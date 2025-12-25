@@ -1,0 +1,18 @@
+{
+  "direction": "bidirectional",
+  "messages": [
+    {
+      "name": "Ping",
+      "opcode": 1,
+      "fields": [
+        { "name": "time", "type": "int64" }
+      ]
+    },
+    {
+      "name": "Pong",
+      "fields": [
+        { "name": "time", "type": "int64" }
+      ]
+    }
+  ]
+}

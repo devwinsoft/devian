@@ -1,0 +1,20 @@
+{
+  "version": "5",
+
+  "inputDir": "input",
+  "tempDir": "temp/devian",
+
+  "domains": {
+    "common": {
+      "csTargetDirs": ["modules/cs/common/Runtime/generated"],
+      "tsTargetDirs": ["modules/ts/common/generated"],
+      "dataTargetDirs": ["modules/data/common"]
+    },
+    "ws": {
+      "dependsOnCommon": true,
+      "csTargetDirs": ["modules/cs/ws/Runtime/generated"],
+      "tsTargetDirs": ["modules/ts/ws/generated"],
+      "dataTargetDirs": []
+    }
+  }
+}

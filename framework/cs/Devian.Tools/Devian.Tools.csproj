@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- 
+      Exe 프로젝트는 netstandard2.1로 빌드 불가.
+      Directory.Build.props의 TargetFramework를 override해야 함.
+      단, LangVersion/Nullable/ImplicitUsings는 전역 설정 따름.
+    -->
+    <TargetFramework>net6.0</TargetFramework>
+    <RootNamespace>Devian.Tools</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="6.0.0" />
+  </ItemGroup>
+</Project>
