@@ -116,10 +116,16 @@ contracts/{language}/{domain}/generated/
 ### 1) Table Consumption
 
 ```csharp
-// Unity Consumer
-var bytes = await Addressables.LoadAssetAsync<TextAsset>("tables/items").Result.bytes;
-var raw = new RawTableData(bytes);
-var items = ItemTableLoader.Load(raw);
+// Consumer: JSON 로드
+var json = await LoadNdjsonAsync("tables/items");
+TB_Items.LoadFromJson(json);
+
+// Consumer: Base64 로드
+var base64 = await LoadBase64Async("tables/items");
+TB_Items.LoadFromBase64(base64);
+
+// 조회
+var item = TB_Items.Get(1001);
 ```
 
 ### 2) Protocol Consumption
@@ -176,8 +182,7 @@ ParserRegistry.Register<ItemId>(new ItemIdParser());
 | `00-rules-minimal` | 모듈 구조 |
 | `01-devian-core-philosophy` | 철학 원칙 |
 | `26-domain-scaffold-generator` | 도메인 생성 |
-| `30-table-loader-design` | Table loader 설계 |
-| `35-unity-raw-table-source` | Unity raw fetch |
+| `28-json-row-io` | 테이블 JSON I/O 정본 |
 | `51-generated-integration` | Generated 통합 |
 | `52-app-templates-blueprint` | App 템플릿 |
 
@@ -187,6 +192,4 @@ ParserRegistry.Register<ItemId>(new ItemIdParser());
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.3.0 | 2024-12-21 | 표준 템플릿 적용, 용어 정리, "강제 아님" 강조 |
-| 0.2.0 | 2024-12-21 | Release pack 제거, Unity Consumer 책임 |
-| 0.1.0 | 2024-12-20 | Initial skill definition |
+| 1.0.0 | 2025-12-28 | Initial |

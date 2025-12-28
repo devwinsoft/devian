@@ -33,7 +33,7 @@
         },
         {
           "name": "userType",
-          "type": "UserType"
+          "type": "enum:UserType"
         }
       ]
     }

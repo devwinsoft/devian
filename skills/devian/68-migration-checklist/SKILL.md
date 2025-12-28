@@ -2,7 +2,7 @@
 
 ## Purpose
 
-**build.json v5 마이그레이션 및 빌드 검증을 위한 체크리스트를 제공한다.**
+**build.json v9 빌드 검증을 위한 체크리스트를 제공한다.**
 
 ---
 
@@ -12,62 +12,106 @@
 
 ---
 
-## 마이그레이션 목표 (확정)
+## Phase 계획
+
+### Phase 1 (완료)
+
+- [x] build.json v7로 변환 (키 rename + files 패턴)
+- [x] Common/Content 숫자 prefix 폴더 적용 (1.contracts, 2.tables, 3.protocols)
+- [x] 스킬 문서 v7 스키마 반영
+
+### Phase 2 (완료)
+
+- [x] Devian.Tools에서 v7 스키마 읽기 구현
+- [x] Dir + Files glob 패턴으로 파일 수집
+- [x] 파일 목록 정렬/중복 제거 (빌드 재현성)
+- [x] v7 강제 + deprecated 키 감지 + 필수 필드 검증
+- [x] `.xlsx`/`.proto` 입력 시 NotSupportedException 처리
+
+### Phase 3 (완료)
+
+- [x] `.xlsx` 테이블 파싱 구현 (ClosedXML, 4행 헤더)
+- [x] `.proto` JSON(proto-json) 파싱 시도 구현
+- [x] Protobuf IDL .proto 미지원 에러 처리
+
+### Phase 4 (완료)
+
+- [x] build.json v8 스키마 적용
+- [x] 숫자 prefix 폴더 제거 (1.contracts → contracts 등)
+- [x] 섹션 배타 규칙 적용 (protocol-only vs data domain)
+- [x] protocolFile 단수 변경 (protocolFiles → protocolFile)
+- [x] 레거시 키 validate fail 처리
+
+### Phase 4.5 (완료)
+
+- [x] build.json v9 스키마 적용
+- [x] domains/protocols 분리 (v8 혼합 제거)
+- [x] protocol-only domain → protocols 섹션으로 이동
+- [x] Devian.Tools 모델: `BuildConfig.Protocols` 추가
+- [x] 스킬 문서 v9 정본화
+
+### Phase 5 (예정)
+
+- [ ] Protobuf IDL .proto 파싱 (protoc 연동)
+
+**Devian.Tools는 v9 스키마를 지원한다. Protobuf IDL .proto 파싱은 Phase 5에서 지원 예정.**
+
+---
+
+## v9 스키마 요약
+
+**build.json v9에서 domains와 protocols는 목적이 다르며 섞이지 않는다.**
 
 | 항목 | 규칙 |
 |------|------|
-| Build 단위 | Domain |
-| 입력 탐색 | `{inputDirs.*Dir}/{domain}/...` 하위에서만 |
-| Protocol | 폴더=domain, 파일명=namespace |
-| 생성 위치 | `tempDir/{domain}/{cs\|ts\|data}` |
-| outputs | copy 대상만 (primary 없음) |
+| Build 단위 | Domain / Protocol |
+| domains | tables + contracts (Data) |
+| protocols | protocolsDir + protocolFile (IDL) |
+| 생성 위치 | `tempDir/{name}/{cs\|ts\|data}` |
 
 ---
 
-## 폐기된 필드 (즉시 실패)
-
-| 폐기 필드 | 대체 |
-|----------|------|
-| `inputs` | `inputDirs` |
-| `targets` | ❌ (domain 내 `*TargetDirs`) |
-| `variables` | ❌ |
-| `output` | ❌ |
-| `workspace.tempRoot` | `tempDir` |
-| `protocolNamespaces` | `protocolFiles` |
-| `contractsSpec` | `contractsFiles` |
-| `tables.sources` | `tablesFiles` |
-
----
-
-## 새 build.json 스펙
+## build.json 스펙 (v9)
 
 ### 최상위 구조
 
 ```json
 {
-  "version": "5",
-  "inputDirs": {
-    "contractsDir": "input/contracts",
-    "tablesDir": "input/tables",
-    "protocolsDir": "input/protocols"
-  },
+  "version": "9",
   "tempDir": "temp/devian",
-  "domains": { ... }
+  "domains": { ... },
+  "protocols": { ... }
 }
 ```
 
-### Domain 구조
+### domains 구조 (Common 예시)
 
 ```json
 {
-  "contractsFiles": ["*.json"],
-  "tablesFiles": ["*.xlsx"],
-  "protocolFiles": ["C2Game.json", "Game2C.json"],
-  "csTargetDirs": ["modules/cs/{domain}/Runtime/generated"],
-  "tsTargetDirs": ["modules/ts/{domain}/generated"],
-  "dataTargetDirs": ["modules/data/{domain}"]
+  "contractsDir": "input/Common/contracts",
+  "contractFiles": ["*.json"],
+  "tablesDir": "input/Common/tables",
+  "tableFiles": ["*.xlsx"],
+
+  "csTargetDirs": ["modules/cs/Common"],
+  "tsTargetDirs": ["modules/ts/Common"],
+  "dataTargetDirs": ["modules/data/Common"]
 }
 ```
+
+### protocols 구조 (C2Game 예시)
+
+```json
+{
+  "protocolsDir": "input/C2Game/protocols",
+  "protocolFile": "C2Game.proto",
+
+  "csTargetDirs": ["modules/cs/C2Game"],
+  "tsTargetDirs": ["modules/ts/C2Game"]
+}
+```
+
+> ⚠️ `*TargetDirs`는 **모듈 루트**만 지정. 생성물 하위 경로(`Runtime/generated` 등)는 Devian이 자동 결정.
 
 ---
 
@@ -77,20 +121,28 @@
 
 | 검증 | 설명 |
 |------|------|
-| 허용 키 외 존재 | 실패 |
-| arrays가 array 타입 | 단일 string 금지 |
-| 폐기 필드 사용 | 즉시 실패 |
+| version = "9" | 필수 |
+| domains 분리 | tables + contracts만 허용 |
+| protocols 분리 | protocolsDir + protocolFile만 허용 |
+| Data domain 필수 | tables 또는 contracts 중 최소 하나 |
 
-### 2. 입력 파일 매칭 검증
+### 2. 레거시 키 감지 (FAIL)
+
+| 레거시 키 | 대체 키 |
+|----------|---------|
+| `tableDir` | `tablesDir` |
+| `contractDir` | `contractsDir` |
+| `protocolDir` | `protocolsDir` |
+| `protocolFiles` | `protocolFile` (단수) |
+| domains 안 `protocolsDir/protocolFile` | protocols 섹션으로 이동 |
+
+### 3. 입력 디렉터리 존재 검증
 
 ```
-각 domain에 대해:
-- contractsFiles 패턴 매칭 결과가 0개면:
-  → contractsFiles가 비어있지 않은데 0개면 실패
-- tablesFiles 패턴 매칭 결과가 0개면:
-  → tablesFiles가 비어있지 않은데 0개면 실패
-- protocolFiles 패턴 매칭 결과가 0개면:
-  → protocolFiles가 비어있지 않은데 0개면 실패
+각 domain/protocol에 대해:
+- contractsDir가 지정되었는데 디렉터리가 없으면 → 경고
+- tablesDir가 지정되었는데 디렉터리가 없으면 → 경고
+- protocolsDir가 지정되었는데 디렉터리가 없으면 → 경고
 ```
 
 ### 3. Protocol namespace 검증
@@ -117,8 +169,8 @@ data 출력 디렉토리에 실제 JSON 존재 검사
 
 | Before | After |
 |--------|-------|
-| `ws/messages.json` | `ws/ws.json` |
-| `net/messages.json` | `net/C2Game.json`, `net/Game2C.json` |
+| `ws/messages.json` | `ws.json` |
+| `net/messages.json` | `C2Game.json`, `Game2C.json` |
 
 ### JSON 내부 namespace 처리
 
@@ -171,36 +223,38 @@ from/to DSL: ❌
 devian build input/build/build.json
 
 # 옵션
---domain <name>    도메인 단위 실행
---clean-temp       tempDir/{domain} 삭제 후 빌드
+--domain <n>    도메인 단위 실행
+--clean-temp       tempDir/{name} 삭제 후 빌드
 --clean-targets    copy 전에 targetDirs 삭제
 ```
 
 ---
 
-## 마이그레이션 순서 (안전한 순서)
+## 마이그레이션 순서 (v9 기준)
 
 | 순서 | 작업 |
 |------|------|
-| 1 | 새 build.json 스펙 반영 + strict validator 추가 |
-| 2 | 생성 output을 tempDir로 고정 |
-| 3 | copy(targetDirs) 구현 |
-| 4 | protocol 입력을 protocolFiles + 파일명=namespace로 변경 |
-| 5 | 기존 IDL 파일명/구조 마이그레이션 |
-| 6 | tables 입력 누락/데이터 누락 문제 해결 |
+| 1 | build.json v9 스펙 반영 (domains/protocols 분리) |
+| 2 | protocol-only domain → protocols 섹션으로 이동 |
+| 3 | Devian.Tools에서 `Protocols` 모델 추가 |
+| 4 | domains/protocols 루프 분리 처리 |
+| 5 | 레거시 키 validate fail 처리 (v8 혼합 포함) |
+| 6 | 스킬 문서 v9 정본화 |
 | 7 | `devian build`로 clean build 재현 가능 확인 |
 
 ---
 
-## Acceptance Criteria
+## Acceptance Criteria (v9)
 
 | # | 조건 |
 |---|------|
-| 1 | 폐기된 필드 사용 시 빌드 즉시 실패 |
-| 2 | 입력 파일 매칭 0개 시 빌드 실패 (비어있지 않은 패턴인 경우) |
-| 3 | Protocol namespace는 파일명에서 결정됨 |
-| 4 | Table loader 요구 키와 data 파일 정합성 검증됨 |
-| 5 | clean build 재현 가능 |
+| 1 | v9 필수 필드 누락 시 빌드 실패 |
+| 2 | domains에는 tables/contracts만 허용 |
+| 3 | protocols에는 protocolsDir/protocolFile만 허용 |
+| 4 | domains 안에 protocolsDir/protocolFile이 있으면 빌드 실패 (v8 혼합) |
+| 5 | Protocol namespace는 파일명에서 결정됨 |
+| 6 | clean build 재현 가능 |
+| 7 | 각 domain/protocol moduleRoot에 scaffold 파일 존재 |
 
 ---
 
@@ -218,4 +272,9 @@ devian build input/build/build.json
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.1.0 | 2024-12-25 | Initial migration checklist |
+| 3.0.0 | 2025-12-28 | v9 스키마: domains/protocols 분리 |
+| 2.0.0 | 2025-12-28 | v8 스키마: 섹션 배타 규칙, protocolFile 단수 |
+| 1.3.0 | 2025-12-28 | Phase 3 완료: xlsx/proto(JSON) 지원 |
+| 1.2.0 | 2025-12-28 | Phase 2 완료 (v7 스키마 지원) |
+| 1.1.0 | 2025-12-28 | v7 스키마 + Phase 계획 |
+| 1.0.0 | 2025-12-28 | Initial |

@@ -9,6 +9,22 @@ and does not generate server or application structure.**
 
 ---
 
+## Domain Root (정본)
+
+**Devian에서 Domain은 디렉터리 이름이 아니라 논리 단위이다.**
+
+모든 Domain의 실제 루트 경로는 다음으로 고정된다:
+
+```
+input/<Domain>/
+```
+
+`domains/` 디렉터리는 Devian 구조에 존재하지 않는다.
+`{Domain}` 표기는 문서/설명용 플레이스홀더이며,
+실제 파일 시스템 경로를 의미하지 않는다.
+
+---
+
 ## Scope
 
 ### In Scope
@@ -61,7 +77,7 @@ contracts/{language}/{domain}/
 
 | # | Rule |
 |---|------|
-| 1 | `common/` 도메인은 옵션으로 생성 가능 |
+| 1 | `Common/` 도메인은 옵션으로 생성 가능 |
 | 2 | scaffold는 비어 있는 구조를 선호한다 |
 | 3 | 파일 수를 늘리지 않는다 |
 
@@ -84,7 +100,7 @@ contracts/{language}/{domain}/
 
 | Parameter | 설명 | 예시 |
 |-----------|------|------|
-| `domainName` | 도메인 이름 | common, auth, ingame |
+| `domainName` | 도메인 이름 | Common, auth, ingame |
 
 ### Optional Flags
 
@@ -119,12 +135,12 @@ contracts/ts/{domain}/
 
 ---
 
-## Special Case: common domain
+## Special Case: Common domain
 
-- `common`은 언어별로 동일하게 생성한다:
-  - `contracts/csharp/common`
-  - `contracts/ts/common`
-- `common`은 도메인들 간 공용 타입의 기준점이다
+- `Common`은 언어별로 동일하게 생성한다:
+  - `contracts/csharp/Common`
+  - `contracts/ts/Common`
+- `Common`은 도메인들 간 공용 타입의 기준점이다
 
 ---
 
@@ -163,8 +179,4 @@ contracts/ts/{domain}/
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.5.0 | 2024-12-21 | v5: Hard/Soft/WON'T 구분, NestJS 비생성 강조 |
-| 0.4.0 | 2024-12-21 | v4: Language-first contracts |
-| 0.3.0 | 2024-12-21 | v3: No bundles |
-| 0.2.0 | 2024-12-21 | v2: Common-aware |
-| 0.1.0 | 2024-12-21 | Initial skill definition |
+| 1.0.0 | 2025-12-28 | Initial |

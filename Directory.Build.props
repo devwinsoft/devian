@@ -1,0 +1,13 @@
+<Project>
+  <!--
+    Devian C# 전역 빌드 설정
+    모든 프로젝트는 이 설정을 따른다.
+    개별 csproj에서 override 금지.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+</Project>

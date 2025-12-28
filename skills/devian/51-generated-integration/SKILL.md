@@ -187,6 +187,4 @@ Consumer가 해당 언어 모듈을 가져다 사용:
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.3.0 | 2024-12-21 | v5: Purpose 재정의, core→generated 금지 명시, Out of scope 강화 |
-| 0.2.0 | 2024-12-21 | v2: Language-first contracts |
-| 0.1.0 | 2024-12-21 | Initial skill definition |
+| 1.0.0 | 2025-12-28 | Initial |

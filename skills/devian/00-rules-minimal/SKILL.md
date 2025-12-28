@@ -75,7 +75,7 @@ IDL (depends on contracts + tables)
 | # | Rule |
 |---|------|
 | 5-1 | **contracts는 독립적**이다 — tables, IDL을 import/require하지 않는다 |
-| 5-2 | **tables는 contracts에 의존**할 수 있다 — enum:Name, class:Name 참조 |
+| 5-2 | **tables는 proto 정의에 의존**할 수 있다 — ref:{Name} 참조 |
 | 5-3 | **IDL은 contracts와 tables에 의존**할 수 있다 |
 | 5-4 | **역방향 의존 금지** — contracts ← tables ← IDL 순서 위반 불가 |
 
@@ -83,22 +83,27 @@ IDL (depends on contracts + tables)
 
 | # | Rule |
 |---|------|
-| 6-1 | **Primary Key는 항상 1열 (첫 번째 컬럼)** |
-| 6-2 | **Key 타입: `class:*` 금지** |
-| 6-3 | **Key 타입: 배열 타입 금지** |
-| 6-4 | 허용되는 Key 타입: `int`, `string`, `enum:*` 등 |
+| 6-1 | **Primary Key는 `key:true` 옵션으로 지정** (Row 3 Options) |
+| 6-2 | **`key:true`는 최대 1개** (복합키 미지원) |
+| 6-3 | `key:true` 없으면 Entity만 생성, 컨테이너/로더 미생성 |
+| 6-4 | **Key 타입: `ref:*` 금지** |
+| 6-5 | **Key 타입: 배열 타입 금지** |
+| 6-6 | 허용되는 Key 타입: `byte`, `ubyte`, `short`, `ushort`, `int`, `uint`, `long`, `ulong`, `string` |
 
-### Hard Rule 7: Table Header 구조 (3줄 고정)
+### Hard Rule 7: Table Header 구조 (4줄 고정)
 
 | # | Rule |
 |---|------|
 | 7-1 | **Row 1: Field Name** (필드 이름) |
-| 7-2 | **Row 2: Type** (타입, prefix 지원) |
-| 7-3 | **Row 3: Comment** (순수 설명용 주석 — **Devian은 절대 해석하지 않음**) |
-| 7-4 | **Row 4+: Data** (실제 데이터) |
-| 7-5 | **ref: 타입은 예약됨** — 빌드 시 오류 발생 |
-| 7-6 | **Row 3에 meta/option/policy/constraint 개념은 없다** |
-| 7-7 | **tablegen, validator, runtime 어디에서도 Row 3을 로직에 사용하지 않는다** |
+| 7-2 | **Row 2: Type** (Scalar 10종, ref:{Name}, 배열) |
+| 7-3 | **Row 3: Options** (`key:true/false`, `parser:json`, `optional:true/false`) |
+| 7-4 | **Row 4: Comment** (순수 설명용 주석 — **Devian은 절대 해석하지 않음**) |
+| 7-5 | **Row 5+: Data** (실제 데이터) |
+| 7-6 | **Row 4에 meta/option/policy/constraint 개념은 없다** |
+| 7-7 | **tablegen, validator, runtime 어디에서도 Row 4를 로직에 사용하지 않는다** |
+| 7-8 | **byte/ubyte/short/ushort 범위 검증은 Generator/Loader 책임** |
+| 7-9 | **Converter는 parse 성공/실패만 책임** |
+
 
 ### Hard Rule 8: Skill 확장 정책
 
@@ -116,6 +121,17 @@ IDL (depends on contracts + tables)
 | 9-1 | 도메인당 **하나의 네임스페이스**만 사용한다 |
 | 9-2 | 하위 네임스페이스(`Devian.Common.*`)는 **금지** |
 | 9-3 | `common` → `Devian.Common`, `ws` → `Devian.Ws` |
+
+### Hard Rule 10: 소유권 및 금지 사항
+
+| # | Rule |
+|---|------|
+| 10-1 | 사람이 `generated/**` 수정 **금지** |
+| 10-2 | 생성기가 `manual/**` 덮어쓰기 **금지** |
+| 10-3 | Common 외 cross-domain ref **금지** (1단계) |
+| 10-4 | ref 대상 정의가 **0개 또는 2개 이상**이면 **생성 실패** |
+
+> **Note:** 수동 작성 proto 폴더(proto-manual)는 폐기되었다.
 
 ---
 
@@ -163,9 +179,4 @@ IDL (depends on contracts + tables)
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.0.0 | 2024-12-25 | **철학 재정립**: Skill 확장 정책(Rule 8), 네임스페이스 규칙(Rule 9) 추가 |
-| 0.5.0 | 2024-12-25 | Hard Rule 7 강화: 3줄 헤더 고정 |
-| 0.4.0 | 2024-12-21 | Hard Rule 5-7 추가 |
-| 0.3.0 | 2024-12-21 | build.json 중심 재설계 |
-| 0.2.0 | 2024-12-21 | Hard Rules 3개 |
-| 0.1.0 | 2024-12-21 | Initial skill definition |
+| 1.0.0 | 2025-12-28 | Initial |

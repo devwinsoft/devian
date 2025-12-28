@@ -4,6 +4,10 @@
 
 **중립 IDL(JSON)로부터 C#/TS 프로토콜 산출물(DTO, opcode, dispatcher skeleton용 타입)을 생성한다.**
 
+**Phase 3 상태:**
+- `.json` 입력: 지원됨
+- `.proto` 입력: JSON(proto-json)으로 파싱 시도 → 성공 시 처리, 실패 시 "IDL 미지원(Phase 4)" 에러
+
 이 스킬은 `build.json`을 읽고 실제 코드를 생성하는 **구현 스펙**이다.
 
 ---
@@ -40,18 +44,31 @@
 
 | Input | 설명 |
 |-------|------|
-| `{protocolsDir}/{domain}/{filename}.json` | Protocol Spec 원천 |
-| `build.json` | `inputDirs.protocolsDir` |
-| `build.json` | `domains[domain].protocolFiles` (파일 목록 또는 glob) |
+| `{domains[domain].protocolsDir}/{protocolFile}` | Protocol Spec 원천 (단일 파일) |
+| `build.json` | `domains[domain].protocolsDir` + `protocolFile` |
 
-### 입력 구조 (확정)
+**v9 변경:** Protocol은 glob 패턴이 아닌 **단일 파일**로 지정됨.
+
+### .proto 파일 처리 규칙
+
+| 확장자 | 처리 |
+|--------|------|
+| `.json` | JSON으로 파싱 → ProtocolSpec |
+| `.proto` | JSON 파싱 시도 → 성공 시 처리, 실패 시 에러 |
+
+**.proto가 JSON이 아닌 경우 (Protobuf IDL):**
+```
+[domain='C2Game'] Protocol '.proto' is not JSON (proto-json). 
+Protobuf IDL .proto is not supported yet (Phase 5). file='...'
+```
+
+> **Note:** Protobuf IDL .proto 파싱은 Phase 5에서 지원 예정.
+
+### 입력 구조 (v9)
 
 ```
-input/protocols/
-└── net/                    ← domain = "net"
-    ├── C2Game.json         ← namespace = "C2Game"
-    ├── Game2C.json         ← namespace = "Game2C"
-    └── S2S.json            ← namespace = "S2S"
+input/C2Game/protocols/        ← domains["C2Game"].protocolsDir
+└── C2Game.proto               ← protocolFile (단일 파일)
 ```
 
 ---
@@ -86,7 +103,6 @@ input/protocols/
 | # | 금지 항목 |
 |---|----------|
 | 1 | protocol namespace를 폴더 기준으로 해석 |
-| 2 | `protocolNamespaces` 사용 (폐기됨) |
 | 3 | domain 외부 경로 참조 (`../`, `net/*.json` 등) |
 | 4 | 1개 파일에서 여러 protocol namespace 정의 |
 | 5 | primary output 경로를 JSON에서 읽기 |
@@ -107,11 +123,11 @@ input/protocols/
 ### 파일 위치
 
 ```
-{protocolsDir}/{domain}/{filename}.json
+{domains[domain].protocolsDir}/{filename}.json
 ```
 
-- **폴더명 = domain** (예: `net`, `chat`, `lobby`)
-- **파일명 = namespace/채널** (예: `C2Game.json` → namespace = `C2Game`)
+- **protocolsDir = 도메인별 명시 경로**
+- **파일명 = namespace/채널** (예: `ws.json` → namespace = `ws`)
 
 ### 스키마
 
@@ -192,19 +208,14 @@ input/protocols/
 
 ---
 
-## 구현 변경 사항 (필수)
+## 구현 요약 (v6)
 
-### 1. 폐기
+### v6 입력 경로
 
-- `DomainConfig.ProtocolNamespaces`
-- `"namespace = 폴더"` 개념
-
-### 2. 도입/변경
-
-- `DomainConfig.protocolFiles: string[]`
+- `DomainConfig.protocolsDir: string`
 - 프로토콜 파일 로딩 로직:
   ```
-  {protocolsDir}/{domain}/ 하위에서 protocolFiles로 파일 목록 결정
+  {domains[domain].protocolsDir}/*.json 에서 파일 목록 결정
   ```
 - 파일 로드 후:
   ```csharp
@@ -212,12 +223,12 @@ input/protocols/
   ```
 - JSON `"namespace"` 필드가 있으면 **일치 검증만** 수행
 
-### 3. 출력 파일명 규칙
+### 출력 파일명 규칙
 
 | 타겟 | 파일명 |
 |------|--------|
-| C# | `{namespace}.g.cs` (예: `C2Game.g.cs`) |
-| TS | `{namespace}.g.ts` (예: `C2Game.g.ts`) |
+| C# | `{namespace}.g.cs` (예: `ws.g.cs`) |
+| TS | `{namespace}.g.ts` (예: `ws.g.ts`) |
 
 ---
 
@@ -270,7 +281,6 @@ input/protocols/
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.4.0 | 2024-12-25 | **build.json 전면 재설계 반영**: tempDir 생성, targetDirs 복사 |
-| 0.3.0 | 2024-12-25 | 입력 규칙 변경: 폴더=domain, 파일명=namespace |
-| 0.2.0 | 2024-12-21 | Protocol Spec 확정 스키마 반영 |
-| 0.1.0 | 2024-12-21 | Initial skill definition |
+| 2.0.0 | 2025-12-28 | **v9 스키마: protocolFile 단수, 섹션 배타 규칙 |
+| 1.1.0 | 2025-12-28 | Phase 3: .proto(JSON) 지원, IDL은 Phase 4 |
+| 1.0.0 | 2025-12-28 | Initial |

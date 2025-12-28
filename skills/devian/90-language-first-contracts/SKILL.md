@@ -85,7 +85,7 @@
 |-------|------|
 | `60-build-pipeline` | Build Spec |
 | `21-codegen-table` | Table codegen |
-| `30-table-loader-design` | Loader 설계 |
+| `28-json-row-io` | JSON I/O 정본 |
 | `00-rules-minimal` | Hard Rules |
 
 ---
@@ -94,6 +94,4 @@
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.3.0 | 2024-12-21 | "타겟 분리 원칙"으로 재정의, 고정 레이아웃 아님 |
-| 0.2.0 | 2024-12-21 | 신규, domain-first 배제 |
-| 0.1.0 | 2024-12-21 | Initial skill definition |
+| 1.0.0 | 2025-12-28 | Initial |

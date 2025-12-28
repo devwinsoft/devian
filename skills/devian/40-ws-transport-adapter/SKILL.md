@@ -155,6 +155,4 @@ public class AuthTransport
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.3.0 | 2024-12-21 | v5: 병렬 소비 개념 명시, 언어 간 의존 금지, TS conditional |
-| 0.2.0 | 2024-12-21 | v2: 예시 패턴 명확화, 서버 자유 강조 |
-| 0.1.0 | 2024-12-20 | Initial skill definition |
+| 1.0.0 | 2025-12-28 | Initial |

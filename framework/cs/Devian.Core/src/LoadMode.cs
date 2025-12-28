@@ -5,7 +5,14 @@ namespace Devian.Core
     /// </summary>
     public enum LoadMode
     {
-        Strict,
-        Lenient
+        /// <summary>
+        /// 기존 캐시 유지 + 새 데이터 병합. key 충돌 시 overwrite.
+        /// </summary>
+        Merge,
+
+        /// <summary>
+        /// 기존 캐시 Clear 후 로드.
+        /// </summary>
+        Replace
     }
 }

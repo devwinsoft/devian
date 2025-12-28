@@ -1,2 +1,40 @@
-# Devian temp workspace
-.devian/
+# Devian .gitignore
+# 
+# IMPORTANT: proto-gen/** is NOT ignored.
+# proto-gen artifacts are committed to ensure reproducibility.
+
+# Build outputs
+bin/
+obj/
+*.dll
+*.exe
+*.pdb
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp
+*.tmp
+*.log
+
+# Node
+node_modules/
+
+# Unity (if applicable)
+Library/
+Temp/
+Logs/
+UserSettings/
+*.csproj
+*.sln
+!Devian.sln
+
+# NOTE: proto-gen/ is INTENTIONALLY COMMITTED
+# Do NOT add proto-gen/ to this file

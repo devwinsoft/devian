@@ -160,6 +160,4 @@ Unity App
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.3.0 | 2024-12-21 | 표준 템플릿 적용, Belongs To 추가, Soft Rules 중심 |
-| 0.2.0 | 2024-12-21 | Consumer-Oriented 재작성 |
-| 0.1.0 | 2024-12-20 | Initial skill definition |
+| 1.0.0 | 2025-12-28 | Initial |

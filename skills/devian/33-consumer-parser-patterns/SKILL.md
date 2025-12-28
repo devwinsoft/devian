@@ -142,8 +142,7 @@ import { parsers } from '@devian/ingame';
 | Skill | 관계 |
 |-------|------|
 | `21-codegen-table` | Table codegen |
-| `30-table-loader-design` | Loader 설계 |
-| `31-table-loader-implementation` | Loader 구현 |
+| `28-json-row-io` | JSON I/O 정본 |
 | `32-table-provider-contract` | Provider 계약 |
 | `51-generated-integration` | Generated 통합 |
 | `90-language-first-contracts` | 경로 기준 |
@@ -154,6 +153,4 @@ import { parsers } from '@devian/ingame';
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.3.0 | 2024-12-21 | v5: Hard Rules 추가, Consumer 역할 명확화, TS conditional |
-| 0.2.0 | 2024-12-21 | v2: Path sync, 규칙 강제 제거 |
-| 0.1.0 | 2024-12-20 | Initial skill definition |
+| 1.0.0 | 2025-12-28 | Initial |

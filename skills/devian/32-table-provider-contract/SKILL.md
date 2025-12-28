@@ -125,11 +125,31 @@ public interface ITableProvider
 
 ---
 
+## Provider vs Container (SSOT)
+
+### 역할 경계
+
+| 역할 | 담당 | 설명 |
+|------|------|------|
+| **Provider** | `ITableProvider` | raw payload 공급만 담당 |
+| **Container** | `Devian.Tables.Table.T_{TableName}` | 런타임 캐시 및 조회 API 소유 |
+
+### 정본 정의
+
+- **Provider (`ITableProvider`)는 raw payload만 공급한다.**
+- **Table Container (`Devian.Tables.Table.T_{TableName}`)가 런타임 캐시와 조회 API (Get/TryGet/Unload)를 소유한다.**
+- **Provider는 컨테이너가 아니며, 런타임 캐시 시맨틱을 노출해서는 안 된다.**
+
+> Provider는 "데이터를 어디서 가져오는가"만 책임지고,
+> Container는 "데이터를 어떻게 캐시하고 조회하는가"를 책임진다.
+
+---
+
 ## Dependency Rules
 
 ### Allowed
 
-- `contracts/csharp/{domain}` → `common` 도메인 ✅
+- `contracts/csharp/{domain}` → `Common` 도메인 ✅
 - `contracts/csharp/{domain}` → `Devian.Core` (`framework/cs/`) ✅
 
 ### Forbidden
@@ -155,6 +175,8 @@ public interface ITableProvider
 | 2 | Skill/runtime 쪽 문서와 역할이 겹치지 않는다 |
 | 3 | Provider 계약이 `contracts/csharp/{domain}`에 위치한다 |
 | 4 | Provider는 raw 데이터만 책임, 파싱은 도메인 로더 책임 |
+| 5 | **Provider vs Container 역할 경계가 명확히 정의됨** |
+| 6 | **Provider는 캐시 시맨틱을 노출하지 않음이 명시됨** |
 
 ---
 
@@ -162,10 +184,9 @@ public interface ITableProvider
 
 | Skill | 관계 |
 |-------|------|
-| `30-table-loader-design` | 도메인 로더 설계 |
-| `31-table-loader-implementation` | 도메인 로더 구현 |
+| `28-json-row-io` | 테이블 JSON I/O 정본 |
 | `33-consumer-parser-patterns` | 파서 패턴 |
-| `35-unity-raw-table-source` | Unity raw source |
+| `61-tablegen-implementation` | tablegen 구현 |
 
 ---
 
@@ -173,7 +194,4 @@ public interface ITableProvider
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.0.0 | 2024-12-25 | **디렉토리 정책**: `packages/` → `framework/`, consumer → Skill |
-| 0.3.0 | 2024-12-21 | 표준 템플릿 적용, interface only 강조 |
-| 0.2.0 | 2024-12-21 | 도메인 소유로 변경 |
-| 0.1.0 | 2024-12-20 | Initial skill definition |
+| 1.0.0 | 2025-12-28 | Initial |

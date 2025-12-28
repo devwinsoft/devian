@@ -162,6 +162,4 @@ export * from '../generated';
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.3.0 | 2024-12-21 | 표준 템플릿 적용, TS optional 명시, 용어 정리 |
-| 0.2.0 | 2024-12-21 | Language-first outputs |
-| 0.1.0 | 2024-12-20 | Initial skill definition |
+| 1.0.0 | 2025-12-28 | Initial |

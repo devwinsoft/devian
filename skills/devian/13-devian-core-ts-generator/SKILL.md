@@ -58,7 +58,7 @@
 
 ```
 modules/ts/
-├── common/generated/*.g.ts
+├── Common/generated/*.g.ts
 └── ws/generated/*.g.ts
 ```
 
@@ -135,12 +135,12 @@ export * from "./generated/index.g";
    - `package.json`, `tsconfig.json`, `src/index.ts`, `src/generated/`
 
 2. **입력 산출물 검증**
-   - `modules/ts/common/generated/*.g.ts`
+   - `modules/ts/Common/generated/*.g.ts`
    - `modules/ts/ws/generated/*.g.ts`
    - **파일 수가 0이면 에러 (exit code 1)**
 
 3. **파일 복제** (Deterministic)
-   - `modules/ts/common/generated/*.g.ts` → `framework/ts/devian-core/src/generated/common/`
+   - `modules/ts/Common/generated/*.g.ts` → `framework/ts/devian-core/src/generated/common/`
    - `modules/ts/ws/generated/*.g.ts` → `framework/ts/devian-core/src/generated/ws/`
 
 4. **Export barrel 생성**
@@ -172,7 +172,7 @@ node skills/devian/13-devian-core-ts-generator/run.mjs
   - framework/ts/devian-core/src/index.ts
 
 [2/4] Scanning input artifacts...
-  - common: 4 file(s) from .../modules/ts/common/generated
+  - Common: 4 file(s) from .../modules/ts/Common/generated
   - ws:     1 file(s) from .../modules/ts/ws/generated
 
 [3/4] Copying artifacts...
@@ -191,7 +191,7 @@ node skills/devian/13-devian-core-ts-generator/run.mjs
 
 ```
 [2/4] Scanning input artifacts...
-  - common: 0 file(s) from .../modules/ts/common/generated
+  - Common: 0 file(s) from .../modules/ts/Common/generated
   - ws:     0 file(s) from .../modules/ts/ws/generated
 
 ERROR: No .g.ts files found in modules/ts/**/generated/
@@ -284,6 +284,4 @@ export * from "./ws/ws.g";
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.2.0 | 2024-12-25 | **추가**: tables.loader.g.ts 캐시 로더 지원 |
-| 1.1.0 | 2024-12-25 | **보완**: 입력 검증, build 옵션 로그, 실행 로그 개선 |
-| 1.0.0 | 2024-12-25 | Initial: modules/ 복사 방식, run.mjs 구현 |
+| 1.0.0 | 2025-12-28 | Initial |

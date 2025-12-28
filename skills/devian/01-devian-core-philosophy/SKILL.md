@@ -142,7 +142,4 @@ Devian은 기존 Devarc 프레임워크를 재설계·재구성한 차세대 프
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.0.0 | 2024-12-25 | **철학 재정립**: "Devian은 프레임워크다", Skill 모델 도입 |
-| 0.3.0 | 2024-12-21 | MVP 팀 지향, build.json 중심 |
-| 0.2.0 | 2024-12-21 | (폐기) "not a framework" |
-| 0.1.0 | 2024-12-21 | Initial skill definition |
+| 1.0.0 | 2025-12-28 | Initial |

@@ -118,8 +118,7 @@ Consumer (parsers, loaders)
 |-------|------|
 | `60-build-pipeline` | Build Spec |
 | `24-table-authoring-rules` | Authoring 규칙 |
-| `30-table-loader-design` | Loader 설계 |
-| `31-table-loader-implementation` | Loader 구현 |
+| `28-json-row-io` | JSON I/O 정본 |
 | `61-tablegen-implementation` | Tablegen 구현 |
 
 ---
@@ -128,7 +127,4 @@ Consumer (parsers, loaders)
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.4.0 | 2024-12-21 | build.json 템플릿 기반, output 강제 금지 |
-| 0.3.0 | 2024-12-21 | 의존 방향, TS optional |
-| 0.2.0 | 2024-12-21 | C# contracts output |
-| 0.1.0 | 2024-12-20 | Initial skill definition |
+| 1.0.0 | 2025-12-28 | Initial |

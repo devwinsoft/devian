@@ -4,6 +4,10 @@
 
 **중립 Contract Spec(JSON)으로부터 C#/TS 타입 산출물(value types, structs, enums)을 생성한다.**
 
+**Phase 3 상태:**
+- `.json` 입력: 지원됨
+- `.proto` 입력: JSON(proto-json)으로 파싱 시도 → 성공 시 처리, 실패 시 "IDL 미지원(Phase 4)" 에러
+
 이 스킬은 `build.json`을 읽고 실제 코드를 생성하는 **구현 스펙**이다.
 
 ---
@@ -39,10 +43,24 @@
 
 | Input | 설명 |
 |-------|------|
-| `input/contracts/{domain}/*.json` | Contract Spec 원천 |
-| `build.json` | `inputs.contracts` |
-| `build.json` | `domains[domain].contractsSpec` |
-| `build.json` | `targets.cs/ts.output`, `variables.CS_OUT/TS_OUT` |
+| `{domains[domain].contractsDir}/*.json` | Contract Spec 원천 (JSON) |
+| `{domains[domain].contractsDir}/*.proto` | Contract Spec 원천 (proto-json) |
+| `build.json` | `domains[domain].contractsDir` + `contractFiles` 패턴 |
+
+### .proto 파일 처리 규칙
+
+| 확장자 | 처리 |
+|--------|------|
+| `.json` | JSON으로 파싱 → JsonDocument |
+| `.proto` | JSON 파싱 시도 → 성공 시 처리, 실패 시 에러 |
+
+**.proto가 JSON이 아닌 경우 (Protobuf IDL):**
+```
+[domain='Common'] Contract '.proto' is not JSON (proto-json). 
+Protobuf IDL .proto is not supported yet (Phase 5). file='...'
+```
+
+> **Note:** Protobuf IDL .proto 파싱은 Phase 5에서 지원 예정.
 
 ---
 
@@ -50,8 +68,10 @@
 
 | 타겟 | 출력 경로 |
 |------|----------|
-| C# | `{CS_OUT}/{domain}/Runtime/generated/*.cs` |
-| TS (optional) | `{TS_OUT}/{domain}/generated/*.ts` |
+| C# | `{tempDir}/{domain}/cs/*.cs` → `{csTargetDir}/generated/` |
+| TS (optional) | `{tempDir}/{domain}/ts/*.ts` → `{tsTargetDir}/generated/` |
+
+> **모든 생성은 tempDir에서** — 복사는 `csTargetDirs`, `tsTargetDirs`로
 
 ---
 
@@ -59,8 +79,8 @@
 
 | # | Rule |
 |---|------|
-| 1 | 입력은 **`input/contracts/{domain}/*.json`**만 사용 |
-| 2 | 출력 경로는 **`build.json`의 targets 템플릿을 그대로** 따른다 |
+| 1 | 입력은 **`{domains[domain].contractsDir}/*.json`**만 사용 |
+| 2 | 생성은 **tempDir/{domain}/{cs\|ts}/**에서만, 복사는 targetDirs로 |
 | 3 | core runtime은 **generated에 의존하지 않는다** (consumer가 import) |
 | 4 | 같은 input → 같은 output (**결정적 빌드**) |
 
@@ -81,14 +101,14 @@
 ### 파일 위치
 
 ```
-input/contracts/{domain}/*.json
+{domains[domain].contractsDir}/*.json
 ```
 
 ### 스키마
 
 ```json
 {
-  "domain": "common",
+  "domain": "Common",
   "namespace": "Common",
   "types": [
     {
@@ -255,7 +275,7 @@ export enum Rarity {
 | 1 | Contract Spec 1개로 C#/TS 타입 파일 생성 |
 | 2 | value/struct/enum 모두 정상 생성 |
 | 3 | 타입 참조 실패 시 빌드 **실패 + 원인 출력** |
-| 4 | build.json 템플릿 경로에 **정확히 출력** |
+| 4 | 생성은 `tempDir/{domain}/{cs\|ts}/`에서 이루어짐 |
 | 5 | TS가 비활성화된 도메인에서는 **TS 산출물 생성하지 않음** |
 
 ---
@@ -275,4 +295,6 @@ export enum Rarity {
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.1.0 | 2024-12-21 | Initial skill definition |
+| 2.0.0 | 2025-12-28 | v8 스키마: contractsDir (복수형) |
+| 1.1.0 | 2025-12-28 | Phase 3: .proto(JSON) 지원, IDL은 Phase 4 |
+| 1.0.0 | 2025-12-28 | Initial |

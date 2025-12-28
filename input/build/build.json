@@ -1,20 +1,36 @@
 {
-  "version": "5",
-
-  "inputDir": "input",
+  "version": "9",
   "tempDir": "temp/devian",
 
   "domains": {
-    "common": {
-      "csTargetDirs": ["modules/cs/common/Runtime/generated"],
-      "tsTargetDirs": ["modules/ts/common/generated"],
-      "dataTargetDirs": ["modules/data/common"]
+    "Common": {
+      "contractsDir": "input/Common/contracts",
+      "contractFiles": ["*.json"],
+
+      "tablesDir": "input/Common/tables",
+      "tableFiles": ["*.xlsx"],
+
+      "csTargetDirs": ["modules/cs/Common"],
+      "tsTargetDirs": ["modules/ts/Common"],
+      "dataTargetDirs": ["modules/data/Common"]
+    }
+  },
+
+  "protocols": {
+    "C2Game": {
+      "protocolsDir": "input/C2Game/protocols",
+      "protocolFile": "C2Game.proto",
+
+      "csTargetDirs": ["modules/cs/C2Game"],
+      "tsTargetDirs": ["modules/ts/C2Game"]
     },
-    "ws": {
-      "dependsOnCommon": true,
-      "csTargetDirs": ["modules/cs/ws/Runtime/generated"],
-      "tsTargetDirs": ["modules/ts/ws/generated"],
-      "dataTargetDirs": []
+
+    "Game2C": {
+      "protocolsDir": "input/Game2C/protocols",
+      "protocolFile": "Game2C.proto",
+
+      "csTargetDirs": ["modules/cs/Game2C"],
+      "tsTargetDirs": ["modules/ts/Game2C"]
     }
   }
 }

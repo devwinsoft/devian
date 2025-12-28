@@ -76,7 +76,7 @@ IDL 기반으로 **C# 프로토콜 계약 코드를 생성**한다.
 | Target | 허용 |
 |--------|:----:|
 | Devian.Core | ✅ |
-| contracts/csharp/common | ✅ |
+| contracts/csharp/Common | ✅ |
 
 ### Generated protocol code MUST NOT reference:
 
@@ -84,7 +84,7 @@ IDL 기반으로 **C# 프로토콜 계약 코드를 생성**한다.
 |--------|:----:|
 | Devian.Tools | ❌ |
 | UnityEngine | ❌ |
-| 다른 도메인 (common 제외) | ❌ |
+| 다른 도메인 (Common 제외) | ❌ |
 
 ---
 
@@ -142,6 +142,4 @@ IDL 기반으로 **C# 프로토콜 계약 코드를 생성**한다.
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 0.3.0 | 2024-12-21 | 표준 템플릿 적용, 용어 정리 |
-| 0.2.0 | 2024-12-21 | C# contracts output |
-| 0.1.0 | 2024-12-20 | Initial skill definition |
+| 1.0.0 | 2025-12-28 | Initial |

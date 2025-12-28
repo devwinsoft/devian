@@ -5,10 +5,10 @@
   What it does:
   - (Optional) runs: dotnet run --project framework/cs/Devian.Tools -- build
   - copies generated TS artifacts from:
-      modules/ts/common/generated/*.g.ts
+      modules/ts/Common/generated/*.g.ts
       modules/ts/ws/generated/*.g.ts
     into:
-      framework/ts/devian-core/src/generated/{common,ws}
+      framework/ts/devian-core/src/generated/{Common,ws}
   - writes generated export barrel:
       framework/ts/devian-core/src/generated/index.g.ts
     and ensures:
@@ -203,14 +203,14 @@ function main() {
 
   // 보완 1: 입력 산출물 존재 검증
   console.log("\n[2/4] Scanning input artifacts...");
-  const srcCommon = path.join(repoRoot, "modules", "ts", "common", "generated");
+  const srcCommon = path.join(repoRoot, "modules", "ts", "Common", "generated");
   const srcWs = path.join(repoRoot, "modules", "ts", "ws", "generated");
 
   const commonFiles = readDirFiles(srcCommon, (f) => f.endsWith(".g.ts"));
   const wsFiles = readDirFiles(srcWs, (f) => f.endsWith(".g.ts"));
   const totalFiles = commonFiles.length + wsFiles.length;
 
-  console.log(`  - common: ${commonFiles.length} file(s) from ${srcCommon}`);
+  console.log(`  - Common: ${commonFiles.length} file(s) from ${srcCommon}`);
   console.log(`  - ws:     ${wsFiles.length} file(s) from ${srcWs}`);
 
   if (totalFiles === 0) {

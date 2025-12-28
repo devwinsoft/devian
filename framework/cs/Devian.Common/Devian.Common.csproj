@@ -1,12 +1,20 @@
 <Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <LangVersion>9.0</LangVersion>
+    <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <RootNamespace>Devian.Common</RootNamespace>
   </PropertyGroup>
-  
+
   <ItemGroup>
     <ProjectReference Include="..\Devian.Core\Devian.Core.csproj" />
   </ItemGroup>
+
+  <!-- 
+    구조:
+    - generated/ : Common 도메인 빌드 결과 (기계 생성, 커밋)
+    - manual/    : 개발자 작성 코드 (생성기 덮어쓰기 금지)
+  -->
+
 </Project>

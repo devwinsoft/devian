@@ -25,10 +25,9 @@ Core Runtime은 다음을 만족한다:
 | 항목 | 설명 |
 |------|------|
 | 공통 타입 | `CoreResult`, `CoreError`, `ParseResult` 등 |
-| 키/식별자 | `ITableElement<TKey>`, `PacketEnvelope` 등 |
+| 키/식별자 | `IEntity`, `PacketEnvelope` 등 |
 | 레지스트리 개념 | `CoreValueParserRegistry` |
 | 파싱/해석 hook | `IValueParser`, `ParseContext` |
-| Codec 추상화 | `IEntityCodec` (구현은 외부) |
 
 ### Out of Scope (Skill 영역)
 
@@ -36,7 +35,7 @@ Core Runtime은 다음을 만족한다:
 |------|-----------|
 | IO 방식 | File / Memory / DB → 각 플랫폼 Skill |
 | Transport | HTTP, WebSocket, MQ → Network Skill |
-| Serialization policy | MessagePack, JSON → Serializer Skill |
+| Serialization policy | Protobuf → Serializer Skill (JSON은 optional view) |
 | 서버 연동 | NestJS 등 → Server Skill |
 | generated 코드 의존 | Core는 generated를 직접 참조하지 않음 |
 | contracts 구조 해석 | Core는 contracts 경로/구조를 알지 않음 |
@@ -50,6 +49,12 @@ Core Runtime은 다음을 만족한다:
 | 1 | Core runtime은 generated 코드를 직접 참조하지 않는다 |
 | 2 | Core runtime은 contracts의 구조를 해석하지 않는다 |
 | 3 | Core runtime은 확장 포인트만 제공한다 (구현 강제 안 함) |
+| 4 | Devian.Core는 IR의 구체적 포맷(Protobuf)에 대해 알지 않는다 |
+| 5 | Devian.Core는 Google.Protobuf 패키지를 참조하지 않는다 |
+
+> IR은 Serializer Skill을 통해서만 다뤄진다.
+> `IProtoEntity<TProto>`는 `Devian.Protobuf`에 정의된다.
+> 런타임 Protobuf 변환기는 `Devian.Protobuf`에, 생성기는 `Devian.Tools`에 있다.
 
 ---
 
@@ -65,9 +70,9 @@ Core Runtime은 다음을 만족한다:
 
 ---
 
-## Responsibilities (3줄)
+## Responsibilities
 
-1. **추상 타입 제공** — Result, Error, TableElement 등
+1. **추상 타입 제공** — Result, Error, Entity 등
 2. **확장 가능한 registry 제공** — ValueParser 등록/조회
 3. **파싱/해석 hook 제공** — IValueParser, ParseContext
 
@@ -94,19 +99,33 @@ Core Runtime은 다음을 만족한다:
 |-----|------|------|
 | `CoreResult.cs` | `CoreResult`, `CoreResult<T>` | 성공/실패 결과 타입 |
 | `CoreError.cs` | `CoreError` | 에러 정보 (코드, 메시지, 체인) |
-| `IEntityCodec.cs` | `IEntityCodec`, `ISafeEntityCodec` | 직렬화 추상화 |
+| `IEntityConverter.cs` | `IEntityConverter<TEntity>` | 테이블 Entity 직렬화 계약 (정식) |
+| `LoadMode.cs` | `LoadMode` | 테이블 로드 모드 (Merge, Replace) |
 | `ParseResult.cs` | `ParseResult`, `ParseResult<T>` | 파싱 결과 타입 |
 | `ParseContext.cs` | `ColumnSchema`, `RowContext`, `ParseContext` | 파싱 컨텍스트 |
 | `IValueParser.cs` | `IValueParser`, `IValueParser<T>`, `ValueParserBase<T>` | 값 파서 인터페이스 |
 | `CoreValueParserRegistry.cs` | `CoreValueParserRegistry` | 파서 레지스트리 |
 | `PacketEnvelope.cs` | `PacketEnvelope`, `PacketEnvelopeBuilder` | 네트워크 패킷 |
 | `IPacketHandler.cs` | `IPacketHandler`, `PacketHandlerBase<T>`, `RequestHandlerBase<TReq,TRes>` | 패킷 핸들러 |
-| `ITableElement.cs` | `ITableElement<TKey>`, `IRawTableElement`, `ITableElementMeta` | 테이블 요소 인터페이스 |
-| `RawTableData.cs` | `RawTableData`, `RawTableRow` | 원시 테이블 데이터 |
+| `IEntity.cs` | `IEntity`, `IEntityWithKey<TKey>` | 엔티티 인터페이스 |
+| `ITableContainer.cs` | `ITableContainer` | 테이블 컨테이너 인터페이스 |
 
 ---
 
 ## Directory & Project Structure
+
+### Domain Root (정본)
+
+**Devian에서 Domain은 디렉터리 이름이 아니라 논리 단위이다.**
+
+모든 Domain의 실제 루트 경로는 다음으로 고정된다:
+
+```
+input/<Domain>/
+```
+
+별도의 도메인 루트 디렉터리는 Devian 구조에 없다.  
+`{Domain}` 표기는 문서/설명용 플레이스홀더이며, 실제 파일 시스템 경로를 의미하지 않는다.
 
 ### Framework vs Modules 역할 분리
 
@@ -114,8 +133,43 @@ Core Runtime은 다음을 만족한다:
 |----------|------|------|
 | `framework/` | 언어별 Core 라이브러리 | Devian Framework 핵심 코드 |
 | `modules/` | 도메인 산출물 | Devian 빌드가 생성하는 코드/데이터 |
+| `input/` | 도메인 입력 | 스키마, 테이블, 프로토콜 정의 |
 
 > ⚠️ `packages/` 용어는 사용하지 않는다 (Unity `Packages/`와 혼동 방지)
+
+### 기계 소유 폴더 (proto-gen/)
+
+기계 생성물은 `input/<Domain>/proto-gen/` 아래에 배치된다. 이 폴더는 기계 생성물 전용이며 사람이 수정하지 않는다.
+
+```
+input/<Domain>/proto-gen/
+├── schema/     # .proto 파일 (Excel → 생성)
+└── cs/         # C# 코드 (protoc → 생성)
+```
+
+### Serialization / Build Policy
+
+`proto-gen/` outputs are pre-generated and committed. Build and runtime must not depend on protoc availability.
+
+| 정책 | 설명 |
+|------|------|
+| 커밋 | proto-gen/** is committed to repository |
+| 빌드 의존성 | protoc 설치 불필요 |
+| 런타임 의존성 | proto-gen 재생성 불필요 |
+
+### Unity UPM 패키지 구조 (modules/upm)
+
+`modules/upm/{Domain}/`은 **Unity UPM 패키지 루트**다.
+
+| 파일 | 설명 |
+|------|------|
+| `package.json` | UPM 패키지 매니페스트 |
+| `README.md` | 패키지 설명 |
+| `Runtime/{AssemblyName}.asmdef` | Runtime 어셈블리 정의 |
+| `Runtime/generated/*.g.cs` | 자동 생성 코드 (수정 금지) |
+| `Editor/{AssemblyName}.Editor.asmdef` | Editor 어셈블리 정의 |
+
+> ⚠️ `Runtime/generated/` 내 `.g.cs` 파일은 Devian.Tools가 생성한다. 수동 편집 금지.
 
 ### 언어별 Core 모듈 위치
 
@@ -142,24 +196,26 @@ devian/
 │   │       └── src/
 │   │           ├── CoreResult.cs
 │   │           ├── CoreError.cs
-│   │           ├── IEntityCodec.cs
+│   │           ├── IEntityConverter.cs
+│   │           ├── LoadMode.cs
 │   │           ├── ParseResult.cs
 │   │           ├── ParseContext.cs
 │   │           ├── IValueParser.cs
 │   │           ├── CoreValueParserRegistry.cs
 │   │           ├── PacketEnvelope.cs
 │   │           ├── IPacketHandler.cs
-│   │           ├── ITableElement.cs
-│   │           └── RawTableData.cs
+│   │           ├── IEntity.cs
+│   │           └── ITableContainer.cs
 │   └── ts/
 │       └── devian-core/         ← TS Core (대칭)
 │           ├── package.json
 │           └── src/
 │               └── index.ts
 ├── modules/                      ← 빌드 산출물
-│   ├── cs/{domain}/Runtime/generated/
-│   ├── ts/{domain}/generated/
-│   └── data/{domain}/
+│   ├── cs/{Domain}/generated/    ← C# 라이브러리 모듈
+│   ├── upm/{Domain}/Runtime/     ← Unity UPM 패키지
+│   ├── ts/{Domain}/generated/
+│   └── data/{Domain}/
 └── Devian.sln
 ```
 
@@ -210,7 +266,11 @@ Devian.Core    ← 단일 네임스페이스
 
 ### DON'T (하지 말 것)
 
-1. 파일 범위 네임스페이스 사용 금지 (`namespace X;` ❌)
+1. **파일 범위 네임스페이스 사용 금지** (`namespace X;` ❌ → `namespace X { }` ✅)
+   - 모든 수동 코드(.cs)에 적용
+   - 모든 코드 생성기(Generators/*.cs)에 적용
+   - 모든 생성 코드(.g.cs)에 적용
+   - 이유: netstandard2.1은 기본 C# 9.0, 파일 범위 네임스페이스는 C# 10+ 전용
 2. ImplicitUsings 사용 금지
 3. IsExternalInit.cs 추가 금지 (Common에만 있음)
 4. 외부 라이브러리 직접 참조 금지
@@ -257,7 +317,7 @@ Devian.Core    ← 단일 네임스페이스
 | `01-devian-core-philosophy` | **기준** — Framework 철학 |
 | `02-skill-specification` | **확장** — Skill 경계 정의 |
 | `12-common-standard-types` | **의존** — Common 타입 참조 |
-| `11-core-serializer-messagepack` | **확장** — IEntityCodec 구현 |
+| `11-core-serializer-protobuf` | **확장** — Protobuf 기반 직렬화 |
 | `13-devian-core-ts-generator` | **구현** — TS Core 생성기 |
 | `00-rules-minimal` | **규칙** — 네임스페이스 명명 규칙 |
 
@@ -267,12 +327,4 @@ Devian.Core    ← 단일 네임스페이스
 
 | Version | Date | Changes |
 |---------|------|---------|
-| 1.1.0 | 2024-12-25 | **디렉토리 정책**: `packages/` → `framework/`, C#/TS 대칭 정책 |
-| 1.0.0 | 2024-12-25 | 철학 재정립: Out of Scope → Skill 영역 |
-| 0.7.0 | 2024-12-21 | v5: Hard/Soft Rules 구분 |
-| 0.6.0 | 2024-12-21 | Devian.Common 의존성 추가 |
-| 0.5.0 | 2024-12-21 | 파일 범위 네임스페이스 금지 |
-| 0.4.0 | 2024-12-21 | ImplicitUsings 사용 금지 |
-| 0.3.0 | 2024-12-21 | netstandard2.1 단일 타겟 |
-| 0.2.0 | 2024-12-20 | Value Parsing Extension Point |
-| 0.1.0 | 2024-12-20 | Initial |
+| 1.0.0 | 2025-12-28 | Initial |
