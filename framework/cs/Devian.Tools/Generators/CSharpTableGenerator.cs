@@ -22,7 +22,7 @@ namespace Devian.Tools.Generators
         {
             var sb = new StringBuilder();
             var ns = $"Devian.{table.Domain}";
-            var className = $"{table.TableName}Row";
+            var className = table.TableName;
             var hasKey = table.PrimaryKeyIndex >= 0;
 
             // Header
@@ -96,7 +96,7 @@ namespace Devian.Tools.Generators
 
             var sb = new StringBuilder();
             var className = $"TB_{table.TableName}";
-            var rowType = $"{table.TableName}Row";
+            var rowType = table.TableName;
             var keyCol = table.Columns[table.PrimaryKeyIndex];
             var keyType = TableTypeMapper.ToCSharp(keyCol.Type);
             var keyProp = ToPascalCase(keyCol.Name);

@@ -1,0 +1,14 @@
+{
+  "ChatNotify.channel": 1,
+  "ChatNotify.message": 4,
+  "ChatNotify.senderId": 2,
+  "ChatNotify.senderName": 3,
+  "ChatNotify.timestamp": 5,
+  "JoinRoomResponse.playerIds": 3,
+  "JoinRoomResponse.roomId": 2,
+  "JoinRoomResponse.success": 1,
+  "LoginResponse.errorCode": 3,
+  "LoginResponse.errorMessage": 4,
+  "LoginResponse.playerId": 2,
+  "LoginResponse.success": 1
+}

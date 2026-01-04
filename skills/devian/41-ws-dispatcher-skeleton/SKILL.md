@@ -9,7 +9,7 @@ SSOT: skills/devian/03-ssot/SKILL.md
 수신 처리의 기본 골격(스켈레톤)을 정의한다.
 
 이 문서는 “라우팅이 opcode 기반이어야 한다” 수준의 정책만 제공한다.
-구체적인 handler/stub/dispatcher 형태와 시그니처는 **`docs/generated/devian-reference.md`**가 정답이다.
+구체적인 handler/stub/dispatcher 형태와 시그니처는 **런타임/제너레이터 코드**가 정답이다.
 
 ---
 
@@ -45,4 +45,4 @@ MUST NOT
 
 - Policy SSOT: `skills/devian/03-ssot/SKILL.md`
 - Transport adapter: `skills/devian/40-ws-transport-adapter/SKILL.md`
-- Code-based Reference: `docs/generated/devian-reference.md`
+- 동작 정본: 런타임/제너레이터 코드

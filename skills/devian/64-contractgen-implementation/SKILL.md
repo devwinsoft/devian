@@ -9,7 +9,7 @@ SSOT: skills/devian/03-ssot/SKILL.md
 DATA(DomainType=DATA)에서 사용하는 **contracts JSON 입력 규약**을 정의한다.
 
 이 문서는 “contracts 입력 포맷과 경로”만 규정한다.
-생성 코드의 네임스페이스/타입/시그니처는 **`docs/generated/devian-reference.md`**를 정답으로 본다.
+생성 코드의 네임스페이스/타입/시그니처는 **런타임/제너레이터 코드**를 정답으로 본다.
 
 ---
 
@@ -69,8 +69,10 @@ Contract spec는 `enums`와 `classes`로 구성된다.
 
 경로 규약은 SSOT를 따른다.
 
-- staging: `{tempDir}/{DomainKey}/cs/generated/**`, `{tempDir}/{DomainKey}/ts/generated/**`
-- final: `{csTargetDir}/generated/**`, `{tsTargetDir}/generated/**`
+Contract는 Domain 단위로 Table과 함께 **단일 파일에 통합** 생성된다.
+
+- staging: `{tempDir}/{DomainKey}/cs/generated/{DomainKey}.g.cs`, `{tempDir}/{DomainKey}/ts/generated/{DomainKey}.g.ts`
+- final: `{csTargetDir}/generated/{DomainKey}.g.cs`, `{tsTargetDir}/generated/{DomainKey}.g.ts`
 
 ---
 
@@ -84,4 +86,4 @@ Contract spec는 `enums`와 `classes`로 구성된다.
 ## Reference
 
 - Policy SSOT: `skills/devian/03-ssot/SKILL.md`
-- Code-based Reference: `docs/generated/devian-reference.md`
+- 동작 정본: 런타임/제너레이터 코드

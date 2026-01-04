@@ -91,7 +91,7 @@ namespace Devian.Tools
 
         private static async Task<int> BuildCommand(string[] args)
         {
-            var configPath = Path.GetFullPath(args.Length > 0 ? args[0] : "input/build/build.json");
+            var configPath = Path.GetFullPath(args.Length > 0 ? args[0] : "input/build.json");
 
             if (!File.Exists(configPath))
             {
@@ -100,6 +100,7 @@ namespace Devian.Tools
             }
 
             // configDir = directory containing build.json
+            // All relative paths in build.json are relative to configDir
             var configDir = Path.GetDirectoryName(configPath);
             if (string.IsNullOrEmpty(configDir))
             {
@@ -122,13 +123,17 @@ namespace Devian.Tools
                 return 1;
             }
 
-            // Normalize tempDir to absolute path based on configDir (build.json directory)
+            // Set configDir for path resolution
+            config.ConfigDir = configDir;
+
+            // Normalize tempDir to absolute path based on configDir
             if (!Path.IsPathRooted(config.TempDir))
             {
                 config.TempDir = Path.Combine(configDir, config.TempDir);
             }
 
             Console.WriteLine($"Devian Build - Version {config.Version}");
+            Console.WriteLine($"ConfigDir: {config.ConfigDir}");
             Console.WriteLine($"TempDir: {config.TempDir}");
             Console.WriteLine();
 
@@ -146,10 +151,10 @@ namespace Devian.Tools
 
             if (config.Protocols != null)
             {
-                foreach (var (name, protocol) in config.Protocols)
+                foreach (var protocolGroup in config.Protocols)
                 {
-                    Console.WriteLine($"  Building protocol: {name}");
-                    await BuildProtocol(config, name, protocol);
+                    Console.WriteLine($"  Building protocol group: {protocolGroup.Group}");
+                    await BuildProtocolGroup(config, protocolGroup);
                 }
             }
 
@@ -184,16 +189,30 @@ namespace Devian.Tools
 
             if (config.Protocols != null)
             {
-                foreach (var (name, protocol) in config.Protocols)
+                foreach (var protocolGroup in config.Protocols)
                 {
-                    Console.WriteLine($"  Copying protocol: {name}");
-                    CopyProtocolToTargets(config, name, protocol);
+                    Console.WriteLine($"  Copying protocol group: {protocolGroup.Group}");
+                    CopyProtocolGroupToTargets(config, protocolGroup);
                 }
             }
 
             Console.WriteLine();
             Console.WriteLine("Build completed.");
             return 0;
+        }
+
+        #endregion
+
+        #region Path Resolution
+
+        /// <summary>
+        /// Resolve relative path based on configDir
+        /// </summary>
+        private static string ResolvePath(BuildConfig config, string relativePath)
+        {
+            if (string.IsNullOrEmpty(relativePath)) return relativePath;
+            if (Path.IsPathRooted(relativePath)) return relativePath;
+            return Path.GetFullPath(Path.Combine(config.ConfigDir, relativePath));
         }
 
         #endregion
@@ -210,10 +229,14 @@ namespace Devian.Tools
             Directory.CreateDirectory(stagingTs);
             Directory.CreateDirectory(stagingData);
 
+            // Resolve paths relative to configDir
+            var contractsDir = ResolvePath(config, domain.ContractsDir);
+            var tablesDir = ResolvePath(config, domain.TablesDir);
+
             // Build contracts
-            if (!string.IsNullOrEmpty(domain.ContractsDir) && Directory.Exists(domain.ContractsDir))
+            if (!string.IsNullOrEmpty(contractsDir) && Directory.Exists(contractsDir))
             {
-                var files = CollectFiles(domain.ContractsDir, domain.ContractFiles);
+                var files = CollectFiles(contractsDir, domain.ContractFiles);
                 foreach (var file in files)
                 {
                     Console.WriteLine($"    Contract: {Path.GetFileName(file)}");
@@ -222,9 +245,9 @@ namespace Devian.Tools
             }
 
             // Build tables
-            if (!string.IsNullOrEmpty(domain.TablesDir) && Directory.Exists(domain.TablesDir))
+            if (!string.IsNullOrEmpty(tablesDir) && Directory.Exists(tablesDir))
             {
-                var files = CollectFiles(domain.TablesDir, domain.TableFiles);
+                var files = CollectFiles(tablesDir, domain.TableFiles);
                 foreach (var file in files)
                 {
                     Console.WriteLine($"    Table: {Path.GetFileName(file)}");
@@ -258,7 +281,7 @@ namespace Devian.Tools
             {
                 // C# Entity
                 var entityCode = CSharpTableGenerator.GenerateEntity(table);
-                await File.WriteAllTextAsync(Path.Combine(stagingCs, $"{table.TableName}Row.g.cs"), entityCode);
+                await File.WriteAllTextAsync(Path.Combine(stagingCs, $"{table.TableName}.g.cs"), entityCode);
 
                 // C# Container (if has primary key)
                 if (table.PrimaryKeyIndex >= 0)
@@ -269,7 +292,7 @@ namespace Devian.Tools
 
                 // TypeScript Entity
                 var tsCode = TypeScriptTableGenerator.GenerateEntity(table);
-                await File.WriteAllTextAsync(Path.Combine(stagingTs, $"{table.TableName}Row.g.ts"), tsCode);
+                await File.WriteAllTextAsync(Path.Combine(stagingTs, $"{table.TableName}.g.ts"), tsCode);
 
                 // NDJSON Data
                 var ndjson = TableDataGenerator.Generate(table);
@@ -281,57 +304,96 @@ namespace Devian.Tools
 
         #region Protocol Build
 
-        private static async Task BuildProtocol(BuildConfig config, string name, ProtocolConfig protocol)
+        private static async Task BuildProtocolGroup(BuildConfig config, ProtocolGroupConfig groupConfig)
         {
-            var protocolPath = Path.Combine(protocol.ProtocolsDir, protocol.ProtocolFile);
-            if (!File.Exists(protocolPath))
-            {
-                Console.Error.WriteLine($"    Protocol file not found: {protocolPath}");
-                return;
-            }
-
-            var stagingCs = Path.Combine(config.TempDir, name, "cs", "generated");
-            var stagingTs = Path.Combine(config.TempDir, name, "ts", "generated");
+            var groupName = groupConfig.Group;
+            var protocolDir = ResolvePath(config, groupConfig.ProtocolDir);
+            var csProjectName = $"Devian.Protocol.{groupName}";
+            
+            // Staging paths
+            var stagingCs = Path.Combine(config.TempDir, csProjectName);
+            var stagingTs = Path.Combine(config.TempDir, groupName);
 
             Directory.CreateDirectory(stagingCs);
             Directory.CreateDirectory(stagingTs);
 
-            var json = await File.ReadAllTextAsync(protocolPath);
-            var spec = JsonSerializer.Deserialize<ProtocolSpec>(json);
-            if (spec == null) return;
+            // Collect protocol names for index.ts
+            var protocolNames = new List<string>();
 
-            // Namespace = 파일명 (62-protocolgen-implementation)
-            var protocolName = Path.GetFileNameWithoutExtension(protocolPath);
-
-            // 검증: JSON namespace가 있으면 파일명과 일치해야 함
-            if (spec.Namespace != null && spec.Namespace != protocolName)
+            // Process each protocol file
+            foreach (var protocolFileName in groupConfig.ProtocolFiles)
             {
-                throw new Exception($"Namespace mismatch: file={protocolName}, json={spec.Namespace}");
+                var protocolPath = Path.Combine(protocolDir, protocolFileName);
+                var protocolName = Path.GetFileNameWithoutExtension(protocolFileName);
+
+                if (!File.Exists(protocolPath))
+                {
+                    Console.Error.WriteLine($"    Protocol file not found: {protocolPath}");
+                    continue;
+                }
+
+                Console.WriteLine($"    Protocol: {protocolName}");
+                protocolNames.Add(protocolName);
+
+                var json = await File.ReadAllTextAsync(protocolPath);
+                var spec = JsonSerializer.Deserialize<ProtocolSpec>(json);
+                if (spec == null) continue;
+
+                // === Registry 로직 (SSOT) ===
+                var generatedDir = Path.Combine(protocolDir, "generated");
+                Directory.CreateDirectory(generatedDir);
+                var opcodesPath = Path.Combine(generatedDir, $"{protocolName}.opcodes.json");
+                var tagsPath = Path.Combine(generatedDir, $"{protocolName}.tags.json");
+
+                // 1. Opcode Registry 로드/적용/저장
+                var opcodeRegistry = await LoadRegistry(opcodesPath);
+                ApplyOpcodes(spec, opcodeRegistry);
+                await SaveRegistry(opcodesPath, opcodeRegistry);
+
+                // 2. Tag Registry 로드/적용/저장
+                var tagRegistry = await LoadRegistry(tagsPath);
+                ApplyTags(spec, tagRegistry);
+                await SaveRegistry(tagsPath, tagRegistry);
+
+                // C#
+                var csCode = CSharpProtocolGenerator.Generate(spec, protocolName);
+                await File.WriteAllTextAsync(Path.Combine(stagingCs, $"{protocolName}.g.cs"), csCode);
+
+                // TypeScript
+                var tsCode = TypeScriptProtocolGenerator.Generate(spec, protocolName);
+                await File.WriteAllTextAsync(Path.Combine(stagingTs, $"{protocolName}.g.ts"), tsCode);
             }
 
-            Console.WriteLine($"    Protocol: {protocolName}");
+            // Generate .csproj for C#
+            var csprojContent = GenerateCsproj(groupName);
+            await File.WriteAllTextAsync(Path.Combine(stagingCs, $"{csProjectName}.csproj"), csprojContent);
 
-            // === Registry 로직 (SSOT) ===
-            var opcodesPath = Path.Combine(protocol.ProtocolsDir, $"{protocolName}.opcodes.json");
-            var tagsPath = Path.Combine(protocol.ProtocolsDir, $"{protocolName}.tags.json");
+            // Generate index.ts for TypeScript
+            var indexTsContent = GenerateIndexTs(protocolNames);
+            await File.WriteAllTextAsync(Path.Combine(stagingTs, "index.ts"), indexTsContent);
+        }
 
-            // 1. Opcode Registry 로드/적용/저장
-            var opcodeRegistry = await LoadRegistry(opcodesPath);
-            ApplyOpcodes(spec, opcodeRegistry);
-            await SaveRegistry(opcodesPath, opcodeRegistry);
+        private static string GenerateCsproj(string groupName)
+        {
+            return $@"<Project Sdk=""Microsoft.NET.Sdk"">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Devian.Protocol.{groupName}</RootNamespace>
+  </PropertyGroup>
 
-            // 2. Tag Registry 로드/적용/저장
-            var tagRegistry = await LoadRegistry(tagsPath);
-            ApplyTags(spec, tagRegistry);
-            await SaveRegistry(tagsPath, tagRegistry);
+  <ItemGroup>
+    <ProjectReference Include=""..\Devian.Core\Devian.Core.csproj"" />
+    <ProjectReference Include=""..\Devian.Network\Devian.Network.csproj"" />
+  </ItemGroup>
+</Project>
+";
+        }
 
-            // C#
-            var csCode = CSharpProtocolGenerator.Generate(spec, protocolName);
-            await File.WriteAllTextAsync(Path.Combine(stagingCs, $"{protocolName}.g.cs"), csCode);
-
-            // TypeScript
-            var tsCode = TypeScriptProtocolGenerator.Generate(spec, protocolName);
-            await File.WriteAllTextAsync(Path.Combine(stagingTs, $"{protocolName}.g.ts"), tsCode);
+        private static string GenerateIndexTs(List<string> protocolNames)
+        {
+            return string.Join("\n", protocolNames.Select(name => $"export * from './{name}.g';")) + "\n";
         }
 
         #endregion
@@ -576,48 +638,57 @@ namespace Devian.Tools
             // C# targets
             foreach (var target in domain.CsTargetDirs)
             {
-                var targetGenerated = Path.Combine(target, "generated");
+                var resolvedTarget = ResolvePath(config, target);
+                var targetGenerated = Path.Combine(resolvedTarget, "generated");
                 CleanAndCopy(stagingCs, targetGenerated);
             }
 
             // TS targets
             foreach (var target in domain.TsTargetDirs)
             {
-                var targetGenerated = Path.Combine(target, "generated");
+                var resolvedTarget = ResolvePath(config, target);
+                var targetGenerated = Path.Combine(resolvedTarget, "generated");
                 CleanAndCopy(stagingTs, targetGenerated);
             }
 
             // Data targets
             foreach (var target in domain.DataTargetDirs)
             {
-                var targetJson = Path.Combine(target, "json");
+                var resolvedTarget = ResolvePath(config, target);
+                var targetJson = Path.Combine(resolvedTarget, "json");
                 CleanAndCopy(stagingData, targetJson);
             }
 
             // UPM targets
             foreach (var target in domain.UpmTargetDirs)
             {
-                CopyUpmToTarget(stagingUpm, target);
+                var resolvedTarget = ResolvePath(config, target);
+                CopyUpmToTarget(stagingUpm, resolvedTarget);
             }
         }
 
-        private static void CopyProtocolToTargets(BuildConfig config, string name, ProtocolConfig protocol)
+        private static void CopyProtocolGroupToTargets(BuildConfig config, ProtocolGroupConfig groupConfig)
         {
-            var stagingCs = Path.Combine(config.TempDir, name, "cs", "generated");
-            var stagingTs = Path.Combine(config.TempDir, name, "ts", "generated");
+            var groupName = groupConfig.Group;
+            var csProjectName = $"Devian.Protocol.{groupName}";
+            
+            var stagingCs = Path.Combine(config.TempDir, csProjectName);
+            var stagingTs = Path.Combine(config.TempDir, groupName);
 
-            // C# targets
-            foreach (var target in protocol.CsTargetDirs)
+            // C# target: {csTargetDir}/Devian.Protocol.{ProtocolGroup}/
+            if (!string.IsNullOrEmpty(groupConfig.CsTargetDir))
             {
-                var targetGenerated = Path.Combine(target, "generated");
-                CleanAndCopy(stagingCs, targetGenerated);
+                var resolvedTarget = ResolvePath(config, groupConfig.CsTargetDir);
+                var targetDir = Path.Combine(resolvedTarget, csProjectName);
+                CleanAndCopy(stagingCs, targetDir);
             }
 
-            // TS targets
-            foreach (var target in protocol.TsTargetDirs)
+            // TS target: {tsTargetDir}/{ProtocolGroup}/
+            if (!string.IsNullOrEmpty(groupConfig.TsTargetDir))
             {
-                var targetGenerated = Path.Combine(target, "generated");
-                CleanAndCopy(stagingTs, targetGenerated);
+                var resolvedTarget = ResolvePath(config, groupConfig.TsTargetDir);
+                var targetDir = Path.Combine(resolvedTarget, groupName);
+                CleanAndCopy(stagingTs, targetDir);
             }
         }
 
@@ -713,7 +784,7 @@ namespace Devian.Tools
                 Console.WriteLine($"  Version: {config.Version}");
                 Console.WriteLine($"  TempDir: {config.TempDir}");
                 Console.WriteLine($"  Domains: {config.Domains?.Count ?? 0}");
-                Console.WriteLine($"  Protocols: {config.Protocols?.Count ?? 0}");
+                Console.WriteLine($"  Protocols: {(config.Protocols != null ? "configured" : "not configured")}");
                 return 0;
             }
             catch (JsonException ex)

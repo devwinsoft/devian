@@ -47,6 +47,10 @@ export function generateTypeScriptProtocol(spec, protocolName) {
     generateCodecJson(lines, spec.messages || []);
     lines.push('');
 
+    // CodecProtobuf
+    generateCodecProtobuf(lines, spec.messages || []);
+    lines.push('');
+
     // Stub class
     generateStub(lines, spec.messages || [], protocolName);
     lines.push('');
@@ -120,6 +124,61 @@ function generateCodecJson(lines, messages) {
     lines.push('');
     lines.push('        decodeByOpcode(opcode: number, data: Uint8Array): unknown {');
     lines.push('            return this.decode(data);');
+    lines.push('        }');
+    lines.push('    }');
+}
+
+function generateCodecProtobuf(lines, messages) {
+    lines.push('    /**');
+    lines.push('     * Protobuf Codec implementation.');
+    lines.push('     * Requires message encoders/decoders to be registered.');
+    lines.push('     */');
+    lines.push('    export class CodecProtobuf implements ICodec {');
+    lines.push('        private encoders = new Map<number, (message: unknown) => Uint8Array>();');
+    lines.push('        private decoders = new Map<number, (data: Uint8Array) => unknown>();');
+    lines.push('        private fallbackCodec = new CodecJson();');
+    lines.push('');
+    lines.push('        /**');
+    lines.push('         * Register encoder for a specific opcode.');
+    lines.push('         */');
+    lines.push('        registerEncoder(opcode: number, encoder: (message: unknown) => Uint8Array): void {');
+    lines.push('            this.encoders.set(opcode, encoder);');
+    lines.push('        }');
+    lines.push('');
+    lines.push('        /**');
+    lines.push('         * Register decoder for a specific opcode.');
+    lines.push('         */');
+    lines.push('        registerDecoder(opcode: number, decoder: (data: Uint8Array) => unknown): void {');
+    lines.push('            this.decoders.set(opcode, decoder);');
+    lines.push('        }');
+    lines.push('');
+    lines.push('        encode<T>(message: T): Uint8Array {');
+    lines.push('            // Generic encode falls back to JSON');
+    lines.push('            return this.fallbackCodec.encode(message);');
+    lines.push('        }');
+    lines.push('');
+    lines.push('        /**');
+    lines.push('         * Encode message by opcode using registered encoder.');
+    lines.push('         */');
+    lines.push('        encodeByOpcode<T>(opcode: number, message: T): Uint8Array {');
+    lines.push('            const encoder = this.encoders.get(opcode);');
+    lines.push('            if (encoder) {');
+    lines.push('                return encoder(message);');
+    lines.push('            }');
+    lines.push('            return this.fallbackCodec.encode(message);');
+    lines.push('        }');
+    lines.push('');
+    lines.push('        decode<T>(data: Uint8Array): T {');
+    lines.push('            // Generic decode falls back to JSON');
+    lines.push('            return this.fallbackCodec.decode(data);');
+    lines.push('        }');
+    lines.push('');
+    lines.push('        decodeByOpcode(opcode: number, data: Uint8Array): unknown {');
+    lines.push('            const decoder = this.decoders.get(opcode);');
+    lines.push('            if (decoder) {');
+    lines.push('                return decoder(data);');
+    lines.push('            }');
+    lines.push('            return this.fallbackCodec.decode(data);');
     lines.push('        }');
     lines.push('    }');
 }

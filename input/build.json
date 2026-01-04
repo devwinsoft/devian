@@ -1,0 +1,28 @@
+{
+  "version": "10",
+  "tempDir": "temp",
+
+  "domains": {
+    "Common": {
+      "contractsDir": "Common/contracts",
+      "contractFiles": ["*.json"],
+
+      "tablesDir": "Common/tables",
+      "tableFiles": ["*.xlsx"],
+
+      "csTargetDir": "../framework/cs",
+      "tsTargetDir": "../framework/ts",
+      "dataTargetDir": "../framework/data"
+    }
+  },
+
+  "protocols": [
+    {
+      "group": "Client",
+      "protocolDir": "./Protocols/Client",
+      "protocolFiles": ["C2Game.json", "Game2C.json"],
+      "csTargetDir": "../framework/cs",
+      "tsTargetDir": "../framework/ts"
+    }
+  ]
+}

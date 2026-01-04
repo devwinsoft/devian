@@ -9,7 +9,7 @@ SSOT: skills/devian/03-ssot/SKILL.md
 DATA(DomainType=DATA)에서 사용하는 XLSX 테이블 작성 규칙을 정의한다.
 
 이 문서는 **XLSX 헤더/옵션/중단 규칙**만을 정본으로 가진다.
-지원 타입의 상세 매핑과 생성 코드 구조는 **`docs/generated/devian-reference.md`**를 정답으로 본다.
+지원 타입의 상세 매핑과 생성 코드 구조는 **런타임/제너레이터 코드**를 정답으로 본다.
 
 ---
 
@@ -108,4 +108,4 @@ PrimaryKey 규칙:
 
 - Policy SSOT: `skills/devian/03-ssot/SKILL.md`
 - DFF 규약: `skills/devian/25-class-cell-format/SKILL.md`
-- Code-based Reference: `docs/generated/devian-reference.md`
+- 동작 정본: 런타임/제너레이터 코드

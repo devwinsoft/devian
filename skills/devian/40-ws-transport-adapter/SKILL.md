@@ -9,7 +9,7 @@ SSOT: skills/devian/03-ssot/SKILL.md
 WebSocket 기반의 Transport Adapter가 지켜야 하는 **역할/경계/검증 포인트**를 정의한다.
 
 이 문서는 WebSocket 구현을 강제하지 않는다.
-또한 런타임 인터페이스/프레임 포맷/시그니처는 **`docs/generated/devian-reference.md`**를 정답으로 본다.
+또한 런타임 인터페이스/프레임 포맷/시그니처는 **런타임/제너레이터 코드**를 정답으로 본다.
 
 ---
 
@@ -52,4 +52,4 @@ MUST NOT
 
 - Policy SSOT: `skills/devian/03-ssot/SKILL.md`
 - Runtime layering: `skills/devian/10-core-runtime/SKILL.md`
-- Code-based Reference: `docs/generated/devian-reference.md`
+- 동작 정본: 런타임/제너레이터 코드

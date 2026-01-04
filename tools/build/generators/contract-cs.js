@@ -42,6 +42,30 @@ export function generateCSharpContract(spec, domainName) {
     return lines.join('\n').trimEnd();
 }
 
+/**
+ * Generate C# contract body only (no header, no namespace wrapper)
+ * @param {Object} spec - Contract specification (enums, classes)
+ * @param {string} domainName - Domain name (e.g., "Common")
+ * @returns {string} Generated C# body code
+ */
+export function generateCSharpContractBody(spec, domainName) {
+    const lines = [];
+
+    // Generate enums
+    for (const enumDef of spec.enums || []) {
+        generateEnum(lines, enumDef);
+        lines.push('');
+    }
+
+    // Generate classes
+    for (const classDef of spec.classes || []) {
+        generateClass(lines, classDef, domainName);
+        lines.push('');
+    }
+
+    return lines.join('\n').trimEnd();
+}
+
 // ============================================================================
 // Generator Functions
 // ============================================================================
@@ -60,7 +84,7 @@ function generateEnum(lines, enumDef) {
 
 function generateClass(lines, classDef, domainName) {
     lines.push(`    /// <summary>${classDef.name} class</summary>`);
-    lines.push(`    public sealed class ${classDef.name}`);
+    lines.push(`    public sealed class ${classDef.name} : IEntity`);
     lines.push('    {');
 
     for (const field of classDef.fields || []) {

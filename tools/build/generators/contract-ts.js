@@ -33,6 +33,29 @@ export function generateTypeScriptContract(spec, domainName) {
     return lines.join('\n').trimEnd();
 }
 
+/**
+ * Generate TypeScript contract body only (no header)
+ * @param {Object} spec - Contract specification (enums, classes)
+ * @returns {string} Generated TypeScript body code
+ */
+export function generateTypeScriptContractBody(spec) {
+    const lines = [];
+
+    // Generate enums
+    for (const enumDef of spec.enums || []) {
+        generateEnum(lines, enumDef);
+        lines.push('');
+    }
+
+    // Generate interfaces (classes become interfaces in TS)
+    for (const classDef of spec.classes || []) {
+        generateInterface(lines, classDef);
+        lines.push('');
+    }
+
+    return lines.join('\n').trimEnd();
+}
+
 // ============================================================================
 // Generator Functions
 // ============================================================================
@@ -50,7 +73,7 @@ function generateEnum(lines, enumDef) {
 
 function generateInterface(lines, classDef) {
     lines.push(`/** ${classDef.name} interface */`);
-    lines.push(`export interface ${classDef.name} {`);
+    lines.push(`export interface ${classDef.name} extends IEntity {`);
 
     for (const field of classDef.fields || []) {
         const tsType = mapToTypeScriptType(field.type);

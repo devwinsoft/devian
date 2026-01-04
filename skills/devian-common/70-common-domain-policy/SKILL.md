@@ -9,7 +9,7 @@ SSOT: skills/devian/03-ssot/SKILL.md
 Common(DomainKey=`Common`) 도메인의 사용 목적과 제약을 정의한다.
 
 이 문서는 “Common을 어떻게 쓸 것인가”의 정책만 가진다.
-Common 생성물의 구체 타입/파일은 **`docs/generated/devian-reference.md`**가 정답이다.
+Common 생성물의 구체 타입/파일은 **런타임/제너레이터 코드**가 정답이다.
 
 ---
 
@@ -50,4 +50,4 @@ Common도 SSOT의 DATA 경로 규약을 따른다.
 ## Reference
 
 - Policy SSOT: `skills/devian/03-ssot/SKILL.md`
-- Code-based Reference: `docs/generated/devian-reference.md`
+- 동작 정본: 런타임/제너레이터 코드

@@ -9,7 +9,7 @@ SSOT: skills/devian/03-ssot/SKILL.md
 Protocol generator의 구현을 “문서로 재서술”하지 않기 위한 가드 문서다.
 
 이 스킬은 **정책적으로 필요한 검증 포인트만** 남기고,
-구체적인 구현/산출 API는 모두 **`docs/generated/devian-reference.md`**로 위임한다.
+구체적인 구현/산출 API는 모두 **런타임/제너레이터 코드**로 위임한다.
 
 ---
 
@@ -29,14 +29,13 @@ SKILL은 위 내용을 단정해서는 안 된다.
 ## Policy-level Checks (MUST)
 
 1) ProtocolSpec 파일은 JSON이다.
-2) JSON `namespace`가 존재하면 파일명 base(ProtocolName)과 같아야 한다.
-3) opcode/tag는 결정적이어야 한다.
-4) Tag reserved range(19000..19999)는 금지다.
-5) Registry 파일(opcodes/tags)은 키 정렬 등으로 **결정적으로 저장**되어야 한다.
+2) opcode/tag는 결정적이어야 한다.
+3) Tag reserved range(19000..19999)는 금지다.
+4) Registry 파일(opcodes/tags)은 키 정렬 등으로 **결정적으로 저장**되어야 한다.
 
 ---
 
 ## Reference
 
 - Policy SSOT: `skills/devian/03-ssot/SKILL.md`
-- Code-based Reference: `docs/generated/devian-reference.md`
+- 동작 정본: 런타임/제너레이터 코드

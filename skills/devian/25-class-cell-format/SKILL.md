@@ -88,4 +88,4 @@ displayName=Hello\, World
 ## Reference
 
 - Policy SSOT: `skills/devian/03-ssot/SKILL.md`
-- Code-based Reference: `docs/generated/devian-reference.md`
+- 동작 정본: 런타임/제너레이터 코드

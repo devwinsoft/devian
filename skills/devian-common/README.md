@@ -22,16 +22,14 @@ input/Common/
 
 ### 산출물
 
-**Common 도메인 빌드 산출물의 정본 위치는 `modules/**/Common/` 이다.**
+**Common 도메인 빌드 산출물의 정본 위치는 `framework/` 이다.**
 
 ```
-modules/
-├── cs/Common/
-│   ├── generated/   # 기계 생성 (커밋 필수, 수정 금지)
-│   └── manual/      # 사람 작성 (생성기 덮어쓰기 금지)
-├── ts/Common/
-│   ├── generated/   # 기계 생성 (커밋 필수, 수정 금지)
-│   └── manual/      # 사람 작성 (생성기 덮어쓰기 금지)
+framework/
+├── cs/Devian.Module.Common/
+│   └── generated/   # 기계 생성 (커밋 필수, 수정 금지)
+├── ts/devian-module-common/
+│   └── generated/   # 기계 생성 (커밋 필수, 수정 금지)
 └── data/Common/
     └── json/        # 테이블 데이터 (NDJSON)
 ```
@@ -39,5 +37,5 @@ modules/
 ## 참조
 
 - Common 도메인: `input/Common/`
-- Common 산출물: `modules/**/Common/`
+- Common 산출물: `framework/`
 - 상위 스킬: `skills/devian/`

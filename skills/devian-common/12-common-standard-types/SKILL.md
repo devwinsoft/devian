@@ -25,7 +25,7 @@ SSOT: skills/devian/03-ssot/SKILL.md
 
 이 문서를 ACTIVE로 올리려면:
 
-- `docs/generated/devian-reference.md`에 표준 타입 목록이 나타나야 한다(코드 기반).
+- 런타임/제너레이터 코드에 표준 타입 목록이 나타나야 한다(코드 기반).
 - build.json 및 생성물 구조가 이를 실제로 반영해야 한다.
 
 ---
@@ -33,4 +33,4 @@ SSOT: skills/devian/03-ssot/SKILL.md
 ## Reference
 
 - Common policy: `skills/devian-common/70-common-domain-policy/SKILL.md`
-- Code-based Reference: `docs/generated/devian-reference.md`
+- 동작 정본: 런타임/제너레이터 코드

@@ -9,7 +9,7 @@ SSOT: skills/devian/03-ssot/SKILL.md
 XLSX 테이블에서 추출된 데이터를 **NDJSON(Line-delimited JSON)**으로 내보내는 규약을 정의한다.
 
 이 문서는 “산출 포맷과 경로”만 정의한다.
-생성되는 로더/컨테이너 API는 **`docs/generated/devian-reference.md`**가 정답이다.
+생성되는 로더/컨테이너 API는 **런타임/제너레이터 코드**가 정답이다.
 
 ---
 
@@ -49,4 +49,4 @@ SSOT 경로 규약을 따른다.
 
 - Policy SSOT: `skills/devian/03-ssot/SKILL.md`
 - DFF 규약: `skills/devian/25-class-cell-format/SKILL.md`
-- Code-based Reference: `docs/generated/devian-reference.md`
+- 동작 정본: 런타임/제너레이터 코드

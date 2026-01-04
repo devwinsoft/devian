@@ -13,12 +13,6 @@ namespace Devian.Tools.Models
     public class ProtocolSpec
     {
         /// <summary>
-        /// namespace는 파일명에서 결정됨. JSON 내부 값은 검증용만.
-        /// </summary>
-        [JsonPropertyName("namespace")]
-        public string? Namespace { get; set; }
-
-        /// <summary>
         /// 방향: client_to_server, server_to_client, bidirectional (기본값)
         /// </summary>
         [JsonPropertyName("direction")]

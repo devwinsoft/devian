@@ -8,7 +8,7 @@ using System.Text.Json.Serialization;
 namespace Devian.Tools.Models
 {
     /// <summary>
-    /// build.json v9 루트 스키마
+    /// build.json v10 루트 스키마
     /// </summary>
     public class BuildConfig
     {
@@ -19,16 +19,23 @@ namespace Devian.Tools.Models
         public string TempDir { get; set; } = "temp";
 
         /// <summary>
+        /// build.json이 위치한 디렉토리 (런타임에 설정됨)
+        /// 모든 상대 경로는 이 디렉토리 기준으로 해석됨
+        /// </summary>
+        [JsonIgnore]
+        public string ConfigDir { get; set; } = "";
+
+        /// <summary>
         /// Data Domains (contracts + tables)
         /// </summary>
         [JsonPropertyName("domains")]
         public Dictionary<string, DomainConfig>? Domains { get; set; }
 
         /// <summary>
-        /// Protocol Domains (IDL link: {A}2{B})
+        /// Protocol Groups (배열)
         /// </summary>
         [JsonPropertyName("protocols")]
-        public Dictionary<string, ProtocolConfig>? Protocols { get; set; }
+        public List<ProtocolGroupConfig>? Protocols { get; set; }
     }
 
     /// <summary>
@@ -62,20 +69,23 @@ namespace Devian.Tools.Models
     }
 
     /// <summary>
-    /// Protocol Domain 설정 (IDL link: {A}2{B})
+    /// Protocol Group 설정
     /// </summary>
-    public class ProtocolConfig
+    public class ProtocolGroupConfig
     {
-        [JsonPropertyName("protocolsDir")]
-        public string ProtocolsDir { get; set; } = "";
+        [JsonPropertyName("group")]
+        public string Group { get; set; } = "";
 
-        [JsonPropertyName("protocolFile")]
-        public string ProtocolFile { get; set; } = "";
+        [JsonPropertyName("protocolDir")]
+        public string ProtocolDir { get; set; } = "";
 
-        [JsonPropertyName("csTargetDirs")]
-        public List<string> CsTargetDirs { get; set; } = new();
+        [JsonPropertyName("protocolFiles")]
+        public List<string> ProtocolFiles { get; set; } = new();
 
-        [JsonPropertyName("tsTargetDirs")]
-        public List<string> TsTargetDirs { get; set; } = new();
+        [JsonPropertyName("csTargetDir")]
+        public string CsTargetDir { get; set; } = "";
+
+        [JsonPropertyName("tsTargetDir")]
+        public string TsTargetDir { get; set; } = "";
     }
 }

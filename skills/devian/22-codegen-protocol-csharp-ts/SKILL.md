@@ -9,7 +9,7 @@ SSOT: skills/devian/03-ssot/SKILL.md
 Protocol codegen의 언어별 산출물(C#/TS)에 대한 **문서 정책**을 정의한다.
 
 이 문서는 “언어별로 무엇을 생성해야 한다”를 **추상적으로**만 서술한다.
-정확한 클래스/함수/시그니처/프레임은 **`docs/generated/devian-reference.md`**를 정답으로 본다.
+정확한 클래스/함수/시그니처/프레임은 **런타임/제너레이터 코드**를 정답으로 본다.
 
 ---
 
@@ -36,4 +36,4 @@ Protocol codegen의 언어별 산출물(C#/TS)에 대한 **문서 정책**을 �
 
 - Overview: `skills/devian/20-codegen-protocol/SKILL.md`
 - Policy SSOT: `skills/devian/03-ssot/SKILL.md`
-- Code-based Reference: `docs/generated/devian-reference.md`
+- 동작 정본: 런타임/제너레이터 코드

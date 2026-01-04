@@ -11,9 +11,9 @@ import { fileURLToPath } from 'url';
 // Generators
 import { generateCSharpProtocol } from './generators/protocol-cs.js';
 import { generateTypeScriptProtocol } from './generators/protocol-ts.js';
-import { generateCSharpContract } from './generators/contract-cs.js';
-import { generateTypeScriptContract } from './generators/contract-ts.js';
-import { generateCSharpTable, generateTableData, parseXlsx } from './generators/table.js';
+import { generateCSharpContract, generateCSharpContractBody } from './generators/contract-cs.js';
+import { generateTypeScriptContract, generateTypeScriptContractBody } from './generators/contract-ts.js';
+import { generateCSharpTable, generateCSharpTableEntityBody, generateCSharpTableContainerBody, generateTypeScriptTable, generateTypeScriptTableBody, generateTypeScriptTableContainerBody, generateTableData, parseXlsx } from './generators/table.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -25,12 +25,20 @@ const __dirname = path.dirname(__filename);
 class BuildRunner {
     constructor(buildJsonPath) {
         this.buildJsonPath = path.resolve(buildJsonPath);
-        // input/build/build.json -> input/build -> input -> devian (project root)
-        // buildJsonDir = directory containing build.json
+        // input/build.json -> input (buildJsonDir) -> devian (rootDir)
+        // All relative paths in build.json are relative to buildJsonDir
         this.buildJsonDir = path.dirname(this.buildJsonPath);
-        this.rootDir = path.dirname(path.dirname(this.buildJsonDir));
+        this.rootDir = path.dirname(this.buildJsonDir);
         this.config = null;
         this.tempDir = null;
+    }
+
+    // Resolve path relative to buildJsonDir
+    resolvePath(relativePath) {
+        if (path.isAbsolute(relativePath)) {
+            return relativePath;
+        }
+        return path.resolve(this.buildJsonDir, relativePath);
     }
 
     async run() {
@@ -64,9 +72,9 @@ class BuildRunner {
         }
 
         // Process protocols
-        if (this.config.protocols) {
-            for (const [protocolName, protocolConfig] of Object.entries(this.config.protocols)) {
-                await this.processProtocol(protocolName, protocolConfig);
+        if (this.config.protocols && Array.isArray(this.config.protocols)) {
+            for (const protocolGroup of this.config.protocols) {
+                await this.processProtocolGroup(protocolGroup);
             }
         }
 
@@ -79,9 +87,9 @@ class BuildRunner {
             }
         }
 
-        if (this.config.protocols) {
-            for (const [protocolName, protocolConfig] of Object.entries(this.config.protocols)) {
-                await this.copyProtocolToTargets(protocolName, protocolConfig);
+        if (this.config.protocols && Array.isArray(this.config.protocols)) {
+            for (const protocolGroup of this.config.protocols) {
+                await this.copyProtocolGroupToTargets(protocolGroup);
             }
         }
 
@@ -100,87 +108,235 @@ class BuildRunner {
 
         const stagingCs = path.join(this.tempDir, domainName, 'cs', 'generated');
         const stagingTs = path.join(this.tempDir, domainName, 'ts', 'generated');
+        const stagingTsRoot = path.join(this.tempDir, domainName, 'ts');
         const stagingData = path.join(this.tempDir, domainName, 'data', 'json');
 
         fs.mkdirSync(stagingCs, { recursive: true });
         fs.mkdirSync(stagingTs, { recursive: true });
         fs.mkdirSync(stagingData, { recursive: true });
 
-        // Process contracts
+        // Collect all data for unified file generation
+        const contractSpecs = [];
+        const tables = [];
+
+        // Load contracts
         if (config.contractsDir && config.contractFiles) {
-            const contractsDir = path.join(this.rootDir, config.contractsDir);
+            const contractsDir = this.resolvePath(config.contractsDir);
             const files = this.globFiles(contractsDir, config.contractFiles);
 
             for (const file of files) {
                 console.log(`    [Contract] ${path.basename(file)}`);
                 const spec = JSON.parse(fs.readFileSync(file, 'utf-8'));
-
-                // C# Contract
-                const csCode = generateCSharpContract(spec, domainName);
-                const csFileName = path.basename(file, '.json') + '.g.cs';
-                fs.writeFileSync(path.join(stagingCs, csFileName), csCode);
-
-                // TypeScript Contract
-                const tsCode = generateTypeScriptContract(spec, domainName);
-                const tsFileName = path.basename(file, '.json') + '.g.ts';
-                fs.writeFileSync(path.join(stagingTs, tsFileName), tsCode);
+                contractSpecs.push(spec);
             }
         }
 
-        // Process tables
+        // Load tables
         if (config.tablesDir && config.tableFiles) {
-            const tablesDir = path.join(this.rootDir, config.tablesDir);
+            const tablesDir = this.resolvePath(config.tablesDir);
             const files = this.globFiles(tablesDir, config.tableFiles);
 
             for (const file of files) {
                 console.log(`    [Table] ${path.basename(file)}`);
-                const tables = parseXlsx(file);
+                const parsedTables = parseXlsx(file);
+                tables.push(...parsedTables);
 
-                for (const table of tables) {
-                    // C# Table Container
-                    const csCode = generateCSharpTable(table, domainName);
-                    const csFileName = `TB_${table.name}.g.cs`;
-                    fs.writeFileSync(path.join(stagingCs, csFileName), csCode);
-
-                    // NDJSON Data
+                // Generate NDJSON data (still individual files)
+                for (const table of parsedTables) {
                     const ndjson = generateTableData(table);
                     const dataFileName = `${table.name}.ndjson`;
                     fs.writeFileSync(path.join(stagingData, dataFileName), ndjson);
                 }
             }
         }
+
+        // Generate unified C# file: {DomainName}.g.cs
+        const csCode = this.generateUnifiedCSharp(domainName, contractSpecs, tables);
+        fs.writeFileSync(path.join(stagingCs, `${domainName}.g.cs`), csCode);
+
+        // Generate unified TS file: {DomainName}.g.ts
+        const tsCode = this.generateUnifiedTypeScript(domainName, contractSpecs, tables);
+        fs.writeFileSync(path.join(stagingTs, `${domainName}.g.ts`), tsCode);
+
+        // Generate index.ts for TypeScript
+        const indexTsContent = this.generateDomainIndexTs([domainName]);
+        fs.writeFileSync(path.join(stagingTsRoot, 'index.ts'), indexTsContent);
+    }
+
+    generateUnifiedCSharp(domainName, contractSpecs, tables) {
+        const lines = [];
+
+        // Header
+        lines.push('// <auto-generated>');
+        lines.push('// DO NOT EDIT - Generated by Devian Build System v10');
+        lines.push('// </auto-generated>');
+        lines.push('');
+        lines.push('#nullable enable');
+        lines.push('');
+        lines.push('using System;');
+        lines.push('using System.Collections.Generic;');
+        lines.push('using System.IO;');
+        lines.push('using System.Text.Json;');
+        lines.push('using Devian.Core;');
+        lines.push('');
+
+        // Namespace
+        lines.push(`namespace Devian.${domainName}`);
+        lines.push('{');
+
+        // Contracts section
+        if (contractSpecs.length > 0) {
+            lines.push('    // ================================================================');
+            lines.push('    // Contracts');
+            lines.push('    // ================================================================');
+            lines.push('');
+
+            for (const spec of contractSpecs) {
+                const body = generateCSharpContractBody(spec, domainName);
+                lines.push(body);
+                lines.push('');
+            }
+        }
+
+        // Table Entities section
+        if (tables.length > 0) {
+            lines.push('    // ================================================================');
+            lines.push('    // Table Entities');
+            lines.push('    // ================================================================');
+            lines.push('');
+
+            for (const table of tables) {
+                const body = generateCSharpTableEntityBody(table);
+                lines.push(body);
+                lines.push('');
+            }
+
+            // Table Containers section
+            lines.push('    // ================================================================');
+            lines.push('    // Table Containers');
+            lines.push('    // ================================================================');
+            lines.push('');
+
+            for (const table of tables) {
+                const body = generateCSharpTableContainerBody(table);
+                lines.push(body);
+                lines.push('');
+            }
+        }
+
+        lines.push('}'); // end namespace
+
+        return lines.join('\n');
+    }
+
+    generateUnifiedTypeScript(domainName, contractSpecs, tables) {
+        const lines = [];
+
+        // Header
+        lines.push('// <auto-generated>');
+        lines.push('// DO NOT EDIT - Generated by Devian Build System v10');
+        lines.push('// </auto-generated>');
+        lines.push('');
+
+        // Check if we need IEntity/IEntityKey import
+        const hasContractClasses = contractSpecs.some(spec => (spec.classes || []).length > 0);
+        const hasTables = tables.length > 0;
+        const hasKeyedTables = tables.some(t => t.keyField);
+
+        if (hasContractClasses || hasTables) {
+            const imports = ['IEntity'];
+            if (hasKeyedTables) {
+                imports.push('IEntityKey');
+            }
+            lines.push(`import { ${imports.join(', ')} } from 'devian-core';`);
+            lines.push('');
+        }
+
+        // Contracts section
+        if (contractSpecs.length > 0) {
+            lines.push('// ================================================================');
+            lines.push('// Contracts');
+            lines.push('// ================================================================');
+            lines.push('');
+
+            for (const spec of contractSpecs) {
+                const body = generateTypeScriptContractBody(spec);
+                lines.push(body);
+                lines.push('');
+            }
+        }
+
+        // Table Interfaces section
+        if (tables.length > 0) {
+            lines.push('// ================================================================');
+            lines.push('// Tables');
+            lines.push('// ================================================================');
+            lines.push('');
+
+            for (const table of tables) {
+                const body = generateTypeScriptTableBody(table);
+                lines.push(body);
+                lines.push('');
+            }
+
+            // Table Containers section
+            lines.push('// ================================================================');
+            lines.push('// Table Containers');
+            lines.push('// ================================================================');
+            lines.push('');
+
+            for (const table of tables) {
+                const body = generateTypeScriptTableContainerBody(table);
+                lines.push(body);
+                lines.push('');
+            }
+        }
+
+        return lines.join('\n').trimEnd();
     }
 
     async copyDomainToTargets(domainName, config) {
         const stagingCs = path.join(this.tempDir, domainName, 'cs', 'generated');
         const stagingTs = path.join(this.tempDir, domainName, 'ts', 'generated');
+        const stagingTsRoot = path.join(this.tempDir, domainName, 'ts');
         const stagingData = path.join(this.tempDir, domainName, 'data', 'json');
 
-        // Copy to CS targets
-        if (config.csTargetDirs) {
-            for (const targetDir of config.csTargetDirs) {
-                const target = path.join(this.rootDir, targetDir, 'generated');
-                this.cleanAndCopy(stagingCs, target);
-                console.log(`    [Copy] ${stagingCs} -> ${target}`);
-            }
+        // Copy to CS target: {csTargetDir}/Devian.Module.{Domain}/generated/
+        if (config.csTargetDir) {
+            const csModuleName = `Devian.Module.${domainName}`;
+            const resolvedTargetDir = path.join(this.resolvePath(config.csTargetDir), csModuleName);
+            const target = path.join(resolvedTargetDir, 'generated');
+            this.cleanAndCopy(stagingCs, target);
+            console.log(`    [Copy] ${stagingCs} -> ${target}`);
+
+            // Generate .csproj if not exists
+            this.ensureCsProj(resolvedTargetDir, csModuleName);
         }
 
-        // Copy to TS targets
-        if (config.tsTargetDirs) {
-            for (const targetDir of config.tsTargetDirs) {
-                const target = path.join(this.rootDir, targetDir, 'generated');
-                this.cleanAndCopy(stagingTs, target);
-                console.log(`    [Copy] ${stagingTs} -> ${target}`);
+        // Copy to TS target: {tsTargetDir}/devian-module-{domain}/generated/
+        if (config.tsTargetDir) {
+            const tsModuleName = `devian-module-${domainName.toLowerCase()}`;
+            const resolvedTargetDir = path.join(this.resolvePath(config.tsTargetDir), tsModuleName);
+            const target = path.join(resolvedTargetDir, 'generated');
+            this.cleanAndCopy(stagingTs, target);
+            console.log(`    [Copy] ${stagingTs} -> ${target}`);
+
+            // Copy index.ts
+            const stagingIndexTs = path.join(stagingTsRoot, 'index.ts');
+            const targetIndexTs = path.join(resolvedTargetDir, 'index.ts');
+            if (fs.existsSync(stagingIndexTs)) {
+                fs.copyFileSync(stagingIndexTs, targetIndexTs);
             }
+
+            // Generate tsconfig.json if not exists
+            this.ensureTsConfig(resolvedTargetDir);
         }
 
-        // Copy to Data targets
-        if (config.dataTargetDirs) {
-            for (const targetDir of config.dataTargetDirs) {
-                const target = path.join(this.rootDir, targetDir, 'json');
-                this.cleanAndCopy(stagingData, target);
-                console.log(`    [Copy] ${stagingData} -> ${target}`);
-            }
+        // Copy to Data target: {dataTargetDir}/{Domain}/json/
+        if (config.dataTargetDir) {
+            const target = path.join(this.resolvePath(config.dataTargetDir), domainName, 'json');
+            this.cleanAndCopy(stagingData, target);
+            console.log(`    [Copy] ${stagingData} -> ${target}`);
         }
     }
 
@@ -188,60 +344,128 @@ class BuildRunner {
     // Protocol Processing
     // ========================================================================
 
-    async processProtocol(protocolName, config) {
-        console.log(`  [Protocol] ${protocolName}`);
+    async processProtocolGroup(groupConfig) {
+        const groupName = groupConfig.group;
+        console.log(`  [ProtocolGroup] ${groupName}`);
 
-        const stagingCs = path.join(this.tempDir, protocolName, 'cs', 'generated');
-        const stagingTs = path.join(this.tempDir, protocolName, 'ts', 'generated');
+        const protocolDir = this.resolvePath(groupConfig.protocolDir);
+        const csProjectName = `Devian.Network.${groupName}`;
+        
+        // Staging paths
+        const stagingCs = path.join(this.tempDir, csProjectName);
+        const stagingTs = path.join(this.tempDir, groupName);
 
         fs.mkdirSync(stagingCs, { recursive: true });
         fs.mkdirSync(stagingTs, { recursive: true });
 
-        // Load protocol spec
-        const protocolFile = path.join(this.rootDir, config.protocolsDir, config.protocolFile);
-        const spec = JSON.parse(fs.readFileSync(protocolFile, 'utf-8'));
+        // Collect protocol names for index.ts
+        const protocolNames = [];
 
-        // Load or create opcode registry
-        const opcodeRegistry = this.loadOrCreateRegistry(protocolName, 'opcodes');
-        const tagRegistry = this.loadOrCreateRegistry(protocolName, 'tags');
-
-        // Assign opcodes and tags
-        this.assignOpcodes(spec, opcodeRegistry);
-        this.assignTags(spec, tagRegistry);
-
-        // Save registries
-        this.saveRegistry(protocolName, 'opcodes', opcodeRegistry);
-        this.saveRegistry(protocolName, 'tags', tagRegistry);
-
-        // C# Protocol
-        const csCode = generateCSharpProtocol(spec, protocolName);
-        fs.writeFileSync(path.join(stagingCs, `${protocolName}.g.cs`), csCode);
-
-        // TypeScript Protocol
-        const tsCode = generateTypeScriptProtocol(spec, protocolName);
-        fs.writeFileSync(path.join(stagingTs, `${protocolName}.g.ts`), tsCode);
-    }
-
-    async copyProtocolToTargets(protocolName, config) {
-        const stagingCs = path.join(this.tempDir, protocolName, 'cs', 'generated');
-        const stagingTs = path.join(this.tempDir, protocolName, 'ts', 'generated');
-
-        // Copy to CS targets
-        if (config.csTargetDirs) {
-            for (const targetDir of config.csTargetDirs) {
-                const target = path.join(this.rootDir, targetDir, 'generated');
-                this.cleanAndCopy(stagingCs, target);
-                console.log(`    [Copy] ${stagingCs} -> ${target}`);
+        // Process each protocol file
+        for (const protocolFileName of groupConfig.protocolFiles) {
+            const protocolFile = path.join(protocolDir, protocolFileName);
+            const protocolName = path.basename(protocolFileName, '.json');
+            
+            if (!fs.existsSync(protocolFile)) {
+                console.error(`    Protocol file not found: ${protocolFile}`);
+                continue;
             }
+
+            console.log(`    [Protocol] ${protocolName}`);
+            protocolNames.push(protocolName);
+
+            // Load protocol spec
+            const spec = JSON.parse(fs.readFileSync(protocolFile, 'utf-8'));
+
+            // Load or create opcode registry
+            const opcodeRegistry = this.loadOrCreateRegistry(protocolDir, protocolName, 'opcodes');
+            const tagRegistry = this.loadOrCreateRegistry(protocolDir, protocolName, 'tags');
+
+            // Assign opcodes and tags
+            this.assignOpcodes(spec, opcodeRegistry);
+            this.assignTags(spec, tagRegistry);
+
+            // Save registries
+            this.saveRegistry(protocolDir, protocolName, 'opcodes', opcodeRegistry);
+            this.saveRegistry(protocolDir, protocolName, 'tags', tagRegistry);
+
+            // C# Protocol
+            const csCode = generateCSharpProtocol(spec, protocolName);
+            fs.writeFileSync(path.join(stagingCs, `${protocolName}.g.cs`), csCode);
+
+            // TypeScript Protocol
+            const tsCode = generateTypeScriptProtocol(spec, protocolName);
+            fs.writeFileSync(path.join(stagingTs, `${protocolName}.g.ts`), tsCode);
         }
 
-        // Copy to TS targets
-        if (config.tsTargetDirs) {
-            for (const targetDir of config.tsTargetDirs) {
-                const target = path.join(this.rootDir, targetDir, 'generated');
-                this.cleanAndCopy(stagingTs, target);
-                console.log(`    [Copy] ${stagingTs} -> ${target}`);
-            }
+        // Generate .csproj for C#
+        const csprojContent = this.generateCsproj(groupName);
+        fs.writeFileSync(path.join(stagingCs, `${csProjectName}.csproj`), csprojContent);
+
+        // Generate index.ts for TypeScript
+        const indexTsContent = this.generateIndexTs(protocolNames);
+        fs.writeFileSync(path.join(stagingTs, 'index.ts'), indexTsContent);
+    }
+
+    generateCsproj(groupName) {
+        return `<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Devian.Network.${groupName}</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\\Devian.Core\\Devian.Core.csproj" />
+    <ProjectReference Include="..\\Devian.Network\\Devian.Network.csproj" />
+  </ItemGroup>
+</Project>
+`;
+    }
+
+    generateIndexTs(protocolNames) {
+        return protocolNames.map(name => `export * from './${name}.g';`).join('\n') + '\n';
+    }
+
+    generateDomainIndexTs(fileNames) {
+        const header = [
+            '// <auto-generated>',
+            '// DO NOT EDIT - Generated by Devian Build System v10',
+            '// </auto-generated>',
+            ''
+        ];
+        const exports = fileNames.map(name => `export * from './generated/${name}.g';`);
+        return header.concat(exports).join('\n') + '\n';
+    }
+
+    async copyProtocolGroupToTargets(groupConfig) {
+        const groupName = groupConfig.group;
+        const csProjectName = `Devian.Network.${groupName}`;
+        
+        const stagingCs = path.join(this.tempDir, csProjectName);
+        const stagingTs = path.join(this.tempDir, groupName);
+
+        // Copy to CS target: {csTargetDir}/Devian.Network.{ProtocolGroup}/
+        if (groupConfig.csTargetDir) {
+            const target = path.join(this.resolvePath(groupConfig.csTargetDir), csProjectName);
+            this.cleanAndCopy(stagingCs, target);
+            console.log(`    [Copy] ${stagingCs} -> ${target}`);
+        }
+
+        // Copy to TS target: {tsTargetDir}/devian-network-{group}/
+        if (groupConfig.tsTargetDir) {
+            const tsModuleName = `devian-network-${groupName.toLowerCase()}`;
+            const target = path.join(this.resolvePath(groupConfig.tsTargetDir), tsModuleName);
+            this.cleanAndCopy(stagingTs, target);
+            console.log(`    [Copy] ${stagingTs} -> ${target}`);
+
+            // Generate tsconfig.json if not exists
+            this.ensureTsConfig(target);
         }
     }
 
@@ -249,18 +473,19 @@ class BuildRunner {
     // Opcode/Tag Registry Management
     // ========================================================================
 
-    loadOrCreateRegistry(protocolName, type) {
-        const registryPath = path.join(this.rootDir, 'input', protocolName, 'protocols', `${protocolName}.${type}.json`);
+    loadOrCreateRegistry(protocolsDir, protocolName, type) {
+        const generatedDir = path.join(protocolsDir, 'generated');
+        const registryPath = path.join(generatedDir, `${protocolName}.${type}.json`);
         if (fs.existsSync(registryPath)) {
             return JSON.parse(fs.readFileSync(registryPath, 'utf-8'));
         }
         return {};
     }
 
-    saveRegistry(protocolName, type, registry) {
-        const registryDir = path.join(this.rootDir, 'input', protocolName, 'protocols');
-        const registryPath = path.join(registryDir, `${protocolName}.${type}.json`);
-        fs.mkdirSync(registryDir, { recursive: true });
+    saveRegistry(protocolsDir, protocolName, type, registry) {
+        const generatedDir = path.join(protocolsDir, 'generated');
+        fs.mkdirSync(generatedDir, { recursive: true });
+        const registryPath = path.join(generatedDir, `${protocolName}.${type}.json`);
         
         // Deterministic save: sort keys (ordinal) + trailing newline
         const sortedKeys = Object.keys(registry).sort((a, b) => a.localeCompare(b));
@@ -441,6 +666,41 @@ class BuildRunner {
             const srcFile = path.join(src, file);
             const destFile = path.join(dest, file);
             fs.copyFileSync(srcFile, destFile);
+        }
+    }
+
+    ensureTsConfig(targetDir) {
+        const tsconfigPath = path.join(targetDir, 'tsconfig.json');
+        if (!fs.existsSync(tsconfigPath)) {
+            const tsconfig = {
+                extends: '../tsconfig.json',
+                compilerOptions: {
+                    outDir: './dist'
+                },
+                include: ['./**/*.ts']
+            };
+            fs.writeFileSync(tsconfigPath, JSON.stringify(tsconfig, null, 2) + '\n');
+        }
+    }
+
+    ensureCsProj(targetDir, moduleName) {
+        const csprojPath = path.join(targetDir, `${moduleName}.csproj`);
+        if (!fs.existsSync(csprojPath)) {
+            fs.mkdirSync(targetDir, { recursive: true });
+            const csproj = `<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>enable</Nullable>
+    <RootNamespace>${moduleName}</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\\Devian.Core\\Devian.Core.csproj" />
+  </ItemGroup>
+</Project>
+`;
+            fs.writeFileSync(csprojPath, csproj);
         }
     }
 }
