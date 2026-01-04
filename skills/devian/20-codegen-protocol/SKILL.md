@@ -1,145 +1,83 @@
-# Devian – 20 Codegen: Protocol Generation
+# Devian v10 — Protocol Codegen (Overview)
+
+Status: ACTIVE  
+AppliesTo: v10  
+SSOT: skills/devian/03-ssot/SKILL.md
 
 ## Purpose
 
-**Describes the protocol and boundaries used by code generation.**
+PROTOCOL(DomainType=PROTOCOL) 입력으로부터 C#/TS 프로토콜 코드를 생성하는 **전체 흐름**을 정의한다.
 
-IDL 기반으로 **C# 프로토콜 계약 코드를 생성**한다.
-
-- 프로토콜 계약 코드는 `contracts/csharp/{domain}`로 생성된다
-- Transport/Dispatcher 구현은 생성하지 않는다
-
----
-
-## Scope
-
-### In Scope
-
-| 항목 | 설명 |
-|------|------|
-| codegen 단계 간 인터페이스 | IDL → generated code |
-| 입력/출력 계약 | 경로, 형식 정의 |
-| DTO / opcode / handler interface | 메시지 타입 생성 |
-
-### Out of Scope
-
-| 항목 | 설명 |
-|------|------|
-| runtime orchestration | ❌ 실행 관리 없음 |
-| execution engine | ❌ 실행 엔진 없음 |
-| server lifecycle | ❌ 서버 생명주기 없음 |
-| transport | ❌ Consumer 책임 |
-
----
-
-## Hard Rules (MUST)
-
-| # | Rule |
-|---|------|
-| 1 | codegen은 `contracts/` 내부에서만 산출물 생성 |
-| 2 | codegen은 서버 구조를 가정하지 않는다 |
-| 3 | transport와 완전히 분리 |
-
----
-
-## Soft Rules (SHOULD)
-
-| # | Rule |
-|---|------|
-| 1 | generated 코드는 재생성 가능해야 함 |
-| 2 | 순수 타입(shape)만 제공 |
+이 문서는 **입력 포맷 / 레지스트리(결정성) / 경로 규약**만 규정한다.
+생성 코드의 구체적 API/산출물은 **`docs/generated/devian-reference.md`**를 정답으로 본다.
 
 ---
 
 ## Inputs
 
-| Input | 설명 |
-|-------|------|
-| `input/protocols/*` | IDL source of truth |
-| domainName | 대상 도메인 |
+입력은 `input/build/build.json`의 `protocols` 섹션이 정본이다.
+
+- `protocols[{LinkName}].protocolsDir`
+- `protocols[{LinkName}].protocolFile` (JSON)
+
+### Protocol Spec JSON (필수 필드)
+
+최소 구조:
+
+```json
+{
+  "direction": "client_to_server | server_to_client | bidirectional",
+  "messages": [
+    {
+      "name": "MessageName",
+      "opcode": 100,              // optional
+      "fields": [
+        { "name": "field", "type": "int32", "tag": 1, "optional": true }
+      ]
+    }
+  ]
+}
+```
+
+추가 키가 존재할 수 있다. “지원 여부/정확한 스키마”는 Reference를 정답으로 본다.
+
+### JSON `namespace` 검증
+
+JSON에 `namespace`가 있는 경우:
+
+- **반드시 ProtocolName(파일명 base)과 일치**해야 한다.
+- 불일치 시 빌드 실패.
 
 ---
 
-## Outputs
+## Determinism Gate (opcode / tag)
 
-| Path | 용도 |
-|------|------|
-| `contracts/csharp/{domain}/generated/` | codegen 산출물 |
-| `contracts/csharp/{domain}/src/` | (선택) 수동 코드 영역 |
+Protocol 호환성을 위해 Registry 파일을 사용한다.
 
----
+- `{ProtocolName}.opcodes.json`
+- `{ProtocolName}.tags.json`
 
-## Dependency Rules
+정책:
 
-### Generated protocol code MAY reference:
+1) 명시 값 우선
+2) 레지스트리 값은 호환성 보존을 위해 유지
+3) 미지정 값은 **결정적 규칙으로 자동 할당**
+4) Tag의 reserved range(19000..19999) 금지
 
-| Target | 허용 |
-|--------|:----:|
-| Devian.Core | ✅ |
-| contracts/csharp/Common | ✅ |
-
-### Generated protocol code MUST NOT reference:
-
-| Target | 금지 |
-|--------|:----:|
-| Devian.Tools | ❌ |
-| UnityEngine | ❌ |
-| 다른 도메인 (Common 제외) | ❌ |
+> 자동 할당의 상세 규칙(최소값/정렬/증가)은 구현/Reference를 정답으로 본다.
 
 ---
 
-## Generation Scope
+## Outputs & Paths
 
-### Included
+경로 규약은 SSOT를 따른다.
 
-| 항목 | 설명 |
-|------|------|
-| DTO | 메시지 데이터 타입 |
-| opcode/message id | 메시지 식별자 |
-| handler interface | (선택) 핸들러 계약 |
-| serialization-friendly shapes | 직렬화 가능 구조 |
-
-### NOT Included
-
-| 항목 | 이유 |
-|------|------|
-| transport | Consumer 책임 |
-| NestJS integration | 서버 자율 |
-| WS server/client templates | Consumer 책임 |
+- staging: `{tempDir}/{LinkName}/cs/generated/**`, `{tempDir}/{LinkName}/ts/generated/**`
+- final: `{csTargetDir}/generated/**`, `{tsTargetDir}/generated/**`
 
 ---
 
-## Responsibilities
+## Reference
 
-1. **IDL → C# DTO 변환** — 프로토콜 타입 생성
-2. **codegen 경로 규칙 정의** — `contracts/csharp/{domain}/generated`
-3. **transport 분리 보장** — 순수 계약 코드만 생성
-
----
-
-## Acceptance Criteria
-
-| # | 조건 |
-|---|------|
-| 1 | 출력 경로가 `contracts/csharp/{domain}/generated`로만 출력 |
-| 2 | codegen 산출물에 도메인 프로토콜 코드가 Devian 패키지 밖에 있음 |
-| 3 | transport와 완전히 분리 |
-
----
-
-## Related Skills
-
-| Skill | 관계 |
-|-------|------|
-| `22-codegen-protocol-csharp-ts` | C#/TS 생성 |
-| `26-domain-scaffold-generator` | 도메인 뼈대 |
-| `51-generated-integration` | Generated 통합 |
-| `90-language-first-contracts` | 경로 기준 |
-
----
-
-## Version History
-
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0.0 | 2025-12-28 | Initial |
+- Policy SSOT: `skills/devian/03-ssot/SKILL.md`
+- Code-based Reference: `docs/generated/devian-reference.md`

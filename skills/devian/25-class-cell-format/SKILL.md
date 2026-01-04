@@ -1,192 +1,91 @@
-# Devian – 25 Class Cell Format
+# Devian v10 — DFF (Class/Enum Cell Format)
+
+Status: ACTIVE  
+AppliesTo: v10  
+SSOT: skills/devian/03-ssot/SKILL.md
 
 ## Purpose
 
-**`class:{Name}` 및 `class:{Name}[]` 타입 셀의 파싱 규칙을 정의한다. (Strict Mode)**
+XLSX 테이블에서 `enum:*` / `class:*` 타입 컬럼의 **셀 텍스트 표현 규약(DFF)**을 정의한다.
+
+이 문서는 “셀 문자열을 어떻게 쓴다”만 다룬다.
+구체적인 파서 API와 적용 위치(빌드 단계에서 파싱 vs 런타임에서 파싱)는 Reference를 정답으로 본다.
 
 ---
 
-## Belongs To
+## DFF 개요
 
-**Table / Codegen**
+DFF는 단일 셀에 **구조화된 값을 텍스트로 인코딩**하는 규약이다.
 
----
-
-## 1. 적용 범위
-
-| 타입 | 설명 |
-|------|------|
-| `class:{Name}` | 단일 message 참조 |
-| `class:{Name}[]` | message 배열 |
-| `class:Common.{Name}` | Common 도메인 message 참조 |
-
-> **enum:{Name}은 24-table-authoring-rules 참조**
+- `enum:*` / `class:*` 타입에서 사용한다
+- 배열 타입(`[]`)과 결합할 수 있다
 
 ---
 
-## 2. 기본 포맷 (DFF)
+## 문법 (정책)
 
-### class → 단일 message
+### 1) 스칼라/enum 값
 
-셀 값은 **DFF object (pair-list)**여야 한다.
+- 스칼라: `123`, `3.14`, `hello`
+- enum: `Member` (문자열로 작성)
 
-```
-id=1; name=Alice; userType=Member
-```
+### 2) 클래스(오브젝트)
 
-### class 배열 → message[]
-
-셀 값은 **DFF list of objects**여야 한다.
+키-값 쌍을 `;`로 구분한다.
 
 ```
-[id=1; name=Alice, id=2; name=Bob]
+userId=1001; displayName=Alice
 ```
+
+### 3) 리스트
+
+리스트는 `[...]` 또는 `{...}`를 쓴다.
+
+- `[...]` : 일반 리스트 (스칼라/enum/오브젝트 모두 가능)
+- `{...}` : **스칼라/enum 전용 리스트** (오브젝트 포함 금지)
+
+예시:
+
+```
+[1,2,3]
+{A,B,C}
+[id=1;name=Alice, id=2;name=Bob]
+```
+
+> 오브젝트 리스트는 반드시 `[...]`를 사용한다.
 
 ---
 
-## 3. DFF 파싱 규칙
+## 이스케이프 규칙
 
-| 항목 | 규칙 |
-|------|------|
-| 허용 형식 | DFF object / DFF list만 (단일 값 금지) |
-| nested object/list | 허용 |
-| unknown field | 기본 실패 (오타 방지) |
-| enum 필드 값 | 이름 기반만 (`Member`) - 숫자는 옵션 |
-| null/unset | `-` 또는 빈 값 |
+특수 문자를 값에 포함하려면 `\`로 escape 한다.
 
-### DFF Object 포맷
+- `\,` `\;` `\=` `\[` `\]` `\{` `\}` `\\`
+
+예:
 
 ```
-key=value; key2=value2
-```
-
-- item separator: `;`
-- kv separator: `=`
-- quoting: `"..."` or `'...'`
-- escaping: `\;` `\=` `\\`
-
-### DFF List 포맷
-
-```
-[item1, item2, item3]
-```
-
-또는
-
-```
-item1, item2, item3
-```
-
-> 상세 포맷은 `27-devian-friendly-format` 참조
-
----
-
-## 4. Parser 정책 (Strict Mode)
-
-- 기본 parser는 **dff** (대소문자 무시)
-- **parser가 dff 이외의 값이면 에러**
-- JSON object/array는 Strict Mode에서 금지
-
----
-
-## 5. Pluggable Class Parser
-
-### 정책
-
-- class 파싱은 **기본 DFF 파서**를 사용한다
-- 프로젝트는 필요시 **ClassParser를 등록해서 대체** 가능
-- 대체 파서가 없으면 기본 파서를 **반드시** 사용
-
-### Resolution Order
-
-```
-1) 타입별 커스텀 파서 등록됨 → 사용
-2) 전역 class 파서 등록됨 → 사용
-3) 기본 DFF 파서 → 사용 (항상 존재, fallback)
-```
-
-### Interface
-
-```csharp
-public interface IClassCellParser
-{
-    /// <summary>
-    /// 셀 값을 파싱하여 인스턴스로 변환
-    /// </summary>
-    object? Parse(string cellValue, string typeName, bool isArray);
-}
+displayName=Hello\, World
 ```
 
 ---
 
-## 6. Hard Rules (MUST)
+## Hard Rules (MUST)
 
-| # | 규칙 |
-|---|------|
-| 1 | class 셀은 DFF object 포맷이 표준 |
-| 2 | 단일 class는 DFF object (pair-list) |
-| 3 | class 배열은 DFF list of objects `[...]` |
-| 4 | unknown field 발견 시 기본 실패 |
-| 5 | enum 필드 값은 이름 문자열 우선 |
-| 6 | parser=dff 기본값 (대소문자 무시) |
-| 7 | parser가 dff 이외면 에러 (Strict Mode) |
-| 8 | **`{}` 금지** (배열 표기 전용, class에서 사용 불가) |
+1) 오브젝트는 `key=value` 쌍으로만 표현한다.
+2) 오브젝트 리스트는 `[...]`만 허용한다.
+3) `{...}`는 오브젝트를 포함하면 안 된다.
 
 ---
 
-## 7. 절대 금지 사항 (MUST NOT)
+## Notes
 
-| # | 금지 |
-|---|------|
-| 1 | 유사 JSON (`{id:1}`) 허용 |
-| 2 | ProtoJSON 직접 작성 |
-| 4 | parser가 dff 이외 값 |
+- 현재 빌드 도구가 DFF를 즉시 파싱하지 않고 **원문 문자열을 보존**할 수 있다.
+- “언제/어디서 DFF를 파싱하는가”는 구현/Reference를 따른다.
 
 ---
 
-## 8. 예시
+## Reference
 
-### TestTable.xlsx 예시
-
-| UserProfile (class:UserProfile) |
-|---------------------------------|
-| `id=1; name=Devian; userType=Admin` |
-| (빈 셀 = 해당 행에 없음) |
-
-### 배열 예시
-
-| Profiles (class:UserProfile[]) |
-|--------------------------------|
-| `[id=1; name=A, id=2; name=B]` |
-
-### enum 타입 예시 (24 참조)
-
-| UserType (enum:UserType) |
-|--------------------------|
-| Admin |
-| Guest |
-
-| UserTypes (enum:UserType[]) |
-|-----------------------------|
-| Admin, Guest, Member |
-
----
-
-## Related Skills
-
-| Skill | 관계 |
-|-------|------|
-| `27-devian-friendly-format` | DFF 입력 포맷 스펙 |
-| `24-table-authoring-rules` | 테이블 작성 규칙, enum 타입 |
-| `61-tablegen-implementation` | 테이블 생성 구현 |
-
----
-
-## Version History
-
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0.0 | 2025-12-28 | Initial |
-## 한 줄 요약
-
-**class 셀은 DFF object, class 배열은 DFF list of objects. parser=dff 기본.**
+- Policy SSOT: `skills/devian/03-ssot/SKILL.md`
+- Code-based Reference: `docs/generated/devian-reference.md`

@@ -1,190 +1,61 @@
-# Devian – 51 Generated Integration
+# Devian v10 — Generated Integration Rules
+
+Status: ACTIVE  
+AppliesTo: v10  
+SSOT: skills/devian/03-ssot/SKILL.md
 
 ## Purpose
 
-**Generated integration means consuming generated contract artifacts  
-inside a domain runtime, not introducing a new integration layer.**
+generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수정 금지 규칙**을 정의한다.
 
-> Generated Integration = contracts 내부에서 generated 코드를 src 런타임이 import해서 쓰는 것  
-> **Devian.Core는 generated를 직접 참조하지 않는다**
-
----
-
-## Scope
-
-### In Scope
-
-| 항목 | 설명 |
-|------|------|
-| domain runtime에서 generated를 import | 사용 패턴 정의 |
-| 경로 기준 | `contracts/{language}/{domain}/generated` |
-
-### Out of Scope (강조)
-
-| 항목 | 설명 |
-|------|------|
-| Devian-level integration layer | ❌ 존재하지 않음 |
-| 자동 등록 / DI | ❌ Devian이 제공하지 않음 |
-| Central orchestration | ❌ Devian이 제공하지 않음 |
-| core runtime 개입 | ❌ core는 generated를 참조하지 않음 |
+이 문서는 “generated를 어떻게 취급할지”만 말한다.
+실제 생성 파일 목록은 **`docs/generated/devian-reference.md`**를 참조한다.
 
 ---
 
-## Hard Rules (MUST)
+## Ownership
 
-| # | Rule |
-|---|------|
-| 1 | core runtime은 generated를 **참조하지 않는다** |
-| 2 | generated integration은 **각 domain 내부에서만** 이루어진다 |
-| 3 | "integration"은 단순한 **import/사용 패턴**이다 |
+- `modules/**/generated/**` 는 **기계 소유**다.
+- 사람은 이 파일을 수정하지 않는다.
+- 수정이 필요하면 입력(contracts/tables/protocols) 또는 generator 코드 변경으로 해결한다.
 
-### 의존 방향 (Hard)
+## Commit Policy
+
+- generated는 **커밋 대상**이다.
+  - 빌드 없이도 소비자가 타입/codec을 사용할 수 있어야 한다.
+
+## Directory Expectations
+
+정확한 출력 루트는 build.json의 targetDirs가 정본이다.
+
+권장(설명용) 구조:
 
 ```
-core runtime (extension points)
-         ↑
-contracts/{language}/{domain}/src (domain runtime)
-         ↑
-contracts/{language}/{domain}/generated
+modules/
+├── cs/{DomainKey or LinkName}/generated/**
+└── ts/{DomainKey or LinkName}/generated/**
+data/
+└── {DomainKey}/json/**.ndjson
 ```
 
-- `core → generated` ❌
-- `generated → core` ❌
-- **domain runtime만 generated를 import한다**
+> 실제 폴더명/레이아웃은 프로젝트 구성에 따라 달라질 수 있으며, Reference가 정답이다.
 
 ---
 
-## What "Integration" Means Here
+## Must / Must Not
 
-| Integration IS | Integration IS NOT |
-|----------------|-------------------|
-| domain src에서 generated import | Devian-level 통합 레이어 |
-| Consumer가 contracts 사용 | 자동 등록/DI/orchestration |
-| 단순한 import 패턴 | 중앙 제어 시스템 |
+MUST
 
----
+- generated를 import하는 “수동 코드(manual)”는 generated와 분리된 폴더에서 관리한다.
+- build.json targetDirs 설계로 산출 충돌을 방지한다.
 
-## Generated Code Locations
+MUST NOT
 
-### C# (Always)
-
-```
-contracts/csharp/{domain}/generated/
-```
-
-### TypeScript (Optional)
-
-> ⚠️ **If TypeScript codegen is enabled**:
-
-```
-contracts/ts/{domain}/generated/
-```
-
-**TS codegen이 비활성화된 경우, 이 경로는 존재하지 않을 수 있다.**
+- generated 파일을 직접 패치해서 ‘임시로’ 문제를 해결하지 않는다.
 
 ---
 
-## Hand-written 영역
+## Reference
 
-### C#
-
-```
-contracts/csharp/{domain}/src/
-```
-
-### TypeScript (If Enabled)
-
-```
-contracts/ts/{domain}/src/
-```
-
----
-
-## Integration Pattern (Example)
-
-### Domain Runtime에서 Generated Import
-
-```csharp
-// contracts/csharp/ingame/src/ItemService.cs
-using Ingame.Generated;  // ← generated import
-
-public class ItemService
-{
-    public ItemRow GetItem(int id)
-    {
-        // generated 타입 사용
-    }
-}
-```
-
-### Consumer에서 Domain Runtime 사용
-
-```csharp
-// Unity App
-var service = new ItemService();
-var item = service.GetItem(123);
-```
-
----
-
-## What Generated Code Must NOT Do
-
-| 금지 | 설명 |
-|------|------|
-| transport 코드 포함 | ❌ |
-| NestJS/Unity 특화 코드 포함 | ❌ |
-| core runtime 확장 시도 | ❌ |
-| 수동 수정 | ❌ (재생성 가능해야 함) |
-
-**generated의 역할은 "형태(shape)"로 제한한다.**
-
----
-
-## Integration Lifecycle
-
-### Build Time
-
-```
-input 변경 → Devian.Tools 실행 → contracts/{language}/{domain}/generated 갱신
-```
-
-### Runtime
-
-Consumer가 해당 언어 모듈을 가져다 사용:
-
-| Language | 방식 |
-|----------|------|
-| C# | 프로젝트 참조/패키지 참조 |
-| TS | workspace/git/publish 등 (강제하지 않음) |
-
----
-
-## Acceptance Criteria
-
-| # | 조건 |
-|---|------|
-| 1 | "integration"이라는 단어가 **프레임워크/중앙 레이어로 오해되지 않는다** |
-| 2 | generated integration이 **단순한 import/사용 패턴**임이 명확하다 |
-| 3 | core runtime은 generated를 **참조하지 않음**이 명시되어 있다 |
-| 4 | TS가 없는 프로젝트에서도 문서가 논리적으로 성립한다 |
-
----
-
-## Related Skills
-
-| Skill | 관계 |
-|-------|------|
-| `01-devian-core-philosophy` | 철학 기준 |
-| `10-core-runtime` | Core 책임 범위 |
-| `20-codegen-protocol` | Protocol codegen |
-| `21-codegen-table` | Table codegen |
-| `26-domain-scaffold-generator` | 도메인 뼈대 |
-| `90-language-first-contracts` | 경로 기준 |
-
----
-
-## Version History
-
-| Version | Date | Changes |
-|---------|------|---------|
-| 1.0.0 | 2025-12-28 | Initial |
+- Policy SSOT: `skills/devian/03-ssot/SKILL.md`
+- Code-based Reference: `docs/generated/devian-reference.md`

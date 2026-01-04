@@ -1,6 +1,6 @@
 # Devian Common Skills
 
-Devian.Common 모듈 및 Common 도메인에 대한 스킬 문서.
+Common 도메인 및 그 산출물에 대한 스킬 문서.
 
 ## 스킬 목록
 
@@ -12,23 +12,32 @@ Devian.Common 모듈 및 Common 도메인에 대한 스킬 문서.
 
 ## 주요 경로
 
-### C#
+### 입력 (도메인)
 
 ```
-framework/cs/Devian.Common/
-├── generated/   # 기계 생성
-└── manual/      # 사람 작성
+input/Common/
+├── contracts/   # 계약 정의 (*.json)
+└── tables/      # 테이블 정의 (*.xlsx)
 ```
 
-### TypeScript
+### 산출물
+
+**Common 도메인 빌드 산출물의 정본 위치는 `modules/**/Common/` 이다.**
 
 ```
-framework/ts/devian-common/
-├── generated/   # 기계 생성
-└── manual/      # 사람 작성
+modules/
+├── cs/Common/
+│   ├── generated/   # 기계 생성 (커밋 필수, 수정 금지)
+│   └── manual/      # 사람 작성 (생성기 덮어쓰기 금지)
+├── ts/Common/
+│   ├── generated/   # 기계 생성 (커밋 필수, 수정 금지)
+│   └── manual/      # 사람 작성 (생성기 덮어쓰기 금지)
+└── data/Common/
+    └── json/        # 테이블 데이터 (NDJSON)
 ```
 
 ## 참조
 
 - Common 도메인: `input/Common/`
+- Common 산출물: `modules/**/Common/`
 - 상위 스킬: `skills/devian/`

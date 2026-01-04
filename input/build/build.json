@@ -1,6 +1,6 @@
 {
-  "version": "9",
-  "tempDir": "temp/devian",
+  "version": "10",
+  "tempDir": "temp",
 
   "domains": {
     "Common": {
@@ -19,7 +19,7 @@
   "protocols": {
     "C2Game": {
       "protocolsDir": "input/C2Game/protocols",
-      "protocolFile": "C2Game.proto",
+      "protocolFile": "C2Game.json",
 
       "csTargetDirs": ["modules/cs/C2Game"],
       "tsTargetDirs": ["modules/ts/C2Game"]
@@ -27,7 +27,7 @@
 
     "Game2C": {
       "protocolsDir": "input/Game2C/protocols",
-      "protocolFile": "Game2C.proto",
+      "protocolFile": "Game2C.json",
 
       "csTargetDirs": ["modules/cs/Game2C"],
       "tsTargetDirs": ["modules/ts/Game2C"]

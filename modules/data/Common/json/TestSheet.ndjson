@@ -1,0 +1,3 @@
+{"UserType":"Admin","Number":1,"IntArr":[-1],"StringArr":["a","b","c"],"FloatArr":[1.5,2.2],"UserProfile":"{\"id\":1, \"name\":\"Devian\", \"userType\":\"Admin\"}"}
+{"UserType":"Guest","Number":2,"IntArr":[55,66,77],"StringArr":["가","나","다"],"FloatArr":[7],"UserProfile":null}
+{"UserType":"Member","Number":3,"IntArr":[-1,-2,-3],"StringArr":["11","22","33"],"FloatArr":[123.45,999.987],"UserProfile":null}
