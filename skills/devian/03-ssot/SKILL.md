@@ -173,13 +173,13 @@ PROTOCOL 입력은 build.json의 `protocols` 섹션(배열)이 정의한다.
 #### PROTOCOL 산출물 경로(정책)
 
 **C#:**
-- staging: `{tempDir}/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs`
-- final: `{csTargetDir}/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs`
-- 프로젝트 파일: `{csTargetDir}/Devian.Network.{ProtocolGroup}/Devian.Network.{ProtocolGroup}.csproj`
+- staging: `{tempDir}/Devian.Protocol.{ProtocolGroup}/{ProtocolName}.g.cs`
+- final: `{csTargetDir}/Devian.Protocol.{ProtocolGroup}/{ProtocolName}.g.cs`
+- 프로젝트 파일: `{csTargetDir}/Devian.Protocol.{ProtocolGroup}/Devian.Protocol.{ProtocolGroup}.csproj`
 
 **TypeScript:**
 - staging: `{tempDir}/{ProtocolGroup}/{ProtocolName}.g.ts`, `index.ts`
-- final: `{tsTargetDir}/devian-network-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
+- final: `{tsTargetDir}/devian-protocol-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
 
 ---
 
@@ -201,6 +201,14 @@ PROTOCOL 입력은 build.json의 `protocols` 섹션(배열)이 정의한다.
 - 문서 링크가 끊김
 
 단, Soft가 Hard 오해를 유발하면 개선 대상이다.
+
+---
+
+## 공식 빌드 러너
+
+공식 빌드 실행은 Node 기반 빌더를 사용한다: `framework-ts/tools/builder/build.js`
+
+C# 모듈은 레포에 `.csproj`/`.sln`을 포함하여 dotnet 빌드 및 IDE를 정식 지원한다.
 
 ---
 

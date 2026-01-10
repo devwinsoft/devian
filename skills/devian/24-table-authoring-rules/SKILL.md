@@ -100,7 +100,7 @@ PrimaryKey 규칙:
 경로 규약은 SSOT를 따른다.
 
 - staging: `{tempDir}/{DomainKey}/cs/generated/**`, `{tempDir}/{DomainKey}/ts/generated/**`, `{tempDir}/{DomainKey}/data/json/**.ndjson`
-- final: `{csTargetDir}/generated/**`, `{tsTargetDir}/generated/**`, `{dataTargetDir}/json/**`
+- final: `{csTargetDir}/Devian.Module.{DomainKey}/generated/**`, `{tsTargetDir}/devian-module-{domainkey}/generated/**`, `{dataTargetDir}/{DomainKey}/json/**`
 
 ---
 

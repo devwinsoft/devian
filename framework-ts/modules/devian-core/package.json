@@ -1,0 +1,6 @@
+{
+  "name": "@devian/core",
+  "version": "10.0.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts"
+}

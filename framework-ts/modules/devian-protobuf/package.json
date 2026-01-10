@@ -1,0 +1,9 @@
+{
+  "name": "@devian/protobuf",
+  "version": "10.0.0",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "@devian/core": "10.0.0"
+  }
+}

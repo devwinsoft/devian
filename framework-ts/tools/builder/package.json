@@ -1,0 +1,10 @@
+{
+  "name": "builder",
+  "version": "10.0.0",
+  "description": "Devian v10 Build System",
+  "type": "module",
+  "main": "build.js",
+  "scripts": {
+    "build": "node build.js"
+  }
+}

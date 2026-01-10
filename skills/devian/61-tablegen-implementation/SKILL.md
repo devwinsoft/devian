@@ -147,7 +147,8 @@ import { IEntity, IEntityKey } from 'devian-core';
 | `Count` | Row 개수 |
 | `Clear()` | 캐시 비우기 |
 | `GetAll()` | 전체 Row 반환 |
-| `Get(key)` | Key로 조회 (Key 있는 경우) |
+| `Get(key)` | Key로 조회, nullable 반환 (Key 있는 경우) |
+| `TryGet(key, out row)` | Key로 조회, out 패턴 (Key 있는 경우) |
 | `LoadFromJson(json)` | JSON 배열 로드 |
 | `LoadFromNdjson(ndjson)` | NDJSON 로드 |
 

@@ -1,0 +1,13 @@
+{
+  "name": "archive",
+  "version": "10.0.0",
+  "description": "Devian v10 Project Archive Tool",
+  "type": "module",
+  "main": "archive.js",
+  "bin": {
+    "devian-archive": "./archive.js"
+  },
+  "scripts": {
+    "archive": "node archive.js"
+  }
+}

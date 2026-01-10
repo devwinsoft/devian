@@ -1,0 +1,16 @@
+{
+  "name": "example-network-server",
+  "version": "10.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "start": "npx tsx src/index.ts"
+  },
+  "dependencies": {
+    "@devian/network-server": "10.0.0",
+    "@devian/protocol-client": "10.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0"
+  }
+}

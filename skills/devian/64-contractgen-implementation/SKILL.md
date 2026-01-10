@@ -46,8 +46,9 @@ Contract spec는 `enums`와 `classes`로 구성된다.
   "name": "UserProfile",
   "doc": "optional doc",
   "fields": [
-    { "name": "userId", "type": "int64" },
-    { "name": "displayName", "type": "string", "optional": true }
+    { "name": "id", "type": "int" },
+    { "name": "name", "type": "string" },
+    { "name": "userType", "type": "enum:UserType" }
   ]
 }
 ```
@@ -72,7 +73,7 @@ Contract spec는 `enums`와 `classes`로 구성된다.
 Contract는 Domain 단위로 Table과 함께 **단일 파일에 통합** 생성된다.
 
 - staging: `{tempDir}/{DomainKey}/cs/generated/{DomainKey}.g.cs`, `{tempDir}/{DomainKey}/ts/generated/{DomainKey}.g.ts`
-- final: `{csTargetDir}/generated/{DomainKey}.g.cs`, `{tsTargetDir}/generated/{DomainKey}.g.ts`
+- final: `{csTargetDir}/Devian.Module.{DomainKey}/generated/{DomainKey}.g.cs`, `{tsTargetDir}/devian-module-{domainkey}/generated/{DomainKey}.g.ts`
 
 ---
 

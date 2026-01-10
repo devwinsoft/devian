@@ -15,7 +15,7 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 
 ## Ownership
 
-- `framework/cs/**/*.g.cs`, `framework/ts/**/*.g.ts` 는 **기계 소유**다.
+- `framework-cs/modules/**/*.g.cs`, `framework-ts/modules/**/*.g.ts` 는 **기계 소유**다.
 - 사람은 이 파일을 수정하지 않는다.
 - 수정이 필요하면 입력(contracts/tables/protocols) 또는 generator 코드 변경으로 해결한다.
 
@@ -32,40 +32,41 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 
 | 타겟 | Domain 출력 경로 | Protocol 출력 경로 |
 |------|------------------|-------------------|
-| C# | `{csTargetDir}/Devian.Module.{Domain}/` | `{csTargetDir}/Devian.Network.{Group}/` |
-| TS | `{tsTargetDir}/devian-module-{domain}/` | `{tsTargetDir}/devian-network-{group}/` |
+| C# | `{csTargetDir}/Devian.Module.{Domain}/` | `{csTargetDir}/Devian.Protocol.{Group}/` |
+| TS | `{tsTargetDir}/devian-module-{domain}/` | `{tsTargetDir}/devian-protocol-{group}/` |
 | Data | `{dataTargetDir}/{Domain}/json/` | - |
 
 ### 권장 구조
 
 ```
-framework/
-├── cs/
+framework-cs/
+├── modules/
 │   ├── Devian.Core/                        # Core 런타임
 │   ├── Devian.Protobuf/                    # Protobuf 런타임
+│   ├── Devian.Network/                     # Network 런타임
 │   ├── Devian.Module.{Domain}/             # Domain 모듈 (generated)
 │   │   └── generated/
 │   │       └── {Domain}.g.cs
-│   └── Devian.Network.{Group}/            # Protocol 모듈 (generated)
-│       ├── Devian.Network.{Group}.csproj
+│   └── Devian.Protocol.{Group}/            # Protocol 모듈 (generated)
+│       ├── Devian.Protocol.{Group}.csproj
 │       └── {ProtocolName}.g.cs
-├── ts/
-│   ├── tsconfig.json                       # 루트 tsconfig (paths alias)
+
+framework-ts/
+├── modules/
 │   ├── devian-core/                        # Core 런타임
 │   ├── devian-protobuf/                    # Protobuf 런타임
 │   ├── devian-module-{domain}/             # Domain 모듈 (generated)
-│   │   ├── tsconfig.json
 │   │   ├── generated/
 │   │   │   └── {Domain}.g.ts
 │   │   └── index.ts
-│   └── devian-network-{group}/            # Protocol 모듈 (generated)
-│       ├── tsconfig.json
+│   └── devian-protocol-{group}/            # Protocol 모듈 (generated)
 │       ├── {ProtocolName}.g.ts
 │       └── index.ts
-└── data/
-    └── {Domain}/
-        └── json/
-            └── *.ndjson
+
+output/
+└── {Domain}/
+    └── json/
+        └── *.ndjson
 ```
 
 > 실제 폴더명/레이아웃은 프로젝트 구성에 따라 달라질 수 있으며, 코드가 정답이다.
@@ -87,20 +88,6 @@ generated TS 코드가 `devian-core`, `devian-protobuf` 모듈을 import하기 �
       "devian-protobuf": ["./devian-protobuf/src"]
     }
   }
-}
-```
-
-### 하위 폴더 tsconfig.json (자동 생성)
-
-각 모듈 폴더는 빌드 시 상위 tsconfig를 extends하는 tsconfig.json이 자동 생성된다:
-
-```json
-{
-  "extends": "../tsconfig.json",
-  "compilerOptions": {
-    "outDir": "./dist"
-  },
-  "include": ["./**/*.ts"]
 }
 ```
 

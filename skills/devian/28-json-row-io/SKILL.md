@@ -33,8 +33,8 @@ PrimaryKey 컬럼이 빈 값이면 즉시 중단한다.
 
 SSOT 경로 규약을 따른다.
 
-- staging: `{tempDir}/{DomainKey}/data/json/{sheetKey}.ndjson`
-- final: `{dataTargetDir}/json/{sheetKey}.ndjson`
+- staging: `{tempDir}/{DomainKey}/data/json/{SheetName}.ndjson`
+- final: `{dataTargetDir}/{DomainKey}/json/{SheetName}.ndjson`
 
 ---
 

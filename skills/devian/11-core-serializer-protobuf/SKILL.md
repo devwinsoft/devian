@@ -34,10 +34,14 @@ Devian v10에서 사용하는 직렬화 정책(Encoding/Decoding)을 정의한�
 
 | 파일 | 역할 |
 |------|------|
+| `DffValue.cs` | DFF 값 타입 정의 |
+| `DffParser.cs` | DFF 문법 파싱 |
 | `DffConverter.cs` | 셀 문자열 → DffValue 변환 |
+| `DffOptions.cs` | DFF 파싱 옵션 |
 | `DffProtobuf.cs` | DFF → Protobuf IMessage 변환 API |
 | `DffProtobufBuilder.cs` | Descriptor 기반 IMessage 빌드 |
 | `IProtoEntity.cs` | Protobuf 엔티티 인터페이스 |
+| `ProtobufEntityConverter.cs` | Protobuf 엔티티 변환 |
 
 ### TypeScript (devian-protobuf)
 

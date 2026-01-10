@@ -1,0 +1,15 @@
+{
+  "name": "@devian/protocol-client",
+  "version": "10.0.0",
+  "type": "module",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./server-runtime": "./generated/ServerRuntime.g.ts"
+  },
+  "dependencies": {
+    "@devian/core": "10.0.0",
+    "@devian/network-server": "10.0.0"
+  }
+}

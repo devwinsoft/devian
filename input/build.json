@@ -10,9 +10,10 @@
       "tablesDir": "Common/tables",
       "tableFiles": ["*.xlsx"],
 
-      "csTargetDir": "../framework/cs",
-      "tsTargetDir": "../framework/ts",
-      "dataTargetDir": "../framework/data"
+      "csTargetDir": "../framework-cs/modules",
+      "tsTargetDir": "../framework-ts/modules",
+      "dataTargetDir": "../output",
+      "upmTargetDir": ""
     }
   },
 
@@ -21,8 +22,9 @@
       "group": "Client",
       "protocolDir": "./Protocols/Client",
       "protocolFiles": ["C2Game.json", "Game2C.json"],
-      "csTargetDir": "../framework/cs",
-      "tsTargetDir": "../framework/ts"
+      "csTargetDir": "../framework-cs/modules",
+      "tsTargetDir": "../framework-ts/modules",
+      "upmTargetDir": ""
     }
   ]
 }

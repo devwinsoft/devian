@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@devian/core": ["./modules/devian-core/src"],
+      "@devian/core/*": ["./modules/devian-core/src/*"],
+      "@devian/protobuf": ["./modules/devian-protobuf/src"],
+      "@devian/protobuf/*": ["./modules/devian-protobuf/src/*"]
+    }
+  },
+  "include": ["modules/**/*.ts", "tools/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
