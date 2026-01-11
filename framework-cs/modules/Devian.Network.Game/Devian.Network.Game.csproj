@@ -3,7 +3,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
-    <RootNamespace>Devian.Protocol.Client</RootNamespace>
+    <RootNamespace>Devian.Network.Game</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

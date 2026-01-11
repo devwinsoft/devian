@@ -1,20 +1,22 @@
 /**
- * Server Protocol Runtime Interface
+ * Network Runtime Interface
  * 
  * This interface is implemented by each {group} package's generated runtime.
- * The devian-network-server module only knows this interface, not the concrete implementations.
+ * The devian-network module only knows this interface, not the concrete implementations.
  */
+
+import type { UnknownOpcodeEvent } from './NetworkServer';
 
 /** Send function type for outbound proxy */
 export type SendFn = (sessionId: number, frame: Uint8Array) => void;
 
 /**
- * Server Protocol Runtime Interface
+ * Network Runtime Interface
  * 
- * Each protocol group (e.g., devian-protocol-client) provides an implementation
+ * Each protocol group (e.g., devian-network-game) provides an implementation
  * that knows its own opcodes, stub dispatch, and proxy creation.
  */
-export interface IServerProtocolRuntime {
+export interface INetworkRuntime {
     /**
      * Get the name of an inbound opcode.
      * @returns opcode name or null if unknown
@@ -35,4 +37,11 @@ export interface IServerProtocolRuntime {
      * @returns Proxy instance (type depends on protocol group)
      */
     createOutboundProxy(sendFn: SendFn): unknown;
+
+    /**
+     * Handle unknown inbound opcode (optional).
+     * If implemented, NetworkServer/NetworkClient will call this when options handler is not set.
+     * @param event Unknown opcode event data
+     */
+    handleUnknownInboundOpcode?(event: UnknownOpcodeEvent): void | Promise<void>;
 }

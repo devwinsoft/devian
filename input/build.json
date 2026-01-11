@@ -19,8 +19,8 @@
 
   "protocols": [
     {
-      "group": "Client",
-      "protocolDir": "./Protocols/Client",
+      "group": "Game",
+      "protocolDir": "./Protocols/Game",
       "protocolFiles": ["C2Game.json", "Game2C.json"],
       "csTargetDir": "../framework-cs/modules",
       "tsTargetDir": "../framework-ts/modules",

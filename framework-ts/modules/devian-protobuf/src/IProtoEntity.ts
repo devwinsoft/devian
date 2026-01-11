@@ -1,4 +1,4 @@
-import { IEntity } from 'devian-core';
+import { IEntity } from '@devian/core';
 
 /**
  * Protobuf 직렬화를 지원하는 Entity 계약.

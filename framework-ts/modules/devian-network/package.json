@@ -1,5 +1,5 @@
 {
-  "name": "@devian/network-server",
+  "name": "@devian/network",
   "version": "10.0.0",
   "type": "module",
   "main": "src/index.ts",
@@ -7,7 +7,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./transport": "./src/transport/WsTransport.ts",
-    "./protocol": "./src/protocol/ProtocolServer.ts",
+    "./protocol": "./src/protocol/NetworkServer.ts",
     "./codec": "./src/shared/codec.ts",
     "./frame": "./src/shared/frame.ts"
   },

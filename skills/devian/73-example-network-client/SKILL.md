@@ -11,6 +11,31 @@ ExampleNetworkServer와의 왕복 통신을 통해 Proxy/Stub + codec + frame �
 
 ---
 
+## 핵심 구조
+
+```typescript
+import { NetworkClient, defaultCodec } from '@devian/network';
+import { createClientRuntime } from '@devian/network-game';
+
+// 1. ClientRuntime 생성
+const { runtime, game2CStub, c2GameProxyFactory } = createClientRuntime(defaultCodec);
+
+// 2. NetworkClient 생성
+const client = new NetworkClient(runtime, { sessionId: 0 });
+
+// 3. WebSocket 메시지 위임
+ws.on('message', (raw) => client.onWsMessage(raw));
+
+// 4. Inbound 핸들러 등록 (Game2C)
+game2CStub.onLoginResponse((sid, msg) => { ... });
+
+// 5. Outbound 전송 (C2Game)
+const c2gameProxy = c2GameProxyFactory(sendFn);
+c2gameProxy.sendLoginRequest(0, { ... });
+```
+
+---
+
 ## 고정 규칙
 
 ### 프레임 포맷
@@ -24,19 +49,17 @@ ExampleNetworkServer와의 왕복 통신을 통해 Proxy/Stub + codec + frame �
 
 ### Codec 정합
 
-- 클라이언트는 `@devian/network-server`의 `defaultCodec`을 사용한다
+- 클라이언트는 `@devian/network`의 `defaultCodec`을 사용한다
 - Proxy/Stub에 동일 codec을 주입한다
-
-### Proxy/Stub 사용
-
-- 송신: `C2Game.Proxy(sendFn, defaultCodec)` 사용
-- 수신: `Game2C.Stub(defaultCodec)` + `dispatch(0, opcode, payload)`
 
 ### Unknown Opcode 처리
 
-- 수신 opcode가 `Game2C.getOpcodeName(opcode)`로 조회되지 않으면:
-  - **로그만 남기고 무시**
+- 수신 opcode가 인식되지 않으면:
   - **절대 disconnect/close 하지 않는다**
+  - 처리 우선순위:
+    1. `NetworkClient` 옵션 핸들러 (`onUnknownInboundOpcode`)
+    2. `runtime.setUnknownInboundOpcode(handler)`
+    3. 기본 warn 로그
 
 ---
 
@@ -56,21 +79,21 @@ framework-ts/apps/ExampleNetworkClient/
 ├── tsconfig.json     # TypeScript 설정
 ├── README.md         # 실행 방법
 └── src/
-    ├── index.ts      # 메인 엔트리 (연결, 송수신)
-    └── frame.ts      # 프레임 파싱 유틸리티
+    └── index.ts      # 메인 엔트리 (NetworkClient + ClientRuntime)
 ```
 
 ### 파일 역할
 
 | 파일 | 역할 |
 |------|------|
-| `src/index.ts` | WebSocket 연결, Proxy로 송신, Stub으로 수신 처리 |
-| `src/frame.ts` | 수신 바이트에서 opcode/payload 분리 |
+| `src/index.ts` | WebSocket 연결, NetworkClient로 메시지 처리, Stub/Proxy 사용 |
+
+프레임 파싱 및 메시지 디스패치는 `NetworkClient`가 내부적으로 처리한다.
 
 ---
 
 ## Reference
 
 - **서버 앱:** `framework-ts/apps/ExampleNetworkServer/`
-- **네트워크 모듈:** `framework-ts/modules/devian-network-server/`
-- **프로토콜:** `framework-ts/modules/devian-protocol-client/`
+- **네트워크 모듈:** `framework-ts/modules/devian-network/`
+- **프로토콜:** `framework-ts/modules/devian-network-game/`

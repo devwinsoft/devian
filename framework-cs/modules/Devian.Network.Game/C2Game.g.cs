@@ -11,7 +11,7 @@ using System.IO;
 using System.Text;
 using System.Text.Json;
 
-namespace Devian.Protocol
+namespace Devian.Network.Game
 {
     // Direction: client_to_server
 

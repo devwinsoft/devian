@@ -2,13 +2,12 @@
  * Example Network Client
  * 
  * WebSocket client for testing Proxy/Stub + defaultCodec + frame format.
- * Connects to ExampleNetworkServer and performs round-trip communication.
+ * Uses NetworkClient + ClientRuntime for simplified message handling.
  */
 
 import WebSocket from 'ws';
-import { defaultCodec } from '@devian/network-server';
-import { C2Game, Game2C } from '@devian/protocol-client';
-import { parseFrame } from './frame';
+import { NetworkClient, defaultCodec } from '@devian/network';
+import { createClientRuntime } from '@devian/network-game';
 
 // Environment variables
 const WS_URL = process.env.WS_URL ?? 'ws://localhost:8080';
@@ -18,13 +17,25 @@ const VERSION = parseInt(process.env.VERSION ?? '1', 10);
 async function main() {
     console.log(`[Client] Connecting to ${WS_URL}...`);
 
+    // Create client runtime for 'Game' protocol group
+    const { runtime, game2CStub, c2GameProxyFactory } = createClientRuntime(defaultCodec);
+
+    // Register unknown opcode handler (optional - runtime has default warn)
+    runtime.setUnknownInboundOpcode(async (e) => {
+        console.warn(`[Client] Unknown opcode=${e.opcode} bytes=${e.payload.length} - ignoring`);
+    });
+
+    // Create WebSocket connection
     const ws = new WebSocket(WS_URL);
 
-    // Create Game2C.Stub for receiving server messages
-    const game2cStub = new Game2C.Stub(defaultCodec);
+    // Create NetworkClient for message handling
+    const client = new NetworkClient(runtime, {
+        sessionId: 0,
+        onError: (err) => console.error(`[Client] Network error:`, err),
+    });
 
-    // Register handlers for server messages
-    game2cStub.onLoginResponse((sessionId, msg) => {
+    // Register handlers for server messages (inbound: Game2C)
+    game2CStub.onLoginResponse((sessionId, msg) => {
         console.log(`[Handler] LoginResponse:`, {
             success: msg.success,
             playerId: msg.playerId.toString(),
@@ -33,7 +44,7 @@ async function main() {
         });
     });
 
-    game2cStub.onJoinRoomResponse((sessionId, msg) => {
+    game2CStub.onJoinRoomResponse((sessionId, msg) => {
         console.log(`[Handler] JoinRoomResponse:`, {
             success: msg.success,
             roomId: msg.roomId,
@@ -41,7 +52,7 @@ async function main() {
         });
     });
 
-    game2cStub.onChatNotify((sessionId, msg) => {
+    game2CStub.onChatNotify((sessionId, msg) => {
         console.log(`[Handler] ChatNotify:`, {
             channel: msg.channel,
             senderId: msg.senderId.toString(),
@@ -51,15 +62,13 @@ async function main() {
         });
     });
 
-    // Create send function for C2Game.Proxy
+    // Create outbound proxy (C2Game)
     const sendFn = (sessionId: number, frame: Uint8Array) => {
         if (ws.readyState === WebSocket.OPEN) {
             ws.send(frame);
         }
     };
-
-    // Create C2Game.Proxy for sending client messages
-    const c2gameProxy = new C2Game.Proxy(sendFn, defaultCodec);
+    const c2gameProxy = c2GameProxyFactory(sendFn);
 
     // WebSocket event handlers
     ws.on('open', () => {
@@ -84,44 +93,8 @@ async function main() {
         }, 1000);
     });
 
-    ws.on('message', (data: Buffer | ArrayBuffer | Buffer[]) => {
-        try {
-            // Convert to Uint8Array
-            let bytes: Uint8Array;
-            if (data instanceof Buffer) {
-                bytes = new Uint8Array(data);
-            } else if (data instanceof ArrayBuffer) {
-                bytes = new Uint8Array(data);
-            } else if (Array.isArray(data)) {
-                bytes = new Uint8Array(Buffer.concat(data));
-            } else {
-                console.warn(`[Client] Unknown message type`);
-                return;
-            }
-
-            // Parse frame
-            const frame = parseFrame(bytes);
-            if (!frame) {
-                console.warn(`[Client] Invalid frame received`);
-                return;
-            }
-
-            const { opcode, payload } = frame;
-
-            // Check if opcode is known
-            const opcodeName = Game2C.getOpcodeName(opcode);
-            if (!opcodeName) {
-                // Unknown opcode - log and ignore (NEVER disconnect)
-                console.warn(`[Client] Unknown opcode ${opcode} (${payload.length} bytes) - ignoring`);
-                return;
-            }
-
-            // Dispatch to stub (sessionId=0 for client)
-            game2cStub.dispatch(0, opcode, payload);
-        } catch (error) {
-            console.error(`[Client] Error processing message:`, error);
-        }
-    });
+    // Delegate message handling to NetworkClient
+    ws.on('message', (raw) => client.onWsMessage(raw));
 
     ws.on('error', (error) => {
         console.error(`[Client] WebSocket error:`, error.message);

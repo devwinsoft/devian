@@ -1,15 +1,16 @@
 {
-  "name": "@devian/protocol-client",
+  "name": "@devian/network-game",
   "version": "10.0.0",
   "type": "module",
   "main": "index.ts",
   "types": "index.ts",
   "exports": {
     ".": "./index.ts",
-    "./server-runtime": "./generated/ServerRuntime.g.ts"
+    "./server-runtime": "./generated/ServerRuntime.g.ts",
+    "./client-runtime": "./generated/ClientRuntime.g.ts"
   },
   "dependencies": {
     "@devian/core": "10.0.0",
-    "@devian/network-server": "10.0.0"
+    "@devian/network": "10.0.0"
   }
 }

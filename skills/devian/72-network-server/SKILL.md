@@ -14,16 +14,18 @@ TypeScript 기반 네트워크 서버 모듈의 설계 원칙과 책임 분리�
 
 ### 1. 공용 모듈과 그룹별 런타임 분리
 
-- **devian-network-server**: 공용 코드만 포함
+- **@devian/network**: 공용 코드만 포함
   - WebSocket transport (세션 관리, binary send)
   - Frame 파싱 (int32 LE opcode + payload)
   - Tagged BigInt JSON codec
-  - ProtocolServer (runtime 주입)
+  - NetworkServer (runtime 주입)
+  - NetworkClient (runtime 주입)
 
-- **devian-protocol-{group}**: 그룹별 서버 런타임 제공
+- **@devian/network-{group}**: 그룹별 런타임 제공
   - Inbound opcode 이름 조회
   - Inbound dispatch (stub.dispatch)
   - Outbound proxy 생성
+  - Devian.Network.{Group} namespace 트리
 
 ### 2. Unknown Opcode 정책
 
@@ -37,7 +39,7 @@ Unknown inbound opcode는:
 ## 디렉토리 구조
 
 ```
-framework-ts/modules/devian-network-server/
+framework-ts/modules/devian-network/
 ├── src/
 │   ├── index.ts              # 모듈 exports
 │   ├── shared/
@@ -47,8 +49,9 @@ framework-ts/modules/devian-network-server/
 │   │   ├── ITransport.ts     # Transport 인터페이스
 │   │   └── WsTransport.ts    # WebSocket 구현
 │   └── protocol/
-│       ├── IProtocolRuntime.ts   # 런타임 인터페이스
-│       └── ProtocolServer.ts     # 프로토콜 서버
+│       ├── INetworkRuntime.ts   # 런타임 인터페이스
+│       ├── NetworkServer.ts     # 서버측 메시지 처리
+│       └── NetworkClient.ts     # 클라이언트측 메시지 처리
 ```
 
 ---
@@ -58,8 +61,9 @@ framework-ts/modules/devian-network-server/
 | 구성요소 | 책임 | 금지 |
 |----------|------|------|
 | WsTransport | 세션 관리, binary 송수신 | opcode 해석 |
-| ProtocolServer | frame 파싱, runtime 호출 | disconnect on unknown |
-| IServerProtocolRuntime | opcode 조회, dispatch, proxy 생성 | - |
+| NetworkServer | frame 파싱, runtime 호출 | disconnect on unknown |
+| NetworkClient | ws message → runtime dispatch | disconnect on unknown |
+| INetworkRuntime | opcode 조회, dispatch, proxy 생성 | - |
 | ExampleNetworkServer | 조립 + 핸들러 등록 | 비즈니스 로직 확장 |
 
 ---
@@ -70,10 +74,21 @@ framework-ts/modules/devian-network-server/
 
 예제 앱은 **조립 + 핸들러 등록만** 수행한다.
 
+```typescript
+import { WsTransport, NetworkServer, defaultCodec } from '@devian/network';
+import { createServerRuntime, Game2C } from '@devian/network-game';
+
+const runtime = createServerRuntime(defaultCodec);
+const stub = runtime.getStub();
+
+// 핸들러 등록
+stub.onLoginRequest(async (sessionId, msg) => { ... });
+```
+
 ---
 
 ## Reference
 
-- **공용 모듈:** `framework-ts/modules/devian-network-server/`
-- **그룹 런타임:** `framework-ts/modules/devian-protocol-{group}/generated/ServerRuntime.g.ts`
+- **공용 모듈:** `framework-ts/modules/devian-network/`
+- **그룹 런타임:** `framework-ts/modules/devian-network-{group}/generated/ServerRuntime.g.ts`
 - **정책 정본:** `skills/devian/03-ssot/SKILL.md`

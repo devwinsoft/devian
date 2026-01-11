@@ -9,8 +9,8 @@
   },
   "dependencies": {
     "ws": "^8.14.0",
-    "@devian/protocol-client": "10.0.0",
-    "@devian/network-server": "10.0.0"
+    "@devian/network": "10.0.0",
+    "@devian/network-game": "10.0.0"
   },
   "devDependencies": {
     "@types/ws": "^8.5.0",

@@ -7,8 +7,8 @@ Devian Network Server 예제 앱입니다.
 이 앱은 **조립만** 수행합니다:
 
 1. `WsTransport` - WebSocket 전송 계층
-2. `ClientServerRuntime` - Client 그룹 프로토콜 런타임
-3. `ProtocolServer` - 프로토콜 서버 (transport + runtime 연결)
+2. `NetworkServerRuntime` - Game 그룹 프로토콜 런타임
+3. `NetworkServer` - 프로토콜 서버 (transport + runtime 연결)
 
 ## 실행
 

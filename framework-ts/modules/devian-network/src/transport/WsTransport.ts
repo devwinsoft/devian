@@ -121,7 +121,11 @@ export class WsTransport implements ITransport {
                     return;
                 }
 
-                this.events.onBinaryMessage?.(sessionId, bytes);
+                // Handle async callback rejection - forward to onError
+                const p = this.events.onBinaryMessage?.(sessionId, bytes);
+                void Promise.resolve(p).catch((err) => {
+                    this.events.onError?.(sessionId, err as Error);
+                });
             } catch (error) {
                 this.events.onError?.(sessionId, error as Error);
             }

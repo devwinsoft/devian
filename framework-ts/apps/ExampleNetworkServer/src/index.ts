@@ -1,38 +1,38 @@
 /**
  * Example Network Server
  * 
- * This app demonstrates how to assemble devian-network-server
+ * This app demonstrates how to assemble devian-network
  * with a protocol group's server runtime.
  * 
  * This file only:
- * - Assembles transport + protocol runtime
+ * - Assembles transport + network runtime
  * - Registers message handlers
  * - Handles unknown opcodes via hook (no disconnect)
  */
 
 import {
     WsTransport,
-    ProtocolServer,
+    NetworkServer,
     defaultCodec,
     type UnknownOpcodeEvent,
-} from '@devian/network-server';
+} from '@devian/network';
 
 import {
     createServerRuntime,
     Game2C,
-} from '@devian/protocol-client';
+} from '@devian/network-game';
 
 const PORT = 8080;
 
 async function main() {
-    // 1. Create protocol runtime for 'Client' group
+    // 1. Create network runtime for 'Game' group
     const runtime = createServerRuntime(defaultCodec);
 
     // 2. Get stub for handler registration
     const stub = runtime.getStub();
 
-    // 3. Create protocol server (will be wired after transport creation)
-    let protocol: ProtocolServer;
+    // 3. Create network server (will be wired after transport creation)
+    let server: NetworkServer;
 
     // 4. Create single transport with events
     const transport = new WsTransport(
@@ -45,8 +45,8 @@ async function main() {
                 console.log(`[App] Session ${sessionId} disconnected`);
             },
             onBinaryMessage: async (sessionId, data) => {
-                // Delegate to protocol server
-                await protocol.onBinaryMessage(sessionId, data);
+                // Delegate to network server
+                await server.onBinaryMessage(sessionId, data);
             },
             onError: (sessionId, error) => {
                 console.error(`[App] Session ${sessionId} error:`, error.message);
@@ -54,8 +54,8 @@ async function main() {
         }
     );
 
-    // 5. Create protocol server with the same transport
-    protocol = new ProtocolServer(transport, runtime, {
+    // 5. Create network server with the same transport
+    server = new NetworkServer(transport, runtime, {
         onUnknownInboundOpcode: async (event: UnknownOpcodeEvent) => {
             // Log only - NEVER disconnect (async hook supported)
             console.warn(
@@ -66,7 +66,7 @@ async function main() {
     });
 
     // 6. Get typed outbound proxy (uses the same transport)
-    const game2cProxy = protocol.createOutboundProxy<Game2C.Proxy>();
+    const game2cProxy = server.createOutboundProxy<Game2C.Proxy>();
 
     // 7. Register message handlers on stub
     stub.onLoginRequest(async (sessionId, msg) => {

@@ -6,7 +6,7 @@
     "devian-core",
     "devian-protobuf",
     "devian-module-*",
-    "devian-protocol-*",
+    "devian-network",
     "devian-network-*"
   ]
 }

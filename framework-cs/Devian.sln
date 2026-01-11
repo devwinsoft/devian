@@ -11,7 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Devian.Network", "modules\D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Devian.Module.Common", "modules\Devian.Module.Common\Devian.Module.Common.csproj", "{C3D4E5F6-3333-4444-5555-666677778888}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Devian.Protocol.Client", "modules\Devian.Protocol.Client\Devian.Protocol.Client.csproj", "{F6A7B8C9-6666-7777-8888-999900001111}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Devian.Network.Game", "modules\Devian.Network.Game\Devian.Network.Game.csproj", "{F6A7B8C9-6666-7777-8888-999900001111}"
 EndProject
 
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "modules", "modules", "{22222222-0000-0000-0000-000000000002}"
