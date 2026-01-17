@@ -7,11 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Devian.Core\Devian.Core.csproj" />
     <ProjectReference Include="..\Devian.Network\Devian.Network.csproj" />
+    <ProjectReference Include="..\Devian.Module.Common\Devian.Module.Common.csproj" />
   </ItemGroup>
 </Project>

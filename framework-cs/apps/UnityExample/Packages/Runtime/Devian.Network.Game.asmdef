@@ -1,0 +1,10 @@
+{
+  "name": "Devian.Network.Game",
+  "references": [
+    "Devian.Core",
+    "Devian.Network",
+    "Devian.Module.Common"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": []
+}

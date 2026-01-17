@@ -1,0 +1,14 @@
+{
+  "version": "10",
+  "tempDir": "temp_sample",
+
+  "protocols": [
+    {
+      "group": "Sample",
+      "protocolDir": "./Protocols/Sample",
+      "protocolFiles": ["C2Sample.json", "Sample2C.json"],
+      "csTargetDir": "../framework-cs/apps/UnityExample/Packages/com.devian.unity.network/Runtime/Generated.Sample",
+      "tsTargetDir": "../framework-ts/modules"
+    }
+  ]
+}

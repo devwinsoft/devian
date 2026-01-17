@@ -1,0 +1,10 @@
+{
+  "name": "Devian.Network.Game.Editor",
+  "references": [
+    "Devian.Network.Game"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": []
+}

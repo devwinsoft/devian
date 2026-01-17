@@ -25,10 +25,15 @@ Table generator의 **정책적 규칙**만 정의한다.
 - TS: `TB_{SheetName}` (최상위, static 멤버)
 - 예: Sheet `TestSheet` → `TB_TestSheet`
 
+**PrimaryKey(`key:true`)가 없는 sheet는 Container 클래스를 생성하지 않는다.**
+
+- PrimaryKey가 있는 sheet → `TB_{SheetName}` 생성
+- PrimaryKey가 없는 sheet → Container 생성 안함 (Entity만 생성)
+
 ### Namespace (C#)
 
-- `Devian.{DomainKey}`를 사용한다.
-- 예: Domain `Common` → `namespace Devian.Common`
+- `Devian.Module.{DomainKey}`를 사용한다.
+- 예: Domain `Common` → `namespace Devian.Module.Common`
 
 ---
 
@@ -109,16 +114,65 @@ export interface VECTOR3 extends IEntity {
 
 Domain 내 모든 Contract, Table Entity, Table Container는 **단일 파일에 통합** 생성된다.
 
-| 산출물 | 파일명 패턴 | 예시 |
-|--------|-------------|------|
-| C# (통합) | `{DomainKey}.g.cs` | `Common.g.cs` |
-| TS (통합) | `{DomainKey}.g.ts` | `Common.g.ts` |
-| NDJSON Data | `{SheetName}.ndjson` | `TestSheet.ndjson` |
+| 산출물 | 파일명 패턴 | 예시 | 생성 조건 |
+|--------|-------------|------|-----------|
+| C# (통합) | `{DomainKey}.g.cs` | `Common.g.cs` | 항상 |
+| TS (통합) | `{DomainKey}.g.ts` | `Common.g.ts` | 항상 |
+| NDJSON Data | `{SheetName}.ndjson` | `TestSheet.ndjson` | PrimaryKey 있는 sheet만 |
+
+---
+
+## Common Dependency (Hard Rule)
+
+DATA Domain 모듈은 Common 참조 여부를 판정하지 않는다.
+
+- `{DomainKey} != Common`인 모든 DATA Domain 모듈은 `Devian.Module.Common` / `@devian/module-common`을 **무조건** 참조한다.
+- Common 모듈 자기 자신은 자기 자신을 참조하지 않는다.
+
+필수 적용:
+
+- C#: `{csTargetDir}/Devian.Module.{DomainKey}/Devian.Module.{DomainKey}.csproj`는 `Devian.Module.Common`을 ProjectReference로 포함해야 한다.
+- TS: `@devian/module-{domainkey}`의 `package.json` `dependencies`에 `@devian/module-common`을 포함해야 한다.
+
+---
+
+## Unity Compatibility (Hard Rule)
+
+Unity 환경에서의 호환성을 위해 다음 규칙을 강제한다.
+
+**C# Domain 코드 생성 시:**
+
+1. **System.Text.Json 사용 금지**
+   - Unity는 `System.Text.Json`을 기본 제공하지 않음
+   - `using System.Text.Json;` 생성 금지
+   - `JsonDocument`, `JsonSerializer` 등 사용 금지
+
+2. **Newtonsoft.Json 사용**
+   - Unity는 `Newtonsoft.Json`을 기본 제공 (com.unity.nuget.newtonsoft-json)
+   - `using Newtonsoft.Json;` 사용
+   - `JsonConvert.DeserializeObject<T>()` 사용
+
+**UPM package.json 종속성:**
+
+생성 코드가 Newtonsoft.Json을 사용하므로, UPM package.json 생성 시 종속성도 함께 추가한다.
+
+```json
+{
+  "name": "com.devian.module.{domain}",
+  "dependencies": {
+    "com.devian.core": "1.0.0",
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
+  }
+}
+```
+
+- 빌드 시스템이 Domain UPM scaffold 생성 시 자동으로 `com.unity.nuget.newtonsoft-json` 종속성 추가
+- 코드와 종속성 일치 보장
 
 ### 파일 구조 (C#)
 
 ```csharp
-namespace Devian.{DomainKey}
+namespace Devian.Module.{DomainKey}
 {
     // Contracts (enum, class : IEntity)
     // Table Entities (class : IEntity 또는 IEntityKey<T>)
@@ -129,7 +183,7 @@ namespace Devian.{DomainKey}
 ### 파일 구조 (TS)
 
 ```typescript
-import { IEntity, IEntityKey } from 'devian-core';
+import { IEntity, IEntityKey } from '@devian/core';
 
 // Contracts (enum, interface extends IEntity)
 // Table Interfaces (extends IEntity 또는 IEntityKey<T>)
@@ -139,6 +193,8 @@ import { IEntity, IEntityKey } from 'devian-core';
 ---
 
 ## Container API (정책)
+
+> Container(`TB_{SheetName}`)는 PrimaryKey가 있는 sheet에 대해서만 생성된다.
 
 ### C# Container (static class TB_{SheetName})
 

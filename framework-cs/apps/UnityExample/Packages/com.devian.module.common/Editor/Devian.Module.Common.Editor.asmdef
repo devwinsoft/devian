@@ -1,0 +1,10 @@
+{
+  "name": "Devian.Module.Common.Editor",
+  "references": [
+    "Devian.Module.Common"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": []
+}

@@ -93,6 +93,10 @@ class DevianToolBuilder {
             }
         }
 
+        // 5. Sync UPM samples metadata
+        console.log('[Phase 3] Sync UPM samples metadata...');
+        await this.syncAllUpmSamples();
+
         console.log();
         console.log('='.repeat(60));
         console.log('Build completed successfully!');
@@ -181,12 +185,12 @@ class DevianToolBuilder {
         lines.push('using System;');
         lines.push('using System.Collections.Generic;');
         lines.push('using System.IO;');
-        lines.push('using System.Text.Json;');
+        lines.push('using Newtonsoft.Json;');
         lines.push('using Devian.Core;');
         lines.push('');
 
         // Namespace
-        lines.push(`namespace Devian.${domainName}`);
+        lines.push(`namespace Devian.Module.${domainName}`);
         lines.push('{');
 
         // Contracts section
@@ -253,7 +257,7 @@ class DevianToolBuilder {
             if (hasKeyedTables) {
                 imports.push('IEntityKey');
             }
-            lines.push(`import { ${imports.join(', ')} } from 'devian-core';`);
+            lines.push(`import { ${imports.join(', ')} } from '@devian/core';`);
             lines.push('');
         }
 
@@ -326,12 +330,11 @@ class DevianToolBuilder {
             this.cleanAndCopy(stagingTs, target);
             console.log(`    [Copy] ${stagingTs} -> ${target}`);
 
-            // Copy index.ts
-            const stagingIndexTs = path.join(stagingTsRoot, 'index.ts');
-            const targetIndexTs = path.join(resolvedTargetDir, 'index.ts');
-            if (fs.existsSync(stagingIndexTs)) {
-                fs.copyFileSync(stagingIndexTs, targetIndexTs);
-            }
+            // Update index.ts with marker-based approach (DO NOT overwrite entirely)
+            this.updateDomainIndexTs(resolvedTargetDir, domainName);
+
+            // Update features/index.ts with auto-scanned exports
+            this.updateFeaturesIndexTs(resolvedTargetDir);
 
             // Generate tsconfig.json if not exists
             this.ensureTsConfig(resolvedTargetDir);
@@ -347,10 +350,11 @@ class DevianToolBuilder {
             console.log(`    [Copy] ${stagingData} -> ${target}`);
         }
 
-        // Copy to UPM target
+        // Copy to UPM target: {upmTargetDir}/com.devian.module.{domain}/
         if (config.upmTargetDir) {
             const stagingUpm = path.join(this.tempDir, domainName, 'upm');
-            const target = this.resolvePath(config.upmTargetDir);
+            const packageName = `com.devian.module.${domainName.toLowerCase()}`;
+            const target = path.join(this.resolvePath(config.upmTargetDir), packageName);
             this.copyUpmToTarget(stagingUpm, target);
             console.log(`    [Copy UPM] ${stagingUpm} -> ${target}`);
         }
@@ -463,12 +467,13 @@ class DevianToolBuilder {
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\\Devian.Core\\Devian.Core.csproj" />
     <ProjectReference Include="..\\Devian.Network\\Devian.Network.csproj" />
+    <ProjectReference Include="..\\Devian.Module.Common\\Devian.Module.Common.csproj" />
   </ItemGroup>
 </Project>
 `;
@@ -774,6 +779,232 @@ class DevianToolBuilder {
         return result;
     }
 
+    // ========================================================================
+    // Marker-based Index Management Utilities
+    // ========================================================================
+
+    /**
+     * Read file content or return empty string if not exists
+     */
+    readTextOrEmpty(filePath) {
+        if (fs.existsSync(filePath)) {
+            return fs.readFileSync(filePath, 'utf-8');
+        }
+        return '';
+    }
+
+    /**
+     * Write text to file with trailing newline
+     */
+    writeText(filePath, text) {
+        const content = text.endsWith('\n') ? text : text + '\n';
+        fs.writeFileSync(filePath, content);
+    }
+
+    /**
+     * Ensure file exists, create with initial content if not
+     */
+    ensureFile(filePath, initialContent) {
+        if (!fs.existsSync(filePath)) {
+            fs.mkdirSync(path.dirname(filePath), { recursive: true });
+            this.writeText(filePath, initialContent);
+            return true; // created
+        }
+        return false; // already exists
+    }
+
+    /**
+     * Update marker block in text content
+     * Returns updated text or throws if markers not found
+     */
+    updateMarkerBlock(text, startMarker, endMarker, replacementLines) {
+        const startIdx = text.indexOf(startMarker);
+        const endIdx = text.indexOf(endMarker);
+
+        if (startIdx === -1 || endIdx === -1) {
+            throw new Error(`Marker not found: ${startMarker} or ${endMarker}`);
+        }
+
+        const before = text.substring(0, startIdx + startMarker.length);
+        const after = text.substring(endIdx);
+
+        const replacement = replacementLines.length > 0
+            ? '\n' + replacementLines.join('\n') + '\n'
+            : '\n';
+
+        return before + replacement + after;
+    }
+
+    /**
+     * Generate initial index.ts template with markers
+     */
+    generateDomainIndexTsTemplate(domainName) {
+        return `// <auto-generated>
+// DO NOT EDIT - Generated by Devian Build System v10
+// </auto-generated>
+
+// <devian:domain-exports>
+export * from './generated/${domainName}.g';
+// </devian:domain-exports>
+
+// <devian:feature-exports>
+export * from './features';
+// </devian:feature-exports>
+`;
+    }
+
+    /**
+     * Generate initial features/index.ts template with markers
+     */
+    generateFeaturesIndexTsTemplate() {
+        return `// <auto-generated>
+// DO NOT EDIT - Generated by Devian Build System v10
+// This file is auto-managed. Do not edit marker blocks.
+// </auto-generated>
+
+// <devian:feature-exports>
+// </devian:feature-exports>
+`;
+    }
+
+    /**
+     * Scan features directory and return sorted export lines
+     */
+    scanFeaturesForExports(featuresDir) {
+        if (!fs.existsSync(featuresDir)) {
+            return [];
+        }
+
+        const entries = fs.readdirSync(featuresDir, { withFileTypes: true });
+        const exports = [];
+
+        for (const entry of entries) {
+            const name = entry.name;
+
+            // Skip exclusions
+            if (name === 'index.ts') continue;
+            if (name.startsWith('.')) continue;
+            if (name === 'generated') continue;
+            if (name.endsWith('.test.ts') || name.endsWith('.spec.ts')) continue;
+            if (name.endsWith('.d.ts')) continue;
+
+            if (entry.isDirectory()) {
+                // Directory -> export * from './{dir}';
+                exports.push({ name, line: `export * from './${name}';` });
+            } else if (name.endsWith('.ts')) {
+                // .ts file -> export * from './{basename}';
+                const basename = name.slice(0, -3); // remove .ts
+                exports.push({ name: basename, line: `export * from './${basename}';` });
+            }
+        }
+
+        // Sort by name (localeCompare for deterministic order)
+        exports.sort((a, b) => a.name.localeCompare(b.name));
+
+        return exports.map(e => e.line);
+    }
+
+    /**
+     * Update or create root index.ts with marker-based approach
+     */
+    updateDomainIndexTs(targetDir, domainName) {
+        const indexPath = path.join(targetDir, 'index.ts');
+
+        // Create template if not exists
+        if (!fs.existsSync(indexPath)) {
+            const template = this.generateDomainIndexTsTemplate(domainName);
+            this.writeText(indexPath, template);
+            console.log(`    [Create] ${indexPath}`);
+            return;
+        }
+
+        // Update marker blocks
+        let content = this.readTextOrEmpty(indexPath);
+
+        // Update domain-exports block
+        const domainExports = [`export * from './generated/${domainName}.g';`];
+        try {
+            content = this.updateMarkerBlock(
+                content,
+                '// <devian:domain-exports>',
+                '// </devian:domain-exports>',
+                domainExports
+            );
+        } catch (e) {
+            // Marker not found - regenerate file
+            console.log(`    [Warn] Marker not found in ${indexPath}, regenerating...`);
+            const template = this.generateDomainIndexTsTemplate(domainName);
+            this.writeText(indexPath, template);
+            return;
+        }
+
+        // Update feature-exports block
+        const featureExports = [`export * from './features';`];
+        try {
+            content = this.updateMarkerBlock(
+                content,
+                '// <devian:feature-exports>',
+                '// </devian:feature-exports>',
+                featureExports
+            );
+        } catch (e) {
+            // Continue even if feature marker not found (legacy file)
+            console.log(`    [Warn] Feature marker not found in ${indexPath}`);
+        }
+
+        this.writeText(indexPath, content);
+        console.log(`    [Update] ${indexPath} (marker)`);
+    }
+
+    /**
+     * Update or create features/index.ts with auto-scanned exports
+     */
+    updateFeaturesIndexTs(targetDir) {
+        const featuresDir = path.join(targetDir, 'features');
+        const featuresIndexPath = path.join(featuresDir, 'index.ts');
+
+        // Ensure features directory exists
+        if (!fs.existsSync(featuresDir)) {
+            fs.mkdirSync(featuresDir, { recursive: true });
+        }
+
+        // Create template if not exists
+        if (!fs.existsSync(featuresIndexPath)) {
+            const template = this.generateFeaturesIndexTsTemplate();
+            this.writeText(featuresIndexPath, template);
+            console.log(`    [Create] ${featuresIndexPath}`);
+        }
+
+        // Scan features and update marker block
+        const featureExports = this.scanFeaturesForExports(featuresDir);
+
+        let content = this.readTextOrEmpty(featuresIndexPath);
+
+        try {
+            content = this.updateMarkerBlock(
+                content,
+                '// <devian:feature-exports>',
+                '// </devian:feature-exports>',
+                featureExports
+            );
+            this.writeText(featuresIndexPath, content);
+            if (featureExports.length > 0) {
+                console.log(`    [Update] ${featuresIndexPath} (${featureExports.length} exports)`);
+            }
+        } catch (e) {
+            console.log(`    [Warn] Marker not found in ${featuresIndexPath}, regenerating...`);
+            const template = this.generateFeaturesIndexTsTemplate();
+            // Insert exports into template
+            const updatedTemplate = this.updateMarkerBlock(
+                template,
+                '// <devian:feature-exports>',
+                '// </devian:feature-exports>',
+                featureExports
+            );
+            this.writeText(featuresIndexPath, updatedTemplate);
+        }
+    }
+
     cleanAndCopy(src, dest) {
         // Clean target
         if (fs.existsSync(dest)) {
@@ -828,6 +1059,10 @@ class DevianToolBuilder {
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\\Devian.Core\\Devian.Core.csproj" />
   </ItemGroup>
 </Project>
@@ -857,7 +1092,8 @@ class DevianToolBuilder {
         
         // Build dependencies
         const dependencies = {
-            '@devian/core': '10.0.0'
+            '@devian/core': '10.0.0',
+            '@devian/module-common': '10.0.0'
         };
         if (hasServerRuntime || hasClientRuntime) {
             dependencies['@devian/network'] = '10.0.0';
@@ -892,6 +1128,7 @@ class DevianToolBuilder {
     // ========================================================================
 
     generateDomainUpmScaffold(domainName, stagingCs) {
+        const asmdefName = `Devian.Module.${domainName}`;
         const stagingUpm = path.join(this.tempDir, domainName, 'upm');
         const stagingRuntime = path.join(stagingUpm, 'Runtime');
         const stagingEditor = path.join(stagingUpm, 'Editor');
@@ -901,31 +1138,35 @@ class DevianToolBuilder {
 
         // package.json
         const packageJson = JSON.stringify({
-            name: `com.devian.${domainName.toLowerCase()}`,
+            name: `com.devian.module.${domainName.toLowerCase()}`,
             version: '1.0.0',
-            displayName: `Devian ${domainName}`,
+            displayName: `Devian Module ${domainName}`,
             description: 'Generated by Devian Build System',
-            unity: '2021.3'
+            unity: '2021.3',
+            dependencies: {
+                'com.devian.core': '1.0.0',
+                'com.unity.nuget.newtonsoft-json': '3.2.1'
+            }
         }, null, 2);
         fs.writeFileSync(path.join(stagingUpm, 'package.json'), packageJson);
 
         // Runtime.asmdef
         const runtimeAsmdef = JSON.stringify({
-            name: `Devian.${domainName}`,
+            name: asmdefName,
             references: ['Devian.Core'],
             includePlatforms: [],
             excludePlatforms: []
         }, null, 2);
-        fs.writeFileSync(path.join(stagingRuntime, `Devian.${domainName}.asmdef`), runtimeAsmdef);
+        fs.writeFileSync(path.join(stagingRuntime, `${asmdefName}.asmdef`), runtimeAsmdef);
 
         // Editor.asmdef
         const editorAsmdef = JSON.stringify({
-            name: `Devian.${domainName}.Editor`,
-            references: [`Devian.${domainName}`],
+            name: `${asmdefName}.Editor`,
+            references: [asmdefName],
             includePlatforms: ['Editor'],
             excludePlatforms: []
         }, null, 2);
-        fs.writeFileSync(path.join(stagingEditor, `Devian.${domainName}.Editor.asmdef`), editorAsmdef);
+        fs.writeFileSync(path.join(stagingEditor, `${asmdefName}.Editor.asmdef`), editorAsmdef);
 
         // Copy C# generated files to Runtime
         if (fs.existsSync(stagingCs)) {
@@ -962,7 +1203,7 @@ class DevianToolBuilder {
         // Runtime.asmdef
         const runtimeAsmdef = JSON.stringify({
             name: csProjectName,
-            references: ['Devian.Core', 'Devian.Network'],
+            references: ['Devian.Core', 'Devian.Network', 'Devian.Module.Common'],
             includePlatforms: [],
             excludePlatforms: []
         }, null, 2);
@@ -1002,6 +1243,9 @@ class DevianToolBuilder {
             fs.copyFileSync(packageJsonSrc, packageJsonDest);
         }
 
+        // Sync samples metadata if Samples~ folder exists
+        this.syncSamplesMetadata(targetDir);
+
         // Editor folder (don't overwrite if exist)
         const stagingEditor = path.join(stagingUpm, 'Editor');
         const targetEditor = path.join(targetDir, 'Editor');
@@ -1019,6 +1263,246 @@ class DevianToolBuilder {
         const stagingRuntime = path.join(stagingUpm, 'Runtime');
         const targetRuntime = path.join(targetDir, 'Runtime');
         this.cleanAndCopy(stagingRuntime, targetRuntime);
+    }
+
+    /**
+     * Sync samples metadata in package.json based on Samples~ folder contents.
+     * If Samples~ folder exists with subfolders, automatically adds/updates samples field.
+     * @param {string} packageDir - UPM package directory
+     */
+    syncSamplesMetadata(packageDir) {
+        const packageJsonPath = path.join(packageDir, 'package.json');
+        const samplesDir = path.join(packageDir, 'Samples~');
+
+        // Skip if no package.json
+        if (!fs.existsSync(packageJsonPath)) return;
+
+        // Check if Samples~ folder exists
+        if (!fs.existsSync(samplesDir)) return;
+
+        // Get sample folders
+        const sampleFolders = fs.readdirSync(samplesDir, { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory())
+            .map(dirent => dirent.name);
+
+        // Skip if no sample folders
+        if (sampleFolders.length === 0) return;
+
+        // Read existing package.json
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+
+        // Build samples array from folder structure
+        const samples = sampleFolders.map(folderName => {
+            const samplePath = `Samples~/${folderName}`;
+            
+            // Check for existing sample entry to preserve displayName/description
+            const existingSample = (packageJson.samples || [])
+                .find(s => s.path === samplePath);
+
+            if (existingSample) {
+                return existingSample;
+            }
+
+            // Generate default metadata for new samples
+            return {
+                displayName: this.folderNameToDisplayName(folderName),
+                description: `Sample: ${folderName}`,
+                path: samplePath
+            };
+        });
+
+        // Update samples field
+        packageJson.samples = samples;
+
+        // Write back with 2-space indent
+        fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
+        console.log(`      [UPM] Synced ${samples.length} sample(s) in ${path.basename(packageDir)}/package.json`);
+    }
+
+    /**
+     * Convert folder name to display name (e.g., "BasicWsClient" -> "Basic Ws Client")
+     * @param {string} folderName - Folder name
+     * @returns {string} - Human-readable display name
+     */
+    folderNameToDisplayName(folderName) {
+        // Insert space before uppercase letters and trim
+        return folderName
+            .replace(/([A-Z])/g, ' $1')
+            .replace(/^[\s]/, '')
+            .trim();
+    }
+
+    /**
+     * Convert asmdef reference name to UPM package name.
+     * @param {string} asmdefRef - Assembly reference name (e.g., "Devian.Core", "Devian.Module.Common")
+     * @returns {string|null} - UPM package name or null if not mappable
+     */
+    asmdefRefToUpmPackage(asmdefRef) {
+        const mapping = {
+            'Devian.Core': 'com.devian.core',
+            'Devian.Network': 'com.devian.network',
+            'Devian.Protobuf': 'com.devian.protobuf',
+        };
+
+        // Direct mapping
+        if (mapping[asmdefRef]) {
+            return mapping[asmdefRef];
+        }
+
+        // Pattern: Devian.Module.{Domain} -> com.devian.module.{domain}
+        const moduleMatch = asmdefRef.match(/^Devian\.Module\.(\w+)$/);
+        if (moduleMatch) {
+            return `com.devian.module.${moduleMatch[1].toLowerCase()}`;
+        }
+
+        // Skip self-references or unknown packages
+        return null;
+    }
+
+    /**
+     * Scan Runtime/Generated.* folders for asmdef files and extract their references.
+     * Updates package.json dependencies based on asmdef references.
+     * @param {string} packageDir - UPM package directory
+     */
+    syncGeneratedDependencies(packageDir) {
+        const packageJsonPath = path.join(packageDir, 'package.json');
+        const runtimeDir = path.join(packageDir, 'Runtime');
+
+        // Skip if no package.json or Runtime folder
+        if (!fs.existsSync(packageJsonPath)) return;
+        if (!fs.existsSync(runtimeDir)) return;
+
+        // Find Generated.* folders
+        const generatedFolders = fs.readdirSync(runtimeDir, { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory() && dirent.name.startsWith('Generated.'))
+            .map(dirent => path.join(runtimeDir, dirent.name));
+
+        if (generatedFolders.length === 0) return;
+
+        // Collect all asmdef references
+        const allRefs = new Set();
+
+        for (const folder of generatedFolders) {
+            // Find all .asmdef files recursively
+            const findAsmdefFiles = (dir) => {
+                const files = [];
+                const entries = fs.readdirSync(dir, { withFileTypes: true });
+                for (const entry of entries) {
+                    const fullPath = path.join(dir, entry.name);
+                    if (entry.isDirectory()) {
+                        files.push(...findAsmdefFiles(fullPath));
+                    } else if (entry.name.endsWith('.asmdef')) {
+                        files.push(fullPath);
+                    }
+                }
+                return files;
+            };
+
+            const asmdefFiles = findAsmdefFiles(folder);
+            
+            for (const asmdefPath of asmdefFiles) {
+                try {
+                    const asmdef = JSON.parse(fs.readFileSync(asmdefPath, 'utf-8'));
+                    if (asmdef.references && Array.isArray(asmdef.references)) {
+                        for (const ref of asmdef.references) {
+                            allRefs.add(ref);
+                        }
+                    }
+                } catch (e) {
+                    console.warn(`      [WARN] Failed to parse ${asmdefPath}: ${e.message}`);
+                }
+            }
+        }
+
+        if (allRefs.size === 0) return;
+
+        // Read existing package.json
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
+        const existingDeps = packageJson.dependencies || {};
+
+        // Default versions for packages (can be improved by scanning actual packages)
+        const defaultVersions = {
+            'com.devian.core': '0.1.0',
+            'com.devian.network': '0.1.0',
+            'com.devian.protobuf': '0.1.0',
+            'com.devian.module.common': '1.0.0',
+        };
+
+        // Convert refs to UPM packages and add to dependencies
+        let addedCount = 0;
+        for (const ref of allRefs) {
+            const upmPackage = this.asmdefRefToUpmPackage(ref);
+            if (upmPackage && !existingDeps[upmPackage]) {
+                const version = defaultVersions[upmPackage] || '1.0.0';
+                existingDeps[upmPackage] = version;
+                addedCount++;
+            }
+        }
+
+        if (addedCount > 0) {
+            packageJson.dependencies = existingDeps;
+            fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2) + '\n');
+            console.log(`      [UPM] Added ${addedCount} generated dependencies in ${path.basename(packageDir)}/package.json`);
+        }
+    }
+
+    /**
+     * Sync samples metadata for all UPM packages in configured upmTargetDirs.
+     * Scans for packages with Samples~ folders and updates their package.json.
+     */
+    async syncAllUpmSamples() {
+        // Collect all unique upmTargetDirs from config
+        const upmTargetDirs = new Set();
+
+        if (this.config.domains) {
+            for (const domainConfig of Object.values(this.config.domains)) {
+                if (domainConfig.upmTargetDir) {
+                    upmTargetDirs.add(this.resolvePath(domainConfig.upmTargetDir));
+                }
+            }
+        }
+
+        if (this.config.protocols && Array.isArray(this.config.protocols)) {
+            for (const protocolConfig of this.config.protocols) {
+                if (protocolConfig.upmTargetDir) {
+                    upmTargetDirs.add(this.resolvePath(protocolConfig.upmTargetDir));
+                }
+            }
+        }
+
+        if (upmTargetDirs.size === 0) {
+            console.log('  No UPM target directories configured, skipping samples sync.');
+            return;
+        }
+
+        // Scan each upmTargetDir for UPM packages with Samples~ folders
+        for (const packagesDir of upmTargetDirs) {
+            if (!fs.existsSync(packagesDir)) continue;
+
+            console.log(`  [Scan] ${packagesDir}`);
+
+            // List subdirectories (each should be a UPM package)
+            const entries = fs.readdirSync(packagesDir, { withFileTypes: true });
+            for (const entry of entries) {
+                if (!entry.isDirectory()) continue;
+
+                const packageDir = path.join(packagesDir, entry.name);
+                const packageJsonPath = path.join(packageDir, 'package.json');
+                const samplesDir = path.join(packageDir, 'Samples~');
+
+                // Skip if not a UPM package (no package.json)
+                if (!fs.existsSync(packageJsonPath)) continue;
+
+                // Skip if no Samples~ folder
+                if (!fs.existsSync(samplesDir)) continue;
+
+                // Sync samples metadata
+                this.syncSamplesMetadata(packageDir);
+
+                // Sync generated dependencies from Runtime/Generated.* asmdef files
+                this.syncGeneratedDependencies(packageDir);
+            }
+        }
     }
 }
 

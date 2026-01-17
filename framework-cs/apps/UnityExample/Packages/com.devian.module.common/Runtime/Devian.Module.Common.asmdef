@@ -1,0 +1,8 @@
+{
+  "name": "Devian.Module.Common",
+  "references": [
+    "Devian.Core"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": []
+}

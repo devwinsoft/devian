@@ -1,4 +1,4 @@
-import { ICodec } from 'devian-core';
+import { ICodec } from '@devian/core';
 
 /**
  * Protobuf Codec 설정

@@ -32,8 +32,8 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 
 | 타겟 | Domain 출력 경로 | Protocol 출력 경로 |
 |------|------------------|-------------------|
-| C# | `{csTargetDir}/Devian.Module.{Domain}/` | `{csTargetDir}/Devian.Protocol.{Group}/` |
-| TS | `{tsTargetDir}/devian-module-{domain}/` | `{tsTargetDir}/devian-protocol-{group}/` |
+| C# | `{csTargetDir}/Devian.Module.{Domain}/` | `{csTargetDir}/Devian.Network.{Group}/` |
+| TS | `{tsTargetDir}/devian-module-{domain}/` | `{tsTargetDir}/devian-network-{group}/` |
 | Data | `{dataTargetDir}/{Domain}/json/` | - |
 
 ### 권장 구조
@@ -47,8 +47,8 @@ framework-cs/
 │   ├── Devian.Module.{Domain}/             # Domain 모듈 (generated)
 │   │   └── generated/
 │   │       └── {Domain}.g.cs
-│   └── Devian.Protocol.{Group}/            # Protocol 모듈 (generated)
-│       ├── Devian.Protocol.{Group}.csproj
+│   └── Devian.Network.{Group}/             # Protocol 모듈 (generated)
+│       ├── Devian.Network.{Group}.csproj
 │       └── {ProtocolName}.g.cs
 
 framework-ts/
@@ -59,7 +59,7 @@ framework-ts/
 │   │   ├── generated/
 │   │   │   └── {Domain}.g.ts
 │   │   └── index.ts
-│   └── devian-protocol-{group}/            # Protocol 모듈 (generated)
+│   └── devian-network-{group}/             # Protocol 모듈 (generated)
 │       ├── {ProtocolName}.g.ts
 │       └── index.ts
 
@@ -75,7 +75,7 @@ output/
 
 ## TypeScript Module Configuration
 
-generated TS 코드가 `devian-core`, `devian-protobuf` 모듈을 import하기 위해 **paths alias 설정**이 필요하다.
+generated TS 코드가 `@devian/core`, `@devian/protobuf` 모듈을 import하기 위해 **paths alias 설정**이 필요하다.
 
 ### framework/ts/tsconfig.json (루트)
 
@@ -84,8 +84,8 @@ generated TS 코드가 `devian-core`, `devian-protobuf` 모듈을 import하기 �
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "devian-core": ["./devian-core/src"],
-      "devian-protobuf": ["./devian-protobuf/src"]
+      "@devian/core": ["./devian-core/src"],
+      "@devian/protobuf": ["./devian-protobuf/src"]
     }
   }
 }
@@ -100,8 +100,8 @@ generated TS 코드가 `devian-core`, `devian-protobuf` 모듈을 import하기 �
 export default {
   resolve: {
     alias: {
-      'devian-core': path.resolve(__dirname, 'framework/ts/devian-core/src'),
-      'devian-protobuf': path.resolve(__dirname, 'framework/ts/devian-protobuf/src')
+      '@devian/core': path.resolve(__dirname, 'framework/ts/devian-core/src'),
+      '@devian/protobuf': path.resolve(__dirname, 'framework/ts/devian-protobuf/src')
     }
   }
 }
@@ -117,11 +117,12 @@ generated C# 코드는 `netstandard2.1`을 타겟으로 하며, 일부 NuGet 패
 
 | 패키지 | 버전 | 용도 | 적용 대상 |
 |--------|------|------|-----------|
-| `System.Text.Json` | 8.0.5 | JSON 직렬화/역직렬화 | Protocol, Domain 모듈 |
+| `Newtonsoft.Json` | 13.0.3 | JSON 직렬화/역직렬화 | Protocol, Domain 모듈 |
 
 ### 이유
 
-`System.Text.Json`은 .NET Core 3.0+ / .NET 5+에서는 기본 제공되지만, `netstandard2.1`에서는 **NuGet 패키지로 별도 참조**해야 한다.
+Unity는 `System.Text.Json`을 기본 제공하지 않으므로, Unity 호환성을 위해 **Newtonsoft.Json**을 사용한다.
+Unity는 `com.unity.nuget.newtonsoft-json` 패키지로 Newtonsoft.Json을 기본 제공한다.
 
 ### 자동 생성 csproj 예시
 
@@ -136,7 +137,7 @@ generated C# 코드는 `netstandard2.1`을 타겟으로 하며, 일부 NuGet 패
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Text.Json" Version="8.0.5" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
 
   <ItemGroup>
@@ -154,7 +155,7 @@ MUST
 
 - generated를 import하는 "수동 코드(manual)"는 generated와 분리된 폴더에서 관리한다.
 - build.json targetDir 설계로 산출 충돌을 방지한다.
-- TypeScript 프로젝트는 paths alias를 설정하여 devian-core 등을 import한다.
+- TypeScript 프로젝트는 paths alias를 설정하여 @devian/core 등을 import한다.
 
 MUST NOT
 

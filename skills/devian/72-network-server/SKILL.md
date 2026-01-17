@@ -64,25 +64,26 @@ framework-ts/modules/devian-network/
 | NetworkServer | frame 파싱, runtime 호출 | disconnect on unknown |
 | NetworkClient | ws message → runtime dispatch | disconnect on unknown |
 | INetworkRuntime | opcode 조회, dispatch, proxy 생성 | - |
-| ExampleNetworkServer | 조립 + 핸들러 등록 | 비즈니스 로직 확장 |
+| SampleServer | 조립 + 핸들러 등록 | 비즈니스 로직 확장 |
 
 ---
 
 ## 예제 앱
 
-위치: `framework-ts/apps/ExampleNetworkServer/`
+위치: `framework-ts/apps/SampleServer/`
 
 예제 앱은 **조립 + 핸들러 등록만** 수행한다.
 
 ```typescript
 import { WsTransport, NetworkServer, defaultCodec } from '@devian/network';
-import { createServerRuntime, Game2C } from '@devian/network-game';
+import { createServerRuntime, Sample2C } from '@devian/network-sample';
 
 const runtime = createServerRuntime(defaultCodec);
 const stub = runtime.getStub();
 
 // 핸들러 등록
-stub.onLoginRequest(async (sessionId, msg) => { ... });
+stub.onPing(async (sessionId, msg) => { ... });
+stub.onEcho(async (sessionId, msg) => { ... });
 ```
 
 ---

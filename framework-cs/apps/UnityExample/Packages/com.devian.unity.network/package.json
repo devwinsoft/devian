@@ -1,0 +1,23 @@
+{
+  "name": "com.devian.unity.network",
+  "version": "0.1.0",
+  "displayName": "Devian Unity Network",
+  "description": "Unity adapter for Devian.Network (MonoBehaviours). Includes Samples~ for basic usage examples.",
+  "unity": "2021.3",
+  "author": {
+    "name": "Kim, Hyong Joon"
+  },
+  "dependencies": {
+    "com.devian.network": "0.1.0",
+    "com.devian.core": "0.1.0",
+    "com.devian.protobuf": "0.1.0",
+    "com.devian.module.common": "1.0.0"
+  },
+  "samples": [
+    {
+      "displayName": "Basic Ws Client",
+      "description": "WebSocket client sample with protocol smoke test. References sample protocol types.",
+      "path": "Samples~/BasicWsClient"
+    }
+  ]
+}

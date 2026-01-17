@@ -26,7 +26,8 @@ export function generateCSharpProtocol(spec, protocolName, groupName) {
     lines.push('using System.Collections.Generic;');
     lines.push('using System.IO;');
     lines.push('using System.Text;');
-    lines.push('using System.Text.Json;');
+    // Note: System.Text.Json 미사용 (Unity 호환성)
+    lines.push('using Devian.Module.Common;');
     lines.push('');
 
     // Namespace: Devian.Network.{Group} (block style)
@@ -84,9 +85,7 @@ export function generateCSharpProtocol(spec, protocolName, groupName) {
     generateICodec(lines, protocolName);
     lines.push('');
 
-    // CodecJson
-    generateCodecJson(lines, spec.messages || [], protocolName);
-    lines.push('');
+    // Note: CodecJson 미생성 (Unity 호환성 - System.Text.Json 미지원)
 
     // CodecProtobuf
     generateCodecProtobuf(lines, spec.messages || [], protocolName);
@@ -98,6 +97,10 @@ export function generateCSharpProtocol(spec, protocolName, groupName) {
 
     // Stub (abstract class)
     generateStub(lines, spec.messages || [], protocolName);
+    lines.push('');
+
+    // Runtime Adapter (INetRuntime implementation)
+    generateRuntimeAdapter(lines, spec.messages || [], protocolName);
     lines.push('');
 
     // Proxy
@@ -329,7 +332,7 @@ function generateProtoWriter(lines) {
     lines.push('                WriteVarint(ms, (tag << 3) | wireType);');
     lines.push('            }');
     lines.push('');
-    lines.push('            public static void WriteString(MemoryStream ms, int tag, string value)');
+    lines.push('            public static void WriteString(MemoryStream ms, int tag, string? value)');
     lines.push('            {');
     lines.push('                if (string.IsNullOrEmpty(value)) return;');
     lines.push('                WriteTag(ms, tag, 2);');
@@ -638,6 +641,52 @@ function generateStub(lines, messages, protocolName) {
     lines.push('        }');
 }
 
+function generateRuntimeAdapter(lines, messages, protocolName) {
+    lines.push('        /// <summary>');
+    lines.push(`        /// Runtime adapter implementing INetRuntime for ${protocolName}.`);
+    lines.push('        /// Bridges NetworkClient and generated Stub.');
+    lines.push('        /// </summary>');
+    lines.push('        public sealed class Runtime : Devian.Network.INetRuntime');
+    lines.push('        {');
+    lines.push('            private readonly Stub _stub;');
+    lines.push('');
+    lines.push('            public Runtime(Stub stub)');
+    lines.push('            {');
+    lines.push('                _stub = stub ?? throw new ArgumentNullException(nameof(stub));');
+    lines.push('            }');
+    lines.push('');
+    lines.push('            /// <summary>');
+    lines.push('            /// Try to dispatch inbound packet. Returns true if opcode belongs to this protocol.');
+    lines.push('            /// </summary>');
+    lines.push('            public bool TryDispatchInbound(int sessionId, int opcode, ReadOnlySpan<byte> payload)');
+    lines.push('            {');
+
+    if (messages.length === 0) {
+        // No messages - always return false
+        lines.push('                return false;');
+    } else {
+        lines.push('                switch (opcode)');
+        lines.push('                {');
+        // Generate case labels for all opcodes
+        for (const msg of messages) {
+            lines.push(`                    case Opcodes.${msg.name}:`);
+        }
+        // Shared block for all cases
+        lines.push('                    {');
+        lines.push('                        var meta = new EnvelopeMeta(sessionId);');
+        lines.push('                        var envelope = new PacketEnvelope(opcode, payload, meta);');
+        lines.push('                        _stub.Dispatch(envelope);');
+        lines.push('                        return true;');
+        lines.push('                    }');
+        lines.push('                    default:');
+        lines.push('                        return false;');
+        lines.push('                }');
+    }
+
+    lines.push('            }');
+    lines.push('        }');
+}
+
 function generateProxy(lines, messages, protocolName) {
     lines.push('        /// <summary>');
     lines.push(`        /// Proxy for sending ${protocolName} messages.`);
@@ -718,14 +767,14 @@ function isValueType(type) {
 function getDefaultValue(type, optional) {
     if (type.endsWith('[]')) return '';
     if (type === 'string') return ' = string.Empty;';
-    if (type === 'bytes') return '';
+    if (type === 'bytes') return ' = Array.Empty<byte>();';
     return '';
 }
 
 function getResetValue(type, optional) {
     if (type.endsWith('[]')) return 'null';
     if (type === 'string') return 'string.Empty';
-    if (type === 'bytes') return 'null';
+    if (type === 'bytes') return 'Array.Empty<byte>()';
     if (isValueType(type.replace('[]', ''))) return 'default';
     return 'null!';
 }

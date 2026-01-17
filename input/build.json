@@ -13,7 +13,7 @@
       "csTargetDir": "../framework-cs/modules",
       "tsTargetDir": "../framework-ts/modules",
       "dataTargetDir": "../output",
-      "upmTargetDir": ""
+      "upmTargetDir": "../framework-cs/apps/UnityExample/Packages"
     }
   },
 
@@ -24,7 +24,7 @@
       "protocolFiles": ["C2Game.json", "Game2C.json"],
       "csTargetDir": "../framework-cs/modules",
       "tsTargetDir": "../framework-ts/modules",
-      "upmTargetDir": ""
+      "upmTargetDir": "../framework-cs/apps/UnityExample/Packages"
     }
   ]
 }

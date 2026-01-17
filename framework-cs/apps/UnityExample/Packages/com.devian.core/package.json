@@ -1,0 +1,10 @@
+{
+  "name": "com.devian.core",
+  "version": "0.1.0",
+  "displayName": "Devian Core",
+  "description": "Devian.Core runtime for Unity (source)",
+  "unity": "2021.3",
+  "author": {
+    "name": "Kim, Hyong Joon"
+  }
+}

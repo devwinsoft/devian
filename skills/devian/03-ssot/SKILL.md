@@ -28,6 +28,17 @@ SSOT 간 충돌이 발생하면:
 
 ---
 
+## "충돌"의 의미 (필수)
+
+Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 충돌이 아니다.
+
+- **SSOT 불일치(Hard)**: 문서(SKILL/build.json)에 적힌 규약/경로/정책이 실제 코드/설정/산출물과 **다른 상태**
+  - 예: 문서에는 `excludePlatforms: ["WebGL"]`인데 실제 asmdef는 `excludePlatforms: []`
+  - 예: 문서에는 `WsNetClient`인데 실제 코드는 `WebSocketClient`
+- 결론: "WebGL 지원" 같은 기능은 가능/불가능이 아니라, **문서와 구현의 일치 여부**만 문제다.
+
+---
+
 ## 용어 (필수)
 
 문서/대화에서 아래 용어를 강제한다. **"domain" 단독 사용 금지**.
@@ -69,6 +80,23 @@ SSOT 간 충돌이 발생하면:
 
 > staging({tempDir}) 외의 위치에 직접 생성하는 동작은 금지한다.
 
+### tempDir 경로 해석 및 분리 (Hard Rule)
+
+**`{tempDir}`는 build.json(또는 build_sample.json)이 위치한 디렉토리 기준 상대경로로 해석된다.**
+
+빌더는 실행 시 `{tempDir}`를 **clean(rm -rf) 후 재생성**한다. 따라서:
+
+- **동일 repo에서 `build.json`과 `build_sample.json`을 번갈아 실행하는 경우, tempDir을 공유하면 서로 staging을 삭제할 수 있으므로 tempDir 분리는 필수다.**
+
+| 설정 파일 | tempDir 권장값 |
+|----------|---------------|
+| `build.json` | `"temp"` |
+| `build_sample.json` | `"temp_sample"` |
+
+예시:
+- `build.json`의 `tempDir: "temp"` → `input/temp/`
+- `build_sample.json`의 `tempDir: "temp_sample"` → `input/temp_sample/`
+
 ### Clean + Copy 정책
 
 - Copy 단계는 targetDir을 **clean 후 copy**한다.
@@ -94,7 +122,38 @@ build.json 위치는 유동적이다. 현재 프로젝트에서는 `input/build.
 
 DATA 입력은 build.json의 `domains` 섹션이 정의한다.
 
-필수 개념:
+#### Common 필수 (Hard Rule)
+
+**Devian v10 프로젝트는 DATA DomainKey로 `Common`을 반드시 포함한다.**
+
+- `input/build.json`에서 `domains.Common`은 필수 항목이다.
+- 결과로 Common 모듈(C#/TS)은 항상 생성/유지된다:
+  - C#: `Devian.Module.Common`
+  - TS: `@devian/module-common` (폴더명: `devian-module-common`)
+
+> Common 모듈의 상세 정책(생성물/수동 코드 경계, features 구조)은 `skills/devian-common/01-module-policy/SKILL.md`를 참조한다.
+
+#### Common 모듈 참조 (Hard Rule)
+
+**Devian v10에서 생성되는 모든 Module/DATA 도메인 모듈과 Protocol 모듈은 Common 모듈을 무조건 참조해야 한다.**
+
+- 예외: Common 모듈 자기 자신(`Devian.Module.Common`, `@devian/module-common`)은 자기 자신을 참조하지 않는다.
+- “참조 판정”은 하지 않는다. 항상 참조한다.
+
+적용 대상:
+
+1) DATA Domain 모듈 (`Devian.Module.{DomainKey}`, `@devian/module-{domainkey}`)
+   - `{DomainKey} != Common`인 모든 모듈은 `Devian.Module.Common`을 참조한다.
+2) PROTOCOL 모듈 (`Devian.Network.{ProtocolGroup}`, `@devian/network-{protocolgroup}`)
+   - 모든 ProtocolGroup 모듈은 `Devian.Module.Common`을 참조한다.
+
+참조 방식(정책):
+
+- C#: `.csproj`에 `Devian.Module.Common` ProjectReference를 포함한다.
+- C# PROTOCOL 생성물(`*.g.cs`): `using Devian.Module.Common;`을 포함한다.
+- TS: `package.json` `dependencies`에 `@devian/module-common`을 포함한다.
+
+#### 필수 개념:
 
 - **Contracts**: JSON 기반 타입/enum 정의
 - **Tables**: XLSX 기반 테이블 정의 + 데이터
@@ -136,6 +195,27 @@ DATA 입력은 build.json의 `domains` 섹션이 정의한다.
 
 > Domain의 모든 Contract, Table Entity, Table Container는 단일 파일(`{DomainKey}.g.cs`, `{DomainKey}.g.ts`)에 통합 생성된다.
 
+#### C# Namespace (Hard Rule)
+
+DATA Domain 생성물(`{DomainKey}.g.cs`)의 C# 네임스페이스는 **반드시** 아래 규칙을 따른다.
+
+- `namespace Devian.Module.{DomainKey}`
+
+예: DomainKey `Common` → `namespace Devian.Module.Common`
+
+#### TS index.ts Marker 관리 (Hard Rule)
+
+**TS `devian-module-*/index.ts`는 빌더가 관리하되, 통째 덮어쓰기를 금지한다.**
+
+- 빌더는 **marker 구간만 갱신**하며, 나머지 영역은 보존한다.
+- marker 구간은 최소 2개:
+  - `// <devian:domain-exports>` ~ `// </devian:domain-exports>` — Domain 생성물 export
+  - `// <devian:feature-exports>` ~ `// </devian:feature-exports>` — features 폴더 export
+- `features/index.ts`도 동일한 marker 방식으로 자동 관리된다.
+- 개발자는 marker 안을 **절대 수정하지 않는다**.
+
+> 상세 규칙은 `skills/devian-common/01-module-policy/SKILL.md`를 참조한다.
+
 ### 2) DomainType = PROTOCOL
 
 PROTOCOL 입력은 build.json의 `protocols` 섹션(배열)이 정의한다.
@@ -173,13 +253,13 @@ PROTOCOL 입력은 build.json의 `protocols` 섹션(배열)이 정의한다.
 #### PROTOCOL 산출물 경로(정책)
 
 **C#:**
-- staging: `{tempDir}/Devian.Protocol.{ProtocolGroup}/{ProtocolName}.g.cs`
-- final: `{csTargetDir}/Devian.Protocol.{ProtocolGroup}/{ProtocolName}.g.cs`
-- 프로젝트 파일: `{csTargetDir}/Devian.Protocol.{ProtocolGroup}/Devian.Protocol.{ProtocolGroup}.csproj`
+- staging: `{tempDir}/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs`
+- final: `{csTargetDir}/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs`
+- 프로젝트 파일: `{csTargetDir}/Devian.Network.{ProtocolGroup}/Devian.Network.{ProtocolGroup}.csproj`
 
 **TypeScript:**
 - staging: `{tempDir}/{ProtocolGroup}/{ProtocolName}.g.ts`, `index.ts`
-- final: `{tsTargetDir}/devian-protocol-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
+- final: `{tsTargetDir}/devian-network-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
 
 ---
 
@@ -192,6 +272,8 @@ PROTOCOL 입력은 build.json의 `protocols` 섹션(배열)이 정의한다.
 3. build.json과 경로/플레이스홀더 규약이 불일치
 4. Reserved 옵션(`parser:*` 등)을 강제/필수/의미로 서술
 5. 코드와 다른 API/산출물/프레임 규약을 SKILL이 "정본"처럼 단정
+6. TS `index.ts`를 통째로 덮어쓰는 동작 (marker 갱신 방식 위반)
+7. `domains.Common`이 build.json에 없는 상태
 
 ---
 

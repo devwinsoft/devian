@@ -199,6 +199,18 @@ function parseSingleValue(value, type) {
             if (type.startsWith('enum:')) {
                 return String(value); // enum stored as name string
             }
+            if (type.startsWith('class:')) {
+                // Parse nested JSON object
+                if (typeof value === 'string' && value.trim()) {
+                    try {
+                        return JSON.parse(value);
+                    } catch (e) {
+                        // If parsing fails, return null
+                        return null;
+                    }
+                }
+                return null;
+            }
             return value;
     }
 }
@@ -252,7 +264,7 @@ export function generateCSharpTable(table, domainName) {
     lines.push('using System;');
     lines.push('using System.Collections.Generic;');
     lines.push('using System.IO;');
-    lines.push('using System.Text.Json;');
+    lines.push('using Newtonsoft.Json;');
     lines.push('');
 
     // Namespace: Devian.Tables (SSOT A안)
@@ -383,10 +395,10 @@ function generateTableContainer(lines, table, tableName, rowClassName) {
     lines.push('        public static void LoadFromJson(string json)');
     lines.push('        {');
     lines.push('            Clear();');
-    lines.push('            using var doc = JsonDocument.Parse(json);');
-    lines.push('            foreach (var element in doc.RootElement.EnumerateArray())');
+    lines.push(`            var rows = JsonConvert.DeserializeObject<List<${rowClassName}>>(json);`);
+    lines.push('            if (rows == null) return;');
+    lines.push('            foreach (var row in rows)');
     lines.push('            {');
-    lines.push(`                var row = JsonSerializer.Deserialize<${rowClassName}>(element.GetRawText());`);
     lines.push('                if (row == null) continue;');
     lines.push('                _list.Add(row);');
     if (table.keyField) {
@@ -405,7 +417,7 @@ function generateTableContainer(lines, table, tableName, rowClassName) {
     lines.push('            while ((line = reader.ReadLine()) != null)');
     lines.push('            {');
     lines.push('                if (string.IsNullOrWhiteSpace(line)) continue;');
-    lines.push(`                var row = JsonSerializer.Deserialize<${rowClassName}>(line);`);
+    lines.push(`                var row = JsonConvert.DeserializeObject<${rowClassName}>(line);`);
     lines.push('                if (row == null) continue;');
     lines.push('                _list.Add(row);');
     if (table.keyField) {
@@ -451,6 +463,10 @@ function mapTableTypeToCSharp(type, optional) {
             if (csType.includes('.')) {
                 const [ns, name] = csType.split('.');
                 csType = `Devian.${ns}.${name}`;
+            }
+            // class types are nullable (reference types can be null in data)
+            if (!isArray) {
+                csType = `${csType}?`;
             }
         } else {
             csType = baseType;
@@ -503,6 +519,7 @@ function mapTableTypeToTypeScript(type) {
     };
 
     let tsType = typeMap[baseType];
+    let isClassType = false;
 
     if (!tsType) {
         // enum:Name or class:Name
@@ -517,6 +534,7 @@ function mapTableTypeToTypeScript(type) {
             if (tsType.includes('.')) {
                 tsType = tsType.split('.').pop();
             }
+            isClassType = true;
         } else {
             tsType = baseType;
         }
@@ -524,6 +542,11 @@ function mapTableTypeToTypeScript(type) {
 
     if (isArray) {
         return `${tsType}[]`;
+    }
+
+    // class types are nullable (can be null in data)
+    if (isClassType) {
+        return `${tsType} | null`;
     }
 
     return tsType;
@@ -579,19 +602,24 @@ export function generateTypeScriptTableBody(table) {
     for (const field of table.fields) {
         const tsType = mapTableTypeToTypeScript(field.type);
         const optional = field.optional && !field.isKey ? '?' : '';
-        const propName = field.name;
-        lines.push(`  ${propName}${optional}: ${tsType};`);
+        // Use PascalCase to match NDJSON field names (C# compatibility)
+        const propName = capitalize(field.name);
+        lines.push(`    ${propName}${optional}: ${tsType};`);
     }
 
     // getKey method signature (IEntityKey<T> implementation) - only if key exists
     if (keyField) {
         const keyType = mapTableTypeToTypeScript(keyField.type);
-        lines.push(`  getKey(): ${keyType};`);
+        lines.push(`    getKey(): ${keyType};`);
     }
 
     lines.push('}');
 
     return lines.join('\n');
+}
+
+function lowerFirst(str) {
+    return str.charAt(0).toLowerCase() + str.slice(1);
 }
 
 /**
@@ -604,7 +632,8 @@ export function generateTypeScriptTableContainerBody(table) {
     const tableName = table.name;
     const keyField = table.keyField;
     const keyType = keyField ? mapTableTypeToTypeScript(keyField.type) : null;
-    const keyProp = keyField ? keyField.name : null;
+    // Use PascalCase to match NDJSON field names (C# compatibility)
+    const keyProp = keyField ? capitalize(keyField.name) : null;
 
     lines.push(`export class TB_${tableName} {`);
 

@@ -32,6 +32,10 @@ SKILL은 위 내용을 단정해서는 안 된다.
 2) opcode/tag는 결정적이어야 한다.
 3) Tag reserved range(19000..19999)는 금지다.
 4) Registry 파일(opcodes/tags)은 키 정렬 등으로 **결정적으로 저장**되어야 한다.
+5) 생성되는 모든 PROTOCOL 모듈은 Common 모듈을 **무조건 참조**해야 한다.
+   - Common 참조 판정은 하지 않는다.
+   - C#: csproj ProjectReference + `*.g.cs`에 `using Devian.Module.Common;`
+   - TS: package.json dependencies에 `@devian/module-common`
 
 ---
 

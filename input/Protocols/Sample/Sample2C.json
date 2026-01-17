@@ -1,0 +1,19 @@
+{
+  "direction": "server_to_client",
+  "messages": [
+    {
+      "name": "Pong",
+      "fields": [
+        { "name": "timestamp", "type": "int64" },
+        { "name": "serverTime", "type": "int64" }
+      ]
+    },
+    {
+      "name": "EchoReply",
+      "fields": [
+        { "name": "message", "type": "string" },
+        { "name": "echoedAt", "type": "int64" }
+      ]
+    }
+  ]
+}

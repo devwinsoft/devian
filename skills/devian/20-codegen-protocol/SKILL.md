@@ -97,6 +97,49 @@ Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴�
 
 ---
 
+## Unity Compatibility (Hard Rule)
+
+Unity 환경에서의 호환성을 위해 다음 규칙을 강제한다.
+
+**C# Protocol 코드 생성 시:**
+
+1. **System.Text.Json 사용 금지**
+   - Unity는 `System.Text.Json`을 기본 제공하지 않음
+   - `using System.Text.Json;` 생성 금지
+   - `JsonSerializer`, `JsonSerializerOptions` 등 사용 금지
+
+2. **CodecJson 생성 금지**
+   - JSON 코덱은 생성하지 않음
+   - `CodecProtobuf`만 생성 (기본 코덱)
+   - Stub 생성자 기본값도 `CodecProtobuf` 사용
+
+3. **ICodec 인터페이스**
+   - 인터페이스는 유지 (확장성)
+   - 기본 구현체는 `CodecProtobuf`만 제공
+
+---
+
+## Common Module Dependency (Hard Rule)
+
+Protocol 생성기는 **Common 참조 여부를 판정하지 않는다.**
+
+Devian v10에서 생성되는 모든 PROTOCOL 모듈은 Common 모듈을 **무조건** 참조한다.
+
+- 예외: Common 모듈 자기 자신은 제외(Protocol 모듈이 아니므로 해당 없음).
+
+필수 적용:
+
+- C#:
+  - `Devian.Network.{ProtocolGroup}.csproj`는 `Devian.Module.Common`을 `ProjectReference`로 포함해야 한다.
+  - 각 생성물(`{ProtocolName}.g.cs`)은 `using Devian.Module.Common;`을 포함해야 한다.
+- TypeScript:
+  - `@devian/network-{protocolgroup}`의 `package.json` `dependencies`에 `@devian/module-common`을 포함해야 한다.
+- **Unity UPM:**
+  - Protocol용 `.asmdef` 파일의 `references`에 `Devian.Module.Common` 포함 필수
+  - 예: `Devian.Unity.Network.Sample.asmdef` → `"references": [..., "Devian.Module.Common"]`
+
+---
+
 ## TypeScript Namespace 규칙
 
 TS에서 C#과 동일한 `Devian.Network.{Group}` 트리를 제공한다.
@@ -171,6 +214,55 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 - `name`: `@devian/network-{group}`
 - `exports`: `.` + Runtime 존재 시 `./server-runtime`, `./client-runtime`
 - `dependencies`: `@devian/core`, `@devian/network`
+
+> 위 dependencies 목록에는 **항상** `@devian/module-common`이 포함되어야 한다. (참조 판정 없음)
+
+---
+
+## Implementation Reference (정본 위치)
+
+**구현 정본 파일:**
+
+| 파일 | 함수 | 역할 |
+|------|------|------|
+| `framework-ts/tools/builder/build.js` | `generateCsproj(...)` | C# csproj 생성/보정 (ProtocolGroup 포함) |
+| `framework-ts/tools/builder/build.js` | `ensureProtocolPackageJson(...)` | TS package.json 생성/보정 |
+| `framework-ts/tools/builder/generators/protocol-cs.js` | `generateCSharpProtocol(...)` | C# `{ProtocolName}.g.cs` 생성 |
+
+**Common 의존성 Hard Rule이 실제로 강제되는 지점:**
+
+- **C#:**
+  - csproj: `generateCsproj(...)`가 `Devian.Module.Common` ProjectReference 포함
+  - g.cs: `generateCSharpProtocol(...)`가 `using Devian.Module.Common;` 포함
+- **TypeScript:**
+  - package.json: `ensureProtocolPackageJson(...)`가 dependencies에 `@devian/module-common` 포함
+
+---
+
+## Verification Checklist (Hard)
+
+빌드 후 반드시 확인해야 하는 사항:
+
+**C#:**
+
+1. 생성된 `framework-cs/modules/Devian.Network.{ProtocolGroup}/Devian.Network.{ProtocolGroup}.csproj`에  
+   `..\Devian.Module.Common\Devian.Module.Common.csproj` ProjectReference 존재
+
+2. 생성된 `framework-cs/modules/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs` 상단에  
+   `using Devian.Module.Common;` 존재
+
+3. 생성된 `{ProtocolName}.g.cs`에 `System.Text.Json` 관련 코드 없음
+
+4. 생성된 `{ProtocolName}.g.cs`에 `CodecJson` 클래스 없음
+
+**TypeScript:**
+
+5. 생성된 `framework-ts/modules/devian-network-{group}/package.json` dependencies에  
+   `@devian/module-common` 존재
+
+**Unity UPM:**
+
+6. Protocol용 `.asmdef` 파일의 `references`에 `Devian.Module.Common` 존재
 
 ---
 

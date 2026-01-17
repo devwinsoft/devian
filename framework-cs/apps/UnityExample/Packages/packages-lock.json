@@ -1,5 +1,58 @@
 {
   "dependencies": {
+    "com.devian.core": {
+      "version": "file:com.devian.core",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
+    "com.devian.module.common": {
+      "version": "file:com.devian.module.common",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.devian.core": "1.0.0",
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
+      }
+    },
+    "com.devian.network": {
+      "version": "file:com.devian.network",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.devian.core": "0.1.0"
+      }
+    },
+    "com.devian.protobuf": {
+      "version": "file:com.devian.protobuf",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.devian.core": "0.1.0"
+      }
+    },
+    "com.devian.unity": {
+      "version": "file:com.devian.unity",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.devian.core": "0.1.0",
+        "com.devian.network": "0.1.0",
+        "com.devian.protobuf": "0.1.0",
+        "com.devian.unity.network": "0.1.0"
+      }
+    },
+    "com.devian.unity.network": {
+      "version": "file:com.devian.unity.network",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.devian.network": "0.1.0",
+        "com.devian.core": "0.1.0",
+        "com.devian.protobuf": "0.1.0",
+        "com.devian.module.common": "1.0.0"
+      }
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.9",
       "depth": 0,
@@ -90,6 +143,13 @@
     "com.unity.nuget.mono-cecil": {
       "version": "1.11.6",
       "depth": 3,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.nuget.newtonsoft-json": {
+      "version": "3.2.2",
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"

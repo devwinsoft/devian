@@ -1,0 +1,18 @@
+{
+  "direction": "client_to_server",
+  "messages": [
+    {
+      "name": "Ping",
+      "fields": [
+        { "name": "timestamp", "type": "int64" },
+        { "name": "payload", "type": "string", "optional": true }
+      ]
+    },
+    {
+      "name": "Echo",
+      "fields": [
+        { "name": "message", "type": "string" }
+      ]
+    }
+  ]
+}

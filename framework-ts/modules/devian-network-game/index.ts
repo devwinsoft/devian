@@ -12,7 +12,6 @@ export const Game2C = Game2CMod.Game2C;
 export const ServerRuntime = ServerRuntimeMod;
 export const ClientRuntime = ClientRuntimeMod;
 
-// Re-export factory functions for direct import
 export { createServerRuntime } from './generated/ServerRuntime.g';
 export { createClientRuntime } from './generated/ClientRuntime.g';
 

@@ -23,7 +23,18 @@ XLSX 테이블에서 추출된 데이터를 **NDJSON(Line-delimited JSON)**으�
 
 ---
 
-## Data Stop Rule (다시 강조)
+## NDJSON 생성 조건
+
+**PrimaryKey(`key:true`)가 없는 sheet는 NDJSON을 생성하지 않는다.**
+
+- PrimaryKey가 있는 sheet → `{SheetName}.ndjson` 생성
+- PrimaryKey가 없는 sheet → NDJSON 생성 안함 (Entity/Container 코드만 생성)
+
+이 규칙은 "데이터 없이 스키마만 정의하는 sheet"를 허용하기 위함이다.
+
+---
+
+## Data Stop Rule
 
 PrimaryKey 컬럼이 빈 값이면 즉시 중단한다.
 

@@ -1,0 +1,13 @@
+{
+  "name": "com.devian.protobuf",
+  "version": "0.1.0",
+  "displayName": "Devian Protobuf",
+  "description": "Devian.Protobuf runtime for Unity (source) + Google.Protobuf dll",
+  "unity": "2021.3",
+  "author": {
+    "name": "Kim, Hyong Joon"
+  },
+  "dependencies": {
+    "com.devian.core": "0.1.0"
+  }
+}
