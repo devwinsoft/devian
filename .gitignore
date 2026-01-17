@@ -5,6 +5,7 @@
 # Temp/Staging 폴더
 temp/
 input/temp/
+input/temp_sample/
 
 # Node.js
 node_modules/
