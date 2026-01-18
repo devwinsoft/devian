@@ -5,7 +5,7 @@ AppliesTo: v10
 
 ## SSOT
 
-이 문서는 번들/구성 패키지(`com.devian.unity` 및 구성 패키지들)의 **레이아웃/의존성/asmdef 규약(정책)**을 정의한다.
+이 문서는 UnityExample embedded 패키지들의 **레이아웃/의존성/asmdef 규약(정책)**을 정의한다.
 
 - 구현 및 공개 API는 **코드가 정답**이며, 문서의 예시는 참고다.
 - 코드 변경 시 문서를 SSOT로 맞추지 않는다(필요하면 참고 수준으로 갱신).
@@ -21,10 +21,9 @@ AppliesTo: v10
   - `com.devian.protobuf` (Devian.Protobuf 소스 + Google.Protobuf.dll 동봉)
   - `com.devian.module.common` (Devian.Module.Common 소스: Common features 포함)
   - `com.devian.unity.network` (Unity 어댑터: WebSocketClientBehaviourBase)
-  - `com.devian.unity.common` (Unity 어댑터: Devian.Module.Common 확장, UnityLogSink)
-  - `com.devian.unity` (메타 패키지: 위 패키지들 dependencies만 제공)
+  - `com.devian.unity.common` (Unity 어댑터: Devian.Module.Common 확장, UnityLogSink, TableID Editor)
 - 설치 경험:
-  - Unity 프로젝트에 `com.devian.unity` 하나만 추가(embedded)하면 의존 패키지까지 함께 사용 가능하게 한다.
+  - 필요한 패키지를 직접 embedded로 추가한다 (예: `com.devian.unity.common`, `com.devian.unity.network`, `com.devian.module.common` 등).
 
 ## 비목표
 
@@ -51,8 +50,7 @@ framework-cs/apps/UnityExample/Packages/
 | `com.devian.protobuf` | Devian.Protobuf 소스 + Google.Protobuf.dll |
 | `com.devian.module.common` | Devian.Module.Common 소스 (Common features 포함) |
 | `com.devian.unity.network` | Unity 어댑터 (WebSocketClientBehaviourBase) |
-| `com.devian.unity.common` | Unity 어댑터 (Devian.Module.Common 확장: UnityLogSink) |
-| `com.devian.unity` | 메타 패키지 (dependencies만) |
+| `com.devian.unity.common` | Unity 어댑터 (Devian.Module.Common 확장: UnityLogSink, TableID Editor) |
 
 ## 버전 정책
 
@@ -108,8 +106,7 @@ Unity UPM 패키지의 소스는 `framework-cs/modules/*`의 소스를 **복사�
 ## 금지
 
 - UnityEngine.dll을 외부 .NET 프로젝트에서 직접 참조해 DLL 빌드하는 방식 금지.
-- `com.devian.unity`에 core/network/protobuf 코드를 "합치지 않는다".
-  - `com.devian.unity`는 meta package(의존성 묶음)만 담당한다.
+- `com.devian.unity` 메타 패키지 생성/유지 금지 (deprecated).
 
 ---
 
@@ -117,5 +114,5 @@ Unity UPM 패키지의 소스는 `framework-cs/modules/*`의 소스를 **복사�
 
 - Related: `skills/devian/14-unity-network-client-upm/SKILL.md`
 - Related: `skills/devian/19-unity-module-common-upm/SKILL.md`
-- Related: `skills/devian/20-unity-common-upm/SKILL.md`
+- Related: `skills/devian/21-unity-common-upm/SKILL.md`
 - Core modules: `framework-cs/modules/Devian.*/`

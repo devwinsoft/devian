@@ -13,7 +13,7 @@ import { generateCSharpProtocol } from './generators/protocol-cs.js';
 import { generateTypeScriptProtocol, generateServerRuntime, generateClientRuntime } from './generators/protocol-ts.js';
 import { generateCSharpContract, generateCSharpContractBody } from './generators/contract-cs.js';
 import { generateTypeScriptContract, generateTypeScriptContractBody } from './generators/contract-ts.js';
-import { generateCSharpTable, generateCSharpTableEntityBody, generateCSharpTableContainerBody, generateTypeScriptTable, generateTypeScriptTableBody, generateTypeScriptTableContainerBody, generateTableData, parseXlsx, collectEnumGenSpecs, generateCSharpEnums, generateTypeScriptEnums } from './generators/table.js';
+import { generateCSharpTable, generateCSharpTableEntityBody, generateCSharpTableContainerBody, generateTypeScriptTable, generateTypeScriptTableBody, generateTypeScriptTableContainerBody, generateTableData, generateTableAsset, parseXlsx, collectEnumGenSpecs, generateCSharpEnums, generateTypeScriptEnums, getCSharpKeyTypeForTable } from './generators/table.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -31,6 +31,8 @@ class DevianToolBuilder {
         this.rootDir = path.dirname(this.buildJsonDir);
         this.config = null;
         this.tempDir = null;
+        // Store domain tables for cross-domain TableID generation
+        this.domainTables = new Map();
     }
 
     // Resolve path relative to buildJsonDir
@@ -110,6 +112,12 @@ class DevianToolBuilder {
             }
         }
 
+        // Guard: Verify unity-common TableId base files exist
+        await this.verifyUnityCommonTableIdFiles();
+
+        // Guard: Verify deprecated packages don't exist
+        await this.verifyNoDeprecatedPackages();
+
         // 5. Sync UPM samples metadata
         console.log('[Phase 3] Sync UPM samples metadata...');
         await this.syncAllUpmSamples();
@@ -130,11 +138,13 @@ class DevianToolBuilder {
         const stagingCs = path.join(this.tempDir, domainName, 'cs', 'generated');
         const stagingTs = path.join(this.tempDir, domainName, 'ts', 'generated');
         const stagingTsRoot = path.join(this.tempDir, domainName, 'ts');
-        const stagingData = path.join(this.tempDir, domainName, 'data', 'json');
+        const stagingNdjson = path.join(this.tempDir, domainName, 'data', 'ndjson');
+        const stagingBin = path.join(this.tempDir, domainName, 'data', 'bin');
 
         fs.mkdirSync(stagingCs, { recursive: true });
         fs.mkdirSync(stagingTs, { recursive: true });
-        fs.mkdirSync(stagingData, { recursive: true });
+        fs.mkdirSync(stagingNdjson, { recursive: true });
+        fs.mkdirSync(stagingBin, { recursive: true });
 
         // Collect all data for unified file generation
         const contractSpecs = [];
@@ -143,7 +153,22 @@ class DevianToolBuilder {
         // Load contracts
         if (config.contractsDir && config.contractFiles) {
             const contractsDir = this.resolvePath(config.contractsDir);
+
+            // Strict validation: contractsDir must exist
+            if (!fs.existsSync(contractsDir)) {
+                throw new Error(
+                    `[Domain:${domainName}] contractsDir not found: ${contractsDir} (from ${config.contractsDir})`
+                );
+            }
+
             const files = this.globFiles(contractsDir, config.contractFiles);
+
+            // Strict validation: at least one file must match
+            if (files.length === 0) {
+                throw new Error(
+                    `[Domain:${domainName}] no contract files matched [${config.contractFiles.join(', ')}] in ${contractsDir}`
+                );
+            }
 
             for (const file of files) {
                 console.log(`    [Contract] ${path.basename(file)}`);
@@ -155,18 +180,44 @@ class DevianToolBuilder {
         // Load tables
         if (config.tablesDir && config.tableFiles) {
             const tablesDir = this.resolvePath(config.tablesDir);
+
+            // Strict validation: tablesDir must exist
+            if (!fs.existsSync(tablesDir)) {
+                throw new Error(
+                    `[Domain:${domainName}] tablesDir not found: ${tablesDir} (from ${config.tablesDir})`
+                );
+            }
+
             const files = this.globFiles(tablesDir, config.tableFiles);
+
+            // Strict validation: at least one file must match
+            if (files.length === 0) {
+                throw new Error(
+                    `[Domain:${domainName}] no table files matched [${config.tableFiles.join(', ')}] in ${tablesDir}`
+                );
+            }
 
             for (const file of files) {
                 console.log(`    [Table] ${path.basename(file)}`);
                 const parsedTables = parseXlsx(file);
                 tables.push(...parsedTables);
 
-                // Generate NDJSON data (still individual files)
+                // Generate NDJSON and .asset data (individual files per table)
+                // SSOT: Only export if PK is defined and valid rows exist
                 for (const table of parsedTables) {
-                    const ndjson = generateTableData(table);
-                    const dataFileName = `${table.name}.ndjson`;
-                    fs.writeFileSync(path.join(stagingData, dataFileName), ndjson);
+                    // NDJSON file (extension .json for tooling, content is NDJSON)
+                    const ndjsonResult = generateTableData(table);
+                    if (ndjsonResult.rowCount > 0 && ndjsonResult.data) {
+                        const ndjsonFileName = `${table.name}.json`;
+                        fs.writeFileSync(path.join(stagingNdjson, ndjsonFileName), ndjsonResult.data);
+                    }
+
+                    // Unity TextAsset .asset file (pk 옵션 있는 테이블만)
+                    // SSOT: skills/devian/28-json-row-io/SKILL.md - bin export 규칙
+                    const assetResult = generateTableAsset(table);
+                    if (assetResult) {
+                        fs.writeFileSync(path.join(stagingBin, `${assetResult.tableName}.asset`), assetResult.yaml);
+                    }
                 }
             }
         }
@@ -179,13 +230,16 @@ class DevianToolBuilder {
         const tsCode = this.generateUnifiedTypeScript(domainName, contractSpecs, tables);
         fs.writeFileSync(path.join(stagingTs, `${domainName}.g.ts`), tsCode);
 
+        // Store tables for cross-domain TableID generation (used by static UPM)
+        this.domainTables.set(domainName, tables);
+
         // Generate index.ts for TypeScript
         const indexTsContent = this.generateDomainIndexTs([domainName]);
         fs.writeFileSync(path.join(stagingTsRoot, 'index.ts'), indexTsContent);
 
         // Generate UPM scaffold if upmTargetDir is configured
         if (config.upmTargetDir) {
-            this.generateDomainUpmScaffold(domainName, stagingCs);
+            this.generateDomainUpmScaffold(domainName, stagingCs, tables);
         }
     }
 
@@ -257,11 +311,94 @@ class DevianToolBuilder {
                 lines.push(body);
                 lines.push('');
             }
+
+            // Table ID Types section (PK 있는 테이블만)
+            const keyedTables = tables.filter(t => t.keyField);
+            if (keyedTables.length > 0) {
+                lines.push('    // ================================================================');
+                lines.push('    // Table ID Types (for Inspector binding)');
+                lines.push('    // ================================================================');
+                lines.push('');
+
+                for (const table of keyedTables) {
+                    const idCode = this.generateTableIdType(table, enumSpecs);
+                    lines.push(idCode);
+                    lines.push('');
+                }
+
+                // IsValid extension methods
+                lines.push('    /// <summary>Table ID validation extensions</summary>');
+                lines.push('    public static class TableIdExtensions');
+                lines.push('    {');
+                for (const table of keyedTables) {
+                    const extCode = this.generateTableIdIsValidExtension(table, enumSpecs);
+                    lines.push(extCode);
+                }
+                lines.push('    }');
+                lines.push('');
+            }
         }
 
         lines.push('}'); // end namespace
 
         return lines.join('\n');
+    }
+
+    /**
+     * Generate {TableName}_ID class for a keyed table
+     */
+    generateTableIdType(table, enumSpecs) {
+        const tableName = table.name;
+        const keyField = table.keyField;
+        
+        // Check if key field has gen: option (enum type)
+        const tableEnumSpec = enumSpecs.find(spec => spec.tableName === tableName);
+        let keyType;
+        if (tableEnumSpec) {
+            keyType = tableEnumSpec.enumName;
+        } else {
+            keyType = getCSharpKeyTypeForTable(table);
+        }
+
+        const lines = [];
+        lines.push(`    /// <summary>Inspector-bindable ID for ${tableName}</summary>`);
+        lines.push('    [Serializable]');
+        lines.push(`    public sealed class ${tableName}_ID`);
+        lines.push('    {');
+        lines.push(`        public ${keyType} Value;`);
+        lines.push('');
+        lines.push(`        public static implicit operator ${keyType}(${tableName}_ID id) => id.Value;`);
+        lines.push(`        public static implicit operator ${tableName}_ID(${keyType} value) => new ${tableName}_ID { Value = value };`);
+        lines.push('    }');
+
+        return lines.join('\n');
+    }
+
+    /**
+     * Generate IsValid extension method for {TableName}_ID
+     */
+    generateTableIdIsValidExtension(table, enumSpecs) {
+        const tableName = table.name;
+        const keyField = table.keyField;
+        
+        // Check if key field has gen: option (enum type)
+        const tableEnumSpec = enumSpecs.find(spec => spec.tableName === tableName);
+        let keyType;
+        if (tableEnumSpec) {
+            keyType = tableEnumSpec.enumName;
+        } else {
+            keyType = getCSharpKeyTypeForTable(table);
+        }
+
+        // IsValid logic depends on key type
+        let isValidCheck;
+        if (keyType === 'string') {
+            isValidCheck = 'obj != null && !string.IsNullOrEmpty(obj.Value)';
+        } else {
+            isValidCheck = `obj != null && !EqualityComparer<${keyType}>.Default.Equals(obj.Value, default)`;
+        }
+
+        return `        public static bool IsValid(this ${tableName}_ID? obj) => ${isValidCheck};`;
     }
 
     generateUnifiedTypeScript(domainName, contractSpecs, tables) {
@@ -280,6 +417,29 @@ class DevianToolBuilder {
         const hasContractClasses = contractSpecs.some(spec => (spec.classes || []).length > 0);
         const hasTables = tables.length > 0;
         const hasKeyedTables = tables.some(t => t.keyField);
+
+        // Check if Variant type is used in any table field
+        const needsVariant = tables.some(table =>
+            (table.fields || []).some(field => {
+                const fieldType = field.type || '';
+                const baseType = fieldType.endsWith('[]') ? fieldType.slice(0, -2) : fieldType;
+                const typeName = baseType.split('.').pop() || '';
+                return typeName.toLowerCase() === 'variant';
+            })
+        );
+
+        // Safety check: Variant is only available in Common domain
+        if (needsVariant && domainName !== 'Common') {
+            throw new Error(
+                `[Domain:${domainName}] Variant type used but Variant is only defined in Common domain (features/variant.ts). ` +
+                `Move the Variant feature to this domain or use a different type.`
+            );
+        }
+
+        // Import Variant if needed (must come before @devian/core import)
+        if (needsVariant) {
+            lines.push("import type { Variant } from '../features/variant';");
+        }
 
         if (hasContractClasses || hasTables) {
             const imports = ['IEntity'];
@@ -343,7 +503,8 @@ class DevianToolBuilder {
         const stagingCs = path.join(this.tempDir, domainName, 'cs', 'generated');
         const stagingTs = path.join(this.tempDir, domainName, 'ts', 'generated');
         const stagingTsRoot = path.join(this.tempDir, domainName, 'ts');
-        const stagingData = path.join(this.tempDir, domainName, 'data', 'json');
+        const stagingNdjson = path.join(this.tempDir, domainName, 'data', 'ndjson');
+        const stagingBin = path.join(this.tempDir, domainName, 'data', 'bin');
 
         // Copy to CS target: {csTargetDir}/Devian.Module.{Domain}/generated/
         if (config.csTargetDir) {
@@ -378,11 +539,27 @@ class DevianToolBuilder {
             this.ensureModulePackageJson(resolvedTargetDir, tsModuleName, domainName);
         }
 
-        // Copy to Data target: {dataTargetDir}/{Domain}/json/
-        if (config.dataTargetDir) {
-            const target = path.join(this.resolvePath(config.dataTargetDir), domainName, 'json');
-            this.cleanAndCopy(stagingData, target);
-            console.log(`    [Copy] ${stagingData} -> ${target}`);
+        // Copy to Data targets: {dataTargetDir}/{Domain}/ndjson/ and {dataTargetDir}/{Domain}/bin/
+        // Support both dataTargetDirs (array) and legacy dataTargetDir (string)
+        let dataTargetDirs = config.dataTargetDirs;
+        if (!dataTargetDirs && config.dataTargetDir) {
+            // Fallback for legacy single target
+            dataTargetDirs = [config.dataTargetDir];
+        }
+        if (dataTargetDirs && Array.isArray(dataTargetDirs)) {
+            for (const dataTargetDir of dataTargetDirs) {
+                const resolvedDataDir = this.resolvePath(dataTargetDir);
+                
+                // Copy ndjson files
+                const ndjsonTarget = path.join(resolvedDataDir, domainName, 'ndjson');
+                this.cleanAndCopy(stagingNdjson, ndjsonTarget);
+                console.log(`    [Copy] ${stagingNdjson} -> ${ndjsonTarget}`);
+
+                // Copy bin files (ASSET table .asset files)
+                const binTarget = path.join(resolvedDataDir, domainName, 'bin');
+                this.cleanAndCopy(stagingBin, binTarget);
+                console.log(`    [Copy] ${stagingBin} -> ${binTarget}`);
+            }
         }
 
         // Copy to UPM target: {upmTargetDir}/com.devian.module.{domain}/
@@ -1162,7 +1339,7 @@ export * from './features';
     // UPM (Unity Package Manager) Support
     // ========================================================================
 
-    generateDomainUpmScaffold(domainName, stagingCs) {
+    generateDomainUpmScaffold(domainName, stagingCs, tables = []) {
         const asmdefName = `Devian.Module.${domainName}`;
         const stagingUpm = path.join(this.tempDir, domainName, 'upm');
         const stagingRuntime = path.join(stagingUpm, 'Runtime');
@@ -1170,6 +1347,8 @@ export * from './features';
 
         fs.mkdirSync(stagingRuntime, { recursive: true });
         fs.mkdirSync(stagingEditor, { recursive: true });
+        // Note: Editor/Generated is NOT created here - TableID bindings go to com.devian.unity.common
+        // SSOT: skills/devian/19-unity-module-common-upm/SKILL.md
 
         // package.json - SSOT: skills/devian/17-upm-package-metadata/SKILL.md
         const isCommon = domainName === 'Common';
@@ -1212,11 +1391,13 @@ export * from './features';
         };
         fs.writeFileSync(path.join(stagingRuntime, `${asmdefName}.asmdef`), JSON.stringify(runtimeAsmdef, null, 2));
 
-        // Editor.asmdef
+        // Editor.asmdef - minimal references (no TableID support needed, handled by com.devian.unity.common)
+        // SSOT: skills/devian/19-unity-module-common-upm/SKILL.md
+        const editorReferences = [asmdefName];
         const editorAsmdef = {
             name: `${asmdefName}.Editor`,
             rootNamespace: `${asmdefName}.Editor`,
-            references: [asmdefName],
+            references: editorReferences,
             includePlatforms: ['Editor'],
             excludePlatforms: [],
             allowUnsafeCode: false,
@@ -1241,6 +1422,10 @@ export * from './features';
             }
         }
 
+        // Note: TableID Editor bindings ({TableName}_ID.Editor.cs) are NOT generated here.
+        // They are generated by processStaticUpmPackage() into com.devian.unity.common/Editor/Generated/
+        // SSOT: skills/devian/21-unity-common-upm/SKILL.md
+
         // Common 모듈일 때 Features 폴더 복사 (Logger/Variant/Complex)
         // SSOT: skills/devian/19-unity-module-common-upm/SKILL.md
         if (isCommon) {
@@ -1252,6 +1437,93 @@ export * from './features';
                 console.log(`    [UPM] Copied Features to staging: ${featuresTarget}`);
             }
         }
+    }
+
+    /**
+     * Generate {TableName}_ID.Editor.cs for Unity Inspector binding
+     */
+    generateTableIdEditorCs(domainName, table) {
+        const tableName = table.name;
+        const enumSpecs = collectEnumGenSpecs([table]);
+        const tableEnumSpec = enumSpecs.find(spec => spec.tableName === tableName);
+        
+        let keyType;
+        if (tableEnumSpec) {
+            keyType = tableEnumSpec.enumName;
+        } else {
+            keyType = getCSharpKeyTypeForTable(table);
+        }
+
+        // Class names with domain prefix to avoid conflicts
+        const selectorClassName = `${domainName}_${tableName}_ID_Selector`;
+        const drawerClassName = `${domainName}_${tableName}_ID_Drawer`;
+
+        const lines = [];
+        lines.push('// <auto-generated>');
+        lines.push('// DO NOT EDIT - Generated by Devian Build System v10');
+        lines.push('// </auto-generated>');
+        lines.push('');
+        lines.push('#if UNITY_EDITOR');
+        lines.push('');
+        lines.push('using UnityEditor;');
+        lines.push('using UnityEngine;');
+        lines.push('using Devian.Unity;');
+        lines.push(`using Devian.Module.${domainName};`);
+        lines.push('');
+        lines.push('namespace Devian.Unity');
+        lines.push('{');
+
+        // Selector class
+        lines.push(`    /// <summary>Selector for ${tableName}_ID</summary>`);
+        lines.push(`    public class ${selectorClassName} : EditorID_SelectorBase`);
+        lines.push('    {');
+        lines.push(`        protected override string GetDisplayTypeName() => "${tableName}";`);
+        lines.push('');
+        lines.push('        public override void Reload()');
+        lines.push('        {');
+        lines.push('            ClearItems();');
+        lines.push(`            TB_${tableName}.Clear();`);
+        lines.push('');
+        lines.push(`            var textAssets = AssetManager.FindAssets<TextAsset>("${tableName}");`);
+        lines.push('            foreach (var ta in textAssets)');
+        lines.push('            {');
+        lines.push('                var assetPath = AssetDatabase.GetAssetPath(ta);');
+        lines.push('                if (!assetPath.EndsWith(".ndjson", System.StringComparison.OrdinalIgnoreCase))');
+        lines.push('                    continue;');
+        lines.push('');
+        lines.push(`                TB_${tableName}.LoadFromNdjson(ta.text);`);
+        lines.push('            }');
+        lines.push('');
+        lines.push(`            foreach (var row in TB_${tableName}.GetAll())`);
+        lines.push('            {');
+        lines.push('                AddItem(row.GetKey().ToString());');
+        lines.push('            }');
+        lines.push('        }');
+        lines.push('    }');
+        lines.push('');
+
+        // Drawer class
+        lines.push(`    /// <summary>PropertyDrawer for ${tableName}_ID</summary>`);
+        lines.push(`    [CustomPropertyDrawer(typeof(${tableName}_ID))]`);
+        lines.push(`    public class ${drawerClassName} : EditorID_DrawerBase<${selectorClassName}>`);
+        lines.push('    {');
+        lines.push(`        private ${selectorClassName}? _selector;`);
+        lines.push('');
+        lines.push(`        protected override ${selectorClassName} GetSelector()`);
+        lines.push('        {');
+        lines.push(`            if (_selector == null)`);
+        lines.push('            {');
+        lines.push(`                _selector = ScriptableWizard.DisplayWizard<${selectorClassName}>("Select ${tableName}");`);
+        lines.push('            }');
+        lines.push('            return _selector;');
+        lines.push('        }');
+        lines.push('    }');
+
+        lines.push('}');
+        lines.push('');
+        lines.push('#endif');
+
+        return lines.join('\n');
     }
 
     /**
@@ -1301,6 +1573,36 @@ export * from './features';
         // Copy entire source to staging
         this.copyDirRecursive(sourcePath, stagingUpm);
         console.log(`    [OK] Staged to ${stagingUpm}`);
+
+        // Generate TableID Editor bindings for com.devian.unity.common
+        // SSOT: skills/devian/21-unity-common-upm/SKILL.md
+        if (name === 'com.devian.unity.common') {
+            await this.generateTableIdEditorForUnityCommon(stagingUpm);
+        }
+    }
+
+    /**
+     * Generate {TableName}_ID.Editor.cs files for all domains into com.devian.unity.common staging.
+     * SSOT: skills/devian/21-unity-common-upm/SKILL.md
+     */
+    async generateTableIdEditorForUnityCommon(stagingUpm) {
+        const generatedDir = path.join(stagingUpm, 'Editor', 'Generated');
+        fs.mkdirSync(generatedDir, { recursive: true });
+
+        let generatedCount = 0;
+        for (const [domainName, tables] of this.domainTables.entries()) {
+            const keyedTables = tables.filter(t => t.keyField);
+            for (const table of keyedTables) {
+                const editorCode = this.generateTableIdEditorCs(domainName, table);
+                const editorFileName = `${table.name}_ID.Editor.cs`;
+                fs.writeFileSync(path.join(generatedDir, editorFileName), editorCode);
+                generatedCount++;
+            }
+        }
+
+        if (generatedCount > 0) {
+            console.log(`    [Generated] ${generatedCount} TableID Editor file(s) to ${generatedDir}`);
+        }
     }
 
     /**
@@ -1326,6 +1628,125 @@ export * from './features';
         // Copy staging to target
         this.copyDirRecursive(stagingUpm, targetPath);
         console.log(`  [UPM] ${name} → ${targetPath}`);
+    }
+
+    /**
+     * Verify that unity-common TableId base files exist.
+     * Prevents build from succeeding when critical files are missing.
+     */
+    async verifyUnityCommonTableIdFiles() {
+        // Find upmTargetDir from staticUpmPackages or domains config
+        let upmTargetDir = null;
+        
+        if (this.config.staticUpmPackages) {
+            const unityCommon = this.config.staticUpmPackages.find(p => p.name === 'com.devian.unity.common');
+            if (unityCommon) {
+                upmTargetDir = this.resolvePath(unityCommon.upmTargetDir);
+            }
+        }
+        
+        if (!upmTargetDir && this.config.domains) {
+            // Fallback: use first domain's upmTargetDir
+            const firstDomain = Object.values(this.config.domains)[0];
+            if (firstDomain && firstDomain.upmTargetDir) {
+                upmTargetDir = this.resolvePath(firstDomain.upmTargetDir);
+            }
+        }
+
+        if (!upmTargetDir) {
+            console.log('  [SKIP] No upmTargetDir found, skipping unity-common guard check');
+            return;
+        }
+
+        const unityCommonPath = path.join(upmTargetDir, 'com.devian.unity.common');
+        const requiredFiles = [
+            'Editor/TableId/EditorID_SelectorBase.cs',
+            'Editor/TableId/EditorID_DrawerBase.cs',
+            'Editor/Devian.Unity.Common.Editor.asmdef'
+        ];
+
+        const missingFiles = [];
+        for (const relPath of requiredFiles) {
+            const fullPath = path.join(unityCommonPath, relPath);
+            if (!fs.existsSync(fullPath)) {
+                missingFiles.push(relPath);
+            }
+        }
+
+        if (missingFiles.length > 0) {
+            console.error();
+            console.error('[FAIL] com.devian.unity.common is missing Editor/TableId base files:');
+            for (const file of missingFiles) {
+                console.error(`       - ${file}`);
+            }
+            console.error();
+            console.error('Fix: Add staticUpmPackages for com.devian.unity.common in build.json:');
+            console.error('  "staticUpmPackages": [');
+            console.error('    {');
+            console.error('      "name": "com.devian.unity.common",');
+            console.error('      "sourceDir": "../framework-cs/upm-src/com.devian.unity.common",');
+            console.error('      "upmTargetDir": "../framework-cs/apps/UnityExample/Packages"');
+            console.error('    }');
+            console.error('  ]');
+            console.error();
+            throw new Error('[FAIL] com.devian.unity.common is missing Editor/TableId base files.');
+        }
+
+        console.log('  [Guard] unity-common TableId base files verified');
+    }
+
+    /**
+     * Guard: Verify deprecated packages don't exist in target.
+     * SSOT: skills/devian/15-unity-bundle-upm/SKILL.md
+     */
+    async verifyNoDeprecatedPackages() {
+        const deprecatedPackages = [
+            'com.devian.unity'  // deprecated meta package
+        ];
+
+        // Find upmTargetDir
+        let upmTargetDir = null;
+        if (this.config.staticUpmPackages) {
+            const unityCommon = this.config.staticUpmPackages.find(p => p.name === 'com.devian.unity.common');
+            if (unityCommon) {
+                upmTargetDir = this.resolvePath(unityCommon.upmTargetDir);
+            }
+        }
+        
+        if (!upmTargetDir && this.config.domains) {
+            const firstDomain = Object.values(this.config.domains)[0];
+            if (firstDomain && firstDomain.upmTargetDir) {
+                upmTargetDir = this.resolvePath(firstDomain.upmTargetDir);
+            }
+        }
+
+        if (!upmTargetDir) {
+            console.log('  [SKIP] No upmTargetDir found, skipping deprecated packages check');
+            return;
+        }
+
+        const foundDeprecated = [];
+        for (const pkgName of deprecatedPackages) {
+            const pkgPath = path.join(upmTargetDir, pkgName);
+            if (fs.existsSync(pkgPath)) {
+                foundDeprecated.push(pkgName);
+            }
+        }
+
+        if (foundDeprecated.length > 0) {
+            console.error();
+            console.error('[FAIL] Deprecated packages found in Packages folder:');
+            for (const pkg of foundDeprecated) {
+                console.error(`       - ${pkg}`);
+            }
+            console.error();
+            console.error('Fix: Delete the deprecated package folder(s) from:');
+            console.error(`     ${upmTargetDir}`);
+            console.error();
+            throw new Error('[FAIL] Deprecated packages exist. Remove them manually.');
+        }
+
+        console.log('  [Guard] No deprecated packages found');
     }
 
     generateProtocolUpmScaffold(groupName, stagingCs) {
@@ -1393,15 +1814,37 @@ export * from './features';
         // Sync samples metadata if Samples~ folder exists
         this.syncSamplesMetadata(targetDir);
 
-        // Editor folder (don't overwrite if exist)
+        // Editor folder handling
         const stagingEditor = path.join(stagingUpm, 'Editor');
         const targetEditor = path.join(targetDir, 'Editor');
         if (fs.existsSync(stagingEditor)) {
             fs.mkdirSync(targetEditor, { recursive: true });
-            for (const file of fs.readdirSync(stagingEditor)) {
-                const dest = path.join(targetEditor, file);
-                if (!fs.existsSync(dest)) {
-                    fs.copyFileSync(path.join(stagingEditor, file), dest);
+            
+            // Get staging editor contents
+            const stagingEntries = new Set(fs.readdirSync(stagingEditor));
+            
+            // Remove directories in target that don't exist in staging
+            // This ensures Editor/Generated is removed when staging doesn't have it
+            if (fs.existsSync(targetEditor)) {
+                for (const entry of fs.readdirSync(targetEditor, { withFileTypes: true })) {
+                    if (entry.isDirectory() && !stagingEntries.has(entry.name)) {
+                        const orphanPath = path.join(targetEditor, entry.name);
+                        fs.rmSync(orphanPath, { recursive: true });
+                    }
+                }
+            }
+            
+            // Copy staging editor contents
+            for (const entry of fs.readdirSync(stagingEditor, { withFileTypes: true })) {
+                const srcPath = path.join(stagingEditor, entry.name);
+                const destPath = path.join(targetEditor, entry.name);
+                
+                if (entry.isDirectory()) {
+                    // For directories (like Generated), always clean and copy
+                    this.cleanAndCopy(srcPath, destPath);
+                } else {
+                    // For files (asmdef, etc.), always overwrite from staging (staging is source of truth)
+                    fs.copyFileSync(srcPath, destPath);
                 }
             }
         }

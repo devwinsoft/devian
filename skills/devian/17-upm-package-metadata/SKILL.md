@@ -21,7 +21,7 @@ AppliesTo: v10
 ### name
 
 - 접두어: `com.devian.`
-- 예: `com.devian.core`, `com.devian.network`, `com.devian.protobuf`, `com.devian.module.common`, `com.devian.unity`, `com.devian.unity.network`, `com.devian.unity.common`
+- 예: `com.devian.core`, `com.devian.network`, `com.devian.protobuf`, `com.devian.module.common`, `com.devian.unity.network`, `com.devian.unity.common`
 
 ### version
 
@@ -43,7 +43,6 @@ AppliesTo: v10
   - `Devian Module Common`
   - `Devian Unity Network`
   - `Devian Unity Common`
-  - `Devian Unity Bundle`
 
 ### description
 
@@ -55,7 +54,6 @@ AppliesTo: v10
   - `"Devian.Module.Common runtime for Unity (source) - Common features"`
   - `"Unity adapter for Devian.Network (MonoBehaviours)"`
   - `"Unity adapter utilities for Devian.Module.Common"`
-  - `"Meta package that bundles Devian core/network/protobuf + unity adapters"`
 
 ### author
 
@@ -78,12 +76,10 @@ AppliesTo: v10
 
 ## dependencies 정책
 
-- meta 패키지(`com.devian.unity`)는 코드가 없고 dependencies만 가진다.
-- runtime 패키지는 필요한 최소 의존만 선언한다:
+runtime 패키지는 필요한 최소 의존만 선언한다:
 
 | 패키지 | dependencies |
 |--------|--------------|
-| `com.devian.unity` | `com.devian.core`, `com.devian.network`, `com.devian.protobuf`, `com.devian.unity.network`, `com.devian.module.common`, `com.devian.unity.common` |
 | `com.devian.unity.network` | `com.devian.network`, `com.devian.core`, `com.devian.protobuf`, `com.devian.module.common` |
 | `com.devian.unity.common` | `com.devian.module.common` |
 | `com.devian.module.common` | `com.devian.core`, `com.unity.nuget.newtonsoft-json` |
@@ -141,6 +137,7 @@ AppliesTo: v10
 - `author.name`을 임의로 변경 금지
 - 패키지마다 `unity` 최소버전이 달라지게 만들지 말 것
 - `com.devian.*` 외 패키지의 package.json은 수정 금지
+- `com.devian.unity` 메타 패키지 생성/유지 금지 (deprecated)
 
 ---
 
@@ -148,4 +145,4 @@ AppliesTo: v10
 
 - Related: `skills/devian/15-unity-bundle-upm/SKILL.md`
 - Related: `skills/devian/19-unity-module-common-upm/SKILL.md`
-- Related: `skills/devian/20-unity-common-upm/SKILL.md`
+- Related: `skills/devian/21-unity-common-upm/SKILL.md`

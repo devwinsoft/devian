@@ -34,7 +34,8 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 |------|------------------|-------------------|
 | C# | `{csTargetDir}/Devian.Module.{Domain}/` | `{csTargetDir}/Devian.Network.{Group}/` |
 | TS | `{tsTargetDir}/devian-module-{domain}/` | `{tsTargetDir}/devian-network-{group}/` |
-| Data | `{dataTargetDir}/{Domain}/json/` | - |
+| Data (ndjson) | `{dataTargetDir}/{Domain}/ndjson/` | - |
+| Data (bin) | `{dataTargetDir}/{Domain}/bin/` (ASSET 테이블만) | - |
 
 ### 권장 구조
 
@@ -65,8 +66,10 @@ framework-ts/
 
 output/
 └── {Domain}/
-    └── json/
-        └── *.ndjson
+    ├── ndjson/
+    │   └── *.ndjson
+    └── bin/
+        └── *.asset  # ASSET 테이블만
 ```
 
 > 실제 폴더명/레이아웃은 프로젝트 구성에 따라 달라질 수 있으며, 코드가 정답이다.

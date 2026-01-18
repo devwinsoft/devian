@@ -9,7 +9,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <RootNamespace>Devian.Unity.Common.Editor</RootNamespace>
+    <RootNamespace>Devian.Unity</RootNamespace>
     <ProjectGuid>{C039A0AA-D1C3-373C-B439-E97985E0D818}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -61,8 +61,13 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.2f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Packages\com.devian.unity.common\Editor\TableId\EditorRectUtil.cs" />
+    <Compile Include="Packages\com.devian.unity.common\Editor\TableId\EditorID_SelectorBase.cs" />
+    <Compile Include="Packages\com.devian.unity.common\Editor\Generated\TestSheet_ID.Editor.cs" />
+    <Compile Include="Packages\com.devian.unity.common\Editor\TableId\EditorID_DrawerBase.cs" />
     <Compile Include="Packages\com.devian.unity.common\Editor\Complex\CStringPropertyDrawer.cs" />
     <Compile Include="Packages\com.devian.unity.common\Editor\Complex\CIntPropertyDrawer.cs" />
+    <Compile Include="Packages\com.devian.unity.common\Editor\Generated\COMPLEX_POLICY_ID.Editor.cs" />
     <Compile Include="Packages\com.devian.unity.common\Editor\Complex\CFloatPropertyDrawer.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -669,6 +674,14 @@
       <HintPath>Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Google.Protobuf">
+      <HintPath>Packages\com.devian.protobuf\Runtime\Plugins\Google.Protobuf.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>Library\PackageCache\com.unity.nuget.newtonsoft-json@4dfd81071c64\Runtime\Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.VisualScripting.TextureAssets">
       <HintPath>Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>
       <Private>False</Private>
@@ -679,14 +692,6 @@
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
       <HintPath>Library\PackageCache\com.unity.collections@aea9d3bd5e19\Unity.Collections.Tests\System.Runtime.CompilerServices.Unsafe\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Google.Protobuf">
-      <HintPath>Packages\com.devian.protobuf\Runtime\Plugins\Google.Protobuf.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>Library\PackageCache\com.unity.nuget.newtonsoft-json@4dfd81071c64\Runtime\Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Android.Types">

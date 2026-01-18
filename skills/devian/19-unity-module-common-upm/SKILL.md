@@ -118,6 +118,8 @@ com.devian.module.common/
 - 코드에서 `UnityEngine.*` namespace 직접 참조 금지.
 - **Features를 `Common.g.cs`에 생성으로 박아 넣는 방식 금지** (Feature는 수동 소스 유지).
 - **clean+copy 정책을 무시하고 targetDir에 수동으로만 파일을 두는 방식 금지** (재빌드 시 삭제됨).
+- **Editor/Generated 폴더 생성 금지**: TableID Inspector 바인딩(`*_ID.Editor.cs`)은 이 패키지가 아닌 `com.devian.unity.common/Editor/Generated/`에서 생성한다.
+- **UnityEditor 의존 파일 포함 금지**: Editor 폴더에는 asmdef만 존재해야 하며, UnityEditor 의존 코드는 `com.devian.unity.common`이 담당한다.
 
 ---
 

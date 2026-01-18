@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEngine;
 using Devian.Module.Common;
 
-namespace Devian.Unity.Common.Editor
+namespace Devian.Unity
 {
     [CustomPropertyDrawer(typeof(CString))]
     public class CStringPropertyDrawer : PropertyDrawer

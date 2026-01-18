@@ -62,10 +62,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\TutorialInfo\Scripts\Editor\ReadmeEditor.cs" />
-    <Compile Include="Assets\Complex\Editor\CFloat_Inspector.cs" />
-    <Compile Include="Assets\Complex\Editor\CInt_Inspector.cs" />
-    <Compile Include="Assets\Complex\Editor\CString_Inspector.cs" />
-    <Compile Include="Assets\Complex\Editor\BasePropertyDrawer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Library\PackageCache\com.unity.collab-proxy@3351acaba9c9\Lib\Editor\Localization\commontypes.ko.txt" />
@@ -769,6 +765,14 @@
       <HintPath>Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Runtime\VisualScripting.Flow\Dependencies\NCalc\Unity.VisualScripting.Antlr3.Runtime.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Google.Protobuf">
+      <HintPath>Packages\com.devian.protobuf\Runtime\Plugins\Google.Protobuf.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>Library\PackageCache\com.unity.nuget.newtonsoft-json@4dfd81071c64\Runtime\Newtonsoft.Json.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="Unity.VisualScripting.TextureAssets">
       <HintPath>Library\PackageCache\com.unity.visualscripting@191c0d7e3b69\Editor\VisualScripting.Core\EditorAssetResources\Unity.VisualScripting.TextureAssets.dll</HintPath>
       <Private>False</Private>
@@ -779,14 +783,6 @@
     </Reference>
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
       <HintPath>Library\PackageCache\com.unity.collections@aea9d3bd5e19\Unity.Collections.Tests\System.Runtime.CompilerServices.Unsafe\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Google.Protobuf">
-      <HintPath>Packages\com.devian.protobuf\Runtime\Plugins\Google.Protobuf.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>Library\PackageCache\com.unity.nuget.newtonsoft-json@4dfd81071c64\Runtime\Newtonsoft.Json.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Unity.Android.Types">
@@ -1454,6 +1450,10 @@
     <ProjectReference Include="Unity.VisualStudio.Editor.csproj">
       <Project>{F9C4FD40-5E40-3D05-0497-92122C5F3AFF}</Project>
       <Name>Unity.VisualStudio.Editor</Name>
+    </ProjectReference>
+    <ProjectReference Include="Devian.Unity.Common.Editor.csproj">
+      <Project>{C039A0AA-D1C3-373C-B439-E97985E0D818}</Project>
+      <Name>Devian.Unity.Common.Editor</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.Collections.csproj">
       <Project>{80EF44D5-120B-AE3F-7B53-38BFA0D0D972}</Project>

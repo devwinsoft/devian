@@ -1192,29 +1192,215 @@ function capitalize(str) {
 // ============================================================================
 
 /**
- * Generate NDJSON data from table
- * @param {Object} table - Table definition from parseXlsx
- * @returns {string} NDJSON string (one JSON per line)
+ * Convert a table row to ordered JSON object
+ * Shared helper for NDJSON and Asset generation (avoids duplication)
+ * SSOT: skills/devian/28-json-row-io/SKILL.md
+ * @param {Object} row - Row data
+ * @param {Array} fields - Field definitions from table
+ * @returns {Object} Ordered row object ready for JSON.stringify
  */
-export function generateTableData(table) {
-    const lines = [];
+function rowToOrderedJson(row, fields) {
+    const orderedRow = {};
+    for (const field of fields) {
+        const value = row[field.name];
+        // SSOT: 64-bit integers → string, enum → name string
+        if (['long', 'ulong'].includes(field.type)) {
+            orderedRow[capitalize(field.name)] = String(value);
+        } else {
+            orderedRow[capitalize(field.name)] = value;
+        }
+    }
+    return orderedRow;
+}
+
+/**
+ * Build export rows with PK validation
+ * SSOT: skills/devian/28-json-row-io/SKILL.md - PK Validation
+ * 
+ * Rules:
+ * - primaryKey가 정의되지 않은 테이블은 export 하지 않는다
+ * - primaryKey 값이 빈 row는 export 하지 않는다
+ * - export 가능한 row가 0개면 파일을 생성하지 않는다
+ * 
+ * @param {Object} table - Table definition from parseXlsx
+ * @returns {Object} { rows: Array, skipped: boolean, reason: string|null }
+ */
+export function buildExportRows(table) {
+    // Check if primaryKey is defined
+    if (!table.keyField) {
+        console.log(`[Skip] Table export skipped (no primaryKey defined): ${table.name}`);
+        return { rows: [], skipped: true, reason: 'no_pk_defined' };
+    }
+
+    const pkFieldName = table.keyField.name;
+    const validRows = [];
 
     for (const row of table.rows) {
-        // Convert row to JSON with proper property order (SSOT: Excel column order)
-        const orderedRow = {};
-        for (const field of table.fields) {
-            const value = row[field.name];
-            // SSOT: 64-bit integers → string, enum → name string
-            if (['long', 'ulong'].includes(field.type)) {
-                orderedRow[capitalize(field.name)] = String(value);
-            } else {
-                orderedRow[capitalize(field.name)] = value;
-            }
+        const pkValue = row[pkFieldName];
+        
+        // PK value must not be null, undefined, or empty string
+        if (pkValue === null || pkValue === undefined || pkValue === '') {
+            // Skip this row (PK is empty)
+            continue;
         }
+        
+        validRows.push(row);
+    }
+
+    // Check if any valid rows remain
+    if (validRows.length === 0) {
+        console.log(`[Skip] Table export skipped (no valid PK rows): ${table.name}`);
+        return { rows: [], skipped: true, reason: 'no_valid_rows' };
+    }
+
+    return { rows: validRows, skipped: false, reason: null };
+}
+
+/**
+ * Generate NDJSON data from table
+ * @param {Object} table - Table definition from parseXlsx
+ * @returns {Object} { data: string, rowCount: number } - NDJSON string (one JSON per line) and row count
+ */
+export function generateTableData(table) {
+    const { rows, skipped } = buildExportRows(table);
+    
+    if (skipped || rows.length === 0) {
+        return { data: '', rowCount: 0 };
+    }
+
+    const lines = [];
+
+    for (const row of rows) {
+        // Convert row to JSON with proper property order (SSOT: Excel column order)
+        const orderedRow = rowToOrderedJson(row, table.fields);
         lines.push(JSON.stringify(orderedRow));
     }
 
-    return lines.join('\n');
+    return { data: lines.join('\n'), rowCount: rows.length };
+}
+
+// ============================================================================
+// Unity TextAsset (.asset) Generator for Tables with PK
+// SSOT: skills/devian/28-json-row-io/SKILL.md
+// Format: Unity TextAsset YAML wrapping pb64 binary data
+// ============================================================================
+
+/**
+ * Encode unsigned integer as protobuf varint
+ * @param {number} value - Unsigned 32-bit integer
+ * @returns {Uint8Array} Varint bytes
+ */
+function encodeVarint(value) {
+    const bytes = [];
+    while (value > 0x7f) {
+        bytes.push((value & 0x7f) | 0x80);
+        value >>>= 7;
+    }
+    bytes.push(value & 0x7f);
+    return new Uint8Array(bytes);
+}
+
+/**
+ * Generate pb64 binary data from table (table-level, all rows concatenated)
+ * Format: varint length-delimited JSON bytes → concat → base64
+ * Each row: [varint length][UTF-8 JSON bytes]
+ * 
+ * @param {Array} rows - Valid rows to export
+ * @param {Array} fields - Field definitions
+ * @returns {string} Base64 encoded string
+ */
+function generatePb64Binary(rows, fields) {
+    const chunks = [];
+
+    for (const row of rows) {
+        const orderedRow = rowToOrderedJson(row, fields);
+        const jsonStr = JSON.stringify(orderedRow);
+        const jsonBytes = Buffer.from(jsonStr, 'utf8');
+        
+        // Prepend varint length
+        const lengthVarint = encodeVarint(jsonBytes.length);
+        
+        chunks.push(Buffer.from(lengthVarint));
+        chunks.push(jsonBytes);
+    }
+
+    const blob = Buffer.concat(chunks);
+    return blob.toString('base64');
+}
+
+/**
+ * Generate Unity TextAsset YAML content
+ * @param {string} tableName - Table name (= m_Name)
+ * @param {string} base64Data - Base64 encoded pb64 binary data
+ * @returns {string} Complete YAML content
+ */
+function generateTextAssetYaml(tableName, base64Data) {
+    // Template is fixed - do not modify field names, order, indentation, or spacing
+    return `%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!49 &4900000
+TextAsset:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ${tableName}
+  m_Script: ${base64Data}
+`;
+}
+
+/**
+ * Generate Unity TextAsset .asset file for a table (table-level, single file)
+ * SSOT: skills/devian/28-json-row-io/SKILL.md - bin export 규칙
+ * 
+ * Rules:
+ * - Only tables with pk option (table.keyField exists) are exported
+ * - If ANY row has empty PK value, the ENTIRE table is skipped (no partial export)
+ * - Output: single {TableName}.asset file per table
+ * - m_Script contains pb64 binary (existing format, no changes)
+ * 
+ * @param {Object} table - Table definition from parseXlsx
+ * @returns {Object} { tableName: string, yaml: string, rowCount: number } or null if skipped
+ */
+export function generateTableAsset(table) {
+    // Rule: Only tables with pk option are exported
+    if (!table.keyField) {
+        return null; // No pk option → no .asset export (silent skip)
+    }
+
+    const pkFieldName = table.keyField.name;
+    const rows = table.rows || [];
+
+    if (rows.length === 0) {
+        console.log(`[Skip] Asset export skipped (no rows): ${table.name}`);
+        return null;
+    }
+
+    // Rule: If ANY row has empty PK, skip the ENTIRE table
+    for (const row of rows) {
+        const pkValue = row[pkFieldName];
+        if (pkValue === null || pkValue === undefined || pkValue === '') {
+            console.log(`[Skip] Asset export skipped (empty PK row): ${table.name}`);
+            return null;
+        }
+    }
+
+    // Generate pb64 binary (existing format, table-level)
+    const base64Data = generatePb64Binary(rows, table.fields);
+
+    if (!base64Data || base64Data.length === 0) {
+        console.log(`[Skip] Asset export skipped (empty data): ${table.name}`);
+        return null;
+    }
+
+    // Wrap in Unity TextAsset YAML
+    const yaml = generateTextAssetYaml(table.name, base64Data);
+
+    return {
+        tableName: table.name,
+        yaml: yaml,
+        rowCount: rows.length
+    };
 }
 
 // ============================================================================
@@ -1369,4 +1555,16 @@ export function generateTypeScriptEnums(enumSpecs) {
  */
 export function getTableEnumSpecs(table, allEnumSpecs) {
     return allEnumSpecs.filter(spec => spec.tableName === table.name);
+}
+
+/**
+ * Get C# key type for a table (for {TableName}_ID generation)
+ * @param {Object} table - Table definition with keyField
+ * @returns {string} C# type string for the key field
+ */
+export function getCSharpKeyTypeForTable(table) {
+    if (!table.keyField) {
+        throw new Error(`Table '${table.name}' has no keyField`);
+    }
+    return mapTableTypeToCSharp(table.keyField.type, false);
 }

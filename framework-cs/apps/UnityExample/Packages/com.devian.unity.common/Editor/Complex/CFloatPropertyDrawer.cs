@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using Devian.Module.Common;
 
-namespace Devian.Unity.Common.Editor
+namespace Devian.Unity
 {
     [CustomPropertyDrawer(typeof(CFloat))]
     public class CFloatPropertyDrawer : PropertyDrawer

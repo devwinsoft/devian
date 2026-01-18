@@ -5,5 +5,8 @@
   "types": "index.ts",
   "dependencies": {
     "@devian/core": "10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.9"
   }
 }

@@ -2,6 +2,14 @@
   "version": "10",
   "tempDir": "temp",
 
+  "staticUpmPackages": [
+    {
+      "name": "com.devian.unity.common",
+      "sourceDir": "../framework-cs/upm-src/com.devian.unity.common",
+      "upmTargetDir": "../framework-cs/apps/UnityExample/Packages"
+    }
+  ],
+
   "domains": {
     "Common": {
       "contractsDir": "Common/contracts",
@@ -12,7 +20,10 @@
 
       "csTargetDir": "../framework-cs/modules",
       "tsTargetDir": "../framework-ts/modules",
-      "dataTargetDir": "../output",
+      "dataTargetDirs": [
+        "../output",
+        "../framework-cs/apps/UnityExample/Assets/Bundles/Tables"
+      ],
       "upmTargetDir": "../framework-cs/apps/UnityExample/Packages"
     }
   },

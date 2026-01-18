@@ -1,6 +1,6 @@
 {
   "name": "Devian.Unity.Common",
-  "rootNamespace": "Devian.Unity.Common",
+  "rootNamespace": "Devian.Unity",
   "references": [
     "Devian.Module.Common"
   ],

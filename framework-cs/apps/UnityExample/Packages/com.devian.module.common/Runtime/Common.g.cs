@@ -244,4 +244,35 @@ namespace Devian.Module.Common
         }
     }
 
+    // ================================================================
+    // Table ID Types (for Inspector binding)
+    // ================================================================
+
+    /// <summary>Inspector-bindable ID for COMPLEX_POLICY</summary>
+    [Serializable]
+    public sealed class COMPLEX_POLICY_ID
+    {
+        public ComplexPolicyType Value;
+
+        public static implicit operator ComplexPolicyType(COMPLEX_POLICY_ID id) => id.Value;
+        public static implicit operator COMPLEX_POLICY_ID(ComplexPolicyType value) => new COMPLEX_POLICY_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for TestSheet</summary>
+    [Serializable]
+    public sealed class TestSheet_ID
+    {
+        public int Value;
+
+        public static implicit operator int(TestSheet_ID id) => id.Value;
+        public static implicit operator TestSheet_ID(int value) => new TestSheet_ID { Value = value };
+    }
+
+    /// <summary>Table ID validation extensions</summary>
+    public static class TableIdExtensions
+    {
+        public static bool IsValid(this COMPLEX_POLICY_ID? obj) => obj != null && !EqualityComparer<ComplexPolicyType>.Default.Equals(obj.Value, default);
+        public static bool IsValid(this TestSheet_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
+    }
+
 }

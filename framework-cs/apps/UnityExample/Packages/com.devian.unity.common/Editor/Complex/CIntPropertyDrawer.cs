@@ -5,7 +5,7 @@ using UnityEditor;
 using UnityEngine;
 using Devian.Module.Common;
 
-namespace Devian.Unity.Common.Editor
+namespace Devian.Unity
 {
     [CustomPropertyDrawer(typeof(CInt))]
     public class CIntPropertyDrawer : PropertyDrawer

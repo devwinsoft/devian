@@ -68,7 +68,7 @@ node framework-ts/tools/builder/build.js input/build.json
 
 ### 2. targetDirs는 샘플 전용 하위 폴더만 사용
 
-샘플 빌드의 `csTargetDir`, `dataTargetDir`은 **반드시** 기존 패키지의 Runtime 하위 전용 폴더를 가리켜야 한다.
+샘플 빌드의 `csTargetDir`, `dataTargetDirs`은 **반드시** 기존 패키지의 Runtime 하위 전용 폴더를 가리켜야 한다.
 
 **허용 경로:**
 

@@ -1,10 +1,18 @@
 {
   "name": "Devian.Module.Common.Editor",
+  "rootNamespace": "Devian.Module.Common.Editor",
   "references": [
     "Devian.Module.Common"
   ],
   "includePlatforms": [
     "Editor"
   ],
-  "excludePlatforms": []
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

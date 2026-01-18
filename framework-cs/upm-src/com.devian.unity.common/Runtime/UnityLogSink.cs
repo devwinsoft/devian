@@ -4,7 +4,7 @@ using System;
 using UnityEngine;
 using Devian.Module.Common;
 
-namespace Devian.Unity.Common
+namespace Devian.Unity
 {
     /// <summary>
     /// Unity-specific log sink that outputs to Unity Console.

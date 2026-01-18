@@ -1,6 +1,6 @@
 {
   "name": "Devian.Unity.Common.Editor",
-  "rootNamespace": "Devian.Unity.Common.Editor",
+  "rootNamespace": "Devian.Unity",
   "references": [
     "Devian.Module.Common",
     "Devian.Unity.Common"

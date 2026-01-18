@@ -13,7 +13,21 @@ AppliesTo: v10
 
 - Devian.Module.Common에 대한 Unity 전용 확장(어댑터)을 제공한다.
 - UnityLogSink를 통해 Unity 콘솔에 로그를 출력한다.
+- AssetManager를 통해 번들 기반 에셋 로딩 및 Editor 전용 Find 기능을 제공한다.
+- TableID Inspector 바인딩(EditorID_DrawerBase, EditorID_SelectorBase)을 제공한다.
 - 이 패키지는 UnityEngine을 의존하므로 Unity 환경에서만 사용 가능하다.
+
+---
+
+## 네임스페이스 정책 (Hard Rule)
+
+**모든 코드는 단일 네임스페이스 `Devian.Unity`를 사용한다.**
+
+- Runtime 코드: `namespace Devian.Unity`
+- Editor 코드: `namespace Devian.Unity` (#if UNITY_EDITOR 블록 내부)
+- Generated TableID Editor 코드: `namespace Devian.Unity`
+
+> **주의**: `Devian.Unity.Common`, `Devian.Unity.Editor` 같은 서브네임스페이스를 사용하지 않는다.
 
 ---
 
@@ -32,13 +46,21 @@ com.devian.unity.common/
 ├── package.json
 ├── Runtime/
 │   ├── Devian.Unity.Common.asmdef
-│   └── UnityLogSink.cs
+│   ├── UnityLogSink.cs
+│   └── AssetManager.cs
 └── Editor/
     ├── Devian.Unity.Common.Editor.asmdef
-    └── Complex/
-        ├── CIntPropertyDrawer.cs
-        ├── CFloatPropertyDrawer.cs
-        └── CStringPropertyDrawer.cs
+    ├── Complex/
+    │   ├── CIntPropertyDrawer.cs
+    │   ├── CFloatPropertyDrawer.cs
+    │   └── CStringPropertyDrawer.cs
+    ├── TableId/
+    │   ├── EditorRectUtil.cs
+    │   ├── EditorID_DrawerBase.cs
+    │   └── EditorID_SelectorBase.cs
+    └── Generated/                    (빌더가 생성)
+        ├── COMPLEX_POLICY_ID.Editor.cs
+        └── TestSheet_ID.Editor.cs
 ```
 
 ---
@@ -76,7 +98,7 @@ com.devian.unity.common/
 ```json
 {
   "name": "Devian.Unity.Common",
-  "rootNamespace": "Devian.Unity.Common",
+  "rootNamespace": "Devian.Unity",
   "references": [
     "Devian.Module.Common"
   ],
@@ -97,7 +119,7 @@ com.devian.unity.common/
 ```json
 {
   "name": "Devian.Unity.Common.Editor",
-  "rootNamespace": "Devian.Unity.Common.Editor",
+  "rootNamespace": "Devian.Unity",
   "references": [
     "Devian.Module.Common",
     "Devian.Unity.Common"
@@ -118,10 +140,10 @@ com.devian.unity.common/
 
 ## API
 
-### UnityLogSink
+### Devian.Unity.UnityLogSink
 
 ```csharp
-namespace Devian.Unity.Common
+namespace Devian.Unity
 {
     public class UnityLogSink : Devian.Module.Common.ILogSink
     {
@@ -143,13 +165,57 @@ namespace Devian.Unity.Common
 - 기본: `[{level}] {tag} - {message}`
 - Error + ex: `[{level}] {tag} - {message}\n{ex.ToString()}`
 
+### Devian.Unity.AssetManager
+
+```csharp
+namespace Devian.Unity
+{
+    public static class AssetManager
+    {
+        // Bundle 로드/언로드
+        public static IEnumerator LoadBundle(string key, string bundleFilePath);
+        public static void UnloadBundle(string key, bool unloadAllLoadedObjects = false);
+        
+        // Bundle 에셋 로드 및 캐시
+        public static IEnumerator LoadBundleAssets<T>(string key) where T : UnityEngine.Object;
+        public static T? GetAsset<T>(string fileName) where T : UnityEngine.Object;
+        
+        // Editor 전용 (UNITY_EDITOR)
+        public static T[] FindAssets<T>(string fileName, params string[] searchDirs) where T : UnityEngine.Object;
+        public static GameObject[] FindPrefabs(params string[] searchDirs);
+        public static GameObject[] FindPrefabs<T>(params string[] searchDirs) where T : Component;
+    }
+}
+```
+
+### Devian.Unity.EditorID_DrawerBase / EditorID_SelectorBase
+
+```csharp
+namespace Devian.Unity
+{
+    // TableID Inspector 바인딩을 위한 베이스 클래스 (Editor 전용)
+    public abstract class EditorID_DrawerBase<TSelector> : PropertyDrawer { ... }
+    public abstract class EditorID_SelectorBase : ScriptableWizard { ... }
+    public static class EditorRectUtil { ... }
+}
+```
+
+**Generated TableID Editor 클래스:**
+- **출력 위치**: `com.devian.unity.common/Editor/Generated/`
+- **생성 주체**: `build.js` (`processStaticUpmPackage` → `generateTableIdEditorForUnityCommon`)
+- **네임스페이스**: `Devian.Unity` 단일 (서브네임스페이스 금지)
+- **클래스명 규칙**: `{DomainName}_{TableName}_ID_Selector`, `{DomainName}_{TableName}_ID_Drawer`
+- **파일명 규칙**: `{TableName}_ID.Editor.cs`
+
+> **주의**: `com.devian.module.common/Editor/Generated/`에는 TableID Editor 파일을 생성하지 않는다.
+
 ---
 
 ## 사용 예시
 
 ```csharp
 using Devian.Module.Common;
-using Devian.Unity.Common;
+using Devian.Unity;
 
 // Unity 콘솔로 로그 출력 설정
 Logger.SetSink(new UnityLogSink());
@@ -166,6 +232,8 @@ Logger.Error("Net", "Connection failed", exception);
 - **core/network/protobuf 코드 포함 금지**: 이 패키지는 확장(어댑터)만 담당한다.
 - **자동 설치(런타임 init) 금지**: 정책 미확정이므로 "수동 SetSink"만 제공한다.
 - Logger.SetSink()를 자동으로 호출하는 코드 포함 금지.
+- **Resources 기반 로딩 금지**: AssetManager는 번들 + Editor Find 전용.
+- **서브네임스페이스 사용 금지**: `Devian.Unity.Common`, `Devian.Unity.Editor` 등 사용하지 않음.
 
 ---
 
