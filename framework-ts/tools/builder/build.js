@@ -139,12 +139,12 @@ class DevianToolBuilder {
         const stagingTs = path.join(this.tempDir, domainName, 'ts', 'generated');
         const stagingTsRoot = path.join(this.tempDir, domainName, 'ts');
         const stagingNdjson = path.join(this.tempDir, domainName, 'data', 'ndjson');
-        const stagingBin = path.join(this.tempDir, domainName, 'data', 'bin');
+        const stagingPb64 = path.join(this.tempDir, domainName, 'data', 'pb64');
 
         fs.mkdirSync(stagingCs, { recursive: true });
         fs.mkdirSync(stagingTs, { recursive: true });
         fs.mkdirSync(stagingNdjson, { recursive: true });
-        fs.mkdirSync(stagingBin, { recursive: true });
+        fs.mkdirSync(stagingPb64, { recursive: true });
 
         // Collect all data for unified file generation
         const contractSpecs = [];
@@ -213,10 +213,10 @@ class DevianToolBuilder {
                     }
 
                     // Unity TextAsset .asset file (pk 옵션 있는 테이블만)
-                    // SSOT: skills/devian/28-json-row-io/SKILL.md - bin export 규칙
+                    // SSOT: skills/devian/28-json-row-io/SKILL.md - pb64 export 규칙
                     const assetResult = generateTableAsset(table);
                     if (assetResult) {
-                        fs.writeFileSync(path.join(stagingBin, `${assetResult.tableName}.asset`), assetResult.yaml);
+                        fs.writeFileSync(path.join(stagingPb64, `${assetResult.tableName}.asset`), assetResult.yaml);
                     }
                 }
             }
@@ -504,7 +504,7 @@ class DevianToolBuilder {
         const stagingTs = path.join(this.tempDir, domainName, 'ts', 'generated');
         const stagingTsRoot = path.join(this.tempDir, domainName, 'ts');
         const stagingNdjson = path.join(this.tempDir, domainName, 'data', 'ndjson');
-        const stagingBin = path.join(this.tempDir, domainName, 'data', 'bin');
+        const stagingPb64 = path.join(this.tempDir, domainName, 'data', 'pb64');
 
         // Copy to CS target: {csTargetDir}/Devian.Module.{Domain}/generated/
         if (config.csTargetDir) {
@@ -539,7 +539,7 @@ class DevianToolBuilder {
             this.ensureModulePackageJson(resolvedTargetDir, tsModuleName, domainName);
         }
 
-        // Copy to Data targets: {dataTargetDir}/{Domain}/ndjson/ and {dataTargetDir}/{Domain}/bin/
+        // Copy to Data targets: {dataTargetDir}/{Domain}/ndjson/ and {dataTargetDir}/{Domain}/pb64/
         // Support both dataTargetDirs (array) and legacy dataTargetDir (string)
         let dataTargetDirs = config.dataTargetDirs;
         if (!dataTargetDirs && config.dataTargetDir) {
@@ -555,10 +555,10 @@ class DevianToolBuilder {
                 this.cleanAndCopy(stagingNdjson, ndjsonTarget);
                 console.log(`    [Copy] ${stagingNdjson} -> ${ndjsonTarget}`);
 
-                // Copy bin files (ASSET table .asset files)
-                const binTarget = path.join(resolvedDataDir, domainName, 'bin');
-                this.cleanAndCopy(stagingBin, binTarget);
-                console.log(`    [Copy] ${stagingBin} -> ${binTarget}`);
+                // Copy pb64 files (PB64 .asset files)
+                const pb64Target = path.join(resolvedDataDir, domainName, 'pb64');
+                this.cleanAndCopy(stagingPb64, pb64Target);
+                console.log(`    [Copy] ${stagingPb64} -> ${pb64Target}`);
             }
         }
 

@@ -195,12 +195,12 @@ DATA 입력은 build.json의 `domains` 섹션이 정의한다.
   - `{tempDir}/{DomainKey}/cs/generated/{DomainKey}.g.cs`
   - `{tempDir}/{DomainKey}/ts/generated/{DomainKey}.g.ts`, `{tempDir}/{DomainKey}/ts/index.ts`
   - `{tempDir}/{DomainKey}/data/ndjson/{TableName}.json` (내용은 NDJSON)
-  - `{tempDir}/{DomainKey}/data/bin/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
+  - `{tempDir}/{DomainKey}/data/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
 - final (각 `{dataTargetDir}` 요소에 대해):
   - `{csTargetDir}/Devian.Module.{DomainKey}/generated/{DomainKey}.g.cs`
   - `{tsTargetDir}/devian-module-{domainkey}/generated/{DomainKey}.g.ts`, `index.ts`
   - `{dataTargetDir}/{DomainKey}/ndjson/{TableName}.json` (내용은 NDJSON)
-  - `{dataTargetDir}/{DomainKey}/bin/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
+  - `{dataTargetDir}/{DomainKey}/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
 
 > Domain의 모든 Contract, Table Entity, Table Container는 단일 파일(`{DomainKey}.g.cs`, `{DomainKey}.g.ts`)에 통합 생성된다.
 > **파일 확장자는 `.json`이지만, `ndjson/` 폴더의 파일 내용은 NDJSON(라인 단위 JSON)이다.** 확장자는 소비 측(Unity/툴링) 요구로 `.json`을 사용한다.
@@ -209,12 +209,12 @@ DATA 입력은 build.json의 `domains` 섹션이 정의한다.
 
 **DATA export는 PK 유효 row만 포함하며, 유효 row가 없으면 산출물을 생성하지 않는다.**
 
-- `primaryKey`(pk 옵션)가 정의되지 않은 테이블은 ndjson/bin 파일을 생성하지 않는다.
+- `primaryKey`(pk 옵션)가 정의되지 않은 테이블은 ndjson/pb64 파일을 생성하지 않는다.
 - `primaryKey` 값이 비어있는 row는 export 대상에서 제외된다 (ndjson).
-- `bin/` export의 경우: row 중 pk가 빈 값이 하나라도 있으면 **테이블 전체 스킵** (부분 export 금지).
+- `pb64/` export의 경우: row 중 pk가 빈 값이 하나라도 있으면 **테이블 전체 스킵** (부분 export 금지).
 - 결과적으로 유효 row가 0개인 경우 파일을 생성하지 않고 `[Skip]` 로그를 남긴다.
 
-#### bin export 규약 (Hard Rule)
+#### pb64 export 규약 (Hard Rule)
 
 **pk 옵션이 있는 테이블만 Unity TextAsset `.asset` 파일로 export한다.**
 
