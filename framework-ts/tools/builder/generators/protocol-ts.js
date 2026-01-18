@@ -4,6 +4,8 @@
 // Namespace: export namespace {ProtocolName} + Devian.Network.{group} alias
 // </auto-generated>
 
+import { mapTsType } from './protocol-type-mapper.js';
+
 /**
  * Generate TypeScript protocol code from protocol spec
  * @param {Object} spec - Protocol specification
@@ -293,6 +295,12 @@ function mapToTypeScriptType(type) {
         const valueType = mapToTypeScriptType(mapMatch[2]);
         const recordType = `Record<${keyType}, ${valueType}>`;
         return isArray ? `${recordType}[]` : recordType;
+    }
+
+    // Complex alias mapping (priority)
+    const aliasType = mapTsType(baseType);
+    if (aliasType) {
+        return isArray ? `(${aliasType})[]` : aliasType;
     }
 
     const typeMap = {

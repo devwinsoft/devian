@@ -21,7 +21,7 @@ AppliesTo: v10
 ### name
 
 - 접두어: `com.devian.`
-- 예: `com.devian.core`, `com.devian.network`, `com.devian.protobuf`, `com.devian.unity`, `com.devian.unity.network`
+- 예: `com.devian.core`, `com.devian.network`, `com.devian.protobuf`, `com.devian.module.common`, `com.devian.unity`, `com.devian.unity.network`, `com.devian.unity.common`
 
 ### version
 
@@ -40,7 +40,9 @@ AppliesTo: v10
   - `Devian Core`
   - `Devian Network`
   - `Devian Protobuf`
+  - `Devian Module Common`
   - `Devian Unity Network`
+  - `Devian Unity Common`
   - `Devian Unity Bundle`
 
 ### description
@@ -50,7 +52,9 @@ AppliesTo: v10
   - `"Devian.Core runtime for Unity (source)"`
   - `"Devian.Network runtime for Unity (source)"`
   - `"Devian.Protobuf runtime for Unity (source) + Google.Protobuf dll"`
+  - `"Devian.Module.Common runtime for Unity (source) - Common features"`
   - `"Unity adapter for Devian.Network (MonoBehaviours)"`
+  - `"Unity adapter utilities for Devian.Module.Common"`
   - `"Meta package that bundles Devian core/network/protobuf + unity adapters"`
 
 ### author
@@ -79,8 +83,10 @@ AppliesTo: v10
 
 | 패키지 | dependencies |
 |--------|--------------|
-| `com.devian.unity` | `com.devian.core`, `com.devian.network`, `com.devian.protobuf`, `com.devian.unity.network` |
-| `com.devian.unity.network` | `com.devian.network` |
+| `com.devian.unity` | `com.devian.core`, `com.devian.network`, `com.devian.protobuf`, `com.devian.unity.network`, `com.devian.module.common`, `com.devian.unity.common` |
+| `com.devian.unity.network` | `com.devian.network`, `com.devian.core`, `com.devian.protobuf`, `com.devian.module.common` |
+| `com.devian.unity.common` | `com.devian.module.common` |
+| `com.devian.module.common` | `com.devian.core`, `com.unity.nuget.newtonsoft-json` |
 | `com.devian.network` | `com.devian.core` |
 | `com.devian.protobuf` | `com.devian.core` |
 | `com.devian.core` | (없음) |
@@ -141,3 +147,5 @@ AppliesTo: v10
 ## Reference
 
 - Related: `skills/devian/15-unity-bundle-upm/SKILL.md`
+- Related: `skills/devian/19-unity-module-common-upm/SKILL.md`
+- Related: `skills/devian/20-unity-common-upm/SKILL.md`

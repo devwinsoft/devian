@@ -5,6 +5,313 @@
 // </auto-generated>
 
 import XLSX from 'xlsx';
+import { createHash } from 'crypto';
+
+// ============================================================================
+// Class Parser Registry (for class: type fields)
+// ============================================================================
+
+const classParsers = new Map();
+
+/**
+ * Register a class parser
+ * @param {string} typeName - Full type name (e.g., 'Devian.Module.Common.CInt')
+ * @param {Function} parser - Parser function (cellText, ctx) => object|null
+ */
+function registerClassParser(typeName, parser) {
+    classParsers.set(typeName, parser);
+}
+
+// ============================================================================
+// Complex Type Parsers (CInt, CFloat, CString)
+// Deterministic conversion: same input always produces same output
+// ============================================================================
+
+// ComplexUtil EncryptTable (copied from C# ComplexUtil.cs - DO NOT MODIFY)
+const ENCRYPT_TABLE = new Uint8Array([
+    0x63, 0x7c, 0x77, 0x7b, 0xf2, 0x6b, 0x6f, 0xc5, 0x30, 0x01, 0x67, 0x2b, 0xfe, 0xd7, 0xab, 0x76,
+    0xca, 0x82, 0xc9, 0x7d, 0xfa, 0x59, 0x47, 0xf0, 0xad, 0xd4, 0xa2, 0xaf, 0x9c, 0xa4, 0x72, 0xc0,
+    0xb7, 0xfd, 0x93, 0x26, 0x36, 0x3f, 0xf7, 0xcc, 0x34, 0xa5, 0xe5, 0xf1, 0x71, 0xd8, 0x31, 0x15,
+    0x04, 0xc7, 0x23, 0xc3, 0x18, 0x96, 0x05, 0x9a, 0x07, 0x12, 0x80, 0xe2, 0xeb, 0x27, 0xb2, 0x75,
+    0x09, 0x83, 0x2c, 0x1a, 0x1b, 0x6e, 0x5a, 0xa0, 0x52, 0x3b, 0xd6, 0xb3, 0x29, 0xe3, 0x2f, 0x84,
+    0x53, 0xd1, 0x00, 0xed, 0x20, 0xfc, 0xb1, 0x5b, 0x6a, 0xcb, 0xbe, 0x39, 0x4a, 0x4c, 0x58, 0xcf,
+    0xd0, 0xef, 0xaa, 0xfb, 0x43, 0x4d, 0x33, 0x85, 0x45, 0xf9, 0x02, 0x7f, 0x50, 0x3c, 0x9f, 0xa8,
+    0x51, 0xa3, 0x40, 0x8f, 0x92, 0x9d, 0x38, 0xf5, 0xbc, 0xb6, 0xda, 0x21, 0x10, 0xff, 0xf3, 0xd2,
+    0xcd, 0x0c, 0x13, 0xec, 0x5f, 0x97, 0x44, 0x17, 0xc4, 0xa7, 0x7e, 0x3d, 0x64, 0x5d, 0x19, 0x73,
+    0x60, 0x81, 0x4f, 0xdc, 0x22, 0x2a, 0x90, 0x88, 0x46, 0xee, 0xb8, 0x14, 0xde, 0x5e, 0x0b, 0xdb,
+    0xe0, 0x32, 0x3a, 0x0a, 0x49, 0x06, 0x24, 0x5c, 0xc2, 0xd3, 0xac, 0x62, 0x91, 0x95, 0xe4, 0x79,
+    0xe7, 0xc8, 0x37, 0x6d, 0x8d, 0xd5, 0x4e, 0xa9, 0x6c, 0x56, 0xf4, 0xea, 0x65, 0x7a, 0xae, 0x08,
+    0xba, 0x78, 0x25, 0x2e, 0x1c, 0xa6, 0xb4, 0xc6, 0xe8, 0xdd, 0x74, 0x1f, 0x4b, 0xbd, 0x8b, 0x8a,
+    0x70, 0x3e, 0xb5, 0x66, 0x48, 0x03, 0xf6, 0x0e, 0x61, 0x35, 0x57, 0xb9, 0x86, 0xc1, 0x1d, 0x9e,
+    0xe1, 0xf8, 0x98, 0x11, 0x69, 0xd9, 0x8e, 0x94, 0x9b, 0x1e, 0x87, 0xe9, 0xce, 0x55, 0x28, 0xdf,
+    0x8c, 0xa1, 0x89, 0x0d, 0xbf, 0xe6, 0x42, 0x68, 0x41, 0x99, 0x2d, 0x0f, 0xb0, 0x54, 0xbb, 0x16
+]);
+
+/**
+ * Generate deterministic mask (save2) using SHA-256
+ * Seed: "{sheetKey}|{rowPk}|{columnName}|{plainText}|{typeName}"
+ * @returns {number} - int32 mask value
+ */
+function generateDeterministicMask(ctx, plainText) {
+    const seed = `${ctx.sheetKey}|${ctx.rowPk}|${ctx.columnName}|${plainText}|${ctx.typeName}`;
+    const hash = createHash('sha256').update(seed, 'utf8').digest();
+    // Read first 4 bytes as little-endian int32
+    let mask = hash.readInt32LE(0);
+    // Avoid zero mask (deterministic fallback)
+    if (mask === 0) {
+        mask = 0x6d2b79f5;
+    }
+    return mask;
+}
+
+/**
+ * Int32 to bytes (little-endian)
+ */
+function int32ToBytes(value) {
+    const buf = Buffer.alloc(4);
+    buf.writeInt32LE(value, 0);
+    return [buf[0], buf[1], buf[2], buf[3]];
+}
+
+/**
+ * Bytes to int32 (little-endian)
+ */
+function bytesToInt32(b0, b1, b2, b3) {
+    const buf = Buffer.from([b0, b1, b2, b3]);
+    return buf.readInt32LE(0);
+}
+
+/**
+ * Float32 to int32 bits (little-endian)
+ */
+function floatToInt32Bits(value) {
+    const buf = Buffer.alloc(4);
+    buf.writeFloatLE(value, 0);
+    return buf.readInt32LE(0);
+}
+
+/**
+ * Encrypt bytes using ComplexUtil table
+ */
+function encryptBytes(data) {
+    const result = new Uint8Array(data.length);
+    for (let i = 0; i < data.length; i++) {
+        result[i] = ENCRYPT_TABLE[data[i]];
+    }
+    return result;
+}
+
+/**
+ * CInt parser: plain integer -> { save1, save2 }
+ */
+function parseCIntCell(cellText, ctx) {
+    const text = String(cellText).trim();
+    
+    // Empty -> null
+    if (text === '') return null;
+    
+    // Raw JSON input
+    if (text.startsWith('{')) {
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            return null;
+        }
+    }
+    
+    // Plain integer input
+    const value = parseInt(text, 10);
+    if (isNaN(value)) return null;
+    
+    // Generate deterministic mask
+    const save2 = generateDeterministicMask(ctx, text);
+    
+    // Get bytes (little-endian)
+    const [v0, v1, v2, v3] = int32ToBytes(value);
+    const [m0, m1, m2, m3] = int32ToBytes(save2);
+    
+    // Permutation: s1_0=v0^m0, s1_1=v2^m1, s1_2=v1^m2, s1_3=v3^m3
+    const s1_0 = v0 ^ m0;
+    const s1_1 = v2 ^ m1;
+    const s1_2 = v1 ^ m2;
+    const s1_3 = v3 ^ m3;
+    
+    const save1 = bytesToInt32(s1_0, s1_1, s1_2, s1_3);
+    
+    return { save1, save2 };
+}
+
+/**
+ * CFloat parser: plain float -> { save1, save2 }
+ */
+function parseCFloatCell(cellText, ctx) {
+    const text = String(cellText).trim();
+    
+    // Empty -> null
+    if (text === '') return null;
+    
+    // Raw JSON input
+    if (text.startsWith('{')) {
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            return null;
+        }
+    }
+    
+    // Plain float input
+    const value = parseFloat(text);
+    if (isNaN(value)) return null;
+    
+    // Convert float to int32 bits
+    const bits = floatToInt32Bits(value);
+    
+    // Generate deterministic mask
+    const save2 = generateDeterministicMask(ctx, text);
+    
+    // Get bytes (little-endian)
+    const [v0, v1, v2, v3] = int32ToBytes(bits);
+    const [m0, m1, m2, m3] = int32ToBytes(save2);
+    
+    // Permutation: same as CInt
+    const s1_0 = v0 ^ m0;
+    const s1_1 = v2 ^ m1;
+    const s1_2 = v1 ^ m2;
+    const s1_3 = v3 ^ m3;
+    
+    const save1 = bytesToInt32(s1_0, s1_1, s1_2, s1_3);
+    
+    return { save1, save2 };
+}
+
+/**
+ * CString parser: plain string -> { data }
+ */
+function parseCStringCell(cellText, ctx) {
+    const text = String(cellText);
+    
+    // Raw JSON input
+    if (text.trim().startsWith('{')) {
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            // Fall through to plain encoding
+        }
+    }
+    
+    // Plain string input: encrypt + base64
+    const plainBytes = Buffer.from(text, 'utf8');
+    const encrypted = encryptBytes(plainBytes);
+    const data = Buffer.from(encrypted).toString('base64');
+    
+    return { data };
+}
+
+// Register Complex parsers
+registerClassParser('Devian.Module.Common.CInt', parseCIntCell);
+registerClassParser('Devian.Module.Common.CFloat', parseCFloatCell);
+registerClassParser('Devian.Module.Common.CString', parseCStringCell);
+
+// ============================================================================
+// Variant Parser (Tagged Union + Complex shape)
+// SSOT: skills/devian-common/11-feature-variant/SKILL.md
+// ============================================================================
+
+/**
+ * Parse Variant cell: "i:123", "f:3.5", "s:Hello"
+ * Returns Tagged Union + Complex shape: { k, i|f|s }
+ * Uses deterministic mask with typeName override for each sub-type.
+ */
+function parseVariantCell(cellText, ctx) {
+    const text = String(cellText).trim();
+    
+    // Empty -> null
+    if (text === '') return null;
+    
+    // Raw JSON input (already in Tagged Union format)
+    if (text.startsWith('{')) {
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            throw new Error(`[Variant] Invalid JSON in cell: '${text}'`);
+        }
+    }
+    
+    // Parse prefix: i:, f:, s:
+    if (text.length < 2 || text[1] !== ':') {
+        throw new Error(`[Variant] Invalid format: '${text}'. Expected 'i:', 'f:', or 's:' prefix.`);
+    }
+    
+    const prefix = text[0];
+    const body = text.substring(2);
+    
+    switch (prefix) {
+        case 'i': {
+            const value = parseInt(body, 10);
+            if (isNaN(value)) {
+                throw new Error(`[Variant] Invalid integer value in '${text}'`);
+            }
+            // Create ctx with typeName override for deterministic mask
+            const intCtx = { ...ctx, typeName: 'Devian.Module.Common.CInt' };
+            const intShape = parseCIntCellDeterministic(value, body, intCtx);
+            return { k: 'i', i: intShape };
+        }
+        case 'f': {
+            const value = parseFloat(body);
+            if (isNaN(value)) {
+                throw new Error(`[Variant] Invalid float value in '${text}'`);
+            }
+            // Create ctx with typeName override for deterministic mask
+            const floatCtx = { ...ctx, typeName: 'Devian.Module.Common.CFloat' };
+            const floatShape = parseCFloatCellDeterministic(value, body, floatCtx);
+            return { k: 'f', f: floatShape };
+        }
+        case 's': {
+            // String: encrypt + base64 (deterministic, no mask needed)
+            const plainBytes = Buffer.from(body, 'utf8');
+            const encrypted = encryptBytes(plainBytes);
+            const data = Buffer.from(encrypted).toString('base64');
+            return { k: 's', s: { data } };
+        }
+        default:
+            throw new Error(`[Variant] Invalid prefix '${prefix}' in '${text}'. Expected 'i', 'f', or 's'.`);
+    }
+}
+
+/**
+ * Internal: Parse integer value with deterministic mask
+ */
+function parseCIntCellDeterministic(value, plainText, ctx) {
+    const save2 = generateDeterministicMask(ctx, plainText);
+    const [v0, v1, v2, v3] = int32ToBytes(value);
+    const [m0, m1, m2, m3] = int32ToBytes(save2);
+    
+    const s1_0 = v0 ^ m0;
+    const s1_1 = v2 ^ m1;
+    const s1_2 = v1 ^ m2;
+    const s1_3 = v3 ^ m3;
+    
+    const save1 = bytesToInt32(s1_0, s1_1, s1_2, s1_3);
+    return { save1, save2 };
+}
+
+/**
+ * Internal: Parse float value with deterministic mask
+ */
+function parseCFloatCellDeterministic(value, plainText, ctx) {
+    const bits = floatToInt32Bits(value);
+    const save2 = generateDeterministicMask(ctx, plainText);
+    const [v0, v1, v2, v3] = int32ToBytes(bits);
+    const [m0, m1, m2, m3] = int32ToBytes(save2);
+    
+    const s1_0 = v0 ^ m0;
+    const s1_1 = v2 ^ m1;
+    const s1_2 = v1 ^ m2;
+    const s1_3 = v3 ^ m3;
+    
+    const save1 = bytesToInt32(s1_0, s1_1, s1_2, s1_3);
+    return { save1, save2 };
+}
 
 /**
  * Parse XLSX file and extract table definitions
@@ -47,14 +354,15 @@ function parseSheet(sheet, sheetName) {
         // Header Stop Rule: Empty FieldName → stop scanning
         if (!fieldName) break
 
-        const options = parseOptions(getCellValue(sheet, 2, col));
+        const options = parseOptions(getCellValue(sheet, 2, col), { sheetName, fieldName });
         const comment = getCellValue(sheet, 3, col);
 
         const field = {
             name: fieldName,
             type: fieldType,
             optional: options.optional === 'true',
-            isKey: options.key === 'true',
+            isKey: options.pk === 'true',
+            gen: options.gen || null,
             comment: comment || '',
         };
 
@@ -70,12 +378,39 @@ function parseSheet(sheet, sheetName) {
 
     if (fields.length === 0) return null;
 
+    // Validate: gen field must be pk (gen column = PK column)
+    const genFields = fields.filter(f => f.gen);
+    if (genFields.length > 0) {
+        if (genFields.length > 1) {
+            throw new Error(`[gen:] Table '${sheetName}': only one gen column allowed per table, found ${genFields.length}`);
+        }
+        const genField = genFields[0];
+        if (!genField.isKey) {
+            throw new Error(`[gen:] Table '${sheetName}': gen field must be pk (gen column is the PK)`);
+        }
+        if (!keyField) {
+            throw new Error(`[gen:] Table '${sheetName}': gen field must be pk (gen column is the PK)`);
+        }
+        if (genField.name !== keyField.name) {
+            throw new Error(`[gen:] Table '${sheetName}': gen field must be pk (gen column is the PK)`);
+        }
+    }
+
     // Parse data rows (Row 5+, 0-indexed: row 4+)
     const rows = [];
     for (let row = 4; row <= range.e.r; row++) {
         const rowData = {};
         let isEmpty = true;
         let keyValue = null;
+
+        // First pass: get key value for ctx (pk-only policy)
+        if (keyField) {
+            const keyFieldIndex = fields.findIndex(f => f.isKey);
+            if (keyFieldIndex >= 0) {
+                const rawKeyValue = getCellValue(sheet, row, keyFieldIndex);
+                keyValue = rawKeyValue !== null && rawKeyValue !== undefined ? String(rawKeyValue) : null;
+            }
+        }
 
         for (let i = 0; i < fields.length; i++) {
             const field = fields[i];
@@ -85,8 +420,17 @@ function parseSheet(sheet, sheetName) {
                 isEmpty = false;
             }
 
+            // Build context for class parsers
+            const ctx = {
+                sheetKey: sheetName,
+                rowPk: keyValue || String(row - 3), // fallback to row index if no pk
+                rowIndex: row - 3,
+                columnName: field.name,
+                typeName: field.type.startsWith('class:') ? field.type.slice(6) : field.type
+            };
+
             // Parse value based on type
-            rowData[field.name] = parseValue(value, field.type);
+            rowData[field.name] = parseValue(value, field.type, ctx);
 
             if (field.isKey) {
                 keyValue = rowData[field.name];
@@ -124,14 +468,26 @@ function getCellValue(sheet, row, col) {
 }
 
 /**
- * Parse options string (comma-separated key:value pairs)
+ * Parse options string (comma-separated key:value pairs or pk flag)
  *
  * SSOT: skills/devian/24-table-authoring-rules/SKILL.md
- * Example: "key:true, optional:true"
+ * 
+ * Supported formats:
+ * - pk (flag) - PrimaryKey, treated as pk:true
+ * - key:value (e.g., "optional:true")
+ * - prefix:value (e.g., "gen:ComplexPolicyType")
+ * 
+ * NOTE: 'key:true' and 'key' options are NOT supported and will throw an error.
+ * 
+ * @param {string} optionStr - Options string from cell
+ * @param {object} context - Optional context for error messages { sheetName, fieldName }
  */
-function parseOptions(optionStr) {
+function parseOptions(optionStr, context = {}) {
     const options = {};
     if (!optionStr) return options;
+
+    const { sheetName, fieldName } = context;
+    const contextStr = sheetName ? ` (table: '${sheetName}'${fieldName ? `, field: '${fieldName}'` : ''})` : '';
 
     // Split by comma, allow extra spaces
     const parts = String(optionStr)
@@ -141,11 +497,33 @@ function parseOptions(optionStr) {
 
     for (const part of parts) {
         const idx = part.indexOf(':');
-        if (idx <= 0) continue;
-        const key = part.slice(0, idx).trim();
-        const value = part.slice(idx + 1).trim();
-        if (key && value !== undefined) {
-            options[key] = value;
+        if (idx <= 0) {
+            // No colon or colon at start - flag format
+            if (part.length > 0) {
+                if (part === 'pk') {
+                    // pk flag is supported (= pk:true)
+                    options.pk = 'true';
+                } else if (part === 'key') {
+                    // key flag is NOT supported
+                    throw new Error(`Invalid option flag 'key'. Use 'pk'.${contextStr}`);
+                } else {
+                    // Other flags are not supported
+                    throw new Error(`Invalid option flag '${part}'.${contextStr}`);
+                }
+            }
+        } else {
+            // Has colon - key:value pair
+            const key = part.slice(0, idx).trim();
+            const value = part.slice(idx + 1).trim();
+            
+            // Check for unsupported 'key' option
+            if (key === 'key') {
+                throw new Error(`Option 'key' is not supported. Use 'pk'.${contextStr}`);
+            }
+            
+            if (key && value !== undefined) {
+                options[key] = value;
+            }
         }
     }
     return options;
@@ -153,8 +531,11 @@ function parseOptions(optionStr) {
 
 /**
  * Parse value based on type
+ * @param {*} value - Cell value
+ * @param {string} type - Field type
+ * @param {object} ctx - Context for class parsers
  */
-function parseValue(value, type) {
+function parseValue(value, type, ctx = null) {
     if (value === null || value === undefined || value === '') {
         return getDefaultForType(type);
     }
@@ -167,14 +548,17 @@ function parseValue(value, type) {
         let arrayStr = String(value);
         arrayStr = arrayStr.replace(/^[\[{]/, '').replace(/[\]}]$/, '');
         const items = arrayStr.split(',').map(s => s.trim()).filter(s => s !== '');
-        return items.map(item => parseSingleValue(item, baseType));
+        return items.map(item => parseSingleValue(item, baseType, ctx));
     }
 
-    return parseSingleValue(value, baseType);
+    return parseSingleValue(value, baseType, ctx);
 }
 
-function parseSingleValue(value, type) {
+function parseSingleValue(value, type, ctx = null) {
     if (value === null || value === undefined) return null;
+
+    // Normalize type for comparison (case-insensitive for Variant)
+    const typeLower = type.toLowerCase();
 
     switch (type) {
         case 'byte':
@@ -195,12 +579,38 @@ function parseSingleValue(value, type) {
         case 'string':
             return String(value);
         default:
+            // Variant type (case-insensitive: 'variant' or 'Variant')
+            if (typeLower === 'variant') {
+                if (ctx) {
+                    return parseVariantCell(value, ctx);
+                }
+                // No ctx: try to parse as raw JSON
+                if (typeof value === 'string' && value.trim().startsWith('{')) {
+                    try {
+                        return JSON.parse(value);
+                    } catch (e) {
+                        throw new Error(`[Variant] Invalid JSON: '${value}'`);
+                    }
+                }
+                throw new Error(`[Variant] Cannot parse without context: '${value}'`);
+            }
             // enum:Name or class:Name
             if (type.startsWith('enum:')) {
                 return String(value); // enum stored as name string
             }
             if (type.startsWith('class:')) {
-                // Parse nested JSON object
+                const className = type.slice(6); // Remove 'class:' prefix
+                
+                // Check for registered class parser
+                const parser = classParsers.get(className);
+                if (parser && ctx) {
+                    const result = parser(value, ctx);
+                    if (result !== null) {
+                        return result;
+                    }
+                }
+                
+                // Fallback: parse as JSON object
                 if (typeof value === 'string' && value.trim()) {
                     try {
                         return JSON.parse(value);
@@ -217,6 +627,8 @@ function parseSingleValue(value, type) {
 
 function getDefaultForType(type) {
     if (type.endsWith('[]')) return [];
+    // Normalize for variant comparison
+    const typeLower = type.toLowerCase();
     switch (type) {
         case 'byte':
         case 'ubyte':
@@ -235,6 +647,10 @@ function getDefaultForType(type) {
         case 'string':
             return '';
         default:
+            // Variant type defaults to null
+            if (typeLower === 'variant') {
+                return null;
+            }
             return null;
     }
 }
@@ -303,13 +719,14 @@ export function generateCSharpTableEntityBody(table) {
 /**
  * Generate C# table container body only (inside partial class Table)
  * @param {Object} table - Table definition from parseXlsx
+ * @param {Array} enumSpecs - Enum specs from collectEnumGenSpecs (optional)
  * @returns {string} Generated C# container body code
  */
-export function generateCSharpTableContainerBody(table) {
+export function generateCSharpTableContainerBody(table, enumSpecs = []) {
     const lines = [];
     const tableName = table.name;
     const rowClassName = table.name;
-    generateTableContainer(lines, table, tableName, rowClassName);
+    generateTableContainer(lines, table, tableName, rowClassName, enumSpecs);
     return lines.join('\n');
 }
 
@@ -344,9 +761,12 @@ function generateRowClass(lines, table, rowClassName) {
     lines.push('    }');
 }
 
-function generateTableContainer(lines, table, tableName, rowClassName) {
+function generateTableContainer(lines, table, tableName, rowClassName, enumSpecs = []) {
     const keyType = table.keyField ? mapTableTypeToCSharp(table.keyField.type, false) : 'int';
     const keyProp = table.keyField ? capitalize(table.keyField.name) : 'Id';
+
+    // Get enum specs for this table
+    const tableEnumSpecs = enumSpecs.filter(spec => spec.tableName === tableName);
 
     lines.push(`    /// <summary>TB_${tableName} container</summary>`);
     lines.push(`    public static class TB_${tableName}`);
@@ -389,6 +809,33 @@ function generateTableContainer(lines, table, tableName, rowClassName) {
         lines.push('            return _dict.TryGetValue(key, out row);');
         lines.push('        }');
         lines.push('');
+
+        // Find/TryFind (int key version) - for gen: tables
+        if (tableEnumSpecs.length > 0) {
+            lines.push(`        public static ${rowClassName} Find(${keyType} key)`);
+            lines.push('        {');
+            lines.push('            if (_dict.TryGetValue(key, out var row)) return row;');
+            lines.push(`            throw new KeyNotFoundException($"TB_${tableName}: key {key} not found");`);
+            lines.push('        }');
+            lines.push('');
+            lines.push(`        public static bool TryFind(${keyType} key, out ${rowClassName}? row)`);
+            lines.push('        {');
+            lines.push('            return _dict.TryGetValue(key, out row);');
+            lines.push('        }');
+            lines.push('');
+
+            // EnumKey overloads - only if keyType is NOT already the enum type
+            for (const enumSpec of tableEnumSpecs) {
+                // Skip if keyType is already enum:EnumName (would create duplicate method)
+                const keyTypeEnum = table.keyField.type;
+                if (keyTypeEnum === `enum:${enumSpec.enumName}`) {
+                    continue;  // keyType is already the enum, no overload needed
+                }
+                lines.push(`        public static ${rowClassName} Find(${enumSpec.enumName} key) => Find((${keyType})key);`);
+                lines.push(`        public static bool TryFind(${enumSpec.enumName} key, out ${rowClassName}? row) => TryFind((${keyType})key, out row);`);
+                lines.push('');
+            }
+        }
     }
 
     // LoadFromJson
@@ -625,15 +1072,19 @@ function lowerFirst(str) {
 /**
  * Generate TypeScript table container body
  * @param {Object} table - Table definition from parseXlsx
+ * @param {Array} enumSpecs - Enum specs from collectEnumGenSpecs (optional)
  * @returns {string} Generated TypeScript container body code
  */
-export function generateTypeScriptTableContainerBody(table) {
+export function generateTypeScriptTableContainerBody(table, enumSpecs = []) {
     const lines = [];
     const tableName = table.name;
     const keyField = table.keyField;
     const keyType = keyField ? mapTableTypeToTypeScript(keyField.type) : null;
     // Use PascalCase to match NDJSON field names (C# compatibility)
     const keyProp = keyField ? capitalize(keyField.name) : null;
+
+    // Get enum specs for this table
+    const tableEnumSpecs = enumSpecs.filter(spec => spec.tableName === tableName);
 
     lines.push(`export class TB_${tableName} {`);
 
@@ -671,6 +1122,41 @@ export function generateTypeScriptTableContainerBody(table) {
         lines.push('        return this._dict.has(key);');
         lines.push('    }');
         lines.push('');
+
+        // find/tryFind (for gen: tables)
+        if (tableEnumSpecs.length > 0) {
+            // Check if keyType is already an enum type from the specs
+            const keyTypeIsEnum = tableEnumSpecs.some(s => keyField.type === `enum:${s.enumName}`);
+            
+            if (keyTypeIsEnum) {
+                // keyType is already the enum - no union type needed
+                lines.push(`    static find(key: ${keyType}): ${tableName} {`);
+                lines.push('        const row = this._dict.get(key);');
+                lines.push(`        if (!row) throw new Error(\`TB_${tableName}: key \${key} not found\`);`);
+                lines.push('        return row;');
+                lines.push('    }');
+                lines.push('');
+                lines.push(`    static tryFind(key: ${keyType}): ${tableName} | undefined {`);
+                lines.push('        return this._dict.get(key);');
+                lines.push('    }');
+                lines.push('');
+            } else {
+                // Build union type for enum keys
+                const enumTypes = tableEnumSpecs.map(s => s.enumName).join(' | ');
+                const keyUnionType = `${keyType} | ${enumTypes}`;
+
+                lines.push(`    static find(key: ${keyUnionType}): ${tableName} {`);
+                lines.push('        const row = this._dict.get(Number(key));');
+                lines.push(`        if (!row) throw new Error(\`TB_${tableName}: key \${key} not found\`);`);
+                lines.push('        return row;');
+                lines.push('    }');
+                lines.push('');
+                lines.push(`    static tryFind(key: ${keyUnionType}): ${tableName} | undefined {`);
+                lines.push('        return this._dict.get(Number(key));');
+                lines.push('    }');
+                lines.push('');
+            }
+        }
     }
 
     // LoadFromJson (NDJSON)
@@ -729,4 +1215,158 @@ export function generateTableData(table) {
     }
 
     return lines.join('\n');
+}
+
+// ============================================================================
+// Enum Generation (gen: option)
+// SSOT: skills/devian/63-tablegen-enumgen/SKILL.md
+// ============================================================================
+
+const IDENTIFIER_REGEX = /^[A-Za-z_][A-Za-z0-9_]*$/;
+
+/**
+ * Collect enum generation specs from tables
+ * 
+ * Rules (SSOT: skills/devian/63-tablegen-enumgen/SKILL.md):
+ * - gen column = PK column (same column, must have pk)
+ * - gen column value = enum member NAME
+ * - enum member VALUE = deterministic auto-assignment (name sorted, 0..N-1)
+ * - Only 1 gen column per table
+ * 
+ * @param {Array} tables - Array of table definitions from parseXlsx
+ * @returns {Array} Array of enum specs: [{ tableName, enumName, genFieldName, members:[{name,value}] }]
+ */
+export function collectEnumGenSpecs(tables) {
+    const specs = [];
+
+    for (const table of tables) {
+        // Find fields with gen: option
+        const genFields = table.fields.filter(f => f.gen);
+        if (genFields.length === 0) continue;
+
+        // Validate: only 1 gen column per table
+        if (genFields.length > 1) {
+            throw new Error(`[gen:] Table '${table.name}': only one gen column allowed per table, found ${genFields.length}`);
+        }
+
+        const genField = genFields[0];
+        const enumName = genField.gen;
+
+        // Validate: enum name must be valid identifier
+        if (!enumName || !IDENTIFIER_REGEX.test(enumName)) {
+            throw new Error(`[gen:] Table '${table.name}': invalid enum name '${enumName}'`);
+        }
+
+        // Validate: gen field must be pk (gen column = PK column)
+        if (!table.keyField) {
+            throw new Error(`[gen:] Table '${table.name}': gen field must be pk (gen column is the PK)`);
+        }
+        if (genField.name !== table.keyField.name) {
+            throw new Error(`[gen:] Table '${table.name}': gen field must be pk (gen column is the PK)`);
+        }
+
+        // Collect member names from rows (gen/PK column value = member name)
+        const memberNames = [];
+        const seenNames = new Set();
+
+        for (let i = 0; i < table.rows.length; i++) {
+            const row = table.rows[i];
+            const memberName = row[genField.name];  // enum name from gen/PK column
+
+            // Validate: member name is not empty
+            if (!memberName || String(memberName).trim() === '') {
+                throw new Error(`[gen:] Table '${table.name}': empty enum member name at row ${i + 5}`);
+            }
+
+            // Validate: member name is valid identifier
+            const nameStr = String(memberName).trim();
+            if (!IDENTIFIER_REGEX.test(nameStr)) {
+                throw new Error(`[gen:] Table '${table.name}': invalid member name '${nameStr}' at row ${i + 5}`);
+            }
+
+            // Validate: no duplicate names
+            if (seenNames.has(nameStr)) {
+                throw new Error(`[gen:] Table '${table.name}': duplicate member name '${nameStr}'`);
+            }
+            seenNames.add(nameStr);
+
+            memberNames.push(nameStr);
+        }
+
+        // Sort member names ascending (deterministic)
+        memberNames.sort();
+
+        // Assign values 0..N-1 based on sorted order
+        const members = memberNames.map((name, index) => ({ name, value: index }));
+
+        specs.push({
+            tableName: table.name,
+            enumName: enumName,
+            genFieldName: genField.name,
+            members: members,
+        });
+    }
+
+    return specs;
+}
+
+/**
+ * Generate C# enum code block
+ * @param {Array} enumSpecs - Array of enum specs from collectEnumGenSpecs
+ * @returns {string} C# enum code block (to be inserted inside namespace)
+ */
+export function generateCSharpEnums(enumSpecs) {
+    if (!enumSpecs || enumSpecs.length === 0) return '';
+
+    const lines = [];
+    lines.push('    // ========== Enums (gen:) ==========');
+    lines.push('');
+
+    for (const spec of enumSpecs) {
+        lines.push(`    /// <summary>Auto-generated enum from TB_${spec.tableName}.${spec.genFieldName}</summary>`);
+        lines.push(`    public enum ${spec.enumName} : int`);
+        lines.push('    {');
+        for (const member of spec.members) {
+            lines.push(`        ${member.name} = ${member.value},`);
+        }
+        lines.push('    }');
+        lines.push('');
+    }
+
+    return lines.join('\n');
+}
+
+/**
+ * Generate TypeScript enum code block
+ * @param {Array} enumSpecs - Array of enum specs from collectEnumGenSpecs
+ * @returns {string} TypeScript enum code block
+ */
+export function generateTypeScriptEnums(enumSpecs) {
+    if (!enumSpecs || enumSpecs.length === 0) return '';
+
+    const lines = [];
+    lines.push('// ========== Enums (gen:) ==========');
+    lines.push('');
+
+    for (const spec of enumSpecs) {
+        lines.push(`/** Auto-generated enum from TB_${spec.tableName}.${spec.genFieldName} */`);
+        lines.push(`export enum ${spec.enumName} {`);
+        for (const member of spec.members) {
+            lines.push(`    ${member.name} = ${member.value},`);
+        }
+        lines.push('}');
+        lines.push('');
+    }
+
+    return lines.join('\n');
+}
+
+/**
+ * Get enum specs for a specific table
+ * @param {Object} table - Table definition
+ * @param {Array} allEnumSpecs - All enum specs from collectEnumGenSpecs
+ * @returns {Array} Enum specs for this table
+ */
+export function getTableEnumSpecs(table, allEnumSpecs) {
+    return allEnumSpecs.filter(spec => spec.tableName === table.name);
 }

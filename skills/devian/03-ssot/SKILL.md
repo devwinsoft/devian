@@ -176,7 +176,12 @@ DATA 입력은 build.json의 `domains` 섹션이 정의한다.
 
 옵션 해석 정책:
 
-- `key:true`만 PrimaryKey로 해석
+- **PrimaryKey:**
+  - `pk` 옵션만 PrimaryKey로 해석한다.
+  - `key:true`, `key` 옵션은 **미지원**이다 (사용 시 빌드 실패).
+- **gen:\<EnumName\>:**
+  - Reserved가 **아니다** (의미 있는 옵션).
+  - `gen:` 옵션이 선언된 컬럼은 **반드시 `pk`여야 한다** (gen 컬럼 = PK 컬럼).
 - `optional:true`는 "nullable/optional column" 힌트로만 사용
 - 그 외 `parser:*` 등은 **Reserved** (있어도 무시 / 의미 부여 금지)
 

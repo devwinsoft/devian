@@ -9,7 +9,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <RootNamespace></RootNamespace>
+    <RootNamespace>Devian.Module.Common</RootNamespace>
     <ProjectGuid>{747B8B61-6317-C2F3-564C-2DA614C3E5C1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -61,7 +61,13 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.2f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Packages\com.devian.module.common\Runtime\Features\Complex\ComplexUtil.cs" />
+    <Compile Include="Packages\com.devian.module.common\Runtime\Features\Logger.cs" />
+    <Compile Include="Packages\com.devian.module.common\Runtime\Features\Complex\CString.cs" />
+    <Compile Include="Packages\com.devian.module.common\Runtime\Features\Complex\CFloat.cs" />
     <Compile Include="Packages\com.devian.module.common\Runtime\Common.g.cs" />
+    <Compile Include="Packages\com.devian.module.common\Runtime\Features\Variant.cs" />
+    <Compile Include="Packages\com.devian.module.common\Runtime\Features\Complex\CInt.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Packages\com.devian.module.common\Runtime\Devian.Module.Common.asmdef" />

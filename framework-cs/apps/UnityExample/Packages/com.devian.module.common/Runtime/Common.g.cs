@@ -12,6 +12,16 @@ using Devian.Core;
 
 namespace Devian.Module.Common
 {
+    // ========== Enums (gen:) ==========
+
+    /// <summary>Auto-generated enum from TB_COMPLEX_POLICY.key</summary>
+    public enum ComplexPolicyType : int
+    {
+        AttackPower = 0,
+        CriRate = 1,
+        NameTag = 2,
+    }
+
     // ================================================================
     // Contracts
     // ================================================================
@@ -35,6 +45,17 @@ namespace Devian.Module.Common
     // ================================================================
     // Table Entities
     // ================================================================
+
+    /// <summary>COMPLEX_POLICY row</summary>
+    public sealed class COMPLEX_POLICY : IEntityKey<ComplexPolicyType>
+    {
+        public ComplexPolicyType Key { get; set; }
+        public Variant FallbackValue { get; set; }
+        public Variant MinValue { get; set; }
+        public Variant MaxValue { get; set; }
+
+        public ComplexPolicyType GetKey() => Key;
+    }
 
     /// <summary>TestSheet row</summary>
     public sealed class TestSheet : IEntityKey<int>
@@ -60,6 +81,72 @@ namespace Devian.Module.Common
     // ================================================================
     // Table Containers
     // ================================================================
+
+    /// <summary>TB_COMPLEX_POLICY container</summary>
+    public static class TB_COMPLEX_POLICY
+    {
+        private static readonly Dictionary<ComplexPolicyType, COMPLEX_POLICY> _dict = new();
+        private static readonly List<COMPLEX_POLICY> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<COMPLEX_POLICY> GetAll() => _list;
+
+        public static COMPLEX_POLICY? Get(ComplexPolicyType key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(ComplexPolicyType key, out COMPLEX_POLICY? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        public static COMPLEX_POLICY Find(ComplexPolicyType key)
+        {
+            if (_dict.TryGetValue(key, out var row)) return row;
+            throw new KeyNotFoundException($"TB_COMPLEX_POLICY: key {key} not found");
+        }
+
+        public static bool TryFind(ComplexPolicyType key, out COMPLEX_POLICY? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<COMPLEX_POLICY>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                _list.Add(row);
+                _dict[row.Key] = row;
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<COMPLEX_POLICY>(line);
+                if (row == null) continue;
+                _list.Add(row);
+                _dict[row.Key] = row;
+            }
+        }
+    }
 
     /// <summary>TB_TestSheet container</summary>
     public static class TB_TestSheet

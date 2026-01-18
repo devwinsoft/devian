@@ -1,0 +1,22 @@
+{
+  "direction": "bidirectional",
+  "messages": [
+    {
+      "name": "SmokeTestRequest",
+      "fields": [
+        { "name": "maskedValue", "type": "cint" },
+        { "name": "maskedText", "type": "cstring" },
+        { "name": "normalValue", "type": "int32" }
+      ]
+    },
+    {
+      "name": "SmokeTestResponse",
+      "fields": [
+        { "name": "resultValue", "type": "cint" },
+        { "name": "resultFloat", "type": "cfloat" },
+        { "name": "resultText", "type": "cstring" },
+        { "name": "success", "type": "bool" }
+      ]
+    }
+  ]
+}

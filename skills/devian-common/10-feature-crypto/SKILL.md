@@ -40,10 +40,10 @@ Common 모듈의 암호화/복호화 기능을 정의한다.
 
 ## Public API
 
-### C# (`Devian.Module.Common.Features`)
+### C# (`Devian.Module.Common`)
 
 ```csharp
-namespace Devian.Module.Common.Features
+namespace Devian.Module.Common
 {
     public static class Crypto
     {
@@ -106,7 +106,7 @@ Common module policy를 따른다:
 ### C#
 
 ```csharp
-using Devian.Module.Common.Features;
+using Devian.Module.Common;
 
 // 키/IV 생성
 var key = Crypto.GenerateKey();

@@ -57,12 +57,34 @@ Common 모듈은 Devian v10에서 생성되는 **모든 Module/DATA 도메인 �
 
 ### 2.1 C# Namespace 규칙 (Hard Rule)
 
-Common 모듈의 C# 코드는 **반드시** 아래 네임스페이스 트리를 사용한다.
+Common 모듈의 C# 코드는 **반드시** 단일 네임스페이스를 사용한다.
 
 - 모듈 루트: `namespace Devian.Module.Common`
-- features: `namespace Devian.Module.Common.Features`
+- features 코드도 동일: `namespace Devian.Module.Common`
 
-> Common(DATA) 생성물(`generated/Common.g.cs`)도 동일하게 `namespace Devian.Module.Common` 아래에 생성되어야 한다.
+> `features/` 폴더는 **물리적 정리용 폴더**일 뿐이며, **namespace 분리 근거가 아니다**.
+
+**금지 (MUST NOT):**
+- ❌ `namespace Devian.Module.Common.Features`
+- ❌ `namespace Devian.Module.Common.*` (어떤 하위 네임스페이스도 금지)
+- ❌ `using Devian.Module.Common.Features;`
+
+**재발 방지:**
+- `Devian.Module.Common.Features` 문자열이 repo에 존재하면 **빌드 실패**
+- 빌더(`build.js`)에서 검사하여 발견 시 즉시 throw
+
+> Common(DATA) 생성물(`generated/Common.g.cs`)도 동일하게 `namespace Devian.Module.Common` 아래에 생성된다.
+
+### 2.2 .NET 타겟 버전 (Hard Rule)
+
+| 타겟 | 버전 | 비고 |
+|------|------|------|
+| Unity | .NET Standard 2.1 | Unity 2021.3+ 기본값 |
+| 서버/CLI | .NET 8 | LTS |
+
+- Unity 타겟 코드(UPM 패키지, Devian.Module.*, Devian.Network.*)는 **.NET Standard 2.1** 호환 API만 사용
+- .NET Standard 2.1에 없는 API 사용 시 Unity에서 컴파일 에러 발생
+- 컴파일 에러 발생 시 해당 API의 대안을 찾아 수정
 
 ### 3. TS index 자동 관리 (Marker 방식)
 

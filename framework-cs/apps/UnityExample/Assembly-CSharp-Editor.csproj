@@ -62,6 +62,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\TutorialInfo\Scripts\Editor\ReadmeEditor.cs" />
+    <Compile Include="Assets\Complex\Editor\CFloat_Inspector.cs" />
+    <Compile Include="Assets\Complex\Editor\CInt_Inspector.cs" />
+    <Compile Include="Assets\Complex\Editor\CString_Inspector.cs" />
+    <Compile Include="Assets\Complex\Editor\BasePropertyDrawer.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Library\PackageCache\com.unity.collab-proxy@3351acaba9c9\Lib\Editor\Localization\commontypes.ko.txt" />
@@ -1426,6 +1430,10 @@
     <ProjectReference Include="Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.csproj">
       <Project>{BFFC6D7A-CB71-4D90-1421-9BD9D5E62490}</Project>
       <Name>Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary</Name>
+    </ProjectReference>
+    <ProjectReference Include="Devian.Unity.Common.csproj">
+      <Project>{8128504E-ACF8-CF1E-7E40-F82A788D314F}</Project>
+      <Name>Devian.Unity.Common</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.csproj">
       <Project>{8833DE80-57CF-21B5-5061-E0D6FB2AE325}</Project>

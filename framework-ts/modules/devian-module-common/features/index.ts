@@ -4,4 +4,7 @@
 // </auto-generated>
 
 // <devian:feature-exports>
+export * from './complex';
+export * from './logger';
+export * from './variant';
 // </devian:feature-exports>

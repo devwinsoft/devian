@@ -39,6 +39,55 @@ SKILL은 위 내용을 단정해서는 안 된다.
 
 ---
 
+## Complex Type Aliases (cint / cfloat / cstring)
+
+프로토콜 스펙에서 Complex 타입을 사용하기 위한 **별칭(alias)** 정책이다.
+
+### 지원 별칭
+
+| 별칭 | 설명 |
+|------|------|
+| cint | 마스킹된 정수 (masking only) |
+| cfloat | 마스킹된 실수 (masking only) |
+| cstring | 마스킹된 문자열 (masking only) |
+
+### JSON Shape (직렬화 표현)
+
+| 별칭 | JSON 표현 |
+|------|-----------|
+| cint | object: save1(int), save2(int) |
+| cfloat | object: save1(int), save2(int) |
+| cstring | object: data(string) |
+
+### 언어별 타입 매핑
+
+**C#:**
+
+| 별칭 | 매핑 타입 | 비고 |
+|------|-----------|------|
+| cint | Devian.Module.Common.CInt | struct (value type) |
+| cfloat | Devian.Module.Common.CFloat | struct (value type) |
+| cstring | Devian.Module.Common.CString | struct (value type) |
+
+**TypeScript:**
+
+| 별칭 | 매핑 타입 (shape) |
+|------|-------------------|
+| cint | { save1: number; save2: number } |
+| cfloat | { save1: number; save2: number } |
+| cstring | { data: string } |
+
+TS에서는 클래스가 아닌 shape 타입으로 취급한다.
+
+### 코덱 정책 (MUST)
+
+1) 프로토콜 파일 내에 cint/cfloat/cstring이 **1개라도 있으면** 기본 코덱은 **JSON**이다.
+2) protobuf 코덱은 별칭 타입을 지원하지 않는다.
+3) protobuf 코덱으로 별칭 포함 메시지를 encode/decode 시도하면 **런타임에서 명확히 실패**한다 (NotSupportedException).
+4) CodecJson은 Newtonsoft.Json(JsonConvert)을 사용한다.
+
+---
+
 ## Reference
 
 - Policy SSOT: `skills/devian/03-ssot/SKILL.md`

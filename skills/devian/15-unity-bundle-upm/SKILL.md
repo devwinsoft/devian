@@ -19,7 +19,9 @@ AppliesTo: v10
   - `com.devian.core` (Devian.Core 소스)
   - `com.devian.network` (Devian.Network 소스)
   - `com.devian.protobuf` (Devian.Protobuf 소스 + Google.Protobuf.dll 동봉)
+  - `com.devian.module.common` (Devian.Module.Common 소스: Common features 포함)
   - `com.devian.unity.network` (Unity 어댑터: WebSocketClientBehaviourBase)
+  - `com.devian.unity.common` (Unity 어댑터: Devian.Module.Common 확장, UnityLogSink)
   - `com.devian.unity` (메타 패키지: 위 패키지들 dependencies만 제공)
 - 설치 경험:
   - Unity 프로젝트에 `com.devian.unity` 하나만 추가(embedded)하면 의존 패키지까지 함께 사용 가능하게 한다.
@@ -47,7 +49,9 @@ framework-cs/apps/UnityExample/Packages/
 | `com.devian.core` | Devian.Core 소스 |
 | `com.devian.network` | Devian.Network 소스 |
 | `com.devian.protobuf` | Devian.Protobuf 소스 + Google.Protobuf.dll |
+| `com.devian.module.common` | Devian.Module.Common 소스 (Common features 포함) |
 | `com.devian.unity.network` | Unity 어댑터 (WebSocketClientBehaviourBase) |
+| `com.devian.unity.common` | Unity 어댑터 (Devian.Module.Common 확장: UnityLogSink) |
 | `com.devian.unity` | 메타 패키지 (dependencies만) |
 
 ## 버전 정책
@@ -63,7 +67,9 @@ framework-cs/apps/UnityExample/Packages/
 | `Devian.Core.asmdef` | `Devian.Core` | `[]` | - |
 | `Devian.Network.asmdef` | `Devian.Network` | `["Devian.Core"]` | excludePlatforms: [] |
 | `Devian.Protobuf.asmdef` | `Devian.Protobuf` | `["Devian.Core"]` | precompiled: Google.Protobuf.dll |
+| `Devian.Module.Common.asmdef` | `Devian.Module.Common` | `["Devian.Core"]` | - |
 | `Devian.Unity.Network.asmdef` | `Devian.Unity.Network` | `["Devian.Network"]` | excludePlatforms: [] |
+| `Devian.Unity.Common.asmdef` | `Devian.Unity.Common` | `["Devian.Module.Common"]` | - |
 
 ---
 
@@ -92,6 +98,8 @@ Unity UPM 패키지의 소스는 `framework-cs/modules/*`의 소스를 **복사�
 | `Devian.Core/src/**` | `com.devian.core/Runtime/**` |
 | `Devian.Network/src/**` | `com.devian.network/Runtime/**` |
 | `Devian.Protobuf/src/**` | `com.devian.protobuf/Runtime/**` |
+| `Devian.Module.Common/generated/**` | `com.devian.module.common/Runtime/**` |
+| `Devian.Module.Common/features/**` | `com.devian.module.common/Runtime/Features/**` |
 
 (추후 단일 소스화는 별도 SKILL에서 다룬다.)
 
@@ -108,4 +116,6 @@ Unity UPM 패키지의 소스는 `framework-cs/modules/*`의 소스를 **복사�
 ## Reference
 
 - Related: `skills/devian/14-unity-network-client-upm/SKILL.md`
+- Related: `skills/devian/19-unity-module-common-upm/SKILL.md`
+- Related: `skills/devian/20-unity-common-upm/SKILL.md`
 - Core modules: `framework-cs/modules/Devian.*/`

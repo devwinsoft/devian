@@ -1,0 +1,19 @@
+{
+  "name": "Devian.Unity.Common.Editor",
+  "rootNamespace": "Devian.Unity.Common.Editor",
+  "references": [
+    "Devian.Module.Common",
+    "Devian.Unity.Common"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -61,7 +61,13 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.2f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Complex\Scripts\CInt.cs" />
+    <Compile Include="Assets\Complex\Scripts\ComplexUtil.cs" />
+    <Compile Include="Assets\NewMonoBehaviourScript.cs" />
     <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
+    <Compile Include="Assets\Complex\Scripts\CBigInt.cs" />
+    <Compile Include="Assets\Complex\Scripts\CFloat.cs" />
+    <Compile Include="Assets\Complex\Scripts\CString.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
@@ -957,6 +963,10 @@
     <ProjectReference Include="Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.Player.csproj">
       <Project>{E7694518-65A4-F466-3827-49488589D577}</Project>
       <Name>Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.Player</Name>
+    </ProjectReference>
+    <ProjectReference Include="Devian.Unity.Common.Player.csproj">
+      <Project>{2008855B-F304-7199-403F-823EC8F31893}</Project>
+      <Name>Devian.Unity.Common.Player</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.Player.csproj">
       <Project>{FF336EE5-A0DB-A6BF-112F-7B2D9F3E6645}</Project>

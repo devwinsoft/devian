@@ -4,6 +4,15 @@
 
 import { IEntity, IEntityKey } from '@devian/core';
 
+// ========== Enums (gen:) ==========
+
+/** Auto-generated enum from TB_COMPLEX_POLICY.key */
+export enum ComplexPolicyType {
+    AttackPower = 0,
+    CriRate = 1,
+    NameTag = 2,
+}
+
 // ================================================================
 // Contracts
 // ================================================================
@@ -26,6 +35,14 @@ export interface UserProfile extends IEntity {
 // Tables
 // ================================================================
 
+export interface COMPLEX_POLICY extends IEntityKey<ComplexPolicyType> {
+    Key: ComplexPolicyType;
+    FallbackValue: Variant;
+    MinValue: Variant;
+    MaxValue: Variant;
+    getKey(): ComplexPolicyType;
+}
+
 export interface TestSheet extends IEntityKey<number> {
     UserType: UserType;
     Number: number;
@@ -45,6 +62,52 @@ export interface VECTOR3 extends IEntity {
 // ================================================================
 // Table Containers
 // ================================================================
+
+export class TB_COMPLEX_POLICY {
+    private static _dict: Map<ComplexPolicyType, COMPLEX_POLICY> = new Map();
+    private static _list: COMPLEX_POLICY[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly COMPLEX_POLICY[] { return this._list; }
+
+    static get(key: ComplexPolicyType): COMPLEX_POLICY | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: ComplexPolicyType): boolean {
+        return this._dict.has(key);
+    }
+
+    static find(key: ComplexPolicyType): COMPLEX_POLICY {
+        const row = this._dict.get(key);
+        if (!row) throw new Error(`TB_COMPLEX_POLICY: key ${key} not found`);
+        return row;
+    }
+
+    static tryFind(key: ComplexPolicyType): COMPLEX_POLICY | undefined {
+        return this._dict.get(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as COMPLEX_POLICY;
+            this._list.push(row);
+            this._dict.set(row.Key, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
 
 export class TB_TestSheet {
     private static _dict: Map<number, TestSheet> = new Map();
