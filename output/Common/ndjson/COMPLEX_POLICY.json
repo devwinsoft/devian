@@ -1,3 +1,3 @@
-{"Key":"AttackPower","FallbackValue":{"k":"i","i":{"save1":-1347782786,"save2":-1347782786}},"MinValue":{"k":"i","i":{"save1":-1133500334,"save2":-1133500334}},"MaxValue":{"k":"i","i":{"save1":1506197343,"save2":1507966799}}}
-{"Key":"CriRate","FallbackValue":{"k":"f","f":{"save1":-964763667,"save2":-964763667}},"MinValue":{"k":"f","f":{"save1":-1852150570,"save2":-1852150570}},"MaxValue":{"k":"f","f":{"save1":1299231842,"save2":225498210}}}
-{"Key":"NameTag","FallbackValue":{"k":"s","s":{"data":"Uk1QUKg="}},"MinValue":{"k":"s","s":{"data":"gw=="}},"MaxValue":{"k":"s","s":{"data":"vg=="}}}
+{"Key":"AttackPower","FallbackValue":{"i":0},"MinValue":{"i":0},"MaxValue":{"i":10000}}
+{"Key":"CriRate","FallbackValue":{"f":0},"MinValue":{"f":0},"MaxValue":{"f":3.5}}
+{"Key":"NameTag","FallbackValue":{"s":"Hello"},"MinValue":{"s":"A"},"MaxValue":{"s":"Z"}}

@@ -234,9 +234,13 @@ TextAsset:
 
 - 파일명: `{TableName}.asset` (테이블 단위 1개 파일)
 - `m_Name`: 테이블 이름과 동일
-- `m_Script`: pb64 binary (기존 포맷 그대로, varint length-delimited JSON rows → base64)
+- `m_Script`: **DVGB gzip 블록 컨테이너** (base64 인코딩)
+  - 헤더: `DVGB` (4바이트) + 버전 1 (1바이트) + blockSize (4바이트) + blockCount (4바이트)
+  - 블록: 1024K 단위로 gzip 압축, 각 블록에 uncompressedLen + compressedLen + gzipBytes
+  - 압축 전 데이터: 기존 pb64 rawBinary (varint length-delimited JSON rows)
 - pk 옵션이 없는 테이블은 export 안함
 - row 중 pk가 빈 값이 하나라도 있으면 테이블 전체 스킵
+- 하위 호환: C# 로더는 `DVGB` 헤더가 없으면 기존 포맷으로 처리
 
 결정성 요구: 같은 입력이면 항상 같은 .asset 출력
 
@@ -268,11 +272,12 @@ PROTOCOL 입력은 build.json의 `protocols` 섹션(배열)이 정의한다.
 ```json
 "protocols": [
   {
-    "group": "Client",
-    "protocolDir": "./Protocols/Client",
+    "group": "Game",
+    "protocolDir": "./Protocols/Game",
     "protocolFiles": ["C2Game.json", "Game2C.json"],
-    "csTargetDir": "../framework/cs",
-    "tsTargetDir": "../framework/ts"
+    "csTargetDir": "../framework-cs/modules",
+    "tsTargetDir": "../framework-ts/modules",
+    "upmTargetDir": "../framework-cs/apps/UnityExample/Packages/com.devian.protocol.game"
   }
 ]
 ```
@@ -306,6 +311,35 @@ PROTOCOL 입력은 build.json의 `protocols` 섹션(배열)이 정의한다.
 - staging: `{tempDir}/{ProtocolGroup}/{ProtocolName}.g.ts`, `index.ts`
 - final: `{tsTargetDir}/devian-network-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
 
+**UPM (Unity Package Manager):**
+- staging: `{tempDir}/Devian.Network.{ProtocolGroup}-upm/`
+- final: `{upmTargetDir}/` (패키지 폴더 자체)
+
+#### UPM 출력 타겟 규칙 (Hard Rule)
+
+**Protocol의 `upmTargetDir`는 Unity Packages 루트가 아니라 "패키지 폴더"를 가리켜야 한다.**
+
+- 올바른 예: `Packages/com.devian.protocol.game`
+- 잘못된 예: `Packages` (루트)
+
+패키지 폴더 네이밍 규칙:
+- `com.devian.protocol.{group}` (group은 소문자)
+- 예: `group: "Game"` → `com.devian.protocol.game`
+
+copy는 `upmTargetDir`(패키지 폴더) 단위로만 clean+copy 한다. **Packages 루트는 절대 건드리지 않는다.**
+
+최종 UPM 출력 구조:
+```
+UnityExample/Packages/com.devian.protocol.{group}/
+├── Runtime/
+│   └── Generated/
+│       └── *.g.cs
+├── Editor/
+│   └── Generated/
+│       └── *.Editor.cs
+└── package.json
+```
+
 ---
 
 ## Hard Conflicts (DoD)
@@ -319,6 +353,7 @@ PROTOCOL 입력은 build.json의 `protocols` 섹션(배열)이 정의한다.
 5. 코드와 다른 API/산출물/프레임 규약을 SKILL이 "정본"처럼 단정
 6. TS `index.ts`를 통째로 덮어쓰는 동작 (marker 갱신 방식 위반)
 7. `domains.Common`이 build.json에 없는 상태
+8. Protocol `upmTargetDir`가 Packages 루트를 가리키는 경우 (패키지 폴더를 가리켜야 함)
 
 ---
 

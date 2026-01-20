@@ -2,6 +2,7 @@
 
 using System;
 using System.Globalization;
+using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -16,66 +17,42 @@ namespace Devian.Module.Common
 
     /// <summary>
     /// Immutable tagged union for Int/Float/String values.
-    /// Internal representation uses CInt/CFloat/CString (Complex shapes).
-    /// JSON serialization uses Tagged Union + Complex shape format.
+    /// JSON format: {"i": number} | {"f": number} | {"s": string}
+    /// Exactly one key per object.
     /// </summary>
     [JsonConverter(typeof(VariantJsonConverter))]
     public readonly struct Variant : IEquatable<Variant>
     {
         private readonly VariantKind _kind;
-        private readonly CInt _i;
-        private readonly CFloat _f;
-        private readonly CString _s;
+        private readonly int _intValue;
+        private readonly float _floatValue;
+        private readonly string? _stringValue;
 
         public VariantKind Kind => _kind;
 
-        // Internal CInt/CFloat/CString accessors (for JsonConverter)
-        internal CInt RawInt => _i;
-        internal CFloat RawFloat => _f;
-        internal CString RawString => _s;
-
         // Private constructors
-        private Variant(VariantKind kind, CInt i, CFloat f, CString s)
+        private Variant(VariantKind kind, int intValue, float floatValue, string? stringValue)
         {
             _kind = kind;
-            _i = i;
-            _f = f;
-            _s = s;
+            _intValue = intValue;
+            _floatValue = floatValue;
+            _stringValue = stringValue;
         }
 
-        // Factory methods (from plain values)
+        // Factory methods
         public static Variant FromInt(int value)
         {
-            var ci = new CInt(value);
-            return new Variant(VariantKind.Int, ci, default, default);
+            return new Variant(VariantKind.Int, value, 0f, null);
         }
 
         public static Variant FromFloat(float value)
         {
-            var cf = new CFloat(value);
-            return new Variant(VariantKind.Float, default, cf, default);
+            return new Variant(VariantKind.Float, 0, value, null);
         }
 
         public static Variant FromString(string value)
         {
-            var cs = new CString(value ?? throw new ArgumentNullException(nameof(value)));
-            return new Variant(VariantKind.String, default, default, cs);
-        }
-
-        // Raw factory methods (for deserialization - sets raw save1/save2/data)
-        public static Variant FromRaw(CInt cint)
-        {
-            return new Variant(VariantKind.Int, cint, default, default);
-        }
-
-        public static Variant FromRaw(CFloat cfloat)
-        {
-            return new Variant(VariantKind.Float, default, cfloat, default);
-        }
-
-        public static Variant FromRaw(CString cstring)
-        {
-            return new Variant(VariantKind.String, default, default, cstring);
+            return new Variant(VariantKind.String, 0, 0f, value ?? throw new ArgumentNullException(nameof(value)));
         }
 
         // Strict accessors
@@ -83,7 +60,7 @@ namespace Devian.Module.Common
         {
             if (_kind == VariantKind.Int)
             {
-                value = _i.GetValue();
+                value = _intValue;
                 return true;
             }
             value = default;
@@ -94,7 +71,7 @@ namespace Devian.Module.Common
         {
             if (_kind == VariantKind.Float)
             {
-                value = _f.GetValue();
+                value = _floatValue;
                 return true;
             }
             value = default;
@@ -105,7 +82,7 @@ namespace Devian.Module.Common
         {
             if (_kind == VariantKind.String)
             {
-                value = _s.GetValue();
+                value = _stringValue;
                 return true;
             }
             value = null;
@@ -114,15 +91,15 @@ namespace Devian.Module.Common
 
         // Throwing accessors (convenience)
         public int AsInt() => _kind == VariantKind.Int
-            ? _i.GetValue()
+            ? _intValue
             : throw new InvalidOperationException($"Variant is {_kind}, not Int");
 
         public float AsFloat() => _kind == VariantKind.Float
-            ? _f.GetValue()
+            ? _floatValue
             : throw new InvalidOperationException($"Variant is {_kind}, not Float");
 
         public string AsString() => _kind == VariantKind.String
-            ? _s.GetValue()
+            ? _stringValue!
             : throw new InvalidOperationException($"Variant is {_kind}, not String");
 
         // Table input parser: "i:123", "f:3.5", "s:Hello"
@@ -163,6 +140,9 @@ namespace Devian.Module.Common
 
         private static Variant ParseInt(string body, string original)
         {
+            // Check for decimal point (not allowed for int)
+            if (body.Contains("."))
+                throw new FormatException($"Integer value cannot have decimal: '{original}'");
             if (!int.TryParse(body, NumberStyles.Integer, CultureInfo.InvariantCulture, out var value))
                 throw new FormatException($"Invalid integer value in Variant: '{original}'");
             return FromInt(value);
@@ -175,15 +155,15 @@ namespace Devian.Module.Common
             return FromFloat(value);
         }
 
-        // IEquatable (compare decoded values)
+        // IEquatable
         public bool Equals(Variant other)
         {
             if (_kind != other._kind) return false;
             return _kind switch
             {
-                VariantKind.Int => _i.GetValue() == other._i.GetValue(),
-                VariantKind.Float => _f.GetValue() == other._f.GetValue(),
-                VariantKind.String => _s.GetValue() == other._s.GetValue(),
+                VariantKind.Int => _intValue == other._intValue,
+                VariantKind.Float => _floatValue == other._floatValue,
+                VariantKind.String => _stringValue == other._stringValue,
                 _ => false
             };
         }
@@ -194,9 +174,9 @@ namespace Devian.Module.Common
         {
             return _kind switch
             {
-                VariantKind.Int => HashCode.Combine(_kind, _i.GetValue()),
-                VariantKind.Float => HashCode.Combine(_kind, _f.GetValue()),
-                VariantKind.String => HashCode.Combine(_kind, _s.GetValue()),
+                VariantKind.Int => HashCode.Combine(_kind, _intValue),
+                VariantKind.Float => HashCode.Combine(_kind, _floatValue),
+                VariantKind.String => HashCode.Combine(_kind, _stringValue),
                 _ => _kind.GetHashCode()
             };
         }
@@ -208,9 +188,9 @@ namespace Devian.Module.Common
         {
             return _kind switch
             {
-                VariantKind.Int => $"i:{_i.GetValue()}",
-                VariantKind.Float => $"f:{_f.GetValue().ToString(CultureInfo.InvariantCulture)}",
-                VariantKind.String => $"s:{_s.GetValue()}",
+                VariantKind.Int => $"i:{_intValue}",
+                VariantKind.Float => $"f:{_floatValue.ToString(CultureInfo.InvariantCulture)}",
+                VariantKind.String => $"s:{_stringValue}",
                 _ => $"<unknown:{_kind}>"
             };
         }
@@ -218,10 +198,8 @@ namespace Devian.Module.Common
 
     /// <summary>
     /// Strict JsonConverter for Variant.
-    /// Serializes to Tagged Union + Complex shape format:
-    /// - Int:    {"k":"i","i":{"save1":...,"save2":...}}
-    /// - Float:  {"k":"f","f":{"save1":...,"save2":...}}
-    /// - String: {"k":"s","s":{"data":"..."}}
+    /// Format: {"i": number} | {"f": number} | {"s": string}
+    /// Exactly one key per object.
     /// </summary>
     public class VariantJsonConverter : JsonConverter<Variant>
     {
@@ -232,37 +210,18 @@ namespace Devian.Module.Common
             switch (value.Kind)
             {
                 case VariantKind.Int:
-                    writer.WritePropertyName("k");
-                    writer.WriteValue("i");
                     writer.WritePropertyName("i");
-                    writer.WriteStartObject();
-                    writer.WritePropertyName("save1");
-                    writer.WriteValue(value.RawInt.save1);
-                    writer.WritePropertyName("save2");
-                    writer.WriteValue(value.RawInt.save2);
-                    writer.WriteEndObject();
+                    writer.WriteValue(value.AsInt());
                     break;
                     
                 case VariantKind.Float:
-                    writer.WritePropertyName("k");
-                    writer.WriteValue("f");
                     writer.WritePropertyName("f");
-                    writer.WriteStartObject();
-                    writer.WritePropertyName("save1");
-                    writer.WriteValue(value.RawFloat.save1);
-                    writer.WritePropertyName("save2");
-                    writer.WriteValue(value.RawFloat.save2);
-                    writer.WriteEndObject();
+                    writer.WriteValue(value.AsFloat());
                     break;
                     
                 case VariantKind.String:
-                    writer.WritePropertyName("k");
-                    writer.WriteValue("s");
                     writer.WritePropertyName("s");
-                    writer.WriteStartObject();
-                    writer.WritePropertyName("data");
-                    writer.WriteValue(value.RawString.data ?? "");
-                    writer.WriteEndObject();
+                    writer.WriteValue(value.AsString());
                     break;
                     
                 default:
@@ -278,97 +237,35 @@ namespace Devian.Module.Common
                 throw new JsonSerializationException("Variant cannot be null");
 
             var obj = JObject.Load(reader);
+            var properties = obj.Properties().ToList();
 
-            // Strict: k must exist and be 'i'|'f'|'s'
-            var kToken = obj["k"];
-            if (kToken == null)
-                throw new JsonSerializationException("Variant JSON must have 'k' property");
+            // Strict: exactly one key
+            if (properties.Count != 1)
+                throw new JsonSerializationException($"Variant must have exactly one key (i, f, or s), got {properties.Count} keys");
 
-            var k = kToken.Value<string>();
-            if (k != "i" && k != "f" && k != "s")
-                throw new JsonSerializationException($"Variant 'k' must be 'i', 'f', or 's', got '{k}'");
+            var prop = properties[0];
+            var key = prop.Name;
 
-            // Strict: only the matching value property should exist
-            var hasI = obj["i"] != null;
-            var hasF = obj["f"] != null;
-            var hasS = obj["s"] != null;
-
-            switch (k)
+            switch (key)
             {
                 case "i":
-                    if (!hasI)
-                        throw new JsonSerializationException("Variant k='i' but 'i' property is missing");
-                    if (hasF || hasS)
-                        throw new JsonSerializationException("Variant k='i' but has extra 'f' or 's' properties");
-                    return ParseCInt(obj["i"]!);
+                    if (prop.Value.Type != JTokenType.Integer)
+                        throw new JsonSerializationException($"Variant 'i' value must be integer, got: {prop.Value.Type}");
+                    return Variant.FromInt(prop.Value.Value<int>());
                     
                 case "f":
-                    if (!hasF)
-                        throw new JsonSerializationException("Variant k='f' but 'f' property is missing");
-                    if (hasI || hasS)
-                        throw new JsonSerializationException("Variant k='f' but has extra 'i' or 's' properties");
-                    return ParseCFloat(obj["f"]!);
+                    if (prop.Value.Type != JTokenType.Float && prop.Value.Type != JTokenType.Integer)
+                        throw new JsonSerializationException($"Variant 'f' value must be number, got: {prop.Value.Type}");
+                    return Variant.FromFloat(prop.Value.Value<float>());
                     
                 case "s":
-                    if (!hasS)
-                        throw new JsonSerializationException("Variant k='s' but 's' property is missing");
-                    if (hasI || hasF)
-                        throw new JsonSerializationException("Variant k='s' but has extra 'i' or 'f' properties");
-                    return ParseCString(obj["s"]!);
+                    if (prop.Value.Type != JTokenType.String)
+                        throw new JsonSerializationException($"Variant 's' value must be string, got: {prop.Value.Type}");
+                    return Variant.FromString(prop.Value.Value<string>() ?? "");
                     
                 default:
-                    throw new JsonSerializationException($"Unknown Variant kind: {k}");
+                    throw new JsonSerializationException($"Invalid Variant key '{key}'. Expected 'i', 'f', or 's'.");
             }
-        }
-
-        private static Variant ParseCInt(JToken token)
-        {
-            if (token.Type != JTokenType.Object)
-                throw new JsonSerializationException("Variant 'i' value must be an object with {save1, save2}");
-
-            var save1Token = token["save1"];
-            var save2Token = token["save2"];
-
-            if (save1Token == null)
-                throw new JsonSerializationException("Variant 'i' object missing 'save1'");
-            if (save2Token == null)
-                throw new JsonSerializationException("Variant 'i' object missing 'save2'");
-
-            var ci = new CInt();
-            ci.SetRaw(save1Token.Value<int>(), save2Token.Value<int>());
-            return Variant.FromRaw(ci);
-        }
-
-        private static Variant ParseCFloat(JToken token)
-        {
-            if (token.Type != JTokenType.Object)
-                throw new JsonSerializationException("Variant 'f' value must be an object with {save1, save2}");
-
-            var save1Token = token["save1"];
-            var save2Token = token["save2"];
-
-            if (save1Token == null)
-                throw new JsonSerializationException("Variant 'f' object missing 'save1'");
-            if (save2Token == null)
-                throw new JsonSerializationException("Variant 'f' object missing 'save2'");
-
-            var cf = new CFloat();
-            cf.SetRaw(save1Token.Value<int>(), save2Token.Value<int>());
-            return Variant.FromRaw(cf);
-        }
-
-        private static Variant ParseCString(JToken token)
-        {
-            if (token.Type != JTokenType.Object)
-                throw new JsonSerializationException("Variant 's' value must be an object with {data}");
-
-            var dataToken = token["data"];
-            if (dataToken == null)
-                throw new JsonSerializationException("Variant 's' object missing 'data'");
-
-            var cs = new CString();
-            cs.SetRaw(dataToken.Value<string>() ?? "");
-            return Variant.FromRaw(cs);
         }
     }
 }

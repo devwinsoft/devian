@@ -804,6 +804,19 @@ class DevianToolBuilder {
         if (groupConfig.upmTargetDir) {
             const stagingUpm = path.join(this.tempDir, `${csProjectName}-upm`);
             const target = this.resolvePath(groupConfig.upmTargetDir);
+            
+            // Guard: upmTargetDir must point to a package folder, not Packages root
+            const targetBasename = path.basename(target);
+            const expectedPrefix = `com.devian.protocol.${groupName.toLowerCase()}`;
+            if (!targetBasename.startsWith('com.devian.protocol.')) {
+                throw new Error(
+                    `[Protocol:${groupName}] upmTargetDir must point to a package folder under Packages ` +
+                    `(e.g., Packages/${expectedPrefix}), not Packages root or other folder.\n` +
+                    `  Current: ${groupConfig.upmTargetDir}\n` +
+                    `  Expected: .../Packages/${expectedPrefix}`
+                );
+            }
+            
             this.copyUpmToTarget(stagingUpm, target);
             console.log(`    [Copy UPM] ${stagingUpm} -> ${target}`);
         }
@@ -2040,6 +2053,10 @@ export * from './features';
     /**
      * Sync samples metadata for all UPM packages in configured upmTargetDirs.
      * Scans for packages with Samples~ folders and updates their package.json.
+     * 
+     * Note: upmTargetDir can point to either:
+     * - Packages root (for domains) -> scan subdirectories as packages
+     * - Package folder (for protocols, e.g., com.devian.protocol.game) -> process directly
      */
     async syncAllUpmSamples() {
         // Collect all unique upmTargetDirs from config
@@ -2067,17 +2084,31 @@ export * from './features';
         }
 
         // Scan each upmTargetDir for UPM packages with Samples~ folders
-        for (const packagesDir of upmTargetDirs) {
-            if (!fs.existsSync(packagesDir)) continue;
+        for (const targetDir of upmTargetDirs) {
+            if (!fs.existsSync(targetDir)) continue;
 
-            console.log(`  [Scan] ${packagesDir}`);
+            // Check if targetDir itself is a package folder (has package.json)
+            const targetPackageJson = path.join(targetDir, 'package.json');
+            if (fs.existsSync(targetPackageJson)) {
+                // targetDir is a package folder itself (e.g., com.devian.protocol.game)
+                console.log(`  [Scan Package] ${targetDir}`);
+                const samplesDir = path.join(targetDir, 'Samples~');
+                if (fs.existsSync(samplesDir)) {
+                    this.syncSamplesMetadata(targetDir);
+                    this.syncGeneratedDependencies(targetDir);
+                }
+                continue;
+            }
+
+            // targetDir is Packages root, scan subdirectories
+            console.log(`  [Scan] ${targetDir}`);
 
             // List subdirectories (each should be a UPM package)
-            const entries = fs.readdirSync(packagesDir, { withFileTypes: true });
+            const entries = fs.readdirSync(targetDir, { withFileTypes: true });
             for (const entry of entries) {
                 if (!entry.isDirectory()) continue;
 
-                const packageDir = path.join(packagesDir, entry.name);
+                const packageDir = path.join(targetDir, entry.name);
                 const packageJsonPath = path.join(packageDir, 'package.json');
                 const samplesDir = path.join(packageDir, 'Samples~');
 

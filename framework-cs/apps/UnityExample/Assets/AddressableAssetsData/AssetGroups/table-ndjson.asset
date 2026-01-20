@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: table-ndjson
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: table-ndjson
+  m_GUID: fc2174b99765ea246ac1a2132e8336ae
+  m_SerializeEntries:
+  - m_GUID: e03f4fc27ca4d444abc0ac62a44ff629
+    m_Address: Assets/Bundles/Tables/Common/ndjson
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ndjson
+    - table
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: daa0599a24d6ad242b59de8ab32c5cb5, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 73e7534bf72ff814196d0261b95829a0, type: 2}
+    - {fileID: 11400000, guid: 07f709b4773e686418949c2d8edcde68, type: 2}

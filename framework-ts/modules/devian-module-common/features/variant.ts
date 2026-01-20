@@ -1,143 +1,131 @@
 // SSOT: skills/devian-common/11-feature-variant/SKILL.md
 
-import { CInt, CFloat, encryptBase64, decryptBase64 } from './complex';
-
 // ============================================================================
-// Shape Interfaces (for JSON serialization)
-// ============================================================================
-
-export interface CIntShape {
-    save1: number;
-    save2: number;
-}
-
-export interface CFloatShape {
-    save1: number;
-    save2: number;
-}
-
-export interface CStringShape {
-    data: string;
-}
-
-// ============================================================================
-// Variant Type (Tagged Union + Complex shape)
+// Variant Type (Simple format: {i} | {f} | {s})
 // ============================================================================
 
 /**
- * Variant tagged union type using Complex shapes.
- * JSON representation: {"k":"i"|"f"|"s", "i"|"f"|"s": {shape}}
+ * Variant tagged union type.
+ * JSON representation: {"i": number} | {"f": number} | {"s": string}
+ * Exactly one key per object.
  */
 export type Variant =
-    | { k: 'i'; i: CIntShape }
-    | { k: 'f'; f: CFloatShape }
-    | { k: 's'; s: CStringShape };
+    | { i: number }
+    | { f: number }
+    | { s: string };
 
 // ============================================================================
-// Factory Functions (from plain values)
+// Factory Functions
 // ============================================================================
 
 /**
  * Create Variant from integer value.
- * Uses CInt internally to generate save1/save2.
  */
 export function vInt(value: number): Variant {
-    const ci = new CInt(Math.trunc(value));
-    return { k: 'i', i: { save1: ci.save1, save2: ci.save2 } };
+    if (!Number.isInteger(value)) {
+        throw new Error(`vInt requires integer, got: ${value}`);
+    }
+    return { i: value };
 }
 
 /**
  * Create Variant from float value.
- * Uses CFloat internally to generate save1/save2.
  */
 export function vFloat(value: number): Variant {
-    const cf = new CFloat(value);
-    return { k: 'f', f: { save1: cf.save1, save2: cf.save2 } };
+    return { f: value };
 }
 
 /**
  * Create Variant from string value.
- * Uses encryptBase64 internally to generate masked data.
  */
 export function vString(value: string): Variant {
-    const data = encryptBase64(value);
-    return { k: 's', s: { data } };
-}
-
-// ============================================================================
-// Raw Factory Functions (for deserialization)
-// ============================================================================
-
-/**
- * Create Variant from raw CInt shape (for deserialization).
- */
-export function vIntRaw(save1: number, save2: number): Variant {
-    return { k: 'i', i: { save1, save2 } };
-}
-
-/**
- * Create Variant from raw CFloat shape (for deserialization).
- */
-export function vFloatRaw(save1: number, save2: number): Variant {
-    return { k: 'f', f: { save1, save2 } };
-}
-
-/**
- * Create Variant from raw CString shape (for deserialization).
- */
-export function vStringRaw(data: string): Variant {
-    return { k: 's', s: { data } };
+    return { s: value };
 }
 
 // ============================================================================
 // Type Guards
 // ============================================================================
 
-export function isInt(v: Variant): v is { k: 'i'; i: CIntShape } {
-    return v.k === 'i';
+export function isInt(v: Variant): v is { i: number } {
+    return 'i' in v;
 }
 
-export function isFloat(v: Variant): v is { k: 'f'; f: CFloatShape } {
-    return v.k === 'f';
+export function isFloat(v: Variant): v is { f: number } {
+    return 'f' in v;
 }
 
-export function isString(v: Variant): v is { k: 's'; s: CStringShape } {
-    return v.k === 's';
+export function isString(v: Variant): v is { s: string } {
+    return 's' in v;
 }
 
 // ============================================================================
-// Accessors (decode from Complex shape)
+// Accessors
 // ============================================================================
 
 /**
  * Get integer value from Variant.
- * Decodes from CInt shape using permutation.
  */
 export function asInt(v: Variant): number {
-    if (v.k !== 'i') throw new Error(`Variant is ${v.k}, not i`);
-    const ci = new CInt();
-    ci.setRaw(v.i.save1, v.i.save2);
-    return ci.getValue();
+    if (!isInt(v)) throw new Error(`Variant is not 'i' type`);
+    return v.i;
 }
 
 /**
  * Get float value from Variant.
- * Decodes from CFloat shape using permutation.
  */
 export function asFloat(v: Variant): number {
-    if (v.k !== 'f') throw new Error(`Variant is ${v.k}, not f`);
-    const cf = new CFloat();
-    cf.setRaw(v.f.save1, v.f.save2);
-    return cf.getValue();
+    if (!isFloat(v)) throw new Error(`Variant is not 'f' type`);
+    return v.f;
 }
 
 /**
  * Get string value from Variant.
- * Decodes from CString shape using decryptBase64.
  */
 export function asString(v: Variant): string {
-    if (v.k !== 's') throw new Error(`Variant is ${v.k}, not s`);
-    return decryptBase64(v.s.data);
+    if (!isString(v)) throw new Error(`Variant is not 's' type`);
+    return v.s;
+}
+
+// ============================================================================
+// Validation
+// ============================================================================
+
+/**
+ * Validate Variant structure.
+ * Must have exactly one key (i, f, or s) with correct value type.
+ */
+export function validateVariant(obj: unknown): Variant {
+    if (obj === null || typeof obj !== 'object') {
+        throw new Error('Variant must be an object');
+    }
+    
+    const keys = Object.keys(obj);
+    if (keys.length !== 1) {
+        throw new Error(`Variant must have exactly one key (i, f, or s), got: ${keys.join(', ')}`);
+    }
+    
+    const key = keys[0];
+    const value = (obj as Record<string, unknown>)[key];
+    
+    switch (key) {
+        case 'i':
+            if (typeof value !== 'number' || !Number.isInteger(value)) {
+                throw new Error(`Variant 'i' value must be integer, got: ${typeof value}`);
+            }
+            return { i: value };
+        case 'f':
+            if (typeof value !== 'number') {
+                throw new Error(`Variant 'f' value must be number, got: ${typeof value}`);
+            }
+            return { f: value };
+        case 's':
+            if (typeof value !== 'string') {
+                throw new Error(`Variant 's' value must be string, got: ${typeof value}`);
+            }
+            return { s: value };
+        default:
+            throw new Error(`Invalid Variant key '${key}'. Expected 'i', 'f', or 's'.`);
+    }
 }
 
 // ============================================================================
@@ -146,7 +134,6 @@ export function asString(v: Variant): string {
 
 /**
  * Parse table input format: "i:123", "f:3.5", "s:Hello"
- * Returns Variant with Complex shape.
  */
 export function parseVariant(input: string): Variant {
     if (!input || input.length < 2) {
@@ -166,6 +153,9 @@ export function parseVariant(input: string): Variant {
             const value = parseInt(body, 10);
             if (isNaN(value)) {
                 throw new Error(`Invalid integer value in Variant: '${input}'`);
+            }
+            if (body.includes('.')) {
+                throw new Error(`Integer value cannot have decimal: '${input}'`);
             }
             return vInt(value);
         }
@@ -199,24 +189,31 @@ export function tryParseVariant(input: string): Variant | null {
 // ============================================================================
 
 /**
- * Convert Variant to table input format string (decoded value).
+ * Convert Variant to table input format string.
  */
 export function variantToString(v: Variant): string {
-    switch (v.k) {
-        case 'i': return `i:${asInt(v)}`;
-        case 'f': return `f:${asFloat(v)}`;
-        case 's': return `s:${asString(v)}`;
-    }
+    if (isInt(v)) return `i:${v.i}`;
+    if (isFloat(v)) return `f:${v.f}`;
+    if (isString(v)) return `s:${v.s}`;
+    throw new Error('Invalid Variant');
 }
 
 /**
- * Compare two variants for equality (by decoded values).
+ * Compare two variants for equality.
  */
 export function variantEquals(a: Variant, b: Variant): boolean {
-    if (a.k !== b.k) return false;
-    switch (a.k) {
-        case 'i': return asInt(a) === asInt(b as { k: 'i'; i: CIntShape });
-        case 'f': return asFloat(a) === asFloat(b as { k: 'f'; f: CFloatShape });
-        case 's': return asString(a) === asString(b as { k: 's'; s: CStringShape });
-    }
+    if (isInt(a) && isInt(b)) return a.i === b.i;
+    if (isFloat(a) && isFloat(b)) return a.f === b.f;
+    if (isString(a) && isString(b)) return a.s === b.s;
+    return false;
+}
+
+/**
+ * Get the kind of variant: 'i', 'f', or 's'
+ */
+export function variantKind(v: Variant): 'i' | 'f' | 's' {
+    if (isInt(v)) return 'i';
+    if (isFloat(v)) return 'f';
+    if (isString(v)) return 's';
+    throw new Error('Invalid Variant');
 }

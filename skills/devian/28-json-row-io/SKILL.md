@@ -74,7 +74,7 @@ XLSX 테이블에서 추출된 데이터를 **NDJSON(Line-delimited JSON)**과 *
 
 ---
 
-## pb64 export 규칙 (Unity TextAsset YAML)
+## pb64 export 규칙 (Unity TextAsset YAML + DVGB gzip)
 
 **pk 옵션이 있는 테이블만 Unity TextAsset `.asset` 파일로 export한다.**
 
@@ -105,11 +105,52 @@ TextAsset:
 ```
 
 - `m_Name`: 테이블 이름과 동일
-- `m_Script`: pb64 binary (base64 인코딩)
+- `m_Script`: DVGB gzip 블록 컨테이너 (base64 인코딩)
 
-### m_Script 바이너리 포맷 (pb64)
+---
 
-base64 디코드 후 구조 (테이블의 모든 row를 concat):
+## DVGB Gzip Block Container Format (정본)
+
+m_Script의 base64를 디코드한 바이너리는 **DVGB gzip 블록 컨테이너** 포맷을 따른다.
+
+### 컨테이너 헤더
+
+| Offset | Size | Field | Value |
+|--------|------|-------|-------|
+| 0 | 4 | Magic | `DVGB` (ASCII) |
+| 4 | 1 | Version | `1` |
+| 5 | 4 | BlockSize | `1048576` (1024K, little-endian) |
+| 9 | 4 | BlockCount | 블록 개수 (little-endian) |
+
+### 블록 구조 (BlockCount 만큼 반복)
+
+| Size | Field | Description |
+|------|-------|-------------|
+| 4 | UncompressedLen | 압축 전 바이트 수 (little-endian) |
+| 4 | CompressedLen | gzip 압축 후 바이트 수 (little-endian) |
+| CompressedLen | GzipBytes | gzip 압축된 데이터 |
+
+### 블록 크기
+
+- 블록 크기: **1024K (1,048,576 bytes)** 고정
+- 마지막 블록은 1024K보다 작을 수 있음
+
+### 압축 대상
+
+- 기존 pb64 rawBinary (varint length-delimited JSON rows)를 1024K 블록으로 분할
+- 각 블록을 개별 gzip 압축
+- **rawBinary 포맷은 변경하지 않음** (압축만 추가)
+
+### 하위 호환
+
+- C# 로더는 앞 4바이트가 `DVGB`가 아니면 **기존 포맷(압축 없음)**으로 처리
+- 기존 .asset 파일도 계속 읽을 수 있음
+
+---
+
+## rawBinary 포맷 (압축 전)
+
+압축 전/후 동일한 포맷. 테이블의 모든 row를 concat:
 
 ```
 [row1][row2][row3]...
@@ -136,6 +177,7 @@ protobuf 표준 varint 인코딩을 사용한다:
 
 - 필드 순서: Excel column 순서
 - JSON serialization: 컴팩트 포맷 (들여쓰기 없음)
+- gzip 압축 레벨: 9 (최대)
 
 ---
 
@@ -145,10 +187,25 @@ SSOT 경로 규약을 따른다. (`{dataTargetDirs}`는 배열이므로 각 요�
 
 - staging:
   - `{tempDir}/{DomainKey}/data/ndjson/{TableName}.json` (내용은 NDJSON)
-  - `{tempDir}/{DomainKey}/data/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
+  - `{tempDir}/{DomainKey}/data/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, DVGB 컨테이너)
 - final (각 `{dataTargetDir}` 요소에 대해):
   - `{dataTargetDir}/{DomainKey}/ndjson/{TableName}.json` (내용은 NDJSON)
-  - `{dataTargetDir}/{DomainKey}/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
+  - `{dataTargetDir}/{DomainKey}/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, DVGB 컨테이너)
+
+---
+
+## C# 로더 API
+
+```csharp
+// DVGB 컨테이너 로드 (하위 호환 지원)
+byte[] rawBinary = Pb64Loader.LoadFromBase64(base64String);
+
+// row 파싱
+Pb64Loader.ParseRows(rawBinary, json => {
+    var entity = JsonConvert.DeserializeObject<MyEntity>(json);
+    // ...
+});
+```
 
 ---
 
@@ -158,6 +215,7 @@ SSOT 경로 규약을 따른다. (`{dataTargetDirs}`는 배열이므로 각 요�
 - `ndjson/` 폴더를 `json/` 폴더로 rename 하는 행위 금지 (폴더명은 `ndjson` 유지)
 - pk 옵션이 없는 테이블을 export하도록 완화하는 행위 금지
 - 특정 테이블명(ASSET 등)에 의존하는 행위 금지
+- rawBinary 포맷 변경 금지 (압축만 추가)
 
 ---
 

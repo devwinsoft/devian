@@ -1335,6 +1335,10 @@
       <Project>{9C756D8C-1238-F33F-37AA-10DB42172B28}</Project>
       <Name>Unity.RenderPipelines.Core.ShaderLibrary</Name>
     </ProjectReference>
+    <ProjectReference Include="Unity.ScriptableBuildPipeline.csproj">
+      <Project>{C90D422D-4577-876F-4995-0A9FBF67C509}</Project>
+      <Name>Unity.ScriptableBuildPipeline</Name>
+    </ProjectReference>
     <ProjectReference Include="Unity.VisualScripting.SettingsProvider.Editor.csproj">
       <Project>{AEE6585A-5C03-F2CE-69AD-D80347FDCC15}</Project>
       <Name>Unity.VisualScripting.SettingsProvider.Editor</Name>
@@ -1367,6 +1371,10 @@
       <Project>{BA233111-C828-0A83-8951-CAD8BDC5047A}</Project>
       <Name>Devian.Network</Name>
     </ProjectReference>
+    <ProjectReference Include="Unity.Addressables.csproj">
+      <Project>{A41FBED1-84E8-FF79-54BA-4D656D3E6B93}</Project>
+      <Name>Unity.Addressables</Name>
+    </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.Shared.csproj">
       <Project>{1B9CC5A5-1B05-8F23-4017-32D6215E0134}</Project>
       <Name>Unity.RenderPipelines.Core.Runtime.Shared</Name>
@@ -1386,6 +1394,10 @@
     <ProjectReference Include="Unity.Searcher.Editor.csproj">
       <Project>{3750D0AB-C9AA-4E0C-99D7-7F1D6D32B07A}</Project>
       <Name>Unity.Searcher.Editor</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.ScriptableBuildPipeline.Editor.csproj">
+      <Project>{19129F34-9436-30AD-F17A-3E0EC9C3DED2}</Project>
+      <Name>Unity.ScriptableBuildPipeline.Editor</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.PlasticSCM.Editor.csproj">
       <Project>{3B955328-114A-1D71-290C-D8133DF1E8ED}</Project>
@@ -1447,6 +1459,10 @@
       <Project>{74DA09FD-7F87-77CD-FE7B-C7F5F4E1F0F8}</Project>
       <Name>Unity.VisualScripting.Flow.Editor</Name>
     </ProjectReference>
+    <ProjectReference Include="Unity.ResourceManager.csproj">
+      <Project>{BC1144F5-454A-1267-4A97-D38AFD3A4FDA}</Project>
+      <Name>Unity.ResourceManager</Name>
+    </ProjectReference>
     <ProjectReference Include="Unity.VisualStudio.Editor.csproj">
       <Project>{F9C4FD40-5E40-3D05-0497-92122C5F3AFF}</Project>
       <Name>Unity.VisualStudio.Editor</Name>
@@ -1462,6 +1478,10 @@
     <ProjectReference Include="Unity.InputSystem.ForUI.csproj">
       <Project>{F3F2338E-5B2C-8342-C281-F31B3BEB5226}</Project>
       <Name>Unity.InputSystem.ForUI</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.Profiling.Core.csproj">
+      <Project>{14BA3A4C-6465-9554-DA42-EB1EA8409819}</Project>
+      <Name>Unity.Profiling.Core</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.GPUDriven.Runtime.csproj">
       <Project>{24B68198-03B6-EF82-26C1-109FB9DE920C}</Project>
@@ -1542,6 +1562,10 @@
     <ProjectReference Include="Unity.InputSystem.csproj">
       <Project>{07C8CE48-6178-867C-2603-83C857DF5DBF}</Project>
       <Name>Unity.InputSystem</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.Addressables.Editor.csproj">
+      <Project>{3A6ECBF3-1251-065A-D3B5-4F3C26983ABD}</Project>
+      <Name>Unity.Addressables.Editor</Name>
     </ProjectReference>
     <ProjectReference Include="UnityEditor.UI.csproj">
       <Project>{6A2C1AFF-9E9A-271E-6D36-6B8D584DF6ED}</Project>

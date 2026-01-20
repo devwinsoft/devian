@@ -6,6 +6,7 @@
 
 import XLSX from 'xlsx';
 import { createHash } from 'crypto';
+import { gzipSync } from 'zlib';
 
 // ============================================================================
 // Class Parser Registry (for class: type fields)
@@ -213,14 +214,14 @@ registerClassParser('Devian.Module.Common.CFloat', parseCFloatCell);
 registerClassParser('Devian.Module.Common.CString', parseCStringCell);
 
 // ============================================================================
-// Variant Parser (Tagged Union + Complex shape)
+// Variant Parser (Simple format: {i} | {f} | {s})
 // SSOT: skills/devian-common/11-feature-variant/SKILL.md
 // ============================================================================
 
 /**
  * Parse Variant cell: "i:123", "f:3.5", "s:Hello"
- * Returns Tagged Union + Complex shape: { k, i|f|s }
- * Uses deterministic mask with typeName override for each sub-type.
+ * Returns simple format: { i: number } | { f: number } | { s: string }
+ * Key is exactly one of i, f, s. No k key, no Complex shapes.
  */
 function parseVariantCell(cellText, ctx) {
     const text = String(cellText).trim();
@@ -228,11 +229,37 @@ function parseVariantCell(cellText, ctx) {
     // Empty -> null
     if (text === '') return null;
     
-    // Raw JSON input (already in Tagged Union format)
+    // Raw JSON input (already in simple format)
     if (text.startsWith('{')) {
         try {
-            return JSON.parse(text);
+            const parsed = JSON.parse(text);
+            // Validate: exactly one key (i, f, or s)
+            const keys = Object.keys(parsed);
+            if (keys.length !== 1) {
+                throw new Error(`[Variant] JSON must have exactly one key (i, f, or s), got: ${keys.join(', ')}`);
+            }
+            const key = keys[0];
+            if (key !== 'i' && key !== 'f' && key !== 's') {
+                throw new Error(`[Variant] Invalid key '${key}'. Expected 'i', 'f', or 's'.`);
+            }
+            // Type validation
+            const value = parsed[key];
+            if (key === 'i') {
+                if (typeof value !== 'number' || !Number.isInteger(value)) {
+                    throw new Error(`[Variant] 'i' value must be integer, got: ${typeof value}`);
+                }
+            } else if (key === 'f') {
+                if (typeof value !== 'number') {
+                    throw new Error(`[Variant] 'f' value must be number, got: ${typeof value}`);
+                }
+            } else if (key === 's') {
+                if (typeof value !== 'string') {
+                    throw new Error(`[Variant] 's' value must be string, got: ${typeof value}`);
+                }
+            }
+            return parsed;
         } catch (e) {
+            if (e.message.startsWith('[Variant]')) throw e;
             throw new Error(`[Variant] Invalid JSON in cell: '${text}'`);
         }
     }
@@ -251,27 +278,22 @@ function parseVariantCell(cellText, ctx) {
             if (isNaN(value)) {
                 throw new Error(`[Variant] Invalid integer value in '${text}'`);
             }
-            // Create ctx with typeName override for deterministic mask
-            const intCtx = { ...ctx, typeName: 'Devian.Module.Common.CInt' };
-            const intShape = parseCIntCellDeterministic(value, body, intCtx);
-            return { k: 'i', i: intShape };
+            // Check for decimal (not allowed for i:)
+            if (body.includes('.')) {
+                throw new Error(`[Variant] Integer value cannot have decimal: '${text}'`);
+            }
+            return { i: value };
         }
         case 'f': {
             const value = parseFloat(body);
             if (isNaN(value)) {
                 throw new Error(`[Variant] Invalid float value in '${text}'`);
             }
-            // Create ctx with typeName override for deterministic mask
-            const floatCtx = { ...ctx, typeName: 'Devian.Module.Common.CFloat' };
-            const floatShape = parseCFloatCellDeterministic(value, body, floatCtx);
-            return { k: 'f', f: floatShape };
+            return { f: value };
         }
         case 's': {
-            // String: encrypt + base64 (deterministic, no mask needed)
-            const plainBytes = Buffer.from(body, 'utf8');
-            const encrypted = encryptBytes(plainBytes);
-            const data = Buffer.from(encrypted).toString('base64');
-            return { k: 's', s: { data } };
+            // String: store as-is (no encryption)
+            return { s: body };
         }
         default:
             throw new Error(`[Variant] Invalid prefix '${prefix}' in '${text}'. Expected 'i', 'f', or 's'.`);
@@ -1282,8 +1304,13 @@ export function generateTableData(table) {
 // ============================================================================
 // Unity TextAsset (.asset) Generator for Tables with PK
 // SSOT: skills/devian/28-json-row-io/SKILL.md
-// Format: Unity TextAsset YAML wrapping pb64 binary data
+// Format: Unity TextAsset YAML wrapping pb64 binary data (gzip block container)
 // ============================================================================
+
+// DVGB Container Constants
+const DVGB_MAGIC = Buffer.from('DVGB', 'ascii');
+const DVGB_VERSION = 1;
+const DVGB_BLOCK_SIZE = 1048576; // 1024K = 1048576 bytes
 
 /**
  * Encode unsigned integer as protobuf varint
@@ -1301,15 +1328,26 @@ function encodeVarint(value) {
 }
 
 /**
- * Generate pb64 binary data from table (table-level, all rows concatenated)
- * Format: varint length-delimited JSON bytes → concat → base64
+ * Write 32-bit unsigned integer as little-endian
+ * @param {number} value - Unsigned 32-bit integer
+ * @returns {Buffer} 4-byte buffer
+ */
+function writeUInt32LE(value) {
+    const buf = Buffer.allocUnsafe(4);
+    buf.writeUInt32LE(value >>> 0, 0);
+    return buf;
+}
+
+/**
+ * Generate raw pb64 binary data from table (table-level, all rows concatenated)
+ * Format: varint length-delimited JSON bytes → concat
  * Each row: [varint length][UTF-8 JSON bytes]
  * 
  * @param {Array} rows - Valid rows to export
  * @param {Array} fields - Field definitions
- * @returns {string} Base64 encoded string
+ * @returns {Buffer} Raw binary data (not base64)
  */
-function generatePb64Binary(rows, fields) {
+function generateRawPb64Binary(rows, fields) {
     const chunks = [];
 
     for (const row of rows) {
@@ -1324,8 +1362,85 @@ function generatePb64Binary(rows, fields) {
         chunks.push(jsonBytes);
     }
 
-    const blob = Buffer.concat(chunks);
-    return blob.toString('base64');
+    return Buffer.concat(chunks);
+}
+
+/**
+ * Compress raw binary using DVGB gzip block container format
+ * 
+ * Container format:
+ * - Magic: 4 bytes "DVGB" (ASCII)
+ * - Version: 1 byte (= 1)
+ * - BlockSize: 4 bytes little-endian (= 1048576)
+ * - BlockCount: 4 bytes little-endian
+ * - Blocks: repeat BlockCount times
+ *   - UncompressedLen: 4 bytes little-endian
+ *   - CompressedLen: 4 bytes little-endian
+ *   - GzipBytes: CompressedLen bytes
+ * 
+ * @param {Buffer} rawBinary - Raw pb64 binary data
+ * @returns {Buffer} DVGB container binary
+ */
+function compressToDvgbContainer(rawBinary) {
+    // Split into blocks
+    const blocks = [];
+    let offset = 0;
+    
+    while (offset < rawBinary.length) {
+        const blockEnd = Math.min(offset + DVGB_BLOCK_SIZE, rawBinary.length);
+        const block = rawBinary.slice(offset, blockEnd);
+        
+        // Compress block with gzip
+        const compressed = gzipSync(block, { level: 9 });
+        
+        blocks.push({
+            uncompressedLen: block.length,
+            compressedLen: compressed.length,
+            data: compressed
+        });
+        
+        offset = blockEnd;
+    }
+    
+    // Build container
+    const headerParts = [
+        DVGB_MAGIC,                      // 4 bytes: "DVGB"
+        Buffer.from([DVGB_VERSION]),     // 1 byte: version
+        writeUInt32LE(DVGB_BLOCK_SIZE),  // 4 bytes: blockSize
+        writeUInt32LE(blocks.length)     // 4 bytes: blockCount
+    ];
+    
+    const blockParts = [];
+    for (const block of blocks) {
+        blockParts.push(writeUInt32LE(block.uncompressedLen));
+        blockParts.push(writeUInt32LE(block.compressedLen));
+        blockParts.push(block.data);
+    }
+    
+    return Buffer.concat([...headerParts, ...blockParts]);
+}
+
+/**
+ * Generate pb64 binary data with gzip block compression
+ * Returns base64 encoded DVGB container
+ * 
+ * @param {Array} rows - Valid rows to export
+ * @param {Array} fields - Field definitions
+ * @returns {string} Base64 encoded DVGB container
+ */
+function generatePb64Binary(rows, fields) {
+    // Generate raw binary (existing format)
+    const rawBinary = generateRawPb64Binary(rows, fields);
+    
+    if (rawBinary.length === 0) {
+        return '';
+    }
+    
+    // Compress to DVGB container
+    const container = compressToDvgbContainer(rawBinary);
+    
+    // Return as base64
+    return container.toString('base64');
 }
 
 /**
@@ -1351,13 +1466,13 @@ TextAsset:
 
 /**
  * Generate Unity TextAsset .asset file for a table (table-level, single file)
- * SSOT: skills/devian/28-json-row-io/SKILL.md - bin export 규칙
+ * SSOT: skills/devian/28-json-row-io/SKILL.md - pb64 export 규칙
  * 
  * Rules:
  * - Only tables with pk option (table.keyField exists) are exported
  * - If ANY row has empty PK value, the ENTIRE table is skipped (no partial export)
  * - Output: single {TableName}.asset file per table
- * - m_Script contains pb64 binary (existing format, no changes)
+ * - m_Script contains DVGB gzip block container (base64 encoded)
  * 
  * @param {Object} table - Table definition from parseXlsx
  * @returns {Object} { tableName: string, yaml: string, rowCount: number } or null if skipped
@@ -1385,7 +1500,7 @@ export function generateTableAsset(table) {
         }
     }
 
-    // Generate pb64 binary (existing format, table-level)
+    // Generate pb64 binary (DVGB gzip block container)
     const base64Data = generatePb64Binary(rows, table.fields);
 
     if (!base64Data || base64Data.length === 0) {

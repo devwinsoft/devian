@@ -919,6 +919,10 @@
       <Project>{0452AAF8-314B-0A7A-4247-05D64D466DF8}</Project>
       <Name>Unity.RenderPipelines.Core.ShaderLibrary.Player</Name>
     </ProjectReference>
+    <ProjectReference Include="Unity.ScriptableBuildPipeline.Player.csproj">
+      <Project>{B18F6E8F-04EF-AAC4-331B-4E6E47176990}</Project>
+      <Name>Unity.ScriptableBuildPipeline.Player</Name>
+    </ProjectReference>
     <ProjectReference Include="Unity.Timeline.Player.csproj">
       <Project>{B205FF34-7F80-FD7B-60ED-CC0D6FBAF8E3}</Project>
       <Name>Unity.Timeline.Player</Name>
@@ -926,6 +930,10 @@
     <ProjectReference Include="Devian.Network.Player.csproj">
       <Project>{C93CE831-31EE-15B9-BDC6-C12E3CD2BFA1}</Project>
       <Name>Devian.Network.Player</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.Addressables.Player.csproj">
+      <Project>{A51EC345-ED80-2A9F-2500-8AD9425892B2}</Project>
+      <Name>Unity.Addressables.Player</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.Shared.Player.csproj">
       <Project>{E8D70176-E50C-9594-C252-AF9F7F9CF539}</Project>
@@ -963,6 +971,10 @@
       <Project>{2008855B-F304-7199-403F-823EC8F31893}</Project>
       <Name>Devian.Unity.Common.Player</Name>
     </ProjectReference>
+    <ProjectReference Include="Devian.Network.Game.Player.csproj">
+      <Project>{7DAC8DDF-1BC6-F2F2-016A-031916C18881}</Project>
+      <Name>Devian.Network.Game.Player</Name>
+    </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.Player.csproj">
       <Project>{FF336EE5-A0DB-A6BF-112F-7B2D9F3E6645}</Project>
       <Name>Unity.RenderPipelines.Core.Runtime.Player</Name>
@@ -971,6 +983,10 @@
       <Project>{7DFFE043-A109-2739-6954-12DBDF0A6DE9}</Project>
       <Name>Unity.VisualScripting.Flow.Player</Name>
     </ProjectReference>
+    <ProjectReference Include="Unity.ResourceManager.Player.csproj">
+      <Project>{2D38A960-1800-D0AB-AFFB-557823E5A4AC}</Project>
+      <Name>Unity.ResourceManager.Player</Name>
+    </ProjectReference>
     <ProjectReference Include="Unity.Collections.Player.csproj">
       <Project>{8470E6EE-0D30-5C40-1FDB-B110F8586669}</Project>
       <Name>Unity.Collections.Player</Name>
@@ -978,6 +994,10 @@
     <ProjectReference Include="Unity.InputSystem.ForUI.Player.csproj">
       <Project>{C91ECEBA-7DF7-69EF-D15A-321B8B0CF683}</Project>
       <Name>Unity.InputSystem.ForUI.Player</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.Profiling.Core.Player.csproj">
+      <Project>{9E08AA7F-A534-3581-D759-9F9D960E7642}</Project>
+      <Name>Unity.Profiling.Core.Player</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.GPUDriven.Runtime.Player.csproj">
       <Project>{0553C431-31B4-3E5B-38FE-08235FB63DBF}</Project>

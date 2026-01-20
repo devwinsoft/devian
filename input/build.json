@@ -35,7 +35,7 @@
       "protocolFiles": ["C2Game.json", "Game2C.json"],
       "csTargetDir": "../framework-cs/modules",
       "tsTargetDir": "../framework-ts/modules",
-      "upmTargetDir": "../framework-cs/apps/UnityExample/Packages"
+      "upmTargetDir": "../framework-cs/apps/UnityExample/Packages/com.devian.protocol.game"
     }
   ]
 }
