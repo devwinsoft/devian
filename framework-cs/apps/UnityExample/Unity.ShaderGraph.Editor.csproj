@@ -548,8 +548,8 @@
     <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Drawing\Views\IdentifierField.cs" />
     <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Data\Graphs\Matrix4ShaderProperty.cs" />
     <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Data\Nodes\Input\PBR\DielectricSpecularNode.cs" />
-    <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Data\Graphs\NormalMaterialSlot.cs" />
     <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Drawing\Views\ReorderableSlotListView.cs" />
+    <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Data\Graphs\NormalMaterialSlot.cs" />
     <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Generation\Descriptors\SubShaderDescriptor.cs" />
     <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Data\Nodes\Utility\DropdownNode.cs" />
     <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Drawing\Inspector\PropertyDrawers\GraphDataPropertyDrawer.cs" />
@@ -583,8 +583,8 @@
     <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Data\Nodes\Input\Texture\Texture3DAssetNode.cs" />
     <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Generation\Contexts\TargetPropertyGUIContext.cs" />
     <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Data\Nodes\Math\Trigonometry\ArccosineNode.cs" />
-    <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Drawing\Colors\CustomColorData.cs" />
     <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Data\Attributes\BuiltinKeywordAttribute.cs" />
+    <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Drawing\Colors\CustomColorData.cs" />
     <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Drawing\EdgeConnectorListener.cs" />
     <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Data\ContextData.cs" />
     <Compile Include="Library\PackageCache\com.unity.shadergraph@3cfe1d1f3f8c\Editor\Data\Graphs\GraphDataReadOnly.cs" />

@@ -2,12 +2,14 @@
   "version": "10",
   "tempDir": "temp",
 
+  "upmConfig": {
+    "sourceDir": "../framework-cs/upm-src",
+    "packageDir": "../framework-cs/apps/UnityExample/Packages"
+  },
+
   "staticUpmPackages": [
-    {
-      "name": "com.devian.unity.common",
-      "sourceDir": "../framework-cs/upm-src/com.devian.unity.common",
-      "upmTargetDir": "../framework-cs/apps/UnityExample/Packages"
-    }
+    { "upmName": "com.devian.unity.common" },
+    { "upmName": "com.devian.unity.network" }
   ],
 
   "domains": {
@@ -23,8 +25,7 @@
       "dataTargetDirs": [
         "../output",
         "../framework-cs/apps/UnityExample/Assets/Bundles/Tables"
-      ],
-      "upmTargetDir": "../framework-cs/apps/UnityExample/Packages"
+      ]
     }
   },
 
@@ -35,7 +36,7 @@
       "protocolFiles": ["C2Game.json", "Game2C.json"],
       "csTargetDir": "../framework-cs/modules",
       "tsTargetDir": "../framework-ts/modules",
-      "upmTargetDir": "../framework-cs/apps/UnityExample/Packages/com.devian.protocol.game"
+      "upmName": "com.devian.protocol.game"
     }
   ]
 }

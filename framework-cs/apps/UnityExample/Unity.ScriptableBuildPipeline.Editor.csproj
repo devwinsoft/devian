@@ -105,9 +105,9 @@
     <Compile Include="Library\PackageCache\com.unity.scriptablebuildpipeline@c60a910e7421\Editor\Tasks\ClusterBuildLayout.cs" />
     <Compile Include="Library\PackageCache\com.unity.scriptablebuildpipeline@c60a910e7421\Editor\WriteTypes\RawWriteOperation.cs" />
     <Compile Include="Library\PackageCache\com.unity.scriptablebuildpipeline@c60a910e7421\Editor\WriteTypes\SceneDataWriteOperation.cs" />
+    <Compile Include="Library\PackageCache\com.unity.scriptablebuildpipeline@c60a910e7421\Editor\Utilities\GraphicsSettingsApi.cs" />
     <Compile Include="Library\PackageCache\com.unity.scriptablebuildpipeline@c60a910e7421\Editor\Utilities\BuildLogger.cs" />
     <Compile Include="Library\PackageCache\com.unity.scriptablebuildpipeline@c60a910e7421\Editor\Shared\BuildContext.cs" />
-    <Compile Include="Library\PackageCache\com.unity.scriptablebuildpipeline@c60a910e7421\Editor\Utilities\GraphicsSettingsApi.cs" />
     <Compile Include="Library\PackageCache\com.unity.scriptablebuildpipeline@c60a910e7421\Editor\Interfaces\IDependencyData.cs" />
     <Compile Include="Library\PackageCache\com.unity.scriptablebuildpipeline@c60a910e7421\Editor\WriteTypes\SceneBundleWriteOperation.cs" />
     <Compile Include="Library\PackageCache\com.unity.scriptablebuildpipeline@c60a910e7421\Editor\Utilities\QualitySettingsApi.cs" />

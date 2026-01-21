@@ -1,11 +1,11 @@
 {
-  "name": "Devian.Sample",
-  "rootNamespace": "Devian.Sample",
+  "name": "Devian.Network.Sample",
+  "rootNamespace": "Devian.Network.Sample",
   "references": [
     "Devian.Core",
     "Devian.Network",
-    "Devian.Unity.Network",
-    "Devian.Network.Sample"
+    "Devian.Protobuf",
+    "Devian.Module.Common"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -15,5 +15,5 @@
   "autoReferenced": true,
   "defineConstraints": [],
   "versionDefines": [],
-  "noEngineReferences": false
+  "noEngineReferences": true
 }

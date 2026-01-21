@@ -448,6 +448,10 @@ MonoBehaviour:
     save2: 1436211193
   c:
     data: xyPD
+  policyId:
+    Value: 0
+  testSheetId:
+    Value: 2
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
@@ -506,7 +510,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1931013202}
-  - component: {fileID: 1931013201}
+  - component: {fileID: 1931013203}
   m_Layer: 0
   m_Name: WsClient
   m_TagString: Untagged
@@ -514,19 +518,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &1931013201
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1931013200}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 428e591d87171eb44a7ec2cb9f7cea02, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Devian.Sample::Devian.Sample.EchoWsClientSample
-  url: wss://localhost/ws
 --- !u!4 &1931013202
 Transform:
   m_ObjectHideFlags: 0
@@ -542,6 +533,21 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1931013203
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1931013200}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0cd3ac0d292359c44bcc5e5f9f4bd024, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Sample::Devian.Sample.EchoWsClientSample
+  url: ws://localhost:8080
+  pingPayload: hello
+  echoMessage: echo test
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

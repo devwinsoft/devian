@@ -1131,10 +1131,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Devian.Sample.csproj">
-      <Project>{A567105F-B505-A358-4D70-DFE43B501C30}</Project>
-      <Name>Devian.Sample</Name>
-    </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Editor.csproj">
       <Project>{44A93BA3-99D4-0E58-152D-4DEA5527805E}</Project>
       <Name>Unity.RenderPipelines.Core.Editor</Name>
@@ -1158,6 +1154,10 @@
     <ProjectReference Include="Unity.RenderPipelines.Core.ShaderLibrary.csproj">
       <Project>{9C756D8C-1238-F33F-37AA-10DB42172B28}</Project>
       <Name>Unity.RenderPipelines.Core.ShaderLibrary</Name>
+    </ProjectReference>
+    <ProjectReference Include="Devian.Sample.Editor.csproj">
+      <Project>{E9BE28B0-4158-2BCC-D396-8E2A79E0620C}</Project>
+      <Name>Devian.Sample.Editor</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.ScriptableBuildPipeline.csproj">
       <Project>{C90D422D-4577-876F-4995-0A9FBF67C509}</Project>
@@ -1187,17 +1187,21 @@
       <Project>{1F6C3922-5DD9-CEFA-3B7E-A7BC250BCE3C}</Project>
       <Name>Unity.AI.Navigation.Editor</Name>
     </ProjectReference>
-    <ProjectReference Include="PPv2URPConverters.csproj">
-      <Project>{0501A597-946E-F1AE-1BC9-3178AA6A2832}</Project>
-      <Name>PPv2URPConverters</Name>
+    <ProjectReference Include="Unity.Addressables.csproj">
+      <Project>{A41FBED1-84E8-FF79-54BA-4D656D3E6B93}</Project>
+      <Name>Unity.Addressables</Name>
     </ProjectReference>
     <ProjectReference Include="Devian.Network.csproj">
       <Project>{BA233111-C828-0A83-8951-CAD8BDC5047A}</Project>
       <Name>Devian.Network</Name>
     </ProjectReference>
-    <ProjectReference Include="Unity.Addressables.csproj">
-      <Project>{A41FBED1-84E8-FF79-54BA-4D656D3E6B93}</Project>
-      <Name>Unity.Addressables</Name>
+    <ProjectReference Include="PPv2URPConverters.csproj">
+      <Project>{0501A597-946E-F1AE-1BC9-3178AA6A2832}</Project>
+      <Name>PPv2URPConverters</Name>
+    </ProjectReference>
+    <ProjectReference Include="Devian.Sample.csproj">
+      <Project>{A567105F-B505-A358-4D70-DFE43B501C30}</Project>
+      <Name>Devian.Sample</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.Shared.csproj">
       <Project>{1B9CC5A5-1B05-8F23-4017-32D6215E0134}</Project>
@@ -1215,13 +1219,13 @@
       <Project>{7EEF047F-69D3-4CF9-8C83-7267AAFCB838}</Project>
       <Name>Unity.VisualScripting.Shared.Editor</Name>
     </ProjectReference>
-    <ProjectReference Include="Unity.Searcher.Editor.csproj">
-      <Project>{3750D0AB-C9AA-4E0C-99D7-7F1D6D32B07A}</Project>
-      <Name>Unity.Searcher.Editor</Name>
-    </ProjectReference>
     <ProjectReference Include="Unity.ScriptableBuildPipeline.Editor.csproj">
       <Project>{19129F34-9436-30AD-F17A-3E0EC9C3DED2}</Project>
       <Name>Unity.ScriptableBuildPipeline.Editor</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.Searcher.Editor.csproj">
+      <Project>{3750D0AB-C9AA-4E0C-99D7-7F1D6D32B07A}</Project>
+      <Name>Unity.Searcher.Editor</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.PlasticSCM.Editor.csproj">
       <Project>{3B955328-114A-1D71-290C-D8133DF1E8ED}</Project>
@@ -1239,13 +1243,13 @@
       <Project>{E56C3396-852E-68F6-072A-9AEE4D51216F}</Project>
       <Name>Unity.Mathematics.Editor</Name>
     </ProjectReference>
-    <ProjectReference Include="Unity.UnifiedRayTracing.Runtime.csproj">
-      <Project>{D1B71C36-BE89-4137-8A20-FC6A3AE16CC0}</Project>
-      <Name>Unity.UnifiedRayTracing.Runtime</Name>
-    </ProjectReference>
     <ProjectReference Include="Devian.Module.Common.csproj">
       <Project>{1C64138F-AE50-81D3-5FD2-8A87FC93AF33}</Project>
       <Name>Devian.Module.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.UnifiedRayTracing.Runtime.csproj">
+      <Project>{D1B71C36-BE89-4137-8A20-FC6A3AE16CC0}</Project>
+      <Name>Unity.UnifiedRayTracing.Runtime</Name>
     </ProjectReference>
     <ProjectReference Include="Devian.Core.csproj">
       <Project>{BE59D257-BCE4-3EFD-A48C-4F1B1BAB05B5}</Project>
@@ -1258,10 +1262,6 @@
     <ProjectReference Include="Unity.AI.Navigation.Editor.ConversionSystem.csproj">
       <Project>{747CD831-FB24-9CF1-4205-22BC33252C7E}</Project>
       <Name>Unity.AI.Navigation.Editor.ConversionSystem</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.csproj">
-      <Project>{BFFC6D7A-CB71-4D90-1421-9BD9D5E62490}</Project>
-      <Name>Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary</Name>
     </ProjectReference>
     <ProjectReference Include="Devian.Unity.Common.csproj">
       <Project>{8128504E-ACF8-CF1E-7E40-F82A788D314F}</Project>
@@ -1278,6 +1278,10 @@
     <ProjectReference Include="Unity.VisualScripting.Flow.csproj">
       <Project>{C0D16D32-2363-BC3B-54AE-A21AB56D5EF9}</Project>
       <Name>Unity.VisualScripting.Flow</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.csproj">
+      <Project>{BFFC6D7A-CB71-4D90-1421-9BD9D5E62490}</Project>
+      <Name>Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.TextMeshPro.Editor.csproj">
       <Project>{9B3918C4-C8C9-8AA6-1145-7F57CF42B28C}</Project>
@@ -1303,13 +1307,13 @@
       <Project>{80EF44D5-120B-AE3F-7B53-38BFA0D0D972}</Project>
       <Name>Unity.Collections</Name>
     </ProjectReference>
-    <ProjectReference Include="Unity.InputSystem.ForUI.csproj">
-      <Project>{F3F2338E-5B2C-8342-C281-F31B3BEB5226}</Project>
-      <Name>Unity.InputSystem.ForUI</Name>
-    </ProjectReference>
     <ProjectReference Include="Unity.Profiling.Core.csproj">
       <Project>{14BA3A4C-6465-9554-DA42-EB1EA8409819}</Project>
       <Name>Unity.Profiling.Core</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.InputSystem.ForUI.csproj">
+      <Project>{F3F2338E-5B2C-8342-C281-F31B3BEB5226}</Project>
+      <Name>Unity.InputSystem.ForUI</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.GPUDriven.Runtime.csproj">
       <Project>{24B68198-03B6-EF82-26C1-109FB9DE920C}</Project>

@@ -1,50 +1,30 @@
 # BasicWsClient Sample
 
-A minimal sample demonstrating `WebSocketClientBehaviourBase` usage with generated Runtime.
+Online-only WebSocket client sample for TS SampleServer.
 
-## Architecture
+## Prerequisites
 
-This sample uses the **generated Runtime pattern**:
+- TS SampleServer running on `ws://localhost:8080`
+- Start server: `cd framework-ts/apps/SampleServer && npm start`
 
-- **Inbound dispatch** is handled by `C2Sample.Runtime` (generated code)
-- **Content logic** is implemented in `C2Sample.Stub` (handler only)
-- **Outbound messages** are sent via `C2Sample.Proxy`
+## Usage
 
-No manual opcode switch or envelope parsing is required in sample code.
+1. Attach `EchoWsClientSample` to any GameObject
+2. Enter Play mode
+3. Use Inspector buttons:
+   - **Connect** - Connect to server
+   - **Disconnect** - Close connection
+   - **Send Ping** - Send Ping message (requires connection)
+   - **Send Echo** - Send Echo message (requires connection)
 
-## Setup
+## Protocol Direction
 
-1. Import this sample via Package Manager → Samples
-2. Create an empty GameObject
-3. Attach `EchoWsClientSample` component
-4. Set the WebSocket URL in the inspector
-5. Play and use Context Menu → Connect / Disconnect
-
-## Files
-
-- `EchoWsClientSample.cs` - Sample MonoBehaviour extending `WebSocketClientBehaviourBase`, uses generated `C2Sample.Runtime` and `C2Sample.Proxy` for sending
-- `SampleProtocolSmokeTest.cs` - Smoke test demonstrating sample protocol type accessibility
-- `Devian.Sample.asmdef` - Assembly definition for sample code
-
-## Sample Protocol
-
-This sample references the generated protocol types from `Runtime/Generated.Sample/`:
-
-- `Devian.Network.Sample.C2Sample` - Client-to-server messages (Ping, Echo)
-- `Devian.Network.Sample.Sample2C` - Server-to-client messages (Pong, EchoReply)
-
-Each protocol provides:
-- `Runtime` - `INetRuntime` implementation for inbound dispatch
-- `Stub` - Abstract handler class (inherit and override `On*` methods)
-- `Proxy` - Outbound sender (requires `ISender` adapter)
-
-To run the smoke test:
-1. Attach `SampleProtocolSmokeTest` to a GameObject
-2. Use Context Menu → Run Smoke Test
+| Direction | Protocol | Messages |
+|-----------|----------|----------|
+| Client → Server | `C2Sample.Proxy` | Ping, Echo |
+| Server → Client | `Sample2C.Runtime` | Pong, EchoReply |
 
 ## Notes
 
-- Samples are copied to `Assets/Samples/` on import - modify freely
-- Base class provides no policy (no auto-connect, no reconnect)
-- Connection policies should be implemented in your project
-- Sample protocol code is in Runtime, not Samples~ (to enable compilation)
+- **No offline mode** - Requires running server
+- **No auto-send** - Use Inspector buttons to send messages

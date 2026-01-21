@@ -899,10 +899,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Devian.Sample.Player.csproj">
-      <Project>{3EE9DD03-A94A-B79E-20C1-3D0608313358}</Project>
-      <Name>Devian.Sample.Player</Name>
-    </ProjectReference>
     <ProjectReference Include="Unity.TextMeshPro.Player.csproj">
       <Project>{58018715-4EB0-152C-7345-D49638C84154}</Project>
       <Name>Unity.TextMeshPro.Player</Name>
@@ -927,13 +923,17 @@
       <Project>{B205FF34-7F80-FD7B-60ED-CC0D6FBAF8E3}</Project>
       <Name>Unity.Timeline.Player</Name>
     </ProjectReference>
+    <ProjectReference Include="Unity.Addressables.Player.csproj">
+      <Project>{A51EC345-ED80-2A9F-2500-8AD9425892B2}</Project>
+      <Name>Unity.Addressables.Player</Name>
+    </ProjectReference>
     <ProjectReference Include="Devian.Network.Player.csproj">
       <Project>{C93CE831-31EE-15B9-BDC6-C12E3CD2BFA1}</Project>
       <Name>Devian.Network.Player</Name>
     </ProjectReference>
-    <ProjectReference Include="Unity.Addressables.Player.csproj">
-      <Project>{A51EC345-ED80-2A9F-2500-8AD9425892B2}</Project>
-      <Name>Unity.Addressables.Player</Name>
+    <ProjectReference Include="Devian.Sample.Player.csproj">
+      <Project>{3EE9DD03-A94A-B79E-20C1-3D0608313358}</Project>
+      <Name>Devian.Sample.Player</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.Shared.Player.csproj">
       <Project>{E8D70176-E50C-9594-C252-AF9F7F9CF539}</Project>
@@ -951,21 +951,17 @@
       <Project>{66074035-E8DF-052E-2AB4-AA6186B3FAC2}</Project>
       <Name>Unity.VisualScripting.Core.Player</Name>
     </ProjectReference>
-    <ProjectReference Include="Unity.UnifiedRayTracing.Runtime.Player.csproj">
-      <Project>{8E933A23-EA13-64F0-41D9-1C0581DDF1BF}</Project>
-      <Name>Unity.UnifiedRayTracing.Runtime.Player</Name>
-    </ProjectReference>
     <ProjectReference Include="Devian.Module.Common.Player.csproj">
       <Project>{747B8B61-6317-C2F3-564C-2DA614C3E5C1}</Project>
       <Name>Devian.Module.Common.Player</Name>
     </ProjectReference>
+    <ProjectReference Include="Unity.UnifiedRayTracing.Runtime.Player.csproj">
+      <Project>{8E933A23-EA13-64F0-41D9-1C0581DDF1BF}</Project>
+      <Name>Unity.UnifiedRayTracing.Runtime.Player</Name>
+    </ProjectReference>
     <ProjectReference Include="Devian.Core.Player.csproj">
       <Project>{59D7EC36-ABE0-6119-559C-F7B3AD20DD9F}</Project>
       <Name>Devian.Core.Player</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.Player.csproj">
-      <Project>{E7694518-65A4-F466-3827-49488589D577}</Project>
-      <Name>Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.Player</Name>
     </ProjectReference>
     <ProjectReference Include="Devian.Unity.Common.Player.csproj">
       <Project>{2008855B-F304-7199-403F-823EC8F31893}</Project>
@@ -983,6 +979,10 @@
       <Project>{7DFFE043-A109-2739-6954-12DBDF0A6DE9}</Project>
       <Name>Unity.VisualScripting.Flow.Player</Name>
     </ProjectReference>
+    <ProjectReference Include="Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.Player.csproj">
+      <Project>{E7694518-65A4-F466-3827-49488589D577}</Project>
+      <Name>Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary.Player</Name>
+    </ProjectReference>
     <ProjectReference Include="Unity.ResourceManager.Player.csproj">
       <Project>{2D38A960-1800-D0AB-AFFB-557823E5A4AC}</Project>
       <Name>Unity.ResourceManager.Player</Name>
@@ -991,13 +991,13 @@
       <Project>{8470E6EE-0D30-5C40-1FDB-B110F8586669}</Project>
       <Name>Unity.Collections.Player</Name>
     </ProjectReference>
-    <ProjectReference Include="Unity.InputSystem.ForUI.Player.csproj">
-      <Project>{C91ECEBA-7DF7-69EF-D15A-321B8B0CF683}</Project>
-      <Name>Unity.InputSystem.ForUI.Player</Name>
-    </ProjectReference>
     <ProjectReference Include="Unity.Profiling.Core.Player.csproj">
       <Project>{9E08AA7F-A534-3581-D759-9F9D960E7642}</Project>
       <Name>Unity.Profiling.Core.Player</Name>
+    </ProjectReference>
+    <ProjectReference Include="Unity.InputSystem.ForUI.Player.csproj">
+      <Project>{C91ECEBA-7DF7-69EF-D15A-321B8B0CF683}</Project>
+      <Name>Unity.InputSystem.ForUI.Player</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.GPUDriven.Runtime.Player.csproj">
       <Project>{0553C431-31B4-3E5B-38FE-08235FB63DBF}</Project>

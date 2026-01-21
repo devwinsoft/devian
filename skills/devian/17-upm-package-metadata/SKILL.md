@@ -94,6 +94,13 @@ runtime 패키지는 필요한 최소 의존만 선언한다:
 `Samples~` 폴더를 제공하는 패키지는 **반드시** `package.json`에 `samples` 배열을 선언해야 한다.
 이 필드가 없으면 Unity Package Manager에서 샘플 설치 UI가 표시되지 않는다.
 
+### Builder samples metadata sync 요구사항 (Hard Rule)
+
+**Hard Rule:**
+- `Samples~` 폴더가 존재하고 샘플 하위 폴더가 있으면, Builder는 `package.json`의 `samples` 필드를 자동으로 동기화해야 한다.
+- `syncSamplesMetadata()` 호출은 **반드시** `Samples~` 폴더가 target 디렉토리에 복사된 **이후**에 실행되어야 한다.
+- 이 순서가 지켜지지 않으면 metadata sync가 빈 폴더를 읽어 `samples` 필드가 누락될 수 있다.
+
 ### samples 항목 구조
 
 | 필드 | 필수 | 설명 |

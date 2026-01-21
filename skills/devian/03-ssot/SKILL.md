@@ -120,6 +120,57 @@ build.json 위치는 유동적이다. 현재 프로젝트에서는 `input/build.
 - `csTargetDir: "../framework/cs"` → `framework/cs`
 - `tempDir: "temp"` → `input/temp`
 
+### UPM 전역 설정 (upmConfig) — Hard Rule
+
+**build.json은 반드시 `upmConfig` 섹션을 포함해야 한다.**
+
+```json
+"upmConfig": {
+  "sourceDir": "../framework-cs/upm-src",
+  "packageDir": "../framework-cs/apps/UnityExample/Packages"
+}
+```
+
+| 필드 | 의미 | 필수 |
+|------|------|------|
+| `sourceDir` | UPM 소스 루트 (upm-src) | ✅ |
+| `packageDir` | Unity Packages 루트 (UnityExample/Packages) | ✅ |
+
+`upmConfig`가 없거나 필드가 누락되면 빌더는 **하드 실패(throw Error)**한다.
+
+### Static UPM Packages
+
+정적 UPM 패키지(수동 관리)는 `staticUpmPackages` 배열로 정의한다.
+
+```json
+"staticUpmPackages": [
+  { "upmName": "com.devian.unity.common" },
+  { "upmName": "com.devian.unity.network" }
+]
+```
+
+**필드 정의:**
+
+| 필드 | 의미 | 필수 |
+|------|------|------|
+| `upmName` | UPM 패키지 이름 (예: `com.devian.unity.network`) | ✅ |
+
+**Deprecated 필드 (Hard Fail):**
+- `name` — 더 이상 사용하지 않음, 사용 시 빌드 실패
+- `sourceDir` — `upmConfig.sourceDir`에서 계산됨
+- `upmTargetDir` — `upmConfig.packageDir`에서 계산됨
+
+**경로 계산 규칙 (Hard Rule):**
+
+```
+sourceDir = {upmConfig.sourceDir}/{upmName}
+targetDir = {upmConfig.packageDir}/{upmName}
+```
+
+예시 (`upmName: "com.devian.unity.network"`):
+- `sourceDir` → `../framework-cs/upm-src/com.devian.unity.network`
+- `targetDir` → `../framework-cs/apps/UnityExample/Packages/com.devian.unity.network`
+
 ### 1) DomainType = DATA
 
 DATA 입력은 build.json의 `domains` 섹션이 정의한다.
@@ -277,10 +328,24 @@ PROTOCOL 입력은 build.json의 `protocols` 섹션(배열)이 정의한다.
     "protocolFiles": ["C2Game.json", "Game2C.json"],
     "csTargetDir": "../framework-cs/modules",
     "tsTargetDir": "../framework-ts/modules",
-    "upmTargetDir": "../framework-cs/apps/UnityExample/Packages/com.devian.protocol.game"
+    "upmName": "com.devian.protocol.game"
   }
 ]
 ```
+
+**필드 정의:**
+
+| 필드 | 의미 | 필수 |
+|------|------|------|
+| `group` | ProtocolGroup 이름 | ✅ |
+| `protocolDir` | 프로토콜 JSON 파일 디렉토리 | ✅ |
+| `protocolFiles` | 처리할 프로토콜 파일 목록 | ✅ |
+| `csTargetDir` | C# 모듈 출력 디렉토리 | ✅ |
+| `tsTargetDir` | TypeScript 모듈 출력 디렉토리 | ✅ |
+| `upmName` | UPM 패키지 이름 (`com.devian.protocol.*` 형식) | ❌ (선택) |
+
+**Deprecated 필드 (Hard Fail):**
+- `upmTargetDir` — 더 이상 사용하지 않음, 사용 시 빌드 실패
 
 #### Protocol Spec 포맷
 
@@ -311,34 +376,35 @@ PROTOCOL 입력은 build.json의 `protocols` 섹션(배열)이 정의한다.
 - staging: `{tempDir}/{ProtocolGroup}/{ProtocolName}.g.ts`, `index.ts`
 - final: `{tsTargetDir}/devian-network-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
 
-**UPM (Unity Package Manager):**
-- staging: `{tempDir}/Devian.Network.{ProtocolGroup}-upm/`
-- final: `{upmTargetDir}/` (패키지 폴더 자체)
+#### PROTOCOL UPM output rule (Hard Rule)
 
-#### UPM 출력 타겟 규칙 (Hard Rule)
+**`protocols[].upmName`으로 UPM 타겟 경로를 계산한다.**
 
-**Protocol의 `upmTargetDir`는 Unity Packages 루트가 아니라 "패키지 폴더"를 가리켜야 한다.**
-
-- 올바른 예: `Packages/com.devian.protocol.game`
-- 잘못된 예: `Packages` (루트)
-
-패키지 폴더 네이밍 규칙:
-- `com.devian.protocol.{group}` (group은 소문자)
-- 예: `group: "Game"` → `com.devian.protocol.game`
-
-copy는 `upmTargetDir`(패키지 폴더) 단위로만 clean+copy 한다. **Packages 루트는 절대 건드리지 않는다.**
-
-최종 UPM 출력 구조:
+경로 계산 규칙:
 ```
-UnityExample/Packages/com.devian.protocol.{group}/
-├── Runtime/
-│   └── Generated/
-│       └── *.g.cs
-├── Editor/
-│   └── Generated/
-│       └── *.Editor.cs
-└── package.json
+targetDir = {upmConfig.packageDir}/{upmName}
 ```
+
+예시 (`upmName: "com.devian.protocol.game"`):
+- `targetDir` → `../framework-cs/apps/UnityExample/Packages/com.devian.protocol.game`
+
+**Hard Validation (빌드 실패 조건):**
+1. `upmName`이 지정된 경우 **반드시** `com.devian.protocol.`로 시작해야 함
+2. `upmName`이 비어있으면 안 됨
+3. Packages root 직접 지정 금지 — 항상 `{packageDir}/{upmName}` 형식
+
+**Packages root를 지정하면 오염 발생:**
+```
+UnityExample/Packages/
+├── Editor/       ← 잘못됨 (UPM 패키지가 아님)
+├── Runtime/      ← 잘못됨
+└── com.devian.*/  ← 정상 UPM 패키지들
+```
+
+빌더는 이를 방지하기 위해 **하드 가드**를 포함한다:
+- `upmName.startsWith('com.devian.protocol.')` 검증
+- 계산된 경로에 `/Packages/` 세그먼트 포함 검증
+- 실패 시 **throw Error** (빌드 중단)
 
 ---
 
@@ -353,7 +419,6 @@ UnityExample/Packages/com.devian.protocol.{group}/
 5. 코드와 다른 API/산출물/프레임 규약을 SKILL이 "정본"처럼 단정
 6. TS `index.ts`를 통째로 덮어쓰는 동작 (marker 갱신 방식 위반)
 7. `domains.Common`이 build.json에 없는 상태
-8. Protocol `upmTargetDir`가 Packages 루트를 가리키는 경우 (패키지 폴더를 가리켜야 함)
 
 ---
 

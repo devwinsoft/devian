@@ -56,6 +56,14 @@ class DevianToolBuilder {
         // tempDir is relative to build.json directory
         this.tempDir = path.join(this.buildJsonDir, this.config.tempDir || 'temp');
 
+        // 1.1. Validate upmConfig (Hard Rule)
+        console.log('[Guard] Validating upmConfig...');
+        this.validateUpmConfig();
+
+        // 1.2. Validate deprecated fields (Hard Fail)
+        console.log('[Guard] Checking deprecated fields...');
+        this.checkDeprecatedFields();
+
         // 1.5. Forbidden namespace guard (재발 방지)
         console.log('[Guard] Checking forbidden namespaces...');
         this.checkForbiddenNamespaces();
@@ -663,8 +671,8 @@ class DevianToolBuilder {
         const indexTsContent = this.generateIndexTs(groupName, protocolNames, hasServerRuntime, hasClientRuntime);
         fs.writeFileSync(path.join(stagingTs, 'index.ts'), indexTsContent);
 
-        // Generate UPM scaffold if upmTargetDir is configured
-        if (groupConfig.upmTargetDir) {
+        // Generate UPM scaffold if upmName is configured
+        if (groupConfig.upmName) {
             this.generateProtocolUpmScaffold(groupName, stagingCs);
         }
     }
@@ -800,26 +808,60 @@ class DevianToolBuilder {
             this.ensureProtocolPackageJson(target, groupName, hasServerRuntime, hasClientRuntime);
         }
 
-        // Copy to UPM target
-        if (groupConfig.upmTargetDir) {
+        // Copy to UPM target (computed from upmConfig.packageDir + upmName)
+        if (groupConfig.upmName) {
+            // HARD GUARD: Validate protocol upmName (prevents Packages root pollution)
+            this.validateProtocolUpmName(groupName, groupConfig.upmName);
+
             const stagingUpm = path.join(this.tempDir, `${csProjectName}-upm`);
-            const target = this.resolvePath(groupConfig.upmTargetDir);
-            
-            // Guard: upmTargetDir must point to a package folder, not Packages root
-            const targetBasename = path.basename(target);
-            const expectedPrefix = `com.devian.protocol.${groupName.toLowerCase()}`;
-            if (!targetBasename.startsWith('com.devian.protocol.')) {
-                throw new Error(
-                    `[Protocol:${groupName}] upmTargetDir must point to a package folder under Packages ` +
-                    `(e.g., Packages/${expectedPrefix}), not Packages root or other folder.\n` +
-                    `  Current: ${groupConfig.upmTargetDir}\n` +
-                    `  Expected: .../Packages/${expectedPrefix}`
-                );
-            }
-            
+            // Compute target from upmConfig.packageDir + upmName
+            const target = path.join(this.upmPackageDir, groupConfig.upmName);
             this.copyUpmToTarget(stagingUpm, target);
             console.log(`    [Copy UPM] ${stagingUpm} -> ${target}`);
         }
+    }
+
+    /**
+     * HARD GUARD: Validate protocol upmName before copying.
+     * - upmName MUST start with "com.devian.protocol."
+     * - upmName MUST NOT be empty or whitespace
+     * Throws Error if invalid (prevents Packages root pollution).
+     * SSOT: skills/devian/03-ssot/SKILL.md
+     */
+    validateProtocolUpmName(groupName, upmName) {
+        const groupLower = groupName.toLowerCase();
+        const expectedPrefix = 'com.devian.protocol.';
+
+        // Check non-empty
+        if (!upmName || typeof upmName !== 'string' || upmName.trim() === '') {
+            throw new Error(
+                `[FAIL] Protocol upmName is empty for group "${groupName}".\n` +
+                `  Expected: "com.devian.protocol.${groupLower}"`
+            );
+        }
+
+        // Check prefix
+        if (!upmName.startsWith(expectedPrefix)) {
+            throw new Error(
+                `[FAIL] Protocol upmName must start with "${expectedPrefix}".\n` +
+                `  Group: ${groupName}\n` +
+                `  Actual: ${upmName}\n` +
+                `  Fix: Use "com.devian.protocol.${groupLower}"`
+            );
+        }
+
+        // Compute and verify target path contains /Packages/
+        const targetPath = path.join(this.upmPackageDir, upmName);
+        if (!targetPath.includes('/Packages/') && !targetPath.includes('\\Packages\\')) {
+            throw new Error(
+                `[FAIL] Protocol UPM target must be inside Unity Packages folder.\n` +
+                `  Computed path: ${targetPath}\n` +
+                `  upmConfig.packageDir: ${this.upmPackageDir}\n` +
+                `  upmName: ${upmName}`
+            );
+        }
+
+        console.log(`    [Guard] Protocol upmName validated: ${upmName}`);
     }
 
     // ========================================================================
@@ -1569,14 +1611,16 @@ export * from './features';
 
     /**
      * Process static UPM package: copy source to staging.
-     * @param {Object} pkgConfig - { name, sourceDir, upmTargetDir }
+     * Paths are computed from upmConfig + upmName.
+     * @param {Object} pkgConfig - { upmName }
      */
     async processStaticUpmPackage(pkgConfig) {
-        const { name, sourceDir } = pkgConfig;
-        console.log(`  [StaticUPM] ${name}`);
+        const { upmName } = pkgConfig;
+        console.log(`  [StaticUPM] ${upmName}`);
 
-        const sourcePath = this.resolvePath(sourceDir);
-        const stagingUpm = path.join(this.tempDir, `static-${name}`);
+        // Compute paths from upmConfig + upmName
+        const sourcePath = path.join(this.upmSourceDir, upmName);
+        const stagingUpm = path.join(this.tempDir, `static-${upmName}`);
 
         if (!fs.existsSync(sourcePath)) {
             console.log(`    [SKIP] Source not found: ${sourcePath}`);
@@ -1587,11 +1631,148 @@ export * from './features';
         this.copyDirRecursive(sourcePath, stagingUpm);
         console.log(`    [OK] Staged to ${stagingUpm}`);
 
+        // GUARD: Validate UPM sample structure (Runtime/Editor separation)
+        // SSOT: skills/devian/16-unity-upm-samples/SKILL.md
+        this.validateUpmSampleStructure(stagingUpm, upmName);
+
         // Generate TableID Editor bindings for com.devian.unity.common
         // SSOT: skills/devian/21-unity-common-upm/SKILL.md
-        if (name === 'com.devian.unity.common') {
+        if (upmName === 'com.devian.unity.common') {
             await this.generateTableIdEditorForUnityCommon(stagingUpm);
         }
+    }
+
+    /**
+     * GUARD: Validate UPM sample structure (Runtime/Editor separation).
+     * Throws Error if sample structure is invalid.
+     * SSOT: skills/devian/16-unity-upm-samples/SKILL.md
+     */
+    validateUpmSampleStructure(stagingUpm, upmName) {
+        const samplesDir = path.join(stagingUpm, 'Samples~');
+        
+        // Skip if no Samples~ folder
+        if (!fs.existsSync(samplesDir)) {
+            return;
+        }
+
+        const entries = fs.readdirSync(samplesDir, { withFileTypes: true });
+        const sampleFolders = entries.filter(e => e.isDirectory());
+
+        for (const sampleEntry of sampleFolders) {
+            const sampleName = sampleEntry.name;
+            const samplePath = path.join(samplesDir, sampleName);
+            const runtimeDir = path.join(samplePath, 'Runtime');
+            const editorDir = path.join(samplePath, 'Editor');
+
+            const hasRuntime = fs.existsSync(runtimeDir);
+            const hasEditor = fs.existsSync(editorDir);
+
+            // Rule 1: Sample must have both Runtime/ and Editor/ folders
+            if (!hasRuntime && !hasEditor) {
+                throw new Error(
+                    `Invalid UPM sample structure: ${upmName}/Samples~/${sampleName} missing Runtime/Editor folders.\n` +
+                    `  Fix: Create Runtime/ and Editor/ subdirectories with appropriate scripts and asmdef files.`
+                );
+            }
+
+            // Rule 2: If Runtime exists, it must have an asmdef
+            if (hasRuntime) {
+                const runtimeAsmdef = this.findAsmdef(runtimeDir);
+                if (!runtimeAsmdef) {
+                    throw new Error(
+                        `Invalid UPM sample asmdef: ${upmName}/Samples~/${sampleName}/Runtime/ missing *.asmdef file.\n` +
+                        `  Fix: Add a Runtime asmdef (e.g., Devian.Sample.asmdef) with no Editor platform restriction.`
+                    );
+                }
+
+                // Check Runtime asmdef doesn't restrict to Editor-only
+                const runtimeAsmdefContent = JSON.parse(fs.readFileSync(runtimeAsmdef, 'utf-8'));
+                const includePlatforms = runtimeAsmdefContent.includePlatforms || [];
+                if (includePlatforms.length === 1 && includePlatforms[0] === 'Editor') {
+                    throw new Error(
+                        `Invalid UPM sample asmdef: ${upmName}/Samples~/${sampleName}/Runtime/*.asmdef must NOT have includePlatforms:["Editor"].\n` +
+                        `  File: ${runtimeAsmdef}\n` +
+                        `  Fix: Remove or empty the includePlatforms array for Runtime asmdef.`
+                    );
+                }
+
+                // Check Runtime scripts don't have "using UnityEditor"
+                this.validateNoUnityEditorUsing(runtimeDir, upmName, sampleName);
+            }
+
+            // Rule 3: If Editor exists, it must have an asmdef with includePlatforms: ["Editor"]
+            if (hasEditor) {
+                const editorAsmdef = this.findAsmdef(editorDir);
+                if (!editorAsmdef) {
+                    throw new Error(
+                        `Invalid UPM sample asmdef: ${upmName}/Samples~/${sampleName}/Editor/ missing *.asmdef file.\n` +
+                        `  Fix: Add an Editor asmdef (e.g., Devian.Sample.Editor.asmdef) with includePlatforms:["Editor"].`
+                    );
+                }
+
+                // Check Editor asmdef has includePlatforms: ["Editor"]
+                const editorAsmdefContent = JSON.parse(fs.readFileSync(editorAsmdef, 'utf-8'));
+                const includePlatforms = editorAsmdefContent.includePlatforms || [];
+                if (!includePlatforms.includes('Editor')) {
+                    throw new Error(
+                        `Invalid UPM sample asmdef: ${upmName}/Samples~/${sampleName}/Editor/*.asmdef must include includePlatforms:["Editor"].\n` +
+                        `  File: ${editorAsmdef}\n` +
+                        `  Current includePlatforms: ${JSON.stringify(includePlatforms)}\n` +
+                        `  Fix: Add "includePlatforms": ["Editor"] to the Editor asmdef.`
+                    );
+                }
+            }
+
+            console.log(`    [Guard] Sample validated: Samples~/${sampleName}`);
+        }
+    }
+
+    /**
+     * Find first *.asmdef file in a directory.
+     */
+    findAsmdef(dir) {
+        if (!fs.existsSync(dir)) return null;
+        const entries = fs.readdirSync(dir);
+        const asmdef = entries.find(e => e.endsWith('.asmdef'));
+        return asmdef ? path.join(dir, asmdef) : null;
+    }
+
+    /**
+     * Validate that no *.cs files in a directory contain "using UnityEditor".
+     */
+    validateNoUnityEditorUsing(dir, upmName, sampleName) {
+        const csFiles = this.findCsFiles(dir);
+        for (const csFile of csFiles) {
+            const content = fs.readFileSync(csFile, 'utf-8');
+            if (content.includes('using UnityEditor;') || content.includes('using UnityEditor.')) {
+                throw new Error(
+                    `Invalid UPM sample code: Runtime script contains "using UnityEditor".\n` +
+                    `  Package: ${upmName}\n` +
+                    `  Sample: Samples~/${sampleName}\n` +
+                    `  File: ${csFile}\n` +
+                    `  Fix: Move this script to Editor/ folder or remove UnityEditor dependency.`
+                );
+            }
+        }
+    }
+
+    /**
+     * Find all *.cs files in a directory (recursive).
+     */
+    findCsFiles(dir) {
+        const results = [];
+        if (!fs.existsSync(dir)) return results;
+
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+                results.push(...this.findCsFiles(fullPath));
+            } else if (entry.isFile() && entry.name.endsWith('.cs')) {
+                results.push(fullPath);
+            }
+        }
+        return results;
     }
 
     /**
@@ -1620,16 +1801,18 @@ export * from './features';
 
     /**
      * Copy static UPM package from staging to target (clean+copy).
-     * @param {Object} pkgConfig - { name, sourceDir, upmTargetDir }
+     * Target path is computed from upmConfig.packageDir + upmName.
+     * @param {Object} pkgConfig - { upmName }
      */
     async copyStaticUpmPackageToTarget(pkgConfig) {
-        const { name, upmTargetDir } = pkgConfig;
+        const { upmName } = pkgConfig;
         
-        const stagingUpm = path.join(this.tempDir, `static-${name}`);
-        const targetPath = path.join(this.resolvePath(upmTargetDir), name);
+        const stagingUpm = path.join(this.tempDir, `static-${upmName}`);
+        // Compute target from upmConfig.packageDir + upmName
+        const targetPath = path.join(this.upmPackageDir, upmName);
 
         if (!fs.existsSync(stagingUpm)) {
-            console.log(`  [SKIP] ${name}: staging not found`);
+            console.log(`  [SKIP] ${upmName}: staging not found`);
             return;
         }
 
@@ -1640,7 +1823,7 @@ export * from './features';
 
         // Copy staging to target
         this.copyDirRecursive(stagingUpm, targetPath);
-        console.log(`  [UPM] ${name} → ${targetPath}`);
+        console.log(`  [UPM] ${upmName} → ${targetPath}`);
     }
 
     /**
@@ -1648,30 +1831,13 @@ export * from './features';
      * Prevents build from succeeding when critical files are missing.
      */
     async verifyUnityCommonTableIdFiles() {
-        // Find upmTargetDir from staticUpmPackages or domains config
-        let upmTargetDir = null;
-        
-        if (this.config.staticUpmPackages) {
-            const unityCommon = this.config.staticUpmPackages.find(p => p.name === 'com.devian.unity.common');
-            if (unityCommon) {
-                upmTargetDir = this.resolvePath(unityCommon.upmTargetDir);
-            }
-        }
-        
-        if (!upmTargetDir && this.config.domains) {
-            // Fallback: use first domain's upmTargetDir
-            const firstDomain = Object.values(this.config.domains)[0];
-            if (firstDomain && firstDomain.upmTargetDir) {
-                upmTargetDir = this.resolvePath(firstDomain.upmTargetDir);
-            }
-        }
-
-        if (!upmTargetDir) {
-            console.log('  [SKIP] No upmTargetDir found, skipping unity-common guard check');
+        // Use upmPackageDir from upmConfig (validated in run())
+        if (!this.upmPackageDir) {
+            console.log('  [SKIP] No upmPackageDir configured, skipping unity-common guard check');
             return;
         }
 
-        const unityCommonPath = path.join(upmTargetDir, 'com.devian.unity.common');
+        const unityCommonPath = path.join(this.upmPackageDir, 'com.devian.unity.common');
         const requiredFiles = [
             'Editor/TableId/EditorID_SelectorBase.cs',
             'Editor/TableId/EditorID_DrawerBase.cs',
@@ -1695,11 +1861,7 @@ export * from './features';
             console.error();
             console.error('Fix: Add staticUpmPackages for com.devian.unity.common in build.json:');
             console.error('  "staticUpmPackages": [');
-            console.error('    {');
-            console.error('      "name": "com.devian.unity.common",');
-            console.error('      "sourceDir": "../framework-cs/upm-src/com.devian.unity.common",');
-            console.error('      "upmTargetDir": "../framework-cs/apps/UnityExample/Packages"');
-            console.error('    }');
+            console.error('    { "upmName": "com.devian.unity.common" }');
             console.error('  ]');
             console.error();
             throw new Error('[FAIL] com.devian.unity.common is missing Editor/TableId base files.');
@@ -1717,30 +1879,15 @@ export * from './features';
             'com.devian.unity'  // deprecated meta package
         ];
 
-        // Find upmTargetDir
-        let upmTargetDir = null;
-        if (this.config.staticUpmPackages) {
-            const unityCommon = this.config.staticUpmPackages.find(p => p.name === 'com.devian.unity.common');
-            if (unityCommon) {
-                upmTargetDir = this.resolvePath(unityCommon.upmTargetDir);
-            }
-        }
-        
-        if (!upmTargetDir && this.config.domains) {
-            const firstDomain = Object.values(this.config.domains)[0];
-            if (firstDomain && firstDomain.upmTargetDir) {
-                upmTargetDir = this.resolvePath(firstDomain.upmTargetDir);
-            }
-        }
-
-        if (!upmTargetDir) {
-            console.log('  [SKIP] No upmTargetDir found, skipping deprecated packages check');
+        // Use upmPackageDir from upmConfig (validated in run())
+        if (!this.upmPackageDir) {
+            console.log('  [SKIP] No upmPackageDir configured, skipping deprecated packages check');
             return;
         }
 
         const foundDeprecated = [];
         for (const pkgName of deprecatedPackages) {
-            const pkgPath = path.join(upmTargetDir, pkgName);
+            const pkgPath = path.join(this.upmPackageDir, pkgName);
             if (fs.existsSync(pkgPath)) {
                 foundDeprecated.push(pkgName);
             }
@@ -1754,7 +1901,7 @@ export * from './features';
             }
             console.error();
             console.error('Fix: Delete the deprecated package folder(s) from:');
-            console.error(`     ${upmTargetDir}`);
+            console.error(`     ${this.upmPackageDir}`);
             console.error();
             throw new Error('[FAIL] Deprecated packages exist. Remove them manually.');
         }
@@ -1824,7 +1971,14 @@ export * from './features';
             fs.copyFileSync(packageJsonSrc, packageJsonDest);
         }
 
-        // Sync samples metadata if Samples~ folder exists
+        // Samples~ folder (clean & copy) - MUST copy BEFORE syncSamplesMetadata
+        const stagingSamples = path.join(stagingUpm, 'Samples~');
+        const targetSamples = path.join(targetDir, 'Samples~');
+        if (fs.existsSync(stagingSamples)) {
+            this.cleanAndCopy(stagingSamples, targetSamples);
+        }
+
+        // Sync samples metadata AFTER Samples~ has been copied
         this.syncSamplesMetadata(targetDir);
 
         // Editor folder handling
@@ -2051,64 +2205,44 @@ export * from './features';
     }
 
     /**
-     * Sync samples metadata for all UPM packages in configured upmTargetDirs.
+     * Sync samples metadata for all UPM packages in configured upmPackageDir.
      * Scans for packages with Samples~ folders and updates their package.json.
-     * 
-     * Note: upmTargetDir can point to either:
-     * - Packages root (for domains) -> scan subdirectories as packages
-     * - Package folder (for protocols, e.g., com.devian.protocol.game) -> process directly
      */
     async syncAllUpmSamples() {
-        // Collect all unique upmTargetDirs from config
-        const upmTargetDirs = new Set();
+        // Collect all unique package directories
+        const upmPackageDirs = new Set();
 
+        // Primary: use upmConfig.packageDir (required, validated earlier)
+        if (this.upmPackageDir) {
+            upmPackageDirs.add(this.upmPackageDir);
+        }
+
+        // Also check domains.upmTargetDir for backward compatibility
         if (this.config.domains) {
             for (const domainConfig of Object.values(this.config.domains)) {
                 if (domainConfig.upmTargetDir) {
-                    upmTargetDirs.add(this.resolvePath(domainConfig.upmTargetDir));
+                    upmPackageDirs.add(this.resolvePath(domainConfig.upmTargetDir));
                 }
             }
         }
 
-        if (this.config.protocols && Array.isArray(this.config.protocols)) {
-            for (const protocolConfig of this.config.protocols) {
-                if (protocolConfig.upmTargetDir) {
-                    upmTargetDirs.add(this.resolvePath(protocolConfig.upmTargetDir));
-                }
-            }
-        }
-
-        if (upmTargetDirs.size === 0) {
+        if (upmPackageDirs.size === 0) {
             console.log('  No UPM target directories configured, skipping samples sync.');
             return;
         }
 
-        // Scan each upmTargetDir for UPM packages with Samples~ folders
-        for (const targetDir of upmTargetDirs) {
-            if (!fs.existsSync(targetDir)) continue;
+        // Scan each package directory for UPM packages with Samples~ folders
+        for (const packagesDir of upmPackageDirs) {
+            if (!fs.existsSync(packagesDir)) continue;
 
-            // Check if targetDir itself is a package folder (has package.json)
-            const targetPackageJson = path.join(targetDir, 'package.json');
-            if (fs.existsSync(targetPackageJson)) {
-                // targetDir is a package folder itself (e.g., com.devian.protocol.game)
-                console.log(`  [Scan Package] ${targetDir}`);
-                const samplesDir = path.join(targetDir, 'Samples~');
-                if (fs.existsSync(samplesDir)) {
-                    this.syncSamplesMetadata(targetDir);
-                    this.syncGeneratedDependencies(targetDir);
-                }
-                continue;
-            }
-
-            // targetDir is Packages root, scan subdirectories
-            console.log(`  [Scan] ${targetDir}`);
+            console.log(`  [Scan] ${packagesDir}`);
 
             // List subdirectories (each should be a UPM package)
-            const entries = fs.readdirSync(targetDir, { withFileTypes: true });
+            const entries = fs.readdirSync(packagesDir, { withFileTypes: true });
             for (const entry of entries) {
                 if (!entry.isDirectory()) continue;
 
-                const packageDir = path.join(targetDir, entry.name);
+                const packageDir = path.join(packagesDir, entry.name);
                 const packageJsonPath = path.join(packageDir, 'package.json');
                 const samplesDir = path.join(packageDir, 'Samples~');
 
@@ -2131,6 +2265,115 @@ export * from './features';
     // Forbidden Namespace Guard (재발 방지)
     // SSOT: skills/devian-common/01-module-policy/SKILL.md
     // ========================================================================
+
+    /**
+     * Validate upmConfig section exists and has required fields.
+     * SSOT: skills/devian/03-ssot/SKILL.md
+     */
+    validateUpmConfig() {
+        const upmConfig = this.config.upmConfig;
+
+        if (!upmConfig) {
+            throw new Error(
+                '[FAIL] Missing required "upmConfig" section in build.json.\n' +
+                '  Required fields:\n' +
+                '    "upmConfig": {\n' +
+                '      "sourceDir": "../framework-cs/upm-src",\n' +
+                '      "packageDir": "../framework-cs/apps/UnityExample/Packages"\n' +
+                '    }'
+            );
+        }
+
+        if (!upmConfig.sourceDir || typeof upmConfig.sourceDir !== 'string') {
+            throw new Error(
+                '[FAIL] Missing or invalid "upmConfig.sourceDir".\n' +
+                '  Expected: path to UPM source root (e.g., "../framework-cs/upm-src")'
+            );
+        }
+
+        if (!upmConfig.packageDir || typeof upmConfig.packageDir !== 'string') {
+            throw new Error(
+                '[FAIL] Missing or invalid "upmConfig.packageDir".\n' +
+                '  Expected: path to Unity Packages root (e.g., "../framework-cs/apps/UnityExample/Packages")'
+            );
+        }
+
+        // Resolve and validate paths
+        this.upmSourceDir = this.resolvePath(upmConfig.sourceDir);
+        this.upmPackageDir = this.resolvePath(upmConfig.packageDir);
+
+        console.log(`  [OK] upmConfig.sourceDir: ${this.upmSourceDir}`);
+        console.log(`  [OK] upmConfig.packageDir: ${this.upmPackageDir}`);
+    }
+
+    /**
+     * Check for deprecated fields and hard fail if found.
+     * SSOT: skills/devian/03-ssot/SKILL.md
+     */
+    checkDeprecatedFields() {
+        const errors = [];
+
+        // Check staticUpmPackages for deprecated fields
+        if (this.config.staticUpmPackages && Array.isArray(this.config.staticUpmPackages)) {
+            for (let i = 0; i < this.config.staticUpmPackages.length; i++) {
+                const pkg = this.config.staticUpmPackages[i];
+                
+                if (pkg.name !== undefined) {
+                    errors.push(
+                        `staticUpmPackages[${i}].name is deprecated. Use "upmName" instead.\n` +
+                        `  Was: { "name": "${pkg.name}", ... }\n` +
+                        `  Fix: { "upmName": "${pkg.name}" }`
+                    );
+                }
+                
+                if (pkg.sourceDir !== undefined) {
+                    errors.push(
+                        `staticUpmPackages[${i}].sourceDir is deprecated.\n` +
+                        `  Source dir is now computed from upmConfig.sourceDir + upmName.`
+                    );
+                }
+                
+                if (pkg.upmTargetDir !== undefined) {
+                    errors.push(
+                        `staticUpmPackages[${i}].upmTargetDir is deprecated.\n` +
+                        `  Target dir is now computed from upmConfig.packageDir + upmName.`
+                    );
+                }
+
+                // Validate upmName exists
+                if (!pkg.upmName || typeof pkg.upmName !== 'string') {
+                    errors.push(
+                        `staticUpmPackages[${i}] missing required "upmName" field.\n` +
+                        `  Example: { "upmName": "com.devian.unity.network" }`
+                    );
+                }
+            }
+        }
+
+        // Check protocols for deprecated fields
+        if (this.config.protocols && Array.isArray(this.config.protocols)) {
+            for (let i = 0; i < this.config.protocols.length; i++) {
+                const proto = this.config.protocols[i];
+                
+                if (proto.upmTargetDir !== undefined) {
+                    errors.push(
+                        `protocols[${i}].upmTargetDir is deprecated. Use "upmName" instead.\n` +
+                        `  Was: { "upmTargetDir": "${proto.upmTargetDir}", ... }\n` +
+                        `  Fix: { "upmName": "com.devian.protocol.${(proto.group || 'unknown').toLowerCase()}" }`
+                    );
+                }
+            }
+        }
+
+        if (errors.length > 0) {
+            throw new Error(
+                '[FAIL] Deprecated fields detected in build.json:\n\n' +
+                errors.map((e, i) => `${i + 1}. ${e}`).join('\n\n')
+            );
+        }
+
+        console.log('  [OK] No deprecated fields found.');
+    }
 
     checkForbiddenNamespaces() {
         const forbiddenPattern = 'Devian.Module.Common.Features';

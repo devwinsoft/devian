@@ -296,8 +296,8 @@
     <Compile Include="Library\PackageCache\com.unity.inputsystem@02433b2481ab\InputSystem\Actions\Composites\OneModifierComposite.cs" />
     <Compile Include="Library\PackageCache\com.unity.inputsystem@02433b2481ab\InputSystem\Editor\PropertyDrawers\InputActionReferenceSearchProviders.cs" />
     <Compile Include="Library\PackageCache\com.unity.inputsystem@02433b2481ab\InputSystem\Utilities\DisplayStringFormatAttribute.cs" />
-    <Compile Include="Library\PackageCache\com.unity.inputsystem@02433b2481ab\InputSystem\Controls\Processors\CompensateRotationProcessor.cs" />
     <Compile Include="Library\PackageCache\com.unity.inputsystem@02433b2481ab\InputSystem\Editor\Settings\InputSettingsProvider.cs" />
+    <Compile Include="Library\PackageCache\com.unity.inputsystem@02433b2481ab\InputSystem\Controls\Processors\CompensateRotationProcessor.cs" />
     <Compile Include="Library\PackageCache\com.unity.inputsystem@02433b2481ab\InputSystem\State\InputState.cs" />
     <Compile Include="Library\PackageCache\com.unity.inputsystem@02433b2481ab\InputSystem\Controls\Vector2Control.cs" />
     <Compile Include="Library\PackageCache\com.unity.inputsystem@02433b2481ab\InputSystem\Devices\Pointer.cs" />
