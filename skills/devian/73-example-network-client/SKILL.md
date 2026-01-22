@@ -95,5 +95,5 @@ framework-ts/apps/ExampleNetworkClient/
 ## Reference
 
 - **서버 앱:** `framework-ts/apps/ExampleNetworkServer/`
-- **네트워크 모듈:** `framework-ts/modules/devian-network/`
-- **프로토콜:** `framework-ts/modules/devian-network-game/`
+- **네트워크 모듈:** `framework-ts/module/devian-network/`
+- **프로토콜:** `framework-ts/module-gen/devian-network-game/`

@@ -1,6 +1,21 @@
 # 16-unity-upm-samples
 
-Status: ACTIVE  
+> ⚠️ **DEPRECATED**: UPM Samples~ 방식은 더 이상 권장하지 않습니다.
+> 
+> **새로운 정책:** `skills/devian-templates/01-templates-policy/SKILL.md`
+> 
+> **이유:**
+> - UPM Samples는 sync 동작으로 프로젝트 수정본을 덮어쓸 수 있음
+> - Templates 원본과 이중 관리 위험
+> - asmdef 충돌 가능성
+>
+> **대안:**
+> - Templates 원본: `framework-cs/upm-src/com.devian.templates/Samples~/`
+> - Network Template: `skills/devian-templates/10-templates-network/SKILL.md`
+
+---
+
+Status: DEPRECATED  
 AppliesTo: v10  
 Type: Policy / Requirements
 
@@ -9,8 +24,32 @@ Type: Policy / Requirements
 이 문서는 **Devian UPM 샘플 제공 정책/규약**을 정의한다.
 
 **Single Source of Truth:**
-- UPM 패키지 콘텐츠(샘플 포함)의 권위 있는 소스: `framework-cs/upm-src/<packageName>/...`
-- `UnityExample/Packages/<packageName>`은 빌드 출력물(복사본)이며 소스가 아니다.
+- **수동 관리 패키지**: `framework-cs/upm-src/<packageName>/...` — 수동으로 관리하는 "완벽한 UPM 패키지"
+- **생성 패키지**: `framework-cs/upm-gen/<packageName>/...` — 빌드가 생성하는 "완벽한 UPM 패키지" (GitHub URL 배포용)
+- **최종 출력**: `framework-cs/apps/UnityExample/Packages/<packageName>` — 빌드 출력물(복사본), 직접 수정 금지
+
+**동기화 흐름:**
+```
+upm-src + upm-gen → packageDir (패키지 단위 clean+copy)
+```
+
+> 수동 패키지(예: com.devian.unity.network)는 upm-src에서 관리하고,  
+> 생성 패키지(예: com.devian.module.common)는 upm-gen에서 관리한다.
+
+---
+
+## 완벽한 UPM 패키지 DoD (Definition of Done)
+
+upm-src / upm-gen 모두 아래 조건을 만족해야 한다:
+
+| 항목 | 요구사항 |
+|------|----------|
+| `package.json` | 패키지 루트에 존재, `name` 필드 유효 |
+| 폴더명 일치 | 폴더명 == `package.json.name` |
+| Runtime/Editor 분리 | Runtime asmdef + Editor asmdef (샘플에 한해) |
+| Editor asmdef | `includePlatforms: ["Editor"]` 필수 |
+| Samples~ | 존재 시 metadata sync 규칙 준수 |
+| using UnityEditor | Runtime 코드에서 금지 |
 
 ---
 
@@ -38,11 +77,11 @@ framework-cs/upm-src/<packageName>/Samples~/...
 upm-src/<packageName>/Samples~/BasicWsClient/
 ├── README.md                         ← 샘플 루트에 위치
 ├── Runtime/
-│   ├── Devian.Sample.asmdef          ← Runtime asmdef
+│   ├── Devian.Templates.Network.asmdef          ← Runtime asmdef
 │   ├── EchoWsClientSample.cs         ← Runtime 스크립트
 │   └── (optional) SampleProtocolSmokeTest.cs
 └── Editor/
-    ├── Devian.Sample.Editor.asmdef   ← Editor-only asmdef (includePlatforms: ["Editor"])
+    ├── Devian.Templates.Network.Editor.asmdef   ← Editor-only asmdef (includePlatforms: ["Editor"])
     └── EchoWsClientSampleEditor.cs   ← Custom Inspector
 ```
 
@@ -72,11 +111,11 @@ public class EchoWsClientSample : WebSocketClientBehaviourBase
 **Step 2: Editor-only asmdef**
 
 ```json
-// Editor/Devian.Sample.Editor.asmdef
+// Editor/Devian.Templates.Network.Editor.asmdef
 {
-    "name": "Devian.Sample.Editor",
-    "rootNamespace": "Devian.Sample.Editor",
-    "references": ["Devian.Sample", "Devian.Unity.Network"],
+    "name": "Devian.Templates.Network.Editor",
+    "rootNamespace": "Devian.Templates.Network.Editor",
+    "references": ["Devian.Templates.Network", "Devian.Unity.Network"],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
@@ -96,7 +135,7 @@ public class EchoWsClientSample : WebSocketClientBehaviourBase
 using UnityEngine;
 using UnityEditor;
 
-namespace Devian.Sample.Editor
+namespace Devian.Templates.Network.Editor
 {
     [CustomEditor(typeof(EchoWsClientSample))]
     public class EchoWsClientSampleEditor : UnityEditor.Editor
@@ -155,26 +194,40 @@ Builder는 **반드시** `Samples~` 폴더를 upm-src에서 UnityExample/Package
 
 ### staticUpmPackages 설정
 
-`input/build.json`에 UPM 패키지를 등록:
+`input/input_common.json`에 UPM 패키지를 등록:
 
 ```json
 {
   "upmConfig": {
     "sourceDir": "../framework-cs/upm-src",
+    "generateDir": "../framework-cs/upm-gen",
     "packageDir": "../framework-cs/apps/UnityExample/Packages"
   },
   "staticUpmPackages": [
-    { "upmName": "com.devian.unity.network" }
+    "com.devian.unity.common",
+    "com.devian.unity.network"
   ]
 }
 ```
 
+**upmConfig 필드 정의:**
+
+| 필드 | 의미 |
+|------|------|
+| `sourceDir` | 수동 관리 UPM 패키지 루트 (upm-src) |
+| `generateDir` | 빌드 생성 UPM 패키지 루트 (upm-gen) |
+| `packageDir` | Unity 최종 패키지 루트 (sync 대상) |
+
+**staticUpmPackages 형식:**
+- **반드시 문자열 배열**로 정의 (객체 형태 `{ "upmName": "..." }` 사용 시 빌드 실패)
+- 배열 내 각 문자열은 `upmConfig.sourceDir`에 존재하는 패키지명
+
 **경로 계산 (upmConfig 기반):**
-- `sourceDir` = `{upmConfig.sourceDir}/{upmName}` → `../framework-cs/upm-src/com.devian.unity.network`
-- `targetDir` = `{upmConfig.packageDir}/{upmName}` → `../framework-cs/apps/UnityExample/Packages/com.devian.unity.network`
+- `sourceDir` = `{upmConfig.sourceDir}/{packageName}` → `../framework-cs/upm-src/com.devian.unity.network`
+- `targetDir` = `{upmConfig.packageDir}/{packageName}` → `../framework-cs/apps/UnityExample/Packages/com.devian.unity.network`
 
 **결과:**
-빌더가 `UnityExample/Packages/com.devian.unity.network/...`를 생성하며, `Samples~` 콘텐츠도 포함된다.
+빌더가 `upm-src + upm-gen`을 `packageDir`로 sync하며, `Samples~` 콘텐츠도 포함된다.
 
 ---
 

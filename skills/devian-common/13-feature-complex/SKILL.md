@@ -196,10 +196,10 @@ CString:
 ## Directory Structure
 
 C#:
-- framework-cs/modules/Devian.Module.Common/features/Complex/CInt.cs
-- framework-cs/modules/Devian.Module.Common/features/Complex/CFloat.cs
-- framework-cs/modules/Devian.Module.Common/features/Complex/CString.cs
-- framework-cs/modules/Devian.Module.Common/features/Complex/ComplexUtil.cs
+- framework-cs/module-gen/Devian.Module.Common/features/Complex/CInt.cs
+- framework-cs/module-gen/Devian.Module.Common/features/Complex/CFloat.cs
+- framework-cs/module-gen/Devian.Module.Common/features/Complex/CString.cs
+- framework-cs/module-gen/Devian.Module.Common/features/Complex/ComplexUtil.cs
 
 TypeScript:
 - framework-ts/modules/devian-module-common/features/complex.ts

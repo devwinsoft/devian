@@ -899,6 +899,10 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="Devian.Protocol.Sample.Player.csproj">
+      <Project>{7AF1D9E7-29AA-B475-8469-485A71DEBC38}</Project>
+      <Name>Devian.Protocol.Sample.Player</Name>
+    </ProjectReference>
     <ProjectReference Include="Unity.TextMeshPro.Player.csproj">
       <Project>{58018715-4EB0-152C-7345-D49638C84154}</Project>
       <Name>Unity.TextMeshPro.Player</Name>
@@ -931,17 +935,9 @@
       <Project>{C93CE831-31EE-15B9-BDC6-C12E3CD2BFA1}</Project>
       <Name>Devian.Network.Player</Name>
     </ProjectReference>
-    <ProjectReference Include="Devian.Sample.Player.csproj">
-      <Project>{3EE9DD03-A94A-B79E-20C1-3D0608313358}</Project>
-      <Name>Devian.Sample.Player</Name>
-    </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.Shared.Player.csproj">
       <Project>{E8D70176-E50C-9594-C252-AF9F7F9CF539}</Project>
       <Name>Unity.RenderPipelines.Core.Runtime.Shared.Player</Name>
-    </ProjectReference>
-    <ProjectReference Include="Devian.Network.Sample.Player.csproj">
-      <Project>{CAB2EF09-546A-437F-4036-CEFD6941476B}</Project>
-      <Name>Devian.Network.Sample.Player</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Universal.2D.Runtime.Player.csproj">
       <Project>{C7E05375-8C69-66FB-D4BC-AB395188EF38}</Project>
@@ -967,9 +963,9 @@
       <Project>{2008855B-F304-7199-403F-823EC8F31893}</Project>
       <Name>Devian.Unity.Common.Player</Name>
     </ProjectReference>
-    <ProjectReference Include="Devian.Network.Game.Player.csproj">
-      <Project>{7DAC8DDF-1BC6-F2F2-016A-031916C18881}</Project>
-      <Name>Devian.Network.Game.Player</Name>
+    <ProjectReference Include="Devian.Templates.Network.Player.csproj">
+      <Project>{380DBF2F-36D9-A814-3BDE-06E386DC8078}</Project>
+      <Name>Devian.Templates.Network.Player</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.Player.csproj">
       <Project>{FF336EE5-A0DB-A6BF-112F-7B2D9F3E6645}</Project>
@@ -1050,6 +1046,10 @@
     <ProjectReference Include="Unity.InputSystem.Player.csproj">
       <Project>{C42CEDC7-EB20-D4A0-7E40-263D9C823ADD}</Project>
       <Name>Unity.InputSystem.Player</Name>
+    </ProjectReference>
+    <ProjectReference Include="Devian.Protocol.Game.Player.csproj">
+      <Project>{4DF2F607-8EE4-F8C2-B2CB-5BD11B0899E2}</Project>
+      <Name>Devian.Protocol.Game.Player</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

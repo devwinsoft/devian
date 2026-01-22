@@ -89,14 +89,23 @@ runtime 패키지는 필요한 최소 의존만 선언한다:
 
 ---
 
-## samples 정책 (Samples~ 제공 시 필수)
+## samples 정책 (Samples~ 제공 시)
+
+> ⚠️ **DEPRECATED**: UPM Samples~ 방식은 더 이상 권장하지 않습니다.
+>
+> **새로운 정책:** `skills/devian-templates/01-templates-policy/SKILL.md`
+>
+> 샘플/예제 코드는 `framework-cs/upm-src/com.devian.templates/Samples~/`에서 Templates로 관리합니다.
+
+### (참고용) 기존 Samples~ 규칙
 
 `Samples~` 폴더를 제공하는 패키지는 **반드시** `package.json`에 `samples` 배열을 선언해야 한다.
 이 필드가 없으면 Unity Package Manager에서 샘플 설치 UI가 표시되지 않는다.
 
-### Builder samples metadata sync 요구사항 (Hard Rule)
+### Builder samples metadata sync 요구사항 (참고용)
 
-**Hard Rule:**
+**참고:** 대부분의 패키지에서 Samples~는 제거되었습니다.
+
 - `Samples~` 폴더가 존재하고 샘플 하위 폴더가 있으면, Builder는 `package.json`의 `samples` 필드를 자동으로 동기화해야 한다.
 - `syncSamplesMetadata()` 호출은 **반드시** `Samples~` 폴더가 target 디렉토리에 복사된 **이후**에 실행되어야 한다.
 - 이 순서가 지켜지지 않으면 metadata sync가 빈 폴더를 읽어 `samples` 필드가 누락될 수 있다.

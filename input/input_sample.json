@@ -1,0 +1,40 @@
+{
+  "version": "10",
+  "tempDir": "temp_sample",
+
+  "csConfig": {
+    "moduleDir": "../framework-cs/module",
+    "generateDir": "../framework-cs/module-gen"
+  },
+
+  "tsConfig": {
+    "moduleDir": "../framework-ts/module",
+    "generateDir": "../framework-ts/module-gen"
+  },
+
+  "upmConfig": {
+    "sourceDir": "../framework-cs/upm-src",
+    "generateDir": "../framework-cs/upm-gen",
+    "packageDir": "../framework-cs/apps/UnityExample/Packages"
+  },
+
+  "dataConfig": {
+    "targetDirs": []
+  },
+
+  "staticUpmPackages": [
+    "com.devian.templates",
+    "com.devian.unity.common",
+    "com.devian.unity.network"
+  ],
+
+  "domains": {},
+
+  "protocols": [
+    {
+      "group": "Sample",
+      "protocolDir": "./Protocols/Sample",
+      "protocolFiles": ["C2Sample.json", "Sample2C.json"]
+    }
+  ]
+}

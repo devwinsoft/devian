@@ -1,0 +1,18 @@
+{
+  "name": "Devian.Protocol.Game.Editor",
+  "rootNamespace": "Devian.Protocol.Game.Editor",
+  "references": [
+    "Devian.Protocol.Game"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

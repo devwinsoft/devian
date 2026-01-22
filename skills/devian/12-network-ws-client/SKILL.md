@@ -49,7 +49,7 @@ Devian.Network 모듈에 **WebSocket 기반 클라이언트 런타임**을 추�
 ## File Paths (Reference)
 
 ```
-framework-cs/modules/Devian.Network/
+framework-cs/module/Devian.Network/
 ├── src/
 │   ├── FrameV1.cs
 │   ├── INetRuntime.cs

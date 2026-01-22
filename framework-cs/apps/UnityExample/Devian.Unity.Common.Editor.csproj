@@ -63,11 +63,9 @@
   <ItemGroup>
     <Compile Include="Packages\com.devian.unity.common\Editor\TableId\EditorRectUtil.cs" />
     <Compile Include="Packages\com.devian.unity.common\Editor\TableId\EditorID_SelectorBase.cs" />
-    <Compile Include="Packages\com.devian.unity.common\Editor\Generated\TestSheet_ID.Editor.cs" />
     <Compile Include="Packages\com.devian.unity.common\Editor\TableId\EditorID_DrawerBase.cs" />
     <Compile Include="Packages\com.devian.unity.common\Editor\Complex\CStringPropertyDrawer.cs" />
     <Compile Include="Packages\com.devian.unity.common\Editor\Complex\CIntPropertyDrawer.cs" />
-    <Compile Include="Packages\com.devian.unity.common\Editor\Generated\COMPLEX_POLICY_ID.Editor.cs" />
     <Compile Include="Packages\com.devian.unity.common\Editor\Complex\CFloatPropertyDrawer.cs" />
   </ItemGroup>
   <ItemGroup>

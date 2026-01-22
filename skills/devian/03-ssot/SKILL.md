@@ -17,12 +17,12 @@ SSOT: this file
 ## SSOT 우선순위
 
 1. **`skills/devian/03-ssot/SKILL.md`** — 정책(Policy) 정본
-2. **`build.json`** — 실제 빌드 스키마/경로 정본
+2. **`input_common.json`** — 실제 빌드 스키마/경로 정본
 3. **런타임/제너레이터 코드** — 실제 동작 정본
 
 SSOT 간 충돌이 발생하면:
 
-- **정책(이 문서) ↔ build.json** 충돌은 **build.json이 우선**
+- **정책(이 문서) ↔ input_common.json** 충돌은 **input_common.json이 우선**
 - **정책 ↔ 코드** 충돌은 **코드가 우선**
 - 정책을 유지하고 싶다면(코드가 아니라 정책이 정답이어야 한다면) **코드를 바꾸는 결정**이 필요하다.
 
@@ -32,7 +32,7 @@ SSOT 간 충돌이 발생하면:
 
 Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 충돌이 아니다.
 
-- **SSOT 불일치(Hard)**: 문서(SKILL/build.json)에 적힌 규약/경로/정책이 실제 코드/설정/산출물과 **다른 상태**
+- **SSOT 불일치(Hard)**: 문서(SKILL/input_common.json)에 적힌 규약/경로/정책이 실제 코드/설정/산출물과 **다른 상태**
   - 예: 문서에는 `excludePlatforms: ["WebGL"]`인데 실제 asmdef는 `excludePlatforms: []`
   - 예: 문서에는 `WsNetClient`인데 실제 코드는 `WebSocketClient`
 - 결론: "WebGL 지원" 같은 기능은 가능/불가능이 아니라, **문서와 구현의 일치 여부**만 문제다.
@@ -46,8 +46,8 @@ Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 
 | 용어 | 의미 | 예시 |
 |---|---|---|
 | **DomainType** | 종류 | `DATA`, `PROTOCOL` |
-| **DomainKey** | DATA 도메인의 build.json 키 | `Common` |
-| **ProtocolGroup** | PROTOCOL 그룹명 (build.json `group` 필드) | `Client` |
+| **DomainKey** | DATA 도메인의 input_common.json 키 | `Common` |
+| **ProtocolGroup** | PROTOCOL 그룹명 (input_common.json `group` 필드) | `Client` |
 | **ProtocolName** | PROTOCOL 파일명 base | `C2Game`, `Game2C` |
 
 ---
@@ -58,15 +58,17 @@ Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 
 
 허용 플레이스홀더:
 
-- `{tempDir}` — build.json의 `tempDir` 값
+- `{tempDir}` — input_common.json의 `tempDir` 값
 - `{DomainKey}`
 - `{ProtocolGroup}`
 - `{ProtocolName}`
-- `{csTargetDir}`, `{tsTargetDir}`, `{dataTargetDirs}`, `{upmTargetDir}`
+- `{csConfig.generateDir}`, `{tsConfig.generateDir}` — 전역 C#/TS 반영 루트
+- `{dataConfig.targetDirs}` — 전역 데이터 반영 타겟 (배열)
+- `{upmTargetDir}` — deprecated, upmConfig로 계산
 
-> `{dataTargetDirs}`는 배열이다. 문서에서 배열 내 개별 요소를 지칭할 때 `{dataTargetDir}`로 표기할 수 있다.
+> `{dataConfig.targetDirs}`는 배열이다. 문서에서 배열 내 개별 요소를 지칭할 때 `{dataTargetDir}`로 표기할 수 있다.
 
-> `{tempDir}`는 절대 경로가 아닌 경우 **build.json이 있는 디렉토리** 기준으로 해석한다.
+> `{tempDir}`는 절대 경로가 아닌 경우 **input_common.json이 있는 디렉토리** 기준으로 해석한다.
 
 ---
 
@@ -74,35 +76,126 @@ Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 
 
 ### Phase 모델
 
-빌드는 **3단계**로 해석한다.
+빌드는 **5단계**로 해석한다.
 
-1. **Collect**: 입력 파일 수집 (build.json 기반)
-2. **Generate**: 모든 산출물은 **staging({tempDir})에만 생성**
-3. **Copy**: staging → targetDirs로 **clean + copy**
+1. **Generate**: 모든 산출물은 **staging({tempDir})에만 생성**
+2. **Materialize**: staging → module-gen/upm-gen/ts-modules로 **clean + copy** (모듈/패키지 단위)
+3. **Validate**: module/module-gen과 upm-src/upm-gen의 **완결성 검증**
+4. **Sync**: upm-src + upm-gen → packageDir로 **패키지 단위 동기화**
 
 > staging({tempDir}) 외의 위치에 직접 생성하는 동작은 금지한다.
+> 
+> **Templates 참고:** 샘플/예제 코드는 `framework-cs/upm-src/com.devian.templates/Samples~/`에서 관리 (UPM Samples~ 사용)
+> → `skills/devian-templates/01-templates-policy/SKILL.md`
+
+**반영 위치:**
+- C# 생성물: `staging` → `csConfig.generateDir` (framework-cs/module-gen)
+- TS 생성물: `staging` → `tsConfig.generateDir` (framework-ts/module-gen)
+- UPM 생성물: `staging` → `upmConfig.generateDir` (framework-cs/upm-gen)
+- 최종 UPM: `upm-src + upm-gen` → `upmConfig.packageDir`
+
+**수동 폴더 보호 (HARD RULE):**
+- `csConfig.moduleDir` (framework-cs/module) — 빌드가 **생성/삭제/클린/복사 금지**, 검증만 허용
+- `tsConfig.moduleDir` (framework-ts/module) — 빌드가 **생성/삭제/클린/복사 금지**, 검증만 허용
+- `upmConfig.sourceDir` (framework-cs/upm-src) — 빌드가 **생성/삭제/클린/복사 금지**, 검증만 허용
+
+**TS 경로 분리 (HARD RULE):**
+- `tsConfig.moduleDir`와 `tsConfig.generateDir`는 반드시 서로 다른 경로
+- 동일 경로 설정 시 빌드 **즉시 FAIL**
+
+### tsConfig 설정 (v10)
+
+TS 산출물의 반영 위치를 관리하는 설정:
+
+```json
+"tsConfig": {
+  "moduleDir": "../framework-ts/module",
+  "generateDir": "../framework-ts/module-gen"
+}
+```
+
+| 필드 | 역할 | 예시 |
+|------|------|------|
+| `moduleDir` | 수동 TS 모듈 루트 (검증만, clean/copy 금지) | `../framework-ts/module` |
+| `generateDir` | 생성 TS 모듈 루트 (빌더가 반영하는 곳) | `../framework-ts/module-gen` |
+
+**경로 분리 규칙 (HARD RULE):**
+- `moduleDir`와 `generateDir`는 **반드시 서로 다른 경로**여야 한다.
+- 동일 경로 설정 시 빌드 **즉시 FAIL**.
+- `moduleDir` 하위에 대한 **clean/copy 금지** (검증만 허용).
+- `generateDir`에만 staging 결과를 **clean+copy** 한다.
+
+**우선순위 규칙:**
+- Domain: `tsConfig.generateDir`로만 반영 (domains[*].tsTargetDir는 deprecated)
+- Protocol: `tsConfig.generateDir`로만 반영 (protocols[*].tsTargetDir는 deprecated)
+
+### dataConfig 설정
+
+DATA 도메인의 데이터 출력 타겟은 전역 `dataConfig`로 설정한다.
+
+```json
+"dataConfig": {
+  "targetDirs": [
+    "../output",
+    "../framework-cs/apps/UnityExample/Assets/Bundles/Tables"
+  ]
+}
+```
+
+| 필드 | 역할 | 예시 |
+|------|------|------|
+| `targetDirs` | 데이터 파일 출력 디렉토리 목록 | `["../output", "..."]` |
+
+**필수 규칙:**
+- `dataConfig.targetDirs`는 필수 (빈 배열 허용)
+- 모든 도메인의 데이터 출력이 이 타겟들로 반영됨
+- `domains[*].dataTargetDirs`는 deprecated (존재 시 빌드 실패)
+
+### 디렉토리 역할 정의 (SSOT)
+
+| 디렉토리 | 역할 | 빌드 동작 |
+|----------|------|-----------|
+| `framework-cs/module` | 수동 C# 모듈 (Devian.Core, Network, Protobuf) | 검증만, 수정 금지 |
+| `framework-cs/module-gen` | 생성 C# 모듈 (Devian.Module.*, Devian.Network.*) | staging 결과로 생성/반영 |
+| `framework-ts/module` | 수동 TS 모듈 (devian-core, devian-network, devian-protobuf) | 검증만, 수정 금지 |
+| `framework-ts/module-gen` | 생성 TS 모듈 (devian-module-*, devian-network-*) | staging 결과로 생성/반영 |
+| `framework-cs/upm-src` | 수동 UPM 패키지 (com.devian.unity.*) | 검증만, 수정 금지 |
+| `framework-cs/upm-gen` | 생성 UPM 패키지 (com.devian.module.*, com.devian.protocol.*) | staging 결과로 생성/반영 |
+| `framework-cs/apps/UnityExample/Packages` | Unity 최종 패키지 | upm-src + upm-gen → sync |
+
+### Validate 단계 (Hard Rule)
+
+**C# 모듈 검증:**
+- `module` (수동): 각 모듈에 `.csproj` 존재, "완벽한 C# 모듈"
+- `module-gen` (생성): 각 모듈에 `.csproj` 존재, "완벽한 C# 모듈"
+
+**UPM 패키지 검증:**
+- `upm-src` (수동): 각 패키지에 `package.json` 존재, 폴더명 == `package.json.name`
+- `upm-gen` (생성): 각 패키지에 `package.json` 존재, 폴더명 == `package.json.name`
+
+> "완벽한 C# 모듈" = `.csproj` 존재 + ProjectReference 경로 유효 + dotnet build 가능
 
 ### tempDir 경로 해석 및 분리 (Hard Rule)
 
-**`{tempDir}`는 build.json(또는 build_sample.json)이 위치한 디렉토리 기준 상대경로로 해석된다.**
+**`{tempDir}`는 input_common.json(또는 input_sample.json)이 위치한 디렉토리 기준 상대경로로 해석된다.**
 
 빌더는 실행 시 `{tempDir}`를 **clean(rm -rf) 후 재생성**한다. 따라서:
 
-- **동일 repo에서 `build.json`과 `build_sample.json`을 번갈아 실행하는 경우, tempDir을 공유하면 서로 staging을 삭제할 수 있으므로 tempDir 분리는 필수다.**
+- **동일 repo에서 `input_common.json`과 `input_sample.json`을 번갈아 실행하는 경우, tempDir을 공유하면 서로 staging을 삭제할 수 있으므로 tempDir 분리는 필수다.**
 
 | 설정 파일 | tempDir 권장값 |
 |----------|---------------|
-| `build.json` | `"temp"` |
-| `build_sample.json` | `"temp_sample"` |
+| `input_common.json` | `"temp"` |
+| `input_sample.json` | `"temp_sample"` |
 
 예시:
-- `build.json`의 `tempDir: "temp"` → `input/temp/`
-- `build_sample.json`의 `tempDir: "temp_sample"` → `input/temp_sample/`
+- `input_common.json`의 `tempDir: "temp"` → `input/temp/`
+- `input_sample.json`의 `tempDir: "temp_sample"` → `input/temp_sample/`
 
 ### Clean + Copy 정책
 
 - Copy 단계는 targetDir을 **clean 후 copy**한다.
-- **충돌 방지 책임은 build.json 설계(타겟 분리)에 있다.**
+- **충돌 방지 책임은 input_common.json 설계(타겟 분리)에 있다.**
   - 동일 targetDir에 여러 DomainKey/ProtocolGroup을 매핑하면, clean 단계 때문에 서로 덮어쓰거나 삭제될 수 있다.
 
 ---
@@ -111,54 +204,94 @@ Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 
 
 ### 경로 해석 규칙
 
-build.json 위치는 유동적이다. 현재 프로젝트에서는 `input/build.json`에 위치한다.
+input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input/input_common.json`에 위치한다.
 
-**build.json 내의 모든 상대 경로는 build.json이 위치한 디렉토리 기준으로 해석된다.**
+**input_common.json 내의 모든 상대 경로는 input_common.json이 위치한 디렉토리 기준으로 해석된다.**
 
-예시 (build.json이 `input/build.json`에 있을 때):
+예시 (input_common.json이 `input/input_common.json`에 있을 때):
 - `contractsDir: "Common/contracts"` → `input/Common/contracts`
 - `csTargetDir: "../framework/cs"` → `framework/cs`
 - `tempDir: "temp"` → `input/temp`
 
 ### UPM 전역 설정 (upmConfig) — Hard Rule
 
-**build.json은 반드시 `upmConfig` 섹션을 포함해야 한다.**
+**input_common.json은 반드시 `upmConfig` 섹션을 포함해야 한다.**
 
 ```json
 "upmConfig": {
   "sourceDir": "../framework-cs/upm-src",
+  "generateDir": "../framework-cs/upm-gen",
   "packageDir": "../framework-cs/apps/UnityExample/Packages"
 }
 ```
 
 | 필드 | 의미 | 필수 |
 |------|------|------|
-| `sourceDir` | UPM 소스 루트 (upm-src) | ✅ |
+| `sourceDir` | UPM 소스 루트 — 수동 관리 패키지 (upm-src) | ✅ |
+| `generateDir` | UPM 생성 루트 — 빌드 생성 패키지 (upm-gen) | ✅ |
 | `packageDir` | Unity Packages 루트 (UnityExample/Packages) | ✅ |
 
 `upmConfig`가 없거나 필드가 누락되면 빌더는 **하드 실패(throw Error)**한다.
 
-### Static UPM Packages
+### C# 전역 설정 (csConfig) — 권장
 
-정적 UPM 패키지(수동 관리)는 `staticUpmPackages` 배열로 정의한다.
+**C# 프로젝트 경로를 전역으로 관리한다.**
 
 ```json
-"staticUpmPackages": [
-  { "upmName": "com.devian.unity.common" },
-  { "upmName": "com.devian.unity.network" }
-]
+"csConfig": {
+  "moduleDir": "../framework-cs/module",
+  "generateDir": "../framework-cs/module-gen"
+}
 ```
-
-**필드 정의:**
 
 | 필드 | 의미 | 필수 |
 |------|------|------|
-| `upmName` | UPM 패키지 이름 (예: `com.devian.unity.network`) | ✅ |
+| `moduleDir` | C# 모듈 루트 — 수동 관리 (Devian.Core 등) | 권장 |
+| `generateDir` | C# 생성 루트 — 빌드 생성 (Devian.Module.*, Devian.Network.*) | 권장 |
 
-**Deprecated 필드 (Hard Fail):**
-- `name` — 더 이상 사용하지 않음, 사용 시 빌드 실패
-- `sourceDir` — `upmConfig.sourceDir`에서 계산됨
-- `upmTargetDir` — `upmConfig.packageDir`에서 계산됨
+### UPM 동기화 흐름 (Hard Rule)
+
+빌드 최종 단계에서 다음 동기화가 수행된다:
+
+1. **staging(tempDir)** → **upm-gen**: Domain/Protocol UPM 패키지 생성
+2. **upm-src + upm-gen** → **packageDir**: 최종 동기화
+
+**동기화 규칙:**
+- 패키지 단위 clean+copy (packageDir 전체 rm -rf 금지)
+
+> **참고:** UPM Samples~는 더 이상 사용하지 않습니다.
+> 샘플/예제는 `framework-cs/upm-src/com.devian.templates/Samples~/`에서 Templates로 관리합니다.
+
+**충돌 정책 (HARD RULE):**
+- upm-src와 upm-gen에 **동일 `package.json.name`이 있으면 무조건 빌드 FAIL**
+- 예외 없음 — 둘 다 "완벽한 UPM"이므로 이름이 같으면 정본이 모호함
+- 충돌 해결: 패키지 이름 변경 또는 하나 제거
+
+> **왜 충돌 예외를 허용하지 않나?**  
+> upm-src는 수동 관리, upm-gen은 빌드 생성. 둘 다 "완벽한 UPM 패키지"로서 동일한 자격을 가진다.
+> 같은 이름의 패키지가 양쪽에 있으면 어느 것이 정본인지 모호해지므로, 빌드 시점에 즉시 FAIL하여 명확한 정리를 강제한다.
+
+### Static UPM Packages
+
+정적 UPM 패키지(수동 관리)는 `staticUpmPackages` 배열로 정의한다.
+이 패키지들은 **upm-src에 존재해야 하며**, 빌드는 존재 여부만 검증한다.
+
+**`staticUpmPackages`는 string[] 형태로 패키지명만 나열한다:**
+
+```json
+"staticUpmPackages": [
+  "com.devian.unity.common",
+  "com.devian.unity.network"
+]
+```
+
+**빌드 동작:**
+- `upmConfig.sourceDir/{upmName}` 경로에 패키지 존재 여부 검증
+- 패키지가 없으면 빌드 FAIL
+- **upm-gen에 복사하지 않음** — upm-src에서 직접 packageDir로 sync됨
+
+**Deprecated (Hard Fail):**
+- 객체 형태 `{ "upmName": "..." }` 사용 시 빌드 실패 — 반드시 문자열 배열 사용
 
 **경로 계산 규칙 (Hard Rule):**
 
@@ -167,19 +300,19 @@ sourceDir = {upmConfig.sourceDir}/{upmName}
 targetDir = {upmConfig.packageDir}/{upmName}
 ```
 
-예시 (`upmName: "com.devian.unity.network"`):
+예시 (`"com.devian.unity.network"`):
 - `sourceDir` → `../framework-cs/upm-src/com.devian.unity.network`
 - `targetDir` → `../framework-cs/apps/UnityExample/Packages/com.devian.unity.network`
 
 ### 1) DomainType = DATA
 
-DATA 입력은 build.json의 `domains` 섹션이 정의한다.
+DATA 입력은 input_common.json의 `domains` 섹션이 정의한다.
 
 #### Common 필수 (Hard Rule)
 
 **Devian v10 프로젝트는 DATA DomainKey로 `Common`을 반드시 포함한다.**
 
-- `input/build.json`에서 `domains.Common`은 필수 항목이다.
+- `input/input_common.json`에서 `domains.Common`은 필수 항목이다.
 - 결과로 Common 모듈(C#/TS)은 항상 생성/유지된다:
   - C#: `Devian.Module.Common`
   - TS: `@devian/module-common` (폴더명: `devian-module-common`)
@@ -211,7 +344,7 @@ DATA 입력은 build.json의 `domains` 섹션이 정의한다.
 - **Contracts**: JSON 기반 타입/enum 정의
 - **Tables**: XLSX 기반 테이블 정의 + 데이터
 
-입력 경로는 build.json이 정본이다. 예:
+입력 경로는 input_common.json이 정본이다. 예:
 
 - `domains[Common].contractsDir = Common/contracts`
 - `domains[Common].tablesDir = Common/tables`
@@ -247,11 +380,16 @@ DATA 입력은 build.json의 `domains` 섹션이 정의한다.
   - `{tempDir}/{DomainKey}/ts/generated/{DomainKey}.g.ts`, `{tempDir}/{DomainKey}/ts/index.ts`
   - `{tempDir}/{DomainKey}/data/ndjson/{TableName}.json` (내용은 NDJSON)
   - `{tempDir}/{DomainKey}/data/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
-- final (각 `{dataTargetDir}` 요소에 대해):
-  - `{csTargetDir}/Devian.Module.{DomainKey}/generated/{DomainKey}.g.cs`
-  - `{tsTargetDir}/devian-module-{domainkey}/generated/{DomainKey}.g.ts`, `index.ts`
-  - `{dataTargetDir}/{DomainKey}/ndjson/{TableName}.json` (내용은 NDJSON)
-  - `{dataTargetDir}/{DomainKey}/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
+- final (csConfig/tsConfig/dataConfig 기반):
+  - `{csConfig.generateDir}/Devian.Module.{DomainKey}/generated/{DomainKey}.g.cs`
+  - `{tsConfig.generateDir}/devian-module-{domainkey}/generated/{DomainKey}.g.ts`, `index.ts`
+  - `{dataConfig.targetDirs[i]}/{DomainKey}/ndjson/{TableName}.json` (내용은 NDJSON)
+  - `{dataConfig.targetDirs[i]}/{DomainKey}/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
+
+**Deprecated 필드 (Hard Fail):**
+- `domains[*].csTargetDir` — 더 이상 사용하지 않음, `csConfig.generateDir` 사용, 존재 시 빌드 실패
+- `domains[*].tsTargetDir` — 더 이상 사용하지 않음, `tsConfig.generateDir` 사용, 존재 시 빌드 실패
+- `domains[*].dataTargetDirs` — 더 이상 사용하지 않음, `dataConfig.targetDirs` 사용, 존재 시 빌드 실패
 
 > Domain의 모든 Contract, Table Entity, Table Container는 단일 파일(`{DomainKey}.g.cs`, `{DomainKey}.g.ts`)에 통합 생성된다.
 > **파일 확장자는 `.json`이지만, `ndjson/` 폴더의 파일 내용은 NDJSON(라인 단위 JSON)이다.** 확장자는 소비 측(Unity/툴링) 요구로 `.json`을 사용한다.
@@ -318,17 +456,14 @@ DATA Domain 생성물(`{DomainKey}.g.cs`)의 C# 네임스페이스는 **반드�
 
 ### 2) DomainType = PROTOCOL
 
-PROTOCOL 입력은 build.json의 `protocols` 섹션(배열)이 정의한다.
+PROTOCOL 입력은 input_common.json의 `protocols` 섹션(배열)이 정의한다.
 
 ```json
 "protocols": [
   {
     "group": "Game",
     "protocolDir": "./Protocols/Game",
-    "protocolFiles": ["C2Game.json", "Game2C.json"],
-    "csTargetDir": "../framework-cs/modules",
-    "tsTargetDir": "../framework-ts/modules",
-    "upmName": "com.devian.protocol.game"
+    "protocolFiles": ["C2Game.json", "Game2C.json"]
   }
 ]
 ```
@@ -340,12 +475,12 @@ PROTOCOL 입력은 build.json의 `protocols` 섹션(배열)이 정의한다.
 | `group` | ProtocolGroup 이름 | ✅ |
 | `protocolDir` | 프로토콜 JSON 파일 디렉토리 | ✅ |
 | `protocolFiles` | 처리할 프로토콜 파일 목록 | ✅ |
-| `csTargetDir` | C# 모듈 출력 디렉토리 | ✅ |
-| `tsTargetDir` | TypeScript 모듈 출력 디렉토리 | ✅ |
-| `upmName` | UPM 패키지 이름 (`com.devian.protocol.*` 형식) | ❌ (선택) |
 
 **Deprecated 필드 (Hard Fail):**
+- `csTargetDir` — 더 이상 사용하지 않음, `csConfig.generateDir` 사용, 존재 시 빌드 실패
+- `tsTargetDir` — 더 이상 사용하지 않음, `tsConfig.generateDir` 사용, 존재 시 빌드 실패
 - `upmTargetDir` — 더 이상 사용하지 않음, 사용 시 빌드 실패
+- `upmName` — 더 이상 사용하지 않음, 자동 계산됨, 사용 시 빌드 실패
 
 #### Protocol Spec 포맷
 
@@ -369,42 +504,49 @@ PROTOCOL 입력은 build.json의 `protocols` 섹션(배열)이 정의한다.
 
 **C#:**
 - staging: `{tempDir}/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs`
-- final: `{csTargetDir}/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs`
-- 프로젝트 파일: `{csTargetDir}/Devian.Network.{ProtocolGroup}/Devian.Network.{ProtocolGroup}.csproj`
+- final: `{csConfig.generateDir}/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs`
+- 프로젝트 파일: `{csConfig.generateDir}/Devian.Network.{ProtocolGroup}/Devian.Network.{ProtocolGroup}.csproj`
 
 **TypeScript:**
 - staging: `{tempDir}/{ProtocolGroup}/{ProtocolName}.g.ts`, `index.ts`
-- final: `{tsTargetDir}/devian-network-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
+- final: `{tsConfig.generateDir}/devian-network-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
 
-#### PROTOCOL UPM output rule (Hard Rule)
+#### Protocol UPM 자동 생성 규칙 (Hard Rule)
 
-**`protocols[].upmName`으로 UPM 타겟 경로를 계산한다.**
+**Protocol UPM 패키지는 항상 자동 생성된다.** (옵션/토글 없음)
 
-경로 계산 규칙:
+**UPM 패키지명 자동 계산:**
 ```
-targetDir = {upmConfig.packageDir}/{upmName}
-```
-
-예시 (`upmName: "com.devian.protocol.game"`):
-- `targetDir` → `../framework-cs/apps/UnityExample/Packages/com.devian.protocol.game`
-
-**Hard Validation (빌드 실패 조건):**
-1. `upmName`이 지정된 경우 **반드시** `com.devian.protocol.`로 시작해야 함
-2. `upmName`이 비어있으면 안 됨
-3. Packages root 직접 지정 금지 — 항상 `{packageDir}/{upmName}` 형식
-
-**Packages root를 지정하면 오염 발생:**
-```
-UnityExample/Packages/
-├── Editor/       ← 잘못됨 (UPM 패키지가 아님)
-├── Runtime/      ← 잘못됨
-└── com.devian.*/  ← 정상 UPM 패키지들
+computedUpmName = "com.devian.protocol." + normalize(group)
 ```
 
-빌더는 이를 방지하기 위해 **하드 가드**를 포함한다:
-- `upmName.startsWith('com.devian.protocol.')` 검증
-- 계산된 경로에 `/Packages/` 세그먼트 포함 검증
-- 실패 시 **throw Error** (빌드 중단)
+**normalize(group) 규칙:**
+1. 소문자화
+2. 공백은 `_`(underscore)로 치환
+3. `_`(underscore)는 유지 ← **중요**
+4. 허용 문자: `[a-z0-9._-]`만 유지, 그 외 제거
+5. 앞/뒤의 `.`, `-`, `_` 정리
+
+**예시:**
+| group | computedUpmName |
+|-------|-----------------|
+| `Game` | `com.devian.protocol.game` |
+| `Game_Server` | `com.devian.protocol.game_server` |
+| `Auth Service` | `com.devian.protocol.auth_service` |
+
+**경로 계산:**
+```
+stagingDir = {tempDir}/Devian.Network.{group}-upm
+targetDir = {upmConfig.generateDir}/{computedUpmName}
+finalDir = {upmConfig.packageDir}/{computedUpmName}
+```
+
+**충돌 정책 (Hard Fail):**
+1. `upm-src`에 동일한 `computedUpmName`이 존재하면 빌드 **FAIL**
+2. `upm-gen`에 동일한 `computedUpmName`이 이미 존재하면 빌드 **FAIL** (중복 생성)
+3. `protocols` 배열 내에서 동일한 `computedUpmName`이 계산되면 빌드 **FAIL**
+
+> 덮어쓰기/우선순위 없음. 모든 충돌은 명시적 오류.
 
 ---
 
@@ -414,11 +556,11 @@ UnityExample/Packages/
 
 1. 입력 포맷이 서로 다르게 서술됨 (예: PROTOCOL이 .proto/IDL이라고 서술)
 2. opcode/tag 규칙이 비결정적으로 서술됨 (재배정/랜덤/비결정 허용)
-3. build.json과 경로/플레이스홀더 규약이 불일치
+3. input_common.json과 경로/플레이스홀더 규약이 불일치
 4. Reserved 옵션(`parser:*` 등)을 강제/필수/의미로 서술
 5. 코드와 다른 API/산출물/프레임 규약을 SKILL이 "정본"처럼 단정
 6. TS `index.ts`를 통째로 덮어쓰는 동작 (marker 갱신 방식 위반)
-7. `domains.Common`이 build.json에 없는 상태
+7. `domains.Common`이 input_common.json에 없는 상태
 
 ---
 
@@ -442,5 +584,5 @@ C# 모듈은 레포에 `.csproj`/`.sln`을 포함하여 dotnet 빌드 및 IDE를
 ## Reference
 
 - **정책 정본:** 이 문서 (`skills/devian/03-ssot/SKILL.md`)
-- **빌드 스키마 정본:** `build.json`
+- **빌드 스키마 정본:** `input_common.json`
 - **동작 정본:** 런타임/제너레이터 코드

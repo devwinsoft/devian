@@ -15,18 +15,16 @@ PROTOCOL(DomainType=PROTOCOL) 입력으로부터 C#/TS 프로토콜 코드를 �
 
 ## Inputs
 
-입력은 `build.json`의 `protocols` 섹션(배열)이 정본이다.
+입력은 `input_common.json`의 `protocols` 섹션(배열)이 정본이다.
 
-> build.json 위치는 유동적이다. 현재 프로젝트에서는 `input/build.json`에 위치한다.
+> input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input/input_common.json`에 위치한다.
 
 ```json
 "protocols": [
   {
     "group": "Game",
     "protocolDir": "./Protocols/Game",
-    "protocolFiles": ["C2Game.json", "Game2C.json"],
-    "csTargetDir": "../framework-cs/modules",
-    "tsTargetDir": "../framework-ts/modules"
+    "protocolFiles": ["C2Game.json", "Game2C.json"]
   }
 ]
 ```
@@ -35,6 +33,11 @@ PROTOCOL(DomainType=PROTOCOL) 입력으로부터 C#/TS 프로토콜 코드를 �
 - `protocolDir`: Protocol JSON 및 Registry 파일이 위치한 디렉토리
 - `protocolFiles`: 처리할 Protocol JSON 파일 목록
 - 파일명 base가 **ProtocolName**이 된다. (예: `C2Game.json` → `C2Game`)
+
+**Deprecated 필드 (존재 시 빌드 실패):**
+- `csTargetDir` — `csConfig.generateDir` 사용
+- `tsTargetDir` — `tsConfig.generateDir` 사용
+- `upmName` — 자동 계산 (`com.devian.protocol.{group.toLowerCase()}`)
 
 ### Protocol Spec JSON (필수 필드)
 
@@ -86,13 +89,13 @@ Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴�
 
 **C#:**
 - staging: `{tempDir}/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs`
-- final: `{csTargetDir}/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs`
+- final: `{csConfig.generateDir}/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs`
 - 프로젝트 파일: `Devian.Network.{ProtocolGroup}.csproj` (netstandard2.1)
 - namespace: `Devian.Network.{ProtocolGroup}`
 
 **TypeScript:**
 - staging: `{tempDir}/{ProtocolGroup}/{ProtocolName}.g.ts`, `index.ts`
-- final: `{tsTargetDir}/devian-network-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
+- final: `{tsConfig.generateDir}/devian-network-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
 - 패키지명: `@devian/network-{protocolgroup}`
 
 ---
@@ -197,8 +200,8 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 - 그 외 (0개, 2개 이상, 한쪽만 존재) → **빌드 에러**
 
 **생성 파일:**
-- `{tsTargetDir}/devian-network-{group}/generated/ServerRuntime.g.ts`
-- `{tsTargetDir}/devian-network-{group}/generated/ClientRuntime.g.ts`
+- `{tsConfig.generateDir}/devian-network-{group}/generated/ServerRuntime.g.ts`
+- `{tsConfig.generateDir}/devian-network-{group}/generated/ClientRuntime.g.ts`
 
 ---
 
@@ -245,10 +248,10 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 
 **C#:**
 
-1. 생성된 `framework-cs/modules/Devian.Network.{ProtocolGroup}/Devian.Network.{ProtocolGroup}.csproj`에  
-   `..\Devian.Module.Common\Devian.Module.Common.csproj` ProjectReference 존재
+1. 생성된 `framework-cs/module-gen/Devian.Network.{ProtocolGroup}/Devian.Network.{ProtocolGroup}.csproj`에  
+   `..\..\module\Devian.Module.Common\Devian.Module.Common.csproj` ProjectReference 존재
 
-2. 생성된 `framework-cs/modules/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs` 상단에  
+2. 생성된 `framework-cs/module-gen/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs` 상단에  
    `using Devian.Module.Common;` 존재
 
 3. 생성된 `{ProtocolName}.g.cs`에 `System.Text.Json` 관련 코드 없음
@@ -257,7 +260,7 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 
 **TypeScript:**
 
-5. 생성된 `framework-ts/modules/devian-network-{group}/package.json` dependencies에  
+5. 생성된 `framework-ts/module-gen/devian-network-{group}/package.json` dependencies에  
    `@devian/module-common` 존재
 
 **Unity UPM:**

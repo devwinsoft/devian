@@ -106,8 +106,8 @@ com.devian.module.common/
 
 - staging에 포함되지 않은 파일은 clean+copy 이후 삭제된다.
 - 따라서 Features(Logger/Variant/Complex)는 **빌더가 staging에 복사**해야 한다.
-- Common 모듈일 때만 `framework-cs/modules/Devian.Module.Common/features/` → staging `Runtime/Features/`로 복사.
-- `upmTargetDir`가 UnityExample/Packages를 가리키면 해당 디렉토리는 **generated output**으로 취급된다.
+- Common 모듈일 때만 `framework-cs/module-gen/Devian.Module.Common/features/` → staging `Runtime/Features/`로 복사.
+- `upmConfig.packageDir`가 UnityExample/Packages를 가리키면 해당 디렉토리는 **generated output**으로 취급된다.
 
 ---
 

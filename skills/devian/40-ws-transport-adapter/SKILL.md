@@ -44,7 +44,7 @@ MUST NOT
 ## Interop Notes
 
 - “Protocol layer(sender/proxy)”와 “Network layer(transport)”의 경계는 Reference에 정의된 계약을 따른다.
-- 동일 프로젝트 내에서 여러 프로토콜을 사용할 경우, build.json의 targetDirs 설계로 산출 충돌을 회피해야 한다.
+- 동일 프로젝트 내에서 여러 프로토콜을 사용할 경우, input_common.json의 targetDirs 설계로 산출 충돌을 회피해야 한다.
 
 ---
 

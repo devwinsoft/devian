@@ -1,6 +1,14 @@
 # Unity WebSocket Client Sample 생성 체크리스트
 
-Status: ACTIVE  
+> ⚠️ **DEPRECATED**: 이 가이드는 더 이상 사용하지 않습니다.
+> 
+> **새로운 위치:** `skills/devian-templates/10-templates-network/SKILL.md`
+> 
+> Network 템플릿은 이제 `framework-cs/upm-src/com.devian.templates/Samples~/Network/`에서 관리됩니다.
+
+---
+
+Status: DEPRECATED  
 Type: Implementation Checklist
 
 ---
@@ -15,12 +23,12 @@ Claude가 Unity WS Client Sample 생성 시 **빠뜨리는 항목을 방지**하
 
 ```
 Samples~/BasicWsClient/
-├── Devian.Sample.asmdef              [1]
+├── Devian.Templates.Network.asmdef              [1]
 ├── EchoWsClientSample.cs             [2]
 ├── SampleProtocolSmokeTest.cs        [3]
 ├── README.md                         [4]
 └── Editor/
-    ├── Devian.Sample.Editor.asmdef   [5]
+    ├── Devian.Templates.Network.Editor.asmdef   [5]
     └── EchoWsClientSampleEditor.cs   [6]
 ```
 
@@ -28,20 +36,20 @@ Samples~/BasicWsClient/
 
 ## 파일별 체크리스트
 
-### [1] Devian.Sample.asmdef
+### [1] Devian.Templates.Network.asmdef
 
 | 항목 | 값 |
 |------|-----|
-| name | `"Devian.Sample"` |
-| rootNamespace | `"Devian.Sample"` |
-| references | `["Devian.Core", "Devian.Network", "Devian.Unity.Network", "Devian.Network.Sample"]` |
+| name | `"Devian.Templates.Network"` |
+| rootNamespace | `"Devian.Templates.Network"` |
+| references | `["Devian.Core", "Devian.Network", "Devian.Unity.Network", "Devian.Protocol.Sample"]` |
 | includePlatforms | `[]` (빈 배열 = 모든 플랫폼) |
 
 ### [2] EchoWsClientSample.cs
 
 | 체크 | 항목 |
 |------|------|
-| □ | `namespace Devian.Sample` |
+| □ | `namespace Devian.Templates.Network` |
 | □ | `public bool IsConnected { get; private set; }` ← **Editor에서 접근 필요** |
 | □ | `public void ConnectWithInspectorUrl()` ← **버튼용** |
 | □ | `public new void Disconnect()` ← **버튼용** |
@@ -52,13 +60,13 @@ Samples~/BasicWsClient/
 | □ | `[ContextMenu]` 사용 안 함 |
 | □ | `using UnityEditor;` 없음 |
 
-### [5] Editor/Devian.Sample.Editor.asmdef
+### [5] Editor/Devian.Templates.Network.Editor.asmdef
 
 | 항목 | 값 |
 |------|-----|
-| name | `"Devian.Sample.Editor"` |
-| rootNamespace | `"Devian.Sample.Editor"` |
-| references | `["Devian.Sample"]` |
+| name | `"Devian.Templates.Network.Editor"` |
+| rootNamespace | `"Devian.Templates.Network.Editor"` |
+| references | `["Devian.Templates.Network"]` |
 | **includePlatforms** | `["Editor"]` ← **반드시 Editor만** |
 
 ### [6] Editor/EchoWsClientSampleEditor.cs
@@ -66,7 +74,7 @@ Samples~/BasicWsClient/
 | 체크 | 항목 |
 |------|------|
 | □ | `using UnityEditor;` |
-| □ | `namespace Devian.Sample.Editor` |
+| □ | `namespace Devian.Templates.Network.Editor` |
 | □ | `[CustomEditor(typeof(EchoWsClientSample))]` |
 | □ | `public class ... : UnityEditor.Editor` |
 | □ | `public override void OnInspectorGUI()` |
@@ -87,7 +95,7 @@ Samples~/BasicWsClient/
 using UnityEngine;
 using UnityEditor;
 
-namespace Devian.Sample.Editor
+namespace Devian.Templates.Network.Editor
 {
     [CustomEditor(typeof(EchoWsClientSample))]
     public class EchoWsClientSampleEditor : UnityEditor.Editor
@@ -126,10 +134,10 @@ namespace Devian.Sample.Editor
 
 ```json
 {
-    "name": "Devian.Sample.Editor",
-    "rootNamespace": "Devian.Sample.Editor",
+    "name": "Devian.Templates.Network.Editor",
+    "rootNamespace": "Devian.Templates.Network.Editor",
     "references": [
-        "Devian.Sample"
+        "Devian.Templates.Network"
     ],
     "includePlatforms": [
         "Editor"

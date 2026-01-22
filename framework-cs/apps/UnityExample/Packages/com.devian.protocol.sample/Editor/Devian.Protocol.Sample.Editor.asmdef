@@ -1,0 +1,18 @@
+{
+  "name": "Devian.Protocol.Sample.Editor",
+  "rootNamespace": "Devian.Protocol.Sample.Editor",
+  "references": [
+    "Devian.Protocol.Sample"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

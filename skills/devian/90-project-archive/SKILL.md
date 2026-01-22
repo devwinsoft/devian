@@ -17,7 +17,7 @@ Devian 프로젝트 전체를 배포/백업용 zip 파일로 아카이브하는 
 - 소스코드 (`framework-cs/`, `framework-ts/`)
 - 스킬 문서 (`skills/`)
 - 입력 파일 (`input/`)
-- 설정 파일 (`build.json` 등)
+- 설정 파일 (`input_common.json` 등)
 - 생성 코드 (`**/generated/`)
 - 출력 데이터 (`output/`)
 
@@ -30,7 +30,7 @@ Devian 프로젝트 전체를 배포/백업용 zip 파일로 아카이브하는 
    - `__pycache__/`
    - `*.pyc`
    - `.DS_Store`
-   - `temp/` (build.json의 tempDir)
+   - `temp/` (input_common.json의 tempDir)
 
 ---
 

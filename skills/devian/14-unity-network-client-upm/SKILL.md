@@ -106,4 +106,4 @@ void SendFrame(byte[] frame)
 ## Reference
 
 - Parent: `skills/devian/12-network-ws-client/SKILL.md`
-- Core: `framework-cs/modules/Devian.Network/`
+- Core: `framework-cs/module/Devian.Network/`

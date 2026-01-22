@@ -144,16 +144,16 @@ function shouldExclude(relPath, patterns, isDir = false) {
 }
 
 /**
- * build.json 또는 .git을 찾아 프로젝트 루트를 결정합니다.
+ * input_common.json 또는 .git을 찾아 프로젝트 루트를 결정합니다.
  */
 function findProjectRoot(startPath) {
     let current = path.resolve(startPath);
 
     while (current !== path.dirname(current)) {
-        if (fs.existsSync(path.join(current, 'input', 'build.json'))) {
+        if (fs.existsSync(path.join(current, 'input', 'input_common.json'))) {
             return current;
         }
-        if (fs.existsSync(path.join(current, 'build.json'))) {
+        if (fs.existsSync(path.join(current, 'input_common.json'))) {
             return current;
         }
         if (fs.existsSync(path.join(current, '.git'))) {

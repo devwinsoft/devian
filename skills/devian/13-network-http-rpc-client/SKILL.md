@@ -34,7 +34,7 @@ Devian.Network 모듈에 **binary→base64 단일 파라미터 POST RPC 클라�
 ## File Path (Reference)
 
 ```
-framework-cs/modules/Devian.Network/
+framework-cs/module/Devian.Network/
 └── src/
     └── Transports/
         └── HttpRpcClient.cs

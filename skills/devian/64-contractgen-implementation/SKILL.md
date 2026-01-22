@@ -15,7 +15,7 @@ DATA(DomainType=DATA)에서 사용하는 **contracts JSON 입력 규약**을 정
 
 ## Inputs
 
-입력은 build.json의 `domains` 섹션이 정본이다.
+입력은 input_common.json의 `domains` 섹션이 정본이다.
 
 - `domains[{DomainKey}].contractsDir`
 - `domains[{DomainKey}].contractFiles` (예: `["*.json"]`)
@@ -73,7 +73,7 @@ Contract spec는 `enums`와 `classes`로 구성된다.
 Contract는 Domain 단위로 Table과 함께 **단일 파일에 통합** 생성된다.
 
 - staging: `{tempDir}/{DomainKey}/cs/generated/{DomainKey}.g.cs`, `{tempDir}/{DomainKey}/ts/generated/{DomainKey}.g.ts`
-- final: `{csTargetDir}/Devian.Module.{DomainKey}/generated/{DomainKey}.g.cs`, `{tsTargetDir}/devian-module-{domainkey}/generated/{DomainKey}.g.ts`
+- final: `{csConfig.generateDir}/Devian.Module.{DomainKey}/generated/{DomainKey}.g.cs`, `{tsConfig.generateDir}/devian-module-{domainkey}/generated/{DomainKey}.g.ts`
 
 ---
 
@@ -86,7 +86,7 @@ DATA Domain 모듈은 Common 참조 여부를 판정하지 않는다.
 
 필수 적용:
 
-- C#: `{csTargetDir}/Devian.Module.{DomainKey}/Devian.Module.{DomainKey}.csproj`는 `Devian.Module.Common`을 ProjectReference로 포함해야 한다.
+- C#: `{csConfig.generateDir}/Devian.Module.{DomainKey}/Devian.Module.{DomainKey}.csproj`는 `Devian.Module.Common`을 ProjectReference로 포함해야 한다.
 - TS: `@devian/module-{domainkey}`의 `package.json` `dependencies`에 `@devian/module-common`을 포함해야 한다.
 
 ---

@@ -89,15 +89,18 @@ DLL 확보 방법:
 
 ## 소스 기준 (중요)
 
-Unity UPM 패키지의 소스는 `framework-cs/modules/*`의 소스를 **복사하여 포함**한다:
+Unity UPM 패키지의 소스는 C# 모듈의 소스를 **복사하여 포함**한다:
 
-| 원본 | 대상 |
+| 원본 (수동 - module) | 대상 |
 |------|------|
-| `Devian.Core/src/**` | `com.devian.core/Runtime/**` |
-| `Devian.Network/src/**` | `com.devian.network/Runtime/**` |
-| `Devian.Protobuf/src/**` | `com.devian.protobuf/Runtime/**` |
-| `Devian.Module.Common/generated/**` | `com.devian.module.common/Runtime/**` |
-| `Devian.Module.Common/features/**` | `com.devian.module.common/Runtime/Features/**` |
+| `framework-cs/module/Devian.Core/src/**` | `com.devian.core/Runtime/**` |
+| `framework-cs/module/Devian.Network/src/**` | `com.devian.network/Runtime/**` |
+| `framework-cs/module/Devian.Protobuf/src/**` | `com.devian.protobuf/Runtime/**` |
+
+| 원본 (생성 - module-gen) | 대상 |
+|------|------|
+| `framework-cs/module-gen/Devian.Module.Common/generated/**` | `com.devian.module.common/Runtime/**` |
+| `framework-cs/module-gen/Devian.Module.Common/features/**` | `com.devian.module.common/Runtime/Features/**` |
 
 (추후 단일 소스화는 별도 SKILL에서 다룬다.)
 
@@ -115,4 +118,4 @@ Unity UPM 패키지의 소스는 `framework-cs/modules/*`의 소스를 **복사�
 - Related: `skills/devian/14-unity-network-client-upm/SKILL.md`
 - Related: `skills/devian/19-unity-module-common-upm/SKILL.md`
 - Related: `skills/devian/21-unity-common-upm/SKILL.md`
-- Core modules: `framework-cs/modules/Devian.*/`
+- Core modules: `framework-cs/module/Devian.*/`

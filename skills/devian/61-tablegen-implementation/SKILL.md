@@ -131,7 +131,7 @@ DATA Domain 모듈은 Common 참조 여부를 판정하지 않는다.
 
 필수 적용:
 
-- C#: `{csTargetDir}/Devian.Module.{DomainKey}/Devian.Module.{DomainKey}.csproj`는 `Devian.Module.Common`을 ProjectReference로 포함해야 한다.
+- C#: `{csConfig.generateDir}/Devian.Module.{DomainKey}/Devian.Module.{DomainKey}.csproj`는 `Devian.Module.Common`을 ProjectReference로 포함해야 한다.
 - TS: `@devian/module-{domainkey}`의 `package.json` `dependencies`에 `@devian/module-common`을 포함해야 한다.
 
 ---

@@ -3,18 +3,20 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Devian.Core", "modules\Devian.Core\Devian.Core.csproj", "{B2C3D4E5-2222-3333-4444-555566667777}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Devian.Core", "module\Devian.Core\Devian.Core.csproj", "{B2C3D4E5-2222-3333-4444-555566667777}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Devian.Protobuf", "modules\Devian.Protobuf\Devian.Protobuf.csproj", "{E5F6A7B8-5555-6666-7777-888899990000}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Devian.Protobuf", "module\Devian.Protobuf\Devian.Protobuf.csproj", "{E5F6A7B8-5555-6666-7777-888899990000}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Devian.Network", "modules\Devian.Network\Devian.Network.csproj", "{D4E5F6A7-4444-5555-6666-777788889999}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Devian.Network", "module\Devian.Network\Devian.Network.csproj", "{D4E5F6A7-4444-5555-6666-777788889999}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Devian.Module.Common", "modules\Devian.Module.Common\Devian.Module.Common.csproj", "{C3D4E5F6-3333-4444-5555-666677778888}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Devian.Module.Common", "module-gen\Devian.Module.Common\Devian.Module.Common.csproj", "{C3D4E5F6-3333-4444-5555-666677778888}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Devian.Network.Game", "modules\Devian.Network.Game\Devian.Network.Game.csproj", "{F6A7B8C9-6666-7777-8888-999900001111}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Devian.Protocol.Game", "module-gen\Devian.Protocol.Game\Devian.Protocol.Game.csproj", "{F6A7B8C9-6666-7777-8888-999900001111}"
 EndProject
 
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "modules", "modules", "{22222222-0000-0000-0000-000000000002}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "module", "module", "{22222222-0000-0000-0000-000000000002}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "module-gen", "module-gen", "{22222222-0000-0000-0000-000000000003}"
 EndProject
 
 Global
@@ -51,7 +53,7 @@ Global
 		{B2C3D4E5-2222-3333-4444-555566667777} = {22222222-0000-0000-0000-000000000002}
 		{E5F6A7B8-5555-6666-7777-888899990000} = {22222222-0000-0000-0000-000000000002}
 		{D4E5F6A7-4444-5555-6666-777788889999} = {22222222-0000-0000-0000-000000000002}
-		{C3D4E5F6-3333-4444-5555-666677778888} = {22222222-0000-0000-0000-000000000002}
-		{F6A7B8C9-6666-7777-8888-999900001111} = {22222222-0000-0000-0000-000000000002}
+		{C3D4E5F6-3333-4444-5555-666677778888} = {22222222-0000-0000-0000-000000000003}
+		{F6A7B8C9-6666-7777-8888-999900001111} = {22222222-0000-0000-0000-000000000003}
 	EndGlobalSection
 EndGlobal

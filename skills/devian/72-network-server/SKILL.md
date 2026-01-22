@@ -39,7 +39,7 @@ Unknown inbound opcode는:
 ## 디렉토리 구조
 
 ```
-framework-ts/modules/devian-network/
+framework-ts/module/devian-network/
 ├── src/
 │   ├── index.ts              # 모듈 exports
 │   ├── shared/
@@ -90,6 +90,6 @@ stub.onEcho(async (sessionId, msg) => { ... });
 
 ## Reference
 
-- **공용 모듈:** `framework-ts/modules/devian-network/`
-- **그룹 런타임:** `framework-ts/modules/devian-network-{group}/generated/ServerRuntime.g.ts`
+- **공용 모듈:** `framework-ts/module/devian-network/`
+- **그룹 런타임:** `framework-ts/module-gen/devian-network-{group}/generated/ServerRuntime.g.ts`
 - **정책 정본:** `skills/devian/03-ssot/SKILL.md`

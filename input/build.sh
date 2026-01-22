@@ -3,4 +3,4 @@
 # Usage: ./build.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-node "$SCRIPT_DIR/../framework-ts/tools/builder/build.js" "$SCRIPT_DIR/../input/build.json"
+node "$SCRIPT_DIR/../framework-ts/tools/builder/build.js" "$SCRIPT_DIR/../input/input_common.json"

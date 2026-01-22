@@ -1,0 +1,19 @@
+{
+  "name": "Devian.Protocol.Game",
+  "rootNamespace": "Devian.Protocol.Game",
+  "references": [
+    "Devian.Core",
+    "Devian.Network",
+    "Devian.Protobuf",
+    "Devian.Module.Common"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": true
+}

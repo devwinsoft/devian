@@ -36,16 +36,16 @@ Devian 런타임은 크게 세 계층으로 나눈다.
 
 | 모듈 | 경로 | 역할 |
 |------|------|------|
-| Devian.Core | `framework-cs/modules/Devian.Core/` | IEntity, ITableContainer, LoadMode 등 |
-| Devian.Protobuf | `framework-cs/modules/Devian.Protobuf/` | DFF 파서, Protobuf 직렬화 |
-| Devian.Network | `framework-cs/modules/Devian.Network/` | IPacketSender, PacketEnvelope |
+| Devian.Core | `framework-cs/module/Devian.Core/` | IEntity, ITableContainer, LoadMode 등 |
+| Devian.Protobuf | `framework-cs/module/Devian.Protobuf/` | DFF 파서, Protobuf 직렬화 |
+| Devian.Network | `framework-cs/module/Devian.Network/` | IPacketSender, PacketEnvelope |
 
 ### TypeScript
 
 | 모듈 | 경로 | 역할 |
 |------|------|------|
-| devian-core | `framework-ts/modules/devian-core/` | IEntity, ITableContainer, ICodec, LoadMode |
-| devian-protobuf | `framework-ts/modules/devian-protobuf/` | DffConverter, ProtobufCodec, IProtoEntity |
+| devian-core | `framework-ts/module/devian-core/` | IEntity, ITableContainer, ICodec, LoadMode |
+| devian-protobuf | `framework-ts/module/devian-protobuf/` | DffConverter, ProtobufCodec, IProtoEntity |
 
 ---
 

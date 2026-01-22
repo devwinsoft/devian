@@ -1135,6 +1135,10 @@
       <Project>{44A93BA3-99D4-0E58-152D-4DEA5527805E}</Project>
       <Name>Unity.RenderPipelines.Core.Editor</Name>
     </ProjectReference>
+    <ProjectReference Include="Devian.Protocol.Sample.csproj">
+      <Project>{42950854-12A8-DF83-DCC8-097762C186F6}</Project>
+      <Name>Devian.Protocol.Sample</Name>
+    </ProjectReference>
     <ProjectReference Include="Unity.TextMeshPro.csproj">
       <Project>{2A45B19C-8264-D946-FAC7-F45EDC2B5D31}</Project>
       <Name>Unity.TextMeshPro</Name>
@@ -1155,10 +1159,6 @@
       <Project>{9C756D8C-1238-F33F-37AA-10DB42172B28}</Project>
       <Name>Unity.RenderPipelines.Core.ShaderLibrary</Name>
     </ProjectReference>
-    <ProjectReference Include="Devian.Sample.Editor.csproj">
-      <Project>{E9BE28B0-4158-2BCC-D396-8E2A79E0620C}</Project>
-      <Name>Devian.Sample.Editor</Name>
-    </ProjectReference>
     <ProjectReference Include="Unity.ScriptableBuildPipeline.csproj">
       <Project>{C90D422D-4577-876F-4995-0A9FBF67C509}</Project>
       <Name>Unity.ScriptableBuildPipeline</Name>
@@ -1166,6 +1166,10 @@
     <ProjectReference Include="Unity.VisualScripting.SettingsProvider.Editor.csproj">
       <Project>{AEE6585A-5C03-F2CE-69AD-D80347FDCC15}</Project>
       <Name>Unity.VisualScripting.SettingsProvider.Editor</Name>
+    </ProjectReference>
+    <ProjectReference Include="Devian.Templates.Network.Editor.csproj">
+      <Project>{E9664053-A87D-5B1A-17EA-F5DB5F65BEF0}</Project>
+      <Name>Devian.Templates.Network.Editor</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Universal.2D.Editor.Overrides.csproj">
       <Project>{34CFFD3A-3421-F37B-597B-DA3F3E8E843E}</Project>
@@ -1195,21 +1199,9 @@
       <Project>{BA233111-C828-0A83-8951-CAD8BDC5047A}</Project>
       <Name>Devian.Network</Name>
     </ProjectReference>
-    <ProjectReference Include="PPv2URPConverters.csproj">
-      <Project>{0501A597-946E-F1AE-1BC9-3178AA6A2832}</Project>
-      <Name>PPv2URPConverters</Name>
-    </ProjectReference>
-    <ProjectReference Include="Devian.Sample.csproj">
-      <Project>{A567105F-B505-A358-4D70-DFE43B501C30}</Project>
-      <Name>Devian.Sample</Name>
-    </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.Shared.csproj">
       <Project>{1B9CC5A5-1B05-8F23-4017-32D6215E0134}</Project>
       <Name>Unity.RenderPipelines.Core.Runtime.Shared</Name>
-    </ProjectReference>
-    <ProjectReference Include="Devian.Network.Sample.csproj">
-      <Project>{1DCC3322-2022-1746-9892-F5A54500C735}</Project>
-      <Name>Devian.Network.Sample</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Universal.2D.Runtime.csproj">
       <Project>{922FAF9B-7134-6416-A390-380AF57D7CA3}</Project>
@@ -1226,6 +1218,10 @@
     <ProjectReference Include="Unity.Searcher.Editor.csproj">
       <Project>{3750D0AB-C9AA-4E0C-99D7-7F1D6D32B07A}</Project>
       <Name>Unity.Searcher.Editor</Name>
+    </ProjectReference>
+    <ProjectReference Include="PPv2URPConverters.csproj">
+      <Project>{0501A597-946E-F1AE-1BC9-3178AA6A2832}</Project>
+      <Name>PPv2URPConverters</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.PlasticSCM.Editor.csproj">
       <Project>{3B955328-114A-1D71-290C-D8133DF1E8ED}</Project>
@@ -1267,9 +1263,9 @@
       <Project>{8128504E-ACF8-CF1E-7E40-F82A788D314F}</Project>
       <Name>Devian.Unity.Common</Name>
     </ProjectReference>
-    <ProjectReference Include="Devian.Network.Game.csproj">
-      <Project>{21DD2A20-BE57-EA61-E1E4-70BAD8BF8A5A}</Project>
-      <Name>Devian.Network.Game</Name>
+    <ProjectReference Include="Devian.Templates.Network.csproj">
+      <Project>{D236B422-C19D-30F3-1D10-A386C0F92F75}</Project>
+      <Name>Devian.Templates.Network</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.csproj">
       <Project>{8833DE80-57CF-21B5-5061-E0D6FB2AE325}</Project>
@@ -1402,6 +1398,10 @@
     <ProjectReference Include="UnityEditor.UI.csproj">
       <Project>{6A2C1AFF-9E9A-271E-6D36-6B8D584DF6ED}</Project>
       <Name>UnityEditor.UI</Name>
+    </ProjectReference>
+    <ProjectReference Include="Devian.Protocol.Game.csproj">
+      <Project>{6AC56B73-B08A-7FA6-85D4-7FD8A70ACF34}</Project>
+      <Name>Devian.Protocol.Game</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -15,7 +15,7 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 
 ## Ownership
 
-- `framework-cs/modules/**/*.g.cs`, `framework-ts/modules/**/*.g.ts` 는 **기계 소유**다.
+- `framework-cs/module-gen/**/*.g.cs`, `framework-ts/module-gen/**/*.g.ts` 는 **기계 소유**다.
 - 사람은 이 파일을 수정하지 않는다.
 - 수정이 필요하면 입력(contracts/tables/protocols) 또는 generator 코드 변경으로 해결한다.
 
@@ -26,50 +26,53 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 
 ## Directory Expectations
 
-정확한 출력 루트는 build.json의 targetDir이 정본이다.
+정확한 출력 루트는 input_common.json의 csConfig/tsConfig가 정본이다.
 
 ### 출력 경로 규칙
 
 | 타겟 | Domain 출력 경로 | Protocol 출력 경로 |
 |------|------------------|-------------------|
-| C# | `{csTargetDir}/Devian.Module.{Domain}/` | `{csTargetDir}/Devian.Network.{Group}/` |
-| TS | `{tsTargetDir}/devian-module-{domain}/` | `{tsTargetDir}/devian-network-{group}/` |
-| Data (ndjson) | `{dataTargetDir}/{Domain}/ndjson/` | - |
-| Data (bin) | `{dataTargetDir}/{Domain}/bin/` (ASSET 테이블만) | - |
+| C# | `{csConfig.generateDir}/Devian.Module.{Domain}/` | `{csConfig.generateDir}/Devian.Network.{Group}/` |
+| TS | `{tsConfig.generateDir}/devian-module-{domain}/` | `{tsConfig.generateDir}/devian-network-{group}/` |
+| Data (ndjson) | `{dataConfig.targetDirs}/{Domain}/ndjson/` | - |
+| Data (bin) | `{dataConfig.targetDirs}/{Domain}/pb64/` (pk 옵션 테이블만) | - |
 
 ### 권장 구조
 
 ```
 framework-cs/
-├── modules/
-│   ├── Devian.Core/                        # Core 런타임
-│   ├── Devian.Protobuf/                    # Protobuf 런타임
-│   ├── Devian.Network/                     # Network 런타임
-│   ├── Devian.Module.{Domain}/             # Domain 모듈 (generated)
+├── module/                                     # 수동 관리 (Core 런타임 등)
+│   ├── Devian.Core/
+│   ├── Devian.Protobuf/
+│   └── Devian.Network/
+├── module-gen/                                 # 생성 산출물 (기계 소유)
+│   ├── Devian.Module.{Domain}/
 │   │   └── generated/
 │   │       └── {Domain}.g.cs
-│   └── Devian.Network.{Group}/             # Protocol 모듈 (generated)
+│   └── Devian.Network.{Group}/
 │       ├── Devian.Network.{Group}.csproj
 │       └── {ProtocolName}.g.cs
 
 framework-ts/
-├── modules/
-│   ├── devian-core/                        # Core 런타임
-│   ├── devian-protobuf/                    # Protobuf 런타임
-│   ├── devian-module-{domain}/             # Domain 모듈 (generated)
+├── module/                                     # 수동 관리 (Core 런타임 등)
+│   ├── devian-core/
+│   ├── devian-protobuf/
+│   └── devian-network/
+├── module-gen/                                 # 생성 산출물 (기계 소유)
+│   ├── devian-module-{domain}/
 │   │   ├── generated/
 │   │   │   └── {Domain}.g.ts
 │   │   └── index.ts
-│   └── devian-network-{group}/             # Protocol 모듈 (generated)
+│   └── devian-network-{group}/
 │       ├── {ProtocolName}.g.ts
 │       └── index.ts
 
 output/
 └── {Domain}/
     ├── ndjson/
-    │   └── *.ndjson
-    └── bin/
-        └── *.asset  # ASSET 테이블만
+    │   └── *.json
+    └── pb64/
+        └── *.asset  # pk 옵션 테이블만
 ```
 
 > 실제 폴더명/레이아웃은 프로젝트 구성에 따라 달라질 수 있으며, 코드가 정답이다.
@@ -144,8 +147,9 @@ Unity는 `com.unity.nuget.newtonsoft-json` 패키지로 Newtonsoft.Json을 기�
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Devian.Core\Devian.Core.csproj" />
-    <ProjectReference Include="..\Devian.Network\Devian.Network.csproj" />
+    <ProjectReference Include="..\..\module\Devian.Core\Devian.Core.csproj" />
+    <ProjectReference Include="..\..\module\Devian.Network\Devian.Network.csproj" />
+    <ProjectReference Include="..\Devian.Module.Common\Devian.Module.Common.csproj" />
   </ItemGroup>
 </Project>
 ```
@@ -157,7 +161,7 @@ Unity는 `com.unity.nuget.newtonsoft-json` 패키지로 Newtonsoft.Json을 기�
 MUST
 
 - generated를 import하는 "수동 코드(manual)"는 generated와 분리된 폴더에서 관리한다.
-- build.json targetDir 설계로 산출 충돌을 방지한다.
+- input_common.json의 csConfig/tsConfig/dataConfig 설계로 산출 충돌을 방지한다.
 - TypeScript 프로젝트는 paths alias를 설정하여 @devian/core 등을 import한다.
 
 MUST NOT
