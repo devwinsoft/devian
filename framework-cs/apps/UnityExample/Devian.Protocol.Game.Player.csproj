@@ -85,7 +85,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Google.Protobuf">
-      <HintPath>Packages\com.devian.protobuf\Runtime\Plugins\Google.Protobuf.dll</HintPath>
+      <HintPath>Assets\Plugins\Google.Protobuf.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
@@ -589,14 +589,6 @@
     <ProjectReference Include="Devian.Core.Player.csproj">
       <Project>{59D7EC36-ABE0-6119-559C-F7B3AD20DD9F}</Project>
       <Name>Devian.Core.Player</Name>
-    </ProjectReference>
-    <ProjectReference Include="Devian.Network.Player.csproj">
-      <Project>{C93CE831-31EE-15B9-BDC6-C12E3CD2BFA1}</Project>
-      <Name>Devian.Network.Player</Name>
-    </ProjectReference>
-    <ProjectReference Include="Devian.Protobuf.Player.csproj">
-      <Project>{3006E4BF-CE7B-34C1-D759-61C0C72A1927}</Project>
-      <Name>Devian.Protobuf.Player</Name>
     </ProjectReference>
     <ProjectReference Include="Devian.Module.Common.Player.csproj">
       <Project>{747B8B61-6317-C2F3-564C-2DA614C3E5C1}</Project>

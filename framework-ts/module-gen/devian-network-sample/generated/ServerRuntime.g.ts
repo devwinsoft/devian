@@ -3,7 +3,7 @@
 // This file provides server-side runtime for protocol group: Sample
 // </auto-generated>
 
-import type { INetworkRuntime, SendFn, ICodec, UnknownOpcodeEvent } from '@devian/network';
+import type { INetworkRuntime, SendFn, ICodec, UnknownOpcodeEvent } from '@devian/core';
 import { C2Sample } from '../C2Sample.g';
 import { Sample2C } from '../Sample2C.g';
 

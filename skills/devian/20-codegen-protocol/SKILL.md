@@ -88,15 +88,18 @@ Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴�
 경로 규약은 SSOT를 따른다.
 
 **C#:**
-- staging: `{tempDir}/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs`
-- final: `{csConfig.generateDir}/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs`
-- 프로젝트 파일: `Devian.Network.{ProtocolGroup}.csproj` (netstandard2.1)
-- namespace: `Devian.Network.{ProtocolGroup}`
+- staging: `{tempDir}/Devian.Protocol.{ProtocolName}/{ProtocolName}.g.cs`
+- final: `{csConfig.generateDir}/Devian.Protocol.{ProtocolName}/{ProtocolName}.g.cs`
+- 프로젝트 파일: `Devian.Protocol.{ProtocolName}.csproj` (netstandard2.1)
+- namespace: `Devian.Protocol.{ProtocolName}` (변경 금지)
 
 **TypeScript:**
 - staging: `{tempDir}/{ProtocolGroup}/{ProtocolName}.g.ts`, `index.ts`
 - final: `{tsConfig.generateDir}/devian-network-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
 - 패키지명: `@devian/network-{protocolgroup}`
+
+> **생성물 namespace 고정 (Hard Rule):**
+> C# 생성물 namespace는 `Devian.Protocol.{ProtocolName}`으로 고정이며, 런타임 모듈 단일화와 무관하게 변경하지 않는다.
 
 ---
 
@@ -133,24 +136,33 @@ Devian v10에서 생성되는 모든 PROTOCOL 모듈은 Common 모듈을 **무�
 필수 적용:
 
 - C#:
-  - `Devian.Network.{ProtocolGroup}.csproj`는 `Devian.Module.Common`을 `ProjectReference`로 포함해야 한다.
+  - `Devian.Protocol.{ProtocolName}.csproj`는 `Devian.Module.Common`을 `ProjectReference`로 포함해야 한다.
   - 각 생성물(`{ProtocolName}.g.cs`)은 `using Devian.Module.Common;`을 포함해야 한다.
 - TypeScript:
   - `@devian/network-{protocolgroup}`의 `package.json` `dependencies`에 `@devian/module-common`을 포함해야 한다.
 - **Unity UPM:**
   - Protocol용 `.asmdef` 파일의 `references`에 `Devian.Module.Common` 포함 필수
-  - 예: `Devian.Unity.Network.Sample.asmdef` → `"references": [..., "Devian.Module.Common"]`
+  - 예: `Devian.Protocol.Sample.asmdef` → `"references": [..., "Devian.Module.Common"]`
 
 ---
 
 ## TypeScript Namespace 규칙
 
-TS에서 C#과 동일한 `Devian.Network.{Group}` 트리를 제공한다.
+TS 생성물은 **ProtocolName 단위**로 네임스페이스가 생성된다.
+
+**생성 형태:**
+```typescript
+// {ProtocolName}.g.ts
+export namespace {ProtocolName} {
+    export interface MessageName { ... }
+    export const Opcodes = { ... } as const;
+}
+```
 
 **핵심 규칙:**
-1. `.g.ts` 파일은 `export namespace {ProtocolName}`만 생성 (Devian 금지)
-2. `index.ts`에서만 `Devian.Network.{Group}` namespace 트리 정의
-3. 소비자 코드는 패키지 루트에서만 Devian import
+1. `.g.ts` 파일은 `export namespace {ProtocolName}`만 생성
+2. `index.ts`에서 Direct export 제공
+3. 소비자 코드는 Direct import를 사용
 
 **생성 예시 (index.ts):**
 ```typescript
@@ -160,24 +172,20 @@ import * as Game2CMod from './Game2C.g';
 export const C2Game = C2GameMod.C2Game;
 export const Game2C = Game2CMod.Game2C;
 
-export namespace Devian {
-    export namespace Network {
-        export namespace Game {
-            export import C2Game = C2GameMod.C2Game;
-            export import Game2C = Game2CMod.Game2C;
-        }
-    }
-}
+export { createServerRuntime } from './generated/ServerRuntime.g';
+export { createClientRuntime } from './generated/ClientRuntime.g';
 ```
 
-**사용법:**
+**사용법 (권장):**
 ```typescript
-// 방법 1: Direct import (권장)
-import { C2Game, Game2C } from '@devian/network-game';
+import { C2Game, Game2C, createClientRuntime } from '@devian/network-game';
 
-// 방법 2: Devian namespace
-import { Devian } from '@devian/network-game';
-const msg: Devian.Network.Game.C2Game.LoginRequest = { ... };
+// 타입 사용
+const req: C2Game.LoginRequest = { ... };
+const ack: Game2C.LoginAck = { ... };
+
+// Opcode 사용
+const opcode = C2Game.Opcodes.LoginRequest;
 ```
 
 ---
@@ -216,7 +224,7 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 **생성 내용:**
 - `name`: `@devian/network-{group}`
 - `exports`: `.` + Runtime 존재 시 `./server-runtime`, `./client-runtime`
-- `dependencies`: `@devian/core`, `@devian/network`
+- `dependencies`: `@devian/core`
 
 > 위 dependencies 목록에는 **항상** `@devian/module-common`이 포함되어야 한다. (참조 판정 없음)
 
@@ -248,10 +256,10 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 
 **C#:**
 
-1. 생성된 `framework-cs/module-gen/Devian.Network.{ProtocolGroup}/Devian.Network.{ProtocolGroup}.csproj`에  
+1. 생성된 `framework-cs/module-gen/Devian.Protocol.{ProtocolName}/Devian.Protocol.{ProtocolName}.csproj`에  
    `..\..\module\Devian.Module.Common\Devian.Module.Common.csproj` ProjectReference 존재
 
-2. 생성된 `framework-cs/module-gen/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs` 상단에  
+2. 생성된 `framework-cs/module-gen/Devian.Protocol.{ProtocolName}/{ProtocolName}.g.cs` 상단에  
    `using Devian.Module.Common;` 존재
 
 3. 생성된 `{ProtocolName}.g.cs`에 `System.Text.Json` 관련 코드 없음

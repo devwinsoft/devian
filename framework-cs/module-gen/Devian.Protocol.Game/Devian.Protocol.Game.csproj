@@ -11,8 +11,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Devian.Core\Devian.Core.csproj" />
-    <ProjectReference Include="..\Devian.Network\Devian.Network.csproj" />
+    <ProjectReference Include="..\Devian\Devian.csproj" />
     <ProjectReference Include="..\Devian.Module.Common\Devian.Module.Common.csproj" />
   </ItemGroup>
 </Project>

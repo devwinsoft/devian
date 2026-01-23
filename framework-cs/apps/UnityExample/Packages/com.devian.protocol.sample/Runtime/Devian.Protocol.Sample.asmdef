@@ -3,8 +3,6 @@
   "rootNamespace": "Devian.Protocol.Sample",
   "references": [
     "Devian.Core",
-    "Devian.Network",
-    "Devian.Protobuf",
     "Devian.Module.Common"
   ],
   "includePlatforms": [],

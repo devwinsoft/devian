@@ -21,7 +21,11 @@ AppliesTo: v10
 ### name
 
 - 접두어: `com.devian.`
-- 예: `com.devian.core`, `com.devian.network`, `com.devian.protobuf`, `com.devian.module.common`, `com.devian.unity.network`, `com.devian.unity.common`
+- 예: `com.devian.core`, `com.devian.module.common`, `com.devian.unity.network`, `com.devian.unity.common`
+
+> **패키지 단일화 정책 (Hard Rule):**
+> - `com.devian.network`, `com.devian.protobuf`는 더 이상 존재하지 않는다.
+> - 모든 런타임 기능은 `com.devian.core` 단일 패키지에 포함된다.
 
 ### version
 
@@ -37,9 +41,7 @@ AppliesTo: v10
 
 - 사람이 읽기 쉬운 이름으로 고정한다.
 - 패턴 예:
-  - `Devian Core`
-  - `Devian Network`
-  - `Devian Protobuf`
+  - `Devian Core` (통합 런타임)
   - `Devian Module Common`
   - `Devian Unity Network`
   - `Devian Unity Common`
@@ -48,11 +50,9 @@ AppliesTo: v10
 
 - 1줄로 역할을 명확히 적는다.
 - 예:
-  - `"Devian.Core runtime for Unity (source)"`
-  - `"Devian.Network runtime for Unity (source)"`
-  - `"Devian.Protobuf runtime for Unity (source) + Google.Protobuf dll"`
+  - `"Devian runtime for Unity - Core, Network, and Protobuf unified package"`
   - `"Devian.Module.Common runtime for Unity (source) - Common features"`
-  - `"Unity adapter for Devian.Network (MonoBehaviours)"`
+  - `"Unity adapter for Devian (WebSocket MonoBehaviours)"`
   - `"Unity adapter utilities for Devian.Module.Common"`
 
 ### author
@@ -80,12 +80,10 @@ runtime 패키지는 필요한 최소 의존만 선언한다:
 
 | 패키지 | dependencies |
 |--------|--------------|
-| `com.devian.unity.network` | `com.devian.network`, `com.devian.core`, `com.devian.protobuf`, `com.devian.module.common` |
-| `com.devian.unity.common` | `com.devian.module.common` |
-| `com.devian.module.common` | `com.devian.core`, `com.unity.nuget.newtonsoft-json` |
-| `com.devian.network` | `com.devian.core` |
-| `com.devian.protobuf` | `com.devian.core` |
 | `com.devian.core` | (없음) |
+| `com.devian.module.common` | `com.devian.core`, `com.unity.nuget.newtonsoft-json` |
+| `com.devian.unity.network` | `com.devian.core`, `com.devian.module.common` |
+| `com.devian.unity.common` | `com.devian.core`, `com.devian.module.common` |
 
 ---
 

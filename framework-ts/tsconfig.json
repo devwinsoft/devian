@@ -12,12 +12,10 @@
     "sourceMap": true,
     "baseUrl": ".",
     "paths": {
-      "@devian/core": ["./modules/devian-core/src"],
-      "@devian/core/*": ["./modules/devian-core/src/*"],
-      "@devian/protobuf": ["./modules/devian-protobuf/src"],
-      "@devian/protobuf/*": ["./modules/devian-protobuf/src/*"]
+      "@devian/core": ["./module/devian-core/src"],
+      "@devian/core/*": ["./module/devian-core/src/*"]
     }
   },
-  "include": ["modules/**/*.ts", "tools/**/*.ts"],
+  "include": ["module/**/*.ts", "tools/**/*.ts"],
   "exclude": ["node_modules", "dist"]
 }

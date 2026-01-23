@@ -398,7 +398,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Google.Protobuf">
-      <HintPath>Packages\com.devian.protobuf\Runtime\Plugins\Google.Protobuf.dll</HintPath>
+      <HintPath>Assets\Plugins\Google.Protobuf.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
@@ -931,10 +931,6 @@
       <Project>{A51EC345-ED80-2A9F-2500-8AD9425892B2}</Project>
       <Name>Unity.Addressables.Player</Name>
     </ProjectReference>
-    <ProjectReference Include="Devian.Network.Player.csproj">
-      <Project>{C93CE831-31EE-15B9-BDC6-C12E3CD2BFA1}</Project>
-      <Name>Devian.Network.Player</Name>
-    </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.Shared.Player.csproj">
       <Project>{E8D70176-E50C-9594-C252-AF9F7F9CF539}</Project>
       <Name>Unity.RenderPipelines.Core.Runtime.Shared.Player</Name>
@@ -1026,10 +1022,6 @@
     <ProjectReference Include="Unity.RenderPipelines.Universal.Runtime.Player.csproj">
       <Project>{81A081C6-C77A-E9D6-5787-B8689DAFE7F6}</Project>
       <Name>Unity.RenderPipelines.Universal.Runtime.Player</Name>
-    </ProjectReference>
-    <ProjectReference Include="Devian.Protobuf.Player.csproj">
-      <Project>{3006E4BF-CE7B-34C1-D759-61C0C72A1927}</Project>
-      <Name>Devian.Protobuf.Player</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.VisualScripting.State.Player.csproj">
       <Project>{0352392E-E220-0C5A-EEA4-299477DE72CD}</Project>

@@ -3,11 +3,9 @@
   "version": "10.0.0",
   "private": true,
   "workspaces": [
-    "modules/devian-core",
-    "modules/devian-protobuf",
-    "modules/devian-module-*",
-    "modules/devian-network",
-    "modules/devian-network-*",
+    "module/devian-core",
+    "module-gen/devian-module-*",
+    "module-gen/devian-network-*",
     "apps/*"
   ],
   "devDependencies": {

@@ -19,6 +19,10 @@ Status: DEPRECATED
 AppliesTo: v10  
 Type: Policy / Requirements
 
+## Prerequisites
+
+**Unity C# 문법 제한:** 샘플 코드는 `skills/devian/04-unity-csharp-compat/SKILL.md`를 준수한다 (금지 문법 사용 시 FAIL).
+
 ## SSOT
 
 이 문서는 **Devian UPM 샘플 제공 정책/규약**을 정의한다.
@@ -95,7 +99,7 @@ upm-src/<packageName>/Samples~/BasicWsClient/
 
 ```csharp
 // Runtime/EchoWsClientSample.cs
-public class EchoWsClientSample : WebSocketClientBehaviourBase
+public class EchoWsClientSample : NetWsClientBehaviourBase
 {
     // ★ Editor에서 연결 상태 확인용 - 반드시 public
     public bool IsConnected { get; private set; }

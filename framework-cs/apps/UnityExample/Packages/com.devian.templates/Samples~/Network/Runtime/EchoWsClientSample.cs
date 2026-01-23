@@ -1,7 +1,7 @@
 #nullable enable
 using System;
 using UnityEngine;
-using Devian.Network;
+using Devian;
 using Devian.Unity.Network;
 using Devian.Protocol.Sample;
 
@@ -21,7 +21,7 @@ namespace Devian.Templates.Network
     /// 
     /// Note: No offline mode. No auto-send on connect.
     /// </summary>
-    public class EchoWsClientSample : WebSocketClientBehaviourBase
+    public class EchoWsClientSample : NetWsClientBehaviourBase
     {
         [Header("Connection Settings")]
         [SerializeField] private string url = "ws://localhost:8080";

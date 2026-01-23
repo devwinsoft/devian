@@ -61,7 +61,7 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.2f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Packages\com.devian.unity.network\Runtime\WebSocketClientBehaviourBase.cs" />
+    <Compile Include="Packages\com.devian.unity.network\Runtime\NetWsClientBehaviourBase.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Packages\com.devian.unity.network\Runtime\Devian.Unity.Network.asmdef" />
@@ -656,7 +656,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Google.Protobuf">
-      <HintPath>Packages\com.devian.protobuf\Runtime\Plugins\Google.Protobuf.dll</HintPath>
+      <HintPath>Assets\Plugins\Google.Protobuf.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
@@ -1173,9 +1173,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Devian.Network.csproj">
-      <Project>{BA233111-C828-0A83-8951-CAD8BDC5047A}</Project>
-      <Name>Devian.Network</Name>
+    <ProjectReference Include="Devian.Core.csproj">
+      <Project>{BE59D257-BCE4-3EFD-A48C-4F1B1BAB05B5}</Project>
+      <Name>Devian.Core</Name>
     </ProjectReference>
     <ProjectReference Include="UnityEditor.UI.csproj">
       <Project>{6A2C1AFF-9E9A-271E-6D36-6B8D584DF6ED}</Project>

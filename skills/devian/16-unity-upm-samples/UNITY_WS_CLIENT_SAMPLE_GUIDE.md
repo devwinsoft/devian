@@ -42,7 +42,7 @@ Samples~/BasicWsClient/
 |------|-----|
 | name | `"Devian.Templates.Network"` |
 | rootNamespace | `"Devian.Templates.Network"` |
-| references | `["Devian.Core", "Devian.Network", "Devian.Unity.Network", "Devian.Protocol.Sample"]` |
+| references | `["Devian.Core", "Devian.Unity.Network", "Devian.Protocol.Sample"]` |
 | includePlatforms | `[]` (빈 배열 = 모든 플랫폼) |
 
 ### [2] EchoWsClientSample.cs

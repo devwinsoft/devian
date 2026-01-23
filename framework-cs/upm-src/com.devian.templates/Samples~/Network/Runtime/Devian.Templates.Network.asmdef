@@ -3,7 +3,6 @@
     "rootNamespace": "Devian.Templates.Network",
     "references": [
         "Devian.Core",
-        "Devian.Network",
         "Devian.Unity.Network",
         "Devian.Protocol.Sample"
     ],

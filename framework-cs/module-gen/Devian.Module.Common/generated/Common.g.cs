@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
-using Devian.Core;
+using Devian;
 
 namespace Devian.Module.Common
 {

@@ -291,7 +291,7 @@ class DevianToolBuilder {
         lines.push('using System.Collections.Generic;');
         lines.push('using System.IO;');
         lines.push('using Newtonsoft.Json;');
-        lines.push('using Devian.Core;');
+        lines.push('using Devian;');
         lines.push('');
 
         // Namespace
@@ -711,8 +711,7 @@ class DevianToolBuilder {
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\\Devian.Core\\Devian.Core.csproj" />
-    <ProjectReference Include="..\\Devian.Network\\Devian.Network.csproj" />
+    <ProjectReference Include="..\\Devian\\Devian.csproj" />
     <ProjectReference Include="..\\Devian.Module.Common\\Devian.Module.Common.csproj" />
   </ItemGroup>
 </Project>
@@ -1403,7 +1402,7 @@ export * from './features';
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\\Devian.Core\\Devian.Core.csproj" />
+    <ProjectReference Include="..\\Devian\\Devian.csproj" />
   </ItemGroup>
 </Project>
 `;
@@ -1430,14 +1429,11 @@ export * from './features';
     ensureProtocolPackageJson(targetDir, groupName, hasServerRuntime = false, hasClientRuntime = false) {
         const packageJsonPath = path.join(targetDir, 'package.json');
         
-        // Build dependencies
+        // Build dependencies - @devian/core includes network functionality
         const dependencies = {
             '@devian/core': '10.0.0',
             '@devian/module-common': '10.0.0'
         };
-        if (hasServerRuntime || hasClientRuntime) {
-            dependencies['@devian/network'] = '10.0.0';
-        }
 
         // Build exports
         const exports = {
@@ -2007,21 +2003,17 @@ export * from './features';
             },
             dependencies: {
                 'com.devian.core': '0.1.0',
-                'com.devian.network': '0.1.0',
-                'com.devian.protobuf': '0.1.0',
                 'com.devian.module.common': '0.1.0'
             }
         }, null, 2);
         fs.writeFileSync(path.join(stagingUpm, 'package.json'), packageJson);
 
-        // Runtime.asmdef (스킬 18 준수: rootNamespace, Devian.Protobuf, noEngineReferences)
+        // Runtime.asmdef (정책: 단일 Devian.Core asmdef만 참조)
         const runtimeAsmdef = JSON.stringify({
             name: csProjectName,
             rootNamespace: csProjectName,
             references: [
                 'Devian.Core',
-                'Devian.Network',
-                'Devian.Protobuf',
                 'Devian.Module.Common'
             ],
             includePlatforms: [],
@@ -2204,8 +2196,8 @@ export * from './features';
     asmdefRefToUpmPackage(asmdefRef) {
         const mapping = {
             'Devian.Core': 'com.devian.core',
-            'Devian.Network': 'com.devian.network',
-            'Devian.Protobuf': 'com.devian.protobuf',
+            'Devian.Network': 'com.devian.core',
+            'Devian.Protobuf': 'com.devian.core',
         };
 
         // Direct mapping
@@ -2287,8 +2279,6 @@ export * from './features';
         // Default versions for packages (can be improved by scanning actual packages)
         const defaultVersions = {
             'com.devian.core': '0.1.0',
-            'com.devian.network': '0.1.0',
-            'com.devian.protobuf': '0.1.0',
             'com.devian.module.common': '0.1.0',
             'com.devian.unity.common': '0.1.0',
         };

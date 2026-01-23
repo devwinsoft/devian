@@ -10,7 +10,7 @@
  */
 
 import WebSocket from 'ws';
-import { NetworkClient, defaultCodec } from '@devian/network';
+import { NetworkClient, defaultCodec } from '@devian/core';
 import { createClientRuntime } from '@devian/network-sample';
 
 // Environment variables

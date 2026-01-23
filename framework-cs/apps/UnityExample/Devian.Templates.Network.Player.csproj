@@ -400,7 +400,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Google.Protobuf">
-      <HintPath>Packages\com.devian.protobuf\Runtime\Plugins\Google.Protobuf.dll</HintPath>
+      <HintPath>Assets\Plugins\Google.Protobuf.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
@@ -904,10 +904,6 @@
     <ProjectReference Include="Devian.Core.Player.csproj">
       <Project>{59D7EC36-ABE0-6119-559C-F7B3AD20DD9F}</Project>
       <Name>Devian.Core.Player</Name>
-    </ProjectReference>
-    <ProjectReference Include="Devian.Network.Player.csproj">
-      <Project>{C93CE831-31EE-15B9-BDC6-C12E3CD2BFA1}</Project>
-      <Name>Devian.Network.Player</Name>
     </ProjectReference>
     <ProjectReference Include="Devian.Unity.Network.Player.csproj">
       <Project>{E0E50406-BED2-333A-6314-7D4EA03D996C}</Project>

@@ -35,9 +35,10 @@ Protocol codegen의 언어별 산출물(C#/TS)에 대한 **문서 정책**을 �
 Devian v10에서 생성되는 모든 PROTOCOL 모듈은 Common 모듈을 **무조건** 참조한다.
 
 - Common 참조 판정은 하지 않는다.
-- C#: `Devian.Network.{ProtocolGroup}.csproj`는 `Devian.Module.Common` ProjectReference를 포함해야 한다.
+- C#: `Devian.Protocol.{ProtocolName}.csproj`는 `Devian.Module.Common` ProjectReference를 포함해야 한다.
 - C# 생성물(`*.g.cs`)은 `using Devian.Module.Common;`을 포함해야 한다.
-- TS: `@devian/network-{protocolgroup}` `package.json`은 `dependencies`에 `@devian/module-common`을 포함해야 한다.
+- C# 생성물 namespace는 `Devian.Protocol.{ProtocolName}`으로 고정 (변경 금지)
+- TS: `@devian/network-{protocolgroup}` `package.json`은 `dependencies`에 `@devian/core`, `@devian/module-common`을 포함해야 한다.
 
 ---
 

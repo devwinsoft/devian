@@ -15,7 +15,7 @@ import {
     NetworkServer,
     defaultCodec,
     type UnknownOpcodeEvent,
-} from '@devian/network';
+} from '@devian/core';
 
 import {
     createServerRuntime,

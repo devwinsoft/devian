@@ -3,7 +3,7 @@
 // This file provides client-side runtime for protocol group: Game
 // </auto-generated>
 
-import type { INetworkRuntime, SendFn, ICodec, UnknownOpcodeEvent } from '@devian/network';
+import type { INetworkRuntime, SendFn, ICodec, UnknownOpcodeEvent } from '@devian/core';
 import { Game2C } from '../Game2C.g';
 import { C2Game } from '../C2Game.g';
 

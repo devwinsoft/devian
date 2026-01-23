@@ -160,14 +160,14 @@ Unity Inspector 확장.
 namespace MyGame.Network
 {
     // 2) 클래스명 변경
-    public class MyNetworkClient : WebSocketClientBehaviourBase
+    public class MyNetworkClient : NetWsClientBehaviourBase
     {
         // 3) 자신의 Protocol 사용
         private MyProtocol.C2Server.Proxy _proxy;
         
-        protected override void OnConnected()
+        protected override void OnOpened()
         {
-            _proxy = new MyProtocol.C2Server.Proxy(this);
+            _proxy = new MyProtocol.C2Server.Proxy(new MySender(this));
         }
     }
 }

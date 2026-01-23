@@ -33,10 +33,10 @@
 
   "domains": {
     "Common": {
-      "contractsDir": "Common/contracts",
+      "contractsDir": "common/contracts",
       "contractFiles": ["*.json"],
 
-      "tablesDir": "Common/tables",
+      "tablesDir": "common/tables",
       "tableFiles": ["*.xlsx"]
     }
   },

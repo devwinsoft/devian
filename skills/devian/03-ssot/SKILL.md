@@ -155,13 +155,125 @@ DATA 도메인의 데이터 출력 타겟은 전역 `dataConfig`로 설정한다
 
 | 디렉토리 | 역할 | 빌드 동작 |
 |----------|------|-----------|
-| `framework-cs/module` | 수동 C# 모듈 (Devian.Core, Network, Protobuf) | 검증만, 수정 금지 |
-| `framework-cs/module-gen` | 생성 C# 모듈 (Devian.Module.*, Devian.Network.*) | staging 결과로 생성/반영 |
-| `framework-ts/module` | 수동 TS 모듈 (devian-core, devian-network, devian-protobuf) | 검증만, 수정 금지 |
+| `framework-cs/module` | 수동 C# 모듈 (Devian — 단일 통합 모듈) | 검증만, 수정 금지 |
+| `framework-cs/module-gen` | 생성 C# 모듈 (Devian.Module.*, Devian.Protocol.*) | staging 결과로 생성/반영 |
+| `framework-ts/module` | 수동 TS 모듈 (devian-core — 단일 통합 모듈) | 검증만, 수정 금지 |
 | `framework-ts/module-gen` | 생성 TS 모듈 (devian-module-*, devian-network-*) | staging 결과로 생성/반영 |
-| `framework-cs/upm-src` | 수동 UPM 패키지 (com.devian.unity.*) | 검증만, 수정 금지 |
+| `framework-cs/upm-src` | 수동 UPM 패키지 (com.devian.core, com.devian.unity.*, com.devian.templates) | 검증만, 수정 금지 |
 | `framework-cs/upm-gen` | 생성 UPM 패키지 (com.devian.module.*, com.devian.protocol.*) | staging 결과로 생성/반영 |
 | `framework-cs/apps/UnityExample/Packages` | Unity 최종 패키지 | upm-src + upm-gen → sync |
+
+### C# 런타임 모듈 구조 (Hard Rule)
+
+**Devian C# 런타임은 단일 모듈(단일 csproj)로 제공한다.**
+
+| 구분 | 경로 | 설명 |
+|------|------|------|
+| 단일 모듈 | `framework-cs/module/Devian/Devian.csproj` | Core + Network + Protobuf 통합 |
+
+**런타임 namespace 규약 (Hard Rule):**
+
+| 기능 | namespace |
+|------|-----------|
+| Core (파서, 엔티티) | `Devian` |
+| Network (프레임, 클라이언트) | `Devian` |
+| Protobuf (DFF, 변환기) | `Devian` |
+
+> **런타임은 `namespace Devian` 단일을 사용한다.**
+> 기능별 하위 네임스페이스(분리된 Net/Proto 네임스페이스 등)는 금지.
+> 파일 폴더 구조(Net/, Proto/)는 유지하되 namespace는 통일한다.
+
+**네트워크 API 네이밍 규칙 (Net 접두사):**
+
+런타임 네임스페이스 단일화로 인해, 과거 분리 네임스페이스에 있던 네트워크 계열 public API는 `Net` 접두사로 명확화한다:
+
+| 원래 이름 | 변경 후 | 비고 |
+|-----------|---------|------|
+| `NetworkClient` | `NetClient` | 중복 방지 축약 |
+| `WebSocketClient` | `NetWsClient` | 중복 방지 축약 |
+| `HttpRpcClient` | `NetHttpRpcClient` | 접두사 추가 |
+| `PacketEnvelope` | `NetPacketEnvelope` | 접두사 추가 |
+| `FrameV1` | `NetFrameV1` | 접두사 추가 |
+| `IPacketSender` | `INetPacketSender` | 접두사 추가 |
+| `INetRuntime` | `INetRuntime` | 이미 Net 포함, 유지 |
+
+> 이미 이름에 `Net`이 포함된 타입은 중복 접두사 금지.
+> `Dff*`, `Protobuf*`, `IProto*` 등 의미가 명확한 Proto 계열 타입은 이름 변경 금지.
+
+**생성물 namespace 유지 (Hard Rule):**
+- 프로토콜 생성물은 `Devian.Protocol.{ProtocolName}`을 유지한다.
+- 모듈 생성물은 `Devian.Module.{DomainKey}`를 유지한다.
+- 생성물 namespace는 본 정책에서 변경 금지.
+
+**분리 네임스페이스 금지 게이트 (Hard Fail):**
+
+코드/UPM 패키지/생성물에서 아래 패턴이 1개라도 발견되면 **빌드 FAIL**:
+
+| 금지 패턴 | 설명 |
+|-----------|------|
+| 분리 Core 네임스페이스 선언/참조 | 런타임에 분리된 Core 네임스페이스 금지 |
+| 분리 Net 네임스페이스 선언/참조 | 런타임에 분리된 Net 네임스페이스 금지 |
+| 분리 Proto 네임스페이스 선언/참조 | 런타임에 분리된 Proto 네임스페이스 금지 |
+
+검증 대상 경로:
+- `framework-cs/module/Devian/`
+- `framework-cs/upm-src/`
+- `framework-cs/apps/UnityExample/Packages/`
+
+> 프로토콜 생성물(`Devian.Protocol.*`)은 이 검증에서 제외된다.
+
+### TS 런타임 모듈 구조 (Hard Rule)
+
+**Devian TS 런타임은 단일 패키지(@devian/core)로 제공한다.**
+
+| 구분 | 경로 | 설명 |
+|------|------|------|
+| 단일 패키지 | `framework-ts/module/devian-core` | Core + Network + Protobuf 통합 |
+
+**패키지 exports:**
+
+| export path | 역할 |
+|-------------|------|
+| `@devian/core` | 루트 (전체 re-export) |
+| `@devian/core/net` | Network 모듈 |
+| `@devian/core/proto` | Protobuf 모듈 |
+| `@devian/core/transport` | WsTransport |
+| `@devian/core/protocol` | NetworkServer |
+| `@devian/core/codec` | codec |
+| `@devian/core/frame` | frame |
+
+**생성물 패키지명 유지 (Hard Rule):**
+- 프로토콜 생성물은 `@devian/network-{protocolgroup}` 이름을 유지한다.
+- 모듈 생성물은 `@devian/module-{domainkey}` 이름을 유지한다.
+
+### Unity UPM 패키지 구조 (Hard Rule)
+
+**Devian Unity 런타임은 단일 패키지(com.devian.core)로 제공한다.**
+
+| 구분 | 경로 | 설명 |
+|------|------|------|
+| 단일 패키지 | `framework-cs/upm-src/com.devian.core` | Core + Network + Protobuf 통합 |
+
+**패키지 내부 asmdef (Hard Rule):**
+
+`com.devian.core`는 **단일 어셈블리**를 제공한다:
+
+| asmdef | namespace | 역할 |
+|--------|-----------|------|
+| `Devian.Core` | `Devian` | 전체 런타임 기능 (Core + Net + Proto 통합) |
+
+> **asmdef 단일화 정책:**
+> - 다른 패키지가 Devian 런타임을 참조할 때는 `"Devian.Core"`만 references에 추가한다.
+> - `"Devian.Network"`, `"Devian.Protobuf"` asmdef 참조는 금지.
+> - asmdef 이름은 `Devian.Core`이지만, 내부 코드의 namespace는 모두 `Devian`이다.
+
+**생성물 패키지명 유지 (Hard Rule):**
+- 프로토콜 생성물은 `com.devian.protocol.{protocolgroup}` 이름을 유지한다.
+- 모듈 생성물은 `com.devian.module.{domainkey}` 이름을 유지한다.
+
+**패키지 단일화 (Hard Rule):**
+- `com.devian.network`, `com.devian.protobuf`는 더 이상 존재하지 않는다.
+- 모든 런타임 기능은 `com.devian.core` 단일 패키지에 포함된다.
 
 ### Validate 단계 (Hard Rule)
 
@@ -246,8 +358,8 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 
 | 필드 | 의미 | 필수 |
 |------|------|------|
-| `moduleDir` | C# 모듈 루트 — 수동 관리 (Devian.Core 등) | 권장 |
-| `generateDir` | C# 생성 루트 — 빌드 생성 (Devian.Module.*, Devian.Network.*) | 권장 |
+| `moduleDir` | C# 모듈 루트 — 수동 관리 (Devian) | 권장 |
+| `generateDir` | C# 생성 루트 — 빌드 생성 (Devian.Module.*, Devian.Protocol.*) | 권장 |
 
 ### UPM 동기화 흐름 (Hard Rule)
 
@@ -330,8 +442,8 @@ DATA 입력은 input_common.json의 `domains` 섹션이 정의한다.
 
 1) DATA Domain 모듈 (`Devian.Module.{DomainKey}`, `@devian/module-{domainkey}`)
    - `{DomainKey} != Common`인 모든 모듈은 `Devian.Module.Common`을 참조한다.
-2) PROTOCOL 모듈 (`Devian.Network.{ProtocolGroup}`, `@devian/network-{protocolgroup}`)
-   - 모든 ProtocolGroup 모듈은 `Devian.Module.Common`을 참조한다.
+2) PROTOCOL 모듈 (`Devian.Protocol.{ProtocolName}`, `@devian/network-{protocolgroup}`)
+   - 모든 Protocol 모듈은 `Devian.Module.Common`을 참조한다.
 
 참조 방식(정책):
 
@@ -503,13 +615,17 @@ PROTOCOL 입력은 input_common.json의 `protocols` 섹션(배열)이 정의한�
 #### PROTOCOL 산출물 경로(정책)
 
 **C#:**
-- staging: `{tempDir}/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs`
-- final: `{csConfig.generateDir}/Devian.Network.{ProtocolGroup}/{ProtocolName}.g.cs`
-- 프로젝트 파일: `{csConfig.generateDir}/Devian.Network.{ProtocolGroup}/Devian.Network.{ProtocolGroup}.csproj`
+- staging: `{tempDir}/Devian.Protocol.{ProtocolName}/{ProtocolName}.g.cs`
+- final: `{csConfig.generateDir}/Devian.Protocol.{ProtocolName}/{ProtocolName}.g.cs`
+- 프로젝트 파일: `{csConfig.generateDir}/Devian.Protocol.{ProtocolName}/Devian.Protocol.{ProtocolName}.csproj`
+- namespace: `Devian.Protocol.{ProtocolName}` (변경 금지)
 
 **TypeScript:**
 - staging: `{tempDir}/{ProtocolGroup}/{ProtocolName}.g.ts`, `index.ts`
 - final: `{tsConfig.generateDir}/devian-network-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
+
+> **생성물 namespace 고정 (Hard Rule):**
+> C# 생성물 namespace는 `Devian.Protocol.{ProtocolName}`으로 고정이며, 런타임 모듈 단일화와 무관하게 변경하지 않는다.
 
 #### Protocol UPM 자동 생성 규칙 (Hard Rule)
 
@@ -536,7 +652,7 @@ computedUpmName = "com.devian.protocol." + normalize(group)
 
 **경로 계산:**
 ```
-stagingDir = {tempDir}/Devian.Network.{group}-upm
+stagingDir = {tempDir}/Devian.Protocol.{ProtocolName}-upm
 targetDir = {upmConfig.generateDir}/{computedUpmName}
 finalDir = {upmConfig.packageDir}/{computedUpmName}
 ```
@@ -547,6 +663,37 @@ finalDir = {upmConfig.packageDir}/{computedUpmName}
 3. `protocols` 배열 내에서 동일한 `computedUpmName`이 계산되면 빌드 **FAIL**
 
 > 덮어쓰기/우선순위 없음. 모든 충돌은 명시적 오류.
+
+---
+
+## Unity C# Compatibility Gate (Hard Rule)
+
+**Unity C# 문법 제한은 `skills/devian/04-unity-csharp-compat/SKILL.md`가 정본이다.**
+
+### DoD (완료 정의) — 하드 게이트
+
+아래 패턴이 적용 범위 경로에서 **1개라도 발견되면 FAIL**:
+
+| 금지 패턴 (정규식) | 탐지 대상 |
+|-------------------|-----------|
+| `\bclass\s+\w+\s*\(` | class primary constructor |
+| `\bstruct\s+\w+\s*\(` | struct primary constructor |
+| `\brecord\b` | record 타입 |
+| `\brequired\b` | required 멤버 |
+| `^\s*namespace\s+.*;\s*$` | file-scoped namespace |
+| `\bglobal\s+using\b` | global using |
+| `\bnew\s*\(\s*\)\s*;?` | target-typed new |
+| `\binit\s*;` | init accessor |
+| `\bdelegate\b[^{;]*\w+\s*\?\s*\(` | delegate 식별자에 `?` 붙은 경우 |
+| `\b[A-Za-z_][A-Za-z0-9_]*\s*\?\?\b` | 타입/선언부에서 `??` 패턴 |
+
+**검사 대상 경로:**
+- `framework-cs/upm-src/`
+- `framework-cs/apps/**/Packages/`
+- UPM 패키지 내부의 `Samples~/` 및 템플릿/샘플 코드도 검사 대상에 포함한다.
+
+> 이 게이트는 "정책 위반이 아니더라도 깨지는 코드"를 잡는 최소 장치다.
+> 상세 규칙은 04 스킬을 참조한다.
 
 ---
 

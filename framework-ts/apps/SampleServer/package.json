@@ -8,7 +8,7 @@
   },
   "dependencies": {
     "ws": "^8.14.0",
-    "@devian/network": "10.0.0",
+    "@devian/core": "10.0.0",
     "@devian/network-sample": "10.0.0"
   },
   "devDependencies": {

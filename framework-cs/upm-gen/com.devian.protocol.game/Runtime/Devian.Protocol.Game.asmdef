@@ -3,8 +3,6 @@
   "rootNamespace": "Devian.Protocol.Game",
   "references": [
     "Devian.Core",
-    "Devian.Network",
-    "Devian.Protobuf",
     "Devian.Module.Common"
   ],
   "includePlatforms": [],

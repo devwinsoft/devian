@@ -618,7 +618,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Google.Protobuf">
-      <HintPath>Packages\com.devian.protobuf\Runtime\Plugins\Google.Protobuf.dll</HintPath>
+      <HintPath>Assets\Plugins\Google.Protobuf.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
@@ -1195,9 +1195,9 @@
       <Project>{A41FBED1-84E8-FF79-54BA-4D656D3E6B93}</Project>
       <Name>Unity.Addressables</Name>
     </ProjectReference>
-    <ProjectReference Include="Devian.Network.csproj">
-      <Project>{BA233111-C828-0A83-8951-CAD8BDC5047A}</Project>
-      <Name>Devian.Network</Name>
+    <ProjectReference Include="PPv2URPConverters.csproj">
+      <Project>{0501A597-946E-F1AE-1BC9-3178AA6A2832}</Project>
+      <Name>PPv2URPConverters</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.RenderPipelines.Core.Runtime.Shared.csproj">
       <Project>{1B9CC5A5-1B05-8F23-4017-32D6215E0134}</Project>
@@ -1218,10 +1218,6 @@
     <ProjectReference Include="Unity.Searcher.Editor.csproj">
       <Project>{3750D0AB-C9AA-4E0C-99D7-7F1D6D32B07A}</Project>
       <Name>Unity.Searcher.Editor</Name>
-    </ProjectReference>
-    <ProjectReference Include="PPv2URPConverters.csproj">
-      <Project>{0501A597-946E-F1AE-1BC9-3178AA6A2832}</Project>
-      <Name>PPv2URPConverters</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.PlasticSCM.Editor.csproj">
       <Project>{3B955328-114A-1D71-290C-D8133DF1E8ED}</Project>
@@ -1358,10 +1354,6 @@
     <ProjectReference Include="Unity.RenderPipelines.Universal.Runtime.csproj">
       <Project>{697DD243-2160-FD46-8E4D-3D74082761D6}</Project>
       <Name>Unity.RenderPipelines.Universal.Runtime</Name>
-    </ProjectReference>
-    <ProjectReference Include="Devian.Protobuf.csproj">
-      <Project>{BBAA3119-7F51-19DC-43E2-F226169AF535}</Project>
-      <Name>Devian.Protobuf</Name>
     </ProjectReference>
     <ProjectReference Include="Unity.VisualScripting.State.csproj">
       <Project>{D06CE759-6D28-6D98-EB9E-D54FA3B6BD38}</Project>

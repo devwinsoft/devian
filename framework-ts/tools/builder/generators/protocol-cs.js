@@ -32,6 +32,7 @@ export function generateCSharpProtocol(spec, protocolName, groupName) {
     lines.push('using System.IO;');
     lines.push('using System.Text;');
     // Note: System.Text.Json 미사용 (Unity 호환성)
+    lines.push('using Devian;');
     lines.push('using Devian.Module.Common;');
     if (usesComplexAliases) {
         lines.push('using Newtonsoft.Json;');
@@ -668,9 +669,9 @@ function generateStub(lines, messages, protocolName, usesComplexAliases = false)
 function generateRuntimeAdapter(lines, messages, protocolName, usesComplexAliases = false) {
     lines.push('        /// <summary>');
     lines.push(`        /// Runtime adapter implementing INetRuntime for ${protocolName}.`);
-    lines.push('        /// Bridges NetworkClient and generated Stub.');
+    lines.push('        /// Bridges NetClient and generated Stub.');
     lines.push('        /// </summary>');
-    lines.push('        public sealed class Runtime : Devian.Network.INetRuntime');
+    lines.push('        public sealed class Runtime : Devian.INetRuntime');
     lines.push('        {');
     lines.push('            private readonly Stub _stub;');
     lines.push('');

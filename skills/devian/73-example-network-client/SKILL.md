@@ -14,7 +14,7 @@ ExampleNetworkServer와의 왕복 통신을 통해 Proxy/Stub + codec + frame �
 ## 핵심 구조
 
 ```typescript
-import { NetworkClient, defaultCodec } from '@devian/network';
+import { NetworkClient, defaultCodec } from '@devian/core';
 import { createClientRuntime } from '@devian/network-game';
 
 // 1. ClientRuntime 생성
@@ -49,7 +49,7 @@ c2gameProxy.sendLoginRequest(0, { ... });
 
 ### Codec 정합
 
-- 클라이언트는 `@devian/network`의 `defaultCodec`을 사용한다
+- 클라이언트는 `@devian/core`의 `defaultCodec`을 사용한다
 - Proxy/Stub에 동일 codec을 주입한다
 
 ### Unknown Opcode 처리
@@ -95,5 +95,5 @@ framework-ts/apps/ExampleNetworkClient/
 ## Reference
 
 - **서버 앱:** `framework-ts/apps/ExampleNetworkServer/`
-- **네트워크 모듈:** `framework-ts/module/devian-network/`
+- **네트워크 모듈:** `framework-ts/module/devian-core/`
 - **프로토콜:** `framework-ts/module-gen/devian-network-game/`

@@ -14,7 +14,7 @@ TypeScript 기반 네트워크 서버 모듈의 설계 원칙과 책임 분리�
 
 ### 1. 공용 모듈과 그룹별 런타임 분리
 
-- **@devian/network**: 공용 코드만 포함
+- **@devian/core**: 공용 코드만 포함
   - WebSocket transport (세션 관리, binary send)
   - Frame 파싱 (int32 LE opcode + payload)
   - Tagged BigInt JSON codec
@@ -25,7 +25,7 @@ TypeScript 기반 네트워크 서버 모듈의 설계 원칙과 책임 분리�
   - Inbound opcode 이름 조회
   - Inbound dispatch (stub.dispatch)
   - Outbound proxy 생성
-  - Devian.Network.{Group} namespace 트리
+  - Devian.Protocol.{Group} namespace 트리
 
 ### 2. Unknown Opcode 정책
 
@@ -39,19 +39,20 @@ Unknown inbound opcode는:
 ## 디렉토리 구조
 
 ```
-framework-ts/module/devian-network/
+framework-ts/module/devian-core/
 ├── src/
 │   ├── index.ts              # 모듈 exports
-│   ├── shared/
-│   │   ├── frame.ts          # 프레임 파싱/생성
-│   │   └── codec.ts          # Tagged BigInt JSON codec
-│   ├── transport/
-│   │   ├── ITransport.ts     # Transport 인터페이스
-│   │   └── WsTransport.ts    # WebSocket 구현
-│   └── protocol/
-│       ├── INetworkRuntime.ts   # 런타임 인터페이스
-│       ├── NetworkServer.ts     # 서버측 메시지 처리
-│       └── NetworkClient.ts     # 클라이언트측 메시지 처리
+│   ├── net/
+│   │   ├── shared/
+│   │   │   ├── frame.ts      # 프레임 파싱/생성
+│   │   │   └── codec.ts      # Tagged BigInt JSON codec
+│   │   ├── transport/
+│   │   │   ├── ITransport.ts # Transport 인터페이스
+│   │   │   └── WsTransport.ts # WebSocket 구현
+│   │   └── protocol/
+│   │       ├── INetworkRuntime.ts   # 런타임 인터페이스
+│   │       ├── NetworkServer.ts     # 서버측 메시지 처리
+│   │       └── NetworkClient.ts     # 클라이언트측 메시지 처리
 ```
 
 ---
@@ -75,7 +76,7 @@ framework-ts/module/devian-network/
 예제 앱은 **조립 + 핸들러 등록만** 수행한다.
 
 ```typescript
-import { WsTransport, NetworkServer, defaultCodec } from '@devian/network';
+import { WsTransport, NetworkServer, defaultCodec } from '@devian/core';
 import { createServerRuntime, Sample2C } from '@devian/network-sample';
 
 const runtime = createServerRuntime(defaultCodec);
@@ -90,6 +91,6 @@ stub.onEcho(async (sessionId, msg) => { ... });
 
 ## Reference
 
-- **공용 모듈:** `framework-ts/module/devian-network/`
+- **공용 모듈:** `framework-ts/module/devian-core/`
 - **그룹 런타임:** `framework-ts/module-gen/devian-network-{group}/generated/ServerRuntime.g.ts`
 - **정책 정본:** `skills/devian/03-ssot/SKILL.md`

@@ -167,7 +167,7 @@ node framework-ts/tools/builder/build.js input/input_common.json
 
 - Sample 프로토콜의 C# 출력은 `csConfig.generateDir` (module-gen)로 반영됨
 - Sample 프로토콜의 UPM 패키지는 `upmConfig.generateDir` (upm-gen)에 자동 생성됨
-- 빌더가 `csConfig.generateDir` 하위에 `Devian.Network.{group}/` 폴더를 자동 생성함
+- 빌더가 `csConfig.generateDir` 하위에 `Devian.Protocol.{ProtocolName}/` 폴더를 자동 생성함
 - Sample UPM 패키지는 `com.devian.protocol.sample`로 자동 명명됨
 
 ---
@@ -215,8 +215,6 @@ Protocol UPM 패키지의 asmdef는 빌더가 자동 생성한다:
   "rootNamespace": "Devian.Protocol.Sample",
   "references": [
     "Devian.Core",
-    "Devian.Network",
-    "Devian.Protobuf",
     "Devian.Module.Common"
   ],
   "noEngineReferences": true

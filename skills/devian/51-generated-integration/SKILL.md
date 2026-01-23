@@ -13,6 +13,21 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 
 ---
 
+## 런타임 참조 정책 (Hard Rule)
+
+**생성물이 런타임을 참조할 때는 `using Devian;`만 사용한다.**
+
+| 구분 | 생성물 namespace | 런타임 참조 |
+|------|------------------|------------|
+| Domain 모듈 | `Devian.Module.{DomainKey}` | `using Devian;` |
+| Protocol 모듈 | `Devian.Protocol.{ProtocolName}` | `using Devian;` |
+
+> **금지 패턴:**
+> 생성물에서 분리된 런타임 하위 네임스페이스 참조 금지.
+> 빌더/제너레이터가 런타임 참조를 생성할 때 `using Devian;`만 사용해야 한다.
+
+---
+
 ## Ownership
 
 - `framework-cs/module-gen/**/*.g.cs`, `framework-ts/module-gen/**/*.g.ts` 는 **기계 소유**다.
@@ -32,32 +47,32 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 
 | 타겟 | Domain 출력 경로 | Protocol 출력 경로 |
 |------|------------------|-------------------|
-| C# | `{csConfig.generateDir}/Devian.Module.{Domain}/` | `{csConfig.generateDir}/Devian.Network.{Group}/` |
+| C# | `{csConfig.generateDir}/Devian.Module.{Domain}/` | `{csConfig.generateDir}/Devian.Protocol.{ProtocolName}/` |
 | TS | `{tsConfig.generateDir}/devian-module-{domain}/` | `{tsConfig.generateDir}/devian-network-{group}/` |
 | Data (ndjson) | `{dataConfig.targetDirs}/{Domain}/ndjson/` | - |
 | Data (bin) | `{dataConfig.targetDirs}/{Domain}/pb64/` (pk 옵션 테이블만) | - |
+
+> **생성물 namespace 고정 (Hard Rule):**
+> C# 생성물 namespace는 `Devian.Protocol.{ProtocolName}`으로 고정이며, 런타임 모듈 단일화와 무관하게 변경하지 않는다.
 
 ### 권장 구조
 
 ```
 framework-cs/
-├── module/                                     # 수동 관리 (Core 런타임 등)
-│   ├── Devian.Core/
-│   ├── Devian.Protobuf/
-│   └── Devian.Network/
+├── module/                                     # 수동 관리 (런타임 모듈)
+│   └── Devian/                                 # 단일 런타임 모듈
+│       └── Devian.csproj
 ├── module-gen/                                 # 생성 산출물 (기계 소유)
 │   ├── Devian.Module.{Domain}/
 │   │   └── generated/
 │   │       └── {Domain}.g.cs
-│   └── Devian.Network.{Group}/
-│       ├── Devian.Network.{Group}.csproj
+│   └── Devian.Protocol.{ProtocolName}/
+│       ├── Devian.Protocol.{ProtocolName}.csproj
 │       └── {ProtocolName}.g.cs
 
 framework-ts/
-├── module/                                     # 수동 관리 (Core 런타임 등)
-│   ├── devian-core/
-│   ├── devian-protobuf/
-│   └── devian-network/
+├── module/                                     # 수동 관리 (런타임 패키지)
+│   └── devian-core/                            # 단일 런타임 패키지 (@devian/core)
 ├── module-gen/                                 # 생성 산출물 (기계 소유)
 │   ├── devian-module-{domain}/
 │   │   ├── generated/
@@ -81,17 +96,16 @@ output/
 
 ## TypeScript Module Configuration
 
-generated TS 코드가 `@devian/core`, `@devian/protobuf` 모듈을 import하기 위해 **paths alias 설정**이 필요하다.
+generated TS 코드가 `@devian/core` 모듈을 import하기 위해 **paths alias 설정**이 필요하다.
 
-### framework/ts/tsconfig.json (루트)
+### framework-ts/tsconfig.json (루트)
 
 ```json
 {
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@devian/core": ["./devian-core/src"],
-      "@devian/protobuf": ["./devian-protobuf/src"]
+      "@devian/core": ["./module/devian-core/src"]
     }
   }
 }
@@ -106,8 +120,7 @@ generated TS 코드가 `@devian/core`, `@devian/protobuf` 모듈을 import하기
 export default {
   resolve: {
     alias: {
-      '@devian/core': path.resolve(__dirname, 'framework/ts/devian-core/src'),
-      '@devian/protobuf': path.resolve(__dirname, 'framework/ts/devian-protobuf/src')
+      '@devian/core': path.resolve(__dirname, 'framework-ts/module/devian-core/src')
     }
   }
 }
@@ -147,8 +160,7 @@ Unity는 `com.unity.nuget.newtonsoft-json` 패키지로 Newtonsoft.Json을 기�
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\module\Devian.Core\Devian.Core.csproj" />
-    <ProjectReference Include="..\..\module\Devian.Network\Devian.Network.csproj" />
+    <ProjectReference Include="..\..\module\Devian\Devian.csproj" />
     <ProjectReference Include="..\Devian.Module.Common\Devian.Module.Common.csproj" />
   </ItemGroup>
 </Project>

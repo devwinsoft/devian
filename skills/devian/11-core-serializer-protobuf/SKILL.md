@@ -30,20 +30,27 @@ Devian v10에서 사용하는 직렬화 정책(Encoding/Decoding)을 정의한�
 
 ## Framework Modules
 
-### C# (Devian.Protobuf)
+### C# (Devian — 단일 모듈)
 
-| 파일 | 역할 |
-|------|------|
-| `DffValue.cs` | DFF 값 타입 정의 |
-| `DffParser.cs` | DFF 문법 파싱 |
-| `DffConverter.cs` | 셀 문자열 → DffValue 변환 |
-| `DffOptions.cs` | DFF 파싱 옵션 |
-| `DffProtobuf.cs` | DFF → Protobuf IMessage 변환 API |
-| `DffProtobufBuilder.cs` | Descriptor 기반 IMessage 빌드 |
-| `IProtoEntity.cs` | Protobuf 엔티티 인터페이스 |
-| `ProtobufEntityConverter.cs` | Protobuf 엔티티 변환 |
+> Devian C# 런타임은 단일 모듈(`Devian.csproj`)로 통합되어 있다.
+> **Protobuf 관련 타입은 `namespace Devian`에 위치한다.** (분리된 하위 네임스페이스 금지)
+> 타입명(`Dff*`, `Protobuf*`, `IProto*`)은 기존 이름을 유지한다.
 
-### TypeScript (devian-protobuf)
+| 파일 | namespace | 역할 |
+|------|-----------|------|
+| `DffValue.cs` | `Devian` | DFF 값 타입 정의 |
+| `DffParser.cs` | `Devian` | DFF 문법 파싱 |
+| `DffConverter.cs` | `Devian` | 셀 문자열 → DffValue 변환 |
+| `DffOptions.cs` | `Devian` | DFF 파싱 옵션 |
+| `DffProtobuf.cs` | `Devian` | DFF → Protobuf IMessage 변환 API |
+| `DffProtobufBuilder.cs` | `Devian` | Descriptor 기반 IMessage 빌드 |
+| `IProtoEntity.cs` | `Devian` | Protobuf 엔티티 인터페이스 |
+| `ProtobufEntityConverter.cs` | `Devian` | Protobuf 엔티티 변환 |
+
+### TypeScript (@devian/core)
+
+> Devian TS 런타임은 단일 패키지(`@devian/core`)로 통합되어 있다.
+> Protobuf 관련 타입은 `@devian/core/proto`에서 export된다.
 
 | 파일 | 역할 |
 |------|------|

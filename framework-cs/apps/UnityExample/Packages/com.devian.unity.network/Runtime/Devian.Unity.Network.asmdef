@@ -2,7 +2,7 @@
   "name": "Devian.Unity.Network",
   "rootNamespace": "Devian.Unity.Network",
   "references": [
-    "Devian.Network"
+    "Devian.Core"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

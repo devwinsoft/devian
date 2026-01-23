@@ -9,6 +9,7 @@ using System.Buffers;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using Devian;
 using Devian.Module.Common;
 
 namespace Devian.Protocol.Sample
@@ -444,9 +445,9 @@ namespace Devian.Protocol.Sample
 
         /// <summary>
         /// Runtime adapter implementing INetRuntime for C2Sample.
-        /// Bridges NetworkClient and generated Stub.
+        /// Bridges NetClient and generated Stub.
         /// </summary>
-        public sealed class Runtime : Devian.Network.INetRuntime
+        public sealed class Runtime : Devian.INetRuntime
         {
             private readonly Stub _stub;
 

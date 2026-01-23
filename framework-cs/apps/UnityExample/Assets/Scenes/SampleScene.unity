@@ -542,9 +542,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 1931013200}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b6d9e81447928564db7121c421f2cec2, type: 3}
+  m_Script: {fileID: 11500000, guid: 0cd3ac0d292359c44bcc5e5f9f4bd024, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Templates.Network::Devian.Templates.Network.EchoWsClientSample
+  m_EditorClassIdentifier: Devian.Sample::Devian.Sample.EchoWsClientSample
   url: ws://localhost:8080
   pingPayload: hello
   echoMessage: echo test
