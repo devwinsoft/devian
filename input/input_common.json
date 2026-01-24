@@ -4,25 +4,27 @@
   "tempDir": "temp",
   "domains": {
     "Common": {
-      "contractsDir": "Common/contracts",
+      "contractDir": "Common/contracts",
       "contractFiles": [
         "*.json"
       ],
-      "tablesDir": "Common/tables",
+      "tableDir": "Common/tables",
+      "tableFiles": [
+        "*.xlsx"
+      ]
+    },
+    "Sample": {
+      "contractDir": "Sample/contracts",
+      "contractFiles": [
+        "*.json"
+      ],
+      "tableDir": "Sample/tables",
       "tableFiles": [
         "*.xlsx"
       ]
     }
   },
   "protocols": [
-    {
-      "group": "Game",
-      "protocolDir": "./Protocols/Game",
-      "protocolFiles": [
-        "C2Game.json",
-        "Game2C.json"
-      ]
-    },
     {
       "group": "Sample",
       "protocolDir": "./Protocols/Sample",

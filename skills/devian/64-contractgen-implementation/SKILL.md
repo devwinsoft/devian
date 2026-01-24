@@ -17,7 +17,7 @@ DATA(DomainType=DATA)에서 사용하는 **contracts JSON 입력 규약**을 정
 
 입력은 input_common.json의 `domains` 섹션이 정본이다.
 
-- `domains[{DomainKey}].contractsDir`
+- `domains[{DomainKey}].contractDir`
 - `domains[{DomainKey}].contractFiles` (예: `["*.json"]`)
 
 ---

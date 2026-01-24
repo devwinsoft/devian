@@ -3,9 +3,7 @@
   "version": "10.0.0",
   "private": true,
   "workspaces": [
-    "module/devian",
-    "module-gen/devian-module-*",
-    "module-gen/devian-network-*",
+    "module/*",
     "apps/*"
   ],
   "devDependencies": {

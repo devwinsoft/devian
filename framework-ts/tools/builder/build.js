@@ -138,6 +138,42 @@ class DevianToolBuilder {
         return result;
     }
 
+    /**
+     * Resolve contract directory from domain config.
+     * Supports new key (contractDir) and legacy key (contractsDir).
+     * Returns resolved absolute path, or undefined if not configured.
+     */
+    resolveContractDir(domainName, config) {
+        // New key takes precedence
+        if (config.contractDir) {
+            return this.resolvePath(config.contractDir);
+        }
+        // Legacy key with deprecation warning
+        if (config.contractsDir) {
+            console.log(`    [Deprecated] domains[${domainName}]: use "contractDir" instead of "contractsDir"`);
+            return this.resolvePath(config.contractsDir);
+        }
+        return undefined;
+    }
+
+    /**
+     * Resolve table directory from domain config.
+     * Supports new key (tableDir) and legacy key (tablesDir).
+     * Returns resolved absolute path, or undefined if not configured.
+     */
+    resolveTableDir(domainName, config) {
+        // New key takes precedence
+        if (config.tableDir) {
+            return this.resolvePath(config.tableDir);
+        }
+        // Legacy key with deprecation warning
+        if (config.tablesDir) {
+            console.log(`    [Deprecated] domains[${domainName}]: use "tableDir" instead of "tablesDir"`);
+            return this.resolvePath(config.tablesDir);
+        }
+        return undefined;
+    }
+
     async run() {
         console.log('='.repeat(60));
         console.log('Devian Build System v10');
@@ -164,6 +200,10 @@ class DevianToolBuilder {
         // 1.5. Forbidden namespace guard (재발 방지)
         console.log('[Guard] Checking forbidden namespaces...');
         this.checkForbiddenNamespaces();
+
+        // 1.6. Unity.Common Editor/Generated guard (재발 방지)
+        console.log('[Guard] Checking unity.common Editor/Generated...');
+        this.checkUnityCommonEditorGenerated();
 
         // 2. Clean temp dir
         console.log('[Phase 0] Cleaning temp directory...');
@@ -197,8 +237,8 @@ class DevianToolBuilder {
             }
         }
 
-        // 4. Clean & Copy to targets (module-gen, upm-gen)
-        console.log('[Phase 2] Materialize to targets (module-gen, upm-gen)...');
+        // 4. Clean & Copy to targets (module, upm)
+        console.log('[Phase 2] Materialize to targets (module, upm)...');
         
         if (this.config.domains) {
             for (const [domainName, domainConfig] of Object.entries(this.config.domains)) {
@@ -212,38 +252,24 @@ class DevianToolBuilder {
             }
         }
 
-        // Note: staticUpmPackages are processed (staging) AND copied to upm-gen
-        // They need upm-gen because they may have generated content (e.g., Editor/Generated)
-        // The upm-gen version is the authoritative source for packageDir sync
+        // Static UPM packages: copy generated content to upm/<pkg>/Runtime/generated (or Editor/Generated)
+        // SSOT: upm is the single source
         if (this.config.staticUpmPackages && Array.isArray(this.config.staticUpmPackages)) {
-            console.log('  [Info] Static UPM packages: staging → upm-gen (materialize generated content)');
+            console.log('  [Info] Static UPM packages: staging/generated → upm/<pkg>/Runtime/generated');
             for (const upmName of this.config.staticUpmPackages) {
-                // Validate static package exists in upm-src
+                // Validate static package exists in upm
                 const pkgPath = path.join(this.upmSourceDir, upmName);
                 if (!fs.existsSync(pkgPath)) {
                     throw new Error(
-                        `[FAIL] Static UPM package not found in upm-src!\n` +
+                        `[FAIL] Static UPM package not found in upm!\n` +
                         `  Package: ${upmName}\n` +
                         `  Expected at: ${pkgPath}\n` +
-                        `  Static packages must exist in upmConfig.sourceDir (manual).`
+                        `  Static packages must exist in upmConfig.sourceDir.`
                     );
                 }
                 
-                // Copy staging (with generated content) to upm-gen
-                await this.copyStaticUpmPackageToGenerateDir({ upmName });
-                
-                // Verify generated content exists in upm-gen (for unity.common)
-                if (upmName === 'com.devian.unity.common') {
-                    const generatedDir = path.join(this.upmGenerateDir, upmName, 'Editor', 'Generated');
-                    if (fs.existsSync(generatedDir)) {
-                        const files = fs.readdirSync(generatedDir).filter(f => f.endsWith('.cs'));
-                        console.log(`    [OK] ${upmName} → upm-gen (${files.length} generated files)`);
-                    } else {
-                        console.log(`    [OK] ${upmName} → upm-gen (no generated files)`);
-                    }
-                } else {
-                    console.log(`    [OK] ${upmName} → upm-gen`);
-                }
+                // Copy only generated content to upm (preserving manual files)
+                await this.copyStaticUpmGeneratedContent({ upmName });
             }
         }
 
@@ -253,13 +279,15 @@ class DevianToolBuilder {
         await this.validateTsModules();
         await this.validateUpmPackages();
 
-        // 6. Sync UPM packages (upm-src + upm-gen → packageDir)
-        console.log('[Phase 4] Sync UPM packages (upm-src + upm-gen → packageDir)...');
+        // 6. Sync UPM packages (upm → packageDir)
+        console.log('[Phase 4] Sync UPM packages (upm → packageDir)...');
         await this.syncUpmToPackageDir();
 
         // Guards: Run after sync (packageDir is now populated)
         await this.verifyUnityCommonTableIdFiles();
         await this.verifyNoDeprecatedPackages();
+        console.log('[Guard] Post-sync: Checking unity.common Editor/Generated...');
+        this.checkUnityCommonEditorGenerated();
 
         // 7. Sync UPM samples metadata
         console.log('[Phase 5] Sync UPM samples metadata...');
@@ -293,76 +321,72 @@ class DevianToolBuilder {
         const contractSpecs = [];
         const tables = [];
 
-        // Load contracts
-        if (config.contractsDir && config.contractFiles) {
-            const contractsDir = this.resolvePath(config.contractsDir);
-
-            // Strict validation: contractsDir must exist
-            if (!fs.existsSync(contractsDir)) {
-                throw new Error(
-                    `[Domain:${domainName}] contractsDir not found: ${contractsDir} (from ${config.contractsDir})`
-                );
-            }
-
-            const files = this.globFiles(contractsDir, config.contractFiles);
-
-            // Strict validation: at least one file must match
-            if (files.length === 0) {
-                throw new Error(
-                    `[Domain:${domainName}] no contract files matched [${config.contractFiles.join(', ')}] in ${contractsDir}`
-                );
-            }
-
-            for (const file of files) {
-                console.log(`    [Contract] ${path.basename(file)}`);
-                const spec = JSON.parse(fs.readFileSync(file, 'utf-8'));
-                contractSpecs.push(spec);
-            }
-        }
-
-        // Load tables
-        if (config.tablesDir && config.tableFiles) {
-            const tablesDir = this.resolvePath(config.tablesDir);
-
-            // Strict validation: tablesDir must exist
-            if (!fs.existsSync(tablesDir)) {
-                throw new Error(
-                    `[Domain:${domainName}] tablesDir not found: ${tablesDir} (from ${config.tablesDir})`
-                );
-            }
-
-            const files = this.globFiles(tablesDir, config.tableFiles);
-
-            // Strict validation: at least one file must match
-            if (files.length === 0) {
-                throw new Error(
-                    `[Domain:${domainName}] no table files matched [${config.tableFiles.join(', ')}] in ${tablesDir}`
-                );
-            }
-
-            for (const file of files) {
-                console.log(`    [Table] ${path.basename(file)}`);
-                const parsedTables = parseXlsx(file);
-                tables.push(...parsedTables);
-
-                // Generate NDJSON and .asset data (individual files per table)
-                // SSOT: Only export if PK is defined and valid rows exist
-                for (const table of parsedTables) {
-                    // NDJSON file (extension .json for tooling, content is NDJSON)
-                    const ndjsonResult = generateTableData(table);
-                    if (ndjsonResult.rowCount > 0 && ndjsonResult.data) {
-                        const ndjsonFileName = `${table.name}.json`;
-                        fs.writeFileSync(path.join(stagingNdjson, ndjsonFileName), ndjsonResult.data);
-                    }
-
-                    // Unity TextAsset .asset file (pk 옵션 있는 테이블만)
-                    // SSOT: skills/devian/28-json-row-io/SKILL.md - pb64 export 규칙
-                    const assetResult = generateTableAsset(table);
-                    if (assetResult) {
-                        fs.writeFileSync(path.join(stagingPb64, `${assetResult.tableName}.asset`), assetResult.yaml);
+        // Resolve contract directory (new: contractDir, legacy: contractsDir)
+        const contractDir = this.resolveContractDir(domainName, config);
+        
+        // Load contracts (SKIP if not configured or not found)
+        if (contractDir && config.contractFiles) {
+            if (!fs.existsSync(contractDir)) {
+                console.log(`    [Skip] contracts: directory not found: ${contractDir}`);
+            } else {
+                const files = this.globFiles(contractDir, config.contractFiles);
+                if (files.length === 0) {
+                    console.log(`    [Skip] contracts: no files matched [${config.contractFiles.join(', ')}] in ${contractDir}`);
+                } else {
+                    for (const file of files) {
+                        console.log(`    [Contract] ${path.basename(file)}`);
+                        const spec = JSON.parse(fs.readFileSync(file, 'utf-8'));
+                        contractSpecs.push(spec);
                     }
                 }
             }
+        } else if (!contractDir && !config.contractFiles) {
+            console.log(`    [Skip] contracts: not configured`);
+        } else {
+            console.log(`    [Skip] contracts: incomplete config (need both contractDir and contractFiles)`);
+        }
+
+        // Resolve table directory (new: tableDir, legacy: tablesDir)
+        const tableDir = this.resolveTableDir(domainName, config);
+        
+        // Load tables (SKIP if not configured or not found)
+        if (tableDir && config.tableFiles) {
+            if (!fs.existsSync(tableDir)) {
+                console.log(`    [Skip] tables: directory not found: ${tableDir}`);
+            } else {
+                const files = this.globFiles(tableDir, config.tableFiles);
+                if (files.length === 0) {
+                    console.log(`    [Skip] tables: no files matched [${config.tableFiles.join(', ')}] in ${tableDir}`);
+                } else {
+                    for (const file of files) {
+                        console.log(`    [Table] ${path.basename(file)}`);
+                        const parsedTables = parseXlsx(file);
+                        tables.push(...parsedTables);
+
+                        // Generate NDJSON and .asset data (individual files per table)
+                        // SSOT: Only export if PK is defined and valid rows exist
+                        for (const table of parsedTables) {
+                            // NDJSON file (extension .json for tooling, content is NDJSON)
+                            const ndjsonResult = generateTableData(table);
+                            if (ndjsonResult.rowCount > 0 && ndjsonResult.data) {
+                                const ndjsonFileName = `${table.name}.json`;
+                                fs.writeFileSync(path.join(stagingNdjson, ndjsonFileName), ndjsonResult.data);
+                            }
+
+                            // Unity TextAsset .asset file (pk 옵션 있는 테이블만)
+                            // SSOT: skills/devian/28-json-row-io/SKILL.md - pb64 export 규칙
+                            const assetResult = generateTableAsset(table);
+                            if (assetResult) {
+                                fs.writeFileSync(path.join(stagingPb64, `${assetResult.tableName}.asset`), assetResult.yaml);
+                            }
+                        }
+                    }
+                }
+            }
+        } else if (!tableDir && !config.tableFiles) {
+            console.log(`    [Skip] tables: not configured`);
+        } else {
+            console.log(`    [Skip] tables: incomplete config (need both tableDir and tableFiles)`);
         }
 
         // Generate unified C# file: {DomainName}.g.cs
@@ -380,10 +404,8 @@ class DevianToolBuilder {
         const indexTsContent = this.generateDomainIndexTs([domainName]);
         fs.writeFileSync(path.join(stagingTsRoot, 'index.ts'), indexTsContent);
 
-        // Generate UPM scaffold if upmTargetDir is configured
-        if (config.upmTargetDir) {
-            this.generateDomainUpmScaffold(domainName, stagingCs, tables);
-        }
+        // Generate Domain UPM scaffold always (domains define module existence)
+        this.generateDomainUpmScaffold(domainName, stagingCs, tables);
     }
 
     generateUnifiedCSharp(domainName, contractSpecs, tables) {
@@ -700,17 +722,85 @@ class DevianToolBuilder {
             }
         }
 
-        // Copy Domain UPM to upm-gen (always, not conditional on config.upmTargetDir)
-        // SSOT: skills/devian/03-ssot/SKILL.md
-        if (!this.upmGenerateDir) {
-            throw new Error('[FAIL] upmConfig.generateDir is required for Domain UPM generation');
-        }
+        // Copy Domain UPM to upm
+        // Rule:
+        // - If upm/<package>/package.json already exists => manual/hybrid package
+        //   => only update Runtime/generated and Editor/Generated (clean+copy), remove legacy folders
+        // - Else => generated-only package
+        //   => copy whole staging package (package-level clean+copy)
         const stagingUpm = path.join(this.tempDir, domainName, 'upm');
         if (fs.existsSync(stagingUpm)) {
             const packageName = `com.devian.module.${domainName.toLowerCase()}`;
-            const target = path.join(this.upmGenerateDir, packageName);
-            this.copyUpmToTarget(stagingUpm, target);
-            console.log(`    [Copy UPM → upm-gen] ${stagingUpm} -> ${target}`);
+            const targetPkgDir = path.join(this.upmSourceDir, packageName);
+            const targetPackageJson = path.join(targetPkgDir, 'package.json');
+
+            const srcRuntimeGenerated = path.join(stagingUpm, 'Runtime', 'generated');
+            const dstRuntimeGenerated = path.join(targetPkgDir, 'Runtime', 'generated');
+
+            const srcEditorGenerated = path.join(stagingUpm, 'Editor', 'Generated');
+            const dstEditorGenerated = path.join(targetPkgDir, 'Editor', 'Generated');
+
+            const asmdefName = `Devian.Module.${domainName}`;
+
+            if (fs.existsSync(targetPackageJson)) {
+                // Manual/Hybrid: protect root, update generated only
+                // First, clean up legacy Generated.* folders and root .g.cs files
+                const targetRuntimeDir = path.join(targetPkgDir, 'Runtime');
+                if (fs.existsSync(targetRuntimeDir)) {
+                    for (const entry of fs.readdirSync(targetRuntimeDir, { withFileTypes: true })) {
+                        // Remove legacy Generated.* directories
+                        if (entry.isDirectory() && entry.name.startsWith('Generated.')) {
+                            const legacyPath = path.join(targetRuntimeDir, entry.name);
+                            fs.rmSync(legacyPath, { recursive: true });
+                            console.log(`    [Cleanup] Removed legacy folder: ${legacyPath}`);
+                        }
+                        // Remove legacy root .g.cs files (e.g., Common.g.cs at Runtime root)
+                        if (entry.isFile() && entry.name.endsWith('.g.cs')) {
+                            const legacyFile = path.join(targetRuntimeDir, entry.name);
+                            fs.unlinkSync(legacyFile);
+                            console.log(`    [Cleanup] Removed legacy file: ${legacyFile}`);
+                        }
+                    }
+                }
+
+                // Update Runtime/generated
+                this.cleanAndCopy(srcRuntimeGenerated, dstRuntimeGenerated);
+                console.log(`    [Copy UPM Runtime/generated] ${srcRuntimeGenerated} -> ${dstRuntimeGenerated}`);
+
+                // Update Editor/Generated (remove if not generated this build)
+                if (fs.existsSync(srcEditorGenerated)) {
+                    this.cleanAndCopy(srcEditorGenerated, dstEditorGenerated);
+                    console.log(`    [Copy UPM Editor/Generated] ${srcEditorGenerated} -> ${dstEditorGenerated}`);
+                } else {
+                    if (fs.existsSync(dstEditorGenerated)) {
+                        fs.rmSync(dstEditorGenerated, { recursive: true });
+                        console.log(`    [Cleanup] Removed stale Editor/Generated: ${dstEditorGenerated}`);
+                    }
+                }
+
+                // Patch Editor asmdef to ensure required references for TableID Editor bindings
+                const editorAsmdefPath = path.join(targetPkgDir, 'Editor', `${asmdefName}.Editor.asmdef`);
+                if (fs.existsSync(editorAsmdefPath)) {
+                    const obj = JSON.parse(fs.readFileSync(editorAsmdefPath, 'utf-8'));
+                    obj.references = obj.references || [];
+                    const requiredRefs = ['Devian.Unity.Common', 'Devian.Unity.Common.Editor'];
+                    let patchedCount = 0;
+                    for (const ref of requiredRefs) {
+                        if (!obj.references.includes(ref)) {
+                            obj.references.push(ref);
+                            patchedCount++;
+                        }
+                    }
+                    if (patchedCount > 0) {
+                        fs.writeFileSync(editorAsmdefPath, JSON.stringify(obj, null, 2) + '\n');
+                        console.log(`    [Patched] Editor asmdef: added ${patchedCount} reference(s)`);
+                    }
+                }
+            } else {
+                // Generated-only: create package root in upm
+                this.copyUpmToTarget(stagingUpm, targetPkgDir);
+                console.log(`    [Copy UPM → upm] ${stagingUpm} -> ${targetPkgDir}`);
+            }
         }
     }
 
@@ -944,6 +1034,17 @@ class DevianToolBuilder {
             this.cleanAndCopy(stagingTs, target);
             console.log(`    [Copy] ${stagingTs} -> ${target}`);
 
+            // Cleanup: Remove non-TS pollution folders if they got copied
+            // (This can happen when protocol group name matches domain name)
+            const pollutionFolders = ['cs', 'data', 'upm', 'ts'];
+            for (const folder of pollutionFolders) {
+                const pollutionPath = path.join(target, folder);
+                if (fs.existsSync(pollutionPath)) {
+                    fs.rmSync(pollutionPath, { recursive: true });
+                    console.log(`    [Cleanup] Removed pollution folder: ${pollutionPath}`);
+                }
+            }
+
             // Generate tsconfig.json if not exists
             this.ensureTsConfig(target);
 
@@ -951,7 +1052,7 @@ class DevianToolBuilder {
             this.ensureProtocolPackageJson(target, groupName, hasServerRuntime, hasClientRuntime);
         }
 
-        // Always copy to UPM generate dir (protocol UPM is always generated)
+        // Always copy to UPM source dir (protocol UPM is Generated-only)
         // UPM name is computed from group name (no manual upmName field)
         const computedUpmName = this.computeProtocolUpmName(groupName);
         
@@ -959,10 +1060,10 @@ class DevianToolBuilder {
         this.validateComputedProtocolUpmName(computedUpmName, groupName);
 
         const stagingUpm = path.join(this.tempDir, `${csProjectName}-upm`);
-        // Copy to upm-gen instead of packageDir directly
-        const upmGenTarget = path.join(this.upmGenerateDir, computedUpmName);
-        this.copyUpmToTarget(stagingUpm, upmGenTarget);
-        console.log(`    [Copy UPM → upm-gen] ${stagingUpm} -> ${upmGenTarget}`);
+        // Copy to upm (single SSOT root)
+        const upmTarget = path.join(this.upmSourceDir, computedUpmName);
+        this.copyUpmToTarget(stagingUpm, upmTarget);
+        console.log(`    [Copy UPM → upm] ${stagingUpm} -> ${upmTarget}`);
     }
 
     /**
@@ -1010,23 +1111,21 @@ class DevianToolBuilder {
 
     /**
      * Validate computed protocol UPM name for conflicts.
-     * Checks against upm-src and already generated upm-gen packages.
+     * Checks against static (manual) packages in upm.
      * @param {string} upmName - Computed UPM package name
      * @param {string} groupName - Original group name (for error messages)
      */
     validateComputedProtocolUpmName(upmName, groupName) {
-        // Check conflict with upm-src
-        if (this.upmSourceDir) {
-            const srcPath = path.join(this.upmSourceDir, upmName);
-            if (fs.existsSync(srcPath)) {
-                throw new Error(
-                    `[FAIL] Computed protocol UPM name conflicts with upm-src!\n` +
-                    `  Group: ${groupName}\n` +
-                    `  Computed UPM name: ${upmName}\n` +
-                    `  Conflict path: ${srcPath}\n` +
-                    `  Solution: Rename the group or remove the conflicting package from upm-src.`
-                );
-            }
+        // Check conflict with static (manual) packages
+        const staticPackages = this.config.staticUpmPackages || [];
+        if (staticPackages.includes(upmName)) {
+            throw new Error(
+                `[FAIL] Computed protocol UPM name conflicts with static package!\n` +
+                `  Group: ${groupName}\n` +
+                `  Computed UPM name: ${upmName}\n` +
+                `  This name is listed in staticUpmPackages (manual package).\n` +
+                `  Solution: Rename the group or remove from staticUpmPackages if it should be generated.`
+            );
         }
 
         // Track generated protocol UPM names for duplicate detection
@@ -1579,12 +1678,12 @@ export * from './features';
         const asmdefName = `Devian.Module.${domainName}`;
         const stagingUpm = path.join(this.tempDir, domainName, 'upm');
         const stagingRuntime = path.join(stagingUpm, 'Runtime');
+        const stagingGenerated = path.join(stagingRuntime, 'generated');
         const stagingEditor = path.join(stagingUpm, 'Editor');
 
         fs.mkdirSync(stagingRuntime, { recursive: true });
+        fs.mkdirSync(stagingGenerated, { recursive: true });
         fs.mkdirSync(stagingEditor, { recursive: true });
-        // Note: Editor/Generated is NOT created here - TableID bindings go to com.devian.unity.common
-        // SSOT: skills/devian/19-unity-module-common-upm/SKILL.md
 
         // package.json - SSOT: skills/devian/17-upm-package-metadata/SKILL.md
         const isCommon = domainName === 'Common';
@@ -1627,9 +1726,9 @@ export * from './features';
         };
         fs.writeFileSync(path.join(stagingRuntime, `${asmdefName}.asmdef`), JSON.stringify(runtimeAsmdef, null, 2));
 
-        // Editor.asmdef - minimal references (no TableID support needed, handled by com.devian.unity.common)
+        // Editor.asmdef - includes refs for TableID Editor bindings (base classes in Devian.Unity.Common.Editor)
         // SSOT: skills/devian/19-unity-module-common-upm/SKILL.md
-        const editorReferences = [asmdefName];
+        const editorReferences = [asmdefName, 'Devian.Unity.Common', 'Devian.Unity.Common.Editor'];
         const editorAsmdef = {
             name: `${asmdefName}.Editor`,
             rootNamespace: `${asmdefName}.Editor`,
@@ -1646,29 +1745,42 @@ export * from './features';
         };
         fs.writeFileSync(path.join(stagingEditor, `${asmdefName}.Editor.asmdef`), JSON.stringify(editorAsmdef, null, 2));
 
-        // Copy C# generated files to Runtime
+        // Copy C# generated files to Runtime/generated
         if (fs.existsSync(stagingCs)) {
             for (const file of fs.readdirSync(stagingCs)) {
                 if (file.endsWith('.cs')) {
                     fs.copyFileSync(
                         path.join(stagingCs, file),
-                        path.join(stagingRuntime, file)
+                        path.join(stagingGenerated, file)
                     );
                 }
             }
         }
 
-        // Note: TableID Editor bindings ({TableName}_ID.Editor.cs) are NOT generated here.
-        // They are generated by processStaticUpmPackage() into com.devian.unity.common/Editor/Generated/
-        // SSOT: skills/devian/21-unity-common-upm/SKILL.md
+        // Generate TableID Editor bindings into this domain module package
+        // SSOT: skills/devian/19-unity-module-common-upm/SKILL.md
+        const keyedTables = (tables || []).filter(t => t && t.keyField);
+        if (keyedTables.length > 0) {
+            const editorGeneratedDir = path.join(stagingUpm, 'Editor', 'Generated');
+            fs.mkdirSync(editorGeneratedDir, { recursive: true });
+
+            let generatedCount = 0;
+            for (const table of keyedTables) {
+                const editorCode = this.generateTableIdEditorCs(domainName, table);
+                const editorFileName = `${table.name}_ID.Editor.cs`;
+                fs.writeFileSync(path.join(editorGeneratedDir, editorFileName), editorCode);
+                generatedCount++;
+            }
+            console.log(`    [Generated] ${generatedCount} TableID Editor file(s) to ${editorGeneratedDir}`);
+        }
 
         // Common 모듈일 때 Features 폴더 복사 (Logger/Variant/Complex)
         // SSOT: skills/devian/19-unity-module-common-upm/SKILL.md
         if (isCommon) {
-            // Use csGenerateDir if available, fallback to module-gen
+            // Use csGenerateDir (unified module root)
             const featuresSource = this.csGenerateDir
                 ? path.join(this.csGenerateDir, 'Devian.Module.Common', 'features')
-                : path.join(this.rootDir, 'framework-cs/module-gen/Devian.Module.Common/features');
+                : path.join(this.rootDir, 'framework-cs/module/Devian.Module.Common/features');
             const featuresTarget = path.join(stagingRuntime, 'Features');
             
             if (fs.existsSync(featuresSource)) {
@@ -1818,10 +1930,14 @@ export * from './features';
         // SSOT: skills/devian/16-unity-upm-samples/SKILL.md
         this.validateUpmSampleStructure(stagingUpm, upmName);
 
-        // Generate TableID Editor bindings for com.devian.unity.common
-        // SSOT: skills/devian/21-unity-common-upm/SKILL.md
+        // Safety: Remove legacy Editor/Generated from unity.common staging
+        // TableID Editor bindings are now generated into each domain module package
         if (upmName === 'com.devian.unity.common') {
-            await this.generateTableIdEditorForUnityCommon(stagingUpm);
+            const legacyGenerated = path.join(stagingUpm, 'Editor', 'Generated');
+            if (fs.existsSync(legacyGenerated)) {
+                fs.rmSync(legacyGenerated, { recursive: true });
+                console.log(`    [Cleanup] Removed legacy Editor/Generated from unity.common staging`);
+            }
         }
     }
 
@@ -1959,55 +2075,59 @@ export * from './features';
     }
 
     /**
-     * Generate {TableName}_ID.Editor.cs files for all domains into com.devian.unity.common staging.
-     * SSOT: skills/devian/21-unity-common-upm/SKILL.md
-     */
-    async generateTableIdEditorForUnityCommon(stagingUpm) {
-        const generatedDir = path.join(stagingUpm, 'Editor', 'Generated');
-        fs.mkdirSync(generatedDir, { recursive: true });
-
-        let generatedCount = 0;
-        for (const [domainName, tables] of this.domainTables.entries()) {
-            const keyedTables = tables.filter(t => t.keyField);
-            for (const table of keyedTables) {
-                const editorCode = this.generateTableIdEditorCs(domainName, table);
-                const editorFileName = `${table.name}_ID.Editor.cs`;
-                fs.writeFileSync(path.join(generatedDir, editorFileName), editorCode);
-                generatedCount++;
-            }
-        }
-
-        if (generatedCount > 0) {
-            console.log(`    [Generated] ${generatedCount} TableID Editor file(s) to ${generatedDir}`);
-        }
-    }
-
-    /**
-     * Copy static UPM package from staging to upm-gen (clean+copy).
-     * Target path is computed from upmConfig.generateDir + upmName.
+     * Copy generated content from staging to upm/<pkg>.
+     * Target path is computed from upmConfig.sourceDir + upmName.
+     * Only copies generated content (Editor/Generated, Runtime/generated) to upm,
+     * preserving manual files.
      * Final sync to packageDir happens in syncUpmToPackageDir().
      * @param {Object} pkgConfig - { upmName }
      */
-    async copyStaticUpmPackageToGenerateDir(pkgConfig) {
+    async copyStaticUpmGeneratedContent(pkgConfig) {
         const { upmName } = pkgConfig;
         
         const stagingUpm = path.join(this.tempDir, `static-${upmName}`);
-        // Copy to upm-gen, not packageDir directly
-        const targetPath = path.join(this.upmGenerateDir, upmName);
+        const targetPath = path.join(this.upmSourceDir, upmName);
 
         if (!fs.existsSync(stagingUpm)) {
             console.log(`  [SKIP] ${upmName}: staging not found`);
             return;
         }
 
-        // Clean target
-        if (fs.existsSync(targetPath)) {
-            fs.rmSync(targetPath, { recursive: true });
+        // Copy only generated content (preserving manual files)
+        // Generated content locations: Editor/Generated, Runtime/generated
+        const generatedPaths = [
+            { src: 'Editor/Generated', dest: 'Editor/Generated' },
+            { src: 'Runtime/generated', dest: 'Runtime/generated' }
+        ];
+
+        let copiedCount = 0;
+        for (const { src, dest } of generatedPaths) {
+            const srcPath = path.join(stagingUpm, src);
+            const destPath = path.join(targetPath, dest);
+            
+            if (fs.existsSync(srcPath)) {
+                // Clean dest and copy from staging
+                if (fs.existsSync(destPath)) {
+                    fs.rmSync(destPath, { recursive: true });
+                }
+                fs.mkdirSync(destPath, { recursive: true });
+                this.copyDirRecursive(srcPath, destPath);
+                
+                const files = fs.readdirSync(destPath).filter(f => f.endsWith('.cs') || f.endsWith('.ts'));
+                console.log(`    [OK] ${upmName}/${src} → upm (${files.length} files)`);
+                copiedCount += files.length;
+            } else {
+                // Source doesn't exist: remove stale dest if present
+                if (fs.existsSync(destPath)) {
+                    fs.rmSync(destPath, { recursive: true });
+                    console.log(`    [Cleanup] ${upmName}/${dest} → removed stale generated folder`);
+                }
+            }
         }
 
-        // Copy staging to upm-gen
-        this.copyDirRecursive(stagingUpm, targetPath);
-        console.log(`  [UPM → upm-gen] ${upmName} → ${targetPath}`);
+        if (copiedCount === 0) {
+            console.log(`    [OK] ${upmName} → upm (no generated content)`);
+        }
     }
 
     /**
@@ -2043,9 +2163,9 @@ export * from './features';
                 console.error(`       - ${file}`);
             }
             console.error();
-            console.error('Fix: Add staticUpmPackages for com.devian.unity.common in input json:');
+            console.error('Fix: Add com.devian.unity.common to staticUpmPackages in config.json:');
             console.error('  "staticUpmPackages": [');
-            console.error('    { "upmName": "com.devian.unity.common" }');
+            console.error('    "com.devian.unity.common"');
             console.error('  ]');
             console.error();
             throw new Error('[FAIL] com.devian.unity.common is missing Editor/TableId base files.');
@@ -2414,89 +2534,34 @@ export * from './features';
     }
 
     /**
-     * Sync UPM packages from upm-src and upm-gen to packageDir.
+     * Sync UPM packages from upm to packageDir.
      * 
-     * Both upm-src and upm-gen are "complete UPM packages".
-     * If the same package name exists in both, it's a conflict (FAIL).
+     * SSOT: upm is the single source of truth for all UPM packages.
+     * This sync copies all packages from upm to packageDir (Unity Packages).
      * 
      * SSOT: skills/devian/03-ssot/SKILL.md
      */
     async syncUpmToPackageDir() {
-        if (!this.upmGenerateDir || !this.upmPackageDir) {
-            console.log('  [SKIP] upmGenerateDir or upmPackageDir not configured');
+        if (!this.upmSourceDir || !this.upmPackageDir) {
+            console.log('  [SKIP] upmSourceDir or upmPackageDir not configured');
             return;
         }
 
-        // Hybrid exception: staticUpmPackages can exist in both upm-src and upm-gen
-        // In this case, upm-gen is authoritative (contains generated content)
-        const hybridPackages = new Set(this.config.staticUpmPackages || []);
-
-        // Collect package names from upm-src
-        const upmSrcPackages = new Set();
+        // Collect package names from upm
+        const upmPackages = new Set();
         if (fs.existsSync(this.upmSourceDir)) {
-            const srcEntries = fs.readdirSync(this.upmSourceDir, { withFileTypes: true });
-            for (const entry of srcEntries) {
+            const entries = fs.readdirSync(this.upmSourceDir, { withFileTypes: true });
+            for (const entry of entries) {
                 if (entry.isDirectory() && !entry.name.startsWith('.')) {
-                    upmSrcPackages.add(entry.name);
+                    upmPackages.add(entry.name);
                 }
             }
         }
 
-        // Collect package names from upm-gen
-        const upmGenPackages = new Set();
-        if (fs.existsSync(this.upmGenerateDir)) {
-            const genEntries = fs.readdirSync(this.upmGenerateDir, { withFileTypes: true });
-            for (const entry of genEntries) {
-                if (entry.isDirectory() && !entry.name.startsWith('.')) {
-                    upmGenPackages.add(entry.name);
-                }
-            }
-        }
-
-        // HARD RULE: Any conflict between upm-src and upm-gen is FAIL
-        // EXCEPTION: staticUpmPackages (hybrid) are allowed in both - upm-gen is authoritative
-        const conflicts = [];
-        for (const genPkg of upmGenPackages) {
-            if (upmSrcPackages.has(genPkg) && !hybridPackages.has(genPkg)) {
-                conflicts.push(genPkg);
-            }
-        }
-
-        if (conflicts.length > 0) {
-            throw new Error(
-                `[FAIL] UPM package name conflict detected!\n` +
-                `  The following package(s) exist in both upm-src and upm-gen:\n` +
-                conflicts.map(c => `    - ${c}`).join('\n') + '\n' +
-                `  This is not allowed. Both directories contain "complete UPM packages".\n` +
-                `  Having the same package name in both makes the source of truth ambiguous.\n` +
-                `  Solution: Rename or remove one of the conflicting packages.\n` +
-                `  (Note: staticUpmPackages are allowed in both - upm-gen is authoritative)\n` +
-                `  upm-src: ${this.upmSourceDir}\n` +
-                `  upm-gen: ${this.upmGenerateDir}`
-            );
-        }
-
-        // GUARD: staticUpmPackages that exist in upm-src MUST also exist in upm-gen after build
-        // This prevents "generated content being lost" scenario
-        for (const hybridPkg of hybridPackages) {
-            if (upmSrcPackages.has(hybridPkg) && !upmGenPackages.has(hybridPkg)) {
-                throw new Error(
-                    `[FAIL] Static UPM package missing from upm-gen!\n` +
-                    `  Package: ${hybridPkg}\n` +
-                    `  This package is in staticUpmPackages and exists in upm-src,\n` +
-                    `  but was not materialized to upm-gen.\n` +
-                    `  This means generated content (e.g., Editor/Generated) would be lost.\n` +
-                    `  Fix: Ensure copyStaticUpmPackageToGenerateDir() is called for this package.`
-                );
-            }
-        }
-
-        // Phase 1: Sync upm-src packages to packageDir
-        // SKIP hybrid packages (they come from upm-gen instead)
-        const srcPackagesToSync = [...upmSrcPackages].filter(pkg => !hybridPackages.has(pkg));
-        if (srcPackagesToSync.length > 0) {
-            console.log(`  [Sync] upm-src → packageDir (${srcPackagesToSync.length} packages, ${hybridPackages.size} hybrid skipped)`);
-            for (const pkgName of srcPackagesToSync) {
+        // Sync all upm packages to packageDir
+        if (upmPackages.size > 0) {
+            console.log(`  [Sync] upm → packageDir (${upmPackages.size} packages)`);
+            for (const pkgName of upmPackages) {
                 const sourcePath = path.join(this.upmSourceDir, pkgName);
                 const targetPath = path.join(this.upmPackageDir, pkgName);
 
@@ -2506,31 +2571,11 @@ export * from './features';
                 }
 
                 // Copy package to packageDir
+                fs.mkdirSync(targetPath, { recursive: true });
                 this.copyDirRecursive(sourcePath, targetPath);
-                console.log(`    [UPM] ${pkgName} (src) → ${targetPath}`);
+                console.log(`    [UPM] ${pkgName} → ${targetPath}`);
             }
-        }
-
-        // Phase 2: Sync upm-gen packages to packageDir (includes hybrid packages)
-        if (upmGenPackages.size > 0) {
-            console.log(`  [Sync] upm-gen → packageDir (${upmGenPackages.size} packages)`);
-            for (const pkgName of upmGenPackages) {
-                const sourcePath = path.join(this.upmGenerateDir, pkgName);
-                const targetPath = path.join(this.upmPackageDir, pkgName);
-
-                // Clean target (package-level clean)
-                if (fs.existsSync(targetPath)) {
-                    fs.rmSync(targetPath, { recursive: true });
-                }
-
-                // Copy package to packageDir
-                this.copyDirRecursive(sourcePath, targetPath);
-                const isHybrid = hybridPackages.has(pkgName) ? ' [hybrid]' : '';
-                console.log(`    [UPM] ${pkgName} (gen)${isHybrid} → ${targetPath}`);
-            }
-        }
-
-        if (srcPackagesToSync.length === 0 && upmGenPackages.size === 0) {
+        } else {
             console.log('  [SKIP] No packages to sync');
         }
     }
@@ -2606,11 +2651,10 @@ export * from './features';
 
         if (!upmConfig) {
             throw new Error(
-                '[FAIL] Missing required "upmConfig" section in input json.\n' +
+                '[FAIL] Missing required "upmConfig" section in config.json.\n' +
                 '  Required fields:\n' +
                 '    "upmConfig": {\n' +
                 '      "sourceDir": "../framework-cs/upm",\n' +
-                '      "generateDir": "../framework-cs/upm-gen",\n' +
                 '      "packageDir": "../framework-cs/apps/UnityExample/Packages"\n' +
                 '    }'
             );
@@ -2623,13 +2667,6 @@ export * from './features';
             );
         }
 
-        if (!upmConfig.generateDir || typeof upmConfig.generateDir !== 'string') {
-            throw new Error(
-                '[FAIL] Missing or invalid "upmConfig.generateDir".\n' +
-                '  Expected: path to generated UPM packages root (e.g., "../framework-cs/upm-gen")'
-            );
-        }
-
         if (!upmConfig.packageDir || typeof upmConfig.packageDir !== 'string') {
             throw new Error(
                 '[FAIL] Missing or invalid "upmConfig.packageDir".\n' +
@@ -2637,36 +2674,40 @@ export * from './features';
             );
         }
 
-        // Resolve and validate paths
+        // Resolve and validate paths (upm is single SSOT)
         this.upmSourceDir = this.resolvePath(upmConfig.sourceDir);
-        this.upmGenerateDir = this.resolvePath(upmConfig.generateDir);
         this.upmPackageDir = this.resolvePath(upmConfig.packageDir);
 
-        // Create upm-gen directory if it doesn't exist
-        if (!fs.existsSync(this.upmGenerateDir)) {
-            fs.mkdirSync(this.upmGenerateDir, { recursive: true });
-        }
-
         console.log(`  [OK] upmConfig.sourceDir: ${this.upmSourceDir}`);
-        console.log(`  [OK] upmConfig.generateDir: ${this.upmGenerateDir}`);
         console.log(`  [OK] upmConfig.packageDir: ${this.upmPackageDir}`);
 
         // Validate csConfig (required)
+        // generateDir is optional/deprecated - falls back to moduleDir (unified structure)
         if (this.config.csConfig) {
             const csConfig = this.config.csConfig;
-            if (csConfig.generateDir) {
-                this.csGenerateDir = this.resolvePath(csConfig.generateDir);
-                console.log(`  [OK] csConfig.generateDir: ${this.csGenerateDir}`);
-            }
             if (csConfig.moduleDir) {
                 this.csModuleDir = this.resolvePath(csConfig.moduleDir);
                 console.log(`  [OK] csConfig.moduleDir: ${this.csModuleDir}`);
             }
+            // generateDir: use if specified, otherwise fall back to moduleDir (unified)
+            if (csConfig.generateDir) {
+                this.csGenerateDir = this.resolvePath(csConfig.generateDir);
+                console.log(`  [OK] csConfig.generateDir: ${this.csGenerateDir}`);
+            } else if (this.csModuleDir) {
+                this.csGenerateDir = this.csModuleDir;
+                console.log(`  [OK] csConfig.generateDir: ${this.csGenerateDir} (unified with moduleDir)`);
+            }
         }
 
         // Validate tsConfig (optional, for backward compatibility)
+        // generateDir is optional/deprecated - falls back to moduleDir (unified structure)
         if (this.config.tsConfig) {
             const tsConfig = this.config.tsConfig;
+            if (tsConfig.moduleDir) {
+                this.tsModuleDir = this.resolvePath(tsConfig.moduleDir);
+                console.log(`  [OK] tsConfig.moduleDir: ${this.tsModuleDir}`);
+            }
+            // generateDir: use if specified, otherwise fall back to moduleDir (unified)
             if (tsConfig.generateDir) {
                 this.tsGenerateDir = this.resolvePath(tsConfig.generateDir);
                 console.log(`  [OK] tsConfig.generateDir: ${this.tsGenerateDir}`);
@@ -2675,10 +2716,9 @@ export * from './features';
                 if (!fs.existsSync(this.tsGenerateDir)) {
                     fs.mkdirSync(this.tsGenerateDir, { recursive: true });
                 }
-            }
-            if (tsConfig.moduleDir) {
-                this.tsModuleDir = this.resolvePath(tsConfig.moduleDir);
-                console.log(`  [OK] tsConfig.moduleDir: ${this.tsModuleDir}`);
+            } else if (this.tsModuleDir) {
+                this.tsGenerateDir = this.tsModuleDir;
+                console.log(`  [OK] tsConfig.generateDir: ${this.tsGenerateDir} (unified with moduleDir)`);
             }
         }
 
@@ -2695,80 +2735,16 @@ export * from './features';
     }
 
     /**
-     * Validate path guards to prevent accidental modification of manual directories.
+     * Validate path guards to prevent accidental modification of dangerous directories.
+     * Note: generateDir == moduleDir is now allowed (unified structure).
      * SSOT: skills/devian/03-ssot/SKILL.md
      */
     validatePathGuards() {
-        // Guard 1: csGenerateDir must not be inside or equal to csModuleDir
-        if (this.csModuleDir && this.csGenerateDir) {
-            const normalizedModule = path.resolve(this.csModuleDir);
-            const normalizedGenerate = path.resolve(this.csGenerateDir);
-            
-            if (normalizedGenerate === normalizedModule || 
-                normalizedGenerate.startsWith(normalizedModule + path.sep)) {
-                throw new Error(
-                    `[FAIL] Path Guard Violation!\n` +
-                    `  csConfig.generateDir cannot be inside or equal to csConfig.moduleDir.\n` +
-                    `  moduleDir: ${this.csModuleDir}\n` +
-                    `  generateDir: ${this.csGenerateDir}`
-                );
-            }
-        }
-
-        // Guard 2: upmGenerateDir must not be inside or equal to upmSourceDir
-        if (this.upmSourceDir && this.upmGenerateDir) {
-            const normalizedSource = path.resolve(this.upmSourceDir);
-            const normalizedGenerate = path.resolve(this.upmGenerateDir);
-            
-            if (normalizedGenerate === normalizedSource || 
-                normalizedGenerate.startsWith(normalizedSource + path.sep)) {
-                throw new Error(
-                    `[FAIL] Path Guard Violation!\n` +
-                    `  upmConfig.generateDir cannot be inside or equal to upmConfig.sourceDir.\n` +
-                    `  sourceDir: ${this.upmSourceDir}\n` +
-                    `  generateDir: ${this.upmGenerateDir}`
-                );
-            }
-        }
-
-        // Guard 3: tsGenerateDir must not be inside or equal to tsModuleDir
-        // SSOT: tsConfig.moduleDir and tsConfig.generateDir MUST be different paths
-        if (this.tsModuleDir && this.tsGenerateDir) {
-            const normalizedModule = path.resolve(this.tsModuleDir);
-            const normalizedGenerate = path.resolve(this.tsGenerateDir);
-            
-            // HARD RULE: moduleDir == generateDir is now FORBIDDEN
-            if (normalizedGenerate === normalizedModule) {
-                throw new Error(
-                    `[FAIL] Path Guard Violation!\n` +
-                    `  tsConfig.moduleDir must be different from tsConfig.generateDir.\n` +
-                    `  moduleDir: ${this.tsModuleDir}\n` +
-                    `  generateDir: ${this.tsGenerateDir}\n` +
-                    `  TS modules are now separated like C#:\n` +
-                    `    - moduleDir (framework-ts/module): manual modules, read-only\n` +
-                    `    - generateDir (framework-ts/module-gen): generated modules, build outputs`
-                );
-            }
-            
-            // generateDir cannot be inside moduleDir
-            if (normalizedGenerate.startsWith(normalizedModule + path.sep)) {
-                throw new Error(
-                    `[FAIL] Path Guard Violation!\n` +
-                    `  tsConfig.generateDir cannot be inside tsConfig.moduleDir.\n` +
-                    `  moduleDir: ${this.tsModuleDir}\n` +
-                    `  generateDir: ${this.tsGenerateDir}`
-                );
-            }
-        }
-
-        // Guard 4: generateDirs must not be repo root or dangerous paths
+        // Guard: generateDirs must not be repo root or dangerous paths
         const dangerousPaths = [this.rootDir, path.dirname(this.rootDir), '/'];
         for (const dangerous of dangerousPaths) {
             if (this.csGenerateDir && path.resolve(this.csGenerateDir) === path.resolve(dangerous)) {
                 throw new Error(`[FAIL] csConfig.generateDir cannot be repo root or parent: ${this.csGenerateDir}`);
-            }
-            if (this.upmGenerateDir && path.resolve(this.upmGenerateDir) === path.resolve(dangerous)) {
-                throw new Error(`[FAIL] upmConfig.generateDir cannot be repo root or parent: ${this.upmGenerateDir}`);
             }
             if (this.tsGenerateDir && path.resolve(this.tsGenerateDir) === path.resolve(dangerous)) {
                 throw new Error(`[FAIL] tsConfig.generateDir cannot be repo root or parent: ${this.tsGenerateDir}`);
@@ -2950,9 +2926,8 @@ export * from './features';
     }
 
     /**
-     * Validate C# modules (module and module-gen).
-     * - module: manual modules, must exist and have valid .csproj
-     * - module-gen: generated modules, must have valid .csproj
+     * Validate C# modules in unified module directory.
+     * All modules must exist and have valid .csproj files.
      * SSOT: skills/devian/03-ssot/SKILL.md
      */
     async validateCsModules() {
@@ -2986,8 +2961,8 @@ export * from './features';
             }
         }
         
-        // Validate module-gen (generated) - must have valid .csproj for each module
-        if (this.csGenerateDir && fs.existsSync(this.csGenerateDir)) {
+        // Validate generated modules - when generateDir differs from moduleDir
+        if (this.csGenerateDir && this.csGenerateDir !== this.csModuleDir && fs.existsSync(this.csGenerateDir)) {
             const genEntries = fs.readdirSync(this.csGenerateDir, { withFileTypes: true });
             let genCount = 0;
             
@@ -3010,15 +2985,14 @@ export * from './features';
             }
             
             if (genCount > 0) {
-                console.log(`    [OK] module-gen: ${genCount} modules validated (generated)`);
+                console.log(`    [OK] module (generated): ${genCount} modules validated`);
             }
         }
     }
 
     /**
-     * Validate TS modules (module and module-gen).
-     * Both must be "complete TS modules" with:
-     * - package.json at root
+     * Validate TS modules in unified module directory.
+     * All modules must have package.json at root.
      * SSOT: skills/devian/03-ssot/SKILL.md
      */
     async validateTsModules() {
@@ -3054,8 +3028,8 @@ export * from './features';
             }
         }
         
-        // Validate tsGenerateDir (generated) - must have valid package.json for each module
-        if (this.tsGenerateDir && fs.existsSync(this.tsGenerateDir)) {
+        // Validate tsGenerateDir (generated) - when generateDir differs from moduleDir
+        if (this.tsGenerateDir && this.tsGenerateDir !== this.tsModuleDir && fs.existsSync(this.tsGenerateDir)) {
             const genEntries = fs.readdirSync(this.tsGenerateDir, { withFileTypes: true });
             let genCount = 0;
             
@@ -3080,7 +3054,7 @@ export * from './features';
             }
             
             if (genCount > 0) {
-                console.log(`    [OK] ts module-gen: ${genCount} modules validated (generated)`);
+                console.log(`    [OK] ts module (generated): ${genCount} modules validated`);
             }
         }
     }
@@ -3102,8 +3076,8 @@ export * from './features';
     }
 
     /**
-     * Validate UPM packages (upm-src and upm-gen).
-     * Both must be "complete UPM packages" with:
+     * Validate UPM packages (upm only, single SSOT).
+     * All packages must be "complete UPM packages" with:
      * - package.json at root
      * - package.json.name matches folder name
      * - Required asmdef files for Runtime/Editor
@@ -3112,19 +3086,11 @@ export * from './features';
     async validateUpmPackages() {
         console.log('  [Validate] UPM packages...');
         
-        // Validate upm-src (manual)
+        // Validate upm (single SSOT)
         if (this.upmSourceDir && fs.existsSync(this.upmSourceDir)) {
-            const srcCount = await this.validateUpmDir(this.upmSourceDir, 'upm-src');
-            if (srcCount > 0) {
-                console.log(`    [OK] upm-src: ${srcCount} packages validated (manual)`);
-            }
-        }
-        
-        // Validate upm-gen (generated)
-        if (this.upmGenerateDir && fs.existsSync(this.upmGenerateDir)) {
-            const genCount = await this.validateUpmDir(this.upmGenerateDir, 'upm-gen');
-            if (genCount > 0) {
-                console.log(`    [OK] upm-gen: ${genCount} packages validated (generated)`);
+            const count = await this.validateUpmDir(this.upmSourceDir, 'upm');
+            if (count > 0) {
+                console.log(`    [OK] upm: ${count} packages validated`);
             }
         }
     }
@@ -3197,10 +3163,10 @@ export * from './features';
     checkForbiddenNamespaces() {
         const forbiddenPattern = 'Devian.Module.Common.Features';
         
-        // Use csGenerateDir/upmGenerateDir if available, fallback to hardcoded paths
+        // Use csGenerateDir (unified module root)
         const csModuleCommonDir = this.csGenerateDir
             ? path.join(this.csGenerateDir, 'Devian.Module.Common')
-            : path.join(this.rootDir, 'framework-cs/module-gen/Devian.Module.Common');
+            : path.join(this.rootDir, 'framework-cs/module/Devian.Module.Common');
         
         const targetDirs = [
             csModuleCommonDir,
@@ -3208,10 +3174,10 @@ export * from './features';
             path.join(this.rootDir, 'framework-cs/apps/UnityExample/Packages/com.devian.unity.common'),
         ];
         
-        // Also scan upm-gen directories if available
-        if (this.upmGenerateDir) {
-            targetDirs.push(path.join(this.upmGenerateDir, 'com.devian.module.common'));
-            targetDirs.push(path.join(this.upmGenerateDir, 'com.devian.unity.common'));
+        // Also scan upm directories
+        if (this.upmSourceDir) {
+            targetDirs.push(path.join(this.upmSourceDir, 'com.devian.module.common'));
+            targetDirs.push(path.join(this.upmSourceDir, 'com.devian.unity.common'));
         }
 
         const violations = [];
@@ -3263,6 +3229,44 @@ export * from './features';
         }
 
         return results;
+    }
+
+    /**
+     * Guard: com.devian.unity.common must NOT contain Editor/Generated.
+     * Editor/Generated for TableID inspection belongs to com.devian.module.* packages.
+     * If this folder exists in unity.common, it indicates a routing/mapping error.
+     * SSOT: skills/devian/03-ssot/SKILL.md
+     */
+    checkUnityCommonEditorGenerated() {
+        const forbiddenPaths = [
+            path.join(this.rootDir, 'framework-cs/upm/com.devian.unity.common/Editor/Generated'),
+            path.join(this.rootDir, 'framework-cs/apps/UnityExample/Packages/com.devian.unity.common/Editor/Generated'),
+        ];
+
+        const violations = [];
+
+        for (const forbiddenPath of forbiddenPaths) {
+            if (fs.existsSync(forbiddenPath)) {
+                violations.push(forbiddenPath);
+            }
+        }
+
+        if (violations.length > 0) {
+            console.error('\n[FAIL] com.devian.unity.common must not contain Editor/Generated!');
+            console.error('This folder belongs to com.devian.module.* packages, not unity.common.');
+            console.error('Violations:');
+            for (const v of violations) {
+                console.error(`  - ${v}`);
+            }
+            console.error('\nFix: Remove generation target mapping or sheet output route that produces it.');
+            console.error('     Check staticUpmPackages config and domain/table routing in input json.');
+            throw new Error(
+                '[FAIL] com.devian.unity.common must not contain Editor/Generated. ' +
+                'Remove generation target mapping or sheet output route that produces it.'
+            );
+        }
+
+        console.log('  [OK] com.devian.unity.common has no forbidden Editor/Generated.');
     }
 }
 

@@ -113,9 +113,9 @@ finalConfig = deepMerge(config.json, input.json)
 ```json
 {
   "configVersion": 1,
-  "csConfig": { "moduleDir": "../framework-cs/module", "generateDir": "../framework-cs/module-gen" },
-  "tsConfig": { "moduleDir": "../framework-ts/module", "generateDir": "../framework-ts/module-gen" },
-  "upmConfig": { "sourceDir": "../framework-cs/upm", "generateDir": "../framework-cs/upm-gen", "packageDir": "..." },
+  "csConfig": { "moduleDir": "../framework-cs/module", "moduleDir" (unified): "../framework-cs/module" },
+  "tsConfig": { "moduleDir": "../framework-ts/module", "moduleDir" (unified): "../framework-ts/module" },
+  "upmConfig": { "sourceDir": "../framework-cs/upm", "packageDir": "..." },
   "dataConfig": { "tableDirs": [...] },
   "staticUpmPackages": [...]
 }
@@ -123,12 +123,12 @@ finalConfig = deepMerge(config.json, input.json)
 
 ### Phase 모델
 
-빌드는 **5단계**로 해석한다.
+빌드는 **4단계**로 해석한다.
 
 1. **Generate**: 모든 산출물은 **staging({tempDir})에만 생성**
-2. **Materialize**: staging → module-gen/upm-gen/ts-modules로 **clean + copy** (모듈/패키지 단위)
-3. **Validate**: module/module-gen과 upm/upm-gen의 **완결성 검증**
-4. **Sync**: upm + upm-gen → packageDir로 **패키지 단위 동기화**
+2. **Materialize**: staging → module/upm/ts-modules로 **clean + copy** (모듈/패키지 단위)
+3. **Validate**: module/module과 upm의 **완결성 검증**
+4. **Sync**: upm → packageDir로 **패키지 단위 동기화**
 
 > staging({tempDir}) 외의 위치에 직접 생성하는 동작은 금지한다.
 > 
@@ -136,10 +136,10 @@ finalConfig = deepMerge(config.json, input.json)
 > → `skills/devian-templates/01-templates-policy/SKILL.md`
 
 **반영 위치:**
-- C# 생성물: `staging` → `csConfig.generateDir` (framework-cs/module-gen)
-- TS 생성물: `staging` → `tsConfig.generateDir` (framework-ts/module-gen)
-- UPM 생성물: `staging` → `upmConfig.generateDir` (framework-cs/upm-gen)
-- 최종 UPM: `upm + upm-gen` → `upmConfig.packageDir`
+- C# 생성물: `staging` → `csConfig.generateDir` (framework-cs/module)
+- TS 생성물: `staging` → `tsConfig.generateDir` (framework-ts/module)
+- UPM 생성물: `staging` → `upmConfig.sourceDir` (framework-cs/upm) - 생성 패키지는 직접 upm에 반영
+- 최종 UPM: `upm` → `upmConfig.packageDir`
 
 ### UPM Packages Sync 정본 (Hard Rule)
 
@@ -148,17 +148,17 @@ finalConfig = deepMerge(config.json, input.json)
 | 구분 | 경로 | 역할 |
 |------|------|------|
 | 정본 (수동) | `framework-cs/upm/{pkg}` | 수동 관리 패키지 원본 |
-| 정본 (생성) | `framework-cs/upm-gen/{pkg}` | 빌더가 생성하는 패키지 원본 |
+| 정본 (생성) | `framework-cs/upm/{pkg}` | 빌더가 생성하는 패키지 원본 |
 | 복사본 (실행) | `framework-cs/apps/UnityExample/Packages/{pkg}` | Unity 실행용 복사본 |
 
 **소스 우선순위:**
-1. `upm-gen/{pkg}` 존재 → upm-gen에서 복사 (hybrid 포함)
-2. `upm-gen/{pkg}` 없음 → upm에서 복사
+1. `upm/{pkg}` 존재 → upm에서 복사 (hybrid 포함)
+2. `upm/{pkg}` 없음 → upm에서 복사
 
 **Hard DoD: Packages 동기화 불일치 FAIL**
 
 sync 후 아래 조건이면 **즉시 FAIL**:
-- `Packages/{pkg}`가 선택된 소스(upm-gen 또는 upm)와 내용이 다름
+- `Packages/{pkg}`가 선택된 소스(upm 또는 upm)와 내용이 다름
 - 정본 소스에 있는데 Packages에 반영되지 않음
 - Packages에서 직접 수정한 코드 발견 (다음 sync에서 덮어써짐)
 
@@ -168,20 +168,26 @@ sync 후 아래 조건이면 **즉시 FAIL**:
 - `com.devian.unity.common`
 
 **수동 패키지 수정 시 필수 절차:**
-1. `upm/{pkg}` 또는 `upm-gen/{pkg}`에서 수정
+1. `upm/{pkg}` 또는 `upm/{pkg}`에서 수정
 2. 빌더 실행 또는 수동 sync (clean + copy)
 3. `Packages/{pkg}` 반영 확인
 
 > **WARNING:** `Packages/` 직접 수정은 정책 위반이며, sync 시 손실된다.
 
-**수동 폴더 보호 (HARD RULE):**
-- `csConfig.moduleDir` (framework-cs/module) — 빌드가 **생성/삭제/클린/복사 금지**, 검증만 허용
-- `tsConfig.moduleDir` (framework-ts/module) — 빌드가 **생성/삭제/클린/복사 금지**, 검증만 허용
+**통합 모드 (HARD RULE):**
+
+`generateDir`가 설정되지 않으면 **통합 모드**로 동작한다:
+- `csGenerateDir = csConfig.moduleDir`
+- `tsGenerateDir = tsConfig.moduleDir`
+
+통합 모드에서는 `moduleDir`이 생성 출력 루트를 겸한다. 이 경우 "수동 폴더 보호" 규칙은 적용되지 않으며, 빌더가 해당 경로에 생성물을 반영할 수 있다.
+
+**수동 폴더 보호 (분리 모드에서만 적용):**
+- `csConfig.moduleDir` (framework-cs/module) — **분리 모드**에서는 빌드가 **생성/삭제/클린/복사 금지**, 검증만 허용
+- `tsConfig.moduleDir` (framework-ts/module) — **분리 모드**에서는 빌드가 **생성/삭제/클린/복사 금지**, 검증만 허용
 - `upmConfig.sourceDir` (framework-cs/upm) — 빌드가 **생성/삭제/클린/복사 금지**, 검증만 허용
 
-**TS 경로 분리 (HARD RULE):**
-- `tsConfig.moduleDir`와 `tsConfig.generateDir`는 반드시 서로 다른 경로
-- 동일 경로 설정 시 빌드 **즉시 FAIL**
+> 분리 모드: `generateDir`가 `moduleDir`와 다른 경로로 명시적으로 설정된 경우
 
 ### tsConfig 설정 (v10)
 
@@ -189,25 +195,26 @@ TS 산출물의 반영 위치를 관리하는 설정:
 
 ```json
 "tsConfig": {
-  "moduleDir": "../framework-ts/module",
-  "generateDir": "../framework-ts/module-gen"
+  "moduleDir": "../framework-ts/module"
 }
 ```
 
-| 필드 | 역할 | 예시 |
-|------|------|------|
-| `moduleDir` | 수동 TS 모듈 루트 (검증만, clean/copy 금지) | `../framework-ts/module` |
-| `generateDir` | 생성 TS 모듈 루트 (빌더가 반영하는 곳) | `../framework-ts/module-gen` |
+| 필드 | 역할 | 필수 | 예시 |
+|------|------|------|------|
+| `moduleDir` | TS 모듈 루트 | ✅ | `../framework-ts/module` |
+| `generateDir` | 생성 TS 모듈 루트 (선택) | ❌ | `../framework-ts/module-gen` |
 
-**경로 분리 규칙 (HARD RULE):**
-- `moduleDir`와 `generateDir`는 **반드시 서로 다른 경로**여야 한다.
-- 동일 경로 설정 시 빌드 **즉시 FAIL**.
-- `moduleDir` 하위에 대한 **clean/copy 금지** (검증만 허용).
-- `generateDir`에만 staging 결과를 **clean+copy** 한다.
+**통합 모드 (기본):**
+- `generateDir`를 생략하면 `moduleDir`을 생성 출력 루트로 사용
+- 빌더는 `moduleDir` 하위에 staging 결과를 **clean+copy**
+
+**분리 모드 (선택):**
+- `generateDir`를 `moduleDir`와 다른 경로로 명시하면 분리 모드
+- 이 경우 `moduleDir`은 검증만, `generateDir`에만 clean+copy
 
 **우선순위 규칙:**
-- Domain: `tsConfig.generateDir`로만 반영 (domains[*].tsTargetDir는 deprecated)
-- Protocol: `tsConfig.generateDir`로만 반영 (protocols[*].tsTargetDir는 deprecated)
+- Domain: `tsConfig.generateDir` (없으면 `tsConfig.moduleDir`)로 반영 (domains[*].tsTargetDir는 deprecated)
+- Protocol: `tsConfig.generateDir` (없으면 `tsConfig.moduleDir`)로 반영 (protocols[*].tsTargetDir는 deprecated)
 
 ### dataConfig 설정
 
@@ -236,12 +243,12 @@ DATA 도메인의 데이터 출력 타겟은 전역 `dataConfig`로 설정한다
 | 디렉토리 | 역할 | 빌드 동작 |
 |----------|------|-----------|
 | `framework-cs/module` | 수동 C# 모듈 (Devian — 단일 통합 모듈) | 검증만, 수정 금지 |
-| `framework-cs/module-gen` | 생성 C# 모듈 (Devian.Module.*, Devian.Protocol.*) | staging 결과로 생성/반영 |
+| `framework-cs/module` | 생성 C# 모듈 (Devian.Module.*, Devian.Protocol.*) | staging 결과로 생성/반영 |
 | `framework-ts/module` | 수동 TS 모듈 (devian — 단일 통합 모듈) | 검증만, 수정 금지 |
-| `framework-ts/module-gen` | 생성 TS 모듈 (devian-module-*, devian-network-*) | staging 결과로 생성/반영 |
+| `framework-ts/module` | 생성 TS 모듈 (devian-module-*, devian-network-*) | staging 결과로 생성/반영 |
 | `framework-cs/upm` | 수동 UPM 패키지 (com.devian.core, com.devian.unity.*, com.devian.templates) | 검증만, 수정 금지 |
-| `framework-cs/upm-gen` | 생성 UPM 패키지 (com.devian.module.*, com.devian.protocol.*) | staging 결과로 생성/반영 |
-| `framework-cs/apps/UnityExample/Packages` | Unity 최종 패키지 | upm + upm-gen → sync |
+| `framework-cs/upm` | 생성 UPM 패키지 (com.devian.module.*, com.devian.protocol.*) | staging 결과로 생성/반영 |
+| `framework-cs/apps/UnityExample/Packages` | Unity 최종 패키지 | upm + upm → sync |
 
 ### C# 런타임 모듈 구조 (Hard Rule)
 
@@ -359,11 +366,11 @@ DATA 도메인의 데이터 출력 타겟은 전역 `dataConfig`로 설정한다
 
 **C# 모듈 검증:**
 - `module` (수동): 각 모듈에 `.csproj` 존재, "완벽한 C# 모듈"
-- `module-gen` (생성): 각 모듈에 `.csproj` 존재, "완벽한 C# 모듈"
+- `module` (생성): 각 모듈에 `.csproj` 존재, "완벽한 C# 모듈"
 
 **UPM 패키지 검증:**
 - `upm` (수동): 각 패키지에 `package.json` 존재, 폴더명 == `package.json.name`
-- `upm-gen` (생성): 각 패키지에 `package.json` 존재, 폴더명 == `package.json.name`
+- `upm` (생성): 각 패키지에 `package.json` 존재, 폴더명 == `package.json.name`
 
 > "완벽한 C# 모듈" = `.csproj` 존재 + ProjectReference 경로 유효 + dotnet build 가능
 
@@ -401,7 +408,7 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 **input_common.json 내의 모든 상대 경로는 input_common.json이 위치한 디렉토리 기준으로 해석된다.**
 
 예시 (input_common.json이 `input/input_common.json`에 있을 때):
-- `contractsDir: "Common/contracts"` → `input/Common/contracts`
+- `contractDir: "Common/contracts"` → `input/Common/contracts`
 - `csTargetDir: "../framework/cs"` → `framework/cs`
 - `tempDir: "temp"` → `input/temp`
 
@@ -412,7 +419,7 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 ```json
 "upmConfig": {
   "sourceDir": "../framework-cs/upm",
-  "generateDir": "../framework-cs/upm-gen",
+  // generateDir removed (upm single SSOT),
   "packageDir": "../framework-cs/apps/UnityExample/Packages"
 }
 ```
@@ -420,7 +427,6 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 | 필드 | 의미 | 필수 |
 |------|------|------|
 | `sourceDir` | UPM 소스 루트 — 수동 관리 패키지 (upm) | ✅ |
-| `generateDir` | UPM 생성 루트 — 빌드 생성 패키지 (upm-gen) | ✅ |
 | `packageDir` | Unity Packages 루트 (UnityExample/Packages) | ✅ |
 
 `upmConfig`가 없거나 필드가 누락되면 빌더는 **하드 실패(throw Error)**한다.
@@ -432,7 +438,7 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 ```json
 "csConfig": {
   "moduleDir": "../framework-cs/module",
-  "generateDir": "../framework-cs/module-gen"
+  "moduleDir" (unified): "../framework-cs/module"
 }
 ```
 
@@ -445,8 +451,8 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 
 빌드 최종 단계에서 다음 동기화가 수행된다:
 
-1. **staging(tempDir)** → **upm-gen**: Domain/Protocol UPM 패키지 생성
-2. **upm + upm-gen** → **packageDir**: 최종 동기화
+1. **staging(tempDir)** → **upm**: Domain/Protocol UPM 패키지 생성
+2. **upm + upm** → **packageDir**: 최종 동기화
 
 **동기화 규칙:**
 - 패키지 단위 clean+copy (packageDir 전체 rm -rf 금지)
@@ -455,18 +461,18 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 > 샘플/예제는 `framework-cs/upm/com.devian.templates/Samples~/`에서 Templates로 관리합니다.
 
 **충돌 정책 (HARD RULE):**
-- upm와 upm-gen에 **동일 `package.json.name`이 있으면 무조건 빌드 FAIL**
+- upm와 upm에 **동일 `package.json.name`이 있으면 무조건 빌드 FAIL**
 - 예외 없음 — 둘 다 "완벽한 UPM"이므로 이름이 같으면 정본이 모호함
 - 충돌 해결: 패키지 이름 변경 또는 하나 제거
 
 > **왜 충돌 예외를 허용하지 않나?**  
-> upm는 수동 관리, upm-gen은 빌드 생성. 둘 다 "완벽한 UPM 패키지"로서 동일한 자격을 가진다.
+> upm는 수동 관리, upm은 빌드 생성. 둘 다 "완벽한 UPM 패키지"로서 동일한 자격을 가진다.
 > 같은 이름의 패키지가 양쪽에 있으면 어느 것이 정본인지 모호해지므로, 빌드 시점에 즉시 FAIL하여 명확한 정리를 강제한다.
 
 ### Static UPM Packages
 
 정적 UPM 패키지(수동 관리 + 빌드 시 가공)는 `staticUpmPackages` 배열로 정의한다.
-이 패키지들은 **upm에 존재해야 하며**, 빌드 시 staging으로 복사 후 가공되어 upm-gen에 materialize된다.
+이 패키지들은 **upm에 존재해야 하며**, 빌드 시 staging으로 복사 후 가공되어 upm에 materialize된다.
 
 **`staticUpmPackages`는 string[] 형태로 패키지명만 나열한다:**
 
@@ -482,18 +488,18 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 1. **입력 검증**: `upm/{upmName}` 경로에 패키지 존재 여부 검증 (없으면 FAIL)
 2. **Staging**: `upm` → `{tempDir}/static-{upmName}` 복사
 3. **가공/생성**: staging에서 생성물 생성 (예: `Editor/Generated/*.cs`)
-4. **Materialize**: staging → `upm-gen/{upmName}` clean+copy
-5. **packageDir Sync**: `upm-gen/{upmName}` → `{packageDir}/{upmName}` (upm-gen이 정본)
+4. **Materialize**: staging → `upm/{upmName}` clean+copy
+5. **packageDir Sync**: `upm/{upmName}` → `{packageDir}/{upmName}` (upm이 정본)
 
 **하이브리드 예외 (충돌 정책):**
-- staticUpmPackages는 upm와 upm-gen에 **동일 이름**이 공존할 수 있다
-- 이 경우 **upm-gen이 정본**이며, upm는 "입력 템플릿"으로만 취급
-- packageDir sync에서 upm는 스킵되고 upm-gen에서만 복사됨
+- staticUpmPackages는 upm와 upm에 **동일 이름**이 공존할 수 있다
+- 이 경우 **upm이 정본**이며, upm는 "입력 템플릿"으로만 취급
+- packageDir sync에서 upm는 스킵되고 upm에서만 복사됨
 - 그 외 패키지는 기존 규칙대로 "동일 이름이면 FAIL" 유지
 
 **GUARD (Hard FAIL):**
-- staticUpmPackages 중 upm에 존재하는 패키지는 빌드 후 upm-gen에도 반드시 존재해야 함
-- staging 생성이 누락되거나 upm-gen 복사가 실패하면 FAIL
+- staticUpmPackages 중 upm에 존재하는 패키지는 빌드 후 upm에도 반드시 존재해야 함
+- staging 생성이 누락되거나 upm 복사가 실패하면 FAIL
 - 이 가드가 "생성물이 버려지는 문제"를 재발 방지함
 
 **Deprecated (Hard Fail):**
@@ -504,14 +510,14 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 ```
 입력(템플릿):    {upmConfig.sourceDir}/{upmName}         (upm)
 staging:        {tempDir}/static-{upmName}
-materialize:    {upmConfig.generateDir}/{upmName}       (upm-gen)
+materialize:    {upmConfig.sourceDir}/{upmName}       (upm)
 최종 패키지:    {upmConfig.packageDir}/{upmName}        (packageDir)
 ```
 
 예시 (`"com.devian.unity.common"`):
 - 입력: `../framework-cs/upm/com.devian.unity.common`
 - staging: `{tempDir}/static-com.devian.unity.common`
-- materialize: `../framework-cs/upm-gen/com.devian.unity.common`
+- materialize: `../framework-cs/upm/com.devian.unity.common`
 - 최종: `../framework-cs/apps/UnityExample/Packages/com.devian.unity.common`
 
 ### 1) DomainType = DATA
@@ -556,8 +562,24 @@ DATA 입력은 input_common.json의 `domains` 섹션이 정의한다.
 
 입력 경로는 input_common.json이 정본이다. 예:
 
-- `domains[Common].contractsDir = Common/contracts`
-- `domains[Common].tablesDir = Common/tables`
+- `domains[Common].contractDir = Common/contracts`
+- `domains[Common].tableDir = Common/tables`
+
+**키 변경 (레거시 호환):**
+- `contractDir` (새 키), `contractsDir` (레거시, deprecated)
+- `tableDir` (새 키), `tablesDir` (레거시, deprecated)
+- 레거시 키 사용 시 경고 로그 후 정상 처리
+
+**Optional contracts/tables (SKIP 동작):**
+
+contracts/tables 입력이 없거나 경로가 없거나 파일 매칭이 0개인 경우, Hard Fail이 아닌 SKIP 로그를 출력하고 빌드를 계속한다.
+
+SKIP 조건:
+- `contractDir` 또는 `contractFiles`가 미설정
+- `contractDir`이 존재하지 않음
+- glob 결과가 0개
+
+SKIP되어도 타겟 디렉토리는 clean되어 이전 산출물이 제거된다.
 
 #### Tables (XLSX) 헤더/데이터 규약
 
@@ -756,13 +778,13 @@ computedUpmName = "com.devian.protocol." + normalize(group)
 **경로 계산:**
 ```
 stagingDir = {tempDir}/Devian.Protocol.{ProtocolName}-upm
-targetDir = {upmConfig.generateDir}/{computedUpmName}
+targetDir = {upmConfig.sourceDir}/{computedUpmName}
 finalDir = {upmConfig.packageDir}/{computedUpmName}
 ```
 
 **충돌 정책 (Hard Fail):**
 1. `upm`에 동일한 `computedUpmName`이 존재하면 빌드 **FAIL**
-2. `upm-gen`에 동일한 `computedUpmName`이 이미 존재하면 빌드 **FAIL** (중복 생성)
+2. `upm`에 동일한 `computedUpmName`이 이미 존재하면 빌드 **FAIL** (중복 생성)
 3. `protocols` 배열 내에서 동일한 `computedUpmName`이 계산되면 빌드 **FAIL**
 
 > 덮어쓰기/우선순위 없음. 모든 충돌은 명시적 오류.
@@ -807,7 +829,7 @@ finalDir = {upmConfig.packageDir}/{computedUpmName}
 ### DoD (완료 정의) — 하드 게이트
 
 검사 대상 경로:
-- `framework-cs/upm-gen/**/Editor/Generated/*.cs`
+- `framework-cs/upm/**/Editor/Generated/*.cs`
 - `framework-cs/apps/**/Packages/**/Editor/Generated/*.cs`
 
 **Hard FAIL:**

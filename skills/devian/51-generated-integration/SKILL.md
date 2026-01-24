@@ -30,7 +30,7 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 
 ## Ownership
 
-- `framework-cs/module-gen/**/*.g.cs`, `framework-ts/module-gen/**/*.g.ts` 는 **기계 소유**다.
+- `framework-cs/module/**/*.g.cs`, `framework-ts/module/**/*.g.ts` 는 **기계 소유**다.
 - 사람은 이 파일을 수정하지 않는다.
 - 수정이 필요하면 입력(contracts/tables/protocols) 또는 generator 코드 변경으로 해결한다.
 
@@ -62,7 +62,7 @@ framework-cs/
 ├── module/                                     # 수동 관리 (런타임 모듈)
 │   └── Devian/                                 # 단일 런타임 모듈
 │       └── Devian.csproj
-├── module-gen/                                 # 생성 산출물 (기계 소유)
+├── module/                                 # 생성 산출물 (기계 소유)
 │   ├── Devian.Module.{Domain}/
 │   │   └── generated/
 │   │       └── {Domain}.g.cs
@@ -73,7 +73,7 @@ framework-cs/
 framework-ts/
 ├── module/                                     # 수동 관리 (런타임 패키지)
 │   └── devian/                            # 단일 런타임 패키지 (@devian/core)
-├── module-gen/                                 # 생성 산출물 (기계 소유)
+├── module/                                 # 생성 산출물 (기계 소유)
 │   ├── devian-module-{domain}/
 │   │   ├── generated/
 │   │   │   └── {Domain}.g.ts

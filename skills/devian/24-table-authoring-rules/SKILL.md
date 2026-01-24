@@ -17,7 +17,7 @@ DATA(DomainType=DATA)에서 사용하는 XLSX 테이블 작성 규칙을 정의�
 
 입력은 input_common.json의 `domains` 섹션이 정본이다.
 
-- `domains[{DomainKey}].tablesDir`
+- `domains[{DomainKey}].tableDir`
 - `domains[{DomainKey}].tableFiles` (예: `['*.xlsx']`)
 
 ---

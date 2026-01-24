@@ -17,11 +17,13 @@ AppliesTo: v10
 
 ---
 
-## 패키지 루트
+## 패키지 루트 (SSOT)
 
 ```
-framework-cs/apps/UnityExample/Packages/com.devian.module.common/
+framework-cs/upm/com.devian.module.common/
 ```
+
+> **Note**: `framework-cs/apps/UnityExample/Packages/com.devian.module.common`는 sync 대상(배포/테스트)일 뿐, SSOT가 아니다.
 
 ---
 
@@ -54,9 +56,9 @@ com.devian.module.common/
 | name | `com.devian.module.common` |
 | version | `0.1.0` (다른 com.devian.* 패키지와 동일) |
 | displayName | `Devian Module Common` |
-| description | `Devian.Module.Common runtime for Unity (source) - Common features` |
+| description | `Devian.Module.Common runtime for Unity (source)` |
 | unity | `2021.3` |
-| author.name | `Kim, Hyong Joon` |
+| author.name | `Devian` |
 | dependencies | `com.devian.core: 0.1.0`, `com.unity.nuget.newtonsoft-json: 3.2.1` |
 
 ---
@@ -106,7 +108,7 @@ com.devian.module.common/
 
 - staging에 포함되지 않은 파일은 clean+copy 이후 삭제된다.
 - 따라서 Features(Logger/Variant/Complex)는 **빌더가 staging에 복사**해야 한다.
-- Common 모듈일 때만 `framework-cs/module-gen/Devian.Module.Common/features/` → staging `Runtime/Features/`로 복사.
+- Common 모듈일 때만 `framework-cs/module/Devian.Module.Common/features/` → staging `Runtime/Features/`로 복사.
 - `upmConfig.packageDir`가 UnityExample/Packages를 가리키면 해당 디렉토리는 **generated output**으로 취급된다.
 
 ---
@@ -118,8 +120,15 @@ com.devian.module.common/
 - 코드에서 `UnityEngine.*` namespace 직접 참조 금지.
 - **Features를 `Common.g.cs`에 생성으로 박아 넣는 방식 금지** (Feature는 수동 소스 유지).
 - **clean+copy 정책을 무시하고 targetDir에 수동으로만 파일을 두는 방식 금지** (재빌드 시 삭제됨).
-- **Editor/Generated 폴더 생성 금지**: TableID Inspector 바인딩(`*_ID.Editor.cs`)은 이 패키지가 아닌 `com.devian.unity.common/Editor/Generated/`에서 생성한다.
-- **UnityEditor 의존 파일 포함 금지**: Editor 폴더에는 asmdef만 존재해야 하며, UnityEditor 의존 코드는 `com.devian.unity.common`이 담당한다.
+
+---
+
+## Editor/Generated 정책
+
+keyed table(primaryKey 있는 테이블)이 있으면 `Editor/Generated/`에 TableID Inspector 바인딩(`{TableName}_ID.Editor.cs`)이 자동 생성된다.
+
+- **베이스 클래스**: `com.devian.unity.common`이 `EditorID_DrawerBase`, `EditorID_SelectorBase`를 제공
+- **Editor asmdef 참조**: `Devian.Unity.Common`, `Devian.Unity.Common.Editor` 필수 (빌더가 자동 패치)
 
 ---
 

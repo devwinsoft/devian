@@ -31,7 +31,8 @@ obj/
 UserSettings/
 [Mm]emoryCaptures/
 [Rr]ecordings/
-framework-cs/apps/UnityExample/*.csproj
+/framework-cs/apps/UnityExample/**/*.csproj
+/framework-cs/apps/UnityExample/**/*.sln
 
 # JetBrains Rider
 .idea/

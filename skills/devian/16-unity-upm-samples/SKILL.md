@@ -29,22 +29,22 @@ Type: Policy / Requirements
 
 **Single Source of Truth:**
 - **수동 관리 패키지**: `framework-cs/upm/<packageName>/...` — 수동으로 관리하는 "완벽한 UPM 패키지"
-- **생성 패키지**: `framework-cs/upm-gen/<packageName>/...` — 빌드가 생성하는 "완벽한 UPM 패키지" (GitHub URL 배포용)
+- **생성 패키지**: `framework-cs/upm/<packageName>/...` — 빌드가 생성하는 "완벽한 UPM 패키지" (GitHub URL 배포용)
 - **최종 출력**: `framework-cs/apps/UnityExample/Packages/<packageName>` — 빌드 출력물(복사본), 직접 수정 금지
 
 **동기화 흐름:**
 ```
-upm + upm-gen → packageDir (패키지 단위 clean+copy)
+upm + upm → packageDir (패키지 단위 clean+copy)
 ```
 
 > 수동 패키지(예: com.devian.unity.network)는 upm에서 관리하고,  
-> 생성 패키지(예: com.devian.module.common)는 upm-gen에서 관리한다.
+> 생성 패키지(예: com.devian.module.common)는 upm에서 관리한다.
 
 ---
 
 ## 완벽한 UPM 패키지 DoD (Definition of Done)
 
-upm / upm-gen 모두 아래 조건을 만족해야 한다:
+upm / upm 모두 아래 조건을 만족해야 한다:
 
 | 항목 | 요구사항 |
 |------|----------|
@@ -227,12 +227,12 @@ md5sum Packages/com.devian.unity.network/Runtime/NetWsClientBehaviourBase.cs
 ```
 
 **Hard FAIL 조건:**
-- `upm` (또는 `upm-gen`)와 `Packages`의 파일이 다르면 **FAIL** (sync 누락)
+- `upm` (또는 `upm`)와 `Packages`의 파일이 다르면 **FAIL** (sync 누락)
 - `Packages/`에서 직접 수정한 경우 **정책 위반** (다음 sync에서 손실)
 
 **동기화 누락 발견 시:**
 1. 빌더 실행: `node build.js ../../../input/input_common.json`
-2. 또는 수동 sync: `rm -rf Packages/{pkg} && cp -r upm-gen/{pkg} Packages/{pkg}`
+2. 또는 수동 sync: `rm -rf Packages/{pkg} && cp -r upm/{pkg} Packages/{pkg}`
 
 ---
 
@@ -254,7 +254,7 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 {
   "upmConfig": {
     "sourceDir": "../framework-cs/upm",
-    "generateDir": "../framework-cs/upm-gen",
+    // removed,
     "packageDir": "../framework-cs/apps/UnityExample/Packages"
   },
   "staticUpmPackages": [
@@ -269,7 +269,6 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 | 필드 | 의미 |
 |------|------|
 | `sourceDir` | 수동 관리 UPM 패키지 루트 (upm) |
-| `generateDir` | 빌드 생성 UPM 패키지 루트 (upm-gen) |
 | `packageDir` | Unity 최종 패키지 루트 (sync 대상) |
 
 **staticUpmPackages 형식:**
@@ -281,7 +280,7 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 - `targetDir` = `{upmConfig.packageDir}/{packageName}` → `../framework-cs/apps/UnityExample/Packages/com.devian.unity.network`
 
 **결과:**
-빌더가 `upm + upm-gen`을 `packageDir`로 sync하며, `Samples~` 콘텐츠도 포함된다.
+빌더가 `upm + upm`을 `packageDir`로 sync하며, `Samples~` 콘텐츠도 포함된다.
 
 ---
 

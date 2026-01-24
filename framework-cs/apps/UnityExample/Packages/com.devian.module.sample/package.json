@@ -1,0 +1,13 @@
+{
+  "name": "com.devian.module.sample",
+  "version": "0.1.0",
+  "displayName": "Devian Module Sample",
+  "description": "Devian.Module.Sample runtime for Unity (source)",
+  "unity": "2021.3",
+  "author": {
+    "name": "Kim, Hyong Joon"
+  },
+  "dependencies": {
+    "com.devian.core": "0.1.0"
+  }
+}

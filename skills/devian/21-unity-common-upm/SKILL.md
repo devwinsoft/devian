@@ -14,7 +14,7 @@ AppliesTo: v10
 - Devian.Module.Common에 대한 Unity 전용 확장(어댑터)을 제공한다.
 - UnityLogSink를 통해 Unity 콘솔에 로그를 출력한다.
 - AssetManager를 통해 번들 기반 에셋 로딩 및 Editor 전용 Find 기능을 제공한다.
-- TableID Inspector 바인딩(EditorID_DrawerBase, EditorID_SelectorBase)을 제공한다.
+- TableID Inspector 바인딩의 **베이스 클래스**(EditorID_DrawerBase, EditorID_SelectorBase)를 제공한다.
 - 이 패키지는 UnityEngine을 의존하므로 Unity 환경에서만 사용 가능하다.
 
 ---
@@ -25,7 +25,6 @@ AppliesTo: v10
 
 - Runtime 코드: `namespace Devian.Unity`
 - Editor 코드: `namespace Devian.Unity` (#if UNITY_EDITOR 블록 내부)
-- Generated TableID Editor 코드: `namespace Devian.Unity`
 
 > **주의**: `Devian.Unity.Common`, `Devian.Unity.Editor` 같은 서브네임스페이스를 사용하지 않는다.
 
@@ -54,59 +53,76 @@ com.devian.unity.common/
     │   ├── CIntPropertyDrawer.cs
     │   ├── CFloatPropertyDrawer.cs
     │   └── CStringPropertyDrawer.cs
-    ├── TableId/
-    │   ├── EditorRectUtil.cs
-    │   ├── EditorID_DrawerBase.cs
-    │   └── EditorID_SelectorBase.cs
-    └── Generated/                    (빌더가 생성)
-        ├── COMPLEX_POLICY_ID.Editor.cs
-        └── TestSheet_ID.Editor.cs
+    └── TableId/
+        ├── EditorRectUtil.cs
+        ├── EditorID_DrawerBase.cs
+        └── EditorID_SelectorBase.cs
 ```
+
+> **중요**: 이 패키지에는 `Editor/Generated/` 폴더를 생성하지 않는다. TableID Editor 바인딩(`*_ID.Editor.cs`)은 각 도메인 모듈 패키지(`com.devian.module.<domain>/Editor/Generated/`)에 생성된다.
+
+---
+
+## TableID Editor 바인딩 정책 (Hard Rule)
+
+**이 패키지는 베이스 클래스만 제공하고, 실제 TableID Editor 바인딩은 각 도메인 모듈 패키지에서 생성한다.**
+
+### 베이스 클래스 (이 패키지가 제공)
+
+- `EditorID_DrawerBase<TSelector>` - PropertyDrawer 베이스
+- `EditorID_SelectorBase` - ScriptableWizard 베이스
+- `EditorRectUtil` - Editor UI 유틸리티
+
+### 생성된 바인딩 (각 도메인 모듈 패키지에 생성)
+
+- **생성 위치**: `com.devian.module.<domain>/Editor/Generated/{TableName}_ID.Editor.cs`
+- **생성 주체**: `build.js` (`generateDomainUpmScaffold`)
+- **네임스페이스**: `Devian.Unity` 단일 (서브네임스페이스 금지)
+- **클래스명 규칙**: `{DomainName}_{TableName}_ID_Selector`, `{DomainName}_{TableName}_ID_Drawer`
+- **파일명 규칙**: `{TableName}_ID.Editor.cs`
+
+### 도메인 모듈 Editor asmdef 참조 요건
+
+각 도메인 모듈 패키지(`com.devian.module.<domain>`)의 Editor asmdef는 다음을 참조해야 한다:
+
+- `Devian.Module.<Domain>` - 해당 도메인 Runtime
+- `Devian.Unity.Common` - AssetManager 등
+- `Devian.Unity.Common.Editor` - EditorID_* 베이스 클래스
 
 ---
 
 ## 빌더 생성 정책 (Hard Rule)
 
-**이 UPM 패키지는 빌더(`build.js`)가 staging → upm-gen → packageDir 파이프라인을 통해 최종 반영된다.**
+**이 UPM 패키지는 빌더(`build.js`)가 staging → upm → packageDir 파이프라인을 통해 최종 반영된다.**
 
 ### 파이프라인 흐름
 
 ```
 1. 정본 소스(입력):  framework-cs/upm/com.devian.unity.common/**
 2. Staging:          {tempDir}/static-com.devian.unity.common/**
-                     └── Editor/Generated/*.cs는 staging에 생성됨
-3. Materialize:      framework-cs/upm-gen/com.devian.unity.common/** (clean+copy)
+3. Materialize:      framework-cs/upm/com.devian.unity.common/** (clean+copy)
 4. Final(packageDir): framework-cs/apps/UnityExample/Packages/com.devian.unity.common/** (clean+copy)
 ```
 
 ### 주요 규칙
 
 - **upm → staging**: 빌더가 입력 템플릿을 staging 폴더로 복사
-- **staging 가공**: `generateTableIdEditorForUnityCommon()`이 `Editor/Generated/` 생성
-- **staging → upm-gen**: `copyStaticUpmPackageToGenerateDir()`가 materialize
-- **upm-gen → packageDir**: `syncUpmToPackageDir()`가 최종 반영 (upm-gen이 정본)
-- **upm는 스킵**: packageDir sync에서 hybrid 패키지(staticUpmPackages)는 upm를 건너뜀
+- **staging → upm**: `copyStaticUpmGeneratedContent()`가 materialize
+- **upm → packageDir**: `syncUpmToPackageDir()`가 최종 반영 (upm이 정본)
+- **Editor/Generated 제거**: staging에서 레거시 Generated 폴더가 있으면 삭제
 
-### 최종 확인 위치
-
-- **upm-gen**: `framework-cs/upm-gen/com.devian.unity.common/Editor/Generated/*_ID.Editor.cs`
-- **packageDir**: `framework-cs/apps/UnityExample/Packages/com.devian.unity.common/Editor/Generated/*_ID.Editor.cs`
-
-> **주의**: `com.devian.module.common`에는 Editor 코드를 두지 않는다 (서버 빌드/UnityEditor 의존 분리).
+> **주의**: 이 패키지에는 `Editor/Generated/`를 생성하지 않는다. TableID Editor 바인딩은 각 도메인 모듈 패키지에 생성된다.
 
 ---
 
 ## DoD (완료 정의) — Hard Gate
 
-keyed table(TableID 기반)이 **1개 이상** 존재하면, 아래 조건을 모두 만족해야 **PASS**:
-
-- [ ] `framework-cs/upm-gen/com.devian.unity.common/Editor/Generated/`에 최소 1개 이상의 `*_ID.Editor.cs` 존재
-- [ ] `framework-cs/apps/UnityExample/Packages/com.devian.unity.common/Editor/Generated/`에 동일 파일 존재
-- [ ] 생성된 파일 수가 keyed table 수와 일치
+- [ ] `framework-cs/upm/com.devian.unity.common/Editor/TableId/` 베이스 파일 존재
+- [ ] `framework-cs/upm/com.devian.unity.common/Editor/Generated/` **존재하지 않음**
+- [ ] 각 도메인 모듈 패키지에 TableID Editor 바인딩이 올바르게 생성됨
 
 **FAIL 조건:**
-- staging 후 upm-gen 복사가 누락되어 Generated 폴더가 없음
-- packageDir sync에서 upm가 upm-gen을 덮어써서 Generated 폴더가 사라짐
+- `com.devian.unity.common/Editor/Generated/`에 파일이 존재함
 
 ---
 
@@ -233,13 +249,6 @@ namespace Devian.Unity
 }
 ```
 
-**Generated TableID Editor 클래스:**
-- **출력 위치**: `com.devian.unity.common/Editor/Generated/`
-- **생성 주체**: `build.js` (`processStaticUpmPackage` → `generateTableIdEditorForUnityCommon`)
-- **네임스페이스**: `Devian.Unity` 단일 (서브네임스페이스 금지)
-- **클래스명 규칙**: `{DomainName}_{TableName}_ID_Selector`, `{DomainName}_{TableName}_ID_Drawer`
-- **파일명 규칙**: `{TableName}_ID.Editor.cs`
-
 **Table ID Inspector 로딩 규칙 (Hard Rule):**
 - Selector/Drawer 생성물은 TextAsset 로드 시 **`.json` 확장자만 허용**한다.
 - DATA 파일은 `ndjson/` 폴더에 `{TableName}.json`(내용은 NDJSON)으로 저장된다.
@@ -248,8 +257,6 @@ namespace Devian.Unity
 **DoD (Inspector 생성물):**
 - `*_ID.Editor.cs` 생성물 내부에 `.EndsWith(".json"` 이 존재해야 **PASS**
 - `.EndsWith(".ndjson"` 또는 `".ndjson"` 문자열이 존재하면 **FAIL**
-
-> **주의**: `com.devian.module.common/Editor/Generated/`에는 TableID Editor 파일을 생성하지 않는다.
 
 ---
 
@@ -276,6 +283,7 @@ Logger.Error("Net", "Connection failed", exception);
 - Logger.SetSink()를 자동으로 호출하는 코드 포함 금지.
 - **Resources 기반 로딩 금지**: AssetManager는 번들 + Editor Find 전용.
 - **서브네임스페이스 사용 금지**: `Devian.Unity.Common`, `Devian.Unity.Editor` 등 사용하지 않음.
+- **Editor/Generated 생성 금지**: TableID Editor 바인딩은 각 도메인 모듈 패키지에 생성한다.
 
 ---
 

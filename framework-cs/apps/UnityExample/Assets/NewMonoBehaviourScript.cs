@@ -1,5 +1,6 @@
 using UnityEngine;
 using Devian.Module.Common;
+using Devian.Module.Sample;
 
 public class NewMonoBehaviourScript : MonoBehaviour
 {

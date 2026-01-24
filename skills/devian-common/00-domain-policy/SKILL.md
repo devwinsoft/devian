@@ -26,7 +26,7 @@ Common 생성물의 구체 타입/파일은 **런타임/제너레이터 코드**
 ## Hard Rules (MUST)
 
 1) Common도 다른 DomainKey와 동일한 방식으로 input_common.json에 정의한다.
-   - `domains.Common.contractsDir`, `domains.Common.tablesDir` 등
+   - `domains.Common.contractDir`, `domains.Common.tableDir` 등
 
 2) v10 구현 기준으로, 타입 참조는 **동일 DomainKey 범위 내**에서만 안정적으로 동작한다고 가정한다.
    - `enum:Name`, `class:Name` 형태는 "현재 도메인에 존재하는 타입"을 전제로 한다.

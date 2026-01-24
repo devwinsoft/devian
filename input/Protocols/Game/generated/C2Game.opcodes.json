@@ -1,6 +1,0 @@
-{
-  "ChatMessage": 1000,
-  "JoinRoomRequest": 100,
-  "LoginRequest": 1001,
-  "UploadData": 1002
-}

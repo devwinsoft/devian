@@ -69,12 +69,12 @@ node framework-ts/tools/builder/build.js input/input_common.json
 
   "csConfig": {
     "moduleDir": "../framework-cs/module",
-    "generateDir": "../framework-cs/module-gen"
+    "generateDir": "../framework-cs/module"
   },
 
   "upmConfig": {
     "sourceDir": "../framework-cs/upm",
-    "generateDir": "../framework-cs/upm-gen",
+    // removed,
     "packageDir": "../framework-cs/apps/UnityExample/Packages"
   }
 }
@@ -95,9 +95,9 @@ node framework-ts/tools/builder/build.js input/input_common.json
 ```
 # 프로덕션 경로 금지
 ../framework-cs/module/
-../framework-cs/module-gen/
+../framework-cs/module/
 ../framework-ts/module/
-../framework-ts/module-gen/
+../framework-ts/module/
 ../output/
 ```
 
@@ -105,16 +105,16 @@ node framework-ts/tools/builder/build.js input/input_common.json
 
 빌더가 `clean+copy` 정책을 사용하므로, Runtime 루트를 targetDir로 지정하면 기존 파일이 삭제된다.
 
-**반드시 하위 폴더(`Generated.Sample/`)만 지정할 것.**
+**반드시 하위 폴더(`generated/`)만 지정할 것.**
 
 ### 5. 프로덕션 경로로 copy 금지
 
 샘플 빌드가 프로덕션 모듈 경로로 산출물을 복사하면 안 된다:
 
 - `../framework-cs/module/` ❌
-- `../framework-cs/module-gen/` ❌
+- `../framework-cs/module/` ❌
 - `../framework-ts/module/` ❌
-- `../framework-ts/module-gen/` ❌
+- `../framework-ts/module/` ❌
 - `../output/` ❌
 
 ---
@@ -128,17 +128,17 @@ node framework-ts/tools/builder/build.js input/input_common.json
 
   "csConfig": {
     "moduleDir": "../framework-cs/module",
-    "generateDir": "../framework-cs/module-gen"
+    "generateDir": "../framework-cs/module"
   },
 
   "tsConfig": {
     "moduleDir": "../framework-ts/module",
-    "generateDir": "../framework-ts/module-gen"
+    "generateDir": "../framework-ts/module"
   },
 
   "upmConfig": {
     "sourceDir": "../framework-cs/upm",
-    "generateDir": "../framework-cs/upm-gen",
+    // removed,
     "packageDir": "../framework-cs/apps/UnityExample/Packages"
   },
 
@@ -165,8 +165,8 @@ node framework-ts/tools/builder/build.js input/input_common.json
 
 ### 주의사항
 
-- Sample 프로토콜의 C# 출력은 `csConfig.generateDir` (module-gen)로 반영됨
-- Sample 프로토콜의 UPM 패키지는 `upmConfig.generateDir` (upm-gen)에 자동 생성됨
+- Sample 프로토콜의 C# 출력은 `csConfig.generateDir` (module)로 반영됨
+- Sample 프로토콜의 UPM 패키지는 `upmConfig.sourceDir` (upm)에 자동 생성됨
 - 빌더가 `csConfig.generateDir` 하위에 `Devian.Protocol.{ProtocolName}/` 폴더를 자동 생성함
 - Sample UPM 패키지는 `com.devian.protocol.sample`로 자동 명명됨
 
@@ -176,14 +176,14 @@ node framework-ts/tools/builder/build.js input/input_common.json
 
 ```
 # C# 모듈 (csConfig.generateDir)
-framework-cs/module-gen/
+framework-cs/module/
 └── Devian.Protocol.Sample/
     ├── C2Sample.g.cs
     ├── Sample2C.g.cs
     └── Devian.Protocol.Sample.csproj
 
-# UPM 패키지 (upmConfig.generateDir → upmConfig.packageDir로 sync)
-upm-gen/com.devian.protocol.sample/
+# UPM 패키지 (upmConfig.sourceDir → upmConfig.packageDir로 sync)
+upm/com.devian.protocol.sample/
 ├── Runtime/
 │   ├── Devian.Protocol.Sample.asmdef
 │   ├── C2Sample.g.cs

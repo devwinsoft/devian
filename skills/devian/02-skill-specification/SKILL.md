@@ -53,7 +53,7 @@ SKILL은 반드시 아래만 다룬다.
 SSOT의 용어/플레이스홀더 표준을 그대로 따른다.
 
 - 용어: DomainType / DomainKey / ProtocolGroup / ProtocolName
-- 플레이스홀더: `{tempDir}`, `{DomainKey}`, `{ProtocolGroup}`, `{ProtocolName}`, `{csConfig.moduleDir}`, `{csConfig.generateDir}`, `{tsConfig.moduleDir}`, `{tsConfig.generateDir}`, `{dataConfig.tableDirs}`, `{upmConfig.sourceDir}`, `{upmConfig.generateDir}`, `{upmConfig.packageDir}`
+- 플레이스홀더: `{tempDir}`, `{DomainKey}`, `{ProtocolGroup}`, `{ProtocolName}`, `{csConfig.moduleDir}`, `{csConfig.generateDir}`, `{tsConfig.moduleDir}`, `{tsConfig.generateDir}`, `{dataConfig.tableDirs}`, `{upmConfig.sourceDir}`, ``, `{upmConfig.packageDir}`
 
 > `{dataConfig.tableDirs}`는 배열이다. 문서에서 배열 내 개별 요소를 지칭할 때 `{dataTargetDir}`로 표기할 수 있다.
 

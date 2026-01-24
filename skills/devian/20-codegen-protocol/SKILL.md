@@ -256,10 +256,10 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 
 **C#:**
 
-1. 생성된 `framework-cs/module-gen/Devian.Protocol.{ProtocolName}/Devian.Protocol.{ProtocolName}.csproj`에  
+1. 생성된 `framework-cs/module/Devian.Protocol.{ProtocolName}/Devian.Protocol.{ProtocolName}.csproj`에  
    `..\..\module\Devian.Module.Common\Devian.Module.Common.csproj` ProjectReference 존재
 
-2. 생성된 `framework-cs/module-gen/Devian.Protocol.{ProtocolName}/{ProtocolName}.g.cs` 상단에  
+2. 생성된 `framework-cs/module/Devian.Protocol.{ProtocolName}/{ProtocolName}.g.cs` 상단에  
    `using Devian.Module.Common;` 존재
 
 3. 생성된 `{ProtocolName}.g.cs`에 `System.Text.Json` 관련 코드 없음
@@ -268,7 +268,7 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 
 **TypeScript:**
 
-5. 생성된 `framework-ts/module-gen/devian-network-{group}/package.json` dependencies에  
+5. 생성된 `framework-ts/module/devian-network-{group}/package.json` dependencies에  
    `@devian/module-common` 존재
 
 **Unity UPM:**

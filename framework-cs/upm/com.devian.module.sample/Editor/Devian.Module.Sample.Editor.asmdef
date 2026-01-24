@@ -1,0 +1,20 @@
+{
+  "name": "Devian.Module.Sample.Editor",
+  "rootNamespace": "Devian.Module.Sample.Editor",
+  "references": [
+    "Devian.Module.Sample",
+    "Devian.Unity.Common",
+    "Devian.Unity.Common.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
