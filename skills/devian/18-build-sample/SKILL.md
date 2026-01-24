@@ -147,8 +147,8 @@ node framework-ts/tools/builder/build.js input/input_common.json
   },
 
   "staticUpmPackages": [
-    "com.devian.unity.common",
-    "com.devian.unity.network"
+    "com.devian.unity",
+    "com.devian.unity"
   ],
 
   "domains": {},
@@ -183,19 +183,18 @@ framework-cs/module/
     └── Devian.Protocol.Sample.csproj
 
 # UPM 패키지 (upmConfig.sourceDir → upmConfig.packageDir로 sync)
+# Protocol UPM은 Runtime-only (Editor 생성 금지)
 upm/com.devian.protocol.sample/
 ├── Runtime/
 │   ├── Devian.Protocol.Sample.asmdef
 │   ├── C2Sample.g.cs
 │   └── Sample2C.g.cs
-├── Editor/
-│   └── Devian.Protocol.Sample.Editor.asmdef
 └── package.json
 
 # Static UPM 패키지 (upm → packageDir로 sync)
-upm/com.devian.unity.network/
+upm/com.devian.unity/Runtime/Network/
 ├── Runtime/
-│   └── Devian.Unity.Network.asmdef
+│   └── Devian.Unity.Common.asmdef (Network 코드 포함)
 ├── Samples~/
 │   └── BasicWsClient/
 └── package.json
@@ -215,7 +214,7 @@ Protocol UPM 패키지의 asmdef는 빌더가 자동 생성한다:
   "rootNamespace": "Devian.Protocol.Sample",
   "references": [
     "Devian.Core",
-    "Devian.Module.Common"
+    "<어셈블리: Devian + .Module.Common>"
   ],
   "noEngineReferences": true
 }
@@ -225,7 +224,7 @@ Protocol UPM 패키지의 asmdef는 빌더가 자동 생성한다:
 
 ## 금지
 
-- 새 UPM 패키지 생성/추가 금지 (기존 `com.devian.unity.network` 확장만)
+- 새 UPM 패키지 생성/추가 금지 (기존 `com.devian.unity` 확장만)
 - 새 "샘플 프로젝트/샘플 패키지" 도입 금지
 - 기존 Common 입력/산출물 구조 변경 금지
 - 샘플 빌드가 프로덕션 경로로 산출물 복사 금지
@@ -237,4 +236,4 @@ Protocol UPM 패키지의 asmdef는 빌더가 자동 생성한다:
 - 빌더: `framework-ts/tools/builder/build.js`
 - 프로덕션 빌드 설정: `input/input_common.json`
 - 샘플 빌드 설정: `input/input_sample.json`
-- Related: `skills/devian/16-unity-upm-samples/SKILL.md`
+- Related: `skills/devian-common-upm-samples/01-upm-samples-policy/SKILL.md`

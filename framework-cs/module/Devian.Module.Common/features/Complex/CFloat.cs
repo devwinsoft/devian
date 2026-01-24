@@ -1,8 +1,8 @@
-// SSOT: skills/devian-common/13-feature-complex/SKILL.md
+// SSOT: skills/devian-common-feature/13-feature-complex/SKILL.md
 
 using System;
 
-namespace Devian.Module.Common
+namespace Devian
 {
     /// <summary>
     /// Lightweight masked float (masking only, not a security feature).

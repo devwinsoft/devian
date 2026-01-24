@@ -32,8 +32,8 @@ Table generator의 **정책적 규칙**만 정의한다.
 
 ### Namespace (C#)
 
-- `Devian.Module.{DomainKey}`를 사용한다.
-- 예: Domain `Common` → `namespace Devian.Module.Common`
+- `Devian.Domain.{DomainKey}`를 사용한다.
+- 예: Domain `Common` → `namespace Devian.Domain.Common`
 
 ---
 
@@ -126,12 +126,12 @@ Domain 내 모든 Contract, Table Entity, Table Container는 **단일 파일에 
 
 DATA Domain 모듈은 Common 참조 여부를 판정하지 않는다.
 
-- `{DomainKey} != Common`인 모든 DATA Domain 모듈은 `Devian.Module.Common` / `@devian/module-common`을 **무조건** 참조한다.
+- `{DomainKey} != Common`인 모든 DATA Domain 모듈은 ``Devian` + `.Module.Common`` / `@devian/module-common`을 **무조건** 참조한다.
 - Common 모듈 자기 자신은 자기 자신을 참조하지 않는다.
 
 필수 적용:
 
-- C#: `{csConfig.generateDir}/Devian.Module.{DomainKey}/Devian.Module.{DomainKey}.csproj`는 `Devian.Module.Common`을 ProjectReference로 포함해야 한다.
+- C#: `{csConfig.generateDir}/` + `Devian` + `.Module.{DomainKey}` + `/` + `Devian` + `.Module.{DomainKey}.csproj`는 `Devian` + `.Module.Common`을 ProjectReference로 포함해야 한다.
 - TS: `@devian/module-{domainkey}`의 `package.json` `dependencies`에 `@devian/module-common`을 포함해야 한다.
 
 ---
@@ -172,7 +172,7 @@ Unity 환경에서의 호환성을 위해 다음 규칙을 강제한다.
 ### 파일 구조 (C#)
 
 ```csharp
-namespace Devian.Module.{DomainKey}
+namespace Devian.Domain.{DomainKey}
 {
     // Contracts (enum, class : IEntity)
     // Table Entities (class : IEntity 또는 IEntityKey<T>)

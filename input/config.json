@@ -22,8 +22,7 @@
   },
 
   "staticUpmPackages": [
-    "com.devian.templates",
-    "com.devian.unity.common",
-    "com.devian.unity.network"
+    "com.devian.samples",
+    "com.devian.unity"
   ]
 }

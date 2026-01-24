@@ -6,10 +6,9 @@
 
 using UnityEditor;
 using UnityEngine;
-using Devian.Unity;
-using Devian.Module.Sample;
+using Devian.Domain.Sample;
 
-namespace Devian.Unity
+namespace Devian
 {
     /// <summary>Selector for TestSheet_ID</summary>
     public class Sample_TestSheet_ID_Selector : EditorID_SelectorBase

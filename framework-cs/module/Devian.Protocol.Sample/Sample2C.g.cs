@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using Devian;
-using Devian.Module.Common;
 
 namespace Devian.Protocol.Sample
 {

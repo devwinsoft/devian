@@ -33,7 +33,6 @@ export function generateCSharpProtocol(spec, protocolName, groupName) {
     lines.push('using System.Text;');
     // Note: System.Text.Json 미사용 (Unity 호환성)
     lines.push('using Devian;');
-    lines.push('using Devian.Module.Common;');
     if (usesComplexAliases) {
         lines.push('using Newtonsoft.Json;');
     }

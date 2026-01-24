@@ -1,10 +1,10 @@
-// SSOT: skills/devian-common/13-feature-complex/SKILL.md
+// SSOT: skills/devian-common-feature/13-feature-complex/SKILL.md
 
 using System;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Devian.Module.Common
+namespace Devian
 {
     /// <summary>
     /// Complex utility functions for lightweight masking (masking only, not a security feature).

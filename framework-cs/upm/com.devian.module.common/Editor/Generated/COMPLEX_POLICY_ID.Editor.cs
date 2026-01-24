@@ -6,10 +6,9 @@
 
 using UnityEditor;
 using UnityEngine;
-using Devian.Unity;
-using Devian.Module.Common;
+using Devian.Domain.Common;
 
-namespace Devian.Unity
+namespace Devian
 {
     /// <summary>Selector for COMPLEX_POLICY_ID</summary>
     public class Common_COMPLEX_POLICY_ID_Selector : EditorID_SelectorBase

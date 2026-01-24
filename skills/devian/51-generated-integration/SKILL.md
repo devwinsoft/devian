@@ -19,7 +19,7 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 
 | 구분 | 생성물 namespace | 런타임 참조 |
 |------|------------------|------------|
-| Domain 모듈 | `Devian.Module.{DomainKey}` | `using Devian;` |
+| Domain 모듈 | `Devian.Domain.{DomainKey}` | `using Devian;` |
 | Protocol 모듈 | `Devian.Protocol.{ProtocolName}` | `using Devian;` |
 
 > **금지 패턴:**
@@ -47,7 +47,7 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 
 | 타겟 | Domain 출력 경로 | Protocol 출력 경로 |
 |------|------------------|-------------------|
-| C# | `{csConfig.generateDir}/Devian.Module.{Domain}/` | `{csConfig.generateDir}/Devian.Protocol.{ProtocolName}/` |
+| C# | `{csConfig.generateDir}/`Devian` + `.Module.{Domain}`/` | `{csConfig.generateDir}/Devian.Protocol.{ProtocolName}/` |
 | TS | `{tsConfig.generateDir}/devian-module-{domain}/` | `{tsConfig.generateDir}/devian-network-{group}/` |
 | Data (ndjson) | `{dataConfig.tableDirs}/{Domain}/ndjson/` | - |
 | Data (bin) | `{dataConfig.tableDirs}/{Domain}/pb64/` (pk 옵션 테이블만) | - |
@@ -63,7 +63,7 @@ framework-cs/
 │   └── Devian/                                 # 단일 런타임 모듈
 │       └── Devian.csproj
 ├── module/                                 # 생성 산출물 (기계 소유)
-│   ├── Devian.Module.{Domain}/
+│   ├── `Devian` + `.Module.{Domain}`/
 │   │   └── generated/
 │   │       └── {Domain}.g.cs
 │   └── Devian.Protocol.{ProtocolName}/
@@ -161,7 +161,8 @@ Unity는 `com.unity.nuget.newtonsoft-json` 패키지로 Newtonsoft.Json을 기�
 
   <ItemGroup>
     <ProjectReference Include="..\..\module\Devian\Devian.csproj" />
-    <ProjectReference Include="..\Devian.Module.Common\Devian.Module.Common.csproj" />
+    <!-- 프로젝트 참조: Devian + .Module.Common -->
+    <ProjectReference Include="..\<Devian + .Module.Common>\<Devian + .Module.Common>.csproj" />
   </ItemGroup>
 </Project>
 ```

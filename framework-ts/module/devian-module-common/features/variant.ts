@@ -1,4 +1,4 @@
-// SSOT: skills/devian-common/11-feature-variant/SKILL.md
+// SSOT: skills/devian-common-feature/11-feature-variant/SKILL.md
 
 // ============================================================================
 // Variant Type (Simple format: {i} | {f} | {s})

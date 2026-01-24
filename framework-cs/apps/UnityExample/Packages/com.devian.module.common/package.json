@@ -7,6 +7,7 @@
   "author": { "name": "Devian" },
   "dependencies": {
     "com.devian.core": "0.1.0",
+    "com.devian.unity": "0.1.0",
     "com.unity.nuget.newtonsoft-json": "3.2.1"
   }
 }

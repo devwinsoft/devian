@@ -229,7 +229,7 @@ class DevianToolBuilder {
             }
         }
 
-        // Process static UPM packages (e.g., com.devian.unity.common)
+        // Process static UPM packages (e.g., com.devian.unity)
         // staticUpmPackages is now string[] of package names
         if (this.config.staticUpmPackages && Array.isArray(this.config.staticUpmPackages)) {
             for (const upmName of this.config.staticUpmPackages) {
@@ -429,7 +429,7 @@ class DevianToolBuilder {
         lines.push('');
 
         // Namespace
-        lines.push(`namespace Devian.Module.${domainName}`);
+        lines.push(`namespace Devian.Domain.${domainName}`);
         lines.push('{');
 
         // Enums section (gen: tables only)
@@ -671,7 +671,7 @@ class DevianToolBuilder {
         const stagingNdjson = path.join(this.tempDir, domainName, 'data', 'ndjson');
         const stagingPb64 = path.join(this.tempDir, domainName, 'data', 'pb64');
 
-        // Copy to CS target: {csConfig.generateDir}/Devian.Module.{Domain}/generated/
+        // Copy to CS target: {csConfig.generateDir}/Devian + .Module.{Domain}/generated/
         // Domain C# output always goes to csConfig.generateDir (domains[*].csTargetDir is deprecated)
         if (this.csGenerateDir) {
             const csModuleName = `Devian.Module.${domainName}`;
@@ -1685,7 +1685,7 @@ export * from './features';
         fs.mkdirSync(stagingGenerated, { recursive: true });
         fs.mkdirSync(stagingEditor, { recursive: true });
 
-        // package.json - SSOT: skills/devian/17-upm-package-metadata/SKILL.md
+        // package.json - SSOT: skills/devian-common-upm/10-package-metadata/SKILL.md
         const isCommon = domainName === 'Common';
         const dependencies = { 'com.devian.core': '0.1.0' };
         if (isCommon) {
@@ -1705,7 +1705,7 @@ export * from './features';
         };
         fs.writeFileSync(path.join(stagingUpm, 'package.json'), JSON.stringify(packageJsonObj, null, 2));
 
-        // Runtime.asmdef - SSOT: skills/devian/19-unity-module-common-upm/SKILL.md
+        // Runtime.asmdef - SSOT: skills/devian-common-upm/20-packages/com.devian.module.common/SKILL.md
         const asmdefReferences = isCommon
             ? ['Devian.Core', 'Newtonsoft.Json']
             : ['Devian.Core'];
@@ -1726,8 +1726,8 @@ export * from './features';
         };
         fs.writeFileSync(path.join(stagingRuntime, `${asmdefName}.asmdef`), JSON.stringify(runtimeAsmdef, null, 2));
 
-        // Editor.asmdef - includes refs for TableID Editor bindings (base classes in Devian.Unity.Common.Editor)
-        // SSOT: skills/devian/19-unity-module-common-upm/SKILL.md
+        // Editor.asmdef - includes refs for TableID Editor bindings (base classes in Devian + .Unity.Common.Editor assembly)
+        // SSOT: skills/devian-common-upm/20-packages/com.devian.module.common/SKILL.md
         const editorReferences = [asmdefName, 'Devian.Unity.Common', 'Devian.Unity.Common.Editor'];
         const editorAsmdef = {
             name: `${asmdefName}.Editor`,
@@ -1758,7 +1758,7 @@ export * from './features';
         }
 
         // Generate TableID Editor bindings into this domain module package
-        // SSOT: skills/devian/19-unity-module-common-upm/SKILL.md
+        // SSOT: skills/devian-common-upm/20-packages/com.devian.module.common/SKILL.md
         const keyedTables = (tables || []).filter(t => t && t.keyField);
         if (keyedTables.length > 0) {
             const editorGeneratedDir = path.join(stagingUpm, 'Editor', 'Generated');
@@ -1775,7 +1775,7 @@ export * from './features';
         }
 
         // Common 모듈일 때 Features 폴더 복사 (Logger/Variant/Complex)
-        // SSOT: skills/devian/19-unity-module-common-upm/SKILL.md
+        // SSOT: skills/devian-common-upm/20-packages/com.devian.module.common/SKILL.md
         if (isCommon) {
             // Use csGenerateDir (unified module root)
             const featuresSource = this.csGenerateDir
@@ -1818,10 +1818,9 @@ export * from './features';
         lines.push('');
         lines.push('using UnityEditor;');
         lines.push('using UnityEngine;');
-        lines.push('using Devian.Unity;');
-        lines.push(`using Devian.Module.${domainName};`);
+        lines.push(`using Devian.Domain.${domainName};`);
         lines.push('');
-        lines.push('namespace Devian.Unity');
+        lines.push('namespace Devian');
         lines.push('{');
 
         // Selector class
@@ -1901,14 +1900,14 @@ export * from './features';
     }
 
     // ========================================================================
-    // Static UPM Package Processing (e.g., com.devian.unity.common)
-    // SSOT: skills/devian/21-unity-common-upm/SKILL.md
+    // Static UPM Package Processing (e.g., com.devian.unity)
+    // SSOT: skills/devian-common-upm/20-packages/com.devian.unity/SKILL.md
     // ========================================================================
 
     /**
      * Process static UPM package: copy source to staging.
      * Paths are computed from upmConfig + upmName.
-     * @param {string} upmName - UPM package name (e.g., "com.devian.unity.common")
+     * @param {string} upmName - UPM package name (e.g., "com.devian.unity")
      */
     async processStaticUpmPackage(upmName) {
         console.log(`  [StaticUPM] ${upmName}`);
@@ -1927,12 +1926,12 @@ export * from './features';
         console.log(`    [OK] Staged to ${stagingUpm}`);
 
         // GUARD: Validate UPM sample structure (Runtime/Editor separation)
-        // SSOT: skills/devian/16-unity-upm-samples/SKILL.md
+        // SSOT: skills/devian-common-upm-samples/01-upm-samples-policy/SKILL.md
         this.validateUpmSampleStructure(stagingUpm, upmName);
 
         // Safety: Remove legacy Editor/Generated from unity.common staging
         // TableID Editor bindings are now generated into each domain module package
-        if (upmName === 'com.devian.unity.common') {
+        if (upmName === 'com.devian.unity') {
             const legacyGenerated = path.join(stagingUpm, 'Editor', 'Generated');
             if (fs.existsSync(legacyGenerated)) {
                 fs.rmSync(legacyGenerated, { recursive: true });
@@ -1944,7 +1943,7 @@ export * from './features';
     /**
      * GUARD: Validate UPM sample structure (Runtime/Editor separation).
      * Throws Error if sample structure is invalid.
-     * SSOT: skills/devian/16-unity-upm-samples/SKILL.md
+     * SSOT: skills/devian-common-upm-samples/01-upm-samples-policy/SKILL.md
      */
     validateUpmSampleStructure(stagingUpm, upmName) {
         const samplesDir = path.join(stagingUpm, 'Samples~');
@@ -2141,7 +2140,7 @@ export * from './features';
             return;
         }
 
-        const unityCommonPath = path.join(this.upmPackageDir, 'com.devian.unity.common');
+        const unityCommonPath = path.join(this.upmPackageDir, 'com.devian.unity');
         const requiredFiles = [
             'Editor/TableId/EditorID_SelectorBase.cs',
             'Editor/TableId/EditorID_DrawerBase.cs',
@@ -2158,17 +2157,17 @@ export * from './features';
 
         if (missingFiles.length > 0) {
             console.error();
-            console.error('[FAIL] com.devian.unity.common is missing Editor/TableId base files:');
+            console.error('[FAIL] com.devian.unity is missing Editor/TableId base files:');
             for (const file of missingFiles) {
                 console.error(`       - ${file}`);
             }
             console.error();
-            console.error('Fix: Add com.devian.unity.common to staticUpmPackages in config.json:');
+            console.error('Fix: Add com.devian.unity to staticUpmPackages in config.json:');
             console.error('  "staticUpmPackages": [');
-            console.error('    "com.devian.unity.common"');
+            console.error('    "com.devian.unity"');
             console.error('  ]');
             console.error();
-            throw new Error('[FAIL] com.devian.unity.common is missing Editor/TableId base files.');
+            throw new Error('[FAIL] com.devian.unity is missing Editor/TableId base files.');
         }
 
         console.log('  [Guard] unity-common TableId base files verified');
@@ -2176,11 +2175,11 @@ export * from './features';
 
     /**
      * Guard: Verify deprecated packages don't exist in target.
-     * SSOT: skills/devian/15-unity-bundle-upm/SKILL.md
+     * SSOT: skills/devian-common-upm/02-upm-bundles/SKILL.md
      */
     async verifyNoDeprecatedPackages() {
         const deprecatedPackages = [
-            'com.devian.unity'  // deprecated meta package
+            // No deprecated packages currently
         ];
 
         // Use upmPackageDir from upmConfig (validated in run())
@@ -2214,14 +2213,14 @@ export * from './features';
     }
 
     generateProtocolUpmScaffold(groupName, stagingCs) {
+        // Protocol UPM은 Runtime-only (Editor 생성 금지)
+        // SSOT: skills/devian/03-ssot/SKILL.md — Protocol UPM 자동 생성 규칙
         const csProjectName = `Devian.Protocol.${groupName}`;
         const upmName = this.computeProtocolUpmName(groupName);
         const stagingUpm = path.join(this.tempDir, `${csProjectName}-upm`);
         const stagingRuntime = path.join(stagingUpm, 'Runtime');
-        const stagingEditor = path.join(stagingUpm, 'Editor');
 
         fs.mkdirSync(stagingRuntime, { recursive: true });
-        fs.mkdirSync(stagingEditor, { recursive: true });
 
         // package.json (스킬 17 준수: version 0.1.0, author, dependencies)
         const packageJson = JSON.stringify({
@@ -2260,22 +2259,7 @@ export * from './features';
         }, null, 2);
         fs.writeFileSync(path.join(stagingRuntime, `${csProjectName}.asmdef`), runtimeAsmdef);
 
-        // Editor.asmdef
-        const editorAsmdef = JSON.stringify({
-            name: `${csProjectName}.Editor`,
-            rootNamespace: `${csProjectName}.Editor`,
-            references: [csProjectName],
-            includePlatforms: ['Editor'],
-            excludePlatforms: [],
-            allowUnsafeCode: false,
-            overrideReferences: false,
-            precompiledReferences: [],
-            autoReferenced: true,
-            defineConstraints: [],
-            versionDefines: [],
-            noEngineReferences: false
-        }, null, 2);
-        fs.writeFileSync(path.join(stagingEditor, `${csProjectName}.Editor.asmdef`), editorAsmdef);
+        // Editor asmdef 생성 금지 (Protocol UPM은 Runtime-only)
 
         // Copy C# generated files to Runtime
         if (fs.existsSync(stagingCs)) {
@@ -2345,6 +2329,10 @@ export * from './features';
                     fs.copyFileSync(srcPath, destPath);
                 }
             }
+        } else if (fs.existsSync(targetEditor)) {
+            // staging에 Editor가 없으면 target Editor 삭제 (staging이 SSOT)
+            // Protocol UPM 등 Runtime-only 패키지에서 이전 빌드 잔재 제거
+            fs.rmSync(targetEditor, { recursive: true });
         }
 
         // Runtime folder (clean & copy)
@@ -2437,7 +2425,7 @@ export * from './features';
             return mapping[asmdefRef];
         }
 
-        // Pattern: Devian.Module.{Domain} -> com.devian.module.{domain}
+        // Pattern: Devian + .Module.{Domain} (assembly) -> com.devian.module.{domain} (UPM)
         const moduleMatch = asmdefRef.match(/^Devian\.Module\.(\w+)$/);
         if (moduleMatch) {
             return `com.devian.module.${moduleMatch[1].toLowerCase()}`;
@@ -2512,7 +2500,7 @@ export * from './features';
         const defaultVersions = {
             'com.devian.core': '0.1.0',
             'com.devian.module.common': '0.1.0',
-            'com.devian.unity.common': '0.1.0',
+            'com.devian.unity': '0.1.0',
         };
 
         // Convert refs to UPM packages and add to dependencies
@@ -2639,7 +2627,7 @@ export * from './features';
 
     // ========================================================================
     // Forbidden Namespace Guard (재발 방지)
-    // SSOT: skills/devian-common/01-module-policy/SKILL.md
+    // SSOT: skills/devian-common-feature/01-module-policy/SKILL.md
     // ========================================================================
 
     /**
@@ -2824,7 +2812,7 @@ export * from './features';
                         `staticUpmPackages[${i}] must be a string, not an object.\n` +
                         `  staticUpmPackages is now string[] of UPM package names.\n` +
                         `  Was: ${JSON.stringify(item)}\n` +
-                        `  Fix: Use plain string like "com.devian.unity.common"`
+                        `  Fix: Use plain string like "com.devian.unity"`
                     );
                 }
             }
@@ -3161,63 +3149,60 @@ export * from './features';
     }
 
     checkForbiddenNamespaces() {
-        const forbiddenPattern = 'Devian.Module.Common.Features';
-        
-        // Use csGenerateDir (unified module root)
-        const csModuleCommonDir = this.csGenerateDir
-            ? path.join(this.csGenerateDir, 'Devian.Module.Common')
-            : path.join(this.rootDir, 'framework-cs/module/Devian.Module.Common');
+        // New policy: namespace Devian.* is forbidden except:
+        // - namespace Devian (single)
+        // - namespace Devian.Domain.*
+        // - namespace Devian.Protocol.*
         
         const targetDirs = [
-            csModuleCommonDir,
-            path.join(this.rootDir, 'framework-cs/apps/UnityExample/Packages/com.devian.module.common'),
-            path.join(this.rootDir, 'framework-cs/apps/UnityExample/Packages/com.devian.unity.common'),
+            path.join(this.rootDir, 'framework-cs/module/Devian'),
+            path.join(this.rootDir, 'framework-cs/upm'),
+            path.join(this.rootDir, 'framework-cs/apps/UnityExample/Packages'),
         ];
-        
-        // Also scan upm directories
-        if (this.upmSourceDir) {
-            targetDirs.push(path.join(this.upmSourceDir, 'com.devian.module.common'));
-            targetDirs.push(path.join(this.upmSourceDir, 'com.devian.unity.common'));
-        }
 
         const violations = [];
 
         for (const dir of targetDirs) {
             if (!fs.existsSync(dir)) continue;
-            const found = this.scanForForbiddenNamespace(dir, forbiddenPattern);
+            const found = this.scanForForbiddenNamespaces(dir);
             violations.push(...found);
         }
 
         if (violations.length > 0) {
             console.error('\n[FAIL] Forbidden namespace detected!');
-            console.error(`Pattern: ${forbiddenPattern}`);
+            console.error('Policy: Only namespace Devian, Devian.Domain.*, Devian.Protocol.* are allowed.');
             console.error('Violations:');
             for (const v of violations) {
                 console.error(`  - ${v.file}:${v.line}: ${v.content.trim()}`);
             }
             throw new Error(
-                `Forbidden namespace detected: ${forbiddenPattern} (Common must use Devian.Module.Common only).`
+                `Forbidden namespace detected. Only namespace Devian, Devian.Domain.*, Devian.Protocol.* are allowed.`
             );
         }
 
         console.log('  [OK] No forbidden namespaces found.');
     }
 
-    scanForForbiddenNamespace(dir, pattern) {
+    scanForForbiddenNamespaces(dir) {
         const results = [];
         const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+        // Regex: matches "namespace Devian.X" where X is not "Domain" or "Protocol"
+        // Allows: "namespace Devian", "namespace Devian.Domain.*", "namespace Devian.Protocol.*"
+        // Forbids: namespace Devian + .<Something> where Something is NOT Domain or Protocol
+        const forbiddenNamespaceRegex = /^\s*namespace\s+Devian\.(?!Domain\b|Protocol\b)(\w+)/;
 
         for (const entry of entries) {
             const fullPath = path.join(dir, entry.name);
 
             if (entry.isDirectory()) {
-                results.push(...this.scanForForbiddenNamespace(fullPath, pattern));
+                results.push(...this.scanForForbiddenNamespaces(fullPath));
             } else if (entry.isFile() && entry.name.endsWith('.cs')) {
                 const content = fs.readFileSync(fullPath, 'utf-8');
                 const lines = content.split('\n');
 
                 for (let i = 0; i < lines.length; i++) {
-                    if (lines[i].includes(pattern)) {
+                    if (forbiddenNamespaceRegex.test(lines[i])) {
                         results.push({
                             file: fullPath,
                             line: i + 1,
@@ -3232,15 +3217,15 @@ export * from './features';
     }
 
     /**
-     * Guard: com.devian.unity.common must NOT contain Editor/Generated.
+     * Guard: com.devian.unity must NOT contain Editor/Generated.
      * Editor/Generated for TableID inspection belongs to com.devian.module.* packages.
      * If this folder exists in unity.common, it indicates a routing/mapping error.
      * SSOT: skills/devian/03-ssot/SKILL.md
      */
     checkUnityCommonEditorGenerated() {
         const forbiddenPaths = [
-            path.join(this.rootDir, 'framework-cs/upm/com.devian.unity.common/Editor/Generated'),
-            path.join(this.rootDir, 'framework-cs/apps/UnityExample/Packages/com.devian.unity.common/Editor/Generated'),
+            path.join(this.rootDir, 'framework-cs/upm/com.devian.unity/Editor/Generated'),
+            path.join(this.rootDir, 'framework-cs/apps/UnityExample/Packages/com.devian.unity/Editor/Generated'),
         ];
 
         const violations = [];
@@ -3252,7 +3237,7 @@ export * from './features';
         }
 
         if (violations.length > 0) {
-            console.error('\n[FAIL] com.devian.unity.common must not contain Editor/Generated!');
+            console.error('\n[FAIL] com.devian.unity must not contain Editor/Generated!');
             console.error('This folder belongs to com.devian.module.* packages, not unity.common.');
             console.error('Violations:');
             for (const v of violations) {
@@ -3261,12 +3246,12 @@ export * from './features';
             console.error('\nFix: Remove generation target mapping or sheet output route that produces it.');
             console.error('     Check staticUpmPackages config and domain/table routing in input json.');
             throw new Error(
-                '[FAIL] com.devian.unity.common must not contain Editor/Generated. ' +
+                '[FAIL] com.devian.unity must not contain Editor/Generated. ' +
                 'Remove generation target mapping or sheet output route that produces it.'
             );
         }
 
-        console.log('  [OK] com.devian.unity.common has no forbidden Editor/Generated.');
+        console.log('  [OK] com.devian.unity has no forbidden Editor/Generated.');
     }
 }
 

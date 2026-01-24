@@ -57,7 +57,7 @@ SSOT의 용어/플레이스홀더 표준을 그대로 따른다.
 
 > `{dataConfig.tableDirs}`는 배열이다. 문서에서 배열 내 개별 요소를 지칭할 때 `{dataTargetDir}`로 표기할 수 있다.
 
-**Deprecated 플레이스홀더 (사용 금지):**
+**금지 플레이스홀더:**
 - `{csTargetDir}`, `{tsTargetDir}`, `{dataTargetDirs}`, `{upmTargetDir}` — 각각 `{csConfig.generateDir}`, `{tsConfig.generateDir}`, `{dataConfig.tableDirs}`, `{upmConfig.packageDir}`로 대체됨
 
 **"domain", "name", "{domain}", "{name}" 단독 사용 금지.**
@@ -79,7 +79,7 @@ Soft를 이유로 "충돌 0개 만들기" 무한 루프를 돌리지 않는다.
 
 모든 SKILL은 상단에 아래 메타를 가진다.
 
-- `Status: ACTIVE | DRAFT | DEPRECATED`
+- `Status: ACTIVE | DRAFT`
 - `AppliesTo: v10`
 - `SSOT: skills/devian/03-ssot/SKILL.md`
 

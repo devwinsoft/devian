@@ -64,7 +64,7 @@ Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 
 - `{ProtocolName}`
 - `{csConfig.generateDir}`, `{tsConfig.generateDir}` — 전역 C#/TS 반영 루트
 - `{dataConfig.tableDirs}` — 전역 데이터 반영 타겟 (배열)
-- `{upmTargetDir}` — deprecated, upmConfig로 계산
+- `{upmTargetDir}` — (금지) upmConfig로 계산됨
 
 > `{dataConfig.tableDirs}`는 배열이다. 문서에서 배열 내 개별 요소를 지칭할 때 `{dataTargetDir}`로 표기할 수 있다.
 
@@ -132,8 +132,8 @@ finalConfig = deepMerge(config.json, input.json)
 
 > staging({tempDir}) 외의 위치에 직접 생성하는 동작은 금지한다.
 > 
-> **Templates 참고:** 샘플/예제 코드는 `framework-cs/upm/com.devian.templates/Samples~/`에서 관리 (UPM Samples~ 사용)
-> → `skills/devian-templates/01-templates-policy/SKILL.md`
+> **Templates 참고:** 샘플/예제 코드는 `framework-cs/upm/com.devian.samples/Samples~/`에서 관리 (UPM Samples~ 사용)
+> → `skills/devian-common-upm-samples/02-samples-policy/SKILL.md`
 
 **반영 위치:**
 - C# 생성물: `staging` → `csConfig.generateDir` (framework-cs/module)
@@ -164,8 +164,8 @@ sync 후 아래 조건이면 **즉시 FAIL**:
 
 **필수 검증 대상 패키지:**
 - `com.devian.core`
-- `com.devian.unity.network`
-- `com.devian.unity.common`
+- `com.devian.unity`
+- `com.devian.unity`
 
 **수동 패키지 수정 시 필수 절차:**
 1. `upm/{pkg}` 또는 `upm/{pkg}`에서 수정
@@ -213,8 +213,8 @@ TS 산출물의 반영 위치를 관리하는 설정:
 - 이 경우 `moduleDir`은 검증만, `generateDir`에만 clean+copy
 
 **우선순위 규칙:**
-- Domain: `tsConfig.generateDir` (없으면 `tsConfig.moduleDir`)로 반영 (domains[*].tsTargetDir는 deprecated)
-- Protocol: `tsConfig.generateDir` (없으면 `tsConfig.moduleDir`)로 반영 (protocols[*].tsTargetDir는 deprecated)
+- Domain: `tsConfig.generateDir` (없으면 `tsConfig.moduleDir`)로 반영 (domains[*].tsTargetDir는 금지)
+- Protocol: `tsConfig.generateDir` (없으면 `tsConfig.moduleDir`)로 반영 (protocols[*].tsTargetDir는 금지)
 
 ### dataConfig 설정
 
@@ -236,17 +236,17 @@ DATA 도메인의 데이터 출력 타겟은 전역 `dataConfig`로 설정한다
 **필수 규칙:**
 - `dataConfig.tableDirs`는 필수 (빈 배열 허용)
 - 모든 도메인의 데이터 출력이 이 타겟들로 반영됨
-- `domains[*].dataTargetDirs`는 deprecated (존재 시 빌드 실패)
+- `domains[*].dataTargetDirs`는 금지 (존재 시 빌드 실패)
 
 ### 디렉토리 역할 정의 (SSOT)
 
 | 디렉토리 | 역할 | 빌드 동작 |
 |----------|------|-----------|
 | `framework-cs/module` | 수동 C# 모듈 (Devian — 단일 통합 모듈) | 검증만, 수정 금지 |
-| `framework-cs/module` | 생성 C# 모듈 (Devian.Module.*, Devian.Protocol.*) | staging 결과로 생성/반영 |
+| `framework-cs/module` | 생성 C# 모듈 (프로젝트명: `Devian` + `.Module.*`, `Devian.Protocol.*`) | staging 결과로 생성/반영 |
 | `framework-ts/module` | 수동 TS 모듈 (devian — 단일 통합 모듈) | 검증만, 수정 금지 |
 | `framework-ts/module` | 생성 TS 모듈 (devian-module-*, devian-network-*) | staging 결과로 생성/반영 |
-| `framework-cs/upm` | 수동 UPM 패키지 (com.devian.core, com.devian.unity.*, com.devian.templates) | 검증만, 수정 금지 |
+| `framework-cs/upm` | 수동 UPM 패키지 (com.devian.core, com.devian.unity.*, com.devian.samples) | 검증만, 수정 금지 |
 | `framework-cs/upm` | 생성 UPM 패키지 (com.devian.module.*, com.devian.protocol.*) | staging 결과로 생성/반영 |
 | `framework-cs/apps/UnityExample/Packages` | Unity 최종 패키지 | upm + upm → sync |
 
@@ -287,27 +287,31 @@ DATA 도메인의 데이터 출력 타겟은 전역 `dataConfig`로 설정한다
 > 이미 이름에 `Net`이 포함된 타입은 중복 접두사 금지.
 > `Dff*`, `Protobuf*`, `IProto*` 등 의미가 명확한 Proto 계열 타입은 이름 변경 금지.
 
-**생성물 namespace 유지 (Hard Rule):**
-- 프로토콜 생성물은 `Devian.Protocol.{ProtocolName}`을 유지한다.
-- 모듈 생성물은 `Devian.Module.{DomainKey}`를 유지한다.
-- 생성물 namespace는 본 정책에서 변경 금지.
+**생성물 namespace 규칙 (Hard Rule):**
+- 프로토콜 생성물은 `Devian.Protocol.{ProtocolName}`을 사용한다.
+- Domain 생성물은 `Devian.Domain.{DomainKey}`를 사용한다.
+- 기본 제공 클래스(UPM/Unity 어댑터 등)는 `namespace Devian` 단일을 사용한다.
 
 **분리 네임스페이스 금지 게이트 (Hard Fail):**
 
-코드/UPM 패키지/생성물에서 아래 패턴이 1개라도 발견되면 **빌드 FAIL**:
+코드/UPM 패키지에서 `namespace Devian.<X>` 패턴(Domain/Protocol 제외)이 1개라도 발견되면 **빌드 FAIL**:
 
-| 금지 패턴 | 설명 |
+| 금지 규칙 | 설명 |
 |-----------|------|
-| 분리 Core 네임스페이스 선언/참조 | 런타임에 분리된 Core 네임스페이스 금지 |
-| 분리 Net 네임스페이스 선언/참조 | 런타임에 분리된 Net 네임스페이스 금지 |
-| 분리 Proto 네임스페이스 선언/참조 | 런타임에 분리된 Proto 네임스페이스 금지 |
+| `namespace Devian` + `.<X>` (X ≠ Domain, Protocol) | 기본 클래스는 `namespace Devian` 사용 |
+
+예시 - 금지되는 패턴:
+- `namespace Devian` + `.Unity` → Unity 어댑터는 `namespace Devian` 사용
+- `namespace Devian` + `.Module` → Domain 생성물은 `Devian.Domain.*` 사용
+- `namespace Devian` + `.Templates` → 샘플 코드는 `namespace Devian` 사용
+- `namespace Devian` + `.Samples` → 샘플 코드는 `namespace Devian` 사용
 
 검증 대상 경로:
 - `framework-cs/module/Devian/`
 - `framework-cs/upm/`
 - `framework-cs/apps/UnityExample/Packages/`
 
-> 프로토콜 생성물(`Devian.Protocol.*`)은 이 검증에서 제외된다.
+> 생성물(`Devian.Protocol.*`, `Devian.Domain.*`)은 이 검증에서 제외된다.
 
 ### TS 런타임 모듈 구조 (Hard Rule)
 
@@ -445,7 +449,7 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 | 필드 | 의미 | 필수 |
 |------|------|------|
 | `moduleDir` | C# 모듈 루트 — 수동 관리 (Devian) | 권장 |
-| `generateDir` | C# 생성 루트 — 빌드 생성 (Devian.Module.*, Devian.Protocol.*) | 권장 |
+| `generateDir` | C# 생성 루트 — 빌드 생성 (프로젝트명: `Devian` + `.Module.*`, `Devian.Protocol.*`) | 권장 |
 
 ### UPM 동기화 흐름 (Hard Rule)
 
@@ -457,8 +461,8 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 **동기화 규칙:**
 - 패키지 단위 clean+copy (packageDir 전체 rm -rf 금지)
 
-> **참고:** UPM Samples~는 더 이상 사용하지 않습니다.
-> 샘플/예제는 `framework-cs/upm/com.devian.templates/Samples~/`에서 Templates로 관리합니다.
+> **참고:** UPM `Samples~`는 templates(사용자가 Import 후 수정하는 샘플 소스)를 배포하는 표준 메커니즘이다.
+> 정책: `skills/devian-common-upm-samples/01-upm-samples-policy/SKILL.md`
 
 **충돌 정책 (HARD RULE):**
 - upm와 upm에 **동일 `package.json.name`이 있으면 무조건 빌드 FAIL**
@@ -478,8 +482,8 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 
 ```json
 "staticUpmPackages": [
-  "com.devian.unity.common",
-  "com.devian.unity.network"
+  "com.devian.unity",
+  "com.devian.unity"
 ]
 ```
 
@@ -502,7 +506,7 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 - staging 생성이 누락되거나 upm 복사가 실패하면 FAIL
 - 이 가드가 "생성물이 버려지는 문제"를 재발 방지함
 
-**Deprecated (Hard Fail):**
+**금지 형식 (Hard Fail):**
 - 객체 형태 `{ "upmName": "..." }` 사용 시 빌드 실패 — 반드시 문자열 배열 사용
 
 **경로 계산 규칙 (Hard Rule):**
@@ -514,11 +518,11 @@ materialize:    {upmConfig.sourceDir}/{upmName}       (upm)
 최종 패키지:    {upmConfig.packageDir}/{upmName}        (packageDir)
 ```
 
-예시 (`"com.devian.unity.common"`):
-- 입력: `../framework-cs/upm/com.devian.unity.common`
-- staging: `{tempDir}/static-com.devian.unity.common`
-- materialize: `../framework-cs/upm/com.devian.unity.common`
-- 최종: `../framework-cs/apps/UnityExample/Packages/com.devian.unity.common`
+예시 (`"com.devian.unity"`):
+- 입력: `../framework-cs/upm/com.devian.unity`
+- staging: `{tempDir}/static-com.devian.unity`
+- materialize: `../framework-cs/upm/com.devian.unity`
+- 최종: `../framework-cs/apps/UnityExample/Packages/com.devian.unity`
 
 ### 1) DomainType = DATA
 
@@ -530,29 +534,29 @@ DATA 입력은 input_common.json의 `domains` 섹션이 정의한다.
 
 - `input/input_common.json`에서 `domains.Common`은 필수 항목이다.
 - 결과로 Common 모듈(C#/TS)은 항상 생성/유지된다:
-  - C#: `Devian.Module.Common`
+  - C#: `Devian` + `.Module.Common` (프로젝트명)
   - TS: `@devian/module-common` (폴더명: `devian-module-common`)
 
-> Common 모듈의 상세 정책(생성물/수동 코드 경계, features 구조)은 `skills/devian-common/01-module-policy/SKILL.md`를 참조한다.
+> Common 모듈의 상세 정책(생성물/수동 코드 경계, features 구조)은 `skills/devian-common-feature/01-module-policy/SKILL.md`를 참조한다.
 
 #### Common 모듈 참조 (Hard Rule)
 
 **Devian v10에서 생성되는 모든 Module/DATA 도메인 모듈과 Protocol 모듈은 Common 모듈을 무조건 참조해야 한다.**
 
-- 예외: Common 모듈 자기 자신(`Devian.Module.Common`, `@devian/module-common`)은 자기 자신을 참조하지 않는다.
+- 예외: Common 모듈 자기 자신(프로젝트명: `Devian` + `.Module.Common`, `@devian/module-common`)은 자기 자신을 참조하지 않는다.
 - “참조 판정”은 하지 않는다. 항상 참조한다.
 
 적용 대상:
 
-1) DATA Domain 모듈 (`Devian.Module.{DomainKey}`, `@devian/module-{domainkey}`)
-   - `{DomainKey} != Common`인 모든 모듈은 `Devian.Module.Common`을 참조한다.
+1) DATA Domain 모듈 (프로젝트명: `Devian` + `.Module.{DomainKey}`, `@devian/module-{domainkey}`)
+   - `{DomainKey} != Common`인 모든 모듈은 `Devian` + `.Module.Common`을 참조한다.
 2) PROTOCOL 모듈 (`Devian.Protocol.{ProtocolName}`, `@devian/network-{protocolgroup}`)
-   - 모든 Protocol 모듈은 `Devian.Module.Common`을 참조한다.
+   - 모든 Protocol 모듈은 `Devian` + `.Module.Common`을 참조한다.
 
 참조 방식(정책):
 
-- C#: `.csproj`에 `Devian.Module.Common` ProjectReference를 포함한다.
-- C# PROTOCOL 생성물(`*.g.cs`): `using Devian.Module.Common;`을 포함한다.
+- C#: `.csproj`에 `Devian` + `.Module.Common` ProjectReference를 포함한다. (프로젝트 참조, 네임스페이스 아님)
+- C# PROTOCOL 생성물(`*.g.cs`): `using Devian;`을 포함한다. (namespace는 Devian 단일)
 - TS: `package.json` `dependencies`에 `@devian/module-common`을 포함한다.
 
 #### 필수 개념:
@@ -566,8 +570,8 @@ DATA 입력은 input_common.json의 `domains` 섹션이 정의한다.
 - `domains[Common].tableDir = Common/tables`
 
 **키 변경 (레거시 호환):**
-- `contractDir` (새 키), `contractsDir` (레거시, deprecated)
-- `tableDir` (새 키), `tablesDir` (레거시, deprecated)
+- `contractDir` (새 키), `contractsDir` (레거시/금지)
+- `tableDir` (새 키), `tablesDir` (레거시/금지)
 - 레거시 키 사용 시 경고 로그 후 정상 처리
 
 **Optional contracts/tables (SKIP 동작):**
@@ -613,15 +617,15 @@ SKIP되어도 타겟 디렉토리는 clean되어 이전 산출물이 제거된�
   - `{tempDir}/{DomainKey}/data/ndjson/{TableName}.json` (내용은 NDJSON)
   - `{tempDir}/{DomainKey}/data/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
 - final (csConfig/tsConfig/dataConfig 기반):
-  - `{csConfig.generateDir}/Devian.Module.{DomainKey}/generated/{DomainKey}.g.cs`
+  - `{csConfig.generateDir}/` + `Devian` + `.Module.{DomainKey}` + `/generated/{DomainKey}.g.cs`
   - `{tsConfig.generateDir}/devian-module-{domainkey}/generated/{DomainKey}.g.ts`, `index.ts`
   - `{dataConfig.tableDirs[i]}/{DomainKey}/ndjson/{TableName}.json` (내용은 NDJSON)
   - `{dataConfig.tableDirs[i]}/{DomainKey}/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
 
-**Deprecated 필드 (Hard Fail):**
-- `domains[*].csTargetDir` — 더 이상 사용하지 않음, `csConfig.generateDir` 사용, 존재 시 빌드 실패
-- `domains[*].tsTargetDir` — 더 이상 사용하지 않음, `tsConfig.generateDir` 사용, 존재 시 빌드 실패
-- `domains[*].dataTargetDirs` — 더 이상 사용하지 않음, `dataConfig.tableDirs` 사용, 존재 시 빌드 실패
+**금지 필드 (Hard Fail):**
+- `domains[*].csTargetDir` — 금지, `csConfig.generateDir` 사용, 존재 시 빌드 실패
+- `domains[*].tsTargetDir` — 금지, `tsConfig.generateDir` 사용, 존재 시 빌드 실패
+- `domains[*].dataTargetDirs` — 금지, `dataConfig.tableDirs` 사용, 존재 시 빌드 실패
 
 > Domain의 모든 Contract, Table Entity, Table Container는 단일 파일(`{DomainKey}.g.cs`, `{DomainKey}.g.ts`)에 통합 생성된다.
 > **파일 확장자는 `.json`이지만, `ndjson/` 폴더의 파일 내용은 NDJSON(라인 단위 JSON)이다.** 확장자는 소비 측(Unity/툴링) 요구로 `.json`을 사용한다.
@@ -674,9 +678,9 @@ TextAsset:
 
 DATA Domain 생성물(`{DomainKey}.g.cs`)의 C# 네임스페이스는 **반드시** 아래 규칙을 따른다.
 
-- `namespace Devian.Module.{DomainKey}`
+- `namespace Devian.Domain.{DomainKey}`
 
-예: DomainKey `Common` → `namespace Devian.Module.Common`
+예: DomainKey `Common` → `namespace Devian.Domain.Common`
 
 #### TS index.ts Marker 관리 (Hard Rule)
 
@@ -689,7 +693,7 @@ DATA Domain 생성물(`{DomainKey}.g.cs`)의 C# 네임스페이스는 **반드�
 - `features/index.ts`도 동일한 marker 방식으로 자동 관리된다.
 - 개발자는 marker 안을 **절대 수정하지 않는다**.
 
-> 상세 규칙은 `skills/devian-common/01-module-policy/SKILL.md`를 참조한다.
+> 상세 규칙은 `skills/devian-common-feature/01-module-policy/SKILL.md`를 참조한다.
 
 ### 2) DomainType = PROTOCOL
 
@@ -713,11 +717,11 @@ PROTOCOL 입력은 input_common.json의 `protocols` 섹션(배열)이 정의한�
 | `protocolDir` | 프로토콜 JSON 파일 디렉토리 | ✅ |
 | `protocolFiles` | 처리할 프로토콜 파일 목록 | ✅ |
 
-**Deprecated 필드 (Hard Fail):**
-- `csTargetDir` — 더 이상 사용하지 않음, `csConfig.generateDir` 사용, 존재 시 빌드 실패
-- `tsTargetDir` — 더 이상 사용하지 않음, `tsConfig.generateDir` 사용, 존재 시 빌드 실패
-- `upmTargetDir` — 더 이상 사용하지 않음, 사용 시 빌드 실패
-- `upmName` — 더 이상 사용하지 않음, 자동 계산됨, 사용 시 빌드 실패
+**금지 필드 (Hard Fail):**
+- `csTargetDir` — 금지, `csConfig.generateDir` 사용, 존재 시 빌드 실패
+- `tsTargetDir` — 금지, `tsConfig.generateDir` 사용, 존재 시 빌드 실패
+- `upmTargetDir` — 금지, 사용 시 빌드 실패
+- `upmName` — 금지, 자동 계산됨, 사용 시 빌드 실패
 
 #### Protocol Spec 포맷
 
@@ -755,6 +759,11 @@ PROTOCOL 입력은 input_common.json의 `protocols` 섹션(배열)이 정의한�
 #### Protocol UPM 자동 생성 규칙 (Hard Rule)
 
 **Protocol UPM 패키지는 항상 자동 생성된다.** (옵션/토글 없음)
+
+**Protocol UPM은 Runtime-only (Hard Rule):**
+- 빌더는 `upm/com.devian.protocol.*` 생성 시 **Runtime/ 폴더만 생성**한다.
+- **Editor/ 폴더 및 `*.Editor.asmdef` 생성 금지**.
+- 기존 빌드 산출물에 Editor/가 남아있으면, 빌더 copy 단계에서 target의 Editor 폴더를 **삭제**한다. (staging이 SSOT)
 
 **UPM 패키지명 자동 계산:**
 ```

@@ -1,0 +1,17 @@
+{
+  "name": "com.devian.samples",
+  "version": "0.1.0",
+  "displayName": "Devian Samples",
+  "description": "Templates for Devian framework. Install samples and customize freely.",
+  "unity": "2021.3",
+  "author": {
+    "name": "Kim, Hyong Joon"
+  },
+  "samples": [
+    {
+      "displayName": "Network",
+      "description": "WebSocket client template with protocol integration.",
+      "path": "Samples~/Network"
+    }
+  ]
+}

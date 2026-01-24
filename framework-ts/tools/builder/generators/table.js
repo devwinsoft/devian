@@ -16,7 +16,7 @@ const classParsers = new Map();
 
 /**
  * Register a class parser
- * @param {string} typeName - Full type name (e.g., 'Devian.Module.Common.CInt')
+ * @param {string} typeName - Full type name (e.g., 'Devian.CInt')
  * @param {Function} parser - Parser function (cellText, ctx) => object|null
  */
 function registerClassParser(typeName, parser) {
@@ -209,13 +209,13 @@ function parseCStringCell(cellText, ctx) {
 }
 
 // Register Complex parsers
-registerClassParser('Devian.Module.Common.CInt', parseCIntCell);
-registerClassParser('Devian.Module.Common.CFloat', parseCFloatCell);
-registerClassParser('Devian.Module.Common.CString', parseCStringCell);
+registerClassParser('Devian.CInt', parseCIntCell);
+registerClassParser('Devian.CFloat', parseCFloatCell);
+registerClassParser('Devian.CString', parseCStringCell);
 
 // ============================================================================
 // Variant Parser (Simple format: {i} | {f} | {s})
-// SSOT: skills/devian-common/11-feature-variant/SKILL.md
+// SSOT: skills/devian-common-feature/11-feature-variant/SKILL.md
 // ============================================================================
 
 /**
@@ -925,13 +925,13 @@ function mapTableTypeToCSharp(type, optional) {
             csType = baseType.slice(5);
             if (csType.includes('.')) {
                 const [ns, name] = csType.split('.');
-                csType = `Devian.${ns}.${name}`;
+                csType = `Devian.Domain.${ns}.${name}`;
             }
         } else if (baseType.startsWith('class:')) {
             csType = baseType.slice(6);
             if (csType.includes('.')) {
                 const [ns, name] = csType.split('.');
-                csType = `Devian.${ns}.${name}`;
+                csType = `Devian.Domain.${ns}.${name}`;
             }
             // class types are nullable (reference types can be null in data)
             if (!isArray) {

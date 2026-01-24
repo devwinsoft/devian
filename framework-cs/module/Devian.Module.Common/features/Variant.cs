@@ -1,4 +1,4 @@
-// SSOT: skills/devian-common/11-feature-variant/SKILL.md
+// SSOT: skills/devian-common-feature/11-feature-variant/SKILL.md
 
 using System;
 using System.Globalization;
@@ -6,7 +6,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Devian.Module.Common
+namespace Devian
 {
     public enum VariantKind : byte
     {

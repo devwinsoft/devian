@@ -10,7 +10,7 @@ using System.IO;
 using Newtonsoft.Json;
 using Devian;
 
-namespace Devian.Module.Sample
+namespace Devian.Domain.Sample
 {
     // ================================================================
     // Contracts

@@ -34,7 +34,7 @@ PROTOCOL(DomainType=PROTOCOL) 입력으로부터 C#/TS 프로토콜 코드를 �
 - `protocolFiles`: 처리할 Protocol JSON 파일 목록
 - 파일명 base가 **ProtocolName**이 된다. (예: `C2Game.json` → `C2Game`)
 
-**Deprecated 필드 (존재 시 빌드 실패):**
+**금지 필드 (존재 시 빌드 실패):**
 - `csTargetDir` — `csConfig.generateDir` 사용
 - `tsTargetDir` — `tsConfig.generateDir` 사용
 - `upmName` — 자동 계산 (`com.devian.protocol.{group.toLowerCase()}`)
@@ -103,6 +103,25 @@ Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴�
 
 ---
 
+## UPM 산출물 정책 (Hard Rule)
+
+**Protocol UPM(`com.devian.protocol.*`)은 Runtime-only로 생성한다.**
+
+| 생성 대상 | 생성 여부 |
+|-----------|----------|
+| `Runtime/Devian.Protocol.{Group}.asmdef` | ✅ 생성 |
+| `Runtime/{ProtocolName}.g.cs` | ✅ 생성 |
+| `Editor/` 폴더 | ❌ 생성 금지 |
+| `Devian.Protocol.{Group}.Editor.asmdef` | ❌ 생성 금지 |
+
+**Runtime asmdef references 정책:**
+- `Devian.Core`
+- `Devian.Module.Common`
+
+> SSOT: `skills/devian/03-ssot/SKILL.md` — Protocol UPM 자동 생성 규칙
+
+---
+
 ## Unity Compatibility (Hard Rule)
 
 Unity 환경에서의 호환성을 위해 다음 규칙을 강제한다.
@@ -136,13 +155,13 @@ Devian v10에서 생성되는 모든 PROTOCOL 모듈은 Common 모듈을 **무�
 필수 적용:
 
 - C#:
-  - `Devian.Protocol.{ProtocolName}.csproj`는 `Devian.Module.Common`을 `ProjectReference`로 포함해야 한다.
-  - 각 생성물(`{ProtocolName}.g.cs`)은 `using Devian.Module.Common;`을 포함해야 한다.
+  - `Devian.Protocol.{ProtocolName}.csproj`는 `Devian + .Module.Common`을 `ProjectReference`로 포함해야 한다. (프로젝트 참조)
+  - 각 생성물(`{ProtocolName}.g.cs`)은 `using Devian;`을 포함해야 한다. (namespace는 Devian 단일)
 - TypeScript:
   - `@devian/network-{protocolgroup}`의 `package.json` `dependencies`에 `@devian/module-common`을 포함해야 한다.
 - **Unity UPM:**
-  - Protocol용 `.asmdef` 파일의 `references`에 `Devian.Module.Common` 포함 필수
-  - 예: `Devian.Protocol.Sample.asmdef` → `"references": [..., "Devian.Module.Common"]`
+  - Protocol용 `.asmdef` 파일의 `references`에 `Devian + .Module.Common` 포함 필수
+  - 예: `Devian.Protocol.Sample.asmdef" → "references": [..., "Devian + .Module.Common""]`
 
 ---
 
@@ -243,8 +262,8 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 **Common 의존성 Hard Rule이 실제로 강제되는 지점:**
 
 - **C#:**
-  - csproj: `generateCsproj(...)`가 `Devian.Module.Common` ProjectReference 포함
-  - g.cs: `generateCSharpProtocol(...)`가 `using Devian.Module.Common;` 포함
+  - csproj: `generateCsproj(...)`가 `Devian + .Module.Common` ProjectReference 포함
+  - g.cs: `generateCSharpProtocol(...)`가 `using Devian;` 포함
 - **TypeScript:**
   - package.json: `ensureProtocolPackageJson(...)`가 dependencies에 `@devian/module-common` 포함
 
@@ -257,10 +276,10 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 **C#:**
 
 1. 생성된 `framework-cs/module/Devian.Protocol.{ProtocolName}/Devian.Protocol.{ProtocolName}.csproj`에  
-   `..\..\module\Devian.Module.Common\Devian.Module.Common.csproj` ProjectReference 존재
+   `..\..\module\` + `Devian` + `.Module.Common` + `\` + `Devian` + `.Module.Common.csproj` ProjectReference 존재
 
 2. 생성된 `framework-cs/module/Devian.Protocol.{ProtocolName}/{ProtocolName}.g.cs` 상단에  
-   `using Devian.Module.Common;` 존재
+   `using Devian;` 존재
 
 3. 생성된 `{ProtocolName}.g.cs`에 `System.Text.Json` 관련 코드 없음
 
@@ -273,7 +292,7 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 
 **Unity UPM:**
 
-6. Protocol용 `.asmdef` 파일의 `references`에 `Devian.Module.Common` 존재
+6. Protocol용 `.asmdef` 파일의 `references`에 `Devian + .Module.Common` 존재
 
 ---
 

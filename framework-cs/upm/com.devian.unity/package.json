@@ -1,0 +1,13 @@
+{
+  "name": "com.devian.unity",
+  "version": "0.1.0",
+  "displayName": "Devian Unity Common",
+  "description": "Unity adapter utilities for Devian Core",
+  "unity": "2021.3",
+  "author": {
+    "name": "Kim, Hyong Joon"
+  },
+  "dependencies": {
+    "com.devian.core": "0.1.0"
+  }
+}

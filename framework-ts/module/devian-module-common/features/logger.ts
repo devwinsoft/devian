@@ -1,4 +1,4 @@
-// SSOT: skills/devian-common/12-feature-logger/SKILL.md
+// SSOT: skills/devian-common-feature/12-feature-logger/SKILL.md
 
 /**
  * Log level for filtering and categorization.
