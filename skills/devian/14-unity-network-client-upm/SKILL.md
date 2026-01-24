@@ -36,7 +36,7 @@ AppliesTo: v10
 
 | 유형 | 경로 |
 |------|------|
-| SSOT (정적 패키지) | `framework-cs/upm-src/com.devian.unity.network/` |
+| SSOT (정적 패키지) | `framework-cs/upm/com.devian.unity.network/` |
 | UnityExample (복사본) | `framework-cs/apps/UnityExample/Packages/com.devian.unity.network/` |
 
 ## 패키지 레이아웃

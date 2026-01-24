@@ -54,9 +54,9 @@ Devian TS 런타임은 단일 패키지(`@devian/core`)로 통합되어 있다.
 
 | 경로 | 역할 |
 |------|------|
-| `framework-ts/module/devian-core/src/` | IEntity, ITableContainer, ICodec, LoadMode |
-| `framework-ts/module/devian-core/src/proto/` | DffConverter, ProtobufCodec, IProtoEntity |
-| `framework-ts/module/devian-core/src/net/` | NetworkClient, NetworkServer, WsTransport |
+| `framework-ts/module/devian/src/` | IEntity, ITableContainer, ICodec, LoadMode |
+| `framework-ts/module/devian/src/proto/` | DffConverter, ProtobufCodec, IProtoEntity |
+| `framework-ts/module/devian/src/net/` | NetworkClient, NetworkServer, WsTransport |
 
 ---
 

@@ -2,6 +2,6 @@
   "name": "devian-modules",
   "private": true,
   "workspaces": [
-    "devian-core"
+    "devian"
   ]
 }

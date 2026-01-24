@@ -7,10 +7,10 @@ import * as Game2CMod from './Game2C.g';
 import * as ServerRuntimeMod from './generated/ServerRuntime.g';
 import * as ClientRuntimeMod from './generated/ClientRuntime.g';
 
-export const C2Game = C2GameMod.C2Game;
-export const Game2C = Game2CMod.Game2C;
-export const ServerRuntime = ServerRuntimeMod;
-export const ClientRuntime = ClientRuntimeMod;
+export { C2Game } from './C2Game.g';
+export { Game2C } from './Game2C.g';
+export * as ServerRuntime from './generated/ServerRuntime.g';
+export * as ClientRuntime from './generated/ClientRuntime.g';
 
 export { createServerRuntime } from './generated/ServerRuntime.g';
 export { createClientRuntime } from './generated/ClientRuntime.g';

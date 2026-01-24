@@ -49,8 +49,8 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 |------|------------------|-------------------|
 | C# | `{csConfig.generateDir}/Devian.Module.{Domain}/` | `{csConfig.generateDir}/Devian.Protocol.{ProtocolName}/` |
 | TS | `{tsConfig.generateDir}/devian-module-{domain}/` | `{tsConfig.generateDir}/devian-network-{group}/` |
-| Data (ndjson) | `{dataConfig.targetDirs}/{Domain}/ndjson/` | - |
-| Data (bin) | `{dataConfig.targetDirs}/{Domain}/pb64/` (pk 옵션 테이블만) | - |
+| Data (ndjson) | `{dataConfig.tableDirs}/{Domain}/ndjson/` | - |
+| Data (bin) | `{dataConfig.tableDirs}/{Domain}/pb64/` (pk 옵션 테이블만) | - |
 
 > **생성물 namespace 고정 (Hard Rule):**
 > C# 생성물 namespace는 `Devian.Protocol.{ProtocolName}`으로 고정이며, 런타임 모듈 단일화와 무관하게 변경하지 않는다.
@@ -72,7 +72,7 @@ framework-cs/
 
 framework-ts/
 ├── module/                                     # 수동 관리 (런타임 패키지)
-│   └── devian-core/                            # 단일 런타임 패키지 (@devian/core)
+│   └── devian/                            # 단일 런타임 패키지 (@devian/core)
 ├── module-gen/                                 # 생성 산출물 (기계 소유)
 │   ├── devian-module-{domain}/
 │   │   ├── generated/
@@ -105,7 +105,7 @@ generated TS 코드가 `@devian/core` 모듈을 import하기 위해 **paths alia
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@devian/core": ["./module/devian-core/src"]
+      "@devian/core": ["./module/devian/src"]
     }
   }
 }
@@ -120,7 +120,7 @@ generated TS 코드가 `@devian/core` 모듈을 import하기 위해 **paths alia
 export default {
   resolve: {
     alias: {
-      '@devian/core': path.resolve(__dirname, 'framework-ts/module/devian-core/src')
+      '@devian/core': path.resolve(__dirname, 'framework-ts/module/devian/src')
     }
   }
 }

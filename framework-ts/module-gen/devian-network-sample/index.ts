@@ -7,7 +7,6 @@ import * as Sample2CMod from './Sample2C.g';
 import * as ServerRuntimeMod from './generated/ServerRuntime.g';
 import * as ClientRuntimeMod from './generated/ClientRuntime.g';
 
-// Direct exports - namespace/type preserving re-export (NOT const)
 export { C2Sample } from './C2Sample.g';
 export { Sample2C } from './Sample2C.g';
 export * as ServerRuntime from './generated/ServerRuntime.g';

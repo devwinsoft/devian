@@ -10,7 +10,7 @@
 > - asmdef 충돌 가능성
 >
 > **대안:**
-> - Templates 원본: `framework-cs/upm-src/com.devian.templates/Samples~/`
+> - Templates 원본: `framework-cs/upm/com.devian.templates/Samples~/`
 > - Network Template: `skills/devian-templates/10-templates-network/SKILL.md`
 
 ---
@@ -28,23 +28,23 @@ Type: Policy / Requirements
 이 문서는 **Devian UPM 샘플 제공 정책/규약**을 정의한다.
 
 **Single Source of Truth:**
-- **수동 관리 패키지**: `framework-cs/upm-src/<packageName>/...` — 수동으로 관리하는 "완벽한 UPM 패키지"
+- **수동 관리 패키지**: `framework-cs/upm/<packageName>/...` — 수동으로 관리하는 "완벽한 UPM 패키지"
 - **생성 패키지**: `framework-cs/upm-gen/<packageName>/...` — 빌드가 생성하는 "완벽한 UPM 패키지" (GitHub URL 배포용)
 - **최종 출력**: `framework-cs/apps/UnityExample/Packages/<packageName>` — 빌드 출력물(복사본), 직접 수정 금지
 
 **동기화 흐름:**
 ```
-upm-src + upm-gen → packageDir (패키지 단위 clean+copy)
+upm + upm-gen → packageDir (패키지 단위 clean+copy)
 ```
 
-> 수동 패키지(예: com.devian.unity.network)는 upm-src에서 관리하고,  
+> 수동 패키지(예: com.devian.unity.network)는 upm에서 관리하고,  
 > 생성 패키지(예: com.devian.module.common)는 upm-gen에서 관리한다.
 
 ---
 
 ## 완벽한 UPM 패키지 DoD (Definition of Done)
 
-upm-src / upm-gen 모두 아래 조건을 만족해야 한다:
+upm / upm-gen 모두 아래 조건을 만족해야 한다:
 
 | 항목 | 요구사항 |
 |------|----------|
@@ -64,7 +64,7 @@ upm-src / upm-gen 모두 아래 조건을 만족해야 한다:
 **Hard Rule:**
 샘플 코드는 **반드시** 다음 위치에서만 작성한다:
 ```
-framework-cs/upm-src/<packageName>/Samples~/...
+framework-cs/upm/<packageName>/Samples~/...
 ```
 
 **금지:**
@@ -78,7 +78,7 @@ framework-cs/upm-src/<packageName>/Samples~/...
 
 **필수 구조:**
 ```
-upm-src/<packageName>/Samples~/BasicWsClient/
+upm/<packageName>/Samples~/BasicWsClient/
 ├── README.md                         ← 샘플 루트에 위치
 ├── Runtime/
 │   ├── Devian.Templates.Network.asmdef          ← Runtime asmdef
@@ -201,7 +201,7 @@ UnityExample Inspector에서 버튼이 표시되지 않으면 **FAIL**이다.
 
 **검증 방법:**
 - Play 모드에서 Connect 후 Disconnect 클릭
-- Console에서 `OnClosed` 또는 `OnConnectClosed` 로그가 1초 이내에 출력되어야 PASS
+- Console에서 `OnClosed` 로그가 1초 이내에 출력되어야 PASS
 - Inspector의 "Connected: Yes"가 "Connected: No"로 변경되어야 PASS
 - "Connected: No" 상태에서 Send 버튼이 disabled(회색)여야 PASS
 
@@ -218,16 +218,16 @@ Disconnect/OnClosed 버그 수정 시, 반드시 `Packages/com.devian.unity.netw
 **확인 방법:**
 ```bash
 # NetWsClientBehaviourBase.cs 파일 크기/날짜 비교
-ls -la upm-src/com.devian.unity.network/Runtime/NetWsClientBehaviourBase.cs
+ls -la upm/com.devian.unity.network/Runtime/NetWsClientBehaviourBase.cs
 ls -la Packages/com.devian.unity.network/Runtime/NetWsClientBehaviourBase.cs
 
 # MD5 해시 비교 (동일해야 함)
-md5sum upm-src/com.devian.unity.network/Runtime/NetWsClientBehaviourBase.cs
+md5sum upm/com.devian.unity.network/Runtime/NetWsClientBehaviourBase.cs
 md5sum Packages/com.devian.unity.network/Runtime/NetWsClientBehaviourBase.cs
 ```
 
 **Hard FAIL 조건:**
-- `upm-src` (또는 `upm-gen`)와 `Packages`의 파일이 다르면 **FAIL** (sync 누락)
+- `upm` (또는 `upm-gen`)와 `Packages`의 파일이 다르면 **FAIL** (sync 누락)
 - `Packages/`에서 직접 수정한 경우 **정책 위반** (다음 sync에서 손실)
 
 **동기화 누락 발견 시:**
@@ -241,7 +241,7 @@ md5sum Packages/com.devian.unity.network/Runtime/NetWsClientBehaviourBase.cs
 ### Builder MUST copy Samples~ (Hard Rule)
 
 **Hard Rule:**
-Builder는 **반드시** `Samples~` 폴더를 upm-src에서 UnityExample/Packages로 복사해야 한다.
+Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로 복사해야 한다.
 
 - Source에 `Samples~`가 존재하면 Target에도 **반드시** 존재해야 함
 - `copyUpmToTarget()` 함수에서 `Samples~` 복사가 `syncSamplesMetadata()` 호출 **전에** 실행되어야 함
@@ -253,7 +253,7 @@ Builder는 **반드시** `Samples~` 폴더를 upm-src에서 UnityExample/Package
 ```json
 {
   "upmConfig": {
-    "sourceDir": "../framework-cs/upm-src",
+    "sourceDir": "../framework-cs/upm",
     "generateDir": "../framework-cs/upm-gen",
     "packageDir": "../framework-cs/apps/UnityExample/Packages"
   },
@@ -268,7 +268,7 @@ Builder는 **반드시** `Samples~` 폴더를 upm-src에서 UnityExample/Package
 
 | 필드 | 의미 |
 |------|------|
-| `sourceDir` | 수동 관리 UPM 패키지 루트 (upm-src) |
+| `sourceDir` | 수동 관리 UPM 패키지 루트 (upm) |
 | `generateDir` | 빌드 생성 UPM 패키지 루트 (upm-gen) |
 | `packageDir` | Unity 최종 패키지 루트 (sync 대상) |
 
@@ -277,11 +277,11 @@ Builder는 **반드시** `Samples~` 폴더를 upm-src에서 UnityExample/Package
 - 배열 내 각 문자열은 `upmConfig.sourceDir`에 존재하는 패키지명
 
 **경로 계산 (upmConfig 기반):**
-- `sourceDir` = `{upmConfig.sourceDir}/{packageName}` → `../framework-cs/upm-src/com.devian.unity.network`
+- `sourceDir` = `{upmConfig.sourceDir}/{packageName}` → `../framework-cs/upm/com.devian.unity.network`
 - `targetDir` = `{upmConfig.packageDir}/{packageName}` → `../framework-cs/apps/UnityExample/Packages/com.devian.unity.network`
 
 **결과:**
-빌더가 `upm-src + upm-gen`을 `packageDir`로 sync하며, `Samples~` 콘텐츠도 포함된다.
+빌더가 `upm + upm-gen`을 `packageDir`로 sync하며, `Samples~` 콘텐츠도 포함된다.
 
 ---
 
@@ -307,7 +307,7 @@ Builder는 **반드시** `Samples~` 폴더를 upm-src에서 UnityExample/Package
 
 ## 금지
 
-- `upm-src` 외부에서 샘플 소스 작성 금지
+- `upm` 외부에서 샘플 소스 작성 금지
 - `UnityExample/Packages/**` 직접 수정 금지 (빌드 출력물)
 - Runtime 코드에 `using UnityEditor` 사용 금지
 - Editor asmdef에 `includePlatforms: []` 사용 금지
@@ -318,5 +318,5 @@ Builder는 **반드시** `Samples~` 폴더를 upm-src에서 UnityExample/Package
 
 ## Reference
 
-- UPM 소스: `framework-cs/upm-src/com.devian.unity.network/`
+- UPM 소스: `framework-cs/upm/com.devian.unity.network/`
 - Related: `skills/devian/14-unity-network-client-upm/SKILL.md`

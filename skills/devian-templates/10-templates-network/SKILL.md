@@ -20,10 +20,10 @@ WebSocket 클라이언트 템플릿. `com.devian.templates` 패키지의 Samples
 
 ## 2. 경로
 
-### 2.1 원본 (upm-src)
+### 2.1 원본 (upm)
 
 ```
-framework-cs/upm-src/com.devian.templates/Samples~/Network/
+framework-cs/upm/com.devian.templates/Samples~/Network/
 ```
 
 ### 2.2 설치 후 위치 (Unity 프로젝트)

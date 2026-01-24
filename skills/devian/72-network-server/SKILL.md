@@ -10,13 +10,30 @@ TypeScript 기반 네트워크 서버 모듈의 설계 원칙과 책임 분리�
 
 ---
 
-## Import 정본
+## Import 정본 (Hard Rule)
 
 **Server 샘플/런타임 import 정본은 `@devian/network-sample/server-runtime` 이다.**
 
 ```typescript
+// ✅ 정본 (MUST)
 import { createServerRuntime, Sample2C } from '@devian/network-sample/server-runtime';
 ```
+
+**루트 import 금지 (Hard Rule):**
+
+```typescript
+// ❌ 금지 - 루트에서 server runtime 가져오기
+import { createServerRuntime } from '@devian/network-sample';  // FAIL
+```
+
+- `@devian/network-sample` 루트 import로 server runtime을 가져오는 것은 **금지**
+- 루트 re-export가 코드에 남아있더라도, **문서/샘플에서는 사용 금지**
+- 정본은 **반드시** `@devian/network-sample/server-runtime` 서브패스 사용
+
+**이유:**
+- Server/Client runtime 분리 명확화
+- 번들 사이즈 최적화 (tree-shaking)
+- 의존성 명시적 표현
 
 ---
 
@@ -66,7 +83,7 @@ Unknown inbound opcode는:
 ## 디렉토리 구조
 
 ```
-framework-ts/module/devian-core/
+framework-ts/module/devian/
 ├── src/
 │   ├── index.ts              # 모듈 exports
 │   ├── net/
@@ -119,6 +136,6 @@ stub.onEcho(async (sessionId, msg) => { ... });
 
 ## Reference
 
-- **공용 모듈:** `framework-ts/module/devian-core/`
+- **공용 모듈:** `framework-ts/module/devian/`
 - **그룹 런타임:** `framework-ts/module-gen/devian-network-{group}/generated/ServerRuntime.g.ts`
 - **정책 정본:** `skills/devian/03-ssot/SKILL.md`

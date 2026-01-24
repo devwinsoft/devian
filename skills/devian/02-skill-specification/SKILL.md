@@ -53,12 +53,12 @@ SKILL은 반드시 아래만 다룬다.
 SSOT의 용어/플레이스홀더 표준을 그대로 따른다.
 
 - 용어: DomainType / DomainKey / ProtocolGroup / ProtocolName
-- 플레이스홀더: `{tempDir}`, `{DomainKey}`, `{ProtocolGroup}`, `{ProtocolName}`, `{csConfig.moduleDir}`, `{csConfig.generateDir}`, `{tsConfig.moduleDir}`, `{tsConfig.generateDir}`, `{dataConfig.targetDirs}`, `{upmConfig.sourceDir}`, `{upmConfig.generateDir}`, `{upmConfig.packageDir}`
+- 플레이스홀더: `{tempDir}`, `{DomainKey}`, `{ProtocolGroup}`, `{ProtocolName}`, `{csConfig.moduleDir}`, `{csConfig.generateDir}`, `{tsConfig.moduleDir}`, `{tsConfig.generateDir}`, `{dataConfig.tableDirs}`, `{upmConfig.sourceDir}`, `{upmConfig.generateDir}`, `{upmConfig.packageDir}`
 
-> `{dataConfig.targetDirs}`는 배열이다. 문서에서 배열 내 개별 요소를 지칭할 때 `{dataTargetDir}`로 표기할 수 있다.
+> `{dataConfig.tableDirs}`는 배열이다. 문서에서 배열 내 개별 요소를 지칭할 때 `{dataTargetDir}`로 표기할 수 있다.
 
 **Deprecated 플레이스홀더 (사용 금지):**
-- `{csTargetDir}`, `{tsTargetDir}`, `{dataTargetDirs}`, `{upmTargetDir}` — 각각 `{csConfig.generateDir}`, `{tsConfig.generateDir}`, `{dataConfig.targetDirs}`, `{upmConfig.packageDir}`로 대체됨
+- `{csTargetDir}`, `{tsTargetDir}`, `{dataTargetDirs}`, `{upmTargetDir}` — 각각 `{csConfig.generateDir}`, `{tsConfig.generateDir}`, `{dataConfig.tableDirs}`, `{upmConfig.packageDir}`로 대체됨
 
 **"domain", "name", "{domain}", "{name}" 단독 사용 금지.**
 

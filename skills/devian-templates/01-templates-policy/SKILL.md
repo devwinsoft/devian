@@ -77,10 +77,10 @@ Templates에서 다음 프리픽스 사용 금지:
 
 ## 4. 경로 정책
 
-### 4.1 Template 원본 (upm-src)
+### 4.1 Template 원본 (upm)
 
 ```
-framework-cs/upm-src/com.devian.templates/
+framework-cs/upm/com.devian.templates/
 ├── package.json
 ├── Samples~/
 │   ├── Network/

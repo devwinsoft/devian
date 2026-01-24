@@ -117,7 +117,7 @@ com.devian.core/
 
 | 유형 | 경로 |
 |------|------|
-| 정적 UPM 패키지 (SSOT) | `framework-cs/upm-src/` |
+| 정적 UPM 패키지 (SSOT) | `framework-cs/upm/` |
 | 생성 UPM 패키지 | `framework-cs/upm-gen/` |
 | UnityExample 최종 패키지 | `framework-cs/apps/UnityExample/Packages/` |
 
@@ -129,28 +129,28 @@ com.devian.core/
 
 | 정본 | 복사본 | 동작 |
 |------|--------|------|
-| `upm-src/{pkg}` 또는 `upm-gen/{pkg}` | `Packages/{pkg}` | clean + copy |
+| `upm/{pkg}` 또는 `upm-gen/{pkg}` | `Packages/{pkg}` | clean + copy |
 
-**수정은 upm-src/upm-gen에서만 한다.**
+**수정은 upm/upm-gen에서만 한다.**
 
 - `Packages/`에서 수정한 코드는 다음 sync에서 덮어써지며, **정책 위반**이다.
-- 수동 패키지(`com.devian.core`, `com.devian.unity.network` 등)는 `upm-src/`에서 수정
+- 수동 패키지(`com.devian.core`, `com.devian.unity.network` 등)는 `upm/`에서 수정
 - 생성 패키지(`com.devian.module.common`, `com.devian.protocol.*` 등)는 빌더가 `upm-gen/`에 생성
 
 **소스 우선순위 (sync 시):**
 1. `upm-gen/{pkg}` 존재 → upm-gen에서 복사
-2. `upm-gen/{pkg}` 없음 → upm-src에서 복사
+2. `upm-gen/{pkg}` 없음 → upm에서 복사
 
 **수동 sync 절차 (빌더 없이):**
 ```bash
-# staticUpmPackages는 upm-gen에서 복사 (빌더가 upm-src → upm-gen 복사 후 생성물 추가)
+# staticUpmPackages는 upm-gen에서 복사 (빌더가 upm → upm-gen 복사 후 생성물 추가)
 for pkg in com.devian.templates com.devian.unity.common com.devian.unity.network; do
     rm -rf Packages/$pkg && cp -r upm-gen/$pkg Packages/$pkg
 done
 
-# upm-src에만 있는 패키지 (upm-gen에 없는 것)
+# upm에만 있는 패키지 (upm-gen에 없는 것)
 for pkg in com.devian.core; do
-    rm -rf Packages/$pkg && cp -r upm-src/$pkg Packages/$pkg
+    rm -rf Packages/$pkg && cp -r upm/$pkg Packages/$pkg
 done
 ```
 

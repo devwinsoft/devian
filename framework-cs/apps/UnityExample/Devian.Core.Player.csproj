@@ -9,7 +9,7 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <RootNamespace>Devian.Core</RootNamespace>
+    <RootNamespace>Devian</RootNamespace>
     <ProjectGuid>{59D7EC36-ABE0-6119-559C-F7B3AD20DD9F}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
@@ -61,18 +61,35 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.2f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Packages\com.devian.core\Runtime\ITableContainer.cs" />
-    <Compile Include="Packages\com.devian.core\Runtime\CoreValueParserRegistry.cs" />
-    <Compile Include="Packages\com.devian.core\Runtime\CoreError.cs" />
-    <Compile Include="Packages\com.devian.core\Runtime\IEntityConverter.cs" />
-    <Compile Include="Packages\com.devian.core\Runtime\LoadMode.cs" />
-    <Compile Include="Packages\com.devian.core\Runtime\CoreResult.cs" />
-    <Compile Include="Packages\com.devian.core\Runtime\ClassCellParserRegistry.cs" />
-    <Compile Include="Packages\com.devian.core\Runtime\ParseContext.cs" />
-    <Compile Include="Packages\com.devian.core\Runtime\IValueParser.cs" />
-    <Compile Include="Packages\com.devian.core\Runtime\ParseResult.cs" />
-    <Compile Include="Packages\com.devian.core\Runtime\IClassCellParser.cs" />
-    <Compile Include="Packages\com.devian.core\Runtime\IEntity.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Net\Transports\WebGLWsDriver.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Core\LoadMode.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Proto\IProtoEntity.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Core\ParseContext.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Net\INetRuntime.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Core\IClassCellParser.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Net\NetClient.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Proto\DffConverter.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Net\Transports\NetWsClient.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Core\IEntityConverter.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Proto\DffProtobufBuilder.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Net\INetPacketSender.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Core\ParseResult.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Proto\DffOptions.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Core\ITableContainer.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Core\CoreValueParserRegistry.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Core\ClassCellParserRegistry.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Core\Pb64Loader.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Core\IEntity.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Proto\DffValue.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Net\NetPacketEnvelope.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Proto\ProtobufEntityConverter.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Core\IValueParser.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Core\CoreError.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Proto\DffParser.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Proto\DffProtobuf.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Net\NetFrameV1.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Net\Transports\NetHttpRpcClient.cs" />
+    <Compile Include="Packages\com.devian.core\Runtime\Core\CoreResult.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Packages\com.devian.core\Runtime\Devian.Core.asmdef" />
@@ -411,7 +428,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Google.Protobuf">
-      <HintPath>Packages\com.devian.protobuf\Runtime\Plugins\Google.Protobuf.dll</HintPath>
+      <HintPath>Assets\Plugins\Google.Protobuf.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">

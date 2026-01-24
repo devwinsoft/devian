@@ -183,7 +183,7 @@ protobuf 표준 varint 인코딩을 사용한다:
 
 ## Output Paths
 
-SSOT 경로 규약을 따른다. (`{dataConfig.targetDirs}`는 배열이므로 각 요소에 대해 복사)
+SSOT 경로 규약을 따른다. (`{dataConfig.tableDirs}`는 배열이므로 각 요소에 대해 복사)
 
 - staging:
   - `{tempDir}/{DomainKey}/data/ndjson/{TableName}.json` (내용은 NDJSON)

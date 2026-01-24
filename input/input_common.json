@@ -1,56 +1,35 @@
 {
   "version": "10",
+  "configPath": "./config.json",
   "tempDir": "temp",
-
-  "csConfig": {
-    "moduleDir": "../framework-cs/module",
-    "generateDir": "../framework-cs/module-gen"
-  },
-
-  "tsConfig": {
-    "moduleDir": "../framework-ts/module",
-    "generateDir": "../framework-ts/module-gen"
-  },
-
-  "upmConfig": {
-    "sourceDir": "../framework-cs/upm-src",
-    "generateDir": "../framework-cs/upm-gen",
-    "packageDir": "../framework-cs/apps/UnityExample/Packages"
-  },
-
-  "dataConfig": {
-    "targetDirs": [
-      "../output",
-      "../framework-cs/apps/UnityExample/Assets/Bundles/Tables"
-    ]
-  },
-
-  "staticUpmPackages": [
-    "com.devian.templates",
-    "com.devian.unity.common",
-    "com.devian.unity.network"
-  ],
-
   "domains": {
     "Common": {
-      "contractsDir": "common/contracts",
-      "contractFiles": ["*.json"],
-
-      "tablesDir": "common/tables",
-      "tableFiles": ["*.xlsx"]
+      "contractsDir": "Common/contracts",
+      "contractFiles": [
+        "*.json"
+      ],
+      "tablesDir": "Common/tables",
+      "tableFiles": [
+        "*.xlsx"
+      ]
     }
   },
-
   "protocols": [
     {
       "group": "Game",
       "protocolDir": "./Protocols/Game",
-      "protocolFiles": ["C2Game.json", "Game2C.json"]
+      "protocolFiles": [
+        "C2Game.json",
+        "Game2C.json"
+      ]
     },
     {
       "group": "Sample",
       "protocolDir": "./Protocols/Sample",
-      "protocolFiles": ["C2Sample.json", "Sample2C.json"]
+      "protocolFiles": [
+        "C2Sample.json",
+        "Sample2C.json"
+      ]
     }
   ]
 }

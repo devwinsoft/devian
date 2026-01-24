@@ -20,7 +20,7 @@ Unity(UPM/Packages 포함)에서 컴파일 깨짐을 원천 방지하기 위한 
 
 | 경로 | 설명 |
 |------|------|
-| `framework-cs/upm-src/**` | 수동 관리 UPM 패키지 |
+| `framework-cs/upm/**` | 수동 관리 UPM 패키지 |
 | `framework-cs/apps/UnityExample/Packages/**` | Unity 최종 패키지 |
 | `framework-cs/apps/**/Packages/**` | 추가 Unity 앱/샘플 패키지 |
 
@@ -114,7 +114,7 @@ public void DoSomething()
 > 패턴 `\b[A-Za-z_][A-Za-z0-9_]*\s*\?\?\b`가 false positive를 내면, 해당 코드를 메서드 내부 표현식으로 옮기고 선언부에서 제거한다.
 
 **검사 대상 경로:**
-- `framework-cs/upm-src/`
+- `framework-cs/upm/`
 - `framework-cs/apps/**/Packages/`
 - UPM 패키지 내부의 `Samples~/` 및 템플릿/샘플 코드도 검사 대상에 포함한다.
 
@@ -176,4 +176,4 @@ public required string Id { get; set; }
 ## Reference
 
 - SSOT: `skills/devian/03-ssot/SKILL.md`
-- 적용 대상: `framework-cs/upm-src/`, `framework-cs/apps/**/Packages/`
+- 적용 대상: `framework-cs/upm/`, `framework-cs/apps/**/Packages/`

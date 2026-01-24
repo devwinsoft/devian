@@ -124,5 +124,5 @@ framework-ts/apps/SampleClient/
 ## Reference
 
 - **서버 앱:** `framework-ts/apps/SampleServer/`
-- **네트워크 모듈:** `framework-ts/module/devian-core/`
+- **네트워크 모듈:** `framework-ts/module/devian/`
 - **프로토콜:** `framework-ts/module-gen/devian-network-sample/`

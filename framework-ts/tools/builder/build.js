@@ -43,6 +43,101 @@ class DevianToolBuilder {
         return path.resolve(this.buildJsonDir, relativePath);
     }
 
+    /**
+     * Load input json and config json, validate forbidden keys, and merge.
+     * SSOT: skills/devian/03-ssot/SKILL.md
+     * 
+     * Rules:
+     * - config.json: csConfig/tsConfig/dataConfig/upmConfig/staticUpmPackages only
+     *   Forbidden in config: tempDir, domains, protocols
+     * - input.json: version/configPath/tempDir/domains/protocols only
+     *   Forbidden in input: csConfig/tsConfig/dataConfig/upmConfig/staticUpmPackages
+     * - All relative paths resolved from buildJsonDir (input json directory)
+     * - Merge: deepMerge(config, input), tempDir from input wins
+     */
+    loadAndMergeConfig() {
+        // Load input json
+        const inputJson = JSON.parse(fs.readFileSync(this.buildJsonPath, 'utf-8'));
+        
+        // Forbidden keys in input json
+        const forbiddenInInput = ['csConfig', 'tsConfig', 'dataConfig', 'upmConfig', 'staticUpmPackages'];
+        for (const key of forbiddenInInput) {
+            if (inputJson[key] !== undefined) {
+                throw new Error(
+                    `[FAIL] Forbidden key in input json!\n` +
+                    `  Key: ${key}\n` +
+                    `  File: ${this.buildJsonPath}\n` +
+                    `  These keys must be in config.json, not input json.\n` +
+                    `  Add "configPath": "./config.json" to input json and move ${key} to config.json.`
+                );
+            }
+        }
+        
+        // Check if configPath exists
+        if (!inputJson.configPath) {
+            throw new Error(
+                `[FAIL] Missing configPath in input json!\n` +
+                `  File: ${this.buildJsonPath}\n` +
+                `  Add "configPath": "./config.json" to input json.\n` +
+                `  Then move csConfig/tsConfig/dataConfig/upmConfig/staticUpmPackages to config.json.`
+            );
+        }
+        
+        // Load config json (path resolved from buildJsonDir)
+        const configPath = this.resolvePath(inputJson.configPath);
+        if (!fs.existsSync(configPath)) {
+            throw new Error(
+                `[FAIL] Config file not found!\n` +
+                `  configPath: ${inputJson.configPath}\n` +
+                `  Resolved: ${configPath}\n` +
+                `  Create config.json with csConfig/tsConfig/dataConfig/upmConfig/staticUpmPackages.`
+            );
+        }
+        
+        const configJson = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+        console.log(`  [Config] Loaded: ${configPath}`);
+        
+        // Forbidden keys in config json
+        const forbiddenInConfig = ['tempDir', 'domains', 'protocols'];
+        for (const key of forbiddenInConfig) {
+            if (configJson[key] !== undefined) {
+                throw new Error(
+                    `[FAIL] Forbidden key in config json!\n` +
+                    `  Key: ${key}\n` +
+                    `  File: ${configPath}\n` +
+                    `  These keys must be in input json, not config.json.\n` +
+                    `  Move ${key} to input json.`
+                );
+            }
+        }
+        
+        // Deep merge: config + input (input overwrites for tempDir)
+        const merged = this.deepMerge(configJson, inputJson);
+        
+        // Ensure tempDir comes from input (explicit override rule)
+        if (inputJson.tempDir) {
+            merged.tempDir = inputJson.tempDir;
+        }
+        
+        console.log(`  [Config] Merged successfully (tempDir: ${merged.tempDir})`);
+        return merged;
+    }
+    
+    /**
+     * Deep merge two objects. Source overwrites target for same keys.
+     */
+    deepMerge(target, source) {
+        const result = { ...target };
+        for (const key of Object.keys(source)) {
+            if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                result[key] = this.deepMerge(result[key] || {}, source[key]);
+            } else {
+                result[key] = source[key];
+            }
+        }
+        return result;
+    }
+
     async run() {
         console.log('='.repeat(60));
         console.log('Devian Build System v10');
@@ -51,9 +146,11 @@ class DevianToolBuilder {
         console.log(`Root dir: ${this.rootDir}`);
         console.log();
 
-        // 1. Load config
-        this.config = JSON.parse(fs.readFileSync(this.buildJsonPath, 'utf-8'));
-        // tempDir is relative to input json directory
+        // 1. Load input json and config json, then merge
+        console.log('[Phase 0] Loading configuration...');
+        this.config = this.loadAndMergeConfig();
+        
+        // tempDir is relative to input json directory (from input json, not config)
         this.tempDir = path.join(this.buildJsonDir, this.config.tempDir || 'temp');
 
         // 1.1. Validate upmConfig (Hard Rule)
@@ -588,7 +685,7 @@ class DevianToolBuilder {
         }
 
         // Copy to Data targets: {dataTargetDir}/{Domain}/ndjson/ and {dataTargetDir}/{Domain}/pb64/
-        // Uses global dataConfig.targetDirs (domains[*].dataTargetDirs is deprecated)
+        // Uses global dataConfig.tableDirs (domains[*].dataTargetDirs is deprecated)
         if (this.dataTargetDirs && this.dataTargetDirs.length > 0) {
             for (const resolvedDataDir of this.dataTargetDirs) {
                 // Copy ndjson files
@@ -2512,7 +2609,7 @@ export * from './features';
                 '[FAIL] Missing required "upmConfig" section in input json.\n' +
                 '  Required fields:\n' +
                 '    "upmConfig": {\n' +
-                '      "sourceDir": "../framework-cs/upm-src",\n' +
+                '      "sourceDir": "../framework-cs/upm",\n' +
                 '      "generateDir": "../framework-cs/upm-gen",\n' +
                 '      "packageDir": "../framework-cs/apps/UnityExample/Packages"\n' +
                 '    }'
@@ -2522,7 +2619,7 @@ export * from './features';
         if (!upmConfig.sourceDir || typeof upmConfig.sourceDir !== 'string') {
             throw new Error(
                 '[FAIL] Missing or invalid "upmConfig.sourceDir".\n' +
-                '  Expected: path to UPM source root (e.g., "../framework-cs/upm-src")'
+                '  Expected: path to UPM source root (e.g., "../framework-cs/upm")'
             );
         }
 
@@ -2585,10 +2682,10 @@ export * from './features';
             }
         }
 
-        // Resolve dataConfig.targetDirs (global data output targets)
-        if (this.config.dataConfig && Array.isArray(this.config.dataConfig.targetDirs)) {
-            this.dataTargetDirs = this.config.dataConfig.targetDirs.map(dir => this.resolvePath(dir));
-            console.log(`  [OK] dataConfig.targetDirs: ${this.dataTargetDirs.length} targets`);
+        // Resolve dataConfig.tableDirs (global data output targets)
+        if (this.config.dataConfig && Array.isArray(this.config.dataConfig.tableDirs)) {
+            this.dataTargetDirs = this.config.dataConfig.tableDirs.map(dir => this.resolvePath(dir));
+            console.log(`  [OK] dataConfig.tableDirs: ${this.dataTargetDirs.length} targets`);
         } else {
             this.dataTargetDirs = [];
         }
@@ -2825,20 +2922,20 @@ export * from './features';
                 if (domainConfig.dataTargetDirs !== undefined) {
                     errors.push(
                         `domains.${domainKey}.dataTargetDirs is deprecated and no longer supported.\n` +
-                        `  Data output is now configured globally via dataConfig.targetDirs.\n` +
+                        `  Data output is now configured globally via dataConfig.tableDirs.\n` +
                         `  Was: { "dataTargetDirs": ${JSON.stringify(domainConfig.dataTargetDirs)}, ... }\n` +
-                        `  Fix: Remove "dataTargetDirs" from domains.${domainKey}. Use dataConfig.targetDirs instead.`
+                        `  Fix: Remove "dataTargetDirs" from domains.${domainKey}. Use dataConfig.tableDirs instead.`
                     );
                 }
             }
         }
 
         // Check dataConfig exists and is valid
-        if (!this.config.dataConfig || !Array.isArray(this.config.dataConfig.targetDirs)) {
+        if (!this.config.dataConfig || !Array.isArray(this.config.dataConfig.tableDirs)) {
             errors.push(
-                `dataConfig.targetDirs is required.\n` +
-                `  Add dataConfig with targetDirs array to input json.\n` +
-                `  Example: "dataConfig": { "targetDirs": ["../output"] }`
+                `dataConfig.tableDirs is required.\n` +
+                `  Add dataConfig.tableDirs to config.json.\n` +
+                `  Example: "dataConfig": { "tableDirs": ["../output/table"] }`
             );
         }
 

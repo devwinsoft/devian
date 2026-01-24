@@ -93,7 +93,7 @@ runtime 패키지는 필요한 최소 의존만 선언한다:
 >
 > **새로운 정책:** `skills/devian-templates/01-templates-policy/SKILL.md`
 >
-> 샘플/예제 코드는 `framework-cs/upm-src/com.devian.templates/Samples~/`에서 Templates로 관리합니다.
+> 샘플/예제 코드는 `framework-cs/upm/com.devian.templates/Samples~/`에서 Templates로 관리합니다.
 
 ### (참고용) 기존 Samples~ 규칙
 

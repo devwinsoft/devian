@@ -4,7 +4,7 @@
 > 
 > **새로운 위치:** `skills/devian-templates/10-templates-network/SKILL.md`
 > 
-> Network 템플릿은 이제 `framework-cs/upm-src/com.devian.templates/Samples~/Network/`에서 관리됩니다.
+> Network 템플릿은 이제 `framework-cs/upm/com.devian.templates/Samples~/Network/`에서 관리됩니다.
 
 ---
 

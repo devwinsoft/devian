@@ -15,7 +15,7 @@ Type: Policy / Build Configuration
 `input/input_sample.json`은 샘플 프로토콜/데이터를 빌드하기 위한 별도 설정 파일이다.
 
 - 기존 `input_common.json`(프로덕션)과 분리
-- 샘플 산출물은 **upm-src 패키지 Runtime 하위의 전용 폴더에만** 복사
+- 샘플 산출물은 **upm 패키지 Runtime 하위의 전용 폴더에만** 복사
 - 프로덕션 빌드 경로/산출물을 오염시키지 않음
 
 ---
@@ -73,20 +73,20 @@ node framework-ts/tools/builder/build.js input/input_common.json
   },
 
   "upmConfig": {
-    "sourceDir": "../framework-cs/upm-src",
+    "sourceDir": "../framework-cs/upm",
     "generateDir": "../framework-cs/upm-gen",
     "packageDir": "../framework-cs/apps/UnityExample/Packages"
   }
 }
 ```
 
-### 3. 샘플 빌드는 dataConfig.targetDirs를 비워두거나 샘플 전용 폴더만 사용
+### 3. 샘플 빌드는 dataConfig.tableDirs를 비워두거나 샘플 전용 폴더만 사용
 
 샘플 빌드의 데이터 출력 경로는 **반드시** 비어있거나 샘플 전용 하위 폴더만 지정해야 한다.
 
 ```json
 "dataConfig": {
-  "targetDirs": []
+  "tableDirs": []
 }
 ```
 
@@ -137,13 +137,13 @@ node framework-ts/tools/builder/build.js input/input_common.json
   },
 
   "upmConfig": {
-    "sourceDir": "../framework-cs/upm-src",
+    "sourceDir": "../framework-cs/upm",
     "generateDir": "../framework-cs/upm-gen",
     "packageDir": "../framework-cs/apps/UnityExample/Packages"
   },
 
   "dataConfig": {
-    "targetDirs": []
+    "tableDirs": []
   },
 
   "staticUpmPackages": [
@@ -192,8 +192,8 @@ upm-gen/com.devian.protocol.sample/
 │   └── Devian.Protocol.Sample.Editor.asmdef
 └── package.json
 
-# Static UPM 패키지 (upm-src → packageDir로 sync)
-upm-src/com.devian.unity.network/
+# Static UPM 패키지 (upm → packageDir로 sync)
+upm/com.devian.unity.network/
 ├── Runtime/
 │   └── Devian.Unity.Network.asmdef
 ├── Samples~/

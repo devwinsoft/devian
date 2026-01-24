@@ -72,7 +72,7 @@ com.devian.unity.common/
 ### 파이프라인 흐름
 
 ```
-1. 정본 소스(입력):  framework-cs/upm-src/com.devian.unity.common/**
+1. 정본 소스(입력):  framework-cs/upm/com.devian.unity.common/**
 2. Staging:          {tempDir}/static-com.devian.unity.common/**
                      └── Editor/Generated/*.cs는 staging에 생성됨
 3. Materialize:      framework-cs/upm-gen/com.devian.unity.common/** (clean+copy)
@@ -81,11 +81,11 @@ com.devian.unity.common/
 
 ### 주요 규칙
 
-- **upm-src → staging**: 빌더가 입력 템플릿을 staging 폴더로 복사
+- **upm → staging**: 빌더가 입력 템플릿을 staging 폴더로 복사
 - **staging 가공**: `generateTableIdEditorForUnityCommon()`이 `Editor/Generated/` 생성
 - **staging → upm-gen**: `copyStaticUpmPackageToGenerateDir()`가 materialize
 - **upm-gen → packageDir**: `syncUpmToPackageDir()`가 최종 반영 (upm-gen이 정본)
-- **upm-src는 스킵**: packageDir sync에서 hybrid 패키지(staticUpmPackages)는 upm-src를 건너뜀
+- **upm는 스킵**: packageDir sync에서 hybrid 패키지(staticUpmPackages)는 upm를 건너뜀
 
 ### 최종 확인 위치
 
@@ -106,7 +106,7 @@ keyed table(TableID 기반)이 **1개 이상** 존재하면, 아래 조건을 �
 
 **FAIL 조건:**
 - staging 후 upm-gen 복사가 누락되어 Generated 폴더가 없음
-- packageDir sync에서 upm-src가 upm-gen을 덮어써서 Generated 폴더가 사라짐
+- packageDir sync에서 upm가 upm-gen을 덮어써서 Generated 폴더가 사라짐
 
 ---
 
