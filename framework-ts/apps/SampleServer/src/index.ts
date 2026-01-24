@@ -13,19 +13,24 @@
 import {
     WsTransport,
     NetworkServer,
+    defaultCodec as jsonCodec,
     type UnknownOpcodeEvent,
 } from '@devian/core';
 
 import {
     createServerRuntime,
     Sample2C,
-} from '@devian/network-sample';
+} from '@devian/network-sample/server-runtime';
 
 const PORT = 8080;
 
+// Toggle codec: false = Protobuf (default), true = Json
+const USE_JSON = false;
+
 async function main() {
-    // 1. Create network runtime for 'Sample' group (protobuf codec by default)
-    const runtime = createServerRuntime();
+    // 1. Create network runtime for 'Sample' group
+    const runtime = USE_JSON ? createServerRuntime(jsonCodec) : createServerRuntime();
+    console.log(`[SampleServer] Using ${USE_JSON ? 'Json' : 'Protobuf'} codec`);
 
     // 2. Get stub for handler registration
     const stub = runtime.getStub();

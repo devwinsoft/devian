@@ -94,6 +94,39 @@ Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 
 - UPM 생성물: `staging` → `upmConfig.generateDir` (framework-cs/upm-gen)
 - 최종 UPM: `upm-src + upm-gen` → `upmConfig.packageDir`
 
+### UPM Packages Sync 정본 (Hard Rule)
+
+**Packages는 derived output이며 직접 수정 금지.**
+
+| 구분 | 경로 | 역할 |
+|------|------|------|
+| 정본 (수동) | `framework-cs/upm-src/{pkg}` | 수동 관리 패키지 원본 |
+| 정본 (생성) | `framework-cs/upm-gen/{pkg}` | 빌더가 생성하는 패키지 원본 |
+| 복사본 (실행) | `framework-cs/apps/UnityExample/Packages/{pkg}` | Unity 실행용 복사본 |
+
+**소스 우선순위:**
+1. `upm-gen/{pkg}` 존재 → upm-gen에서 복사 (hybrid 포함)
+2. `upm-gen/{pkg}` 없음 → upm-src에서 복사
+
+**Hard DoD: Packages 동기화 불일치 FAIL**
+
+sync 후 아래 조건이면 **즉시 FAIL**:
+- `Packages/{pkg}`가 선택된 소스(upm-gen 또는 upm-src)와 내용이 다름
+- 정본 소스에 있는데 Packages에 반영되지 않음
+- Packages에서 직접 수정한 코드 발견 (다음 sync에서 덮어써짐)
+
+**필수 검증 대상 패키지:**
+- `com.devian.core`
+- `com.devian.unity.network`
+- `com.devian.unity.common`
+
+**수동 패키지 수정 시 필수 절차:**
+1. `upm-src/{pkg}` 또는 `upm-gen/{pkg}`에서 수정
+2. 빌더 실행 또는 수동 sync (clean + copy)
+3. `Packages/{pkg}` 반영 확인
+
+> **WARNING:** `Packages/` 직접 수정은 정책 위반이며, sync 시 손실된다.
+
 **수동 폴더 보호 (HARD RULE):**
 - `csConfig.moduleDir` (framework-cs/module) — 빌드가 **생성/삭제/클린/복사 금지**, 검증만 허용
 - `tsConfig.moduleDir` (framework-ts/module) — 빌드가 **생성/삭제/클린/복사 금지**, 검증만 허용

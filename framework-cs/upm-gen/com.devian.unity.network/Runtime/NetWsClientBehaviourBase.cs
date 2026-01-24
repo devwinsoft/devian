@@ -35,8 +35,8 @@ namespace Devian.Unity.Network
         /// <param name="url">WebSocket URL (ws:// or wss://)</param>
         public void Connect(string url)
         {
-            // 1. Close existing connection
-            CloseInternal();
+            // 1. Dispose existing connection (immediate cleanup for reconnect)
+            DisposeClient();
 
             // 2. Normalize URL
             var normalizedUrl = NormalizeUrl(url);
@@ -233,6 +233,7 @@ namespace Devian.Unity.Network
         private void HandleClose(ushort code, string reason)
         {
             OnClosed(code, reason);
+            DisposeClient();
         }
 
         private void HandleError(Exception ex)
@@ -259,14 +260,17 @@ namespace Devian.Unity.Network
         {
             if (_client == null) return;
 
+            // IMPORTANT: Do NOT unhook events here.
+            // OnClose event must be received to update state properly.
+            // DisposeClient() will be called in HandleClose() after OnClosed hook.
             try
             {
-                UnhookClientEvents(_client);
                 _client.Close();
             }
             catch
             {
-                // ignore
+                // If Close fails, force cleanup
+                DisposeClient();
             }
         }
 

@@ -248,6 +248,8 @@ namespace Devian
         private ClientWebSocket? _ws;
         private Thread? _recvThread;
         private Thread? _sendThread;
+        private CancellationTokenSource? _cts;
+        private volatile bool _closeRequested;
 
         // Send queue (sync enqueue from main thread)
         private readonly object _sendLock = new();
@@ -321,6 +323,12 @@ namespace Devian
             }
 
             _running = true;
+            
+            // Clean up previous CTS and initialize new one
+            _cts?.Cancel();
+            _cts?.Dispose();
+            _cts = new CancellationTokenSource();
+            _closeRequested = false;
 
             // Start send thread
             _sendThread = new Thread(SendLoop) { IsBackground = true, Name = "NetWsClient.Send" };
@@ -339,7 +347,9 @@ namespace Devian
         public void Close()
         {
             if (!_running) return;
+            _closeRequested = true;
             EnqueueClose();
+            _cts?.Cancel(); // Cancel RecvLoop to ensure OnClose fires
         }
 
         /// <summary>
@@ -439,6 +449,8 @@ namespace Devian
                         item = _sendQueue.Dequeue();
                     }
 
+                    var token = _cts?.Token ?? CancellationToken.None;
+
                     if (item.Type == SendItemType.Close)
                     {
                         try
@@ -446,11 +458,16 @@ namespace Devian
                             _ws.CloseOutputAsync(
                                 WebSocketCloseStatus.NormalClosure,
                                 "Normal Closure",
-                                CancellationToken.None).GetAwaiter().GetResult();
+                                token).GetAwaiter().GetResult();
+                        }
+                        catch (OperationCanceledException) when (_closeRequested)
+                        {
+                            // Expected during local close
                         }
                         catch (Exception ex)
                         {
-                            SafeDispatch(() => OnError?.Invoke(ex));
+                            if (!_closeRequested)
+                                SafeDispatch(() => OnError?.Invoke(ex));
                         }
                         continue;
                     }
@@ -467,11 +484,16 @@ namespace Devian
                             new ArraySegment<byte>(item.Buffer!, 0, item.Length),
                             WebSocketMessageType.Binary,
                             endOfMessage: true,
-                            cancellationToken: CancellationToken.None).GetAwaiter().GetResult();
+                            cancellationToken: token).GetAwaiter().GetResult();
+                    }
+                    catch (OperationCanceledException) when (_closeRequested)
+                    {
+                        // Expected during local close
                     }
                     catch (Exception ex)
                     {
-                        SafeDispatch(() => OnError?.Invoke(ex));
+                        if (!_closeRequested)
+                            SafeDispatch(() => OnError?.Invoke(ex));
                     }
                     finally
                     {
@@ -495,7 +517,8 @@ namespace Devian
 
             try
             {
-                if (_ws == null) return;
+                if (_ws == null || _cts == null) return;
+                var token = _cts.Token;
 
                 // Start with 64KB buffer, grow as needed
                 _recvBuffer = ArrayPool<byte>.Shared.Rent(64 * 1024);
@@ -506,7 +529,7 @@ namespace Devian
                     EnsureRecvCapacity(minFree: 8 * 1024);
 
                     var segment = new ArraySegment<byte>(_recvBuffer!, _recvLen, _recvBuffer!.Length - _recvLen);
-                    var result = _ws.ReceiveAsync(segment, CancellationToken.None).GetAwaiter().GetResult();
+                    var result = _ws.ReceiveAsync(segment, token).GetAwaiter().GetResult();
 
                     if (result.MessageType == WebSocketMessageType.Close)
                     {
@@ -528,11 +551,21 @@ namespace Devian
                     _recvLen = 0;
                 }
             }
+            catch (OperationCanceledException) when (_closeRequested)
+            {
+                // Close() called - normal local close
+                closeCode = 1000; // Normal Closure
+                closeReason = "Local Close";
+            }
             catch (Exception ex)
             {
-                SafeDispatch(() => OnError?.Invoke(ex));
-                closeCode = 1006; // Abnormal Closure
-                closeReason = ex.Message;
+                // Don't fire OnError if this was a requested close
+                if (!_closeRequested)
+                {
+                    SafeDispatch(() => OnError?.Invoke(ex));
+                }
+                closeCode = _closeRequested ? (ushort)1000 : (ushort)1006;
+                closeReason = _closeRequested ? "Local Close" : ex.Message;
             }
             finally
             {
@@ -564,6 +597,9 @@ namespace Devian
         private void CleanupSocket()
         {
             _running = false;
+
+            try { _cts?.Dispose(); } catch { /* ignore */ }
+            _cts = null;
 
             try { _ws?.Dispose(); } catch { /* ignore */ }
             _ws = null;

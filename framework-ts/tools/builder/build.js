@@ -742,7 +742,7 @@ class DevianToolBuilder {
         lines.push('// </auto-generated>');
         lines.push('');
 
-        // Import modules
+        // Import modules (needed for Devian namespace tree)
         for (const name of protocolNames) {
             lines.push(`import * as ${name}Mod from './${name}.g';`);
         }
@@ -754,15 +754,15 @@ class DevianToolBuilder {
         }
         lines.push('');
 
-        // Direct exports (for convenience)
+        // Direct exports - namespace/type preserving re-export (NOT const)
         for (const name of protocolNames) {
-            lines.push(`export const ${name} = ${name}Mod.${name};`);
+            lines.push(`export { ${name} } from './${name}.g';`);
         }
         if (hasServerRuntime) {
-            lines.push(`export const ServerRuntime = ServerRuntimeMod;`);
+            lines.push(`export * as ServerRuntime from './generated/ServerRuntime.g';`);
         }
         if (hasClientRuntime) {
-            lines.push(`export const ClientRuntime = ClientRuntimeMod;`);
+            lines.push(`export * as ClientRuntime from './generated/ClientRuntime.g';`);
         }
         lines.push('');
 

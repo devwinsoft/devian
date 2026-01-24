@@ -7,15 +7,41 @@ SSOT: skills/devian/03-ssot/SKILL.md
 ## Purpose
 
 WebSocket 클라이언트 테스트 앱의 설계 원칙과 규칙을 정의한다.  
-SampleServer와의 왕복 통신을 통해 Proxy/Stub + protobuf codec + frame 포맷이 정상인지 검증한다.
+SampleServer와의 왕복 통신을 통해 Proxy/Stub + codec + frame 포맷이 정상인지 검증한다.
+
+---
+
+## Import 정본
+
+**Client 샘플/런타임 import 정본은 `@devian/network-sample/client-runtime` 이다.**
+
+```typescript
+import { createClientRuntime, Sample2C } from '@devian/network-sample/client-runtime';
+```
 
 ---
 
 ## 핵심 구조
 
+TS SampleClient의 기본 codec은 Protobuf이다(인자 미주입).  
+Json은 `@devian/core`의 `defaultCodec`를 runtime 생성 시 주입해서 선택한다.
+
+```typescript
+import { defaultCodec as jsonCodec } from '@devian/core';
+import { createClientRuntime } from '@devian/network-sample/client-runtime';
+
+// 기본(Protobuf)
+const clientA = createClientRuntime();
+
+// Json 선택
+const clientB = createClientRuntime(jsonCodec);
+```
+
+### 전체 예시
+
 ```typescript
 import { NetworkClient } from '@devian/core';
-import { createClientRuntime } from '@devian/network-sample';
+import { createClientRuntime } from '@devian/network-sample/client-runtime';
 
 // 1. ClientRuntime 생성 (codec 미주입 = protobuf 기본)
 const { runtime, sample2CStub, c2SampleProxyFactory } = createClientRuntime();
@@ -51,9 +77,9 @@ c2sampleProxy.sendEcho(0, { ... });
 
 ### Codec 정합
 
-- **기본:** protobuf codec (생성된 Stub/Proxy의 기본 codec)
-- **선택:** `createClientRuntime(customCodec)`로 custom codec 주입 가능
-- codec 미주입 시 Stub/Proxy 각자의 기본 protobuf codec 사용
+- **기본:** Protobuf codec (생성된 Stub/Proxy의 기본 codec)
+- **선택:** `createClientRuntime(defaultCodec)`로 Json codec 주입 가능
+- codec 미주입 시 Stub/Proxy 각자의 기본 Protobuf codec 사용
 
 ### Unknown Opcode 처리
 

@@ -184,6 +184,56 @@ namespace Devian.Templates.Network.Editor
 **Definition of Done:**
 UnityExample Inspector에서 버튼이 표시되지 않으면 **FAIL**이다.
 
+### E) Disconnect 행동 DoD (Hard DoD)
+
+**Hard DoD - Disconnect 후 상태 갱신 필수:**
+
+1. **OnClosed 호출 필수 (시간 제한):** Inspector에서 Disconnect 버튼을 누르면 **1초 이내**(또는 1~2 프레임 + 네트워크 지연 허용)에 샘플의 `OnClosed(code, reason)` 훅이 호출되어야 한다.
+
+2. **IsConnected 갱신 필수:** 샘플의 `IsConnected`가 `false`로 바뀌어 Inspector에 표시되어야 한다.
+
+3. **Send 버튼 비활성화:** `IsConnected == false` 상태에서는 Send 버튼이 비활성화(또는 경고 출력)되어야 한다.
+
+**Hard FAIL 조건:**
+- "연결은 끊겼는데(IsOpen=false) OnClosed가 안 오는 상태"는 **FAIL**
+- OnClosed 로그 없이 IsConnected만 false로 우회하면 **FAIL**
+- 1초 후에도 OnClosed가 발생하지 않으면 **FAIL**
+
+**검증 방법:**
+- Play 모드에서 Connect 후 Disconnect 클릭
+- Console에서 `OnClosed` 또는 `OnConnectClosed` 로그가 1초 이내에 출력되어야 PASS
+- Inspector의 "Connected: Yes"가 "Connected: No"로 변경되어야 PASS
+- "Connected: No" 상태에서 Send 버튼이 disabled(회색)여야 PASS
+
+**구현 금지 (재발 방지):**
+- Disconnect는 Close 이벤트를 통해 상태가 갱신되어야 하며, Close 이전에 OnClose 핸들러를 제거하면 **FAIL**
+- 샘플에서 `IsConnected = false`를 직접 설정하여 우회하면 **FAIL** (반드시 OnClosed 훅을 통해 갱신)
+
+### F) Packages 반영 확인 (Hard Rule)
+
+**샘플 실행 전 필수 체크:**
+
+Disconnect/OnClosed 버그 수정 시, 반드시 `Packages/com.devian.unity.network/...`에 반영됐는지 확인한다.
+
+**확인 방법:**
+```bash
+# NetWsClientBehaviourBase.cs 파일 크기/날짜 비교
+ls -la upm-src/com.devian.unity.network/Runtime/NetWsClientBehaviourBase.cs
+ls -la Packages/com.devian.unity.network/Runtime/NetWsClientBehaviourBase.cs
+
+# MD5 해시 비교 (동일해야 함)
+md5sum upm-src/com.devian.unity.network/Runtime/NetWsClientBehaviourBase.cs
+md5sum Packages/com.devian.unity.network/Runtime/NetWsClientBehaviourBase.cs
+```
+
+**Hard FAIL 조건:**
+- `upm-src` (또는 `upm-gen`)와 `Packages`의 파일이 다르면 **FAIL** (sync 누락)
+- `Packages/`에서 직접 수정한 경우 **정책 위반** (다음 sync에서 손실)
+
+**동기화 누락 발견 시:**
+1. 빌더 실행: `node build.js ../../../input/input_common.json`
+2. 또는 수동 sync: `rm -rf Packages/{pkg} && cp -r upm-gen/{pkg} Packages/{pkg}`
+
 ---
 
 ## 빌드 통합 (Build Integration)
@@ -262,6 +312,7 @@ Builder는 **반드시** `Samples~` 폴더를 upm-src에서 UnityExample/Package
 - Runtime 코드에 `using UnityEditor` 사용 금지
 - Editor asmdef에 `includePlatforms: []` 사용 금지
 - EchoWsClientSample에 offline/loopback 모드 추가 금지
+- **Close 처리에서 이벤트 unhook을 Close 이전에 수행 금지** (Disconnect 상태 갱신 불가 원인)
 
 ---
 

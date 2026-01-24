@@ -54,7 +54,7 @@ namespace Devian.Templates.Network
         /// Close the connection.
         /// Called by CustomEditor Inspector button.
         /// </summary>
-        public new void Disconnect()
+        public void Disconnect()
         {
             Close();
         }
@@ -127,7 +127,8 @@ namespace Devian.Templates.Network
             IsConnected = true;
 
             // Create proxy for outbound messages (C2Sample)
-            _proxy ??= new C2Sample.Proxy(new SampleSender(this));
+            // Always create new proxy on connect (old one is cleared in OnClosed)
+            _proxy = new C2Sample.Proxy(new SampleSender(this));
 
             // NO auto-send on connect - use Inspector buttons only
         }
@@ -136,6 +137,7 @@ namespace Devian.Templates.Network
         {
             Debug.Log($"[EchoWsClientSample] Connection closed: code={closeCode} reason={reason}");
             IsConnected = false;
+            _proxy = null; // Clear proxy on disconnect (will be recreated on next connect)
         }
 
         protected override void OnClientError(Exception ex)

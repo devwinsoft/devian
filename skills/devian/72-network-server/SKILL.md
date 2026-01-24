@@ -10,6 +10,16 @@ TypeScript 기반 네트워크 서버 모듈의 설계 원칙과 책임 분리�
 
 ---
 
+## Import 정본
+
+**Server 샘플/런타임 import 정본은 `@devian/network-sample/server-runtime` 이다.**
+
+```typescript
+import { createServerRuntime, Sample2C } from '@devian/network-sample/server-runtime';
+```
+
+---
+
 ## 설계 원칙
 
 ### 1. 공용 모듈과 그룹별 런타임 분리
@@ -30,9 +40,19 @@ TypeScript 기반 네트워크 서버 모듈의 설계 원칙과 책임 분리�
 
 ### 2. Codec 정합
 
-- **기본:** protobuf codec (생성된 Stub/Proxy의 기본 codec)
-- **선택:** `createServerRuntime(customCodec)`로 custom codec 주입 가능
-- codec 미주입 시 Stub/Proxy 각자의 기본 protobuf codec 사용
+TS SampleServer의 기본 codec은 Protobuf이다(인자 미주입).  
+Json은 `@devian/core`의 `defaultCodec`를 runtime 생성 시 주입해서 선택한다.
+
+```typescript
+import { defaultCodec as jsonCodec } from '@devian/core';
+import { createServerRuntime } from '@devian/network-sample/server-runtime';
+
+// 기본(Protobuf)
+const serverA = createServerRuntime();
+
+// Json 선택
+const serverB = createServerRuntime(jsonCodec);
+```
 
 ### 3. Unknown Opcode 정책
 
@@ -80,11 +100,11 @@ framework-ts/module/devian-core/
 
 위치: `framework-ts/apps/SampleServer/`
 
-예제 앱은 **조립 + 핸들러 등록만** 수행한다. SampleServer는 protobuf codec을 기본으로 사용한다.
+예제 앱은 **조립 + 핸들러 등록만** 수행한다.
 
 ```typescript
 import { WsTransport, NetworkServer } from '@devian/core';
-import { createServerRuntime, Sample2C } from '@devian/network-sample';
+import { createServerRuntime, Sample2C } from '@devian/network-sample/server-runtime';
 
 // codec 미주입 = protobuf 기본
 const runtime = createServerRuntime();

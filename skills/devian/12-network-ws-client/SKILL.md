@@ -189,6 +189,20 @@ namespace Devian
 
 ---
 
+## Close → OnClose 보장 (Hard Rule)
+
+**로컬 Close() 호출 시 OnClose 이벤트가 반드시 발생해야 한다.**
+
+- 서버 응답 여부와 무관하게 OnClose 발생 필수
+- RecvLoop blocking 중이어도 OnClose 발생 필수
+- CancellationToken.None으로 무한 대기 금지
+
+**위반 시 FAIL:**
+- Close() 후 OnClose 안 오면 FAIL
+- 서버가 응답 안 해도 일정 시간 내 OnClose 와야 함
+
+---
+
 ## Performance / GC Rules (Hard Rules)
 
 ### MUST

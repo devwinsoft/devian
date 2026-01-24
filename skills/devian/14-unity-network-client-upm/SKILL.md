@@ -65,28 +65,76 @@ com.devian.unity.network/
 
 ### `NetWsClientBehaviourBase`
 
-**Serialize Fields:**
+**설계 원칙:**
+- 정책 필드(url 저장, autoConnect, reconnect 등)를 제공하지 않는다
+- 최소 엔진만 제공: Connect/Close/TrySend/Update
+- 서브클래스는 `CreateRuntime()`을 구현하고 필요 시 훅을 오버라이드한다
 
-| 필드 | 타입 | 설명 |
+**Properties:**
+
+| 이름 | 타입 | 설명 |
 |------|------|------|
-| `Url` | `string` | WebSocket 접속 URL |
-| `SubProtocols` | `string[]` | 서브 프로토콜 목록 |
-| `AutoConnect` | `bool` | Start()에서 자동 연결 여부 |
+| `IsConnected` | `bool` | 현재 연결 여부 (read-only) |
 
 **Public Methods (sync):**
 
 ```csharp
-void Initialize(INetRuntime runtime)
-void Connect()
-void Close()
-void SendFrame(byte[] frame)
+void Connect(string url)      // WebSocket 연결 시작
+void Close()                  // 연결 종료
+bool TrySend(ReadOnlySpan<byte> frame)  // 프레임 전송 시도
+bool TrySend(byte[] frame)    // 프레임 전송 시도 (편의 오버로드)
+```
+
+**Abstract (서브클래스 필수 구현):**
+
+```csharp
+protected abstract INetRuntime CreateRuntime()
+```
+
+**Virtual Hooks (선택적 오버라이드):**
+
+```csharp
+protected virtual void OnConnectRequested(Uri uri)
+protected virtual void OnConnectFailed(string rawUrl, Exception ex)
+protected virtual void OnOpened()
+protected virtual void OnClosed(ushort closeCode, string reason)
+protected virtual void OnClientError(Exception ex)
+protected virtual void OnParseError(int sessionId, Exception ex)
+protected virtual void OnUnhandledFrame(int sessionId, int opcode, ReadOnlySpan<byte> payload)
 ```
 
 **Unity Lifecycle:**
 
-- `Start()`: AutoConnect면 Connect 호출
 - `Update()`: 내부 `NetWsClient.Update()` 호출 (메인스레드 디스패치 큐 flush)
-- `OnDestroy()`: Close/Dispose
+- `OnDestroy()`: `DisposeClient()` 호출
+
+---
+
+## Hard Rules (Close 이벤트 처리)
+
+**CRITICAL - Close 처리 규칙:**
+
+1. **Close 전에 Unhook 금지:** `CloseInternal()`에서 `UnhookClientEvents()`를 호출하고 나서 `Close()`를 호출하면 OnClose 이벤트가 전달되지 않는다. 재발 방지를 위해 금지.
+
+2. **로컬 Close에서도 OnClosed 호출 필수:** 사용자가 `Close()` 버튼을 눌렀을 때도 `OnClosed(code, reason)` 훅이 호출되어야 한다.
+
+3. **HandleClose에서 DisposeClient 호출:** OnClose 이벤트를 받은 시점(`HandleClose`)에서 `OnClosed()` 호출 후 `DisposeClient()`로 정리한다.
+
+4. **Connect 시작 시 DisposeClient:** 재연결 시에는 `CloseInternal()`이 아닌 `DisposeClient()`로 즉시 정리한다(이전 client의 이벤트가 새 상태를 오염시키지 않도록).
+
+---
+
+## Hard Rules (NetWsClient CTS Cancel)
+
+**로컬 Disconnect(클라이언트 Close 호출)에서도 OnClosed가 반드시 호출되어야 한다.**
+
+- non-WebGL에서는 **Close 시 CancellationTokenSource.Cancel()**로 RecvLoop 종료를 보장해야 한다.
+- `_closeRequested` 플래그로 정상 종료와 비정상 종료를 구분한다.
+- RecvLoop의 OperationCanceledException은 `when (_closeRequested)` 조건으로 정상 종료 처리한다.
+
+**Update 호출 필수:**
+- `NetWsClient.Update()`가 dispatch queue를 flush 하므로, BehaviourBase는 **매 프레임** `_client.Update()`를 호출해야 한다.
+- Derived가 Update를 override하면 `base.Update()` 호출 필수.
 
 ---
 
@@ -117,6 +165,7 @@ void SendFrame(byte[] frame)
 
 - UnityEngine.dll을 직접 참조해 DLL 빌드하는 방식 금지.
 - WebGL 재연결/백오프/성능 최적화 정책은 이 SKILL에서 강제하지 않는다.
+- **Close 처리에서 이벤트 unhook을 Close 이전에 수행 금지** (재발 방지)
 
 ---
 

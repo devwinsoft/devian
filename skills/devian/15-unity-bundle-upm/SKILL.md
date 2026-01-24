@@ -123,6 +123,39 @@ com.devian.core/
 
 ---
 
+## 패키지 동기화 규칙 (Hard Rule)
+
+**UnityExample/Packages는 빌더가 clean+copy로 갱신한다.**
+
+| 정본 | 복사본 | 동작 |
+|------|--------|------|
+| `upm-src/{pkg}` 또는 `upm-gen/{pkg}` | `Packages/{pkg}` | clean + copy |
+
+**수정은 upm-src/upm-gen에서만 한다.**
+
+- `Packages/`에서 수정한 코드는 다음 sync에서 덮어써지며, **정책 위반**이다.
+- 수동 패키지(`com.devian.core`, `com.devian.unity.network` 등)는 `upm-src/`에서 수정
+- 생성 패키지(`com.devian.module.common`, `com.devian.protocol.*` 등)는 빌더가 `upm-gen/`에 생성
+
+**소스 우선순위 (sync 시):**
+1. `upm-gen/{pkg}` 존재 → upm-gen에서 복사
+2. `upm-gen/{pkg}` 없음 → upm-src에서 복사
+
+**수동 sync 절차 (빌더 없이):**
+```bash
+# staticUpmPackages는 upm-gen에서 복사 (빌더가 upm-src → upm-gen 복사 후 생성물 추가)
+for pkg in com.devian.templates com.devian.unity.common com.devian.unity.network; do
+    rm -rf Packages/$pkg && cp -r upm-gen/$pkg Packages/$pkg
+done
+
+# upm-src에만 있는 패키지 (upm-gen에 없는 것)
+for pkg in com.devian.core; do
+    rm -rf Packages/$pkg && cp -r upm-src/$pkg Packages/$pkg
+done
+```
+
+---
+
 ## 마이그레이션 노트
 
 이전에 `com.devian.network`, `com.devian.protobuf`를 사용하던 프로젝트는:

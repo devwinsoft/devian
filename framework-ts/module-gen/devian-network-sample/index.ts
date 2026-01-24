@@ -7,10 +7,11 @@ import * as Sample2CMod from './Sample2C.g';
 import * as ServerRuntimeMod from './generated/ServerRuntime.g';
 import * as ClientRuntimeMod from './generated/ClientRuntime.g';
 
-export const C2Sample = C2SampleMod.C2Sample;
-export const Sample2C = Sample2CMod.Sample2C;
-export const ServerRuntime = ServerRuntimeMod;
-export const ClientRuntime = ClientRuntimeMod;
+// Direct exports - namespace/type preserving re-export (NOT const)
+export { C2Sample } from './C2Sample.g';
+export { Sample2C } from './Sample2C.g';
+export * as ServerRuntime from './generated/ServerRuntime.g';
+export * as ClientRuntime from './generated/ClientRuntime.g';
 
 export { createServerRuntime } from './generated/ServerRuntime.g';
 export { createClientRuntime } from './generated/ClientRuntime.g';
