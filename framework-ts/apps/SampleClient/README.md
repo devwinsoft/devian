@@ -1,7 +1,7 @@
 # Sample Client
 
-Devian Network Client 테스트 앱입니다.  
-SampleServer와의 왕복 통신을 통해 Proxy/Stub + defaultCodec + frame 포맷을 검증합니다.
+Devian Network Client 테스트 앱입니다. 현재 샘플은 Ping/Echo 기반입니다.  
+SampleServer와의 왕복 통신을 통해 Proxy/Stub + protobuf codec + frame 포맷을 검증합니다.
 
 ## 실행 순서
 
@@ -26,8 +26,6 @@ npm run dev
 | 변수 | 기본값 | 설명 |
 |------|--------|------|
 | `WS_URL` | `ws://localhost:8080` | 서버 주소 |
-| `USER_ID` | `user1` | 로그인 사용자 ID |
-| `VERSION` | `1` | 클라이언트 버전 |
 
 ```bash
 WS_URL=ws://127.0.0.1:9000 npm run dev
@@ -37,19 +35,19 @@ WS_URL=ws://127.0.0.1:9000 npm run dev
 
 ### 클라이언트
 ```
-[Client] Connecting to ws://localhost:8080...
-[Client] Connected to server
-[Client] Sending LoginRequest...
-[Handler] LoginResponse: { success: true, playerId: '1000', ... }
-[Client] Sending ChatMessage...
-[Handler] ChatNotify: { channel: 0, message: 'Hello from client!', ... }
+[SampleClient] Connecting to ws://localhost:8080...
+[SampleClient] Connected to server
+[SampleClient] Sending Ping...
+[Handler] Pong: { timestamp: '...', serverTime: '...' }
+[SampleClient] Sending Echo...
+[Handler] EchoReply: { message: 'echo from client', echoedAt: '...' }
 ```
 
 ### 서버
 ```
-[App] Session 1 connected
-[Handler] LoginRequest from session 1: ...
-[Handler] ChatMessage from session 1: ...
+[SampleServer] Session 1 connected
+[Handler] Ping from session 1: ...
+[Handler] Echo from session 1: ...
 ```
 
 ## Unknown Opcode 처리
@@ -58,5 +56,5 @@ WS_URL=ws://127.0.0.1:9000 npm run dev
 **절대 disconnect 하지 않습니다.**
 
 ```
-[Client] Unknown opcode 9999 (10 bytes) - ignoring
+[SampleClient] Unknown opcode 9999 (10 bytes) - ignoring
 ```

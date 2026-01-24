@@ -18,12 +18,12 @@ export type UnknownOpcodeHandler = (event: UnknownOpcodeEvent) => void | Promise
  */
 export class NetworkServerRuntime implements INetworkRuntime {
     private readonly stub: C2Game.Stub;
-    private readonly codec: ICodec;
+    private readonly codec: ICodec | null;
     private unknownHandler: UnknownOpcodeHandler | null = null;
 
-    constructor(codec: ICodec) {
-        this.codec = codec;
-        this.stub = new C2Game.Stub(codec);
+    constructor(codec?: ICodec) {
+        this.codec = codec ?? null;
+        this.stub = this.codec ? new C2Game.Stub(this.codec) : new C2Game.Stub();
     }
 
     /**
@@ -42,7 +42,7 @@ export class NetworkServerRuntime implements INetworkRuntime {
     }
 
     createOutboundProxy(sendFn: SendFn): Game2C.Proxy {
-        return new Game2C.Proxy(sendFn, this.codec);
+        return this.codec ? new Game2C.Proxy(sendFn, this.codec) : new Game2C.Proxy(sendFn);
     }
 
     /**
@@ -75,8 +75,9 @@ export class NetworkServerRuntime implements INetworkRuntime {
 
 /**
  * Create server runtime for Game protocol group
+ * @param codec Optional codec (default: protobuf codec from Stub/Proxy)
  */
-export function createServerRuntime(codec: ICodec): NetworkServerRuntime {
+export function createServerRuntime(codec?: ICodec): NetworkServerRuntime {
     return new NetworkServerRuntime(codec);
 }
 

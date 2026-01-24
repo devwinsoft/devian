@@ -1,0 +1,18 @@
+{
+    "name": "Devian.Templates.Network",
+    "rootNamespace": "Devian.Templates.Network",
+    "references": [
+        "Devian.Core",
+        "Devian.Unity.Network",
+        "Devian.Protocol.Sample"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

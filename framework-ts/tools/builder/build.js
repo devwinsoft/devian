@@ -115,11 +115,11 @@ class DevianToolBuilder {
             }
         }
 
-        // Note: staticUpmPackages are NOT copied to upm-gen
-        // They exist in upm-src (manual) and are synced directly to packageDir
-        // upm-src is for manual packages, upm-gen is for generated packages only
+        // Note: staticUpmPackages are processed (staging) AND copied to upm-gen
+        // They need upm-gen because they may have generated content (e.g., Editor/Generated)
+        // The upm-gen version is the authoritative source for packageDir sync
         if (this.config.staticUpmPackages && Array.isArray(this.config.staticUpmPackages)) {
-            console.log('  [Info] Static UPM packages are in upm-src (manual), will be synced in Phase 3');
+            console.log('  [Info] Static UPM packages: staging → upm-gen (materialize generated content)');
             for (const upmName of this.config.staticUpmPackages) {
                 // Validate static package exists in upm-src
                 const pkgPath = path.join(this.upmSourceDir, upmName);
@@ -131,7 +131,22 @@ class DevianToolBuilder {
                         `  Static packages must exist in upmConfig.sourceDir (manual).`
                     );
                 }
-                console.log(`    [OK] ${upmName} exists in upm-src`);
+                
+                // Copy staging (with generated content) to upm-gen
+                await this.copyStaticUpmPackageToGenerateDir({ upmName });
+                
+                // Verify generated content exists in upm-gen (for unity.common)
+                if (upmName === 'com.devian.unity.common') {
+                    const generatedDir = path.join(this.upmGenerateDir, upmName, 'Editor', 'Generated');
+                    if (fs.existsSync(generatedDir)) {
+                        const files = fs.readdirSync(generatedDir).filter(f => f.endsWith('.cs'));
+                        console.log(`    [OK] ${upmName} → upm-gen (${files.length} generated files)`);
+                    } else {
+                        console.log(`    [OK] ${upmName} → upm-gen (no generated files)`);
+                    }
+                } else {
+                    console.log(`    [OK] ${upmName} → upm-gen`);
+                }
             }
         }
 
@@ -1615,7 +1630,7 @@ export * from './features';
         lines.push('            foreach (var ta in textAssets)');
         lines.push('            {');
         lines.push('                var assetPath = AssetDatabase.GetAssetPath(ta);');
-        lines.push('                if (!assetPath.EndsWith(".ndjson", System.StringComparison.OrdinalIgnoreCase))');
+        lines.push('                if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))');
         lines.push('                    continue;');
         lines.push('');
         lines.push(`                TB_${tableName}.LoadFromNdjson(ta.text);`);
@@ -1634,7 +1649,7 @@ export * from './features';
         lines.push(`    [CustomPropertyDrawer(typeof(${tableName}_ID))]`);
         lines.push(`    public class ${drawerClassName} : EditorID_DrawerBase<${selectorClassName}>`);
         lines.push('    {');
-        lines.push(`        private ${selectorClassName}? _selector;`);
+        lines.push(`        private ${selectorClassName} _selector;`);
         lines.push('');
         lines.push(`        protected override ${selectorClassName} GetSelector()`);
         lines.push('        {');
@@ -2315,6 +2330,10 @@ export * from './features';
             return;
         }
 
+        // Hybrid exception: staticUpmPackages can exist in both upm-src and upm-gen
+        // In this case, upm-gen is authoritative (contains generated content)
+        const hybridPackages = new Set(this.config.staticUpmPackages || []);
+
         // Collect package names from upm-src
         const upmSrcPackages = new Set();
         if (fs.existsSync(this.upmSourceDir)) {
@@ -2338,10 +2357,10 @@ export * from './features';
         }
 
         // HARD RULE: Any conflict between upm-src and upm-gen is FAIL
-        // Both are "complete UPM packages", so same name means ambiguous source of truth
+        // EXCEPTION: staticUpmPackages (hybrid) are allowed in both - upm-gen is authoritative
         const conflicts = [];
         for (const genPkg of upmGenPackages) {
-            if (upmSrcPackages.has(genPkg)) {
+            if (upmSrcPackages.has(genPkg) && !hybridPackages.has(genPkg)) {
                 conflicts.push(genPkg);
             }
         }
@@ -2354,15 +2373,33 @@ export * from './features';
                 `  This is not allowed. Both directories contain "complete UPM packages".\n` +
                 `  Having the same package name in both makes the source of truth ambiguous.\n` +
                 `  Solution: Rename or remove one of the conflicting packages.\n` +
+                `  (Note: staticUpmPackages are allowed in both - upm-gen is authoritative)\n` +
                 `  upm-src: ${this.upmSourceDir}\n` +
                 `  upm-gen: ${this.upmGenerateDir}`
             );
         }
 
+        // GUARD: staticUpmPackages that exist in upm-src MUST also exist in upm-gen after build
+        // This prevents "generated content being lost" scenario
+        for (const hybridPkg of hybridPackages) {
+            if (upmSrcPackages.has(hybridPkg) && !upmGenPackages.has(hybridPkg)) {
+                throw new Error(
+                    `[FAIL] Static UPM package missing from upm-gen!\n` +
+                    `  Package: ${hybridPkg}\n` +
+                    `  This package is in staticUpmPackages and exists in upm-src,\n` +
+                    `  but was not materialized to upm-gen.\n` +
+                    `  This means generated content (e.g., Editor/Generated) would be lost.\n` +
+                    `  Fix: Ensure copyStaticUpmPackageToGenerateDir() is called for this package.`
+                );
+            }
+        }
+
         // Phase 1: Sync upm-src packages to packageDir
-        if (upmSrcPackages.size > 0) {
-            console.log(`  [Sync] upm-src → packageDir (${upmSrcPackages.size} packages)`);
-            for (const pkgName of upmSrcPackages) {
+        // SKIP hybrid packages (they come from upm-gen instead)
+        const srcPackagesToSync = [...upmSrcPackages].filter(pkg => !hybridPackages.has(pkg));
+        if (srcPackagesToSync.length > 0) {
+            console.log(`  [Sync] upm-src → packageDir (${srcPackagesToSync.length} packages, ${hybridPackages.size} hybrid skipped)`);
+            for (const pkgName of srcPackagesToSync) {
                 const sourcePath = path.join(this.upmSourceDir, pkgName);
                 const targetPath = path.join(this.upmPackageDir, pkgName);
 
@@ -2377,7 +2414,7 @@ export * from './features';
             }
         }
 
-        // Phase 2: Sync upm-gen packages to packageDir
+        // Phase 2: Sync upm-gen packages to packageDir (includes hybrid packages)
         if (upmGenPackages.size > 0) {
             console.log(`  [Sync] upm-gen → packageDir (${upmGenPackages.size} packages)`);
             for (const pkgName of upmGenPackages) {
@@ -2391,11 +2428,12 @@ export * from './features';
 
                 // Copy package to packageDir
                 this.copyDirRecursive(sourcePath, targetPath);
-                console.log(`    [UPM] ${pkgName} (gen) → ${targetPath}`);
+                const isHybrid = hybridPackages.has(pkgName) ? ' [hybrid]' : '';
+                console.log(`    [UPM] ${pkgName} (gen)${isHybrid} → ${targetPath}`);
             }
         }
 
-        if (upmSrcPackages.size === 0 && upmGenPackages.size === 0) {
+        if (srcPackagesToSync.length === 0 && upmGenPackages.size === 0) {
             console.log('  [SKIP] No packages to sync');
         }
     }

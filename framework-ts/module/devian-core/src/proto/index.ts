@@ -5,7 +5,10 @@
  * @see Devian.Protobuf (C#)
  */
 
-export { DffValue, DffScalar, DffArray, DffObject, DffValueUtils } from './DffValue';
-export { DffConverter, DffOptions, defaultConverter } from './DffConverter';
-export { IProtoEntity } from './IProtoEntity';
-export { ProtobufCodec, ProtobufCodecOptions, MessageTypeDefinition, JsonCodec } from './ProtobufCodec';
+export type { DffValue, DffScalar, DffArray, DffObject } from './DffValue';
+export { DffValueUtils } from './DffValue';
+export type { DffOptions } from './DffConverter';
+export { DffConverter, defaultConverter } from './DffConverter';
+export type { IProtoEntity } from './IProtoEntity';
+export type { ProtobufCodecOptions, MessageTypeDefinition } from './ProtobufCodec';
+export { ProtobufCodec, JsonCodec } from './ProtobufCodec';

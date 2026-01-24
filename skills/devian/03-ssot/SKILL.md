@@ -385,8 +385,8 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 
 ### Static UPM Packages
 
-정적 UPM 패키지(수동 관리)는 `staticUpmPackages` 배열로 정의한다.
-이 패키지들은 **upm-src에 존재해야 하며**, 빌드는 존재 여부만 검증한다.
+정적 UPM 패키지(수동 관리 + 빌드 시 가공)는 `staticUpmPackages` 배열로 정의한다.
+이 패키지들은 **upm-src에 존재해야 하며**, 빌드 시 staging으로 복사 후 가공되어 upm-gen에 materialize된다.
 
 **`staticUpmPackages`는 string[] 형태로 패키지명만 나열한다:**
 
@@ -397,10 +397,24 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 ]
 ```
 
-**빌드 동작:**
-- `upmConfig.sourceDir/{upmName}` 경로에 패키지 존재 여부 검증
-- 패키지가 없으면 빌드 FAIL
-- **upm-gen에 복사하지 않음** — upm-src에서 직접 packageDir로 sync됨
+**빌드 흐름 (Hard Rule):**
+
+1. **입력 검증**: `upm-src/{upmName}` 경로에 패키지 존재 여부 검증 (없으면 FAIL)
+2. **Staging**: `upm-src` → `{tempDir}/static-{upmName}` 복사
+3. **가공/생성**: staging에서 생성물 생성 (예: `Editor/Generated/*.cs`)
+4. **Materialize**: staging → `upm-gen/{upmName}` clean+copy
+5. **packageDir Sync**: `upm-gen/{upmName}` → `{packageDir}/{upmName}` (upm-gen이 정본)
+
+**하이브리드 예외 (충돌 정책):**
+- staticUpmPackages는 upm-src와 upm-gen에 **동일 이름**이 공존할 수 있다
+- 이 경우 **upm-gen이 정본**이며, upm-src는 "입력 템플릿"으로만 취급
+- packageDir sync에서 upm-src는 스킵되고 upm-gen에서만 복사됨
+- 그 외 패키지는 기존 규칙대로 "동일 이름이면 FAIL" 유지
+
+**GUARD (Hard FAIL):**
+- staticUpmPackages 중 upm-src에 존재하는 패키지는 빌드 후 upm-gen에도 반드시 존재해야 함
+- staging 생성이 누락되거나 upm-gen 복사가 실패하면 FAIL
+- 이 가드가 "생성물이 버려지는 문제"를 재발 방지함
 
 **Deprecated (Hard Fail):**
 - 객체 형태 `{ "upmName": "..." }` 사용 시 빌드 실패 — 반드시 문자열 배열 사용
@@ -408,13 +422,17 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 **경로 계산 규칙 (Hard Rule):**
 
 ```
-sourceDir = {upmConfig.sourceDir}/{upmName}
-targetDir = {upmConfig.packageDir}/{upmName}
+입력(템플릿):    {upmConfig.sourceDir}/{upmName}         (upm-src)
+staging:        {tempDir}/static-{upmName}
+materialize:    {upmConfig.generateDir}/{upmName}       (upm-gen)
+최종 패키지:    {upmConfig.packageDir}/{upmName}        (packageDir)
 ```
 
-예시 (`"com.devian.unity.network"`):
-- `sourceDir` → `../framework-cs/upm-src/com.devian.unity.network`
-- `targetDir` → `../framework-cs/apps/UnityExample/Packages/com.devian.unity.network`
+예시 (`"com.devian.unity.common"`):
+- 입력: `../framework-cs/upm-src/com.devian.unity.common`
+- staging: `{tempDir}/static-com.devian.unity.common`
+- materialize: `../framework-cs/upm-gen/com.devian.unity.common`
+- 최종: `../framework-cs/apps/UnityExample/Packages/com.devian.unity.common`
 
 ### 1) DomainType = DATA
 
@@ -505,6 +523,11 @@ DATA 입력은 input_common.json의 `domains` 섹션이 정의한다.
 
 > Domain의 모든 Contract, Table Entity, Table Container는 단일 파일(`{DomainKey}.g.cs`, `{DomainKey}.g.ts`)에 통합 생성된다.
 > **파일 확장자는 `.json`이지만, `ndjson/` 폴더의 파일 내용은 NDJSON(라인 단위 JSON)이다.** 확장자는 소비 측(Unity/툴링) 요구로 `.json`을 사용한다.
+
+**Unity Table ID Inspector 소비 규칙 (Hard Rule):**
+- Unity Table ID Inspector(EditorID_SelectorBase 기반)는 `ndjson/` 폴더의 `{TableName}.json`(내용은 NDJSON)을 로드한다.
+- Inspector 생성물은 반드시 `.json` 확장자 필터를 사용해야 한다.
+- `.ndjson` 확장자 필터 사용 시 **정책 위반(FAIL)**.
 
 #### DATA export PK 규칙 (Hard Rule)
 
@@ -694,6 +717,25 @@ finalDir = {upmConfig.packageDir}/{computedUpmName}
 
 > 이 게이트는 "정책 위반이 아니더라도 깨지는 코드"를 잡는 최소 장치다.
 > 상세 규칙은 04 스킬을 참조한다.
+
+---
+
+## Table ID Inspector 생성물 Gate (Hard Rule)
+
+**Table ID Inspector 생성물은 `.json` 확장자 필터를 사용해야 한다.**
+
+### DoD (완료 정의) — 하드 게이트
+
+검사 대상 경로:
+- `framework-cs/upm-gen/**/Editor/Generated/*.cs`
+- `framework-cs/apps/**/Packages/**/Editor/Generated/*.cs`
+
+**Hard FAIL:**
+- 위 대상에서 문자열 `".ndjson"` 발견 시 **FAIL**
+- 정본: `.EndsWith(".json"` 형태여야 함
+
+> DATA 파일 확장자는 `.json`(내용은 NDJSON)이 정본이다.
+> Inspector가 `.ndjson`을 검색하면 파일을 찾지 못한다.
 
 ---
 

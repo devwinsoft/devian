@@ -7,6 +7,7 @@
 /** Codec interface */
 export interface ICodec {
     encode<T>(message: T): Uint8Array;
+    encodeByOpcode<T>(opcode: number, message: T): Uint8Array;
     decode<T>(data: Uint8Array): T;
     decodeByOpcode(opcode: number, data: Uint8Array): unknown;
 }
@@ -48,6 +49,10 @@ export class TaggedBigIntCodec implements ICodec {
     encode<T>(message: T): Uint8Array {
         const json = this.stringify(message);
         return this.encoder.encode(json);
+    }
+
+    encodeByOpcode<T>(_opcode: number, message: T): Uint8Array {
+        return this.encode(message);
     }
 
     decode<T>(data: Uint8Array): T {

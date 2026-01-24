@@ -53,6 +53,7 @@ export namespace C2Game {
     /** Codec interface */
     export interface ICodec {
         encode<T>(message: T): Uint8Array;
+        encodeByOpcode<T>(opcode: number, message: T): Uint8Array;
         decode<T>(data: Uint8Array): T;
         decodeByOpcode(opcode: number, data: Uint8Array): unknown;
     }
@@ -67,6 +68,10 @@ export namespace C2Game {
             return this.encoder.encode(json);
         }
 
+        encodeByOpcode<T>(_opcode: number, message: T): Uint8Array {
+            return this.encode(message);
+        }
+
         decode<T>(data: Uint8Array): T {
             const json = this.decoder.decode(data);
             return JSON.parse(json) as T;
@@ -77,56 +82,295 @@ export namespace C2Game {
         }
     }
 
+    /** Protobuf wire format helpers */
+    const Proto = {
+        readVarint(data: Uint8Array, pos: { v: number }): bigint {
+            let result = 0n;
+            let shift = 0n;
+            while (pos.v < data.length) {
+                const b = data[pos.v++];
+                result |= BigInt(b & 0x7f) << shift;
+                if ((b & 0x80) === 0) break;
+                shift += 7n;
+            }
+            return result;
+        },
+
+        readTag(data: Uint8Array, pos: { v: number }): { tag: number; wireType: number } {
+            const varint = Number(this.readVarint(data, pos));
+            return { tag: varint >> 3, wireType: varint & 0x7 };
+        },
+
+        readInt32(data: Uint8Array, pos: { v: number }): number {
+            return Number(this.readVarint(data, pos));
+        },
+
+        readInt64(data: Uint8Array, pos: { v: number }): bigint {
+            return this.readVarint(data, pos);
+        },
+
+        readBool(data: Uint8Array, pos: { v: number }): boolean {
+            return this.readVarint(data, pos) !== 0n;
+        },
+
+        readString(data: Uint8Array, pos: { v: number }): string {
+            const len = Number(this.readVarint(data, pos));
+            if (len === 0) return "";
+            const bytes = data.slice(pos.v, pos.v + len);
+            pos.v += len;
+            return new TextDecoder().decode(bytes);
+        },
+
+        readBytes(data: Uint8Array, pos: { v: number }): Uint8Array {
+            const len = Number(this.readVarint(data, pos));
+            if (len === 0) return new Uint8Array(0);
+            const bytes = data.slice(pos.v, pos.v + len);
+            pos.v += len;
+            return bytes;
+        },
+
+        readFloat(data: Uint8Array, pos: { v: number }): number {
+            const view = new DataView(data.buffer, data.byteOffset + pos.v, 4);
+            pos.v += 4;
+            return view.getFloat32(0, true);
+        },
+
+        readDouble(data: Uint8Array, pos: { v: number }): number {
+            const view = new DataView(data.buffer, data.byteOffset + pos.v, 8);
+            pos.v += 8;
+            return view.getFloat64(0, true);
+        },
+
+        skip(data: Uint8Array, pos: { v: number }, wireType: number): void {
+            switch (wireType) {
+                case 0: this.readVarint(data, pos); break;
+                case 1: pos.v += 8; break;
+                case 2: pos.v += Number(this.readVarint(data, pos)); break;
+                case 5: pos.v += 4; break;
+            }
+        },
+
+        writeVarint(arr: number[], value: bigint): void {
+            let v = BigInt.asUintN(64, value);
+            while (v >= 0x80n) {
+                arr.push(Number(v & 0x7fn) | 0x80);
+                v >>= 7n;
+            }
+            arr.push(Number(v));
+        },
+
+        writeTag(arr: number[], tag: number, wireType: number): void {
+            this.writeVarint(arr, BigInt((tag << 3) | wireType));
+        },
+
+        writeInt32(arr: number[], tag: number, value: number): void {
+            if (value === 0) return;
+            this.writeTag(arr, tag, 0);
+            this.writeVarint(arr, BigInt(value));
+        },
+
+        writeInt64(arr: number[], tag: number, value: bigint): void {
+            if (value === 0n) return;
+            this.writeTag(arr, tag, 0);
+            this.writeVarint(arr, value);
+        },
+
+        writeBool(arr: number[], tag: number, value: boolean): void {
+            if (!value) return;
+            this.writeTag(arr, tag, 0);
+            arr.push(1);
+        },
+
+        writeString(arr: number[], tag: number, value: string | undefined): void {
+            if (!value) return;
+            const bytes = new TextEncoder().encode(value);
+            this.writeTag(arr, tag, 2);
+            this.writeVarint(arr, BigInt(bytes.length));
+            for (const b of bytes) arr.push(b);
+        },
+
+        writeBytes(arr: number[], tag: number, value: Uint8Array | undefined): void {
+            if (!value || value.length === 0) return;
+            this.writeTag(arr, tag, 2);
+            this.writeVarint(arr, BigInt(value.length));
+            for (const b of value) arr.push(b);
+        },
+
+        writeFloat(arr: number[], tag: number, value: number): void {
+            if (value === 0) return;
+            this.writeTag(arr, tag, 5);
+            const buf = new ArrayBuffer(4);
+            new DataView(buf).setFloat32(0, value, true);
+            for (const b of new Uint8Array(buf)) arr.push(b);
+        },
+
+        writeDouble(arr: number[], tag: number, value: number): void {
+            if (value === 0) return;
+            this.writeTag(arr, tag, 1);
+            const buf = new ArrayBuffer(8);
+            new DataView(buf).setFloat64(0, value, true);
+            for (const b of new Uint8Array(buf)) arr.push(b);
+        },
+    };
+
     /**
      * Protobuf Codec implementation.
-     * Requires message encoders/decoders to be registered.
      */
     export class CodecProtobuf implements ICodec {
-        private encoders = new Map<number, (message: unknown) => Uint8Array>();
-        private decoders = new Map<number, (data: Uint8Array) => unknown>();
-        private fallbackCodec = new CodecJson();
 
-        /**
-         * Register encoder for a specific opcode.
-         */
-        registerEncoder(opcode: number, encoder: (message: unknown) => Uint8Array): void {
-            this.encoders.set(opcode, encoder);
+        private encodeLoginRequest(m: LoginRequest): Uint8Array {
+            const arr: number[] = [];
+            Proto.writeString(arr, 1, m.userId);
+            Proto.writeString(arr, 2, m.token);
+            Proto.writeInt32(arr, 3, m.version ?? 0);
+            return new Uint8Array(arr);
         }
 
-        /**
-         * Register decoder for a specific opcode.
-         */
-        registerDecoder(opcode: number, decoder: (data: Uint8Array) => unknown): void {
-            this.decoders.set(opcode, decoder);
+        private encodeJoinRoomRequest(m: JoinRoomRequest): Uint8Array {
+            const arr: number[] = [];
+            Proto.writeInt32(arr, 1, m.roomId ?? 0);
+            Proto.writeString(arr, 2, m.password);
+            return new Uint8Array(arr);
+        }
+
+        private encodeChatMessage(m: ChatMessage): Uint8Array {
+            const arr: number[] = [];
+            Proto.writeInt32(arr, 1, m.channel ?? 0);
+            Proto.writeString(arr, 2, m.message);
+            return new Uint8Array(arr);
+        }
+
+        private encodeUploadData(m: UploadData): Uint8Array {
+            const arr: number[] = [];
+            Proto.writeBytes(arr, 1, m.data);
+            return new Uint8Array(arr);
+        }
+
+        private decodeLoginRequest(data: Uint8Array): LoginRequest {
+            const m: LoginRequest = {} as LoginRequest;
+            const pos = { v: 0 };
+            while (pos.v < data.length) {
+                const { tag, wireType } = Proto.readTag(data, pos);
+                switch (tag) {
+                    case 1:
+                        m.userId = Proto.readString(data, pos);
+                        break;
+                    case 2:
+                        m.token = Proto.readString(data, pos);
+                        break;
+                    case 3:
+                        m.version = Proto.readInt32(data, pos);
+                        break;
+                    default:
+                        Proto.skip(data, pos, wireType);
+                        break;
+                }
+            }
+            return m;
+        }
+
+        private decodeJoinRoomRequest(data: Uint8Array): JoinRoomRequest {
+            const m: JoinRoomRequest = {} as JoinRoomRequest;
+            const pos = { v: 0 };
+            while (pos.v < data.length) {
+                const { tag, wireType } = Proto.readTag(data, pos);
+                switch (tag) {
+                    case 1:
+                        m.roomId = Proto.readInt32(data, pos);
+                        break;
+                    case 2:
+                        m.password = Proto.readString(data, pos);
+                        break;
+                    default:
+                        Proto.skip(data, pos, wireType);
+                        break;
+                }
+            }
+            return m;
+        }
+
+        private decodeChatMessage(data: Uint8Array): ChatMessage {
+            const m: ChatMessage = {} as ChatMessage;
+            const pos = { v: 0 };
+            while (pos.v < data.length) {
+                const { tag, wireType } = Proto.readTag(data, pos);
+                switch (tag) {
+                    case 1:
+                        m.channel = Proto.readInt32(data, pos);
+                        break;
+                    case 2:
+                        m.message = Proto.readString(data, pos);
+                        break;
+                    case 3:
+                        break;
+                    default:
+                        Proto.skip(data, pos, wireType);
+                        break;
+                }
+            }
+            return m;
+        }
+
+        private decodeUploadData(data: Uint8Array): UploadData {
+            const m: UploadData = {} as UploadData;
+            const pos = { v: 0 };
+            while (pos.v < data.length) {
+                const { tag, wireType } = Proto.readTag(data, pos);
+                switch (tag) {
+                    case 1:
+                        m.data = Proto.readBytes(data, pos);
+                        break;
+                    case 2:
+                        break;
+                    case 3:
+                        break;
+                    default:
+                        Proto.skip(data, pos, wireType);
+                        break;
+                }
+            }
+            return m;
         }
 
         encode<T>(message: T): Uint8Array {
-            // Generic encode falls back to JSON
-            return this.fallbackCodec.encode(message);
+            // Type dispatch - caller should use encodeByOpcode when possible
+            if ((message as unknown as LoginRequest).userId !== undefined) {
+                // Heuristic check - may need refinement
+            }
+            if ((message as unknown as JoinRoomRequest).roomId !== undefined) {
+                // Heuristic check - may need refinement
+            }
+            if ((message as unknown as ChatMessage).channel !== undefined) {
+                // Heuristic check - may need refinement
+            }
+            if ((message as unknown as UploadData).data !== undefined) {
+                // Heuristic check - may need refinement
+            }
+            throw new Error("Unknown message type for encode");
         }
 
-        /**
-         * Encode message by opcode using registered encoder.
-         */
         encodeByOpcode<T>(opcode: number, message: T): Uint8Array {
-            const encoder = this.encoders.get(opcode);
-            if (encoder) {
-                return encoder(message);
+            switch (opcode) {
+                case Opcodes.LoginRequest: return this.encodeLoginRequest(message as unknown as LoginRequest);
+                case Opcodes.JoinRoomRequest: return this.encodeJoinRoomRequest(message as unknown as JoinRoomRequest);
+                case Opcodes.ChatMessage: return this.encodeChatMessage(message as unknown as ChatMessage);
+                case Opcodes.UploadData: return this.encodeUploadData(message as unknown as UploadData);
+                default: throw new Error(`Unknown opcode: ${opcode}`);
             }
-            return this.fallbackCodec.encode(message);
         }
 
         decode<T>(data: Uint8Array): T {
-            // Generic decode falls back to JSON
-            return this.fallbackCodec.decode(data);
+            throw new Error("Use decodeByOpcode instead");
         }
 
         decodeByOpcode(opcode: number, data: Uint8Array): unknown {
-            const decoder = this.decoders.get(opcode);
-            if (decoder) {
-                return decoder(data);
+            switch (opcode) {
+                case Opcodes.LoginRequest: return this.decodeLoginRequest(data);
+                case Opcodes.JoinRoomRequest: return this.decodeJoinRoomRequest(data);
+                case Opcodes.ChatMessage: return this.decodeChatMessage(data);
+                case Opcodes.UploadData: return this.decodeUploadData(data);
+                default: throw new Error(`Unknown opcode: ${opcode}`);
             }
-            return this.fallbackCodec.decode(data);
         }
     }
 
@@ -142,7 +386,7 @@ export namespace C2Game {
         private handlers = new Map<number, Set<MessageHandler<unknown>>>();
 
         constructor(codec?: ICodec) {
-            this.codec = codec ?? new CodecJson();
+            this.codec = codec ?? new CodecProtobuf();
         }
 
         async dispatch(sessionId: number, opcode: number, payload: Uint8Array): Promise<void> {
@@ -196,7 +440,7 @@ export namespace C2Game {
 
         constructor(sendFn: SendFn, codec?: ICodec) {
             this.sendFn = sendFn;
-            this.codec = codec ?? new CodecJson();
+            this.codec = codec ?? new CodecProtobuf();
         }
 
         private packFrame(opcode: number, payload: Uint8Array): Uint8Array {
@@ -208,25 +452,25 @@ export namespace C2Game {
         }
 
         async sendLoginRequest(sessionId: number, message: LoginRequest): Promise<void> {
-            const payload = this.codec.encode(message);
+            const payload = this.codec.encodeByOpcode(Opcodes.LoginRequest, message);
             const frame = this.packFrame(Opcodes.LoginRequest, payload);
             await this.sendFn(sessionId, frame);
         }
 
         async sendJoinRoomRequest(sessionId: number, message: JoinRoomRequest): Promise<void> {
-            const payload = this.codec.encode(message);
+            const payload = this.codec.encodeByOpcode(Opcodes.JoinRoomRequest, message);
             const frame = this.packFrame(Opcodes.JoinRoomRequest, payload);
             await this.sendFn(sessionId, frame);
         }
 
         async sendChatMessage(sessionId: number, message: ChatMessage): Promise<void> {
-            const payload = this.codec.encode(message);
+            const payload = this.codec.encodeByOpcode(Opcodes.ChatMessage, message);
             const frame = this.packFrame(Opcodes.ChatMessage, payload);
             await this.sendFn(sessionId, frame);
         }
 
         async sendUploadData(sessionId: number, message: UploadData): Promise<void> {
-            const payload = this.codec.encode(message);
+            const payload = this.codec.encodeByOpcode(Opcodes.UploadData, message);
             const frame = this.packFrame(Opcodes.UploadData, payload);
             await this.sendFn(sessionId, frame);
         }

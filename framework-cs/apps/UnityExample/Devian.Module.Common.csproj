@@ -662,7 +662,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Google.Protobuf">
-      <HintPath>Assets\Plugins\Google.Protobuf.dll</HintPath>
+      <HintPath>Packages\com.devian.protobuf\Runtime\Plugins\Google.Protobuf.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">

@@ -9,9 +9,9 @@
 
 // Core exports
 export { LoadMode } from './LoadMode';
-export { IEntity, IEntityKey } from './IEntity';
-export { ITableContainer, IKeyedTableContainer } from './ITableContainer';
-export { ICodec } from './ICodec';
+export type { IEntity, IEntityKey } from './IEntity';
+export type { ITableContainer, IKeyedTableContainer } from './ITableContainer';
+export type { ICodec } from './ICodec';
 
 // Network exports (Devian.Net equivalent)
 export * from './net';

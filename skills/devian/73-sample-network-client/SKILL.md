@@ -7,18 +7,18 @@ SSOT: skills/devian/03-ssot/SKILL.md
 ## Purpose
 
 WebSocket 클라이언트 테스트 앱의 설계 원칙과 규칙을 정의한다.  
-SampleServer와의 왕복 통신을 통해 Proxy/Stub + codec + frame 포맷이 정상인지 검증한다.
+SampleServer와의 왕복 통신을 통해 Proxy/Stub + protobuf codec + frame 포맷이 정상인지 검증한다.
 
 ---
 
 ## 핵심 구조
 
 ```typescript
-import { NetworkClient, defaultCodec } from '@devian/core';
+import { NetworkClient } from '@devian/core';
 import { createClientRuntime } from '@devian/network-sample';
 
-// 1. ClientRuntime 생성
-const { runtime, sample2CStub, c2SampleProxyFactory } = createClientRuntime(defaultCodec);
+// 1. ClientRuntime 생성 (codec 미주입 = protobuf 기본)
+const { runtime, sample2CStub, c2SampleProxyFactory } = createClientRuntime();
 
 // 2. NetworkClient 생성
 const client = new NetworkClient(runtime, { sessionId: 0 });
@@ -51,8 +51,9 @@ c2sampleProxy.sendEcho(0, { ... });
 
 ### Codec 정합
 
-- 클라이언트는 `@devian/core`의 `defaultCodec`을 사용한다
-- Proxy/Stub에 동일 codec을 주입한다
+- **기본:** protobuf codec (생성된 Stub/Proxy의 기본 codec)
+- **선택:** `createClientRuntime(customCodec)`로 custom codec 주입 가능
+- codec 미주입 시 Stub/Proxy 각자의 기본 protobuf codec 사용
 
 ### Unknown Opcode 처리
 
@@ -67,8 +68,8 @@ c2sampleProxy.sendEcho(0, { ... });
 
 ## 금지 사항
 
-- `generated` 코드 수정 금지
-- `builder` 수정 금지
+- `generated` 코드 임의 수정 금지 (생성기 변경과 동기화 필수)
+- 샘플 앱이 아닌 build system 변경은 별도 phase에서만 수행
 - unknown opcode에서 disconnect/close 호출 금지
 
 ---

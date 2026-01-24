@@ -18,12 +18,12 @@ export type UnknownOpcodeHandler = (event: UnknownOpcodeEvent) => void | Promise
  */
 export class NetworkClientRuntime implements INetworkRuntime {
     private readonly stub: Sample2C.Stub;
-    private readonly codec: ICodec;
+    private readonly codec: ICodec | null;
     private unknownHandler: UnknownOpcodeHandler | null = null;
 
-    constructor(codec: ICodec) {
-        this.codec = codec;
-        this.stub = new Sample2C.Stub(codec);
+    constructor(codec?: ICodec) {
+        this.codec = codec ?? null;
+        this.stub = this.codec ? new Sample2C.Stub(this.codec) : new Sample2C.Stub();
     }
 
     /**
@@ -42,7 +42,7 @@ export class NetworkClientRuntime implements INetworkRuntime {
     }
 
     createOutboundProxy(sendFn: SendFn): C2Sample.Proxy {
-        return new C2Sample.Proxy(sendFn, this.codec);
+        return this.codec ? new C2Sample.Proxy(sendFn, this.codec) : new C2Sample.Proxy(sendFn);
     }
 
     /**
@@ -75,9 +75,10 @@ export class NetworkClientRuntime implements INetworkRuntime {
 
 /**
  * Create client runtime for Sample protocol group
+ * @param codec Optional codec (default: protobuf codec from Stub/Proxy)
  * @returns Runtime instance with stub access and proxy factory
  */
-export function createClientRuntime(codec: ICodec): {
+export function createClientRuntime(codec?: ICodec): {
     runtime: NetworkClientRuntime;
     sample2CStub: Sample2C.Stub;
     c2SampleProxyFactory: (sendFn: SendFn) => C2Sample.Proxy;

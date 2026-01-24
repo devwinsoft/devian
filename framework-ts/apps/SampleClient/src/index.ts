@@ -1,7 +1,7 @@
 /**
  * Sample Client
  * 
- * WebSocket client for testing Proxy/Stub + defaultCodec + frame format.
+ * WebSocket client for testing Proxy/Stub + protobuf codec + frame format.
  * Uses NetworkClient + ClientRuntime for simplified message handling.
  * 
  * Communicates with SampleServer using Sample protocol:
@@ -10,7 +10,7 @@
  */
 
 import WebSocket from 'ws';
-import { NetworkClient, defaultCodec } from '@devian/core';
+import { NetworkClient } from '@devian/core';
 import { createClientRuntime } from '@devian/network-sample';
 
 // Environment variables
@@ -19,8 +19,8 @@ const WS_URL = process.env.WS_URL ?? 'ws://localhost:8080';
 async function main() {
     console.log(`[SampleClient] Connecting to ${WS_URL}...`);
 
-    // Create client runtime for 'Sample' protocol group
-    const { runtime, sample2CStub, c2SampleProxyFactory } = createClientRuntime(defaultCodec);
+    // Create client runtime for 'Sample' protocol group (protobuf codec by default)
+    const { runtime, sample2CStub, c2SampleProxyFactory } = createClientRuntime();
 
     // Register unknown opcode handler (optional - runtime has default warn)
     runtime.setUnknownInboundOpcode(async (e) => {

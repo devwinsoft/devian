@@ -1,0 +1,16 @@
+{
+  "name": "Devian.Unity.Common",
+  "rootNamespace": "Devian.Unity",
+  "references": [
+    "Devian.Module.Common"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -106,6 +106,7 @@ function generateICodecInterface(lines) {
     lines.push('    /** Codec interface */');
     lines.push('    export interface ICodec {');
     lines.push('        encode<T>(message: T): Uint8Array;');
+    lines.push('        encodeByOpcode<T>(opcode: number, message: T): Uint8Array;');
     lines.push('        decode<T>(data: Uint8Array): T;');
     lines.push('        decodeByOpcode(opcode: number, data: Uint8Array): unknown;');
     lines.push('    }');
@@ -122,6 +123,10 @@ function generateCodecJson(lines, messages) {
     lines.push('            return this.encoder.encode(json);');
     lines.push('        }');
     lines.push('');
+    lines.push('        encodeByOpcode<T>(_opcode: number, message: T): Uint8Array {');
+    lines.push('            return this.encode(message);');
+    lines.push('        }');
+    lines.push('');
     lines.push('        decode<T>(data: Uint8Array): T {');
     lines.push('            const json = this.decoder.decode(data);');
     lines.push('            return JSON.parse(json) as T;');
@@ -134,57 +139,265 @@ function generateCodecJson(lines, messages) {
 }
 
 function generateCodecProtobuf(lines, messages) {
+    // Proto helpers
+    lines.push('    /** Protobuf wire format helpers */');
+    lines.push('    const Proto = {');
+    lines.push('        readVarint(data: Uint8Array, pos: { v: number }): bigint {');
+    lines.push('            let result = 0n;');
+    lines.push('            let shift = 0n;');
+    lines.push('            while (pos.v < data.length) {');
+    lines.push('                const b = data[pos.v++];');
+    lines.push('                result |= BigInt(b & 0x7f) << shift;');
+    lines.push('                if ((b & 0x80) === 0) break;');
+    lines.push('                shift += 7n;');
+    lines.push('            }');
+    lines.push('            return result;');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        readTag(data: Uint8Array, pos: { v: number }): { tag: number; wireType: number } {');
+    lines.push('            const varint = Number(this.readVarint(data, pos));');
+    lines.push('            return { tag: varint >> 3, wireType: varint & 0x7 };');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        readInt32(data: Uint8Array, pos: { v: number }): number {');
+    lines.push('            return Number(this.readVarint(data, pos));');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        readInt64(data: Uint8Array, pos: { v: number }): bigint {');
+    lines.push('            return this.readVarint(data, pos);');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        readBool(data: Uint8Array, pos: { v: number }): boolean {');
+    lines.push('            return this.readVarint(data, pos) !== 0n;');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        readString(data: Uint8Array, pos: { v: number }): string {');
+    lines.push('            const len = Number(this.readVarint(data, pos));');
+    lines.push('            if (len === 0) return "";');
+    lines.push('            const bytes = data.slice(pos.v, pos.v + len);');
+    lines.push('            pos.v += len;');
+    lines.push('            return new TextDecoder().decode(bytes);');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        readBytes(data: Uint8Array, pos: { v: number }): Uint8Array {');
+    lines.push('            const len = Number(this.readVarint(data, pos));');
+    lines.push('            if (len === 0) return new Uint8Array(0);');
+    lines.push('            const bytes = data.slice(pos.v, pos.v + len);');
+    lines.push('            pos.v += len;');
+    lines.push('            return bytes;');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        readFloat(data: Uint8Array, pos: { v: number }): number {');
+    lines.push('            const view = new DataView(data.buffer, data.byteOffset + pos.v, 4);');
+    lines.push('            pos.v += 4;');
+    lines.push('            return view.getFloat32(0, true);');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        readDouble(data: Uint8Array, pos: { v: number }): number {');
+    lines.push('            const view = new DataView(data.buffer, data.byteOffset + pos.v, 8);');
+    lines.push('            pos.v += 8;');
+    lines.push('            return view.getFloat64(0, true);');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        skip(data: Uint8Array, pos: { v: number }, wireType: number): void {');
+    lines.push('            switch (wireType) {');
+    lines.push('                case 0: this.readVarint(data, pos); break;');
+    lines.push('                case 1: pos.v += 8; break;');
+    lines.push('                case 2: pos.v += Number(this.readVarint(data, pos)); break;');
+    lines.push('                case 5: pos.v += 4; break;');
+    lines.push('            }');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        writeVarint(arr: number[], value: bigint): void {');
+    lines.push('            let v = BigInt.asUintN(64, value);');
+    lines.push('            while (v >= 0x80n) {');
+    lines.push('                arr.push(Number(v & 0x7fn) | 0x80);');
+    lines.push('                v >>= 7n;');
+    lines.push('            }');
+    lines.push('            arr.push(Number(v));');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        writeTag(arr: number[], tag: number, wireType: number): void {');
+    lines.push('            this.writeVarint(arr, BigInt((tag << 3) | wireType));');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        writeInt32(arr: number[], tag: number, value: number): void {');
+    lines.push('            if (value === 0) return;');
+    lines.push('            this.writeTag(arr, tag, 0);');
+    lines.push('            this.writeVarint(arr, BigInt(value));');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        writeInt64(arr: number[], tag: number, value: bigint): void {');
+    lines.push('            if (value === 0n) return;');
+    lines.push('            this.writeTag(arr, tag, 0);');
+    lines.push('            this.writeVarint(arr, value);');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        writeBool(arr: number[], tag: number, value: boolean): void {');
+    lines.push('            if (!value) return;');
+    lines.push('            this.writeTag(arr, tag, 0);');
+    lines.push('            arr.push(1);');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        writeString(arr: number[], tag: number, value: string | undefined): void {');
+    lines.push('            if (!value) return;');
+    lines.push('            const bytes = new TextEncoder().encode(value);');
+    lines.push('            this.writeTag(arr, tag, 2);');
+    lines.push('            this.writeVarint(arr, BigInt(bytes.length));');
+    lines.push('            for (const b of bytes) arr.push(b);');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        writeBytes(arr: number[], tag: number, value: Uint8Array | undefined): void {');
+    lines.push('            if (!value || value.length === 0) return;');
+    lines.push('            this.writeTag(arr, tag, 2);');
+    lines.push('            this.writeVarint(arr, BigInt(value.length));');
+    lines.push('            for (const b of value) arr.push(b);');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        writeFloat(arr: number[], tag: number, value: number): void {');
+    lines.push('            if (value === 0) return;');
+    lines.push('            this.writeTag(arr, tag, 5);');
+    lines.push('            const buf = new ArrayBuffer(4);');
+    lines.push('            new DataView(buf).setFloat32(0, value, true);');
+    lines.push('            for (const b of new Uint8Array(buf)) arr.push(b);');
+    lines.push('        },');
+    lines.push('');
+    lines.push('        writeDouble(arr: number[], tag: number, value: number): void {');
+    lines.push('            if (value === 0) return;');
+    lines.push('            this.writeTag(arr, tag, 1);');
+    lines.push('            const buf = new ArrayBuffer(8);');
+    lines.push('            new DataView(buf).setFloat64(0, value, true);');
+    lines.push('            for (const b of new Uint8Array(buf)) arr.push(b);');
+    lines.push('        },');
+    lines.push('    };');
+    lines.push('');
+
+    // CodecProtobuf class with actual encode/decode
     lines.push('    /**');
     lines.push('     * Protobuf Codec implementation.');
-    lines.push('     * Requires message encoders/decoders to be registered.');
     lines.push('     */');
     lines.push('    export class CodecProtobuf implements ICodec {');
-    lines.push('        private encoders = new Map<number, (message: unknown) => Uint8Array>();');
-    lines.push('        private decoders = new Map<number, (data: Uint8Array) => unknown>();');
-    lines.push('        private fallbackCodec = new CodecJson();');
     lines.push('');
-    lines.push('        /**');
-    lines.push('         * Register encoder for a specific opcode.');
-    lines.push('         */');
-    lines.push('        registerEncoder(opcode: number, encoder: (message: unknown) => Uint8Array): void {');
-    lines.push('            this.encoders.set(opcode, encoder);');
-    lines.push('        }');
-    lines.push('');
-    lines.push('        /**');
-    lines.push('         * Register decoder for a specific opcode.');
-    lines.push('         */');
-    lines.push('        registerDecoder(opcode: number, decoder: (data: Uint8Array) => unknown): void {');
-    lines.push('            this.decoders.set(opcode, decoder);');
-    lines.push('        }');
-    lines.push('');
+    
+    // Generate encode methods per message
+    for (const msg of messages) {
+        const msgName = msg.name;
+        lines.push(`        private encode${msgName}(m: ${msgName}): Uint8Array {`);
+        lines.push('            const arr: number[] = [];');
+        
+        let tagNum = 1;
+        for (const field of msg.fields || []) {
+            const fieldName = field.name;
+            const tsType = mapToTypeScriptType(field.type);
+            
+            if (tsType === 'bigint') {
+                lines.push(`            Proto.writeInt64(arr, ${tagNum}, m.${fieldName} ?? 0n);`);
+            } else if (tsType === 'number' && (field.type === 'float' || field.type === 'double')) {
+                if (field.type === 'float') {
+                    lines.push(`            Proto.writeFloat(arr, ${tagNum}, m.${fieldName} ?? 0);`);
+                } else {
+                    lines.push(`            Proto.writeDouble(arr, ${tagNum}, m.${fieldName} ?? 0);`);
+                }
+            } else if (tsType === 'number') {
+                lines.push(`            Proto.writeInt32(arr, ${tagNum}, m.${fieldName} ?? 0);`);
+            } else if (tsType === 'boolean') {
+                lines.push(`            Proto.writeBool(arr, ${tagNum}, m.${fieldName} ?? false);`);
+            } else if (tsType === 'string') {
+                lines.push(`            Proto.writeString(arr, ${tagNum}, m.${fieldName});`);
+            } else if (tsType === 'Uint8Array') {
+                lines.push(`            Proto.writeBytes(arr, ${tagNum}, m.${fieldName});`);
+            }
+            tagNum++;
+        }
+        
+        lines.push('            return new Uint8Array(arr);');
+        lines.push('        }');
+        lines.push('');
+    }
+    
+    // Generate decode methods per message
+    for (const msg of messages) {
+        const msgName = msg.name;
+        lines.push(`        private decode${msgName}(data: Uint8Array): ${msgName} {`);
+        lines.push(`            const m: ${msgName} = {} as ${msgName};`);
+        lines.push('            const pos = { v: 0 };');
+        lines.push('            while (pos.v < data.length) {');
+        lines.push('                const { tag, wireType } = Proto.readTag(data, pos);');
+        lines.push('                switch (tag) {');
+        
+        let tagNum = 1;
+        for (const field of msg.fields || []) {
+            const fieldName = field.name;
+            const tsType = mapToTypeScriptType(field.type);
+            
+            lines.push(`                    case ${tagNum}:`);
+            if (tsType === 'bigint') {
+                lines.push(`                        m.${fieldName} = Proto.readInt64(data, pos);`);
+            } else if (tsType === 'number' && (field.type === 'float' || field.type === 'double')) {
+                if (field.type === 'float') {
+                    lines.push(`                        m.${fieldName} = Proto.readFloat(data, pos);`);
+                } else {
+                    lines.push(`                        m.${fieldName} = Proto.readDouble(data, pos);`);
+                }
+            } else if (tsType === 'number') {
+                lines.push(`                        m.${fieldName} = Proto.readInt32(data, pos);`);
+            } else if (tsType === 'boolean') {
+                lines.push(`                        m.${fieldName} = Proto.readBool(data, pos);`);
+            } else if (tsType === 'string') {
+                lines.push(`                        m.${fieldName} = Proto.readString(data, pos);`);
+            } else if (tsType === 'Uint8Array') {
+                lines.push(`                        m.${fieldName} = Proto.readBytes(data, pos);`);
+            }
+            lines.push('                        break;');
+            tagNum++;
+        }
+        
+        lines.push('                    default:');
+        lines.push('                        Proto.skip(data, pos, wireType);');
+        lines.push('                        break;');
+        lines.push('                }');
+        lines.push('            }');
+        lines.push('            return m;');
+        lines.push('        }');
+        lines.push('');
+    }
+    
+    // ICodec interface methods
     lines.push('        encode<T>(message: T): Uint8Array {');
-    lines.push('            // Generic encode falls back to JSON');
-    lines.push('            return this.fallbackCodec.encode(message);');
+    lines.push('            // Type dispatch - caller should use encodeByOpcode when possible');
+    for (const msg of messages) {
+        lines.push(`            if ((message as unknown as ${msg.name}).${(msg.fields?.[0]?.name) || 'toString'} !== undefined) {`);
+        lines.push(`                // Heuristic check - may need refinement`);
+        lines.push('            }');
+    }
+    lines.push('            throw new Error("Unknown message type for encode");');
     lines.push('        }');
     lines.push('');
-    lines.push('        /**');
-    lines.push('         * Encode message by opcode using registered encoder.');
-    lines.push('         */');
+    
     lines.push('        encodeByOpcode<T>(opcode: number, message: T): Uint8Array {');
-    lines.push('            const encoder = this.encoders.get(opcode);');
-    lines.push('            if (encoder) {');
-    lines.push('                return encoder(message);');
+    lines.push('            switch (opcode) {');
+    for (const msg of messages) {
+        lines.push(`                case Opcodes.${msg.name}: return this.encode${msg.name}(message as unknown as ${msg.name});`);
+    }
+    lines.push('                default: throw new Error(`Unknown opcode: ${opcode}`);');
     lines.push('            }');
-    lines.push('            return this.fallbackCodec.encode(message);');
     lines.push('        }');
     lines.push('');
+    
     lines.push('        decode<T>(data: Uint8Array): T {');
-    lines.push('            // Generic decode falls back to JSON');
-    lines.push('            return this.fallbackCodec.decode(data);');
+    lines.push('            throw new Error("Use decodeByOpcode instead");');
     lines.push('        }');
     lines.push('');
+    
     lines.push('        decodeByOpcode(opcode: number, data: Uint8Array): unknown {');
-    lines.push('            const decoder = this.decoders.get(opcode);');
-    lines.push('            if (decoder) {');
-    lines.push('                return decoder(data);');
+    lines.push('            switch (opcode) {');
+    for (const msg of messages) {
+        lines.push(`                case Opcodes.${msg.name}: return this.decode${msg.name}(data);`);
+    }
+    lines.push('                default: throw new Error(`Unknown opcode: ${opcode}`);');
     lines.push('            }');
-    lines.push('            return this.fallbackCodec.decode(data);');
     lines.push('        }');
+    
     lines.push('    }');
 }
 
@@ -201,7 +414,7 @@ function generateStub(lines, messages, protocolName) {
     lines.push('        private handlers = new Map<number, Set<MessageHandler<unknown>>>();');
     lines.push('');
     lines.push('        constructor(codec?: ICodec) {');
-    lines.push('            this.codec = codec ?? new CodecJson();');
+    lines.push('            this.codec = codec ?? new CodecProtobuf();');
     lines.push('        }');
     lines.push('');
 
@@ -253,7 +466,7 @@ function generateProxy(lines, messages, protocolName) {
     lines.push('');
     lines.push('        constructor(sendFn: SendFn, codec?: ICodec) {');
     lines.push('            this.sendFn = sendFn;');
-    lines.push('            this.codec = codec ?? new CodecJson();');
+    lines.push('            this.codec = codec ?? new CodecProtobuf();');
     lines.push('        }');
     lines.push('');
 
@@ -270,7 +483,7 @@ function generateProxy(lines, messages, protocolName) {
     // Send methods per message
     for (const msg of messages) {
         lines.push(`        async send${msg.name}(sessionId: number, message: ${msg.name}): Promise<void> {`);
-        lines.push('            const payload = this.codec.encode(message);');
+        lines.push(`            const payload = this.codec.encodeByOpcode(Opcodes.${msg.name}, message);`);
         lines.push(`            const frame = this.packFrame(Opcodes.${msg.name}, payload);`);
         lines.push('            await this.sendFn(sessionId, frame);');
         lines.push('        }');
@@ -394,12 +607,12 @@ export function generateServerRuntime(groupName, protocols) {
     lines.push(' */');
     lines.push(`export class NetworkServerRuntime implements INetworkRuntime {`);
     lines.push(`    private readonly stub: ${inboundName}.Stub;`);
-    lines.push('    private readonly codec: ICodec;');
+    lines.push('    private readonly codec: ICodec | null;');
     lines.push('    private unknownHandler: UnknownOpcodeHandler | null = null;');
     lines.push('');
-    lines.push('    constructor(codec: ICodec) {');
-    lines.push('        this.codec = codec;');
-    lines.push(`        this.stub = new ${inboundName}.Stub(codec);`);
+    lines.push('    constructor(codec?: ICodec) {');
+    lines.push('        this.codec = codec ?? null;');
+    lines.push(`        this.stub = this.codec ? new ${inboundName}.Stub(this.codec) : new ${inboundName}.Stub();`);
     lines.push('    }');
     lines.push('');
 
@@ -426,7 +639,7 @@ export function generateServerRuntime(groupName, protocols) {
 
     // createOutboundProxy
     lines.push(`    createOutboundProxy(sendFn: SendFn): ${outboundName}.Proxy {`);
-    lines.push(`        return new ${outboundName}.Proxy(sendFn, this.codec);`);
+    lines.push(`        return this.codec ? new ${outboundName}.Proxy(sendFn, this.codec) : new ${outboundName}.Proxy(sendFn);`);
     lines.push('    }');
     lines.push('');
 
@@ -465,8 +678,9 @@ export function generateServerRuntime(groupName, protocols) {
     // Factory function
     lines.push('/**');
     lines.push(` * Create server runtime for ${groupName} protocol group`);
+    lines.push(' * @param codec Optional codec (default: protobuf codec from Stub/Proxy)');
     lines.push(' */');
-    lines.push(`export function createServerRuntime(codec: ICodec): NetworkServerRuntime {`);
+    lines.push(`export function createServerRuntime(codec?: ICodec): NetworkServerRuntime {`);
     lines.push(`    return new NetworkServerRuntime(codec);`);
     lines.push('}');
     lines.push('');
@@ -553,12 +767,12 @@ export function generateClientRuntime(groupName, protocols) {
     lines.push(' */');
     lines.push(`export class NetworkClientRuntime implements INetworkRuntime {`);
     lines.push(`    private readonly stub: ${inboundName}.Stub;`);
-    lines.push('    private readonly codec: ICodec;');
+    lines.push('    private readonly codec: ICodec | null;');
     lines.push('    private unknownHandler: UnknownOpcodeHandler | null = null;');
     lines.push('');
-    lines.push('    constructor(codec: ICodec) {');
-    lines.push('        this.codec = codec;');
-    lines.push(`        this.stub = new ${inboundName}.Stub(codec);`);
+    lines.push('    constructor(codec?: ICodec) {');
+    lines.push('        this.codec = codec ?? null;');
+    lines.push(`        this.stub = this.codec ? new ${inboundName}.Stub(this.codec) : new ${inboundName}.Stub();`);
     lines.push('    }');
     lines.push('');
 
@@ -585,7 +799,7 @@ export function generateClientRuntime(groupName, protocols) {
 
     // createOutboundProxy
     lines.push(`    createOutboundProxy(sendFn: SendFn): ${outboundName}.Proxy {`);
-    lines.push(`        return new ${outboundName}.Proxy(sendFn, this.codec);`);
+    lines.push(`        return this.codec ? new ${outboundName}.Proxy(sendFn, this.codec) : new ${outboundName}.Proxy(sendFn);`);
     lines.push('    }');
     lines.push('');
 
@@ -624,9 +838,10 @@ export function generateClientRuntime(groupName, protocols) {
     // Factory function
     lines.push('/**');
     lines.push(` * Create client runtime for ${groupName} protocol group`);
+    lines.push(' * @param codec Optional codec (default: protobuf codec from Stub/Proxy)');
     lines.push(' * @returns Runtime instance with stub access and proxy factory');
     lines.push(' */');
-    lines.push(`export function createClientRuntime(codec: ICodec): {`);
+    lines.push(`export function createClientRuntime(codec?: ICodec): {`);
     lines.push(`    runtime: NetworkClientRuntime;`);
     lines.push(`    ${inboundName.charAt(0).toLowerCase() + inboundName.slice(1)}Stub: ${inboundName}.Stub;`);
     lines.push(`    ${outboundName.charAt(0).toLowerCase() + outboundName.slice(1)}ProxyFactory: (sendFn: SendFn) => ${outboundName}.Proxy;`);

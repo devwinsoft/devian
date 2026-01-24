@@ -656,7 +656,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Google.Protobuf">
-      <HintPath>Assets\Plugins\Google.Protobuf.dll</HintPath>
+      <HintPath>Packages\com.devian.protobuf\Runtime\Plugins\Google.Protobuf.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="Newtonsoft.Json">
@@ -1173,9 +1173,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Devian.Core.csproj">
-      <Project>{BE59D257-BCE4-3EFD-A48C-4F1B1BAB05B5}</Project>
-      <Name>Devian.Core</Name>
+    <ProjectReference Include="Devian.Network.csproj">
+      <Project>{BA233111-C828-0A83-8951-CAD8BDC5047A}</Project>
+      <Name>Devian.Network</Name>
     </ProjectReference>
     <ProjectReference Include="UnityEditor.UI.csproj">
       <Project>{6A2C1AFF-9E9A-271E-6D36-6B8D584DF6ED}</Project>

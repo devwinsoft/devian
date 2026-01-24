@@ -13,7 +13,6 @@
 import {
     WsTransport,
     NetworkServer,
-    defaultCodec,
     type UnknownOpcodeEvent,
 } from '@devian/core';
 
@@ -25,8 +24,8 @@ import {
 const PORT = 8080;
 
 async function main() {
-    // 1. Create network runtime for 'Sample' group
-    const runtime = createServerRuntime(defaultCodec);
+    // 1. Create network runtime for 'Sample' group (protobuf codec by default)
+    const runtime = createServerRuntime();
 
     // 2. Get stub for handler registration
     const stub = runtime.getStub();

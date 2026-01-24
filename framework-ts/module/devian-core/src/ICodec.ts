@@ -11,6 +11,15 @@ export interface ICodec {
     encode<T>(message: T): Uint8Array;
 
     /**
+     * Opcode 기반으로 메시지를 바이너리로 인코딩한다.
+     * Protobuf codec 등 opcode별 인코더가 필요한 경우 사용한다.
+     * @param opcode 메시지 Opcode
+     * @param message 인코딩할 메시지
+     * @returns 인코딩된 바이너리
+     */
+    encodeByOpcode<T>(opcode: number, message: T): Uint8Array;
+
+    /**
      * 바이너리를 메시지로 디코딩한다.
      * @param data 디코딩할 바이너리
      * @returns 디코딩된 메시지

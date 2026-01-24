@@ -111,6 +111,10 @@ export class JsonCodec implements ICodec {
         return this.encoder.encode(json);
     }
 
+    encodeByOpcode<T>(_opcode: number, message: T): Uint8Array {
+        return this.encode(message);
+    }
+
     decode<T>(data: Uint8Array): T {
         const json = this.decoder.decode(data);
         return JSON.parse(json) as T;

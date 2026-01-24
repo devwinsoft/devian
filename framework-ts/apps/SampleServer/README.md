@@ -1,13 +1,13 @@
 # Sample Server
 
-Devian Network Server 샘플 앱입니다.
+Devian Network Server 샘플 앱입니다. 현재 샘플은 Ping/Echo 기반입니다.
 
 ## 구조
 
 이 앱은 **조립만** 수행합니다:
 
 1. `WsTransport` - WebSocket 전송 계층
-2. `NetworkServerRuntime` - Game 그룹 프로토콜 런타임
+2. `NetworkServerRuntime` - Sample 그룹 프로토콜 런타임 (protobuf codec 기본)
 3. `NetworkServer` - 프로토콜 서버 (transport + runtime 연결)
 
 ## 실행
@@ -19,10 +19,8 @@ npm start
 
 ## 핸들러
 
-- `onLoginRequest` - 로그인 요청 처리
-- `onJoinRoomRequest` - 방 입장 요청 처리
-- `onChatMessage` - 채팅 메시지 브로드캐스트
-- `onUploadData` - 데이터 업로드 로깅
+- `onPing` - Ping 요청 처리 → Pong 응답
+- `onEcho` - Echo 요청 처리 → EchoReply 응답
 
 ## Unknown Opcode 정책
 

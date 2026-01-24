@@ -17,7 +17,7 @@ TypeScript 기반 네트워크 서버 모듈의 설계 원칙과 책임 분리�
 - **@devian/core**: 공용 코드만 포함
   - WebSocket transport (세션 관리, binary send)
   - Frame 파싱 (int32 LE opcode + payload)
-  - Tagged BigInt JSON codec
+  - Tagged BigInt JSON codec (옵션)
   - NetworkServer (runtime 주입)
   - NetworkClient (runtime 주입)
 
@@ -25,9 +25,16 @@ TypeScript 기반 네트워크 서버 모듈의 설계 원칙과 책임 분리�
   - Inbound opcode 이름 조회
   - Inbound dispatch (stub.dispatch)
   - Outbound proxy 생성
+  - Protobuf codec (기본)
   - Devian.Protocol.{Group} namespace 트리
 
-### 2. Unknown Opcode 정책
+### 2. Codec 정합
+
+- **기본:** protobuf codec (생성된 Stub/Proxy의 기본 codec)
+- **선택:** `createServerRuntime(customCodec)`로 custom codec 주입 가능
+- codec 미주입 시 Stub/Proxy 각자의 기본 protobuf codec 사용
+
+### 3. Unknown Opcode 정책
 
 Unknown inbound opcode는:
 - **절대 disconnect/close 하지 않는다**
@@ -73,13 +80,14 @@ framework-ts/module/devian-core/
 
 위치: `framework-ts/apps/SampleServer/`
 
-예제 앱은 **조립 + 핸들러 등록만** 수행한다.
+예제 앱은 **조립 + 핸들러 등록만** 수행한다. SampleServer는 protobuf codec을 기본으로 사용한다.
 
 ```typescript
-import { WsTransport, NetworkServer, defaultCodec } from '@devian/core';
+import { WsTransport, NetworkServer } from '@devian/core';
 import { createServerRuntime, Sample2C } from '@devian/network-sample';
 
-const runtime = createServerRuntime(defaultCodec);
+// codec 미주입 = protobuf 기본
+const runtime = createServerRuntime();
 const stub = runtime.getStub();
 
 // 핸들러 등록

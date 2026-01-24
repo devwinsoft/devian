@@ -1,0 +1,16 @@
+{
+  "name": "Devian.Unity.Network",
+  "rootNamespace": "Devian.Unity.Network",
+  "references": [
+    "Devian.Core"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -67,13 +67,46 @@ com.devian.unity.common/
 
 ## 빌더 생성 정책 (Hard Rule)
 
-**이 UPM 패키지는 빌더(`build.js`)가 staging에 생성 후 clean+copy로 targetDir에 덮어쓴다.**
+**이 UPM 패키지는 빌더(`build.js`)가 staging → upm-gen → packageDir 파이프라인을 통해 최종 반영된다.**
 
-- staging에 포함되지 않은 파일은 clean+copy 이후 삭제된다.
-- Editor 폴더(PropertyDrawer 등)는 **빌더가 staging에 복사**해야 한다.
-- 정본 소스: `framework-cs/upm-src/com.devian.unity.common/Editor/`
+### 파이프라인 흐름
+
+```
+1. 정본 소스(입력):  framework-cs/upm-src/com.devian.unity.common/**
+2. Staging:          {tempDir}/static-com.devian.unity.common/**
+                     └── Editor/Generated/*.cs는 staging에 생성됨
+3. Materialize:      framework-cs/upm-gen/com.devian.unity.common/** (clean+copy)
+4. Final(packageDir): framework-cs/apps/UnityExample/Packages/com.devian.unity.common/** (clean+copy)
+```
+
+### 주요 규칙
+
+- **upm-src → staging**: 빌더가 입력 템플릿을 staging 폴더로 복사
+- **staging 가공**: `generateTableIdEditorForUnityCommon()`이 `Editor/Generated/` 생성
+- **staging → upm-gen**: `copyStaticUpmPackageToGenerateDir()`가 materialize
+- **upm-gen → packageDir**: `syncUpmToPackageDir()`가 최종 반영 (upm-gen이 정본)
+- **upm-src는 스킵**: packageDir sync에서 hybrid 패키지(staticUpmPackages)는 upm-src를 건너뜀
+
+### 최종 확인 위치
+
+- **upm-gen**: `framework-cs/upm-gen/com.devian.unity.common/Editor/Generated/*_ID.Editor.cs`
+- **packageDir**: `framework-cs/apps/UnityExample/Packages/com.devian.unity.common/Editor/Generated/*_ID.Editor.cs`
 
 > **주의**: `com.devian.module.common`에는 Editor 코드를 두지 않는다 (서버 빌드/UnityEditor 의존 분리).
+
+---
+
+## DoD (완료 정의) — Hard Gate
+
+keyed table(TableID 기반)이 **1개 이상** 존재하면, 아래 조건을 모두 만족해야 **PASS**:
+
+- [ ] `framework-cs/upm-gen/com.devian.unity.common/Editor/Generated/`에 최소 1개 이상의 `*_ID.Editor.cs` 존재
+- [ ] `framework-cs/apps/UnityExample/Packages/com.devian.unity.common/Editor/Generated/`에 동일 파일 존재
+- [ ] 생성된 파일 수가 keyed table 수와 일치
+
+**FAIL 조건:**
+- staging 후 upm-gen 복사가 누락되어 Generated 폴더가 없음
+- packageDir sync에서 upm-src가 upm-gen을 덮어써서 Generated 폴더가 사라짐
 
 ---
 
@@ -206,6 +239,15 @@ namespace Devian.Unity
 - **네임스페이스**: `Devian.Unity` 단일 (서브네임스페이스 금지)
 - **클래스명 규칙**: `{DomainName}_{TableName}_ID_Selector`, `{DomainName}_{TableName}_ID_Drawer`
 - **파일명 규칙**: `{TableName}_ID.Editor.cs`
+
+**Table ID Inspector 로딩 규칙 (Hard Rule):**
+- Selector/Drawer 생성물은 TextAsset 로드 시 **`.json` 확장자만 허용**한다.
+- DATA 파일은 `ndjson/` 폴더에 `{TableName}.json`(내용은 NDJSON)으로 저장된다.
+- Inspector가 `.ndjson` 확장자를 검색/필터링하면 **정책 위반(FAIL)**.
+
+**DoD (Inspector 생성물):**
+- `*_ID.Editor.cs` 생성물 내부에 `.EndsWith(".json"` 이 존재해야 **PASS**
+- `.EndsWith(".ndjson"` 또는 `".ndjson"` 문자열이 존재하면 **FAIL**
 
 > **주의**: `com.devian.module.common/Editor/Generated/`에는 TableID Editor 파일을 생성하지 않는다.
 
