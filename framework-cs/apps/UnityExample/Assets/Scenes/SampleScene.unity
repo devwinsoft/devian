@@ -392,7 +392,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 605545718}
-  - component: {fileID: 605545717}
   - component: {fileID: 605545719}
   m_Layer: 0
   m_Name: Test
@@ -401,18 +400,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &605545717
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 605545716}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a75a104d4f7a88b4c893c1c9efc80fbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Devian.Sample::Devian.Sample.SampleProtocolSmokeTest
 --- !u!4 &605545718
 Transform:
   m_ObjectHideFlags: 0
@@ -542,7 +529,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1931013200}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0cd3ac0d292359c44bcc5e5f9f4bd024, type: 3}
+  m_Script: {fileID: 11500000, guid: d0187a096136c5141bf0b8c72e62290f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Sample::Devian.Sample.EchoWsClientSample
   url: ws://localhost:8080

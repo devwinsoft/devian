@@ -1,7 +1,7 @@
 # 01-singleton
 
 Status: ACTIVE  
-AppliesTo: v11  
+AppliesTo: v19  
 Type: Policy
 
 ---
@@ -9,7 +9,7 @@ Type: Policy
 ## 1. 목적
 
 Unity용 Singleton **정책**을 정의한다.  
-이 스킬은 **싱글톤 계열 정책 묶음**이며, 정확히 3개의 타입만 제공한다.
+이 스킬은 **싱글톤 계열 정책 묶음**이며, 정확히 4개의 타입을 제공한다.
 
 ---
 
@@ -20,6 +20,7 @@ Unity용 Singleton **정책**을 정의한다.
 - **MonoSingleton\<T\>** - Manual / Persistent (자동 생성 없음)
 - **AutoSingleton\<T\>** - AutoCreate / Persistent (Instance 접근 시 자동 생성)
 - **ResSingleton\<T\>** - Resources / Persistent (Resources.Load로 생성)
+- **SimpleSingleton\<T\>** - Pure C# / Lazy 기반 / 스레드 안전 (Unity 오브젝트 의존 없음)
 - 공통 규약 (중복 처리, 영속성, 네임스페이스, 스레드)
 - API 시그니처 정본
 - 확장 정책
@@ -28,7 +29,7 @@ Unity용 Singleton **정책**을 정의한다.
 
 - Scene 종속형 Singleton (별도 스킬로 분리)
 - 실제 C# 구현 코드
-- 위 3개 외 다른 singleton 타입
+- 위 4개 외 다른 singleton 타입
 
 ---
 
@@ -50,13 +51,14 @@ Unity용 Singleton **정책**을 정의한다.
 
 ### 4.1 네이밍 규약 (정본)
 
-제공 타입 이름은 **정확히 3개만** 사용:
+제공 타입 이름은 **정확히 4개만** 사용:
 
 | 타입 이름 | 용도 |
 |-----------|------|
 | `MonoSingleton<T>` | Manual / Persistent |
 | `AutoSingleton<T>` | AutoCreate / Persistent |
 | `ResSingleton<T>` | Resources / Persistent |
+| `SimpleSingleton<T>` | Pure C# / Lazy / Thread-safe |
 
 - **위 이름 외 "더 긴 이름/다른 접두사/접미사" 금지**
 - 네임스페이스: **`namespace Devian`** 고정
@@ -335,7 +337,78 @@ namespace Devian
 
 ---
 
-## 8. 확장 정책 (추가 Singleton 타입)
+## 8. 타입 D: SimpleSingleton\<T\> (Pure C# / Lazy)
+
+### 8.1 목적
+
+Unity API에 의존하지 않는 **순수 C# 싱글톤** 베이스를 제공한다.
+`Lazy<T>`를 사용하여 스레드 안전하고, MonoBehaviour/씬 생명주기와 무관하게 동작한다.
+
+사용처:
+- Unity 오브젝트/씬 의존 없는 서비스
+- 캐시/매퍼/레지스트리 등 순수 데이터 관리 클래스
+
+### 8.2 필수 규약 (정본)
+
+| 항목 | 규칙 |
+|------|------|
+| **제약** | `where T : SimpleSingleton<T>, new()` |
+| **Unity API** | **금지** (MonoBehaviour, UnityEngine.Object 상속 금지) |
+| **생성 시점** | `Instance` 최초 접근 시 1회 생성 |
+| **스레드 안전성** | `Lazy<T>` (isThreadSafe: true)로 보장 |
+| **외부 생성** | **금지** (protected 생성자) |
+
+### 8.3 API 시그니처 (정본)
+
+```csharp
+namespace Devian
+{
+    public abstract class SimpleSingleton<T>
+        where T : SimpleSingleton<T>, new()
+    {
+        /// <summary>싱글톤 인스턴스 (최초 접근 시 생성)</summary>
+        public static T Instance { get; }
+        
+        protected SimpleSingleton() { }
+    }
+}
+```
+
+### 8.4 금지사항
+
+| 금지 항목 | 이유 |
+|-----------|------|
+| MonoBehaviour 상속 | Unity 생명주기 의존성 발생 |
+| public 생성자 | 외부에서 직접 생성 허용 방지 |
+| Reset/Dispose 등 추가 API | 이 스킬 범위 밖 (필요시 별도 확장) |
+
+### 8.5 SimpleSingleton 안전 규약 (정본)
+
+**금지:**
+
+| 금지 항목 | 이유 |
+|-----------|------|
+| 생성자(ctor)에서 `Instance` 호출 | 초기화 순서 미보장, 무한 재귀 위험 |
+| 정적 필드 초기화 / 정적 생성자(static ctor)에서 `Instance` 호출 | 타입 로딩 시점 문제, Unity Editor ScriptableSingleton 충돌 |
+| `[InitializeOnLoad]`, `[InitializeOnLoadMethod]`에서 즉시 `Instance` 호출 | 에디터 로딩 완료 전 접근 시 경고/에러 발생 |
+
+**권장 패턴:**
+
+- 무거운 초기화는 생성자 대신 `Init()` 같은 명시적 메서드로 분리
+- 호출 타이밍은 게임 시작 이후(예: Start/Awake 이후) 또는 사용자 액션 이후로 지연
+- 에디터 초기화가 필요하면 `EditorApplication.delayCall`을 사용해 "에디터 로딩 완료 후" 실행
+
+**가드 구현:**
+
+- `UNITY_EDITOR || DEVELOPMENT_BUILD` 조건부로 StackTrace 기반 검사
+- Instance 최초 생성 시 1회만 실행 (Lazy 람다 내부)
+- 생성자/정적 생성자에서 호출 감지 시 `InvalidOperationException` 발생
+
+> **Note**: SimpleSingleton은 수기 코드이며, 생성기는 `Generated/` 폴더만 다룬다.
+
+---
+
+## 9. 확장 정책 (추가 Singleton 타입)
 
 ### 8.1 확장 규칙
 
@@ -363,7 +436,7 @@ namespace Devian
 
 ### 네이밍/구조
 
-- [x] `MonoSingleton<T>`, `AutoSingleton<T>`, `ResSingleton<T>` 이름이 SSOT로 명시
+- [x] `MonoSingleton<T>`, `AutoSingleton<T>`, `ResSingleton<T>`, `SimpleSingleton<T>` 이름이 SSOT로 명시
 - [x] 네임스페이스 `Devian` 고정 규약이 명시
 - [x] "씬 종속형은 별도 스킬"이 명시
 
@@ -388,6 +461,12 @@ namespace Devian
 - [x] Instance 정책 (Load 선행 필요, 없으면 throw)이 명시
 - [x] 경로 자동 유추 금지가 명시
 
+### SimpleSingleton
+
+- [x] `SimpleSingleton<T>` 이름/경로/네임스페이스가 SSOT로 명시
+- [x] Pure C# / Lazy 기반 / 스레드 안전이 명시
+- [x] Unity API 금지가 명시
+
 ---
 
 ## 10. Generated Output (정본)
@@ -407,7 +486,8 @@ com.devian.unity/Runtime/
 └── Singleton/
     ├── MonoSingleton.cs
     ├── AutoSingleton.cs
-    └── ResSingleton.cs
+    ├── ResSingleton.cs
+    └── SimpleSingleton.cs
 ```
 
 ### 생성 주체 (정본)
@@ -423,6 +503,7 @@ com.devian.unity/Runtime/
 | `MonoSingleton.cs` | `MonoSingleton<T>` | `Devian` |
 | `AutoSingleton.cs` | `AutoSingleton<T>` | `Devian` |
 | `ResSingleton.cs` | `ResSingleton<T>` | `Devian` |
+| `SimpleSingleton.cs` | `SimpleSingleton<T>` | `Devian` |
 
 ### 공용 헬퍼 (Pool과 공유)
 
@@ -443,7 +524,7 @@ UnityEngine.Object.Destroy(gameObject);
 
 ### 주의사항
 
-- 제공 singleton 타입은 3종만이며, 공용 헬퍼는 `_Shared/`에 위치
+- 제공 singleton 타입은 4종이며, 공용 헬퍼는 `_Shared/`에 위치
 - **`Singleton/UnityMainThread.cs`는 생성하지 않음** (공용 `_Shared/` 사용)
 - 소스 레포지토리(`framework-cs/upm/com.devian.unity`)에는 생성 폴더가 없어도 됨
 - 빌드 후 `UnityExample/Packages/com.devian.unity/Runtime/Singleton/*.cs` 에 파일 존재

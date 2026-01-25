@@ -1,20 +1,21 @@
 # 04-pool-factories
 
 Status: ACTIVE  
-AppliesTo: v11  
+AppliesTo: v20  
 Type: Component Specification
 
 ## 1. 목적
 
-`IPoolFactory`의 실사용 구현 2종 제공:
-- `InspectorPoolFactory` - 인스펙터에서 프리팹 등록
-- `BundlePoolFactory` - AssetBundle 기반 로딩
+`IPoolFactory`의 실사용 구현 2종 및 static facade 1종 제공:
+- `InspectorPoolFactory` - 인스펙터에서 프리팹 등록 (MonoBehaviour)
+- `BundlePoolFactory` - AssetBundle 기반 로딩 (SimpleSingleton + IPoolFactory)
+- `BundlePool` - BundlePoolFactory의 static facade (권장 사용법)
 
 ---
 
 ## 2. 네임스페이스
 
-모든 생성 코드는 `namespace Devian` 고정.
+모든 코드는 `namespace Devian` 고정.
 
 ---
 
@@ -24,25 +25,20 @@ Type: Component Specification
 
 ---
 
-## 4. 생성 위치 (정본)
+## 4. 파일 위치 (정본)
 
 ```
 com.devian.unity/Runtime/PoolFactories/
 ├── InspectorPoolFactory.cs
-└── BundlePoolFactory.cs
+├── BundlePoolFactory.cs
+└── BundlePool.cs
 ```
 
----
-
-## 5. 생성 주체 (정본)
-
-- `framework-ts/tools/builder/build.js`
-- `processStaticUpmPackage('com.devian.unity')` 단계에서 staging에 생성
-- 생성 순서: `_Shared` → `Singleton` → `Pool` → `PoolFactories`
+> **Note**: 이 폴더는 수기 코드이며, 생성기는 clean+generate하지 않음.
 
 ---
 
-## 6. InspectorPoolFactory 규약
+## 5. InspectorPoolFactory 규약
 
 형태: `public sealed class InspectorPoolFactory : MonoBehaviour, IPoolFactory`
 
@@ -98,30 +94,128 @@ UnityEngine.Object.Destroy(instance.gameObject);
 ```
 
 - **컴포넌트가 아닌 `instance.gameObject`를 Destroy**
-- `Destroy(instance)` 금지
 
 ---
 
-## 7. BundlePoolFactory 규약
+## 6. BundlePoolFactory 규약
 
-형태: `public sealed class BundlePoolFactory : IPoolFactory`
+형태: `public sealed class BundlePoolFactory : SimpleSingleton<BundlePoolFactory>, IPoolFactory`
 
-### GetPrefab(name)
+### 생성자
 
 ```csharp
-return AssetManager.GetAsset<GameObject>(name);
+public BundlePoolFactory() { }  // SimpleSingleton의 new() 제약 충족
 ```
 
-- `AssetManager.Instance` 금지 (존재하지 않는 API)
-- `Resources.Load` / `Addressables` 금지
+### Generic GetPrefab (권장)
+
+```csharp
+public TAsset GetPrefab<TAsset>(string name) where TAsset : UnityEngine.Object
+{
+    UnityMainThread.EnsureOrThrow("BundlePoolFactory.GetPrefab<TAsset>");
+    return AssetManager.GetAsset<TAsset>(name);
+}
+```
+
+- `AssetManager.GetAsset<T>(name)` 그대로 사용
+- Generic으로 다양한 에셋 타입 지원
+
+### IPoolFactory.GetPrefab (명시적 구현)
+
+```csharp
+GameObject IPoolFactory.GetPrefab(string name)
+{
+    return GetPrefab<GameObject>(name);
+}
+```
+
+- IPoolFactory 인터페이스는 GameObject 고정
+- Generic API를 GameObject로 연결
 
 ### GetPoolType/CreateInstance/DestroyInstance
 
 `InspectorPoolFactory`와 동일 규약.
+모든 public API에 `UnityMainThread.EnsureOrThrow(...)` 적용.
 
 ---
 
-## 8. 금지 사항
+## 7. BundlePool 규약 (권장 사용법)
+
+형태: `public static class BundlePool`
+
+**사용자는 BundlePool을 통해 풀링하는 것을 권장**
+
+### Spawn
+
+```csharp
+public static T Spawn<T>(
+    string name,
+    Vector3 position = default,
+    Quaternion rotation = default,
+    Transform parent = null,
+    PoolOptions options = default)
+    where T : Component, IPoolable<T>
+{
+    UnityMainThread.EnsureOrThrow("BundlePool.Spawn");
+    return BundlePoolFactory.Instance.Spawn<T>(name, position, rotation, parent, options);
+}
+```
+
+### Despawn
+
+```csharp
+public static void Despawn(Component instance)
+{
+    UnityMainThread.EnsureOrThrow("BundlePool.Despawn");
+    BundlePoolFactory.Instance.Despawn(instance);
+}
+```
+
+### ClearAll
+
+```csharp
+public static void ClearAll()
+{
+    UnityMainThread.EnsureOrThrow("BundlePool.ClearAll");
+    PoolManager.Instance.ClearAll();
+}
+```
+
+---
+
+## 8. 사용 예시
+
+### BundlePool (권장)
+
+```csharp
+// Spawn
+var enemy = BundlePool.Spawn<Enemy>("Goblin", position, rotation);
+
+// Despawn
+BundlePool.Despawn(enemy);
+```
+
+### BundlePoolFactory (직접 사용)
+
+```csharp
+// Spawn (factory 확장 메서드)
+var enemy = BundlePoolFactory.Instance.Spawn<Enemy>("Goblin", position, rotation);
+
+// Despawn
+BundlePoolFactory.Instance.Despawn(enemy);
+```
+
+---
+
+## 9. 주의 사항
+
+1. **에셋 사전 로딩 필수**: BundlePoolFactory는 AssetManager를 통해 에셋을 가져옴. 에셋이 캐시에 없으면 실패함.
+2. **name은 에셋 키이자 풀 키**: 오타/대소문자 차이가 있으면 다른 풀로 분리되어 메모리 낭비 발생.
+3. **메인 스레드 전용**: 모든 API는 메인 스레드에서만 호출 가능.
+
+---
+
+## 10. 금지 사항
 
 - `IPoolFactory` 인터페이스 변경 금지
 - `AssetManager.Instance` 사용 금지 (static 메서드 사용)
@@ -130,12 +224,14 @@ return AssetManager.GetAsset<GameObject>(name);
 
 ---
 
-## 9. DoD (완료 정의)
+## 11. DoD (완료 정의)
 
-- [ ] 빌드 후 `Runtime/PoolFactories/`에 2개 파일 존재
-- [ ] 두 클래스 모두 `IPoolFactory` 구현
-- [ ] `DestroyInstance`는 `00-unity-object-destruction` 규약 준수
-- [ ] `BundlePoolFactory`는 `AssetManager.GetAsset<GameObject>(name)` 사용
+- [x] `Runtime/PoolFactories/`에 3개 파일 존재 (InspectorPoolFactory, BundlePoolFactory, BundlePool)
+- [x] `BundlePoolFactory`가 `SimpleSingleton<BundlePoolFactory>` 상속
+- [x] `BundlePoolFactory.GetPrefab<TAsset>(name)` Generic API 제공
+- [x] `BundlePool`이 static facade로 존재하며 사용자 권장 API로 명시
+- [x] `DestroyInstance`는 `00-unity-object-destruction` 규약 준수
+- [x] 모든 public API에 메인 스레드 강제
 
 ---
 
@@ -143,5 +239,6 @@ return AssetManager.GetAsset<GameObject>(name);
 
 - Parent: `skills/devian-upm/30-unity-components/SKILL.md`
 - Related: `02-pool-manager/SKILL.md` (IPoolFactory 인터페이스 정의)
+- Related: `01-singleton/SKILL.md` (SimpleSingleton 베이스)
 - Related: `00-unity-object-destruction/SKILL.md` (Destroy 규약)
 - Related: `10-asset-manager/SKILL.md` (AssetManager API)

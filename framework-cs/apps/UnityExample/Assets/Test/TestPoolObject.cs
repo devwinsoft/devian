@@ -1,15 +1,15 @@
 using UnityEngine;
 using Devian;
-using Devian.Domain.Common;
-using Devian.Domain.Game;
 
-public class NewMonoBehaviourScript : MonoBehaviour
+public class TestPoolObject : MonoBehaviour, IPoolable<TestPoolObject>
 {
-    public CInt a;
-    public CFloat b;
-    public CString c;
-    public COMPLEX_POLICY_ID policyId;
-    public TestSheet_ID testSheetId;
+    public void OnPoolSpawned()
+    {
+    }
+
+    public void OnPoolDespawned()
+    {
+    }
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()

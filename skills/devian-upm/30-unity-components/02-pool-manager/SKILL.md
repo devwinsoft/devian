@@ -1,12 +1,13 @@
 # 02-pool-manager
 
 Status: ACTIVE  
-AppliesTo: v11  
+AppliesTo: v16  
 Type: Component Specification
 
 ## 1. 목적
 
 Unity에서 프리팹 기반 객체 재사용을 위한 PoolManager 템플릿 제공.
+PoolManager는 **AutoSingleton 기반 Registry**이며, 사용자는 **IPoolFactory 확장 메서드로 Spawn/Despawn**한다.
 
 ---
 
@@ -16,17 +17,16 @@ Unity에서 프리팹 기반 객체 재사용을 위한 PoolManager 템플릿 �
 
 - `IPoolable<T>` 인터페이스
 - `IPoolFactory` 인터페이스
-- `PoolManager` static 클래스
+- `PoolManager` AutoSingleton 클래스 (Registry 역할)
 - `Pool<T>` 제네릭 풀 및 비제네릭 `IPool` 인터페이스
-- `Spawn(string name)` + `Spawn<T>(string name)` 지원
-- `GetOrCreatePool<T>()` + `GetOrCreatePool(Type, ...)`
-- `Clear` / `ClearAll`
+- `PoolTag` MonoBehaviour (인스턴스→풀 결정적 매핑)
+- `PoolFactoryExtensions` 확장 메서드 (factory.Spawn/Despawn)
+- **Type/PoolName/Active|Inactive 디버깅 하이어라키**
 - 메인 스레드 강제 (비메인 throw)
 
 ### 제외
 
 - 비동기 큐잉/스레드 마샬링 (throw로 단순화)
-- Type당 다중 풀 (variant) — 향후 확장 항목
 
 ---
 
@@ -36,18 +36,111 @@ Unity에서 프리팹 기반 객체 재사용을 위한 PoolManager 템플릿 �
 
 ---
 
-## 4. 키/풀 규약
+## 4. 사용자 API (핵심)
 
-- **Spawn key** = `string name` (prefab의 `gameObject.name`)
-- **Pool identity** = Type 당 1풀
-- Type 풀 내부에서 name별 서브 큐로 분리:
-  ```csharp
-  Dictionary<string, Queue<T>> _inactiveByName
-  ```
+**사용자는 PoolManager로 직접 Spawn하지 않는다.** IPoolFactory 확장 메서드를 사용한다:
+
+```csharp
+// Spawn
+var enemy = myFactory.Spawn<Enemy>("Goblin", position, rotation);
+
+// Despawn (PoolTag 기반 라우팅)
+myFactory.Despawn(enemy);
+// 또는
+PoolManager.Instance.Despawn(enemy);
+```
 
 ---
 
-## 5. IPoolable<T> (콜백 이름 고정)
+## 5. 디버깅 하이어라키 구조 (핵심)
+
+Unity Hierarchy에서 풀 오브젝트가 Type → PoolName → Active/Inactive로 정렬된다:
+
+```
+[PoolManager]
+  <TypeName>                    # typeof(T).Name
+    <PoolName>                  # Spawn(name)의 name (프리팹 이름)
+      Active                    # Spawn된 활성 오브젝트 (parent=null일 때)
+      Inactive                  # Despawn된 비활성 오브젝트
+```
+
+### 예시
+
+```
+[PoolManager]
+  Enemy
+    Goblin
+      Active
+      Inactive
+    Orc
+      Active
+      Inactive
+  Projectile
+    Fireball
+      Active
+      Inactive
+```
+
+### PoolName 결정 규칙
+
+1. `Spawn(name)`의 `name` 파라미터를 사용
+2. 정규화:
+   - null/empty/whitespace → `"Default"`
+   - 64자 초과 → 앞부분 64자만 사용
+   - 슬래시(`/`, `\`) → `_`로 치환
+
+---
+
+## 6. 키/풀 규약
+
+- **Pool identity** = `PoolId (int)` — 내부 등록 시 발급
+- **Pool lookup key** = `(factory reference, component type, poolName)` — 3개 요소로 풀 구분
+- **Spawn key** = `string name` (prefab의 `gameObject.name`)
+- 각 `(factory, type, poolName)` 조합마다 별도의 Pool<T> 인스턴스가 생성됨
+
+---
+
+## 7. Parent 정책 (Spawn)
+
+Spawn 시 `parent` 인자에 따라 오브젝트 부모가 결정된다:
+
+| parent 인자 | 결과 |
+|-------------|------|
+| `null` | `[PoolManager]/{Type}/{PoolName}/Active` 아래로 이동 (디버깅 기본값) |
+| `Transform` 제공 | 제공된 parent 아래로 이동 (게임 로직 우선) |
+
+### Despawn
+
+Despawn 시에는 **항상** `[PoolManager]/{Type}/{PoolName}/Inactive` 아래로 이동.
+비활성 풀링 오브젝트는 한 곳에 모여야 디버깅이 용이함.
+
+---
+
+## 8. PoolTag (인스턴스→풀 결정적 매핑)
+
+```csharp
+namespace Devian
+{
+    [DisallowMultipleComponent]
+    public sealed class PoolTag : MonoBehaviour
+    {
+        public int PoolId { get; private set; }
+        public string PoolName { get; private set; }
+        
+        internal void SetPoolInfo(int poolId, string poolName);
+    }
+}
+```
+
+### 규약
+
+- Spawn 시 PoolManager가 `PoolTag`를 인스턴스에 부착/갱신하여 `PoolId`, `PoolName`을 기록
+- Despawn 시 PoolManager가 `PoolTag.PoolId`로 풀을 찾아 반환
+- **Tag 없으면 Despawn 거부** (throw) — 휴리스틱 추측 금지
+
+---
+
+## 9. IPoolable<T> (콜백 이름 고정)
 
 ```csharp
 public interface IPoolable<T> where T : UnityEngine.Component
@@ -61,7 +154,7 @@ public interface IPoolable<T> where T : UnityEngine.Component
 
 ---
 
-## 6. IPoolFactory (확장성)
+## 10. IPoolFactory (확장성)
 
 ```csharp
 public interface IPoolFactory
@@ -76,79 +169,190 @@ public interface IPoolFactory
 ### 규약
 
 - `GetPoolType`: prefab에서 `IPoolable<>` 구현 컴포넌트를 찾아 해당 컴포넌트 타입을 반환해야 함.
+- **IPoolFactory 인터페이스 시그니처 변경 금지** — 기존 Factory 구현 호환성 유지
 
 ### DestroyInstance 정본 (Hard Rule)
 
-`DestroyInstance`는 `00-unity-object-destruction/SKILL.md` 규약을 따른다:
-
-```csharp
-// 정본: DestroyInstance 구현
-public void DestroyInstance(UnityEngine.Component instance)
-{
-#if UNITY_EDITOR
-    if (!UnityEngine.Application.isPlaying)
-    {
-        UnityEngine.Object.DestroyImmediate(instance.gameObject);
-        return;
-    }
-#endif
-    UnityEngine.Object.Destroy(instance.gameObject);
-}
-```
-
-- **컴포넌트가 아닌 `instance.gameObject`를 Destroy**
-- `delete` 키워드 사용 금지 (C#에 없음)
-- Runtime에서는 `UnityEngine.Object.Destroy` 사용
-
-### 구현 계획 → 04-pool-factories로 이동
-
-아래 Factory 구현은 `04-pool-factories/SKILL.md`로 이동됨:
-- `InspectorPoolFactory` - 인스펙터 프리팹 링크
-- `BundlePoolFactory` - AssetManager 기반 로딩
-
-> **참고**: 이 스킬(02-pool-manager)은 인터페이스와 PoolManager만 정의하며, Factory 구현은 별도 스킬로 분리됨.
+`DestroyInstance`는 `00-unity-object-destruction/SKILL.md` 규약을 따른다.
 
 ---
 
-## 7. PoolManager API (필수)
+## 11. PoolManager API (AutoSingleton)
 
 ```csharp
-public static class PoolManager
+public sealed class PoolManager : AutoSingleton<PoolManager>
 {
-    void Initialize(IPoolFactory factory);
+    // === Public API ===
+    public static PoolManager Instance { get; }  // AutoSingleton 제공
     
-    Pool<T> GetOrCreatePool<T>(PoolOptions options = default) where T : Component, IPoolable<T>;
-    IPool GetOrCreatePool(Type type, PoolOptions options = default);
+    public void Despawn(Component instance);     // PoolTag 기반 라우팅
+    public void Clear(int poolId);
+    public void ClearAll();
     
-    T Spawn<T>(string name, Vector3 position = default, Quaternion rotation = default, Transform parent = null) where T : Component, IPoolable<T>;
-    Component Spawn(string name, Vector3 position = default, Quaternion rotation = default, Transform parent = null);
-    
-    void Despawn(Component instance);
-    
-    void Clear<T>() where T : Component, IPoolable<T>;
-    void Clear(Type type);
-    void ClearAll();
+    // === Internal (factory.Spawn에서 사용) ===
+    internal static string NormalizePoolName(string name);
+    internal Transform _GetTypeRoot(Type componentType);
+    internal NameRoots _GetNameRoots(Type componentType, string poolName);
+    internal IPool _GetOrCreatePool<T>(IPoolFactory factory, string poolName, PoolOptions options);
+    internal void _TrackSpawned(IPool pool, Component instance, string poolName);
 }
 ```
 
+### Despawn
+
+- 메인스레드 체크
+- null 체크
+- **PoolTag 없으면 throw** (어느 풀에서 왔는지 모르면 반환 불가)
+- `tag.PoolId`로 풀 찾아서 `pool.Despawn(instance)` 호출
+
+### _GetNameRoots (internal)
+
+- Type/PoolName별 Active/Inactive 루트 생성 및 캐시
+- `NameRoots` struct로 `(Active, Inactive)` 반환
+
 ---
 
-## 8. 스레드 규약
+## 12. PoolFactoryExtensions (사용자 진입점)
 
-- 위 API는 **전부 메인 스레드에서만 허용**
+```csharp
+public static class PoolFactoryExtensions
+{
+    public static T Spawn<T>(
+        this IPoolFactory factory,
+        string name,
+        Vector3 position = default,
+        Quaternion rotation = default,
+        Transform parent = null,
+        PoolOptions options = default) where T : Component, IPoolable<T>;
+    
+    public static void Despawn(this IPoolFactory factory, Component instance);
+}
+```
+
+### Spawn<T>
+
+- 메인스레드 체크
+- `name`을 poolName으로 사용
+- `PoolManager.Instance._GetOrCreatePool<T>(factory, name, options)` 호출
+- `pool.Spawn(name, position, rotation, parent)` 반환
+
+### Despawn
+
+- 메인스레드 체크
+- `PoolManager.Instance.Despawn(instance)` 위임
+- factory 인자는 API 일관성용 (라우팅은 PoolTag 기반)
+
+---
+
+## 13. PoolOptions
+
+```csharp
+public struct PoolOptions
+{
+    public int MaxSize;           // 최대 비활성 인스턴스 수 (기본 512)
+    public Transform ActiveRoot;  // Spawn 시 parent=null일 때 사용 (PoolManager가 설정)
+    public Transform InactiveRoot;// Despawn 시 사용 (PoolManager가 설정)
+    public int Prewarm;           // 프리웜 수량 (기본 0)
+}
+```
+
+> **Note**: `ActiveRoot`와 `InactiveRoot`는 PoolManager가 자동으로 설정함. 사용자가 직접 설정할 필요 없음.
+
+---
+
+## 14. 스레드 규약
+
+- 모든 API는 **메인 스레드에서만 허용**
 - 비메인 호출 시 `InvalidOperationException` throw
 - `UnityMainThread.EnsureOrThrow(string context)` 형태로 통일
 
 ---
 
-## 9. Clear 규약
+## 15. Clear 규약
 
 - `Clear`는 **inactive만 Destroy** 후 큐 비움
 - active 강제 회수는 제외
 
 ---
 
-## 10. Generated Output (정본)
+## 16. 풀 안전 규칙 (Hard Rule)
+
+### 16.1 Despawn 순서 (정본)
+
+```
+1. OnPoolDespawned() 호출 (사용자 코드)
+2. SetActive(false)
+3. SetParent(InactiveRoot)
+4. inactive 큐에 추가
+```
+
+- **OnPoolDespawned()가 먼저 호출되어야 함** (사용자가 비활성화 전 정리 가능)
+- 순서를 바꾸는 것은 금지
+
+### 16.2 Destroy 예외 처리 (정본)
+
+**OnPoolDespawned() 중 Destroy:**
+
+```csharp
+instance.OnPoolDespawned();
+
+if (instance == null || instance.gameObject == null)
+{
+    throw new InvalidOperationException(
+        "Pooled object was destroyed during OnPoolDespawned(). " +
+        "Destroying pooled objects is forbidden. Use Despawn only.");
+}
+```
+
+- 사용자가 콜백에서 Destroy하면 즉시 예외 발생
+- "조용히 무시"는 금지
+
+**inactive 큐의 Destroy된 엔트리:**
+
+```csharp
+T instance = null;
+while (_inactiveQueue.Count > 0 && instance == null)
+{
+    instance = _inactiveQueue.Dequeue();
+}
+```
+
+- Spawn 시 null(Unity null 포함) 엔트리는 자동 제거
+- Destroy된 오브젝트가 반환되지 않음
+
+**_activeInstances 정리:**
+
+```csharp
+_activeInstances.RemoveWhere(x => x == null);
+```
+
+- Spawn/Despawn 진입 시 Unity null 엔트리 제거
+
+### 16.3 PoolTag 불변 규칙 (정본)
+
+```csharp
+internal void SetPoolInfo(int poolId, string poolName)
+{
+    if (PoolId != 0 && PoolId != poolId)
+    {
+        throw new InvalidOperationException("PoolTag.PoolId must never change.");
+    }
+    if (!string.IsNullOrEmpty(PoolName) && PoolName != poolName)
+    {
+        throw new InvalidOperationException("PoolTag.PoolName must never change.");
+    }
+    PoolId = poolId;
+    PoolName = poolName;
+}
+```
+
+- **최초 세팅 후 변경 금지**
+- 같은 값 재세팅은 허용 (idempotent)
+- 다른 풀로 "재귀속" 시도 시 즉시 예외
+
+---
+
+## 17. Generated Output (정본)
 
 ### 생성 대상 패키지
 
@@ -166,16 +370,18 @@ com.devian.unity/Runtime/
     ├── PoolOptions.cs
     ├── IPool.cs
     ├── Pool.cs
-    └── PoolManager.cs
+    ├── PoolManager.cs
+    ├── PoolTag.cs
+    └── PoolFactoryExtensions.cs
 ```
 
-### 생성 주체 (정본)
+### 수기 코드 정책 (Static UPM)
 
-- `framework-ts/tools/builder/build.js` 의 static UPM 처리 단계
-- `processStaticUpmPackage('com.devian.unity')` 에서 staging에 생성
-- 생성 순서: `_Shared` → `Singleton` → `Pool`
+- `com.devian.unity`의 `Pool/` 폴더는 **고정 유틸 수기 코드**
+- 생성기는 `Generated/` 폴더만 처리하며, `Pool/` 폴더를 clean/generate하지 않음
+- Static UPM은 소스 복사 기반 (`framework-cs/upm/` → `UnityExample/Packages/`)
 
-### 생성 파일 규칙
+### 파일 목록 (8개)
 
 | 파일 | 타입 | 네임스페이스 |
 |------|------|-------------|
@@ -184,26 +390,15 @@ com.devian.unity/Runtime/
 | `PoolOptions.cs` | `PoolOptions` (struct) | `Devian` |
 | `IPool.cs` | `IPool` | `Devian` |
 | `Pool.cs` | `Pool<T>` | `Devian` |
-| `PoolManager.cs` | `PoolManager` (static) | `Devian` |
-
-### 공용 헬퍼 (Singleton과 공유)
-
-- `_Shared/UnityMainThread.cs` - 메인 스레드 검증 헬퍼
-- 호출 형태: `UnityMainThread.EnsureOrThrow(string context)`
-- Pool은 이 공용 헬퍼를 참조한다
-
-### 주의사항
-
-- **`Pool/UnityMainThread.cs`는 생성하지 않음** (공용 `_Shared/` 사용)
-- 소스 레포지토리(`framework-cs/upm/com.devian.unity`)에는 Pool 폴더가 없어도 됨
-- 빌드 후 `UnityExample/Packages/com.devian.unity/Runtime/Pool/*.cs` 에 파일 존재
-- `Runtime/Templates/` 레거시 경로가 존재하면 FAIL
+| `PoolManager.cs` | `PoolManager` (AutoSingleton) | `Devian` |
+| `PoolTag.cs` | `PoolTag` (MonoBehaviour) | `Devian` |
+| `PoolFactoryExtensions.cs` | `PoolFactoryExtensions` (static) | `Devian` |
 
 ---
 
 ## Reference
 
 - Parent: `skills/devian-upm/30-unity-components/SKILL.md`
-- Related: `01-singleton-template/SKILL.md` (공용 `_Shared/UnityMainThread` 사용)
+- Related: `01-singleton-template/SKILL.md` (AutoSingleton 베이스)
 - Related: `00-unity-object-destruction/SKILL.md` (Destroy 규약)
 - Related: `04-pool-factories/SKILL.md` (IPoolFactory 구현체)

@@ -9,35 +9,47 @@ using UnityEngine;
 namespace Devian
 {
     /// <summary>
-    /// AssetBundle-based pool factory.
-    /// Loads prefabs via AssetManager and spawns by name.
+    /// Bundle-based pool factory (manual).
+    /// Prefab lookup uses AssetManager.GetAsset&lt;T&gt;(name).
     /// </summary>
-    public sealed class BundlePoolFactory : IPoolFactory
+    public sealed class BundlePoolFactory : SimpleSingleton<BundlePoolFactory>, IPoolFactory
     {
-        /// <inheritdoc/>
-        public GameObject GetPrefab(string name)
+        // new() constraint requires a public parameterless ctor.
+        public BundlePoolFactory() { }
+
+        /// <summary>
+        /// Generic asset lookup API (requested).
+        /// </summary>
+        public TAsset GetPrefab<TAsset>(string name) where TAsset : UnityEngine.Object
         {
-            // Use AssetManager static API (not Instance pattern)
-            return AssetManager.GetAsset<GameObject>(name);
+            UnityMainThread.EnsureOrThrow("BundlePoolFactory.GetPrefab<TAsset>");
+            return AssetManager.GetAsset<TAsset>(name);
         }
-        
+
+        /// <inheritdoc/>
+        GameObject IPoolFactory.GetPrefab(string name)
+        {
+            // IPoolFactory는 GameObject 고정이므로 generic API를 GameObject로 연결
+            return GetPrefab<GameObject>(name);
+        }
+
         /// <inheritdoc/>
         public Type GetPoolType(GameObject prefab)
         {
+            UnityMainThread.EnsureOrThrow("BundlePoolFactory.GetPoolType");
+
             if (prefab == null)
                 throw new ArgumentNullException(nameof(prefab));
-            
+
             var components = prefab.GetComponents<Component>();
             var iPoolableGenericDef = typeof(IPoolable<>);
-            
+
             foreach (var component in components)
             {
                 if (component == null) continue;
-                
+
                 var componentType = component.GetType();
-                var interfaces = componentType.GetInterfaces();
-                
-                foreach (var iface in interfaces)
+                foreach (var iface in componentType.GetInterfaces())
                 {
                     if (iface.IsGenericType && iface.GetGenericTypeDefinition() == iPoolableGenericDef)
                     {
@@ -45,27 +57,31 @@ namespace Devian
                     }
                 }
             }
-            
+
             throw new InvalidOperationException(
                 $"Prefab '{prefab.name}' does not have a component implementing IPoolable<>.");
         }
-        
+
         /// <inheritdoc/>
         public Component CreateInstance(GameObject prefab)
         {
+            UnityMainThread.EnsureOrThrow("BundlePoolFactory.CreateInstance");
+
             if (prefab == null)
                 throw new ArgumentNullException(nameof(prefab));
-            
+
             var go = UnityEngine.Object.Instantiate(prefab);
             var poolType = GetPoolType(prefab);
             return go.GetComponent(poolType);
         }
-        
+
         /// <inheritdoc/>
         public void DestroyInstance(Component instance)
         {
+            UnityMainThread.EnsureOrThrow("BundlePoolFactory.DestroyInstance");
+
             if (instance == null) return;
-            
+
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {

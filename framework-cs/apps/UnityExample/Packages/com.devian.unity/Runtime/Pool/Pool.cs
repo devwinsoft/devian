@@ -10,31 +10,43 @@ using UnityEngine;
 namespace Devian
 {
     /// <summary>
-    /// Generic object pool for a specific component type.
-    /// Type identity: One pool per Type.
-    /// Spawn key: prefab name (string).
+    /// Generic object pool for a specific component type and pool name.
+    /// Pool identity: PoolId assigned by PoolManager on registration.
+    /// Each Pool manages a single prefab name (poolName).
+    /// Debug hierarchy: [PoolManager]/{Type}/{PoolName}/Active|Inactive
     /// </summary>
     /// <typeparam name="T">The poolable component type</typeparam>
     public sealed class Pool<T> : IPool where T : Component, IPoolable<T>
     {
-        private readonly Dictionary<string, Queue<T>> _inactiveByName = new Dictionary<string, Queue<T>>();
-        private readonly Dictionary<string, GameObject> _prefabByName = new Dictionary<string, GameObject>();
+        private readonly Queue<T> _inactiveQueue = new Queue<T>();
         private readonly HashSet<T> _activeInstances = new HashSet<T>();
         private readonly IPoolFactory _factory;
         private readonly int _maxSize;
+        private readonly Transform _activeRoot;
         private readonly Transform _inactiveRoot;
+        private readonly string _poolName;
+        
+        private GameObject _prefab;
         
         public Type ComponentType => typeof(T);
         
-        public Pool(IPoolFactory factory, PoolOptions options)
+        /// <summary>
+        /// The pool name this pool manages.
+        /// </summary>
+        public string PoolName => _poolName;
+        
+        public Pool(IPoolFactory factory, string poolName, PoolOptions options)
         {
             _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            _poolName = PoolManager.NormalizePoolName(poolName);
             _maxSize = options.MaxSize > 0 ? options.MaxSize : 512;
+            _activeRoot = options.ActiveRoot;
             _inactiveRoot = options.InactiveRoot;
         }
         
         /// <summary>
         /// Spawns a pooled instance by prefab name.
+        /// The name should match this pool's poolName.
         /// </summary>
         public T Spawn(string name, Vector3 position = default, Quaternion rotation = default, Transform parent = null)
         {
@@ -45,37 +57,39 @@ namespace Devian
                 throw new ArgumentException("Prefab name cannot be null or empty.", nameof(name));
             }
             
-            // Get or cache prefab
-            if (!_prefabByName.TryGetValue(name, out var prefab))
+            // Clean up destroyed entries from active set
+            _activeInstances.RemoveWhere(x => x == null);
+            
+            // Get or cache prefab (first time only)
+            if (_prefab == null)
             {
-                prefab = _factory.GetPrefab(name);
-                if (prefab == null)
+                _prefab = _factory.GetPrefab(name);
+                if (_prefab == null)
                 {
                     throw new InvalidOperationException($"Prefab '{name}' not found by factory.");
                 }
                 
                 // Verify pool type matches
-                var poolType = _factory.GetPoolType(prefab);
+                var poolType = _factory.GetPoolType(_prefab);
                 if (poolType != typeof(T))
                 {
                     throw new InvalidOperationException(
                         $"Prefab '{name}' pool type is {poolType.Name}, expected {typeof(T).Name}.");
                 }
-                
-                _prefabByName[name] = prefab;
             }
             
-            T instance;
+            T instance = null;
             
-            // Try to get from inactive pool
-            if (_inactiveByName.TryGetValue(name, out var queue) && queue.Count > 0)
+            // Remove destroyed entries from inactive queue and get first valid instance
+            while (_inactiveQueue.Count > 0 && instance == null)
             {
-                instance = queue.Dequeue();
+                instance = _inactiveQueue.Dequeue();
             }
-            else
+            
+            if (instance == null)
             {
                 // Create new instance
-                var component = _factory.CreateInstance(prefab);
+                var component = _factory.CreateInstance(_prefab);
                 instance = component as T;
                 if (instance == null)
                 {
@@ -88,13 +102,26 @@ namespace Devian
             var go = instance.gameObject;
             go.SetActive(true);
             
-            var transform = instance.transform;
-            transform.SetParent(parent, false);
-            transform.position = position;
-            transform.rotation = rotation;
+            var t = instance.transform;
+            
+            // Parent policy: if parent is null, use ActiveRoot; otherwise use provided parent
+            if (parent != null)
+            {
+                t.SetParent(parent, false);
+            }
+            else if (_activeRoot != null)
+            {
+                t.SetParent(_activeRoot, false);
+            }
+            
+            t.position = position;
+            t.rotation = rotation;
             
             // Track as active
             _activeInstances.Add(instance);
+            
+            // Track with PoolManager (attaches/updates PoolTag)
+            PoolManager.Instance._TrackSpawned(this, instance, _poolName);
             
             // Notify
             instance.OnPoolSpawned();
@@ -109,6 +136,8 @@ namespace Devian
         
         /// <summary>
         /// Returns an instance to the pool.
+        /// Instance is always moved under InactiveRoot for debug hierarchy.
+        /// Order: OnPoolDespawned() -> SetActive(false) -> reparent
         /// </summary>
         public void Despawn(T instance)
         {
@@ -119,41 +148,43 @@ namespace Devian
                 throw new ArgumentNullException(nameof(instance));
             }
             
+            // Clean up destroyed entries from active set
+            _activeInstances.RemoveWhere(x => x == null);
+            
             if (!_activeInstances.Remove(instance))
             {
                 // Already despawned or not from this pool
                 return;
             }
             
-            // Notify
+            // Notify first (user code)
             instance.OnPoolDespawned();
             
-            // Deactivate and reparent
-            var go = instance.gameObject;
-            go.SetActive(false);
+            // If user destroyed pooled object during callback, fail fast with clear message
+            if (instance == null || instance.gameObject == null)
+            {
+                throw new InvalidOperationException(
+                    "Pooled object was destroyed during OnPoolDespawned(). " +
+                    "Destroying pooled objects is forbidden. Use Despawn only.");
+            }
             
+            // Deactivate (only if still active)
+            var go = instance.gameObject;
+            if (go.activeSelf)
+            {
+                go.SetActive(false);
+            }
+            
+            // Reparent to InactiveRoot
             if (_inactiveRoot != null)
             {
                 instance.transform.SetParent(_inactiveRoot, false);
             }
             
-            // Get prefab name from gameObject.name (strip "(Clone)" if present)
-            var name = go.name;
-            if (name.EndsWith("(Clone)"))
+            // Add to inactive queue or destroy if over capacity
+            if (_inactiveQueue.Count < _maxSize)
             {
-                name = name.Substring(0, name.Length - 7).TrimEnd();
-            }
-            
-            // Add to inactive pool or destroy if over capacity
-            if (!_inactiveByName.TryGetValue(name, out var queue))
-            {
-                queue = new Queue<T>();
-                _inactiveByName[name] = queue;
-            }
-            
-            if (queue.Count < _maxSize)
-            {
-                queue.Enqueue(instance);
+                _inactiveQueue.Enqueue(instance);
             }
             else
             {
@@ -174,19 +205,14 @@ namespace Devian
         {
             UnityMainThread.EnsureOrThrow("Pool.Clear");
             
-            foreach (var kvp in _inactiveByName)
+            while (_inactiveQueue.Count > 0)
             {
-                var queue = kvp.Value;
-                while (queue.Count > 0)
+                var instance = _inactiveQueue.Dequeue();
+                if (instance != null)
                 {
-                    var instance = queue.Dequeue();
-                    if (instance != null)
-                    {
-                        _factory.DestroyInstance(instance);
-                    }
+                    _factory.DestroyInstance(instance);
                 }
             }
-            _inactiveByName.Clear();
         }
     }
 }

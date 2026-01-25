@@ -51,8 +51,8 @@ com.devian.domain.* (module packages - unity 의존)
 
 | 컴포넌트 | 설명 | 전용 스킬 |
 |----------|------|-----------|
-| Singleton | Persistent MonoBehaviour Singleton (3종) | `skills/devian-upm/30-unity-components/01-singleton/SKILL.md` |
-| PoolManager | Type당 1풀 + prefab name 기반 Spawn + Factory 추상화 | `skills/devian-upm/30-unity-components/02-pool-manager/SKILL.md` |
+| Singleton | Persistent Singleton (MonoBehaviour 3종 + Pure C# 1종) | `skills/devian-upm/30-unity-components/01-singleton/SKILL.md` |
+| PoolManager | AutoSingleton Registry + Type/Name/Active-Inactive 디버깅 하이어라키 + factory.Spawn 확장 | `skills/devian-upm/30-unity-components/02-pool-manager/SKILL.md` |
 | AssetManager | AssetBundle 기반 로딩/캐시/언로드 | `skills/devian-upm/30-unity-components/10-asset-manager/SKILL.md` |
 | NetWsClientBehaviourBase | WebSocket 네트워크 클라이언트 베이스 | `skills/devian-upm/30-unity-components/11-network-client-behaviour/SKILL.md` |
 
@@ -88,20 +88,27 @@ com.devian.unity/
 │   ├── AssetManager.cs
 │   ├── Network/
 │   │   └── NetWsClientBehaviourBase.cs
-│   ├── _Shared/                              (빌드 시 생성)
+│   ├── _Shared/                              (수기 코드 / 생성기 clean+generate 금지)
 │   │   ├── UnityMainThread.cs                (공용 내부 헬퍼 - 메인 스레드 감지)
 │   │   └── UnityMainThreadDispatcher.cs      (로그 디스패처 - 백그라운드→메인 스레드)
-│   ├── Singleton/                            (빌드 시 생성)
+│   ├── Singleton/                            (수기 코드 / 생성기 clean+generate 금지)
 │   │   ├── MonoSingleton.cs
 │   │   ├── AutoSingleton.cs
-│   │   └── ResSingleton.cs
-│   └── Pool/                                 (빌드 시 생성)
-│       ├── IPoolable.cs
-│       ├── IPoolFactory.cs
-│       ├── PoolOptions.cs
-│       ├── IPool.cs
-│       ├── Pool.cs
-│       └── PoolManager.cs
+│   │   ├── ResSingleton.cs
+│   │   └── SimpleSingleton.cs
+│   ├── Pool/                                 (수기 코드 / 생성기 clean+generate 금지)
+│   │   ├── IPoolable.cs
+│   │   ├── IPoolFactory.cs
+│   │   ├── PoolOptions.cs
+│   │   ├── IPool.cs
+│   │   ├── Pool.cs
+│   │   ├── PoolManager.cs
+│   │   ├── PoolTag.cs
+│   │   └── PoolFactoryExtensions.cs
+│   └── PoolFactories/                        (수기 코드 / 생성기 clean+generate 금지)
+│       ├── InspectorPoolFactory.cs
+│       ├── BundlePoolFactory.cs
+│       └── BundlePool.cs
 └── Editor/
     ├── Devian.Unity.Common.Editor.asmdef
     └── TableId/
@@ -114,7 +121,8 @@ com.devian.unity/
 > - 이 패키지에는 `Editor/Generated/` 폴더를 생성하지 않는다.
 > - **Complex PropertyDrawer(`CInt/CFloat/CString`)는 `com.devian.domain.common/Editor/Complex/`에 위치한다.**
 > - **Network 폴더에 별도 asmdef가 없다** - `Devian.Unity.Common.asmdef`에 통합됨.
-> - **`_Shared/`, `Singleton/`, `Pool/` 폴더는 빌드 시 생성된다** - 소스(`framework-cs/upm/`)에는 없어도 됨.
+> - **`_Shared/`, `Singleton/`, `Pool/`, `PoolFactories/` 폴더는 고정 유틸 수기 코드이며 생성기는 절대 clean/generate하지 않는다** (`skills/devian/03-ssot/SKILL.md`의 "Generated Only 정책" 준수).
+> - **생성기가 다루는 건 `Runtime/Generated`, `Editor/Generated`뿐**인데, 이 패키지는 `Editor/Generated`를 만들지 않음.
 > - **`UnityMainThread`는 `_Shared/`에 1개만 존재** - Singleton/Pool 폴더에 중복 생성 금지
 > - **`Runtime/Templates/` 레거시 경로가 존재하면 FAIL**
 
@@ -149,15 +157,17 @@ com.devian.unity/
 - [ ] `framework-cs/upm/com.devian.unity/Editor/Complex/` **존재하지 않음** (module.common으로 이동됨)
 - [ ] `framework-cs/upm/com.devian.unity/Runtime/Network/` 에 asmdef 파일 **없음**
 - [ ] 각 도메인 모듈 패키지에 TableID Editor 바인딩이 올바르게 생성됨
-- [ ] 빌드 후 `UnityExample/Packages/com.devian.unity/Runtime/_Shared/UnityMainThread.cs` 존재
-- [ ] 빌드 후 `UnityExample/Packages/com.devian.unity/Runtime/_Shared/UnityMainThreadDispatcher.cs` 존재 (10-unity-main-thread 스킬 참조)
+- [ ] 동기화 후 `UnityExample/Packages/com.devian.unity/Runtime/_Shared/UnityMainThread.cs` 존재 (수기 코드 포함)
+- [ ] 동기화 후 `UnityExample/Packages/com.devian.unity/Runtime/_Shared/UnityMainThreadDispatcher.cs` 존재 (수기 코드 포함, 10-unity-main-thread 스킬 참조)
 - [ ] UnityLogSink는 Dispatcher를 사용하여 백그라운드 로그를 메인 스레드로 디스패치함
-- [ ] 빌드 후 `UnityExample/Packages/com.devian.unity/Runtime/Singleton/*.cs` 3개 파일 존재
-- [ ] 빌드 후 `UnityExample/Packages/com.devian.unity/Runtime/Pool/*.cs` 6개 파일 존재
+- [ ] 동기화 후 `UnityExample/Packages/com.devian.unity/Runtime/Singleton/*.cs` 4개 파일 존재 (수기 코드 포함)
+- [ ] 동기화 후 `UnityExample/Packages/com.devian.unity/Runtime/Pool/*.cs` 8개 파일 존재 (수기 코드 포함)
+- [ ] 동기화 후 `UnityExample/Packages/com.devian.unity/Runtime/PoolFactories/*.cs` 3개 파일 존재 (수기 코드 포함)
 
-**생성 정본:**
-- 소스(`framework-cs/upm/com.devian.unity/Runtime/`)에는 생성 폴더가 **없어도 됨** (staging에서 생성)
-- 생성 순서: `_Shared` → `Singleton` → `Pool`
+**수기 코드 정책 (Generated Only 정책 준수):**
+- 소스(`framework-cs/upm/com.devian.unity/Runtime/`)에 `_Shared`, `Singleton`, `Pool`, `PoolFactories` 폴더가 **존재해야 함** (수기 코드)
+- 생성기는 이 폴더들을 clean/generate하지 않음 - **Generated 폴더만 다룸**
+- 동기화 순서: `_Shared` → `Singleton` → `Pool` → `PoolFactories`
 - `_Shared` 폴더: `UnityMainThread.cs`, `UnityMainThreadDispatcher.cs` 2개 파일
 
 **공용 헬퍼 (Runtime/_Shared/):**
@@ -168,6 +178,7 @@ com.devian.unity/
 - `MonoSingleton.cs`
 - `AutoSingleton.cs`
 - `ResSingleton.cs`
+- `SimpleSingleton.cs`
 
 **Pool (Runtime/Pool/):**
 - `IPoolable.cs`
@@ -176,6 +187,13 @@ com.devian.unity/
 - `IPool.cs`
 - `Pool.cs`
 - `PoolManager.cs`
+- `PoolTag.cs`
+- `PoolFactoryExtensions.cs`
+
+**PoolFactories (Runtime/PoolFactories/):**
+- `InspectorPoolFactory.cs`
+- `BundlePoolFactory.cs`
+- `BundlePool.cs`
 
 **FAIL 조건:**
 - `com.devian.unity/Editor/Generated/`에 파일이 존재함
@@ -277,7 +295,7 @@ UnityLogSink는 멀티스레드 호출을 지원하며, `10-unity-main-thread` �
 - Unity API 호출(`Debug.Log` 등)은 **메인 스레드에서만** 수행한다.
 - **maxPerFrame 제한**: 프레임당 최대 500개 로그만 처리하여 프레임 드랍 방지
 
-> **Note:** `UnityMainThread`, `UnityMainThreadDispatcher`는 `10-unity-main-thread` 스킬이 소유하며, 빌더가 `_Shared`에 생성한다. UnityLogSink는 이를 사용만 한다.
+> **Note:** `UnityMainThread`, `UnityMainThreadDispatcher`는 `10-unity-main-thread` 스킬이 소유하며, `_Shared`에 수기 코드로 존재한다. UnityLogSink는 이를 사용만 한다.
 
 **Write 분기 규칙:**
 
