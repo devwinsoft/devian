@@ -191,6 +191,10 @@ class DevianToolBuilder {
         console.log('[Guard] Checking unity.common Editor/Generated...');
         this.checkUnityCommonEditorGenerated();
 
+        // 1.7. Singleton early init guard (SimpleSingleton ctor/static-init 금지 패턴 탐지)
+        console.log('[Guard] Checking singleton early init...');
+        this.checkSingletonEarlyInit();
+
         // 2. Clean temp dir
         console.log('[Phase 0] Cleaning temp directory...');
         if (fs.existsSync(this.tempDir)) {
@@ -790,7 +794,7 @@ class DevianToolBuilder {
                 if (fs.existsSync(editorAsmdefPath)) {
                     const obj = JSON.parse(fs.readFileSync(editorAsmdefPath, 'utf-8'));
                     obj.references = obj.references || [];
-                    const requiredRefs = ['Devian.Unity.Common', 'Devian.Unity.Common.Editor'];
+                    const requiredRefs = ['Devian.Unity', 'Devian.Unity.Editor'];
                     let patchedCount = 0;
                     for (const ref of requiredRefs) {
                         if (!obj.references.includes(ref)) {
@@ -1722,9 +1726,9 @@ export * from './features';
         };
         fs.writeFileSync(path.join(stagingRuntime, `${asmdefName}.asmdef`), JSON.stringify(runtimeAsmdef, null, 2));
 
-        // Editor.asmdef - includes refs for TableID Editor bindings (base classes in Devian + .Unity.Common.Editor assembly)
+        // Editor.asmdef - includes refs for TableID Editor bindings (base classes in Devian + .Unity.Editor assembly)
         // SSOT: skills/devian-upm/20-packages/com.devian.domain.template/SKILL.md
-        const editorReferences = [asmdefName, 'Devian.Unity.Common', 'Devian.Unity.Common.Editor'];
+        const editorReferences = [asmdefName, 'Devian.Unity', 'Devian.Unity.Editor'];
         const editorAsmdef = {
             name: `${asmdefName}.Editor`,
             rootNamespace: `${asmdefName}.Editor`,
@@ -2163,7 +2167,7 @@ export * from './features';
         const requiredFiles = [
             'Editor/TableId/EditorID_SelectorBase.cs',
             'Editor/TableId/EditorID_DrawerBase.cs',
-            'Editor/Devian.Unity.Common.Editor.asmdef'
+            'Editor/Devian.Unity.Editor.asmdef'
         ];
 
         const missingFiles = [];
@@ -3201,6 +3205,143 @@ export * from './features';
         }
 
         console.log('  [OK] com.devian.unity has no forbidden Editor/Generated.');
+    }
+
+    /**
+     * Guard: Detect SimpleSingleton.Instance access from InitializeOnLoad or static constructors.
+     * This pattern causes Unity Editor ScriptableSingleton conflicts.
+     * SSOT: skills/devian-upm/30-unity-components/01-singleton/SKILL.md (8.5)
+     */
+    checkSingletonEarlyInit() {
+        const targetDirs = [
+            path.join(this.rootDir, 'framework-cs/upm'),
+            path.join(this.rootDir, 'framework-cs/module'),
+        ];
+
+        const violations = [];
+
+        for (const dir of targetDirs) {
+            if (!fs.existsSync(dir)) continue;
+            const found = this.scanForSingletonEarlyInit(dir);
+            violations.push(...found);
+        }
+
+        if (violations.length > 0) {
+            console.error('\n[FAIL] SimpleSingleton early init pattern detected!');
+            console.error('Policy: Do not access SimpleSingleton.Instance from:');
+            console.error('  - [InitializeOnLoad] / [InitializeOnLoadMethod] attributed code');
+            console.error('  - Static constructors (static ClassName())');
+            console.error('Reference: skills/devian-upm/30-unity-components/01-singleton/SKILL.md (8.5)');
+            console.error('\nViolations:');
+            for (const v of violations) {
+                console.error(`  - ${v.file}:${v.line}: ${v.reason}`);
+                console.error(`    > ${v.content.trim()}`);
+            }
+            throw new Error(
+                '[FAIL] SimpleSingleton early init pattern detected. ' +
+                'Do not access SimpleSingleton.Instance from InitializeOnLoad or static constructors. ' +
+                'See: skills/devian-upm/30-unity-components/01-singleton/SKILL.md (8.5)'
+            );
+        }
+
+        console.log('  [OK] No SimpleSingleton early init violations found.');
+    }
+
+    /**
+     * Scan directory for SimpleSingleton early init violations.
+     * Returns array of { file, line, content, reason }.
+     */
+    scanForSingletonEarlyInit(dir) {
+        const results = [];
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+
+            if (entry.isDirectory()) {
+                results.push(...this.scanForSingletonEarlyInit(fullPath));
+            } else if (entry.isFile() && entry.name.endsWith('.cs')) {
+                // Skip SimpleSingleton.cs itself (it's the guard implementation)
+                if (entry.name === 'SimpleSingleton.cs') continue;
+
+                const content = fs.readFileSync(fullPath, 'utf-8');
+                
+                // Skip files that don't use SimpleSingleton at all
+                if (!content.includes('SimpleSingleton')) continue;
+                
+                // Check if file accesses SimpleSingleton.Instance or SimpleSingleton<...>.Instance
+                const hasInstanceAccess = /SimpleSingleton[<\s].*?\.Instance\b/.test(content) ||
+                                          /SimpleSingleton\s*\.\s*Instance\b/.test(content);
+                if (!hasInstanceAccess) continue;
+
+                const lines = content.split('\n');
+
+                // Check 1: InitializeOnLoad or InitializeOnLoadMethod with SimpleSingleton.Instance
+                const hasInitializeOnLoad = /\[\s*InitializeOnLoad(Method)?\s*\]/.test(content);
+                if (hasInitializeOnLoad) {
+                    // Find the line with Instance access and report
+                    for (let i = 0; i < lines.length; i++) {
+                        if (/SimpleSingleton.*\.Instance\b/.test(lines[i])) {
+                            results.push({
+                                file: fullPath,
+                                line: i + 1,
+                                content: lines[i],
+                                reason: 'SimpleSingleton.Instance in file with [InitializeOnLoad]',
+                            });
+                        }
+                    }
+                }
+
+                // Check 2: Static constructor (static TypeName()) with SimpleSingleton.Instance
+                // Pattern: static ClassName() { ... }
+                const staticCtorPattern = /static\s+(\w+)\s*\(\s*\)\s*\{/g;
+                let match;
+                while ((match = staticCtorPattern.exec(content)) !== null) {
+                    const ctorName = match[1];
+                    // Find the opening brace position
+                    const ctorStart = match.index;
+                    
+                    // Simple heuristic: find matching closing brace
+                    // We scan for SimpleSingleton.Instance between { and }
+                    let braceDepth = 0;
+                    let inCtor = false;
+                    let ctorEnd = content.length;
+                    
+                    for (let i = ctorStart; i < content.length; i++) {
+                        if (content[i] === '{') {
+                            braceDepth++;
+                            inCtor = true;
+                        } else if (content[i] === '}') {
+                            braceDepth--;
+                            if (inCtor && braceDepth === 0) {
+                                ctorEnd = i;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    const ctorBody = content.substring(ctorStart, ctorEnd);
+                    if (/SimpleSingleton.*\.Instance\b/.test(ctorBody)) {
+                        // Find the line number of the Instance access
+                        const ctorLines = ctorBody.split('\n');
+                        const startLine = content.substring(0, ctorStart).split('\n').length;
+                        
+                        for (let i = 0; i < ctorLines.length; i++) {
+                            if (/SimpleSingleton.*\.Instance\b/.test(ctorLines[i])) {
+                                results.push({
+                                    file: fullPath,
+                                    line: startLine + i,
+                                    content: ctorLines[i],
+                                    reason: `SimpleSingleton.Instance in static constructor '${ctorName}'`,
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return results;
     }
 }
 

@@ -137,7 +137,7 @@ namespace Devian
 
 ### Editor asmdef (TableID 생성 시)
 
-**Editor asmdef는 반드시 `Devian.Unity.Common`, `Devian.Unity.Common.Editor`를 참조해야 한다.**
+**Editor asmdef는 반드시 `Devian.Unity`, `Devian.Unity.Editor`를 참조해야 한다.**
 
 ```json
 {
@@ -145,8 +145,8 @@ namespace Devian
   "rootNamespace": "Devian.Domain.{DomainName}",
   "references": [
     "Devian.Domain.{DomainName}",
-    "Devian.Unity.Common",
-    "Devian.Unity.Common.Editor"
+    "Devian.Unity",
+    "Devian.Unity.Editor"
   ],
   "includePlatforms": ["Editor"]
 }
@@ -183,7 +183,7 @@ namespace Devian
 keyed table이 있는 도메인의 경우:
 
 - [ ] `Editor/Generated/{TableName}_ID.Editor.cs` 파일 존재
-- [ ] Editor asmdef에 `Devian.Unity.Common`, `Devian.Unity.Common.Editor` 참조 포함
+- [ ] Editor asmdef에 `Devian.Unity`, `Devian.Unity.Editor` 참조 포함
 - [ ] 생성된 클래스가 `EditorID_DrawerBase`, `EditorID_SelectorBase`를 상속
 - [ ] 네임스페이스가 `Devian`으로 통일됨
 

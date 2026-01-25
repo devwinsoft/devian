@@ -3,7 +3,7 @@
     "rootNamespace": "Devian.Templates.Network",
     "references": [
         "Devian.Core",
-        "Devian.Unity.Common",
+        "Devian.Unity",
         "Devian.Protocol.Game"
     ],
     "includePlatforms": [],

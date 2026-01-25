@@ -3,7 +3,7 @@
     "rootNamespace": "Devian.Templates.Network.Editor",
     "references": [
         "Devian.Templates.Network",
-        "Devian.Unity.Common"
+        "Devian.Unity"
     ],
     "includePlatforms": [
         "Editor"

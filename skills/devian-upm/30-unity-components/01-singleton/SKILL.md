@@ -402,7 +402,10 @@ namespace Devian
 
 - `UNITY_EDITOR || DEVELOPMENT_BUILD` 조건부로 StackTrace 기반 검사
 - Instance 최초 생성 시 1회만 실행 (Lazy 람다 내부)
-- 생성자/정적 생성자에서 호출 감지 시 `InvalidOperationException` 발생
+- **System/Unity 내부 프레임은 제외** (System.*, Microsoft.*, UnityEngine.*, UnityEditor.* 어셈블리)
+- **사용자/에디터 스크립트의 ctor/static-init만 탐지**
+- InitializeOnLoad/InitializeOnLoadMethod attribute도 reflection으로 감지 (UNITY_EDITOR에서)
+- 생성자/정적 생성자/InitializeOnLoad에서 호출 감지 시 `InvalidOperationException` 발생
 
 > **Note**: SimpleSingleton은 수기 코드이며, 생성기는 `Generated/` 폴더만 다룬다.
 
@@ -469,15 +472,22 @@ namespace Devian
 
 ---
 
-## 10. Generated Output (정본)
+## 10. 파일 위치 및 소유권 (정본)
 
-이 스킬의 C# 코드는 빌드 시 자동 생성된다.
+이 스킬의 C# 코드는 **고정 유틸(수기 코드)** 영역에 속하며, 생성기가 건드리지 않는다.
 
-### 생성 대상 패키지
+### 소유권 정책 (SSOT: 03-ssot)
 
-- `com.devian.unity`
+| 영역 | 정책 |
+|------|------|
+| `Runtime/_Shared/` | 고정 유틸(수기) — 생성기 clean/generate 금지 |
+| `Runtime/Singleton/` | 고정 유틸(수기) — 생성기 clean/generate 금지 |
+| `Runtime/Pool/` | 고정 유틸(수기) — 생성기 clean/generate 금지 |
+| `Runtime/PoolFactories/` | 고정 유틸(수기) — 생성기 clean/generate 금지 |
+| `Runtime/Generated/**` | 생성기 관리 영역 (Generated Only) |
+| `Editor/Generated/**` | 생성기 관리 영역 (Generated Only) |
 
-### 생성 위치 (고정)
+### 파일 위치 (고정)
 
 ```
 com.devian.unity/Runtime/
@@ -490,13 +500,15 @@ com.devian.unity/Runtime/
     └── SimpleSingleton.cs
 ```
 
-### 생성 주체 (정본)
+### 빌드 파이프라인 동작
 
-- `framework-ts/tools/builder/build.js` 의 static UPM 처리 단계
-- `processStaticUpmPackage('com.devian.unity')` 에서 staging에 생성
-- 생성 순서: `_Shared` → `Singleton` → `Pool`
+1. 빌더는 `framework-cs/upm/{pkg}`를 staging에 복사
+2. 최종적으로 `apps/UnityExample/Packages/{pkg}`로 **package-level clean+copy sync**
+3. 생성기는 UPM에서 `Runtime/Generated/**`, `Editor/Generated/**`만 clean+generate (Generated Only)
 
-### 생성 파일 규칙
+> **Note:** Singleton 폴더는 수기 코드 영역이므로 생성기가 생성/삭제하지 않음
+
+### 파일 규칙
 
 | 파일 | 타입 | 네임스페이스 |
 |------|------|-------------|
@@ -526,8 +538,6 @@ UnityEngine.Object.Destroy(gameObject);
 
 - 제공 singleton 타입은 4종이며, 공용 헬퍼는 `_Shared/`에 위치
 - **`Singleton/UnityMainThread.cs`는 생성하지 않음** (공용 `_Shared/` 사용)
-- 소스 레포지토리(`framework-cs/upm/com.devian.unity`)에는 생성 폴더가 없어도 됨
-- 빌드 후 `UnityExample/Packages/com.devian.unity/Runtime/Singleton/*.cs` 에 파일 존재
 - `Runtime/Templates/` 레거시 경로가 존재하면 FAIL
 
 ---

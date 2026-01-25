@@ -25,23 +25,36 @@ AppliesTo: v10
 ```
 com.devian.core (base)
        ↑
-com.devian.unity (이 패키지 - core만 의존)
+com.devian.unity (이 패키지 - core + addressables 의존)
        ↑
 com.devian.domain.* (module packages - unity 의존)
 ```
 
-> **Hard Rule:** `com.devian.unity` → `com.devian.domain.*` 의존 **금지** (순환 방지)
+### package.json 의존성
+
+```json
+{
+  "dependencies": {
+    "com.devian.core": "0.1.0",
+    "com.unity.addressables": "2.7.6"
+  }
+}
+```
+
+> **Hard Rule:** 
+> - `com.devian.unity` → `com.devian.domain.*` 의존 **금지** (순환 방지)
+> - `com.unity.addressables` 의존은 **DownloadManager** (Addressables Label 기반 다운로드)에 필수
 
 ---
 
 ## Network 런타임 포함
 
-**NetWsClientBehaviourBase는 `Devian.Unity.Common` 어셈블리에 포함된다.**
+**NetWsClientBehaviourBase는 `Devian.Unity` 어셈블리에 포함된다.**
 
 - 경로: `Runtime/Network/NetWsClientBehaviourBase.cs`
-- 어셈블리: `Devian.Unity.Common` (별도 asmdef 없음)
+- 어셈블리: `Devian.Unity` (별도 asmdef 없음)
 
-> **Note:** Network 코드는 별도 어셈블리로 분리하지 않고 `Devian.Unity.Common.asmdef`에 통합되어 있다.
+> **Note:** Network 코드는 별도 어셈블리로 분리하지 않고 `Devian.Unity.asmdef`에 통합되어 있다.
 
 ---
 
@@ -55,6 +68,7 @@ com.devian.domain.* (module packages - unity 의존)
 | PoolManager | AutoSingleton Registry + Type/Name/Active-Inactive 디버깅 하이어라키 + factory.Spawn 확장 | `skills/devian-upm/30-unity-components/02-pool-manager/SKILL.md` |
 | AssetManager | AssetBundle 기반 로딩/캐시/언로드 | `skills/devian-upm/30-unity-components/10-asset-manager/SKILL.md` |
 | NetWsClientBehaviourBase | WebSocket 네트워크 클라이언트 베이스 | `skills/devian-upm/30-unity-components/11-network-client-behaviour/SKILL.md` |
+| DownloadManager | Addressables Label 기반 Patch/Download (ResSingleton) | `skills/devian-upm/30-unity-components/12-download-manager/SKILL.md` |
 
 ---
 
@@ -83,9 +97,11 @@ framework-cs/apps/UnityExample/Packages/com.devian.unity/
 com.devian.unity/
 ├── package.json
 ├── Runtime/
-│   ├── Devian.Unity.Common.asmdef
+│   ├── Devian.Unity.asmdef
 │   ├── UnityLogSink.cs
-│   ├── AssetManager.cs
+│   ├── AssetManager/
+│   │   ├── AssetManager.cs
+│   │   └── DownloadManager.cs                (ResSingleton - Addressables Patch/Download)
 │   ├── Network/
 │   │   └── NetWsClientBehaviourBase.cs
 │   ├── _Shared/                              (수기 코드 / 생성기 clean+generate 금지)
@@ -110,7 +126,7 @@ com.devian.unity/
 │       ├── BundlePoolFactory.cs
 │       └── BundlePool.cs
 └── Editor/
-    ├── Devian.Unity.Common.Editor.asmdef
+    ├── Devian.Unity.Editor.asmdef
     └── TableId/
         ├── EditorRectUtil.cs
         ├── EditorID_DrawerBase.cs
@@ -120,8 +136,8 @@ com.devian.unity/
 > **중요**: 
 > - 이 패키지에는 `Editor/Generated/` 폴더를 생성하지 않는다.
 > - **Complex PropertyDrawer(`CInt/CFloat/CString`)는 `com.devian.domain.common/Editor/Complex/`에 위치한다.**
-> - **Network 폴더에 별도 asmdef가 없다** - `Devian.Unity.Common.asmdef`에 통합됨.
-> - **`_Shared/`, `Singleton/`, `Pool/`, `PoolFactories/` 폴더는 고정 유틸 수기 코드이며 생성기는 절대 clean/generate하지 않는다** (`skills/devian/03-ssot/SKILL.md`의 "Generated Only 정책" 준수).
+> - **Network 폴더에 별도 asmdef가 없다** - `Devian.Unity.asmdef`에 통합됨.
+> - **`_Shared/`, `Singleton/`, `Pool/`, `PoolFactories/`, `AssetManager/` 폴더는 고정 유틸 수기 코드이며 생성기는 절대 clean/generate하지 않는다** (`skills/devian/03-ssot/SKILL.md`의 "Generated Only 정책" 준수).
 > - **생성기가 다루는 건 `Runtime/Generated`, `Editor/Generated`뿐**인데, 이 패키지는 `Editor/Generated`를 만들지 않음.
 > - **`UnityMainThread`는 `_Shared/`에 1개만 존재** - Singleton/Pool 폴더에 중복 생성 금지
 > - **`Runtime/Templates/` 레거시 경로가 존재하면 FAIL**
@@ -225,14 +241,16 @@ com.devian.unity/
 
 > 아래 JSON 예시에서 `"name"` 및 `"references"` 필드 값은 **어셈블리명**이며, 네임스페이스가 아닙니다.
 
-### Runtime asmdef (파일명: `Devian.Unity.Common.asmdef`)
+### Runtime asmdef (파일명: `Devian.Unity.asmdef`)
 
 ```json
 {
-  "name": "Devian.Unity.Common",
+  "name": "Devian.Unity",
   "rootNamespace": "Devian.Unity",
   "references": [
-    "Devian.Core"
+    "Devian.Core",
+    "Unity.Addressables",
+    "Unity.ResourceManager"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -246,17 +264,19 @@ com.devian.unity/
 }
 ```
 
-> **Note:** Network 폴더의 코드도 이 asmdef에 포함된다 (별도 Network asmdef 없음).
+> **Note:** 
+> - Network 폴더의 코드도 이 asmdef에 포함된다 (별도 Network asmdef 없음).
+> - `Unity.Addressables`, `Unity.ResourceManager` 참조는 **DownloadManager**에서 Addressables API를 사용하기 위해 필수.
 
-### Editor asmdef (파일명: `Devian.Unity.Common.Editor.asmdef`)
+### Editor asmdef (파일명: `Devian.Unity.Editor.asmdef`)
 
 ```json
 {
-  "name": "Devian.Unity.Common.Editor",
+  "name": "Devian.Unity.Editor",
   "rootNamespace": "Devian.Unity",
   "references": [
     "Devian.Core",
-    "Devian.Unity.Common"
+    "Devian.Unity"
   ],
   "includePlatforms": ["Editor"],
   "excludePlatforms": [],
@@ -353,7 +373,7 @@ Logger.Error("Net", "Connection failed", exception);
 - **Editor/Generated 생성 금지**: TableID Editor 바인딩은 각 도메인 모듈 패키지에 생성한다.
 - **Complex PropertyDrawer 포함 금지**: module.common/Editor/Complex에 위치함.
 - **module.* 패키지 의존 금지**: 순환 방지를 위해 core만 의존.
-- **Network 폴더에 별도 asmdef 생성 금지**: Devian.Unity.Common에 통합됨.
+- **Network 폴더에 별도 asmdef 생성 금지**: Devian.Unity에 통합됨.
 
 ---
 

@@ -23,8 +23,8 @@ AppliesTo: v10
 
 | 위치 | 경로 |
 |------|------|
-| UPM 소스 | `framework-cs/upm/com.devian.unity/Runtime/AssetManager.cs` |
-| UnityExample | `framework-cs/apps/UnityExample/Packages/com.devian.unity/Runtime/AssetManager.cs` |
+| UPM 소스 | `framework-cs/upm/com.devian.unity/Runtime/AssetManager/AssetManager.cs` |
+| UnityExample | `framework-cs/apps/UnityExample/Packages/com.devian.unity/Runtime/AssetManager/AssetManager.cs` |
 
 ---
 
@@ -180,12 +180,12 @@ public class BundleLoader : MonoBehaviour
 
 ### PASS 조건
 
-- [ ] `AssetManager.cs` (UPM + UnityExample) 최상단 SSOT가 이 문서를 가리킴
-- [ ] `AssetManager.cs` 내 `Resources.` 문자열 0건
+- [ ] `AssetManager/AssetManager.cs` (UPM + UnityExample) 최상단 SSOT가 이 문서를 가리킴
+- [ ] `AssetManager/AssetManager.cs` 내 `Resources.` 문자열 0건
 
 ### FAIL 조건
 
-- `AssetManager.cs` 내 `Resources.Load`, `Resources.LoadAsync` 등 존재
+- `AssetManager/AssetManager.cs` 내 `Resources.Load`, `Resources.LoadAsync` 등 존재
 - SSOT 주석이 다른 문서를 가리킴
 
 ---

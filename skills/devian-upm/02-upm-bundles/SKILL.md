@@ -81,7 +81,7 @@ com.devian.domain.* (module packages - core + unity 의존)
 | asmdef | name | references | 패키지 |
 |--------|------|------------|--------|
 | `Devian.Core.asmdef` | `Devian.Core` | `[]` | com.devian.core |
-| `Devian.Unity.Common.asmdef` | `Devian.Unity.Common` | `["Devian.Core"]` | com.devian.unity |
+| `Devian.Unity.asmdef` | `Devian.Unity` | `["Devian.Core"]` | com.devian.unity |
 | `Devian.Domain.Common.asmdef` | `Devian.Domain.Common` | `["Devian.Core", "Newtonsoft.Json"]` | com.devian.domain.common |
 | `Devian.Domain.Game.asmdef` | `Devian.Domain.Game` | `["Devian.Core", "Devian.Domain.Common"]` | com.devian.domain.game |
 
@@ -89,9 +89,9 @@ com.devian.domain.* (module packages - core + unity 의존)
 
 | asmdef | name | references | 패키지 |
 |--------|------|------------|--------|
-| `Devian.Unity.Common.Editor.asmdef` | `Devian.Unity.Common.Editor` | `["Devian.Core", "Devian.Unity.Common"]` | com.devian.unity |
-| `Devian.Domain.Common.Editor.asmdef` | `Devian.Domain.Common.Editor` | `["Devian.Domain.Common", "Devian.Unity.Common", "Devian.Unity.Common.Editor"]` | com.devian.domain.common |
-| `Devian.Domain.Game.Editor.asmdef` | `Devian.Domain.Game.Editor` | `["Devian.Domain.Common", "Devian.Domain.Game", "Devian.Unity.Common", "Devian.Unity.Common.Editor"]` | com.devian.domain.game |
+| `Devian.Unity.Editor.asmdef` | `Devian.Unity.Editor` | `["Devian.Core", "Devian.Unity"]` | com.devian.unity |
+| `Devian.Domain.Common.Editor.asmdef` | `Devian.Domain.Common.Editor` | `["Devian.Domain.Common", "Devian.Unity", "Devian.Unity.Editor"]` | com.devian.domain.common |
+| `Devian.Domain.Game.Editor.asmdef` | `Devian.Domain.Game.Editor` | `["Devian.Domain.Common", "Devian.Domain.Game", "Devian.Unity", "Devian.Unity.Editor"]` | com.devian.domain.game |
 
 ---
 

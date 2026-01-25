@@ -151,9 +151,10 @@ finalConfig = deepMerge(config.json, input.json)
 
 `com.devian.unity`의 아래 폴더는 수기 코드로 유지하며, 생성기가 절대 clean/generate하지 않는다:
 - `Runtime/_Shared/` — UnityMainThread, UnityMainThreadDispatcher
-- `Runtime/Singleton/` — MonoSingleton, AutoSingleton, ResSingleton
+- `Runtime/Singleton/` — MonoSingleton, AutoSingleton, ResSingleton, SimpleSingleton
 - `Runtime/Pool/` — IPoolable, IPoolFactory, PoolManager, Pool
 - `Runtime/PoolFactories/` — InspectorPoolFactory, BundlePoolFactory
+- `Runtime/AssetManager/` — AssetManager, DownloadManager (bootstrap/download utilities)
 
 **레거시 경로 cleanup:**
 - 빌더는 기존 `generated`(소문자) 폴더가 존재하면 자동 제거

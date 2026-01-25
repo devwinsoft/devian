@@ -21,6 +21,7 @@ Type: Index / Directory
 | 04 | PoolFactories | InspectorPoolFactory, BundlePoolFactory | `04-pool-factories/SKILL.md` |
 | 10 | AssetManager | AssetBundle 기반 로딩/캐시/언로드 | `10-asset-manager/SKILL.md` |
 | 11 | NetWsClientBehaviourBase | WebSocket 네트워크 클라이언트 베이스 | `11-network-client-behaviour/SKILL.md` |
+| 12 | DownloadManager | Addressables Label 기반 Patch/Download (ResSingleton, inspector label list) | `12-download-manager/SKILL.md` |
 
 ---
 
