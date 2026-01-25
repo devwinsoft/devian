@@ -3,7 +3,7 @@
 // </auto-generated>
 
 // <devian:domain-exports>
-export * from './generated/Game.g';
+export * from './Generated/Game.g';
 // </devian:domain-exports>
 
 // <devian:feature-exports>

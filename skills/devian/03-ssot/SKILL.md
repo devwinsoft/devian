@@ -135,6 +135,30 @@ finalConfig = deepMerge(config.json, input.json)
 > **Templates 참고:** 샘플/예제 코드는 `framework-cs/upm/com.devian.samples/Samples~/`에서 관리 (UPM Samples~ 사용)
 > → `skills/devian-upm-samples/00-samples-policy/SKILL.md`
 
+### Generated Only 정책 (Hard Rule)
+
+**생성기(clean+generate)가 건드리는 영역은 오직 폴더명이 `Generated`인 디렉토리만 허용한다.**
+
+| 영역 | 허용 경로 | 금지 |
+|------|-----------|------|
+| staging | `{tempDir}/{DomainKey}/cs/Generated/**` | `generated`, `_Shared`, `Templates` 등 |
+| staging | `{tempDir}/{DomainKey}/ts/Generated/**` | 동일 |
+| final (CS) | `{csConfig.generateDir}/.../Generated/**` | 동일 |
+| final (TS) | `{tsConfig.generateDir}/.../Generated/**` | 동일 |
+| UPM | `Runtime/Generated/**`, `Editor/Generated/**` | `Runtime/Generated`, `Runtime/_Shared` 등 |
+
+**고정 유틸(수기 코드) 영역:**
+
+`com.devian.unity`의 아래 폴더는 수기 코드로 유지하며, 생성기가 절대 clean/generate하지 않는다:
+- `Runtime/_Shared/` — UnityMainThread, UnityMainThreadDispatcher
+- `Runtime/Singleton/` — MonoSingleton, AutoSingleton, ResSingleton
+- `Runtime/Pool/` — IPoolable, IPoolFactory, PoolManager, Pool
+- `Runtime/PoolFactories/` — InspectorPoolFactory, BundlePoolFactory
+
+**레거시 경로 cleanup:**
+- 빌더는 기존 `generated`(소문자) 폴더가 존재하면 자동 제거
+- 마이그레이션 완료 후 레포에 `generated` 폴더가 0개여야 함
+
 **반영 위치:**
 - C# 생성물: `staging` → `csConfig.generateDir` (framework-cs/module)
 - TS 생성물: `staging` → `tsConfig.generateDir` (framework-ts/module)
@@ -612,13 +636,13 @@ SKIP되어도 타겟 디렉토리는 clean되어 이전 산출물이 제거된�
 #### DATA 산출물 경로(정책)
 
 - staging:
-  - `{tempDir}/{DomainKey}/cs/generated/{DomainKey}.g.cs`
-  - `{tempDir}/{DomainKey}/ts/generated/{DomainKey}.g.ts`, `{tempDir}/{DomainKey}/ts/index.ts`
+  - `{tempDir}/{DomainKey}/cs/Generated/{DomainKey}.g.cs`
+  - `{tempDir}/{DomainKey}/ts/Generated/{DomainKey}.g.ts`, `{tempDir}/{DomainKey}/ts/index.ts`
   - `{tempDir}/{DomainKey}/data/ndjson/{TableName}.json` (내용은 NDJSON)
   - `{tempDir}/{DomainKey}/data/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
 - final (csConfig/tsConfig/dataConfig 기반):
-  - `{csConfig.generateDir}/` + `Devian` + `.Module.{DomainKey}` + `/generated/{DomainKey}.g.cs`
-  - `{tsConfig.generateDir}/devian-domain-{domainkey}/generated/{DomainKey}.g.ts`, `index.ts`
+  - `{csConfig.generateDir}/` + `Devian` + `.Module.{DomainKey}` + `/Generated/{DomainKey}.g.cs`
+  - `{tsConfig.generateDir}/devian-domain-{domainkey}/Generated/{DomainKey}.g.ts`, `index.ts`
   - `{dataConfig.tableDirs[i]}/{DomainKey}/ndjson/{TableName}.json` (내용은 NDJSON)
   - `{dataConfig.tableDirs[i]}/{DomainKey}/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
 
@@ -731,7 +755,7 @@ PROTOCOL 입력은 input_common.json의 `protocols` 섹션(배열)이 정의한�
 #### Opcode/Tag 레지스트리 (결정성)
 
 - `{ProtocolName}.opcodes.json`, `{ProtocolName}.tags.json`은 **프로토콜 호환성을 위한 Registry**다.
-- Registry 파일은 `protocolDir/generated/`에 위치하며, 빌드 시 갱신된다.
+- Registry 파일은 `protocolDir/Generated/`에 위치하며, 빌드 시 갱신된다.
 - Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴더에 보존된다.
 - 정책 목표:
   - **결정적(deterministic)** 이여야 한다.

@@ -64,7 +64,7 @@ framework-cs/
 │       └── Devian.csproj
 ├── module/                                 # 생성 산출물 (기계 소유)
 │   ├── `Devian` + `.Domain.{Domain}`/
-│   │   └── generated/
+│   │   └── Generated/
 │   │       └── {Domain}.g.cs
 │   └── Devian.Protocol.{ProtocolGroup}/
 │       ├── Devian.Protocol.{ProtocolGroup}.csproj
@@ -75,7 +75,7 @@ framework-ts/
 │   └── devian/                            # 단일 런타임 패키지 (@devian/core)
 ├── module/                                 # 생성 산출물 (기계 소유)
 │   ├── devian-domain-{domain}/
-│   │   ├── generated/
+│   │   ├── Generated/
 │   │   │   └── {Domain}.g.ts
 │   │   └── index.ts
 │   └── devian-protocol-{group}/

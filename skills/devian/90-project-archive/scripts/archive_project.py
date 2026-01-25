@@ -146,7 +146,7 @@ def find_project_root(start_path: Path) -> Path:
 def collect_files(
     root: Path,
     exclude_patterns: list[str],
-    exclude_generated: bool = False,
+    exclude_Generated: bool = False,
     exclude_data: bool = False,
     include_temp: bool = False
 ) -> list[Path]:
@@ -158,8 +158,8 @@ def collect_files(
     # 추가 제외 패턴
     extra_excludes = list(exclude_patterns)
     
-    if exclude_generated:
-        extra_excludes.extend(['**/generated', '**/generated/**'])
+    if exclude_Generated:
+        extra_excludes.extend(['**/Generated', '**/Generated/**'])
     
     if exclude_data:
         extra_excludes.extend(['**/*.ndjson'])
@@ -238,9 +238,9 @@ def main():
         help='출력 디렉토리 (기본: 프로젝트 루트)'
     )
     parser.add_argument(
-        '--exclude-generated',
+        '--exclude-Generated',
         action='store_true',
-        help='generated 폴더 제외'
+        help='Generated 폴더 제외'
     )
     parser.add_argument(
         '--exclude-data',
@@ -282,7 +282,7 @@ def main():
     files = collect_files(
         root,
         exclude_patterns,
-        exclude_generated=args.exclude_generated,
+        exclude_Generated=args.exclude_Generated,
         exclude_data=args.exclude_data,
         include_temp=args.include_temp
     )

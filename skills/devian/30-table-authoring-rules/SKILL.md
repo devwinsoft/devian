@@ -187,8 +187,8 @@ Complex 타입의 `save2` 값(마스크)은 다음 규칙에 따라 결정적으
 
 경로 규약은 SSOT를 따른다.
 
-- staging: `{tempDir}/{DomainKey}/cs/generated/**`, `{tempDir}/{DomainKey}/ts/generated/**`, `{tempDir}/{DomainKey}/data/ndjson/{TableName}.json` (내용은 NDJSON), `{tempDir}/{DomainKey}/data/pb64/{TableName}.asset` (pk 옵션 있는 테이블만)
-- final (각 `{dataConfig.tableDirs}` 요소에 대해): `{csConfig.generateDir}/`Devian` + `.Module.{DomainKey}`/generated/**`, `{tsConfig.generateDir}/devian-domain-{domainkey}/generated/**`, `{dataTargetDir}/{DomainKey}/ndjson/{TableName}.json` (내용은 NDJSON), `{dataTargetDir}/{DomainKey}/pb64/{TableName}.asset` (pk 옵션 있는 테이블만)
+- staging: `{tempDir}/{DomainKey}/cs/Generated/**`, `{tempDir}/{DomainKey}/ts/Generated/**`, `{tempDir}/{DomainKey}/data/ndjson/{TableName}.json` (내용은 NDJSON), `{tempDir}/{DomainKey}/data/pb64/{TableName}.asset` (pk 옵션 있는 테이블만)
+- final (각 `{dataConfig.tableDirs}` 요소에 대해): `{csConfig.generateDir}/`Devian` + `.Module.{DomainKey}`/Generated/**`, `{tsConfig.generateDir}/devian-domain-{domainkey}/Generated/**`, `{dataTargetDir}/{DomainKey}/ndjson/{TableName}.json` (내용은 NDJSON), `{dataTargetDir}/{DomainKey}/pb64/{TableName}.asset` (pk 옵션 있는 테이블만)
 
 > **파일 확장자는 `.json`이지만, `ndjson/` 폴더의 파일 내용은 NDJSON(라인 단위 JSON)이다.** 확장자는 소비 측(Unity/툴링) 요구로 `.json`을 사용한다.
 

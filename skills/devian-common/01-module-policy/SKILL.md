@@ -47,7 +47,7 @@ Common 모듈은 Devian v10에서 생성되는 **모든 Module/DATA 도메인 �
 
 | 영역 | 소유자 | 설명 |
 |------|--------|------|
-| `generated/` | 빌더 | 항상 clean+copy 대상. 수동 편집 금지. |
+| `Generated/` | 빌더 | 항상 clean+copy 대상. 수동 편집 금지. |
 | `features/` | 개발자 | 공용 기능(crypto 등) 수동 코드 영역. |
 
 **경로:**
@@ -77,7 +77,7 @@ Common 모듈의 C# 코드는 **반드시** 단일 네임스페이스를 사용�
 - C# 코드에서 `namespace Devian` + `.<X>` (X ≠ Domain, Protocol) 문자열이 발견되면 **빌드 실패**
 - 빌더(`build.js`)에서 검사하여 발견 시 즉시 throw
 
-> Common(DATA) 생성물(`generated/Common.g.cs`)은 `namespace Devian.Domain.Common` 아래에 생성된다.
+> Common(DATA) 생성물(`Generated/Common.g.cs`)은 `namespace Devian.Domain.Common` 아래에 생성된다.
 
 ### 2.2 .NET 타겟 버전 (Hard Rule)
 
@@ -127,7 +127,7 @@ TS `devian-domain-*/index.ts`는 빌더가 관리한다.
 - `*.test.ts`, `*.spec.ts`
 - `.d.ts`
 - 숨김 파일 (`.`로 시작)
-- `generated` 폴더
+- `Generated` 폴더
 
 **포함:**
 - `*.ts` 파일 → `export * from './{basename}';`
@@ -165,7 +165,7 @@ Common에 기능을 추가할 때 다음을 만족해야 한다:
 
 ```
 # 프로젝트 디렉토리: Devian + .Module.Common
-├── generated/
+├── Generated/
 │   └── Common.g.cs      # 빌더 소유 (수정 금지)
 └── Features/
     └── Crypto.cs        # 개발자 소유 (수동 코드)
@@ -175,7 +175,7 @@ Common에 기능을 추가할 때 다음을 만족해야 한다:
 
 ```
 devian-domain-common/
-├── generated/
+├── Generated/
 │   └── Common.g.ts      # 빌더 소유 (수정 금지)
 ├── features/
 │   ├── index.ts         # 빌더 관리 (marker 갱신)

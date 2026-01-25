@@ -22,7 +22,7 @@ Devian UPM 패키지의 **정책 및 규약**을 정의하는 최상위 엔트�
 
 ### 2. GeneratedRoot Clean+Copy 규칙 (Hard Rule)
 
-**빌더는 GeneratedRoot(`Runtime/generated`, `Editor/Generated`)만 clean+copy 한다.**
+**빌더는 GeneratedRoot(`Runtime/Generated`, `Editor/Generated`)만 clean+copy 한다.**
 
 - 수동 패키지의 수동 관리 파일(non-generated)은 빌더가 **절대 수정/삭제하지 않는다**
 - 생성 패키지는 전체가 빌더 관리 대상

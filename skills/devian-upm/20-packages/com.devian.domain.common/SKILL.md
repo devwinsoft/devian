@@ -49,7 +49,7 @@ com.devian.domain.common/
 ├── package.json
 ├── Runtime/
 │   ├── Devian.Domain.Common.asmdef
-│   ├── generated/
+│   ├── Generated/
 │   │   └── Common.g.cs              (generated)
 │   └── Features/
 │       ├── Variant.cs
@@ -145,7 +145,7 @@ com.devian.domain.common/
 
 | 파일 | 설명 |
 |------|------|
-| `Runtime/generated/Common.g.cs` | TableGen으로 생성된 Common 모듈 코드 |
+| `Runtime/Generated/Common.g.cs` | TableGen으로 생성된 Common 모듈 코드 |
 | `Runtime/Features/Variant.cs` | Variant feature 구현 (SSOT: 11-feature-variant) |
 | `Runtime/Features/Complex/*.cs` | Complex feature 구현 (SSOT: 13-feature-complex) |
 

@@ -51,7 +51,7 @@ com.devian.domain.{domainname}/
 ├── package.json
 ├── Runtime/
 │   ├── Devian.Domain.{DomainName}.asmdef
-│   ├── generated/
+│   ├── Generated/
 │   │   └── {DomainName}.g.cs              (generated - TableGen)
 │   └── Features/                           (선택 - 도메인별 features)
 │       └── ...

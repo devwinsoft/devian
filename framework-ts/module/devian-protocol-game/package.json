@@ -6,8 +6,8 @@
   "types": "index.ts",
   "exports": {
     ".": "./index.ts",
-    "./server-runtime": "./generated/ServerRuntime.g.ts",
-    "./client-runtime": "./generated/ClientRuntime.g.ts"
+    "./server-runtime": "./Generated/ServerRuntime.g.ts",
+    "./client-runtime": "./Generated/ClientRuntime.g.ts"
   },
   "dependencies": {
     "@devian/core": "10.0.0",

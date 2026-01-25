@@ -3,7 +3,7 @@
 // </auto-generated>
 
 // <devian:domain-exports>
-export * from './generated/Common.g';
+export * from './Generated/Common.g';
 // </devian:domain-exports>
 
 // <devian:feature-exports>

@@ -4,16 +4,16 @@
 
 import * as C2GameMod from './C2Game.g';
 import * as Game2CMod from './Game2C.g';
-import * as ServerRuntimeMod from './generated/ServerRuntime.g';
-import * as ClientRuntimeMod from './generated/ClientRuntime.g';
+import * as ServerRuntimeMod from './Generated/ServerRuntime.g';
+import * as ClientRuntimeMod from './Generated/ClientRuntime.g';
 
 export { C2Game } from './C2Game.g';
 export { Game2C } from './Game2C.g';
-export * as ServerRuntime from './generated/ServerRuntime.g';
-export * as ClientRuntime from './generated/ClientRuntime.g';
+export * as ServerRuntime from './Generated/ServerRuntime.g';
+export * as ClientRuntime from './Generated/ClientRuntime.g';
 
-export { createServerRuntime } from './generated/ServerRuntime.g';
-export { createClientRuntime } from './generated/ClientRuntime.g';
+export { createServerRuntime } from './Generated/ServerRuntime.g';
+export { createClientRuntime } from './Generated/ClientRuntime.g';
 
 // Devian namespace tree - defined only in index.ts
 export namespace Devian {

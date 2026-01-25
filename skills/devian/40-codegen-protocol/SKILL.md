@@ -69,7 +69,7 @@ Protocol 호환성을 위해 Registry 파일을 사용한다.
 - `{ProtocolName}.opcodes.json`
 - `{ProtocolName}.tags.json`
 
-Registry 파일은 `protocolDir/generated/`에 위치하며, 빌드 시 갱신된다.
+Registry 파일은 `protocolDir/Generated/`에 위치하며, 빌드 시 갱신된다.
 Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴더에 보존된다.
 
 정책:
@@ -191,8 +191,8 @@ import * as Game2CMod from './Game2C.g';
 export const C2Game = C2GameMod.C2Game;
 export const Game2C = Game2CMod.Game2C;
 
-export { createServerRuntime } from './generated/ServerRuntime.g';
-export { createClientRuntime } from './generated/ClientRuntime.g';
+export { createServerRuntime } from './Generated/ServerRuntime.g';
+export { createClientRuntime } from './Generated/ClientRuntime.g';
 ```
 
 **사용법 (권장):**
@@ -227,8 +227,8 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 - 그 외 (0개, 2개 이상, 한쪽만 존재) → **빌드 에러**
 
 **생성 파일:**
-- `{tsConfig.generateDir}/devian-protocol-{group}/generated/ServerRuntime.g.ts`
-- `{tsConfig.generateDir}/devian-protocol-{group}/generated/ClientRuntime.g.ts`
+- `{tsConfig.generateDir}/devian-protocol-{group}/Generated/ServerRuntime.g.ts`
+- `{tsConfig.generateDir}/devian-protocol-{group}/Generated/ClientRuntime.g.ts`
 
 ---
 

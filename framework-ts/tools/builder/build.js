@@ -252,10 +252,10 @@ class DevianToolBuilder {
             }
         }
 
-        // Static UPM packages: copy generated content to upm/<pkg>/Runtime/generated (or Editor/Generated)
+        // Static UPM packages: copy generated content to upm/<pkg>/Runtime/Generated (or Editor/Generated)
         // SSOT: upm is the single source
         if (this.config.staticUpmPackages && Array.isArray(this.config.staticUpmPackages)) {
-            console.log('  [Info] Static UPM packages: staging/generated → upm/<pkg>/Runtime/generated');
+            console.log('  [Info] Static UPM packages: staging/Generated → upm/<pkg>/Runtime/Generated');
             for (const upmName of this.config.staticUpmPackages) {
                 // Validate static package exists in upm
                 const pkgPath = path.join(this.upmSourceDir, upmName);
@@ -306,8 +306,8 @@ class DevianToolBuilder {
     async processDomain(domainName, config) {
         console.log(`  [Domain] ${domainName}`);
 
-        const stagingCs = path.join(this.tempDir, domainName, 'cs', 'generated');
-        const stagingTs = path.join(this.tempDir, domainName, 'ts', 'generated');
+        const stagingCs = path.join(this.tempDir, domainName, 'cs', 'Generated');
+        const stagingTs = path.join(this.tempDir, domainName, 'ts', 'Generated');
         const stagingTsRoot = path.join(this.tempDir, domainName, 'ts');
         const stagingNdjson = path.join(this.tempDir, domainName, 'data', 'ndjson');
         const stagingPb64 = path.join(this.tempDir, domainName, 'data', 'pb64');
@@ -665,18 +665,26 @@ class DevianToolBuilder {
     }
 
     async copyDomainToTargets(domainName, config) {
-        const stagingCs = path.join(this.tempDir, domainName, 'cs', 'generated');
-        const stagingTs = path.join(this.tempDir, domainName, 'ts', 'generated');
+        const stagingCs = path.join(this.tempDir, domainName, 'cs', 'Generated');
+        const stagingTs = path.join(this.tempDir, domainName, 'ts', 'Generated');
         const stagingTsRoot = path.join(this.tempDir, domainName, 'ts');
         const stagingNdjson = path.join(this.tempDir, domainName, 'data', 'ndjson');
         const stagingPb64 = path.join(this.tempDir, domainName, 'data', 'pb64');
 
-        // Copy to CS target: {csConfig.generateDir}/Devian + .Module.{Domain}/generated/
+        // Copy to CS target: {csConfig.generateDir}/Devian + .Module.{Domain}/Generated/
         // Domain C# output always goes to csConfig.generateDir (domains[*].csTargetDir is deprecated)
         if (this.csGenerateDir) {
             const csModuleName = `Devian.Domain.${domainName}`;
             const resolvedTargetDir = path.join(this.csGenerateDir, csModuleName);
-            const target = path.join(resolvedTargetDir, 'generated');
+            const target = path.join(resolvedTargetDir, 'Generated');
+            
+            // Cleanup legacy generated (lowercase) folder if exists
+            const legacyTarget = path.join(resolvedTargetDir, 'generated');
+            if (fs.existsSync(legacyTarget)) {
+                fs.rmSync(legacyTarget, { recursive: true });
+                console.log(`    [Cleanup] Removed legacy ${legacyTarget}`);
+            }
+            
             this.cleanAndCopy(stagingCs, target);
             console.log(`    [Copy] ${stagingCs} -> ${target}`);
 
@@ -684,12 +692,20 @@ class DevianToolBuilder {
             this.ensureCsProj(resolvedTargetDir, csModuleName);
         }
 
-        // Copy to TS target: {tsConfig.generateDir}/devian-domain-{domain}/generated/
+        // Copy to TS target: {tsConfig.generateDir}/devian-domain-{domain}/Generated/
         // Domain TS output always goes to tsConfig.generateDir (domains[*].tsTargetDir is deprecated)
         if (this.tsGenerateDir) {
             const tsModuleName = `devian-domain-${domainName.toLowerCase()}`;
             const resolvedTargetDir = path.join(this.tsGenerateDir, tsModuleName);
-            const target = path.join(resolvedTargetDir, 'generated');
+            const target = path.join(resolvedTargetDir, 'Generated');
+            
+            // Cleanup legacy generated (lowercase) folder if exists
+            const legacyTarget = path.join(resolvedTargetDir, 'generated');
+            if (fs.existsSync(legacyTarget)) {
+                fs.rmSync(legacyTarget, { recursive: true });
+                console.log(`    [Cleanup] Removed legacy ${legacyTarget}`);
+            }
+            
             this.cleanAndCopy(stagingTs, target);
             console.log(`    [Copy] ${stagingTs} -> ${target}`);
 
@@ -725,7 +741,7 @@ class DevianToolBuilder {
         // Copy Domain UPM to upm
         // Rule:
         // - If upm/<package>/package.json already exists => manual/hybrid package
-        //   => only update Runtime/generated and Editor/Generated (clean+copy), remove legacy folders
+        //   => only update Runtime/Generated and Editor/Generated (clean+copy), remove legacy folders
         // - Else => generated-only package
         //   => copy whole staging package (package-level clean+copy)
         const stagingUpm = path.join(this.tempDir, domainName, 'upm');
@@ -734,8 +750,8 @@ class DevianToolBuilder {
             const targetPkgDir = path.join(this.upmSourceDir, packageName);
             const targetPackageJson = path.join(targetPkgDir, 'package.json');
 
-            const srcRuntimeGenerated = path.join(stagingUpm, 'Runtime', 'generated');
-            const dstRuntimeGenerated = path.join(targetPkgDir, 'Runtime', 'generated');
+            const srcRuntimeGenerated = path.join(stagingUpm, 'Runtime', 'Generated');
+            const dstRuntimeGenerated = path.join(targetPkgDir, 'Runtime', 'Generated');
 
             const srcEditorGenerated = path.join(stagingUpm, 'Editor', 'Generated');
             const dstEditorGenerated = path.join(targetPkgDir, 'Editor', 'Generated');
@@ -754,6 +770,12 @@ class DevianToolBuilder {
                             fs.rmSync(legacyPath, { recursive: true });
                             console.log(`    [Cleanup] Removed legacy folder: ${legacyPath}`);
                         }
+                        // Remove legacy generated (lowercase) folder
+                        if (entry.isDirectory() && entry.name === 'generated') {
+                            const legacyPath = path.join(targetRuntimeDir, entry.name);
+                            fs.rmSync(legacyPath, { recursive: true });
+                            console.log(`    [Cleanup] Removed legacy folder: ${legacyPath}`);
+                        }
                         // Remove legacy root .g.cs files (e.g., Common.g.cs at Runtime root)
                         if (entry.isFile() && entry.name.endsWith('.g.cs')) {
                             const legacyFile = path.join(targetRuntimeDir, entry.name);
@@ -763,9 +785,9 @@ class DevianToolBuilder {
                     }
                 }
 
-                // Update Runtime/generated
+                // Update Runtime/Generated
                 this.cleanAndCopy(srcRuntimeGenerated, dstRuntimeGenerated);
-                console.log(`    [Copy UPM Runtime/generated] ${srcRuntimeGenerated} -> ${dstRuntimeGenerated}`);
+                console.log(`    [Copy UPM Runtime/Generated] ${srcRuntimeGenerated} -> ${dstRuntimeGenerated}`);
 
                 // Update Editor/Generated (remove if not generated this build)
                 if (fs.existsSync(srcEditorGenerated)) {
@@ -818,7 +840,7 @@ class DevianToolBuilder {
         // Staging paths
         const stagingCs = path.join(this.tempDir, csProjectName);
         const stagingTs = path.join(this.tempDir, groupName);
-        const stagingTsGenerated = path.join(stagingTs, 'generated');
+        const stagingTsGenerated = path.join(stagingTs, 'Generated');
 
         fs.mkdirSync(stagingCs, { recursive: true });
         fs.mkdirSync(stagingTs, { recursive: true });
@@ -934,10 +956,10 @@ class DevianToolBuilder {
             lines.push(`import * as ${name}Mod from './${name}.g';`);
         }
         if (hasServerRuntime) {
-            lines.push(`import * as ServerRuntimeMod from './generated/ServerRuntime.g';`);
+            lines.push(`import * as ServerRuntimeMod from './Generated/ServerRuntime.g';`);
         }
         if (hasClientRuntime) {
-            lines.push(`import * as ClientRuntimeMod from './generated/ClientRuntime.g';`);
+            lines.push(`import * as ClientRuntimeMod from './Generated/ClientRuntime.g';`);
         }
         lines.push('');
 
@@ -946,19 +968,19 @@ class DevianToolBuilder {
             lines.push(`export { ${name} } from './${name}.g';`);
         }
         if (hasServerRuntime) {
-            lines.push(`export * as ServerRuntime from './generated/ServerRuntime.g';`);
+            lines.push(`export * as ServerRuntime from './Generated/ServerRuntime.g';`);
         }
         if (hasClientRuntime) {
-            lines.push(`export * as ClientRuntime from './generated/ClientRuntime.g';`);
+            lines.push(`export * as ClientRuntime from './Generated/ClientRuntime.g';`);
         }
         lines.push('');
 
         // Re-export factory functions for direct import
         if (hasServerRuntime) {
-            lines.push(`export { createServerRuntime } from './generated/ServerRuntime.g';`);
+            lines.push(`export { createServerRuntime } from './Generated/ServerRuntime.g';`);
         }
         if (hasClientRuntime) {
-            lines.push(`export { createClientRuntime } from './generated/ClientRuntime.g';`);
+            lines.push(`export { createClientRuntime } from './Generated/ClientRuntime.g';`);
         }
         if (hasServerRuntime || hasClientRuntime) {
             lines.push('');
@@ -993,7 +1015,7 @@ class DevianToolBuilder {
             '// </auto-generated>',
             ''
         ];
-        const exports = fileNames.map(name => `export * from './generated/${name}.g';`);
+        const exports = fileNames.map(name => `export * from './Generated/${name}.g';`);
         return header.concat(exports).join('\n') + '\n';
     }
 
@@ -1015,8 +1037,8 @@ class DevianToolBuilder {
         const stagingTs = path.join(this.tempDir, groupName);
 
         // Check if ServerRuntime and ClientRuntime were generated
-        const hasServerRuntime = fs.existsSync(path.join(stagingTs, 'generated', 'ServerRuntime.g.ts'));
-        const hasClientRuntime = fs.existsSync(path.join(stagingTs, 'generated', 'ClientRuntime.g.ts'));
+        const hasServerRuntime = fs.existsSync(path.join(stagingTs, 'Generated', 'ServerRuntime.g.ts'));
+        const hasClientRuntime = fs.existsSync(path.join(stagingTs, 'Generated', 'ClientRuntime.g.ts'));
 
         // Copy to CS target: {csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/
         // Protocol C# output always goes to csConfig.generateDir (protocols[*].csTargetDir is deprecated)
@@ -1152,7 +1174,7 @@ class DevianToolBuilder {
     // ========================================================================
 
     loadOrCreateRegistry(protocolsDir, protocolName, type) {
-        const generatedDir = path.join(protocolsDir, 'generated');
+        const generatedDir = path.join(protocolsDir, 'Generated');
         const registryPath = path.join(generatedDir, `${protocolName}.${type}.json`);
         if (fs.existsSync(registryPath)) {
             return JSON.parse(fs.readFileSync(registryPath, 'utf-8'));
@@ -1161,7 +1183,7 @@ class DevianToolBuilder {
     }
 
     saveRegistry(protocolsDir, protocolName, type, registry) {
-        const generatedDir = path.join(protocolsDir, 'generated');
+        const generatedDir = path.join(protocolsDir, 'Generated');
         fs.mkdirSync(generatedDir, { recursive: true });
         const registryPath = path.join(generatedDir, `${protocolName}.${type}.json`);
         
@@ -1394,7 +1416,7 @@ class DevianToolBuilder {
 // </auto-generated>
 
 // <devian:domain-exports>
-export * from './generated/${domainName}.g';
+export * from './Generated/${domainName}.g';
 // </devian:domain-exports>
 
 // <devian:feature-exports>
@@ -1434,7 +1456,7 @@ export * from './features';
             // Skip exclusions
             if (name === 'index.ts') continue;
             if (name.startsWith('.')) continue;
-            if (name === 'generated') continue;
+            if (name === 'Generated') continue;
             if (name.endsWith('.test.ts') || name.endsWith('.spec.ts')) continue;
             if (name.endsWith('.d.ts')) continue;
 
@@ -1472,7 +1494,7 @@ export * from './features';
         let content = this.readTextOrEmpty(indexPath);
 
         // Update domain-exports block
-        const domainExports = [`export * from './generated/${domainName}.g';`];
+        const domainExports = [`export * from './Generated/${domainName}.g';`];
         try {
             content = this.updateMarkerBlock(
                 content,
@@ -1651,10 +1673,10 @@ export * from './features';
             '.': './index.ts'
         };
         if (hasServerRuntime) {
-            exports['./server-runtime'] = './generated/ServerRuntime.g.ts';
+            exports['./server-runtime'] = './Generated/ServerRuntime.g.ts';
         }
         if (hasClientRuntime) {
-            exports['./client-runtime'] = './generated/ClientRuntime.g.ts';
+            exports['./client-runtime'] = './Generated/ClientRuntime.g.ts';
         }
 
         const packageJson = {
@@ -1678,7 +1700,7 @@ export * from './features';
         const asmdefName = `Devian.Domain.${domainName}`;
         const stagingUpm = path.join(this.tempDir, domainName, 'upm');
         const stagingRuntime = path.join(stagingUpm, 'Runtime');
-        const stagingGenerated = path.join(stagingRuntime, 'generated');
+        const stagingGenerated = path.join(stagingRuntime, 'Generated');
         const stagingEditor = path.join(stagingUpm, 'Editor');
 
         fs.mkdirSync(stagingRuntime, { recursive: true });
@@ -1745,7 +1767,7 @@ export * from './features';
         };
         fs.writeFileSync(path.join(stagingEditor, `${asmdefName}.Editor.asmdef`), JSON.stringify(editorAsmdef, null, 2));
 
-        // Copy C# generated files to Runtime/generated
+        // Copy C# generated files to Runtime/Generated
         if (fs.existsSync(stagingCs)) {
             for (const file of fs.readdirSync(stagingCs)) {
                 if (file.endsWith('.cs')) {
@@ -1938,21 +1960,10 @@ export * from './features';
                 console.log(`    [Cleanup] Removed legacy Editor/Generated from unity.common staging`);
             }
             
-            // Generate shared templates (must be first - UnityMainThread is shared)
-            // SSOT: skills/devian-upm/30-unity-components/00-unity-object-destruction/SKILL.md
-            this.generateUnitySharedRuntime(stagingUpm);
-            
-            // Generate singleton templates
-            // SSOT: skills/devian-upm/30-unity-components/01-singleton/SKILL.md
-            this.generateUnitySingletonRuntime(stagingUpm);
-            
-            // Generate pool templates
-            // SSOT: skills/devian-upm/30-unity-components/02-pool-manager/SKILL.md
-            this.generateUnityPoolRuntime(stagingUpm);
-            
-            // Generate pool factories
-            // SSOT: skills/devian-upm/30-unity-components/04-pool-factories/SKILL.md
-            this.generateUnityPoolFactoriesRuntime(stagingUpm);
+            // NOTE: com.devian.unity의 고정 유틸(_Shared, Singleton, Pool, PoolFactories)은
+            // 수기 코드로 유지하며, 생성기가 건드리지 않는다.
+            // SSOT: "Generated Only" 규칙 - 생성기는 오직 Generated 폴더만 clean+generate
+            // 고정 유틸 파일들은 framework-cs/upm/com.devian.unity/Runtime/에 이미 존재한다.
         }
     }
 
@@ -3487,7 +3498,7 @@ namespace Devian
     /**
      * Copy generated content from staging to upm/<pkg>.
      * Target path is computed from upmConfig.sourceDir + upmName.
-     * Only copies generated content (Editor/Generated, Runtime/generated) to upm,
+     * Only copies generated content (Editor/Generated, Runtime/Generated) to upm,
      * preserving manual files.
      * Final sync to packageDir happens in syncUpmToPackageDir().
      * @param {Object} pkgConfig - { upmName }
@@ -3517,15 +3528,13 @@ namespace Devian
             }
         }
 
-        // Copy only generated content (preserving manual files)
-        // Generated content locations: Editor/Generated, Runtime/generated, Runtime/{_Shared,Singleton,Pool,PoolFactories}
+        // Copy only Generated content (preserving manual files)
+        // "Generated Only" 정책: 생성기가 clean+generate하는 영역은 오직 Generated 폴더만
+        // SSOT: skills/devian/03-ssot/SKILL.md
+        // 고정 유틸(_Shared, Singleton, Pool, PoolFactories)은 수기 코드이므로 복사 대상 아님
         const generatedPaths = [
             { src: 'Editor/Generated', dest: 'Editor/Generated' },
-            { src: 'Runtime/generated', dest: 'Runtime/generated' },
-            { src: 'Runtime/_Shared', dest: 'Runtime/_Shared' },
-            { src: 'Runtime/Singleton', dest: 'Runtime/Singleton' },
-            { src: 'Runtime/Pool', dest: 'Runtime/Pool' },
-            { src: 'Runtime/PoolFactories', dest: 'Runtime/PoolFactories' }
+            { src: 'Runtime/Generated', dest: 'Runtime/Generated' }
         ];
 
         let copiedCount = 0;
