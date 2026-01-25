@@ -186,5 +186,5 @@ namespace MyGame.Network
 ## 10. 참고
 
 - 정책 문서: `skills/devian-upm-samples/00-samples-policy/SKILL.md`
-- Network SDK: `skills/devian/12-network-ws-client/SKILL.md`
-- Protocol 코드젠: `skills/devian/22-codegen-protocol-csharp-ts/SKILL.md`
+- Network SDK: `skills/devian/72-network-ws-client/SKILL.md`
+- Protocol 코드젠: `skills/devian/41-codegen-protocol-csharp-ts/SKILL.md`

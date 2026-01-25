@@ -492,7 +492,7 @@ function getCellValue(sheet, row, col) {
 /**
  * Parse options string (comma-separated key:value pairs or pk flag)
  *
- * SSOT: skills/devian/24-table-authoring-rules/SKILL.md
+ * SSOT: skills/devian/30-table-authoring-rules/SKILL.md
  * 
  * Supported formats:
  * - pk (flag) - PrimaryKey, treated as pk:true
@@ -1216,7 +1216,7 @@ function capitalize(str) {
 /**
  * Convert a table row to ordered JSON object
  * Shared helper for NDJSON and Asset generation (avoids duplication)
- * SSOT: skills/devian/28-json-row-io/SKILL.md
+ * SSOT: skills/devian/32-json-row-io/SKILL.md
  * @param {Object} row - Row data
  * @param {Array} fields - Field definitions from table
  * @returns {Object} Ordered row object ready for JSON.stringify
@@ -1237,7 +1237,7 @@ function rowToOrderedJson(row, fields) {
 
 /**
  * Build export rows with PK validation
- * SSOT: skills/devian/28-json-row-io/SKILL.md - PK Validation
+ * SSOT: skills/devian/32-json-row-io/SKILL.md - PK Validation
  * 
  * Rules:
  * - primaryKey가 정의되지 않은 테이블은 export 하지 않는다
@@ -1303,7 +1303,7 @@ export function generateTableData(table) {
 
 // ============================================================================
 // Unity TextAsset (.asset) Generator for Tables with PK
-// SSOT: skills/devian/28-json-row-io/SKILL.md
+// SSOT: skills/devian/32-json-row-io/SKILL.md
 // Format: Unity TextAsset YAML wrapping pb64 binary data (gzip block container)
 // ============================================================================
 
@@ -1466,7 +1466,7 @@ TextAsset:
 
 /**
  * Generate Unity TextAsset .asset file for a table (table-level, single file)
- * SSOT: skills/devian/28-json-row-io/SKILL.md - pb64 export 규칙
+ * SSOT: skills/devian/32-json-row-io/SKILL.md - pb64 export 규칙
  * 
  * Rules:
  * - Only tables with pk option (table.keyField exists) are exported
@@ -1520,7 +1520,7 @@ export function generateTableAsset(table) {
 
 // ============================================================================
 // Enum Generation (gen: option)
-// SSOT: skills/devian/63-tablegen-enumgen/SKILL.md
+// SSOT: skills/devian/45-tablegen-enumgen/SKILL.md
 // ============================================================================
 
 const IDENTIFIER_REGEX = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -1528,7 +1528,7 @@ const IDENTIFIER_REGEX = /^[A-Za-z_][A-Za-z0-9_]*$/;
 /**
  * Collect enum generation specs from tables
  * 
- * Rules (SSOT: skills/devian/63-tablegen-enumgen/SKILL.md):
+ * Rules (SSOT: skills/devian/45-tablegen-enumgen/SKILL.md):
  * - gen column = PK column (same column, must have pk)
  * - gen column value = enum member NAME
  * - enum member VALUE = deterministic auto-assignment (name sorted, 0..N-1)

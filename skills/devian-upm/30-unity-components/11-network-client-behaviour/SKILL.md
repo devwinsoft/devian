@@ -94,4 +94,4 @@ UnityExample 복사본(직접 수정 금지):
 ## Reference
 
 - Related: `skills/devian-upm/20-packages/com.devian.unity/SKILL.md`
-- Related: `skills/devian/12-network-ws-client/SKILL.md`
+- Related: `skills/devian/72-network-ws-client/SKILL.md`

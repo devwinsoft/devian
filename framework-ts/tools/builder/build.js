@@ -374,7 +374,7 @@ class DevianToolBuilder {
                             }
 
                             // Unity TextAsset .asset file (pk 옵션 있는 테이블만)
-                            // SSOT: skills/devian/28-json-row-io/SKILL.md - pb64 export 규칙
+                            // SSOT: skills/devian/32-json-row-io/SKILL.md - pb64 export 규칙
                             const assetResult = generateTableAsset(table);
                             if (assetResult) {
                                 fs.writeFileSync(path.join(stagingPb64, `${assetResult.tableName}.asset`), assetResult.yaml);

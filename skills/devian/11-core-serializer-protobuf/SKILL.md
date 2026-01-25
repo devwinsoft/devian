@@ -69,7 +69,7 @@ XLSX에서 `enum:*` / `class:*` 타입 셀에 들어가는 텍스트 표현을 *
 - 빌드 도구가 DFF를 항상 해석해야 한다고 강제하지 않는다
   - (예) 빌드 산출 NDJSON에 셀 원문을 보존하고, 런타임 로더에서 DFF를 해석할 수 있다
 
-DFF 문법/예시는 `skills/devian/25-class-cell-format/SKILL.md`를 따른다.
+DFF 문법/예시는 `skills/devian/31-class-cell-format/SKILL.md`를 따른다.
 
 ---
 
@@ -90,5 +90,5 @@ MUST NOT
 ## Reference
 
 - Policy SSOT: `skills/devian/03-ssot/SKILL.md`
-- DFF 규약: `skills/devian/25-class-cell-format/SKILL.md`
+- DFF 규약: `skills/devian/31-class-cell-format/SKILL.md`
 - 동작 정본: 런타임/제너레이터 코드
