@@ -373,7 +373,7 @@ namespace Devian.Protocol.Game
                 ProtoWriter.WriteString(ms, 1, m.Message);
             }
 
-            private static void DecodePing(ReadOnlySpan<byte> data, Ping m)
+            internal static void DecodePing(ReadOnlySpan<byte> data, Ping m)
             {
                 var reader = new ProtoReader(data);
                 while (reader.HasMore)
@@ -388,7 +388,7 @@ namespace Devian.Protocol.Game
                 }
             }
 
-            private static void DecodeEcho(ReadOnlySpan<byte> data, Echo m)
+            internal static void DecodeEcho(ReadOnlySpan<byte> data, Echo m)
             {
                 var reader = new ProtoReader(data);
                 while (reader.HasMore)
@@ -504,6 +504,102 @@ namespace Devian.Protocol.Game
                 _sender.SendTo(sessionId, frame);
             }
 
+        }
+
+        // ============================================================================
+        // Pooling API - RentDecodePooled / ReturnPooled
+        // SSOT: skills/devian/40-codegen-protocol/SKILL.md
+        // ============================================================================
+
+        private static readonly PacketPool<Ping> _pool_Ping = new PacketPool<Ping>(256);
+        private static readonly PacketPool<Echo> _pool_Echo = new PacketPool<Echo>(256);
+
+        /// <summary>
+        /// Rent a pooled message object and decode from data.
+        /// Call ReturnPooled() when done to return the object to the pool.
+        /// </summary>
+        public static object? RentDecodePooled(int opcode, ReadOnlySpan<byte> data)
+        {
+            switch (opcode)
+            {
+                case Opcodes.Ping:
+                {
+                    var m = _pool_Ping.Rent();
+                    m._Reset();
+                    CodecProtobuf.DecodePing(data, m);
+                    return m;
+                }
+                case Opcodes.Echo:
+                {
+                    var m = _pool_Echo.Rent();
+                    m._Reset();
+                    CodecProtobuf.DecodeEcho(data, m);
+                    return m;
+                }
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>
+        /// Rent a pooled message object of type T and decode from data.
+        /// Call ReturnPooled() when done to return the object to the pool.
+        /// </summary>
+        public static T RentDecodePooled<T>(ReadOnlySpan<byte> data) where T : class, new()
+        {
+            object pooled;
+            if (typeof(T) == typeof(Ping))
+            {
+                var m = _pool_Ping.Rent();
+                m._Reset();
+                CodecProtobuf.DecodePing(data, m);
+                pooled = m;
+            }
+            else if (typeof(T) == typeof(Echo))
+            {
+                var m = _pool_Echo.Rent();
+                m._Reset();
+                CodecProtobuf.DecodeEcho(data, m);
+                pooled = m;
+            }
+            else
+            {
+                // Fallback: create new instance (not pooled)
+                var codec = new CodecProtobuf();
+                return codec.Decode<T>(data);
+            }
+            return (T)pooled;
+        }
+
+        /// <summary>
+        /// Return a pooled message object to the pool.
+        /// The object will be reset before being returned.
+        /// </summary>
+        public static void ReturnPooled(object message)
+        {
+            switch (message)
+            {
+                case Ping m:
+                    m._Reset();
+                    _pool_Ping.Return(m);
+                    break;
+                case Echo m:
+                    m._Reset();
+                    _pool_Echo.Return(m);
+                    break;
+                default:
+                    // Unknown type - silently ignore (no crash for user error)
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Return a pooled message object of type T to the pool.
+        /// </summary>
+        public static void ReturnPooled<T>(T message) where T : class
+        {
+            if (message == null) return;
+            ReturnPooled((object)message);
         }
     }
 }

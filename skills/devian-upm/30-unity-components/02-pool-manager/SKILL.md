@@ -100,12 +100,13 @@ public void DestroyInstance(UnityEngine.Component instance)
 - `delete` 키워드 사용 금지 (C#에 없음)
 - Runtime에서는 `UnityEngine.Object.Destroy` 사용
 
-### 구현 계획 (문서 명시만)
+### 구현 계획 → 04-pool-factories로 이동
 
-| Factory | 설명 |
-|---------|------|
-| `InspectorPoolFactory` | 인스펙터 프리팹 링크, key = prefab.name |
-| `BundlePoolFactory` | `AssetManager.Instance.GetAsset<GameObject>(name)` 사용 |
+아래 Factory 구현은 `04-pool-factories/SKILL.md`로 이동됨:
+- `InspectorPoolFactory` - 인스펙터 프리팹 링크
+- `BundlePoolFactory` - AssetManager 기반 로딩
+
+> **참고**: 이 스킬(02-pool-manager)은 인터페이스와 PoolManager만 정의하며, Factory 구현은 별도 스킬로 분리됨.
 
 ---
 
@@ -205,3 +206,4 @@ com.devian.unity/Runtime/
 - Parent: `skills/devian-upm/30-unity-components/SKILL.md`
 - Related: `01-singleton-template/SKILL.md` (공용 `_Shared/UnityMainThread` 사용)
 - Related: `00-unity-object-destruction/SKILL.md` (Destroy 규약)
+- Related: `04-pool-factories/SKILL.md` (IPoolFactory 구현체)

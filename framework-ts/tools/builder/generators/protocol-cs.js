@@ -118,6 +118,12 @@ export function generateCSharpProtocol(spec, protocolName, groupName) {
     // Proxy
     generateProxy(lines, spec.messages || [], protocolName, usesComplexAliases);
 
+    // Pooling API (RentDecodePooled / ReturnPooled)
+    if (!usesComplexAliases && (spec.messages || []).length > 0) {
+        lines.push('');
+        generatePoolingApi(lines, spec.messages || []);
+    }
+
     lines.push('    }'); // end static class
     lines.push('}'); // end namespace
 
@@ -419,8 +425,13 @@ function generateMessageClass(lines, message) {
     lines.push('            {');
     for (const field of message.fields || []) {
         const propName = capitalize(field.name);
-        const resetValue = getResetValue(field.type, field.optional);
-        lines.push(`                ${propName} = ${resetValue};`);
+        // List<T>? fields: use Clear() instead of null assignment
+        if (field.type.endsWith('[]')) {
+            lines.push(`                if (${propName} != null) ${propName}.Clear();`);
+        } else {
+            const resetValue = getResetValue(field.type, field.optional);
+            lines.push(`                ${propName} = ${resetValue};`);
+        }
     }
     lines.push('            }');
 
@@ -587,7 +598,8 @@ function generateEncodeMethod(lines, message) {
 }
 
 function generateDecodeMethod(lines, message) {
-    lines.push(`            private static void Decode${message.name}(ReadOnlySpan<byte> data, ${message.name} m)`);
+    // internal static to allow access from pooling API
+    lines.push(`            internal static void Decode${message.name}(ReadOnlySpan<byte> data, ${message.name} m)`);
     lines.push('            {');
     lines.push('                var reader = new ProtoReader(data);');
     lines.push('                while (reader.HasMore)');
@@ -874,4 +886,108 @@ function capitalize(str) {
 
 function lowerFirst(str) {
     return str.charAt(0).toLowerCase() + str.slice(1);
+}
+
+// ============================================================================
+// Pooling API Generator
+// ============================================================================
+
+function generatePoolingApi(lines, messages) {
+    lines.push('        // ============================================================================');
+    lines.push('        // Pooling API - RentDecodePooled / ReturnPooled');
+    lines.push('        // SSOT: skills/devian/40-codegen-protocol/SKILL.md');
+    lines.push('        // ============================================================================');
+    lines.push('');
+
+    // Pool fields (one per message type, max=256)
+    for (const msg of messages) {
+        lines.push(`        private static readonly PacketPool<${msg.name}> _pool_${msg.name} = new PacketPool<${msg.name}>(256);`);
+    }
+    lines.push('');
+
+    // RentDecodePooled(int opcode, ReadOnlySpan<byte> data)
+    lines.push('        /// <summary>');
+    lines.push('        /// Rent a pooled message object and decode from data.');
+    lines.push('        /// Call ReturnPooled() when done to return the object to the pool.');
+    lines.push('        /// </summary>');
+    lines.push('        public static object? RentDecodePooled(int opcode, ReadOnlySpan<byte> data)');
+    lines.push('        {');
+    lines.push('            switch (opcode)');
+    lines.push('            {');
+    for (const msg of messages) {
+        lines.push(`                case Opcodes.${msg.name}:`);
+        lines.push('                {');
+        lines.push(`                    var m = _pool_${msg.name}.Rent();`);
+        lines.push('                    m._Reset();');
+        lines.push(`                    CodecProtobuf.Decode${msg.name}(data, m);`);
+        lines.push('                    return m;');
+        lines.push('                }');
+    }
+    lines.push('                default:');
+    lines.push('                    return null;');
+    lines.push('            }');
+    lines.push('        }');
+    lines.push('');
+
+    // RentDecodePooled<T>(ReadOnlySpan<byte> data)
+    lines.push('        /// <summary>');
+    lines.push('        /// Rent a pooled message object of type T and decode from data.');
+    lines.push('        /// Call ReturnPooled() when done to return the object to the pool.');
+    lines.push('        /// </summary>');
+    lines.push('        public static T RentDecodePooled<T>(ReadOnlySpan<byte> data) where T : class, new()');
+    lines.push('        {');
+    lines.push('            object pooled;');
+    // Generate type checks using typeof(T) == typeof(Foo) pattern
+    for (let i = 0; i < messages.length; i++) {
+        const msg = messages[i];
+        const prefix = i === 0 ? 'if' : 'else if';
+        lines.push(`            ${prefix} (typeof(T) == typeof(${msg.name}))`);
+        lines.push('            {');
+        lines.push(`                var m = _pool_${msg.name}.Rent();`);
+        lines.push('                m._Reset();');
+        lines.push(`                CodecProtobuf.Decode${msg.name}(data, m);`);
+        lines.push('                pooled = m;');
+        lines.push('            }');
+    }
+    lines.push('            else');
+    lines.push('            {');
+    lines.push('                // Fallback: create new instance (not pooled)');
+    lines.push('                var codec = new CodecProtobuf();');
+    lines.push('                return codec.Decode<T>(data);');
+    lines.push('            }');
+    lines.push('            return (T)pooled;');
+    lines.push('        }');
+    lines.push('');
+
+    // ReturnPooled(object message)
+    lines.push('        /// <summary>');
+    lines.push('        /// Return a pooled message object to the pool.');
+    lines.push('        /// The object will be reset before being returned.');
+    lines.push('        /// </summary>');
+    lines.push('        public static void ReturnPooled(object message)');
+    lines.push('        {');
+    lines.push('            switch (message)');
+    lines.push('            {');
+    for (const msg of messages) {
+        lines.push(`                case ${msg.name} m:`);
+        lines.push('                    m._Reset();');
+        lines.push(`                    _pool_${msg.name}.Return(m);`);
+        lines.push('                    break;');
+    }
+    lines.push('                default:');
+    lines.push('                    // Unknown type - silently ignore (no crash for user error)');
+    lines.push('                    break;');
+    lines.push('            }');
+    lines.push('        }');
+    lines.push('');
+
+    // ReturnPooled<T>(T message)
+    lines.push('        /// <summary>');
+    lines.push('        /// Return a pooled message object of type T to the pool.');
+    lines.push('        /// </summary>');
+    lines.push('        public static void ReturnPooled<T>(T message) where T : class');
+    lines.push('        {');
+    lines.push('            if (message == null) return;');
+    lines.push('            ReturnPooled((object)message);');
+    lines.push('        }');
 }

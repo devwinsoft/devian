@@ -89,7 +89,8 @@ com.devian.unity/
 │   ├── Network/
 │   │   └── NetWsClientBehaviourBase.cs
 │   ├── _Shared/                              (빌드 시 생성)
-│   │   └── UnityMainThread.cs                (공용 내부 헬퍼)
+│   │   ├── UnityMainThread.cs                (공용 내부 헬퍼 - 메인 스레드 감지)
+│   │   └── UnityMainThreadDispatcher.cs      (로그 디스패처 - 백그라운드→메인 스레드)
 │   ├── Singleton/                            (빌드 시 생성)
 │   │   ├── MonoSingleton.cs
 │   │   ├── AutoSingleton.cs
@@ -149,15 +150,19 @@ com.devian.unity/
 - [ ] `framework-cs/upm/com.devian.unity/Runtime/Network/` 에 asmdef 파일 **없음**
 - [ ] 각 도메인 모듈 패키지에 TableID Editor 바인딩이 올바르게 생성됨
 - [ ] 빌드 후 `UnityExample/Packages/com.devian.unity/Runtime/_Shared/UnityMainThread.cs` 존재
+- [ ] 빌드 후 `UnityExample/Packages/com.devian.unity/Runtime/_Shared/UnityMainThreadDispatcher.cs` 존재 (10-unity-main-thread 스킬 참조)
+- [ ] UnityLogSink는 Dispatcher를 사용하여 백그라운드 로그를 메인 스레드로 디스패치함
 - [ ] 빌드 후 `UnityExample/Packages/com.devian.unity/Runtime/Singleton/*.cs` 3개 파일 존재
 - [ ] 빌드 후 `UnityExample/Packages/com.devian.unity/Runtime/Pool/*.cs` 6개 파일 존재
 
 **생성 정본:**
 - 소스(`framework-cs/upm/com.devian.unity/Runtime/`)에는 생성 폴더가 **없어도 됨** (staging에서 생성)
 - 생성 순서: `_Shared` → `Singleton` → `Pool`
+- `_Shared` 폴더: `UnityMainThread.cs`, `UnityMainThreadDispatcher.cs` 2개 파일
 
 **공용 헬퍼 (Runtime/_Shared/):**
-- `UnityMainThread.cs` - 메인 스레드 검증 (1개만 존재)
+- `UnityMainThread.cs` - 메인 스레드 검증 (10-unity-main-thread 스킬)
+- `UnityMainThreadDispatcher.cs` - 로그 메인 스레드 디스패치 (10-unity-main-thread 스킬)
 
 **Singleton (Runtime/Singleton/):**
 - `MonoSingleton.cs`
@@ -263,6 +268,17 @@ namespace Devian
 }
 ```
 
+**멀티스레드 지원 (Main Thread Dispatch):**
+
+UnityLogSink는 멀티스레드 호출을 지원하며, `10-unity-main-thread` 스킬의 Dispatcher를 **의존하여 사용**한다.
+
+- **메인 스레드 호출**: 즉시 `Debug.Log*` 실행 (기존 동작)
+- **백그라운드 스레드 호출**: `UnityMainThreadDispatcher` 큐에 적재 → 메인 스레드 `Update()`에서 출력
+- Unity API 호출(`Debug.Log` 등)은 **메인 스레드에서만** 수행한다.
+- **maxPerFrame 제한**: 프레임당 최대 500개 로그만 처리하여 프레임 드랍 방지
+
+> **Note:** `UnityMainThread`, `UnityMainThreadDispatcher`는 `10-unity-main-thread` 스킬이 소유하며, 빌더가 `_Shared`에 생성한다. UnityLogSink는 이를 사용만 한다.
+
 **Write 분기 규칙:**
 
 | LogLevel | Unity API |
@@ -328,6 +344,7 @@ Logger.Error("Net", "Connection failed", exception);
 - Related: `skills/devian-upm/01-upm-policy/SKILL.md`
 - Related: `skills/devian-upm/02-upm-bundles/SKILL.md`
 - Related: `skills/devian-upm/03-package-metadata/SKILL.md`
+- Related: `skills/devian-upm/10-unity-main-thread/SKILL.md`
 - Related: `skills/devian-upm/20-packages/com.devian.domain.common/SKILL.md`
 - Related: `skills/devian-upm/30-unity-components/SKILL.md`
 - Related: `skills/devian-upm/30-unity-components/10-asset-manager/SKILL.md`

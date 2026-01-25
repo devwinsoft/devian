@@ -296,6 +296,54 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 
 ---
 
+## Protocol Message Pooling
+
+생성된 프로토콜 코드는 메시지 객체 풀링을 지원한다. 풀링은 **새 API**로 제공되며, 기존 `Decode<T>()`/`Decode(opcode)`는 호환성을 위해 그대로 유지된다.
+
+### 생성 API (필수)
+
+각 `{ProtocolName}.g.cs`의 `public static partial class {ProtocolName}` 내부에 아래 API가 생성되어야 한다:
+
+```csharp
+// 풀 필드 (메시지 타입별, max=256)
+private static readonly PacketPool<Foo> _pool_Foo = new PacketPool<Foo>(256);
+
+// opcode 기반 풀링 디코드
+public static object? RentDecodePooled(int opcode, ReadOnlySpan<byte> data);
+
+// 제네릭 풀링 디코드
+public static T RentDecodePooled<T>(ReadOnlySpan<byte> data) where T : class, new();
+
+// 반환 (타입 패턴 매칭)
+public static void ReturnPooled(object message);
+
+// 제네릭 반환
+public static void ReturnPooled<T>(T message) where T : class;
+```
+
+### Reset 규약 (필수)
+
+풀에서 꺼낸 메시지는 디코드 전에 반드시 `_Reset()` 호출해야 한다.
+
+**List<T>? 필드의 Reset 처리:**
+- `null`로 버리지 말고 `Clear()` 호출
+- 생성 형태: `if (Field != null) Field.Clear();`
+
+### 기존 API 호환성
+
+- `CodecProtobuf.Decode<T>()`, `Decode(opcode)`는 **그대로 유지**
+- 풀링은 새 API(`RentDecodePooled`/`ReturnPooled`)로만 제공
+- 기존 사용자 코드 파괴 금지
+
+### DoD (완료 정의)
+
+- [ ] 생성된 `.g.cs`에서 `PacketPool<T>`가 "정의만" 되지 않고, `RentDecodePooled`/`ReturnPooled`에서 실제로 사용됨
+- [ ] `_Reset()` 메서드에서 `List<T>` 필드는 `?.Clear()` 형태로 리셋됨
+- [ ] 기존 `Decode<T>()`/`Decode(opcode)`는 그대로 유지됨 (호환성)
+- [ ] `ReturnPooled(object)`는 패턴 매칭으로 타입 분기하며, `default`는 조용히 무시
+
+---
+
 ## Reference
 
 - Policy SSOT: `skills/devian/03-ssot/SKILL.md`
