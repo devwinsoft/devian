@@ -1,4 +1,4 @@
-// SSOT: skills/devian-common-upm/30-unity-components/10-asset-manager/SKILL.md
+// SSOT: skills/devian-upm/30-unity-components/10-asset-manager/SKILL.md
 // Devian Unity Asset Manager - Bundle + Editor Find Only
 // Resources 기반 로딩 없음
 

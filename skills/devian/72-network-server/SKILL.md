@@ -137,5 +137,5 @@ stub.onEcho(async (sessionId, msg) => { ... });
 ## Reference
 
 - **공용 모듈:** `framework-ts/module/devian/`
-- **그룹 런타임:** `framework-ts/module/devian-network-{group}/generated/ServerRuntime.g.ts`
+- **그룹 런타임:** `framework-ts/module/devian-protocol-{group}/generated/ServerRuntime.g.ts`
 - **정책 정본:** `skills/devian/03-ssot/SKILL.md`

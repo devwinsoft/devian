@@ -133,7 +133,7 @@ finalConfig = deepMerge(config.json, input.json)
 > staging({tempDir}) 외의 위치에 직접 생성하는 동작은 금지한다.
 > 
 > **Templates 참고:** 샘플/예제 코드는 `framework-cs/upm/com.devian.samples/Samples~/`에서 관리 (UPM Samples~ 사용)
-> → `skills/devian-common-upm-samples/02-samples-policy/SKILL.md`
+> → `skills/devian-upm-samples/00-samples-policy/SKILL.md`
 
 **반영 위치:**
 - C# 생성물: `staging` → `csConfig.generateDir` (framework-cs/module)
@@ -245,7 +245,7 @@ DATA 도메인의 데이터 출력 타겟은 전역 `dataConfig`로 설정한다
 | `framework-cs/module` | 수동 C# 모듈 (Devian — 단일 통합 모듈) | 검증만, 수정 금지 |
 | `framework-cs/module` | 생성 C# 모듈 (프로젝트명: `Devian` + `.Module.*`, `Devian.Protocol.*`) | staging 결과로 생성/반영 |
 | `framework-ts/module` | 수동 TS 모듈 (devian — 단일 통합 모듈) | 검증만, 수정 금지 |
-| `framework-ts/module` | 생성 TS 모듈 (devian-module-*, devian-network-*) | staging 결과로 생성/반영 |
+| `framework-ts/module` | 생성 TS 모듈 (devian-domain-*, devian-protocol-*) | staging 결과로 생성/반영 |
 | `framework-cs/upm` | 수동 UPM 패키지 (com.devian.core, com.devian.unity.*, com.devian.samples) | 검증만, 수정 금지 |
 | `framework-cs/upm` | 생성 UPM 패키지 (com.devian.domain.*, com.devian.protocol.*) | staging 결과로 생성/반영 |
 | `framework-cs/apps/UnityExample/Packages` | Unity 최종 패키지 | upm + upm → sync |
@@ -462,7 +462,7 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 - 패키지 단위 clean+copy (packageDir 전체 rm -rf 금지)
 
 > **참고:** UPM `Samples~`는 templates(사용자가 Import 후 수정하는 샘플 소스)를 배포하는 표준 메커니즘이다.
-> 정책: `skills/devian-common-upm-samples/01-upm-samples-policy/SKILL.md`
+> 정책: `skills/devian-upm-samples/01-samples-authoring-guide/SKILL.md`
 
 **충돌 정책 (HARD RULE):**
 - upm와 upm에 **동일 `package.json.name`이 있으면 무조건 빌드 FAIL**
@@ -535,9 +535,9 @@ DATA 입력은 input_common.json의 `domains` 섹션이 정의한다.
 - `input/input_common.json`에서 `domains.Common`은 필수 항목이다.
 - 결과로 Common 모듈(C#/TS)은 항상 생성/유지된다:
   - C#: `Devian` + `.Module.Common` (프로젝트명)
-  - TS: `@devian/module-common` (폴더명: `devian-module-common`)
+  - TS: `@devian/module-common` (폴더명: `devian-domain-common`)
 
-> Common 모듈의 상세 정책(생성물/수동 코드 경계, features 구조)은 `skills/devian-common-feature/01-module-policy/SKILL.md`를 참조한다.
+> Common 모듈의 상세 정책(생성물/수동 코드 경계, features 구조)은 `skills/devian-common/01-module-policy/SKILL.md`를 참조한다.
 
 #### Common 모듈 참조 (Hard Rule)
 
@@ -618,7 +618,7 @@ SKIP되어도 타겟 디렉토리는 clean되어 이전 산출물이 제거된�
   - `{tempDir}/{DomainKey}/data/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
 - final (csConfig/tsConfig/dataConfig 기반):
   - `{csConfig.generateDir}/` + `Devian` + `.Module.{DomainKey}` + `/generated/{DomainKey}.g.cs`
-  - `{tsConfig.generateDir}/devian-module-{domainkey}/generated/{DomainKey}.g.ts`, `index.ts`
+  - `{tsConfig.generateDir}/devian-domain-{domainkey}/generated/{DomainKey}.g.ts`, `index.ts`
   - `{dataConfig.tableDirs[i]}/{DomainKey}/ndjson/{TableName}.json` (내용은 NDJSON)
   - `{dataConfig.tableDirs[i]}/{DomainKey}/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
 
@@ -684,7 +684,7 @@ DATA Domain 생성물(`{DomainKey}.g.cs`)의 C# 네임스페이스는 **반드�
 
 #### TS index.ts Marker 관리 (Hard Rule)
 
-**TS `devian-module-*/index.ts`는 빌더가 관리하되, 통째 덮어쓰기를 금지한다.**
+**TS `devian-domain-*/index.ts`는 빌더가 관리하되, 통째 덮어쓰기를 금지한다.**
 
 - 빌더는 **marker 구간만 갱신**하며, 나머지 영역은 보존한다.
 - marker 구간은 최소 2개:
@@ -693,7 +693,7 @@ DATA Domain 생성물(`{DomainKey}.g.cs`)의 C# 네임스페이스는 **반드�
 - `features/index.ts`도 동일한 marker 방식으로 자동 관리된다.
 - 개발자는 marker 안을 **절대 수정하지 않는다**.
 
-> 상세 규칙은 `skills/devian-common-feature/01-module-policy/SKILL.md`를 참조한다.
+> 상세 규칙은 `skills/devian-common/01-module-policy/SKILL.md`를 참조한다.
 
 ### 2) DomainType = PROTOCOL
 
@@ -751,7 +751,7 @@ PROTOCOL 입력은 input_common.json의 `protocols` 섹션(배열)이 정의한�
 
 **TypeScript:**
 - staging: `{tempDir}/{ProtocolGroup}/{ProtocolName}.g.ts`, `index.ts`
-- final: `{tsConfig.generateDir}/devian-network-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
+- final: `{tsConfig.generateDir}/devian-protocol-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
 
 > **생성물 namespace 고정 (Hard Rule):**
 > C# 생성물 namespace는 `Devian.Protocol.{ProtocolGroup}`으로 고정이며, 런타임 모듈 단일화와 무관하게 변경하지 않는다.
@@ -878,6 +878,31 @@ finalDir = {upmConfig.packageDir}/{computedUpmName}
 공식 빌드 실행은 Node 기반 빌더를 사용한다: `framework-ts/tools/builder/build.js`
 
 C# 모듈은 레포에 `.csproj`/`.sln`을 포함하여 dotnet 빌드 및 IDE를 정식 지원한다.
+
+### 빌드 입력/설정/산출물
+
+도메인/프로토콜 동적 빌드 정책 (입력 스펙, 설정 스펙, 산출물 규칙):
+
+> **정책 문서:** `skills/devian/18-build-domain/SKILL.md`
+
+### 빌드 에러 리포팅
+
+빌드 실패 시 에러 출력 규격 및 로그 파일 규칙:
+
+> **정책 문서:** `skills/devian/19-build-error-reporting/SKILL.md`
+
+---
+
+## Examples (예제 도메인)
+
+**DomainKey = `Game`** 을 기준으로 한 예제 입력과 흐름 안내:
+
+> **진입점:** `skills/devian-examples/00-examples-policy/SKILL.md`
+
+예제 입력 위치:
+- `devian/input/Game/contracts/**` — 컨트랙트 예제
+- `devian/input/Game/tables/**` — 테이블 예제
+- `devian/input/Protocols/Game/**` — 프로토콜 예제
 
 ---
 

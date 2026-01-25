@@ -3,7 +3,7 @@
   "private": true,
   "workspaces": [
     "devian",
-    "devian-module-*",
-    "devian-network-*"
+    "devian-domain-*",
+    "devian-protocol-*"
   ]
 }

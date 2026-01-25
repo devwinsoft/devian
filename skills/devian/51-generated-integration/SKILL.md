@@ -48,7 +48,7 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 | 타겟 | Domain 출력 경로 | Protocol 출력 경로 |
 |------|------------------|-------------------|
 | C# | `{csConfig.generateDir}/`Devian` + `.Domain.{Domain}`/` | `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/` |
-| TS | `{tsConfig.generateDir}/devian-module-{domain}/` | `{tsConfig.generateDir}/devian-network-{group}/` |
+| TS | `{tsConfig.generateDir}/devian-domain-{domain}/` | `{tsConfig.generateDir}/devian-protocol-{group}/` |
 | Data (ndjson) | `{dataConfig.tableDirs}/{Domain}/ndjson/` | - |
 | Data (bin) | `{dataConfig.tableDirs}/{Domain}/pb64/` (pk 옵션 테이블만) | - |
 
@@ -74,11 +74,11 @@ framework-ts/
 ├── module/                                     # 수동 관리 (런타임 패키지)
 │   └── devian/                            # 단일 런타임 패키지 (@devian/core)
 ├── module/                                 # 생성 산출물 (기계 소유)
-│   ├── devian-module-{domain}/
+│   ├── devian-domain-{domain}/
 │   │   ├── generated/
 │   │   │   └── {Domain}.g.ts
 │   │   └── index.ts
-│   └── devian-network-{group}/
+│   └── devian-protocol-{group}/
 │       ├── {ProtocolName}.g.ts
 │       └── index.ts
 

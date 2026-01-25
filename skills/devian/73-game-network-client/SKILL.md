@@ -125,4 +125,4 @@ framework-ts/apps/GameClient/
 
 - **서버 앱:** `framework-ts/apps/GameServer/`
 - **네트워크 모듈:** `framework-ts/module/devian/`
-- **프로토콜:** `framework-ts/module/devian-network-game/`
+- **프로토콜:** `framework-ts/module/devian-protocol-game/`

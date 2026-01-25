@@ -684,10 +684,10 @@ class DevianToolBuilder {
             this.ensureCsProj(resolvedTargetDir, csModuleName);
         }
 
-        // Copy to TS target: {tsConfig.generateDir}/devian-module-{domain}/generated/
+        // Copy to TS target: {tsConfig.generateDir}/devian-domain-{domain}/generated/
         // Domain TS output always goes to tsConfig.generateDir (domains[*].tsTargetDir is deprecated)
         if (this.tsGenerateDir) {
-            const tsModuleName = `devian-module-${domainName.toLowerCase()}`;
+            const tsModuleName = `devian-domain-${domainName.toLowerCase()}`;
             const resolvedTargetDir = path.join(this.tsGenerateDir, tsModuleName);
             const target = path.join(resolvedTargetDir, 'generated');
             this.cleanAndCopy(stagingTs, target);
@@ -1026,10 +1026,10 @@ class DevianToolBuilder {
             console.log(`    [Copy] ${stagingCs} -> ${target}`);
         }
 
-        // Copy to TS target: {tsConfig.generateDir}/devian-network-{group}/
+        // Copy to TS target: {tsConfig.generateDir}/devian-protocol-{group}/
         // Protocol TS output always goes to tsConfig.generateDir (protocols[*].tsTargetDir is deprecated)
         if (this.tsGenerateDir) {
-            const tsModuleName = `devian-network-${groupName.toLowerCase()}`;
+            const tsModuleName = `devian-protocol-${groupName.toLowerCase()}`;
             const target = path.join(this.tsGenerateDir, tsModuleName);
             this.cleanAndCopy(stagingTs, target);
             console.log(`    [Copy] ${stagingTs} -> ${target}`);
@@ -1685,7 +1685,7 @@ export * from './features';
         fs.mkdirSync(stagingGenerated, { recursive: true });
         fs.mkdirSync(stagingEditor, { recursive: true });
 
-        // package.json - SSOT: skills/devian-common-upm/10-package-metadata/SKILL.md
+        // package.json - SSOT: skills/devian-upm/03-package-metadata/SKILL.md
         const isCommon = domainName === 'Common';
         const dependencies = { 'com.devian.core': '0.1.0' };
         if (isCommon) {
@@ -1705,7 +1705,7 @@ export * from './features';
         };
         fs.writeFileSync(path.join(stagingUpm, 'package.json'), JSON.stringify(packageJsonObj, null, 2));
 
-        // Runtime.asmdef - SSOT: skills/devian-common-upm/20-packages/com.devian.domain.common/SKILL.md
+        // Runtime.asmdef - SSOT: skills/devian-upm/20-packages/com.devian.domain.template/SKILL.md
         const asmdefReferences = isCommon
             ? ['Devian.Core', 'Newtonsoft.Json']
             : ['Devian.Core'];
@@ -1727,7 +1727,7 @@ export * from './features';
         fs.writeFileSync(path.join(stagingRuntime, `${asmdefName}.asmdef`), JSON.stringify(runtimeAsmdef, null, 2));
 
         // Editor.asmdef - includes refs for TableID Editor bindings (base classes in Devian + .Unity.Common.Editor assembly)
-        // SSOT: skills/devian-common-upm/20-packages/com.devian.domain.common/SKILL.md
+        // SSOT: skills/devian-upm/20-packages/com.devian.domain.template/SKILL.md
         const editorReferences = [asmdefName, 'Devian.Unity.Common', 'Devian.Unity.Common.Editor'];
         const editorAsmdef = {
             name: `${asmdefName}.Editor`,
@@ -1758,7 +1758,7 @@ export * from './features';
         }
 
         // Generate TableID Editor bindings into this domain module package
-        // SSOT: skills/devian-common-upm/20-packages/com.devian.domain.common/SKILL.md
+        // SSOT: skills/devian-upm/20-packages/com.devian.domain.template/SKILL.md
         const keyedTables = (tables || []).filter(t => t && t.keyField);
         if (keyedTables.length > 0) {
             const editorGeneratedDir = path.join(stagingUpm, 'Editor', 'Generated');
@@ -1775,7 +1775,7 @@ export * from './features';
         }
 
         // Common 모듈일 때 Features 폴더 복사 (Logger/Variant/Complex)
-        // SSOT: skills/devian-common-upm/20-packages/com.devian.domain.common/SKILL.md
+        // SSOT: skills/devian-upm/20-packages/com.devian.domain.common/SKILL.md
         if (isCommon) {
             // Use csGenerateDir (unified module root)
             const featuresSource = this.csGenerateDir
@@ -1901,7 +1901,7 @@ export * from './features';
 
     // ========================================================================
     // Static UPM Package Processing (e.g., com.devian.unity)
-    // SSOT: skills/devian-common-upm/20-packages/com.devian.unity/SKILL.md
+    // SSOT: skills/devian-upm/20-packages/com.devian.unity/SKILL.md
     // ========================================================================
 
     /**
@@ -1926,7 +1926,7 @@ export * from './features';
         console.log(`    [OK] Staged to ${stagingUpm}`);
 
         // GUARD: Validate UPM sample structure (Runtime/Editor separation)
-        // SSOT: skills/devian-common-upm-samples/01-upm-samples-policy/SKILL.md
+        // SSOT: skills/devian-upm-samples/01-samples-authoring-guide/SKILL.md
         this.validateUpmSampleStructure(stagingUpm, upmName);
 
         // Safety: Remove legacy Editor/Generated from unity.common staging
@@ -1939,15 +1939,15 @@ export * from './features';
             }
             
             // Generate shared templates (must be first - UnityMainThread is shared)
-            // SSOT: skills/devian-common-upm/30-unity-components/00-unity-object-destruction/SKILL.md
+            // SSOT: skills/devian-upm/30-unity-components/00-unity-object-destruction/SKILL.md
             this.generateUnitySharedRuntime(stagingUpm);
             
             // Generate singleton templates
-            // SSOT: skills/devian-common-upm/30-unity-components/01-singleton/SKILL.md
+            // SSOT: skills/devian-upm/30-unity-components/01-singleton/SKILL.md
             this.generateUnitySingletonRuntime(stagingUpm);
             
             // Generate pool templates
-            // SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+            // SSOT: skills/devian-upm/30-unity-components/02-pool-manager/SKILL.md
             this.generateUnityPoolRuntime(stagingUpm);
         }
     }
@@ -1973,7 +1973,7 @@ export * from './features';
         // Generate UnityMainThread.cs (shared helper)
         const unityMainThreadCode = `// <auto-generated>
 // Unity Shared - Main Thread Helper
-// SSOT: skills/devian-common-upm/30-unity-components/00-unity-object-destruction/SKILL.md
+// SSOT: skills/devian-upm/30-unity-components/00-unity-object-destruction/SKILL.md
 // </auto-generated>
 
 using System;
@@ -2024,7 +2024,7 @@ namespace Devian
 
     /**
      * Generate Unity Singleton files.
-     * SSOT: skills/devian-common-upm/30-unity-components/01-singleton/SKILL.md
+     * SSOT: skills/devian-upm/30-unity-components/01-singleton/SKILL.md
      * 
      * Generates:
      * - Runtime/Singleton/MonoSingleton.cs
@@ -2046,7 +2046,7 @@ namespace Devian
         // Generate MonoSingleton.cs
         const monoSingletonCode = `// <auto-generated>
 // Unity Singleton - MonoSingleton<T>
-// SSOT: skills/devian-common-upm/30-unity-components/01-singleton/SKILL.md
+// SSOT: skills/devian-upm/30-unity-components/01-singleton/SKILL.md
 // </auto-generated>
 
 using System;
@@ -2154,7 +2154,7 @@ namespace Devian
         // Generate AutoSingleton.cs
         const autoSingletonCode = `// <auto-generated>
 // Unity Singleton - AutoSingleton<T>
-// SSOT: skills/devian-common-upm/30-unity-components/01-singleton/SKILL.md
+// SSOT: skills/devian-upm/30-unity-components/01-singleton/SKILL.md
 // </auto-generated>
 
 using System;
@@ -2278,7 +2278,7 @@ namespace Devian
         // Generate ResSingleton.cs
         const resSingletonCode = `// <auto-generated>
 // Unity Singleton - ResSingleton<T>
-// SSOT: skills/devian-common-upm/30-unity-components/01-singleton/SKILL.md
+// SSOT: skills/devian-upm/30-unity-components/01-singleton/SKILL.md
 // </auto-generated>
 
 using System;
@@ -2412,7 +2412,7 @@ namespace Devian
 
     /**
      * Generate Unity Pool files.
-     * SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+     * SSOT: skills/devian-upm/30-unity-components/02-pool-manager/SKILL.md
      * 
      * Generates:
      * - Runtime/Pool/IPoolable.cs
@@ -2437,7 +2437,7 @@ namespace Devian
         // Generate IPoolable.cs
         const iPoolableCode = `// <auto-generated>
 // Unity Pool - IPoolable Interface
-// SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+// SSOT: skills/devian-upm/30-unity-components/02-pool-manager/SKILL.md
 // </auto-generated>
 
 using UnityEngine;
@@ -2470,7 +2470,7 @@ namespace Devian
         // Generate IPoolFactory.cs
         const iPoolFactoryCode = `// <auto-generated>
 // Unity Pool - IPoolFactory Interface
-// SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+// SSOT: skills/devian-upm/30-unity-components/02-pool-manager/SKILL.md
 // </auto-generated>
 
 using System;
@@ -2521,7 +2521,7 @@ namespace Devian
         // Generate PoolOptions.cs
         const poolOptionsCode = `// <auto-generated>
 // Unity Pool - PoolOptions
-// SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+// SSOT: skills/devian-upm/30-unity-components/02-pool-manager/SKILL.md
 // </auto-generated>
 
 using UnityEngine;
@@ -2569,7 +2569,7 @@ namespace Devian
         // Generate IPool.cs
         const iPoolCode = `// <auto-generated>
 // Unity Pool - IPool Interface
-// SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+// SSOT: skills/devian-upm/30-unity-components/02-pool-manager/SKILL.md
 // </auto-generated>
 
 using System;
@@ -2610,7 +2610,7 @@ namespace Devian
         // Generate Pool.cs
         const poolCode = `// <auto-generated>
 // Unity Pool - Pool<T>
-// SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+// SSOT: skills/devian-upm/30-unity-components/02-pool-manager/SKILL.md
 // </auto-generated>
 
 using System;
@@ -2806,7 +2806,7 @@ namespace Devian
         // Generate PoolManager.cs
         const poolManagerCode = `// <auto-generated>
 // Unity Pool - PoolManager
-// SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+// SSOT: skills/devian-upm/30-unity-components/02-pool-manager/SKILL.md
 // </auto-generated>
 
 using System;
@@ -2994,7 +2994,7 @@ namespace Devian
     /**
      * GUARD: Validate UPM sample structure (Runtime/Editor separation).
      * Throws Error if sample structure is invalid.
-     * SSOT: skills/devian-common-upm-samples/01-upm-samples-policy/SKILL.md
+     * SSOT: skills/devian-upm-samples/01-samples-authoring-guide/SKILL.md
      */
     validateUpmSampleStructure(stagingUpm, upmName) {
         const samplesDir = path.join(stagingUpm, 'Samples~');
@@ -3243,7 +3243,7 @@ namespace Devian
 
     /**
      * Guard: Verify deprecated packages don't exist in target.
-     * SSOT: skills/devian-common-upm/02-upm-bundles/SKILL.md
+     * SSOT: skills/devian-upm/02-upm-bundles/SKILL.md
      */
     async verifyNoDeprecatedPackages() {
         const deprecatedPackages = [
@@ -3695,7 +3695,7 @@ namespace Devian
 
     // ========================================================================
     // Forbidden Namespace Guard (재발 방지)
-    // SSOT: skills/devian-common-feature/01-module-policy/SKILL.md
+    // SSOT: skills/devian-common/01-module-policy/SKILL.md
     // ========================================================================
 
     /**

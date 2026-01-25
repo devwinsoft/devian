@@ -1,4 +1,4 @@
-// SSOT: skills/devian-common-feature/13-feature-complex/SKILL.md
+// SSOT: skills/devian-common/13-feature-complex/SKILL.md
 // PropertyDrawer for CString - displays unmasked value in Inspector
 
 using System;

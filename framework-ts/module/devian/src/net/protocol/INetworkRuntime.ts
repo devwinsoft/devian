@@ -13,7 +13,7 @@ export type SendFn = (sessionId: number, frame: Uint8Array) => void;
 /**
  * Network Runtime Interface
  * 
- * Each protocol group (e.g., devian-network-game) provides an implementation
+ * Each protocol group (e.g., devian-protocol-game) provides an implementation
  * that knows its own opcodes, stub dispatch, and proxy creation.
  */
 export interface INetworkRuntime {

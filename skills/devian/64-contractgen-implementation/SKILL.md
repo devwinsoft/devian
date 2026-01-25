@@ -73,7 +73,7 @@ Contract spec는 `enums`와 `classes`로 구성된다.
 Contract는 Domain 단위로 Table과 함께 **단일 파일에 통합** 생성된다.
 
 - staging: `{tempDir}/{DomainKey}/cs/generated/{DomainKey}.g.cs`, `{tempDir}/{DomainKey}/ts/generated/{DomainKey}.g.ts`
-- final: `{csConfig.generateDir}/` + `Devian` + `.Module.{DomainKey}` + `/generated/{DomainKey}.g.cs`, `{tsConfig.generateDir}/devian-module-{domainkey}/generated/{DomainKey}.g.ts`
+- final: `{csConfig.generateDir}/` + `Devian` + `.Module.{DomainKey}` + `/generated/{DomainKey}.g.cs`, `{tsConfig.generateDir}/devian-domain-{domainkey}/generated/{DomainKey}.g.ts`
 
 ---
 

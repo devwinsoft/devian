@@ -95,7 +95,7 @@ Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴�
 
 **TypeScript:**
 - staging: `{tempDir}/{ProtocolGroup}/{ProtocolName}.g.ts`, `index.ts`
-- final: `{tsConfig.generateDir}/devian-network-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
+- final: `{tsConfig.generateDir}/devian-protocol-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
 - 패키지명: `@devian/network-{protocolgroup}`
 
 > **생성물 namespace 고정 (Hard Rule):**
@@ -227,14 +227,14 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 - 그 외 (0개, 2개 이상, 한쪽만 존재) → **빌드 에러**
 
 **생성 파일:**
-- `{tsConfig.generateDir}/devian-network-{group}/generated/ServerRuntime.g.ts`
-- `{tsConfig.generateDir}/devian-network-{group}/generated/ClientRuntime.g.ts`
+- `{tsConfig.generateDir}/devian-protocol-{group}/generated/ServerRuntime.g.ts`
+- `{tsConfig.generateDir}/devian-protocol-{group}/generated/ClientRuntime.g.ts`
 
 ---
 
 ## TypeScript package.json (생성 산출물)
 
-`devian-network-*` 패키지의 `package.json`은 **빌드 시스템이 생성하는 산출물**이다.
+`devian-protocol-*` 패키지의 `package.json`은 **빌드 시스템이 생성하는 산출물**이다.
 
 **수정 금지 정책:**
 - 수동 편집 금지
@@ -287,7 +287,7 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 
 **TypeScript:**
 
-5. 생성된 `framework-ts/module/devian-network-{group}/package.json` dependencies에  
+5. 생성된 `framework-ts/module/devian-protocol-{group}/package.json` dependencies에  
    `@devian/module-common` 존재
 
 **Unity UPM:**
