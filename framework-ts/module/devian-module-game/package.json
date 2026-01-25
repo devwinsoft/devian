@@ -1,0 +1,9 @@
+{
+  "name": "@devian/module-game",
+  "version": "10.0.0",
+  "main": "index.ts",
+  "types": "index.ts",
+  "dependencies": {
+    "@devian/core": "10.0.0"
+  }
+}

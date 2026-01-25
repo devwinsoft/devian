@@ -63,7 +63,7 @@ Samples~/Network/
     "Devian.Core",
     "Devian.Network",
     "<어셈블리: Devian + .Unity.Network>",
-    "Devian.Protocol.Sample"
+    "Devian.Protocol.Game"
   ]
 }
 ```
@@ -95,7 +95,7 @@ Samples~/Network/
 | `com.devian.core` | ✅ | 핵심 인터페이스 |
 | `com.devian.network` | ✅ | 네트워크 런타임 |
 | `com.devian.unity` | ✅ | Unity 네트워크 클라이언트 |
-| `com.devian.protocol.sample` | ✅ | Sample 프로토콜 (테스트용) |
+| `com.devian.protocol.game` | ✅ | Sample 프로토콜 (테스트용) |
 
 ---
 
@@ -136,9 +136,9 @@ Unity Inspector 확장.
 
 ## 8. 테스트 실행
 
-1. TS SampleServer 실행:
+1. TS GameServer 실행:
    ```bash
-   cd framework-ts/apps/SampleServer
+   cd framework-ts/apps/GameServer
    npm start
    ```
 
@@ -175,7 +175,7 @@ namespace MyGame.Network
 
 ### 9.2 Protocol 변경
 
-`Devian.Protocol.Sample` 대신 자신의 프로토콜 사용:
+`Devian.Protocol.Game` 대신 자신의 프로토콜 사용:
 
 1. asmdef references 수정
 2. using 문 변경

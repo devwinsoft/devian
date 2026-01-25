@@ -40,7 +40,7 @@ upm + upm → packageDir (패키지 단위 clean+copy)
 ```
 
 > 수동 패키지(예: com.devian.unity)는 upm에서 관리하고,  
-> 생성 패키지(예: com.devian.module.common)는 upm에서 관리한다.
+> 생성 패키지(예: com.devian.domain.common)는 upm에서 관리한다.
 
 ---
 
@@ -286,7 +286,7 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 
 ---
 
-## EchoWsClientSample Spec (Online-only, TS SampleServer)
+## EchoWsClientSample Spec (Online-only, TS GameServer)
 
 ### 필수 요구사항
 
@@ -301,8 +301,8 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 
 | 방향 | Protocol | 메시지 |
 |------|----------|--------|
-| **Outbound** (Client→Server) | `C2Sample.Proxy` | Ping, Echo |
-| **Inbound** (Server→Client) | `Sample2C.Runtime` + `Sample2C.Stub` | Pong, EchoReply |
+| **Outbound** (Client→Server) | `C2Game.Proxy` | Ping, Echo |
+| **Inbound** (Server→Client) | `Game2C.Runtime` + `Game2C.Stub` | Pong, EchoReply |
 
 ---
 

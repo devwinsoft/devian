@@ -1,0 +1,19 @@
+{
+  "name": "game-client",
+  "version": "10.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "npx tsx src/index.ts"
+  },
+  "dependencies": {
+    "ws": "^8.14.0",
+    "@devian/core": "10.0.0",
+    "@devian/network-game": "10.0.0"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.5.0",
+    "tsx": "^4.7.0"
+  }
+}

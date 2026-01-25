@@ -13,12 +13,12 @@
         "*.xlsx"
       ]
     },
-    "Sample": {
-      "contractDir": "Sample/contracts",
+    "Game": {
+      "contractDir": "Game/contracts",
       "contractFiles": [
         "*.json"
       ],
-      "tableDir": "Sample/tables",
+      "tableDir": "Game/tables",
       "tableFiles": [
         "*.xlsx"
       ]
@@ -26,11 +26,11 @@
   },
   "protocols": [
     {
-      "group": "Sample",
-      "protocolDir": "./Protocols/Sample",
+      "group": "Game",
+      "protocolDir": "./Protocols/Game",
       "protocolFiles": [
-        "C2Sample.json",
-        "Sample2C.json"
+        "C2Game.json",
+        "Game2C.json"
       ]
     }
   ]

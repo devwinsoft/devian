@@ -20,7 +20,7 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 | 구분 | 생성물 namespace | 런타임 참조 |
 |------|------------------|------------|
 | Domain 모듈 | `Devian.Domain.{DomainKey}` | `using Devian;` |
-| Protocol 모듈 | `Devian.Protocol.{ProtocolName}` | `using Devian;` |
+| Protocol 모듈 | `Devian.Protocol.{ProtocolGroup}` | `using Devian;` |
 
 > **금지 패턴:**
 > 생성물에서 분리된 런타임 하위 네임스페이스 참조 금지.
@@ -47,13 +47,13 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 
 | 타겟 | Domain 출력 경로 | Protocol 출력 경로 |
 |------|------------------|-------------------|
-| C# | `{csConfig.generateDir}/`Devian` + `.Module.{Domain}`/` | `{csConfig.generateDir}/Devian.Protocol.{ProtocolName}/` |
+| C# | `{csConfig.generateDir}/`Devian` + `.Domain.{Domain}`/` | `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/` |
 | TS | `{tsConfig.generateDir}/devian-module-{domain}/` | `{tsConfig.generateDir}/devian-network-{group}/` |
 | Data (ndjson) | `{dataConfig.tableDirs}/{Domain}/ndjson/` | - |
 | Data (bin) | `{dataConfig.tableDirs}/{Domain}/pb64/` (pk 옵션 테이블만) | - |
 
 > **생성물 namespace 고정 (Hard Rule):**
-> C# 생성물 namespace는 `Devian.Protocol.{ProtocolName}`으로 고정이며, 런타임 모듈 단일화와 무관하게 변경하지 않는다.
+> C# 생성물 namespace는 `Devian.Protocol.{ProtocolGroup}`으로 고정이며, 런타임 모듈 단일화와 무관하게 변경하지 않는다.
 
 ### 권장 구조
 
@@ -63,11 +63,11 @@ framework-cs/
 │   └── Devian/                                 # 단일 런타임 모듈
 │       └── Devian.csproj
 ├── module/                                 # 생성 산출물 (기계 소유)
-│   ├── `Devian` + `.Module.{Domain}`/
+│   ├── `Devian` + `.Domain.{Domain}`/
 │   │   └── generated/
 │   │       └── {Domain}.g.cs
-│   └── Devian.Protocol.{ProtocolName}/
-│       ├── Devian.Protocol.{ProtocolName}.csproj
+│   └── Devian.Protocol.{ProtocolGroup}/
+│       ├── Devian.Protocol.{ProtocolGroup}.csproj
 │       └── {ProtocolName}.g.cs
 
 framework-ts/

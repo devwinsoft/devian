@@ -21,7 +21,7 @@ AppliesTo: v10
 - UnityEngine.dll을 외부 .NET 빌드에서 직접 참조하지 않는다.
 - UnityExample에 embedded UPM 패키지로 다음을 제공한다:
   - `com.devian.core` (Devian 런타임 통합: Core + Network + Protobuf + Logger)
-  - `com.devian.module.common` (Devian.Module.Common 소스 + Complex PropertyDrawer)
+  - `com.devian.domain.common` (Devian.Domain.Common 소스 + Complex PropertyDrawer)
   - `com.devian.unity` (Unity 어댑터: UnityLogSink, AssetManager, TableID Editor, Network 런타임)
   - `com.devian.samples` (UPM Samples~ 기반 샘플 코드)
 
@@ -45,8 +45,8 @@ framework-cs/apps/UnityExample/Packages/
 | 패키지 | 역할 |
 |--------|------|
 | `com.devian.core` | Devian 런타임 통합 (Core + Network + Protobuf + Logger) |
-| `com.devian.module.common` | Devian.Module.Common 소스 (Complex types + PropertyDrawers) |
-| `com.devian.module.sample` | Devian.Module.Sample 소스 (테이블 생성 예제) |
+| `com.devian.domain.common` | Devian.Domain.Common 소스 (Complex types + PropertyDrawers) |
+| `com.devian.domain.game` | Devian.Domain.Game 소스 (테이블 생성 예제) |
 | `com.devian.unity` | Unity 어댑터 (UnityLogSink, AssetManager, TableID Editor, Network 런타임) |
 | `com.devian.samples` | UPM Samples~ 기반 샘플 코드 |
 
@@ -67,10 +67,10 @@ com.devian.core (base - 의존 없음)
        ↑
 com.devian.unity (Unity adapters - core만 의존)
        ↑
-com.devian.module.* (module packages - core + unity 의존)
+com.devian.domain.* (module packages - core + unity 의존)
 ```
 
-> **Hard Rule:** `com.devian.unity` → `com.devian.module.*` 의존 **금지** (순환 방지)
+> **Hard Rule:** `com.devian.unity` → `com.devian.domain.*` 의존 **금지** (순환 방지)
 
 ---
 
@@ -82,16 +82,16 @@ com.devian.module.* (module packages - core + unity 의존)
 |--------|------|------------|--------|
 | `Devian.Core.asmdef` | `Devian.Core` | `[]` | com.devian.core |
 | `Devian.Unity.Common.asmdef` | `Devian.Unity.Common` | `["Devian.Core"]` | com.devian.unity |
-| `Devian.Module.Common.asmdef` | `Devian.Module.Common` | `["Devian.Core", "Newtonsoft.Json"]` | com.devian.module.common |
-| `Devian.Module.Sample.asmdef` | `Devian.Module.Sample` | `["Devian.Core", "Devian.Module.Common"]` | com.devian.module.sample |
+| `Devian.Domain.Common.asmdef` | `Devian.Domain.Common` | `["Devian.Core", "Newtonsoft.Json"]` | com.devian.domain.common |
+| `Devian.Domain.Game.asmdef` | `Devian.Domain.Game` | `["Devian.Core", "Devian.Domain.Common"]` | com.devian.domain.game |
 
 ### Editor asmdef
 
 | asmdef | name | references | 패키지 |
 |--------|------|------------|--------|
 | `Devian.Unity.Common.Editor.asmdef` | `Devian.Unity.Common.Editor` | `["Devian.Core", "Devian.Unity.Common"]` | com.devian.unity |
-| `Devian.Module.Common.Editor.asmdef` | `Devian.Module.Common.Editor` | `["Devian.Module.Common", "Devian.Unity.Common", "Devian.Unity.Common.Editor"]` | com.devian.module.common |
-| `Devian.Module.Sample.Editor.asmdef` | `Devian.Module.Sample.Editor` | `["Devian.Module.Common", "Devian.Module.Sample", "Devian.Unity.Common", "Devian.Unity.Common.Editor"]` | com.devian.module.sample |
+| `Devian.Domain.Common.Editor.asmdef` | `Devian.Domain.Common.Editor` | `["Devian.Domain.Common", "Devian.Unity.Common", "Devian.Unity.Common.Editor"]` | com.devian.domain.common |
+| `Devian.Domain.Game.Editor.asmdef` | `Devian.Domain.Game.Editor` | `["Devian.Domain.Common", "Devian.Domain.Game", "Devian.Unity.Common", "Devian.Unity.Common.Editor"]` | com.devian.domain.game |
 
 ---
 
@@ -101,8 +101,8 @@ com.devian.module.* (module packages - core + unity 의존)
 |--------|--------------|
 | `com.devian.core` | (없음) |
 | `com.devian.unity` | `com.devian.core` |
-| `com.devian.module.common` | `com.devian.core`, `com.devian.unity`, `com.unity.nuget.newtonsoft-json` |
-| `com.devian.module.sample` | `com.devian.core`, `com.devian.unity` |
+| `com.devian.domain.common` | `com.devian.core`, `com.devian.unity`, `com.unity.nuget.newtonsoft-json` |
+| `com.devian.domain.game` | `com.devian.core`, `com.devian.unity` |
 | `com.devian.samples` | (없음) |
 
 ---
@@ -129,7 +129,7 @@ com.devian.module.* (module packages - core + unity 의존)
 
 - `Packages/`에서 수정한 코드는 다음 sync에서 덮어써지며, **정책 위반**이다.
 - 수동 패키지(`com.devian.core`, `com.devian.unity`, `com.devian.samples` 등)는 `upm/`에서 수정
-- 생성 패키지(`com.devian.module.common`, `com.devian.protocol.*` 등)는 빌더가 `upm/`에 생성
+- 생성 패키지(`com.devian.domain.common`, `com.devian.protocol.*` 등)는 빌더가 `upm/`에 생성
 
 ---
 
@@ -138,4 +138,4 @@ com.devian.module.* (module packages - core + unity 의존)
 - Related: `skills/devian-common-upm/01-upm-policy/SKILL.md`
 - Related: `skills/devian-common-upm/03-package-metadata/SKILL.md`
 - Related: `skills/devian-common-upm/20-packages/com.devian.unity/SKILL.md`
-- Related: `skills/devian-common-upm/20-packages/com.devian.module.common/SKILL.md`
+- Related: `skills/devian-common-upm/20-packages/com.devian.domain.common/SKILL.md`

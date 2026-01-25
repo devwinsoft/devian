@@ -71,7 +71,7 @@ Common 모듈의 C# 코드는 **반드시** 단일 네임스페이스를 사용�
 
 **허용 (예외):**
 - ✅ `namespace Devian.Domain.{DomainKey}` (Domain 생성물)
-- ✅ `namespace Devian.Protocol.{ProtocolName}` (Protocol 생성물)
+- ✅ `namespace Devian.Protocol.{ProtocolGroup}` (Protocol 생성물)
 
 **재발 방지:**
 - C# 코드에서 `namespace Devian` + `.<X>` (X ≠ Domain, Protocol) 문자열이 발견되면 **빌드 실패**

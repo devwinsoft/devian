@@ -4,7 +4,7 @@
     "references": [
         "Devian.Core",
         "Devian.Unity.Common",
-        "Devian.Protocol.Sample"
+        "Devian.Protocol.Game"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

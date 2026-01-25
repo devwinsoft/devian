@@ -7,39 +7,21 @@
 
 export namespace C2Game {
 
-    /** LoginRequest message */
-    export interface LoginRequest {
-        userId: string;
-        token: string;
-        version: number;
+    /** Ping message */
+    export interface Ping {
+        timestamp: bigint;
+        payload?: string;
     }
 
-    /** JoinRoomRequest message */
-    export interface JoinRoomRequest {
-        roomId: number;
-        password?: string;
-    }
-
-    /** ChatMessage message */
-    export interface ChatMessage {
-        channel: number;
+    /** Echo message */
+    export interface Echo {
         message: string;
-        targetUserIds?: bigint[];
-    }
-
-    /** UploadData message */
-    export interface UploadData {
-        data: Uint8Array;
-        metadata?: Record<string, string>;
-        flags: boolean[];
     }
 
     /** Opcode constants */
     export const Opcodes = {
-        LoginRequest: 1001,
-        JoinRoomRequest: 100,
-        ChatMessage: 1000,
-        UploadData: 1002,
+        Ping: 1001,
+        Echo: 1000,
     } as const;
 
     export type OpcodeType = typeof Opcodes[keyof typeof Opcodes];
@@ -218,48 +200,30 @@ export namespace C2Game {
      */
     export class CodecProtobuf implements ICodec {
 
-        private encodeLoginRequest(m: LoginRequest): Uint8Array {
+        private encodePing(m: Ping): Uint8Array {
             const arr: number[] = [];
-            Proto.writeString(arr, 1, m.userId);
-            Proto.writeString(arr, 2, m.token);
-            Proto.writeInt32(arr, 3, m.version ?? 0);
+            Proto.writeInt64(arr, 1, m.timestamp ?? 0n);
+            Proto.writeString(arr, 2, m.payload);
             return new Uint8Array(arr);
         }
 
-        private encodeJoinRoomRequest(m: JoinRoomRequest): Uint8Array {
+        private encodeEcho(m: Echo): Uint8Array {
             const arr: number[] = [];
-            Proto.writeInt32(arr, 1, m.roomId ?? 0);
-            Proto.writeString(arr, 2, m.password);
+            Proto.writeString(arr, 1, m.message);
             return new Uint8Array(arr);
         }
 
-        private encodeChatMessage(m: ChatMessage): Uint8Array {
-            const arr: number[] = [];
-            Proto.writeInt32(arr, 1, m.channel ?? 0);
-            Proto.writeString(arr, 2, m.message);
-            return new Uint8Array(arr);
-        }
-
-        private encodeUploadData(m: UploadData): Uint8Array {
-            const arr: number[] = [];
-            Proto.writeBytes(arr, 1, m.data);
-            return new Uint8Array(arr);
-        }
-
-        private decodeLoginRequest(data: Uint8Array): LoginRequest {
-            const m: LoginRequest = {} as LoginRequest;
+        private decodePing(data: Uint8Array): Ping {
+            const m: Ping = {} as Ping;
             const pos = { v: 0 };
             while (pos.v < data.length) {
                 const { tag, wireType } = Proto.readTag(data, pos);
                 switch (tag) {
                     case 1:
-                        m.userId = Proto.readString(data, pos);
+                        m.timestamp = Proto.readInt64(data, pos);
                         break;
                     case 2:
-                        m.token = Proto.readString(data, pos);
-                        break;
-                    case 3:
-                        m.version = Proto.readInt32(data, pos);
+                        m.payload = Proto.readString(data, pos);
                         break;
                     default:
                         Proto.skip(data, pos, wireType);
@@ -269,60 +233,14 @@ export namespace C2Game {
             return m;
         }
 
-        private decodeJoinRoomRequest(data: Uint8Array): JoinRoomRequest {
-            const m: JoinRoomRequest = {} as JoinRoomRequest;
+        private decodeEcho(data: Uint8Array): Echo {
+            const m: Echo = {} as Echo;
             const pos = { v: 0 };
             while (pos.v < data.length) {
                 const { tag, wireType } = Proto.readTag(data, pos);
                 switch (tag) {
                     case 1:
-                        m.roomId = Proto.readInt32(data, pos);
-                        break;
-                    case 2:
-                        m.password = Proto.readString(data, pos);
-                        break;
-                    default:
-                        Proto.skip(data, pos, wireType);
-                        break;
-                }
-            }
-            return m;
-        }
-
-        private decodeChatMessage(data: Uint8Array): ChatMessage {
-            const m: ChatMessage = {} as ChatMessage;
-            const pos = { v: 0 };
-            while (pos.v < data.length) {
-                const { tag, wireType } = Proto.readTag(data, pos);
-                switch (tag) {
-                    case 1:
-                        m.channel = Proto.readInt32(data, pos);
-                        break;
-                    case 2:
                         m.message = Proto.readString(data, pos);
-                        break;
-                    case 3:
-                        break;
-                    default:
-                        Proto.skip(data, pos, wireType);
-                        break;
-                }
-            }
-            return m;
-        }
-
-        private decodeUploadData(data: Uint8Array): UploadData {
-            const m: UploadData = {} as UploadData;
-            const pos = { v: 0 };
-            while (pos.v < data.length) {
-                const { tag, wireType } = Proto.readTag(data, pos);
-                switch (tag) {
-                    case 1:
-                        m.data = Proto.readBytes(data, pos);
-                        break;
-                    case 2:
-                        break;
-                    case 3:
                         break;
                     default:
                         Proto.skip(data, pos, wireType);
@@ -334,16 +252,10 @@ export namespace C2Game {
 
         encode<T>(message: T): Uint8Array {
             // Type dispatch - caller should use encodeByOpcode when possible
-            if ((message as unknown as LoginRequest).userId !== undefined) {
+            if ((message as unknown as Ping).timestamp !== undefined) {
                 // Heuristic check - may need refinement
             }
-            if ((message as unknown as JoinRoomRequest).roomId !== undefined) {
-                // Heuristic check - may need refinement
-            }
-            if ((message as unknown as ChatMessage).channel !== undefined) {
-                // Heuristic check - may need refinement
-            }
-            if ((message as unknown as UploadData).data !== undefined) {
+            if ((message as unknown as Echo).message !== undefined) {
                 // Heuristic check - may need refinement
             }
             throw new Error("Unknown message type for encode");
@@ -351,10 +263,8 @@ export namespace C2Game {
 
         encodeByOpcode<T>(opcode: number, message: T): Uint8Array {
             switch (opcode) {
-                case Opcodes.LoginRequest: return this.encodeLoginRequest(message as unknown as LoginRequest);
-                case Opcodes.JoinRoomRequest: return this.encodeJoinRoomRequest(message as unknown as JoinRoomRequest);
-                case Opcodes.ChatMessage: return this.encodeChatMessage(message as unknown as ChatMessage);
-                case Opcodes.UploadData: return this.encodeUploadData(message as unknown as UploadData);
+                case Opcodes.Ping: return this.encodePing(message as unknown as Ping);
+                case Opcodes.Echo: return this.encodeEcho(message as unknown as Echo);
                 default: throw new Error(`Unknown opcode: ${opcode}`);
             }
         }
@@ -365,10 +275,8 @@ export namespace C2Game {
 
         decodeByOpcode(opcode: number, data: Uint8Array): unknown {
             switch (opcode) {
-                case Opcodes.LoginRequest: return this.decodeLoginRequest(data);
-                case Opcodes.JoinRoomRequest: return this.decodeJoinRoomRequest(data);
-                case Opcodes.ChatMessage: return this.decodeChatMessage(data);
-                case Opcodes.UploadData: return this.decodeUploadData(data);
+                case Opcodes.Ping: return this.decodePing(data);
+                case Opcodes.Echo: return this.decodeEcho(data);
                 default: throw new Error(`Unknown opcode: ${opcode}`);
             }
         }
@@ -399,20 +307,12 @@ export namespace C2Game {
             }
         }
 
-        onLoginRequest(handler: MessageHandler<LoginRequest>): () => void {
-            return this.register(Opcodes.LoginRequest, handler as MessageHandler<unknown>);
+        onPing(handler: MessageHandler<Ping>): () => void {
+            return this.register(Opcodes.Ping, handler as MessageHandler<unknown>);
         }
 
-        onJoinRoomRequest(handler: MessageHandler<JoinRoomRequest>): () => void {
-            return this.register(Opcodes.JoinRoomRequest, handler as MessageHandler<unknown>);
-        }
-
-        onChatMessage(handler: MessageHandler<ChatMessage>): () => void {
-            return this.register(Opcodes.ChatMessage, handler as MessageHandler<unknown>);
-        }
-
-        onUploadData(handler: MessageHandler<UploadData>): () => void {
-            return this.register(Opcodes.UploadData, handler as MessageHandler<unknown>);
+        onEcho(handler: MessageHandler<Echo>): () => void {
+            return this.register(Opcodes.Echo, handler as MessageHandler<unknown>);
         }
 
         private register(opcode: number, handler: MessageHandler<unknown>): () => void {
@@ -451,27 +351,15 @@ export namespace C2Game {
             return frame;
         }
 
-        async sendLoginRequest(sessionId: number, message: LoginRequest): Promise<void> {
-            const payload = this.codec.encodeByOpcode(Opcodes.LoginRequest, message);
-            const frame = this.packFrame(Opcodes.LoginRequest, payload);
+        async sendPing(sessionId: number, message: Ping): Promise<void> {
+            const payload = this.codec.encodeByOpcode(Opcodes.Ping, message);
+            const frame = this.packFrame(Opcodes.Ping, payload);
             await this.sendFn(sessionId, frame);
         }
 
-        async sendJoinRoomRequest(sessionId: number, message: JoinRoomRequest): Promise<void> {
-            const payload = this.codec.encodeByOpcode(Opcodes.JoinRoomRequest, message);
-            const frame = this.packFrame(Opcodes.JoinRoomRequest, payload);
-            await this.sendFn(sessionId, frame);
-        }
-
-        async sendChatMessage(sessionId: number, message: ChatMessage): Promise<void> {
-            const payload = this.codec.encodeByOpcode(Opcodes.ChatMessage, message);
-            const frame = this.packFrame(Opcodes.ChatMessage, payload);
-            await this.sendFn(sessionId, frame);
-        }
-
-        async sendUploadData(sessionId: number, message: UploadData): Promise<void> {
-            const payload = this.codec.encodeByOpcode(Opcodes.UploadData, message);
-            const frame = this.packFrame(Opcodes.UploadData, payload);
+        async sendEcho(sessionId: number, message: Echo): Promise<void> {
+            const payload = this.codec.encodeByOpcode(Opcodes.Echo, message);
+            const frame = this.packFrame(Opcodes.Echo, payload);
             await this.sendFn(sessionId, frame);
         }
 

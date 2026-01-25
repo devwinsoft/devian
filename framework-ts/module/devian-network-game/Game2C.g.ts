@@ -7,35 +7,22 @@
 
 export namespace Game2C {
 
-    /** LoginResponse message */
-    export interface LoginResponse {
-        success: boolean;
-        playerId: bigint;
-        errorCode?: number;
-        errorMessage?: string;
-    }
-
-    /** JoinRoomResponse message */
-    export interface JoinRoomResponse {
-        success: boolean;
-        roomId: number;
-        playerIds: bigint[];
-    }
-
-    /** ChatNotify message */
-    export interface ChatNotify {
-        channel: number;
-        senderId: bigint;
-        senderName: string;
-        message: string;
+    /** Pong message */
+    export interface Pong {
         timestamp: bigint;
+        serverTime: bigint;
+    }
+
+    /** EchoReply message */
+    export interface EchoReply {
+        message: string;
+        echoedAt: bigint;
     }
 
     /** Opcode constants */
     export const Opcodes = {
-        LoginResponse: 1002,
-        JoinRoomResponse: 1001,
-        ChatNotify: 1000,
+        Pong: 1001,
+        EchoReply: 1000,
     } as const;
 
     export type OpcodeType = typeof Opcodes[keyof typeof Opcodes];
@@ -214,49 +201,31 @@ export namespace Game2C {
      */
     export class CodecProtobuf implements ICodec {
 
-        private encodeLoginResponse(m: LoginResponse): Uint8Array {
+        private encodePong(m: Pong): Uint8Array {
             const arr: number[] = [];
-            Proto.writeBool(arr, 1, m.success ?? false);
-            Proto.writeInt64(arr, 2, m.playerId ?? 0n);
-            Proto.writeInt32(arr, 3, m.errorCode ?? 0);
-            Proto.writeString(arr, 4, m.errorMessage);
+            Proto.writeInt64(arr, 1, m.timestamp ?? 0n);
+            Proto.writeInt64(arr, 2, m.serverTime ?? 0n);
             return new Uint8Array(arr);
         }
 
-        private encodeJoinRoomResponse(m: JoinRoomResponse): Uint8Array {
+        private encodeEchoReply(m: EchoReply): Uint8Array {
             const arr: number[] = [];
-            Proto.writeBool(arr, 1, m.success ?? false);
-            Proto.writeInt32(arr, 2, m.roomId ?? 0);
+            Proto.writeString(arr, 1, m.message);
+            Proto.writeInt64(arr, 2, m.echoedAt ?? 0n);
             return new Uint8Array(arr);
         }
 
-        private encodeChatNotify(m: ChatNotify): Uint8Array {
-            const arr: number[] = [];
-            Proto.writeInt32(arr, 1, m.channel ?? 0);
-            Proto.writeInt64(arr, 2, m.senderId ?? 0n);
-            Proto.writeString(arr, 3, m.senderName);
-            Proto.writeString(arr, 4, m.message);
-            Proto.writeInt64(arr, 5, m.timestamp ?? 0n);
-            return new Uint8Array(arr);
-        }
-
-        private decodeLoginResponse(data: Uint8Array): LoginResponse {
-            const m: LoginResponse = {} as LoginResponse;
+        private decodePong(data: Uint8Array): Pong {
+            const m: Pong = {} as Pong;
             const pos = { v: 0 };
             while (pos.v < data.length) {
                 const { tag, wireType } = Proto.readTag(data, pos);
                 switch (tag) {
                     case 1:
-                        m.success = Proto.readBool(data, pos);
+                        m.timestamp = Proto.readInt64(data, pos);
                         break;
                     case 2:
-                        m.playerId = Proto.readInt64(data, pos);
-                        break;
-                    case 3:
-                        m.errorCode = Proto.readInt32(data, pos);
-                        break;
-                    case 4:
-                        m.errorMessage = Proto.readString(data, pos);
+                        m.serverTime = Proto.readInt64(data, pos);
                         break;
                     default:
                         Proto.skip(data, pos, wireType);
@@ -266,48 +235,17 @@ export namespace Game2C {
             return m;
         }
 
-        private decodeJoinRoomResponse(data: Uint8Array): JoinRoomResponse {
-            const m: JoinRoomResponse = {} as JoinRoomResponse;
+        private decodeEchoReply(data: Uint8Array): EchoReply {
+            const m: EchoReply = {} as EchoReply;
             const pos = { v: 0 };
             while (pos.v < data.length) {
                 const { tag, wireType } = Proto.readTag(data, pos);
                 switch (tag) {
                     case 1:
-                        m.success = Proto.readBool(data, pos);
-                        break;
-                    case 2:
-                        m.roomId = Proto.readInt32(data, pos);
-                        break;
-                    case 3:
-                        break;
-                    default:
-                        Proto.skip(data, pos, wireType);
-                        break;
-                }
-            }
-            return m;
-        }
-
-        private decodeChatNotify(data: Uint8Array): ChatNotify {
-            const m: ChatNotify = {} as ChatNotify;
-            const pos = { v: 0 };
-            while (pos.v < data.length) {
-                const { tag, wireType } = Proto.readTag(data, pos);
-                switch (tag) {
-                    case 1:
-                        m.channel = Proto.readInt32(data, pos);
-                        break;
-                    case 2:
-                        m.senderId = Proto.readInt64(data, pos);
-                        break;
-                    case 3:
-                        m.senderName = Proto.readString(data, pos);
-                        break;
-                    case 4:
                         m.message = Proto.readString(data, pos);
                         break;
-                    case 5:
-                        m.timestamp = Proto.readInt64(data, pos);
+                    case 2:
+                        m.echoedAt = Proto.readInt64(data, pos);
                         break;
                     default:
                         Proto.skip(data, pos, wireType);
@@ -319,13 +257,10 @@ export namespace Game2C {
 
         encode<T>(message: T): Uint8Array {
             // Type dispatch - caller should use encodeByOpcode when possible
-            if ((message as unknown as LoginResponse).success !== undefined) {
+            if ((message as unknown as Pong).timestamp !== undefined) {
                 // Heuristic check - may need refinement
             }
-            if ((message as unknown as JoinRoomResponse).success !== undefined) {
-                // Heuristic check - may need refinement
-            }
-            if ((message as unknown as ChatNotify).channel !== undefined) {
+            if ((message as unknown as EchoReply).message !== undefined) {
                 // Heuristic check - may need refinement
             }
             throw new Error("Unknown message type for encode");
@@ -333,9 +268,8 @@ export namespace Game2C {
 
         encodeByOpcode<T>(opcode: number, message: T): Uint8Array {
             switch (opcode) {
-                case Opcodes.LoginResponse: return this.encodeLoginResponse(message as unknown as LoginResponse);
-                case Opcodes.JoinRoomResponse: return this.encodeJoinRoomResponse(message as unknown as JoinRoomResponse);
-                case Opcodes.ChatNotify: return this.encodeChatNotify(message as unknown as ChatNotify);
+                case Opcodes.Pong: return this.encodePong(message as unknown as Pong);
+                case Opcodes.EchoReply: return this.encodeEchoReply(message as unknown as EchoReply);
                 default: throw new Error(`Unknown opcode: ${opcode}`);
             }
         }
@@ -346,9 +280,8 @@ export namespace Game2C {
 
         decodeByOpcode(opcode: number, data: Uint8Array): unknown {
             switch (opcode) {
-                case Opcodes.LoginResponse: return this.decodeLoginResponse(data);
-                case Opcodes.JoinRoomResponse: return this.decodeJoinRoomResponse(data);
-                case Opcodes.ChatNotify: return this.decodeChatNotify(data);
+                case Opcodes.Pong: return this.decodePong(data);
+                case Opcodes.EchoReply: return this.decodeEchoReply(data);
                 default: throw new Error(`Unknown opcode: ${opcode}`);
             }
         }
@@ -379,16 +312,12 @@ export namespace Game2C {
             }
         }
 
-        onLoginResponse(handler: MessageHandler<LoginResponse>): () => void {
-            return this.register(Opcodes.LoginResponse, handler as MessageHandler<unknown>);
+        onPong(handler: MessageHandler<Pong>): () => void {
+            return this.register(Opcodes.Pong, handler as MessageHandler<unknown>);
         }
 
-        onJoinRoomResponse(handler: MessageHandler<JoinRoomResponse>): () => void {
-            return this.register(Opcodes.JoinRoomResponse, handler as MessageHandler<unknown>);
-        }
-
-        onChatNotify(handler: MessageHandler<ChatNotify>): () => void {
-            return this.register(Opcodes.ChatNotify, handler as MessageHandler<unknown>);
+        onEchoReply(handler: MessageHandler<EchoReply>): () => void {
+            return this.register(Opcodes.EchoReply, handler as MessageHandler<unknown>);
         }
 
         private register(opcode: number, handler: MessageHandler<unknown>): () => void {
@@ -427,21 +356,15 @@ export namespace Game2C {
             return frame;
         }
 
-        async sendLoginResponse(sessionId: number, message: LoginResponse): Promise<void> {
-            const payload = this.codec.encodeByOpcode(Opcodes.LoginResponse, message);
-            const frame = this.packFrame(Opcodes.LoginResponse, payload);
+        async sendPong(sessionId: number, message: Pong): Promise<void> {
+            const payload = this.codec.encodeByOpcode(Opcodes.Pong, message);
+            const frame = this.packFrame(Opcodes.Pong, payload);
             await this.sendFn(sessionId, frame);
         }
 
-        async sendJoinRoomResponse(sessionId: number, message: JoinRoomResponse): Promise<void> {
-            const payload = this.codec.encodeByOpcode(Opcodes.JoinRoomResponse, message);
-            const frame = this.packFrame(Opcodes.JoinRoomResponse, payload);
-            await this.sendFn(sessionId, frame);
-        }
-
-        async sendChatNotify(sessionId: number, message: ChatNotify): Promise<void> {
-            const payload = this.codec.encodeByOpcode(Opcodes.ChatNotify, message);
-            const frame = this.packFrame(Opcodes.ChatNotify, payload);
+        async sendEchoReply(sessionId: number, message: EchoReply): Promise<void> {
+            const payload = this.codec.encodeByOpcode(Opcodes.EchoReply, message);
+            const frame = this.packFrame(Opcodes.EchoReply, payload);
             await this.sendFn(sessionId, frame);
         }
 

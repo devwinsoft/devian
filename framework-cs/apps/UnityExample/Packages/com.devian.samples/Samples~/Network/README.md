@@ -11,7 +11,7 @@ WebSocket 클라이언트 샘플.
 - `com.devian.core`
 - `com.devian.network`
 - `com.devian.unity`
-- `com.devian.protocol.sample`
+- `com.devian.protocol.game`
 
 ## 파일 구조
 
@@ -29,7 +29,7 @@ Network/
 ## 사용법
 
 1. `EchoWsClientSample`을 GameObject에 추가
-2. TS SampleServer 실행: `cd framework-ts/apps/SampleServer && npm start`
+2. TS GameServer 실행: `cd framework-ts/apps/GameServer && npm start`
 3. Play 모드에서 Inspector 버튼 사용
 
 ## 커스터마이징

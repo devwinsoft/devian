@@ -1,0 +1,20 @@
+{
+  "name": "Devian.Domain.Game.Editor",
+  "rootNamespace": "Devian.Domain.Game.Editor",
+  "references": [
+    "Devian.Domain.Game",
+    "Devian.Unity.Common",
+    "Devian.Unity.Common.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

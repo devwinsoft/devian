@@ -88,10 +88,10 @@ Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴�
 경로 규약은 SSOT를 따른다.
 
 **C#:**
-- staging: `{tempDir}/Devian.Protocol.{ProtocolName}/{ProtocolName}.g.cs`
-- final: `{csConfig.generateDir}/Devian.Protocol.{ProtocolName}/{ProtocolName}.g.cs`
-- 프로젝트 파일: `Devian.Protocol.{ProtocolName}.csproj` (netstandard2.1)
-- namespace: `Devian.Protocol.{ProtocolName}` (변경 금지)
+- staging: `{tempDir}/Devian.Protocol.{ProtocolGroup}/{ProtocolName}.g.cs`
+- final: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/{ProtocolName}.g.cs`
+- 프로젝트 파일: `Devian.Protocol.{ProtocolGroup}.csproj` (netstandard2.1)
+- namespace: `Devian.Protocol.{ProtocolGroup}` (변경 금지)
 
 **TypeScript:**
 - staging: `{tempDir}/{ProtocolGroup}/{ProtocolName}.g.ts`, `index.ts`
@@ -99,7 +99,7 @@ Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴�
 - 패키지명: `@devian/network-{protocolgroup}`
 
 > **생성물 namespace 고정 (Hard Rule):**
-> C# 생성물 namespace는 `Devian.Protocol.{ProtocolName}`으로 고정이며, 런타임 모듈 단일화와 무관하게 변경하지 않는다.
+> C# 생성물 namespace는 `Devian.Protocol.{ProtocolGroup}`으로 고정이며, 런타임 모듈 단일화와 무관하게 변경하지 않는다.
 
 ---
 
@@ -116,7 +116,7 @@ Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴�
 
 **Runtime asmdef references 정책:**
 - `Devian.Core`
-- `Devian.Module.Common`
+- `Devian.Domain.Common`
 
 > SSOT: `skills/devian/03-ssot/SKILL.md` — Protocol UPM 자동 생성 규칙
 
@@ -155,13 +155,13 @@ Devian v10에서 생성되는 모든 PROTOCOL 모듈은 Common 모듈을 **무�
 필수 적용:
 
 - C#:
-  - `Devian.Protocol.{ProtocolName}.csproj`는 `Devian + .Module.Common`을 `ProjectReference`로 포함해야 한다. (프로젝트 참조)
+  - `Devian.Protocol.{ProtocolGroup}.csproj`는 `Devian + .Module.Common`을 `ProjectReference`로 포함해야 한다. (프로젝트 참조)
   - 각 생성물(`{ProtocolName}.g.cs`)은 `using Devian;`을 포함해야 한다. (namespace는 Devian 단일)
 - TypeScript:
   - `@devian/network-{protocolgroup}`의 `package.json` `dependencies`에 `@devian/module-common`을 포함해야 한다.
 - **Unity UPM:**
   - Protocol용 `.asmdef` 파일의 `references`에 `Devian + .Module.Common` 포함 필수
-  - 예: `Devian.Protocol.Sample.asmdef" → "references": [..., "Devian + .Module.Common""]`
+  - 예: `Devian.Protocol.Game.asmdef" → "references": [..., "Devian + .Module.Common""]`
 
 ---
 
@@ -275,10 +275,10 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 
 **C#:**
 
-1. 생성된 `framework-cs/module/Devian.Protocol.{ProtocolName}/Devian.Protocol.{ProtocolName}.csproj`에  
+1. 생성된 `framework-cs/module/Devian.Protocol.{ProtocolGroup}/Devian.Protocol.{ProtocolGroup}.csproj`에  
    `..\..\module\` + `Devian` + `.Module.Common` + `\` + `Devian` + `.Module.Common.csproj` ProjectReference 존재
 
-2. 생성된 `framework-cs/module/Devian.Protocol.{ProtocolName}/{ProtocolName}.g.cs` 상단에  
+2. 생성된 `framework-cs/module/Devian.Protocol.{ProtocolGroup}/{ProtocolName}.g.cs` 상단에  
    `using Devian;` 존재
 
 3. 생성된 `{ProtocolName}.g.cs`에 `System.Text.Json` 관련 코드 없음

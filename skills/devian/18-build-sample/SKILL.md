@@ -29,8 +29,8 @@ input/
 └── Protocols/
     ├── Game/            ← 프로덕션 프로토콜
     └── Sample/          ← 샘플 프로토콜
-        ├── C2Sample.json
-        └── Sample2C.json
+        ├── C2Game.json
+        └── Game2C.json
 ```
 
 ---
@@ -155,9 +155,9 @@ node framework-ts/tools/builder/build.js input/input_common.json
 
   "protocols": [
     {
-      "group": "Sample",
-      "protocolDir": "./Protocols/Sample",
-      "protocolFiles": ["C2Sample.json", "Sample2C.json"]
+      "group": "Game",
+      "protocolDir": "./Protocols/Game",
+      "protocolFiles": ["C2Game.json", "Game2C.json"]
     }
   ]
 }
@@ -167,8 +167,8 @@ node framework-ts/tools/builder/build.js input/input_common.json
 
 - Sample 프로토콜의 C# 출력은 `csConfig.generateDir` (module)로 반영됨
 - Sample 프로토콜의 UPM 패키지는 `upmConfig.sourceDir` (upm)에 자동 생성됨
-- 빌더가 `csConfig.generateDir` 하위에 `Devian.Protocol.{ProtocolName}/` 폴더를 자동 생성함
-- Sample UPM 패키지는 `com.devian.protocol.sample`로 자동 명명됨
+- 빌더가 `csConfig.generateDir` 하위에 `Devian.Protocol.{ProtocolGroup}/` 폴더를 자동 생성함
+- Sample UPM 패키지는 `com.devian.protocol.game`로 자동 명명됨
 
 ---
 
@@ -177,18 +177,18 @@ node framework-ts/tools/builder/build.js input/input_common.json
 ```
 # C# 모듈 (csConfig.generateDir)
 framework-cs/module/
-└── Devian.Protocol.Sample/
-    ├── C2Sample.g.cs
-    ├── Sample2C.g.cs
-    └── Devian.Protocol.Sample.csproj
+└── Devian.Protocol.Game/
+    ├── C2Game.g.cs
+    ├── Game2C.g.cs
+    └── Devian.Protocol.Game.csproj
 
 # UPM 패키지 (upmConfig.sourceDir → upmConfig.packageDir로 sync)
 # Protocol UPM은 Runtime-only (Editor 생성 금지)
-upm/com.devian.protocol.sample/
+upm/com.devian.protocol.game/
 ├── Runtime/
-│   ├── Devian.Protocol.Sample.asmdef
-│   ├── C2Sample.g.cs
-│   └── Sample2C.g.cs
+│   ├── Devian.Protocol.Game.asmdef
+│   ├── C2Game.g.cs
+│   └── Game2C.g.cs
 └── package.json
 
 # Static UPM 패키지 (upm → packageDir로 sync)
@@ -204,14 +204,14 @@ upm/com.devian.unity/Runtime/Network/
 
 ## asmdef 설정
 
-### com.devian.protocol.sample/Runtime/Devian.Protocol.Sample.asmdef
+### com.devian.protocol.game/Runtime/Devian.Protocol.Game.asmdef
 
 Protocol UPM 패키지의 asmdef는 빌더가 자동 생성한다:
 
 ```json
 {
-  "name": "Devian.Protocol.Sample",
-  "rootNamespace": "Devian.Protocol.Sample",
+  "name": "Devian.Protocol.Game",
+  "rootNamespace": "Devian.Protocol.Game",
   "references": [
     "Devian.Core",
     "<어셈블리: Devian + .Module.Common>"

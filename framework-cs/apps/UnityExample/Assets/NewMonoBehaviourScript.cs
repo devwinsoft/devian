@@ -1,7 +1,7 @@
 using UnityEngine;
 using Devian;
 using Devian.Domain.Common;
-using Devian.Domain.Sample;
+using Devian.Domain.Game;
 
 public class NewMonoBehaviourScript : MonoBehaviour
 {

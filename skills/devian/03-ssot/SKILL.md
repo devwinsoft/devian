@@ -247,7 +247,7 @@ DATA 도메인의 데이터 출력 타겟은 전역 `dataConfig`로 설정한다
 | `framework-ts/module` | 수동 TS 모듈 (devian — 단일 통합 모듈) | 검증만, 수정 금지 |
 | `framework-ts/module` | 생성 TS 모듈 (devian-module-*, devian-network-*) | staging 결과로 생성/반영 |
 | `framework-cs/upm` | 수동 UPM 패키지 (com.devian.core, com.devian.unity.*, com.devian.samples) | 검증만, 수정 금지 |
-| `framework-cs/upm` | 생성 UPM 패키지 (com.devian.module.*, com.devian.protocol.*) | staging 결과로 생성/반영 |
+| `framework-cs/upm` | 생성 UPM 패키지 (com.devian.domain.*, com.devian.protocol.*) | staging 결과로 생성/반영 |
 | `framework-cs/apps/UnityExample/Packages` | Unity 최종 패키지 | upm + upm → sync |
 
 ### C# 런타임 모듈 구조 (Hard Rule)
@@ -288,7 +288,7 @@ DATA 도메인의 데이터 출력 타겟은 전역 `dataConfig`로 설정한다
 > `Dff*`, `Protobuf*`, `IProto*` 등 의미가 명확한 Proto 계열 타입은 이름 변경 금지.
 
 **생성물 namespace 규칙 (Hard Rule):**
-- 프로토콜 생성물은 `Devian.Protocol.{ProtocolName}`을 사용한다.
+- 프로토콜 생성물은 `Devian.Protocol.{ProtocolGroup}`을 사용한다.
 - Domain 생성물은 `Devian.Domain.{DomainKey}`를 사용한다.
 - 기본 제공 클래스(UPM/Unity 어댑터 등)는 `namespace Devian` 단일을 사용한다.
 
@@ -360,7 +360,7 @@ DATA 도메인의 데이터 출력 타겟은 전역 `dataConfig`로 설정한다
 
 **생성물 패키지명 유지 (Hard Rule):**
 - 프로토콜 생성물은 `com.devian.protocol.{protocolgroup}` 이름을 유지한다.
-- 모듈 생성물은 `com.devian.module.{domainkey}` 이름을 유지한다.
+- 모듈 생성물은 `com.devian.domain.{domainkey}` 이름을 유지한다.
 
 **패키지 단일화 (Hard Rule):**
 - `com.devian.network`, `com.devian.protobuf`는 더 이상 존재하지 않는다.
@@ -380,20 +380,20 @@ DATA 도메인의 데이터 출력 타겟은 전역 `dataConfig`로 설정한다
 
 ### tempDir 경로 해석 및 분리 (Hard Rule)
 
-**`{tempDir}`는 input_common.json(또는 input_sample.json)이 위치한 디렉토리 기준 상대경로로 해석된다.**
+**`{tempDir}`는 실행한 입력 설정 JSON이 위치한 디렉토리 기준 상대경로로 해석된다.**
 
 빌더는 실행 시 `{tempDir}`를 **clean(rm -rf) 후 재생성**한다. 따라서:
 
-- **동일 repo에서 `input_common.json`과 `input_sample.json`을 번갈아 실행하는 경우, tempDir을 공유하면 서로 staging을 삭제할 수 있으므로 tempDir 분리는 필수다.**
+- **동일 repo에서 서로 다른 입력 설정 JSON을 번갈아 실행하는 경우, tempDir을 공유하면 서로 staging을 삭제할 수 있으므로 tempDir 분리는 필수다.**
 
 | 설정 파일 | tempDir 권장값 |
 |----------|---------------|
 | `input_common.json` | `"temp"` |
-| `input_sample.json` | `"temp_sample"` |
+| `input_alt.json` (예시) | `"temp_alt"` |
 
 예시:
 - `input_common.json`의 `tempDir: "temp"` → `input/temp/`
-- `input_sample.json`의 `tempDir: "temp_sample"` → `input/temp_sample/`
+- `input_alt.json`의 `tempDir: "temp_alt"` → `input/temp_alt/`
 
 ### Clean + Copy 정책
 
@@ -550,7 +550,7 @@ DATA 입력은 input_common.json의 `domains` 섹션이 정의한다.
 
 1) DATA Domain 모듈 (프로젝트명: `Devian` + `.Module.{DomainKey}`, `@devian/module-{domainkey}`)
    - `{DomainKey} != Common`인 모든 모듈은 `Devian` + `.Module.Common`을 참조한다.
-2) PROTOCOL 모듈 (`Devian.Protocol.{ProtocolName}`, `@devian/network-{protocolgroup}`)
+2) PROTOCOL 모듈 (`Devian.Protocol.{ProtocolGroup}`, `@devian/network-{protocolgroup}`)
    - 모든 Protocol 모듈은 `Devian` + `.Module.Common`을 참조한다.
 
 참조 방식(정책):
@@ -744,17 +744,17 @@ PROTOCOL 입력은 input_common.json의 `protocols` 섹션(배열)이 정의한�
 #### PROTOCOL 산출물 경로(정책)
 
 **C#:**
-- staging: `{tempDir}/Devian.Protocol.{ProtocolName}/{ProtocolName}.g.cs`
-- final: `{csConfig.generateDir}/Devian.Protocol.{ProtocolName}/{ProtocolName}.g.cs`
-- 프로젝트 파일: `{csConfig.generateDir}/Devian.Protocol.{ProtocolName}/Devian.Protocol.{ProtocolName}.csproj`
-- namespace: `Devian.Protocol.{ProtocolName}` (변경 금지)
+- staging: `{tempDir}/Devian.Protocol.{ProtocolGroup}/{ProtocolName}.g.cs`
+- final: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/{ProtocolName}.g.cs`
+- 프로젝트 파일: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/Devian.Protocol.{ProtocolGroup}.csproj`
+- namespace: `Devian.Protocol.{ProtocolGroup}` (변경 금지)
 
 **TypeScript:**
 - staging: `{tempDir}/{ProtocolGroup}/{ProtocolName}.g.ts`, `index.ts`
 - final: `{tsConfig.generateDir}/devian-network-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
 
 > **생성물 namespace 고정 (Hard Rule):**
-> C# 생성물 namespace는 `Devian.Protocol.{ProtocolName}`으로 고정이며, 런타임 모듈 단일화와 무관하게 변경하지 않는다.
+> C# 생성물 namespace는 `Devian.Protocol.{ProtocolGroup}`으로 고정이며, 런타임 모듈 단일화와 무관하게 변경하지 않는다.
 
 #### Protocol UPM 자동 생성 규칙 (Hard Rule)
 
@@ -786,7 +786,7 @@ computedUpmName = "com.devian.protocol." + normalize(group)
 
 **경로 계산:**
 ```
-stagingDir = {tempDir}/Devian.Protocol.{ProtocolName}-upm
+stagingDir = {tempDir}/Devian.Protocol.{ProtocolGroup}-upm
 targetDir = {upmConfig.sourceDir}/{computedUpmName}
 finalDir = {upmConfig.packageDir}/{computedUpmName}
 ```

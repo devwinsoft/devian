@@ -27,10 +27,10 @@ com.devian.core (base)
        ↑
 com.devian.unity (이 패키지 - core만 의존)
        ↑
-com.devian.module.* (module packages - unity 의존)
+com.devian.domain.* (module packages - unity 의존)
 ```
 
-> **Hard Rule:** `com.devian.unity` → `com.devian.module.*` 의존 **금지** (순환 방지)
+> **Hard Rule:** `com.devian.unity` → `com.devian.domain.*` 의존 **금지** (순환 방지)
 
 ---
 
@@ -51,6 +51,8 @@ com.devian.module.* (module packages - unity 의존)
 
 | 컴포넌트 | 설명 | 전용 스킬 |
 |----------|------|-----------|
+| Singleton | Persistent MonoBehaviour Singleton (3종) | `skills/devian-common-upm/30-unity-components/01-singleton/SKILL.md` |
+| PoolManager | Type당 1풀 + prefab name 기반 Spawn + Factory 추상화 | `skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md` |
 | AssetManager | AssetBundle 기반 로딩/캐시/언로드 | `skills/devian-common-upm/30-unity-components/10-asset-manager/SKILL.md` |
 | NetWsClientBehaviourBase | WebSocket 네트워크 클라이언트 베이스 | `skills/devian-common-upm/30-unity-components/11-network-client-behaviour/SKILL.md` |
 
@@ -84,8 +86,21 @@ com.devian.unity/
 │   ├── Devian.Unity.Common.asmdef
 │   ├── UnityLogSink.cs
 │   ├── AssetManager.cs
-│   └── Network/
-│       └── NetWsClientBehaviourBase.cs
+│   ├── Network/
+│   │   └── NetWsClientBehaviourBase.cs
+│   ├── _Shared/                              (빌드 시 생성)
+│   │   └── UnityMainThread.cs                (공용 내부 헬퍼)
+│   ├── Singleton/                            (빌드 시 생성)
+│   │   ├── MonoSingleton.cs
+│   │   ├── AutoSingleton.cs
+│   │   └── ResSingleton.cs
+│   └── Pool/                                 (빌드 시 생성)
+│       ├── IPoolable.cs
+│       ├── IPoolFactory.cs
+│       ├── PoolOptions.cs
+│       ├── IPool.cs
+│       ├── Pool.cs
+│       └── PoolManager.cs
 └── Editor/
     ├── Devian.Unity.Common.Editor.asmdef
     └── TableId/
@@ -96,8 +111,11 @@ com.devian.unity/
 
 > **중요**: 
 > - 이 패키지에는 `Editor/Generated/` 폴더를 생성하지 않는다.
-> - **Complex PropertyDrawer(`CInt/CFloat/CString`)는 `com.devian.module.common/Editor/Complex/`에 위치한다.**
+> - **Complex PropertyDrawer(`CInt/CFloat/CString`)는 `com.devian.domain.common/Editor/Complex/`에 위치한다.**
 > - **Network 폴더에 별도 asmdef가 없다** - `Devian.Unity.Common.asmdef`에 통합됨.
+> - **`_Shared/`, `Singleton/`, `Pool/` 폴더는 빌드 시 생성된다** - 소스(`framework-cs/upm/`)에는 없어도 됨.
+> - **`UnityMainThread`는 `_Shared/`에 1개만 존재** - Singleton/Pool 폴더에 중복 생성 금지
+> - **`Runtime/Templates/` 레거시 경로가 존재하면 FAIL**
 
 ---
 
@@ -113,7 +131,7 @@ com.devian.unity/
 
 ### 생성된 바인딩 (각 도메인 모듈 패키지에 생성)
 
-- **생성 위치**: `com.devian.module.<domain>/Editor/Generated/{TableName}_ID.Editor.cs`
+- **생성 위치**: `com.devian.domain.<domain>/Editor/Generated/{TableName}_ID.Editor.cs`
 - **생성 주체**: `build.js` (`generateDomainUpmScaffold`)
 - **네임스페이스**: `Devian` 단일 (서브네임스페이스 금지)
 - **클래스명 규칙**: `{DomainName}_{TableName}_ID_Selector`, `{DomainName}_{TableName}_ID_Drawer`
@@ -128,11 +146,37 @@ com.devian.unity/
 - [ ] `framework-cs/upm/com.devian.unity/Editor/Complex/` **존재하지 않음** (module.common으로 이동됨)
 - [ ] `framework-cs/upm/com.devian.unity/Runtime/Network/` 에 asmdef 파일 **없음**
 - [ ] 각 도메인 모듈 패키지에 TableID Editor 바인딩이 올바르게 생성됨
+- [ ] 빌드 후 `UnityExample/Packages/com.devian.unity/Runtime/_Shared/UnityMainThread.cs` 존재
+- [ ] 빌드 후 `UnityExample/Packages/com.devian.unity/Runtime/Singleton/*.cs` 3개 파일 존재
+- [ ] 빌드 후 `UnityExample/Packages/com.devian.unity/Runtime/Pool/*.cs` 6개 파일 존재
+
+**생성 정본:**
+- 소스(`framework-cs/upm/com.devian.unity/Runtime/`)에는 생성 폴더가 **없어도 됨** (staging에서 생성)
+- 생성 순서: `_Shared` → `Singleton` → `Pool`
+
+**공용 헬퍼 (Runtime/_Shared/):**
+- `UnityMainThread.cs` - 메인 스레드 검증 (1개만 존재)
+
+**Singleton (Runtime/Singleton/):**
+- `MonoSingleton.cs`
+- `AutoSingleton.cs`
+- `ResSingleton.cs`
+
+**Pool (Runtime/Pool/):**
+- `IPoolable.cs`
+- `IPoolFactory.cs`
+- `PoolOptions.cs`
+- `IPool.cs`
+- `Pool.cs`
+- `PoolManager.cs`
 
 **FAIL 조건:**
 - `com.devian.unity/Editor/Generated/`에 파일이 존재함
 - `com.devian.unity/Editor/Complex/`에 파일이 존재함
 - `com.devian.unity/Runtime/Network/`에 asmdef 파일이 존재함
+- `com.devian.unity/Runtime/Templates/` 레거시 경로가 존재함
+- `com.devian.unity/Runtime/Singleton/UnityMainThread.cs`이 존재함 (중복 금지)
+- `com.devian.unity/Runtime/Pool/UnityMainThread.cs`이 존재함 (중복 금지)
 
 ---
 
@@ -148,7 +192,7 @@ com.devian.unity/
 | author.name | `Kim, Hyong Joon` |
 | dependencies | `com.devian.core: 0.1.0` |
 
-> **주의:** `com.devian.module.*` 의존 **금지** (순환 방지)
+> **주의:** `com.devian.domain.*` 의존 **금지** (순환 방지)
 
 ---
 
@@ -269,7 +313,7 @@ Logger.Error("Net", "Connection failed", exception);
 - **자동 설치(런타임 init) 금지**: 정책 미확정이므로 "수동 SetSink"만 제공한다.
 - Logger.SetSink()를 자동으로 호출하는 코드 포함 금지.
 - **Resources 기반 로딩 금지**: AssetManager는 번들 + Editor Find 전용.
-- **서브네임스페이스 사용 금지**: `Devian.Unity`, `Devian.Module` 등 사용하지 않음. 모든 코드는 `namespace Devian`만 사용.
+- **서브네임스페이스 사용 금지**: `Devian.Unity`, `Devian.Domain` 등 사용하지 않음. 모든 코드는 `namespace Devian`만 사용.
 - **Editor/Generated 생성 금지**: TableID Editor 바인딩은 각 도메인 모듈 패키지에 생성한다.
 - **Complex PropertyDrawer 포함 금지**: module.common/Editor/Complex에 위치함.
 - **module.* 패키지 의존 금지**: 순환 방지를 위해 core만 의존.
@@ -282,7 +326,7 @@ Logger.Error("Net", "Connection failed", exception);
 - Related: `skills/devian-common-upm/01-upm-policy/SKILL.md`
 - Related: `skills/devian-common-upm/02-upm-bundles/SKILL.md`
 - Related: `skills/devian-common-upm/03-package-metadata/SKILL.md`
-- Related: `skills/devian-common-upm/20-packages/com.devian.module.common/SKILL.md`
+- Related: `skills/devian-common-upm/20-packages/com.devian.domain.common/SKILL.md`
 - Related: `skills/devian-common-upm/30-unity-components/SKILL.md`
 - Related: `skills/devian-common-upm/30-unity-components/10-asset-manager/SKILL.md`
 - Related: `skills/devian-common-upm/30-unity-components/11-network-client-behaviour/SKILL.md`

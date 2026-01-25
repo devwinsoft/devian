@@ -12,23 +12,23 @@ TypeScript 기반 네트워크 서버 모듈의 설계 원칙과 책임 분리�
 
 ## Import 정본 (Hard Rule)
 
-**Server 샘플/런타임 import 정본은 `@devian/network-sample/server-runtime` 이다.**
+**Server 샘플/런타임 import 정본은 `@devian/network-game/server-runtime` 이다.**
 
 ```typescript
 // ✅ 정본 (MUST)
-import { createServerRuntime, Sample2C } from '@devian/network-sample/server-runtime';
+import { createServerRuntime, Game2C } from '@devian/network-game/server-runtime';
 ```
 
 **루트 import 금지 (Hard Rule):**
 
 ```typescript
 // ❌ 금지 - 루트에서 server runtime 가져오기
-import { createServerRuntime } from '@devian/network-sample';  // FAIL
+import { createServerRuntime } from '@devian/network-game';  // FAIL
 ```
 
-- `@devian/network-sample` 루트 import로 server runtime을 가져오는 것은 **금지**
+- `@devian/network-game` 루트 import로 server runtime을 가져오는 것은 **금지**
 - 루트 re-export가 코드에 남아있더라도, **문서/샘플에서는 사용 금지**
-- 정본은 **반드시** `@devian/network-sample/server-runtime` 서브패스 사용
+- 정본은 **반드시** `@devian/network-game/server-runtime` 서브패스 사용
 
 **이유:**
 - Server/Client runtime 분리 명확화
@@ -57,12 +57,12 @@ import { createServerRuntime } from '@devian/network-sample';  // FAIL
 
 ### 2. Codec 정합
 
-TS SampleServer의 기본 codec은 Protobuf이다(인자 미주입).  
+TS GameServer의 기본 codec은 Protobuf이다(인자 미주입).  
 Json은 `@devian/core`의 `defaultCodec`를 runtime 생성 시 주입해서 선택한다.
 
 ```typescript
 import { defaultCodec as jsonCodec } from '@devian/core';
-import { createServerRuntime } from '@devian/network-sample/server-runtime';
+import { createServerRuntime } from '@devian/network-game/server-runtime';
 
 // 기본(Protobuf)
 const serverA = createServerRuntime();
@@ -109,19 +109,19 @@ framework-ts/module/devian/
 | NetworkServer | frame 파싱, runtime 호출 | disconnect on unknown |
 | NetworkClient | ws message → runtime dispatch | disconnect on unknown |
 | INetworkRuntime | opcode 조회, dispatch, proxy 생성 | - |
-| SampleServer | 조립 + 핸들러 등록 | 비즈니스 로직 확장 |
+| GameServer | 조립 + 핸들러 등록 | 비즈니스 로직 확장 |
 
 ---
 
 ## 예제 앱
 
-위치: `framework-ts/apps/SampleServer/`
+위치: `framework-ts/apps/GameServer/`
 
 예제 앱은 **조립 + 핸들러 등록만** 수행한다.
 
 ```typescript
 import { WsTransport, NetworkServer } from '@devian/core';
-import { createServerRuntime, Sample2C } from '@devian/network-sample/server-runtime';
+import { createServerRuntime, Game2C } from '@devian/network-game/server-runtime';
 
 // codec 미주입 = protobuf 기본
 const runtime = createServerRuntime();

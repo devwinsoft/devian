@@ -674,7 +674,7 @@ class DevianToolBuilder {
         // Copy to CS target: {csConfig.generateDir}/Devian + .Module.{Domain}/generated/
         // Domain C# output always goes to csConfig.generateDir (domains[*].csTargetDir is deprecated)
         if (this.csGenerateDir) {
-            const csModuleName = `Devian.Module.${domainName}`;
+            const csModuleName = `Devian.Domain.${domainName}`;
             const resolvedTargetDir = path.join(this.csGenerateDir, csModuleName);
             const target = path.join(resolvedTargetDir, 'generated');
             this.cleanAndCopy(stagingCs, target);
@@ -730,7 +730,7 @@ class DevianToolBuilder {
         //   => copy whole staging package (package-level clean+copy)
         const stagingUpm = path.join(this.tempDir, domainName, 'upm');
         if (fs.existsSync(stagingUpm)) {
-            const packageName = `com.devian.module.${domainName.toLowerCase()}`;
+            const packageName = `com.devian.domain.${domainName.toLowerCase()}`;
             const targetPkgDir = path.join(this.upmSourceDir, packageName);
             const targetPackageJson = path.join(targetPkgDir, 'package.json');
 
@@ -740,7 +740,7 @@ class DevianToolBuilder {
             const srcEditorGenerated = path.join(stagingUpm, 'Editor', 'Generated');
             const dstEditorGenerated = path.join(targetPkgDir, 'Editor', 'Generated');
 
-            const asmdefName = `Devian.Module.${domainName}`;
+            const asmdefName = `Devian.Domain.${domainName}`;
 
             if (fs.existsSync(targetPackageJson)) {
                 // Manual/Hybrid: protect root, update generated only
@@ -914,7 +914,7 @@ class DevianToolBuilder {
 
   <ItemGroup>
     <ProjectReference Include="..\\Devian\\Devian.csproj" />
-    <ProjectReference Include="..\\Devian.Module.Common\\Devian.Module.Common.csproj" />
+    <ProjectReference Include="..\\Devian.Domain.Common\\Devian.Domain.Common.csproj" />
   </ItemGroup>
 </Project>
 `;
@@ -1675,7 +1675,7 @@ export * from './features';
     // ========================================================================
 
     generateDomainUpmScaffold(domainName, stagingCs, tables = []) {
-        const asmdefName = `Devian.Module.${domainName}`;
+        const asmdefName = `Devian.Domain.${domainName}`;
         const stagingUpm = path.join(this.tempDir, domainName, 'upm');
         const stagingRuntime = path.join(stagingUpm, 'Runtime');
         const stagingGenerated = path.join(stagingRuntime, 'generated');
@@ -1693,19 +1693,19 @@ export * from './features';
         }
 
         const packageJsonObj = {
-            name: `com.devian.module.${domainName.toLowerCase()}`,
+            name: `com.devian.domain.${domainName.toLowerCase()}`,
             version: '0.1.0',
             displayName: `Devian Module ${domainName}`,
             description: isCommon
-                ? 'Devian.Module.Common runtime for Unity (source) - Common features'
-                : `Devian.Module.${domainName} runtime for Unity (source)`,
+                ? 'Devian.Domain.Common runtime for Unity (source) - Common features'
+                : `Devian.Domain.${domainName} runtime for Unity (source)`,
             unity: '2021.3',
             author: { name: 'Kim, Hyong Joon' },
             dependencies
         };
         fs.writeFileSync(path.join(stagingUpm, 'package.json'), JSON.stringify(packageJsonObj, null, 2));
 
-        // Runtime.asmdef - SSOT: skills/devian-common-upm/20-packages/com.devian.module.common/SKILL.md
+        // Runtime.asmdef - SSOT: skills/devian-common-upm/20-packages/com.devian.domain.common/SKILL.md
         const asmdefReferences = isCommon
             ? ['Devian.Core', 'Newtonsoft.Json']
             : ['Devian.Core'];
@@ -1727,7 +1727,7 @@ export * from './features';
         fs.writeFileSync(path.join(stagingRuntime, `${asmdefName}.asmdef`), JSON.stringify(runtimeAsmdef, null, 2));
 
         // Editor.asmdef - includes refs for TableID Editor bindings (base classes in Devian + .Unity.Common.Editor assembly)
-        // SSOT: skills/devian-common-upm/20-packages/com.devian.module.common/SKILL.md
+        // SSOT: skills/devian-common-upm/20-packages/com.devian.domain.common/SKILL.md
         const editorReferences = [asmdefName, 'Devian.Unity.Common', 'Devian.Unity.Common.Editor'];
         const editorAsmdef = {
             name: `${asmdefName}.Editor`,
@@ -1758,7 +1758,7 @@ export * from './features';
         }
 
         // Generate TableID Editor bindings into this domain module package
-        // SSOT: skills/devian-common-upm/20-packages/com.devian.module.common/SKILL.md
+        // SSOT: skills/devian-common-upm/20-packages/com.devian.domain.common/SKILL.md
         const keyedTables = (tables || []).filter(t => t && t.keyField);
         if (keyedTables.length > 0) {
             const editorGeneratedDir = path.join(stagingUpm, 'Editor', 'Generated');
@@ -1775,12 +1775,12 @@ export * from './features';
         }
 
         // Common 모듈일 때 Features 폴더 복사 (Logger/Variant/Complex)
-        // SSOT: skills/devian-common-upm/20-packages/com.devian.module.common/SKILL.md
+        // SSOT: skills/devian-common-upm/20-packages/com.devian.domain.common/SKILL.md
         if (isCommon) {
             // Use csGenerateDir (unified module root)
             const featuresSource = this.csGenerateDir
-                ? path.join(this.csGenerateDir, 'Devian.Module.Common', 'features')
-                : path.join(this.rootDir, 'framework-cs/module/Devian.Module.Common/features');
+                ? path.join(this.csGenerateDir, 'Devian.Domain.Common', 'features')
+                : path.join(this.rootDir, 'framework-cs/module/Devian.Domain.Common/features');
             const featuresTarget = path.join(stagingRuntime, 'Features');
             
             if (fs.existsSync(featuresSource)) {
@@ -1937,7 +1937,1058 @@ export * from './features';
                 fs.rmSync(legacyGenerated, { recursive: true });
                 console.log(`    [Cleanup] Removed legacy Editor/Generated from unity.common staging`);
             }
+            
+            // Generate shared templates (must be first - UnityMainThread is shared)
+            // SSOT: skills/devian-common-upm/30-unity-components/00-unity-object-destruction/SKILL.md
+            this.generateUnitySharedRuntime(stagingUpm);
+            
+            // Generate singleton templates
+            // SSOT: skills/devian-common-upm/30-unity-components/01-singleton/SKILL.md
+            this.generateUnitySingletonRuntime(stagingUpm);
+            
+            // Generate pool templates
+            // SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+            this.generateUnityPoolRuntime(stagingUpm);
         }
+    }
+
+    /**
+     * Generate Unity Shared template files.
+     * Contains common utilities shared across all templates.
+     * 
+     * Generates:
+     * - Runtime/_Shared/UnityMainThread.cs (internal helper)
+     */
+    generateUnitySharedRuntime(stagingUpm) {
+        const outDir = path.join(stagingUpm, 'Runtime', '_Shared');
+        
+        // Clean legacy path: Runtime/Templates (forbidden)
+        const legacyTemplates = path.join(stagingUpm, 'Runtime', 'Templates');
+        fs.rmSync(legacyTemplates, { recursive: true, force: true });
+        
+        // Clean and create output directory (deterministic)
+        fs.rmSync(outDir, { recursive: true, force: true });
+        fs.mkdirSync(outDir, { recursive: true });
+        
+        // Generate UnityMainThread.cs (shared helper)
+        const unityMainThreadCode = `// <auto-generated>
+// Unity Shared - Main Thread Helper
+// SSOT: skills/devian-common-upm/30-unity-components/00-unity-object-destruction/SKILL.md
+// </auto-generated>
+
+using System;
+using System.Threading;
+using UnityEngine;
+
+namespace Devian
+{
+    /// <summary>
+    /// Internal helper for main thread detection.
+    /// Used by all Unity templates to enforce main thread constraint.
+    /// </summary>
+    internal static class UnityMainThread
+    {
+        private static int _mainThreadId = -1;
+        
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void CaptureMainThread()
+        {
+            _mainThreadId = Thread.CurrentThread.ManagedThreadId;
+        }
+        
+        /// <summary>
+        /// Returns true if called from the main thread.
+        /// </summary>
+        public static bool IsMainThread => _mainThreadId == Thread.CurrentThread.ManagedThreadId;
+        
+        /// <summary>
+        /// Throws InvalidOperationException if not on main thread.
+        /// </summary>
+        /// <param name="context">Description for error message (e.g., "PoolManager.Spawn")</param>
+        public static void EnsureOrThrow(string context)
+        {
+            if (!IsMainThread)
+            {
+                throw new InvalidOperationException(
+                    $"[{context}] Must be called from the main thread. " +
+                    "Unity API calls are not thread-safe.");
+            }
+        }
+    }
+}
+`;
+        fs.writeFileSync(path.join(outDir, 'UnityMainThread.cs'), unityMainThreadCode, 'utf-8');
+        
+        console.log(`    [OK] Generated unity shared: Runtime/_Shared (1 file)`);
+    }
+
+    /**
+     * Generate Unity Singleton files.
+     * SSOT: skills/devian-common-upm/30-unity-components/01-singleton/SKILL.md
+     * 
+     * Generates:
+     * - Runtime/Singleton/MonoSingleton.cs
+     * - Runtime/Singleton/AutoSingleton.cs
+     * - Runtime/Singleton/ResSingleton.cs
+     * 
+     * Note: UnityMainThread is in _Shared/ folder (shared with Pool)
+     */
+    generateUnitySingletonRuntime(stagingUpm) {
+        const outDir = path.join(stagingUpm, 'Runtime', 'Singleton');
+        
+        // Clean and create output directory (deterministic)
+        fs.rmSync(outDir, { recursive: true, force: true });
+        fs.mkdirSync(outDir, { recursive: true });
+        
+        // NOTE: UnityMainThread.cs is generated in _Shared/ by generateUnitySharedRuntime()
+        // Do NOT generate it here to avoid duplicate type definitions
+        
+        // Generate MonoSingleton.cs
+        const monoSingletonCode = `// <auto-generated>
+// Unity Singleton - MonoSingleton<T>
+// SSOT: skills/devian-common-upm/30-unity-components/01-singleton/SKILL.md
+// </auto-generated>
+
+using System;
+using UnityEngine;
+
+namespace Devian
+{
+    /// <summary>
+    /// Manual singleton - no auto-creation.
+    /// Instance must be placed in scene or explicitly registered.
+    /// Accessing Instance without prior registration throws InvalidOperationException.
+    /// </summary>
+    /// <typeparam name="T">Concrete singleton type</typeparam>
+    public abstract class MonoSingleton<T> : MonoBehaviour where T : MonoSingleton<T>
+    {
+        private static T _instance;
+        private static readonly object _lock = new object();
+        
+        /// <summary>
+        /// Returns true if an instance exists.
+        /// </summary>
+        public static bool HasInstance => _instance != null;
+        
+        /// <summary>
+        /// Gets the singleton instance.
+        /// Throws InvalidOperationException if not registered.
+        /// </summary>
+        public static T Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    throw new InvalidOperationException(
+                        $"[{typeof(T).Name}] Instance not found. " +
+                        "Ensure the singleton is placed in scene or explicitly registered via Register().");
+                }
+                return _instance;
+            }
+        }
+        
+        /// <summary>
+        /// Registers an instance explicitly. Main thread only.
+        /// Does NOT create a new instance - use scene placement or manual instantiation.
+        /// </summary>
+        /// <param name="instance">Instance to register</param>
+        public static void Register(T instance)
+        {
+            UnityMainThread.EnsureOrThrow($"{typeof(T).Name}.Register");
+            
+            if (instance == null)
+                throw new ArgumentNullException(nameof(instance));
+            
+            lock (_lock)
+            {
+                if (_instance != null && _instance != instance)
+                {
+                    Debug.LogWarning($"[{typeof(T).Name}] Instance already registered. Destroying duplicate.");
+                    UnityEngine.Object.Destroy(instance.gameObject);
+                    return;
+                }
+                
+                _instance = instance;
+                DontDestroyOnLoad(instance.gameObject);
+            }
+        }
+        
+        /// <summary>
+        /// Called by Unity. Handles duplicate detection and registration.
+        /// </summary>
+        protected virtual void Awake()
+        {
+            lock (_lock)
+            {
+                if (_instance != null && _instance != this)
+                {
+                    Debug.LogWarning($"[{typeof(T).Name}] Duplicate instance detected. Destroying this.");
+                    UnityEngine.Object.Destroy(gameObject);
+                    return;
+                }
+                
+                _instance = (T)this;
+                DontDestroyOnLoad(gameObject);
+            }
+        }
+        
+        /// <summary>
+        /// Called by Unity. Clears instance reference if this is the registered instance.
+        /// </summary>
+        protected virtual void OnDestroy()
+        {
+            lock (_lock)
+            {
+                if (_instance == this)
+                {
+                    _instance = null;
+                }
+            }
+        }
+    }
+}
+`;
+        fs.writeFileSync(path.join(outDir, 'MonoSingleton.cs'), monoSingletonCode, 'utf-8');
+        
+        // Generate AutoSingleton.cs
+        const autoSingletonCode = `// <auto-generated>
+// Unity Singleton - AutoSingleton<T>
+// SSOT: skills/devian-common-upm/30-unity-components/01-singleton/SKILL.md
+// </auto-generated>
+
+using System;
+using UnityEngine;
+
+namespace Devian
+{
+    /// <summary>
+    /// Auto-create singleton - creates instance on first access.
+    /// Uses Find-first strategy: searches scene before creating new.
+    /// Main thread required for auto-creation.
+    /// </summary>
+    /// <typeparam name="T">Concrete singleton type</typeparam>
+    public abstract class AutoSingleton<T> : MonoBehaviour where T : AutoSingleton<T>
+    {
+        private static T _instance;
+        private static readonly object _lock = new object();
+        private static bool _isQuitting = false;
+        
+        /// <summary>
+        /// Returns true if an instance exists.
+        /// </summary>
+        public static bool HasInstance => _instance != null;
+        
+        /// <summary>
+        /// Gets the singleton instance. Creates if not exists (main thread only).
+        /// Throws InvalidOperationException during application quit or from non-main thread.
+        /// </summary>
+        public static T Instance
+        {
+            get
+            {
+                // Fast path: instance exists
+                if (_instance != null)
+                    return _instance;
+                
+                lock (_lock)
+                {
+                    // Double-check after lock
+                    if (_instance != null)
+                        return _instance;
+                    
+                    // Quit check
+                    if (_isQuitting)
+                    {
+                        throw new InvalidOperationException(
+                            $"[{typeof(T).Name}] Cannot access singleton during application quit.");
+                    }
+                    
+                    // Main thread check (required for Find/Create)
+                    UnityMainThread.EnsureOrThrow($"{typeof(T).Name}.Instance");
+                    
+                    // Step 1: Find existing in scene (including inactive)
+#if UNITY_2023_1_OR_NEWER
+                    _instance = FindAnyObjectByType<T>(FindObjectsInactive.Include);
+#else
+                    _instance = FindObjectOfType<T>(true);
+#endif
+                    
+                    if (_instance != null)
+                    {
+                        DontDestroyOnLoad(_instance.gameObject);
+                        return _instance;
+                    }
+                    
+                    // Step 2: Create new
+                    var go = new GameObject($"[{typeof(T).Name}]");
+                    _instance = go.AddComponent<T>();
+                    DontDestroyOnLoad(go);
+                    
+                    return _instance;
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Called by Unity. Handles duplicate detection.
+        /// </summary>
+        protected virtual void Awake()
+        {
+            lock (_lock)
+            {
+                if (_instance != null && _instance != this)
+                {
+                    Debug.LogWarning($"[{typeof(T).Name}] Duplicate instance detected. Destroying this.");
+                    UnityEngine.Object.Destroy(gameObject);
+                    return;
+                }
+                
+                _instance = (T)this;
+                DontDestroyOnLoad(gameObject);
+            }
+        }
+        
+        /// <summary>
+        /// Called by Unity. Sets quit flag to prevent recreation.
+        /// </summary>
+        protected virtual void OnApplicationQuit()
+        {
+            _isQuitting = true;
+        }
+        
+        /// <summary>
+        /// Called by Unity. Clears instance reference if this is the registered instance.
+        /// </summary>
+        protected virtual void OnDestroy()
+        {
+            lock (_lock)
+            {
+                if (_instance == this)
+                {
+                    _instance = null;
+                }
+            }
+        }
+    }
+}
+`;
+        fs.writeFileSync(path.join(outDir, 'AutoSingleton.cs'), autoSingletonCode, 'utf-8');
+        
+        // Generate ResSingleton.cs
+        const resSingletonCode = `// <auto-generated>
+// Unity Singleton - ResSingleton<T>
+// SSOT: skills/devian-common-upm/30-unity-components/01-singleton/SKILL.md
+// </auto-generated>
+
+using System;
+using UnityEngine;
+
+namespace Devian
+{
+    /// <summary>
+    /// Resources-based singleton - loads prefab from Resources folder.
+    /// Only this type allows Resources.Load usage.
+    /// Instance requires prior Load(resourcePath) call.
+    /// </summary>
+    /// <typeparam name="T">Concrete singleton type</typeparam>
+    public abstract class ResSingleton<T> : MonoBehaviour where T : ResSingleton<T>
+    {
+        private static T _instance;
+        private static readonly object _lock = new object();
+        
+        /// <summary>
+        /// Returns true if an instance exists.
+        /// </summary>
+        public static bool HasInstance => _instance != null;
+        
+        /// <summary>
+        /// Gets the singleton instance.
+        /// Throws InvalidOperationException if Load() was not called first.
+        /// </summary>
+        public static T Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    throw new InvalidOperationException(
+                        $"[{typeof(T).Name}] Instance not found. " +
+                        "Call Load(resourcePath) first to create the singleton.");
+                }
+                return _instance;
+            }
+        }
+        
+        /// <summary>
+        /// Loads and instantiates the singleton from Resources.
+        /// Main thread only. If already loaded, returns existing instance.
+        /// </summary>
+        /// <param name="resourcePath">Path within Resources folder (without extension)</param>
+        /// <returns>The singleton instance</returns>
+        public static T Load(string resourcePath)
+        {
+            // Main thread check
+            UnityMainThread.EnsureOrThrow($"{typeof(T).Name}.Load");
+            
+            if (string.IsNullOrEmpty(resourcePath))
+                throw new ArgumentException("resourcePath cannot be null or empty", nameof(resourcePath));
+            
+            lock (_lock)
+            {
+                // Already loaded - return existing
+                if (_instance != null)
+                    return _instance;
+                
+                // Load prefab
+                var prefab = Resources.Load<GameObject>(resourcePath);
+                if (prefab == null)
+                {
+                    throw new InvalidOperationException(
+                        $"[{typeof(T).Name}] Failed to load prefab at 'Resources/{resourcePath}'. " +
+                        "Ensure the prefab exists in a Resources folder.");
+                }
+                
+                // Instantiate
+                var go = Instantiate(prefab);
+                go.name = $"[{typeof(T).Name}]";
+                
+                // Get component
+                var component = go.GetComponent<T>();
+                if (component == null)
+                {
+                    UnityEngine.Object.Destroy(go);
+                    throw new InvalidOperationException(
+                        $"[{typeof(T).Name}] Prefab at 'Resources/{resourcePath}' " +
+                        $"does not have component {typeof(T).Name}.");
+                }
+                
+                _instance = component;
+                DontDestroyOnLoad(go);
+                
+                return _instance;
+            }
+        }
+        
+        /// <summary>
+        /// Called by Unity. Handles duplicate detection.
+        /// </summary>
+        protected virtual void Awake()
+        {
+            lock (_lock)
+            {
+                if (_instance != null && _instance != this)
+                {
+                    Debug.LogWarning($"[{typeof(T).Name}] Duplicate instance detected. Destroying this.");
+                    UnityEngine.Object.Destroy(gameObject);
+                    return;
+                }
+                
+                _instance = (T)this;
+                DontDestroyOnLoad(gameObject);
+            }
+        }
+        
+        /// <summary>
+        /// Called by Unity. Clears instance reference if this is the registered instance.
+        /// </summary>
+        protected virtual void OnDestroy()
+        {
+            lock (_lock)
+            {
+                if (_instance == this)
+                {
+                    _instance = null;
+                }
+            }
+        }
+    }
+}
+`;
+        fs.writeFileSync(path.join(outDir, 'ResSingleton.cs'), resSingletonCode, 'utf-8');
+        
+        console.log(`    [OK] Generated unity singleton: Runtime/Singleton (3 files)`);
+    }
+
+    /**
+     * Generate Unity Pool files.
+     * SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+     * 
+     * Generates:
+     * - Runtime/Pool/IPoolable.cs
+     * - Runtime/Pool/IPoolFactory.cs
+     * - Runtime/Pool/PoolOptions.cs
+     * - Runtime/Pool/IPool.cs
+     * - Runtime/Pool/Pool.cs
+     * - Runtime/Pool/PoolManager.cs
+     * 
+     * Note: UnityMainThread is in _Shared/ folder (shared with Singleton)
+     */
+    generateUnityPoolRuntime(stagingUpm) {
+        const outDir = path.join(stagingUpm, 'Runtime', 'Pool');
+        
+        // Clean and create output directory (deterministic)
+        fs.rmSync(outDir, { recursive: true, force: true });
+        fs.mkdirSync(outDir, { recursive: true });
+        
+        // NOTE: UnityMainThread.cs is generated in _Shared/ by generateUnitySharedRuntime()
+        // Do NOT generate it here to avoid duplicate type definitions
+        
+        // Generate IPoolable.cs
+        const iPoolableCode = `// <auto-generated>
+// Unity Pool - IPoolable Interface
+// SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+// </auto-generated>
+
+using UnityEngine;
+
+namespace Devian
+{
+    /// <summary>
+    /// Interface for poolable components.
+    /// Implement this on your MonoBehaviour to enable object pooling.
+    /// </summary>
+    /// <typeparam name="T">The component type itself</typeparam>
+    public interface IPoolable<T> where T : Component
+    {
+        /// <summary>
+        /// Called when the object is spawned from the pool.
+        /// Use this to initialize/reset the object state.
+        /// </summary>
+        void OnPoolSpawned();
+        
+        /// <summary>
+        /// Called when the object is returned to the pool.
+        /// Use this to cleanup/disable the object.
+        /// </summary>
+        void OnPoolDespawned();
+    }
+}
+`;
+        fs.writeFileSync(path.join(outDir, 'IPoolable.cs'), iPoolableCode, 'utf-8');
+        
+        // Generate IPoolFactory.cs
+        const iPoolFactoryCode = `// <auto-generated>
+// Unity Pool - IPoolFactory Interface
+// SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+// </auto-generated>
+
+using System;
+using UnityEngine;
+
+namespace Devian
+{
+    /// <summary>
+    /// Factory interface for creating and managing pooled instances.
+    /// Implement this to provide different prefab loading strategies.
+    /// </summary>
+    public interface IPoolFactory
+    {
+        /// <summary>
+        /// Gets the prefab by name.
+        /// </summary>
+        /// <param name="name">The prefab name (typically gameObject.name)</param>
+        /// <returns>The prefab GameObject, or null if not found</returns>
+        GameObject GetPrefab(string name);
+        
+        /// <summary>
+        /// Gets the pool type from a prefab.
+        /// Should find the IPoolable&lt;&gt; component and return its type.
+        /// </summary>
+        /// <param name="prefab">The prefab to inspect</param>
+        /// <returns>The Component type that implements IPoolable&lt;&gt;</returns>
+        Type GetPoolType(GameObject prefab);
+        
+        /// <summary>
+        /// Creates a new instance from the prefab.
+        /// Typically calls Instantiate internally.
+        /// </summary>
+        /// <param name="prefab">The prefab to instantiate</param>
+        /// <returns>The poolable component on the new instance</returns>
+        Component CreateInstance(GameObject prefab);
+        
+        /// <summary>
+        /// Destroys an instance.
+        /// Typically calls Destroy internally.
+        /// </summary>
+        /// <param name="instance">The instance to destroy</param>
+        void DestroyInstance(Component instance);
+    }
+}
+`;
+        fs.writeFileSync(path.join(outDir, 'IPoolFactory.cs'), iPoolFactoryCode, 'utf-8');
+        
+        // Generate PoolOptions.cs
+        const poolOptionsCode = `// <auto-generated>
+// Unity Pool - PoolOptions
+// SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+// </auto-generated>
+
+using UnityEngine;
+
+namespace Devian
+{
+    /// <summary>
+    /// Configuration options for a pool.
+    /// </summary>
+    public struct PoolOptions
+    {
+        /// <summary>
+        /// Maximum number of inactive instances to keep in the pool.
+        /// When exceeded, despawned instances will be destroyed instead of pooled.
+        /// Default: 512
+        /// </summary>
+        public int MaxSize;
+        
+        /// <summary>
+        /// Optional transform to parent inactive instances under.
+        /// Helps keep the hierarchy clean.
+        /// </summary>
+        public Transform InactiveRoot;
+        
+        /// <summary>
+        /// Number of instances to pre-create when the pool is initialized.
+        /// Default: 0
+        /// </summary>
+        public int Prewarm;
+        
+        /// <summary>
+        /// Creates default pool options.
+        /// </summary>
+        public static PoolOptions Default => new PoolOptions
+        {
+            MaxSize = 512,
+            InactiveRoot = null,
+            Prewarm = 0
+        };
+    }
+}
+`;
+        fs.writeFileSync(path.join(outDir, 'PoolOptions.cs'), poolOptionsCode, 'utf-8');
+        
+        // Generate IPool.cs
+        const iPoolCode = `// <auto-generated>
+// Unity Pool - IPool Interface
+// SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+// </auto-generated>
+
+using System;
+using UnityEngine;
+
+namespace Devian
+{
+    /// <summary>
+    /// Non-generic pool interface for type-erased pool access.
+    /// </summary>
+    public interface IPool
+    {
+        /// <summary>
+        /// The component type managed by this pool.
+        /// </summary>
+        Type ComponentType { get; }
+        
+        /// <summary>
+        /// Spawns an instance by prefab name.
+        /// </summary>
+        Component Spawn(string name, Vector3 position, Quaternion rotation, Transform parent);
+        
+        /// <summary>
+        /// Despawns an instance back to the pool.
+        /// </summary>
+        void Despawn(Component instance);
+        
+        /// <summary>
+        /// Clears all inactive instances from the pool (destroys them).
+        /// Does not affect active instances.
+        /// </summary>
+        void Clear();
+    }
+}
+`;
+        fs.writeFileSync(path.join(outDir, 'IPool.cs'), iPoolCode, 'utf-8');
+        
+        // Generate Pool.cs
+        const poolCode = `// <auto-generated>
+// Unity Pool - Pool<T>
+// SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+// </auto-generated>
+
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace Devian
+{
+    /// <summary>
+    /// Generic object pool for a specific component type.
+    /// Type identity: One pool per Type.
+    /// Spawn key: prefab name (string).
+    /// </summary>
+    /// <typeparam name="T">The poolable component type</typeparam>
+    public sealed class Pool<T> : IPool where T : Component, IPoolable<T>
+    {
+        private readonly Dictionary<string, Queue<T>> _inactiveByName = new Dictionary<string, Queue<T>>();
+        private readonly Dictionary<string, GameObject> _prefabByName = new Dictionary<string, GameObject>();
+        private readonly HashSet<T> _activeInstances = new HashSet<T>();
+        private readonly IPoolFactory _factory;
+        private readonly int _maxSize;
+        private readonly Transform _inactiveRoot;
+        
+        public Type ComponentType => typeof(T);
+        
+        public Pool(IPoolFactory factory, PoolOptions options)
+        {
+            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+            _maxSize = options.MaxSize > 0 ? options.MaxSize : 512;
+            _inactiveRoot = options.InactiveRoot;
+        }
+        
+        /// <summary>
+        /// Spawns a pooled instance by prefab name.
+        /// </summary>
+        public T Spawn(string name, Vector3 position = default, Quaternion rotation = default, Transform parent = null)
+        {
+            UnityMainThread.EnsureOrThrow("Pool.Spawn");
+            
+            if (string.IsNullOrEmpty(name))
+            {
+                throw new ArgumentException("Prefab name cannot be null or empty.", nameof(name));
+            }
+            
+            // Get or cache prefab
+            if (!_prefabByName.TryGetValue(name, out var prefab))
+            {
+                prefab = _factory.GetPrefab(name);
+                if (prefab == null)
+                {
+                    throw new InvalidOperationException($"Prefab '{name}' not found by factory.");
+                }
+                
+                // Verify pool type matches
+                var poolType = _factory.GetPoolType(prefab);
+                if (poolType != typeof(T))
+                {
+                    throw new InvalidOperationException(
+                        $"Prefab '{name}' pool type is {poolType.Name}, expected {typeof(T).Name}.");
+                }
+                
+                _prefabByName[name] = prefab;
+            }
+            
+            T instance;
+            
+            // Try to get from inactive pool
+            if (_inactiveByName.TryGetValue(name, out var queue) && queue.Count > 0)
+            {
+                instance = queue.Dequeue();
+            }
+            else
+            {
+                // Create new instance
+                var component = _factory.CreateInstance(prefab);
+                instance = component as T;
+                if (instance == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Factory created instance of type {component.GetType().Name}, expected {typeof(T).Name}.");
+                }
+            }
+            
+            // Activate and position
+            var go = instance.gameObject;
+            go.SetActive(true);
+            
+            var transform = instance.transform;
+            transform.SetParent(parent, false);
+            transform.position = position;
+            transform.rotation = rotation;
+            
+            // Track as active
+            _activeInstances.Add(instance);
+            
+            // Notify
+            instance.OnPoolSpawned();
+            
+            return instance;
+        }
+        
+        Component IPool.Spawn(string name, Vector3 position, Quaternion rotation, Transform parent)
+        {
+            return Spawn(name, position, rotation, parent);
+        }
+        
+        /// <summary>
+        /// Returns an instance to the pool.
+        /// </summary>
+        public void Despawn(T instance)
+        {
+            UnityMainThread.EnsureOrThrow("Pool.Despawn");
+            
+            if (instance == null)
+            {
+                throw new ArgumentNullException(nameof(instance));
+            }
+            
+            if (!_activeInstances.Remove(instance))
+            {
+                // Already despawned or not from this pool
+                return;
+            }
+            
+            // Notify
+            instance.OnPoolDespawned();
+            
+            // Deactivate and reparent
+            var go = instance.gameObject;
+            go.SetActive(false);
+            
+            if (_inactiveRoot != null)
+            {
+                instance.transform.SetParent(_inactiveRoot, false);
+            }
+            
+            // Get prefab name from gameObject.name (strip "(Clone)" if present)
+            var name = go.name;
+            if (name.EndsWith("(Clone)"))
+            {
+                name = name.Substring(0, name.Length - 7).TrimEnd();
+            }
+            
+            // Add to inactive pool or destroy if over capacity
+            if (!_inactiveByName.TryGetValue(name, out var queue))
+            {
+                queue = new Queue<T>();
+                _inactiveByName[name] = queue;
+            }
+            
+            if (queue.Count < _maxSize)
+            {
+                queue.Enqueue(instance);
+            }
+            else
+            {
+                _factory.DestroyInstance(instance);
+            }
+        }
+        
+        void IPool.Despawn(Component instance)
+        {
+            Despawn(instance as T);
+        }
+        
+        /// <summary>
+        /// Clears all inactive instances (destroys them).
+        /// Active instances are not affected.
+        /// </summary>
+        public void Clear()
+        {
+            UnityMainThread.EnsureOrThrow("Pool.Clear");
+            
+            foreach (var kvp in _inactiveByName)
+            {
+                var queue = kvp.Value;
+                while (queue.Count > 0)
+                {
+                    var instance = queue.Dequeue();
+                    if (instance != null)
+                    {
+                        _factory.DestroyInstance(instance);
+                    }
+                }
+            }
+            _inactiveByName.Clear();
+        }
+    }
+}
+`;
+        fs.writeFileSync(path.join(outDir, 'Pool.cs'), poolCode, 'utf-8');
+        
+        // Generate PoolManager.cs
+        const poolManagerCode = `// <auto-generated>
+// Unity Pool - PoolManager
+// SSOT: skills/devian-common-upm/30-unity-components/02-pool-manager/SKILL.md
+// </auto-generated>
+
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace Devian
+{
+    /// <summary>
+    /// Central manager for object pools.
+    /// Type identity: One pool per Type.
+    /// </summary>
+    public static class PoolManager
+    {
+        private static readonly Dictionary<Type, IPool> _pools = new Dictionary<Type, IPool>();
+        private static IPoolFactory _factory;
+        
+        /// <summary>
+        /// Initializes the PoolManager with a factory.
+        /// Must be called before any Spawn/Despawn operations.
+        /// </summary>
+        public static void Initialize(IPoolFactory factory)
+        {
+            UnityMainThread.EnsureOrThrow("PoolManager.Initialize");
+            _factory = factory ?? throw new ArgumentNullException(nameof(factory));
+        }
+        
+        /// <summary>
+        /// Gets or creates a pool for the specified type.
+        /// </summary>
+        public static Pool<T> GetOrCreatePool<T>(PoolOptions options = default) where T : Component, IPoolable<T>
+        {
+            UnityMainThread.EnsureOrThrow("PoolManager.GetOrCreatePool");
+            
+            var type = typeof(T);
+            if (_pools.TryGetValue(type, out var existingPool))
+            {
+                return (Pool<T>)existingPool;
+            }
+            
+            EnsureInitialized();
+            
+            if (options.MaxSize <= 0)
+            {
+                options = PoolOptions.Default;
+            }
+            
+            var pool = new Pool<T>(_factory, options);
+            _pools[type] = pool;
+            return pool;
+        }
+        
+        /// <summary>
+        /// Gets or creates a pool for the specified type (non-generic version).
+        /// </summary>
+        public static IPool GetOrCreatePool(Type type, PoolOptions options = default)
+        {
+            UnityMainThread.EnsureOrThrow("PoolManager.GetOrCreatePool");
+            
+            if (type == null)
+            {
+                throw new ArgumentNullException(nameof(type));
+            }
+            
+            if (_pools.TryGetValue(type, out var existingPool))
+            {
+                return existingPool;
+            }
+            
+            EnsureInitialized();
+            
+            if (options.MaxSize <= 0)
+            {
+                options = PoolOptions.Default;
+            }
+            
+            // Create Pool<T> using reflection
+            var poolType = typeof(Pool<>).MakeGenericType(type);
+            var pool = (IPool)Activator.CreateInstance(poolType, _factory, options);
+            _pools[type] = pool;
+            return pool;
+        }
+        
+        /// <summary>
+        /// Spawns an instance of the specified type by prefab name.
+        /// </summary>
+        public static T Spawn<T>(string name, Vector3 position = default, Quaternion rotation = default, Transform parent = null) 
+            where T : Component, IPoolable<T>
+        {
+            var pool = GetOrCreatePool<T>();
+            return pool.Spawn(name, position, rotation, parent);
+        }
+        
+        /// <summary>
+        /// Spawns an instance by prefab name. Type is determined by the factory.
+        /// </summary>
+        public static Component Spawn(string name, Vector3 position = default, Quaternion rotation = default, Transform parent = null)
+        {
+            UnityMainThread.EnsureOrThrow("PoolManager.Spawn");
+            EnsureInitialized();
+            
+            var prefab = _factory.GetPrefab(name);
+            if (prefab == null)
+            {
+                throw new InvalidOperationException($"Prefab '{name}' not found by factory.");
+            }
+            
+            var type = _factory.GetPoolType(prefab);
+            var pool = GetOrCreatePool(type);
+            return pool.Spawn(name, position, rotation, parent);
+        }
+        
+        /// <summary>
+        /// Despawns an instance back to its pool.
+        /// </summary>
+        public static void Despawn(Component instance)
+        {
+            UnityMainThread.EnsureOrThrow("PoolManager.Despawn");
+            
+            if (instance == null)
+            {
+                throw new ArgumentNullException(nameof(instance));
+            }
+            
+            var type = instance.GetType();
+            if (!_pools.TryGetValue(type, out var pool))
+            {
+                throw new InvalidOperationException(
+                    $"No pool found for type {type.Name}. Was this instance spawned from PoolManager?");
+            }
+            
+            pool.Despawn(instance);
+        }
+        
+        /// <summary>
+        /// Clears the pool for the specified type.
+        /// </summary>
+        public static void Clear<T>() where T : Component, IPoolable<T>
+        {
+            Clear(typeof(T));
+        }
+        
+        /// <summary>
+        /// Clears the pool for the specified type.
+        /// </summary>
+        public static void Clear(Type type)
+        {
+            UnityMainThread.EnsureOrThrow("PoolManager.Clear");
+            
+            if (type != null && _pools.TryGetValue(type, out var pool))
+            {
+                pool.Clear();
+            }
+        }
+        
+        /// <summary>
+        /// Clears all pools.
+        /// </summary>
+        public static void ClearAll()
+        {
+            UnityMainThread.EnsureOrThrow("PoolManager.ClearAll");
+            
+            foreach (var pool in _pools.Values)
+            {
+                pool.Clear();
+            }
+        }
+        
+        private static void EnsureInitialized()
+        {
+            if (_factory == null)
+            {
+                throw new InvalidOperationException(
+                    "PoolManager not initialized. Call PoolManager.Initialize(factory) first.");
+            }
+        }
+    }
+}
+`;
+        fs.writeFileSync(path.join(outDir, 'PoolManager.cs'), poolManagerCode, 'utf-8');
+        
+        console.log(`    [OK] Generated unity pool: Runtime/Pool (6 files)`);
     }
 
     /**
@@ -2092,11 +3143,28 @@ export * from './features';
             return;
         }
 
+        // Clean legacy path for com.devian.unity (Runtime/Templates is forbidden)
+        if (upmName === 'com.devian.unity') {
+            const legacyPaths = [
+                'Runtime/Templates'  // Legacy path - remove if exists
+            ];
+            for (const legacyPath of legacyPaths) {
+                const fullPath = path.join(targetPath, legacyPath);
+                if (fs.existsSync(fullPath)) {
+                    fs.rmSync(fullPath, { recursive: true });
+                    console.log(`    [Cleanup] ${upmName}/${legacyPath} → removed legacy folder`);
+                }
+            }
+        }
+
         // Copy only generated content (preserving manual files)
-        // Generated content locations: Editor/Generated, Runtime/generated
+        // Generated content locations: Editor/Generated, Runtime/generated, Runtime/{_Shared,Singleton,Pool}
         const generatedPaths = [
             { src: 'Editor/Generated', dest: 'Editor/Generated' },
-            { src: 'Runtime/generated', dest: 'Runtime/generated' }
+            { src: 'Runtime/generated', dest: 'Runtime/generated' },
+            { src: 'Runtime/_Shared', dest: 'Runtime/_Shared' },
+            { src: 'Runtime/Singleton', dest: 'Runtime/Singleton' },
+            { src: 'Runtime/Pool', dest: 'Runtime/Pool' }
         ];
 
         let copiedCount = 0;
@@ -2234,7 +3302,7 @@ export * from './features';
             },
             dependencies: {
                 'com.devian.core': '0.1.0',
-                'com.devian.module.common': '0.1.0'
+                'com.devian.domain.common': '0.1.0'
             }
         }, null, 2);
         fs.writeFileSync(path.join(stagingUpm, 'package.json'), packageJson);
@@ -2245,7 +3313,7 @@ export * from './features';
             rootNamespace: csProjectName,
             references: [
                 'Devian.Core',
-                'Devian.Module.Common'
+                'Devian.Domain.Common'
             ],
             includePlatforms: [],
             excludePlatforms: [],
@@ -2410,7 +3478,7 @@ export * from './features';
 
     /**
      * Convert asmdef reference name to UPM package name.
-     * @param {string} asmdefRef - Assembly reference name (e.g., "Devian.Core", "Devian.Module.Common")
+     * @param {string} asmdefRef - Assembly reference name (e.g., "Devian.Core", "Devian.Domain.Common")
      * @returns {string|null} - UPM package name or null if not mappable
      */
     asmdefRefToUpmPackage(asmdefRef) {
@@ -2425,10 +3493,10 @@ export * from './features';
             return mapping[asmdefRef];
         }
 
-        // Pattern: Devian + .Module.{Domain} (assembly) -> com.devian.module.{domain} (UPM)
-        const moduleMatch = asmdefRef.match(/^Devian\.Module\.(\w+)$/);
-        if (moduleMatch) {
-            return `com.devian.module.${moduleMatch[1].toLowerCase()}`;
+        // Pattern: Devian + .Domain.{Domain} (assembly) -> com.devian.domain.{domain} (UPM)
+        const domainMatch = asmdefRef.match(/^Devian\.Domain\.(\w+)$/);
+        if (domainMatch) {
+            return `com.devian.domain.${domainMatch[1].toLowerCase()}`;
         }
 
         // Skip self-references or unknown packages
@@ -2499,7 +3567,7 @@ export * from './features';
         // Default versions for packages (can be improved by scanning actual packages)
         const defaultVersions = {
             'com.devian.core': '0.1.0',
-            'com.devian.module.common': '0.1.0',
+            'com.devian.domain.common': '0.1.0',
             'com.devian.unity': '0.1.0',
         };
 
@@ -3218,7 +4286,7 @@ export * from './features';
 
     /**
      * Guard: com.devian.unity must NOT contain Editor/Generated.
-     * Editor/Generated for TableID inspection belongs to com.devian.module.* packages.
+     * Editor/Generated for TableID inspection belongs to com.devian.domain.* packages.
      * If this folder exists in unity.common, it indicates a routing/mapping error.
      * SSOT: skills/devian/03-ssot/SKILL.md
      */
@@ -3238,7 +4306,7 @@ export * from './features';
 
         if (violations.length > 0) {
             console.error('\n[FAIL] com.devian.unity must not contain Editor/Generated!');
-            console.error('This folder belongs to com.devian.module.* packages, not unity.common.');
+            console.error('This folder belongs to com.devian.domain.* packages, not unity.common.');
             console.error('Violations:');
             for (const v of violations) {
                 console.error(`  - ${v}`);

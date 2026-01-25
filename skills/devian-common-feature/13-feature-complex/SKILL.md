@@ -228,7 +228,7 @@ CInt/CFloat/CString의 내부 상태(save1/save2/data)는 Inspector에서 직접
 | 표시 | GetValue()로 복호화된 값만 표시 |
 | 편집 | 변경 시 SetValue()로 내부 상태 갱신 |
 | 담당 | `com.devian.unity/Editor`의 PropertyDrawer |
-| 위치 | `com.devian.module.common`에는 Editor 코드 금지 |
+| 위치 | `com.devian.domain.common`에는 Editor 코드 금지 |
 
 PropertyDrawer 파일:
 - `CIntPropertyDrawer.cs`

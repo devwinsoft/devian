@@ -2,19 +2,19 @@
 using System;
 using UnityEngine;
 using Devian;
-using Devian.Protocol.Sample;
+using Devian.Protocol.Game;
 
 namespace Devian
 {
     /// <summary>
-    /// Online-only WebSocket client sample for TS SampleServer.
+    /// Online-only WebSocket client sample for TS GameServer.
     /// 
     /// Protocol direction:
-    /// - Outbound (send): C2Sample.Proxy (Ping, Echo)
-    /// - Inbound (receive): Sample2C.Runtime + Sample2C.Stub (Pong, EchoReply)
+    /// - Outbound (send): C2Game.Proxy (Ping, Echo)
+    /// - Inbound (receive): Game2C.Runtime + Game2C.Stub (Pong, EchoReply)
     /// 
     /// Usage:
-    /// 1. Start TS SampleServer: cd framework-ts/apps/SampleServer && npm start
+    /// 1. Start TS GameServer: cd framework-ts/apps/GameServer && npm start
     /// 2. Attach to a GameObject
     /// 3. In Play mode, use Inspector buttons: Connect / Disconnect / Send Ping / Send Echo
     /// 
@@ -29,7 +29,7 @@ namespace Devian
         [SerializeField] private string pingPayload = "hello";
         [SerializeField] private string echoMessage = "echo test";
 
-        private C2Sample.Proxy? _proxy;
+        private C2Game.Proxy? _proxy;
 
         /// <summary>
         /// Connection state for Editor UI.
@@ -70,7 +70,7 @@ namespace Devian
                 return;
             }
 
-            var ping = new C2Sample.Ping
+            var ping = new C2Game.Ping
             {
                 Timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 Payload = pingPayload
@@ -91,7 +91,7 @@ namespace Devian
                 return;
             }
 
-            var echo = new C2Sample.Echo { Message = echoMessage };
+            var echo = new C2Game.Echo { Message = echoMessage };
             _proxy.SendEcho(0, echo);
             Debug.Log($"[EchoWsClientSample] Sent Echo: message={echoMessage}");
         }
@@ -102,8 +102,8 @@ namespace Devian
 
         protected override INetRuntime CreateRuntime()
         {
-            Debug.Log("[EchoWsClientSample] Creating Sample2C.Runtime for inbound dispatch");
-            return new Sample2C.Runtime(new SampleS2CStub());
+            Debug.Log("[EchoWsClientSample] Creating Game2C.Runtime for inbound dispatch");
+            return new Game2C.Runtime(new GameS2CStub());
         }
 
         // ========================================
@@ -125,9 +125,9 @@ namespace Devian
             Debug.Log("[EchoWsClientSample] Connection opened");
             IsConnected = true;
 
-            // Create proxy for outbound messages (C2Sample)
+            // Create proxy for outbound messages (C2Game)
             // Always create new proxy on connect (old one is cleared in OnClosed)
-            _proxy = new C2Sample.Proxy(new SampleSender(this));
+            _proxy = new C2Game.Proxy(new GameSender(this));
 
             // NO auto-send on connect - use Inspector buttons only
         }
@@ -158,23 +158,23 @@ namespace Devian
         // Internal types
         // ========================================
 
-        private sealed class SampleSender : C2Sample.ISender
+        private sealed class GameSender : C2Game.ISender
         {
             private readonly EchoWsClientSample _owner;
-            public SampleSender(EchoWsClientSample owner) => _owner = owner;
+            public GameSender(EchoWsClientSample owner) => _owner = owner;
             public void SendTo(int sessionId, ReadOnlySpan<byte> frame) => _owner.TrySend(frame);
         }
 
-        private sealed class SampleS2CStub : Sample2C.Stub
+        private sealed class GameS2CStub : Game2C.Stub
         {
-            protected override void OnPong(Sample2C.EnvelopeMeta meta, Sample2C.Pong message)
+            protected override void OnPong(Game2C.EnvelopeMeta meta, Game2C.Pong message)
             {
-                Debug.Log($"[Sample2C] OnPong sid={meta.SessionId} ts={message.Timestamp} serverTime={message.ServerTime}");
+                Debug.Log($"[Game2C] OnPong sid={meta.SessionId} ts={message.Timestamp} serverTime={message.ServerTime}");
             }
 
-            protected override void OnEchoReply(Sample2C.EnvelopeMeta meta, Sample2C.EchoReply message)
+            protected override void OnEchoReply(Game2C.EnvelopeMeta meta, Game2C.EchoReply message)
             {
-                Debug.Log($"[Sample2C] OnEchoReply sid={meta.SessionId} msg={message.Message} echoedAt={message.EchoedAt}");
+                Debug.Log($"[Game2C] OnEchoReply sid={meta.SessionId} msg={message.Message} echoedAt={message.EchoedAt}");
             }
         }
     }

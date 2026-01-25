@@ -158,7 +158,7 @@ Unity 환경에서의 호환성을 위해 다음 규칙을 강제한다.
 
 ```json
 {
-  "name": "com.devian.module.{domain}",
+  "name": "com.devian.domain.{domain}",
   "dependencies": {
     "com.devian.core": "1.0.0",
     "com.unity.nuget.newtonsoft-json": "3.2.1"

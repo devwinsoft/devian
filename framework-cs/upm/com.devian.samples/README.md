@@ -20,7 +20,7 @@ WebSocket 클라이언트 샘플. Protocol 연동 예시 포함.
 
 - **assembly (asmdef):** Devian Templates Network
 - **namespace:** `Devian`
-- **의존성:** com.devian.unity, com.devian.protocol.sample
+- **의존성:** com.devian.unity, com.devian.protocol.game
 
 ## 설치 후
 
