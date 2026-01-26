@@ -7,6 +7,7 @@
 import XLSX from 'xlsx';
 import { createHash } from 'crypto';
 import { gzipSync } from 'zlib';
+import { encodeNdjsonFromLines } from './ndjson-storage.js';
 
 // ============================================================================
 // Class Parser Registry (for class: type fields)
@@ -363,6 +364,12 @@ export function parseXlsx(filePath) {
  */
 function parseSheet(sheet, sheetName) {
     const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+    
+    // Note: String Table 자동 스킵 로직 제거됨
+    // SSOT: skills/devian/33-string-table/SKILL.md
+    // String Table은 stringDir/stringFiles로 별도 분리하여 처리
+    // 폴더/설정 분리로 중복 처리 방지
+    
     const fields = [];
     let keyField = null;
 
@@ -1298,7 +1305,8 @@ export function generateTableData(table) {
         lines.push(JSON.stringify(orderedRow));
     }
 
-    return { data: lines.join('\n'), rowCount: rows.length };
+    // SSOT: skills/devian/34-ndjson-storage/SKILL.md
+    return { data: encodeNdjsonFromLines(lines), rowCount: rows.length };
 }
 
 // ============================================================================

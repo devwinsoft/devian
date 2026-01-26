@@ -1,0 +1,8 @@
+{"id":"greeting","text":"안녕하세요"}
+{"id":"farewell","text":"안녕히 가세요"}
+{"id":"welcome","text":"환영합니다"}
+{"id":"thanks","text":"감사합니다"}
+{"id":"error_network","text":"네트워크 오류"}
+{"id":"btn_start","text":"시작"}
+{"id":"btn_quit","text":"종료"}
+{"id":"loading","text":"로딩 중..."}

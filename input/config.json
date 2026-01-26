@@ -15,9 +15,9 @@
   },
 
   "dataConfig": {
-    "tableDirs": [
-      "../output/table",
-      "../framework-cs/apps/UnityExample/Assets/Bundles/Tables"
+    "bundleDirs": [
+      "../output",
+      "../framework-cs/apps/UnityExample/Assets/Bundles"
     ]
   },
 

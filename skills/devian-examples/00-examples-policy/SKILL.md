@@ -39,19 +39,19 @@ AppliesTo: v10
 
 도메인 패키지(`com.devian.domain.*`)의 공통 규약:
 
-- `skills/devian-upm/20-packages/com.devian.domain.template/SKILL.md`
+- `skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md`
 
 ### UPM 번들/복사 흐름
 
 UPM 패키지가 staging → upm → Packages로 복사되는 개념:
 
-- `skills/devian-upm/02-upm-bundles/SKILL.md`
+- `skills/devian-unity/02-unity-bundles/SKILL.md`
 
 ### Protocol 샘플 (네트워크 템플릿)
 
 Network 샘플 템플릿 작성 방법:
 
-- `skills/devian-upm-samples/10-samples-network/SKILL.md`
+- `skills/devian-unity-samples/10-samples-network/SKILL.md`
 
 ---
 
@@ -74,6 +74,6 @@ Network 샘플 템플릿 작성 방법:
 ## Reference
 
 - Related: `skills/devian/03-ssot/SKILL.md`
-- Related: `skills/devian-upm/20-packages/com.devian.domain.template/SKILL.md`
-- Related: `skills/devian-upm/02-upm-bundles/SKILL.md`
-- Related: `skills/devian-upm-samples/10-samples-network/SKILL.md`
+- Related: `skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md`
+- Related: `skills/devian-unity/02-unity-bundles/SKILL.md`
+- Related: `skills/devian-unity-samples/10-samples-network/SKILL.md`

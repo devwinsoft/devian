@@ -11,6 +11,10 @@
       "tableDir": "Common/tables",
       "tableFiles": [
         "*.xlsx"
+      ],
+      "stringDir": "Common/strings",
+      "stringFiles": [
+        "*.xlsx"
       ]
     },
     "Game": {
@@ -20,6 +24,10 @@
       ],
       "tableDir": "Game/tables",
       "tableFiles": [
+        "*.xlsx"
+      ],
+      "stringDir": "Game/strings",
+      "stringFiles": [
         "*.xlsx"
       ]
     }

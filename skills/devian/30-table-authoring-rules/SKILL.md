@@ -188,9 +188,10 @@ Complex 타입의 `save2` 값(마스크)은 다음 규칙에 따라 결정적으
 경로 규약은 SSOT를 따른다.
 
 - staging: `{tempDir}/{DomainKey}/cs/Generated/**`, `{tempDir}/{DomainKey}/ts/Generated/**`, `{tempDir}/{DomainKey}/data/ndjson/{TableName}.json` (내용은 NDJSON), `{tempDir}/{DomainKey}/data/pb64/{TableName}.asset` (pk 옵션 있는 테이블만)
-- final (각 `{dataConfig.tableDirs}` 요소에 대해): `{csConfig.generateDir}/`Devian` + `.Module.{DomainKey}`/Generated/**`, `{tsConfig.generateDir}/devian-domain-{domainkey}/Generated/**`, `{dataTargetDir}/{DomainKey}/ndjson/{TableName}.json` (내용은 NDJSON), `{dataTargetDir}/{DomainKey}/pb64/{TableName}.asset` (pk 옵션 있는 테이블만)
+- final (각 `{bundleDir}` 요소에 대해): `{csConfig.generateDir}/`Devian` + `.Module.{DomainKey}`/Generated/**`, `{tsConfig.generateDir}/devian-domain-{domainkey}/Generated/**`, `{bundleDir}/Tables/ndjson/{TableName}.json` (내용은 NDJSON), `{bundleDir}/Tables/pb64/{TableName}.asset` (pk 옵션 있는 테이블만)
 
-> **파일 확장자는 `.json`이지만, `ndjson/` 폴더의 파일 내용은 NDJSON(라인 단위 JSON)이다.** 확장자는 소비 측(Unity/툴링) 요구로 `.json`을 사용한다.
+> **NDJSON 저장 규약:** 파일 확장자는 `.json`이지만, `ndjson/` 폴더의 파일 내용은 NDJSON(라인 단위 JSON)이다. 정본: `skills/devian/34-ndjson-storage/SKILL.md`
+> **pb64 저장 규약:** 정본: `skills/devian/35-pb64-storage/SKILL.md`
 
 ---
 

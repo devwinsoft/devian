@@ -63,10 +63,10 @@ Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 
 - `{ProtocolGroup}`
 - `{ProtocolName}`
 - `{csConfig.generateDir}`, `{tsConfig.generateDir}` — 전역 C#/TS 반영 루트
-- `{dataConfig.tableDirs}` — 전역 데이터 반영 타겟 (배열)
+- `{dataConfig.bundleDirs}` — 전역 번들 출력 타겟 (배열)
 - `{upmTargetDir}` — (금지) upmConfig로 계산됨
 
-> `{dataConfig.tableDirs}`는 배열이다. 문서에서 배열 내 개별 요소를 지칭할 때 `{dataTargetDir}`로 표기할 수 있다.
+> `{dataConfig.bundleDirs}`는 배열이다. 문서에서 배열 내 개별 요소를 지칭할 때 `{bundleDir}`로 표기할 수 있다.
 
 > `{tempDir}`는 절대 경로가 아닌 경우 **input_common.json이 있는 디렉토리** 기준으로 해석한다.
 
@@ -116,7 +116,7 @@ finalConfig = deepMerge(config.json, input.json)
   "csConfig": { "moduleDir": "../framework-cs/module", "moduleDir" (unified): "../framework-cs/module" },
   "tsConfig": { "moduleDir": "../framework-ts/module", "moduleDir" (unified): "../framework-ts/module" },
   "upmConfig": { "sourceDir": "../framework-cs/upm", "packageDir": "..." },
-  "dataConfig": { "tableDirs": [...] },
+  "dataConfig": { "bundleDirs": [...] },
   "staticUpmPackages": [...]
 }
 ```
@@ -133,7 +133,7 @@ finalConfig = deepMerge(config.json, input.json)
 > staging({tempDir}) 외의 위치에 직접 생성하는 동작은 금지한다.
 > 
 > **Templates 참고:** 샘플/예제 코드는 `framework-cs/upm/com.devian.samples/Samples~/`에서 관리 (UPM Samples~ 사용)
-> → `skills/devian-upm-samples/00-samples-policy/SKILL.md`
+> → `skills/devian-unity-samples/00-samples-policy/SKILL.md`
 
 ### Generated Only 정책 (Hard Rule)
 
@@ -243,24 +243,25 @@ TS 산출물의 반영 위치를 관리하는 설정:
 
 ### dataConfig 설정
 
-DATA 도메인의 데이터 출력 타겟은 전역 `dataConfig`로 설정한다.
+DATA 도메인의 번들 출력 타겟은 전역 `dataConfig`로 설정한다.
 
 ```json
 "dataConfig": {
-  "tableDirs": [
-    "../output/table",
-    "../framework-cs/apps/UnityExample/Assets/Bundles/Tables"
+  "bundleDirs": [
+    "../output",
+    "../framework-cs/apps/UnityExample/Assets/Bundles"
   ]
 }
 ```
 
 | 필드 | 역할 | 예시 |
 |------|------|------|
-| `tableDirs` | 테이블 데이터 출력 디렉토리 목록 | `["../output/table", "..."]` |
+| `bundleDirs` | 번들 출력 루트 디렉토리 목록 | `["../output", "..."]` |
 
 **필수 규칙:**
-- `dataConfig.tableDirs`는 필수 (빈 배열 허용)
-- 모든 도메인의 데이터 출력이 이 타겟들로 반영됨
+- `dataConfig.bundleDirs`는 필수 (빈 배열 허용)
+- 빌더가 각 bundleDir에 대해 `Tables/` 및 `Strings/` 하위 디렉토리를 생성
+- `dataConfig.tableDirs`는 deprecated (존재 시 빌드 FAIL)
 - `domains[*].dataTargetDirs`는 금지 (존재 시 빌드 실패)
 
 ### 디렉토리 역할 정의 (SSOT)
@@ -487,7 +488,7 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 - 패키지 단위 clean+copy (packageDir 전체 rm -rf 금지)
 
 > **참고:** UPM `Samples~`는 templates(사용자가 Import 후 수정하는 샘플 소스)를 배포하는 표준 메커니즘이다.
-> 정책: `skills/devian-upm-samples/01-samples-authoring-guide/SKILL.md`
+> 정책: `skills/devian-unity-samples/01-samples-authoring-guide/SKILL.md`
 
 **충돌 정책 (HARD RULE):**
 - upm와 upm에 **동일 `package.json.name`이 있으면 무조건 빌드 FAIL**
@@ -641,16 +642,26 @@ SKIP되어도 타겟 디렉토리는 clean되어 이전 산출물이 제거된�
   - `{tempDir}/{DomainKey}/ts/Generated/{DomainKey}.g.ts`, `{tempDir}/{DomainKey}/ts/index.ts`
   - `{tempDir}/{DomainKey}/data/ndjson/{TableName}.json` (내용은 NDJSON)
   - `{tempDir}/{DomainKey}/data/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
+  - `{tempDir}/{DomainKey}/data/string/ndjson/{Language}/{TableName}.json` (String Table)
+  - `{tempDir}/{DomainKey}/data/string/pb64/{Language}/{TableName}.asset` (String Table)
 - final (csConfig/tsConfig/dataConfig 기반):
   - `{csConfig.generateDir}/` + `Devian` + `.Module.{DomainKey}` + `/Generated/{DomainKey}.g.cs`
   - `{tsConfig.generateDir}/devian-domain-{domainkey}/Generated/{DomainKey}.g.ts`, `index.ts`
-  - `{dataConfig.tableDirs[i]}/{DomainKey}/ndjson/{TableName}.json` (내용은 NDJSON)
-  - `{dataConfig.tableDirs[i]}/{DomainKey}/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
+  - `{bundleDir}/Tables/ndjson/{TableName}.json` (내용은 NDJSON)
+  - `{bundleDir}/Tables/pb64/{TableName}.asset` (pk 옵션 있는 테이블만)
+  - `{bundleDir}/Strings/ndjson/{Language}/{TableName}.json` (String Table)
+  - `{bundleDir}/Strings/pb64/{Language}/{TableName}.asset` (String Table)
+
+**도메인 폴더 미사용 (Hard Rule):**
+- 최종 경로에 `{DomainKey}` 폴더를 생성하지 않는다.
+- 모든 도메인의 테이블 파일이 동일 디렉토리에 병합된다.
+- **동일 파일명 충돌 시 빌드 FAIL** (조용한 덮어쓰기 금지).
 
 **금지 필드 (Hard Fail):**
 - `domains[*].csTargetDir` — 금지, `csConfig.generateDir` 사용, 존재 시 빌드 실패
 - `domains[*].tsTargetDir` — 금지, `tsConfig.generateDir` 사용, 존재 시 빌드 실패
-- `domains[*].dataTargetDirs` — 금지, `dataConfig.tableDirs` 사용, 존재 시 빌드 실패
+- `domains[*].dataTargetDirs` — 금지, `dataConfig.bundleDirs` 사용, 존재 시 빌드 실패
+- `dataConfig.tableDirs` — deprecated, `dataConfig.bundleDirs` 사용, 존재 시 빌드 FAIL
 
 > Domain의 모든 Contract, Table Entity, Table Container는 단일 파일(`{DomainKey}.g.cs`, `{DomainKey}.g.ts`)에 통합 생성된다.
 > **파일 확장자는 `.json`이지만, `ndjson/` 폴더의 파일 내용은 NDJSON(라인 단위 JSON)이다.** 확장자는 소비 측(Unity/툴링) 요구로 `.json`을 사용한다.
@@ -673,31 +684,17 @@ SKIP되어도 타겟 디렉토리는 clean되어 이전 산출물이 제거된�
 
 **pk 옵션이 있는 테이블만 Unity TextAsset `.asset` 파일로 export한다.**
 
-포맷 (Unity TextAsset YAML):
-```yaml
-%YAML 1.1
-%TAG !u! tag:unity3d.com,2011:
---- !u!49 &4900000
-TextAsset:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: <TABLE_NAME>
-  m_Script: <BASE64>
-```
-
 - 파일명: `{TableName}.asset` (테이블 단위 1개 파일)
+- 저장 형식: Unity TextAsset YAML
 - `m_Name`: 테이블 이름과 동일
-- `m_Script`: **DVGB gzip 블록 컨테이너** (base64 인코딩)
-  - 헤더: `DVGB` (4바이트) + 버전 1 (1바이트) + blockSize (4바이트) + blockCount (4바이트)
-  - 블록: 1024K 단위로 gzip 압축, 각 블록에 uncompressedLen + compressedLen + gzipBytes
-  - 압축 전 데이터: 기존 pb64 rawBinary (varint length-delimited JSON rows)
+- `m_Script`: base64 인코딩된 payload (일반 Table은 DVGB gzip 컨테이너, String Table은 청크 base64)
 - pk 옵션이 없는 테이블은 export 안함
 - row 중 pk가 빈 값이 하나라도 있으면 테이블 전체 스킵
 - 하위 호환: C# 로더는 `DVGB` 헤더가 없으면 기존 포맷으로 처리
 
 결정성 요구: 같은 입력이면 항상 같은 .asset 출력
+
+> **상세 포장 규약 정본:** `skills/devian/35-pb64-storage/SKILL.md`
 
 #### C# Namespace (Hard Rule)
 

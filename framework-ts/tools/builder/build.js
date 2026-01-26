@@ -14,6 +14,7 @@ import { generateTypeScriptProtocol, generateServerRuntime, generateClientRuntim
 import { generateCSharpContract, generateCSharpContractBody } from './generators/contract-cs.js';
 import { generateTypeScriptContract, generateTypeScriptContractBody } from './generators/contract-ts.js';
 import { generateCSharpTable, generateCSharpTableEntityBody, generateCSharpTableContainerBody, generateTypeScriptTable, generateTypeScriptTableBody, generateTypeScriptTableContainerBody, generateTableData, generateTableAsset, parseXlsx, collectEnumGenSpecs, generateCSharpEnums, generateTypeScriptEnums, getCSharpKeyTypeForTable } from './generators/table.js';
+import { parseStringTablesFromXlsx, generateStringNdjson, generateStringPb64, generateStringPb64TextAssetYaml } from './generators/string-table.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -160,6 +161,18 @@ class DevianToolBuilder {
         return undefined;
     }
 
+    /**
+     * Resolve string directory for a domain.
+     * SSOT: skills/devian/33-string-table/SKILL.md
+     * Returns resolved absolute path, or undefined if not configured.
+     */
+    resolveStringDir(domainName, config) {
+        if (config.stringDir) {
+            return this.resolvePath(config.stringDir);
+        }
+        return undefined;
+    }
+
     async run() {
         console.log('='.repeat(60));
         console.log('Devian Build System v10');
@@ -300,11 +313,14 @@ class DevianToolBuilder {
         const stagingTsRoot = path.join(this.tempDir, domainName, 'ts');
         const stagingNdjson = path.join(this.tempDir, domainName, 'data', 'ndjson');
         const stagingPb64 = path.join(this.tempDir, domainName, 'data', 'pb64');
+        // String table staging directories (string/{format}/{Language}/)
+        const stagingStringRoot = path.join(this.tempDir, domainName, 'data', 'string');
 
         fs.mkdirSync(stagingCs, { recursive: true });
         fs.mkdirSync(stagingTs, { recursive: true });
         fs.mkdirSync(stagingNdjson, { recursive: true });
         fs.mkdirSync(stagingPb64, { recursive: true });
+        fs.mkdirSync(stagingStringRoot, { recursive: true });
 
         // Collect all data for unified file generation
         const contractSpecs = [];
@@ -376,6 +392,93 @@ class DevianToolBuilder {
             console.log(`    [Skip] tables: not configured`);
         } else {
             console.log(`    [Skip] tables: incomplete config (need both tableDir and tableFiles)`);
+        }
+
+        // ================================================================
+        // String Tables Processing (stringDir/stringFiles 전용)
+        // SSOT: skills/devian/33-string-table/SKILL.md
+        // Hard Rule: tableDir/tableFiles는 절대 사용하지 않음
+        // ================================================================
+        const stringDir = this.resolveStringDir(domainName, config);
+        
+        // Incomplete config check (FAIL, not skip)
+        if ((stringDir && !config.stringFiles) || (!stringDir && config.stringFiles)) {
+            throw new Error(
+                `[FAIL] Incomplete string table config in domain '${domainName}'.\n` +
+                `  Both stringDir and stringFiles must be configured together.\n` +
+                `  stringDir: ${config.stringDir || '(not set)'}\n` +
+                `  stringFiles: ${config.stringFiles ? JSON.stringify(config.stringFiles) : '(not set)'}`
+            );
+        }
+        
+        if (stringDir && config.stringFiles) {
+            // ============================================================
+            // Overlap detection: table inputs vs string inputs
+            // Hard Rule: 같은 파일이 양쪽에서 처리되면 FAIL
+            // ============================================================
+            if (tableDir && config.tableFiles && fs.existsSync(tableDir) && fs.existsSync(stringDir)) {
+                const tableFiles = new Set(this.globFiles(tableDir, config.tableFiles));
+                const stringFiles = this.globFiles(stringDir, config.stringFiles);
+                const overlap = stringFiles.filter(f => tableFiles.has(f));
+                if (overlap.length > 0) {
+                    throw new Error(
+                        `[FAIL] Input file overlap detected in domain '${domainName}'.\n` +
+                        `  The following files are matched by both tableFiles and stringFiles:\n` +
+                        `  ${overlap.map(f => path.basename(f)).join(', ')}\n` +
+                        `  This is forbidden to prevent silent processing errors.\n` +
+                        `  Move string table XLSX files to a separate directory (stringDir).`
+                    );
+                }
+            }
+            
+            if (!fs.existsSync(stringDir)) {
+                console.log(`    [Skip] string tables: directory not found: ${stringDir}`);
+            } else {
+                const files = this.globFiles(stringDir, config.stringFiles);
+                if (files.length === 0) {
+                    console.log(`    [Skip] string tables: no files matched [${config.stringFiles.join(', ')}] in ${stringDir}`);
+                } else {
+                    for (const file of files) {
+                        try {
+                            const stringTables = parseStringTablesFromXlsx(file);
+                            
+                            for (const strTable of stringTables) {
+                                console.log(`    [StringTable] ${strTable.tableName}`);
+                                
+                                for (const [language, entries] of strTable.byLanguage) {
+                                    // Create language directories
+                                    const strNdjsonDir = path.join(stagingStringRoot, 'ndjson', language);
+                                    const strPb64Dir = path.join(stagingStringRoot, 'pb64', language);
+                                    fs.mkdirSync(strNdjsonDir, { recursive: true });
+                                    fs.mkdirSync(strPb64Dir, { recursive: true });
+                                    
+                                    // Generate ndjson
+                                    const ndjsonContent = generateStringNdjson(entries);
+                                    const ndjsonPath = path.join(strNdjsonDir, `${strTable.tableName}.json`);
+                                    fs.writeFileSync(ndjsonPath, ndjsonContent);
+                                    
+                                    // Generate pb64 as Unity TextAsset .asset
+                                    // SSOT: skills/devian-upm/30-unity-components/13-pb64-storage/SKILL.md
+                                    const pb64Text = generateStringPb64(entries);
+                                    const assetYaml = generateStringPb64TextAssetYaml(strTable.tableName, pb64Text);
+                                    const assetPath = path.join(strPb64Dir, `${strTable.tableName}.asset`);
+                                    fs.writeFileSync(assetPath, assetYaml);
+                                    
+                                    console.log(`      [${language}] ${strTable.tableName}.json, ${strTable.tableName}.asset`);
+                                }
+                            }
+                        } catch (err) {
+                            // Validation errors are thrown, re-throw them
+                            if (err.message.startsWith('[FAIL]')) {
+                                throw err;
+                            }
+                            // Other errors (e.g., no string table sheets) are ignored
+                        }
+                    }
+                }
+            }
+        } else {
+            console.log(`    [Skip] string tables: not configured`);
         }
 
         // Generate unified C# file: {DomainName}.g.cs
@@ -659,6 +762,9 @@ class DevianToolBuilder {
         const stagingTsRoot = path.join(this.tempDir, domainName, 'ts');
         const stagingNdjson = path.join(this.tempDir, domainName, 'data', 'ndjson');
         const stagingPb64 = path.join(this.tempDir, domainName, 'data', 'pb64');
+        // String Table staging paths (SSOT: skills/devian/33-string-table/SKILL.md)
+        const stagingStringNdjson = path.join(this.tempDir, domainName, 'data', 'string', 'ndjson');
+        const stagingStringPb64 = path.join(this.tempDir, domainName, 'data', 'string', 'pb64');
 
         // Copy to CS target: {csConfig.generateDir}/Devian + .Module.{Domain}/Generated/
         // Domain C# output always goes to csConfig.generateDir (domains[*].csTargetDir is deprecated)
@@ -711,19 +817,47 @@ class DevianToolBuilder {
             this.ensureModulePackageJson(resolvedTargetDir, tsModuleName, domainName);
         }
 
-        // Copy to Data targets: {dataTargetDir}/{Domain}/ndjson/ and {dataTargetDir}/{Domain}/pb64/
-        // Uses global dataConfig.tableDirs (domains[*].dataTargetDirs is deprecated)
-        if (this.dataTargetDirs && this.dataTargetDirs.length > 0) {
-            for (const resolvedDataDir of this.dataTargetDirs) {
-                // Copy ndjson files
-                const ndjsonTarget = path.join(resolvedDataDir, domainName, 'ndjson');
-                this.cleanAndCopy(stagingNdjson, ndjsonTarget);
-                console.log(`    [Copy] ${stagingNdjson} -> ${ndjsonTarget}`);
+        // Copy to Bundle targets: {bundleDir}/Tables/ and {bundleDir}/Strings/
+        // Uses global dataConfig.bundleDirs (domains[*].dataTargetDirs is deprecated)
+        // SSOT: skills/devian/03-ssot/SKILL.md
+        // NOTE: Domain folder is NOT created. Files are merged directly.
+        //       Filename collision will FAIL the build (no silent overwrite).
+        if (this.bundleDirs && this.bundleDirs.length > 0) {
+            for (const bundleDir of this.bundleDirs) {
+                // ============================================================
+                // General Tables → {bundleDir}/Tables/ndjson|pb64/
+                // Clean once per bundleDir, then merge copy from all domains
+                // ============================================================
+                
+                // Copy ndjson files: {bundleDir}/Tables/ndjson/
+                const ndjsonTarget = path.join(bundleDir, 'Tables', 'ndjson');
+                this.ensureCleanDirOnce(ndjsonTarget, `${bundleDir}:Tables:ndjson`);
+                this.mergeCopyDirNoOverwrite(stagingNdjson, ndjsonTarget);
+                console.log(`    [MergeCopy] ${stagingNdjson} -> ${ndjsonTarget}`);
 
-                // Copy pb64 files (PB64 .asset files)
-                const pb64Target = path.join(resolvedDataDir, domainName, 'pb64');
-                this.cleanAndCopy(stagingPb64, pb64Target);
-                console.log(`    [Copy] ${stagingPb64} -> ${pb64Target}`);
+                // Copy pb64 files: {bundleDir}/Tables/pb64/
+                const pb64Target = path.join(bundleDir, 'Tables', 'pb64');
+                this.ensureCleanDirOnce(pb64Target, `${bundleDir}:Tables:pb64`);
+                this.mergeCopyDirNoOverwrite(stagingPb64, pb64Target);
+                console.log(`    [MergeCopy] ${stagingPb64} -> ${pb64Target}`);
+
+                // ============================================================
+                // String Tables → {bundleDir}/Strings/ndjson|pb64/{Language}/
+                // Clean once per bundleDir, then merge copy from all domains
+                // ============================================================
+                
+                // Copy String Table ndjson files: {bundleDir}/Strings/ndjson/{Language}/
+                // SSOT: skills/devian/33-string-table/SKILL.md
+                const stringNdjsonTarget = path.join(bundleDir, 'Strings', 'ndjson');
+                this.ensureCleanDirOnce(stringNdjsonTarget, `${bundleDir}:Strings:ndjson`);
+                this.mergeCopyDirNoOverwrite(stagingStringNdjson, stringNdjsonTarget);
+                console.log(`    [MergeCopy] ${stagingStringNdjson} -> ${stringNdjsonTarget}`);
+
+                // Copy String Table pb64 files: {bundleDir}/Strings/pb64/{Language}/
+                const stringPb64Target = path.join(bundleDir, 'Strings', 'pb64');
+                this.ensureCleanDirOnce(stringPb64Target, `${bundleDir}:Strings:pb64`);
+                this.mergeCopyDirNoOverwrite(stagingStringPb64, stringPb64Target);
+                console.log(`    [MergeCopy] ${stagingStringPb64} -> ${stringPb64Target}`);
             }
         }
 
@@ -1582,6 +1716,59 @@ export * from './features';
         }
     }
 
+    /**
+     * Clean directory only once per key (for merge copy pattern).
+     * Used when multiple domains copy to the same target directory.
+     * @param {string} dstDir - Target directory to clean
+     * @param {string} key - Unique key to track if already cleaned
+     */
+    ensureCleanDirOnce(dstDir, key) {
+        if (!this._cleanedDirs) {
+            this._cleanedDirs = new Set();
+        }
+        if (this._cleanedDirs.has(key)) {
+            return; // Already cleaned
+        }
+        if (fs.existsSync(dstDir)) {
+            fs.rmSync(dstDir, { recursive: true });
+        }
+        fs.mkdirSync(dstDir, { recursive: true });
+        this._cleanedDirs.add(key);
+    }
+
+    /**
+     * Merge copy directory without overwriting existing files.
+     * FAIL if destination file already exists (filename collision).
+     * @param {string} srcDir - Source directory
+     * @param {string} dstDir - Destination directory
+     */
+    mergeCopyDirNoOverwrite(srcDir, dstDir) {
+        if (!fs.existsSync(srcDir)) return;
+        
+        const entries = fs.readdirSync(srcDir, { withFileTypes: true });
+        for (const entry of entries) {
+            const srcPath = path.join(srcDir, entry.name);
+            const dstPath = path.join(dstDir, entry.name);
+            
+            if (entry.isDirectory()) {
+                fs.mkdirSync(dstPath, { recursive: true });
+                this.mergeCopyDirNoOverwrite(srcPath, dstPath);
+            } else {
+                // FAIL if file already exists (no silent overwrite)
+                if (fs.existsSync(dstPath)) {
+                    throw new Error(
+                        `[FAIL] File collision detected during merge copy.\n` +
+                        `  Source: ${srcPath}\n` +
+                        `  Destination: ${dstPath}\n` +
+                        `  The destination file already exists. This happens when multiple domains produce files with the same name.\n` +
+                        `  Solution: Ensure unique table names across all domains, or use domain-prefixed naming.`
+                    );
+                }
+                fs.copyFileSync(srcPath, dstPath);
+            }
+        }
+    }
+
     ensureTsConfig(targetDir) {
         const tsconfigPath = path.join(targetDir, 'tsconfig.json');
         if (!fs.existsSync(tsconfigPath)) {
@@ -1695,7 +1882,7 @@ export * from './features';
         const packageJsonObj = {
             name: `com.devian.domain.${domainName.toLowerCase()}`,
             version: '0.1.0',
-            displayName: `Devian Module ${domainName}`,
+            displayName: `Devian Domain ${domainName}`,
             description: isCommon
                 ? 'Devian.Domain.Common runtime for Unity (source) - Common features'
                 : `Devian.Domain.${domainName} runtime for Unity (source)`,
@@ -2695,12 +2882,28 @@ export * from './features';
             }
         }
 
-        // Resolve dataConfig.tableDirs (global data output targets)
-        if (this.config.dataConfig && Array.isArray(this.config.dataConfig.tableDirs)) {
-            this.dataTargetDirs = this.config.dataConfig.tableDirs.map(dir => this.resolvePath(dir));
-            console.log(`  [OK] dataConfig.tableDirs: ${this.dataTargetDirs.length} targets`);
+        // Resolve dataConfig.bundleDirs (global bundle output targets)
+        // SSOT: skills/devian/03-ssot/SKILL.md
+        if (this.config.dataConfig) {
+            // FAIL if deprecated tableDirs exists
+            if (this.config.dataConfig.tableDirs !== undefined) {
+                throw new Error(
+                    `[FAIL] dataConfig.tableDirs is deprecated. Use dataConfig.bundleDirs instead.\n` +
+                    `  1. Rename "tableDirs" to "bundleDirs" in config.json.\n` +
+                    `  2. Remove "/Tables" suffix from bundleDirs values.\n` +
+                    `     Example: ".../Assets/Bundles/Tables" → ".../Assets/Bundles"\n` +
+                    `  The builder will create Tables/ and Strings/ subdirectories automatically.`
+                );
+            }
+            
+            if (Array.isArray(this.config.dataConfig.bundleDirs)) {
+                this.bundleDirs = this.config.dataConfig.bundleDirs.map(dir => this.resolvePath(dir));
+                console.log(`  [OK] dataConfig.bundleDirs: ${this.bundleDirs.length} targets`);
+            } else {
+                this.bundleDirs = [];
+            }
         } else {
-            this.dataTargetDirs = [];
+            this.bundleDirs = [];
         }
 
         // Path Guards (CRITICAL)
@@ -2819,9 +3022,9 @@ export * from './features';
                 if (domainConfig.dataTargetDirs !== undefined) {
                     errors.push(
                         `domains.${domainKey}.dataTargetDirs is deprecated and no longer supported.\n` +
-                        `  Data output is now configured globally via dataConfig.tableDirs.\n` +
+                        `  Data output is now configured globally via dataConfig.bundleDirs.\n` +
                         `  Was: { "dataTargetDirs": ${JSON.stringify(domainConfig.dataTargetDirs)}, ... }\n` +
-                        `  Fix: Remove "dataTargetDirs" from domains.${domainKey}. Use dataConfig.tableDirs instead.`
+                        `  Fix: Remove "dataTargetDirs" from domains.${domainKey}. Use dataConfig.bundleDirs instead.`
                     );
                 }
 
@@ -2848,11 +3051,11 @@ export * from './features';
         }
 
         // Check dataConfig exists and is valid
-        if (!this.config.dataConfig || !Array.isArray(this.config.dataConfig.tableDirs)) {
+        if (!this.config.dataConfig || !Array.isArray(this.config.dataConfig.bundleDirs)) {
             errors.push(
-                `dataConfig.tableDirs is required.\n` +
-                `  Add dataConfig.tableDirs to config.json.\n` +
-                `  Example: "dataConfig": { "tableDirs": ["../output/table"] }`
+                `dataConfig.bundleDirs is required.\n` +
+                `  Add dataConfig.bundleDirs to config.json.\n` +
+                `  Example: "dataConfig": { "bundleDirs": ["../output", "../framework-cs/apps/UnityExample/Assets/Bundles"] }`
             );
         }
 

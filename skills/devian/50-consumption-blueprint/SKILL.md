@@ -34,7 +34,10 @@ Devian 산출물을 실제 앱(클라/서버/툴)에서 소비하는 기본 청�
 
 ### DATA
 
-1) `{dataTargetDir}/{DomainKey}/ndjson/*.ndjson` 또는 `{dataTargetDir}/{DomainKey}/bin/*.asset` (ASSET 테이블만)를 로드한다.
+1) 테이블 데이터를 로드한다:
+   - NDJSON: `{bundleDir}/Tables/ndjson/*.json` (내용은 NDJSON)
+   - pb64: `{bundleDir}/Tables/pb64/*.asset` (pk 옵션 있는 테이블만)
+   - String Table: `{bundleDir}/Strings/ndjson/{Language}/*.json`, `{bundleDir}/Strings/pb64/{Language}/*.asset`
 2) generated 컨테이너/로더를 통해 테이블을 구성한다.
 3) `enum:*` / `class:*` 셀 원문이 필요한 경우 DFF 규약으로 해석한다.
 

@@ -130,9 +130,10 @@ node framework-ts/tools/builder/build.js <buildJson>
 
 | 필드 | 필수 | 설명 |
 |------|------|------|
-| `tableDirs` | **✓ 필수** | 테이블 데이터 출력 디렉토리 배열 |
+| `bundleDirs` | **✓ 필수** | 번들 출력 루트 디렉토리 배열 |
 
-> **CRITICAL:** `dataConfig.tableDirs`가 누락되면 빌드가 **즉시 FAIL**한다.
+> **CRITICAL:** `dataConfig.bundleDirs`가 누락되면 빌드가 **즉시 FAIL**한다.
+> `dataConfig.tableDirs`는 deprecated이며 존재 시 빌드 **즉시 FAIL**한다.
 
 ### staticUpmPackages
 
@@ -178,11 +179,21 @@ UPM: {upmConfig.sourceDir}/com.devian.protocol.{protocolGroupLower}/
 
 ### 데이터 산출물
 
+**일반 테이블:**
 ```
-{dataConfig.tableDirs[*]}/{DomainKey}/
+{bundleDir}/Tables/ndjson/{TableName}.json
+{bundleDir}/Tables/pb64/{TableName}.asset
 ```
 
-- 복수 타겟 가능 (`tableDirs`가 배열)
+**String Table:**
+```
+{bundleDir}/Strings/ndjson/{Language}/{TableName}.json
+{bundleDir}/Strings/pb64/{Language}/{TableName}.asset
+```
+
+- 복수 타겟 가능 (`bundleDirs`가 배열, 각 `{bundleDir}`에 복사)
+- **도메인 폴더 미사용**: 최종 경로에 `{DomainKey}` 폴더 없음
+- **동일 파일명 충돌 시 빌드 FAIL** (조용한 덮어쓰기 금지)
 
 ---
 
@@ -197,7 +208,7 @@ UPM: {upmConfig.sourceDir}/com.devian.protocol.{protocolGroupLower}/
 
 | 조건 | 결과 |
 |------|------|
-| `dataConfig.tableDirs` 누락 | **즉시 FAIL** |
+| `dataConfig.bundleDirs` 누락 | **즉시 FAIL** |
 
 ### Deprecated 필드 FAIL
 
@@ -205,6 +216,7 @@ UPM: {upmConfig.sourceDir}/com.devian.protocol.{protocolGroupLower}/
 
 | 위치 | Deprecated 필드 |
 |------|-----------------|
+| `dataConfig` | `tableDirs` |
 | `domains[*]` | `csTargetDir` |
 | `domains[*]` | `tsTargetDir` |
 | `domains[*]` | `dataTargetDirs` |
@@ -213,7 +225,7 @@ UPM: {upmConfig.sourceDir}/com.devian.protocol.{protocolGroupLower}/
 | `protocols[*]` | `upmName` |
 | `protocols[*]` | `upmTargetDir` |
 
-> **총 7개** deprecated 필드. 하나라도 발견되면 빌드가 중단된다.
+> **총 8개** deprecated 필드. 하나라도 발견되면 빌드가 중단된다.
 
 ---
 
@@ -248,4 +260,4 @@ Game 도메인/프로토콜 예제의 상세 설명은 별도 스킬 문서를 �
 | `skills/devian/03-ssot/SKILL.md` | 전체 SSOT 정책 |
 | `skills/devian/21-build-error-reporting/SKILL.md` | 빌드 에러/로그 표준 |
 | `skills/devian-examples/00-examples-policy/SKILL.md` | Game 예제 정책 |
-| `skills/devian-upm/02-upm-bundles/SKILL.md` | UPM 번들/복사 흐름 |
+| `skills/devian-unity/02-unity-bundles/SKILL.md` | UPM 번들/복사 흐름 |

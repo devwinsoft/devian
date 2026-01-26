@@ -1,0 +1,8 @@
+{"id":"greeting","text":"こんにちは"}
+{"id":"farewell","text":"さようなら"}
+{"id":"welcome","text":"ようこそ"}
+{"id":"thanks","text":"ありがとう"}
+{"id":"error_network","text":"ネットワークエラー"}
+{"id":"btn_start","text":"開始"}
+{"id":"btn_quit","text":"終了"}
+{"id":"loading","text":"読み込み中..."}

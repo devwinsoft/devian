@@ -246,6 +246,6 @@ build-{yyyyMMdd-HHmmss}-{pid}.ndjson
 
 ### 입력 규약 (연결 후보)
 
-- `skills/devian-upm/20-packages/com.devian.domain.template/SKILL.md` — 도메인 패키지 생성 규칙
-- `skills/devian-upm-samples/00-samples-policy/SKILL.md`
+- `skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md` — 도메인 패키지 생성 규칙
+- `skills/devian-unity-samples/00-samples-policy/SKILL.md`
 - `skills/devian-examples/00-examples-policy/SKILL.md`

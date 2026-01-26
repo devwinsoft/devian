@@ -1,3 +1,0 @@
-{"Key":"AttackPower","FallbackValue":{"i":0},"MinValue":{"i":0},"MaxValue":{"i":10000}}
-{"Key":"CriRate","FallbackValue":{"f":0},"MinValue":{"f":0},"MaxValue":{"f":3.5}}
-{"Key":"NameTag","FallbackValue":{"s":"Hello"},"MinValue":{"s":"A"},"MaxValue":{"s":"Z"}}

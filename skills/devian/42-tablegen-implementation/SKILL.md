@@ -118,7 +118,11 @@ Domain 내 모든 Contract, Table Entity, Table Container는 **단일 파일에 
 |--------|-------------|------|-----------|
 | C# (통합) | `{DomainKey}.g.cs` | `Common.g.cs` | 항상 |
 | TS (통합) | `{DomainKey}.g.ts` | `Common.g.ts` | 항상 |
-| NDJSON Data | `{SheetName}.ndjson` | `TestSheet.ndjson` | PrimaryKey 있는 sheet만 |
+| NDJSON Data | `{SheetName}.json` | `TestSheet.json` | PrimaryKey 있는 sheet만 |
+| pb64 Data | `{SheetName}.asset` | `TestSheet.asset` | PrimaryKey 있는 sheet만 |
+
+> **NDJSON 저장 규약:** 내용은 NDJSON이며 확장자는 `.json` 고정. 정본: `skills/devian/34-ndjson-storage/SKILL.md`
+> **pb64 저장 규약:** Unity TextAsset `.asset` 형식. 정본: `skills/devian/35-pb64-storage/SKILL.md`
 
 ---
 

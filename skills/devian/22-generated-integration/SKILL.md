@@ -49,11 +49,16 @@ generated 산출물을 프로젝트에 통합할 때의 **소유권/폴더/수�
 |------|------------------|-------------------|
 | C# | `{csConfig.generateDir}/`Devian` + `.Domain.{Domain}`/` | `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/` |
 | TS | `{tsConfig.generateDir}/devian-domain-{domain}/` | `{tsConfig.generateDir}/devian-protocol-{group}/` |
-| Data (ndjson) | `{dataConfig.tableDirs}/{Domain}/ndjson/` | - |
-| Data (bin) | `{dataConfig.tableDirs}/{Domain}/pb64/` (pk 옵션 테이블만) | - |
+| Data (ndjson) | `{bundleDir}/Tables/ndjson/` | - |
+| Data (pb64) | `{bundleDir}/Tables/pb64/` (pk 옵션 테이블만) | - |
+| String Table (ndjson) | `{bundleDir}/Strings/ndjson/{Language}/` | - |
+| String Table (pb64) | `{bundleDir}/Strings/pb64/{Language}/` | - |
 
 > **생성물 namespace 고정 (Hard Rule):**
 > C# 생성물 namespace는 `Devian.Protocol.{ProtocolGroup}`으로 고정이며, 런타임 모듈 단일화와 무관하게 변경하지 않는다.
+
+> **도메인 폴더 미사용 (Hard Rule):**
+> 최종 경로에 `{Domain}` 폴더를 생성하지 않는다. 동일 파일명 충돌 시 빌드 FAIL.
 
 ### 권장 구조
 
@@ -82,12 +87,19 @@ framework-ts/
 │       ├── {ProtocolName}.g.ts
 │       └── index.ts
 
-output/
-└── {Domain}/
+{bundleDir}/
+├── Tables/
+│   ├── ndjson/
+│   │   └── *.json
+│   └── pb64/
+│       └── *.asset  # pk 옵션 테이블만
+└── Strings/
     ├── ndjson/
-    │   └── *.json
+    │   └── {Language}/
+    │       └── *.json
     └── pb64/
-        └── *.asset  # pk 옵션 테이블만
+        └── {Language}/
+            └── *.asset
 ```
 
 > 실제 폴더명/레이아웃은 프로젝트 구성에 따라 달라질 수 있으며, 코드가 정답이다.

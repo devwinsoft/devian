@@ -59,7 +59,7 @@ input/Game/contracts/*.json
   UnityExample/Packages/com.devian.domain.game/  (sync)
 ```
 
-> **상세 흐름:** `skills/devian-upm/02-upm-bundles/SKILL.md` 참조
+> **상세 흐름:** `skills/devian-unity/02-unity-bundles/SKILL.md` 참조
 
 ---
 
@@ -67,11 +67,11 @@ input/Game/contracts/*.json
 
 | 주제 | 스킬 경로 |
 |------|-----------|
-| 도메인 패키지 공통 규약 | `skills/devian-upm/20-packages/com.devian.domain.template/SKILL.md` |
+| 도메인 패키지 공통 규약 | `skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md` |
 | 테이블 작성 규칙 | `skills/devian/30-table-authoring-rules/SKILL.md` |
 | 테이블 생성 구현 | `skills/devian/42-tablegen-implementation/SKILL.md` |
 | 컨트랙트 생성 구현 | `skills/devian/43-contractgen-implementation/SKILL.md` |
-| UPM 번들/복사 흐름 | `skills/devian-upm/02-upm-bundles/SKILL.md` |
+| UPM 번들/복사 흐름 | `skills/devian-unity/02-unity-bundles/SKILL.md` |
 
 ---
 
@@ -86,5 +86,5 @@ input/Game/contracts/*.json
 ## Reference
 
 - Related: `skills/devian-examples/00-examples-policy/SKILL.md`
-- Related: `skills/devian-upm/20-packages/com.devian.domain.template/SKILL.md`
+- Related: `skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md`
 - Related: `skills/devian/03-ssot/SKILL.md`
