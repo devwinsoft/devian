@@ -287,15 +287,15 @@ var text = AssetManager.GetAsset<TextAsset>("UIText"); // 언어 충돌!
 
 ### 올바른 패턴
 
-**String Table은 `StringTableManager`를 사용하고, `(format, language, tableName)` 키로 별도 캐시한다.**
+**String Table은 `TableManager` + `ST_{TableName}`을 사용하고, `(format, language, tableName)` 키로 별도 캐시한다.**
 
 ```csharp
-// CORRECT: StringTableManager 사용
-yield return StringTableManager.Instance.PreloadAsync("ndjson", SystemLanguage.Korean, "UIText");
-var text = StringTableManager.Instance.Get("ndjson", SystemLanguage.Korean, "UIText", "greeting");
+// CORRECT: TableManager / ST_ 사용
+yield return ST_UIText.PreloadAsync("ndjson", SystemLanguage.Korean);
+var text = ST_UIText.Get("ndjson", SystemLanguage.Korean, "greeting");
 ```
 
-> **Reference**: `skills/devian/33-string-table/SKILL.md`
+> **Reference**: `skills/devian/33-string-table/SKILL.md`, `skills/devian-unity/30-unity-components/14-table-manager/SKILL.md`
 
 ---
 

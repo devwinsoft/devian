@@ -325,6 +325,7 @@ class DevianToolBuilder {
         // Collect all data for unified file generation
         const contractSpecs = [];
         const tables = [];
+        const stringTableNames = []; // For UPM wrapper generation
 
         // Resolve contract directory
         const contractDir = this.resolveContractDir(domainName, config);
@@ -444,6 +445,7 @@ class DevianToolBuilder {
                             
                             for (const strTable of stringTables) {
                                 console.log(`    [StringTable] ${strTable.tableName}`);
+                                stringTableNames.push(strTable.tableName); // Collect for UPM wrapper
                                 
                                 for (const [language, entries] of strTable.byLanguage) {
                                     // Create language directories
@@ -497,7 +499,7 @@ class DevianToolBuilder {
         fs.writeFileSync(path.join(stagingTsRoot, 'index.ts'), indexTsContent);
 
         // Generate Domain UPM scaffold always (domains define module existence)
-        this.generateDomainUpmScaffold(domainName, stagingCs, tables);
+        this.generateDomainUpmScaffold(domainName, stagingCs, tables, stringTableNames);
     }
 
     generateUnifiedCSharp(domainName, contractSpecs, tables) {
@@ -822,40 +824,50 @@ class DevianToolBuilder {
         // SSOT: skills/devian/03-ssot/SKILL.md
         // NOTE: Domain folder is NOT created. Files are merged directly.
         //       Filename collision will FAIL the build (no silent overwrite).
+        //       Tables/ and Strings/ root are cleaned once per bundleDir to remove legacy domain folders.
         if (this.bundleDirs && this.bundleDirs.length > 0) {
             for (const bundleDir of this.bundleDirs) {
                 // ============================================================
+                // Clean Tables/ and Strings/ root once per bundleDir
+                // This removes legacy domain folders (e.g., Tables/Common, Tables/Game)
+                // ============================================================
+                const tablesRoot = path.join(bundleDir, 'Tables');
+                const stringsRoot = path.join(bundleDir, 'Strings');
+                this.ensureCleanDirOnce(tablesRoot, `bundle:${bundleDir}:Tables`);
+                this.ensureCleanDirOnce(stringsRoot, `bundle:${bundleDir}:Strings`);
+
+                // ============================================================
                 // General Tables → {bundleDir}/Tables/ndjson|pb64/
-                // Clean once per bundleDir, then merge copy from all domains
+                // Merge copy from all domains (no overwrite, collision = FAIL)
                 // ============================================================
                 
                 // Copy ndjson files: {bundleDir}/Tables/ndjson/
                 const ndjsonTarget = path.join(bundleDir, 'Tables', 'ndjson');
-                this.ensureCleanDirOnce(ndjsonTarget, `${bundleDir}:Tables:ndjson`);
+                fs.mkdirSync(ndjsonTarget, { recursive: true });
                 this.mergeCopyDirNoOverwrite(stagingNdjson, ndjsonTarget);
                 console.log(`    [MergeCopy] ${stagingNdjson} -> ${ndjsonTarget}`);
 
                 // Copy pb64 files: {bundleDir}/Tables/pb64/
                 const pb64Target = path.join(bundleDir, 'Tables', 'pb64');
-                this.ensureCleanDirOnce(pb64Target, `${bundleDir}:Tables:pb64`);
+                fs.mkdirSync(pb64Target, { recursive: true });
                 this.mergeCopyDirNoOverwrite(stagingPb64, pb64Target);
                 console.log(`    [MergeCopy] ${stagingPb64} -> ${pb64Target}`);
 
                 // ============================================================
                 // String Tables → {bundleDir}/Strings/ndjson|pb64/{Language}/
-                // Clean once per bundleDir, then merge copy from all domains
+                // Merge copy from all domains (no overwrite, collision = FAIL)
                 // ============================================================
                 
                 // Copy String Table ndjson files: {bundleDir}/Strings/ndjson/{Language}/
                 // SSOT: skills/devian/33-string-table/SKILL.md
                 const stringNdjsonTarget = path.join(bundleDir, 'Strings', 'ndjson');
-                this.ensureCleanDirOnce(stringNdjsonTarget, `${bundleDir}:Strings:ndjson`);
+                fs.mkdirSync(stringNdjsonTarget, { recursive: true });
                 this.mergeCopyDirNoOverwrite(stagingStringNdjson, stringNdjsonTarget);
                 console.log(`    [MergeCopy] ${stagingStringNdjson} -> ${stringNdjsonTarget}`);
 
                 // Copy String Table pb64 files: {bundleDir}/Strings/pb64/{Language}/
                 const stringPb64Target = path.join(bundleDir, 'Strings', 'pb64');
-                this.ensureCleanDirOnce(stringPb64Target, `${bundleDir}:Strings:pb64`);
+                fs.mkdirSync(stringPb64Target, { recursive: true });
                 this.mergeCopyDirNoOverwrite(stagingStringPb64, stringPb64Target);
                 console.log(`    [MergeCopy] ${stagingStringPb64} -> ${stringPb64Target}`);
             }
@@ -1861,7 +1873,7 @@ export * from './features';
     // UPM (Unity Package Manager) Support
     // ========================================================================
 
-    generateDomainUpmScaffold(domainName, stagingCs, tables = []) {
+    generateDomainUpmScaffold(domainName, stagingCs, tables = [], stringTableNames = []) {
         const asmdefName = `Devian.Domain.${domainName}`;
         const stagingUpm = path.join(this.tempDir, domainName, 'upm');
         const stagingRuntime = path.join(stagingUpm, 'Runtime');
@@ -1873,8 +1885,12 @@ export * from './features';
         fs.mkdirSync(stagingEditor, { recursive: true });
 
         // package.json - SSOT: skills/devian-upm/03-package-metadata/SKILL.md
+        // All domain packages require com.devian.unity for TableManager (ST_/TB_ wrappers)
         const isCommon = domainName === 'Common';
-        const dependencies = { 'com.devian.core': '0.1.0' };
+        const dependencies = { 
+            'com.devian.core': '0.1.0',
+            'com.devian.unity': '0.1.0'
+        };
         if (isCommon) {
             dependencies['com.unity.nuget.newtonsoft-json'] = '3.2.1';
         }
@@ -1882,7 +1898,7 @@ export * from './features';
         const packageJsonObj = {
             name: `com.devian.domain.${domainName.toLowerCase()}`,
             version: '0.1.0',
-            displayName: `Devian Domain ${domainName}`,
+            displayName: `Devain Domain ${domainName}`,
             description: isCommon
                 ? 'Devian.Domain.Common runtime for Unity (source) - Common features'
                 : `Devian.Domain.${domainName} runtime for Unity (source)`,
@@ -1893,9 +1909,10 @@ export * from './features';
         fs.writeFileSync(path.join(stagingUpm, 'package.json'), JSON.stringify(packageJsonObj, null, 2));
 
         // Runtime.asmdef - SSOT: skills/devian-upm/20-packages/com.devian.domain.template/SKILL.md
+        // All domain packages require Devian.Unity for TableManager (ST_/TB_ wrappers)
         const asmdefReferences = isCommon
-            ? ['Devian.Core', 'Newtonsoft.Json']
-            : ['Devian.Core'];
+            ? ['Devian.Core', 'Devian.Unity', 'Newtonsoft.Json']
+            : ['Devian.Core', 'Devian.Unity'];
         
         const runtimeAsmdef = {
             name: asmdefName,
@@ -1959,6 +1976,33 @@ export * from './features';
                 generatedCount++;
             }
             console.log(`    [Generated] ${generatedCount} TableID Editor file(s) to ${editorGeneratedDir}`);
+        }
+
+        // ================================================================
+        // Generate UPM Unity wrappers: TB_{TableName}.Unity.g.cs
+        // SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md
+        // ================================================================
+        const keyedTables2 = (tables || []).filter(t => t && t.keyField);
+        if (keyedTables2.length > 0) {
+            for (const table of keyedTables2) {
+                const wrapperCode = this.generateTableUnityWrapperCs(domainName, table);
+                const wrapperFileName = `TB_${table.name}.Unity.g.cs`;
+                fs.writeFileSync(path.join(stagingGenerated, wrapperFileName), wrapperCode);
+            }
+            console.log(`    [Generated] ${keyedTables2.length} TB_*.Unity.g.cs wrapper(s)`);
+        }
+
+        // ================================================================
+        // Generate UPM Unity wrappers: ST_{TableName}.g.cs
+        // SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md
+        // ================================================================
+        if (stringTableNames && stringTableNames.length > 0) {
+            for (const tableName of stringTableNames) {
+                const wrapperCode = this.generateStringTableWrapperCs(domainName, tableName);
+                const wrapperFileName = `ST_${tableName}.g.cs`;
+                fs.writeFileSync(path.join(stagingGenerated, wrapperFileName), wrapperCode);
+            }
+            console.log(`    [Generated] ${stringTableNames.length} ST_*.g.cs wrapper(s)`);
         }
 
         // Common 모듈일 때 Features 폴더 복사 (Logger/Variant/Complex)
@@ -2060,6 +2104,158 @@ export * from './features';
         lines.push('');
         lines.push('#endif');
 
+        return lines.join('\n');
+    }
+
+    /**
+     * Generate TB_{TableName}.Unity.g.cs - Unity wrapper for table loading
+     * SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md
+     */
+    generateTableUnityWrapperCs(domainName, table) {
+        const tableName = table.name;
+        const lines = [];
+        
+        lines.push('// <auto-generated>');
+        lines.push('// DO NOT EDIT - Generated by Devian Build System v10');
+        lines.push('// Unity wrapper for TableManager integration');
+        lines.push('// SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md');
+        lines.push('// </auto-generated>');
+        lines.push('');
+        lines.push('#nullable enable');
+        lines.push('');
+        lines.push('using System;');
+        lines.push('using System.Collections;');
+        lines.push('using UnityEngine;');
+        lines.push('');
+        lines.push(`namespace Devian.Domain.${domainName}`);
+        lines.push('{');
+        lines.push(`    public static partial class TB_${tableName}`);
+        lines.push('    {');
+        lines.push('        /// <summary>');
+        lines.push(`        /// Preload ${tableName} table via TableManager.`);
+        lines.push('        /// </summary>');
+        lines.push('        /// <param name="format">"ndjson" or "pb64"</param>');
+        lines.push('        /// <param name="onProgress">Progress callback (0-1)</param>');
+        lines.push('        /// <param name="onError">Error callback</param>');
+        lines.push('        public static IEnumerator PreloadAsync(');
+        lines.push('            string format,');
+        lines.push('            Action<float>? onProgress = null,');
+        lines.push('            Action<string>? onError = null)');
+        lines.push('        {');
+        lines.push(`            yield return global::Devian.TableManager.Instance.PreloadTableAsync(`);
+        lines.push('                format,');
+        lines.push(`                "${tableName}",`);
+        lines.push('                (rawText, rawBinary) =>');
+        lines.push('                {');
+        lines.push('                    if (format == "ndjson" && rawText != null)');
+        lines.push('                    {');
+        lines.push('                        LoadFromNdjson(rawText);');
+        lines.push('                    }');
+        lines.push('                    else if (format == "pb64" && rawBinary != null)');
+        lines.push('                    {');
+        lines.push('                        LoadFromPb64Binary(rawBinary);');
+        lines.push('                    }');
+        lines.push('                },');
+        lines.push('                onProgress,');
+        lines.push('                onError');
+        lines.push('            );');
+        lines.push('        }');
+        lines.push('');
+        lines.push('        /// <summary>');
+        lines.push(`        /// Unload ${tableName} table from TableManager cache.`);
+        lines.push('        /// </summary>');
+        lines.push('        public static void Unload(string format)');
+        lines.push('        {');
+        lines.push(`            global::Devian.TableManager.Instance.UnloadTable(format, "${tableName}");`);
+        lines.push('            Clear();');
+        lines.push('        }');
+        lines.push('');
+        lines.push('        /// <summary>');
+        lines.push(`        /// Check if ${tableName} table is loaded in TableManager.`);
+        lines.push('        /// </summary>');
+        lines.push('        public static bool IsLoaded(string format)');
+        lines.push('        {');
+        lines.push(`            return global::Devian.TableManager.Instance.IsTableLoaded(format, "${tableName}");`);
+        lines.push('        }');
+        lines.push('    }');
+        lines.push('}');
+        
+        return lines.join('\n');
+    }
+
+    /**
+     * Generate ST_{TableName}.g.cs - Unity wrapper for string table loading
+     * SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md
+     */
+    generateStringTableWrapperCs(domainName, tableName) {
+        const lines = [];
+        
+        lines.push('// <auto-generated>');
+        lines.push('// DO NOT EDIT - Generated by Devian Build System v10');
+        lines.push('// Unity wrapper for StringTable via TableManager');
+        lines.push('// SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md');
+        lines.push('// </auto-generated>');
+        lines.push('');
+        lines.push('#nullable enable');
+        lines.push('');
+        lines.push('using System;');
+        lines.push('using System.Collections;');
+        lines.push('using UnityEngine;');
+        lines.push('');
+        lines.push(`namespace Devian.Domain.${domainName}`);
+        lines.push('{');
+        lines.push(`    /// <summary>String Table wrapper for ${tableName}</summary>`);
+        lines.push(`    public static class ST_${tableName}`);
+        lines.push('    {');
+        lines.push('        /// <summary>');
+        lines.push(`        /// Preload ${tableName} string table via TableManager.`);
+        lines.push('        /// </summary>');
+        lines.push('        /// <param name="format">"ndjson" or "pb64"</param>');
+        lines.push('        /// <param name="language">Target language</param>');
+        lines.push('        /// <param name="onProgress">Progress callback (0-1)</param>');
+        lines.push('        /// <param name="onError">Error callback</param>');
+        lines.push('        public static IEnumerator PreloadAsync(');
+        lines.push('            string format,');
+        lines.push('            SystemLanguage language,');
+        lines.push('            Action<float>? onProgress = null,');
+        lines.push('            Action<string>? onError = null)');
+        lines.push('        {');
+        lines.push('            yield return global::Devian.TableManager.Instance.PreloadStringAsync(');
+        lines.push('                format,');
+        lines.push('                language,');
+        lines.push(`                "${tableName}",`);
+        lines.push('                onProgress,');
+        lines.push('                onError');
+        lines.push('            );');
+        lines.push('        }');
+        lines.push('');
+        lines.push('        /// <summary>');
+        lines.push(`        /// Get text by id from ${tableName} string table.`);
+        lines.push('        /// Fallback: language → English → id');
+        lines.push('        /// </summary>');
+        lines.push('        public static string Get(string format, SystemLanguage language, string id)');
+        lines.push('        {');
+        lines.push(`            return global::Devian.TableManager.Instance.GetString(format, language, "${tableName}", id);`);
+        lines.push('        }');
+        lines.push('');
+        lines.push('        /// <summary>');
+        lines.push(`        /// Unload ${tableName} string table from TableManager cache.`);
+        lines.push('        /// </summary>');
+        lines.push('        public static void Unload(string format, SystemLanguage language)');
+        lines.push('        {');
+        lines.push(`            global::Devian.TableManager.Instance.UnloadString(format, language, "${tableName}");`);
+        lines.push('        }');
+        lines.push('');
+        lines.push('        /// <summary>');
+        lines.push(`        /// Check if ${tableName} string table is loaded in TableManager.`);
+        lines.push('        /// </summary>');
+        lines.push('        public static bool IsLoaded(string format, SystemLanguage language)');
+        lines.push('        {');
+        lines.push(`            return global::Devian.TableManager.Instance.IsStringLoaded(format, language, "${tableName}");`);
+        lines.push('        }');
+        lines.push('    }');
+        lines.push('}');
+        
         return lines.join('\n');
     }
 

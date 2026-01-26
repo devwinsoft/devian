@@ -15,7 +15,7 @@ AppliesTo: v10
 
 - **입력(마스터)**: XLSX 시트, 컬럼: `id`, `description`, `{Language}`, ...
 - **출력**: 언어별 ndjson/pb64 파일
-- **런타임**: DownloadManager 다운로드 → StringTableManager 로드/캐시/조회
+- **런타임**: DownloadManager 다운로드 → TableManager 로드/캐시/조회 → ST_{TableName} wrapper
 
 저장 규약 참조:
 - **NDJSON 저장**: `skills/devian/34-ndjson-storage/SKILL.md`
@@ -261,7 +261,7 @@ var cacheKey = tableName; // FAIL - 언어 충돌 발생
 **String Table은 AssetManager의 name 캐시를 사용하면 안 된다.**
 
 - 이유: 언어별로 같은 TableName 파일이 존재하므로 name 충돌 발생
-- 해결: StringTableManager가 `(format, language, tableName)` 키로 별도 캐시
+- 해결: TableManager가 `(format, language, tableName)` 키로 별도 캐시
 
 ---
 
@@ -270,8 +270,9 @@ var cacheKey = tableName; // FAIL - 언어 충돌 발생
 | 역할 | 경로 |
 |------|------|
 | 생성기 | `framework-ts/tools/builder/generators/string-table.js` |
-| 런타임(UPM) | `framework-cs/upm/com.devian.unity/Runtime/StringTable/StringTableManager.cs` |
-| 런타임(Example) | `framework-cs/apps/UnityExample/Packages/com.devian.unity/Runtime/StringTable/StringTableManager.cs` |
+| 런타임(UPM) | `framework-cs/upm/com.devian.unity/Runtime/Table/TableManager.cs` |
+| 런타임(Example) | `framework-cs/apps/UnityExample/Packages/com.devian.unity/Runtime/Table/TableManager.cs` |
+| ST_ wrapper | UPM 도메인 패키지 `Runtime/Generated/ST_{TableName}.g.cs` |
 
 ---
 

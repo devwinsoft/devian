@@ -42,7 +42,7 @@ namespace Devian.Domain.Common
     // ================================================================
 
     /// <summary>TB_COMPLEX_POLICY container</summary>
-    public static class TB_COMPLEX_POLICY
+    public static partial class TB_COMPLEX_POLICY
     {
         private static readonly Dictionary<ComplexPolicyType, COMPLEX_POLICY> _dict = new();
         private static readonly List<COMPLEX_POLICY> _list = new();
@@ -104,6 +104,19 @@ namespace Devian.Domain.Common
                 _list.Add(row);
                 _dict[row.Key] = row;
             }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<COMPLEX_POLICY>(jsonRow);
+                if (row == null) return;
+                _list.Add(row);
+                _dict[row.Key] = row;
+            });
         }
     }
 

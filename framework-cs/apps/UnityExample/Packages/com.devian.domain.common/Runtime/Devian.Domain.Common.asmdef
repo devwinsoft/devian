@@ -3,6 +3,7 @@
   "rootNamespace": "Devian.Domain.Common",
   "references": [
     "Devian.Core",
+    "Devian.Unity",
     "Newtonsoft.Json"
   ],
   "includePlatforms": [],

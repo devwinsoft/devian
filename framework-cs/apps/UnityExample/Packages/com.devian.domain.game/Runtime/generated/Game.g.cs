@@ -62,7 +62,7 @@ namespace Devian.Domain.Game
     // ================================================================
 
     /// <summary>TB_TestSheet container</summary>
-    public static class TB_TestSheet
+    public static partial class TB_TestSheet
     {
         private static readonly Dictionary<int, TestSheet> _dict = new();
         private static readonly List<TestSheet> _list = new();
@@ -114,10 +114,23 @@ namespace Devian.Domain.Game
                 _dict[row.Number] = row;
             }
         }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<TestSheet>(jsonRow);
+                if (row == null) return;
+                _list.Add(row);
+                _dict[row.Number] = row;
+            });
+        }
     }
 
     /// <summary>TB_VECTOR3 container</summary>
-    public static class TB_VECTOR3
+    public static partial class TB_VECTOR3
     {
         private static readonly List<VECTOR3> _list = new();
 
@@ -154,6 +167,18 @@ namespace Devian.Domain.Game
                 if (row == null) continue;
                 _list.Add(row);
             }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<VECTOR3>(jsonRow);
+                if (row == null) return;
+                _list.Add(row);
+            });
         }
     }
 

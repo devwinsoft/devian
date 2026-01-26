@@ -42,7 +42,7 @@ AppliesTo: v10
 - 사람이 읽기 쉬운 이름으로 고정한다.
 - 패턴 예:
   - `Devian Core` (통합 런타임)
-  - `Devian Module Common`
+  - `Devain Domain Common`
   - `Devian Unity Common`
 
 ### description

@@ -14,14 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
   m_GroupName: table-ndjson
   m_GUID: fc2174b99765ea246ac1a2132e8336ae
-  m_SerializeEntries:
-  - m_GUID: e03f4fc27ca4d444abc0ac62a44ff629
-    m_Address: Assets/Bundles/Tables/Common/ndjson
-    m_ReadOnly: 0
-    m_SerializedLabels:
-    - ndjson
-    - table
-    FlaggedDuringContentUpdateRestriction: 0
+  m_SerializeEntries: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: daa0599a24d6ad242b59de8ab32c5cb5, type: 2}
   m_SchemaSet:

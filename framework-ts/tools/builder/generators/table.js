@@ -798,7 +798,7 @@ function generateTableContainer(lines, table, tableName, rowClassName, enumSpecs
     const tableEnumSpecs = enumSpecs.filter(spec => spec.tableName === tableName);
 
     lines.push(`    /// <summary>TB_${tableName} container</summary>`);
-    lines.push(`    public static class TB_${tableName}`);
+    lines.push(`    public static partial class TB_${tableName}`);
     lines.push('    {');
 
     // Storage
@@ -900,6 +900,23 @@ function generateTableContainer(lines, table, tableName, rowClassName, enumSpecs
         lines.push(`                _dict[row.${keyProp}] = row;`);
     }
     lines.push('            }');
+    lines.push('        }');
+    lines.push('');
+
+    // LoadFromPb64Binary (Unity-independent, for use with TableManager)
+    lines.push('        public static void LoadFromPb64Binary(byte[] rawBinary)');
+    lines.push('        {');
+    lines.push('            Clear();');
+    lines.push('            Pb64Loader.ParseRows(rawBinary, jsonRow =>');
+    lines.push('            {');
+    lines.push('                if (string.IsNullOrWhiteSpace(jsonRow)) return;');
+    lines.push(`                var row = JsonConvert.DeserializeObject<${rowClassName}>(jsonRow);`);
+    lines.push('                if (row == null) return;');
+    lines.push('                _list.Add(row);');
+    if (table.keyField) {
+        lines.push(`                _dict[row.${keyProp}] = row;`);
+    }
+    lines.push('            });');
     lines.push('        }');
 
     lines.push('    }');

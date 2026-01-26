@@ -162,7 +162,7 @@ namespace Devian
 |------|------|
 | name | `com.devian.domain.{domainname}` (소문자) |
 | version | `0.1.0` (다른 com.devian.* 패키지와 동일) |
-| displayName | `Devian Module {DomainName}` |
+| displayName | `Devain Domain {DomainName}` |
 | unity | `2021.3` |
 | dependencies | `com.devian.core: 0.1.0`, `com.devian.unity: 0.1.0` (최소) |
 
