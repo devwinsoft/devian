@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 0752773ab72a4f0478dd0d0209936ff4
   m_currentHash:
     serializedVersion: 2
-    Hash: 00000000000000000000000000000000
+    Hash: 36cd33f6fcfd9377410b9c777e76fe26
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 0
   m_CatalogRequestsTimeout: 0
@@ -51,10 +51,10 @@ MonoBehaviour:
   m_CheckForContentUpdateRestrictionsOption: 0
   m_MonoScriptBundleCustomNaming: 
   m_RemoteCatalogBuildPath:
-    m_Id: 
+    m_Id: 67c8d9caa93261741957ced356812efe
   m_RemoteCatalogLoadPath:
-    m_Id: 
-  m_ContentStateBuildPathProfileVariableName: 
+    m_Id: 1a95dda2699412f4784c66998ba76664
+  m_ContentStateBuildPathProfileVariableName: <default settings path>
   m_CustomContentStateBuildPath: 
   m_ContentStateBuildPath: 
   m_BuildAddressablesWithPlayerBuild: 0
@@ -83,7 +83,7 @@ MonoBehaviour:
       - m_Id: d088646625082d74cb1f339b26ee765b
         m_Value: '[UnityEditor.EditorUserBuildSettings.activeBuildTarget]'
       - m_Id: e9fe000a0d57e814caca31fc13075bdb
-        m_Value: <undefined>
+        m_Value: 'https://d3pyf3eydly59u.cloudfront.net/v[UnityEditor.PlayerSettings.bundleVersion]/[BuildTarget]'
     m_ProfileEntryNames:
     - m_Id: 1a95dda2699412f4784c66998ba76664
       m_Name: Local.LoadPath

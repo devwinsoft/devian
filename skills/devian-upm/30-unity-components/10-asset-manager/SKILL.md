@@ -11,11 +11,13 @@ AppliesTo: v10
 
 ## 목적/범위
 
-**AssetBundle 기반 런타임 로딩/캐시/언로드를 제공하는 Unity 전용 컴포넌트.**
+**Addressables 기반 로딩/캐시 + Resources 로딩(옵션) + Editor Find를 제공하는 Unity 전용 컴포넌트.**
 
-- **런타임**: AssetBundle 로드, 에셋 캐시, 언로드 기능
+- **런타임(필수)**: Addressables로 라벨/키 기반 에셋 로드 → 캐시에 등록 → 이름으로 조회
+- **런타임(옵션)**: Resources 로드/언로드 (캐시 포함)
 - **에디터**: `UNITY_EDITOR` 전용 Find 메서드 (AssetDatabase 기반)
-- **금지**: Resources 기반 로딩 없음
+
+> **Note:** 이 문서에서 "Bundle"은 **파일 기반 AssetBundle이 아니라 Addressables의 label/key 묶음**을 의미한다.
 
 ---
 
@@ -36,44 +38,76 @@ namespace Devian
     public static class AssetManager
     {
         // ====================================================================
-        // Bundle Load/Unload
+        // Addressables (Bundle 의미 = Label/Key)
         // ====================================================================
         
         /// <summary>
-        /// AssetBundle을 파일 경로에서 로드하고 지정된 key로 등록한다.
+        /// Addressables에서 단일 에셋을 로드하고 캐시한다.
         /// </summary>
-        /// <param name="key">번들을 식별하는 고유 키</param>
-        /// <param name="bundleFilePath">번들 파일의 전체 경로</param>
-        public static IEnumerator LoadBundle(string key, string bundleFilePath);
+        public static IEnumerator LoadBundleAsset<T>(string key) where T : UnityEngine.Object;
         
         /// <summary>
-        /// 번들을 언로드하고 캐시된 에셋을 제거한다.
+        /// Addressables에서 label/key에 해당하는 모든 에셋을 로드하고 캐시한다.
         /// </summary>
-        /// <param name="key">번들 키</param>
-        /// <param name="unloadAllLoadedObjects">true면 로드된 모든 오브젝트도 파괴</param>
-        public static void UnloadBundle(string key, bool unloadAllLoadedObjects = false);
-        
-        // ====================================================================
-        // Bundle Asset Loading
-        // ====================================================================
-        
-        /// <summary>
-        /// 로드된 번들에서 타입 T의 모든 에셋을 로드하고 캐시한다.
-        /// </summary>
-        /// <typeparam name="T">에셋 타입</typeparam>
-        /// <param name="key">번들 키 (LoadBundle로 먼저 로드해야 함)</param>
         public static IEnumerator LoadBundleAssets<T>(string key) where T : UnityEngine.Object;
         
         /// <summary>
-        /// 파일명으로 캐시된 에셋을 가져온다 (확장자 제거, 대소문자 무시).
+        /// Addressables에서 key AND lang (intersection)에 해당하는 에셋을 로드하고 캐시한다.
         /// </summary>
-        /// <typeparam name="T">에셋 타입</typeparam>
-        /// <param name="fileName">에셋 파일명 (확장자 포함/미포함)</param>
-        /// <returns>에셋 또는 null</returns>
+        public static IEnumerator LoadBundleAssets<T>(string key, SystemLanguage lang) where T : UnityEngine.Object;
+        
+        /// <summary>
+        /// 지정된 key로 로드된 에셋들을 캐시에서 제거하고 Addressables handle을 해제한다.
+        /// </summary>
+        public static IEnumerable<string> UnloadBundleAssets(string key);
+        
+        // ====================================================================
+        // Cache Access (즉시 반환)
+        // ====================================================================
+        
+        /// <summary>
+        /// 파일명으로 캐시된 에셋을 가져온다 (확장자 제거, 대소문자 무시).
+        /// 탐색 순서: Bundle 캐시 → Resource 캐시
+        /// </summary>
         public static T? GetAsset<T>(string fileName) where T : UnityEngine.Object;
         
         /// <summary>
-        /// 모든 캐시된 번들과 에셋을 정리한다.
+        /// GetAsset의 별칭 (기존 코드 호환용).
+        /// </summary>
+        public static T? LoadAsset<T>(string fileName) where T : UnityEngine.Object;
+        
+        // ====================================================================
+        // Resources (옵션)
+        // ====================================================================
+        
+        /// <summary>
+        /// Resources 폴더에서 에셋을 로드하고 캐시한다.
+        /// </summary>
+        public static T? LoadResourceAsset<T>(string filePath, SystemLanguage lang = SystemLanguage.Unknown)
+            where T : UnityEngine.Object;
+        
+        /// <summary>
+        /// Resources 폴더 하위 디렉토리에서 모든 에셋을 로드하고 캐시한다.
+        /// </summary>
+        public static T[] LoadResourceAssets<T>(string searchDir, SystemLanguage lang = SystemLanguage.Unknown)
+            where T : UnityEngine.Object;
+        
+        /// <summary>
+        /// 캐시된 Resource 에셋을 언로드한다.
+        /// </summary>
+        public static void UnloadResourceAsset<T>(string fileName) where T : UnityEngine.Object;
+        
+        /// <summary>
+        /// 디렉토리에 해당하는 캐시된 Resource 에셋들을 언로드한다.
+        /// </summary>
+        public static IEnumerable<string> UnloadResourceAssets<T>(string searchDir) where T : UnityEngine.Object;
+        
+        // ====================================================================
+        // Cleanup
+        // ====================================================================
+        
+        /// <summary>
+        /// 모든 캐시된 번들과 리소스를 정리한다.
         /// </summary>
         public static void ClearAll();
         
@@ -107,16 +141,54 @@ namespace Devian
 
 ## Hard Rules (정책)
 
-### 1. Resources 기반 로딩 금지
+### 1. Addressables 기반 (필수)
 
-**AssetManager는 AssetBundle + Editor Find 전용이다.**
+**`LoadBundleAsset(s)`는 Addressables API를 사용한다.**
 
-- `Resources.Load`, `Resources.LoadAsync` 등 사용 금지
-- 코드 내 `Resources.` 문자열이 존재하면 **FAIL**
+- `LoadBundleAssets<T>(key)`: `Addressables.LoadAssetsAsync<T>(key, onEachLoaded)` 사용
+- `LoadBundleAssets<T>(key, lang)`: `Addressables.MergeMode.Intersection`으로 key + lang 교집합 로드
+- `UnloadBundleAssets(key)`: 해당 key의 handle을 `Addressables.Release`로 해제
 
-### 2. 동일 key 재로드 정책
+### 2. 캐시 키 규칙
 
-**이미 로드된 key로 `LoadBundle`을 다시 호출하면 경고만 출력하고 무시한다.**
+**에셋 키는 `Path.GetFileNameWithoutExtension(name).ToLowerInvariant()`로 정규화한다.**
+
+```csharp
+// 예시
+"TestSheet.json" → "testsheet"
+"Cube.prefab" → "cube"
+```
+
+- 대소문자 무시 (case-insensitive)
+- 확장자 제거
+- 중복 이름은 오류 로그 후 등록 거부 (기존 동작 유지)
+
+### 3. 네이밍 예외 (@로 시작하는 에셋)
+
+**에셋 이름이 `@`로 시작하면 캐시에 등록하지 않는다.**
+
+```csharp
+if (assetKey.StartsWith("@"))
+    return; // skip registration
+```
+
+### 4. Resources 허용 범위
+
+**Resources는 명시 API(`LoadResourceAsset(s)` / `UnloadResourceAsset(s)`)로만 로드/정리한다.**
+
+- `GetAsset<T>` 탐색 순서: **Bundle(Addressables) 캐시 → Resource 캐시**
+- 무분별한 `Resources.Load` 직접 호출은 권장하지 않음
+
+### 5. 파일 AssetBundle 로딩 제거
+
+**파일 경로 기반 AssetBundle 로딩(`AssetBundle.LoadFromFileAsync`)은 지원하지 않는다.**
+
+- `LoadBundle(key, bundleFilePath)` 형태의 API 없음
+- Addressables가 카탈로그/그룹을 통해 번들을 관리함
+
+### 6. 동일 key 재로드 정책
+
+**이미 로드된 key로 `LoadBundleAsset` 또는 `LoadBundleAssets`를 다시 호출하면 경고만 출력하고 무시한다.**
 
 ```csharp
 if (mBundles.ContainsKey(key))
@@ -126,52 +198,75 @@ if (mBundles.ContainsKey(key))
 }
 ```
 
-- Overwrite 아님, 단순 무시 + 경고
-- 기존 번들 교체가 필요하면 `UnloadBundle` 후 다시 로드
-
-### 3. Unload 정책
-
-**`UnloadBundle(key, unloadAllLoadedObjects)`**
-
-- `unloadAllLoadedObjects = false` (기본): 번들만 해제, 로드된 오브젝트는 유지
-- `unloadAllLoadedObjects = true`: 번들 해제 + 로드된 모든 오브젝트 파괴
-- 캐시 딕셔너리에서 해당 번들의 에셋 키도 제거
-
-### 4. 에셋 키 규칙
-
-- 에셋 키는 **파일명(확장자 제거, 소문자)**로 관리
-- `GetAsset<T>("TestSheet.json")` → 키: `"testsheet"`
-- 대소문자 구분 없음 (case-insensitive)
+> **Note:** `LoadBundleAssets(key, lang)` 오버로드도 동일하게 `key`로 중복 체크 및 저장한다. 언로드는 항상 `UnloadBundleAssets(key)`로 수행.
 
 ---
 
 ## 사용 예시
 
+### DownloadManager + AssetManager 연동
+
 ```csharp
 using Devian;
 using UnityEngine;
 
-public class BundleLoader : MonoBehaviour
+public class BootSequence : MonoBehaviour
 {
     IEnumerator Start()
     {
-        // 1. 번들 로드
-        yield return AssetManager.LoadBundle("tables", "/path/to/tables.bundle");
+        // 1. DownloadManager로 다운로드 정책 수행
+        DownloadManager.Load("Devian/DownloadManager");
+        var dm = DownloadManager.Instance;
         
-        // 2. 에셋 로드 및 캐시
-        yield return AssetManager.LoadBundleAssets<TextAsset>("tables");
+        yield return dm.PatchProc(
+            info => Debug.Log($"Total: {info.TotalSize} bytes"),
+            err => Debug.LogError(err)
+        );
         
-        // 3. 캐시에서 에셋 가져오기
-        var asset = AssetManager.GetAsset<TextAsset>("TestSheet.json");
-        if (asset != null)
+        yield return dm.DownloadProc(
+            progress => Debug.Log($"Progress: {progress * 100:F1}%"),
+            () => Debug.Log("Download complete"),
+            err => Debug.LogError(err)
+        );
+        
+        // 2. AssetManager로 Addressables 에셋 로드
+        yield return AssetManager.LoadBundleAssets<GameObject>("prefabs");
+        yield return AssetManager.LoadBundleAssets<TextAsset>("table-ndjson");
+        
+        // 3. 캐시에서 즉시 조회
+        var cube = AssetManager.LoadAsset<GameObject>("Cube");
+        var testSheet = AssetManager.GetAsset<TextAsset>("TestSheet");
+        
+        if (cube != null)
         {
-            Debug.Log(asset.text);
+            Instantiate(cube);
         }
         
-        // 4. 정리
-        AssetManager.UnloadBundle("tables", unloadAllLoadedObjects: true);
+        if (testSheet != null)
+        {
+            Debug.Log(testSheet.text);
+        }
+    }
+    
+    void OnDestroy()
+    {
+        // 정리
+        AssetManager.ClearAll();
     }
 }
+```
+
+### Resources 로딩 (옵션)
+
+```csharp
+// Resources 폴더에서 로드 (Addressables가 아닌 경우)
+var config = AssetManager.LoadResourceAsset<TextAsset>("Config/settings");
+
+// 캐시에서 조회 (Bundle + Resources 모두 탐색)
+var asset = AssetManager.GetAsset<TextAsset>("settings");
+
+// 정리
+AssetManager.UnloadResourceAsset<TextAsset>("settings");
 ```
 
 ---
@@ -181,11 +276,15 @@ public class BundleLoader : MonoBehaviour
 ### PASS 조건
 
 - [ ] `AssetManager/AssetManager.cs` (UPM + UnityExample) 최상단 SSOT가 이 문서를 가리킴
-- [ ] `AssetManager/AssetManager.cs` 내 `Resources.` 문자열 0건
+- [ ] `AssetManager/AssetManager.cs`가 `Addressables.LoadAssetsAsync`를 사용
+- [ ] `AssetManager/AssetManager.cs`가 `Addressables.Release(handle)`로 언로드
+- [ ] `LoadAsset<T>`가 `GetAsset<T>`의 alias로 존재
+- [ ] 파일 AssetBundle 로딩 코드(`AssetBundle.LoadFromFileAsync`) 없음
 
 ### FAIL 조건
 
-- `AssetManager/AssetManager.cs` 내 `Resources.Load`, `Resources.LoadAsync` 등 존재
+- `AssetBundle.LoadFromFileAsync` 코드가 존재
+- `LoadBundle(key, bundleFilePath)` 형태의 API가 존재
 - SSOT 주석이 다른 문서를 가리킴
 
 ---
@@ -193,4 +292,5 @@ public class BundleLoader : MonoBehaviour
 ## Reference
 
 - Related: `skills/devian-upm/20-packages/com.devian.unity/SKILL.md` (패키지 컨텍스트)
+- Related: `skills/devian-upm/30-unity-components/12-download-manager/SKILL.md` (다운로드 정책)
 - Related: `skills/devian-upm/01-upm-policy/SKILL.md` (component policy)

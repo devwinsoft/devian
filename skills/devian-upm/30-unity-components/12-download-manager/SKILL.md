@@ -234,6 +234,54 @@ if (sizeOp.Status == AsyncOperationStatus.Failed)
 - 리소스 로딩은 `ResSingleton<T>.Load(path)`를 통해서만 발생
 - 상속받은 ResSingleton이 Resources.Load 수행 (허용)
 
+### 6. AssetManager 연동 규칙
+
+**DownloadManager는 다운로드만 담당하고, 실제 로딩은 AssetManager가 수행한다.**
+
+- **역할 분리**:
+  - `DownloadManager`: 다운로드 크기 확인 + 번들 다운로드 (캐시에 저장)
+  - `AssetManager`: 다운로드된 에셋을 로드하여 사용
+
+- **연동 흐름**:
+  1. `DownloadManager.PatchProc()` → 다운로드 필요 크기 확인
+  2. `DownloadManager.DownloadProc()` → 번들 다운로드 (Addressables 캐시에 저장)
+  3. `AssetManager.LoadBundleAssets(label)` → 다운로드된 에셋을 로드하여 사용
+
+- **label/key 일치 권장**: 패치 대상 label과 AssetManager에서 사용하는 key는 동일 문자열로 운영하는 것을 권장
+
+```csharp
+// 다운로드 (DownloadManager)
+yield return dm.DownloadProc(..., labels: new[] { "prefabs", "table-ndjson" });
+
+// 로딩 (AssetManager) - 동일한 label/key 사용
+yield return AssetManager.LoadBundleAssets<GameObject>("prefabs");
+yield return AssetManager.LoadBundleAssets<TextAsset>("table-ndjson");
+```
+
+---
+
+## Known Behavior (운영/디버깅용)
+
+### TotalSize = 0 은 정상일 수 있다
+
+**PatchProc에서 `TotalSize = 0`이 반환되는 경우:**
+
+1. **이미 캐시에 존재**: 이전에 다운로드한 번들이 캐시에 남아있음
+2. **Editor Play Mode**: AssetDatabase 기반으로 동작하여 다운로드 개념이 없음
+3. **Local-only 그룹**: Addressables 그룹이 로컬 빌드로 설정되어 있음
+4. **빈 라벨 리스트**: 정규화 후 라벨이 없음
+
+### 로딩 실패 원인 분석
+
+**다운로드 성공 후 로딩이 실패하는 경우:**
+
+- DownloadManager 문제가 **아닐** 가능성이 높음
+- 확인 사항:
+  - Addressables 카탈로그가 최신인지
+  - 에셋 키/label이 정확한지
+  - AssetManager.LoadBundleAssets 호출 시 타입이 맞는지
+  - Addressables 그룹 설정이 올바른지
+
 ---
 
 ## 사용 예시

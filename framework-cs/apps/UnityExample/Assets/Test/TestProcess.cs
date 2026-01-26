@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using Devian;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
@@ -15,7 +16,16 @@ public class NewMonoBehaviourScript : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     IEnumerator Start()
     {
-        yield return AssetManager.LoadBundleAssets<TestPoolObject>("prefabs");
+        Devian.Logger.SetSink(new UnityLogSink());
+        DownloadManager.Load("DownloadManager");
+        yield return DownloadManager.Instance.PatchProc(
+            (patch) =>
+            {
+                Debug.Log(patch.TotalSize);
+            }
+        );
+
+        yield return AssetManager.LoadBundleAssets<GameObject>("prefabs");
         var obj = BundlePool.Spawn<TestPoolObject>("Cube", Vector3.zero, Quaternion.identity, null);
         Debug.Log(obj);
     }

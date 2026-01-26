@@ -9,6 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1425312890776232260}
+  - component: {fileID: 6086802003758917500}
   - component: {fileID: 5811000637339742351}
   - component: {fileID: 326973724668637066}
   - component: {fileID: 3675504619116166493}
@@ -34,6 +35,18 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &6086802003758917500
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7471036124395997891}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 415a85113a1ed3c4b99a46e0f94abe62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TestPoolObject
 --- !u!33 &5811000637339742351
 MeshFilter:
   m_ObjectHideFlags: 0
