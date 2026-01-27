@@ -460,7 +460,7 @@ class DevianToolBuilder {
                                     fs.writeFileSync(ndjsonPath, ndjsonContent);
                                     
                                     // Generate pb64 as Unity TextAsset .asset
-                                    // SSOT: skills/devian-upm/30-unity-components/13-pb64-storage/SKILL.md
+                                    // SSOT: skills/devian-unity/30-unity-components/13-pb64-storage/SKILL.md
                                     const pb64Text = generateStringPb64(entries);
                                     const assetYaml = generateStringPb64TextAssetYaml(strTable.tableName, pb64Text);
                                     const assetPath = path.join(strPb64Dir, `${strTable.tableName}.asset`);
@@ -1884,7 +1884,7 @@ export * from './features';
         fs.mkdirSync(stagingGenerated, { recursive: true });
         fs.mkdirSync(stagingEditor, { recursive: true });
 
-        // package.json - SSOT: skills/devian-upm/03-package-metadata/SKILL.md
+        // package.json - SSOT: skills/devian-unity/03-package-metadata/SKILL.md
         // All domain packages require com.devian.unity for TableManager (ST_/TB_ wrappers)
         const isCommon = domainName === 'Common';
         const dependencies = { 
@@ -1908,7 +1908,7 @@ export * from './features';
         };
         fs.writeFileSync(path.join(stagingUpm, 'package.json'), JSON.stringify(packageJsonObj, null, 2));
 
-        // Runtime.asmdef - SSOT: skills/devian-upm/20-packages/com.devian.domain.template/SKILL.md
+        // Runtime.asmdef - SSOT: skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md
         // All domain packages require Devian.Unity for TableManager (ST_/TB_ wrappers)
         const asmdefReferences = isCommon
             ? ['Devian.Core', 'Devian.Unity', 'Newtonsoft.Json']
@@ -1931,7 +1931,7 @@ export * from './features';
         fs.writeFileSync(path.join(stagingRuntime, `${asmdefName}.asmdef`), JSON.stringify(runtimeAsmdef, null, 2));
 
         // Editor.asmdef - includes refs for TableID Editor bindings (base classes in Devian + .Unity.Editor assembly)
-        // SSOT: skills/devian-upm/20-packages/com.devian.domain.template/SKILL.md
+        // SSOT: skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md
         const editorReferences = [asmdefName, 'Devian.Unity', 'Devian.Unity.Editor'];
         const editorAsmdef = {
             name: `${asmdefName}.Editor`,
@@ -1962,7 +1962,7 @@ export * from './features';
         }
 
         // Generate TableID Editor bindings into this domain module package
-        // SSOT: skills/devian-upm/20-packages/com.devian.domain.template/SKILL.md
+        // SSOT: skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md
         const keyedTables = (tables || []).filter(t => t && t.keyField);
         if (keyedTables.length > 0) {
             const editorGeneratedDir = path.join(stagingUpm, 'Editor', 'Generated');
@@ -1990,6 +1990,11 @@ export * from './features';
                 fs.writeFileSync(path.join(stagingGenerated, wrapperFileName), wrapperCode);
             }
             console.log(`    [Generated] ${keyedTables2.length} TB_*.Unity.g.cs wrapper(s)`);
+            
+            // Generate DomainTableRegistry.g.cs for auto TB/ST loader registration
+            const registryCode = this.generateDomainTableRegistryCs(domainName, tables, stringTableNames || []);
+            fs.writeFileSync(path.join(stagingGenerated, 'DomainTableRegistry.g.cs'), registryCode);
+            console.log(`    [Generated] DomainTableRegistry.g.cs (${keyedTables2.length} TB, ${(stringTableNames || []).length} ST loader(s))`);
         }
 
         // ================================================================
@@ -2006,7 +2011,7 @@ export * from './features';
         }
 
         // Common 모듈일 때 Features 폴더 복사 (Logger/Variant/Complex)
-        // SSOT: skills/devian-upm/20-packages/com.devian.domain.common/SKILL.md
+        // SSOT: skills/devian-unity/20-packages/com.devian.domain.common/SKILL.md
         if (isCommon) {
             // Use csGenerateDir (unified module root)
             const featuresSource = this.csGenerateDir
@@ -2131,51 +2136,110 @@ export * from './features';
         lines.push('{');
         lines.push(`    public static partial class TB_${tableName}`);
         lines.push('    {');
+        lines.push('        private static global::Devian.TableFormat _loadedFormat;');
+        lines.push('        private static bool _isLoaded;');
+        lines.push('');
         lines.push('        /// <summary>');
         lines.push(`        /// Preload ${tableName} table via TableManager.`);
+        lines.push('        /// TableManager handles: TextAsset load + TB insert + cache.');
         lines.push('        /// </summary>');
-        lines.push('        /// <param name="format">"ndjson" or "pb64"</param>');
-        lines.push('        /// <param name="onProgress">Progress callback (0-1)</param>');
+        lines.push('        /// <param name="key">Addressables key to load TextAsset</param>');
+        lines.push('        /// <param name="format">Json or Pb64</param>');
         lines.push('        /// <param name="onError">Error callback</param>');
         lines.push('        public static IEnumerator PreloadAsync(');
-        lines.push('            string format,');
-        lines.push('            Action<float>? onProgress = null,');
+        lines.push('            string key,');
+        lines.push('            global::Devian.TableFormat format,');
         lines.push('            Action<string>? onError = null)');
         lines.push('        {');
-        lines.push(`            yield return global::Devian.TableManager.Instance.PreloadTableAsync(`);
+        lines.push('            yield return global::Devian.TableManager.Instance.LoadTablesAsync(');
+        lines.push('                key,');
         lines.push('                format,');
-        lines.push(`                "${tableName}",`);
-        lines.push('                (rawText, rawBinary) =>');
-        lines.push('                {');
-        lines.push('                    if (format == "ndjson" && rawText != null)');
-        lines.push('                    {');
-        lines.push('                        LoadFromNdjson(rawText);');
-        lines.push('                    }');
-        lines.push('                    else if (format == "pb64" && rawBinary != null)');
-        lines.push('                    {');
-        lines.push('                        LoadFromPb64Binary(rawBinary);');
-        lines.push('                    }');
-        lines.push('                },');
-        lines.push('                onProgress,');
         lines.push('                onError');
         lines.push('            );');
+        lines.push('            _loadedFormat = format;');
+        lines.push('            _isLoaded = true;');
         lines.push('        }');
         lines.push('');
         lines.push('        /// <summary>');
-        lines.push(`        /// Unload ${tableName} table from TableManager cache.`);
+        lines.push(`        /// Unload ${tableName} table and clear data.`);
         lines.push('        /// </summary>');
-        lines.push('        public static void Unload(string format)');
+        lines.push('        public static void Unload()');
         lines.push('        {');
-        lines.push(`            global::Devian.TableManager.Instance.UnloadTable(format, "${tableName}");`);
         lines.push('            Clear();');
+        lines.push('            _isLoaded = false;');
         lines.push('        }');
         lines.push('');
         lines.push('        /// <summary>');
-        lines.push(`        /// Check if ${tableName} table is loaded in TableManager.`);
+        lines.push(`        /// Check if ${tableName} table is loaded.`);
         lines.push('        /// </summary>');
-        lines.push('        public static bool IsLoaded(string format)');
+        lines.push('        public static bool IsLoaded => _isLoaded;');
+        lines.push('');
+        lines.push('        /// <summary>');
+        lines.push('        /// Get the format used for loading.');
+        lines.push('        /// </summary>');
+        lines.push('        public static global::Devian.TableFormat LoadedFormat => _loadedFormat;');
+        lines.push('    }');
+        lines.push('}');
+        
+        return lines.join('\n');
+    }
+
+    /**
+     * Generate DomainTableRegistry.g.cs - Auto-register TB loaders at startup
+     * SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md
+     */
+    generateDomainTableRegistryCs(domainName, tables, stringTableNames) {
+        const keyedTables = (tables || []).filter(t => t && t.keyField);
+        const stNames = stringTableNames || [];
+        const lines = [];
+        
+        lines.push('// <auto-generated>');
+        lines.push('// DO NOT EDIT - Generated by Devian Build System v10');
+        lines.push('// Domain Table Registry - Auto-registers TB/ST loaders at startup');
+        lines.push('// SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md');
+        lines.push('// </auto-generated>');
+        lines.push('');
+        lines.push('#nullable enable');
+        lines.push('');
+        lines.push('using UnityEngine;');
+        lines.push('');
+        lines.push(`namespace Devian.Domain.${domainName}`);
+        lines.push('{');
+        lines.push('    /// <summary>');
+        lines.push(`    /// Auto-registers TB/ST loaders for ${domainName} domain at startup.`);
+        lines.push('    /// This ensures TableManager can auto-insert data when loading tables.');
+        lines.push('    /// </summary>');
+        lines.push('    internal static class DomainTableRegistry');
+        lines.push('    {');
+        lines.push('        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]');
+        lines.push('        private static void Register()');
         lines.push('        {');
-        lines.push(`            return global::Devian.TableManager.Instance.IsTableLoaded(format, "${tableName}");`);
+        
+        // TB loaders
+        for (const table of keyedTables) {
+            const tableName = table.name;
+            lines.push(`            global::Devian.TableManager.Instance.RegisterTbLoader("${tableName}", (format, text, bin) =>`);
+            lines.push('            {');
+            lines.push(`                if (format == global::Devian.TableFormat.Json && text != null)`);
+            lines.push(`                    TB_${tableName}.LoadFromNdjson(text);`);
+            lines.push(`                else if (format == global::Devian.TableFormat.Pb64 && bin != null)`);
+            lines.push(`                    TB_${tableName}.LoadFromPb64Binary(bin);`);
+            lines.push('            });');
+            lines.push('');
+        }
+        
+        // ST loaders
+        for (const stName of stNames) {
+            lines.push(`            global::Devian.TableManager.Instance.RegisterStLoader("${stName}", (format, lang, text, pb64Text) =>`);
+            lines.push('            {');
+            lines.push(`                if (format == global::Devian.TableFormat.Json && text != null)`);
+            lines.push(`                    ST_${stName}._LoadFromNdjson(text, lang);`);
+            lines.push(`                else if (format == global::Devian.TableFormat.Pb64 && pb64Text != null)`);
+            lines.push(`                    ST_${stName}._LoadFromPb64(pb64Text, lang);`);
+            lines.push('            });');
+            lines.push('');
+        }
+        
         lines.push('        }');
         lines.push('    }');
         lines.push('}');
@@ -2200,6 +2264,8 @@ export * from './features';
         lines.push('');
         lines.push('using System;');
         lines.push('using System.Collections;');
+        lines.push('using System.Collections.Generic;');
+        lines.push('using System.Text;');
         lines.push('using UnityEngine;');
         lines.push('');
         lines.push(`namespace Devian.Domain.${domainName}`);
@@ -2207,51 +2273,238 @@ export * from './features';
         lines.push(`    /// <summary>String Table wrapper for ${tableName}</summary>`);
         lines.push(`    public static class ST_${tableName}`);
         lines.push('    {');
+        lines.push('        private static readonly Dictionary<string, string> _cache = new();');
+        lines.push('        private static global::Devian.TableFormat _loadedFormat;');
+        lines.push('        private static SystemLanguage _loadedLanguage;');
+        lines.push('        private static bool _isLoaded;');
+        lines.push('');
+        lines.push('        // ====================================================================');
+        lines.push('        // Internal loading entry points (called by DomainTableRegistry)');
+        lines.push('        // ====================================================================');
+        lines.push('');
+        lines.push('        /// <summary>Internal: Load from NDJSON text. Called by TableManager via registry.</summary>');
+        lines.push('        internal static void _LoadFromNdjson(string text, SystemLanguage lang)');
+        lines.push('        {');
+        lines.push('            _cache.Clear();');
+        lines.push('            ParseNdjson(text);');
+        lines.push('            _loadedFormat = global::Devian.TableFormat.Json;');
+        lines.push('            _loadedLanguage = lang;');
+        lines.push('            _isLoaded = true;');
+        lines.push('        }');
+        lines.push('');
+        lines.push('        /// <summary>Internal: Load from PB64 text. Called by TableManager via registry.</summary>');
+        lines.push('        internal static void _LoadFromPb64(string pb64Text, SystemLanguage lang)');
+        lines.push('        {');
+        lines.push('            _cache.Clear();');
+        lines.push('            ParsePb64(pb64Text);');
+        lines.push('            _loadedFormat = global::Devian.TableFormat.Pb64;');
+        lines.push('            _loadedLanguage = lang;');
+        lines.push('            _isLoaded = true;');
+        lines.push('        }');
+        lines.push('');
+        lines.push('        // ====================================================================');
+        lines.push('        // Public API');
+        lines.push('        // ====================================================================');
+        lines.push('');
         lines.push('        /// <summary>');
         lines.push(`        /// Preload ${tableName} string table via TableManager.`);
+        lines.push('        /// Language is fixed after preload. To change language, call ReloadAsync.');
         lines.push('        /// </summary>');
-        lines.push('        /// <param name="format">"ndjson" or "pb64"</param>');
+        lines.push('        /// <param name="key">Addressables key to load TextAsset</param>');
+        lines.push('        /// <param name="format">Json or Pb64</param>');
         lines.push('        /// <param name="language">Target language</param>');
-        lines.push('        /// <param name="onProgress">Progress callback (0-1)</param>');
         lines.push('        /// <param name="onError">Error callback</param>');
         lines.push('        public static IEnumerator PreloadAsync(');
-        lines.push('            string format,');
+        lines.push('            string key,');
+        lines.push('            global::Devian.TableFormat format,');
         lines.push('            SystemLanguage language,');
-        lines.push('            Action<float>? onProgress = null,');
         lines.push('            Action<string>? onError = null)');
         lines.push('        {');
-        lines.push('            yield return global::Devian.TableManager.Instance.PreloadStringAsync(');
+        lines.push('            yield return global::Devian.TableManager.Instance.LoadStringsAsync(');
+        lines.push('                key,');
         lines.push('                format,');
         lines.push('                language,');
-        lines.push(`                "${tableName}",`);
-        lines.push('                onProgress,');
         lines.push('                onError');
         lines.push('            );');
         lines.push('        }');
         lines.push('');
         lines.push('        /// <summary>');
+        lines.push(`        /// Reload ${tableName} string table with different language.`);
+        lines.push('        /// Unloads current data and preloads new language.');
+        lines.push('        /// </summary>');
+        lines.push('        public static IEnumerator ReloadAsync(');
+        lines.push('            string key,');
+        lines.push('            global::Devian.TableFormat format,');
+        lines.push('            SystemLanguage language,');
+        lines.push('            Action<string>? onError = null)');
+        lines.push('        {');
+        lines.push(`            global::Devian.TableManager.Instance.UnloadStrings("${tableName}");`);
+        lines.push('            Unload();');
+        lines.push('            yield return PreloadAsync(key, format, language, onError);');
+        lines.push('        }');
+        lines.push('');
+        lines.push('        /// <summary>');
         lines.push(`        /// Get text by id from ${tableName} string table.`);
-        lines.push('        /// Fallback: language → English → id');
+        lines.push('        /// Returns id if not found (fallback).');
         lines.push('        /// </summary>');
-        lines.push('        public static string Get(string format, SystemLanguage language, string id)');
+        lines.push('        public static string Get(string id)');
         lines.push('        {');
-        lines.push(`            return global::Devian.TableManager.Instance.GetString(format, language, "${tableName}", id);`);
+        lines.push('            return _cache.TryGetValue(id, out var text) ? text : id;');
         lines.push('        }');
         lines.push('');
         lines.push('        /// <summary>');
-        lines.push(`        /// Unload ${tableName} string table from TableManager cache.`);
+        lines.push(`        /// Unload ${tableName} string table and clear cache.`);
         lines.push('        /// </summary>');
-        lines.push('        public static void Unload(string format, SystemLanguage language)');
+        lines.push('        public static void Unload()');
         lines.push('        {');
-        lines.push(`            global::Devian.TableManager.Instance.UnloadString(format, language, "${tableName}");`);
+        lines.push('            _cache.Clear();');
+        lines.push('            _isLoaded = false;');
         lines.push('        }');
         lines.push('');
-        lines.push('        /// <summary>');
-        lines.push(`        /// Check if ${tableName} string table is loaded in TableManager.`);
-        lines.push('        /// </summary>');
-        lines.push('        public static bool IsLoaded(string format, SystemLanguage language)');
+        lines.push('        /// <summary>Check if string table is loaded.</summary>');
+        lines.push('        public static bool IsLoaded => _isLoaded;');
+        lines.push('');
+        lines.push('        /// <summary>Get the language used for loading.</summary>');
+        lines.push('        public static SystemLanguage LoadedLanguage => _loadedLanguage;');
+        lines.push('');
+        lines.push('        /// <summary>Get the format used for loading.</summary>');
+        lines.push('        public static global::Devian.TableFormat LoadedFormat => _loadedFormat;');
+        lines.push('');
+        lines.push('        // ====================================================================');
+        lines.push('        // Parsing');
+        lines.push('        // ====================================================================');
+        lines.push('');
+        lines.push('        private static void ParseNdjson(string content)');
         lines.push('        {');
-        lines.push(`            return global::Devian.TableManager.Instance.IsStringLoaded(format, language, "${tableName}");`);
+        lines.push('            var lines = content.Split(\'\\n\', StringSplitOptions.RemoveEmptyEntries);');
+        lines.push('            foreach (var line in lines)');
+        lines.push('            {');
+        lines.push('                var trimmed = line.Trim();');
+        lines.push('                if (string.IsNullOrEmpty(trimmed)) continue;');
+        lines.push('                var entry = JsonUtility.FromJson<StringEntry>(trimmed);');
+        lines.push('                if (entry != null && !string.IsNullOrEmpty(entry.id))');
+        lines.push('                {');
+        lines.push('                    _cache[entry.id] = entry.text ?? string.Empty;');
+        lines.push('                }');
+        lines.push('            }');
+        lines.push('        }');
+        lines.push('');
+        lines.push('        // base64 후보 판별: A-Za-z0-9+/= 만 허용, 길이 4 미만이면 false');
+        lines.push('        private static bool IsLikelyBase64(string s)');
+        lines.push('        {');
+        lines.push('            if (string.IsNullOrEmpty(s) || s.Length < 4) return false;');
+        lines.push('            for (int i = 0; i < s.Length; i++)');
+        lines.push('            {');
+        lines.push('                char c = s[i];');
+        lines.push('                bool ok = (c >= \'A\' && c <= \'Z\') || (c >= \'a\' && c <= \'z\') ||');
+        lines.push('                          (c >= \'0\' && c <= \'9\') || c == \'+\' || c == \'/\' || c == \'=\';');
+        lines.push('                if (!ok) return false;');
+        lines.push('            }');
+        lines.push('            return true;');
+        lines.push('        }');
+        lines.push('');
+        lines.push('        private static void ParsePb64(string content)');
+        lines.push('        {');
+        lines.push('            if (string.IsNullOrEmpty(content)) return;');
+        lines.push('');
+        lines.push('            content = content.Replace("\\r", "");');
+        lines.push('            // 방어: \'chunk1|chunk2|...\' 형태 지원 + YAML의 \'m_Script: |\' 라인도 분해되어 필터링됨');
+        lines.push('            content = content.Replace(\'|\', \'\\n\');');
+        lines.push('');
+        lines.push('            var lines = content.Split(\'\\n\', StringSplitOptions.RemoveEmptyEntries);');
+        lines.push('            foreach (var line in lines)');
+        lines.push('            {');
+        lines.push('                var trimmed = line.Trim();');
+        lines.push('                if (string.IsNullOrEmpty(trimmed)) continue;');
+        lines.push('');
+        lines.push('                // YAML 라인/잡문은 여기서 걸러져서 로그 스팸 방지');
+        lines.push('                if (!IsLikelyBase64(trimmed)) continue;');
+        lines.push('');
+        lines.push('                try');
+        lines.push('                {');
+        lines.push('                    var bytes = Convert.FromBase64String(trimmed);');
+        lines.push('                    ParseStringChunk(bytes);');
+        lines.push('                }');
+        lines.push(`                catch (Exception ex)`);
+        lines.push('                {');
+        lines.push('                    var preview = trimmed.Length <= 64 ? trimmed : (trimmed.Substring(0, 64) + "...");');
+        lines.push(`                    global::Devian.Log.Error($"[ST_${stName}] ParsePb64 failed. len={trimmed.Length} preview='{preview}' ex={ex}");`);
+        lines.push('                }');
+        lines.push('            }');
+        lines.push('        }');
+        lines.push('');
+        lines.push('        private static void ParseStringChunk(byte[] bytes)');
+        lines.push('        {');
+        lines.push('            int offset = 0;');
+        lines.push('            while (offset < bytes.Length)');
+        lines.push('            {');
+        lines.push('                var tag = ReadVarint(bytes, ref offset);');
+        lines.push('                var fieldNumber = (int)(tag >> 3);');
+        lines.push('                var wireType = (int)(tag & 0x7);');
+        lines.push('                if (fieldNumber == 1 && wireType == 2)');
+        lines.push('                {');
+        lines.push('                    var length = (int)ReadVarint(bytes, ref offset);');
+        lines.push('                    var entryBytes = new byte[length];');
+        lines.push('                    Array.Copy(bytes, offset, entryBytes, 0, length);');
+        lines.push('                    offset += length;');
+        lines.push('                    var (id, text) = ParseStringEntry(entryBytes);');
+        lines.push('                    if (!string.IsNullOrEmpty(id)) _cache[id] = text;');
+        lines.push('                }');
+        lines.push('                else { SkipField(bytes, ref offset, wireType); }');
+        lines.push('            }');
+        lines.push('        }');
+        lines.push('');
+        lines.push('        private static (string id, string text) ParseStringEntry(byte[] bytes)');
+        lines.push('        {');
+        lines.push('            string id = string.Empty, text = string.Empty;');
+        lines.push('            int offset = 0;');
+        lines.push('            while (offset < bytes.Length)');
+        lines.push('            {');
+        lines.push('                var tag = ReadVarint(bytes, ref offset);');
+        lines.push('                var fieldNumber = (int)(tag >> 3);');
+        lines.push('                var wireType = (int)(tag & 0x7);');
+        lines.push('                if (wireType == 2)');
+        lines.push('                {');
+        lines.push('                    var length = (int)ReadVarint(bytes, ref offset);');
+        lines.push('                    var str = Encoding.UTF8.GetString(bytes, offset, length);');
+        lines.push('                    offset += length;');
+        lines.push('                    if (fieldNumber == 1) id = str;');
+        lines.push('                    else if (fieldNumber == 2) text = str;');
+        lines.push('                }');
+        lines.push('                else { SkipField(bytes, ref offset, wireType); }');
+        lines.push('            }');
+        lines.push('            return (id, text);');
+        lines.push('        }');
+        lines.push('');
+        lines.push('        private static ulong ReadVarint(byte[] bytes, ref int offset)');
+        lines.push('        {');
+        lines.push('            ulong result = 0; int shift = 0;');
+        lines.push('            while (offset < bytes.Length)');
+        lines.push('            {');
+        lines.push('                var b = bytes[offset++];');
+        lines.push('                result |= (ulong)(b & 0x7f) << shift;');
+        lines.push('                if ((b & 0x80) == 0) break;');
+        lines.push('                shift += 7;');
+        lines.push('            }');
+        lines.push('            return result;');
+        lines.push('        }');
+        lines.push('');
+        lines.push('        private static void SkipField(byte[] bytes, ref int offset, int wireType)');
+        lines.push('        {');
+        lines.push('            switch (wireType)');
+        lines.push('            {');
+        lines.push('                case 0: ReadVarint(bytes, ref offset); break;');
+        lines.push('                case 1: offset += 8; break;');
+        lines.push('                case 2: offset += (int)ReadVarint(bytes, ref offset); break;');
+        lines.push('                case 5: offset += 4; break;');
+        lines.push('            }');
+        lines.push('        }');
+        lines.push('');
+        lines.push('        [Serializable]');
+        lines.push('        private class StringEntry');
+        lines.push('        {');
+        lines.push('            public string id = string.Empty;');
+        lines.push('            public string text = string.Empty;');
         lines.push('        }');
         lines.push('    }');
         lines.push('}');
@@ -2284,7 +2537,7 @@ export * from './features';
 
     // ========================================================================
     // Static UPM Package Processing (e.g., com.devian.unity)
-    // SSOT: skills/devian-upm/20-packages/com.devian.unity/SKILL.md
+    // SSOT: skills/devian-unity/20-packages/com.devian.unity/SKILL.md
     // ========================================================================
 
     /**
@@ -2309,7 +2562,7 @@ export * from './features';
         console.log(`    [OK] Staged to ${stagingUpm}`);
 
         // GUARD: Validate UPM sample structure (Runtime/Editor separation)
-        // SSOT: skills/devian-upm-samples/01-samples-authoring-guide/SKILL.md
+        // SSOT: skills/devian-unity-samples/01-samples-authoring-guide/SKILL.md
         this.validateUpmSampleStructure(stagingUpm, upmName);
 
         // Safety: Remove legacy Editor/Generated from unity.common staging
@@ -2333,7 +2586,7 @@ export * from './features';
     /**
      * GUARD: Validate UPM sample structure (Runtime/Editor separation).
      * Throws Error if sample structure is invalid.
-     * SSOT: skills/devian-upm-samples/01-samples-authoring-guide/SKILL.md
+     * SSOT: skills/devian-unity-samples/01-samples-authoring-guide/SKILL.md
      */
     validateUpmSampleStructure(stagingUpm, upmName) {
         const samplesDir = path.join(stagingUpm, 'Samples~');
@@ -3609,7 +3862,7 @@ export * from './features';
     /**
      * Guard: Detect SimpleSingleton.Instance access from InitializeOnLoad or static constructors.
      * This pattern causes Unity Editor ScriptableSingleton conflicts.
-     * SSOT: skills/devian-upm/30-unity-components/01-singleton/SKILL.md (8.5)
+     * SSOT: skills/devian-unity/30-unity-components/01-singleton/SKILL.md (8.5)
      */
     checkSingletonEarlyInit() {
         const targetDirs = [
@@ -3630,7 +3883,7 @@ export * from './features';
             console.error('Policy: Do not access SimpleSingleton.Instance from:');
             console.error('  - [InitializeOnLoad] / [InitializeOnLoadMethod] attributed code');
             console.error('  - Static constructors (static ClassName())');
-            console.error('Reference: skills/devian-upm/30-unity-components/01-singleton/SKILL.md (8.5)');
+            console.error('Reference: skills/devian-unity/30-unity-components/01-singleton/SKILL.md (8.5)');
             console.error('\nViolations:');
             for (const v of violations) {
                 console.error(`  - ${v.file}:${v.line}: ${v.reason}`);
@@ -3639,7 +3892,7 @@ export * from './features';
             throw new Error(
                 '[FAIL] SimpleSingleton early init pattern detected. ' +
                 'Do not access SimpleSingleton.Instance from InitializeOnLoad or static constructors. ' +
-                'See: skills/devian-upm/30-unity-components/01-singleton/SKILL.md (8.5)'
+                'See: skills/devian-unity/30-unity-components/01-singleton/SKILL.md (8.5)'
             );
         }
 

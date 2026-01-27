@@ -4,6 +4,7 @@ using Devian;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
 using System.Collections;
+using Unity.VisualScripting;
 
 public class NewMonoBehaviourScript : MonoBehaviour
 {
@@ -16,8 +17,9 @@ public class NewMonoBehaviourScript : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     IEnumerator Start()
     {
-        Devian.Logger.SetSink(new UnityLogSink());
+        Log.SetSink(new UnityLogSink());
         DownloadManager.Load("DownloadManager");
+
         yield return DownloadManager.Instance.PatchProc(
             (patch) =>
             {
@@ -25,7 +27,11 @@ public class NewMonoBehaviourScript : MonoBehaviour
             }
         );
 
+        yield return TableManager.Instance.LoadTablesAsync("table-ndjson", TableFormat.Json);
+        yield return TableManager.Instance.LoadStringsAsync("string-pb64", TableFormat.Pb64, SystemLanguage.Korean);
         yield return AssetManager.LoadBundleAssets<GameObject>("prefabs");
+
+        Log.Debug(ST_UIText.Get("loading"));
         var obj = BundlePool.Spawn<TestPoolObject>("Cube", Vector3.zero, Quaternion.identity, null);
         Debug.Log(obj);
     }

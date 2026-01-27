@@ -14,10 +14,43 @@ Table generator의 **정책적 규칙**만 정의한다.
 
 ## Naming Rules (정책)
 
+### Sheet Name @ 규칙 (Hard Rule)
+
+Sheet 이름이 `{TableName}@{Description}` 형식일 때:
+
+| 항목 | 값 |
+|------|-----|
+| SheetFullName | `{TableName}@{Description}` (원본) |
+| CodeTableName | `@` 앞 문자열 (`{TableName}`) |
+
+**코드 생성에 사용되는 이름은 CodeTableName만이다.**
+
+```
+예: Sheet "Monsters@몬스터테이블"
+→ CodeTableName = "Monsters"
+→ C# class = Monsters
+→ Container = TB_Monsters
+→ Runtime에서 로드 시 TB_Monsters에 insert
+```
+
+### 중복 codeTableName FAIL 규칙 (Hard Rule)
+
+**같은 XLSX 파일 내에서 동일한 codeTableName을 가진 시트가 2개 이상 있으면 빌드 FAIL.**
+
+```
+예: FAIL 케이스
+- Sheet1: "Monsters@보스몬스터"
+- Sheet2: "Monsters@일반몬스터"
+→ codeTableName이 둘 다 "Monsters" → FAIL
+```
+
+에러 메시지에는 XLSX 파일명과 충돌하는 시트 이름 목록이 포함되어야 한다.
+
 ### Entity 클래스/인터페이스
 
-- **SheetName을 그대로 사용**한다.
+- **CodeTableName을 그대로 사용**한다.
 - 예: Sheet `TestSheet` → C# `class TestSheet`, TS `interface TestSheet`
+- 예: Sheet `Monsters@몬스터테이블` → C# `class Monsters`
 
 ### Container 클래스
 

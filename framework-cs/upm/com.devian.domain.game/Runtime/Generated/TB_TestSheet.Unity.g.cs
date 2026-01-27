@@ -14,51 +14,47 @@ namespace Devian.Domain.Game
 {
     public static partial class TB_TestSheet
     {
+        private static global::Devian.TableFormat _loadedFormat;
+        private static bool _isLoaded;
+
         /// <summary>
         /// Preload TestSheet table via TableManager.
+        /// TableManager handles: TextAsset load + TB insert + cache.
         /// </summary>
-        /// <param name="format">"ndjson" or "pb64"</param>
-        /// <param name="onProgress">Progress callback (0-1)</param>
+        /// <param name="key">Addressables key to load TextAsset</param>
+        /// <param name="format">Json or Pb64</param>
         /// <param name="onError">Error callback</param>
         public static IEnumerator PreloadAsync(
-            string format,
-            Action<float>? onProgress = null,
+            string key,
+            global::Devian.TableFormat format,
             Action<string>? onError = null)
         {
-            yield return global::Devian.TableManager.Instance.PreloadTableAsync(
+            yield return global::Devian.TableManager.Instance.LoadTablesAsync(
+                key,
                 format,
-                "TestSheet",
-                (rawText, rawBinary) =>
-                {
-                    if (format == "ndjson" && rawText != null)
-                    {
-                        LoadFromNdjson(rawText);
-                    }
-                    else if (format == "pb64" && rawBinary != null)
-                    {
-                        LoadFromPb64Binary(rawBinary);
-                    }
-                },
-                onProgress,
                 onError
             );
+            _loadedFormat = format;
+            _isLoaded = true;
         }
 
         /// <summary>
-        /// Unload TestSheet table from TableManager cache.
+        /// Unload TestSheet table and clear data.
         /// </summary>
-        public static void Unload(string format)
+        public static void Unload()
         {
-            global::Devian.TableManager.Instance.UnloadTable(format, "TestSheet");
             Clear();
+            _isLoaded = false;
         }
 
         /// <summary>
-        /// Check if TestSheet table is loaded in TableManager.
+        /// Check if TestSheet table is loaded.
         /// </summary>
-        public static bool IsLoaded(string format)
-        {
-            return global::Devian.TableManager.Instance.IsTableLoaded(format, "TestSheet");
-        }
+        public static bool IsLoaded => _isLoaded;
+
+        /// <summary>
+        /// Get the format used for loading.
+        /// </summary>
+        public static global::Devian.TableFormat LoadedFormat => _loadedFormat;
     }
 }

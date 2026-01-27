@@ -21,16 +21,16 @@ namespace Devian
     /// </summary>
     public interface ILogSink
     {
-        void Write(LogLevel level, string tag, string message, Exception? ex = null);
+        void Write(LogLevel level, string message);
     }
 
     /// <summary>
     /// Default console log sink.
-    /// Format: [{LEVEL}] {tag} - {message}
+    /// Format: [{LEVEL}] {message}
     /// </summary>
     public sealed class ConsoleLogSink : ILogSink
     {
-        public void Write(LogLevel level, string tag, string message, Exception? ex = null)
+        public void Write(LogLevel level, string message)
         {
             var levelStr = level switch
             {
@@ -41,19 +41,14 @@ namespace Devian
                 _ => "UNKNOWN",
             };
 
-            Console.WriteLine($"[{levelStr}] {tag} - {message}");
-
-            if (ex != null)
-            {
-                Console.WriteLine(ex.ToString());
-            }
+            Console.WriteLine($"[{levelStr}] {message}");
         }
     }
 
     /// <summary>
     /// Global static logger with level filtering and sink replacement.
     /// </summary>
-    public static class Logger
+    public static class Log
     {
         private static LogLevel _level = LogLevel.Debug;
         private static ILogSink _sink = new ConsoleLogSink();
@@ -96,27 +91,27 @@ namespace Devian
 
         // Output
 
-        public static void Debug(string tag, string message)
+        public static void Debug(string message)
         {
-            Log(LogLevel.Debug, tag, message, null);
+            Output(LogLevel.Debug, message);
         }
 
-        public static void Info(string tag, string message)
+        public static void Info(string message)
         {
-            Log(LogLevel.Info, tag, message, null);
+            Output(LogLevel.Info, message);
         }
 
-        public static void Warn(string tag, string message)
+        public static void Warn(string message)
         {
-            Log(LogLevel.Warn, tag, message, null);
+            Output(LogLevel.Warn, message);
         }
 
-        public static void Error(string tag, string message, Exception? ex = null)
+        public static void Error(string message)
         {
-            Log(LogLevel.Error, tag, message, ex);
+            Output(LogLevel.Error, message);
         }
 
-        private static void Log(LogLevel level, string tag, string message, Exception? ex)
+        private static void Output(LogLevel level, string message)
         {
             ILogSink sink;
             LogLevel currentLevel;
@@ -129,7 +124,7 @@ namespace Devian
 
             if (level < currentLevel) return;
 
-            sink.Write(level, tag, message, ex);
+            sink.Write(level, message);
         }
     }
 }

@@ -1,6 +1,6 @@
-# Devian v10 — Common Feature: Logger
+# Devian v10 — Common Feature: Log
 
-Status: DRAFT  
+Status: ACTIVE  
 AppliesTo: v10  
 SSOT: skills/devian/03-ssot/SKILL.md
 
@@ -9,7 +9,7 @@ SSOT: skills/devian/03-ssot/SKILL.md
 Common 모듈의 표준 로깅 기능을 정의한다.
 
 목표:
-- 서버(C#) / 클라이언트(TS)에서 동일한 개념(레벨, 태그, 메시지)을 제공한다.
+- 서버(C#) / 클라이언트(TS)에서 동일한 개념(레벨, 메시지)을 제공한다.
 - 기본 구현은 콘솔 출력이지만, Sink 교체로 출력 대상을 바꿀 수 있어야 한다.
 
 ---
@@ -38,6 +38,7 @@ Common 모듈의 표준 로깅 기능을 정의한다.
    - 직접 호출은 **Sink 내부에서만 허용**한다.
 3. 기본 Sink는 존재해야 하며(기본 동작 보장), Sink 교체도 가능해야 한다.
 4. 로그 레벨은 정확히 4단계만 제공한다: Debug / Info / Warn / Error
+5. **모든 출력 API는 message 파라미터 1개만 받는다.** (tag, ex 파라미터 금지)
 
 ---
 
@@ -58,10 +59,10 @@ namespace Devian
 
     public interface ILogSink
     {
-        void Write(LogLevel level, string tag, string message, System.Exception? ex = null);
+        void Write(LogLevel level, string message);
     }
 
-    public static class Logger
+    public static class Log
     {
         // 설정
         public static void SetLevel(LogLevel level);
@@ -70,18 +71,18 @@ namespace Devian
         public static void SetSink(ILogSink sink);
         public static ILogSink GetSink();
 
-        // 출력
-        public static void Debug(string tag, string message);
-        public static void Info(string tag, string message);
-        public static void Warn(string tag, string message);
-        public static void Error(string tag, string message, System.Exception? ex = null);
+        // 출력 (message 1개만)
+        public static void Debug(string message);
+        public static void Info(string message);
+        public static void Warn(string message);
+        public static void Error(string message);
     }
 }
 ```
 
 필수 기본 구현:
 - `ConsoleLogSink : ILogSink` (기본 Sink)
-- 기본 포맷(권장): `[{LEVEL}] {tag} - {message}` (+ 예외는 별도 출력 가능)
+- 기본 포맷: `[{LEVEL}] {message}`
 
 ### TypeScript (`devian-domain-common/features`)
 
@@ -96,7 +97,7 @@ export enum LogLevel {
 }
 
 export interface LogSink {
-  write(level: LogLevel, tag: string, message: string, err?: unknown): void;
+  write(level: LogLevel, message: string): void;
 }
 
 export function setLevel(level: LogLevel): void;
@@ -105,11 +106,11 @@ export function getLevel(): LogLevel;
 export function setSink(sink: LogSink): void;
 export function getSink(): LogSink;
 
-// output
-export function debug(tag: string, message: string): void;
-export function info(tag: string, message: string): void;
-export function warn(tag: string, message: string): void;
-export function error(tag: string, message: string, err?: unknown): void;
+// output (message 1개만)
+export function debug(message: string): void;
+export function info(message: string): void;
+export function warn(message: string): void;
+export function error(message: string): void;
 ```
 
 필수 기본 구현:
@@ -125,12 +126,12 @@ export function error(tag: string, message: string, err?: unknown): void;
 ```csharp
 using Devian;
 
-Logger.SetLevel(LogLevel.Info);
+Log.SetLevel(LogLevel.Info);
 
-Logger.Debug("Net", "this will be filtered out");
-Logger.Info("Net", "connected");
-Logger.Warn("Auth", "token expired soon");
-Logger.Error("DB", "query failed", ex);
+Log.Debug("this will be filtered out");
+Log.Info("connected");
+Log.Warn("token expired soon");
+Log.Error($"query failed: {ex}");
 ```
 
 ### TypeScript
@@ -140,16 +141,16 @@ import { setLevel, LogLevel, info, warn, error } from "@devian/module-common/fea
 
 setLevel(LogLevel.Info);
 
-info("Net", "connected");
-warn("Auth", "token expired soon");
-error("DB", "query failed", err);
+info("connected");
+warn("token expired soon");
+error(`query failed: ${err}`);
 ```
 
 ---
 
 ## DoD (Definition of Done)
 
-- [x] C# Logger 구현 + 기본 Sink 구현
+- [x] C# Log 구현 + 기본 Sink 구현
 - [x] TS logger.ts 구현 + 기본 Sink 구현
 - [ ] 레벨 필터링 동작 확인
 - [ ] Sink 교체 동작 확인

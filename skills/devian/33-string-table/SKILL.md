@@ -223,36 +223,111 @@ message StringChunk {
 
 ---
 
+## pb64 Encoding/Decoding 규칙 (Hard Rule)
+
+### Encoding (Generator)
+
+1. `StringChunk`(protobuf bytes)를 base64로 인코딩
+2. 청크 여러 개면 여러 라인으로 저장 (canonical: `\n` 구분)
+3. 저장(포장)은 `35-pb64-storage` 규약에 따라 `.asset` YAML로 감싼다 (block scalar `m_Script: |`)
+
+### Decoding (Runtime) — Hard Rule
+
+런타임에서 `TextAsset.text`는 **YAML 전체일 수 있다** (헤더/필드 라인 포함).
+
+디코더는 아래를 지원해야 한다:
+
+| 케이스 | 처리 방법 |
+|--------|-----------|
+| YAML block scalar marker 라인 (예: `m_Script: |`) | 무시 (base64 아님) |
+| 기타 YAML 라인 (헤더, 필드) | 무시 (base64 아님) |
+| base64 청크가 개행으로 나뉜 canonical 케이스 | `\n` 구분 |
+| (방어) base64 청크가 `|`로 이어진 케이스 | `|` 구분자 지원 |
+
+### 로그 정책 (Hard Rule)
+
+- 디코드/파싱 실패 시 `Devian.Log.Error(...)` 로 기록
+- **단, YAML 같은 "명백히 base64가 아닌 라인"은 사전 필터링으로 디코드 시도 자체를 하지 않음**
+- 이를 통해 로그 스팸을 방지
+
+### base64 후보 판별 (IsLikelyBase64)
+
+```csharp
+// base64 문자: A-Za-z0-9+/= 만 허용
+// 길이 4 미만이면 false
+private static bool IsLikelyBase64(string s)
+{
+    if (string.IsNullOrEmpty(s) || s.Length < 4) return false;
+    foreach (char c in s)
+    {
+        bool ok = (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
+                  (c >= '0' && c <= '9') || c == '+' || c == '/' || c == '=';
+        if (!ok) return false;
+    }
+    return true;
+}
+```
+
+---
+
 ## 런타임 규칙
+
+### Language 고정 규칙 (Hard Rule)
+
+**ST는 Preload한 언어로 고정된다. 언어 변경은 Reload로 처리.**
+
+```csharp
+// Preload - 언어 지정 (onProgress 없음)
+yield return ST_UIText.PreloadAsync(key, TableFormat.Json, SystemLanguage.Korean, onError);
+
+// Get - language 파라미터 없음 (preload된 언어 사용)
+var text = ST_UIText.Get("greeting");
+
+// 언어 변경 - Reload 필요 (TableManager.UnloadStrings + PreloadAsync)
+yield return ST_UIText.ReloadAsync(key, TableFormat.Json, SystemLanguage.English, onError);
+```
+
+### TableManager LoadStringsAsync (Hard Rule)
+
+**LoadStringsAsync는 onLoaded/onProgress 콜백 없이 내부에서 완결한다.**
+
+```csharp
+public IEnumerator LoadStringsAsync(
+    string key,
+    TableFormat format,
+    SystemLanguage language,
+    Action<string>? onError = null)
+```
+
+- TextAsset 로드 → baseName 파싱 → ST loader registry로 insert
+- 이미 다른 언어로 로드되어 있으면 FAIL (언어 변경은 Reload 필요)
 
 ### Language 기본값 규칙
 
-**load/get 호출에서 language가 없거나 `Unknown`이면 `English`로 치환**
+**load 호출에서 language가 `Unknown`이면 `English`로 치환**
 
 ```csharp
 if (lang == SystemLanguage.Unknown)
     lang = SystemLanguage.English;
 ```
 
-### 캐시 키 규칙 (Hard Rule)
+### ST_ 캐시 규칙 (Hard Rule)
 
-**캐시는 반드시 `(format, language, tableName)` 단위로 관리**
+**ST_ wrapper는 자체 Dictionary 캐시를 관리한다.**
 
 ```csharp
-// 올바른 캐시 키
-var cacheKey = $"{format}/{language}/{tableName}";
-
-// 금지: tableName만으로 캐시
-var cacheKey = tableName; // FAIL - 언어 충돌 발생
+private static readonly Dictionary<string, string> _cache = new();
+private static SystemLanguage _loadedLanguage;
 ```
 
 ### Get Fallback 규칙
 
 ```
-1. 현재 language 테이블에서 id 검색
-2. 없거나 빈 문자열이면 → English 테이블에서 검색
-3. 그래도 없으면 → id 자체를 반환
+1. 자체 캐시에서 id 검색
+2. 없으면 → id 자체를 반환 (fallback)
 ```
+
+**참고:** 언어간 fallback(Korean → English)은 지원하지 않는다. 언어 변경이 필요하면 Reload를 사용.
 
 ---
 
@@ -287,8 +362,11 @@ var cacheKey = tableName; // FAIL - 언어 충돌 발생
 - [ ] staging에 `string/pb64/{Language}/{Table}.asset` 생성됨 (청크/여러 줄)
 - [ ] ndjson 파일에 description 필드 없음
 - [ ] pb64 파일이 Unity TextAsset YAML 형식이며 block scalar(`|`) 사용
-- [ ] 런타임에서 language 미지정 시 English 기본 적용
-- [ ] Get fallback이 English → id 순서로 동작
+- [ ] 런타임에서 language `Unknown`이면 English 기본 적용
+- [ ] ST_.Get(id) - language 파라미터 없음
+- [ ] ST_.PreloadAsync(key, format, language, onError?) - onLoaded/onProgress 없음
+- [ ] ST_.ReloadAsync로 언어 변경 가능
+- [ ] LoadStringsAsync(key, format, language, onError?) - onLoaded/onProgress 없음
 
 ### FAIL 조건
 
@@ -300,6 +378,8 @@ var cacheKey = tableName; // FAIL - 언어 충돌 발생
 - description이 출력에 포함됨
 - pb64 확장자가 `.pb64` (`.asset`이어야 함)
 - AssetManager name 캐시 직접 사용
+- LoadStringsAsync에 onLoaded/onProgress 파라미터 존재
+- ST loader 미등록 시 조용히 무시
 
 ---
 

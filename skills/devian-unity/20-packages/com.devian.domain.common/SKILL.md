@@ -21,7 +21,7 @@ AppliesTo: v10
 ## 의존 방향 정책 (핵심)
 
 ```
-com.devian.core (base - Logger 포함)
+com.devian.core (base - Log 포함)
        ↑
 com.devian.unity (Unity adapters)
        ↑
@@ -68,7 +68,7 @@ com.devian.domain.common/
         └── CStringPropertyDrawer.cs
 ```
 
-> **중요:** Logger는 `com.devian.core`에 위치한다. 이 패키지에는 Logger가 없다.
+> **중요:** Log는 `com.devian.core`에 위치한다. 이 패키지에는 Log가 없다.
 
 ---
 
@@ -158,7 +158,7 @@ com.devian.domain.common/
 | `Editor/Complex/CStringPropertyDrawer.cs` | CString PropertyDrawer |
 | `Editor/Generated/{TableName}_ID.Editor.cs` | TableID Inspector 바인딩 (keyed table 있을 때 생성) |
 
-> **주의:** Logger는 `com.devian.core/Runtime/Core/Logger.cs`에 위치한다. 이 패키지에 Logger를 포함하지 않는다.
+> **주의:** Log는 `com.devian.core/Runtime/Core/Logger.cs`에 위치한다. 이 패키지에 Log를 포함하지 않는다.
 
 ---
 
@@ -192,7 +192,7 @@ com.devian.domain.common/
 - Runtime 코드에서 `UnityEngine.*` namespace 직접 참조 금지.
 - **Features를 `Common.g.cs`에 생성으로 박아 넣는 방식 금지** (Feature는 수동 소스 유지).
 - **clean+copy 정책을 무시하고 targetDir에 수동으로만 파일을 두는 방식 금지** (재빌드 시 삭제됨).
-- **Logger 포함 금지**: Logger는 `com.devian.core`에 위치한다.
+- **Log 포함 금지**: Log는 `com.devian.core`에 위치한다.
 
 ---
 

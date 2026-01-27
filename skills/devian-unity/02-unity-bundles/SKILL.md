@@ -20,7 +20,7 @@ AppliesTo: v10
 
 - UnityEngine.dll을 외부 .NET 빌드에서 직접 참조하지 않는다.
 - UnityExample에 embedded UPM 패키지로 다음을 제공한다:
-  - `com.devian.core` (Devian 런타임 통합: Core + Network + Protobuf + Logger)
+  - `com.devian.core` (Devian 런타임 통합: Core + Network + Protobuf + Log)
   - `com.devian.domain.common` (Devian.Domain.Common 소스 + Complex PropertyDrawer)
   - `com.devian.unity` (Unity 어댑터: UnityLogSink, AssetManager, TableID Editor, Network 런타임)
   - `com.devian.samples` (UPM Samples~ 기반 샘플 코드)
@@ -44,7 +44,7 @@ framework-cs/apps/UnityExample/Packages/
 
 | 패키지 | 역할 |
 |--------|------|
-| `com.devian.core` | Devian 런타임 통합 (Core + Network + Protobuf + Logger) |
+| `com.devian.core` | Devian 런타임 통합 (Core + Network + Protobuf + Log) |
 | `com.devian.domain.common` | Devian.Domain.Common 소스 (Complex types + PropertyDrawers) |
 | `com.devian.domain.game` | Devian.Domain.Game 소스 (테이블 생성 예제) |
 | `com.devian.unity` | Unity 어댑터 (UnityLogSink, AssetManager, TableID Editor, Network 런타임) |

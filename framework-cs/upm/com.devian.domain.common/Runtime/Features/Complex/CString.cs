@@ -41,7 +41,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                Logger.Error("Complex", "CString.GetValue failed to decrypt", ex);
+                Log.Error($"CString.GetValue failed to decrypt. {ex}");
                 return string.Empty;
             }
         }

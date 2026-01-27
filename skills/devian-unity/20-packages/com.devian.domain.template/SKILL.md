@@ -23,7 +23,7 @@ AppliesTo: v10
 ## 의존 방향 정책 (핵심)
 
 ```
-com.devian.core (base - Logger 포함)
+com.devian.core (base - Log 포함)
        ↑
 com.devian.unity (Unity adapters)
        ↑

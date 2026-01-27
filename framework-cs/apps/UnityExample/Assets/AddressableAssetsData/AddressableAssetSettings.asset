@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 0752773ab72a4f0478dd0d0209936ff4
   m_currentHash:
     serializedVersion: 2
-    Hash: 36cd33f6fcfd9377410b9c777e76fe26
+    Hash: 00000000000000000000000000000000
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 0
   m_CatalogRequestsTimeout: 0
@@ -63,7 +63,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cb02528411e95af409198297184a711d, type: 2}
   - {fileID: 11400000, guid: 7d5663fe3298cf04fa3b1f1d6727d1c4, type: 2}
   - {fileID: 11400000, guid: 150815d00a4eca74fb80d57e90aa36c9, type: 2}
+  - {fileID: 11400000, guid: 1679f64ce97ed0242b406c6cda9604ec, type: 2}
   - {fileID: 11400000, guid: e1fd680bdda96f640b92efe7d658c4fa, type: 2}
+  - {fileID: 11400000, guid: e4f18ebf3821b6746b899447c76666a0, type: 2}
   - {fileID: 11400000, guid: d7a134b82e1be0240b167256e4769393, type: 2}
   m_BuildSettings:
     m_LogResourceManagerExceptions: 1
@@ -105,9 +107,13 @@ MonoBehaviour:
     m_LabelNames:
     - default
     - prefabs
-    - table
-    - ndjson
-    - pb64
+    - table-ndjson
+    - table-pb64
+    - string-ndjson
+    - string-pb64
+    - English
+    - Japanese
+    - Korean
   m_SchemaTemplates: []
   m_GroupTemplateObjects:
   - {fileID: 11400000, guid: afd5c7715f605fd448072ba910c47a52, type: 2}

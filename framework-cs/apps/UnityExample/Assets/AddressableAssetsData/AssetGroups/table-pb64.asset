@@ -14,7 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
   m_GroupName: table-pb64
   m_GUID: 01d32e6fe7ebe86488c5502745d5b89b
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 17c2870a6ddb2944b88ef37d26afbbd4
+    m_Address: Assets/Bundles/Tables/pb64
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - table-pb64
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: daa0599a24d6ad242b59de8ab32c5cb5, type: 2}
   m_SchemaSet:

@@ -66,6 +66,25 @@ TextAsset:
 
 > **절대 금지**: `m_Script: ${multilineText}`처럼 단일 라인에 멀티라인 문자열을 끼워 넣기 (YAML 깨짐)
 
+### Decoding Note (Runtime) — Hard Rule
+
+`.asset`는 Unity TextAsset YAML이므로 `TextAsset.text`가 **YAML 전체를 반환할 수 있다**.
+
+**StringTable pb64 디코더 규칙:**
+
+| 규칙 | 설명 |
+|------|------|
+| base64 라인만 추출 | YAML 헤더/필드 라인은 무시 |
+| 구분자 지원 | `\n` + `|` 둘 다 지원 (파이프 연결형 입력 방어) |
+| 실패 로깅 | `Devian.Log`로 기록 (단, base64 후보 라인에 대해서만) |
+| 로그 스팸 방지 | YAML 라인은 base64 후보 필터로 사전 제외 |
+
+**base64 후보 판별:**
+- 문자: `A-Za-z0-9+/=` 만 허용
+- 길이 4 미만이면 base64가 아님
+
+> **Reference:** `skills/devian/33-string-table/SKILL.md`의 "pb64 Encoding/Decoding 규칙" 섹션
+
 ---
 
 ## DVGB Gzip Block Container Format (일반 Table용)

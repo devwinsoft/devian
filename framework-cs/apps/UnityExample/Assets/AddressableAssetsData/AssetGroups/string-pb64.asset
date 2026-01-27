@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: string-pb64
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: string-pb64
+  m_GUID: aed82e71af4dca247b7e0048e59841c8
+  m_SerializeEntries:
+  - m_GUID: 2de13be06c5ad9a40b6d765543921efb
+    m_Address: Assets/Bundles/Strings/pb64/English
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - English
+    - string-pb64
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 38aef2bc5c4d79348905bcd9a7429a12
+    m_Address: Assets/Bundles/Strings/pb64/Korean
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Korean
+    - string-pb64
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: e071f25b6d7b3cd429b44088aeb1109e
+    m_Address: Assets/Bundles/Strings/pb64/Japanese
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - Japanese
+    - string-pb64
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: daa0599a24d6ad242b59de8ab32c5cb5, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 8c072c4a14742344e98d5c6bdbb9ea8c, type: 2}
+    - {fileID: 11400000, guid: 300e8103fff238848a365bd88b5afc07, type: 2}

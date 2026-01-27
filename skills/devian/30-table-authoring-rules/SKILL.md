@@ -29,6 +29,33 @@ DATA(DomainType=DATA)에서 사용하는 XLSX 테이블 작성 규칙을 정의�
 
 ---
 
+## Sheet Name 규칙 (Hard Rule)
+
+Sheet 이름은 다음 형식을 지원한다:
+
+| 형식 | 예시 | CodeTableName |
+|------|------|---------------|
+| `{TableName}` | `TestSheet` | `TestSheet` |
+| `{TableName}@{Description}` | `Monsters@몬스터테이블` | `Monsters` |
+
+### 파싱 규칙
+
+- `@` 문자가 있으면 앞쪽 문자열이 **CodeTableName**
+- `@` 뒤 문자열은 설명용 (Description)
+- 코드 생성/런타임에서 사용되는 이름은 **CodeTableName**만
+
+### 런타임 동작
+
+- `{TableName}@{Description}` 형식의 에셋이 로드되면 `TB_{CodeTableName}`에 자동 insert
+- TableManager가 `ExtractBaseName(fileName)`으로 CodeTableName 추출
+
+### 금지 규칙
+
+- `@` 뒤 문자열을 코드 테이블명으로 사용 금지
+- 같은 CodeTableName을 가진 여러 Sheet 금지 (충돌)
+
+---
+
 ## Header Layout (4 rows)
 
 모든 sheet는 최소 4행 헤더를 가진다.

@@ -149,11 +149,16 @@ namespace Devian
 - `LoadBundleAssets<T>(key, lang)`: `Addressables.MergeMode.Intersection`으로 key + lang 교집합 로드
 - `UnloadBundleAssets(key)`: 해당 key의 handle을 `Addressables.Release`로 해제
 
-### 2. 캐시 키 규칙
+### 2. 캐시 키 규칙 (NormalizeAssetName)
 
-**에셋 키는 `Path.GetFileNameWithoutExtension(name).ToLowerInvariant()`로 정규화한다.**
+**에셋 키는 `NormalizeAssetName(name)` = `Path.GetFileNameWithoutExtension(name).ToLowerInvariant()`로 정규화한다.**
 
 ```csharp
+private static string NormalizeAssetName(string name)
+{
+    return Path.GetFileNameWithoutExtension(name).ToLowerInvariant();
+}
+
 // 예시
 "TestSheet.json" → "testsheet"
 "Cube.prefab" → "cube"
@@ -161,16 +166,22 @@ namespace Devian
 
 - 대소문자 무시 (case-insensitive)
 - 확장자 제거
-- 중복 이름은 오류 로그 후 등록 거부 (기존 동작 유지)
+- 중복 이름(type별)은 오류 로그 후 등록 거부 (기존 에셋 우선, handle leak 방지)
 
 ### 3. 네이밍 예외 (@로 시작하는 에셋)
 
-**에셋 이름이 `@`로 시작하면 캐시에 등록하지 않는다.**
+**에셋의 원본 이름(`asset.name`)이 `@`로 시작하면 캐시에 등록하지 않고 handle을 즉시 해제한다.**
 
 ```csharp
-if (assetKey.StartsWith("@"))
-    return; // skip registration
+// 정규화 전 원본 asset.name 기준으로 체크
+if (asset.name.StartsWith("@"))
+{
+    Addressables.Release(handle);
+    yield break; // skip registration
+}
 ```
+
+> **Note:** `assetKey`(정규화 후)가 아니라 `asset.name`(원본) 기준이다. 정규화는 캐시 등록 직전에만 수행된다.
 
 ### 4. Resources 허용 범위
 
@@ -186,14 +197,26 @@ if (assetKey.StartsWith("@"))
 - `LoadBundle(key, bundleFilePath)` 형태의 API 없음
 - Addressables가 카탈로그/그룹을 통해 번들을 관리함
 
-### 6. 동일 key 재로드 정책
+### 6. 동일 key 재로드 정책 (Handle Leak 방지)
 
 **이미 로드된 key로 `LoadBundleAsset` 또는 `LoadBundleAssets`를 다시 호출하면 경고만 출력하고 무시한다.**
 
 ```csharp
+// 이미 로드된 key인 경우
 if (mBundles.ContainsKey(key))
 {
     Debug.LogWarning($"[AssetManager] Bundle '{key}' already loaded.");
+    yield break;  // 중복 로드 방지 → handle leak 방지
+}
+```
+
+**중복 asset name(type별) 발견 시:**
+
+```csharp
+if (typeDict.ContainsKey(assetKey))
+{
+    Debug.LogError($"[AssetManager] Duplicate asset name '{assetKey}' for type {type.Name}. Ignoring.");
+    Addressables.Release(handle);  // 기존 에셋 우선, 새 handle 해제
     yield break;
 }
 ```

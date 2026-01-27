@@ -8,31 +8,29 @@ namespace Devian
     /// <summary>
     /// Unity-specific log sink that outputs to Unity Console.
     /// Supports multi-threaded logging by dispatching to main thread when called from background threads.
-    /// Use Logger.SetSink(new UnityLogSink()) to enable Unity console logging.
+    /// Use Log.SetSink(new UnityLogSink()) to enable Unity console logging.
     /// </summary>
     public sealed class UnityLogSink : ILogSink
     {
-        public void Write(LogLevel level, string tag, string message, Exception? ex = null)
+        public void Write(LogLevel level, string message)
         {
             // Main thread: output directly
             if (UnityMainThread.IsMainThread)
             {
-                OutputLogDirect(level, tag, message, ex);
+                OutputLogDirect(level, message);
                 return;
             }
 
             // Background thread: enqueue for main thread dispatch
-            // Convert exception to string here to avoid cross-thread issues
-            string? exceptionText = ex?.ToString();
-            UnityMainThreadDispatcher.Enqueue(new LogItem(level, tag, message, exceptionText));
+            UnityMainThreadDispatcher.Enqueue(new LogItem(level, message));
         }
 
         /// <summary>
         /// Direct output on main thread. Called when already on main thread.
         /// </summary>
-        private static void OutputLogDirect(LogLevel level, string tag, string message, Exception? ex)
+        private static void OutputLogDirect(LogLevel level, string message)
         {
-            var formatted = $"[{GetLevelString(level)}] {tag} - {message}";
+            var formatted = $"[{GetLevelString(level)}] {message}";
 
             switch (level)
             {
@@ -46,14 +44,7 @@ namespace Devian
                     break;
 
                 case LogLevel.Error:
-                    if (ex != null)
-                    {
-                        Debug.LogError(formatted + "\n" + ex.ToString());
-                    }
-                    else
-                    {
-                        Debug.LogError(formatted);
-                    }
+                    Debug.LogError(formatted);
                     break;
 
                 default:

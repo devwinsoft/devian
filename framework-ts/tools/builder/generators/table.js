@@ -344,12 +344,34 @@ function parseCFloatCellDeterministic(value, plainText, ctx) {
 export function parseXlsx(filePath) {
     const workbook = XLSX.readFile(filePath);
     const tables = [];
+    
+    // Track codeTableName to detect duplicates
+    // SSOT: skills/devian/42-tablegen-implementation/SKILL.md
+    const codeTableNameMap = new Map(); // codeTableName -> [sheetFullName, ...]
 
     for (const sheetName of workbook.SheetNames) {
         const sheet = workbook.Sheets[sheetName];
         const table = parseSheet(sheet, sheetName);
         if (table) {
+            // Check for duplicate codeTableName
+            const codeTableName = table.name;
+            if (codeTableNameMap.has(codeTableName)) {
+                codeTableNameMap.get(codeTableName).push(table.sheetName);
+            } else {
+                codeTableNameMap.set(codeTableName, [table.sheetName]);
+            }
             tables.push(table);
+        }
+    }
+    
+    // Validate: no duplicate codeTableName in same xlsx
+    for (const [codeTableName, sheetNames] of codeTableNameMap) {
+        if (sheetNames.length > 1) {
+            throw new Error(
+                `[table.js] Duplicate codeTableName '${codeTableName}' in '${filePath}':\n` +
+                `  Sheets: ${sheetNames.join(', ')}\n` +
+                `  Each sheet must have a unique codeTableName (part before @)`
+            );
         }
     }
 
@@ -359,11 +381,23 @@ export function parseXlsx(filePath) {
 /**
  * Parse a single sheet into table definition
  * @param {Object} sheet - XLSX sheet object
- * @param {string} sheetName - Sheet name
+ * @param {string} sheetName - Sheet name (may contain @)
  * @returns {Object|null} Table definition or null if invalid
  */
 function parseSheet(sheet, sheetName) {
     const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
+    
+    // SSOT: skills/devian/42-tablegen-implementation/SKILL.md
+    // {TableName}@{Description} support:
+    // - codeTableName = part before @ (used for C# identifiers)
+    // - sheetName = original full name (preserved for reference)
+    const atIndex = sheetName.indexOf('@');
+    const codeTableName = atIndex >= 0 ? sheetName.substring(0, atIndex) : sheetName;
+    
+    // Validate: codeTableName must not be empty
+    if (!codeTableName || codeTableName.trim() === '') {
+        throw new Error(`[table.js] Invalid sheet name '${sheetName}': codeTableName (part before @) is empty`);
+    }
     
     // Note: String Table 자동 스킵 로직 제거됨
     // SSOT: skills/devian/33-string-table/SKILL.md
@@ -480,7 +514,8 @@ function parseSheet(sheet, sheetName) {
     }
 
     return {
-        name: sheetName,
+        name: codeTableName,      // C# identifier (part before @)
+        sheetName: sheetName,     // Original full sheet name
         fields: fields,
         keyField: keyField,
         rows: rows,

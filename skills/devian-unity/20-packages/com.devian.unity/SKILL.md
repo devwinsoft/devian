@@ -354,11 +354,11 @@ namespace Devian
 using Devian;
 
 // Unity 콘솔로 로그 출력 설정
-Logger.SetSink(new UnityLogSink());
+Log.SetSink(new UnityLogSink());
 
-Logger.Info("Game", "Game started");
-Logger.Warn("Auth", "Token expiring soon");
-Logger.Error("Net", "Connection failed", exception);
+Log.Info("Game started");
+Log.Warn("Token expiring soon");
+Log.Error($"Connection failed: {exception}");
 ```
 
 ---
@@ -367,7 +367,7 @@ Logger.Error("Net", "Connection failed", exception);
 
 - **core/network/protobuf 코드 포함 금지**: 이 패키지는 확장(어댑터)만 담당한다.
 - **자동 설치(런타임 init) 금지**: 정책 미확정이므로 "수동 SetSink"만 제공한다.
-- Logger.SetSink()를 자동으로 호출하는 코드 포함 금지.
+- Log.SetSink()를 자동으로 호출하는 코드 포함 금지.
 - **Resources 기반 로딩 금지**: AssetManager는 번들 + Editor Find 전용.
 - **서브네임스페이스 사용 금지**: `Devian.Unity`, `Devian.Domain` 등 사용하지 않음. 모든 코드는 `namespace Devian`만 사용.
 - **Editor/Generated 생성 금지**: TableID Editor 바인딩은 각 도메인 모듈 패키지에 생성한다.

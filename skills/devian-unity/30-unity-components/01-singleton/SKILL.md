@@ -1,7 +1,7 @@
 # 01-singleton
 
 Status: ACTIVE  
-AppliesTo: v19  
+AppliesTo: v10  
 Type: Policy
 
 ---
@@ -9,7 +9,7 @@ Type: Policy
 ## 1. 목적
 
 Unity용 Singleton **정책**을 정의한다.  
-이 스킬은 **싱글톤 계열 정책 묶음**이며, 정확히 4개의 타입을 제공한다.
+이 스킬은 **싱글톤 계열 정책 묶음**이며, 정확히 5개의 타입을 제공한다.
 
 ---
 
@@ -17,7 +17,8 @@ Unity용 Singleton **정책**을 정의한다.
 
 ### 포함
 
-- **MonoSingleton\<T\>** - Manual / Persistent (자동 생성 없음)
+- **SceneSingleton\<T\>** - Scene-Placed / Persistent (자동 생성 없음)
+- **MonoSingleton\<T\>** - [Obsolete] SceneSingleton 래퍼 (호환성용)
 - **AutoSingleton\<T\>** - AutoCreate / Persistent (Instance 접근 시 자동 생성)
 - **ResSingleton\<T\>** - Resources / Persistent (Resources.Load로 생성)
 - **SimpleSingleton\<T\>** - Pure C# / Lazy 기반 / 스레드 안전 (Unity 오브젝트 의존 없음)
@@ -29,7 +30,7 @@ Unity용 Singleton **정책**을 정의한다.
 
 - Scene 종속형 Singleton (별도 스킬로 분리)
 - 실제 C# 구현 코드
-- 위 4개 외 다른 singleton 타입
+- 위 5개 외 다른 singleton 타입
 
 ---
 
@@ -39,7 +40,7 @@ Unity용 Singleton **정책**을 정의한다.
 |------|------|
 | Persistent Singleton | `DontDestroyOnLoad`로 씬 전환에도 유지되는 싱글톤 |
 | Scene Singleton | 특정 씬 내에서만 유효한 싱글톤 (이 스킬에서 제외) |
-| Manual Singleton | 씬 배치 또는 명시적 등록으로만 인스턴스 생성 (MonoSingleton) |
+| Scene-Placed Singleton | 씬 배치 또는 명시적 등록으로만 인스턴스 생성 (SceneSingleton) |
 | AutoCreate Singleton | Instance 접근 시 인스턴스가 없으면 자동 생성 (AutoSingleton) |
 | Resources Singleton | Resources.Load로 프리팹을 로드하여 생성 (ResSingleton) |
 
@@ -51,11 +52,12 @@ Unity용 Singleton **정책**을 정의한다.
 
 ### 4.1 네이밍 규약 (정본)
 
-제공 타입 이름은 **정확히 4개만** 사용:
+제공 타입 이름은 **정확히 5개만** 사용:
 
 | 타입 이름 | 용도 |
 |-----------|------|
-| `MonoSingleton<T>` | Manual / Persistent |
+| `SceneSingleton<T>` | Scene-Placed / Persistent (자동 생성 없음) |
+| `MonoSingleton<T>` | **[Obsolete]** SceneSingleton 래퍼 (호환성용) |
 | `AutoSingleton<T>` | AutoCreate / Persistent |
 | `ResSingleton<T>` | Resources / Persistent |
 | `SimpleSingleton<T>` | Pure C# / Lazy / Thread-safe |
@@ -91,17 +93,17 @@ Awake()에서 기존 인스턴스(_instance)가 있고 자기 자신이 아니�
 
 ### 4.6 멀티스레드 경계
 
-> Logger 같은 시스템에서 "어떤 스레드에서든 호출"을 원하면,  
+> Log 같은 시스템에서 "어떤 스레드에서든 호출"을 원하면,  
 > 그것은 **singleton 템플릿이 아니라 sink/pump 설계**로 해결한다.  
-> 예: `Logger.Log()`는 큐에 메시지를 넣고, 메인 스레드의 pump가 처리.
+> 예: `Log.Info()`는 큐에 메시지를 넣고, 메인 스레드의 pump가 처리.
 
 ---
 
-## 5. 타입 A: MonoSingleton\<T\> (Manual / Persistent)
+## 5. 타입 A: SceneSingleton\<T\> (Scene-Placed / Persistent)
 
 ### 5.1 목적
 
-자동 생성 없이 **명시적으로 존재하는 인스턴스**만 singleton으로 관리한다.  
+자동 생성 없이 **씬 배치 또는 명시적 등록**으로만 인스턴스를 관리한다.  
 Instance가 없으면 예외를 발생시켜 개발자가 누락을 즉시 인지하도록 한다.
 
 ### 5.2 필수 규약 (정본)
@@ -114,9 +116,7 @@ Instance가 없으면 예외를 발생시켜 개발자가 누락을 즉시 인�
 | **허용되는 생성 방식** | 씬 배치 또는 명시적 Register 호출 |
 | **중복 처리** | 신규 Destroy, 기존 유지 |
 | **영속성** | 등록된(유효한) 인스턴스에 DontDestroyOnLoad 적용 |
-
-- 인스턴스는 **씬 배치** 또는 **명시적 등록 흐름**에서만 만들어짐
-- 템플릿은 **등록/중복 방지/영속성 보장**만 담당
+| **메인 스레드 강제** | Register() 호출 시 `UnityMainThread.EnsureOrThrow()` |
 
 ### 5.3 Instance 실패 정책 (정본)
 
@@ -125,11 +125,11 @@ public static T Instance
 {
     get
     {
-        if (_instance == null)
+        if (s_instance == null)
             throw new InvalidOperationException(
                 $"[{typeof(T).Name}] Instance not found. " +
-                "Ensure the singleton is placed in scene or explicitly registered.");
-        return _instance;
+                "SceneSingleton requires scene placement or explicit Register() call.");
+        return s_instance;
     }
 }
 ```
@@ -139,7 +139,7 @@ public static T Instance
 ```csharp
 namespace Devian
 {
-    public class MonoSingleton<T> : MonoBehaviour where T : MonoSingleton<T>
+    public abstract class SceneSingleton<T> : MonoBehaviour where T : SceneSingleton<T>
     {
         /// <summary>인스턴스 존재 여부</summary>
         public static bool HasInstance { get; }
@@ -149,12 +149,35 @@ namespace Devian
         public static T Instance { get; }
 
         /// <summary>명시적 인스턴스 등록 (메인 스레드 전용, 자동 생성 아님)</summary>
+        /// <remarks>Register()에서 UnityMainThread.EnsureOrThrow() 호출</remarks>
         public static void Register(T instance);
     }
 }
 ```
 
-- `Register`가 있어도 **자동 생성은 아님**을 명확히 한다
+---
+
+## 5.5. MonoSingleton\<T\> (Obsolete - SceneSingleton 래퍼)
+
+### 목적
+
+**[Obsolete]** `SceneSingleton<T>` 또는 `AutoSingleton<T>`를 대신 사용하라.
+
+MonoSingleton은 기존 코드 호환성을 위해 유지되며, `SceneSingleton<T>`의 얇은 래퍼이다.
+
+```csharp
+namespace Devian
+{
+    [Obsolete("Use SceneSingleton<T> or AutoSingleton<T> instead.")]
+    public abstract class MonoSingleton<T> : SceneSingleton<T> where T : MonoSingleton<T>
+    {
+        // All functionality inherited from SceneSingleton<T>
+    }
+}
+```
+
+- 모든 기능은 `SceneSingleton<T>`에서 상속
+- 신규 코드에서는 `SceneSingleton<T>` 또는 `AutoSingleton<T>` 직접 사용 권장
 
 ---
 
@@ -189,7 +212,7 @@ Instance 로직은 **반드시 아래 순서**를 따른다:
 
 | 항목 | 규칙 |
 |------|------|
-| **메인 스레드 강제** | Step 2~3 진입 시 메인 스레드가 아니면 **throw** |
+| **메인 스레드 강제** | Step 2~3 진입 시 `InitIfNeeded()` → `EnsureOrThrow()`로 메인 스레드 강제, 아니면 **throw** |
 | **Resources.Load** | **금지** |
 | **중복 처리** | 신규 Destroy, 기존 유지 |
 | **종료 중 재생성** | **금지** (throw) |
@@ -197,13 +220,13 @@ Instance 로직은 **반드시 아래 순서**를 따른다:
 ### 6.4 스레드 규칙 (정본)
 
 ```csharp
-// 정본: 메인 스레드가 아니면 예외
-if (!IsMainThread())
-    throw new InvalidOperationException(
-        $"[{typeof(T).Name}] Cannot auto-create singleton from non-main thread.");
+// 정본: InitIfNeeded MUST be called first to prevent false negatives during early initialization
+UnityMainThread.InitIfNeeded();
+UnityMainThread.EnsureOrThrow($"{typeof(T).Name}.Instance");
 ```
 
-- 이미 인스턴스가 존재하면 어떤 스레드에서든 Instance 접근 가능
+- `InitIfNeeded()`가 먼저 호출되어 초기화 타이밍 문제 방지
+- 이미 인스턴스가 존재하면 메인 스레드 체크 스킵 (fast path)
 - **단, Unity 객체 접근이 섞이므로 권장하지 않음**
 
 ### 6.5 종료 중 재생성 금지 (정본)
@@ -439,20 +462,27 @@ namespace Devian
 
 ### 네이밍/구조
 
-- [x] `MonoSingleton<T>`, `AutoSingleton<T>`, `ResSingleton<T>`, `SimpleSingleton<T>` 이름이 SSOT로 명시
+- [x] `SceneSingleton<T>`, `MonoSingleton<T>`, `AutoSingleton<T>`, `ResSingleton<T>`, `SimpleSingleton<T>` 이름이 SSOT로 명시
+- [x] `MonoSingleton<T>`이 [Obsolete]로 표시되고 SceneSingleton 래퍼임이 명시
 - [x] 네임스페이스 `Devian` 고정 규약이 명시
 - [x] "씬 종속형은 별도 스킬"이 명시
 
-### MonoSingleton
+### SceneSingleton (신규)
 
 - [x] 자동 생성 금지가 명시
 - [x] Resources.Load 금지가 명시
 - [x] Instance 없으면 throw가 명시
+- [x] Register()에서 메인 스레드 강제가 명시
+
+### MonoSingleton
+
+- [x] [Obsolete] 표시 및 SceneSingleton 래퍼임이 명시
+- [x] 모든 기능이 SceneSingleton에서 상속됨이 명시
 
 ### AutoSingleton
 
 - [x] Find-first → Create 순서가 명시
-- [x] 메인 스레드 강제 (비메인 시 throw)가 명시
+- [x] 메인 스레드 강제 (InitIfNeeded() → EnsureOrThrow())가 명시
 - [x] Resources.Load 금지가 명시
 - [x] 종료 중 재생성 방지 (throw)가 명시
 
@@ -494,7 +524,8 @@ com.devian.unity/Runtime/
 ├── _Shared/
 │   └── UnityMainThread.cs     (공용 내부 헬퍼)
 └── Singleton/
-    ├── MonoSingleton.cs
+    ├── SceneSingleton.cs      (Scene-Placed, 자동 생성 없음)
+    ├── MonoSingleton.cs       ([Obsolete] SceneSingleton 래퍼)
     ├── AutoSingleton.cs
     ├── ResSingleton.cs
     └── SimpleSingleton.cs
@@ -512,7 +543,8 @@ com.devian.unity/Runtime/
 
 | 파일 | 타입 | 네임스페이스 |
 |------|------|-------------|
-| `MonoSingleton.cs` | `MonoSingleton<T>` | `Devian` |
+| `SceneSingleton.cs` | `SceneSingleton<T>` | `Devian` |
+| `MonoSingleton.cs` | `MonoSingleton<T>` [Obsolete] | `Devian` |
 | `AutoSingleton.cs` | `AutoSingleton<T>` | `Devian` |
 | `ResSingleton.cs` | `ResSingleton<T>` | `Devian` |
 | `SimpleSingleton.cs` | `SimpleSingleton<T>` | `Devian` |
@@ -536,7 +568,7 @@ UnityEngine.Object.Destroy(gameObject);
 
 ### 주의사항
 
-- 제공 singleton 타입은 4종이며, 공용 헬퍼는 `_Shared/`에 위치
+- 제공 singleton 타입은 5종이며, 공용 헬퍼는 `_Shared/`에 위치
 - **`Singleton/UnityMainThread.cs`는 생성하지 않음** (공용 `_Shared/` 사용)
 - `Runtime/Templates/` 레거시 경로가 존재하면 FAIL
 
