@@ -5,7 +5,6 @@
 
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Devian.Domain.Game
 {
@@ -26,7 +25,7 @@ namespace Devian.Domain.Game
         public string group_key { get; set; } = string.Empty;
         public float cooltime { get; set; }
 
-        // 언어별 컬럼 (SystemLanguage.ToString() 규칙)
+        // 언어별 컬럼 (clip_ + SystemLanguage.ToString() 규칙)
         // clip 값은 TB_SOUND.sound_id를 참조한다.
         public string clip_Korean { get; set; } = string.Empty;
         public string clip_English { get; set; } = string.Empty;
@@ -35,19 +34,38 @@ namespace Devian.Domain.Game
         public string clip_ChineseTraditional { get; set; } = string.Empty;
 
         /// <summary>
-        /// 지정된 언어에 해당하는 sound_id를 반환한다.
+        /// 컬럼명으로 sound_id를 조회한다 (Resolve 단계에서만 호출).
+        /// reflection 금지, 지원 언어 컬럼만 switch로 매칭.
         /// </summary>
-        public string GetSoundIdForLanguage(SystemLanguage language)
+        public bool TryGetClipColumn(string columnName, out string soundId)
         {
-            return language switch
+            soundId = string.Empty;
+
+            switch (columnName)
             {
-                SystemLanguage.Korean => clip_Korean,
-                SystemLanguage.English => clip_English,
-                SystemLanguage.Japanese => clip_Japanese,
-                SystemLanguage.ChineseSimplified => clip_ChineseSimplified,
-                SystemLanguage.ChineseTraditional => clip_ChineseTraditional,
-                _ => clip_English // fallback
-            };
+                case "clip_Korean":
+                    soundId = clip_Korean;
+                    return !string.IsNullOrEmpty(soundId);
+
+                case "clip_English":
+                    soundId = clip_English;
+                    return !string.IsNullOrEmpty(soundId);
+
+                case "clip_Japanese":
+                    soundId = clip_Japanese;
+                    return !string.IsNullOrEmpty(soundId);
+
+                case "clip_ChineseSimplified":
+                    soundId = clip_ChineseSimplified;
+                    return !string.IsNullOrEmpty(soundId);
+
+                case "clip_ChineseTraditional":
+                    soundId = clip_ChineseTraditional;
+                    return !string.IsNullOrEmpty(soundId);
+
+                default:
+                    return false;
+            }
         }
     }
 

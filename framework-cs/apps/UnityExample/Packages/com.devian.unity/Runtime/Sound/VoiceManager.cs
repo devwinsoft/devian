@@ -61,7 +61,7 @@ namespace Devian
 
         /// <summary>
         /// 지정된 언어로 TB_VOICE 전체를 Resolve하여 캐시를 구성한다.
-        /// SystemLanguage는 이 메서드에서만 사용한다.
+        /// SystemLanguage는 이 메서드에서만 사용한다 (재생 시점에는 절대 사용 금지).
         /// </summary>
         public void ResolveForLanguage(SystemLanguage language)
         {
@@ -76,6 +76,10 @@ namespace Devian
             _subtitleKeyByVoiceId.Clear();
             _currentLanguage = language;
 
+            // 컬럼명 구성: "clip_" + language.ToString()
+            var col = "clip_" + language.ToString();
+            var fallbackCol = "clip_" + _fallbackLanguage.ToString();
+
             var allRows = GetAllVoiceRows();
             if (allRows == null) return;
 
@@ -83,20 +87,16 @@ namespace Devian
             {
                 if (row == null) continue;
 
-                // 1. 해당 언어의 sound_id 가져오기
-                var soundId = row.GetSoundIdForLanguage(language);
-
-                // 2. 비어있으면 fallback 적용
-                if (string.IsNullOrEmpty(soundId))
+                // 1. 해당 언어의 컬럼에서 sound_id 가져오기
+                if (!row.TryGetClipColumn(col, out var soundId))
                 {
-                    soundId = row.GetSoundIdForLanguage(_fallbackLanguage);
-                }
-
-                // 3. 여전히 비어있으면 경고 후 스킵
-                if (string.IsNullOrEmpty(soundId))
-                {
-                    Log.Warn($"[VoiceManager] Voice '{row.voice_id}' has no sound_id for {language} or fallback {_fallbackLanguage}.");
-                    continue;
+                    // 2. 비어있으면 fallback 컬럼 시도
+                    if (!row.TryGetClipColumn(fallbackCol, out soundId))
+                    {
+                        // 3. 여전히 비어있으면 경고 후 스킵
+                        Log.Warn($"[VoiceManager] Voice '{row.voice_id}' has no sound_id for {col} or fallback {fallbackCol}.");
+                        continue;
+                    }
                 }
 
                 // 4. 캐시 등록
@@ -118,14 +118,16 @@ namespace Devian
         }
 
         // ====================================================================
-        // Load Voice Clips
+        // Load Voice Clips (SoundManager로 통합됨)
         // ====================================================================
 
         /// <summary>
-        /// 현재 Resolve된 언어에 대한 Voice 클립들을 로드한다.
+        /// Voice 클립들을 로드한다. SoundManager.LoadByKeyAsync로 위임.
         /// 반드시 ResolveForLanguage() 호출 후에 사용한다.
         /// </summary>
-        public IEnumerator LoadVoiceClipsAsync(string bundleKey, Action<string>? onError = null)
+        /// <param name="groupKey">게임 로딩 그룹 키 (TB_SOUND.key)</param>
+        /// <param name="onError">에러 콜백</param>
+        public IEnumerator LoadVoiceClipsAsync(string groupKey, Action<string>? onError = null)
         {
             if (_currentLanguage == SystemLanguage.Unknown)
             {
@@ -133,9 +135,13 @@ namespace Devian
                 yield break;
             }
 
-            // AssetManager.LoadBundleAssets를 사용하여 언어별 클립 로드
-            // 언어 intersection은 AssetManager가 처리
-            yield return AssetManager.LoadBundleAssets<AudioClip>(bundleKey, _currentLanguage);
+            // SoundManager로 위임 (Voice 채널 로딩 책임 통합)
+            yield return SoundManager.Instance.LoadByKeyAsync(
+                groupKey,
+                _currentLanguage,
+                _fallbackLanguage,
+                onError
+            );
         }
 
         // ====================================================================

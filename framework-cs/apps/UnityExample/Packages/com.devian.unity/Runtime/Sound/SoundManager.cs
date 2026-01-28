@@ -70,9 +70,27 @@ namespace Devian
         // ====================================================================
 
         /// <summary>
-        /// 게임 로딩 그룹(key) 기준으로 사운드를 로드한다.
+        /// 게임 로딩 그룹(key) 기준으로 사운드를 로드한다 (언어 무관).
+        /// Voice 채널은 이 메서드로 로드하지 않는다 (LoadByKeyAsync 사용).
         /// </summary>
         public IEnumerator LoadByKey(string gameKey, Action<string>? onError = null)
+        {
+            yield return LoadByKeyAsync(gameKey, SystemLanguage.Unknown, SystemLanguage.Unknown, onError);
+        }
+
+        /// <summary>
+        /// 게임 로딩 그룹(key) 기준으로 사운드를 로드한다 (언어 지원).
+        /// Voice 채널 번들은 language 라벨 교집합으로 로드한다.
+        /// </summary>
+        /// <param name="gameKey">게임 로딩 그룹 키</param>
+        /// <param name="language">Voice 채널용 언어</param>
+        /// <param name="fallbackLanguage">Voice 채널용 fallback 언어</param>
+        /// <param name="onError">에러 콜백</param>
+        public IEnumerator LoadByKeyAsync(
+            string gameKey,
+            SystemLanguage language,
+            SystemLanguage fallbackLanguage,
+            Action<string>? onError = null)
         {
             if (_loadedGameKeys.Contains(gameKey))
             {
@@ -98,29 +116,45 @@ namespace Devian
                 yield break;
             }
 
-            // bundle_key별로 그룹화
-            var bundleGroups = new Dictionary<string, List<ISoundRow>>();
+            // bundle_key별로 그룹화 (Voice/Non-Voice 분리)
+            var voiceBundleGroups = new Dictionary<string, List<ISoundRow>>();
+            var normalBundleGroups = new Dictionary<string, List<ISoundRow>>();
+
             foreach (var soundId in soundIds)
             {
                 var row = GetSoundRow(soundId);
                 if (row == null) continue;
                 if (row.source != SoundSourceType.Bundle) continue;
 
-                if (!bundleGroups.TryGetValue(row.bundle_key, out var list))
+                // Voice 채널 여부 판단
+                var isVoice = string.Equals(row.channel, "Voice", StringComparison.OrdinalIgnoreCase);
+                var targetGroups = isVoice ? voiceBundleGroups : normalBundleGroups;
+
+                if (!targetGroups.TryGetValue(row.bundle_key, out var list))
                 {
                     list = new List<ISoundRow>();
-                    bundleGroups[row.bundle_key] = list;
+                    targetGroups[row.bundle_key] = list;
                 }
                 list.Add(row);
             }
 
-            // 각 bundle_key에 대해 로드
-            foreach (var kvp in bundleGroups)
+            // 일반 번들 로드 (언어 무관)
+            foreach (var kvp in normalBundleGroups)
             {
                 var bundleKey = kvp.Key;
                 if (_loadedBundleKeys.Contains(bundleKey)) continue;
 
                 yield return LoadBundleAsync(bundleKey, kvp.Value, onError);
+                _loadedBundleKeys.Add(bundleKey);
+            }
+
+            // Voice 번들 로드 (언어 라벨 교집합)
+            foreach (var kvp in voiceBundleGroups)
+            {
+                var bundleKey = kvp.Key;
+                if (_loadedBundleKeys.Contains(bundleKey)) continue;
+
+                yield return LoadVoiceBundleAsync(bundleKey, kvp.Value, language, fallbackLanguage, onError);
                 _loadedBundleKeys.Add(bundleKey);
             }
 
@@ -133,6 +167,37 @@ namespace Devian
             yield return AssetManager.LoadBundleAssets<AudioClip>(bundleKey);
 
             // row들의 path로 클립을 조회하여 캐시 등록
+            PopulateClipCache(rows, onError);
+        }
+
+        private IEnumerator LoadVoiceBundleAsync(
+            string bundleKey,
+            List<ISoundRow> rows,
+            SystemLanguage language,
+            SystemLanguage fallbackLanguage,
+            Action<string>? onError)
+        {
+            // Voice 번들은 언어 라벨 교집합으로 로드
+            if (language != SystemLanguage.Unknown)
+            {
+                yield return AssetManager.LoadBundleAssets<AudioClip>(bundleKey, language);
+            }
+            else
+            {
+                // 언어 미지정 시 일반 로드
+                yield return AssetManager.LoadBundleAssets<AudioClip>(bundleKey);
+            }
+
+            // row들의 path로 클립을 조회하여 캐시 등록
+            PopulateClipCache(rows, onError);
+        }
+
+        /// <summary>
+        /// row들의 path로 클립을 조회하여 _clipCache에 등록한다.
+        /// 핵심 규칙: clip resolve 키는 반드시 row.path를 사용한다.
+        /// </summary>
+        private void PopulateClipCache(List<ISoundRow> rows, Action<string>? onError)
+        {
             int loadedCount = 0;
             foreach (var row in rows)
             {
@@ -149,9 +214,9 @@ namespace Devian
                 }
             }
 
-            if (loadedCount == 0)
+            if (rows.Count > 0 && loadedCount == 0)
             {
-                onError?.Invoke($"[SoundManager] No AudioClips loaded for bundle_key '{bundleKey}'.");
+                onError?.Invoke($"[SoundManager] No AudioClips loaded for bundle (expected {rows.Count} clips).");
             }
         }
 

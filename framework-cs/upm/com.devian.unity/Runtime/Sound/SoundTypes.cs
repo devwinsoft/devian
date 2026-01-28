@@ -52,7 +52,7 @@ namespace Devian
 
     /// <summary>
     /// TB_VOICE row 인터페이스. 프로젝트에서 concrete class를 구현한다.
-    /// 언어별 clip_ 컬럼은 concrete class에서 직접 접근한다.
+    /// 언어별 clip_ 컬럼은 TryGetClipColumn으로 접근한다 (Resolve 단계에서만 호출).
     /// </summary>
     public interface IVoiceRow
     {
@@ -67,9 +67,12 @@ namespace Devian
         float cooltime { get; }
 
         /// <summary>
-        /// 지정된 언어에 해당하는 sound_id를 반환한다.
-        /// 언어별 컬럼(clip_Korean, clip_English 등)에서 값을 읽는다.
+        /// 컬럼명으로 sound_id를 조회한다 (Resolve 단계에서만 호출).
+        /// 재생 시점에는 절대 호출되지 않는다.
         /// </summary>
-        string GetSoundIdForLanguage(UnityEngine.SystemLanguage language);
+        /// <param name="columnName">컬럼명 (예: "clip_Korean", "clip_English")</param>
+        /// <param name="soundId">조회된 sound_id</param>
+        /// <returns>유효한 값이 있으면 true</returns>
+        bool TryGetClipColumn(string columnName, out string soundId);
     }
 }
