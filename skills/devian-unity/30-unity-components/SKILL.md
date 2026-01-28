@@ -25,6 +25,9 @@ Type: Index / Directory
 | 13 | Pb64Storage | pb64를 Unity TextAsset .asset로 저장하는 규약 | `skills/devian/35-pb64-storage/SKILL.md` (DEPRECATED: `13-pb64-storage/SKILL.md`) |
 | 14 | TableManager | TB_/ST_ 테이블 로딩/캐시/언로드 (ndjson/pb64) | `14-table-manager/SKILL.md` |
 | 15 | SceneTransManager | Scene 전환 직렬화 + 페이드 + BaseScene Enter/Exit | `15-scene-trans-manager/SKILL.md` |
+| 16 | SoundTables | TB_SOUND/TB_VOICE 테이블 규약 (컬럼/책임 분리) | `16-sound-tables/SKILL.md` |
+| 17 | SoundManager | 테이블 기반 사운드 재생/풀/채널/쿨타임 관리 | `17-sound-manager/SKILL.md` |
+| 18 | VoiceTableResolve | Voice 로딩 시 언어별 Resolve 캐시 + 재생 시 캐시 조회 | `18-voice-table-resolve/SKILL.md` |
 
 ---
 

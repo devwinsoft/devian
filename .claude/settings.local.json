@@ -6,7 +6,8 @@
       "Bash(git -C \"C:/Users/USER/.claude-worktrees/devian/loving-greider\" show HEAD:input/Protocols/Game/generated/Game2C.opcodes.json)",
       "Bash(git -C \"C:/Users/USER/.claude-worktrees/devian/loving-greider\" show HEAD:input/Protocols/Game/generated/Game2C.tags.json)",
       "Bash(npm install:*)",
-      "Bash(test:*)"
+      "Bash(test:*)",
+      "Bash(dotnet build:*)"
     ]
   }
 }
