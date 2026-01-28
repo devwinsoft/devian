@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"C:/Users/USER/.claude-worktrees/devian/loving-greider\" show HEAD:input/Protocols/Game/generated/C2Game.opcodes.json)",
+      "Bash(git -C \"C:/Users/USER/.claude-worktrees/devian/loving-greider\" show HEAD:input/Protocols/Game/generated/C2Game.tags.json)",
+      "Bash(git -C \"C:/Users/USER/.claude-worktrees/devian/loving-greider\" show HEAD:input/Protocols/Game/generated/Game2C.opcodes.json)",
+      "Bash(git -C \"C:/Users/USER/.claude-worktrees/devian/loving-greider\" show HEAD:input/Protocols/Game/generated/Game2C.tags.json)",
+      "Bash(npm install:*)",
+      "Bash(test:*)"
+    ]
+  }
+}

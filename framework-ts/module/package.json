@@ -1,9 +1,0 @@
-{
-  "name": "devian-modules",
-  "private": true,
-  "workspaces": [
-    "devian",
-    "devian-domain-*",
-    "devian-protocol-*"
-  ]
-}

@@ -199,6 +199,14 @@ sync 후 아래 조건이면 **즉시 FAIL**:
 
 > **WARNING:** `Packages/` 직접 수정은 정책 위반이며, sync 시 손실된다.
 
+### TypeScript Workspace 정본 (Hard Rule)
+
+- TS 의존성 설치는 `framework-ts/` 루트에서만 수행한다. (단일 `node_modules`)
+- workspace root는 `framework-ts/package.json` 단 하나만 허용한다.
+- lockfile은 `framework-ts/package-lock.json` 단 하나만 허용한다.
+
+자세한 규칙: `skills/devian/23-framework-ts-workspace/SKILL.md`
+
 **통합 모드 (HARD RULE):**
 
 `generateDir`가 설정되지 않으면 **통합 모드**로 동작한다:

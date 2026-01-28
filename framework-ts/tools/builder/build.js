@@ -2428,7 +2428,7 @@ export * from './features';
         lines.push(`                catch (Exception ex)`);
         lines.push('                {');
         lines.push('                    var preview = trimmed.Length <= 64 ? trimmed : (trimmed.Substring(0, 64) + "...");');
-        lines.push(`                    global::Devian.Log.Error($"[ST_${stName}] ParsePb64 failed. len={trimmed.Length} preview='{preview}' ex={ex}");`);
+        lines.push(`                    global::Devian.Log.Error($"[ST_${tableName}] ParsePb64 failed. len={trimmed.Length} preview='{preview}' ex={ex}");`);
         lines.push('                }');
         lines.push('            }');
         lines.push('        }');
