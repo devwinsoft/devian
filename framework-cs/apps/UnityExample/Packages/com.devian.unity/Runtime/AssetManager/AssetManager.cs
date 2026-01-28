@@ -11,6 +11,8 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using UnityEngine.ResourceManagement.ResourceProviders;
+using UnityEngine.SceneManagement;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -552,6 +554,77 @@ namespace Devian
         {
             var nameWithoutExt = Path.GetFileNameWithoutExtension(name);
             return nameWithoutExt.ToLowerInvariant();
+        }
+
+        // ====================================================================
+        // Scene Load/Unload (Addressables)
+        // ====================================================================
+
+        private static readonly Dictionary<string, AsyncOperationHandle<SceneInstance>> mScenes = new();
+
+        /// <summary>
+        /// Load a scene by Addressables key.
+        /// </summary>
+        /// <param name="key">Addressables scene key</param>
+        /// <param name="mode">LoadSceneMode (Single or Additive)</param>
+        /// <param name="activateOnLoad">Activate scene on load</param>
+        /// <param name="priority">Loading priority</param>
+        public static IEnumerator LoadSceneAsync(string key, LoadSceneMode mode = LoadSceneMode.Single, bool activateOnLoad = true, int priority = 100)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                Log.Error("AssetManager.LoadSceneAsync failed: key is null/empty.");
+                yield break;
+            }
+
+            if (mScenes.ContainsKey(key))
+            {
+                Log.Warn($"AssetManager.LoadSceneAsync ignored: '{key}' already loaded.");
+                yield break;
+            }
+
+            var handle = Addressables.LoadSceneAsync(key, mode, activateOnLoad, priority);
+            yield return handle;
+
+            if (handle.Status != AsyncOperationStatus.Succeeded)
+            {
+                Log.Error($"AssetManager.LoadSceneAsync failed: {key}");
+                if (handle.IsValid())
+                    Addressables.Release(handle);
+                yield break;
+            }
+
+            mScenes[key] = handle;
+        }
+
+        /// <summary>
+        /// Unload a scene loaded by LoadSceneAsync.
+        /// </summary>
+        /// <param name="key">Addressables scene key used in LoadSceneAsync</param>
+        /// <param name="autoReleaseHandle">Auto-release handle after unload</param>
+        public static IEnumerator UnloadSceneAsync(string key, bool autoReleaseHandle = true)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                yield break;
+
+            if (!mScenes.TryGetValue(key, out var handle))
+                yield break;
+
+            var unload = Addressables.UnloadSceneAsync(handle, autoReleaseHandle);
+            yield return unload;
+
+            if (unload.Status != AsyncOperationStatus.Succeeded)
+            {
+                Log.Error($"AssetManager.UnloadSceneAsync failed: {key}");
+                // 실패 시 캐시 유지 (초안 정책). 성공하면 제거.
+                yield break;
+            }
+
+            mScenes.Remove(key);
+
+            // autoReleaseHandle=false인 케이스 방어 (초안에서는 거의 안 쓰지만 안전하게)
+            if (!autoReleaseHandle && handle.IsValid())
+                Addressables.Release(handle);
         }
 
         // ====================================================================
