@@ -11,19 +11,13 @@ namespace Devian
 {
     /// <summary>
     /// Scene 전환 파이프라인을 단일화(직렬화)하는 싱글턴.
-    /// 전환 순서: FadeOut → BaseScene.OnExit → Load → BaseScene.OnEnter → FadeIn
+    /// 전환 순서: FadeOut → beforeUnload → BaseScene.OnExit → Load → afterLoad → BaseScene.OnEnter → FadeIn
     /// 부팅 시 첫 씬의 OnEnter()도 1회 보장한다.
+    ///
+    /// 이 Manager는 페이드 UI를 직접 소유하지 않으며, FadeOutRequested/FadeInRequested 이벤트로 위임한다.
     /// </summary>
-    public sealed class SceneTransManager : MonoBehaviour
+    public sealed class SceneTransManager : AutoSingleton<SceneTransManager>
     {
-        public static SceneTransManager? Instance { get; private set; }
-
-        [Header("Overlay (optional)")]
-        [SerializeField] private CanvasGroup? _overlay;
-        [SerializeField] private float _fadeOutSeconds = 0.2f;
-        [SerializeField] private float _fadeInSeconds = 0.2f;
-        [SerializeField] private bool _dontDestroyOnLoad = true;
-
         private bool _isTransitioning;
 
         /// <summary>
@@ -31,57 +25,31 @@ namespace Devian
         /// </summary>
         public bool IsTransitioning => _isTransitioning;
 
+        // ====================================================================
+        // Fade 위임 이벤트 (페이드 UI는 외부 컴포넌트가 구독하여 처리)
+        // ====================================================================
+
         /// <summary>
-        /// Scene 전환 옵션.
+        /// 페이드 아웃 요청 이벤트. 구독자는 fadeOutSeconds 동안 페이드 아웃을 수행하는 코루틴을 반환한다.
         /// </summary>
-        public struct SceneTransOptions
+        public event Func<float, IEnumerator>? FadeOutRequested;
+
+        /// <summary>
+        /// 페이드 인 요청 이벤트. 구독자는 fadeInSeconds 동안 페이드 인을 수행하는 코루틴을 반환한다.
+        /// </summary>
+        public event Func<float, IEnumerator>? FadeInRequested;
+
+        // ====================================================================
+        // Lifecycle
+        // ====================================================================
+
+        protected override void Awake()
         {
-            public LoadSceneMode Mode;
-            public bool ActivateOnLoad;
-            public int Priority;
-            public bool UseFade;
-            public bool BlockInput;
-            public float FadeOutSecondsOverride;
-            public float FadeInSecondsOverride;
-
-            /// <summary>
-            /// Single 모드 기본 옵션.
-            /// </summary>
-            public static SceneTransOptions DefaultSingle => new SceneTransOptions
-            {
-                Mode = LoadSceneMode.Single,
-                ActivateOnLoad = true,
-                Priority = 100,
-                UseFade = true,
-                BlockInput = true,
-                FadeOutSecondsOverride = 0f,
-                FadeInSecondsOverride = 0f,
-            };
-        }
-
-        private void Awake()
-        {
-            if (Instance != null && Instance != this)
-            {
-                Destroy(gameObject);
-                return;
-            }
-
-            Instance = this;
-
-            if (_dontDestroyOnLoad)
-                DontDestroyOnLoad(gameObject);
-
-            if (_overlay != null)
-            {
-                _overlay.alpha = 0f;
-                _overlay.blocksRaycasts = false;
-                _overlay.interactable = false;
-            }
+            base.Awake();
         }
 
         /// <summary>
-        /// 부팅 시 첫 씬의 OnEnter()를 1회 보장한다 (TransitionTo를 거치지 않는 케이스).
+        /// 부팅 시 첫 씬의 OnEnter()를 1회 보장한다 (LoadSceneAsync를 거치지 않는 케이스).
         /// </summary>
         private IEnumerator Start()
         {
@@ -101,45 +69,73 @@ namespace Devian
             yield return scene.OnEnter();
         }
 
+        // ====================================================================
+        // Core API
+        // ====================================================================
+
         /// <summary>
-        /// 지정된 씬으로 전환한다.
+        /// 지정된 씬을 로드한다.
         /// </summary>
         /// <param name="sceneKey">Addressables 씬 키</param>
-        /// <param name="options">전환 옵션</param>
-        /// <param name="onError">에러 발생 시 콜백 (optional, 현재 미사용)</param>
-        public IEnumerator TransitionTo(string sceneKey, SceneTransOptions options, Action<string>? onError = null)
+        /// <param name="mode">씬 로드 모드 (기본: Single)</param>
+        /// <param name="fadeOutSeconds">페이드 아웃 시간 (0 이하면 스킵)</param>
+        /// <param name="fadeInSeconds">페이드 인 시간 (0 이하면 스킵)</param>
+        /// <param name="beforeUnload">언로드 전 실행할 코루틴 (optional)</param>
+        /// <param name="afterLoad">로드 후 실행할 코루틴 (optional)</param>
+        /// <param name="onError">에러 발생 시 콜백 (optional)</param>
+        public IEnumerator LoadSceneAsync(
+            string sceneKey,
+            LoadSceneMode mode = LoadSceneMode.Single,
+            float fadeOutSeconds = 0.2f,
+            float fadeInSeconds = 0.2f,
+            Func<IEnumerator>? beforeUnload = null,
+            Func<IEnumerator>? afterLoad = null,
+            Action<string>? onError = null)
         {
             if (string.IsNullOrWhiteSpace(sceneKey))
             {
-                Log.Error("SceneTransManager.TransitionTo failed: sceneKey is null/empty.");
+                Log.Error("SceneTransManager.LoadSceneAsync failed: sceneKey is null/empty.");
+                onError?.Invoke("sceneKey is null/empty");
                 yield break;
             }
 
             if (_isTransitioning)
             {
-                Log.Warn("SceneTransManager.TransitionTo ignored: already transitioning.");
+                Log.Warn("SceneTransManager.LoadSceneAsync ignored: already transitioning.");
                 yield break;
             }
 
             _isTransitioning = true;
 
-            var fadeOut = options.FadeOutSecondsOverride > 0f ? options.FadeOutSecondsOverride : _fadeOutSeconds;
-            var fadeIn = options.FadeInSecondsOverride > 0f ? options.FadeInSecondsOverride : _fadeInSeconds;
+            // 1) FadeOut (이벤트 위임)
+            if (fadeOutSeconds > 0f)
+            {
+                yield return InvokeFadeEvent(FadeOutRequested, fadeOutSeconds);
+            }
 
-            // 1) Block input + Fade out
-            if (options.BlockInput) SetOverlayBlocking(true);
-            if (options.UseFade) yield return FadeTo(1f, fadeOut);
+            // 2) beforeUnload hook
+            if (beforeUnload != null)
+            {
+                yield return beforeUnload();
+            }
 
-            // 2) Exit current scene (best-effort)
+            // 3) Exit current scene (best-effort)
             var current = FindActiveBaseScene();
             if (current != null)
+            {
                 yield return current.OnExit();
+            }
 
-            // 3) Load next scene
-            yield return AssetManager.LoadSceneAsync(sceneKey, options.Mode, options.ActivateOnLoad, options.Priority);
+            // 4) Load next scene
+            yield return AssetManager.LoadSceneAsync(sceneKey, mode, activateOnLoad: true, priority: 100);
 
-            // 4) Enter next scene (best-effort, 중복 방지)
-            //    Single 모드면 Unity가 활성 씬을 전환하므로, Find로 새 BaseScene을 찾는다.
+            // 5) afterLoad hook
+            if (afterLoad != null)
+            {
+                yield return afterLoad();
+            }
+
+            // 6) Enter next scene (best-effort, 중복 방지)
             var next = FindActiveBaseScene();
             if (next != null)
             {
@@ -154,12 +150,18 @@ namespace Devian
                 }
             }
 
-            // 5) Fade in + Unblock input
-            if (options.UseFade) yield return FadeTo(0f, fadeIn);
-            if (options.BlockInput) SetOverlayBlocking(false);
+            // 7) FadeIn (이벤트 위임)
+            if (fadeInSeconds > 0f)
+            {
+                yield return InvokeFadeEvent(FadeInRequested, fadeInSeconds);
+            }
 
             _isTransitioning = false;
         }
+
+        // ====================================================================
+        // Internal Helpers
+        // ====================================================================
 
         private BaseScene? FindActiveBaseScene()
         {
@@ -191,36 +193,27 @@ namespace Devian
             return first;
         }
 
-        private void SetOverlayBlocking(bool on)
+        /// <summary>
+        /// 이벤트에 등록된 모든 델리게이트를 순차 실행한다.
+        /// </summary>
+        private IEnumerator InvokeFadeEvent(Func<float, IEnumerator>? fadeEvent, float seconds)
         {
-            if (_overlay == null) return;
-            _overlay.blocksRaycasts = on;
-            _overlay.interactable = on;
-        }
-
-        private IEnumerator FadeTo(float targetAlpha, float seconds)
-        {
-            if (_overlay == null) yield break;
-
-            seconds = Mathf.Max(0f, seconds);
-            var start = _overlay.alpha;
-
-            if (seconds <= 0f)
-            {
-                _overlay.alpha = targetAlpha;
+            if (fadeEvent == null)
                 yield break;
-            }
 
-            float t = 0f;
-            while (t < seconds)
+            var invocationList = fadeEvent.GetInvocationList();
+            for (int i = 0; i < invocationList.Length; i++)
             {
-                t += Time.unscaledDeltaTime;
-                var p = Mathf.Clamp01(t / seconds);
-                _overlay.alpha = Mathf.Lerp(start, targetAlpha, p);
-                yield return null;
+                var handler = invocationList[i] as Func<float, IEnumerator>;
+                if (handler != null)
+                {
+                    var coroutine = handler(seconds);
+                    if (coroutine != null)
+                    {
+                        yield return coroutine;
+                    }
+                }
             }
-
-            _overlay.alpha = targetAlpha;
         }
     }
 }

@@ -33,25 +33,50 @@ Scene 전환 파이프라인을 단일화(직렬화)하고, 씬별 초기화/정
 
 ### SceneTransManager
 
-MonoBehaviour 싱글턴으로, Scene 전환을 직렬화(동시 전환 방지)한다.
+**AutoSingleton 기반 전역 흐름 제어자**로, Scene 전환을 직렬화(동시 전환 방지)한다.
 
-**전환 순서:**
-1. overlay 페이드 아웃 (선택)
-2. 현재 씬의 `BaseScene.OnExit()` 호출
-3. `AssetManager.LoadSceneAsync()` 로 새 씬 로드
-4. 새 씬의 `BaseScene.OnEnter()` 호출 (중복 방지)
-5. overlay 페이드 인 (선택)
+**책임:**
+- 전환 흐름 직렬화 (동시 전환 방지)
+- Fade 시간 전달 (이벤트 위임)
+- BaseScene OnExit/OnEnter 호출
+- Hook(beforeUnload/afterLoad) 실행
+
+**전환 순서 (LoadSceneAsync):**
+1. FadeOutRequested 이벤트 발생 (fadeOutSeconds > 0인 경우)
+2. beforeUnload 훅 실행 (있으면)
+3. 현재 씬의 `BaseScene.OnExit()` 호출
+4. `AssetManager.LoadSceneAsync()` 로 새 씬 로드
+5. afterLoad 훅 실행 (있으면)
+6. 새 씬의 `BaseScene.OnEnter()` 호출 (중복 방지)
+7. FadeInRequested 이벤트 발생 (fadeInSeconds > 0인 경우)
 
 **특징:**
+- `AutoSingleton<SceneTransManager>` 상속 (자동 생성, DontDestroyOnLoad)
 - `_isTransitioning` 플래그로 중복 전환 방지
-- `CanvasGroup` 기반 overlay 페이드 (optional)
-- `SceneTransOptions` 구조체로 옵션 지정
+- Delegate 기반 Hook (beforeUnload, afterLoad)
+- 페이드는 이벤트로 위임 (FadeOutRequested, FadeInRequested)
+
+### 페이드 위임 (Hard Rule)
+
+**SceneTransManager는 페이드 UI(CanvasGroup/Overlay)를 직접 소유하지 않는다.**
+
+페이드 처리는 외부 컴포넌트가 이벤트를 구독하여 처리한다:
+
+```csharp
+// 페이드 이벤트
+public event Func<float, IEnumerator>? FadeOutRequested;
+public event Func<float, IEnumerator>? FadeInRequested;
+```
+
+- 구독자는 fadeSeconds 동안 페이드를 수행하는 코루틴을 반환한다.
+- 여러 구독자가 있으면 등록 순서대로 순차 실행된다.
+- fadeSeconds가 0 이하면 이벤트 호출을 스킵한다.
 
 ### 부팅 씬 (첫 씬) 처리
 
 SceneTransManager는 `Start()`에서 Active Scene의 BaseScene을 찾아:
 - 아직 Enter되지 않았다면 `OnEnter()`를 1회 호출한다 (bootstrap).
-- 이로써 TransitionTo를 거치지 않는 첫 씬도 `OnEnter()`를 받는다.
+- 이로써 LoadSceneAsync를 거치지 않는 첫 씬도 `OnEnter()`를 받는다.
 
 ### 중복 호출 방지
 
@@ -61,8 +86,35 @@ SceneTransManager는 `Start()`에서 Active Scene의 BaseScene을 찾아:
 
 ### Additive 모드
 
-- 이번 초안에서는 Additive 모드 로드는 가능하지만, ActiveScene 선택은 best-effort로 처리한다.
+- Additive 모드 로드는 가능하지만, ActiveScene 선택은 best-effort로 처리한다.
 - Single 모드면 Unity가 활성 씬을 전환하므로 자동으로 처리된다.
+
+---
+
+## API
+
+### LoadSceneAsync
+
+```csharp
+public IEnumerator LoadSceneAsync(
+    string sceneKey,
+    LoadSceneMode mode = LoadSceneMode.Single,
+    float fadeOutSeconds = 0.2f,
+    float fadeInSeconds = 0.2f,
+    Func<IEnumerator>? beforeUnload = null,
+    Func<IEnumerator>? afterLoad = null,
+    Action<string>? onError = null)
+```
+
+| 파라미터 | 설명 | 기본값 |
+|----------|------|--------|
+| sceneKey | Addressables 씬 키 | (필수) |
+| mode | LoadSceneMode.Single 또는 Additive | Single |
+| fadeOutSeconds | 페이드 아웃 시간 (0 이하면 스킵) | 0.2f |
+| fadeInSeconds | 페이드 인 시간 (0 이하면 스킵) | 0.2f |
+| beforeUnload | 언로드 전 실행할 코루틴 | null |
+| afterLoad | 로드 후 실행할 코루틴 | null |
+| onError | 에러 콜백 | null |
 
 ---
 
@@ -77,26 +129,90 @@ SceneTransManager는 `Start()`에서 Active Scene의 BaseScene을 찾아:
 
 ## Usage Example
 
+### 기본 사용 (LoadSceneAsync)
+
 ```csharp
-// Single 씬 전환 (기본)
-// Note: SceneTransManager가 씬에 배치되어 있어야 Instance가 유효함
-StartCoroutine(SceneTransManager.Instance.TransitionTo(
-    "SceneKey_Main",
-    SceneTransManager.SceneTransOptions.DefaultSingle
+// 기본 전환 (페이드 0.2초)
+StartCoroutine(SceneTransManager.Instance.LoadSceneAsync("SceneKey_Main"));
+
+// 페이드 시간 커스텀
+StartCoroutine(SceneTransManager.Instance.LoadSceneAsync(
+    "SceneKey_Game",
+    LoadSceneMode.Single,
+    fadeOutSeconds: 0.5f,
+    fadeInSeconds: 0.3f
+));
+```
+
+### Hook 사용 (beforeUnload/afterLoad)
+
+```csharp
+StartCoroutine(SceneTransManager.Instance.LoadSceneAsync(
+    "SceneKey_Game",
+    LoadSceneMode.Single,
+    fadeOutSeconds: 0.25f,
+    fadeInSeconds: 0.25f,
+    beforeUnload: () => SaveBeforeLeave(),
+    afterLoad: () => WarmupAfterEnter()
 ));
 
-// 커스텀 옵션
-var options = new SceneTransManager.SceneTransOptions
+IEnumerator SaveBeforeLeave()
 {
-    Mode = LoadSceneMode.Single,
-    ActivateOnLoad = true,
-    Priority = 100,
-    UseFade = true,
-    BlockInput = true,
-    FadeOutSecondsOverride = 0.5f,
-    FadeInSecondsOverride = 0.3f,
-};
-StartCoroutine(SceneTransManager.Instance.TransitionTo("SceneKey_Game", options));
+    // 씬 떠나기 전 저장 로직
+    yield return null;
+}
+
+IEnumerator WarmupAfterEnter()
+{
+    // 씬 로드 후 워밍업 로직
+    yield return null;
+}
+```
+
+### 페이드 위임 (외부 컴포넌트가 구독)
+
+```csharp
+// 페이드 UI 컴포넌트에서 구독
+void OnEnable()
+{
+    SceneTransManager.Instance.FadeOutRequested += OnFadeOut;
+    SceneTransManager.Instance.FadeInRequested += OnFadeIn;
+}
+
+void OnDisable()
+{
+    if (SceneTransManager.HasInstance)
+    {
+        SceneTransManager.Instance.FadeOutRequested -= OnFadeOut;
+        SceneTransManager.Instance.FadeInRequested -= OnFadeIn;
+    }
+}
+
+IEnumerator OnFadeOut(float seconds)
+{
+    // CanvasGroup alpha를 0 → 1로 변경
+    float t = 0f;
+    while (t < seconds)
+    {
+        t += Time.unscaledDeltaTime;
+        _canvasGroup.alpha = Mathf.Clamp01(t / seconds);
+        yield return null;
+    }
+    _canvasGroup.alpha = 1f;
+}
+
+IEnumerator OnFadeIn(float seconds)
+{
+    // CanvasGroup alpha를 1 → 0로 변경
+    float t = 0f;
+    while (t < seconds)
+    {
+        t += Time.unscaledDeltaTime;
+        _canvasGroup.alpha = 1f - Mathf.Clamp01(t / seconds);
+        yield return null;
+    }
+    _canvasGroup.alpha = 0f;
+}
 ```
 
 ### BaseScene 구현 예시
@@ -130,7 +246,8 @@ public class MainScene : BaseScene
 
 ## Non-goals
 
-- 로딩 UI / 프로그레스바 / 다운로드 진행률 표시는 이번 초안 범위 밖이다.
+- **페이드 UI 직접 소유**: SceneTransManager는 CanvasGroup/Overlay를 소유하지 않는다. 이벤트로 위임한다.
+- 로딩 UI / 프로그레스바 / 다운로드 진행률 표시는 이번 범위 밖이다.
 - DI / ServiceLocator 설계 도입은 포함하지 않는다.
 - Addressables 라벨/키 정책 변경은 포함하지 않는다.
 
@@ -140,3 +257,4 @@ public class MainScene : BaseScene
 
 - Parent: `skills/devian-unity/30-unity-components/SKILL.md`
 - AssetManager: `skills/devian-unity/30-unity-components/10-asset-manager/SKILL.md`
+- Singleton: `skills/devian-unity/30-unity-components/01-singleton/SKILL.md`
