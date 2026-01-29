@@ -29,6 +29,20 @@ Voice는 TB_VOICE 단일 테이블을 **로딩 시점에 "현재 언어용 맵"�
 - TB_VOICE는 단일 테이블을 유지한다.
 - `VOICE_ko`, `VOICE_en` 같은 언어별 테이블 분리 금지.
 
+### Voice 로딩 책임 (Hard Rule)
+
+- **VoiceManager가 Voice clip 로딩을 담당한다.**
+- SoundManager는 Voice 채널을 로드하지 않는다.
+- `LoadByGroupKeyAsync(groupKey, language, fallbackLanguage)`로 group_key 단위 로드.
+- Resolve 결과로 나온 sound_id들만 로드한다.
+- 언로드는 `UnloadByGroupKey(groupKey)`로 수행.
+
+### runtime_id 기반 재생 (Hard Rule)
+
+- **PlayVoice()는 SoundRuntimeId를 반환한다.**
+- 모든 재생 제어(Stop/Pause/Resume)는 runtime_id로 수행한다.
+- SoundPlay/AudioSource를 외부에 노출하지 않는다.
+
 ---
 
 ## Resolve Policy
@@ -62,29 +76,69 @@ foreach (var row in TB_VOICE.All())
 
 ---
 
-## Playback Policy
+## Loading Policy
 
-### PlayVoice API
+### LoadByGroupKeyAsync / UnloadByGroupKey
 
 ```csharp
-public void PlayVoice(string voiceId, ...)
-{
-    // 1. 캐시에서 sound_id 조회
-    if (!_voiceSoundIdByVoiceId.TryGetValue(voiceId, out var soundId))
-    {
-        Log.Warn($"Voice not found: {voiceId}");
-        return;
-    }
+// Voice 로드 (group_key 기반)
+yield return VoiceManager.Instance.LoadByGroupKeyAsync(
+    "BATTLE",                    // TB_VOICE.group_key
+    SystemLanguage.Korean,       // 언어
+    SystemLanguage.English       // fallback 언어
+);
 
-    // 2. SoundManager로 재생 위임
-    SoundManager.I.Play(soundId, channelOverride: "Voice", ...);
-}
+// Voice 언로드
+VoiceManager.Instance.UnloadByGroupKey("BATTLE");
 ```
+
+- 반드시 **ResolveForLanguage() 호출 후**에 사용한다.
+- group_key에 해당하는 voice rows에서 Resolve된 sound_id만 로드.
+- 내부적으로 `SoundManager._loadVoiceBySoundIdsAsync()` 호출.
+- 언로드 시 `SoundManager.UnloadByKey("VOICE::groupKey")` 호출.
+
+### 로드 순서 (중요)
+
+1. `ResolveForLanguage(language)` - 전체 TB_VOICE Resolve
+2. `LoadByGroupKeyAsync(groupKey, language, fallback)` - 필요한 voice clip 로드
+3. `PlayVoice(voiceId)` - 재생 (캐시 조회만)
+
+---
+
+## Playback API
+
+### PlayVoice
+
+```csharp
+// 반환: runtime_id (재생 실패 시 Invalid)
+SoundRuntimeId PlayVoice(
+    string voiceId,
+    float volume = 1f,
+    float pitch = 1f,
+    int groupId = 0
+)
+```
+
+- voice_id → sound_id 캐시 조회
+- SoundManager.PlaySound(soundId, channelOverride: "Voice") 호출
+- **반환값**: SoundRuntimeId (재생 실패 시 `SoundRuntimeId.Invalid`)
+
+### 재생 제어 (runtime_id 기반)
+
+```csharp
+bool StopVoice(SoundRuntimeId runtimeId)
+bool PauseVoice(SoundRuntimeId runtimeId)
+bool ResumeVoice(SoundRuntimeId runtimeId)
+bool IsVoicePlaying(SoundRuntimeId runtimeId)
+```
+
+- 모든 제어는 runtime_id로 수행
+- 내부적으로 SoundManager의 해당 메서드 호출
 
 ### 자막 처리
 
 ```csharp
-public string GetSubtitleKey(string voiceId)
+public string? GetSubtitleKey(string voiceId)
 {
     // text_l10n_key로 StringTable에서 자막 조회
     if (_subtitleKeyByVoiceId.TryGetValue(voiceId, out var key))
@@ -103,7 +157,7 @@ public string GetSubtitleKey(string voiceId)
 
 **기본 정책 (개발 중 생산성 우선):**
 - 경고 로그 출력
-- 재생 스킵
+- 재생 스킵 (SoundRuntimeId.Invalid 반환)
 
 **프로젝트 선택 옵션:**
 - 빌드 실패 정책으로 전환 가능 (릴리즈 빌드용)
@@ -121,18 +175,40 @@ public static class VoiceConfig
 ## Usage Examples
 
 ```csharp
-// 초기화 시점 (언어 설정 후)
+// 1. 초기화 시점 (언어 Resolve)
 VoiceManager.I.ResolveForLanguage(SystemLanguage.Korean);
 
-// 재생 시점 (캐시 조회만)
-VoiceManager.I.PlayVoice("VO_TUTORIAL_001");
+// 2. Voice clip 로드 (group_key 기반)
+yield return VoiceManager.I.LoadByGroupKeyAsync(
+    "BATTLE",
+    SystemLanguage.Korean,
+    SystemLanguage.English
+);
 
-// 자막 키 조회
+// 3. 재생 시점 (runtime_id 반환)
+var runtimeId = VoiceManager.I.PlayVoice("VO_TUTORIAL_001");
+
+// 4. runtime_id로 제어
+VoiceManager.I.PauseVoice(runtimeId);
+VoiceManager.I.ResumeVoice(runtimeId);
+VoiceManager.I.StopVoice(runtimeId);
+
+// 5. 재생 상태 확인
+if (VoiceManager.I.IsVoicePlaying(runtimeId))
+{
+    // 재생 중...
+}
+
+// 6. 자막 키 조회
 string subtitleKey = VoiceManager.I.GetSubtitleKey("VO_TUTORIAL_001");
 string subtitle = StringTable.Get(subtitleKey);
 
-// 언어 변경 시
+// 7. 언로드
+VoiceManager.I.UnloadByGroupKey("BATTLE");
+
+// 8. 언어 변경 시 (Resolve 재수행 필요)
 VoiceManager.I.ResolveForLanguage(SystemLanguage.English);
+// + 필요한 group_key들 다시 로드
 ```
 
 ---

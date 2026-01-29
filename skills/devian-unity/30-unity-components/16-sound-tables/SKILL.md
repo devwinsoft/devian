@@ -12,10 +12,20 @@ TB_SOUND / TB_VOICE 테이블의 책임 분리와 컬럼 규약을 고정한다.
 
 ## Hard Rules
 
+### partial class 패턴 (Generated + 확장)
+
+- TB_SOUND, TB_VOICE 컨테이너는 **Generated 코드에서 `partial class`로 선언**된다.
+- 수기 유지 파일(TB_SOUND.cs, TB_VOICE.cs)은 **반드시 `partial` 키워드를 사용**하여 확장한다.
+- Generated 클래스(SOUND, VOICE)는 PascalCase 프로퍼티를 사용하며, ISoundRow/IVoiceRow 인터페이스는 snake_case를 사용한다.
+- **Adapter 패턴**으로 Generated 클래스를 인터페이스에 맞춘다: `SoundRowAdapter`, `VoiceRowAdapter`
+
 ### TB_SOUND
 
 - TB_SOUND는 **"재생 단위(실제 AudioClip)"의 정본**이며, `bundle_key` 컬럼이 반드시 존재한다.
-- 모든 사운드 재생은 `sound_id`를 통해 TB_SOUND를 참조한다.
+- **`row_id`가 PK**(내부 row 식별자, 재생 단위)이며, `sound_id`는 **논리 그룹 키**(중복 허용)이다.
+- 동일 `sound_id`에 여러 row가 존재할 수 있다 (weight 기반 랜덤 선택 지원).
+- 모든 사운드 재생은 `sound_id`를 통해 TB_SOUND를 참조하며, 해당 sound_id의 후보 row 중 weight 기반으로 1개를 선택한다.
+- `weight` 값이 0 이하인 경우 1로 취급한다.
 
 ### TB_VOICE
 
@@ -40,8 +50,8 @@ TB_SOUND / TB_VOICE 테이블의 책임 분리와 컬럼 규약을 고정한다.
 
 | 컬럼명 | 타입 | 설명 |
 |--------|------|------|
-| `sound_id` | string | PK, 사운드 식별자 |
-| `row_id` | int | 내부 row 식별자 |
+| `row_id` | int | **PK**, 내부 row 식별자 (재생 단위) |
+| `sound_id` | string | 논리 사운드 식별자 (그룹 키, 중복 허용) |
 | `key` | string | 게임 로딩 그룹 (레벨/씬/컨텍스트) |
 | `source` | enum | 로딩 소스 (Bundle, Resources, etc.) |
 | `bundle_key` | string | 번들 로드/언로드 단위 |

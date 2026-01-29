@@ -13,9 +13,13 @@ namespace Devian
     /// Voice 재생 관리자.
     /// - TB_VOICE를 로딩 시점에 "현재 언어용 맵"으로 Resolve 캐시
     /// - 재생 시점에는 캐시 조회만 수행 (SystemLanguage 분기 금지)
+    /// - Voice clip 로딩은 group_key + language 기반으로 수행
     /// </summary>
     public sealed class VoiceManager : AutoSingleton<VoiceManager>
     {
+        // Voice group key prefix
+        private const string VOICE_GROUP_PREFIX = "VOICE::";
+
         // ====================================================================
         // Voice Table Registry
         // ====================================================================
@@ -31,6 +35,12 @@ namespace Devian
         /// Resolve 시점에 전체 테이블을 캐시로 구성할 때 사용한다.
         /// </summary>
         public Func<IEnumerable<IVoiceRow>>? GetAllVoiceRows { get; set; }
+
+        /// <summary>
+        /// group_key로 voice rows를 조회하는 델리게이트.
+        /// LoadByGroupKeyAsync에서 사용한다.
+        /// </summary>
+        public Func<string, IEnumerable<IVoiceRow>>? GetVoiceRowsByGroupKey { get; set; }
 
         // ====================================================================
         // Resolve Cache
@@ -54,6 +64,12 @@ namespace Devian
             get => _fallbackLanguage;
             set => _fallbackLanguage = value;
         }
+
+        // ====================================================================
+        // Loaded Voice Groups
+        // ====================================================================
+
+        private readonly HashSet<string> _loadedVoiceGroupKeys = new();
 
         // ====================================================================
         // Resolve API
@@ -118,30 +134,124 @@ namespace Devian
         }
 
         // ====================================================================
-        // Load Voice Clips (SoundManager로 통합됨)
+        // Voice Loading API (group_key + language 기반)
         // ====================================================================
 
         /// <summary>
-        /// Voice 클립들을 로드한다. SoundManager.LoadByKeyAsync로 위임.
+        /// group_key 기반으로 Voice clip을 로드한다.
         /// 반드시 ResolveForLanguage() 호출 후에 사용한다.
+        /// Resolve 결과로 나온 sound_id들만 로드한다.
         /// </summary>
-        /// <param name="groupKey">게임 로딩 그룹 키 (TB_SOUND.key)</param>
+        /// <param name="groupKey">TB_VOICE.group_key</param>
+        /// <param name="language">Voice 언어</param>
+        /// <param name="fallbackLanguage">Fallback 언어</param>
         /// <param name="onError">에러 콜백</param>
-        public IEnumerator LoadVoiceClipsAsync(string groupKey, Action<string>? onError = null)
+        public IEnumerator LoadByGroupKeyAsync(
+            string groupKey,
+            SystemLanguage language,
+            SystemLanguage fallbackLanguage,
+            Action<string>? onError = null)
         {
+            var voiceGroupKey = VOICE_GROUP_PREFIX + groupKey;
+
+            if (_loadedVoiceGroupKeys.Contains(groupKey))
+            {
+                yield break;
+            }
+
             if (_currentLanguage == SystemLanguage.Unknown)
             {
                 onError?.Invoke("[VoiceManager] Language not resolved. Call ResolveForLanguage() first.");
                 yield break;
             }
 
-            // SoundManager로 위임 (Voice 채널 로딩 책임 통합)
-            yield return SoundManager.Instance.LoadByKeyAsync(
-                groupKey,
-                _currentLanguage,
-                _fallbackLanguage,
+            // group_key에 해당하는 voice rows 수집
+            IEnumerable<IVoiceRow>? voiceRows = null;
+
+            if (GetVoiceRowsByGroupKey != null)
+            {
+                voiceRows = GetVoiceRowsByGroupKey(groupKey);
+            }
+            else if (GetAllVoiceRows != null)
+            {
+                // Fallback: 전체 순회하면서 group_key 필터링
+                var filteredRows = new List<IVoiceRow>();
+                foreach (var row in GetAllVoiceRows())
+                {
+                    if (row != null && row.group_key == groupKey)
+                    {
+                        filteredRows.Add(row);
+                    }
+                }
+                voiceRows = filteredRows;
+            }
+
+            if (voiceRows == null)
+            {
+                onError?.Invoke($"[VoiceManager] No voice rows found for group_key: {groupKey}");
+                yield break;
+            }
+
+            // Resolve된 sound_id 집합 수집 (중복 제거)
+            var soundIds = new HashSet<string>();
+
+            foreach (var row in voiceRows)
+            {
+                if (row == null) continue;
+
+                // Resolve 캐시에서 sound_id 조회
+                if (_voiceSoundIdByVoiceId.TryGetValue(row.voice_id, out var soundId))
+                {
+                    if (!string.IsNullOrEmpty(soundId))
+                    {
+                        soundIds.Add(soundId);
+                    }
+                }
+            }
+
+            if (soundIds.Count == 0)
+            {
+                Log.Warn($"[VoiceManager] No resolved sound_ids for group_key: {groupKey}");
+                _loadedVoiceGroupKeys.Add(groupKey);
+                yield break;
+            }
+
+            // SoundManager 내부 헬퍼 호출
+            yield return SoundManager.Instance._loadVoiceBySoundIdsAsync(
+                voiceGroupKey,
+                soundIds,
+                language,
+                fallbackLanguage,
                 onError
             );
+
+            _loadedVoiceGroupKeys.Add(groupKey);
+        }
+
+        /// <summary>
+        /// group_key 기반으로 Voice clip을 언로드한다.
+        /// </summary>
+        public void UnloadByGroupKey(string groupKey)
+        {
+            if (!_loadedVoiceGroupKeys.Contains(groupKey)) return;
+
+            var voiceGroupKey = VOICE_GROUP_PREFIX + groupKey;
+            SoundManager.Instance.UnloadByKey(voiceGroupKey);
+
+            _loadedVoiceGroupKeys.Remove(groupKey);
+        }
+
+        /// <summary>
+        /// 모든 로드된 Voice group을 언로드한다.
+        /// </summary>
+        public void UnloadAllVoiceGroups()
+        {
+            foreach (var groupKey in _loadedVoiceGroupKeys)
+            {
+                var voiceGroupKey = VOICE_GROUP_PREFIX + groupKey;
+                SoundManager.Instance.UnloadByKey(voiceGroupKey);
+            }
+            _loadedVoiceGroupKeys.Clear();
         }
 
         // ====================================================================
@@ -152,17 +262,54 @@ namespace Devian
         /// voice_id로 보이스를 재생한다.
         /// 재생 시점에는 캐시 조회만 수행한다 (SystemLanguage 파라미터 없음).
         /// </summary>
-        public SoundPlay? PlayVoice(string voiceId, float volume = 1f, int groupId = 0)
+        /// <param name="voiceId">voice_id (TB_VOICE)</param>
+        /// <param name="volume">볼륨 (0~1)</param>
+        /// <param name="pitch">피치</param>
+        /// <param name="groupId">그룹 ID</param>
+        /// <returns>runtime_id (재생 실패 시 Invalid)</returns>
+        public SoundRuntimeId PlayVoice(string voiceId, float volume = 1f, float pitch = 1f, int groupId = 0)
         {
             // 1. 캐시에서 sound_id 조회
             if (!_voiceSoundIdByVoiceId.TryGetValue(voiceId, out var soundId))
             {
                 Log.Warn($"[VoiceManager] Voice not resolved: {voiceId}");
-                return null;
+                return SoundRuntimeId.Invalid;
             }
 
             // 2. SoundManager로 재생 위임 (채널은 Voice로 고정)
-            return SoundManager.Instance.Play(soundId, volume, groupId, channelOverride: "Voice");
+            return SoundManager.Instance.PlaySound(soundId, volume, pitch, groupId, position: null, channelOverride: "Voice");
+        }
+
+        /// <summary>
+        /// runtime_id로 보이스 재생을 정지한다.
+        /// </summary>
+        public bool StopVoice(SoundRuntimeId runtimeId)
+        {
+            return SoundManager.Instance.StopSound(runtimeId);
+        }
+
+        /// <summary>
+        /// runtime_id로 보이스 재생을 일시정지한다.
+        /// </summary>
+        public bool PauseVoice(SoundRuntimeId runtimeId)
+        {
+            return SoundManager.Instance.PauseSound(runtimeId);
+        }
+
+        /// <summary>
+        /// runtime_id로 보이스 재생을 재개한다.
+        /// </summary>
+        public bool ResumeVoice(SoundRuntimeId runtimeId)
+        {
+            return SoundManager.Instance.ResumeSound(runtimeId);
+        }
+
+        /// <summary>
+        /// runtime_id로 보이스가 재생 중인지 확인한다.
+        /// </summary>
+        public bool IsVoicePlaying(SoundRuntimeId runtimeId)
+        {
+            return SoundManager.Instance.IsPlaying(runtimeId);
         }
 
         /// <summary>
@@ -197,12 +344,21 @@ namespace Devian
             return null;
         }
 
+        /// <summary>
+        /// 특정 group_key가 로드되어 있는지 확인한다.
+        /// </summary>
+        public bool IsGroupKeyLoaded(string groupKey)
+        {
+            return _loadedVoiceGroupKeys.Contains(groupKey);
+        }
+
         // ====================================================================
         // Lifecycle
         // ====================================================================
 
         protected override void OnDestroy()
         {
+            UnloadAllVoiceGroups();
             ClearResolveCache();
             base.OnDestroy();
         }

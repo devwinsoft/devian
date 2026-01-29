@@ -7,7 +7,13 @@
       "Bash(git -C \"C:/Users/USER/.claude-worktrees/devian/loving-greider\" show HEAD:input/Protocols/Game/generated/Game2C.tags.json)",
       "Bash(npm install:*)",
       "Bash(test:*)",
-      "Bash(dotnet build:*)"
+      "Bash(dotnet build:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(pwsh:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File:*)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File ./sync-upm-to-packages.ps1)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"cd ''C:\\\\Users\\\\USER\\\\.claude-worktrees\\\\devian\\\\loving-greider\\\\framework-cs''; .\\\\sync-upm-to-packages.ps1\")"
     ]
   }
 }

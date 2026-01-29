@@ -26,6 +26,68 @@ namespace Devian
     }
 
     /// <summary>
+    /// 사운드 런타임 ID.
+    /// PlaySound/PlayVoice가 반환하며, 이후 모든 제어(Stop/Pause/Resume 등)는 이 ID로 수행한다.
+    /// </summary>
+    public readonly struct SoundRuntimeId
+    {
+        public readonly int Value;
+
+        public SoundRuntimeId(int value) => Value = value;
+
+        /// <summary>유효한 ID인지 확인 (0 이하는 무효)</summary>
+        public bool IsValid => Value > 0;
+
+        /// <summary>무효한 ID (재생 실패 시 반환)</summary>
+        public static SoundRuntimeId Invalid => new(0);
+
+        public override string ToString() => $"SoundRuntimeId({Value})";
+        public override int GetHashCode() => Value;
+        public override bool Equals(object? obj) => obj is SoundRuntimeId other && Value == other.Value;
+
+        public static bool operator ==(SoundRuntimeId left, SoundRuntimeId right) => left.Value == right.Value;
+        public static bool operator !=(SoundRuntimeId left, SoundRuntimeId right) => left.Value != right.Value;
+    }
+
+    /// <summary>
+    /// 재생 중인 사운드 정보 (readonly, 디버그/툴용).
+    /// </summary>
+    public readonly struct PlayingInfo
+    {
+        public readonly SoundRuntimeId RuntimeId;
+        public readonly string SoundId;
+        public readonly int RowId;
+        public readonly SoundChannelType Channel;
+        public readonly float StartTime;
+        public readonly bool Loop;
+        public readonly float Volume;
+        public readonly float Pitch;
+        public readonly bool IsPaused;
+
+        public PlayingInfo(
+            SoundRuntimeId runtimeId,
+            string soundId,
+            int rowId,
+            SoundChannelType channel,
+            float startTime,
+            bool loop,
+            float volume,
+            float pitch,
+            bool isPaused)
+        {
+            RuntimeId = runtimeId;
+            SoundId = soundId;
+            RowId = rowId;
+            Channel = channel;
+            StartTime = startTime;
+            Loop = loop;
+            Volume = volume;
+            Pitch = pitch;
+            IsPaused = isPaused;
+        }
+    }
+
+    /// <summary>
     /// TB_SOUND row 인터페이스. 프로젝트에서 concrete class를 구현한다.
     /// </summary>
     public interface ISoundRow

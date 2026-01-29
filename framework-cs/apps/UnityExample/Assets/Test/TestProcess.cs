@@ -31,6 +31,9 @@ public class NewMonoBehaviourScript : MonoBehaviour
         yield return TableManager.Instance.LoadStringsAsync("string-pb64", TableFormat.Pb64, SystemLanguage.Korean);
         yield return AssetManager.LoadBundleAssets<GameObject>("prefabs");
 
+        //yield return SoundManager.Instance.LoadByKeyAsync("");
+        //yield return VoiceManager.Instance.LoadByGroupKeyAsync("", SystemLanguage.Korean, SystemLanguage.English);
+
         Log.Debug(ST_UIText.Get("loading"));
         var obj = BundlePool.Spawn<TestPoolObject>("Cube", Vector3.zero, Quaternion.identity, null);
         Debug.Log(obj);

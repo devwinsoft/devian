@@ -19,6 +19,22 @@ namespace Devian.Domain.Game
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Register()
         {
+            global::Devian.TableManager.Instance.RegisterTbLoader("SOUND", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                    TB_SOUND.LoadFromNdjson(text);
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                    TB_SOUND.LoadFromPb64Binary(bin);
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("VOICE", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                    TB_VOICE.LoadFromNdjson(text);
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                    TB_VOICE.LoadFromPb64Binary(bin);
+            });
+
             global::Devian.TableManager.Instance.RegisterTbLoader("TestSheet", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
