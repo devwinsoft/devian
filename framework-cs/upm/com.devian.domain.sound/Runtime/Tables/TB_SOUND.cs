@@ -135,8 +135,9 @@ namespace Devian.Domain.Sound
         public bool loop => _row.Loop;
         public float cooltime => _row.Cooltime;
         public bool is3d => _row.Is3d;
-        public float area_close => _row.Area_close;
-        public float area_far => _row.Area_far;
+        // Excel 컬럼명 변경 완료: distance_near/distance_far
+        public float distance_near => _row.Distance_near;
+        public float distance_far => _row.Distance_far;
         public int weight => _row.Weight;
         public float volume_scale => _row.Volume_scale;
         public float pitch_min => _row.Pitch_min;

@@ -19,8 +19,8 @@ export interface SOUND extends IEntityKey<number> {
     Loop: boolean;
     Cooltime: number;
     Is3d: boolean;
-    Area_close: number;
-    Area_far: number;
+    Distance_near: number;
+    Distance_far: number;
     Weight: number;
     Volume_scale: number;
     Pitch_min: number;
@@ -30,7 +30,6 @@ export interface SOUND extends IEntityKey<number> {
 
 export interface VOICE extends IEntityKey<string> {
     Voice_id: string;
-    Text_l10n_key: string;
     Speaker: string;
     Category: string;
     Priority: number;

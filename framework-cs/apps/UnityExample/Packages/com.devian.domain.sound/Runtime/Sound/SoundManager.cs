@@ -347,7 +347,7 @@ namespace Devian
         // ====================================================================
 
         /// <summary>
-        /// sound_id로 사운드를 재생한다.
+        /// sound_id로 2D 사운드를 재생한다.
         /// 동일 sound_id의 후보 rows 중 weight 기반 랜덤으로 1개를 선택하여 재생한다.
         /// 쿨타임은 논리키(sound_id) 단위로 적용된다.
         /// </summary>
@@ -357,8 +357,37 @@ namespace Devian
             float volume = 1f,
             float pitch = 1f,
             int groupId = 0,
-            Vector3? position = null,
             string? channelOverride = null)
+        {
+            return _playInternal(soundId, volume, pitch, groupId, null, channelOverride);
+        }
+
+        /// <summary>
+        /// sound_id로 3D 사운드를 재생한다.
+        /// 위치 정보가 필수이며, 3D 파라미터(distance_near, distance_far)는 row에서 가져온다.
+        /// </summary>
+        /// <returns>재생 성공 시 유효한 SoundRuntimeId, 실패 시 SoundRuntimeId.Invalid</returns>
+        public SoundRuntimeId PlaySound3D(
+            string soundId,
+            Vector3 position,
+            float volume = 1f,
+            float pitch = 1f,
+            int groupId = 0,
+            string? channelOverride = null)
+        {
+            return _playInternal(soundId, volume, pitch, groupId, position, channelOverride);
+        }
+
+        /// <summary>
+        /// 내부 재생 구현 (2D/3D 공통).
+        /// </summary>
+        private SoundRuntimeId _playInternal(
+            string soundId,
+            float volume,
+            float pitch,
+            int groupId,
+            Vector3? position,
+            string? channelOverride)
         {
             if (GetSoundRowsBySoundId == null)
             {
@@ -418,7 +447,7 @@ namespace Devian
                 return SoundRuntimeId.Invalid;
             }
 
-            // 6. 볼륨/피치 계산
+            // 6. 볼륨/피치 계산 (BaseAudioManager 로직)
             var effectiveVolume = volume * selectedRow.volume_scale;
             var effectivePitch = pitch;
             if (selectedRow.pitch_min > 0f && selectedRow.pitch_max > 0f && selectedRow.pitch_min < selectedRow.pitch_max)
@@ -426,13 +455,13 @@ namespace Devian
                 effectivePitch = UnityEngine.Random.Range(selectedRow.pitch_min, selectedRow.pitch_max);
             }
 
-            // 7. 3D 위치
-            var is3d = selectedRow.is3d && position.HasValue;
+            // 7. 3D 판정 (position이 주어지면 3D, 아니면 2D)
+            var is3d = position.HasValue;
 
             // 8. runtime_id 발급
             var runtimeId = _allocateRuntimeId();
 
-            // 9. 채널에 재생 요청
+            // 9. 채널에 재생 요청 (distance_near/distance_far 사용)
             var success = channel.PlayWithRuntimeId(
                 runtimeId,
                 soundId,  // 쿨타임 공유를 위해 sound_id 전달
@@ -448,8 +477,8 @@ namespace Devian
                 effectivePitch,
                 is3d,
                 position,
-                selectedRow.area_close,
-                selectedRow.area_far
+                selectedRow.distance_near,
+                selectedRow.distance_far
             );
 
             if (!success)
@@ -473,10 +502,25 @@ namespace Devian
             float volume = 1f,
             float pitch = 1f,
             int groupId = 0,
-            Vector3? position = null,
             string? channelOverride = null)
         {
-            runtimeId = PlaySound(soundId, volume, pitch, groupId, position, channelOverride);
+            runtimeId = PlaySound(soundId, volume, pitch, groupId, channelOverride);
+            return runtimeId.IsValid;
+        }
+
+        /// <summary>
+        /// TryPlaySound3D 버전 (out 파라미터).
+        /// </summary>
+        public bool TryPlaySound3D(
+            string soundId,
+            Vector3 position,
+            out SoundRuntimeId runtimeId,
+            float volume = 1f,
+            float pitch = 1f,
+            int groupId = 0,
+            string? channelOverride = null)
+        {
+            runtimeId = PlaySound3D(soundId, position, volume, pitch, groupId, channelOverride);
             return runtimeId.IsValid;
         }
 

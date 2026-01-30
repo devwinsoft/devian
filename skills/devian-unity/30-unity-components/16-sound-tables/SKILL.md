@@ -18,15 +18,15 @@ TB_SOUND / TB_VOICE 테이블의 책임 분리와 컬럼 규약을 고정한다.
 - 네임스페이스 목표: `Devian.Domain.Sound`
 - 현재는 Game 도메인(`Devian.Domain.Game`)에 있지만, **Phase 2에서 Sound 도메인으로 이동** 예정.
 
-### 현재 상태 vs 목표 상태
+### 현재 상태 (Sound 도메인 완료)
 
-| 항목 | 현재 상태 | 목표 상태 (Phase 2 후) |
-|------|----------|----------------------|
-| 데이터 파일 | `input/Domains/Game/tables/SoundTable.xlsx` | `input/Domains/Sound/tables/SoundTable.xlsx` |
-| Generated 위치 | `com.devian.domain.game` | `com.devian.domain.sound` |
-| 네임스페이스 | `Devian.Domain.Game` | `Devian.Domain.Sound` |
+| 항목 | 상태 |
+|------|------|
+| 데이터 파일 | `input/Domains/Sound/tables/SoundTable.xlsx` |
+| Generated 위치 | `com.devian.domain.sound` |
+| 네임스페이스 | `Devian.Domain.Sound` |
 
-> 자세한 이관 계획은 `19-sound-domain/SKILL.md` 참조.
+> 도메인 설계는 `19-sound-domain/SKILL.md` 참조.
 
 ---
 
@@ -80,17 +80,15 @@ TB_SOUND / TB_VOICE 테이블의 책임 분리와 컬럼 규약을 고정한다.
 | `loop` | bool | 루프 여부 |
 | `cooltime` | float | 재생 쿨타임 (초) |
 | `is3d` | bool | 3D 사운드 여부 |
-| `area_close` | float | 3D 근거리 |
-| `area_far` | float | 3D 원거리 |
+| `distance_near` | float | 3D near 거리 (minDistance), 기본값 1.0 |
+| `distance_far` | float | 3D far 거리 (maxDistance), 기본값 500.0 |
+| `weight` | int | 랜덤 선택 가중치, 기본값 1 |
+| `volume_scale` | float | 볼륨 스케일, 기본값 1.0 |
+| `pitch_min` | float | 피치 랜덤 최소, 기본값 1.0 |
+| `pitch_max` | float | 피치 랜덤 최대, 기본값 1.0 |
 
-**선택 컬럼:**
-
-| 컬럼명 | 타입 | 설명 |
-|--------|------|------|
-| `weight` | int | 랜덤 선택 가중치 |
-| `volume_scale` | float | 볼륨 스케일 |
-| `pitch_min` | float | 피치 최소 |
-| `pitch_max` | float | 피치 최대 |
+> **3D 파라미터**: `distance_near`/`distance_far`는 BaseAudioManager의 Play3D에서 직접 사용된다.
+> 자세한 내용은 `20-base-audio-manager/SKILL.md` 참조.
 
 ### TB_VOICE 컬럼
 
@@ -99,7 +97,6 @@ TB_SOUND / TB_VOICE 테이블의 책임 분리와 컬럼 규약을 고정한다.
 | 컬럼명 | 타입 | 설명 |
 |--------|------|------|
 | `voice_id` | string | PK, 보이스 식별자 |
-| `text_l10n_key` | string | 자막용 StringTable 키 |
 
 **선택 컬럼:**
 
@@ -137,3 +134,4 @@ TB_SOUND / TB_VOICE 테이블의 책임 분리와 컬럼 규약을 고정한다.
 - `skills/devian-unity/30-unity-components/19-sound-domain/SKILL.md` — **Sound 도메인 설계 (SSOT)**
 - `skills/devian-unity/30-unity-components/17-sound-manager/SKILL.md` — SoundManager 규약
 - `skills/devian-unity/30-unity-components/18-voice-table-resolve/SKILL.md` — Voice Resolve 규약
+- `skills/devian-unity/30-unity-components/20-base-audio-manager/SKILL.md` — BaseAudioManager 공통 Play 규약

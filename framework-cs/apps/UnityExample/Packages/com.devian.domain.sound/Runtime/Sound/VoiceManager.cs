@@ -47,7 +47,7 @@ namespace Devian
         // ====================================================================
 
         private readonly Dictionary<string, string> _voiceSoundIdByVoiceId = new();
-        private readonly Dictionary<string, string> _subtitleKeyByVoiceId = new();
+        // text_l10n_key 제거됨 - 자막 키가 필요하면 voice_id 자체를 사용
         private SystemLanguage _currentLanguage = SystemLanguage.Unknown;
         private SystemLanguage _fallbackLanguage = SystemLanguage.English;
 
@@ -89,7 +89,6 @@ namespace Devian
 
             // 캐시 초기화
             _voiceSoundIdByVoiceId.Clear();
-            _subtitleKeyByVoiceId.Clear();
             _currentLanguage = language;
 
             // 컬럼명 구성: "clip_" + language.ToString()
@@ -117,7 +116,7 @@ namespace Devian
 
                 // 4. 캐시 등록
                 _voiceSoundIdByVoiceId[row.voice_id] = soundId;
-                _subtitleKeyByVoiceId[row.voice_id] = row.text_l10n_key;
+                // text_l10n_key 제거됨 - 자막 키가 필요하면 voice_id 자체를 사용
             }
 
             Log.Info($"[VoiceManager] Resolved {_voiceSoundIdByVoiceId.Count} voices for {language}.");
@@ -129,7 +128,6 @@ namespace Devian
         public void ClearResolveCache()
         {
             _voiceSoundIdByVoiceId.Clear();
-            _subtitleKeyByVoiceId.Clear();
             _currentLanguage = SystemLanguage.Unknown;
         }
 
@@ -259,7 +257,7 @@ namespace Devian
         // ====================================================================
 
         /// <summary>
-        /// voice_id로 보이스를 재생한다.
+        /// voice_id로 2D 보이스를 재생한다.
         /// 재생 시점에는 캐시 조회만 수행한다 (SystemLanguage 파라미터 없음).
         /// </summary>
         /// <param name="voiceId">voice_id (TB_VOICE)</param>
@@ -277,7 +275,31 @@ namespace Devian
             }
 
             // 2. SoundManager로 재생 위임 (채널은 Voice로 고정)
-            return SoundManager.Instance.PlaySound(soundId, volume, pitch, groupId, position: null, channelOverride: "Voice");
+            return SoundManager.Instance.PlaySound(soundId, volume, pitch, groupId, channelOverride: "Voice");
+        }
+
+        /// <summary>
+        /// voice_id로 3D 보이스를 재생한다.
+        /// 재생 시점에는 캐시 조회만 수행한다 (SystemLanguage 파라미터 없음).
+        /// 3D 파라미터(distance_near, distance_far)는 Resolve된 sound_id의 SOUND row에서 가져온다.
+        /// </summary>
+        /// <param name="voiceId">voice_id (TB_VOICE)</param>
+        /// <param name="position">3D 위치</param>
+        /// <param name="volume">볼륨 (0~1)</param>
+        /// <param name="pitch">피치</param>
+        /// <param name="groupId">그룹 ID</param>
+        /// <returns>runtime_id (재생 실패 시 Invalid)</returns>
+        public SoundRuntimeId PlayVoice3D(string voiceId, Vector3 position, float volume = 1f, float pitch = 1f, int groupId = 0)
+        {
+            // 1. 캐시에서 sound_id 조회
+            if (!_voiceSoundIdByVoiceId.TryGetValue(voiceId, out var soundId))
+            {
+                Log.Warn($"[VoiceManager] Voice not resolved: {voiceId}");
+                return SoundRuntimeId.Invalid;
+            }
+
+            // 2. SoundManager로 3D 재생 위임 (채널은 Voice로 고정)
+            return SoundManager.Instance.PlaySound3D(soundId, position, volume, pitch, groupId, channelOverride: "Voice");
         }
 
         /// <summary>
@@ -314,15 +336,23 @@ namespace Devian
 
         /// <summary>
         /// voice_id에 해당하는 자막 키를 반환한다.
+        /// text_l10n_key 제거됨 - voice_id 자체를 자막 키로 사용.
         /// </summary>
-        public string? GetSubtitleKey(string voiceId)
+        public string? GetCaptionKey(string voiceId)
         {
-            if (_subtitleKeyByVoiceId.TryGetValue(voiceId, out var key))
+            // voice_id 자체가 자막 키
+            if (_voiceSoundIdByVoiceId.ContainsKey(voiceId))
             {
-                return key;
+                return voiceId;
             }
             return null;
         }
+
+        /// <summary>
+        /// [Deprecated] GetSubtitleKey → GetCaptionKey로 변경됨.
+        /// </summary>
+        [Obsolete("Use GetCaptionKey instead. text_l10n_key has been removed.")]
+        public string? GetSubtitleKey(string voiceId) => GetCaptionKey(voiceId);
 
         /// <summary>
         /// voice_id가 Resolve 캐시에 존재하는지 확인한다.

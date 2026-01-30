@@ -19,7 +19,9 @@
       "Bash(where:*)",
       "Bash(cmd //c \"mklink /D com.devian.domain.sound ..\\\\..\\\\..\\\\upm\\\\com.devian.domain.sound\")",
       "Bash(bash:*)",
-      "Bash(/c/Program Files/nodejs/npm.cmd ci)"
+      "Bash(/c/Program Files/nodejs/npm.cmd ci)",
+      "Bash(cmd.exe /c \"where npm\")",
+      "Bash(pip install:*)"
     ]
   }
 }

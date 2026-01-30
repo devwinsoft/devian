@@ -79,6 +79,13 @@ SoundManager는 테이블 기반으로 사운드 재생/풀/채널/쿨타임을 
 - SoundManager는 **SerializeField 의존 없이 런타임 생성 원칙**을 권장한다.
 - 프로젝트 정책에 따라 조정 가능하나, 스킬은 "참조 의존 최소화"로 고정.
 
+### BaseAudioManager 위임 (Hard Rule)
+
+- **SoundManager/VoiceManager는 Play 로직을 직접 구현하지 않는다.**
+- 2D/3D Play, AudioSource 풀링, pitch/volume 랜덤, 3D 거리 파라미터 적용은 **BaseAudioManager가 담당**한다.
+- 3D 파라미터 (`distance_near`, `distance_far`)는 SOUND row 필드에서 가져온다.
+- 자세한 내용은 `20-base-audio-manager/SKILL.md` 참조.
+
 ---
 
 ## SoundRuntimeId
@@ -121,7 +128,7 @@ public bool ValidateGeneration(int expected) => _generation == expected;
 
 ## Playback API
 
-### PlaySound
+### PlaySound (2D)
 
 ```csharp
 // 반환: runtime_id (재생 실패 시 Invalid)
@@ -130,10 +137,26 @@ SoundRuntimeId PlaySound(
     float volume = 1f,
     float pitch = 1f,
     int groupId = 0,
-    Vector3? position = null,
     string? channelOverride = null
 )
 ```
+
+### PlaySound3D (3D)
+
+```csharp
+// 3D 사운드 재생 - 위치 필수
+SoundRuntimeId PlaySound3D(
+    string soundId,
+    Vector3 position,
+    float volume = 1f,
+    float pitch = 1f,
+    int groupId = 0,
+    string? channelOverride = null
+)
+```
+
+- 3D 파라미터(`distance_near`, `distance_far`)는 SOUND row에서 자동 적용됨
+- BaseAudioManager.Play3D로 위임
 
 ### 재생 제어 (runtime_id 기반)
 
@@ -204,7 +227,6 @@ yield return SoundManager.Instance._loadVoiceBySoundIdsAsync(
 
 - **SoundVoiceTableRegistry는 Sound 도메인에 존재**한다.
 - `RuntimeInitializeOnLoadMethod(BeforeSceneLoad)`로 매니저와 테이블을 연결한다.
-- 현재는 Game 도메인에 위치하지만, **Phase 2에서 Sound 도메인으로 이동** 예정.
 
 ### Adapter 패턴 (Hard Rule)
 
@@ -244,8 +266,8 @@ var runtimeId = SoundManager.I.PlaySound("UI_CLICK");
 // 볼륨/그룹 지정 재생
 var hitId = SoundManager.I.PlaySound("SFX_HIT", volume: 0.8f, groupId: 123);
 
-// 3D 사운드 재생
-var explosionId = SoundManager.I.PlaySound("SFX_EXPLOSION", position: transform.position);
+// 3D 사운드 재생 (명시적 API)
+var explosionId = SoundManager.I.PlaySound3D("SFX_EXPLOSION", transform.position);
 
 // runtime_id로 제어
 SoundManager.I.PauseSound(runtimeId);
@@ -287,3 +309,4 @@ SoundManager.I.UnloadByKey("BATTLE");
 - `skills/devian-unity/30-unity-components/19-sound-domain/SKILL.md` — **Sound 도메인 설계 (SSOT)**
 - `skills/devian-unity/30-unity-components/16-sound-tables/SKILL.md` — TB_SOUND/TB_VOICE 테이블 규약
 - `skills/devian-unity/30-unity-components/18-voice-table-resolve/SKILL.md` — Voice Resolve 규약
+- `skills/devian-unity/30-unity-components/20-base-audio-manager/SKILL.md` — BaseAudioManager 공통 Play 규약

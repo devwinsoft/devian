@@ -52,6 +52,20 @@ Voice는 TB_VOICE 단일 테이블을 **로딩 시점에 "현재 언어용 맵"�
 - 모든 재생 제어(Stop/Pause/Resume)는 runtime_id로 수행한다.
 - SoundPlay/AudioSource를 외부에 노출하지 않는다.
 
+### text_l10n_key 제거 (Hard Rule)
+
+- **VOICE 테이블에서 `text_l10n_key` 컬럼은 삭제한다.**
+- Voice 관련 "텍스트/자막 키"가 필요할 경우 **voice_id 자체를 키로 사용**한다.
+- 예: `captionKey = voice_id` (또는 "자막 없음" 정책이면 null 반환)
+- Voice Resolve는 **voice_id → clip(sound_id) 결정만 담당**한다.
+- 자막 시스템은 별도 구현으로 분리되며, 이 스킬 범위 외이다.
+
+### 3D Voice Play (Hard Rule)
+
+- **PlayVoice3D(voiceId, position)** API를 제공한다.
+- 3D 파라미터는 Resolve된 sound_id의 SOUND row에서 가져온다.
+- BaseAudioManager.Play3D를 통해 재생한다.
+
 ---
 
 ## Resolve Policy
@@ -74,7 +88,7 @@ foreach (var row in TB_VOICE.All())
 
     // 5. 캐시 생성
     _voiceSoundIdByVoiceId[row.voice_id] = soundId;
-    _subtitleKeyByVoiceId[row.voice_id] = row.text_l10n_key;
+    // text_l10n_key 제거됨 - 자막 키가 필요하면 voice_id 자체를 사용
 }
 ```
 
@@ -147,16 +161,31 @@ bool IsVoicePlaying(SoundRuntimeId runtimeId)
 ### 자막 처리
 
 ```csharp
-public string? GetSubtitleKey(string voiceId)
+public string? GetCaptionKey(string voiceId)
 {
-    // text_l10n_key로 StringTable에서 자막 조회
-    if (_subtitleKeyByVoiceId.TryGetValue(voiceId, out var key))
-        return key;
-    return null;
+    // text_l10n_key 제거됨 - voice_id 자체를 자막 키로 사용
+    return voiceId;
 }
 ```
 
+- 자막 키는 voice_id 자체를 사용한다 (별도 컬럼 불필요).
 - 자막 표시 시스템 자체는 이 스킬 범위 외.
+
+### 3D Play API
+
+```csharp
+// 3D Voice 재생
+SoundRuntimeId PlayVoice3D(
+    string voiceId,
+    Vector3 position,
+    float volume = 1f,
+    float pitch = 1f,
+    int groupId = 0
+)
+```
+
+- voice_id → sound_id 캐시 조회
+- SoundManager.PlaySound3D(soundId, position, channelOverride: "Voice") 호출
 
 ---
 
@@ -208,14 +237,17 @@ if (VoiceManager.I.IsVoicePlaying(runtimeId))
     // 재생 중...
 }
 
-// 6. 자막 키 조회
-string subtitleKey = VoiceManager.I.GetSubtitleKey("VO_TUTORIAL_001");
-string subtitle = StringTable.Get(subtitleKey);
+// 6. 자막 키 조회 (voice_id 자체가 키)
+string captionKey = VoiceManager.I.GetCaptionKey("VO_TUTORIAL_001");
+string subtitle = StringTable.Get(captionKey);
 
-// 7. 언로드
+// 7. 3D Voice 재생
+var runtimeId3D = VoiceManager.I.PlayVoice3D("VO_TUTORIAL_001", transform.position);
+
+// 8. 언로드
 VoiceManager.I.UnloadByGroupKey("BATTLE");
 
-// 8. 언어 변경 시 (Resolve 재수행 필요)
+// 9. 언어 변경 시 (Resolve 재수행 필요)
 VoiceManager.I.ResolveForLanguage(SystemLanguage.English);
 // + 필요한 group_key들 다시 로드
 ```
@@ -234,4 +266,5 @@ VoiceManager.I.ResolveForLanguage(SystemLanguage.English);
 - `skills/devian-unity/30-unity-components/19-sound-domain/SKILL.md` — **Sound 도메인 설계 (SSOT)**
 - `skills/devian-unity/30-unity-components/16-sound-tables/SKILL.md` — TB_SOUND/TB_VOICE 테이블 규약
 - `skills/devian-unity/30-unity-components/17-sound-manager/SKILL.md` — SoundManager 규약
+- `skills/devian-unity/30-unity-components/20-base-audio-manager/SKILL.md` — BaseAudioManager 공통 Play 규약
 - `skills/devian-unity/30-unity-components/14-table-manager/SKILL.md` — TableManager (테이블 로딩)

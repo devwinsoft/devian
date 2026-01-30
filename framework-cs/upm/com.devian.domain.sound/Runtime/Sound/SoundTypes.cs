@@ -102,24 +102,26 @@ namespace Devian
         bool loop { get; }
         float cooltime { get; }
         bool is3d { get; }
-        float area_close { get; }
-        float area_far { get; }
 
-        // Optional columns (nullable for projects that don't use them)
-        int weight { get; }
-        float volume_scale { get; }
-        float pitch_min { get; }
-        float pitch_max { get; }
+        // 3D 파라미터 (SSOT: 20-base-audio-manager)
+        float distance_near { get; }  // 3D near 거리 (minDistance)
+        float distance_far { get; }   // 3D far 거리 (maxDistance)
+
+        // 재생 파라미터
+        int weight { get; }           // 랜덤 선택 가중치
+        float volume_scale { get; }   // 볼륨 스케일
+        float pitch_min { get; }      // 피치 랜덤 최소
+        float pitch_max { get; }      // 피치 랜덤 최대
     }
 
     /// <summary>
     /// TB_VOICE row 인터페이스. 프로젝트에서 concrete class를 구현한다.
     /// 언어별 clip_ 컬럼은 TryGetClipColumn으로 접근한다 (Resolve 단계에서만 호출).
+    /// text_l10n_key 제거됨 - 자막 키가 필요하면 voice_id 자체를 사용
     /// </summary>
     public interface IVoiceRow
     {
         string voice_id { get; }
-        string text_l10n_key { get; }
 
         // Optional columns
         string speaker { get; }

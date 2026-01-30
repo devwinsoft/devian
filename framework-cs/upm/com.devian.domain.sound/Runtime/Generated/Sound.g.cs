@@ -29,8 +29,8 @@ namespace Devian.Domain.Sound
         public bool Loop { get; set; }
         public float Cooltime { get; set; }
         public bool Is3d { get; set; }
-        public float Area_close { get; set; }
-        public float Area_far { get; set; }
+        public float Distance_near { get; set; }
+        public float Distance_far { get; set; }
         public int Weight { get; set; }
         public float Volume_scale { get; set; }
         public float Pitch_min { get; set; }
@@ -43,7 +43,6 @@ namespace Devian.Domain.Sound
     public sealed class VOICE : IEntityKey<string>
     {
         public string Voice_id { get; set; } = string.Empty;
-        public string Text_l10n_key { get; set; } = string.Empty;
         public string Speaker { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;
         public int Priority { get; set; }

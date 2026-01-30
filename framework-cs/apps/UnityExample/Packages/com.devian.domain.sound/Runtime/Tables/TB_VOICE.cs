@@ -90,7 +90,7 @@ namespace Devian.Domain.Sound
         }
 
         public string voice_id => _row.Voice_id;
-        public string text_l10n_key => _row.Text_l10n_key;
+        // text_l10n_key 제거됨 - 자막 키가 필요하면 voice_id 자체를 사용
         public string speaker => _row.Speaker;
         public string category => _row.Category;
         public int priority => _row.Priority;
