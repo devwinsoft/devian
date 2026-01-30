@@ -953,6 +953,20 @@ function generateTableContainer(lines, table, tableName, rowClassName, enumSpecs
     }
     lines.push('            });');
     lines.push('        }');
+    lines.push('');
+
+    // AfterLoad Hook (optional)
+    lines.push('        // ====================================================================');
+    lines.push('        // AfterLoad Hook (optional)');
+    lines.push('        // Called by DomainTableRegistry after TableManager inserts data.');
+    lines.push('        // ====================================================================');
+    lines.push('');
+    lines.push('        internal static void _AfterLoad()');
+    lines.push('        {');
+    lines.push('            _OnAfterLoad();');
+    lines.push('        }');
+    lines.push('');
+    lines.push('        static partial void _OnAfterLoad();');
 
     lines.push('    }');
 }

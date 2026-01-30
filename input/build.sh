@@ -3,16 +3,18 @@
 # Usage: ./build.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TOOLS_DIR="$SCRIPT_DIR/../framework-ts/tools"
+FRAMEWORK_TS_DIR="$SCRIPT_DIR/../framework-ts"
+INPUT_JSON="$SCRIPT_DIR/input_common.json"
 
-# Bootstrap: install dependencies if node_modules missing
-if [ ! -d "$TOOLS_DIR/node_modules" ]; then
-  echo "[Bootstrap] Installing dependencies..."
-  if [ -f "$TOOLS_DIR/package-lock.json" ]; then
-    (cd "$TOOLS_DIR" && npm ci)
+# Bootstrap: install dependencies if node_modules missing (root only)
+if [ ! -d "$FRAMEWORK_TS_DIR/node_modules" ]; then
+  echo "[Bootstrap] Installing dependencies (framework-ts)..."
+  if [ -f "$FRAMEWORK_TS_DIR/package-lock.json" ]; then
+    (cd "$FRAMEWORK_TS_DIR" && npm ci)
   else
-    (cd "$TOOLS_DIR" && npm install)
+    (cd "$FRAMEWORK_TS_DIR" && npm install)
   fi
 fi
 
-node "$SCRIPT_DIR/../framework-ts/tools/builder/build.js" "$SCRIPT_DIR/../input/input_common.json"
+# Run builder from root workspace
+(cd "$FRAMEWORK_TS_DIR" && npm -w builder run build -- "$INPUT_JSON")

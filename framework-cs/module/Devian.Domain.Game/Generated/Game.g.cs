@@ -127,6 +127,18 @@ namespace Devian.Domain.Game
                 _dict[row.Number] = row;
             });
         }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
     }
 
     /// <summary>TB_VECTOR3 container</summary>
@@ -180,6 +192,18 @@ namespace Devian.Domain.Game
                 _list.Add(row);
             });
         }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
     }
 
     // ================================================================

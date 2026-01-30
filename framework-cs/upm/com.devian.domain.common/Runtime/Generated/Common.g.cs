@@ -118,6 +118,18 @@ namespace Devian.Domain.Common
                 _dict[row.Key] = row;
             });
         }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
     }
 
     // ================================================================

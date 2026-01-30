@@ -6,7 +6,7 @@ Type: Unity Component Policy / API
 
 ## Purpose
 
-`com.devian.unity`에 포함된 `NetWsClientBehaviourBase`의 정책/API/확장 지점을 정의한다.  
+`com.devian.foundation`에 포함된 `NetWsClientBehaviourBase`의 정책/API/확장 지점을 정의한다.
 protobuf 종속 회피를 위한 분리(별도 asmdef) 같은 우회 설계를 하지 않고, Unity에서 단순하게 네트워크 클라이언트를 사용하기 위한 베이스를 제공한다.
 
 ---
@@ -14,10 +14,10 @@ protobuf 종속 회피를 위한 분리(별도 asmdef) 같은 우회 설계를 �
 ## Location (SSOT)
 
 정본 소스:
-- `framework-cs/upm/com.devian.unity/Runtime/Network/NetWsClientBehaviourBase.cs`
+- `framework-cs/upm/com.devian.foundation/Runtime/Unity/Network/NetWsClientBehaviourBase.cs`
 
 UnityExample 복사본(직접 수정 금지):
-- `framework-cs/apps/UnityExample/Packages/com.devian.unity/Runtime/Network/NetWsClientBehaviourBase.cs`
+- `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Runtime/Unity/Network/NetWsClientBehaviourBase.cs`
 
 ---
 
@@ -93,5 +93,5 @@ UnityExample 복사본(직접 수정 금지):
 
 ## Reference
 
-- Related: `skills/devian-unity/20-packages/com.devian.unity/SKILL.md`
+- Related: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT)
 - Related: `skills/devian/72-network-ws-client/SKILL.md`

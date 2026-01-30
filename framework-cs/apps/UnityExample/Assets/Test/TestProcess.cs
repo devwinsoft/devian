@@ -31,6 +31,13 @@ public class NewMonoBehaviourScript : MonoBehaviour
         yield return TableManager.Instance.LoadStringsAsync("string-pb64", TableFormat.Pb64, SystemLanguage.Korean);
         yield return AssetManager.LoadBundleAssets<GameObject>("prefabs");
 
+        //yield return SoundManager.Instance.LoadByKeyAsync("");
+        //yield return VoiceManager.Instance.LoadByGroupKeyAsync("", SystemLanguage.Korean, SystemLanguage.English);
+
+        // [Optional] Sound 도메인 샘플 실행:
+        // Phase 2 이후 Sound 도메인 이관이 완료되면 아래 주석을 해제하여 실행 가능.
+        // yield return SoundDomainSample.Run();
+
         Log.Debug(ST_UIText.Get("loading"));
         var obj = BundlePool.Spawn<TestPoolObject>("Cube", Vector3.zero, Quaternion.identity, null);
         Debug.Log(obj);

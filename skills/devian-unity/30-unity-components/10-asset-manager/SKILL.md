@@ -25,8 +25,8 @@ AppliesTo: v10
 
 | 위치 | 경로 |
 |------|------|
-| UPM 소스 | `framework-cs/upm/com.devian.unity/Runtime/AssetManager/AssetManager.cs` |
-| UnityExample | `framework-cs/apps/UnityExample/Packages/com.devian.unity/Runtime/AssetManager/AssetManager.cs` |
+| UPM 소스 | `framework-cs/upm/com.devian.foundation/Runtime/Unity/AssetManager/AssetManager.cs` |
+| UnityExample | `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Runtime/Unity/AssetManager/AssetManager.cs` |
 
 ---
 
@@ -342,7 +342,7 @@ var text = ST_UIText.Get("ndjson", SystemLanguage.Korean, "greeting");
 
 ## Reference
 
-- Related: `skills/devian-unity/20-packages/com.devian.unity/SKILL.md` (패키지 컨텍스트)
+- Related: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT)
 - Related: `skills/devian-unity/30-unity-components/12-download-manager/SKILL.md` (다운로드 정책)
 - Related: `skills/devian/33-string-table/SKILL.md` (String Table 규약)
 - Related: `skills/devian-unity/01-unity-policy/SKILL.md` (component policy)

@@ -1,0 +1,13 @@
+{
+  "name": "com.devian.domain.sound",
+  "version": "0.1.0",
+  "displayName": "Devian Domain Sound",
+  "description": "Devian.Domain.Sound runtime for Unity - Sound/Voice tables and managers",
+  "unity": "2021.3",
+  "author": {
+    "name": "Kim, Hyong Joon"
+  },
+  "dependencies": {
+    "com.devian.foundation": "0.1.0"
+  }
+}

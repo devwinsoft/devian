@@ -23,14 +23,12 @@ AppliesTo: v10
 ## 의존 방향 정책 (핵심)
 
 ```
-com.devian.core (base - Log 포함)
+com.devian.foundation (base - Core + Unity 통합)
        ↑
-com.devian.unity (Unity adapters)
-       ↑
-com.devian.domain.{DomainName} (이 템플릿 - core + unity 의존)
+com.devian.domain.{DomainName} (이 템플릿 - foundation 의존)
 ```
 
-> **Hard Rule:** `com.devian.unity` → `com.devian.domain.*` 의존 **금지** (순환 방지)
+> **Hard Rule:** `com.devian.foundation` → `com.devian.domain.*` 의존 **금지** (순환 방지)
 
 ---
 
@@ -107,15 +105,15 @@ namespace Devian
 
 ### 베이스 클래스 참조
 
-베이스 클래스는 `com.devian.unity` 패키지에서 제공된다:
+베이스 클래스는 `com.devian.foundation` 패키지에서 제공된다:
 
 | 파일 | 경로 |
 |------|------|
-| `EditorID_DrawerBase.cs` | `com.devian.unity/Editor/TableId/EditorID_DrawerBase.cs` |
-| `EditorID_SelectorBase.cs` | `com.devian.unity/Editor/TableId/EditorID_SelectorBase.cs` |
-| `EditorRectUtil.cs` | `com.devian.unity/Editor/TableId/EditorRectUtil.cs` |
+| `EditorID_DrawerBase.cs` | `com.devian.foundation/Editor/TableId/EditorID_DrawerBase.cs` |
+| `EditorID_SelectorBase.cs` | `com.devian.foundation/Editor/TableId/EditorID_SelectorBase.cs` |
+| `EditorRectUtil.cs` | `com.devian.foundation/Editor/TableId/EditorRectUtil.cs` |
 
-> **상세 API**: `skills/devian-unity/20-packages/com.devian.unity/SKILL.md` 참조
+> **상세 API**: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT) 참조
 
 ---
 
@@ -164,7 +162,7 @@ namespace Devian
 | version | `0.1.0` (다른 com.devian.* 패키지와 동일) |
 | displayName | `Devain Domain {DomainName}` |
 | unity | `2021.3` |
-| dependencies | `com.devian.core: 0.1.0`, `com.devian.unity: 0.1.0` (최소) |
+| dependencies | `com.devian.foundation: 0.1.0` (최소) |
 
 ---
 
@@ -199,13 +197,13 @@ keyed table이 없는 도메인의 경우:
 - Runtime 코드에서 `UnityEngine.*` namespace 직접 참조 금지.
 - **서브네임스페이스 사용 금지**: Editor 생성물도 `namespace Devian` 단일 사용.
 - **clean+copy 정책 무시 금지**: targetDir에 수동으로만 파일을 두면 재빌드 시 삭제됨.
-- **TableID 베이스 클래스 중복 정의 금지**: `com.devian.unity`가 제공하는 베이스만 사용.
+- **TableID 베이스 클래스 중복 정의 금지**: `com.devian.foundation`이 제공하는 베이스만 사용.
 
 ---
 
 ## Reference
 
-- Related: `skills/devian-unity/20-packages/com.devian.unity/SKILL.md` (TableID 베이스 클래스)
+- Related: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT, TableID 베이스 클래스)
 - Related: `skills/devian-unity/02-unity-bundles/SKILL.md`
 - Related: `skills/devian-unity/03-package-metadata/SKILL.md`
 - Related: `skills/devian/03-ssot/SKILL.md`

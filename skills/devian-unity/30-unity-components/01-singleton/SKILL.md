@@ -520,7 +520,7 @@ namespace Devian
 ### 파일 위치 (고정)
 
 ```
-com.devian.unity/Runtime/
+com.devian.foundation/Runtime/Unity/
 ├── _Shared/
 │   └── UnityMainThread.cs     (공용 내부 헬퍼)
 └── Singleton/
@@ -577,5 +577,5 @@ UnityEngine.Object.Destroy(gameObject);
 ## 11. Reference
 
 - Parent: `skills/devian-unity/30-unity-components/SKILL.md`
-- Related: `skills/devian-unity/20-packages/com.devian.unity/SKILL.md`
+- Related: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT)
 - Related: `skills/devian-unity/30-unity-components/00-unity-object-destruction/SKILL.md` (Destroy 규약)

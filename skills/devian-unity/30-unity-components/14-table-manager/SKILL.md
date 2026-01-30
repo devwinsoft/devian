@@ -160,6 +160,13 @@ if (mTbLoaders.ContainsKey(baseTableName))
     throw new InvalidOperationException(...);
 ```
 
+### TbLoader 등록 SSOT (Hard Rule)
+
+- TB loader (`RegisterTbLoader`) 등록의 SSOT는 **도메인 UPM의 Generated `DomainTableRegistry.g.cs`** 이다.
+- 기능별 수기 Registry(예: SoundVoiceTableRegistry)는 **절대 TbLoader를 등록하지 않는다.**
+  - 수기 Registry의 책임은 "델리게이트 연결/어댑터 캐시/도메인 내부 wiring"에 한정한다.
+- 같은 baseTableName 중복 등록은 즉시 FAIL이다. (InvalidOperationException)
+
 ---
 
 ## API 명세
@@ -479,14 +486,13 @@ internal static class DomainTableRegistry
 
 ## 도메인 패키지 의존성 주입 규칙 (Hard Rule)
 
-**모든 도메인 UPM 패키지는 com.devian.unity에 의존해야 한다.**
+**모든 도메인 UPM 패키지는 com.devian.foundation에 의존해야 한다.**
 
 ### package.json dependencies
 
 ```json
 "dependencies": {
-  "com.devian.core": "0.1.0",
-  "com.devian.unity": "0.1.0"
+  "com.devian.foundation": "0.1.0"
 }
 ```
 
@@ -509,9 +515,9 @@ internal static class DomainTableRegistry
 
 | 역할 | 경로 |
 |------|------|
-| TableManager | `framework-cs/upm/com.devian.unity/Runtime/Table/TableManager.cs` |
-| TableFormat | `framework-cs/upm/com.devian.unity/Runtime/Table/TableFormat.cs` |
-| Pb64Loader | `framework-cs/upm/com.devian.core/Runtime/Core/Pb64Loader.cs` |
+| TableManager | `framework-cs/upm/com.devian.foundation/Runtime/Unity/Table/TableManager.cs` |
+| TableFormat | `framework-cs/upm/com.devian.foundation/Runtime/Core/Table/TableFormat.cs` |
+| Pb64Loader | `framework-cs/upm/com.devian.foundation/Runtime/Core/Core/Pb64Loader.cs` |
 | TB 코드젠 | `framework-ts/tools/builder/generators/table.js` |
 | UPM wrapper 생성 | `framework-ts/tools/builder/build.js` |
 

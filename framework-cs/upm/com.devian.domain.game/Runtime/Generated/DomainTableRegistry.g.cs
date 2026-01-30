@@ -22,9 +22,15 @@ namespace Devian.Domain.Game
             global::Devian.TableManager.Instance.RegisterTbLoader("TestSheet", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
+                {
                     TB_TestSheet.LoadFromNdjson(text);
+                    TB_TestSheet._AfterLoad();
+                }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
                     TB_TestSheet.LoadFromPb64Binary(bin);
+                    TB_TestSheet._AfterLoad();
+                }
             });
 
             global::Devian.TableManager.Instance.RegisterStLoader("UIText", (format, lang, text, pb64Text) =>

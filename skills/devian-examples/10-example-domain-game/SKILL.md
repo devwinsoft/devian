@@ -25,8 +25,8 @@ AppliesTo: v10
 
 | 유형 | 경로 | 설명 |
 |------|------|------|
-| Tables | `devian/input/Game/tables/TestTable.xlsx` | 테이블 예제 |
-| Contracts | `devian/input/Game/contracts/TestContract.json` | 컨트랙트 예제 |
+| Tables | `devian/input/Domains/Game/tables/TestTable.xlsx` | 테이블 예제 |
+| Contracts | `devian/input/Domains/Game/contracts/TestContract.json` | 컨트랙트 예제 |
 
 ### 빌드 생성물
 
@@ -45,8 +45,8 @@ AppliesTo: v10
 ## 빌드 흐름 개념
 
 ```
-input/Game/tables/*.xlsx
-input/Game/contracts/*.json
+input/Domains/Game/tables/*.xlsx
+input/Domains/Game/contracts/*.json
         ↓
    [build.js]
         ↓

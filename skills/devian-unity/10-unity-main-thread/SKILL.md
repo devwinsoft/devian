@@ -22,8 +22,8 @@ AppliesTo: v10
 
 | 파일 | 설명 |
 |------|------|
-| `com.devian.unity/Runtime/_Shared/UnityMainThread.cs` | 메인 스레드 감지 헬퍼 |
-| `com.devian.unity/Runtime/_Shared/UnityMainThreadDispatcher.cs` | 백그라운드→메인 스레드 디스패처 |
+| `com.devian.foundation/Runtime/Unity/_Shared/UnityMainThread.cs` | 메인 스레드 감지 헬퍼 |
+| `com.devian.foundation/Runtime/Unity/_Shared/UnityMainThreadDispatcher.cs` | 백그라운드→메인 스레드 디스패처 |
 
 ### 소유권 정책 (Hard Rule)
 
@@ -31,8 +31,8 @@ AppliesTo: v10
 
 | 항목 | 정책 |
 |------|------|
-| 정본 | `framework-cs/upm/com.devian.unity/Runtime/_Shared/` |
-| 복사본 | `framework-cs/apps/UnityExample/Packages/com.devian.unity/Runtime/_Shared/` |
+| 정본 | `framework-cs/upm/com.devian.foundation/Runtime/Unity/_Shared/` |
+| 복사본 | `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Runtime/Unity/_Shared/` |
 | 생성기 | `Runtime/Generated/**`만 다룸 — `_Shared`는 건드리지 않음 |
 
 > **Note:** 생성기는 `Runtime/_Shared`를 clean/generate 하지 않는다. 이 파일들은 수기 유지되며, 빌더가 upm → Packages로 패키지 레벨 복사(sync)를 수행한다.
@@ -102,8 +102,8 @@ UnityMainThreadDispatcher ← UnityLogSink (백그라운드 로그 디스패치)
 
 ## DoD (완료 정의) — Hard Gate
 
-- [ ] `com.devian.unity/Runtime/_Shared/UnityMainThread.cs` 존재
-- [ ] `com.devian.unity/Runtime/_Shared/UnityMainThreadDispatcher.cs` 존재
+- [ ] `com.devian.foundation/Runtime/Unity/_Shared/UnityMainThread.cs` 존재
+- [ ] `com.devian.foundation/Runtime/Unity/_Shared/UnityMainThreadDispatcher.cs` 존재
 - [ ] UPM 경로와 UnityExample/Packages 경로의 파일 내용이 동일함
 - [ ] Dispatcher는 `maxPerFrame` 제한(500)을 가짐
 - [ ] Unity API 호출(`Debug.Log*`)은 메인 스레드에서만 수행됨
@@ -128,7 +128,7 @@ UnityMainThreadDispatcher ← UnityLogSink (백그라운드 로그 디스패치)
 
 ## Reference
 
-- Related: `skills/devian-unity/20-packages/com.devian.unity/SKILL.md`
+- Related: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT)
 - Related: `skills/devian-unity/30-unity-components/00-unity-object-destruction/SKILL.md`
 - Related: `skills/devian-common/12-feature-logger/SKILL.md`
 - Related: `skills/devian-unity/03-ssot/SKILL.md` (소유권 정책)

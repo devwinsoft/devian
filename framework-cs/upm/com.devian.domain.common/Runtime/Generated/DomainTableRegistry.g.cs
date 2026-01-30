@@ -22,9 +22,15 @@ namespace Devian.Domain.Common
             global::Devian.TableManager.Instance.RegisterTbLoader("COMPLEX_POLICY", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
+                {
                     TB_COMPLEX_POLICY.LoadFromNdjson(text);
+                    TB_COMPLEX_POLICY._AfterLoad();
+                }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
                     TB_COMPLEX_POLICY.LoadFromPb64Binary(bin);
+                    TB_COMPLEX_POLICY._AfterLoad();
+                }
             });
 
         }

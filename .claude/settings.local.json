@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C \"C:/Users/USER/.claude-worktrees/devian/loving-greider\" show HEAD:input/Protocols/Game/generated/C2Game.opcodes.json)",
+      "Bash(git -C \"C:/Users/USER/.claude-worktrees/devian/loving-greider\" show HEAD:input/Protocols/Game/generated/C2Game.tags.json)",
+      "Bash(git -C \"C:/Users/USER/.claude-worktrees/devian/loving-greider\" show HEAD:input/Protocols/Game/generated/Game2C.opcodes.json)",
+      "Bash(git -C \"C:/Users/USER/.claude-worktrees/devian/loving-greider\" show HEAD:input/Protocols/Game/generated/Game2C.tags.json)",
+      "Bash(npm install:*)",
+      "Bash(test:*)",
+      "Bash(dotnet build:*)",
+      "Bash(python3:*)",
+      "Bash(python:*)",
+      "Bash(pwsh:*)",
+      "Bash(powershell -ExecutionPolicy Bypass -File:*)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File ./sync-upm-to-packages.ps1)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -Command \"cd ''C:\\\\Users\\\\USER\\\\.claude-worktrees\\\\devian\\\\loving-greider\\\\framework-cs''; .\\\\sync-upm-to-packages.ps1\")",
+      "Bash(bash build.sh:*)",
+      "Bash(node build.js:*)",
+      "Bash(where:*)",
+      "Bash(cmd //c \"mklink /D com.devian.domain.sound ..\\\\..\\\\..\\\\upm\\\\com.devian.domain.sound\")",
+      "Bash(bash:*)",
+      "Bash(/c/Program Files/nodejs/npm.cmd ci)",
+      "Bash(cmd.exe /c \"where npm\")",
+      "Bash(pip install:*)",
+      "Bash(node framework-ts/tools/builder/build.js:*)",
+      "Bash(grep:*)"
+    ]
+  }
+}

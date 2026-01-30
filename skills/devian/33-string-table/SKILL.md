@@ -38,9 +38,9 @@ AppliesTo: v10
 {
   "domains": {
     "Game": {
-      "tableDir": "Game/tables",
+      "tableDir": "Domains/Game/tables",
       "tableFiles": ["*.xlsx"],
-      "stringDir": "Game/strings",
+      "stringDir": "Domains/Game/strings",
       "stringFiles": ["*.xlsx"]
     }
   }
@@ -345,8 +345,8 @@ private static SystemLanguage _loadedLanguage;
 | 역할 | 경로 |
 |------|------|
 | 생성기 | `framework-ts/tools/builder/generators/string-table.js` |
-| 런타임(UPM) | `framework-cs/upm/com.devian.unity/Runtime/Table/TableManager.cs` |
-| 런타임(Example) | `framework-cs/apps/UnityExample/Packages/com.devian.unity/Runtime/Table/TableManager.cs` |
+| 런타임(UPM) | `framework-cs/upm/com.devian.foundation/Runtime/Unity/Table/TableManager.cs` |
+| 런타임(Example) | `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Runtime/Unity/Table/TableManager.cs` |
 | ST_ wrapper | UPM 도메인 패키지 `Runtime/Generated/ST_{TableName}.g.cs` |
 
 ---

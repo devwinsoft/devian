@@ -4,8 +4,15 @@
   "private": true,
   "workspaces": [
     "module/*",
-    "apps/*"
+    "apps/*",
+    "tools/*"
   ],
+  "scripts": {
+    "builder": "npm -w builder run build --",
+    "archive": "npm -w archive run archive --",
+    "dev:client": "npm -w game-client run dev",
+    "start:server": "npm -w game-server run start"
+  },
   "devDependencies": {
     "typescript": "^5.3.0",
     "xlsx": "^0.18.5"
