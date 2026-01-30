@@ -38,9 +38,9 @@ AppliesTo: v10
 {
   "domains": {
     "Game": {
-      "tableDir": "Game/tables",
+      "tableDir": "Domains/Game/tables",
       "tableFiles": ["*.xlsx"],
-      "stringDir": "Game/strings",
+      "stringDir": "Domains/Game/strings",
       "stringFiles": ["*.xlsx"]
     }
   }

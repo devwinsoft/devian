@@ -10,6 +10,15 @@ SoundManager는 테이블 기반으로 사운드 재생/풀/채널/쿨타임을 
 
 ---
 
+## Domain Ownership
+
+- SoundManager/VoiceManager/SoundChannel/SoundPlay는 **Sound 도메인 소유**이다.
+- TB_SOUND/TB_VOICE 테이블은 Sound 도메인 DLL에 위치한다.
+- SoundVoiceTableRegistry는 Sound 도메인에서 테이블과 매니저를 연결한다.
+- 자세한 도메인 구조는 `19-sound-domain/SKILL.md` 참조.
+
+---
+
 ## Architecture
 
 | 컴포넌트 | 책임 |
@@ -191,6 +200,12 @@ yield return SoundManager.Instance._loadVoiceBySoundIdsAsync(
 
 ## SoundVoiceTableRegistry
 
+### 위치 및 책임
+
+- **SoundVoiceTableRegistry는 Sound 도메인에 존재**한다.
+- `RuntimeInitializeOnLoadMethod(BeforeSceneLoad)`로 매니저와 테이블을 연결한다.
+- 현재는 Game 도메인에 위치하지만, **Phase 2에서 Sound 도메인으로 이동** 예정.
+
 ### Adapter 패턴 (Hard Rule)
 
 - **SoundVoiceTableRegistry**는 Generated 테이블(TB_SOUND, TB_VOICE)과 Manager(SoundManager, VoiceManager)를 연결한다.
@@ -269,5 +284,6 @@ SoundManager.I.UnloadByKey("BATTLE");
 
 ## See Also
 
+- `skills/devian-unity/30-unity-components/19-sound-domain/SKILL.md` — **Sound 도메인 설계 (SSOT)**
 - `skills/devian-unity/30-unity-components/16-sound-tables/SKILL.md` — TB_SOUND/TB_VOICE 테이블 규약
 - `skills/devian-unity/30-unity-components/18-voice-table-resolve/SKILL.md` — Voice Resolve 규약

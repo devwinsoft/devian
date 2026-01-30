@@ -160,6 +160,13 @@ if (mTbLoaders.ContainsKey(baseTableName))
     throw new InvalidOperationException(...);
 ```
 
+### TbLoader 등록 SSOT (Hard Rule)
+
+- TB loader (`RegisterTbLoader`) 등록의 SSOT는 **도메인 UPM의 Generated `DomainTableRegistry.g.cs`** 이다.
+- 기능별 수기 Registry(예: SoundVoiceTableRegistry)는 **절대 TbLoader를 등록하지 않는다.**
+  - 수기 Registry의 책임은 "델리게이트 연결/어댑터 캐시/도메인 내부 wiring"에 한정한다.
+- 같은 baseTableName 중복 등록은 즉시 FAIL이다. (InvalidOperationException)
+
 ---
 
 ## API 명세

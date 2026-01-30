@@ -446,7 +446,7 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 **input_common.json 내의 모든 상대 경로는 input_common.json이 위치한 디렉토리 기준으로 해석된다.**
 
 예시 (input_common.json이 `input/input_common.json`에 있을 때):
-- `contractDir: "Common/contracts"` → `input/Common/contracts`
+- `contractDir: "Domains/Common/contracts"` → `input/Domains/Common/contracts`
 - `csTargetDir: "../framework/cs"` → `framework/cs`
 - `tempDir: "temp"` → `input/temp`
 
@@ -506,6 +506,12 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 > **왜 충돌 예외를 허용하지 않나?**  
 > upm는 수동 관리, upm은 빌드 생성. 둘 다 "완벽한 UPM 패키지"로서 동일한 자격을 가진다.
 > 같은 이름의 패키지가 양쪽에 있으면 어느 것이 정본인지 모호해지므로, 빌드 시점에 즉시 FAIL하여 명확한 정리를 강제한다.
+
+### Hard Rule: staticUpmPackages excludes domain packages
+
+- `staticUpmPackages`에는 `com.devian.domain.*` 패키지를 포함하지 않는다.
+- Domain 패키지(`com.devian.domain.{DomainKey}`)는 `domains` 파이프라인이 생성/동기화/clean+copy로 관리한다.
+- Domain 패키지를 `staticUpmPackages`에 포함하면 `Runtime/Generated`가 static copy 단계에서 덮어쓰기/삭제될 수 있으므로 **빌드 FAIL로 본다.**
 
 ### Static UPM Packages
 
@@ -600,8 +606,8 @@ DATA 입력은 input_common.json의 `domains` 섹션이 정의한다.
 
 입력 경로는 input_common.json이 정본이다. 예:
 
-- `domains[Common].contractDir = Common/contracts`
-- `domains[Common].tableDir = Common/tables`
+- `domains[Common].contractDir = Domains/Common/contracts`
+- `domains[Common].tableDir = Domains/Common/tables`
 
 **키 변경 (레거시 호환):**
 - `contractDir` (새 키), `contractsDir` (레거시/금지)
@@ -930,8 +936,8 @@ C# 모듈은 레포에 `.csproj`/`.sln`을 포함하여 dotnet 빌드 및 IDE를
 > **진입점:** `skills/devian-examples/00-examples-policy/SKILL.md`
 
 예제 입력 위치:
-- `devian/input/Game/contracts/**` — 컨트랙트 예제
-- `devian/input/Game/tables/**` — 테이블 예제
+- `devian/input/Domains/Game/contracts/**` — 컨트랙트 예제
+- `devian/input/Domains/Game/tables/**` — 테이블 예제
 - `devian/input/Protocols/Game/**` — 프로토콜 예제
 
 ---

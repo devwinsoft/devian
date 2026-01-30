@@ -2221,9 +2221,15 @@ export * from './features';
             lines.push(`            global::Devian.TableManager.Instance.RegisterTbLoader("${tableName}", (format, text, bin) =>`);
             lines.push('            {');
             lines.push(`                if (format == global::Devian.TableFormat.Json && text != null)`);
+            lines.push('                {');
             lines.push(`                    TB_${tableName}.LoadFromNdjson(text);`);
+            lines.push(`                    TB_${tableName}._AfterLoad();`);
+            lines.push('                }');
             lines.push(`                else if (format == global::Devian.TableFormat.Pb64 && bin != null)`);
+            lines.push('                {');
             lines.push(`                    TB_${tableName}.LoadFromPb64Binary(bin);`);
+            lines.push(`                    TB_${tableName}._AfterLoad();`);
+            lines.push('                }');
             lines.push('            });');
             lines.push('');
         }

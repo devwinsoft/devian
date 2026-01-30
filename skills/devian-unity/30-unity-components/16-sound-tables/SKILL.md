@@ -10,6 +10,26 @@ TB_SOUND / TB_VOICE 테이블의 책임 분리와 컬럼 규약을 고정한다.
 
 ---
 
+## Domain Ownership (Important)
+
+### 테이블 소유 도메인
+
+- **최종적으로 TB_SOUND, TB_VOICE는 Sound 도메인 소유**이다.
+- 네임스페이스 목표: `Devian.Domain.Sound`
+- 현재는 Game 도메인(`Devian.Domain.Game`)에 있지만, **Phase 2에서 Sound 도메인으로 이동** 예정.
+
+### 현재 상태 vs 목표 상태
+
+| 항목 | 현재 상태 | 목표 상태 (Phase 2 후) |
+|------|----------|----------------------|
+| 데이터 파일 | `input/Domains/Game/tables/SoundTable.xlsx` | `input/Domains/Sound/tables/SoundTable.xlsx` |
+| Generated 위치 | `com.devian.domain.game` | `com.devian.domain.sound` |
+| 네임스페이스 | `Devian.Domain.Game` | `Devian.Domain.Sound` |
+
+> 자세한 이관 계획은 `19-sound-domain/SKILL.md` 참조.
+
+---
+
 ## Hard Rules
 
 ### partial class 패턴 (Generated + 확장)
@@ -114,5 +134,6 @@ TB_SOUND / TB_VOICE 테이블의 책임 분리와 컬럼 규약을 고정한다.
 
 ## See Also
 
+- `skills/devian-unity/30-unity-components/19-sound-domain/SKILL.md` — **Sound 도메인 설계 (SSOT)**
 - `skills/devian-unity/30-unity-components/17-sound-manager/SKILL.md` — SoundManager 규약
 - `skills/devian-unity/30-unity-components/18-voice-table-resolve/SKILL.md` — Voice Resolve 규약

@@ -244,6 +244,7 @@ import { IEntity, IEntityKey } from '@devian/core';
 | `TryGet(key, out row)` | Key로 조회, out 패턴 (Key 있는 경우) |
 | `LoadFromJson(json)` | JSON 배열 로드 |
 | `LoadFromNdjson(ndjson)` | NDJSON 로드 |
+| `_AfterLoad()` | AfterLoad 훅 (internal, 아래 섹션 참조) |
 
 ### TS Container (export class TB_{SheetName})
 
@@ -256,6 +257,20 @@ import { IEntity, IEntityKey } from '@devian/core';
 | `has(key)` | Key 존재 여부 (Key 있는 경우) |
 | `loadFromJson(json)` | NDJSON 로드 |
 | `saveToJson()` | NDJSON 저장 |
+
+---
+
+## AfterLoad Hook Contract (Hard Rule)
+
+빌더는 TableManager가 TB insert를 수행한 직후, 각 TB 컨테이너에 대해 AfterLoad 훅을 호출한다.
+
+- 빌더는 `TB_*` insert 직후 반드시 `TB_*._AfterLoad()`를 호출해야 한다.
+- `TB_*` 컨테이너는 항상 다음을 제공해야 한다:
+  - `internal static void _AfterLoad()` (항상 존재)
+  - `static partial void _OnAfterLoad()` (옵션 훅, 구현 없으면 no-op)
+- `_AfterLoad()`는 내부에서 `_OnAfterLoad()`를 호출한다.
+
+이 훅은 "인덱스 빌드/캐시 초기화/도메인 내부 후처리"를 **결정적으로** 수행하기 위한 표준 진입점이다.
 
 ---
 

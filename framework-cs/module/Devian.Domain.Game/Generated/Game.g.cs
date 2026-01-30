@@ -36,48 +36,6 @@ namespace Devian.Domain.Game
     // Table Entities
     // ================================================================
 
-    /// <summary>SOUND row</summary>
-    public sealed class SOUND : IEntityKey<int>
-    {
-        public int Row_id { get; set; }
-        public string Sound_id { get; set; } = string.Empty;
-        public string Key { get; set; } = string.Empty;
-        public string Source { get; set; } = string.Empty;
-        public string Bundle_key { get; set; } = string.Empty;
-        public string Path { get; set; } = string.Empty;
-        public string Channel { get; set; } = string.Empty;
-        public bool Loop { get; set; }
-        public float Cooltime { get; set; }
-        public bool Is3d { get; set; }
-        public float Area_close { get; set; }
-        public float Area_far { get; set; }
-        public int Weight { get; set; }
-        public float Volume_scale { get; set; }
-        public float Pitch_min { get; set; }
-        public float Pitch_max { get; set; }
-
-        public int GetKey() => Row_id;
-    }
-
-    /// <summary>VOICE row</summary>
-    public sealed class VOICE : IEntityKey<string>
-    {
-        public string Voice_id { get; set; } = string.Empty;
-        public string Text_l10n_key { get; set; } = string.Empty;
-        public string Speaker { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
-        public int Priority { get; set; }
-        public string Group_key { get; set; } = string.Empty;
-        public float Cooltime { get; set; }
-        public string Clip_Korean { get; set; } = string.Empty;
-        public string Clip_English { get; set; } = string.Empty;
-        public string Clip_Japanese { get; set; } = string.Empty;
-        public string Clip_ChineseSimplified { get; set; } = string.Empty;
-        public string Clip_ChineseTraditional { get; set; } = string.Empty;
-
-        public string GetKey() => Voice_id;
-    }
-
     /// <summary>TestSheet row</summary>
     public sealed class TestSheet : IEntityKey<int>
     {
@@ -102,142 +60,6 @@ namespace Devian.Domain.Game
     // ================================================================
     // Table Containers
     // ================================================================
-
-    /// <summary>TB_SOUND container</summary>
-    public static partial class TB_SOUND
-    {
-        private static readonly Dictionary<int, SOUND> _dict = new();
-        private static readonly List<SOUND> _list = new();
-
-        public static int Count => _list.Count;
-
-        public static void Clear()
-        {
-            _dict.Clear();
-            _list.Clear();
-        }
-
-        public static IReadOnlyList<SOUND> GetAll() => _list;
-
-        public static SOUND? Get(int key)
-        {
-            return _dict.TryGetValue(key, out var row) ? row : null;
-        }
-
-        public static bool TryGet(int key, out SOUND? row)
-        {
-            return _dict.TryGetValue(key, out row);
-        }
-
-        public static void LoadFromJson(string json)
-        {
-            Clear();
-            var rows = JsonConvert.DeserializeObject<List<SOUND>>(json);
-            if (rows == null) return;
-            foreach (var row in rows)
-            {
-                if (row == null) continue;
-                _list.Add(row);
-                _dict[row.Row_id] = row;
-            }
-        }
-
-        public static void LoadFromNdjson(string ndjson)
-        {
-            Clear();
-            using var reader = new StringReader(ndjson);
-            string? line;
-            while ((line = reader.ReadLine()) != null)
-            {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<SOUND>(line);
-                if (row == null) continue;
-                _list.Add(row);
-                _dict[row.Row_id] = row;
-            }
-        }
-
-        public static void LoadFromPb64Binary(byte[] rawBinary)
-        {
-            Clear();
-            Pb64Loader.ParseRows(rawBinary, jsonRow =>
-            {
-                if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<SOUND>(jsonRow);
-                if (row == null) return;
-                _list.Add(row);
-                _dict[row.Row_id] = row;
-            });
-        }
-    }
-
-    /// <summary>TB_VOICE container</summary>
-    public static partial class TB_VOICE
-    {
-        private static readonly Dictionary<string, VOICE> _dict = new();
-        private static readonly List<VOICE> _list = new();
-
-        public static int Count => _list.Count;
-
-        public static void Clear()
-        {
-            _dict.Clear();
-            _list.Clear();
-        }
-
-        public static IReadOnlyList<VOICE> GetAll() => _list;
-
-        public static VOICE? Get(string key)
-        {
-            return _dict.TryGetValue(key, out var row) ? row : null;
-        }
-
-        public static bool TryGet(string key, out VOICE? row)
-        {
-            return _dict.TryGetValue(key, out row);
-        }
-
-        public static void LoadFromJson(string json)
-        {
-            Clear();
-            var rows = JsonConvert.DeserializeObject<List<VOICE>>(json);
-            if (rows == null) return;
-            foreach (var row in rows)
-            {
-                if (row == null) continue;
-                _list.Add(row);
-                _dict[row.Voice_id] = row;
-            }
-        }
-
-        public static void LoadFromNdjson(string ndjson)
-        {
-            Clear();
-            using var reader = new StringReader(ndjson);
-            string? line;
-            while ((line = reader.ReadLine()) != null)
-            {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<VOICE>(line);
-                if (row == null) continue;
-                _list.Add(row);
-                _dict[row.Voice_id] = row;
-            }
-        }
-
-        public static void LoadFromPb64Binary(byte[] rawBinary)
-        {
-            Clear();
-            Pb64Loader.ParseRows(rawBinary, jsonRow =>
-            {
-                if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<VOICE>(jsonRow);
-                if (row == null) return;
-                _list.Add(row);
-                _dict[row.Voice_id] = row;
-            });
-        }
-    }
 
     /// <summary>TB_TestSheet container</summary>
     public static partial class TB_TestSheet
@@ -305,6 +127,18 @@ namespace Devian.Domain.Game
                 _dict[row.Number] = row;
             });
         }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
     }
 
     /// <summary>TB_VECTOR3 container</summary>
@@ -358,31 +192,23 @@ namespace Devian.Domain.Game
                 _list.Add(row);
             });
         }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
     }
 
     // ================================================================
     // Table ID Types (for Inspector binding)
     // ================================================================
-
-    /// <summary>Inspector-bindable ID for SOUND</summary>
-    [Serializable]
-    public sealed class SOUND_ID
-    {
-        public int Value;
-
-        public static implicit operator int(SOUND_ID id) => id.Value;
-        public static implicit operator SOUND_ID(int value) => new SOUND_ID { Value = value };
-    }
-
-    /// <summary>Inspector-bindable ID for VOICE</summary>
-    [Serializable]
-    public sealed class VOICE_ID
-    {
-        public string Value;
-
-        public static implicit operator string(VOICE_ID id) => id.Value;
-        public static implicit operator VOICE_ID(string value) => new VOICE_ID { Value = value };
-    }
 
     /// <summary>Inspector-bindable ID for TestSheet</summary>
     [Serializable]
@@ -397,8 +223,6 @@ namespace Devian.Domain.Game
     /// <summary>Table ID validation extensions</summary>
     public static class TableIdExtensions
     {
-        public static bool IsValid(this SOUND_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
-        public static bool IsValid(this VOICE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this TestSheet_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
     }
 

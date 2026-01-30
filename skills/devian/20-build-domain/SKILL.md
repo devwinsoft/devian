@@ -76,9 +76,9 @@ node framework-ts/tools/builder/build.js <buildJson>
 ```json
 {
   "DomainKey": {
-    "contractDir": "Game/contracts",
+    "contractDir": "Domains/Game/contracts",
     "contractFiles": ["*.json"],
-    "tableDir": "Game/tables",
+    "tableDir": "Domains/Game/tables",
     "tableFiles": ["*.xlsx"]
   }
 }
@@ -140,6 +140,12 @@ node framework-ts/tools/builder/build.js <buildJson>
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | `staticUpmPackages` | string[] | 정적 UPM 패키지 목록 |
+
+### Hard Rule: Do not static-copy domain packages
+
+- `staticUpmPackages`는 "소스 기반 정적 UPM 패키지"에만 사용한다. (예: `com.devian.unity`, samples 등)
+- `com.devian.domain.*` 는 domain 빌드 산출물이므로 static 단계에 포함하면 안 된다.
+- 위 규칙 위반 시, `Runtime/Generated`가 삭제되거나 빈 상태로 덮어써질 수 있으므로 FAIL.
 
 ---
 
@@ -236,9 +242,18 @@ Game 도메인/프로토콜 예제의 상세 설명은 별도 스킬 문서를 �
 > **예제 정책:** `skills/devian-examples/00-examples-policy/SKILL.md`
 
 예제 입력 위치:
-- `devian/input/Game/contracts/**`
-- `devian/input/Game/tables/**`
+- `devian/input/Domains/Game/contracts/**`
+- `devian/input/Domains/Game/tables/**`
 - `devian/input/Protocols/Game/**`
+
+---
+
+## Verification Checklist
+
+1) `input/config.json`의 `staticUpmPackages`에 `com.devian.domain.*` 가 포함되어 있지 않다.
+2) 빌드 후 `framework-cs/upm/com.devian.domain.sound/Runtime/Generated/Sound.g.cs` 가 존재한다.
+3) 빌드 후 `framework-cs/apps/UnityExample/Packages/com.devian.domain.sound/Runtime/Generated/Sound.g.cs` 가 존재한다.
+4) Unity 컴파일 에러 `CS0246 (SOUND/VOICE not found)` 가 발생하지 않는다.
 
 ---
 

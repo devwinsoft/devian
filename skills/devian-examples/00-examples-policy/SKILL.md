@@ -25,8 +25,8 @@ AppliesTo: v10
 
 | 입력 유형 | 경로 |
 |-----------|------|
-| Contracts | `devian/input/Game/contracts/**` |
-| Tables | `devian/input/Game/tables/**` |
+| Contracts | `devian/input/Domains/Game/contracts/**` |
+| Tables | `devian/input/Domains/Game/tables/**` |
 | Protocols | `devian/input/Protocols/Game/**` |
 
 > **Note:** 위 경로의 파일들은 빌드 시 `com.devian.domain.game`, `com.devian.protocol.game` 등으로 생성된다.

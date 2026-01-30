@@ -19,28 +19,18 @@ namespace Devian.Domain.Game
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Register()
         {
-            global::Devian.TableManager.Instance.RegisterTbLoader("SOUND", (format, text, bin) =>
-            {
-                if (format == global::Devian.TableFormat.Json && text != null)
-                    TB_SOUND.LoadFromNdjson(text);
-                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
-                    TB_SOUND.LoadFromPb64Binary(bin);
-            });
-
-            global::Devian.TableManager.Instance.RegisterTbLoader("VOICE", (format, text, bin) =>
-            {
-                if (format == global::Devian.TableFormat.Json && text != null)
-                    TB_VOICE.LoadFromNdjson(text);
-                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
-                    TB_VOICE.LoadFromPb64Binary(bin);
-            });
-
             global::Devian.TableManager.Instance.RegisterTbLoader("TestSheet", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
+                {
                     TB_TestSheet.LoadFromNdjson(text);
+                    TB_TestSheet._AfterLoad();
+                }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
                     TB_TestSheet.LoadFromPb64Binary(bin);
+                    TB_TestSheet._AfterLoad();
+                }
             });
 
             global::Devian.TableManager.Instance.RegisterStLoader("UIText", (format, lang, text, pb64Text) =>

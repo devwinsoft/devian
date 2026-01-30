@@ -10,6 +10,15 @@ Voice는 TB_VOICE 단일 테이블을 **로딩 시점에 "현재 언어용 맵"�
 
 ---
 
+## Domain Ownership
+
+- VoiceManager는 **Sound 도메인 소유**이다.
+- TB_VOICE 테이블은 Sound 도메인에 귀속된다.
+- SoundVoiceTableRegistry를 통해 VoiceManager와 TB_VOICE가 연결된다.
+- 자세한 도메인 구조는 `19-sound-domain/SKILL.md` 참조.
+
+---
+
 ## Hard Rules
 
 ### SystemLanguage 사용 제한 (가장 중요)
@@ -222,6 +231,7 @@ VoiceManager.I.ResolveForLanguage(SystemLanguage.English);
 
 ## See Also
 
+- `skills/devian-unity/30-unity-components/19-sound-domain/SKILL.md` — **Sound 도메인 설계 (SSOT)**
 - `skills/devian-unity/30-unity-components/16-sound-tables/SKILL.md` — TB_SOUND/TB_VOICE 테이블 규약
 - `skills/devian-unity/30-unity-components/17-sound-manager/SKILL.md` — SoundManager 규약
 - `skills/devian-unity/30-unity-components/14-table-manager/SKILL.md` — TableManager (테이블 로딩)
