@@ -21,7 +21,9 @@
       "Bash(bash:*)",
       "Bash(/c/Program Files/nodejs/npm.cmd ci)",
       "Bash(cmd.exe /c \"where npm\")",
-      "Bash(pip install:*)"
+      "Bash(pip install:*)",
+      "Bash(node framework-ts/tools/builder/build.js:*)",
+      "Bash(grep:*)"
     ]
   }
 }

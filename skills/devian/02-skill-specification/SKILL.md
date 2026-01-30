@@ -58,8 +58,8 @@ SSOT의 용어/플레이스홀더 표준을 그대로 따른다.
 > `{dataConfig.bundleDirs}`는 배열이다. 문서에서 배열 내 개별 요소를 지칭할 때 `{bundleDir}`로 표기할 수 있다.
 
 **금지 플레이스홀더:**
-- `{csTargetDir}`, `{tsTargetDir}`, `{dataTargetDirs}`, `{dataTargetDir}`, `{upmTargetDir}` — deprecated
-- `{dataConfig.tableDirs}` — deprecated, `{dataConfig.bundleDirs}` 사용
+- `{csTargetDir}`, `{tsTargetDir}`, `{dataTargetDirs}`, `{dataTargetDir}`, `{upmTargetDir}` — 금지
+- `{dataConfig.tableDirs}` — 금지, `{dataConfig.bundleDirs}` 사용
 
 **"domain", "name", "{domain}", "{name}" 단독 사용 금지.**
 

@@ -92,9 +92,7 @@ Samples~/Network/
 
 | 패키지 | 필수 | 용도 |
 |--------|------|------|
-| `com.devian.core` | ✅ | 핵심 인터페이스 |
-| `com.devian.network` | ✅ | 네트워크 런타임 |
-| `com.devian.unity` | ✅ | Unity 네트워크 클라이언트 |
+| `com.devian.foundation` | ✅ | 핵심 인터페이스 + Unity 네트워크 클라이언트 |
 | `com.devian.protocol.game` | ✅ | Sample 프로토콜 (테스트용) |
 
 ---

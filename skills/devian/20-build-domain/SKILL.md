@@ -133,19 +133,19 @@ node framework-ts/tools/builder/build.js <buildJson>
 | `bundleDirs` | **✓ 필수** | 번들 출력 루트 디렉토리 배열 |
 
 > **CRITICAL:** `dataConfig.bundleDirs`가 누락되면 빌드가 **즉시 FAIL**한다.
-> `dataConfig.tableDirs`는 deprecated이며 존재 시 빌드 **즉시 FAIL**한다.
+> `dataConfig.tableDirs`는 금지 필드이며 존재 시 빌드 **즉시 FAIL**한다.
 
-### staticUpmPackages
+### samplePackages
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| `staticUpmPackages` | string[] | 정적 UPM 패키지 목록 |
+| `samplePackages` | string[] | 샘플 패키지 목록 (com.devian.samples만 허용) |
 
-### Hard Rule: Do not static-copy domain packages
+### Hard Rule: samplePackages cannot contain libraries/domains
 
-- `staticUpmPackages`는 "소스 기반 정적 UPM 패키지"에만 사용한다. (예: `com.devian.unity`, samples 등)
-- `com.devian.domain.*` 는 domain 빌드 산출물이므로 static 단계에 포함하면 안 된다.
-- 위 규칙 위반 시, `Runtime/Generated`가 삭제되거나 빈 상태로 덮어써질 수 있으므로 FAIL.
+- `samplePackages`에는 `com.devian.samples`만 포함할 수 있다.
+- `com.devian.foundation` 또는 `com.devian.domain.*` 가 들어가면 FAIL (Generated 덮어쓰기/삭제 위험).
+- `staticUpmPackages` 키는 금지이며 존재 시 FAIL.
 
 ---
 
@@ -216,11 +216,11 @@ UPM: {upmConfig.sourceDir}/com.devian.protocol.{protocolGroupLower}/
 |------|------|
 | `dataConfig.bundleDirs` 누락 | **즉시 FAIL** |
 
-### Deprecated 필드 FAIL
+### Forbidden 필드 FAIL
 
 아래 필드가 존재하면 **즉시 FAIL** 처리됨:
 
-| 위치 | Deprecated 필드 |
+| 위치 | Forbidden 필드 |
 |------|-----------------|
 | `dataConfig` | `tableDirs` |
 | `domains[*]` | `csTargetDir` |
@@ -231,7 +231,7 @@ UPM: {upmConfig.sourceDir}/com.devian.protocol.{protocolGroupLower}/
 | `protocols[*]` | `upmName` |
 | `protocols[*]` | `upmTargetDir` |
 
-> **총 8개** deprecated 필드. 하나라도 발견되면 빌드가 중단된다.
+> **총 8개** 금지 필드. 하나라도 발견되면 빌드가 중단된다.
 
 ---
 
@@ -250,10 +250,17 @@ Game 도메인/프로토콜 예제의 상세 설명은 별도 스킬 문서를 �
 
 ## Verification Checklist
 
-1) `input/config.json`의 `staticUpmPackages`에 `com.devian.domain.*` 가 포함되어 있지 않다.
-2) 빌드 후 `framework-cs/upm/com.devian.domain.sound/Runtime/Generated/Sound.g.cs` 가 존재한다.
-3) 빌드 후 `framework-cs/apps/UnityExample/Packages/com.devian.domain.sound/Runtime/Generated/Sound.g.cs` 가 존재한다.
-4) Unity 컴파일 에러 `CS0246 (SOUND/VOICE not found)` 가 발생하지 않는다.
+1) `input/config.json`에 `samplePackages: ["com.devian.samples"]`만 존재한다.
+2) `input/config.json`에 `staticUpmPackages` 키가 존재하지 않는다 (금지 필드).
+3) 빌드 후 `framework-cs/upm/com.devian.domain.sound/Runtime/Generated/Sound.g.cs` 가 존재한다.
+4) 빌드 후 `framework-cs/apps/UnityExample/Packages/com.devian.domain.sound/Runtime/Generated/Sound.g.cs` 가 존재한다.
+5) samplePackages 처리 이후에도 (3), (4)가 삭제되지 않는다.
+6) Unity 컴파일 에러 `CS0246 (SOUND/VOICE not found)` 가 발생하지 않는다.
+
+## Verification Checklist (Dependencies)
+
+- `framework-cs/upm/**/package.json`에서 `com.devian.core`, `com.devian.unity` dependency가 0개여야 한다.
+- `framework-cs/apps/UnityExample/Packages/**/package.json`에서도 위 dependency가 0개여야 한다.
 
 ---
 

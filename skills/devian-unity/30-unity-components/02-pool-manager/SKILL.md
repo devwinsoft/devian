@@ -356,12 +356,12 @@ internal void SetPoolInfo(int poolId, string poolName)
 
 ### 생성 대상 패키지
 
-- `com.devian.unity`
+- `com.devian.foundation`
 
 ### 생성 위치 (고정)
 
 ```
-com.devian.unity/Runtime/
+com.devian.foundation/Runtime/Unity/
 ├── _Shared/
 │   └── UnityMainThread.cs     (공용 내부 헬퍼)
 └── Pool/
@@ -377,7 +377,7 @@ com.devian.unity/Runtime/
 
 ### 수기 코드 정책 (Static UPM)
 
-- `com.devian.unity`의 `Pool/` 폴더는 **고정 유틸 수기 코드**
+- `com.devian.foundation`의 `Runtime/Unity/Pool/` 폴더는 **고정 유틸 수기 코드**
 - 생성기는 `Generated/` 폴더만 처리하며, `Pool/` 폴더를 clean/generate하지 않음
 - Static UPM은 소스 복사 기반 (`framework-cs/upm/` → `UnityExample/Packages/`)
 

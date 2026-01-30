@@ -41,12 +41,12 @@ upm/{pkg} → UnityExample/Packages/{pkg} (패키지 단위 clean+copy)
 
 ## 금지 경로 가드 (Hard Rule)
 
-### com.devian.unity Editor/Generated 금지
+### com.devian.foundation Editor/Generated 금지
 
-**`com.devian.unity`에는 `Editor/Generated` 폴더가 생성되면 안 된다.**
+**`com.devian.foundation`에는 `Editor/Generated` 폴더가 생성되면 안 된다.**
 
 - Editor/Generated for TableID inspection은 `com.devian.domain.*` 패키지에 속함
-- unity.common에 이 폴더가 존재하면 빌드 **즉시 FAIL**
+- foundation에 이 폴더가 존재하면 빌드 **즉시 FAIL**
 
 빌더 가드 위치: `framework-ts/tools/builder/build.js` - `checkUnityCommonEditorGenerated()`
 
@@ -59,7 +59,7 @@ upm/{pkg} → UnityExample/Packages/{pkg} (패키지 단위 clean+copy)
 
 ### 패키지별 문서
 - `skills/devian-unity/02-unity-bundles/SKILL.md`
-- `skills/devian-unity/20-packages/com.devian.unity/SKILL.md`
+- `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT)
 - `skills/devian-unity/20-packages/com.devian.domain.common/SKILL.md`
 
 ### Unity Components

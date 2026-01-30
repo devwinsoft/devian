@@ -49,10 +49,10 @@ class DevianToolBuilder {
      * SSOT: skills/devian/03-ssot/SKILL.md
      * 
      * Rules:
-     * - config.json: csConfig/tsConfig/dataConfig/upmConfig/staticUpmPackages only
-     *   Forbidden in config: tempDir, domains, protocols
+     * - config.json: csConfig/tsConfig/dataConfig/upmConfig/samplePackages only
+     *   Forbidden in config: tempDir, domains, protocols, staticUpmPackages (forbidden)
      * - input.json: version/configPath/tempDir/domains/protocols only
-     *   Forbidden in input: csConfig/tsConfig/dataConfig/upmConfig/staticUpmPackages
+     *   Forbidden in input: csConfig/tsConfig/dataConfig/upmConfig/samplePackages
      * - All relative paths resolved from buildJsonDir (input json directory)
      * - Merge: deepMerge(config, input), tempDir from input wins
      */
@@ -61,7 +61,7 @@ class DevianToolBuilder {
         const inputJson = JSON.parse(fs.readFileSync(this.buildJsonPath, 'utf-8'));
         
         // Forbidden keys in input json
-        const forbiddenInInput = ['csConfig', 'tsConfig', 'dataConfig', 'upmConfig', 'staticUpmPackages'];
+        const forbiddenInInput = ['csConfig', 'tsConfig', 'dataConfig', 'upmConfig', 'samplePackages'];
         for (const key of forbiddenInInput) {
             if (inputJson[key] !== undefined) {
                 throw new Error(
@@ -80,7 +80,7 @@ class DevianToolBuilder {
                 `[FAIL] Missing configPath in input json!\n` +
                 `  File: ${this.buildJsonPath}\n` +
                 `  Add "configPath": "./config.json" to input json.\n` +
-                `  Then move csConfig/tsConfig/dataConfig/upmConfig/staticUpmPackages to config.json.`
+                `  Then move csConfig/tsConfig/dataConfig/upmConfig/samplePackages to config.json.`
             );
         }
         
@@ -91,7 +91,7 @@ class DevianToolBuilder {
                 `[FAIL] Config file not found!\n` +
                 `  configPath: ${inputJson.configPath}\n` +
                 `  Resolved: ${configPath}\n` +
-                `  Create config.json with csConfig/tsConfig/dataConfig/upmConfig/staticUpmPackages.`
+                `  Create config.json with csConfig/tsConfig/dataConfig/upmConfig/samplePackages.`
             );
         }
         
@@ -111,15 +111,47 @@ class DevianToolBuilder {
                 );
             }
         }
+
+        // FORBIDDEN: staticUpmPackages (replaced by samplePackages)
+        // SSOT: skills/devian/03-ssot/SKILL.md
+        if (configJson.staticUpmPackages !== undefined) {
+            throw new Error(
+                `[FAIL] Forbidden key in config json!\n` +
+                `  Key: staticUpmPackages\n` +
+                `  File: ${configPath}\n` +
+                `  staticUpmPackages is forbidden. Use samplePackages instead.\n` +
+                `  samplePackages can ONLY contain "com.devian.samples".\n` +
+                `  Library packages (com.devian.foundation) and domain packages are NOT allowed.`
+            );
+        }
         
+        // Validate samplePackages - ONLY com.devian.samples is allowed
+        // SSOT: skills/devian/03-ssot/SKILL.md - Hard Rule
+        if (configJson.samplePackages && Array.isArray(configJson.samplePackages)) {
+            const allowedSamplePackages = ['com.devian.samples'];
+            for (const pkg of configJson.samplePackages) {
+                if (!allowedSamplePackages.includes(pkg)) {
+                    throw new Error(
+                        `[FAIL] Invalid package in samplePackages!\n` +
+                        `  Package: ${pkg}\n` +
+                        `  File: ${configPath}\n` +
+                        `  samplePackages can ONLY contain: ${allowedSamplePackages.join(', ')}\n` +
+                        `  Library packages (com.devian.foundation), domain packages (com.devian.domain.*),\n` +
+                        `  and protocol packages (com.devian.protocol.*) are NOT allowed.\n` +
+                        `  These packages are managed automatically by the builder.`
+                    );
+                }
+            }
+        }
+
         // Deep merge: config + input (input overwrites for tempDir)
         const merged = this.deepMerge(configJson, inputJson);
-        
+
         // Ensure tempDir comes from input (explicit override rule)
         if (inputJson.tempDir) {
             merged.tempDir = inputJson.tempDir;
         }
-        
+
         console.log(`  [Config] Merged successfully (tempDir: ${merged.tempDir})`);
         return merged;
     }
@@ -192,9 +224,9 @@ class DevianToolBuilder {
         console.log('[Guard] Validating upmConfig...');
         this.validateUpmConfig();
 
-        // 1.2. Validate deprecated fields (Hard Fail)
-        console.log('[Guard] Checking deprecated fields...');
-        this.checkDeprecatedFields();
+        // 1.2. Validate forbidden fields (Hard Fail)
+        console.log('[Guard] Checking forbidden fields...');
+        this.checkForbiddenFields();
 
         // 1.5. Forbidden namespace guard (재발 방지)
         console.log('[Guard] Checking forbidden namespaces...');
@@ -202,7 +234,7 @@ class DevianToolBuilder {
 
         // 1.6. Unity.Common Editor/Generated guard (재발 방지)
         console.log('[Guard] Checking unity.common Editor/Generated...');
-        this.checkUnityCommonEditorGenerated();
+        this.checkFoundationEditorGenerated();
 
         // 1.7. Singleton early init guard (SimpleSingleton ctor/static-init 금지 패턴 탐지)
         console.log('[Guard] Checking singleton early init...');
@@ -232,11 +264,11 @@ class DevianToolBuilder {
             }
         }
 
-        // Process static UPM packages (e.g., com.devian.unity)
-        // staticUpmPackages is now string[] of package names
-        if (this.config.staticUpmPackages && Array.isArray(this.config.staticUpmPackages)) {
-            for (const upmName of this.config.staticUpmPackages) {
-                await this.processStaticUpmPackage(upmName);
+        // Process sample packages (e.g., com.devian.samples)
+        // samplePackages is string[] of package names, ONLY com.devian.samples allowed
+        if (this.config.samplePackages && Array.isArray(this.config.samplePackages)) {
+            for (const upmName of this.config.samplePackages) {
+                await this.processSamplePackage(upmName);
             }
         }
 
@@ -255,24 +287,24 @@ class DevianToolBuilder {
             }
         }
 
-        // Static UPM packages: copy generated content to upm/<pkg>/Runtime/Generated (or Editor/Generated)
-        // SSOT: upm is the single source
-        if (this.config.staticUpmPackages && Array.isArray(this.config.staticUpmPackages)) {
-            console.log('  [Info] Static UPM packages: staging/Generated → upm/<pkg>/Runtime/Generated');
-            for (const upmName of this.config.staticUpmPackages) {
-                // Validate static package exists in upm
+        // Sample packages: copy to packageDir (clean + copy entire package)
+        // SSOT: upm is the single source, samplePackages ONLY for com.devian.samples
+        if (this.config.samplePackages && Array.isArray(this.config.samplePackages)) {
+            console.log('  [Info] Sample packages: upm/<pkg> → packageDir/<pkg> (clean copy)');
+            for (const upmName of this.config.samplePackages) {
+                // Validate sample package exists in upm
                 const pkgPath = path.join(this.upmSourceDir, upmName);
                 if (!fs.existsSync(pkgPath)) {
                     throw new Error(
-                        `[FAIL] Static UPM package not found in upm!\n` +
+                        `[FAIL] Sample package not found in upm!\n` +
                         `  Package: ${upmName}\n` +
                         `  Expected at: ${pkgPath}\n` +
-                        `  Static packages must exist in upmConfig.sourceDir.`
+                        `  Sample packages must exist in upmConfig.sourceDir.`
                     );
                 }
-                
-                // Copy only generated content to upm (preserving manual files)
-                await this.copyStaticUpmGeneratedContent({ upmName });
+
+                // Copy entire sample package to packageDir (clean copy, NOT generated content)
+                await this.copySamplePackageToTarget(upmName);
             }
         }
 
@@ -289,7 +321,7 @@ class DevianToolBuilder {
         // Guards: Run after sync (packageDir is now populated)
         await this.verifyUnityCommonTableIdFiles();
         console.log('[Guard] Post-sync: Checking unity.common Editor/Generated...');
-        this.checkUnityCommonEditorGenerated();
+        this.checkFoundationEditorGenerated();
 
         // 7. Sync UPM samples metadata
         console.log('[Phase 5] Sync UPM samples metadata...');
@@ -769,7 +801,7 @@ class DevianToolBuilder {
         const stagingStringPb64 = path.join(this.tempDir, domainName, 'data', 'string', 'pb64');
 
         // Copy to CS target: {csConfig.generateDir}/Devian + .Module.{Domain}/Generated/
-        // Domain C# output always goes to csConfig.generateDir (domains[*].csTargetDir is deprecated)
+        // Domain C# output always goes to csConfig.generateDir (domains[*].csTargetDir is forbidden)
         if (this.csGenerateDir) {
             const csModuleName = `Devian.Domain.${domainName}`;
             const resolvedTargetDir = path.join(this.csGenerateDir, csModuleName);
@@ -790,7 +822,7 @@ class DevianToolBuilder {
         }
 
         // Copy to TS target: {tsConfig.generateDir}/devian-domain-{domain}/Generated/
-        // Domain TS output always goes to tsConfig.generateDir (domains[*].tsTargetDir is deprecated)
+        // Domain TS output always goes to tsConfig.generateDir (domains[*].tsTargetDir is forbidden)
         if (this.tsGenerateDir) {
             const tsModuleName = `devian-domain-${domainName.toLowerCase()}`;
             const resolvedTargetDir = path.join(this.tsGenerateDir, tsModuleName);
@@ -820,7 +852,7 @@ class DevianToolBuilder {
         }
 
         // Copy to Bundle targets: {bundleDir}/Tables/ and {bundleDir}/Strings/
-        // Uses global dataConfig.bundleDirs (domains[*].dataTargetDirs is deprecated)
+        // Uses global dataConfig.bundleDirs (domains[*].dataTargetDirs is forbidden)
         // SSOT: skills/devian/03-ssot/SKILL.md
         // NOTE: Domain folder is NOT created. Files are merged directly.
         //       Filename collision will FAIL the build (no silent overwrite).
@@ -1176,7 +1208,7 @@ class DevianToolBuilder {
         const hasClientRuntime = fs.existsSync(path.join(stagingTs, 'Generated', 'ClientRuntime.g.ts'));
 
         // Copy to CS target: {csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/
-        // Protocol C# output always goes to csConfig.generateDir (protocols[*].csTargetDir is deprecated)
+        // Protocol C# output always goes to csConfig.generateDir (protocols[*].csTargetDir is forbidden)
         if (this.csGenerateDir) {
             const target = path.join(this.csGenerateDir, csProjectName);
             this.cleanAndCopy(stagingCs, target);
@@ -1184,7 +1216,7 @@ class DevianToolBuilder {
         }
 
         // Copy to TS target: {tsConfig.generateDir}/devian-protocol-{group}/
-        // Protocol TS output always goes to tsConfig.generateDir (protocols[*].tsTargetDir is deprecated)
+        // Protocol TS output always goes to tsConfig.generateDir (protocols[*].tsTargetDir is forbidden)
         if (this.tsGenerateDir) {
             const tsModuleName = `devian-protocol-${groupName.toLowerCase()}`;
             const target = path.join(this.tsGenerateDir, tsModuleName);
@@ -1273,15 +1305,15 @@ class DevianToolBuilder {
      * @param {string} groupName - Original group name (for error messages)
      */
     validateComputedProtocolUpmName(upmName, groupName) {
-        // Check conflict with static (manual) packages
-        const staticPackages = this.config.staticUpmPackages || [];
-        if (staticPackages.includes(upmName)) {
+        // Check conflict with sample packages
+        const samplePackages = this.config.samplePackages || [];
+        if (samplePackages.includes(upmName)) {
             throw new Error(
-                `[FAIL] Computed protocol UPM name conflicts with static package!\n` +
+                `[FAIL] Computed protocol UPM name conflicts with sample package!\n` +
                 `  Group: ${groupName}\n` +
                 `  Computed UPM name: ${upmName}\n` +
-                `  This name is listed in staticUpmPackages (manual package).\n` +
-                `  Solution: Rename the group or remove from staticUpmPackages if it should be generated.`
+                `  This name is listed in samplePackages.\n` +
+                `  Solution: Rename the group or remove from samplePackages if it should be generated.`
             );
         }
 
@@ -1885,11 +1917,10 @@ export * from './features';
         fs.mkdirSync(stagingEditor, { recursive: true });
 
         // package.json - SSOT: skills/devian-unity/03-package-metadata/SKILL.md
-        // All domain packages require com.devian.unity for TableManager (ST_/TB_ wrappers)
+        // All domain packages require com.devian.foundation for TableManager (ST_/TB_ wrappers)
         const isCommon = domainName === 'Common';
-        const dependencies = { 
-            'com.devian.core': '0.1.0',
-            'com.devian.unity': '0.1.0'
+        const dependencies = {
+            'com.devian.foundation': '0.1.0'
         };
         if (isCommon) {
             dependencies['com.unity.nuget.newtonsoft-json'] = '3.2.1';
@@ -1909,7 +1940,7 @@ export * from './features';
         fs.writeFileSync(path.join(stagingUpm, 'package.json'), JSON.stringify(packageJsonObj, null, 2));
 
         // Runtime.asmdef - SSOT: skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md
-        // All domain packages require Devian.Unity for TableManager (ST_/TB_ wrappers)
+        // All domain packages require Devian.Core and Devian.Unity for TableManager (ST_/TB_ wrappers)
         const asmdefReferences = isCommon
             ? ['Devian.Core', 'Devian.Unity', 'Newtonsoft.Json']
             : ['Devian.Core', 'Devian.Unity'];
@@ -2551,12 +2582,18 @@ export * from './features';
      * Paths are computed from upmConfig + upmName.
      * @param {string} upmName - UPM package name (e.g., "com.devian.unity")
      */
-    async processStaticUpmPackage(upmName) {
-        console.log(`  [StaticUPM] ${upmName}`);
+    /**
+     * Process a sample package (e.g., com.devian.samples).
+     * samplePackages ONLY allows com.devian.samples.
+     * SSOT: skills/devian/03-ssot/SKILL.md - Hard Rule
+     * @param {string} upmName - UPM package name (e.g., "com.devian.samples")
+     */
+    async processSamplePackage(upmName) {
+        console.log(`  [SamplePkg] ${upmName}`);
 
         // Compute paths from upmConfig + upmName
         const sourcePath = path.join(this.upmSourceDir, upmName);
-        const stagingUpm = path.join(this.tempDir, `static-${upmName}`);
+        const stagingUpm = path.join(this.tempDir, `sample-${upmName}`);
 
         if (!fs.existsSync(sourcePath)) {
             console.log(`    [SKIP] Source not found: ${sourcePath}`);
@@ -2570,21 +2607,6 @@ export * from './features';
         // GUARD: Validate UPM sample structure (Runtime/Editor separation)
         // SSOT: skills/devian-unity-samples/01-samples-authoring-guide/SKILL.md
         this.validateUpmSampleStructure(stagingUpm, upmName);
-
-        // Safety: Remove legacy Editor/Generated from unity.common staging
-        // TableID Editor bindings are now generated into each domain module package
-        if (upmName === 'com.devian.unity') {
-            const legacyGenerated = path.join(stagingUpm, 'Editor', 'Generated');
-            if (fs.existsSync(legacyGenerated)) {
-                fs.rmSync(legacyGenerated, { recursive: true });
-                console.log(`    [Cleanup] Removed legacy Editor/Generated from unity.common staging`);
-            }
-            
-            // NOTE: com.devian.unity의 고정 유틸(_Shared, Singleton, Pool, PoolFactories)은
-            // 수기 코드로 유지하며, 생성기가 건드리지 않는다.
-            // SSOT: "Generated Only" 규칙 - 생성기는 오직 Generated 폴더만 clean+generate
-            // 고정 유틸 파일들은 framework-cs/upm/com.devian.unity/Runtime/에 이미 존재한다.
-        }
     }
 
 
@@ -2795,6 +2817,47 @@ export * from './features';
     }
 
     /**
+     * Copy entire sample package from upm to packageDir (clean copy).
+     * Sample packages are not generated - they are manually authored.
+     * SSOT: skills/devian-unity-samples/01-samples-authoring-guide/SKILL.md
+     * @param {string} upmName - Sample package name (e.g., "com.devian.samples")
+     */
+    async copySamplePackageToTarget(upmName) {
+        const sourcePath = path.join(this.upmSourceDir, upmName);
+        const targetPath = path.join(this.upmPackageDir, upmName);
+
+        if (!fs.existsSync(sourcePath)) {
+            console.log(`    [SKIP] ${upmName}: upm source not found`);
+            return;
+        }
+
+        // Clean target and copy entire package
+        if (fs.existsSync(targetPath)) {
+            fs.rmSync(targetPath, { recursive: true });
+        }
+        fs.mkdirSync(targetPath, { recursive: true });
+        this.copyDirRecursive(sourcePath, targetPath);
+
+        // Count copied files for logging
+        const countFiles = (dir) => {
+            let count = 0;
+            if (!fs.existsSync(dir)) return 0;
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                if (entry.isDirectory()) {
+                    count += countFiles(path.join(dir, entry.name));
+                } else if (entry.isFile()) {
+                    count++;
+                }
+            }
+            return count;
+        };
+
+        const fileCount = countFiles(targetPath);
+        console.log(`    [OK] ${upmName} → packageDir (${fileCount} files)`);
+    }
+
+    /**
      * Verify that unity-common TableId base files exist.
      * Prevents build from succeeding when critical files are missing.
      */
@@ -2827,12 +2890,10 @@ export * from './features';
                 console.error(`       - ${file}`);
             }
             console.error();
-            console.error('Fix: Add com.devian.unity to staticUpmPackages in config.json:');
-            console.error('  "staticUpmPackages": [');
-            console.error('    "com.devian.unity"');
-            console.error('  ]');
+            console.error('Fix: Ensure com.devian.foundation package contains Editor/TableId base files.');
+            console.error('     These files should be in: upm/com.devian.foundation/Editor/TableId/');
             console.error();
-            throw new Error('[FAIL] com.devian.unity is missing Editor/TableId base files.');
+            throw new Error('[FAIL] Foundation package is missing Editor/TableId base files.');
         }
 
         console.log('  [Guard] unity-common TableId base files verified');
@@ -2850,6 +2911,7 @@ export * from './features';
         fs.mkdirSync(stagingRuntime, { recursive: true });
 
         // package.json (스킬 17 준수: version 0.1.0, author, dependencies)
+        // SSOT: skills/devian/03-ssot/SKILL.md — Hard Rule: Base UPM package is com.devian.foundation only
         const packageJson = JSON.stringify({
             name: upmName,
             version: '0.1.0',
@@ -2860,7 +2922,7 @@ export * from './features';
                 name: 'Kim, Hyong Joon'
             },
             dependencies: {
-                'com.devian.core': '0.1.0',
+                'com.devian.foundation': '0.1.0',
                 'com.devian.domain.common': '0.1.0'
             }
         }, null, 2);
@@ -3041,10 +3103,12 @@ export * from './features';
      * @returns {string|null} - UPM package name or null if not mappable
      */
     asmdefRefToUpmPackage(asmdefRef) {
+        // SSOT: skills/devian/03-ssot/SKILL.md — Hard Rule: Base UPM package is com.devian.foundation only
         const mapping = {
-            'Devian.Core': 'com.devian.core',
-            'Devian.Network': 'com.devian.core',
-            'Devian.Protobuf': 'com.devian.core',
+            'Devian.Core': 'com.devian.foundation',
+            'Devian.Unity': 'com.devian.foundation',
+            'Devian.Network': 'com.devian.foundation',
+            'Devian.Protobuf': 'com.devian.foundation',
         };
 
         // Direct mapping
@@ -3124,10 +3188,10 @@ export * from './features';
         const existingDeps = packageJson.dependencies || {};
 
         // Default versions for packages (can be improved by scanning actual packages)
+        // SSOT: skills/devian/03-ssot/SKILL.md — Hard Rule: Base UPM package is com.devian.foundation only
         const defaultVersions = {
-            'com.devian.core': '0.1.0',
+            'com.devian.foundation': '0.1.0',
             'com.devian.domain.common': '0.1.0',
-            'com.devian.unity': '0.1.0',
         };
 
         // Convert refs to UPM packages and add to dependencies
@@ -3297,7 +3361,7 @@ export * from './features';
         console.log(`  [OK] upmConfig.packageDir: ${this.upmPackageDir}`);
 
         // Validate csConfig (required)
-        // generateDir is optional/deprecated - falls back to moduleDir (unified structure)
+        // generateDir is optional - falls back to moduleDir (unified structure)
         if (this.config.csConfig) {
             const csConfig = this.config.csConfig;
             if (csConfig.moduleDir) {
@@ -3315,7 +3379,7 @@ export * from './features';
         }
 
         // Validate tsConfig (optional, for backward compatibility)
-        // generateDir is optional/deprecated - falls back to moduleDir (unified structure)
+        // generateDir is optional - falls back to moduleDir (unified structure)
         if (this.config.tsConfig) {
             const tsConfig = this.config.tsConfig;
             if (tsConfig.moduleDir) {
@@ -3340,10 +3404,10 @@ export * from './features';
         // Resolve dataConfig.bundleDirs (global bundle output targets)
         // SSOT: skills/devian/03-ssot/SKILL.md
         if (this.config.dataConfig) {
-            // FAIL if deprecated tableDirs exists
+            // FAIL if forbidden tableDirs exists
             if (this.config.dataConfig.tableDirs !== undefined) {
                 throw new Error(
-                    `[FAIL] dataConfig.tableDirs is deprecated. Use dataConfig.bundleDirs instead.\n` +
+                    `[FAIL] dataConfig.tableDirs is forbidden. Use dataConfig.bundleDirs instead.\n` +
                     `  1. Rename "tableDirs" to "bundleDirs" in config.json.\n` +
                     `  2. Remove "/Tables" suffix from bundleDirs values.\n` +
                     `     Example: ".../Assets/Bundles/Tables" → ".../Assets/Bundles"\n` +
@@ -3387,55 +3451,55 @@ export * from './features';
 
 
     /**
-     * Check for deprecated fields and hard fail if found.
+     * Check for forbidden fields and hard fail if found.
      * SSOT: skills/devian/03-ssot/SKILL.md
      */
-    checkDeprecatedFields() {
+    checkForbiddenFields() {
         const errors = [];
 
-        // Check staticUpmPackages - must be string[] now
-        if (this.config.staticUpmPackages && Array.isArray(this.config.staticUpmPackages)) {
-            for (let i = 0; i < this.config.staticUpmPackages.length; i++) {
-                const item = this.config.staticUpmPackages[i];
-                
+        // Check samplePackages - must be string[] now
+        if (this.config.samplePackages && Array.isArray(this.config.samplePackages)) {
+            for (let i = 0; i < this.config.samplePackages.length; i++) {
+                const item = this.config.samplePackages[i];
+
                 if (typeof item !== 'string') {
                     errors.push(
-                        `staticUpmPackages[${i}] must be a string, not an object.\n` +
-                        `  staticUpmPackages is now string[] of UPM package names.\n` +
+                        `samplePackages[${i}] must be a string, not an object.\n` +
+                        `  samplePackages is string[] of UPM package names.\n` +
                         `  Was: ${JSON.stringify(item)}\n` +
-                        `  Fix: Use plain string like "com.devian.unity"`
+                        `  Fix: Use plain string like "com.devian.samples"`
                     );
                 }
             }
         }
 
-        // Check protocols for deprecated fields
+        // Check protocols for forbidden fields
         if (this.config.protocols && Array.isArray(this.config.protocols)) {
             for (let i = 0; i < this.config.protocols.length; i++) {
                 const proto = this.config.protocols[i];
-                
+
                 if (proto.upmTargetDir !== undefined) {
                     errors.push(
-                        `protocols[${i}].upmTargetDir is deprecated and no longer supported.\n` +
+                        `protocols[${i}].upmTargetDir is forbidden and no longer supported.\n` +
                         `  Was: { "upmTargetDir": "${proto.upmTargetDir}", ... }\n` +
                         `  Fix: Remove this field. Protocol UPM is now auto-generated from group name.`
                     );
                 }
 
-                // upmName is now deprecated - computed automatically from group
+                // upmName is now forbidden - computed automatically from group
                 if (proto.upmName !== undefined) {
                     errors.push(
-                        `protocols[${i}].upmName is deprecated and no longer supported.\n` +
+                        `protocols[${i}].upmName is forbidden and no longer supported.\n` +
                         `  Protocol UPM name is now computed automatically from group name.\n` +
                         `  Was: { "upmName": "${proto.upmName}", ... }\n` +
                         `  Fix: Remove "upmName" field. It will be computed as "com.devian.protocol.${(proto.group || 'unknown').toLowerCase()}"`
                     );
                 }
 
-                // csTargetDir/tsTargetDir are now deprecated - use csConfig/tsConfig.generateDir
+                // csTargetDir/tsTargetDir are now forbidden - use csConfig/tsConfig.generateDir
                 if (proto.csTargetDir !== undefined) {
                     errors.push(
-                        `protocols[${i}].csTargetDir is deprecated and no longer supported.\n` +
+                        `protocols[${i}].csTargetDir is forbidden and no longer supported.\n` +
                         `  Protocol C# output is now always placed in csConfig.generateDir.\n` +
                         `  Was: { "csTargetDir": "${proto.csTargetDir}", ... }\n` +
                         `  Fix: Remove "csTargetDir" from protocols[${i}]. Use csConfig.generateDir instead.`
@@ -3444,7 +3508,7 @@ export * from './features';
 
                 if (proto.tsTargetDir !== undefined) {
                     errors.push(
-                        `protocols[${i}].tsTargetDir is deprecated and no longer supported.\n` +
+                        `protocols[${i}].tsTargetDir is forbidden and no longer supported.\n` +
                         `  Protocol TS output is now always placed in tsConfig.generateDir.\n` +
                         `  Was: { "tsTargetDir": "${proto.tsTargetDir}", ... }\n` +
                         `  Fix: Remove "tsTargetDir" from protocols[${i}]. Use tsConfig.generateDir instead.`
@@ -3453,12 +3517,12 @@ export * from './features';
             }
         }
 
-        // Check domains for deprecated fields (csTargetDir, tsTargetDir, dataTargetDirs)
+        // Check domains for forbidden fields (csTargetDir, tsTargetDir, dataTargetDirs)
         if (this.config.domains && typeof this.config.domains === 'object') {
             for (const [domainKey, domainConfig] of Object.entries(this.config.domains)) {
                 if (domainConfig.csTargetDir !== undefined) {
                     errors.push(
-                        `domains.${domainKey}.csTargetDir is deprecated and no longer supported.\n` +
+                        `domains.${domainKey}.csTargetDir is forbidden and no longer supported.\n` +
                         `  Domain C# output is now always placed in csConfig.generateDir.\n` +
                         `  Was: { "csTargetDir": "${domainConfig.csTargetDir}", ... }\n` +
                         `  Fix: Remove "csTargetDir" from domains.${domainKey}. Use csConfig.generateDir instead.`
@@ -3467,7 +3531,7 @@ export * from './features';
 
                 if (domainConfig.tsTargetDir !== undefined) {
                     errors.push(
-                        `domains.${domainKey}.tsTargetDir is deprecated and no longer supported.\n` +
+                        `domains.${domainKey}.tsTargetDir is forbidden and no longer supported.\n` +
                         `  Domain TS output is now always placed in tsConfig.generateDir.\n` +
                         `  Was: { "tsTargetDir": "${domainConfig.tsTargetDir}", ... }\n` +
                         `  Fix: Remove "tsTargetDir" from domains.${domainKey}. Use tsConfig.generateDir instead.`
@@ -3476,7 +3540,7 @@ export * from './features';
 
                 if (domainConfig.dataTargetDirs !== undefined) {
                     errors.push(
-                        `domains.${domainKey}.dataTargetDirs is deprecated and no longer supported.\n` +
+                        `domains.${domainKey}.dataTargetDirs is forbidden and no longer supported.\n` +
                         `  Data output is now configured globally via dataConfig.bundleDirs.\n` +
                         `  Was: { "dataTargetDirs": ${JSON.stringify(domainConfig.dataTargetDirs)}, ... }\n` +
                         `  Fix: Remove "dataTargetDirs" from domains.${domainKey}. Use dataConfig.bundleDirs instead.`
@@ -3486,7 +3550,7 @@ export * from './features';
                 // contractsDir → contractDir (legacy key removed)
                 if (domainConfig.contractsDir !== undefined) {
                     errors.push(
-                        `domains.${domainKey}.contractsDir is deprecated and no longer supported.\n` +
+                        `domains.${domainKey}.contractsDir is forbidden and no longer supported.\n` +
                         `  Use "contractDir" instead of "contractsDir".\n` +
                         `  Was: { "contractsDir": "${domainConfig.contractsDir}", ... }\n` +
                         `  Fix: Rename "contractsDir" to "contractDir" in domains.${domainKey}.`
@@ -3496,7 +3560,7 @@ export * from './features';
                 // tablesDir → tableDir (legacy key removed)
                 if (domainConfig.tablesDir !== undefined) {
                     errors.push(
-                        `domains.${domainKey}.tablesDir is deprecated and no longer supported.\n` +
+                        `domains.${domainKey}.tablesDir is forbidden and no longer supported.\n` +
                         `  Use "tableDir" instead of "tablesDir".\n` +
                         `  Was: { "tablesDir": "${domainConfig.tablesDir}", ... }\n` +
                         `  Fix: Rename "tablesDir" to "tableDir" in domains.${domainKey}.`
@@ -3516,12 +3580,12 @@ export * from './features';
 
         if (errors.length > 0) {
             throw new Error(
-                '[FAIL] Deprecated fields detected in input json:\n\n' +
+                '[FAIL] Forbidden fields detected in input json:\n\n' +
                 errors.map((e, i) => `${i + 1}. ${e}`).join('\n\n')
             );
         }
 
-        console.log('  [OK] No deprecated fields found.');
+        console.log('  [OK] No forbidden fields found.');
     }
 
     /**
@@ -3828,15 +3892,15 @@ export * from './features';
     }
 
     /**
-     * Guard: com.devian.unity must NOT contain Editor/Generated.
+     * Guard: com.devian.foundation must NOT contain Editor/Generated.
      * Editor/Generated for TableID inspection belongs to com.devian.domain.* packages.
-     * If this folder exists in unity.common, it indicates a routing/mapping error.
+     * If this folder exists in foundation, it indicates a routing/mapping error.
      * SSOT: skills/devian/03-ssot/SKILL.md
      */
-    checkUnityCommonEditorGenerated() {
+    checkFoundationEditorGenerated() {
         const forbiddenPaths = [
-            path.join(this.rootDir, 'framework-cs/upm/com.devian.unity/Editor/Generated'),
-            path.join(this.rootDir, 'framework-cs/apps/UnityExample/Packages/com.devian.unity/Editor/Generated'),
+            path.join(this.rootDir, 'framework-cs/upm/com.devian.foundation/Editor/Generated'),
+            path.join(this.rootDir, 'framework-cs/apps/UnityExample/Packages/com.devian.foundation/Editor/Generated'),
         ];
 
         const violations = [];
@@ -3848,21 +3912,21 @@ export * from './features';
         }
 
         if (violations.length > 0) {
-            console.error('\n[FAIL] com.devian.unity must not contain Editor/Generated!');
-            console.error('This folder belongs to com.devian.domain.* packages, not unity.common.');
+            console.error('\n[FAIL] com.devian.foundation must not contain Editor/Generated!');
+            console.error('This folder belongs to com.devian.domain.* packages, not foundation.');
             console.error('Violations:');
             for (const v of violations) {
                 console.error(`  - ${v}`);
             }
             console.error('\nFix: Remove generation target mapping or sheet output route that produces it.');
-            console.error('     Check staticUpmPackages config and domain/table routing in input json.');
+            console.error('     Check samplePackages config and domain/table routing in input json.');
             throw new Error(
-                '[FAIL] com.devian.unity must not contain Editor/Generated. ' +
+                '[FAIL] com.devian.foundation must not contain Editor/Generated. ' +
                 'Remove generation target mapping or sheet output route that produces it.'
             );
         }
 
-        console.log('  [OK] com.devian.unity has no forbidden Editor/Generated.');
+        console.log('  [OK] com.devian.foundation has no forbidden Editor/Generated.');
     }
 
     /**

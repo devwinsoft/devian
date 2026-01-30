@@ -22,12 +22,12 @@ Sound 도메인은 사운드/음성 관련 기능(테이블, 매니저, 레지�
 ### 의존성 방향 (Dependency Rule)
 
 ```
-[Game Domain] ──depends──► [Sound Domain] ──depends──► [Core/Unity]
+[Game Domain] ──depends──► [Sound Domain] ──depends──► [Foundation]
 ```
 
 - Game 도메인 → Sound 도메인: **허용**
 - Sound 도메인 → Game 도메인: **금지**
-- Sound 도메인 → Core/Unity: **허용**
+- Sound 도메인 → Foundation: **허용**
 
 ---
 
@@ -170,12 +170,10 @@ com.devian.domain.sound/
 
 ```
 com.devian.domain.sound
-├── com.devian.core
-└── com.devian.unity
+└── com.devian.foundation
 
 com.devian.domain.game
-├── com.devian.core
-├── com.devian.unity
+├── com.devian.foundation
 └── com.devian.domain.sound  ← Game은 Sound에 의존 가능
 ```
 

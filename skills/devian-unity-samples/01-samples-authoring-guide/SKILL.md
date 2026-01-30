@@ -39,7 +39,7 @@ Type: Policy / Requirements
 upm + upm → packageDir (패키지 단위 clean+copy)
 ```
 
-> 수동 패키지(예: com.devian.unity)는 upm에서 관리하고,  
+> 수동 패키지(예: com.devian.foundation)는 upm에서 관리하고,
 > 생성 패키지(예: com.devian.domain.common)는 upm에서 관리한다.
 
 ---
@@ -215,17 +215,17 @@ UnityExample Inspector에서 버튼이 표시되지 않으면 **FAIL**이다.
 
 **샘플 실행 전 필수 체크:**
 
-Disconnect/OnClosed 버그 수정 시, 반드시 `Packages/com.devian.unity/Runtime/Network/...`에 반영됐는지 확인한다.
+Disconnect/OnClosed 버그 수정 시, 반드시 `Packages/com.devian.foundation/Runtime/Unity/Network/...`에 반영됐는지 확인한다.
 
 **확인 방법:**
 ```bash
 # NetWsClientBehaviourBase.cs 파일 크기/날짜 비교
-ls -la upm/com.devian.unity/Runtime/Network/NetWsClientBehaviourBase.cs
-ls -la Packages/com.devian.unity/Runtime/Network/NetWsClientBehaviourBase.cs
+ls -la upm/com.devian.foundation/Runtime/Unity/Network/NetWsClientBehaviourBase.cs
+ls -la Packages/com.devian.foundation/Runtime/Unity/Network/NetWsClientBehaviourBase.cs
 
 # MD5 해시 비교 (동일해야 함)
-md5sum upm/com.devian.unity/Runtime/Network/NetWsClientBehaviourBase.cs
-md5sum Packages/com.devian.unity/Runtime/Network/NetWsClientBehaviourBase.cs
+md5sum upm/com.devian.foundation/Runtime/Unity/Network/NetWsClientBehaviourBase.cs
+md5sum Packages/com.devian.foundation/Runtime/Unity/Network/NetWsClientBehaviourBase.cs
 ```
 
 **Hard FAIL 조건:**
@@ -248,20 +248,18 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 - Source에 `Samples~`가 존재하면 Target에도 **반드시** 존재해야 함
 - `copyUpmToTarget()` 함수에서 `Samples~` 복사가 `syncSamplesMetadata()` 호출 **전에** 실행되어야 함
 
-### staticUpmPackages 설정
+### samplePackages 설정
 
-`input/input_common.json`에 UPM 패키지를 등록:
+`input/config.json`에 샘플 패키지를 등록:
 
 ```json
 {
   "upmConfig": {
     "sourceDir": "../framework-cs/upm",
-    // removed,
     "packageDir": "../framework-cs/apps/UnityExample/Packages"
   },
-  "staticUpmPackages": [
-    "com.devian.unity",
-    "com.devian.unity"
+  "samplePackages": [
+    "com.devian.samples"
   ]
 }
 ```
@@ -273,16 +271,17 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 | `sourceDir` | 수동 관리 UPM 패키지 루트 (upm) |
 | `packageDir` | Unity 최종 패키지 루트 (sync 대상) |
 
-**staticUpmPackages 형식:**
-- **반드시 문자열 배열**로 정의 (객체 형태 `{ "upmName": "..." }` 사용 시 빌드 실패)
-- 배열 내 각 문자열은 `upmConfig.sourceDir`에 존재하는 패키지명
+**samplePackages 규칙 (Hard Rule):**
+- **반드시 문자열 배열**로 정의
+- `com.devian.samples`만 허용 — 라이브러리/도메인 패키지는 포함 금지
+- `staticUpmPackages` 키는 금지이며 사용 시 빌드 FAIL
 
 **경로 계산 (upmConfig 기반):**
-- `sourceDir` = `{upmConfig.sourceDir}/{packageName}` → `../framework-cs/upm/com.devian.unity`
-- `targetDir` = `{upmConfig.packageDir}/{packageName}` → `../framework-cs/apps/UnityExample/Packages/com.devian.unity`
+- `sourceDir` = `{upmConfig.sourceDir}/{packageName}` → `../framework-cs/upm/com.devian.samples`
+- `targetDir` = `{upmConfig.packageDir}/{packageName}` → `../framework-cs/apps/UnityExample/Packages/com.devian.samples`
 
 **결과:**
-빌더가 `upm + upm`을 `packageDir`로 sync하며, `Samples~` 콘텐츠도 포함된다.
+빌더가 `upm`을 `packageDir`로 sync하며, `Samples~` 콘텐츠도 포함된다.
 
 ---
 
@@ -319,5 +318,5 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 
 ## Reference
 
-- UPM 소스: `framework-cs/upm/com.devian.unity/Runtime/Network/`
-- Related: `skills/devian-unity/20-packages/com.devian.unity/SKILL.md`
+- UPM 소스: `framework-cs/upm/com.devian.foundation/Runtime/Unity/Network/`
+- Related: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT)

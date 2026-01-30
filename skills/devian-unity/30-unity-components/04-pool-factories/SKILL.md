@@ -21,14 +21,14 @@ Type: Component Specification
 
 ## 3. 생성 대상 패키지
 
-- `com.devian.unity`
+- `com.devian.foundation`
 
 ---
 
 ## 4. 파일 위치 (정본)
 
 ```
-com.devian.unity/Runtime/PoolFactories/
+com.devian.foundation/Runtime/Unity/PoolFactories/
 ├── InspectorPoolFactory.cs
 ├── BundlePoolFactory.cs
 └── BundlePool.cs

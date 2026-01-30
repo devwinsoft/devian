@@ -12,8 +12,8 @@ Scene 전환 파이프라인을 단일화(직렬화)하고, 씬별 초기화/정
 
 ## Files (SSOT)
 
-- `framework-cs/upm/com.devian.unity/Runtime/Scene/BaseScene.cs`
-- `framework-cs/upm/com.devian.unity/Runtime/Scene/SceneTransManager.cs`
+- `framework-cs/upm/com.devian.foundation/Runtime/Unity/Scene/BaseScene.cs`
+- `framework-cs/upm/com.devian.foundation/Runtime/Unity/Scene/SceneTransManager.cs`
 
 ---
 

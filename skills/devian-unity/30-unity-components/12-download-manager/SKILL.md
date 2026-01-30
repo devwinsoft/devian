@@ -25,8 +25,8 @@ AppliesTo: v10
 
 | 위치 | 경로 |
 |------|------|
-| UPM 소스 | `framework-cs/upm/com.devian.unity/Runtime/AssetManager/DownloadManager.cs` |
-| UnityExample | `framework-cs/apps/UnityExample/Packages/com.devian.unity/Runtime/AssetManager/DownloadManager.cs` (derived output) |
+| UPM 소스 | `framework-cs/upm/com.devian.foundation/Runtime/Unity/AssetManager/DownloadManager.cs` |
+| UnityExample | `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Runtime/Unity/AssetManager/DownloadManager.cs` (derived output) |
 
 ---
 
@@ -39,7 +39,7 @@ AppliesTo: v10
 ```json
 {
   "dependencies": {
-    "com.devian.core": "0.1.0",
+    "com.devian.foundation": "0.1.0",
     "com.unity.addressables": "2.7.6"
   }
 }
@@ -387,7 +387,7 @@ yield return dm.PatchProc(
 
 ## Reference
 
-- Related: `skills/devian-unity/20-packages/com.devian.unity/SKILL.md` (패키지 컨텍스트)
+- Related: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT)
 - Related: `skills/devian-unity/30-unity-components/01-singleton/SKILL.md` (ResSingleton)
 - Related: `skills/devian-unity/30-unity-components/10-asset-manager/SKILL.md` (AssetManager)
 - Related: `skills/devian/33-string-table/SKILL.md` (String Table 규약)

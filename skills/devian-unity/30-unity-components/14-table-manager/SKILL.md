@@ -486,14 +486,13 @@ internal static class DomainTableRegistry
 
 ## 도메인 패키지 의존성 주입 규칙 (Hard Rule)
 
-**모든 도메인 UPM 패키지는 com.devian.unity에 의존해야 한다.**
+**모든 도메인 UPM 패키지는 com.devian.foundation에 의존해야 한다.**
 
 ### package.json dependencies
 
 ```json
 "dependencies": {
-  "com.devian.core": "0.1.0",
-  "com.devian.unity": "0.1.0"
+  "com.devian.foundation": "0.1.0"
 }
 ```
 
@@ -516,9 +515,9 @@ internal static class DomainTableRegistry
 
 | 역할 | 경로 |
 |------|------|
-| TableManager | `framework-cs/upm/com.devian.unity/Runtime/Table/TableManager.cs` |
-| TableFormat | `framework-cs/upm/com.devian.unity/Runtime/Table/TableFormat.cs` |
-| Pb64Loader | `framework-cs/upm/com.devian.core/Runtime/Core/Pb64Loader.cs` |
+| TableManager | `framework-cs/upm/com.devian.foundation/Runtime/Unity/Table/TableManager.cs` |
+| TableFormat | `framework-cs/upm/com.devian.foundation/Runtime/Core/Table/TableFormat.cs` |
+| Pb64Loader | `framework-cs/upm/com.devian.foundation/Runtime/Core/Core/Pb64Loader.cs` |
 | TB 코드젠 | `framework-ts/tools/builder/generators/table.js` |
 | UPM wrapper 생성 | `framework-ts/tools/builder/build.js` |
 

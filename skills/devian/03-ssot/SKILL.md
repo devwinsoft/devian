@@ -80,12 +80,13 @@ Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 
 
 | 파일 | 역할 | 허용 키 |
 |------|------|---------|
-| `input/config.json` | 공통 설정 (경로/타겟) | csConfig, tsConfig, dataConfig, upmConfig, staticUpmPackages |
+| `input/config.json` | 공통 설정 (경로/타겟) | csConfig, tsConfig, dataConfig, upmConfig, samplePackages |
 | `input/input_*.json` | 빌드 스펙 (도메인/프로토콜) | version, configPath, tempDir, domains, protocols |
 
 **금지 키 (Hard FAIL):**
 - config.json에 `tempDir`, `domains`, `protocols` 존재 → FAIL
-- input.json에 `csConfig`, `tsConfig`, `dataConfig`, `upmConfig`, `staticUpmPackages` 존재 → FAIL
+- config.json에 `staticUpmPackages` 존재 → FAIL (forbidden, `samplePackages` 사용)
+- input.json에 `csConfig`, `tsConfig`, `dataConfig`, `upmConfig`, `samplePackages` 존재 → FAIL
 
 **상대경로 기준 (중요):**
 - 모든 상대경로 해석 기준은 **input json 파일이 있는 폴더 (buildJsonDir, 보통 `input/`)**
@@ -117,7 +118,7 @@ finalConfig = deepMerge(config.json, input.json)
   "tsConfig": { "moduleDir": "../framework-ts/module", "moduleDir" (unified): "../framework-ts/module" },
   "upmConfig": { "sourceDir": "../framework-cs/upm", "packageDir": "..." },
   "dataConfig": { "bundleDirs": [...] },
-  "staticUpmPackages": [...]
+  "samplePackages": ["com.devian.samples"]
 }
 ```
 
@@ -149,12 +150,13 @@ finalConfig = deepMerge(config.json, input.json)
 
 **고정 유틸(수기 코드) 영역:**
 
-`com.devian.unity`의 아래 폴더는 수기 코드로 유지하며, 생성기가 절대 clean/generate하지 않는다:
-- `Runtime/_Shared/` — UnityMainThread, UnityMainThreadDispatcher
-- `Runtime/Singleton/` — MonoSingleton, AutoSingleton, ResSingleton, SimpleSingleton
-- `Runtime/Pool/` — IPoolable, IPoolFactory, PoolManager, Pool
-- `Runtime/PoolFactories/` — InspectorPoolFactory, BundlePoolFactory
-- `Runtime/AssetManager/` — AssetManager, DownloadManager (bootstrap/download utilities)
+`com.devian.foundation`의 아래 폴더는 수기 코드로 유지하며, 생성기가 절대 clean/generate하지 않는다:
+- `Runtime/Unity/_Shared/` — UnityMainThread, UnityMainThreadDispatcher
+- `Runtime/Unity/Singleton/` — MonoSingleton, AutoSingleton, ResSingleton, SimpleSingleton
+- `Runtime/Unity/Pool/` — IPoolable, IPoolFactory, PoolManager, Pool
+- `Runtime/Unity/PoolFactories/` — InspectorPoolFactory, BundlePoolFactory
+- `Runtime/Unity/AssetManager/` — AssetManager, DownloadManager (bootstrap/download utilities)
+- `Runtime/Core/` — 순수 C# 코드 (UnityEngine 의존 없음)
 
 **레거시 경로 cleanup:**
 - 빌더는 기존 `generated`(소문자) 폴더가 존재하면 자동 제거
@@ -188,9 +190,8 @@ sync 후 아래 조건이면 **즉시 FAIL**:
 - Packages에서 직접 수정한 코드 발견 (다음 sync에서 덮어써짐)
 
 **필수 검증 대상 패키지:**
-- `com.devian.core`
-- `com.devian.unity`
-- `com.devian.unity`
+- `com.devian.foundation` — Core + Unity 통합 패키지
+- `com.devian.samples` — 샘플 패키지
 
 **수동 패키지 수정 시 필수 절차:**
 1. `upm/{pkg}` 또는 `upm/{pkg}`에서 수정
@@ -269,7 +270,7 @@ DATA 도메인의 번들 출력 타겟은 전역 `dataConfig`로 설정한다.
 **필수 규칙:**
 - `dataConfig.bundleDirs`는 필수 (빈 배열 허용)
 - 빌더가 각 bundleDir에 대해 `Tables/` 및 `Strings/` 하위 디렉토리를 생성
-- `dataConfig.tableDirs`는 deprecated (존재 시 빌드 FAIL)
+- `dataConfig.tableDirs`는 금지 (존재 시 빌드 FAIL)
 - `domains[*].dataTargetDirs`는 금지 (존재 시 빌드 실패)
 
 ### 디렉토리 역할 정의 (SSOT)
@@ -280,7 +281,7 @@ DATA 도메인의 번들 출력 타겟은 전역 `dataConfig`로 설정한다.
 | `framework-cs/module` | 생성 C# 모듈 (프로젝트명: `Devian` + `.Module.*`, `Devian.Protocol.*`) | staging 결과로 생성/반영 |
 | `framework-ts/module` | 수동 TS 모듈 (devian — 단일 통합 모듈) | 검증만, 수정 금지 |
 | `framework-ts/module` | 생성 TS 모듈 (devian-domain-*, devian-protocol-*) | staging 결과로 생성/반영 |
-| `framework-cs/upm` | 수동 UPM 패키지 (com.devian.core, com.devian.unity.*, com.devian.samples) | 검증만, 수정 금지 |
+| `framework-cs/upm` | 수동 UPM 패키지 (com.devian.foundation, com.devian.samples) | 검증만, 수정 금지 |
 | `framework-cs/upm` | 생성 UPM 패키지 (com.devian.domain.*, com.devian.protocol.*) | staging 결과로 생성/반영 |
 | `framework-cs/apps/UnityExample/Packages` | Unity 최종 패키지 | upm + upm → sync |
 
@@ -373,32 +374,63 @@ DATA 도메인의 번들 출력 타겟은 전역 `dataConfig`로 설정한다.
 
 ### Unity UPM 패키지 구조 (Hard Rule)
 
-**Devian Unity 런타임은 단일 패키지(com.devian.core)로 제공한다.**
+**Devian Unity 런타임은 단일 패키지(com.devian.foundation)로 제공한다.**
 
 | 구분 | 경로 | 설명 |
 |------|------|------|
-| 단일 패키지 | `framework-cs/upm/com.devian.core` | Core + Network + Protobuf 통합 |
+| Foundation 패키지 | `framework-cs/upm/com.devian.foundation` | Core + Unity 통합 |
+
+**패키지 내부 폴더 구조 (Hard Rule):**
+
+```
+com.devian.foundation/
+  Runtime/
+    Core/                     # UnityEngine 의존 없는 순수 C# 코드
+      Devian.Core.asmdef      # noEngineReferences: true
+      Core/                   # 파서, 엔티티, 인터페이스
+      Net/                    # 네트워크 클라이언트 (WebGLWsDriver 제외)
+      Proto/                  # Protobuf, DFF
+      Table/                  # TableFormat 등 순수 타입
+    Unity/                    # UnityEngine 의존 코드
+      Devian.Unity.asmdef
+      AssetManager/
+      Message/
+      Net/Transports/         # WebGLWsDriver.cs
+      Network/
+      Pool/
+      PoolFactories/
+      Scene/
+      Singleton/
+      Table/                  # TableManager.cs
+      _Shared/
+  Editor/
+    Devian.Unity.Editor.asmdef
+    TableId/
+```
 
 **패키지 내부 asmdef (Hard Rule):**
 
-`com.devian.core`는 **단일 어셈블리**를 제공한다:
+`com.devian.foundation`은 **두 개의 어셈블리**를 제공한다:
 
-| asmdef | namespace | 역할 |
-|--------|-----------|------|
-| `Devian.Core` | `Devian` | 전체 런타임 기능 (Core + Net + Proto 통합) |
+| asmdef | 위치 | namespace | 역할 |
+|--------|------|-----------|------|
+| `Devian.Core` | `Runtime/Core/` | `Devian` | 순수 C# 런타임 (UnityEngine 의존 없음) |
+| `Devian.Unity` | `Runtime/Unity/` | `Devian.Unity` | Unity 어댑터 (UnityEngine 사용) |
+| `Devian.Unity.Editor` | `Editor/` | `Devian.Unity` | Unity Editor 전용 |
 
-> **asmdef 단일화 정책:**
-> - 다른 패키지가 Devian 런타임을 참조할 때는 `"Devian.Core"`만 references에 추가한다.
-> - `"Devian.Network"`, `"Devian.Protobuf"` asmdef 참조는 금지.
-> - asmdef 이름은 `Devian.Core`이지만, 내부 코드의 namespace는 모두 `Devian`이다.
+> **asmdef 분리 정책:**
+> - `Devian.Core`는 `noEngineReferences: true`로 UnityEngine 참조를 금지한다.
+> - `Devian.Unity`는 `Devian.Core`를 참조한다.
+> - 다른 패키지가 Devian 런타임을 참조할 때는 `"Devian.Core"`, `"Devian.Unity"`를 references에 추가한다.
 
 **생성물 패키지명 유지 (Hard Rule):**
 - 프로토콜 생성물은 `com.devian.protocol.{protocolgroup}` 이름을 유지한다.
 - 모듈 생성물은 `com.devian.domain.{domainkey}` 이름을 유지한다.
 
-**패키지 단일화 (Hard Rule):**
-- `com.devian.network`, `com.devian.protobuf`는 더 이상 존재하지 않는다.
-- 모든 런타임 기능은 `com.devian.core` 단일 패키지에 포함된다.
+**패키지 통합 (Hard Rule):**
+- `com.devian.core`, `com.devian.unity`는 더 이상 별도 패키지로 존재하지 않는다.
+- 모든 런타임 기능은 `com.devian.foundation` 단일 패키지에 포함된다.
+- Domain/Protocol 패키지는 `com.devian.foundation`을 의존한다.
 
 ### Validate 단계 (Hard Rule)
 
@@ -507,62 +539,67 @@ input_common.json 위치는 유동적이다. 현재 프로젝트에서는 `input
 > upm는 수동 관리, upm은 빌드 생성. 둘 다 "완벽한 UPM 패키지"로서 동일한 자격을 가진다.
 > 같은 이름의 패키지가 양쪽에 있으면 어느 것이 정본인지 모호해지므로, 빌드 시점에 즉시 FAIL하여 명확한 정리를 강제한다.
 
-### Hard Rule: staticUpmPackages excludes domain packages
+### Hard Rule: samplePackages is samples-only
 
-- `staticUpmPackages`에는 `com.devian.domain.*` 패키지를 포함하지 않는다.
-- Domain 패키지(`com.devian.domain.{DomainKey}`)는 `domains` 파이프라인이 생성/동기화/clean+copy로 관리한다.
-- Domain 패키지를 `staticUpmPackages`에 포함하면 `Runtime/Generated`가 static copy 단계에서 덮어쓰기/삭제될 수 있으므로 **빌드 FAIL로 본다.**
+- `samplePackages`는 샘플 패키지 목록이다.
+- `samplePackages`에는 `com.devian.samples`만 허용한다.
+- 라이브러리(`com.devian.foundation` 등), 도메인(`com.devian.domain.*`), 프로토콜(`com.devian.protocol.*`)은 절대 포함하지 않는다.
+- 위반 시 빌드는 즉시 FAIL이어야 한다.
 
-### Static UPM Packages
+**금지 패키지 목록 (samplePackages에 넣으면 Hard FAIL):**
+- `com.devian.foundation`
+- `com.devian.domain.*`
+- `com.devian.protocol.*`
 
-정적 UPM 패키지(수동 관리 + 빌드 시 가공)는 `staticUpmPackages` 배열로 정의한다.
+## Hard Rule: Base UPM package is com.devian.foundation only
+
+- `com.devian.core`, `com.devian.unity` UPM 패키지는 존재하지 않는다.
+- 모든 `com.devian.*` 패키지의 `package.json` dependencies에서 `com.devian.core`, `com.devian.unity` 사용은 금지이며, 반드시 `com.devian.foundation`을 사용한다.
+- 위반 시 빌드는 즉시 FAIL이다.
+- `com.devian.protocol.*` package.json dependencies는 `com.devian.foundation` + (필요 시) `com.devian.domain.common`만 사용.
+
+### Foundation Package (SSOT)
+
+- 공통 기반 라이브러리는 `com.devian.foundation` UPM 패키지가 SSOT다.
+- 이 패키지 안에 `Devian.Core` / `Devian.Unity` asmdef가 존재한다.
+- Sound/Voice는 foundation에 포함하지 않고 `com.devian.domain.sound`로 분리 유지한다.
+
+### Sample Packages
+
+샘플 패키지는 `samplePackages` 배열로 정의한다.
 이 패키지들은 **upm에 존재해야 하며**, 빌드 시 staging으로 복사 후 가공되어 upm에 materialize된다.
 
-**`staticUpmPackages`는 string[] 형태로 패키지명만 나열한다:**
+**`samplePackages`는 string[] 형태로 패키지명만 나열한다:**
 
 ```json
-"staticUpmPackages": [
-  "com.devian.unity",
-  "com.devian.unity"
+"samplePackages": [
+  "com.devian.samples"
 ]
 ```
 
 **빌드 흐름 (Hard Rule):**
 
 1. **입력 검증**: `upm/{upmName}` 경로에 패키지 존재 여부 검증 (없으면 FAIL)
-2. **Staging**: `upm` → `{tempDir}/static-{upmName}` 복사
-3. **가공/생성**: staging에서 생성물 생성 (예: `Editor/Generated/*.cs`)
-4. **Materialize**: staging → `upm/{upmName}` clean+copy
-5. **packageDir Sync**: `upm/{upmName}` → `{packageDir}/{upmName}` (upm이 정본)
-
-**하이브리드 예외 (충돌 정책):**
-- staticUpmPackages는 upm와 upm에 **동일 이름**이 공존할 수 있다
-- 이 경우 **upm이 정본**이며, upm는 "입력 템플릿"으로만 취급
-- packageDir sync에서 upm는 스킵되고 upm에서만 복사됨
-- 그 외 패키지는 기존 규칙대로 "동일 이름이면 FAIL" 유지
-
-**GUARD (Hard FAIL):**
-- staticUpmPackages 중 upm에 존재하는 패키지는 빌드 후 upm에도 반드시 존재해야 함
-- staging 생성이 누락되거나 upm 복사가 실패하면 FAIL
-- 이 가드가 "생성물이 버려지는 문제"를 재발 방지함
-
-**금지 형식 (Hard Fail):**
-- 객체 형태 `{ "upmName": "..." }` 사용 시 빌드 실패 — 반드시 문자열 배열 사용
+2. **가드 검증**: 패키지명이 `com.devian.samples`가 아니면 즉시 FAIL
+3. **Staging**: `upm` → `{tempDir}/sample-{upmName}` 복사
+4. **가공/생성**: staging에서 생성물 생성 (예: `Editor/Generated/*.cs`)
+5. **Materialize**: staging → `upm/{upmName}` clean+copy
+6. **packageDir Sync**: `upm/{upmName}` → `{packageDir}/{upmName}` (upm이 정본)
 
 **경로 계산 규칙 (Hard Rule):**
 
 ```
 입력(템플릿):    {upmConfig.sourceDir}/{upmName}         (upm)
-staging:        {tempDir}/static-{upmName}
+staging:        {tempDir}/sample-{upmName}
 materialize:    {upmConfig.sourceDir}/{upmName}       (upm)
 최종 패키지:    {upmConfig.packageDir}/{upmName}        (packageDir)
 ```
 
-예시 (`"com.devian.unity"`):
-- 입력: `../framework-cs/upm/com.devian.unity`
-- staging: `{tempDir}/static-com.devian.unity`
-- materialize: `../framework-cs/upm/com.devian.unity`
-- 최종: `../framework-cs/apps/UnityExample/Packages/com.devian.unity`
+예시 (`"com.devian.samples"`):
+- 입력: `../framework-cs/upm/com.devian.samples`
+- staging: `{tempDir}/sample-com.devian.samples`
+- materialize: `../framework-cs/upm/com.devian.samples`
+- 최종: `../framework-cs/apps/UnityExample/Packages/com.devian.samples`
 
 ### 1) DomainType = DATA
 
@@ -675,7 +712,7 @@ SKIP되어도 타겟 디렉토리는 clean되어 이전 산출물이 제거된�
 - `domains[*].csTargetDir` — 금지, `csConfig.generateDir` 사용, 존재 시 빌드 실패
 - `domains[*].tsTargetDir` — 금지, `tsConfig.generateDir` 사용, 존재 시 빌드 실패
 - `domains[*].dataTargetDirs` — 금지, `dataConfig.bundleDirs` 사용, 존재 시 빌드 실패
-- `dataConfig.tableDirs` — deprecated, `dataConfig.bundleDirs` 사용, 존재 시 빌드 FAIL
+- `dataConfig.tableDirs` — 금지, `dataConfig.bundleDirs` 사용, 존재 시 빌드 FAIL
 
 > Domain의 모든 Contract, Table Entity, Table Container는 단일 파일(`{DomainKey}.g.cs`, `{DomainKey}.g.ts`)에 통합 생성된다.
 > **파일 확장자는 `.json`이지만, `ndjson/` 폴더의 파일 내용은 NDJSON(라인 단위 JSON)이다.** 확장자는 소비 측(Unity/툴링) 요구로 `.json`을 사용한다.
