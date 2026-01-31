@@ -30,7 +30,8 @@
       "Bash(dir:*)",
       "Bash(npm -w builder run build -- ../input/input_common.json)",
       "Bash(node tools/builder/build.js:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(echo:*)"
     ]
   }
 }

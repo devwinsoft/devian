@@ -21,7 +21,7 @@ PoolManager는 **AutoSingleton 기반 Registry**이며, 사용자는 **IPoolFact
 - `Pool<T>` 제네릭 풀 및 비제네릭 `IPool` 인터페이스
 - `PoolTag` MonoBehaviour (인스턴스→풀 결정적 매핑)
 - `PoolFactoryExtensions` 확장 메서드 (factory.Spawn/Despawn)
-- **Type/PoolName/Active|Inactive 디버깅 하이어라키**
+- **Type/PoolName/Inactive 디버깅 하이어라키**
 - 메인 스레드 강제 (비메인 throw)
 
 ### 제외
@@ -54,15 +54,18 @@ PoolManager.Instance.Despawn(enemy);
 
 ## 5. 디버깅 하이어라키 구조 (핵심)
 
-Unity Hierarchy에서 풀 오브젝트가 Type → PoolName → Active/Inactive로 정렬된다:
+Unity Hierarchy에서 풀 오브젝트가 Type → PoolName → Inactive로 정렬된다:
 
 ```
 [PoolManager]
   <TypeName>                    # typeof(T).Name
     <PoolName>                  # Spawn(name)의 name (프리팹 이름)
-      Active                    # Spawn된 활성 오브젝트 (parent=null일 때)
       Inactive                  # Despawn된 비활성 오브젝트
 ```
+
+- **Active 폴더는 생성하지 않는다.**
+- Spawn(parent=null) 시 오브젝트는 `[PoolManager]/{Type}/{PoolName}` 아래로 정렬한다.
+- Despawn 시 오브젝트는 항상 `Inactive` 아래로 이동한다.
 
 ### 예시
 
@@ -70,14 +73,11 @@ Unity Hierarchy에서 풀 오브젝트가 Type → PoolName → Active/Inactive�
 [PoolManager]
   Enemy
     Goblin
-      Active
       Inactive
     Orc
-      Active
       Inactive
   Projectile
     Fireball
-      Active
       Inactive
 ```
 
@@ -106,7 +106,7 @@ Spawn 시 `parent` 인자에 따라 오브젝트 부모가 결정된다:
 
 | parent 인자 | 결과 |
 |-------------|------|
-| `null` | `[PoolManager]/{Type}/{PoolName}/Active` 아래로 이동 (디버깅 기본값) |
+| `null` | `[PoolManager]/{Type}/{PoolName}` 아래로 이동 (디버깅 기본값) |
 | `Transform` 제공 | 제공된 parent 아래로 이동 (게임 로직 우선) |
 
 ### Despawn
@@ -126,17 +126,21 @@ namespace Devian
     {
         public int PoolId { get; private set; }
         public string PoolName { get; private set; }
-        
+        public bool IsSpawned { get; private set; }
+
         internal void SetPoolInfo(int poolId, string poolName);
+        internal void MarkSpawned();
+        internal void MarkDespawned();
     }
 }
 ```
 
 ### 규약
 
-- Spawn 시 PoolManager가 `PoolTag`를 인스턴스에 부착/갱신하여 `PoolId`, `PoolName`을 기록
-- Despawn 시 PoolManager가 `PoolTag.PoolId`로 풀을 찾아 반환
+- Spawn 시 PoolManager가 `PoolTag`를 인스턴스에 부착/갱신하여 `PoolId`, `PoolName`을 기록하고, `IsSpawned = true`로 마킹
+- Despawn 시 PoolManager가 `PoolTag.PoolId`로 풀을 찾아 반환, `IsSpawned = false`로 마킹
 - **Tag 없으면 Despawn 거부** (throw) — 휴리스틱 추측 금지
+- **IsSpawned로 이중 Despawn 방지** — 이미 `IsSpawned = false`면 Despawn 무시
 
 ---
 
@@ -207,8 +211,8 @@ public sealed class PoolManager : AutoSingleton<PoolManager>
 
 ### _GetNameRoots (internal)
 
-- Type/PoolName별 Active/Inactive 루트 생성 및 캐시
-- `NameRoots` struct로 `(Active, Inactive)` 반환
+- Type/PoolName별 Root/Inactive 루트 생성 및 캐시
+- `NameRoots` struct로 `(Root, Inactive)` 반환
 
 ---
 
@@ -250,13 +254,13 @@ public static class PoolFactoryExtensions
 public struct PoolOptions
 {
     public int MaxSize;           // 최대 비활성 인스턴스 수 (기본 512)
-    public Transform ActiveRoot;  // Spawn 시 parent=null일 때 사용 (PoolManager가 설정)
+    public Transform Root;        // Spawn 시 parent=null일 때 정렬 루트 (PoolManager가 설정)
     public Transform InactiveRoot;// Despawn 시 사용 (PoolManager가 설정)
     public int Prewarm;           // 프리웜 수량 (기본 0)
 }
 ```
 
-> **Note**: `ActiveRoot`와 `InactiveRoot`는 PoolManager가 자동으로 설정함. 사용자가 직접 설정할 필요 없음.
+> **Note**: `Root`와 `InactiveRoot`는 PoolManager가 자동으로 설정함. 사용자가 직접 설정할 필요 없음.
 
 ---
 
@@ -320,13 +324,12 @@ while (_inactiveQueue.Count > 0 && instance == null)
 - Spawn 시 null(Unity null 포함) 엔트리는 자동 제거
 - Destroy된 오브젝트가 반환되지 않음
 
-**_activeInstances 정리:**
+**PoolTag.IsSpawned 상태 플래그:**
 
-```csharp
-_activeInstances.RemoveWhere(x => x == null);
-```
-
-- Spawn/Despawn 진입 시 Unity null 엔트리 제거
+- Active 저장(HashSet)은 사용하지 않고, PoolTag.IsSpawned로 이중 Despawn만 방지
+- Spawn 시 `tag.MarkSpawned()` 호출
+- Despawn 시 `tag.IsSpawned == false`면 return (중복 Despawn 무시)
+- Despawn 처리 시작 시 `tag.MarkDespawned()` 호출
 
 ### 16.3 PoolTag 불변 규칙 (정본)
 

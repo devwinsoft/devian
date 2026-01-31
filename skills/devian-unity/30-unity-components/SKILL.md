@@ -31,6 +31,7 @@ Type: Index / Directory
 | 21 | AssetId | 폴더 스캔 기반 Asset ID 선택 UI (Select + 검색) 공통 패턴 | `21-asset-id/SKILL.md` |
 | 22 | EffectManager | BundlePool 기반 이펙트 스폰/디스폰 + Runner 확장 | `22-effect-manager/SKILL.md` |
 | 23 | DevianSettings | config.json → Assets/Settings JSON → Settings.asset 일관 파이프라인 | `23-devian-settings/SKILL.md` |
+| 24 | PlayerPrefs Wrapper | Primitive/Enum/Json 기반 PlayerPrefs 래퍼 | `24-player-prefs/SKILL.md` |
 
 ---
 

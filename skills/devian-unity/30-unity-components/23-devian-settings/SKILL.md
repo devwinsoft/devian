@@ -46,10 +46,18 @@ com.devian.foundation/Editor/Settings/
 ### 기본값
 
 - `assetId[EFFECT]` = `"Assets/Bundles/Effects"`
+- `playerPrefsPrefix` = `"devian.game."`
 
 ### 필드
 
 - `AssetIdEntry[] _assetId`: GroupKey → SearchDir 매핑
+- `string _playerPrefsPrefix`: PlayerPrefs Key Prefix (dot suffix 포함)
+
+### 규약 (Hard)
+
+- `playerPrefsPrefix`는 공백 불가
+- `playerPrefsPrefix`는 반드시 `'.'`로 끝나야 한다 (예: `devian.game.`)
+- PlayerPrefs 키는 `DevianSettings.playerPrefsPrefix`로 시작해야 한다 (SSOT)
 
 ---
 

@@ -20,11 +20,10 @@ namespace Devian
         public int MaxSize;
         
         /// <summary>
-        /// Optional transform to parent active (spawned) instances under.
-        /// Used when Spawn is called with parent=null.
+        /// Optional transform to parent spawned instances under when parent=null.
         /// Set automatically by PoolManager for debug hierarchy.
         /// </summary>
-        public Transform ActiveRoot;
+        public Transform Root;
         
         /// <summary>
         /// Optional transform to parent inactive (despawned) instances under.
@@ -44,7 +43,7 @@ namespace Devian
         public static PoolOptions Default => new PoolOptions
         {
             MaxSize = 512,
-            ActiveRoot = null,
+            Root = null,
             InactiveRoot = null,
             Prewarm = 0
         };

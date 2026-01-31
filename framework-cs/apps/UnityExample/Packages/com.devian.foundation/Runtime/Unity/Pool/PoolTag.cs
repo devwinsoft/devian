@@ -26,7 +26,23 @@ namespace Devian
         /// Useful for debugging and hierarchy organization.
         /// </summary>
         public string PoolName { get; private set; }
-        
+
+        /// <summary>
+        /// Whether this instance is currently spawned (active in the game).
+        /// Used to prevent double-despawn issues.
+        /// </summary>
+        public bool IsSpawned { get; private set; }
+
+        /// <summary>
+        /// Marks the instance as spawned. Called by PoolManager after TrackSpawned.
+        /// </summary>
+        internal void MarkSpawned() => IsSpawned = true;
+
+        /// <summary>
+        /// Marks the instance as despawned. Called by Pool.Despawn at the start of despawn.
+        /// </summary>
+        internal void MarkDespawned() => IsSpawned = false;
+
         /// <summary>
         /// Sets the pool info. Only callable from within Devian assembly.
         /// Immutable after first set - throws if attempting to change values.

@@ -30,7 +30,7 @@ namespace Devian
         
         /// <summary>
         /// Clears all inactive instances from the pool (destroys them).
-        /// Does not affect active instances.
+        /// Does not affect spawned instances.
         /// </summary>
         void Clear();
     }

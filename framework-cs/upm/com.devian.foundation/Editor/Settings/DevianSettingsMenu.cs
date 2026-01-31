@@ -16,6 +16,7 @@ namespace Devian
             {
                 // Auto-repair: ensure default entries exist
                 existing.EnsureAssetId("EFFECT", "Assets/Bundles/Effects");
+                existing.EnsurePlayerPrefsPrefix(DevianSettings.DefaultPlayerPrefsPrefix);
                 EditorUtility.SetDirty(existing);
                 AssetDatabase.SaveAssets();
 
@@ -35,6 +36,7 @@ namespace Devian
             // Default seed requested by user:
             // "assetId": { "EFFECT": "Assets/Bundles/Effects" }
             asset.EnsureAssetId("EFFECT", "Assets/Bundles/Effects");
+            asset.EnsurePlayerPrefsPrefix(DevianSettings.DefaultPlayerPrefsPrefix);
 
             AssetDatabase.CreateAsset(asset, DevianSettings.DefaultAssetPath);
             AssetDatabase.SaveAssets();

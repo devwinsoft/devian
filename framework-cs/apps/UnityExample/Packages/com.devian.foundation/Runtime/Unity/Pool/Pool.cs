@@ -13,34 +13,33 @@ namespace Devian
     /// Generic object pool for a specific component type and pool name.
     /// Pool identity: PoolId assigned by PoolManager on registration.
     /// Each Pool manages a single prefab name (poolName).
-    /// Debug hierarchy: [PoolManager]/{Type}/{PoolName}/Active|Inactive
+    /// Debug hierarchy: [PoolManager]/{Type}/{PoolName}/Inactive
     /// </summary>
     /// <typeparam name="T">The poolable component type</typeparam>
     public sealed class Pool<T> : IPool where T : Component, IPoolable<T>
     {
         private readonly Queue<T> _inactiveQueue = new Queue<T>();
-        private readonly HashSet<T> _activeInstances = new HashSet<T>();
         private readonly IPoolFactory _factory;
         private readonly int _maxSize;
-        private readonly Transform _activeRoot;
+        private readonly Transform _root;
         private readonly Transform _inactiveRoot;
         private readonly string _poolName;
-        
+
         private GameObject _prefab;
-        
+
         public Type ComponentType => typeof(T);
-        
+
         /// <summary>
         /// The pool name this pool manages.
         /// </summary>
         public string PoolName => _poolName;
-        
+
         public Pool(IPoolFactory factory, string poolName, PoolOptions options)
         {
             _factory = factory ?? throw new ArgumentNullException(nameof(factory));
             _poolName = PoolManager.NormalizePoolName(poolName);
             _maxSize = options.MaxSize > 0 ? options.MaxSize : 512;
-            _activeRoot = options.ActiveRoot;
+            _root = options.Root;
             _inactiveRoot = options.InactiveRoot;
         }
         
@@ -56,10 +55,7 @@ namespace Devian
             {
                 throw new ArgumentException("Prefab name cannot be null or empty.", nameof(name));
             }
-            
-            // Clean up destroyed entries from active set
-            _activeInstances.RemoveWhere(x => x == null);
-            
+
             // Get or cache prefab (first time only)
             if (_prefab == null)
             {
@@ -103,24 +99,21 @@ namespace Devian
             go.SetActive(true);
             
             var t = instance.transform;
-            
-            // Parent policy: if parent is null, use ActiveRoot; otherwise use provided parent
+
+            // Parent policy: if parent is null, use Root; otherwise use provided parent
             if (parent != null)
             {
                 t.SetParent(parent, false);
             }
-            else if (_activeRoot != null)
+            else if (_root != null)
             {
-                t.SetParent(_activeRoot, false);
+                t.SetParent(_root, false);
             }
-            
+
             t.position = position;
             t.rotation = rotation;
-            
-            // Track as active
-            _activeInstances.Add(instance);
-            
-            // Track with PoolManager (attaches/updates PoolTag)
+
+            // Track with PoolManager (attaches/updates PoolTag, marks IsSpawned)
             PoolManager.Instance._TrackSpawned(this, instance, _poolName);
             
             // Notify
@@ -142,21 +135,29 @@ namespace Devian
         public void Despawn(T instance)
         {
             UnityMainThread.EnsureOrThrow("Pool.Despawn");
-            
+
             if (instance == null)
             {
                 throw new ArgumentNullException(nameof(instance));
             }
-            
-            // Clean up destroyed entries from active set
-            _activeInstances.RemoveWhere(x => x == null);
-            
-            if (!_activeInstances.Remove(instance))
+
+            // Check PoolTag.IsSpawned to prevent double-despawn
+            var tag = instance.GetComponent<PoolTag>();
+            if (tag == null)
             {
-                // Already despawned or not from this pool
+                throw new InvalidOperationException(
+                    $"Cannot despawn '{instance.name}': No PoolTag found. Was this instance spawned from a registered pool?");
+            }
+
+            if (!tag.IsSpawned)
+            {
+                // Already despawned, ignore
                 return;
             }
-            
+
+            // Mark as despawned first to prevent re-entry
+            tag.MarkDespawned();
+
             // Notify first (user code)
             instance.OnPoolDespawned();
             
@@ -199,7 +200,7 @@ namespace Devian
         
         /// <summary>
         /// Clears all inactive instances (destroys them).
-        /// Active instances are not affected.
+        /// Spawned instances are not affected.
         /// </summary>
         public void Clear()
         {

@@ -14,9 +14,9 @@ namespace Devian
     /// Central registry for object pools.
     /// AutoSingleton-based MonoBehaviour that manages:
     /// - Pool registration by (factory, type, poolName) key
-    /// - Debug hierarchy: [PoolManager]/Type/PoolName/Active|Inactive
+    /// - Debug hierarchy: [PoolManager]/Type/PoolName/Inactive
     /// - PoolTag-based despawn routing
-    /// 
+    ///
     /// Usage: Use IPoolFactory extension methods (factory.Spawn/Despawn),
     /// not PoolManager directly for spawning.
     /// </summary>
@@ -36,16 +36,16 @@ namespace Devian
             new Dictionary<Type, Dictionary<string, NameRoots>>();
         
         /// <summary>
-        /// Holds Active and Inactive root transforms for a pool name.
+        /// Holds Root and Inactive root transforms for a pool name.
         /// </summary>
         internal readonly struct NameRoots
         {
-            public readonly Transform Active;
+            public readonly Transform Root;
             public readonly Transform Inactive;
-            
-            public NameRoots(Transform active, Transform inactive)
+
+            public NameRoots(Transform root, Transform inactive)
             {
-                Active = active;
+                Root = root;
                 Inactive = inactive;
             }
         }
@@ -101,48 +101,45 @@ namespace Devian
             return go.transform;
         }
         
-        // === Internal: Get or Create Name Roots (Active/Inactive) ===
-        
+        // === Internal: Get or Create Name Roots (Root/Inactive) ===
+
         /// <summary>
-        /// Gets or creates Active and Inactive root transforms for a pool name.
-        /// Structure: [PoolManager]/{TypeName}/{PoolName}/Active|Inactive
+        /// Gets or creates Root and Inactive root transforms for a pool name.
+        /// Structure: [PoolManager]/{TypeName}/{PoolName}/Inactive
+        /// Spawned instances go under {PoolName} (Root), despawned go under Inactive.
         /// </summary>
         internal NameRoots _GetNameRoots(Type componentType, string poolName)
         {
             var normalizedName = NormalizePoolName(poolName);
-            
+
             // Ensure type root exists
             var typeRoot = _GetTypeRoot(componentType);
-            
+
             // Get or create name roots dictionary
             if (!_nameRootsByType.TryGetValue(componentType, out var nameRootsDict))
             {
                 nameRootsDict = new Dictionary<string, NameRoots>();
                 _nameRootsByType[componentType] = nameRootsDict;
             }
-            
+
             // Check cache
             if (nameRootsDict.TryGetValue(normalizedName, out var roots))
             {
                 return roots;
             }
-            
+
             // Create pool name root: [PoolManager]/{TypeName}/{PoolName}
             var nameRootGo = new GameObject(normalizedName);
             nameRootGo.transform.SetParent(typeRoot, false);
-            
-            // Create Active root
-            var activeGo = new GameObject("Active");
-            activeGo.transform.SetParent(nameRootGo.transform, false);
-            
+
             // Create Inactive root (deactivated)
             var inactiveGo = new GameObject("Inactive");
             inactiveGo.transform.SetParent(nameRootGo.transform, false);
             inactiveGo.SetActive(false);
-            
-            roots = new NameRoots(activeGo.transform, inactiveGo.transform);
+
+            roots = new NameRoots(nameRootGo.transform, inactiveGo.transform);
             nameRootsDict[normalizedName] = roots;
-            
+
             return roots;
         }
         
@@ -164,10 +161,10 @@ namespace Devian
             
             // Get name roots for debug hierarchy
             var nameRoots = _GetNameRoots(typeof(T), normalizedName);
-            
+
             // Set options with roots
             var optionsWithRoots = options;
-            optionsWithRoots.ActiveRoot = nameRoots.Active;
+            optionsWithRoots.Root = nameRoots.Root;
             optionsWithRoots.InactiveRoot = nameRoots.Inactive;
             
             // Create new pool
@@ -266,6 +263,7 @@ namespace Devian
             }
             
             tag.SetPoolInfo(poolId, NormalizePoolName(poolName));
+            tag.MarkSpawned();
         }
         
         // === Public API: Despawn ===

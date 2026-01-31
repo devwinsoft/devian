@@ -10,22 +10,22 @@ namespace Devian
     /// <summary>
     /// Extension methods for IPoolFactory providing convenient Spawn/Despawn API.
     /// This is the primary user-facing API for object pooling.
-    /// 
+    ///
     /// Usage:
     ///   var enemy = myFactory.Spawn&lt;Enemy&gt;("Goblin", position, rotation);
     ///   myFactory.Despawn(enemy);
-    /// 
+    ///
     /// Debug Hierarchy:
-    ///   [PoolManager]/{TypeName}/{PoolName}/Active|Inactive
+    ///   [PoolManager]/{TypeName}/{PoolName}/Inactive
     /// </summary>
     public static class PoolFactoryExtensions
     {
         /// <summary>
         /// Spawns a pooled instance by prefab name using this factory.
         /// Creates or reuses a Pool for the given (factory, type, poolName) combination.
-        /// 
+        ///
         /// Parent policy:
-        /// - If parent is null, instance goes under [PoolManager]/{Type}/{Name}/Active
+        /// - If parent is null, instance goes under [PoolManager]/{Type}/{Name}
         /// - If parent is provided, instance goes under that parent (game logic priority)
         /// </summary>
         /// <typeparam name="T">The poolable component type</typeparam>
