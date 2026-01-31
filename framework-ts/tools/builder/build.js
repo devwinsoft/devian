@@ -477,7 +477,10 @@ class DevianToolBuilder {
                             
                             for (const strTable of stringTables) {
                                 console.log(`    [StringTable] ${strTable.tableName}`);
-                                stringTableNames.push(strTable.tableName); // Collect for UPM wrapper
+                                // Collect for UPM wrapper (deduplicated)
+                                if (!stringTableNames.includes(strTable.tableName)) {
+                                    stringTableNames.push(strTable.tableName);
+                                }
                                 
                                 for (const [language, entries] of strTable.byLanguage) {
                                     // Create language directories
@@ -515,8 +518,22 @@ class DevianToolBuilder {
             console.log(`    [Skip] string tables: not configured`);
         }
 
+        // Validate: TB table name and ST table name collision check
+        // SSOT: skills/devian/33-string-table/SKILL.md - Hard Rule
+        const tableNameSet = new Set((tables || []).map(t => t.name));
+        for (const stName of (stringTableNames || [])) {
+            if (tableNameSet.has(stName)) {
+                throw new Error(
+                    `[FAIL] StringTable name collision in domain '${domainName}'.\n` +
+                    `  '${stName}' exists as both a TB table and a StringTable.\n` +
+                    `  This is forbidden because it would generate duplicate '${stName}_ID' types.\n` +
+                    `  Rename either the TB sheet or the StringTable sheet.`
+                );
+            }
+        }
+
         // Generate unified C# file: {DomainName}.g.cs
-        const csCode = this.generateUnifiedCSharp(domainName, contractSpecs, tables);
+        const csCode = this.generateUnifiedCSharp(domainName, contractSpecs, tables, stringTableNames);
         fs.writeFileSync(path.join(stagingCs, `${domainName}.g.cs`), csCode);
 
         // Generate unified TS file: {DomainName}.g.ts
@@ -534,7 +551,7 @@ class DevianToolBuilder {
         this.generateDomainUpmScaffold(domainName, stagingCs, tables, stringTableNames);
     }
 
-    generateUnifiedCSharp(domainName, contractSpecs, tables) {
+    generateUnifiedCSharp(domainName, contractSpecs, tables, stringTableNames = []) {
         const lines = [];
 
         // Collect enum specs from tables
@@ -605,14 +622,25 @@ class DevianToolBuilder {
 
             // Table ID Types section (PK 있는 테이블만)
             const keyedTables = tables.filter(t => t.keyField);
-            if (keyedTables.length > 0) {
+            const stNames = stringTableNames || [];
+            const shouldGenerateIdTypes = keyedTables.length > 0 || stNames.length > 0;
+
+            if (shouldGenerateIdTypes) {
                 lines.push('    // ================================================================');
                 lines.push('    // Table ID Types (for Inspector binding)');
                 lines.push('    // ================================================================');
                 lines.push('');
 
+                // TB keyed table IDs
                 for (const table of keyedTables) {
                     const idCode = this.generateTableIdType(table, enumSpecs);
+                    lines.push(idCode);
+                    lines.push('');
+                }
+
+                // ST string table IDs
+                for (const stName of stNames) {
+                    const idCode = this.generateStringTableIdType(stName);
                     lines.push(idCode);
                     lines.push('');
                 }
@@ -623,6 +651,10 @@ class DevianToolBuilder {
                 lines.push('    {');
                 for (const table of keyedTables) {
                     const extCode = this.generateTableIdIsValidExtension(table, enumSpecs);
+                    lines.push(extCode);
+                }
+                for (const stName of stNames) {
+                    const extCode = this.generateStringTableIdIsValidExtension(stName);
                     lines.push(extCode);
                 }
                 lines.push('    }');
@@ -690,6 +722,31 @@ class DevianToolBuilder {
         }
 
         return `        public static bool IsValid(this ${tableName}_ID? obj) => ${isValidCheck};`;
+    }
+
+    /**
+     * Generate {TableName}_ID class for a string table (ST)
+     * SSOT: skills/devian/33-string-table/SKILL.md
+     */
+    generateStringTableIdType(tableName) {
+        const lines = [];
+        lines.push(`    /// <summary>Inspector-bindable ID for string table ${tableName}</summary>`);
+        lines.push('    [Serializable]');
+        lines.push(`    public sealed class ${tableName}_ID`);
+        lines.push('    {');
+        lines.push('        public string Value = string.Empty;');
+        lines.push('');
+        lines.push(`        public static implicit operator string(${tableName}_ID id) => id.Value;`);
+        lines.push(`        public static implicit operator ${tableName}_ID(string value) => new ${tableName}_ID { Value = value };`);
+        lines.push('    }');
+        return lines.join('\n');
+    }
+
+    /**
+     * Generate IsValid extension method for string table {TableName}_ID
+     */
+    generateStringTableIdIsValidExtension(tableName) {
+        return `        public static bool IsValid(this ${tableName}_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);`;
     }
 
     generateUnifiedTypeScript(domainName, contractSpecs, tables) {
@@ -2002,10 +2059,14 @@ export * from './features';
         // Generate TableID Editor bindings into this domain module package
         // SSOT: skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md
         const keyedTables = (tables || []).filter(t => t && t.keyField);
-        if (keyedTables.length > 0) {
+        const stNames = stringTableNames || [];
+        const hasEditorBindings = keyedTables.length > 0 || stNames.length > 0;
+
+        if (hasEditorBindings) {
             const editorGeneratedDir = path.join(stagingUpm, 'Editor', 'Generated');
             fs.mkdirSync(editorGeneratedDir, { recursive: true });
 
+            // TB keyed table Editor bindings
             let generatedCount = 0;
             for (const table of keyedTables) {
                 const editorCode = this.generateTableIdEditorCs(domainName, table);
@@ -2013,7 +2074,16 @@ export * from './features';
                 fs.writeFileSync(path.join(editorGeneratedDir, editorFileName), editorCode);
                 generatedCount++;
             }
-            console.log(`    [Generated] ${generatedCount} TableID Editor file(s) to ${editorGeneratedDir}`);
+
+            // ST string table Editor bindings
+            for (const stName of stNames) {
+                const editorCode = this.generateStringTableIdEditorCs(domainName, stName);
+                const editorFileName = `${stName}_ID.Editor.cs`;
+                fs.writeFileSync(path.join(editorGeneratedDir, editorFileName), editorCode);
+                generatedCount++;
+            }
+
+            console.log(`    [Generated] ${generatedCount} ID Editor file(s) (${keyedTables.length} TB, ${stNames.length} ST)`);
         }
 
         // ================================================================
@@ -2028,24 +2098,30 @@ export * from './features';
                 fs.writeFileSync(path.join(stagingGenerated, wrapperFileName), wrapperCode);
             }
             console.log(`    [Generated] ${keyedTables2.length} TB_*.Unity.g.cs wrapper(s)`);
-            
-            // Generate DomainTableRegistry.g.cs for auto TB/ST loader registration
-            const registryCode = this.generateDomainTableRegistryCs(domainName, tables, stringTableNames || []);
-            fs.writeFileSync(path.join(stagingGenerated, 'DomainTableRegistry.g.cs'), registryCode);
-            console.log(`    [Generated] DomainTableRegistry.g.cs (${keyedTables2.length} TB, ${(stringTableNames || []).length} ST loader(s))`);
         }
 
         // ================================================================
         // Generate UPM Unity wrappers: ST_{TableName}.g.cs
         // SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md
         // ================================================================
-        if (stringTableNames && stringTableNames.length > 0) {
-            for (const tableName of stringTableNames) {
+        if (stNames.length > 0) {
+            for (const tableName of stNames) {
                 const wrapperCode = this.generateStringTableWrapperCs(domainName, tableName);
                 const wrapperFileName = `ST_${tableName}.g.cs`;
                 fs.writeFileSync(path.join(stagingGenerated, wrapperFileName), wrapperCode);
             }
-            console.log(`    [Generated] ${stringTableNames.length} ST_*.g.cs wrapper(s)`);
+            console.log(`    [Generated] ${stNames.length} ST_*.g.cs wrapper(s)`);
+        }
+
+        // ================================================================
+        // Generate DomainTableRegistry.g.cs for auto TB/ST loader registration
+        // Generate if TB > 0 OR ST > 0 (changed from TB > 0 only)
+        // ================================================================
+        const shouldGenRegistry = keyedTables2.length > 0 || stNames.length > 0;
+        if (shouldGenRegistry) {
+            const registryCode = this.generateDomainTableRegistryCs(domainName, tables, stNames);
+            fs.writeFileSync(path.join(stagingGenerated, 'DomainTableRegistry.g.cs'), registryCode);
+            console.log(`    [Generated] DomainTableRegistry.g.cs (${keyedTables2.length} TB, ${stNames.length} ST loader(s))`);
         }
 
         // Common 모듈일 때 Features 폴더 복사 (Logger/Variant/Complex)
@@ -2147,7 +2223,10 @@ export * from './features';
         lines.push('    {');
         lines.push(`        protected override ${selectorClassName} GetSelector()`);
         lines.push('        {');
-        lines.push(`            return ScriptableWizard.DisplayWizard<${selectorClassName}>("Select ${tableName}");`);
+        lines.push(`            var w = ScriptableObject.CreateInstance<${selectorClassName}>();`);
+        lines.push(`            w.titleContent = new GUIContent("Select ${tableName}");`);
+        lines.push('            w.ShowUtility();');
+        lines.push('            return w;');
         lines.push('        }');
 
         // Add GetValueDisplayString override for group-based display
@@ -2177,6 +2256,95 @@ export * from './features';
             lines.push('            return base.GetValueDisplayString(valueProp);');
             lines.push('        }');
         }
+        lines.push('    }');
+
+        lines.push('}');
+        lines.push('');
+        lines.push('#endif');
+
+        return lines.join('\n');
+    }
+
+    /**
+     * Generate {TableName}_ID.Editor.cs for StringTable (ST) Unity Inspector binding
+     * SSOT: skills/devian/33-string-table/SKILL.md
+     */
+    generateStringTableIdEditorCs(domainName, tableName) {
+        // Class names with domain prefix to avoid conflicts
+        const selectorClassName = `${domainName}_${tableName}_ID_Selector`;
+        const drawerClassName = `${domainName}_${tableName}_ID_Drawer`;
+
+        const lines = [];
+        lines.push('// <auto-generated>');
+        lines.push('// DO NOT EDIT - Generated by Devian Build System v10');
+        lines.push('// StringTable ID Inspector binding');
+        lines.push('// SSOT: skills/devian/33-string-table/SKILL.md');
+        lines.push('// </auto-generated>');
+        lines.push('');
+        lines.push('#if UNITY_EDITOR');
+        lines.push('');
+        lines.push('using System;');
+        lines.push('using System.Linq;');
+        lines.push('using UnityEditor;');
+        lines.push('using UnityEngine;');
+        lines.push(`using Devian.Domain.${domainName};`);
+        lines.push('');
+        lines.push('namespace Devian');
+        lines.push('{');
+
+        // Selector class
+        lines.push(`    /// <summary>Selector for StringTable ${tableName}_ID</summary>`);
+        lines.push(`    public class ${selectorClassName} : EditorID_SelectorBase`);
+        lines.push('    {');
+        lines.push(`        protected override string GetDisplayTypeName() => "${tableName}";`);
+        lines.push('');
+        lines.push('        [Serializable]');
+        lines.push('        private class StringEntry { public string id = string.Empty; public string text = string.Empty; }');
+        lines.push('');
+        lines.push('        public override void Reload()');
+        lines.push('        {');
+        lines.push('            ClearItems();');
+        lines.push('');
+        lines.push(`            var textAssets = AssetManager.FindAssets<TextAsset>("${tableName}");`);
+        lines.push('            // Sort by path and pick first one (any language is fine, keys are same across languages)');
+        lines.push('            var sortedAssets = textAssets');
+        lines.push('                .Select(ta => new { Asset = ta, Path = AssetDatabase.GetAssetPath(ta) })');
+        lines.push('                .Where(x => x.Path.EndsWith(".json", StringComparison.OrdinalIgnoreCase))');
+        lines.push('                .OrderBy(x => x.Path)');
+        lines.push('                .ToList();');
+        lines.push('');
+        lines.push('            if (sortedAssets.Count == 0) return;');
+        lines.push('');
+        lines.push('            var ta = sortedAssets[0].Asset;');
+        lines.push('            var ndjsonLines = ta.text.Split(new[] { \'\\n\', \'\\r\' }, StringSplitOptions.RemoveEmptyEntries);');
+        lines.push('            foreach (var line in ndjsonLines)');
+        lines.push('            {');
+        lines.push('                var trimmed = line.Trim();');
+        lines.push('                if (string.IsNullOrEmpty(trimmed)) continue;');
+        lines.push('                try');
+        lines.push('                {');
+        lines.push('                    var entry = JsonUtility.FromJson<StringEntry>(trimmed);');
+        lines.push('                    if (!string.IsNullOrEmpty(entry.id))');
+        lines.push('                        AddItem(entry.id);');
+        lines.push('                }');
+        lines.push('                catch { /* ignore parse errors */ }');
+        lines.push('            }');
+        lines.push('        }');
+        lines.push('    }');
+        lines.push('');
+
+        // Drawer class
+        lines.push(`    /// <summary>PropertyDrawer for ${tableName}_ID</summary>`);
+        lines.push(`    [CustomPropertyDrawer(typeof(${tableName}_ID))]`);
+        lines.push(`    public class ${drawerClassName} : EditorID_DrawerBase<${selectorClassName}>`);
+        lines.push('    {');
+        lines.push(`        protected override ${selectorClassName} GetSelector()`);
+        lines.push('        {');
+        lines.push(`            var w = ScriptableObject.CreateInstance<${selectorClassName}>();`);
+        lines.push(`            w.titleContent = new GUIContent("Select ${tableName}");`);
+        lines.push('            w.ShowUtility();');
+        lines.push('            return w;');
+        lines.push('        }');
         lines.push('    }');
 
         lines.push('}');

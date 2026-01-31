@@ -44,7 +44,10 @@ namespace Devian
     {
         protected override Common_COMPLEX_POLICY_ID_Selector GetSelector()
         {
-            return ScriptableWizard.DisplayWizard<Common_COMPLEX_POLICY_ID_Selector>("Select COMPLEX_POLICY");
+            var w = ScriptableObject.CreateInstance<Common_COMPLEX_POLICY_ID_Selector>();
+            w.titleContent = new GUIContent("Select COMPLEX_POLICY");
+            w.ShowUtility();
+            return w;
         }
     }
 }

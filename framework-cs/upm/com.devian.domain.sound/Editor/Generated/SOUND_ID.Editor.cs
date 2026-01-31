@@ -48,7 +48,10 @@ namespace Devian
     {
         protected override Sound_SOUND_ID_Selector GetSelector()
         {
-            return ScriptableWizard.DisplayWizard<Sound_SOUND_ID_Selector>("Select SOUND");
+            var w = ScriptableObject.CreateInstance<Sound_SOUND_ID_Selector>();
+            w.titleContent = new GUIContent("Select SOUND");
+            w.ShowUtility();
+            return w;
         }
 
         protected override string GetValueDisplayString(SerializedProperty valueProp)

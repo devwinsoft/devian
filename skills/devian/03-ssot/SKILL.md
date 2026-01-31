@@ -745,6 +745,13 @@ SKIP되어도 타겟 디렉토리는 clean되어 이전 산출물이 제거된�
 - `.ndjson` 확장자 필터 사용 시 **정책 위반(FAIL)**.
 - EditorID_SelectorBase UI 규칙(Hard): SelectionGrid 항목 클릭 즉시 Value를 적용하고, Apply 버튼을 두지 않는다(자동 Close).
 
+**String Table ID Inspector (ST) 소비 규칙 (Hard Rule):**
+- `{TableName}_ID.Value`는 `string` 타입이다.
+- Inspector는 `Strings/ndjson/**/{TableName}.json`(내용 NDJSON, 필드: `{"id","text"}`)에서 `id`만 읽어 목록을 구성한다.
+- 언어 폴더(`English`/`Korean`/...)가 여러 개여도 아무 언어 1개 파일(정렬상 첫 번째)을 선택해 id 목록을 만든다(키셋은 언어 간 동일해야 함).
+- `.json` 확장자만 허용(필터 강제).
+- 항목 클릭 즉시 Value 적용 + 창 Close, Apply 버튼/추가 버튼 UI 금지.
+
 #### DATA export PK 규칙 (Hard Rule)
 
 **DATA export는 PK 유효 row만 포함하며, 유효 row가 없으면 산출물을 생성하지 않는다.**

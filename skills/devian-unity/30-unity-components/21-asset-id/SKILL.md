@@ -65,17 +65,23 @@ AssetId 그룹은 **단일 SearchDir(string)** 만 지원한다.
 ## 6. Selector Window 표시 규약 (Hard)
 
 - Drawer는 Select 버튼 클릭 시 **반드시 Selector 창을 화면에 표시**해야 한다.
-- Selector는 ScriptableWizard 기반이므로 `ScriptableWizard.DisplayWizard<TSelector>(...)`를 사용해 **표시 상태로 생성**해야 한다.
-- `CreateInstance`만 하고 Show 호출이 없는 구현은 금지한다.
+- Selector 창에는 **Apply/Create 버튼이 존재하면 안 된다**. (SSOT: skills/devian/03-ssot/SKILL.md)
+- 따라서 Selector는 **EditorWindow(Utility) 기반**으로 생성/표시한다.
+- Selector 캐싱은 금지한다. (창을 닫았다가 다시 Select 시 창이 안 뜨는 버그 방지)
+- `CreateInstance` 후 **반드시 ShowUtility()** 로 표시 상태로 만들어야 한다.
 
 권장 패턴(정본):
 
 ```csharp
 protected override TSelector GetSelector()
 {
-    return ScriptableWizard.DisplayWizard<TSelector>("Select ...");
+    var w = ScriptableObject.CreateInstance<TSelector>();
+    w.ShowUtility();
+    return w;
 }
 ```
+
+> NOTE: 기존 "ScriptableWizard 기반/DisplayWizard 강제" 문구는 SSOT의 "Apply 버튼 금지"와 충돌하므로 제거한다.
 
 ---
 

@@ -44,7 +44,10 @@ namespace Devian
     {
         protected override Sound_VOICE_ID_Selector GetSelector()
         {
-            return ScriptableWizard.DisplayWizard<Sound_VOICE_ID_Selector>("Select VOICE");
+            var w = ScriptableObject.CreateInstance<Sound_VOICE_ID_Selector>();
+            w.titleContent = new GUIContent("Select VOICE");
+            w.ShowUtility();
+            return w;
         }
     }
 }

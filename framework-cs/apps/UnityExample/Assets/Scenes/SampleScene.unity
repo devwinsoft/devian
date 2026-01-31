@@ -445,6 +445,8 @@ MonoBehaviour:
     Value: 1
   voiceId:
     Value: hello
+  textID:
+    Value: 
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0

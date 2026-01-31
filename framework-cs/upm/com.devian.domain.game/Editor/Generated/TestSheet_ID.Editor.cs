@@ -44,7 +44,10 @@ namespace Devian
     {
         protected override Game_TestSheet_ID_Selector GetSelector()
         {
-            return ScriptableWizard.DisplayWizard<Game_TestSheet_ID_Selector>("Select TestSheet");
+            var w = ScriptableObject.CreateInstance<Game_TestSheet_ID_Selector>();
+            w.titleContent = new GUIContent("Select TestSheet");
+            w.ShowUtility();
+            return w;
         }
     }
 }

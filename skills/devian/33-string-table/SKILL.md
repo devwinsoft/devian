@@ -383,6 +383,70 @@ private static SystemLanguage _loadedLanguage;
 
 ---
 
+## String Table ID Types (Inspector binding)
+
+### Hard Rules
+
+1. **타입 생성**: 각 StringTable `{TableName}`마다 C# `{TableName}_ID(string)` 타입을 생성한다.
+2. **이름 충돌 금지**: 같은 도메인에서 TB 테이블명과 ST 테이블명이 동일하면 **빌드 FAIL** (타입 충돌 방지).
+3. **Unity Editor 생성**: `{TableName}_ID.Editor.cs`를 자동 생성한다.
+4. **확장자 필터**: `.json`만 로드 (`.ndjson` 필터 사용 시 **FAIL**).
+5. **NDJSON 파싱**: `{"id","text"}` 중 `id`만 추출하여 Selector 목록 구성.
+6. **클릭 즉시 적용**: SelectionGrid 항목 클릭 시 Value 적용 + 창 Close, Apply 버튼 **금지**.
+
+### 생성물 구조
+
+```csharp
+// {TableName}_ID 타입 (Runtime)
+[Serializable]
+public sealed class {TableName}_ID
+{
+    public string Value = string.Empty;
+
+    public static implicit operator string({TableName}_ID id) => id.Value;
+    public static implicit operator {TableName}_ID(string value) => new {TableName}_ID { Value = value };
+}
+
+// IsValid extension
+public static bool IsValid(this {TableName}_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+```
+
+### Editor 생성물 구조
+
+```csharp
+// {TableName}_ID.Editor.cs (Editor/Generated)
+public sealed class {TableName}IdSelector : EditorID_SelectorBase
+{
+    protected override string GetDisplayTypeName() => "{TableName}_ID";
+
+    public override void Reload()
+    {
+        ClearItems();
+        // AssetManager.FindAssets<TextAsset>("{TableName}")
+        // 1) .json 확장자만 필터
+        // 2) assetPath 정렬 후 첫 번째 1개 선택
+        // 3) NDJSON 파싱: JsonUtility.FromJson<StringEntry>(line)
+        // 4) AddItem(entry.id)
+    }
+
+    [Serializable]
+    private class StringEntry { public string id = string.Empty; public string text = string.Empty; }
+}
+
+[CustomPropertyDrawer(typeof({TableName}_ID))]
+public sealed class {TableName}_ID_Drawer : EditorID_DrawerBase<{TableName}IdSelector>
+{
+    protected override {TableName}IdSelector GetSelector()
+    {
+        var w = ScriptableObject.CreateInstance<{TableName}IdSelector>();
+        w.ShowUtility();
+        return w;
+    }
+}
+```
+
+---
+
 ## Reference
 
 - NDJSON 저장: `skills/devian/34-ndjson-storage/SKILL.md`

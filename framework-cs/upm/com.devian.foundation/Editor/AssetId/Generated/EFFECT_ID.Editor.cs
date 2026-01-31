@@ -24,7 +24,10 @@ namespace Devian
     {
         protected override EffectIdSelector GetSelector()
         {
-            return ScriptableWizard.DisplayWizard<EffectIdSelector>("Select EFFECT");
+            var w = ScriptableObject.CreateInstance<EffectIdSelector>();
+            w.titleContent = new GUIContent("Select EFFECT");
+            w.ShowUtility();
+            return w;
         }
     }
 }

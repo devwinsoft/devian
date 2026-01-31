@@ -29,7 +29,8 @@
       "Bash(\"C:\\\\Program Files\\\\Unity\\\\Hub\\\\Editor\\\\6000.0.30f1\\\\Editor\\\\Unity.exe\" -batchmode -nographics -quit -projectPath . -logFile - -executeMethod Build.VerifyCompile)",
       "Bash(dir:*)",
       "Bash(npm -w builder run build -- ../input/input_common.json)",
-      "Bash(node tools/builder/build.js:*)"
+      "Bash(node tools/builder/build.js:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }

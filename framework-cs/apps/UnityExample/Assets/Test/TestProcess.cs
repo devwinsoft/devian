@@ -15,6 +15,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
     public EFFECT_ID effectId;
     public SOUND_ID soundId;
     public VOICE_ID voiceId;
+    public UIText_ID textID;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     IEnumerator Start()

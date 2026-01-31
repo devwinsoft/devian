@@ -51,7 +51,7 @@ namespace Devian
             if (GUI.Button(buttonRect, "Select"))
             {
                 var selector = GetSelector();
-                selector.Show(property);
+                selector.Bind(property);
                 selector.Reload();
                 selector.Init(currentValue);
             }
