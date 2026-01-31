@@ -25,7 +25,9 @@ SoundManager는 테이블 기반으로 사운드 재생/풀/채널/쿨타임을 
 |----------|------|
 | **SoundManager** (전역) | 채널 생성/관리, 테이블 인덱싱, 로딩 그룹 정책, runtime_id 발급/추적 |
 | **SoundChannel** (채널) | 풀/재생 리스트/쿨타임/SEQ 관리, runtime_id 기반 제어 |
-| **SoundPlay** (재생 유닛) | Wait/FadeIn/Play/FadeOut 상태 처리, generation 기반 풀 재사용 보호 |
+| **SoundPlay** (재생 유닛) | Wait/FadeIn/Play/FadeOut 상태 처리, generation 기반 풀 재사용 보호, 3D Linear rolloff 설정 |
+| **BaseAudioManager** (static) | 볼륨/피치 계산, 3D 파라미터 구성, SoundChannel에 재생 요청 위임 |
+| **AudioAssetNameUtil** (static) | 에셋 경로에서 이름 추출, 확장자 제거 유틸리티 |
 
 ---
 
@@ -36,11 +38,18 @@ SoundManager는 테이블 기반으로 사운드 재생/풀/채널/쿨타임을 
 - SoundManager는 **테이블(TB_SOUND) 기반으로만 식별**한다.
 - 직접 경로 문자열 하드코딩 금지.
 
+### SoundManager는 SOUND 테이블만 담당 (Hard Rule)
+
+- **SoundManager는 TB_SOUND 테이블만 다룬다.**
+- VOICE 재생/로딩과 결합 금지 (VoiceManager 독립).
+- VOICE 관련 로직은 VoiceManager가 담당한다.
+
 ### Voice 채널 책임 분리 (Hard Rule)
 
 - **SoundManager는 Voice 채널을 로드하지 않는다.**
-- `LoadByKeyAsync()`는 `channel == "Voice"` row를 제외하고 로드한다.
-- Voice 로딩은 **VoiceManager.LoadByGroupKeyAsync()** 가 담당한다.
+- `LoadByBundleKeyAsync()`는 `channel == SoundChannelType.Voice` row를 제외하고 로드한다.
+- 채널 비교는 **enum 기반**이다 (문자열 비교 금지): `SoundChannelType.Voice`
+- Voice 로딩은 **VoiceManager.LoadByBundleKeyAsync()** 가 담당한다.
 - SoundManager 공개 API에는 **언어(SystemLanguage) 파라미터가 없다.**
 - Voice 언어 결정은 VoiceManager의 책임이다.
 
@@ -59,15 +68,23 @@ SoundManager는 테이블 기반으로 사운드 재생/풀/채널/쿨타임을 
 - 쿨타임은 논리키(`sound_id`) 단위로 적용한다 (같은 sound_id의 모든 변형 row가 쿨타임 공유).
 - **반환값**: SoundRuntimeId (재생 실패 시 `SoundRuntimeId.Invalid`)
 
-### key vs bundle_key 구분 (Hard Rule)
+### key_bundle 기반 로드/언로드 (Hard Rule)
 
 | 필드 | 용도 | 예시 |
 |------|------|------|
-| `bundle_key` | 번들 로드/언로드 단위 | `"sound_battle"`, `"sound_ui"` |
-| `key` | 게임 로딩 그룹 (레벨/씬/컨텍스트) | `"GLOBAL"`, `"BATTLE"`, `"LOBBY"` |
+| `key_bundle` | **로드/언로드 단위 키** | `"sound_battle"`, `"sound_ui"` |
 
-- 둘을 혼동 금지.
-- `key`는 게임 로직 단위, `bundle_key`는 에셋 번들 단위.
+- **key_group은 제거됨** — 로드/언로드는 `key_bundle` 단위로만 수행한다.
+- `isBundle=true`: Addressables label/key로 사용
+- `isBundle=false`: Resources 그룹 키로 사용 (AssetManager Resource API 기반)
+
+### isBundle 기반 로딩 분기 (Hard Rule)
+
+- `row.isBundle == true`: Addressables/AssetBundle로 로드 (key_bundle 단위)
+- `row.isBundle == false`: AssetManager Resource API로 로드 (key_bundle를 Resource 그룹 키로 사용)
+- 확장자 제거는 `AudioAssetNameUtil.RemoveExtension()` 사용
+- SOUND 테이블의 `source` (string enum) 방식은 **폐기됨** → `isBundle` (bool)로 교체
+- **Resources.Load 직접 호출 금지** — 언로드를 위해 AssetManager 캐시에 등록되어야 함
 
 ### 채널/풀 책임 분리
 
@@ -82,9 +99,34 @@ SoundManager는 테이블 기반으로 사운드 재생/풀/채널/쿨타임을 
 ### BaseAudioManager 위임 (Hard Rule)
 
 - **SoundManager/VoiceManager는 Play 로직을 직접 구현하지 않는다.**
-- 2D/3D Play, AudioSource 풀링, pitch/volume 랜덤, 3D 거리 파라미터 적용은 **BaseAudioManager가 담당**한다.
-- 3D 파라미터 (`distance_near`, `distance_far`)는 SOUND row 필드에서 가져온다.
+- 볼륨/피치 계산, 3D 설정 파라미터 구성은 **BaseAudioManager가 담당**한다.
+- BaseAudioManager.TryPlay()가 SoundChannel에 재생 요청을 위임한다.
+- 3D 파라미터 (`distance_near`, `distance_far`)는 IAudioRowBase 필드에서 가져온다.
 - 자세한 내용은 `20-base-audio-manager/SKILL.md` 참조.
+
+### 3D 설정: Linear Rolloff (Hard Rule)
+
+- 3D 사운드는 **Linear rolloff** 방식을 사용한다.
+- `AudioSource.rolloffMode = AudioRolloffMode.Linear`
+- `AudioSource.dopplerLevel = 0` (도플러 효과 비활성화)
+- `distance_near` = minDistance, `distance_far` = maxDistance
+
+### 3D 적용 판단 규칙 (Hard Rule)
+
+- 3D는 position만으로 결정하지 않고 **row.is3d를 포함해 결정**한다:
+- `effective3d = row.is3d && position.HasValue`
+- position이 있어도 row.is3d가 false면 2D로 재생된다.
+
+### weight는 SOUND 전용 (Hard Rule)
+
+- `weight`는 동일 sound_id 후보 rows 중 **가중치 기반 랜덤 선택** 용도이다.
+- VOICE 테이블에는 weight 필드가 없으며 사용하지 않는다.
+
+### channel은 enum 기반 (Hard Rule)
+
+- `channel`은 string이 아니라 **SoundChannelType enum**으로 취급한다.
+- 테이블 값도 enum 이름과 일치해야 한다: `Bgm`, `Effect`, `Ui`, `Voice`
+- 문자열 비교 방식은 사용하지 않는다.
 
 ---
 
@@ -135,9 +177,9 @@ public bool ValidateGeneration(int expected) => _generation == expected;
 SoundRuntimeId PlaySound(
     string soundId,
     float volume = 1f,
-    float pitch = 1f,
+    float pitch = 0f,   // 0이면 row 기반 랜덤
     int groupId = 0,
-    string? channelOverride = null
+    SoundChannelType? channelOverride = null
 )
 ```
 
@@ -149,14 +191,15 @@ SoundRuntimeId PlaySound3D(
     string soundId,
     Vector3 position,
     float volume = 1f,
-    float pitch = 1f,
+    float pitch = 0f,
     int groupId = 0,
-    string? channelOverride = null
+    SoundChannelType? channelOverride = null
 )
 ```
 
 - 3D 파라미터(`distance_near`, `distance_far`)는 SOUND row에서 자동 적용됨
-- BaseAudioManager.Play3D로 위임
+- BaseAudioManager.TryPlay()로 위임
+- Linear rolloff, doppler=0
 
 ### 재생 제어 (runtime_id 기반)
 
@@ -185,39 +228,59 @@ void StopAll()                              // 전체 정지
 
 ## Loading Policy
 
-### LoadByKeyAsync / UnloadByKey
+### LoadByBundleKeyAsync / UnloadByBundleKey (Hard Rule)
 
 ```csharp
-yield return SoundManager.Instance.LoadByKeyAsync("GLOBAL");
-SoundManager.Instance.UnloadByKey("BATTLE");
+yield return SoundManager.Instance.LoadByBundleKeyAsync("sound_battle");
+SoundManager.Instance.UnloadByBundleKey("sound_battle");
 ```
 
-- `TB_SOUND.key`로 **row 전체**(row_id 단위)를 등록/해제한다.
-- **Voice 채널(channel == "Voice")은 제외**한다.
-- 로딩: `GetSoundRowsByKey(key)` → Voice 제외 row 순회 → `bundle_key` 기준 로드 → `row_id`로 clipCache 등록
-- 언로딩: `key`에 해당하는 row_id 목록의 clipCache 제거
-- `source` / `bundle_key` 규칙으로 에셋 로딩/언로딩을 수행한다.
+- **로드/언로드는 `key_bundle` 단위로만 수행**한다 (key_group 제거됨).
+- **Voice 채널(channel == SoundChannelType.Voice)은 제외**한다.
+- isBundle=true: `AssetManager.LoadBundleAssets<AudioClip>(key_bundle)`
+- isBundle=false: `AssetManager.LoadResourceAssets<AudioClip>(key_bundle)`
+- 로딩: `GetSoundRowsByBundleKey(bundleKey)` → Voice 제외 row 순회 → 로드 → `row_id`로 clipCache 등록
+- 언로딩: `_loadedRowIdsByBundleKey[bundleKey]` 목록의 clipCache 제거 + AssetManager 언로드
 
-### _loadVoiceBySoundIdsAsync (internal)
+### LoadByBundleKeysAsync / UnloadByBundleKeys (벌크)
+
+```csharp
+yield return SoundManager.Instance.LoadByBundleKeysAsync(new[] { "sound_battle", "sound_ui" });
+SoundManager.Instance.UnloadByBundleKeys(new[] { "sound_battle", "sound_ui" });
+```
+
+### Unload 동기화 규칙 (Hard Rule)
+
+- `UnloadByBundleKey`는 **row 캐시 제거 + AssetManager 언로드를 동기화**한다.
+- isBundle=true: `AssetManager.UnloadBundleAssets(key_bundle)` 호출
+- isBundle=false: `AssetManager.UnloadResourceAssets<AudioClip>(key_bundle)` 호출
+- 언로드 후 `_loadedRowIdsByBundleKey[bundleKey]` 및 `_loadedBundleKeys` 에서 제거
+
+### 캐시 구조
+
+```csharp
+// key_bundle 기반 캐시
+private readonly Dictionary<string, List<int>> _loadedRowIdsByBundleKey;
+private readonly HashSet<string> _loadedBundleKeys;
+private readonly Dictionary<int, AudioClip> _clipCacheByRowId;
+```
+
+### _loadVoiceClipsAsync (internal)
 
 - VoiceManager 전용 Voice clip 로드 헬퍼.
-- Resolve된 `sound_id` 집합을 받아 해당 Voice row만 로드.
+- IVoiceRow 집합을 받아 해당 Voice clip을 로드.
+- **VOICE는 SOUND 테이블을 참조하지 않고 독립적으로 로드**한다.
 - 공개 API로 노출하지 않는다 (internal).
 
 ```csharp
 // VoiceManager가 호출
-yield return SoundManager.Instance._loadVoiceBySoundIdsAsync(
-    "VOICE::BATTLE",      // voiceGroupKey
-    resolvedSoundIds,     // sound_id 집합
+yield return SoundManager.Instance._loadVoiceClipsAsync(
+    bundleKey,            // key_bundle
+    resolvedVoiceRows,    // IVoiceRow 집합
     language,
     fallbackLanguage
 );
 ```
-
-### source == Bundle
-
-- `bundle_key` 기준으로 로딩 단위를 잡는다.
-- 구현 상세는 코드에 위임하되 규약만 고정.
 
 ---
 
@@ -237,28 +300,32 @@ yield return SoundManager.Instance._loadVoiceBySoundIdsAsync(
   - `VoiceRowAdapter`: VOICE → IVoiceRow
 - Adapter 인스턴스는 **캐시**하여 동일 row에 대해 중복 생성하지 않는다.
 
-### 테이블 로드 후 인덱스 빌드
-
-- TB 로더에서 `LoadFromNdjson` / `LoadFromPb64Binary` 호출 후 **반드시 `BuildGroupIndices()` 호출**.
-- 로드 시 Adapter 캐시도 클리어한다.
+### Delegate 연결
 
 ```csharp
-// SoundVoiceTableRegistry 내부
-TableManager.Instance.RegisterTbLoader("SOUND", (format, text, bin) =>
-{
-    _soundAdapterCache.Clear();
-    // ... 로드 로직 ...
-    TB_SOUND.BuildGroupIndices();
-});
+// SoundManager
+SoundManager.Instance.GetSoundRowsBySoundId = GetSoundRowsBySoundId;
+SoundManager.Instance.GetSoundRowsByBundleKey = GetSoundRowsByBundleKey;
+
+// VoiceManager
+VoiceManager.Instance.GetVoiceRow = GetVoiceRow;
+VoiceManager.Instance.GetAllVoiceRows = GetAllVoiceRows;
+VoiceManager.Instance.GetVoiceRowsByBundleKey = GetVoiceRowsByBundleKey;
 ```
+
+### 테이블 로드 후 인덱스 빌드
+
+- TB 로더에서 `LoadFromNdjson` / `LoadFromPb64Binary` 호출 후 **반드시 `BuildBundleIndices()` 호출**.
+- 로드 시 Adapter 캐시도 클리어한다.
 
 ---
 
 ## Usage Examples
 
 ```csharp
-// 글로벌 사운드 로드
-yield return SoundManager.I.LoadByKeyAsync("GLOBAL");
+// 번들 키로 사운드 로드
+yield return SoundManager.I.LoadByBundleKeyAsync("sound_global");
+yield return SoundManager.I.LoadByBundleKeysAsync(new[] { "sound_battle", "sound_ui" });
 
 // 기본 재생 (runtime_id 반환)
 var runtimeId = SoundManager.I.PlaySound("UI_CLICK");
@@ -266,7 +333,7 @@ var runtimeId = SoundManager.I.PlaySound("UI_CLICK");
 // 볼륨/그룹 지정 재생
 var hitId = SoundManager.I.PlaySound("SFX_HIT", volume: 0.8f, groupId: 123);
 
-// 3D 사운드 재생 (명시적 API)
+// 3D 사운드 재생 (Linear rolloff)
 var explosionId = SoundManager.I.PlaySound3D("SFX_EXPLOSION", transform.position);
 
 // runtime_id로 제어
@@ -291,8 +358,9 @@ if (SoundManager.I.TryGetPlayingInfo(hitId, out var info))
 SoundManager.I.StopAllBySoundId("BGM_BATTLE");  // 특정 sound_id 전체 정지
 SoundManager.I.StopAllByChannel(SoundChannelType.Effect);  // 채널 전체 정지
 
-// 언로드
-SoundManager.I.UnloadByKey("BATTLE");
+// 번들 키로 언로드
+SoundManager.I.UnloadByBundleKey("sound_battle");
+SoundManager.I.UnloadByBundleKeys(new[] { "sound_battle", "sound_ui" });
 ```
 
 ---

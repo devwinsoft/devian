@@ -1,10 +1,12 @@
 {
   "name": "com.devian.domain.common",
   "version": "0.1.0",
-  "displayName": "Devain Domain Common",
+  "displayName": "Devian Domain Common",
   "description": "Devian.Domain.Common runtime for Unity (source)",
   "unity": "2021.3",
-  "author": { "name": "Devian" },
+  "author": {
+    "name": "Devian"
+  },
   "dependencies": {
     "com.devian.foundation": "0.1.0",
     "com.unity.nuget.newtonsoft-json": "3.2.1"

@@ -10,6 +10,12 @@ namespace Devian
     /// 개별 사운드 재생 유닛. Wait/FadeIn/Play/FadeOut 상태를 처리한다.
     /// SoundChannel이 풀링하여 재사용한다.
     /// generation을 통해 풀 재사용 시 잘못된 제어를 방지한다.
+    ///
+    /// 3D 설정:
+    /// - rolloffMode = Linear
+    /// - dopplerLevel = 0
+    /// - distance_near = minDistance
+    /// - distance_far = maxDistance
     /// </summary>
     public sealed class SoundPlay : MonoBehaviour
     {
@@ -72,6 +78,10 @@ namespace Devian
                 _audioSource = gameObject.AddComponent<AudioSource>();
             }
             _audioSource.playOnAwake = false;
+
+            // 기본 3D 설정: Linear rolloff, doppler 0
+            _audioSource.rolloffMode = AudioRolloffMode.Linear;
+            _audioSource.dopplerLevel = 0f;
         }
 
         /// <summary>
@@ -97,6 +107,7 @@ namespace Devian
 
         /// <summary>
         /// 사운드 재생을 시작한다.
+        /// 3D 설정: Linear rolloff, doppler=0, distance_near=minDistance, distance_far=maxDistance.
         /// </summary>
         public void Play(
             AudioClip clip,
@@ -109,8 +120,8 @@ namespace Devian
             float pitch = 1f,
             bool is3d = false,
             Vector3? position = null,
-            float areaClose = 1f,
-            float areaFar = 500f)
+            float distanceNear = 1f,
+            float distanceFar = 500f)
         {
             if (_audioSource == null) return;
 
@@ -125,12 +136,14 @@ namespace Devian
             _fadeOutDuration = fadeOutSeconds;
             _waitTime = waitSeconds;
 
-            // 3D 설정
+            // 3D 설정: Linear rolloff, doppler=0
             if (is3d && position.HasValue)
             {
                 _audioSource.spatialBlend = 1f;
-                _audioSource.minDistance = areaClose;
-                _audioSource.maxDistance = areaFar;
+                _audioSource.rolloffMode = AudioRolloffMode.Linear;
+                _audioSource.dopplerLevel = 0f;
+                _audioSource.minDistance = distanceNear;
+                _audioSource.maxDistance = distanceFar;
                 transform.position = position.Value;
             }
             else

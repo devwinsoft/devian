@@ -55,10 +55,14 @@ AppliesTo: v10
 
 ### author
 
-- `author.name`은 다음 중 하나로 고정한다:
-  - `Kim, Hyong Joon` (개인 저작)
-  - `Devian` (프로젝트 저작)
+- `author.name`은 `Devian`으로 통일한다.
 - `author.url` / `email`은 현재 정책에서 사용하지 않는다(비워둔다).
+
+```json
+"author": {
+  "name": "Devian"
+}
+```
 
 ---
 

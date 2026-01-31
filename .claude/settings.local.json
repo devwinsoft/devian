@@ -23,7 +23,11 @@
       "Bash(cmd.exe /c \"where npm\")",
       "Bash(pip install:*)",
       "Bash(node framework-ts/tools/builder/build.js:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(uuidgen:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(\"C:\\\\Program Files\\\\Unity\\\\Hub\\\\Editor\\\\6000.0.30f1\\\\Editor\\\\Unity.exe\" -batchmode -nographics -quit -projectPath . -logFile - -executeMethod Build.VerifyCompile)",
+      "Bash(dir:*)"
     ]
   }
 }

@@ -80,18 +80,18 @@ Sound 도메인은 사운드/음성 관련 기능(테이블, 매니저, 레지�
 [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
 private static void _register()
 {
-    // 1. SoundManager 델리게이트 연결
+    // 1. SoundManager 델리게이트 연결 (v10: key_bundle 기반)
     SoundManager.Instance.GetSoundRowsBySoundId = _getSoundRowsBySoundId;
-    SoundManager.Instance.GetSoundRowsByKey = _getSoundRowsByKey;
+    SoundManager.Instance.GetSoundRowsByBundleKey = _getSoundRowsByBundleKey;
 
-    // 2. VoiceManager 델리게이트 연결
+    // 2. VoiceManager 델리게이트 연결 (v10: key_bundle 기반)
     VoiceManager.Instance.GetVoiceRow = _getVoiceRow;
     VoiceManager.Instance.GetAllVoiceRows = _getAllVoiceRows;
-    VoiceManager.Instance.GetVoiceRowsByGroupKey = _getVoiceRowsByGroupKey;
+    VoiceManager.Instance.GetVoiceRowsByBundleKey = _getVoiceRowsByBundleKey;
 
     // NOTE: TbLoader 등록은 DomainTableRegistry (Generated)가 담당.
     // TB_SOUND._AfterLoad() / TB_VOICE._AfterLoad()가 호출되어
-    // _OnAfterLoad()에서 어댑터 캐시 클리어 + 그룹 인덱스 빌드가 자동 수행됨.
+    // _OnAfterLoad()에서 어댑터 캐시 클리어 + 번들 인덱스 빌드가 자동 수행됨.
 }
 ```
 
@@ -105,7 +105,7 @@ private static void _register()
 
 `TB_SOUND`, `TB_VOICE`는 `_OnAfterLoad()`에서 다음을 수행한다:
 
-- `BuildGroupIndices()` — sound_id/key 그룹 인덱스 빌드
+- `BuildBundleIndices()` — sound_id/key_bundle 인덱스 빌드 (key_group 제거됨)
 - `SoundVoiceTableRegistry.ClearSoundAdapterCache()` / `ClearVoiceAdapterCache()` — 어댑터 캐시 초기화
 
 > **Note**: AfterLoad hook 계약 자체는 `42-tablegen-implementation` 스킬이 SSOT.
@@ -182,6 +182,7 @@ com.devian.domain.game
 ## 사용 흐름 (Phase 2 완료 후)
 
 > **Note**: TableManager 시그니처는 `14-table-manager` 스킬이 SSOT.
+> **v10 변경**: key_group 제거, key_bundle 단위 로드/언로드.
 
 ```csharp
 // 1) TB 로드
@@ -197,12 +198,12 @@ yield return TableManager.Instance.LoadStringsAsync(
 // 3) Voice Resolve (언어별 캐시 생성)
 VoiceManager.Instance.ResolveForLanguage(SystemLanguage.Korean);
 
-// 4) 사운드 로드 (Voice 제외)
-yield return SoundManager.Instance.LoadByKeyAsync("Common");
+// 4) 사운드 로드 (Voice 제외, key_bundle 기반)
+yield return SoundManager.Instance.LoadByBundleKeyAsync("sound_common");
 
-// 5) Voice 로드 (group_key 기반)
-yield return VoiceManager.Instance.LoadByGroupKeyAsync(
-    "greet",
+// 5) Voice 로드 (key_bundle 기반)
+yield return VoiceManager.Instance.LoadByBundleKeyAsync(
+    "voice_greet",
     SystemLanguage.Korean,
     SystemLanguage.English
 );
@@ -214,6 +215,15 @@ var voiceId = VoiceManager.Instance.PlayVoice("hello");
 // 7) 제어
 SoundManager.Instance.StopSound(sfxId);
 VoiceManager.Instance.StopVoice(voiceId);
+
+// 8) 언로드 (key_bundle 기반)
+SoundManager.Instance.UnloadByBundleKey("sound_common");
+VoiceManager.Instance.UnloadByBundleKey("voice_greet");
+
+// 9) 언어 변경 시
+VoiceManager.Instance.UnloadAllVoiceBundles();
+VoiceManager.Instance.ResolveForLanguage(SystemLanguage.English);
+// 필요한 bundle들 다시 로드...
 ```
 
 ---

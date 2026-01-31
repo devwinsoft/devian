@@ -173,7 +173,41 @@ public required string Id { get; set; }
 
 ---
 
+## asmdef precompiledReferences 정책 (Hard Rule)
+
+### 정책
+
+Unity의 `.asmdef` 파일에서 `precompiledReferences`로 선언된 DLL은 **실제로 프로젝트에 존재해야** 한다.
+
+| 상태 | 결과 |
+|------|------|
+| DLL 파일 존재 | ✅ 정상 빌드 |
+| DLL 파일 없음 (meta만 존재) | ❌ 빌드 실패 |
+| DLL 파일 없음 (meta도 없음) | ❌ 빌드 실패 |
+
+### 편의성 우선 정책
+
+이 프레임워크는 **"DLL 없으면 빌드 실패"를 허용하는 정책**을 채택했다.
+
+**이유:**
+- `Devian.Core.asmdef`는 `Google.Protobuf.dll`을 `precompiledReferences`로 선언한다
+- Protobuf 기능이 필요한 경우 해당 DLL이 필수이다
+- DLL이 없는 상태에서 컴파일 실패는 **의도된 동작**이다
+
+### 사용자 책임
+
+| 항목 | 설명 |
+|------|------|
+| DLL 준비 | `Google.Protobuf.dll`을 프로젝트에 포함해야 함 |
+| 경로 | `Assets/Plugins/` 또는 Unity가 인식하는 위치 |
+| .gitignore | DLL을 ignore했다면 clone 후 수동 복사 필요 |
+
+> **참고:** 이 정책은 `skills/devian/11-core-serializer-protobuf/SKILL.md`의 "Unity Google.Protobuf.dll 정책"과 연계된다.
+
+---
+
 ## Reference
 
 - SSOT: `skills/devian/03-ssot/SKILL.md`
+- Protobuf DLL 정책: `skills/devian/11-core-serializer-protobuf/SKILL.md`
 - 적용 대상: `framework-cs/upm/`, `framework-cs/apps/**/Packages/`

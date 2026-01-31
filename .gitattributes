@@ -1,0 +1,44 @@
+# Devian v10 Git Attributes
+# SSOT: skills/devian/06-git-policy/SKILL.md
+
+# 기본: 모든 텍스트 파일 LF
+* text=auto eol=lf
+
+# Shell 스크립트: 반드시 LF (CRLF 사용시 shebang 오류)
+*.sh text eol=lf
+
+# 바이너리 파일
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.dll binary
+*.exe binary
+*.pdf binary
+*.zip binary
+*.tar binary
+*.gz binary
+
+# Unity 관련
+*.unity binary
+*.prefab binary
+*.asset binary
+*.mat binary
+*.cubemap binary
+*.anim binary
+*.controller binary
+*.overrideController binary
+*.physicMaterial binary
+*.physicsMaterial2D binary
+*.playable binary
+*.mask binary
+*.brush binary
+*.flare binary
+*.fontsettings binary
+*.guiskin binary
+*.giparams binary
+*.renderTexture binary
+*.spriteatlas binary
+*.terrainlayer binary
+*.mixer binary
+*.shadervariants binary

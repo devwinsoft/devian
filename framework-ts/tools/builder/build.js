@@ -2573,15 +2573,10 @@ export * from './features';
     }
 
     // ========================================================================
-    // Static UPM Package Processing (e.g., com.devian.unity)
-    // SSOT: skills/devian-unity/20-packages/com.devian.unity/SKILL.md
+    // Static UPM Package Processing (e.g., com.devian.foundation)
+    // SSOT: skills/devian-unity/03-package-metadata/SKILL.md
     // ========================================================================
 
-    /**
-     * Process static UPM package: copy source to staging.
-     * Paths are computed from upmConfig + upmName.
-     * @param {string} upmName - UPM package name (e.g., "com.devian.unity")
-     */
     /**
      * Process a sample package (e.g., com.devian.samples).
      * samplePackages ONLY allows com.devian.samples.
@@ -2763,20 +2758,6 @@ export * from './features';
             return;
         }
 
-        // Clean legacy path for com.devian.unity (Runtime/Templates is forbidden)
-        if (upmName === 'com.devian.unity') {
-            const legacyPaths = [
-                'Runtime/Templates'  // Legacy path - remove if exists
-            ];
-            for (const legacyPath of legacyPaths) {
-                const fullPath = path.join(targetPath, legacyPath);
-                if (fs.existsSync(fullPath)) {
-                    fs.rmSync(fullPath, { recursive: true });
-                    console.log(`    [Cleanup] ${upmName}/${legacyPath} → removed legacy folder`);
-                }
-            }
-        }
-
         // Copy only Generated content (preserving manual files)
         // "Generated Only" 정책: 생성기가 clean+generate하는 영역은 오직 Generated 폴더만
         // SSOT: skills/devian/03-ssot/SKILL.md
@@ -2868,7 +2849,7 @@ export * from './features';
             return;
         }
 
-        const unityCommonPath = path.join(this.upmPackageDir, 'com.devian.unity');
+        const foundationPath = path.join(this.upmPackageDir, 'com.devian.foundation');
         const requiredFiles = [
             'Editor/TableId/EditorID_SelectorBase.cs',
             'Editor/TableId/EditorID_DrawerBase.cs',
@@ -2877,7 +2858,7 @@ export * from './features';
 
         const missingFiles = [];
         for (const relPath of requiredFiles) {
-            const fullPath = path.join(unityCommonPath, relPath);
+            const fullPath = path.join(foundationPath, relPath);
             if (!fs.existsSync(fullPath)) {
                 missingFiles.push(relPath);
             }
@@ -2885,7 +2866,7 @@ export * from './features';
 
         if (missingFiles.length > 0) {
             console.error();
-            console.error('[FAIL] com.devian.unity is missing Editor/TableId base files:');
+            console.error('[FAIL] com.devian.foundation is missing Editor/TableId base files:');
             for (const file of missingFiles) {
                 console.error(`       - ${file}`);
             }
@@ -2896,7 +2877,7 @@ export * from './features';
             throw new Error('[FAIL] Foundation package is missing Editor/TableId base files.');
         }
 
-        console.log('  [Guard] unity-common TableId base files verified');
+        console.log('  [Guard] foundation TableId base files verified');
     }
 
 

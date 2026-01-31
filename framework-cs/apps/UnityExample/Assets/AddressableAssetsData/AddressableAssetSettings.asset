@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 0752773ab72a4f0478dd0d0209936ff4
   m_currentHash:
     serializedVersion: 2
-    Hash: 00000000000000000000000000000000
+    Hash: 8182a17a8adde6175c2d92e010dedfed
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 0
   m_CatalogRequestsTimeout: 0
@@ -63,6 +63,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: cb02528411e95af409198297184a711d, type: 2}
   - {fileID: 11400000, guid: 7d5663fe3298cf04fa3b1f1d6727d1c4, type: 2}
   - {fileID: 11400000, guid: 150815d00a4eca74fb80d57e90aa36c9, type: 2}
+  - {fileID: 11400000, guid: 10fc38594e5102c4c9cf66c16ef77799, type: 2}
   - {fileID: 11400000, guid: 1679f64ce97ed0242b406c6cda9604ec, type: 2}
   - {fileID: 11400000, guid: e1fd680bdda96f640b92efe7d658c4fa, type: 2}
   - {fileID: 11400000, guid: e4f18ebf3821b6746b899447c76666a0, type: 2}
@@ -107,6 +108,7 @@ MonoBehaviour:
     m_LabelNames:
     - default
     - prefabs
+    - sound
     - table-ndjson
     - table-pb64
     - string-ndjson

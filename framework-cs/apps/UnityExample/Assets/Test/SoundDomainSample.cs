@@ -10,6 +10,8 @@
 // 주의:
 //   - Phase 1에서는 Sound 도메인 이관 전이므로 실제 테이블 데이터가 없을 수 있음.
 //   - 이 샘플은 컴파일만 통과하면 됨 (실행 시 에러 발생 가능).
+//
+// v10 변경: key_group 제거, key_bundle 중심 로드/언로드
 
 #nullable enable
 
@@ -78,31 +80,31 @@ public static class SoundDomainSample
         // ============================================================
         // Step 4: 사운드 로드 (Voice 제외)
         // ============================================================
-        // SoundManager.LoadByKeyAsync()는 TB_SOUND에서 key 기준으로 로드하되,
-        // channel == "Voice" row는 제외한다.
+        // SoundManager.LoadByBundleKeyAsync()는 TB_SOUND에서 key_bundle 기준으로 로드하되,
+        // channel == SoundChannelType.Voice row는 제외한다.
         // Voice 로딩은 VoiceManager의 책임.
         // ============================================================
 
         Log.Info("[SoundDomainSample] Step 4: Loading sounds (excluding Voice)...");
 
         // 실제 프로젝트에서는 아래와 같이 호출:
-        // yield return SoundManager.Instance.LoadByKeyAsync("Common");
+        // yield return SoundManager.Instance.LoadByBundleKeyAsync("sound_common");
 
         yield return null;
 
         // ============================================================
-        // Step 5: Voice 로드 (group_key 기반)
+        // Step 5: Voice 로드 (key_bundle 기반)
         // ============================================================
-        // VoiceManager.LoadByGroupKeyAsync()로 TB_VOICE.group_key 기준 로드.
-        // Resolve된 sound_id들만 로드한다.
-        // 내부적으로 SoundManager._loadVoiceBySoundIdsAsync() 호출.
+        // VoiceManager.LoadByBundleKeyAsync()로 TB_VOICE.key_bundle 기준 로드.
+        // Resolve된 IVoiceRow들만 로드한다.
+        // 내부적으로 SoundManager._loadVoiceClipsAsync() 호출.
         // ============================================================
 
         Log.Info("[SoundDomainSample] Step 5: Loading voice clips...");
 
         // 실제 프로젝트에서는 아래와 같이 호출:
-        // yield return VoiceManager.Instance.LoadByGroupKeyAsync(
-        //     "greet",                      // TB_VOICE.group_key
+        // yield return VoiceManager.Instance.LoadByBundleKeyAsync(
+        //     "voice_greet",                // TB_VOICE.key_bundle
         //     SystemLanguage.Korean,        // 현재 언어
         //     SystemLanguage.English        // fallback 언어
         // );
@@ -203,8 +205,8 @@ public static class SoundDomainSample
 
         Log.Info("[SoundDomainSample] Step 10: Unloading...");
 
-        // SoundManager.Instance.UnloadByKey("Common");
-        // VoiceManager.Instance.UnloadByGroupKey("greet");
+        // SoundManager.Instance.UnloadByBundleKey("sound_common");
+        // VoiceManager.Instance.UnloadByBundleKey("voice_greet");
 
         Log.Info("[SoundDomainSample] === Sound Domain Sample Complete ===");
     }
@@ -217,14 +219,14 @@ public static class SoundDomainSample
         Log.Info($"[SoundDomainSample] Changing language to {newLanguage}...");
 
         // 1. 기존 Voice 언로드
-        VoiceManager.Instance.UnloadAllVoiceGroups();
+        VoiceManager.Instance.UnloadAllVoiceBundles();
 
         // 2. 새 언어로 Resolve 재수행
         VoiceManager.Instance.ResolveForLanguage(newLanguage);
 
-        // 3. 필요한 group_key들 다시 로드
-        // yield return VoiceManager.Instance.LoadByGroupKeyAsync(
-        //     "greet",
+        // 3. 필요한 key_bundle들 다시 로드
+        // yield return VoiceManager.Instance.LoadByBundleKeyAsync(
+        //     "voice_greet",
         //     newLanguage,
         //     SystemLanguage.English
         // );

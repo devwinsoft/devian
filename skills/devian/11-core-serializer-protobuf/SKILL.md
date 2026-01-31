@@ -87,6 +87,35 @@ MUST NOT
 
 ---
 
+## Unity Google.Protobuf.dll 정책 (Hard Rule)
+
+Unity 프로젝트에서 Protobuf 기반 기능(`DffProtobuf`, `IProtoEntity` 등)을 사용하려면 **Google.Protobuf.dll**이 필수이다.
+
+### 필수 조건
+
+1. `Google.Protobuf.dll` 파일이 Unity가 로드하는 위치에 존재해야 한다
+   - 예: `Assets/Plugins/Google.Protobuf.dll`
+2. `.dll.meta` 파일만 있고 `.dll` 파일이 없으면 **빌드 실패**
+
+### 정책
+
+- Google.Protobuf 기반 기능은 **필수 의존성**으로 취급한다
+- `Google.Protobuf.dll`이 없거나 Unity가 dll을 찾지 못하면 `Devian.Core` 어셈블리가 컴파일에 실패할 수 있다
+- 이 상태는 **허용되는 실패**이다 (편의성 우선 정책)
+
+### 사용자 준비사항
+
+| 항목 | 설명 |
+|------|------|
+| dll 파일 | `Google.Protobuf.dll`을 Unity 프로젝트에 포함 |
+| 경로 | `Assets/Plugins/` 또는 Unity가 인식하는 위치 |
+| 버전 | Google.Protobuf 3.x 이상 권장 |
+
+> **참고:** `.dll.meta`만 커밋하고 실제 `.dll`을 .gitignore로 제외한 경우,
+> 새로운 환경에서 clone 후 dll을 별도로 복사해야 한다.
+
+---
+
 ## Reference
 
 - Policy SSOT: `skills/devian/03-ssot/SKILL.md`

@@ -21,18 +21,17 @@ namespace Devian.Domain.Sound
     {
         public int Row_id { get; set; }
         public string Sound_id { get; set; } = string.Empty;
-        public string Key { get; set; } = string.Empty;
-        public string Source { get; set; } = string.Empty;
-        public string Bundle_key { get; set; } = string.Empty;
+        public bool IsBundle { get; set; }
+        public string Key_bundle { get; set; } = string.Empty;
         public string Path { get; set; } = string.Empty;
         public string Channel { get; set; } = string.Empty;
+        public float Volume_scale { get; set; }
         public bool Loop { get; set; }
         public float Cooltime { get; set; }
         public bool Is3d { get; set; }
         public float Distance_near { get; set; }
         public float Distance_far { get; set; }
         public int Weight { get; set; }
-        public float Volume_scale { get; set; }
         public float Pitch_min { get; set; }
         public float Pitch_max { get; set; }
 
@@ -43,16 +42,18 @@ namespace Devian.Domain.Sound
     public sealed class VOICE : IEntityKey<string>
     {
         public string Voice_id { get; set; } = string.Empty;
-        public string Speaker { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
-        public int Priority { get; set; }
-        public string Group_key { get; set; } = string.Empty;
+        public string Key_bundle { get; set; } = string.Empty;
+        public float Volume_scale { get; set; }
         public float Cooltime { get; set; }
+        public bool Is3d { get; set; }
+        public float Distance_near { get; set; }
+        public float Distance_far { get; set; }
+        public float Pitch_min { get; set; }
+        public float Pitch_max { get; set; }
         public string Clip_Korean { get; set; } = string.Empty;
         public string Clip_English { get; set; } = string.Empty;
         public string Clip_Japanese { get; set; } = string.Empty;
-        public string Clip_ChineseSimplified { get; set; } = string.Empty;
-        public string Clip_ChineseTraditional { get; set; } = string.Empty;
+        public string Clip_Chinese { get; set; } = string.Empty;
 
         public string GetKey() => Voice_id;
     }

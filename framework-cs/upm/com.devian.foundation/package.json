@@ -5,7 +5,7 @@
   "description": "Devian Foundation - Core + Unity unified package. Contains Devian.Core (runtime) and Devian.Unity (Unity adapter) assemblies.",
   "unity": "2021.3",
   "author": {
-    "name": "Kim, Hyong Joon"
+    "name": "Devian"
   },
   "dependencies": {
     "com.unity.addressables": "2.7.6"

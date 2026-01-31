@@ -15,8 +15,10 @@ namespace Devian
     /// - row_id가 PK, sound_id는 논리 그룹 키 (weight 기반 랜덤 선택)
     /// - 채널/풀 책임은 SoundChannel에 위임
     /// - SerializeField 의존 없이 런타임 생성
-    /// - Voice 채널 로딩은 VoiceManager가 담당 (언어 파라미터 없음)
     /// - PlaySound는 SoundRuntimeId를 반환하고, 모든 제어는 runtime_id 기반
+    /// - isBundle=false일 경우 Resources.Load를 사용한다
+    /// - channel은 SoundChannelType enum으로 직접 비교한다
+    /// - Voice 채널 로딩 지원 (VoiceManager가 호출)
     /// </summary>
     public sealed class SoundManager : AutoSingleton<SoundManager>
     {
@@ -31,15 +33,16 @@ namespace Devian
         public Func<string, IReadOnlyList<ISoundRow>>? GetSoundRowsBySoundId { get; set; }
 
         /// <summary>
-        /// key(게임 로딩 그룹)로 rows를 조회하는 델리게이트 (Load/Unload용).
+        /// key_bundle(로드/언로드 단위 키)로 rows를 조회하는 델리게이트 (Load/Unload용).
+        /// key_group은 제거됨 - 로드/언로드는 key_bundle 단위로만 수행.
         /// </summary>
-        public Func<string, IEnumerable<ISoundRow>>? GetSoundRowsByKey { get; set; }
+        public Func<string, IEnumerable<ISoundRow>>? GetSoundRowsByBundleKey { get; set; }
 
         // ====================================================================
         // Channels
         // ====================================================================
 
-        private readonly Dictionary<SoundChannelType, SoundChannel> _channels = new();
+        private readonly Dictionary<SoundChannelType, SoundChannel> _channels = new Dictionary<SoundChannelType, SoundChannel>();
 
         protected override void Awake()
         {
@@ -68,7 +71,7 @@ namespace Devian
         private int _nextRuntimeId = 1;
 
         // runtime_id → channel 매핑 (제어 시 채널 탐색용)
-        private readonly Dictionary<int, SoundChannelType> _channelByRuntimeId = new();
+        private readonly Dictionary<int, SoundChannelType> _channelByRuntimeId = new Dictionary<int, SoundChannelType>();
 
         /// <summary>
         /// 새 runtime_id를 발급한다.
@@ -100,102 +103,179 @@ namespace Devian
         // ====================================================================
 
         // row_id → AudioClip
-        private readonly Dictionary<int, AudioClip> _clipCacheByRowId = new();
+        private readonly Dictionary<int, AudioClip> _clipCacheByRowId = new Dictionary<int, AudioClip>();
 
-        // gameKey → 로드된 row_id 목록 (언로드용)
-        private readonly Dictionary<string, List<int>> _loadedRowIdsByGameKey = new();
+        // bundleKey → 로드된 row_id 목록 (언로드용)
+        private readonly Dictionary<string, List<int>> _loadedRowIdsByBundleKey = new Dictionary<string, List<int>>();
 
-        private readonly HashSet<string> _loadedBundleKeys = new();
-        private readonly HashSet<string> _loadedGameKeys = new();
+        // 로드된 bundle_key 세트
+        private readonly HashSet<string> _loadedBundleKeys = new HashSet<string>();
+
+        // bundleKey → isBundle (언로드 시 분기용)
+        private readonly Dictionary<string, bool> _bundleKeyIsBundle = new Dictionary<string, bool>();
 
         // ====================================================================
-        // Loading Policy (Sound Only - Voice 제외)
+        // Loading Policy (key_bundle 단위, isBundle=true→Bundle, isBundle=false→Resource API)
+        // key_group은 제거됨 - 로드/언로드는 key_bundle 단위로만 수행.
         // ====================================================================
 
         /// <summary>
-        /// 게임 로딩 그룹(key) 기준으로 사운드를 로드한다.
-        /// Voice 채널은 로드하지 않는다 (VoiceManager.LoadByGroupKeyAsync 사용).
+        /// key_bundle 기준으로 사운드를 로드한다.
+        /// Voice 채널은 로드하지 않는다 (VoiceManager.LoadByBundleKeyAsync 사용).
         /// </summary>
-        public IEnumerator LoadByKeyAsync(string gameKey, Action<string>? onError = null)
+        public IEnumerator LoadByBundleKeyAsync(string bundleKey, Action<string>? onError = null)
         {
-            if (_loadedGameKeys.Contains(gameKey))
+            if (_loadedBundleKeys.Contains(bundleKey))
             {
                 yield break;
             }
 
-            if (GetSoundRowsByKey == null)
+            if (GetSoundRowsByBundleKey == null)
             {
-                onError?.Invoke("[SoundManager] GetSoundRowsByKey delegate not set.");
+                onError?.Invoke("[SoundManager] GetSoundRowsByBundleKey delegate not set.");
                 yield break;
             }
 
-            var rows = GetSoundRowsByKey(gameKey);
+            var rows = GetSoundRowsByBundleKey(bundleKey);
             if (rows == null)
             {
-                _loadedGameKeys.Add(gameKey);
+                _loadedBundleKeys.Add(bundleKey);
                 yield break;
             }
 
-            // bundle_key별로 그룹화 (Voice 채널 제외)
-            var bundleGroups = new Dictionary<string, List<ISoundRow>>();
-            var loadedRowIds = new List<int>();
+            // isBundle 분기를 위해 첫 row 확인
+            var rowList = new List<ISoundRow>();
+            bool? isBundle = null;
 
             foreach (var row in rows)
             {
                 if (row == null) continue;
-                if (row.source != SoundSourceType.Bundle) continue;
 
                 // Voice 채널 제외 (Voice는 VoiceManager가 담당)
-                if (string.Equals(row.channel, "Voice", StringComparison.OrdinalIgnoreCase))
+                if (row.channel == SoundChannelType.Voice)
                 {
                     continue;
                 }
 
-                if (!bundleGroups.TryGetValue(row.bundle_key, out var list))
+                rowList.Add(row);
+
+                if (!isBundle.HasValue)
                 {
-                    list = new List<ISoundRow>();
-                    bundleGroups[row.bundle_key] = list;
+                    isBundle = row.isBundle;
                 }
-                list.Add(row);
-                loadedRowIds.Add(row.row_id);
             }
 
-            // 번들 로드 (언어 무관)
-            foreach (var kvp in bundleGroups)
+            if (rowList.Count == 0)
             {
-                var bundleKey = kvp.Key;
-                if (_loadedBundleKeys.Contains(bundleKey)) continue;
-
-                yield return _loadBundleAsync(bundleKey, kvp.Value, onError);
                 _loadedBundleKeys.Add(bundleKey);
+                yield break;
+            }
+
+            var loadedRowIds = new List<int>();
+            var actualIsBundle = isBundle ?? true;
+
+            if (actualIsBundle)
+            {
+                // Bundle 로드: AssetManager.LoadBundleAssets
+                yield return AssetManager.LoadBundleAssets<AudioClip>(bundleKey);
+
+                foreach (var row in rowList)
+                {
+                    var assetName = AudioAssetNameUtil.ExtractAssetName(row.path);
+                    var clip = AssetManager.GetAsset<AudioClip>(assetName);
+                    if (clip != null)
+                    {
+                        _clipCacheByRowId[row.row_id] = clip;
+                        loadedRowIds.Add(row.row_id);
+                    }
+                    else
+                    {
+                        onError?.Invoke($"[SoundManager] AudioClip not found for row_id '{row.row_id}', path '{row.path}'.");
+                    }
+                }
+            }
+            else
+            {
+                // Resource 로드: AssetManager.LoadResourceAssets (그룹 단위)
+                yield return AssetManager.LoadResourceAssets<AudioClip>(bundleKey);
+
+                foreach (var row in rowList)
+                {
+                    var assetName = AudioAssetNameUtil.ExtractAssetName(row.path);
+                    var clip = AssetManager.GetAsset<AudioClip>(assetName);
+                    if (clip != null)
+                    {
+                        _clipCacheByRowId[row.row_id] = clip;
+                        loadedRowIds.Add(row.row_id);
+                    }
+                    else
+                    {
+                        onError?.Invoke($"[SoundManager] Resource AudioClip not found for row_id '{row.row_id}', path '{row.path}'.");
+                    }
+                }
             }
 
             // 언로드용 row_id 목록 저장
-            _loadedRowIdsByGameKey[gameKey] = loadedRowIds;
-            _loadedGameKeys.Add(gameKey);
+            _loadedRowIdsByBundleKey[bundleKey] = loadedRowIds;
+            _bundleKeyIsBundle[bundleKey] = actualIsBundle;
+            _loadedBundleKeys.Add(bundleKey);
         }
 
         /// <summary>
-        /// 게임 로딩 그룹(key) 기준으로 사운드를 언로드한다.
+        /// 여러 key_bundle을 순차적으로 로드한다.
         /// </summary>
-        public void UnloadByKey(string gameKey)
+        public IEnumerator LoadByBundleKeysAsync(IEnumerable<string> bundleKeys, Action<string>? onError = null)
         {
-            if (!_loadedGameKeys.Contains(gameKey)) return;
+            foreach (var bundleKey in bundleKeys)
+            {
+                yield return LoadByBundleKeyAsync(bundleKey, onError);
+            }
+        }
 
-            // 해당 key의 row_id들을 캐시에서 제거
-            if (_loadedRowIdsByGameKey.TryGetValue(gameKey, out var rowIds))
+        /// <summary>
+        /// key_bundle 기준으로 사운드를 언로드한다.
+        /// row 캐시 제거 + AssetManager 언로드를 동기화한다.
+        /// </summary>
+        public void UnloadByBundleKey(string bundleKey)
+        {
+            if (!_loadedBundleKeys.Contains(bundleKey)) return;
+
+            // 해당 bundleKey의 row_id들을 캐시에서 제거
+            if (_loadedRowIdsByBundleKey.TryGetValue(bundleKey, out var rowIds))
             {
                 foreach (var rowId in rowIds)
                 {
                     _clipCacheByRowId.Remove(rowId);
                 }
-                _loadedRowIdsByGameKey.Remove(gameKey);
+                _loadedRowIdsByBundleKey.Remove(bundleKey);
             }
 
-            _loadedGameKeys.Remove(gameKey);
+            // AssetManager 언로드 (isBundle 분기)
+            if (_bundleKeyIsBundle.TryGetValue(bundleKey, out var isBundle))
+            {
+                if (isBundle)
+                {
+                    AssetManager.UnloadBundleAssets(bundleKey);
+                }
+                else
+                {
+                    AssetManager.UnloadResourceAssets<AudioClip>(bundleKey);
+                }
+                _bundleKeyIsBundle.Remove(bundleKey);
+            }
 
-            // Note: bundle_key 단위 언로드는 여러 gameKey가 공유할 수 있으므로
-            // 여기서는 clip 캐시만 제거. 실제 Addressables Release는 별도 정책 필요.
+            _loadedBundleKeys.Remove(bundleKey);
+        }
+
+        /// <summary>
+        /// 여러 key_bundle을 언로드한다.
+        /// </summary>
+        public void UnloadByBundleKeys(IEnumerable<string> bundleKeys)
+        {
+            foreach (var bundleKey in bundleKeys)
+            {
+                UnloadByBundleKey(bundleKey);
+            }
         }
 
         // ====================================================================
@@ -204,108 +284,68 @@ namespace Devian
 
         /// <summary>
         /// VoiceManager가 호출하는 Voice clip 로드 헬퍼.
-        /// Resolve된 sound_id 집합을 받아 해당 voice clip만 로드한다.
+        /// IVoiceRow 집합을 받아 해당 voice clip을 로드한다.
+        /// VOICE는 SOUND 테이블을 참조하지 않고 독립적으로 로드한다.
         /// </summary>
-        internal IEnumerator _loadVoiceBySoundIdsAsync(
-            string voiceGroupKey,
-            IEnumerable<string> soundIds,
+        internal IEnumerator _loadVoiceClipsAsync(
+            string bundleKey,
+            IEnumerable<IVoiceRow> voiceRows,
             SystemLanguage language,
             SystemLanguage fallbackLanguage,
             Action<string>? onError = null)
         {
-            if (_loadedGameKeys.Contains(voiceGroupKey))
+            if (_loadedBundleKeys.Contains(bundleKey))
             {
                 yield break;
             }
 
-            if (GetSoundRowsBySoundId == null)
-            {
-                onError?.Invoke("[SoundManager] GetSoundRowsBySoundId delegate not set.");
-                yield break;
-            }
-
-            // sound_id별로 Voice 채널 rows 수집
-            var bundleGroups = new Dictionary<string, List<ISoundRow>>();
+            // Voice clip 정보 수집
+            var voiceClipInfos = new List<VoiceClipLoadInfo>();
             var loadedRowIds = new List<int>();
 
-            foreach (var soundId in soundIds)
+            // 언어 컬럼명 결정
+            var langCol = "clip_" + language.ToString();
+            var fallbackCol = "clip_" + fallbackLanguage.ToString();
+
+            foreach (var row in voiceRows)
             {
-                if (string.IsNullOrEmpty(soundId)) continue;
+                if (row == null) continue;
 
-                var candidates = GetSoundRowsBySoundId(soundId);
-                if (candidates == null || candidates.Count == 0) continue;
-
-                foreach (var row in candidates)
+                // clip 경로 resolve
+                string clipPath;
+                if (!row.TryGetClipColumn(langCol, out clipPath))
                 {
-                    if (row == null) continue;
-                    if (row.source != SoundSourceType.Bundle) continue;
-
-                    // Voice 채널만 수집
-                    if (!string.Equals(row.channel, "Voice", StringComparison.OrdinalIgnoreCase))
+                    if (!row.TryGetClipColumn(fallbackCol, out clipPath))
                     {
+                        // 경로 없음 - 스킵
                         continue;
                     }
+                }
 
-                    if (!bundleGroups.TryGetValue(row.bundle_key, out var list))
-                    {
-                        list = new List<ISoundRow>();
-                        bundleGroups[row.bundle_key] = list;
-                    }
+                if (string.IsNullOrEmpty(clipPath)) continue;
 
-                    // 중복 row 방지
-                    bool exists = false;
-                    foreach (var existing in list)
+                // voice_id를 row_id 해시로 사용 (VOICE는 PK가 string)
+                var rowIdHash = row.voice_id.GetHashCode();
+
+                // 중복 체크
+                bool exists = false;
+                foreach (var info in voiceClipInfos)
+                {
+                    if (info.RowIdHash == rowIdHash)
                     {
-                        if (existing.row_id == row.row_id)
-                        {
-                            exists = true;
-                            break;
-                        }
+                        exists = true;
+                        break;
                     }
-                    if (!exists)
-                    {
-                        list.Add(row);
-                        loadedRowIds.Add(row.row_id);
-                    }
+                }
+
+                if (!exists)
+                {
+                    voiceClipInfos.Add(new VoiceClipLoadInfo(row, clipPath, rowIdHash));
+                    loadedRowIds.Add(rowIdHash);
                 }
             }
 
-            // Voice 번들 로드 (언어 라벨 교집합)
-            foreach (var kvp in bundleGroups)
-            {
-                var bundleKey = kvp.Key;
-                var voiceBundleKey = bundleKey;
-
-                if (!_loadedBundleKeys.Contains(voiceBundleKey))
-                {
-                    yield return _loadVoiceBundleAsync(bundleKey, kvp.Value, language, fallbackLanguage, onError);
-                    _loadedBundleKeys.Add(voiceBundleKey);
-                }
-                else
-                {
-                    // 번들은 이미 로드됨, clip 캐시만 등록
-                    _populateClipCache(kvp.Value, onError);
-                }
-            }
-
-            // 언로드용 row_id 목록 저장
-            _loadedRowIdsByGameKey[voiceGroupKey] = loadedRowIds;
-            _loadedGameKeys.Add(voiceGroupKey);
-        }
-
-        private IEnumerator _loadBundleAsync(string bundleKey, List<ISoundRow> rows, Action<string>? onError)
-        {
-            yield return AssetManager.LoadBundleAssets<AudioClip>(bundleKey);
-            _populateClipCache(rows, onError);
-        }
-
-        private IEnumerator _loadVoiceBundleAsync(
-            string bundleKey,
-            List<ISoundRow> rows,
-            SystemLanguage language,
-            SystemLanguage fallbackLanguage,
-            Action<string>? onError)
-        {
+            // Voice 번들 로드 (VOICE는 isBundle=true 고정)
             if (language != SystemLanguage.Unknown)
             {
                 yield return AssetManager.LoadBundleAssets<AudioClip>(bundleKey, language);
@@ -315,30 +355,53 @@ namespace Devian
                 yield return AssetManager.LoadBundleAssets<AudioClip>(bundleKey);
             }
 
-            _populateClipCache(rows, onError);
+            // clip 캐시 등록
+            _populateVoiceClipCache(voiceClipInfos, onError);
+
+            // 언로드용 row_id 목록 저장
+            _loadedRowIdsByBundleKey[bundleKey] = loadedRowIds;
+            _bundleKeyIsBundle[bundleKey] = true; // VOICE는 항상 Bundle
+            _loadedBundleKeys.Add(bundleKey);
         }
 
-        private void _populateClipCache(List<ISoundRow> rows, Action<string>? onError)
+        /// <summary>
+        /// Voice clip 로드 정보.
+        /// </summary>
+        private readonly struct VoiceClipLoadInfo
+        {
+            public readonly IVoiceRow Row;
+            public readonly string ClipPath;
+            public readonly int RowIdHash;
+
+            public VoiceClipLoadInfo(IVoiceRow row, string clipPath, int rowIdHash)
+            {
+                Row = row;
+                ClipPath = clipPath;
+                RowIdHash = rowIdHash;
+            }
+        }
+
+        private void _populateVoiceClipCache(List<VoiceClipLoadInfo> infos, Action<string>? onError)
         {
             int loadedCount = 0;
-            foreach (var row in rows)
+            foreach (var info in infos)
             {
-                var assetName = _extractAssetName(row.path);
+                var assetName = AudioAssetNameUtil.ExtractAssetName(info.ClipPath);
                 var clip = AssetManager.GetAsset<AudioClip>(assetName);
                 if (clip != null)
                 {
-                    _clipCacheByRowId[row.row_id] = clip;
+                    _clipCacheByRowId[info.RowIdHash] = clip;
                     loadedCount++;
                 }
                 else
                 {
-                    onError?.Invoke($"[SoundManager] AudioClip not found for row_id '{row.row_id}', path '{row.path}'.");
+                    onError?.Invoke($"[SoundManager] Voice AudioClip not found for voice_id '{info.Row.voice_id}', path '{info.ClipPath}'.");
                 }
             }
 
-            if (rows.Count > 0 && loadedCount == 0)
+            if (infos.Count > 0 && loadedCount == 0)
             {
-                onError?.Invoke($"[SoundManager] No AudioClips loaded for bundle (expected {rows.Count} clips).");
+                onError?.Invoke($"[SoundManager] No Voice AudioClips loaded (expected {infos.Count} clips).");
             }
         }
 
@@ -355,9 +418,9 @@ namespace Devian
         public SoundRuntimeId PlaySound(
             string soundId,
             float volume = 1f,
-            float pitch = 1f,
+            float pitch = 0f,
             int groupId = 0,
-            string? channelOverride = null)
+            SoundChannelType? channelOverride = null)
         {
             return _playInternal(soundId, volume, pitch, groupId, null, channelOverride);
         }
@@ -371,23 +434,24 @@ namespace Devian
             string soundId,
             Vector3 position,
             float volume = 1f,
-            float pitch = 1f,
+            float pitch = 0f,
             int groupId = 0,
-            string? channelOverride = null)
+            SoundChannelType? channelOverride = null)
         {
             return _playInternal(soundId, volume, pitch, groupId, position, channelOverride);
         }
 
         /// <summary>
         /// 내부 재생 구현 (2D/3D 공통).
+        /// BaseAudioManager에 볼륨/피치 계산을 위임한다.
         /// </summary>
         private SoundRuntimeId _playInternal(
             string soundId,
             float volume,
-            float pitch,
+            float pitchOverride,
             int groupId,
             Vector3? position,
-            string? channelOverride)
+            SoundChannelType? channelOverride)
         {
             if (GetSoundRowsBySoundId == null)
             {
@@ -434,12 +498,8 @@ namespace Devian
                 return SoundRuntimeId.Invalid;
             }
 
-            // 5. 채널 결정
-            var channelName = channelOverride ?? selectedRow.channel;
-            if (!_tryParseChannel(channelName, out var channelType))
-            {
-                channelType = SoundChannelType.Effect;
-            }
+            // 5. 채널 결정 (enum 직접 비교)
+            var channelType = channelOverride ?? selectedRow.channel;
 
             if (!_channels.TryGetValue(channelType, out var channel))
             {
@@ -447,38 +507,21 @@ namespace Devian
                 return SoundRuntimeId.Invalid;
             }
 
-            // 6. 볼륨/피치 계산 (BaseAudioManager 로직)
-            var effectiveVolume = volume * selectedRow.volume_scale;
-            var effectivePitch = pitch;
-            if (selectedRow.pitch_min > 0f && selectedRow.pitch_max > 0f && selectedRow.pitch_min < selectedRow.pitch_max)
-            {
-                effectivePitch = UnityEngine.Random.Range(selectedRow.pitch_min, selectedRow.pitch_max);
-            }
-
-            // 7. 3D 판정 (position이 주어지면 3D, 아니면 2D)
-            var is3d = position.HasValue;
-
-            // 8. runtime_id 발급
+            // 6. runtime_id 발급
             var runtimeId = _allocateRuntimeId();
 
-            // 9. 채널에 재생 요청 (distance_near/distance_far 사용)
-            var success = channel.PlayWithRuntimeId(
+            // 7. BaseAudioManager.TryPlay()로 위임
+            var success = BaseAudioManager.TryPlay(
+                channel,
                 runtimeId,
                 soundId,  // 쿨타임 공유를 위해 sound_id 전달
                 selectedRow.row_id,
+                selectedRow,
                 clip,
-                effectiveVolume,
-                selectedRow.loop,
-                selectedRow.cooltime,
-                fadeInSeconds: 0f,
-                fadeOutSeconds: 0f,
-                waitSeconds: 0f,
+                volume,
+                pitchOverride,
                 groupId,
-                effectivePitch,
-                is3d,
-                position,
-                selectedRow.distance_near,
-                selectedRow.distance_far
+                position
             );
 
             if (!success)
@@ -487,7 +530,7 @@ namespace Devian
                 return SoundRuntimeId.Invalid;
             }
 
-            // 10. channel 매핑 등록
+            // 8. channel 매핑 등록
             _channelByRuntimeId[runtimeId.Value] = channelType;
 
             return runtimeId;
@@ -500,9 +543,9 @@ namespace Devian
             string soundId,
             out SoundRuntimeId runtimeId,
             float volume = 1f,
-            float pitch = 1f,
+            float pitch = 0f,
             int groupId = 0,
-            string? channelOverride = null)
+            SoundChannelType? channelOverride = null)
         {
             runtimeId = PlaySound(soundId, volume, pitch, groupId, channelOverride);
             return runtimeId.IsValid;
@@ -516,12 +559,70 @@ namespace Devian
             Vector3 position,
             out SoundRuntimeId runtimeId,
             float volume = 1f,
-            float pitch = 1f,
+            float pitch = 0f,
             int groupId = 0,
-            string? channelOverride = null)
+            SoundChannelType? channelOverride = null)
         {
             runtimeId = PlaySound3D(soundId, position, volume, pitch, groupId, channelOverride);
             return runtimeId.IsValid;
+        }
+
+        // ====================================================================
+        // Voice Play API (VoiceManager 전용, internal)
+        // ====================================================================
+
+        /// <summary>
+        /// VoiceManager가 호출하는 Voice 재생 헬퍼.
+        /// IVoiceRow 기반으로 재생한다.
+        /// </summary>
+        internal SoundRuntimeId _playVoiceInternal(
+            IVoiceRow voiceRow,
+            float volume,
+            float pitchOverride,
+            int groupId,
+            Vector3? position)
+        {
+            // voice_id 해시로 clip 조회
+            var rowIdHash = voiceRow.voice_id.GetHashCode();
+
+            if (!_clipCacheByRowId.TryGetValue(rowIdHash, out var clip))
+            {
+                Log.Warn($"[SoundManager] Voice AudioClip not loaded: {voiceRow.voice_id}");
+                return SoundRuntimeId.Invalid;
+            }
+
+            // Voice 채널 고정
+            if (!_channels.TryGetValue(SoundChannelType.Voice, out var channel))
+            {
+                Log.Warn("[SoundManager] Voice channel not found.");
+                return SoundRuntimeId.Invalid;
+            }
+
+            // runtime_id 발급
+            var runtimeId = _allocateRuntimeId();
+
+            // BaseAudioManager.TryPlay()로 위임
+            var success = BaseAudioManager.TryPlay(
+                channel,
+                runtimeId,
+                voiceRow.voice_id,  // logicalId
+                rowIdHash,          // rowId
+                voiceRow,
+                clip,
+                volume,
+                pitchOverride,
+                groupId,
+                position
+            );
+
+            if (!success)
+            {
+                return SoundRuntimeId.Invalid;
+            }
+
+            _channelByRuntimeId[runtimeId.Value] = SoundChannelType.Voice;
+
+            return runtimeId;
         }
 
         // ====================================================================
@@ -793,42 +894,6 @@ namespace Devian
             return candidates[candidates.Count - 1];
         }
 
-        private static string _extractAssetName(string path)
-        {
-            if (string.IsNullOrEmpty(path)) return path;
-
-            var lastSlash = path.LastIndexOfAny(new[] { '/', '\\' });
-            var name = lastSlash >= 0 ? path.Substring(lastSlash + 1) : path;
-
-            var dot = name.LastIndexOf('.');
-            return dot >= 0 ? name.Substring(0, dot) : name;
-        }
-
-        private static bool _tryParseChannel(string channelName, out SoundChannelType channelType)
-        {
-            channelType = SoundChannelType.Effect;
-            if (string.IsNullOrEmpty(channelName)) return false;
-
-            switch (channelName.ToLowerInvariant())
-            {
-                case "bgm":
-                    channelType = SoundChannelType.Bgm;
-                    return true;
-                case "effect":
-                case "sfx":
-                    channelType = SoundChannelType.Effect;
-                    return true;
-                case "ui":
-                    channelType = SoundChannelType.Ui;
-                    return true;
-                case "voice":
-                    channelType = SoundChannelType.Voice;
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
         // ====================================================================
         // Lifecycle
         // ====================================================================
@@ -837,9 +902,9 @@ namespace Devian
         {
             StopAll();
             _clipCacheByRowId.Clear();
-            _loadedRowIdsByGameKey.Clear();
+            _loadedRowIdsByBundleKey.Clear();
             _loadedBundleKeys.Clear();
-            _loadedGameKeys.Clear();
+            _bundleKeyIsBundle.Clear();
             _channelByRuntimeId.Clear();
             _channels.Clear();
             base.OnDestroy();

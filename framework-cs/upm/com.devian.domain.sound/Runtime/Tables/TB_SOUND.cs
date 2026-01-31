@@ -1,6 +1,7 @@
 // SSOT: skills/devian-unity/30-unity-components/16-sound-tables/SKILL.md
-// partial 확장 파일 - Generated TB_SOUND에 sound_id/key 그룹 인덱스 추가
+// partial 확장 파일 - Generated TB_SOUND에 sound_id/key_bundle 그룹 인덱스 추가
 // row_id가 PK, sound_id는 논리 그룹 키 (중복 허용)
+// v10 변경: key_group 제거, key_bundle 중심 로드/언로드, isBundle(bool), channel(enum)
 
 #nullable enable
 
@@ -12,16 +13,17 @@ namespace Devian.Domain.Sound
     /// <summary>
     /// TB_SOUND partial 확장.
     /// - sound_id → rows 그룹 인덱스
-    /// - key → rows 그룹 인덱스
+    /// - key_bundle → rows 그룹 인덱스 (로드/언로드 단위)
     /// - ISoundRow 어댑터 제공
+    /// key_group은 제거됨 - 로드/언로드는 key_bundle 단위로만 수행.
     /// </summary>
     public static partial class TB_SOUND
     {
         // sound_id → rows (그룹 인덱스)
         private static readonly Dictionary<string, List<SOUND>> _rowsBySoundId = new();
 
-        // key → rows (게임 로딩 그룹 인덱스)
-        private static readonly Dictionary<string, List<SOUND>> _rowsByKey = new();
+        // key_bundle → rows (로드/언로드 단위 인덱스)
+        private static readonly Dictionary<string, List<SOUND>> _rowsByBundleKey = new();
 
         // 빈 리스트 (반환용)
         private static readonly IReadOnlyList<SOUND> _emptyList = Array.Empty<SOUND>();
@@ -46,22 +48,22 @@ namespace Devian.Domain.Sound
         }
 
         /// <summary>
-        /// 게임 로딩 그룹(key)로 rows를 조회한다.
+        /// key_bundle로 rows를 조회한다 (로드/언로드 단위).
         /// </summary>
-        public static IReadOnlyList<SOUND> GetRowsByKey(string key)
+        public static IReadOnlyList<SOUND> GetRowsByBundleKey(string bundleKey)
         {
-            if (string.IsNullOrEmpty(key)) return _emptyList;
-            return _rowsByKey.TryGetValue(key, out var list) ? list : _emptyList;
+            if (string.IsNullOrEmpty(bundleKey)) return _emptyList;
+            return _rowsByBundleKey.TryGetValue(bundleKey, out var list) ? list : _emptyList;
         }
 
         /// <summary>
-        /// 그룹 인덱스를 빌드한다.
+        /// 인덱스를 빌드한다.
         /// _OnAfterLoad에서 호출됨.
         /// </summary>
-        public static void BuildGroupIndices()
+        public static void BuildBundleIndices()
         {
             _rowsBySoundId.Clear();
-            _rowsByKey.Clear();
+            _rowsByBundleKey.Clear();
 
             foreach (var row in GetAll())
             {
@@ -78,26 +80,26 @@ namespace Devian.Domain.Sound
                     soundIdList.Add(row);
                 }
 
-                // key 인덱스
-                if (!string.IsNullOrEmpty(row.Key))
+                // key_bundle 인덱스
+                if (!string.IsNullOrEmpty(row.Key_bundle))
                 {
-                    if (!_rowsByKey.TryGetValue(row.Key, out var keyList))
+                    if (!_rowsByBundleKey.TryGetValue(row.Key_bundle, out var bundleList))
                     {
-                        keyList = new List<SOUND>();
-                        _rowsByKey[row.Key] = keyList;
+                        bundleList = new List<SOUND>();
+                        _rowsByBundleKey[row.Key_bundle] = bundleList;
                     }
-                    keyList.Add(row);
+                    bundleList.Add(row);
                 }
             }
         }
 
         /// <summary>
-        /// 그룹 인덱스를 초기화한다.
+        /// 인덱스를 초기화한다.
         /// </summary>
-        public static void ClearGroupIndices()
+        public static void ClearBundleIndices()
         {
             _rowsBySoundId.Clear();
-            _rowsByKey.Clear();
+            _rowsByBundleKey.Clear();
         }
 
         /// <summary>
@@ -107,14 +109,16 @@ namespace Devian.Domain.Sound
         {
             // 어댑터 캐시 클리어
             SoundVoiceTableRegistry.ClearSoundAdapterCache();
-            // 그룹 인덱스 빌드
-            BuildGroupIndices();
+            // 인덱스 빌드
+            BuildBundleIndices();
         }
     }
 
     /// <summary>
     /// SOUND → ISoundRow 어댑터.
     /// Generated SOUND 클래스를 ISoundRow 인터페이스로 래핑한다.
+    /// IAudioRowBase를 구현하여 BaseAudioManager에서 공통 처리 가능.
+    /// key_group은 제거됨 - key_bundle만 사용.
     /// </summary>
     public sealed class SoundRowAdapter : ISoundRow
     {
@@ -125,31 +129,34 @@ namespace Devian.Domain.Sound
             _row = row ?? throw new ArgumentNullException(nameof(row));
         }
 
+        // ISoundRow 고유
         public int row_id => _row.Row_id;
         public string sound_id => _row.Sound_id;
-        public string key => _row.Key;
-        public SoundSourceType source => ParseSource(_row.Source);
-        public string bundle_key => _row.Bundle_key;
+        public bool isBundle => _row.IsBundle;
+        public string key_bundle => _row.Key_bundle;
         public string path => _row.Path;
-        public string channel => _row.Channel;
+        public SoundChannelType channel => ParseChannel(_row.Channel);
+        public int weight => _row.Weight;
+
+        // IAudioRowBase 공통
         public bool loop => _row.Loop;
         public float cooltime => _row.Cooltime;
         public bool is3d => _row.Is3d;
-        // Excel 컬럼명 변경 완료: distance_near/distance_far
         public float distance_near => _row.Distance_near;
         public float distance_far => _row.Distance_far;
-        public int weight => _row.Weight;
         public float volume_scale => _row.Volume_scale;
         public float pitch_min => _row.Pitch_min;
         public float pitch_max => _row.Pitch_max;
 
-        private static SoundSourceType ParseSource(string source)
+        private static SoundChannelType ParseChannel(string channel)
         {
-            if (string.Equals(source, "Bundle", StringComparison.OrdinalIgnoreCase))
-                return SoundSourceType.Bundle;
-            if (string.Equals(source, "Resource", StringComparison.OrdinalIgnoreCase))
-                return SoundSourceType.Resource;
-            return SoundSourceType.Bundle; // default
+            if (string.IsNullOrEmpty(channel))
+                return SoundChannelType.Effect;
+
+            if (Enum.TryParse<SoundChannelType>(channel, true, out var result))
+                return result;
+
+            return SoundChannelType.Effect; // default
         }
     }
 }

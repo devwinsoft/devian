@@ -1,6 +1,8 @@
 // SSOT: skills/devian-unity/30-unity-components/16-sound-tables/SKILL.md
 // partial 확장 파일 - Generated TB_VOICE에 IVoiceRow 어댑터 추가
 // Generated TB_VOICE는 voice_id가 PK
+// v10 변경: key_group 제거, key_bundle 중심 로드/언로드, is3d/distance 추가
+// VOICE는 SOUND 테이블 미참조, 직접 clip 경로 사용
 
 #nullable enable
 
@@ -11,57 +13,58 @@ namespace Devian.Domain.Sound
 {
     /// <summary>
     /// TB_VOICE partial 확장.
-    /// - group_key → rows 그룹 인덱스
-    /// - IVoiceRow 어댑터 제공
+    /// - key_bundle → rows 그룹 인덱스 (로드/언로드 단위)
+    /// - IVoiceRow 어댑터 제공 (IAudioRowBase 구현)
+    /// key_group은 제거됨 - 로드/언로드는 key_bundle 단위로만 수행.
     /// </summary>
     public static partial class TB_VOICE
     {
-        // group_key → rows (게임 로딩 그룹 인덱스)
-        private static readonly Dictionary<string, List<VOICE>> _rowsByGroupKey = new();
+        // key_bundle → rows (로드/언로드 단위 인덱스)
+        private static readonly Dictionary<string, List<VOICE>> _rowsByBundleKey = new();
 
         // 빈 리스트 (반환용)
         private static readonly IReadOnlyList<VOICE> _emptyVoiceList = Array.Empty<VOICE>();
 
         /// <summary>
-        /// 게임 로딩 그룹(group_key)으로 rows를 조회한다.
+        /// key_bundle로 rows를 조회한다 (로드/언로드 단위).
         /// </summary>
-        public static IReadOnlyList<VOICE> GetRowsByGroupKey(string groupKey)
+        public static IReadOnlyList<VOICE> GetRowsByBundleKey(string bundleKey)
         {
-            if (string.IsNullOrEmpty(groupKey)) return _emptyVoiceList;
-            return _rowsByGroupKey.TryGetValue(groupKey, out var list) ? list : _emptyVoiceList;
+            if (string.IsNullOrEmpty(bundleKey)) return _emptyVoiceList;
+            return _rowsByBundleKey.TryGetValue(bundleKey, out var list) ? list : _emptyVoiceList;
         }
 
         /// <summary>
-        /// 그룹 인덱스를 빌드한다.
+        /// 인덱스를 빌드한다.
         /// _OnAfterLoad에서 호출됨.
         /// </summary>
-        public static void BuildGroupIndices()
+        public static void BuildBundleIndices()
         {
-            _rowsByGroupKey.Clear();
+            _rowsByBundleKey.Clear();
 
             foreach (var row in GetAll())
             {
                 if (row == null) continue;
 
-                // group_key 인덱스
-                if (!string.IsNullOrEmpty(row.Group_key))
+                // key_bundle 인덱스
+                if (!string.IsNullOrEmpty(row.Key_bundle))
                 {
-                    if (!_rowsByGroupKey.TryGetValue(row.Group_key, out var groupList))
+                    if (!_rowsByBundleKey.TryGetValue(row.Key_bundle, out var bundleList))
                     {
-                        groupList = new List<VOICE>();
-                        _rowsByGroupKey[row.Group_key] = groupList;
+                        bundleList = new List<VOICE>();
+                        _rowsByBundleKey[row.Key_bundle] = bundleList;
                     }
-                    groupList.Add(row);
+                    bundleList.Add(row);
                 }
             }
         }
 
         /// <summary>
-        /// 그룹 인덱스를 초기화한다.
+        /// 인덱스를 초기화한다.
         /// </summary>
-        public static void ClearGroupIndices()
+        public static void ClearBundleIndices()
         {
-            _rowsByGroupKey.Clear();
+            _rowsByBundleKey.Clear();
         }
 
         /// <summary>
@@ -71,14 +74,17 @@ namespace Devian.Domain.Sound
         {
             // 어댑터 캐시 클리어
             SoundVoiceTableRegistry.ClearVoiceAdapterCache();
-            // 그룹 인덱스 빌드
-            BuildGroupIndices();
+            // 인덱스 빌드
+            BuildBundleIndices();
         }
     }
 
     /// <summary>
     /// VOICE → IVoiceRow 어댑터.
     /// Generated VOICE 클래스를 IVoiceRow 인터페이스로 래핑한다.
+    /// IAudioRowBase를 구현하여 BaseAudioManager에서 공통 처리 가능.
+    /// VOICE는 SOUND 테이블을 참조하지 않고 clip 경로를 직접 사용한다.
+    /// key_group은 제거됨 - key_bundle만 사용.
     /// </summary>
     public sealed class VoiceRowAdapter : IVoiceRow
     {
@@ -89,43 +95,49 @@ namespace Devian.Domain.Sound
             _row = row ?? throw new ArgumentNullException(nameof(row));
         }
 
+        // IVoiceRow 고유
         public string voice_id => _row.Voice_id;
-        // text_l10n_key 제거됨 - 자막 키가 필요하면 voice_id 자체를 사용
-        public string speaker => _row.Speaker;
-        public string category => _row.Category;
-        public int priority => _row.Priority;
-        public string group_key => _row.Group_key;
+        public string key_bundle => _row.Key_bundle;
+
+        // IAudioRowBase 상수 (VOICE defaults)
+        public bool isBundle => true; // VOICE는 항상 Bundle
+        public SoundChannelType channel => SoundChannelType.Voice; // VOICE는 항상 Voice
+        public bool loop => false; // VOICE는 항상 비루프
         public float cooltime => _row.Cooltime;
+        public bool is3d => _row.Is3d;
+        public float distance_near => _row.Distance_near;
+        public float distance_far => _row.Distance_far;
+        public float volume_scale => _row.Volume_scale;
+        public float pitch_min => _row.Pitch_min;
+        public float pitch_max => _row.Pitch_max;
 
         /// <summary>
-        /// 컬럼명으로 sound_id를 조회한다 (Resolve 단계에서만 호출).
+        /// 컬럼명으로 clip 경로를 조회한다 (Resolve 단계에서만 호출).
         /// reflection 금지, 지원 언어 컬럼만 switch로 매칭.
+        /// VOICE는 SOUND를 참조하지 않고 clip 경로를 직접 반환한다.
+        /// 중국어는 clip_Chinese로 통합 (간체/번체 구분 없음).
         /// </summary>
-        public bool TryGetClipColumn(string columnName, out string soundId)
+        public bool TryGetClipColumn(string columnName, out string clipPath)
         {
-            soundId = string.Empty;
+            clipPath = string.Empty;
 
             switch (columnName)
             {
                 case "clip_Korean":
-                    soundId = _row.Clip_Korean;
-                    return !string.IsNullOrEmpty(soundId);
+                    clipPath = _row.Clip_Korean;
+                    return !string.IsNullOrEmpty(clipPath);
 
                 case "clip_English":
-                    soundId = _row.Clip_English;
-                    return !string.IsNullOrEmpty(soundId);
+                    clipPath = _row.Clip_English;
+                    return !string.IsNullOrEmpty(clipPath);
 
                 case "clip_Japanese":
-                    soundId = _row.Clip_Japanese;
-                    return !string.IsNullOrEmpty(soundId);
+                    clipPath = _row.Clip_Japanese;
+                    return !string.IsNullOrEmpty(clipPath);
 
-                case "clip_ChineseSimplified":
-                    soundId = _row.Clip_ChineseSimplified;
-                    return !string.IsNullOrEmpty(soundId);
-
-                case "clip_ChineseTraditional":
-                    soundId = _row.Clip_ChineseTraditional;
-                    return !string.IsNullOrEmpty(soundId);
+                case "clip_Chinese":
+                    clipPath = _row.Clip_Chinese;
+                    return !string.IsNullOrEmpty(clipPath);
 
                 default:
                     return false;

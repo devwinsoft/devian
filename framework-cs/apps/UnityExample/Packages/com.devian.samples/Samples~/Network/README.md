@@ -8,10 +8,13 @@ WebSocket 클라이언트 샘플.
 ## 의존성
 
 이 샘플을 사용하려면 다음 패키지가 필요합니다:
-- `com.devian.core`
-- `com.devian.network`
-- `com.devian.unity`
+- `com.devian.foundation`
 - `com.devian.protocol.game`
+
+참조하는 어셈블리:
+- `Devian.Core`
+- `Devian.Unity`
+- `Devian.Protocol.Game`
 
 ## 파일 구조
 

@@ -11,18 +11,17 @@ import { IEntity, IEntityKey } from '@devian/core';
 export interface SOUND extends IEntityKey<number> {
     Row_id: number;
     Sound_id: string;
-    Key: string;
-    Source: string;
-    Bundle_key: string;
+    IsBundle: boolean;
+    Key_bundle: string;
     Path: string;
     Channel: string;
+    Volume_scale: number;
     Loop: boolean;
     Cooltime: number;
     Is3d: boolean;
     Distance_near: number;
     Distance_far: number;
     Weight: number;
-    Volume_scale: number;
     Pitch_min: number;
     Pitch_max: number;
     getKey(): number;
@@ -30,16 +29,18 @@ export interface SOUND extends IEntityKey<number> {
 
 export interface VOICE extends IEntityKey<string> {
     Voice_id: string;
-    Speaker: string;
-    Category: string;
-    Priority: number;
-    Group_key: string;
+    Key_bundle: string;
+    Volume_scale: number;
     Cooltime: number;
+    Is3d: boolean;
+    Distance_near: number;
+    Distance_far: number;
+    Pitch_min: number;
+    Pitch_max: number;
     Clip_Korean: string;
     Clip_English: string;
     Clip_Japanese: string;
-    Clip_ChineseSimplified: string;
-    Clip_ChineseTraditional: string;
+    Clip_Chinese: string;
     getKey(): string;
 }
 

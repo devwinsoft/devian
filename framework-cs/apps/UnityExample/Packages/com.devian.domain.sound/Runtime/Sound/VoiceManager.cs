@@ -13,12 +13,12 @@ namespace Devian
     /// Voice 재생 관리자.
     /// - TB_VOICE를 로딩 시점에 "현재 언어용 맵"으로 Resolve 캐시
     /// - 재생 시점에는 캐시 조회만 수행 (SystemLanguage 분기 금지)
-    /// - Voice clip 로딩은 group_key + language 기반으로 수행
+    /// - Voice clip 로딩은 key_bundle + language 기반으로 수행 (key_group 제거됨)
+    /// - VOICE는 SOUND 테이블을 참조하지 않고 독립적으로 로드/재생한다
+    /// - clip 경로는 IVoiceRow.TryGetClipColumn()으로 직접 조회
     /// </summary>
     public sealed class VoiceManager : AutoSingleton<VoiceManager>
     {
-        // Voice group key prefix
-        private const string VOICE_GROUP_PREFIX = "VOICE::";
 
         // ====================================================================
         // Voice Table Registry
@@ -37,17 +37,18 @@ namespace Devian
         public Func<IEnumerable<IVoiceRow>>? GetAllVoiceRows { get; set; }
 
         /// <summary>
-        /// group_key로 voice rows를 조회하는 델리게이트.
-        /// LoadByGroupKeyAsync에서 사용한다.
+        /// key_bundle로 voice rows를 조회하는 델리게이트.
+        /// LoadByBundleKeyAsync에서 사용한다.
+        /// key_group은 제거됨 - 로드/언로드는 key_bundle 단위로만 수행.
         /// </summary>
-        public Func<string, IEnumerable<IVoiceRow>>? GetVoiceRowsByGroupKey { get; set; }
+        public Func<string, IEnumerable<IVoiceRow>>? GetVoiceRowsByBundleKey { get; set; }
 
         // ====================================================================
         // Resolve Cache
         // ====================================================================
 
-        private readonly Dictionary<string, string> _voiceSoundIdByVoiceId = new();
-        // text_l10n_key 제거됨 - 자막 키가 필요하면 voice_id 자체를 사용
+        // voice_id → IVoiceRow 캐시 (Resolve 결과)
+        private readonly Dictionary<string, IVoiceRow> _resolvedVoiceRows = new Dictionary<string, IVoiceRow>();
         private SystemLanguage _currentLanguage = SystemLanguage.Unknown;
         private SystemLanguage _fallbackLanguage = SystemLanguage.English;
 
@@ -66,10 +67,10 @@ namespace Devian
         }
 
         // ====================================================================
-        // Loaded Voice Groups
+        // Loaded Voice Bundles (key_bundle 기반)
         // ====================================================================
 
-        private readonly HashSet<string> _loadedVoiceGroupKeys = new();
+        private readonly HashSet<string> _loadedVoiceBundleKeys = new HashSet<string>();
 
         // ====================================================================
         // Resolve API
@@ -88,7 +89,7 @@ namespace Devian
             }
 
             // 캐시 초기화
-            _voiceSoundIdByVoiceId.Clear();
+            _resolvedVoiceRows.Clear();
             _currentLanguage = language;
 
             // 컬럼명 구성: "clip_" + language.ToString()
@@ -102,24 +103,23 @@ namespace Devian
             {
                 if (row == null) continue;
 
-                // 1. 해당 언어의 컬럼에서 sound_id 가져오기
-                if (!row.TryGetClipColumn(col, out var soundId))
+                // 1. 해당 언어의 컬럼에서 clip 경로 가져오기
+                if (!row.TryGetClipColumn(col, out var clipPath))
                 {
                     // 2. 비어있으면 fallback 컬럼 시도
-                    if (!row.TryGetClipColumn(fallbackCol, out soundId))
+                    if (!row.TryGetClipColumn(fallbackCol, out clipPath))
                     {
                         // 3. 여전히 비어있으면 경고 후 스킵
-                        Log.Warn($"[VoiceManager] Voice '{row.voice_id}' has no sound_id for {col} or fallback {fallbackCol}.");
+                        Log.Warn($"[VoiceManager] Voice '{row.voice_id}' has no clip for {col} or fallback {fallbackCol}.");
                         continue;
                     }
                 }
 
-                // 4. 캐시 등록
-                _voiceSoundIdByVoiceId[row.voice_id] = soundId;
-                // text_l10n_key 제거됨 - 자막 키가 필요하면 voice_id 자체를 사용
+                // 4. 캐시 등록 (voice_id → IVoiceRow)
+                _resolvedVoiceRows[row.voice_id] = row;
             }
 
-            Log.Info($"[VoiceManager] Resolved {_voiceSoundIdByVoiceId.Count} voices for {language}.");
+            Log.Info($"[VoiceManager] Resolved {_resolvedVoiceRows.Count} voices for {language}.");
         }
 
         /// <summary>
@@ -127,32 +127,31 @@ namespace Devian
         /// </summary>
         public void ClearResolveCache()
         {
-            _voiceSoundIdByVoiceId.Clear();
+            _resolvedVoiceRows.Clear();
             _currentLanguage = SystemLanguage.Unknown;
         }
 
         // ====================================================================
-        // Voice Loading API (group_key + language 기반)
+        // Voice Loading API (key_bundle + language 기반, SOUND 미참조)
+        // key_group은 제거됨 - 로드/언로드는 key_bundle 단위로만 수행.
         // ====================================================================
 
         /// <summary>
-        /// group_key 기반으로 Voice clip을 로드한다.
+        /// key_bundle 기반으로 Voice clip을 로드한다.
         /// 반드시 ResolveForLanguage() 호출 후에 사용한다.
-        /// Resolve 결과로 나온 sound_id들만 로드한다.
+        /// VOICE 테이블의 key_bundle/clip 경로를 직접 사용한다 (SOUND 테이블 미참조).
         /// </summary>
-        /// <param name="groupKey">TB_VOICE.group_key</param>
+        /// <param name="bundleKey">TB_VOICE.key_bundle</param>
         /// <param name="language">Voice 언어</param>
         /// <param name="fallbackLanguage">Fallback 언어</param>
         /// <param name="onError">에러 콜백</param>
-        public IEnumerator LoadByGroupKeyAsync(
-            string groupKey,
+        public IEnumerator LoadByBundleKeyAsync(
+            string bundleKey,
             SystemLanguage language,
             SystemLanguage fallbackLanguage,
             Action<string>? onError = null)
         {
-            var voiceGroupKey = VOICE_GROUP_PREFIX + groupKey;
-
-            if (_loadedVoiceGroupKeys.Contains(groupKey))
+            if (_loadedVoiceBundleKeys.Contains(bundleKey))
             {
                 yield break;
             }
@@ -163,20 +162,20 @@ namespace Devian
                 yield break;
             }
 
-            // group_key에 해당하는 voice rows 수집
+            // key_bundle에 해당하는 voice rows 수집
             IEnumerable<IVoiceRow>? voiceRows = null;
 
-            if (GetVoiceRowsByGroupKey != null)
+            if (GetVoiceRowsByBundleKey != null)
             {
-                voiceRows = GetVoiceRowsByGroupKey(groupKey);
+                voiceRows = GetVoiceRowsByBundleKey(bundleKey);
             }
             else if (GetAllVoiceRows != null)
             {
-                // Fallback: 전체 순회하면서 group_key 필터링
+                // Fallback: 전체 순회하면서 key_bundle 필터링
                 var filteredRows = new List<IVoiceRow>();
                 foreach (var row in GetAllVoiceRows())
                 {
-                    if (row != null && row.group_key == groupKey)
+                    if (row != null && row.key_bundle == bundleKey)
                     {
                         filteredRows.Add(row);
                     }
@@ -186,70 +185,91 @@ namespace Devian
 
             if (voiceRows == null)
             {
-                onError?.Invoke($"[VoiceManager] No voice rows found for group_key: {groupKey}");
+                onError?.Invoke($"[VoiceManager] No voice rows found for key_bundle: {bundleKey}");
                 yield break;
             }
 
-            // Resolve된 sound_id 집합 수집 (중복 제거)
-            var soundIds = new HashSet<string>();
+            // Resolve된 voice_id만 필터링
+            var resolvedRows = new List<IVoiceRow>();
 
             foreach (var row in voiceRows)
             {
                 if (row == null) continue;
 
-                // Resolve 캐시에서 sound_id 조회
-                if (_voiceSoundIdByVoiceId.TryGetValue(row.voice_id, out var soundId))
+                // Resolve 캐시에 존재하는지 확인
+                if (_resolvedVoiceRows.ContainsKey(row.voice_id))
                 {
-                    if (!string.IsNullOrEmpty(soundId))
-                    {
-                        soundIds.Add(soundId);
-                    }
+                    resolvedRows.Add(row);
                 }
             }
 
-            if (soundIds.Count == 0)
+            if (resolvedRows.Count == 0)
             {
-                Log.Warn($"[VoiceManager] No resolved sound_ids for group_key: {groupKey}");
-                _loadedVoiceGroupKeys.Add(groupKey);
+                Log.Warn($"[VoiceManager] No resolved voices for key_bundle: {bundleKey}");
+                _loadedVoiceBundleKeys.Add(bundleKey);
                 yield break;
             }
 
-            // SoundManager 내부 헬퍼 호출
-            yield return SoundManager.Instance._loadVoiceBySoundIdsAsync(
-                voiceGroupKey,
-                soundIds,
+            // SoundManager 내부 헬퍼 호출 (VOICE row 직접 전달, SOUND 미참조)
+            yield return SoundManager.Instance._loadVoiceClipsAsync(
+                bundleKey,
+                resolvedRows,
                 language,
                 fallbackLanguage,
                 onError
             );
 
-            _loadedVoiceGroupKeys.Add(groupKey);
+            _loadedVoiceBundleKeys.Add(bundleKey);
         }
 
         /// <summary>
-        /// group_key 기반으로 Voice clip을 언로드한다.
+        /// 여러 key_bundle을 순차적으로 로드한다.
         /// </summary>
-        public void UnloadByGroupKey(string groupKey)
+        public IEnumerator LoadByBundleKeysAsync(
+            IEnumerable<string> bundleKeys,
+            SystemLanguage language,
+            SystemLanguage fallbackLanguage,
+            Action<string>? onError = null)
         {
-            if (!_loadedVoiceGroupKeys.Contains(groupKey)) return;
-
-            var voiceGroupKey = VOICE_GROUP_PREFIX + groupKey;
-            SoundManager.Instance.UnloadByKey(voiceGroupKey);
-
-            _loadedVoiceGroupKeys.Remove(groupKey);
-        }
-
-        /// <summary>
-        /// 모든 로드된 Voice group을 언로드한다.
-        /// </summary>
-        public void UnloadAllVoiceGroups()
-        {
-            foreach (var groupKey in _loadedVoiceGroupKeys)
+            foreach (var bundleKey in bundleKeys)
             {
-                var voiceGroupKey = VOICE_GROUP_PREFIX + groupKey;
-                SoundManager.Instance.UnloadByKey(voiceGroupKey);
+                yield return LoadByBundleKeyAsync(bundleKey, language, fallbackLanguage, onError);
             }
-            _loadedVoiceGroupKeys.Clear();
+        }
+
+        /// <summary>
+        /// key_bundle 기반으로 Voice clip을 언로드한다.
+        /// </summary>
+        public void UnloadByBundleKey(string bundleKey)
+        {
+            if (!_loadedVoiceBundleKeys.Contains(bundleKey)) return;
+
+            SoundManager.Instance.UnloadByBundleKey(bundleKey);
+
+            _loadedVoiceBundleKeys.Remove(bundleKey);
+        }
+
+        /// <summary>
+        /// 여러 key_bundle을 언로드한다.
+        /// </summary>
+        public void UnloadByBundleKeys(IEnumerable<string> bundleKeys)
+        {
+            foreach (var bundleKey in bundleKeys)
+            {
+                UnloadByBundleKey(bundleKey);
+            }
+        }
+
+        /// <summary>
+        /// 모든 로드된 Voice bundle을 언로드한다.
+        /// </summary>
+        public void UnloadAllVoiceBundles()
+        {
+            foreach (var bundleKey in _loadedVoiceBundleKeys)
+            {
+                SoundManager.Instance.UnloadByBundleKey(bundleKey);
+            }
+            _loadedVoiceBundleKeys.Clear();
         }
 
         // ====================================================================
@@ -262,44 +282,44 @@ namespace Devian
         /// </summary>
         /// <param name="voiceId">voice_id (TB_VOICE)</param>
         /// <param name="volume">볼륨 (0~1)</param>
-        /// <param name="pitch">피치</param>
+        /// <param name="pitch">피치 (0이면 row 기반)</param>
         /// <param name="groupId">그룹 ID</param>
         /// <returns>runtime_id (재생 실패 시 Invalid)</returns>
-        public SoundRuntimeId PlayVoice(string voiceId, float volume = 1f, float pitch = 1f, int groupId = 0)
+        public SoundRuntimeId PlayVoice(string voiceId, float volume = 1f, float pitch = 0f, int groupId = 0)
         {
-            // 1. 캐시에서 sound_id 조회
-            if (!_voiceSoundIdByVoiceId.TryGetValue(voiceId, out var soundId))
+            // 1. 캐시에서 IVoiceRow 조회
+            if (!_resolvedVoiceRows.TryGetValue(voiceId, out var voiceRow))
             {
                 Log.Warn($"[VoiceManager] Voice not resolved: {voiceId}");
                 return SoundRuntimeId.Invalid;
             }
 
-            // 2. SoundManager로 재생 위임 (채널은 Voice로 고정)
-            return SoundManager.Instance.PlaySound(soundId, volume, pitch, groupId, channelOverride: "Voice");
+            // 2. SoundManager 내부 헬퍼로 재생 위임 (IVoiceRow 기반)
+            return SoundManager.Instance._playVoiceInternal(voiceRow, volume, pitch, groupId, null);
         }
 
         /// <summary>
         /// voice_id로 3D 보이스를 재생한다.
         /// 재생 시점에는 캐시 조회만 수행한다 (SystemLanguage 파라미터 없음).
-        /// 3D 파라미터(distance_near, distance_far)는 Resolve된 sound_id의 SOUND row에서 가져온다.
+        /// 3D 파라미터(distance_near, distance_far)는 IVoiceRow에서 가져온다.
         /// </summary>
         /// <param name="voiceId">voice_id (TB_VOICE)</param>
         /// <param name="position">3D 위치</param>
         /// <param name="volume">볼륨 (0~1)</param>
-        /// <param name="pitch">피치</param>
+        /// <param name="pitch">피치 (0이면 row 기반)</param>
         /// <param name="groupId">그룹 ID</param>
         /// <returns>runtime_id (재생 실패 시 Invalid)</returns>
-        public SoundRuntimeId PlayVoice3D(string voiceId, Vector3 position, float volume = 1f, float pitch = 1f, int groupId = 0)
+        public SoundRuntimeId PlayVoice3D(string voiceId, Vector3 position, float volume = 1f, float pitch = 0f, int groupId = 0)
         {
-            // 1. 캐시에서 sound_id 조회
-            if (!_voiceSoundIdByVoiceId.TryGetValue(voiceId, out var soundId))
+            // 1. 캐시에서 IVoiceRow 조회
+            if (!_resolvedVoiceRows.TryGetValue(voiceId, out var voiceRow))
             {
                 Log.Warn($"[VoiceManager] Voice not resolved: {voiceId}");
                 return SoundRuntimeId.Invalid;
             }
 
-            // 2. SoundManager로 3D 재생 위임 (채널은 Voice로 고정)
-            return SoundManager.Instance.PlaySound3D(soundId, position, volume, pitch, groupId, channelOverride: "Voice");
+            // 2. SoundManager 내부 헬퍼로 3D 재생 위임 (IVoiceRow 기반)
+            return SoundManager.Instance._playVoiceInternal(voiceRow, volume, pitch, groupId, position);
         }
 
         /// <summary>
@@ -336,12 +356,12 @@ namespace Devian
 
         /// <summary>
         /// voice_id에 해당하는 자막 키를 반환한다.
-        /// text_l10n_key 제거됨 - voice_id 자체를 자막 키로 사용.
+        /// voice_id 자체를 자막 키로 사용.
         /// </summary>
         public string? GetCaptionKey(string voiceId)
         {
             // voice_id 자체가 자막 키
-            if (_voiceSoundIdByVoiceId.ContainsKey(voiceId))
+            if (_resolvedVoiceRows.ContainsKey(voiceId))
             {
                 return voiceId;
             }
@@ -351,7 +371,7 @@ namespace Devian
         /// <summary>
         /// [Deprecated] GetSubtitleKey → GetCaptionKey로 변경됨.
         /// </summary>
-        [Obsolete("Use GetCaptionKey instead. text_l10n_key has been removed.")]
+        [Obsolete("Use GetCaptionKey instead.")]
         public string? GetSubtitleKey(string voiceId) => GetCaptionKey(voiceId);
 
         /// <summary>
@@ -359,27 +379,27 @@ namespace Devian
         /// </summary>
         public bool IsVoiceResolved(string voiceId)
         {
-            return _voiceSoundIdByVoiceId.ContainsKey(voiceId);
+            return _resolvedVoiceRows.ContainsKey(voiceId);
         }
 
         /// <summary>
-        /// Resolve된 voice_id에 매핑된 sound_id를 반환한다.
+        /// Resolve된 voice_id에 해당하는 IVoiceRow를 반환한다.
         /// </summary>
-        public string? GetResolvedSoundId(string voiceId)
+        public IVoiceRow? GetResolvedVoiceRow(string voiceId)
         {
-            if (_voiceSoundIdByVoiceId.TryGetValue(voiceId, out var soundId))
+            if (_resolvedVoiceRows.TryGetValue(voiceId, out var row))
             {
-                return soundId;
+                return row;
             }
             return null;
         }
 
         /// <summary>
-        /// 특정 group_key가 로드되어 있는지 확인한다.
+        /// 특정 key_bundle이 로드되어 있는지 확인한다.
         /// </summary>
-        public bool IsGroupKeyLoaded(string groupKey)
+        public bool IsBundleKeyLoaded(string bundleKey)
         {
-            return _loadedVoiceGroupKeys.Contains(groupKey);
+            return _loadedVoiceBundleKeys.Contains(bundleKey);
         }
 
         // ====================================================================
@@ -388,7 +408,7 @@ namespace Devian
 
         protected override void OnDestroy()
         {
-            UnloadAllVoiceGroups();
+            UnloadAllVoiceBundles();
             ClearResolveCache();
             base.OnDestroy();
         }
