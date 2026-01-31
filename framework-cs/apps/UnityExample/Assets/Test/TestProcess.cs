@@ -1,10 +1,8 @@
 using UnityEngine;
-using UnityEngine.AddressableAssets;
 using Devian;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
 using System.Collections;
-using Unity.VisualScripting;
 
 public class NewMonoBehaviourScript : MonoBehaviour
 {
@@ -13,6 +11,7 @@ public class NewMonoBehaviourScript : MonoBehaviour
     public CString c;
     public COMPLEX_POLICY_ID policyId;
     public TestSheet_ID testSheetId;
+    public EFFECT_ID effectId;
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     IEnumerator Start()
@@ -30,13 +29,14 @@ public class NewMonoBehaviourScript : MonoBehaviour
         yield return TableManager.Instance.LoadTablesAsync("table-ndjson", TableFormat.Json);
         yield return TableManager.Instance.LoadStringsAsync("string-pb64", TableFormat.Pb64, SystemLanguage.Korean);
 
-        yield return SoundManager.Instance.LoadByBundleKeyAsync("sound");
+        yield return SoundManager.Instance.LoadByBundleKeyAsync("sounds");
+        yield return AssetManager.LoadBundleAssets<GameObject>("effects");
         yield return AssetManager.LoadBundleAssets<GameObject>("prefabs");
 
-        //yield return SoundManager.Instance.LoadByKeyAsync("");
         //yield return VoiceManager.Instance.LoadByGroupKeyAsync("", SystemLanguage.Korean, SystemLanguage.English);
 
         SoundManager.Instance.PlaySound("bgm_title");
+        EffectManager.Instance.CreateEffect(effectId, null, Vector3.zero, Quaternion.identity, EFFECT_ATTACH_TYPE.World);
 
         Log.Debug(ST_UIText.Get("loading"));
         var obj = BundlePool.Spawn<TestPoolObject>("Cube", Vector3.zero, Quaternion.identity, null);

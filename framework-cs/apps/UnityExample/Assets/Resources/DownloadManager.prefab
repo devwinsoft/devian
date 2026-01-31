@@ -46,7 +46,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Devian.Unity::Devian.DownloadManager
   patchLabels:
   - prefabs
-  - sound
+  - effects
+  - sounds
   - table-ndjson
   - table-pb64
   forceClearDependencyCache: 0

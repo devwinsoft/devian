@@ -278,6 +278,79 @@ namespace Devian
         }
 
         /// <summary>
+        /// Load all prefabs and cache their components by Addressables label/key.
+        /// Use this when T is a Component type (prefabs are stored as GameObject in Addressables).
+        /// </summary>
+        /// <typeparam name="T">Component type</typeparam>
+        /// <param name="key">Addressables label or key</param>
+        public static IEnumerator LoadBundleComponents<T>(string key) where T : Component
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                Debug.LogError("[AssetManager] LoadBundleComponents: key is null or empty.");
+                yield break;
+            }
+
+            // Already loaded?
+            if (mBundles.ContainsKey(key))
+            {
+                Debug.LogWarning($"[AssetManager] Bundle '{key}' already loaded.");
+                yield break;
+            }
+
+            var bundleData = new BundleData(key);
+            var type = typeof(T);
+
+            if (!mBundleAssets.TryGetValue(type, out var typeDict))
+            {
+                typeDict = new Dictionary<string, UnityEngine.Object>();
+                mBundleAssets[type] = typeDict;
+            }
+
+            // Load as GameObject, then GetComponent<T>
+            var handle = Addressables.LoadAssetsAsync<GameObject>(
+                key,
+                go =>
+                {
+                    if (go == null) return;
+
+                    // Skip if name starts with @
+                    if (go.name.StartsWith("@")) return;
+
+                    var component = go.GetComponent<T>();
+                    if (component == null)
+                    {
+                        Debug.LogWarning($"[AssetManager] Prefab '{go.name}' does not have component {type.Name}. Skipping.");
+                        return;
+                    }
+
+                    var assetKey = NormalizeAssetName(go.name);
+
+                    if (typeDict.ContainsKey(assetKey))
+                    {
+                        Debug.LogError($"[AssetManager] Duplicate asset name '{assetKey}' for type {type.Name}. Ignoring.");
+                        return;
+                    }
+
+                    typeDict[assetKey] = component;
+                    bundleData.Names.Add(assetKey);
+                }
+            );
+
+            yield return handle;
+
+            if (handle.Status != AsyncOperationStatus.Succeeded)
+            {
+                Debug.LogError($"[AssetManager] LoadBundleComponents failed for key '{key}': {handle.OperationException?.Message}");
+                Addressables.Release(handle);
+                yield break;
+            }
+
+            bundleData.Handle = handle;
+            mBundles[key] = bundleData;
+        }
+
+        /// <summary>
         /// Unload assets loaded by the given key and release the handle.
         /// </summary>
         /// <param name="key">Addressables key/label used in LoadBundleAssets</param>

@@ -80,13 +80,19 @@ Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 
 
 | 파일 | 역할 | 허용 키 |
 |------|------|---------|
-| `input/config.json` | 공통 설정 (경로/타겟) | csConfig, tsConfig, dataConfig, upmConfig, samplePackages |
+| `input/config.json` | 공통 설정 (경로/타겟) | csConfig, tsConfig, tableConfig, upmConfig, samplePackages |
 | `input/input_*.json` | 빌드 스펙 (도메인/프로토콜) | version, configPath, tempDir, domains, protocols |
 
 **금지 키 (Hard FAIL):**
 - config.json에 `tempDir`, `domains`, `protocols` 존재 → FAIL
 - config.json에 `staticUpmPackages` 존재 → FAIL (forbidden, `samplePackages` 사용)
-- input.json에 `csConfig`, `tsConfig`, `dataConfig`, `upmConfig`, `samplePackages` 존재 → FAIL
+- input.json에 `csConfig`, `tsConfig`, `tableConfig`, `upmConfig`, `samplePackages` 존재 → FAIL
+- config.json에 `dataConfig` 존재 → FAIL (deprecated, `tableConfig` 사용)
+
+**Deprecated 금지 (Hard FAIL):**
+- framework/upm 내에서 deprecated/fallback 레이어를 추가하거나 유지하는 것을 금지한다.
+- 구조/설정 체계가 바뀌면, 동일 작업에서 기존 레거시 코드를 즉시 삭제하고 사용처도 함께 정리해야 한다.
+- "나중에 지우기 위해 deprecated로 남겨두기"는 허용하지 않는다.
 
 **상대경로 기준 (중요):**
 - 모든 상대경로 해석 기준은 **input json 파일이 있는 폴더 (buildJsonDir, 보통 `input/`)**
@@ -114,10 +120,14 @@ finalConfig = deepMerge(config.json, input.json)
 ```json
 {
   "configVersion": 1,
-  "csConfig": { "moduleDir": "../framework-cs/module", "moduleDir" (unified): "../framework-cs/module" },
-  "tsConfig": { "moduleDir": "../framework-ts/module", "moduleDir" (unified): "../framework-ts/module" },
+  "csConfig": { "moduleDir": "../framework-cs/module" },
+  "tsConfig": { "moduleDir": "../framework-ts/module" },
   "upmConfig": { "sourceDir": "../framework-cs/upm", "packageDir": "..." },
-  "dataConfig": { "bundleDirs": [...] },
+  "tableConfig": {
+    "soundDirs": ["...Assets/Bundles/sounds"],
+    "stringDirs": ["...Assets/Bundles/Strings"],
+    "tableDirs": ["...Assets/Bundles/Tables"]
+  },
   "samplePackages": ["com.devian.samples"]
 }
 ```

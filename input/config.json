@@ -1,26 +1,26 @@
 {
   "configVersion": 1,
-
   "csConfig": {
     "moduleDir": "../framework-cs/module"
   },
-
   "tsConfig": {
     "moduleDir": "../framework-ts/module"
   },
-
   "upmConfig": {
     "sourceDir": "../framework-cs/upm",
     "packageDir": "../framework-cs/apps/UnityExample/Packages"
   },
-
-  "dataConfig": {
-    "bundleDirs": [
-      "../output",
-      "../framework-cs/apps/UnityExample/Assets/Bundles"
+  "tableConfig": {
+    "soundDirs": [
+      "../framework-cs/apps/UnityExample/Assets/Bundles/Sounds"
+    ],
+    "stringDirs": [
+      "../framework-cs/apps/UnityExample/Assets/Bundles/Strings"
+    ],
+    "tableDirs": [
+      "../framework-cs/apps/UnityExample/Assets/Bundles/Tables"
     ]
   },
-
   "samplePackages": [
     "com.devian.samples"
   ]

@@ -61,7 +61,7 @@ class DevianToolBuilder {
         const inputJson = JSON.parse(fs.readFileSync(this.buildJsonPath, 'utf-8'));
         
         // Forbidden keys in input json
-        const forbiddenInInput = ['csConfig', 'tsConfig', 'dataConfig', 'upmConfig', 'samplePackages'];
+        const forbiddenInInput = ['csConfig', 'tsConfig', 'tableConfig', 'upmConfig', 'samplePackages'];
         for (const key of forbiddenInInput) {
             if (inputJson[key] !== undefined) {
                 throw new Error(
@@ -851,57 +851,64 @@ class DevianToolBuilder {
             this.ensureModulePackageJson(resolvedTargetDir, tsModuleName, domainName);
         }
 
-        // Copy to Bundle targets: {bundleDir}/Tables/ and {bundleDir}/Strings/
-        // Uses global dataConfig.bundleDirs (domains[*].dataTargetDirs is forbidden)
+        // Copy to data export targets:
+        // - Tables  : each {tableDir}/ndjson|pb64/
+        // - Strings : each {stringDir}/ndjson|pb64/{Language}/ (language subdirs live under staging)
+        // - Sounds  : ensure dirs exist only (do NOT clean user sound bundles)
+        //
         // SSOT: skills/devian/03-ssot/SKILL.md
-        // NOTE: Domain folder is NOT created. Files are merged directly.
-        //       Filename collision will FAIL the build (no silent overwrite).
-        //       Tables/ and Strings/ root are cleaned once per bundleDir to remove legacy domain folders.
-        if (this.bundleDirs && this.bundleDirs.length > 0) {
-            for (const bundleDir of this.bundleDirs) {
-                // ============================================================
-                // Clean Tables/ and Strings/ root once per bundleDir
-                // This removes legacy domain folders (e.g., Tables/Common, Tables/Game)
-                // ============================================================
-                const tablesRoot = path.join(bundleDir, 'Tables');
-                const stringsRoot = path.join(bundleDir, 'Strings');
-                this.ensureCleanDirOnce(tablesRoot, `bundle:${bundleDir}:Tables`);
-                this.ensureCleanDirOnce(stringsRoot, `bundle:${bundleDir}:Strings`);
+        // NOTE:
+        // - Domain folder is NOT created. Files are merged directly.
+        // - Filename collision will FAIL the build (no silent overwrite).
+        // - Clean is performed ONCE per target subdir (ndjson/pb64 roots), not per domain.
+        if (this.tableDirs && this.tableDirs.length > 0) {
+            for (const tableDir of this.tableDirs) {
+                const ndjsonTarget = path.join(tableDir, 'ndjson');
+                const pb64Target = path.join(tableDir, 'pb64');
 
-                // ============================================================
-                // General Tables → {bundleDir}/Tables/ndjson|pb64/
-                // Merge copy from all domains (no overwrite, collision = FAIL)
-                // ============================================================
-                
-                // Copy ndjson files: {bundleDir}/Tables/ndjson/
-                const ndjsonTarget = path.join(bundleDir, 'Tables', 'ndjson');
+                this.ensureCleanDirOnce(ndjsonTarget, `table:${tableDir}:ndjson`);
+                this.ensureCleanDirOnce(pb64Target, `table:${tableDir}:pb64`);
+
                 fs.mkdirSync(ndjsonTarget, { recursive: true });
+                fs.mkdirSync(pb64Target, { recursive: true });
+
                 this.mergeCopyDirNoOverwrite(stagingNdjson, ndjsonTarget);
                 console.log(`    [MergeCopy] ${stagingNdjson} -> ${ndjsonTarget}`);
 
-                // Copy pb64 files: {bundleDir}/Tables/pb64/
-                const pb64Target = path.join(bundleDir, 'Tables', 'pb64');
-                fs.mkdirSync(pb64Target, { recursive: true });
                 this.mergeCopyDirNoOverwrite(stagingPb64, pb64Target);
                 console.log(`    [MergeCopy] ${stagingPb64} -> ${pb64Target}`);
+            }
+        }
 
-                // ============================================================
-                // String Tables → {bundleDir}/Strings/ndjson|pb64/{Language}/
-                // Merge copy from all domains (no overwrite, collision = FAIL)
-                // ============================================================
-                
-                // Copy String Table ndjson files: {bundleDir}/Strings/ndjson/{Language}/
-                // SSOT: skills/devian/33-string-table/SKILL.md
-                const stringNdjsonTarget = path.join(bundleDir, 'Strings', 'ndjson');
-                fs.mkdirSync(stringNdjsonTarget, { recursive: true });
-                this.mergeCopyDirNoOverwrite(stagingStringNdjson, stringNdjsonTarget);
-                console.log(`    [MergeCopy] ${stagingStringNdjson} -> ${stringNdjsonTarget}`);
+        if (this.stringDirs && this.stringDirs.length > 0) {
+            for (const stringDir of this.stringDirs) {
+                const ndjsonTarget = path.join(stringDir, 'ndjson');
+                const pb64Target = path.join(stringDir, 'pb64');
 
-                // Copy String Table pb64 files: {bundleDir}/Strings/pb64/{Language}/
-                const stringPb64Target = path.join(bundleDir, 'Strings', 'pb64');
-                fs.mkdirSync(stringPb64Target, { recursive: true });
-                this.mergeCopyDirNoOverwrite(stagingStringPb64, stringPb64Target);
-                console.log(`    [MergeCopy] ${stagingStringPb64} -> ${stringPb64Target}`);
+                this.ensureCleanDirOnce(ndjsonTarget, `string:${stringDir}:ndjson`);
+                this.ensureCleanDirOnce(pb64Target, `string:${stringDir}:pb64`);
+
+                fs.mkdirSync(ndjsonTarget, { recursive: true });
+                fs.mkdirSync(pb64Target, { recursive: true });
+
+                this.mergeCopyDirNoOverwrite(stagingStringNdjson, ndjsonTarget);
+                console.log(`    [MergeCopy] ${stagingStringNdjson} -> ${ndjsonTarget}`);
+
+                this.mergeCopyDirNoOverwrite(stagingStringPb64, pb64Target);
+                console.log(`    [MergeCopy] ${stagingStringPb64} -> ${pb64Target}`);
+            }
+        }
+
+        if (this.soundDirs && this.soundDirs.length > 0) {
+            for (const soundDir of this.soundDirs) {
+                // IMPORTANT: do not clean soundDir (user-managed bundles).
+                // Only ensure directory exists.
+                if (!fs.existsSync(soundDir)) {
+                    fs.mkdirSync(soundDir, { recursive: true });
+                    console.log(`    [EnsureDir] Created soundDir: ${soundDir}`);
+                } else {
+                    console.log(`    [EnsureDir] soundDir exists: ${soundDir}`);
+                }
             }
         }
 
@@ -3198,7 +3205,7 @@ export * from './features';
      * 
      * SSOT: upm is the single source of truth for all UPM packages.
      * This sync copies all packages from upm to packageDir (Unity Packages).
-     * 
+     *
      * SSOT: skills/devian/03-ssot/SKILL.md
      */
     async syncUpmToPackageDir() {
@@ -3382,29 +3389,64 @@ export * from './features';
             }
         }
 
-        // Resolve dataConfig.bundleDirs (global bundle output targets)
+        // Resolve tableConfig.*Dirs (global data export targets)
         // SSOT: skills/devian/03-ssot/SKILL.md
-        if (this.config.dataConfig) {
-            // FAIL if forbidden tableDirs exists
-            if (this.config.dataConfig.tableDirs !== undefined) {
+        //
+        // Hard Rules:
+        // - dataConfig is forbidden (deprecated layer is not allowed)
+        // - tableConfig must exist
+        // - soundDirs/stringDirs/tableDirs must exist and must be string[]
+        // - arrays can be empty, but keys must exist for visibility/consistency
+        if (this.config.dataConfig !== undefined) {
+            throw new Error(
+                `[FAIL] dataConfig is forbidden.\n` +
+                `  File: input/config.json\n` +
+                `  Fix: Remove "dataConfig" entirely and use "tableConfig".\n` +
+                `  tableConfig keys: soundDirs, stringDirs, tableDirs`
+            );
+        }
+
+        const tableConfig = this.config.tableConfig;
+        if (!tableConfig || typeof tableConfig !== 'object') {
+            throw new Error(
+                `[FAIL] Missing required "tableConfig" section in config.json.\n` +
+                `  Required keys: soundDirs, stringDirs, tableDirs (each is string[]).\n` +
+                `  Example:\n` +
+                `    "tableConfig": {\n` +
+                `      "soundDirs": ["../.../Assets/Bundles/sounds"],\n` +
+                `      "stringDirs": ["../.../Assets/Bundles/Strings"],\n` +
+                `      "tableDirs": ["../.../Assets/Bundles/Tables"]\n` +
+                `    }`
+            );
+        }
+
+        const requireStringArray = (key) => {
+            const v = tableConfig[key];
+            if (!Array.isArray(v)) {
                 throw new Error(
-                    `[FAIL] dataConfig.tableDirs is forbidden. Use dataConfig.bundleDirs instead.\n` +
-                    `  1. Rename "tableDirs" to "bundleDirs" in config.json.\n` +
-                    `  2. Remove "/Tables" suffix from bundleDirs values.\n` +
-                    `     Example: ".../Assets/Bundles/Tables" → ".../Assets/Bundles"\n` +
-                    `  The builder will create Tables/ and Strings/ subdirectories automatically.`
+                    `[FAIL] tableConfig.${key} must exist and must be string[].\n` +
+                    `  File: input/config.json\n` +
+                    `  Fix: Add "${key}": [] (or a list of paths)`
                 );
             }
-            
-            if (Array.isArray(this.config.dataConfig.bundleDirs)) {
-                this.bundleDirs = this.config.dataConfig.bundleDirs.map(dir => this.resolvePath(dir));
-                console.log(`  [OK] dataConfig.bundleDirs: ${this.bundleDirs.length} targets`);
-            } else {
-                this.bundleDirs = [];
+            for (let i = 0; i < v.length; i++) {
+                if (typeof v[i] !== 'string') {
+                    throw new Error(
+                        `[FAIL] tableConfig.${key}[${i}] must be a string.\n` +
+                        `  Was: ${JSON.stringify(v[i])}`
+                    );
+                }
             }
-        } else {
-            this.bundleDirs = [];
-        }
+            return v;
+        };
+
+        this.soundDirs = requireStringArray('soundDirs').map(dir => this.resolvePath(dir));
+        this.stringDirs = requireStringArray('stringDirs').map(dir => this.resolvePath(dir));
+        this.tableDirs  = requireStringArray('tableDirs').map(dir => this.resolvePath(dir));
+
+        console.log(`  [OK] tableConfig.soundDirs: ${this.soundDirs.length} targets`);
+        console.log(`  [OK] tableConfig.stringDirs: ${this.stringDirs.length} targets`);
+        console.log(`  [OK] tableConfig.tableDirs: ${this.tableDirs.length} targets`);
 
         // Path Guards (CRITICAL)
         this.validatePathGuards();
@@ -3522,9 +3564,9 @@ export * from './features';
                 if (domainConfig.dataTargetDirs !== undefined) {
                     errors.push(
                         `domains.${domainKey}.dataTargetDirs is forbidden and no longer supported.\n` +
-                        `  Data output is now configured globally via dataConfig.bundleDirs.\n` +
+                        `  Data export output is now configured globally via tableConfig.soundDirs/stringDirs/tableDirs.\n` +
                         `  Was: { "dataTargetDirs": ${JSON.stringify(domainConfig.dataTargetDirs)}, ... }\n` +
-                        `  Fix: Remove "dataTargetDirs" from domains.${domainKey}. Use dataConfig.bundleDirs instead.`
+                        `  Fix: Remove "dataTargetDirs" from domains.${domainKey}. Use tableConfig instead.`
                     );
                 }
 
@@ -3550,13 +3592,31 @@ export * from './features';
             }
         }
 
-        // Check dataConfig exists and is valid
-        if (!this.config.dataConfig || !Array.isArray(this.config.dataConfig.bundleDirs)) {
+        // tableConfig is required (dataConfig is forbidden)
+        if (this.config.dataConfig !== undefined) {
             errors.push(
-                `dataConfig.bundleDirs is required.\n` +
-                `  Add dataConfig.bundleDirs to config.json.\n` +
-                `  Example: "dataConfig": { "bundleDirs": ["../output", "../framework-cs/apps/UnityExample/Assets/Bundles"] }`
+                `dataConfig is forbidden (deprecated layer not allowed).\n` +
+                `  Fix: Remove "dataConfig" and use "tableConfig" with soundDirs/stringDirs/tableDirs.`
             );
+        }
+
+        const tc = this.config.tableConfig;
+        if (!tc || typeof tc !== 'object') {
+            errors.push(
+                `tableConfig is required.\n` +
+                `  Add tableConfig to config.json.\n` +
+                `  Required keys: soundDirs, stringDirs, tableDirs (each is string[]).`
+            );
+        } else {
+            const keys = ['soundDirs', 'stringDirs', 'tableDirs'];
+            for (const k of keys) {
+                if (!Array.isArray(tc[k])) {
+                    errors.push(
+                        `tableConfig.${k} must exist and must be string[].\n` +
+                        `  Fix: Add "${k}": [] (or list of paths) to tableConfig.`
+                    );
+                }
+            }
         }
 
         if (errors.length > 0) {

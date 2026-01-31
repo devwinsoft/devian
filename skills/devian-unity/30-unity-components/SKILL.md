@@ -28,6 +28,9 @@ Type: Index / Directory
 | 16 | SoundTables | TB_SOUND/TB_VOICE 테이블 규약 (컬럼/책임 분리) | `16-sound-tables/SKILL.md` |
 | 17 | SoundManager | 테이블 기반 사운드 재생/풀/채널/쿨타임 관리 | `17-sound-manager/SKILL.md` |
 | 18 | VoiceTableResolve | Voice 로딩 시 언어별 Resolve 캐시 + 재생 시 캐시 조회 | `18-voice-table-resolve/SKILL.md` |
+| 21 | AssetId | 폴더 스캔 기반 Asset ID 선택 UI (Select + 검색) 공통 패턴 | `21-asset-id/SKILL.md` |
+| 22 | EffectManager | BundlePool 기반 이펙트 스폰/디스폰 + Runner 확장 | `22-effect-manager/SKILL.md` |
+| 23 | DevianSettings | config.json → Assets/Settings JSON → Settings.asset 일관 파이프라인 | `23-devian-settings/SKILL.md` |
 
 ---
 

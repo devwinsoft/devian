@@ -439,6 +439,8 @@ MonoBehaviour:
     Value: 0
   testSheetId:
     Value: 2
+  effectId:
+    Value: TestEffect
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0
