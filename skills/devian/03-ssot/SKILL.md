@@ -691,6 +691,18 @@ SKIP되어도 타겟 디렉토리는 clean되어 이전 산출물이 제거된�
 - **gen:\<EnumName\>:**
   - Reserved가 **아니다** (의미 있는 옵션).
   - `gen:` 옵션이 선언된 컬럼은 **반드시 `pk`여야 한다** (gen 컬럼 = PK 컬럼).
+- **group:true (Hard):**
+  - 테이블당 최대 1개 컬럼만 허용한다.
+  - `group:true` 컬럼은 PK 컬럼일 수 없다.
+  - 배열/클래스 타입에는 `group:true`를 금지한다.
+  - `group:true`가 존재하면 `TB_{Table}`은 group 인덱스를 추가로 관리한다:
+    - 중복 제거된 groupKey 리스트
+    - groupKey -> rows
+    - groupKey -> 대표 PK (min PK, 결정적)
+    - PK -> groupKey
+  - Unity Editor ID 생성은 groupKey가 있으면 기본 표시/선택을 groupKey로 한다.
+    - 선택 적용은 대표 PK(min PK)를 `{Table}_ID.Value`에 저장한다.
+    - Inspector 표시 문자열도 groupKey로 보여준다.
 - `optional:true`는 "nullable/optional column" 힌트로만 사용
 - 그 외 `parser:*` 등은 **Reserved** (있어도 무시 / 의미 부여 금지)
 
@@ -731,6 +743,7 @@ SKIP되어도 타겟 디렉토리는 clean되어 이전 산출물이 제거된�
 - Unity Table ID Inspector(EditorID_SelectorBase 기반)는 `ndjson/` 폴더의 `{TableName}.json`(내용은 NDJSON)을 로드한다.
 - Inspector 생성물은 반드시 `.json` 확장자 필터를 사용해야 한다.
 - `.ndjson` 확장자 필터 사용 시 **정책 위반(FAIL)**.
+- EditorID_SelectorBase UI 규칙(Hard): SelectionGrid 항목 클릭 즉시 Value를 적용하고, Apply 버튼을 두지 않는다(자동 Close).
 
 #### DATA export PK 규칙 (Hard Rule)
 

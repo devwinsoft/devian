@@ -28,6 +28,7 @@ namespace Devian
                     continue;
 
                 TB_TestSheet.LoadFromNdjson(ta.text);
+                break;
             }
 
             foreach (var row in TB_TestSheet.GetAll())
@@ -41,15 +42,9 @@ namespace Devian
     [CustomPropertyDrawer(typeof(TestSheet_ID))]
     public class Game_TestSheet_ID_Drawer : EditorID_DrawerBase<Game_TestSheet_ID_Selector>
     {
-        private Game_TestSheet_ID_Selector _selector;
-
         protected override Game_TestSheet_ID_Selector GetSelector()
         {
-            if (_selector == null)
-            {
-                _selector = ScriptableWizard.DisplayWizard<Game_TestSheet_ID_Selector>("Select TestSheet");
-            }
-            return _selector;
+            return ScriptableWizard.DisplayWizard<Game_TestSheet_ID_Selector>("Select TestSheet");
         }
     }
 }

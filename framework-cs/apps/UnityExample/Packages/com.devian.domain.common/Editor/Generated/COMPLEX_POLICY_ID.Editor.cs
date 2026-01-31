@@ -28,6 +28,7 @@ namespace Devian
                     continue;
 
                 TB_COMPLEX_POLICY.LoadFromNdjson(ta.text);
+                break;
             }
 
             foreach (var row in TB_COMPLEX_POLICY.GetAll())
@@ -41,15 +42,9 @@ namespace Devian
     [CustomPropertyDrawer(typeof(COMPLEX_POLICY_ID))]
     public class Common_COMPLEX_POLICY_ID_Drawer : EditorID_DrawerBase<Common_COMPLEX_POLICY_ID_Selector>
     {
-        private Common_COMPLEX_POLICY_ID_Selector _selector;
-
         protected override Common_COMPLEX_POLICY_ID_Selector GetSelector()
         {
-            if (_selector == null)
-            {
-                _selector = ScriptableWizard.DisplayWizard<Common_COMPLEX_POLICY_ID_Selector>("Select COMPLEX_POLICY");
-            }
-            return _selector;
+            return ScriptableWizard.DisplayWizard<Common_COMPLEX_POLICY_ID_Selector>("Select COMPLEX_POLICY");
         }
     }
 }

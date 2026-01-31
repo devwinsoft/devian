@@ -140,15 +140,13 @@ namespace Devian
             if (newSelection != _selectedIndex)
             {
                 _selectedIndex = newSelection;
-            }
 
-            EditorGUILayout.Space();
-
-            // Apply button
-            if (GUILayout.Button("Apply"))
-            {
+                // Apply immediately when the user clicks an item.
                 ApplySelection();
                 Close();
+
+                // Prevent GUI errors after closing the wizard during OnGUI.
+                GUIUtility.ExitGUI();
             }
         }
 

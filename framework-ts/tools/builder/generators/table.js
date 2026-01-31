@@ -406,6 +406,7 @@ function parseSheet(sheet, sheetName) {
     
     const fields = [];
     let keyField = null;
+    let groupField = null;
 
     // Parse header (4 rows fixed per SSOT)
     // Row 1: FieldName, Row 2: Type, Row 3: Options, Row 4: Comment
@@ -425,6 +426,7 @@ function parseSheet(sheet, sheetName) {
             type: fieldType,
             optional: options.optional === 'true',
             isKey: options.pk === 'true',
+            isGroup: options.group === 'true',
             gen: options.gen || null,
             comment: comment || '',
         };
@@ -436,6 +438,19 @@ function parseSheet(sheet, sheetName) {
                 throw new Error(`Multiple key fields not allowed: ${sheetName}`);
             }
             keyField = field;
+        }
+
+        if (field.isGroup) {
+            if (groupField) {
+                throw new Error(`[group] Table '${sheetName}': only one group column allowed`);
+            }
+            if (field.isKey) {
+                throw new Error(`[group] Table '${sheetName}': group column cannot be pk`);
+            }
+            if (String(field.type).endsWith('[]') || String(field.type).startsWith('class:')) {
+                throw new Error(`[group] Table '${sheetName}': group column must be scalar (no arrays/classes). Field='${field.name}', type='${field.type}'`);
+            }
+            groupField = field;
         }
     }
 
@@ -518,6 +533,7 @@ function parseSheet(sheet, sheetName) {
         sheetName: sheetName,     // Original full sheet name
         fields: fields,
         keyField: keyField,
+        groupField: groupField,
         rows: rows,
     };
 }
@@ -843,6 +859,17 @@ function generateTableContainer(lines, table, tableName, rowClassName, enumSpecs
     lines.push(`        private static readonly List<${rowClassName}> _list = new();`);
     lines.push('');
 
+    // Group storage (optional)
+    if (table.groupField) {
+        const groupType = mapTableTypeToCSharp(table.groupField.type, false);
+
+        lines.push(`        private static readonly Dictionary<${groupType}, List<${rowClassName}>> _groupDict = new();`);
+        lines.push(`        private static readonly List<${groupType}> _groupList = new();`);
+        lines.push(`        private static readonly Dictionary<${groupType}, ${keyType}> _groupPrimaryKey = new();`);
+        lines.push(`        private static readonly Dictionary<${keyType}, ${groupType}> _keyToGroup = new();`);
+        lines.push('');
+    }
+
     // Count property
     lines.push('        public static int Count => _list.Count;');
     lines.push('');
@@ -854,12 +881,41 @@ function generateTableContainer(lines, table, tableName, rowClassName, enumSpecs
         lines.push('            _dict.Clear();');
     }
     lines.push('            _list.Clear();');
+    if (table.groupField) {
+        lines.push('            _groupDict.Clear();');
+        lines.push('            _groupList.Clear();');
+        lines.push('            _groupPrimaryKey.Clear();');
+        lines.push('            _keyToGroup.Clear();');
+    }
     lines.push('        }');
     lines.push('');
 
     // GetAll
     lines.push(`        public static IReadOnlyList<${rowClassName}> GetAll() => _list;`);
     lines.push('');
+
+    // Group API (optional)
+    if (table.groupField) {
+        const groupType = mapTableTypeToCSharp(table.groupField.type, false);
+
+        lines.push(`        public static IReadOnlyList<${groupType}> GetGroupKeys() => _groupList;`);
+        lines.push('');
+        lines.push(`        public static IReadOnlyList<${rowClassName}> GetByGroup(${groupType} groupKey)`);
+        lines.push('        {');
+        lines.push(`            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<${rowClassName}>();`);
+        lines.push('        }');
+        lines.push('');
+        lines.push(`        public static bool TryGetGroupPrimaryKey(${groupType} groupKey, out ${keyType} key)`);
+        lines.push('        {');
+        lines.push('            return _groupPrimaryKey.TryGetValue(groupKey, out key);');
+        lines.push('        }');
+        lines.push('');
+        lines.push(`        public static bool TryGetGroupKeyByKey(${keyType} key, out ${groupType} groupKey)`);
+        lines.push('        {');
+        lines.push('            return _keyToGroup.TryGetValue(key, out groupKey);');
+        lines.push('        }');
+        lines.push('');
+    }
 
     // Get/TryGet (if key exists)
     if (table.keyField) {
@@ -902,6 +958,39 @@ function generateTableContainer(lines, table, tableName, rowClassName, enumSpecs
         }
     }
 
+    // AddRow helper (for group indexing)
+    lines.push(`        private static void AddRow(${rowClassName} row)`);
+    lines.push('        {');
+    lines.push('            _list.Add(row);');
+    if (table.keyField) {
+        lines.push(`            _dict[row.${keyProp}] = row;`);
+    }
+    if (table.groupField) {
+        const groupType = mapTableTypeToCSharp(table.groupField.type, false);
+        const groupProp = capitalize(table.groupField.name);
+
+        lines.push(`            var groupKey = row.${groupProp};`);
+        lines.push(`            _keyToGroup[row.${keyProp}] = groupKey;`);
+        lines.push('            if (!_groupDict.TryGetValue(groupKey, out var groupList))');
+        lines.push('            {');
+        lines.push(`                groupList = new List<${rowClassName}>();`);
+        lines.push('                _groupDict[groupKey] = groupList;');
+        lines.push('                _groupList.Add(groupKey);');
+        lines.push('            }');
+        lines.push('            groupList.Add(row);');
+        lines.push('            if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))');
+        lines.push('            {');
+        lines.push(`                if (Comparer<${keyType}>.Default.Compare(row.${keyProp}, existing) < 0)`);
+        lines.push(`                    _groupPrimaryKey[groupKey] = row.${keyProp};`);
+        lines.push('            }');
+        lines.push('            else');
+        lines.push('            {');
+        lines.push(`                _groupPrimaryKey[groupKey] = row.${keyProp};`);
+        lines.push('            }');
+    }
+    lines.push('        }');
+    lines.push('');
+
     // LoadFromJson
     lines.push('        public static void LoadFromJson(string json)');
     lines.push('        {');
@@ -911,10 +1000,7 @@ function generateTableContainer(lines, table, tableName, rowClassName, enumSpecs
     lines.push('            foreach (var row in rows)');
     lines.push('            {');
     lines.push('                if (row == null) continue;');
-    lines.push('                _list.Add(row);');
-    if (table.keyField) {
-        lines.push(`                _dict[row.${keyProp}] = row;`);
-    }
+    lines.push('                AddRow(row);');
     lines.push('            }');
     lines.push('        }');
     lines.push('');
@@ -930,10 +1016,7 @@ function generateTableContainer(lines, table, tableName, rowClassName, enumSpecs
     lines.push('                if (string.IsNullOrWhiteSpace(line)) continue;');
     lines.push(`                var row = JsonConvert.DeserializeObject<${rowClassName}>(line);`);
     lines.push('                if (row == null) continue;');
-    lines.push('                _list.Add(row);');
-    if (table.keyField) {
-        lines.push(`                _dict[row.${keyProp}] = row;`);
-    }
+    lines.push('                AddRow(row);');
     lines.push('            }');
     lines.push('        }');
     lines.push('');
@@ -947,10 +1030,7 @@ function generateTableContainer(lines, table, tableName, rowClassName, enumSpecs
     lines.push('                if (string.IsNullOrWhiteSpace(jsonRow)) return;');
     lines.push(`                var row = JsonConvert.DeserializeObject<${rowClassName}>(jsonRow);`);
     lines.push('                if (row == null) return;');
-    lines.push('                _list.Add(row);');
-    if (table.keyField) {
-        lines.push(`                _dict[row.${keyProp}] = row;`);
-    }
+    lines.push('                AddRow(row);');
     lines.push('            });');
     lines.push('        }');
     lines.push('');

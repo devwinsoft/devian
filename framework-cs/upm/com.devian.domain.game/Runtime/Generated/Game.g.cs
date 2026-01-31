@@ -87,6 +87,12 @@ namespace Devian.Domain.Game
             return _dict.TryGetValue(key, out row);
         }
 
+        private static void AddRow(TestSheet row)
+        {
+            _list.Add(row);
+            _dict[row.Number] = row;
+        }
+
         public static void LoadFromJson(string json)
         {
             Clear();
@@ -95,8 +101,7 @@ namespace Devian.Domain.Game
             foreach (var row in rows)
             {
                 if (row == null) continue;
-                _list.Add(row);
-                _dict[row.Number] = row;
+                AddRow(row);
             }
         }
 
@@ -110,8 +115,7 @@ namespace Devian.Domain.Game
                 if (string.IsNullOrWhiteSpace(line)) continue;
                 var row = JsonConvert.DeserializeObject<TestSheet>(line);
                 if (row == null) continue;
-                _list.Add(row);
-                _dict[row.Number] = row;
+                AddRow(row);
             }
         }
 
@@ -123,8 +127,7 @@ namespace Devian.Domain.Game
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
                 var row = JsonConvert.DeserializeObject<TestSheet>(jsonRow);
                 if (row == null) return;
-                _list.Add(row);
-                _dict[row.Number] = row;
+                AddRow(row);
             });
         }
 
@@ -155,6 +158,11 @@ namespace Devian.Domain.Game
 
         public static IReadOnlyList<VECTOR3> GetAll() => _list;
 
+        private static void AddRow(VECTOR3 row)
+        {
+            _list.Add(row);
+        }
+
         public static void LoadFromJson(string json)
         {
             Clear();
@@ -163,7 +171,7 @@ namespace Devian.Domain.Game
             foreach (var row in rows)
             {
                 if (row == null) continue;
-                _list.Add(row);
+                AddRow(row);
             }
         }
 
@@ -177,7 +185,7 @@ namespace Devian.Domain.Game
                 if (string.IsNullOrWhiteSpace(line)) continue;
                 var row = JsonConvert.DeserializeObject<VECTOR3>(line);
                 if (row == null) continue;
-                _list.Add(row);
+                AddRow(row);
             }
         }
 
@@ -189,7 +197,7 @@ namespace Devian.Domain.Game
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
                 var row = JsonConvert.DeserializeObject<VECTOR3>(jsonRow);
                 if (row == null) return;
-                _list.Add(row);
+                AddRow(row);
             });
         }
 

@@ -78,6 +78,12 @@ namespace Devian.Domain.Common
             return _dict.TryGetValue(key, out row);
         }
 
+        private static void AddRow(COMPLEX_POLICY row)
+        {
+            _list.Add(row);
+            _dict[row.Key] = row;
+        }
+
         public static void LoadFromJson(string json)
         {
             Clear();
@@ -86,8 +92,7 @@ namespace Devian.Domain.Common
             foreach (var row in rows)
             {
                 if (row == null) continue;
-                _list.Add(row);
-                _dict[row.Key] = row;
+                AddRow(row);
             }
         }
 
@@ -101,8 +106,7 @@ namespace Devian.Domain.Common
                 if (string.IsNullOrWhiteSpace(line)) continue;
                 var row = JsonConvert.DeserializeObject<COMPLEX_POLICY>(line);
                 if (row == null) continue;
-                _list.Add(row);
-                _dict[row.Key] = row;
+                AddRow(row);
             }
         }
 
@@ -114,8 +118,7 @@ namespace Devian.Domain.Common
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
                 var row = JsonConvert.DeserializeObject<COMPLEX_POLICY>(jsonRow);
                 if (row == null) return;
-                _list.Add(row);
-                _dict[row.Key] = row;
+                AddRow(row);
             });
         }
 

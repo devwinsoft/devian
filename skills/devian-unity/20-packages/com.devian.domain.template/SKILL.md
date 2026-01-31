@@ -113,6 +113,9 @@ namespace Devian
 | `EditorID_SelectorBase.cs` | `com.devian.foundation/Editor/TableId/EditorID_SelectorBase.cs` |
 | `EditorRectUtil.cs` | `com.devian.foundation/Editor/TableId/EditorRectUtil.cs` |
 
+- Selector UX(Hard): 항목 클릭 즉시 적용(Apply 버튼 없음). (EditorID_SelectorBase 규약)
+- Group 지원(Hard): 테이블에 `group:true` 컬럼이 있으면 Selector는 groupKey 목록을 표시하고, 선택 시 대표 PK(min PK)를 Value에 저장한다. Inspector 표시도 groupKey로 한다. (EditorID_SelectorBase 규약)
+
 > **상세 API**: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT) 참조
 
 ---

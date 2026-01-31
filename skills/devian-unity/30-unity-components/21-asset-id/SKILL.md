@@ -9,7 +9,7 @@ Type: Component Specification
 Unity Editor에서 특정 폴더의 prefab 목록을 스캔하여,
 Inspector에서 string 기반 ID를 선택할 수 있도록 하는 **AssetId 패턴**을 정의한다.
 
-- TableId 패턴과 동일한 UX (Select 버튼 + 검색 + 그리드 선택)
+- TableId 패턴과 동일한 UX (Select 버튼 + 검색 + 그리드 선택, 클릭 즉시 적용)
 - 폴더 경로는 **DevianSettings(Assets/Settings/DevianSettings.asset)** 에서 공급받는다.
 - deprecated/fallback 레이어는 만들지 않는다.
 
@@ -86,3 +86,4 @@ protected override TSelector GetSelector()
 - Selector 캐싱 금지 (창을 닫았다가 다시 Select 시 창이 안 뜨는 버그 방지)
 - `@`로 시작하는 prefab name은 목록에서 제외한다. (AssetManager 정책과 일치)
 - ID 값은 prefab.name 그대로 저장한다.
+- Apply 버튼 금지: 선택 리스트(SelectionGrid)에서 항목을 클릭하는 즉시 Value가 적용되고, Selector 창은 자동으로 닫혀야 한다.

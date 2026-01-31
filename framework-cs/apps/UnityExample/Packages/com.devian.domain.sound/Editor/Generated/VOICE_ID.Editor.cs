@@ -28,6 +28,7 @@ namespace Devian
                     continue;
 
                 TB_VOICE.LoadFromNdjson(ta.text);
+                break;
             }
 
             foreach (var row in TB_VOICE.GetAll())
@@ -41,15 +42,9 @@ namespace Devian
     [CustomPropertyDrawer(typeof(VOICE_ID))]
     public class Sound_VOICE_ID_Drawer : EditorID_DrawerBase<Sound_VOICE_ID_Selector>
     {
-        private Sound_VOICE_ID_Selector _selector;
-
         protected override Sound_VOICE_ID_Selector GetSelector()
         {
-            if (_selector == null)
-            {
-                _selector = ScriptableWizard.DisplayWizard<Sound_VOICE_ID_Selector>("Select VOICE");
-            }
-            return _selector;
+            return ScriptableWizard.DisplayWizard<Sound_VOICE_ID_Selector>("Select VOICE");
         }
     }
 }

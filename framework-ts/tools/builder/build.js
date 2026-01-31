@@ -2116,31 +2116,67 @@ export * from './features';
         lines.push('                    continue;');
         lines.push('');
         lines.push(`                TB_${tableName}.LoadFromNdjson(ta.text);`);
+        lines.push('                break;');
         lines.push('            }');
         lines.push('');
-        lines.push(`            foreach (var row in TB_${tableName}.GetAll())`);
-        lines.push('            {');
-        lines.push('                AddItem(row.GetKey().ToString());');
-        lines.push('            }');
+
+        // Group-based AddItem or PK-based AddItem
+        if (table.groupField) {
+            lines.push(`            foreach (var groupKey in TB_${tableName}.GetGroupKeys())`);
+            lines.push('            {');
+            lines.push(`                if (TB_${tableName}.TryGetGroupPrimaryKey(groupKey, out var pk))`);
+            lines.push('                {');
+            lines.push('                    // key = PK string (applied to Value), display = groupKey');
+            lines.push('                    AddItem(pk.ToString(), groupKey.ToString());');
+            lines.push('                }');
+            lines.push('            }');
+        } else {
+            lines.push(`            foreach (var row in TB_${tableName}.GetAll())`);
+            lines.push('            {');
+            lines.push('                AddItem(row.GetKey().ToString());');
+            lines.push('            }');
+        }
         lines.push('        }');
         lines.push('    }');
         lines.push('');
 
-        // Drawer class
+        // Drawer class (no caching - SSOT: skills/devian-unity/30-unity-components/21-asset-id/SKILL.md)
         lines.push(`    /// <summary>PropertyDrawer for ${tableName}_ID</summary>`);
         lines.push(`    [CustomPropertyDrawer(typeof(${tableName}_ID))]`);
         lines.push(`    public class ${drawerClassName} : EditorID_DrawerBase<${selectorClassName}>`);
         lines.push('    {');
-        lines.push(`        private ${selectorClassName} _selector;`);
-        lines.push('');
         lines.push(`        protected override ${selectorClassName} GetSelector()`);
         lines.push('        {');
-        lines.push(`            if (_selector == null)`);
-        lines.push('            {');
-        lines.push(`                _selector = ScriptableWizard.DisplayWizard<${selectorClassName}>("Select ${tableName}");`);
-        lines.push('            }');
-        lines.push('            return _selector;');
+        lines.push(`            return ScriptableWizard.DisplayWizard<${selectorClassName}>("Select ${tableName}");`);
         lines.push('        }');
+
+        // Add GetValueDisplayString override for group-based display
+        if (table.groupField) {
+            const groupProp = table.groupField.name.charAt(0).toUpperCase() + table.groupField.name.slice(1);
+            lines.push('');
+            lines.push('        protected override string GetValueDisplayString(SerializedProperty valueProp)');
+            lines.push('        {');
+            lines.push('            // Show groupKey by default if available');
+            lines.push('            if (valueProp.propertyType == SerializedPropertyType.Integer)');
+            lines.push('            {');
+            lines.push('                var pk = valueProp.intValue;');
+            lines.push(`                TB_${tableName}.Clear();`);
+            lines.push(`                var textAssets = AssetManager.FindAssets<TextAsset>("${tableName}");`);
+            lines.push('                foreach (var ta in textAssets)');
+            lines.push('                {');
+            lines.push('                    var assetPath = AssetDatabase.GetAssetPath(ta);');
+            lines.push('                    if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))');
+            lines.push('                        continue;');
+            lines.push(`                    TB_${tableName}.LoadFromNdjson(ta.text);`);
+            lines.push('                    break;');
+            lines.push('                }');
+            lines.push(`                if (TB_${tableName}.TryGetGroupKeyByKey(pk, out var groupKey))`);
+            lines.push('                    return groupKey.ToString();');
+            lines.push('                return pk.ToString();');
+            lines.push('            }');
+            lines.push('            return base.GetValueDisplayString(valueProp);');
+            lines.push('        }');
+        }
         lines.push('    }');
 
         lines.push('}');

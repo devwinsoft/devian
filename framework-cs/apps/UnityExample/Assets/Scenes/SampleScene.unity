@@ -441,6 +441,10 @@ MonoBehaviour:
     Value: 2
   effectId:
     Value: TestEffect
+  soundId:
+    Value: 1
+  voiceId:
+    Value: hello
 --- !u!1 &832575517
 GameObject:
   m_ObjectHideFlags: 0

@@ -68,15 +68,41 @@ namespace Devian.Domain.Sound
         private static readonly Dictionary<int, SOUND> _dict = new();
         private static readonly List<SOUND> _list = new();
 
+        private static readonly Dictionary<string, List<SOUND>> _groupDict = new();
+        private static readonly List<string> _groupList = new();
+        private static readonly Dictionary<string, int> _groupPrimaryKey = new();
+        private static readonly Dictionary<int, string> _keyToGroup = new();
+
         public static int Count => _list.Count;
 
         public static void Clear()
         {
             _dict.Clear();
             _list.Clear();
+            _groupDict.Clear();
+            _groupList.Clear();
+            _groupPrimaryKey.Clear();
+            _keyToGroup.Clear();
         }
 
         public static IReadOnlyList<SOUND> GetAll() => _list;
+
+        public static IReadOnlyList<string> GetGroupKeys() => _groupList;
+
+        public static IReadOnlyList<SOUND> GetByGroup(string groupKey)
+        {
+            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<SOUND>();
+        }
+
+        public static bool TryGetGroupPrimaryKey(string groupKey, out int key)
+        {
+            return _groupPrimaryKey.TryGetValue(groupKey, out key);
+        }
+
+        public static bool TryGetGroupKeyByKey(int key, out string groupKey)
+        {
+            return _keyToGroup.TryGetValue(key, out groupKey);
+        }
 
         public static SOUND? Get(int key)
         {
@@ -88,6 +114,30 @@ namespace Devian.Domain.Sound
             return _dict.TryGetValue(key, out row);
         }
 
+        private static void AddRow(SOUND row)
+        {
+            _list.Add(row);
+            _dict[row.Row_id] = row;
+            var groupKey = row.Sound_id;
+            _keyToGroup[row.Row_id] = groupKey;
+            if (!_groupDict.TryGetValue(groupKey, out var groupList))
+            {
+                groupList = new List<SOUND>();
+                _groupDict[groupKey] = groupList;
+                _groupList.Add(groupKey);
+            }
+            groupList.Add(row);
+            if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
+            {
+                if (Comparer<int>.Default.Compare(row.Row_id, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.Row_id;
+            }
+            else
+            {
+                _groupPrimaryKey[groupKey] = row.Row_id;
+            }
+        }
+
         public static void LoadFromJson(string json)
         {
             Clear();
@@ -96,8 +146,7 @@ namespace Devian.Domain.Sound
             foreach (var row in rows)
             {
                 if (row == null) continue;
-                _list.Add(row);
-                _dict[row.Row_id] = row;
+                AddRow(row);
             }
         }
 
@@ -111,8 +160,7 @@ namespace Devian.Domain.Sound
                 if (string.IsNullOrWhiteSpace(line)) continue;
                 var row = JsonConvert.DeserializeObject<SOUND>(line);
                 if (row == null) continue;
-                _list.Add(row);
-                _dict[row.Row_id] = row;
+                AddRow(row);
             }
         }
 
@@ -124,8 +172,7 @@ namespace Devian.Domain.Sound
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
                 var row = JsonConvert.DeserializeObject<SOUND>(jsonRow);
                 if (row == null) return;
-                _list.Add(row);
-                _dict[row.Row_id] = row;
+                AddRow(row);
             });
         }
 
@@ -168,6 +215,12 @@ namespace Devian.Domain.Sound
             return _dict.TryGetValue(key, out row);
         }
 
+        private static void AddRow(VOICE row)
+        {
+            _list.Add(row);
+            _dict[row.Voice_id] = row;
+        }
+
         public static void LoadFromJson(string json)
         {
             Clear();
@@ -176,8 +229,7 @@ namespace Devian.Domain.Sound
             foreach (var row in rows)
             {
                 if (row == null) continue;
-                _list.Add(row);
-                _dict[row.Voice_id] = row;
+                AddRow(row);
             }
         }
 
@@ -191,8 +243,7 @@ namespace Devian.Domain.Sound
                 if (string.IsNullOrWhiteSpace(line)) continue;
                 var row = JsonConvert.DeserializeObject<VOICE>(line);
                 if (row == null) continue;
-                _list.Add(row);
-                _dict[row.Voice_id] = row;
+                AddRow(row);
             }
         }
 
@@ -204,8 +255,7 @@ namespace Devian.Domain.Sound
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
                 var row = JsonConvert.DeserializeObject<VOICE>(jsonRow);
                 if (row == null) return;
-                _list.Add(row);
-                _dict[row.Voice_id] = row;
+                AddRow(row);
             });
         }
 

@@ -28,11 +28,16 @@ namespace Devian
                     continue;
 
                 TB_SOUND.LoadFromNdjson(ta.text);
+                break;
             }
 
-            foreach (var row in TB_SOUND.GetAll())
+            foreach (var groupKey in TB_SOUND.GetGroupKeys())
             {
-                AddItem(row.GetKey().ToString());
+                if (TB_SOUND.TryGetGroupPrimaryKey(groupKey, out var pk))
+                {
+                    // key = PK string (applied to Value), display = groupKey
+                    AddItem(pk.ToString(), groupKey.ToString());
+                }
             }
         }
     }
@@ -41,15 +46,32 @@ namespace Devian
     [CustomPropertyDrawer(typeof(SOUND_ID))]
     public class Sound_SOUND_ID_Drawer : EditorID_DrawerBase<Sound_SOUND_ID_Selector>
     {
-        private Sound_SOUND_ID_Selector _selector;
-
         protected override Sound_SOUND_ID_Selector GetSelector()
         {
-            if (_selector == null)
+            return ScriptableWizard.DisplayWizard<Sound_SOUND_ID_Selector>("Select SOUND");
+        }
+
+        protected override string GetValueDisplayString(SerializedProperty valueProp)
+        {
+            // Show groupKey by default if available
+            if (valueProp.propertyType == SerializedPropertyType.Integer)
             {
-                _selector = ScriptableWizard.DisplayWizard<Sound_SOUND_ID_Selector>("Select SOUND");
+                var pk = valueProp.intValue;
+                TB_SOUND.Clear();
+                var textAssets = AssetManager.FindAssets<TextAsset>("SOUND");
+                foreach (var ta in textAssets)
+                {
+                    var assetPath = AssetDatabase.GetAssetPath(ta);
+                    if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    TB_SOUND.LoadFromNdjson(ta.text);
+                    break;
+                }
+                if (TB_SOUND.TryGetGroupKeyByKey(pk, out var groupKey))
+                    return groupKey.ToString();
+                return pk.ToString();
             }
-            return _selector;
+            return base.GetValueDisplayString(valueProp);
         }
     }
 }

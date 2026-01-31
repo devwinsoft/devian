@@ -246,6 +246,15 @@ import { IEntity, IEntityKey } from '@devian/core';
 | `LoadFromNdjson(ndjson)` | NDJSON 로드 |
 | `_AfterLoad()` | AfterLoad 훅 (internal, 아래 섹션 참조) |
 
+**Group API (group:true 컬럼 있을 때):**
+
+| 메서드 | 설명 |
+|--------|------|
+| `GetGroupKeys()` | 중복 제거된 groupKey 리스트 |
+| `GetByGroup(groupKey)` | groupKey에 속한 row 리스트 |
+| `TryGetGroupPrimaryKey(groupKey, out key)` | groupKey의 대표 PK(min PK) 반환 |
+| `TryGetGroupKeyByKey(key, out groupKey)` | PK로 groupKey 역조회 |
+
 ### TS Container (export class TB_{SheetName})
 
 | 메서드 | 설명 |
