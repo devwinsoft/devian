@@ -10,7 +10,7 @@ Unity Editor에서 특정 폴더의 prefab 목록을 스캔하여,
 Inspector에서 string 기반 ID를 선택할 수 있도록 하는 **AssetId 패턴**을 정의한다.
 
 - TableId 패턴과 동일한 UX (Select 버튼 + 검색 + 그리드 선택, 클릭 즉시 적용)
-- 폴더 경로는 **DevianSettings(Assets/Settings/DevianSettings.asset)** 에서 공급받는다.
+- 폴더 경로는 **DevianSettings(`Assets/Resources/Devian/DevianSettings.asset`)** 에서 공급받는다.
 - deprecated/fallback 레이어는 만들지 않는다.
 
 ---
@@ -40,7 +40,7 @@ com.devian.foundation/Editor/AssetId/
 
 Settings (단일 정본):
 
-- `Assets/Settings/DevianSettings.asset` (JSON 형태 금지)
+- `Assets/Resources/Devian/DevianSettings.asset` (JSON 형태 금지)
 
 Runtime ID 타입(예: EFFECT_ID):
 

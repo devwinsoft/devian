@@ -58,6 +58,60 @@ namespace Devian
             Play(_defaultSequence, playSpeed, onComplete, startIndex);
         }
 
+        /// <summary>
+        /// default sequence 기준 재생 시간 계산.
+        /// -1 = 무한(Repeat==Loop 포함), 0 = clip 없음/계산불가, >0 = 초
+        /// </summary>
+        public float _GetDefaultPlayTime(float playSpeed = 1f)
+        {
+            return _ComputeSequencePlayTime(_defaultSequence, playSpeed);
+        }
+
+        private static float _ComputeSequencePlayTime(AnimSequenceData sequence, float playSpeed)
+        {
+            // playSpeed==0이면 진행 불가 → 계산 불가(0)
+            if (Mathf.Abs(playSpeed) < Epsilon)
+                return 0f;
+
+            // 시퀀스/스텝/클립이 없으면 "clip이 없다"로 간주 → 0
+            if (sequence == null || !sequence.IsValid() || sequence.Steps == null)
+                return 0f;
+
+            // 무한 체크: Repeat==Loop 스텝이 하나라도 있으면 -1
+            for (int i = 0; i < sequence.Steps.Length; i++)
+            {
+                var step = sequence.Steps[i];
+                if (step == null) continue;
+                if (step.Repeat == AnimPlayCount.Loop)
+                    return -1f;
+            }
+
+            float total = 0f;
+
+            for (int i = 0; i < sequence.Steps.Length; i++)
+            {
+                var step = sequence.Steps[i];
+                if (step == null) continue;
+
+                var clip = step.Clip;
+                if (clip == null)
+                    return 0f; // clip이 없으면 0
+
+                var stepSpeed = Mathf.Abs(step.Speed);
+                if (stepSpeed < Epsilon)
+                    return 0f;
+
+                var repeatCount = (int)step.Repeat;
+                if (repeatCount <= 0) repeatCount = 1;
+
+                // clip 있으면 계산
+                var per = clip.length / (playSpeed * stepSpeed);
+                total += per * repeatCount;
+            }
+
+            return total > 0f ? total : 0f;
+        }
+
         public void Play(AnimSequenceData sequence, float playSpeed = 1f, Action onComplete = null, int startIndex = 0)
         {
             if (_animator == null)

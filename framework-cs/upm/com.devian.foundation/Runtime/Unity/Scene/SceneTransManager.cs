@@ -50,9 +50,13 @@ namespace Devian
 
         /// <summary>
         /// 부팅 시 첫 씬의 OnEnter()를 1회 보장한다 (LoadSceneAsync를 거치지 않는 케이스).
+        /// DevianBootstrap의 부팅 완료를 대기한 후 실행한다.
         /// </summary>
         private IEnumerator Start()
         {
+            // 부팅 완료 대기 (DevianBootstrap.IsBooted == true)
+            yield return DevianBootstrap.WaitUntilBooted();
+
             // 전환 중이면 bootstrap 하지 않음
             if (_isTransitioning)
                 yield break;
@@ -104,6 +108,9 @@ namespace Devian
                 Log.Warn("SceneTransManager.LoadSceneAsync ignored: already transitioning.");
                 yield break;
             }
+
+            // 부팅 완료 대기 (Boot 전에 LoadSceneAsync가 호출되는 레이스 방지)
+            yield return DevianBootstrap.WaitUntilBooted();
 
             _isTransitioning = true;
 

@@ -33,6 +33,8 @@ Type: Index / Directory
 | 23 | DevianSettings | config.json → Assets/Settings JSON → Settings.asset 일관 파이프라인 | `23-devian-settings/SKILL.md` |
 | 24 | PlayerPrefs Wrapper | Primitive/Enum/Json 기반 PlayerPrefs 래퍼 | `24-player-prefs/SKILL.md` |
 | 25 | AnimSequencePlayer | Playables 기반 애니메이션 시퀀스 재생 컴포넌트 | `25-anim-sequence-player/SKILL.md` |
+| 26 | FsmController | FIFO 큐 기반 FSM 컨트롤러 (미등록 throw, self-transition 분리) | `26-fsm-controller/SKILL.md` |
+| 27 | BootstrapResourceObject | Resources 기반 Bootstrap Root + IDevianBootStep 부팅 파이프라인 | `27-bootstrap-resource-object/SKILL.md` |
 
 ---
 

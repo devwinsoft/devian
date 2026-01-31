@@ -5,8 +5,14 @@ namespace Devian
 {
     public sealed class DevianSettings : ScriptableObject
     {
-        // Fixed default path (project asset, not inside package)
-        public const string DefaultAssetPath = "Assets/Settings/DevianSettings.asset";
+        // Resources.Load 경로 (정본 SSOT)
+        public const string ResourcesPath = "Devian/DevianSettings";
+
+        // 프로젝트 에셋 경로 (정본 SSOT)
+        public const string DefaultResourcesAssetPath = "Assets/Resources/Devian/DevianSettings.asset";
+
+        // 마이그레이션용 레거시 경로 (deprecated)
+        public const string LegacyAssetPath = "Assets/Settings/DevianSettings.asset";
 
         // Default PlayerPrefs key prefix (must end with '.')
         public const string DefaultPlayerPrefsPrefix = "devian.game.";

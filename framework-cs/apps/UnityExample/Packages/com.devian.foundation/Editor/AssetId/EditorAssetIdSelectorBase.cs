@@ -8,7 +8,7 @@ namespace Devian
 {
     /// <summary>
     /// Base selector for AssetId (Editor-only).
-    /// SearchDir source: Assets/Settings/DevianSettings.asset
+    /// SearchDir source: Assets/Resources/Devian/DevianSettings.asset
     /// SSOT: skills/devian-unity/30-unity-components/21-asset-id/SKILL.md
     /// </summary>
     public abstract class EditorAssetIdSelectorBase<TComponent> : EditorID_SelectorBase
@@ -63,10 +63,10 @@ namespace Devian
 
         private static string ResolveSearchDirOrFallback(string groupKey)
         {
-            var settings = AssetDatabase.LoadAssetAtPath<DevianSettings>(DevianSettings.DefaultAssetPath);
+            var settings = AssetDatabase.LoadAssetAtPath<DevianSettings>(DevianSettings.DefaultResourcesAssetPath);
             if (settings == null)
             {
-                Debug.LogWarning($"[AssetId] DevianSettings not found at '{DevianSettings.DefaultAssetPath}'. Using fallback searchDir: Assets");
+                Debug.LogWarning($"[AssetId] DevianSettings not found at '{DevianSettings.DefaultResourcesAssetPath}'. Using fallback searchDir: Assets");
                 return "Assets";
             }
 

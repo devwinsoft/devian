@@ -129,8 +129,18 @@ EffectObject 내부에서만 호출하는 public API이므로 메서드명은 `_
 
 ### AnimEffectRunner
 
-- Animator 기반
-- clip 또는 playTime 기반으로 종료 판단 후 Remove
+- `[RequireComponent(typeof(AnimSequencePlayer))]` 로 AnimSequencePlayer 의존성 강제
+- Runner 자체는 AnimSequenceData나 AnimationClip을 보유하지 않음
+- AnimSequencePlayer.PlayDefault()만 호출하여 재생
+- playSpeed 필드: PlayDefault(playSpeed, callback)으로 전달
+- ComputedPlayTime 제공 (초 단위):
+  - AnimSequencePlayer._GetDefaultPlayTime(playSpeed) 호출
+  - 무한이면 -1
+  - clip/sequence가 없으면 0
+  - clip/sequence가 있으면 계산값
+- 자동 제거 정책:
+  - ComputedPlayTime == -1이면 자동 Remove 하지 않음
+  - 그 외에는 시퀀스 완료 콜백으로 Remove
 - Stop은 즉시 Remove
 
 ---

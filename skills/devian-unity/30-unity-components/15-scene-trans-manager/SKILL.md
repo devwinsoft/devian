@@ -75,8 +75,10 @@ public event Func<float, IEnumerator>? FadeInRequested;
 ### 부팅 씬 (첫 씬) 처리
 
 SceneTransManager는 `Start()`에서 Active Scene의 BaseScene을 찾아:
-- 아직 Enter되지 않았다면 `OnEnter()`를 1회 호출한다 (bootstrap).
+- **DevianBootstrap.WaitUntilBooted()를 통해 부팅 완료를 먼저 대기한다.** (SSOT: 27-bootstrap-resource-object)
+- 부팅 완료 후, 아직 Enter되지 않았다면 `OnEnter()`를 1회 호출한다 (bootstrap).
 - 이로써 LoadSceneAsync를 거치지 않는 첫 씬도 `OnEnter()`를 받는다.
+- LoadSceneAsync에서도 부팅 완료를 대기하여 레이스 조건을 방지한다.
 
 ### 중복 호출 방지
 
@@ -253,8 +255,16 @@ public class MainScene : BaseScene
 
 ---
 
+## BootstrapRoot Prefab에 포함
+
+SceneTransManager는 `Devian/Create Bootstrap` 메뉴로 생성되는 BootstrapRoot prefab에 포함된다.
+이로써 부팅과 씬 전환이 일관된 파이프라인으로 동작한다.
+
+---
+
 ## Reference
 
 - Parent: `skills/devian-unity/30-unity-components/SKILL.md`
 - AssetManager: `skills/devian-unity/30-unity-components/10-asset-manager/SKILL.md`
 - Singleton: `skills/devian-unity/30-unity-components/01-singleton/SKILL.md`
+- BootstrapResourceObject: `skills/devian-unity/30-unity-components/27-bootstrap-resource-object/SKILL.md`
