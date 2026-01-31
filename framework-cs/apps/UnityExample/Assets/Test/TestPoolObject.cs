@@ -3,8 +3,11 @@ using Devian;
 
 public class TestPoolObject : MonoBehaviour, IPoolable<TestPoolObject>
 {
+    public AnimSequencePlayer player;
+
     public void OnPoolSpawned()
     {
+        player.PlayDefault();
     }
 
     public void OnPoolDespawned()
