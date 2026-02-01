@@ -4,10 +4,10 @@ using UnityEngine;
 namespace Devian
 {
     /// <summary>
-    /// IRenderDriver 구현체.
+    /// IMaterialEffectDriver 구현체.
     /// Renderer[]를 관리하며 Material/PropertyBlock 조작을 제공한다.
     /// </summary>
-    public sealed class RendererDriver : MonoBehaviour, IRenderDriver
+    public sealed class MaterialEffectDriver : MonoBehaviour, IMaterialEffectDriver
     {
         [Tooltip("Renderers to control. If empty, will auto-collect from children.")]
         [SerializeField] private Renderer[] _renderers;

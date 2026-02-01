@@ -1,18 +1,18 @@
-# RENDER_EFFECT_ID
+# MATERIAL_EFFECT_ID
 
 ## 목적
-RenderEffectAsset을 참조하기 위한 string wrapper ID 타입
+MaterialEffectAsset을 참조하기 위한 string wrapper ID 타입
 
 ## 파일 위치 (SSOT)
-- Runtime: `com.devian.foundation/Runtime/Unity/Render/RENDER_EFFECT_ID.cs`
-- Editor Selector: `com.devian.foundation/Editor/AssetId/Generated/RENDER_EFFECT_ID.Editor.cs`
+- Runtime: `com.devian.foundation/Runtime/Unity/Render/MATERIAL_EFFECT_ID.cs`
+- Editor Selector: `com.devian.foundation/Editor/AssetId/Generated/MATERIAL_EFFECT_ID.Editor.cs`
 
 ## String Wrapper 패턴
 
 COMMON_EFFECT_ID와 동일한 구조:
 ```csharp
 [Serializable]
-public sealed class RENDER_EFFECT_ID
+public sealed class MATERIAL_EFFECT_ID
 {
     public string Value;
     public bool IsValid => !string.IsNullOrEmpty(Value);
@@ -30,11 +30,11 @@ public sealed class RENDER_EFFECT_ID
 - **클릭 즉시 적용 + 창 자동 닫기**
 
 ### SearchDir 공급
-- DevianSettings.asset의 AssetIdEntry에서 `GroupKey="RENDER_EFFECT"`로 조회
+- DevianSettings.asset의 AssetIdEntry에서 `GroupKey="MATERIAL_EFFECT"`로 조회
 - 실패/폴더 없음이면 `"Assets"` fallback
 
 ### 스캔 대상
-- RenderEffectAsset(ScriptableObject) 목록을 SearchDir에서 스캔
+- MaterialEffectAsset(ScriptableObject) 목록을 SearchDir에서 스캔
 - `asset.name`을 ID 값으로 사용
 - `@` prefix 이름 제외
 - case-insensitive 중복 name은 에러 로그 후 스킵
@@ -42,27 +42,27 @@ public sealed class RENDER_EFFECT_ID
 ## DevianSettings 등록
 
 ```
-assetId[RENDER_EFFECT] = "Assets/Bundles/RenderEffects"
+assetId[MATERIAL_EFFECT] = "Assets/Bundles/MaterialEffects"
 ```
 
 ## Editor 구현
 
 ### Selector 클래스
 ```csharp
-public sealed class RenderEffectIdSelector : EditorScriptableAssetIdSelectorBase<RenderEffectAsset>
+public sealed class MaterialEffectIdSelector : EditorScriptableAssetIdSelectorBase<MaterialEffectAsset>
 {
-    protected override string GroupKey => "RENDER_EFFECT";
-    protected override string DisplayTypeName => "RENDER_EFFECT_ID";
+    protected override string GroupKey => "MATERIAL_EFFECT";
+    protected override string DisplayTypeName => "MATERIAL_EFFECT_ID";
 }
 ```
 
 ### Drawer 클래스
 ```csharp
-[CustomPropertyDrawer(typeof(RENDER_EFFECT_ID))]
-public sealed class RENDER_EFFECT_ID_Drawer : EditorID_DrawerBase<RenderEffectIdSelector>
+[CustomPropertyDrawer(typeof(MATERIAL_EFFECT_ID))]
+public sealed class MATERIAL_EFFECT_ID_Drawer : EditorID_DrawerBase<MaterialEffectIdSelector>
 {
     // ShowUtility()로 창 표시
-    // title: "Select RENDER_EFFECT_ID"
+    // title: "Select MATERIAL_EFFECT_ID"
 }
 ```
 

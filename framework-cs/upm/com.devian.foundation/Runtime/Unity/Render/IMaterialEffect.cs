@@ -1,9 +1,9 @@
 namespace Devian
 {
-    public interface IRenderEffect
+    public interface IMaterialEffect
     {
         int Priority { get; }
-        void Apply(IRenderDriver driver);
+        void Apply(IMaterialEffectDriver driver);
 
         // pooling reset hook
         void Reset();

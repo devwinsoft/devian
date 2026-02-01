@@ -3,11 +3,11 @@ using UnityEngine;
 namespace Devian
 {
     /// <summary>
-    /// MaterialPropertyBlock을 사용하여 색상 틴트를 적용하는 RenderEffect.
+    /// MaterialPropertyBlock을 사용하여 색상 틴트를 적용하는 MaterialEffect.
     /// Material 인스턴스를 생성하지 않아 성능에 유리하다.
     /// </summary>
-    [CreateAssetMenu(fileName = "PropertyBlockTintRenderEffect", menuName = "Devian/Render Effects/Property Block Tint")]
-    public sealed class PropertyBlockTintRenderEffectAsset : RenderEffectAsset
+    [CreateAssetMenu(fileName = "PropertyBlockTintMaterialEffect", menuName = "Devian/Material Effects/Property Block Tint")]
+    public sealed class PropertyBlockTintMaterialEffectAsset : MaterialEffectAsset
     {
         [Tooltip("Property name for color tint (e.g. _Color, _BaseColor).")]
         [SerializeField] private string _colorPropertyName = "_Color";
@@ -18,12 +18,12 @@ namespace Devian
         public string ColorPropertyName => _colorPropertyName;
         public Color TintColor => _tintColor;
 
-        protected override IRenderEffect CreateInstanceInternal()
+        protected override IMaterialEffect CreateInstanceInternal()
         {
-            return new PropertyBlockTintRenderEffect(Priority, _colorPropertyName, _tintColor);
+            return new PropertyBlockTintMaterialEffect(Priority, _colorPropertyName, _tintColor);
         }
 
-        private sealed class PropertyBlockTintRenderEffect : IRenderEffect
+        private sealed class PropertyBlockTintMaterialEffect : IMaterialEffect
         {
             private readonly int _priority;
             private readonly string _colorPropertyName;
@@ -33,7 +33,7 @@ namespace Devian
 
             public int Priority => _priority;
 
-            public PropertyBlockTintRenderEffect(int priority, string colorPropertyName, Color tintColor)
+            public PropertyBlockTintMaterialEffect(int priority, string colorPropertyName, Color tintColor)
             {
                 _priority = priority;
                 _colorPropertyName = colorPropertyName;
@@ -42,7 +42,7 @@ namespace Devian
                 _propertyBlock = new MaterialPropertyBlock();
             }
 
-            public void Apply(IRenderDriver driver)
+            public void Apply(IMaterialEffectDriver driver)
             {
                 if (driver == null)
                     return;

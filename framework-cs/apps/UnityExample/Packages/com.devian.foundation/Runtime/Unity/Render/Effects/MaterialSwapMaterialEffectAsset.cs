@@ -3,35 +3,35 @@ using UnityEngine;
 namespace Devian
 {
     /// <summary>
-    /// 모든 Renderer의 Material을 지정된 Material로 교체하는 RenderEffect.
+    /// 모든 Renderer의 Material을 지정된 Material로 교체하는 MaterialEffect.
     /// </summary>
-    [CreateAssetMenu(fileName = "MaterialSwapRenderEffect", menuName = "Devian/Render Effects/Material Swap")]
-    public sealed class MaterialSwapRenderEffectAsset : RenderEffectAsset
+    [CreateAssetMenu(fileName = "MaterialSwapMaterialEffect", menuName = "Devian/Material Effects/Material Swap")]
+    public sealed class MaterialSwapMaterialEffectAsset : MaterialEffectAsset
     {
         [Tooltip("Material to swap to.")]
         [SerializeField] private Material _material;
 
         public Material Material => _material;
 
-        protected override IRenderEffect CreateInstanceInternal()
+        protected override IMaterialEffect CreateInstanceInternal()
         {
-            return new MaterialSwapRenderEffect(Priority, _material);
+            return new MaterialSwapMaterialEffect(Priority, _material);
         }
 
-        private sealed class MaterialSwapRenderEffect : IRenderEffect
+        private sealed class MaterialSwapMaterialEffect : IMaterialEffect
         {
             private readonly int _priority;
             private Material _material;
 
             public int Priority => _priority;
 
-            public MaterialSwapRenderEffect(int priority, Material material)
+            public MaterialSwapMaterialEffect(int priority, Material material)
             {
                 _priority = priority;
                 _material = material;
             }
 
-            public void Apply(IRenderDriver driver)
+            public void Apply(IMaterialEffectDriver driver)
             {
                 if (_material == null || driver == null)
                     return;

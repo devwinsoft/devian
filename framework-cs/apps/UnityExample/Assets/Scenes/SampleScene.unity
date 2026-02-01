@@ -527,7 +527,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1189553334e90d3429cd613de79808a6, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Unity::Devian.RenderController
+  m_EditorClassIdentifier: Devian.Unity::Devian.MaterialEffectController
   _driverComponent: {fileID: 0}
   _defaultEffectAsset: {fileID: 0}
 --- !u!4 &1554012041

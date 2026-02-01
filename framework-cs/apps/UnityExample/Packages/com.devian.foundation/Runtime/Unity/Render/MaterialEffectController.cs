@@ -7,19 +7,19 @@ namespace Devian
     /// Actor에 붙는 렌더 제어 컴포넌트.
     /// SSOT: skills/devian-unity/30-unity-components/28-render-controller/SKILL.md
     /// </summary>
-    public sealed class RenderController : BaseController<GameObject>
+    public sealed class MaterialEffectController : BaseController<GameObject>
     {
-        [Tooltip("Driver component to use. If null, will search for IRenderDriver on this GameObject.")]
+        [Tooltip("Driver component to use. If null, will search for IMaterialEffectDriver on this GameObject.")]
         [SerializeField] private Component _driverComponent;
 
-        [Tooltip("If true, search for IRenderDriver in children when not found on this GameObject.")]
+        [Tooltip("If true, search for IMaterialEffectDriver in children when not found on this GameObject.")]
         [SerializeField] private bool _searchDriverInChildren = false;
 
         [Tooltip("Default effect asset. Applied when no other effects are active.")]
-        [SerializeField] private RenderEffectAsset _defaultEffectAsset;
+        [SerializeField] private MaterialEffectAsset _defaultEffectAsset;
 
-        private IRenderDriver _driver;
-        private IRenderEffect _defaultEffect;
+        private IMaterialEffectDriver _driver;
+        private IMaterialEffect _defaultEffect;
 
         private readonly Dictionary<int, EffectEntry> _effects = new Dictionary<int, EffectEntry>();
         private int _nextHandle = 1;
@@ -29,8 +29,8 @@ namespace Devian
 
         private struct EffectEntry
         {
-            public RenderEffectAsset Asset;
-            public IRenderEffect Instance;
+            public MaterialEffectAsset Asset;
+            public IMaterialEffect Instance;
             public int Priority;
             public long Sequence;
         }
@@ -43,22 +43,22 @@ namespace Devian
             // 1. driver resolve
             if (_driverComponent != null)
             {
-                _driver = _driverComponent as IRenderDriver;
+                _driver = _driverComponent as IMaterialEffectDriver;
             }
 
             if (_driver == null)
             {
-                _driver = GetComponent<IRenderDriver>();
+                _driver = GetComponent<IMaterialEffectDriver>();
             }
 
             if (_driver == null && _searchDriverInChildren)
             {
-                _driver = GetComponentInChildren<IRenderDriver>(true);
+                _driver = GetComponentInChildren<IMaterialEffectDriver>(true);
             }
 
             if (_driver == null || !_driver.IsValid)
             {
-                Debug.LogError($"[RenderController] IRenderDriver not found or invalid on {gameObject.name}");
+                Debug.LogError($"[MaterialEffectController] IMaterialEffectDriver not found or invalid on {gameObject.name}");
                 return;
             }
 
@@ -68,7 +68,7 @@ namespace Devian
             // 3. default effect 준비 및 적용
             if (_defaultEffectAsset == null)
             {
-                Debug.LogError($"[RenderController] defaultEffectAsset is null on {gameObject.name}. Set a default (e.g., NoOpRenderEffectAsset).");
+                Debug.LogError($"[MaterialEffectController] defaultEffectAsset is null on {gameObject.name}. Set a default (e.g., NoOpMaterialEffectAsset).");
             }
             else
             {
@@ -95,24 +95,24 @@ namespace Devian
         /// <summary>
         /// Add effect from asset. Returns handle (> 0) on success, 0 on failure.
         /// </summary>
-        public int _AddEffect(RenderEffectAsset asset)
+        public int _AddEffect(MaterialEffectAsset asset)
         {
             if (asset == null)
             {
-                Debug.LogWarning("[RenderController] _AddEffect: asset is null");
+                Debug.LogWarning("[MaterialEffectController] _AddEffect: asset is null");
                 return 0;
             }
 
             if (_driver == null || !_driver.IsValid)
             {
-                Debug.LogWarning("[RenderController] _AddEffect: driver is invalid");
+                Debug.LogWarning("[MaterialEffectController] _AddEffect: driver is invalid");
                 return 0;
             }
 
             var instance = asset.Rent();
             if (instance == null)
             {
-                Debug.LogError($"[RenderController] _AddEffect: asset.Rent() returned null for {asset.name}");
+                Debug.LogError($"[MaterialEffectController] _AddEffect: asset.Rent() returned null for {asset.name}");
                 return 0;
             }
 
@@ -134,18 +134,18 @@ namespace Devian
         /// <summary>
         /// Add effect by ID. Returns handle (> 0) on success, 0 on failure.
         /// </summary>
-        public int _AddEffect(RENDER_EFFECT_ID id)
+        public int _AddEffect(MATERIAL_EFFECT_ID id)
         {
             if (id == null || !id.IsValid)
             {
-                Debug.LogWarning("[RenderController] _AddEffect: id is null or invalid");
+                Debug.LogWarning("[MaterialEffectController] _AddEffect: id is null or invalid");
                 return 0;
             }
 
-            var asset = AssetManager.GetAsset<RenderEffectAsset>(id.Value);
+            var asset = AssetManager.GetAsset<MaterialEffectAsset>(id.Value);
             if (asset == null)
             {
-                Debug.LogWarning($"[RenderController] _AddEffect: asset not found for id '{id.Value}'");
+                Debug.LogWarning($"[MaterialEffectController] _AddEffect: asset not found for id '{id.Value}'");
                 return 0;
             }
 
@@ -195,7 +195,7 @@ namespace Devian
         /// <summary>
         /// Replace default effect at runtime. Immediately applies if no other effects active.
         /// </summary>
-        public void _SetDefault(RenderEffectAsset asset)
+        public void _SetDefault(MaterialEffectAsset asset)
         {
             // 기존 default 반환
             if (_defaultEffect != null && _defaultEffectAsset != null)
@@ -208,7 +208,7 @@ namespace Devian
 
             if (_defaultEffectAsset == null)
             {
-                Debug.LogError($"[RenderController] _SetDefault called with null on {gameObject.name}.");
+                Debug.LogError($"[MaterialEffectController] _SetDefault called with null on {gameObject.name}.");
                 _ApplySelected();
                 return;
             }
@@ -258,7 +258,7 @@ namespace Devian
 
             // 선택 계산
             int selectedHandle = 0;
-            IRenderEffect selectedEffect = null;
+            IMaterialEffect selectedEffect = null;
             int bestPriority = int.MinValue;
             long bestSequence = -1;
 

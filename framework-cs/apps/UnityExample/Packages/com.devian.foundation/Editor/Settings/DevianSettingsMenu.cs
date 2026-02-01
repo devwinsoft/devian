@@ -134,22 +134,31 @@ namespace Devian
             }
             settings.EnsureAssetId("COMMON_EFFECT", commonEffectDir);
 
-            // RENDER_EFFECT seed (기존 RENDER_EFFECT_GROUP에서 마이그레이션)
-            var renderEffectDir = settings.GetAssetIdSearchDir("RENDER_EFFECT");
-            if (string.Equals(renderEffectDir, "Assets", StringComparison.OrdinalIgnoreCase))
+            // MATERIAL_EFFECT seed (기존 RENDER_EFFECT/RENDER_EFFECT_GROUP에서 마이그레이션)
+            var materialEffectDir = settings.GetAssetIdSearchDir("MATERIAL_EFFECT");
+            if (string.Equals(materialEffectDir, "Assets", StringComparison.OrdinalIgnoreCase))
             {
-                // 기존 RENDER_EFFECT_GROUP 키가 커스텀 경로면 승계
-                var legacyGroupDir = settings.GetAssetIdSearchDir("RENDER_EFFECT_GROUP");
-                if (!string.Equals(legacyGroupDir, "Assets", StringComparison.OrdinalIgnoreCase))
+                // 기존 RENDER_EFFECT 키가 커스텀 경로면 승계
+                var legacyRenderEffectDir = settings.GetAssetIdSearchDir("RENDER_EFFECT");
+                if (!string.Equals(legacyRenderEffectDir, "Assets", StringComparison.OrdinalIgnoreCase))
                 {
-                    renderEffectDir = legacyGroupDir;
+                    materialEffectDir = legacyRenderEffectDir;
                 }
                 else
                 {
-                    renderEffectDir = "Assets/Bundles/RenderEffects";
+                    // 기존 RENDER_EFFECT_GROUP 키가 커스텀 경로면 승계
+                    var legacyGroupDir = settings.GetAssetIdSearchDir("RENDER_EFFECT_GROUP");
+                    if (!string.Equals(legacyGroupDir, "Assets", StringComparison.OrdinalIgnoreCase))
+                    {
+                        materialEffectDir = legacyGroupDir;
+                    }
+                    else
+                    {
+                        materialEffectDir = "Assets/Bundles/MaterialEffects";
+                    }
                 }
             }
-            settings.EnsureAssetId("RENDER_EFFECT", renderEffectDir);
+            settings.EnsureAssetId("MATERIAL_EFFECT", materialEffectDir);
 
             settings.EnsurePlayerPrefsPrefix(DevianSettings.DefaultPlayerPrefsPrefix);
             EditorUtility.SetDirty(settings);

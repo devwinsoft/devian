@@ -4,14 +4,14 @@ using UnityEngine;
 
 namespace Devian
 {
-    public abstract class RenderEffectAsset : ScriptableObject
+    public abstract class MaterialEffectAsset : ScriptableObject
     {
         [SerializeField] private int _priority = 0;
         public int Priority => _priority;
 
-        private readonly Stack<IRenderEffect> _pool = new Stack<IRenderEffect>();
+        private readonly Stack<IMaterialEffect> _pool = new Stack<IMaterialEffect>();
 
-        public IRenderEffect Rent()
+        public IMaterialEffect Rent()
         {
             if (_pool.Count > 0)
             {
@@ -21,12 +21,12 @@ namespace Devian
             var created = CreateInstanceInternal();
             if (created == null)
             {
-                throw new InvalidOperationException($"[RenderEffectAsset] CreateInstanceInternal returned null: {name}");
+                throw new InvalidOperationException($"[MaterialEffectAsset] CreateInstanceInternal returned null: {name}");
             }
             return created;
         }
 
-        public void Return(IRenderEffect effect)
+        public void Return(IMaterialEffect effect)
         {
             if (effect == null) return;
             effect.Reset();
@@ -34,6 +34,6 @@ namespace Devian
         }
 
         // Asset이 구체 인스턴스를 생성한다.
-        protected abstract IRenderEffect CreateInstanceInternal();
+        protected abstract IMaterialEffect CreateInstanceInternal();
     }
 }

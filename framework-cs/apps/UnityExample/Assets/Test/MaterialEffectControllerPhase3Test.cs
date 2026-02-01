@@ -5,29 +5,29 @@ using UnityEngine;
 namespace Devian.Test
 {
     /// <summary>
-    /// RenderController Phase 1~3 회귀 테스트.
+    /// MaterialEffectController Phase 1~3 회귀 테스트.
     /// Boot/Addressables에 의존하지 않고 씬 로컬 참조만 사용한다.
     /// </summary>
-    public sealed class RenderControllerPhase3Test : MonoBehaviour
+    public sealed class MaterialEffectControllerPhase3Test : MonoBehaviour
     {
         [Header("Required References")]
-        [SerializeField] private RenderController _controller;
+        [SerializeField] private MaterialEffectController _controller;
 
         [Header("Effect Assets (Scene Local References)")]
         [Tooltip("Initial default effect (priority 0, NoOp recommended)")]
-        [SerializeField] private RenderEffectAsset _default1;
+        [SerializeField] private MaterialEffectAsset _default1;
 
         [Tooltip("Replacement default effect for _SetDefault test")]
-        [SerializeField] private RenderEffectAsset _default2;
+        [SerializeField] private MaterialEffectAsset _default2;
 
         [Tooltip("Low priority effect (e.g. priority=1)")]
-        [SerializeField] private RenderEffectAsset _effectA;
+        [SerializeField] private MaterialEffectAsset _effectA;
 
         [Tooltip("High priority effect (e.g. priority=10)")]
-        [SerializeField] private RenderEffectAsset _effectB;
+        [SerializeField] private MaterialEffectAsset _effectB;
 
         [Tooltip("Same priority as B (priority=10) for tie-breaker test")]
-        [SerializeField] private RenderEffectAsset _effectC;
+        [SerializeField] private MaterialEffectAsset _effectC;
 
         [Header("Test Settings")]
         [SerializeField] private float _stepDelay = 0.1f;
@@ -42,7 +42,7 @@ namespace Devian.Test
 
         private IEnumerator RunAllTests()
         {
-            Debug.Log("[RenderControllerPhase3Test] Starting tests...");
+            Debug.Log("[MaterialEffectControllerPhase3Test] Starting tests...");
 
             // Wait one frame for Awake to complete
             yield return null;
@@ -63,14 +63,14 @@ namespace Devian.Test
             yield return Test_T3_SetDefaultRuntimeReplacement();
             if (_testFailed) yield break;
 
-            Debug.Log("[RenderControllerPhase3Test] ===== ALL TESTS PASSED =====");
+            Debug.Log("[MaterialEffectControllerPhase3Test] ===== ALL TESTS PASSED =====");
         }
 
         private void Fail(string message)
         {
             _testFailed = true;
             _failureMessage = message;
-            Debug.LogError($"[RenderControllerPhase3Test] TEST FAILED: {message}");
+            Debug.LogError($"[MaterialEffectControllerPhase3Test] TEST FAILED: {message}");
             throw new Exception(message);
         }
 

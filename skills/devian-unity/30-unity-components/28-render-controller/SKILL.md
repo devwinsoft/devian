@@ -1,4 +1,4 @@
-# RenderController
+# MaterialEffectController
 
 ## 목적
 Actor에 붙는 렌더 제어(Shader/Material 효과만) 컴포넌트
@@ -9,7 +9,7 @@ Actor에 붙는 렌더 제어(Shader/Material 효과만) 컴포넌트
 ## 클래스 선언
 
 ```csharp
-RenderController : BaseController<GameObject>
+MaterialEffectController : BaseController<GameObject>
 ```
 
 - **OWNER 타입/바인딩 방식은 현재 단계에서 고정하지 않는다**
@@ -17,7 +17,7 @@ RenderController : BaseController<GameObject>
 
 ## 핵심 구성요소
 
-### IRenderDriver
+### IMaterialEffectDriver
 - Material/Shader 관련 API만 제공
 - **애니메이션 관련 API 금지**
 - 필수 메서드:
@@ -26,24 +26,24 @@ RenderController : BaseController<GameObject>
   - `SetPropertyBlock()` / `ClearPropertyBlock()`
   - `SetVisible()`
 
-### IRenderEffect
+### IMaterialEffect
 - 런타임 인스턴스 인터페이스
 - `Priority`: 우선순위 값
-- `Apply(IRenderDriver driver)`: 효과 적용
+- `Apply(IMaterialEffectDriver driver)`: 효과 적용
 - `Reset()`: 풀링 반환 시 초기화
 
-### RenderEffectAsset (ScriptableObject)
+### MaterialEffectAsset (ScriptableObject)
 - 프로토타입 역할
-- 내부 풀 관리: `Stack<IRenderEffect>`
+- 내부 풀 관리: `Stack<IMaterialEffect>`
 - `Rent()`: 인스턴스 획득. **내부 인스턴스 생성 실패(null) 시 즉시 예외(throw)로 실패 ("적당히 처리" 금지)**
-- `Return(IRenderEffect)`: 인스턴스 반환
+- `Return(IMaterialEffect)`: 인스턴스 반환
 - `CreateInstanceInternal()`: 추상 팩토리
 
-### RenderController
+### MaterialEffectController
 - Actor에 부착
 - `defaultEffectAsset`: 필수 - effect 0개일 때 적용. **런타임 강제: Awake에서 null이면 Error 로그 출력**
-- `driverComponent`: 선택 - 미지정 시 같은 GO에서 IRenderDriver 자동 탐색
-- `searchDriverInChildren`: 선택(기본 false) - true면 같은 GO에서 driver를 못 찾을 때 `GetComponentInChildren<IRenderDriver>(includeInactive: true)`로 한 번 더 탐색
+- `driverComponent`: 선택 - 미지정 시 같은 GO에서 IMaterialEffectDriver 자동 탐색
+- `searchDriverInChildren`: 선택(기본 false) - true면 같은 GO에서 driver를 못 찾을 때 `GetComponentInChildren<IMaterialEffectDriver>(includeInactive: true)`로 한 번 더 탐색
 
 ## 우선순위 규칙 (하드)
 
@@ -70,7 +70,7 @@ selectedEffect.Apply(driver)
 ## Pooling 규칙
 
 - ScriptableObject(Asset)는 프로토타입
-- 런타임 인스턴스(IRenderEffect)를 풀링
+- 런타임 인스턴스(IMaterialEffect)를 풀링
 - add 시: `asset.Rent()`
 - remove 시: `asset.Return(instance)`
 
@@ -78,8 +78,8 @@ selectedEffect.Apply(driver)
 
 ```
 handle(int) → entry:
-  - RenderEffectAsset asset
-  - IRenderEffect instance
+  - MaterialEffectAsset asset
+  - IMaterialEffect instance
   - int priority (instance.Priority)
   - long sequence
 ```
@@ -88,11 +88,11 @@ handle(int) → entry:
 
 | 메서드 | 설명 |
 |--------|------|
-| `int _AddEffect(RenderEffectAsset asset)` | effect 추가, handle 반환 |
+| `int _AddEffect(MaterialEffectAsset asset)` | effect 추가, handle 반환 |
 | `bool _RemoveEffect(int handle)` | effect 제거 |
 | `void _ClearEffects()` | 모든 effect 제거 |
-| `int _AddEffect(RENDER_EFFECT_ID id)` | ID로 effect 추가 |
-| `void _SetDefault(RenderEffectAsset asset)` | 런타임에서 default 교체 후 즉시 적용 |
+| `int _AddEffect(MATERIAL_EFFECT_ID id)` | ID로 effect 추가 |
+| `void _SetDefault(MaterialEffectAsset asset)` | 런타임에서 default 교체 후 즉시 적용 |
 | `int _GetCurrentAppliedHandle()` | 현재 적용 중인 effect handle (0=default, -1=none) |
 | `string _GetCurrentAppliedEffectName()` | 현재 적용 중인 effect 이름 ("default", "none", 또는 asset 이름)  |
 
@@ -107,41 +107,41 @@ handle(int) → entry:
 
 ## 금지 사항
 
-- IRenderDriver에 animation 관련 API 추가 금지
+- IMaterialEffectDriver에 animation 관련 API 추가 금지
 - 런타임 ID resolve에서 AssetDatabase/Resources.Load 직접 호출 금지 (AssetManager 캐시만)
 
 ---
 
-## RenderEffectManager
+## MaterialEffectManager
 
-RenderEffectAsset을 AssetManager 캐시에 적재하는 **CompoSingleton 기반** 매니저.
+MaterialEffectAsset을 AssetManager 캐시에 적재하는 **CompoSingleton 기반** 매니저.
 
 ### 파일 위치
 
-- `com.devian.foundation/Runtime/Unity/Render/RenderEffectManager.cs`
+- `com.devian.foundation/Runtime/Unity/Render/MaterialEffectManager.cs`
 
 ### 선언
 
 ```csharp
-public sealed class RenderEffectManager : CompoSingleton<RenderEffectManager>
+public sealed class MaterialEffectManager : CompoSingleton<MaterialEffectManager>
 ```
 
 ### 인스펙터 필드
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| `_addressablesKey` | `string` | RenderEffectAsset 번들의 Addressables key/label |
+| `_addressablesKey` | `string` | MaterialEffectAsset 번들의 Addressables key/label |
 
 ### 동작
 
-- `Start()`에서 `_addressablesKey`가 설정되어 있으면 `AssetManager.LoadBundleAssets<RenderEffectAsset>(key)` 호출
+- `Start()`에서 `_addressablesKey`가 설정되어 있으면 `AssetManager.LoadBundleAssets<MaterialEffectAsset>(key)` 호출
 - BootstrapRoot.prefab에 포함하여 사용 가능
 - key가 비어있으면 경고 로그 후 스킵
 
 ### 사용 예시
 
 ```csharp
-// BootstrapRoot.prefab에 RenderEffectManager 컴포넌트 추가
-// Inspector에서 _addressablesKey 설정 (예: "render-effects")
-// Start()에서 자동으로 RenderEffectAsset 로딩
+// BootstrapRoot.prefab에 MaterialEffectManager 컴포넌트 추가
+// Inspector에서 _addressablesKey 설정 (예: "material-effects")
+// Start()에서 자동으로 MaterialEffectAsset 로딩
 ```

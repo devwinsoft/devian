@@ -1,7 +1,7 @@
 # BaseController
 
 ## 목적
-컨트롤러 공통 베이스 제공 (RenderController 등에서 공통 패턴 흡수)
+컨트롤러 공통 베이스 제공 (MaterialEffectController 등에서 공통 패턴 흡수)
 
 ## 현재 단계 범위
 - **Owner 바인딩**만 제공

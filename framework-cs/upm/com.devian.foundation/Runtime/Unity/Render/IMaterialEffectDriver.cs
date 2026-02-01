@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Devian
 {
-    public interface IRenderDriver
+    public interface IMaterialEffectDriver
     {
         bool IsValid { get; }
 
