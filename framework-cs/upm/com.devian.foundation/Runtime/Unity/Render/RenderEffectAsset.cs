@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -18,7 +19,10 @@ namespace Devian
             }
 
             var created = CreateInstanceInternal();
-            // created는 null이면 안 됨. null이면 즉시 에러.
+            if (created == null)
+            {
+                throw new InvalidOperationException($"[RenderEffectAsset] CreateInstanceInternal returned null: {name}");
+            }
             return created;
         }
 

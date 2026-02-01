@@ -35,14 +35,15 @@ RenderController : BaseController<GameObject>
 ### RenderEffectAsset (ScriptableObject)
 - 프로토타입 역할
 - 내부 풀 관리: `Stack<IRenderEffect>`
-- `Rent()`: 인스턴스 획득
+- `Rent()`: 인스턴스 획득. **내부 인스턴스 생성 실패(null) 시 즉시 예외(throw)로 실패 ("적당히 처리" 금지)**
 - `Return(IRenderEffect)`: 인스턴스 반환
 - `CreateInstanceInternal()`: 추상 팩토리
 
 ### RenderController
 - Actor에 부착
-- `defaultEffectAsset`: 필수 - effect 0개일 때 적용
+- `defaultEffectAsset`: 필수 - effect 0개일 때 적용. **런타임 강제: Awake에서 null이면 Error 로그 출력**
 - `driverComponent`: 선택 - 미지정 시 같은 GO에서 IRenderDriver 자동 탐색
+- `searchDriverInChildren`: 선택(기본 false) - true면 같은 GO에서 driver를 못 찾을 때 `GetComponentInChildren<IRenderDriver>(includeInactive: true)`로 한 번 더 탐색
 
 ## 우선순위 규칙 (하드)
 
@@ -61,9 +62,10 @@ selectedEffect.Apply(driver)
 ## Awake 순서
 
 1. `Init(gameObject)` 호출 (BaseController 바인딩)
-2. driver resolve (driverComponent 우선, 없으면 자동 탐색)
+2. driver resolve (driverComponent 우선, 없으면 자동 탐색, `searchDriverInChildren` true면 children 탐색)
 3. `driver.CaptureBaseline()`
 4. effect 0개 상태이므로 default 즉시 적용
+5. **default는 Awake에서 즉시 적용되어야 하므로, 내부 `_currentAppliedHandle` 초기값을 0이 아니라 '미적용 상태(-1)'로 둔다**
 
 ## Pooling 규칙
 
@@ -90,6 +92,18 @@ handle(int) → entry:
 | `bool _RemoveEffect(int handle)` | effect 제거 |
 | `void _ClearEffects()` | 모든 effect 제거 |
 | `int _AddEffect(RENDER_EFFECT_ID id)` | ID로 effect 추가 |
+| `void _SetDefault(RenderEffectAsset asset)` | 런타임에서 default 교체 후 즉시 적용 |
+| `int _GetCurrentAppliedHandle()` | 현재 적용 중인 effect handle (0=default, -1=none) |
+| `string _GetCurrentAppliedEffectName()` | 현재 적용 중인 effect 이름 ("default", "none", 또는 asset 이름)  |
+
+### 런타임 default 교체 규칙
+
+- `_SetDefault(asset)` 호출 시:
+  1. 기존 default instance가 있으면 `Return()` 후 제거
+  2. 새 asset으로 교체 및 `Rent()`
+  3. 즉시 `_ApplySelected()` 호출 (효과 스택이 비어있어도 반영)
+- `_SetDefault(null)` 호출 시 Error 로그, 이후 baseline만 유지
+- **default는 반드시 초기화 시 설정**하되, 런타임 교체 API 사용 가능
 
 ## 금지 사항
 

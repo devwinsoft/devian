@@ -12,6 +12,9 @@ namespace Devian
         [Tooltip("Driver component to use. If null, will search for IRenderDriver on this GameObject.")]
         [SerializeField] private Component _driverComponent;
 
+        [Tooltip("If true, search for IRenderDriver in children when not found on this GameObject.")]
+        [SerializeField] private bool _searchDriverInChildren = false;
+
         [Tooltip("Default effect asset. Applied when no other effects are active.")]
         [SerializeField] private RenderEffectAsset _defaultEffectAsset;
 
@@ -22,7 +25,7 @@ namespace Devian
         private int _nextHandle = 1;
         private long _nextSequence = 0;
 
-        private int _currentAppliedHandle = 0; // 0 = default
+        private int _currentAppliedHandle = -1; // -1 = not applied yet, forces first apply
 
         private struct EffectEntry
         {
@@ -48,6 +51,11 @@ namespace Devian
                 _driver = GetComponent<IRenderDriver>();
             }
 
+            if (_driver == null && _searchDriverInChildren)
+            {
+                _driver = GetComponentInChildren<IRenderDriver>(true);
+            }
+
             if (_driver == null || !_driver.IsValid)
             {
                 Debug.LogError($"[RenderController] IRenderDriver not found or invalid on {gameObject.name}");
@@ -58,7 +66,11 @@ namespace Devian
             _driver.CaptureBaseline();
 
             // 3. default effect 준비 및 적용
-            if (_defaultEffectAsset != null)
+            if (_defaultEffectAsset == null)
+            {
+                Debug.LogError($"[RenderController] defaultEffectAsset is null on {gameObject.name}. Set a default (e.g., NoOpRenderEffectAsset).");
+            }
+            else
             {
                 _defaultEffect = _defaultEffectAsset.Rent();
             }
@@ -178,6 +190,61 @@ namespace Devian
 
             _effects.Clear();
             _ApplySelected();
+        }
+
+        /// <summary>
+        /// Replace default effect at runtime. Immediately applies if no other effects active.
+        /// </summary>
+        public void _SetDefault(RenderEffectAsset asset)
+        {
+            // 기존 default 반환
+            if (_defaultEffect != null && _defaultEffectAsset != null)
+            {
+                _defaultEffectAsset.Return(_defaultEffect);
+                _defaultEffect = null;
+            }
+
+            _defaultEffectAsset = asset;
+
+            if (_defaultEffectAsset == null)
+            {
+                Debug.LogError($"[RenderController] _SetDefault called with null on {gameObject.name}.");
+                _ApplySelected();
+                return;
+            }
+
+            _defaultEffect = _defaultEffectAsset.Rent();
+            _ApplySelected();
+        }
+
+        /// <summary>
+        /// Get current applied effect handle. 0 = default, -1 = none (driver invalid or not applied).
+        /// </summary>
+        public int _GetCurrentAppliedHandle()
+        {
+            return _currentAppliedHandle;
+        }
+
+        /// <summary>
+        /// Get current applied effect name for debugging.
+        /// Returns "none" if nothing applied, "default" if default is applied, otherwise asset name.
+        /// </summary>
+        public string _GetCurrentAppliedEffectName()
+        {
+            if (_currentAppliedHandle == -1)
+                return "none";
+
+            if (_currentAppliedHandle == 0)
+            {
+                return _defaultEffectAsset != null ? $"default({_defaultEffectAsset.name})" : "default(null)";
+            }
+
+            if (_effects.TryGetValue(_currentAppliedHandle, out var entry))
+            {
+                return entry.Asset != null ? entry.Asset.name : "unknown";
+            }
+
+            return "none";
         }
 
         /// <summary>
