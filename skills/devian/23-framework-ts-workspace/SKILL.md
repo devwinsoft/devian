@@ -79,7 +79,31 @@ Devian v10의 TypeScript(workspaces) 구성에서 **node_modules 단일 공유**
 
 ---
 
+## tools/ 디렉토리 구조
+
+| 경로 | 역할 | 설명 |
+|------|------|------|
+| `tools/builder/` | 메인 빌더 | build.js + generators |
+| `tools/builder/generators/` | 빌더 전용 생성기 | build.js에서만 import |
+| `tools/scripts/` | 공용 독립 스크립트 | 빌드 외 단독 실행 도구 |
+
+### 공용 스크립트 (tools/scripts/)
+
+| 스크립트 | 용도 | 실행 |
+|----------|------|------|
+| `archive.js` | 프로젝트 아카이브 | `npm run archive` |
+| `sync-meta.js` | Unity .meta 역동기화 | `npm -w builder run sync-meta -- <config>` |
+
+### 배치 규칙 (Hard Rule)
+
+1. **generators/**: build.js 전용 모듈 (단독 실행 불가)
+2. **scripts/**: 독립 실행 가능한 CLI 도구
+
+---
+
 ## See Also
 
 - `skills/devian/03-ssot/SKILL.md` — SSOT 규약
+- `skills/devian/90-project-archive/SKILL.md` — Archive 정책
+- `skills/devian-unity/01-unity-policy/SKILL.md` — Unity .meta 정책
 - `skills/devian-unity/30-unity-components/19-sound-domain/SKILL.md` — Sound 도메인 빌드 계약

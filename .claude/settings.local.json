@@ -31,7 +31,9 @@
       "Bash(npm -w builder run build -- ../input/input_common.json)",
       "Bash(node tools/builder/build.js:*)",
       "Bash(npm run build:*)",
-      "Bash(echo:*)"
+      "Bash(echo:*)",
+      "Bash(node tools/sync-meta.js:*)",
+      "Bash(\"C:/Program Files/nodejs/node.exe\" build.js)"
     ]
   }
 }

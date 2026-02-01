@@ -37,6 +37,26 @@ upm/{pkg} → UnityExample/Packages/{pkg} (패키지 단위 clean+copy)
 - `Packages/{pkg}`가 `upm/{pkg}`와 내용 일치
 - `Packages/` 직접 수정 → 정책 위반, 다음 sync에서 덮어써짐
 
+### 4. .meta 파일 SSOT (Hard Rule)
+
+**UPM 소스(`upm/{pkg}`)에 .meta 파일 포함 필수**
+
+| 항목 | 규칙 |
+|------|------|
+| **정본 위치** | `framework-cs/upm/{pkg}/*.meta` |
+| **Unity 복사본** | `framework-cs/apps/UnityExample/Packages/{pkg}/*.meta` |
+| **수정 금지** | Unity Packages 폴더에서 직접 .meta 수정 금지 |
+| **역방향 동기화** | Packages → UPM 복사 필요시 `npm run sync-meta` 사용 |
+
+**빌드 검증:**
+- `syncUpmToPackageDir()` 실행 후 `checkUpmPackagesSynced()` 자동 호출
+- `assertDirTreeEqual()`: 디렉토리 트리 완전 일치 검증 (파일 + 내용)
+- 불일치 시 빌드 **즉시 FAIL**
+
+**도구:**
+- `npm -w builder run sync-meta -- <config>` - Packages의 .meta를 UPM으로 역복사 (일회성 마이그레이션용)
+- 위치: `framework-ts/tools/scripts/sync-meta.js`
+
 ---
 
 ## 금지 경로 가드 (Hard Rule)

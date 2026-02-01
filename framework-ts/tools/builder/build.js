@@ -318,6 +318,10 @@ class DevianToolBuilder {
         console.log('[Phase 4] Sync UPM packages (upm → packageDir)...');
         await this.syncUpmToPackageDir();
 
+        // 6-1. Verify UPM ↔ Packages sync (SSOT guard)
+        console.log('[Guard] Verifying UPM ↔ Packages sync...');
+        this.checkUpmPackagesSynced();
+
         // Guards: Run after sync (packageDir is now populated)
         await this.verifyUnityCommonTableIdFiles();
         console.log('[Guard] Post-sync: Checking unity.common Editor/Generated...');
@@ -3449,6 +3453,125 @@ export * from './features';
         } else {
             console.log('  [SKIP] No packages to sync');
         }
+    }
+
+    /**
+     * Assert that two directory trees are identical (files + content).
+     * SSOT: skills/devian-unity/01-unity-policy/SKILL.md
+     * @param {string} sourceDir - Source directory (UPM)
+     * @param {string} targetDir - Target directory (Packages)
+     * @param {string[]} ignoreList - List of patterns to ignore (e.g., ['.DS_Store'])
+     * @throws {Error} If directories differ
+     */
+    assertDirTreeEqual(sourceDir, targetDir, ignoreList = []) {
+        const errors = [];
+
+        const shouldIgnore = (name) => {
+            return ignoreList.some(pattern => {
+                if (pattern.includes('*')) {
+                    const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
+                    return regex.test(name);
+                }
+                return name === pattern;
+            });
+        };
+
+        const collectFiles = (dir, relativePath = '') => {
+            const files = new Map();
+            if (!fs.existsSync(dir)) return files;
+
+            const entries = fs.readdirSync(dir, { withFileTypes: true });
+            for (const entry of entries) {
+                if (shouldIgnore(entry.name)) continue;
+
+                const entryRelPath = relativePath ? `${relativePath}/${entry.name}` : entry.name;
+                const entryFullPath = path.join(dir, entry.name);
+
+                if (entry.isDirectory()) {
+                    const subFiles = collectFiles(entryFullPath, entryRelPath);
+                    for (const [k, v] of subFiles) {
+                        files.set(k, v);
+                    }
+                } else if (entry.isFile()) {
+                    files.set(entryRelPath, entryFullPath);
+                }
+            }
+            return files;
+        };
+
+        const sourceFiles = collectFiles(sourceDir);
+        const targetFiles = collectFiles(targetDir);
+
+        // Check for missing files in target
+        for (const [relPath, srcFullPath] of sourceFiles) {
+            if (!targetFiles.has(relPath)) {
+                errors.push(`Missing in target: ${relPath}`);
+            }
+        }
+
+        // Check for extra files in target
+        for (const [relPath, tgtFullPath] of targetFiles) {
+            if (!sourceFiles.has(relPath)) {
+                errors.push(`Extra in target: ${relPath}`);
+            }
+        }
+
+        // Check content differences for common files
+        for (const [relPath, srcFullPath] of sourceFiles) {
+            if (targetFiles.has(relPath)) {
+                const tgtFullPath = targetFiles.get(relPath);
+                const srcContent = fs.readFileSync(srcFullPath);
+                const tgtContent = fs.readFileSync(tgtFullPath);
+                if (!srcContent.equals(tgtContent)) {
+                    errors.push(`Content differs: ${relPath}`);
+                }
+            }
+        }
+
+        if (errors.length > 0) {
+            const errorMsg = `[assertDirTreeEqual] Directories differ:\n  Source: ${sourceDir}\n  Target: ${targetDir}\n  Differences:\n    - ${errors.slice(0, 10).join('\n    - ')}${errors.length > 10 ? `\n    ... and ${errors.length - 10} more` : ''}`;
+            throw new Error(errorMsg);
+        }
+    }
+
+    /**
+     * Verify that UPM source and Packages directories are in sync.
+     * Called after syncUpmToPackageDir() to ensure SSOT compliance.
+     * SSOT: skills/devian-unity/01-unity-policy/SKILL.md
+     */
+    checkUpmPackagesSynced() {
+        if (!this.upmSourceDir || !this.upmPackageDir) {
+            console.log('  [SKIP] upmSourceDir or upmPackageDir not configured');
+            return;
+        }
+
+        const ignoreList = ['.DS_Store', 'Thumbs.db'];
+
+        // Get all package names from UPM source
+        const upmPackages = [];
+        if (fs.existsSync(this.upmSourceDir)) {
+            const entries = fs.readdirSync(this.upmSourceDir, { withFileTypes: true });
+            for (const entry of entries) {
+                if (entry.isDirectory() && !entry.name.startsWith('.')) {
+                    upmPackages.push(entry.name);
+                }
+            }
+        }
+
+        if (upmPackages.length === 0) {
+            console.log('  [SKIP] No UPM packages found');
+            return;
+        }
+
+        console.log(`  [Verify] Checking ${upmPackages.length} packages...`);
+        for (const pkgName of upmPackages) {
+            const sourcePath = path.join(this.upmSourceDir, pkgName);
+            const targetPath = path.join(this.upmPackageDir, pkgName);
+
+            this.assertDirTreeEqual(sourcePath, targetPath, ignoreList);
+            console.log(`    [OK] ${pkgName}`);
+        }
+        console.log('  [Guard] UPM ↔ Packages sync verified.');
     }
 
     /**

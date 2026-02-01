@@ -45,7 +45,7 @@ python skills/devian/90-project-archive/scripts/archive_project.py [options]
 ### Node.js 버전
 
 ```bash
-node framework-ts/tools/archive/archive.js [options]
+node framework-ts/tools/scripts/archive.js [options]
 ```
 
 ### Options
@@ -65,13 +65,13 @@ node framework-ts/tools/archive/archive.js [options]
 python skills/devian/90-project-archive/scripts/archive_project.py
 
 # Node.js - 기본 사용
-node framework-ts/tools/archive/archive.js
+node framework-ts/tools/scripts/archive.js
 
 # 출력 경로 지정
-node framework-ts/tools/archive/archive.js --output /path/to/backup
+node framework-ts/tools/scripts/archive.js --output /path/to/backup
 
 # generated 제외
-node framework-ts/tools/archive/archive.js --exclude-generated
+node framework-ts/tools/scripts/archive.js --exclude-generated
 ```
 
 ---
@@ -89,7 +89,7 @@ node framework-ts/tools/archive/archive.js --exclude-generated
 | 버전 | 위치 | 의존성 |
 |------|------|--------|
 | Python | `skills/devian/90-project-archive/scripts/archive_project.py` | 없음 (표준 라이브러리) |
-| Node.js | `framework-ts/tools/archive/archive.js` | 없음 (시스템 zip 또는 PowerShell) |
+| Node.js | `framework-ts/tools/scripts/archive.js` | 없음 (시스템 zip 또는 PowerShell) |
 
 ---
 
