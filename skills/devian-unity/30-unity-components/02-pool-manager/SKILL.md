@@ -17,7 +17,7 @@ PoolManager는 **AutoSingleton 기반 Registry**이며, 사용자는 **IPoolFact
 
 - `IPoolable<T>` 인터페이스
 - `IPoolFactory` 인터페이스
-- `PoolManager` AutoSingleton 클래스 (Registry 역할)
+- `PoolManager` CompoSingleton 클래스 (Registry 역할)
 - `Pool<T>` 제네릭 풀 및 비제네릭 `IPool` 인터페이스
 - `PoolTag` MonoBehaviour (인스턴스→풀 결정적 매핑)
 - `PoolFactoryExtensions` 확장 메서드 (factory.Spawn/Despawn)
@@ -402,6 +402,6 @@ com.devian.foundation/Runtime/Unity/
 ## Reference
 
 - Parent: `skills/devian-unity/30-unity-components/SKILL.md`
-- Related: `01-singleton-template/SKILL.md` (AutoSingleton 베이스)
+- Related: `31-singleton/SKILL.md` (Singleton v3)
 - Related: `00-unity-object-destruction/SKILL.md` (Destroy 규약)
 - Related: `04-pool-factories/SKILL.md` (IPoolFactory 구현체)

@@ -95,3 +95,39 @@ handle(int) → entry:
 
 - IRenderDriver에 animation 관련 API 추가 금지
 - 런타임 ID resolve에서 AssetDatabase/Resources.Load 직접 호출 금지 (AssetManager 캐시만)
+
+---
+
+## RenderEffectManager
+
+RenderEffectAsset을 AssetManager 캐시에 적재하는 **CompoSingleton 기반** 매니저.
+
+### 파일 위치
+
+- `com.devian.foundation/Runtime/Unity/Render/RenderEffectManager.cs`
+
+### 선언
+
+```csharp
+public sealed class RenderEffectManager : CompoSingleton<RenderEffectManager>
+```
+
+### 인스펙터 필드
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `_addressablesKey` | `string` | RenderEffectAsset 번들의 Addressables key/label |
+
+### 동작
+
+- `Start()`에서 `_addressablesKey`가 설정되어 있으면 `AssetManager.LoadBundleAssets<RenderEffectAsset>(key)` 호출
+- BootstrapRoot.prefab에 포함하여 사용 가능
+- key가 비어있으면 경고 로그 후 스킵
+
+### 사용 예시
+
+```csharp
+// BootstrapRoot.prefab에 RenderEffectManager 컴포넌트 추가
+// Inspector에서 _addressablesKey 설정 (예: "render-effects")
+// Start()에서 자동으로 RenderEffectAsset 로딩
+```

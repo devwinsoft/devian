@@ -1,6 +1,6 @@
 // SSOT: skills/devian-unity/30-unity-components/12-download-manager/SKILL.md
 // Devian Unity Download Manager - Addressables Label based Patch/Download
-// ResSingleton: requires Load(resourcePath) before Instance access
+// CompoSingleton: Bootstrap에서 생성/등록되거나 씬에 배치해야 함
 
 #nullable enable
 
@@ -23,25 +23,26 @@ namespace Devian
         /// Total download size in bytes across all labels.
         /// </summary>
         public long TotalSize { get; }
-        
+
         /// <summary>
         /// Download size per label in bytes.
         /// </summary>
         public IReadOnlyDictionary<string, long> LabelSizes { get; }
-        
+
         public PatchInfo(long totalSize, Dictionary<string, long> labelSizes)
         {
             TotalSize = totalSize;
             LabelSizes = labelSizes;
         }
     }
-    
+
     /// <summary>
     /// Addressables Label-based Patch/Download manager.
-    /// ResSingleton: requires Load("Devian/DownloadManager") before Instance access.
     /// Inspector에서 patchLabels를 설정하고, PatchProc/DownloadProc로 다운로드 수행.
+    ///
+    /// CompoSingleton-based: Bootstrap에서 생성/등록되거나 씬에 배치해야 함.
     /// </summary>
-    public sealed class DownloadManager : ResSingleton<DownloadManager>
+    public sealed class DownloadManager : CompoSingleton<DownloadManager>
     {
         // ====================================================================
         // Inspector Fields

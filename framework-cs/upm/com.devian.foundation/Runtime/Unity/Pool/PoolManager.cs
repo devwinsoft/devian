@@ -19,6 +19,8 @@ namespace Devian
     ///
     /// Usage: Use IPoolFactory extension methods (factory.Spawn/Despawn),
     /// not PoolManager directly for spawning.
+    ///
+    /// v3: AutoSingleton 기본. 없으면 자동 생성. 씬에 배치하면 CompoSingleton이 우선.
     /// </summary>
     public sealed class PoolManager : AutoSingleton<PoolManager>
     {

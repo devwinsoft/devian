@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: DevianSettings
   m_EditorClassIdentifier: Devian.Unity::Devian.DevianSettings
   _assetId:
-  - GroupKey: EFFECT
-    SearchDir: Assets/Bundles/Effects
+  - GroupKey: COMMON_EFFECT
+    SearchDir: Assets/Bundles/CommonEffects
   - GroupKey: RENDER_EFFECT
-    SearchDir: Assets/Bundles/Effects
+    SearchDir: Assets/Bundles/RenderEffects
   _playerPrefsPrefix: devian.game.

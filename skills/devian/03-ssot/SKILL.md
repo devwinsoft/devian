@@ -63,10 +63,12 @@ Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 
 - `{ProtocolGroup}`
 - `{ProtocolName}`
 - `{csConfig.generateDir}`, `{tsConfig.generateDir}` — 전역 C#/TS 반영 루트
-- `{dataConfig.bundleDirs}` — 전역 번들 출력 타겟 (배열)
+- `{tableConfig.tableDirs}` — 테이블 출력 타겟 (배열)
+- `{tableConfig.stringDirs}` — String 테이블 출력 타겟 (배열)
+- `{tableConfig.soundDirs}` — Sound 데이터 출력 타겟 (배열)
 - `{upmTargetDir}` — (금지) upmConfig로 계산됨
 
-> `{dataConfig.bundleDirs}`는 배열이다. 문서에서 배열 내 개별 요소를 지칭할 때 `{bundleDir}`로 표기할 수 있다.
+> 각 Dir 배열에서 개별 요소를 지칭할 때 `{tableDir}`, `{stringDir}`, `{soundDir}`로 표기할 수 있다.
 
 > `{tempDir}`는 절대 경로가 아닌 경우 **input_common.json이 있는 디렉토리** 기준으로 해석한다.
 
@@ -88,6 +90,7 @@ Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 
 - config.json에 `staticUpmPackages` 존재 → FAIL (forbidden, `samplePackages` 사용)
 - input.json에 `csConfig`, `tsConfig`, `tableConfig`, `upmConfig`, `samplePackages` 존재 → FAIL
 - config.json에 `dataConfig` 존재 → FAIL (deprecated, `tableConfig` 사용)
+- config.json에 `dataConfig.bundleDirs` 존재 → FAIL (deprecated, `tableConfig.*Dirs` 사용)
 
 **Deprecated 금지 (Hard FAIL):**
 - framework/upm 내에서 deprecated/fallback 레이어를 추가하거나 유지하는 것을 금지한다.
@@ -162,7 +165,7 @@ finalConfig = deepMerge(config.json, input.json)
 
 `com.devian.foundation`의 아래 폴더는 수기 코드로 유지하며, 생성기가 절대 clean/generate하지 않는다:
 - `Runtime/Unity/_Shared/` — UnityMainThread, UnityMainThreadDispatcher
-- `Runtime/Unity/Singleton/` — MonoSingleton, AutoSingleton, ResSingleton, SimpleSingleton
+- `Runtime/Unity/Singletons/` — Singleton, SingletonRegistry, CompoSingleton, BootSingleton (v2)
 - `Runtime/Unity/Pool/` — IPoolable, IPoolFactory, PoolManager, Pool
 - `Runtime/Unity/PoolFactories/` — InspectorPoolFactory, BundlePoolFactory
 - `Runtime/Unity/AssetManager/` — AssetManager, DownloadManager (bootstrap/download utilities)
@@ -260,27 +263,28 @@ TS 산출물의 반영 위치를 관리하는 설정:
 - Domain: `tsConfig.generateDir` (없으면 `tsConfig.moduleDir`)로 반영 (domains[*].tsTargetDir는 금지)
 - Protocol: `tsConfig.generateDir` (없으면 `tsConfig.moduleDir`)로 반영 (protocols[*].tsTargetDir는 금지)
 
-### dataConfig 설정
+### tableConfig 설정
 
-DATA 도메인의 번들 출력 타겟은 전역 `dataConfig`로 설정한다.
+DATA 도메인의 데이터 출력 타겟은 전역 `tableConfig`로 설정한다.
 
 ```json
-"dataConfig": {
-  "bundleDirs": [
-    "../output",
-    "../framework-cs/apps/UnityExample/Assets/Bundles"
-  ]
+"tableConfig": {
+  "tableDirs": ["../framework-cs/apps/UnityExample/Assets/Bundles/Tables"],
+  "stringDirs": ["../framework-cs/apps/UnityExample/Assets/Bundles/Strings"],
+  "soundDirs": ["../framework-cs/apps/UnityExample/Assets/Bundles/Sounds"]
 }
 ```
 
 | 필드 | 역할 | 예시 |
 |------|------|------|
-| `bundleDirs` | 번들 출력 루트 디렉토리 목록 | `["../output", "..."]` |
+| `tableDirs` | 테이블 출력 디렉토리 목록 | `["...Assets/Bundles/Tables"]` |
+| `stringDirs` | String 테이블 출력 디렉토리 목록 | `["...Assets/Bundles/Strings"]` |
+| `soundDirs` | Sound 데이터 출력 디렉토리 목록 | `["...Assets/Bundles/Sounds"]` |
 
 **필수 규칙:**
-- `dataConfig.bundleDirs`는 필수 (빈 배열 허용)
-- 빌더가 각 bundleDir에 대해 `Tables/` 및 `Strings/` 하위 디렉토리를 생성
-- `dataConfig.tableDirs`는 금지 (존재 시 빌드 FAIL)
+- `tableConfig`의 각 Dir 배열은 필수 (빈 배열 허용)
+- 빌더가 각 Dir에 대해 `ndjson/` 및 `pb64/` 하위 디렉토리를 생성
+- `dataConfig`는 금지 (deprecated, 존재 시 빌드 FAIL)
 - `domains[*].dataTargetDirs`는 금지 (존재 시 빌드 실패)
 
 ### 디렉토리 역할 정의 (SSOT)
@@ -717,13 +721,13 @@ SKIP되어도 타겟 디렉토리는 clean되어 이전 산출물이 제거된�
   - `{tempDir}/{DomainKey}/data/pb64/{TableName}.asset` (pk 옵션 있는 테이블만, 내용은 pb64 YAML)
   - `{tempDir}/{DomainKey}/data/string/ndjson/{Language}/{TableName}.json` (String Table)
   - `{tempDir}/{DomainKey}/data/string/pb64/{Language}/{TableName}.asset` (String Table)
-- final (csConfig/tsConfig/dataConfig 기반):
+- final (csConfig/tsConfig/tableConfig 기반):
   - `{csConfig.generateDir}/` + `Devian` + `.Module.{DomainKey}` + `/Generated/{DomainKey}.g.cs`
   - `{tsConfig.generateDir}/devian-domain-{domainkey}/Generated/{DomainKey}.g.ts`, `index.ts`
-  - `{bundleDir}/Tables/ndjson/{TableName}.json` (내용은 NDJSON)
-  - `{bundleDir}/Tables/pb64/{TableName}.asset` (pk 옵션 있는 테이블만)
-  - `{bundleDir}/Strings/ndjson/{Language}/{TableName}.json` (String Table)
-  - `{bundleDir}/Strings/pb64/{Language}/{TableName}.asset` (String Table)
+  - `{tableDir}/ndjson/{TableName}.json` (내용은 NDJSON)
+  - `{tableDir}/pb64/{TableName}.asset` (pk 옵션 있는 테이블만)
+  - `{stringDir}/ndjson/{Language}/{TableName}.json` (String Table)
+  - `{stringDir}/pb64/{Language}/{TableName}.asset` (String Table)
 
 **도메인 폴더 미사용 (Hard Rule):**
 - 최종 경로에 `{DomainKey}` 폴더를 생성하지 않는다.
@@ -733,8 +737,8 @@ SKIP되어도 타겟 디렉토리는 clean되어 이전 산출물이 제거된�
 **금지 필드 (Hard Fail):**
 - `domains[*].csTargetDir` — 금지, `csConfig.generateDir` 사용, 존재 시 빌드 실패
 - `domains[*].tsTargetDir` — 금지, `tsConfig.generateDir` 사용, 존재 시 빌드 실패
-- `domains[*].dataTargetDirs` — 금지, `dataConfig.bundleDirs` 사용, 존재 시 빌드 실패
-- `dataConfig.tableDirs` — 금지, `dataConfig.bundleDirs` 사용, 존재 시 빌드 FAIL
+- `domains[*].dataTargetDirs` — 금지, `tableConfig.*Dirs` 사용, 존재 시 빌드 실패
+- `dataConfig` — 금지 (deprecated), `tableConfig` 사용, 존재 시 빌드 FAIL
 
 > Domain의 모든 Contract, Table Entity, Table Container는 단일 파일(`{DomainKey}.g.cs`, `{DomainKey}.g.ts`)에 통합 생성된다.
 > **파일 확장자는 `.json`이지만, `ndjson/` 폴더의 파일 내용은 NDJSON(라인 단위 JSON)이다.** 확장자는 소비 측(Unity/툴링) 요구로 `.json`을 사용한다.

@@ -126,14 +126,16 @@ node framework-ts/tools/builder/build.js <buildJson>
 | `sourceDir` | ✓ | UPM 소스 디렉토리 |
 | `packageDir` | ✓ | UPM 패키지 출력 디렉토리 |
 
-### dataConfig (데이터 출력)
+### tableConfig (데이터 출력)
 
 | 필드 | 필수 | 설명 |
 |------|------|------|
-| `bundleDirs` | **✓ 필수** | 번들 출력 루트 디렉토리 배열 |
+| `tableDirs` | ✓ | 테이블 출력 디렉토리 배열 |
+| `stringDirs` | ✓ | String 테이블 출력 디렉토리 배열 |
+| `soundDirs` | ✓ | 사운드 데이터 출력 디렉토리 배열 |
 
-> **CRITICAL:** `dataConfig.bundleDirs`가 누락되면 빌드가 **즉시 FAIL**한다.
-> `dataConfig.tableDirs`는 금지 필드이며 존재 시 빌드 **즉시 FAIL**한다.
+> **CRITICAL:** config.json에 `dataConfig` 키가 존재하면 빌드가 **즉시 FAIL**한다 (deprecated).
+> tableConfig의 각 Dir 배열에 대해 해당 데이터 유형이 출력된다.
 
 ### samplePackages
 
@@ -185,19 +187,25 @@ UPM: {upmConfig.sourceDir}/com.devian.protocol.{protocolGroupLower}/
 
 ### 데이터 산출물
 
-**일반 테이블:**
+**일반 테이블 (tableConfig.tableDirs):**
 ```
-{bundleDir}/Tables/ndjson/{TableName}.json
-{bundleDir}/Tables/pb64/{TableName}.asset
-```
-
-**String Table:**
-```
-{bundleDir}/Strings/ndjson/{Language}/{TableName}.json
-{bundleDir}/Strings/pb64/{Language}/{TableName}.asset
+{tableDir}/ndjson/{TableName}.json
+{tableDir}/pb64/{TableName}.asset
 ```
 
-- 복수 타겟 가능 (`bundleDirs`가 배열, 각 `{bundleDir}`에 복사)
+**String Table (tableConfig.stringDirs):**
+```
+{stringDir}/ndjson/{Language}/{TableName}.json
+{stringDir}/pb64/{Language}/{TableName}.asset
+```
+
+**Sound 데이터 (tableConfig.soundDirs):**
+```
+{soundDir}/ndjson/{TableName}.json
+{soundDir}/pb64/{TableName}.asset
+```
+
+- 복수 타겟 가능 (각 Dir 배열의 모든 경로에 복사)
 - **도메인 폴더 미사용**: 최종 경로에 `{DomainKey}` 폴더 없음
 - **동일 파일명 충돌 시 빌드 FAIL** (조용한 덮어쓰기 금지)
 
@@ -214,7 +222,9 @@ UPM: {upmConfig.sourceDir}/com.devian.protocol.{protocolGroupLower}/
 
 | 조건 | 결과 |
 |------|------|
-| `dataConfig.bundleDirs` 누락 | **즉시 FAIL** |
+| `tableConfig.tableDirs` 누락 | **즉시 FAIL** |
+| `tableConfig.stringDirs` 누락 | **즉시 FAIL** |
+| `tableConfig.soundDirs` 누락 | **즉시 FAIL** |
 
 ### Forbidden 필드 FAIL
 
@@ -222,7 +232,7 @@ UPM: {upmConfig.sourceDir}/com.devian.protocol.{protocolGroupLower}/
 
 | 위치 | Forbidden 필드 |
 |------|-----------------|
-| `dataConfig` | `tableDirs` |
+| `config.json` | `dataConfig` (deprecated) |
 | `domains[*]` | `csTargetDir` |
 | `domains[*]` | `tsTargetDir` |
 | `domains[*]` | `dataTargetDirs` |

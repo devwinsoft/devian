@@ -42,11 +42,11 @@ Settings (단일 정본):
 
 - `Assets/Resources/Devian/DevianSettings.asset` (JSON 형태 금지)
 
-Runtime ID 타입(예: EFFECT_ID):
+Runtime ID 타입(예: COMMON_EFFECT_ID):
 
 ```
 com.devian.foundation/Runtime/Unity/Effects/
-└── EFFECT_ID.cs
+└── COMMON_EFFECT_ID.cs
 ```
 
 ---

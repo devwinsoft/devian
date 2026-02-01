@@ -19,7 +19,7 @@ AppliesTo: v10
 public sealed class TableManager : AutoSingleton<TableManager>
 ```
 
-AutoSingleton 기반으로 첫 `Instance` 접근 시 자동 생성된다.
+AutoSingleton 기반: 없으면 자동 생성. 씬에 CompoSingleton으로 배치하면 우선.
 
 ### 책임
 

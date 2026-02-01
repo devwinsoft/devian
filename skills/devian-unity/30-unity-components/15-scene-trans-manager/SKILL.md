@@ -33,7 +33,8 @@ Scene 전환 파이프라인을 단일화(직렬화)하고, 씬별 초기화/정
 
 ### SceneTransManager
 
-**AutoSingleton 기반 전역 흐름 제어자**로, Scene 전환을 직렬화(동시 전환 방지)한다.
+**CompoSingleton 기반 전역 흐름 제어자**로, Scene 전환을 직렬화(동시 전환 방지)한다.
+BootstrapRoot prefab에 포함되어 부팅 시 자동 등록된다.
 
 **책임:**
 - 전환 흐름 직렬화 (동시 전환 방지)
@@ -51,7 +52,7 @@ Scene 전환 파이프라인을 단일화(직렬화)하고, 씬별 초기화/정
 7. FadeInRequested 이벤트 발생 (fadeInSeconds > 0인 경우)
 
 **특징:**
-- `AutoSingleton<SceneTransManager>` 상속 (자동 생성, DontDestroyOnLoad)
+- `CompoSingleton<SceneTransManager>` 상속 (BootstrapRoot prefab에 포함)
 - `_isTransitioning` 플래그로 중복 전환 방지
 - Delegate 기반 Hook (beforeUnload, afterLoad)
 - 페이드는 이벤트로 위임 (FadeOutRequested, FadeInRequested)
@@ -75,10 +76,8 @@ public event Func<float, IEnumerator>? FadeInRequested;
 ### 부팅 씬 (첫 씬) 처리
 
 SceneTransManager는 `Start()`에서 Active Scene의 BaseScene을 찾아:
-- **DevianBootstrap.WaitUntilBooted()를 통해 부팅 완료를 먼저 대기한다.** (SSOT: 27-bootstrap-resource-object)
-- 부팅 완료 후, 아직 Enter되지 않았다면 `OnEnter()`를 1회 호출한다 (bootstrap).
+- 아직 Enter되지 않았다면 `OnEnter()`를 1회 호출한다.
 - 이로써 LoadSceneAsync를 거치지 않는 첫 씬도 `OnEnter()`를 받는다.
-- LoadSceneAsync에서도 부팅 완료를 대기하여 레이스 조건을 방지한다.
 
 ### 중복 호출 방지
 
@@ -183,7 +182,7 @@ void OnEnable()
 
 void OnDisable()
 {
-    if (SceneTransManager.HasInstance)
+    if (Singleton.TryGet<SceneTransManager>(out var stm))
     {
         SceneTransManager.Instance.FadeOutRequested -= OnFadeOut;
         SceneTransManager.Instance.FadeInRequested -= OnFadeIn;
@@ -266,5 +265,5 @@ SceneTransManager는 `Devian/Create Bootstrap` 메뉴로 생성되는 BootstrapR
 
 - Parent: `skills/devian-unity/30-unity-components/SKILL.md`
 - AssetManager: `skills/devian-unity/30-unity-components/10-asset-manager/SKILL.md`
-- Singleton: `skills/devian-unity/30-unity-components/01-singleton/SKILL.md`
+- Singleton: `skills/devian-unity/30-unity-components/31-singleton/SKILL.md`
 - BootstrapResourceObject: `skills/devian-unity/30-unity-components/27-bootstrap-resource-object/SKILL.md`

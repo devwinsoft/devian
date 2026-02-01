@@ -59,7 +59,6 @@ AppliesTo: v10
 - **초기화 전 EnsureOrThrow 호출 (Hard Rule):**
   - 과거: 초기화 전에 `EnsureOrThrow`가 호출되면 false negative 발생 (메인 스레드인데도 throw)
   - 현재: `EnsureOrThrow` 내부에서 `InitIfNeeded()`를 먼저 호출하여 이 문제 방지
-  - AutoSingleton도 `InitIfNeeded()` → `EnsureOrThrow()` 순서로 호출하여 이중 보호
 
 ```csharp
 // 현재 구현

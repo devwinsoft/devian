@@ -13,7 +13,7 @@ AppliesTo: v10
 
 **Addressables Label 기반 패치/다운로드를 제공하는 Unity 전용 컴포넌트.**
 
-- **ResSingleton**: `Load(resourcePath)` 선행 호출 후 `Instance` 접근 가능
+- **CompoSingleton**: Bootstrap에서 생성/등록되거나 씬에 배치해야 함
 - **인스펙터**: `patchLabels` (Label 리스트) 설정 가능
 - **PatchProc**: 라벨별 다운로드 필요 용량 계산
 - **DownloadProc**: 라벨별 의존 번들 다운로드 (가중치 기반 진행률)

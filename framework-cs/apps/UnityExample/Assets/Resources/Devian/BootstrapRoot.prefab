@@ -9,9 +9,9 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6965000095625495815}
-  - component: {fileID: 1108957171108321841}
   - component: {fileID: -8644512890401012568}
-  - component: {fileID: 7463896602245374569}
+  - component: {fileID: -4201736480531811430}
+  - component: {fileID: 1856151958633733160}
   m_Layer: 0
   m_Name: BootstrapRoot
   m_TagString: Untagged
@@ -34,19 +34,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1108957171108321841
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2454387350981742136}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d7172cae8f0efba4e85d579d48adfd65, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Devian.Unity::Devian.BootCoordinator
-  _autoStart: 1
 --- !u!114 &-8644512890401012568
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -59,7 +46,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d1185151d0d97f4fbdbc96d48eb784a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TestBootstrap
---- !u!114 &7463896602245374569
+--- !u!114 &-4201736480531811430
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -68,8 +55,26 @@ MonoBehaviour:
   m_GameObject: {fileID: 2454387350981742136}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a916fcdf6fd5ea2448c73112490094d6, type: 3}
+  m_Script: {fileID: 11500000, guid: 8ba7955ebf80efe41b1e7927e85f3ff0, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Unity::Devian.RenderEffectBootStep
-  _order: 100
+  m_EditorClassIdentifier: Devian.Unity::Devian.DownloadManager
+  patchLabels:
+  - common-effects
+  - prefabs
+  - sounds
+  - table-ndjson
+  - table-pb64
+  forceClearDependencyCache: 0
+--- !u!114 &1856151958633733160
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2454387350981742136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cea22c7adac94c947bfce5285e037dbd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Unity::Devian.RenderEffectManager
   _addressablesKey: 

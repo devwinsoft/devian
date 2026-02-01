@@ -15,8 +15,10 @@ namespace Devian
     /// 부팅 시 첫 씬의 OnEnter()도 1회 보장한다.
     ///
     /// 이 Manager는 페이드 UI를 직접 소유하지 않으며, FadeOutRequested/FadeInRequested 이벤트로 위임한다.
+    ///
+    /// CompoSingleton-based: BootstrapRoot prefab에 포함되어 부팅 시 자동 등록.
     /// </summary>
-    public sealed class SceneTransManager : AutoSingleton<SceneTransManager>
+    public sealed class SceneTransManager : CompoSingleton<SceneTransManager>
     {
         private bool _isTransitioning;
 
@@ -50,12 +52,11 @@ namespace Devian
 
         /// <summary>
         /// 부팅 시 첫 씬의 OnEnter()를 1회 보장한다 (LoadSceneAsync를 거치지 않는 케이스).
-        /// DevianBootstrap의 부팅 완료를 대기한 후 실행한다.
         /// </summary>
         private IEnumerator Start()
         {
-            // 부팅 완료 대기 (DevianBootstrap.IsBooted == true)
-            yield return DevianBootstrap.WaitUntilBooted();
+            // BootstrapRoot 존재 보장
+            DevianBootstrap.Ensure();
 
             // 전환 중이면 bootstrap 하지 않음
             if (_isTransitioning)
@@ -108,9 +109,6 @@ namespace Devian
                 Log.Warn("SceneTransManager.LoadSceneAsync ignored: already transitioning.");
                 yield break;
             }
-
-            // 부팅 완료 대기 (Boot 전에 LoadSceneAsync가 호출되는 레이스 방지)
-            yield return DevianBootstrap.WaitUntilBooted();
 
             _isTransitioning = true;
 

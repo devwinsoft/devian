@@ -8,7 +8,7 @@ Type: Component Specification
 
 `IPoolFactory`의 실사용 구현 2종 및 static facade 1종 제공:
 - `InspectorPoolFactory` - 인스펙터에서 프리팹 등록 (MonoBehaviour)
-- `BundlePoolFactory` - AssetBundle 기반 로딩 (SimpleSingleton + IPoolFactory)
+- `BundlePoolFactory` - AssetBundle 기반 로딩 (Lazy singleton + IPoolFactory)
 - `BundlePool` - BundlePoolFactory의 static facade (권장 사용법)
 
 ---

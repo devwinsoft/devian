@@ -2,7 +2,6 @@
 
 #nullable enable
 
-using System.Collections;
 using UnityEngine;
 
 namespace Devian
@@ -12,8 +11,9 @@ namespace Devian
     ///
     /// - Resources에서 Bootstrap Prefab을 찾으면 Instantiate
     /// - 없으면 코드로 Bootstrap Root를 생성(fallback)
-    /// - BootCoordinator를 보장하고, 부팅 완료 대기 API 제공
     /// - DevianSettings는 Resources에서 로드하며, BootstrapRoot에 주입
+    ///
+    /// 프레임워크는 "부팅 완료"를 강제/대기하지 않는다. 개발자 코드가 부팅 흐름을 책임진다.
     /// </summary>
     public static class DevianBootstrap
     {
@@ -21,18 +21,8 @@ namespace Devian
         // 프로젝트 자산 경로: Assets/Resources/Devian/BootstrapRoot.prefab
         public const string ResourcesPrefabPath = "Devian/BootstrapRoot";
 
-        private static BootCoordinator? _coordinator;
         private static DevianBootstrapRoot? _root;
         private static DevianSettings? _settings;
-
-        public static bool IsBooted
-        {
-            get
-            {
-                var c = FindCoordinator();
-                return c != null && c.IsBooted && c.BootError == null;
-            }
-        }
 
         /// <summary>
         /// DevianSettings를 Resources에서 로드하여 반환한다.
@@ -70,19 +60,21 @@ namespace Devian
             Ensure();
         }
 
-        public static BootCoordinator Ensure()
+        /// <summary>
+        /// BootstrapRoot 존재 보장 + DDOL + Settings 주입.
+        /// </summary>
+        public static DevianBootstrapRoot Ensure()
         {
             // 캐시가 유효하면 반환
-            if (_coordinator != null)
-                return _coordinator;
+            if (_root != null)
+                return _root;
 
             // 이미 씬에 존재하는지 탐색(DDOL 포함)
-            _coordinator = Object.FindAnyObjectByType<BootCoordinator>();
-            if (_coordinator != null)
+            _root = Object.FindAnyObjectByType<DevianBootstrapRoot>();
+            if (_root != null)
             {
-                _root = _coordinator.GetComponentInParent<DevianBootstrapRoot>();
                 InjectSettingsIfNeeded();
-                return _coordinator;
+                return _root;
             }
 
             // 1) Resources Prefab 시도
@@ -94,17 +86,12 @@ namespace Devian
                 Object.DontDestroyOnLoad(go);
 
                 _root = go.GetComponentInChildren<DevianBootstrapRoot>(true);
-                _coordinator = go.GetComponentInChildren<BootCoordinator>(true);
 
                 if (_root == null)
                     _root = go.AddComponent<DevianBootstrapRoot>();
 
-                if (_coordinator == null)
-                    _coordinator = go.AddComponent<BootCoordinator>();
-
                 InjectSettingsIfNeeded();
-                _coordinator.StartBoot();
-                return _coordinator;
+                return _root;
             }
 
             // 2) Fallback 생성(테스트/최소 실행 보장)
@@ -112,35 +99,14 @@ namespace Devian
             Object.DontDestroyOnLoad(root);
 
             _root = root.AddComponent<DevianBootstrapRoot>();
-            _coordinator = root.AddComponent<BootCoordinator>();
 
             InjectSettingsIfNeeded();
-            _coordinator.StartBoot();
 
             Debug.LogWarning(
                 $"DevianBootstrap: Resources prefab not found at '{ResourcesPrefabPath}'. " +
                 $"Created fallback BootstrapRoot. Use menu 'Devian/Create Bootstrap' to create the prefab.");
 
-            return _coordinator;
-        }
-
-        public static IEnumerator WaitUntilBooted()
-        {
-            var c = Ensure();
-            yield return c.WaitUntilBooted();
-        }
-
-        private static BootCoordinator? FindCoordinator()
-        {
-            if (_coordinator != null)
-                return _coordinator;
-
-            // FindAnyObjectByType 사용
-            var found = Object.FindAnyObjectByType<BootCoordinator>();
-            if (found != null)
-                _coordinator = found;
-
-            return found;
+            return _root;
         }
 
         /// <summary>

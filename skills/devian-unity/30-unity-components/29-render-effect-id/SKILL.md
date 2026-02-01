@@ -9,7 +9,7 @@ RenderEffectAsset을 참조하기 위한 string wrapper ID 타입
 
 ## String Wrapper 패턴
 
-EFFECT_ID와 동일한 구조:
+COMMON_EFFECT_ID와 동일한 구조:
 ```csharp
 [Serializable]
 public sealed class RENDER_EFFECT_ID
@@ -30,7 +30,7 @@ public sealed class RENDER_EFFECT_ID
 - **클릭 즉시 적용 + 창 자동 닫기**
 
 ### SearchDir 공급
-- DevianSettings.asset의 AssetIdEntry에서 `GroupKey="RENDER_EFFECT_GROUP"`로 조회
+- DevianSettings.asset의 AssetIdEntry에서 `GroupKey="RENDER_EFFECT"`로 조회
 - 실패/폴더 없음이면 `"Assets"` fallback
 
 ### 스캔 대상
@@ -42,7 +42,7 @@ public sealed class RENDER_EFFECT_ID
 ## DevianSettings 등록
 
 ```
-assetId[RENDER_EFFECT_GROUP] = "Assets/Bundles/RenderEffects"
+assetId[RENDER_EFFECT] = "Assets/Bundles/RenderEffects"
 ```
 
 ## Editor 구현
@@ -51,7 +51,7 @@ assetId[RENDER_EFFECT_GROUP] = "Assets/Bundles/RenderEffects"
 ```csharp
 public sealed class RenderEffectIdSelector : EditorScriptableAssetIdSelectorBase<RenderEffectAsset>
 {
-    protected override string GroupKey => "RENDER_EFFECT_GROUP";
+    protected override string GroupKey => "RENDER_EFFECT";
     protected override string DisplayTypeName => "RENDER_EFFECT_ID";
 }
 ```

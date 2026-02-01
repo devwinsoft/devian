@@ -11,7 +11,7 @@ namespace Devian
 
     public sealed class RenderEffectIdSelector : EditorScriptableAssetIdSelectorBase<RenderEffectAsset>
     {
-        protected override string GroupKey => "RENDER_EFFECT_GROUP";
+        protected override string GroupKey => "RENDER_EFFECT";
         protected override string DisplayTypeName => "RENDER_EFFECT_ID";
     }
 

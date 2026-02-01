@@ -19,6 +19,8 @@ namespace Devian
     /// - isBundle=false일 경우 Resources.Load를 사용한다
     /// - channel은 SoundChannelType enum으로 직접 비교한다
     /// - Voice 채널 로딩 지원 (VoiceManager가 호출)
+    ///
+    /// AutoSingleton-based: 없으면 자동 생성. 씬에 CompoSingleton으로 배치하면 우선.
     /// </summary>
     public sealed class SoundManager : AutoSingleton<SoundManager>
     {

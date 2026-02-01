@@ -117,23 +117,39 @@ namespace Devian
         /// </summary>
         private static void RepairSettings(DevianSettings settings)
         {
-            settings.EnsureAssetId("EFFECT", "Assets/Bundles/Effects");
+            // COMMON_EFFECT seed (기존 EFFECT에서 마이그레이션)
+            var commonEffectDir = settings.GetAssetIdSearchDir("COMMON_EFFECT");
+            if (string.Equals(commonEffectDir, "Assets", StringComparison.OrdinalIgnoreCase))
+            {
+                // 기존 EFFECT 키가 커스텀 경로면 승계
+                var legacyEffectDir = settings.GetAssetIdSearchDir("EFFECT");
+                if (!string.Equals(legacyEffectDir, "Assets", StringComparison.OrdinalIgnoreCase))
+                {
+                    commonEffectDir = legacyEffectDir;
+                }
+                else
+                {
+                    commonEffectDir = "Assets/Bundles/Effects";
+                }
+            }
+            settings.EnsureAssetId("COMMON_EFFECT", commonEffectDir);
 
-            // RenderEffect group key migration: RENDER_EFFECT (legacy) -> RENDER_EFFECT_GROUP (new)
-            var renderEffectDir = settings.GetAssetIdSearchDir("RENDER_EFFECT_GROUP");
+            // RENDER_EFFECT seed (기존 RENDER_EFFECT_GROUP에서 마이그레이션)
+            var renderEffectDir = settings.GetAssetIdSearchDir("RENDER_EFFECT");
             if (string.Equals(renderEffectDir, "Assets", StringComparison.OrdinalIgnoreCase))
             {
-                var legacyDir = settings.GetAssetIdSearchDir("RENDER_EFFECT");
-                if (!string.Equals(legacyDir, "Assets", StringComparison.OrdinalIgnoreCase))
+                // 기존 RENDER_EFFECT_GROUP 키가 커스텀 경로면 승계
+                var legacyGroupDir = settings.GetAssetIdSearchDir("RENDER_EFFECT_GROUP");
+                if (!string.Equals(legacyGroupDir, "Assets", StringComparison.OrdinalIgnoreCase))
                 {
-                    renderEffectDir = legacyDir;
+                    renderEffectDir = legacyGroupDir;
                 }
                 else
                 {
                     renderEffectDir = "Assets/Bundles/RenderEffects";
                 }
             }
-            settings.EnsureAssetId("RENDER_EFFECT_GROUP", renderEffectDir);
+            settings.EnsureAssetId("RENDER_EFFECT", renderEffectDir);
 
             settings.EnsurePlayerPrefsPrefix(DevianSettings.DefaultPlayerPrefsPrefix);
             EditorUtility.SetDirty(settings);
@@ -167,7 +183,6 @@ namespace Devian
             var root = go.AddComponent<DevianBootstrapRoot>();
             root.SetSettings(settings);
 
-            go.AddComponent<BootCoordinator>();
             go.AddComponent<SceneTransManager>();
 
             // Prefab 저장
@@ -209,13 +224,6 @@ namespace Devian
             if (root.Settings != settings)
             {
                 root.SetSettings(settings);
-                modified = true;
-            }
-
-            // BootCoordinator 확인/추가
-            if (instance.GetComponent<BootCoordinator>() == null)
-            {
-                instance.AddComponent<BootCoordinator>();
                 modified = true;
             }
 

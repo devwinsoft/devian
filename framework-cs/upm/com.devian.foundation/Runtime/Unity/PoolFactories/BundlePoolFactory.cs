@@ -11,11 +11,20 @@ namespace Devian
     /// <summary>
     /// Bundle-based pool factory (manual).
     /// Prefab lookup uses AssetManager.GetAsset&lt;T&gt;(name).
+    ///
+    /// Lazy singleton pattern (pure C#, thread-safe).
     /// </summary>
-    public sealed class BundlePoolFactory : SimpleSingleton<BundlePoolFactory>, IPoolFactory
+    public sealed class BundlePoolFactory : IPoolFactory
     {
-        // new() constraint requires a public parameterless ctor.
-        public BundlePoolFactory() { }
+        private static readonly Lazy<BundlePoolFactory> _instance =
+            new Lazy<BundlePoolFactory>(() => new BundlePoolFactory(), isThreadSafe: true);
+
+        /// <summary>
+        /// Singleton instance (lazy, thread-safe).
+        /// </summary>
+        public static BundlePoolFactory Instance => _instance.Value;
+
+        private BundlePoolFactory() { }
 
         /// <summary>
         /// Generic asset lookup API (requested).

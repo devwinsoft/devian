@@ -16,6 +16,8 @@ namespace Devian
     /// - Voice clip 로딩은 key_bundle + language 기반으로 수행 (key_group 제거됨)
     /// - VOICE는 SOUND 테이블을 참조하지 않고 독립적으로 로드/재생한다
     /// - clip 경로는 IVoiceRow.TryGetClipColumn()으로 직접 조회
+    ///
+    /// AutoSingleton-based: 없으면 자동 생성. 씬에 CompoSingleton으로 배치하면 우선.
     /// </summary>
     public sealed class VoiceManager : AutoSingleton<VoiceManager>
     {
