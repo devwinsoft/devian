@@ -1,0 +1,73 @@
+# RENDER_EFFECT_ID
+
+## 목적
+RenderEffectAsset을 참조하기 위한 string wrapper ID 타입
+
+## 파일 위치 (SSOT)
+- Runtime: `com.devian.foundation/Runtime/Unity/Render/RENDER_EFFECT_ID.cs`
+- Editor Selector: `com.devian.foundation/Editor/AssetId/Generated/RENDER_EFFECT_ID.Editor.cs`
+
+## String Wrapper 패턴
+
+EFFECT_ID와 동일한 구조:
+```csharp
+[Serializable]
+public sealed class RENDER_EFFECT_ID
+{
+    public string Value;
+    public bool IsValid => !string.IsNullOrEmpty(Value);
+
+    // implicit operators for string 호환
+}
+```
+
+## Selector/Drawer 규약 (21-asset-id 준수)
+
+### 필수 규칙
+- **Apply/Create 버튼 금지**
+- **ShowUtility() 필수**
+- **Selector 캐싱 금지**
+- **클릭 즉시 적용 + 창 자동 닫기**
+
+### SearchDir 공급
+- DevianSettings.asset의 AssetIdEntry에서 `GroupKey="RENDER_EFFECT_GROUP"`로 조회
+- 실패/폴더 없음이면 `"Assets"` fallback
+
+### 스캔 대상
+- RenderEffectAsset(ScriptableObject) 목록을 SearchDir에서 스캔
+- `asset.name`을 ID 값으로 사용
+- `@` prefix 이름 제외
+- case-insensitive 중복 name은 에러 로그 후 스킵
+
+## DevianSettings 등록
+
+```
+assetId[RENDER_EFFECT_GROUP] = "Assets/Bundles/RenderEffects"
+```
+
+## Editor 구현
+
+### Selector 클래스
+```csharp
+public sealed class RenderEffectIdSelector : EditorScriptableAssetIdSelectorBase<RenderEffectAsset>
+{
+    protected override string GroupKey => "RENDER_EFFECT_GROUP";
+    protected override string DisplayTypeName => "RENDER_EFFECT_ID";
+}
+```
+
+### Drawer 클래스
+```csharp
+[CustomPropertyDrawer(typeof(RENDER_EFFECT_ID))]
+public sealed class RENDER_EFFECT_ID_Drawer : EditorID_DrawerBase<RenderEffectIdSelector>
+{
+    // ShowUtility()로 창 표시
+    // title: "Select RENDER_EFFECT_ID"
+}
+```
+
+## 금지 사항
+
+- Selector 캐싱 금지 (항상 CreateInstance)
+- Apply 버튼 금지 (SelectionGrid 클릭 즉시 적용/닫기)
+- 런타임에서 AssetDatabase/Resources.Load 금지 (AssetManager 캐시만)

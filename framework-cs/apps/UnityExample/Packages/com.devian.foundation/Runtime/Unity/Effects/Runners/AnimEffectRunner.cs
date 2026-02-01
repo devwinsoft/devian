@@ -5,8 +5,6 @@ namespace Devian
     [RequireComponent(typeof(AnimSequencePlayer))]
     public sealed class AnimEffectRunner : MonoBehaviour, IEffectRunner
     {
-        public bool playOnStart = true;
-
         [Tooltip("Global speed multiplier forwarded to AnimSequencePlayer.PlayDefault().")]
         public float playSpeed = 1f;
 

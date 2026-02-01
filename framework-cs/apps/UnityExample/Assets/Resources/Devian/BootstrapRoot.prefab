@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 6965000095625495815}
   - component: {fileID: 1108957171108321841}
   - component: {fileID: -8644512890401012568}
+  - component: {fileID: 7463896602245374569}
   m_Layer: 0
   m_Name: BootstrapRoot
   m_TagString: Untagged
@@ -58,3 +59,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d1185151d0d97f4fbdbc96d48eb784a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TestBootstrap
+--- !u!114 &7463896602245374569
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2454387350981742136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a916fcdf6fd5ea2448c73112490094d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Unity::Devian.RenderEffectBootStep
+  _order: 100
+  _addressablesKey: 

@@ -15,3 +15,6 @@ MonoBehaviour:
   _assetId:
   - GroupKey: EFFECT
     SearchDir: Assets/Bundles/Effects
+  - GroupKey: RENDER_EFFECT
+    SearchDir: Assets/Bundles/Effects
+  _playerPrefsPrefix: devian.game.

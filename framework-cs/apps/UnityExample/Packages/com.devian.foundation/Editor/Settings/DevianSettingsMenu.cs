@@ -2,6 +2,7 @@
 
 #if UNITY_EDITOR
 
+using System;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -117,6 +118,23 @@ namespace Devian
         private static void RepairSettings(DevianSettings settings)
         {
             settings.EnsureAssetId("EFFECT", "Assets/Bundles/Effects");
+
+            // RenderEffect group key migration: RENDER_EFFECT (legacy) -> RENDER_EFFECT_GROUP (new)
+            var renderEffectDir = settings.GetAssetIdSearchDir("RENDER_EFFECT_GROUP");
+            if (string.Equals(renderEffectDir, "Assets", StringComparison.OrdinalIgnoreCase))
+            {
+                var legacyDir = settings.GetAssetIdSearchDir("RENDER_EFFECT");
+                if (!string.Equals(legacyDir, "Assets", StringComparison.OrdinalIgnoreCase))
+                {
+                    renderEffectDir = legacyDir;
+                }
+                else
+                {
+                    renderEffectDir = "Assets/Bundles/RenderEffects";
+                }
+            }
+            settings.EnsureAssetId("RENDER_EFFECT_GROUP", renderEffectDir);
+
             settings.EnsurePlayerPrefsPrefix(DevianSettings.DefaultPlayerPrefsPrefix);
             EditorUtility.SetDirty(settings);
             AssetDatabase.SaveAssets();
@@ -156,7 +174,7 @@ namespace Devian
             PrefabUtility.SaveAsPrefabAsset(go, BootstrapRootPrefabPath);
 
             // 임시 객체 삭제
-            Object.DestroyImmediate(go);
+            UnityEngine.Object.DestroyImmediate(go);
 
             AssetDatabase.Refresh();
 
@@ -215,7 +233,7 @@ namespace Devian
             }
 
             // 인스턴스 삭제
-            Object.DestroyImmediate(instance);
+            UnityEngine.Object.DestroyImmediate(instance);
 
             // prefab 선택
             var savedPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(BootstrapRootPrefabPath);
