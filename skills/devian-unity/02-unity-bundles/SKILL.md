@@ -5,7 +5,7 @@ AppliesTo: v10
 
 ## Prerequisites
 
-**Unity C# 문법 제한:** 이 문서에서 다루는 모든 UPM 패키지 코드는 `skills/devian/04-unity-csharp-compat/SKILL.md`를 준수한다 (금지 문법 사용 시 FAIL).
+**Unity C# 문법 제한:** 이 문서에서 다루는 모든 UPM 패키지 코드는 `skills/devian-core/04-unity-csharp-compat/SKILL.md`를 준수한다 (금지 문법 사용 시 FAIL).
 
 ## SSOT
 
@@ -133,7 +133,7 @@ com.devian.domain.* (module packages - foundation 의존)
 
 ## Reference
 
-- Related: `skills/devian-unity/01-unity-policy/SKILL.md`
-- Related: `skills/devian-unity/03-package-metadata/SKILL.md`
-- Related: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT)
+- Related: `skills/devian-unity/01-policy/SKILL.md`
+- Related: `skills/devian-unity/04-package-metadata/SKILL.md`
+- Related: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
 - Related: `skills/devian-unity/20-packages/com.devian.domain.common/SKILL.md`

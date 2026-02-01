@@ -2,7 +2,7 @@
 
 Status: DRAFT  
 AppliesTo: v10  
-SSOT: skills/devian/03-ssot/SKILL.md
+SSOT: skills/devian-core/03-ssot/SKILL.md
 
 ## Overview
 
@@ -152,5 +152,5 @@ const decrypted = decryptAes(encrypted, key, iv);
 
 ## Reference
 
-- Module Policy: `skills/devian-common/01-module-policy/SKILL.md`
-- Domain Policy: `skills/devian-common/00-domain-policy/SKILL.md`
+- Module Policy: `skills/devian-common/02-module-policy/SKILL.md`
+- Domain Policy: `skills/devian-common/01-policy/SKILL.md`

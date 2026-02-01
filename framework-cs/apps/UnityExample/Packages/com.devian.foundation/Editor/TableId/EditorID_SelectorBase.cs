@@ -15,7 +15,7 @@ namespace Devian
     /// <summary>
     /// Base class for TableID Selector (EditorWindow).
     /// Provides search, grid selection, and value assignment.
-    /// SSOT: skills/devian/03-ssot/SKILL.md (Apply button forbidden)
+    /// SSOT: skills/devian-core/03-ssot/SKILL.md (Apply button forbidden)
     /// </summary>
     public abstract class EditorID_SelectorBase : EditorWindow
     {

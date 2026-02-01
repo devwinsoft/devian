@@ -2,7 +2,7 @@
 
 Status: ACTIVE  
 AppliesTo: v10  
-SSOT: skills/devian/03-ssot/SKILL.md
+SSOT: skills/devian-core/03-ssot/SKILL.md
 
 ## Overview
 
@@ -33,7 +33,7 @@ Common 모듈의 표준 로깅 기능을 정의한다.
 
 ## Hard Rules (MUST)
 
-1. **Common은 다른 모듈을 참조하지 않는다.** (skills/devian-common/01-module-policy 준수)
+1. **Common은 다른 모듈을 참조하지 않는다.** (skills/devian-common/02-module-policy 준수)
 2. 로깅 호출부는 `Console.WriteLine` / `console.*`를 직접 사용하지 않는다.  
    - 직접 호출은 **Sink 내부에서만 허용**한다.
 3. 기본 Sink는 존재해야 하며(기본 동작 보장), Sink 교체도 가능해야 한다.

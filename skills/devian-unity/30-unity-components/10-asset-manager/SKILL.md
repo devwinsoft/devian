@@ -318,7 +318,7 @@ yield return ST_UIText.PreloadAsync("ndjson", SystemLanguage.Korean);
 var text = ST_UIText.Get("ndjson", SystemLanguage.Korean, "greeting");
 ```
 
-> **Reference**: `skills/devian/33-string-table/SKILL.md`, `skills/devian-unity/30-unity-components/14-table-manager/SKILL.md`
+> **Reference**: `skills/devian-data/33-string-table/SKILL.md`, `skills/devian-unity/30-unity-components/14-table-manager/SKILL.md`
 
 ---
 
@@ -342,7 +342,7 @@ var text = ST_UIText.Get("ndjson", SystemLanguage.Korean, "greeting");
 
 ## Reference
 
-- Related: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT)
+- Related: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
 - Related: `skills/devian-unity/30-unity-components/12-download-manager/SKILL.md` (다운로드 정책)
-- Related: `skills/devian/33-string-table/SKILL.md` (String Table 규약)
-- Related: `skills/devian-unity/01-unity-policy/SKILL.md` (component policy)
+- Related: `skills/devian-data/33-string-table/SKILL.md` (String Table 규약)
+- Related: `skills/devian-unity/01-policy/SKILL.md` (component policy)

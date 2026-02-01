@@ -89,9 +89,9 @@ Serialize → Deserialize 후 값이 **동일**해야 한다.
 
 | 언어 | 파일 |
 |------|------|
-| TypeScript (타입) | `framework-ts/modules/devian-domain-common/features/variant.ts` |
+| TypeScript (타입) | `framework-ts/module/devian-domain-common/features/variant.ts` |
 | TypeScript (파서) | `framework-ts/tools/builder/generators/table.js` |
-| C# | `framework-cs/module-gen/`Devian` + `.Module.Common`/features/Variant.cs` |
+| C# | `framework-cs/module/Devian.Domain.Common/features/Variant.cs` |
 
 ---
 

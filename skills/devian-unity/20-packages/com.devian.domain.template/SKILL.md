@@ -116,7 +116,7 @@ namespace Devian
 - Selector UX(Hard): 항목 클릭 즉시 적용(Apply 버튼 없음). (EditorID_SelectorBase 규약)
 - Group 지원(Hard): 테이블에 `group:true` 컬럼이 있으면 Selector는 groupKey 목록을 표시하고, 선택 시 대표 PK(min PK)를 Value에 저장한다. Inspector 표시도 groupKey로 한다. (EditorID_SelectorBase 규약)
 
-> **상세 API**: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT) 참조
+> **상세 API**: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT) 참조
 
 ---
 
@@ -206,7 +206,7 @@ keyed table이 없는 도메인의 경우:
 
 ## Reference
 
-- Related: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT, TableID 베이스 클래스)
+- Related: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT, TableID 베이스 클래스)
 - Related: `skills/devian-unity/02-unity-bundles/SKILL.md`
-- Related: `skills/devian-unity/03-package-metadata/SKILL.md`
-- Related: `skills/devian/03-ssot/SKILL.md`
+- Related: `skills/devian-unity/04-package-metadata/SKILL.md`
+- Related: `skills/devian-core/03-ssot/SKILL.md`

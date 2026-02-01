@@ -22,7 +22,7 @@ Type: Index / Directory
 | 10 | AssetManager | AssetBundle 기반 로딩/캐시/언로드 | `10-asset-manager/SKILL.md` |
 | 11 | NetWsClientBehaviourBase | WebSocket 네트워크 클라이언트 베이스 | `11-network-client-behaviour/SKILL.md` |
 | 12 | DownloadManager | Addressables Label 기반 Patch/Download (CompoSingleton) | `12-download-manager/SKILL.md` |
-| 13 | Pb64Storage | pb64를 Unity TextAsset .asset로 저장하는 규약 | `skills/devian/35-pb64-storage/SKILL.md` |
+| 13 | Pb64Storage | pb64를 Unity TextAsset .asset로 저장하는 규약 | `skills/devian-data/35-pb64-storage/SKILL.md` |
 | 14 | TableManager | TB_/ST_ 테이블 로딩/캐시/언로드 (ndjson/pb64) | `14-table-manager/SKILL.md` |
 | 15 | SceneTransManager | Scene 전환 직렬화 + 페이드 + BaseScene Enter/Exit | `15-scene-trans-manager/SKILL.md` |
 | 16 | SoundTables | TB_SOUND/TB_VOICE 테이블 규약 (컬럼/책임 분리) | `16-sound-tables/SKILL.md` |
@@ -40,4 +40,4 @@ Type: Index / Directory
 
 ## Reference
 
-- Parent: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT)
+- Parent: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)

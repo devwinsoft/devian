@@ -27,3 +27,22 @@
 ## 5) Follow SSOT (skills) strictly
 - Do not change file names/paths/extensions or formats unless the Skill (SSOT) is updated first.
 - If a rule must change, update the Skill first, then update implementation to match.
+
+## 6) Skills folder structure
+- All `skills/devian-*` folders follow this structure:
+  - `00-overview/SKILL.md` — Group overview (what this group contains)
+  - `01-policy/SKILL.md` — Group policy/rules
+  - `03-ssot/SKILL.md` — Category SSOT (if applicable: core, tools, data, protocol, unity)
+- When analyzing or working with a skill group, **always read `00-overview/SKILL.md` first** to understand:
+  - What the group covers
+  - Key documents and their purposes
+  - Links to related skills and SSOT
+- Entry points:
+  - `skills/SKILL.md` — Root index
+  - `skills/devian/SKILL.md` — Devian main index (includes SSOT Hub)
+- SSOT hierarchy:
+  - `skills/devian-core/03-ssot/SKILL.md` — **Root SSOT** (공통 용어, 플레이스홀더, 입력 분리, 머지 규칙)
+  - `skills/devian-tools/03-ssot/SKILL.md` — Tools SSOT (빌드 파이프라인, Phase, Validate, tempDir)
+  - `skills/devian-data/03-ssot/SKILL.md` — Data SSOT (tableConfig, Tables, NDJSON, pb64)
+  - `skills/devian-protocol/03-ssot/SKILL.md` — Protocol SSOT (Opcode/Tag, Protocol UPM)
+  - `skills/devian-unity/03-ssot/SKILL.md` — Unity SSOT (upmConfig, UPM Sync, Foundation)

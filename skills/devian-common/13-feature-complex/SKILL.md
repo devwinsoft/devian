@@ -2,7 +2,7 @@
 
 Status: ACTIVE  
 AppliesTo: v10  
-SSOT: skills/devian/03-ssot/SKILL.md
+SSOT: skills/devian-core/03-ssot/SKILL.md
 
 ## Overview
 
@@ -196,13 +196,13 @@ CString:
 ## Directory Structure
 
 C#:
-- framework-cs/module-gen/`Devian` + `.Module.Common`/features/Complex/CInt.cs
-- framework-cs/module-gen/`Devian` + `.Module.Common`/features/Complex/CFloat.cs
-- framework-cs/module-gen/`Devian` + `.Module.Common`/features/Complex/CString.cs
-- framework-cs/module-gen/`Devian` + `.Module.Common`/features/Complex/ComplexUtil.cs
+- framework-cs/module/Devian.Domain.Common/features/Complex/CInt.cs
+- framework-cs/module/Devian.Domain.Common/features/Complex/CFloat.cs
+- framework-cs/module/Devian.Domain.Common/features/Complex/CString.cs
+- framework-cs/module/Devian.Domain.Common/features/Complex/ComplexUtil.cs
 
 TypeScript:
-- framework-ts/modules/devian-domain-common/features/complex.ts
+- framework-ts/module/devian-domain-common/features/complex.ts
 
 ---
 
@@ -241,6 +241,6 @@ PropertyDrawer 파일:
 
 ## Reference
 
-- Domain Policy: skills/devian-common/00-domain-policy/SKILL.md
-- Module Policy: skills/devian-common/01-module-policy/SKILL.md
+- Domain Policy: skills/devian-common/01-policy/SKILL.md
+- Module Policy: skills/devian-common/02-module-policy/SKILL.md
 - Logger Feature: skills/devian-common/12-feature-logger/SKILL.md

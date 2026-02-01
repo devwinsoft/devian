@@ -33,7 +33,32 @@
       "Bash(npm run build:*)",
       "Bash(echo:*)",
       "Bash(node tools/sync-meta.js:*)",
-      "Bash(\"C:/Program Files/nodejs/node.exe\" build.js)"
+      "Bash(\"C:/Program Files/nodejs/node.exe\" build.js)",
+      "Bash(xxd:*)",
+      "Bash(for folder in 02-skill-specification 03-ssot 04-unity-csharp-compat 06-git-policy 10-core-runtime 11-core-serializer-protobuf 22-generated-integration 50-consumption-blueprint 70-ws-transport-adapter 71-ws-dispatcher-skeleton 72-network-ws-client 73-network-http-rpc-client 74-network-server 75-game-network-client)",
+      "Bash(do cp -r \"skills/devian/$folder\" \"skills/devian-core/\")",
+      "Bash(done)",
+      "Bash(if [ -d \"D:/Projects/Devwinsoft/devian/skills/devian/99-moved-map\" ])",
+      "Bash(then echo \"EXISTS\")",
+      "Bash(else echo \"DELETED\")",
+      "Bash(fi)",
+      "Bash(if [ -d \"D:/Projects/Devwinsoft/devian/skills/devian-tools/23-framework-ts-workspace\" ])",
+      "Bash(find:*)",
+      "Bash(for g in devian-core devian-tools devian-data devian-protocol devian-common devian-unity devian-examples devian-unity-samples)",
+      "Bash(do if [ -d \"$g/00-overview\" ])",
+      "Bash([ -d \"$g/01-policy\" ])",
+      "Bash(then echo \"PASS: $g\")",
+      "Bash(else echo \"FAIL: $g\")",
+      "Bash(for f in devian-tools/03-ssot/SKILL.md devian-data/03-ssot/SKILL.md devian-protocol/03-ssot/SKILL.md devian-unity/03-ssot/SKILL.md)",
+      "Bash(do if [ -f \"$f\" ])",
+      "Bash(then echo \"PASS: $f\")",
+      "Bash(else echo \"FAIL: $f\")",
+      "Bash(if [ -d \"devian-unity/03-package-metadata\" ])",
+      "Bash(then echo \"FAIL: 03-package-metadata still exists\")",
+      "Bash(else echo \"PASS: 03-package-metadata removed\")",
+      "Bash(if [ -d \"devian-unity/04-package-metadata\" ])",
+      "Bash(then echo \"PASS: 04-package-metadata exists\")",
+      "Bash(else echo \"FAIL: 04-package-metadata missing\")"
     ]
   }
 }

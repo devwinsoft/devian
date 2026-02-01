@@ -1,4 +1,4 @@
-// SSOT: skills/devian/44-protocolgen-implementation/SKILL.md
+// SSOT: skills/devian-protocol/44-protocolgen-implementation/SKILL.md
 // Protocol Type Mapper - Complex type aliases support
 // "추측 금지" 정책: 명시된 별칭만 처리, 나머지는 null 반환
 

@@ -387,10 +387,10 @@ yield return dm.PatchProc(
 
 ## Reference
 
-- Related: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT)
+- Related: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
 - Related: `skills/devian-unity/30-unity-components/01-singleton/SKILL.md` (ResSingleton)
 - Related: `skills/devian-unity/30-unity-components/10-asset-manager/SKILL.md` (AssetManager)
-- Related: `skills/devian/33-string-table/SKILL.md` (String Table 규약)
+- Related: `skills/devian-data/33-string-table/SKILL.md` (String Table 규약)
 
 ---
 

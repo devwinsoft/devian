@@ -190,5 +190,5 @@ var net = NetworkManager.Instance;
 
 ## 10. Reference
 
-- Parent: `skills/devian/03-ssot/SKILL.md`
+- Parent: `skills/devian-core/03-ssot/SKILL.md`
 - Index: `skills/devian-unity/30-unity-components/SKILL.md`

@@ -127,7 +127,7 @@ UnityMainThreadDispatcher ← UnityLogSink (백그라운드 로그 디스패치)
 
 ## Reference
 
-- Related: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT)
+- Related: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
 - Related: `skills/devian-unity/30-unity-components/00-unity-object-destruction/SKILL.md`
 - Related: `skills/devian-common/12-feature-logger/SKILL.md`
 - Related: `skills/devian-unity/03-ssot/SKILL.md` (소유권 정책)

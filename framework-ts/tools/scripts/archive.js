@@ -2,8 +2,11 @@
 /**
  * Devian Project Archive Tool (Node.js)
  * 프로젝트 전체를 zip 파일로 아카이브합니다.
- * 
+ *
  * 외부 의존성 없이 시스템 zip 명령어 또는 PowerShell을 사용합니다.
+ *
+ * temp 제외 기준: {buildInputJson}.tempDir (buildInputJson 디렉토리 기준 상대경로)
+ * SSOT: skills/devian-tools/90-project-archive/SKILL.md
  *
  * Usage:
  *   node archive.js [--root PATH] [--output PATH] [options]
@@ -24,9 +27,6 @@ const BUILTIN_EXCLUDES = [
     '.git/**',
     'node_modules',
     'node_modules/**',
-    '__pycache__',
-    '__pycache__/**',
-    '*.pyc',
     '.DS_Store',
     '*.zip',
 ];
@@ -169,22 +169,88 @@ function findProjectRoot(startPath) {
 }
 
 /**
+ * buildInputJson 경로를 찾습니다.
+ * 탐지 우선순위:
+ * 1. ${root}/input/input_common.json
+ * 2. ${root}/input_common.json
+ * 3. null (없으면)
+ */
+function findBuildInputJson(root) {
+    const candidates = [
+        path.join(root, 'input', 'input_common.json'),
+        path.join(root, 'input_common.json'),
+    ];
+
+    for (const candidate of candidates) {
+        if (fs.existsSync(candidate)) {
+            return candidate;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * buildInputJson에서 tempDir 값을 읽어 제외 패턴을 계산합니다.
+ * @param {string} root - 프로젝트 루트
+ * @returns {string[]} - 제외 패턴 배열 (예: ['input/temp', 'input/temp/**'])
+ */
+function getTempDirExcludePatterns(root) {
+    const buildInputJsonPath = findBuildInputJson(root);
+
+    if (!buildInputJsonPath) {
+        // fallback: 기본 temp 패턴
+        console.log('  [Archive] buildInputJson not found, using fallback temp patterns');
+        return ['temp', 'temp/**', '**/temp', '**/temp/**'];
+    }
+
+    try {
+        const buildInputJson = JSON.parse(fs.readFileSync(buildInputJsonPath, 'utf-8'));
+        const tempDirValue = buildInputJson.tempDir ?? 'temp';
+        const buildJsonDir = path.dirname(buildInputJsonPath);
+
+        // tempDir 경로 해석 (buildJsonDir 기준)
+        const resolvedTempAbs = path.resolve(buildJsonDir, tempDirValue);
+        let resolvedTempRel = path.relative(root, resolvedTempAbs).replace(/\\/g, '/');
+
+        // 안전장치: 빈 문자열이거나 ..로 시작하면 fallback만 적용
+        if (!resolvedTempRel || resolvedTempRel.startsWith('..')) {
+            console.log(`  [Archive] tempDir resolved outside root, using fallback patterns`);
+            return ['temp', 'temp/**', '**/temp', '**/temp/**'];
+        }
+
+        console.log(`  [Archive] tempDir from buildInputJson: ${tempDirValue} -> ${resolvedTempRel}`);
+
+        return [
+            resolvedTempRel,
+            `${resolvedTempRel}/**`,
+        ];
+    } catch (e) {
+        console.log(`  [Archive] Failed to read buildInputJson: ${e.message}`);
+        return ['temp', 'temp/**', '**/temp', '**/temp/**'];
+    }
+}
+
+/**
  * 아카이브할 파일 목록을 수집합니다.
  */
 function collectFiles(root, excludePatterns, options = {}) {
     const files = [];
     const extraExcludes = [...excludePatterns];
 
+    // --exclude-generated: Generated 폴더 제외 (대문자 G)
     if (options.excludeGenerated) {
-        extraExcludes.push('**/generated', '**/generated/**');
+        extraExcludes.push('**/Generated', '**/Generated/**');
     }
 
     if (options.excludeData) {
         extraExcludes.push('**/*.ndjson');
     }
 
+    // temp 제외: buildInputJson.tempDir 기반
     if (!options.includeTemp) {
-        extraExcludes.push('temp', 'temp/**', '**/temp', '**/temp/**');
+        const tempPatterns = getTempDirExcludePatterns(root);
+        extraExcludes.push(...tempPatterns);
     }
 
     function walkDir(dir) {
@@ -249,7 +315,7 @@ function createArchiveWithPowerShell(root, files, archivePath) {
             const srcPath = path.join(root, relPath);
             const destPath = path.join(tempDir, relPath);
             const destDir = path.dirname(destPath);
-            
+
             fs.mkdirSync(destDir, { recursive: true });
             fs.copyFileSync(srcPath, destPath);
         }
@@ -328,9 +394,9 @@ Usage:
 Options:
   --root <path>          프로젝트 루트 경로 (기본: 자동 탐지)
   --output <path>        출력 디렉토리 (기본: 프로젝트 루트)
-  --exclude-generated    generated 폴더 제외
+  --exclude-generated    Generated 폴더 제외
   --exclude-data         ndjson 데이터 파일 제외
-  --include-temp         temp 폴더 포함
+  --include-temp         temp 폴더 포함 (기본: {buildInputJson}.tempDir 기준 제외)
   -h, --help             도움말 표시
 `);
                 process.exit(0);

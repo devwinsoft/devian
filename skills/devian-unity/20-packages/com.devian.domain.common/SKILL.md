@@ -209,7 +209,7 @@ keyed table(primaryKey 있는 테이블)이 있으면 `Editor/Generated/`에 Tab
 
 - Related: `skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md` (도메인 패키지 공통 규약)
 - Related: `skills/devian-unity/02-unity-bundles/SKILL.md`
-- Related: `skills/devian-unity/03-package-metadata/SKILL.md`
-- Related: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT)
+- Related: `skills/devian-unity/04-package-metadata/SKILL.md`
+- Related: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
 - Related: `skills/devian-common/11-feature-variant/SKILL.md`
 - Related: `skills/devian-common/13-feature-complex/SKILL.md`

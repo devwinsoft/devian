@@ -93,5 +93,5 @@ UnityExample 복사본(직접 수정 금지):
 
 ## Reference
 
-- Related: `skills/devian/03-ssot/SKILL.md` (Foundation Package SSOT)
-- Related: `skills/devian/72-network-ws-client/SKILL.md`
+- Related: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
+- Related: `skills/devian-core/72-network-ws-client/SKILL.md`
