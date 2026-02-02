@@ -58,7 +58,9 @@
       "Bash(else echo \"PASS: 03-package-metadata removed\")",
       "Bash(if [ -d \"devian-unity/04-package-metadata\" ])",
       "Bash(then echo \"PASS: 04-package-metadata exists\")",
-      "Bash(else echo \"FAIL: 04-package-metadata missing\")"
+      "Bash(else echo \"FAIL: 04-package-metadata missing\")",
+      "mcp__blender__get_scene_info",
+      "mcp__mcp-registry__search_mcp_registry"
     ]
   }
 }

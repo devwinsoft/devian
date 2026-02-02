@@ -1,0 +1,20 @@
+{
+    "name": "Devian.TestsMcp.V2.Editor",
+    "rootNamespace": "Devian.TestsMcp.Editor",
+    "references": [
+        "Devian.Unity",
+        "Devian.Core",
+        "Devian.TestsMcp.V2"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
