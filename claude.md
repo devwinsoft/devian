@@ -46,3 +46,4 @@
   - `skills/devian-data/03-ssot/SKILL.md` — Data SSOT (tableConfig, Tables, NDJSON, pb64)
   - `skills/devian-protocol/03-ssot/SKILL.md` — Protocol SSOT (Opcode/Tag, Protocol UPM)
   - `skills/devian-unity/03-ssot/SKILL.md` — Unity SSOT (upmConfig, UPM Sync, Foundation)
+  - `skills/devian-examples/03-ssot/SKILL.md` — Examples SSOT (config/input JSON, TS apps, Unity Example)

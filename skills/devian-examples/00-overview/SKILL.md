@@ -12,6 +12,7 @@ Devian 예제 도메인 및 프로토콜을 담당한다.
 | Document | Description |
 |----------|-------------|
 | [01-policy](../01-policy/SKILL.md) | Examples 그룹 정책 |
+| [03-ssot](../03-ssot/SKILL.md) | Example App SSOT (config/input JSON, TS apps, Unity Example) |
 | [10-example-domain-game](../10-example-domain-game/SKILL.md) | Game 도메인 예제 |
 | [20-example-protocol-game](../20-example-protocol-game/SKILL.md) | Game 프로토콜 예제 |
 

@@ -57,6 +57,39 @@ upm/{pkg} → UnityExample/Packages/{pkg} (패키지 단위 clean+copy)
 - `npm -w builder run sync-meta -- <config>` - Packages의 .meta를 UPM으로 역복사 (일회성 마이그레이션용)
 - 위치: `framework-ts/tools/scripts/sync-meta.js`
 
+### 5. 대규모 리네임 작업 규칙 (Hard Rule)
+
+**C# 파일 대규모 리네임 시 다음 절차를 따른다:**
+
+#### 금지 사항
+- `.meta` 파일 내용 직접 편집 금지
+- 파일별 개별 Read → Edit → Write 순차 처리 금지
+- UPM과 UnityExample을 개별적으로 수정 금지
+
+#### 필수 절차
+
+```bash
+# 1. 파일 리네임 (git mv 사용 - .meta 자동 처리, GUID 유지)
+git mv OldName.cs NewName.cs
+
+# 2. 내용 일괄 치환 (sed 사용)
+find . -name "*.cs" -exec sed -i 's/OldName/NewName/g' {} +
+
+# 3. UPM → UnityExample 폴더 단위 복사
+cp -r upm/{pkg}/Runtime/Unity/TargetDir/* UnityExample/Packages/{pkg}/Runtime/Unity/TargetDir/
+
+# 4. UnityExample의 구 파일 정리 (필요시)
+rm -f UnityExample/Packages/{pkg}/.../OldName.cs
+rm -f UnityExample/Packages/{pkg}/.../OldName.cs.meta
+```
+
+#### 핵심 원칙
+| 작업 | 도구 | 이유 |
+|------|------|------|
+| 파일 리네임 | `git mv` | Unity GUID 자동 유지 |
+| 내용 치환 | `sed` / `find -exec` | 일괄 처리로 속도 향상 |
+| 패키지 동기화 | `cp -r` (폴더 단위) | 파일별 처리 불필요 |
+
 ---
 
 ## 금지 경로 가드 (Hard Rule)
