@@ -37,7 +37,9 @@ PROTOCOL(DomainType=PROTOCOL) 입력으로부터 C#/TS 프로토콜 코드를 �
 **금지 필드 (존재 시 빌드 실패):**
 - `csTargetDir` — `csConfig.generateDir` 사용
 - `tsTargetDir` — `tsConfig.generateDir` 사용
-- `upmName` — 자동 계산 (`com.devian.protocol.{group.toLowerCase()}`)
+- `upmName` — 자동 계산 (`com.devian.protocol.{normalize(group)}`)
+
+> **normalize 규칙 (요약):** trim → 공백을 `_`로 치환 → 허용 문자 외 제거(영문/숫자/`_`/`-`만 남김) → 소문자화. 정확한 규칙은 빌더의 `normalizeUpmSuffixFromGroup()` 참조.
 
 ### Protocol Spec JSON (필수 필드)
 
@@ -87,15 +89,16 @@ Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴�
 
 경로 규약은 SSOT를 따른다.
 
-**C#:**
-- staging: `{tempDir}/Devian.Protocol.{ProtocolGroup}/{ProtocolName}.g.cs`
-- final: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/{ProtocolName}.g.cs`
-- 프로젝트 파일: `Devian.Protocol.{ProtocolGroup}.csproj` (netstandard2.1)
+**C# (ProtocolGroup = {ProtocolGroup}):**
+- staging: `{tempDir}/Devian.Protocol.{ProtocolGroup}/cs/Generated/{ProtocolName}.g.cs`
+- final: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/Generated/{ProtocolName}.g.cs`
+- 프로젝트 파일: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/Devian.Protocol.{ProtocolGroup}.csproj` (수기/고정, 빌더가 생성/수정 금지)
 - namespace: `Devian.Protocol.{ProtocolGroup}` (변경 금지)
 
 **TypeScript:**
-- staging: `{tempDir}/{ProtocolGroup}/{ProtocolName}.g.ts`, `index.ts`
-- final: `{tsConfig.generateDir}/devian-protocol-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
+- staging: `{tempDir}/{ProtocolGroup}/ts/Generated/{ProtocolName}.g.ts`
+- final: `{tsConfig.generateDir}/devian-protocol-{protocolgroup}/Generated/{ProtocolName}.g.ts`
+- `index.ts`는 모듈 루트에 존재하되 수기/고정, 빌더가 생성/수정 금지
 - 패키지명: `@devian/network-{protocolgroup}`
 
 > **생성물 namespace 고정 (Hard Rule):**
@@ -105,20 +108,20 @@ Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴�
 
 ## UPM 산출물 정책 (Hard Rule)
 
-**Protocol UPM(`com.devian.protocol.*`)은 Runtime-only로 생성한다.**
+**Protocol UPM(`com.devian.protocol.*`)은 Runtime-only이며, 빌더가 touch 가능한 범위는 Generated/** 뿐이다.**
 
-| 생성 대상 | 생성 여부 |
+| 대상 | 빌더 동작 |
 |-----------|----------|
-| `Runtime/Devian.Protocol.{Group}.asmdef` | ✅ 생성 |
-| `Runtime/{ProtocolName}.g.cs` | ✅ 생성 |
-| `Editor/` 폴더 | ❌ 생성 금지 |
-| `Devian.Protocol.{Group}.Editor.asmdef` | ❌ 생성 금지 |
+| `Runtime/Devian.Protocol.{Group}.asmdef` | 수기 파일 (빌더 수정 금지) |
+| `Runtime/Generated/{ProtocolName}.g.cs` | ✅ 생성/갱신 |
+| `package.json` | 수기 파일 (빌더 수정 금지) |
+| `Editor/` 폴더 | ❌ 생성 금지, 존재 시 레거시 청소로 삭제 |
 
 **Runtime asmdef references 정책:**
 - `Devian.Core`
 - `Devian.Domain.Common`
 
-> SSOT: `skills/devian-core/03-ssot/SKILL.md` — Protocol UPM 자동 생성 규칙
+> SSOT: `skills/devian-protocol/03-ssot/SKILL.md` — Protocol UPM 산출물 정책
 
 ---
 

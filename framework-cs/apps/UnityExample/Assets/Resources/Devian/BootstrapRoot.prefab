@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 6965000095625495815}
   - component: {fileID: 3329868128984831037}
-  - component: {fileID: 5990696027577273228}
   - component: {fileID: -4201736480531811430}
   - component: {fileID: 1856151958633733160}
   m_Layer: 0
@@ -47,19 +46,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d1185151d0d97f4fbdbc96d48eb784a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TestBootstrap
---- !u!114 &5990696027577273228
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2454387350981742136}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3e1a96f849d06df49b238d84b5199a99, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Devian.Unity::Devian.DevianBootstrapRoot
-  _settings: {fileID: 11400000, guid: b9ef47ada4412e64d9de31efe2335e71, type: 2}
 --- !u!114 &-4201736480531811430
 MonoBehaviour:
   m_ObjectHideFlags: 0

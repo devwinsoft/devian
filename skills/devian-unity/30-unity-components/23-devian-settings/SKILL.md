@@ -77,15 +77,10 @@ com.devian.foundation/Editor/Settings/
 
 ## 6. Runtime 접근
 
-DevianSettings는 Resources에서 로드하여 접근한다.
-BootstrapRoot prefab의 DevianBootstrapRoot가 참조로 보유할 수도 있고, 없으면 Resources.Load로 직접 로드한다.
+DevianSettings는 Resources에서 직접 로드하여 접근한다.
 
 ```csharp
-// DevianBootstrap.Settings로 접근 (캐시됨)
-var settings = DevianBootstrap.Settings;
-
-// 또는 직접 Resources.Load
-var settings = Resources.Load<DevianSettings>("Devian/DevianSettings");
+var settings = Resources.Load<DevianSettings>(DevianSettings.ResourcesPath);
 ```
 
 ---

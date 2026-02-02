@@ -1071,14 +1071,12 @@ class DevianToolBuilder {
 
         const protocolDir = this.resolvePath(groupConfig.protocolDir);
         const csProjectName = `Devian.Protocol.${groupName}`;
-        
-        // Staging paths
-        const stagingCs = path.join(this.tempDir, csProjectName);
-        const stagingTs = path.join(this.tempDir, groupName);
-        const stagingTsGenerated = path.join(stagingTs, 'Generated');
 
-        fs.mkdirSync(stagingCs, { recursive: true });
-        fs.mkdirSync(stagingTs, { recursive: true });
+        // Staging paths (Generated-only: SSOT skills/devian-protocol/03-ssot/SKILL.md)
+        const stagingCsGenerated = path.join(this.tempDir, csProjectName, 'cs', 'Generated');
+        const stagingTsGenerated = path.join(this.tempDir, groupName, 'ts', 'Generated');
+
+        fs.mkdirSync(stagingCsGenerated, { recursive: true });
         fs.mkdirSync(stagingTsGenerated, { recursive: true });
 
         // Collect protocol info for index.ts and ServerRuntime
@@ -1119,25 +1117,24 @@ class DevianToolBuilder {
             this.saveRegistry(protocolDir, protocolName, 'opcodes', opcodeRegistry);
             this.saveRegistry(protocolDir, protocolName, 'tags', tagRegistry);
 
-            // C# Protocol
+            // C# Protocol (Generated-only)
             const csCode = generateCSharpProtocol(spec, protocolName, groupName);
-            fs.writeFileSync(path.join(stagingCs, `${protocolName}.g.cs`), csCode);
+            fs.writeFileSync(path.join(stagingCsGenerated, `${protocolName}.g.cs`), csCode);
 
-            // TypeScript Protocol
+            // TypeScript Protocol (Generated-only)
             const tsCode = generateTypeScriptProtocol(spec, protocolName, groupName);
-            fs.writeFileSync(path.join(stagingTs, `${protocolName}.g.ts`), tsCode);
+            fs.writeFileSync(path.join(stagingTsGenerated, `${protocolName}.g.ts`), tsCode);
         }
 
-        // Generate .csproj for C#
-        const csprojContent = this.generateCsproj(groupName);
-        fs.writeFileSync(path.join(stagingCs, `${csProjectName}.csproj`), csprojContent);
+        // NOTE: .csproj 생성 제거 (수기/고정 파일, 빌더가 생성/수정 금지)
+        // SSOT: skills/devian-protocol/03-ssot/SKILL.md
 
         // Generate ServerRuntime.g.ts for TypeScript (if both inbound/outbound exist)
         const serverRuntimeCode = generateServerRuntime(groupName, protocolInfos);
         const hasServerRuntime = serverRuntimeCode !== null;
         if (hasServerRuntime) {
             fs.writeFileSync(path.join(stagingTsGenerated, 'ServerRuntime.g.ts'), serverRuntimeCode);
-            console.log(`    [ServerRuntime] generated/ServerRuntime.g.ts`);
+            console.log(`    [ServerRuntime] Generated/ServerRuntime.g.ts`);
         }
 
         // Generate ClientRuntime.g.ts for TypeScript (if both inbound/outbound exist)
@@ -1145,15 +1142,14 @@ class DevianToolBuilder {
         const hasClientRuntime = clientRuntimeCode !== null;
         if (hasClientRuntime) {
             fs.writeFileSync(path.join(stagingTsGenerated, 'ClientRuntime.g.ts'), clientRuntimeCode);
-            console.log(`    [ClientRuntime] generated/ClientRuntime.g.ts`);
+            console.log(`    [ClientRuntime] Generated/ClientRuntime.g.ts`);
         }
 
-        // Generate index.ts for TypeScript
-        const indexTsContent = this.generateIndexTs(groupName, protocolNames, hasServerRuntime, hasClientRuntime);
-        fs.writeFileSync(path.join(stagingTs, 'index.ts'), indexTsContent);
+        // NOTE: index.ts 생성 제거 (수기/고정 파일, 빌더가 생성/수정 금지)
+        // SSOT: skills/devian-protocol/03-ssot/SKILL.md
 
-        // Always generate UPM scaffold (protocol UPM is always generated)
-        this.generateProtocolUpmScaffold(groupName, stagingCs);
+        // NOTE: generateProtocolUpmScaffold 호출 제거 (package.json/asmdef 수기 파일)
+        // UPM은 copyProtocolGroupToTargets에서 Generated만 반영
     }
 
     generateCsproj(groupName) {
@@ -1267,60 +1263,172 @@ class DevianToolBuilder {
                 console.log(`    [Migration] Removed old folder: ${oldTarget}`);
             }
         }
-        
-        const stagingCs = path.join(this.tempDir, csProjectName);
-        const stagingTs = path.join(this.tempDir, groupName);
 
-        // Check if ServerRuntime and ClientRuntime were generated
-        const hasServerRuntime = fs.existsSync(path.join(stagingTs, 'Generated', 'ServerRuntime.g.ts'));
-        const hasClientRuntime = fs.existsSync(path.join(stagingTs, 'Generated', 'ClientRuntime.g.ts'));
+        // Staging paths (Generated-only: SSOT skills/devian-protocol/03-ssot/SKILL.md)
+        const stagingCsGenerated = path.join(this.tempDir, csProjectName, 'cs', 'Generated');
+        const stagingTsGenerated = path.join(this.tempDir, groupName, 'ts', 'Generated');
 
-        // Copy to CS target: {csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/
-        // Protocol C# output always goes to csConfig.generateDir (protocols[*].csTargetDir is forbidden)
+        // ========== C# 반영 (Generated-only) ==========
         if (this.csGenerateDir) {
-            const target = path.join(this.csGenerateDir, csProjectName);
-            this.cleanAndCopy(stagingCs, target);
-            console.log(`    [Copy] ${stagingCs} -> ${target}`);
+            const resolvedTargetDir = path.join(this.csGenerateDir, csProjectName);
+            const csprojPath = path.join(resolvedTargetDir, `${csProjectName}.csproj`);
+
+            // Guard: csproj must exist (수기 파일)
+            if (!fs.existsSync(resolvedTargetDir) || !fs.existsSync(csprojPath)) {
+                throw new Error(
+                    `[FAIL] Protocol C# module scaffold missing!\n` +
+                    `  Target: ${resolvedTargetDir}\n` +
+                    `  Expected: ${csprojPath}\n` +
+                    `  Create the .csproj file manually before running build.`
+                );
+            }
+
+            // Legacy cleanup: 모듈 루트의 *.g.cs 파일 삭제
+            for (const file of fs.readdirSync(resolvedTargetDir)) {
+                if (file.endsWith('.g.cs')) {
+                    fs.rmSync(path.join(resolvedTargetDir, file));
+                    console.log(`    [Legacy Cleanup] Removed root .g.cs: ${file}`);
+                }
+            }
+
+            // Legacy cleanup: generated/ (소문자) 폴더 삭제
+            const lowercaseGenerated = path.join(resolvedTargetDir, 'generated');
+            if (fs.existsSync(lowercaseGenerated)) {
+                fs.rmSync(lowercaseGenerated, { recursive: true });
+                console.log(`    [Legacy Cleanup] Removed lowercase generated/`);
+            }
+
+            // 반영: Generated 폴더만 갱신
+            const targetGenerated = path.join(resolvedTargetDir, 'Generated');
+            this.cleanAndCopy(stagingCsGenerated, targetGenerated);
+            console.log(`    [Copy CS Generated] -> ${targetGenerated}`);
         }
 
-        // Copy to TS target: {tsConfig.generateDir}/devian-protocol-{group}/
-        // Protocol TS output always goes to tsConfig.generateDir (protocols[*].tsTargetDir is forbidden)
+        // ========== TS 반영 (Generated-only) ==========
         if (this.tsGenerateDir) {
             const tsModuleName = `devian-protocol-${groupName.toLowerCase()}`;
-            const target = path.join(this.tsGenerateDir, tsModuleName);
-            this.cleanAndCopy(stagingTs, target);
-            console.log(`    [Copy] ${stagingTs} -> ${target}`);
+            const resolvedTargetDir = path.join(this.tsGenerateDir, tsModuleName);
 
-            // Cleanup: Remove non-TS pollution folders if they got copied
-            // (This can happen when protocol group name matches domain name)
+            // Guard: 수기 파일들 존재 확인
+            const packageJsonPath = path.join(resolvedTargetDir, 'package.json');
+            const tsconfigPath = path.join(resolvedTargetDir, 'tsconfig.json');
+            const indexTsPath = path.join(resolvedTargetDir, 'index.ts');
+
+            if (!fs.existsSync(packageJsonPath)) {
+                throw new Error(
+                    `[FAIL] Protocol TS module scaffold missing!\n` +
+                    `  Target: ${resolvedTargetDir}\n` +
+                    `  Expected: package.json\n` +
+                    `  Create package.json manually before running build.`
+                );
+            }
+            if (!fs.existsSync(tsconfigPath)) {
+                throw new Error(
+                    `[FAIL] Protocol TS module scaffold missing!\n` +
+                    `  Target: ${resolvedTargetDir}\n` +
+                    `  Expected: tsconfig.json\n` +
+                    `  Create tsconfig.json manually before running build.`
+                );
+            }
+            if (!fs.existsSync(indexTsPath)) {
+                throw new Error(
+                    `[FAIL] Protocol TS module scaffold missing!\n` +
+                    `  Target: ${resolvedTargetDir}\n` +
+                    `  Expected: index.ts\n` +
+                    `  Create index.ts manually before running build.`
+                );
+            }
+
+            // Legacy cleanup: 모듈 루트의 *.g.ts 파일 삭제
+            for (const file of fs.readdirSync(resolvedTargetDir)) {
+                if (file.endsWith('.g.ts')) {
+                    fs.rmSync(path.join(resolvedTargetDir, file));
+                    console.log(`    [Legacy Cleanup] Removed root .g.ts: ${file}`);
+                }
+            }
+
+            // Legacy cleanup: generated/ (소문자) 폴더 삭제
+            const lowercaseGenerated = path.join(resolvedTargetDir, 'generated');
+            if (fs.existsSync(lowercaseGenerated)) {
+                fs.rmSync(lowercaseGenerated, { recursive: true });
+                console.log(`    [Legacy Cleanup] Removed lowercase generated/`);
+            }
+
+            // Cleanup: 오염 폴더 삭제 (레거시 방지)
             const pollutionFolders = ['cs', 'data', 'upm', 'ts'];
             for (const folder of pollutionFolders) {
-                const pollutionPath = path.join(target, folder);
+                const pollutionPath = path.join(resolvedTargetDir, folder);
                 if (fs.existsSync(pollutionPath)) {
                     fs.rmSync(pollutionPath, { recursive: true });
                     console.log(`    [Cleanup] Removed pollution folder: ${pollutionPath}`);
                 }
             }
 
-            // Generate tsconfig.json if not exists
-            this.ensureTsConfig(target);
-
-            // Generate/update package.json with correct dependencies
-            this.ensureProtocolPackageJson(target, groupName, hasServerRuntime, hasClientRuntime);
+            // 반영: Generated 폴더만 갱신
+            const targetGenerated = path.join(resolvedTargetDir, 'Generated');
+            this.cleanAndCopy(stagingTsGenerated, targetGenerated);
+            console.log(`    [Copy TS Generated] -> ${targetGenerated}`);
         }
 
-        // Always copy to UPM source dir (protocol UPM is Generated-only)
+        // ========== Protocol UPM 반영 (Generated-only) ==========
         // UPM name is computed from group name (no manual upmName field)
         const computedUpmName = this.computeProtocolUpmName(groupName);
-        
+
         // Validate computed UPM name (checks for conflicts)
         this.validateComputedProtocolUpmName(computedUpmName, groupName);
 
-        const stagingUpm = path.join(this.tempDir, `${csProjectName}-upm`);
-        // Copy to upm (single SSOT root)
-        const upmTarget = path.join(this.upmSourceDir, computedUpmName);
-        this.copyUpmToTarget(stagingUpm, upmTarget);
-        console.log(`    [Copy UPM → upm] ${stagingUpm} -> ${upmTarget}`);
+        const upmTargetDir = path.join(this.upmSourceDir, computedUpmName);
+
+        // Guard: 수기 파일들 존재 확인
+        const upmPackageJsonPath = path.join(upmTargetDir, 'package.json');
+        const upmAsmdefPath = path.join(upmTargetDir, 'Runtime', `${csProjectName}.asmdef`);
+
+        if (!fs.existsSync(upmPackageJsonPath)) {
+            throw new Error(
+                `[FAIL] Protocol UPM scaffold missing!\n` +
+                `  Target: ${upmTargetDir}\n` +
+                `  Expected: package.json\n` +
+                `  Create package.json manually before running build.`
+            );
+        }
+        if (!fs.existsSync(upmAsmdefPath)) {
+            throw new Error(
+                `[FAIL] Protocol UPM scaffold missing!\n` +
+                `  Target: ${upmTargetDir}\n` +
+                `  Expected: Runtime/${csProjectName}.asmdef\n` +
+                `  Create the asmdef file manually before running build.`
+            );
+        }
+
+        // Legacy cleanup: Editor/ 폴더 삭제 (Runtime-only 정책)
+        const editorDir = path.join(upmTargetDir, 'Editor');
+        if (fs.existsSync(editorDir)) {
+            fs.rmSync(editorDir, { recursive: true });
+            console.log(`    [Legacy Cleanup] Removed Editor/ folder (Runtime-only)`);
+        }
+
+        // Legacy cleanup: Runtime/ 루트의 *.g.cs 파일 삭제
+        const runtimeDir = path.join(upmTargetDir, 'Runtime');
+        if (fs.existsSync(runtimeDir)) {
+            for (const file of fs.readdirSync(runtimeDir)) {
+                if (file.endsWith('.g.cs')) {
+                    fs.rmSync(path.join(runtimeDir, file));
+                    console.log(`    [Legacy Cleanup] Removed Runtime root .g.cs: ${file}`);
+                }
+            }
+
+            // Legacy cleanup: Runtime/generated (소문자) 폴더 삭제
+            const lowercaseGenerated = path.join(runtimeDir, 'generated');
+            if (fs.existsSync(lowercaseGenerated)) {
+                fs.rmSync(lowercaseGenerated, { recursive: true });
+                console.log(`    [Legacy Cleanup] Removed Runtime/generated/`);
+            }
+        }
+
+        // 반영: Runtime/Generated 폴더만 갱신
+        const upmTargetGenerated = path.join(upmTargetDir, 'Runtime', 'Generated');
+        this.cleanAndCopy(stagingCsGenerated, upmTargetGenerated);
+        console.log(`    [Copy UPM Generated] -> ${upmTargetGenerated}`);
     }
 
     /**

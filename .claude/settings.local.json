@@ -60,7 +60,9 @@
       "Bash(then echo \"PASS: 04-package-metadata exists\")",
       "Bash(else echo \"FAIL: 04-package-metadata missing\")",
       "mcp__blender__get_scene_info",
-      "mcp__mcp-registry__search_mcp_registry"
+      "mcp__mcp-registry__search_mcp_registry",
+      "Bash(npm ci:*)",
+      "Bash(\"/c/Program Files/dotnet/dotnet\" build \"D:/Projects/Devwinsoft/devian/framework-cs/module/Devian.Protocol.Game/Devian.Protocol.Game.csproj\")"
     ]
   }
 }

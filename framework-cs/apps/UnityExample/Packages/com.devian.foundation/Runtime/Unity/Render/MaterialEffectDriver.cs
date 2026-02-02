@@ -174,6 +174,9 @@ namespace Devian
             if (!_baselineCaptured || _baselineMaterials == null || _renderer == null)
                 return;
 
+            // PB clear: sharedMaterials 변경 전에 PropertyBlock 제거
+            _renderer.SetPropertyBlock(null);
+
             // baseline clone을 Renderer에 재적용
             _renderer.sharedMaterials = _baselineMaterials;
         }
@@ -205,6 +208,9 @@ namespace Devian
         {
             if (_renderer == null)
                 return;
+
+            // PB clear: sharedMaterials 변경 전에 PropertyBlock 제거
+            _renderer.SetPropertyBlock(null);
 
             if (materials == null)
             {

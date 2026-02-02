@@ -5,6 +5,13 @@ using UnityEngine;
 namespace Devian
 {
     /// <summary>
+    /// BootSingleton의 비제네릭 베이스 클래스.
+    /// 부트 컨테이너 식별/탐색용 마커 베이스.
+    /// 제네릭 없이 FindAnyObjectByType으로 검색 가능.
+    /// </summary>
+    public abstract class BootSingletonBase : MonoBehaviour { }
+
+    /// <summary>
     /// Bootstrap 프리팹용 싱글톤 컴포넌트 베이스.
     /// BootstrapRoot.prefab에 붙여서 사용한다.
     /// Awake()에서 SingletonRegistry에 Source=Boot로 등록한다.
@@ -14,7 +21,7 @@ namespace Devian
     /// 씬에서 CompoSingleton으로 같은 타입이 등장하면 Boot를 Adopt(대체)할 수 있다.
     /// Adopt 시 BootstrapRoot GameObject 전체를 파괴하면 안 된다 (컴포넌트만 제거).
     /// </summary>
-    public abstract class BootSingleton<T> : MonoBehaviour where T : MonoBehaviour
+    public abstract class BootSingleton<T> : BootSingletonBase where T : MonoBehaviour
     {
         /// <summary>
         /// DontDestroyOnLoad 적용 여부. 기본 true.

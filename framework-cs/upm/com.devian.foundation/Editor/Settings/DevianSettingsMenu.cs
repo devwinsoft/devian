@@ -29,10 +29,10 @@ namespace Devian
             EnsureFolder(ResourcesFolderPath);
 
             // 2) DevianSettings 생성/보수 (마이그레이션 포함)
-            var settings = EnsureDevianSettings();
+            EnsureDevianSettings();
 
             // 3) BootstrapRoot Prefab 생성/보수
-            EnsureBootstrapRootPrefab(settings);
+            EnsureBootstrapRootPrefab();
 
             Debug.Log("Devian Bootstrap created/repaired successfully.");
         }
@@ -127,31 +127,29 @@ namespace Devian
 
         /// <summary>
         /// BootstrapRoot Prefab을 생성하거나 보수한다.
+        /// Prefab에는 BootSingleton 기반 컴포넌트들만 포함 (마커 컴포넌트 없음).
         /// </summary>
-        private static void EnsureBootstrapRootPrefab(DevianSettings settings)
+        private static void EnsureBootstrapRootPrefab()
         {
             // 기존 prefab 로드 시도
             var existingPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(BootstrapRootPrefabPath);
             if (existingPrefab != null)
             {
-                // 보수: 컴포넌트 확인 및 Settings 참조 갱신
-                RepairBootstrapRootPrefab(existingPrefab, settings);
+                // 보수: 컴포넌트 확인
+                RepairBootstrapRootPrefab(existingPrefab);
                 return;
             }
 
             // 새 prefab 생성
-            CreateBootstrapRootPrefab(settings);
+            CreateBootstrapRootPrefab();
         }
 
-        private static void CreateBootstrapRootPrefab(DevianSettings settings)
+        private static void CreateBootstrapRootPrefab()
         {
             // 임시 GameObject 생성
             var go = new GameObject("[Devian] BootstrapRoot");
 
-            // 컴포넌트 추가
-            var root = go.AddComponent<DevianBootstrapRoot>();
-            root.SetSettings(settings);
-
+            // 기본 컴포넌트 추가 (BootSingleton 기반, 마커 없음)
             go.AddComponent<SceneTransManager>();
 
             // Prefab 저장
@@ -173,7 +171,7 @@ namespace Devian
             Debug.Log($"BootstrapRoot prefab created at: {BootstrapRootPrefabPath}");
         }
 
-        private static void RepairBootstrapRootPrefab(GameObject prefab, DevianSettings settings)
+        private static void RepairBootstrapRootPrefab(GameObject prefab)
         {
             // Prefab 내용물을 임시로 인스턴스화
             var instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
@@ -181,22 +179,7 @@ namespace Devian
 
             bool modified = false;
 
-            // DevianBootstrapRoot 확인/추가
-            var root = instance.GetComponent<DevianBootstrapRoot>();
-            if (root == null)
-            {
-                root = instance.AddComponent<DevianBootstrapRoot>();
-                modified = true;
-            }
-
-            // Settings 참조 갱신
-            if (root.Settings != settings)
-            {
-                root.SetSettings(settings);
-                modified = true;
-            }
-
-            // SceneTransManager 확인/추가
+            // SceneTransManager 확인/추가 (BootSingleton 기반)
             if (instance.GetComponent<SceneTransManager>() == null)
             {
                 instance.AddComponent<SceneTransManager>();

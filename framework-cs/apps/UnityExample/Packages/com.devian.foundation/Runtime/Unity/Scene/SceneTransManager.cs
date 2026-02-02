@@ -16,7 +16,7 @@ namespace Devian
     ///
     /// 이 Manager는 페이드 UI를 직접 소유하지 않으며, FadeOutRequested/FadeInRequested 이벤트로 위임한다.
     ///
-    /// CompoSingleton-based: BootstrapRoot prefab에 포함되어 부팅 시 자동 등록.
+    /// CompoSingleton-based: BootstrapRoot(부트 컨테이너)에 포함되어 등록된다.
     /// </summary>
     public sealed class SceneTransManager : CompoSingleton<SceneTransManager>
     {
@@ -55,9 +55,6 @@ namespace Devian
         /// </summary>
         private IEnumerator Start()
         {
-            // BootstrapRoot 존재 보장
-            DevianBootstrap.Ensure();
-
             // 전환 중이면 bootstrap 하지 않음
             if (_isTransitioning)
                 yield break;

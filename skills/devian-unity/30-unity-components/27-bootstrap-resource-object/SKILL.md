@@ -2,21 +2,19 @@
 
 ## 0. 목적
 
-씬과 무관하게 Devian BootstrapRoot를 DDOL로 보장한다.
+BootstrapRoot(부트 컨테이너)를 정의한다. Devian 프레임워크는 자동 instantiate를 제공하지 않는다.
 
 ---
 
 ## 1. 구성
 
-- **DevianBootstrap** (static): BeforeSceneLoad에서 BootstrapRoot prefab 로드/Instantiate + DDOL 보장
-- **DevianBootstrapRoot** (MonoBehaviour): BootstrapRoot prefab의 루트 컴포넌트, DevianSettings 참조 보유
+- **BootstrapRoot prefab**: 부트 컨테이너 프리팹 (예: `Assets/Resources/Devian/BootstrapRoot.prefab`)
+- **BootSingletonBase** (abstract MonoBehaviour): 부트 컨테이너 식별/탐색용 마커 베이스 (31-singleton 참조)
 
 ---
 
 ## 2. Files (SSOT)
 
-- `framework-cs/upm/com.devian.foundation/Runtime/Unity/Bootstrap/DevianBootstrap.cs`
-- `framework-cs/upm/com.devian.foundation/Runtime/Unity/Bootstrap/DevianBootstrapRoot.cs`
 - `framework-cs/upm/com.devian.foundation/Editor/Settings/DevianSettingsMenu.cs`
 
 ---
@@ -32,52 +30,42 @@
 
 ## 4. BootstrapRoot 구조
 
-BootstrapRoot는 **registry prefab**이다:
-- 여기에 `BootSingleton<T>` 컴포넌트들을 붙여서 자동 등록
+BootstrapRoot는 **부트 컨테이너 프리팹**이다:
+- 여기에 `BootSingleton<T>` 컴포넌트들을 붙여서 등록
 - 사용자는 자신의 초기화 MonoBehaviour 스크립트를 붙여서, 원하는 로딩/초기화/등록을 직접 코딩
 
-프레임워크는 "부팅 완료"를 강제/대기하지 않는다. 개발자 코드가 부팅 흐름을 책임진다.
+**프레임워크는 BootstrapRoot를 자동 instantiate 하지 않는다.** 개발자 코드가 부팅 흐름을 책임진다.
+
+**부트 컨테이너 식별:**
+- `BootSingletonBase`를 `FindAnyObjectByType`으로 탐색하여 부트 컨테이너 존재 여부 판단
+- `BootSingleton<T>`는 `BootSingletonBase`를 상속하므로, 어떤 BootSingleton이든 있으면 부트 컨테이너가 로드된 것
+
+**부트 컨테이너에는 최소 1개 이상의 BootSingleton 기반 컴포넌트를 붙이는 것을 권장한다.**
 
 ---
 
-## 5. DevianBootstrap
+## 5. 프로젝트 적용 방식
 
-BeforeSceneLoad에서 자동 실행되는 정적 클래스.
+Devian은 자동 부팅 코드를 제공하지 않는다. 프로젝트에서 다음 중 하나를 선택한다:
 
-```csharp
-public static class DevianBootstrap
-{
-    // BootstrapRoot 존재 보장 + DDOL + Settings 주입
-    public static DevianBootstrapRoot Ensure();
+### A) 첫 씬에 BootstrapRoot.prefab 배치 (권장)
 
-    // Settings 캐시 접근
-    public static DevianSettings Settings { get; }
-}
-```
+1. 첫 씬에 BootstrapRoot.prefab을 직접 배치
+2. BootSingleton 기반 컴포넌트들이 Awake()에서 Registry에 등록됨
+3. 필요 시 DontDestroyOnLoad 적용
 
-**Ensure() 동작:**
-1. 이미 존재하는 DevianBootstrapRoot를 FindAnyObjectByType으로 찾음
-2. 없으면 Resources에서 `Devian/BootstrapRoot` prefab 로드 후 Instantiate
-3. prefab이 없으면 fallback으로 코드로 생성 (테스트/최소 실행 보장)
-4. DontDestroyOnLoad 적용
-5. Settings 주입 (없으면 Resources에서 로드)
-
----
-
-## 6. DevianBootstrapRoot
+### B) 사용자 코드에서 직접 instantiate
 
 ```csharp
-public sealed class DevianBootstrapRoot : MonoBehaviour
-{
-    [SerializeField] private DevianSettings? _settings;
-    public DevianSettings? Settings => _settings;
-    public void SetSettings(DevianSettings? settings) { _settings = settings; }
-}
+// 예시: 사용자 초기화 코드에서 직접 로드
+var prefab = Resources.Load<GameObject>("Devian/BootstrapRoot");
+var go = Object.Instantiate(prefab);
+Object.DontDestroyOnLoad(go);
 ```
 
 ---
 
-## 7. Editor 메뉴
+## 6. Editor 메뉴
 
 **메뉴: Devian/Create Bootstrap**
 
@@ -86,16 +74,27 @@ public sealed class DevianBootstrapRoot : MonoBehaviour
 2. BootstrapRoot Prefab (`Assets/Resources/Devian/BootstrapRoot.prefab`)
 
 **BootstrapRoot Prefab 기본 구성:**
-- DevianBootstrapRoot (Settings 참조 연결)
-- SceneTransManager
+- SceneTransManager (CompoSingleton 기반)
+
+**DevianSettings는 별도로 Resources에 생성/보수한다.** BootstrapRoot prefab은 Settings를 참조하지 않는다.
 
 사용자는 BootstrapRoot.prefab에 초기화 스크립트를 추가로 부착해, 원하는 순서/로딩/등록을 직접 코딩할 수 있다.
 
 ---
 
+## 7. Settings 접근
+
+Settings는 Resources에서 직접 로드한다:
+
+```csharp
+var settings = Resources.Load<DevianSettings>(DevianSettings.ResourcesPath);
+```
+
+---
+
 ## 8. 테스트 규약
 
-PlayMode 테스트는 SetUp에서 `DevianBootstrap.Ensure()` 호출로 BootstrapRoot 존재를 보장한다.
+PlayMode 테스트는 테스트 씬에 BootstrapRoot를 배치하거나, SetUp에서 직접 instantiate 한다.
 
 ---
 

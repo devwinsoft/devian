@@ -30,9 +30,20 @@ Type: Component Specification
 - `Awake()`에서 Registry에 등록한다.
 - **우선순위 최고**: CompoSingleton이 등록되면 같은 타입의 Auto/Boot 인스턴스를 대체한다(Adopt).
 
+### BootSingletonBase (비제네릭 베이스)
+
+- `BootSingleton<T>`의 비제네릭 베이스 클래스다.
+- 부트 컨테이너 식별/탐색용 마커 베이스.
+- 제네릭 없이 `FindAnyObjectByType<BootSingletonBase>()`로 검색 가능하다.
+
+```csharp
+public abstract class BootSingletonBase : MonoBehaviour { }
+```
+
 ### BootSingleton\<T\> (선택, Bootstrap 프리팹용 컴포넌트)
 
 - `BootstrapRoot.prefab`에 붙여서 사용하는 컴포넌트 베이스다.
+- `BootSingletonBase`를 상속한다.
 - `Awake()`에서 SingletonRegistry에 `Source=Boot`로 등록한다.
 - 우선순위: **Compo > Boot > Auto**
 - 동일 타입 Boot 중복은 **즉시 예외**(기존 규약 유지).

@@ -71,28 +71,40 @@ PROTOCOL 입력은 `{buildInputJson}`의 `protocols` 섹션(배열)이 정의한
 
 ## PROTOCOL 산출물 경로 (정책)
 
-**C#:**
-- staging: `{tempDir}/Devian.Protocol.{ProtocolGroup}/{ProtocolName}.g.cs`
-- final: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/{ProtocolName}.g.cs`
-- 프로젝트 파일: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/Devian.Protocol.{ProtocolGroup}.csproj`
+**C# (ProtocolGroup = {ProtocolGroup}):**
+- staging: `{tempDir}/Devian.Protocol.{ProtocolGroup}/cs/Generated/{ProtocolName}.g.cs`
+- final: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/Generated/{ProtocolName}.g.cs`
+- 프로젝트 파일: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/Devian.Protocol.{ProtocolGroup}.csproj` (수기/고정, 빌더가 생성/수정 금지)
 - namespace: `Devian.Protocol.{ProtocolGroup}` (변경 금지)
 
 **TypeScript:**
-- staging: `{tempDir}/{ProtocolGroup}/{ProtocolName}.g.ts`, `index.ts`
-- final: `{tsConfig.generateDir}/devian-protocol-{protocolgroup}/{ProtocolName}.g.ts`, `index.ts`
+- staging: `{tempDir}/{ProtocolGroup}/ts/Generated/{ProtocolName}.g.ts`
+- final: `{tsConfig.generateDir}/devian-protocol-{protocolgroup}/Generated/{ProtocolName}.g.ts`
+- `index.ts`는 모듈 루트에 존재하되 수기/고정, 빌더가 생성/수정 금지
+- 패키지명: `@devian/network-{protocolgroup}` (기존 유지)
 
 > **생성물 namespace 고정 (Hard Rule):**
 > C# 생성물 namespace는 `Devian.Protocol.{ProtocolGroup}`으로 고정이며, 런타임 모듈 단일화와 무관하게 변경하지 않는다.
 
 ---
 
-## Protocol UPM 자동 생성 규칙 (Hard Rule)
+## Protocol UPM 산출물 정책 (Hard Rule)
 
-**Protocol UPM 패키지는 항상 자동 생성된다.** (옵션/토글 없음)
+**Protocol UPM은 Runtime-only이며, 빌더가 touch 가능한 범위는 Generated/** 뿐이다.**
 
-**Protocol UPM은 Runtime-only (Hard Rule):**
-- 빌더는 `upm/com.devian.protocol.*` 생성 시 **Runtime/ 폴더만 생성**한다.
-- **Editor/ 폴더 및 `*.Editor.asmdef` 생성 금지**.
+**UPM 산출물 경로:**
+- staging 생성/수정 허용 대상: `{tempDir}/Devian.Protocol.{ProtocolGroup}/cs/Generated/**`
+- final 반영 대상 (빌더가 touch 가능한 범위): `{upmConfig.sourceDir}/com.devian.protocol.{suffix}/Runtime/Generated/**`
+
+> UPM은 별도 `-upm` staging을 만들지 않으며, C# staging(`…/cs/Generated`)을 그대로 UPM `Runtime/Generated`로 copy한다.
+
+**수기/고정 파일 (빌더 생성/수정 금지):**
+- `package.json`
+- `Runtime/*.asmdef`
+- `*.meta`
+
+**레거시 청소:**
+- `Editor/` 폴더 존재 시 삭제 (Runtime-only 정책)
 
 **UPM 패키지명 자동 계산:**
 ```
@@ -112,13 +124,6 @@ computedUpmName = "com.devian.protocol." + normalize(group)
 | `Game` | `com.devian.protocol.game` |
 | `Game_Server` | `com.devian.protocol.game_server` |
 | `Auth Service` | `com.devian.protocol.auth_service` |
-
-**경로 계산:**
-```
-stagingDir = {tempDir}/Devian.Protocol.{ProtocolGroup}-upm
-targetDir = {upmConfig.sourceDir}/{computedUpmName}
-finalDir = {upmConfig.packageDir}/{computedUpmName}
-```
 
 ---
 
