@@ -13,7 +13,7 @@
 
 ## 파일 위치 (SSOT)
 
-- Runtime: `com.devian.foundation/Runtime/Unity/Render/`
+- Runtime: `com.devian.foundation/Runtime/Unity/MaterialEffect/`
 
 ## 클래스 선언
 
@@ -201,7 +201,7 @@ MaterialEffectAsset을 AssetManager 캐시에 적재하는 **CompoSingleton 기�
 
 ### 파일 위치
 
-- `com.devian.foundation/Runtime/Unity/Render/MaterialEffectManager.cs`
+- `com.devian.foundation/Runtime/Unity/MaterialEffect/MaterialEffectManager.cs`
 
 ### 선언
 

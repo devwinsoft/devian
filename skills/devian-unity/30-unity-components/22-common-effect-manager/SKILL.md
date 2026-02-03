@@ -29,7 +29,7 @@ Unity에서 사용할 Common Effect 시스템을 정의한다.
 ## 4. 파일 위치 (정본)
 
 ```
-com.devian.foundation/Runtime/Unity/Effects/
+com.devian.foundation/Runtime/Unity/CommonEffect/
 ├── COMMON_EFFECT_ID.cs
 ├── CommonEffectManager.cs
 ├── CommonEffectObject.cs

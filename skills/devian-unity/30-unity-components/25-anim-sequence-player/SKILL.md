@@ -84,11 +84,11 @@ AnimationEvent에 의존하지 않는다.
 ## 7. 파일 구조
 
 ```
-Runtime/Unity/Animation/
+Runtime/Unity/AnimSequence/
   AnimSequence.cs         # Serializable 데이터 (AnimSequenceData, AnimSequenceStep, AnimPlayCount)
   AnimSequencePlayer.cs   # MonoBehaviour 재생기 (Animator 기반)
 
-Editor/Animation/
+Editor/AnimSequence/
   AnimClipSelectorWindow.cs   # clip 선택 EditorWindow
   AnimSequenceStep_Drawer.cs  # AnimSequenceStep PropertyDrawer
 ```

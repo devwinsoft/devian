@@ -197,7 +197,7 @@ IEnumerator DelayedNotify()
 
 | 타입 | 경로 |
 |------|------|
-| Runtime | `com.devian.foundation/Runtime/Unity/Message/MessageSystem.cs` |
+| Runtime | `com.devian.foundation/Runtime/Unity/MessageSystem/MessageSystem.cs` |
 
 ---
 

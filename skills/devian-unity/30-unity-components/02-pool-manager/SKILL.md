@@ -369,13 +369,17 @@ com.devian.foundation/Runtime/Unity/
 │   └── UnityMainThread.cs     (공용 내부 헬퍼)
 └── Pool/
     ├── IPoolable.cs
-    ├── IPoolFactory.cs
     ├── PoolOptions.cs
     ├── IPool.cs
     ├── Pool.cs
     ├── PoolManager.cs
     ├── PoolTag.cs
-    └── PoolFactoryExtensions.cs
+    └── Factory/
+        ├── IPoolFactory.cs
+        ├── PoolFactoryExtensions.cs
+        ├── BundlePool.cs
+        ├── BundlePoolFactory.cs
+        └── InspectorPoolFactory.cs
 ```
 
 ### 수기 코드 정책 (Static UPM)
@@ -384,18 +388,21 @@ com.devian.foundation/Runtime/Unity/
 - 생성기는 `Generated/` 폴더만 처리하며, `Pool/` 폴더를 clean/generate하지 않음
 - Static UPM은 소스 복사 기반 (`framework-cs/upm/` → `UnityExample/Packages/`)
 
-### 파일 목록 (8개)
+### 파일 목록 (11개)
 
 | 파일 | 타입 | 네임스페이스 |
 |------|------|-------------|
 | `IPoolable.cs` | `IPoolable<T>` | `Devian` |
-| `IPoolFactory.cs` | `IPoolFactory` | `Devian` |
 | `PoolOptions.cs` | `PoolOptions` (struct) | `Devian` |
 | `IPool.cs` | `IPool` | `Devian` |
 | `Pool.cs` | `Pool<T>` | `Devian` |
 | `PoolManager.cs` | `PoolManager` (AutoSingleton) | `Devian` |
 | `PoolTag.cs` | `PoolTag` (MonoBehaviour) | `Devian` |
-| `PoolFactoryExtensions.cs` | `PoolFactoryExtensions` (static) | `Devian` |
+| `Factory/IPoolFactory.cs` | `IPoolFactory` | `Devian` |
+| `Factory/PoolFactoryExtensions.cs` | `PoolFactoryExtensions` (static) | `Devian` |
+| `Factory/BundlePool.cs` | `BundlePool` (static facade) | `Devian` |
+| `Factory/BundlePoolFactory.cs` | `BundlePoolFactory` (SimpleSingleton) | `Devian` |
+| `Factory/InspectorPoolFactory.cs` | `InspectorPoolFactory` (MonoBehaviour) | `Devian` |
 
 ---
 

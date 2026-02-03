@@ -28,7 +28,9 @@ Type: Component Specification
 ## 4. 파일 위치 (정본)
 
 ```
-com.devian.foundation/Runtime/Unity/PoolFactories/
+com.devian.foundation/Runtime/Unity/Pool/Factory/
+├── IPoolFactory.cs
+├── PoolFactoryExtensions.cs
 ├── InspectorPoolFactory.cs
 ├── BundlePoolFactory.cs
 └── BundlePool.cs

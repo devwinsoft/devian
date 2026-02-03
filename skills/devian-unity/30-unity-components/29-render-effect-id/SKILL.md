@@ -4,7 +4,7 @@
 MaterialEffectAsset을 참조하기 위한 string wrapper ID 타입
 
 ## 파일 위치 (SSOT)
-- Runtime: `com.devian.foundation/Runtime/Unity/Render/MATERIAL_EFFECT_ID.cs`
+- Runtime: `com.devian.foundation/Runtime/Unity/MaterialEffect/MATERIAL_EFFECT_ID.cs`
 - Editor Selector: `com.devian.foundation/Editor/AssetId/Generated/MATERIAL_EFFECT_ID.Editor.cs`
 
 ## String Wrapper 패턴
