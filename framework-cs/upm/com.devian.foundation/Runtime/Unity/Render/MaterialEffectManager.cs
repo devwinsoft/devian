@@ -8,9 +8,9 @@ namespace Devian
     /// <summary>
     /// MaterialEffectAsset을 AssetManager 캐시에 적재하는 CompoSingleton 매니저.
     /// Addressables key를 인스펙터에서 입력받아 로드한다.
-    /// BootstrapRoot.prefab에 붙여서 사용하면 Start()에서 자동 실행된다.
+    /// Bootstrap.prefab에 붙여서 사용하면 Start()에서 자동 실행된다.
     ///
-    /// CompoSingleton-based: BootstrapRoot prefab에 포함되어 부팅 시 자동 등록.
+    /// CompoSingleton-based: Bootstrap prefab에 포함되어 부팅 시 자동 등록.
     /// </summary>
     public sealed class MaterialEffectManager : CompoSingleton<MaterialEffectManager>
     {

@@ -19,6 +19,7 @@ public class SceneTest : BaseScene
 
     protected override void OnInitAwake()
     {
+        base.OnInitAwake();
         Debug.Log("[SceneTest::OnInitAwake]");
     }
 
@@ -28,9 +29,9 @@ public class SceneTest : BaseScene
         yield return null;
     }
 
-    IEnumerator Start()
+    public override IEnumerator OnStart()
     {
-        yield return TestBootstrap.Instance.Boot();
+        yield return base.OnStart();
 
         yield return DownloadManager.Instance.PatchProc(
             (patch) =>

@@ -9,15 +9,16 @@ namespace Devian
 {
     /// <summary>
     /// 씬 루트(또는 유일한 오브젝트)에 1개만 존재하도록 권장되는 씬 라이프사이클 훅.
-    /// SceneTransManager가 전환 시 OnExit → Load → OnEnter 순으로 호출한다.
+    /// SceneTransManager가 OnEnter/OnExit를 호출한다.
+    /// OnStart는 BaseScene.Start()에서 호출된다.
     /// </summary>
     public abstract class BaseScene : MonoBehaviour
     {
         /// <summary>
-        /// OnEnter()가 이미 호출되었는지 여부.
-        /// 중복 호출 방지에 사용된다.
+        /// Bootstrap 사용 여부. 기본 true.
+        /// false로 override하면 해당 씬에서는 부트 트리거를 스킵한다.
         /// </summary>
-        internal bool HasEntered { get; private set; }
+        protected virtual bool UseBootstrap => true;
 
         /// <summary>
         /// 씬 로드 시 Unity Awake()에서 항상 1회 호출되는 초기화 훅.
@@ -28,23 +29,39 @@ namespace Devian
         private void Awake()
         {
             OnInitAwake();
+
+            // UseBootstrap이고 Bootstrap이 아직 생성되지 않았으면 생성 트리거
+            if (UseBootstrap && !BaseBootstrap.IsCreated)
+            {
+                BaseBootstrap.CreateFromResources();
+            }
         }
 
         /// <summary>
-        /// OnEnter()가 호출되었음을 표시한다.
-        /// SceneTransManager 내부에서만 호출해야 한다.
+        /// Unity Start 코루틴. OnStart()를 호출한다.
         /// </summary>
-        internal void _MarkEntered()
+        private IEnumerator Start()
         {
-            HasEntered = true;
+            // BootProc 호출 (이미 부팅이면 즉시 종료)
+            if (UseBootstrap)
+            {
+                yield return BaseBootstrap.BootProc();
+            }
+
+            yield return OnStart();
         }
 
         /// <summary>
         /// 씬 진입 시 호출되는 초기화 코루틴.
-        /// SceneTransManager가 씬 로드 완료 후 또는 부팅 시 1회 호출한다.
-        /// 한 씬 인스턴스 당 1회만 실행된다 (중복 방지).
+        /// SceneTransManager가 씬 로드 완료 후 또는 부팅 시 호출한다.
         /// </summary>
         public abstract IEnumerator OnEnter();
+
+        /// <summary>
+        /// 씬 시작 시 호출되는 코루틴.
+        /// BaseScene.Start()에서 호출된다.
+        /// </summary>
+        public virtual IEnumerator OnStart() { yield break; }
 
         /// <summary>
         /// 씬 퇴장 시 호출되는 정리 코루틴.

@@ -529,7 +529,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Devian.Unity::Devian.MaterialEffectController
   _driverComponent: {fileID: 0}
-  _defaultEffectAsset: {fileID: 0}
+  _searchDriverInChildren: 0
 --- !u!4 &1554012041
 Transform:
   m_ObjectHideFlags: 0

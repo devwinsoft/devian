@@ -43,7 +43,7 @@ ParentSSOT: skills/devian-core/03-ssot/SKILL.md
 
 `com.devian.foundation`의 아래 폴더는 수기 코드로 유지하며, 생성기가 절대 clean/generate하지 않는다:
 - `Runtime/Unity/_Shared/` — UnityMainThread, UnityMainThreadDispatcher
-- `Runtime/Unity/Singletons/` — Singleton, SingletonRegistry, CompoSingleton, BootSingleton (v2)
+- `Runtime/Unity/Singletons/` — Singleton, SingletonRegistry, AutoSingleton, CompoSingleton
 - `Runtime/Unity/Pool/` — IPoolable, IPoolFactory, PoolManager, Pool
 - `Runtime/Unity/PoolFactories/` — InspectorPoolFactory, BundlePoolFactory
 - `Runtime/Unity/AssetManager/` — AssetManager, DownloadManager (bootstrap/download utilities)

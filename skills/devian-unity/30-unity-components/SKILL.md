@@ -15,7 +15,7 @@ Type: Index / Directory
 | ID | 컴포넌트 | 설명 | 스킬 |
 |----|----------|------|------|
 | 00 | UnityObjectDestruction | UnityEngine.Object.Destroy / DestroyImmediate 규약 | `00-unity-object-destruction/SKILL.md` |
-| 31 | Singleton v3 | 3종 싱글톤 (AutoSingleton 기본, CompoSingleton/BootSingleton 선택) + Registry SSOT | `31-singleton/SKILL.md` |
+| 31 | Singleton v3 | 2종 싱글톤 (AutoSingleton 기본, CompoSingleton 선택) + Registry SSOT | `31-singleton/SKILL.md` |
 | 02 | PoolManager | Type당 1풀 + prefab name 기반 Spawn + Factory 추상화 | `02-pool-manager/SKILL.md` |
 | 03 | MessageSystem | instanceId + key 기반 메시지/트리거 시스템 (timer 제외) | `03-message-system/SKILL.md` |
 | 04 | PoolFactories | InspectorPoolFactory, BundlePoolFactory | `04-pool-factories/SKILL.md` |

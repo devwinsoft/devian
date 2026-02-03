@@ -11,12 +11,12 @@ namespace Devian
 {
     /// <summary>
     /// Scene 전환 파이프라인을 단일화(직렬화)하는 싱글턴.
-    /// 전환 순서: FadeOut → beforeUnload → BaseScene.OnExit → Load → afterLoad → BaseScene.OnEnter → FadeIn
-    /// 부팅 시 첫 씬의 OnEnter()도 1회 보장한다.
+    /// 전환 순서: FadeOut → beforeUnload → OnExit → Load → afterLoad → BootProc → OnEnter → FadeIn
+    /// OnStart는 각 BaseScene.Start()에서 호출된다.
     ///
     /// 이 Manager는 페이드 UI를 직접 소유하지 않으며, FadeOutRequested/FadeInRequested 이벤트로 위임한다.
     ///
-    /// CompoSingleton-based: BootstrapRoot(부트 컨테이너)에 포함되어 등록된다.
+    /// CompoSingleton-based: Bootstrap(부트 컨테이너)에 포함되어 등록된다.
     /// </summary>
     public sealed class SceneTransManager : CompoSingleton<SceneTransManager>
     {
@@ -51,11 +51,11 @@ namespace Devian
         }
 
         /// <summary>
-        /// 부팅 시 첫 씬의 OnEnter()를 1회 보장한다 (LoadSceneAsync를 거치지 않는 케이스).
+        /// 부팅 시 첫 씬의 OnEnter()를 호출한다 (LoadSceneAsync를 거치지 않는 케이스).
+        /// OnStart는 BaseScene.Start()에서 호출된다.
         /// </summary>
         private IEnumerator Start()
         {
-            // 전환 중이면 bootstrap 하지 않음
             if (_isTransitioning)
                 yield break;
 
@@ -63,11 +63,10 @@ namespace Devian
             if (scene == null)
                 yield break;
 
-            // 이미 Enter 되었으면 스킵
-            if (scene.HasEntered)
-                yield break;
+            // BootProc 호출 (이미 부팅이면 즉시 종료)
+            yield return BaseBootstrap.BootProc();
 
-            scene._MarkEntered();
+            // OnEnter 호출
             yield return scene.OnEnter();
         }
 
@@ -137,19 +136,15 @@ namespace Devian
                 yield return afterLoad();
             }
 
-            // 6) Enter next scene (best-effort, 중복 방지)
+            // 6) Enter next scene
             var next = FindActiveBaseScene();
             if (next != null)
             {
-                if (!next.HasEntered)
-                {
-                    next._MarkEntered();
-                    yield return next.OnEnter();
-                }
-                else
-                {
-                    Log.Warn("SceneTransManager: OnEnter skipped (already entered).");
-                }
+                // BootProc 호출 (이미 부팅이면 즉시 종료)
+                yield return BaseBootstrap.BootProc();
+
+                // OnEnter 호출
+                yield return next.OnEnter();
             }
 
             // 7) FadeIn (이벤트 위임)

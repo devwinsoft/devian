@@ -7,12 +7,12 @@ Type: Component Specification
 ## 0. 목표
 
 - 개발자가 실수 없이 싱글톤을 사용하도록 **기본 AutoSingleton**을 제공한다.
-- 필요 시 **BootSingleton / CompoSingleton**으로 생성 책임(boot) 또는 배치 책임(component)을 명시한다.
+- 필요 시 **CompoSingleton**으로 배치 책임(component)을 명시한다.
 - 모든 싱글톤은 **단일 저장소(SingletonRegistry)**를 통해 통합 관리한다.
 
 ---
 
-## 1. 제공 타입 (3종)
+## 1. 제공 타입 (2종)
 
 ### AutoSingleton\<T\> (기본)
 
@@ -28,33 +28,13 @@ Type: Component Specification
 
 - 씬/프리팹에 컴포넌트로 붙여서 사용한다.
 - `Awake()`에서 Registry에 등록한다.
-- **우선순위 최고**: CompoSingleton이 등록되면 같은 타입의 Auto/Boot 인스턴스를 대체한다(Adopt).
-
-### BootSingletonBase (비제네릭 베이스)
-
-- `BootSingleton<T>`의 비제네릭 베이스 클래스다.
-- 부트 컨테이너 식별/탐색용 마커 베이스.
-- 제네릭 없이 `FindAnyObjectByType<BootSingletonBase>()`로 검색 가능하다.
-
-```csharp
-public abstract class BootSingletonBase : MonoBehaviour { }
-```
-
-### BootSingleton\<T\> (선택, Bootstrap 프리팹용 컴포넌트)
-
-- `BootstrapRoot.prefab`에 붙여서 사용하는 컴포넌트 베이스다.
-- `BootSingletonBase`를 상속한다.
-- `Awake()`에서 SingletonRegistry에 `Source=Boot`로 등록한다.
-- 우선순위: **Compo > Boot > Auto**
-- 동일 타입 Boot 중복은 **즉시 예외**(기존 규약 유지).
-- 씬에서 `CompoSingleton`으로 같은 타입이 등장하면 Boot를 Adopt(대체)할 수 있다.
-- **Adopt 시 BootstrapRoot GameObject 전체를 파괴하면 안 된다** (컴포넌트만 제거).
+- **우선순위 최고**: CompoSingleton이 등록되면 같은 타입의 Auto 인스턴스를 대체한다(Adopt).
 
 ---
 
 ## 2. 우선순위 규칙 (Hard Rule)
 
-같은 타입 T에 대해 **Compo > Boot > Auto**가 항상 승리한다.
+같은 타입 T에 대해 **Compo > Auto**가 항상 승리한다.
 
 - CompoSingleton이 늦게 로드되어도, 기존 AutoSingleton 인스턴스를 **대체(Adopt)**해야 한다.
 - CompoSingleton끼리 중복은 **즉시 실패(예외)**로 처리한다.
@@ -97,8 +77,7 @@ com.devian.foundation/Runtime/Unity/Singletons/
 ├── SingletonRegistry.cs    # SSOT 저장소
 ├── Singleton.cs            # 정적 파사드
 ├── AutoSingleton.cs        # 기본 싱글톤 (컴포넌트 베이스)
-├── CompoSingleton.cs       # 씬/프리팹 싱글톤 (컴포넌트 베이스)
-└── BootSingleton.cs        # Bootstrap 프리팹용 싱글톤 (컴포넌트 베이스)
+└── CompoSingleton.cs       # 씬/프리팹 싱글톤 (컴포넌트 베이스)
 ```
 
 ---
@@ -109,8 +88,7 @@ com.devian.foundation/Runtime/Unity/Singletons/
 public enum SingletonSource
 {
     Auto = 0,   // 자동 생성 (최저 우선순위)
-    Boot = 1,   // Bootstrap에서 등록
-    Compo = 2,  // 씬/프리팹 컴포넌트 (최고 우선순위)
+    Compo = 1,  // 씬/프리팹 컴포넌트 (최고 우선순위)
 }
 ```
 
@@ -136,10 +114,7 @@ private readonly struct Entry
 | 기존 | 신규 | 결과 |
 |------|------|------|
 | Auto | Compo | Adopt (기존 파괴 + Error 로그) |
-| Auto | Boot | Adopt (기존 파괴 + Warn 로그) |
-| Boot | Compo | Adopt (기존 파괴 + Error 로그) |
 | Compo | Compo | **즉시 예외** (중복 금지) |
-| Boot | Boot | **즉시 예외** (중복 금지) |
 | Auto | Auto | **즉시 예외** (중복 금지) |
 
 ### 파괴 정책
@@ -174,27 +149,6 @@ public class AudioManager : CompoSingleton<AudioManager>
 
 // 씬에 배치된 인스턴스가 정본이 됨
 // 만약 AutoSingleton으로 먼저 접근했어도 CompoSingleton이 대체함
-```
-
-### Bootstrap 프리팹에서 등록 (BootSingleton)
-
-```csharp
-// BootstrapRoot.prefab에 부착하는 컴포넌트
-public class NetworkManager : BootSingleton<NetworkManager>
-{
-    [SerializeField] private string _serverUrl;
-
-    protected override void Awake()
-    {
-        base.Awake(); // Registry 등록
-        // 초기화 로직
-    }
-}
-
-// 이후 접근
-var net = Singleton.Get<NetworkManager>();
-// 또는
-var net = NetworkManager.Instance;
 ```
 
 ---
