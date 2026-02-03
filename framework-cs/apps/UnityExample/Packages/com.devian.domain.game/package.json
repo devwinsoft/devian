@@ -1,7 +1,7 @@
 {
   "name": "com.devian.domain.game",
   "version": "0.1.0",
-  "displayName": "Devain Domain Game",
+  "displayName": "Devian Domain Game",
   "description": "Devian.Domain.Game runtime for Unity (source)",
   "unity": "2021.3",
   "author": {

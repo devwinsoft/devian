@@ -163,7 +163,7 @@ namespace Devian
 |------|------|
 | name | `com.devian.domain.{domainname}` (소문자) |
 | version | `0.1.0` (다른 com.devian.* 패키지와 동일) |
-| displayName | `Devain Domain {DomainName}` |
+| displayName | `Devian Domain {DomainName}` |
 | unity | `2021.3` |
 | dependencies | `com.devian.foundation: 0.1.0` (최소) |
 

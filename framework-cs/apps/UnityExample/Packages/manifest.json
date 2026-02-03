@@ -1,5 +1,7 @@
 {
   "dependencies": {
+    "com.github-glitchenzo.nugetforunity": "4.5.0",
+    "com.ivanmurzak.unity.mcp": "0.44.0",
     "com.unity.addressables": "2.7.6",
     "com.unity.ai.navigation": "2.0.9",
     "com.unity.collab-proxy": "2.10.2",
@@ -45,8 +47,7 @@
     "com.unity.modules.video": "1.0.0",
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
-    "com.unity.modules.xr": "1.0.0",
-    "com.ivanmurzak.unity.mcp": "0.44.0"
+    "com.unity.modules.xr": "1.0.0"
   },
   "scopedRegistries": [
     {
@@ -59,6 +60,13 @@
         "org.nuget.microsoft",
         "org.nuget.system",
         "org.nuget.r3"
+      ]
+    },
+    {
+      "name": "package.openupm.com (nuget for unity)",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "com.github-glitchenzo.nugetforunity"
       ]
     }
   ]

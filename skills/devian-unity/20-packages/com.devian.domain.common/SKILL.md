@@ -76,7 +76,7 @@ com.devian.domain.common/
 |------|-----|
 | name | `com.devian.domain.common` |
 | version | `0.1.0` (다른 com.devian.* 패키지와 동일) |
-| displayName | `Devain Domain Common` |
+| displayName | `Devian Domain Common` |
 | description | `Devian.Domain.Common runtime for Unity (source)` |
 | unity | `2021.3` |
 | author.name | `Devian` |

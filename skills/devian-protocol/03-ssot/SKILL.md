@@ -152,5 +152,6 @@ computedUpmName = "com.devian.protocol." + normalize(group)
 ## See Also
 
 - [Root SSOT](../../devian-core/03-ssot/SKILL.md) — 공통 용어/플레이스홀더/머지 규칙
+- [Package Metadata](../../devian-unity/04-package-metadata/SKILL.md) — UPM package.json 정책 (author.name, displayName 등)
 - [Protocol Policy](../01-policy/SKILL.md)
 - [Codegen Protocol](../40-codegen-protocol/SKILL.md)
