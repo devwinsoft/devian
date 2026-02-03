@@ -81,7 +81,7 @@ PROTOCOL 입력은 `{buildInputJson}`의 `protocols` 섹션(배열)이 정의한
 - staging: `{tempDir}/{ProtocolGroup}/ts/Generated/{ProtocolName}.g.ts`
 - final: `{tsConfig.generateDir}/devian-protocol-{protocolgroup}/Generated/{ProtocolName}.g.ts`
 - `index.ts`는 모듈 루트에 존재하되 수기/고정, 빌더가 생성/수정 금지
-- 패키지명: `@devian/network-{protocolgroup}` (기존 유지)
+- 패키지명: `@devian/protocol-{protocolgroup}` (기존 유지)
 
 > **생성물 namespace 고정 (Hard Rule):**
 > C# 생성물 namespace는 `Devian.Protocol.{ProtocolGroup}`으로 고정이며, 런타임 모듈 단일화와 무관하게 변경하지 않는다.
@@ -145,7 +145,7 @@ computedUpmName = "com.devian.protocol." + normalize(group)
   - `..\Devian.Domain.Common\Devian.Domain.Common.csproj`
 
 **TS PROTOCOL 패키지 의존성:**
-- `@devian/network-{protocolgroup}`는 `@devian/core` + `@devian/module-common`을 의존한다.
+- `@devian/protocol-{protocolgroup}`는 `@devian/core` + `@devian/module-common`을 의존한다.
 
 ---
 

@@ -85,9 +85,9 @@ UnityExample 복사본(직접 수정 금지):
 
 ## DoD (Hard Gate)
 
-- [ ] `Devian.Unity.Network.asmdef`가 repo에 존재하지 않는다.
-- [ ] `NetWsClientBehaviourBase.cs`가 `Devian.Unity` 런타임 어셈블리에 포함된다.
-- [ ] 샘플 asmdef에서 `Devian.Unity.Network` 참조가 0건이다.
+- [x] `Devian.Unity.Network.asmdef`가 repo에 존재하지 않는다.
+- [x] `NetWsClientBehaviourBase.cs`가 `Devian.Unity` 런타임 어셈블리에 포함된다.
+- [x] 샘플 asmdef에서 `Devian.Unity.Network` 참조가 0건이다.
 
 ---
 

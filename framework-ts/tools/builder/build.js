@@ -9,7 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 // Generators
-import { generateCSharpProtocol } from './generators/protocol-cs.js';
+import { generateCSharpProtocol, generateCSharpProtocolHandlers, generateCSharpProtocolGroupWsClient } from './generators/protocol-cs.js';
 import { generateTypeScriptProtocol, generateServerRuntime, generateClientRuntime } from './generators/protocol-ts.js';
 import { generateCSharpContract, generateCSharpContractBody } from './generators/contract-cs.js';
 import { generateTypeScriptContract, generateTypeScriptContractBody } from './generators/contract-ts.js';
@@ -1074,7 +1074,8 @@ class DevianToolBuilder {
 
         // Staging paths (Generated-only: SSOT skills/devian-protocol/03-ssot/SKILL.md)
         const stagingCsGenerated = path.join(this.tempDir, csProjectName, 'cs', 'Generated');
-        const stagingTsGenerated = path.join(this.tempDir, groupName, 'ts', 'Generated');
+        // Protocol TS staging: {tempDir}/protocol/{groupName}/ts/Generated (Domain과 분리)
+        const stagingTsGenerated = path.join(this.tempDir, 'protocol', groupName, 'ts', 'Generated');
 
         fs.mkdirSync(stagingCsGenerated, { recursive: true });
         fs.mkdirSync(stagingTsGenerated, { recursive: true });
@@ -1121,6 +1122,11 @@ class DevianToolBuilder {
             const csCode = generateCSharpProtocol(spec, protocolName, groupName);
             fs.writeFileSync(path.join(stagingCsGenerated, `${protocolName}.g.cs`), csCode);
 
+            // C# Handlers (Generated-only)
+            const handlersCode = generateCSharpProtocolHandlers(spec, protocolName, groupName);
+            fs.writeFileSync(path.join(stagingCsGenerated, `${protocolName}_Handlers.g.cs`), handlersCode);
+            console.log(`    [Handlers] Generated/${protocolName}_Handlers.g.cs`);
+
             // TypeScript Protocol (Generated-only)
             const tsCode = generateTypeScriptProtocol(spec, protocolName, groupName);
             fs.writeFileSync(path.join(stagingTsGenerated, `${protocolName}.g.ts`), tsCode);
@@ -1143,6 +1149,13 @@ class DevianToolBuilder {
         if (hasClientRuntime) {
             fs.writeFileSync(path.join(stagingTsGenerated, 'ClientRuntime.g.ts'), clientRuntimeCode);
             console.log(`    [ClientRuntime] Generated/ClientRuntime.g.ts`);
+        }
+
+        // Generate C# WsClient for protocol group (if any inbound or outbound protocols exist)
+        const wsClientCode = generateCSharpProtocolGroupWsClient(groupName, protocolInfos);
+        if (wsClientCode) {
+            fs.writeFileSync(path.join(stagingCsGenerated, `${groupName}WsClient.g.cs`), wsClientCode);
+            console.log(`    [WsClient] Generated/${groupName}WsClient.g.cs`);
         }
 
         // NOTE: index.ts 생성 제거 (수기/고정 파일, 빌더가 생성/수정 금지)
@@ -1266,7 +1279,8 @@ class DevianToolBuilder {
 
         // Staging paths (Generated-only: SSOT skills/devian-protocol/03-ssot/SKILL.md)
         const stagingCsGenerated = path.join(this.tempDir, csProjectName, 'cs', 'Generated');
-        const stagingTsGenerated = path.join(this.tempDir, groupName, 'ts', 'Generated');
+        // Protocol TS staging: {tempDir}/protocol/{groupName}/ts/Generated (Domain과 분리)
+        const stagingTsGenerated = path.join(this.tempDir, 'protocol', groupName, 'ts', 'Generated');
 
         // ========== C# 반영 (Generated-only) ==========
         if (this.csGenerateDir) {
@@ -2065,7 +2079,7 @@ export * from './features';
         }
 
         const packageJson = {
-            name: `@devian/network-${groupName.toLowerCase()}`,
+            name: `@devian/protocol-${groupName.toLowerCase()}`,
             version: '10.0.0',
             type: 'module',
             main: 'index.ts',

@@ -43,8 +43,16 @@ MUST NOT
 
 ## Interop Notes
 
-- “Protocol layer(sender/proxy)”와 “Network layer(transport)”의 경계는 Reference에 정의된 계약을 따른다.
+- "Protocol layer(sender/proxy)"와 "Network layer(transport)"의 경계는 Reference에 정의된 계약을 따른다.
 - 동일 프로젝트 내에서 여러 프로토콜을 사용할 경우, `{buildInputJson}`의 targetDirs 설계로 산출 충돌을 회피해야 한다.
+
+**WebGL 폴링 계약 (Hard Rule):**
+
+WebGL(`UNITY_WEBGL && !UNITY_EDITOR`)에서 WebSocket Transport는 **콜백(SendMessage) 기반이 아니라 "폴링 기반 브릿지 계약"**을 따른다.
+
+- 계약/메모리 규칙 정본:
+  - [76-webgl-ws-polling-bridge](../76-webgl-ws-polling-bridge/SKILL.md)
+  - [77-webgl-jslib-memory-rules](../77-webgl-jslib-memory-rules/SKILL.md)
 
 ---
 

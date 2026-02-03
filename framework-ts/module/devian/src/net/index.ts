@@ -2,7 +2,7 @@
  * Devian Network Module
  * 
  * Provides common networking infrastructure for Devian network servers and clients.
- * Group-specific runtime is provided by @devian/network-{group} packages.
+ * Group-specific runtime is provided by @devian/protocol-{group} packages.
  */
 
 // Shared utilities

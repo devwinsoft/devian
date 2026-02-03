@@ -1,30 +1,69 @@
 #nullable enable
 using System;
+using System.Buffers;
+using System.Collections.Generic;
 using UnityEngine;
-using Devian;
 
 namespace Devian
 {
     /// <summary>
     /// Base class for WebSocket client MonoBehaviour.
-    /// 
+    ///
+    /// NOTE: The standard/recommended approach for network client management is:
+    /// 1. Create INetTickable clients (e.g., NetWsClient) in your app code
+    /// 2. Register them with a NetTickRunner for unified tick management
+    /// 3. Handle protocol binding in your app layer, not in this behaviour
+    ///
+    /// This MonoBehaviour is provided as a convenience/optional pattern for cases where
+    /// you want a self-contained WebSocket client component. It is NOT required for
+    /// using the network system.
+    ///
     /// Design principles:
     /// - No policy fields (url storage, connectOnStart, autoReconnect are NOT provided)
     /// - No "connected" callback (project-specific concept)
-    /// - Provides minimal engine: Connect/Close/TrySend/Update
+    /// - Provides minimal engine: Connect/Close/TrySend/Tick
     /// - Extension points via virtual hooks
-    /// 
+    /// - Main-thread safety: All inbound dispatch happens on Unity main thread
+    ///
     /// Subclasses implement CreateRuntime() and optionally override hooks.
     /// </summary>
     public abstract class NetWsClientBehaviourBase : MonoBehaviour
     {
         private NetClient? _core;
         private NetWsClient? _client;
+        private INetRuntime? _innerRuntime;
+
+        // Inbound queue for main-thread dispatch
+        private readonly object _inboundLock = new();
+        private readonly Queue<InboundItem> _inboundQueue = new();
+        private readonly Queue<Action> _mainThreadActions = new();
+        private bool _overflowWarned;
 
         /// <summary>
         /// Returns true if the WebSocket is connected.
         /// </summary>
         public bool IsConnected => _client?.IsOpen ?? false;
+
+        // ---------- Virtual options ----------
+
+        /// <summary>
+        /// If true, inbound messages are queued and dispatched on main thread in Update().
+        /// If false, inbound messages are dispatched immediately on receive thread (unsafe for Unity API).
+        /// Default: true (safe).
+        /// </summary>
+        protected virtual bool DispatchInboundOnMainThread => true;
+
+        /// <summary>
+        /// Maximum number of inbound items in the queue.
+        /// Excess items are dropped and OnInboundQueueOverflow is called once.
+        /// </summary>
+        protected virtual int MaxInboundQueueItems => 1024;
+
+        /// <summary>
+        /// Get sub-protocols to use for the WebSocket connection.
+        /// Override to provide project-specific sub-protocols.
+        /// </summary>
+        protected virtual string[]? GetSubProtocols(Uri uri) => null;
 
         // ---------- Public API (sync, no callbacks) ----------
 
@@ -54,23 +93,47 @@ namespace Devian
                 return;
             }
 
-            // 4. Notify hook
+            // 4. Get sub-protocols
+            var subProtocols = GetSubProtocols(uri);
+
+            // 5. Notify hooks
             OnConnectRequested(uri);
+            OnConnecting(uri, subProtocols);
 
-            // 5. Create runtime and core
-            var runtime = CreateRuntime();
+            // 6. Create runtime (with optional main-thread wrapper)
+            _innerRuntime = CreateRuntime();
+            INetRuntime runtime = _innerRuntime;
+
+            if (DispatchInboundOnMainThread)
+            {
+                runtime = new MainThreadDispatchRuntime(this);
+            }
+
+            // 7. Create core
             _core = new NetClient(runtime);
-            _core.OnParseError = (sid, ex) => OnParseError(sid, ex);
-            _core.OnUnhandled = (sid, op, payload) => OnUnhandledFrame(sid, op, payload);
 
-            // 6. Create client
+            if (DispatchInboundOnMainThread)
+            {
+                // Route parse errors to main thread
+                _core.OnParseError = (sid, ex) => EnqueueMainThreadAction(() => OnParseError(sid, ex));
+                // OnUnhandled is handled in DrainInboundQueue, so leave it null
+                _core.OnUnhandled = null;
+            }
+            else
+            {
+                // Direct dispatch (unsafe for Unity API calls in handlers)
+                _core.OnParseError = (sid, ex) => OnParseError(sid, ex);
+                _core.OnUnhandled = (sid, op, payload) => OnUnhandledFrame(sid, op, payload);
+            }
+
+            // 8. Create client
             _client = CreateClient(uri, _core);
             HookClientEvents(_client);
 
-            // 7. Attempt connection
+            // 9. Attempt connection
             try
             {
-                _client.Connect(uri.ToString());
+                _client.Connect(uri.ToString(), subProtocols);
             }
             catch (Exception ex)
             {
@@ -166,6 +229,12 @@ namespace Devian
         protected virtual void OnConnectRequested(Uri uri) { }
 
         /// <summary>
+        /// Called when connection is about to be attempted (after OnConnectRequested).
+        /// Useful for UI feedback showing connection in progress.
+        /// </summary>
+        protected virtual void OnConnecting(Uri uri, string[]? subProtocols) { }
+
+        /// <summary>
         /// Called when connection attempt fails (URL parse error or Connect exception).
         /// </summary>
         protected virtual void OnConnectFailed(string rawUrl, Exception ex) { }
@@ -194,6 +263,23 @@ namespace Devian
         /// Called when an unhandled frame (unknown opcode) is received.
         /// </summary>
         protected virtual void OnUnhandledFrame(int sessionId, int opcode, ReadOnlySpan<byte> payload) { }
+
+        /// <summary>
+        /// Called when inbound queue overflows (only once per overflow condition).
+        /// Override to handle backpressure (e.g., close connection).
+        /// </summary>
+        protected virtual void OnInboundQueueOverflow(int queueSize, int maxSize)
+        {
+            Debug.LogWarning($"[NetWsClientBehaviourBase] Inbound queue overflow: {queueSize}/{maxSize} items. New messages will be dropped.");
+        }
+
+        /// <summary>
+        /// Called when an exception occurs during inbound message dispatch.
+        /// </summary>
+        protected virtual void OnDispatchError(int sessionId, int opcode, Exception ex)
+        {
+            Debug.LogError($"[NetWsClientBehaviourBase] Dispatch error for opcode {opcode}: {ex}");
+        }
 
         /// <summary>
         /// Create NetWsClient instance. Override for custom configuration.
@@ -245,13 +331,143 @@ namespace Devian
 
         protected virtual void Update()
         {
-            // Flush dispatch queue on main thread
-            _client?.Update();
+            // 1. Flush transport dispatch queue on main thread
+            _client?.Tick();
+
+            // 2. Process main-thread actions (parse errors, etc.)
+            DrainMainThreadActions();
+
+            // 3. Process inbound queue (if main-thread dispatch is enabled)
+            if (DispatchInboundOnMainThread)
+            {
+                DrainInboundQueue();
+            }
         }
 
         protected virtual void OnDestroy()
         {
             DisposeClient();
+        }
+
+        // ---------- Main-thread dispatch infrastructure ----------
+
+        private void EnqueueMainThreadAction(Action action)
+        {
+            lock (_inboundLock)
+            {
+                _mainThreadActions.Enqueue(action);
+            }
+        }
+
+        private void DrainMainThreadActions()
+        {
+            while (true)
+            {
+                Action? action;
+                lock (_inboundLock)
+                {
+                    if (_mainThreadActions.Count == 0)
+                        break;
+                    action = _mainThreadActions.Dequeue();
+                }
+
+                try
+                {
+                    action?.Invoke();
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[NetWsClientBehaviourBase] Main thread action error: {ex}");
+                }
+            }
+        }
+
+        private void EnqueueInbound(int sessionId, int opcode, ReadOnlySpan<byte> payload)
+        {
+            var length = payload.Length;
+            var buffer = ArrayPool<byte>.Shared.Rent(length);
+            payload.CopyTo(buffer.AsSpan(0, length));
+
+            lock (_inboundLock)
+            {
+                if (_inboundQueue.Count >= MaxInboundQueueItems)
+                {
+                    // Drop the message and return buffer
+                    ArrayPool<byte>.Shared.Return(buffer);
+
+                    if (!_overflowWarned)
+                    {
+                        _overflowWarned = true;
+                        var size = _inboundQueue.Count;
+                        var max = MaxInboundQueueItems;
+                        // Schedule overflow notification on main thread
+                        _mainThreadActions.Enqueue(() => OnInboundQueueOverflow(size, max));
+                    }
+                    return;
+                }
+
+                _inboundQueue.Enqueue(new InboundItem
+                {
+                    SessionId = sessionId,
+                    Opcode = opcode,
+                    Buffer = buffer,
+                    Length = length
+                });
+            }
+        }
+
+        private void DrainInboundQueue()
+        {
+            if (_innerRuntime == null)
+                return;
+
+            while (true)
+            {
+                InboundItem item;
+                lock (_inboundLock)
+                {
+                    if (_inboundQueue.Count == 0)
+                    {
+                        // Reset overflow flag when queue is empty
+                        _overflowWarned = false;
+                        break;
+                    }
+                    item = _inboundQueue.Dequeue();
+                }
+
+                try
+                {
+                    var payload = item.Buffer.AsSpan(0, item.Length);
+                    var handled = _innerRuntime.TryDispatchInbound(item.SessionId, item.Opcode, payload);
+
+                    if (!handled)
+                    {
+                        OnUnhandledFrame(item.SessionId, item.Opcode, payload);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    OnDispatchError(item.SessionId, item.Opcode, ex);
+                }
+                finally
+                {
+                    ArrayPool<byte>.Shared.Return(item.Buffer);
+                }
+            }
+        }
+
+        private void ClearInboundQueue()
+        {
+            lock (_inboundLock)
+            {
+                while (_inboundQueue.Count > 0)
+                {
+                    var item = _inboundQueue.Dequeue();
+                    ArrayPool<byte>.Shared.Return(item.Buffer);
+                }
+                _mainThreadActions.Clear();
+                _overflowWarned = false;
+            }
         }
 
         // ---------- Internal helpers ----------
@@ -276,6 +492,9 @@ namespace Devian
 
         private void DisposeClient()
         {
+            // Clear inbound queue first (return ArrayPool buffers)
+            ClearInboundQueue();
+
             if (_client != null)
             {
                 try
@@ -294,6 +513,40 @@ namespace Devian
             }
 
             _core = null;
+            _innerRuntime = null;
+        }
+
+        // ---------- Nested types ----------
+
+        private struct InboundItem
+        {
+            public int SessionId;
+            public int Opcode;
+            public byte[] Buffer;
+            public int Length;
+        }
+
+        /// <summary>
+        /// INetRuntime wrapper that queues inbound messages for main-thread dispatch.
+        /// </summary>
+        private sealed class MainThreadDispatchRuntime : INetRuntime
+        {
+            private readonly NetWsClientBehaviourBase _behaviour;
+
+            public MainThreadDispatchRuntime(NetWsClientBehaviourBase behaviour)
+            {
+                _behaviour = behaviour;
+            }
+
+            public bool TryDispatchInbound(int sessionId, int opcode, ReadOnlySpan<byte> payload)
+            {
+                // Queue for main-thread dispatch
+                _behaviour.EnqueueInbound(sessionId, opcode, payload);
+
+                // Always return true to prevent NetClient.OnUnhandled from being called on receive thread
+                // Actual unhandled detection happens in DrainInboundQueue on main thread
+                return true;
+            }
         }
     }
 }

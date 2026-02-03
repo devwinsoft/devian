@@ -14,14 +14,15 @@ namespace Devian
 {
     /// <summary>
     /// WebSocket network client with sync public API.
-    /// 
+    ///
     /// Platform behavior:
     /// - Editor/Standalone: background threads with ClientWebSocket
-    /// - WebGL: browser WebSocket via JS interop, all on main thread
-    /// 
-    /// Events are dispatched via Update() for Unity main thread compatibility.
+    /// - WebGL: browser WebSocket via JS interop (polling-based), all on main thread
+    ///
+    /// Events are dispatched via Tick() for Unity main thread compatibility.
+    /// Update() is an alias for Tick() (legacy compatibility).
     /// </summary>
-    public sealed class NetWsClient : IDisposable
+    public sealed class NetWsClient : INetTickable, IDisposable
     {
         private readonly NetClient _core;
         private readonly int _sessionId;
@@ -33,8 +34,9 @@ namespace Devian
         private readonly Queue<Action> _dispatchQueue = new();
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-        // ========== WebGL Implementation ==========
+        // ========== WebGL Implementation (Polling-based) ==========
 
+        // --- DllImport declarations ---
         [DllImport("__Internal")]
         private static extern int WS_Connect(string url, string subProtocolsJson);
 
@@ -47,8 +49,30 @@ namespace Devian
         [DllImport("__Internal")]
         private static extern void WS_Close(int socketId, int code, string reason);
 
+        // Polling
         [DllImport("__Internal")]
-        private static extern void WS_FreeBuffer(int ptr);
+        private static extern int WS_PollEvent(
+            int socketId,
+            out int eventType,
+            out int code,
+            out IntPtr dataPtr,
+            out int dataLen,
+            out IntPtr messagePtr
+        );
+
+        // Memory
+        [DllImport("__Internal")]
+        private static extern void WS_FreeBuffer(IntPtr ptr);
+
+        [DllImport("__Internal")]
+        private static extern void WS_FreeString(IntPtr ptr);
+
+        // --- Event type constants (must match jslib) ---
+        private const int EVT_OPEN = 1;
+        private const int EVT_CLOSE = 2;
+        private const int EVT_ERROR = 3;
+        private const int EVT_MESSAGE = 4;
+        private const int WEBGL_MAX_EVENTS_PER_TICK = 64;
 
         private int _socketId = -1;
 
@@ -85,6 +109,7 @@ namespace Devian
 
         /// <summary>
         /// Connect to WebSocket server (WebGL: async via browser).
+        /// OnOpen will be dispatched via Tick() when connection is established.
         /// </summary>
         /// <param name="url">WebSocket URL (wss:// required for WebGL).</param>
         /// <param name="subProtocols">Optional sub-protocols.</param>
@@ -95,9 +120,6 @@ namespace Devian
 
             _running = true;
 
-            // Ensure driver singleton exists
-            var driver = WebGLWsDriver.Instance;
-
             // Convert subProtocols to JSON
             var subProtocolsJson = "";
             if (subProtocols != null && subProtocols.Length > 0)
@@ -105,11 +127,9 @@ namespace Devian
                 subProtocolsJson = "[\"" + string.Join("\",\"", subProtocols) + "\"]";
             }
 
-            // Call JS to connect
+            // Call JS to connect (polling-based: no driver registration)
             _socketId = WS_Connect(url, subProtocolsJson);
-
-            // Register with driver for callbacks
-            driver.Register(_socketId, this);
+            // OnOpen will be received via WS_PollEvent in Tick()
         }
 
         /// <summary>
@@ -120,7 +140,7 @@ namespace Devian
             if (!_running || _socketId < 0) return;
 
             WS_Close(_socketId, 1000, "Normal Closure");
-            // OnClose will be called from JS callback
+            // OnClose will be received via WS_PollEvent in Tick()
         }
 
         /// <summary>
@@ -153,10 +173,87 @@ namespace Devian
         }
 
         /// <summary>
-        /// Process dispatch queue on the calling thread.
+        /// Standard pump function: polls JS events and drains dispatch queue.
         /// Call this from Unity's Update() for main thread event handling.
         /// </summary>
-        public void Update()
+        public void Tick()
+        {
+            if (!_running || _socketId < 0)
+            {
+                DrainDispatchQueue();
+                return;
+            }
+
+            // 1) Poll events from JS
+            for (var i = 0; i < WEBGL_MAX_EVENTS_PER_TICK; i++)
+            {
+                int eventType, code, dataLen;
+                IntPtr dataPtr, messagePtr;
+
+                var has = WS_PollEvent(_socketId, out eventType, out code, out dataPtr, out dataLen, out messagePtr);
+                if (has == 0) break;
+
+                switch (eventType)
+                {
+                    case EVT_OPEN:
+                        SafeDispatch(() => OnOpen?.Invoke());
+                        break;
+
+                    case EVT_CLOSE:
+                        {
+                            var reason = ReadAndFreeString(messagePtr);
+                            var closeCode = (ushort)code;
+                            SafeDispatch(() => OnClose?.Invoke(closeCode, reason));
+                            // Local state cleanup (socketId invalid after close)
+                            _running = false;
+                            _socketId = -1;
+                        }
+                        break;
+
+                    case EVT_ERROR:
+                        {
+                            var msg = ReadAndFreeString(messagePtr);
+                            SafeDispatch(() => OnError?.Invoke(new Exception(msg)));
+                        }
+                        break;
+
+                    case EVT_MESSAGE:
+                        HandlePolledMessage(dataPtr, dataLen);
+                        break;
+                }
+            }
+
+            // 2) Drain dispatch queue
+            DrainDispatchQueue();
+        }
+
+        /// <summary>
+        /// Legacy alias for Tick(). Prefer Tick() for new code.
+        /// </summary>
+        public void Update() => Tick();
+
+        /// <inheritdoc />
+        public void Dispose()
+        {
+            if (_socketId >= 0)
+            {
+                try { Close(); } catch { /* ignore */ }
+                _socketId = -1;
+            }
+            _running = false;
+        }
+
+        // ========== Internal helpers ==========
+
+        private void SafeDispatch(Action action)
+        {
+            lock (_dispatchLock)
+            {
+                _dispatchQueue.Enqueue(action);
+            }
+        }
+
+        private void DrainDispatchQueue()
         {
             while (true)
             {
@@ -178,67 +275,36 @@ namespace Devian
             }
         }
 
-        /// <inheritdoc />
-        public void Dispose()
+        private string ReadAndFreeString(IntPtr ptr)
         {
-            if (_socketId >= 0)
+            if (ptr == IntPtr.Zero) return "";
+            var str = Marshal.PtrToStringUTF8(ptr) ?? "";
+            WS_FreeString(ptr);
+            return str;
+        }
+
+        private void HandlePolledMessage(IntPtr dataPtr, int dataLen)
+        {
+            if (dataPtr == IntPtr.Zero || dataLen <= 0)
             {
-                try { Close(); } catch { /* ignore */ }
-                WebGLWsDriver.Instance.Unregister(_socketId);
-                _socketId = -1;
+                if (dataPtr != IntPtr.Zero) WS_FreeBuffer(dataPtr);
+                return;
             }
-            _running = false;
-        }
-
-        // ========== Internal: Called by WebGLWsDriver ==========
-
-        internal void HandleJsOpen()
-        {
-            SafeDispatch(() => OnOpen?.Invoke());
-        }
-
-        internal void HandleJsClose(ushort code, string reason)
-        {
-            _running = false;
-            if (_socketId >= 0)
-            {
-                WebGLWsDriver.Instance.Unregister(_socketId);
-                _socketId = -1;
-            }
-            SafeDispatch(() => OnClose?.Invoke(code, reason));
-        }
-
-        internal void HandleJsMessagePtr(int ptr, int len)
-        {
-            if (ptr == 0 || len <= 0) return;
 
             byte[]? rented = null;
             try
             {
-                rented = ArrayPool<byte>.Shared.Rent(len);
-                Marshal.Copy((IntPtr)ptr, rented, 0, len);
+                rented = ArrayPool<byte>.Shared.Rent(dataLen);
+                Marshal.Copy(dataPtr, rented, 0, dataLen);
 
                 // Pass to core (Span-based, no storage)
-                _core.OnFrame(_sessionId, rented.AsSpan(0, len));
+                _core.OnFrame(_sessionId, rented.AsSpan(0, dataLen));
             }
             finally
             {
                 // Free JS malloc buffer
-                WS_FreeBuffer(ptr);
+                WS_FreeBuffer(dataPtr);
                 if (rented != null) ArrayPool<byte>.Shared.Return(rented);
-            }
-        }
-
-        internal void HandleJsError(string message)
-        {
-            SafeDispatch(() => OnError?.Invoke(new Exception(message)));
-        }
-
-        private void SafeDispatch(Action action)
-        {
-            lock (_dispatchLock)
-            {
-                _dispatchQueue.Enqueue(action);
             }
         }
 
@@ -374,10 +440,10 @@ namespace Devian
         }
 
         /// <summary>
-        /// Process dispatch queue on the calling thread.
+        /// Standard pump function: drains the dispatch queue.
         /// Call this from Unity's Update() for main thread event handling.
         /// </summary>
-        public void Update()
+        public void Tick()
         {
             while (true)
             {
@@ -398,6 +464,11 @@ namespace Devian
                 }
             }
         }
+
+        /// <summary>
+        /// Legacy alias for Tick(). Prefer Tick() for new code.
+        /// </summary>
+        public void Update() => Tick();
 
         /// <inheritdoc />
         public void Dispose()

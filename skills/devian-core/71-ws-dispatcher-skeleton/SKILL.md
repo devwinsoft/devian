@@ -34,6 +34,7 @@ MUST
 
 - opcode/tag 정책(SSOT)의 결정성을 위반하지 않는다
 - Unknown opcode는 무시하지 말고 명확한 에러/로그 경로를 가진다
+- **Unity 환경에서는 유저 핸들러(Stub/Handlers) 호출이 항상 `Tick()` 호출 스레드(= 메인 스레드)에서만 발생해야 한다. (수신 스레드/JS 콜백에서 직접 호출 금지)**
 
 MUST NOT
 

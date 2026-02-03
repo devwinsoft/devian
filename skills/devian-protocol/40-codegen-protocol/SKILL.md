@@ -99,10 +99,51 @@ Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴�
 - staging: `{tempDir}/{ProtocolGroup}/ts/Generated/{ProtocolName}.g.ts`
 - final: `{tsConfig.generateDir}/devian-protocol-{protocolgroup}/Generated/{ProtocolName}.g.ts`
 - `index.ts`는 모듈 루트에 존재하되 수기/고정, 빌더가 생성/수정 금지
-- 패키지명: `@devian/network-{protocolgroup}`
+- 패키지명: `@devian/protocol-{protocolgroup}`
 
 > **생성물 namespace 고정 (Hard Rule):**
 > C# 생성물 namespace는 `Devian.Protocol.{ProtocolGroup}`으로 고정이며, 런타임 모듈 단일화와 무관하게 변경하지 않는다.
+
+---
+
+## C# Handlers 생성 (Hard Rule)
+
+Stub abstract 메서드를 전부 구현해야 하는 부담을 제거하기 위해, Handlers 클래스를 자동 생성한다.
+
+**생성 파일:**
+- staging: `{tempDir}/Devian.Protocol.{ProtocolGroup}/cs/Generated/{ProtocolName}_Handlers.g.cs`
+- final: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/Generated/{ProtocolName}_Handlers.g.cs`
+
+**namespace 고정:**
+- `Devian.Protocol.{ProtocolGroup}` (변경 금지)
+
+**생성 형태:**
+```csharp
+// {ProtocolName}_Handlers.g.cs
+namespace Devian.Protocol.{ProtocolGroup}
+{
+    public partial class {ProtocolName}_Handlers : {ProtocolName}.Stub
+    {
+        protected override void OnFoo({ProtocolName}.EnvelopeMeta meta, {ProtocolName}.Foo message)
+        {
+            OnFooImpl(meta, message);
+        }
+        partial void OnFooImpl({ProtocolName}.EnvelopeMeta meta, {ProtocolName}.Foo message);
+
+        // ... 모든 메시지에 대해 동일 패턴
+    }
+}
+```
+
+**핵심 규칙:**
+- `*2C_Handlers : *2C.Stub` 형태로 상속
+- override는 생성 코드가 수행
+- 실제 사용자 구현은 `partial void On{Message}Impl(...)` 로 위임
+- partial 미구현 시 no-op (호출 제거)로 간주
+
+**빌더 touch 범위 정책 유지:**
+- Protocol UPM에서 빌더가 손대는 건 `Runtime/Generated/**` 뿐
+- `_Handlers.g.cs`는 `Generated/**` 안에 생성되므로 정책 위반 아님
 
 ---
 
@@ -156,7 +197,7 @@ Unity 환경에서의 호환성을 위해 다음 규칙을 강제한다.
 - 각 생성물(`{ProtocolName}.g.cs`)은 `using Devian;`을 포함해야 한다. (namespace는 Devian 단일)
 
 **TS PROTOCOL 패키지 의존성:**
-- `@devian/network-{protocolgroup}`는 `@devian/core` + `@devian/module-common`을 의존한다.
+- `@devian/protocol-{protocolgroup}`는 `@devian/core` + `@devian/module-common`을 의존한다.
 
 **Unity UPM:**
 - Protocol용 `.asmdef` 파일의 `references`에 `Devian.Domain.Common` 포함 필수
@@ -196,7 +237,7 @@ export { createClientRuntime } from './Generated/ClientRuntime.g';
 
 **사용법 (권장):**
 ```typescript
-import { C2Game, Game2C, createClientRuntime } from '@devian/network-game';
+import { C2Game, Game2C, createClientRuntime } from '@devian/protocol-game';
 
 // 타입 사용
 const req: C2Game.LoginRequest = { ... };
@@ -240,7 +281,7 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 - 빌드 시 덮어쓰기됨
 
 **생성 내용:**
-- `name`: `@devian/network-{group}`
+- `name`: `@devian/protocol-{group}`
 - `exports`: `.` + Runtime 존재 시 `./server-runtime`, `./client-runtime`
 - `dependencies`: `@devian/core`
 

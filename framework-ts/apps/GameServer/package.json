@@ -9,7 +9,7 @@
   "dependencies": {
     "ws": "^8.14.0",
     "@devian/core": "10.0.0",
-    "@devian/network-game": "10.0.0"
+    "@devian/protocol-game": "10.0.0"
   },
   "devDependencies": {
     "@types/ws": "^8.5.0",

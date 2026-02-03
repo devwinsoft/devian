@@ -38,7 +38,7 @@ Devian v10 프로젝트는 DATA DomainKey로 `Common`을 **반드시** 포함한
 - `@devian/module-{domainkey}`는 `@devian/core`만 의존한다.
 
 **TS PROTOCOL 패키지 의존성:**
-- `@devian/network-{protocolgroup}`는 `@devian/core` + `@devian/module-common`을 의존한다.
+- `@devian/protocol-{protocolgroup}`는 `@devian/core` + `@devian/module-common`을 의존한다.
 
 참조 방식(정책):
 

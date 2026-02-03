@@ -11,7 +11,7 @@
 
 import WebSocket from 'ws';
 import { NetworkClient, defaultCodec as jsonCodec } from '@devian/core';
-import { createClientRuntime } from '@devian/network-game/client-runtime';
+import { createClientRuntime } from '@devian/protocol-game/client-runtime';
 
 // Environment variables
 const WS_URL = process.env.WS_URL ?? 'ws://localhost:8080';

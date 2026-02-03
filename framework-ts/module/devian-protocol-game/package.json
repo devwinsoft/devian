@@ -1,5 +1,5 @@
 {
-  "name": "@devian/network-game",
+  "name": "@devian/protocol-game",
   "version": "10.0.0",
   "type": "module",
   "main": "index.ts",

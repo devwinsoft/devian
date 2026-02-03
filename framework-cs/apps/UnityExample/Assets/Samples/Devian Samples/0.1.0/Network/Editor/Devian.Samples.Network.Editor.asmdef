@@ -1,0 +1,17 @@
+{
+  "name": "Devian.Samples.Network.Editor",
+  "rootNamespace": "Devian",
+  "references": [
+    "Devian.Samples.Network",
+    "Devian.Unity"
+  ],
+  "includePlatforms": ["Editor"],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

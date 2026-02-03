@@ -20,7 +20,7 @@ import {
 import {
     createServerRuntime,
     Game2C,
-} from '@devian/network-game/server-runtime';
+} from '@devian/protocol-game/server-runtime';
 
 const PORT = 8080;
 

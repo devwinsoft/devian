@@ -2,7 +2,7 @@
   "name": "com.devian.samples",
   "version": "0.1.0",
   "displayName": "Devian Samples",
-  "description": "Templates for Devian framework. Install samples and customize freely.",
+  "description": "Samples for Devian framework. Import samples and customize freely.",
   "unity": "2021.3",
   "author": {
     "name": "Devian"
@@ -10,7 +10,7 @@
   "samples": [
     {
       "displayName": "Network",
-      "description": "WebSocket client template with protocol integration.",
+      "description": "Unity WebSocket client sample using Devian.Protocol.Game (Ping/Echo) with Tick-based pump.",
       "path": "Samples~/Network"
     }
   ]

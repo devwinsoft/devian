@@ -40,7 +40,7 @@ Protocol codegen의 언어별 산출물(C#/TS)에 대한 **문서 정책**을 �
 - C# 생성물 namespace는 `Devian.Protocol.{ProtocolGroup}`으로 고정 (변경 금지)
 
 **TS PROTOCOL 패키지 의존성:**
-- `@devian/network-{protocolgroup}`는 `@devian/core` + `@devian/module-common`을 의존한다.
+- `@devian/protocol-{protocolgroup}`는 `@devian/core` + `@devian/module-common`을 의존한다.
 
 ---
 

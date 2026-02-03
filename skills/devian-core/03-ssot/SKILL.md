@@ -149,7 +149,7 @@ finalConfig = deepMerge(config.json, input.json)
 | 단일 패키지 | `framework-ts/module/devian` | Core + Network + Protobuf 통합 |
 
 **생성물 패키지명 유지 (Hard Rule):**
-- 프로토콜 생성물은 `@devian/network-{protocolgroup}` 이름을 유지한다.
+- 프로토콜 생성물은 `@devian/protocol-{protocolgroup}` 이름을 유지한다.
 - 모듈 생성물은 `@devian/module-{domainkey}` 이름을 유지한다.
 
 ---
@@ -168,7 +168,7 @@ finalConfig = deepMerge(config.json, input.json)
 - `@devian/module-{domainkey}`는 `@devian/core`만 의존한다.
 
 **TS PROTOCOL 패키지 의존성:**
-- `@devian/network-{protocolgroup}`는 `@devian/core` + `@devian/module-common`을 의존한다.
+- `@devian/protocol-{protocolgroup}`는 `@devian/core` + `@devian/module-common`을 의존한다.
 
 ---
 

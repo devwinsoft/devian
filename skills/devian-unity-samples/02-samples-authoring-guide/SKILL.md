@@ -1,7 +1,7 @@
 # 02-samples-authoring-guide
 
 > **UPM Samples~ 정책 엔트리**
-> 
+>
 > **Samples~의 역할:**
 > - Samples~는 **폐기가 아니라** UPM 표준 방식으로 templates를 배포하는 메커니즘
 > - Templates는 사용자(개발자)가 **Import 후 수정**해서 사용하는 것이 목적
@@ -13,7 +13,7 @@
 >
 > **세부 문서:**
 > - Templates 원본: `framework-cs/upm/com.devian.samples/Samples~/`
-> - Network Template: `skills/devian-unity-samples/10-samples-network/SKILL.md`
+> - Network Sample: `skills/devian-unity-samples/10-samples-network/SKILL.md`
 
 ---
 
@@ -80,15 +80,16 @@ framework-cs/upm/<packageName>/Samples~/...
 
 **필수 구조:**
 ```
-upm/<packageName>/Samples~/BasicWsClient/
+upm/<packageName>/Samples~/Network/
 ├── README.md                         ← 샘플 루트에 위치
 ├── Runtime/
-│   ├── `[asmdef: Devian` + `.Templates.Network]`          ← Runtime asmdef
-│   ├── EchoWsClientSample.cs         ← Runtime 스크립트
-│   └── (optional) SampleProtocolSmokeTest.cs
+│   ├── [asmdef: Devian.Samples.Network]          ← Runtime asmdef
+│   ├── GameNetworkClientSample.cs    ← Runtime 스크립트
+│   └── ProtocolHandlers/             ← (선택) partial 구현 폴더
+│       └── Game2C_Handlers.SampleImpl.cs
 └── Editor/
-    ├── `[asmdef: Devian` + `.Templates.Network.Editor]`   ← Editor-only asmdef (includePlatforms: ["Editor"])
-    └── EchoWsClientSampleEditor.cs   ← Custom Inspector
+    ├── [asmdef: Devian.Samples.Network.Editor]   ← Editor-only asmdef (includePlatforms: ["Editor"])
+    └── GameNetworkClientSampleEditor.cs          ← Custom Inspector
 ```
 
 **금지:**
@@ -100,28 +101,30 @@ upm/<packageName>/Samples~/BasicWsClient/
 **Step 1: Runtime 클래스에서 Editor용 Public API 노출**
 
 ```csharp
-// Runtime/EchoWsClientSample.cs
-public class EchoWsClientSample : NetWsClientBehaviourBase
+// Runtime/GameNetworkClientSample.cs
+public class GameNetworkClientSample : MonoBehaviour
 {
+    private GameWsClient _client;
+
     // ★ Editor에서 연결 상태 확인용 - 반드시 public
-    public bool IsConnected { get; private set; }
-    
+    public bool IsConnected => _client?.IsConnected ?? false;
+
     // ★ CustomEditor 버튼에서 호출할 public 메서드들
-    public void ConnectWithInspectorUrl() => Connect(url);
-    public new void Disconnect() => Close();
-    public void SendPing() { /* ... */ }
-    public void SendEcho() { /* ... */ }
+    public void ConnectWithInspectorUrl() => _client?.Connect(url);
+    public void Disconnect() => _client?.Close();
+    public void SendPing() { /* _client.C2GameProxy.SendPing(...) */ }
+    public void SendEcho() { /* _client.C2GameProxy.SendEcho(...) */ }
 }
 ```
 
 **Step 2: Editor-only asmdef**
 
 ```json
-// Editor/`[asmdef: Devian` + `.Templates.Network.Editor]`
+// Editor/Devian.Samples.Network.Editor.asmdef
 {
-    "name": "<어셈블리명: Devian + .Templates.Network.Editor>",
+    "name": "Devian.Samples.Network.Editor",
     "rootNamespace": "Devian",
-    "references": ["<어셈블리: Devian + .Templates.Network>", "<어셈블리: Devian + .Unity.Network>"],
+    "references": ["Devian.Samples.Network"],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
@@ -137,19 +140,19 @@ public class EchoWsClientSample : NetWsClientBehaviourBase
 **Step 3: CustomEditor 클래스**
 
 ```csharp
-// Editor/EchoWsClientSampleEditor.cs
+// Editor/GameNetworkClientSampleEditor.cs
 using UnityEngine;
 using UnityEditor;
 
 namespace Devian
 {
-    [CustomEditor(typeof(EchoWsClientSample))]
-    public class EchoWsClientSampleEditor : UnityEditor.Editor
+    [CustomEditor(typeof(GameNetworkClientSample))]
+    public class GameNetworkClientSampleEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
-            var sample = (EchoWsClientSample)target;
+            var sample = (GameNetworkClientSample)target;
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Actions", EditorStyles.boldLabel);
@@ -177,7 +180,7 @@ namespace Devian
 ### D) 패킷 테스트 샘플 필수 Inspector 버튼 (Hard Rule)
 
 **Hard Rule:**
-패킷 테스트 샘플은 **반드시** CustomEditor로 구현된 Inspector 버튼을 제공해야 한다:
+패킷 테스트 샘플(`GameNetworkClientSample`)은 **반드시** CustomEditor로 구현된 Inspector 버튼을 제공해야 한다:
 - **Connect** - 연결
 - **Disconnect** - 연결 해제
 - **Send Ping** - Ping 메시지 전송
@@ -285,7 +288,7 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 
 ---
 
-## EchoWsClientSample Spec (Online-only, TS GameServer)
+## GameNetworkClientSample Spec (Online-only, TS GameServer)
 
 ### 필수 요구사항
 
@@ -293,15 +296,15 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 |------|----------|
 | Default URL | `ws://localhost:8080` |
 | Offline mode | **NOT supported** (no offline/loopback) |
-| Auto-send on connect | **NOT allowed** (no auto-send in OnOpened) |
+| Auto-send on connect | **NOT allowed** (no auto-send in OnOpen) |
 | Message trigger | **Inspector buttons only** (Connect/Disconnect/Ping/Echo) |
 
 ### Protocol Direction Contract
 
 | 방향 | Protocol | 메시지 |
 |------|----------|--------|
-| **Outbound** (Client→Server) | `C2Game.Proxy` | Ping, Echo |
-| **Inbound** (Server→Client) | `Game2C.Runtime` + `Game2C.Stub` | Pong, EchoReply |
+| **Outbound** (Client→Server) | `GameWsClient.C2GameProxy` | Ping, Echo |
+| **Inbound** (Server→Client) | `Game2C_Handlers` partial 구현 | Pong, EchoReply |
 
 ---
 
@@ -311,7 +314,7 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 - `UnityExample/Packages/**` 직접 수정 금지 (빌드 출력물)
 - Runtime 코드에 `using UnityEditor` 사용 금지
 - Editor asmdef에 `includePlatforms: []` 사용 금지
-- EchoWsClientSample에 offline/loopback 모드 추가 금지
+- GameNetworkClientSample에 offline/loopback 모드 추가 금지
 - **Close 처리에서 이벤트 unhook을 Close 이전에 수행 금지** (Disconnect 상태 갱신 불가 원인)
 
 ---

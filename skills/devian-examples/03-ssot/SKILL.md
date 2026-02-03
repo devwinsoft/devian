@@ -78,7 +78,7 @@ framework-ts/apps/GameServer/
 
 **핵심 의존성:**
 - `@devian/core` — NetworkServer, WsTransport
-- `@devian/network-game/server-runtime` — Game protocol stub/proxy
+- `@devian/protocol-game/server-runtime` — Game protocol stub/proxy
 
 #### GameClient 구조
 
@@ -92,7 +92,7 @@ framework-ts/apps/GameClient/
 
 **핵심 의존성:**
 - `@devian/core` — NetworkClient
-- `@devian/network-game/client-runtime` — Game protocol stub/proxy
+- `@devian/protocol-game/client-runtime` — Game protocol stub/proxy
 
 ### Unity Example
 

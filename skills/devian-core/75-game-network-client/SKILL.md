@@ -13,10 +13,10 @@ GameServer와의 왕복 통신을 통해 Proxy/Stub + codec + frame 포맷이 �
 
 ## Import 정본
 
-**Client 런타임 import 정본은 `@devian/network-game/client-runtime` 이다.**
+**Client 런타임 import 정본은 `@devian/protocol-game/client-runtime` 이다.**
 
 ```typescript
-import { createClientRuntime, Game2C } from '@devian/network-game/client-runtime';
+import { createClientRuntime, Game2C } from '@devian/protocol-game/client-runtime';
 ```
 
 ---
@@ -28,7 +28,7 @@ Json은 `@devian/core`의 `defaultCodec`를 runtime 생성 시 주입해서 선�
 
 ```typescript
 import { defaultCodec as jsonCodec } from '@devian/core';
-import { createClientRuntime } from '@devian/network-game/client-runtime';
+import { createClientRuntime } from '@devian/protocol-game/client-runtime';
 
 // 기본(Protobuf)
 const clientA = createClientRuntime();
@@ -41,7 +41,7 @@ const clientB = createClientRuntime(jsonCodec);
 
 ```typescript
 import { NetworkClient } from '@devian/core';
-import { createClientRuntime } from '@devian/network-game/client-runtime';
+import { createClientRuntime } from '@devian/protocol-game/client-runtime';
 
 // 1. ClientRuntime 생성 (codec 미주입 = protobuf 기본)
 const { runtime, game2CStub, c2GameProxyFactory } = createClientRuntime();

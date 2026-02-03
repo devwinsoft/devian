@@ -62,7 +62,12 @@
       "mcp__blender__get_scene_info",
       "mcp__mcp-registry__search_mcp_registry",
       "Bash(npm ci:*)",
-      "Bash(\"/c/Program Files/dotnet/dotnet\" build \"D:/Projects/Devwinsoft/devian/framework-cs/module/Devian.Protocol.Game/Devian.Protocol.Game.csproj\")"
+      "Bash(\"/c/Program Files/dotnet/dotnet\" build \"D:/Projects/Devwinsoft/devian/framework-cs/module/Devian.Protocol.Game/Devian.Protocol.Game.csproj\")",
+      "Bash(npm run builder:*)",
+      "Bash(ls:*)",
+      "Bash(xargs:*)",
+      "Bash(for sym in WS_Connect WS_GetState WS_SendBinary WS_Close WS_PollEvent WS_FreeBuffer WS_FreeString)",
+      "Bash(do grep -q \"$sym\" /Users/maoshy/Documents/Projects/devian/framework-cs/upm/com.devian.foundation/Runtime/Plugins/WebGL/DevianWs.jslib)"
     ]
   }
 }
