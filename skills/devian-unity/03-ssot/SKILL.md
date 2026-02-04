@@ -16,12 +16,18 @@ ParentSSOT: skills/devian-core/03-ssot/SKILL.md
 
 ## UPM 전역 설정 (upmConfig) — Hard Rule
 
-**`{buildInputJson}`은 반드시 `upmConfig` 섹션을 포함해야 한다.**
+**`upmConfig`는 `input/config.json`에 존재해야 한다.**
+
+`{buildInputJson}` (예: `input_common.json`)에 `upmConfig`가 존재하면 **FAIL**.
 
 ```json
-"upmConfig": {
-  "sourceDir": "../framework-cs/upm",
-  "packageDir": "../framework-cs/apps/UnityExample/Packages"
+// config.json 구조
+{
+  "configVersion": 1,
+  "upmConfig": {
+    "sourceDir": "../framework-cs/upm",
+    "packageDir": "../framework-cs/apps/UnityExample/Packages"
+  }
 }
 ```
 

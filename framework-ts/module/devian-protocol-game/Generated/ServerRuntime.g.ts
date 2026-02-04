@@ -4,8 +4,8 @@
 // </auto-generated>
 
 import type { INetworkRuntime, SendFn, ICodec, UnknownOpcodeEvent } from '@devian/core';
-import { C2Game } from '../C2Game.g';
-import { Game2C } from '../Game2C.g';
+import { C2Game } from './C2Game.g';
+import { Game2C } from './Game2C.g';
 
 /** Unknown opcode handler type */
 export type UnknownOpcodeHandler = (event: UnknownOpcodeEvent) => void | Promise<void>;

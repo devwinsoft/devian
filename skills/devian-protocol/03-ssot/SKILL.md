@@ -149,6 +149,27 @@ computedUpmName = "com.devian.protocol." + normalize(group)
 
 ---
 
+## TS Runtime Import 경로 규칙 (Hard Fail)
+
+**`Generated/*Runtime.g.ts`가 같은 `Generated/` 폴더의 `*.g.ts`를 import할 때 상대경로는 반드시 `./`를 사용한다.**
+
+```typescript
+// ✅ CORRECT
+import { C2Game } from './C2Game.g';
+import { Game2C } from './Game2C.g';
+
+// ❌ WRONG - 즉시 FAIL
+import { C2Game } from '../C2Game.g';  // <- ../는 금지
+```
+
+**검증 DoD:**
+- `npm -w game-server run start` 실행 시 `ERR_MODULE_NOT_FOUND` 없음
+- `npm -w game-client run dev` 실행 시 `ERR_MODULE_NOT_FOUND` 없음
+
+> Generator 수정 시 이 규칙을 반드시 유지해야 한다. (위치: `protocol-ts.js`의 `generateServerRuntime()`, `generateClientRuntime()`)
+
+---
+
 ## See Also
 
 - [Root SSOT](../../devian-core/03-ssot/SKILL.md) — 공통 용어/플레이스홀더/머지 규칙

@@ -51,7 +51,9 @@ Samples~/Network/
     └── GameNetworkClient_Stub.cs      (Game2C.Stub 상속 구현)
 ```
 
-> **참고:** `_Handlers.g.cs` partial 확장은 어셈블리 경계로 인해 불가능하므로, Stub 상속 방식을 사용한다.
+> **참고:** 최신 빌더는 `GameWsClient.g.cs`, `Game2C_Handlers.g.cs`를 생성한다.
+> 그러나 **샘플 어셈블리(`Devian.Samples.Network`)는 `Devian.Protocol.Game` 어셈블리와 분리**되어 있어
+> `_Handlers.g.cs` partial 확장이 불가능하다. 따라서 샘플은 Stub 상속 방식을 사용한다.
 
 ---
 
@@ -206,15 +208,41 @@ namespace Devian
 
 ---
 
-## 8. 어셈블리 제약 안내
+## 8. 어셈블리 제약 및 최신 생성물 안내
 
-### 8.1 왜 Handlers partial이 아닌가?
+### 8.1 최신 생성물
+
+빌더는 다음 파일들을 `Devian.Protocol.Game` 어셈블리에 생성한다:
+
+| 파일 | 역할 |
+|------|------|
+| `GameWsClient.g.cs` | WS 클라이언트 래퍼 (INetTickable, Proxy/Handlers 통합) |
+| `Game2C_Handlers.g.cs` | `Game2C.Stub` 상속 + `On*Impl` partial 메서드 제공 |
+| `C2Game_Handlers.g.cs` | 서버측 핸들러 (클라이언트에서는 사용 안 함) |
+
+**동일 어셈블리 내 사용 시:**
+```csharp
+// Devian.Protocol.Game 어셈블리 내에서만 가능
+public partial class Game2C_Handlers
+{
+    partial void OnPongImpl(Game2C.EnvelopeMeta meta, Game2C.Pong message)
+    {
+        // 구현
+    }
+}
+```
+
+### 8.2 왜 샘플은 Handlers partial을 사용하지 않는가?
 
 `Game2C_Handlers.g.cs`는 `Devian.Protocol.Game` 어셈블리에 생성된다.
 C#의 `partial class`는 **동일 어셈블리 내에서만** 동작하므로,
 샘플 어셈블리(`Devian.Samples.Network`)에서 partial 확장이 불가능하다.
 
-### 8.2 샘플의 해결책: Stub 상속
+**요약:**
+- **프로젝트 코드가 `Devian.Protocol.Game` 어셈블리 내** → `Game2C_Handlers` partial 확장 가능
+- **별도 어셈블리 (샘플 포함)** → `Game2C.Stub` 상속 방식만 가능
+
+### 8.3 샘플의 해결책: Stub 상속
 
 `Game2C.Stub`는 abstract class이므로 어떤 어셈블리에서든 상속 가능.
 샘플은 `SampleGame2CStub : Game2C.Stub`로 수신 처리를 구현한다.
@@ -237,13 +265,15 @@ C#의 `partial class`는 **동일 어셈블리 내에서만** 동작하므로,
 ### 10.1 서버 실행 (로컬)
 
 ```bash
-cd framework-ts
+# framework-ts 루트에서
 npm install
-npm run start:server
+npm -w GameServer run start
 ```
 
 - **기본 포트:** `ws://localhost:8080`
 - **코덱:** Protobuf (기본), `USE_JSON=false`
+
+> 서버 상세: `skills/devian-examples/30-example-network-server/SKILL.md`
 
 ### 10.2 Unity에서 테스트
 
@@ -323,3 +353,5 @@ namespace MyGame.Network
 - 정책 문서: `skills/devian-unity-samples/01-policy/SKILL.md`
 - NetTickRunner: `skills/devian-core/72-network-ws-client/SKILL.md`
 - Protocol 코드젠: `skills/devian-protocol/41-codegen-protocol-csharp-ts/SKILL.md`
+- TS 서버 예제: `skills/devian-examples/30-example-network-server/SKILL.md`
+- TS 클라이언트 예제: `skills/devian-examples/31-example-network-client/SKILL.md`

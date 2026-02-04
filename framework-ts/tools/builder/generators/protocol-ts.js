@@ -589,8 +589,8 @@ export function generateServerRuntime(groupName, protocols) {
 
     // Imports (no .js extension)
     lines.push(`import type { INetworkRuntime, SendFn, ICodec, UnknownOpcodeEvent } from '@devian/core';`);
-    lines.push(`import { ${inboundName} } from '../${inboundName}.g';`);
-    lines.push(`import { ${outboundName} } from '../${outboundName}.g';`);
+    lines.push(`import { ${inboundName} } from './${inboundName}.g';`);
+    lines.push(`import { ${outboundName} } from './${outboundName}.g';`);
     lines.push('');
 
     // Unknown handler type
@@ -749,8 +749,8 @@ export function generateClientRuntime(groupName, protocols) {
 
     // Imports (no .js extension)
     lines.push(`import type { INetworkRuntime, SendFn, ICodec, UnknownOpcodeEvent } from '@devian/core';`);
-    lines.push(`import { ${inboundName} } from '../${inboundName}.g';`);
-    lines.push(`import { ${outboundName} } from '../${outboundName}.g';`);
+    lines.push(`import { ${inboundName} } from './${inboundName}.g';`);
+    lines.push(`import { ${outboundName} } from './${outboundName}.g';`);
     lines.push('');
 
     // Unknown handler type
