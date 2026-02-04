@@ -26,6 +26,34 @@ namespace Devian
         private static bool _booted;
 
         /// <summary>
+        /// Unity Awake. Ensures required CompoSingleton components exist on Bootstrap.
+        /// </summary>
+        protected virtual void Awake()
+        {
+            ensureRequiredComponents();
+        }
+
+        /// <summary>
+        /// Ensures required CompoSingleton components are attached to Bootstrap.
+        /// Override in derived class to add more components.
+        /// </summary>
+        protected virtual void ensureRequiredComponents()
+        {
+            ensureComponent<UIManager>();
+            ensureComponent<UIInputManager>();
+        }
+
+        /// <summary>
+        /// Gets or adds a component of type T to this GameObject.
+        /// </summary>
+        private T ensureComponent<T>() where T : Component
+        {
+            var c = GetComponent<T>();
+            if (c != null) return c;
+            return gameObject.AddComponent<T>();
+        }
+
+        /// <summary>
         /// Bootstrap 인스턴스가 생성되었는지 여부.
         /// </summary>
         public static bool IsCreated => _instance != null;

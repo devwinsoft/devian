@@ -35,6 +35,7 @@ Type: Index / Directory
 | 25 | AnimSequencePlayer | Playables 기반 애니메이션 시퀀스 재생 컴포넌트 | `25-anim-sequence-player/SKILL.md` |
 | 26 | FsmController | FIFO 큐 기반 FSM 컨트롤러 (미등록 throw, self-transition 분리) | `26-fsm-controller/SKILL.md` |
 | 27 | BootstrapResourceObject | Resources 기반 Bootstrap Root + IDevianBootStep 부팅 파이프라인 | `27-bootstrap-resource-object/SKILL.md` |
+| 33 | UIManager | Canvas 수명주기 + UI 입력 보장 (CompoSingleton/Bootstrap) | `33-ui-manager/SKILL.md` |
 
 ---
 

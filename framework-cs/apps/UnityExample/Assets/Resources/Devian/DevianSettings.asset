@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Devian.Unity::Devian.DevianSettings
   _assetId:
   - GroupKey: COMMON_EFFECT
-    SearchDir: Assets/Bundles/CommonEffects
+    SearchDir: Assets/Bundles/Effects
   - GroupKey: MATERIAL_EFFECT
     SearchDir: Assets/Bundles/MaterialEffects
   _playerPrefsPrefix: devian.game.

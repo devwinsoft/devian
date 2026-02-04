@@ -81,10 +81,11 @@ public static IEnumerator BootProc()
 ```
 
 동작:
-1. 이미 부팅되었으면 (`_booted == true`) 즉시 반환
-2. `_instance`가 없으면 즉시 반환
-3. `_booted = true` 설정
-4. `_instance.OnBootProc()` 실행
+1. `_booted == true`면 `yield break`
+2. `_instance == null`이면 `CreateFromResources()` 시도
+   - 실패 시 에러 로그 후 `yield break`
+3. `CreateFromResources()` 후에도 `_instance == null`이면 에러 로그 후 `yield break`
+4. `try { yield return _instance.OnBootProc(); } finally { _booted = true; }`
 
 ### Domain Reload 대응
 
@@ -149,6 +150,16 @@ private IEnumerator Start()
 
 **프레임워크가 BaseBootstrap 파생 컴포넌트를 자동 추가하지 않는다.** 개발자가 직접 추가해야 한다.
 
+### 필수 CompoSingleton 컴포넌트
+
+BaseBootstrap.Awake()에서 `ensureRequiredComponents()`가 호출되며, 아래 컴포넌트들이 자동으로 보장된다:
+
+| 컴포넌트 | 책임 |
+|----------|------|
+| **UIManager** | Canvas 수명주기 관리 + UI 입력 보장 (EventSystem + InputSystemUIInputModule) |
+
+UIManager.Awake()에서 `EnsureUiEventSystem()`이 자동 호출되어 UI 입력 인프라를 보장한다.
+
 ---
 
 ## 7. Editor 메뉴
@@ -188,3 +199,4 @@ PlayMode 테스트는 테스트 씬에 부트 컨테이너를 배치하거나, S
 - DevianSettings: `skills/devian-unity/30-unity-components/23-devian-settings/SKILL.md`
 - SceneTransManager: `skills/devian-unity/30-unity-components/15-scene-trans-manager/SKILL.md`
 - Singleton: `skills/devian-unity/30-unity-components/31-singleton/SKILL.md`
+- UIManager: `skills/devian-unity/30-unity-components/33-ui-manager/SKILL.md`
