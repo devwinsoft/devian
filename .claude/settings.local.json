@@ -69,7 +69,13 @@
       "Bash(for sym in WS_Connect WS_GetState WS_SendBinary WS_Close WS_PollEvent WS_FreeBuffer WS_FreeString)",
       "Bash(do grep -q \"$sym\" /Users/maoshy/Documents/Projects/devian/framework-cs/upm/com.devian.foundation/Runtime/Plugins/WebGL/DevianWs.jslib)",
       "Bash(timeout 8 npm:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(WEBGL_PORT=abc npm:*)",
+      "Bash(WEBGL_PORT=8091 timeout 5 npm:*)",
+      "Bash(npm -w webgl-server run env:sync)",
+      "Bash(npm -w game-server run env:sync)",
+      "Bash(npm -w webgl-server run env:check)",
+      "Bash(npm -w game-server run env:check)"
     ]
   }
 }

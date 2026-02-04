@@ -4,6 +4,9 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
+    "env:sync": "node ../../tools/env/env-sync.mjs .",
+    "env:check": "node ../../tools/env/env-check.mjs .",
+    "prestart": "npm run env:check",
     "start": "npx tsx src/index.ts"
   },
   "dependencies": {

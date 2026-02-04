@@ -19,6 +19,8 @@ UnityExample WebGL 빌드 → NestJS(WebGLServer)로 로컬 서빙 → 브라우
 | **Unity project** | `framework-cs/apps/UnityExample/` |
 | **WebGL build output (default)** | `output/unity-webgl/UnityExample/` |
 | **NestJS server app** | `framework-ts/apps/WebGLServer/` |
+| **환경변수 정의 (SSOT)** | `framework-ts/apps/WebGLServer/env.spec.json` |
+| **.env.example (자동 생성)** | `framework-ts/apps/WebGLServer/.env.example` |
 
 ---
 
@@ -59,13 +61,30 @@ http://localhost:8081/
 
 ## Environment Variables
 
+> **SSOT**: `env.spec.json` → `.env.example`는 자동 생성 (수동 편집 금지)
+>
+> 환경변수 변경 시: `env.spec.json` 수정 → `npm -w webgl-server run env:sync`
+
 | 변수 | 기본값 | 설명 |
 |------|--------|------|
 | `WEBGL_ROOT` | `output/unity-webgl/UnityExample` | WebGL 빌드 출력 경로 |
+| `WEBGL_PORT` | `8081` | 서버 포트 (1..65535) |
 
 ```bash
-# 커스텀 경로 사용 예시
-WEBGL_ROOT=./my-webgl-build npm -w webgl-server run start:dev
+# .env.example 생성/갱신
+npm -w webgl-server run env:sync
+
+# 기본 실행
+cd framework-ts
+npm -w webgl-server run start:dev
+
+# 포트 지정
+cd framework-ts
+WEBGL_PORT=8091 npm -w webgl-server run start:dev
+
+# 루트+포트 지정
+cd framework-ts
+WEBGL_ROOT=output/unity-webgl/UnityExample WEBGL_PORT=8091 npm -w webgl-server run start:dev
 ```
 
 ---
@@ -84,6 +103,7 @@ WEBGL_ROOT=./my-webgl-build npm -w webgl-server run start:dev
 
 - [ ] WebGL 로딩 성공, 씬 진입
 - [ ] 브라우저 콘솔 치명 에러 0
+- [ ] `WEBGL_PORT` 설정 시 해당 포트로 기동 확인
 - [ ] (권장) WS 연결 확인:
   - 서버 로그에 connect 흔적
   - 브라우저에서 연결 성공 로그 또는 게임 UI에 연결 표시
@@ -100,7 +120,7 @@ WEBGL_ROOT=./my-webgl-build npm -w webgl-server run start:dev
 
 ## Server Features
 
-- **Port**: 8081
+- **Port**: `WEBGL_PORT` (기본값 8081)
 - **Static serving**: `WEBGL_ROOT` 폴더 정적 서빙
 - **SPA fallback**: 정적 파일 없으면 `index.html`로 fallback
 - **MIME types**: `.wasm`, `.data`, `.gz`, `.br` 헤더 자동 설정
@@ -113,3 +133,4 @@ WEBGL_ROOT=./my-webgl-build npm -w webgl-server run start:dev
 - [30-example-network-server](../30-example-network-server/SKILL.md) — Game Protocol TS 서버 예제
 - [31-example-network-client](../31-example-network-client/SKILL.md) — Game Protocol TS 클라이언트 예제
 - [03-ssot](../03-ssot/SKILL.md) — Example Apps SSOT
+- [30-env-management](../../devian-tools/30-env-management/SKILL.md) — 환경변수 관리 정책

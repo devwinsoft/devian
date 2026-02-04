@@ -16,8 +16,25 @@ import { AppModule } from './app.module';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = 8081;
+const DEFAULT_PORT = 8081;
 const DEFAULT_WEBGL_ROOT = 'output/unity-webgl/UnityExample';
+
+// Parse and validate WEBGL_PORT
+function resolvePort(): number {
+    const portRaw = process.env.WEBGL_PORT;
+    if (!portRaw) {
+        return DEFAULT_PORT;
+    }
+
+    const port = Number(portRaw);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+        console.error(`[WebGLServer] Invalid WEBGL_PORT: "${portRaw}". Must be an integer 1..65535.`);
+        process.exit(1);
+    }
+    return port;
+}
+
+const port = resolvePort();
 
 // Resolve WebGL root path
 // - If WEBGL_ROOT env is set: resolve from cwd
@@ -74,10 +91,10 @@ async function bootstrap() {
         res.sendFile(indexPath);
     });
 
-    await app.listen(PORT);
+    await app.listen(port);
 
-    console.log(`[WebGLServer] Serving WebGL build from: ${webglRoot}`);
-    console.log(`[WebGLServer] Listening on http://localhost:${PORT}`);
+    console.log(`[WebGLServer] WEBGL_ROOT=${webglRoot}`);
+    console.log(`[WebGLServer] Listening on http://localhost:${port}`);
 }
 
 bootstrap().catch((err) => {

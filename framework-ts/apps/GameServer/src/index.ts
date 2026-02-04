@@ -22,10 +22,32 @@ import {
     Game2C,
 } from '@devian/protocol-game/server-runtime';
 
-const PORT = 8080;
+// Parse and validate port from environment
+function resolvePortFromEnv(key: string, defaultValue: number): number {
+    const raw = process.env[key];
+    if (!raw) {
+        return defaultValue;
+    }
 
-// Toggle codec: false = Protobuf (default), true = Json
-const USE_JSON = false;
+    const port = Number(raw);
+    if (!Number.isInteger(port) || port < 1 || port > 65535) {
+        console.error(`[GameServer] Invalid ${key}: "${raw}". Must be an integer 1..65535.`);
+        process.exit(1);
+    }
+    return port;
+}
+
+// Parse boolean from environment
+function resolveBoolFromEnv(key: string, defaultValue: boolean): boolean {
+    const raw = process.env[key];
+    if (raw === undefined || raw === '') {
+        return defaultValue;
+    }
+    return raw === 'true' || raw === '1';
+}
+
+const PORT = resolvePortFromEnv('GAME_SERVER_PORT', 8080);
+const USE_JSON = resolveBoolFromEnv('GAME_SERVER_USE_JSON', false);
 
 async function main() {
     // 1. Create network runtime for 'Game' group
