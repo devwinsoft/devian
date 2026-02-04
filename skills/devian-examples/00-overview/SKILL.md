@@ -17,6 +17,7 @@ Devian 예제 도메인 및 프로토콜을 담당한다.
 | [20-example-protocol-game](../20-example-protocol-game/SKILL.md) | Game 프로토콜 예제 |
 | [30-example-network-server](../30-example-network-server/SKILL.md) | Game protocol TS 서버 조립 예제 |
 | [31-example-network-client](../31-example-network-client/SKILL.md) | Game protocol TS 클라이언트 조립 예제 |
+| [32-example-webgl-server](../32-example-webgl-server/SKILL.md) | Unity WebGL 정적 서버 (NestJS) |
 
 ---
 
