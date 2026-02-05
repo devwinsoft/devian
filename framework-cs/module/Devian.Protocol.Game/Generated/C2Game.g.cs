@@ -107,10 +107,13 @@ namespace Devian.Protocol.Game
         }
 
         /// <summary>
-        /// Span-based protobuf reader (zero-copy)
+        /// Span-based protobuf reader (zero-copy, zero-alloc for string decode)
         /// </summary>
         internal ref struct ProtoReader
         {
+            // Static UTF8 encoder to avoid repeated Encoding.UTF8 property access
+            private static readonly Encoding Utf8 = Encoding.UTF8;
+
             private ReadOnlySpan<byte> _data;
             private int _pos;
 
@@ -121,6 +124,8 @@ namespace Devian.Protocol.Game
             }
 
             public bool HasMore => _pos < _data.Length;
+            public int Position => _pos;
+            public int Remaining => _data.Length - _pos;
 
             public (int tag, int wireType) ReadTag()
             {
@@ -162,34 +167,53 @@ namespace Devian.Protocol.Game
 
             public float ReadFloat()
             {
-                var bytes = _data.Slice(_pos, 4);
+                var span = _data.Slice(_pos, 4);
                 _pos += 4;
-                return BitConverter.ToSingle(bytes);
+                return BitConverter.ToSingle(span);
             }
 
             public double ReadDouble()
             {
-                var bytes = _data.Slice(_pos, 8);
+                var span = _data.Slice(_pos, 8);
                 _pos += 8;
-                return BitConverter.ToDouble(bytes);
+                return BitConverter.ToDouble(span);
             }
 
+            /// <summary>
+            /// Read string using span-based UTF8 decode (zero temp byte[] allocation).
+            /// Only allocates the final string object.
+            /// </summary>
             public string ReadString()
             {
                 var len = (int)ReadVarint();
                 if (len == 0) return string.Empty;
-                var bytes = _data.Slice(_pos, len);
+                // Zero-alloc path: decode directly from contiguous span
+                var span = _data.Slice(_pos, len);
                 _pos += len;
-                return Encoding.UTF8.GetString(bytes);
+                return Utf8.GetString(span);
             }
 
+            /// <summary>
+            /// Read bytes field. Note: bytes fields inherently need array allocation
+            /// since the message field type is byte[].
+            /// </summary>
             public byte[] ReadBytes()
             {
                 var len = (int)ReadVarint();
                 if (len == 0) return Array.Empty<byte>();
-                var bytes = _data.Slice(_pos, len).ToArray();
+                var result = _data.Slice(_pos, len).ToArray();
                 _pos += len;
-                return bytes;
+                return result;
+            }
+
+            /// <summary>
+            /// Read length-delimited block length and return end position for packed repeated.
+            /// Use with ReadPackedInt32/etc for zero-copy packed repeated decode.
+            /// </summary>
+            public int ReadLengthDelimitedEnd()
+            {
+                var len = (int)ReadVarint();
+                return _pos + len;
             }
 
             public void Skip(int wireType)
@@ -205,78 +229,110 @@ namespace Devian.Protocol.Game
         }
 
         /// <summary>
-        /// Protobuf wire format writer helper
+        /// Protobuf wire format writer helper (IBufferWriter-based, zero-alloc)
         /// </summary>
         private static class ProtoWriter
         {
-            public static void WriteVarint(MemoryStream ms, long value)
+            public static void WriteVarint(IBufferWriter<byte> w, ulong value)
             {
-                var uval = (ulong)value;
-                while (uval >= 0x80)
+                Span<byte> buf = stackalloc byte[10];
+                var i = 0;
+                while (value >= 0x80)
                 {
-                    ms.WriteByte((byte)(uval | 0x80));
-                    uval >>= 7;
+                    buf[i++] = (byte)(value | 0x80);
+                    value >>= 7;
                 }
-                ms.WriteByte((byte)uval);
+                buf[i++] = (byte)value;
+                var span = w.GetSpan(i);
+                buf.Slice(0, i).CopyTo(span);
+                w.Advance(i);
             }
 
-            public static void WriteTag(MemoryStream ms, int tag, int wireType)
+            public static void WriteTag(IBufferWriter<byte> w, int tag, int wireType)
             {
-                WriteVarint(ms, (tag << 3) | wireType);
+                WriteVarint(w, (ulong)((tag << 3) | wireType));
             }
 
-            public static void WriteString(MemoryStream ms, int tag, string? value)
+            public static void WriteString(IBufferWriter<byte> w, int tag, string? value)
             {
                 if (string.IsNullOrEmpty(value)) return;
-                WriteTag(ms, tag, 2);
-                var bytes = Encoding.UTF8.GetBytes(value);
-                WriteVarint(ms, bytes.Length);
-                ms.Write(bytes, 0, bytes.Length);
+                WriteTag(w, tag, 2);
+                var byteCount = Encoding.UTF8.GetByteCount(value);
+                WriteVarint(w, (ulong)byteCount);
+                if (byteCount <= 256)
+                {
+                    // Small string: write directly to span
+                    var span = w.GetSpan(byteCount);
+                    Encoding.UTF8.GetBytes(value.AsSpan(), span);
+                    w.Advance(byteCount);
+                }
+                else
+                {
+                    // Large string: use pooled buffer
+                    var rented = ArrayPool<byte>.Shared.Rent(byteCount);
+                    try
+                    {
+                        Encoding.UTF8.GetBytes(value.AsSpan(), rented.AsSpan(0, byteCount));
+                        var span = w.GetSpan(byteCount);
+                        rented.AsSpan(0, byteCount).CopyTo(span);
+                        w.Advance(byteCount);
+                    }
+                    finally
+                    {
+                        ArrayPool<byte>.Shared.Return(rented);
+                    }
+                }
             }
 
-            public static void WriteInt32(MemoryStream ms, int tag, int value)
+            public static void WriteInt32(IBufferWriter<byte> w, int tag, int value)
             {
                 if (value == 0) return;
-                WriteTag(ms, tag, 0);
-                WriteVarint(ms, value);
+                WriteTag(w, tag, 0);
+                WriteVarint(w, (ulong)value);
             }
 
-            public static void WriteInt64(MemoryStream ms, int tag, long value)
+            public static void WriteInt64(IBufferWriter<byte> w, int tag, long value)
             {
                 if (value == 0) return;
-                WriteTag(ms, tag, 0);
-                WriteVarint(ms, value);
+                WriteTag(w, tag, 0);
+                WriteVarint(w, (ulong)value);
             }
 
-            public static void WriteBool(MemoryStream ms, int tag, bool value)
+            public static void WriteBool(IBufferWriter<byte> w, int tag, bool value)
             {
                 if (!value) return;
-                WriteTag(ms, tag, 0);
-                ms.WriteByte(1);
+                WriteTag(w, tag, 0);
+                var span = w.GetSpan(1);
+                span[0] = 1;
+                w.Advance(1);
             }
 
-            public static void WriteBytes(MemoryStream ms, int tag, byte[]? value)
+            public static void WriteBytes(IBufferWriter<byte> w, int tag, byte[]? value)
             {
                 if (value == null || value.Length == 0) return;
-                WriteTag(ms, tag, 2);
-                WriteVarint(ms, value.Length);
-                ms.Write(value, 0, value.Length);
+                WriteTag(w, tag, 2);
+                WriteVarint(w, (ulong)value.Length);
+                var span = w.GetSpan(value.Length);
+                value.AsSpan().CopyTo(span);
+                w.Advance(value.Length);
             }
 
-            public static void WriteFloat(MemoryStream ms, int tag, float value)
+            public static void WriteFloat(IBufferWriter<byte> w, int tag, float value)
             {
                 if (value == 0) return;
-                WriteTag(ms, tag, 5);
-                var bytes = BitConverter.GetBytes(value);
-                ms.Write(bytes, 0, 4);
+                WriteTag(w, tag, 5);
+                var span = w.GetSpan(4);
+                BitConverter.TryWriteBytes(span, value);
+                w.Advance(4);
             }
 
-            public static void WriteDouble(MemoryStream ms, int tag, double value)
+            public static void WriteDouble(IBufferWriter<byte> w, int tag, double value)
             {
                 if (value == 0) return;
-                WriteTag(ms, tag, 1);
-                var bytes = BitConverter.GetBytes(value);
-                ms.Write(bytes, 0, 8);
+                WriteTag(w, tag, 1);
+                var span = w.GetSpan(8);
+                BitConverter.TryWriteBytes(span, value);
+                w.Advance(8);
             }
         }
 
@@ -321,7 +377,10 @@ namespace Devian.Protocol.Game
         /// <summary>Codec interface</summary>
         public interface ICodec
         {
+            /// <summary>Encode to byte array (legacy, avoid in hot path)</summary>
             byte[] Encode<T>(T message) where T : class;
+            /// <summary>Encode directly to IBufferWriter (zero-alloc send path)</summary>
+            void EncodeTo<T>(IBufferWriter<byte> writer, T message) where T : class;
             T Decode<T>(ReadOnlySpan<byte> data) where T : class, new();
             object? Decode(int opcode, ReadOnlySpan<byte> data);
         }
@@ -331,14 +390,20 @@ namespace Devian.Protocol.Game
         {
             public byte[] Encode<T>(T message) where T : class
             {
-                using var ms = new MemoryStream();
+                // Legacy path: uses PooledBufferWriter then copies to byte[]
+                using var bw = new PooledBufferWriter(256);
+                EncodeTo(bw, message);
+                return bw.WrittenSpan.ToArray();
+            }
+
+            public void EncodeTo<T>(IBufferWriter<byte> writer, T message) where T : class
+            {
                 switch (message)
                 {
-                    case Ping m: EncodePing(ms, m); break;
-                    case Echo m: EncodeEcho(ms, m); break;
+                    case Ping m: EncodePing(writer, m); break;
+                    case Echo m: EncodeEcho(writer, m); break;
                     default: throw new ArgumentException($"Unknown message type: {typeof(T).Name}");
                 }
-                return ms.ToArray();
             }
 
             public T Decode<T>(ReadOnlySpan<byte> data) where T : class, new()
@@ -362,15 +427,15 @@ namespace Devian.Protocol.Game
                 };
             }
 
-            private static void EncodePing(MemoryStream ms, Ping m)
+            private static void EncodePing(IBufferWriter<byte> writer, Ping m)
             {
-                ProtoWriter.WriteInt64(ms, 1, m.Timestamp);
-                ProtoWriter.WriteString(ms, 2, m.Payload);
+                ProtoWriter.WriteInt64(writer, 1, m.Timestamp);
+                ProtoWriter.WriteString(writer, 2, m.Payload);
             }
 
-            private static void EncodeEcho(MemoryStream ms, Echo m)
+            private static void EncodeEcho(IBufferWriter<byte> writer, Echo m)
             {
-                ProtoWriter.WriteString(ms, 1, m.Message);
+                ProtoWriter.WriteString(writer, 1, m.Message);
             }
 
             internal static void DecodePing(ReadOnlySpan<byte> data, Ping m)
@@ -487,6 +552,8 @@ namespace Devian.Protocol.Game
             private INetSession? _session;
             private string _url = string.Empty;
             private string _lastError = string.Empty;
+            private volatile bool _isConnecting; // Re-entry guard flag
+            private bool _errorNotified; // Error dedup guard (max 1 OnError per attempt)
 
             // ======== Codec ========
             private readonly ICodec _codec;
@@ -498,6 +565,7 @@ namespace Devian.Protocol.Game
 
             // ======== Properties ========
             public bool IsConnected => _session?.State == NetClientState.Connected;
+            public bool IsConnecting => _isConnecting;
             public string Url => _url;
             public string LastError => _lastError;
 
@@ -511,7 +579,8 @@ namespace Devian.Protocol.Game
 
             /// <summary>
             /// Connect to server using the provided connector.
-            /// Proxy depends only on INetSession/INetConnector interfaces.
+            /// Re-entry safe: ignores if already connecting/connected to same URL.
+            /// If URL differs, disposes existing connection and reconnects.
             /// Stub must be Game2C.Stub for inbound message dispatch.
             /// </summary>
             public void Connect(Game2C.Stub stub, string url, INetConnector connector)
@@ -520,10 +589,24 @@ namespace Devian.Protocol.Game
                 if (string.IsNullOrEmpty(url)) throw new ArgumentException("url is empty", nameof(url));
                 if (connector == null) throw new ArgumentNullException(nameof(connector));
 
-                DisposeConnection();
+                // Already connecting to same URL -> ignore
+                if (_isConnecting && string.Equals(_url, url, StringComparison.Ordinal))
+                    return;
+
+                // Already connected to same URL -> ignore
+                if (_session != null &&
+                    _session.State == NetClientState.Connected &&
+                    string.Equals(_url, url, StringComparison.Ordinal))
+                    return;
+
+                // Different URL -> dispose existing connection first
+                if (!string.Equals(_url, url, StringComparison.Ordinal))
+                    DisposeConnection();
 
                 _url = url;
                 _lastError = string.Empty;
+                _isConnecting = true; // Set before session creation to prevent re-entry
+                _errorNotified = false; // Reset error dedup guard for new attempt
 
                 // Inbound dispatch runtime (Game2C)
                 var runtime = new Game2C.Runtime(stub);
@@ -565,31 +648,42 @@ namespace Devian.Protocol.Game
 
             private void DisposeConnection()
             {
-                if (_session != null)
-                {
-                    _session.OnOpen -= HandleOpen;
-                    _session.OnClose -= HandleClose;
-                    _session.OnError -= HandleError;
-                    (_session as IDisposable)?.Dispose();
-                    _session = null;
-                }
+                _isConnecting = false; // Clear flag first
+                _errorNotified = false; // Reset error dedup guard
+
+                var s = _session;
+                if (s == null) return;
+
+                s.OnOpen -= HandleOpen;
+                s.OnClose -= HandleClose;
+                s.OnError -= HandleError;
+
+                if (s is IDisposable d) d.Dispose();
+                _session = null;
             }
 
             // ======== Internal Event Handlers ========
 
             private void HandleOpen()
             {
+                _isConnecting = false;
+                _errorNotified = false; // Reset for connected state
                 OnOpen?.Invoke();
             }
 
             private void HandleClose(ushort code, string reason)
             {
+                _isConnecting = false;
                 OnClose?.Invoke(code, reason);
             }
 
             private void HandleError(Exception ex)
             {
+                _isConnecting = false;
                 _lastError = ex.Message;
+                if (_errorNotified)
+                    return;
+                _errorNotified = true;
                 OnError?.Invoke(ex);
             }
 
@@ -605,21 +699,43 @@ namespace Devian.Protocol.Game
             }
 
             // ======== Send Methods ========
+            // Uses PooledBufferWriter + EncodeTo for zero GC allocation.
+            // Frame format: [opcode:int32LE][payload...]
 
             public void SendPing(Ping message)
             {
                 var session = _session ?? throw new InvalidOperationException("Proxy is not connected. Call Connect() or AttachSession() first.");
-                var payload = _codec.Encode(message);
-                var frame = Frame.Pack(Opcodes.Ping, payload);
-                session.SendTo(frame);
+
+                using var bw = new PooledBufferWriter(256);
+
+                // Write opcode (4 bytes LE)
+                var span = bw.GetSpan(4);
+                BitConverter.TryWriteBytes(span, Opcodes.Ping);
+                bw.Advance(4);
+
+                // Encode payload directly to buffer
+                _codec.EncodeTo(bw, message);
+
+                // Send frame
+                session.SendTo(bw.WrittenSpan);
             }
 
             public void SendEcho(Echo message)
             {
                 var session = _session ?? throw new InvalidOperationException("Proxy is not connected. Call Connect() or AttachSession() first.");
-                var payload = _codec.Encode(message);
-                var frame = Frame.Pack(Opcodes.Echo, payload);
-                session.SendTo(frame);
+
+                using var bw = new PooledBufferWriter(256);
+
+                // Write opcode (4 bytes LE)
+                var span = bw.GetSpan(4);
+                BitConverter.TryWriteBytes(span, Opcodes.Echo);
+                bw.Advance(4);
+
+                // Encode payload directly to buffer
+                _codec.EncodeTo(bw, message);
+
+                // Send frame
+                session.SendTo(bw.WrittenSpan);
             }
 
         }

@@ -9,7 +9,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 // Generators
-import { generateCSharpProtocol, generateCSharpProtocolHandlers, generateCSharpProtocolGroupWsClient } from './generators/protocol-cs.js';
+import { generateCSharpProtocol } from './generators/protocol-cs.js';
+// NOTE: generateCSharpProtocolHandlers, generateCSharpProtocolGroupWsClient removed
+// Handlers/WsClient are no longer generated - use GameNetManager + Proxy pattern instead
 import { generateTypeScriptProtocol, generateServerRuntime, generateClientRuntime } from './generators/protocol-ts.js';
 import { generateCSharpContract, generateCSharpContractBody } from './generators/contract-cs.js';
 import { generateTypeScriptContract, generateTypeScriptContractBody } from './generators/contract-ts.js';
@@ -1122,10 +1124,8 @@ class DevianToolBuilder {
             const csCode = generateCSharpProtocol(spec, protocolName, groupName);
             fs.writeFileSync(path.join(stagingCsGenerated, `${protocolName}.g.cs`), csCode);
 
-            // C# Handlers (Generated-only)
-            const handlersCode = generateCSharpProtocolHandlers(spec, protocolName, groupName);
-            fs.writeFileSync(path.join(stagingCsGenerated, `${protocolName}_Handlers.g.cs`), handlersCode);
-            console.log(`    [Handlers] Generated/${protocolName}_Handlers.g.cs`);
+            // NOTE: Handlers generation removed - use Stub directly or create custom partial class
+            // SSOT: skills/devian-protocol/40-codegen-protocol/SKILL.md
 
             // TypeScript Protocol (Generated-only)
             const tsCode = generateTypeScriptProtocol(spec, protocolName, groupName);
@@ -1151,12 +1151,8 @@ class DevianToolBuilder {
             console.log(`    [ClientRuntime] Generated/ClientRuntime.g.ts`);
         }
 
-        // Generate C# WsClient for protocol group (if any inbound or outbound protocols exist)
-        const wsClientCode = generateCSharpProtocolGroupWsClient(groupName, protocolInfos);
-        if (wsClientCode) {
-            fs.writeFileSync(path.join(stagingCsGenerated, `${groupName}WsClient.g.cs`), wsClientCode);
-            console.log(`    [WsClient] Generated/${groupName}WsClient.g.cs`);
-        }
+        // NOTE: WsClient generation removed - use GameNetManager + Proxy.Connect() pattern instead
+        // SSOT: skills/devian-protocol/40-codegen-protocol/SKILL.md
 
         // NOTE: index.ts 생성 제거 (수기/고정 파일, 빌더가 생성/수정 금지)
         // SSOT: skills/devian-protocol/03-ssot/SKILL.md

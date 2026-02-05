@@ -1,3 +1,4 @@
+//#define DEVIAN_NET_DEBUG  // Uncomment locally for debug logs (default OFF for zero GC)
 #nullable enable
 using System;
 using System.Buffers;
@@ -72,7 +73,10 @@ namespace Devian
         private const int EVT_CLOSE = 2;
         private const int EVT_ERROR = 3;
         private const int EVT_MESSAGE = 4;
-        private const int WEBGL_MAX_EVENTS_PER_TICK = 64;
+
+        // --- Tick cap constants (prevents GC/memory explosion during event flooding) ---
+        private const int MaxEventsPerTick = 128;
+        private const int MaxBytesPerTick = 256 * 1024; // 256KB
 
         private int _socketId = -1;
 
@@ -175,6 +179,7 @@ namespace Devian
         /// <summary>
         /// Standard pump function: polls JS events and drains dispatch queue.
         /// Call this from Unity's Update() for main thread event handling.
+        /// Applies MaxEventsPerTick and MaxBytesPerTick caps to prevent GC spike.
         /// </summary>
         public void Tick()
         {
@@ -184,14 +189,19 @@ namespace Devian
                 return;
             }
 
-            // 1) Poll events from JS
-            for (var i = 0; i < WEBGL_MAX_EVENTS_PER_TICK; i++)
+            // 1) Poll events from JS (with cap)
+            var processedEvents = 0;
+            var processedBytes = 0;
+
+            while (processedEvents < MaxEventsPerTick && processedBytes < MaxBytesPerTick)
             {
                 int eventType, code, dataLen;
                 IntPtr dataPtr, messagePtr;
 
                 var has = WS_PollEvent(_socketId, out eventType, out code, out dataPtr, out dataLen, out messagePtr);
                 if (has == 0) break;
+
+                processedEvents++;
 
                 switch (eventType)
                 {
@@ -218,10 +228,16 @@ namespace Devian
                         break;
 
                     case EVT_MESSAGE:
+                        processedBytes += dataLen;
                         HandlePolledMessage(dataPtr, dataLen);
                         break;
                 }
             }
+
+#if DEVIAN_NET_DEBUG
+            if (processedEvents >= MaxEventsPerTick || processedBytes >= MaxBytesPerTick)
+                UnityEngine.Debug.Log("[NetWsClient] Tick cap reached");
+#endif
 
             // 2) Drain dispatch queue
             DrainDispatchQueue();
@@ -311,6 +327,10 @@ namespace Devian
 #else
         // ========== Editor/Standalone Implementation ==========
 
+        // --- Tick cap constants (prevents GC/memory explosion during event flooding) ---
+        private const int MaxEventsPerTick = 128;
+        private const int MaxBytesPerTick = 256 * 1024; // 256KB
+
         private ClientWebSocket? _ws;
         private Thread? _recvThread;
         private Thread? _sendThread;
@@ -389,7 +409,7 @@ namespace Devian
             }
 
             _running = true;
-
+            
             // Clean up previous CTS and initialize new one
             _cts?.Cancel();
             _cts?.Dispose();
@@ -442,10 +462,13 @@ namespace Devian
         /// <summary>
         /// Standard pump function: drains the dispatch queue.
         /// Call this from Unity's Update() for main thread event handling.
+        /// Applies MaxEventsPerTick cap to prevent GC spike.
         /// </summary>
         public void Tick()
         {
-            while (true)
+            var processedEvents = 0;
+
+            while (processedEvents < MaxEventsPerTick)
             {
                 Action? action;
                 lock (_dispatchLock)
@@ -453,6 +476,8 @@ namespace Devian
                     if (_dispatchQueue.Count == 0) return;
                     action = _dispatchQueue.Dequeue();
                 }
+
+                processedEvents++;
 
                 try
                 {
@@ -463,6 +488,11 @@ namespace Devian
                     // Swallow user handler exceptions
                 }
             }
+
+#if DEVIAN_NET_DEBUG
+            if (processedEvents >= MaxEventsPerTick)
+                UnityEngine.Debug.Log("[NetWsClient] Tick cap reached");
+#endif
         }
 
         /// <summary>

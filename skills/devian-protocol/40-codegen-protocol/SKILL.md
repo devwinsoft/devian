@@ -106,44 +106,112 @@ Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴�
 
 ---
 
-## C# Handlers 생성 (Hard Rule)
+## Handlers / WsClient 미생성 (Hard Rule)
 
-Stub abstract 메서드를 전부 구현해야 하는 부담을 제거하기 위해, Handlers 클래스를 자동 생성한다.
+**현재 프로토콜 코드젠은 Handlers와 WsClient를 생성하지 않는다.**
 
-**생성 파일:**
-- staging: `{tempDir}/Devian.Protocol.{ProtocolGroup}/cs/Generated/{ProtocolName}_Handlers.g.cs`
-- final: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/Generated/{ProtocolName}_Handlers.g.cs`
+### 제거된 생성물
 
-**namespace 고정:**
-- `Devian.Protocol.{ProtocolGroup}` (변경 금지)
+- `{ProtocolName}_Handlers.g.cs` (예: C2Game_Handlers.g.cs, Game2C_Handlers.g.cs)
+- `{GroupName}WsClient.g.cs` (예: GameWsClient.g.cs)
 
-**생성 형태:**
+### 제거 사유
+
+- WsClient/Handlers는 중복 레이어로 오해 유발
+- 표준 흐름인 `GameNetManager + Proxy.Connect() + Proxy.Tick()` 패턴으로 충분
+- 사용자는 Stub를 직접 상속하거나, 별도 partial class를 수기로 작성
+
+### 표준 연결 흐름 (권장)
+
 ```csharp
-// {ProtocolName}_Handlers.g.cs
-namespace Devian.Protocol.{ProtocolGroup}
-{
-    public partial class {ProtocolName}_Handlers : {ProtocolName}.Stub
-    {
-        protected override void OnFoo({ProtocolName}.EnvelopeMeta meta, {ProtocolName}.Foo message)
-        {
-            OnFooImpl(meta, message);
-        }
-        partial void OnFooImpl({ProtocolName}.EnvelopeMeta meta, {ProtocolName}.Foo message);
+// GameNetManager에서 직접 Proxy 사용
+private readonly Game2CStub _stub = new();
+private readonly C2Game.Proxy _proxy = new();
+private readonly INetConnector _connector = new NetWsConnector();
 
-        // ... 모든 메시지에 대해 동일 패턴
-    }
+public void Connect(string url)
+{
+    _proxy.Connect(_stub, url, _connector);
+}
+
+public void Tick()
+{
+    _proxy.Tick();
+}
+```
+
+### Proxy.Connect 재진입 가드 (Hard Rule)
+
+**Generated Proxy.Connect는 재진입 가능성이 있으므로, Connecting/Connected 상태에서 동일 URL Connect는 무시한다.**
+
+| 상태 | 동일 URL | 다른 URL |
+|------|----------|----------|
+| `_isConnecting == true` | return (무시) | DisposeConnection() 후 재연결 |
+| `Connected` | return (무시) | DisposeConnection() 후 재연결 |
+| 그 외 | 새 연결 시작 | 새 연결 시작 |
+
+**핵심 규칙:**
+1. `_isConnecting = true`는 세션 생성 전에 설정 (같은 프레임 재호출 방지)
+2. URL이 바뀌면 기존 세션을 Dispose 후 재연결
+3. 연결 상태 플래그는 `HandleOpen`/`HandleClose`/`HandleError`에서 해제
+
+**생성 코드 핵심부:**
+```csharp
+public void Connect(Stub stub, string url, INetConnector connector)
+{
+    // Already connecting to same URL -> ignore
+    if (_isConnecting && string.Equals(_url, url, StringComparison.Ordinal))
+        return;
+
+    // Already connected to same URL -> ignore
+    if (_session != null &&
+        _session.State == NetClientState.Connected &&
+        string.Equals(_url, url, StringComparison.Ordinal))
+        return;
+
+    // Different URL -> dispose existing first
+    if (!string.Equals(_url, url, StringComparison.Ordinal))
+        DisposeConnection();
+
+    _url = url;
+    _isConnecting = true; // Set before session creation
+    // ... create session and connect
+}
+```
+
+### OnError 디듀프 가드 (Hard Rule)
+
+**Proxy는 연결 실패 시 OnError를 Attempt당 최대 1회만 발생시킨다(디듀프 가드).**
+
+**필드:**
+```csharp
+private bool _errorNotified; // Error dedup guard (max 1 OnError per attempt)
+```
+
+**리셋 위치:**
+| 메서드 | 리셋 타이밍 |
+|--------|-------------|
+| `Connect()` | 새 연결 시작 전 |
+| `HandleOpen()` | 연결 성공 시 |
+| `DisposeConnection()` | 세션 정리 시 |
+
+**HandleError 구현:**
+```csharp
+private void HandleError(Exception ex)
+{
+    _isConnecting = false;
+    _lastError = ex.Message;
+    if (_errorNotified)
+        return;
+    _errorNotified = true;
+    OnError?.Invoke(ex);
 }
 ```
 
 **핵심 규칙:**
-- `*2C_Handlers : *2C.Stub` 형태로 상속
-- override는 생성 코드가 수행
-- 실제 사용자 구현은 `partial void On{Message}Impl(...)` 로 위임
-- partial 미구현 시 no-op (호출 제거)로 간주
-
-**빌더 touch 범위 정책 유지:**
-- Protocol UPM에서 빌더가 손대는 건 `Runtime/Generated/**` 뿐
-- `_Handlers.g.cs`는 `Generated/**` 안에 생성되므로 정책 위반 아님
+1. 한 연결 시도에서 OnError는 최대 1회만 Invoke
+2. _errorNotified가 true이면 추가 에러 무시
+3. 새 연결/연결 성공/세션 정리 시 플래그 리셋
 
 ---
 
@@ -381,6 +449,205 @@ public static void ReturnPooled<T>(T message) where T : class;
 - [ ] `_Reset()` 메서드에서 `List<T>` 필드는 `?.Clear()` 형태로 리셋됨
 - [ ] 기존 `Decode<T>()`/`Decode(opcode)`는 그대로 유지됨 (호환성)
 - [ ] `ReturnPooled(object)`는 패턴 매칭으로 타입 분기하며, `default`는 조용히 무시
+
+---
+
+## Zero-Alloc Encoding (Hard Rule)
+
+**프로토콜 인코딩은 IBufferWriter<byte> 기반으로 구현되어 GC 할당이 발생하지 않는다.**
+
+### ICodec 인터페이스
+
+```csharp
+public interface ICodec
+{
+    /// <summary>Encode to byte array (legacy, avoid in hot path)</summary>
+    byte[] Encode<T>(T message) where T : class;
+    /// <summary>Encode directly to IBufferWriter (zero-alloc send path)</summary>
+    void EncodeTo<T>(IBufferWriter<byte> writer, T message) where T : class;
+    T Decode<T>(ReadOnlySpan<byte> data) where T : class, new();
+    object? Decode(int opcode, ReadOnlySpan<byte> data);
+}
+```
+
+### PooledBufferWriter
+
+`Devian.PooledBufferWriter`는 ArrayPool 기반 IBufferWriter 구현체이다:
+
+```csharp
+public sealed class PooledBufferWriter : IBufferWriter<byte>, IDisposable
+{
+    // ArrayPool<byte>.Shared.Rent/Return 기반
+    public int WrittenCount { get; }
+    public ReadOnlySpan<byte> WrittenSpan { get; }
+    public void Reset();  // 버퍼 반환 없이 재사용
+}
+```
+
+### ProtoWriter (IBufferWriter 기반)
+
+생성된 ProtoWriter는 IBufferWriter<byte>를 직접 사용한다:
+
+```csharp
+private static class ProtoWriter
+{
+    public static void WriteVarint(IBufferWriter<byte> w, ulong value);
+    public static void WriteTag(IBufferWriter<byte> w, int tag, int wireType);
+    public static void WriteString(IBufferWriter<byte> w, int tag, string? value);
+    public static void WriteInt32(IBufferWriter<byte> w, int tag, int value);
+    // ... 등
+}
+```
+
+---
+
+## Frame Buffer Pooling (Hard Rule)
+
+**Proxy.SendXxx 메서드는 PooledBufferWriter + EncodeTo 패턴으로 Zero-Alloc Send를 구현한다.**
+
+### 생성 패턴 (필수)
+
+```csharp
+public void SendFoo(Foo message)
+{
+    var session = _session ?? throw new InvalidOperationException(...);
+
+    using var bw = new PooledBufferWriter(256);
+
+    // Write opcode (4 bytes LE)
+    var span = bw.GetSpan(4);
+    BitConverter.TryWriteBytes(span, Opcodes.Foo);
+    bw.Advance(4);
+
+    // Encode payload directly to buffer
+    _codec.EncodeTo(bw, message);
+
+    // Send frame
+    session.SendTo(bw.WrittenSpan);
+}
+```
+
+### 핵심 규칙
+
+1. **`new byte[]` 금지**: Send 경로에서 `new byte[...]` 또는 `_codec.Encode()` 사용 금지
+2. **PooledBufferWriter 사용**: opcode + payload를 연속으로 기록
+3. **using 패턴**: `using var bw = new PooledBufferWriter(256);`로 자동 Dispose
+4. **EncodeTo 사용**: `_codec.EncodeTo(bw, message)`로 직접 인코딩
+
+### Legacy API 보존 (호환성)
+
+- `ICodec.Encode<T>()`: 내부적으로 `EncodeTo` 호출 후 `ToArray()` (레거시 호환)
+- `Frame.Pack()`: 보존되지만 SendXxx에서 미사용
+
+### DoD (완료 정의)
+
+- [ ] ICodec에 `EncodeTo<T>(IBufferWriter<byte> writer, T message)` 존재
+- [ ] 생성된 `SendXxx`에서 `using var bw = new PooledBufferWriter(...)` 패턴 사용
+- [ ] 생성된 `SendXxx`에서 `_codec.EncodeTo(bw, message)` 호출
+- [ ] `_codec.Encode(message)` 또는 `new byte[...]`가 SendXxx에 없음
+- [ ] `CodecProtobuf.Encode<T>()`는 내부적으로 `EncodeTo` 사용
+
+---
+
+## Zero-Alloc Decoding (Hard Rule)
+
+**프로토콜 디코딩은 임시 byte[] 할당 없이 span 기반으로 구현한다.**
+
+### ProtoReader (Span 기반)
+
+```csharp
+internal ref struct ProtoReader
+{
+    private static readonly Encoding Utf8 = Encoding.UTF8;
+    private ReadOnlySpan<byte> _data;
+    private int _pos;
+
+    public int Position => _pos;
+    public int Remaining => _data.Length - _pos;
+}
+```
+
+### String Decode: 임시 byte[] 금지 (Hard Rule)
+
+**Reader는 연속 span이 가능하면 `Encoding.UTF8.GetString(ReadOnlySpan<byte>)`로 디코드한다.**
+
+```csharp
+public string ReadString()
+{
+    var len = (int)ReadVarint();
+    if (len == 0) return string.Empty;
+    // Zero-alloc path: decode directly from contiguous span
+    var span = _data.Slice(_pos, len);
+    _pos += len;
+    return Utf8.GetString(span);  // string 1회만 할당
+}
+```
+
+**핵심 규칙:**
+1. 연속 span이면 `Utf8.GetString(span)` 직접 호출 (string 할당만 발생)
+2. 연속 span이 불가능한 경우에만 ArrayPool 임시 버퍼 rent/return
+3. `new byte[]` 임시 버퍼 생성 금지
+
+### Collection Decode: 교체 금지 (Hard Rule)
+
+**repeated/dict 필드는 디코드 시 컬렉션을 새로 만들지 않고 Clear() 후 채운다.**
+
+```csharp
+internal static void DecodeFoo(ReadOnlySpan<byte> data, Foo m)
+{
+    // Clear collections before decode (reuse pattern - no new List allocation)
+    m.Items?.Clear();
+
+    var reader = new ProtoReader(data);
+    while (reader.HasMore)
+    {
+        var (tag, wireType) = reader.ReadTag();
+        switch (tag)
+        {
+            case 1:
+                // Only create if null (first decode), never replace
+                (m.Items ??= new List<int>()).Add(reader.ReadInt32());
+                break;
+        }
+    }
+}
+```
+
+**핵심 규칙:**
+1. **리스트 교체 금지**: `m.Items = new List<T>()` 패턴 금지
+2. **Clear() 패턴 사용**: 디코드 전 `?.Clear()` 호출
+3. **null-coalesce 생성**: `??= new List<T>()` 로 최초 1회만 생성
+4. **AddRange 임시 배열 금지**: 루프에서 개별 Add() 사용
+
+### Packed Repeated: Span 기반 파싱 (Hard Rule)
+
+**packed repeated는 length-delimited 블록을 span으로 직접 순회하며 파싱한다(복사 금지).**
+
+```csharp
+// ProtoReader에 제공되는 헬퍼
+public int ReadLengthDelimitedEnd()
+{
+    var len = (int)ReadVarint();
+    return _pos + len;
+}
+
+// 사용 패턴 (블록 전체 복사 없이 직접 순회)
+var end = reader.ReadLengthDelimitedEnd();
+while (reader.Position < end)
+{
+    list.Add(reader.ReadInt32());
+}
+```
+
+### DoD (완료 정의)
+
+- [ ] string decode 경로에 `new byte[]` 없음
+- [ ] string decode는 `Encoding.UTF8.GetString(ReadOnlySpan<byte>)` 사용
+- [ ] fallback 복사가 필요한 경우 `ArrayPool<byte>.Shared.Rent/Return`만 사용
+- [ ] repeated/dict 디코드에서 `new List<>`, `new Dictionary<>` 교체 금지
+- [ ] 디코드 전 `?.Clear()` 호출로 기존 컬렉션 재사용
+- [ ] packed repeated는 블록 span 직접 순회 (임시 배열 복사 금지)
+- [ ] 컴파일 에러 없음
 
 ---
 

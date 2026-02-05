@@ -230,10 +230,13 @@ function generatePacketPool(lines) {
 
 function generateProtoReader(lines) {
     lines.push('        /// <summary>');
-    lines.push('        /// Span-based protobuf reader (zero-copy)');
+    lines.push('        /// Span-based protobuf reader (zero-copy, zero-alloc for string decode)');
     lines.push('        /// </summary>');
     lines.push('        internal ref struct ProtoReader');
     lines.push('        {');
+    lines.push('            // Static UTF8 encoder to avoid repeated Encoding.UTF8 property access');
+    lines.push('            private static readonly Encoding Utf8 = Encoding.UTF8;');
+    lines.push('');
     lines.push('            private ReadOnlySpan<byte> _data;');
     lines.push('            private int _pos;');
     lines.push('');
@@ -244,6 +247,8 @@ function generateProtoReader(lines) {
     lines.push('            }');
     lines.push('');
     lines.push('            public bool HasMore => _pos < _data.Length;');
+    lines.push('            public int Position => _pos;');
+    lines.push('            public int Remaining => _data.Length - _pos;');
     lines.push('');
     lines.push('            public (int tag, int wireType) ReadTag()');
     lines.push('            {');
@@ -285,34 +290,53 @@ function generateProtoReader(lines) {
     lines.push('');
     lines.push('            public float ReadFloat()');
     lines.push('            {');
-    lines.push('                var bytes = _data.Slice(_pos, 4);');
+    lines.push('                var span = _data.Slice(_pos, 4);');
     lines.push('                _pos += 4;');
-    lines.push('                return BitConverter.ToSingle(bytes);');
+    lines.push('                return BitConverter.ToSingle(span);');
     lines.push('            }');
     lines.push('');
     lines.push('            public double ReadDouble()');
     lines.push('            {');
-    lines.push('                var bytes = _data.Slice(_pos, 8);');
+    lines.push('                var span = _data.Slice(_pos, 8);');
     lines.push('                _pos += 8;');
-    lines.push('                return BitConverter.ToDouble(bytes);');
+    lines.push('                return BitConverter.ToDouble(span);');
     lines.push('            }');
     lines.push('');
+    lines.push('            /// <summary>');
+    lines.push('            /// Read string using span-based UTF8 decode (zero temp byte[] allocation).');
+    lines.push('            /// Only allocates the final string object.');
+    lines.push('            /// </summary>');
     lines.push('            public string ReadString()');
     lines.push('            {');
     lines.push('                var len = (int)ReadVarint();');
     lines.push('                if (len == 0) return string.Empty;');
-    lines.push('                var bytes = _data.Slice(_pos, len);');
+    lines.push('                // Zero-alloc path: decode directly from contiguous span');
+    lines.push('                var span = _data.Slice(_pos, len);');
     lines.push('                _pos += len;');
-    lines.push('                return Encoding.UTF8.GetString(bytes);');
+    lines.push('                return Utf8.GetString(span);');
     lines.push('            }');
     lines.push('');
+    lines.push('            /// <summary>');
+    lines.push('            /// Read bytes field. Note: bytes fields inherently need array allocation');
+    lines.push('            /// since the message field type is byte[].');
+    lines.push('            /// </summary>');
     lines.push('            public byte[] ReadBytes()');
     lines.push('            {');
     lines.push('                var len = (int)ReadVarint();');
     lines.push('                if (len == 0) return Array.Empty<byte>();');
-    lines.push('                var bytes = _data.Slice(_pos, len).ToArray();');
+    lines.push('                var result = _data.Slice(_pos, len).ToArray();');
     lines.push('                _pos += len;');
-    lines.push('                return bytes;');
+    lines.push('                return result;');
+    lines.push('            }');
+    lines.push('');
+    lines.push('            /// <summary>');
+    lines.push('            /// Read length-delimited block length and return end position for packed repeated.');
+    lines.push('            /// Use with ReadPackedInt32/etc for zero-copy packed repeated decode.');
+    lines.push('            /// </summary>');
+    lines.push('            public int ReadLengthDelimitedEnd()');
+    lines.push('            {');
+    lines.push('                var len = (int)ReadVarint();');
+    lines.push('                return _pos + len;');
     lines.push('            }');
     lines.push('');
     lines.push('            public void Skip(int wireType)');
@@ -330,78 +354,110 @@ function generateProtoReader(lines) {
 
 function generateProtoWriter(lines) {
     lines.push('        /// <summary>');
-    lines.push('        /// Protobuf wire format writer helper');
+    lines.push('        /// Protobuf wire format writer helper (IBufferWriter-based, zero-alloc)');
     lines.push('        /// </summary>');
     lines.push('        private static class ProtoWriter');
     lines.push('        {');
-    lines.push('            public static void WriteVarint(MemoryStream ms, long value)');
+    lines.push('            public static void WriteVarint(IBufferWriter<byte> w, ulong value)');
     lines.push('            {');
-    lines.push('                var uval = (ulong)value;');
-    lines.push('                while (uval >= 0x80)');
+    lines.push('                Span<byte> buf = stackalloc byte[10];');
+    lines.push('                var i = 0;');
+    lines.push('                while (value >= 0x80)');
     lines.push('                {');
-    lines.push('                    ms.WriteByte((byte)(uval | 0x80));');
-    lines.push('                    uval >>= 7;');
+    lines.push('                    buf[i++] = (byte)(value | 0x80);');
+    lines.push('                    value >>= 7;');
     lines.push('                }');
-    lines.push('                ms.WriteByte((byte)uval);');
+    lines.push('                buf[i++] = (byte)value;');
+    lines.push('                var span = w.GetSpan(i);');
+    lines.push('                buf.Slice(0, i).CopyTo(span);');
+    lines.push('                w.Advance(i);');
     lines.push('            }');
     lines.push('');
-    lines.push('            public static void WriteTag(MemoryStream ms, int tag, int wireType)');
+    lines.push('            public static void WriteTag(IBufferWriter<byte> w, int tag, int wireType)');
     lines.push('            {');
-    lines.push('                WriteVarint(ms, (tag << 3) | wireType);');
+    lines.push('                WriteVarint(w, (ulong)((tag << 3) | wireType));');
     lines.push('            }');
     lines.push('');
-    lines.push('            public static void WriteString(MemoryStream ms, int tag, string? value)');
+    lines.push('            public static void WriteString(IBufferWriter<byte> w, int tag, string? value)');
     lines.push('            {');
     lines.push('                if (string.IsNullOrEmpty(value)) return;');
-    lines.push('                WriteTag(ms, tag, 2);');
-    lines.push('                var bytes = Encoding.UTF8.GetBytes(value);');
-    lines.push('                WriteVarint(ms, bytes.Length);');
-    lines.push('                ms.Write(bytes, 0, bytes.Length);');
+    lines.push('                WriteTag(w, tag, 2);');
+    lines.push('                var byteCount = Encoding.UTF8.GetByteCount(value);');
+    lines.push('                WriteVarint(w, (ulong)byteCount);');
+    lines.push('                if (byteCount <= 256)');
+    lines.push('                {');
+    lines.push('                    // Small string: write directly to span');
+    lines.push('                    var span = w.GetSpan(byteCount);');
+    lines.push('                    Encoding.UTF8.GetBytes(value.AsSpan(), span);');
+    lines.push('                    w.Advance(byteCount);');
+    lines.push('                }');
+    lines.push('                else');
+    lines.push('                {');
+    lines.push('                    // Large string: use pooled buffer');
+    lines.push('                    var rented = ArrayPool<byte>.Shared.Rent(byteCount);');
+    lines.push('                    try');
+    lines.push('                    {');
+    lines.push('                        Encoding.UTF8.GetBytes(value.AsSpan(), rented.AsSpan(0, byteCount));');
+    lines.push('                        var span = w.GetSpan(byteCount);');
+    lines.push('                        rented.AsSpan(0, byteCount).CopyTo(span);');
+    lines.push('                        w.Advance(byteCount);');
+    lines.push('                    }');
+    lines.push('                    finally');
+    lines.push('                    {');
+    lines.push('                        ArrayPool<byte>.Shared.Return(rented);');
+    lines.push('                    }');
+    lines.push('                }');
     lines.push('            }');
     lines.push('');
-    lines.push('            public static void WriteInt32(MemoryStream ms, int tag, int value)');
+    lines.push('            public static void WriteInt32(IBufferWriter<byte> w, int tag, int value)');
     lines.push('            {');
     lines.push('                if (value == 0) return;');
-    lines.push('                WriteTag(ms, tag, 0);');
-    lines.push('                WriteVarint(ms, value);');
+    lines.push('                WriteTag(w, tag, 0);');
+    lines.push('                WriteVarint(w, (ulong)value);');
     lines.push('            }');
     lines.push('');
-    lines.push('            public static void WriteInt64(MemoryStream ms, int tag, long value)');
+    lines.push('            public static void WriteInt64(IBufferWriter<byte> w, int tag, long value)');
     lines.push('            {');
     lines.push('                if (value == 0) return;');
-    lines.push('                WriteTag(ms, tag, 0);');
-    lines.push('                WriteVarint(ms, value);');
+    lines.push('                WriteTag(w, tag, 0);');
+    lines.push('                WriteVarint(w, (ulong)value);');
     lines.push('            }');
     lines.push('');
-    lines.push('            public static void WriteBool(MemoryStream ms, int tag, bool value)');
+    lines.push('            public static void WriteBool(IBufferWriter<byte> w, int tag, bool value)');
     lines.push('            {');
     lines.push('                if (!value) return;');
-    lines.push('                WriteTag(ms, tag, 0);');
-    lines.push('                ms.WriteByte(1);');
+    lines.push('                WriteTag(w, tag, 0);');
+    lines.push('                var span = w.GetSpan(1);');
+    lines.push('                span[0] = 1;');
+    lines.push('                w.Advance(1);');
     lines.push('            }');
     lines.push('');
-    lines.push('            public static void WriteBytes(MemoryStream ms, int tag, byte[]? value)');
+    lines.push('            public static void WriteBytes(IBufferWriter<byte> w, int tag, byte[]? value)');
     lines.push('            {');
     lines.push('                if (value == null || value.Length == 0) return;');
-    lines.push('                WriteTag(ms, tag, 2);');
-    lines.push('                WriteVarint(ms, value.Length);');
-    lines.push('                ms.Write(value, 0, value.Length);');
+    lines.push('                WriteTag(w, tag, 2);');
+    lines.push('                WriteVarint(w, (ulong)value.Length);');
+    lines.push('                var span = w.GetSpan(value.Length);');
+    lines.push('                value.AsSpan().CopyTo(span);');
+    lines.push('                w.Advance(value.Length);');
     lines.push('            }');
     lines.push('');
-    lines.push('            public static void WriteFloat(MemoryStream ms, int tag, float value)');
+    lines.push('            public static void WriteFloat(IBufferWriter<byte> w, int tag, float value)');
     lines.push('            {');
     lines.push('                if (value == 0) return;');
-    lines.push('                WriteTag(ms, tag, 5);');
-    lines.push('                var bytes = BitConverter.GetBytes(value);');
-    lines.push('                ms.Write(bytes, 0, 4);');
+    lines.push('                WriteTag(w, tag, 5);');
+    lines.push('                var span = w.GetSpan(4);');
+    lines.push('                BitConverter.TryWriteBytes(span, value);');
+    lines.push('                w.Advance(4);');
     lines.push('            }');
     lines.push('');
-    lines.push('            public static void WriteDouble(MemoryStream ms, int tag, double value)');
+    lines.push('            public static void WriteDouble(IBufferWriter<byte> w, int tag, double value)');
     lines.push('            {');
     lines.push('                if (value == 0) return;');
-    lines.push('                WriteTag(ms, tag, 1);');
-    lines.push('                var bytes = BitConverter.GetBytes(value);');
-    lines.push('                ms.Write(bytes, 0, 8);');
+    lines.push('                WriteTag(w, tag, 1);');
+    lines.push('                var span = w.GetSpan(8);');
+    lines.push('                BitConverter.TryWriteBytes(span, value);');
+    lines.push('                w.Advance(8);');
     lines.push('            }');
     lines.push('        }');
 }
@@ -460,7 +516,10 @@ function generateICodec(lines, protocolName) {
     lines.push('        /// <summary>Codec interface</summary>');
     lines.push('        public interface ICodec');
     lines.push('        {');
+    lines.push('            /// <summary>Encode to byte array (legacy, avoid in hot path)</summary>');
     lines.push('            byte[] Encode<T>(T message) where T : class;');
+    lines.push('            /// <summary>Encode directly to IBufferWriter (zero-alloc send path)</summary>');
+    lines.push('            void EncodeTo<T>(IBufferWriter<byte> writer, T message) where T : class;');
     lines.push('            T Decode<T>(ReadOnlySpan<byte> data) where T : class, new();');
     lines.push('            object? Decode(int opcode, ReadOnlySpan<byte> data);');
     lines.push('        }');
@@ -474,6 +533,15 @@ function generateCodecJson(lines, messages, protocolName) {
     lines.push('            {');
     lines.push('                var json = JsonConvert.SerializeObject(message);');
     lines.push('                return Encoding.UTF8.GetBytes(json);');
+    lines.push('            }');
+    lines.push('');
+    lines.push('            public void EncodeTo<T>(IBufferWriter<byte> writer, T message) where T : class');
+    lines.push('            {');
+    lines.push('                var json = JsonConvert.SerializeObject(message);');
+    lines.push('                var byteCount = Encoding.UTF8.GetByteCount(json);');
+    lines.push('                var span = writer.GetSpan(byteCount);');
+    lines.push('                Encoding.UTF8.GetBytes(json.AsSpan(), span);');
+    lines.push('                writer.Advance(byteCount);');
     lines.push('            }');
     lines.push('');
     lines.push('            public T Decode<T>(ReadOnlySpan<byte> data) where T : class, new()');
@@ -500,21 +568,33 @@ function generateCodecProtobuf(lines, messages, protocolName, usesComplexAliases
     lines.push('        public sealed class CodecProtobuf : ICodec');
     lines.push('        {');
 
-    // Encode
+    // Encode (legacy, uses EncodeTo internally)
     lines.push('            public byte[] Encode<T>(T message) where T : class');
     lines.push('            {');
     if (usesComplexAliases) {
         lines.push('                throw new NotSupportedException("cint/cfloat/cstring is not supported in protobuf codec; use CodecJson.");');
     } else {
-        lines.push('                using var ms = new MemoryStream();');
+        lines.push('                // Legacy path: uses PooledBufferWriter then copies to byte[]');
+        lines.push('                using var bw = new PooledBufferWriter(256);');
+        lines.push('                EncodeTo(bw, message);');
+        lines.push('                return bw.WrittenSpan.ToArray();');
+    }
+    lines.push('            }');
+    lines.push('');
+
+    // EncodeTo (zero-alloc path)
+    lines.push('            public void EncodeTo<T>(IBufferWriter<byte> writer, T message) where T : class');
+    lines.push('            {');
+    if (usesComplexAliases) {
+        lines.push('                throw new NotSupportedException("cint/cfloat/cstring is not supported in protobuf codec; use CodecJson.");');
+    } else {
         lines.push('                switch (message)');
         lines.push('                {');
         for (const msg of messages) {
-            lines.push(`                    case ${msg.name} m: Encode${msg.name}(ms, m); break;`);
+            lines.push(`                    case ${msg.name} m: Encode${msg.name}(writer, m); break;`);
         }
         lines.push('                    default: throw new ArgumentException($"Unknown message type: {typeof(T).Name}");');
         lines.push('                }');
-        lines.push('                return ms.ToArray();');
     }
     lines.push('            }');
     lines.push('');
@@ -573,13 +653,13 @@ function generateCodecProtobuf(lines, messages, protocolName, usesComplexAliases
 }
 
 function generateEncodeMethod(lines, message) {
-    lines.push(`            private static void Encode${message.name}(MemoryStream ms, ${message.name} m)`);
+    lines.push(`            private static void Encode${message.name}(IBufferWriter<byte> writer, ${message.name} m)`);
     lines.push('            {');
     for (const field of message.fields || []) {
         const tag = field.tag;
         const propName = capitalize(field.name);
         const writeMethod = getWriteMethod(field.type);
-        
+
         if (field.type.endsWith('[]')) {
             // Array handling
             const baseType = field.type.slice(0, -2);
@@ -591,7 +671,7 @@ function generateEncodeMethod(lines, message) {
             lines.push('                    }');
             lines.push('                }');
         } else if (writeMethod) {
-            lines.push(`                ProtoWriter.${writeMethod}(ms, ${tag}, m.${propName});`);
+            lines.push(`                ProtoWriter.${writeMethod}(writer, ${tag}, m.${propName});`);
         }
     }
     lines.push('            }');
@@ -601,29 +681,41 @@ function generateDecodeMethod(lines, message) {
     // internal static to allow access from pooling API
     lines.push(`            internal static void Decode${message.name}(ReadOnlySpan<byte> data, ${message.name} m)`);
     lines.push('            {');
+
+    // Check if message has any array fields - need to clear them before decode
+    const arrayFields = (message.fields || []).filter(f => f.type.endsWith('[]'));
+    if (arrayFields.length > 0) {
+        lines.push('                // Clear collections before decode (reuse pattern - no new List allocation)');
+        for (const field of arrayFields) {
+            const propName = capitalize(field.name);
+            lines.push(`                m.${propName}?.Clear();`);
+        }
+        lines.push('');
+    }
+
     lines.push('                var reader = new ProtoReader(data);');
     lines.push('                while (reader.HasMore)');
     lines.push('                {');
     lines.push('                    var (tag, wireType) = reader.ReadTag();');
     lines.push('                    switch (tag)');
     lines.push('                    {');
-    
+
     for (const field of message.fields || []) {
         const tag = field.tag;
         const propName = capitalize(field.name);
         const readCall = getReadCall(field.type);
-        
+
         if (field.type.endsWith('[]')) {
             const baseType = field.type.slice(0, -2);
             lines.push(`                        case ${tag}:`);
-            lines.push(`                            m.${propName} ??= new List<${mapToCSharpBaseType(baseType)}>();`);
-            lines.push(`                            m.${propName}.Add(${getArrayReadCall(baseType)});`);
+            // Only create list if null (first decode), never replace existing list
+            lines.push(`                            (m.${propName} ??= new List<${mapToCSharpBaseType(baseType)}>()).Add(${getArrayReadCall(baseType)});`);
             lines.push('                            break;');
         } else if (readCall) {
             lines.push(`                        case ${tag}: m.${propName} = ${readCall}; break;`);
         }
     }
-    
+
     lines.push('                        default: reader.Skip(wireType); break;');
     lines.push('                    }');
     lines.push('                }');
@@ -758,6 +850,8 @@ function generateProxy(lines, messages, protocolName, usesComplexAliases = false
     lines.push('            private INetSession? _session;');
     lines.push('            private string _url = string.Empty;');
     lines.push('            private string _lastError = string.Empty;');
+    lines.push('            private volatile bool _isConnecting; // Re-entry guard flag');
+    lines.push('            private bool _errorNotified; // Error dedup guard (max 1 OnError per attempt)');
     lines.push('');
     lines.push('            // ======== Codec ========');
     lines.push('            private readonly ICodec _codec;');
@@ -769,6 +863,7 @@ function generateProxy(lines, messages, protocolName, usesComplexAliases = false
     lines.push('');
     lines.push('            // ======== Properties ========');
     lines.push('            public bool IsConnected => _session?.State == NetClientState.Connected;');
+    lines.push('            public bool IsConnecting => _isConnecting;');
     lines.push('            public string Url => _url;');
     lines.push('            public string LastError => _lastError;');
     lines.push('');
@@ -782,7 +877,8 @@ function generateProxy(lines, messages, protocolName, usesComplexAliases = false
     lines.push('');
     lines.push('            /// <summary>');
     lines.push('            /// Connect to server using the provided connector.');
-    lines.push('            /// Proxy depends only on INetSession/INetConnector interfaces.');
+    lines.push('            /// Re-entry safe: ignores if already connecting/connected to same URL.');
+    lines.push('            /// If URL differs, disposes existing connection and reconnects.');
     lines.push(`            /// Stub must be ${inboundProtocolName}.Stub for inbound message dispatch.`);
     lines.push('            /// </summary>');
     lines.push(`            public void Connect(${inboundProtocolName}.Stub stub, string url, INetConnector connector)`);
@@ -791,10 +887,24 @@ function generateProxy(lines, messages, protocolName, usesComplexAliases = false
     lines.push('                if (string.IsNullOrEmpty(url)) throw new ArgumentException("url is empty", nameof(url));');
     lines.push('                if (connector == null) throw new ArgumentNullException(nameof(connector));');
     lines.push('');
-    lines.push('                DisposeConnection();');
+    lines.push('                // Already connecting to same URL -> ignore');
+    lines.push('                if (_isConnecting && string.Equals(_url, url, StringComparison.Ordinal))');
+    lines.push('                    return;');
+    lines.push('');
+    lines.push('                // Already connected to same URL -> ignore');
+    lines.push('                if (_session != null &&');
+    lines.push('                    _session.State == NetClientState.Connected &&');
+    lines.push('                    string.Equals(_url, url, StringComparison.Ordinal))');
+    lines.push('                    return;');
+    lines.push('');
+    lines.push('                // Different URL -> dispose existing connection first');
+    lines.push('                if (!string.Equals(_url, url, StringComparison.Ordinal))');
+    lines.push('                    DisposeConnection();');
     lines.push('');
     lines.push('                _url = url;');
     lines.push('                _lastError = string.Empty;');
+    lines.push('                _isConnecting = true; // Set before session creation to prevent re-entry');
+    lines.push('                _errorNotified = false; // Reset error dedup guard for new attempt');
     lines.push('');
     lines.push(`                // Inbound dispatch runtime (${inboundProtocolName})`);
     lines.push(`                var runtime = new ${inboundProtocolName}.Runtime(stub);`);
@@ -836,31 +946,42 @@ function generateProxy(lines, messages, protocolName, usesComplexAliases = false
     lines.push('');
     lines.push('            private void DisposeConnection()');
     lines.push('            {');
-    lines.push('                if (_session != null)');
-    lines.push('                {');
-    lines.push('                    _session.OnOpen -= HandleOpen;');
-    lines.push('                    _session.OnClose -= HandleClose;');
-    lines.push('                    _session.OnError -= HandleError;');
-    lines.push('                    (_session as IDisposable)?.Dispose();');
-    lines.push('                    _session = null;');
-    lines.push('                }');
+    lines.push('                _isConnecting = false; // Clear flag first');
+    lines.push('                _errorNotified = false; // Reset error dedup guard');
+    lines.push('');
+    lines.push('                var s = _session;');
+    lines.push('                if (s == null) return;');
+    lines.push('');
+    lines.push('                s.OnOpen -= HandleOpen;');
+    lines.push('                s.OnClose -= HandleClose;');
+    lines.push('                s.OnError -= HandleError;');
+    lines.push('');
+    lines.push('                if (s is IDisposable d) d.Dispose();');
+    lines.push('                _session = null;');
     lines.push('            }');
     lines.push('');
     lines.push('            // ======== Internal Event Handlers ========');
     lines.push('');
     lines.push('            private void HandleOpen()');
     lines.push('            {');
+    lines.push('                _isConnecting = false;');
+    lines.push('                _errorNotified = false; // Reset for connected state');
     lines.push('                OnOpen?.Invoke();');
     lines.push('            }');
     lines.push('');
     lines.push('            private void HandleClose(ushort code, string reason)');
     lines.push('            {');
+    lines.push('                _isConnecting = false;');
     lines.push('                OnClose?.Invoke(code, reason);');
     lines.push('            }');
     lines.push('');
     lines.push('            private void HandleError(Exception ex)');
     lines.push('            {');
+    lines.push('                _isConnecting = false;');
     lines.push('                _lastError = ex.Message;');
+    lines.push('                if (_errorNotified)');
+    lines.push('                    return;');
+    lines.push('                _errorNotified = true;');
     lines.push('                OnError?.Invoke(ex);');
     lines.push('            }');
     lines.push('');
@@ -876,15 +997,27 @@ function generateProxy(lines, messages, protocolName, usesComplexAliases = false
     lines.push('            }');
     lines.push('');
     lines.push('            // ======== Send Methods ========');
+    lines.push('            // Uses PooledBufferWriter + EncodeTo for zero GC allocation.');
+    lines.push('            // Frame format: [opcode:int32LE][payload...]');
     lines.push('');
 
     for (const msg of messages) {
         lines.push(`            public void Send${msg.name}(${msg.name} message)`);
         lines.push('            {');
         lines.push('                var session = _session ?? throw new InvalidOperationException("Proxy is not connected. Call Connect() or AttachSession() first.");');
-        lines.push(`                var payload = _codec.Encode(message);`);
-        lines.push(`                var frame = Frame.Pack(Opcodes.${msg.name}, payload);`);
-        lines.push('                session.SendTo(frame);');
+        lines.push('');
+        lines.push('                using var bw = new PooledBufferWriter(256);');
+        lines.push('');
+        lines.push('                // Write opcode (4 bytes LE)');
+        lines.push('                var span = bw.GetSpan(4);');
+        lines.push(`                BitConverter.TryWriteBytes(span, Opcodes.${msg.name});`);
+        lines.push('                bw.Advance(4);');
+        lines.push('');
+        lines.push('                // Encode payload directly to buffer');
+        lines.push('                _codec.EncodeTo(bw, message);');
+        lines.push('');
+        lines.push('                // Send frame');
+        lines.push('                session.SendTo(bw.WrittenSpan);');
         lines.push('            }');
         lines.push('');
     }
@@ -1001,10 +1134,10 @@ function getReadCall(type) {
 
 function getArrayWriteCall(baseType, tag) {
     const writeMap = {
-        'int32': `ProtoWriter.WriteInt32(ms, ${tag}, item);`,
-        'int64': `ProtoWriter.WriteInt64(ms, ${tag}, item);`,
-        'bool': `ProtoWriter.WriteBool(ms, ${tag}, item);`,
-        'string': `ProtoWriter.WriteString(ms, ${tag}, item);`,
+        'int32': `ProtoWriter.WriteInt32(writer, ${tag}, item);`,
+        'int64': `ProtoWriter.WriteInt64(writer, ${tag}, item);`,
+        'bool': `ProtoWriter.WriteBool(writer, ${tag}, item);`,
+        'string': `ProtoWriter.WriteString(writer, ${tag}, item);`,
     };
     return writeMap[baseType] || `// TODO: ${baseType}[]`;
 }

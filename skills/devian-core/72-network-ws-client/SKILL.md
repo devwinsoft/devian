@@ -282,7 +282,10 @@ namespace Devian
 ### MUST
 
 1. **ToArray() 금지**: 수신/송신 경로에서 `ToArray()` 호출 금지
-2. **ArrayPool 기반 버퍼 재사용**:
+2. **프로토콜 프레임 풀링**: WebGL GC 스파이크 방지를 위해 프로토콜 프레임은 ArrayPool 버퍼를 사용한다
+3. **로그/문자열 할당 금지**: 네트워크 Tick/수신 경로에서는 기본 빌드에서 `Debug.Log` 및 문자열 보간을 금지한다. 필요 시 `DEVIAN_NET_DEBUG` 심볼로만 활성화
+4. **Tick 처리 상한 필수**: WebGL(폴링 기반)에서는 `MaxEventsPerTick`(128)과 `MaxBytesPerTick`(256KB)으로 Tick당 처리량을 제한한다. cap 도달 시 남은 이벤트는 다음 Tick에서 처리한다(연결 종료 정책은 별도)
+5. **ArrayPool 기반 버퍼 재사용**:
    - 수신: `ArrayPool<byte>.Shared.Rent()` → 누적 → 처리 후 재사용
    - 송신: caller span을 rented buffer에 복사 → 전송 후 `Return()`
 3. **Send는 sync enqueue (Non-WebGL)**: `SendFrame()`은 즉시 반환, 실제 전송은 send thread

@@ -179,9 +179,14 @@ protected override void OnDestroy()
 
 **partial** concrete stub 클래스. inbound 메시지 처리.
 
+**기본 빌드에서 로그 없음 (zero GC):**
+- `DEVIAN_NET_DEBUG` 심볼이 정의되지 않으면 `Debug.Log` 호출 없음
+- 문자열 보간/할당 없음
+- 디버그가 필요하면 파일 상단의 `#define DEVIAN_NET_DEBUG` 주석 해제
+
 **포함:**
-- `OnPong()` — 기본 로그 출력 후 `OnPongImpl()` 호출
-- `OnEchoReply()` — 기본 로그 출력 후 `OnEchoReplyImpl()` 호출
+- `OnPong()` — `OnPongImpl()` 호출 (디버그 모드에서만 로그)
+- `OnEchoReply()` — `OnEchoReplyImpl()` 호출 (디버그 모드에서만 로그)
 - `partial void OnPongImpl(...)` — 확장 훅
 - `partial void OnEchoReplyImpl(...)` — 확장 훅
 
