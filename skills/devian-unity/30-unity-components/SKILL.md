@@ -21,7 +21,6 @@ Type: Index / Directory
 | 03 | MessageSystem | instanceId + key 기반 메시지/트리거 시스템 (timer 제외) | `03-message-system/SKILL.md` |
 | 04 | PoolFactories | InspectorPoolFactory, BundlePoolFactory | `04-pool-factories/SKILL.md` |
 | 10 | AssetManager | AssetBundle 기반 로딩/캐시/언로드 | `10-asset-manager/SKILL.md` |
-| 11 | NetWsClientBehaviourBase | WebSocket 네트워크 클라이언트 베이스 | `11-network-client-behaviour/SKILL.md` |
 | 12 | DownloadManager | Addressables Label 기반 Patch/Download (CompoSingleton) | `12-download-manager/SKILL.md` |
 | 13 | Pb64Storage | pb64를 Unity TextAsset .asset로 저장하는 규약 | `skills/devian-data/35-pb64-storage/SKILL.md` |
 | 14 | TableManager | TB_/ST_ 테이블 로딩/캐시/언로드 (ndjson/pb64) | `14-table-manager/SKILL.md` |

@@ -7,7 +7,7 @@
 //   client.Connect("wss://...");
 //   // Implement handlers via partial class
 //   // Send messages via client.C2GameProxy.SendXxx(...)
-//   // Call client.Tick() each frame (or register with NetTickRunner)
+//   // Call client.Tick() each frame
 // </auto-generated>
 
 #nullable enable
@@ -19,6 +19,7 @@ namespace Devian.Protocol.Game
 {
     /// <summary>
     /// WebSocket client for Game protocol group.
+    /// Uses INetSession/INetConnector for protocol-agnostic session management.
     /// Implements INetTickable for unified tick management.
     /// </summary>
     public sealed class GameWsClient : INetTickable, IDisposable
@@ -29,17 +30,11 @@ namespace Devian.Protocol.Game
         // ======== Outbound Proxies ========
         public C2Game.Proxy C2GameProxy { get; }
 
-        // ======== Core Infrastructure ========
-        public NetClient Core { get; }
-        public NetWsClient Transport { get; }
-
-        // ======== Sender Adapters ========
-        private sealed class C2Game_WsSender : C2Game.ISender
-        {
-            private readonly GameWsClient _owner;
-            public C2Game_WsSender(GameWsClient owner) => _owner = owner;
-            public void SendTo(int sessionId, ReadOnlySpan<byte> frame) => _owner.Transport.SendFrame(frame);
-        }
+        // ======== Session Infrastructure ========
+        private INetSession? _session;
+        private readonly INetConnector _connector;
+        private string _url = string.Empty;
+        private string _lastError = string.Empty;
 
         // ======== Runtime Multiplexer ========
         private sealed class RuntimeMux : INetRuntime
@@ -61,52 +56,113 @@ namespace Devian.Protocol.Game
         }
 
         // ======== Constructor ========
-        public GameWsClient()
+        public GameWsClient(INetConnector? connector = null)
         {
             // Create handlers
             Game2CHandlers = new Game2C_Handlers();
 
-            // Create runtime multiplexer
+            // Create proxies
+            C2GameProxy = new C2Game.Proxy();
+
+            // Use provided connector or create default
+            _connector = connector ?? new NetWsConnector();
+        }
+
+        // ======== Properties ========
+        public bool IsConnected => _session?.State == NetClientState.Connected;
+        public string Url => _url;
+        public string LastError => _lastError;
+
+        // ======== Connection Lifecycle ========
+
+        /// <summary>
+        /// Connect to server. Creates session via INetConnector.
+        /// </summary>
+        public void Connect(string url)
+        {
+            if (string.IsNullOrEmpty(url)) throw new ArgumentException("url is empty", nameof(url));
+
+            DisposeSession();
+
+            _url = url;
+            _lastError = string.Empty;
+
+            // Create runtime multiplexer from handlers
             var runtimeMux = new RuntimeMux(
                 new Game2C.Runtime(Game2CHandlers)
             );
 
-            // Create core and transport
-            Core = new NetClient(runtimeMux);
-            Transport = new NetWsClient(Core);
+            // Create session via connector
+            var session = _connector.CreateSession(runtimeMux, url);
+            session.OnOpen += HandleOpen;
+            session.OnClose += HandleClose;
+            session.OnError += HandleError;
 
-            // Create proxies
-            C2GameProxy = new C2Game.Proxy(new C2Game_WsSender(this));
+            // Attach session to proxies for sending
+            C2GameProxy.AttachSession(session);
+
+            _session = session;
+            _ = session.ConnectAsync();
         }
 
-        // ======== Public API ========
-        public bool IsConnected => Transport.IsOpen;
+        /// <summary>
+        /// Process network events. Call from Update() loop.
+        /// </summary>
+        public void Tick()
+        {
+            _session?.Tick();
+        }
 
-        public void Connect(string url, string[]? subProtocols = null) => Transport.Connect(url, subProtocols);
+        /// <summary>
+        /// Request graceful disconnect.
+        /// </summary>
+        public void Close()
+        {
+            if (_session == null) return;
+            _ = _session.CloseAsync();
+        }
 
-        public void Close() => Transport.Close();
+        /// <summary>
+        /// Dispose connection resources.
+        /// </summary>
+        public void Dispose()
+        {
+            DisposeSession();
+        }
 
-        public void Tick() => Transport.Tick();
+        private void DisposeSession()
+        {
+            if (_session != null)
+            {
+                _session.OnOpen -= HandleOpen;
+                _session.OnClose -= HandleClose;
+                _session.OnError -= HandleError;
+                (_session as IDisposable)?.Dispose();
+                _session = null;
+            }
+        }
 
-        public void Dispose() => Transport.Dispose();
+        // ======== Internal Event Handlers ========
+
+        private void HandleOpen()
+        {
+            OnOpen?.Invoke();
+        }
+
+        private void HandleClose(ushort code, string reason)
+        {
+            OnClose?.Invoke(code, reason);
+        }
+
+        private void HandleError(Exception ex)
+        {
+            _lastError = ex.Message;
+            OnError?.Invoke(ex);
+        }
 
         // ======== Events ========
-        public event Action? OnOpen
-        {
-            add => Transport.OnOpen += value;
-            remove => Transport.OnOpen -= value;
-        }
-
-        public event Action<ushort, string>? OnClose
-        {
-            add => Transport.OnClose += value;
-            remove => Transport.OnClose -= value;
-        }
-
-        public event Action<Exception>? OnError
-        {
-            add => Transport.OnError += value;
-            remove => Transport.OnError -= value;
-        }
+        public event Action? OnOpen;
+        public event Action<ushort, string>? OnClose;
+        public event Action<Exception>? OnError;
     }
 }

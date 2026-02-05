@@ -4,7 +4,7 @@ namespace Devian
 {
     /// <summary>
     /// Interface for network objects that require periodic tick processing.
-    /// Used by NetTickLoop and NetTickRunner for unified tick management.
+    /// Used by tick loops (manual Update, custom runner, etc.) for unified tick management.
     /// </summary>
     public interface INetTickable
     {

@@ -5,71 +5,48 @@ using UnityEditor;
 namespace Devian
 {
     /// <summary>
-    /// Editor menu for one-click Network sample setup.
-    /// Creates NetTickRunner and GameNetworkClientSample in the current scene.
+    /// Editor menu for Network sample.
+    /// GameNetManager handles Stub/Proxy internally - extend via partial class.
     /// </summary>
     public static class NetworkSampleMenu
     {
-        private const string MenuPath = "Devian/Samples/Network/Create Sample Setup";
-        private const string DefaultUrl = "ws://localhost:8080";
+        private const string CreateMenuPath = "Devian/Samples/Network/Create GameNetManager";
+        private const string HelpMenuPath = "Devian/Samples/Network/How to Use";
 
-        [MenuItem(MenuPath)]
-        public static void CreateSampleSetup()
+        [MenuItem(CreateMenuPath)]
+        public static void CreateGameNetManager()
         {
-            // 1. Find or create NetTickRunner
-            var runner = Object.FindAnyObjectByType<NetTickRunner>();
-            GameObject? runnerGo = null;
-
-            if (runner == null)
-            {
-                runnerGo = new GameObject("Devian.NetTickRunner");
-                runner = runnerGo.AddComponent<NetTickRunner>();
-                Undo.RegisterCreatedObjectUndo(runnerGo, "Create NetTickRunner");
-                Debug.Log("[NetworkSampleMenu] Created NetTickRunner.");
-            }
-            else
-            {
-                Debug.Log("[NetworkSampleMenu] NetTickRunner already exists in scene.");
-            }
-
-            // 2. Create GameNetworkClientSample
-            var sampleGo = new GameObject("Devian.GameNetworkClientSample");
-            var sample = sampleGo.AddComponent<GameNetworkClientSample>();
-            Undo.RegisterCreatedObjectUndo(sampleGo, "Create GameNetworkClientSample");
-
-            // 3. Set default URL via SerializedObject
-            SetDefaultUrl(sample);
-
-            // 4. Select the sample object
-            Selection.activeGameObject = sampleGo;
-
-            Debug.Log($"[NetworkSampleMenu] Created GameNetworkClientSample. Use menu Devian/Samples/Network or Play to test.");
+            var go = new GameObject("GameNetManager");
+            go.AddComponent<GameNetManager>();
+            Selection.activeGameObject = go;
+            Debug.Log("[NetworkSampleMenu] Created GameNetManager. Use Connect(url) to connect.");
         }
 
-        private static void SetDefaultUrl(GameNetworkClientSample sample)
+        [MenuItem(HelpMenuPath)]
+        public static void ShowUsageInfo()
         {
-            var so = new SerializedObject(sample);
+            Debug.Log(@"[NetworkSampleMenu] GameNetManager Usage:
 
-            // Try common field names for URL
-            var urlProp = so.FindProperty("_url");
-            if (urlProp == null)
-                urlProp = so.FindProperty("url");
-            if (urlProp == null)
-                urlProp = so.FindProperty("m_Url");
+1. Add GameNetManager component to a GameObject (or use menu)
+2. Call Connect(url) to establish connection
+3. Use Proxy to send messages
+4. Extend via partial class for custom handling
 
-            if (urlProp != null && urlProp.propertyType == SerializedPropertyType.String)
-            {
-                urlProp.stringValue = DefaultUrl;
-                so.ApplyModifiedProperties();
-                Debug.Log($"[NetworkSampleMenu] Set URL to: {DefaultUrl}");
-            }
-        }
+Basic Usage:
+  var manager = GetComponent<GameNetManager>();
+  manager.Connect(""ws://localhost:8080"");
+  manager.Proxy.SendPing(new C2Game.Ping { Timestamp = Time.time });
 
-        [MenuItem(MenuPath, true)]
-        public static bool ValidateCreateSampleSetup()
-        {
-            // Always enabled (can create multiple samples if needed)
-            return true;
+Extending (partial class):
+  // In a separate file: Game2CStub.Partial.cs
+  public partial class Game2CStub
+  {
+      partial void OnPongImpl(Game2C.EnvelopeMeta meta, Game2C.Pong message)
+      {
+          // Handle Pong message
+      }
+  }
+");
         }
     }
 }

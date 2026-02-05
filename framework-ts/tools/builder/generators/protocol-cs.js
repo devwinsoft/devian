@@ -634,7 +634,7 @@ function generateISender(lines) {
     lines.push('        /// <summary>Sender interface for Proxy</summary>');
     lines.push('        public interface ISender');
     lines.push('        {');
-    lines.push('            void SendTo(int sessionId, ReadOnlySpan<byte> frame);');
+    lines.push('            void SendTo(ReadOnlySpan<byte> frame);');
     lines.push('        }');
 }
 
@@ -723,29 +723,168 @@ function generateRuntimeAdapter(lines, messages, protocolName, usesComplexAliase
     lines.push('        }');
 }
 
+/**
+ * Get the paired inbound protocol name for a given outbound protocol.
+ * Mapping: C2{X} ↔ {X}2C
+ * Examples: C2Game → Game2C, Game2C → C2Game
+ */
+function getInboundProtocolName(outboundProtocolName) {
+    // Pattern: C2{GroupName} → {GroupName}2C
+    if (outboundProtocolName.startsWith('C2')) {
+        const groupName = outboundProtocolName.slice(2); // Remove 'C2' prefix
+        return `${groupName}2C`;
+    }
+    // Pattern: {GroupName}2C → C2{GroupName}
+    if (outboundProtocolName.endsWith('2C')) {
+        const groupName = outboundProtocolName.slice(0, -2); // Remove '2C' suffix
+        return `C2${groupName}`;
+    }
+    // Fallback: same protocol (bidirectional or unknown pattern)
+    return outboundProtocolName;
+}
+
 function generateProxy(lines, messages, protocolName, usesComplexAliases = false) {
     const defaultCodec = usesComplexAliases ? 'CodecJson' : 'CodecProtobuf';
+    const inboundProtocolName = getInboundProtocolName(protocolName);
+
     lines.push('        /// <summary>');
     lines.push(`        /// Proxy for sending ${protocolName} messages.`);
+    lines.push('        /// Uses INetSession/INetConnector for protocol-agnostic session management.');
+    lines.push(`        /// Inbound dispatch uses ${inboundProtocolName}.Runtime.`);
     lines.push('        /// </summary>');
-    lines.push('        public sealed class Proxy');
+    lines.push('        public sealed class Proxy : IDisposable');
     lines.push('        {');
-    lines.push('            private readonly ISender _sender;');
+    lines.push('            // ======== Session (interface-based, no concrete types) ========');
+    lines.push('            private INetSession? _session;');
+    lines.push('            private string _url = string.Empty;');
+    lines.push('            private string _lastError = string.Empty;');
+    lines.push('');
+    lines.push('            // ======== Codec ========');
     lines.push('            private readonly ICodec _codec;');
     lines.push('');
-    lines.push('            public Proxy(ISender sender, ICodec? codec = null)');
+    lines.push('            // ======== Events ========');
+    lines.push('            public event Action? OnOpen;');
+    lines.push('            public event Action<ushort, string>? OnClose;');
+    lines.push('            public event Action<Exception>? OnError;');
+    lines.push('');
+    lines.push('            // ======== Properties ========');
+    lines.push('            public bool IsConnected => _session?.State == NetClientState.Connected;');
+    lines.push('            public string Url => _url;');
+    lines.push('            public string LastError => _lastError;');
+    lines.push('');
+    lines.push('            // ======== Constructor ========');
+    lines.push('            public Proxy(ICodec? codec = null)');
     lines.push('            {');
-    lines.push('                _sender = sender;');
     lines.push(`                _codec = codec ?? new ${defaultCodec}();`);
     lines.push('            }');
     lines.push('');
+    lines.push('            // ======== Connection Lifecycle API ========');
+    lines.push('');
+    lines.push('            /// <summary>');
+    lines.push('            /// Connect to server using the provided connector.');
+    lines.push('            /// Proxy depends only on INetSession/INetConnector interfaces.');
+    lines.push(`            /// Stub must be ${inboundProtocolName}.Stub for inbound message dispatch.`);
+    lines.push('            /// </summary>');
+    lines.push(`            public void Connect(${inboundProtocolName}.Stub stub, string url, INetConnector connector)`);
+    lines.push('            {');
+    lines.push('                if (stub == null) throw new ArgumentNullException(nameof(stub));');
+    lines.push('                if (string.IsNullOrEmpty(url)) throw new ArgumentException("url is empty", nameof(url));');
+    lines.push('                if (connector == null) throw new ArgumentNullException(nameof(connector));');
+    lines.push('');
+    lines.push('                DisposeConnection();');
+    lines.push('');
+    lines.push('                _url = url;');
+    lines.push('                _lastError = string.Empty;');
+    lines.push('');
+    lines.push(`                // Inbound dispatch runtime (${inboundProtocolName})`);
+    lines.push(`                var runtime = new ${inboundProtocolName}.Runtime(stub);`);
+    lines.push('');
+    lines.push('                // Create session via connector (no concrete types here)');
+    lines.push('                var session = connector.CreateSession(runtime, url);');
+    lines.push('                session.OnOpen += HandleOpen;');
+    lines.push('                session.OnClose += HandleClose;');
+    lines.push('                session.OnError += HandleError;');
+    lines.push('');
+    lines.push('                _session = session;');
+    lines.push('                _ = session.ConnectAsync();');
+    lines.push('            }');
+    lines.push('');
+    lines.push('            /// <summary>');
+    lines.push('            /// Process network events. Call from Update() loop.');
+    lines.push('            /// </summary>');
+    lines.push('            public void Tick()');
+    lines.push('            {');
+    lines.push('                _session?.Tick();');
+    lines.push('            }');
+    lines.push('');
+    lines.push('            /// <summary>');
+    lines.push('            /// Request graceful disconnect.');
+    lines.push('            /// </summary>');
+    lines.push('            public void Disconnect()');
+    lines.push('            {');
+    lines.push('                if (_session == null) return;');
+    lines.push('                _ = _session.CloseAsync();');
+    lines.push('            }');
+    lines.push('');
+    lines.push('            /// <summary>');
+    lines.push('            /// Dispose connection resources.');
+    lines.push('            /// </summary>');
+    lines.push('            public void Dispose()');
+    lines.push('            {');
+    lines.push('                DisposeConnection();');
+    lines.push('            }');
+    lines.push('');
+    lines.push('            private void DisposeConnection()');
+    lines.push('            {');
+    lines.push('                if (_session != null)');
+    lines.push('                {');
+    lines.push('                    _session.OnOpen -= HandleOpen;');
+    lines.push('                    _session.OnClose -= HandleClose;');
+    lines.push('                    _session.OnError -= HandleError;');
+    lines.push('                    (_session as IDisposable)?.Dispose();');
+    lines.push('                    _session = null;');
+    lines.push('                }');
+    lines.push('            }');
+    lines.push('');
+    lines.push('            // ======== Internal Event Handlers ========');
+    lines.push('');
+    lines.push('            private void HandleOpen()');
+    lines.push('            {');
+    lines.push('                OnOpen?.Invoke();');
+    lines.push('            }');
+    lines.push('');
+    lines.push('            private void HandleClose(ushort code, string reason)');
+    lines.push('            {');
+    lines.push('                OnClose?.Invoke(code, reason);');
+    lines.push('            }');
+    lines.push('');
+    lines.push('            private void HandleError(Exception ex)');
+    lines.push('            {');
+    lines.push('                _lastError = ex.Message;');
+    lines.push('                OnError?.Invoke(ex);');
+    lines.push('            }');
+    lines.push('');
+    lines.push('            // ======== Session Attachment (for WsClient shared session) ========');
+    lines.push('');
+    lines.push('            /// <summary>');
+    lines.push('            /// Attach an externally created session for sending.');
+    lines.push('            /// Used by WsClient to share a single session across protocols.');
+    lines.push('            /// </summary>');
+    lines.push('            public void AttachSession(INetSession session)');
+    lines.push('            {');
+    lines.push('                _session = session ?? throw new ArgumentNullException(nameof(session));');
+    lines.push('            }');
+    lines.push('');
+    lines.push('            // ======== Send Methods ========');
+    lines.push('');
 
     for (const msg of messages) {
-        lines.push(`            public void Send${msg.name}(int sessionId, ${msg.name} message)`);
+        lines.push(`            public void Send${msg.name}(${msg.name} message)`);
         lines.push('            {');
+        lines.push('                var session = _session ?? throw new InvalidOperationException("Proxy is not connected. Call Connect() or AttachSession() first.");');
         lines.push(`                var payload = _codec.Encode(message);`);
         lines.push(`                var frame = Frame.Pack(Opcodes.${msg.name}, payload);`);
-        lines.push('                _sender.SendTo(sessionId, frame);');
+        lines.push('                session.SendTo(frame);');
         lines.push('            }');
         lines.push('');
     }
@@ -1090,7 +1229,7 @@ export function generateCSharpProtocolGroupWsClient(groupName, protocolInfos) {
     lines.push('//   client.Connect("wss://...");');
     lines.push('//   // Implement handlers via partial class');
     lines.push('//   // Send messages via client.C2GameProxy.SendXxx(...)');
-    lines.push('//   // Call client.Tick() each frame (or register with NetTickRunner)');
+    lines.push('//   // Call client.Tick() each frame');
     lines.push('// </auto-generated>');
     lines.push('');
     lines.push('#nullable enable');
@@ -1106,6 +1245,7 @@ export function generateCSharpProtocolGroupWsClient(groupName, protocolInfos) {
     // Class
     lines.push('    /// <summary>');
     lines.push(`    /// WebSocket client for ${groupName} protocol group.`);
+    lines.push('    /// Uses INetSession/INetConnector for protocol-agnostic session management.');
     lines.push('    /// Implements INetTickable for unified tick management.');
     lines.push('    /// </summary>');
     lines.push(`    public sealed class ${groupName}WsClient : INetTickable, IDisposable`);
@@ -1129,25 +1269,13 @@ export function generateCSharpProtocolGroupWsClient(groupName, protocolInfos) {
         lines.push('');
     }
 
-    // ======== Core infrastructure ========
-    lines.push('        // ======== Core Infrastructure ========');
-    lines.push('        public NetClient Core { get; }');
-    lines.push('        public NetWsClient Transport { get; }');
+    // ======== Session infrastructure ========
+    lines.push('        // ======== Session Infrastructure ========');
+    lines.push('        private INetSession? _session;');
+    lines.push('        private readonly INetConnector _connector;');
+    lines.push('        private string _url = string.Empty;');
+    lines.push('        private string _lastError = string.Empty;');
     lines.push('');
-
-    // ======== Sender adapters (private nested classes) ========
-    if (outboundProtos.length > 0) {
-        lines.push('        // ======== Sender Adapters ========');
-        for (const proto of outboundProtos) {
-            lines.push(`        private sealed class ${proto.name}_WsSender : ${proto.name}.ISender`);
-            lines.push('        {');
-            lines.push(`            private readonly ${groupName}WsClient _owner;`);
-            lines.push(`            public ${proto.name}_WsSender(${groupName}WsClient owner) => _owner = owner;`);
-            lines.push('            public void SendTo(int sessionId, ReadOnlySpan<byte> frame) => _owner.Transport.SendFrame(frame);');
-            lines.push('        }');
-            lines.push('');
-        }
-    }
 
     // ======== RuntimeMux (private nested class) ========
     lines.push('        // ======== Runtime Multiplexer ========');
@@ -1185,7 +1313,7 @@ export function generateCSharpProtocolGroupWsClient(groupName, protocolInfos) {
 
     // ======== Constructor ========
     lines.push('        // ======== Constructor ========');
-    lines.push(`        public ${groupName}WsClient()`);
+    lines.push(`        public ${groupName}WsClient(INetConnector? connector = null)`);
     lines.push('        {');
 
     // Create handlers
@@ -1197,8 +1325,45 @@ export function generateCSharpProtocolGroupWsClient(groupName, protocolInfos) {
         lines.push('');
     }
 
-    // Create runtime mux
-    lines.push('            // Create runtime multiplexer');
+    // Create proxies
+    if (outboundProtos.length > 0) {
+        lines.push('            // Create proxies');
+        for (const proto of outboundProtos) {
+            lines.push(`            ${proto.name}Proxy = new ${proto.name}.Proxy();`);
+        }
+        lines.push('');
+    }
+
+    // Store connector
+    lines.push('            // Use provided connector or create default');
+    lines.push('            _connector = connector ?? new NetWsConnector();');
+
+    lines.push('        }');
+    lines.push('');
+
+    // ======== Public API ========
+    lines.push('        // ======== Properties ========');
+    lines.push('        public bool IsConnected => _session?.State == NetClientState.Connected;');
+    lines.push('        public string Url => _url;');
+    lines.push('        public string LastError => _lastError;');
+    lines.push('');
+
+    // Connect method
+    lines.push('        // ======== Connection Lifecycle ========');
+    lines.push('');
+    lines.push('        /// <summary>');
+    lines.push('        /// Connect to server. Creates session via INetConnector.');
+    lines.push('        /// </summary>');
+    lines.push('        public void Connect(string url)');
+    lines.push('        {');
+    lines.push('            if (string.IsNullOrEmpty(url)) throw new ArgumentException("url is empty", nameof(url));');
+    lines.push('');
+    lines.push('            DisposeSession();');
+    lines.push('');
+    lines.push('            _url = url;');
+    lines.push('            _lastError = string.Empty;');
+    lines.push('');
+    lines.push('            // Create runtime multiplexer from handlers');
     if (inboundProtos.length > 0) {
         const runtimeArgs = inboundProtos.map(p => `new ${p.name}.Runtime(${p.name}Handlers)`);
         lines.push(`            var runtimeMux = new RuntimeMux(`);
@@ -1208,56 +1373,97 @@ export function generateCSharpProtocolGroupWsClient(groupName, protocolInfos) {
         lines.push('            var runtimeMux = new RuntimeMux();');
     }
     lines.push('');
-
-    // Create Core and Transport
-    lines.push('            // Create core and transport');
-    lines.push('            Core = new NetClient(runtimeMux);');
-    lines.push('            Transport = new NetWsClient(Core);');
+    lines.push('            // Create session via connector');
+    lines.push('            var session = _connector.CreateSession(runtimeMux, url);');
+    lines.push('            session.OnOpen += HandleOpen;');
+    lines.push('            session.OnClose += HandleClose;');
+    lines.push('            session.OnError += HandleError;');
     lines.push('');
 
-    // Create proxies
+    // Attach session to proxies
     if (outboundProtos.length > 0) {
-        lines.push('            // Create proxies');
+        lines.push('            // Attach session to proxies for sending');
         for (const proto of outboundProtos) {
-            lines.push(`            ${proto.name}Proxy = new ${proto.name}.Proxy(new ${proto.name}_WsSender(this));`);
+            lines.push(`            ${proto.name}Proxy.AttachSession(session);`);
         }
+        lines.push('');
     }
 
+    lines.push('            _session = session;');
+    lines.push('            _ = session.ConnectAsync();');
     lines.push('        }');
     lines.push('');
 
-    // ======== Public API ========
-    lines.push('        // ======== Public API ========');
-    lines.push('        public bool IsConnected => Transport.IsOpen;');
-    lines.push('');
-    lines.push('        public void Connect(string url, string[]? subProtocols = null) => Transport.Connect(url, subProtocols);');
-    lines.push('');
-    lines.push('        public void Close() => Transport.Close();');
-    lines.push('');
-    lines.push('        public void Tick() => Transport.Tick();');
-    lines.push('');
-    lines.push('        public void Dispose() => Transport.Dispose();');
+    // Tick
+    lines.push('        /// <summary>');
+    lines.push('        /// Process network events. Call from Update() loop.');
+    lines.push('        /// </summary>');
+    lines.push('        public void Tick()');
+    lines.push('        {');
+    lines.push('            _session?.Tick();');
+    lines.push('        }');
     lines.push('');
 
-    // ======== Events (delegated) ========
+    // Close
+    lines.push('        /// <summary>');
+    lines.push('        /// Request graceful disconnect.');
+    lines.push('        /// </summary>');
+    lines.push('        public void Close()');
+    lines.push('        {');
+    lines.push('            if (_session == null) return;');
+    lines.push('            _ = _session.CloseAsync();');
+    lines.push('        }');
+    lines.push('');
+
+    // Dispose
+    lines.push('        /// <summary>');
+    lines.push('        /// Dispose connection resources.');
+    lines.push('        /// </summary>');
+    lines.push('        public void Dispose()');
+    lines.push('        {');
+    lines.push('            DisposeSession();');
+    lines.push('        }');
+    lines.push('');
+
+    // DisposeSession helper
+    lines.push('        private void DisposeSession()');
+    lines.push('        {');
+    lines.push('            if (_session != null)');
+    lines.push('            {');
+    lines.push('                _session.OnOpen -= HandleOpen;');
+    lines.push('                _session.OnClose -= HandleClose;');
+    lines.push('                _session.OnError -= HandleError;');
+    lines.push('                (_session as IDisposable)?.Dispose();');
+    lines.push('                _session = null;');
+    lines.push('            }');
+    lines.push('        }');
+    lines.push('');
+
+    // ======== Event handlers ========
+    lines.push('        // ======== Internal Event Handlers ========');
+    lines.push('');
+    lines.push('        private void HandleOpen()');
+    lines.push('        {');
+    lines.push('            OnOpen?.Invoke();');
+    lines.push('        }');
+    lines.push('');
+    lines.push('        private void HandleClose(ushort code, string reason)');
+    lines.push('        {');
+    lines.push('            OnClose?.Invoke(code, reason);');
+    lines.push('        }');
+    lines.push('');
+    lines.push('        private void HandleError(Exception ex)');
+    lines.push('        {');
+    lines.push('            _lastError = ex.Message;');
+    lines.push('            OnError?.Invoke(ex);');
+    lines.push('        }');
+    lines.push('');
+
+    // ======== Events ========
     lines.push('        // ======== Events ========');
-    lines.push('        public event Action? OnOpen');
-    lines.push('        {');
-    lines.push('            add => Transport.OnOpen += value;');
-    lines.push('            remove => Transport.OnOpen -= value;');
-    lines.push('        }');
-    lines.push('');
-    lines.push('        public event Action<ushort, string>? OnClose');
-    lines.push('        {');
-    lines.push('            add => Transport.OnClose += value;');
-    lines.push('            remove => Transport.OnClose -= value;');
-    lines.push('        }');
-    lines.push('');
-    lines.push('        public event Action<Exception>? OnError');
-    lines.push('        {');
-    lines.push('            add => Transport.OnError += value;');
-    lines.push('            remove => Transport.OnError -= value;');
-    lines.push('        }');
+    lines.push('        public event Action? OnOpen;');
+    lines.push('        public event Action<ushort, string>? OnClose;');
+    lines.push('        public event Action<Exception>? OnError;');
 
     lines.push('    }');
     lines.push('}');

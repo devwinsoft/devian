@@ -34,6 +34,8 @@ Devian 런타임에 **WebSocket 기반 클라이언트 런타임**을 추가한�
 - HTTP/RPC는 별도 SKILL에서 다룸
 - 기존 `INetPacketSender`, `NetPacketEnvelope` API 변경 없음
 
+> **Note:** 본 SKILL의 sender/transport 정책은 Devian 네트워크 런타임(`Net*`) 범위이며, 프로토콜 generated의 `ISender`는 별도 규칙(Proxy wiring 규칙)을 따른다. → [Generated Protocol Proxy Wiring](#generated-protocol-proxy-wiring) 참조
+
 ---
 
 ## Relationship with Devian
@@ -48,6 +50,65 @@ Devian 런타임에 **WebSocket 기반 클라이언트 런타임**을 추가한�
 | - | `INetRuntime` |
 | - | `NetClient` |
 | - | `NetWsClient` |
+
+---
+
+## Generated Protocol Proxy Wiring
+
+**프로토콜 생성 코드가 네트워크 구현을 끌고 들어가면 안 된다 (Hard Rule).**
+
+Generated Protocol Proxy는 **인터페이스에만 의존**하며, 구체 타입(NetWsTransport, NetClientBase 등)을 참조하지 않는다.
+
+**프로토콜 Proxy가 만드는 runtime(stub)은 수신 방향 프로토콜(Runtime/Stub)을 사용한다.**
+- C2Game 송신 Proxy → Game2C Runtime (수신)
+- Game2C 송신 Proxy → C2Game Runtime (수신)
+
+**규칙:**
+
+1. **Proxy는 기본 ctor로 생성 가능해야 한다**
+   - `new C2Game.Proxy()` (파라미터 없음)
+
+2. **Proxy는 INetSession/INetConnector 인터페이스에만 의존한다**
+   - `C2Game.Proxy.Connect(Game2C.Stub stub, string url, INetConnector connector)` 시그니처
+   - 내부에서:
+     - `var runtime = new Game2C.Runtime(stub);` — **수신 방향 프로토콜 런타임 생성**
+     - `var session = connector.CreateSession(runtime, url);` — 세션 생성 (인터페이스)
+     - 이벤트 핸들러 연결 + ConnectAsync 시작
+
+3. **Proxy가 연결 수명관리 API를 제공한다**
+   - `Connect({InboundProtocol}.Stub stub, string url, INetConnector connector)` — 연결 시작
+   - `Tick()` — 네트워크 이벤트 처리 (Unity Update에서 호출)
+   - `Disconnect()` — 연결 종료
+   - `Dispose()` — 리소스 정리
+
+4. **Proxy가 이벤트를 외부로 노출한다**
+   - `event Action? OnOpen`
+   - `event Action<ushort, string>? OnClose` — code/reason 정보 끝까지 전달
+   - `event Action<Exception>? OnError`
+   - `bool IsConnected`, `string Url`, `string LastError` 프로퍼티
+
+5. **Foundation에서 인터페이스와 구현을 제공한다**
+   - `INetSession` — 세션 인터페이스 (Tick/ConnectAsync/CloseAsync/SendTo + 이벤트)
+   - `INetConnector` — 세션 팩토리 인터페이스 (CreateSession)
+   - `NetClientBase : INetSession` — 세션 구현
+   - `NetWsConnector : INetConnector` — WebSocket 세션 생성 (공통 구현)
+
+6. **Unity 샘플(Network)에서는 Manager가 Stub/Proxy/Connector를 소유한다**
+   - GameNetManager는 CompoSingleton (중복 인스턴스 방지)
+   - Awake에서 stub(Game2CStub)/proxy(C2Game.Proxy)/connector 생성 + proxy 이벤트 구독
+   - Connect에서 `_proxy.Connect(_stub, url, _connector)` 호출
+   - Update에서 `_proxy.Tick()` 호출
+
+7. **WsClient에서는 AttachSession 사용**
+   - `proxy.AttachSession(session)` — 공유 세션 부착
+   - sender 기반 wiring 금지
+
+**이유:**
+- Generated Proxy가 구체 네트워크 구현을 참조하지 않아 의존성 분리
+- NetWsConnector가 "공통 구현"이며, Proxy는 interface에만 의존
+- Manager는 stub/url/connector만 전달하고 연결 세부사항을 몰라도 됨
+- 샘플 문서(`10-samples-network`)의 규칙과 일관성 유지
+- 상태 관리와 전송이 INetSession으로 통합되어 안정적인 lifecycle 관리
 
 ---
 

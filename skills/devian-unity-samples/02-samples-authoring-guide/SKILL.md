@@ -84,40 +84,20 @@ upm/<packageName>/Samples~/Network/
 ├── README.md                         ← 샘플 루트에 위치
 ├── Runtime/
 │   ├── [asmdef: Devian.Samples.Network]          ← Runtime asmdef
-│   ├── GameNetworkClientSample.cs    ← Runtime 스크립트
-│   └── ProtocolHandlers/             ← (선택) partial 구현 폴더
-│       └── Game2C_Handlers.SampleImpl.cs
+│   ├── GameNetManager.cs             ← partial 네트워크 매니저 (Stub/Proxy 내부 생성)
+│   └── Game2CStub.cs                 ← partial 메시지 스텁 (핸들러 내부 처리)
 └── Editor/
     ├── [asmdef: Devian.Samples.Network.Editor]   ← Editor-only asmdef (includePlatforms: ["Editor"])
-    └── GameNetworkClientSampleEditor.cs          ← Custom Inspector
+    └── NetworkSampleMenu.cs          ← 에디터 메뉴
 ```
 
 **금지:**
 - Runtime 코드에 `using UnityEditor;` 사용 금지
 - Editor asmdef에 `includePlatforms: []` 사용 금지 (반드시 `["Editor"]` 지정)
 
-### C) CustomEditor 구현 가이드
+### C) Editor asmdef 구성
 
-**Step 1: Runtime 클래스에서 Editor용 Public API 노출**
-
-```csharp
-// Runtime/GameNetworkClientSample.cs
-public class GameNetworkClientSample : MonoBehaviour
-{
-    private GameWsClient _client;
-
-    // ★ Editor에서 연결 상태 확인용 - 반드시 public
-    public bool IsConnected => _client?.IsConnected ?? false;
-
-    // ★ CustomEditor 버튼에서 호출할 public 메서드들
-    public void ConnectWithInspectorUrl() => _client?.Connect(url);
-    public void Disconnect() => _client?.Close();
-    public void SendPing() { /* _client.C2GameProxy.SendPing(...) */ }
-    public void SendEcho() { /* _client.C2GameProxy.SendEcho(...) */ }
-}
-```
-
-**Step 2: Editor-only asmdef**
+**Editor-only asmdef:**
 
 ```json
 // Editor/Devian.Samples.Network.Editor.asmdef
@@ -137,102 +117,40 @@ public class GameNetworkClientSample : MonoBehaviour
 }
 ```
 
-**Step 3: CustomEditor 클래스**
+### D) 에디터 메뉴 (NetworkSampleMenu)
 
-```csharp
-// Editor/GameNetworkClientSampleEditor.cs
-using UnityEngine;
-using UnityEditor;
+**역할:**
+- 메뉴에서 `GameNetManager` GameObject 생성
+- 사용법 안내
 
-namespace Devian
-{
-    [CustomEditor(typeof(GameNetworkClientSample))]
-    public class GameNetworkClientSampleEditor : UnityEditor.Editor
-    {
-        public override void OnInspectorGUI()
-        {
-            DrawDefaultInspector();
-            var sample = (GameNetworkClientSample)target;
-
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Actions", EditorStyles.boldLabel);
-
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Connect")) sample.ConnectWithInspectorUrl();
-            if (GUILayout.Button("Disconnect")) sample.Disconnect();
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUI.BeginDisabledGroup(!Application.isPlaying || !sample.IsConnected);
-            EditorGUILayout.BeginHorizontal();
-            if (GUILayout.Button("Send Ping")) sample.SendPing();
-            if (GUILayout.Button("Send Echo")) sample.SendEcho();
-            EditorGUILayout.EndHorizontal();
-            EditorGUI.EndDisabledGroup();
-
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("Status", EditorStyles.boldLabel);
-            EditorGUILayout.LabelField("Connected:", sample.IsConnected ? "Yes" : "No");
-        }
-    }
-}
-```
-
-### D) 패킷 테스트 샘플 필수 Inspector 버튼 (Hard Rule)
-
-**Hard Rule:**
-패킷 테스트 샘플(`GameNetworkClientSample`)은 **반드시** CustomEditor로 구현된 Inspector 버튼을 제공해야 한다:
-- **Connect** - 연결
-- **Disconnect** - 연결 해제
-- **Send Ping** - Ping 메시지 전송
-- **Send Echo** - Echo 메시지 전송
-
-**Definition of Done:**
-UnityExample Inspector에서 버튼이 표시되지 않으면 **FAIL**이다.
+**메뉴 경로:**
+- `Devian/Samples/Network/Create GameNetManager`
+- `Devian/Samples/Network/How to Use`
 
 ### E) Disconnect 행동 DoD (Hard DoD)
 
 **Hard DoD - Disconnect 후 상태 갱신 필수:**
 
-1. **OnClosed 호출 필수 (시간 제한):** Inspector에서 Disconnect 버튼을 누르면 **1초 이내**(또는 1~2 프레임 + 네트워크 지연 허용)에 샘플의 `OnClosed(code, reason)` 훅이 호출되어야 한다.
+1. **OnClose 이벤트 호출 필수 (시간 제한):** Disconnect 호출 시 **1초 이내**(또는 1~2 프레임 + 네트워크 지연 허용)에 `OnClose` 이벤트가 발생해야 한다.
 
-2. **IsConnected 갱신 필수:** 샘플의 `IsConnected`가 `false`로 바뀌어 Inspector에 표시되어야 한다.
-
-3. **Send 버튼 비활성화:** `IsConnected == false` 상태에서는 Send 버튼이 비활성화(또는 경고 출력)되어야 한다.
+2. **IsConnected 갱신 필수:** `IsConnected`가 `false`로 바뀌어야 한다.
 
 **Hard FAIL 조건:**
-- "연결은 끊겼는데(IsOpen=false) OnClosed가 안 오는 상태"는 **FAIL**
-- OnClosed 로그 없이 IsConnected만 false로 우회하면 **FAIL**
-- 1초 후에도 OnClosed가 발생하지 않으면 **FAIL**
-
-**검증 방법:**
-- Play 모드에서 Connect 후 Disconnect 클릭
-- Console에서 `OnClosed` 로그가 1초 이내에 출력되어야 PASS
-- Inspector의 "Connected: Yes"가 "Connected: No"로 변경되어야 PASS
-- "Connected: No" 상태에서 Send 버튼이 disabled(회색)여야 PASS
+- "연결은 끊겼는데(IsOpen=false) OnClose가 안 오는 상태"는 **FAIL**
+- OnClose 이벤트 없이 IsConnected만 false로 우회하면 **FAIL**
+- 1초 후에도 OnClose가 발생하지 않으면 **FAIL**
 
 **구현 금지 (재발 방지):**
 - Disconnect는 Close 이벤트를 통해 상태가 갱신되어야 하며, Close 이전에 OnClose 핸들러를 제거하면 **FAIL**
-- 샘플에서 `IsConnected = false`를 직접 설정하여 우회하면 **FAIL** (반드시 OnClosed 훅을 통해 갱신)
 
 ### F) Packages 반영 확인 (Hard Rule)
 
 **샘플 실행 전 필수 체크:**
 
-Disconnect/OnClosed 버그 수정 시, 반드시 `Packages/com.devian.foundation/Runtime/Unity/Network/...`에 반영됐는지 확인한다.
-
-**확인 방법:**
-```bash
-# NetWsClientBehaviourBase.cs 파일 크기/날짜 비교
-ls -la upm/com.devian.foundation/Runtime/Unity/Network/NetWsClientBehaviourBase.cs
-ls -la Packages/com.devian.foundation/Runtime/Unity/Network/NetWsClientBehaviourBase.cs
-
-# MD5 해시 비교 (동일해야 함)
-md5sum upm/com.devian.foundation/Runtime/Unity/Network/NetWsClientBehaviourBase.cs
-md5sum Packages/com.devian.foundation/Runtime/Unity/Network/NetWsClientBehaviourBase.cs
-```
+Disconnect/OnClosed 버그 수정 시, 반드시 `Packages/com.devian.foundation/...`에 반영됐는지 확인한다.
 
 **Hard FAIL 조건:**
-- `upm` (또는 `upm`)와 `Packages`의 파일이 다르면 **FAIL** (sync 누락)
+- `upm`와 `Packages`의 파일이 다르면 **FAIL** (sync 누락)
 - `Packages/`에서 직접 수정한 경우 **정책 위반** (다음 sync에서 손실)
 
 **동기화 누락 발견 시:**
@@ -288,7 +206,7 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 
 ---
 
-## GameNetworkClientSample Spec (Online-only, TS GameServer)
+## GameNetManager Spec (Online-only, TS GameServer)
 
 ### 필수 요구사항
 
@@ -297,14 +215,31 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 | Default URL | `ws://localhost:8080` |
 | Offline mode | **NOT supported** (no offline/loopback) |
 | Auto-send on connect | **NOT allowed** (no auto-send in OnOpen) |
-| Message trigger | **Inspector buttons only** (Connect/Disconnect/Ping/Echo) |
 
 ### Protocol Direction Contract
 
 | 방향 | Protocol | 메시지 |
 |------|----------|--------|
-| **Outbound** (Client→Server) | `GameWsClient.C2GameProxy` | Ping, Echo |
-| **Inbound** (Server→Client) | `Game2C_Handlers` partial 구현 | Pong, EchoReply |
+| **Outbound** (Client→Server) | `C2Game.Proxy` | Ping, Echo |
+| **Inbound** (Server→Client) | `Game2CStub` (partial 클래스로 확장) | Pong, EchoReply |
+
+### 내부 처리 + partial 확장 패턴 (Hard Rule)
+
+**Stub/Proxy는 GameNetManager가 내부에서 생성/보관:**
+- `_stub = new Game2CStub()` — 생성자에서 내부 생성
+- `_proxy = new C2Game.Proxy(...)` — OnTransportCreated()에서 내부 생성
+
+**사용자 확장은 partial 클래스로:**
+```csharp
+// Game2CStub.Partial.cs
+public partial class Game2CStub
+{
+    partial void OnPongImpl(Game2C.EnvelopeMeta meta, Game2C.Pong message)
+    {
+        // Custom handling
+    }
+}
+```
 
 ---
 
@@ -314,8 +249,12 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 - `UnityExample/Packages/**` 직접 수정 금지 (빌드 출력물)
 - Runtime 코드에 `using UnityEditor` 사용 금지
 - Editor asmdef에 `includePlatforms: []` 사용 금지
-- GameNetworkClientSample에 offline/loopback 모드 추가 금지
 - **Close 처리에서 이벤트 unhook을 Close 이전에 수행 금지** (Disconnect 상태 갱신 불가 원인)
+- **GameNetworkClientSample 파일 생성 금지** — 삭제됨
+- **별도 .g.cs 파일 생성 금지** — 단일 파일로 통합
+- **BaseGameNetworkClient 사용 금지** — GameNetManager로 대체됨
+- **외부 Stub 주입/등록 금지** — RegisterStub(), inboundStub 프로퍼티 사용 금지
+- **외부 핸들러 등록 금지** — RegisterHandler() 등 사용 금지, partial 확장으로 처리
 
 ---
 

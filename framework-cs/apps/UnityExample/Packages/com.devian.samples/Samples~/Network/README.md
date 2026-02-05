@@ -1,148 +1,104 @@
 # Network Sample
 
-Unity WebSocket client sample using `Devian.Protocol.Game` (Ping/Echo) with Tick-based pump.
+Unity WebSocket client sample using `Devian.Protocol.Game` with Tick-based pump.
 
 ## Requirements
 
-- `com.devian.foundation` - Core network infrastructure
+- `com.devian.foundation` - Core network infrastructure (INetSession, INetConnector, NetWsConnector)
 - `com.devian.protocol.game` - Game protocol (C2Game/Game2C)
-
-## Quick Start
-
-### Option A: One-click Setup (Recommended)
-
-1. Menu: **Devian → Samples → Network → Create Sample Setup**
-2. This creates:
-   - `Devian.NetTickRunner` - Tick loop manager (if not already present)
-   - `Devian.GameNetworkClientSample` - Sample client with default URL
-3. Enter Play mode
-4. Use the on-screen buttons to Connect, Send Ping/Echo, and Disconnect
-
-### Option B: Manual Setup
-
-1. Add `GameNetworkClientSample` component to any GameObject
-2. Enter your WebSocket server URL (e.g., `ws://localhost:8080`)
-3. Enter Play mode
-4. Use the on-screen buttons to Connect, Send Ping/Echo, and Disconnect
 
 ## Architecture
 
+**INetSession/INetConnector 기반 (Interface-based DI):**
+- `GameNetManager` owns: Stub, Proxy, and Connector
+- `Generated Proxy` depends only on interfaces (INetSession, INetConnector)
+- `NetWsConnector` implements INetConnector (Foundation에서 제공)
+
 ```
-GameNetworkClientSample (MonoBehaviour)
-    └── GameNetworkClient (INetTickable, IDisposable)
-            ├── NetWsClient (transport)
-            ├── NetClient (core)
-            ├── Game2C.Runtime (inbound dispatch)
-            │       └── SampleGame2CStub (Pong/EchoReply handling)
-            └── C2Game.Proxy (outbound Ping/Echo)
+GameObject
+└── GameNetManager : MonoBehaviour
+        ├── _stub (Game2CStub) — created in Awake()
+        ├── _proxy (C2Game.Proxy) — created in Awake()
+        ├── _connector (NetWsConnector) — created in Awake()
+        │
+        ├── Connect(url) → proxy.Connect(stub, url, connector)
+        │       Proxy내부: runtime = new Runtime(stub)
+        │       Connector: session = connector.CreateSession(runtime, url)
+        │
+        └── Update() → proxy.Tick()
 ```
+
+## Quick Start
+
+1. Add `GameNetManager` component to a GameObject
+2. Call `Connect(url)` to establish connection
+3. Use `Proxy` to send messages
+4. Extend via partial class for custom handling
 
 ## Files
 
 | File | Description |
 |------|-------------|
-| `GameNetworkClientSample.cs` | MonoBehaviour with OnGUI buttons |
-| `GameNetworkClient.cs` | Pure C# client (INetTickable) |
-| `GameNetworkClient_Stub.cs` | Game2C.Stub implementation for Pong/EchoReply |
+| `GameNetManager.cs` | Unity MonoBehaviour manager (owns Stub/Proxy/Connector) |
+| `Game2CStub.cs` | Concrete stub (partial), handles inbound messages |
+| `NetworkSampleMenu.cs` | Editor menu for creating GameNetManager |
 
-## Tick Management
+## API
 
-This sample uses `NetTickRunner` for automatic tick management:
-- If no `NetTickRunner` exists in scene, one is auto-created
-- `GameNetworkClient` implements `INetTickable` and is registered with the runner
-- Every frame, `Tick()` is called automatically to process events
+### Basic Usage
 
-## Customization
+```csharp
+var manager = GetComponent<GameNetManager>();
+manager.Connect("ws://localhost:8080");
 
-After importing, you can freely modify the sample code:
-- Change namespace from `Devian` to your own
-- Replace `Devian.Protocol.Game` with your own protocol
-- Add your own message handlers (by inheriting `{Protocol}.Stub`)
+// Send messages via Proxy
+manager.Proxy.SendPing(new C2Game.Ping { Timestamp = Time.time });
+```
 
-## Verification in Unity (UnityExample)
+### Connect/Disconnect
 
-### Checklist
+```csharp
+manager.Connect("ws://localhost:8080");
+manager.Disconnect();
+```
 
-1. **Open UnityExample project**
-   ```
-   framework-cs/apps/UnityExample/
-   ```
+### Extending via Partial Class
 
-2. **Import the sample**
-   - Window → Package Manager
-   - Select `Devian Samples` (com.devian.samples)
-   - Samples section → "Network" → Import
+To customize message handling, create a partial class file:
 
-3. **Test in Editor**
-   - Create empty GameObject in any scene
-   - Add `GameNetworkClientSample` component
-   - Enter URL (default: `ws://localhost:8080`)
-   - Play → Use OnGUI buttons to Connect → Ping/Echo → Disconnect
-   - Check Console for response logs
+```csharp
+// Game2CStub.Partial.cs
+namespace Devian
+{
+    public partial class Game2CStub
+    {
+        partial void OnPongImpl(Game2C.EnvelopeMeta meta, Game2C.Pong message)
+        {
+            // Custom Pong handling
+            Debug.Log($"Custom Pong: timestamp={message.Timestamp}");
+        }
 
-4. **Expected results**
-   - `[GameNetworkClientSample] Connected!` on successful connection
-   - `[GameNetworkClientSample] Pong received - Latency: ...` on Ping response
-   - `[GameNetworkClientSample] EchoReply: ...` on Echo response
+        partial void OnEchoReplyImpl(Game2C.EnvelopeMeta meta, Game2C.EchoReply message)
+        {
+            // Custom EchoReply handling
+            Debug.Log($"Custom EchoReply: text={message.Text}");
+        }
+    }
+}
+```
 
-## Local server (recommended)
-
-로컬에서 바로 통신 확인을 하려면 Devian TS GameServer를 실행한다.
-
-### Server execution
-
-터미널에서 아래 실행:
+## Local server
 
 ```bash
 cd framework-ts
 npm install
-npm run start:server
+npm -w GameServer run start
 ```
 
-- **기본 포트:** `ws://localhost:8080`
-
-### Unity sample URL
-
-```
-ws://localhost:8080
-```
-
-### Protocol codec
-
-- 기본은 **Protobuf**이며, 서버 코드(`framework-ts/apps/GameServer/src/index.ts`)의 `USE_JSON`은 기본 `false`를 유지한다.
-
-## Expected logs
-
-### Server side
-
-```
-Session connected
-Ping handler called
-Echo handler called
-```
-
-### Unity side
-
-```
-[GameNetworkClientSample] Connected!
-[GameNetworkClientSample] Pong received - Latency: Xms, ServerTime: Y
-[GameNetworkClientSample] EchoReply: "Hello, World!" (echoed at Z)
-```
+- **Default port:** `ws://localhost:8080`
 
 ## WebGL notes
-
-WebGL 빌드는 브라우저 보안 때문에 대부분 **wss://(TLS) + https 페이지**가 필요하다.
 
 - **wss:// required**: WebGL browsers require secure WebSocket (wss://)
 - **CORS**: Server must allow WebSocket connections from the Unity WebGL origin
 - **.jslib included**: `DevianWs.jslib` is in `com.devian.foundation/Runtime/Plugins/WebGL/`
-
-로컬 테스트는 **에디터/스탠드얼론**에서 먼저 확인하고,
-WebGL은 **배포 환경(https + wss)**에서 확인한다.
-
-## Smoke checklist
-
-- [ ] Unity Package Manager에서 `com.devian.samples` → Samples → Network Import
-- [ ] 메뉴 `Devian/Samples/Network/Create Sample Setup` 실행
-- [ ] Play → Connect → Pong/EchoReply 로그 확인
-- [ ] 서버 로그에 Ping/Echo handler 호출 확인

@@ -407,7 +407,7 @@ namespace Devian.Protocol.Game
         /// <summary>Sender interface for Proxy</summary>
         public interface ISender
         {
-            void SendTo(int sessionId, ReadOnlySpan<byte> frame);
+            void SendTo(ReadOnlySpan<byte> frame);
         }
 
         /// <summary>
@@ -478,30 +478,148 @@ namespace Devian.Protocol.Game
 
         /// <summary>
         /// Proxy for sending C2Game messages.
+        /// Uses INetSession/INetConnector for protocol-agnostic session management.
+        /// Inbound dispatch uses Game2C.Runtime.
         /// </summary>
-        public sealed class Proxy
+        public sealed class Proxy : IDisposable
         {
-            private readonly ISender _sender;
+            // ======== Session (interface-based, no concrete types) ========
+            private INetSession? _session;
+            private string _url = string.Empty;
+            private string _lastError = string.Empty;
+
+            // ======== Codec ========
             private readonly ICodec _codec;
 
-            public Proxy(ISender sender, ICodec? codec = null)
+            // ======== Events ========
+            public event Action? OnOpen;
+            public event Action<ushort, string>? OnClose;
+            public event Action<Exception>? OnError;
+
+            // ======== Properties ========
+            public bool IsConnected => _session?.State == NetClientState.Connected;
+            public string Url => _url;
+            public string LastError => _lastError;
+
+            // ======== Constructor ========
+            public Proxy(ICodec? codec = null)
             {
-                _sender = sender;
                 _codec = codec ?? new CodecProtobuf();
             }
 
-            public void SendPing(int sessionId, Ping message)
+            // ======== Connection Lifecycle API ========
+
+            /// <summary>
+            /// Connect to server using the provided connector.
+            /// Proxy depends only on INetSession/INetConnector interfaces.
+            /// Stub must be Game2C.Stub for inbound message dispatch.
+            /// </summary>
+            public void Connect(Game2C.Stub stub, string url, INetConnector connector)
             {
-                var payload = _codec.Encode(message);
-                var frame = Frame.Pack(Opcodes.Ping, payload);
-                _sender.SendTo(sessionId, frame);
+                if (stub == null) throw new ArgumentNullException(nameof(stub));
+                if (string.IsNullOrEmpty(url)) throw new ArgumentException("url is empty", nameof(url));
+                if (connector == null) throw new ArgumentNullException(nameof(connector));
+
+                DisposeConnection();
+
+                _url = url;
+                _lastError = string.Empty;
+
+                // Inbound dispatch runtime (Game2C)
+                var runtime = new Game2C.Runtime(stub);
+
+                // Create session via connector (no concrete types here)
+                var session = connector.CreateSession(runtime, url);
+                session.OnOpen += HandleOpen;
+                session.OnClose += HandleClose;
+                session.OnError += HandleError;
+
+                _session = session;
+                _ = session.ConnectAsync();
             }
 
-            public void SendEcho(int sessionId, Echo message)
+            /// <summary>
+            /// Process network events. Call from Update() loop.
+            /// </summary>
+            public void Tick()
             {
+                _session?.Tick();
+            }
+
+            /// <summary>
+            /// Request graceful disconnect.
+            /// </summary>
+            public void Disconnect()
+            {
+                if (_session == null) return;
+                _ = _session.CloseAsync();
+            }
+
+            /// <summary>
+            /// Dispose connection resources.
+            /// </summary>
+            public void Dispose()
+            {
+                DisposeConnection();
+            }
+
+            private void DisposeConnection()
+            {
+                if (_session != null)
+                {
+                    _session.OnOpen -= HandleOpen;
+                    _session.OnClose -= HandleClose;
+                    _session.OnError -= HandleError;
+                    (_session as IDisposable)?.Dispose();
+                    _session = null;
+                }
+            }
+
+            // ======== Internal Event Handlers ========
+
+            private void HandleOpen()
+            {
+                OnOpen?.Invoke();
+            }
+
+            private void HandleClose(ushort code, string reason)
+            {
+                OnClose?.Invoke(code, reason);
+            }
+
+            private void HandleError(Exception ex)
+            {
+                _lastError = ex.Message;
+                OnError?.Invoke(ex);
+            }
+
+            // ======== Session Attachment (for WsClient shared session) ========
+
+            /// <summary>
+            /// Attach an externally created session for sending.
+            /// Used by WsClient to share a single session across protocols.
+            /// </summary>
+            public void AttachSession(INetSession session)
+            {
+                _session = session ?? throw new ArgumentNullException(nameof(session));
+            }
+
+            // ======== Send Methods ========
+
+            public void SendPing(Ping message)
+            {
+                var session = _session ?? throw new InvalidOperationException("Proxy is not connected. Call Connect() or AttachSession() first.");
+                var payload = _codec.Encode(message);
+                var frame = Frame.Pack(Opcodes.Ping, payload);
+                session.SendTo(frame);
+            }
+
+            public void SendEcho(Echo message)
+            {
+                var session = _session ?? throw new InvalidOperationException("Proxy is not connected. Call Connect() or AttachSession() first.");
                 var payload = _codec.Encode(message);
                 var frame = Frame.Pack(Opcodes.Echo, payload);
-                _sender.SendTo(sessionId, frame);
+                session.SendTo(frame);
             }
 
         }

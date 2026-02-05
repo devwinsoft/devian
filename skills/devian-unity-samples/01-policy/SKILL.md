@@ -75,17 +75,35 @@ namespace Devian
 `Devian.Protocol.*` 어셈블리에서 생성된 `*_Handlers.g.cs`는 **다른 asmdef(샘플 asmdef 포함)에서 partial로 확장할 수 없다.**
 (C#의 partial class는 동일 어셈블리 내에서만 동작)
 
-**따라서 샘플에서 수신 처리 예시는 아래 방법으로 구현한다:**
+**샘플에서 수신 처리 구현 방식 (내부 생성 + partial 확장):**
 
-1. **Stub 상속 (권장):** `Devian.Protocol.{Group}.{ProtocolName}.Stub`를 샘플 어셈블리에서 상속 구현
-   - 예: `class SampleGame2CStub : Game2C.Stub`
-   - 샘플이 자체 어셈블리에서 자유롭게 구현 가능
+1. **GameNetManager:** Stub/Proxy를 내부에서 생성/보관
+   - `_stub = new Game2CStub()` — 생성자에서 내부 생성
+   - `_proxy = new C2Game.Proxy(...)` — OnTransportCreated()에서 내부 생성
+   - 외부 주입/등록 없음
 
-2. **(참고) 프로토콜 패키지 내부:** partial 확장은 프로토콜 패키지 내부에서만 가능 (샘플 범위 밖)
+2. **Game2CStub:** partial 클래스로 확장 가능
+   - `OnPong()`, `OnEchoReply()` — 기본 로그 후 partial 훅 호출
+   - `partial void OnPongImpl(...)` — 사용자가 별도 파일에서 구현
+   - **"Sample" 접두어 금지** — `SampleGame2CStub` 같은 이름 사용 금지
+
+3. **partial 확장 패턴:** 별도 파일에서 partial 메서드 구현
+   ```csharp
+   // Game2CStub.Partial.cs
+   public partial class Game2CStub
+   {
+       partial void OnPongImpl(Game2C.EnvelopeMeta meta, Game2C.Pong message)
+       {
+           // Custom handling
+       }
+   }
+   ```
 
 **금지 (Hard):**
 - 샘플에서 `partial class *_Handlers` 형태로 확장 시도 금지 (컴파일 불가, 오해 유발)
 - 샘플에서 `namespace Devian.Protocol.*` 사용 금지 (Stub 상속 시에도 `namespace Devian` 사용)
+- **"Sample" 접두어 타입명 금지** — `SampleGame2CStub`, `SampleProtocolHelper` 등 사용 금지
+- **외부 Stub 주입/등록 금지** — RegisterStub(), inboundStub 사용 금지
 
 ### 3.5 금지 프리픽스 (네임스페이스)
 
@@ -170,11 +188,12 @@ Assets/Samples/Devian Templates/{version}/{TemplateName}/
 ```
 Assets/Samples/Devian Samples/0.1.0/Network/
 ├── README.md
+├── Editor/
+│   └── NetworkSampleMenu.cs
 └── Runtime/
     ├── [asmdef: Devian.Samples.Network]
-    ├── GameNetworkClientSample.cs
-    ├── GameNetworkClient.cs
-    └── GameNetworkClient_Stub.cs   (Game2C.Stub 상속 구현)
+    ├── GameNetManager.cs           (partial, Stub/Proxy 내부 생성)
+    └── Game2CStub.cs               (partial, 메시지 핸들러 내부 처리)
 ```
 
 ---

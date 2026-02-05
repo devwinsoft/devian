@@ -4,6 +4,7 @@ using Devian;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
 using Devian.Domain.Sound;
+using Devian.Protocol.Game;
 using TMPro;
 
 public class SceneTest : BaseScene
