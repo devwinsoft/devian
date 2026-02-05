@@ -228,21 +228,10 @@ namespace Devian.Domain.Game
         public static implicit operator TestSheet_ID(int value) => new TestSheet_ID { Value = value };
     }
 
-    /// <summary>Inspector-bindable ID for string table UIText</summary>
-    [Serializable]
-    public sealed class UIText_ID
-    {
-        public string Value = string.Empty;
-
-        public static implicit operator string(UIText_ID id) => id.Value;
-        public static implicit operator UIText_ID(string value) => new UIText_ID { Value = value };
-    }
-
     /// <summary>Table ID validation extensions</summary>
     public static class TableIdExtensions
     {
         public static bool IsValid(this TestSheet_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
-        public static bool IsValid(this UIText_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
     }
 
 }

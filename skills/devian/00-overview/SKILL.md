@@ -40,6 +40,31 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 
 ---
 
+## Routing (Central)
+
+이 문서는 Devian 전체의 **단일 라우팅 정본**이다.
+키워드/의도 기반으로 어디 스킬로 가야 하는지 여기서만 결정한다.
+
+### Group Routing
+
+- Unity 일반 컴포넌트(Non-UI) → `skills/devian-unity/30-unity-components/00-overview/skill.md`
+- Unity UI 컴포넌트(UI/Canvas/Frame/UIManager) → `skills/devian-unity/40-ui-components/00-overview/skill.md`
+
+### Routing Keywords
+
+| keyword | route-to |
+|---|---|
+| StringTable, string-table, ST_, 다국어, localization, localizing, TEXT table, LocalizedText, 번역 | `skills/devian-common/14-feature-string-table/SKILL.md` |
+| NDJSON, ndjson, .json 스토리지 | `skills/devian-data/34-ndjson-storage/SKILL.md` |
+| PB64, pb64, .asset 바이너리 | `skills/devian-data/35-pb64-storage/SKILL.md` |
+| TableGen, 테이블 생성 | `skills/devian-data/42-tablegen-implementation/SKILL.md` |
+| TableManager, LoadStringsAsync | `skills/devian-unity/30-unity-components/14-table-manager/SKILL.md` |
+| DownloadManager, Addressables | `skills/devian-unity/30-unity-components/12-download-manager/SKILL.md` |
+| UIManager, UICanvas, UIFrame | `skills/devian-unity/40-ui-components/10-ui-manager/skill.md` |
+| UI Canvas Frames, UICanvasFrames | `skills/devian-unity/40-ui-components/20-ui-canvas-frames/skill.md` |
+
+---
+
 ## Navigation
 
 | 찾고 싶은 것 | 문서 |

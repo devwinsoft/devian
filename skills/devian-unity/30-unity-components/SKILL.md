@@ -14,7 +14,8 @@ Type: Index / Directory
 
 | ID | 컴포넌트 | 설명 | 스킬 |
 |----|----------|------|------|
-| 00 | UnityObjectDestruction | UnityEngine.Object.Destroy / DestroyImmediate 규약 | `00-unity-object-destruction/SKILL.md` |
+| 00 | Overview | 진입점/범위 | `00-overview/skill.md` |
+| 09 | UnityMainThread | Unity 메인스레드 강제 유틸 (UnityMainThread, UnityMainThreadDispatcher) | `09-unity-main-thread/SKILL.md` |
 | 31 | Singleton v3 | 2종 싱글톤 (AutoSingleton 기본, CompoSingleton 선택) + Registry SSOT | `31-singleton/SKILL.md` |
 | 02 | PoolManager | Type당 1풀 + prefab name 기반 Spawn + Factory 추상화 | `02-pool-manager/SKILL.md` |
 | 03 | MessageSystem | instanceId + key 기반 메시지/트리거 시스템 (timer 제외) | `03-message-system/SKILL.md` |
@@ -35,10 +36,11 @@ Type: Index / Directory
 | 25 | AnimSequencePlayer | Playables 기반 애니메이션 시퀀스 재생 컴포넌트 | `25-anim-sequence-player/SKILL.md` |
 | 26 | FsmController | FIFO 큐 기반 FSM 컨트롤러 (미등록 throw, self-transition 분리) | `26-fsm-controller/SKILL.md` |
 | 27 | BootstrapResourceObject | Resources 기반 Bootstrap Root + IDevianBootStep 부팅 파이프라인 | `27-bootstrap-resource-object/SKILL.md` |
-| 33 | UIManager | Canvas 수명주기 + UI 입력 보장 (CompoSingleton/Bootstrap) | `33-ui-manager/SKILL.md` |
 
 ---
 
 ## Reference
 
 - Parent: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
+- UI 관련 컴포넌트는 `skills/devian-unity/40-ui-components/skill.md` 참고
+- Object Destruction 규약은 `skills/devian-unity/05-unity-object-destruction/skill.md`로 이동됨

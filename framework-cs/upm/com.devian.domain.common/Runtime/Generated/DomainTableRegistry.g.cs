@@ -33,6 +33,14 @@ namespace Devian.Domain.Common
                 }
             });
 
+            global::Devian.TableManager.Instance.RegisterStLoader("TEXT", (format, lang, text, pb64Text) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                    ST_TEXT._LoadFromNdjson(text, lang);
+                else if (format == global::Devian.TableFormat.Pb64 && pb64Text != null)
+                    ST_TEXT._LoadFromPb64(pb64Text, lang);
+            });
+
         }
     }
 }

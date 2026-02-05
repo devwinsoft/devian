@@ -149,10 +149,21 @@ namespace Devian.Domain.Common
         public static implicit operator COMPLEX_POLICY_ID(ComplexPolicyType value) => new COMPLEX_POLICY_ID { Value = value };
     }
 
+    /// <summary>Inspector-bindable ID for string table TEXT</summary>
+    [Serializable]
+    public sealed class TEXT_ID
+    {
+        public string Value = string.Empty;
+
+        public static implicit operator string(TEXT_ID id) => id.Value;
+        public static implicit operator TEXT_ID(string value) => new TEXT_ID { Value = value };
+    }
+
     /// <summary>Table ID validation extensions</summary>
     public static class TableIdExtensions
     {
         public static bool IsValid(this COMPLEX_POLICY_ID? obj) => obj != null && !EqualityComparer<ComplexPolicyType>.Default.Equals(obj.Value, default);
+        public static bool IsValid(this TEXT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
     }
 
 }

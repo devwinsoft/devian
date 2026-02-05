@@ -96,5 +96,5 @@ var settings = Resources.Load<DevianSettings>(DevianSettings.ResourcesPath);
 
 ## 8. Reference
 
-- Parent: `skills/devian-unity/30-unity-components/SKILL.md`
+- Parent: `skills/devian-unity/30-unity-components/skill.md`
 - BootstrapResourceObject: `skills/devian-unity/30-unity-components/27-bootstrap-resource-object/SKILL.md`

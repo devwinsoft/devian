@@ -400,7 +400,7 @@ function parseSheet(sheet, sheetName) {
     }
     
     // Note: String Table 자동 스킵 로직 제거됨
-    // SSOT: skills/devian-data/33-string-table/SKILL.md
+    // SSOT: skills/devian-common/14-feature-string-table/SKILL.md
     // String Table은 stringDir/stringFiles로 별도 분리하여 처리
     // 폴더/설정 분리로 중복 처리 방지
     

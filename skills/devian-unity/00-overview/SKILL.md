@@ -1,5 +1,8 @@
 # devian-unity — Overview
 
+> Routing(키워드→스킬)은 중앙 정본을 따른다: `skills/devian/00-overview/SKILL.md`
+> Unity 컴포넌트 인덱스는 계속 이 문서의 Start Here를 따른다.
+
 Devian Unity 런타임, UPM 패키지, 컴포넌트를 담당한다.
 
 - **Unity Policy**: Unity 전용 정책
@@ -14,9 +17,11 @@ Devian Unity 런타임, UPM 패키지, 컴포넌트를 담당한다.
 |----------|-------------|
 | [01-policy](../01-policy/SKILL.md) | Unity 그룹 정책 |
 | [03-ssot](../03-ssot/SKILL.md) | Unity SSOT (upmConfig, UPM Sync, Foundation) |
-| [30-unity-components](../30-unity-components/SKILL.md) | Unity 컴포넌트 인덱스 |
+| [05-unity-object-destruction](../05-unity-object-destruction/skill.md) | UnityEngine.Object.Destroy 규약 |
 | [20-packages](../20-packages/SKILL.md) | UPM 패키지 목록 |
 | [02-unity-bundles](../02-unity-bundles/SKILL.md) | Unity 번들 정책 |
+| [30-unity-components](../30-unity-components/skill.md) | Unity 컴포넌트 인덱스 |
+| [40-ui-components](../40-ui-components/skill.md) | UI 컴포넌트 인덱스 |
 
 ---
 

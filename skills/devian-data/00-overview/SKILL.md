@@ -1,5 +1,7 @@
 # devian-data — Overview
 
+> Routing(키워드→스킬)은 중앙 정본을 따른다: `skills/devian/00-overview/SKILL.md`
+
 Devian 테이블, Contract, 스토리지 포맷을 담당한다.
 
 - **Table Authoring**: Excel 테이블 작성 규칙

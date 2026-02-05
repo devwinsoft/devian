@@ -195,8 +195,8 @@ PlayMode 테스트는 테스트 씬에 부트 컨테이너를 배치하거나, S
 
 ## 10. Reference
 
-- Parent: `skills/devian-unity/30-unity-components/SKILL.md`
+- Parent: `skills/devian-unity/30-unity-components/skill.md`
 - DevianSettings: `skills/devian-unity/30-unity-components/23-devian-settings/SKILL.md`
 - SceneTransManager: `skills/devian-unity/30-unity-components/15-scene-trans-manager/SKILL.md`
 - Singleton: `skills/devian-unity/30-unity-components/31-singleton/SKILL.md`
-- UIManager: `skills/devian-unity/30-unity-components/33-ui-manager/SKILL.md`
+- UIManager: `skills/devian-unity/40-ui-components/10-ui-manager/skill.md`

@@ -177,7 +177,7 @@ public interface IPoolFactory
 
 ### DestroyInstance 정본 (Hard Rule)
 
-`DestroyInstance`는 `00-unity-object-destruction/SKILL.md` 규약을 따른다.
+`DestroyInstance`는 `../05-unity-object-destruction/skill.md` 규약을 따른다.
 
 ---
 
@@ -408,7 +408,7 @@ com.devian.foundation/Runtime/Unity/
 
 ## Reference
 
-- Parent: `skills/devian-unity/30-unity-components/SKILL.md`
+- Parent: `skills/devian-unity/30-unity-components/skill.md`
 - Related: `31-singleton/SKILL.md` (Singleton v3)
-- Related: `00-unity-object-destruction/SKILL.md` (Destroy 규약)
+- Related: `../05-unity-object-destruction/skill.md` (Destroy 규약)
 - Related: `04-pool-factories/SKILL.md` (IPoolFactory 구현체)

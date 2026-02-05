@@ -203,4 +203,4 @@ IEnumerator DelayedNotify()
 
 ## Reference
 
-- 인덱스: `30-unity-components/SKILL.md`
+- 인덱스: `30-unity-components/skill.md`

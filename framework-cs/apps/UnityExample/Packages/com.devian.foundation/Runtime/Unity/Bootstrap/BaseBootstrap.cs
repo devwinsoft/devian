@@ -40,7 +40,6 @@ namespace Devian
         protected virtual void ensureRequiredComponents()
         {
             ensureComponent<UIManager>();
-            ensureComponent<UIInputManager>();
         }
 
         /// <summary>

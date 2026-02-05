@@ -16,7 +16,7 @@ public class SceneTest : BaseScene
     public COMMON_EFFECT_ID effectId;
     public SOUND_ID soundId;
     public VOICE_ID voiceId;
-    public UIText_ID textID;
+    public TEXT_ID textID;
 
     protected override void OnInitAwake()
     {
@@ -53,7 +53,7 @@ public class SceneTest : BaseScene
         SoundManager.Instance.PlaySound("bgm_title");
         CommonEffectManager.Instance.CreateEffect(effectId, null, Vector3.zero, Quaternion.identity, COMMON_EFFECT_ATTACH_TYPE.World);
 
-        Log.Debug(ST_UIText.Get("loading"));
+        Log.Debug(ST_TEXT.Get("loading"));
         var obj = BundlePool.Spawn<TestPoolObject>("Cube", Vector3.zero, Quaternion.identity, null);
         Debug.Log(obj);
     }

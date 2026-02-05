@@ -281,7 +281,7 @@ Bootstrap prefab에는 BaseBootstrap 파생 컴포넌트가 정확히 1개 필�
 
 ## Reference
 
-- Parent: `skills/devian-unity/30-unity-components/SKILL.md`
+- Parent: `skills/devian-unity/30-unity-components/skill.md`
 - AssetManager: `skills/devian-unity/30-unity-components/10-asset-manager/SKILL.md`
 - Singleton: `skills/devian-unity/30-unity-components/31-singleton/SKILL.md`
 - BootstrapResourceObject: `skills/devian-unity/30-unity-components/27-bootstrap-resource-object/SKILL.md`
