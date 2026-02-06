@@ -2,10 +2,10 @@
 
 ## Overview
 
-UI Canvas의 수명주기를 관리하고 UI 입력 인프라를 보장하는 중앙 매니저.
-Canvas 조회, 생성, 보장, EventSystem/InputModule 보장 및 유틸리티 기능을 제공한다.
+UI Canvas의 수명주기를 관리하는 중앙 매니저.
+Canvas 조회, 생성, 보장 및 유틸리티 기능을 제공한다.
 
-**Bootstrap에 부착되는 CompoSingleton**이다. 런타임 자동 생성되지 않는다.
+**AutoSingleton** 기반. `Instance` 접근 시 자동 생성된다.
 
 ---
 
@@ -19,11 +19,9 @@ Canvas 조회, 생성, 보장, EventSystem/InputModule 보장 및 유틸리티 �
 - Canvas 제거 (`DespawnCanvas`)
 - Canvas 검증 (`ValidateCanvas`)
 - 커서 설정 (`SetCursor`)
-- EventSystem 보장 (`EnsureUiEventSystem`)
-- InputSystemUIInputModule 보장
-- StandaloneInputModule 제거
 
 ### Excludes
+- EventSystem 보장/생성 (UIManager는 EventSystem 보장 로직을 갖지 않는다)
 - 게임플레이 입력 (ActionMap, 리바인딩, 컨텍스트 전환)
 - InputActions 자산/바인딩 정책
 - 언어/로컬라이제이션
@@ -43,14 +41,13 @@ framework-cs/upm/com.devian.ui/Runtime/UIManager.cs
 ```csharp
 namespace Devian
 {
-    public sealed class UIManager : CompoSingleton<UIManager>
+    public sealed class UIManager : AutoSingleton<UIManager>
 }
 ```
 
 ### Singleton Type
-- **CompoSingleton** (Bootstrap 프리팹에 부착되어야 한다)
-- 자동 보장 없음 (ensureComponent 호출 제거됨)
-- 런타임 자동 생성 없음 (AutoSingleton 아님)
+- **AutoSingleton** — `Instance` 접근 시 자동 생성
+- Bootstrap 부착 불필요
 
 ---
 
@@ -71,23 +68,6 @@ public static UIMessageSystem messageSystem { get; }
 UIManager.messageSystem.Subcribe(ownerEntityId, UI_MESSAGE.ReloadText, args => { /* ... */ return false; });
 ```
 
-### EnsureUiEventSystem
-
-```csharp
-public void EnsureUiEventSystem()
-```
-
-UI 입력에 필요한 EventSystem과 InputSystemUIInputModule을 보장한다.
-Awake에서 자동 호출되며, 수동 호출도 가능하다.
-
-**동작:**
-1. EventSystem 검색/생성
-   - 0개: 새 GameObject 생성 후 UIManager 하위로 배치
-   - 1개: 기존 인스턴스 재사용
-   - 2개+: 첫 번째 사용, `Debug.LogWarning` (삭제 금지)
-2. StandaloneInputModule 발견 시 `Destroy()`
-3. InputSystemUIInputModule이 없으면 Reflection으로 추가
-
 ### TryGetCanvas
 
 ```csharp
@@ -95,7 +75,7 @@ public bool TryGetCanvas<TCanvas>(out TCanvas canvas)
     where TCanvas : MonoBehaviour
 ```
 
-- CompoSingleton 레지스트리 우선 조회
+- Singleton 레지스트리 우선 조회
 - 없으면 `FindObjectOfType<TCanvas>(true)`로 씬 탐색
 - 찾으면 `true`, 없으면 `false`
 
@@ -110,7 +90,7 @@ public TCanvas CreateCanvas<TCanvas>(string prefabName, Transform parent = null)
 - **중복 처리 정책**: 스폰 후 기존 싱글톤이 존재하고 새 인스턴스와 다르면:
   - 새 인스턴스를 `BundlePool.Despawn()`
   - 기존 인스턴스 반환
-- 이유: CompoSingleton Canvas는 "타입당 1개" 원칙
+- 이유: Singleton Canvas는 "타입당 1개" 원칙
 
 ### EnsureCanvas
 
@@ -161,29 +141,17 @@ C# 메서드 네이밍(internal `_` 접두어, protected lowerCamelCase)은 상�
 ### Duplicate Handling (Canvas)
 `CreateCanvas`가 중복 생성되면 새 인스턴스를 despawn하고 기존 인스턴스를 반환한다.
 
-### EventSystem 중복 처리
-EventSystem이 2개 이상 발견되면 `Debug.LogWarning`만 남기고 제거하지 않는다.
-
-### InputSystemUIInputModule (Reflection)
-- `using UnityEngine.InputSystem.UI;` 금지 (asmdef 의존성 유발)
-- Reflection으로 타입 로드:
-  1. `"UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem"` (Assembly-qualified)
-  2. `"UnityEngine.InputSystem.UI.InputSystemUIInputModule"` (Fallback)
-- 타입을 못 찾으면 `Debug.LogError`만 (throw 금지)
-
 ---
 
 ## Dependencies
 
 | Dependency | Location |
 |------------|----------|
-| `CompoSingleton<T>` | `Runtime/Unity/Singletons/CompoSingleton.cs` |
+| `AutoSingleton<T>` | `Runtime/Unity/Singletons/AutoSingleton.cs` |
 | `BundlePool` | `Runtime/Unity/Pool/Factory/BundlePool.cs` |
 | `UICanvas<T>` | `com.devian.ui/Runtime/UICanvas.cs` |
 | `UIMessageSystem` | `com.devian.ui/Runtime/UIMessageSystem.cs` |
 | `Singleton` | `Runtime/Unity/Singletons/Singleton.cs` |
-| `BaseBootstrap` | `Runtime/Unity/Bootstrap/BaseBootstrap.cs` |
-| `EventSystem` | `UnityEngine.EventSystems` |
 
 ---
 
@@ -193,4 +161,3 @@ EventSystem이 2개 이상 발견되면 `Debug.LogWarning`만 남기고 제거�
 - [UIMessageSystem](../33-ui-message-system/skill.md)
 - [Singleton](../../30-unity-components/31-singleton/SKILL.md)
 - [Pool Factories](../../30-unity-components/04-pool-factories/SKILL.md)
-- [Bootstrap](../../30-unity-components/27-bootstrap-resource-object/SKILL.md)

@@ -40,11 +40,9 @@ framework-cs/upm/com.devian.ui/Runtime/
 ### Circular Dependency Prevention
 
 `com.devian.foundation`은 `com.devian.ui`를 참조하지 않는다 (순환 의존 방지).
-`BaseBootstrap.ensureRequiredComponents()`에서 `ensureComponent<UIManager>()` 호출이 삭제되어,
 Foundation → UI 하드 참조가 존재하지 않는다.
 
-> **UIManager 자동 보장은 없다.** Bootstrap에서 UIManager를 자동 생성하지 않으므로,
-> UIManager 설치/프리팹 구성 책임은 사용자(앱/샘플) 측에 있다.
+> **UIManager는 AutoSingleton**이다. `Instance` 접근 시 자동 생성되므로 Bootstrap 부착이 불필요하다.
 
 ### Assembly Definitions
 
@@ -61,7 +59,7 @@ Foundation → UI 하드 참조가 존재하지 않는다.
 |----|----------|------|------|
 | 00 | Overview | 진입점/범위 | `00-overview/skill.md` |
 | 01 | Policy | 문서 작성 정책 (Usage 섹션 금지 등) | `01-policy/skill.md` |
-| 10 | UIManager | Canvas 수명주기 + UI 입력 보장 (CompoSingleton/Bootstrap) | `10-ui-manager/skill.md` |
+| 10 | UIManager | Canvas 수명주기 (AutoSingleton) | `10-ui-manager/skill.md` |
 | 20 | UICanvasFrames | UICanvas/UIFrame 규약 (overview+policy+ssot 통합) | `20-ui-canvas-frames/skill.md` |
 | 30 | UIPlugInButton | Button press feedback + UI sound + events + scroll bridge | `30-ui-plugin-button/skill.md` |
 | 31 | UIPlugInCircleFilter | Collider2D 기반 Raycast filter | `31-ui-plugin-circle-filter/skill.md` |

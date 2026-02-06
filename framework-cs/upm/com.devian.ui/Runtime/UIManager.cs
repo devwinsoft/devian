@@ -1,15 +1,13 @@
-using System;
 using UnityEngine;
-using UnityEngine.EventSystems;
 
 namespace Devian
 {
     /// <summary>
-    /// Central manager for UI Canvas lifecycle and UI input infrastructure.
-    /// Provides Canvas lookup, creation, utility methods, and ensures EventSystem.
-    /// Must be attached to Bootstrap prefab (CompoSingleton).
+    /// Central manager for UI Canvas lifecycle.
+    /// Provides Canvas lookup, creation, utility methods.
+    /// AutoSingleton: auto-created on first Instance access.
     /// </summary>
-    public sealed class UIManager : CompoSingleton<UIManager>
+    public sealed class UIManager : AutoSingleton<UIManager>
     {
         private UIMessageSystem mMessageSystem = new UIMessageSystem();
 
@@ -19,113 +17,8 @@ namespace Devian
         public static UIMessageSystem messageSystem => Instance.mMessageSystem;
 
         /// <summary>
-        /// Unity Awake callback. Overrides CompoSingleton.Awake().
-        /// Ensures UI event system is ready.
-        /// </summary>
-        protected override void Awake()
-        {
-            base.Awake();
-            EnsureUiEventSystem();
-        }
-
-        /// <summary>
-        /// Ensures EventSystem and InputSystemUIInputModule exist for UI input.
-        /// Creates EventSystem if none found, removes StandaloneInputModule,
-        /// adds InputSystemUIInputModule via reflection.
-        /// </summary>
-        public void EnsureUiEventSystem()
-        {
-            var eventSystem = findOrCreateEventSystem();
-            if (eventSystem == null)
-            {
-                return;
-            }
-
-            ensureInputModule(eventSystem);
-        }
-
-        /// <summary>
-        /// Finds existing EventSystem or creates one under this transform.
-        /// </summary>
-        private EventSystem findOrCreateEventSystem()
-        {
-            var eventSystems = FindObjectsOfType<EventSystem>(true);
-
-            if (eventSystems == null || eventSystems.Length == 0)
-            {
-                // Create new EventSystem under UIManager (Bootstrap child)
-                var go = new GameObject("EventSystem");
-                go.transform.SetParent(transform, false);
-                return go.AddComponent<EventSystem>();
-            }
-
-            // Use first found
-            var eventSystem = eventSystems[0];
-
-            // Warn if multiple exist (do not destroy)
-            if (eventSystems.Length > 1)
-            {
-                Debug.LogWarning(
-                    $"[UIManager] Multiple EventSystems found ({eventSystems.Length}). " +
-                    $"Using '{eventSystem.name}'. Consider removing duplicates manually.");
-            }
-
-            return eventSystem;
-        }
-
-        /// <summary>
-        /// Ensures InputSystemUIInputModule exists, removes StandaloneInputModule.
-        /// Uses reflection to avoid hard dependency on Input System package.
-        /// </summary>
-        private void ensureInputModule(EventSystem eventSystem)
-        {
-            // Remove StandaloneInputModule if present
-            var standalone = eventSystem.GetComponent<StandaloneInputModule>();
-            if (standalone != null)
-            {
-                Destroy(standalone);
-            }
-
-            // Try to get InputSystemUIInputModule type via reflection
-            var inputModuleType = resolveInputSystemUiModuleType();
-            if (inputModuleType == null)
-            {
-                Debug.LogError(
-                    "[UIManager] Input System UI module type not found. " +
-                    "Ensure Unity Input System package is installed.");
-                return;
-            }
-
-            // Check if component already exists
-            var existingModule = eventSystem.GetComponent(inputModuleType);
-            if (existingModule == null)
-            {
-                eventSystem.gameObject.AddComponent(inputModuleType);
-            }
-        }
-
-        /// <summary>
-        /// Resolves InputSystemUIInputModule type via reflection.
-        /// </summary>
-        private Type resolveInputSystemUiModuleType()
-        {
-            // Primary: Assembly-qualified name
-            var type = Type.GetType(
-                "UnityEngine.InputSystem.UI.InputSystemUIInputModule, Unity.InputSystem");
-
-            if (type != null)
-            {
-                return type;
-            }
-
-            // Fallback: Without assembly qualifier
-            return Type.GetType(
-                "UnityEngine.InputSystem.UI.InputSystemUIInputModule");
-        }
-
-        /// <summary>
         /// Tries to get an existing canvas of the specified type.
-        /// First checks CompoSingleton registry, then searches scene.
+        /// First checks Singleton registry, then searches scene.
         /// </summary>
         /// <typeparam name="TCanvas">The canvas type.</typeparam>
         /// <param name="canvas">The found canvas, or null.</param>
@@ -133,7 +26,7 @@ namespace Devian
         public bool TryGetCanvas<TCanvas>(out TCanvas canvas)
             where TCanvas : MonoBehaviour
         {
-            // 1. Try CompoSingleton registry first
+            // 1. Try Singleton registry first
             if (Singleton.TryGet<TCanvas>(out canvas))
             {
                 return true;

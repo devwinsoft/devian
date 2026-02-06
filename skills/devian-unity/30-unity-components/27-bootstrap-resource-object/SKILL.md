@@ -152,13 +152,9 @@ private IEnumerator Start()
 
 ### 필수 CompoSingleton 컴포넌트
 
-BaseBootstrap.Awake()에서 `ensureRequiredComponents()`가 호출되며, 아래 컴포넌트들이 자동으로 보장된다:
+BaseBootstrap.Awake()에서 `ensureRequiredComponents()`가 호출된다.
 
-| 컴포넌트 | 책임 |
-|----------|------|
-| **UIManager** | Canvas 수명주기 관리 + UI 입력 보장 (EventSystem + InputSystemUIInputModule) |
-
-UIManager.Awake()에서 `EnsureUiEventSystem()`이 자동 호출되어 UI 입력 인프라를 보장한다.
+> **UIManager는 Bootstrap 관리 대상이 아니다.** UIManager는 AutoSingleton으로 전환되어 `Instance` 접근 시 자동 생성된다.
 
 ---
 

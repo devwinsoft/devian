@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 1856151958633733160}
   - component: {fileID: 8802484957537992892}
   - component: {fileID: 7627467817636175406}
-  - component: {fileID: -6175896275388550597}
   - component: {fileID: 8321347923667030604}
   m_Layer: 0
   m_Name: Bootstrap
@@ -107,18 +106,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 945aaaac012ccc1498cd10c7eea4ada7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Unity::Devian.TableManager
---- !u!114 &-6175896275388550597
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2454387350981742136}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2518f791a8712419abad01bfdb044170, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Devian.Unity::Devian.UIManager
 --- !u!114 &8321347923667030604
 MonoBehaviour:
   m_ObjectHideFlags: 0
