@@ -12,7 +12,7 @@ AppliesTo: v10
 이 문서는 **UnityExample embedded 패키지 묶음(번들)**의 **구성/레이아웃/의존성/asmdef 규약**을 정의한다.
 
 > **주의:** 이 문서는 "패키지"가 아니라 **번들 정책(embedded 패키지 묶음)**을 정의한다.
-> 개별 패키지 상세는 각 패키지 스킬(`skills/devian-unity/20-packages/`)을 참조한다.
+> 개별 패키지 상세는 각 패키지 스킬(`skills/devian-unity/06-domain-packages/`)을 참조한다.
 
 ---
 
@@ -21,6 +21,7 @@ AppliesTo: v10
 - UnityEngine.dll을 외부 .NET 빌드에서 직접 참조하지 않는다.
 - UnityExample에 embedded UPM 패키지로 다음을 제공한다:
   - `com.devian.foundation` (Devian 런타임 통합: Core + Unity)
+  - `com.devian.ui` (UI 컴포넌트: UIManager, UICanvas, UIFrame, Plugins)
   - `com.devian.domain.common` (Devian.Domain.Common 소스 + Complex PropertyDrawer)
   - `com.devian.domain.sound` (Sound/Voice 도메인)
   - `com.devian.samples` (UPM Samples~ 기반 샘플 코드)
@@ -45,6 +46,7 @@ framework-cs/apps/UnityExample/Packages/
 | 패키지 | 역할 |
 |--------|------|
 | `com.devian.foundation` | Devian 런타임 통합 (Core + Unity) |
+| `com.devian.ui` | UI 컴포넌트 (UIManager, UICanvas, UIFrame, Plugins) |
 | `com.devian.domain.common` | Devian.Domain.Common 소스 (Complex types + PropertyDrawers) |
 | `com.devian.domain.game` | Devian.Domain.Game 소스 (테이블 생성 예제) |
 | `com.devian.domain.sound` | Sound/Voice 도메인 |
@@ -65,10 +67,13 @@ framework-cs/apps/UnityExample/Packages/
 ```
 com.devian.foundation (base - Core + Unity 통합)
        ↑
+com.devian.ui (UI 컴포넌트 - foundation + domain.common + domain.sound 의존)
+       ↑
 com.devian.domain.* (module packages - foundation 의존)
 ```
 
 > **Hard Rule:** `com.devian.foundation` → `com.devian.domain.*` 의존 **금지** (순환 방지)
+> **Hard Rule:** `com.devian.foundation` → `com.devian.ui` 의존 **금지** (순환 방지)
 
 ---
 
@@ -80,6 +85,7 @@ com.devian.domain.* (module packages - foundation 의존)
 |--------|------|------------|--------|
 | `Devian.Core.asmdef` | `Devian.Core` | `[]` | com.devian.foundation/Runtime/Core |
 | `Devian.Unity.asmdef` | `Devian.Unity` | `["Devian.Core"]` | com.devian.foundation/Runtime/Unity |
+| `Devian.UI.asmdef` | `Devian.UI` | `["Devian.Core", "Devian.Unity"]` | com.devian.ui/Runtime |
 | `Devian.Domain.Common.asmdef` | `Devian.Domain.Common` | `["Devian.Core", "Devian.Unity", "Newtonsoft.Json"]` | com.devian.domain.common |
 | `Devian.Domain.Sound.asmdef` | `Devian.Domain.Sound` | `["Devian.Core", "Devian.Unity"]` | com.devian.domain.sound |
 
@@ -88,6 +94,7 @@ com.devian.domain.* (module packages - foundation 의존)
 | asmdef | name | references | 패키지 |
 |--------|------|------------|--------|
 | `Devian.Unity.Editor.asmdef` | `Devian.Unity.Editor` | `["Devian.Core", "Devian.Unity"]` | com.devian.foundation/Editor |
+| `Devian.UI.Editor.asmdef` | `Devian.UI.Editor` | `["Devian.UI", "Devian.Unity", "Devian.Unity.Editor"]` | com.devian.ui/Editor |
 | `Devian.Domain.Common.Editor.asmdef` | `Devian.Domain.Common.Editor` | `["Devian.Domain.Common", "Devian.Unity", "Devian.Unity.Editor"]` | com.devian.domain.common |
 | `Devian.Domain.Sound.Editor.asmdef` | `Devian.Domain.Sound.Editor` | `["Devian.Domain.Sound", "Devian.Unity", "Devian.Unity.Editor"]` | com.devian.domain.sound |
 
@@ -98,6 +105,7 @@ com.devian.domain.* (module packages - foundation 의존)
 | 패키지 | dependencies |
 |--------|--------------|
 | `com.devian.foundation` | `com.unity.addressables` |
+| `com.devian.ui` | `com.devian.foundation`, `com.devian.domain.common`, `com.devian.domain.sound` |
 | `com.devian.domain.common` | `com.devian.foundation`, `com.unity.nuget.newtonsoft-json` |
 | `com.devian.domain.sound` | `com.devian.foundation` |
 | `com.devian.domain.game` | `com.devian.foundation`, `com.devian.domain.sound` |
@@ -136,4 +144,4 @@ com.devian.domain.* (module packages - foundation 의존)
 - Related: `skills/devian-unity/01-policy/SKILL.md`
 - Related: `skills/devian-unity/04-package-metadata/SKILL.md`
 - Related: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
-- Related: `skills/devian-unity/20-packages/com.devian.domain.common/SKILL.md`
+- Related: `skills/devian-unity/06-domain-packages/com.devian.domain.common/SKILL.md`

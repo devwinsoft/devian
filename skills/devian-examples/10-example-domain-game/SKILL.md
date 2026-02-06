@@ -67,7 +67,7 @@ input/Domains/Game/contracts/*.json
 
 | 주제 | 스킬 경로 |
 |------|-----------|
-| 도메인 패키지 공통 규약 | `skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md` |
+| 도메인 패키지 공통 규약 | `skills/devian-unity/06-domain-packages/com.devian.domain.template/SKILL.md` |
 | 테이블 작성 규칙 | `skills/devian-data/30-table-authoring-rules/SKILL.md` |
 | 테이블 생성 구현 | `skills/devian-data/42-tablegen-implementation/SKILL.md` |
 | 컨트랙트 생성 구현 | `skills/devian-data/43-contractgen-implementation/SKILL.md` |
@@ -86,5 +86,5 @@ input/Domains/Game/contracts/*.json
 ## Reference
 
 - Related: `skills/devian-examples/01-policy/SKILL.md`
-- Related: `skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md`
+- Related: `skills/devian-unity/06-domain-packages/com.devian.domain.template/SKILL.md`
 - Related: `skills/devian-core/03-ssot/SKILL.md`

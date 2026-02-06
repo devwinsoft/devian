@@ -83,7 +83,12 @@
       "Bash(npm -w builder run build:*)",
       "Bash(wc -l __NEW_LINE_98d4d27f96bdc15f__ echo echo '=== DoD 3: C2GameStub.cs 파일 존재 여부 \\(0이어야 함\\) ===' find /Users/maoshy/Documents/Projects/devian/framework-cs -name C2GameStub.cs)",
       "Bash(wc -l __NEW_LINE_98d4d27f96bdc15f__ echo \"\" echo \"=== DoD 4: C2Game.Proxy.Connect이 Game2C.Stub 타입 받는지 ===\" grep \"public void Connect\\(Game2C.Stub\" /Users/maoshy/Documents/Projects/devian/framework-cs/upm/com.devian.protocol.game/Runtime/Generated/C2Game.g.cs __NEW_LINE_98d4d27f96bdc15f__ echo \"\" echo \"=== DoD 5: C2Game.Proxy.Connect 내부에 new Game2C.Runtime\\(stub\\) 있는지 ===\" grep \"new Game2C.Runtime\\(stub\\)\" /Users/maoshy/Documents/Projects/devian/framework-cs/upm/com.devian.protocol.game/Runtime/Generated/C2Game.g.cs)",
-      "Bash(while read f)"
+      "Bash(while read f)",
+      "Bash(dotnet --version:*)",
+      "Bash(dotnet run:*)",
+      "Bash(git -C /Users/maoshy/Documents/Projects/devian ls-files:*)",
+      "Bash(git -C /Users/maoshy/Documents/Projects/devian show HEAD:\"framework-cs/apps/UnityExample/Packages/com.devian.foundation/Runtime/Unity/UI/UIManager.cs.meta\")",
+      "Bash(git -C /Users/maoshy/Documents/Projects/devian show HEAD:\"framework-cs/apps/UnityExample/Packages/com.devian.foundation/Runtime/Unity/UI/UICanvas.cs.meta\")"
     ]
   }
 }

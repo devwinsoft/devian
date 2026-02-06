@@ -1,0 +1,17 @@
+{
+  "name": "Devian.UI",
+  "rootNamespace": "Devian",
+  "references": [
+    "Devian.Core",
+    "Devian.Unity"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -49,6 +49,16 @@
       "source": "embedded",
       "dependencies": {}
     },
+    "com.devian.ui": {
+      "version": "file:com.devian.ui",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.devian.foundation": "0.1.0",
+        "com.devian.domain.common": "0.1.0",
+        "com.devian.domain.sound": "0.1.0"
+      }
+    },
     "com.github-glitchenzo.nugetforunity": {
       "version": "4.5.0",
       "depth": 0,

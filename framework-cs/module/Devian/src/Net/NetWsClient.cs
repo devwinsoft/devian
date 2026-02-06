@@ -224,6 +224,10 @@ namespace Devian
                         {
                             var msg = ReadAndFreeString(messagePtr);
                             SafeDispatch(() => OnError?.Invoke(new Exception(msg)));
+
+                            // Allow reconnect after error
+                            _running = false;
+                            _socketId = -1;
                         }
                         break;
 

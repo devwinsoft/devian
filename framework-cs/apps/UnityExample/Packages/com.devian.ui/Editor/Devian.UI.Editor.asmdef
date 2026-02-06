@@ -1,0 +1,20 @@
+{
+  "name": "Devian.UI.Editor",
+  "rootNamespace": "Devian.UI.Editor",
+  "references": [
+    "Devian.UI",
+    "Devian.Unity",
+    "Devian.Unity.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

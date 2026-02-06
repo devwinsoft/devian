@@ -12,8 +12,10 @@ namespace Devian
     public sealed class NetWsTransport : INetTransport
     {
         private readonly NetWsClient _ws;
-        private readonly TaskCompletionSource<bool> _connectTcs = new();
-        private readonly TaskCompletionSource<bool> _closeTcs = new();
+        private TaskCompletionSource<bool> _connectTcs =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private TaskCompletionSource<bool> _closeTcs =
+            new(TaskCreationOptions.RunContinuationsAsynchronously);
         private bool _disposed;
         private bool _connectCompleted;
         private bool _closeCompleted;
@@ -46,10 +48,13 @@ namespace Devian
         }
 
         /// <inheritdoc />
-        public Task ConnectAsync(string url, CancellationToken ct = default)
+        public async Task ConnectAsync(string url, CancellationToken ct = default)
         {
             if (_disposed)
                 throw new ObjectDisposedException(nameof(NetWsTransport));
+
+            _connectCompleted = false;
+            _connectTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             // Use synchronous connect, completion via events
             _ws.Connect(url);
@@ -57,35 +62,38 @@ namespace Devian
             // For sync connect (Editor/Standalone), OnOpen fires immediately after Connect
             // For WebGL, OnOpen fires asynchronously via Tick
             if (_connectCompleted)
-                return Task.CompletedTask;
+                return;
 
-            ct.Register(() =>
+            using var reg = ct.Register(() =>
             {
                 if (!_connectCompleted)
                     _connectTcs.TrySetCanceled(ct);
             });
 
-            return _connectTcs.Task;
+            await _connectTcs.Task.ConfigureAwait(false);
         }
 
         /// <inheritdoc />
-        public Task CloseAsync(CancellationToken ct = default)
+        public async Task CloseAsync(CancellationToken ct = default)
         {
             if (_disposed || !_ws.IsOpen)
-                return Task.CompletedTask;
+                return;
+
+            _closeCompleted = false;
+            _closeTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
             _ws.Close();
 
             if (_closeCompleted)
-                return Task.CompletedTask;
+                return;
 
-            ct.Register(() =>
+            using var reg = ct.Register(() =>
             {
                 if (!_closeCompleted)
                     _closeTcs.TrySetCanceled(ct);
             });
 
-            return _closeTcs.Task;
+            await _closeTcs.Task.ConfigureAwait(false);
         }
 
         /// <inheritdoc />
@@ -130,12 +138,24 @@ namespace Devian
         {
             _closeCompleted = true;
             _closeTcs.TrySetResult(true);
+
+            if (!_connectCompleted)
+            {
+                _connectCompleted = true;
+                _connectTcs.TrySetException(new Exception($"Closed during connect: {code} {reason}"));
+            }
+
             OnClose?.Invoke(code, reason);
         }
 
         private void HandleError(Exception ex)
         {
-            _connectTcs.TrySetException(ex);
+            if (!_connectCompleted)
+            {
+                _connectCompleted = true;
+                _connectTcs.TrySetException(ex);
+            }
+
             OnError?.Invoke(ex);
         }
     }

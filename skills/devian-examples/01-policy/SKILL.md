@@ -39,7 +39,7 @@ AppliesTo: v10
 
 도메인 패키지(`com.devian.domain.*`)의 공통 규약:
 
-- `skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md`
+- `skills/devian-unity/06-domain-packages/com.devian.domain.template/SKILL.md`
 
 ### UPM 번들/복사 흐름
 
@@ -74,6 +74,6 @@ Network 샘플 템플릿 작성 방법:
 ## Reference
 
 - Related: `skills/devian-core/03-ssot/SKILL.md`
-- Related: `skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md`
+- Related: `skills/devian-unity/06-domain-packages/com.devian.domain.template/SKILL.md`
 - Related: `skills/devian-unity/02-unity-bundles/SKILL.md`
 - Related: `skills/devian-unity-samples/10-samples-network/SKILL.md`

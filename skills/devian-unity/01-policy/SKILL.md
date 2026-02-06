@@ -113,7 +113,7 @@ rm -f UnityExample/Packages/{pkg}/.../OldName.cs.meta
 ### 패키지별 문서
 - `skills/devian-unity/02-unity-bundles/SKILL.md`
 - `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
-- `skills/devian-unity/20-packages/com.devian.domain.common/SKILL.md`
+- `skills/devian-unity/06-domain-packages/com.devian.domain.common/SKILL.md`
 
 ### Unity Components
 - AssetManager: `skills/devian-unity/30-unity-components/10-asset-manager/SKILL.md`

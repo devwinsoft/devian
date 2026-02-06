@@ -39,7 +39,6 @@ namespace Devian
         /// </summary>
         protected virtual void ensureRequiredComponents()
         {
-            ensureComponent<UIManager>();
         }
 
         /// <summary>
