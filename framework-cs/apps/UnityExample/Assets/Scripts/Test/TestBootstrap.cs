@@ -9,18 +9,10 @@ using System.Collections;
 /// </summary>
 public class TestBootstrap : BaseBootstrap
 {
-    /// <summary>
-    /// 외부에서 BootProc에 로직을 주입할 수 있는 이벤트.
-    /// </summary>
-    public static event Action? BootProcInjected;
-
     protected override IEnumerator OnBootProc()
     {
         Log.SetSink(new UnityLogSink());
 
-        // 외부 주입 로직 실행
-        BootProcInjected?.Invoke();
-
-        yield return null;
+        yield break;
     }
 }

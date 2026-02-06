@@ -1,7 +1,7 @@
 # 30-unity-components
 
 Status: ACTIVE  
-AppliesTo: v10  
+AppliesTo: v11  
 Type: Index / Directory
 
 ## Purpose
@@ -18,7 +18,7 @@ Type: Index / Directory
 | 09 | UnityMainThread | Unity 메인스레드 강제 유틸 (UnityMainThread, UnityMainThreadDispatcher) | `09-unity-main-thread/SKILL.md` |
 | 31 | Singleton v3 | 2종 싱글톤 (AutoSingleton 기본, CompoSingleton 선택) + Registry SSOT | `31-singleton/SKILL.md` |
 | 02 | PoolManager | Type당 1풀 + prefab name 기반 Spawn + Factory 추상화 | `02-pool-manager/SKILL.md` |
-| 03 | MessageSystem | instanceId + key 기반 메시지/트리거 시스템 (timer 제외) | `03-message-system/SKILL.md` |
+| 03 | MessageSystem | ownerKey + enum msgKey 기반 메시지/트리거 시스템 (timer 제외) | `03-message-system/SKILL.md` |
 | 04 | PoolFactories | InspectorPoolFactory, BundlePoolFactory | `04-pool-factories/SKILL.md` |
 | 10 | AssetManager | AssetBundle 기반 로딩/캐시/언로드 | `10-asset-manager/SKILL.md` |
 | 12 | DownloadManager | Addressables Label 기반 Patch/Download (CompoSingleton) | `12-download-manager/SKILL.md` |

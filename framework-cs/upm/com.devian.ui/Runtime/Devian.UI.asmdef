@@ -4,7 +4,9 @@
   "references": [
     "Devian.Core",
     "Devian.Unity",
-    "Devian.Domain.Sound"
+    "Devian.Domain.Common",
+    "Devian.Domain.Sound",
+    "Unity.TextMeshPro"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

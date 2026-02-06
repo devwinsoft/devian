@@ -11,7 +11,7 @@ and ScrollRect drag bridge.
 ## Scope
 
 ### Includes
-- PointerDown/Up 시각 피드백 (useScaling=true → Scale 1.1x, false → EffectType 기반)
+- PointerDown/Up 시각 피드백 (EffectType 기반, Scale 1.1x, AnchoredPosition -10)
 - (선택) PointerDown/Up UI 사운드 재생 (`SoundDown`, `SoundUp`)
 - UnityEvent hook (`onDown`, `onUp`)
 - ScrollRect drag bridge (`SetScroll`)
@@ -60,7 +60,6 @@ namespace Devian
 ### Serialized Fields
 ```csharp
 [SerializeField] private EffectType _effectType = EffectType.Scale;
-[SerializeField] private bool useScaling = true;
 [SerializeField] private SOUND_ID SoundDown;
 [SerializeField] private SOUND_ID SoundUp;
 ```

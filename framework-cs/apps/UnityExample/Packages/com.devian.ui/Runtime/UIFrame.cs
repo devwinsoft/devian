@@ -58,36 +58,6 @@ namespace Devian
         /// </summary>
         /// <param name="owner">The canvas owner.</param>
         protected abstract void onInitFromCanvas(MonoBehaviour owner);
-
-        /// <summary>
-        /// Creates a new frame instance using BundlePool.
-        /// </summary>
-        /// <typeparam name="FRAME">The frame component type. Must implement IPoolable.</typeparam>
-        /// <param name="prefabName">Name of the prefab in the bundle.</param>
-        /// <param name="parent">Parent transform. Defaults to this frame's transform if null.</param>
-        /// <returns>The created and initialized frame instance.</returns>
-        /// <exception cref="InvalidOperationException">Thrown if called before _InitFromCanvas.</exception>
-        protected FRAME createFrame<FRAME>(string prefabName, Transform parent = null)
-            where FRAME : Component, IPoolable<FRAME>
-        {
-            if (!isInitialized)
-            {
-                throw new InvalidOperationException(
-                    $"Cannot call createFrame before _InitFromCanvas. Frame: {GetType().Name}, Prefab: {prefabName}");
-            }
-
-            var instance = BundlePool.Spawn<FRAME>(
-                prefabName,
-                parent: parent ?? transform);
-
-            var frameBase = instance.GetComponent<UIFrameBase>();
-            if (frameBase != null)
-            {
-                frameBase._InitFromCanvas(ownerBase);
-            }
-
-            return instance;
-        }
     }
 
     /// <summary>

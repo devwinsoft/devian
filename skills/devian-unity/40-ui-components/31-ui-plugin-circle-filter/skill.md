@@ -28,7 +28,7 @@ Filters UI raycasts based on whether the point is inside the attached Collider2D
 
 ### Code Path
 ```
-framework-cs/upm/com.devian.foundation/Runtime/Unity/UI/Plugins/UIPlugInCircleFilter.cs
+framework-cs/upm/com.devian.ui/Runtime/Plugins/UIPlugInCircleFilter.cs
 ```
 
 ### Class

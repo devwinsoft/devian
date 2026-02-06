@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace Devian
 {
@@ -16,7 +17,7 @@ namespace Devian
     /// <summary>
     /// Base class for UI Canvas owners.
     /// Inherits from CompoSingleton for scene-placed singleton pattern.
-    /// Automatically initializes child UIFrames on Awake.
+    /// Frames are initialized when Init() is called.
     /// </summary>
     /// <typeparam name="TCanvas">The derived canvas type.</typeparam>
     public abstract class UICanvas<TCanvas> : CompoSingleton<TCanvas>
@@ -27,6 +28,9 @@ namespace Devian
         /// </summary>
         public Canvas canvas { get; private set; }
 
+        bool mInitialized = false;
+        List<UIFrameBase> mFrames = new List<UIFrameBase>();
+
         /// <summary>
         /// Unity Awake callback. Overrides CompoSingleton.Awake().
         /// Use onAwake for custom initialization in derived classes.
@@ -36,25 +40,29 @@ namespace Devian
             base.Awake();
             canvas = GetComponent<Canvas>();
             onAwake();
-            initChildFrames();
         }
 
         /// <summary>
         /// Override this for custom initialization logic.
-        /// Called after canvas is cached, before child frames are initialized.
+        /// Called after canvas is cached. Frame initialization happens in Init().
         /// </summary>
         protected virtual void onAwake() { }
 
-        /// <summary>
-        /// Finds all child UIFrameBase components and initializes them with this canvas.
-        /// </summary>
-        private void initChildFrames()
+        protected virtual void onInit() { }
+        protected virtual void onInitComplete() { }
+
+        public void Init()
         {
-            var frames = GetComponentsInChildren<UIFrameBase>(true);
-            foreach (var frame in frames)
+            if (mInitialized) return;
+            mInitialized = true;
+            mFrames.AddRange(GetComponentsInChildren<UIFrameBase>(true));
+            onInit();
+            foreach (var frame in mFrames)
             {
                 frame._InitFromCanvas(this);
             }
+            onInitComplete();
+            UIManager.messageSystem.Notify(UI_MESSAGE.InitOnce);
         }
 
         /// <summary>
@@ -86,6 +94,31 @@ namespace Devian
 
             reason = null;
             return true;
+        }
+
+        /// <summary>
+        /// Creates a new frame instance using BundlePool.
+        /// When initialized, the created frame is added to the frame list and _InitFromCanvas(this) is called.
+        /// </summary>
+        /// <typeparam name="FRAME">The frame component type. Must implement IPoolable.</typeparam>
+        /// <param name="prefabName">Name of the prefab in the bundle.</param>
+        /// <param name="parent">Parent transform. Defaults to this frame's transform if null.</param>
+        /// <returns>The created and initialized frame instance.</returns>
+        public FRAME CreateFrame<FRAME>(string prefabName, Transform parent = null)
+            where FRAME : Component, IPoolable<FRAME>
+        {
+            var instance = BundlePool.Spawn<FRAME>(
+                prefabName,
+                parent: parent ?? transform);
+
+            var frameBase = instance.GetComponent<UIFrameBase>();
+            if (frameBase != null && mInitialized)
+            {
+                mFrames.Add(frameBase);
+                frameBase._InitFromCanvas(this);
+            }
+
+            return instance;
         }
 
         /// <summary>

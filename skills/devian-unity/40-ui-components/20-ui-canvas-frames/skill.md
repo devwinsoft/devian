@@ -16,7 +16,7 @@ Canvas owner와 UI 기능 단위(Frame)의 초기화 수명주기를 표준화�
 
 | Term | Definition |
 |------|------------|
-| **UICanvas** | Canvas owner. CompoSingleton 기반 싱글톤으로, 자식 Frame들의 초기화 주체 |
+| **UICanvas** | Canvas owner. CompoSingleton 기반 싱글톤으로, Init() 호출 시 자식 Frame들을 초기화 |
 | **UIFrame** | Canvas 하위 UI 기능 단위. UICanvas로부터 _InitFromCanvas 호출을 받아 초기화됨 |
 | **UIFrameBase** | UIFrame의 비제네릭 기반 클래스. _InitFromCanvas(MonoBehaviour) 진입점 제공 |
 | **UIFrame\<TCanvas\>** | 타입 안전 버전. 강타입 owner 참조 + onInit(TCanvas) 확장점 제공 |
@@ -28,15 +28,19 @@ Canvas owner와 UI 기능 단위(Frame)의 초기화 수명주기를 표준화�
    └── UICanvas<MyCanvas> 컴포넌트를 Canvas GameObject에 배치
        └── 자식에 UIFrame<MyCanvas> 컴포넌트들 배치
 
-2. Runtime Initialization (Automatic)
-   └── UICanvas.Awake() (override from CompoSingleton)
-       ├── base.Awake()                    ← Singleton 등록
-       ├── canvas = GetComponent<Canvas>()
-       ├── onAwake()                       ← custom logic
-       └── initChildFrames()
-           └── foreach child UIFrameBase → frame._InitFromCanvas(this)
+2. UICanvas.Awake()
+   ├── base.Awake()                    ← Singleton 등록
+   ├── canvas = GetComponent<Canvas>()
+   └── onAwake()                       ← custom logic
 
-3. UIFrame Lifecycle
+3. UICanvas.Init()
+   ├── mFrames.AddRange(GetComponentsInChildren<UIFrameBase>(true))
+   ├── onInit()                        ← override point
+   ├── foreach frame in mFrames
+   │   └── frame._InitFromCanvas(this)
+   └── onInitComplete()                ← override point
+
+4. UIFrame Lifecycle
    └── UIFrame.Awake() → onAwake()
    └── UIFrame._InitFromCanvas(owner)
        ├── ownerBase = owner
@@ -45,17 +49,17 @@ Canvas owner와 UI 기능 단위(Frame)의 초기화 수명주기를 표준화�
            └── (UIFrame<TCanvas>) owner as TCanvas 캐스팅
                └── onInit(TCanvas owner)   ← 확장점
 
-4. Dynamic Frame Creation (Optional)
-   └── existingFrame.createFrame<MyFrame>("PrefabName")
+5. Dynamic Frame Creation (Optional)
+   └── canvas.CreateFrame<MyFrame>("PrefabName")
        ├── BundlePool.Spawn<MyFrame>(...)
-       └── newFrame._InitFromCanvas(ownerBase)
+       └── if (mInitialized): mFrames.Add(frameBase) + frameBase._InitFromCanvas(this)
 ```
 
 ### Includes / Excludes
 
 **Includes:**
-- Init lifecycle (Awake → onAwake, _InitFromCanvas → onInitFromCanvas → onInit)
-- createFrame for dynamic frame creation via BundlePool
+- Init lifecycle (Awake → onAwake, Init → onInit → _InitFromCanvas → onInitComplete)
+- CreateFrame for dynamic frame creation via BundlePool
 - Validation helpers (Validate)
 - Coordinate conversion helpers (TryWorldToOverlayLocal)
 - Billboard helpers (ComputeBillboardRotation, ApplyBillboard)
@@ -96,18 +100,18 @@ C# 메서드 네이밍(internal `_` 접두어, protected lowerCamelCase)은 상�
 | **MUST** | `Awake()` → `onAwake()` 패턴 사용 |
 | **MUST** | UICanvas.Awake()는 `override` + `base.Awake()` 호출 (CompoSingleton 상속) |
 | **MUST** | UIFrame.Awake()는 non-virtual (MonoBehaviour 직접 상속) |
-| **MUST** | UICanvas는 `onAwake()` 완료 후 child frame `_InitFromCanvas(this)` 수행 |
+| **MUST** | UICanvas.Init()에서 child frame `_InitFromCanvas(this)` 수행 |
 | **MUST** | UIFrameBase._InitFromCanvas()는 owner 저장만 수행 |
 | **MUST** | 실제 초기화 로직은 `onInit(TCanvas owner)`에서 처리 |
 | **MUST** | `_InitFromCanvas()` 중복 호출 방지 (isInitialized 체크) |
+| **MUST** | `Init()` 중복 호출 방지 (mInitialized 체크) |
 
 ### Creation Policy
 
 | Rule | Description |
 |------|-------------|
-| **MUST** | `UIFrameBase.createFrame<T>()` 는 `BundlePool`로 생성 |
-| **MUST** | 생성 직후 `_InitFromCanvas(ownerBase)` 호출 |
-| **MUST** | `createFrame`은 `_InitFromCanvas` 이전 호출 시 예외 발생 |
+| **MUST** | `UICanvas.CreateFrame<T>()` 는 `BundlePool`로 생성 |
+| **MUST** | mInitialized == true 일 때 mFrames.Add + `_InitFromCanvas(this)` 호출 |
 
 ### Prohibited Actions
 
@@ -134,7 +138,7 @@ C# 메서드 네이밍(internal `_` 접두어, protected lowerCamelCase)은 상�
 ### Canonical Code Path
 
 ```
-framework-cs/upm/com.devian.foundation/Runtime/Unity/UI/
+framework-cs/upm/com.devian.ui/Runtime/
 ```
 
 ### File List
@@ -179,9 +183,18 @@ namespace Devian
         // Lifecycle (override from CompoSingleton)
         protected override void Awake();  // calls base.Awake() first
         protected virtual void onAwake();
+        protected virtual void onInit();
+        protected virtual void onInitComplete();
+
+        // Initialization
+        public void Init();
 
         // Validation
         public virtual bool Validate(out string reason);
+
+        // Frame Creation
+        public FRAME CreateFrame<FRAME>(string prefabName, Transform parent = null)
+            where FRAME : Component, IPoolable<FRAME>;
 
         // Helpers
         public bool TryWorldToOverlayLocal(
@@ -196,9 +209,6 @@ namespace Devian
         public void ApplyBillboard(
             Transform target,
             BillboardMode mode = BillboardMode.Full);
-
-        // Private
-        private void initChildFrames();
     }
 }
 ```
@@ -221,10 +231,6 @@ namespace Devian
         // Initialization (internal - called by UICanvas)
         internal void _InitFromCanvas(MonoBehaviour owner);
         protected abstract void onInitFromCanvas(MonoBehaviour owner);
-
-        // Frame Creation
-        protected FRAME createFrame<FRAME>(string prefabName, Transform parent = null)
-            where FRAME : Component, IPoolable<FRAME>;
     }
 }
 ```
@@ -255,10 +261,17 @@ namespace Devian
 UICanvas.Awake()  (override from CompoSingleton)
 ├── 1. base.Awake()                      ← CompoSingleton 등록
 ├── 2. canvas = GetComponent<Canvas>()
-├── 3. onAwake()                         ← override point
-└── 4. initChildFrames()
-    └── foreach UIFrameBase in children
-        └── frame._InitFromCanvas(this)
+└── 3. onAwake()                         ← override point
+
+UICanvas.Init()
+├── 1. if (mInitialized) return          ← 중복 방지
+├── 2. mInitialized = true
+├── 3. mFrames.AddRange(GetComponentsInChildren<UIFrameBase>(true))
+├── 4. onInit()                          ← override point
+├── 5. foreach frame in mFrames
+│   └── frame._InitFromCanvas(this)
+├── 6. onInitComplete()                  ← override point
+└── 7. UIManager.messageSystem.Notify(UI_MESSAGE.InitOnce)
 ```
 
 #### UIFrame Initialization
@@ -279,14 +292,15 @@ UIFrame<TCanvas>.onInitFromCanvas(owner)
 └── 3. onInit(this.owner)                ← override point
 ```
 
-#### createFrame Sequence
+#### CreateFrame Sequence
 
 ```
-UIFrameBase.createFrame<FRAME>(prefabName, parent)
-├── 1. if (!isInitialized) throw         ← _InitFromCanvas 전 호출 금지
-├── 2. BundlePool.Spawn<FRAME>(prefabName, parent: parent ?? transform)
-├── 3. instance.GetComponent<UIFrameBase>()
-└── 4. frameBase?._InitFromCanvas(ownerBase)
+UICanvas.CreateFrame<FRAME>(prefabName, parent)
+├── 1. BundlePool.Spawn<FRAME>(prefabName, parent: parent ?? transform)
+├── 2. instance.GetComponent<UIFrameBase>()
+└── 3. if (frameBase != null && mInitialized)
+    ├── mFrames.Add(frameBase)
+    └── frameBase._InitFromCanvas(this)
 ```
 
 ### Type Constraints
@@ -295,23 +309,23 @@ UIFrameBase.createFrame<FRAME>(prefabName, parent)
 |---------|------------|
 | `UICanvas<TCanvas>` | `where TCanvas : MonoBehaviour` |
 | `UIFrame<TCanvas>` | `where TCanvas : MonoBehaviour` |
-| `createFrame<FRAME>` | `where FRAME : Component, IPoolable<FRAME>` |
+| `CreateFrame<FRAME>` | `where FRAME : Component, IPoolable<FRAME>` |
 
 ### Dependencies
 
 | Dependency | Location |
 |------------|----------|
-| `CompoSingleton<T>` | `Runtime/Unity/Singletons/CompoSingleton.cs` |
-| `BundlePool` | `Runtime/Unity/Pool/Factory/BundlePool.cs` |
-| `IPoolable<T>` | `Runtime/Unity/Pool/IPoolable.cs` |
+| `CompoSingleton<T>` | `com.devian.foundation/Runtime/Unity/Singletons/CompoSingleton.cs` |
+| `BundlePool` | `com.devian.foundation/Runtime/Unity/Pool/Factory/BundlePool.cs` |
+| `IPoolable<T>` | `com.devian.foundation/Runtime/Unity/Pool/IPoolable.cs` |
 
 ---
 
 ## DoD (Definition of Done) Checklist
 
 ### Files Exist
-- [ ] `Runtime/Unity/UI/UICanvas.cs`
-- [ ] `Runtime/Unity/UI/UIFrame.cs`
+- [ ] `com.devian.ui/Runtime/UICanvas.cs`
+- [ ] `com.devian.ui/Runtime/UIFrame.cs`
 
 ### Files Removed
 - [ ] `IUiCanvasOwner.cs` 삭제 및 참조 0
@@ -323,19 +337,19 @@ UIFrameBase.createFrame<FRAME>(prefabName, parent)
 ### Lifecycle Compliance
 - [ ] `UICanvas.Awake()`가 `override` + `base.Awake()` 호출
 - [ ] `UIFrame.Awake()`가 `virtual`이 아님
-- [ ] `UICanvas.Awake()` 순서: base.Awake → canvas 캐시 → onAwake → initChildFrames
+- [ ] `UICanvas.Awake()` 순서: base.Awake → canvas 캐시 → onAwake
+- [ ] `UICanvas.Init()` 순서: mInitialized 체크 → mFrames 스캔 → onInit → _InitFromCanvas 반복 → onInitComplete → Notify(InitOnce)
 - [ ] `UICanvas`가 child frames를 `_InitFromCanvas(this)`로 초기화
 - [ ] `UIFrame<TCanvas>`가 `onInit(TCanvas owner)`를 확장 포인트로 제공
 - [ ] `UIFrame<TCanvas>`가 `owner`를 저장함
 
 ### Naming Compliance
 - [ ] internal 메서드가 `_` 접두어로 시작 (`_InitFromCanvas`)
-- [ ] protected 메서드가 lowerCamelCase (`onInitFromCanvas`, `createFrame`)
+- [ ] protected 메서드가 lowerCamelCase (`onInitFromCanvas`, `onInit`, `onInitComplete`)
 
-### createFrame Compliance
-- [ ] `BundlePool.Spawn<T>()` 사용
-- [ ] 생성 직후 `_InitFromCanvas(ownerBase)` 호출
-- [ ] `isInitialized == false` 시 예외 발생
+### CreateFrame Compliance
+- [ ] `UICanvas.CreateFrame<T>()` 가 `BundlePool.Spawn<T>()` 사용
+- [ ] mInitialized == true 일 때 mFrames.Add + `_InitFromCanvas(this)` 호출
 
 ### Build
 - [ ] 컴파일 오류 0개

@@ -6,6 +6,7 @@ using Devian.Domain.Game;
 using Devian.Domain.Sound;
 using Devian.Protocol.Game;
 using TMPro;
+using Devian;
 
 public class SceneTest : BaseScene
 {
@@ -51,6 +52,7 @@ public class SceneTest : BaseScene
 
         //yield return VoiceManager.Instance.LoadByGroupKeyAsync("", SystemLanguage.Korean, SystemLanguage.English);
 
+        TestUICanvas.Instance.Init();
         SoundManager.Instance.PlaySound("bgm_title");
         CommonEffectManager.Instance.CreateEffect(effectId, null, Vector3.zero, Quaternion.identity, COMMON_EFFECT_ATTACH_TYPE.World);
 

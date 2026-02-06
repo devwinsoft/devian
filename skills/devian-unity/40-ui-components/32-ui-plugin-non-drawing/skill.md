@@ -22,7 +22,7 @@ Useful for raycast targets or layout purposes without visual rendering.
 
 ### Code Path
 ```
-framework-cs/upm/com.devian.foundation/Runtime/Unity/UI/Plugins/UIPlugInNonDrawing.cs
+framework-cs/upm/com.devian.ui/Runtime/Plugins/UIPlugInNonDrawing.cs
 ```
 
 ### Class

@@ -11,6 +11,13 @@ namespace Devian
     /// </summary>
     public sealed class UIManager : CompoSingleton<UIManager>
     {
+        private UIMessageSystem mMessageSystem = new UIMessageSystem();
+
+        /// <summary>
+        /// UI message system for UI-level messaging (ReloadText, Resize, etc.).
+        /// </summary>
+        public static UIMessageSystem messageSystem => Instance.mMessageSystem;
+
         /// <summary>
         /// Unity Awake callback. Overrides CompoSingleton.Awake().
         /// Ensures UI event system is ready.

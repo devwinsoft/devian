@@ -20,7 +20,6 @@ namespace Devian
         }
 
         [SerializeField] private EffectType _effectType = EffectType.Scale;
-        [SerializeField] private bool useScaling = true;
         [SerializeField] private SOUND_ID SoundDown;
         [SerializeField] private SOUND_ID SoundUp;
 
@@ -79,21 +78,14 @@ namespace Devian
         {
             if (_rectTransform == null) return;
 
-            if (useScaling)
+            switch (_effectType)
             {
-                _rectTransform.localScale = _originalScale * 1.1f;
-            }
-            else
-            {
-                switch (_effectType)
-                {
-                    case EffectType.Scale:
-                        _rectTransform.localScale = _originalScale * 1.1f;
-                        break;
-                    case EffectType.AnchoredPosition:
-                        _rectTransform.anchoredPosition = _originalAnchoredPosition + new Vector2(0, -10f);
-                        break;
-                }
+                case EffectType.Scale:
+                    _rectTransform.localScale = _originalScale * 1.1f;
+                    break;
+                case EffectType.AnchoredPosition:
+                    _rectTransform.anchoredPosition = _originalAnchoredPosition + new Vector2(0, -10f);
+                    break;
             }
 
             // UI Sound (down)
@@ -113,21 +105,14 @@ namespace Devian
         {
             if (_rectTransform == null) return;
 
-            if (useScaling)
+            switch (_effectType)
             {
-                _rectTransform.localScale = _originalScale;
-            }
-            else
-            {
-                switch (_effectType)
-                {
-                    case EffectType.Scale:
-                        _rectTransform.localScale = _originalScale;
-                        break;
-                    case EffectType.AnchoredPosition:
-                        _rectTransform.anchoredPosition = _originalAnchoredPosition;
-                        break;
-                }
+                case EffectType.Scale:
+                    _rectTransform.localScale = _originalScale;
+                    break;
+                case EffectType.AnchoredPosition:
+                    _rectTransform.anchoredPosition = _originalAnchoredPosition;
+                    break;
             }
 
             // UI Sound (up)

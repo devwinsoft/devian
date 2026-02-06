@@ -12,6 +12,7 @@ Canvas 조회, 생성, 보장, EventSystem/InputModule 보장 및 유틸리티 �
 ## Scope
 
 ### Includes
+- UI 메시지 시스템 (`messageSystem`)
 - Canvas 조회 (`TryGetCanvas`)
 - Canvas 생성 (`CreateCanvas`)
 - Canvas 보장 (`EnsureCanvas`)
@@ -35,7 +36,7 @@ Canvas 조회, 생성, 보장, EventSystem/InputModule 보장 및 유틸리티 �
 
 ### Code Path
 ```
-framework-cs/upm/com.devian.foundation/Runtime/Unity/UI/UIManager.cs
+framework-cs/upm/com.devian.ui/Runtime/UIManager.cs
 ```
 
 ### Class
@@ -47,13 +48,28 @@ namespace Devian
 ```
 
 ### Singleton Type
-- **CompoSingleton** (Bootstrap에 부착)
-- BaseBootstrap.Awake()에서 `ensureComponent<UIManager>()` 호출로 보장됨
+- **CompoSingleton** (Bootstrap 프리팹에 부착되어야 한다)
+- 자동 보장 없음 (ensureComponent 호출 제거됨)
 - 런타임 자동 생성 없음 (AutoSingleton 아님)
 
 ---
 
 ## API
+
+### messageSystem
+
+```csharp
+public static UIMessageSystem messageSystem { get; }
+```
+
+- 정적 접근: `UIManager.messageSystem`
+- UI 레벨 메시징 인스턴스 (`MessageSystem<EntityId, UI_MESSAGE>` 특화)
+- UIManager 생성 시 내부에서 `new UIMessageSystem()` 초기화
+- UI 메시지(InitOnce, ReloadText, Resize 등)의 발행/구독에 사용
+
+```csharp
+UIManager.messageSystem.Subcribe(ownerEntityId, UI_MESSAGE.ReloadText, args => { /* ... */ return false; });
+```
 
 ### EnsureUiEventSystem
 
@@ -163,7 +179,8 @@ EventSystem이 2개 이상 발견되면 `Debug.LogWarning`만 남기고 제거�
 |------------|----------|
 | `CompoSingleton<T>` | `Runtime/Unity/Singletons/CompoSingleton.cs` |
 | `BundlePool` | `Runtime/Unity/Pool/Factory/BundlePool.cs` |
-| `UICanvas<T>` | `Runtime/Unity/UI/UICanvas.cs` |
+| `UICanvas<T>` | `com.devian.ui/Runtime/UICanvas.cs` |
+| `UIMessageSystem` | `com.devian.ui/Runtime/UIMessageSystem.cs` |
 | `Singleton` | `Runtime/Unity/Singletons/Singleton.cs` |
 | `BaseBootstrap` | `Runtime/Unity/Bootstrap/BaseBootstrap.cs` |
 | `EventSystem` | `UnityEngine.EventSystems` |
@@ -173,6 +190,7 @@ EventSystem이 2개 이상 발견되면 `Debug.LogWarning`만 남기고 제거�
 ## Related Documents
 
 - [UICanvas/UIFrame](../20-ui-canvas-frames/skill.md)
+- [UIMessageSystem](../33-ui-message-system/skill.md)
 - [Singleton](../../30-unity-components/31-singleton/SKILL.md)
 - [Pool Factories](../../30-unity-components/04-pool-factories/SKILL.md)
 - [Bootstrap](../../30-unity-components/27-bootstrap-resource-object/SKILL.md)

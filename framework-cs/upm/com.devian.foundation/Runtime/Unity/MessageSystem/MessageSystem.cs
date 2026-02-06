@@ -1,16 +1,17 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using UnityEngine;
 
 namespace Devian
 {
     /// <summary>
-    /// instanceId + key 기반 메시지/트리거 시스템.
+    /// ownerKey + msgKey 기반 메시지/트리거 시스템.
     /// 시간 기반 이벤트는 지원하지 않음 (Unity Invoke/Coroutine 사용 권장).
-    /// Re-entrancy safe: 핸들러 내부에서 Register/Unregister/ClearAll 호출 가능.
+    /// Re-entrancy safe: 핸들러 내부에서 Subcribe/UnSubcribe/ClearAll 호출 가능.
     /// </summary>
-    public static class MessageSystem<TKey> where TKey : unmanaged, Enum
+    public class MessageSystem<TOwnerKey, TMsgKey>
+        where TOwnerKey : IEquatable<TOwnerKey>, IComparable<TOwnerKey>
+        where TMsgKey : unmanaged, Enum
     {
         /// <summary>
         /// 메시지 핸들러. true 반환 시 자동 해제됨.
@@ -19,43 +20,43 @@ namespace Devian
 
         private struct Entry
         {
-            public TKey Key;
+            public TMsgKey Key;
             public Handler Handler;
         }
 
         private struct PendingRegister
         {
-            public int InstanceId;
-            public TKey Key;
+            public TOwnerKey OwnerKey;
+            public TMsgKey Key;
             public Handler Handler;
         }
 
         private struct PendingRemove
         {
-            public int InstanceId;
-            public int Index;
+            public TOwnerKey OwnerKey;
+            public int EntryIndex;
         }
 
         // Main storage
-        private static readonly Dictionary<int, List<Entry>> _byInstanceId = new();
-        private static readonly EqualityComparer<TKey> _keyComparer = EqualityComparer<TKey>.Default;
+        private readonly Dictionary<TOwnerKey, List<Entry>> _byInstanceId = new();
+        private readonly EqualityComparer<TMsgKey> _keyComparer = EqualityComparer<TMsgKey>.Default;
 
         // Re-entrancy tracking
-        private static int _notifyDepth;
-        private static bool _pendingClearAll;
+        private int _notifyDepth;
+        private bool _pendingClearAll;
 
         // Pending operations (deferred during Notify)
-        private static readonly List<int> _pendingUnregisterInstanceIds = new();
-        private static readonly List<PendingRegister> _pendingRegisters = new();
-        private static readonly List<PendingRemove> _pendingRemoves = new();
+        private readonly List<TOwnerKey> _pendingUnregisterOwnerKeys = new();
+        private readonly List<PendingRegister> _pendingRegisters = new();
+        private readonly List<PendingRemove> _pendingRemoves = new();
 
         // Snapshot buffer for safe iteration
-        private static readonly List<int> _snapshotInstanceIds = new();
+        private readonly List<TOwnerKey> _snapshotOwnerKeys = new();
 
         /// <summary>
         /// 모든 등록을 초기화한다.
         /// </summary>
-        public static void ClearAll()
+        public void ClearAll()
         {
             if (_notifyDepth > 0)
             {
@@ -67,40 +68,30 @@ namespace Devian
         }
 
         /// <summary>
-        /// instanceId에 key 핸들러를 등록한다.
+        /// ownerKey에 key 핸들러를 등록한다.
         /// </summary>
-        public static void Register(int instanceId, TKey key, Handler handler)
+        public void Subcribe(TOwnerKey ownerKey, TMsgKey key, Handler handler)
         {
             if (_notifyDepth > 0)
             {
                 _pendingRegisters.Add(new PendingRegister
                 {
-                    InstanceId = instanceId,
+                    OwnerKey = ownerKey,
                     Key = key,
                     Handler = handler
                 });
                 return;
             }
 
-            registerImmediate(instanceId, key, handler);
+            registerImmediate(ownerKey, key, handler);
         }
 
         /// <summary>
-        /// UnityEngine.Object owner에 key 핸들러를 등록한다.
-        /// owner가 null이면 무시한다.
+        /// ownerKey에 1회성 핸들러를 등록한다. 호출 후 자동 해제된다.
         /// </summary>
-        public static void Register(UnityEngine.Object owner, TKey key, Handler handler)
+        public void SubcribeOnce(TOwnerKey ownerKey, TMsgKey key, Action<object[]> handler)
         {
-            if (owner == null) return;
-            Register(owner.GetInstanceID(), key, handler);
-        }
-
-        /// <summary>
-        /// instanceId에 1회성 핸들러를 등록한다. 호출 후 자동 해제된다.
-        /// </summary>
-        public static void RegisterOnce(int instanceId, TKey key, Action<object[]> handler)
-        {
-            Register(instanceId, key, args =>
+            Subcribe(ownerKey, key, args =>
             {
                 handler(args);
                 return true; // 자동 해제
@@ -108,62 +99,42 @@ namespace Devian
         }
 
         /// <summary>
-        /// UnityEngine.Object owner에 1회성 핸들러를 등록한다. 호출 후 자동 해제된다.
-        /// owner가 null이면 무시한다.
+        /// ownerKey의 모든 핸들러를 해제한다.
         /// </summary>
-        public static void RegisterOnce(UnityEngine.Object owner, TKey key, Action<object[]> handler)
-        {
-            if (owner == null) return;
-            RegisterOnce(owner.GetInstanceID(), key, handler);
-        }
-
-        /// <summary>
-        /// instanceId의 모든 핸들러를 해제한다.
-        /// </summary>
-        public static void Unregister(int instanceId)
+        public void UnSubcribe(TOwnerKey ownerKey)
         {
             if (_notifyDepth > 0)
             {
-                _pendingUnregisterInstanceIds.Add(instanceId);
+                _pendingUnregisterOwnerKeys.Add(ownerKey);
                 return;
             }
 
-            _byInstanceId.Remove(instanceId);
-        }
-
-        /// <summary>
-        /// UnityEngine.Object owner의 모든 핸들러를 해제한다.
-        /// owner가 null이면 무시한다.
-        /// </summary>
-        public static void Unregister(UnityEngine.Object owner)
-        {
-            if (owner == null) return;
-            Unregister(owner.GetInstanceID());
+            _byInstanceId.Remove(ownerKey);
         }
 
         /// <summary>
         /// key에 매칭되는 모든 핸들러를 호출한다.
         /// 핸들러가 true를 반환하면 자동 해제된다.
         /// </summary>
-        public static void Notify(TKey key, params object[] args)
+        public void Notify(TMsgKey key, params object[] args)
         {
             _notifyDepth++;
 
             try
             {
-                // Snapshot instanceId keys (safe: no handler execution yet)
-                _snapshotInstanceIds.Clear();
+                // Snapshot ownerKeys (safe: no handler execution yet)
+                _snapshotOwnerKeys.Clear();
                 foreach (var kvp in _byInstanceId)
                 {
-                    _snapshotInstanceIds.Add(kvp.Key);
+                    _snapshotOwnerKeys.Add(kvp.Key);
                 }
 
                 // Iterate over snapshot
-                for (int s = 0; s < _snapshotInstanceIds.Count; s++)
+                for (int s = 0; s < _snapshotOwnerKeys.Count; s++)
                 {
-                    int instanceId = _snapshotInstanceIds[s];
+                    TOwnerKey ownerKey = _snapshotOwnerKeys[s];
 
-                    if (!_byInstanceId.TryGetValue(instanceId, out var list))
+                    if (!_byInstanceId.TryGetValue(ownerKey, out var list))
                         continue;
 
                     // Reverse 순회 (제거 인덱스 안전)
@@ -181,8 +152,8 @@ namespace Devian
                             // Pending remove (deferred)
                             _pendingRemoves.Add(new PendingRemove
                             {
-                                InstanceId = instanceId,
-                                Index = i
+                                OwnerKey = ownerKey,
+                                EntryIndex = i
                             });
                         }
                     }
@@ -203,58 +174,58 @@ namespace Devian
         // Private helpers
         // ========================================
 
-        private static void registerImmediate(int instanceId, TKey key, Handler handler)
+        private void registerImmediate(TOwnerKey ownerKey, TMsgKey key, Handler handler)
         {
-            if (!_byInstanceId.TryGetValue(instanceId, out var list))
+            if (!_byInstanceId.TryGetValue(ownerKey, out var list))
             {
                 list = new List<Entry>();
-                _byInstanceId[instanceId] = list;
+                _byInstanceId[ownerKey] = list;
             }
 
             list.Add(new Entry { Key = key, Handler = handler });
         }
 
-        private static void flushPending()
+        private void flushPending()
         {
             // 1. ClearAll takes priority
             if (_pendingClearAll)
             {
                 _byInstanceId.Clear();
                 _pendingClearAll = false;
-                _pendingUnregisterInstanceIds.Clear();
+                _pendingUnregisterOwnerKeys.Clear();
                 _pendingRemoves.Clear();
                 _pendingRegisters.Clear();
                 return;
             }
 
-            // 2. Process pending unregisters (remove entire instanceId)
-            if (_pendingUnregisterInstanceIds.Count > 0)
+            // 2. Process pending unregisters (remove entire ownerKey)
+            if (_pendingUnregisterOwnerKeys.Count > 0)
             {
                 // Deduplicate
-                var unregisterSet = new HashSet<int>(_pendingUnregisterInstanceIds);
-                foreach (var instanceId in unregisterSet)
+                var unregisterSet = new HashSet<TOwnerKey>(_pendingUnregisterOwnerKeys);
+                foreach (var ownerKey in unregisterSet)
                 {
-                    _byInstanceId.Remove(instanceId);
+                    _byInstanceId.Remove(ownerKey);
                 }
-                _pendingUnregisterInstanceIds.Clear();
+                _pendingUnregisterOwnerKeys.Clear();
 
-                // Remove pending removes for unregistered instanceIds
-                _pendingRemoves.RemoveAll(r => unregisterSet.Contains(r.InstanceId));
+                // Remove pending removes for unregistered ownerKeys
+                _pendingRemoves.RemoveAll(r => unregisterSet.Contains(r.OwnerKey));
             }
 
             // 3. Process pending removes (handler returned true)
             if (_pendingRemoves.Count > 0)
             {
-                // Group by instanceId and sort indices descending
-                var grouped = new Dictionary<int, List<int>>();
+                // Group by ownerKey and sort indices descending
+                var grouped = new Dictionary<TOwnerKey, List<int>>();
                 foreach (var r in _pendingRemoves)
                 {
-                    if (!grouped.TryGetValue(r.InstanceId, out var indices))
+                    if (!grouped.TryGetValue(r.OwnerKey, out var indices))
                     {
                         indices = new List<int>();
-                        grouped[r.InstanceId] = indices;
+                        grouped[r.OwnerKey] = indices;
                     }
-                    indices.Add(r.Index);
+                    indices.Add(r.EntryIndex);
                 }
 
                 foreach (var kvp in grouped)
@@ -288,7 +259,7 @@ namespace Devian
             {
                 foreach (var p in _pendingRegisters)
                 {
-                    registerImmediate(p.InstanceId, p.Key, p.Handler);
+                    registerImmediate(p.OwnerKey, p.Key, p.Handler);
                 }
                 _pendingRegisters.Clear();
             }

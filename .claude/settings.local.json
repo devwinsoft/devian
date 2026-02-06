@@ -88,7 +88,8 @@
       "Bash(dotnet run:*)",
       "Bash(git -C /Users/maoshy/Documents/Projects/devian ls-files:*)",
       "Bash(git -C /Users/maoshy/Documents/Projects/devian show HEAD:\"framework-cs/apps/UnityExample/Packages/com.devian.foundation/Runtime/Unity/UI/UIManager.cs.meta\")",
-      "Bash(git -C /Users/maoshy/Documents/Projects/devian show HEAD:\"framework-cs/apps/UnityExample/Packages/com.devian.foundation/Runtime/Unity/UI/UICanvas.cs.meta\")"
+      "Bash(git -C /Users/maoshy/Documents/Projects/devian show HEAD:\"framework-cs/apps/UnityExample/Packages/com.devian.foundation/Runtime/Unity/UI/UICanvas.cs.meta\")",
+      "Bash(unzip:*)"
     ]
   }
 }
