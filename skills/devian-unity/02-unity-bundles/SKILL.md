@@ -85,7 +85,7 @@ com.devian.domain.* (module packages - foundation 의존)
 |--------|------|------------|--------|
 | `Devian.Core.asmdef` | `Devian.Core` | `[]` | com.devian.foundation/Runtime/Core |
 | `Devian.Unity.asmdef` | `Devian.Unity` | `["Devian.Core"]` | com.devian.foundation/Runtime/Unity |
-| `Devian.UI.asmdef` | `Devian.UI` | `["Devian.Core", "Devian.Unity"]` | com.devian.ui/Runtime |
+| `Devian.UI.asmdef` | `Devian.UI` | `["Devian.Core", "Devian.Unity", "Devian.Domain.Sound"]` | com.devian.ui/Runtime |
 | `Devian.Domain.Common.asmdef` | `Devian.Domain.Common` | `["Devian.Core", "Devian.Unity", "Newtonsoft.Json"]` | com.devian.domain.common |
 | `Devian.Domain.Sound.asmdef` | `Devian.Domain.Sound` | `["Devian.Core", "Devian.Unity"]` | com.devian.domain.sound |
 

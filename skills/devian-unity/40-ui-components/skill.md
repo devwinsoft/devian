@@ -34,8 +34,8 @@ framework-cs/upm/com.devian.ui/Runtime/
 | `com.devian.domain.common` | `0.1.0` | 필수 (향후 사용 고정) |
 | `com.devian.domain.sound` | `0.1.0` | 필수 (향후 사용 고정) |
 
-> **Devian Domain Common** 및 **Devian Domain Sound**는 현재 코드에서 즉시 사용하는지 여부와 무관하게,
-> 향후 사용을 위해 필수 의존으로 고정한다.
+> **Devian Domain Sound**는 `UIPlugInButton`의 UI 사운드 재생에서 사용한다 (`SOUND_ID`, `TB_SOUND`, `SoundManager`, `SoundChannelType.Ui`).
+> **Devian Domain Common**은 향후 사용을 위해 필수 의존으로 고정한다.
 
 ### Circular Dependency Prevention
 
@@ -50,7 +50,7 @@ Foundation → UI 하드 참조가 존재하지 않는다.
 
 | asmdef | name | references | 위치 |
 |--------|------|------------|------|
-| `Devian.UI.asmdef` | `Devian.UI` | `["Devian.Core", "Devian.Unity"]` | `Runtime/` |
+| `Devian.UI.asmdef` | `Devian.UI` | `["Devian.Core", "Devian.Unity", "Devian.Domain.Sound"]` | `Runtime/` |
 | `Devian.UI.Editor.asmdef` | `Devian.UI.Editor` | `["Devian.UI", "Devian.Unity", "Devian.Unity.Editor"]` | `Editor/` |
 
 ---
@@ -63,7 +63,7 @@ Foundation → UI 하드 참조가 존재하지 않는다.
 | 01 | Policy | 문서 작성 정책 (Usage 섹션 금지 등) | `01-policy/skill.md` |
 | 10 | UIManager | Canvas 수명주기 + UI 입력 보장 (CompoSingleton/Bootstrap) | `10-ui-manager/skill.md` |
 | 20 | UICanvasFrames | UICanvas/UIFrame 규약 (overview+policy+ssot 통합) | `20-ui-canvas-frames/skill.md` |
-| 30 | UIPlugInButton | Button press feedback + events + scroll bridge | `30-ui-plugin-button/skill.md` |
+| 30 | UIPlugInButton | Button press feedback + UI sound + events + scroll bridge | `30-ui-plugin-button/skill.md` |
 | 31 | UIPlugInCircleFilter | Collider2D 기반 Raycast filter | `31-ui-plugin-circle-filter/skill.md` |
 | 32 | UIPlugInNonDrawing | Non-drawing Graphic | `32-ui-plugin-non-drawing/skill.md` |
 

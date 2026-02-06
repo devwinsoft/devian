@@ -1,3 +1,4 @@
+using Devian.Domain.Sound;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -6,8 +7,8 @@ using UnityEngine.UI;
 namespace Devian
 {
     /// <summary>
-    /// Button press visual feedback plugin with UnityEvent hooks and ScrollRect drag bridge.
-    /// Provides scale/position animation on pointer down/up without sound dependencies.
+    /// Button press visual feedback plugin with UnityEvent hooks, optional UI sound playback,
+    /// and ScrollRect drag bridge.
     /// </summary>
     [RequireComponent(typeof(EventTrigger))]
     public class UIPlugInButton : MonoBehaviour
@@ -19,6 +20,9 @@ namespace Devian
         }
 
         [SerializeField] private EffectType _effectType = EffectType.Scale;
+        [SerializeField] private bool useScaling = true;
+        [SerializeField] private SOUND_ID SoundDown;
+        [SerializeField] private SOUND_ID SoundUp;
 
         /// <summary>
         /// Invoked when pointer down occurs (after visual feedback).
@@ -75,14 +79,31 @@ namespace Devian
         {
             if (_rectTransform == null) return;
 
-            switch (_effectType)
+            if (useScaling)
             {
-                case EffectType.Scale:
-                    _rectTransform.localScale = _originalScale * 1.1f;
-                    break;
-                case EffectType.AnchoredPosition:
-                    _rectTransform.anchoredPosition = _originalAnchoredPosition + new Vector2(0, -10f);
-                    break;
+                _rectTransform.localScale = _originalScale * 1.1f;
+            }
+            else
+            {
+                switch (_effectType)
+                {
+                    case EffectType.Scale:
+                        _rectTransform.localScale = _originalScale * 1.1f;
+                        break;
+                    case EffectType.AnchoredPosition:
+                        _rectTransform.anchoredPosition = _originalAnchoredPosition + new Vector2(0, -10f);
+                        break;
+                }
+            }
+
+            // UI Sound (down)
+            if (SoundDown != null && SoundDown.IsValid())
+            {
+                var row = TB_SOUND.Get(SoundDown.Value);
+                if (row != null && !string.IsNullOrEmpty(row.Sound_id))
+                {
+                    SoundManager.Instance.PlaySound(row.Sound_id, channelOverride: SoundChannelType.Ui);
+                }
             }
 
             onDown?.Invoke();
@@ -92,14 +113,31 @@ namespace Devian
         {
             if (_rectTransform == null) return;
 
-            switch (_effectType)
+            if (useScaling)
             {
-                case EffectType.Scale:
-                    _rectTransform.localScale = _originalScale;
-                    break;
-                case EffectType.AnchoredPosition:
-                    _rectTransform.anchoredPosition = _originalAnchoredPosition;
-                    break;
+                _rectTransform.localScale = _originalScale;
+            }
+            else
+            {
+                switch (_effectType)
+                {
+                    case EffectType.Scale:
+                        _rectTransform.localScale = _originalScale;
+                        break;
+                    case EffectType.AnchoredPosition:
+                        _rectTransform.anchoredPosition = _originalAnchoredPosition;
+                        break;
+                }
+            }
+
+            // UI Sound (up)
+            if (SoundUp != null && SoundUp.IsValid())
+            {
+                var row = TB_SOUND.Get(SoundUp.Value);
+                if (row != null && !string.IsNullOrEmpty(row.Sound_id))
+                {
+                    SoundManager.Instance.PlaySound(row.Sound_id, channelOverride: SoundChannelType.Ui);
+                }
             }
 
             onUp?.Invoke();
