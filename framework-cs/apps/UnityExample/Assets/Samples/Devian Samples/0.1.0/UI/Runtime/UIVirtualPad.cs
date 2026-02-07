@@ -3,6 +3,7 @@
 // - Supports fixed center or dynamic center (appears where you touch).
 // - Outputs normalized Vector2 (-1..1) via OnValueChanged and CurrentValue.
 // - UGUI only (Image + RectTransform). No InputSystem dependency.
+// - Pivot/Anchor/Scale independent: all calculations use local coordinates.
 
 using System;
 using UnityEngine;
@@ -53,7 +54,6 @@ namespace Devian
         public UnityEvent OnPressed => mOnPressed;
         public UnityEvent OnReleased => mOnReleased;
 
-        private Vector2 mCenterScreen;
         private Vector2 mLastValueSent = new Vector2(float.NaN, float.NaN);
 
         private void Reset()
@@ -83,14 +83,7 @@ namespace Devian
 
             if (mDynamicCenter)
             {
-                mCenterScreen = eventData.position;
-                MovePadVisualToScreen(mCenterScreen);
-            }
-            else
-            {
-                // Fixed center: use current outer position as center.
-                var cam = ResolveUiCamera();
-                mCenterScreen = RectTransformUtility.WorldToScreenPoint(cam, mOuter.position);
+                MovePadVisualCenterToScreen(eventData.position);
             }
 
             ApplyActiveVisibility();
@@ -118,10 +111,21 @@ namespace Devian
 
         private void UpdateFromPointer(Vector2 screenPos)
         {
-            var deltaPixels = screenPos - mCenterScreen;
+            if (mOuter == null || mInner == null) return;
 
-            // Clamp to radius in pixels
-            var clamped = Vector2.ClampMagnitude(deltaPixels, Mathf.Max(1f, mRadius));
+            var cam = ResolveUiCamera();
+
+            if (!RectTransformUtility.ScreenPointToLocalPointInRectangle(mOuter, screenPos, cam, out var localPoint))
+                return;
+
+            // pivot/anchor 변화에도 안전한 "비주얼 중심"
+            var center = mOuter.rect.center;
+
+            // local delta in pixels (rect local)
+            var delta = localPoint - center;
+
+            // Clamp to radius
+            var clamped = Vector2.ClampMagnitude(delta, Mathf.Max(1f, mRadius));
             SetInnerVisual(clamped);
 
             // Normalize to -1..1
@@ -167,25 +171,31 @@ namespace Devian
             return (canvas.renderMode == RenderMode.ScreenSpaceOverlay) ? null : canvas.worldCamera;
         }
 
-        private void MovePadVisualToScreen(Vector2 screenPos)
+        private void MovePadVisualCenterToScreen(Vector2 screenPos)
         {
             if (mOuter == null) return;
 
             var parent = mOuter.parent as RectTransform;
-            if (parent == null)
-            {
-                // Last-resort fallback
-                mOuter.position = screenPos;
-                if (mInner != null) mInner.anchoredPosition = Vector2.zero;
-                return;
-            }
-
             var cam = ResolveUiCamera();
 
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                parent, screenPos, cam, out var local);
+            // outer 중심의 월드 좌표(현재)
+            var centerWorld = mOuter.TransformPoint(mOuter.rect.center);
+            var pivotWorld = mOuter.position;
+            var pivotOffsetWorld = pivotWorld - centerWorld; // center->pivot offset
 
-            mOuter.anchoredPosition = local;
+            if (parent != null &&
+                RectTransformUtility.ScreenPointToWorldPointInRectangle(parent, screenPos, cam, out var targetWorld))
+            {
+                // targetWorld는 parent 평면 위의 월드 위치(터치 지점).
+                // outer의 "center"가 터치 지점에 오도록 pivot을 보정
+                mOuter.position = targetWorld + pivotOffsetWorld;
+            }
+            else
+            {
+                // fallback
+                mOuter.position = (Vector3)screenPos + pivotOffsetWorld;
+            }
+
             if (mInner != null) mInner.anchoredPosition = Vector2.zero;
         }
 

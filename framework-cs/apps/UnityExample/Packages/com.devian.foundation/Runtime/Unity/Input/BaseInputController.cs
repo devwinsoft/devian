@@ -5,7 +5,7 @@ namespace Devian
 {
     /// <summary>
     /// MonoBehaviour 기반 입력 소비 컨트롤러.
-    /// OnEnable에서 InputManager.Instance.Bus 구독, OnDisable에서 해제.
+    /// OnEnable에서 InputManager.RegisterController, OnDisable에서 UnregisterController.
     /// InputEnabled == false이면 콜백 무시.
     /// 변화가 있을 때만 4개 virtual 콜백을 호출한다.
     /// </summary>
@@ -13,7 +13,6 @@ namespace Devian
     {
         [SerializeField] private float _axisEpsilon = 0.001f;
 
-        private int _subToken = -1;
         private bool _hasPrev;
         private Vector2 _prevMove;
         private Vector2 _prevLook;
@@ -29,17 +28,12 @@ namespace Devian
 
         protected virtual void OnEnable()
         {
-            var mgr = InputManager.Instance;
-            _subToken = mgr.Bus.Subscribe(_onInputFrame);
+            InputManager.Instance.RegisterController(this);
         }
 
         protected virtual void OnDisable()
         {
-            if (_subToken >= 0)
-            {
-                InputManager.Instance.Bus.Unsubscribe(_subToken);
-                _subToken = -1;
-            }
+            InputManager.Instance.UnregisterController(this);
 
             _hasPrev = false;
             _prevMove = default;
@@ -68,6 +62,17 @@ namespace Devian
         /// 버튼이 떼어졌을 때 호출된다.
         /// </summary>
         protected virtual void OnButtonRelease(string key, int index) { }
+
+        // ---- Internal entry point (called by InputManager) ----
+
+        /// <summary>
+        /// InputManager가 호출하는 엔트리 포인트.
+        /// 외부 코드에서 직접 호출하지 않는다.
+        /// </summary>
+        public void __Consume(InputFrame frame)
+        {
+            _onInputFrame(frame);
+        }
 
         // ---- Private ----
 

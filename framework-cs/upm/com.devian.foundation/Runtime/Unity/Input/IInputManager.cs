@@ -19,11 +19,6 @@ namespace Devian
         InputContext Context { get; }
 
         /// <summary>
-        /// 입력 발행/구독 버스.
-        /// </summary>
-        IInputBus Bus { get; }
-
-        /// <summary>
         /// key("Map/Action") → button index 맵 조회.
         /// 없으면 -1 반환.
         /// </summary>

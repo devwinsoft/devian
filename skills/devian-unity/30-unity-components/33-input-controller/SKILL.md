@@ -8,7 +8,7 @@ Type: Component Specification
 
 `BaseInputController`는 **오브젝트 부착형 입력 소비** 컨트롤러이다.
 
-- `InputManager.Instance.Bus` 구독/해제를 자동화 (OnEnable/OnDisable)
+- `InputManager.Instance.RegisterController/UnregisterController`로 등록/해제 자동화 (OnEnable/OnDisable)
 - `IInputSpace` 전략으로 Move 입력을 월드 공간 벡터로 변환
 - `InputEnabled` guard로 입력 수신 on/off
 - **변화가 있을 때만** 4개 virtual 콜백 호출 (change-only)
@@ -20,7 +20,7 @@ Type: Component Specification
 ### 포함
 
 - `IBaseInputController` — 입력 컨트롤러 계약
-- `BaseInputController` — MonoBehaviour 구현, Bus 자동 구독/해제, change-only 콜백
+- `BaseInputController` — MonoBehaviour 구현, 컨트롤러 등록/해제, change-only 콜백
 - `IInputSpace` — Move(Vector2) → World(Vector3) 변환 전략 인터페이스
 - `WorldXZSpace` — `(x, y) → (x, 0, y)` 탑다운/2D용
 - `ViewFlattenedSpace` — 카메라 forward/right y=0 평탄화 후 합성
@@ -42,19 +42,21 @@ namespace Devian
 
 ## 핵심 규약 (Hard Rule)
 
-### 1. Bus 구독 lifecycle
+### 1. 컨트롤러 등록 lifecycle
 
-- `OnEnable()`: `InputManager.Instance.Bus.Subscribe(_onInputFrame)` → token 저장
-- `OnDisable()`: `InputManager.Instance.Bus.Unsubscribe(token)` → token 초기화, prev 상태 리셋
+- `OnEnable()`: `InputManager.Instance.RegisterController(this)` — 컨트롤러 등록
+- `OnDisable()`: `InputManager.Instance.UnregisterController(this)` — 등록 해제, prev 상태 리셋
 - InputManager는 싱글톤을 신뢰 (Bootstrap 보장, SerializeField 없음)
+- Bus(IInputBus/InputBus)는 삭제됨 — InputManager가 직접 `__Consume(frame)`을 호출
 
 ### 2. InputEnabled guard
 
-`InputEnabled == false`이면 `_onInputFrame` 내부에서 모든 콜백을 무시한다.
+`InputEnabled == false`이면 `__Consume` 내부에서 모든 콜백을 무시한다.
 
 ### 3. Priority
 
 기본값 0. 서브클래스에서 override 가능.
+InputManager가 `_controllersDirty`일 때 Priority 내림차순으로 정렬하여 호출.
 
 ### 4. IInputSpace
 
@@ -81,6 +83,12 @@ InputFrame을 매 프레임 받지만, 파생 클래스 콜백은 **변화가 �
 - key는 `InputManager.Instance.ButtonKeys[index]`에서 가져온 `"Map/Action"` 문자열
 - index가 ButtonKeys 범위 밖이면 key는 빈 문자열 (예외 없음)
 
+### 7. `__Consume` 엔트리 포인트
+
+- `public void __Consume(InputFrame frame)` — InputManager가 호출하는 진입점
+- 외부 코드에서 직접 호출하지 않는다
+- 내부에서 `_onInputFrame(frame)`을 호출하여 change detection + 4개 콜백 dispatch
+
 ---
 
 ## API 시그니처
@@ -100,6 +108,8 @@ public abstract class BaseInputController : MonoBehaviour, IBaseInputController
     public bool InputEnabled { get; set; }
     public virtual int Priority => 0;
     public IInputSpace InputSpace { get; set; }
+
+    public void __Consume(InputFrame frame);
 
     protected virtual void OnInputMove(Vector2 move) { }
     protected virtual void OnInputLook(Vector2 look) { }
@@ -145,10 +155,12 @@ public class ViewFlattenedSpace : IInputSpace
 
 - [ ] 모든 파일이 `namespace Devian` 사용
 - [ ] BaseInputController가 InputManager.Instance(싱글톤)으로만 접근 (SerializeField 없음)
+- [ ] RegisterController/UnregisterController로 등록/해제 (Bus 없음)
 - [ ] InputEnabled guard 적용
 - [ ] 4개 virtual 콜백: OnInputMove, OnInputLook, OnButtonPress, OnButtonRelease
 - [ ] 변화 없으면 콜백 호출되지 않음 (change-only)
 - [ ] 버튼 이벤트는 개별 key/index로 펼쳐서 호출 (mask 외부 전달 없음)
+- [ ] `__Consume` 엔트리 포인트 존재
 - [ ] WorldXZSpace / ViewFlattenedSpace 구현
 - [ ] UPM ↔ UnityExample 동일
 

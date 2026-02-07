@@ -7,6 +7,7 @@ namespace Devian
     /// <summary>
     /// InputActionAsset 기반 입력 수집/정규화/발행 관리자.
     /// CompoSingleton — Bootstrap에 기본 포함. IInputManager는 OnEnable/OnDisable에서 별도 Register.
+    /// Update에서 등록된 BaseInputController를 Priority 순으로 직접 호출한다.
     /// </summary>
     public sealed class InputManager : CompoSingleton<InputManager>, IInputManager
     {
@@ -37,14 +38,16 @@ namespace Devian
         private InputAction[] _buttonActions;
         private string[] _buttonKeys;
 
-        private readonly InputBus _bus = new();
         private InputContext _context;
+
+        // Controller registry
+        private readonly List<BaseInputController> _controllers = new();
+        private bool _controllersDirty;
 
         // ---- IInputManager ----
 
         public InputActionAsset Asset => _asset;
         public InputContext Context => _context;
-        public IInputBus Bus => _bus;
         public System.Collections.Generic.IReadOnlyList<string> ButtonKeys => _buttonKeys ?? System.Array.Empty<string>();
 
         public int GetButtonIndex(string key)
@@ -71,6 +74,23 @@ namespace Devian
                     _uiMap.Enable();
                 }
             }
+        }
+
+        // ---- Controller Registry ----
+
+        public void RegisterController(BaseInputController controller)
+        {
+            if (controller == null) return;
+            if (_controllers.Contains(controller)) return;
+            _controllers.Add(controller);
+            _controllersDirty = true;
+        }
+
+        public void UnregisterController(BaseInputController controller)
+        {
+            if (controller == null) return;
+            if (_controllers.Remove(controller))
+                _controllersDirty = true;
         }
 
         // ---- Lifecycle ----
@@ -133,7 +153,21 @@ namespace Devian
             }
 
             var frame = new InputFrame(move, look, bits, _context, Time.time);
-            _bus.Publish(frame);
+
+            // Sort controllers by Priority (descending) when dirty
+            if (_controllersDirty)
+            {
+                _controllers.Sort((a, b) => b.Priority.CompareTo(a.Priority));
+                _controllersDirty = false;
+            }
+
+            // Dispatch to all registered controllers
+            for (int i = 0; i < _controllers.Count; i++)
+            {
+                var c = _controllers[i];
+                if (c == null) continue;
+                c.__Consume(frame);
+            }
         }
 
         // ---- Public (Editor-safe) ----
