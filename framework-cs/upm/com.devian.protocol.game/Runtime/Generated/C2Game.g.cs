@@ -554,6 +554,7 @@ namespace Devian.Protocol.Game
             private string _lastError = string.Empty;
             private volatile bool _isConnecting; // Re-entry guard flag
             private bool _errorNotified; // Error dedup guard (max 1 OnError per attempt)
+            private bool _connectRejectNotified; // Connect-reject dedup guard
 
             // ======== Codec ========
             private readonly ICodec _codec;
@@ -579,8 +580,8 @@ namespace Devian.Protocol.Game
 
             /// <summary>
             /// Connect to server using the provided connector.
-            /// Re-entry safe: ignores if already connecting/connected to same URL.
-            /// If URL differs, disposes existing connection and reconnects.
+            /// Connect is allowed only when state is Disconnected.
+            /// Any attempt in other states fails immediately (OnError invoked).
             /// Stub must be Game2C.Stub for inbound message dispatch.
             /// </summary>
             public void Connect(Game2C.Stub stub, string url, INetConnector connector)
@@ -589,22 +590,37 @@ namespace Devian.Protocol.Game
                 if (string.IsNullOrEmpty(url)) throw new ArgumentException("url is empty", nameof(url));
                 if (connector == null) throw new ArgumentNullException(nameof(connector));
 
-                // Already connecting to same URL -> ignore
-                if (_isConnecting && string.Equals(_url, url, StringComparison.Ordinal))
-                    return;
+                // Connect is allowed ONLY when Disconnected.
+                // Any attempt in Connecting/Connected/Closing/Faulted is treated as failure.
+                var state = _session?.State;
 
-                // Already connected to same URL -> ignore
-                if (_session != null &&
-                    _session.State == NetClientState.Connected &&
-                    string.Equals(_url, url, StringComparison.Ordinal))
-                    return;
+                // Fail if already connecting OR state exists and is not Disconnected.
+                if (_isConnecting || (state.HasValue && state.Value != NetClientState.Disconnected))
+                {
+                    // Dedup: only notify once until state changes/reset
+                    if (_connectRejectNotified)
+                        return;
 
-                // Different URL -> dispose existing connection first
-                if (!string.Equals(_url, url, StringComparison.Ordinal))
+                    _connectRejectNotified = true;
+
+                    var msg =
+                        "Connect() is only allowed when state is Disconnected. Current state=" +
+                        (state.HasValue ? state.Value.ToString() : "null") + ".";
+
+                    var ex = new InvalidOperationException(msg);
+                    _lastError = msg;
+
+                    OnError?.Invoke(ex);
+                    return;
+                }
+
+                // If we have a disconnected session but URL differs, dispose before new attempt.
+                if (_session != null && !string.Equals(_url, url, StringComparison.Ordinal))
                     DisposeConnection();
 
                 _url = url;
                 _lastError = string.Empty;
+                _connectRejectNotified = false;
                 _isConnecting = true; // Set before session creation to prevent re-entry
                 _errorNotified = false; // Reset error dedup guard for new attempt
 
@@ -650,6 +666,7 @@ namespace Devian.Protocol.Game
             {
                 _isConnecting = false; // Clear flag first
                 _errorNotified = false; // Reset error dedup guard
+                _connectRejectNotified = false;
 
                 var s = _session;
                 if (s == null) return;
@@ -668,18 +685,21 @@ namespace Devian.Protocol.Game
             {
                 _isConnecting = false;
                 _errorNotified = false; // Reset for connected state
+                _connectRejectNotified = false;
                 OnOpen?.Invoke();
             }
 
             private void HandleClose(ushort code, string reason)
             {
                 _isConnecting = false;
+                _connectRejectNotified = false;
                 OnClose?.Invoke(code, reason);
             }
 
             private void HandleError(Exception ex)
             {
                 _isConnecting = false;
+                _connectRejectNotified = false;
                 _lastError = ex.Message;
                 if (_errorNotified)
                     return;

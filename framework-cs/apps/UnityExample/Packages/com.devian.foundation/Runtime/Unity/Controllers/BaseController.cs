@@ -15,6 +15,12 @@ namespace Devian
         public TOwner Owner => _owner;
         public bool IsInitialized => _isInitialized;
 
+        public virtual void Clear()
+        {
+            _owner = default;
+            _isInitialized = false;
+        }
+
         /// <summary>
         /// Owner 1회 바인딩 + OnInit 호출.
         /// </summary>

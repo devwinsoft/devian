@@ -4,12 +4,12 @@ using UnityEngine;
 namespace Devian
 {
     /// <summary>
-    /// MonoBehaviour 기반 입력 소비 컨트롤러.
-    /// OnEnable에서 InputManager.RegisterController, OnDisable에서 UnregisterController.
+    /// BaseController 기반 입력 소비 컨트롤러.
+    /// onInit에서 InputManager.RegisterController, Clear에서 UnregisterController.
     /// InputEnabled == false이면 콜백 무시.
     /// 변화가 있을 때만 4개 virtual 콜백을 호출한다.
     /// </summary>
-    public abstract class BaseInputController : MonoBehaviour, IBaseInputController
+    public class BaseInputController : BaseController, IBaseInputController
     {
         [SerializeField] private float _axisEpsilon = 0.001f;
 
@@ -20,20 +20,13 @@ namespace Devian
 
         public bool InputEnabled { get; set; } = true;
 
-        public virtual int Priority => 0;
-
         public IInputSpace InputSpace { get; set; }
 
-        // ---- Lifecycle ----
+        // ---- Actor lifecycle ----
 
-        protected virtual void OnEnable()
+        protected override void onInit(BaseActor actor)
         {
             InputManager.Instance.RegisterController(this);
-        }
-
-        protected virtual void OnDisable()
-        {
-            InputManager.Instance.UnregisterController(this);
 
             _hasPrev = false;
             _prevMove = default;
@@ -41,27 +34,47 @@ namespace Devian
             _prevButtons = 0UL;
         }
 
+        public override void Clear()
+        {
+            // 에디터 종료/플레이 종료/씬 종료 정리 중이면 매니저 접근 금지
+            if (BaseBootstrap.IsShuttingDown)
+            {
+                base.Clear();
+                return;
+            }
+
+            if (!IsCleared && SingletonRegistry.TryGet<InputManager>(out var mgr))
+                mgr.UnregisterController(this);
+
+            _hasPrev = false;
+            _prevMove = default;
+            _prevLook = default;
+            _prevButtons = 0UL;
+
+            base.Clear();
+        }
+
         // ---- Virtual callbacks (override in subclass) ----
 
         /// <summary>
         /// Move 값이 변화했을 때 호출된다.
         /// </summary>
-        protected virtual void OnInputMove(Vector2 move) { }
+        protected virtual void onInputMove(Vector2 move) { }
 
         /// <summary>
         /// Look 값이 변화했을 때 호출된다.
         /// </summary>
-        protected virtual void OnInputLook(Vector2 look) { }
+        protected virtual void onInputLook(Vector2 look) { }
 
         /// <summary>
         /// 버튼이 눌렸을 때 호출된다.
         /// </summary>
-        protected virtual void OnButtonPress(string key, int index) { }
+        protected virtual void onButtonPress(string key, int index) { }
 
         /// <summary>
         /// 버튼이 떼어졌을 때 호출된다.
         /// </summary>
-        protected virtual void OnButtonRelease(string key, int index) { }
+        protected virtual void onButtonRelease(string key, int index) { }
 
         // ---- Internal entry point (called by InputManager) ----
 
@@ -84,11 +97,11 @@ namespace Devian
 
             // Move
             if (!_hasPrev || (frame.Move - _prevMove).sqrMagnitude > eps2)
-                OnInputMove(frame.Move);
+                onInputMove(frame.Move);
 
             // Look
             if (!_hasPrev || (frame.Look - _prevLook).sqrMagnitude > eps2)
-                OnInputLook(frame.Look);
+                onInputLook(frame.Look);
 
             // Buttons
             ulong cur = frame.ButtonBits;
@@ -118,13 +131,13 @@ namespace Devian
                 if ((downMask & bit) != 0UL)
                 {
                     string key = _keyOrEmpty(keys, i);
-                    OnButtonPress(key, i);
+                    onButtonPress(key, i);
                 }
 
                 if ((upMask & bit) != 0UL)
                 {
                     string key = _keyOrEmpty(keys, i);
-                    OnButtonRelease(key, i);
+                    onButtonRelease(key, i);
                 }
             }
         }

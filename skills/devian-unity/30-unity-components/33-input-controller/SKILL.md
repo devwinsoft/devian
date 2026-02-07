@@ -6,9 +6,12 @@ Type: Component Specification
 
 ## 목적
 
-`BaseInputController`는 **오브젝트 부착형 입력 소비** 컨트롤러이다.
+`BaseInputController`는 **BaseController 기반 입력 소비** 컨트롤러이다.
 
-- `InputManager.Instance.RegisterController/UnregisterController`로 등록/해제 자동화 (OnEnable/OnDisable)
+- `BaseController`를 상속하여 Actor lifecycle에 통합
+- `onInit()`에서 `InputManager.Instance.RegisterController(this)` — 등록
+- `Clear()` override에서 `UnregisterController(this)` + `base.Clear()` — 해제
+- `RegisterSelf` 없음 — BaseController가 `TryRegisterToActor()`에서 자동 등록
 - `IInputSpace` 전략으로 Move 입력을 월드 공간 벡터로 변환
 - `InputEnabled` guard로 입력 수신 on/off
 - **변화가 있을 때만** 4개 virtual 콜백 호출 (change-only)
@@ -20,7 +23,7 @@ Type: Component Specification
 ### 포함
 
 - `IBaseInputController` — 입력 컨트롤러 계약
-- `BaseInputController` — MonoBehaviour 구현, 컨트롤러 등록/해제, change-only 콜백
+- `BaseInputController` — BaseController 상속, Actor lifecycle 기반 컨트롤러 등록/해제, change-only 콜백
 - `IInputSpace` — Move(Vector2) → World(Vector3) 변환 전략 인터페이스
 - `WorldXZSpace` — `(x, y) → (x, 0, y)` 탑다운/2D용
 - `ViewFlattenedSpace` — 카메라 forward/right y=0 평탄화 후 합성
@@ -42,10 +45,15 @@ namespace Devian
 
 ## 핵심 규약 (Hard Rule)
 
-### 1. 컨트롤러 등록 lifecycle
+### 1. 컨트롤러 등록 lifecycle (Actor 기반)
 
-- `OnEnable()`: `InputManager.Instance.RegisterController(this)` — 컨트롤러 등록
-- `OnDisable()`: `InputManager.Instance.UnregisterController(this)` — 등록 해제, prev 상태 리셋
+- `BaseController`를 상속 → Actor의 Init/Clear lifecycle에 통합
+- `onInit(BaseActor actor)`: `InputManager.Instance.RegisterController(this)` + prev 상태 리셋
+- `Clear()` override: `InputManager.Instance.UnregisterController(this)` + prev 리셋 + `base.Clear()`
+  - `IsCleared` 체크로 중복 호출 방어
+  - `onClear()` hook은 사용하지 않음
+- `RegisterSelf` 없음 — BaseController에서 삭제됨 (자동 등록으로 대체)
+- Priority는 BaseController에서 상속 (`virtual int Priority => 0`) — 중복 선언 없음
 - InputManager는 싱글톤을 신뢰 (Bootstrap 보장, SerializeField 없음)
 - Bus(IInputBus/InputBus)는 삭제됨 — InputManager가 직접 `__Consume(frame)`을 호출
 
@@ -69,10 +77,10 @@ InputFrame을 매 프레임 받지만, 파생 클래스 콜백은 **변화가 �
 
 | 콜백 | 호출 조건 |
 |------|----------|
-| `OnInputMove(Vector2 move)` | `(cur - prev).sqrMagnitude > epsilon²` |
-| `OnInputLook(Vector2 look)` | `(cur - prev).sqrMagnitude > epsilon²` |
-| `OnButtonPress(string key, int index)` | bit가 0→1로 전환된 각 버튼마다 1회 |
-| `OnButtonRelease(string key, int index)` | bit가 1→0으로 전환된 각 버튼마다 1회 |
+| `onInputMove(Vector2 move)` | `(cur - prev).sqrMagnitude > epsilon²` |
+| `onInputLook(Vector2 look)` | `(cur - prev).sqrMagnitude > epsilon²` |
+| `onButtonPress(string key, int index)` | bit가 0→1로 전환된 각 버튼마다 1회 |
+| `onButtonRelease(string key, int index)` | bit가 1→0으로 전환된 각 버튼마다 1회 |
 
 - `_axisEpsilon` (SerializeField, default 0.001f) — Move/Look 변화 감지 임계값
 - 첫 프레임(`_hasPrev == false`)은 항상 콜백 호출
@@ -103,18 +111,21 @@ public interface IBaseInputController
 }
 
 // --- BaseInputController ---
-public abstract class BaseInputController : MonoBehaviour, IBaseInputController
+public class BaseInputController : BaseController, IBaseInputController
 {
     public bool InputEnabled { get; set; }
-    public virtual int Priority => 0;
     public IInputSpace InputSpace { get; set; }
+
+    // Actor lifecycle (BaseController overrides)
+    protected override void onInit(BaseActor actor);   // RegisterController + reset prev
+    public override void Clear();                       // UnregisterController + reset prev + base.Clear()
 
     public void __Consume(InputFrame frame);
 
-    protected virtual void OnInputMove(Vector2 move) { }
-    protected virtual void OnInputLook(Vector2 look) { }
-    protected virtual void OnButtonPress(string key, int index) { }
-    protected virtual void OnButtonRelease(string key, int index) { }
+    protected virtual void onInputMove(Vector2 move) { }
+    protected virtual void onInputLook(Vector2 look) { }
+    protected virtual void onButtonPress(string key, int index) { }
+    protected virtual void onButtonRelease(string key, int index) { }
 }
 
 // --- IInputSpace ---
@@ -154,10 +165,14 @@ public class ViewFlattenedSpace : IInputSpace
 ## DoD (Definition of Done)
 
 - [ ] 모든 파일이 `namespace Devian` 사용
-- [ ] BaseInputController가 InputManager.Instance(싱글톤)으로만 접근 (SerializeField 없음)
-- [ ] RegisterController/UnregisterController로 등록/해제 (Bus 없음)
+- [ ] BaseInputController가 BaseController를 상속 (non-abstract class)
+- [ ] `RegisterSelf` 없음 — BaseController 자동 등록
+- [ ] `onInit`에서 RegisterController (Actor lifecycle)
+- [ ] `Clear()` override에서 UnregisterController + base.Clear()
+- [ ] Priority는 BaseController에서 상속 (중복 선언 없음)
+- [ ] InputManager.Instance(싱글톤)으로만 접근 (SerializeField 없음)
 - [ ] InputEnabled guard 적용
-- [ ] 4개 virtual 콜백: OnInputMove, OnInputLook, OnButtonPress, OnButtonRelease
+- [ ] 4개 virtual 콜백: onInputMove, onInputLook, onButtonPress, onButtonRelease
 - [ ] 변화 없으면 콜백 호출되지 않음 (change-only)
 - [ ] 버튼 이벤트는 개별 key/index로 펼쳐서 호출 (mask 외부 전달 없음)
 - [ ] `__Consume` 엔트리 포인트 존재

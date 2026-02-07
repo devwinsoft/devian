@@ -26,6 +26,12 @@ namespace Devian
         private static bool _booted;
 
         /// <summary>
+        /// 에디터 종료/플레이 종료/씬 종료 정리 단계 여부.
+        /// 정리 경로에서 싱글톤/매니저 접근을 스킵하는 데 사용한다.
+        /// </summary>
+        public static bool IsShuttingDown { get; private set; }
+
+        /// <summary>
         /// Unity Awake. Ensures required CompoSingleton components exist on Bootstrap.
         /// </summary>
         protected virtual void Awake()
@@ -144,11 +150,22 @@ namespace Devian
         /// <summary>
         /// 도메인 리로드 시 상태 리셋.
         /// </summary>
+        protected virtual void OnApplicationQuit()
+        {
+            IsShuttingDown = true;
+        }
+
+        protected virtual void OnDestroy()
+        {
+            IsShuttingDown = true;
+        }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStatics()
         {
             _instance = null;
             _booted = false;
+            IsShuttingDown = false;
         }
     }
 }
