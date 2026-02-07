@@ -1,3 +1,4 @@
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace Devian
@@ -6,6 +7,7 @@ namespace Devian
     /// A Graphic that does not draw anything.
     /// Useful for raycast targets or layout purposes without visual rendering.
     /// </summary>
+    [RequireComponent(typeof(CanvasRenderer))]
     public class UIPlugInNonDrawing : Graphic
     {
         public override void SetMaterialDirty()

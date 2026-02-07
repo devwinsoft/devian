@@ -29,9 +29,12 @@ framework-cs/upm/com.devian.ui/Runtime/Plugins/UIPlugInNonDrawing.cs
 ```csharp
 namespace Devian
 {
+    [RequireComponent(typeof(CanvasRenderer))]
     public class UIPlugInNonDrawing : Graphic
 }
 ```
+
+> Requires `CanvasRenderer` via `RequireComponent`.
 
 ## Reference
 

@@ -1,9 +1,10 @@
 # devian-unity-samples — Overview
 
-Unity 샘플 프로젝트 작성 가이드 및 네트워크 샘플을 담당한다.
+Unity 샘플 프로젝트 작성 가이드 및 샘플들을 담당한다.
 
 - **Samples Authoring**: Unity 샘플 작성 규칙
 - **Network Samples**: WebSocket 네트워크 샘플
+- **UI Samples**: UGUI Virtual Pad (조이스틱) 샘플
 
 ---
 
@@ -14,6 +15,7 @@ Unity 샘플 프로젝트 작성 가이드 및 네트워크 샘플을 담당한�
 | [01-policy](../01-policy/SKILL.md) | Unity Samples 그룹 정책 |
 | [02-samples-authoring-guide](../02-samples-authoring-guide/SKILL.md) | 샘플 작성 가이드 |
 | [10-samples-network](../10-samples-network/SKILL.md) | 네트워크 샘플 |
+| [20-samples-ui-virtual-pad](../20-samples-ui-virtual-pad/SKILL.md) | UI Virtual Pad 샘플 |
 
 ---
 
