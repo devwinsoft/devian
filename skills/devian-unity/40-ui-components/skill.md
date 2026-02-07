@@ -64,7 +64,7 @@ Foundation → UI 하드 참조가 존재하지 않는다.
 | 30 | UIPlugInButton | Button press feedback + UI sound + events + scroll bridge | `30-ui-plugin-button/skill.md` |
 | 31 | UIPlugInCircleFilter | Collider2D 기반 Raycast filter | `31-ui-plugin-circle-filter/skill.md` |
 | 32 | UIPlugInNonDrawing | Non-drawing Graphic | `32-ui-plugin-non-drawing/skill.md` |
-| 33 | UIMessageSystem | UI 전용 메시지 시스템 (EntityId + UI_MESSAGE) | `33-ui-message-system/skill.md` |
+| 33 | UIMessageSystem | UI 전용 메시지 시스템 (UnityEngine.EntityId + UI_MESSAGE) | `33-ui-message-system/skill.md` |
 | 34 | UIPlugInText | ST_TEXT 바인딩 텍스트 플러그인 (InitOnce + ReloadText) | `34-ui-plugin-text/skill.md` |
 
 ---

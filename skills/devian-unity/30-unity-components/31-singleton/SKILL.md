@@ -24,6 +24,10 @@ Type: Component Specification
 
 **"없으면 자동 생성"이 기본 동작이다.**
 
+**Shutdown 억제**: 에디터 종료/플레이 종료/앱 종료 중(`IsShuttingDown == true`)에는 자동 생성이 억제되며 `Instance`는 `null`을 반환한다. Shutdown 방어가 필요하면:
+- `AutoSingleton<T>.IsShuttingDown`으로 사전 체크
+- `Singleton.TryGet<T>(out var t)` 또는 `T.TryGet(out var t)`로 안전 조회 (자동 생성 없음)
+
 ### CompoSingleton\<T\> (선택)
 
 - 씬/프리팹에 컴포넌트로 붙여서 사용한다.
@@ -57,7 +61,8 @@ Registry에 AutoSingleton이 등록된 상태에서 CompoSingleton이 등록되�
 |-----|------|
 | `Singleton.Get<T>()` | 없으면 예외 (Fail-fast) |
 | `Singleton.TryGet<T>(out T)` | 없으면 false |
-| `T.Instance` | AutoSingleton/CompoSingleton이 제공하는 편의 (기본은 AutoSingleton) |
+| `T.Instance` | AutoSingleton/CompoSingleton이 제공하는 편의 (기본은 AutoSingleton). Shutdown 중 null 반환 |
+| `AutoSingleton<T>.IsShuttingDown` | Shutdown 구간 여부 (`OnApplicationQuit` 또는 `!Application.isPlaying`) |
 
 ---
 

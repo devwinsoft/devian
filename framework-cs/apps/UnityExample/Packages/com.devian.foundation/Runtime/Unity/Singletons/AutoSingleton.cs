@@ -11,6 +11,13 @@ namespace Devian
     public abstract class AutoSingleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         private static readonly object _lock = new object();
+        private static bool _isShuttingDown;
+
+        /// <summary>
+        /// Shutdown 구간 여부. 에디터 종료/플레이 종료/앱 종료 중이면 true.
+        /// shutdown 중에는 Instance가 자동 생성을 억제하고 null을 반환한다.
+        /// </summary>
+        public static bool IsShuttingDown => _isShuttingDown || !Application.isPlaying;
 
         /// <summary>
         /// DontDestroyOnLoad 적용 여부. 기본 true.
@@ -55,7 +62,13 @@ namespace Devian
                         return Singleton.Get<T>();
                     }
 
-                    // 3. 없으면 생성
+                    // 3. 없으면 생성 (shutdown 중이면 억제)
+                    if (IsShuttingDown)
+                    {
+                        Debug.LogWarning($"[AutoSingleton] Suppressed auto-create of '{typeof(T).Name}' during shutdown.");
+                        return null;
+                    }
+
                     // CreateInstance() 내부에서 AddComponent<T>()가 호출되면
                     // Unity가 Awake()를 호출하고, Awake()가 Registry 등록을 수행한다.
                     CreateInstance();
@@ -148,6 +161,11 @@ namespace Devian
             {
                 DontDestroyOnLoad(gameObject);
             }
+        }
+
+        protected virtual void OnApplicationQuit()
+        {
+            _isShuttingDown = true;
         }
 
         protected virtual void OnDestroy()

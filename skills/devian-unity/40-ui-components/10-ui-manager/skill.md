@@ -56,13 +56,14 @@ namespace Devian
 ### messageSystem
 
 ```csharp
-public static UIMessageSystem messageSystem { get; }
+public static UIMessageSystem messageSystem => Instance?.mMessageSystem;
 ```
 
 - 정적 접근: `UIManager.messageSystem`
-- UI 레벨 메시징 인스턴스 (`MessageSystem<EntityId, UI_MESSAGE>` 특화)
+- UI 레벨 메시징 인스턴스 (`MessageSystem<UnityEngine.EntityId, UI_MESSAGE>` 특화)
 - UIManager 생성 시 내부에서 `new UIMessageSystem()` 초기화
 - UI 메시지(InitOnce, ReloadText, Resize 등)의 발행/구독에 사용
+- Shutdown 시 `Instance`가 `null`을 반환하면 `messageSystem`도 `null` (NRE 방지)
 
 ```csharp
 UIManager.messageSystem.Subcribe(ownerEntityId, UI_MESSAGE.ReloadText, args => { /* ... */ return false; });

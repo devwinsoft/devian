@@ -14,7 +14,7 @@ namespace Devian
         /// <summary>
         /// UI message system for UI-level messaging (ReloadText, Resize, etc.).
         /// </summary>
-        public static UIMessageSystem messageSystem => Instance.mMessageSystem;
+        public static UIMessageSystem messageSystem => Instance?.mMessageSystem;
 
         /// <summary>
         /// Tries to get an existing canvas of the specified type.

@@ -12,17 +12,16 @@ namespace Devian
     {
         [SerializeField] private TMP_Text _text;
         [SerializeField] private TEXT_ID _textId;
-        [SerializeField] private EntityId _owner;
 
         private void OnEnable()
         {
-            UIManager.messageSystem.SubcribeOnce(_owner, UI_MESSAGE.InitOnce, onInitOnce);
-            UIManager.messageSystem.Subcribe(_owner, UI_MESSAGE.ReloadText, onReloadText);
+            UIManager.messageSystem.SubcribeOnce(GetEntityId(), UI_MESSAGE.InitOnce, onInitOnce);
+            UIManager.messageSystem.Subcribe(GetEntityId(), UI_MESSAGE.ReloadText, onReloadText);
         }
 
         private void OnDisable()
         {
-            UIManager.messageSystem.UnSubcribe(_owner);
+            UIManager.messageSystem?.UnSubcribe(GetEntityId());
         }
 
         private void onInitOnce(object[] args)

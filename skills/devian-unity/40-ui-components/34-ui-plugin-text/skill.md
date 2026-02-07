@@ -29,7 +29,6 @@ framework-cs/upm/com.devian.ui/Runtime/Plugins/UIPlugInText.cs
 |-------|------|-------------|
 | `_text` | `TMP_Text` | 텍스트를 표시할 TMP 컴포넌트 |
 | `_textId` | `TEXT_ID` | ST_TEXT 조회 키 |
-| `_owner` | `EntityId` | UIMessageSystem owner 키 |
 
 ---
 
@@ -39,8 +38,8 @@ framework-cs/upm/com.devian.ui/Runtime/Plugins/UIPlugInText.cs
 
 | Event | Action |
 |-------|--------|
-| `OnEnable` | `SubcribeOnce(_owner, UI_MESSAGE.InitOnce, ...)` + `Subcribe(_owner, UI_MESSAGE.ReloadText, ...)` |
-| `OnDisable` | `UnSubcribe(_owner)` — owner의 모든 핸들러 해제 |
+| `OnEnable` | `SubcribeOnce(GetEntityId(), UI_MESSAGE.InitOnce, ...)` + `Subcribe(GetEntityId(), UI_MESSAGE.ReloadText, ...)` |
+| `OnDisable` | `messageSystem?.UnSubcribe(GetEntityId())` — ownerKey의 모든 핸들러 해제 |
 
 ### 내부 메서드
 
@@ -61,7 +60,7 @@ framework-cs/upm/com.devian.ui/Runtime/Plugins/UIPlugInText.cs
 |------------|----------|
 | `UIManager.messageSystem` | `com.devian.ui/Runtime/UIManager.cs` |
 | `UI_MESSAGE` | `com.devian.ui/Runtime/UIMessageSystem.cs` |
-| `EntityId` | `com.devian.foundation/Runtime/Core/Core/EntityId.cs` |
+| `UnityEngine.EntityId` (ownerKey via `GetEntityId()`) | Unity 내장 |
 | `ST_TEXT` | `com.devian.domain.common/Runtime/Generated/ST_TEXT.g.cs` |
 | `TEXT_ID` | `com.devian.domain.common/Runtime/Generated/Common.g.cs` |
 | `TMP_Text` | `Unity.TextMeshPro` |

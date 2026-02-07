@@ -19,7 +19,7 @@ UI 레벨 이벤트(초기화 완료, 텍스트 리로드, 리사이즈 등)를 
 |------|------------|
 | **UIMessageSystem** | `MessageSystem<EntityId, UI_MESSAGE>` 특화 클래스 |
 | **UI_MESSAGE** | UI 메시지 키 enum (`None`, `InitOnce`, `ReloadText`, `Resize`) |
-| **EntityId** | int-wrapping value type. ownerKey로 사용 |
+| **EntityId** | `UnityEngine.EntityId`. ownerKey로 사용 (`GetEntityId()` 반환값) |
 
 ---
 
@@ -110,7 +110,7 @@ UIManager.messageSystem.UnSubcribe(ownerEntityId);
 | Dependency | Location |
 |------------|----------|
 | `MessageSystem<TOwnerKey, TMsgKey>` | `com.devian.foundation/Runtime/Unity/MessageSystem/MessageSystem.cs` |
-| `EntityId` | `com.devian.foundation/Runtime/Core/Core/EntityId.cs` |
+| `UnityEngine.EntityId` | Unity 내장 (`UnityEngine.Object.GetEntityId()` 반환 타입) |
 | `UIManager` | `com.devian.ui/Runtime/UIManager.cs` |
 
 ---
@@ -119,4 +119,4 @@ UIManager.messageSystem.UnSubcribe(ownerEntityId);
 
 - **MessageSystem**: [03-message-system/SKILL.md](../../30-unity-components/03-message-system/SKILL.md)
 - **UIManager**: [10-ui-manager/skill.md](../10-ui-manager/skill.md)
-- **EntityId**: `com.devian.foundation/Runtime/Core/Core/EntityId.cs`
+- **EntityId**: `UnityEngine.EntityId` (Unity 내장)
