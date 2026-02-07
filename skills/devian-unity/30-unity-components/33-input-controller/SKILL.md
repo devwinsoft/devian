@@ -9,9 +9,10 @@ Type: Component Specification
 `BaseInputController`는 **BaseController 기반 입력 소비** 컨트롤러이다.
 
 - `BaseController`를 상속하여 Actor lifecycle에 통합
-- `onInit()`에서 `InputManager.Instance.RegisterController(this)` — 등록
+- `onInit(actor)`에서 `InputManager.Instance.RegisterController(this)` — 등록
 - `Clear()` override에서 `UnregisterController(this)` + `base.Clear()` — 해제
-- `RegisterSelf` 없음 — BaseController가 `TryRegisterToActor()`에서 자동 등록
+  - `BaseBootstrap.IsShuttingDown` 시 매니저 접근 없이 `base.Clear()` 호출
+  - `SingletonRegistry.TryGet<InputManager>` 로 안전한 싱글톤 접근
 - `IInputSpace` 전략으로 Move 입력을 월드 공간 벡터로 변환
 - `InputEnabled` guard로 입력 수신 on/off
 - **변화가 있을 때만** 4개 virtual 콜백 호출 (change-only)
@@ -49,10 +50,10 @@ namespace Devian
 
 - `BaseController`를 상속 → Actor의 Init/Clear lifecycle에 통합
 - `onInit(BaseActor actor)`: `InputManager.Instance.RegisterController(this)` + prev 상태 리셋
-- `Clear()` override: `InputManager.Instance.UnregisterController(this)` + prev 리셋 + `base.Clear()`
-  - `IsCleared` 체크로 중복 호출 방어
-  - `onClear()` hook은 사용하지 않음
-- `RegisterSelf` 없음 — BaseController에서 삭제됨 (자동 등록으로 대체)
+- `Clear()` override: 종료 방어 + `UnregisterController(this)` + prev 리셋 + `base.Clear()`
+  - `BaseBootstrap.IsShuttingDown` 시 매니저 접근 없이 `base.Clear()` 호출
+  - `IsCleared` 체크 + `SingletonRegistry.TryGet<InputManager>` 로 안전한 해제
+- Actor가 `RegisterController<T>()`로 등록, `Init()` 루프에서 초기화 (자동 등록 없음)
 - Priority는 BaseController에서 상속 (`virtual int Priority => 0`) — 중복 선언 없음
 - InputManager는 싱글톤을 신뢰 (Bootstrap 보장, SerializeField 없음)
 - Bus(IInputBus/InputBus)는 삭제됨 — InputManager가 직접 `__Consume(frame)`을 호출
@@ -166,9 +167,10 @@ public class ViewFlattenedSpace : IInputSpace
 
 - [ ] 모든 파일이 `namespace Devian` 사용
 - [ ] BaseInputController가 BaseController를 상속 (non-abstract class)
-- [ ] `RegisterSelf` 없음 — BaseController 자동 등록
+- [ ] 자동 등록 없음 — Actor가 `RegisterController<T>()`로 등록
 - [ ] `onInit`에서 RegisterController (Actor lifecycle)
 - [ ] `Clear()` override에서 UnregisterController + base.Clear()
+- [ ] `Clear()` 종료 방어: `BaseBootstrap.IsShuttingDown` + `SingletonRegistry.TryGet`
 - [ ] Priority는 BaseController에서 상속 (중복 선언 없음)
 - [ ] InputManager.Instance(싱글톤)으로만 접근 (SerializeField 없음)
 - [ ] InputEnabled guard 적용

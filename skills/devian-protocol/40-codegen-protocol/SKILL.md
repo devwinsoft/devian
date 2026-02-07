@@ -142,38 +142,44 @@ public void Tick()
 
 ### Proxy.Connect 재진입 가드 (Hard Rule)
 
-**Generated Proxy.Connect는 재진입 가능성이 있으므로, Connecting/Connected 상태에서 동일 URL Connect는 무시한다.**
+**Generated Proxy.Connect는 재진입 가능성이 있으므로, Connecting/Connected 상태에서 Connect는 reject한다.**
 
-| 상태 | 동일 URL | 다른 URL |
-|------|----------|----------|
-| `_isConnecting == true` | return (무시) | DisposeConnection() 후 재연결 |
-| `Connected` | return (무시) | DisposeConnection() 후 재연결 |
-| 그 외 | 새 연결 시작 | 새 연결 시작 |
+| 상태 | 동작 |
+|------|------|
+| `Faulted` | DisposeConnection() 후 새 연결 시작 |
+| `_isConnecting == true` | reject (OnError 1회, dedup) |
+| `session.State != Disconnected` | reject (OnError 1회, dedup) |
+| `session == null` 또는 `Disconnected` | 새 연결 시작 |
 
 **핵심 규칙:**
-1. `_isConnecting = true`는 세션 생성 전에 설정 (같은 프레임 재호출 방지)
-2. URL이 바뀌면 기존 세션을 Dispose 후 재연결
-3. 연결 상태 플래그는 `HandleOpen`/`HandleClose`/`HandleError`에서 해제
+1. **Faulted 세션 자동 폐기**: Connect() 진입 시 `_session.State == Faulted`이면 reject 전에 `DisposeConnection()`으로 폐기 (one-shot session 정책)
+2. `_isConnecting = true`는 세션 생성 전에 설정 (같은 프레임 재호출 방지)
+3. URL이 바뀌면 기존 세션을 Dispose 후 재연결
+4. 연결 상태 플래그는 `HandleOpen`/`HandleClose`/`HandleError`에서 해제
 
 **생성 코드 핵심부:**
 ```csharp
 public void Connect(Stub stub, string url, INetConnector connector)
 {
-    // Already connecting to same URL -> ignore
-    if (_isConnecting && string.Equals(_url, url, StringComparison.Ordinal))
-        return;
-
-    // Already connected to same URL -> ignore
-    if (_session != null &&
-        _session.State == NetClientState.Connected &&
-        string.Equals(_url, url, StringComparison.Ordinal))
-        return;
-
-    // Different URL -> dispose existing first
-    if (!string.Equals(_url, url, StringComparison.Ordinal))
+    // Faulted session is one-shot. Dispose and recreate.
+    if (_session != null && _session.State == NetClientState.Faulted)
         DisposeConnection();
 
-    _url = url;
+    var state = _session?.State;
+
+    // Reject if already connecting or session not Disconnected
+    if (_isConnecting || (state.HasValue && state.Value != NetClientState.Disconnected))
+    {
+        if (_connectRejectNotified) return;
+        _connectRejectNotified = true;
+        OnError?.Invoke(new InvalidOperationException(...));
+        return;
+    }
+
+    // URL changed -> dispose existing first
+    if (_session != null && !string.Equals(_url, url, StringComparison.Ordinal))
+        DisposeConnection();
+
     _isConnecting = true; // Set before session creation
     // ... create session and connect
 }

@@ -386,6 +386,11 @@ namespace Devian
             if (_running)
                 throw new InvalidOperationException("Already running.");
 
+            // Set running before connect attempt so dispatch queue events
+            // from a failed ConnectAsync are guaranteed to be processed by Tick().
+            // CleanupSocket() will reset _running = false on failure.
+            _running = true;
+
             _ws = new ClientWebSocket();
             if (subProtocols != null)
             {
@@ -408,8 +413,6 @@ namespace Devian
                 return;
             }
 
-            _running = true;
-            
             // Clean up previous CTS and initialize new one
             _cts?.Cancel();
             _cts?.Dispose();

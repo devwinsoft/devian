@@ -888,6 +888,10 @@ function generateProxy(lines, messages, protocolName, usesComplexAliases = false
     lines.push('                if (string.IsNullOrEmpty(url)) throw new ArgumentException("url is empty", nameof(url));');
     lines.push('                if (connector == null) throw new ArgumentNullException(nameof(connector));');
     lines.push('');
+    lines.push('                // If previous session is Faulted, it is one-shot. Dispose and recreate.');
+    lines.push('                if (_session != null && _session.State == NetClientState.Faulted)');
+    lines.push('                    DisposeConnection();');
+    lines.push('');
     lines.push('                // Connect is allowed ONLY when Disconnected.');
     lines.push('                // Any attempt in Connecting/Connected/Closing/Faulted is treated as failure.');
     lines.push('                var state = _session?.State;');

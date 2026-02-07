@@ -594,6 +594,10 @@ namespace Devian.Protocol.Game
                 if (string.IsNullOrEmpty(url)) throw new ArgumentException("url is empty", nameof(url));
                 if (connector == null) throw new ArgumentNullException(nameof(connector));
 
+                // If previous session is Faulted, it is one-shot. Dispose and recreate.
+                if (_session != null && _session.State == NetClientState.Faulted)
+                    DisposeConnection();
+
                 // Connect is allowed ONLY when Disconnected.
                 // Any attempt in Connecting/Connected/Closing/Faulted is treated as failure.
                 var state = _session?.State;

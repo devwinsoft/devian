@@ -12,11 +12,12 @@ namespace Devian
     public sealed class NetWsTransport : INetTransport
     {
         private readonly NetWsClient _ws;
-        private readonly TaskCompletionSource<bool> _connectTcs = new();
-        private readonly TaskCompletionSource<bool> _closeTcs = new();
+        private TaskCompletionSource<bool>? _connectTcs;
+        private TaskCompletionSource<bool>? _closeTcs;
         private bool _disposed;
         private bool _connectCompleted;
         private bool _closeCompleted;
+        private bool _opened;
 
         /// <inheritdoc />
         public bool IsConnected => _ws.IsOpen;
@@ -51,19 +52,26 @@ namespace Devian
             if (_disposed)
                 throw new ObjectDisposedException(nameof(NetWsTransport));
 
-            // Use synchronous connect, completion via events
+            // Start new attempt: reset attempt state
+            _opened = false;
+            _connectCompleted = false;
+            _connectTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+            // Connect (completion via events)
             _ws.Connect(url);
 
-            // For sync connect (Editor/Standalone), OnOpen fires immediately after Connect
-            // For WebGL, OnOpen fires asynchronously via Tick
+            // If completed synchronously (Editor/Standalone), return immediately
             if (_connectCompleted)
                 return Task.CompletedTask;
 
-            ct.Register(() =>
+            if (ct.CanBeCanceled)
             {
-                if (!_connectCompleted)
-                    _connectTcs.TrySetCanceled(ct);
-            });
+                ct.Register(() =>
+                {
+                    if (!_connectCompleted)
+                        _connectTcs.TrySetCanceled(ct);
+                });
+            }
 
             return _connectTcs.Task;
         }
@@ -74,16 +82,22 @@ namespace Devian
             if (_disposed || !_ws.IsOpen)
                 return Task.CompletedTask;
 
+            _closeCompleted = false;
+            _closeTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+
             _ws.Close();
 
             if (_closeCompleted)
                 return Task.CompletedTask;
 
-            ct.Register(() =>
+            if (ct.CanBeCanceled)
             {
-                if (!_closeCompleted)
-                    _closeTcs.TrySetCanceled(ct);
-            });
+                ct.Register(() =>
+                {
+                    if (!_closeCompleted)
+                        _closeTcs.TrySetCanceled(ct);
+                });
+            }
 
             return _closeTcs.Task;
         }
@@ -115,28 +129,35 @@ namespace Devian
             _ws.Dispose();
 
             // Complete any pending tasks
-            _connectTcs.TrySetCanceled();
-            _closeTcs.TrySetCanceled();
+            _connectTcs?.TrySetCanceled();
+            _closeTcs?.TrySetCanceled();
         }
 
         private void HandleOpen()
         {
+            _opened = true;
             _connectCompleted = true;
-            _connectTcs.TrySetResult(true);
+            _connectTcs?.TrySetResult(true);
             OnOpen?.Invoke();
         }
 
         private void HandleClose(ushort code, string reason)
         {
             _closeCompleted = true;
-            _closeTcs.TrySetResult(true);
+            _closeTcs?.TrySetResult(true);
             OnClose?.Invoke(code, reason);
         }
 
         private void HandleError(Exception ex)
         {
-            _connectTcs.TrySetException(ex);
-            OnError?.Invoke(ex);
+            _connectCompleted = true;
+            _connectTcs?.TrySetException(ex);
+
+            // Option A: during connecting phase (before OnOpen), do NOT propagate OnError event.
+            // The failure is delivered via await ConnectAsync only.
+            // After already opened, OnError represents runtime transport errors.
+            if (_opened)
+                OnError?.Invoke(ex);
         }
     }
 }

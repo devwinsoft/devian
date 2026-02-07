@@ -98,7 +98,10 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                State = NetClientState.Faulted;
+                // Only transition to Faulted if we are still Connecting.
+                // If OnClose already moved us to Disconnected, do not overwrite.
+                if (State == NetClientState.Connecting)
+                    State = NetClientState.Faulted;
 
                 if (Interlocked.Exchange(ref _errorRaisedAttemptId, attemptId) != attemptId)
                     OnError?.Invoke(ex);

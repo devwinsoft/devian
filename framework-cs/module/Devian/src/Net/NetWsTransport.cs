@@ -12,13 +12,12 @@ namespace Devian
     public sealed class NetWsTransport : INetTransport
     {
         private readonly NetWsClient _ws;
-        private TaskCompletionSource<bool> _connectTcs =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
-        private TaskCompletionSource<bool> _closeTcs =
-            new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private TaskCompletionSource<bool>? _connectTcs;
+        private TaskCompletionSource<bool>? _closeTcs;
         private bool _disposed;
         private bool _connectCompleted;
         private bool _closeCompleted;
+        private bool _opened;
 
         /// <inheritdoc />
         public bool IsConnected => _ws.IsOpen;
@@ -53,14 +52,15 @@ namespace Devian
             if (_disposed)
                 throw new ObjectDisposedException(nameof(NetWsTransport));
 
+            // Start new attempt: reset attempt state
+            _opened = false;
             _connectCompleted = false;
             _connectTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-            // Use synchronous connect, completion via events
+            // Connect (completion via events)
             _ws.Connect(url);
 
-            // For sync connect (Editor/Standalone), OnOpen fires immediately after Connect
-            // For WebGL, OnOpen fires asynchronously via Tick
+            // If completed synchronously (Editor/Standalone), return immediately
             if (_connectCompleted)
                 return;
 
@@ -123,26 +123,27 @@ namespace Devian
             _ws.Dispose();
 
             // Complete any pending tasks
-            _connectTcs.TrySetCanceled();
-            _closeTcs.TrySetCanceled();
+            _connectTcs?.TrySetCanceled();
+            _closeTcs?.TrySetCanceled();
         }
 
         private void HandleOpen()
         {
+            _opened = true;
             _connectCompleted = true;
-            _connectTcs.TrySetResult(true);
+            _connectTcs?.TrySetResult(true);
             OnOpen?.Invoke();
         }
 
         private void HandleClose(ushort code, string reason)
         {
             _closeCompleted = true;
-            _closeTcs.TrySetResult(true);
+            _closeTcs?.TrySetResult(true);
 
             if (!_connectCompleted)
             {
                 _connectCompleted = true;
-                _connectTcs.TrySetException(new Exception($"Closed during connect: {code} {reason}"));
+                _connectTcs?.TrySetException(new Exception($"Closed during connect: {code} {reason}"));
             }
 
             OnClose?.Invoke(code, reason);
@@ -150,13 +151,14 @@ namespace Devian
 
         private void HandleError(Exception ex)
         {
-            if (!_connectCompleted)
-            {
-                _connectCompleted = true;
-                _connectTcs.TrySetException(ex);
-            }
+            _connectCompleted = true;
+            _connectTcs?.TrySetException(ex);
 
-            OnError?.Invoke(ex);
+            // Option A: during connecting phase (before OnOpen), do NOT propagate OnError event.
+            // The failure is delivered via await ConnectAsync only.
+            // After already opened, OnError represents runtime transport errors.
+            if (_opened)
+                OnError?.Invoke(ex);
         }
     }
 }
