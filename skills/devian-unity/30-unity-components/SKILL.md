@@ -35,6 +35,9 @@ Type: Index / Directory
 | 25 | AnimSequencePlayer | Playables 기반 애니메이션 시퀀스 재생 컴포넌트 | `25-anim-sequence-player/SKILL.md` |
 | 26 | FsmController | FIFO 큐 기반 FSM 컨트롤러 (미등록 throw, self-transition 분리) | `26-fsm-controller/SKILL.md` |
 | 27 | BootstrapResourceObject | Resources 기반 Bootstrap Root + IDevianBootStep 부팅 파이프라인 | `27-bootstrap-resource-object/SKILL.md` |
+| 32 | InputManager | InputActionAsset 기반 입력 수집/정규화/발행 (InputFrame, InputBus, ButtonMap) | `32-input-manager/SKILL.md` |
+| 33 | InputController | 오브젝트 부착형 입력 소비 (BaseInputController, IInputSpace) | `33-input-controller/SKILL.md` |
+| 34 | VirtualGamepad | InputSystem 커스텀 가상 디바이스 + CompoSingleton Driver | `34-virtual-gamepad/SKILL.md` |
 
 ---
 

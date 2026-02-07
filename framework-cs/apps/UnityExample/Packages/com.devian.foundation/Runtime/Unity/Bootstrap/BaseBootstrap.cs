@@ -39,6 +39,7 @@ namespace Devian
         /// </summary>
         protected virtual void ensureRequiredComponents()
         {
+            ensureComponent<InputManager>();
         }
 
         /// <summary>

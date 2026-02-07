@@ -15,6 +15,8 @@ GameObject:
   - component: {fileID: 8802484957537992892}
   - component: {fileID: 7627467817636175406}
   - component: {fileID: 8321347923667030604}
+  - component: {fileID: 4706526706863056144}
+  - component: {fileID: -7611824914717835204}
   m_Layer: 0
   m_Name: Bootstrap
   m_TagString: Untagged
@@ -118,6 +120,52 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 15b30c92344ee4776a74102c5cb7337f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.Network::Devian.GameNetManager
+--- !u!114 &4706526706863056144
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2454387350981742136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71f0f7e76459f4b958901c06af063737, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Unity::Devian.InputManager
+  _asset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  _gameplayMapName: Player
+  _uiMapName: UI
+  _moveKey: Player/Move
+  _lookKey: Player/Look
+  _expectedButtonKeys:
+  - Player/Attack
+  - Player/Interact
+  - Player/Next
+  - Player/Previous
+  - Player/Sprint
+  - UI/Cancel
+  - UI/Click
+  - UI/MiddleClick
+  - UI/RightClick
+  - UI/Submit
+  _outputEnabled: 1
+--- !u!114 &-7611824914717835204
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2454387350981742136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81ad5841c326c40fdabb917b9644099b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Unity::Devian.VirtualGamepadDriver
+  _installTargetAsset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  _moveActionKey: Player/Move
+  _lookActionKey: Player/Look
+  _installDash: 0
+  _dashActionKey: Player/Dash
 --- !u!1 &6261706322476616027
 GameObject:
   m_ObjectHideFlags: 0

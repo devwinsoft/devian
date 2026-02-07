@@ -809,7 +809,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -840, y: -300}
+  m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 400, y: 400}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &889720641
@@ -1479,6 +1479,7 @@ GameObject:
   - component: {fileID: 1854872812}
   - component: {fileID: 1854872810}
   - component: {fileID: 1854872813}
+  - component: {fileID: 1854872814}
   m_Layer: 5
   m_Name: VirtualPad
   m_TagString: Untagged
@@ -1501,10 +1502,10 @@ RectTransform:
   - {fileID: 889720640}
   m_Father: {fileID: 2085270392}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 1080, y: 540}
-  m_SizeDelta: {x: 2160, y: 1080}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 2060, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1854872810
 MonoBehaviour:
@@ -1557,6 +1558,19 @@ MonoBehaviour:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &1854872814
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1854872808}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 038333013824045899731424ce64e707, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Samples.UI::Devian.UIVirtualPadToVirtualGamepadBridge
+  _pad: {fileID: 1854872810}
 --- !u!1 &2052594967
 GameObject:
   m_ObjectHideFlags: 0
@@ -1728,6 +1742,51 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
   m_Delegates: []
+--- !u!1 &2064278255
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2064278257}
+  - component: {fileID: 2064278258}
+  m_Layer: 0
+  m_Name: TestInputController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2064278257
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064278255}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 462.41913, y: 203.40784, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2064278258
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2064278255}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b8612ab8afda4780a73872518fee59a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::TestInputController
+  _axisEpsilon: 0.001
 --- !u!1 &2085270388
 GameObject:
   m_ObjectHideFlags: 0
@@ -1854,3 +1913,4 @@ SceneRoots:
   - {fileID: 1234671395}
   - {fileID: 1554012041}
   - {fileID: 2085270392}
+  - {fileID: 2064278257}

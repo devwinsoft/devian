@@ -1,0 +1,213 @@
+# 32-input-manager
+
+Status: ACTIVE
+AppliesTo: v11
+Type: Component Specification
+
+## 목적
+
+`InputManager`는 **InputActionAsset 기반 입력 수집/정규화/발행** 시스템이다.
+
+- Unity InputSystem의 InputActionAsset을 직접 참조
+- Move/Look은 Vector2로, 버튼은 ulong bitset으로 정규화
+- 매 프레임 `InputFrame`을 `InputBus`를 통해 발행
+- Game / UI 컨텍스트 전환 지원
+
+---
+
+## 범위
+
+### 포함
+
+- `InputManager` — CompoSingleton, Bootstrap 기본 포함
+- `InputFrame` — 한 프레임의 정규화된 입력 스냅샷 (readonly struct)
+- `InputContext` — Game / UI 모드 enum
+- `IInputBus` / `InputBus` — InputFrame 발행/구독 버스
+- `IInputManager` — InputManager 계약
+- `InputButtonMapBuilder` — key("Map/Action") → button index 맵 빌드 유틸
+
+### 제외
+
+- 오브젝트 부착형 입력 소비 (→ `33-input-controller`)
+- InputSpace 전략 (→ `33-input-controller`)
+- InputAction 바인딩/리매핑 UI
+
+---
+
+## 네임스페이스
+
+```csharp
+namespace Devian
+```
+
+---
+
+## 핵심 규약 (Hard Rule)
+
+### 1. Serialized 기본값
+
+| 필드 | 기본값 |
+|------|--------|
+| `_gameplayMapName` | `"Player"` |
+| `_uiMapName` | `"UI"` |
+| `_moveKey` | `"Player/Move"` |
+| `_lookKey` | `"Player/Look"` |
+
+### 2. ButtonMap key 포맷
+
+버튼 키는 `"Map/Action"` 형식이다. 예: `"Player/Attack"`, `"Player/Jump"`.
+
+### 3. ButtonMap 정렬 및 인덱스
+
+`InputButtonMapBuilder.Build()`는 expectedKeys를 **Ordinal sort** 후 0..63 인덱스를 부여한다.
+
+### 4. 64 버튼 제한
+
+ulong bitset이므로 최대 64개 버튼. 초과 시 `InvalidOperationException`.
+
+`InputFrame.IsDown(int)`은 0..63만 유효하며, 범위 밖은 `false`.
+
+### 5. Context 전환
+
+`SetContext(InputContext)` 호출 시:
+- `Game` → Gameplay ActionMap Enable, UI ActionMap Disable
+- `UI` → Gameplay ActionMap Disable, UI ActionMap Enable
+
+### 6. Singleton 등록
+
+- `CompoSingleton<InputManager>` — `Awake()`에서 `base.Awake()` 호출 → 타입 등록
+- `IInputManager`는 `OnEnable`에서 `Singleton.Register<IInputManager>` (Compo), `OnDisable`에서 `Unregister`
+- Bootstrap의 `ensureRequiredComponents()`에서 `ensureComponent<InputManager>()` 호출 → 기본 포함
+
+### 7. Update loop
+
+`outputEnabled == true`일 때만 매 프레임 Move/Look ReadValue + buttons bitset 합산 → `InputBus.Publish`.
+
+---
+
+## API 시그니처
+
+```csharp
+// --- InputContext ---
+public enum InputContext : byte { Game = 0, UI = 1 }
+
+// --- InputFrame ---
+public readonly struct InputFrame
+{
+    public readonly Vector2 Move;
+    public readonly Vector2 Look;
+    public readonly ulong ButtonBits;
+    public readonly InputContext Context;
+    public readonly float Timestamp;
+
+    public InputFrame(Vector2 move, Vector2 look, ulong buttonBits, InputContext context, float timestamp);
+    public bool IsDown(int buttonIndex);
+}
+
+// --- IInputBus ---
+public interface IInputBus
+{
+    void Publish(InputFrame frame);
+    int Subscribe(Action<InputFrame> handler);
+    void Unsubscribe(int token);
+}
+
+// --- InputBus ---
+public class InputBus : IInputBus { /* Dictionary<int, Action<InputFrame>> 기반 */ }
+
+// --- IInputManager ---
+public interface IInputManager
+{
+    InputActionAsset Asset { get; }
+    InputContext Context { get; }
+    IInputBus Bus { get; }
+    int GetButtonIndex(string key);
+    IReadOnlyList<string> ButtonKeys { get; }  // index → key 역매핑
+    void SetContext(InputContext context);
+    void RebuildButtonMap();
+}
+
+// --- InputManager ---
+public sealed class InputManager : CompoSingleton<InputManager>, IInputManager { /* ... */ }
+
+// --- InputButtonMapBuilder ---
+public static class InputButtonMapBuilder
+{
+    public static Dictionary<string, int> Build(InputActionAsset asset, string[] expectedKeys);
+    public static InputAction TryFindActionByKey(InputActionAsset asset, string key);
+}
+```
+
+---
+
+## Editor 기능
+
+### Refresh Expected Button Keys
+
+`InputManagerInspector` 커스텀 인스펙터에 **"Refresh Expected Button Keys"** 버튼을 제공한다.
+
+**동작:**
+1. `InputActionAsset`의 모든 ActionMap을 스캔
+2. `action.expectedControlType == "Button"` 인 액션만 수집
+3. key 포맷: `"Map/Action"` (예: `"Player/Attack"`)
+4. 중복 제거 (`StringComparer.Ordinal`)
+5. Ordinal 정렬
+6. 64개 초과 시 64개까지만 적용 + 경고 로그
+7. `_expectedButtonKeys` 배열을 완전 덮어쓰기
+8. `RebuildButtonMap()` 자동 호출 → 내부 버튼 맵 즉시 동기화
+
+Refresh Expected Button Keys(편집 모드 전용)는 리스트 갱신 후 즉시 `RebuildButtonMap()`을 호출해 내부 버튼 맵을 동기화한다.
+
+**Play Mode:** Inspector Refresh는 Play Mode에서 비활성화된다.
+
+### Install/Ensure VirtualGamepad Bindings
+
+`InputManagerInspector`에 **"Install/Ensure VirtualGamepad Bindings"** 버튼을 제공한다.
+
+**동작:**
+1. InputManager의 `_moveKey`, `_lookKey` 값을 읽어 해당 Action을 해석
+2. Action에 `<VirtualGamepad>/move`, `<VirtualGamepad>/look` 바인딩이 없으면 추가
+3. 이미 존재하면 아무 것도 안 함
+4. Undo 지원 + `AssetDatabase.SaveAssets()`
+
+**Play Mode:** Play Mode에서 비활성화된다.
+
+**Editor 파일:** `com.devian.foundation/Editor/Unity/Input/InputManagerInspector.cs`
+
+---
+
+## 파일 경로
+
+| 타입 | 경로 |
+|------|------|
+| InputContext | `com.devian.foundation/Runtime/Unity/Input/InputContext.cs` |
+| InputFrame | `com.devian.foundation/Runtime/Unity/Input/InputFrame.cs` |
+| IInputBus | `com.devian.foundation/Runtime/Unity/Input/IInputBus.cs` |
+| InputBus | `com.devian.foundation/Runtime/Unity/Input/InputBus.cs` |
+| IInputManager | `com.devian.foundation/Runtime/Unity/Input/IInputManager.cs` |
+| InputButtonMapBuilder | `com.devian.foundation/Runtime/Unity/Input/InputButtonMapBuilder.cs` |
+| InputManager | `com.devian.foundation/Runtime/Unity/Input/InputManager.cs` |
+| InputManagerInspector | `com.devian.foundation/Editor/Unity/Input/InputManagerInspector.cs` |
+
+---
+
+## DoD (Definition of Done)
+
+- [ ] 모든 파일이 `namespace Devian` 사용
+- [ ] `Devian.Unity.asmdef`에 `Unity.InputSystem` 참조 포함
+- [ ] UPM ↔ UnityExample 동일
+- [ ] ButtonMap key 64개 이하 검증
+- [ ] InputBus Publish re-entrancy safe (key snapshot)
+- [ ] InputManager 기본값: `"Player"`, `"Player/Move"`, `"Player/Look"`
+- [ ] Inspector "Refresh Expected Button Keys" 버튼 동작
+- [ ] Inspector "Install/Ensure VirtualGamepad Bindings" 버튼 동작
+- [ ] `Devian.Unity.Editor.asmdef`에 `Unity.InputSystem` 참조 포함
+- [ ] InputManager: CompoSingleton + Awake base.Awake()
+- [ ] BaseBootstrap: ensureRequiredComponents에 InputManager 포함
+
+---
+
+## Reference
+
+- 인덱스: `30-unity-components/SKILL.md`
+- 입력 소비: `33-input-controller/SKILL.md`
