@@ -256,7 +256,11 @@ namespace Devian
                 try { Close(); } catch { /* ignore */ }
                 _socketId = -1;
             }
+
             _running = false;
+
+            // Option 2: drop any pending queued events (prevent delayed/duplicate logs across attempts)
+            ClearDispatchQueueNoThrow();
         }
 
         // ========== Internal helpers ==========
@@ -288,6 +292,14 @@ namespace Devian
                 {
                     // Swallow user handler exceptions
                 }
+            }
+        }
+
+        private void ClearDispatchQueueNoThrow()
+        {
+            lock (_dispatchLock)
+            {
+                _dispatchQueue.Clear();
             }
         }
 
@@ -509,11 +521,17 @@ namespace Devian
             try { Close(); } catch { /* ignore */ }
             _running = false;
 
+            // Option 2: drop any pending queued events (prevent delayed/duplicate logs across attempts)
+            ClearDispatchQueueNoThrow();
+
             // Best-effort thread join
             try { _sendThread?.Join(100); } catch { }
             try { _recvThread?.Join(100); } catch { }
 
             CleanupSocket();
+
+            // Best-effort: drop anything enqueued during cleanup
+            ClearDispatchQueueNoThrow();
         }
 
         private void SafeDispatch(Action action)
@@ -521,6 +539,14 @@ namespace Devian
             lock (_dispatchLock)
             {
                 _dispatchQueue.Enqueue(action);
+            }
+        }
+
+        private void ClearDispatchQueueNoThrow()
+        {
+            lock (_dispatchLock)
+            {
+                _dispatchQueue.Clear();
             }
         }
 

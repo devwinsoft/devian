@@ -145,6 +145,13 @@ namespace Devian
         {
             _closeCompleted = true;
             _closeTcs?.TrySetResult(true);
+
+            if (!_connectCompleted)
+            {
+                _connectCompleted = true;
+                _connectTcs?.TrySetException(new Exception($"Closed during connect: {code} {reason}"));
+            }
+
             OnClose?.Invoke(code, reason);
         }
 

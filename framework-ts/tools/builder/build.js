@@ -1695,6 +1695,7 @@ class DevianToolBuilder {
         for (const pattern of patterns) {
             const regex = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
             for (const file of files) {
+                if (file.startsWith('~$')) continue; // skip Excel temp/lock files
                 if (regex.test(file)) {
                     result.push(path.join(dir, file));
                 }
@@ -2297,7 +2298,7 @@ export * from './features';
 
         // Selector class
         lines.push(`    /// <summary>Selector for ${tableName}_ID</summary>`);
-        lines.push(`    public class ${selectorClassName} : EditorID_SelectorBase`);
+        lines.push(`    public class ${selectorClassName} : BaseEditorID_Selector`);
         lines.push('    {');
         lines.push(`        protected override string GetDisplayTypeName() => "${tableName}";`);
         lines.push('');
@@ -2341,7 +2342,7 @@ export * from './features';
         // Drawer class (no caching - SSOT: skills/devian-unity/30-unity-components/21-asset-id/SKILL.md)
         lines.push(`    /// <summary>PropertyDrawer for ${tableName}_ID</summary>`);
         lines.push(`    [CustomPropertyDrawer(typeof(${tableName}_ID))]`);
-        lines.push(`    public class ${drawerClassName} : EditorID_DrawerBase<${selectorClassName}>`);
+        lines.push(`    public class ${drawerClassName} : BaseEditorID_Drawer<${selectorClassName}>`);
         lines.push('    {');
         lines.push(`        protected override ${selectorClassName} GetSelector()`);
         lines.push('        {');
@@ -2416,7 +2417,7 @@ export * from './features';
 
         // Selector class
         lines.push(`    /// <summary>Selector for StringTable ${tableName}_ID</summary>`);
-        lines.push(`    public class ${selectorClassName} : EditorID_SelectorBase`);
+        lines.push(`    public class ${selectorClassName} : BaseEditorID_Selector`);
         lines.push('    {');
         lines.push(`        protected override string GetDisplayTypeName() => "${tableName}";`);
         lines.push('');
@@ -2458,7 +2459,7 @@ export * from './features';
         // Drawer class
         lines.push(`    /// <summary>PropertyDrawer for ${tableName}_ID</summary>`);
         lines.push(`    [CustomPropertyDrawer(typeof(${tableName}_ID))]`);
-        lines.push(`    public class ${drawerClassName} : EditorID_DrawerBase<${selectorClassName}>`);
+        lines.push(`    public class ${drawerClassName} : BaseEditorID_Drawer<${selectorClassName}>`);
         lines.push('    {');
         lines.push(`        protected override ${selectorClassName} GetSelector()`);
         lines.push('        {');
@@ -3184,8 +3185,8 @@ export * from './features';
 
         const foundationPath = path.join(this.upmPackageDir, 'com.devian.foundation');
         const requiredFiles = [
-            'Editor/TableId/EditorID_SelectorBase.cs',
-            'Editor/TableId/EditorID_DrawerBase.cs',
+            'Editor/TableId/BaseEditorID_Selector.cs',
+            'Editor/TableId/BaseEditorID_Drawer.cs',
             'Editor/Devian.Unity.Editor.asmdef'
         ];
 

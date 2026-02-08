@@ -18,6 +18,11 @@ namespace Devian
         private NetClientState _state = NetClientState.Disconnected;
         private bool _disposed;
 
+        // Connect-attempt dedup: ensures OnError fires at most once per attempt
+        private int _connectAttemptId;
+        private int _activeConnectAttemptId;
+        private int _errorRaisedAttemptId;
+
         /// <inheritdoc />
         public NetClientState State
         {
@@ -83,6 +88,9 @@ namespace Devian
 
             State = NetClientState.Connecting;
 
+            var attemptId = Interlocked.Increment(ref _connectAttemptId);
+            Volatile.Write(ref _activeConnectAttemptId, attemptId);
+
             try
             {
                 await _transport.ConnectAsync(_url, ct).ConfigureAwait(false);
@@ -94,7 +102,10 @@ namespace Devian
                 // If OnClose already moved us to Disconnected, do not overwrite.
                 if (State == NetClientState.Connecting)
                     State = NetClientState.Faulted;
-                OnError?.Invoke(ex);
+
+                if (Interlocked.Exchange(ref _errorRaisedAttemptId, attemptId) != attemptId)
+                    OnError?.Invoke(ex);
+
                 throw;
             }
         }
@@ -190,7 +201,10 @@ namespace Devian
             {
                 State = NetClientState.Faulted;
             }
-            OnError?.Invoke(ex);
+
+            var attemptId = Volatile.Read(ref _activeConnectAttemptId);
+            if (Interlocked.Exchange(ref _errorRaisedAttemptId, attemptId) != attemptId)
+                OnError?.Invoke(ex);
         }
 
         private void ThrowIfDisposed()
