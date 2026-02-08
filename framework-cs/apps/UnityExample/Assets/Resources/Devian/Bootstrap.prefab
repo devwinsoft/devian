@@ -161,11 +161,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81ad5841c326c40fdabb917b9644099b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Unity::Devian.VirtualGamepadDriver
-  _installTargetAsset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  _moveActionKey: Player/Move
-  _lookActionKey: Player/Look
-  _installDash: 0
-  _dashActionKey: Player/Dash
 --- !u!1 &6261706322476616027
 GameObject:
   m_ObjectHideFlags: 0

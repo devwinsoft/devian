@@ -4,10 +4,12 @@ using Devian;
 
 public class TestActor : BaseActor
 {
+    TestInputController mTestInputController = null;
+    
     protected override void onAwake()
     {
         base.onAwake();
-        RegisterController<TestInputController>();
+        mTestInputController = RegisterController<TestInputController>();
     }
 
     protected override void onInit()
