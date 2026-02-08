@@ -52,6 +52,20 @@ enum 멤버 값은 **결정적 자동 할당**으로 생성된다:
 할당 결과:     AttackPower=0, CriRate=1, MaxHealth=2
 ```
 
+### 3.1 Enum Member Value = code(int) (Opt-in)
+
+Options Row(3번째 줄)에서 gen 컬럼(=PK 컬럼)에 `code` 키워드를 함께 선언하면:
+
+- 예: `pk, gen:ErrorServerType, code`
+- 이 경우 enum 멤버 value는 0..N-1 자동 할당이 아니라, **같은 row의 `code` 컬럼(int) 값**을 사용한다.
+- 출력 순서는 여전히 **멤버 이름 오름차순(결정적)** 으로 유지한다.
+
+Failure Conditions (MUST fail):
+- `code` 컬럼이 없으면 FAIL
+- `code` 타입이 int가 아니면 FAIL
+- row의 `code`가 비어있으면 FAIL
+- `code` 값이 중복이면 FAIL
+
 ### 4. 식별자 규칙 위반은 실패
 
 - gen 컬럼 값(enum 멤버 이름)이 C#/TS 식별자 규칙을 위반하면 빌드 실패한다.

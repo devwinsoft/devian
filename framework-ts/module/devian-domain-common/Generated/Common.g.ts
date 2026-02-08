@@ -14,6 +14,26 @@ export enum ComplexPolicyType {
     NameTag = 2,
 }
 
+/** Auto-generated enum from TB_ERROR_CLIENT.id */
+export enum ErrorClientType {
+    COMMON_AUTH = 0,
+    COMMON_NETWORK = 1,
+    COMMON_RATE_LIMIT = 2,
+    COMMON_SERVER = 3,
+    COMMON_UNKNOWN = 4,
+}
+
+/** Auto-generated enum from TB_ERROR_SERVER.id */
+export enum ErrorServerType {
+    BAD_REQUEST = 1,
+    FORBIDDEN = 3,
+    INTERNAL = 100,
+    NOT_FOUND = 4,
+    SERVICE_UNAVAILABLE = 101,
+    UNAUTHORIZED = 2,
+    UNKNOWN = 0,
+}
+
 // ================================================================
 // Tables
 // ================================================================
@@ -24,6 +44,20 @@ export interface COMPLEX_POLICY extends IEntityKey<ComplexPolicyType> {
     MinValue: Variant;
     MaxValue: Variant;
     getKey(): ComplexPolicyType;
+}
+
+export interface ERROR_CLIENT extends IEntityKey<ErrorClientType> {
+    Id: ErrorClientType;
+    Msg_key: string;
+    Msg: string;
+    getKey(): ErrorClientType;
+}
+
+export interface ERROR_SERVER extends IEntityKey<ErrorServerType> {
+    Id: ErrorServerType;
+    Code: number;
+    Status: number;
+    getKey(): ErrorServerType;
 }
 
 // ================================================================
@@ -68,6 +102,98 @@ export class TB_COMPLEX_POLICY {
             const row = JSON.parse(line) as COMPLEX_POLICY;
             this._list.push(row);
             this._dict.set(row.Key, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_ERROR_CLIENT {
+    private static _dict: Map<ErrorClientType, ERROR_CLIENT> = new Map();
+    private static _list: ERROR_CLIENT[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly ERROR_CLIENT[] { return this._list; }
+
+    static get(key: ErrorClientType): ERROR_CLIENT | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: ErrorClientType): boolean {
+        return this._dict.has(key);
+    }
+
+    static find(key: ErrorClientType): ERROR_CLIENT {
+        const row = this._dict.get(key);
+        if (!row) throw new Error(`TB_ERROR_CLIENT: key ${key} not found`);
+        return row;
+    }
+
+    static tryFind(key: ErrorClientType): ERROR_CLIENT | undefined {
+        return this._dict.get(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as ERROR_CLIENT;
+            this._list.push(row);
+            this._dict.set(row.Id, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_ERROR_SERVER {
+    private static _dict: Map<ErrorServerType, ERROR_SERVER> = new Map();
+    private static _list: ERROR_SERVER[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly ERROR_SERVER[] { return this._list; }
+
+    static get(key: ErrorServerType): ERROR_SERVER | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: ErrorServerType): boolean {
+        return this._dict.has(key);
+    }
+
+    static find(key: ErrorServerType): ERROR_SERVER {
+        const row = this._dict.get(key);
+        if (!row) throw new Error(`TB_ERROR_SERVER: key ${key} not found`);
+        return row;
+    }
+
+    static tryFind(key: ErrorServerType): ERROR_SERVER | undefined {
+        return this._dict.get(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as ERROR_SERVER;
+            this._list.push(row);
+            this._dict.set(row.Id, row);
         }
     }
 

@@ -94,7 +94,8 @@
       "Bash(git diff:*)",
       "Bash(git mv:*)",
       "Bash(git rm:*)",
-      "Bash(./input/build.sh:*)"
+      "Bash(./input/build.sh:*)",
+      "Bash(node:*)"
     ]
   }
 }

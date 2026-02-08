@@ -22,6 +22,28 @@ namespace Devian.Domain.Common
         NameTag = 2,
     }
 
+    /// <summary>Auto-generated enum from TB_ERROR_CLIENT.id</summary>
+    public enum ErrorClientType : int
+    {
+        COMMON_AUTH = 0,
+        COMMON_NETWORK = 1,
+        COMMON_RATE_LIMIT = 2,
+        COMMON_SERVER = 3,
+        COMMON_UNKNOWN = 4,
+    }
+
+    /// <summary>Auto-generated enum from TB_ERROR_SERVER.id</summary>
+    public enum ErrorServerType : int
+    {
+        BAD_REQUEST = 1,
+        FORBIDDEN = 3,
+        INTERNAL = 100,
+        NOT_FOUND = 4,
+        SERVICE_UNAVAILABLE = 101,
+        UNAUTHORIZED = 2,
+        UNKNOWN = 0,
+    }
+
     // ================================================================
     // Table Entities
     // ================================================================
@@ -35,6 +57,26 @@ namespace Devian.Domain.Common
         public Variant MaxValue { get; set; }
 
         public ComplexPolicyType GetKey() => Key;
+    }
+
+    /// <summary>ERROR_CLIENT row</summary>
+    public sealed class ERROR_CLIENT : IEntityKey<ErrorClientType>
+    {
+        public ErrorClientType Id { get; set; }
+        public string Msg_key { get; set; } = string.Empty;
+        public string Msg { get; set; } = string.Empty;
+
+        public ErrorClientType GetKey() => Id;
+    }
+
+    /// <summary>ERROR_SERVER row</summary>
+    public sealed class ERROR_SERVER : IEntityKey<ErrorServerType>
+    {
+        public ErrorServerType Id { get; set; }
+        public int Code { get; set; }
+        public int Status { get; set; }
+
+        public ErrorServerType GetKey() => Id;
     }
 
     // ================================================================
@@ -135,6 +177,194 @@ namespace Devian.Domain.Common
         static partial void _OnAfterLoad();
     }
 
+    /// <summary>TB_ERROR_CLIENT container</summary>
+    public static partial class TB_ERROR_CLIENT
+    {
+        private static readonly Dictionary<ErrorClientType, ERROR_CLIENT> _dict = new();
+        private static readonly List<ERROR_CLIENT> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<ERROR_CLIENT> GetAll() => _list;
+
+        public static ERROR_CLIENT? Get(ErrorClientType key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(ErrorClientType key, out ERROR_CLIENT? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        public static ERROR_CLIENT Find(ErrorClientType key)
+        {
+            if (_dict.TryGetValue(key, out var row)) return row;
+            throw new KeyNotFoundException($"TB_ERROR_CLIENT: key {key} not found");
+        }
+
+        public static bool TryFind(ErrorClientType key, out ERROR_CLIENT? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(ERROR_CLIENT row)
+        {
+            _list.Add(row);
+            _dict[row.Id] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<ERROR_CLIENT>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<ERROR_CLIENT>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<ERROR_CLIENT>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_ERROR_SERVER container</summary>
+    public static partial class TB_ERROR_SERVER
+    {
+        private static readonly Dictionary<ErrorServerType, ERROR_SERVER> _dict = new();
+        private static readonly List<ERROR_SERVER> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<ERROR_SERVER> GetAll() => _list;
+
+        public static ERROR_SERVER? Get(ErrorServerType key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(ErrorServerType key, out ERROR_SERVER? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        public static ERROR_SERVER Find(ErrorServerType key)
+        {
+            if (_dict.TryGetValue(key, out var row)) return row;
+            throw new KeyNotFoundException($"TB_ERROR_SERVER: key {key} not found");
+        }
+
+        public static bool TryFind(ErrorServerType key, out ERROR_SERVER? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(ERROR_SERVER row)
+        {
+            _list.Add(row);
+            _dict[row.Id] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<ERROR_SERVER>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<ERROR_SERVER>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<ERROR_SERVER>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
     // ================================================================
     // Table ID Types (for Inspector binding)
     // ================================================================
@@ -147,6 +377,26 @@ namespace Devian.Domain.Common
 
         public static implicit operator ComplexPolicyType(COMPLEX_POLICY_ID id) => id.Value;
         public static implicit operator COMPLEX_POLICY_ID(ComplexPolicyType value) => new COMPLEX_POLICY_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for ERROR_CLIENT</summary>
+    [Serializable]
+    public sealed class ERROR_CLIENT_ID
+    {
+        public ErrorClientType Value;
+
+        public static implicit operator ErrorClientType(ERROR_CLIENT_ID id) => id.Value;
+        public static implicit operator ERROR_CLIENT_ID(ErrorClientType value) => new ERROR_CLIENT_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for ERROR_SERVER</summary>
+    [Serializable]
+    public sealed class ERROR_SERVER_ID
+    {
+        public ErrorServerType Value;
+
+        public static implicit operator ErrorServerType(ERROR_SERVER_ID id) => id.Value;
+        public static implicit operator ERROR_SERVER_ID(ErrorServerType value) => new ERROR_SERVER_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for string table TEXT</summary>
@@ -163,6 +413,8 @@ namespace Devian.Domain.Common
     public static class TableIdExtensions
     {
         public static bool IsValid(this COMPLEX_POLICY_ID? obj) => obj != null && !EqualityComparer<ComplexPolicyType>.Default.Equals(obj.Value, default);
+        public static bool IsValid(this ERROR_CLIENT_ID? obj) => obj != null && !EqualityComparer<ErrorClientType>.Default.Equals(obj.Value, default);
+        public static bool IsValid(this ERROR_SERVER_ID? obj) => obj != null && !EqualityComparer<ErrorServerType>.Default.Equals(obj.Value, default);
         public static bool IsValid(this TEXT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
     }
 

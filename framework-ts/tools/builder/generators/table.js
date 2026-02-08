@@ -428,6 +428,7 @@ function parseSheet(sheet, sheetName) {
             isKey: options.pk === 'true',
             isGroup: options.group === 'true',
             gen: options.gen || null,
+            enumValueFromCode: options.code === 'true',
             comment: comment || '',
         };
 
@@ -474,6 +475,10 @@ function parseSheet(sheet, sheetName) {
         }
     }
 
+    // enumgen opt-in: if gen field has 'code' flag, treat empty 'code' cells as null (so we can fail later)
+    const enumValueFromCodeMode =
+        genFields.length === 1 && genFields[0].enumValueFromCode === true;
+
     // Parse data rows (Row 5+, 0-indexed: row 4+)
     const rows = [];
     for (let row = 4; row <= range.e.r; row++) {
@@ -508,7 +513,12 @@ function parseSheet(sheet, sheetName) {
             };
 
             // Parse value based on type
-            rowData[field.name] = parseValue(value, field.type, ctx);
+            // In enumValueFromCodeMode, we must detect missing 'code' values (do not coerce to default)
+            if (enumValueFromCodeMode && field.name === 'code' && (value === null || value === undefined || value === '')) {
+                rowData[field.name] = null;
+            } else {
+                rowData[field.name] = parseValue(value, field.type, ctx);
+            }
 
             if (field.isKey) {
                 keyValue = rowData[field.name];
@@ -583,6 +593,9 @@ function parseOptions(optionStr, context = {}) {
                 if (part === 'pk') {
                     // pk flag is supported (= pk:true)
                     options.pk = 'true';
+                } else if (part === 'code') {
+                    // code flag is supported (used by enumgen opt-in: enum value from 'code' column)
+                    options.code = 'true';
                 } else if (part === 'key') {
                     // key flag is NOT supported
                     throw new Error(`Invalid option flag 'key'. Use 'pk'.${contextStr}`);
@@ -1751,8 +1764,54 @@ export function collectEnumGenSpecs(tables) {
         // Sort member names ascending (deterministic)
         memberNames.sort();
 
-        // Assign values 0..N-1 based on sorted order
-        const members = memberNames.map((name, index) => ({ name, value: index }));
+        // Opt-in: enum value from 'code' column if gen field has 'code' flag (Options Row)
+        const useCodeAsEnumValue = genField.enumValueFromCode === true;
+
+        let members;
+
+        if (!useCodeAsEnumValue) {
+            // Default behavior: 0..N-1 based on sorted order
+            members = memberNames.map((name, index) => ({ name, value: index }));
+        } else {
+            // Validate: code field exists and is int
+            const codeField = table.fields.find(f => f.name === 'code');
+            if (!codeField) {
+                throw new Error(`[gen:] Table '${table.name}': 'code' keyword requires a 'code' column`);
+            }
+            if (String(codeField.type).trim() !== 'int') {
+                throw new Error(`[gen:] Table '${table.name}': 'code' keyword requires 'code' column type 'int', got '${codeField.type}'`);
+            }
+
+            // Build name -> code map from rows
+            const nameToCode = new Map();
+            for (let i = 0; i < table.rows.length; i++) {
+                const row = table.rows[i];
+                const nameStr = String(row[genField.name]).trim();
+                const codeVal = row['code'];
+
+                if (codeVal === null || codeVal === undefined || codeVal === '') {
+                    throw new Error(`[gen:] Table '${table.name}': 'code' is empty at row ${i + 5}`);
+                }
+                if (typeof codeVal !== 'number' || !Number.isInteger(codeVal)) {
+                    throw new Error(`[gen:] Table '${table.name}': 'code' must be int at row ${i + 5}, got '${codeVal}'`);
+                }
+                nameToCode.set(nameStr, codeVal);
+            }
+
+            // Validate: no duplicate code values
+            const seenCodes = new Set();
+            members = memberNames.map((name) => {
+                const codeVal = nameToCode.get(name);
+                if (codeVal === undefined) {
+                    throw new Error(`[gen:] Table '${table.name}': missing code mapping for member '${name}'`);
+                }
+                if (seenCodes.has(codeVal)) {
+                    throw new Error(`[gen:] Table '${table.name}': duplicate enum value(code) '${codeVal}'`);
+                }
+                seenCodes.add(codeVal);
+                return { name, value: codeVal };
+            });
+        }
 
         specs.push({
             tableName: table.name,

@@ -33,6 +33,34 @@ namespace Devian.Domain.Common
                 }
             });
 
+            global::Devian.TableManager.Instance.RegisterTbLoader("ERROR_CLIENT", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_ERROR_CLIENT.LoadFromNdjson(text);
+                    TB_ERROR_CLIENT._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_ERROR_CLIENT.LoadFromPb64Binary(bin);
+                    TB_ERROR_CLIENT._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("ERROR_SERVER", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_ERROR_SERVER.LoadFromNdjson(text);
+                    TB_ERROR_SERVER._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_ERROR_SERVER.LoadFromPb64Binary(bin);
+                    TB_ERROR_SERVER._AfterLoad();
+                }
+            });
+
             global::Devian.TableManager.Instance.RegisterStLoader("TEXT", (format, lang, text, pb64Text) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)

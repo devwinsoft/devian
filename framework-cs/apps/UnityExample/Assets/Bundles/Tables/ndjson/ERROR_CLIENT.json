@@ -1,0 +1,5 @@
+{"Id":"COMMON_UNKNOWN","Msg_key":"","Msg":"Unknown error"}
+{"Id":"COMMON_NETWORK","Msg_key":"","Msg":"Network error"}
+{"Id":"COMMON_AUTH","Msg_key":"","Msg":"Authorization error"}
+{"Id":"COMMON_RATE_LIMIT","Msg_key":"","Msg":"Too many requests"}
+{"Id":"COMMON_SERVER","Msg_key":"","Msg":"Server error"}

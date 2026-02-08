@@ -579,8 +579,7 @@ namespace Devian.Protocol.Game
 
             /// <summary>
             /// Connect to server using the provided connector.
-            /// Connect is allowed only when state is Disconnected.
-            /// Any attempt in other states fails immediately (OnError invoked).
+            /// Previous session is always disposed before creating a new one.
             /// Stub must be Game2C.Stub for inbound message dispatch.
             /// </summary>
             public void Connect(Game2C.Stub stub, string url, INetConnector connector)
@@ -597,7 +596,6 @@ namespace Devian.Protocol.Game
 
                 _url = url;
                 _lastError = string.Empty;
-
                 _isConnecting = true; // Set before session creation to prevent re-entry
                 _errorNotified = false; // Reset error dedup guard for new attempt
 
@@ -644,7 +642,6 @@ namespace Devian.Protocol.Game
                 _isConnecting = false; // Clear flag first
                 _errorNotified = false; // Reset error dedup guard
 
-
                 var s = _session;
                 if (s == null) return;
 
@@ -662,21 +659,18 @@ namespace Devian.Protocol.Game
             {
                 _isConnecting = false;
                 _errorNotified = false; // Reset for connected state
-
                 OnOpen?.Invoke();
             }
 
             private void HandleClose(ushort code, string reason)
             {
                 _isConnecting = false;
-
                 OnClose?.Invoke(code, reason);
             }
 
             private void HandleError(Exception ex)
             {
                 _isConnecting = false;
-
                 _lastError = ex.Message;
                 if (_errorNotified)
                     return;
