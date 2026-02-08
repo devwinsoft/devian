@@ -17,10 +17,9 @@ namespace Devian
 
         private const string ClonePrefix = "__DevianClone__";
 
-        // baseline
+        // baseline (원본 참조 저장, clone 생성 금지)
         private Material[] _baselineMaterials;
         private bool _baselineCaptured;
-        private readonly HashSet<int> _baselineCloneIds = new HashSet<int>();
 
         // clone-on-apply
         private readonly Dictionary<int, Material> _applyCloneCache = new Dictionary<int, Material>();
@@ -32,6 +31,11 @@ namespace Devian
         private void Awake()
         {
             EnsureRenderer();
+        }
+
+        private void OnDisable()
+        {
+            RestoreBaseline();
         }
 
         private void OnDestroy()
@@ -58,12 +62,7 @@ namespace Devian
             if (m == null)
                 return false;
 
-            int id = m.GetInstanceID();
-
-            if (_baselineCloneIds.Contains(id))
-                return true;
-
-            if (_applyCloneIds.Contains(id))
+            if (_applyCloneIds.Contains(m.GetInstanceID()))
                 return true;
 
             if (m.name != null && m.name.StartsWith(ClonePrefix))
@@ -131,38 +130,15 @@ namespace Devian
             if (_renderer == null)
                 return;
 
-            // 기존 baseline이 있으면 먼저 정리 (메모리 누수 방지)
+            // 기존 baseline이 있으면 먼저 정리
             if (_baselineCaptured)
             {
                 DisposeBaseline();
             }
 
+            // 원본 참조 저장 (clone 금지 — 효과 0개일 때 __DevianClone__ 잔존 방지)
             var mats = _renderer.sharedMaterials;
-            if (mats != null && mats.Length > 0)
-            {
-                _baselineMaterials = new Material[mats.Length];
-                for (int i = 0; i < mats.Length; i++)
-                {
-                    if (mats[i] != null)
-                    {
-                        // 깊은 복제: 초기 material/shader 설정 값을 고정
-                        var clone = new Material(mats[i]);
-                        clone.hideFlags = HideFlags.DontSave;
-                        clone.name = ClonePrefix + mats[i].name;
-                        _baselineCloneIds.Add(clone.GetInstanceID());
-                        _baselineMaterials[i] = clone;
-                    }
-                    else
-                    {
-                        _baselineMaterials[i] = null;
-                    }
-                }
-            }
-            else
-            {
-                _baselineMaterials = null;
-            }
-
+            _baselineMaterials = (mats != null && mats.Length > 0) ? mats : null;
             _baselineCaptured = true;
         }
 
@@ -177,29 +153,16 @@ namespace Devian
             // PB clear: sharedMaterials 변경 전에 PropertyBlock 제거
             _renderer.SetPropertyBlock(null);
 
-            // baseline clone을 Renderer에 재적용
+            // 원본 baseline을 Renderer에 재적용
             _renderer.sharedMaterials = _baselineMaterials;
         }
 
         public override void DisposeBaseline()
         {
-            // apply clone도 함께 정리 (OnDestroy 경로에서 누수 방지)
+            // apply clone 정리 (OnDestroy 경로에서 누수 방지)
             DisposeAppliedClones();
 
-            if (_baselineMaterials == null)
-                return;
-
-            // 모든 baseline clone Material을 Destroy
-            for (int i = 0; i < _baselineMaterials.Length; i++)
-            {
-                if (_baselineMaterials[i] != null)
-                {
-                    _baselineCloneIds.Remove(_baselineMaterials[i].GetInstanceID());
-                    Object.Destroy(_baselineMaterials[i]);
-                    _baselineMaterials[i] = null;
-                }
-            }
-
+            // baseline은 원본 참조이므로 Destroy 금지 — 참조만 해제
             _baselineMaterials = null;
             _baselineCaptured = false;
         }

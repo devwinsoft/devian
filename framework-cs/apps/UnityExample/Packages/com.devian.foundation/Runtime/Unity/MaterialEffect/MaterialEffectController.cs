@@ -57,19 +57,16 @@ namespace Devian
             _ApplySelected();
         }
 
+        private void OnDisable()
+        {
+            // 비활성화 시 모든 효과 반환 + baseline 복원 (클론 잔존 방지)
+            _ClearEffects();
+        }
+
         private void OnDestroy()
         {
-            // effect 반환만 하고 _ApplySelected()는 호출하지 않는다
-            foreach (var kvp in _effects)
-            {
-                var entry = kvp.Value;
-                if (entry.Asset != null && entry.Instance != null)
-                {
-                    entry.Asset.Return(entry.Instance);
-                }
-            }
-
-            _effects.Clear();
+            // 효과 반환 + baseline 복원 (driver가 아직 유효하면)
+            _ClearEffects();
         }
 
         /// <summary>
