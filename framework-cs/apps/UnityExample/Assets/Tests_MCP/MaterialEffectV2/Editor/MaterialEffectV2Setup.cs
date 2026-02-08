@@ -167,7 +167,7 @@ namespace Devian.TestsMcp.Editor
             renderer.sharedMaterial = baseMaterial;
 
             // Add components
-            var driver = cube.AddComponent<MaterialEffectDriver>();
+            var driver = cube.AddComponent<MaterialEffectDriverCommon>();
             var controller = cube.AddComponent<MaterialEffectController>();
             var harness = cube.AddComponent<Devian.TestsMcp.MaterialEffectV2Harness>();
 
@@ -181,7 +181,7 @@ namespace Devian.TestsMcp.Editor
             }
             else
             {
-                Debug.LogWarning("[MaterialEffectV2Setup] _renderer field not found on MaterialEffectDriver");
+                Debug.LogWarning("[MaterialEffectV2Setup] _renderer field not found on MaterialEffectDriverCommon");
             }
 
             // Configure Controller: set _driverComponent if available

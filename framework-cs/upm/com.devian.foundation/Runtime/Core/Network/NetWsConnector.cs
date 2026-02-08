@@ -4,7 +4,7 @@ namespace Devian
 {
     /// <summary>
     /// WebSocket-based connector implementation.
-    /// Creates sessions using NetWsTransport and NetClientBase.
+    /// Creates sessions using NetWsTransport and BaseNetClient.
     /// </summary>
     public sealed class NetWsConnector : INetConnector
     {
@@ -13,7 +13,7 @@ namespace Devian
         {
             var core = new NetClient(runtime);
             var transport = new NetWsTransport(core);
-            return new NetClientBase(transport, url);
+            return new BaseNetClient(transport, url);
         }
     }
 }

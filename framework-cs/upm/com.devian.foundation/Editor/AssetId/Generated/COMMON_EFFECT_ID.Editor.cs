@@ -9,7 +9,7 @@ namespace Devian
     // COMMON_EFFECT_ID Selector
     // ============================================================
 
-    public sealed class CommonEffectIdSelector : EditorAssetIdSelectorBase<CommonEffectObject>
+    public sealed class CommonEffectIdSelector : BaseEditorAssetIdSelector<CommonEffectObject>
     {
         protected override string GroupKey => "COMMON_EFFECT";
         protected override string DisplayTypeName => "COMMON_EFFECT_ID";
@@ -20,7 +20,7 @@ namespace Devian
     // ============================================================
 
     [CustomPropertyDrawer(typeof(COMMON_EFFECT_ID))]
-    public sealed class COMMON_EFFECT_ID_Drawer : EditorID_DrawerBase<CommonEffectIdSelector>
+    public sealed class COMMON_EFFECT_ID_Drawer : BaseEditorID_Drawer<CommonEffectIdSelector>
     {
         protected override CommonEffectIdSelector GetSelector()
         {

@@ -7,7 +7,7 @@ namespace Devian
 {
     /// <summary>
     /// WebSocket transport adapter that implements INetTransport.
-    /// Wraps NetWsClient for use with NetClientBase.
+    /// Wraps NetWsClient for use with BaseNetClient.
     /// </summary>
     public sealed class NetWsTransport : INetTransport
     {

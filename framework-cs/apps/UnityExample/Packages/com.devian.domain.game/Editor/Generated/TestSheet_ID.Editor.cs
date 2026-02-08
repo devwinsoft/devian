@@ -11,7 +11,7 @@ using Devian.Domain.Game;
 namespace Devian
 {
     /// <summary>Selector for TestSheet_ID</summary>
-    public class Game_TestSheet_ID_Selector : EditorID_SelectorBase
+    public class Game_TestSheet_ID_Selector : BaseEditorID_Selector
     {
         protected override string GetDisplayTypeName() => "TestSheet";
 
@@ -40,7 +40,7 @@ namespace Devian
 
     /// <summary>PropertyDrawer for TestSheet_ID</summary>
     [CustomPropertyDrawer(typeof(TestSheet_ID))]
-    public class Game_TestSheet_ID_Drawer : EditorID_DrawerBase<Game_TestSheet_ID_Selector>
+    public class Game_TestSheet_ID_Drawer : BaseEditorID_Drawer<Game_TestSheet_ID_Selector>
     {
         protected override Game_TestSheet_ID_Selector GetSelector()
         {

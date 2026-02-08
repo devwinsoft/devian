@@ -102,6 +102,18 @@ namespace Devian
             return controller;
         }
 
+        public T RegisterController<T>(GameObject obj) where T : BaseController
+        {
+            T controller = obj.GetComponent<T>();
+            if (controller == null)
+                controller = obj.AddComponent<T>();
+
+            if (!_controllers.Contains(controller))
+                _controllers.Add(controller);
+
+            return controller;
+        }
+
         public bool UnregisterController(BaseController controller)
         {
             if (controller == null) return false;

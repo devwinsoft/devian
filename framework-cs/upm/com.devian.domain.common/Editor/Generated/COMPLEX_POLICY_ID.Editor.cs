@@ -11,7 +11,7 @@ using Devian.Domain.Common;
 namespace Devian
 {
     /// <summary>Selector for COMPLEX_POLICY_ID</summary>
-    public class Common_COMPLEX_POLICY_ID_Selector : EditorID_SelectorBase
+    public class Common_COMPLEX_POLICY_ID_Selector : BaseEditorID_Selector
     {
         protected override string GetDisplayTypeName() => "COMPLEX_POLICY";
 
@@ -40,7 +40,7 @@ namespace Devian
 
     /// <summary>PropertyDrawer for COMPLEX_POLICY_ID</summary>
     [CustomPropertyDrawer(typeof(COMPLEX_POLICY_ID))]
-    public class Common_COMPLEX_POLICY_ID_Drawer : EditorID_DrawerBase<Common_COMPLEX_POLICY_ID_Selector>
+    public class Common_COMPLEX_POLICY_ID_Drawer : BaseEditorID_Drawer<Common_COMPLEX_POLICY_ID_Selector>
     {
         protected override Common_COMPLEX_POLICY_ID_Selector GetSelector()
         {

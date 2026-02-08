@@ -43,7 +43,7 @@ namespace Devian
                 _materials = materials;
             }
 
-            public void Apply(IMaterialEffectDriver driver)
+            public void Apply(BaseMaterialEffectDriver driver)
             {
                 if (driver == null || _materials == null)
                     return;

@@ -112,7 +112,7 @@ public interface IBaseInputController
 }
 
 // --- BaseInputController ---
-public class BaseInputController : BaseController, IBaseInputController
+public abstract class BaseInputController : BaseController, IBaseInputController
 {
     public bool InputEnabled { get; set; }
     public IInputSpace InputSpace { get; set; }
@@ -166,7 +166,7 @@ public class ViewFlattenedSpace : IInputSpace
 ## DoD (Definition of Done)
 
 - [ ] 모든 파일이 `namespace Devian` 사용
-- [ ] BaseInputController가 BaseController를 상속 (non-abstract class)
+- [ ] BaseInputController가 BaseController를 상속 (abstract class)
 - [ ] 자동 등록 없음 — Actor가 `RegisterController<T>()`로 등록
 - [ ] `onInit`에서 RegisterController (Actor lifecycle)
 - [ ] `Clear()` override에서 UnregisterController + base.Clear()

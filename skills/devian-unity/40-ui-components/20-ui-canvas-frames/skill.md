@@ -18,7 +18,7 @@ Canvas owner와 UI 기능 단위(Frame)의 초기화 수명주기를 표준화�
 |------|------------|
 | **UICanvas** | Canvas owner. CompoSingleton 기반 싱글톤으로, Init() 호출 시 자식 Frame들을 초기화 |
 | **UIFrame** | Canvas 하위 UI 기능 단위. UICanvas로부터 _InitFromCanvas 호출을 받아 초기화됨 |
-| **UIFrameBase** | UIFrame의 비제네릭 기반 클래스. _InitFromCanvas(MonoBehaviour) 진입점 제공 |
+| **BaseUIFrame** | UIFrame의 비제네릭 기반 클래스. _InitFromCanvas(MonoBehaviour) 진입점 제공 |
 | **UIFrame\<TCanvas\>** | 타입 안전 버전. 강타입 owner 참조 + onInit(TCanvas) 확장점 제공 |
 
 ### Usage Flow
@@ -34,7 +34,7 @@ Canvas owner와 UI 기능 단위(Frame)의 초기화 수명주기를 표준화�
    └── onAwake()                       ← custom logic
 
 3. UICanvas.Init()
-   ├── mFrames.AddRange(GetComponentsInChildren<UIFrameBase>(true))
+   ├── mFrames.AddRange(GetComponentsInChildren<BaseUIFrame>(true))
    ├── onInit()                        ← override point
    ├── foreach frame in mFrames
    │   └── frame._InitFromCanvas(this)
@@ -101,7 +101,7 @@ C# 메서드 네이밍(internal `_` 접두어, protected lowerCamelCase)은 상�
 | **MUST** | UICanvas.Awake()는 `override` + `base.Awake()` 호출 (CompoSingleton 상속) |
 | **MUST** | UIFrame.Awake()는 non-virtual (MonoBehaviour 직접 상속) |
 | **MUST** | UICanvas.Init()에서 child frame `_InitFromCanvas(this)` 수행 |
-| **MUST** | UIFrameBase._InitFromCanvas()는 owner 저장만 수행 |
+| **MUST** | BaseUIFrame._InitFromCanvas()는 owner 저장만 수행 |
 | **MUST** | 실제 초기화 로직은 `onInit(TCanvas owner)`에서 처리 |
 | **MUST** | `_InitFromCanvas()` 중복 호출 방지 (isInitialized 체크) |
 | **MUST** | `Init()` 중복 호출 방지 (mInitialized 체크) |
@@ -146,7 +146,7 @@ framework-cs/upm/com.devian.ui/Runtime/
 | File | Purpose |
 |------|---------|
 | `UICanvas.cs` | UICanvas<T> 추상 클래스 + BillboardMode enum |
-| `UIFrame.cs` | UIFrameBase + UIFrame<TCanvas> 클래스 |
+| `BaseUIFrame.cs` | BaseUIFrame + UIFrame<TCanvas> 클래스 |
 
 #### Removed Files
 
@@ -213,12 +213,12 @@ namespace Devian
 }
 ```
 
-#### UIFrameBase
+#### BaseUIFrame
 
 ```csharp
 namespace Devian
 {
-    public abstract class UIFrameBase : MonoBehaviour
+    public abstract class BaseUIFrame : MonoBehaviour
     {
         // Properties
         public bool isInitialized { get; }
@@ -240,7 +240,7 @@ namespace Devian
 ```csharp
 namespace Devian
 {
-    public abstract class UIFrame<TCanvas> : UIFrameBase
+    public abstract class UIFrame<TCanvas> : BaseUIFrame
         where TCanvas : MonoBehaviour
     {
         // Properties
@@ -266,7 +266,7 @@ UICanvas.Awake()  (override from CompoSingleton)
 UICanvas.Init()
 ├── 1. if (mInitialized) return          ← 중복 방지
 ├── 2. mInitialized = true
-├── 3. mFrames.AddRange(GetComponentsInChildren<UIFrameBase>(true))
+├── 3. mFrames.AddRange(GetComponentsInChildren<BaseUIFrame>(true))
 ├── 4. onInit()                          ← override point
 ├── 5. foreach frame in mFrames
 │   └── frame._InitFromCanvas(this)
@@ -280,7 +280,7 @@ UICanvas.Init()
 UIFrame.Awake()
 └── onAwake()                            ← override point
 
-UIFrameBase._InitFromCanvas(owner)
+BaseUIFrame._InitFromCanvas(owner)
 ├── 1. if (isInitialized) return         ← 중복 방지
 ├── 2. ownerBase = owner
 ├── 3. isInitialized = true
@@ -297,7 +297,7 @@ UIFrame<TCanvas>.onInitFromCanvas(owner)
 ```
 UICanvas.CreateFrame<FRAME>(prefabName, parent)
 ├── 1. BundlePool.Spawn<FRAME>(prefabName, parent: parent ?? transform)
-├── 2. instance.GetComponent<UIFrameBase>()
+├── 2. instance.GetComponent<BaseUIFrame>()
 └── 3. if (frameBase != null && mInitialized)
     ├── mFrames.Add(frameBase)
     └── frameBase._InitFromCanvas(this)
@@ -325,7 +325,7 @@ UICanvas.CreateFrame<FRAME>(prefabName, parent)
 
 ### Files Exist
 - [ ] `com.devian.ui/Runtime/UICanvas.cs`
-- [ ] `com.devian.ui/Runtime/UIFrame.cs`
+- [ ] `com.devian.ui/Runtime/BaseUIFrame.cs`
 
 ### Files Removed
 - [ ] `IUiCanvasOwner.cs` 삭제 및 참조 0

@@ -7,7 +7,7 @@ namespace Devian
     /// Base class for UI frames.
     /// Provides initialization lifecycle with canvas owner reference.
     /// </summary>
-    public abstract class UIFrameBase : MonoBehaviour
+    public abstract class BaseUIFrame : MonoBehaviour
     {
         /// <summary>
         /// Whether this frame has been initialized.
@@ -64,7 +64,7 @@ namespace Devian
     /// Type-safe UIFrame with strongly-typed canvas reference.
     /// </summary>
     /// <typeparam name="TCanvas">The canvas type.</typeparam>
-    public abstract class UIFrame<TCanvas> : UIFrameBase
+    public abstract class UIFrame<TCanvas> : BaseUIFrame
         where TCanvas : MonoBehaviour
     {
         /// <summary>

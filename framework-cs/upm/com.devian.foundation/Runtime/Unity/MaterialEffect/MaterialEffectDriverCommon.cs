@@ -4,10 +4,10 @@ using UnityEngine;
 namespace Devian
 {
     /// <summary>
-    /// 단일 Renderer를 위한 IMaterialEffectDriver 구현체 (v2).
+    /// 단일 Renderer를 위한 BaseMaterialEffectDriver 구현체 (v2).
     /// Material[] 교체만 지원하며, PropertyBlock/Common 기능은 제거됨.
     /// </summary>
-    public sealed class MaterialEffectDriver : MonoBehaviour, IMaterialEffectDriver
+    public sealed class MaterialEffectDriverCommon : BaseMaterialEffectDriver
     {
         [Tooltip("Target renderer. If null, will auto-acquire from this GameObject (no children search).")]
         [SerializeField] private Renderer _renderer;
@@ -27,7 +27,7 @@ namespace Devian
         private readonly List<Material> _applyClones = new List<Material>();
         private readonly HashSet<int> _applyCloneIds = new HashSet<int>();
 
-        public bool IsValid => _renderer != null;
+        public override bool IsValid => _renderer != null;
 
         private void Awake()
         {
@@ -123,7 +123,7 @@ namespace Devian
             _applyCloneIds.Clear();
         }
 
-        public void CaptureBaseline()
+        public override void CaptureBaseline()
         {
             // Renderer 자동 획득 보장 (Awake 순서가 뒤집혀도 안전)
             EnsureRenderer();
@@ -166,7 +166,7 @@ namespace Devian
             _baselineCaptured = true;
         }
 
-        public void RestoreBaseline()
+        public override void RestoreBaseline()
         {
             // apply clone을 먼저 정리 (effect 전환 시 누수 방지)
             DisposeAppliedClones();
@@ -181,7 +181,7 @@ namespace Devian
             _renderer.sharedMaterials = _baselineMaterials;
         }
 
-        public void DisposeBaseline()
+        public override void DisposeBaseline()
         {
             // apply clone도 함께 정리 (OnDestroy 경로에서 누수 방지)
             DisposeAppliedClones();
@@ -204,7 +204,7 @@ namespace Devian
             _baselineCaptured = false;
         }
 
-        public void SetSharedMaterials(Material[] materials)
+        public override void SetSharedMaterials(Material[] materials)
         {
             if (_renderer == null)
                 return;
@@ -235,7 +235,7 @@ namespace Devian
             _renderer.sharedMaterials = cloned;
         }
 
-        public void SetVisible(bool visible)
+        public override void SetVisible(bool visible)
         {
             if (_renderer != null)
             {

@@ -25,7 +25,7 @@ namespace Devian
                 _priority = priority;
             }
 
-            public void Apply(IMaterialEffectDriver driver)
+            public void Apply(BaseMaterialEffectDriver driver)
             {
                 // 아무 것도 하지 않음 - baseline 상태 유지
             }

@@ -198,7 +198,7 @@ com.devian.domain.common/
 
 keyed table(primaryKey 있는 테이블)이 있으면 `Editor/Generated/`에 TableID Inspector 바인딩(`{TableName}_ID.Editor.cs`)이 자동 생성된다.
 
-- **베이스 클래스**: `com.devian.foundation`이 `EditorID_DrawerBase`, `EditorID_SelectorBase`를 제공
+- **베이스 클래스**: `com.devian.foundation`이 `BaseEditorID_Drawer`, `BaseEditorID_Selector`를 제공
 - **Editor asmdef 참조**: `Devian.Unity`, `Devian.Unity.Editor` 필수 (빌더가 자동 패치)
 
 > **공통 도메인 템플릿 규칙**: `skills/devian-unity/06-domain-packages/com.devian.domain.template/SKILL.md` 참조

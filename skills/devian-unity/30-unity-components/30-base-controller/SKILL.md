@@ -9,7 +9,7 @@ Type: Component Specification
 `BaseActor` / `BaseController`는 **Actor-Controller 패턴**의 공통 베이스이다.
 
 - `BaseActor` — MonoBehaviour + IPoolable. 컨트롤러 목록 관리, 외부 Init/Clear lifecycle
-- `BaseController` — MonoBehaviour. Actor에 종속되는 경량 모듈. 자체 등록 없음
+- `BaseController` — abstract MonoBehaviour. Actor에 종속되는 경량 모듈. 자체 등록 없음
 - Actor가 `RegisterController<T>()`로 컨트롤러를 등록하고, `Init()`에서 일괄 초기화
 
 ---
@@ -73,6 +73,10 @@ namespace Devian
   1. `GetComponent<T>()` → null이면 `AddComponent<T>()`
   2. 중복 검사 후 `_controllers`에 추가
   3. Init은 하지 않음 — `Actor.Init()` 루프에서 일괄 초기화
+- `BaseActor.RegisterController<T>(GameObject obj)` — 외부 GameObject 대상 제네릭
+  1. `obj.GetComponent<T>()` → null이면 `obj.AddComponent<T>()`
+  2. 중복 검사 후 `_controllers`에 추가
+  3. Init은 하지 않음 — `Actor.Init()` 루프에서 일괄 초기화
 - `BaseActor.UnregisterController(BaseController)` — 목록에서 제거
 
 ### 4. Controller 자동 등록 없음
@@ -117,6 +121,7 @@ public abstract class BaseActor : MonoBehaviour, IPoolable<BaseActor>
 
     // Controller registry
     public T RegisterController<T>() where T : BaseController;
+    public T RegisterController<T>(GameObject obj) where T : BaseController;
     public bool UnregisterController(BaseController controller);
     public IReadOnlyList<BaseController> Controllers { get; }
     public bool IsInitialized { get; }
@@ -124,7 +129,7 @@ public abstract class BaseActor : MonoBehaviour, IPoolable<BaseActor>
 }
 
 // --- BaseController ---
-public class BaseController : MonoBehaviour
+public abstract class BaseController : MonoBehaviour
 {
     public virtual int Priority { get; }     // default 0
     protected virtual void Awake();
@@ -159,9 +164,10 @@ public class BaseController : MonoBehaviour
 
 - [ ] 모든 파일이 `namespace Devian` 사용
 - [ ] BaseActor가 `abstract class`, `IPoolable<BaseActor>` 구현
-- [ ] BaseController가 `class` (non-abstract), MonoBehaviour 상속
+- [ ] BaseController가 `abstract class`, MonoBehaviour 상속
 - [ ] Controller 자동 등록 없음 (OnEnable/RegisterSelf 등 없음)
 - [ ] `RegisterController<T>()` — 파라미터 없는 제네릭, GetComponent/AddComponent
+- [ ] `RegisterController<T>(GameObject obj)` — 외부 GameObject 대상 제네릭
 - [ ] Actor.Init()에서 컨트롤러 일괄 Init (등록 시점에 Init 하지 않음)
 - [ ] Actor.Clear()에서 컨트롤러 역순 Clear
 - [ ] 모든 protected virtual 훅 소문자 시작 (onAwake, onInit, onClear, onPostInit, onPostClear)

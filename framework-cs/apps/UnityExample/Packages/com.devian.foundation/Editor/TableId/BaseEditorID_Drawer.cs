@@ -13,9 +13,9 @@ namespace Devian
     /// Base class for TableID PropertyDrawer.
     /// Derived classes should provide the selector instance.
     /// </summary>
-    /// <typeparam name="TSelector">Selector type derived from EditorID_SelectorBase</typeparam>
-    public abstract class EditorID_DrawerBase<TSelector> : PropertyDrawer
-        where TSelector : EditorID_SelectorBase
+    /// <typeparam name="TSelector">Selector type derived from BaseEditorID_Selector</typeparam>
+    public abstract class BaseEditorID_Drawer<TSelector> : PropertyDrawer
+        where TSelector : BaseEditorID_Selector
     {
         private const float ButtonWidth = 60f;
 

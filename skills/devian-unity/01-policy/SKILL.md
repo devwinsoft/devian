@@ -57,6 +57,16 @@ upm/{pkg} → UnityExample/Packages/{pkg} (패키지 단위 clean+copy)
 - `npm -w builder run sync-meta -- <config>` - Packages의 .meta를 UPM으로 역복사 (일회성 마이그레이션용)
 - 위치: `framework-ts/tools/scripts/sync-meta.js`
 
+### Abstract Base Class Naming (Hard Rule)
+
+Devian Unity C#에서 abstract base class 네이밍은 `{Category}Base`를 금지하고 `Base{Category}`를 사용한다.
+
+- Bad: `abstract class ActorBase`
+- Good: `abstract class BaseActor`
+
+이 규칙은 **repo 전체**에 적용되며, 리네임 시 `git mv`로 `.meta` GUID를 유지하고,
+UPM(`framework-cs/upm/{pkg}`)과 UnityExample/Packages(`framework-cs/apps/UnityExample/Packages/{pkg}`)를 **동일하게** 갱신한다.
+
 ### 5. 대규모 리네임 작업 규칙 (Hard Rule)
 
 **C# 파일 대규모 리네임 시 다음 절차를 따른다:**

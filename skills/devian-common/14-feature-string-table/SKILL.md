@@ -426,7 +426,7 @@ public static bool IsValid(this {TableName}_ID? obj) => obj != null && !string.I
 
 ```csharp
 // {TableName}_ID.Editor.cs (Editor/Generated)
-public sealed class {TableName}IdSelector : EditorID_SelectorBase
+public sealed class {TableName}IdSelector : BaseEditorID_Selector
 {
     protected override string GetDisplayTypeName() => "{TableName}_ID";
 
@@ -445,7 +445,7 @@ public sealed class {TableName}IdSelector : EditorID_SelectorBase
 }
 
 [CustomPropertyDrawer(typeof({TableName}_ID))]
-public sealed class {TableName}_ID_Drawer : EditorID_DrawerBase<{TableName}IdSelector>
+public sealed class {TableName}_ID_Drawer : BaseEditorID_Drawer<{TableName}IdSelector>
 {
     protected override {TableName}IdSelector GetSelector()
     {

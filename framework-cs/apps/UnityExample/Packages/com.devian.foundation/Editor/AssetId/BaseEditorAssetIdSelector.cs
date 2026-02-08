@@ -7,12 +7,12 @@ using UnityEngine;
 namespace Devian
 {
     /// <summary>
-    /// Base selector for ScriptableObject-based AssetId (Editor-only).
+    /// Base selector for AssetId (Editor-only).
     /// SearchDir source: Assets/Resources/Devian/DevianSettings.asset
-    /// SSOT: skills/devian-unity/30-unity-components/29-render-effect-id/SKILL.md
+    /// SSOT: skills/devian-unity/30-unity-components/21-asset-id/SKILL.md
     /// </summary>
-    public abstract class EditorScriptableAssetIdSelectorBase<TAsset> : EditorID_SelectorBase
-        where TAsset : ScriptableObject
+    public abstract class BaseEditorAssetIdSelector<TComponent> : BaseEditorID_Selector
+        where TComponent : Component
     {
         protected abstract string GroupKey { get; }
         protected abstract string DisplayTypeName { get; }
@@ -27,25 +27,23 @@ namespace Devian
             ClearItems();
 
             var searchDir = ResolveSearchDirOrFallback(GroupKey);
+            var prefabs = AssetManager.FindPrefabs<TComponent>(new[] { searchDir });
 
-            // ScriptableObject 스캔
-            var guids = AssetDatabase.FindAssets($"t:{typeof(TAsset).Name}", new[] { searchDir });
-            if (guids == null || guids.Length == 0)
+            if (prefabs == null || prefabs.Length == 0)
             {
                 return;
             }
 
             var normalizedSet = new HashSet<string>();
-            for (var i = 0; i < guids.Length; i++)
+            for (var i = 0; i < prefabs.Length; i++)
             {
-                var path = AssetDatabase.GUIDToAssetPath(guids[i]);
-                var asset = AssetDatabase.LoadAssetAtPath<TAsset>(path);
-                if (asset == null) continue;
+                var prefab = prefabs[i];
+                if (prefab == null) continue;
 
-                var name = asset.name ?? string.Empty;
+                var name = prefab.name ?? string.Empty;
                 if (string.IsNullOrEmpty(name)) continue;
 
-                // AssetManager policy: ignore @ prefix
+                // AssetManager policy: ignore @ prefabs
                 if (name.StartsWith("@"))
                 {
                     continue;
@@ -54,7 +52,7 @@ namespace Devian
                 var normalized = name.Trim().ToLowerInvariant();
                 if (normalizedSet.Contains(normalized))
                 {
-                    Debug.LogError($"[AssetId] Duplicate ScriptableObject name (case-insensitive): '{name}'. Skipping.");
+                    Debug.LogError($"[AssetId] Duplicate prefab name (case-insensitive): '{name}'. Skipping.");
                     continue;
                 }
                 normalizedSet.Add(normalized);

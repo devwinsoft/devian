@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Devian
 {
-    public class BaseController : MonoBehaviour
+    public abstract class BaseController : MonoBehaviour
     {
         private BaseActor _actor;
         private bool _initialized;

@@ -9,7 +9,7 @@ namespace Devian
     /// InputEnabled == false이면 콜백 무시.
     /// 변화가 있을 때만 4개 virtual 콜백을 호출한다.
     /// </summary>
-    public class BaseInputController : BaseController, IBaseInputController
+    public abstract class BaseInputController : BaseController, IBaseInputController
     {
         [SerializeField] private float _axisEpsilon = 0.001f;
 

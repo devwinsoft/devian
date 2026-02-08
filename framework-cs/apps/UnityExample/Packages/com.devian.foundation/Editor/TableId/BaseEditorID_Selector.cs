@@ -17,7 +17,7 @@ namespace Devian
     /// Provides search, grid selection, and value assignment.
     /// SSOT: skills/devian-core/03-ssot/SKILL.md (Apply button forbidden)
     /// </summary>
-    public abstract class EditorID_SelectorBase : EditorWindow
+    public abstract class BaseEditorID_Selector : EditorWindow
     {
         private const int ColumnCount = 4;
         private const string NoneOption = "(none)";

@@ -10,13 +10,8 @@ namespace Devian
     /// </summary>
     public sealed class MaterialEffectController : BaseController<GameObject>
     {
-        [Tooltip("Driver component to use. If null, will search for IMaterialEffectDriver on this GameObject.")]
-        [SerializeField] private Component _driverComponent;
-
-        [Tooltip("If true, search for IMaterialEffectDriver in children when not found on this GameObject. (Not recommended for v2 1:1 policy)")]
-        [SerializeField] private bool _searchDriverInChildren = false;
-
-        private IMaterialEffectDriver _driver;
+        [Tooltip("Driver component to use. If null, will search for BaseMaterialEffectDriver on this GameObject.")]
+        [SerializeField] private BaseMaterialEffectDriver _driverComponent;
 
         private readonly Dictionary<int, EffectEntry> _effects = new Dictionary<int, EffectEntry>();
         private int _nextHandle = 1;
@@ -44,29 +39,19 @@ namespace Devian
             Init(gameObject);
 
             // 1. driver resolve
-            if (_driverComponent != null)
+            if (_driverComponent == null)
             {
-                _driver = _driverComponent as IMaterialEffectDriver;
+                _driverComponent = GetComponent<BaseMaterialEffectDriver>();
             }
 
-            if (_driver == null)
+            if (_driverComponent == null || !_driverComponent.IsValid)
             {
-                _driver = GetComponent<IMaterialEffectDriver>();
-            }
-
-            if (_driver == null && _searchDriverInChildren)
-            {
-                _driver = GetComponentInChildren<IMaterialEffectDriver>(true);
-            }
-
-            if (_driver == null || !_driver.IsValid)
-            {
-                Debug.LogError($"[MaterialEffectController] IMaterialEffectDriver not found or invalid on {gameObject.name}");
+                Debug.LogError($"[MaterialEffectController] BaseMaterialEffectDriver not found or invalid on {gameObject.name}");
                 return;
             }
 
             // 2. baseline capture
-            _driver.CaptureBaseline();
+            _driverComponent.CaptureBaseline();
 
             // 3. effect 0개 상태이므로 default(handle 0)로 진입
             _ApplySelected();
@@ -90,24 +75,24 @@ namespace Devian
         /// <summary>
         /// Add effect from asset. Returns handle (> 0) on success, 0 on failure.
         /// </summary>
-        public int _AddEffect(MaterialEffectAsset asset)
+        public int AddEffect(MaterialEffectAsset asset)
         {
             if (asset == null)
             {
-                Debug.LogWarning("[MaterialEffectController] _AddEffect: asset is null");
+                Debug.LogWarning("[MaterialEffectController] AddEffect: asset is null");
                 return 0;
             }
 
-            if (_driver == null || !_driver.IsValid)
+            if (_driverComponent == null || !_driverComponent.IsValid)
             {
-                Debug.LogWarning("[MaterialEffectController] _AddEffect: driver is invalid");
+                Debug.LogWarning("[MaterialEffectController] AddEffect: driver is invalid");
                 return 0;
             }
 
             var instance = asset.Rent();
             if (instance == null)
             {
-                Debug.LogError($"[MaterialEffectController] _AddEffect: asset.Rent() returned null for {asset.name}");
+                Debug.LogError($"[MaterialEffectController] AddEffect: asset.Rent() returned null for {asset.name}");
                 return 0;
             }
 
@@ -129,28 +114,28 @@ namespace Devian
         /// <summary>
         /// Add effect by ID. Returns handle (> 0) on success, 0 on failure.
         /// </summary>
-        public int _AddEffect(MATERIAL_EFFECT_ID id)
+        public int AddEffect(MATERIAL_EFFECT_ID id)
         {
             if (id == null || !id.IsValid)
             {
-                Debug.LogWarning("[MaterialEffectController] _AddEffect: id is null or invalid");
+                Debug.LogWarning("[MaterialEffectController] AddEffect: id is null or invalid");
                 return 0;
             }
 
             var asset = AssetManager.GetAsset<MaterialEffectAsset>(id.Value);
             if (asset == null)
             {
-                Debug.LogWarning($"[MaterialEffectController] _AddEffect: asset not found for id '{id.Value}'");
+                Debug.LogWarning($"[MaterialEffectController] AddEffect: asset not found for id '{id.Value}'");
                 return 0;
             }
 
-            return _AddEffect(asset);
+            return AddEffect(asset);
         }
 
         /// <summary>
         /// Remove effect by handle. Returns true on success.
         /// </summary>
-        public bool _RemoveEffect(int handle)
+        public bool RemoveEffect(int handle)
         {
             if (!_effects.TryGetValue(handle, out var entry))
             {
@@ -222,7 +207,7 @@ namespace Devian
         /// </summary>
         private void _ApplySelected()
         {
-            if (_driver == null || !_driver.IsValid)
+            if (_driverComponent == null || !_driverComponent.IsValid)
                 return;
 
             // 선택 계산
@@ -268,12 +253,12 @@ namespace Devian
             _currentAppliedHandle = selectedHandle;
 
             // 적용 순서: RestoreBaseline 항상 실행
-            _driver.RestoreBaseline();
+            _driverComponent.RestoreBaseline();
 
             // effect가 있을 때만 Apply 실행
             if (selectedEffect != null)
             {
-                selectedEffect.Apply(_driver);
+                selectedEffect.Apply(_driverComponent);
             }
             // effect가 없으면(handle 0) baseline 복원 상태가 default
         }

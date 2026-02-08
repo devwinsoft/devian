@@ -11,7 +11,7 @@ using Devian.Domain.Sound;
 namespace Devian
 {
     /// <summary>Selector for VOICE_ID</summary>
-    public class Sound_VOICE_ID_Selector : EditorID_SelectorBase
+    public class Sound_VOICE_ID_Selector : BaseEditorID_Selector
     {
         protected override string GetDisplayTypeName() => "VOICE";
 
@@ -40,7 +40,7 @@ namespace Devian
 
     /// <summary>PropertyDrawer for VOICE_ID</summary>
     [CustomPropertyDrawer(typeof(VOICE_ID))]
-    public class Sound_VOICE_ID_Drawer : EditorID_DrawerBase<Sound_VOICE_ID_Selector>
+    public class Sound_VOICE_ID_Drawer : BaseEditorID_Drawer<Sound_VOICE_ID_Selector>
     {
         protected override Sound_VOICE_ID_Selector GetSelector()
         {

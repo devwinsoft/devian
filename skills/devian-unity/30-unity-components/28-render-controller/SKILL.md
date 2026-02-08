@@ -23,9 +23,9 @@ MaterialEffectController : BaseController<GameObject>
 
 ## 핵심 구성요소
 
-### IMaterialEffectDriver (v2)
+### BaseMaterialEffectDriver (v2)
 
-단일 Renderer를 위한 Material 교체 인터페이스.
+단일 Renderer를 위한 Material 교체 abstract base class.
 
 | 메서드 | 설명 |
 |--------|------|
@@ -49,7 +49,7 @@ MaterialEffectController : BaseController<GameObject>
 | 멤버 | 설명 |
 |------|------|
 | `int Priority { get; }` | 우선순위 값 |
-| `void Apply(IMaterialEffectDriver driver)` | 효과 적용 |
+| `void Apply(BaseMaterialEffectDriver driver)` | 효과 적용 |
 | `void Reset()` | 풀링 반환 시 초기화 |
 
 ### MaterialEffectAsset (ScriptableObject)
@@ -64,8 +64,7 @@ MaterialEffectController : BaseController<GameObject>
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| `_driverComponent` | Component | Driver 지정 (선택) |
-| `_searchDriverInChildren` | bool | children 탐색 (기본 false, v2 정책상 비권장) |
+| `_driverComponent` | BaseMaterialEffectDriver | Driver 지정 (선택) |
 
 ## 우선순위 규칙 (하드)
 
@@ -92,10 +91,10 @@ if (selectedEffect != null) selectedEffect.Apply(driver)
 
 | 메서드 | 설명 |
 |--------|------|
-| `int _AddEffect(MaterialEffectAsset asset)` | effect 추가, handle 반환 |
-| `bool _RemoveEffect(int handle)` | effect 제거 |
+| `int AddEffect(MaterialEffectAsset asset)` | effect 추가, handle 반환 |
+| `bool RemoveEffect(int handle)` | effect 제거 |
 | `void _ClearEffects()` | 모든 effect 제거 |
-| `int _AddEffect(MATERIAL_EFFECT_ID id)` | ID로 effect 추가 |
+| `int AddEffect(MATERIAL_EFFECT_ID id)` | ID로 effect 추가 |
 | `int _GetCurrentAppliedHandle()` | 현재 적용 중인 effect handle (0=baseline, -1=none) |
 | `string _GetCurrentAppliedEffectName()` | 현재 적용 중인 effect 이름 |
 
@@ -117,7 +116,7 @@ public sealed class MaterialSetMaterialEffectAsset : MaterialEffectAsset
 
 아무 효과도 적용하지 않음 (baseline 상태 유지).
 
-## MaterialEffectDriver (v2)
+## MaterialEffectDriverCommon (v2)
 
 단일 Renderer 전용 구현체.
 
@@ -134,7 +133,7 @@ public sealed class MaterialSetMaterialEffectAsset : MaterialEffectAsset
 
 ## 금지 사항
 
-- IMaterialEffectDriver에 animation 관련 API 추가 금지
+- BaseMaterialEffectDriver에 animation 관련 API 추가 금지
 - 런타임 ID resolve에서 AssetDatabase/Resources.Load 직접 호출 금지 (AssetManager 캐시만)
 - slot mismatch 검증/차단/자동 보정 금지
 

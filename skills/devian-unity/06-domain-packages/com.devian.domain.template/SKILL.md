@@ -96,8 +96,8 @@ com.devian.domain.{domainname}/Editor/Generated/{TableName}_ID.Editor.cs
 ```csharp
 namespace Devian
 {
-    public class Game_TestSheet_ID_Selector : EditorID_SelectorBase { ... }
-    public class Game_TestSheet_ID_Drawer : EditorID_DrawerBase<Game_TestSheet_ID_Selector> { ... }
+    public class Game_TestSheet_ID_Selector : BaseEditorID_Selector { ... }
+    public class Game_TestSheet_ID_Drawer : BaseEditorID_Drawer<Game_TestSheet_ID_Selector> { ... }
 }
 ```
 
@@ -109,12 +109,12 @@ namespace Devian
 
 | 파일 | 경로 |
 |------|------|
-| `EditorID_DrawerBase.cs` | `com.devian.foundation/Editor/TableId/EditorID_DrawerBase.cs` |
-| `EditorID_SelectorBase.cs` | `com.devian.foundation/Editor/TableId/EditorID_SelectorBase.cs` |
+| `BaseEditorID_Drawer.cs` | `com.devian.foundation/Editor/TableId/BaseEditorID_Drawer.cs` |
+| `BaseEditorID_Selector.cs` | `com.devian.foundation/Editor/TableId/BaseEditorID_Selector.cs` |
 | `EditorRectUtil.cs` | `com.devian.foundation/Editor/TableId/EditorRectUtil.cs` |
 
-- Selector UX(Hard): 항목 클릭 즉시 적용(Apply 버튼 없음). (EditorID_SelectorBase 규약)
-- Group 지원(Hard): 테이블에 `group:true` 컬럼이 있으면 Selector는 groupKey 목록을 표시하고, 선택 시 대표 PK(min PK)를 Value에 저장한다. Inspector 표시도 groupKey로 한다. (EditorID_SelectorBase 규약)
+- Selector UX(Hard): 항목 클릭 즉시 적용(Apply 버튼 없음). (BaseEditorID_Selector 규약)
+- Group 지원(Hard): 테이블에 `group:true` 컬럼이 있으면 Selector는 groupKey 목록을 표시하고, 선택 시 대표 PK(min PK)를 Value에 저장한다. Inspector 표시도 groupKey로 한다. (BaseEditorID_Selector 규약)
 
 > **상세 API**: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT) 참조
 
@@ -185,7 +185,7 @@ keyed table이 있는 도메인의 경우:
 
 - [ ] `Editor/Generated/{TableName}_ID.Editor.cs` 파일 존재
 - [ ] Editor asmdef에 `Devian.Unity`, `Devian.Unity.Editor` 참조 포함
-- [ ] 생성된 클래스가 `EditorID_DrawerBase`, `EditorID_SelectorBase`를 상속
+- [ ] 생성된 클래스가 `BaseEditorID_Drawer`, `BaseEditorID_Selector`를 상속
 - [ ] 네임스페이스가 `Devian`으로 통일됨
 
 keyed table이 없는 도메인의 경우:

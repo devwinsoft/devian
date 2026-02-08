@@ -49,7 +49,7 @@ assetId[MATERIAL_EFFECT] = "Assets/Bundles/MaterialEffects"
 
 ### Selector 클래스
 ```csharp
-public sealed class MaterialEffectIdSelector : EditorScriptableAssetIdSelectorBase<MaterialEffectAsset>
+public sealed class MaterialEffectIdSelector : BaseEditorScriptableAssetIdSelector<MaterialEffectAsset>
 {
     protected override string GroupKey => "MATERIAL_EFFECT";
     protected override string DisplayTypeName => "MATERIAL_EFFECT_ID";
@@ -59,7 +59,7 @@ public sealed class MaterialEffectIdSelector : EditorScriptableAssetIdSelectorBa
 ### Drawer 클래스
 ```csharp
 [CustomPropertyDrawer(typeof(MATERIAL_EFFECT_ID))]
-public sealed class MATERIAL_EFFECT_ID_Drawer : EditorID_DrawerBase<MaterialEffectIdSelector>
+public sealed class MATERIAL_EFFECT_ID_Drawer : BaseEditorID_Drawer<MaterialEffectIdSelector>
 {
     // ShowUtility()로 창 표시
     // title: "Select MATERIAL_EFFECT_ID"

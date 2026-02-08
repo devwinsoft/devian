@@ -15,7 +15,7 @@ using Devian.Domain.Common;
 namespace Devian
 {
     /// <summary>Selector for StringTable TEXT_ID</summary>
-    public class Common_TEXT_ID_Selector : EditorID_SelectorBase
+    public class Common_TEXT_ID_Selector : BaseEditorID_Selector
     {
         protected override string GetDisplayTypeName() => "TEXT";
 
@@ -55,7 +55,7 @@ namespace Devian
 
     /// <summary>PropertyDrawer for TEXT_ID</summary>
     [CustomPropertyDrawer(typeof(TEXT_ID))]
-    public class Common_TEXT_ID_Drawer : EditorID_DrawerBase<Common_TEXT_ID_Selector>
+    public class Common_TEXT_ID_Drawer : BaseEditorID_Drawer<Common_TEXT_ID_Selector>
     {
         protected override Common_TEXT_ID_Selector GetSelector()
         {

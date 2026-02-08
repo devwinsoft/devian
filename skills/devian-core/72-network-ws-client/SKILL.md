@@ -57,7 +57,7 @@ Devian 런타임에 **WebSocket 기반 클라이언트 런타임**을 추가한�
 
 **프로토콜 생성 코드가 네트워크 구현을 끌고 들어가면 안 된다 (Hard Rule).**
 
-Generated Protocol Proxy는 **인터페이스에만 의존**하며, 구체 타입(NetWsTransport, NetClientBase 등)을 참조하지 않는다.
+Generated Protocol Proxy는 **인터페이스에만 의존**하며, 구체 타입(NetWsTransport, BaseNetClient 등)을 참조하지 않는다.
 
 **프로토콜 Proxy가 만드는 runtime(stub)은 수신 방향 프로토콜(Runtime/Stub)을 사용한다.**
 - C2Game 송신 Proxy → Game2C Runtime (수신)
@@ -90,7 +90,7 @@ Generated Protocol Proxy는 **인터페이스에만 의존**하며, 구체 타�
 5. **Foundation에서 인터페이스와 구현을 제공한다**
    - `INetSession` — 세션 인터페이스 (Tick/ConnectAsync/CloseAsync/SendTo + 이벤트)
    - `INetConnector` — 세션 팩토리 인터페이스 (CreateSession)
-   - `NetClientBase : INetSession` — 세션 구현
+   - `BaseNetClient : INetSession` — 세션 구현
    - `NetWsConnector : INetConnector` — WebSocket 세션 생성 (공통 구현)
 
 6. **Unity 샘플(Network)에서는 Manager가 Stub/Proxy/Connector를 소유한다**

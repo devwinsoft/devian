@@ -8,7 +8,7 @@ using Devian.Protocol.Game;
 using TMPro;
 using Devian;
 
-public class SceneTest : BaseScene
+public class TestScene : BaseScene
 {
     public CInt a;
     public CFloat b;

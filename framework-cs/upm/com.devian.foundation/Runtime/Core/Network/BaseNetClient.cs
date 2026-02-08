@@ -10,7 +10,7 @@ namespace Devian
     /// Protocol-specific message handling is NOT in this class.
     /// Implements INetSession for protocol-agnostic session management.
     /// </summary>
-    public class NetClientBase : INetClient, INetSession
+    public class BaseNetClient : INetClient, INetSession
     {
         private readonly INetTransport _transport;
         private readonly string _url;
@@ -52,11 +52,11 @@ namespace Devian
         public event Action<ushort, string>? OnClose;
 
         /// <summary>
-        /// Creates a new NetClientBase with the specified transport and URL.
+        /// Creates a new BaseNetClient with the specified transport and URL.
         /// </summary>
         /// <param name="transport">Transport implementation.</param>
         /// <param name="url">Server URL to connect to.</param>
-        public NetClientBase(INetTransport transport, string url)
+        public BaseNetClient(INetTransport transport, string url)
         {
             _transport = transport ?? throw new ArgumentNullException(nameof(transport));
             _url = url ?? throw new ArgumentNullException(nameof(url));

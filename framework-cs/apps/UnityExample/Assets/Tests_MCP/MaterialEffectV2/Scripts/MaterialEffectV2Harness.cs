@@ -33,7 +33,7 @@ namespace Devian.TestsMcp
             // Step1: apply A
             if (_effectA != null)
             {
-                _hA = _controller._AddEffect(_effectA);
+                _hA = _controller.AddEffect(_effectA);
                 Debug.Log($"[MaterialEffectV2Harness] Step1 add A handle={_hA}, current={_controller._GetCurrentAppliedHandle()}");
             }
             else Debug.LogWarning("[MaterialEffectV2Harness] effectA null");
@@ -42,7 +42,7 @@ namespace Devian.TestsMcp
             // Step2: apply B (priority should be higher on asset or manually set; if same priority, later wins)
             if (_effectB != null)
             {
-                _hB = _controller._AddEffect(_effectB);
+                _hB = _controller.AddEffect(_effectB);
                 Debug.Log($"[MaterialEffectV2Harness] Step2 add B handle={_hB}, current={_controller._GetCurrentAppliedHandle()}");
             }
             else Debug.LogWarning("[MaterialEffectV2Harness] effectB null");
@@ -51,7 +51,7 @@ namespace Devian.TestsMcp
             // Step3: remove B -> A
             if (_hB != 0)
             {
-                _controller._RemoveEffect(_hB);
+                _controller.RemoveEffect(_hB);
                 Debug.Log($"[MaterialEffectV2Harness] Step3 remove B, current={_controller._GetCurrentAppliedHandle()}");
             }
             yield return new WaitForSeconds(_stepSeconds);
@@ -59,7 +59,7 @@ namespace Devian.TestsMcp
             // Step4: remove A -> default
             if (_hA != 0)
             {
-                _controller._RemoveEffect(_hA);
+                _controller.RemoveEffect(_hA);
                 Debug.Log($"[MaterialEffectV2Harness] Step4 remove A, current={_controller._GetCurrentAppliedHandle()}");
             }
         }

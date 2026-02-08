@@ -9,7 +9,7 @@ namespace Devian
     // MATERIAL_EFFECT_ID Selector
     // ============================================================
 
-    public sealed class MaterialEffectIdSelector : EditorScriptableAssetIdSelectorBase<MaterialEffectAsset>
+    public sealed class MaterialEffectIdSelector : BaseEditorScriptableAssetIdSelector<MaterialEffectAsset>
     {
         protected override string GroupKey => "MATERIAL_EFFECT";
         protected override string DisplayTypeName => "MATERIAL_EFFECT_ID";
@@ -20,7 +20,7 @@ namespace Devian
     // ============================================================
 
     [CustomPropertyDrawer(typeof(MATERIAL_EFFECT_ID))]
-    public sealed class MATERIAL_EFFECT_ID_Drawer : EditorID_DrawerBase<MaterialEffectIdSelector>
+    public sealed class MATERIAL_EFFECT_ID_Drawer : BaseEditorID_Drawer<MaterialEffectIdSelector>
     {
         protected override MaterialEffectIdSelector GetSelector()
         {

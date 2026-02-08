@@ -29,7 +29,7 @@ namespace Devian
         public Canvas canvas { get; private set; }
 
         bool mInitialized = false;
-        List<UIFrameBase> mFrames = new List<UIFrameBase>();
+        List<BaseUIFrame> mFrames = new List<BaseUIFrame>();
 
         /// <summary>
         /// Unity Awake callback. Overrides CompoSingleton.Awake().
@@ -55,7 +55,7 @@ namespace Devian
         {
             if (mInitialized) return;
             mInitialized = true;
-            mFrames.AddRange(GetComponentsInChildren<UIFrameBase>(true));
+            mFrames.AddRange(GetComponentsInChildren<BaseUIFrame>(true));
             onInit();
             foreach (var frame in mFrames)
             {
@@ -111,7 +111,7 @@ namespace Devian
                 prefabName,
                 parent: parent ?? transform);
 
-            var frameBase = instance.GetComponent<UIFrameBase>();
+            var frameBase = instance.GetComponent<BaseUIFrame>();
             if (frameBase != null && mInitialized)
             {
                 mFrames.Add(frameBase);
