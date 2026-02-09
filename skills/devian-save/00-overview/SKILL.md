@@ -32,6 +32,7 @@ Devian의 **Cloud Save + Local Save (Unity 전용)** 스킬 그룹.
 | [21-cloudsave-google](../21-cloudsave-google/SKILL.md) | Cloud Save Android(Google, Unity) |
 | [22-cloudsave-icloud](../22-cloudsave-icloud/SKILL.md) | Cloud Save iOS(iCloud, Unity) |
 | [23-cloudsave-steam](../23-cloudsave-steam/SKILL.md) | Cloud Save PC(Steam, Unity) |
+| [24-cloudsave-guide](../24-cloudsave-guide/SKILL.md) | Cloud Save 빠른 시작 가이드(설정/구성/샘플 연결) |
 | [50-localsave-unity](../50-localsave-unity/SKILL.md) | Local Save Unity 공통 |
 | [51-localsave-android](../51-localsave-android/SKILL.md) | Local Save Android(Unity) |
 | [52-localsave-ios](../52-localsave-ios/SKILL.md) | Local Save iOS(Unity) |

@@ -17,6 +17,11 @@
       "displayName": "UI",
       "description": "UGUI virtual pad (joystick) sample. Outputs normalized Vector2 via drag input.",
       "path": "Samples~/UI"
+    },
+    {
+      "displayName": "CloudSave (GPGS)",
+      "description": "Samples-only GPGS integration entry: client creation + CloudSaveManager.Configure in one call (stub client).",
+      "path": "Samples~/CloudSave-GPGS"
     }
   ]
 }

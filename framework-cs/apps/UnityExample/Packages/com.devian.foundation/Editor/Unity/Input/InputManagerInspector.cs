@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -123,7 +124,20 @@ namespace Devian
             added += _ensureVirtualGamepadBinding(asset, "_lookKey", VirtualGamepadLookPath);
 
             EditorUtility.SetDirty(asset);
-            AssetDatabase.SaveAssets();
+
+            // Persist changes deterministically for .inputactions source assets.
+            // Saving the imported InputActionAsset alone may not survive reimport/restart.
+            var assetPath = AssetDatabase.GetAssetPath(asset);
+            if (!string.IsNullOrEmpty(assetPath) &&
+                assetPath.EndsWith(".inputactions", StringComparison.OrdinalIgnoreCase))
+            {
+                File.WriteAllText(assetPath, asset.ToJson());
+                AssetDatabase.ImportAsset(assetPath);
+            }
+            else
+            {
+                AssetDatabase.SaveAssets();
+            }
 
             Debug.Log(added > 0
                 ? $"[InputManagerInspector] VirtualGamepad bindings installed. Added {added} binding(s)."

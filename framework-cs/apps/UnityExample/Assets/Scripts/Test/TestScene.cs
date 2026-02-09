@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using System.Threading;
 using Devian;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
@@ -62,7 +63,6 @@ public class TestScene : BaseScene
 
         var save_result = LocalSaveManager.Instance.Save("main", "ABCD");
         var load_result = LocalSaveManager.Instance.LoadPayload("main");
-        Debug.Log(Application.persistentDataPath);
     }
 
     public override IEnumerator OnExit()
