@@ -61,9 +61,7 @@ public class TestScene : BaseScene
         Debug.Log(obj);
 
         var save_result = LocalSaveManager.Instance.Save("main", "ABCD");
-        Debug.Log(save_result.Value);
         var load_result = LocalSaveManager.Instance.LoadPayload("main");
-        Debug.Log(load_result.Value);
         Debug.Log(Application.persistentDataPath);
     }
 

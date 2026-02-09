@@ -183,7 +183,7 @@ MonoBehaviour:
     data: G+/jUsOWmqOWO6Cd0SxbarE4n/yzhScn
   _slots:
   - slotKey: main
-    filename: slot_main.json
+    filename: save/slot_main.json
 --- !u!114 &-4669010396052858670
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -201,7 +201,9 @@ MonoBehaviour:
     data: hJIbg8fHx5ICTTgvFSPDvkC8hagsoyAHUjvL4/mWM0Bb2iD1sZZNvsvajyc=
   _ivBase64:
     data: oEACL1HvvjsA8dr8Bym8lqqjnzv59Scn
-  _slots: []
+  _slots:
+  - slotKey: main
+    cloudSlot: main
 --- !u!1 &6261706322476616027
 GameObject:
   m_ObjectHideFlags: 0

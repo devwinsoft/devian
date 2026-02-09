@@ -128,7 +128,7 @@ public sealed class LocalSaveManager : CompoSingleton<LocalSaveManager>
 2. 파일명 유효성 검증 (`IsValidJsonFilename`)
 3. encrypt(optional) using Devian `Crypto`
 4. checksum(SHA-256) over ciphertext (`LocalSaveCrypto.ComputeSha256Base64`)
-5. `LocalSavePayload` 생성 (SchemaVersion, UTC millis, cipher, checksum)
+5. `LocalSavePayload` 생성 (SchemaVersion, updateTime, utcTime, cipher, checksum)
 6. temp write + atomic rename (`LocalSaveFileStore.WriteAtomic`)
 
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -183,7 +184,8 @@ namespace Devian
 
             var csPayload = new CloudSavePayload(
                 SchemaVersion,
-                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                NowUpdateTime(),
+                NowUtcTime(),
                 cipher,
                 checksum
             );
@@ -237,6 +239,18 @@ namespace Devian
             return r == CloudSaveResult.Success
                 ? CoreResult<bool>.Success(true)
                 : CoreResult<bool>.Failure("cloudsave.delete", $"Delete failed: {r}");
+        }
+
+        private const string UpdateTimeFormat = "yyyyMMdd:HHmmss";
+
+        private static string NowUpdateTime()
+        {
+            return DateTime.Now.ToString(UpdateTimeFormat, CultureInfo.InvariantCulture);
+        }
+
+        private static long NowUtcTime()
+        {
+            return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
         }
 
         private bool TryResolveCloudSlot(string slot, out string cloudSlot)

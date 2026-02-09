@@ -6,14 +6,16 @@ namespace Devian
     public sealed class LocalSavePayload
     {
         public int version;
-        public long updatedAtUtc;
+        public string updateTime;
+        public long utcTime;
         public string payload;
         public string checksum;
 
-        public LocalSavePayload(int version, long updatedAtUtc, string payload, string checksum)
+        public LocalSavePayload(int version, string updateTime, long utcTime, string payload, string checksum)
         {
             this.version = version;
-            this.updatedAtUtc = updatedAtUtc;
+            this.updateTime = updateTime;
+            this.utcTime = utcTime;
             this.payload = payload;
             this.checksum = checksum;
         }

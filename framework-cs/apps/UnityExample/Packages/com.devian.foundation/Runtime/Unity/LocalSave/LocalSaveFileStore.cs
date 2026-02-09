@@ -23,9 +23,12 @@ namespace Devian
                     return CoreResult<bool>.Failure("localsave.filename.empty", "Filename is empty.");
                 }
 
-                Directory.CreateDirectory(rootPath);
-
                 var path = Path.Combine(rootPath, filename);
+                var dir = Path.GetDirectoryName(path);
+                if (!string.IsNullOrEmpty(dir))
+                {
+                    Directory.CreateDirectory(dir);
+                }
                 var tmpPath = path + ".tmp." + Guid.NewGuid().ToString("N");
 
                 var json = JsonUtility.ToJson(payload);

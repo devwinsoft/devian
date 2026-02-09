@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 
 namespace Devian
@@ -127,7 +128,8 @@ namespace Devian
 
             var save = new LocalSavePayload(
                 SchemaVersion,
-                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                NowUpdateTime(),
+                NowUtcTime(),
                 cipher,
                 checksum
             );
@@ -216,6 +218,18 @@ namespace Devian
             return System.Threading.Tasks.Task.FromResult(LoadPayload(slot));
         }
 
+        private const string UpdateTimeFormat = "yyyyMMdd:HHmmss";
+
+        private static string NowUpdateTime()
+        {
+            return DateTime.Now.ToString(UpdateTimeFormat, CultureInfo.InvariantCulture);
+        }
+
+        private static long NowUtcTime()
+        {
+            return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        }
+
         private string GetRootPath()
         {
             return _root == LocalSaveRoot.PersistentData
@@ -232,7 +246,7 @@ namespace Devian
 
                 if (string.Equals(s.slotKey, slot, StringComparison.Ordinal))
                 {
-                    filename = s.filename;
+                    filename = s.filename?.Replace('\\', '/').Trim();
                     return !string.IsNullOrWhiteSpace(filename);
                 }
             }
@@ -246,13 +260,6 @@ namespace Devian
             if (string.IsNullOrWhiteSpace(filename))
             {
                 error = "Filename is empty.";
-                return false;
-            }
-
-            // Must be a plain filename (no directories)
-            if (filename.IndexOf('/') >= 0 || filename.IndexOf('\\') >= 0)
-            {
-                error = "Filename must not contain path separators.";
                 return false;
             }
 

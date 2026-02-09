@@ -15,7 +15,8 @@ AppliesTo: v10
 
 
 - `version: int` — 세이브 스키마 버전
-- `updatedAtUtc: long` — UTC epoch millis
+- `updateTime: string` — `"yyyyMMdd:HHmmss"` (DateTime.Now, device local time)
+- `utcTime: long` — Unix epoch milliseconds (UTC)
 - `payload: string` — JSON(권장) 또는 압축된 텍스트
 - `checksum: string` — SHA-256
   - Devian `CloudSaveManager` 사용 시: 저장 전에 checksum을 생성하고, 로드 시 checksum을 검증한다.
@@ -73,7 +74,7 @@ AppliesTo: v10
 
 
 권장 패턴(서비스 레이어):
-- `updatedAtUtc` 기준 최신 승리
+- `utcTime` 기준 최신 승리
 - 단조 증가 값(최고 스테이지/업적 등)은 max 병합(선택)
 - 재화/경제 데이터는 병합 금지(복제/치팅 리스크)
 
