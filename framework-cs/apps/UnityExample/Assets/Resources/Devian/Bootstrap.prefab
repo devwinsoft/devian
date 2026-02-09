@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 4706526706863056144}
   - component: {fileID: -7611824914717835204}
   - component: {fileID: 9207624478463307170}
+  - component: {fileID: -4669010396052858670}
   m_Layer: 0
   m_Name: Bootstrap
   m_TagString: Untagged
@@ -180,6 +181,26 @@ MonoBehaviour:
     data: vsc4hEBTUp87y1s4B/yWOFsjAlG2lqPR+ykvBRpTsVuabrzDEtZFhTvvGCc=
   _ivBase64:
     data: G+/jUsOWmqOWO6Cd0SxbarE4n/yzhScn
+  _slots:
+  - slotKey: main
+    filename: slot_main.json
+--- !u!114 &-4669010396052858670
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2454387350981742136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c1505e7da3b324fb6ada71463399aa9f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Unity::Devian.CloudSaveManager
+  _useEncryption: 1
+  _keyBase64:
+    data: hJIbg8fHx5ICTTgvFSPDvkC8hagsoyAHUjvL4/mWM0Bb2iD1sZZNvsvajyc=
+  _ivBase64:
+    data: oEACL1HvvjsA8dr8Bym8lqqjnzv59Scn
   _slots: []
 --- !u!1 &6261706322476616027
 GameObject:

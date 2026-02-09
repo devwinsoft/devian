@@ -59,6 +59,12 @@ public class TestScene : BaseScene
         Log.Debug(ST_TEXT.Get("loading"));
         var obj = BundlePool.Spawn<TestPoolObject>("Cube", Vector3.zero, Quaternion.identity, null);
         Debug.Log(obj);
+
+        var save_result = LocalSaveManager.Instance.Save("main", "ABCD");
+        Debug.Log(save_result.Value);
+        var load_result = LocalSaveManager.Instance.LoadPayload("main");
+        Debug.Log(load_result.Value);
+        Debug.Log(Application.persistentDataPath);
     }
 
     public override IEnumerator OnExit()

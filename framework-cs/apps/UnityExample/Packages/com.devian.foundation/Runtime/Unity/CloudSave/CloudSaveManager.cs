@@ -320,6 +320,19 @@ namespace Devian
             _keyBase64.Value = Convert.ToBase64String(Crypto.GenerateKey());
             _ivBase64.Value = Convert.ToBase64String(Crypto.GenerateIv());
         }
+
+        private void OnValidate()
+        {
+            if (!_useEncryption) return;
+
+            var keyB64 = _keyBase64.Value;
+            var ivB64 = _ivBase64.Value;
+
+            if (string.IsNullOrWhiteSpace(keyB64) || string.IsNullOrWhiteSpace(ivB64))
+            {
+                GenerateKeyIv();
+            }
+        }
 #endif
     }
 }
