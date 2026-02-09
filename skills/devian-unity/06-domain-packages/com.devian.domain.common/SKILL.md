@@ -12,8 +12,7 @@ AppliesTo: v10
 ## 목표
 
 - Devian.Domain.Common 소스를 Unity UPM 패키지로 제공한다.
-- Common features(Variant, Complex types)를 포함한다.
-- Complex PropertyDrawer(Editor)를 포함한다.
+- Common features(Variant)를 포함한다.
 - UnityEngine 직접 의존 없이 순수 C# 코드만 포함한다(Editor 코드 제외).
 
 ---
@@ -50,20 +49,11 @@ com.devian.domain.common/
 │   ├── Generated/
 │   │   └── Common.g.cs              (generated)
 │   └── Features/
-│       ├── Variant.cs
-│       └── Complex/
-│           ├── CInt.cs
-│           ├── CFloat.cs
-│           ├── CString.cs
-│           └── ComplexUtil.cs
+│       └── Variant.cs
 └── Editor/
     ├── Devian.Domain.Common.Editor.asmdef
-    ├── Generated/
-    │   └── {TableName}_ID.Editor.cs  (keyed table 있을 때 생성)
-    └── Complex/
-        ├── CIntPropertyDrawer.cs
-        ├── CFloatPropertyDrawer.cs
-        └── CStringPropertyDrawer.cs
+    └── Generated/
+        └── {TableName}_ID.Editor.cs  (keyed table 있을 때 생성)
 ```
 
 > **중요:** Log는 `com.devian.foundation`에 위치한다. 이 패키지에는 Log가 없다.
@@ -145,30 +135,14 @@ com.devian.domain.common/
 |------|------|
 | `Runtime/Generated/Common.g.cs` | TableGen으로 생성된 Common 모듈 코드 |
 | `Runtime/Features/Variant.cs` | Variant feature 구현 (SSOT: 11-feature-variant) |
-| `Runtime/Features/Complex/*.cs` | Complex feature 구현 (SSOT: 13-feature-complex) |
 
 ### Editor
 
 | 파일 | 설명 |
 |------|------|
-| `Editor/Complex/CIntPropertyDrawer.cs` | CInt PropertyDrawer |
-| `Editor/Complex/CFloatPropertyDrawer.cs` | CFloat PropertyDrawer |
-| `Editor/Complex/CStringPropertyDrawer.cs` | CString PropertyDrawer |
 | `Editor/Generated/{TableName}_ID.Editor.cs` | TableID Inspector 바인딩 (keyed table 있을 때 생성) |
 
 > **주의:** Log는 `com.devian.foundation/Runtime/Core/Core/Logger.cs`에 위치한다. 이 패키지에 Log를 포함하지 않는다.
-
----
-
-## Complex PropertyDrawer 정책
-
-**Complex types(CInt, CFloat, CString)의 PropertyDrawer는 이 패키지의 `Editor/Complex/`에 위치한다.**
-
-- `CIntPropertyDrawer.cs` - CInt 인스펙터 UI
-- `CFloatPropertyDrawer.cs` - CFloat 인스펙터 UI  
-- `CStringPropertyDrawer.cs` - CString 인스펙터 UI (LocalizationKey 지원)
-
-> **이전 위치와 다름:** 기존에는 `com.devian.foundation/Editor/Complex/`에 있었으나, 의존 방향 정책에 따라 이 패키지로 이동됨.
 
 ---
 
@@ -177,8 +151,9 @@ com.devian.domain.common/
 **이 UPM 패키지는 빌더(`build.js`)가 staging에 생성 후 clean+copy로 targetDir에 덮어쓴다.**
 
 - staging에 포함되지 않은 파일은 clean+copy 이후 삭제된다.
-- 따라서 Features(Variant/Complex)는 **빌더가 staging에 복사**해야 한다.
+- 따라서 Features(Variant)는 **빌더가 staging에 복사**해야 한다.
 - Common 모듈일 때만 `framework-cs/module/Devian.Domain.Common/features/` → staging `Runtime/Features/`로 복사.
+- Complex는 `com.devian.foundation`으로 이동됨 (skills/devian-unity/30-unity-components/13-feature-complex/SKILL.md 참조).
 - `upmConfig.packageDir`가 UnityExample/Packages를 가리키면 해당 디렉토리는 **generated output**으로 취급된다.
 
 ---
@@ -212,4 +187,4 @@ keyed table(primaryKey 있는 테이블)이 있으면 `Editor/Generated/`에 Tab
 - Related: `skills/devian-unity/04-package-metadata/SKILL.md`
 - Related: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
 - Related: `skills/devian-common/11-feature-variant/SKILL.md`
-- Related: `skills/devian-common/13-feature-complex/SKILL.md`
+- Related: `skills/devian-unity/30-unity-components/13-feature-complex/SKILL.md`

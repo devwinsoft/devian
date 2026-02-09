@@ -96,7 +96,9 @@
       "Bash(git rm:*)",
       "Bash(./input/build.sh:*)",
       "Bash(node:*)",
-      "Bash(git -C /Users/maoshy/Documents/Projects/devian log -10 --oneline -p -- '**/TestInputController.cs')"
+      "Bash(git -C /Users/maoshy/Documents/Projects/devian log -10 --oneline -p -- '**/TestInputController.cs')",
+      "Bash(\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Packages/com.devian.foundation/Runtime/Core/Features/Complex/CFloat.cs.meta\" << 'EOF'\nfileFormatVersion: 2\nguid: 1b8227e95945429781093ff648c06897\nEOF)",
+      "Bash(printf:*)"
     ]
   }
 }

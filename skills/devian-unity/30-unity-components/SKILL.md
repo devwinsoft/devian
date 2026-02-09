@@ -16,6 +16,7 @@ Type: Index / Directory
 |----|----------|------|------|
 | 00 | Overview | 진입점/범위 | `00-overview/skill.md` |
 | 09 | UnityMainThread | Unity 메인스레드 강제 유틸 (UnityMainThread, UnityMainThreadDispatcher) | `09-unity-main-thread/SKILL.md` |
+| 13 | Complex | 경량 마스킹 (CInt/CFloat/CString/ComplexUtil) + PropertyDrawer | `13-feature-complex/SKILL.md` |
 | 31 | Singleton v3 | 2종 싱글톤 (AutoSingleton 기본, CompoSingleton 선택) + Registry SSOT | `31-singleton/SKILL.md` |
 | 02 | PoolManager | Type당 1풀 + prefab name 기반 Spawn + Factory 추상화 | `02-pool-manager/SKILL.md` |
 | 03 | MessageSystem | ownerKey + enum msgKey 기반 메시지/트리거 시스템 (timer 제외) | `03-message-system/SKILL.md` |

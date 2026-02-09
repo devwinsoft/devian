@@ -24,3 +24,4 @@ AppliesTo: v10
 | **devian-unity** | [00-overview](./devian-unity/00-overview/SKILL.md) | [01-policy](./devian-unity/01-policy/SKILL.md) | [03-ssot](./devian-unity/03-ssot/SKILL.md) | Unity UPM, 컴포넌트 |
 | **devian-examples** | [00-overview](./devian-examples/00-overview/SKILL.md) | [01-policy](./devian-examples/01-policy/SKILL.md) | — | 예제 도메인/프로토콜 |
 | **devian-unity-samples** | [00-overview](./devian-unity-samples/00-overview/SKILL.md) | [01-policy](./devian-unity-samples/01-policy/SKILL.md) | — | Unity 샘플 템플릿 |
+| **devian-save** | [00-overview](./devian-save/00-overview/SKILL.md) | [01-policy](./devian-save/01-policy/SKILL.md) | [03-ssot](./devian-save/03-ssot/SKILL.md) | Cloud Save + Local Save (Unity) |
