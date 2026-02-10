@@ -463,6 +463,6 @@ public sealed class {TableName}_ID_Drawer : BaseEditorID_Drawer<{TableName}IdSel
 - Parent: `skills/devian-common/00-overview/SKILL.md`
 - NDJSON 저장: `skills/devian-data/34-ndjson-storage/SKILL.md`
 - pb64 저장: `skills/devian-data/35-pb64-storage/SKILL.md`
-- Related: `skills/devian-unity/30-unity-components/12-download-manager/SKILL.md` (다운로드 연동)
-- Related: `skills/devian-unity/30-unity-components/10-asset-manager/SKILL.md` (캐시 금지 규칙)
+- Related: `skills/devian-unity/10-base-system/12-download-manager/SKILL.md` (다운로드 연동)
+- Related: `skills/devian-unity/10-base-system/10-asset-manager/SKILL.md` (캐시 금지 규칙)
 - Related: `skills/devian-data/32-json-row-io/SKILL.md` (일반 테이블 포맷)

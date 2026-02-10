@@ -126,7 +126,7 @@ rm -f UnityExample/Packages/{pkg}/.../OldName.cs.meta
 - `skills/devian-unity/06-domain-packages/com.devian.domain.common/SKILL.md`
 
 ### Unity Components
-- AssetManager: `skills/devian-unity/30-unity-components/10-asset-manager/SKILL.md`
+- AssetManager: `skills/devian-unity/10-base-system/10-asset-manager/SKILL.md`
 
 ---
 

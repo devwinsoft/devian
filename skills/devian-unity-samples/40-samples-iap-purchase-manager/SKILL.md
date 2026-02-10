@@ -51,7 +51,7 @@ PurchaseManager(IAP 샘플)의 위치/역할/규약을 설명한다.
 ## Related SSOT
 
 
-- `skills/devian-unity-iap/03-ssot/SKILL.md`
-- `skills/devian-unity-iap/06-ssot-verify-idempotency/SKILL.md`
-- `skills/devian-unity-iap/07-ssot-subscription-noads/SKILL.md`
-- `skills/devian-unity-iap/08-ssot-season-pass/SKILL.md`
+- `skills/devian-unity/30-purchase-system/03-ssot/SKILL.md`
+- `skills/devian-unity/30-purchase-system/06-ssot-verify-idempotency/SKILL.md`
+- `skills/devian-unity/30-purchase-system/07-ssot-subscription-noads/SKILL.md`
+- `skills/devian-unity/30-purchase-system/08-ssot-season-pass/SKILL.md`

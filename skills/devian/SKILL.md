@@ -35,7 +35,7 @@ AppliesTo: v10
 | **Data** | [devian-data/03-ssot](../devian-data/03-ssot/SKILL.md) | tableConfig, Tables, NDJSON, pb64 |
 | **Protocol** | [devian-protocol/03-ssot](../devian-protocol/03-ssot/SKILL.md) | Protocol Spec, Opcode/Tag, Protocol UPM |
 | **Unity** | [devian-unity/03-ssot](../devian-unity/03-ssot/SKILL.md) | upmConfig, UPM Sync, Foundation |
-| **Unity IAP** | [devian-unity-iap/03-ssot](../devian-unity-iap/03-ssot/SKILL.md) | Unity IAP + 결제 검증(Functions) + 멱등/구독 상태(Firestore) |
+| **Purchase System** | [devian-unity/30-purchase-system/03-ssot](../devian-unity/30-purchase-system/03-ssot/SKILL.md) | Unity IAP + 결제 검증(Functions) + 멱등/구독 상태(Firestore) |
 
 ---
 
@@ -66,7 +66,6 @@ AppliesTo: v10
 | **devian-protocol** | [00-overview](../devian-protocol/00-overview/SKILL.md) | [01-policy](../devian-protocol/01-policy/SKILL.md) | [03-ssot](../devian-protocol/03-ssot/SKILL.md) | 프로토콜 코드젠, Opcode |
 | **devian-common** | [00-overview](../devian-common/00-overview/SKILL.md) | [01-policy](../devian-common/01-policy/SKILL.md) | — | Common 도메인, Feature 모듈 |
 | **devian-unity** | [00-overview](../devian-unity/00-overview/SKILL.md) | [01-policy](../devian-unity/01-policy/SKILL.md) | [03-ssot](../devian-unity/03-ssot/SKILL.md) | Unity UPM, 컴포넌트 |
-| **devian-unity-iap** | [00-overview](../devian-unity-iap/00-overview/SKILL.md) | [01-policy](../devian-unity-iap/01-policy/SKILL.md) | [03-ssot](../devian-unity-iap/03-ssot/SKILL.md) | Unity IAP + 결제 검증(Functions) + 멱등/구독 상태(Firestore) |
 | **devian-examples** | [00-overview](../devian-examples/00-overview/SKILL.md) | [01-policy](../devian-examples/01-policy/SKILL.md) | — | 예제 도메인/프로토콜 |
 | **devian-unity-samples** | [00-overview](../devian-unity-samples/00-overview/SKILL.md) | [01-policy](../devian-unity-samples/01-policy/SKILL.md) | — | Unity 샘플 템플릿 |
 

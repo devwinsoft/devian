@@ -113,4 +113,4 @@ delete instance;  // 컴파일 에러
 ## Reference
 
 - Parent: `skills/devian-unity/00-overview/SKILL.md`
-- Used by: `30-unity-components/31-singleton/SKILL.md`, `30-unity-components/02-pool-manager/SKILL.md`
+- Used by: `10-base-system/31-singleton/SKILL.md`, `10-base-system/02-pool-manager/SKILL.md`
