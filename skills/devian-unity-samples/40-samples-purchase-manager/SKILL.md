@@ -1,7 +1,7 @@
-# samples-iap-purchase-manager
+# samples-purchase-manager
 
 
-PurchaseManager(IAP 샘플)의 위치/역할/규약을 설명한다.
+PurchaseManager(구매 샘플)의 위치/역할/규약을 설명한다.
 
 
 ---
@@ -10,12 +10,12 @@ PurchaseManager(IAP 샘플)의 위치/역할/규약을 설명한다.
 ## Implementation Location (SSOT)
 
 
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/IAP/Runtime/PurchaseManager.cs`
-- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/IAP/Runtime/PurchaseManager.cs`
+- UPM: `framework-cs/upm/com.devian.samples/Samples~/PurchaseManager/Runtime/PurchaseManager.cs`
+- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/PurchaseManager/Runtime/PurchaseManager.cs`
 
 
 - asmdef:
-  - `Devian.Samples.Iap` (`Samples~/IAP/Runtime/Devian.Samples.Iap.asmdef`)
+  - `Devian.Samples.PurchaseManager` (`Samples~/PurchaseManager/Runtime/Devian.Samples.PurchaseManager.asmdef`)
 
 
 ---

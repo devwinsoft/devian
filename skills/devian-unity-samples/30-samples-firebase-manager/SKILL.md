@@ -1,4 +1,4 @@
-# devian-unity-samples — FirebaseManager
+# devian-unity-samples — Firebase Manager
 
 
 ## Scope
@@ -22,7 +22,7 @@
   - UPM: `framework-cs/upm/com.devian.samples/Samples~/Auth-Firebase/Runtime/Devian.Samples.AuthFirebase.asmdef`
   - UnityExample mirror: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/Auth-Firebase/Runtime/Devian.Samples.AuthFirebase.asmdef`
 - Firebase SDK는 프로젝트에 설치되어 있어야 한다(FirebaseApp/FirebaseAuth 사용).
-- UPM Samples UI 표시는 `com.devian.samples/package.json`의 `samples[].displayName/description`를 따른다. Auth-Firebase 샘플은 `(Anonymous)`가 아닌 일반 Firebase Auth 샘플로 표시된다.
+- UPM Samples UI 표시는 `com.devian.samples/package.json`의 `samples[].displayName/description`를 따른다. Firebase Manager 샘플은 `(Anonymous)`가 아닌 일반 Firebase Auth 샘플로 표시된다.
 
 
 ## Locations (mirrored)

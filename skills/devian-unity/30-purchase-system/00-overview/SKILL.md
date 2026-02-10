@@ -33,7 +33,7 @@ Firebase Cloud Functions + Firestore 기반의 **결제 검증/멱등 지급/구
 ## Related
 
 
-- Sample Implementation: `com.devian.samples` — `Samples~/IAP/Runtime/PurchaseManager.cs`
+- Sample Implementation: `com.devian.samples` — `Samples~/PurchaseManager/Runtime/PurchaseManager.cs`
 - [Root SSOT](../../../devian-core/03-ssot/SKILL.md)
 - [Unity SSOT](../../03-ssot/SKILL.md)
 - [Devian Index](../../../devian/SKILL.md)

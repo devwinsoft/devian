@@ -9,7 +9,7 @@
   },
   "samples": [
     {
-      "displayName": "Auth-Firebase",
+      "displayName": "Firebase Manager",
       "description": "Firebase Auth sample (Anonymous/Google/Apple/Facebook common flow: init + sign-in + ID token).",
       "path": "Samples~/Auth-Firebase"
     },
@@ -19,14 +19,14 @@
       "path": "Samples~/CloudSave-GPGS"
     },
     {
-      "displayName": "I A P",
-      "description": "Sample: IAP",
-      "path": "Samples~/IAP"
-    },
-    {
       "displayName": "Network",
       "description": "Unity WebSocket client sample using Devian.Protocol.Game (Ping/Echo) with Tick-based pump.",
       "path": "Samples~/Network"
+    },
+    {
+      "displayName": "Purchase Manager",
+      "description": "Sample: PurchaseManager",
+      "path": "Samples~/PurchaseManager"
     },
     {
       "displayName": "UI",

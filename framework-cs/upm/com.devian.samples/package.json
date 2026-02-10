@@ -24,7 +24,7 @@
       "path": "Samples~/CloudSave-GPGS"
     },
     {
-      "displayName": "Auth-Firebase",
+      "displayName": "Firebase Manager",
       "description": "Firebase Auth sample (Anonymous/Google/Apple/Facebook common flow: init + sign-in + ID token).",
       "path": "Samples~/Auth-Firebase"
     }

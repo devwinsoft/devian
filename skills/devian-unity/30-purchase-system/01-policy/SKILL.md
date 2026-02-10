@@ -89,7 +89,7 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 ## PurchaseManager (Client Entry Point)
 
 
-- 샘플 구현: `com.devian.samples` — `Samples~/IAP/Runtime/PurchaseManager.cs`
+- 샘플 구현: `com.devian.samples` — `Samples~/PurchaseManager/Runtime/PurchaseManager.cs`
 - 구현: `PurchaseManager : CompoSingleton<PurchaseManager>`
 
 
