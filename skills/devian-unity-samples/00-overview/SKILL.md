@@ -17,6 +17,7 @@ Unity 샘플 프로젝트 작성 가이드 및 샘플들을 담당한다.
 | [10-samples-network](../10-samples-network/SKILL.md) | 네트워크 샘플 |
 | [20-samples-ui-virtual-pad](../20-samples-ui-virtual-pad/SKILL.md) | UI Virtual Pad 샘플 |
 | [30-samples-firebase-manager](../30-samples-firebase-manager/SKILL.md) | FirebaseManager 샘플 |
+| [40-samples-iap-purchase-manager](../40-samples-iap-purchase-manager/SKILL.md) | PurchaseManager(IAP) 샘플 |
 
 
 ---

@@ -19,6 +19,11 @@
       "path": "Samples~/CloudSave-GPGS"
     },
     {
+      "displayName": "I A P",
+      "description": "Sample: IAP",
+      "path": "Samples~/IAP"
+    },
+    {
       "displayName": "Network",
       "description": "Unity WebSocket client sample using Devian.Protocol.Game (Ping/Echo) with Tick-based pump.",
       "path": "Samples~/Network"

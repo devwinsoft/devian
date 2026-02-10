@@ -1,4 +1,18 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash([ -d \"skills/devian-auth-firebase/30-samples-auth-firebase-anonymous\" ])",
+      "Bash([ -d \"skills/devian-unity-samples/30-samples-auth-firebase-anonymous\" ])",
+      "Bash(git rm:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(ssh:*)",
+      "Bash(git remote set-url:*)",
+      "Bash(python3:*)",
+      "Bash(test:*)"
+    ]
+  },
   "project": {
     "name": "Devian",
     "description": "Devian framework monorepo"
@@ -23,11 +37,5 @@
     "SSOT=skills/devian/03-ssot policy-only, build.json path/schema truth, code truth for APIs/artifacts/frame/signatures",
     "Devian internal method naming: _{method name}",
     "Devian private method naming: starts with lowercase"
-  ],
-  "permissions": {
-    "allow": [
-      "Bash([ -d \"skills/devian-auth-firebase/30-samples-auth-firebase-anonymous\" ])",
-      "Bash([ -d \"skills/devian-unity-samples/30-samples-auth-firebase-anonymous\" ])"
-    ]
-  }
+  ]
 }
