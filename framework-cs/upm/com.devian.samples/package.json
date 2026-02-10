@@ -22,6 +22,11 @@
       "displayName": "CloudSave (GPGS)",
       "description": "Samples-only GPGS integration entry: client creation + CloudSaveManager.Configure in one call (stub client).",
       "path": "Samples~/CloudSave-GPGS"
+    },
+    {
+      "displayName": "Auth-Firebase",
+      "description": "Firebase Auth sample (Anonymous/Google/Apple/Facebook common flow: init + sign-in + ID token).",
+      "path": "Samples~/Auth-Firebase"
     }
   ]
 }

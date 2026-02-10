@@ -57,6 +57,12 @@ function parseGitignore(gitignorePath) {
             continue;
         }
 
+        // Normalize gitignore-style leading slash:
+        // Archive tool uses relative paths like "framework-cs/...", so "/framework-cs/..." must match.
+        if (line.startsWith('/')) {
+            line = line.slice(1);
+        }
+
         patterns.push(line);
     }
 
@@ -91,11 +97,13 @@ function matchesPattern(filePath, pattern) {
 
     if (pattern.includes('**')) {
         let regexPattern = pattern
-            .replace(/\*\*\//g, '(.*/)?')
-            .replace(/\*\*/g, '.*')
+            .replace(/\*\*\//g, '{{DIRSTAR}}')
+            .replace(/\*\*/g, '{{GLOBSTAR}}')
             .replace(/\*/g, '[^/]*')
             .replace(/\?/g, '[^/]')
-            .replace(/\./g, '\\.');
+            .replace(/\./g, '\\.')
+            .replace(/{{DIRSTAR}}/g, '(.*/)?')
+            .replace(/{{GLOBSTAR}}/g, '.*');
         regexPattern = `^${regexPattern}$`;
 
         try {
@@ -247,6 +255,14 @@ function collectFiles(root, excludePatterns, options = {}) {
         extraExcludes.push('**/*.ndjson');
     }
 
+    // UnityExample 분석 불필요/대용량 폴더: 항상 제외 (prefix 기반)
+    const unityExampleHardExcludePrefixes = [
+        'framework-cs/apps/UnityExample/Assets/Firebase',
+        'framework-cs/apps/UnityExample/Assets/GeneratedLocalRepo',
+        'framework-cs/apps/UnityExample/Assets/TextMesh Pro',
+        'framework-cs/apps/UnityExample/Assets/GooglePlayGames',
+    ];
+
     // temp 제외: buildInputJson.tempDir 기반
     if (!options.includeTemp) {
         const tempPatterns = getTempDirExcludePatterns(root);
@@ -259,6 +275,18 @@ function collectFiles(root, excludePatterns, options = {}) {
         for (const entry of entries) {
             const fullPath = path.join(dir, entry.name);
             const relPath = path.relative(root, fullPath).replace(/\\/g, '/');
+
+            // Hard prefix 제외: glob 매칭 전에 경로 시작 일치만으로 컷
+            let excludedByPrefix = false;
+            for (const prefix of unityExampleHardExcludePrefixes) {
+                if (relPath === prefix || relPath.startsWith(prefix + '/')) {
+                    excludedByPrefix = true;
+                    break;
+                }
+            }
+            if (excludedByPrefix) {
+                continue;
+            }
 
             if (entry.isDirectory()) {
                 if (!shouldExclude(relPath, extraExcludes, true)) {

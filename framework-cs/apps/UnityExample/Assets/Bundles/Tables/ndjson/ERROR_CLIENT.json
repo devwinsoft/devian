@@ -3,3 +3,16 @@
 {"Id":"COMMON_AUTH","Msg_key":"","Msg":"Authorization error"}
 {"Id":"COMMON_RATE_LIMIT","Msg_key":"","Msg":"Too many requests"}
 {"Id":"COMMON_SERVER","Msg_key":"","Msg":"Server error"}
+{"Id":"FIREBASE_DEPENDENCY","Msg_key":"","Msg":"Firebase dependency error"}
+{"Id":"FIREBASE_NOT_INITIALIZED","Msg_key":"","Msg":"Firebase is not initialized"}
+{"Id":"FIREBASE_SIGNIN","Msg_key":"","Msg":"Firebase sign-in failed"}
+{"Id":"FIREBASE_NO_USER","Msg_key":"","Msg":"No signed-in user"}
+{"Id":"FIREBASE_TOKEN","Msg_key":"","Msg":"Failed to get ID token"}
+{"Id":"FIREBASE_GOOGLE_TOKEN","Msg_key":"","Msg":"Google idToken is empty"}
+{"Id":"FIREBASE_GOOGLE_SIGNIN","Msg_key":"","Msg":"Google sign-in failed"}
+{"Id":"FIREBASE_GOOGLE_REAUTH_REQUIRED","Msg_key":"","Msg":"Google re-authentication required"}
+{"Id":"FIREBASE_APPLE_TOKEN","Msg_key":"","Msg":"Apple identity token is empty"}
+{"Id":"FIREBASE_APPLE_SIGNIN","Msg_key":"","Msg":"Apple sign-in failed"}
+{"Id":"FIREBASE_APPLE_BRIDGE","Msg_key":"","Msg":"Apple sign-in bridge is not wired"}
+{"Id":"FIREBASE_FACEBOOK_NOT_IMPLEMENTED","Msg_key":"","Msg":"Facebook sign-in is not implemented"}
+{"Id":"FIREBASE_REAUTH_UNKNOWN","Msg_key":"","Msg":"Unknown re-authentication type"}

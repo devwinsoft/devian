@@ -9,6 +9,16 @@
   },
   "samples": [
     {
+      "displayName": "Auth-Firebase",
+      "description": "Firebase Auth sample (Anonymous/Google/Apple/Facebook common flow: init + sign-in + ID token).",
+      "path": "Samples~/Auth-Firebase"
+    },
+    {
+      "displayName": "CloudSave (GPGS)",
+      "description": "Samples-only GPGS integration entry: client creation + CloudSaveManager.Configure in one call (stub client).",
+      "path": "Samples~/CloudSave-GPGS"
+    },
+    {
       "displayName": "Network",
       "description": "Unity WebSocket client sample using Devian.Protocol.Game (Ping/Echo) with Tick-based pump.",
       "path": "Samples~/Network"
@@ -17,11 +27,6 @@
       "displayName": "UI",
       "description": "UGUI virtual pad (joystick) sample. Outputs normalized Vector2 via drag input.",
       "path": "Samples~/UI"
-    },
-    {
-      "displayName": "CloudSave (GPGS)",
-      "description": "Samples-only GPGS integration entry: client creation + CloudSaveManager.Configure in one call (stub client).",
-      "path": "Samples~/CloudSave-GPGS"
     }
   ]
 }

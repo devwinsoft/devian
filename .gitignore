@@ -35,6 +35,9 @@ UserSettings/
 /framework-cs/apps/UnityExample/**/*.csproj
 /framework-cs/apps/UnityExample/**/*.sln
 
+# Firebase x86_64 native plugins (too large for GitHub)
+framework-cs/apps/UnityExample/Assets/Firebase/Plugins/x86_64/
+
 # JetBrains Rider
 .idea/
 
