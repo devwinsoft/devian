@@ -2,6 +2,7 @@ using UnityEngine;
 using Devian;
 using System;
 using System.Collections;
+using System.Threading;
 
 /// <summary>
 /// BaseBootstrap 파생 예제.
@@ -12,7 +13,7 @@ public class TestBootstrap : BaseBootstrap
     protected override IEnumerator OnBootProc()
     {
         Log.SetSink(new UnityLogSink());
-
+        
         yield break;
     }
 }

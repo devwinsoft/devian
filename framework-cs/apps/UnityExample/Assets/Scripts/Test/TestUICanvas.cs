@@ -28,6 +28,16 @@ public class TestUICanvas : UICanvas<TestUICanvas>
         Debug.Log(r.Value);
     }
 
+    public async void OnClick_CloudLoad()
+    {
+        var r = CloudSaveManager.Instance.LoadPayloadAsync("main", CancellationToken.None);
+    }
+    
+    public async void OnClick_CloudSave()
+    {
+    }
+
+
     public void OnClick_Connect()
     {
         GameNetManager.Instance.Connect("ws://localhost:8080");

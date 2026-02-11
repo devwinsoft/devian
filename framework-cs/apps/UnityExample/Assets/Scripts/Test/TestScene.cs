@@ -34,16 +34,24 @@ public class TestScene : BaseScene
         yield return null;
     }
 
+    async void _tryActivateGpgsSavedGames()
+    {
+        var r = await CloudSaveManager.Instance.InitializeAsync(CancellationToken.None);
+        Debug.Log($"CloudSave result: success={r.Value == CloudSaveResult.Success}");
+    }
+    
     public override IEnumerator OnStart()
     {
         yield return base.OnStart();
-
+        
         yield return DownloadManager.Instance.PatchProc(
             (patch) =>
             {
                 Debug.Log(patch.TotalSize);
             }
         );
+
+        _tryActivateGpgsSavedGames();
 
         yield return TableManager.Instance.LoadTablesAsync("table-ndjson", TableFormat.Json);
         yield return TableManager.Instance.LoadStringsAsync("string-pb64", TableFormat.Pb64, SystemLanguage.Korean);

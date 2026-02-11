@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -90,6 +91,23 @@ namespace Devian
 
         public bool IsAvailable => _client != null && _client.IsAvailable;
 
+        /// <summary>
+        /// One-line init:
+        /// - If client not configured: create default GPGS cloud save client.
+        /// - Best-effort activate GPGS (Saved Games enabled) when plugin exists.
+        /// - Then sign-in (or no-op if already signed in).
+        /// </summary>
+        public Task<CoreResult<CloudSaveResult>> InitializeAsync(CancellationToken ct)
+        {
+            if (_client == null)
+            {
+                _client = new GooglePlayGamesCloudSaveClient();
+                _tryActivateGpgsSavedGames();
+            }
+
+            return _signInInternal(ct);
+        }
+
         public Task<CoreResult<CloudSaveResult>> SignInIfNeededAsync(CancellationToken ct)
         {
             if (_client == null)
@@ -161,6 +179,57 @@ namespace Devian
             return r == CloudSaveResult.Success
                 ? CoreResult<CloudSaveResult>.Success(r)
                 : CoreResult<CloudSaveResult>.Failure("cloudsave.signin", $"Sign-in failed: {r}");
+        }
+
+        private const string _gpgsConfigBuilderTypeName =
+            "GooglePlayGames.BasicApi.PlayGamesClientConfiguration+Builder, GooglePlayGames";
+        private const string _playGamesPlatformTypeName =
+            "GooglePlayGames.PlayGamesPlatform, GooglePlayGames";
+
+        private static void _tryActivateGpgsSavedGames()
+        {
+#if UNITY_ANDROID && !UNITY_EDITOR
+            try
+            {
+                var builderType = Type.GetType(_gpgsConfigBuilderTypeName);
+                var platformType = Type.GetType(_playGamesPlatformTypeName);
+
+                if (builderType == null || platformType == null) return;
+
+                var builder = Activator.CreateInstance(builderType);
+                if (builder == null) return;
+
+                builderType.GetMethod("EnableSavedGames", Type.EmptyTypes)
+                    ?.Invoke(builder, null);
+
+                var config = builderType.GetMethod("Build", Type.EmptyTypes)
+                    ?.Invoke(builder, null);
+                if (config == null) return;
+
+                MethodInfo init = null;
+                var methods = platformType.GetMethods(BindingFlags.Public | BindingFlags.Static);
+                for (var i = 0; i < methods.Length; i++)
+                {
+                    var m = methods[i];
+                    if (!string.Equals(m.Name, "InitializeInstance", StringComparison.Ordinal)) continue;
+                    var ps = m.GetParameters();
+                    if (ps.Length == 1)
+                    {
+                        init = m;
+                        break;
+                    }
+                }
+
+                init?.Invoke(null, new[] { config });
+
+                platformType.GetMethod("Activate", BindingFlags.Public | BindingFlags.Static)
+                    ?.Invoke(null, null);
+            }
+            catch
+            {
+                // Best-effort: no throw.
+            }
+#endif
         }
 
         private async Task<CoreResult<bool>> _saveInternal(
