@@ -19,7 +19,7 @@ GameObject:
   - component: {fileID: -7611824914717835204}
   - component: {fileID: 9207624478463307170}
   - component: {fileID: -4669010396052858670}
-  - component: {fileID: 4118440632331827862}
+  - component: {fileID: 4846411388033390387}
   m_Layer: 0
   m_Name: Bootstrap
   m_TagString: Untagged
@@ -205,7 +205,7 @@ MonoBehaviour:
   _slots:
   - slotKey: main
     cloudSlot: main
---- !u!114 &4118440632331827862
+--- !u!114 &4846411388033390387
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -214,7 +214,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2454387350981742136}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bd1f63a0f7e1947e69fe07630d2b340b, type: 3}
+  m_Script: {fileID: 11500000, guid: c1aa7832139b249628ca4f1b7e95549f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.AuthFirebase::Devian.FirebaseManager
 --- !u!1 &6261706322476616027

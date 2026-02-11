@@ -22,6 +22,10 @@ Devian Unity 런타임, UPM 패키지, 컴포넌트를 담당한다.
 | [06-domain-packages](../06-domain-packages/SKILL.md) | 도메인 UPM 패키지 인덱스 |
 | [02-unity-bundles](../02-unity-bundles/SKILL.md) | Unity 번들 정책 |
 | [10-base-system](../10-base-system/skill.md) | Unity 컴포넌트 인덱스 |
+| [12-complex-system](../12-complex-system/00-overview/SKILL.md) | Complex System (CInt/CFloat/CBigInt) |
+| [14-effect-system](../14-effect-system/00-overview/SKILL.md) | Effect System (CommonEffect/MaterialEffect) |
+| [15-input-system](../15-input-system/00-overview/SKILL.md) | Input System (InputManager/InputController/VirtualGamepad) |
+| [22-sound-system](../22-sound-system/00-overview/SKILL.md) | Sound System (Tables/Manager/Voice Resolve/Domain/BaseAudio) |
 | [30-purchase-system](../30-purchase-system/00-overview/SKILL.md) | Purchase System (Unity IAP + verification + entitlements) |
 | [40-ui-system](../40-ui-system/skill.md) | UI 컴포넌트 인덱스 |
 

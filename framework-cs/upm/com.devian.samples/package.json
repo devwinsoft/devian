@@ -14,9 +14,9 @@
       "path": "Samples~/Network"
     },
     {
-      "displayName": "UI",
+      "displayName": "Virtual Pad",
       "description": "UGUI virtual pad (joystick) sample. Outputs normalized Vector2 via drag input.",
-      "path": "Samples~/UI"
+      "path": "Samples~/VirtualPad"
     },
     {
       "displayName": "CloudSave (GPGS)",
@@ -26,7 +26,7 @@
     {
       "displayName": "Firebase Manager",
       "description": "Firebase Auth sample (Anonymous/Google/Apple/Facebook common flow: init + sign-in + ID token).",
-      "path": "Samples~/Auth-Firebase"
+      "path": "Samples~/Firebase"
     }
   ]
 }

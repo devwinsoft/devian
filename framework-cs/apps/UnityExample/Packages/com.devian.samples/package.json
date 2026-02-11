@@ -9,14 +9,14 @@
   },
   "samples": [
     {
-      "displayName": "Firebase Manager",
-      "description": "Firebase Auth sample (Anonymous/Google/Apple/Facebook common flow: init + sign-in + ID token).",
-      "path": "Samples~/Auth-Firebase"
-    },
-    {
       "displayName": "CloudSave (GPGS)",
       "description": "Samples-only GPGS integration entry: client creation + CloudSaveManager.Configure in one call (stub client).",
       "path": "Samples~/CloudSave-GPGS"
+    },
+    {
+      "displayName": "Firebase Manager",
+      "description": "Firebase Auth sample (Anonymous/Google/Apple/Facebook common flow: init + sign-in + ID token).",
+      "path": "Samples~/Firebase"
     },
     {
       "displayName": "Network",
@@ -29,9 +29,9 @@
       "path": "Samples~/PurchaseManager"
     },
     {
-      "displayName": "UI",
+      "displayName": "Virtual Pad",
       "description": "UGUI virtual pad (joystick) sample. Outputs normalized Vector2 via drag input.",
-      "path": "Samples~/UI"
+      "path": "Samples~/VirtualPad"
     }
   ]
 }
