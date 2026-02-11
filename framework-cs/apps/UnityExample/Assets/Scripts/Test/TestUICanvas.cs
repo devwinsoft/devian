@@ -1,3 +1,5 @@
+using System.Threading;
+using System.Threading.Tasks;
 using UnityEngine;
 using Devian;
 using Devian.Protocol.Game;
@@ -6,6 +8,24 @@ public class TestUICanvas : UICanvas<TestUICanvas>
 {
     protected override void onAwake()
     {
+    }
+
+    public async void OnClick_SignIn()
+    {
+        var init = await FirebaseManager.Instance.InitializeAsync(CancellationToken.None);
+        if (!init.IsSuccess)
+        {
+            Debug.LogError(init.Error.Message);
+            return;
+        }
+
+        var r = await FirebaseManager.Instance.SignInAnonymouslyAsync(CancellationToken.None);
+        if (!r.IsSuccess)
+        {
+            Debug.LogError(r.Error.Message);
+            return;
+        }
+        Debug.Log(r.Value);
     }
 
     public void OnClick_Connect()

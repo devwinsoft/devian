@@ -1,0 +1,31 @@
+{
+  "project_info": {
+    "project_number": "381297379415",
+    "project_id": "devian-example-b19f9",
+    "storage_bucket": "devian-example-b19f9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:381297379415:ios:434ec9259a3cb976a7bb12",
+        "android_client_info": {
+          "package_name": "com.devian.example"
+        }
+      },
+      "api_key": [
+        {
+          "current_key": "AIzaSyCSj0b60sOOXkmDRXko5LvON5XFimaDSAM"
+        }
+      ],
+      "services": {
+        "analytics_service": {
+          "status": 0
+        },
+        "appinvite_service": {
+          "status": 1
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

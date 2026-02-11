@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/gcm_defaultSenderId,@string/google_storage_bucket,@string/project_id,@string/google_api_key,@string/google_crash_reporting_api_key,@string/google_app_id,@string/default_android_client_id,@string/default_web_client_id">
+  <string name="gcm_defaultSenderId" translatable="false">381297379415</string>
+  <string name="google_storage_bucket" translatable="false">devian-example-b19f9.firebasestorage.app</string>
+  <string name="project_id" translatable="false">devian-example-b19f9</string>
+  <string name="google_api_key" translatable="false">AIzaSyBB-tlUe00EHF0lfqjHsNh0cTaRwpRo650</string>
+  <string name="google_crash_reporting_api_key" translatable="false">AIzaSyBB-tlUe00EHF0lfqjHsNh0cTaRwpRo650</string>
+  <string name="google_app_id" translatable="false">1:381297379415:android:c63af6af672f2feca7bb12</string>
+  <string name="default_android_client_id" translatable="false">381297379415-l5njhlqs34mfbp4iba2n1qmjto6j01rp.apps.googleusercontent.com</string>
+  <string name="default_web_client_id" translatable="false">381297379415-upghdo7175a9mjd9ha6bsa0g375neg5d.apps.googleusercontent.com</string>
+</resources>

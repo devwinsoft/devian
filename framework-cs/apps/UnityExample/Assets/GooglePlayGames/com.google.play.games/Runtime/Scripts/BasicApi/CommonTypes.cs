@@ -136,7 +136,6 @@ namespace GooglePlayGames.BasicApi
         Social = 2,
     }
 
-    /// <summary>Values specifying the visibility status of the friends list.</summary>
     public enum FriendsListVisibilityStatus
     {
         ///< summary>
@@ -170,7 +169,6 @@ namespace GooglePlayGames.BasicApi
         NotAuthorized = -5,
     }
 
-    /// <summary>Values specifying the status of the friends list.</summary>
     public enum LoadFriendsStatus
     {
         /// <summary>An unknown value to return when loadFriends is not available.</summary>
@@ -197,15 +195,8 @@ namespace GooglePlayGames.BasicApi
         NetworkError = -6,
     }
 
-    /// <summary>
-    /// Utility class for common types.
-    /// This class checks if a response status is a success or not.
-    /// </summary>
     public class CommonTypesUtil
     {
-        /// <summary>
-        /// Checks if a response status is a success or not.
-        /// </summary>
         public static bool StatusIsSuccess(ResponseStatus status)
         {
             return ((int) status) > 0;

@@ -22,50 +22,18 @@ namespace GooglePlayGames
     using UnityEngine.SocialPlatforms;
 
     /// <summary>
-    /// Represents a score on a Google Play Games leaderboard. Implements the Unity
-    /// <c>IScore</c> interface.
+    /// Represents a Google Play Games score that can be sent to a leaderboard.
     /// </summary>
     public class PlayGamesScore : IScore
     {
-        /// <summary>
-        /// The ID of the leaderboard this score belongs to.
-        /// </summary>
         private string mLbId = null;
-
-        /// <summary>
-        /// The numerical value of the score.
-        /// </summary>
         private long mValue = 0;
-
-        /// <summary>
-        /// The rank of this score on the leaderboard.
-        /// </summary>
         private ulong mRank = 0;
-
-        /// <summary>
-        /// The ID of the player who achieved this score.
-        /// </summary>
         private string mPlayerId = string.Empty;
-
-        /// <summary>
-        /// The metadata associated with this score (also known as a score tag).
-        /// </summary>
         private string mMetadata = string.Empty;
 
-        /// <summary>
-        /// The date and time when the score was achieved.
-        /// </summary>
         private DateTime mDate = new DateTime(1970, 1, 1, 0, 0, 0);
 
-        /// <summary>
-        /// Initializes a new instance of the <see cref="PlayGamesScore"/> class.
-        /// </summary>
-        /// <param name="date">The date the score was achieved.</param>
-        /// <param name="leaderboardId">The leaderboard ID.</param>
-        /// <param name="rank">The rank of the score.</param>
-        /// <param name="playerId">The player's ID.</param>
-        /// <param name="value">The numerical score value.</param>
-        /// <param name="metadata">The metadata (score tag) associated with the score.</param>
         internal PlayGamesScore(DateTime date, string leaderboardId,
             ulong rank, string playerId, ulong value, string metadata)
         {
@@ -78,35 +46,41 @@ namespace GooglePlayGames
         }
 
         /// <summary>
-        /// Reports this score to the Google Play Games services. This is equivalent
-        /// to calling <see cref="PlayGamesPlatform.ReportScore" />.
+        /// Reports the score. Equivalent to <see cref="PlayGamesPlatform.ReportScore" />.
         /// </summary>
-        /// <param name="callback">A callback to be invoked with a boolean indicating the success of the operation.</param>
         public void ReportScore(Action<bool> callback)
         {
             PlayGamesPlatform.Instance.ReportScore(mValue, mLbId, mMetadata, callback);
         }
 
         /// <summary>
-        /// Gets or sets the ID of the leaderboard this score is for.
+        /// Gets or sets the leaderboard id.
         /// </summary>
+        /// <returns>
+        /// The leaderboard id.
+        /// </returns>
         public string leaderboardID
         {
             get { return mLbId; }
+
             set { mLbId = value; }
         }
 
         /// <summary>
         /// Gets or sets the score value.
         /// </summary>
+        /// <returns>
+        /// The value.
+        /// </returns>
         public long value
         {
             get { return mValue; }
+
             set { mValue = value; }
         }
 
         /// <summary>
-        /// Gets the date and time this score was achieved.
+        /// Not implemented. Returns Jan 01, 1970, 00:00:00
         /// </summary>
         public DateTime date
         {
@@ -114,7 +88,7 @@ namespace GooglePlayGames
         }
 
         /// <summary>
-        /// Gets the score value as a formatted string.
+        /// Not implemented. Returns the value converted to a string, unformatted.
         /// </summary>
         public string formattedValue
         {
@@ -122,7 +96,7 @@ namespace GooglePlayGames
         }
 
         /// <summary>
-        /// Gets the ID of the user who achieved this score.
+        /// Not implemented. Returns the empty string.
         /// </summary>
         public string userID
         {
@@ -130,7 +104,7 @@ namespace GooglePlayGames
         }
 
         /// <summary>
-        /// Gets the rank of this score in the leaderboard.
+        /// Not implemented. Returns 1.
         /// </summary>
         public int rank
         {
@@ -138,8 +112,11 @@ namespace GooglePlayGames
         }
 
         /// <summary>
-        /// Gets the metadata associated with this score (also known as a score tag).
+        /// Gets the metaData (scoreTag).
         /// </summary>
+        /// <returns>
+        /// The metaData.
+        /// </returns>
         public string metaData
         {
             get { return mMetadata; }

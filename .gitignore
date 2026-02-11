@@ -37,6 +37,8 @@ UserSettings/
 
 # Firebase x86_64 native plugins (too large for GitHub)
 framework-cs/apps/UnityExample/Assets/Firebase/Plugins/x86_64/
+framework-cs/apps/UnityExample/.utmp/
+framework-cs/apps/secret/
 
 # JetBrains Rider
 .idea/

@@ -8,13 +8,18 @@ dependencies {
 // Android Resolver Dependencies Start
     implementation 'com.google.android.gms:play-services-base:18.10.0' // Assets/Firebase/Editor/AppDependencies.xml:20
     implementation 'com.google.firebase:firebase-analytics:23.0.0' // Assets/Firebase/Editor/FirestoreDependencies.xml:18
+    implementation 'com.google.firebase:firebase-analytics-unity:13.7.0' // Assets/Firebase/Editor/AnalyticsDependencies.xml:21
+    implementation 'com.google.firebase:firebase-appcheck:19.0.1' // Assets/Firebase/Editor/AppCheckDependencies.xml:16
+    implementation 'com.google.firebase:firebase-appcheck-debug:19.0.1' // Assets/Firebase/Editor/AppCheckDependencies.xml:18
+    implementation 'com.google.firebase:firebase-appcheck-playintegrity:19.0.1' // Assets/Firebase/Editor/AppCheckDependencies.xml:20
+    implementation 'com.google.firebase:firebase-appcheck-unity:13.7.0' // Assets/Firebase/Editor/AppCheckDependencies.xml:27
     implementation 'com.google.firebase:firebase-app-unity:13.7.0' // Assets/Firebase/Editor/AppDependencies.xml:25
     implementation 'com.google.firebase:firebase-auth:24.0.1' // Assets/Firebase/Editor/AuthDependencies.xml:16
     implementation 'com.google.firebase:firebase-auth-unity:13.7.0' // Assets/Firebase/Editor/AuthDependencies.xml:23
     implementation 'com.google.firebase:firebase-common:22.0.1' // Assets/Firebase/Editor/AppDependencies.xml:16
     implementation 'com.google.firebase:firebase-firestore:26.1.0' // Assets/Firebase/Editor/FirestoreDependencies.xml:16
     implementation 'com.google.firebase:firebase-firestore-unity:13.7.0' // Assets/Firebase/Editor/FirestoreDependencies.xml:23
-    implementation 'com.google.games:gpgs-plugin-support:2.1.0' // Assets/GooglePlayGames/com.google.play.games/Editor/GooglePlayGamesPluginDependencies.xml:11
+    implementation 'com.google.games:gpgs-plugin-support:2.0.0' // Assets/GooglePlayGames/com.google.play.games/Editor/GooglePlayGamesPluginDependencies.xml:11
 // Android Resolver Dependencies End
 **DEPS**}
 
