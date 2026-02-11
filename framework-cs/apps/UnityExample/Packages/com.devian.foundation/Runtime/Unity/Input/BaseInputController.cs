@@ -14,6 +14,10 @@ namespace Devian
         [SerializeField] private float _axisEpsilon = 0.001f;
 
         private bool _hasPrev;
+
+        private bool _prevMoveValid;
+        private bool _prevLookValid;
+
         private Vector2 _prevMove;
         private Vector2 _prevLook;
         private ulong _prevButtons;
@@ -29,6 +33,10 @@ namespace Devian
             InputManager.Instance.RegisterController(this);
 
             _hasPrev = false;
+
+            _prevMoveValid = false;
+            _prevLookValid = false;
+
             _prevMove = default;
             _prevLook = default;
             _prevButtons = 0UL;
@@ -47,6 +55,10 @@ namespace Devian
                 mgr.UnregisterController(this);
 
             _hasPrev = false;
+
+            _prevMoveValid = false;
+            _prevLookValid = false;
+
             _prevMove = default;
             _prevLook = default;
             _prevButtons = 0UL;
@@ -95,13 +107,27 @@ namespace Devian
 
             float eps2 = _axisEpsilon * _axisEpsilon;
 
-            // Move
-            if (!_hasPrev || (frame.Move - _prevMove).sqrMagnitude > eps2)
-                onInputMove(frame.Move);
+            // Move (Invalid(NaN)이면 콜백 없음)
+            bool moveValid = !_isInvalid(frame.Move);
+            if (moveValid)
+            {
+                if (!_prevMoveValid || (frame.Move - _prevMove).sqrMagnitude > eps2)
+                    onInputMove(frame.Move);
 
-            // Look
-            if (!_hasPrev || (frame.Look - _prevLook).sqrMagnitude > eps2)
-                onInputLook(frame.Look);
+                _prevMove = frame.Move;
+                _prevMoveValid = true;
+            }
+
+            // Look (Invalid(NaN)이면 콜백 없음)
+            bool lookValid = !_isInvalid(frame.Look);
+            if (lookValid)
+            {
+                if (!_prevLookValid || (frame.Look - _prevLook).sqrMagnitude > eps2)
+                    onInputLook(frame.Look);
+
+                _prevLook = frame.Look;
+                _prevLookValid = true;
+            }
 
             // Buttons
             ulong cur = frame.ButtonBits;
@@ -115,9 +141,12 @@ namespace Devian
 
             // save prev
             _hasPrev = true;
-            _prevMove = frame.Move;
-            _prevLook = frame.Look;
             _prevButtons = cur;
+        }
+
+        private static bool _isInvalid(Vector2 v)
+        {
+            return float.IsNaN(v.x) || float.IsNaN(v.y);
         }
 
         private void _dispatchButtons(ulong downMask, ulong upMask)

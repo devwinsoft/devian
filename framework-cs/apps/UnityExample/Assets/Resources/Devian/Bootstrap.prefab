@@ -139,7 +139,7 @@ MonoBehaviour:
   _gameplayMapName: Player
   _uiMapName: UI
   _moveKey: Player/Move
-  _lookKey: Player/Look
+  _lookKey:
   _expectedButtonKeys:
   - Player/Attack
   - Player/Interact

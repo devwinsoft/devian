@@ -21,6 +21,12 @@ namespace Devian
         [Serializable]
         public sealed class Vector2Event : UnityEvent<Vector2> { }
 
+        public enum VirtualPadType
+        {
+            Move,
+            Look,
+        }
+
         [Header("References (UGUI)")]
         [SerializeField] private RectTransform mOuter;   // large ring (semi-transparent)
         [SerializeField] private RectTransform mInner;   // small knob (opaque)
@@ -28,6 +34,8 @@ namespace Devian
         [Header("Behavior")]
         [Tooltip("If true, the pad center moves to the touch position on pointer down.")]
         [SerializeField] private bool mDynamicCenter = true;
+
+        [SerializeField] private VirtualPadType mPadType = VirtualPadType.Move;
 
         [Tooltip("Maximum movement radius of the inner knob in pixels.")]
         [SerializeField] private float mRadius = 120f;
@@ -62,6 +70,7 @@ namespace Devian
             mDeadzone = 0.1f;
             mDynamicCenter = true;
             mHideWhenIdle = true;
+            mPadType = VirtualPadType.Move;
         }
 
         private void Awake()
@@ -77,12 +86,26 @@ namespace Devian
         private void Update()
         {
             if (!VirtualGamepadDriver.TryGet(out var driver)) return;
+
+            if (mPadType == VirtualPadType.Look)
+            {
+                driver.SetLook(CurrentValue);
+                return;
+            }
+
             driver.SetMove(CurrentValue);
         }
 
         private void OnDisable()
         {
             if (!VirtualGamepadDriver.TryGet(out var driver)) return;
+
+            if (mPadType == VirtualPadType.Look)
+            {
+                driver.SetLook(Vector2.zero);
+                return;
+            }
+
             driver.SetMove(Vector2.zero);
         }
 

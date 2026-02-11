@@ -78,13 +78,14 @@ InputFrame을 매 프레임 받지만, 파생 클래스 콜백은 **변화가 �
 
 | 콜백 | 호출 조건 |
 |------|----------|
-| `onInputMove(Vector2 move)` | `(cur - prev).sqrMagnitude > epsilon²` |
-| `onInputLook(Vector2 look)` | `(cur - prev).sqrMagnitude > epsilon²` |
+| `onInputMove(Vector2 move)` | 축이 유효(non-NaN) + `(cur - prev).sqrMagnitude > epsilon²` |
+| `onInputLook(Vector2 look)` | 축이 유효(non-NaN) + `(cur - prev).sqrMagnitude > epsilon²` |
 | `onButtonPress(string key, int index)` | bit가 0→1로 전환된 각 버튼마다 1회 |
 | `onButtonRelease(string key, int index)` | bit가 1→0으로 전환된 각 버튼마다 1회 |
 
 - `_axisEpsilon` (SerializeField, default 0.001f) — Move/Look 변화 감지 임계값
-- 첫 프레임(`_hasPrev == false`)은 항상 콜백 호출
+- 축이 초기화되지 않은 경우(NaN — 키 미설정/Action 없음) 해당 축의 콜백은 발생하지 않는다
+- 유효한 축의 첫 프레임(`_prevMoveValid`/`_prevLookValid == false`)은 항상 콜백 호출
 
 ### 6. 버튼 이벤트 규약
 

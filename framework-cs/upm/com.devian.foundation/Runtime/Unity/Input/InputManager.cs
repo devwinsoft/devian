@@ -136,8 +136,11 @@ namespace Devian
         {
             if (!_outputEnabled) return;
 
-            Vector2 move = _moveAction != null ? _moveAction.ReadValue<Vector2>() : Vector2.zero;
-            Vector2 look = _lookAction != null ? _lookAction.ReadValue<Vector2>() : Vector2.zero;
+            // NOTE:
+            // Action이 null이면 "초기화 안 됨"으로 간주하고 축 값을 Invalid(NaN)로 보낸다.
+            // BaseInputController에서 NaN 축은 콜백을 절대 발생시키지 않는다.
+            Vector2 move = _moveAction != null ? _moveAction.ReadValue<Vector2>() : new Vector2(float.NaN, float.NaN);
+            Vector2 look = _lookAction != null ? _lookAction.ReadValue<Vector2>() : new Vector2(float.NaN, float.NaN);
 
             ulong bits = 0UL;
             if (_buttonActions != null)

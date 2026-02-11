@@ -78,7 +78,11 @@ ulong bitset이므로 최대 64개 버튼. 초과 시 `InvalidOperationException
 - `IInputManager`는 `OnEnable`에서 `Singleton.Register<IInputManager>` (Compo), `OnDisable`에서 `Unregister`
 - Bootstrap의 `ensureRequiredComponents()`에서 `ensureComponent<InputManager>()` 호출 → 기본 포함
 
-### 7. Controller Registry Dispatch
+### 7. Uninitialized Axis Policy
+
+`_moveKey`/`_lookKey`가 비어 있거나 해당 Action을 찾지 못하면(`_moveAction`/`_lookAction == null`), 해당 축은 "초기화 안 됨"으로 간주하여 `NaN`을 InputFrame에 담는다. BaseInputController는 NaN 축에 대해 콜백을 발생시키지 않는다.
+
+### 8. Controller Registry Dispatch
 
 `outputEnabled == true`일 때만 매 프레임:
 1. Move/Look ReadValue + buttons bitset 합산 → `InputFrame` 생성
