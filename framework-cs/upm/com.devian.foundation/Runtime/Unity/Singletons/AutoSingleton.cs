@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/30-unity-components/31-singleton/SKILL.md
+// SSOT: skills/devian-unity/10-base-system/31-singleton/SKILL.md
 
 using UnityEngine;
 

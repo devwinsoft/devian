@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/30-unity-components/28-render-controller/SKILL.md
+// SSOT: skills/devian-unity/14-effect-system/28-material-effect-controller/SKILL.md
 
 using System.Collections;
 using UnityEngine;

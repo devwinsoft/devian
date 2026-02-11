@@ -59,5 +59,5 @@ WebGL(`UNITY_WEBGL && !UNITY_EDITOR`)에서 WebSocket Transport는 **콜백(Send
 ## Reference
 
 - Policy SSOT: `skills/devian-core/03-ssot/SKILL.md`
-- Runtime layering: `skills/devian-core/10-core-runtime/SKILL.md`
+- Runtime layering: `skills/devian-core/07-runtime-policy/SKILL.md`
 - 동작 정본: 런타임/제너레이터 코드

@@ -20,6 +20,7 @@ public class TestScene : BaseScene
     public SOUND_ID soundId;
     public VOICE_ID voiceId;
     public TEXT_ID textID;
+    public CBigInt bigInt;
 
     protected override void OnInitAwake()
     {
@@ -63,6 +64,9 @@ public class TestScene : BaseScene
 
         var save_result = LocalSaveManager.Instance.Save("main", "ABCD");
         var load_result = LocalSaveManager.Instance.LoadPayload("main");
+
+        CBigInt x = new CBigInt(12345, 1);
+        Debug.Log(x * bigInt);
     }
 
     public override IEnumerator OnExit()

@@ -83,7 +83,7 @@ com.devian.domain.* (module packages - foundation 의존)
 
 | asmdef | name | references | 패키지 |
 |--------|------|------------|--------|
-| `Devian.Core.asmdef` | `Devian.Core` | `[]` | com.devian.foundation/Runtime/Core |
+| `Devian.Core.asmdef` | `Devian.Core` | `[]` | com.devian.foundation/Runtime/Module |
 | `Devian.Unity.asmdef` | `Devian.Unity` | `["Devian.Core"]` | com.devian.foundation/Runtime/Unity |
 | `Devian.UI.asmdef` | `Devian.UI` | `["Devian.Core", "Devian.Unity", "Devian.Domain.Sound"]` | com.devian.ui/Runtime |
 | `Devian.Domain.Common.asmdef` | `Devian.Domain.Common` | `["Devian.Core", "Devian.Unity", "Newtonsoft.Json"]` | com.devian.domain.common |

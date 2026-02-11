@@ -516,8 +516,8 @@ internal static class DomainTableRegistry
 | 역할 | 경로 |
 |------|------|
 | TableManager | `framework-cs/upm/com.devian.foundation/Runtime/Unity/Table/TableManager.cs` |
-| TableFormat | `framework-cs/upm/com.devian.foundation/Runtime/Core/Table/TableFormat.cs` |
-| Pb64Loader | `framework-cs/upm/com.devian.foundation/Runtime/Core/Core/Pb64Loader.cs` |
+| TableFormat | `framework-cs/upm/com.devian.foundation/Runtime/Module/Core/TableFormat.cs` |
+| Pb64Loader | `framework-cs/upm/com.devian.foundation/Runtime/Module/Core/Pb64Loader.cs` |
 | TB 코드젠 | `framework-ts/tools/builder/generators/table.js` |
 | UPM wrapper 생성 | `framework-ts/tools/builder/build.js` |
 

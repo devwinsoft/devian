@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md
+// SSOT: skills/devian-unity/10-base-system/14-table-manager/SKILL.md
 // Devian Unity TableManager - Raw data loading for TB_/ST_
 //
 // Key Design:

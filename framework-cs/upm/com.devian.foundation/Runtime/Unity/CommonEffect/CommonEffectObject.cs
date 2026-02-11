@@ -7,7 +7,7 @@ namespace Devian
     /// <summary>
     /// Root common effect object (pool unit).
     /// Contains players (components implementing ICommonEffectPlayer).
-    /// SSOT: skills/devian-unity/30-unity-components/22-common-effect-manager/SKILL.md
+    /// SSOT: skills/devian-unity/14-effect-system/22-common-effect-manager/SKILL.md
     /// </summary>
     public sealed class CommonEffectObject : MonoBehaviour, IPoolable<CommonEffectObject>
     {

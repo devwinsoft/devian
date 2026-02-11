@@ -6,7 +6,7 @@ namespace Devian
     /// <summary>
     /// 단일 Renderer의 Material[] 스위치 전용 컴포넌트 (v2).
     /// Controller ↔ Driver 1:1 매칭. PropertyBlock/Common 기능 제거됨.
-    /// SSOT: skills/devian-unity/30-unity-components/28-render-controller/SKILL.md
+    /// SSOT: skills/devian-unity/14-effect-system/28-material-effect-controller/SKILL.md
     /// </summary>
     public sealed class MaterialEffectController : BaseController<GameObject>
     {

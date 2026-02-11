@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/20-packages/com.devian.unity/SKILL.md
+// SSOT: skills/devian-core/12-logger/SKILL.md
 
 using System;
 using UnityEngine;

@@ -3,7 +3,7 @@ namespace Devian
     /// <summary>
     /// Common effect player interface.
     /// Public but CommonEffectObject-internal usage only -> underscore prefix.
-    /// SSOT: skills/devian-unity/30-unity-components/22-common-effect-manager/SKILL.md
+    /// SSOT: skills/devian-unity/14-effect-system/22-common-effect-manager/SKILL.md
     /// </summary>
     public interface ICommonEffectPlayer
     {

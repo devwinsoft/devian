@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/30-unity-components/16-sound-tables/SKILL.md
+// SSOT: skills/devian-unity/22-sound-system/16-sound-tables/SKILL.md
 // partial 확장 파일 - Generated TB_SOUND에 sound_id/key_bundle 그룹 인덱스 추가
 // row_id가 PK, sound_id는 논리 그룹 키 (중복 허용)
 // v10 변경: key_group 제거, key_bundle 중심 로드/언로드, isBundle(bool), channel(enum)

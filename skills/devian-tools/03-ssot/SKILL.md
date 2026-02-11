@@ -47,7 +47,7 @@ ParentSSOT: skills/devian-core/03-ssot/SKILL.md
 - `Runtime/Unity/Pool/` — IPoolable, IPoolFactory, PoolManager, Pool
 - `Runtime/Unity/PoolFactories/` — InspectorPoolFactory, BundlePoolFactory
 - `Runtime/Unity/AssetManager/` — AssetManager, DownloadManager (bootstrap/download utilities)
-- `Runtime/Core/` — 순수 C# 코드 (UnityEngine 의존 없음)
+- `Runtime/Module/` — 순수 C# 코드 (UnityEngine 의존 없음)
 
 **레거시 경로 cleanup:**
 - 빌더는 기존 `generated`(소문자) 폴더가 존재하면 자동 제거

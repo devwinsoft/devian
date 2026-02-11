@@ -9,7 +9,7 @@ namespace Devian
     /// <summary>
     /// Base selector for AssetId (Editor-only).
     /// SearchDir source: Assets/Resources/Devian/DevianSettings.asset
-    /// SSOT: skills/devian-unity/30-unity-components/21-asset-id/SKILL.md
+    /// SSOT: skills/devian-unity/10-base-system/21-asset-id/SKILL.md
     /// </summary>
     public abstract class BaseEditorAssetIdSelector<TComponent> : BaseEditorID_Selector
         where TComponent : Component

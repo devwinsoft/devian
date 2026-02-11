@@ -1,4 +1,4 @@
-// SSOT: skills/devian-common/13-feature-complex/SKILL.md
+// SSOT: skills/devian-unity/10-base-system/34-editor-complex-drawer/SKILL.md
 // PropertyDrawer for CInt - displays unmasked value in Inspector
 
 using UnityEditor;

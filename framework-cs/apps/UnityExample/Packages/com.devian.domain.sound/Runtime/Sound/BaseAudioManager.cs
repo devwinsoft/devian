@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/30-unity-components/20-base-audio-manager/SKILL.md
+// SSOT: skills/devian-unity/22-sound-system/20-base-audio-manager/SKILL.md
 
 #nullable enable
 

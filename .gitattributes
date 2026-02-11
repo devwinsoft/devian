@@ -1,5 +1,5 @@
 # Devian v10 Git Attributes
-# SSOT: skills/devian/06-git-policy/SKILL.md
+# SSOT: skills/devian-core/06-git-policy/SKILL.md
 
 # 기본: 모든 텍스트 파일 LF
 * text=auto eol=lf

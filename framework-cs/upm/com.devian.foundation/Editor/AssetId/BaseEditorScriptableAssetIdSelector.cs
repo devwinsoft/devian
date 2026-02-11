@@ -9,7 +9,7 @@ namespace Devian
     /// <summary>
     /// Base selector for ScriptableObject-based AssetId (Editor-only).
     /// SearchDir source: Assets/Resources/Devian/DevianSettings.asset
-    /// SSOT: skills/devian-unity/30-unity-components/29-render-effect-id/SKILL.md
+    /// SSOT: skills/devian-unity/14-effect-system/29-material-effect-id/SKILL.md
     /// </summary>
     public abstract class BaseEditorScriptableAssetIdSelector<TAsset> : BaseEditorID_Selector
         where TAsset : ScriptableObject

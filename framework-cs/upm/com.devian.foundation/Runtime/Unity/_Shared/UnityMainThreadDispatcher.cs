@@ -1,5 +1,5 @@
 // Unity Shared - Main Thread Dispatcher
-// SSOT: skills/devian-unity/10-unity-main-thread/SKILL.md
+// SSOT: skills/devian-unity/10-base-system/09-unity-main-thread/SKILL.md
 // NOTE: 이 파일은 Generated 폴더 산출물이 아닌 고정 유틸(수기 유지)이며,
 //       정본은 upm 경로다. Packages는 복사본.
 

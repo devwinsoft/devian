@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/30-unity-components/15-scene-trans-manager/SKILL.md
+// SSOT: skills/devian-unity/10-base-system/15-scene-trans-manager/SKILL.md
 
 #nullable enable
 

@@ -106,7 +106,7 @@ com.devian.foundation/
 
 | asmdef | 위치 | namespace | 역할 |
 |--------|------|-----------|------|
-| `Devian.Core` | `Runtime/Core/` | `Devian` | 순수 C# 런타임 (UnityEngine 의존 없음) |
+| `Devian.Core` | `Runtime/Module/` | `Devian` | 순수 C# 런타임 (UnityEngine 의존 없음) |
 | `Devian.Unity` | `Runtime/Unity/` | `Devian.Unity` | Unity 어댑터 (UnityEngine 사용) |
 | `Devian.Unity.Editor` | `Editor/` | `Devian.Unity` | Unity Editor 전용 |
 

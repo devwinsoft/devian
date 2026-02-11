@@ -372,6 +372,6 @@ WebGL에서는 브라우저 제약으로 **스레드 기반 send/recv 루프를 
 ## Reference
 
 - Parent Module: `Devian` (단일 런타임 모듈, `namespace Devian`)
-- Related: `skills/devian-core/10-core-runtime/SKILL.md`
+- Related: `skills/devian-core/07-runtime-policy/SKILL.md`
 - WebGL 폴링 계약: [76-webgl-ws-polling-bridge](../76-webgl-ws-polling-bridge/SKILL.md)
 - WebGL 메모리 규칙: [77-webgl-jslib-memory-rules](../77-webgl-jslib-memory-rules/SKILL.md)

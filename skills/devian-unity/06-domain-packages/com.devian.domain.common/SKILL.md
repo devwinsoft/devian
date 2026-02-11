@@ -134,7 +134,7 @@ com.devian.domain.common/
 | 파일 | 설명 |
 |------|------|
 | `Runtime/Generated/Common.g.cs` | TableGen으로 생성된 Common 모듈 코드 |
-| `Runtime/Features/Variant.cs` | Variant feature 구현 (SSOT: 11-feature-variant) |
+| `Runtime/Features/Variant.cs` | Variant feature 구현 (SSOT: 32-variable-variant) |
 
 ### Editor
 
@@ -142,7 +142,7 @@ com.devian.domain.common/
 |------|------|
 | `Editor/Generated/{TableName}_ID.Editor.cs` | TableID Inspector 바인딩 (keyed table 있을 때 생성) |
 
-> **주의:** Log는 `com.devian.foundation/Runtime/Core/Core/Logger.cs`에 위치한다. 이 패키지에 Log를 포함하지 않는다.
+> **주의:** Log는 `com.devian.foundation/Runtime/Module/Core/Logger.cs`에 위치한다. 이 패키지에 Log를 포함하지 않는다.
 
 ---
 
@@ -153,7 +153,7 @@ com.devian.domain.common/
 - staging에 포함되지 않은 파일은 clean+copy 이후 삭제된다.
 - 따라서 Features(Variant)는 **빌더가 staging에 복사**해야 한다.
 - Common 모듈일 때만 `framework-cs/module/Devian.Domain.Common/features/` → staging `Runtime/Features/`로 복사.
-- Complex는 `com.devian.foundation`으로 이동됨 (skills/devian-unity/12-complex-system/13-feature-complex/SKILL.md 참조).
+- Complex는 `com.devian.foundation`으로 이동됨 (skills/devian-core/31-variable-complex/SKILL.md 참조).
 - `upmConfig.packageDir`가 UnityExample/Packages를 가리키면 해당 디렉토리는 **generated output**으로 취급된다.
 
 ---
@@ -186,5 +186,5 @@ keyed table(primaryKey 있는 테이블)이 있으면 `Editor/Generated/`에 Tab
 - Related: `skills/devian-unity/02-unity-bundles/SKILL.md`
 - Related: `skills/devian-unity/04-package-metadata/SKILL.md`
 - Related: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
-- Related: `skills/devian-common/11-feature-variant/SKILL.md`
-- Related: `skills/devian-unity/12-complex-system/13-feature-complex/SKILL.md`
+- Related: `skills/devian-core/32-variable-variant/SKILL.md`
+- Related: `skills/devian-core/31-variable-complex/SKILL.md`

@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/30-unity-components/17-sound-manager/SKILL.md
+// SSOT: skills/devian-unity/22-sound-system/17-sound-manager/SKILL.md
 // 수기 유지 파일 (Generated 아님)
 // Sound/Voice 테이블과 Manager를 연결하는 레지스트리.
 // Generated 클래스(SOUND, VOICE)를 Adapter로 ISoundRow/IVoiceRow 인터페이스에 맞춘다.

@@ -8,6 +8,9 @@
  */
 
 // Core exports
+export * from './log';
+export * from './complex';
+export * from './variant';
 export { LoadMode } from './LoadMode';
 export type { IEntity, IEntityKey } from './IEntity';
 export type { ITableContainer, IKeyedTableContainer } from './ITableContainer';

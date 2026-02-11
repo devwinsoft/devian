@@ -287,7 +287,7 @@ export { SYSTEM_LANGUAGE_ENUM };
 
 // ============================================================================
 // Unity TextAsset YAML Generation for String Table pb64
-// SSOT: skills/devian-upm/30-unity-components/13-pb64-storage/SKILL.md
+// SSOT: skills/devian-data/35-pb64-storage/SKILL.md
 // ============================================================================
 
 /**

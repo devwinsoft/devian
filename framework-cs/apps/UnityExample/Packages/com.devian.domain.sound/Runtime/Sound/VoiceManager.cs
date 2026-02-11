@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/30-unity-components/18-voice-table-resolve/SKILL.md
+// SSOT: skills/devian-unity/22-sound-system/18-voice-table-resolve/SKILL.md
 
 #nullable enable
 

@@ -9,7 +9,7 @@
  *   node tools/sync-meta.js <config.json>
  *   npm -w builder run sync-meta -- ../input/config.json
  *
- * SSOT: skills/devian-unity/01-unity-policy/SKILL.md
+ * SSOT: skills/devian-unity/01-policy/SKILL.md
  */
 
 import fs from 'fs';

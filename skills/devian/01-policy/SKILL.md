@@ -12,7 +12,7 @@
 
 ## SSOT 우선순위
 
-- **정본**: [skills/devian-core/03-ssot/SKILL.md](../devian-core/03-ssot/SKILL.md)
+- **정본**: [skills/devian-core/03-ssot/SKILL.md](../../devian-core/03-ssot/SKILL.md)
 - 충돌 시 SSOT 문서가 우선한다.
 - 다른 문서에서 SSOT 상세 규칙을 장문 복제하지 않는다 (링크로 해결).
 
@@ -56,7 +56,7 @@
 
 ## Link Policy
 
-- 상세 규칙(금지 키, 머지, 경로 템플릿)은 [SSOT](../devian-core/03-ssot/SKILL.md)로 링크한다.
+- 상세 규칙(금지 키, 머지, 경로 템플릿)은 [SSOT](../../devian-core/03-ssot/SKILL.md)로 링크한다.
 - 중복 서술을 금지한다.
 - 링크는 상대 경로를 사용한다.
 
@@ -78,6 +78,6 @@
 
 ## See Also
 
-- [SSOT](../devian-core/03-ssot/SKILL.md)
+- [SSOT](../../devian-core/03-ssot/SKILL.md)
 - [Devian Index](./SKILL.md)
-- [Glossary](./10-glossary/SKILL.md)
+- [Glossary](../10-glossary/SKILL.md)

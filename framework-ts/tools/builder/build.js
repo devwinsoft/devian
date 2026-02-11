@@ -501,7 +501,7 @@ class DevianToolBuilder {
                                     fs.writeFileSync(ndjsonPath, ndjsonContent);
                                     
                                     // Generate pb64 as Unity TextAsset .asset
-                                    // SSOT: skills/devian-unity/30-unity-components/13-pb64-storage/SKILL.md
+                                    // SSOT: skills/devian-data/35-pb64-storage/SKILL.md
                                     const pb64Text = generateStringPb64(entries);
                                     const assetYaml = generateStringPb64TextAssetYaml(strTable.tableName, pb64Text);
                                     const assetPath = path.join(strPb64Dir, `${strTable.tableName}.asset`);
@@ -2103,7 +2103,7 @@ export * from './features';
         fs.mkdirSync(stagingGenerated, { recursive: true });
         fs.mkdirSync(stagingEditor, { recursive: true });
 
-        // package.json - SSOT: skills/devian-unity/03-package-metadata/SKILL.md
+        // package.json - SSOT: skills/devian-unity/04-package-metadata/SKILL.md
         // All domain packages require com.devian.foundation for TableManager (ST_/TB_ wrappers)
         const isCommon = domainName === 'Common';
         const dependencies = {
@@ -2126,7 +2126,7 @@ export * from './features';
         };
         fs.writeFileSync(path.join(stagingUpm, 'package.json'), JSON.stringify(packageJsonObj, null, 2));
 
-        // Runtime.asmdef - SSOT: skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md
+        // Runtime.asmdef - SSOT: skills/devian-unity/06-domain-packages/com.devian.domain.template/SKILL.md
         // All domain packages require Devian.Core and Devian.Unity for TableManager (ST_/TB_ wrappers)
         const asmdefReferences = isCommon
             ? ['Devian.Core', 'Devian.Unity', 'Newtonsoft.Json']
@@ -2149,7 +2149,7 @@ export * from './features';
         fs.writeFileSync(path.join(stagingRuntime, `${asmdefName}.asmdef`), JSON.stringify(runtimeAsmdef, null, 2));
 
         // Editor.asmdef - includes refs for TableID Editor bindings (base classes in Devian + .Unity.Editor assembly)
-        // SSOT: skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md
+        // SSOT: skills/devian-unity/06-domain-packages/com.devian.domain.template/SKILL.md
         const editorReferences = [asmdefName, 'Devian.Unity', 'Devian.Unity.Editor'];
         const editorAsmdef = {
             name: `${asmdefName}.Editor`,
@@ -2180,7 +2180,7 @@ export * from './features';
         }
 
         // Generate TableID Editor bindings into this domain module package
-        // SSOT: skills/devian-unity/20-packages/com.devian.domain.template/SKILL.md
+        // SSOT: skills/devian-unity/06-domain-packages/com.devian.domain.template/SKILL.md
         const keyedTables = (tables || []).filter(t => t && t.keyField);
         const stNames = stringTableNames || [];
         const hasEditorBindings = keyedTables.length > 0 || stNames.length > 0;
@@ -2211,7 +2211,7 @@ export * from './features';
 
         // ================================================================
         // Generate UPM Unity wrappers: TB_{TableName}.Unity.g.cs
-        // SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md
+        // SSOT: skills/devian-unity/10-base-system/14-table-manager/SKILL.md
         // ================================================================
         const keyedTables2 = (tables || []).filter(t => t && t.keyField);
         if (keyedTables2.length > 0) {
@@ -2225,7 +2225,7 @@ export * from './features';
 
         // ================================================================
         // Generate UPM Unity wrappers: ST_{TableName}.g.cs
-        // SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md
+        // SSOT: skills/devian-unity/10-base-system/14-table-manager/SKILL.md
         // ================================================================
         if (stNames.length > 0) {
             for (const tableName of stNames) {
@@ -2248,7 +2248,7 @@ export * from './features';
         }
 
         // Common 모듈일 때 Features 폴더 복사 (Logger/Variant/Complex)
-        // SSOT: skills/devian-unity/20-packages/com.devian.domain.common/SKILL.md
+        // SSOT: skills/devian-unity/06-domain-packages/com.devian.domain.common/SKILL.md
         if (isCommon) {
             // Use csGenerateDir (unified module root)
             const featuresSource = this.csGenerateDir
@@ -2339,7 +2339,7 @@ export * from './features';
         lines.push('    }');
         lines.push('');
 
-        // Drawer class (no caching - SSOT: skills/devian-unity/30-unity-components/21-asset-id/SKILL.md)
+        // Drawer class (no caching - SSOT: skills/devian-unity/10-base-system/21-asset-id/SKILL.md)
         lines.push(`    /// <summary>PropertyDrawer for ${tableName}_ID</summary>`);
         lines.push(`    [CustomPropertyDrawer(typeof(${tableName}_ID))]`);
         lines.push(`    public class ${drawerClassName} : BaseEditorID_Drawer<${selectorClassName}>`);
@@ -2479,7 +2479,7 @@ export * from './features';
 
     /**
      * Generate TB_{TableName}.Unity.g.cs - Unity wrapper for table loading
-     * SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md
+     * SSOT: skills/devian-unity/10-base-system/14-table-manager/SKILL.md
      */
     generateTableUnityWrapperCs(domainName, table) {
         const tableName = table.name;
@@ -2488,7 +2488,7 @@ export * from './features';
         lines.push('// <auto-generated>');
         lines.push('// DO NOT EDIT - Generated by Devian Build System v10');
         lines.push('// Unity wrapper for TableManager integration');
-        lines.push('// SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md');
+        lines.push('// SSOT: skills/devian-unity/10-base-system/14-table-manager/SKILL.md');
         lines.push('// </auto-generated>');
         lines.push('');
         lines.push('#nullable enable');
@@ -2551,7 +2551,7 @@ export * from './features';
 
     /**
      * Generate DomainTableRegistry.g.cs - Auto-register TB loaders at startup
-     * SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md
+     * SSOT: skills/devian-unity/10-base-system/14-table-manager/SKILL.md
      */
     generateDomainTableRegistryCs(domainName, tables, stringTableNames) {
         const keyedTables = (tables || []).filter(t => t && t.keyField);
@@ -2561,7 +2561,7 @@ export * from './features';
         lines.push('// <auto-generated>');
         lines.push('// DO NOT EDIT - Generated by Devian Build System v10');
         lines.push('// Domain Table Registry - Auto-registers TB/ST loaders at startup');
-        lines.push('// SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md');
+        lines.push('// SSOT: skills/devian-unity/10-base-system/14-table-manager/SKILL.md');
         lines.push('// </auto-generated>');
         lines.push('');
         lines.push('#nullable enable');
@@ -2620,7 +2620,7 @@ export * from './features';
 
     /**
      * Generate ST_{TableName}.g.cs - Unity wrapper for string table loading
-     * SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md
+     * SSOT: skills/devian-unity/10-base-system/14-table-manager/SKILL.md
      */
     generateStringTableWrapperCs(domainName, tableName) {
         const lines = [];
@@ -2628,7 +2628,7 @@ export * from './features';
         lines.push('// <auto-generated>');
         lines.push('// DO NOT EDIT - Generated by Devian Build System v10');
         lines.push('// Unity wrapper for StringTable via TableManager');
-        lines.push('// SSOT: skills/devian-unity/30-unity-components/14-table-manager/SKILL.md');
+        lines.push('// SSOT: skills/devian-unity/10-base-system/14-table-manager/SKILL.md');
         lines.push('// </auto-generated>');
         lines.push('');
         lines.push('#nullable enable');
@@ -2908,7 +2908,7 @@ export * from './features';
 
     // ========================================================================
     // Static UPM Package Processing (e.g., com.devian.foundation)
-    // SSOT: skills/devian-unity/03-package-metadata/SKILL.md
+    // SSOT: skills/devian-unity/04-package-metadata/SKILL.md
     // ========================================================================
 
     /**
@@ -3576,7 +3576,7 @@ export * from './features';
 
     /**
      * Assert that two directory trees are identical (files + content).
-     * SSOT: skills/devian-unity/01-unity-policy/SKILL.md
+     * SSOT: skills/devian-unity/01-policy/SKILL.md
      * @param {string} sourceDir - Source directory (UPM)
      * @param {string} targetDir - Target directory (Packages)
      * @param {string[]} ignoreList - List of patterns to ignore (e.g., ['.DS_Store'])
@@ -3656,7 +3656,7 @@ export * from './features';
     /**
      * Verify that UPM source and Packages directories are in sync.
      * Called after syncUpmToPackageDir() to ensure SSOT compliance.
-     * SSOT: skills/devian-unity/01-unity-policy/SKILL.md
+     * SSOT: skills/devian-unity/01-policy/SKILL.md
      */
     checkUpmPackagesSynced() {
         if (!this.upmSourceDir || !this.upmPackageDir) {
@@ -3752,7 +3752,7 @@ export * from './features';
 
     // ========================================================================
     // Forbidden Namespace Guard (재발 방지)
-    // SSOT: skills/devian-common/01-module-policy/SKILL.md
+    // SSOT: skills/devian-common/02-module-policy/SKILL.md
     // ========================================================================
 
     /**
@@ -4419,7 +4419,7 @@ export * from './features';
     /**
      * Guard: Detect SimpleSingleton.Instance access from InitializeOnLoad or static constructors.
      * This pattern causes Unity Editor ScriptableSingleton conflicts.
-     * SSOT: skills/devian-unity/30-unity-components/01-singleton/SKILL.md (8.5)
+     * SSOT: skills/devian-unity/10-base-system/31-singleton/SKILL.md (8.5)
      */
     checkSingletonEarlyInit() {
         const targetDirs = [
@@ -4440,7 +4440,7 @@ export * from './features';
             console.error('Policy: Do not access SimpleSingleton.Instance from:');
             console.error('  - [InitializeOnLoad] / [InitializeOnLoadMethod] attributed code');
             console.error('  - Static constructors (static ClassName())');
-            console.error('Reference: skills/devian-unity/30-unity-components/01-singleton/SKILL.md (8.5)');
+            console.error('Reference: skills/devian-unity/10-base-system/31-singleton/SKILL.md (8.5)');
             console.error('\nViolations:');
             for (const v of violations) {
                 console.error(`  - ${v.file}:${v.line}: ${v.reason}`);
@@ -4449,7 +4449,7 @@ export * from './features';
             throw new Error(
                 '[FAIL] SimpleSingleton early init pattern detected. ' +
                 'Do not access SimpleSingleton.Instance from InitializeOnLoad or static constructors. ' +
-                'See: skills/devian-unity/30-unity-components/01-singleton/SKILL.md (8.5)'
+                'See: skills/devian-unity/10-base-system/31-singleton/SKILL.md (8.5)'
             );
         }
 

@@ -5,7 +5,7 @@ namespace Devian
 {
     /// <summary>
     /// Common Effect prefab id (prefab.name).
-    /// SSOT: skills/devian-unity/30-unity-components/22-effect-manager/SKILL.md
+    /// SSOT: skills/devian-unity/14-effect-system/22-common-effect-manager/SKILL.md
     /// </summary>
     [Serializable]
     public sealed class COMMON_EFFECT_ID

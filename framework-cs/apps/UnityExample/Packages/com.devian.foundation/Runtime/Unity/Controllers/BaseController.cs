@@ -5,7 +5,7 @@ namespace Devian
     /// <summary>
     /// 컨트롤러 공통 베이스.
     /// 현재 단계에서는 Owner 바인딩만 제공.
-    /// SSOT: skills/devian-unity/30-unity-components/30-base-controller/SKILL.md
+    /// SSOT: skills/devian-unity/10-base-system/30-base-controller/SKILL.md
     /// </summary>
     public abstract class BaseController<TOwner> : MonoBehaviour
     {

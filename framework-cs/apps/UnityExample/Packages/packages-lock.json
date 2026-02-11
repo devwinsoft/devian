@@ -31,7 +31,8 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
-        "com.unity.addressables": "2.7.6"
+        "com.unity.addressables": "2.7.6",
+        "com.unity.nuget.newtonsoft-json": "3.2.1"
       }
     },
     "com.devian.protocol.game": {

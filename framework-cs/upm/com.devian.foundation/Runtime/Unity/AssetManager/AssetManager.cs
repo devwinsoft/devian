@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/30-unity-components/10-asset-manager/SKILL.md
+// SSOT: skills/devian-unity/10-base-system/10-asset-manager/SKILL.md
 // Devian Unity Asset Manager - Addressables 기반 로딩/캐시 + Resources(옵션) + Editor Find
 // DownloadManager와 연동: DownloadManager가 다운로드 → AssetManager가 로딩/캐시
 

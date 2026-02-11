@@ -216,7 +216,7 @@ registerClassParser('Devian.CString', parseCStringCell);
 
 // ============================================================================
 // Variant Parser (Simple format: {i} | {f} | {s})
-// SSOT: skills/devian-common/11-feature-variant/SKILL.md
+// SSOT: skills/devian-core/32-variable-variant/SKILL.md
 // ============================================================================
 
 /**

@@ -917,6 +917,13 @@ MonoBehaviour:
     Value: 
   textID:
     Value: 
+  bigInt:
+    mBase:
+      save1: 424874729
+      save2: 1553175785
+    mPow:
+      save1: -1712696041
+      save2: -1712696043
 --- !u!1 &1358389015
 GameObject:
   m_ObjectHideFlags: 0

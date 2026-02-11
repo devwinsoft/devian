@@ -12,7 +12,7 @@ namespace Devian
     /// <summary>
     /// Common effect manager.
     /// Spawns CommonEffectObject via BundlePool.
-    /// SSOT: skills/devian-unity/30-unity-components/22-common-effect-manager/SKILL.md
+    /// SSOT: skills/devian-unity/14-effect-system/22-common-effect-manager/SKILL.md
     ///
     /// AutoSingleton-based: 없으면 자동 생성. 씬에 CompoSingleton으로 배치하면 우선.
     /// </summary>

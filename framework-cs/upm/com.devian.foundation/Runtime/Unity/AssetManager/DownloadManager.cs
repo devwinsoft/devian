@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/30-unity-components/12-download-manager/SKILL.md
+// SSOT: skills/devian-unity/10-base-system/12-download-manager/SKILL.md
 // Devian Unity Download Manager - Addressables Label based Patch/Download
 // CompoSingleton: Bootstrap에서 생성/등록되거나 씬에 배치해야 함
 

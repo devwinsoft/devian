@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/30-unity-components/27-bootstrap-resource-object/SKILL.md
+// SSOT: skills/devian-unity/10-base-system/27-bootstrap-resource-object/SKILL.md
 
 #if UNITY_EDITOR
 

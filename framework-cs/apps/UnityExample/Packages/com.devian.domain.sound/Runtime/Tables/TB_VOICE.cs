@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/30-unity-components/16-sound-tables/SKILL.md
+// SSOT: skills/devian-unity/22-sound-system/16-sound-tables/SKILL.md
 // partial 확장 파일 - Generated TB_VOICE에 IVoiceRow 어댑터 추가
 // Generated TB_VOICE는 voice_id가 PK
 // v10 변경: key_group 제거, key_bundle 중심 로드/언로드, is3d/distance 추가
