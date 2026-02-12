@@ -17,9 +17,9 @@ GameObject:
   - component: {fileID: 8321347923667030604}
   - component: {fileID: 4706526706863056144}
   - component: {fileID: -7611824914717835204}
-  - component: {fileID: 4846411388033390387}
-  - component: {fileID: 1345724823640957005}
-  - component: {fileID: -5284564875076542411}
+  - component: {fileID: 420909886897670353}
+  - component: {fileID: 495534033099473291}
+  - component: {fileID: 6778154675446920720}
   m_Layer: 0
   m_Name: Bootstrap
   m_TagString: Untagged
@@ -164,7 +164,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81ad5841c326c40fdabb917b9644099b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Unity::Devian.VirtualGamepadDriver
---- !u!114 &4846411388033390387
+--- !u!114 &420909886897670353
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -173,10 +173,10 @@ MonoBehaviour:
   m_GameObject: {fileID: 2454387350981742136}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c1aa7832139b249628ca4f1b7e95549f, type: 3}
+  m_Script: {fileID: 11500000, guid: 64f2f1513c0f84e07b2738f4715c9601, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Samples.AuthFirebase::Devian.FirebaseManager
---- !u!114 &1345724823640957005
+  m_EditorClassIdentifier: Devian.Samples.CloudClientSystem::Devian.FirebaseManager
+--- !u!114 &495534033099473291
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -185,19 +185,19 @@ MonoBehaviour:
   m_GameObject: {fileID: 2454387350981742136}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 25e912d2f34214f4591066d02316f671, type: 3}
+  m_Script: {fileID: 11500000, guid: 02699528a794c4defab32883e6621df8, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Samples.ClaudSave::Devian.LocalSaveManager
+  m_EditorClassIdentifier: Devian.Samples.CloudClientSystem::Devian.LocalSaveManager
   _root: 0
   _useEncryption: 1
   _keyBase64:
-    data: 7ahuhajtsZ+SM8eaAjwzAtYsw8eglpKjTRXvBwWzfzjDoCPDs8dQLPwbhSc=
+    data: UpZAaryxwxrtWjxQhbEzRYXH9ePvo5aW777jhfudasP89RoEBDwjAMMFyyc=
   _ivBase64:
-    data: sUP5BAdRRbZqG8c8G5LLL6oVw6rxgycn
+    data: PIT5M1IV7VqSPE2DLy8V7cMFMxpF9Scn
   _slots:
   - slotKey: main
-    filename: save/main.json
---- !u!114 &-5284564875076542411
+    filename: main
+--- !u!114 &6778154675446920720
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -206,14 +206,14 @@ MonoBehaviour:
   m_GameObject: {fileID: 2454387350981742136}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0fe7c232a3021424a8a70b8126f66132, type: 3}
+  m_Script: {fileID: 11500000, guid: 93612b70a924744d5bc1e3073a9c8b67, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Samples.ClaudSave::Devian.CloudSaveManager
+  m_EditorClassIdentifier: Devian.Samples.CloudClientSystem::Devian.CloudSaveManager
   _useEncryption: 1
   _keyBase64:
-    data: qPGWw77HvloHllODqEVRai8a9cu8Bce8BVPWsX/WvAQzlintUE3HQ1M7qCc=
+    data: tp2qy4VTQPuERcegUhpNqmpamqMA7aOWneMA8UWSx/v7fzNQarFavFsVgyc=
   _ivBase64:
-    data: w24afxjDozu8s2oEx52P7e8pmsO+hScn
+    data: By+q75opUJIvB50C1jyxblp/9YRThScn
   _slots:
   - slotKey: main
     cloudSlot: main

@@ -65,7 +65,7 @@ iOS에서 당장 iCloud 구현이 준비되지 않은 경우, **Installer에서 
 
 
 - 샘플 엔트리:
-  - `Samples~/SaveSystem/Runtime/ClaudSaveInstaller.cs`
+  - `Samples~/CloudClientSystem/Runtime/ClaudSaveInstaller.cs`
 - iOS 분기에서:
   - `CloudSaveManager.Instance.Configure(client: new FirebaseCloudSaveClient())`
 

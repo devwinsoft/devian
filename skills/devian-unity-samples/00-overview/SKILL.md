@@ -17,8 +17,11 @@ Unity 샘플 프로젝트 작성 가이드 및 샘플들을 담당한다.
 | [03-samples-creation](../03-samples-creation/SKILL.md) | Samples~ 생성 절차(체크리스트) |
 | [10-samples-network](../10-samples-network/SKILL.md) | 네트워크 샘플 |
 | [20-samples-virtual-pad](../20-samples-virtual-pad/SKILL.md) | Virtual Pad 샘플 |
-| [30-samples-firebase-manager](../30-samples-firebase-manager/SKILL.md) | Firebase Manager 샘플 |
-| [35-samples-save-system](../35-samples-save-system/SKILL.md) | Save System 샘플 |
+| [30-samples-cloud-client-system](../30-samples-cloud-client-system/SKILL.md) | CloudClientSystem 번들 샘플 (Firebase + SaveSystem + LoginManager) |
+| [31-samples-firebase-manager](../31-samples-firebase-manager/SKILL.md) | Firebase Manager 샘플 |
+| [32-samples-localsave-manager](../32-samples-localsave-manager/SKILL.md) | LocalSave Manager 샘플 |
+| [33-samples-cloudsave-manager](../33-samples-cloudsave-manager/SKILL.md) | CloudSave Manager 샘플 |
+| [36-samples-login-manager](../36-samples-login-manager/SKILL.md) | Login Manager 샘플 |
 | [40-samples-purchase-manager](../40-samples-purchase-manager/SKILL.md) | PurchaseManager(구매) 샘플 |
 
 

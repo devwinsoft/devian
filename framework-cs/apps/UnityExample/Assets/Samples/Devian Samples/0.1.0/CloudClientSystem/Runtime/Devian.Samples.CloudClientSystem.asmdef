@@ -1,0 +1,19 @@
+{
+  "name": "Devian.Samples.CloudClientSystem",
+  "rootNamespace": "Devian",
+  "references": [
+    "Devian.Unity",
+    "Devian.Core",
+    "Devian.Module.Common",
+    "Devian.Domain.Common"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

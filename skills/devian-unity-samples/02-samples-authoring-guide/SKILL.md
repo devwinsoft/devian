@@ -15,7 +15,8 @@
 > - Templates 원본: `framework-cs/upm/com.devian.samples/Samples~/`
 > - Samples~ 생성 절차: `skills/devian-unity-samples/03-samples-creation/SKILL.md`
 > - Network Sample: `skills/devian-unity-samples/10-samples-network/SKILL.md`
-> - Save System Sample: `skills/devian-unity-samples/35-samples-save-system/SKILL.md`
+> - LocalSave Manager Sample: `skills/devian-unity-samples/32-samples-localsave-manager/SKILL.md`
+> - CloudSave Manager Sample: `skills/devian-unity-samples/33-samples-cloudsave-manager/SKILL.md`
 
 ---
 

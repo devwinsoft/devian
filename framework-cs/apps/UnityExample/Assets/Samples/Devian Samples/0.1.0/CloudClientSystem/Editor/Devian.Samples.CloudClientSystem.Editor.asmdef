@@ -1,0 +1,20 @@
+{
+    "name": "Devian.Samples.CloudClientSystem.Editor",
+    "rootNamespace": "Devian",
+    "references": [
+        "Devian.Samples.CloudClientSystem",
+        "Devian.Unity",
+        "Devian.Unity.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

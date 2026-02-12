@@ -9,14 +9,9 @@
   },
   "samples": [
     {
-      "displayName": "Save System",
-      "description": "Common Android/iOS entry: platform-branch init for CloudSaveManager. Android=GPGS, iOS=iCloud (Option A stub).",
-      "path": "Samples~/SaveSystem"
-    },
-    {
-      "displayName": "Firebase Manager",
-      "description": "Firebase Auth sample (Anonymous/Google/Apple/Facebook common flow: init + sign-in + ID token).",
-      "path": "Samples~/Firebase"
+      "displayName": "CloudClientSystem",
+      "description": "Bundle sample: installs FirebaseManager + SaveSystem + LoginManager together.",
+      "path": "Samples~/CloudClientSystem"
     },
     {
       "displayName": "Network",

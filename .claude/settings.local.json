@@ -33,7 +33,11 @@
       "Bash(fi)",
       "Bash(else echo \"NO META: $meta\")",
       "Bash(done)",
-      "Bash(git mv:*)"
+      "Bash(git mv:*)",
+      "Bash(for item in SaveSystem/Runtime/*)",
+      "Bash(do mv \"$item\" Runtime/)",
+      "Bash(for item in SaveSystem/Editor/*)",
+      "Bash(do mv \"$item\" Editor/)"
     ]
   },
   "project": {
