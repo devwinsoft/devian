@@ -313,6 +313,9 @@ class DevianToolBuilder {
         // 4-1. Sync Devian Core → UPM Foundation Core (.cs only, preserve .meta)
         this.syncDevianCoreToUpmFoundation();
 
+        // 4-2. Sync Domain.Common Core → UPM Domain.Common Core (.cs only, preserve .meta)
+        this.syncDomainCommonCoreToUpmDomainCommon();
+
         // 5. Validate (C# modules, TS modules, and UPM packages)
         console.log('[Phase 3] Validate modules and packages...');
         await this.validateCsModules();
@@ -2935,6 +2938,32 @@ export * from './features';
         }
 
         console.log('  [Sync] Devian Core → UPM Foundation Core (.cs only)');
+
+        this._syncCsRecursive(src, dest);
+    }
+
+    /**
+     * Sync Domain.Common Core sources to UPM Domain.Common package.
+     * Source: framework-cs/module/Devian.Domain.Common/src/Core
+     * Target: framework-cs/upm/com.devian.domain.common/Runtime/Module/Core
+     * - Copies new/changed .cs files from source to target.
+     * - Deletes stale .cs files in target that no longer exist in source.
+     * - Never touches .meta files (Unity GUID preservation).
+     */
+    syncDomainCommonCoreToUpmDomainCommon() {
+        const src = path.join(this.rootDir, 'framework-cs/module/Devian.Domain.Common/src/Core');
+        const dest = path.join(this.rootDir, 'framework-cs/upm/com.devian.domain.common/Runtime/Module/Core');
+
+        if (!fs.existsSync(src)) {
+            console.log('  [Skip] Domain.Common Core source not found:', src);
+            return;
+        }
+        if (!fs.existsSync(dest)) {
+            console.log('  [Skip] UPM Domain.Common Core target not found:', dest);
+            return;
+        }
+
+        console.log('  [Sync] Domain.Common Core → UPM Domain.Common Core (.cs only)');
 
         this._syncCsRecursive(src, dest);
     }

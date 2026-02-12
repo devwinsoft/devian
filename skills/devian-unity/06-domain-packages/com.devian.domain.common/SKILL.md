@@ -48,6 +48,10 @@ com.devian.domain.common/
 │   ├── Devian.Domain.Common.asmdef
 │   ├── Generated/
 │   │   └── Common.g.cs              (generated)
+│   ├── Module/
+│   │   └── Core/
+│   │       ├── CoreError.cs          (에러 정보 컨테이너)
+│   │       └── CoreResult.cs         (성공/실패 결과 타입)
 │   └── Features/
 │       └── Variant.cs
 └── Editor/
@@ -133,8 +137,14 @@ com.devian.domain.common/
 
 | 파일 | 설명 |
 |------|------|
-| `Runtime/Generated/Common.g.cs` | TableGen으로 생성된 Common 모듈 코드 |
+| `Runtime/Generated/Common.g.cs` | TableGen으로 생성된 Common 모듈 코드 (ErrorClientType enum 포함) |
+| `Runtime/Module/Core/CoreError.cs` | 에러 정보 컨테이너. 공식 네임스페이스: `Devian.Domain.Common` |
+| `Runtime/Module/Core/CoreResult.cs` | 성공/실패 결과 타입. 공식 네임스페이스: `Devian.Domain.Common` |
 | `Runtime/Features/Variant.cs` | Variant feature 구현 (SSOT: 32-variable-variant) |
+
+> **CoreError/CoreResult는 Domain.Common의 기본 타입이며, 공식 네임스페이스는 `Devian.Domain.Common`이다.**
+> 소스 SSOT: `framework-cs/module/Devian.Domain.Common/src/Core/`
+> 빌더 sync: `syncDomainCommonCoreToUpmDomainCommon()`가 module → UPM 동기화를 수행한다.
 
 ### Editor
 
@@ -155,6 +165,44 @@ com.devian.domain.common/
 - Common 모듈일 때만 `framework-cs/module/Devian.Domain.Common/features/` → staging `Runtime/Features/`로 복사.
 - Complex는 `com.devian.foundation`으로 이동됨 (skills/devian-core/31-variable-complex/SKILL.md 참조).
 - `upmConfig.packageDir`가 UnityExample/Packages를 가리키면 해당 디렉토리는 **generated output**으로 취급된다.
+
+---
+
+## CoreResult / CoreError API
+
+CoreError/CoreResult는 Domain.Common의 기본 타입이며, 공식 네임스페이스는 `Devian.Domain.Common`이다.
+
+### CoreResult 주 사용 시그니처
+
+```csharp
+// 주 사용 — 프로덕션 코드에서는 이 시그니처만 사용한다.
+CoreResult<T>.Failure(ErrorClientType errorType, string message)
+
+// Deprecated (Obsolete) — 내부/호환용. 사용 금지.
+[Obsolete] CoreResult<T>.Failure(string code, string message)
+```
+
+> **프로덕션 코드에서는 `Failure(string, string)`을 사용하지 않는다(사용처 0개 유지).**
+> 에러 식별자는 ERROR_CLIENT 테이블에서 생성되는 `ErrorClientType`를 사용한다.
+
+### CoreError 생성자
+
+```csharp
+// 주 사용
+new CoreError(ErrorClientType errorType, string message, string? details = null)
+
+// Deprecated (Obsolete) — 내부/호환용. 사용 금지.
+[Obsolete] new CoreError(string code, string message, string? details = null)
+```
+
+---
+
+## ErrorClientType SSOT
+
+- `CommonTable.xlsx`의 `ERROR_CLIENT` 시트는 `ErrorClientType` enum의 SSOT이다.
+- 빌더가 ERROR_CLIENT의 `id` 컬럼으로 `ErrorClientType` enum을 생성한다 (`Common.g.cs`).
+- LoginManager / CloudSaveManager / LocalSaveManager / FirebaseManager / PurchaseManager의 에러 코드는 `ErrorClientType` 항목으로 관리한다.
+- 새 에러 코드가 필요하면 ERROR_CLIENT 테이블에 행을 추가하고 빌더를 실행한다.
 
 ---
 

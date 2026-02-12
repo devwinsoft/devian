@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Text;
 using UnityEngine;
+using Devian.Domain.Common;
 
 namespace Devian
 {
@@ -15,12 +16,12 @@ namespace Devian
             {
                 if (string.IsNullOrWhiteSpace(rootPath))
                 {
-                    return CoreResult<bool>.Failure("localsave.path.empty", "Root path is empty.");
+                    return CoreResult<bool>.Failure(ErrorClientType.LOCALSAVE_PATH_EMPTY, "Root path is empty.");
                 }
 
                 if (string.IsNullOrWhiteSpace(filename))
                 {
-                    return CoreResult<bool>.Failure("localsave.filename.empty", "Filename is empty.");
+                    return CoreResult<bool>.Failure(ErrorClientType.LOCALSAVE_FILENAME_EMPTY, "Filename is empty.");
                 }
 
                 var path = Path.Combine(rootPath, filename);
@@ -45,7 +46,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CoreResult<bool>.Failure("localsave.write", ex.Message);
+                return CoreResult<bool>.Failure(ErrorClientType.LOCALSAVE_WRITE, ex.Message);
             }
         }
 
@@ -55,12 +56,12 @@ namespace Devian
             {
                 if (string.IsNullOrWhiteSpace(rootPath))
                 {
-                    return CoreResult<LocalSavePayload>.Failure("localsave.path.empty", "Root path is empty.");
+                    return CoreResult<LocalSavePayload>.Failure(ErrorClientType.LOCALSAVE_PATH_EMPTY, "Root path is empty.");
                 }
 
                 if (string.IsNullOrWhiteSpace(filename))
                 {
-                    return CoreResult<LocalSavePayload>.Failure("localsave.filename.empty", "Filename is empty.");
+                    return CoreResult<LocalSavePayload>.Failure(ErrorClientType.LOCALSAVE_FILENAME_EMPTY, "Filename is empty.");
                 }
 
                 var path = Path.Combine(rootPath, filename);
@@ -75,7 +76,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CoreResult<LocalSavePayload>.Failure("localsave.read", ex.Message);
+                return CoreResult<LocalSavePayload>.Failure(ErrorClientType.LOCALSAVE_READ, ex.Message);
             }
         }
     }

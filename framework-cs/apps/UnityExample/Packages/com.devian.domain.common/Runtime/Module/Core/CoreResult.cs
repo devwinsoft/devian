@@ -1,7 +1,8 @@
-namespace Devian
+namespace Devian.Domain.Common
 {
     /// <summary>
     /// Generic result type for operations that may fail.
+    /// Basic design: Domain.Common owns error/result primitives.
     /// </summary>
     public readonly struct CoreResult<T>
     {
@@ -17,7 +18,14 @@ namespace Devian
         }
 
         public static CoreResult<T> Success(T value) => new(value, null);
+
         public static CoreResult<T> Failure(CoreError error) => new(default, error);
-        public static CoreResult<T> Failure(string code, string message) => new(default, new CoreError(code, message));
+
+        public static CoreResult<T> Failure(ErrorClientType errorType, string message)
+            => new(default, new CoreError(errorType, message));
+
+        [System.Obsolete("Use Failure(ErrorClientType, string) instead.")]
+        public static CoreResult<T> Failure(string code, string message)
+            => new(default, new CoreError(code, message));
     }
 }

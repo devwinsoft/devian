@@ -16,3 +16,46 @@
 {"Id":"FIREBASE_APPLE_BRIDGE","Msg_key":"","Msg":"Apple sign-in bridge is not wired"}
 {"Id":"FIREBASE_FACEBOOK_NOT_IMPLEMENTED","Msg_key":"","Msg":"Facebook sign-in is not implemented"}
 {"Id":"FIREBASE_REAUTH_UNKNOWN","Msg_key":"","Msg":"Unknown re-authentication type"}
+{"Id":"LOGIN_FIREBASE_DEPENDENCY","Msg_key":"","Msg":"Firebase dependency error"}
+{"Id":"LOGIN_CREDENTIAL_UNSUPPORTED","Msg_key":"","Msg":"Internal credential acquisition not supported"}
+{"Id":"LOGIN_GPGS_NOT_FOUND","Msg_key":"","Msg":"GooglePlayGames plugin is not installed"}
+{"Id":"LOGIN_GPGS_NOT_INITIALIZED","Msg_key":"","Msg":"PlayGamesPlatform.Instance is null"}
+{"Id":"LOGIN_GPGS_NO_AUTHENTICATE","Msg_key":"","Msg":"PlayGamesPlatform.Authenticate not found"}
+{"Id":"LOGIN_GPGS_AUTH_FAILED","Msg_key":"","Msg":"Google Play Games authentication failed"}
+{"Id":"LOGIN_GPGS_NO_SERVER_ACCESS","Msg_key":"","Msg":"PlayGamesPlatform.RequestServerSideAccess not found"}
+{"Id":"LOGIN_GPGS_NO_AUTH_CODE","Msg_key":"","Msg":"Failed to obtain server auth code from GPGS"}
+{"Id":"LOGIN_GPGS_EXCEPTION","Msg_key":"","Msg":"GPGS credential exception"}
+{"Id":"LOGIN_UNSUPPORTED","Msg_key":"","Msg":"LoginType not supported on this platform"}
+{"Id":"LOGIN_ANONYMOUS_FAILED","Msg_key":"","Msg":"Anonymous sign-in returned no user"}
+{"Id":"LOGIN_ANONYMOUS_EXCEPTION","Msg_key":"","Msg":"Anonymous sign-in exception"}
+{"Id":"LOGIN_GOOGLE_MISSING_AUTH_CODE","Msg_key":"","Msg":"Google ServerAuthCode is required"}
+{"Id":"LOGIN_GOOGLE_LINK_FAILED","Msg_key":"","Msg":"Failed to link Google credential"}
+{"Id":"LOGIN_GOOGLE_SIGNIN_FAILED","Msg_key":"","Msg":"Failed to sign in with Google credential"}
+{"Id":"LOGIN_GOOGLE_EXCEPTION","Msg_key":"","Msg":"Google sign-in exception"}
+{"Id":"LOGIN_APPLE_MISSING_TOKEN","Msg_key":"","Msg":"Apple IdToken and RawNonce required"}
+{"Id":"LOGIN_APPLE_LINK_FAILED","Msg_key":"","Msg":"Failed to link Apple credential"}
+{"Id":"LOGIN_APPLE_SIGNIN_FAILED","Msg_key":"","Msg":"Failed to sign in with Apple credential"}
+{"Id":"LOGIN_APPLE_EXCEPTION","Msg_key":"","Msg":"Apple sign-in exception"}
+{"Id":"CLOUDSAVE_KEYIV","Msg_key":"","Msg":"Key/IV error"}
+{"Id":"CLOUDSAVE_NOCLIENT","Msg_key":"","Msg":"Client not configured"}
+{"Id":"CLOUDSAVE_SLOT_EMPTY","Msg_key":"","Msg":"Slot is empty"}
+{"Id":"CLOUDSAVE_SLOT_MISSING","Msg_key":"","Msg":"Slot not configured"}
+{"Id":"CLOUDSAVE_PAYLOAD_INVALID","Msg_key":"","Msg":"Payload must be JSON"}
+{"Id":"CLOUDSAVE_SIGNIN","Msg_key":"","Msg":"Cloud save sign-in failed"}
+{"Id":"CLOUDSAVE_SAVE","Msg_key":"","Msg":"Cloud save failed"}
+{"Id":"CLOUDSAVE_LOAD","Msg_key":"","Msg":"Cloud load failed"}
+{"Id":"CLOUDSAVE_CHECKSUM","Msg_key":"","Msg":"Checksum mismatch"}
+{"Id":"CLOUDSAVE_DELETE","Msg_key":"","Msg":"Cloud delete failed"}
+{"Id":"LOCALSAVE_KEYIV","Msg_key":"","Msg":"Key/IV error"}
+{"Id":"LOCALSAVE_SLOT_EMPTY","Msg_key":"","Msg":"Slot is empty"}
+{"Id":"LOCALSAVE_SLOT_MISSING","Msg_key":"","Msg":"Slot not configured"}
+{"Id":"LOCALSAVE_FILENAME_INVALID","Msg_key":"","Msg":"Invalid filename"}
+{"Id":"LOCALSAVE_CANCELLED","Msg_key":"","Msg":"Operation cancelled"}
+{"Id":"LOCALSAVE_CHECKSUM","Msg_key":"","Msg":"Checksum mismatch"}
+{"Id":"LOCALSAVE_PATH_EMPTY","Msg_key":"","Msg":"Root path is empty"}
+{"Id":"LOCALSAVE_FILENAME_EMPTY","Msg_key":"","Msg":"Filename is empty"}
+{"Id":"LOCALSAVE_WRITE","Msg_key":"","Msg":"Write failed"}
+{"Id":"LOCALSAVE_READ","Msg_key":"","Msg":"Read failed"}
+{"Id":"IAP_NOT_INITIALIZED","Msg_key":"","Msg":"Store not initialized"}
+{"Id":"IAP_NOT_SUPPORTED","Msg_key":"","Msg":"Unity Purchasing not available"}
+{"Id":"PURCHASE_STORE_FAILED","Msg_key":"","Msg":"Purchase store failed"}

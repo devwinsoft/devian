@@ -152,11 +152,13 @@ public sealed class LocalSaveManager : CompoSingleton<LocalSaveManager>
 ## 8. Failure Handling
 
 
-- checksum 불일치: `CoreResult.Failure("localsave.checksum", ...)` 반환
+- checksum 불일치: `CoreResult.Failure(ErrorClientType.LOCALSAVE_CHECKSUM, ...)` 반환
 - 파일 미존재: `CoreResult.Success(null)` 반환 (실패가 아님)
-- 파일명 유효성 실패: `CoreResult.Failure("localsave.filename.invalid", ...)` 반환
-- Key/IV 미설정: `CoreResult.Failure("localsave.keyiv", ...)` 반환
+- 파일명 유효성 실패: `CoreResult.Failure(ErrorClientType.LOCALSAVE_FILENAME_INVALID, ...)` 반환
+- Key/IV 미설정: `CoreResult.Failure(ErrorClientType.LOCALSAVE_KEYIV, ...)` 반환
 
+> 에러 식별자는 `ErrorClientType` enum을 사용한다(ERROR_CLIENT 테이블 SSOT).
+> `Failure(string, string)`은 Deprecated(Obsolete)이며 사용 금지.
 > fallback/재생성 정책은 **서비스 레이어 책임**이다.
 
 

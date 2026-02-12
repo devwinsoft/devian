@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
+using Devian.Domain.Common;
 
 namespace Devian
 {
@@ -60,7 +61,7 @@ namespace Devian
             {
                 if (string.IsNullOrWhiteSpace(keyBase64) || string.IsNullOrWhiteSpace(ivBase64))
                 {
-                    return CoreResult<bool>.Failure("localsave.keyiv", "Key/IV is not set.");
+                    return CoreResult<bool>.Failure(ErrorClientType.LOCALSAVE_KEYIV, "Key/IV is not set.");
                 }
 
                 var key = Convert.FromBase64String(keyBase64);
@@ -68,12 +69,12 @@ namespace Devian
 
                 if (key.Length != 32)
                 {
-                    return CoreResult<bool>.Failure("localsave.keyiv", "Key must be 32 bytes (AES-256).");
+                    return CoreResult<bool>.Failure(ErrorClientType.LOCALSAVE_KEYIV, "Key must be 32 bytes (AES-256).");
                 }
 
                 if (iv.Length != 16)
                 {
-                    return CoreResult<bool>.Failure("localsave.keyiv", "IV must be 16 bytes.");
+                    return CoreResult<bool>.Failure(ErrorClientType.LOCALSAVE_KEYIV, "IV must be 16 bytes.");
                 }
 
                 _keyBase64.Value = keyBase64;
@@ -83,7 +84,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CoreResult<bool>.Failure("localsave.keyiv", ex.Message);
+                return CoreResult<bool>.Failure(ErrorClientType.LOCALSAVE_KEYIV, ex.Message);
             }
         }
 
@@ -97,17 +98,17 @@ namespace Devian
         {
             if (string.IsNullOrWhiteSpace(slot))
             {
-                return CoreResult<bool>.Failure("localsave.slot.empty", "Slot is empty.");
+                return CoreResult<bool>.Failure(ErrorClientType.LOCALSAVE_SLOT_EMPTY, "Slot is empty.");
             }
 
             if (!TryResolveFilename(slot, out var filename))
             {
-                return CoreResult<bool>.Failure("localsave.slot.missing", $"Slot '{slot}' not configured.");
+                return CoreResult<bool>.Failure(ErrorClientType.LOCALSAVE_SLOT_MISSING, $"Slot '{slot}' not configured.");
             }
 
             if (!IsValidJsonFilename(filename, out var fnError))
             {
-                return CoreResult<bool>.Failure("localsave.filename.invalid", fnError);
+                return CoreResult<bool>.Failure(ErrorClientType.LOCALSAVE_FILENAME_INVALID, fnError);
             }
 
             var plain = payload ?? string.Empty;
@@ -117,7 +118,7 @@ namespace Devian
 
             if (_useEncryption && !TryGetKeyIv(out key, out iv, out var keyError))
             {
-                return CoreResult<bool>.Failure("localsave.keyiv", keyError);
+                return CoreResult<bool>.Failure(ErrorClientType.LOCALSAVE_KEYIV, keyError);
             }
 
             var cipher = _useEncryption
@@ -144,17 +145,17 @@ namespace Devian
         {
             if (string.IsNullOrWhiteSpace(slot))
             {
-                return CoreResult<string>.Failure("localsave.slot.empty", "Slot is empty.");
+                return CoreResult<string>.Failure(ErrorClientType.LOCALSAVE_SLOT_EMPTY, "Slot is empty.");
             }
 
             if (!TryResolveFilename(slot, out var filename))
             {
-                return CoreResult<string>.Failure("localsave.slot.missing", $"Slot '{slot}' not configured.");
+                return CoreResult<string>.Failure(ErrorClientType.LOCALSAVE_SLOT_MISSING, $"Slot '{slot}' not configured.");
             }
 
             if (!IsValidJsonFilename(filename, out var fnError))
             {
-                return CoreResult<string>.Failure("localsave.filename.invalid", fnError);
+                return CoreResult<string>.Failure(ErrorClientType.LOCALSAVE_FILENAME_INVALID, fnError);
             }
 
             var loaded = LocalSaveFileStore.Read(GetRootPath(), filename);
@@ -172,7 +173,7 @@ namespace Devian
             var expected = LocalSaveCrypto.ComputeSha256Base64(save.payload);
             if (!string.Equals(expected, save.checksum, StringComparison.Ordinal))
             {
-                return CoreResult<string>.Failure("localsave.checksum", "Checksum mismatch.");
+                return CoreResult<string>.Failure(ErrorClientType.LOCALSAVE_CHECKSUM, "Checksum mismatch.");
             }
 
             byte[] key = null;
@@ -180,7 +181,7 @@ namespace Devian
 
             if (_useEncryption && !TryGetKeyIv(out key, out iv, out var keyError))
             {
-                return CoreResult<string>.Failure("localsave.keyiv", keyError);
+                return CoreResult<string>.Failure(ErrorClientType.LOCALSAVE_KEYIV, keyError);
             }
 
             var plain = _useEncryption
@@ -198,7 +199,7 @@ namespace Devian
             if (ct.IsCancellationRequested)
             {
                 return System.Threading.Tasks.Task.FromResult(
-                    CoreResult<bool>.Failure("localsave.cancelled", "Cancelled."));
+                    CoreResult<bool>.Failure(ErrorClientType.LOCALSAVE_CANCELLED, "Cancelled."));
             }
 
             // Calls the existing synchronous Save (validations remain in one place)
@@ -212,7 +213,7 @@ namespace Devian
             if (ct.IsCancellationRequested)
             {
                 return System.Threading.Tasks.Task.FromResult(
-                    CoreResult<string>.Failure("localsave.cancelled", "Cancelled."));
+                    CoreResult<string>.Failure(ErrorClientType.LOCALSAVE_CANCELLED, "Cancelled."));
             }
 
             return System.Threading.Tasks.Task.FromResult(LoadPayload(slot));

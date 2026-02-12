@@ -236,7 +236,7 @@ namespace Devian
 
         private static CoreError firebaseError(ErrorClientType code, string message)
         {
-            return new CoreError(code.ToString(), message);
+            return new CoreError(code, message);
         }
 
         private static string tryGetUserId(object signInResult)
