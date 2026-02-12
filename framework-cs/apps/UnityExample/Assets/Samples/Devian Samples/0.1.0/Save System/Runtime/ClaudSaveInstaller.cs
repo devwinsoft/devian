@@ -1,0 +1,48 @@
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+
+namespace Devian
+{
+    public static class ClaudSaveInstaller
+    {
+        /// <summary>
+        /// Common Android/iOS entry:
+        /// - Android: use CloudSaveManager default client selection (GPGS) + best-effort activation inside manager.
+        /// - iOS: inject FirebaseCloudSaveClient for now. (iCloud stays as designed; switch later.)
+        /// </summary>
+        public static Task<CoreResult<CloudSaveResult>> InitializeAsync(CancellationToken ct)
+        {
+#if UNITY_IOS && !UNITY_EDITOR
+            // iOS: use Firebase cloud save for now. (iCloud stays as designed; switch later.)
+            CloudSaveManager.Instance.Configure(client: new FirebaseCloudSaveClient());
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            // Android uses CloudSaveManager default client creation (GPGS + activation).
+            // Do not inject a client here.
+#else
+            // Editor/other: keep existing dev flow (default selection).
+#endif
+            return CloudSaveManager.Instance.InitializeAsync(ct);
+        }
+
+
+        /// <summary>
+        /// Common entry + optional configuration (slots/encryption).
+        /// Client selection remains platform-branch.
+        /// </summary>
+        public static Task<CoreResult<CloudSaveResult>> InitializeAsync(
+            List<CloudSaveSlot> slots,
+            bool useEncryption,
+            CancellationToken ct)
+        {
+            CloudSaveManager.Instance.Configure(
+                client: null,
+                useEncryption: useEncryption,
+                slots: slots);
+
+
+            return InitializeAsync(ct);
+        }
+    }
+}

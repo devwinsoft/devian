@@ -25,10 +25,13 @@ AppliesTo: v10
 ## 2. 빠른 체크리스트
 
 
-- (Unity) `com.devian.foundation` 설치
+- (Unity) `com.devian.samples` 설치 (CloudSave/LocalSave 구현은 `Samples~/SaveSystem`에 포함)
 - (Android) Google Play Games Plugin for Unity 설치 및 프로젝트 설정
 - (Runtime) `CloudSaveManager.Instance.Configure(...)` 호출
 - (Runtime) 필요 시 `SignInIfNeededAsync` 호출 후 Save/Load 수행
+- (Product) 로그인은 Firebase Auth(Anonymous + Apple/Google) 기준으로 구성한다.
+- (Product) 기본 Cloud Save 저장소는 플랫폼별(Android=GPGS / iOS=iCloud)로 유지한다. iOS(iCloud) 구현이 준비되지 않은 단계에서는 Firebase 구현을 임시로 사용할 수 있다.
+- (Out of scope) 기타 소셜 로그인 제공자는 이 스킬 범위 밖이다.
 
 
 ---
@@ -37,7 +40,7 @@ AppliesTo: v10
 ## 3. Android (Google Play Games) 구성 요약
 
 
-Devian은 Foundation에 `GooglePlayGamesCloudSaveClient`를 제공한다.
+Devian은 Samples(ClaudSave)에 `GoogleCloudSaveClient`를 제공한다.
 
 
 - Reflection 기반: 플러그인이 없어도 컴파일은 됨
@@ -45,6 +48,11 @@ Devian은 Foundation에 `GooglePlayGamesCloudSaveClient`를 제공한다.
   - Android 기기 런타임
   - GPGS 플러그인 설치 + 초기화/설정 완료
   - 로그인 가능 상태
+
+
+주의:
+- Firebase Auth를 사용하더라도, GPGS Saved Games는 Play Games 로그인 계정 기준으로 동작한다.
+- iOS(iCloud)와 Android(GPGS) 간 자동 세이브 이전/통합은 비목표다.
 
 
 구현 상세는 [21-cloudsave-google](../21-cloudsave-google/SKILL.md) 참고.
@@ -76,7 +84,7 @@ namespace Devian
             };
 
 
-            var client = new GooglePlayGamesCloudSaveClient();
+            var client = new GoogleCloudSaveClient();
 
 
             CloudSaveManager.Instance.Configure(
@@ -135,12 +143,13 @@ namespace Devian
 ## 6. 샘플 위치
 
 
-`com.devian.samples/Samples~/CloudSave-GPGS`
+`com.devian.samples/Samples~/SaveSystem`
 
 
-- `GpgsCloudSaveInstaller.ConfigureCloudSave(object googlePlayService)` — 클라이언트 주입 전용
-- `GpgsCloudSaveInstaller.ConfigureCloudSave(object, List<CloudSaveSlot>, bool)` — 레거시 호환
-- `GpgsCloudSaveClient` — 커스텀 구현 레퍼런스용 스텁
+- `ClaudSaveInstaller.InitializeAsync(CancellationToken ct)` — 공통 엔트리(내부 플랫폼 분기)
+- `ClaudSaveInstaller.InitializeAsync(List<CloudSaveSlot>, bool, CancellationToken)` — slots/encryption 포함 오버로드
+- (옵션) `FirebaseCloudSaveClient` — iOS에서 iCloud 구현이 준비되지 않은 경우 임시로 사용 가능
+- (문서) Firebase 구현 상세: [25-cloudsave-firebase](../25-cloudsave-firebase/SKILL.md)
 
 
 ---

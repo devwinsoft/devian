@@ -99,6 +99,23 @@ SSOT: [03-ssot](../03-ssot/SKILL.md)
 플랫폼별 저장소는 서로 다른 세이브로 간주한다(교차 동기화 비목표).
 
 
+### 7.1 Identity Strategy (Product Decision)
+
+
+- 로그인(아이덴티티): Firebase Auth
+  - 게스트: Anonymous
+  - 정식: Apple(iOS) / Google(Android)만 지원한다.
+  - 기타 소셜 로그인 제공자는 범위 밖이다.
+
+
+- Cloud Save 계정 스코프:
+  - Android: Google Play Games 로그인 계정 기준으로 Saved Games가 분리된다.
+  - iOS: Apple ID / iCloud 설정 기준으로 iCloud 저장소가 분리된다.
+
+
+저장소는 단일로 통합하지 않으며, 플랫폼별 저장소는 서로 다른 세이브로 간주한다.
+
+
 ---
 
 

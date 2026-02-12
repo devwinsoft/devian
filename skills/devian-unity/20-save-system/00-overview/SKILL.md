@@ -13,6 +13,15 @@ Devian Unity 하위의 **Save System(Cloud Save + Local Save, Unity 전용)** �
 - PC: Steam Cloud (Remote Storage)
 
 
+추가 가정(프로덕트 결정):
+- 로그인(아이덴티티)은 Firebase Auth를 사용한다.
+  - 게스트: Anonymous
+  - 정식: Apple(iOS) / Google(Android)만 지원한다.
+  - 기타 소셜 로그인 제공자는 범위 밖이다.
+- Cloud Save 저장소는 플랫폼 네이티브 저장소를 그대로 사용하며, 단일 저장소로 통합하지 않는다.
+- iOS(iCloud) 구현이 준비되지 않은 단계에서는 Firebase 기반 Cloud Save를 임시로 사용할 수 있다.
+
+
 비목표:
 - 서버/BaaS 없이 **크로스플랫폼(안드↔iOS↔Steam) 세이브 공유**를 보장하는 것
 
@@ -33,6 +42,7 @@ Devian Unity 하위의 **Save System(Cloud Save + Local Save, Unity 전용)** �
 | [22-cloudsave-icloud](../22-cloudsave-icloud/SKILL.md) | Cloud Save iOS(iCloud, Unity) |
 | [23-cloudsave-steam](../23-cloudsave-steam/SKILL.md) | Cloud Save PC(Steam, Unity) |
 | [24-cloudsave-guide](../24-cloudsave-guide/SKILL.md) | Cloud Save 빠른 시작 가이드(설정/구성/샘플 연결) |
+| [25-cloudsave-firebase](../25-cloudsave-firebase/SKILL.md) | Cloud Save Firebase(Firestore, Unity) |
 | [50-localsave-unity](../50-localsave-unity/SKILL.md) | Local Save Unity 공통 |
 | [51-localsave-android](../51-localsave-android/SKILL.md) | Local Save Android(Unity) |
 | [52-localsave-ios](../52-localsave-ios/SKILL.md) | Local Save iOS(Unity) |

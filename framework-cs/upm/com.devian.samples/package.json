@@ -19,9 +19,9 @@
       "path": "Samples~/VirtualPad"
     },
     {
-      "displayName": "CloudSave (GPGS)",
-      "description": "Samples-only GPGS integration entry: client creation + CloudSaveManager.Configure in one call (stub client).",
-      "path": "Samples~/CloudSave-GPGS"
+      "displayName": "Save System",
+      "description": "Common Android/iOS entry: platform-branch init for CloudSaveManager. Android=GPGS, iOS=iCloud (Option A stub).",
+      "path": "Samples~/SaveSystem"
     },
     {
       "displayName": "Firebase Manager",

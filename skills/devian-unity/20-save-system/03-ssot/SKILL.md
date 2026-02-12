@@ -80,29 +80,31 @@ UnityExample에서:
 ## Implementation Reference
 
 
-### Cloud Save (UPM)
+### Cloud Save
 
 | File | Description |
 |------|-------------|
-| `Runtime/Unity/CloudSave/CloudSaveResult.cs` | 결과 enum |
-| `Runtime/Unity/CloudSave/CloudSavePayload.cs` | 데이터 클래스 |
-| `Runtime/Unity/CloudSave/ICloudSaveClient.cs` | 플랫폼 클라이언트 인터페이스 |
-| `Runtime/Unity/CloudSave/CloudSaveManager.cs` | 도구 레이어 매니저 |
-| `Runtime/Unity/CloudSave/CloudSaveCrypto.cs` | SHA-256 체크섬 |
-| `Runtime/Unity/CloudSave/GooglePlayGamesCloudSaveClient.cs` | GPGS 구현 (Reflection) |
+| `Samples~/SaveSystem/Runtime/CloudSave/CloudSaveResult.cs` | 결과 enum |
+| `Samples~/SaveSystem/Runtime/CloudSave/CloudSavePayload.cs` | 데이터 클래스 |
+| `Samples~/SaveSystem/Runtime/CloudSave/ICloudSaveClient.cs` | 플랫폼 클라이언트 인터페이스 |
+| `Samples~/SaveSystem/Runtime/CloudSave/CloudSaveManager.cs` | 도구 레이어 매니저 |
+| `Samples~/SaveSystem/Runtime/CloudSave/CloudSaveCrypto.cs` | SHA-256 체크섬 |
+| `Samples~/SaveSystem/Runtime/CloudSave/GoogleCloudSaveClient.cs` | GPGS 구현 (Reflection) |
+| `Samples~/SaveSystem/Runtime/CloudSave/FirebaseCloudSaveClient.cs` | Firebase(Firestore) 구현 |
+| `Samples~/SaveSystem/Editor/CloudSave/CloudSaveManagerEditor.cs` | Inspector (Key/IV 생성) |
 
 
-### Local Save (UPM)
+### Local Save
 
 | File | Description |
 |------|-------------|
-| `Runtime/Unity/LocalSave/LocalSaveManager.cs` | 도구 레이어 매니저 |
-| `Runtime/Unity/LocalSave/LocalSavePayload.cs` | 데이터 클래스 |
-| `Runtime/Unity/LocalSave/LocalSaveCrypto.cs` | SHA-256 체크섬 |
-| `Runtime/Unity/LocalSave/LocalSaveFileStore.cs` | 파일 I/O (atomic write) |
-| `Runtime/Unity/LocalSave/Crypto.cs` | AES 암호화 유틸리티 |
-| `Editor/LocalSave/LocalSaveManagerEditor.cs` | Inspector (Key/IV 생성) |
+| `Samples~/SaveSystem/Runtime/LocalSave/LocalSaveManager.cs` | 도구 레이어 매니저 |
+| `Samples~/SaveSystem/Runtime/LocalSave/LocalSavePayload.cs` | 데이터 클래스 |
+| `Samples~/SaveSystem/Runtime/LocalSave/LocalSaveCrypto.cs` | SHA-256 체크섬 |
+| `Samples~/SaveSystem/Runtime/LocalSave/LocalSaveFileStore.cs` | 파일 I/O (atomic write) |
+| `Samples~/SaveSystem/Runtime/LocalSave/Crypto.cs` | AES 암호화 유틸리티 |
+| `Samples~/SaveSystem/Editor/LocalSave/LocalSaveManagerEditor.cs` | Inspector (Key/IV 생성) |
 
 
-UPM root: `framework-cs/upm/com.devian.foundation/`
-Mirror: `framework-cs/apps/UnityExample/Packages/com.devian.foundation/`
+UPM root: `framework-cs/upm/com.devian.samples/`
+Mirror: `framework-cs/apps/UnityExample/Packages/com.devian.samples/`

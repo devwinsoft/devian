@@ -70,7 +70,7 @@ AppliesTo: v10
 
 > 아래는 **서비스 레이어 책임**이며 프레임워크 범위 밖이다.
 > GPGS 구현은 `OpenWithAutomaticConflictResolution` + `UseLongestPlaytime`로
-> 플랫폼 수준 자동 충돌 해결을 사용한다(코드 참조: `GooglePlayGamesCloudSaveClient`).
+> 플랫폼 수준 자동 충돌 해결을 사용한다(코드 참조: `GoogleCloudSaveClient`).
 
 
 권장 패턴(서비스 레이어):

@@ -32,7 +32,8 @@
       "Bash(else echo \"ORPHAN: $meta \\(delete candidate\\)\")",
       "Bash(fi)",
       "Bash(else echo \"NO META: $meta\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(git mv:*)"
     ]
   },
   "project": {
