@@ -102,7 +102,7 @@ UnityExample에서:
 | `Samples~/CloudClientSystem/Runtime/LocalSave/LocalSavePayload.cs` | 데이터 클래스 |
 | `Samples~/CloudClientSystem/Runtime/LocalSave/LocalSaveCrypto.cs` | SHA-256 체크섬 |
 | `Samples~/CloudClientSystem/Runtime/LocalSave/LocalSaveFileStore.cs` | 파일 I/O (atomic write) |
-| `Samples~/CloudClientSystem/Runtime/LocalSave/Crypto.cs` | AES 암호화 유틸리티 |
+| `framework-cs/module/Devian/src/Core/Crypto.cs` | AES 암호화 유틸리티 |
 | `Samples~/CloudClientSystem/Editor/LocalSave/LocalSaveManagerEditor.cs` | Inspector (Key/IV 생성) |
 
 

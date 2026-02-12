@@ -37,7 +37,8 @@
       "Bash(for item in SaveSystem/Runtime/*)",
       "Bash(do mv \"$item\" Runtime/)",
       "Bash(for item in SaveSystem/Editor/*)",
-      "Bash(do mv \"$item\" Editor/)"
+      "Bash(do mv \"$item\" Editor/)",
+      "Bash(echo:*)"
     ]
   },
   "project": {

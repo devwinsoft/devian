@@ -173,7 +173,7 @@ public sealed class LocalSaveManager : CompoSingleton<LocalSaveManager>
 | CloudSavePayload | `Runtime/Unity/CloudSave/CloudSavePayload.cs` *(논리 필드 비교용)* |
 | LocalSaveCrypto | `Runtime/Unity/LocalSave/LocalSaveCrypto.cs` |
 | LocalSaveFileStore | `Runtime/Unity/LocalSave/LocalSaveFileStore.cs` |
-| Crypto | `Runtime/Unity/LocalSave/Crypto.cs` |
+| Crypto | `framework-cs/module/Devian/src/Core/Crypto.cs` |
 | LocalSaveManagerEditor | `Editor/LocalSave/LocalSaveManagerEditor.cs` |
 
 

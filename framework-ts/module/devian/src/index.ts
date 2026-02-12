@@ -11,6 +11,7 @@
 export * from './log';
 export * from './complex';
 export * from './variant';
+export * from './crypto';
 export { LoadMode } from './LoadMode';
 export type { IEntity, IEntityKey } from './IEntity';
 export type { ITableContainer, IKeyedTableContainer } from './ITableContainer';

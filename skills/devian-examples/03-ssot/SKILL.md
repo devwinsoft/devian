@@ -100,7 +100,6 @@ framework-ts/apps/GameClient/
 |------|------|
 | **프로젝트 루트** | `framework-cs/apps/UnityExample/` |
 | **메인 씬** | `framework-cs/apps/UnityExample/Assets/Scenes/SampleScene.unity` |
-| **테스트 씬** | `framework-cs/apps/UnityExample/Assets/Test/MaterialEffectControllerTest.unity` |
 | **UPM 패키지** | `framework-cs/apps/UnityExample/Packages/com.devian.*` |
 | **번들 에셋** | `framework-cs/apps/UnityExample/Assets/Bundles/` |
 

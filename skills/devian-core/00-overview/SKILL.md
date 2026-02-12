@@ -18,6 +18,7 @@ Devian 프레임워크의 핵심 정책, SSOT, 런타임, 직렬화, 네트워�
 | [03-ssot](../03-ssot/SKILL.md) | SSOT (Single Source of Truth) |
 | [02-skill-specification](../02-skill-specification/SKILL.md) | 스킬 문서 작성 규격 |
 | [05-consumption-blueprint](../05-consumption-blueprint/SKILL.md) | 소비자 관점 통합 가이드 |
+| [10-feature-crypto](../10-feature-crypto/SKILL.md) | Crypto Feature |
 
 ---
 

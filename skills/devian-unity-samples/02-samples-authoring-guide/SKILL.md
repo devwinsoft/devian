@@ -263,5 +263,5 @@ public partial class Game2CStub
 
 ## Reference
 
-- UPM 소스: `framework-cs/upm/com.devian.foundation/Runtime/Unity/Network/`
+- UPM 소스: `framework-cs/upm/com.devian.foundation/Runtime/Module/Net/`
 - Related: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)

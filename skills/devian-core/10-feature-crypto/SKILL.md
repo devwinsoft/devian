@@ -62,30 +62,30 @@ namespace Devian
 }
 ```
 
-### TypeScript (`devian-domain-common/features`)
+### TypeScript (`@devian/core`)
 
 ```typescript
-// features/crypto.ts
+// crypto.ts
 
 /**
  * AES-256 암호화 (Base64 반환)
  */
-export function encryptAes(plainText: string, key: Uint8Array, iv: Uint8Array): string;
+export function encryptAes(plainText: string, key: Uint8Array, iv: Uint8Array): Promise<string>;
 
 /**
  * AES-256 복호화
  */
-export function decryptAes(cipherTextBase64: string, key: Uint8Array, iv: Uint8Array): string;
+export function decryptAes(cipherTextBase64: string, key: Uint8Array, iv: Uint8Array): Promise<string>;
 
 /**
  * 안전한 Key 생성 (256-bit)
  */
-export function generateKey(): Uint8Array;
+export function generateKey(): Promise<Uint8Array>;
 
 /**
  * 안전한 IV 생성 (128-bit)
  */
-export function generateIv(): Uint8Array;
+export function generateIv(): Promise<Uint8Array>;
 ```
 
 ---
@@ -123,17 +123,17 @@ var decrypted = Crypto.DecryptAes(encrypted, key, iv);
 ### TypeScript
 
 ```typescript
-import { encryptAes, decryptAes, generateKey, generateIv } from '@devian/module-common/features';
+import { encryptAes, decryptAes, generateKey, generateIv } from '@devian/core';
 
 // 키/IV 생성
-const key = generateKey();
-const iv = generateIv();
+const key = await generateKey();
+const iv = await generateIv();
 
 // 암호화
-const encrypted = encryptAes('Hello, World!', key, iv);
+const encrypted = await encryptAes('Hello, World!', key, iv);
 
 // 복호화
-const decrypted = decryptAes(encrypted, key, iv);
+const decrypted = await decryptAes(encrypted, key, iv);
 // decrypted === 'Hello, World!'
 ```
 
@@ -149,6 +149,11 @@ const decrypted = decryptAes(encrypted, key, iv);
 - [ ] features/index.ts에 자동 export 확인
 
 ---
+
+## Implementation
+
+- C# Implementation: `framework-cs/module/Devian/src/Core/Crypto.cs`
+- TS Implementation: `framework-ts/module/devian/src/crypto.ts`
 
 ## Reference
 

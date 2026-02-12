@@ -12,7 +12,7 @@
   - `framework-cs/upm/com.devian.samples/Samples~/CloudClientSystem/Runtime/LocalSave/LocalSavePayload.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/CloudClientSystem/Runtime/LocalSave/LocalSaveCrypto.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/CloudClientSystem/Runtime/LocalSave/LocalSaveFileStore.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/CloudClientSystem/Runtime/LocalSave/Crypto.cs`
+  - `framework-cs/module/Devian/src/Core/Crypto.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/CloudClientSystem/Editor/LocalSave/LocalSaveManagerEditor.cs`
 - UnityExample mirror (직접 수정 금지):
   - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/CloudClientSystem/...`

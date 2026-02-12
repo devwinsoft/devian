@@ -103,7 +103,7 @@ AppliesTo: v10
 
 - `checksum`은 **SHA-256**으로 계산한다.
 - 암호화/복호화는 Devian `Crypto` 유틸리티를 사용한다.
-  - Implementation Ref: `framework-cs/upm/com.devian.foundation/Runtime/Unity/LocalSave/Crypto.cs`
+  - Implementation Ref: `framework-cs/module/Devian/src/Core/Crypto.cs`
 - 암호화 적용 순서: `encrypt(payload) -> checksum(ciphertext)`
 
 

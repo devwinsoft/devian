@@ -310,6 +310,9 @@ class DevianToolBuilder {
             }
         }
 
+        // 4-1. Sync Devian Core → UPM Foundation Core (.cs only, preserve .meta)
+        this.syncDevianCoreToUpmFoundation();
+
         // 5. Validate (C# modules, TS modules, and UPM packages)
         console.log('[Phase 3] Validate modules and packages...');
         await this.validateCsModules();
@@ -2901,6 +2904,72 @@ export * from './features';
             } else if (entry.isFile()) {
                 if (!extFilter || entry.name.endsWith(extFilter)) {
                     fs.copyFileSync(srcPath, destPath);
+                }
+            }
+        }
+    }
+
+    // ========================================================================
+    // Devian Core → UPM Foundation Core sync (.cs only, preserve .meta)
+    // ========================================================================
+
+    /**
+     * Sync .cs files from framework-cs/module/Devian/src/Core
+     * to framework-cs/upm/com.devian.foundation/Runtime/Module/Core.
+     *
+     * - Copies new/changed .cs files from source to target.
+     * - Deletes stale .cs files in target that no longer exist in source.
+     * - Never touches .meta files (Unity GUID preservation).
+     */
+    syncDevianCoreToUpmFoundation() {
+        const src = path.join(this.rootDir, 'framework-cs/module/Devian/src/Core');
+        const dest = path.join(this.rootDir, 'framework-cs/upm/com.devian.foundation/Runtime/Module/Core');
+
+        if (!fs.existsSync(src)) {
+            console.log('  [Skip] Devian Core source not found:', src);
+            return;
+        }
+        if (!fs.existsSync(dest)) {
+            console.log('  [Skip] UPM Foundation Core target not found:', dest);
+            return;
+        }
+
+        console.log('  [Sync] Devian Core → UPM Foundation Core (.cs only)');
+
+        this._syncCsRecursive(src, dest);
+    }
+
+    /**
+     * Recursively sync .cs files from src to dest.
+     * - Copy/overwrite .cs files present in src.
+     * - Delete .cs files in dest that are not in src (stale removal).
+     * - Recurse into subdirectories present in src.
+     * - Never touch .meta files.
+     */
+    _syncCsRecursive(src, dest) {
+        fs.mkdirSync(dest, { recursive: true });
+
+        // Collect source .cs files and subdirs
+        const srcEntries = fs.readdirSync(src, { withFileTypes: true });
+        const srcCsFiles = new Set();
+        const srcDirs = new Set();
+
+        for (const entry of srcEntries) {
+            if (entry.isDirectory()) {
+                srcDirs.add(entry.name);
+                this._syncCsRecursive(path.join(src, entry.name), path.join(dest, entry.name));
+            } else if (entry.isFile() && entry.name.endsWith('.cs')) {
+                srcCsFiles.add(entry.name);
+                fs.copyFileSync(path.join(src, entry.name), path.join(dest, entry.name));
+            }
+        }
+
+        // Remove stale .cs files in dest
+        if (fs.existsSync(dest)) {
+            for (const entry of fs.readdirSync(dest, { withFileTypes: true })) {
+                if (entry.isFile() && entry.name.endsWith('.cs') && !srcCsFiles.has(entry.name)) {
+                    fs.unlinkSync(path.join(dest, entry.name));
+                    console.log(`    [Remove stale] ${path.join(dest, entry.name)}`);
                 }
             }
         }
