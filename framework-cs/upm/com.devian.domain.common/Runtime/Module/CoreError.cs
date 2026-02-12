@@ -10,14 +10,14 @@ namespace Devian.Domain.Common
         public string Message { get; }
         public string? Details { get; }
 
-        public CoreError(ErrorClientType errorType, string message, string? details = null)
+        public CoreError(CommonErrorType errorType, string message, string? details = null)
         {
             Code = errorType.ToString();
             Message = message;
             Details = details;
         }
 
-        [System.Obsolete("Use CoreError(ErrorClientType, ...) instead.")]
+        [System.Obsolete("Use CoreError(CommonErrorType, ...) instead.")]
         public CoreError(string code, string message, string? details = null)
         {
             Code = code;

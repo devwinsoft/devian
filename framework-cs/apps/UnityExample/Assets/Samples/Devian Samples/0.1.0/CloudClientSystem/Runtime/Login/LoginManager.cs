@@ -53,7 +53,7 @@ namespace Devian
                 ct.ThrowIfCancellationRequested();
                 if (dep != DependencyStatus.Available)
                 {
-                    return CoreResult<bool>.Failure(ErrorClientType.LOGIN_FIREBASE_DEPENDENCY, $"Firebase dependency error: {dep}");
+                    return CoreResult<bool>.Failure(CommonErrorType.LOGIN_FIREBASE_DEPENDENCY, $"Firebase dependency error: {dep}");
                 }
 
                 _auth = FirebaseAuth.DefaultInstance;
@@ -93,7 +93,7 @@ namespace Devian
 #endif
 
                 default:
-                    return CoreResult<LoginCredential>.Failure(ErrorClientType.LOGIN_CREDENTIAL_UNSUPPORTED,
+                    return CoreResult<LoginCredential>.Failure(CommonErrorType.LOGIN_CREDENTIAL_UNSUPPORTED,
                         $"Internal credential acquisition is not supported for {loginType}. Use LoginAsync(LoginType, LoginCredential, CancellationToken) instead.");
             }
         }
@@ -110,7 +110,7 @@ namespace Devian
                 var platformType = Type.GetType("GooglePlayGames.PlayGamesPlatform, Google.Play.Games");
                 if (platformType == null)
                 {
-                    return CoreResult<LoginCredential>.Failure(ErrorClientType.LOGIN_GPGS_NOT_FOUND,
+                    return CoreResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_NOT_FOUND,
                         "GooglePlayGames plugin is not installed.");
                 }
 
@@ -118,7 +118,7 @@ namespace Devian
                 var instance = instanceProp?.GetValue(null);
                 if (instance == null)
                 {
-                    return CoreResult<LoginCredential>.Failure(ErrorClientType.LOGIN_GPGS_NOT_INITIALIZED,
+                    return CoreResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_NOT_INITIALIZED,
                         "PlayGamesPlatform.Instance is null. Call PlayGamesPlatform.Activate() first.");
                 }
 
@@ -126,7 +126,7 @@ namespace Devian
                 var authenticateMethod = platformType.GetMethod("Authenticate", new[] { typeof(Action<bool>) });
                 if (authenticateMethod == null)
                 {
-                    return CoreResult<LoginCredential>.Failure(ErrorClientType.LOGIN_GPGS_NO_AUTHENTICATE,
+                    return CoreResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_NO_AUTHENTICATE,
                         "PlayGamesPlatform.Authenticate(Action<bool>) not found.");
                 }
 
@@ -139,7 +139,7 @@ namespace Devian
 
                 if (!authenticated)
                 {
-                    return CoreResult<LoginCredential>.Failure(ErrorClientType.LOGIN_GPGS_AUTH_FAILED,
+                    return CoreResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_AUTH_FAILED,
                         "Google Play Games authentication failed.");
                 }
 
@@ -148,7 +148,7 @@ namespace Devian
                     new[] { typeof(bool), typeof(Action<string>) });
                 if (requestMethod == null)
                 {
-                    return CoreResult<LoginCredential>.Failure(ErrorClientType.LOGIN_GPGS_NO_SERVER_ACCESS,
+                    return CoreResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_NO_SERVER_ACCESS,
                         "PlayGamesPlatform.RequestServerSideAccess not found.");
                 }
 
@@ -161,7 +161,7 @@ namespace Devian
 
                 if (string.IsNullOrEmpty(serverAuthCode))
                 {
-                    return CoreResult<LoginCredential>.Failure(ErrorClientType.LOGIN_GPGS_NO_AUTH_CODE,
+                    return CoreResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_NO_AUTH_CODE,
                         "Failed to obtain server auth code from GPGS.");
                 }
 
@@ -170,7 +170,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CoreResult<LoginCredential>.Failure(ErrorClientType.LOGIN_GPGS_EXCEPTION, ex.Message);
+                return CoreResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_EXCEPTION, ex.Message);
             }
         }
 #endif
@@ -194,7 +194,7 @@ namespace Devian
 #endif
 
                 default:
-                    return CoreResult<bool>.Failure(ErrorClientType.LOGIN_UNSUPPORTED, $"LoginType {loginType} is not supported on this platform.");
+                    return CoreResult<bool>.Failure(CommonErrorType.LOGIN_UNSUPPORTED, $"LoginType {loginType} is not supported on this platform.");
             }
         }
 
@@ -206,14 +206,14 @@ namespace Devian
                 ct.ThrowIfCancellationRequested();
                 if (_auth.CurrentUser == null)
                 {
-                    return CoreResult<bool>.Failure(ErrorClientType.LOGIN_ANONYMOUS_FAILED, "Anonymous sign-in returned no user.");
+                    return CoreResult<bool>.Failure(CommonErrorType.LOGIN_ANONYMOUS_FAILED, "Anonymous sign-in returned no user.");
                 }
 
                 return CoreResult<bool>.Success(true);
             }
             catch (Exception ex)
             {
-                return CoreResult<bool>.Failure(ErrorClientType.LOGIN_ANONYMOUS_EXCEPTION, ex.Message);
+                return CoreResult<bool>.Failure(CommonErrorType.LOGIN_ANONYMOUS_EXCEPTION, ex.Message);
             }
         }
 
@@ -222,7 +222,7 @@ namespace Devian
         {
             if (credential == null || string.IsNullOrEmpty(credential.ServerAuthCode))
             {
-                return CoreResult<bool>.Failure(ErrorClientType.LOGIN_GOOGLE_MISSING_AUTH_CODE, "Google ServerAuthCode is required.");
+                return CoreResult<bool>.Failure(CommonErrorType.LOGIN_GOOGLE_MISSING_AUTH_CODE, "Google ServerAuthCode is required.");
             }
 
             try
@@ -235,7 +235,7 @@ namespace Devian
                     ct.ThrowIfCancellationRequested();
                     if (linked?.User == null)
                     {
-                        return CoreResult<bool>.Failure(ErrorClientType.LOGIN_GOOGLE_LINK_FAILED, "Failed to link Google credential to anonymous user.");
+                        return CoreResult<bool>.Failure(CommonErrorType.LOGIN_GOOGLE_LINK_FAILED, "Failed to link Google credential to anonymous user.");
                     }
 
                     return CoreResult<bool>.Success(true);
@@ -245,14 +245,14 @@ namespace Devian
                 ct.ThrowIfCancellationRequested();
                 if (signed?.User == null)
                 {
-                    return CoreResult<bool>.Failure(ErrorClientType.LOGIN_GOOGLE_SIGNIN_FAILED, "Failed to sign in with Google credential.");
+                    return CoreResult<bool>.Failure(CommonErrorType.LOGIN_GOOGLE_SIGNIN_FAILED, "Failed to sign in with Google credential.");
                 }
 
                 return CoreResult<bool>.Success(true);
             }
             catch (Exception ex)
             {
-                return CoreResult<bool>.Failure(ErrorClientType.LOGIN_GOOGLE_EXCEPTION, ex.Message);
+                return CoreResult<bool>.Failure(CommonErrorType.LOGIN_GOOGLE_EXCEPTION, ex.Message);
             }
         }
 #endif
@@ -262,7 +262,7 @@ namespace Devian
         {
             if (credential == null || string.IsNullOrEmpty(credential.IdToken) || string.IsNullOrEmpty(credential.RawNonce))
             {
-                return CoreResult<bool>.Failure(ErrorClientType.LOGIN_APPLE_MISSING_TOKEN, "Apple IdToken and RawNonce are required.");
+                return CoreResult<bool>.Failure(CommonErrorType.LOGIN_APPLE_MISSING_TOKEN, "Apple IdToken and RawNonce are required.");
             }
 
             try
@@ -277,7 +277,7 @@ namespace Devian
                     ct.ThrowIfCancellationRequested();
                     if (linked?.User == null)
                     {
-                        return CoreResult<bool>.Failure(ErrorClientType.LOGIN_APPLE_LINK_FAILED, "Failed to link Apple credential to anonymous user.");
+                        return CoreResult<bool>.Failure(CommonErrorType.LOGIN_APPLE_LINK_FAILED, "Failed to link Apple credential to anonymous user.");
                     }
 
                     return CoreResult<bool>.Success(true);
@@ -287,14 +287,14 @@ namespace Devian
                 ct.ThrowIfCancellationRequested();
                 if (signed?.User == null)
                 {
-                    return CoreResult<bool>.Failure(ErrorClientType.LOGIN_APPLE_SIGNIN_FAILED, "Failed to sign in with Apple credential.");
+                    return CoreResult<bool>.Failure(CommonErrorType.LOGIN_APPLE_SIGNIN_FAILED, "Failed to sign in with Apple credential.");
                 }
 
                 return CoreResult<bool>.Success(true);
             }
             catch (Exception ex)
             {
-                return CoreResult<bool>.Failure(ErrorClientType.LOGIN_APPLE_EXCEPTION, ex.Message);
+                return CoreResult<bool>.Failure(CommonErrorType.LOGIN_APPLE_EXCEPTION, ex.Message);
             }
         }
 #endif

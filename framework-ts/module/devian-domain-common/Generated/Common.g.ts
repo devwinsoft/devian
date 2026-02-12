@@ -15,7 +15,7 @@ export enum ComplexPolicyType {
 }
 
 /** Auto-generated enum from TB_ERROR_CLIENT.id */
-export enum ErrorClientType {
+export enum CommonErrorType {
     CLOUDSAVE_CHECKSUM = 0,
     CLOUDSAVE_DELETE = 1,
     CLOUDSAVE_KEYIV = 2,
@@ -102,11 +102,11 @@ export interface COMPLEX_POLICY extends IEntityKey<ComplexPolicyType> {
     getKey(): ComplexPolicyType;
 }
 
-export interface ERROR_CLIENT extends IEntityKey<ErrorClientType> {
-    Id: ErrorClientType;
+export interface ERROR_CLIENT extends IEntityKey<CommonErrorType> {
+    Id: CommonErrorType;
     Msg_key: string;
     Msg: string;
-    getKey(): ErrorClientType;
+    getKey(): CommonErrorType;
 }
 
 export interface ERROR_SERVER extends IEntityKey<ErrorServerType> {
@@ -167,7 +167,7 @@ export class TB_COMPLEX_POLICY {
 }
 
 export class TB_ERROR_CLIENT {
-    private static _dict: Map<ErrorClientType, ERROR_CLIENT> = new Map();
+    private static _dict: Map<CommonErrorType, ERROR_CLIENT> = new Map();
     private static _list: ERROR_CLIENT[] = [];
 
     static get count(): number { return this._list.length; }
@@ -179,21 +179,21 @@ export class TB_ERROR_CLIENT {
 
     static getAll(): readonly ERROR_CLIENT[] { return this._list; }
 
-    static get(key: ErrorClientType): ERROR_CLIENT | undefined {
+    static get(key: CommonErrorType): ERROR_CLIENT | undefined {
         return this._dict.get(key);
     }
 
-    static has(key: ErrorClientType): boolean {
+    static has(key: CommonErrorType): boolean {
         return this._dict.has(key);
     }
 
-    static find(key: ErrorClientType): ERROR_CLIENT {
+    static find(key: CommonErrorType): ERROR_CLIENT {
         const row = this._dict.get(key);
         if (!row) throw new Error(`TB_ERROR_CLIENT: key ${key} not found`);
         return row;
     }
 
-    static tryFind(key: ErrorClientType): ERROR_CLIENT | undefined {
+    static tryFind(key: CommonErrorType): ERROR_CLIENT | undefined {
         return this._dict.get(key);
     }
 

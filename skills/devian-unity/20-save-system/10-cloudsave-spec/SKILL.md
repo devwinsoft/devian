@@ -43,7 +43,7 @@ AppliesTo: v10
 권장(서비스 레이어 예시):
 - `main`, (선택) `backup`, `manual`
 
-> 구현 참조: `CloudSaveManager.cs` (`TryResolveCloudSlot` — 매핑 미발견 시 `Failure(ErrorClientType.CLOUDSAVE_SLOT_MISSING, ...)`), `LocalSaveManager.cs` (`TryResolveFilename` — 매핑 미발견 시 `Failure(ErrorClientType.LOCALSAVE_SLOT_MISSING, ...)`)
+> 구현 참조: `CloudSaveManager.cs` (`TryResolveCloudSlot` — 매핑 미발견 시 `Failure(CommonErrorType.CLOUDSAVE_SLOT_MISSING, ...)`), `LocalSaveManager.cs` (`TryResolveFilename` — 매핑 미발견 시 `Failure(CommonErrorType.LOCALSAVE_SLOT_MISSING, ...)`)
 
 
 ---
@@ -85,8 +85,8 @@ AppliesTo: v10
 ## 5. Failure Handling — Guidance (Non-normative)
 
 
-> 프레임워크는 실패 시 `CoreResult.Failure(ErrorClientType, string)`를 반환할 뿐이다.
-> 에러 식별자는 `ErrorClientType` enum을 사용한다(ERROR_CLIENT 테이블 SSOT).
+> 프레임워크는 실패 시 `CoreResult.Failure(CommonErrorType, string)`를 반환할 뿐이다.
+> 에러 식별자는 `CommonErrorType` enum을 사용한다(ERROR_CLIENT 테이블 SSOT).
 > `Failure(string, string)`은 Deprecated(Obsolete)이며 사용 금지.
 > 재시도·fallback 정책은 **서비스 레이어 책임**이다.
 

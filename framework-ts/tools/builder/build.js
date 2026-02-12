@@ -2944,28 +2944,36 @@ export * from './features';
 
     /**
      * Sync Domain.Common Core sources to UPM Domain.Common package.
-     * Source: framework-cs/module/Devian.Domain.Common/src/Core
-     * Target: framework-cs/upm/com.devian.domain.common/Runtime/Module/Core
-     * - Copies new/changed .cs files from source to target.
-     * - Deletes stale .cs files in target that no longer exist in source.
+     * Source: framework-cs/module/Devian.Domain.Common/src
+     * Target: framework-cs/upm/com.devian.domain.common/Runtime/Module
+     * - Copies CoreError.cs and CoreResult.cs only.
      * - Never touches .meta files (Unity GUID preservation).
      */
     syncDomainCommonCoreToUpmDomainCommon() {
-        const src = path.join(this.rootDir, 'framework-cs/module/Devian.Domain.Common/src/Core');
-        const dest = path.join(this.rootDir, 'framework-cs/upm/com.devian.domain.common/Runtime/Module/Core');
+        const src = path.join(this.rootDir, 'framework-cs/module/Devian.Domain.Common/src');
+        const dest = path.join(this.rootDir, 'framework-cs/upm/com.devian.domain.common/Runtime/Module');
+        const files = ['CoreError.cs', 'CoreResult.cs'];
 
         if (!fs.existsSync(src)) {
-            console.log('  [Skip] Domain.Common Core source not found:', src);
+            console.log('  [Skip] Domain.Common src not found:', src);
             return;
         }
         if (!fs.existsSync(dest)) {
-            console.log('  [Skip] UPM Domain.Common Core target not found:', dest);
+            console.log('  [Skip] UPM Domain.Common Module target not found:', dest);
             return;
         }
 
-        console.log('  [Sync] Domain.Common Core → UPM Domain.Common Core (.cs only)');
+        console.log('  [Sync] Domain.Common src → UPM Domain.Common Module (CoreError/CoreResult only)');
 
-        this._syncCsRecursive(src, dest);
+        for (const file of files) {
+            const srcFile = path.join(src, file);
+            const destFile = path.join(dest, file);
+            if (fs.existsSync(srcFile)) {
+                fs.copyFileSync(srcFile, destFile);
+            } else {
+                console.log(`    [WARN] Source file not found: ${srcFile}`);
+            }
+        }
     }
 
     /**

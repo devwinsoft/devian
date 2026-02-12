@@ -57,7 +57,7 @@ namespace Devian
             {
                 if (string.IsNullOrWhiteSpace(keyBase64) || string.IsNullOrWhiteSpace(ivBase64))
                 {
-                    return CoreResult<bool>.Failure(ErrorClientType.CLOUDSAVE_KEYIV, "Key/IV is not set.");
+                    return CoreResult<bool>.Failure(CommonErrorType.CLOUDSAVE_KEYIV, "Key/IV is not set.");
                 }
 
                 var key = Convert.FromBase64String(keyBase64);
@@ -65,12 +65,12 @@ namespace Devian
 
                 if (key.Length != 32)
                 {
-                    return CoreResult<bool>.Failure(ErrorClientType.CLOUDSAVE_KEYIV, "Key must be 32 bytes (AES-256).");
+                    return CoreResult<bool>.Failure(CommonErrorType.CLOUDSAVE_KEYIV, "Key must be 32 bytes (AES-256).");
                 }
 
                 if (iv.Length != 16)
                 {
-                    return CoreResult<bool>.Failure(ErrorClientType.CLOUDSAVE_KEYIV, "IV must be 16 bytes.");
+                    return CoreResult<bool>.Failure(CommonErrorType.CLOUDSAVE_KEYIV, "IV must be 16 bytes.");
                 }
 
                 _keyBase64.Value = keyBase64;
@@ -80,7 +80,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CoreResult<bool>.Failure(ErrorClientType.CLOUDSAVE_KEYIV, ex.Message);
+                return CoreResult<bool>.Failure(CommonErrorType.CLOUDSAVE_KEYIV, ex.Message);
             }
         }
 
@@ -128,7 +128,7 @@ namespace Devian
         {
             if (_client == null)
                 return Task.FromResult(
-                    CoreResult<CloudSaveResult>.Failure(ErrorClientType.CLOUDSAVE_NOCLIENT, "Client not configured."));
+                    CoreResult<CloudSaveResult>.Failure(CommonErrorType.CLOUDSAVE_NOCLIENT, "Client not configured."));
 
             return _signInInternal(ct);
         }
@@ -137,19 +137,19 @@ namespace Devian
         {
             if (string.IsNullOrWhiteSpace(slot))
                 return Task.FromResult(
-                    CoreResult<bool>.Failure(ErrorClientType.CLOUDSAVE_SLOT_EMPTY, "Slot is empty."));
+                    CoreResult<bool>.Failure(CommonErrorType.CLOUDSAVE_SLOT_EMPTY, "Slot is empty."));
 
             if (_client == null)
                 return Task.FromResult(
-                    CoreResult<bool>.Failure(ErrorClientType.CLOUDSAVE_NOCLIENT, "Client not configured."));
+                    CoreResult<bool>.Failure(CommonErrorType.CLOUDSAVE_NOCLIENT, "Client not configured."));
 
             if (!TryResolveCloudSlot(slot, out var cloudSlot))
                 return Task.FromResult(
-                    CoreResult<bool>.Failure(ErrorClientType.CLOUDSAVE_SLOT_MISSING, $"Slot '{slot}' not configured."));
+                    CoreResult<bool>.Failure(CommonErrorType.CLOUDSAVE_SLOT_MISSING, $"Slot '{slot}' not configured."));
 
             if (!IsLikelyJson(payload))
                 return Task.FromResult(
-                    CoreResult<bool>.Failure(ErrorClientType.CLOUDSAVE_PAYLOAD_INVALID,
+                    CoreResult<bool>.Failure(CommonErrorType.CLOUDSAVE_PAYLOAD_INVALID,
                         "Payload must be JSON (object or array)."));
 
             return _saveInternal(cloudSlot, payload, ct);
@@ -159,15 +159,15 @@ namespace Devian
         {
             if (string.IsNullOrWhiteSpace(slot))
                 return Task.FromResult(
-                    CoreResult<string>.Failure(ErrorClientType.CLOUDSAVE_SLOT_EMPTY, "Slot is empty."));
+                    CoreResult<string>.Failure(CommonErrorType.CLOUDSAVE_SLOT_EMPTY, "Slot is empty."));
 
             if (_client == null)
                 return Task.FromResult(
-                    CoreResult<string>.Failure(ErrorClientType.CLOUDSAVE_NOCLIENT, "Client not configured."));
+                    CoreResult<string>.Failure(CommonErrorType.CLOUDSAVE_NOCLIENT, "Client not configured."));
 
             if (!TryResolveCloudSlot(slot, out var cloudSlot))
                 return Task.FromResult(
-                    CoreResult<string>.Failure(ErrorClientType.CLOUDSAVE_SLOT_MISSING, $"Slot '{slot}' not configured."));
+                    CoreResult<string>.Failure(CommonErrorType.CLOUDSAVE_SLOT_MISSING, $"Slot '{slot}' not configured."));
 
             return _loadInternal(cloudSlot, ct);
         }
@@ -176,15 +176,15 @@ namespace Devian
         {
             if (string.IsNullOrWhiteSpace(slot))
                 return Task.FromResult(
-                    CoreResult<bool>.Failure(ErrorClientType.CLOUDSAVE_SLOT_EMPTY, "Slot is empty."));
+                    CoreResult<bool>.Failure(CommonErrorType.CLOUDSAVE_SLOT_EMPTY, "Slot is empty."));
 
             if (_client == null)
                 return Task.FromResult(
-                    CoreResult<bool>.Failure(ErrorClientType.CLOUDSAVE_NOCLIENT, "Client not configured."));
+                    CoreResult<bool>.Failure(CommonErrorType.CLOUDSAVE_NOCLIENT, "Client not configured."));
 
             if (!TryResolveCloudSlot(slot, out var cloudSlot))
                 return Task.FromResult(
-                    CoreResult<bool>.Failure(ErrorClientType.CLOUDSAVE_SLOT_MISSING, $"Slot '{slot}' not configured."));
+                    CoreResult<bool>.Failure(CommonErrorType.CLOUDSAVE_SLOT_MISSING, $"Slot '{slot}' not configured."));
 
             return _deleteInternal(cloudSlot, ct);
         }
@@ -194,7 +194,7 @@ namespace Devian
             var r = await _client.SignInIfNeededAsync(ct);
             return r == CloudSaveResult.Success
                 ? CoreResult<CloudSaveResult>.Success(r)
-                : CoreResult<CloudSaveResult>.Failure(ErrorClientType.CLOUDSAVE_SIGNIN, $"Sign-in failed: {r}");
+                : CoreResult<CloudSaveResult>.Failure(CommonErrorType.CLOUDSAVE_SIGNIN, $"Sign-in failed: {r}");
         }
 
         private const string _gpgsConfigBuilderTypeName =
@@ -258,7 +258,7 @@ namespace Devian
 
             if (_useEncryption && !TryGetKeyIv(out key, out iv, out var keyError))
             {
-                return CoreResult<bool>.Failure(ErrorClientType.CLOUDSAVE_KEYIV, keyError);
+                return CoreResult<bool>.Failure(CommonErrorType.CLOUDSAVE_KEYIV, keyError);
             }
 
             var cipher = _useEncryption
@@ -278,7 +278,7 @@ namespace Devian
             var r = await _client.SaveAsync(cloudSlot, csPayload, ct);
             return r == CloudSaveResult.Success
                 ? CoreResult<bool>.Success(true)
-                : CoreResult<bool>.Failure(ErrorClientType.CLOUDSAVE_SAVE, $"Save failed: {r}");
+                : CoreResult<bool>.Failure(CommonErrorType.CLOUDSAVE_SAVE, $"Save failed: {r}");
         }
 
         private async Task<CoreResult<string>> _loadInternal(
@@ -287,7 +287,7 @@ namespace Devian
             var (result, loaded) = await _client.LoadAsync(cloudSlot, ct);
             if (result != CloudSaveResult.Success)
             {
-                return CoreResult<string>.Failure(ErrorClientType.CLOUDSAVE_LOAD, $"Load failed: {result}");
+                return CoreResult<string>.Failure(CommonErrorType.CLOUDSAVE_LOAD, $"Load failed: {result}");
             }
 
             if (loaded == null)
@@ -299,7 +299,7 @@ namespace Devian
             if (!string.IsNullOrEmpty(loaded.Checksum) &&
                 !string.Equals(expected, loaded.Checksum, StringComparison.Ordinal))
             {
-                return CoreResult<string>.Failure(ErrorClientType.CLOUDSAVE_CHECKSUM, "Checksum mismatch.");
+                return CoreResult<string>.Failure(CommonErrorType.CLOUDSAVE_CHECKSUM, "Checksum mismatch.");
             }
 
             byte[] key = null;
@@ -307,7 +307,7 @@ namespace Devian
 
             if (_useEncryption && !TryGetKeyIv(out key, out iv, out var keyError))
             {
-                return CoreResult<string>.Failure(ErrorClientType.CLOUDSAVE_KEYIV, keyError);
+                return CoreResult<string>.Failure(CommonErrorType.CLOUDSAVE_KEYIV, keyError);
             }
 
             var plain = _useEncryption
@@ -323,7 +323,7 @@ namespace Devian
             var r = await _client.DeleteAsync(cloudSlot, ct);
             return r == CloudSaveResult.Success
                 ? CoreResult<bool>.Success(true)
-                : CoreResult<bool>.Failure(ErrorClientType.CLOUDSAVE_DELETE, $"Delete failed: {r}");
+                : CoreResult<bool>.Failure(CommonErrorType.CLOUDSAVE_DELETE, $"Delete failed: {r}");
         }
 
         private const string UpdateTimeFormat = "yyyyMMdd:HHmmss";

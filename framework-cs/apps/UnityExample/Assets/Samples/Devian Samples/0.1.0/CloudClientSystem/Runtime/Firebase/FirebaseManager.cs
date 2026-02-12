@@ -33,7 +33,7 @@ namespace Devian
             if (dep != DependencyStatus.Available)
             {
                 _initialized = false;
-                return CoreResult<bool>.Failure(firebaseError(ErrorClientType.FIREBASE_DEPENDENCY, $"Firebase dependency error: {dep}"));
+                return CoreResult<bool>.Failure(firebaseError(CommonErrorType.FIREBASE_DEPENDENCY, $"Firebase dependency error: {dep}"));
             }
 
             _auth = FirebaseAuth.DefaultInstance;
@@ -52,7 +52,7 @@ namespace Devian
         {
             if (!_initialized || _auth == null)
             {
-                return CoreResult<string>.Failure(firebaseError(ErrorClientType.FIREBASE_NOT_INITIALIZED, "FirebaseManager is not initialized."));
+                return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_NOT_INITIALIZED, "FirebaseManager is not initialized."));
             }
 
             try
@@ -62,7 +62,7 @@ namespace Devian
                 var userId = tryGetUserId(result);
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return CoreResult<string>.Failure(firebaseError(ErrorClientType.FIREBASE_SIGNIN, "Anonymous sign-in returned no user id."));
+                    return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_SIGNIN, "Anonymous sign-in returned no user id."));
                 }
 
                 _currentLoginType = AuthLoginType.Anonymous;
@@ -70,7 +70,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CoreResult<string>.Failure(firebaseError(ErrorClientType.FIREBASE_SIGNIN, ex.Message));
+                return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_SIGNIN, ex.Message));
             }
         }
 
@@ -78,12 +78,12 @@ namespace Devian
         {
             if (!_initialized || _auth == null)
             {
-                return CoreResult<string>.Failure(firebaseError(ErrorClientType.FIREBASE_NOT_INITIALIZED, "FirebaseManager is not initialized."));
+                return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_NOT_INITIALIZED, "FirebaseManager is not initialized."));
             }
 
             if (string.IsNullOrWhiteSpace(idToken))
             {
-                return CoreResult<string>.Failure(firebaseError(ErrorClientType.FIREBASE_GOOGLE_TOKEN, "Google idToken is empty."));
+                return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_GOOGLE_TOKEN, "Google idToken is empty."));
             }
 
             try
@@ -95,7 +95,7 @@ namespace Devian
                 var userId = tryGetUserId(result);
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return CoreResult<string>.Failure(firebaseError(ErrorClientType.FIREBASE_GOOGLE_SIGNIN, "Firebase sign-in returned no user id."));
+                    return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_GOOGLE_SIGNIN, "Firebase sign-in returned no user id."));
                 }
 
                 _currentLoginType = AuthLoginType.Google;
@@ -103,7 +103,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CoreResult<string>.Failure(firebaseError(ErrorClientType.FIREBASE_GOOGLE_SIGNIN, ex.Message));
+                return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_GOOGLE_SIGNIN, ex.Message));
             }
         }
 
@@ -111,7 +111,7 @@ namespace Devian
         {
             if (!_initialized || _auth == null)
             {
-                return CoreResult<string>.Failure(firebaseError(ErrorClientType.FIREBASE_NOT_INITIALIZED, "FirebaseManager is not initialized."));
+                return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_NOT_INITIALIZED, "FirebaseManager is not initialized."));
             }
 
             try
@@ -128,7 +128,7 @@ namespace Devian
                 var identityToken = appleTokens.Value.IdentityToken;
                 if (string.IsNullOrEmpty(identityToken))
                 {
-                    return CoreResult<string>.Failure(firebaseError(ErrorClientType.FIREBASE_APPLE_TOKEN, "Apple identity token is empty."));
+                    return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_APPLE_TOKEN, "Apple identity token is empty."));
                 }
 
                 var credential = OAuthProvider.GetCredential("apple.com", identityToken, rawNonce);
@@ -138,7 +138,7 @@ namespace Devian
                 var userId = tryGetUserId(result);
                 if (string.IsNullOrEmpty(userId))
                 {
-                    return CoreResult<string>.Failure(firebaseError(ErrorClientType.FIREBASE_APPLE_SIGNIN, "Firebase sign-in returned no user id."));
+                    return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_APPLE_SIGNIN, "Firebase sign-in returned no user id."));
                 }
 
                 _currentLoginType = AuthLoginType.Apple;
@@ -146,7 +146,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CoreResult<string>.Failure(firebaseError(ErrorClientType.FIREBASE_APPLE_SIGNIN, ex.Message));
+                return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_APPLE_SIGNIN, ex.Message));
             }
         }
 
@@ -154,7 +154,7 @@ namespace Devian
         {
             // Design only (not implemented)
             await Task.CompletedTask;
-            return CoreResult<string>.Failure(firebaseError(ErrorClientType.FIREBASE_FACEBOOK_NOT_IMPLEMENTED,
+            return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_FACEBOOK_NOT_IMPLEMENTED,
                 "Facebook re-login is designed but not implemented yet."));
         }
 
@@ -162,13 +162,13 @@ namespace Devian
         {
             if (!_initialized || _auth == null)
             {
-                return CoreResult<string>.Failure(firebaseError(ErrorClientType.FIREBASE_NOT_INITIALIZED, "FirebaseManager is not initialized."));
+                return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_NOT_INITIALIZED, "FirebaseManager is not initialized."));
             }
 
             var user = _auth.CurrentUser;
             if (user == null)
             {
-                return CoreResult<string>.Failure(firebaseError(ErrorClientType.FIREBASE_NO_USER, "No current user. Sign in first."));
+                return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_NO_USER, "No current user. Sign in first."));
             }
 
             try
@@ -178,7 +178,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CoreResult<string>.Failure(firebaseError(ErrorClientType.FIREBASE_TOKEN, ex.Message));
+                return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_TOKEN, ex.Message));
             }
         }
 
@@ -224,7 +224,7 @@ namespace Devian
         {
             if (_auth == null)
             {
-                return CoreResult<bool>.Failure(firebaseError(ErrorClientType.FIREBASE_NOT_INITIALIZED, "FirebaseManager is not initialized."));
+                return CoreResult<bool>.Failure(firebaseError(CommonErrorType.FIREBASE_NOT_INITIALIZED, "FirebaseManager is not initialized."));
             }
 
             _auth.SignOut();
@@ -234,7 +234,7 @@ namespace Devian
 
         // --- Private helpers ---
 
-        private static CoreError firebaseError(ErrorClientType code, string message)
+        private static CoreError firebaseError(CommonErrorType code, string message)
         {
             return new CoreError(code, message);
         }
@@ -305,7 +305,7 @@ namespace Devian
                 case AuthLoginType.Google:
                 {
                     await Task.CompletedTask;
-                    return CoreResult<bool>.Failure(firebaseError(ErrorClientType.FIREBASE_GOOGLE_REAUTH_REQUIRED,
+                    return CoreResult<bool>.Failure(firebaseError(CommonErrorType.FIREBASE_GOOGLE_REAUTH_REQUIRED,
                         "Google re-login requires an idToken from the app layer. Call SignInWithGoogleAsync(idToken, ...)."));
                 }
 
@@ -319,13 +319,13 @@ namespace Devian
                 {
                     // Design only
                     await Task.CompletedTask;
-                    return CoreResult<bool>.Failure(firebaseError(ErrorClientType.FIREBASE_FACEBOOK_NOT_IMPLEMENTED,
+                    return CoreResult<bool>.Failure(firebaseError(CommonErrorType.FIREBASE_FACEBOOK_NOT_IMPLEMENTED,
                         "Facebook re-login is designed but not implemented yet."));
                 }
 
                 default:
                     await Task.CompletedTask;
-                    return CoreResult<bool>.Failure(firebaseError(ErrorClientType.FIREBASE_REAUTH_UNKNOWN, "No known login type to re-authenticate."));
+                    return CoreResult<bool>.Failure(firebaseError(CommonErrorType.FIREBASE_REAUTH_UNKNOWN, "No known login type to re-authenticate."));
             }
         }
 
@@ -348,7 +348,7 @@ namespace Devian
                 // 따라서 여기서도 "미연결 스텁 성공" 같은 옵션 동작을 만들지 말고,
                 // 실제 플러그인 호출로 채우기 전까지는 명확히 실패 반환을 유지한다.
                 await Task.CompletedTask;
-                return CoreResult<AppleTokens>.Failure(firebaseError(ErrorClientType.FIREBASE_APPLE_BRIDGE, "AppleSignInBridge is not wired to a plugin implementation."));
+                return CoreResult<AppleTokens>.Failure(firebaseError(CommonErrorType.FIREBASE_APPLE_BRIDGE, "AppleSignInBridge is not wired to a plugin implementation."));
             }
         }
 

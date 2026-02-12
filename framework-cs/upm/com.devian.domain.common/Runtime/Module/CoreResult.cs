@@ -21,10 +21,10 @@ namespace Devian.Domain.Common
 
         public static CoreResult<T> Failure(CoreError error) => new(default, error);
 
-        public static CoreResult<T> Failure(ErrorClientType errorType, string message)
+        public static CoreResult<T> Failure(CommonErrorType errorType, string message)
             => new(default, new CoreError(errorType, message));
 
-        [System.Obsolete("Use Failure(ErrorClientType, string) instead.")]
+        [System.Obsolete("Use Failure(CommonErrorType, string) instead.")]
         public static CoreResult<T> Failure(string code, string message)
             => new(default, new CoreError(code, message));
     }
