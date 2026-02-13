@@ -56,7 +56,7 @@ enum 멤버 값은 **결정적 자동 할당**으로 생성된다:
 
 Options Row(3번째 줄)에서 gen 컬럼(=PK 컬럼)에 `code` 키워드를 함께 선언하면:
 
-- 예: `pk, gen:ErrorServerType, code`
+- 예: `pk, gen:ServerErrorType, code`
 - 이 경우 enum 멤버 value는 0..N-1 자동 할당이 아니라, **같은 row의 `code` 컬럼(int) 값**을 사용한다.
 - 출력 순서는 여전히 **멤버 이름 오름차순(결정적)** 으로 유지한다.
 

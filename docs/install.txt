@@ -1,0 +1,19 @@
+// 보안 해제
+xattr -dr com.apple.quarantine Assets/Firebase
+xattr -dr com.apple.quarantine Assets/Plugins
+
+// Generate keystore
+keytool -genkeypair -v \
+  -keystore {filename}.keystore \
+  -storepass {passwd} -keypass {passwd} \
+  -alias example \
+  -keyalg RSA -keysize 2048 -validity 10000 \
+  -dname "CN=Example,O=Debug,C=KR"
+
+// SHA-1
+keytool -exportcert -rfc \
+  -alias example \
+  -keystore {filename}.keystore \
+  -storepass {passwd} -keypass {passwd} \
+| openssl x509 -noout -fingerprint -sha1
+

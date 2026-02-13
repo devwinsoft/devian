@@ -2209,7 +2209,7 @@ GameObject:
   - component: {fileID: 1854872810}
   - component: {fileID: 1854872813}
   m_Layer: 5
-  m_Name: VirtualPad
+  m_Name: VirtualMovePad
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -2246,11 +2246,10 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 463b559a14cfa4003bfebf32730a1449, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Samples.UI::Devian.UIVirtualPad
+  m_EditorClassIdentifier: Devian.Samples.UI::Devian.UIVirtualMovePad
   mOuter: {fileID: 889720640}
   mInner: {fileID: 1766126951}
   mDynamicCenter: 1
-  mPadType: 0
   mRadius: 120
   mDeadzone: 0.1
   mHideWhenIdle: 1

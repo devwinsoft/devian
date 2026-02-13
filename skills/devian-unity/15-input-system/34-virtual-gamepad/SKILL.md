@@ -6,7 +6,7 @@ Type: Component Specification
 
 ## 목적
 
-`VirtualGamepad`는 **InputSystem 커스텀 가상 디바이스**로, UI(UIVirtualPad 등)의 입력을 InputAction 바인딩 경로(`<VirtualGamepad>/move` 등)로 주입한다.
+`VirtualGamepad`는 **InputSystem 커스텀 가상 디바이스**로, UI(UIVirtualMovePad / UIVirtualLookPad 등)의 입력을 InputAction 바인딩 경로(`<VirtualGamepad>/move` 등)로 주입한다.
 
 - InputManager는 VirtualGamepad 존재를 모른다 (수정 없음)
 - VirtualGamepadDriver가 `QueueStateEvent`로 상태 주입
@@ -25,7 +25,7 @@ Type: Component Specification
 
 ### 제외
 
-- UI 컴포넌트 (UIVirtualPad → `com.devian.samples`, VirtualGamepadDriver 연동 내장)
+- UI 컴포넌트 (UIVirtualMovePad / UIVirtualLookPad → `com.devian.samples`, VirtualGamepadDriver 연동 내장)
 - 바인딩 설치 (→ `32-input-manager` InputManagerInspector)
 - InputManager 수정
 
@@ -68,6 +68,12 @@ InputManager는 VirtualGamepad/Driver를 참조하지 않는다. InputAction 바
 ### 5. 바인딩 설치는 InputManager에서
 
 VirtualGamepad 바인딩 설치는 `InputManagerInspector`의 "Install/Ensure VirtualGamepad Bindings" 버튼으로 수행한다. VirtualGamepadDriver에는 설치 관련 필드/인스펙터가 없다.
+
+### 6. UI 컴포넌트 연결
+
+- `UIVirtualMovePad`는 매 프레임 `VirtualGamepadDriver.SetMove(CurrentValue)`만 호출한다.
+- `UIVirtualLookPad`는 매 프레임 `VirtualGamepadDriver.SetLook(CurrentValue)`만 호출한다.
+- 각 패드는 전용 축만 주입하며 분기 로직 없음.
 
 ---
 

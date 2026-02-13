@@ -59,3 +59,9 @@
 {"Id":"IAP_NOT_INITIALIZED","Msg_key":"","Msg":"Store not initialized"}
 {"Id":"IAP_NOT_SUPPORTED","Msg_key":"","Msg":"Unity Purchasing not available"}
 {"Id":"PURCHASE_STORE_FAILED","Msg_key":"","Msg":"Purchase store failed"}
+{"Id":"LOGIN_SYNC_CANCELLED","Msg_key":"","Msg":"Sync cancelled"}
+{"Id":"LOGIN_SYNC_SLOT_LIST_FAILED","Msg_key":"","Msg":"Sync failed while listing slots"}
+{"Id":"LOGIN_SYNC_LOAD_LOCAL_FAILED","Msg_key":"","Msg":"Sync failed while loading local data"}
+{"Id":"LOGIN_SYNC_LOAD_CLOUD_FAILED","Msg_key":"","Msg":"Sync failed while loading cloud data"}
+{"Id":"LOGIN_SYNC_SAVE_LOCAL_FAILED","Msg_key":"","Msg":"Sync failed while saving local data"}
+{"Id":"LOGIN_SYNC_SAVE_CLOUD_FAILED","Msg_key":"","Msg":"Sync failed while saving cloud data"}

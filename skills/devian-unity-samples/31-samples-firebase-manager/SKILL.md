@@ -13,11 +13,11 @@
 
 ## Error handling
 - FirebaseManager의 실패 코드는 `CommonErrorType.FIREBASE_*` enum만 사용한다.
-- `CommonTable.xlsx`의 `ERROR_CLIENT` 시트는 `CommonErrorType` enum의 SSOT이다.
+- `CommonTable.xlsx`의 `ERROR_COMMON` 시트는 `CommonErrorType` enum의 SSOT이다.
 - `"firebase.xxx"` 같은 문자열 코드와 `CoreError.Details`는 사용하지 않는다. (details는 버리고 enum만 남긴다)
 - 프로덕션 코드에서는 `Failure(string, string)`을 사용하지 않는다(Deprecated, 사용처 0개 유지).
 - 주 사용 시그니처: `CoreResult<T>.Failure(CommonErrorType errorType, string message)`
-- 필요한 분기는 enum 항목을 `ERROR_CLIENT` 테이블에 추가하고 빌더를 실행하는 방식으로만 확장한다.
+- 필요한 분기는 enum 항목을 `ERROR_COMMON` 테이블에 추가하고 빌더를 실행하는 방식으로만 확장한다.
 
 
 ## Assembly Definition (asmdef) and References

@@ -22,7 +22,7 @@ namespace Devian.Domain.Common
         NameTag = 2,
     }
 
-    /// <summary>Auto-generated enum from TB_ERROR_CLIENT.id</summary>
+    /// <summary>Auto-generated enum from TB_ERROR_COMMON.id</summary>
     public enum CommonErrorType : int
     {
         CLOUDSAVE_CHECKSUM = 0,
@@ -84,12 +84,18 @@ namespace Devian.Domain.Common
         LOGIN_GPGS_NO_AUTHENTICATE = 56,
         LOGIN_GPGS_NO_AUTH_CODE = 57,
         LOGIN_GPGS_NO_SERVER_ACCESS = 58,
-        LOGIN_UNSUPPORTED = 59,
-        PURCHASE_STORE_FAILED = 60,
+        LOGIN_SYNC_CANCELLED = 59,
+        LOGIN_SYNC_LOAD_CLOUD_FAILED = 60,
+        LOGIN_SYNC_LOAD_LOCAL_FAILED = 61,
+        LOGIN_SYNC_SAVE_CLOUD_FAILED = 62,
+        LOGIN_SYNC_SAVE_LOCAL_FAILED = 63,
+        LOGIN_SYNC_SLOT_LIST_FAILED = 64,
+        LOGIN_UNSUPPORTED = 65,
+        PURCHASE_STORE_FAILED = 66,
     }
 
     /// <summary>Auto-generated enum from TB_ERROR_SERVER.id</summary>
-    public enum ErrorServerType : int
+    public enum ServerErrorType : int
     {
         BAD_REQUEST = 1,
         FORBIDDEN = 3,
@@ -115,8 +121,8 @@ namespace Devian.Domain.Common
         public ComplexPolicyType GetKey() => Key;
     }
 
-    /// <summary>ERROR_CLIENT row</summary>
-    public sealed class ERROR_CLIENT : IEntityKey<CommonErrorType>
+    /// <summary>ERROR_COMMON row</summary>
+    public sealed class ERROR_COMMON : IEntityKey<CommonErrorType>
     {
         public CommonErrorType Id { get; set; }
         public string Msg_key { get; set; } = string.Empty;
@@ -126,13 +132,13 @@ namespace Devian.Domain.Common
     }
 
     /// <summary>ERROR_SERVER row</summary>
-    public sealed class ERROR_SERVER : IEntityKey<ErrorServerType>
+    public sealed class ERROR_SERVER : IEntityKey<ServerErrorType>
     {
-        public ErrorServerType Id { get; set; }
+        public ServerErrorType Id { get; set; }
         public int Code { get; set; }
         public int Status { get; set; }
 
-        public ErrorServerType GetKey() => Id;
+        public ServerErrorType GetKey() => Id;
     }
 
     // ================================================================
@@ -233,11 +239,11 @@ namespace Devian.Domain.Common
         static partial void _OnAfterLoad();
     }
 
-    /// <summary>TB_ERROR_CLIENT container</summary>
-    public static partial class TB_ERROR_CLIENT
+    /// <summary>TB_ERROR_COMMON container</summary>
+    public static partial class TB_ERROR_COMMON
     {
-        private static readonly Dictionary<CommonErrorType, ERROR_CLIENT> _dict = new();
-        private static readonly List<ERROR_CLIENT> _list = new();
+        private static readonly Dictionary<CommonErrorType, ERROR_COMMON> _dict = new();
+        private static readonly List<ERROR_COMMON> _list = new();
 
         public static int Count => _list.Count;
 
@@ -247,30 +253,30 @@ namespace Devian.Domain.Common
             _list.Clear();
         }
 
-        public static IReadOnlyList<ERROR_CLIENT> GetAll() => _list;
+        public static IReadOnlyList<ERROR_COMMON> GetAll() => _list;
 
-        public static ERROR_CLIENT? Get(CommonErrorType key)
+        public static ERROR_COMMON? Get(CommonErrorType key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(CommonErrorType key, out ERROR_CLIENT? row)
+        public static bool TryGet(CommonErrorType key, out ERROR_COMMON? row)
         {
             return _dict.TryGetValue(key, out row);
         }
 
-        public static ERROR_CLIENT Find(CommonErrorType key)
+        public static ERROR_COMMON Find(CommonErrorType key)
         {
             if (_dict.TryGetValue(key, out var row)) return row;
-            throw new KeyNotFoundException($"TB_ERROR_CLIENT: key {key} not found");
+            throw new KeyNotFoundException($"TB_ERROR_COMMON: key {key} not found");
         }
 
-        public static bool TryFind(CommonErrorType key, out ERROR_CLIENT? row)
+        public static bool TryFind(CommonErrorType key, out ERROR_COMMON? row)
         {
             return _dict.TryGetValue(key, out row);
         }
 
-        private static void AddRow(ERROR_CLIENT row)
+        private static void AddRow(ERROR_COMMON row)
         {
             _list.Add(row);
             _dict[row.Id] = row;
@@ -279,7 +285,7 @@ namespace Devian.Domain.Common
         public static void LoadFromJson(string json)
         {
             Clear();
-            var rows = JsonConvert.DeserializeObject<List<ERROR_CLIENT>>(json);
+            var rows = JsonConvert.DeserializeObject<List<ERROR_COMMON>>(json);
             if (rows == null) return;
             foreach (var row in rows)
             {
@@ -296,7 +302,7 @@ namespace Devian.Domain.Common
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<ERROR_CLIENT>(line);
+                var row = JsonConvert.DeserializeObject<ERROR_COMMON>(line);
                 if (row == null) continue;
                 AddRow(row);
             }
@@ -308,7 +314,7 @@ namespace Devian.Domain.Common
             Pb64Loader.ParseRows(rawBinary, jsonRow =>
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<ERROR_CLIENT>(jsonRow);
+                var row = JsonConvert.DeserializeObject<ERROR_COMMON>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -330,7 +336,7 @@ namespace Devian.Domain.Common
     /// <summary>TB_ERROR_SERVER container</summary>
     public static partial class TB_ERROR_SERVER
     {
-        private static readonly Dictionary<ErrorServerType, ERROR_SERVER> _dict = new();
+        private static readonly Dictionary<ServerErrorType, ERROR_SERVER> _dict = new();
         private static readonly List<ERROR_SERVER> _list = new();
 
         public static int Count => _list.Count;
@@ -343,23 +349,23 @@ namespace Devian.Domain.Common
 
         public static IReadOnlyList<ERROR_SERVER> GetAll() => _list;
 
-        public static ERROR_SERVER? Get(ErrorServerType key)
+        public static ERROR_SERVER? Get(ServerErrorType key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(ErrorServerType key, out ERROR_SERVER? row)
+        public static bool TryGet(ServerErrorType key, out ERROR_SERVER? row)
         {
             return _dict.TryGetValue(key, out row);
         }
 
-        public static ERROR_SERVER Find(ErrorServerType key)
+        public static ERROR_SERVER Find(ServerErrorType key)
         {
             if (_dict.TryGetValue(key, out var row)) return row;
             throw new KeyNotFoundException($"TB_ERROR_SERVER: key {key} not found");
         }
 
-        public static bool TryFind(ErrorServerType key, out ERROR_SERVER? row)
+        public static bool TryFind(ServerErrorType key, out ERROR_SERVER? row)
         {
             return _dict.TryGetValue(key, out row);
         }
@@ -435,24 +441,24 @@ namespace Devian.Domain.Common
         public static implicit operator COMPLEX_POLICY_ID(ComplexPolicyType value) => new COMPLEX_POLICY_ID { Value = value };
     }
 
-    /// <summary>Inspector-bindable ID for ERROR_CLIENT</summary>
+    /// <summary>Inspector-bindable ID for ERROR_COMMON</summary>
     [Serializable]
-    public sealed class ERROR_CLIENT_ID
+    public sealed class ERROR_COMMON_ID
     {
         public CommonErrorType Value;
 
-        public static implicit operator CommonErrorType(ERROR_CLIENT_ID id) => id.Value;
-        public static implicit operator ERROR_CLIENT_ID(CommonErrorType value) => new ERROR_CLIENT_ID { Value = value };
+        public static implicit operator CommonErrorType(ERROR_COMMON_ID id) => id.Value;
+        public static implicit operator ERROR_COMMON_ID(CommonErrorType value) => new ERROR_COMMON_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for ERROR_SERVER</summary>
     [Serializable]
     public sealed class ERROR_SERVER_ID
     {
-        public ErrorServerType Value;
+        public ServerErrorType Value;
 
-        public static implicit operator ErrorServerType(ERROR_SERVER_ID id) => id.Value;
-        public static implicit operator ERROR_SERVER_ID(ErrorServerType value) => new ERROR_SERVER_ID { Value = value };
+        public static implicit operator ServerErrorType(ERROR_SERVER_ID id) => id.Value;
+        public static implicit operator ERROR_SERVER_ID(ServerErrorType value) => new ERROR_SERVER_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for string table TEXT</summary>
@@ -469,8 +475,8 @@ namespace Devian.Domain.Common
     public static class TableIdExtensions
     {
         public static bool IsValid(this COMPLEX_POLICY_ID? obj) => obj != null && !EqualityComparer<ComplexPolicyType>.Default.Equals(obj.Value, default);
-        public static bool IsValid(this ERROR_CLIENT_ID? obj) => obj != null && !EqualityComparer<CommonErrorType>.Default.Equals(obj.Value, default);
-        public static bool IsValid(this ERROR_SERVER_ID? obj) => obj != null && !EqualityComparer<ErrorServerType>.Default.Equals(obj.Value, default);
+        public static bool IsValid(this ERROR_COMMON_ID? obj) => obj != null && !EqualityComparer<CommonErrorType>.Default.Equals(obj.Value, default);
+        public static bool IsValid(this ERROR_SERVER_ID? obj) => obj != null && !EqualityComparer<ServerErrorType>.Default.Equals(obj.Value, default);
         public static bool IsValid(this TEXT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
     }
 

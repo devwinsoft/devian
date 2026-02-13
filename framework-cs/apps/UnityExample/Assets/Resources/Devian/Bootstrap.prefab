@@ -20,6 +20,7 @@ GameObject:
   - component: {fileID: 420909886897670353}
   - component: {fileID: 495534033099473291}
   - component: {fileID: 6778154675446920720}
+  - component: {fileID: -3305892532995235069}
   m_Layer: 0
   m_Name: Bootstrap
   m_TagString: Untagged
@@ -139,7 +140,7 @@ MonoBehaviour:
   _gameplayMapName: Player
   _uiMapName: UI
   _moveKey: Player/Move
-  _lookKey: 
+  _lookKey: Player/Look
   _expectedButtonKeys:
   - Player/Attack
   - Player/Interact
@@ -217,6 +218,18 @@ MonoBehaviour:
   _slots:
   - slotKey: main
     cloudSlot: main
+--- !u!114 &-3305892532995235069
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2454387350981742136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 533b998bd10484f308a927b24cb6122e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Samples.CloudClientSystem::Devian.LoginManager
 --- !u!1 &6261706322476616027
 GameObject:
   m_ObjectHideFlags: 0

@@ -94,6 +94,84 @@ namespace Devian
             _ivBase64 = default;
         }
 
+        public System.Collections.Generic.List<string> GetSlotKeys()
+        {
+            var keys = new System.Collections.Generic.List<string>(_slots.Count);
+            for (var i = 0; i < _slots.Count; i++)
+            {
+                var s = _slots[i];
+                if (s == null) continue;
+                if (string.IsNullOrWhiteSpace(s.slotKey)) continue;
+                keys.Add(s.slotKey);
+            }
+            return keys;
+        }
+
+        public CoreResult<LocalSavePayload> LoadRecord(string slot)
+        {
+            if (string.IsNullOrWhiteSpace(slot))
+            {
+                return CoreResult<LocalSavePayload>.Failure(CommonErrorType.LOCALSAVE_SLOT_EMPTY, "Slot is empty.");
+            }
+
+            if (!TryResolveFilename(slot, out var filename))
+            {
+                return CoreResult<LocalSavePayload>.Failure(CommonErrorType.LOCALSAVE_SLOT_MISSING, $"Slot '{slot}' not configured.");
+            }
+
+            if (!IsValidJsonFilename(filename, out var fnError))
+            {
+                return CoreResult<LocalSavePayload>.Failure(CommonErrorType.LOCALSAVE_FILENAME_INVALID, fnError);
+            }
+
+            var loaded = LocalSaveFileStore.Read(GetRootPath(), filename);
+            if (loaded.IsFailure)
+            {
+                return CoreResult<LocalSavePayload>.Failure(loaded.Error!);
+            }
+
+            var save = loaded.Value;
+            if (save == null)
+            {
+                return CoreResult<LocalSavePayload>.Success(null);
+            }
+
+            var expected = LocalSaveCrypto.ComputeSha256Base64(save.payload);
+            if (!string.Equals(expected, save.checksum, StringComparison.Ordinal))
+            {
+                return CoreResult<LocalSavePayload>.Failure(CommonErrorType.LOCALSAVE_CHECKSUM, "Checksum mismatch.");
+            }
+
+            byte[] key = null;
+            byte[] iv = null;
+
+            if (_useEncryption && !TryGetKeyIv(out key, out iv, out var keyError))
+            {
+                return CoreResult<LocalSavePayload>.Failure(CommonErrorType.LOCALSAVE_KEYIV, keyError);
+            }
+
+            var plain = _useEncryption
+                ? Crypto.DecryptAes(save.payload, key, iv)
+                : save.payload;
+
+            // Return record with decrypted payload (so Sync can compare utcTime + use payload directly)
+            return CoreResult<LocalSavePayload>.Success(
+                new LocalSavePayload(save.version, save.updateTime, save.utcTime, plain, save.checksum));
+        }
+
+        public System.Threading.Tasks.Task<CoreResult<LocalSavePayload>> LoadRecordAsync(
+            string slot,
+            System.Threading.CancellationToken ct)
+        {
+            if (ct.IsCancellationRequested)
+            {
+                return System.Threading.Tasks.Task.FromResult(
+                    CoreResult<LocalSavePayload>.Failure(CommonErrorType.LOCALSAVE_CANCELLED, "Cancelled."));
+            }
+
+            return System.Threading.Tasks.Task.FromResult(LoadRecord(slot));
+        }
+
         public CoreResult<bool> Save(string slot, string payload)
         {
             if (string.IsNullOrWhiteSpace(slot))

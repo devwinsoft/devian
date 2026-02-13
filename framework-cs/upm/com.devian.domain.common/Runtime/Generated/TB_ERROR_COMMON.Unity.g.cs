@@ -12,13 +12,13 @@ using UnityEngine;
 
 namespace Devian.Domain.Common
 {
-    public static partial class TB_ERROR_CLIENT
+    public static partial class TB_ERROR_COMMON
     {
         private static global::Devian.TableFormat _loadedFormat;
         private static bool _isLoaded;
 
         /// <summary>
-        /// Preload ERROR_CLIENT table via TableManager.
+        /// Preload ERROR_COMMON table via TableManager.
         /// TableManager handles: TextAsset load + TB insert + cache.
         /// </summary>
         /// <param name="key">Addressables key to load TextAsset</param>
@@ -39,7 +39,7 @@ namespace Devian.Domain.Common
         }
 
         /// <summary>
-        /// Unload ERROR_CLIENT table and clear data.
+        /// Unload ERROR_COMMON table and clear data.
         /// </summary>
         public static void Unload()
         {
@@ -48,7 +48,7 @@ namespace Devian.Domain.Common
         }
 
         /// <summary>
-        /// Check if ERROR_CLIENT table is loaded.
+        /// Check if ERROR_COMMON table is loaded.
         /// </summary>
         public static bool IsLoaded => _isLoaded;
 

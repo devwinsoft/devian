@@ -182,7 +182,7 @@ CoreResult<T>.Failure(CommonErrorType errorType, string message)
 ```
 
 > **프로덕션 코드에서는 `Failure(string, string)`을 사용하지 않는다(사용처 0개 유지).**
-> 에러 식별자는 ERROR_CLIENT 테이블에서 생성되는 `CommonErrorType`를 사용한다.
+> 에러 식별자는 ERROR_COMMON 테이블에서 생성되는 `CommonErrorType`를 사용한다.
 
 ### CoreError 생성자
 
@@ -198,10 +198,10 @@ new CoreError(CommonErrorType errorType, string message, string? details = null)
 
 ## CommonErrorType SSOT
 
-- `CommonTable.xlsx`의 `ERROR_CLIENT` 시트는 `CommonErrorType` enum의 SSOT이다.
-- 빌더가 ERROR_CLIENT의 `id` 컬럼으로 `CommonErrorType` enum을 생성한다 (`Common.g.cs`).
+- `CommonTable.xlsx`의 `ERROR_COMMON` 시트는 `CommonErrorType` enum의 SSOT이다.
+- 빌더가 ERROR_COMMON의 `id` 컬럼으로 `CommonErrorType` enum을 생성한다 (`Common.g.cs`).
 - LoginManager / CloudSaveManager / LocalSaveManager / FirebaseManager / PurchaseManager의 에러 코드는 `CommonErrorType` 항목으로 관리한다.
-- 새 에러 코드가 필요하면 ERROR_CLIENT 테이블에 행을 추가하고 빌더를 실행한다.
+- 새 에러 코드가 필요하면 ERROR_COMMON 테이블에 행을 추가하고 빌더를 실행한다.
 
 ---
 

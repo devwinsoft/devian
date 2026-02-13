@@ -157,7 +157,7 @@ public sealed class LocalSaveManager : CompoSingleton<LocalSaveManager>
 - 파일명 유효성 실패: `CoreResult.Failure(CommonErrorType.LOCALSAVE_FILENAME_INVALID, ...)` 반환
 - Key/IV 미설정: `CoreResult.Failure(CommonErrorType.LOCALSAVE_KEYIV, ...)` 반환
 
-> 에러 식별자는 `CommonErrorType` enum을 사용한다(ERROR_CLIENT 테이블 SSOT).
+> 에러 식별자는 `CommonErrorType` enum을 사용한다(ERROR_COMMON 테이블 SSOT).
 > `Failure(string, string)`은 Deprecated(Obsolete)이며 사용 금지.
 > fallback/재생성 정책은 **서비스 레이어 책임**이다.
 

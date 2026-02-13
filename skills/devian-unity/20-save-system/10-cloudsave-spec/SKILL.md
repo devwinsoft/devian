@@ -86,7 +86,7 @@ AppliesTo: v10
 
 
 > 프레임워크는 실패 시 `CoreResult.Failure(CommonErrorType, string)`를 반환할 뿐이다.
-> 에러 식별자는 `CommonErrorType` enum을 사용한다(ERROR_CLIENT 테이블 SSOT).
+> 에러 식별자는 `CommonErrorType` enum을 사용한다(ERROR_COMMON 테이블 SSOT).
 > `Failure(string, string)`은 Deprecated(Obsolete)이며 사용 금지.
 > 재시도·fallback 정책은 **서비스 레이어 책임**이다.
 

@@ -36,10 +36,13 @@ Samples~/VirtualPad/
 ├── README.md
 └── Runtime/
     ├── Devian.Samples.UI.asmdef
-    └── UIVirtualPad.cs
+    ├── UIVirtualMovePad.cs
+    └── UIVirtualLookPad.cs
 ```
 
-> UIVirtualPad는 VirtualGamepadDriver가 존재하면 매 프레임 `VirtualPadType`에 따라 `SetMove(CurrentValue)` 또는 `SetLook(CurrentValue)`로 입력을 주입한다. 비활성화 시에도 동일한 축에 `Vector2.zero`를 주입한다.
+> UIVirtualMovePad는 VirtualGamepadDriver가 존재하면 매 프레임 `SetMove(CurrentValue)`로 입력을 주입한다. 비활성화 시에도 `SetMove(Vector2.zero)`를 주입한다.
+>
+> UIVirtualLookPad는 VirtualGamepadDriver가 존재하면 매 프레임 `SetLook(CurrentValue)`로 입력을 주입한다. 비활성화 시에도 `SetLook(Vector2.zero)`를 주입한다.
 >
 > - Look 입력은 기본적으로 미설정일 수 있다. InputManager의 LookKey가 비어있으면 Look은 초기화되지 않은 것으로 간주되며 `onInputLook` 콜백이 발생하지 않는다.
 > - Look을 사용하려면 LookKey(예: `Player/Look`)를 명시적으로 설정하고 `<VirtualGamepad>/look` 바인딩을 추가한다.
@@ -71,7 +74,7 @@ Samples~/VirtualPad/
 
 ---
 
-## 6. UIVirtualPad 컴포넌트
+## 6. UIVirtualMovePad / UIVirtualLookPad 컴포넌트
 
 ### Inspector Setup
 
@@ -80,18 +83,17 @@ Hierarchy 예시:
   - `Knob (Image + RectTransform)` — Inner
 
 컴포넌트:
-- `UIVirtualPad`를 Outer 오브젝트에 부착
+- `UIVirtualMovePad` (또는 `UIVirtualLookPad`)를 Outer 오브젝트에 부착
 - `mOuter` = Outer RectTransform
 - `mInner` = Inner RectTransform
 
-> UIVirtualPad requires `CanvasRenderer` and `UIPlugInNonDrawing` via `RequireComponent`.
+> UIVirtualMovePad / UIVirtualLookPad requires `CanvasRenderer` and `UIPlugInNonDrawing` via `RequireComponent`.
 
 ### Parameters
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | `mDynamicCenter` | bool | true면 터치 위치에 패드 중심이 이동 |
-| `mPadType` | VirtualPadType | VirtualGamepad 입력 주입 대상 선택 (`Move` / `Look`) |
 | `mRadius` | float | knob 최대 이동 반경 (px) |
 | `mDeadzone` | float (0..1) | deadzone |
 | `mHideWhenIdle` | bool | 입력 없을 때 그래픽 숨김 |
@@ -118,4 +120,4 @@ Hierarchy 예시:
 
 - 정책 문서: `skills/devian-unity-samples/01-policy/SKILL.md`
 - 샘플 작성 가이드: `skills/devian-unity-samples/02-samples-authoring-guide/SKILL.md`
-- **이전 위치:** `com.devian.ui/Runtime/Plugins/UIVirtualPad.cs` → `com.devian.samples/Samples~/VirtualPad/Runtime/` 로 이동 완료
+- **이전 위치:** `com.devian.ui/Runtime/Plugins/UIVirtualPad.cs` → `com.devian.samples/Samples~/VirtualPad/Runtime/` 로 이동 후, `UIVirtualMovePad` + `UIVirtualLookPad`로 분리 완료

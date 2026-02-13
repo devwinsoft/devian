@@ -14,7 +14,7 @@ export enum ComplexPolicyType {
     NameTag = 2,
 }
 
-/** Auto-generated enum from TB_ERROR_CLIENT.id */
+/** Auto-generated enum from TB_ERROR_COMMON.id */
 export enum CommonErrorType {
     CLOUDSAVE_CHECKSUM = 0,
     CLOUDSAVE_DELETE = 1,
@@ -75,12 +75,18 @@ export enum CommonErrorType {
     LOGIN_GPGS_NO_AUTHENTICATE = 56,
     LOGIN_GPGS_NO_AUTH_CODE = 57,
     LOGIN_GPGS_NO_SERVER_ACCESS = 58,
-    LOGIN_UNSUPPORTED = 59,
-    PURCHASE_STORE_FAILED = 60,
+    LOGIN_SYNC_CANCELLED = 59,
+    LOGIN_SYNC_LOAD_CLOUD_FAILED = 60,
+    LOGIN_SYNC_LOAD_LOCAL_FAILED = 61,
+    LOGIN_SYNC_SAVE_CLOUD_FAILED = 62,
+    LOGIN_SYNC_SAVE_LOCAL_FAILED = 63,
+    LOGIN_SYNC_SLOT_LIST_FAILED = 64,
+    LOGIN_UNSUPPORTED = 65,
+    PURCHASE_STORE_FAILED = 66,
 }
 
 /** Auto-generated enum from TB_ERROR_SERVER.id */
-export enum ErrorServerType {
+export enum ServerErrorType {
     BAD_REQUEST = 1,
     FORBIDDEN = 3,
     INTERNAL = 100,
@@ -102,18 +108,18 @@ export interface COMPLEX_POLICY extends IEntityKey<ComplexPolicyType> {
     getKey(): ComplexPolicyType;
 }
 
-export interface ERROR_CLIENT extends IEntityKey<CommonErrorType> {
+export interface ERROR_COMMON extends IEntityKey<CommonErrorType> {
     Id: CommonErrorType;
     Msg_key: string;
     Msg: string;
     getKey(): CommonErrorType;
 }
 
-export interface ERROR_SERVER extends IEntityKey<ErrorServerType> {
-    Id: ErrorServerType;
+export interface ERROR_SERVER extends IEntityKey<ServerErrorType> {
+    Id: ServerErrorType;
     Code: number;
     Status: number;
-    getKey(): ErrorServerType;
+    getKey(): ServerErrorType;
 }
 
 // ================================================================
@@ -166,9 +172,9 @@ export class TB_COMPLEX_POLICY {
     }
 }
 
-export class TB_ERROR_CLIENT {
-    private static _dict: Map<CommonErrorType, ERROR_CLIENT> = new Map();
-    private static _list: ERROR_CLIENT[] = [];
+export class TB_ERROR_COMMON {
+    private static _dict: Map<CommonErrorType, ERROR_COMMON> = new Map();
+    private static _list: ERROR_COMMON[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -177,9 +183,9 @@ export class TB_ERROR_CLIENT {
         this._list = [];
     }
 
-    static getAll(): readonly ERROR_CLIENT[] { return this._list; }
+    static getAll(): readonly ERROR_COMMON[] { return this._list; }
 
-    static get(key: CommonErrorType): ERROR_CLIENT | undefined {
+    static get(key: CommonErrorType): ERROR_COMMON | undefined {
         return this._dict.get(key);
     }
 
@@ -187,13 +193,13 @@ export class TB_ERROR_CLIENT {
         return this._dict.has(key);
     }
 
-    static find(key: CommonErrorType): ERROR_CLIENT {
+    static find(key: CommonErrorType): ERROR_COMMON {
         const row = this._dict.get(key);
-        if (!row) throw new Error(`TB_ERROR_CLIENT: key ${key} not found`);
+        if (!row) throw new Error(`TB_ERROR_COMMON: key ${key} not found`);
         return row;
     }
 
-    static tryFind(key: CommonErrorType): ERROR_CLIENT | undefined {
+    static tryFind(key: CommonErrorType): ERROR_COMMON | undefined {
         return this._dict.get(key);
     }
 
@@ -201,7 +207,7 @@ export class TB_ERROR_CLIENT {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as ERROR_CLIENT;
+            const row = JSON.parse(line) as ERROR_COMMON;
             this._list.push(row);
             this._dict.set(row.Id, row);
         }
@@ -213,7 +219,7 @@ export class TB_ERROR_CLIENT {
 }
 
 export class TB_ERROR_SERVER {
-    private static _dict: Map<ErrorServerType, ERROR_SERVER> = new Map();
+    private static _dict: Map<ServerErrorType, ERROR_SERVER> = new Map();
     private static _list: ERROR_SERVER[] = [];
 
     static get count(): number { return this._list.length; }
@@ -225,21 +231,21 @@ export class TB_ERROR_SERVER {
 
     static getAll(): readonly ERROR_SERVER[] { return this._list; }
 
-    static get(key: ErrorServerType): ERROR_SERVER | undefined {
+    static get(key: ServerErrorType): ERROR_SERVER | undefined {
         return this._dict.get(key);
     }
 
-    static has(key: ErrorServerType): boolean {
+    static has(key: ServerErrorType): boolean {
         return this._dict.has(key);
     }
 
-    static find(key: ErrorServerType): ERROR_SERVER {
+    static find(key: ServerErrorType): ERROR_SERVER {
         const row = this._dict.get(key);
         if (!row) throw new Error(`TB_ERROR_SERVER: key ${key} not found`);
         return row;
     }
 
-    static tryFind(key: ErrorServerType): ERROR_SERVER | undefined {
+    static tryFind(key: ServerErrorType): ERROR_SERVER | undefined {
         return this._dict.get(key);
     }
 

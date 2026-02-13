@@ -7,8 +7,8 @@ namespace Devian
     /// <summary>
     /// VirtualGamepad에 상태를 주입하는 드라이버.
     /// CompoSingleton — 씬에 배치하면 전역 접근 가능, 씬 전환 시 파괴된다.
-    /// UI(UIVirtualPad 등)에서 SetMove/SetLook/SetButton을 호출하면,
-    /// 매 프레임 InputSystem.QueueStateEvent로 디바이스에 상태를 주입한다.
+    /// UI(UIVirtualMovePad / UIVirtualLookPad 등)에서 SetMove/SetLook/SetButton을 호출하면,
+    /// LateUpdate에서 InputSystem.QueueStateEvent로 디바이스에 상태를 주입한다.
     /// </summary>
     public sealed class VirtualGamepadDriver : CompoSingleton<VirtualGamepadDriver>
     {
@@ -61,7 +61,7 @@ namespace Devian
             _dirty = false;
         }
 
-        private void Update()
+        private void LateUpdate()
         {
             if (_device == null || !_device.added) return;
 

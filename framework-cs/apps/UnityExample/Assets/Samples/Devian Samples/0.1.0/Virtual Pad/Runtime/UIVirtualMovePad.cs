@@ -1,5 +1,5 @@
-// UIVirtualPad.cs
-// UGUI virtual pad (joystick) for mobile.
+// UIVirtualMovePad.cs
+// UGUI virtual pad (joystick) for mobile — Move input only.
 // - Supports fixed center or dynamic center (appears where you touch).
 // - Outputs normalized Vector2 (-1..1) via OnValueChanged and CurrentValue.
 // - If VirtualGamepadDriver exists, feeds CurrentValue to VirtualGamepadDriver.SetMove each frame.
@@ -16,16 +16,10 @@ namespace Devian
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CanvasRenderer))]
     [RequireComponent(typeof(UIPlugInNonDrawing))]
-    public sealed class UIVirtualPad : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
+    public sealed class UIVirtualMovePad : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
     {
         [Serializable]
         public sealed class Vector2Event : UnityEvent<Vector2> { }
-
-        public enum VirtualPadType
-        {
-            Move,
-            Look,
-        }
 
         [Header("References (UGUI)")]
         [SerializeField] private RectTransform mOuter;   // large ring (semi-transparent)
@@ -34,8 +28,6 @@ namespace Devian
         [Header("Behavior")]
         [Tooltip("If true, the pad center moves to the touch position on pointer down.")]
         [SerializeField] private bool mDynamicCenter = true;
-
-        [SerializeField] private VirtualPadType mPadType = VirtualPadType.Move;
 
         [Tooltip("Maximum movement radius of the inner knob in pixels.")]
         [SerializeField] private float mRadius = 120f;
@@ -70,7 +62,6 @@ namespace Devian
             mDeadzone = 0.1f;
             mDynamicCenter = true;
             mHideWhenIdle = true;
-            mPadType = VirtualPadType.Move;
         }
 
         private void Awake()
@@ -83,29 +74,9 @@ namespace Devian
             SetValue(Vector2.zero, forceSend: true);
         }
 
-        private void Update()
-        {
-            if (!VirtualGamepadDriver.TryGet(out var driver)) return;
-
-            if (mPadType == VirtualPadType.Look)
-            {
-                driver.SetLook(CurrentValue);
-                return;
-            }
-
-            driver.SetMove(CurrentValue);
-        }
-
         private void OnDisable()
         {
             if (!VirtualGamepadDriver.TryGet(out var driver)) return;
-
-            if (mPadType == VirtualPadType.Look)
-            {
-                driver.SetLook(Vector2.zero);
-                return;
-            }
-
             driver.SetMove(Vector2.zero);
         }
 
@@ -191,6 +162,11 @@ namespace Devian
 
             mLastValueSent = v;
             mOnValueChanged?.Invoke(v);
+
+            if (VirtualGamepadDriver.TryGet(out var driver))
+            {
+                driver.SetMove(v);
+            }
         }
 
         private void SetInnerVisual(Vector2 deltaPixels)

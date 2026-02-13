@@ -90,6 +90,36 @@ namespace Devian
             _ivBase64 = default;
         }
 
+        public System.Collections.Generic.List<string> GetSlotKeys()
+        {
+            var keys = new System.Collections.Generic.List<string>(_slots.Count);
+            for (var i = 0; i < _slots.Count; i++)
+            {
+                var s = _slots[i];
+                if (s == null) continue;
+                if (string.IsNullOrWhiteSpace(s.slotKey)) continue;
+                keys.Add(s.slotKey);
+            }
+            return keys;
+        }
+
+        public Task<CoreResult<CloudSavePayload>> LoadRecordAsync(string slot, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(slot))
+                return Task.FromResult(
+                    CoreResult<CloudSavePayload>.Failure(CommonErrorType.CLOUDSAVE_SLOT_EMPTY, "Slot is empty."));
+
+            if (_client == null)
+                return Task.FromResult(
+                    CoreResult<CloudSavePayload>.Failure(CommonErrorType.CLOUDSAVE_NOCLIENT, "Client not configured."));
+
+            if (!TryResolveCloudSlot(slot, out var cloudSlot))
+                return Task.FromResult(
+                    CoreResult<CloudSavePayload>.Failure(CommonErrorType.CLOUDSAVE_SLOT_MISSING, $"Slot '{slot}' not configured."));
+
+            return _loadRecordInternal(cloudSlot, ct);
+        }
+
         public bool IsAvailable => _client != null && _client.IsAvailable;
 
         /// <summary>
@@ -315,6 +345,44 @@ namespace Devian
                 : loaded.Payload;
 
             return CoreResult<string>.Success(plain);
+        }
+
+        private async Task<CoreResult<CloudSavePayload>> _loadRecordInternal(
+            string cloudSlot, CancellationToken ct)
+        {
+            var (result, loaded) = await _client.LoadAsync(cloudSlot, ct);
+            if (result != CloudSaveResult.Success)
+            {
+                return CoreResult<CloudSavePayload>.Failure(CommonErrorType.CLOUDSAVE_LOAD, $"Load failed: {result}");
+            }
+
+            if (loaded == null)
+            {
+                return CoreResult<CloudSavePayload>.Success(null);
+            }
+
+            var expected = CloudSaveCrypto.ComputeSha256Base64(loaded.Payload);
+            if (!string.IsNullOrEmpty(loaded.Checksum) &&
+                !string.Equals(expected, loaded.Checksum, StringComparison.Ordinal))
+            {
+                return CoreResult<CloudSavePayload>.Failure(CommonErrorType.CLOUDSAVE_CHECKSUM, "Checksum mismatch.");
+            }
+
+            byte[] key = null;
+            byte[] iv = null;
+
+            if (_useEncryption && !TryGetKeyIv(out key, out iv, out var keyError))
+            {
+                return CoreResult<CloudSavePayload>.Failure(CommonErrorType.CLOUDSAVE_KEYIV, keyError);
+            }
+
+            var plain = _useEncryption
+                ? Crypto.DecryptAes(loaded.Payload, key, iv)
+                : loaded.Payload;
+
+            // Return record with decrypted payload for Sync logic
+            return CoreResult<CloudSavePayload>.Success(
+                new CloudSavePayload(loaded.Version, loaded.UpdateTime, loaded.UtcTime, plain, loaded.Checksum));
         }
 
         private async Task<CoreResult<bool>> _deleteInternal(

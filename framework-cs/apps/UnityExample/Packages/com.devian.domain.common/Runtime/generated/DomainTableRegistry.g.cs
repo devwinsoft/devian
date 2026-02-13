@@ -33,17 +33,17 @@ namespace Devian.Domain.Common
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("ERROR_CLIENT", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("ERROR_COMMON", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_ERROR_CLIENT.LoadFromNdjson(text);
-                    TB_ERROR_CLIENT._AfterLoad();
+                    TB_ERROR_COMMON.LoadFromNdjson(text);
+                    TB_ERROR_COMMON._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_ERROR_CLIENT.LoadFromPb64Binary(bin);
-                    TB_ERROR_CLIENT._AfterLoad();
+                    TB_ERROR_COMMON.LoadFromPb64Binary(bin);
+                    TB_ERROR_COMMON._AfterLoad();
                 }
             });
 

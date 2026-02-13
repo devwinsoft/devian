@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
@@ -74,7 +75,12 @@ namespace Devian
                 return CoreResult<bool>.Failure(initResult.Error!);
             }
 
-            // 4. Sync (not implemented — entry point only)
+            // 4. Sync
+            var syncResult = await syncAsync(ct);
+            if (syncResult.IsFailure)
+            {
+                return syncResult;
+            }
 
             return CoreResult<bool>.Success(true);
         }
@@ -298,6 +304,106 @@ namespace Devian
             }
         }
 #endif
+
+        private async Task<CoreResult<bool>> syncAsync(CancellationToken ct)
+        {
+            try
+            {
+                // Slot keys: union(Local, Cloud) to be resilient.
+                var slotSet = new HashSet<string>(StringComparer.Ordinal);
+
+                var localKeys = LocalSaveManager.Instance.GetSlotKeys();
+                for (var i = 0; i < localKeys.Count; i++)
+                {
+                    var k = localKeys[i];
+                    if (!string.IsNullOrWhiteSpace(k)) slotSet.Add(k);
+                }
+
+                var cloudKeys = CloudSaveManager.Instance.GetSlotKeys();
+                for (var i = 0; i < cloudKeys.Count; i++)
+                {
+                    var k = cloudKeys[i];
+                    if (!string.IsNullOrWhiteSpace(k)) slotSet.Add(k);
+                }
+
+                foreach (var slot in slotSet)
+                {
+                    ct.ThrowIfCancellationRequested();
+
+                    var localR = await LocalSaveManager.Instance.LoadRecordAsync(slot, ct);
+                    if (localR.IsFailure)
+                    {
+                        return CoreResult<bool>.Failure(
+                            new CoreError(CommonErrorType.LOGIN_SYNC_LOAD_LOCAL_FAILED, $"Sync load local failed. slot='{slot}'", localR.Error!.ToString()));
+                    }
+
+                    var cloudR = await CloudSaveManager.Instance.LoadRecordAsync(slot, ct);
+                    if (cloudR.IsFailure)
+                    {
+                        return CoreResult<bool>.Failure(
+                            new CoreError(CommonErrorType.LOGIN_SYNC_LOAD_CLOUD_FAILED, $"Sync load cloud failed. slot='{slot}'", cloudR.Error!.ToString()));
+                    }
+
+                    var local = localR.Value;   // LocalSavePayload (may be null)
+                    var cloud = cloudR.Value;   // CloudSavePayload (may be null)
+
+                    if (local == null && cloud == null)
+                    {
+                        continue;
+                    }
+
+                    if (local == null && cloud != null)
+                    {
+                        var saveLocal = await LocalSaveManager.Instance.SaveAsync(slot, cloud.Payload, ct);
+                        if (saveLocal.IsFailure)
+                        {
+                            return CoreResult<bool>.Failure(
+                                new CoreError(CommonErrorType.LOGIN_SYNC_SAVE_LOCAL_FAILED, $"Sync save local failed. slot='{slot}'", saveLocal.Error!.ToString()));
+                        }
+                        continue;
+                    }
+
+                    if (local != null && cloud == null)
+                    {
+                        var saveCloud = await CloudSaveManager.Instance.SaveAsync(slot, local.payload, ct);
+                        if (saveCloud.IsFailure)
+                        {
+                            return CoreResult<bool>.Failure(
+                                new CoreError(CommonErrorType.LOGIN_SYNC_SAVE_CLOUD_FAILED, $"Sync save cloud failed. slot='{slot}'", saveCloud.Error!.ToString()));
+                        }
+                        continue;
+                    }
+
+                    // Both exist: pick newer by utcTime
+                    if (local.utcTime > cloud.UtcTime)
+                    {
+                        var saveCloud = await CloudSaveManager.Instance.SaveAsync(slot, local.payload, ct);
+                        if (saveCloud.IsFailure)
+                        {
+                            return CoreResult<bool>.Failure(
+                                new CoreError(CommonErrorType.LOGIN_SYNC_SAVE_CLOUD_FAILED, $"Sync save cloud failed. slot='{slot}'", saveCloud.Error!.ToString()));
+                        }
+                    }
+                    else if (cloud.UtcTime > local.utcTime)
+                    {
+                        var saveLocal = await LocalSaveManager.Instance.SaveAsync(slot, cloud.Payload, ct);
+                        if (saveLocal.IsFailure)
+                        {
+                            return CoreResult<bool>.Failure(
+                                new CoreError(CommonErrorType.LOGIN_SYNC_SAVE_LOCAL_FAILED, $"Sync save local failed. slot='{slot}'", saveLocal.Error!.ToString()));
+                        }
+                    }
+                    // equal: no-op
+                }
+
+                return CoreResult<bool>.Success(true);
+            }
+            catch (OperationCanceledException ex)
+            {
+                return CoreResult<bool>.Failure(
+                    new CoreError(CommonErrorType.LOGIN_SYNC_CANCELLED, "Sync cancelled.", ex.Message));
+            }
+        }
     }
 
     /// <summary>
