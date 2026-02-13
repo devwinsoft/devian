@@ -11,6 +11,7 @@ namespace Devian
     {
         Success,
         Conflict,
+        Initial,
     }
 
     public sealed class SyncResult
@@ -60,7 +61,16 @@ namespace Devian
         {
             if (LoginManager.Instance._getCurrentLoginType() == LoginType.GuestLogin)
             {
-                return CoreResult<SyncResult>.Success(new SyncResult(SyncState.Success));
+                var localKeys = LocalSaveManager.Instance.GetSlotKeys();
+                var hasAnyLocal = false;
+                for (var i = 0; i < localKeys.Count; i++)
+                {
+                    if (string.IsNullOrWhiteSpace(localKeys[i])) continue;
+                    var r = await LocalSaveManager.Instance.LoadRecordAsync(localKeys[i], ct);
+                    if (r.IsSuccess && r.Value != null) { hasAnyLocal = true; break; }
+                }
+                var guestState = hasAnyLocal ? SyncState.Success : SyncState.Initial;
+                return CoreResult<SyncResult>.Success(new SyncResult(guestState));
             }
 
             return await syncAsync(ct);
@@ -139,6 +149,9 @@ namespace Devian
                     if (!string.IsNullOrWhiteSpace(k)) slotSet.Add(k);
                 }
 
+                var hasAnyLocal = false;
+                var hasAnyCloud = false;
+
                 foreach (var slot in slotSet)
                 {
                     ct.ThrowIfCancellationRequested();
@@ -164,6 +177,9 @@ namespace Devian
 
                     var local = localR.Value;
                     var cloud = cloudR.IsSuccess ? cloudR.Value : null;
+
+                    if (local != null) hasAnyLocal = true;
+                    if (cloud != null) hasAnyCloud = true;
 
                     if (local == null && cloud == null)
                     {
@@ -211,6 +227,11 @@ namespace Devian
                             localDeviceId,
                             cloudDeviceId));
                     }
+                }
+
+                if (!hasAnyLocal && !hasAnyCloud)
+                {
+                    return CoreResult<SyncResult>.Success(new SyncResult(SyncState.Initial));
                 }
 
                 return CoreResult<SyncResult>.Success(new SyncResult(SyncState.Success));

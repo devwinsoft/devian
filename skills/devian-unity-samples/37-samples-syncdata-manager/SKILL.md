@@ -16,10 +16,17 @@
 - 샘플 씬(또는 초기화 루틴)에서 컴포넌트로 배치되어 lifecycle을 가진다.
 
 
+## SyncState
+- `Success` (0) — 동기화 정상 완료, 데이터 존재
+- `Conflict` (1) — deviceId 불일치로 유저 선택 필요
+- `Initial` (2) — 어떤 슬롯에도 데이터 없음 (신규 유저 / 초기 상태)
+
+
 ## Scenario
 
 ### Guest 로그인
-- 클라우드 없음 (no-op), conflict 없음
+- Cloud 호출 금지 (Guest는 CloudSaveManager 접근 불가)
+- Local 슬롯만 검사: 데이터 있으면 `Success`, 없으면 `Initial`
 
 ### Local 없음 + Cloud 있음
 - Cloud 데이터를 Local에 저장
@@ -37,6 +44,10 @@
   - **Local 선택**: Local → Cloud 저장 + Cloud DeviceId = 현재 deviceId
   - **Cloud 선택**: Cloud → Local 저장 (즉시 Cloud 저장 금지, 이후 cloud save 시 overwrite 가능)
 - "핑퐁 충돌" 허용 (의도): 다른 기기에서 local이 존재하면 재실행 시 다시 Conflict 가능
+
+### Initial (데이터 없음)
+- Guest: Local 슬롯 전체 검사 후 데이터가 하나도 없으면 `Initial`
+- Non-Guest: 모든 슬롯(Local + Cloud) 순회 후 `hasAnyLocal == false && hasAnyCloud == false`이면 `Initial`
 
 
 ## Public API

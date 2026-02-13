@@ -45,6 +45,7 @@ public class TestUICanvas : UICanvas<TestUICanvas>
 
     public void OnClick_Logout()
     {
+        Debug.Log(Application.persistentDataPath);
         LoginManager.Instance.Logout();
         Debug.Log($"Logout");
     }

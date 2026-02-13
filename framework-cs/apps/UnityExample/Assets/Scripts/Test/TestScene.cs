@@ -73,8 +73,8 @@ public class TestScene : BaseScene
         var obj = BundlePool.Spawn<TestPoolObject>("Cube", Vector3.zero, Quaternion.identity, null);
         Debug.Log(obj);
 
-        var save_result = LocalSaveManager.Instance.Save("main", "ABCD");
-        var load_result = LocalSaveManager.Instance.LoadPayload("main");
+        //var save_result = LocalSaveManager.Instance.Save("main", "ABCD");
+        //var load_result = LocalSaveManager.Instance.LoadPayload("main");
 
         CBigInt x = new CBigInt(12345, 1);
         Debug.Log(x * bigInt);
