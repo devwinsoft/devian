@@ -47,7 +47,8 @@
       "Bash(head -10 echo \"  \\(should have multiple entries\\)\" __NEW_LINE_adc47905c67f9a8f__ echo \"\" echo \"=== DoD Check 3: Failure\\(string,string\\) marked as Deprecated ===\" grep -rn 'Failure\\(string.*string' --include=\"SKILL.md\")",
       "Bash(head -10 echo \"  \\(all should be in Deprecated/Obsolete context\\)\" __NEW_LINE_adc47905c67f9a8f__ echo \"\" echo \"=== DoD Check 4: Standalone PGS \\(not GPGS\\) ===\" grep -rn 'PGS' --include=\"SKILL.md\")",
       "Bash(bash:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(./input/build.sh:*)"
     ]
   },
   "project": {

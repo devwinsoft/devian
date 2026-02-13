@@ -144,12 +144,6 @@ namespace Devian
                 return CoreResult<LocalSavePayload>.Success(null);
             }
 
-            var expected = LocalSaveCrypto.ComputeSha256Base64(save.payload);
-            if (!string.Equals(expected, save.checksum, StringComparison.Ordinal))
-            {
-                return CoreResult<LocalSavePayload>.Failure(CommonErrorType.LOCALSAVE_CHECKSUM, "Checksum mismatch.");
-            }
-
             byte[] key = null;
             byte[] iv = null;
 
@@ -162,9 +156,8 @@ namespace Devian
                 ? Crypto.DecryptAes(save.payload, key, iv)
                 : save.payload;
 
-            // Return record with decrypted payload (so Sync can compare utcTime + use payload directly)
             return CoreResult<LocalSavePayload>.Success(
-                new LocalSavePayload(save.version, save.updateTime, save.utcTime, plain, save.checksum));
+                new LocalSavePayload(save.version, save.updateTime, plain, _getOrCreateDeviceId()));
         }
 
         public System.Threading.Tasks.Task<CoreResult<LocalSavePayload>> LoadRecordAsync(
@@ -211,14 +204,11 @@ namespace Devian
                 ? Crypto.EncryptAes(plain, key, iv)
                 : plain;
 
-            var checksum = LocalSaveCrypto.ComputeSha256Base64(cipher);
-
             var save = new LocalSavePayload(
                 SchemaVersion,
                 NowUpdateTime(),
-                NowUtcTime(),
                 cipher,
-                checksum
+                _getOrCreateDeviceId()
             );
 
             var write = LocalSaveFileStore.WriteAtomic(GetRootPath(), filename, save);
@@ -254,12 +244,6 @@ namespace Devian
             if (save == null)
             {
                 return CoreResult<string>.Success(null);
-            }
-
-            var expected = LocalSaveCrypto.ComputeSha256Base64(save.payload);
-            if (!string.Equals(expected, save.checksum, StringComparison.Ordinal))
-            {
-                return CoreResult<string>.Failure(CommonErrorType.LOCALSAVE_CHECKSUM, "Checksum mismatch.");
             }
 
             byte[] key = null;
@@ -312,9 +296,17 @@ namespace Devian
             return DateTime.Now.ToString(UpdateTimeFormat, CultureInfo.InvariantCulture);
         }
 
-        private static long NowUtcTime()
+        private const string DeviceIdPrefsKey = "Devian.DeviceId";
+
+        private static string _getOrCreateDeviceId()
         {
-            return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var id = PlayerPrefs.GetString(DeviceIdPrefsKey, null);
+            if (!string.IsNullOrEmpty(id)) return id;
+
+            id = Guid.NewGuid().ToString("N");
+            PlayerPrefs.SetString(DeviceIdPrefsKey, id);
+            PlayerPrefs.Save();
+            return id;
         }
 
         private string GetRootPath()

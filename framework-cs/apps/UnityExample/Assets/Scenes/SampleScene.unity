@@ -484,7 +484,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Save
+  m_text: Log-out
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b38cfe6c1181eb246bb01f3c8b44dde1, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 38e19179181d37c4da742485d6443b22, type: 2}
@@ -877,7 +877,7 @@ GameObject:
   - component: {fileID: 548394593}
   - component: {fileID: 548394592}
   m_Layer: 5
-  m_Name: Button (Save)
+  m_Name: Button (Log-out)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -985,7 +985,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2085270393}
         m_TargetAssemblyTypeName: TestUICanvas, Assembly-CSharp
-        m_MethodName: OnClick_CloudSave
+        m_MethodName: OnClick_Logout
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -3476,9 +3476,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8f49faa060d6b4b68be5bdc1f3f88bc1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TestUICanvas
-  buttonApple: {fileID: 0}
-  buttonGoogle: {fileID: 0}
-  buttonGuest: {fileID: 0}
 --- !u!1 &2087799408
 GameObject:
   m_ObjectHideFlags: 0

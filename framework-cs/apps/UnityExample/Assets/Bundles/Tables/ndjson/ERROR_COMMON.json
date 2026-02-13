@@ -65,3 +65,4 @@
 {"Id":"LOGIN_SYNC_LOAD_CLOUD_FAILED","Msg_key":"","Msg":"Sync failed while loading cloud data"}
 {"Id":"LOGIN_SYNC_SAVE_LOCAL_FAILED","Msg_key":"","Msg":"Sync failed while saving local data"}
 {"Id":"LOGIN_SYNC_SAVE_CLOUD_FAILED","Msg_key":"","Msg":"Sync failed while saving cloud data"}
+{"Id":"LOGIN_SYNC_RESOLVE_FAILED","Msg_key":"","Msg":"Sync failed while resolving conflict"}

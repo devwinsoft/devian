@@ -83,9 +83,8 @@ namespace Devian
                 var payload = new CloudSavePayload(
                     version: dict.ContainsKey("Version") ? Convert.ToInt32(dict["Version"]) : 0,
                     updateTime: dict.ContainsKey("UpdateTime") ? Convert.ToString(dict["UpdateTime"]) : null,
-                    utcTime: dict.ContainsKey("UtcTime") ? Convert.ToInt64(dict["UtcTime"]) : 0L,
                     payload: dict.ContainsKey("Payload") ? Convert.ToString(dict["Payload"]) : null,
-                    checksum: dict.ContainsKey("Checksum") ? Convert.ToString(dict["Checksum"]) : null
+                    deviceId: dict.ContainsKey("DeviceId") ? Convert.ToString(dict["DeviceId"]) : null
                 );
 
                 return (CloudSaveResult.Success, payload);
@@ -123,9 +122,10 @@ namespace Devian
                 {
                     ["Version"] = payload.Version,
                     ["UpdateTime"] = payload.UpdateTime,
-                    ["UtcTime"] = payload.UtcTime,
                     ["Payload"] = payload.Payload,
-                    ["Checksum"] = payload.Checksum,
+                    ["DeviceId"] = payload.DeviceId,
+                    ["UtcTime"] = FieldValue.Delete,
+                    ["Checksum"] = FieldValue.Delete,
                 };
 
                 await doc.SetAsync(data, SetOptions.MergeAll);

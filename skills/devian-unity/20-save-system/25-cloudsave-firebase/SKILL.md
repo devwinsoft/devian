@@ -19,9 +19,9 @@
 - 저장 필드(문서):
   - `Version` (int)
   - `UpdateTime` (string)
-  - `UtcTime` (long)
   - `Payload` (string)
-  - `Checksum` (string)
+  - `DeviceId` (string)
+  - *(legacy `UtcTime`/`Checksum` 필드는 SaveAsync 시 `FieldValue.Delete`로 제거)*
 
 
 

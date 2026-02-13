@@ -16,18 +16,15 @@ AppliesTo: v10
 
 - `version: int` — 세이브 스키마 버전
 - `updateTime: string` — `"yyyyMMdd:HHmmss"` (DateTime.Now, device local time)
-- `utcTime: long` — Unix epoch milliseconds (UTC)
 - `payload: string` — JSON(권장) 또는 압축된 텍스트
-- `checksum: string` — SHA-256
-  - Devian `CloudSaveManager` 사용 시: 저장 전에 checksum을 생성하고, 로드 시 checksum을 검증한다.
-  - 호환성/이식성을 위해 payload 객체 자체는 checksum이 null/empty일 수 있다(구현 참조).
+- `deviceId: string` — 디바이스 고유 ID (`Guid.NewGuid().ToString("N")`, PlayerPrefs 저장)
 
 
 권장:
 - payload는 작게(수 KB~수십 KB).
 - 큰 바이너리/리플레이/로그는 Cloud Save에 넣지 않는다.
 
-> 구현 참조: `CloudSavePayload.cs` (ctor `checksum = null`), `CloudSaveManager.cs` (Save: 항상 생성, Load: `IsNullOrEmpty` 시 검증 생략)
+> 구현 참조: `CloudSavePayload.cs` (ctor `deviceId = null`), `LocalSavePayload.cs` (ctor `deviceId`)
 
 
 ---
@@ -65,18 +62,18 @@ AppliesTo: v10
 ---
 
 
-## 4. Conflict Resolution — Guidance (Non-normative)
+## 4. Conflict Resolution
 
 
-> 아래는 **서비스 레이어 책임**이며 프레임워크 범위 밖이다.
-> GPGS 구현은 `OpenWithAutomaticConflictResolution` + `UseLongestPlaytime`로
-> 플랫폼 수준 자동 충돌 해결을 사용한다(코드 참조: `GoogleCloudSaveClient`).
+동기화(Sync)는 `deviceId` 기반 충돌 감지를 사용한다.
 
+- Local과 Cloud 모두 존재할 때, `deviceId`가 일치하면 → **Success** (동일 디바이스)
+- `deviceId`가 불일치하면 → **Conflict** 반환 (다른 디바이스에서 저장됨)
+- Conflict 시 자동 덮어쓰기하지 않으며, 사용자(UI)가 `ResolveSyncConflictAsync(slot, SyncResolution, ct)`로 명시적 선택을 해야 한다.
+  - `SyncResolution.UseLocal` — 로컬 데이터를 클라우드에 업로드
+  - `SyncResolution.UseCloud` — 클라우드 데이터를 로컬에 다운로드
 
-권장 패턴(서비스 레이어):
-- `utcTime` 기준 최신 승리
-- 단조 증가 값(최고 스테이지/업적 등)은 max 병합(선택)
-- 재화/경제 데이터는 병합 금지(복제/치팅 리스크)
+> GPGS 구현은 `OpenWithAutomaticConflictResolution` + `UseLongestPlaytime`로 플랫폼 수준 자동 충돌 해결을 사용한다(코드 참조: `GoogleCloudSaveClient`).
 
 
 ---
@@ -100,13 +97,11 @@ AppliesTo: v10
 ---
 
 
-## 6. Integrity / Encryption
+## 6. Encryption
 
 
-- `checksum`은 **SHA-256**으로 계산한다.
 - 암호화/복호화는 Devian `Crypto` 유틸리티를 사용한다.
   - Implementation Ref: `framework-cs/module/Devian/src/Core/Crypto.cs`
-- 암호화 적용 순서: `encrypt(payload) -> checksum(ciphertext)`
 
 
 ### Encryption Key/IV
@@ -124,7 +119,7 @@ AppliesTo: v10
 ## 7. Local Save Integration (Unity)
 
 
-Local Save와 Cloud Save는 **동일한 논리 필드(버전/시간/payload/checksum)**를 사용한다.
+Local Save와 Cloud Save는 **동일한 논리 필드(버전/시간/payload/deviceId)**를 사용한다.
 단, 직렬화 필드명/키는 구현에 따라 다를 수 있다(구현 참조).
 슬롯/파일명 매핑은 **서비스 레이어에서 구성**하며, 프레임워크는 암묵적 기본값을 제공하지 않는다.
 

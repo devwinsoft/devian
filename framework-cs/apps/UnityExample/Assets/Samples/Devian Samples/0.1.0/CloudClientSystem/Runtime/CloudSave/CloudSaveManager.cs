@@ -297,14 +297,11 @@ namespace Devian
                 ? Crypto.EncryptAes(plain, key, iv)
                 : plain;
 
-            var checksum = CloudSaveCrypto.ComputeSha256Base64(cipher);
-
             var csPayload = new CloudSavePayload(
                 SchemaVersion,
                 NowUpdateTime(),
-                NowUtcTime(),
                 cipher,
-                checksum
+                _getOrCreateDeviceId()
             );
 
             var r = await _client.SaveAsync(cloudSlot, csPayload, ct);
@@ -325,13 +322,6 @@ namespace Devian
             if (loaded == null)
             {
                 return CoreResult<string>.Success(null);
-            }
-
-            var expected = CloudSaveCrypto.ComputeSha256Base64(loaded.Payload);
-            if (!string.IsNullOrEmpty(loaded.Checksum) &&
-                !string.Equals(expected, loaded.Checksum, StringComparison.Ordinal))
-            {
-                return CoreResult<string>.Failure(CommonErrorType.CLOUDSAVE_CHECKSUM, "Checksum mismatch.");
             }
 
             byte[] key = null;
@@ -371,13 +361,6 @@ namespace Devian
                 return CoreResult<CloudSavePayload>.Success(null);
             }
 
-            var expected = CloudSaveCrypto.ComputeSha256Base64(loaded.Payload);
-            if (!string.IsNullOrEmpty(loaded.Checksum) &&
-                !string.Equals(expected, loaded.Checksum, StringComparison.Ordinal))
-            {
-                return CoreResult<CloudSavePayload>.Failure(CommonErrorType.CLOUDSAVE_CHECKSUM, "Checksum mismatch.");
-            }
-
             byte[] key = null;
             byte[] iv = null;
 
@@ -390,9 +373,8 @@ namespace Devian
                 ? Crypto.DecryptAes(loaded.Payload, key, iv)
                 : loaded.Payload;
 
-            // Return record with decrypted payload for Sync logic
             return CoreResult<CloudSavePayload>.Success(
-                new CloudSavePayload(loaded.Version, loaded.UpdateTime, loaded.UtcTime, plain, loaded.Checksum));
+                new CloudSavePayload(loaded.Version, loaded.UpdateTime, plain, loaded.DeviceId));
         }
 
         private async Task<CoreResult<bool>> _deleteInternal(
@@ -411,9 +393,17 @@ namespace Devian
             return DateTime.Now.ToString(UpdateTimeFormat, CultureInfo.InvariantCulture);
         }
 
-        private static long NowUtcTime()
+        private const string DeviceIdPrefsKey = "Devian.DeviceId";
+
+        private static string _getOrCreateDeviceId()
         {
-            return DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var id = PlayerPrefs.GetString(DeviceIdPrefsKey, null);
+            if (!string.IsNullOrEmpty(id)) return id;
+
+            id = Guid.NewGuid().ToString("N");
+            PlayerPrefs.SetString(DeviceIdPrefsKey, id);
+            PlayerPrefs.Save();
+            return id;
         }
 
         private bool TryResolveCloudSlot(string slot, out string cloudSlot)

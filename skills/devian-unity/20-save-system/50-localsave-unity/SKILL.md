@@ -21,9 +21,8 @@ Unity 로컬 파일 시스템 기반 Local Save 공통 규약.
 ## 2. Responsibilities
 
 
-- SavePayload 논리 필드 준수(버전/시간/payload/checksum) — Cloud Save와 **의미상 동일**
+- SavePayload 논리 필드 준수(버전/시간/payload/deviceId) — Cloud Save와 **의미상 동일**
   - 직렬화 필드명/키는 구현에 따라 다를 수 있다(Cloud: PascalCase, Local: camelCase).
-- SHA-256 checksum 필수
 - 암호화/복호화는 Devian Crypto 유틸리티 사용
 - 저장 경로/파일명 매핑을 외부 설정으로 제공
 - Key/IV는 LocalSaveManager 내부에 저장
@@ -127,9 +126,8 @@ public sealed class LocalSaveManager : CompoSingleton<LocalSaveManager>
 1. slot → filename 해석 (`TryResolveFilename`)
 2. 파일명 유효성 검증 (`IsValidJsonFilename`)
 3. encrypt(optional) using Devian `Crypto`
-4. checksum(SHA-256) over ciphertext (`LocalSaveCrypto.ComputeSha256Base64`)
-5. `LocalSavePayload` 생성 (SchemaVersion, updateTime, utcTime, cipher, checksum)
-6. temp write + atomic rename (`LocalSaveFileStore.WriteAtomic`)
+4. `LocalSavePayload` 생성 (SchemaVersion, updateTime, cipher, deviceId)
+5. temp write + atomic rename (`LocalSaveFileStore.WriteAtomic`)
 
 
 ---
@@ -141,9 +139,8 @@ public sealed class LocalSaveManager : CompoSingleton<LocalSaveManager>
 1. slot → filename 해석
 2. 파일명 유효성 검증
 3. read file (`LocalSaveFileStore.Read`)
-4. checksum 검증(SHA-256)
-5. decrypt(optional) using Devian `Crypto`
-6. return plain payload
+4. decrypt(optional) using Devian `Crypto`
+5. return plain payload
 
 
 ---
@@ -152,7 +149,6 @@ public sealed class LocalSaveManager : CompoSingleton<LocalSaveManager>
 ## 8. Failure Handling
 
 
-- checksum 불일치: `CoreResult.Failure(CommonErrorType.LOCALSAVE_CHECKSUM, ...)` 반환
 - 파일 미존재: `CoreResult.Success(null)` 반환 (실패가 아님)
 - 파일명 유효성 실패: `CoreResult.Failure(CommonErrorType.LOCALSAVE_FILENAME_INVALID, ...)` 반환
 - Key/IV 미설정: `CoreResult.Failure(CommonErrorType.LOCALSAVE_KEYIV, ...)` 반환
