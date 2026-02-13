@@ -197,7 +197,7 @@ MonoBehaviour:
     data: PIT5M1IV7VqSPE2DLy8V7cMFMxpF9Scn
   _slots:
   - slotKey: main
-    filename: main
+    filename: save/main.json
 --- !u!114 &6778154675446920720
 MonoBehaviour:
   m_ObjectHideFlags: 0

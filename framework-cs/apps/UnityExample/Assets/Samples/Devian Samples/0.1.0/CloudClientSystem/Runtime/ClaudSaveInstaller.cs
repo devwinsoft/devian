@@ -9,20 +9,24 @@ namespace Devian
     public static class ClaudSaveInstaller
     {
         /// <summary>
-        /// Common Android/iOS entry:
+        /// Common Editor/Android/iOS entry:
+        /// - Editor: inject FirebaseCloudSaveClient so CloudSave init does not depend on GPGS / platform sign-in.
         /// - Android: use CloudSaveManager default client selection (GPGS) + best-effort activation inside manager.
         /// - iOS: inject FirebaseCloudSaveClient for now. (iCloud stays as designed; switch later.)
         /// </summary>
         public static Task<CoreResult<CloudSaveResult>> InitializeAsync(CancellationToken ct)
         {
-#if UNITY_IOS && !UNITY_EDITOR
+#if UNITY_EDITOR
+            // Editor: inject Firebase cloud save so CloudSave init does not depend on GPGS / platform sign-in.
+            CloudSaveManager.Instance.Configure(client: new FirebaseCloudSaveClient());
+#elif UNITY_IOS
             // iOS: use Firebase cloud save for now. (iCloud stays as designed; switch later.)
             CloudSaveManager.Instance.Configure(client: new FirebaseCloudSaveClient());
-#elif UNITY_ANDROID && !UNITY_EDITOR
+#elif UNITY_ANDROID
             // Android uses CloudSaveManager default client creation (GPGS + activation).
             // Do not inject a client here.
 #else
-            // Editor/other: keep existing dev flow (default selection).
+            // Other platforms: keep existing dev flow (default selection).
 #endif
             return CloudSaveManager.Instance.InitializeAsync(ct);
         }

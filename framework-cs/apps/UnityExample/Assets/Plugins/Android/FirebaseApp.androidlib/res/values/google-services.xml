@@ -1,11 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@string/gcm_defaultSenderId,@string/google_storage_bucket,@string/project_id,@string/google_api_key,@string/google_crash_reporting_api_key,@string/google_app_id,@string/default_android_client_id,@string/default_web_client_id">
-  <string name="gcm_defaultSenderId" translatable="false">381297379415</string>
-  <string name="google_storage_bucket" translatable="false">devian-example-b19f9.firebasestorage.app</string>
-  <string name="project_id" translatable="false">devian-example-b19f9</string>
-  <string name="google_api_key" translatable="false">AIzaSyBB-tlUe00EHF0lfqjHsNh0cTaRwpRo650</string>
-  <string name="google_crash_reporting_api_key" translatable="false">AIzaSyBB-tlUe00EHF0lfqjHsNh0cTaRwpRo650</string>
-  <string name="google_app_id" translatable="false">1:381297379415:android:c63af6af672f2feca7bb12</string>
-  <string name="default_android_client_id" translatable="false">381297379415-l5njhlqs34mfbp4iba2n1qmjto6j01rp.apps.googleusercontent.com</string>
-  <string name="default_web_client_id" translatable="false">381297379415-upghdo7175a9mjd9ha6bsa0g375neg5d.apps.googleusercontent.com</string>
+  <string name="gcm_defaultSenderId" translatable="false">119226054667</string>
+  <string name="google_storage_bucket" translatable="false">devian-framwork-example.firebasestorage.app</string>
+  <string name="project_id" translatable="false">devian-framwork-example</string>
+  <string name="google_api_key" translatable="false">AIzaSyA_DN5iTzJXTf25NsvZ0OB2ya2IuJ9O4iQ</string>
+  <string name="google_crash_reporting_api_key" translatable="false">AIzaSyA_DN5iTzJXTf25NsvZ0OB2ya2IuJ9O4iQ</string>
+  <string name="google_app_id" translatable="false">1:119226054667:android:b98cb9bc4c529c6bab6f0e</string>
+  <string name="default_android_client_id" translatable="false">119226054667-97jam966nlfqig89vct8unk00ldfd9c8.apps.googleusercontent.com</string>
+  <string name="default_web_client_id" translatable="false">119226054667-2lb89njh0itfnaijtefrlesqtpnotbng.apps.googleusercontent.com</string>
 </resources>

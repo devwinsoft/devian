@@ -18,6 +18,7 @@
 - 프로덕션 코드에서는 `Failure(string, string)`을 사용하지 않는다(Deprecated, 사용처 0개 유지).
 - 주 사용 시그니처: `CoreResult<T>.Failure(CommonErrorType errorType, string message)`
 - 필요한 분기는 enum 항목을 `ERROR_COMMON` 테이블에 추가하고 빌더를 실행하는 방식으로만 확장한다.
+- FirebaseManager는 실패 시 Unity 콘솔에 예외를 상세 로깅한다(FirebaseException.ErrorCode / inner / stack 포함). 반환 실패 코드는 여전히 `CommonErrorType.FIREBASE_*`만 사용한다.
 
 
 ## Assembly Definition (asmdef) and References

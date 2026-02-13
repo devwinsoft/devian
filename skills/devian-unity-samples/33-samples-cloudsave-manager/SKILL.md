@@ -2,8 +2,8 @@
 
 
 ## Purpose
-- Android(GPGS) / iOS(Firebase 임시) 공통 엔트리로 Devian `CloudSaveManager`를 초기화하는 샘플 진입점을 제공한다.
-- 내부에서 플랫폼 분기(Android=GPGS, iOS=FirebaseCloudSaveClient 임시)를 수행한다. iCloud(AppleCloudSaveClient)는 설계대로 유지하되, 준비 완료 후 교체한다.
+- Editor/Android(GPGS) / iOS(Firebase 임시) 공통 엔트리로 Devian `CloudSaveManager`를 초기화하는 샘플 진입점을 제공한다.
+- 내부에서 플랫폼 분기(Editor/iOS=FirebaseCloudSaveClient, Android=GPGS)를 수행한다. iCloud(AppleCloudSaveClient)는 설계대로 유지하되, 준비 완료 후 교체한다.
 
 
 ## Locations (mirrored)
@@ -27,6 +27,7 @@
 
 
 ## Platform behavior
+- Editor: `FirebaseCloudSaveClient`를 주입해 GPGS/플랫폼 sign-in 없이 CloudSave를 초기화한다.
 - Android: `GoogleCloudSaveClient`(GPGS)가 기본 선택된다.
 - iOS: `FirebaseCloudSaveClient`를 주입해 `CloudSaveManager`를 초기화(임시). `AppleCloudSaveClient`(iCloud)는 설계대로 유지하며, iCloud 구현 준비 완료 후 iOS 주입을 교체한다.
 
@@ -54,7 +55,7 @@ await ClaudSaveInstaller.InitializeAsync(ct);
 
 
 ## Notes
-- iOS에서는 현재 `FirebaseCloudSaveClient`가 주입되어 동작한다(임시).
+- Editor/iOS에서는 현재 `FirebaseCloudSaveClient`가 주입되어 동작한다(임시).
 - iCloud 구현 상세: [20-save-system — 25-cloudsave-firebase](../../devian-unity/20-save-system/25-cloudsave-firebase/SKILL.md)
 
 

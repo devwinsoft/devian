@@ -222,9 +222,11 @@ namespace Devian
         private async Task<CoreResult<CloudSaveResult>> _signInInternal(CancellationToken ct)
         {
             var r = await _client.SignInIfNeededAsync(ct);
+            var clientName = _client != null ? _client.GetType().Name : "null";
+
             return r == CloudSaveResult.Success
                 ? CoreResult<CloudSaveResult>.Success(r)
-                : CoreResult<CloudSaveResult>.Failure(CommonErrorType.CLOUDSAVE_SIGNIN, $"Sign-in failed: {r}");
+                : CoreResult<CloudSaveResult>.Failure(CommonErrorType.CLOUDSAVE_SIGNIN, $"Sign-in failed: {r} (client={clientName})");
         }
 
         private const string _gpgsConfigBuilderTypeName =
@@ -351,6 +353,14 @@ namespace Devian
             string cloudSlot, CancellationToken ct)
         {
             var (result, loaded) = await _client.LoadAsync(cloudSlot, ct);
+
+            // NotFound means: the slot has never been saved to cloud yet.
+            // Treat it as an empty cloud state (success with null payload).
+            if (result == CloudSaveResult.NotFound)
+            {
+                return CoreResult<CloudSavePayload>.Success(null);
+            }
+
             if (result != CloudSaveResult.Success)
             {
                 return CoreResult<CloudSavePayload>.Failure(CommonErrorType.CLOUDSAVE_LOAD, $"Load failed: {result}");

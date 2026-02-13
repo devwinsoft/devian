@@ -70,6 +70,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
+                logFailure(CommonErrorType.FIREBASE_SIGNIN, "SignInAnonymouslyAsync", ex);
                 return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_SIGNIN, ex.Message));
             }
         }
@@ -103,6 +104,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
+                logFailure(CommonErrorType.FIREBASE_GOOGLE_SIGNIN, "SignInWithGoogleAsync", ex);
                 return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_GOOGLE_SIGNIN, ex.Message));
             }
         }
@@ -146,6 +148,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
+                logFailure(CommonErrorType.FIREBASE_APPLE_SIGNIN, "SignInWithAppleAsync", ex);
                 return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_APPLE_SIGNIN, ex.Message));
             }
         }
@@ -178,6 +181,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
+                logFailure(CommonErrorType.FIREBASE_TOKEN, "GetIdTokenAsync", ex);
                 return CoreResult<string>.Failure(firebaseError(CommonErrorType.FIREBASE_TOKEN, ex.Message));
             }
         }
@@ -237,6 +241,51 @@ namespace Devian
         private static CoreError firebaseError(CommonErrorType code, string message)
         {
             return new CoreError(code, message);
+        }
+
+        private static void logFailure(CommonErrorType code, string context, Exception ex)
+        {
+            // Unwrap AggregateException to get meaningful Firebase exception.
+            var e = unwrap(ex);
+
+            // FirebaseAuthException usually inherits FirebaseException.
+            var firebaseCode = tryGetFirebaseErrorCode(e, out var firebaseErrorCodeText);
+
+            var msg =
+                $"[FirebaseManager] Failure code={code} context={context}\n" +
+                (firebaseCode
+                    ? $"FirebaseErrorCode={firebaseErrorCodeText}\n"
+                    : string.Empty) +
+                $"ExceptionType={e.GetType().FullName}\n" +
+                $"Message={e.Message}\n" +
+                $"Stack={e}";
+
+            Debug.LogError(msg);
+        }
+
+        private static Exception unwrap(Exception ex)
+        {
+            if (ex is AggregateException ae)
+            {
+                var flat = ae.Flatten();
+                if (flat.InnerExceptions != null && flat.InnerExceptions.Count > 0)
+                    return unwrap(flat.InnerExceptions[0]);
+            }
+
+            return ex.InnerException != null ? unwrap(ex.InnerException) : ex;
+        }
+
+        private static bool tryGetFirebaseErrorCode(Exception ex, out string codeText)
+        {
+            // FirebaseException.ErrorCode is int.
+            if (ex is Firebase.FirebaseException fex)
+            {
+                codeText = fex.ErrorCode.ToString();
+                return true;
+            }
+
+            codeText = null;
+            return false;
         }
 
         private static string tryGetUserId(object signInResult)

@@ -69,7 +69,7 @@ namespace Devian
             }
 
             // 3. CloudSaveManager init
-            var initResult = await CloudSaveManager.Instance.InitializeAsync(ct);
+            var initResult = await ClaudSaveInstaller.InitializeAsync(ct);
             if (initResult.IsFailure)
             {
                 return CoreResult<bool>.Failure(initResult.Error!);
@@ -239,7 +239,7 @@ namespace Devian
                 {
                     var linked = await _auth.CurrentUser.LinkWithCredentialAsync(cred);
                     ct.ThrowIfCancellationRequested();
-                    if (linked?.User == null)
+                    if (linked == null)
                     {
                         return CoreResult<bool>.Failure(CommonErrorType.LOGIN_GOOGLE_LINK_FAILED, "Failed to link Google credential to anonymous user.");
                     }
@@ -249,7 +249,7 @@ namespace Devian
 
                 var signed = await _auth.SignInWithCredentialAsync(cred);
                 ct.ThrowIfCancellationRequested();
-                if (signed?.User == null)
+                if (signed == null)
                 {
                     return CoreResult<bool>.Failure(CommonErrorType.LOGIN_GOOGLE_SIGNIN_FAILED, "Failed to sign in with Google credential.");
                 }
@@ -281,7 +281,7 @@ namespace Devian
                 {
                     var linked = await _auth.CurrentUser.LinkWithCredentialAsync(cred);
                     ct.ThrowIfCancellationRequested();
-                    if (linked?.User == null)
+                    if (linked == null)
                     {
                         return CoreResult<bool>.Failure(CommonErrorType.LOGIN_APPLE_LINK_FAILED, "Failed to link Apple credential to anonymous user.");
                     }
@@ -291,7 +291,7 @@ namespace Devian
 
                 var signed = await _auth.SignInWithCredentialAsync(cred);
                 ct.ThrowIfCancellationRequested();
-                if (signed?.User == null)
+                if (signed == null)
                 {
                     return CoreResult<bool>.Failure(CommonErrorType.LOGIN_APPLE_SIGNIN_FAILED, "Failed to sign in with Apple credential.");
                 }
@@ -337,15 +337,22 @@ namespace Devian
                             new CoreError(CommonErrorType.LOGIN_SYNC_LOAD_LOCAL_FAILED, $"Sync load local failed. slot='{slot}'", localR.Error!.ToString()));
                     }
 
+                    var cloudWritable = true;
+
                     var cloudR = await CloudSaveManager.Instance.LoadRecordAsync(slot, ct);
                     if (cloudR.IsFailure)
                     {
-                        return CoreResult<bool>.Failure(
-                            new CoreError(CommonErrorType.LOGIN_SYNC_LOAD_CLOUD_FAILED, $"Sync load cloud failed. slot='{slot}'", cloudR.Error!.ToString()));
+                        // Cloud is optional for GuestLogin (especially on first run / offline / rules not ready).
+                        // Keep local path working and avoid failing the entire login.
+                        UnityEngine.Debug.LogWarning(
+                            $"[LoginManager] Sync load cloud failed. slot='{slot}'. " +
+                            $"Proceeding with local-only. error={cloudR.Error}");
+
+                        cloudWritable = false;
                     }
 
-                    var local = localR.Value;   // LocalSavePayload (may be null)
-                    var cloud = cloudR.Value;   // CloudSavePayload (may be null)
+                    var local = localR.Value;                 // LocalSavePayload (may be null)
+                    var cloud = cloudR.IsSuccess ? cloudR.Value : null;  // treat cloud as empty when load failed
 
                     if (local == null && cloud == null)
                     {
@@ -365,6 +372,12 @@ namespace Devian
 
                     if (local != null && cloud == null)
                     {
+                        // If cloud load failed, do not attempt cloud save for this slot.
+                        if (!cloudWritable)
+                        {
+                            continue;
+                        }
+
                         var saveCloud = await CloudSaveManager.Instance.SaveAsync(slot, local.payload, ct);
                         if (saveCloud.IsFailure)
                         {

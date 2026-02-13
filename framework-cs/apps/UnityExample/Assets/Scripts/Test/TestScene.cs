@@ -54,8 +54,11 @@ public class TestScene : BaseScene
         _tryActivateGpgsSavedGames();
 
         yield return TableManager.Instance.LoadTablesAsync("table-ndjson", TableFormat.Json);
-        yield return TableManager.Instance.LoadStringsAsync("string-pb64", TableFormat.Pb64, SystemLanguage.Korean);
-
+        yield return Devian.TableManager.Instance.LoadStringsAsync(
+            "string-pb64",
+            Devian.TableFormat.Pb64,
+            UnityEngine.SystemLanguage.Korean);
+        
         yield return SoundManager.Instance.LoadByBundleKeyAsync("sounds");
         yield return AssetManager.LoadBundleAssets<GameObject>("common-effects");
         yield return AssetManager.LoadBundleAssets<GameObject>("prefabs");

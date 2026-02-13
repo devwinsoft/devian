@@ -101,8 +101,16 @@ namespace Devian
             {
                 var s = _slots[i];
                 if (s == null) continue;
-                if (string.IsNullOrWhiteSpace(s.slotKey)) continue;
-                keys.Add(s.slotKey);
+
+                var key = s.slotKey;
+                if (string.IsNullOrWhiteSpace(key)) continue;
+
+                var filename = s.filename?.Replace('\\', '/').Trim();
+                if (string.IsNullOrWhiteSpace(filename)) continue;
+
+                if (!IsValidJsonFilename(filename, out _)) continue;
+
+                keys.Add(key);
             }
             return keys;
         }

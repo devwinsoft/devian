@@ -1,56 +1,56 @@
 {
   "project_info": {
-    "project_number": "381297379415",
-    "project_id": "devian-example-b19f9",
-    "storage_bucket": "devian-example-b19f9.firebasestorage.app"
+    "project_number": "119226054667",
+    "project_id": "devian-framwork-example",
+    "storage_bucket": "devian-framwork-example.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:381297379415:android:c63af6af672f2feca7bb12",
+        "mobilesdk_app_id": "1:119226054667:android:b98cb9bc4c529c6bab6f0e",
         "android_client_info": {
-          "package_name": "com.devian.example"
+          "package_name": "com.devian.framework"
         }
       },
       "oauth_client": [
         {
-          "client_id": "381297379415-l5njhlqs34mfbp4iba2n1qmjto6j01rp.apps.googleusercontent.com",
+          "client_id": "119226054667-97jam966nlfqig89vct8unk00ldfd9c8.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.devian.example",
-            "certificate_hash": "9526547da949eac5edc942eaf62aab15e5148500"
+            "package_name": "com.devian.framework",
+            "certificate_hash": "161761dd8118ddf9fb7e84790d64a509ab7cc463"
           }
         },
         {
-          "client_id": "381297379415-quach5rjkphi28aak5c20m3di4r8pn7o.apps.googleusercontent.com",
+          "client_id": "119226054667-rohmt5gnp188b3hk70u9oi9kr79c15l5.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.devian.example",
-            "certificate_hash": "626746667551c330c09d5a108e34a27d98522277"
+            "package_name": "com.devian.framework",
+            "certificate_hash": "378f429cdade23636ab04d55c375a7ec83af59ba"
           }
         },
         {
-          "client_id": "381297379415-upghdo7175a9mjd9ha6bsa0g375neg5d.apps.googleusercontent.com",
+          "client_id": "119226054667-2lb89njh0itfnaijtefrlesqtpnotbng.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyBB-tlUe00EHF0lfqjHsNh0cTaRwpRo650"
+          "current_key": "AIzaSyA_DN5iTzJXTf25NsvZ0OB2ya2IuJ9O4iQ"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "381297379415-upghdo7175a9mjd9ha6bsa0g375neg5d.apps.googleusercontent.com",
+              "client_id": "119226054667-0grp2s8u2v0q79dr1679nv62nq5ia0o6.apps.googleusercontent.com",
               "client_type": 3
             },
             {
-              "client_id": "381297379415-u9mrvqkldevf3dlhj9fob5h4unjjmtrn.apps.googleusercontent.com",
+              "client_id": "119226054667-llags1q3ukir4ebgku7k46so6s3fgl2i.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.devian.example"
+                "bundle_id": "com.devian.framework"
               }
             }
           ]

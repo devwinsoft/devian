@@ -12,7 +12,8 @@ namespace Devian
 {
     /// <summary>
     /// Firebase Firestore cloud save client.
-    /// Uses Firebase Auth (anonymous sign-in) + Firestore for cloud save storage.
+    /// Uses Firebase Auth + Firestore for cloud save storage.
+    /// Does NOT own the login flow — LoginManager must sign in before CloudSave.
     /// </summary>
     public sealed class FirebaseCloudSaveClient : ICloudSaveClient
     {
@@ -33,27 +34,19 @@ namespace Devian
             var init = await ensureInitializedAsync(ct);
             if (init != CloudSaveResult.Success)
             {
+                UnityEngine.Debug.LogError($"[FirebaseCloudSaveClient] init failed: {init}");
                 return init;
             }
 
+            // CloudSave does NOT own the login flow.
+            // LoginManager must have signed in already (anonymous or other).
             if (_auth.CurrentUser != null)
             {
                 return CloudSaveResult.Success;
             }
 
-            try
-            {
-                await _auth.SignInAnonymouslyAsync();
-                ct.ThrowIfCancellationRequested();
-
-                return _auth.CurrentUser != null
-                    ? CloudSaveResult.Success
-                    : CloudSaveResult.AuthRequired;
-            }
-            catch
-            {
-                return CloudSaveResult.AuthRequired;
-            }
+            UnityEngine.Debug.LogError("[FirebaseCloudSaveClient] AuthRequired: FirebaseAuth.CurrentUser is null. Login flow must sign in before CloudSave.");
+            return CloudSaveResult.AuthRequired;
         }
 
 
@@ -97,8 +90,9 @@ namespace Devian
 
                 return (CloudSaveResult.Success, payload);
             }
-            catch
+            catch (Exception ex)
             {
+                UnityEngine.Debug.LogError($"[FirebaseCloudSaveClient] LoadAsync failed. slot='{slot}' ex={ex}");
                 return (CloudSaveResult.TemporaryFailure, null);
             }
         }
@@ -201,9 +195,10 @@ namespace Devian
                 _initialized = true;
                 return CloudSaveResult.Success;
             }
-            catch
+            catch (Exception ex)
             {
                 _initialized = false;
+                UnityEngine.Debug.LogError($"[FirebaseCloudSaveClient] ensureInitializedAsync exception: {ex}");
                 return CloudSaveResult.NotAvailable;
             }
         }

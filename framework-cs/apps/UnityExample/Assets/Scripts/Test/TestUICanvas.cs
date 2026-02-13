@@ -6,11 +6,27 @@ using Devian.Protocol.Game;
 
 public class TestUICanvas : UICanvas<TestUICanvas>
 {
+    public GameObject buttonApple;
+    public GameObject buttonGoogle;
+    public GameObject buttonGuest;
+    
     protected override void onAwake()
     {
     }
 
-    public async void OnClick_SignIn()
+    public async void OnClick_SignIn_Apple()
+    {
+        var login = await LoginManager.Instance.LoginAsync(LoginType.AppleLogin, CancellationToken.None);
+        Debug.Log(login.Value);
+    }
+    
+    public async void OnClick_SignIn_Google()
+    {
+        var login = await LoginManager.Instance.LoginAsync(LoginType.GoogleLogin, CancellationToken.None);
+        Debug.Log(login.Value);
+    }
+
+    public async void OnClick_SignIn_Guest()
     {
         var init = await FirebaseManager.Instance.InitializeAsync(CancellationToken.None);
         if (!init.IsSuccess)
@@ -18,25 +34,12 @@ public class TestUICanvas : UICanvas<TestUICanvas>
             Debug.LogError(init.Error.Message);
             return;
         }
+        Debug.Log(init.Value);
 
-        var r = await FirebaseManager.Instance.SignInAnonymouslyAsync(CancellationToken.None);
-        if (!r.IsSuccess)
-        {
-            Debug.LogError(r.Error.Message);
-            return;
-        }
-        Debug.Log(r.Value);
-    }
-
-    public async void OnClick_CloudLoad()
-    {
-        var r = CloudSaveManager.Instance.LoadPayloadAsync("main", CancellationToken.None);
+        var login = await LoginManager.Instance.LoginAsync(LoginType.GuestLogin, CancellationToken.None);
+        Debug.Log(login.Value);
     }
     
-    public async void OnClick_CloudSave()
-    {
-    }
-
 
     public void OnClick_Connect()
     {
