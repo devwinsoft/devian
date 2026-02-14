@@ -1,4 +1,4 @@
-# devian-unity-samples — Samples~ Creation
+# devian-unity/90-samples — Samples~ Creation
 
 
 
@@ -11,7 +11,7 @@
 
 
 ## Prerequisites
-- Samples 작성 정책/규약: `skills/devian-unity-samples/02-samples-authoring-guide/SKILL.md`
+- Samples 작성 정책/규약: `skills/devian-unity/90-samples/02-samples-authoring-guide/SKILL.md`
 
 
 

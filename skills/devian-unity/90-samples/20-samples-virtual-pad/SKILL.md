@@ -118,6 +118,6 @@ Hierarchy 예시:
 
 ## 7. 참고
 
-- 정책 문서: `skills/devian-unity-samples/01-policy/SKILL.md`
-- 샘플 작성 가이드: `skills/devian-unity-samples/02-samples-authoring-guide/SKILL.md`
+- 정책 문서: `skills/devian-unity/90-samples/01-policy/SKILL.md`
+- 샘플 작성 가이드: `skills/devian-unity/90-samples/02-samples-authoring-guide/SKILL.md`
 - **이전 위치:** `com.devian.ui/Runtime/Plugins/UIVirtualPad.cs` → `com.devian.samples/Samples~/VirtualPad/Runtime/` 로 이동 후, `UIVirtualMovePad` + `UIVirtualLookPad`로 분리 완료

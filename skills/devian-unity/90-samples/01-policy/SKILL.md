@@ -1,4 +1,4 @@
-# devian-unity-samples — Policy
+# devian-unity/90-samples — Policy
 
 > **도메인:** devian-upm-samples
 > **정책 문서 버전:** v4
@@ -203,7 +203,7 @@ Assets/Samples/Devian Samples/0.1.0/Network/
 1. `Samples~/` 아래에 새 폴더 생성
 2. Runtime/, Editor/ 폴더 및 asmdef/코드 추가
 3. `package.json`의 `samples` 배열에 항목 추가
-4. `skills/devian-unity-samples/`에 새 스킬 문서 추가
+4. `skills/devian-unity/90-samples/`에 새 스킬 문서 추가
 
 ---
 

@@ -2,7 +2,7 @@
   "permissions": {
     "allow": [
       "Bash([ -d \"skills/devian-auth-firebase/30-samples-auth-firebase-anonymous\" ])",
-      "Bash([ -d \"skills/devian-unity-samples/30-samples-auth-firebase-anonymous\" ])",
+      "Bash([ -d \"skills/devian-unity/90-samples/30-samples-auth-firebase-anonymous\" ])",
       "Bash(git rm:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
@@ -48,7 +48,11 @@
       "Bash(head -10 echo \"  \\(all should be in Deprecated/Obsolete context\\)\" __NEW_LINE_adc47905c67f9a8f__ echo \"\" echo \"=== DoD Check 4: Standalone PGS \\(not GPGS\\) ===\" grep -rn 'PGS' --include=\"SKILL.md\")",
       "Bash(bash:*)",
       "Bash(git checkout:*)",
-      "Bash(./input/build.sh:*)"
+      "Bash(./input/build.sh:*)",
+      "Bash(xargs sed:*)",
+      "Bash(for:*)",
+      "Bash(if [ -f \"$f\" ])",
+      "Bash(else)"
     ]
   },
   "project": {

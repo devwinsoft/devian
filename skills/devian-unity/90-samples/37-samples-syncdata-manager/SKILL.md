@@ -1,4 +1,4 @@
-# devian-unity-samples — SyncDataManager
+# devian-unity/90-samples — SyncDataManager
 
 
 ## Scope

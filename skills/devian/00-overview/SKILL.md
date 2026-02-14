@@ -36,7 +36,7 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | **devian-common** | Common 도메인, Feature 모듈 | [00-overview](../../devian-common/00-overview/SKILL.md) | [01-policy](../../devian-common/01-policy/SKILL.md) | — |
 | **devian-unity** | UPM 패키지, Unity 런타임, 컴포넌트 | [00-overview](../../devian-unity/00-overview/SKILL.md) | [01-policy](../../devian-unity/01-policy/SKILL.md) | [03-ssot](../../devian-unity/03-ssot/SKILL.md) |
 | **devian-examples** | 예제 도메인, 예제 프로토콜 | [00-overview](../../devian-examples/00-overview/SKILL.md) | [01-policy](../../devian-examples/01-policy/SKILL.md) | — |
-| **devian-unity-samples** | Unity 샘플 작성 가이드, 네트워크 샘플 | [00-overview](../../devian-unity-samples/00-overview/SKILL.md) | [01-policy](../../devian-unity-samples/01-policy/SKILL.md) | — |
+| **devian-unity/90-samples** | Unity 샘플 작성 가이드, 네트워크 샘플 | [00-overview](../../devian-unity/90-samples/00-overview/SKILL.md) | [01-policy](../../devian-unity/90-samples/01-policy/SKILL.md) | — |
 
 ---
 

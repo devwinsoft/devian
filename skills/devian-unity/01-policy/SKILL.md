@@ -133,4 +133,4 @@ rm -f UnityExample/Packages/{pkg}/.../OldName.cs.meta
 ## Related
 
 - SSOT 정본: `skills/devian-core/03-ssot/SKILL.md`
-- UPM Samples 정책: `skills/devian-unity-samples/02-samples-authoring-guide/SKILL.md`
+- UPM Samples 정책: `skills/devian-unity/90-samples/02-samples-authoring-guide/SKILL.md`

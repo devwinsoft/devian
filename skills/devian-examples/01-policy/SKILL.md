@@ -51,7 +51,7 @@ UPM 패키지가 staging → upm → Packages로 복사되는 개념:
 
 Network 샘플 템플릿 작성 방법:
 
-- `skills/devian-unity-samples/10-samples-network/SKILL.md`
+- `skills/devian-unity/90-samples/10-samples-network/SKILL.md`
 
 ---
 
@@ -76,4 +76,4 @@ Network 샘플 템플릿 작성 방법:
 - Related: `skills/devian-core/03-ssot/SKILL.md`
 - Related: `skills/devian-unity/06-domain-packages/com.devian.domain.template/SKILL.md`
 - Related: `skills/devian-unity/02-unity-bundles/SKILL.md`
-- Related: `skills/devian-unity-samples/10-samples-network/SKILL.md`
+- Related: `skills/devian-unity/90-samples/10-samples-network/SKILL.md`

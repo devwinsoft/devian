@@ -1,4 +1,4 @@
-# devian-unity-samples — Login Manager
+# devian-unity/90-samples — Login Manager
 
 
 ## Singleton

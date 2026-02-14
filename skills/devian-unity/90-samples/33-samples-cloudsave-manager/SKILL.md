@@ -56,7 +56,7 @@ await ClaudSaveInstaller.InitializeAsync(ct);
 
 ## Notes
 - Editor/iOS에서는 현재 `FirebaseCloudSaveClient`가 주입되어 동작한다(임시).
-- iCloud 구현 상세: [20-save-system — 25-cloudsave-firebase](../../devian-unity/20-save-system/25-cloudsave-firebase/SKILL.md)
+- iCloud 구현 상세: [20-save-system — 25-cloudsave-firebase](../../20-save-system/25-cloudsave-firebase/SKILL.md)
 
 
 ## Links

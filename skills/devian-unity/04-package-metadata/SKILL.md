@@ -99,7 +99,7 @@ runtime 패키지는 필요한 최소 의존만 선언한다:
 
 ## Samples~ 정책 (Samples~ 제공 시)
 
-정책: `skills/devian-unity-samples/01-policy/SKILL.md`
+정책: `skills/devian-unity/90-samples/01-policy/SKILL.md`
 
 `Samples~` 폴더를 제공하는 패키지는 `package.json`에 `samples` 배열을 선언해야 한다.
 (Unity Package Manager UI 노출을 위해 필수)

@@ -1,4 +1,4 @@
-# devian-unity-samples — Firebase Manager
+# devian-unity/90-samples — Firebase Manager
 
 
 ## Scope

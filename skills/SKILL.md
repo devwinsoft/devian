@@ -23,4 +23,4 @@ AppliesTo: v10
 | **devian-common** | [00-overview](./devian-common/00-overview/SKILL.md) | [01-policy](./devian-common/01-policy/SKILL.md) | — | Common 도메인, Feature 모듈 |
 | **devian-unity** | [00-overview](./devian-unity/00-overview/SKILL.md) | [01-policy](./devian-unity/01-policy/SKILL.md) | [03-ssot](./devian-unity/03-ssot/SKILL.md) | Unity UPM, 컴포넌트 |
 | **devian-examples** | [00-overview](./devian-examples/00-overview/SKILL.md) | [01-policy](./devian-examples/01-policy/SKILL.md) | — | 예제 도메인/프로토콜 |
-| **devian-unity-samples** | [00-overview](./devian-unity-samples/00-overview/SKILL.md) | [01-policy](./devian-unity-samples/01-policy/SKILL.md) | — | Unity 샘플 템플릿 |
+| **devian-unity/90-samples** | [00-overview](./devian-unity/90-samples/00-overview/SKILL.md) | [01-policy](./devian-unity/90-samples/01-policy/SKILL.md) | — | Unity 샘플 템플릿 |

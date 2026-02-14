@@ -66,7 +66,7 @@ AppliesTo: v10
    - 샘플을 Import 후 자신의 프로토콜로 대체 가능
    - `Devian.Protocol.Game` → 사용자 프로토콜로 교체
 
-> **샘플 템플릿 상세:** `skills/devian-unity-samples/10-samples-network/SKILL.md` 참조
+> **샘플 템플릿 상세:** `skills/devian-unity/90-samples/10-samples-network/SKILL.md` 참조
 
 ---
 
@@ -76,7 +76,7 @@ AppliesTo: v10
 |------|-----------|
 | 프로토콜 코드젠 규칙 | `skills/devian-protocol/40-codegen-protocol/SKILL.md` |
 | 프로토콜 생성 구현 | `skills/devian-protocol/44-protocolgen-implementation/SKILL.md` |
-| Network 샘플 템플릿 | `skills/devian-unity-samples/10-samples-network/SKILL.md` |
+| Network 샘플 템플릿 | `skills/devian-unity/90-samples/10-samples-network/SKILL.md` |
 | WebSocket 클라이언트 | `skills/devian-core/72-network-ws-client/SKILL.md` |
 | 네트워크 서버 | `skills/devian-core/74-network-server/SKILL.md` |
 
@@ -94,4 +94,4 @@ AppliesTo: v10
 
 - Related: `skills/devian-examples/01-policy/SKILL.md`
 - Related: `skills/devian-protocol/40-codegen-protocol/SKILL.md`
-- Related: `skills/devian-unity-samples/10-samples-network/SKILL.md`
+- Related: `skills/devian-unity/90-samples/10-samples-network/SKILL.md`
