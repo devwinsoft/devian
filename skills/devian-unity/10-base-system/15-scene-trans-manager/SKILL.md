@@ -272,7 +272,7 @@ public class MainScene : BaseScene
 
 ## Bootstrap Prefab에 포함
 
-SceneTransManager는 `Devian/Create Bootstrap` 메뉴로 생성되는 Bootstrap prefab에 포함된다.
+SceneTransManager는 Bootstrap prefab에 포함된다.
 이로써 부팅과 씬 전환이 일관된 파이프라인으로 동작한다.
 
 Bootstrap prefab에는 BaseBootstrap 파생 컴포넌트가 정확히 1개 필요하다 (개발자가 직접 추가).
@@ -284,4 +284,4 @@ Bootstrap prefab에는 BaseBootstrap 파생 컴포넌트가 정확히 1개 필�
 - Parent: `skills/devian-unity/10-base-system/skill.md`
 - AssetManager: `skills/devian-unity/10-base-system/10-asset-manager/SKILL.md`
 - Singleton: `skills/devian-unity/10-base-system/31-singleton/SKILL.md`
-- BootstrapResourceObject: `skills/devian-unity/10-base-system/27-bootstrap-resource-object/SKILL.md`
+- Bootstrap: `skills/devian-unity/10-base-system/27-bootstrap/SKILL.md`

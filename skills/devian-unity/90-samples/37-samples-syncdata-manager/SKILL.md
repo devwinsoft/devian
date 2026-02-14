@@ -3,7 +3,7 @@
 
 ## Scope
 - Login/LocalSave/CloudSave를 사용해 시나리오 기반 동기화(Conflict + 선택)를 오케스트레이션한다.
-- [30-samples-cloud-client-system](../30-samples-cloud-client-system/SKILL.md)의 서브스킬이다.
+- [30-samples-mobile-system](../30-samples-mobile-system/SKILL.md)의 서브스킬이다.
 
 
 ## Preconditions
@@ -56,10 +56,10 @@
 
 
 ## Location
-- CloudClientSystem 번들 샘플 내부, 단일 asmdef(`Devian.Samples.CloudClientSystem`)에 포함되어 함께 설치된다.
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/CloudClientSystem/Runtime/Sync/SyncDataManager.cs`
-- UnityExample mirror: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/CloudClientSystem/Runtime/Sync/SyncDataManager.cs`
-- [30-samples-cloud-client-system](../30-samples-cloud-client-system/SKILL.md)
+- MobileSystem 번들 샘플 내부, 단일 asmdef(`Devian.Samples.CloudClientSystem`)에 포함되어 함께 설치된다.
+- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Sync/SyncDataManager.cs`
+- UnityExample mirror: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Sync/SyncDataManager.cs`
+- [30-samples-mobile-system](../30-samples-mobile-system/SKILL.md)
 
 
 ## Out of Scope

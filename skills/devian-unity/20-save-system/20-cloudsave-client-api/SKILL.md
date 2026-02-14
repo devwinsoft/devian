@@ -8,14 +8,14 @@ AppliesTo: v10
 ---
 
 
-## 1. ICloudSaveClient Interface (Contract)
+## 1. CloudSaveClientApple Interface (Contract)
 
 
-플랫폼별 구현은 `ICloudSaveClient` 인터페이스를 구현해야 한다.
+플랫폼별 구현은 `CloudSaveClientApple` 인터페이스를 구현해야 한다.
 
 
 ```csharp
-public interface ICloudSaveClient
+public interface CloudSaveClientApple
 {
     bool IsAvailable { get; }
     Task<CloudSaveResult> SignInIfNeededAsync(CancellationToken ct);
@@ -47,12 +47,12 @@ public enum CloudSaveResult
 ## 2. CloudSaveManager Public API (Contract)
 
 
-`CloudSaveManager`는 `ICloudSaveClient`를 감싸는 도구 레이어다.
+`CloudSaveManager`는 `CloudSaveClientApple`를 감싸는 도구 레이어다.
 
 ```csharp
 public sealed class CloudSaveManager : CompoSingleton<CloudSaveManager>
 {
-    public void Configure(ICloudSaveClient client, bool? useEncryption, List<CloudSaveSlot> slots);
+    public void Configure(CloudSaveClientApple client, bool? useEncryption, List<CloudSaveSlot> slots);
     public bool IsAvailable { get; }
     public Task<CoreResult<CloudSaveResult>> SignInIfNeededAsync(CancellationToken ct);
     public Task<CoreResult<bool>> SaveAsync(string slot, string payload, CancellationToken ct);
@@ -95,7 +95,7 @@ public sealed class CloudSaveManager : CompoSingleton<CloudSaveManager>
 
 | Item | Path (UPM) |
 |------|-----------|
-| ICloudSaveClient | `Runtime/Unity/CloudSave/ICloudSaveClient.cs` |
+| CloudSaveClientApple | `Runtime/Unity/CloudSave/CloudSaveClientApple.cs` |
 | CloudSaveResult | `Runtime/Unity/CloudSave/CloudSaveResult.cs` |
 | CloudSavePayload | `Runtime/Unity/CloudSave/CloudSavePayload.cs` |
 | CloudSaveManager | `Runtime/Unity/CloudSave/CloudSaveManager.cs` |

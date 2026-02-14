@@ -9,9 +9,9 @@
   },
   "samples": [
     {
-      "displayName": "CloudClientSystem",
+      "displayName": "MobileSystem",
       "description": "Bundle sample: installs FirebaseManager + SaveSystem + LoginManager together.",
-      "path": "Samples~/CloudClientSystem"
+      "path": "Samples~/MobileSystem"
     },
     {
       "displayName": "Network",

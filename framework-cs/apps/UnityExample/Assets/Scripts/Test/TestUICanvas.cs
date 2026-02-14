@@ -13,6 +13,7 @@ public class TestUICanvas : UICanvas<TestUICanvas>
 {
     protected override void onAwake()
     {
+        LoginManager.Instance.Initialize();
     }
 
     public async void OnClick_SignIn_Apple()

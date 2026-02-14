@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/10-base-system/27-bootstrap-resource-object/SKILL.md
+// SSOT: skills/devian-unity/10-base-system/23-devian-settings/SKILL.md
 
 #if UNITY_EDITOR
 
@@ -10,23 +10,17 @@ using UnityEngine;
 namespace Devian
 {
     /// <summary>
-    /// Devian/Create Bootstrap 메뉴.
-    /// DevianSettings와 Bootstrap prefab을 Resources/Devian 폴더에 생성/보수한다.
+    /// Devian/Create Settings 메뉴.
+    /// DevianSettings를 Resources/Devian 폴더에 생성/보수한다.
     /// 기존 Assets/Settings 경로에 있는 DevianSettings는 자동 마이그레이션된다.
-    ///
-    /// Bootstrap prefab에는 BaseBootstrap 파생 컴포넌트가 정확히 1개 있어야 한다 (개발자 책임).
-    /// 프레임워크가 유저 파생을 자동 추가하지 않는다.
     /// </summary>
     public static class DevianSettingsMenu
     {
         // Resources 폴더 경로 (SSOT)
         private const string ResourcesFolderPath = "Assets/Resources/Devian";
 
-        // Bootstrap prefab 경로 (Resources.Load 경로: "Devian/Bootstrap")
-        private const string BootstrapPrefabPath = "Assets/Resources/Devian/Bootstrap.prefab";
-
-        [MenuItem("Devian/Create Bootstrap")]
-        private static void CreateBootstrap()
+        [MenuItem("Devian/Create Settings")]
+        private static void CreateSettings()
         {
             // 1) Resources/Devian 폴더 보장
             EnsureFolder(ResourcesFolderPath);
@@ -34,10 +28,7 @@ namespace Devian
             // 2) DevianSettings 생성/보수 (마이그레이션 포함)
             EnsureDevianSettings();
 
-            // 3) Bootstrap Prefab 생성/보수
-            EnsureBootstrapPrefab();
-
-            Debug.Log("Devian Bootstrap created/repaired successfully.");
+            Debug.Log("DevianSettings created/repaired successfully.");
         }
 
         /// <summary>
@@ -126,87 +117,6 @@ namespace Devian
             settings.EnsurePlayerPrefsPrefix(DevianSettings.DefaultPlayerPrefsPrefix);
             EditorUtility.SetDirty(settings);
             AssetDatabase.SaveAssets();
-        }
-
-        /// <summary>
-        /// Bootstrap Prefab을 생성하거나 보수한다.
-        /// 프레임워크는 SceneTransManager만 추가한다.
-        /// BaseBootstrap 파생 컴포넌트는 개발자가 직접 추가해야 한다.
-        /// </summary>
-        private static void EnsureBootstrapPrefab()
-        {
-            // 기존 prefab 로드 시도
-            var existingPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(BootstrapPrefabPath);
-            if (existingPrefab != null)
-            {
-                // 보수: 컴포넌트 확인
-                RepairBootstrapPrefab(existingPrefab);
-                return;
-            }
-
-            // 새 prefab 생성
-            CreateBootstrapPrefab();
-        }
-
-        private static void CreateBootstrapPrefab()
-        {
-            // 임시 GameObject 생성
-            var go = new GameObject("[Devian] Bootstrap");
-
-            // 기본 컴포넌트 추가 (SceneTransManager만 - BaseBootstrap 파생은 개발자 책임)
-            go.AddComponent<SceneTransManager>();
-
-            // Prefab 저장
-            PrefabUtility.SaveAsPrefabAsset(go, BootstrapPrefabPath);
-
-            // 임시 객체 삭제
-            UnityEngine.Object.DestroyImmediate(go);
-
-            AssetDatabase.Refresh();
-
-            // 생성된 prefab 선택
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(BootstrapPrefabPath);
-            if (prefab != null)
-            {
-                Selection.activeObject = prefab;
-                EditorGUIUtility.PingObject(prefab);
-            }
-
-            Debug.Log($"Bootstrap prefab created at: {BootstrapPrefabPath}");
-            Debug.LogWarning("Bootstrap prefab requires a BaseBootstrap-derived component. Please add your custom bootstrap component.");
-        }
-
-        private static void RepairBootstrapPrefab(GameObject prefab)
-        {
-            // Prefab 내용물을 임시로 인스턴스화
-            var instance = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
-            if (instance == null) return;
-
-            bool modified = false;
-
-            // SceneTransManager 확인/추가
-            if (instance.GetComponent<SceneTransManager>() == null)
-            {
-                instance.AddComponent<SceneTransManager>();
-                modified = true;
-            }
-
-            if (modified)
-            {
-                // 변경사항 저장
-                PrefabUtility.SaveAsPrefabAsset(instance, BootstrapPrefabPath);
-            }
-
-            // 인스턴스 삭제
-            UnityEngine.Object.DestroyImmediate(instance);
-
-            // prefab 선택
-            var savedPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(BootstrapPrefabPath);
-            if (savedPrefab != null)
-            {
-                Selection.activeObject = savedPrefab;
-                EditorGUIUtility.PingObject(savedPrefab);
-            }
         }
     }
 }

@@ -73,7 +73,7 @@ AppliesTo: v10
   - `SyncResolution.UseLocal` — 로컬 데이터를 클라우드에 업로드
   - `SyncResolution.UseCloud` — 클라우드 데이터를 로컬에 다운로드
 
-> GPGS 구현은 `OpenWithAutomaticConflictResolution` + `UseLongestPlaytime`로 플랫폼 수준 자동 충돌 해결을 사용한다(코드 참조: `GoogleCloudSaveClient`).
+> GPGS 구현은 `OpenWithAutomaticConflictResolution` + `UseLongestPlaytime`로 플랫폼 수준 자동 충돌 해결을 사용한다(코드 참조: `CloudSaveClientGoogle`).
 
 
 ---
@@ -141,7 +141,7 @@ Local Save와 Cloud Save는 **동일한 논리 필드(버전/시간/payload/devi
 |------|-----------|
 | CloudSavePayload | `Runtime/Unity/CloudSave/CloudSavePayload.cs` |
 | CloudSaveResult | `Runtime/Unity/CloudSave/CloudSaveResult.cs` |
-| ICloudSaveClient | `Runtime/Unity/CloudSave/ICloudSaveClient.cs` |
+| CloudSaveClientApple | `Runtime/Unity/CloudSave/CloudSaveClientApple.cs` |
 | CloudSaveManager | `Runtime/Unity/CloudSave/CloudSaveManager.cs` |
 | CloudSaveCrypto | `Runtime/Unity/CloudSave/CloudSaveCrypto.cs` |
 

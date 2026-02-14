@@ -6,7 +6,7 @@
 
 
 
-`FirebaseCloudSaveClient`는 Firestore 기반 저장을 제공한다.
+`CloudSaveClient`는 Firestore 기반 저장을 제공한다.
 
 
 
@@ -66,9 +66,9 @@ Editor/iOS에서 GPGS 등 플랫폼 sign-in 없이 CloudSave를 사용하려면,
 
 
 - 샘플 엔트리:
-  - `Samples~/CloudClientSystem/Runtime/ClaudSaveInstaller.cs`
+  - `Samples~/MobileSystem/Runtime/ClaudSaveInstaller.cs`
 - Editor/iOS 분기에서:
-  - `CloudSaveManager.Instance.Configure(client: new FirebaseCloudSaveClient())`
+  - `CloudSaveManager.Instance.Configure(client: new CloudSaveClient())`
 
 
 
@@ -118,6 +118,6 @@ Firebase Unity SDK가 프로젝트에 포함되어 있어야 한다.
 
 
 
-- `FirebaseCloudSaveClient`는 CloudSave 저장소 접근만 담당하며, 로그인(anonymous 포함)은 LoginManager/FirebaseManager가 선행되어야 한다. CloudSaveClient 내부에서 별도 sign-in을 시도하지 않는다.
+- `CloudSaveClient`는 CloudSave 저장소 접근만 담당하며, 로그인(anonymous 포함)은 LoginManager/FirebaseManager가 선행되어야 한다. CloudSaveClient 내부에서 별도 sign-in을 시도하지 않는다.
 - 플랫폼 네이티브 저장소(GPGS/iCloud)와의 크로스플랫폼 세이브 공유는 비목표다.
 - Firebase 저장소는 "Editor/iOS 임시/대체 구현" 또는 "향후 통합 백엔드" 옵션으로 사용한다.

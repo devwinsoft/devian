@@ -68,7 +68,7 @@
       "url": "https://package.openupm.com"
     },
     "com.ivanmurzak.unity.mcp": {
-      "version": "0.46.2",
+      "version": "0.46.4",
       "depth": 0,
       "source": "registry",
       "dependencies": {

@@ -68,10 +68,9 @@ com.devian.foundation/Editor/Settings/
 
 ## 5. Editor 메뉴
 
-- `Devian/Create Bootstrap` (통합 메뉴)
-- DevianSettings와 BootstrapRoot prefab을 함께 생성/보수
+- `Devian/Create Settings` 메뉴
+- DevianSettings를 생성/보수
 - 기존 `Assets/Settings/DevianSettings.asset`가 있으면 `Assets/Resources/Devian/`로 자동 마이그레이션
-- 자세한 내용은 `27-bootstrap-resource-object/SKILL.md` 참조
 
 ---
 
@@ -97,4 +96,4 @@ var settings = Resources.Load<DevianSettings>(DevianSettings.ResourcesPath);
 ## 8. Reference
 
 - Parent: `skills/devian-unity/10-base-system/skill.md`
-- BootstrapResourceObject: `skills/devian-unity/10-base-system/27-bootstrap-resource-object/SKILL.md`
+- Bootstrap: `skills/devian-unity/10-base-system/27-bootstrap/SKILL.md`

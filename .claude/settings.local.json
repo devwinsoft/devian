@@ -52,7 +52,15 @@
       "Bash(xargs sed:*)",
       "Bash(for:*)",
       "Bash(if [ -f \"$f\" ])",
-      "Bash(else)"
+      "Bash(else)",
+      "Bash(AST=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime\")",
+      "Bash(if [ -f \"$AST/$m\" ])",
+      "Bash(__NEW_LINE_64e14baae14bb8b6__ echo \"\")",
+      "Bash(if [ -f \"/Users/maoshy/Documents/Projects/devian/skills/devian-unity/90-samples/$s\" ])",
+      "Bash(UPM=\"framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime\" PKG=\"framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime\" ASS=\"framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime\" __NEW_LINE_44508a68f243d435__ echo \"=== UPM files ===\" cd \"$UPM\")",
+      "Bash(grep:*)",
+      "Bash(git -C /Users/maoshy/Documents/Projects/devian diff --name-only -- '**/TestBootstrap*')",
+      "Bash(git -C /Users/maoshy/Documents/Projects/devian diff -- \"framework-cs/apps/UnityExample/Assets/Scripts/Test/TestBootstrap.cs\")"
     ]
   },
   "project": {

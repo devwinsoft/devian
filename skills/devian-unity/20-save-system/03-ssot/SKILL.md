@@ -84,26 +84,26 @@ UnityExample에서:
 
 | File | Description |
 |------|-------------|
-| `Samples~/CloudClientSystem/Runtime/CloudSave/CloudSaveResult.cs` | 결과 enum |
-| `Samples~/CloudClientSystem/Runtime/CloudSave/CloudSavePayload.cs` | 데이터 클래스 |
-| `Samples~/CloudClientSystem/Runtime/CloudSave/ICloudSaveClient.cs` | 플랫폼 클라이언트 인터페이스 |
-| `Samples~/CloudClientSystem/Runtime/CloudSave/CloudSaveManager.cs` | 도구 레이어 매니저 |
-| `Samples~/CloudClientSystem/Runtime/CloudSave/CloudSaveCrypto.cs` | SHA-256 체크섬 |
-| `Samples~/CloudClientSystem/Runtime/CloudSave/GoogleCloudSaveClient.cs` | GPGS 구현 (Reflection) |
-| `Samples~/CloudClientSystem/Runtime/CloudSave/FirebaseCloudSaveClient.cs` | Firebase(Firestore) 구현 |
-| `Samples~/CloudClientSystem/Editor/CloudSave/CloudSaveManagerEditor.cs` | Inspector (Key/IV 생성) |
+| `Samples~/MobileSystem/Runtime/CloudSave/CloudSaveResult.cs` | 결과 enum |
+| `Samples~/MobileSystem/Runtime/CloudSave/CloudSavePayload.cs` | 데이터 클래스 |
+| `Samples~/MobileSystem/Runtime/CloudSave/CloudSaveClientApple.cs` | 플랫폼 클라이언트 인터페이스 |
+| `Samples~/MobileSystem/Runtime/CloudSave/CloudSaveManager.cs` | 도구 레이어 매니저 |
+| `Samples~/MobileSystem/Runtime/CloudSave/CloudSaveCrypto.cs` | SHA-256 체크섬 |
+| `Samples~/MobileSystem/Runtime/CloudSave/CloudSaveClientGoogle.cs` | GPGS 구현 (Reflection) |
+| `Samples~/MobileSystem/Runtime/CloudSave/CloudSaveClient.cs` | Firebase(Firestore) 구현 |
+| `Samples~/MobileSystem/Editor/CloudSave/CloudSaveManagerEditor.cs` | Inspector (Key/IV 생성) |
 
 
 ### Local Save
 
 | File | Description |
 |------|-------------|
-| `Samples~/CloudClientSystem/Runtime/LocalSave/LocalSaveManager.cs` | 도구 레이어 매니저 |
-| `Samples~/CloudClientSystem/Runtime/LocalSave/LocalSavePayload.cs` | 데이터 클래스 |
-| `Samples~/CloudClientSystem/Runtime/LocalSave/LocalSaveCrypto.cs` | SHA-256 체크섬 |
-| `Samples~/CloudClientSystem/Runtime/LocalSave/LocalSaveFileStore.cs` | 파일 I/O (atomic write) |
+| `Samples~/MobileSystem/Runtime/LocalSave/LocalSaveManager.cs` | 도구 레이어 매니저 |
+| `Samples~/MobileSystem/Runtime/LocalSave/LocalSavePayload.cs` | 데이터 클래스 |
+| `Samples~/MobileSystem/Runtime/LocalSave/LocalSaveCrypto.cs` | SHA-256 체크섬 |
+| `Samples~/MobileSystem/Runtime/LocalSave/LocalSaveFileStore.cs` | 파일 I/O (atomic write) |
 | `framework-cs/module/Devian/src/Core/Crypto.cs` | AES 암호화 유틸리티 |
-| `Samples~/CloudClientSystem/Editor/LocalSave/LocalSaveManagerEditor.cs` | Inspector (Key/IV 생성) |
+| `Samples~/MobileSystem/Editor/LocalSave/LocalSaveManagerEditor.cs` | Inspector (Key/IV 생성) |
 
 
 UPM root: `framework-cs/upm/com.devian.samples/`

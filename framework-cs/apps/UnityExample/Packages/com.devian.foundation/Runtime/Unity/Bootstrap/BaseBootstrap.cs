@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/10-base-system/27-bootstrap-resource-object/SKILL.md
+// SSOT: skills/devian-unity/10-base-system/27-bootstrap/SKILL.md
 
 using System;
 using System.Collections;

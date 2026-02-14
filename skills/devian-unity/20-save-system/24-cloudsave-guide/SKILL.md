@@ -25,11 +25,11 @@ AppliesTo: v10
 ## 2. 빠른 체크리스트
 
 
-- (Unity) `com.devian.samples` 설치 (CloudSave/LocalSave 구현은 `Samples~/CloudClientSystem`에 포함)
+- (Unity) `com.devian.samples` 설치 (CloudSave/LocalSave 구현은 `Samples~/MobileSystem`에 포함)
 - (Android) Google Play Games Plugin for Unity 설치 및 프로젝트 설정
 - (Runtime) `CloudSaveManager.Instance.Configure(...)` 호출
 - (Runtime) 필요 시 `SignInIfNeededAsync` 호출 후 Save/Load 수행
-- (Product) Editor/Guest는 Firebase Anonymous를 사용한다. 실기기에서는 Guest + Google(Android) + Apple(iOS)을 지원한다. 상세는 [login-manager](../../../devian-unity/90-samples/36-samples-login-manager/SKILL.md) 참조. login-manager는 Save System 샘플 모듈에 포함되어 동일 asmdef로 컴파일된다.
+- (Product) Editor/Guest는 Firebase Anonymous를 사용한다. 실기기에서는 Guest + Google(Android) + Apple(iOS)을 지원한다. 상세는 [login-manager](../../../devian-unity/90-samples/33-samples-login-manager/SKILL.md) 참조. login-manager는 Save System 샘플 모듈에 포함되어 동일 asmdef로 컴파일된다.
 - (Product) 기본 Cloud Save 저장소는 플랫폼별(Android=GPGS / iOS=iCloud)로 유지한다. iOS(iCloud) 구현이 준비되지 않은 단계에서는 Firebase 구현을 임시로 사용할 수 있다.
 - (Out of scope) 기타 소셜 로그인 제공자는 이 스킬 범위 밖이다.
 
@@ -40,7 +40,7 @@ AppliesTo: v10
 ## 3. Android (Google Play Games) 구성 요약
 
 
-Devian은 Samples(ClaudSave)에 `GoogleCloudSaveClient`를 제공한다.
+Devian은 Samples(ClaudSave)에 `CloudSaveClientGoogle`를 제공한다.
 
 
 - Reflection 기반: 플러그인이 없어도 컴파일은 됨
@@ -84,7 +84,7 @@ namespace Devian
             };
 
 
-            var client = new GoogleCloudSaveClient();
+            var client = new CloudSaveClientGoogle();
 
 
             CloudSaveManager.Instance.Configure(
@@ -143,12 +143,12 @@ namespace Devian
 ## 6. 샘플 위치
 
 
-`com.devian.samples/Samples~/CloudClientSystem`
+`com.devian.samples/Samples~/MobileSystem`
 
 
 - `ClaudSaveInstaller.InitializeAsync(CancellationToken ct)` — 공통 엔트리(내부 플랫폼 분기)
 - `ClaudSaveInstaller.InitializeAsync(List<CloudSaveSlot>, bool, CancellationToken)` — slots/encryption 포함 오버로드
-- (옵션) `FirebaseCloudSaveClient` — iOS에서 iCloud 구현이 준비되지 않은 경우 임시로 사용 가능
+- (옵션) `CloudSaveClient` — iOS에서 iCloud 구현이 준비되지 않은 경우 임시로 사용 가능
 - (문서) Firebase 구현 상세: [25-cloudsave-firebase](../25-cloudsave-firebase/SKILL.md)
 
 

@@ -102,8 +102,8 @@ Unity Android에서 Google Play Games Saved Games 기반 Cloud Save 구현 가�
 
 | Item | Path (UPM) |
 |------|-----------|
-| GoogleCloudSaveClient | `Runtime/Unity/CloudSave/GoogleCloudSaveClient.cs` |
-| ICloudSaveClient | `Runtime/Unity/CloudSave/ICloudSaveClient.cs` |
+| CloudSaveClientGoogle | `Runtime/Unity/CloudSave/CloudSaveClientGoogle.cs` |
+| CloudSaveClientApple | `Runtime/Unity/CloudSave/CloudSaveClientApple.cs` |
 | CloudSaveManager | `Runtime/Unity/CloudSave/CloudSaveManager.cs` |
 
 - Platform guard: `#if UNITY_ANDROID && !UNITY_EDITOR`
