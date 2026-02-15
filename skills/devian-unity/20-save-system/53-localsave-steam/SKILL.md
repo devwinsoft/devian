@@ -21,5 +21,5 @@ Unity PC Local Save 구현 가이드.
 ## 2. Notes
 
 
-- 저장 경로는 LocalSaveManager에서 설정한다.
+- 저장 경로는 SaveLocalManager에서 설정한다.
 - Steam Cloud 연동 시 cloudsave 파일명 규칙을 기본으로 유지한다.

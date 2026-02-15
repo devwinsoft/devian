@@ -93,6 +93,7 @@ namespace Devian.Domain.Common
         LOGIN_SYNC_SLOT_LIST_FAILED = 65,
         LOGIN_UNSUPPORTED = 66,
         PURCHASE_STORE_FAILED = 67,
+        SAVEDATA_PAYLOAD_PARSE_FAILED = 68,
     }
 
     /// <summary>Auto-generated enum from TB_ERROR_SERVER.id</summary>

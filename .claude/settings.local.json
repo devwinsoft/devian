@@ -60,7 +60,22 @@
       "Bash(UPM=\"framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime\" PKG=\"framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime\" ASS=\"framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime\" __NEW_LINE_44508a68f243d435__ echo \"=== UPM files ===\" cd \"$UPM\")",
       "Bash(grep:*)",
       "Bash(git -C /Users/maoshy/Documents/Projects/devian diff --name-only -- '**/TestBootstrap*')",
-      "Bash(git -C /Users/maoshy/Documents/Projects/devian diff -- \"framework-cs/apps/UnityExample/Assets/Scripts/Test/TestBootstrap.cs\")"
+      "Bash(git -C /Users/maoshy/Documents/Projects/devian diff -- \"framework-cs/apps/UnityExample/Assets/Scripts/Test/TestBootstrap.cs\")",
+      "Bash(diff:*)",
+      "Bash(UPM=\"/Users/maoshy/Documents/Projects/devian/framework-cs/upm/com.devian.samples/Samples~/MobileSystem\")",
+      "Bash(__NEW_LINE_98b170ed3302145c__ echo \"UPM content replacements done\")",
+      "Bash(UPM=\"/Users/maoshy/Documents/Projects/devian/framework-cs/upm/com.devian.samples/Samples~/MobileSystem\" PKG=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem\" ASSETS=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem\" __NEW_LINE_53378491f58a57fd__ echo \"=== UPM vs Packages ===\" diff -rq \"$UPM\" \"$PKG\" --exclude=\"*.meta\")",
+      "Bash(UPM=\"/Users/maoshy/Documents/Projects/devian/framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime\")",
+      "Bash(PKG=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime\")",
+      "Bash(ASSETS=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime\")",
+      "Bash(__NEW_LINE_0514de464a46c84d__ for f in SaveCloud/SaveCloudClientApple.cs AppleSaveCloudClient.cs)",
+      "Bash([ -f \"$d/$f\" ])",
+      "Bash(UPM_R=\"/Users/maoshy/Documents/Projects/devian/framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime\")",
+      "Bash(PKG_R=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime\")",
+      "Bash(AST_R=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime\")",
+      "Bash([ -d \"$d/SaveCloud\" ])",
+      "Bash([ -d \"$d/SaveLocal\" ])",
+      "Bash([ -f \"$f\" ])"
     ]
   },
   "project": {

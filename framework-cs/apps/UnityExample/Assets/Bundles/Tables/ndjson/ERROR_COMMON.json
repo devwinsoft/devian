@@ -66,3 +66,4 @@
 {"Id":"LOGIN_SYNC_SAVE_LOCAL_FAILED","Msg_key":"","Msg":"Sync failed while saving local data"}
 {"Id":"LOGIN_SYNC_SAVE_CLOUD_FAILED","Msg_key":"","Msg":"Sync failed while saving cloud data"}
 {"Id":"LOGIN_SYNC_RESOLVE_FAILED","Msg_key":"","Msg":"Sync failed while resolving conflict"}
+{"Id":"SAVEDATA_PAYLOAD_PARSE_FAILED","Msg_key":"","Msg":"Failed to parse save payload json"}

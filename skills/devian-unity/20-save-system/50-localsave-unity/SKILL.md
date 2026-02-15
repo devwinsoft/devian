@@ -25,14 +25,14 @@ Unity 로컬 파일 시스템 기반 Local Save 공통 규약.
   - 직렬화 필드명/키는 구현에 따라 다를 수 있다(Cloud: PascalCase, Local: camelCase).
 - 암호화/복호화는 Devian Crypto 유틸리티 사용
 - 저장 경로/파일명 매핑을 외부 설정으로 제공
-- Key/IV는 LocalSaveManager 내부에 저장
+- Key/IV는 SaveLocalManager 내부에 저장
 - Editor에서 Key/IV 자동 생성 기능 제공
 
 
 ### Encryption Key/IV
 
 
-- `LocalSaveManager`는 AES key/IV를 **base64 문자열**로 취급한다.
+- `SaveLocalManager`는 AES key/IV를 **base64 문자열**로 취급한다.
 - 내부 저장 필드는 `CString`이며, 실제 base64 문자열은 `CString.Value`로 사용된다.
 - 키/IV의 저장/보관은 서비스 레이어 책임이며, 프레임워크는 `GetKeyIvBase64 / SetKeyIvBase64 / ClearKeyIv` 수단만 제공한다.
 
@@ -43,9 +43,9 @@ Unity 로컬 파일 시스템 기반 Local Save 공통 규약.
 ## 3. Path / File Naming
 
 
-- 저장 경로는 **LocalSaveManager에서 설정** 가능해야 한다.
+- 저장 경로는 **SaveLocalManager에서 설정** 가능해야 한다.
   - 예: `Application.persistentDataPath`, `Application.temporaryCachePath`
-- 경로 선택은 enum 옵션으로 제공한다: `LocalSaveRoot`
+- 경로 선택은 enum 옵션으로 제공한다: `SaveLocalRoot`
   - `PersistentData`, `TemporaryCache`
 - 파일명은 **List<slotKey, filename>** 구조로 사용자(개발자)가 설정한다.
 - 슬롯 미설정 시 실패 처리(암묵적 기본값/하드코딩 금지).
@@ -72,13 +72,13 @@ Unity 로컬 파일 시스템 기반 Local Save 공통 규약.
 ## 4. Runtime API (Unity)
 
 
-### LocalSaveManager (CompoSingleton)
+### SaveLocalManager (CompoSingleton)
 
 ```csharp
-public sealed class LocalSaveManager : CompoSingleton<LocalSaveManager>
+public sealed class SaveLocalManager : CompoSingleton<SaveLocalManager>
 {
     // Configuration
-    public void Configure(LocalSaveRoot? root, bool? useEncryption, List<LocalSaveSlot> slots);
+    public void Configure(SaveLocalRoot? root, bool? useEncryption, List<SaveLocalSlot> slots);
 
     // Sync API
     public CoreResult<bool> Save(string slot, string payload);
@@ -102,7 +102,7 @@ public sealed class LocalSaveManager : CompoSingleton<LocalSaveManager>
 
 ### Slot Mapping
 
-- `List<LocalSaveSlot>`로 slotKey→filename 매핑을 구성한다.
+- `List<SaveLocalSlot>`로 slotKey→filename 매핑을 구성한다.
 - Runtime에서 `Configure()`로 덮어쓰기 가능(선택).
 
 
@@ -112,7 +112,7 @@ public sealed class LocalSaveManager : CompoSingleton<LocalSaveManager>
 ## 5. Editor
 
 
-- LocalSaveManager Inspector에 **Generate Key/IV** 버튼을 제공한다.
+- SaveLocalManager Inspector에 **Generate Key/IV** 버튼을 제공한다.
 - Key/IV는 Base64 문자열로 저장된다.
 - `#if UNITY_EDITOR` 내 `GenerateKeyIv()` 메서드로 구현.
 
@@ -126,8 +126,8 @@ public sealed class LocalSaveManager : CompoSingleton<LocalSaveManager>
 1. slot → filename 해석 (`TryResolveFilename`)
 2. 파일명 유효성 검증 (`IsValidJsonFilename`)
 3. encrypt(optional) using Devian `Crypto`
-4. `LocalSavePayload` 생성 (SchemaVersion, updateTime, cipher, deviceId)
-5. temp write + atomic rename (`LocalSaveFileStore.WriteAtomic`)
+4. `SaveLocalPayload` 생성 (SchemaVersion, updateTime, cipher, deviceId)
+5. temp write + atomic rename (`SaveLocalFileStore.WriteAtomic`)
 
 
 ---
@@ -138,7 +138,7 @@ public sealed class LocalSaveManager : CompoSingleton<LocalSaveManager>
 
 1. slot → filename 해석
 2. 파일명 유효성 검증
-3. read file (`LocalSaveFileStore.Read`)
+3. read file (`SaveLocalFileStore.Read`)
 4. decrypt(optional) using Devian `Crypto`
 5. return plain payload
 
@@ -166,13 +166,13 @@ public sealed class LocalSaveManager : CompoSingleton<LocalSaveManager>
 
 | Item | Path (UPM) |
 |------|-----------|
-| LocalSaveManager | `Runtime/Unity/LocalSave/LocalSaveManager.cs` |
-| LocalSavePayload | `Runtime/Unity/LocalSave/LocalSavePayload.cs` |
-| CloudSavePayload | `Runtime/Unity/CloudSave/CloudSavePayload.cs` *(논리 필드 비교용)* |
-| LocalSaveCrypto | `Runtime/Unity/LocalSave/LocalSaveCrypto.cs` |
-| LocalSaveFileStore | `Runtime/Unity/LocalSave/LocalSaveFileStore.cs` |
+| SaveLocalManager | `Runtime/Unity/SaveLocal/SaveLocalManager.cs` |
+| SaveLocalPayload | `Runtime/Unity/SaveLocal/SaveLocalPayload.cs` |
+| SaveCloudPayload | `Runtime/Unity/SaveCloud/SaveCloudPayload.cs` *(논리 필드 비교용)* |
+| SaveLocalCrypto | `Runtime/Unity/SaveLocal/SaveLocalCrypto.cs` |
+| SaveLocalFileStore | `Runtime/Unity/SaveLocal/SaveLocalFileStore.cs` |
 | Crypto | `framework-cs/module/Devian/src/Core/Crypto.cs` |
-| LocalSaveManagerEditor | `Editor/LocalSave/LocalSaveManagerEditor.cs` |
+| SaveLocalManagerEditor | `Editor/SaveLocal/SaveLocalManagerEditor.cs` |
 
 
 UPM root: `framework-cs/upm/com.devian.foundation/`

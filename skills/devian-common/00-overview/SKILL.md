@@ -16,7 +16,7 @@ Devian Common 도메인 및 공용 Feature 모듈을 담당한다.
 | [32-variable-variant](../../devian-core/32-variable-variant/SKILL.md) | Variant Feature |
 | [12-logger](../../devian-core/12-logger/SKILL.md) | Logger Feature |
 | [31-variable-complex](../../devian-core/31-variable-complex/SKILL.md) | Complex Feature |
-| [14-feature-string-table](../14-feature-string-table/SKILL.md) | String Table Feature |
+| [14-string-table](../14-string-table/SKILL.md) | String Table Feature |
 
 ---
 

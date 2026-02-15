@@ -10,13 +10,13 @@ MobileSystem 샘플 하나를 Import하면, 아래 하위 코드가 함께 설�
 
 
 - 31-samples-firebase-manager
-- 41-samples-localsave-manager
-- 42-samples-cloudsave-manager
-- 33-samples-login-manager
-- 37-samples-syncdata-manager
+- 41-samples-savedata-savelocal
+- 42-samples-savedata-savecloud
+- 33-samples-account-manager
+- 37-samples-savedata-manager
 
 
-Guest 모드에서는 CloudSave 경로 비활성 (CloudSaveManager 미호출).
+Guest 모드에서는 CloudSave 경로 비활성 (SaveCloudManager 미호출).
 
 
 ## Sample SSOT
@@ -25,7 +25,9 @@ Guest 모드에서는 CloudSave 경로 비활성 (CloudSaveManager 미호출).
 
 ## Sub-samples
 - [31-samples-firebase-manager](../31-samples-firebase-manager/SKILL.md)
-- [41-samples-localsave-manager](../41-samples-localsave-manager/SKILL.md)
-- [42-samples-cloudsave-manager](../42-samples-cloudsave-manager/SKILL.md)
-- [33-samples-login-manager](../33-samples-login-manager/SKILL.md)
-- [37-samples-syncdata-manager](../37-samples-syncdata-manager/SKILL.md)
+- [41-samples-savedata-savelocal](../41-samples-savedata-savelocal/SKILL.md)
+- [42-samples-savedata-savecloud](../42-samples-savedata-savecloud/SKILL.md)
+- [33-samples-account-manager](../33-samples-account-manager/SKILL.md)
+- [37-samples-savedata-manager](../37-samples-savedata-manager/SKILL.md)
+- [38-samples-savedata-saveslot](../38-samples-savedata-saveslot/SKILL.md)
+- [39-samples-savedata-saveconfig](../39-samples-savedata-saveconfig/SKILL.md)

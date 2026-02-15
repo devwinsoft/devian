@@ -8,28 +8,28 @@ AppliesTo: v10
 ---
 
 
-## 1. CloudSaveClientApple Interface (Contract)
+## 1. ISaveCloudClient Interface (Contract)
 
 
-플랫폼별 구현은 `CloudSaveClientApple` 인터페이스를 구현해야 한다.
+플랫폼별 구현은 `ISaveCloudClient` 인터페이스를 구현해야 한다.
 
 
 ```csharp
-public interface CloudSaveClientApple
+public interface ISaveCloudClient
 {
     bool IsAvailable { get; }
-    Task<CloudSaveResult> SignInIfNeededAsync(CancellationToken ct);
-    Task<(CloudSaveResult result, CloudSavePayload payload)> LoadAsync(string slot, CancellationToken ct);
-    Task<CloudSaveResult> SaveAsync(string slot, CloudSavePayload payload, CancellationToken ct);
-    Task<CloudSaveResult> DeleteAsync(string slot, CancellationToken ct);
+    Task<SaveCloudResult> SignInIfNeededAsync(CancellationToken ct);
+    Task<(SaveCloudResult result, SaveCloudPayload payload)> LoadAsync(string slot, CancellationToken ct);
+    Task<SaveCloudResult> SaveAsync(string slot, SaveCloudPayload payload, CancellationToken ct);
+    Task<SaveCloudResult> DeleteAsync(string slot, CancellationToken ct);
 }
 ```
 
 
-### CloudSaveResult
+### SaveCloudResult
 
 ```csharp
-public enum CloudSaveResult
+public enum SaveCloudResult
 {
     Success = 0,
     NotFound = 1,
@@ -44,17 +44,17 @@ public enum CloudSaveResult
 ---
 
 
-## 2. CloudSaveManager Public API (Contract)
+## 2. SaveCloudManager Public API (Contract)
 
 
-`CloudSaveManager`는 `CloudSaveClientApple`를 감싸는 도구 레이어다.
+`SaveCloudManager`는 `ISaveCloudClient`를 감싸는 도구 레이어다.
 
 ```csharp
-public sealed class CloudSaveManager : CompoSingleton<CloudSaveManager>
+public sealed class SaveCloudManager : CompoSingleton<SaveCloudManager>
 {
-    public void Configure(CloudSaveClientApple client, bool? useEncryption, List<CloudSaveSlot> slots);
+    public void Configure(ISaveCloudClient client, bool? useEncryption, List<SaveCloudSlot> slots);
     public bool IsAvailable { get; }
-    public Task<CoreResult<CloudSaveResult>> SignInIfNeededAsync(CancellationToken ct);
+    public Task<CoreResult<SaveCloudResult>> SignInIfNeededAsync(CancellationToken ct);
     public Task<CoreResult<bool>> SaveAsync(string slot, string payload, CancellationToken ct);
     public Task<CoreResult<string>> LoadPayloadAsync(string slot, CancellationToken ct);
     public Task<CoreResult<bool>> DeleteAsync(string slot, CancellationToken ct);
@@ -64,7 +64,7 @@ public sealed class CloudSaveManager : CompoSingleton<CloudSaveManager>
 - 슬롯 allowlist 검증 (`TryResolveCloudSlot`)
 - JSON 형식 검증 (`IsLikelyJson` — `{}` 또는 `[]` wrapping)
 - 암호화/복호화 (선택, `Crypto.EncryptAes`/`DecryptAes`)
-- 체크섬 (`CloudSaveCrypto.ComputeSha256Base64`)
+- 체크섬 (`SaveCloudCrypto.ComputeSha256Base64`)
 
 
 ---
@@ -95,11 +95,11 @@ public sealed class CloudSaveManager : CompoSingleton<CloudSaveManager>
 
 | Item | Path (UPM) |
 |------|-----------|
-| CloudSaveClientApple | `Runtime/Unity/CloudSave/CloudSaveClientApple.cs` |
-| CloudSaveResult | `Runtime/Unity/CloudSave/CloudSaveResult.cs` |
-| CloudSavePayload | `Runtime/Unity/CloudSave/CloudSavePayload.cs` |
-| CloudSaveManager | `Runtime/Unity/CloudSave/CloudSaveManager.cs` |
-| CloudSaveCrypto | `Runtime/Unity/CloudSave/CloudSaveCrypto.cs` |
+| ISaveCloudClient | `Runtime/Unity/SaveCloud/ISaveCloudClient.cs` |
+| SaveCloudResult | `Runtime/Unity/SaveCloud/SaveCloudResult.cs` |
+| SaveCloudPayload | `Runtime/Unity/SaveCloud/SaveCloudPayload.cs` |
+| SaveCloudManager | `Runtime/Unity/SaveCloud/SaveCloudManager.cs` |
+| SaveCloudCrypto | `Runtime/Unity/SaveCloud/SaveCloudCrypto.cs` |
 
 
 UPM root: `framework-cs/upm/com.devian.foundation/`

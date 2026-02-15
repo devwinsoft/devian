@@ -6,7 +6,7 @@
 
 
 
-`CloudSaveClient`는 Firestore 기반 저장을 제공한다.
+`SaveCloudClient`는 Firestore 기반 저장을 제공한다.
 
 
 
@@ -43,7 +43,7 @@
   - 슬롯 문서에 payload 메타/데이터 저장(`SetAsync(..., MergeAll)`)
 - `LoadAsync`:
   - 슬롯 문서를 읽어 payload 복원
-  - `CloudSaveResult.NotFound`는 "클라우드 데이터 없음(첫 저장 전)"을 의미하며, Sync에서는 실패가 아닌 `Success(null)`로 취급한다.
+  - `SaveCloudResult.NotFound`는 "클라우드 데이터 없음(첫 저장 전)"을 의미하며, Sync에서는 실패가 아닌 `Success(null)`로 취급한다.
 - `DeleteAsync`:
   - 슬롯 문서 삭제
 
@@ -55,26 +55,19 @@
 
 
 
-## How to use (Editor/iOS)
+## How to use (iOS)
 
 
 
 
-Editor/iOS에서 GPGS 등 플랫폼 sign-in 없이 CloudSave를 사용하려면, **Installer에서 Firebase client를 주입**해 사용한다.
-
-
-
-
-- 샘플 엔트리:
-  - `Samples~/MobileSystem/Runtime/ClaudSaveInstaller.cs`
-- Editor/iOS 분기에서:
-  - `CloudSaveManager.Instance.Configure(client: new CloudSaveClient())`
+정책: **Unity Editor에서는 CloudSave를 사용하지 않는다(LocalSave only).** SaveCloudManager가 Failure를 반환한다.
+iOS 런타임 빌드에서 iCloud 미구현 시에만, 프로젝트 요구에 따라 `SaveCloudManager.Instance.Configure(client: new SaveCloudClient())` 방식으로 client를 주입한다.
 
 
 
 
 주의:
-- `AppleCloudSaveClient`(iCloud)는 "설계대로 유지"하며, 준비 완료 후 iOS 분기 주입을 교체한다.
+- `AppleSaveCloudClient`(iCloud)는 "설계대로 유지"하며, 준비 완료 후 iOS 분기 주입을 교체한다.
 
 
 
@@ -118,6 +111,6 @@ Firebase Unity SDK가 프로젝트에 포함되어 있어야 한다.
 
 
 
-- `CloudSaveClient`는 CloudSave 저장소 접근만 담당하며, 로그인(anonymous 포함)은 LoginManager/FirebaseManager가 선행되어야 한다. CloudSaveClient 내부에서 별도 sign-in을 시도하지 않는다.
+- `SaveCloudClient`는 CloudSave 저장소 접근만 담당하며, 로그인(anonymous 포함)은 AccountManager/FirebaseManager가 선행되어야 한다. SaveCloudClient 내부에서 별도 sign-in을 시도하지 않는다.
 - 플랫폼 네이티브 저장소(GPGS/iCloud)와의 크로스플랫폼 세이브 공유는 비목표다.
 - Firebase 저장소는 "Editor/iOS 임시/대체 구현" 또는 "향후 통합 백엔드" 옵션으로 사용한다.

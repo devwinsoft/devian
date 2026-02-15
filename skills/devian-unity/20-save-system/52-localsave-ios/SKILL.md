@@ -21,5 +21,5 @@ Unity iOS Local Save 구현 가이드.
 ## 2. Notes
 
 
-- 저장 경로는 LocalSaveManager에서 설정한다.
+- 저장 경로는 SaveLocalManager에서 설정한다.
 - iOS 환경에서도 cloudsave 파일명 규칙을 기본으로 사용한다.

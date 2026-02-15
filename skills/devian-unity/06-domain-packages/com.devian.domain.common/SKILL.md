@@ -200,7 +200,7 @@ new CoreError(CommonErrorType errorType, string message, string? details = null)
 
 - `CommonTable.xlsx`의 `ERROR_COMMON` 시트는 `CommonErrorType` enum의 SSOT이다.
 - 빌더가 ERROR_COMMON의 `id` 컬럼으로 `CommonErrorType` enum을 생성한다 (`Common.g.cs`).
-- LoginManager / CloudSaveManager / LocalSaveManager / FirebaseManager / PurchaseManager의 에러 코드는 `CommonErrorType` 항목으로 관리한다.
+- AccountManager / SaveCloudManager / SaveLocalManager / FirebaseManager / PurchaseManager의 에러 코드는 `CommonErrorType` 항목으로 관리한다.
 - 새 에러 코드가 필요하면 ERROR_COMMON 테이블에 행을 추가하고 빌더를 실행한다.
 
 ---

@@ -24,7 +24,7 @@ AppliesTo: v10
 - payload는 작게(수 KB~수십 KB).
 - 큰 바이너리/리플레이/로그는 Cloud Save에 넣지 않는다.
 
-> 구현 참조: `CloudSavePayload.cs` (ctor `deviceId = null`), `LocalSavePayload.cs` (ctor `deviceId`)
+> 구현 참조: `SaveCloudPayload.cs` (ctor `deviceId = null`), `SaveLocalPayload.cs` (ctor `deviceId`)
 
 
 ---
@@ -40,7 +40,7 @@ AppliesTo: v10
 권장(서비스 레이어 예시):
 - `main`, (선택) `backup`, `manual`
 
-> 구현 참조: `CloudSaveManager.cs` (`TryResolveCloudSlot` — 매핑 미발견 시 `Failure(CommonErrorType.CLOUDSAVE_SLOT_MISSING, ...)`), `LocalSaveManager.cs` (`TryResolveFilename` — 매핑 미발견 시 `Failure(CommonErrorType.LOCALSAVE_SLOT_MISSING, ...)`)
+> 구현 참조: `SaveCloudManager.cs` (`TryResolveCloudSlot` — 매핑 미발견 시 `Failure(CommonErrorType.CLOUDSAVE_SLOT_MISSING, ...)`), `SaveLocalManager.cs` (`TryResolveFilename` — 매핑 미발견 시 `Failure(CommonErrorType.LOCALSAVE_SLOT_MISSING, ...)`)
 
 
 ---
@@ -73,7 +73,7 @@ AppliesTo: v10
   - `SyncResolution.UseLocal` — 로컬 데이터를 클라우드에 업로드
   - `SyncResolution.UseCloud` — 클라우드 데이터를 로컬에 다운로드
 
-> GPGS 구현은 `OpenWithAutomaticConflictResolution` + `UseLongestPlaytime`로 플랫폼 수준 자동 충돌 해결을 사용한다(코드 참조: `CloudSaveClientGoogle`).
+> GPGS 구현은 `OpenWithAutomaticConflictResolution` + `UseLongestPlaytime`로 플랫폼 수준 자동 충돌 해결을 사용한다(코드 참조: `SaveCloudClientGoogle`).
 
 
 ---
@@ -107,7 +107,7 @@ AppliesTo: v10
 ### Encryption Key/IV
 
 
-- `CloudSaveManager`는 AES key/IV를 **base64 문자열**로 취급한다.
+- `SaveCloudManager`는 AES key/IV를 **base64 문자열**로 취급한다.
 - 내부 저장 필드는 `CString`이며(Inspector 기본값/편의 목적), 실제 base64 문자열은 `CString.Value`로 사용된다.
 - 키/IV의 **저장 위치/보관 정책**은 서비스 레이어(개발자) 책임이다.
   - 프레임워크는 `GetKeyIvBase64 / SetKeyIvBase64 / ClearKeyIv`로 **내보내기/주입 수단만 제공**한다.
@@ -124,9 +124,9 @@ Local Save와 Cloud Save는 **동일한 논리 필드(버전/시간/payload/devi
 슬롯/파일명 매핑은 **서비스 레이어에서 구성**하며, 프레임워크는 암묵적 기본값을 제공하지 않는다.
 
 - 파일명은 **슬롯 → 파일명 매핑**을 통해 변경 가능해야 한다.
-- 저장 경로는 **LocalSaveManager에서 설정**할 수 있어야 한다.
+- 저장 경로는 **SaveLocalManager에서 설정**할 수 있어야 한다.
 
-> 구현 참조: `CloudSavePayload.cs` (PascalCase: `Version`, `Payload`), `LocalSavePayload.cs` (camelCase: `version`, `payload`), `CloudSaveManager.cs` / `LocalSaveManager.cs` (슬롯 매핑)
+> 구현 참조: `SaveCloudPayload.cs` (PascalCase: `Version`, `Payload`), `SaveLocalPayload.cs` (camelCase: `version`, `payload`), `SaveCloudManager.cs` / `SaveLocalManager.cs` (슬롯 매핑)
 
 
 ---
@@ -139,21 +139,21 @@ Local Save와 Cloud Save는 **동일한 논리 필드(버전/시간/payload/devi
 
 | Item | Path (UPM) |
 |------|-----------|
-| CloudSavePayload | `Runtime/Unity/CloudSave/CloudSavePayload.cs` |
-| CloudSaveResult | `Runtime/Unity/CloudSave/CloudSaveResult.cs` |
-| CloudSaveClientApple | `Runtime/Unity/CloudSave/CloudSaveClientApple.cs` |
-| CloudSaveManager | `Runtime/Unity/CloudSave/CloudSaveManager.cs` |
-| CloudSaveCrypto | `Runtime/Unity/CloudSave/CloudSaveCrypto.cs` |
+| SaveCloudPayload | `Runtime/Unity/SaveCloud/SaveCloudPayload.cs` |
+| SaveCloudResult | `Runtime/Unity/SaveCloud/SaveCloudResult.cs` |
+| ISaveCloudClient | `Runtime/Unity/SaveCloud/ISaveCloudClient.cs` |
+| SaveCloudManager | `Runtime/Unity/SaveCloud/SaveCloudManager.cs` |
+| SaveCloudCrypto | `Runtime/Unity/SaveCloud/SaveCloudCrypto.cs` |
 
 
 ### Local Save
 
 | Item | Path (UPM) |
 |------|-----------|
-| LocalSavePayload | `Runtime/Unity/LocalSave/LocalSavePayload.cs` |
-| LocalSaveManager | `Runtime/Unity/LocalSave/LocalSaveManager.cs` |
-| LocalSaveCrypto | `Runtime/Unity/LocalSave/LocalSaveCrypto.cs` |
-| LocalSaveFileStore | `Runtime/Unity/LocalSave/LocalSaveFileStore.cs` |
+| SaveLocalPayload | `Runtime/Unity/SaveLocal/SaveLocalPayload.cs` |
+| SaveLocalManager | `Runtime/Unity/SaveLocal/SaveLocalManager.cs` |
+| SaveLocalCrypto | `Runtime/Unity/SaveLocal/SaveLocalCrypto.cs` |
+| SaveLocalFileStore | `Runtime/Unity/SaveLocal/SaveLocalFileStore.cs` |
 
 
 UPM root: `framework-cs/upm/com.devian.foundation/`

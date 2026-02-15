@@ -1,6 +1,5 @@
 using UnityEngine;
 using System.Collections;
-using System.Threading;
 using Devian;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
@@ -34,10 +33,10 @@ public class TestScene : BaseScene
         yield return null;
     }
 
-    async void _tryActivateGpgsSavedGames()
+    void _tryActivateGpgsSavedGames()
     {
-        var r = await CloudSaveManager.Instance.InitializeAsync(CancellationToken.None);
-        Debug.Log($"CloudSave result: success={r.Value == CloudSaveResult.Success}");
+        // Cloud initialization is now handled by AccountManager.LoginAsync (non-Guest/non-Editor).
+        Debug.Log("[TestScene] Cloud init is handled by AccountManager login flow.");
     }
     
     public override IEnumerator OnStart()
@@ -73,8 +72,6 @@ public class TestScene : BaseScene
         var obj = BundlePool.Spawn<TestPoolObject>("Cube", Vector3.zero, Quaternion.identity, null);
         Debug.Log(obj);
 
-        //var save_result = LocalSaveManager.Instance.Save("main", "ABCD");
-        //var load_result = LocalSaveManager.Instance.LoadPayload("main");
 
         CBigInt x = new CBigInt(12345, 1);
         Debug.Log(x * bigInt);

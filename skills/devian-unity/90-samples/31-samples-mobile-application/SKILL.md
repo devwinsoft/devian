@@ -29,7 +29,7 @@ namespace MyApp
     {
         protected override System.Collections.IEnumerator OnBootProc()
         {
-            // MobileSystem common initialization (Log, GPGS Activate, LoginManager)
+            // MobileSystem common initialization (Log, GPGS Activate, AccountManager)
             yield return base.OnBootProc();
 
             // App-specific initialization here.

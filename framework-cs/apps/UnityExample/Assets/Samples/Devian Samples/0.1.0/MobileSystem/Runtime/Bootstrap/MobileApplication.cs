@@ -5,10 +5,8 @@ using UnityEngine;
 
 namespace Devian
 {
-    [RequireComponent(typeof(CloudSaveManager))]
-    [RequireComponent(typeof(LocalSaveManager))]
-    [RequireComponent(typeof(LoginManager))]
-    [RequireComponent(typeof(SyncDataManager))]
+    [RequireComponent(typeof(AccountManager))]
+    [RequireComponent(typeof(SaveDataManager))]
     public abstract class MobileApplication : BaseBootstrap
     {
         protected override IEnumerator OnBootProc()
@@ -20,9 +18,6 @@ namespace Devian
             #if UNITY_ANDROID && !UNITY_EDITOR
             tryActivateGooglePlayGames();
             #endif
-
-            // Prepare login controllers early (avoid lazy-init at first login call).
-            LoginManager.Instance.Initialize();
 
             yield break;
         }

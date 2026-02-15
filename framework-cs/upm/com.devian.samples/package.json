@@ -20,7 +20,7 @@
     },
     {
       "displayName": "MobileSystem",
-      "description": "Bundle sample: installs FirebaseManager + SaveSystem + LoginManager together.",
+      "description": "Bundle sample: installs FirebaseManager + SaveSystem + AccountManager together.",
       "path": "Samples~/MobileSystem"
     }
   ]

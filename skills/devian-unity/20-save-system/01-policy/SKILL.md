@@ -81,7 +81,7 @@ SSOT: [03-ssot](../03-ssot/SKILL.md)
 
 
 - Local Save는 Cloud Save 스펙과 동일 스키마/슬롯 규칙을 따른다.
-- Local Save 경로는 **LocalSaveManager에서 설정** 가능해야 한다.
+- Local Save 경로는 **SaveLocalManager에서 설정** 가능해야 한다.
 - 기본 파일명 규칙은 cloudsave 정책과 동일하며, 슬롯→파일명 매핑을 허용한다.
 
 

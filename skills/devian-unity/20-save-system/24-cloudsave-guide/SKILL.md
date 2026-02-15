@@ -27,9 +27,9 @@ AppliesTo: v10
 
 - (Unity) `com.devian.samples` 설치 (CloudSave/LocalSave 구현은 `Samples~/MobileSystem`에 포함)
 - (Android) Google Play Games Plugin for Unity 설치 및 프로젝트 설정
-- (Runtime) `CloudSaveManager.Instance.Configure(...)` 호출
+- (Runtime) `SaveCloudManager.Instance.Configure(...)` 호출
 - (Runtime) 필요 시 `SignInIfNeededAsync` 호출 후 Save/Load 수행
-- (Product) Editor/Guest는 Firebase Anonymous를 사용한다. 실기기에서는 Guest + Google(Android) + Apple(iOS)을 지원한다. 상세는 [login-manager](../../../devian-unity/90-samples/33-samples-login-manager/SKILL.md) 참조. login-manager는 Save System 샘플 모듈에 포함되어 동일 asmdef로 컴파일된다.
+- (Product) **Editor/Guest에서는 CloudSave를 사용하지 않는다(LocalSave only).** 실기기에서는 Google(Android) + Apple(iOS)을 지원한다. 상세는 [account-manager](../../../devian-unity/90-samples/33-samples-account-manager/SKILL.md) 참조. account-manager는 Save System 샘플 모듈에 포함되어 동일 asmdef로 컴파일된다.
 - (Product) 기본 Cloud Save 저장소는 플랫폼별(Android=GPGS / iOS=iCloud)로 유지한다. iOS(iCloud) 구현이 준비되지 않은 단계에서는 Firebase 구현을 임시로 사용할 수 있다.
 - (Out of scope) 기타 소셜 로그인 제공자는 이 스킬 범위 밖이다.
 
@@ -40,7 +40,7 @@ AppliesTo: v10
 ## 3. Android (Google Play Games) 구성 요약
 
 
-Devian은 Samples(ClaudSave)에 `CloudSaveClientGoogle`를 제공한다.
+Devian은 Samples(ClaudSave)에 `SaveCloudClientGoogle`를 제공한다.
 
 
 - Reflection 기반: 플러그인이 없어도 컴파일은 됨
@@ -71,23 +71,23 @@ using UnityEngine;
 
 namespace Devian
 {
-    public sealed class CloudSaveBootstrap : MonoBehaviour
+    public sealed class SaveCloudBootstrap : MonoBehaviour
     {
         [SerializeField] private bool useEncryption = true;
 
 
         private void Awake()
         {
-            var slots = new List<CloudSaveSlot>
+            var slots = new List<SaveCloudSlot>
             {
-                new CloudSaveSlot { slotKey = "main", cloudSlot = "main" }
+                new SaveCloudSlot { slotKey = "main", cloudSlot = "main" }
             };
 
 
-            var client = new CloudSaveClientGoogle();
+            var client = new SaveCloudClientGoogle();
 
 
-            CloudSaveManager.Instance.Configure(
+            SaveCloudManager.Instance.Configure(
                 client: client,
                 useEncryption: useEncryption,
                 slots: slots);
@@ -111,25 +111,25 @@ using UnityEngine;
 
 namespace Devian
 {
-    public sealed class CloudSaveExample : MonoBehaviour
+    public sealed class SaveCloudExample : MonoBehaviour
     {
         public async Task SaveAsync(CancellationToken ct)
         {
             // 권장: 필요 시 로그인 먼저
-            await CloudSaveManager.Instance.SignInIfNeededAsync(ct);
+            await SaveCloudManager.Instance.SignInIfNeededAsync(ct);
 
 
             string payloadJson = "{\"coins\":123,\"stage\":5}";
-            await CloudSaveManager.Instance.SaveAsync(slot: "main", payload: payloadJson, ct: ct);
+            await SaveCloudManager.Instance.SaveAsync(slot: "main", payload: payloadJson, ct: ct);
         }
 
 
         public async Task<string> LoadAsync(CancellationToken ct)
         {
-            await CloudSaveManager.Instance.SignInIfNeededAsync(ct);
+            await SaveCloudManager.Instance.SignInIfNeededAsync(ct);
 
 
-            var r = await CloudSaveManager.Instance.LoadPayloadAsync(slot: "main", ct: ct);
+            var r = await SaveCloudManager.Instance.LoadPayloadAsync(slot: "main", ct: ct);
             return r.IsSuccess ? r.Value : null;
         }
     }
@@ -146,9 +146,9 @@ namespace Devian
 `com.devian.samples/Samples~/MobileSystem`
 
 
-- `ClaudSaveInstaller.InitializeAsync(CancellationToken ct)` — 공통 엔트리(내부 플랫폼 분기)
-- `ClaudSaveInstaller.InitializeAsync(List<CloudSaveSlot>, bool, CancellationToken)` — slots/encryption 포함 오버로드
-- (옵션) `CloudSaveClient` — iOS에서 iCloud 구현이 준비되지 않은 경우 임시로 사용 가능
+- CloudSave 초기화는 `SaveCloudManager.Instance.InitializeAsync(ct)`로 수행한다.
+- 정책: **Unity Editor에서는 CloudSave를 지원하지 않는다(LocalSave only).** SaveCloudManager가 Failure를 반환한다.
+- (옵션) `SaveCloudClient` — iOS에서 iCloud 구현이 준비되지 않은 경우 임시로 사용 가능
 - (문서) Firebase 구현 상세: [25-cloudsave-firebase](../25-cloudsave-firebase/SKILL.md)
 
 
