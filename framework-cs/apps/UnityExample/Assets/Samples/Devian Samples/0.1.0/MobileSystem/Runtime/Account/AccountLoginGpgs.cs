@@ -132,16 +132,31 @@ namespace Devian
 #endif
         }
 
+        /// <summary>
+        /// Resets internal GPGS state so the next login triggers a fresh ManuallyAuthenticate.
+        /// GPGS v2 does not expose a SignOut API — sign-out is managed at the OS level
+        /// (Settings > Google > Play Games). This method clears cached Reflection references
+        /// so that the next SignInIfNeededAsync / GetServerAuthCodeCredentialAsync
+        /// re-resolves and re-authenticates from scratch.
+        /// </summary>
         public void SignOut()
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
-            if (!_isAvailable) return;
-            try
-            {
-                var m = _platformType?.GetMethod("SignOut", BindingFlags.Public | BindingFlags.Instance);
-                m?.Invoke(_platformInstance, null);
-            }
-            catch { }
+            _reflectionResolved = false;
+            _isAvailable = false;
+            _platformType = null;
+            _platformInstance = null;
+            _savedGameClient = null;
+            _statusType = null;
+            _metadataType = null;
+            _statusSuccess = null;
+            _dsReadNetworkFirst = null;
+            _strategyLongestPlaytime = null;
+            _openMethod = null;
+            _readMethod = null;
+            _commitMethod = null;
+            _deleteMethod = null;
+            _builderType = null;
 #endif
         }
 
@@ -158,6 +173,7 @@ namespace Devian
             {
                 if (_platformType == null || _platformInstance == null)
                 {
+                    Debug.LogError($"[AccountLoginGpgs] GPGS not found: _platformType={_platformType != null}, _platformInstance={_platformInstance != null}");
                     return CommonResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_NOT_FOUND,
                         "GooglePlayGames v2 plugin is not installed.");
                 }
@@ -182,6 +198,7 @@ namespace Devian
                 var statusCb = createAction1(signInStatusType, (obj) =>
                 {
                     var s = obj?.ToString();
+                    Debug.Log($"[AccountLoginGpgs] Authenticate callback: SignInStatus={s}");
                     tcsAuth.TrySetResult(string.Equals(s, "Success", StringComparison.OrdinalIgnoreCase));
                 });
 
@@ -205,6 +222,7 @@ namespace Devian
 
                 if (!authenticated)
                 {
+                    Debug.LogWarning("[AccountLoginGpgs] Authentication failed (SignInStatus was not Success)");
                     return CommonResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_AUTH_FAILED,
                         "Google Play Games authentication failed.");
                 }
@@ -240,7 +258,13 @@ namespace Devian
                         ? cbParamType.GetGenericArguments()[0]
                         : cbParamType.GetMethod("Invoke").GetParameters()[0].ParameterType;
 
-                var getAuthCode = authResponseType.GetMethod("GetAuthCode", BindingFlags.Public | BindingFlags.Instance);
+                // GPGS v2 has two callback styles:
+                //   Action<string>       → auth code is passed directly as string
+                //   Action<AuthResponse> → auth code via AuthResponse.GetAuthCode()
+                var isDirectString = authResponseType == typeof(string);
+                var getAuthCode = isDirectString
+                    ? null
+                    : authResponseType.GetMethod("GetAuthCode", BindingFlags.Public | BindingFlags.Instance);
 
                 var tcsCode = new TaskCompletionSource<string>();
 
@@ -248,11 +272,24 @@ namespace Devian
                 {
                     if (obj == null)
                     {
+                        Debug.LogWarning("[AccountLoginGpgs] RequestServerSideAccess callback: response is null");
                         tcsCode.TrySetResult(string.Empty);
                         return;
                     }
 
-                    var code = getAuthCode != null ? (string)getAuthCode.Invoke(obj, null) : null;
+                    string code;
+                    if (isDirectString)
+                    {
+                        // Action<string>: obj is the auth code itself
+                        code = obj as string;
+                    }
+                    else
+                    {
+                        // Action<AuthResponse>: extract via GetAuthCode()
+                        code = getAuthCode != null ? (string)getAuthCode.Invoke(obj, null) : null;
+                    }
+
+                    Debug.Log($"[AccountLoginGpgs] RequestServerSideAccess callback: authCode={(string.IsNullOrEmpty(code) ? "(empty)" : "obtained")}");
                     tcsCode.TrySetResult(code ?? string.Empty);
                 });
 
@@ -289,6 +326,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
+                Debug.LogError($"[AccountLoginGpgs] GetServerAuthCodeCredentialAsync exception: {ex}");
                 return CommonResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_EXCEPTION, ex.ToString());
             }
 #else

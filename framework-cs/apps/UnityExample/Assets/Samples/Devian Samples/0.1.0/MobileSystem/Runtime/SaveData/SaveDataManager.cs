@@ -14,6 +14,7 @@ namespace Devian
         Success,
         Conflict,
         Initial,
+        ConnectionFailed,
     }
 
     public sealed class SyncResult
@@ -93,6 +94,21 @@ namespace Devian
                 {
                     UnityEngine.Debug.LogWarning(
                         $"[SaveDataManager] SyncAsync: cloud init failed, proceeding local-only. error={init.Error}");
+
+                    // If no local payload exists, caller cannot proceed -> explicit ConnectionFailed state.
+                    // If local payload exists, caller can still handle using local data, so do NOT return ConnectionFailed.
+                    var localKeys = getLocalSlotKeys();
+                    var hasAnyLocal = false;
+                    for (var i = 0; i < localKeys.Count; i++)
+                    {
+                        if (string.IsNullOrWhiteSpace(localKeys[i])) continue;
+                        var r = await loadLocalRecordAsync(localKeys[i], ct);
+                        if (r.IsSuccess && r.Value != null) { hasAnyLocal = true; break; }
+                    }
+                    if (!hasAnyLocal)
+                    {
+                        return CommonResult<SyncResult>.Success(new SyncResult(SyncState.ConnectionFailed));
+                    }
                 }
             }
 
@@ -182,11 +198,27 @@ namespace Devian
             return saveLocalAsync(slot, payload, ct);
         }
 
+        public Task<CommonResult<bool>> SaveDataLocalAsync<T>(string slot, T data, CancellationToken ct)
+        {
+            var json = JsonUtility.ToJson(data);
+            return SaveDataLocalAsync(slot, json, ct);
+        }
+
         public async Task<CommonResult<bool>> SaveDataLocalAndCloudAsync(
             string slot, string payload, CancellationToken ct)
         {
             var local = await saveLocalAsync(slot, payload, ct);
             if (local.IsFailure) return local;
+
+            // In Editor / Guest, silently ignore cloud save and return success.
+#if UNITY_EDITOR
+            return CommonResult<bool>.Success(true);
+#else
+            var loginType = AccountManager.Instance._getCurrentLoginType();
+            if (loginType == LoginType.GuestLogin || loginType == LoginType.EditorLogin)
+            {
+                return CommonResult<bool>.Success(true);
+            }
 
             var init = await _initializeCloudAsync(ct);
             if (init.IsFailure)
@@ -196,6 +228,13 @@ namespace Devian
             if (cloud.IsFailure) return cloud;
 
             return CommonResult<bool>.Success(true);
+#endif
+        }
+
+        public Task<CommonResult<bool>> SaveDataLocalAndCloudAsync<T>(string slot, T data, CancellationToken ct)
+        {
+            var json = JsonUtility.ToJson(data);
+            return SaveDataLocalAndCloudAsync(slot, json, ct);
         }
 
         // ──────────────────────────────────────────────
@@ -607,6 +646,7 @@ namespace Devian
         {
             try
             {
+                var hasCloudConnectionFailure = false;
                 var slotSet = new HashSet<string>(StringComparer.Ordinal);
 
                 var localKeys = getLocalSlotKeys();
@@ -646,6 +686,7 @@ namespace Devian
                             $"[SaveDataManager] Sync load cloud failed. slot='{slot}'. " +
                             $"Proceeding with local-only. error={cloudR.Error}");
 
+                        hasCloudConnectionFailure = true;
                         cloudWritable = false;
                     }
 
@@ -713,9 +754,13 @@ namespace Devian
 
                 if (!hasAnyLocal && !hasAnyCloud)
                 {
+                    if (hasCloudConnectionFailure)
+                        return CommonResult<SyncResult>.Success(new SyncResult(SyncState.ConnectionFailed));
                     return CommonResult<SyncResult>.Success(new SyncResult(SyncState.Initial));
                 }
 
+                if (hasCloudConnectionFailure && !hasAnyLocal)
+                    return CommonResult<SyncResult>.Success(new SyncResult(SyncState.ConnectionFailed));
                 return CommonResult<SyncResult>.Success(new SyncResult(SyncState.Success));
             }
             catch (OperationCanceledException ex)

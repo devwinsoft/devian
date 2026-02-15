@@ -68,12 +68,25 @@ public class TestUICanvas : UICanvas<TestUICanvas>
         switch (sync.Result.Value.State)
         {
             case SyncState.Initial:
-                var init = SaveDataManager.Instance.SaveDataLocalAsync("main", "ABCD", CancellationToken.None);
+            {
+                TestSaveData data = new TestSaveData();
+                data.name = "devian framework";
+                data.items.Add(new TestSaveData.TestItemData());
+                data.items[0].item_id = "devian item 001";
+                var init = SaveDataManager.Instance.SaveDataLocalAndCloudAsync("main", data, CancellationToken.None);
                 Debug.Log(init.Result.Value);
                 break;
+            }
             case SyncState.Conflict:
                 var resolve = SaveDataManager.Instance.ResolveConflictAsync("main", SyncResolution.UseLocal, CancellationToken.None);
                 Debug.Log(resolve.Result.Value);
+                break;
+            case SyncState.ConnectionFailed:
+                Debug.LogWarning("[TestUICanvas] Cloud connection failed and no local data exists. Retry or check connection.");
+                return;
+            default:
+                Debug.Log(sync.Result.Value.LocalPayload);
+                Debug.Log(sync.Result.Value.CloudPayload);
                 break;
         }
     }

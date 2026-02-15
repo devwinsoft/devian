@@ -74,24 +74,23 @@ namespace Devian
 
         public void Logout()
         {
-            switch (_currentLoginType)
-            {
-                case LoginType.EditorLogin:
-                case LoginType.GuestLogin:
-                    _firebaseLogin.SignOut();
-                    break;
-                case LoginType.GoogleLogin:
-#if UNITY_ANDROID && !UNITY_EDITOR
-                    _gpgs.SignOut();
-#endif
-                    break;
-                case LoginType.AppleLogin:
-#if UNITY_IOS && !UNITY_EDITOR
-                    _apple.SignOut();
-#endif
-                    break;
-            }
+            // Complete logout: try sign-out from all providers regardless of current login type.
+            // Failures are ignored (Logout is void).
 
+            // 1) Firebase (Guest/Editor included) - always try
+            try { _firebaseLogin?.SignOut(); } catch { /* ignore */ }
+
+            // 2) GPGS - Android only
+#if UNITY_ANDROID && !UNITY_EDITOR
+            try { _gpgs?.SignOut(); } catch { /* ignore */ }
+#endif
+
+            // 3) Apple - iOS only
+#if UNITY_IOS && !UNITY_EDITOR
+            try { _apple?.SignOut(); } catch { /* ignore */ }
+#endif
+
+            // 4) Reset state
             _currentLoginType = LoginType.EditorLogin;
         }
 
@@ -146,6 +145,14 @@ namespace Devian
 #if UNITY_ANDROID && !UNITY_EDITOR
                 case LoginType.GoogleLogin:
                 {
+                    // GetServerAuthCodeCredentialAsync already calls ManuallyAuthenticate,
+                    // so if we have a valid ServerAuthCode the user is already authenticated.
+                    // Only call SignInIfNeededAsync when no credential was provided (direct call).
+                    if (!string.IsNullOrEmpty(credential.ServerAuthCode))
+                    {
+                        return CommonResult<bool>.Success(true);
+                    }
+
                     var r = await _gpgs.SignInIfNeededAsync(ct);
                     return r == SaveCloudResult.Success
                         ? CommonResult<bool>.Success(true)
