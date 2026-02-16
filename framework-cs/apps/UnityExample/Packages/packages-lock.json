@@ -44,6 +44,18 @@
         "com.devian.domain.common": "0.1.0"
       }
     },
+    "com.devian.purchase.store.apple": {
+      "version": "file:com.devian.purchase.store.apple",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
+    "com.devian.purchase.store.google": {
+      "version": "file:com.devian.purchase.store.google",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.devian.samples": {
       "version": "file:com.devian.samples",
       "depth": 0,

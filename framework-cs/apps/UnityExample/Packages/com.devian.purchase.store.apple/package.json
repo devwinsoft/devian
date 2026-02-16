@@ -1,0 +1,8 @@
+{
+  "name": "com.devian.purchase.store.apple",
+  "version": "0.1.0",
+  "displayName": "Devian Purchase Store (Apple)",
+  "description": "Apple store implementation for Devian.IPurchaseStore (owned by PurchaseManager sample).",
+  "unity": "2021.3",
+  "author": { "name": "Devian" }
+}

@@ -87,7 +87,10 @@
       "WebFetch(domain:developers.google.com)",
       "WebFetch(domain:www.spacelabgames.com)",
       "Bash(else echo \"debug.keystore not found\")",
-      "Bash(openssl dgst:*)"
+      "Bash(openssl dgst:*)",
+      "WebFetch(domain:docs.unity3d.com)",
+      "WebFetch(domain:gist.github.com)",
+      "WebFetch(domain:gist.githubusercontent.com)"
     ]
   },
   "project": {

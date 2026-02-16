@@ -1,0 +1,16 @@
+{
+  "name": "Devian.Purchase.Store.Google",
+  "rootNamespace": "Devian",
+  "references": [
+    "Devian.Samples.PurchaseManager"
+  ],
+  "includePlatforms": [ "Android" ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -8,8 +8,39 @@ AppliesTo: v10
 ## 전제
 
 
-- 결제 SDK는 Unity **In-App Purchasing (Unity IAP)**를 사용한다.
+- 결제 SDK는 Unity **In-App Purchasing (Unity IAP) 5.1.2** (`com.unity.purchasing@5.1.2`)를 사용한다.
 - 스토어별 구현 차이는 존재하지만, 최종 지급/상태는 서버 검증 결과를 따른다.
+
+
+---
+
+
+## Unity IAP 5.x v5 API 정책
+
+- 현재 구현은 **v5 신규 API** (`StoreController` + `UnityIAPServices` + 이벤트 기반)를 사용한다.
+- `[Obsolete]` Legacy API (`IDetailedStoreListener`, `UnityPurchasing.Initialize`, `ConfigurationBuilder`, `IStoreController`, `Product.receipt`)는 **사용하지 않는다**.
+
+### v5 API 사용 패턴
+
+| 기능 | v5 API |
+|------|--------|
+| 초기화 | `UnityIAPServices.StoreController()` → `await controller.Connect()` → `controller.FetchProducts(definitions)` |
+| 제품 등록 | `List<ProductDefinition>` + `controller.FetchProducts(...)` (ProductCatalog에서 변환) |
+| 구매 시작 | `controller.PurchaseProduct(productId)` |
+| 구매 확인 | `controller.ConfirmPurchase(pendingOrder)` |
+| Receipt 접근 | `PendingOrder.Info.Receipt` |
+| Restore | `controller.RestoreTransactions(Action<bool, string?>)` (플랫폼 분기 불필요) |
+| 구매 성공 콜백 | `controller.OnPurchasePending` (PendingOrder) |
+| 구매 실패 콜백 | `controller.OnPurchaseFailed` (FailedOrder) |
+| 제품 Fetch 콜백 | `controller.OnProductsFetched` / `OnProductsFetchFailed` |
+
+### 참고: 4.x → 5.x 주요 변경 사항
+
+| 항목 | 변경 |
+|------|------|
+| Amazon/UWP/Facebook 스토어 | **제거됨** |
+| Apple Receipt Validation | **Deprecated** (Google Play만 지원) |
+| `IAppleExtensions.RestoreTransactions` | `Action<bool>` → `Action<bool, string>` |
 
 
 ---

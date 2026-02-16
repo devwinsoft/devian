@@ -1,0 +1,16 @@
+{
+  "name": "Devian.Purchase.Store.Apple",
+  "rootNamespace": "Devian",
+  "references": [
+    "Devian.Samples.PurchaseManager"
+  ],
+  "includePlatforms": [ "iOS", "tvOS" ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

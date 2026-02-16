@@ -9,24 +9,24 @@
   },
   "samples": [
     {
-      "displayName": "MobileSystem",
-      "description": "Bundle sample: installs FirebaseManager + SaveSystem + AccountManager together.",
-      "path": "Samples~/MobileSystem"
-    },
-    {
       "displayName": "Network",
       "description": "Unity WebSocket client sample using Devian.Protocol.Game (Ping/Echo) with Tick-based pump.",
       "path": "Samples~/Network"
     },
     {
-      "displayName": "Purchase Manager",
-      "description": "Sample: PurchaseManager",
-      "path": "Samples~/PurchaseManager"
-    },
-    {
       "displayName": "Virtual Pad",
       "description": "UGUI virtual pad (joystick) sample. Outputs normalized Vector2 via drag input.",
       "path": "Samples~/VirtualPad"
+    },
+    {
+      "displayName": "MobileSystem",
+      "description": "Bundle sample: installs FirebaseManager + SaveSystem + AccountManager + PurchaseManager together.",
+      "path": "Samples~/MobileSystem"
+    },
+    {
+      "displayName": "Purchase Manager",
+      "description": "Sample: PurchaseManager",
+      "path": "Samples~/PurchaseManager"
     }
   ]
 }
