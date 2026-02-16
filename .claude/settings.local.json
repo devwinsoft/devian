@@ -75,7 +75,9 @@
       "Bash(AST_R=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime\")",
       "Bash([ -d \"$d/SaveCloud\" ])",
       "Bash([ -d \"$d/SaveLocal\" ])",
-      "Bash([ -f \"$f\" ])"
+      "Bash([ -f \"$f\" ])",
+      "Bash(shasum:*)",
+      "Bash(dotnet build:*)"
     ]
   },
   "project": {

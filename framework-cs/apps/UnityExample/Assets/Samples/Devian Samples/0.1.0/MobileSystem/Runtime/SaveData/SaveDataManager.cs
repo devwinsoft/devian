@@ -63,25 +63,34 @@ namespace Devian
         //  Public: Sync API
         // ──────────────────────────────────────────────
 
+        private bool isLocalOnly(LoginType loginType)
+        {
+#if UNITY_EDITOR
+            return true;
+#else
+            return loginType == LoginType.GuestLogin || loginType == LoginType.EditorLogin;
+#endif
+        }
+
+        private async Task<bool> hasAnyLocalAsync(CancellationToken ct)
+        {
+            var localKeys = _slotConfig.GetLocalSlotKeys();
+            for (var i = 0; i < localKeys.Count; i++)
+            {
+                if (string.IsNullOrWhiteSpace(localKeys[i])) continue;
+                var r = await loadLocalRecordAsync(localKeys[i], ct);
+                if (r.IsSuccess && r.Value != null) return true;
+            }
+            return false;
+        }
+
         public async Task<CommonResult<SyncResult>> SyncAsync(CancellationToken ct)
         {
             var loginType = AccountManager.Instance._getCurrentLoginType();
-#if UNITY_EDITOR
-            var isEditorNoCloud = true;
-#else
-            var isEditorNoCloud = (loginType == LoginType.EditorLogin);
-#endif
 
-            if (loginType == LoginType.GuestLogin || isEditorNoCloud)
+            if (isLocalOnly(loginType))
             {
-                var localKeys = getLocalSlotKeys();
-                var hasAnyLocal = false;
-                for (var i = 0; i < localKeys.Count; i++)
-                {
-                    if (string.IsNullOrWhiteSpace(localKeys[i])) continue;
-                    var r = await loadLocalRecordAsync(localKeys[i], ct);
-                    if (r.IsSuccess && r.Value != null) { hasAnyLocal = true; break; }
-                }
+                var hasAnyLocal = await hasAnyLocalAsync(ct);
                 var state = hasAnyLocal ? SyncState.Success : SyncState.Initial;
                 return CommonResult<SyncResult>.Success(new SyncResult(state));
             }
@@ -97,14 +106,7 @@ namespace Devian
 
                     // If no local payload exists, caller cannot proceed -> explicit ConnectionFailed state.
                     // If local payload exists, caller can still handle using local data, so do NOT return ConnectionFailed.
-                    var localKeys = getLocalSlotKeys();
-                    var hasAnyLocal = false;
-                    for (var i = 0; i < localKeys.Count; i++)
-                    {
-                        if (string.IsNullOrWhiteSpace(localKeys[i])) continue;
-                        var r = await loadLocalRecordAsync(localKeys[i], ct);
-                        if (r.IsSuccess && r.Value != null) { hasAnyLocal = true; break; }
-                    }
+                    var hasAnyLocal = await hasAnyLocalAsync(ct);
                     if (!hasAnyLocal)
                     {
                         return CommonResult<SyncResult>.Success(new SyncResult(SyncState.ConnectionFailed));
@@ -115,17 +117,183 @@ namespace Devian
             return await syncAsync(ct);
         }
 
+        public async Task<CommonResult<SyncResult>> SyncAsync(string slot, CancellationToken ct)
+        {
+            var loginType = AccountManager.Instance._getCurrentLoginType();
+
+            // Guest/Editor: local-only. 반드시 slot 단일을 로드하여 payload를 채워 반환.
+            if (isLocalOnly(loginType))
+            {
+                if (string.IsNullOrWhiteSpace(slot))
+                    return CommonResult<SyncResult>.Failure(
+                        CommonErrorType.LOCALSAVE_SLOT_EMPTY, "Slot is empty.");
+
+                var localR = await loadLocalRecordAsync(slot, ct);
+                if (localR.IsFailure)
+                    return CommonResult<SyncResult>.Failure(localR.Error!);
+
+                var local = localR.Value;
+                if (local == null)
+                    return CommonResult<SyncResult>.Success(new SyncResult(SyncState.Initial, slot));
+
+                return CommonResult<SyncResult>.Success(new SyncResult(
+                    SyncState.Success,
+                    slot,
+                    local,
+                    null,
+                    local.deviceId,
+                    null));
+            }
+
+            // Cloud init 시도. 실패하면 local-only로 진행하되 slot 기준으로만 판정.
+            {
+                var init = await _initializeCloudAsync(ct);
+                if (init.IsFailure)
+                {
+                    UnityEngine.Debug.LogWarning(
+                        $"[SaveDataManager] SyncAsync(slot): cloud init failed, proceeding local-only. error={init.Error}");
+
+                    if (string.IsNullOrWhiteSpace(slot))
+                        return CommonResult<SyncResult>.Success(new SyncResult(SyncState.ConnectionFailed));
+
+                    var localR = await loadLocalRecordAsync(slot, ct);
+                    if (localR.IsFailure)
+                        return CommonResult<SyncResult>.Failure(localR.Error!);
+
+                    var local = localR.Value;
+                    if (local == null)
+                        return CommonResult<SyncResult>.Success(new SyncResult(SyncState.ConnectionFailed, slot));
+
+                    return CommonResult<SyncResult>.Success(new SyncResult(
+                        SyncState.Success,
+                        slot,
+                        local,
+                        null,
+                        local.deviceId,
+                        null));
+                }
+            }
+
+            // Cloud 사용 가능: slot 1개만 sync 처리하고, 가능한 경우 payload를 채워 반환.
+            if (string.IsNullOrWhiteSpace(slot))
+                return CommonResult<SyncResult>.Failure(
+                    CommonErrorType.LOCALSAVE_SLOT_EMPTY, "Slot is empty.");
+
+            var localR2 = await loadLocalRecordAsync(slot, ct);
+            if (localR2.IsFailure)
+            {
+                return CommonResult<SyncResult>.Failure(
+                    new CommonError(CommonErrorType.LOGIN_SYNC_LOAD_LOCAL_FAILED, $"Sync load local failed. slot='{slot}'", localR2.Error!.ToString()));
+            }
+
+            var cloudWritable = true;
+            var cloudR2 = await loadCloudRecordAsync(slot, ct);
+            if (cloudR2.IsFailure)
+            {
+                UnityEngine.Debug.LogWarning(
+                    $"[SaveDataManager] SyncAsync(slot) load cloud failed. slot='{slot}'. " +
+                    $"Proceeding with local-only. error={cloudR2.Error}");
+                cloudWritable = false;
+            }
+
+            var local2 = localR2.Value;
+            var cloud2 = cloudR2.IsSuccess ? cloudR2.Value : null;
+
+            // both missing
+            if (local2 == null && cloud2 == null)
+            {
+                var st = cloudWritable ? SyncState.Initial : SyncState.ConnectionFailed;
+                return CommonResult<SyncResult>.Success(new SyncResult(st, slot));
+            }
+
+            // cloud -> local (+ cloud resave)
+            if (local2 == null && cloud2 != null)
+            {
+                var jsonR = decryptCloudPayloadToJson(cloud2);
+                if (jsonR.IsFailure)
+                {
+                    return CommonResult<SyncResult>.Failure(
+                        new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_LOCAL_FAILED, $"Sync decrypt cloud failed. slot='{slot}'", jsonR.Error!.ToString()));
+                }
+
+                var saveLocalR = await saveLocalAsync(slot, jsonR.Value, ct);
+                if (saveLocalR.IsFailure)
+                {
+                    return CommonResult<SyncResult>.Failure(
+                        new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_LOCAL_FAILED, $"Sync save local failed. slot='{slot}'", saveLocalR.Error!.ToString()));
+                }
+
+                var cloudResaveR = await saveCloudAsync(slot, jsonR.Value, ct);
+                if (cloudResaveR.IsFailure)
+                {
+                    return CommonResult<SyncResult>.Failure(
+                        new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_CLOUD_FAILED, $"Sync re-save cloud failed. slot='{slot}'", cloudResaveR.Error!.ToString()));
+                }
+
+                // reload to return payloads
+                var reLocal = await loadLocalRecordAsync(slot, ct);
+                var reCloud = await loadCloudRecordAsync(slot, ct);
+                var lp = reLocal.IsSuccess ? reLocal.Value : null;
+                var cp = reCloud.IsSuccess ? reCloud.Value : null;
+                return CommonResult<SyncResult>.Success(new SyncResult(
+                    SyncState.Success, slot, lp, cp, lp?.deviceId, cp?.DeviceId));
+            }
+
+            // local -> cloud
+            if (local2 != null && cloud2 == null)
+            {
+                if (!cloudWritable)
+                {
+                    return CommonResult<SyncResult>.Success(new SyncResult(
+                        SyncState.Success, slot, local2, null, local2.deviceId, null));
+                }
+
+                var jsonR = decryptLocalPayloadToJson(local2);
+                if (jsonR.IsFailure)
+                {
+                    return CommonResult<SyncResult>.Failure(
+                        new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_CLOUD_FAILED, $"Sync decrypt local failed. slot='{slot}'", jsonR.Error!.ToString()));
+                }
+
+                var saveCloudR = await saveCloudAsync(slot, jsonR.Value, ct);
+                if (saveCloudR.IsFailure)
+                {
+                    return CommonResult<SyncResult>.Failure(
+                        new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_CLOUD_FAILED, $"Sync save cloud failed. slot='{slot}'", saveCloudR.Error!.ToString()));
+                }
+
+                var reCloud = await loadCloudRecordAsync(slot, ct);
+                var cp = reCloud.IsSuccess ? reCloud.Value : null;
+                return CommonResult<SyncResult>.Success(new SyncResult(
+                    SyncState.Success, slot, local2, cp, local2.deviceId, cp?.DeviceId));
+            }
+
+            // both exist
+            if (local2 != null && cloud2 != null)
+            {
+                var localDeviceId = local2.deviceId ?? string.Empty;
+                var cloudDeviceId = cloud2.DeviceId ?? string.Empty;
+
+                if (!string.Equals(localDeviceId, cloudDeviceId, StringComparison.Ordinal))
+                {
+                    return CommonResult<SyncResult>.Success(new SyncResult(
+                        SyncState.Conflict, slot, local2, cloud2, localDeviceId, cloudDeviceId));
+                }
+
+                return CommonResult<SyncResult>.Success(new SyncResult(
+                    SyncState.Success, slot, local2, cloud2, localDeviceId, cloudDeviceId));
+            }
+
+            // fallback (should not reach)
+            return CommonResult<SyncResult>.Success(new SyncResult(SyncState.Success, slot));
+        }
+
         public async Task<CommonResult<bool>> ResolveConflictAsync(
             string slot, SyncResolution resolution, CancellationToken ct)
         {
             var loginType = AccountManager.Instance._getCurrentLoginType();
-#if UNITY_EDITOR
-            var isEditorNoCloud = true;
-#else
-            var isEditorNoCloud = (loginType == LoginType.EditorLogin);
-#endif
 
-            if (loginType == LoginType.GuestLogin || isEditorNoCloud)
+            if (isLocalOnly(loginType))
             {
                 return CommonResult<bool>.Failure(
                     CommonErrorType.LOGIN_SYNC_RESOLVE_FAILED,
@@ -151,7 +319,11 @@ namespace Devian
                         if (localR.Value == null)
                             return CommonResult<bool>.Failure(CommonErrorType.LOGIN_SYNC_RESOLVE_FAILED, "Local payload is null.");
 
-                        var saveCloud = await saveCloudAsync(slot, localR.Value.payload, ct);
+                        var jsonR = decryptLocalPayloadToJson(localR.Value);
+                        if (jsonR.IsFailure)
+                            return CommonResult<bool>.Failure(jsonR.Error!);
+
+                        var saveCloud = await saveCloudAsync(slot, jsonR.Value, ct);
                         if (saveCloud.IsFailure)
                             return CommonResult<bool>.Failure(saveCloud.Error!);
 
@@ -166,12 +338,16 @@ namespace Devian
                         if (cloudR.Value == null)
                             return CommonResult<bool>.Failure(CommonErrorType.LOGIN_SYNC_RESOLVE_FAILED, "Cloud payload is null.");
 
-                        var saveLocalR = await saveLocalAsync(slot, cloudR.Value.Payload, ct);
+                        var jsonR = decryptCloudPayloadToJson(cloudR.Value);
+                        if (jsonR.IsFailure)
+                            return CommonResult<bool>.Failure(jsonR.Error!);
+
+                        var saveLocalR = await saveLocalAsync(slot, jsonR.Value, ct);
                         if (saveLocalR.IsFailure)
                             return CommonResult<bool>.Failure(saveLocalR.Error!);
 
                         // Re-save same payload to cloud to update deviceId and prevent next Sync conflict.
-                        var cloudSave = await saveCloudAsync(slot, cloudR.Value.Payload, ct);
+                        var cloudSave = await saveCloudAsync(slot, jsonR.Value, ct);
                         if (cloudSave.IsFailure)
                             return CommonResult<bool>.Failure(cloudSave.Error!);
 
@@ -211,11 +387,8 @@ namespace Devian
             if (local.IsFailure) return local;
 
             // In Editor / Guest, silently ignore cloud save and return success.
-#if UNITY_EDITOR
-            return CommonResult<bool>.Success(true);
-#else
             var loginType = AccountManager.Instance._getCurrentLoginType();
-            if (loginType == LoginType.GuestLogin || loginType == LoginType.EditorLogin)
+            if (isLocalOnly(loginType))
             {
                 return CommonResult<bool>.Success(true);
             }
@@ -228,7 +401,6 @@ namespace Devian
             if (cloud.IsFailure) return cloud;
 
             return CommonResult<bool>.Success(true);
-#endif
         }
 
         public Task<CommonResult<bool>> SaveDataLocalAndCloudAsync<T>(string slot, T data, CancellationToken ct)
@@ -238,17 +410,72 @@ namespace Devian
         }
 
         // ──────────────────────────────────────────────
+        //  Internal: Decrypt payload to json (source-aware)
+        // ──────────────────────────────────────────────
+
+        private CommonResult<string> decryptLocalPayloadToJson(SaveLocalPayload payload)
+        {
+            if (payload == null)
+                return CommonResult<string>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveLocalPayload is null.");
+
+            var raw = payload.payload ?? string.Empty;
+            if (!_slotConfig.useEncryption)
+                return CommonResult<string>.Success(raw);
+
+            if (!tryGetLocalKeyIv(out var key, out var iv, out var keyError))
+                return CommonResult<string>.Failure(CommonErrorType.LOCALSAVE_KEYIV, keyError);
+
+            try
+            {
+                var json = Crypto.DecryptAes(raw, key, iv);
+                return CommonResult<string>.Success(json);
+            }
+            catch (Exception ex)
+            {
+                return CommonResult<string>.Failure(CommonErrorType.LOCALSAVE_KEYIV, $"Local decrypt failed: {ex.Message}");
+            }
+        }
+
+        private CommonResult<string> decryptCloudPayloadToJson(SaveCloudPayload payload)
+        {
+            if (payload == null)
+                return CommonResult<string>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveCloudPayload is null.");
+
+            var raw = payload.Payload ?? string.Empty;
+            if (!_slotConfig.useEncryption)
+                return CommonResult<string>.Success(raw);
+
+            if (!_slotConfig.TryGetKeyIv(out var key, out var iv, out var keyError))
+                return CommonResult<string>.Failure(CommonErrorType.CLOUDSAVE_KEYIV, keyError);
+
+            try
+            {
+                var json = Crypto.DecryptAes(raw, key, iv);
+                return CommonResult<string>.Success(json);
+            }
+            catch (Exception ex)
+            {
+                return CommonResult<string>.Failure(CommonErrorType.CLOUDSAVE_KEYIV, $"Cloud decrypt failed: {ex.Message}");
+            }
+        }
+
+        // ──────────────────────────────────────────────
         //  Public: Payload parsing
         // ──────────────────────────────────────────────
 
         public static CommonResult<T> ParsePayloadResult<T>(SaveLocalPayload payload)
         {
-            if (payload == null)
-                return CommonResult<T>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveLocalPayload is null.");
+            var mgr = SaveDataManager.Instance;
+            if (mgr == null)
+                return CommonResult<T>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveDataManager.Instance is null.");
 
-            var json = payload.payload;
+            var dec = mgr.decryptLocalPayloadToJson(payload);
+            if (dec.IsFailure)
+                return CommonResult<T>.Failure(dec.Error!);
+
+            var json = dec.Value;
             if (string.IsNullOrWhiteSpace(json))
-                return CommonResult<T>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveLocalPayload json is empty.");
+                return CommonResult<T>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "Decrypted json is empty.");
 
             try
             {
@@ -263,12 +490,17 @@ namespace Devian
 
         public static CommonResult<T> ParsePayloadResult<T>(SaveCloudPayload payload)
         {
-            if (payload == null)
-                return CommonResult<T>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveCloudPayload is null.");
+            var mgr = SaveDataManager.Instance;
+            if (mgr == null)
+                return CommonResult<T>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveDataManager.Instance is null.");
 
-            var json = payload.Payload;
+            var dec = mgr.decryptCloudPayloadToJson(payload);
+            if (dec.IsFailure)
+                return CommonResult<T>.Failure(dec.Error!);
+
+            var json = dec.Value;
             if (string.IsNullOrWhiteSpace(json))
-                return CommonResult<T>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveCloudPayload json is empty.");
+                return CommonResult<T>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "Decrypted json is empty.");
 
             try
             {
@@ -323,11 +555,6 @@ namespace Devian
         //  Private: Local save operations
         // ──────────────────────────────────────────────
 
-        private List<string> getLocalSlotKeys()
-        {
-            return _slotConfig.GetLocalSlotKeys();
-        }
-
         private CommonResult<SaveLocalPayload> loadLocalRecord(string slot)
         {
             if (string.IsNullOrWhiteSpace(slot))
@@ -335,7 +562,7 @@ namespace Devian
                 return CommonResult<SaveLocalPayload>.Failure(CommonErrorType.LOCALSAVE_SLOT_EMPTY, "Slot is empty.");
             }
 
-            if (!tryResolveLocalFilename(slot, out var filename))
+            if (!_slotConfig.TryResolveLocalFilename(slot, out var filename))
             {
                 return CommonResult<SaveLocalPayload>.Failure(CommonErrorType.LOCALSAVE_SLOT_MISSING, $"Slot '{slot}' not configured.");
             }
@@ -360,17 +587,76 @@ namespace Devian
             byte[] key = null;
             byte[] iv = null;
 
-            if (_slotConfig.useEncryption && !tryGetKeyIv(out key, out iv, out var keyError))
+            if (_slotConfig.useEncryption && !tryGetLocalKeyIv(out key, out iv, out var keyError))
             {
                 return CommonResult<SaveLocalPayload>.Failure(CommonErrorType.LOCALSAVE_KEYIV, keyError);
             }
 
-            var plain = _slotConfig.useEncryption
-                ? Crypto.DecryptAes(save.payload, key, iv)
-                : save.payload;
+            // Payload Contract (Ciphertext-only):
+            // - 반환 SaveLocalPayload.payload 는 저장 포맷 그대로(암호화 시 ciphertext)여야 한다.
+            // - decrypt/parse는 별도 경로(SaveDataManager)를 통해 수행한다.
 
-            return CommonResult<SaveLocalPayload>.Success(
-                new SaveLocalPayload(save.version, save.updateTime, plain, _getOrCreateDeviceId()));
+            if (!_slotConfig.useEncryption)
+            {
+                // No-encryption mode: payload is plain json by definition.
+                return CommonResult<SaveLocalPayload>.Success(save);
+            }
+
+            // Encryption mode: ensure migration Option B (legacy->device-bound) is handled,
+            // but 반환은 항상 ciphertext payload로 유지한다.
+            try
+            {
+                // device-bound decrypt 성공 여부만 확인(성공이면 그대로 반환)
+                _ = Crypto.DecryptAes(save.payload, key, iv);
+                return CommonResult<SaveLocalPayload>.Success(save);
+            }
+            catch
+            {
+                // Security: legacy decrypt is allowed only on the same device.
+                var currentDeviceId = _getOrCreateDeviceId();
+                if (!string.IsNullOrEmpty(save.deviceId) && save.deviceId != currentDeviceId)
+                {
+                    return CommonResult<SaveLocalPayload>.Failure(
+                        CommonErrorType.LOCALSAVE_KEYIV,
+                        $"Legacy decrypt blocked: device mismatch. saved={save.deviceId}, current={currentDeviceId}");
+                }
+
+                // fallback: legacy(shared) key/iv로 1회 복호화 시도
+                if (!_slotConfig.TryGetKeyIv(out var legacyKey, out var legacyIv, out var legacyError))
+                {
+                    return CommonResult<SaveLocalPayload>.Failure(CommonErrorType.LOCALSAVE_KEYIV, legacyError);
+                }
+
+                string plain;
+                try
+                {
+                    plain = Crypto.DecryptAes(save.payload, legacyKey, legacyIv);
+                }
+                catch (Exception ex)
+                {
+                    return CommonResult<SaveLocalPayload>.Failure(
+                        CommonErrorType.LOCALSAVE_KEYIV, $"Decrypt failed (device-bound + legacy). {ex.Message}");
+                }
+
+                // 성공했으면 즉시 device-bound로 재저장(옵션 B)
+                var reSave = saveLocal(slot, plain);
+                if (reSave.IsFailure)
+                {
+                    UnityEngine.Debug.LogWarning(
+                        $"[SaveDataManager] Local migration re-save failed. slot={slot} err={reSave.Error}");
+                    // 재저장 실패 시: 기존 파일(save)을 그대로 반환(계약상 ciphertext 유지)
+                    return CommonResult<SaveLocalPayload>.Success(save);
+                }
+
+                // 재저장 성공 시: 파일을 다시 읽어서 device-bound ciphertext payload를 반환
+                var reLoaded = SaveLocalFileStore.Read(getRootPath(), filename);
+                if (reLoaded.IsFailure)
+                {
+                    return CommonResult<SaveLocalPayload>.Failure(reLoaded.Error!);
+                }
+
+                return CommonResult<SaveLocalPayload>.Success(reLoaded.Value);
+            }
         }
 
         private Task<CommonResult<SaveLocalPayload>> loadLocalRecordAsync(string slot, CancellationToken ct)
@@ -391,7 +677,7 @@ namespace Devian
                 return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_SLOT_EMPTY, "Slot is empty.");
             }
 
-            if (!tryResolveLocalFilename(slot, out var filename))
+            if (!_slotConfig.TryResolveLocalFilename(slot, out var filename))
             {
                 return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_SLOT_MISSING, $"Slot '{slot}' not configured.");
             }
@@ -406,7 +692,7 @@ namespace Devian
             byte[] key = null;
             byte[] iv = null;
 
-            if (_slotConfig.useEncryption && !tryGetKeyIv(out key, out iv, out var keyError))
+            if (_slotConfig.useEncryption && !tryGetLocalKeyIv(out key, out iv, out var keyError))
             {
                 return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_KEYIV, keyError);
             }
@@ -443,11 +729,6 @@ namespace Devian
         //  Private: Cloud save operations
         // ──────────────────────────────────────────────
 
-        private List<string> getCloudSlotKeys()
-        {
-            return _slotConfig.GetCloudSlotKeys();
-        }
-
         private Task<CommonResult<SaveCloudPayload>> loadCloudRecordAsync(string slot, CancellationToken ct)
         {
 #if UNITY_EDITOR
@@ -461,7 +742,7 @@ namespace Devian
                 return Task.FromResult(
                     CommonResult<SaveCloudPayload>.Failure(CommonErrorType.CLOUDSAVE_NOCLIENT, "Client not configured."));
 
-            if (!tryResolveCloudSlot(slot, out var cloudSlot))
+            if (!_slotConfig.TryResolveCloudSlot(slot, out var cloudSlot))
                 return Task.FromResult(
                     CommonResult<SaveCloudPayload>.Failure(CommonErrorType.CLOUDSAVE_SLOT_MISSING, $"Slot '{slot}' not configured."));
 
@@ -481,7 +762,7 @@ namespace Devian
                 return Task.FromResult(
                     CommonResult<bool>.Failure(CommonErrorType.CLOUDSAVE_NOCLIENT, "Client not configured."));
 
-            if (!tryResolveCloudSlot(slot, out var cloudSlot))
+            if (!_slotConfig.TryResolveCloudSlot(slot, out var cloudSlot))
                 return Task.FromResult(
                     CommonResult<bool>.Failure(CommonErrorType.CLOUDSAVE_SLOT_MISSING, $"Slot '{slot}' not configured."));
 
@@ -511,7 +792,7 @@ namespace Devian
             byte[] key = null;
             byte[] iv = null;
 
-            if (_slotConfig.useEncryption && !tryGetKeyIv(out key, out iv, out var keyError))
+            if (_slotConfig.useEncryption && !_slotConfig.TryGetKeyIv(out key, out iv, out var keyError))
             {
                 return CommonResult<bool>.Failure(CommonErrorType.CLOUDSAVE_KEYIV, keyError);
             }
@@ -553,20 +834,9 @@ namespace Devian
                 return CommonResult<SaveCloudPayload>.Success(null);
             }
 
-            byte[] key = null;
-            byte[] iv = null;
-
-            if (_slotConfig.useEncryption && !tryGetKeyIv(out key, out iv, out var keyError))
-            {
-                return CommonResult<SaveCloudPayload>.Failure(CommonErrorType.CLOUDSAVE_KEYIV, keyError);
-            }
-
-            var plain = _slotConfig.useEncryption
-                ? Crypto.DecryptAes(loaded.Payload, key, iv)
-                : loaded.Payload;
-
-            return CommonResult<SaveCloudPayload>.Success(
-                new SaveCloudPayload(loaded.Version, loaded.UpdateTime, plain, loaded.DeviceId));
+            // Payload Contract (Ciphertext-only):
+            // - 반환 SaveCloudPayload.Payload 는 저장 포맷 그대로(암호화 시 ciphertext)여야 한다.
+            return CommonResult<SaveCloudPayload>.Success(loaded);
         }
 
         private static ISaveCloudClient createDefaultClient()
@@ -649,14 +919,14 @@ namespace Devian
                 var hasCloudConnectionFailure = false;
                 var slotSet = new HashSet<string>(StringComparer.Ordinal);
 
-                var localKeys = getLocalSlotKeys();
+                var localKeys = _slotConfig.GetLocalSlotKeys();
                 for (var i = 0; i < localKeys.Count; i++)
                 {
                     var k = localKeys[i];
                     if (!string.IsNullOrWhiteSpace(k)) slotSet.Add(k);
                 }
 
-                var cloudKeys = getCloudSlotKeys();
+                var cloudKeys = _slotConfig.GetCloudSlotKeys();
                 for (var i = 0; i < cloudKeys.Count; i++)
                 {
                     var k = cloudKeys[i];
@@ -703,7 +973,14 @@ namespace Devian
 
                     if (local == null && cloud != null)
                     {
-                        var saveLocalR = await saveLocalAsync(slot, cloud.Payload, ct);
+                        var jsonR = decryptCloudPayloadToJson(cloud);
+                        if (jsonR.IsFailure)
+                        {
+                            return CommonResult<SyncResult>.Failure(
+                                new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_LOCAL_FAILED, $"Sync decrypt cloud failed. slot='{slot}'", jsonR.Error!.ToString()));
+                        }
+
+                        var saveLocalR = await saveLocalAsync(slot, jsonR.Value, ct);
                         if (saveLocalR.IsFailure)
                         {
                             return CommonResult<SyncResult>.Failure(
@@ -711,7 +988,7 @@ namespace Devian
                         }
 
                         // Re-save to cloud to update deviceId and prevent next Sync conflict.
-                        var cloudResaveR = await saveCloudAsync(slot, cloud.Payload, ct);
+                        var cloudResaveR = await saveCloudAsync(slot, jsonR.Value, ct);
                         if (cloudResaveR.IsFailure)
                         {
                             return CommonResult<SyncResult>.Failure(
@@ -727,7 +1004,14 @@ namespace Devian
                             continue;
                         }
 
-                        var saveCloudR = await saveCloudAsync(slot, local.payload, ct);
+                        var jsonR = decryptLocalPayloadToJson(local);
+                        if (jsonR.IsFailure)
+                        {
+                            return CommonResult<SyncResult>.Failure(
+                                new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_CLOUD_FAILED, $"Sync decrypt local failed. slot='{slot}'", jsonR.Error!.ToString()));
+                        }
+
+                        var saveCloudR = await saveCloudAsync(slot, jsonR.Value, ct);
                         if (saveCloudR.IsFailure)
                         {
                             return CommonResult<SyncResult>.Failure(
@@ -797,11 +1081,6 @@ namespace Devian
                 : Application.temporaryCachePath;
         }
 
-        private bool tryResolveLocalFilename(string slot, out string filename)
-        {
-            return _slotConfig.TryResolveLocalFilename(slot, out filename);
-        }
-
         internal static bool IsValidJsonFilename(string filename, out string error)
         {
             if (string.IsNullOrWhiteSpace(filename))
@@ -826,11 +1105,6 @@ namespace Devian
             return true;
         }
 
-        private bool tryResolveCloudSlot(string slot, out string cloudSlot)
-        {
-            return _slotConfig.TryResolveCloudSlot(slot, out cloudSlot);
-        }
-
         private static bool isLikelyJson(string s)
         {
             if (s == null) return true;
@@ -844,9 +1118,15 @@ namespace Devian
             return false;
         }
 
-        private bool tryGetKeyIv(out byte[] key, out byte[] iv, out string error)
+        private bool tryGetLocalKeyIv(out byte[] key, out byte[] iv, out string error)
         {
+            // Local은 device-bound (Keystore/Keychain)
+#if UNITY_EDITOR
+            // Editor는 보안 저장소가 없으므로 기존 shared key/iv 사용
             return _slotConfig.TryGetKeyIv(out key, out iv, out error);
+#else
+            return SaveLocalDeviceKeyStore.TryGetOrCreateKeyIv(out key, out iv, out error);
+#endif
         }
 
         // ──────────────────────────────────────────────

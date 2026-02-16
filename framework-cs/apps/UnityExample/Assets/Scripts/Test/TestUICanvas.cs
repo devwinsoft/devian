@@ -63,7 +63,7 @@ public class TestUICanvas : UICanvas<TestUICanvas>
         msg.Message = "Echo Message";
         GameNetManager.Proxy.SendEcho(msg);
         */
-        var sync = SaveDataManager.Instance.SyncAsync(CancellationToken.None);
+        var sync = SaveDataManager.Instance.SyncAsync("main", CancellationToken.None);
         Debug.Log(sync.Result.Value.State);
         switch (sync.Result.Value.State)
         {
