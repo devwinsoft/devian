@@ -58,13 +58,15 @@ namespace Devian
             // 2. SaveCloud init policy:
             // - Guest: never
             // - Editor: never (use SaveLocal only)
+            // Cloud init 실패는 login 실패가 아님 — cloud save만 비활성화되고 login은 성공 처리.
             if (loginType != LoginType.GuestLogin && loginType != LoginType.EditorLogin)
             {
 #if !UNITY_EDITOR
                 var initResult = await SaveDataManager.Instance._initializeCloudAsync(ct);
                 if (initResult.IsFailure)
                 {
-                    return CommonResult<bool>.Failure(initResult.Error!);
+                    UnityEngine.Debug.LogWarning(
+                        $"[AccountManager] Cloud init failed (login proceeds): {initResult.Error}");
                 }
 #endif
             }
@@ -146,17 +148,10 @@ namespace Devian
                 case LoginType.GoogleLogin:
                 {
                     // GetServerAuthCodeCredentialAsync already calls ManuallyAuthenticate,
-                    // so if we have a valid ServerAuthCode the user is already authenticated.
-                    // Only call SignInIfNeededAsync when no credential was provided (direct call).
-                    if (!string.IsNullOrEmpty(credential.ServerAuthCode))
-                    {
-                        return CommonResult<bool>.Success(true);
-                    }
-
-                    var r = await _gpgs.SignInIfNeededAsync(ct);
-                    return r == SaveCloudResult.Success
-                        ? CommonResult<bool>.Success(true)
-                        : CommonResult<bool>.Failure(CommonErrorType.LOGIN_GOOGLE_SIGNIN_FAILED, $"GPGS sign-in failed: {r}");
+                    // so the user is already authenticated regardless of ServerAuthCode.
+                    // LoginCredential.Empty() means ManuallyAuthenticate succeeded but
+                    // RequestServerSideAccess failed — this is still a valid sign-in.
+                    return CommonResult<bool>.Success(true);
                 }
 #endif
 

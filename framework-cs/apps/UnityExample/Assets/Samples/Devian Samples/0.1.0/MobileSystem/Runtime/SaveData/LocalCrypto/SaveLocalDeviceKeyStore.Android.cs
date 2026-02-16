@@ -42,7 +42,14 @@ namespace Devian
         internal static byte[] GetOrCreateSecret48()
         {
             using var cls = new AndroidJavaClass(ClassName);
-            return cls.CallStatic<byte[]>("getOrCreateSecret48");
+            // Use sbyte[] to avoid Unity JNI obsolete warnings:
+            //   "AndroidJNIHelper.GetSignature: using Byte parameters is obsolete, use SByte parameters instead"
+            //   "AndroidJNIHelper: converting from Byte array is obsolete, use SByte array instead"
+            var signed = cls.CallStatic<sbyte[]>("getOrCreateSecret48");
+            if (signed == null) return null;
+            var unsigned = new byte[signed.Length];
+            Buffer.BlockCopy(signed, 0, unsigned, 0, signed.Length);
+            return unsigned;
         }
     }
 }

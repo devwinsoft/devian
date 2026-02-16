@@ -77,7 +77,17 @@
       "Bash([ -d \"$d/SaveLocal\" ])",
       "Bash([ -f \"$f\" ])",
       "Bash(shasum:*)",
-      "Bash(dotnet build:*)"
+      "Bash(dotnet build:*)",
+      "Bash(keytool -list:*)",
+      "Bash(keytool -exportcert:*)",
+      "Bash(openssl x509:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:discussions.unity.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:developers.google.com)",
+      "WebFetch(domain:www.spacelabgames.com)",
+      "Bash(else echo \"debug.keystore not found\")",
+      "Bash(openssl dgst:*)"
     ]
   },
   "project": {

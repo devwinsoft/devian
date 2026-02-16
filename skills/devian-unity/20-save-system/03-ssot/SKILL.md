@@ -99,6 +99,17 @@ Cloud Save와 Local Save(Unity) 모두 이 문서를 따른다.
   - `isLocalOnly(LoginType)`
   - `hasAnyLocalAsync(CancellationToken)`
 
+#### Clear Slot (Hard)
+
+- `SaveDataManager.ClearSlotAsync(slot, clearCloud, ct)` 는 특정 슬롯 데이터를 삭제한다.
+  - Local 삭제는 항상 시도하며, 파일이 없어도 성공(idempotent)으로 처리한다.
+  - `clearCloud == true` 인 경우에만 cloud 삭제를 시도한다.
+- Guest/Editor(Local-only)에서는 cloud 삭제를 **절대 시도하지 않고** 조용히 skip 한다.
+- Cloud 사용 로그인에서도 cloud 초기화 실패/클라이언트 미가용인 경우, local 삭제가 이미 완료되었다면 cloud 삭제는 **조용히 skip**할 수 있다(Warning 로그만).
+- Slot→Local filename 매핑은 `SaveSlotConfig.TryResolveLocalFilename` 을 사용한다.
+- Slot→Cloud slot 매핑은 `SaveSlotConfig.TryResolveCloudSlot` 을 사용한다.
+- Cloud delete는 `ISaveCloudClient.DeleteAsync` 를 사용한다.
+
 #### Guest Local Encryption
 
 Guest Login(Firebase Anonymous) 상태에서도 Local Save 암호화는 **기기 바인딩(Device-bound)** 을 만족해야 한다.

@@ -1,0 +1,9 @@
+# ─── Google Play Games Services v2 ───
+# GMS Games 클래스의 isAuthenticated() 등 JNI 리플렉션으로 호출되는 메서드가
+# R8/ProGuard에 의해 strip/obfuscate 되지 않도록 보호한다.
+-keep class com.google.android.gms.games.** { *; }
+-keep class com.google.android.gms.common.** { *; }
+-keep class com.google.android.gms.tasks.** { *; }
+
+# GPGS plugin support
+-keep class com.google.games.bridge.** { *; }

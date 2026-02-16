@@ -24,7 +24,7 @@ public class TestUICanvas : UICanvas<TestUICanvas>
     public async void OnClick_SignIn_Google()
     {
         var login = await AccountManager.Instance.LoginAsync(LoginType.GoogleLogin, CancellationToken.None);
-        Debug.Log($"SignIn Google: {login.IsSuccess}");
+        Debug.Log($"SignIn Google: {login.IsSuccess} {(login.IsFailure ? login.Error?.ToString() : "")}");
         if (login.IsSuccess)
         {
             var sync = await SaveDataManager.Instance.SyncAsync(CancellationToken.None);
@@ -63,9 +63,15 @@ public class TestUICanvas : UICanvas<TestUICanvas>
         msg.Message = "Echo Message";
         GameNetManager.Proxy.SendEcho(msg);
         */
-        var sync = SaveDataManager.Instance.SyncAsync("main", CancellationToken.None);
-        Debug.Log(sync.Result.Value.State);
-        switch (sync.Result.Value.State)
+        var source = new CancellationTokenSource(System.TimeSpan.FromSeconds(15));
+        var sync = await SaveDataManager.Instance.SyncAsync("main", source.Token);
+        Debug.Log($"Sync state: {sync.Value?.State}");
+        if (sync.IsFailure)
+        {
+            Debug.LogWarning($"[TestUICanvas] SyncAsync failed: {sync.Error}");
+            return;
+        }
+        switch (sync.Value.State)
         {
             case SyncState.Initial:
             {
@@ -73,26 +79,28 @@ public class TestUICanvas : UICanvas<TestUICanvas>
                 data.name = "devian framework";
                 data.items.Add(new TestSaveData.TestItemData());
                 data.items[0].item_id = "devian item 001";
-                var init = SaveDataManager.Instance.SaveDataLocalAndCloudAsync("main", data, CancellationToken.None);
-                Debug.Log(init.Result.Value);
+                var init = await SaveDataManager.Instance.SaveDataLocalAndCloudAsync("main", data, source.Token);
+                Debug.Log($"SaveDataLocalAndCloud: {init.Value}");
                 break;
             }
             case SyncState.Conflict:
-                var resolve = SaveDataManager.Instance.ResolveConflictAsync("main", SyncResolution.UseLocal, CancellationToken.None);
-                Debug.Log(resolve.Result.Value);
+                var resolve = await SaveDataManager.Instance.ResolveConflictAsync("main", SyncResolution.UseLocal, source.Token);
+                Debug.Log($"ResolveConflict: {resolve.Value}");
                 break;
             case SyncState.ConnectionFailed:
                 Debug.LogWarning("[TestUICanvas] Cloud connection failed and no local data exists. Retry or check connection.");
                 return;
             default:
-                Debug.Log(sync.Result.Value.LocalPayload);
-                Debug.Log(sync.Result.Value.CloudPayload);
+                Debug.Log($"Sync success: {sync.IsSuccess}");
+                Debug.Log($"LocalPayload: {sync.Value.LocalPayload?.payload}");
+                Debug.Log($"CloudPayload: {sync.Value.CloudPayload?.Payload}");
                 break;
         }
     }
     
     public void OnClick_DisConnect()
     {
-        GameNetManager.Instance.Disconnect();
+        //GameNetManager.Instance.Disconnect();
+        SaveDataManager.Instance.ClearSlotAsync("main", CancellationToken.None);
     }
 }

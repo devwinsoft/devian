@@ -410,6 +410,96 @@ namespace Devian
         }
 
         // ──────────────────────────────────────────────
+        //  Public: Clear Slot API
+        // ──────────────────────────────────────────────
+
+        public Task<CommonResult<bool>> ClearSlotAsync(string slot, CancellationToken ct)
+        {
+            return ClearSlotAsync(slot, clearCloud: true, ct);
+        }
+
+        public async Task<CommonResult<bool>> ClearSlotAsync(string slot, bool clearCloud, CancellationToken ct)
+        {
+            if (ct.IsCancellationRequested)
+                return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_CANCELLED, "Cancelled.");
+
+            if (string.IsNullOrWhiteSpace(slot))
+                return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_SLOT_EMPTY, "Slot is empty.");
+
+            // 1) Local delete (idempotent)
+            if (!_slotConfig.TryResolveLocalFilename(slot, out var filename))
+            {
+                return CommonResult<bool>.Failure(
+                    CommonErrorType.LOCALSAVE_FILENAME_INVALID,
+                    $"Filename resolve failed. slot='{slot}'.");
+            }
+
+            try
+            {
+                var root = getRootPath();
+                if (string.IsNullOrWhiteSpace(root))
+                {
+                    return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_PATH_EMPTY, "Root path is empty.");
+                }
+
+                var path = System.IO.Path.Combine(root, filename);
+                if (System.IO.File.Exists(path))
+                {
+                    System.IO.File.Delete(path);
+                }
+            }
+            catch (Exception ex)
+            {
+                // NOTE: dedicated LOCALSAVE_DELETE 가 없으므로 LOCALSAVE_WRITE 재사용(파일 I/O 실패)
+                return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_WRITE, $"Local delete failed. {ex.Message}");
+            }
+
+            // 2) Cloud delete (optional)
+            if (!clearCloud)
+                return CommonResult<bool>.Success(true);
+
+            var loginType = AccountManager.Instance._getCurrentLoginType();
+            if (isLocalOnly(loginType))
+            {
+                // Guest/Editor: cloud is silently ignored
+                return CommonResult<bool>.Success(true);
+            }
+
+            // Initialize cloud; if failed, silently skip (policy: local can proceed)
+            var init = await _initializeCloudAsync(ct);
+            if (init.IsFailure)
+            {
+                UnityEngine.Debug.LogWarning(
+                    $"[SaveDataManager] ClearSlotAsync: cloud init failed, skipping cloud delete. slot='{slot}' err={init.Error}");
+                return CommonResult<bool>.Success(true);
+            }
+
+            if (_cloudClient == null || !_cloudClient.IsAvailable)
+            {
+                UnityEngine.Debug.LogWarning(
+                    $"[SaveDataManager] ClearSlotAsync: cloud client not available, skipping cloud delete. slot='{slot}'");
+                return CommonResult<bool>.Success(true);
+            }
+
+            if (!_slotConfig.TryResolveCloudSlot(slot, out var cloudSlot))
+            {
+                return CommonResult<bool>.Failure(
+                    CommonErrorType.CLOUDSAVE_SLOT_MISSING,
+                    $"Cloud slot resolve failed. slot='{slot}'.");
+            }
+
+            var del = await _cloudClient.DeleteAsync(cloudSlot, ct);
+            if (del != SaveCloudResult.Success)
+            {
+                // Cloud delete 실패는 "로컬은 이미 삭제됨" 정책상 실패로 올리지 않고 warn 처리(최소 변경).
+                UnityEngine.Debug.LogWarning(
+                    $"[SaveDataManager] ClearSlotAsync: cloud delete failed. slot='{slot}' cloudSlot='{cloudSlot}' result={del}");
+            }
+
+            return CommonResult<bool>.Success(true);
+        }
+
+        // ──────────────────────────────────────────────
         //  Internal: Decrypt payload to json (source-aware)
         // ──────────────────────────────────────────────
 
