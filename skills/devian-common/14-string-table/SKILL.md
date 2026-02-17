@@ -20,8 +20,8 @@ AppliesTo: v10
 - **런타임**: DownloadManager 다운로드 → TableManager 로드/캐시/조회 → ST_{TableName} wrapper
 
 저장 규약 참조:
-- **NDJSON 저장**: `skills/devian-data/34-ndjson-storage/SKILL.md`
-- **pb64 저장**: `skills/devian-data/35-pb64-storage/SKILL.md`
+- **NDJSON 저장**: `skills/devian-builder/34-ndjson-storage/SKILL.md`
+- **pb64 저장**: `skills/devian-builder/35-pb64-storage/SKILL.md`
 
 ---
 
@@ -178,7 +178,7 @@ Label:   string/ndjson/Korean/UIText
 
 ## ndjson 포맷 규칙
 
-**NDJSON 저장 규약은 `skills/devian-data/34-ndjson-storage/SKILL.md`를 따른다.**
+**NDJSON 저장 규약은 `skills/devian-builder/34-ndjson-storage/SKILL.md`를 따른다.**
 
 ### String Table ndjson 필드 구조
 
@@ -198,7 +198,7 @@ Label:   string/ndjson/Korean/UIText
 
 ## pb64 포맷 규칙 (청크 기반)
 
-**pb64 저장(확장자/포장)은 `skills/devian-data/35-pb64-storage/SKILL.md`를 따르며, Unity 소비를 위해 `.asset`로 저장한다.**
+**pb64 저장(확장자/포장)은 `skills/devian-builder/35-pb64-storage/SKILL.md`를 따르며, Unity 소비를 위해 `.asset`로 저장한다.**
 
 ### 페이로드 구조
 
@@ -461,8 +461,8 @@ public sealed class {TableName}_ID_Drawer : BaseEditorID_Drawer<{TableName}IdSel
 ## Reference
 
 - Parent: `skills/devian-common/00-overview/SKILL.md`
-- NDJSON 저장: `skills/devian-data/34-ndjson-storage/SKILL.md`
-- pb64 저장: `skills/devian-data/35-pb64-storage/SKILL.md`
-- Related: `skills/devian-unity/10-base-system/12-download-manager/SKILL.md` (다운로드 연동)
-- Related: `skills/devian-unity/10-base-system/10-asset-manager/SKILL.md` (캐시 금지 규칙)
-- Related: `skills/devian-data/32-json-row-io/SKILL.md` (일반 테이블 포맷)
+- NDJSON 저장: `skills/devian-builder/34-ndjson-storage/SKILL.md`
+- pb64 저장: `skills/devian-builder/35-pb64-storage/SKILL.md`
+- Related: `skills/devian-unity/10-foundation/19-download-manager/SKILL.md` (다운로드 연동)
+- Related: `skills/devian-unity/10-foundation/18-asset-manager/SKILL.md` (캐시 금지 규칙)
+- Related: `skills/devian-builder/32-json-row-io/SKILL.md` (일반 테이블 포맷)

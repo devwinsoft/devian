@@ -358,6 +358,6 @@ UICanvas.CreateFrame<FRAME>(prefabName, parent)
 
 ## Reference
 
-- **Singleton**: [10-foundation/14-singleton/SKILL.md](../../10-foundation/14-singleton/SKILL.md)
-- **Pool Factories**: [10-foundation/20-pool-factories/SKILL.md](../../10-foundation/20-pool-factories/SKILL.md)
+- **Singleton**: [10-foundation/15-singleton/SKILL.md](../../10-foundation/15-singleton/SKILL.md)
+- **Pool Factories**: [10-foundation/21-pool-factories/SKILL.md](../../10-foundation/21-pool-factories/SKILL.md)
 - **UIManager**: [10-ui-manager/SKILL.md](../10-ui-manager/SKILL.md)

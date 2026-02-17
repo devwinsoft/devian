@@ -28,11 +28,13 @@
       ]
     },
     "Sound": {
-      "contractDir": "Domains/Sound/contracts",
-      "contractFiles": [
-        "*.json"
-      ],
       "tableDir": "Domains/Sound/tables",
+      "tableFiles": [
+        "*.xlsx"
+      ]
+    },
+    "Purchase": {
+      "tableDir": "Domains/Purchase/tables",
       "tableFiles": [
         "*.xlsx"
       ]

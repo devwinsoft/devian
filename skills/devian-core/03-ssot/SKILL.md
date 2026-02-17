@@ -20,8 +20,7 @@ SSOT: this file
 | Category | SSOT | 범위 |
 |----------|------|------|
 | **Tools** | [devian-tools/03-ssot](../../devian-tools/03-ssot/SKILL.md) | 빌드 파이프라인, Phase, Validate, tempDir, Clean+Copy, TS Workspace |
-| **Data** | [devian-data/03-ssot](../../devian-data/03-ssot/SKILL.md) | tableConfig, Tables, NDJSON, pb64, DATA 산출물 |
-| **Protocol** | [devian-protocol/03-ssot](../../devian-protocol/03-ssot/SKILL.md) | Protocol Spec, Opcode/Tag, PROTOCOL 산출물, Protocol UPM |
+| **Builder** | [devian-builder/03-ssot](../../devian-builder/03-ssot/SKILL.md) | tableConfig, Tables, NDJSON, pb64, DATA 산출물, Protocol Spec, Opcode/Tag, Protocol UPM |
 | **Unity** | [devian-unity/03-ssot](../../devian-unity/03-ssot/SKILL.md) | upmConfig, UPM Sync, Foundation, samplePackages, Unity Gate |
 
 ---
@@ -213,8 +212,8 @@ finalConfig = deepMerge(config.json, input.json)
 - **공통 정책 정본:** 이 문서 (`skills/devian-core/03-ssot/SKILL.md`)
 - **카테고리 SSOT:**
   - [Tools SSOT](../../devian-tools/03-ssot/SKILL.md)
-  - [Data SSOT](../../devian-data/03-ssot/SKILL.md)
-  - [Protocol SSOT](../../devian-protocol/03-ssot/SKILL.md)
+  - [Data SSOT](../../devian-builder/03-ssot/SKILL.md)
+  - [Protocol SSOT](../../devian-builder/03-ssot/SKILL.md)
   - [Unity SSOT](../../devian-unity/03-ssot/SKILL.md)
 - **빌드 스키마 정본:** `{buildInputJson}` (예: `input/input_common.json`)
 - **동작 정본:** 런타임/제너레이터 코드

@@ -117,6 +117,6 @@ UIManager.messageSystem.UnSubcribe(ownerEntityId);
 
 ## Reference
 
-- **MessageSystem**: [21-message-system/SKILL.md](../../10-foundation/21-message-system/SKILL.md)
+- **MessageSystem**: [22-message-system/SKILL.md](../../10-foundation/22-message-system/SKILL.md)
 - **UIManager**: [10-ui-manager/SKILL.md](../10-ui-manager/SKILL.md)
 - **EntityId**: `UnityEngine.EntityId` (Unity 내장)

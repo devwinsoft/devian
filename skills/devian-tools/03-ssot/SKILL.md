@@ -148,13 +148,13 @@ TS 산출물의 반영 위치를 관리하는 설정:
 
 도메인/프로토콜 동적 빌드 정책 (입력 스펙, 설정 스펙, 산출물 규칙):
 
-> **정책 문서:** [skills/devian-tools/20-build-domain](../20-build-domain/SKILL.md)
+> **정책 문서:** [skills/devian-builder/20-build-domain](../../devian-builder/20-build-domain/SKILL.md)
 
 ### 빌드 에러 리포팅
 
 빌드 실패 시 에러 출력 규격 및 로그 파일 규칙:
 
-> **정책 문서:** [skills/devian-tools/21-build-error-reporting](../21-build-error-reporting/SKILL.md)
+> **정책 문서:** [skills/devian-builder/21-build-error-reporting](../../devian-builder/21-build-error-reporting/SKILL.md)
 
 ---
 

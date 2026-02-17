@@ -163,7 +163,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 58edb072859a9475285a3a211485df5b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Samples.CloudClientSystem::Devian.VirtualGamepadDriver
+  m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.VirtualGamepadDriver
 --- !u!114 &230484287148134745
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -175,7 +175,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 533b998bd10484f308a927b24cb6122e, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Samples.CloudClientSystem::Devian.AccountManager
+  m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.AccountManager
 --- !u!114 &3514971825711784064
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -187,7 +187,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 581dcce1cc97b43d1a6f1e4675722532, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Samples.CloudClientSystem::Devian.SaveDataManager
+  m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.SaveDataManager
   _localRoot: 0
   _slotConfig:
     useEncryption: 1

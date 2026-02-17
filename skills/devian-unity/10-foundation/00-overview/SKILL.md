@@ -29,7 +29,7 @@ Unity 런타임 컴포넌트(비-UI)의 스킬 인덱스와 진입점이다.
 | Topic | Link | Notes |
 | --- | --- | --- |
 | Policy | [01-policy](../01-policy/SKILL.md) | Effect 시스템 정책 |
-| SSOT | [26-effect-system](../26-effect-system/SKILL.md) | Effect 시스템 정본(경로/규칙/링크) |
-| CommonEffectManager | [28-common-effect-manager](../28-common-effect-manager/SKILL.md) | 공통 이펙트 |
-| MaterialEffectController | [27-material-effect-controller](../27-material-effect-controller/SKILL.md) | 머티리얼 스위치 |
-| MaterialEffectId | [12-material-effect-id](../12-material-effect-id/SKILL.md) | MATERIAL_EFFECT_ID |
+| SSOT | [27-effect-system](../27-effect-system/SKILL.md) | Effect 시스템 정본(경로/규칙/링크) |
+| CommonEffectManager | [29-common-effect-manager](../29-common-effect-manager/SKILL.md) | 공통 이펙트 |
+| MaterialEffectController | [28-material-effect-controller](../28-material-effect-controller/SKILL.md) | 머티리얼 스위치 |
+| MaterialEffectId | [13-material-effect-id](../13-material-effect-id/SKILL.md) | MATERIAL_EFFECT_ID |

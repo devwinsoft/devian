@@ -733,7 +733,7 @@ namespace Devian.Protocol.Game
 
         // ============================================================================
         // Pooling API - RentDecodePooled / ReturnPooled
-        // SSOT: skills/devian-protocol/40-codegen-protocol/SKILL.md
+        // SSOT: skills/devian-builder/40-codegen-protocol/SKILL.md
         // ============================================================================
 
         private static readonly PacketPool<Ping> _pool_Ping = new PacketPool<Ping>(256);

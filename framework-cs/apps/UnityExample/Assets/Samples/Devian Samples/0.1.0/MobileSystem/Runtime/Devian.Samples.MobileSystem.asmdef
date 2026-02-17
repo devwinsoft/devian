@@ -1,0 +1,21 @@
+{
+  "name": "Devian.Samples.MobileSystem",
+  "rootNamespace": "Devian",
+  "references": [
+    "Devian.Unity",
+    "Devian.Core",
+    "Devian.Domain.Common",
+    "Devian.Samples.PurchaseManager",
+    "Unity.InputSystem",
+    "Devian.UI"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

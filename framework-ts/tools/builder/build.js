@@ -424,7 +424,7 @@ class DevianToolBuilder {
                             }
 
                             // Unity TextAsset .asset file (pk 옵션 있는 테이블만)
-                            // SSOT: skills/devian-data/32-json-row-io/SKILL.md - pb64 export 규칙
+                            // SSOT: skills/devian-builder/32-json-row-io/SKILL.md - pb64 export 규칙
                             const assetResult = generateTableAsset(table);
                             if (assetResult) {
                                 fs.writeFileSync(path.join(stagingPb64, `${assetResult.tableName}.asset`), assetResult.yaml);
@@ -507,7 +507,7 @@ class DevianToolBuilder {
                                     fs.writeFileSync(ndjsonPath, ndjsonContent);
                                     
                                     // Generate pb64 as Unity TextAsset .asset
-                                    // SSOT: skills/devian-data/35-pb64-storage/SKILL.md
+                                    // SSOT: skills/devian-builder/35-pb64-storage/SKILL.md
                                     const pb64Text = generateStringPb64(entries);
                                     const assetYaml = generateStringPb64TextAssetYaml(strTable.tableName, pb64Text);
                                     const assetPath = path.join(strPb64Dir, `${strTable.tableName}.asset`);
@@ -1080,7 +1080,7 @@ class DevianToolBuilder {
         const protocolDir = this.resolvePath(groupConfig.protocolDir);
         const csProjectName = `Devian.Protocol.${groupName}`;
 
-        // Staging paths (Generated-only: SSOT skills/devian-protocol/03-ssot/SKILL.md)
+        // Staging paths (Generated-only: SSOT skills/devian-builder/03-ssot/SKILL.md)
         const stagingCsGenerated = path.join(this.tempDir, csProjectName, 'cs', 'Generated');
         // Protocol TS staging: {tempDir}/protocol/{groupName}/ts/Generated (Domain과 분리)
         const stagingTsGenerated = path.join(this.tempDir, 'protocol', groupName, 'ts', 'Generated');
@@ -1131,7 +1131,7 @@ class DevianToolBuilder {
             fs.writeFileSync(path.join(stagingCsGenerated, `${protocolName}.g.cs`), csCode);
 
             // NOTE: Handlers generation removed - use Stub directly or create custom partial class
-            // SSOT: skills/devian-protocol/40-codegen-protocol/SKILL.md
+            // SSOT: skills/devian-builder/40-codegen-protocol/SKILL.md
 
             // TypeScript Protocol (Generated-only)
             const tsCode = generateTypeScriptProtocol(spec, protocolName, groupName);
@@ -1139,7 +1139,7 @@ class DevianToolBuilder {
         }
 
         // NOTE: .csproj 생성 제거 (수기/고정 파일, 빌더가 생성/수정 금지)
-        // SSOT: skills/devian-protocol/03-ssot/SKILL.md
+        // SSOT: skills/devian-builder/03-ssot/SKILL.md
 
         // Generate ServerRuntime.g.ts for TypeScript (if both inbound/outbound exist)
         const serverRuntimeCode = generateServerRuntime(groupName, protocolInfos);
@@ -1158,10 +1158,10 @@ class DevianToolBuilder {
         }
 
         // NOTE: WsClient generation removed - use GameNetManager + Proxy.Connect() pattern instead
-        // SSOT: skills/devian-protocol/40-codegen-protocol/SKILL.md
+        // SSOT: skills/devian-builder/40-codegen-protocol/SKILL.md
 
         // NOTE: index.ts 생성 제거 (수기/고정 파일, 빌더가 생성/수정 금지)
-        // SSOT: skills/devian-protocol/03-ssot/SKILL.md
+        // SSOT: skills/devian-builder/03-ssot/SKILL.md
 
         // NOTE: generateProtocolUpmScaffold 호출 제거 (package.json/asmdef 수기 파일)
         // UPM은 copyProtocolGroupToTargets에서 Generated만 반영
@@ -1279,7 +1279,7 @@ class DevianToolBuilder {
             }
         }
 
-        // Staging paths (Generated-only: SSOT skills/devian-protocol/03-ssot/SKILL.md)
+        // Staging paths (Generated-only: SSOT skills/devian-builder/03-ssot/SKILL.md)
         const stagingCsGenerated = path.join(this.tempDir, csProjectName, 'cs', 'Generated');
         // Protocol TS staging: {tempDir}/protocol/{groupName}/ts/Generated (Domain과 분리)
         const stagingTsGenerated = path.join(this.tempDir, 'protocol', groupName, 'ts', 'Generated');

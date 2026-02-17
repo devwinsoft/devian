@@ -1,4 +1,4 @@
-// SSOT: skills/devian-data/32-json-row-io/SKILL.md
+// SSOT: skills/devian-builder/32-json-row-io/SKILL.md
 // PB64 Loader with DVGB gzip block container support
 
 using System;

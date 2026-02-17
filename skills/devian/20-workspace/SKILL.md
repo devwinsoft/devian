@@ -97,4 +97,4 @@ npm install
 
 - Archive: `skills/devian-tools/90-project-archive/SKILL.md`
 - SSOT: `skills/devian-core/03-ssot/SKILL.md`
-- Build: `skills/devian-tools/20-build-domain/SKILL.md`
+- Build: `skills/devian-builder/20-build-domain/SKILL.md`

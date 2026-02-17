@@ -18,6 +18,14 @@
         "com.devian.domain.sound": "0.1.0"
       }
     },
+    "com.devian.domain.purchase": {
+      "version": "file:com.devian.domain.purchase",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.devian.foundation": "0.1.0"
+      }
+    },
     "com.devian.domain.sound": {
       "version": "file:com.devian.domain.sound",
       "depth": 0,

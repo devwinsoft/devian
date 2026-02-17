@@ -1158,7 +1158,7 @@ function lowerFirst(str) {
 function generatePoolingApi(lines, messages) {
     lines.push('        // ============================================================================');
     lines.push('        // Pooling API - RentDecodePooled / ReturnPooled');
-    lines.push('        // SSOT: skills/devian-protocol/40-codegen-protocol/SKILL.md');
+    lines.push('        // SSOT: skills/devian-builder/40-codegen-protocol/SKILL.md');
     lines.push('        // ============================================================================');
     lines.push('');
 

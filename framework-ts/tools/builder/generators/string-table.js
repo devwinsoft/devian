@@ -223,7 +223,7 @@ export function parseStringTablesFromXlsx(filePath) {
 /**
  * Generate ndjson content for a string table
  * Format: one JSON object per line {"id":"...","text":"..."}
- * SSOT: skills/devian-data/34-ndjson-storage/SKILL.md
+ * SSOT: skills/devian-builder/34-ndjson-storage/SKILL.md
  * @param {Map<string, string>} entries - Map of id -> text
  * @returns {string}
  */
@@ -287,7 +287,7 @@ export { SYSTEM_LANGUAGE_ENUM };
 
 // ============================================================================
 // Unity TextAsset YAML Generation for String Table pb64
-// SSOT: skills/devian-data/35-pb64-storage/SKILL.md
+// SSOT: skills/devian-builder/35-pb64-storage/SKILL.md
 // ============================================================================
 
 /**

@@ -1,0 +1,13 @@
+{
+  "name": "com.devian.domain.purchase",
+  "version": "0.1.0",
+  "displayName": "Devain Domain Purchase",
+  "description": "Devian.Domain.Purchase runtime for Unity (source)",
+  "unity": "2021.3",
+  "author": {
+    "name": "Kim, Hyong Joon"
+  },
+  "dependencies": {
+    "com.devian.foundation": "0.1.0"
+  }
+}

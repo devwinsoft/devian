@@ -25,6 +25,6 @@ The Single Source of Truth (SSOT) is located at:
 |-------|--------|
 | **devian** | `skills/devian/SKILL.md` — 공통 인덱스, 용어, workspace |
 | **tools** | `skills/devian-tools/01-policy/SKILL.md` |
-| **data** | `skills/devian-data/01-policy/SKILL.md` |
-| **protocol** | `skills/devian-protocol/01-policy/SKILL.md` |
+| **data** | `skills/devian-builder/01-policy/SKILL.md` |
+| **protocol** | `skills/devian-builder/01-policy/SKILL.md` |
 | **unity** | `skills/devian-unity/01-policy/SKILL.md` |

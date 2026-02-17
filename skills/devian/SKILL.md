@@ -32,10 +32,9 @@ AppliesTo: v10
 |----------|------|------|
 | **Root** | [devian-core/03-ssot](../devian-core/03-ssot/SKILL.md) | 공통 용어, 플레이스홀더, 입력 분리, 머지 규칙 |
 | **Tools** | [devian-tools/03-ssot](../devian-tools/03-ssot/SKILL.md) | 빌드 파이프라인, Phase, Validate, tempDir |
-| **Data** | [devian-data/03-ssot](../devian-data/03-ssot/SKILL.md) | tableConfig, Tables, NDJSON, pb64 |
-| **Protocol** | [devian-protocol/03-ssot](../devian-protocol/03-ssot/SKILL.md) | Protocol Spec, Opcode/Tag, Protocol UPM |
+| **Builder** | [devian-builder/03-ssot](../devian-builder/03-ssot/SKILL.md) | tableConfig, Tables, NDJSON, pb64, Protocol Spec, Opcode/Tag, Protocol UPM |
 | **Unity** | [devian-unity/03-ssot](../devian-unity/03-ssot/SKILL.md) | upmConfig, UPM Sync, Foundation |
-| **Purchase System** | [devian-unity/30-purchase-system/03-ssot](../devian-unity/30-purchase-system/03-ssot/SKILL.md) | Unity IAP + 결제 검증(Functions) + 멱등/구독 상태(Firestore) |
+| **Purchase System** | [devian-unity/90-samples/30-purchase-system/03-ssot](../devian-unity/90-samples/30-purchase-system/03-ssot/SKILL.md) | Unity IAP + 결제 검증(Functions) + 멱등/구독 상태(Firestore) |
 
 ---
 
@@ -43,15 +42,15 @@ AppliesTo: v10
 
 | 목적 | 문서 |
 |------|------|
-| 빌드 실행하기 | [skills/devian-tools/20-build-domain](../devian-tools/20-build-domain/SKILL.md) |
-| 빌드 에러 이해하기 | [skills/devian-tools/21-build-error-reporting](../devian-tools/21-build-error-reporting/SKILL.md) |
+| 빌드 실행하기 | [skills/devian-builder/20-build-domain](../devian-builder/20-build-domain/SKILL.md) |
+| 빌드 에러 이해하기 | [skills/devian-builder/21-build-error-reporting](../devian-builder/21-build-error-reporting/SKILL.md) |
 | 아카이브/배포하기 | [skills/devian-tools/90-project-archive](../devian-tools/90-project-archive/SKILL.md) |
-| 테이블 작성하기 | [skills/devian-data/30-table-authoring-rules](../devian-data/30-table-authoring-rules/SKILL.md) |
-| NDJSON/Row IO 이해하기 | [skills/devian-data/32-json-row-io](../devian-data/32-json-row-io/SKILL.md) |
-| ContractGen 구현 보기 | [skills/devian-data/43-contractgen-implementation](../devian-data/43-contractgen-implementation/SKILL.md) |
-| 프로토콜 코드젠 보기 | [skills/devian-protocol/40-codegen-protocol](../devian-protocol/40-codegen-protocol/SKILL.md) |
+| 테이블 작성하기 | [skills/devian-builder/30-table-authoring-rules](../devian-builder/30-table-authoring-rules/SKILL.md) |
+| NDJSON/Row IO 이해하기 | [skills/devian-builder/32-json-row-io](../devian-builder/32-json-row-io/SKILL.md) |
+| ContractGen 구현 보기 | [skills/devian-builder/43-contractgen-implementation](../devian-builder/43-contractgen-implementation/SKILL.md) |
+| 프로토콜 코드젠 보기 | [skills/devian-builder/40-codegen-protocol](../devian-builder/40-codegen-protocol/SKILL.md) |
 | Unity 정책 확인하기 | [skills/devian-unity/01-policy](../devian-unity/01-policy/SKILL.md) |
-| 샘플 작성하기 | [skills/devian-unity/08-samples-authoring-guide](../devian-unity/08-samples-authoring-guide/SKILL.md) |
+| 샘플 작성하기 | [skills/devian-unity/90-samples/08-samples-authoring-guide](../devian-unity/90-samples/08-samples-authoring-guide/SKILL.md) |
 
 ---
 
@@ -61,9 +60,8 @@ AppliesTo: v10
 |-------|----------|--------|------|------|
 | **devian** | [00-overview](./00-overview/SKILL.md) | [01-policy](./01-policy/SKILL.md) | — | 공통 인덱스, 용어, workspace |
 | **devian-core** | [00-overview](../devian-core/00-overview/SKILL.md) | [01-policy](../devian-core/01-policy/SKILL.md) | [03-ssot](../devian-core/03-ssot/SKILL.md) | Root SSOT, 스킬 규격, 런타임 |
-| **devian-tools** | [00-overview](../devian-tools/00-overview/SKILL.md) | [01-policy](../devian-tools/01-policy/SKILL.md) | [03-ssot](../devian-tools/03-ssot/SKILL.md) | 빌더, 아카이브, CLI 도구 |
-| **devian-data** | [00-overview](../devian-data/00-overview/SKILL.md) | [01-policy](../devian-data/01-policy/SKILL.md) | [03-ssot](../devian-data/03-ssot/SKILL.md) | 테이블, 계약, NDJSON, PB64 |
-| **devian-protocol** | [00-overview](../devian-protocol/00-overview/SKILL.md) | [01-policy](../devian-protocol/01-policy/SKILL.md) | [03-ssot](../devian-protocol/03-ssot/SKILL.md) | 프로토콜 코드젠, Opcode |
+| **devian-tools** | [00-overview](../devian-tools/00-overview/SKILL.md) | [01-policy](../devian-tools/01-policy/SKILL.md) | [03-ssot](../devian-tools/03-ssot/SKILL.md) | 아카이브, CLI 도구 |
+| **devian-builder** | [00-overview](../devian-builder/00-overview/SKILL.md) | [01-policy](../devian-builder/01-policy/SKILL.md) | [03-ssot](../devian-builder/03-ssot/SKILL.md) | 빌드, 테이블, 계약, NDJSON, PB64, 프로토콜 코드젠, 에러 리포팅 |
 | **devian-common** | [00-overview](../devian-common/00-overview/SKILL.md) | [01-policy](../devian-common/01-policy/SKILL.md) | — | Common 도메인, Feature 모듈 |
 | **devian-unity** | [00-overview](../devian-unity/00-overview/SKILL.md) | [01-policy](../devian-unity/01-policy/SKILL.md) | [03-ssot](../devian-unity/03-ssot/SKILL.md) | Unity UPM, 컴포넌트 |
 | **devian-examples** | [00-overview](../devian-examples/00-overview/SKILL.md) | [01-policy](../devian-examples/01-policy/SKILL.md) | — | 예제 도메인/프로토콜 |

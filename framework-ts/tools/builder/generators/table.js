@@ -346,7 +346,7 @@ export function parseXlsx(filePath) {
     const tables = [];
     
     // Track codeTableName to detect duplicates
-    // SSOT: skills/devian-data/42-tablegen-implementation/SKILL.md
+    // SSOT: skills/devian-builder/42-tablegen-implementation/SKILL.md
     const codeTableNameMap = new Map(); // codeTableName -> [sheetFullName, ...]
 
     for (const sheetName of workbook.SheetNames) {
@@ -387,7 +387,7 @@ export function parseXlsx(filePath) {
 function parseSheet(sheet, sheetName) {
     const range = XLSX.utils.decode_range(sheet['!ref'] || 'A1');
     
-    // SSOT: skills/devian-data/42-tablegen-implementation/SKILL.md
+    // SSOT: skills/devian-builder/42-tablegen-implementation/SKILL.md
     // {TableName}@{Description} support:
     // - codeTableName = part before @ (used for C# identifiers)
     // - sheetName = original full name (preserved for reference)
@@ -560,7 +560,7 @@ function getCellValue(sheet, row, col) {
 /**
  * Parse options string (comma-separated key:value pairs or pk flag)
  *
- * SSOT: skills/devian-data/30-table-authoring-rules/SKILL.md
+ * SSOT: skills/devian-builder/30-table-authoring-rules/SKILL.md
  * 
  * Supported formats:
  * - pk (flag) - PrimaryKey, treated as pk:true
@@ -1382,7 +1382,7 @@ function capitalize(str) {
 /**
  * Convert a table row to ordered JSON object
  * Shared helper for NDJSON and Asset generation (avoids duplication)
- * SSOT: skills/devian-data/32-json-row-io/SKILL.md
+ * SSOT: skills/devian-builder/32-json-row-io/SKILL.md
  * @param {Object} row - Row data
  * @param {Array} fields - Field definitions from table
  * @returns {Object} Ordered row object ready for JSON.stringify
@@ -1403,7 +1403,7 @@ function rowToOrderedJson(row, fields) {
 
 /**
  * Build export rows with PK validation
- * SSOT: skills/devian-data/32-json-row-io/SKILL.md - PK Validation
+ * SSOT: skills/devian-builder/32-json-row-io/SKILL.md - PK Validation
  * 
  * Rules:
  * - primaryKey가 정의되지 않은 테이블은 export 하지 않는다
@@ -1464,13 +1464,13 @@ export function generateTableData(table) {
         lines.push(JSON.stringify(orderedRow));
     }
 
-    // SSOT: skills/devian-data/34-ndjson-storage/SKILL.md
+    // SSOT: skills/devian-builder/34-ndjson-storage/SKILL.md
     return { data: encodeNdjsonFromLines(lines), rowCount: rows.length };
 }
 
 // ============================================================================
 // Unity TextAsset (.asset) Generator for Tables with PK
-// SSOT: skills/devian-data/32-json-row-io/SKILL.md
+// SSOT: skills/devian-builder/32-json-row-io/SKILL.md
 // Format: Unity TextAsset YAML wrapping pb64 binary data (gzip block container)
 // ============================================================================
 
@@ -1633,7 +1633,7 @@ TextAsset:
 
 /**
  * Generate Unity TextAsset .asset file for a table (table-level, single file)
- * SSOT: skills/devian-data/32-json-row-io/SKILL.md - pb64 export 규칙
+ * SSOT: skills/devian-builder/32-json-row-io/SKILL.md - pb64 export 규칙
  * 
  * Rules:
  * - Only tables with pk option (table.keyField exists) are exported
@@ -1687,7 +1687,7 @@ export function generateTableAsset(table) {
 
 // ============================================================================
 // Enum Generation (gen: option)
-// SSOT: skills/devian-data/45-tablegen-enumgen/SKILL.md
+// SSOT: skills/devian-builder/45-tablegen-enumgen/SKILL.md
 // ============================================================================
 
 const IDENTIFIER_REGEX = /^[A-Za-z_][A-Za-z0-9_]*$/;
@@ -1695,7 +1695,7 @@ const IDENTIFIER_REGEX = /^[A-Za-z_][A-Za-z0-9_]*$/;
 /**
  * Collect enum generation specs from tables
  * 
- * Rules (SSOT: skills/devian-data/45-tablegen-enumgen/SKILL.md):
+ * Rules (SSOT: skills/devian-builder/45-tablegen-enumgen/SKILL.md):
  * - gen column = PK column (same column, must have pk)
  * - gen column value = enum member NAME
  * - enum member VALUE = deterministic auto-assignment (name sorted, 0..N-1)
