@@ -1,4 +1,4 @@
-# 10-samples-network
+# 40-samples-network
 
 > **패키지:** com.devian.samples
 > **샘플명:** Network
@@ -374,7 +374,7 @@ Session connected
 
 ## 12. 참고
 
-- 정책 문서: `skills/devian-unity/90-samples/01-policy/SKILL.md`
+- 정책 문서: `skills/devian-examples/01-policy/SKILL.md`
 - **Core/Net 정본**: `com.devian.foundation/Runtime/Module/Net/`
 - NetClient/NetWsClient: `skills/devian-core/72-network-ws-client/SKILL.md`
 - Protocol 코드젠: `skills/devian-builder/41-codegen-protocol-csharp-ts/SKILL.md`

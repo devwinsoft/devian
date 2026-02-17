@@ -2,7 +2,7 @@
   "name": "Devian.Purchase.Store.Apple",
   "rootNamespace": "Devian",
   "references": [
-    "Devian.Samples.PurchaseManager"
+    "Devian.Samples.MobileSystem"
   ],
   "includePlatforms": [ "iOS", "tvOS" ],
   "excludePlatforms": [],

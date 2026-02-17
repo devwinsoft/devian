@@ -3,7 +3,6 @@
 Unity 샘플 프로젝트 작성 가이드 및 샘플들을 담당한다.
 
 - **Samples Authoring**: Unity 샘플 작성 규칙
-- **Network Samples**: WebSocket 네트워크 샘플
 
 ---
 
@@ -12,9 +11,8 @@ Unity 샘플 프로젝트 작성 가이드 및 샘플들을 담당한다.
 | Document | Description |
 |----------|-------------|
 | [01-policy](../01-policy/SKILL.md) | Unity Samples 그룹 정책 |
-| [08-samples-authoring-guide](../08-samples-authoring-guide/SKILL.md) | 샘플 작성 가이드 |
-| [09-samples-creation](../09-samples-creation/SKILL.md) | Samples~ 생성 절차(체크리스트) |
-| [10-samples-network](../10-samples-network/SKILL.md) | 네트워크 샘플 |
+| [08-samples-authoring-guide](../../08-samples-authoring-guide/SKILL.md) | 샘플 작성 가이드 |
+| [09-samples-creation](../../09-samples-creation/SKILL.md) | Samples~ 생성 절차(체크리스트) |
 
 ---
 

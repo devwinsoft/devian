@@ -216,4 +216,4 @@ Hierarchy 예시:
 - 입력 관리: `../../10-foundation/31-input-manager/SKILL.md`
 - 입력 소비: `../../10-foundation/32-input-controller/SKILL.md`
 - 정책 문서: `skills/devian-unity/90-samples/01-policy/SKILL.md`
-- 샘플 작성 가이드: `skills/devian-unity/90-samples/08-samples-authoring-guide/SKILL.md`
+- 샘플 작성 가이드: `skills/devian-unity/08-samples-authoring-guide/SKILL.md`

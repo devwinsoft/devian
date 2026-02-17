@@ -17,11 +17,6 @@
       "displayName": "MobileSystem",
       "description": "Bundle sample: installs FirebaseManager + SaveSystem + AccountManager + PurchaseManager together.",
       "path": "Samples~/MobileSystem"
-    },
-    {
-      "displayName": "Purchase Manager",
-      "description": "Sample: PurchaseManager",
-      "path": "Samples~/PurchaseManager"
     }
   ]
 }

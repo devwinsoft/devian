@@ -100,7 +100,8 @@
       "Bash(while read f)",
       "Bash(do sed -i '' 's/devian-data/devian-builder/g' \"$f\")",
       "Bash(__NEW_LINE_069a54d85e5844d9__ echo \"\")",
-      "Bash(if [ -f \"$group/03-ssot/SKILL.md\" ])"
+      "Bash(if [ -f \"$group/03-ssot/SKILL.md\" ])",
+      "Bash(# DoD 2: asmdef files must not exist echo \"\"=== asmdef existence check ===\"\" && find /Users/maoshy/Documents/Projects/devian/framework-cs -name \"\"Devian.Samples.PurchaseManager.asmdef\"\")"
     ]
   },
   "project": {

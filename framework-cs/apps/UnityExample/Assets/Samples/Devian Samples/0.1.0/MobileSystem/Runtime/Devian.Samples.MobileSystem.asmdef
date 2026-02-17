@@ -5,9 +5,9 @@
     "Devian.Unity",
     "Devian.Core",
     "Devian.Domain.Common",
-    "Devian.Samples.PurchaseManager",
     "Unity.InputSystem",
-    "Devian.UI"
+    "Devian.UI",
+    "UnityEngine.Purchasing"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

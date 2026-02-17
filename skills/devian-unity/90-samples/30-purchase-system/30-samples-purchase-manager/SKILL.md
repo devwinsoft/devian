@@ -10,12 +10,12 @@ PurchaseManager(구매 샘플)의 위치/역할/규약을 설명한다.
 ## Implementation Location (SSOT)
 
 
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/PurchaseManager/Runtime/PurchaseManager.cs`
-- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/PurchaseManager/Runtime/PurchaseManager.cs`
+- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/PurchaseManager/PurchaseManager.cs`
+- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/PurchaseManager/PurchaseManager.cs`
 
 
 - asmdef:
-  - `Devian.Samples.PurchaseManager` (`Samples~/PurchaseManager/Runtime/Devian.Samples.PurchaseManager.asmdef`)
+  - `Devian.Samples.MobileSystem` (`Samples~/MobileSystem/Runtime/Devian.Samples.MobileSystem.asmdef`)
 
 
 ---
