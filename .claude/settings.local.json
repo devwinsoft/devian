@@ -90,7 +90,12 @@
       "Bash(openssl dgst:*)",
       "WebFetch(domain:docs.unity3d.com)",
       "WebFetch(domain:gist.github.com)",
-      "WebFetch(domain:gist.githubusercontent.com)"
+      "WebFetch(domain:gist.githubusercontent.com)",
+      "Bash(__NEW_LINE_648676a684eae6ec__ echo \"\")",
+      "Bash(do sed -i '' 's/10-ssot-/10-/g; s/11-ssot-/11-/g; s/12-ssot-/12-/g; s/13-ssot-/13-/g; s/14-ssot-/14-/g; s/15-ssot-/15-/g; s/16-ssot-/16-/g; s/17-ssot-/17-/g; s/18-ssot-/18-/g; s/19-ssot-/19-/g; s/20-ssot-/20-/g; s/21-ssot-/21-/g; s/22-ssot-/22-/g; s/23-ssot-/23-/g; s/24-ssot-/24-/g; s/25-ssot-/25-/g; s/26-ssot-/26-/g; s/27-ssot-/27-/g; s/28-ssot-/28-/g; s/29-ssot-/29-/g' \"$f\")",
+      "Bash(do test -d \"skills/devian-unity/50-mobile-system/$d\")",
+      "Bash(do test ! -d \"skills/devian-unity/50-mobile-system/$d\")",
+      "Bash(git -C /Users/maoshy/Documents/Projects/devian ls-files:*)"
     ]
   },
   "project": {

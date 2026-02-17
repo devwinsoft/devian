@@ -2727,7 +2727,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1854872808}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 463b559a14cfa4003bfebf32730a1449, type: 3}
+  m_Script: {fileID: 11500000, guid: 692e2ebe8f98d407ebc86985f81d0788, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.UI::Devian.UIVirtualMovePad
   mOuter: {fileID: 889720640}

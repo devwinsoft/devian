@@ -5,7 +5,10 @@
     "Devian.Unity",
     "Devian.Core",
     "Devian.Module.Common",
-    "Devian.Domain.Common"
+    "Devian.Domain.Common",
+    "Devian.Samples.PurchaseManager",
+    "Unity.InputSystem",
+    "Devian.UI"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

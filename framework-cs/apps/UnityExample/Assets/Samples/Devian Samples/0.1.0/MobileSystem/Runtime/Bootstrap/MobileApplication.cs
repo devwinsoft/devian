@@ -7,6 +7,7 @@ namespace Devian
 {
     [RequireComponent(typeof(AccountManager))]
     [RequireComponent(typeof(SaveDataManager))]
+    [RequireComponent(typeof(PurchaseManager))]
     public abstract class MobileApplication : BaseBootstrap
     {
         protected override IEnumerator OnBootProc()
@@ -19,7 +20,31 @@ namespace Devian
             tryActivateGooglePlayGames();
             #endif
 
+            // Purchase store injection (platform-dependent packages)
+            trySetPurchaseStore();
+
             yield break;
+        }
+
+        private static void trySetPurchaseStore()
+        {
+#if UNITY_IOS || UNITY_TVOS
+            // Devian.PurchaseStoreApple, Devian.Purchase.Store.Apple
+            var t = Type.GetType("Devian.PurchaseStoreApple, Devian.Purchase.Store.Apple");
+#elif UNITY_ANDROID
+            // Devian.PurchaseStoreGoogle, Devian.Purchase.Store.Google
+            var t = Type.GetType("Devian.PurchaseStoreGoogle, Devian.Purchase.Store.Google");
+#else
+            Type t = null;
+#endif
+            if (t == null)
+                return;
+
+            var instance = Activator.CreateInstance(t) as IPurchaseStore;
+            if (instance == null)
+                return;
+
+            PurchaseManager.Instance.SetPurchaseStore(instance);
         }
 
         #if UNITY_ANDROID && !UNITY_EDITOR

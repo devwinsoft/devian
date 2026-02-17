@@ -126,11 +126,11 @@ rm -f UnityExample/Packages/{pkg}/.../OldName.cs.meta
 - `skills/devian-unity/06-domain-packages/com.devian.domain.common/SKILL.md`
 
 ### Unity Components
-- AssetManager: `skills/devian-unity/10-base-system/10-asset-manager/SKILL.md`
+- AssetManager: `skills/devian-unity/10-foundation/17-asset-manager/SKILL.md`
 
 ---
 
 ## Related
 
 - SSOT 정본: `skills/devian-core/03-ssot/SKILL.md`
-- UPM Samples 정책: `skills/devian-unity/90-samples/02-samples-authoring-guide/SKILL.md`
+- UPM Samples 정책: `skills/devian-unity/08-samples-authoring-guide/SKILL.md`

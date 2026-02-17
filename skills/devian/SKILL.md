@@ -51,7 +51,7 @@ AppliesTo: v10
 | ContractGen 구현 보기 | [skills/devian-data/43-contractgen-implementation](../devian-data/43-contractgen-implementation/SKILL.md) |
 | 프로토콜 코드젠 보기 | [skills/devian-protocol/40-codegen-protocol](../devian-protocol/40-codegen-protocol/SKILL.md) |
 | Unity 정책 확인하기 | [skills/devian-unity/01-policy](../devian-unity/01-policy/SKILL.md) |
-| 샘플 작성하기 | [skills/devian-unity/90-samples/02-samples-authoring-guide](../devian-unity/90-samples/02-samples-authoring-guide/SKILL.md) |
+| 샘플 작성하기 | [skills/devian-unity/08-samples-authoring-guide](../devian-unity/08-samples-authoring-guide/SKILL.md) |
 
 ---
 

@@ -16,9 +16,10 @@ GameObject:
   - component: {fileID: 7627467817636175406}
   - component: {fileID: 8321347923667030604}
   - component: {fileID: 4706526706863056144}
-  - component: {fileID: -7611824914717835204}
+  - component: {fileID: 8648204434353560985}
   - component: {fileID: 230484287148134745}
   - component: {fileID: 3514971825711784064}
+  - component: {fileID: 2516925715426756820}
   m_Layer: 0
   m_Name: Bootstrap
   m_TagString: Untagged
@@ -151,7 +152,7 @@ MonoBehaviour:
   - UI/RightClick
   - UI/Submit
   _outputEnabled: 1
---- !u!114 &-7611824914717835204
+--- !u!114 &8648204434353560985
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -160,9 +161,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2454387350981742136}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 81ad5841c326c40fdabb917b9644099b, type: 3}
+  m_Script: {fileID: 11500000, guid: 58edb072859a9475285a3a211485df5b, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Unity::Devian.VirtualGamepadDriver
+  m_EditorClassIdentifier: Devian.Samples.CloudClientSystem::Devian.VirtualGamepadDriver
 --- !u!114 &230484287148134745
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -198,6 +199,18 @@ MonoBehaviour:
     - slotKey: main
       filename: save/main.json
       cloudSlot: main
+--- !u!114 &2516925715426756820
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2454387350981742136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7cd7dc1e1db4e465998c6015c0426ffa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Samples.PurchaseManager::Devian.PurchaseManager
 --- !u!1 &6261706322476616027
 GameObject:
   m_ObjectHideFlags: 0

@@ -36,6 +36,7 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | **devian-common** | Common 도메인, Feature 모듈 | [00-overview](../../devian-common/00-overview/SKILL.md) | [01-policy](../../devian-common/01-policy/SKILL.md) | — |
 | **devian-unity** | UPM 패키지, Unity 런타임, 컴포넌트 | [00-overview](../../devian-unity/00-overview/SKILL.md) | [01-policy](../../devian-unity/01-policy/SKILL.md) | [03-ssot](../../devian-unity/03-ssot/SKILL.md) |
 | **devian-examples** | 예제 도메인, 예제 프로토콜 | [00-overview](../../devian-examples/00-overview/SKILL.md) | [01-policy](../../devian-examples/01-policy/SKILL.md) | — |
+| **devian-unity/50-mobile-system** | MobileSystem (Devian Samples) | [00-overview](../../devian-unity/50-mobile-system/00-overview/SKILL.md) | [01-policy](../../devian-unity/50-mobile-system/01-policy/SKILL.md) | — |
 | **devian-unity/90-samples** | Unity 샘플 작성 가이드, 네트워크 샘플 | [00-overview](../../devian-unity/90-samples/00-overview/SKILL.md) | [01-policy](../../devian-unity/90-samples/01-policy/SKILL.md) | — |
 
 ---
@@ -62,7 +63,6 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | DownloadManager, Addressables | `skills/devian-unity/10-base-system/12-download-manager/SKILL.md` |
 | UIManager, UICanvas, UIFrame | `skills/devian-unity/40-ui-system/10-ui-manager/skill.md` |
 | UI Canvas Frames, UICanvasFrames | `skills/devian-unity/40-ui-system/20-ui-canvas-frames/skill.md` |
-| Cloud Save, CloudSave, cloudsave, Local Save, LocalSave, localsave, save-manager, SaveManager, Save Manager, Cloud Sync, iCloud, Steam Cloud, GPGS | `skills/devian-unity/20-save-system/00-overview/SKILL.md` |
 
 ---
 
@@ -77,7 +77,6 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | 테이블 작성 규칙 | [devian-data/30-table-authoring-rules](../../devian-data/30-table-authoring-rules/SKILL.md) |
 | 프로토콜 코드젠 | [devian-protocol/40-codegen-protocol](../../devian-protocol/40-codegen-protocol/SKILL.md) |
 | Unity 정책 | [devian-unity/01-policy](../../devian-unity/01-policy/SKILL.md) |
-| Cloud/Local Save | [devian-unity/20-save-system/00-overview](../../devian-unity/20-save-system/00-overview/SKILL.md) |
 
 ---
 

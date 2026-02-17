@@ -1,0 +1,19 @@
+{
+  "name": "Devian.Samples.PurchaseManager",
+  "rootNamespace": "Devian",
+  "references": [
+    "Devian.Core",
+    "Devian.Unity",
+    "Devian.Domain.Common",
+    "UnityEngine.Purchasing"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

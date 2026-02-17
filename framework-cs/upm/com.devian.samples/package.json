@@ -14,11 +14,6 @@
       "path": "Samples~/Network"
     },
     {
-      "displayName": "Virtual Pad",
-      "description": "UGUI virtual pad (joystick) sample. Outputs normalized Vector2 via drag input.",
-      "path": "Samples~/VirtualPad"
-    },
-    {
       "displayName": "MobileSystem",
       "description": "Bundle sample: installs FirebaseManager + SaveSystem + AccountManager + PurchaseManager together.",
       "path": "Samples~/MobileSystem"

@@ -30,7 +30,7 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 - 반드시 서버(Cloud Functions)의 `verifyPurchase` 결과를 기준으로 Entitlement를 반영한다.
 
 
-정본 규칙: [06-ssot-verify-idempotency](../06-ssot-verify-idempotency/SKILL.md)
+정본 규칙: [03-ssot](../03-ssot/SKILL.md)
 
 
 ### 2) 내부 표준 ID만 게임 로직에 노출한다
@@ -40,7 +40,7 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 - Store SKU(googlePlayProductId / appStoreProductId)는 카탈로그/매핑 레이어로만 취급한다.
 
 
-정본 규칙: [05-ssot-product-catalog](../05-ssot-product-catalog/SKILL.md)
+정본 규칙: [03-ssot](../03-ssot/SKILL.md)
 
 
 ### 3) iOS Restore 지원
@@ -51,7 +51,7 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 - 단, 최종 상태는 서버의 Entitlement 기준.
 
 
-정본 규칙: [04-ssot-unity-iap](../04-ssot-unity-iap/SKILL.md), [07-ssot-subscription-noads](../07-ssot-subscription-noads/SKILL.md)
+정본 규칙: [03-ssot](../03-ssot/SKILL.md)
 
 
 ---
@@ -80,7 +80,7 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 - UI/게임 로직에 반영 가능한 최종 결과는 서버 검증 결과(`GRANTED/ALREADY_GRANTED/REJECTED/PENDING`)를 따른다.
 
 
-정본 규칙: [06-ssot-verify-idempotency](../06-ssot-verify-idempotency/SKILL.md)
+정본 규칙: [03-ssot](../03-ssot/SKILL.md)
 
 
 ---

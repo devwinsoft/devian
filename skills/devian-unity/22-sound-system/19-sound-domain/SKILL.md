@@ -251,7 +251,7 @@ Phase 2는 아래가 **모두 참**이어야 DONE이다:
 
 범용 빌드/생성 규칙은 아래 스킬이 SSOT이다:
 
-- `skills/devian-unity/10-base-system/14-table-manager/SKILL.md` — **TbLoader SSOT / 중복 등록 금지** Hard Rule
+- `skills/devian-unity/10-foundation/10-table-manager/SKILL.md` — **TbLoader SSOT / 중복 등록 금지** Hard Rule
 - `skills/devian-data/42-tablegen-implementation/SKILL.md` — **AfterLoad hook 계약** Hard Rule
 - `skills/devian/20-workspace/SKILL.md` — **npm ci / lock 동기화** 규약
 - `skills/devian-core/22-generated-integration/SKILL.md` — **임시 stub 금지** 규약

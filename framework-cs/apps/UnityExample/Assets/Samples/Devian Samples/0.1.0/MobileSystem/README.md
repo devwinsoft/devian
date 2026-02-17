@@ -10,3 +10,9 @@ This sample bundles the following sub-samples in one import:
 
 
 Importing `MobileSystem` installs all sub-codes together under this folder.
+
+## VirtualGamepad (recycled)
+
+VirtualPad sample is not used here. MobileSystem uses:
+
+- `Samples~/MobileSystem/Runtime/VirtualGamepad`

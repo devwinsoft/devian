@@ -309,4 +309,4 @@ VoiceManager.I.ResolveForLanguage(SystemLanguage.English);
 - `skills/devian-unity/22-sound-system/16-sound-tables/SKILL.md` — TB_SOUND/TB_VOICE 테이블 규약
 - `skills/devian-unity/22-sound-system/17-sound-manager/SKILL.md` — SoundManager 규약
 - `skills/devian-unity/22-sound-system/20-base-audio-manager/SKILL.md` — BaseAudioManager 공통 Play 규약
-- `skills/devian-unity/10-base-system/14-table-manager/SKILL.md` — TableManager (테이블 로딩)
+- `skills/devian-unity/10-foundation/10-table-manager/SKILL.md` — TableManager (테이블 로딩)
