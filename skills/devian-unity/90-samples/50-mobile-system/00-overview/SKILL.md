@@ -15,7 +15,8 @@ MobileSystem은 **Devian Samples**(`com.devian.samples`)에 포함된 Unity Samp
 
 ## Sub-skills
 
-- [31-mobile-application](../31-mobile-application/SKILL.md)
+- [30-purchase-system](../30-purchase-system/00-overview/SKILL.md)
+- [11-mobile-application](../11-mobile-application/SKILL.md)
 - [33-account-manager](../33-account-manager/SKILL.md)
 - [34-account-login-apple](../34-account-login-apple/SKILL.md)
 - [35-account-login-firebase](../35-account-login-firebase/SKILL.md)

@@ -1,0 +1,13 @@
+{
+  "enums": [
+    {
+      "name": "ProductKind",
+      "values": [
+        { "name": "Consumable", "value": 0 },
+        { "name": "Rental", "value": 1 },
+        { "name": "Subscription", "value": 2 },
+        { "name": "SeasonPass", "value": 3 }
+      ]
+    }
+  ]
+}

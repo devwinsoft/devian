@@ -62,6 +62,7 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | DownloadManager, Addressables | `skills/devian-unity/10-foundation/19-download-manager/SKILL.md` |
 | UIManager, UICanvas, UIFrame | `skills/devian-unity/40-ui-system/10-ui-manager/skill.md` |
 | UI Canvas Frames, UICanvasFrames | `skills/devian-unity/40-ui-system/20-ui-canvas-frames/skill.md` |
+| PurchaseManager, purchase, IAP, in-app purchase, 결제, 인앱 | `skills/devian-unity/90-samples/50-mobile-system/30-purchase-system/00-overview/SKILL.md` |
 
 ---
 

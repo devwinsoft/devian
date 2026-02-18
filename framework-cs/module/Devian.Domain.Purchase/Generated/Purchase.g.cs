@@ -13,6 +13,19 @@ using Devian;
 namespace Devian.Domain.Purchase
 {
     // ================================================================
+    // Contracts
+    // ================================================================
+
+    /// <summary>ProductKind enum</summary>
+    public enum ProductKind
+    {
+        Consumable = 0,
+        Rental = 1,
+        Subscription = 2,
+        SeasonPass = 3,
+    }
+
+    // ================================================================
     // Table Entities
     // ================================================================
 
@@ -20,7 +33,9 @@ namespace Devian.Domain.Purchase
     public sealed class PRODUCT : IEntityKey<string>
     {
         public string InternalProductId { get; set; } = string.Empty;
-        public string Kind { get; set; } = string.Empty;
+        public ProductKind Kind { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
         public string StoreSkuApple { get; set; } = string.Empty;
         public string StoreSkuGoogle { get; set; } = string.Empty;
 

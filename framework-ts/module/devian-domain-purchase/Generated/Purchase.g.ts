@@ -5,12 +5,26 @@
 import { IEntity, IEntityKey } from '@devian/core';
 
 // ================================================================
+// Contracts
+// ================================================================
+
+/** ProductKind enum */
+export enum ProductKind {
+    Consumable = 0,
+    Rental = 1,
+    Subscription = 2,
+    SeasonPass = 3,
+}
+
+// ================================================================
 // Tables
 // ================================================================
 
 export interface PRODUCT extends IEntityKey<string> {
     InternalProductId: string;
-    Kind: string;
+    Kind: ProductKind;
+    Title: string;
+    IsActive: boolean;
     StoreSkuApple: string;
     StoreSkuGoogle: string;
     getKey(): string;

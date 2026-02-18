@@ -51,9 +51,26 @@ public class TestUICanvas : UICanvas<TestUICanvas>
     }
     
 
-    public void OnClick_Connect()
+    public async void OnClick_Connect()
     {
-        GameNetManager.Instance.Connect("ws://localhost:8080");
+        //GameNetManager.Instance.Connect("ws://localhost:8080");
+        var source = new CancellationTokenSource(System.TimeSpan.FromSeconds(15));
+        
+        var init = await PurchaseManager.Instance.InitializeAsync(source.Token);
+        if (init.IsFailure)
+        {
+            Debug.Log(init.Error.Code);
+        }
+        
+        var rental = await PurchaseManager.Instance.GetLatestRentalPurchase30dAsync(source.Token);
+        if (rental.IsSuccess)
+        {
+            Debug.Log(rental.Value.storePurchasedAtMs);
+        }
+        else
+        {
+            Debug.Log(rental.Error.Code);
+        }
     }
     
     public async void OnClick_Echo()

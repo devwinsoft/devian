@@ -13,7 +13,7 @@
 - **부트 컨테이너 프리팹**: `Assets/Resources/Devian/Bootstrap.prefab`
 - **BaseBootstrap** (abstract MonoBehaviour): 개발자가 상속하여 부트 로직을 구현하는 베이스 클래스
 
-프리팹 생성 규칙은 [31-mobile-application](../../50-mobile-system/31-mobile-application/SKILL.md)에서 다룬다.
+프리팹 생성 규칙은 [11-mobile-application](../../50-mobile-system/11-mobile-application/SKILL.md)에서 다룬다.
 
 ---
 

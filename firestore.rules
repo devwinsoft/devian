@@ -1,0 +1,18 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── 사용자 purchases 원장: 서버(Functions)만 write 가능 ──
+    match /users/{uid}/purchases/{purchaseId} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;  // 클라 write 금지 — Functions(admin SDK)만 기록
+    }
+
+    // ── 사용자 entitlements 스냅샷: 서버(Functions)만 write 가능 ──
+    match /users/{uid}/entitlements/{docId} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;  // 클라 write 금지 — Functions(admin SDK)만 기록
+    }
+  }
+}

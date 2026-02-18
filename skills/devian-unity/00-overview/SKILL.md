@@ -23,7 +23,7 @@ Devian Unity 런타임, UPM 패키지, 컴포넌트를 담당한다.
 | [10-foundation](../10-foundation/SKILL.md) | Unity 컴포넌트 인덱스 |
 | [27-effect-system](../10-foundation/27-effect-system/SKILL.md) | Effect System (CommonEffect/MaterialEffect) |
 | [22-sound-system](../22-sound-system/00-overview/SKILL.md) | Sound System (Tables/Manager/Voice Resolve/Domain/BaseAudio) |
-| [30-purchase-system](../90-samples/30-purchase-system/00-overview/SKILL.md) | Purchase System (Unity IAP + verification + entitlements) |
+| [30-purchase-system](../90-samples/50-mobile-system/30-purchase-system/00-overview/SKILL.md) | Purchase System (Unity IAP + verification + entitlements) |
 | [40-ui-system](../40-ui-system/SKILL.md) | UI 컴포넌트 인덱스 |
 | [50-mobile-system](../90-samples/50-mobile-system/00-overview/SKILL.md) | MobileSystem (Devian Samples) |
 | [90-samples](../90-samples/00-overview/SKILL.md) | Unity 샘플 템플릿 |

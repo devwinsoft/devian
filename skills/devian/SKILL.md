@@ -34,7 +34,7 @@ AppliesTo: v10
 | **Tools** | [devian-tools/03-ssot](../devian-tools/03-ssot/SKILL.md) | 빌드 파이프라인, Phase, Validate, tempDir |
 | **Builder** | [devian-builder/03-ssot](../devian-builder/03-ssot/SKILL.md) | tableConfig, Tables, NDJSON, pb64, Protocol Spec, Opcode/Tag, Protocol UPM |
 | **Unity** | [devian-unity/03-ssot](../devian-unity/03-ssot/SKILL.md) | upmConfig, UPM Sync, Foundation |
-| **Purchase System** | [devian-unity/90-samples/30-purchase-system/03-ssot](../devian-unity/90-samples/30-purchase-system/03-ssot/SKILL.md) | Unity IAP + 결제 검증(Functions) + 멱등/구독 상태(Firestore) |
+| **Purchase System** | [devian-unity/90-samples/50-mobile-system/30-purchase-system/03-ssot](../devian-unity/90-samples/50-mobile-system/30-purchase-system/03-ssot/SKILL.md) | Unity IAP + 결제 검증(Functions) + 멱등/구독 상태(Firestore) |
 
 ---
 
