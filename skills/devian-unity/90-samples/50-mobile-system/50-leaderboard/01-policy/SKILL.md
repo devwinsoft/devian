@@ -22,10 +22,10 @@ Leaderboard/Achievements 연동의 **모듈 경계**와 **하드룰**,
 ## Hard Rules
 
 
-### 1) 게임 로직에는 내부 ID만 노출한다
+### 1) 상위 로직에는 내부 ID만 노출한다
 
 
-- 게임 로직은 `leaderboardId`, `achievementId`(내부 표준 ID)만 사용한다.
+- 상위 로직은 `leaderboardId`, `achievementId`(내부 표준 ID)만 사용한다.
 - Apple/Google의 플랫폼 문자열 ID는 "매핑 레이어(SSOT)"에만 존재해야 한다.
 
 정본: [03-ssot](../03-ssot/SKILL.md)
@@ -35,7 +35,7 @@ Leaderboard/Achievements 연동의 **모듈 경계**와 **하드룰**,
 
 
 - Leaderboard는 "업적 달성 여부 확인/동기화/보고"까지만 책임진다.
-- "업적 달성 → 보상 지급/저장/중복 방지"는 Reward 시스템(또는 게임 로직/SaveData)이 책임진다.
+- "업적 달성 → 보상 지급/저장/중복 방지"는 Reward 시스템(또는 상위 로직/SaveData)이 책임진다.
 - Leaderboard는 Reward 측이 소비할 수 있도록 **업적 달성 신호(event)** 만 제공한다.
 
 정본: [03-ssot](../03-ssot/SKILL.md)
@@ -44,7 +44,7 @@ Leaderboard/Achievements 연동의 **모듈 경계**와 **하드룰**,
 ### Reward 연동은 이벤트로만 한다
 
 - LeaderboardManager는 `OnAchievementUnlocked(achievementId)` 이벤트만 제공한다.
-- 보상 지급/중복 방지는 이벤트 소비자(예: MissionManager 또는 게임 로직)가 책임진다.
+- 보상 지급/중복 방지는 이벤트 소비자(예: MissionManager 또는 상위 로직)가 책임진다.
 - RewardManager는 "지급 실행(Apply)"만 담당한다(멱등/기록/복구 책임 없음).
 
 연관:
@@ -76,7 +76,7 @@ NEEDS CHECK(구현 단계): Leaderboard 전용 error code 세트 확정
 
 - 플랫폼에서 이미 달성된 업적을 Sync로 읽어왔을 때:
   - "이번 Sync에서 새로 달성으로 전환된 업적"만 `OnAchievementUnlocked(achievementId)`를 발생시킨다.
-- 신호는 이벤트 소비자 측(MissionManager/게임 로직)이 멱등 처리(중복 지급 방지)할 수 있어야 한다.
+- 신호는 이벤트 소비자 측(MissionManager/상위 로직)이 멱등 처리(중복 지급 방지)할 수 있어야 한다.
 
 정본: [09-ssot-operations](../09-ssot-operations/SKILL.md)
 

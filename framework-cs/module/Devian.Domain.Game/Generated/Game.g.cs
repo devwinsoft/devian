@@ -37,6 +37,15 @@ namespace Devian.Domain.Game
         SeasonPass = 3,
     }
 
+    /// <summary>StatType enum</summary>
+    public enum StatType
+    {
+        None = 0,
+        ItemCount = 1,
+        ItemLevel = 2,
+        ItemSlotNumber = 3,
+    }
+
     /// <summary>UserType enum</summary>
     public enum UserType
     {
@@ -56,6 +65,16 @@ namespace Devian.Domain.Game
     // ================================================================
     // Table Entities
     // ================================================================
+
+    /// <summary>ITEM row</summary>
+    public sealed class ITEM : IEntityKey<string>
+    {
+        public string ItemId { get; set; } = string.Empty;
+        public string ItemNameId { get; set; } = string.Empty;
+        public string ItemDescId { get; set; } = string.Empty;
+
+        public string GetKey() => ItemId;
+    }
 
     /// <summary>MISSION_DAILY row</summary>
     public sealed class MISSION_DAILY : IEntityKey<string>
@@ -103,6 +122,7 @@ namespace Devian.Domain.Game
     public sealed class PRODUCT : IEntityKey<string>
     {
         public string InternalProductId { get; set; } = string.Empty;
+        public string RewardId { get; set; } = string.Empty;
         public ProductKind Kind { get; set; }
         public string Title { get; set; } = string.Empty;
         public bool IsActive { get; set; }
@@ -154,6 +174,89 @@ namespace Devian.Domain.Game
     // ================================================================
     // Table Containers
     // ================================================================
+
+    /// <summary>TB_ITEM container</summary>
+    public static partial class TB_ITEM
+    {
+        private static readonly Dictionary<string, ITEM> _dict = new();
+        private static readonly List<ITEM> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<ITEM> GetAll() => _list;
+
+        public static ITEM? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out ITEM? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(ITEM row)
+        {
+            _list.Add(row);
+            _dict[row.ItemId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<ITEM>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<ITEM>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<ITEM>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
 
     /// <summary>TB_MISSION_DAILY container</summary>
     public static partial class TB_MISSION_DAILY
@@ -727,6 +830,16 @@ namespace Devian.Domain.Game
     // Table ID Types (for Inspector binding)
     // ================================================================
 
+    /// <summary>Inspector-bindable ID for ITEM</summary>
+    [Serializable]
+    public sealed class ITEM_ID
+    {
+        public string Value;
+
+        public static implicit operator string(ITEM_ID id) => id.Value;
+        public static implicit operator ITEM_ID(string value) => new ITEM_ID { Value = value };
+    }
+
     /// <summary>Inspector-bindable ID for MISSION_DAILY</summary>
     [Serializable]
     public sealed class MISSION_DAILY_ID
@@ -790,6 +903,7 @@ namespace Devian.Domain.Game
     /// <summary>Table ID validation extensions</summary>
     public static class TableIdExtensions
     {
+        public static bool IsValid(this ITEM_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MISSION_DAILY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MISSION_WEEKLY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MISSION_ACHIEVEMENT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);

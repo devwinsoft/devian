@@ -24,6 +24,8 @@
 | **프로젝트 소유** | 설치 후 Assets/Samples/에 복사되어 프로젝트가 소유 |
 | **충돌 방지** | `Devian` + `.Network.*`, `Devian` + `.Protocol.*`, `Devian` + `.Domain.*` 네임스페이스 사용 금지 |
 
+정본/미러 동기화 하드룰은 상위 정책 `skills/devian-unity/01-policy/SKILL.md`를 따른다.
+
 ---
 
 ## 3. 네이밍 규칙
@@ -43,8 +45,8 @@ Samples~/<TemplateName>/
 ```
 
 예시:
-- `Samples~/Network/`
-- `Samples~/Game/`
+- `Samples~/GameContents/`
+- `Samples~/MobileSystem/`
 
 ### 3.3 asmdef 이름 (어셈블리명)
 
@@ -54,8 +56,8 @@ Devian.Samples.<TemplateName>.Editor
 ```
 
 예시:
-- `Devian.Samples.Network`
-- `Devian.Samples.Network.Editor`
+- `Devian.Samples.GameContents`
+- `Devian.Samples.GameContents.Editor`
 
 > **주의**: 위는 asmdef의 `name`(어셈블리명)이다. 코드의 namespace와 혼동하지 않는다.
 
@@ -128,12 +130,12 @@ namespace Devian
 framework-cs/upm/com.devian.samples/
 ├── package.json
 ├── Samples~/
-│   ├── Network/
+│   ├── GameContents/
 │   │   ├── Runtime/
-│   │   │   ├── [asmdef: Devian.Samples.Network]
-│   │   │   └── *.cs
+│   │   │   ├── [asmdef: Devian.Samples.GameContents]
+│   │   │   └── Network/*.cs
 │   │   ├── Editor/
-│   │   │   ├── [asmdef: Devian.Samples.Network.Editor]
+│   │   │   ├── [asmdef: Devian.Samples.GameContents.Editor]
 │   │   │   └── *.cs
 │   │   └── README.md
 │   └── (다른 템플릿들...)
@@ -165,9 +167,9 @@ Assets/Samples/Devian Templates/{version}/{TemplateName}/
   "unity": "2021.3",
   "samples": [
     {
-      "displayName": "Network",
-      "description": "WebSocket client template.",
-      "path": "Samples~/Network"
+      "displayName": "GameContents",
+      "description": "Bundle sample: installs GameNetManager + Game2CStub (Network) together.",
+      "path": "Samples~/GameContents"
     }
   ]
 }
@@ -186,14 +188,13 @@ Assets/Samples/Devian Templates/{version}/{TemplateName}/
 ### 6.2 설치 후 위치
 
 ```
-Assets/Samples/Devian Samples/0.1.0/Network/
+Assets/Samples/Devian Samples/0.1.0/GameContents/
 ├── README.md
-├── Editor/
-│   └── NetworkSampleMenu.cs
 └── Runtime/
-    ├── [asmdef: Devian.Samples.Network]
-    ├── GameNetManager.cs           (partial, Stub/Proxy 내부 생성)
-    └── Game2CStub.cs               (partial, 메시지 핸들러 내부 처리)
+    ├── [asmdef: Devian.Samples.GameContents]
+    └── Network/
+        ├── GameNetManager.cs       (partial, Stub/Proxy 내부 생성)
+        └── Game2CStub.cs           (partial, 메시지 핸들러 내부 처리)
 ```
 
 ---

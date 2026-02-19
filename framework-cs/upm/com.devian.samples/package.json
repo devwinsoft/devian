@@ -9,9 +9,9 @@
   },
   "samples": [
     {
-      "displayName": "Network",
-      "description": "Unity WebSocket client sample using Devian.Protocol.Game (Ping/Echo) with Tick-based pump.",
-      "path": "Samples~/Network"
+      "displayName": "GameContents",
+      "description": "Bundle sample: installs GameNetManager + Game2CStub (Network) together.",
+      "path": "Samples~/GameContents"
     },
     {
       "displayName": "MobileSystem",

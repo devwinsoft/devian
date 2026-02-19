@@ -14,7 +14,7 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 
 - 결제 SDK는 Unity IAP를 사용한다.
 - 결제 검증/지급 결정은 **클라이언트가 아닌 서버(Cloud Functions)**가 담당한다.
-- 게임 로직은 Store SKU / 스토어별 영수증 구조를 직접 알지 않는다(내부 ID만 사용).
+- 상위 로직은 Store SKU / 스토어별 영수증 구조를 직접 알지 않는다(내부 ID만 사용).
 
 
 ---
@@ -33,10 +33,10 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 정본 규칙: [03-ssot](../03-ssot/SKILL.md)
 
 
-### 2) 내부 표준 ID만 게임 로직에 노출한다
+### 2) 내부 표준 ID만 상위 로직에 노출한다
 
 
-- 게임 로직은 `internalProductId`만 사용한다.
+- 상위 로직은 `internalProductId`만 사용한다.
 - Store SKU(googlePlayProductId / appStoreProductId)는 카탈로그/매핑 레이어로만 취급한다.
 
 
@@ -56,7 +56,8 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 
 ### 4) Purchase의 실제 지급 실행은 RewardManager에 위임한다
 
-- 서버 `verifyPurchase` 결과가 `GRANTED`일 때만 `grants[]`를 RewardManager에 전달해 적용한다.
+- 서버 `verifyPurchase` 결과가 `GRANTED`일 때만 `rewardId`를 RewardManager에 전달해 적용한다.
+- `rewardId`는 `internalProductId -> rewardId` 매핑으로 얻는다(PurchaseManager가 `TB_PRODUCT` 테이블을 직접 조회하여 변환).
 - `ALREADY_GRANTED`는 서버 멱등 결과이며, 클라에서 중복 적용을 시도하지 않는다.
 - 멱등/기록/복구 정본은 Purchase 시스템이다. Reward는 지급 실행만 담당한다.
 
@@ -86,7 +87,7 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 
 
 - 구매 결과는 "스토어 결제 성공/실패"와 "서버 검증 결과"를 구분한다.
-- UI/게임 로직에 반영 가능한 최종 결과는 서버 검증 결과(`GRANTED/ALREADY_GRANTED/REJECTED/PENDING`)를 따른다.
+- UI/상위 로직에 반영 가능한 최종 결과는 서버 검증 결과(`GRANTED/ALREADY_GRANTED/REJECTED/PENDING`)를 따른다.
 
 
 정본 규칙: [03-ssot](../03-ssot/SKILL.md)

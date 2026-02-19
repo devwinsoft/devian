@@ -19,6 +19,20 @@ namespace Devian.Domain.Game
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Register()
         {
+            global::Devian.TableManager.Instance.RegisterTbLoader("ITEM", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_ITEM.LoadFromNdjson(text);
+                    TB_ITEM._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_ITEM.LoadFromPb64Binary(bin);
+                    TB_ITEM._AfterLoad();
+                }
+            });
+
             global::Devian.TableManager.Instance.RegisterTbLoader("MISSION_DAILY", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)

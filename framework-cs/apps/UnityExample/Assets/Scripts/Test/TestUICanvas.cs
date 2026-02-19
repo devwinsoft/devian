@@ -56,13 +56,13 @@ public class TestUICanvas : UICanvas<TestUICanvas>
         //GameNetManager.Instance.Connect("ws://localhost:8080");
         var source = new CancellationTokenSource(System.TimeSpan.FromSeconds(15));
         
-        var init = await PurchaseManager.Instance.InitializeAsync(source.Token);
+        var init = await Singleton.Get<PurchaseManager>().InitializeAsync(source.Token);
         if (init.IsFailure)
         {
             Debug.Log(init.Error.Code);
         }
         
-        var rental = await PurchaseManager.Instance.GetLatestRentalPurchase30dAsync(source.Token);
+        var rental = await Singleton.Get<PurchaseManager>().GetLatestRentalPurchase30dAsync(source.Token);
         if (rental.IsSuccess)
         {
             Debug.Log(rental.Value.storePurchasedAtMs);

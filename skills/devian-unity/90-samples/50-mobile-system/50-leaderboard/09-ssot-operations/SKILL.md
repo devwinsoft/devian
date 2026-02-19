@@ -22,7 +22,7 @@ ID 매핑/트리거 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
   - 플랫폼 업적 상태를 읽는다.
   - "신규 달성으로 전환된 업적"만 `OnAchievementUnlocked(achievementId)`를 발생시킨다.
 - Sync로 "신규 달성"을 감지하면 `OnAchievementUnlocked(achievementId)`를 발생시킨다.
-- 이벤트 소비자(MissionManager/게임 로직)가 이 이벤트를 소비해 중복 방지(자체 ledger) 후 RewardManager로 "지급 실행(Apply)"을 수행한다.
+- 이벤트 소비자(MissionManager/상위 로직)가 이 이벤트를 소비해 중복 방지(자체 ledger) 후 RewardManager로 "지급 실행(Apply)"을 수행한다.
 
 연관:
 - [48-mission-system/09-ssot-operations](../../48-mission-system/09-ssot-operations/SKILL.md)
@@ -31,16 +31,16 @@ ID 매핑/트리거 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
 
 ### 2) 업적 달성 시점
 
-- 게임 로직이 "업적 달성 조건 충족"을 결정한다(플랫폼이 결정하지 않음).
+- 상위 로직이 "업적 달성 조건 충족"을 결정한다(플랫폼이 결정하지 않음).
 - 즉시 `UnlockAchievementAsync(achievementId, ct)` 호출(플랫폼 반영)
 - 성공 시(또는 Sync에서 신규 달성 판별 시) `OnAchievementUnlocked(achievementId)` 신호가 발생한다.
-- Reward 지급은 이벤트 소비자(MissionManager/게임 로직)가 자체 ledger로 중복 방지 후 RewardManager로 지급 실행을 위임한다.
+- Reward 지급은 이벤트 소비자(MissionManager/상위 로직)가 자체 ledger로 중복 방지 후 RewardManager로 지급 실행을 위임한다.
 
 
 ### 3) 다중 기기/재설치
 
 - 다른 기기에서 이미 달성된 업적은 로그인 후 Sync에서 감지될 수 있다.
-- 이 경우에도 이벤트 소비자(MissionManager/게임 로직)가 "기기 기준"이 아니라 "계정/SaveData 기준"으로 자체 ledger를 사용해 중복 지급을 방지해야 한다.
+- 이 경우에도 이벤트 소비자(MissionManager/상위 로직)가 "기기 기준"이 아니라 "계정/SaveData 기준"으로 자체 ledger를 사용해 중복 지급을 방지해야 한다.
 
 
 ---
@@ -60,7 +60,7 @@ ID 매핑/트리거 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
   - ReportScore/UnlockAchievement 성공/실패 케이스
   - Sync에서 신규 달성만 이벤트 발생
 - 이벤트 소비자 중복 방지:
-  - 동일 achievementId로 이벤트가 재발생해도 이벤트 소비자(MissionManager/게임 로직)의 자체 ledger 기준으로 중복 지급이 일어나지 않음
+  - 동일 achievementId로 이벤트가 재발생해도 이벤트 소비자(MissionManager/상위 로직)의 자체 ledger 기준으로 중복 지급이 일어나지 않음
 
 
 ---

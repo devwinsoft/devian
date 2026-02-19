@@ -45,7 +45,7 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
 - 인증 정책:
   - Callable은 `context.auth.uid` 필수(unauthenticated 거부)
 
-- `kind`의 정본 enum은 `input/Domains/Game/ProductKind.json`의 `ProductKind`이며, Callable에는 그 string 값을 그대로 보낸다.
+- `kind`의 정본 enum은 컨텐츠 레이어 SSOT의 `ProductKind`이며, Callable에는 그 string 값을 그대로 보낸다.
 
 - 요청 스키마(고정 키):
   - `storeKey` (`"apple" | "google"`)

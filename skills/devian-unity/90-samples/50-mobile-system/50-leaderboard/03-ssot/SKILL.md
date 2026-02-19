@@ -33,7 +33,7 @@ AppliesTo: v10
 - `leaderboardId`: 게임 내부 표준 리더보드 ID (string)
 - `achievementId`: 게임 내부 표준 업적 ID (string)
 
-게임 로직은 위 내부 ID만 사용한다.
+상위 로직은 위 내부 ID만 사용한다.
 
 
 ---
@@ -107,7 +107,7 @@ Reward 연동은 "이벤트 신호"로만 한다.
 
 ### 2) (선택) 소비자 ledger 키 규칙
 
-- 이벤트 소비자(MissionManager/게임 로직)가 중복 방지를 위해 자체 키를 사용할 수 있다.
+- 이벤트 소비자(MissionManager/상위 로직)가 중복 방지를 위해 자체 키를 사용할 수 있다.
 - 예: `achievement:{achievementId}`
 
 

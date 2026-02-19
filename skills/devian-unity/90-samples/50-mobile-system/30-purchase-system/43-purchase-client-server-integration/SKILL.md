@@ -55,7 +55,7 @@ SSOT의 "C# ↔ Callable 필드 매핑"을 그대로 따른다.
 
 > ~~**현재 코드 위반**~~ → ✅ **수정됨**: `resultStatus` 확인 후 `GRANTED`/`ALREADY_GRANTED`만 Confirm, 나머지는 Confirm 하지 않음.
 
-또한 `resultStatus == GRANTED`인 경우에만 `grants[]`를 RewardManager에 전달해 실제 지급을 적용한다.
+또한 `resultStatus == GRANTED`인 경우에만 컨텐츠 레이어 매핑(`internalProductId -> rewardId`) 후 RewardManager의 `ApplyRewardId(rewardId)`를 호출해 실제 지급을 적용한다.
 Reward는 멱등/복구를 담당하지 않으며, Purchase의 멱등은 서버 verify 결과로 보장한다.
 
 

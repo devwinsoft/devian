@@ -8,7 +8,8 @@
     "Devian.Domain.Game",
     "Unity.InputSystem",
     "Devian.UI",
-    "Unity.Purchasing"
+    "Unity.Purchasing",
+    "Devian.Samples.GameContents"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

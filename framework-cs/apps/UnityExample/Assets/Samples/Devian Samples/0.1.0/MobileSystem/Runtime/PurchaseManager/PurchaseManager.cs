@@ -4,6 +4,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Devian.Domain.Common;
+using Devian.Domain.Game;
 using Firebase.Functions;
 
 #if UNITY_PURCHASING
@@ -14,9 +15,21 @@ namespace Devian
 {
     public sealed class PurchaseManager : CompoSingleton<PurchaseManager>
     {
-#if UNITY_PURCHASING
         const string Tag = "PurchaseManager";
 
+        protected override void Awake()
+        {
+            base.Awake();
+            SetProductCatalog(new GameProductCatalog());
+        }
+
+        // (REQ-5) internalProductId -> rewardId 변환: TB_PRODUCT 직접 참조
+        string ResolveRewardId(string internalProductId)
+        {
+            return TB_PRODUCT.Get(internalProductId).RewardId;
+        }
+
+#if UNITY_PURCHASING
         StoreController _controller;
         bool _connected;
         bool _iapInitialized;
@@ -86,7 +99,6 @@ namespace Devian
                 return CommonResult<EntitlementsSnapshot>.Failure(CommonErrorType.PURCHASE_INIT_REQUIRED,
                     "PurchaseManager not initialized. Call InitializeAsync() first.");
 
-            // v5: RestoreTransactions는 StoreController에 직접 존재 (플랫폼 분기 불필요)
             var tcs = new TaskCompletionSource<CommonResult<bool>>();
 
             _controller.RestoreTransactions((success, error) =>
@@ -104,35 +116,16 @@ namespace Devian
             if (restore.IsFailure)
                 return CommonResult<EntitlementsSnapshot>.Failure(restore.Error!);
 
-            // 최종 entitlement는 서버 getEntitlements로 확정
             return await SyncEntitlementsAsync(ct);
         }
 
         public async Task<CommonResult<EntitlementsSnapshot>> SyncEntitlementsAsync(CancellationToken ct = default)
         {
-            try
-            {
-                // getEntitlements: uid는 Firebase Auth context에서 자동 전달
-                var callable = FirebaseFunctions.DefaultInstance.GetHttpsCallable("getEntitlements");
-                var result = await callable.CallAsync();
+            var result = await callFunctionAsync("getEntitlements", null, ct);
+            if (result.IsFailure)
+                return CommonResult<EntitlementsSnapshot>.Failure(result.Error!);
 
-                ct.ThrowIfCancellationRequested();
-
-                var response = result.Data as Dictionary<string, object>;
-                if (response == null)
-                    return CommonResult<EntitlementsSnapshot>.Failure(CommonErrorType.COMMON_SERVER, "getEntitlements returned null.");
-
-                return CommonResult<EntitlementsSnapshot>.Success(ParseEntitlementsSnapshot(response));
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[{Tag}] getEntitlements failed: {ex.Message}");
-                return CommonResult<EntitlementsSnapshot>.Failure(CommonErrorType.COMMON_SERVER, ex.Message);
-            }
+            return CommonResult<EntitlementsSnapshot>.Success(ParseEntitlementsSnapshot(result.Value!));
         }
 
         public async Task<CommonResult<RentalPurchaseItem>> GetLatestRentalPurchase30dAsync(CancellationToken ct = default)
@@ -140,83 +133,83 @@ namespace Devian
 #if UNITY_EDITOR
             return CommonResult<RentalPurchaseItem>.Failure(
                 CommonErrorType.PURCHASE_UNSUPPORTED_PLATFORM,
-                "PurchaseManager is not supported in Editor."
-            );
+                "PurchaseManager is not supported in Editor.");
 #endif
             if (!_iapInitialized)
                 return CommonResult<RentalPurchaseItem>.Failure(
                     CommonErrorType.PURCHASE_INIT_REQUIRED,
                     "PurchaseManager not initialized. Call InitializeAsync() first.");
 
+            var data = new Dictionary<string, object> { ["pageSize"] = 1 };
+            var result = await callFunctionAsync("getRecentRentalPurchases30d", data, ct);
+            if (result.IsFailure)
+                return CommonResult<RentalPurchaseItem>.Failure(result.Error!);
+
+            var item = parseFirstRentalPurchaseItem(result.Value!);
+            if (item == null)
+                return CommonResult<RentalPurchaseItem>.Failure(
+                    CommonErrorType.PURCHASE_RENTAL_LATEST_NOT_FOUND,
+                    "No recent rental purchase within 30 days.");
+
+            return CommonResult<RentalPurchaseItem>.Success(item);
+        }
+
+        // ── Firebase Callable Helper ─────────────────────────────
+
+        async Task<CommonResult<Dictionary<string, object>>> callFunctionAsync(
+            string functionName, Dictionary<string, object> data, CancellationToken ct)
+        {
             try
             {
-                // 서버가 "최근 30일"을 계산한다. 클라/기기 시간 사용 금지.
-                var data = new Dictionary<string, object>
-                {
-                    ["pageSize"] = 1
-                };
-
-                var callable = FirebaseFunctions.DefaultInstance.GetHttpsCallable("getRecentRentalPurchases30d");
-                var result = await callable.CallAsync(data);
+                var callable = FirebaseFunctions.DefaultInstance.GetHttpsCallable(functionName);
+                var result = data != null
+                    ? await callable.CallAsync(data)
+                    : await callable.CallAsync();
 
                 ct.ThrowIfCancellationRequested();
 
-                var item = parseFirstRentalPurchaseItem(result.Data);
-                if (item == null)
-                    return CommonResult<RentalPurchaseItem>.Failure(
-                        CommonErrorType.PURCHASE_RENTAL_LATEST_NOT_FOUND,
-                        "No recent rental purchase within 30 days.");
+                var response = result.Data as Dictionary<string, object>;
+                if (response == null)
+                    return CommonResult<Dictionary<string, object>>.Failure(
+                        CommonErrorType.COMMON_SERVER, $"{functionName} returned null.");
 
-                return CommonResult<RentalPurchaseItem>.Success(item);
+                return CommonResult<Dictionary<string, object>>.Success(response);
             }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
+            catch (OperationCanceledException) { throw; }
             catch (Exception ex)
             {
-                // Firebase Functions 예외 매핑
-                if (ex is Firebase.Functions.FunctionsException fex)
-                {
-                    switch (fex.ErrorCode)
-                    {
-                        case Firebase.Functions.FunctionsErrorCode.Unauthenticated:
-                            return CommonResult<RentalPurchaseItem>.Failure(
-                                CommonErrorType.PURCHASE_UNAUTHENTICATED,
-                                "Authentication required."
-                            );
+                var mapped = mapFirebaseException(functionName, ex);
+                if (mapped.HasValue) return mapped.Value;
 
-                        case Firebase.Functions.FunctionsErrorCode.Unavailable:
-                        case Firebase.Functions.FunctionsErrorCode.DeadlineExceeded:
-                            return CommonResult<RentalPurchaseItem>.Failure(
-                                CommonErrorType.PURCHASE_NETWORK_UNAVAILABLE,
-                                "Network unavailable."
-                            );
+                Debug.LogError($"[{Tag}] {functionName} failed: {ex.Message}");
+                return CommonResult<Dictionary<string, object>>.Failure(
+                    CommonErrorType.COMMON_SERVER, ex.Message);
+            }
+        }
 
-                        default:
-                            return CommonResult<RentalPurchaseItem>.Failure(
-                                CommonErrorType.PURCHASE_RENTAL_LATEST_CALL_FAILED,
-                                fex.Message
-                            );
-                    }
-                }
+        static CommonResult<Dictionary<string, object>>? mapFirebaseException(string functionName, Exception ex)
+        {
+            if (!(ex is FunctionsException fex)) return null;
 
-                Debug.LogError($"[{Tag}] getRecentRentalPurchases30d failed: {ex.Message}");
-                return CommonResult<RentalPurchaseItem>.Failure(
-                    CommonErrorType.PURCHASE_RENTAL_LATEST_CALL_FAILED,
-                    ex.Message
-                );
+            switch (fex.ErrorCode)
+            {
+                case FunctionsErrorCode.Unauthenticated:
+                    return CommonResult<Dictionary<string, object>>.Failure(
+                        CommonErrorType.PURCHASE_UNAUTHENTICATED, "Authentication required.");
+
+                case FunctionsErrorCode.Unavailable:
+                case FunctionsErrorCode.DeadlineExceeded:
+                    return CommonResult<Dictionary<string, object>>.Failure(
+                        CommonErrorType.PURCHASE_NETWORK_UNAVAILABLE, "Network unavailable.");
+
+                default:
+                    return CommonResult<Dictionary<string, object>>.Failure(
+                        CommonErrorType.COMMON_SERVER, fex.Message);
             }
         }
 
         // ── Core Flow ──────────────────────────────────────────────
 
-        /// <summary>
-        /// IAP 초기화 비동기 구현.
-        /// 1) StoreController 생성 + Connect
-        /// 2) IPurchaseProductCatalog 기반 제품 등록 (FetchProducts)
-        /// 3) FetchProducts 콜백을 TCS로 await
-        /// </summary>
         async Task<CommonResult> initializeIapAsync(CancellationToken ct)
         {
             if (_productCatalog == null)
@@ -226,36 +219,30 @@ namespace Devian
             {
                 _controller = UnityIAPServices.StoreController();
 
-                // Event 등록 (Purchase 전용 — FetchProducts 콜백은 TCS 내부에서 처리)
                 _controller.OnPurchasePending += onPurchasePending;
                 _controller.OnPurchaseFailed += onPurchaseFailed;
                 _controller.OnStoreDisconnected += onStoreDisconnected;
 
-                // 1) Connect
                 await _controller.Connect();
                 _connected = true;
                 Debug.Log($"[{Tag}] Store connected.");
 
                 ct.ThrowIfCancellationRequested();
 
-                // 2) IPurchaseProductCatalog 기반 제품 등록 (Port: 컨텐츠 레이어에서 주입)
                 var items = _productCatalog.GetActiveProducts();
                 var definitions = new List<ProductDefinition>(items.Count);
-                foreach (var item in items)
-                    definitions.Add(new ProductDefinition(item.InternalProductId, item.StoreSku, toUnityProductType(item.ProductType)));
+                for (int i = 0; i < items.Count; i++)
+                {
+                    var item = items[i];
+                    definitions.Add(new ProductDefinition(
+                        item.InternalProductId, item.StoreSku, toUnityProductType(item.ProductType)));
+                }
 
-                // 3) FetchProducts + TCS로 콜백 대기
                 var fetchTcs = new TaskCompletionSource<bool>();
 
-                void onFetched(List<Product> fetched)
-                {
-                    fetchTcs.TrySetResult(true);
-                }
-
+                void onFetched(List<Product> fetched) => fetchTcs.TrySetResult(true);
                 void onFetchFailed(ProductFetchFailed failure)
-                {
-                    fetchTcs.TrySetException(new Exception($"Products fetch failed: {failure}"));
-                }
+                    => fetchTcs.TrySetException(new Exception($"Products fetch failed: {failure}"));
 
                 _controller.OnProductsFetched += onFetched;
                 _controller.OnProductsFetchFailed += onFetchFailed;
@@ -280,16 +267,12 @@ namespace Devian
                 Debug.Log($"[{Tag}] IAP initialized successfully.");
                 return CommonResult.Ok();
             }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
+            catch (OperationCanceledException) { throw; }
             catch (Exception ex)
             {
                 _initError = ex.Message;
                 Debug.LogError($"[{Tag}] IAP initialization failed: {ex.Message}");
 
-                // FetchProducts 실패와 그 외 초기화 실패를 구분
                 if (ex.Message != null && ex.Message.Contains("Products fetch failed"))
                     return CommonResult.Failure(CommonErrorType.PURCHASE_PRODUCT_FETCH_FAILED, ex.Message);
 
@@ -332,31 +315,29 @@ namespace Devian
 
                 ct.ThrowIfCancellationRequested();
 
-                // v5: receipt는 PendingOrder.Info.Receipt
                 var store = _purchaseStore.StoreKey;
                 var payload = _purchaseStore.BuildVerifyPayload(pendingOrder.Info.Receipt);
-                var request = new VerifyPurchaseRequest(internalProductId, kind, store, payload);
-
-                var verifyResult = await VerifyPurchaseAsync(request, ct);
+                var verifyResult = await verifyPurchaseAsync(internalProductId, kind, store, payload, ct);
                 if (verifyResult.IsFailure)
                     return CommonResult<PurchaseFinalResult>.Failure(verifyResult.Error!);
 
                 var response = verifyResult.Value!;
                 var status = response.ResultStatus;
 
-                // SSOT 하드룰: resultStatus에 따라 ConfirmPurchase 분기
-                // - GRANTED / ALREADY_GRANTED → Confirm 실행
-                // - REJECTED / PENDING / REVOKED / REFUNDED → Confirm 하지 않음
                 if (status == "GRANTED" || status == "ALREADY_GRANTED")
                 {
                     _controller.ConfirmPurchase(pendingOrder);
+
+                    if (status == "GRANTED")
+                    {
+                        var rewardId = ResolveRewardId(internalProductId);
+                        Singleton.Get<RewardManager>().ApplyRewardId(rewardId);
+                    }
 
                     return CommonResult<PurchaseFinalResult>.Success(
                         new PurchaseFinalResult(internalProductId, kind, status, response.Grants));
                 }
 
-                // PENDING/REJECTED/REVOKED/REFUNDED → Failure 반환 (호출자가 IsSuccess로 지급 판단)
-                // Confirm 하지 않으면 Unity IAP가 다음 앱 실행 시 OnPurchasePending을 재전달한다.
                 return CommonResult<PurchaseFinalResult>.Failure(
                     CommonErrorType.PURCHASE_STORE_FAILED,
                     $"Purchase verify returned non-granted status: {status}");
@@ -367,66 +348,33 @@ namespace Devian
             }
         }
 
-        async Task<CommonResult<VerifyPurchaseResponse>> VerifyPurchaseAsync(
-            VerifyPurchaseRequest request, CancellationToken ct)
+        async Task<CommonResult<VerifyPurchaseResponse>> verifyPurchaseAsync(
+            string internalProductId, PurchaseKind kind, string store, string payload,
+            CancellationToken ct)
         {
-            try
+            var data = new Dictionary<string, object>
             {
-                // SSOT 필드 매핑: C# → Callable JSON
-                var data = new Dictionary<string, object>
-                {
-                    ["storeKey"] = request.Store,
-                    ["internalProductId"] = request.InternalProductId,
-                    ["kind"] = PurchaseKindToString(request.Kind),
-                    ["payload"] = request.Payload,
-                };
+                ["storeKey"] = store,
+                ["internalProductId"] = internalProductId,
+                ["kind"] = PurchaseKindToString(kind),
+                ["payload"] = payload,
+            };
 
-                var callable = FirebaseFunctions.DefaultInstance.GetHttpsCallable("verifyPurchase");
-                var result = await callable.CallAsync(data);
+            var result = await callFunctionAsync("verifyPurchase", data, ct);
+            if (result.IsFailure)
+                return CommonResult<VerifyPurchaseResponse>.Failure(result.Error!);
 
-                ct.ThrowIfCancellationRequested();
+            var response = result.Value!;
+            var resultStatus = response.TryGetValue("resultStatus", out var rs) ? rs as string ?? "" : "";
 
-                var response = result.Data as Dictionary<string, object>;
-                if (response == null)
-                    return CommonResult<VerifyPurchaseResponse>.Failure(CommonErrorType.COMMON_SERVER, "verifyPurchase returned null.");
+            var grants = parseGrants(response);
 
-                var resultStatus = response.TryGetValue("resultStatus", out var rs) ? rs as string ?? "" : "";
+            EntitlementsSnapshot? snapshot = null;
+            if (response.TryGetValue("entitlementsSnapshot", out var snapObj) && snapObj is Dictionary<string, object> snap)
+                snapshot = ParseEntitlementsSnapshot(snap);
 
-                // grants[] 파싱
-                var grants = new List<PurchaseGrant>();
-                if (response.TryGetValue("grants", out var grantsObj) && grantsObj is IEnumerable<object> grantList)
-                {
-                    foreach (var item in grantList)
-                    {
-                        if (item is Dictionary<string, object> g)
-                        {
-                            var type = g.TryGetValue("type", out var t) ? t as string ?? "" : "";
-                            var id = g.TryGetValue("id", out var i) ? i as string ?? "" : "";
-                            var amount = g.TryGetValue("amount", out var a) ? Convert.ToInt64(a) : 0L;
-                            grants.Add(new PurchaseGrant(type, id, amount));
-                        }
-                    }
-                }
-
-                // entitlementsSnapshot (optional) 파싱
-                EntitlementsSnapshot? snapshot = null;
-                if (response.TryGetValue("entitlementsSnapshot", out var snapObj) && snapObj is Dictionary<string, object> snap)
-                {
-                    snapshot = ParseEntitlementsSnapshot(snap);
-                }
-
-                return CommonResult<VerifyPurchaseResponse>.Success(
-                    new VerifyPurchaseResponse(resultStatus, grants, snapshot));
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[{Tag}] verifyPurchase failed: {ex.Message}");
-                return CommonResult<VerifyPurchaseResponse>.Failure(CommonErrorType.COMMON_SERVER, ex.Message);
-            }
+            return CommonResult<VerifyPurchaseResponse>.Success(
+                new VerifyPurchaseResponse(resultStatus, grants, snapshot));
         }
 
         // ── Event Handlers ────────────────────────────────────────
@@ -455,7 +403,6 @@ namespace Devian
                 _controller.OnPurchaseFailed -= onPurchaseFailed;
                 _controller.OnStoreDisconnected -= onStoreDisconnected;
             }
-
             base.OnDestroy();
         }
 
@@ -525,6 +472,25 @@ namespace Devian
             return new EntitlementsSnapshot(noAds, seasonPasses, balances);
         }
 
+        static List<PurchaseGrant> parseGrants(Dictionary<string, object> response)
+        {
+            var grants = new List<PurchaseGrant>();
+            if (!response.TryGetValue("grants", out var grantsObj) || !(grantsObj is IEnumerable<object> grantList))
+                return grants;
+
+            foreach (var item in grantList)
+            {
+                if (item is Dictionary<string, object> g)
+                {
+                    grants.Add(new PurchaseGrant(
+                        getString(g, "type"),
+                        getString(g, "id"),
+                        getLong(g, "amount")));
+                }
+            }
+            return grants;
+        }
+
         static string PurchaseKindToString(PurchaseKind kind)
         {
             switch (kind)
@@ -537,20 +503,11 @@ namespace Devian
             }
         }
 
-        // ── Rental Parse Helpers (private, Devian 네이밍 정책: 소문자 시작) ──
-
-        static RentalPurchaseItem parseFirstRentalPurchaseItem(object data)
+        static RentalPurchaseItem parseFirstRentalPurchaseItem(Dictionary<string, object> root)
         {
-            var root = data as IDictionary<string, object>;
-            if (root == null) return null;
-
             if (!root.TryGetValue("items", out var itemsObj)) return null;
-
-            var items = itemsObj as IList<object>;
-            if (items == null || items.Count == 0) return null;
-
-            var first = items[0] as IDictionary<string, object>;
-            if (first == null) return null;
+            if (!(itemsObj is IList<object> items) || items.Count == 0) return null;
+            if (!(items[0] is IDictionary<string, object> first)) return null;
 
             return new RentalPurchaseItem
             {

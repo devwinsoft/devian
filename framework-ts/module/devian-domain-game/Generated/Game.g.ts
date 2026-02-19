@@ -27,6 +27,14 @@ export enum ProductKind {
     SeasonPass = 3,
 }
 
+/** StatType enum */
+export enum StatType {
+    None = 0,
+    ItemCount = 1,
+    ItemLevel = 2,
+    ItemSlotNumber = 3,
+}
+
 /** UserType enum */
 export enum UserType {
     Guest = 0,
@@ -44,6 +52,13 @@ export interface UserProfile extends IEntity {
 // ================================================================
 // Tables
 // ================================================================
+
+export interface ITEM extends IEntityKey<string> {
+    ItemId: string;
+    ItemNameId: string;
+    ItemDescId: string;
+    getKey(): string;
+}
 
 export interface MISSION_DAILY extends IEntityKey<string> {
     MissionId: string;
@@ -80,6 +95,7 @@ export interface MISSION_ACHIEVEMENT extends IEntityKey<string> {
 
 export interface PRODUCT extends IEntityKey<string> {
     InternalProductId: string;
+    RewardId: string;
     Kind: ProductKind;
     Title: string;
     IsActive: boolean;
@@ -122,6 +138,42 @@ export interface VECTOR3 extends IEntity {
 // ================================================================
 // Table Containers
 // ================================================================
+
+export class TB_ITEM {
+    private static _dict: Map<string, ITEM> = new Map();
+    private static _list: ITEM[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly ITEM[] { return this._list; }
+
+    static get(key: string): ITEM | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as ITEM;
+            this._list.push(row);
+            this._dict.set(row.ItemId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
 
 export class TB_MISSION_DAILY {
     private static _dict: Map<string, MISSION_DAILY> = new Map();

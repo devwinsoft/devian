@@ -20,7 +20,7 @@ AppliesTo: v10
 
 
 - iOS 런타임 외에서는 안전 실패(미지원)로 처리한다.
-- 게임 로직은 내부 ID만 사용하고, Apple 플랫폼 ID는 SSOT 매핑으로만 취급한다.
+- 상위 로직은 내부 ID만 사용하고, Apple 플랫폼 ID는 SSOT 매핑으로만 취급한다.
 
 정본: [03-ssot](../03-ssot/SKILL.md)
 

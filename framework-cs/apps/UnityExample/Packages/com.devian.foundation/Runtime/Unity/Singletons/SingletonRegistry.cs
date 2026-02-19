@@ -46,31 +46,40 @@ namespace Devian
 
             if (_entries.TryGetValue(type, out var existing))
             {
-                // 동일 인스턴스 재등록은 idempotent (동일 source일 때만)
-                if (existing.Source == source && ReferenceEquals(existing.Instance, instance))
+                // 기존 엔트리가 Unity destroyed 상태면 정리 후 신규 등록으로 진행
+                if (isUnityDestroyed(existing.Instance))
                 {
-                    return true; // 이미 등록된 동일 인스턴스 - no-op
-                }
-
-                // 동일 source 중복은 예외 (다른 인스턴스)
-                if (existing.Source == source)
-                {
-                    throw new InvalidOperationException(
-                        $"[SingletonRegistry] Duplicate {source} registration for '{type.Name}'. " +
-                        $"Existing: '{existing.DebugSource}', New: '{debugSource ?? "unknown"}'");
-                }
-
-                // 우선순위 비교: 신규가 더 높으면 Adopt
-                if (source > existing.Source)
-                {
-                    // Adopt: 기존 인스턴스 파괴 + 신규 등록
-                    AdoptAndDestroy(type, existing, newEntry);
-                    _entries[type] = newEntry;
-                    return true;
+                    _entries.Remove(type);
                 }
                 else
                 {
-                    // 기존이 더 높음: 신규 무시 (신규가 Auto인데 이미 Compo/Boot가 있는 경우)
+                    // 동일 인스턴스 재등록: source가 같으면 idempotent, source가 다르면 "승격"만 허용
+                    if (ReferenceEquals(existing.Instance, instance))
+                    {
+                        if (source > existing.Source)
+                        {
+                            _entries[type] = newEntry; // 승격(파괴 없음)
+                        }
+                        return true; // 동일 인스턴스면 no-op 취급
+                    }
+
+                    // 동일 source 중복은 예외 (다른 인스턴스)
+                    if (existing.Source == source)
+                    {
+                        throw new InvalidOperationException(
+                            $"[SingletonRegistry] Duplicate {source} registration for '{type.Name}'. " +
+                            $"Existing: '{existing.DebugSource}', New: '{debugSource ?? "unknown"}'");
+                    }
+
+                    // 우선순위 비교: 신규가 더 높으면 Adopt
+                    if (source > existing.Source)
+                    {
+                        AdoptAndDestroy(type, existing, newEntry);
+                        _entries[type] = newEntry;
+                        return true;
+                    }
+
+                    // 기존이 더 높음: 신규 무시
                     Debug.LogWarning(
                         $"[SingletonRegistry] Ignoring {source} registration for '{type.Name}' " +
                         $"(existing {existing.Source} has higher priority)");
@@ -88,10 +97,15 @@ namespace Devian
         /// </summary>
         private static void AdoptAndDestroy(Type type, Entry oldEntry, Entry newEntry)
         {
+            // 동일 인스턴스면 파괴 금지 (소스 승격 케이스 방어)
+            if (ReferenceEquals(oldEntry.Instance, newEntry.Instance))
+            {
+                return;
+            }
+
             var oldSource = oldEntry.Source;
             var newSource = newEntry.Source;
 
-            // Error 로그 (Compo가 Auto/Boot를 대체하는 경우)
             if (newSource == SingletonSource.Compo)
             {
                 Debug.LogError(
@@ -141,14 +155,21 @@ namespace Devian
         {
             var type = typeof(T);
 
-            if (!_entries.TryGetValue(type, out var entry))
+            if (_entries.TryGetValue(type, out var entry))
             {
-                throw new InvalidOperationException(
-                    $"[SingletonRegistry] No instance registered for type '{type.Name}'. " +
-                    "Ensure the singleton is instantiated before access.");
+                if (isUnityDestroyed(entry.Instance))
+                {
+                    _entries.Remove(type);
+                }
+                else
+                {
+                    return (T)entry.Instance;
+                }
             }
 
-            return (T)entry.Instance;
+            throw new InvalidOperationException(
+                $"[SingletonRegistry] No instance registered for type '{type.Name}'. " +
+                "Ensure the singleton is instantiated before access.");
         }
 
         /// <summary>
@@ -160,8 +181,15 @@ namespace Devian
 
             if (_entries.TryGetValue(type, out var entry))
             {
-                instance = (T)entry.Instance;
-                return true;
+                if (isUnityDestroyed(entry.Instance))
+                {
+                    _entries.Remove(type);
+                }
+                else
+                {
+                    instance = (T)entry.Instance;
+                    return true;
+                }
             }
 
             instance = default;
@@ -177,9 +205,16 @@ namespace Devian
 
             if (_entries.TryGetValue(type, out var entry))
             {
-                instance = (T)entry.Instance;
-                source = entry.Source;
-                return true;
+                if (isUnityDestroyed(entry.Instance))
+                {
+                    _entries.Remove(type);
+                }
+                else
+                {
+                    instance = (T)entry.Instance;
+                    source = entry.Source;
+                    return true;
+                }
             }
 
             instance = default;
@@ -193,6 +228,16 @@ namespace Devian
         public static void Clear()
         {
             _entries.Clear();
+        }
+
+        private static bool isUnityDestroyed(object instance)
+        {
+            if (instance is UnityEngine.Object unityObj)
+            {
+                // Unity의 destroyed-object는 == null이 true
+                return unityObj == null;
+            }
+            return false;
         }
     }
 }

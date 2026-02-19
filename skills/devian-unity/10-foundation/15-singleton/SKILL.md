@@ -12,9 +12,12 @@ Type: Component Specification
 
 ---
 
-## 1. 제공 타입 (2종)
+## 1. 제공 타입 (4종)
 
-### AutoSingleton\<T\> (기본)
+
+### 1-param (Registry key = 자기 자신)
+
+#### AutoSingleton\<T\> (기본)
 
 `T.Instance` 접근 시:
 1. Registry 조회
@@ -28,17 +31,65 @@ Type: Component Specification
 - `AutoSingleton<T>.IsShuttingDown`으로 사전 체크
 - `Singleton.TryGet<T>(out var t)` 또는 `T.TryGet(out var t)`로 안전 조회 (자동 생성 없음)
 
-### CompoSingleton\<T\> (선택)
+#### CompoSingleton\<T\> (선택)
 
 - 씬/프리팹에 컴포넌트로 붙여서 사용한다.
 - `Awake()`에서 Registry에 등록한다.
 - **우선순위 최고**: CompoSingleton이 등록되면 같은 타입의 Auto 인스턴스를 대체한다(Adopt).
 
+
+### 2-param (Registry key = Base 타입)
+
+2-param은 **상속 기반이 아니라 정적 helper**로 제공한다.
+즉, `TSelf`는 **오직 `TBase : MonoBehaviour`만 상속**하면 된다. (다중 상속 문제 없음)
+
+#### AutoSingleton\<TBase, TSelf\>
+
+`AutoSingleton<T>`와 동일하되, **Registry key가 `TBase`**다.
+
+- `TBase`: Registry key. 반드시 `MonoBehaviour` 기반 Base 타입(보통 abstract class).
+- `TSelf`: 실제 MonoBehaviour 타입. `TSelf : TBase`
+- `Instance`는 **`TSelf`** 타입을 반환한다 (캐스팅 최소화).
+- 시스템 레이어에서는 `Singleton.Get<TBase>()`로 `TBase` 타입 접근.
+
+제네릭 제약:
+```
+where TBase : MonoBehaviour
+where TSelf : TBase
+```
+
+#### CompoSingleton\<TBase, TSelf\>
+
+`CompoSingleton<T>`와 동일하되, **Registry key가 `TBase`**다.
+
+- `TBase`: Registry key. 반드시 `MonoBehaviour` 기반 Base 타입(보통 abstract class).
+- `TSelf`: 실제 MonoBehaviour 타입. `TSelf : TBase`
+- `Register(this)`를 `Awake()`에서 호출해 등록한다.
+- `Instance`는 **`TSelf`** 타입을 반환한다 (캐스팅 최소화).
+- 시스템 레이어에서는 `Singleton.Get<TBase>()`로 `TBase` 타입 접근.
+
+제네릭 제약:
+```
+where TBase : MonoBehaviour
+where TSelf : TBase
+```
+
+### 1-param vs 2-param 사용 기준
+
+| | 1-param (`<T>`) | 2-param (`<TBase, TSelf>`) |
+|---|---|---|
+| 형태 | 상속 기반 (`class X : AutoSingleton<X>`) | **정적 helper** (`static class AutoSingleton<TBase, TSelf>`) |
+| TSelf 상속 | `MonoBehaviour` (via Singleton 상속) | **`TBase`만 상속** (다중 상속 없음) |
+| Registry key | `T` (= 자기 자신) | `TBase` (= 추상 Base) |
+| Instance 반환 타입 | `T` | **`TSelf`** (구체 타입) |
+| TBase 접근 | `Singleton.Get<T>()` | `Singleton.Get<TBase>()` |
+| 용도 | Base 분리 불필요한 경우 | 시스템 레이어(Base) / 컨텐츠 레이어(파생) 분리 |
+
 ---
 
 ## 2. 우선순위 규칙 (Hard Rule)
 
-같은 타입 T에 대해 **Compo > Auto**가 항상 승리한다.
+같은 타입 T에 대해 **Compo > Boot > Auto**가 항상 승리한다.
 
 - CompoSingleton이 늦게 로드되어도, 기존 AutoSingleton 인스턴스를 **대체(Adopt)**해야 한다.
 - CompoSingleton끼리 중복은 **즉시 실패(예외)**로 처리한다.
@@ -47,7 +98,7 @@ Type: Component Specification
 
 ## 3. Adopt 정책 (Hard Rule)
 
-Registry에 AutoSingleton이 등록된 상태에서 CompoSingleton이 등록되면:
+Registry에 Auto/Boot가 등록된 상태에서 Compo가 등록되면:
 
 1. CompoSingleton을 "정본"으로 등록
 2. 기존 AutoSingleton 인스턴스는 **제거(파괴)**하여 중복을 해소
@@ -81,8 +132,10 @@ com.devian.foundation/Runtime/Unity/Singletons/
 ├── SingletonSource.cs      # enum
 ├── SingletonRegistry.cs    # SSOT 저장소
 ├── Singleton.cs            # 정적 파사드
-├── AutoSingleton.cs        # 기본 싱글톤 (컴포넌트 베이스)
-└── CompoSingleton.cs       # 씬/프리팹 싱글톤 (컴포넌트 베이스)
+├── AutoSingleton.cs        # 1-param: AutoSingleton<T>
+├── AutoSingleton2.cs       # 2-param: AutoSingleton<TBase, TSelf>
+├── CompoSingleton.cs       # 1-param: CompoSingleton<T>
+└── CompoSingleton2.cs      # 2-param: CompoSingleton<TBase, TSelf>
 ```
 
 ---
@@ -93,7 +146,8 @@ com.devian.foundation/Runtime/Unity/Singletons/
 public enum SingletonSource
 {
     Auto = 0,   // 자동 생성 (최저 우선순위)
-    Compo = 1,  // 씬/프리팹 컴포넌트 (최고 우선순위)
+    Boot = 1,   // Bootstrap에서 등록 (중간 우선순위)
+    Compo = 2,  // 씬/프리팹 컴포넌트 (최고 우선순위)
 }
 ```
 
@@ -154,6 +208,61 @@ public class AudioManager : CompoSingleton<AudioManager>
 
 // 씬에 배치된 인스턴스가 정본이 됨
 // 만약 AutoSingleton으로 먼저 접근했어도 CompoSingleton이 대체함
+```
+
+### 시스템/컨텐츠 분리 — 2-param (CompoSingleton\<TBase, TSelf\>)
+
+```csharp
+// ── 시스템 레이어 (framework) ──
+public abstract class BaseNetworkSystem : MonoBehaviour
+{
+    protected abstract void OnConnectionEstablished();
+}
+
+// ── 컨텐츠 레이어 (game) ──
+public sealed class GameNetworkSystem : BaseNetworkSystem
+{
+    public static GameNetworkSystem Instance => CompoSingleton<BaseNetworkSystem, GameNetworkSystem>.Instance;
+
+    private void Awake()
+    {
+        CompoSingleton<BaseNetworkSystem, GameNetworkSystem>.Register(this);
+    }
+
+    protected override void OnConnectionEstablished()
+    {
+        // Game-specific connection handling
+    }
+}
+
+// 접근 (Registry key = BaseNetworkSystem)
+Singleton.Get<BaseNetworkSystem>()      // OK (반환 타입: BaseNetworkSystem — 시스템 레이어용)
+GameNetworkSystem.Instance              // OK (반환 타입: GameNetworkSystem — 컨텐츠 레이어용)
+```
+
+### 시스템/컨텐츠 분리 — 2-param (AutoSingleton\<TBase, TSelf\>)
+
+```csharp
+// ── 시스템 레이어 (framework) ──
+public abstract class BaseUISystem : MonoBehaviour
+{
+    public abstract void ShowPopup(string message);
+}
+
+// ── 컨텐츠 레이어 (game) ──
+public sealed class GameUISystem : BaseUISystem
+{
+    public static GameUISystem Instance => AutoSingleton<BaseUISystem, GameUISystem>.Instance;
+
+    public override void ShowPopup(string message)
+    {
+        // Game-specific popup implementation
+    }
+}
+
+// 접근 (Registry key = BaseUISystem)
+Singleton.Get<BaseUISystem>()          // OK (반환 타입: BaseUISystem — 시스템 레이어용)
+GameUISystem.Instance                  // OK (반환 타입: GameUISystem — 컨텐츠 레이어용)
 ```
 
 ---

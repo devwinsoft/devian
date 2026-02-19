@@ -44,7 +44,7 @@ MobileSystem 샘플에서 사용할 LeaderboardManager(설계)의 위치/역할/
 
 
 - `OnAchievementUnlocked(achievementId)`
-  - Reward 시스템(또는 게임 로직)이 구독하여 보상을 지급한다.
+  - Reward 시스템(또는 상위 로직)이 구독하여 보상을 지급한다.
   - 멱등 키는 [03-ssot](../03-ssot/SKILL.md)의 `grantId` 규칙을 따른다.
 
 
@@ -54,7 +54,7 @@ MobileSystem 샘플에서 사용할 LeaderboardManager(설계)의 위치/역할/
 ## Hard Rules (샘플은 반드시 준수)
 
 
-- 게임 로직은 내부 ID만 사용(플랫폼 ID 직접 사용 금지)
+- 상위 로직은 내부 ID만 사용(플랫폼 ID 직접 사용 금지)
 - Reward 지급 로직을 LeaderboardManager에 넣지 않는다
 - Editor/미지원 플랫폼에서 안전 실패(CommonResult 기반)로 종료한다
 

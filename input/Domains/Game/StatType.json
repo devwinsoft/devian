@@ -1,0 +1,13 @@
+{
+  "enums": [
+    {
+      "name": "StatType",
+      "values": [
+        { "name": "None", "value": 0 },
+        { "name": "ItemCount", "value": 1 },
+        { "name": "ItemLevel", "value": 2 },
+        { "name": "ItemSlotNumber", "value": 3 }
+      ]
+    }
+  ]
+}

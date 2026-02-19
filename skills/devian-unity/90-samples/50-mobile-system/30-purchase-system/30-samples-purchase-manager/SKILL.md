@@ -3,6 +3,9 @@
 
 PurchaseManager(구매 샘플)의 위치/역할/규약을 설명한다.
 
+PurchaseManager는 **단일 concrete 클래스**이다.
+`TB_PRODUCT` 테이블을 직접 참조하여 `internalProductId -> rewardId` 변환과 ProductDefinition 빌드를 수행한다.
+
 
 ---
 
@@ -12,10 +15,25 @@ PurchaseManager(구매 샘플)의 위치/역할/규약을 설명한다.
 
 - UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/PurchaseManager/PurchaseManager.cs`
 - UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/PurchaseManager/PurchaseManager.cs`
+- Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/PurchaseManager/PurchaseManager.cs`
 
 
 - asmdef:
   - `Devian.Samples.MobileSystem` (`Samples~/MobileSystem/Runtime/Devian.Samples.MobileSystem.asmdef`)
+  - 참조: `Devian.Domain.Game` (TB_PRODUCT 테이블), `Devian.Domain.Common` (CommonResult)
+
+
+---
+
+
+## Singleton
+
+```csharp
+CompoSingleton<PurchaseManager>.Instance
+```
+
+- Registry key: `PurchaseManager`
+- 다른 매니저에서 접근: `Singleton.Get<PurchaseManager>()`
 
 
 ---
@@ -43,6 +61,19 @@ PurchaseManager(구매 샘플)의 위치/역할/규약을 설명한다.
 ---
 
 
+## 컨텐츠 카탈로그 통합 (TB_PRODUCT 직접 참조)
+
+PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
+
+- `ResolveRewardId(internalProductId)`: `TB_PRODUCT.Get(internalProductId).RewardId` — 테이블 조회로 변환
+- `BuildProductDefinitions()`: `TB_PRODUCT.GetAll()`에서 `isActive` 필터링 후 ProductDefinition 목록 생성
+  - 플랫폼별 StoreSku 매핑: `#if UNITY_IOS` → `StoreSkuApple`, `#elif UNITY_ANDROID` → `StoreSkuGoogle`
+  - `Kind` → `ProductType` 매핑: Consumable→Consumable, Subscription→Subscription, SeasonPass→NonConsumable, Rental→NonConsumable
+
+
+---
+
+
 ## Server Integration (구현 완료)
 
 
@@ -63,8 +94,8 @@ PurchaseManager(구매 샘플)의 위치/역할/규약을 설명한다.
 
 - Unity IAP "스토어 구매 성공 콜백"만으로 지급/NoAds 적용 금지
 - 최종 지급/상태 반영은 서버(Cloud Functions) 결과(verifyPurchase/getEntitlements)만 기준으로 한다.
-- 소모성 지급량은 서버 grants/currencyDelta 결과만 신뢰한다(클라 계산 금지).
-- 서버 `verifyPurchase`가 반환한 `grants[]`의 실제 적용(지급 실행)은 RewardManager(49-reward-system)에 위임한다.
+- 지급 여부는 서버 `verifyPurchase.resultStatus`만 기준으로 한다(스토어 콜백만으로 지급 금지).
+- `resultStatus == GRANTED`일 때만 `ResolveRewardId(internalProductId)` → `rewardId` 변환 후 `Singleton.Get<RewardManager>().ApplyRewardId(rewardId)`로 지급 실행을 위임한다.
 
 
 ---
@@ -85,10 +116,10 @@ PurchaseManager(구매 샘플)의 위치/역할/규약을 설명한다.
 
 ### ~~ISSUE-3. ProductCatalog.LoadDefaultCatalog() 사용 (SSOT 불일치)~~ — ✅ 수정됨
 
-- `TB_PRODUCT.GetAll()` 기반으로 교체 완료.
+- `TB_PRODUCT` 기반으로 교체 완료.
 - `isActive` 필터링: 비활성 상품은 Unity IAP에 등록하지 않음.
 - 플랫폼별 StoreSku 매핑: `#if UNITY_IOS` → `StoreSkuApple`, `#elif UNITY_ANDROID` → `StoreSkuGoogle`.
-- `Kind` → `ProductType` 매핑: Consumable→Consumable, Subscription→Subscription, SeasonPass→NonConsumable, Rental→NonConsumable.
+- `Kind` → `ProductType` 매핑.
 
 
 ### ~~ISSUE-4. 동시 구매 요청 경쟁 조건~~ — ✅ 수정됨

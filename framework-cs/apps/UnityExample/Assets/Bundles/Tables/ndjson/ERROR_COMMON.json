@@ -75,3 +75,7 @@
 {"Id":"PURCHASE_INIT_FAILED","Msg_key":"","Msg":"IAP initialization failed."}
 {"Id":"PURCHASE_INIT_REQUIRED","Msg_key":"","Msg":"PurchaseManager not initialized. Call InitializeAsync() first."}
 {"Id":"PURCHASE_PRODUCT_FETCH_FAILED","Msg_key":"","Msg":"Failed to fetch products from store."}
+{"Id":"INVENTORY_DELTAS_NULL","Msg_key":"","Msg":"rewards array is null"}
+{"Id":"INVENTORY_DELTA_TYPE_INVALID","Msg_key":"","Msg":"reward type is not Item or Currency"}
+{"Id":"INVENTORY_DELTA_ID_EMPTY","Msg_key":"","Msg":"reward id is null or empty"}
+{"Id":"INVENTORY_DELTA_AMOUNT_NEGATIVE","Msg_key":"","Msg":"reward amount is negative"}

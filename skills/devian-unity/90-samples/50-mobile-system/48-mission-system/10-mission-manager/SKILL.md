@@ -3,7 +3,7 @@
 
 MissionManager(설계)는 `MISSION` 테이블 기반으로 미션을 평가하고, 완료/클레임 상태를 관리한다.
 daily/weekly 리셋 경계 및 기간 키(dailyKey/weeklyKey)는 **서버 시간 기준**으로 계산한다.
-mission row의 `rewardId`는 Game REWARD.rewardId(pk)이며, 실제 지급 실행(Apply)은 RewardManager에 위임한다(구현은 이후).
+mission row의 `rewardId`는 컨텐츠 레이어의 reward 키를 사용하며, 실제 지급 실행(Apply)은 RewardManager에 위임한다(구현은 이후).
 
 
 ---

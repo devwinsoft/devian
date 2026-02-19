@@ -7,8 +7,8 @@ AppliesTo: v10
 
 ## 이 문서가 정본이다 (SSOT)
 
-- Game 도메인 테이블 파일: `input/Domains/Game/MissionTable.xlsx`
-- Game 도메인 테이블 파일: `input/Domains/Game/RewardTable.xlsx`
+- 컨텐츠 도메인 Mission 테이블(상위 컨텐츠 레이어 SSOT)
+- 컨텐츠 도메인 Reward 테이블(상위 컨텐츠 레이어 SSOT)
 - `MISSION_DAILY` 테이블 스키마 (일일 미션)
 - `MISSION_WEEKLY` 테이블 스키마 (주간 미션)
 - `MISSION_ACHIEVEMENT` 테이블 스키마 (업적 미션)
@@ -26,7 +26,7 @@ AppliesTo: v10
 - `conditionKey`: 조건 입력 키(예: `stage_clear_count`)
 - `conditionOp`: 연산자 표현(예: `>=`)
 - `conditionValue`: 목표값(int)
-- `rewardKey`: 보상 키(string). Game REWARD 테이블의 `rewardId`(pk)를 참조한다.
+- `rewardKey`: 보상 키(string). 컨텐츠 레이어의 reward 키 정본을 참조한다.
 
 NOTE:
 - 일일/주간/업적은 **테이블을 분리**한다:
@@ -51,7 +51,7 @@ NOTE:
 | `conditionKey` | string | 조건 입력 키 |
 | `conditionOp` | string | `>=` 등(표현만) |
 | `conditionValue` | int | 목표값 |
-| `rewardKey` | string | 보상 키(= Game REWARD.rewardId(pk)) |
+| `rewardKey` | string | 보상 키(= 컨텐츠 레이어 reward 키) |
 
 NOTE:
 - condition 표현은 "테이블로 표현 가능한 최소 형태"만 정한다.

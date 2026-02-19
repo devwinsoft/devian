@@ -12,7 +12,7 @@ MobileSystem 샘플에서 Apple(Game Center) / Google Play Games Services(GPGS v
 Leaderboard / Achievements 연동을 **설계 문서**로 정의한다.
 
 이 스킬 그룹은 "플랫폼 연동 + 내부 ID 매핑 + 업적 동기화"까지만 책임진다.
-업적 달성에 따른 Reward 지급은 별도 Reward 시스템(또는 게임 로직)이 처리하며,
+업적 달성에 따른 Reward 지급은 별도 Reward 시스템(또는 상위 로직)이 처리하며,
 Leaderboard는 **업적 달성 신호(event)** 만 제공한다.
 
 

@@ -51,7 +51,7 @@ UPM 패키지가 staging → upm → Packages로 복사되는 개념:
 
 Network 샘플 템플릿 작성 방법:
 
-- `skills/devian-examples/14-unity-game-net-manager/SKILL.md`
+- `skills/devian-unity/90-samples/40-game-system/21-game-net-manager/SKILL.md`
 
 ---
 
@@ -59,7 +59,7 @@ Network 샘플 템플릿 작성 방법:
 
 | 스킬 | 설명 |
 |------|------|
-| `skills/devian-examples/11-domain-game/SKILL.md` | Game 도메인(테이블/컨트랙트) 예제 |
+| `skills/devian-unity/90-samples/40-game-system/11-domain-game/SKILL.md` | Game 도메인 허브 (테이블/컨트랙트/생성물) |
 | `skills/devian-examples/12-protocol-game/SKILL.md` | Game 프로토콜(C2Game/Game2C) 예제 |
 
 ---
@@ -76,4 +76,4 @@ Network 샘플 템플릿 작성 방법:
 - Related: `skills/devian/10-module/03-ssot/SKILL.md`
 - Related: `skills/devian-unity/06-domain-packages/com.devian.domain.template/SKILL.md`
 - Related: `skills/devian-unity/02-unity-bundles/SKILL.md`
-- Related: `skills/devian-examples/14-unity-game-net-manager/SKILL.md`
+- Related: `skills/devian-unity/90-samples/40-game-system/21-game-net-manager/SKILL.md`

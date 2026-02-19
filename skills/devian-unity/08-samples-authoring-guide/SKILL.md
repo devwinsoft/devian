@@ -14,7 +14,7 @@
 > **세부 문서:**
 > - Templates 원본: `framework-cs/upm/com.devian.samples/Samples~/`
 > - Samples~ 생성 절차: `skills/devian-unity/09-samples-creation/SKILL.md`
-> - Network Sample: `skills/devian-examples/14-unity-game-net-manager/SKILL.md`
+> - Network Sample: `skills/devian-unity/90-samples/40-game-system/21-game-net-manager/SKILL.md`
 > - LocalSave Manager Sample: `skills/devian-unity/90-samples/50-mobile-system/21-savedata-system/41-savedata-savelocal/SKILL.md`
 > - CloudSave Manager Sample: `skills/devian-unity/90-samples/50-mobile-system/21-savedata-system/42-savedata-savecloud/SKILL.md`
 
@@ -83,15 +83,16 @@ framework-cs/upm/<packageName>/Samples~/...
 
 **필수 구조:**
 ```
-upm/<packageName>/Samples~/Network/
+upm/<packageName>/Samples~/GameContents/
 ├── README.md                         ← 샘플 루트에 위치
 ├── Runtime/
-│   ├── [asmdef: Devian.Samples.Network]          ← Runtime asmdef
-│   ├── GameNetManager.cs             ← partial 네트워크 매니저 (Stub/Proxy 내부 생성)
-│   └── Game2CStub.cs                 ← partial 메시지 스텁 (핸들러 내부 처리)
+│   ├── [asmdef: Devian.Samples.GameContents]     ← Runtime asmdef
+│   └── Network/
+│       ├── GameNetManager.cs         ← partial 네트워크 매니저 (Stub/Proxy 내부 생성)
+│       └── Game2CStub.cs             ← partial 메시지 스텁 (핸들러 내부 처리)
 └── Editor/
-    ├── [asmdef: Devian.Samples.Network.Editor]   ← Editor-only asmdef (includePlatforms: ["Editor"])
-    └── NetworkSampleMenu.cs          ← 에디터 메뉴
+    ├── [asmdef: Devian.Samples.GameContents.Editor] ← Editor-only asmdef (includePlatforms: ["Editor"])
+    └── GameContentsSampleMenu.cs     ← 에디터 메뉴
 ```
 
 **금지:**
@@ -103,11 +104,11 @@ upm/<packageName>/Samples~/Network/
 **Editor-only asmdef:**
 
 ```json
-// Editor/Devian.Samples.Network.Editor.asmdef
+// Editor/Devian.Samples.GameContents.Editor.asmdef
 {
-    "name": "Devian.Samples.Network.Editor",
+    "name": "Devian.Samples.GameContents.Editor",
     "rootNamespace": "Devian",
-    "references": ["Devian.Samples.Network"],
+    "references": ["Devian.Samples.GameContents"],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
@@ -120,15 +121,15 @@ upm/<packageName>/Samples~/Network/
 }
 ```
 
-### D) 에디터 메뉴 (NetworkSampleMenu)
+### D) 에디터 메뉴 (GameContentsSampleMenu)
 
 **역할:**
 - 메뉴에서 `GameNetManager` GameObject 생성
 - 사용법 안내
 
 **메뉴 경로:**
-- `Devian/Samples/Network/Create GameNetManager`
-- `Devian/Samples/Network/How to Use`
+- `Devian/Samples/GameContents/Create GameNetManager`
+- `Devian/Samples/GameContents/How to Use`
 
 ### E) Disconnect 행동 DoD (Hard DoD)
 

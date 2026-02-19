@@ -100,6 +100,13 @@ rm -f UnityExample/Packages/{pkg}/.../OldName.cs.meta
 | 내용 치환 | `sed` / `find -exec` | 일괄 처리로 속도 향상 |
 | 패키지 동기화 | `cp -r` (폴더 단위) | 파일별 처리 불필요 |
 
+### 6. UPM 원본 우선 + 미러 동기화 (Hard Rule)
+
+- 코드 정본 수정 위치는 항상 `framework-cs/upm/{pkg}`다.
+- `framework-cs/apps/UnityExample/Packages/{pkg}`는 UPM에서 동기화되는 미러이며 직접 수정 금지다.
+- `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/...`는 샘플 배포 산출 미러다.
+- 하위 도메인/샘플 문서는 위 하드룰을 재정의하지 않고 본 문서를 참조한다.
+
 ---
 
 ## 금지 경로 가드 (Hard Rule)

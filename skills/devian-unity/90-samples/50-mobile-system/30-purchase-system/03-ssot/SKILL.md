@@ -92,7 +92,7 @@ AppliesTo: v10
 
 #### 1) 내부 표준 ID가 정본
 
-- 게임/Devian 로직은 `internalProductId`가 정본이다.
+- 상위 로직은 `internalProductId`를 정본으로 사용한다.
 - Store SKU는 매핑 데이터로만 취급한다.
 
 #### 2) 타입 규칙
@@ -102,20 +102,23 @@ AppliesTo: v10
 - Season Pass: 시즌별 구매 1회성 Entitlement로 운영
 - Rental: 기간 한정 이용권(1회 구매, 기간 만료 후 비활성) — one-time(products) 검증 경로
 
-- kind의 정본 enum은 `input/Domains/Game/ProductKind.json`의 `ProductKind`이다.
+- kind의 정본 enum은 컨텐츠 레이어가 정의한 `ProductKind`다.
 - 테이블(`PurchaseTable.xlsx` PRODUCT.kind)의 타입은 `ProductKind`를 사용한다.
 
-### 레이어 분리 (옵션A)
+### 카탈로그 통합
 
-PurchaseManager(시스템 레이어)는 PRODUCT 테이블 타입을 **직접 참조하지 않는다**.
-대신 `IPurchaseProductCatalog` 포트를 통해 컨텐츠 레이어로부터 카탈로그를 주입받는다.
-Game 도메인 기반 구현체는 `GameProductCatalog`이며, Bootstrap(`MobileApplication.OnBootProc`)에서 주입한다.
+PurchaseManager는 `TB_PRODUCT` 테이블을 **직접 참조**하여 카탈로그를 구성한다.
+`Devian.Samples.MobileSystem.asmdef`에 `Devian.Domain.Game` 참조가 포함되어 있다.
+
+Purchase 지급을 위해 `internalProductId -> rewardId` 변환이 필요하다.
+- `PurchaseManager`가 `ResolveRewardId(internalProductId)` → `TB_PRODUCT.Get(internalProductId).RewardId`로 직접 변환한다.
+- `BuildProductDefinitions()` → `TB_PRODUCT.GetAll()`에서 `isActive` 필터링 후 ProductDefinition 목록을 생성한다.
 
 ### Unity IAP 5.x (v5) Catalog Notes
 
 - 본 SSOT에서 "카탈로그"는 **내부 ID(`internalProductId`) ↔ 스토어 SKU(Apple/Google) 매핑 데이터**를 의미한다.
 - Unity IAP 5.x(v5)에서는 과거 방식의 `ProductCatalog.LoadDefaultCatalog()` 같은 런타임 로딩 API에 의존하지 않는다. (obsolete 전제 제거)
-- 런타임에서는 "등록된 제품 정의"를 사용해 구매를 시작하며, 게임 로직은 반드시 `internalProductId`만 사용한다.
+- 런타임에서는 "등록된 제품 정의"를 사용해 구매를 시작하며, 상위 로직은 반드시 `internalProductId`만 사용한다.
 - 스토어 SKU는 플랫폼별 매핑 데이터일 뿐이며, 운영/코드에서 직접 참조하지 않는다.
 
 ### NEEDS CHECK (형준 결정 필요)
@@ -124,13 +127,13 @@ Game 도메인 기반 구현체는 `GameProductCatalog`이며, Bootstrap(`Mobile
 - [x] SSOT 저장 위치: **(A) Devian input 테이블(Excel) 기반** — 결정됨
   - PRODUCT 테이블 스키마를 이 문서(03-ssot)에서 SSOT로 정의한다.
   - `PurchaseTable.xlsx`에 PRODUCT 시트를 생성하여 데이터를 관리한다.
-- [x] input_common.json 도메인(Game) 등록: — 결정됨
-  - `input/input_common.json`에 Game 도메인 등록 완료
-  - `tableDir`: `Domains/Game`
+- [x] input_common.json 도메인 등록: — 결정됨
+  - 도메인 등록 정보는 컨텐츠 레이어 SSOT에서 관리
 - [x] PurchaseTable.xlsx 경로: — 결정됨
-  - `input/Domains/Game/PurchaseTable.xlsx`
+  - 경로는 컨텐츠 레이어 SSOT에서 관리
 - [x] PRODUCT 테이블 스키마/필드: — 결정됨
   - `internalProductId` (string, pk) — 내부 상품 ID (정본)
+  - `rewardId` (string) — 지급 Reward Key, `internalProductId -> rewardId` 변환의 SSOT
   - `kind` (ProductKind) — 상품 타입 (`Consumable` / `Rental` / `Subscription` / `SeasonPass`)
   - `title` (string) — 표시용 상품명(요약)
   - `isActive` (bool) — 운영 활성 토글
@@ -186,7 +189,7 @@ Game 도메인 기반 구현체는 `GameProductCatalog`이며, Bootstrap(`Mobile
   4) 결과 반환
 - 출력
   - `resultStatus: string` — 위 enum 중 하나
-  - `grants: array` — 지급 내역(InventoryDelta[]) (각 항목: `{ type, id, amount }`, `type="item"|"currency"`, `amount>=0`)
+  - `grants: array` — 지급 내역(RewardData[]) (각 항목: `{ type, id, amount }`, `type="item"|"currency"`, `amount>=0`)
   - `entitlementsSnapshot: object?` — (optional) 갱신된 entitlements 스냅샷
 
 ##### C# ↔ Callable 필드 매핑
@@ -247,8 +250,10 @@ Game 도메인 기반 구현체는 `GameProductCatalog`이며, Bootstrap(`Mobile
 
 #### Reward 적용(클라) 규칙
 
-- `verifyPurchase` 응답 `resultStatus`가 `GRANTED`일 때만 `grants[]`를 RewardManager에 전달해 적용한다.
+- `verifyPurchase` 응답 `resultStatus`가 `GRANTED`일 때만:
+  - 컨텐츠 레이어 매핑(`internalProductId -> rewardId`) 후 RewardManager의 `ApplyRewardId(rewardId)`를 호출한다.
 - `ALREADY_GRANTED`는 "이미 지급됨(멱등)" 결과이며, 클라에서 중복 지급을 시도하지 않는다.
+- `grants[]`는 응답 스키마에 존재할 수 있으나, **클라 지급 입력으로 사용하지 않는다**(지급 호출은 rewardId 기반).
 - RewardManager는 지급 실행만 담당하며, 멱등/기록/복구는 PurchaseManager(+서버)가 책임진다.
 
 연관:

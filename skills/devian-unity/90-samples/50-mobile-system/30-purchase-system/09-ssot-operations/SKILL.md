@@ -57,7 +57,7 @@ AppliesTo: v10
   - "Firestore = idempotent payment records / subscription status"
 - Policy(01)에 다음 원칙이 명시되어 있다:
   - "클라 콜백만으로 지급 금지"
-  - "internalProductId만 게임 로직에 노출"
+  - "internalProductId만 상위 로직에 노출"
   - "iOS Restore 제공"
 
 

@@ -107,7 +107,7 @@ Generated Protocol Proxy는 **인터페이스에만 의존**하며, 구체 타�
 - Generated Proxy가 구체 네트워크 구현을 참조하지 않아 의존성 분리
 - NetWsConnector가 "공통 구현"이며, Proxy는 interface에만 의존
 - Manager는 stub/url/connector만 전달하고 연결 세부사항을 몰라도 됨
-- 샘플 문서(`14-unity-game-net-manager`)의 규칙과 일관성 유지
+- 샘플 문서(`40-game-system/21-game-net-manager`)의 규칙과 일관성 유지
 - 상태 관리와 전송이 INetSession으로 통합되어 안정적인 lifecycle 관리
 
 ---

@@ -1,0 +1,19 @@
+{
+  "name": "Devian.Samples.GameContents",
+  "rootNamespace": "Devian",
+  "references": [
+    "Devian.Core",
+    "Devian.Unity",
+    "Devian.Protocol.Game",
+    "Devian.Domain.Game"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

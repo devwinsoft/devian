@@ -7,7 +7,6 @@ namespace Devian
 {
     [RequireComponent(typeof(AccountManager))]
     [RequireComponent(typeof(SaveDataManager))]
-    [RequireComponent(typeof(PurchaseManager))]
     public abstract class MobileApplication : BaseBootstrap
     {
         protected override IEnumerator OnBootProc()
@@ -22,7 +21,6 @@ namespace Devian
 
             // Purchase store injection (platform-dependent packages)
             trySetPurchaseStore();
-            trySetProductCatalog();
 
             yield break;
         }
@@ -45,12 +43,7 @@ namespace Devian
             if (instance == null)
                 return;
 
-            PurchaseManager.Instance.SetPurchaseStore(instance);
-        }
-
-        private static void trySetProductCatalog()
-        {
-            PurchaseManager.Instance.SetProductCatalog(new GameProductCatalog());
+            Singleton.Get<PurchaseManager>().SetPurchaseStore(instance);
         }
 
         #if UNITY_ANDROID && !UNITY_EDITOR

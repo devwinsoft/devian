@@ -56,7 +56,7 @@ AppliesTo: v10
 ### 연동 지점
 
 1. **샘플 템플릿 위치**
-   - `framework-cs/upm/com.devian.samples/Samples~/Network/`
+   - `framework-cs/upm/com.devian.samples/Samples~/GameContents/`
 
 2. **프로토콜 참조**
    - 샘플의 asmdef가 `Devian.Protocol.Game` 어셈블리를 참조
@@ -66,7 +66,7 @@ AppliesTo: v10
    - 샘플을 Import 후 자신의 프로토콜로 대체 가능
    - `Devian.Protocol.Game` → 사용자 프로토콜로 교체
 
-> **샘플 템플릿 상세:** `skills/devian-examples/14-unity-game-net-manager/SKILL.md` 참조
+> **샘플 템플릿 상세:** `skills/devian-unity/90-samples/40-game-system/21-game-net-manager/SKILL.md` 참조
 
 ---
 
@@ -76,7 +76,7 @@ AppliesTo: v10
 |------|-----------|
 | 프로토콜 코드젠 규칙 | `skills/devian-tools/11-builder/40-codegen-protocol/SKILL.md` |
 | 프로토콜 생성 구현 | `skills/devian-tools/11-builder/44-protocolgen-implementation/SKILL.md` |
-| Network 샘플 템플릿 | `skills/devian-examples/14-unity-game-net-manager/SKILL.md` |
+| Network 샘플 템플릿 | `skills/devian-unity/90-samples/40-game-system/21-game-net-manager/SKILL.md` |
 | WebSocket 클라이언트 | `skills/devian/10-module/72-network-ws-client/SKILL.md` |
 | 네트워크 서버 | `skills/devian/10-module/74-network-server/SKILL.md` |
 
@@ -94,4 +94,4 @@ AppliesTo: v10
 
 - Related: `skills/devian-examples/01-policy/SKILL.md`
 - Related: `skills/devian-tools/11-builder/40-codegen-protocol/SKILL.md`
-- Related: `skills/devian-examples/14-unity-game-net-manager/SKILL.md`
+- Related: `skills/devian-unity/90-samples/40-game-system/21-game-net-manager/SKILL.md`

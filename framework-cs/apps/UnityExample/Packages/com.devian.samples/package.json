@@ -9,14 +9,14 @@
   },
   "samples": [
     {
+      "displayName": "GameContents",
+      "description": "Bundle sample: installs GameNetManager + Game2CStub (Network) together.",
+      "path": "Samples~/GameContents"
+    },
+    {
       "displayName": "MobileSystem",
       "description": "Bundle sample: installs FirebaseManager + SaveSystem + AccountManager + PurchaseManager together.",
       "path": "Samples~/MobileSystem"
-    },
-    {
-      "displayName": "Network",
-      "description": "Unity WebSocket client sample using Devian.Protocol.Game (Ping/Echo) with Tick-based pump.",
-      "path": "Samples~/Network"
     }
   ]
 }

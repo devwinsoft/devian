@@ -52,6 +52,7 @@ AppliesTo: v10
 | 프로토콜 코드젠 보기 | [skills/devian-tools/11-builder/40-codegen-protocol](../devian-tools/11-builder/40-codegen-protocol/SKILL.md) |
 | Unity 정책 확인하기 | [skills/devian-unity/01-policy](../devian-unity/01-policy/SKILL.md) |
 | 샘플 작성하기 | [skills/devian-unity/08-samples-authoring-guide](../devian-unity/08-samples-authoring-guide/SKILL.md) |
+| Game 도메인 전체 보기 | [40-game-system/11-domain-game](../devian-unity/90-samples/40-game-system/11-domain-game/SKILL.md) |
 
 ---
 
