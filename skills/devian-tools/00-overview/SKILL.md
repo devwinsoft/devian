@@ -19,5 +19,5 @@ Devian CLI 도구, 아카이브 관리를 담당한다.
 ## Related
 
 - [Tools SSOT](../03-ssot/SKILL.md)
-- [Root SSOT](../../devian-core/03-ssot/SKILL.md)
+- [Root SSOT](../../devian/10-module/03-ssot/SKILL.md)
 - [Devian Index](../../devian/SKILL.md)

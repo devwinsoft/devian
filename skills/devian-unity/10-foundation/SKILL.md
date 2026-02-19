@@ -22,7 +22,7 @@ Type: Index / Directory
 | 04 | PoolFactories | InspectorPoolFactory, BundlePoolFactory | `21-pool-factories/SKILL.md` |
 | 10 | AssetManager | AssetBundle 기반 로딩/캐시/언로드 | `18-asset-manager/SKILL.md` |
 | 12 | DownloadManager | Addressables Label 기반 Patch/Download (CompoSingleton) | `19-download-manager/SKILL.md` |
-| 13 | Pb64Storage | pb64를 Unity TextAsset .asset로 저장하는 규약 | `skills/devian-builder/35-pb64-storage/SKILL.md` |
+| 13 | Pb64Storage | pb64를 Unity TextAsset .asset로 저장하는 규약 | `skills/devian-tools/11-builder/35-pb64-storage/SKILL.md` |
 | 14 | TableManager | TB_/ST_ 테이블 로딩/캐시/언로드 (ndjson/pb64) | `11-table-manager/SKILL.md` |
 | 15 | SceneTransManager | Scene 전환 직렬화 + 페이드 + BaseScene Enter/Exit | `17-scene-trans-manager/SKILL.md` |
 | 16 | SoundTables | TB_SOUND/TB_VOICE 테이블 규약 (컬럼/책임 분리) | `../22-sound-system/16-sound-tables/SKILL.md` |
@@ -37,12 +37,12 @@ Type: Index / Directory
 | 27 | Bootstrap | Resources 기반 Bootstrap Root + BaseBootstrap 부팅 파이프라인 | `16-bootstrap/SKILL.md` |
 | 32 | InputManager | InputActionAsset 기반 입력 수집/정규화/발행 (InputFrame, InputBus, ButtonMap) | `31-input-manager/SKILL.md` |
 | 33 | InputController | 오브젝트 부착형 입력 소비 (BaseInputController, IInputSpace) | `32-input-controller/SKILL.md` |
-| 34 | VirtualGamepad | InputSystem 커스텀 가상 디바이스 + CompoSingleton Driver | `../50-mobile-system/51-virtual-gamepad/SKILL.md` |
+| 34 | VirtualGamepad | InputSystem 커스텀 가상 디바이스 + CompoSingleton Driver | `../50-mobile-system/61-virtual-gamepad/SKILL.md` |
 
 ---
 
 ## Reference
 
-- Parent: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
+- Parent: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)
 - UI 관련 컴포넌트는 `skills/devian-unity/40-ui-system/SKILL.md` 참고
 - Object Destruction 규약은 `skills/devian-unity/05-unity-object-destruction/SKILL.md`로 이동됨

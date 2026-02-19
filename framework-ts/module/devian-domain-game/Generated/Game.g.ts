@@ -8,6 +8,25 @@ import { IEntity, IEntityKey } from '@devian/core';
 // Contracts
 // ================================================================
 
+/** CurrencyType enum */
+export enum CurrencyType {
+    Gold = 0,
+    JewelFree = 1,
+    JewelPaid = 2,
+    Stamina = 3,
+    Friendship = 4,
+    GuildCoin = 5,
+    ArenaCoin = 6,
+}
+
+/** ProductKind enum */
+export enum ProductKind {
+    Consumable = 0,
+    Rental = 1,
+    Subscription = 2,
+    SeasonPass = 3,
+}
+
 /** UserType enum */
 export enum UserType {
     Guest = 0,
@@ -25,6 +44,64 @@ export interface UserProfile extends IEntity {
 // ================================================================
 // Tables
 // ================================================================
+
+export interface MISSION_DAILY extends IEntityKey<string> {
+    MissionId: string;
+    IsActive: boolean;
+    ConditionType: string;
+    ConditionKey: string;
+    ConditionOp: string;
+    ConditionValue: number;
+    RewardKey: string;
+    getKey(): string;
+}
+
+export interface MISSION_WEEKLY extends IEntityKey<string> {
+    MissionId: string;
+    IsActive: boolean;
+    ConditionType: string;
+    ConditionKey: string;
+    ConditionOp: string;
+    ConditionValue: number;
+    RewardKey: string;
+    getKey(): string;
+}
+
+export interface MISSION_ACHIEVEMENT extends IEntityKey<string> {
+    MissionId: string;
+    IsActive: boolean;
+    ConditionType: string;
+    ConditionKey: string;
+    ConditionOp: string;
+    ConditionValue: number;
+    RewardKey: string;
+    getKey(): string;
+}
+
+export interface PRODUCT extends IEntityKey<string> {
+    InternalProductId: string;
+    Kind: ProductKind;
+    Title: string;
+    IsActive: boolean;
+    StoreSkuApple: string;
+    StoreSkuGoogle: string;
+    getKey(): string;
+}
+
+export interface REWARD extends IEntityKey<string> {
+    RewardId: string;
+    ItemId_00: string;
+    ItemCount_00: number;
+    ItemId_01: string;
+    ItemCount_01: number;
+    ItemId_02: string;
+    ItemCount_02: number;
+    ItemId_03: string;
+    ItemCount_03: number;
+    CurrencyType: CurrencyType;
+    CurrencyAmount: number;
+    getKey(): string;
+}
 
 export interface TestSheet extends IEntityKey<number> {
     UserType: UserType;
@@ -45,6 +122,186 @@ export interface VECTOR3 extends IEntity {
 // ================================================================
 // Table Containers
 // ================================================================
+
+export class TB_MISSION_DAILY {
+    private static _dict: Map<string, MISSION_DAILY> = new Map();
+    private static _list: MISSION_DAILY[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly MISSION_DAILY[] { return this._list; }
+
+    static get(key: string): MISSION_DAILY | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as MISSION_DAILY;
+            this._list.push(row);
+            this._dict.set(row.MissionId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_MISSION_WEEKLY {
+    private static _dict: Map<string, MISSION_WEEKLY> = new Map();
+    private static _list: MISSION_WEEKLY[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly MISSION_WEEKLY[] { return this._list; }
+
+    static get(key: string): MISSION_WEEKLY | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as MISSION_WEEKLY;
+            this._list.push(row);
+            this._dict.set(row.MissionId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_MISSION_ACHIEVEMENT {
+    private static _dict: Map<string, MISSION_ACHIEVEMENT> = new Map();
+    private static _list: MISSION_ACHIEVEMENT[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly MISSION_ACHIEVEMENT[] { return this._list; }
+
+    static get(key: string): MISSION_ACHIEVEMENT | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as MISSION_ACHIEVEMENT;
+            this._list.push(row);
+            this._dict.set(row.MissionId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_PRODUCT {
+    private static _dict: Map<string, PRODUCT> = new Map();
+    private static _list: PRODUCT[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly PRODUCT[] { return this._list; }
+
+    static get(key: string): PRODUCT | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as PRODUCT;
+            this._list.push(row);
+            this._dict.set(row.InternalProductId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_REWARD {
+    private static _dict: Map<string, REWARD> = new Map();
+    private static _list: REWARD[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly REWARD[] { return this._list; }
+
+    static get(key: string): REWARD | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as REWARD;
+            this._list.push(row);
+            this._dict.set(row.RewardId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
 
 export class TB_TestSheet {
     private static _dict: Map<number, TestSheet> = new Map();

@@ -2,7 +2,7 @@
 
 Status: ACTIVE  
 AppliesTo: v10  
-SSOT: skills/devian-core/03-ssot/SKILL.md
+SSOT: skills/devian/10-module/03-ssot/SKILL.md
 
 ## Purpose
 
@@ -194,6 +194,6 @@ devian-domain-common/
 
 ## Reference
 
-- Policy SSOT: `skills/devian-core/03-ssot/SKILL.md`
+- Policy SSOT: `skills/devian/10-module/03-ssot/SKILL.md`
 - Domain Policy: `skills/devian-common/01-policy/SKILL.md`
 - Feature Skills: `skills/devian-common/10-feature-*/SKILL.md`

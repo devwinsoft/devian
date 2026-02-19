@@ -11,6 +11,8 @@ AppliesTo: v10
 Unity **In-App Purchasing (Unity IAP)** 기반의 인앱 결제 모듈(클라)과,
 Firebase Cloud Functions + Firestore 기반의 **결제 검증/멱등 지급/구독 상태** 운영 규칙을 다룬다.
 
+Purchase(유료) 경로의 `grants[]` 적용(실제 지급 실행)은 RewardManager(49-reward-system)에 위임한다.
+
 
 ---
 
@@ -39,6 +41,6 @@ Firebase Cloud Functions + Firestore 기반의 **결제 검증/멱등 지급/구
 
 
 - [PurchaseManager Sample](../30-samples-purchase-manager/SKILL.md) — `com.devian.samples` / `Samples~/MobileSystem/Runtime/PurchaseManager/PurchaseManager.cs`
-- [Root SSOT](../../../../../devian-core/03-ssot/SKILL.md)
+- [Root SSOT](../../../../../devian/10-module/03-ssot/SKILL.md)
 - [Unity SSOT](../../../../03-ssot/SKILL.md)
 - [Devian Index](../../../../../devian/SKILL.md)

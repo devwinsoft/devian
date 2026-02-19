@@ -137,4 +137,4 @@ npm -w webgl-server run env:check && npm -w game-server run env:check
 ## Related
 
 - [03-ssot](../03-ssot/SKILL.md) — Tools SSOT
-- [32-example-webgl-server](../../devian-examples/32-example-webgl-server/SKILL.md) — WebGL 서버 예제
+- [17-server-game-webgl](../../devian-examples/17-server-game-webgl/SKILL.md) — WebGL 서버 예제

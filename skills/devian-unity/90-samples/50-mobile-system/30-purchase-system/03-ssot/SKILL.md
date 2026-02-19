@@ -14,7 +14,7 @@ AppliesTo: v10
 
 ## 우선순위
 
-- Root SSOT: `skills/devian-core/03-ssot/SKILL.md`
+- Root SSOT: `skills/devian/10-module/03-ssot/SKILL.md`
 - Unity 관련 SSOT: `skills/devian-unity/03-ssot/SKILL.md`
 - 결제/IAP 관련 SSOT: 이 문서
 
@@ -102,8 +102,14 @@ AppliesTo: v10
 - Season Pass: 시즌별 구매 1회성 Entitlement로 운영
 - Rental: 기간 한정 이용권(1회 구매, 기간 만료 후 비활성) — one-time(products) 검증 경로
 
-- kind의 정본 enum은 `input/Domains/Purchase/contracts/ProductKind.json`의 `ProductKind`이다.
+- kind의 정본 enum은 `input/Domains/Game/ProductKind.json`의 `ProductKind`이다.
 - 테이블(`PurchaseTable.xlsx` PRODUCT.kind)의 타입은 `ProductKind`를 사용한다.
+
+### 레이어 분리 (옵션A)
+
+PurchaseManager(시스템 레이어)는 PRODUCT 테이블 타입을 **직접 참조하지 않는다**.
+대신 `IPurchaseProductCatalog` 포트를 통해 컨텐츠 레이어로부터 카탈로그를 주입받는다.
+Game 도메인 기반 구현체는 `GameProductCatalog`이며, Bootstrap(`MobileApplication.OnBootProc`)에서 주입한다.
 
 ### Unity IAP 5.x (v5) Catalog Notes
 
@@ -118,11 +124,11 @@ AppliesTo: v10
 - [x] SSOT 저장 위치: **(A) Devian input 테이블(Excel) 기반** — 결정됨
   - PRODUCT 테이블 스키마를 이 문서(03-ssot)에서 SSOT로 정의한다.
   - `PurchaseTable.xlsx`에 PRODUCT 시트를 생성하여 데이터를 관리한다.
-- [x] input_common.json 도메인(Purchase) 등록: — 결정됨
-  - `input/input_common.json`에 Purchase 도메인 등록 완료
-  - `tableDir`: `Domains/Purchase/tables`
+- [x] input_common.json 도메인(Game) 등록: — 결정됨
+  - `input/input_common.json`에 Game 도메인 등록 완료
+  - `tableDir`: `Domains/Game`
 - [x] PurchaseTable.xlsx 경로: — 결정됨
-  - `input/Domains/Purchase/tables/PurchaseTable.xlsx`
+  - `input/Domains/Game/PurchaseTable.xlsx`
 - [x] PRODUCT 테이블 스키마/필드: — 결정됨
   - `internalProductId` (string, pk) — 내부 상품 ID (정본)
   - `kind` (ProductKind) — 상품 타입 (`Consumable` / `Rental` / `Subscription` / `SeasonPass`)
@@ -180,7 +186,7 @@ AppliesTo: v10
   4) 결과 반환
 - 출력
   - `resultStatus: string` — 위 enum 중 하나
-  - `grants: array` — 지급/권한 변경 내역 (각 항목: `{ type, id, amount }`)
+  - `grants: array` — 지급 내역(InventoryDelta[]) (각 항목: `{ type, id, amount }`, `type="item"|"currency"`, `amount>=0`)
   - `entitlementsSnapshot: object?` — (optional) 갱신된 entitlements 스냅샷
 
 ##### C# ↔ Callable 필드 매핑
@@ -195,7 +201,7 @@ AppliesTo: v10
 | Callable JSON response | C# (`VerifyPurchaseResponse`) | 비고 |
 |------------------------|-------------------------------|------|
 | `resultStatus` | `ResultStatus` | 위 enum 값 |
-| `grants[]` | `Grants` (`IReadOnlyList<PurchaseGrant>`) | `{ type, id, amount }` |
+| `grants[]` | `Grants` (`IReadOnlyList<PurchaseGrant>`) | `{ type, id, amount }` (`type="item"|"currency"`, `amount>=0`) |
 | `entitlementsSnapshot` | `Snapshot` (`EntitlementsSnapshot?`) | optional |
 
 #### 2) getEntitlements (Callable/HTTPS 중 택1)
@@ -238,6 +244,16 @@ AppliesTo: v10
   - `REJECTED` → Confirm **하지 않음** (Unity가 자동 환불 처리)
   - `PENDING` → Confirm **하지 않음** (스토어 확정 대기)
 - Confirm을 호출하지 않으면 Unity IAP가 다음 앱 실행 시 `OnPurchasePending`을 재전달한다.
+
+#### Reward 적용(클라) 규칙
+
+- `verifyPurchase` 응답 `resultStatus`가 `GRANTED`일 때만 `grants[]`를 RewardManager에 전달해 적용한다.
+- `ALREADY_GRANTED`는 "이미 지급됨(멱등)" 결과이며, 클라에서 중복 지급을 시도하지 않는다.
+- RewardManager는 지급 실행만 담당하며, 멱등/기록/복구는 PurchaseManager(+서버)가 책임진다.
+
+연관:
+- [49-reward-system/01-policy](../../49-reward-system/01-policy/SKILL.md)
+- [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md)
 
 #### Pending / Deferred 처리 규칙 (v5)
 

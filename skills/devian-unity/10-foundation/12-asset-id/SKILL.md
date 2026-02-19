@@ -65,7 +65,7 @@ AssetId 그룹은 **단일 SearchDir(string)** 만 지원한다.
 ## 6. Selector Window 표시 규약 (Hard)
 
 - Drawer는 Select 버튼 클릭 시 **반드시 Selector 창을 화면에 표시**해야 한다.
-- Selector 창에는 **Apply/Create 버튼이 존재하면 안 된다**. (SSOT: skills/devian-core/03-ssot/SKILL.md)
+- Selector 창에는 **Apply/Create 버튼이 존재하면 안 된다**. (SSOT: skills/devian/10-module/03-ssot/SKILL.md)
 - 따라서 Selector는 **EditorWindow(Utility) 기반**으로 생성/표시한다.
 - Selector 캐싱은 금지한다. (창을 닫았다가 다시 Select 시 창이 안 뜨는 버그 방지)
 - `CreateInstance` 후 **반드시 ShowUtility()** 로 표시 상태로 만들어야 한다.

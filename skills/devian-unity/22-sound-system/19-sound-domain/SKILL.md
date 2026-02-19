@@ -64,7 +64,7 @@ Sound 도메인은 사운드/음성 관련 기능(테이블, 매니저, 레지�
 
 | 파일 | 현재 위치 | 목표 위치 |
 |------|----------|----------|
-| `SoundTable.xlsx` | `input/Domains/Game/tables/` | `input/Domains/Sound/tables/` |
+| `SoundTable.xlsx` | `input/Domains/Sound/` | `input/Domains/Sound/` |
 
 > **Note**: Phase 1에서는 파일 이동 금지. Phase 2에서 이동.
 
@@ -124,7 +124,7 @@ private static void _register()
 
 - [x] 빌더에 AfterLoad 훅 추가 (`TB_*.{_AfterLoad, _OnAfterLoad}`)
 - [x] `com.devian.domain.sound` UPM 패키지 신설
-- [x] `SoundTable.xlsx` → `input/Sound/tables/` 이동
+- [x] `SoundTable.xlsx` → `input/Domains/Sound/` 이동
 - [x] `{buildInputJson}`에 Sound 도메인 추가
 - [x] SoundManager/VoiceManager 소스 이동
 - [x] SoundVoiceTableRegistry 이동
@@ -252,9 +252,9 @@ Phase 2는 아래가 **모두 참**이어야 DONE이다:
 범용 빌드/생성 규칙은 아래 스킬이 SSOT이다:
 
 - `skills/devian-unity/10-foundation/11-table-manager/SKILL.md` — **TbLoader SSOT / 중복 등록 금지** Hard Rule
-- `skills/devian-builder/42-tablegen-implementation/SKILL.md` — **AfterLoad hook 계약** Hard Rule
-- `skills/devian/20-workspace/SKILL.md` — **npm ci / lock 동기화** 규약
-- `skills/devian-core/22-generated-integration/SKILL.md` — **임시 stub 금지** 규약
+- `skills/devian-tools/11-builder/42-tablegen-implementation/SKILL.md` — **AfterLoad hook 계약** Hard Rule
+- `skills/devian/05-workspace/SKILL.md` — **npm ci / lock 동기화** 규약
+- `skills/devian/10-module/22-generated-integration/SKILL.md` — **임시 stub 금지** 규약
 
 Sound 도메인 관련:
 

@@ -2,7 +2,7 @@
 
 Status: ACTIVE  
 AppliesTo: v10  
-SSOT: skills/devian-core/03-ssot/SKILL.md
+SSOT: skills/devian/10-module/03-ssot/SKILL.md
 
 ## Purpose
 
@@ -52,6 +52,6 @@ Common도 SSOT의 DATA 경로 규약을 따른다.
 
 ## Reference
 
-- Policy SSOT: `skills/devian-core/03-ssot/SKILL.md`
+- Policy SSOT: `skills/devian/10-module/03-ssot/SKILL.md`
 - Module Policy: `skills/devian-common/02-module-policy/SKILL.md`
 - 동작 정본: 런타임/제너레이터 코드

@@ -18,5 +18,5 @@ Unity 샘플 프로젝트 작성 가이드 및 샘플들을 담당한다.
 
 ## Related
 
-- [SSOT](../../../devian-core/03-ssot/SKILL.md)
+- [SSOT](../../../devian/10-module/03-ssot/SKILL.md)
 - [Devian Index](../../../devian/SKILL.md)

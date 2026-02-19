@@ -122,7 +122,7 @@ rm -f UnityExample/Packages/{pkg}/.../OldName.cs.meta
 
 ### 패키지별 문서
 - `skills/devian-unity/02-unity-bundles/SKILL.md`
-- `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
+- `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)
 - `skills/devian-unity/06-domain-packages/com.devian.domain.common/SKILL.md`
 
 ### Unity Components
@@ -132,5 +132,5 @@ rm -f UnityExample/Packages/{pkg}/.../OldName.cs.meta
 
 ## Related
 
-- SSOT 정본: `skills/devian-core/03-ssot/SKILL.md`
+- SSOT 정본: `skills/devian/10-module/03-ssot/SKILL.md`
 - UPM Samples 정책: `skills/devian-unity/08-samples-authoring-guide/SKILL.md`

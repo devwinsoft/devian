@@ -14,9 +14,9 @@
 > **세부 문서:**
 > - Templates 원본: `framework-cs/upm/com.devian.samples/Samples~/`
 > - Samples~ 생성 절차: `skills/devian-unity/09-samples-creation/SKILL.md`
-> - Network Sample: `skills/devian-examples/40-samples-network/SKILL.md`
-> - LocalSave Manager Sample: `skills/devian-unity/90-samples/50-mobile-system/41-savedata-savelocal/SKILL.md`
-> - CloudSave Manager Sample: `skills/devian-unity/90-samples/50-mobile-system/42-savedata-savecloud/SKILL.md`
+> - Network Sample: `skills/devian-examples/14-unity-game-net-manager/SKILL.md`
+> - LocalSave Manager Sample: `skills/devian-unity/90-samples/50-mobile-system/21-savedata-system/41-savedata-savelocal/SKILL.md`
+> - CloudSave Manager Sample: `skills/devian-unity/90-samples/50-mobile-system/21-savedata-system/42-savedata-savecloud/SKILL.md`
 
 ---
 
@@ -26,7 +26,7 @@ Type: Policy / Requirements
 
 ## Prerequisites
 
-**Unity C# 문법 제한:** 샘플 코드는 `skills/devian-core/04-unity-csharp-compat/SKILL.md`를 준수한다 (금지 문법 사용 시 FAIL).
+**Unity C# 문법 제한:** 샘플 코드는 `skills/devian/10-module/04-unity-csharp-compat/SKILL.md`를 준수한다 (금지 문법 사용 시 FAIL).
 
 ## SSOT
 
@@ -264,4 +264,4 @@ public partial class Game2CStub
 ## Reference
 
 - UPM 소스: `framework-cs/upm/com.devian.foundation/Runtime/Module/Net/`
-- Related: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
+- Related: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)

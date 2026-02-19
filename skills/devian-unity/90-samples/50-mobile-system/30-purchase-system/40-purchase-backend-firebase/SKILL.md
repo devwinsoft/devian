@@ -3,7 +3,7 @@
 Status: ACTIVE
 AppliesTo: v10
 
-> Root SSOT: `skills/devian-core/03-ssot/SKILL.md`
+> Root SSOT: `skills/devian/10-module/03-ssot/SKILL.md`
 
 > Purchase SSOT: `skills/devian-unity/90-samples/50-mobile-system/30-purchase-system/03-ssot/SKILL.md` (특히 C 섹션)
 

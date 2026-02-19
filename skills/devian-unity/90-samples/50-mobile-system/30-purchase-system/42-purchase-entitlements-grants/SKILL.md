@@ -19,7 +19,7 @@ AppliesTo: v10
 
 - `internalProductId`가 정본이다.
 - 상품 메타는 SSOT에서 합의된 PRODUCT 테이블을 따른다:
-  - `input/Domains/Purchase/tables/PurchaseTable.xlsx` (PRODUCT 시트)
+  - `input/Domains/Game/PurchaseTable.xlsx` (PRODUCT 시트)
 
 
 ---
@@ -29,9 +29,20 @@ AppliesTo: v10
 
 `grants[]` 각 항목은 `{ type, id, amount }` 형태다.
 
+- `type: string` — `"item"` | `"currency"` (고정)
+- `id: string`
+- `amount: long` (`>= 0`만 허용)
+
+Hard Rule:
+- `grants[]`는 inventory 지급 전용이다.
+- 권한/플래그 변화는 `grants[]`로 표현하지 않고, `entitlements/current` 스냅샷(`entitlementsSnapshot`)으로만 처리한다.
+
+NOTE:
+- `type=item`의 `id`는 `itemId(pk)`를 의미한다(`itemUid` 없음).
+- `grants[]`에는 `options`가 포함되지 않는다. 아이템 `options`는 Inventory 내부 속성으로만 관리된다.
+
 NEEDS CHECK:
-- `type` 값 세트(예: `currency`, `entitlement`, `flag`)를 확정해야 한다.
-- `id` 규칙(예: `gem`, `no_ads`, `season_pass_s1`)을 확정해야 한다.
+- `id` 규칙(예: `gem`, `gold`, `item_sword_01`)을 확정해야 한다.
 
 
 ---
@@ -65,7 +76,8 @@ NEEDS CHECK:
 - `REJECTED`
   - 지급 금지
 - `REFUNDED` / `REVOKED`
-  - entitlements 재계산(철회 반영) 규칙 필요 (NEEDS CHECK)
+  - 지급 금지 (grants 없음)
+  - entitlements 재계산 및 저장(철회 반영)
 
 
 ---

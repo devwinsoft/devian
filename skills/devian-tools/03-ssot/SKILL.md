@@ -2,7 +2,7 @@
 
 Status: ACTIVE
 AppliesTo: v10
-ParentSSOT: skills/devian-core/03-ssot/SKILL.md
+ParentSSOT: skills/devian/10-module/03-ssot/SKILL.md
 
 ---
 
@@ -10,7 +10,7 @@ ParentSSOT: skills/devian-core/03-ssot/SKILL.md
 
 이 문서는 **빌드 파이프라인, 검증, 워크스페이스** 관련 SSOT를 정의한다.
 
-**중복 금지:** 공통 용어/플레이스홀더/입력 분리/머지 규칙은 [Root SSOT](../../devian-core/03-ssot/SKILL.md)가 정본이며, 이 문서는 재정의하지 않는다.
+**중복 금지:** 공통 용어/플레이스홀더/입력 분리/머지 규칙은 [Root SSOT](../../devian/10-module/03-ssot/SKILL.md)가 정본이며, 이 문서는 재정의하지 않는다.
 
 ---
 
@@ -61,7 +61,7 @@ ParentSSOT: skills/devian-core/03-ssot/SKILL.md
 - workspace root는 `framework-ts/package.json` 단 하나만 허용한다.
 - lockfile은 `framework-ts/package-lock.json` 단 하나만 허용한다.
 
-자세한 규칙: [skills/devian/20-workspace](../../devian/20-workspace/SKILL.md)
+자세한 규칙: [skills/devian/05-workspace](../../devian/05-workspace/SKILL.md)
 
 ---
 
@@ -148,18 +148,18 @@ TS 산출물의 반영 위치를 관리하는 설정:
 
 도메인/프로토콜 동적 빌드 정책 (입력 스펙, 설정 스펙, 산출물 규칙):
 
-> **정책 문서:** [skills/devian-builder/20-build-domain](../../devian-builder/20-build-domain/SKILL.md)
+> **정책 문서:** [skills/devian-tools/11-builder/20-build-domain](../11-builder/20-build-domain/SKILL.md)
 
 ### 빌드 에러 리포팅
 
 빌드 실패 시 에러 출력 규격 및 로그 파일 규칙:
 
-> **정책 문서:** [skills/devian-builder/21-build-error-reporting](../../devian-builder/21-build-error-reporting/SKILL.md)
+> **정책 문서:** [skills/devian-tools/11-builder/21-build-error-reporting](../11-builder/21-build-error-reporting/SKILL.md)
 
 ---
 
 ## See Also
 
-- [Root SSOT](../../devian-core/03-ssot/SKILL.md) — 공통 용어/플레이스홀더/머지 규칙
+- [Root SSOT](../../devian/10-module/03-ssot/SKILL.md) — 공통 용어/플레이스홀더/머지 규칙
 - [Tools Policy](../01-policy/SKILL.md)
-- [Workspace](../../devian/20-workspace/SKILL.md)
+- [Workspace](../../devian/05-workspace/SKILL.md)

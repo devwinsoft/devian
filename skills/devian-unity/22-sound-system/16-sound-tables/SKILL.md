@@ -21,7 +21,7 @@ TB_SOUND / TB_VOICE 테이블의 책임 분리와 컬럼 규약을 고정한다.
 
 | 항목 | 상태 |
 |------|------|
-| 데이터 파일 | `input/Domains/Sound/tables/SoundTable.xlsx` |
+| 데이터 파일 | `input/Domains/Sound/SoundTable.xlsx` |
 | Generated 위치 | `com.devian.domain.sound` |
 | 네임스페이스 | `Devian.Domain.Sound` |
 

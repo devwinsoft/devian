@@ -3,7 +3,7 @@
 
 Status: ACTIVE
 AppliesTo: v10
-SSOT: skills/devian-core/03-ssot/SKILL.md
+SSOT: skills/devian/10-module/03-ssot/SKILL.md
 
 
 ## Overview

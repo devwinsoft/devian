@@ -54,5 +54,5 @@ namespace MyApp
 
 
 ## Links
-- [16-bootstrap](../../10-foundation/16-bootstrap/SKILL.md) — BaseBootstrap 런타임 스펙
+- [16-bootstrap](../../../../10-foundation/16-bootstrap/SKILL.md) — BaseBootstrap 런타임 스펙
 - [50-mobile-system overview](../00-overview/SKILL.md) — MobileSystem (Devian Samples) 그룹 개요

@@ -4,41 +4,27 @@
   "tempDir": "temp",
   "domains": {
     "Common": {
-      "contractDir": "Domains/Common/contracts",
-      "contractFiles": [
-        "*.json"
-      ],
-      "tableDir": "Domains/Common/tables",
+      "tableDir": "Domains/Common",
       "tableFiles": [
-        "*.xlsx"
+        "CommonTable.xlsx"
       ],
-      "stringDir": "Domains/Common/strings",
+      "stringDir": "Domains/Common",
       "stringFiles": [
-        "*.xlsx"
+        "LocalizedText.xlsx"
       ]
     },
     "Game": {
-      "contractDir": "Domains/Game/contracts",
+      "contractDir": "Domains/Game",
       "contractFiles": [
         "*.json"
       ],
-      "tableDir": "Domains/Game/tables",
+      "tableDir": "Domains/Game",
       "tableFiles": [
         "*.xlsx"
       ]
     },
     "Sound": {
-      "tableDir": "Domains/Sound/tables",
-      "tableFiles": [
-        "*.xlsx"
-      ]
-    },
-    "Purchase": {
-      "contractDir": "Domains/Purchase/contracts",
-      "contractFiles": [
-        "*.json"
-      ],
-      "tableDir": "Domains/Purchase/tables",
+      "tableDir": "Domains/Sound",
       "tableFiles": [
         "*.xlsx"
       ]

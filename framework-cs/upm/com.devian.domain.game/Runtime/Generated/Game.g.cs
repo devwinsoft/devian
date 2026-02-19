@@ -16,6 +16,27 @@ namespace Devian.Domain.Game
     // Contracts
     // ================================================================
 
+    /// <summary>CurrencyType enum</summary>
+    public enum CurrencyType
+    {
+        Gold = 0,
+        JewelFree = 1,
+        JewelPaid = 2,
+        Stamina = 3,
+        Friendship = 4,
+        GuildCoin = 5,
+        ArenaCoin = 6,
+    }
+
+    /// <summary>ProductKind enum</summary>
+    public enum ProductKind
+    {
+        Consumable = 0,
+        Rental = 1,
+        Subscription = 2,
+        SeasonPass = 3,
+    }
+
     /// <summary>UserType enum</summary>
     public enum UserType
     {
@@ -35,6 +56,79 @@ namespace Devian.Domain.Game
     // ================================================================
     // Table Entities
     // ================================================================
+
+    /// <summary>MISSION_DAILY row</summary>
+    public sealed class MISSION_DAILY : IEntityKey<string>
+    {
+        public string MissionId { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public string ConditionType { get; set; } = string.Empty;
+        public string ConditionKey { get; set; } = string.Empty;
+        public string ConditionOp { get; set; } = string.Empty;
+        public int ConditionValue { get; set; }
+        public string RewardKey { get; set; } = string.Empty;
+
+        public string GetKey() => MissionId;
+    }
+
+    /// <summary>MISSION_WEEKLY row</summary>
+    public sealed class MISSION_WEEKLY : IEntityKey<string>
+    {
+        public string MissionId { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public string ConditionType { get; set; } = string.Empty;
+        public string ConditionKey { get; set; } = string.Empty;
+        public string ConditionOp { get; set; } = string.Empty;
+        public int ConditionValue { get; set; }
+        public string RewardKey { get; set; } = string.Empty;
+
+        public string GetKey() => MissionId;
+    }
+
+    /// <summary>MISSION_ACHIEVEMENT row</summary>
+    public sealed class MISSION_ACHIEVEMENT : IEntityKey<string>
+    {
+        public string MissionId { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public string ConditionType { get; set; } = string.Empty;
+        public string ConditionKey { get; set; } = string.Empty;
+        public string ConditionOp { get; set; } = string.Empty;
+        public int ConditionValue { get; set; }
+        public string RewardKey { get; set; } = string.Empty;
+
+        public string GetKey() => MissionId;
+    }
+
+    /// <summary>PRODUCT row</summary>
+    public sealed class PRODUCT : IEntityKey<string>
+    {
+        public string InternalProductId { get; set; } = string.Empty;
+        public ProductKind Kind { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public string StoreSkuApple { get; set; } = string.Empty;
+        public string StoreSkuGoogle { get; set; } = string.Empty;
+
+        public string GetKey() => InternalProductId;
+    }
+
+    /// <summary>REWARD row</summary>
+    public sealed class REWARD : IEntityKey<string>
+    {
+        public string RewardId { get; set; } = string.Empty;
+        public string ItemId_00 { get; set; } = string.Empty;
+        public int ItemCount_00 { get; set; }
+        public string ItemId_01 { get; set; } = string.Empty;
+        public int ItemCount_01 { get; set; }
+        public string ItemId_02 { get; set; } = string.Empty;
+        public int ItemCount_02 { get; set; }
+        public string ItemId_03 { get; set; } = string.Empty;
+        public int ItemCount_03 { get; set; }
+        public CurrencyType CurrencyType { get; set; }
+        public long CurrencyAmount { get; set; }
+
+        public string GetKey() => RewardId;
+    }
 
     /// <summary>TestSheet row</summary>
     public sealed class TestSheet : IEntityKey<int>
@@ -60,6 +154,421 @@ namespace Devian.Domain.Game
     // ================================================================
     // Table Containers
     // ================================================================
+
+    /// <summary>TB_MISSION_DAILY container</summary>
+    public static partial class TB_MISSION_DAILY
+    {
+        private static readonly Dictionary<string, MISSION_DAILY> _dict = new();
+        private static readonly List<MISSION_DAILY> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<MISSION_DAILY> GetAll() => _list;
+
+        public static MISSION_DAILY? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out MISSION_DAILY? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(MISSION_DAILY row)
+        {
+            _list.Add(row);
+            _dict[row.MissionId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<MISSION_DAILY>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<MISSION_DAILY>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<MISSION_DAILY>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_MISSION_WEEKLY container</summary>
+    public static partial class TB_MISSION_WEEKLY
+    {
+        private static readonly Dictionary<string, MISSION_WEEKLY> _dict = new();
+        private static readonly List<MISSION_WEEKLY> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<MISSION_WEEKLY> GetAll() => _list;
+
+        public static MISSION_WEEKLY? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out MISSION_WEEKLY? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(MISSION_WEEKLY row)
+        {
+            _list.Add(row);
+            _dict[row.MissionId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<MISSION_WEEKLY>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<MISSION_WEEKLY>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<MISSION_WEEKLY>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_MISSION_ACHIEVEMENT container</summary>
+    public static partial class TB_MISSION_ACHIEVEMENT
+    {
+        private static readonly Dictionary<string, MISSION_ACHIEVEMENT> _dict = new();
+        private static readonly List<MISSION_ACHIEVEMENT> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<MISSION_ACHIEVEMENT> GetAll() => _list;
+
+        public static MISSION_ACHIEVEMENT? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out MISSION_ACHIEVEMENT? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(MISSION_ACHIEVEMENT row)
+        {
+            _list.Add(row);
+            _dict[row.MissionId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<MISSION_ACHIEVEMENT>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<MISSION_ACHIEVEMENT>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<MISSION_ACHIEVEMENT>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_PRODUCT container</summary>
+    public static partial class TB_PRODUCT
+    {
+        private static readonly Dictionary<string, PRODUCT> _dict = new();
+        private static readonly List<PRODUCT> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<PRODUCT> GetAll() => _list;
+
+        public static PRODUCT? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out PRODUCT? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(PRODUCT row)
+        {
+            _list.Add(row);
+            _dict[row.InternalProductId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<PRODUCT>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<PRODUCT>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<PRODUCT>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_REWARD container</summary>
+    public static partial class TB_REWARD
+    {
+        private static readonly Dictionary<string, REWARD> _dict = new();
+        private static readonly List<REWARD> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<REWARD> GetAll() => _list;
+
+        public static REWARD? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out REWARD? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(REWARD row)
+        {
+            _list.Add(row);
+            _dict[row.RewardId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<REWARD>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<REWARD>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<REWARD>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
 
     /// <summary>TB_TestSheet container</summary>
     public static partial class TB_TestSheet
@@ -218,6 +727,56 @@ namespace Devian.Domain.Game
     // Table ID Types (for Inspector binding)
     // ================================================================
 
+    /// <summary>Inspector-bindable ID for MISSION_DAILY</summary>
+    [Serializable]
+    public sealed class MISSION_DAILY_ID
+    {
+        public string Value;
+
+        public static implicit operator string(MISSION_DAILY_ID id) => id.Value;
+        public static implicit operator MISSION_DAILY_ID(string value) => new MISSION_DAILY_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for MISSION_WEEKLY</summary>
+    [Serializable]
+    public sealed class MISSION_WEEKLY_ID
+    {
+        public string Value;
+
+        public static implicit operator string(MISSION_WEEKLY_ID id) => id.Value;
+        public static implicit operator MISSION_WEEKLY_ID(string value) => new MISSION_WEEKLY_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for MISSION_ACHIEVEMENT</summary>
+    [Serializable]
+    public sealed class MISSION_ACHIEVEMENT_ID
+    {
+        public string Value;
+
+        public static implicit operator string(MISSION_ACHIEVEMENT_ID id) => id.Value;
+        public static implicit operator MISSION_ACHIEVEMENT_ID(string value) => new MISSION_ACHIEVEMENT_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for PRODUCT</summary>
+    [Serializable]
+    public sealed class PRODUCT_ID
+    {
+        public string Value;
+
+        public static implicit operator string(PRODUCT_ID id) => id.Value;
+        public static implicit operator PRODUCT_ID(string value) => new PRODUCT_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for REWARD</summary>
+    [Serializable]
+    public sealed class REWARD_ID
+    {
+        public string Value;
+
+        public static implicit operator string(REWARD_ID id) => id.Value;
+        public static implicit operator REWARD_ID(string value) => new REWARD_ID { Value = value };
+    }
+
     /// <summary>Inspector-bindable ID for TestSheet</summary>
     [Serializable]
     public sealed class TestSheet_ID
@@ -231,6 +790,11 @@ namespace Devian.Domain.Game
     /// <summary>Table ID validation extensions</summary>
     public static class TableIdExtensions
     {
+        public static bool IsValid(this MISSION_DAILY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this MISSION_WEEKLY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this MISSION_ACHIEVEMENT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this PRODUCT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this REWARD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this TestSheet_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
     }
 

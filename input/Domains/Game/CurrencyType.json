@@ -1,0 +1,37 @@
+{
+    "enums": [
+        {
+            "name": "CurrencyType",
+            "values": [
+                {
+                    "name": "Gold",
+                    "value": 0
+                },
+                {
+                    "name": "JewelFree",
+                    "value": 1
+                },
+                {
+                    "name": "JewelPaid",
+                    "value": 2
+                },
+                {
+                    "name": "Stamina",
+                    "value": 3
+                },
+                {
+                    "name": "Friendship",
+                    "value": 4
+                },
+                {
+                    "name": "GuildCoin",
+                    "value": 5
+                },
+                {
+                    "name": "ArenaCoin",
+                    "value": 6
+                }
+            ]
+        }
+    ]
+}

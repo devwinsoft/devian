@@ -22,6 +22,7 @@ namespace Devian
 
             // Purchase store injection (platform-dependent packages)
             trySetPurchaseStore();
+            trySetProductCatalog();
 
             yield break;
         }
@@ -45,6 +46,11 @@ namespace Devian
                 return;
 
             PurchaseManager.Instance.SetPurchaseStore(instance);
+        }
+
+        private static void trySetProductCatalog()
+        {
+            PurchaseManager.Instance.SetProductCatalog(new GameProductCatalog());
         }
 
         #if UNITY_ANDROID && !UNITY_EDITOR

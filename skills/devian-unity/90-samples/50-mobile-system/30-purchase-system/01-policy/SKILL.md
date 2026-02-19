@@ -54,6 +54,15 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 정본 규칙: [03-ssot](../03-ssot/SKILL.md)
 
 
+### 4) Purchase의 실제 지급 실행은 RewardManager에 위임한다
+
+- 서버 `verifyPurchase` 결과가 `GRANTED`일 때만 `grants[]`를 RewardManager에 전달해 적용한다.
+- `ALREADY_GRANTED`는 서버 멱등 결과이며, 클라에서 중복 적용을 시도하지 않는다.
+- 멱등/기록/복구 정본은 Purchase 시스템이다. Reward는 지급 실행만 담당한다.
+
+연관: [49-reward-system](../../49-reward-system/00-overview/SKILL.md)
+
+
 ---
 
 

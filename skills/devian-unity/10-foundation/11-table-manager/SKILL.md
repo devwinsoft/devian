@@ -563,8 +563,8 @@ internal static class DomainTableRegistry
 
 ## Reference
 
-- pb64 저장: `skills/devian-builder/35-pb64-storage/SKILL.md`
-- ndjson 저장: `skills/devian-builder/34-ndjson-storage/SKILL.md`
+- pb64 저장: `skills/devian-tools/11-builder/35-pb64-storage/SKILL.md`
+- ndjson 저장: `skills/devian-tools/11-builder/34-ndjson-storage/SKILL.md`
 - String Table: `skills/devian-common/14-string-table/SKILL.md`
-- Table Authoring: `skills/devian-builder/30-table-authoring-rules/SKILL.md`
-- TableGen: `skills/devian-builder/42-tablegen-implementation/SKILL.md`
+- Table Authoring: `skills/devian-tools/11-builder/30-table-authoring-rules/SKILL.md`
+- TableGen: `skills/devian-tools/11-builder/42-tablegen-implementation/SKILL.md`

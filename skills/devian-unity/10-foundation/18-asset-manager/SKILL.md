@@ -342,7 +342,7 @@ var text = ST_UIText.Get("ndjson", SystemLanguage.Korean, "greeting");
 
 ## Reference
 
-- Related: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
+- Related: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)
 - Related: `skills/devian-unity/10-foundation/19-download-manager/SKILL.md` (다운로드 정책)
 - Related: `skills/devian-common/14-string-table/SKILL.md` (String Table 규약)
 - Related: `skills/devian-unity/01-policy/SKILL.md` (component policy)

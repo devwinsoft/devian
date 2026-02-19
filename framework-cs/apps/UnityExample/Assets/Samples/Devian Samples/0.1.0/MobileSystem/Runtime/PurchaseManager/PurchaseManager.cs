@@ -4,7 +4,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Devian.Domain.Common;
-using Devian.Domain.Purchase;
 using Firebase.Functions;
 
 #if UNITY_PURCHASING
@@ -29,10 +28,16 @@ namespace Devian
         bool _purchaseInProgress;
 
         IPurchaseStore _purchaseStore;
+        IPurchaseProductCatalog _productCatalog;
 
         public void SetPurchaseStore(IPurchaseStore store)
         {
             _purchaseStore = store;
+        }
+
+        public void SetProductCatalog(IPurchaseProductCatalog catalog)
+        {
+            _productCatalog = catalog;
         }
 
         // ── Public API ─────────────────────────────────────────────
@@ -209,11 +214,14 @@ namespace Devian
         /// <summary>
         /// IAP 초기화 비동기 구현.
         /// 1) StoreController 생성 + Connect
-        /// 2) TB_PRODUCT 기반 제품 등록 (FetchProducts)
+        /// 2) IPurchaseProductCatalog 기반 제품 등록 (FetchProducts)
         /// 3) FetchProducts 콜백을 TCS로 await
         /// </summary>
         async Task<CommonResult> initializeIapAsync(CancellationToken ct)
         {
+            if (_productCatalog == null)
+                return CommonResult.Failure(CommonErrorType.PURCHASE_INIT_FAILED, "ProductCatalog not set. Call SetProductCatalog().");
+
             try
             {
                 _controller = UnityIAPServices.StoreController();
@@ -230,17 +238,11 @@ namespace Devian
 
                 ct.ThrowIfCancellationRequested();
 
-                // 2) TB_PRODUCT 기반 제품 등록 (SSOT: Devian PRODUCT 테이블이 카탈로그 정본)
-                var products = TB_PRODUCT.GetAll();
-                var definitions = new List<ProductDefinition>();
-                foreach (var p in products)
-                {
-                    if (!p.IsActive) continue;
-
-                    var productType = KindToProductType(p.Kind);
-                    var storeSku = GetStoreSku(p);
-                    definitions.Add(new ProductDefinition(p.InternalProductId, storeSku, productType));
-                }
+                // 2) IPurchaseProductCatalog 기반 제품 등록 (Port: 컨텐츠 레이어에서 주입)
+                var items = _productCatalog.GetActiveProducts();
+                var definitions = new List<ProductDefinition>(items.Count);
+                foreach (var item in items)
+                    definitions.Add(new ProductDefinition(item.InternalProductId, item.StoreSku, toUnityProductType(item.ProductType)));
 
                 // 3) FetchProducts + TCS로 콜백 대기
                 var fetchTcs = new TaskCompletionSource<bool>();
@@ -459,33 +461,22 @@ namespace Devian
 
         // ── Catalog Helpers ────────────────────────────────────────
 
-        static ProductType KindToProductType(ProductKind kind)
+        static ProductType toUnityProductType(PurchaseProductType type)
         {
-            switch (kind)
+            switch (type)
             {
-                case ProductKind.Consumable: return ProductType.Consumable;
-                case ProductKind.Rental: return ProductType.NonConsumable;
-                case ProductKind.Subscription: return ProductType.Subscription;
-                case ProductKind.SeasonPass: return ProductType.NonConsumable;
-                default: return ProductType.Consumable;
+                case PurchaseProductType.Consumable: return ProductType.Consumable;
+                case PurchaseProductType.Subscription: return ProductType.Subscription;
+                case PurchaseProductType.NonConsumable:
+                default: return ProductType.NonConsumable;
             }
-        }
-
-        static string GetStoreSku(PRODUCT p)
-        {
-#if UNITY_IOS || UNITY_TVOS
-            return string.IsNullOrEmpty(p.StoreSkuApple) ? p.InternalProductId : p.StoreSkuApple;
-#elif UNITY_ANDROID
-            return string.IsNullOrEmpty(p.StoreSkuGoogle) ? p.InternalProductId : p.StoreSkuGoogle;
-#else
-            return p.InternalProductId;
-#endif
         }
 
 #else
         // ── Unity Purchasing unavailable ────────────────────────────
 
         public void SetPurchaseStore(IPurchaseStore store) { }
+        public void SetProductCatalog(IPurchaseProductCatalog catalog) { }
 
         static readonly Task<CommonResult> _notSupportedInit =
             Task.FromResult(CommonResult.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));

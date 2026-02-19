@@ -25,8 +25,8 @@ AppliesTo: v10
 
 | 입력 유형 | 경로 |
 |-----------|------|
-| Contracts | `devian/input/Domains/Game/contracts/**` |
-| Tables | `devian/input/Domains/Game/tables/**` |
+| Contracts | `devian/input/Domains/Game/*.json` |
+| Tables | `devian/input/Domains/Game/*.xlsx` |
 | Protocols | `devian/input/Protocols/Game/**` |
 
 > **Note:** 위 경로의 파일들은 빌드 시 `com.devian.domain.game`, `com.devian.protocol.game` 등으로 생성된다.
@@ -51,7 +51,7 @@ UPM 패키지가 staging → upm → Packages로 복사되는 개념:
 
 Network 샘플 템플릿 작성 방법:
 
-- `skills/devian-examples/40-samples-network/SKILL.md`
+- `skills/devian-examples/14-unity-game-net-manager/SKILL.md`
 
 ---
 
@@ -59,8 +59,8 @@ Network 샘플 템플릿 작성 방법:
 
 | 스킬 | 설명 |
 |------|------|
-| `skills/devian-examples/10-example-domain-game/SKILL.md` | Game 도메인(테이블/컨트랙트) 예제 |
-| `skills/devian-examples/20-example-protocol-game/SKILL.md` | Game 프로토콜(C2Game/Game2C) 예제 |
+| `skills/devian-examples/11-domain-game/SKILL.md` | Game 도메인(테이블/컨트랙트) 예제 |
+| `skills/devian-examples/12-protocol-game/SKILL.md` | Game 프로토콜(C2Game/Game2C) 예제 |
 
 ---
 
@@ -73,7 +73,7 @@ Network 샘플 템플릿 작성 방법:
 
 ## Reference
 
-- Related: `skills/devian-core/03-ssot/SKILL.md`
+- Related: `skills/devian/10-module/03-ssot/SKILL.md`
 - Related: `skills/devian-unity/06-domain-packages/com.devian.domain.template/SKILL.md`
 - Related: `skills/devian-unity/02-unity-bundles/SKILL.md`
-- Related: `skills/devian-examples/40-samples-network/SKILL.md`
+- Related: `skills/devian-examples/14-unity-game-net-manager/SKILL.md`

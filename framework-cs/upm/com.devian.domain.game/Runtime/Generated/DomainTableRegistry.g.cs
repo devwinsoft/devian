@@ -19,6 +19,76 @@ namespace Devian.Domain.Game
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Register()
         {
+            global::Devian.TableManager.Instance.RegisterTbLoader("MISSION_DAILY", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_MISSION_DAILY.LoadFromNdjson(text);
+                    TB_MISSION_DAILY._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_MISSION_DAILY.LoadFromPb64Binary(bin);
+                    TB_MISSION_DAILY._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("MISSION_WEEKLY", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_MISSION_WEEKLY.LoadFromNdjson(text);
+                    TB_MISSION_WEEKLY._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_MISSION_WEEKLY.LoadFromPb64Binary(bin);
+                    TB_MISSION_WEEKLY._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("MISSION_ACHIEVEMENT", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_MISSION_ACHIEVEMENT.LoadFromNdjson(text);
+                    TB_MISSION_ACHIEVEMENT._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_MISSION_ACHIEVEMENT.LoadFromPb64Binary(bin);
+                    TB_MISSION_ACHIEVEMENT._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("PRODUCT", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_PRODUCT.LoadFromNdjson(text);
+                    TB_PRODUCT._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_PRODUCT.LoadFromPb64Binary(bin);
+                    TB_PRODUCT._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("REWARD", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_REWARD.LoadFromNdjson(text);
+                    TB_REWARD._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_REWARD.LoadFromPb64Binary(bin);
+                    TB_REWARD._AfterLoad();
+                }
+            });
+
             global::Devian.TableManager.Instance.RegisterTbLoader("TestSheet", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)

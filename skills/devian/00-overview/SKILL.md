@@ -2,7 +2,7 @@
 
 Status: ACTIVE
 AppliesTo: v10
-SSOT: skills/devian-core/03-ssot/SKILL.md
+SSOT: skills/devian/10-module/03-ssot/SKILL.md
 
 ## What is Devian?
 
@@ -19,7 +19,7 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 
 모든 정책/경로/규칙의 정본은 **SSOT 문서**에 있다:
 
-→ `skills/devian-core/03-ssot/SKILL.md`
+→ `skills/devian/10-module/03-ssot/SKILL.md`
 
 이 문서를 포함한 모든 스킬은 SSOT를 참조하며, 충돌 시 SSOT가 우선한다.
 
@@ -29,13 +29,13 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 
 | Group | Description | Overview | Policy | SSOT |
 |-------|-------------|----------|--------|------|
-| **devian-core** | Root SSOT, 스킬 규격, 런타임 | [00-overview](../../devian-core/00-overview/SKILL.md) | [01-policy](../../devian-core/01-policy/SKILL.md) | [03-ssot](../../devian-core/03-ssot/SKILL.md) |
+| **devian/10-module** | Root SSOT, 스킬 규격, 런타임 | [00-overview](../10-module/00-overview/SKILL.md) | [01-policy](../10-module/01-policy/SKILL.md) | [03-ssot](../10-module/03-ssot/SKILL.md) |
 | **devian-tools** | CLI, 아카이브 | [00-overview](../../devian-tools/00-overview/SKILL.md) | [01-policy](../../devian-tools/01-policy/SKILL.md) | [03-ssot](../../devian-tools/03-ssot/SKILL.md) |
-| **devian-builder** | Build, Table, Contract, NDJSON, PB64, Protocol Codegen, Error Reporting | [00-overview](../../devian-builder/00-overview/SKILL.md) | [01-policy](../../devian-builder/01-policy/SKILL.md) | [03-ssot](../../devian-builder/03-ssot/SKILL.md) |
+| **devian-tools/11-builder** | Build, Table, Contract, NDJSON, PB64, Protocol Codegen, Error Reporting | [00-overview](../../devian-tools/11-builder/00-overview/SKILL.md) | [01-policy](../../devian-tools/11-builder/01-policy/SKILL.md) | [03-ssot](../../devian-tools/11-builder/03-ssot/SKILL.md) |
 | **devian-common** | Common 도메인, Feature 모듈 | [00-overview](../../devian-common/00-overview/SKILL.md) | [01-policy](../../devian-common/01-policy/SKILL.md) | — |
 | **devian-unity** | UPM 패키지, Unity 런타임, 컴포넌트 | [00-overview](../../devian-unity/00-overview/SKILL.md) | [01-policy](../../devian-unity/01-policy/SKILL.md) | [03-ssot](../../devian-unity/03-ssot/SKILL.md) |
-| **devian-examples** | 예제 도메인, 예제 프로토콜 | [00-overview](../../devian-examples/00-overview/SKILL.md) | [01-policy](../../devian-examples/01-policy/SKILL.md) | — |
-| **devian-unity/50-mobile-system** | MobileSystem (Devian Samples) | [00-overview](../../devian-unity/90-samples/50-mobile-system/00-overview/SKILL.md) | [01-policy](../../devian-unity/90-samples/50-mobile-system/01-policy/SKILL.md) | — |
+| **devian-examples** | 예제 도메인, 예제 프로토콜 | [00-overview](../../devian-examples/00-overview/SKILL.md) | [01-policy](../../devian-examples/01-policy/SKILL.md) | [03-ssot](../../devian-examples/03-ssot/SKILL.md) |
+| **devian-unity/50-mobile-system** | MobileSystem (Devian Samples) | [00-overview](../../devian-unity/90-samples/50-mobile-system/00-overview/SKILL.md) | — | — |
 | **devian-unity/90-samples** | Unity 샘플 작성 가이드, 네트워크 샘플 | [00-overview](../../devian-unity/90-samples/00-overview/SKILL.md) | [01-policy](../../devian-unity/90-samples/01-policy/SKILL.md) | — |
 
 ---
@@ -55,9 +55,9 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | keyword | route-to |
 |---|---|
 | StringTable, string-table, ST_, 다국어, localization, localizing, TEXT table, LocalizedText, 번역 | `skills/devian-common/14-string-table/SKILL.md` |
-| NDJSON, ndjson, .json 스토리지 | `skills/devian-builder/34-ndjson-storage/SKILL.md` |
-| PB64, pb64, .asset 바이너리 | `skills/devian-builder/35-pb64-storage/SKILL.md` |
-| TableGen, 테이블 생성 | `skills/devian-builder/42-tablegen-implementation/SKILL.md` |
+| NDJSON, ndjson, .json 스토리지 | `skills/devian-tools/11-builder/34-ndjson-storage/SKILL.md` |
+| PB64, pb64, .asset 바이너리 | `skills/devian-tools/11-builder/35-pb64-storage/SKILL.md` |
+| TableGen, 테이블 생성 | `skills/devian-tools/11-builder/42-tablegen-implementation/SKILL.md` |
 | TableManager, LoadStringsAsync | `skills/devian-unity/10-foundation/11-table-manager/SKILL.md` |
 | DownloadManager, Addressables | `skills/devian-unity/10-foundation/19-download-manager/SKILL.md` |
 | UIManager, UICanvas, UIFrame | `skills/devian-unity/40-ui-system/10-ui-manager/skill.md` |
@@ -70,12 +70,12 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 
 | 찾고 싶은 것 | 문서 |
 |-------------|------|
-| 용어 정의 | [10-glossary](../10-glossary/SKILL.md) |
-| Workspace 구조 | [20-workspace](../20-workspace/SKILL.md) |
+| 용어 정의 | [04-glossary](../04-glossary/SKILL.md) |
+| Workspace 구조 | [05-workspace](../05-workspace/SKILL.md) |
 | 공통 정책 | [01-policy](../01-policy/SKILL.md) |
-| 빌드 실행 | [devian-builder/20-build-domain](../../devian-builder/20-build-domain/SKILL.md) |
-| 테이블 작성 규칙 | [devian-builder/30-table-authoring-rules](../../devian-builder/30-table-authoring-rules/SKILL.md) |
-| 프로토콜 코드젠 | [devian-builder/40-codegen-protocol](../../devian-builder/40-codegen-protocol/SKILL.md) |
+| 빌드 실행 | [devian-tools/11-builder/20-build-domain](../../devian-tools/11-builder/20-build-domain/SKILL.md) |
+| 테이블 작성 규칙 | [devian-tools/11-builder/30-table-authoring-rules](../../devian-tools/11-builder/30-table-authoring-rules/SKILL.md) |
+| 프로토콜 코드젠 | [devian-tools/11-builder/40-codegen-protocol](../../devian-tools/11-builder/40-codegen-protocol/SKILL.md) |
 | Unity 정책 | [devian-unity/01-policy](../../devian-unity/01-policy/SKILL.md) |
 
 ---
@@ -83,4 +83,4 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 ## Reference
 
 - Index: [skills/devian/SKILL.md](./SKILL.md)
-- SSOT: [skills/devian-core/03-ssot/SKILL.md](../../devian-core/03-ssot/SKILL.md)
+- SSOT: [skills/devian/10-module/03-ssot/SKILL.md](../10-module/03-ssot/SKILL.md)

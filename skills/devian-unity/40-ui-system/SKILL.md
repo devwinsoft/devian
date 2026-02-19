@@ -71,6 +71,6 @@ Foundation → UI 하드 참조가 존재하지 않는다.
 
 ## Reference
 
-- Parent: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
+- Parent: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)
 - Related: `skills/devian-unity/02-unity-bundles/SKILL.md` (번들 구성/의존 정책)
 - Related: `skills/devian-unity/10-foundation/SKILL.md` (기타 Unity 컴포넌트)

@@ -64,6 +64,7 @@ PurchaseManager(구매 샘플)의 위치/역할/규약을 설명한다.
 - Unity IAP "스토어 구매 성공 콜백"만으로 지급/NoAds 적용 금지
 - 최종 지급/상태 반영은 서버(Cloud Functions) 결과(verifyPurchase/getEntitlements)만 기준으로 한다.
 - 소모성 지급량은 서버 grants/currencyDelta 결과만 신뢰한다(클라 계산 금지).
+- 서버 `verifyPurchase`가 반환한 `grants[]`의 실제 적용(지급 실행)은 RewardManager(49-reward-system)에 위임한다.
 
 
 ---

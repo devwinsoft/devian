@@ -163,4 +163,4 @@ Samples~가 존재하는 패키지에 한해 적용:
 
 - Related: `skills/devian-unity/02-unity-bundles/SKILL.md`
 - Related: `skills/devian-unity/06-domain-packages/com.devian.domain.common/SKILL.md`
-- Related: `skills/devian-core/03-ssot/SKILL.md` (Foundation Package SSOT)
+- Related: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)

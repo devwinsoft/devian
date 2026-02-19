@@ -160,5 +160,5 @@ public class AudioManager : CompoSingleton<AudioManager>
 
 ## 10. Reference
 
-- Parent: `skills/devian-core/03-ssot/SKILL.md`
+- Parent: `skills/devian/10-module/03-ssot/SKILL.md`
 - Index: `skills/devian-unity/10-foundation/SKILL.md`

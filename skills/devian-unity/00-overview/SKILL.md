@@ -33,5 +33,5 @@ Devian Unity 런타임, UPM 패키지, 컴포넌트를 담당한다.
 ## Related
 
 - [Unity SSOT](../03-ssot/SKILL.md)
-- [Root SSOT](../../devian-core/03-ssot/SKILL.md)
+- [Root SSOT](../../devian/10-module/03-ssot/SKILL.md)
 - [Devian Index](../../devian/SKILL.md)

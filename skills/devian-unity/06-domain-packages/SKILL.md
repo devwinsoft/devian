@@ -25,7 +25,7 @@ Type: Index / Directory
 |------|-----------|
 | 번들 정책 (패키지 묶음/의존 방향) | `skills/devian-unity/02-unity-bundles/SKILL.md` |
 | package.json 메타데이터 | `skills/devian-unity/04-package-metadata/SKILL.md` |
-| Foundation Package SSOT | `skills/devian-core/03-ssot/SKILL.md` |
+| Foundation Package SSOT | `skills/devian/10-module/03-ssot/SKILL.md` |
 
 ---
 
@@ -34,4 +34,4 @@ Type: Index / Directory
 - Parent: `skills/devian-unity/00-overview/SKILL.md`
 - Related: `skills/devian-unity/02-unity-bundles/SKILL.md`
 - Related: `skills/devian-unity/04-package-metadata/SKILL.md`
-- Related: `skills/devian-core/03-ssot/SKILL.md`
+- Related: `skills/devian/10-module/03-ssot/SKILL.md`

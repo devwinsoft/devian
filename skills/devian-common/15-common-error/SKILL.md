@@ -25,7 +25,7 @@ Common 레이어의 에러 표현을 표준화한다.
 
 `CommonErrorType`의 정본은 아래 테이블이다.
 
-- 파일: `input/Domains/Common/tables/CommonTable.xlsx`
+- 파일: `input/Domains/Common/CommonTable.xlsx`
 - 시트: `ERROR_COMMON`
 - 컬럼(최소): `id`, `msg_key`, `msg`
 

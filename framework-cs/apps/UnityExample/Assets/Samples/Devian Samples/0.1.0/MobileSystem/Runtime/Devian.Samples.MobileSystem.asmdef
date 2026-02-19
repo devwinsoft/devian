@@ -5,7 +5,7 @@
     "Devian.Unity",
     "Devian.Core",
     "Devian.Domain.Common",
-    "Devian.Domain.Purchase",
+    "Devian.Domain.Game",
     "Unity.InputSystem",
     "Devian.UI",
     "Unity.Purchasing"
