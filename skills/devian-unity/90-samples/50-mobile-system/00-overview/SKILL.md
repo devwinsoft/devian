@@ -23,4 +23,5 @@ MobileSystem은 **Devian Samples**(`com.devian.samples`)에 포함된 Unity Samp
 - [49-reward-system](../49-reward-system/00-overview/SKILL.md)
 - [50-leaderboard](../50-leaderboard/00-overview/SKILL.md)
 - [61-virtual-gamepad](../61-virtual-gamepad/SKILL.md)
-- [52-inventory-system](../52-inventory-system/00-overview/SKILL.md)
+
+> **Note:** inventory-system은 [40-game-system/15-game-inventory-system](../../40-game-system/15-game-inventory-system/00-overview/SKILL.md)으로 이전되었다.

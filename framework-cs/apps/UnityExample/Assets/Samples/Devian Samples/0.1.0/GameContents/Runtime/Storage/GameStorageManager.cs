@@ -1,126 +1,69 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 using Newtonsoft.Json.Linq;
 using Devian.Domain.Game;
 
 namespace Devian
 {
-    public sealed class InventoryStorage
+    public sealed class GameStorageManager : CompoSingleton<GameStorageManager>
     {
-        // ── Currency ──
-        readonly Dictionary<string, long> mWallet = new();
-        public IReadOnlyDictionary<string, long> Wallet => mWallet;
+        const int CurrentVersion = 1;
 
-        // ── Equips ──
-        readonly Dictionary<string, AbilityEquip> mEquipments = new();
-        public IReadOnlyDictionary<string, AbilityEquip> Equipments => mEquipments;
-
-        // ── Cards ──
-        readonly Dictionary<string, AbilityCard> mCards = new();
-        public IReadOnlyDictionary<string, AbilityCard> Cards => mCards;
-
-        // ── Heroes ──
-        readonly Dictionary<string, AbilityUnitHero> mHeroes = new();
-        public IReadOnlyDictionary<string, AbilityUnitHero> Heroes => mHeroes;
-
-        // ── Currency Operations ──
-
-        public long GetCurrencyBalance(string currencyId)
-        {
-            return mWallet.TryGetValue(currencyId, out var balance) ? balance : 0L;
-        }
-
-        public void AddCurrency(string currencyId, long amount)
-        {
-            mWallet.TryGetValue(currencyId, out var current);
-            mWallet[currencyId] = current + amount;
-        }
-
-        // ── Equip Operations ──
-
-        public AbilityEquip GetEquip(string itemUid)
-        {
-            return mEquipments.TryGetValue(itemUid, out var equip) ? equip : null;
-        }
-
-        public List<AbilityEquip> GetEquipsByEquipId(string equipId)
-        {
-            return mEquipments.Values.Where(e => e.EquipId == equipId).ToList();
-        }
-
-        public AbilityEquip AddEquip(string itemUid, AbilityEquip ability)
-        {
-            if (mEquipments.ContainsKey(itemUid)) return mEquipments[itemUid];
-            mEquipments[itemUid] = ability;
-            return ability;
-        }
-
-        public bool RemoveEquip(string itemUid)
-        {
-            if (!mEquipments.TryGetValue(itemUid, out var equip)) return false;
-            if (equip.IsEquipped) equip.ClearOwner();
-            mEquipments.Remove(itemUid);
-            return true;
-        }
-
-        // ── Card Operations ──
-
-        public AbilityCard GetCard(string cardId)
-        {
-            return mCards.TryGetValue(cardId, out var card) ? card : null;
-        }
-
-        public AbilityCard AddCard(string cardId, AbilityCard ability)
-        {
-            if (mCards.ContainsKey(cardId)) return mCards[cardId];
-            mCards[cardId] = ability;
-            return ability;
-        }
-
-        // ── Hero Operations ──
-
-        public AbilityUnitHero GetHero(string heroId)
-        {
-            return mHeroes.TryGetValue(heroId, out var hero) ? hero : null;
-        }
-
-        public AbilityUnitHero AddHero(string heroId, AbilityUnitHero ability)
-        {
-            if (mHeroes.ContainsKey(heroId)) return mHeroes[heroId];
-            mHeroes[heroId] = ability;
-            return ability;
-        }
-
-        // ── Equip Operations (장착/해제) ──
-
-        public bool Equip(string heroId, int equipSlot, string equipUid)
-        {
-            if (!mHeroes.TryGetValue(heroId, out var hero)) return false;
-            if (!mEquipments.TryGetValue(equipUid, out var equip)) return false;
-            return hero.Equip(equip, equipSlot);
-        }
-
-        public bool Unequip(string heroId, int equipSlot)
-        {
-            if (!mHeroes.TryGetValue(heroId, out var hero)) return false;
-            return hero.Unequip(equipSlot);
-        }
-
-        // ── JSON ──
+        InventoryStorage _inventory => InventoryManager.Instance.Storage;
 
         public string ToJson()
         {
             var root = new JObject();
+            root["version"] = CurrentVersion;
+            root["inventory"] = _serializeInventory();
+            return root.ToString();
+        }
+
+        public string ToPayload()
+        {
+            var json = ToJson();
+            return ComplexUtil.Encrypt_Base64(json);
+        }
+
+        public void LoadFromPayload(string payload)
+        {
+            var json = ComplexUtil.Decrypt_Base64(payload);
+            LoadFromJson(json);
+        }
+
+        public void LoadFromJson(string json)
+        {
+            var root = JObject.Parse(json);
+            var version = root.Value<int>("version");
+            if (version != CurrentVersion)
+                return;
+
+            if (root["inventory"] is JObject inventoryObj)
+                _deserializeInventory(inventoryObj);
+        }
+
+        public void Clear()
+        {
+            _inventory.Clear();
+        }
+
+        // ── Serialize ──
+
+        JObject _serializeInventory()
+        {
+            var inventory = _inventory;
+            var inv = new JObject();
 
             // wallet
             var walletObj = new JObject();
-            foreach (var kv in mWallet)
-                walletObj[kv.Key] = kv.Value;
-            root["wallet"] = walletObj;
+            foreach (var kv in inventory.Wallet)
+                walletObj[kv.Key.ToString()] = kv.Value;
+            inv["wallet"] = walletObj;
 
             // equipments
             var equipsObj = new JObject();
-            foreach (var kv in mEquipments)
+            foreach (var kv in inventory.Equipments)
             {
                 var e = kv.Value;
                 var obj = new JObject
@@ -136,11 +79,11 @@ namespace Devian
                 obj["stats"] = stats;
                 equipsObj[kv.Key] = obj;
             }
-            root["equipments"] = equipsObj;
+            inv["equipments"] = equipsObj;
 
             // cards
             var cardsObj = new JObject();
-            foreach (var kv in mCards)
+            foreach (var kv in inventory.Cards)
             {
                 var c = kv.Value;
                 var obj = new JObject
@@ -153,11 +96,11 @@ namespace Devian
                 obj["stats"] = stats;
                 cardsObj[kv.Key] = obj;
             }
-            root["cards"] = cardsObj;
+            inv["cards"] = cardsObj;
 
             // heroes
             var heroesObj = new JObject();
-            foreach (var kv in mHeroes)
+            foreach (var kv in inventory.Heroes)
             {
                 var h = kv.Value;
                 var obj = new JObject
@@ -176,25 +119,30 @@ namespace Devian
 
                 heroesObj[kv.Key] = obj;
             }
-            root["heroes"] = heroesObj;
+            inv["heroes"] = heroesObj;
 
-            return root.ToString();
+            return inv;
         }
 
-        public void FromJson(string json)
+        // ── Deserialize ──
+
+        void _deserializeInventory(JObject inv)
         {
-            var root = JObject.Parse(json);
-            Clear();
+            var inventory = _inventory;
+            inventory.Clear();
 
             // wallet
-            if (root["wallet"] is JObject walletObj)
+            if (inv["wallet"] is JObject walletObj)
             {
                 foreach (var prop in walletObj.Properties())
-                    mWallet[prop.Name] = prop.Value.Value<long>();
+                {
+                    if (System.Enum.TryParse<CURRENCY_TYPE>(prop.Name, out var currencyType))
+                        inventory.AddCurrency(currencyType, prop.Value.Value<long>());
+                }
             }
 
             // equipments
-            if (root["equipments"] is JObject equipsObj)
+            if (inv["equipments"] is JObject equipsObj)
             {
                 foreach (var prop in equipsObj.Properties())
                 {
@@ -211,7 +159,7 @@ namespace Devian
                     {
                         foreach (var sp in statsObj.Properties())
                         {
-                            if (System.Enum.TryParse<StatType>(sp.Name, out var statType))
+                            if (System.Enum.TryParse<STAT_TYPE>(sp.Name, out var statType))
                                 ability.SetStat(statType, sp.Value.Value<int>());
                         }
                     }
@@ -221,12 +169,12 @@ namespace Devian
                     if (ownerSlot > 0 && !string.IsNullOrEmpty(ownerUnitId))
                         ability.SetOwner(ownerUnitId, ownerSlot);
 
-                    mEquipments[itemUid] = ability;
+                    inventory.AddEquip(itemUid, ability);
                 }
             }
 
             // cards
-            if (root["cards"] is JObject cardsObj)
+            if (inv["cards"] is JObject cardsObj)
             {
                 foreach (var prop in cardsObj.Properties())
                 {
@@ -242,17 +190,17 @@ namespace Devian
                     {
                         foreach (var sp in statsObj.Properties())
                         {
-                            if (System.Enum.TryParse<StatType>(sp.Name, out var statType))
+                            if (System.Enum.TryParse<STAT_TYPE>(sp.Name, out var statType))
                                 ability.SetStat(statType, sp.Value.Value<int>());
                         }
                     }
 
-                    mCards[cardId] = ability;
+                    inventory.AddCard(cardId, ability);
                 }
             }
 
-            // heroes (last: equip slot references need mEquipments)
-            if (root["heroes"] is JObject heroesObj)
+            // heroes (last: equip slot references need equipments)
+            if (inv["heroes"] is JObject heroesObj)
             {
                 foreach (var prop in heroesObj.Properties())
                 {
@@ -269,12 +217,12 @@ namespace Devian
                     {
                         foreach (var sp in statsObj.Properties())
                         {
-                            if (System.Enum.TryParse<StatType>(sp.Name, out var statType))
+                            if (System.Enum.TryParse<STAT_TYPE>(sp.Name, out var statType))
                                 ability.SetStat(statType, sp.Value.Value<int>());
                         }
                     }
 
-                    mHeroes[unitId] = ability;
+                    inventory.AddHero(unitId, ability);
 
                     if (obj["equips"] is JObject equipsMap)
                     {
@@ -283,25 +231,12 @@ namespace Devian
                             if (int.TryParse(ep.Name, out var slotNumber))
                             {
                                 var equipUid = ep.Value.Value<string>();
-                                if (mEquipments.TryGetValue(equipUid, out var equip))
-                                    ability.Equip(equip, slotNumber);
+                                inventory.Equip(unitId, slotNumber, equipUid);
                             }
                         }
                     }
                 }
             }
-        }
-
-        // ── Clear ──
-
-        public void Clear()
-        {
-            mWallet.Clear();
-            mCards.Clear();
-            mHeroes.Clear();
-            foreach (var kv in mEquipments)
-                kv.Value.ClearOwner();
-            mEquipments.Clear();
         }
     }
 }

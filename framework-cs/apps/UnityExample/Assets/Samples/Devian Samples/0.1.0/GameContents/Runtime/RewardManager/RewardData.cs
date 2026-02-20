@@ -4,15 +4,15 @@ namespace Devian
 {
     public readonly struct RewardData
     {
-        public RewardData(RewardType type, string id, long amount)
+        public RewardData(REWARD_TYPE type, string id, int amount)
         {
             Type = type;
             Id = id;
             Amount = amount;
         }
 
-        public RewardType Type { get; }
+        public REWARD_TYPE Type { get; }
         public string Id { get; }
-        public long Amount { get; }
+        public int Amount { get; }
     }
 }

@@ -1,0 +1,37 @@
+{
+  "enums": [
+    {
+      "name": "CURRENCY_TYPE",
+      "values": [
+        { "name": "GOLD", "value": 0 },
+        { "name": "JEWEL_FREE", "value": 1 },
+        { "name": "JEWEL_PAID", "value": 2 },
+        { "name": "STAMINA", "value": 3 },
+        { "name": "FRIENDSHIP", "value": 4 },
+        { "name": "GUILD_COIN", "value": 5 },
+        { "name": "ARENA_COIN", "value": 6 }
+      ]
+    },
+    {
+      "name": "REWARD_TYPE",
+      "values": [
+        { "name": "CARD", "value": 0 },
+        { "name": "CURRENCY", "value": 1 },
+        { "name": "EQUIP", "value": 2 },
+        { "name": "HERO", "value": 3 }
+      ]
+    },
+    {
+      "name": "STAT_TYPE",
+      "values": [
+        { "name": "NONE", "value": 0 },
+        { "name": "CARD_AMOUNT", "value": 1 },
+        { "name": "CARD_LEVEL", "value": 2 },
+        { "name": "EQUIP_LEVEL", "value": 11 },
+        { "name": "UNIT_AMOUNT", "value": 20 },
+        { "name": "UNIT_LEVEL", "value": 21 },
+        { "name": "UNIT_HP_MAX", "value": 100 }
+      ]
+    }
+  ]
+}

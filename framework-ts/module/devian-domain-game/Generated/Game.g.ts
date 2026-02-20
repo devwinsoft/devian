@@ -8,34 +8,34 @@ import { IEntity, IEntityKey } from '@devian/core';
 // Contracts
 // ================================================================
 
-/** CurrencyType enum */
-export enum CurrencyType {
-    Gold = 0,
-    JewelFree = 1,
-    JewelPaid = 2,
-    Stamina = 3,
-    Friendship = 4,
-    GuildCoin = 5,
-    ArenaCoin = 6,
+/** CURRENCY_TYPE enum */
+export enum CURRENCY_TYPE {
+    GOLD = 0,
+    JEWEL_FREE = 1,
+    JEWEL_PAID = 2,
+    STAMINA = 3,
+    FRIENDSHIP = 4,
+    GUILD_COIN = 5,
+    ARENA_COIN = 6,
 }
 
-/** RewardType enum */
-export enum RewardType {
-    Card = 0,
-    Currency = 1,
-    Equip = 2,
-    Hero = 3,
+/** REWARD_TYPE enum */
+export enum REWARD_TYPE {
+    CARD = 0,
+    CURRENCY = 1,
+    EQUIP = 2,
+    HERO = 3,
 }
 
-/** StatType enum */
-export enum StatType {
-    None = 0,
-    CardAmount = 1,
-    CardLevel = 2,
-    EquipLevel = 11,
-    UnitAmount = 20,
-    UnitLevel = 21,
-    UnitHpMax = 100,
+/** STAT_TYPE enum */
+export enum STAT_TYPE {
+    NONE = 0,
+    CARD_AMOUNT = 1,
+    CARD_LEVEL = 2,
+    EQUIP_LEVEL = 11,
+    UNIT_AMOUNT = 20,
+    UNIT_LEVEL = 21,
+    UNIT_HP_MAX = 100,
 }
 
 /** ProductKind enum */
@@ -125,7 +125,7 @@ export interface PRODUCT extends IEntityKey<string> {
 export interface REWARD extends IEntityKey<number> {
     RewardNum: number;
     RewardGroupId: string;
-    Type: RewardType;
+    Type: REWARD_TYPE;
     Id: string;
     Amount: number;
     getKey(): number;

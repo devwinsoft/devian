@@ -26,7 +26,7 @@ namespace Devian
             {
                 var r = rewards[i];
 
-                if (r.Type != RewardType.Card && r.Type != RewardType.Currency && r.Type != RewardType.Equip && r.Type != RewardType.Hero)
+                if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY && r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO)
                     return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_TYPE_INVALID,
                         $"rewards[{i}] invalid type: {r.Type}");
 
@@ -47,19 +47,20 @@ namespace Devian
                 if (r.Amount == 0)
                     continue;
 
-                if (r.Type == RewardType.Currency)
+                if (r.Type == REWARD_TYPE.CURRENCY)
                 {
-                    _storage.AddCurrency(r.Id, r.Amount);
+                    var currencyType = (CURRENCY_TYPE)Enum.Parse(typeof(CURRENCY_TYPE), r.Id);
+                    _storage.AddCurrency(currencyType, r.Amount);
                 }
-                else if (r.Type == RewardType.Card)
+                else if (r.Type == REWARD_TYPE.CARD)
                 {
                     _applyCard(r.Id, r.Amount);
                 }
-                else if (r.Type == RewardType.Equip)
+                else if (r.Type == REWARD_TYPE.EQUIP)
                 {
                     _applyEquip(r.Id, r.Amount);
                 }
-                else // RewardType.Hero
+                else // REWARD_TYPE.HERO
                 {
                     _applyHero(r.Id, r.Amount);
                 }
@@ -70,26 +71,27 @@ namespace Devian
 
         public long GetAmount(string type, string id)
         {
-            if (type == nameof(RewardType.Currency))
+            if (type == nameof(REWARD_TYPE.CURRENCY))
             {
-                return _storage.GetCurrencyBalance(id);
+                var currencyType = (CURRENCY_TYPE)Enum.Parse(typeof(CURRENCY_TYPE), id);
+                return _storage.GetCurrencyBalance(currencyType);
             }
 
-            if (type == nameof(RewardType.Card))
+            if (type == nameof(REWARD_TYPE.CARD))
             {
                 var card = _storage.GetCard(id);
                 return card != null ? card.Amount : 0L;
             }
 
-            if (type == nameof(RewardType.Equip))
+            if (type == nameof(REWARD_TYPE.EQUIP))
             {
                 return _storage.GetEquipsByEquipId(id).Count;
             }
 
-            if (type == nameof(RewardType.Hero))
+            if (type == nameof(REWARD_TYPE.HERO))
             {
                 var hero = _storage.GetHero(id);
-                return hero != null ? hero[StatType.UnitAmount] : 0L;
+                return hero != null ? hero[STAT_TYPE.UNIT_AMOUNT] : 0L;
             }
 
             return 0L;
@@ -132,7 +134,7 @@ namespace Devian
             var existing = _storage.GetHero(heroId);
             if (existing != null)
             {
-                existing.AddStat(StatType.UnitAmount, (int)amount);
+                existing.AddStat(STAT_TYPE.UNIT_AMOUNT, (int)amount);
             }
             else
             {
@@ -142,7 +144,7 @@ namespace Devian
                     ability.Init(table);
 
                 _storage.AddHero(heroId, ability);
-                ability.AddStat(StatType.UnitAmount, (int)amount);
+                ability.AddStat(STAT_TYPE.UNIT_AMOUNT, (int)amount);
             }
         }
     }

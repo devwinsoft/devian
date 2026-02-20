@@ -14,7 +14,7 @@ namespace Devian
         public void Init(UNIT_HERO table)
         {
             mTable = table;
-            AddStat(StatType.UnitHpMax, table.MaxHp);
+            AddStat(STAT_TYPE.UNIT_HP_MAX, table.MaxHp);
         }
 
         public override AbilityBase Clone()

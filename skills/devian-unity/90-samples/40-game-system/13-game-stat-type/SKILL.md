@@ -3,64 +3,64 @@
 Status: ACTIVE
 AppliesTo: v10
 
-**StatType enum 정의.** Game 도메인의 `StatType` enum 값(카테고리별)을 관리한다.
+**STAT_TYPE enum 정의.** Game 도메인의 `STAT_TYPE` enum 값(카테고리별)을 관리한다.
 
 ---
 
 ## 1. Overview
 
-`StatType`은 Game 도메인 contract에서 빌드 파이프라인으로 생성되는 enum이다.
+`STAT_TYPE`은 Game 도메인 contract에서 빌드 파이프라인으로 생성되는 enum이다.
 모든 Ability 시스템([12-game-ability](../12-game-ability/SKILL.md))의 key로 사용된다.
 
-- 입력: `input/Domains/Game/EnumTypes.json`
-- 생성: `Devian.Domain.Game.StatType` enum
+- 입력: `input/Domains/Game/ENUM_TYPES.json`
+- 생성: `Devian.Domain.Game.STAT_TYPE` enum
 - 네임스페이스: `Devian.Domain.Game`
 
-이 스킬에 카테고리별 StatType 값을 추가/관리한다.
+이 스킬에 카테고리별 STAT_TYPE 값을 추가/관리한다.
 
 ---
 
-## 2. StatType Values
+## 2. STAT_TYPE Values
 
 ### Card (1~)
 
 | name | value | 설명 |
 |---|---|---|
-| `CardAmount` | 1 | 카드 수량(Amount) |
-| `CardLevel` | 2 | 카드 레벨 |
+| `CARD_AMOUNT` | 1 | 카드 수량(Amount) |
+| `CARD_LEVEL` | 2 | 카드 레벨 |
 
 ### Equip (10~)
 
 | name | value | 설명 |
 |---|---|---|
-| `EquipLevel` | 11 | 장비 레벨 |
+| `EQUIP_LEVEL` | 11 | 장비 레벨 |
 
 ### Unit (20~)
 
 | name | value | 설명 |
 |---|---|---|
-| `UnitAmount` | 20 | 유닛 수량(Amount) |
-| `UnitLevel` | 21 | 유닛 레벨 |
-| `UnitHpMax` | 100 | 유닛 최대 HP |
+| `UNIT_AMOUNT` | 20 | 유닛 수량(Amount) |
+| `UNIT_LEVEL` | 21 | 유닛 레벨 |
+| `UNIT_HP_MAX` | 100 | 유닛 최대 HP |
 
 ---
 
-## 3. EnumTypes.json — StatType 부분 (SSOT)
+## 3. ENUM_TYPES.json — STAT_TYPE 부분 (SSOT)
 
 ```json
 {
   "enums": [
     {
-      "name": "StatType",
+      "name": "STAT_TYPE",
       "values": [
-        { "name": "None", "value": 0 },
-        { "name": "CardAmount", "value": 1 },
-        { "name": "CardLevel", "value": 2 },
-        { "name": "EquipLevel", "value": 11 },
+        { "name": "NONE", "value": 0 },
+        { "name": "CARD_AMOUNT", "value": 1 },
+        { "name": "CARD_LEVEL", "value": 2 },
+        { "name": "EQUIP_LEVEL", "value": 11 },
 
-        { "name": "UnitAmount", "value": 20 },
-        { "name": "UnitLevel", "value": 21 },
-        { "name": "UnitHpMax", "value": 100 }
+        { "name": "UNIT_AMOUNT", "value": 20 },
+        { "name": "UNIT_LEVEL", "value": 21 },
+        { "name": "UNIT_HP_MAX", "value": 100 }
       ]
     }
   ]
@@ -71,35 +71,35 @@ AppliesTo: v10
 
 ## 4. 사용 예
 
-### AbilityCard 수량 (CardAmount)
+### AbilityCard 수량 (CARD_AMOUNT)
 
-`AbilityCard[StatType.CardAmount]`를 사용한다.
+`AbilityCard[STAT_TYPE.CARD_AMOUNT]`를 사용한다.
 
 ```csharp
 // 수량 읽기
-int amount = abilityCard.Amount;  // = this[StatType.CardAmount]
+int amount = abilityCard.Amount;  // = this[STAT_TYPE.CARD_AMOUNT]
 
 // 수량 누적
-abilityCard.AddAmount(delta);     // = AddStat(StatType.CardAmount, delta)
+abilityCard.AddAmount(delta);     // = AddStat(STAT_TYPE.CARD_AMOUNT, delta)
 ```
 
-- `AbilityBase.mStats`의 `StatType.CardAmount` 값이 카드 수량 SSOT이다.
+- `AbilityBase.mStats`의 `STAT_TYPE.CARD_AMOUNT` 값이 카드 수량 SSOT이다.
 
-### AbilityUnitHero 수량 (UnitAmount)
+### AbilityUnitHero 수량 (UNIT_AMOUNT)
 
-`AbilityUnitHero[StatType.UnitAmount]`를 사용한다.
+`AbilityUnitHero[STAT_TYPE.UNIT_AMOUNT]`를 사용한다.
 
 ```csharp
 // 수량 읽기
-int amount = hero[StatType.UnitAmount];
+int amount = hero[STAT_TYPE.UNIT_AMOUNT];
 
 // 수량 누적
-hero.AddStat(StatType.UnitAmount, delta);
+hero.AddStat(STAT_TYPE.UNIT_AMOUNT, delta);
 ```
 
 ### AbilityEquip 장착 정보 (Owner)
 
-장착 정보는 StatType이 아닌 **AbilityEquip의 별도 필드**로 관리한다.
+장착 정보는 STAT_TYPE이 아닌 **AbilityEquip의 별도 필드**로 관리한다.
 
 ```csharp
 // 장착 여부
@@ -118,14 +118,14 @@ hero.Unequip(slotNumber);
 
 ## 5. Hard Rules
 
-- `StatType`은 Generated enum이다. 수동 정의 금지.
-- 새 StatType 값 추가 시 이 스킬 → `EnumTypes.json` → 빌드 순서로 진행한다.
+- `STAT_TYPE`은 Generated enum이다. 수동 정의 금지.
+- 새 STAT_TYPE 값 추가 시 이 스킬 → `ENUM_TYPES.json` → 빌드 순서로 진행한다.
 - value 번호는 카테고리별로 범위를 관리한다 (충돌 방지).
 
 ---
 
 ## 6. Related
 
-- [12-game-ability](../12-game-ability/SKILL.md) — AbilityBase, AbilityEquip (StatType 소비자)
-- [11-domain-game](../11-domain-game/SKILL.md) — Game 도메인 허브 (EnumTypes.json contract)
-- [11-inventory-storage](../../50-mobile-system/52-inventory-system/11-inventory-storage/SKILL.md) — InventoryStorage
+- [12-game-ability](../12-game-ability/SKILL.md) — AbilityBase, AbilityEquip (STAT_TYPE 소비자)
+- [11-domain-game](../11-domain-game/SKILL.md) — Game 도메인 허브 (ENUM_TYPES.json contract)
+- [11-inventory-storage](../15-game-inventory-system/11-inventory-storage/SKILL.md) — InventoryStorage

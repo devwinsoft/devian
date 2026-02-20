@@ -52,35 +52,51 @@
 
 
 ## Unified Settings
-- 암호화(Key/IV), 슬롯 설정이 SaveDataManager 단일 Inspector에 통합됨.
+- 슬롯 설정이 SaveDataManager 단일 Inspector에 통합됨.
 - `SaveSlot` 중첩 타입: `slotKey` + `filename`(local) + `cloudSlot`(cloud).
-- Key/IV는 Local/Cloud 공용.
+- payload 난독화는 `ComplexUtil.Encrypt_Base64/Decrypt_Base64`로 수행 (경량 난독화, Key/IV 불필요).
 
 
 ## SlotConfig Interface
 
-SaveDataManager는 Slot/Encryption 설정을 `SaveSlotConfig`로 캡슐화한다. (단일 파일 내부 중첩 타입)
+SaveDataManager는 Slot 설정을 `SaveSlotConfig`로 캡슐화한다. (단일 파일 내부 중첩 타입)
 
 ### Methods
 - `List<string> GetLocalSlotKeys()`
 - `List<string> GetCloudSlotKeys()`
 - `bool TryResolveLocalFilename(string slotKey, out string filename)`
 - `bool TryResolveCloudSlot(string slotKey, out string cloudSlot)`
-- `void GetKeyIvBase64(out string keyBase64, out string ivBase64)`
-- `CoreResult<bool> SetKeyIvBase64(string keyBase64, string ivBase64)`
-- `void ClearKeyIv()`
-- `bool TryGetKeyIv(out byte[] key, out byte[] iv, out string error)`
 
 
 ## Public API
-- `Task<CoreResult<SyncResult>> SyncAsync(CancellationToken ct)`
-- `Task<CoreResult<bool>> ResolveConflictAsync(string slot, SyncResolution resolution, CancellationToken ct)`
-- `void GetKeyIvBase64(out string keyBase64, out string ivBase64)`
-- `CoreResult<bool> SetKeyIvBase64(string keyBase64, string ivBase64)`
-- `void ClearKeyIv()`
+
+### Sync
+- `Task<CommonResult<SyncResult>> SyncAsync(CancellationToken ct)`
+- `Task<CommonResult<SyncResult>> SyncAsync(string slot, CancellationToken ct)`
+- `Task<CommonResult<bool>> ResolveConflictAsync(string slot, SyncResolution resolution, CancellationToken ct)`
+
+### Save
+- `Task<CommonResult<bool>> SaveDataAsync(string slot, string payload, CancellationToken ct)`
+- `Task<CommonResult<bool>> SaveDataAsync(string slot, string payload, bool includeCloud, CancellationToken ct)`
+- `Task<CommonResult<bool>> SaveDataAsync<T>(string slot, T data, CancellationToken ct)`
+- `Task<CommonResult<bool>> SaveDataAsync<T>(string slot, T data, bool includeCloud, CancellationToken ct)`
+
+- `includeCloud` 생략 시 기본값은 `false` (local만 저장).
+- `includeCloud: true` — local 저장 후, `isLocalOnly(loginType)`이 false이면 cloud도 저장. Guest/Editor는 자동 스킵.
+- `includeCloud: false` — local만 저장. cloud 시도 없음.
+
+### Clear
+- `Task<CommonResult<bool>> ClearSlotAsync(string slot, CancellationToken ct)`
+
+항상 local + cloud 모두 삭제.
+
+### Payload Parsing
+- `static CommonResult<T> ParsePayloadResult<T>(SaveLocalPayload payload)`
+- `static CommonResult<T> ParsePayloadResult<T>(SaveCloudPayload payload)`
+
 
 ## Internal API
-- `internal Task<CoreResult<SaveCloudResult>> _initializeCloudAsync(CancellationToken ct)` — AccountManager에서 호출
+- `internal Task<CommonResult<SaveCloudResult>> _initializeCloudAsync(CancellationToken ct)` — AccountManager에서 호출
 - `internal bool _isCloudAvailable`
 
 

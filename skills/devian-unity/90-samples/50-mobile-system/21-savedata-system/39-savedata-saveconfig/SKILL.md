@@ -11,7 +11,7 @@ SaveDataManager에서 SaveSlot / SaveSlotConfig 타입을 별도 파일로 분�
 | File | Description |
 |------|-------------|
 | `SaveSlot.cs` | 슬롯 데이터: `slotKey`, `filename` (Local), `cloudSlot` (Cloud) |
-| `SaveSlotConfig.cs` | 슬롯/암호화 설정 캡슐화 (Inspector 설정 위임) |
+| `SaveSlotConfig.cs` | 슬롯 설정 캡슐화 (Inspector 설정 위임) |
 | `SaveDataManager.cs` | 단일 매니저 — 위 타입을 필드로 사용 |
 
 

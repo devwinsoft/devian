@@ -5,6 +5,7 @@
     "Devian.Core",
     "Devian.Unity",
     "Devian.Protocol.Game",
+    "Devian.Domain.Common",
     "Devian.Domain.Game"
   ],
   "includePlatforms": [],

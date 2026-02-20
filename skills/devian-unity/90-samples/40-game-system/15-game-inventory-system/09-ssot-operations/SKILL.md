@@ -1,4 +1,4 @@
-# 09-ssot-operations — 52-inventory-system
+# 09-ssot-operations — 15-game-inventory-system
 
 
 Status: ACTIVE
@@ -31,9 +31,9 @@ SSOT 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
 ### 3) 조회/UI 갱신
 
 - UI는 조회 API(개념)를 통해 현재 값을 반영한다.
-  - 통화: `type=RewardType.Currency` + `currencyType` 잔고
-  - 장비: `type=RewardType.Equip` + `equipId(pk)` 스택 수량
-  - 카드: `type=RewardType.Card` + `cardId(pk)` 수량
+  - 통화: `type=REWARD_TYPE.CURRENCY` + `currencyType` 잔고
+  - 장비: `type=REWARD_TYPE.EQUIP` + `equipId(pk)` 스택 수량
+  - 카드: `type=REWARD_TYPE.CARD` + `cardId(pk)` 수량
 - 아이템 `options`(업그레이드/레벨 등) 표시는 별도 조회/수정 경로가 필요하다(NEEDS CHECK).
 - 변경 이벤트 기반 최적화는 구현 단계에서 확정한다(NEEDS CHECK).
 
@@ -59,7 +59,7 @@ SSOT 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
 ## DoD
 
 Hard (반드시 0)
-- RewardData 정본이 [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md)에 명시되고, 52 문서는 이를 참조함
+- RewardData 정본이 [49-reward-system/03-ssot](../../../50-mobile-system/49-reward-system/03-ssot/SKILL.md)에 명시되고, 52 문서는 이를 참조함
 - 컨텐츠 미의존(테이블/enum 직접 참조 금지)이 Policy에 명시됨
 - `AddRewards` 반환 타입이 `CommonResult`로 문서에 명시됨
 - invalid 입력 시 실패 + 전체 미적용(원자성) 규약이 문서에 명시됨

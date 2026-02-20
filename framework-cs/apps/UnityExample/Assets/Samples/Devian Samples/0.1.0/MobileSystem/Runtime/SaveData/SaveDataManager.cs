@@ -369,22 +369,19 @@ namespace Devian
         //  Public: Save API
         // ──────────────────────────────────────────────
 
-        public Task<CommonResult<bool>> SaveDataLocalAsync(string slot, string payload, CancellationToken ct)
+        public Task<CommonResult<bool>> SaveDataAsync(string slot, string payload, CancellationToken ct)
         {
-            return saveLocalAsync(slot, payload, ct);
+            return SaveDataAsync(slot, payload, includeCloud: false, ct);
         }
 
-        public Task<CommonResult<bool>> SaveDataLocalAsync<T>(string slot, T data, CancellationToken ct)
-        {
-            var json = JsonUtility.ToJson(data);
-            return SaveDataLocalAsync(slot, json, ct);
-        }
-
-        public async Task<CommonResult<bool>> SaveDataLocalAndCloudAsync(
-            string slot, string payload, CancellationToken ct)
+        public async Task<CommonResult<bool>> SaveDataAsync(
+            string slot, string payload, bool includeCloud, CancellationToken ct)
         {
             var local = await saveLocalAsync(slot, payload, ct);
             if (local.IsFailure) return local;
+
+            if (!includeCloud)
+                return CommonResult<bool>.Success(true);
 
             // In Editor / Guest, silently ignore cloud save and return success.
             var loginType = AccountManager.Instance._getCurrentLoginType();
@@ -403,22 +400,23 @@ namespace Devian
             return CommonResult<bool>.Success(true);
         }
 
-        public Task<CommonResult<bool>> SaveDataLocalAndCloudAsync<T>(string slot, T data, CancellationToken ct)
+        public Task<CommonResult<bool>> SaveDataAsync<T>(string slot, T data, CancellationToken ct)
+        {
+            return SaveDataAsync<T>(slot, data, includeCloud: false, ct);
+        }
+
+        public Task<CommonResult<bool>> SaveDataAsync<T>(
+            string slot, T data, bool includeCloud, CancellationToken ct)
         {
             var json = JsonUtility.ToJson(data);
-            return SaveDataLocalAndCloudAsync(slot, json, ct);
+            return SaveDataAsync(slot, json, includeCloud, ct);
         }
 
         // ──────────────────────────────────────────────
         //  Public: Clear Slot API
         // ──────────────────────────────────────────────
 
-        public Task<CommonResult<bool>> ClearSlotAsync(string slot, CancellationToken ct)
-        {
-            return ClearSlotAsync(slot, clearCloud: true, ct);
-        }
-
-        public async Task<CommonResult<bool>> ClearSlotAsync(string slot, bool clearCloud, CancellationToken ct)
+        public async Task<CommonResult<bool>> ClearSlotAsync(string slot, CancellationToken ct)
         {
             if (ct.IsCancellationRequested)
                 return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_CANCELLED, "Cancelled.");
@@ -454,10 +452,7 @@ namespace Devian
                 return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_WRITE, $"Local delete failed. {ex.Message}");
             }
 
-            // 2) Cloud delete (optional)
-            if (!clearCloud)
-                return CommonResult<bool>.Success(true);
-
+            // 2) Cloud delete
             var loginType = AccountManager.Instance._getCurrentLoginType();
             if (isLocalOnly(loginType))
             {
@@ -500,7 +495,7 @@ namespace Devian
         }
 
         // ──────────────────────────────────────────────
-        //  Internal: Decrypt payload to json (source-aware)
+        //  Internal: Deobfuscate payload to json (source-aware)
         // ──────────────────────────────────────────────
 
         private CommonResult<string> decryptLocalPayloadToJson(SaveLocalPayload payload)
@@ -509,20 +504,17 @@ namespace Devian
                 return CommonResult<string>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveLocalPayload is null.");
 
             var raw = payload.payload ?? string.Empty;
-            if (!_slotConfig.useEncryption)
+            if (string.IsNullOrEmpty(raw))
                 return CommonResult<string>.Success(raw);
-
-            if (!tryGetLocalKeyIv(out var key, out var iv, out var keyError))
-                return CommonResult<string>.Failure(CommonErrorType.LOCALSAVE_KEYIV, keyError);
 
             try
             {
-                var json = Crypto.DecryptAes(raw, key, iv);
+                var json = ComplexUtil.Decrypt_Base64(raw);
                 return CommonResult<string>.Success(json);
             }
             catch (Exception ex)
             {
-                return CommonResult<string>.Failure(CommonErrorType.LOCALSAVE_KEYIV, $"Local decrypt failed: {ex.Message}");
+                return CommonResult<string>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, $"Local deobfuscate failed: {ex.Message}");
             }
         }
 
@@ -532,20 +524,17 @@ namespace Devian
                 return CommonResult<string>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveCloudPayload is null.");
 
             var raw = payload.Payload ?? string.Empty;
-            if (!_slotConfig.useEncryption)
+            if (string.IsNullOrEmpty(raw))
                 return CommonResult<string>.Success(raw);
-
-            if (!_slotConfig.TryGetKeyIv(out var key, out var iv, out var keyError))
-                return CommonResult<string>.Failure(CommonErrorType.CLOUDSAVE_KEYIV, keyError);
 
             try
             {
-                var json = Crypto.DecryptAes(raw, key, iv);
+                var json = ComplexUtil.Decrypt_Base64(raw);
                 return CommonResult<string>.Success(json);
             }
             catch (Exception ex)
             {
-                return CommonResult<string>.Failure(CommonErrorType.CLOUDSAVE_KEYIV, $"Cloud decrypt failed: {ex.Message}");
+                return CommonResult<string>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, $"Cloud deobfuscate failed: {ex.Message}");
             }
         }
 
@@ -623,25 +612,6 @@ namespace Devian
         internal bool _isCloudAvailable => _cloudClient != null && _cloudClient.IsAvailable;
 
         // ──────────────────────────────────────────────
-        //  Public: Key/IV management
-        // ──────────────────────────────────────────────
-
-        public void GetKeyIvBase64(out string keyBase64, out string ivBase64)
-        {
-            _slotConfig.GetKeyIvBase64(out keyBase64, out ivBase64);
-        }
-
-        public CommonResult<bool> SetKeyIvBase64(string keyBase64, string ivBase64)
-        {
-            return _slotConfig.SetKeyIvBase64(keyBase64, ivBase64);
-        }
-
-        public void ClearKeyIv()
-        {
-            _slotConfig.ClearKeyIv();
-        }
-
-        // ──────────────────────────────────────────────
         //  Private: Local save operations
         // ──────────────────────────────────────────────
 
@@ -674,79 +644,10 @@ namespace Devian
                 return CommonResult<SaveLocalPayload>.Success(null);
             }
 
-            byte[] key = null;
-            byte[] iv = null;
-
-            if (_slotConfig.useEncryption && !tryGetLocalKeyIv(out key, out iv, out var keyError))
-            {
-                return CommonResult<SaveLocalPayload>.Failure(CommonErrorType.LOCALSAVE_KEYIV, keyError);
-            }
-
-            // Payload Contract (Ciphertext-only):
-            // - 반환 SaveLocalPayload.payload 는 저장 포맷 그대로(암호화 시 ciphertext)여야 한다.
-            // - decrypt/parse는 별도 경로(SaveDataManager)를 통해 수행한다.
-
-            if (!_slotConfig.useEncryption)
-            {
-                // No-encryption mode: payload is plain json by definition.
-                return CommonResult<SaveLocalPayload>.Success(save);
-            }
-
-            // Encryption mode: ensure migration Option B (legacy->device-bound) is handled,
-            // but 반환은 항상 ciphertext payload로 유지한다.
-            try
-            {
-                // device-bound decrypt 성공 여부만 확인(성공이면 그대로 반환)
-                _ = Crypto.DecryptAes(save.payload, key, iv);
-                return CommonResult<SaveLocalPayload>.Success(save);
-            }
-            catch
-            {
-                // Security: legacy decrypt is allowed only on the same device.
-                var currentDeviceId = _getOrCreateDeviceId();
-                if (!string.IsNullOrEmpty(save.deviceId) && save.deviceId != currentDeviceId)
-                {
-                    return CommonResult<SaveLocalPayload>.Failure(
-                        CommonErrorType.LOCALSAVE_KEYIV,
-                        $"Legacy decrypt blocked: device mismatch. saved={save.deviceId}, current={currentDeviceId}");
-                }
-
-                // fallback: legacy(shared) key/iv로 1회 복호화 시도
-                if (!_slotConfig.TryGetKeyIv(out var legacyKey, out var legacyIv, out var legacyError))
-                {
-                    return CommonResult<SaveLocalPayload>.Failure(CommonErrorType.LOCALSAVE_KEYIV, legacyError);
-                }
-
-                string plain;
-                try
-                {
-                    plain = Crypto.DecryptAes(save.payload, legacyKey, legacyIv);
-                }
-                catch (Exception ex)
-                {
-                    return CommonResult<SaveLocalPayload>.Failure(
-                        CommonErrorType.LOCALSAVE_KEYIV, $"Decrypt failed (device-bound + legacy). {ex.Message}");
-                }
-
-                // 성공했으면 즉시 device-bound로 재저장(옵션 B)
-                var reSave = saveLocal(slot, plain);
-                if (reSave.IsFailure)
-                {
-                    UnityEngine.Debug.LogWarning(
-                        $"[SaveDataManager] Local migration re-save failed. slot={slot} err={reSave.Error}");
-                    // 재저장 실패 시: 기존 파일(save)을 그대로 반환(계약상 ciphertext 유지)
-                    return CommonResult<SaveLocalPayload>.Success(save);
-                }
-
-                // 재저장 성공 시: 파일을 다시 읽어서 device-bound ciphertext payload를 반환
-                var reLoaded = SaveLocalFileStore.Read(getRootPath(), filename);
-                if (reLoaded.IsFailure)
-                {
-                    return CommonResult<SaveLocalPayload>.Failure(reLoaded.Error!);
-                }
-
-                return CommonResult<SaveLocalPayload>.Success(reLoaded.Value);
-            }
+            // Payload Contract (Obfuscated-only):
+            // - 반환 SaveLocalPayload.payload 는 저장 포맷 그대로(난독화 시 obfuscated)여야 한다.
+            // - deobfuscate/parse는 별도 경로(SaveDataManager)를 통해 수행한다.
+            return CommonResult<SaveLocalPayload>.Success(save);
         }
 
         private Task<CommonResult<SaveLocalPayload>> loadLocalRecordAsync(string slot, CancellationToken ct)
@@ -778,23 +679,12 @@ namespace Devian
             }
 
             var plain = payload ?? string.Empty;
-
-            byte[] key = null;
-            byte[] iv = null;
-
-            if (_slotConfig.useEncryption && !tryGetLocalKeyIv(out key, out iv, out var keyError))
-            {
-                return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_KEYIV, keyError);
-            }
-
-            var cipher = _slotConfig.useEncryption
-                ? Crypto.EncryptAes(plain, key, iv)
-                : plain;
+            var obfuscated = ComplexUtil.Encrypt_Base64(plain);
 
             var save = new SaveLocalPayload(
                 SchemaVersion,
                 nowUpdateTime(),
-                cipher,
+                obfuscated,
                 _getOrCreateDeviceId()
             );
 
@@ -878,23 +768,12 @@ namespace Devian
             string cloudSlot, string payload, CancellationToken ct)
         {
             var plain = payload ?? string.Empty;
-
-            byte[] key = null;
-            byte[] iv = null;
-
-            if (_slotConfig.useEncryption && !_slotConfig.TryGetKeyIv(out key, out iv, out var keyError))
-            {
-                return CommonResult<bool>.Failure(CommonErrorType.CLOUDSAVE_KEYIV, keyError);
-            }
-
-            var cipher = _slotConfig.useEncryption
-                ? Crypto.EncryptAes(plain, key, iv)
-                : plain;
+            var obfuscated = ComplexUtil.Encrypt_Base64(plain);
 
             var csPayload = new SaveCloudPayload(
                 SchemaVersion,
                 nowUpdateTime(),
-                cipher,
+                obfuscated,
                 _getOrCreateDeviceId()
             );
 
@@ -924,8 +803,8 @@ namespace Devian
                 return CommonResult<SaveCloudPayload>.Success(null);
             }
 
-            // Payload Contract (Ciphertext-only):
-            // - 반환 SaveCloudPayload.Payload 는 저장 포맷 그대로(암호화 시 ciphertext)여야 한다.
+            // Payload Contract (Obfuscated-only):
+            // - 반환 SaveCloudPayload.Payload 는 저장 포맷 그대로(난독화 시 obfuscated)여야 한다.
             return CommonResult<SaveCloudPayload>.Success(loaded);
         }
 
@@ -1208,17 +1087,6 @@ namespace Devian
             return false;
         }
 
-        private bool tryGetLocalKeyIv(out byte[] key, out byte[] iv, out string error)
-        {
-            // Local은 device-bound (Keystore/Keychain)
-#if UNITY_EDITOR
-            // Editor는 보안 저장소가 없으므로 기존 shared key/iv 사용
-            return _slotConfig.TryGetKeyIv(out key, out iv, out error);
-#else
-            return SaveLocalDeviceKeyStore.TryGetOrCreateKeyIv(out key, out iv, out error);
-#endif
-        }
-
         // ──────────────────────────────────────────────
         //  Editor
         // ──────────────────────────────────────────────
@@ -1229,26 +1097,6 @@ namespace Devian
             return CommonResult<T>.Failure(
                 CommonErrorType.CLOUDSAVE_NOCLIENT,
                 "SaveCloud is not supported in Unity Editor. Use SaveLocal only.");
-        }
-
-        [ContextMenu("Generate Key/IV (AES-256, Base64)")]
-        public void GenerateKeyIv()
-        {
-            _slotConfig.keyBase64.Value = Convert.ToBase64String(Crypto.GenerateKey());
-            _slotConfig.ivBase64.Value = Convert.ToBase64String(Crypto.GenerateIv());
-        }
-
-        private void OnValidate()
-        {
-            if (!_slotConfig.useEncryption) return;
-
-            var keyB64 = _slotConfig.keyBase64.Value;
-            var ivB64 = _slotConfig.ivBase64.Value;
-
-            if (string.IsNullOrWhiteSpace(keyB64) || string.IsNullOrWhiteSpace(ivB64))
-            {
-                GenerateKeyIv();
-            }
         }
 #endif
     }

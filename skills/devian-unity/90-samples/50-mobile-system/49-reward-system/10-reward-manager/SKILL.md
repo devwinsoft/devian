@@ -122,5 +122,5 @@ asmdef:
 ## Related
 
 - [49-reward-system/03-ssot](../03-ssot/SKILL.md) — RewardData 스키마 정본
-- [52-inventory-system/10-inventory-manager](../../52-inventory-system/10-inventory-manager/SKILL.md) — InventoryManager (AddRewards 위임 대상)
+- [15-game-inventory-system/10-inventory-manager](../../../40-game-system/15-game-inventory-system/10-inventory-manager/SKILL.md) — InventoryManager (AddRewards 위임 대상)
 - [30-purchase-system/30-samples-purchase-manager](../../30-purchase-system/30-samples-purchase-manager/SKILL.md) — PurchaseManager (지급 요청 원점)

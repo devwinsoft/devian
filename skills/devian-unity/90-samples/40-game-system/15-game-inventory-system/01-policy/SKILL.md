@@ -1,4 +1,4 @@
-# 52-inventory-system — Policy
+# 15-game-inventory-system — Policy
 
 
 Status: ACTIVE
@@ -26,14 +26,14 @@ Inventory System의 모듈 경계/하드룰을 정의한다.
   - 장비: `itemUid(pk, GUID) -> AbilityEquip` (능력치/장비 슬롯을 StatType 기반으로 관리)
 - 장비 PK는 `itemUid`(GUID)이다. `equipId`는 템플릿 ID(EQUIP 테이블 키)로 사용한다.
 - 같은 `equipId`에 여러 인스턴스(각각 고유 `itemUid`)가 존재할 수 있다.
-- 장비 내부 속성(레벨/장착 등)은 `AbilityEquip : AbilityBase` → `mStats[StatType.X]`로 정규화한다.
+- 장비 내부 속성(레벨/장착 등)은 `AbilityEquip : AbilityBase` → `mStats[STAT_TYPE.X]`로 정규화한다.
 
 
 ### 2) RewardData 규약은 고정이다 (호환성)
 
 RewardData 스키마는 Reward 시스템 문서가 단일 정본이다.
 
-- 정본: [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md)
+- 정본: [49-reward-system/03-ssot](../../../50-mobile-system/49-reward-system/03-ssot/SKILL.md)
 - Inventory 문서는 스키마를 재정의하지 않고 참조만 한다.
 
 

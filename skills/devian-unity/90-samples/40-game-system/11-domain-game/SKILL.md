@@ -59,7 +59,7 @@ Game 도메인은 Devian 프레임워크의 **예제 도메인**이다.
 
 | 파일 | 생성 타입 | 설명 |
 |---|---|---|
-| `EnumTypes.json` | `enum CurrencyType`, `enum RewardType`, `enum StatType` | 통화/보상/능력치 enum 통합 |
+| `ENUM_TYPES.json` | `enum CURRENCY_TYPE`, `enum REWARD_TYPE`, `enum STAT_TYPE` | 통화/보상/능력치 enum 통합 |
 | `ProductKind.json` | `enum ProductKind` | 상품 유형 (Consumable, Rental, Subscription, SeasonPass) |
 | `TestContract.json` | `enum UserType`, `class UserProfile` | 테스트 예제 (UserType: Guest/Member/Admin, UserProfile: Id/Name/UserType) |
 
@@ -87,8 +87,11 @@ Game 도메인을 사용하는 스킬:
 
 | 스킬 | 핵심 타입 | 설명 |
 |---|---|---|
-| [12-game-ability](../12-game-ability/SKILL.md) | AbilityBase, AbilityEquip, AbilityCard, StatType | 능력치 정규화 시스템 |
+| [12-game-ability](../12-game-ability/SKILL.md) | AbilityBase, AbilityEquip, AbilityCard, STAT_TYPE | 능력치 정규화 시스템 |
 | [21-game-net-manager](../21-game-net-manager/SKILL.md) | GameNetManager, Game2CStub | 네트워크 샘플 |
+
+| [10-inventory-manager](../15-game-inventory-system/10-inventory-manager/SKILL.md) | InventoryManager | 인벤토리 + InventoryStorage |
+| [11-inventory-storage](../15-game-inventory-system/11-inventory-storage/SKILL.md) | InventoryStorage | 인벤토리 데이터 컨테이너 |
 
 ### MobileSystem (`com.devian.samples/Samples~/MobileSystem`)
 
@@ -96,8 +99,6 @@ Game 도메인을 사용하는 스킬:
 |---|---|---|
 | [30-samples-purchase-manager](../../50-mobile-system/30-purchase-system/30-samples-purchase-manager/SKILL.md) | PurchaseManager | 구매 (TB_PRODUCT 직접 참조) |
 | [10-reward-manager](../../50-mobile-system/49-reward-system/10-reward-manager/SKILL.md) | RewardManager | 보상 (TB_REWARD 직접 참조) |
-| [10-inventory-manager](../../50-mobile-system/52-inventory-system/10-inventory-manager/SKILL.md) | InventoryManager | 인벤토리 + InventoryStorage |
-| [11-inventory-storage](../../50-mobile-system/52-inventory-system/11-inventory-storage/SKILL.md) | InventoryStorage | 인벤토리 데이터 컨테이너 |
 
 개요: [40-game-system/00-overview](../00-overview/SKILL.md)
 
@@ -123,7 +124,7 @@ Game 도메인을 사용하는 스킬:
 
 | 주제 | 스킬 |
 |---|---|
-| StatType enum 값 관리 | [13-game-stat-type](../13-game-stat-type/SKILL.md) |
+| STAT_TYPE enum 값 관리 | [13-game-stat-type](../13-game-stat-type/SKILL.md) |
 | Game 프로토콜 예제 | [devian-examples/12-protocol-game](../../../devian-examples/12-protocol-game/SKILL.md) |
 | Examples SSOT (config/input) | [devian-examples/03-ssot](../../../devian-examples/03-ssot/SKILL.md) |
 | Builder SSOT (테이블/컨트랙트 규칙) | [devian-tools/11-builder/03-ssot](../../../devian-tools/11-builder/03-ssot/SKILL.md) |

@@ -5,14 +5,14 @@ namespace Devian
 {
     public abstract class AbilityBase
     {
-        Dictionary<StatType, int> mStats = new();
+        Dictionary<STAT_TYPE, int> mStats = new();
 
-        public int this[StatType type]
+        public int this[STAT_TYPE type]
         {
             get => mStats.TryGetValue(type, out var v) ? v : 0;
         }
 
-        public void AddStat(StatType type, int value)
+        public void AddStat(STAT_TYPE type, int value)
         {
             mStats.TryGetValue(type, out var cur);
             mStats[type] = cur + value;
@@ -24,17 +24,17 @@ namespace Devian
                 AddStat(kv.Key, kv.Value);
         }
 
-        public int GetInt(StatType type) => mStats.TryGetValue(type, out var v) ? v : 0;
+        public int GetInt(STAT_TYPE type) => mStats.TryGetValue(type, out var v) ? v : 0;
 
-        public float GetFloat(StatType type) => GetInt(type) * 0.0001f;
+        public float GetFloat(STAT_TYPE type) => GetInt(type) * 0.0001f;
 
-        public void SetStat(StatType type, int value) => mStats[type] = value;
+        public void SetStat(STAT_TYPE type, int value) => mStats[type] = value;
 
-        public void ClearStat(StatType type) => mStats.Remove(type);
+        public void ClearStat(STAT_TYPE type) => mStats.Remove(type);
 
         public void ClearStats() => mStats.Clear();
 
-        public IReadOnlyDictionary<StatType, int> GetStats() => mStats;
+        public IReadOnlyDictionary<STAT_TYPE, int> GetStats() => mStats;
 
         public abstract AbilityBase Clone();
 

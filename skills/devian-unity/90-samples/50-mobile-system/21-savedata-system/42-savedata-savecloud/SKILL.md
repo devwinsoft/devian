@@ -35,7 +35,7 @@
 ## What it does
 - `SaveDataManager.Instance._initializeCloudAsync(ct)`로 플랫폼별 client 선택 및 초기화를 수행한다.
 - 정책: **Unity Editor에서는 CloudSave를 사용하지 않는다(SaveDataManager가 Failure 반환).**
-- Key/IV 관리는 SaveDataManager Inspector에서 통합 설정.
+- payload 난독화는 `ComplexUtil`로 수행 (경량 바이트 치환, Key/IV 불필요).
 
 
 ## Usage

@@ -32,4 +32,4 @@ SaveDataManager가 유일한 진입점이며, SaveLocal/SaveCloud 로직을 단�
 - [20-account-system](../../20-account-system/00-overview/SKILL.md)
 - [48-mission-system](../../48-mission-system/00-overview/SKILL.md)
 - [49-reward-system](../../49-reward-system/00-overview/SKILL.md)
-- [52-inventory-system](../../52-inventory-system/00-overview/SKILL.md)
+- [15-game-inventory-system](../../../40-game-system/15-game-inventory-system/00-overview/SKILL.md)

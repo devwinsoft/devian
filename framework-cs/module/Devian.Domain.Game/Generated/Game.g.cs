@@ -16,37 +16,37 @@ namespace Devian.Domain.Game
     // Contracts
     // ================================================================
 
-    /// <summary>CurrencyType enum</summary>
-    public enum CurrencyType
+    /// <summary>CURRENCY_TYPE enum</summary>
+    public enum CURRENCY_TYPE
     {
-        Gold = 0,
-        JewelFree = 1,
-        JewelPaid = 2,
-        Stamina = 3,
-        Friendship = 4,
-        GuildCoin = 5,
-        ArenaCoin = 6,
+        GOLD = 0,
+        JEWEL_FREE = 1,
+        JEWEL_PAID = 2,
+        STAMINA = 3,
+        FRIENDSHIP = 4,
+        GUILD_COIN = 5,
+        ARENA_COIN = 6,
     }
 
-    /// <summary>RewardType enum</summary>
-    public enum RewardType
+    /// <summary>REWARD_TYPE enum</summary>
+    public enum REWARD_TYPE
     {
-        Card = 0,
-        Currency = 1,
-        Equip = 2,
-        Hero = 3,
+        CARD = 0,
+        CURRENCY = 1,
+        EQUIP = 2,
+        HERO = 3,
     }
 
-    /// <summary>StatType enum</summary>
-    public enum StatType
+    /// <summary>STAT_TYPE enum</summary>
+    public enum STAT_TYPE
     {
-        None = 0,
-        CardAmount = 1,
-        CardLevel = 2,
-        EquipLevel = 11,
-        UnitAmount = 20,
-        UnitLevel = 21,
-        UnitHpMax = 100,
+        NONE = 0,
+        CARD_AMOUNT = 1,
+        CARD_LEVEL = 2,
+        EQUIP_LEVEL = 11,
+        UNIT_AMOUNT = 20,
+        UNIT_LEVEL = 21,
+        UNIT_HP_MAX = 100,
     }
 
     /// <summary>ProductKind enum</summary>
@@ -159,7 +159,7 @@ namespace Devian.Domain.Game
     {
         public int RewardNum { get; set; }
         public string RewardGroupId { get; set; } = string.Empty;
-        public RewardType Type { get; set; }
+        public REWARD_TYPE Type { get; set; }
         public string Id { get; set; } = string.Empty;
         public int Amount { get; set; }
 

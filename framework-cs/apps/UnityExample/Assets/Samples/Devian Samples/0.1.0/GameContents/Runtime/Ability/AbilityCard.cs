@@ -7,7 +7,7 @@ namespace Devian
         CARD mTable = null;
 
         public string CardId => mTable?.CardId ?? string.Empty;
-        public int Amount => this[StatType.CardAmount];
+        public int Amount => this[STAT_TYPE.CARD_AMOUNT];
 
         public void Init(CARD table)
         {
@@ -24,7 +24,7 @@ namespace Devian
 
         public void AddAmount(int delta)
         {
-            AddStat(StatType.CardAmount, delta);
+            AddStat(STAT_TYPE.CARD_AMOUNT, delta);
         }
     }
 }

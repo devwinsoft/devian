@@ -96,8 +96,8 @@ public class TestUICanvas : UICanvas<TestUICanvas>
                 data.name = "devian framework";
                 data.items.Add(new TestSaveData.TestItemData());
                 data.items[0].item_id = "devian item 001";
-                var init = await SaveDataManager.Instance.SaveDataLocalAndCloudAsync("main", data, source.Token);
-                Debug.Log($"SaveDataLocalAndCloud: {init.Value}");
+                var init = await SaveDataManager.Instance.SaveDataAsync("main", data, includeCloud: true, source.Token);
+                Debug.Log($"SaveData: {init.Value}");
                 break;
             }
             case SyncState.Conflict:
