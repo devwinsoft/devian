@@ -24,6 +24,14 @@ namespace Devian
                 AddStat(kv.Key, kv.Value);
         }
 
+        public int GetInt(StatType type) => mStats.TryGetValue(type, out var v) ? v : 0;
+
+        public float GetFloat(StatType type) => GetInt(type) * 0.0001f;
+
+        public void SetStat(StatType type, int value) => mStats[type] = value;
+
+        public void ClearStat(StatType type) => mStats.Remove(type);
+
         public void ClearStats() => mStats.Clear();
     }
 }

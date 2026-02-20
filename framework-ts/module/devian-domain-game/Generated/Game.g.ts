@@ -30,7 +30,7 @@ export enum ProductKind {
 /** StatType enum */
 export enum StatType {
     None = 0,
-    ItemCount = 1,
+    ItemAmount = 1,
     ItemLevel = 2,
     ItemSlotNumber = 3,
 }

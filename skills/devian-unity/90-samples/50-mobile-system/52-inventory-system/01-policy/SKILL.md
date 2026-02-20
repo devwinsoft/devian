@@ -52,7 +52,7 @@ RewardData 스키마는 Reward 시스템 문서가 단일 정본이다.
 
 ### 5) 차감/소비/회수는 RewardData로 처리하지 않는다
 
-- `RewardData.amount`의 비음수 규약은 RewardData 정본을 따른다.
+- `RewardData.Amount`의 비음수 규약은 RewardData 정본을 따른다.
 - 차감/소비/회수(환불/철회 포함)는 별도 시스템/경로에서 처리한다.
 
 

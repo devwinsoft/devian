@@ -26,7 +26,7 @@ AppliesTo: v10
 
 | name | value | 설명 |
 |---|---|---|
-| `ItemCount` | 1 | 아이템 수량 |
+| `ItemAmount` | 1 | 아이템 수량(Amount) |
 | `ItemLevel` | 2 | 아이템 레벨 |
 | `ItemSlotNumber` | 3 | 장착 슬롯 인덱스 (0 = 미장착) |
 
@@ -43,7 +43,7 @@ AppliesTo: v10
       "name": "StatType",
       "values": [
         { "name": "None", "value": 0 },
-        { "name": "ItemCount", "value": 1 },
+        { "name": "ItemAmount", "value": 1 },
         { "name": "ItemLevel", "value": 2 },
         { "name": "ItemSlotNumber", "value": 3 }
       ]
@@ -56,20 +56,20 @@ AppliesTo: v10
 
 ## 4. 사용 예
 
-### ItemData 수량 (ItemCount)
+### ItemData 수량 (ItemAmount)
 
-`mItemAbility[StatType.ItemCount]`를 사용한다.
+`mItemAbility[StatType.ItemAmount]`를 사용한다.
 
 ```csharp
 // 수량 읽기
-int count = itemData.Ability[StatType.ItemCount];
+int amount = itemData.Ability[StatType.ItemAmount];
 
 // 수량 누적
-itemData.Ability.AddStat(StatType.ItemCount, delta);
+itemData.Ability.AddStat(StatType.ItemAmount, delta);
 ```
 
-- `BaseAbility.mStats`의 `StatType.ItemCount` 값이 아이템 수량 SSOT이다.
-- 별도 수량 필드가 불필요해진다 (`ItemData.Count`로 접근).
+- `BaseAbility.mStats`의 `StatType.ItemAmount` 값이 아이템 수량 SSOT이다.
+- 별도 수량 필드가 불필요해진다 (`ItemData.Amount`로 접근).
 
 ### ItemData 장착 슬롯 (ItemSlotNumber)
 
@@ -80,7 +80,7 @@ itemData.Ability.AddStat(StatType.ItemCount, delta);
 int slot = itemData.Ability[StatType.ItemSlotNumber];  // 0 = 미장착
 
 // 장착 설정
-itemData.Ability.AddStat(StatType.ItemSlotNumber, slotIndex);
+itemData.Ability.SetStat(StatType.ItemSlotNumber, slotNumber);
 ```
 
 - `BaseAbility.mStats`의 `StatType.ItemSlotNumber` 값이 장착 슬롯 SSOT이다.

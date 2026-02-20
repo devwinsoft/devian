@@ -42,12 +42,12 @@ Inventory 상태는 "통화"와 "아이템"으로 분리된다.
 
 `ItemData` 필드 (구현: [11-inventory-storage](../11-inventory-storage/SKILL.md)):
 - `ItemId: string` (== key, `mItemAbility.ItemId`)
-- `Count: long` (= `mItemAbility[StatType.ItemCount]`)
+- `Amount: int` (= `mItemAbility[StatType.ItemAmount]`)
 - 능력치: `ItemAbility : BaseAbility` → `mStats[StatType.X]` (StatType 기반 정규화)
-  - 수량 = `StatType.ItemCount`
+  - 수량 = `StatType.ItemAmount`
   - 장착 슬롯 = `StatType.ItemSlotNumber`
   - 레벨 = `StatType.ItemLevel`
-  - Reward/Purchase grants에서는 `StatType.ItemCount`만 변경된다
+  - Reward/Purchase grants에서는 `StatType.ItemAmount`만 변경된다
 
 NOTE:
 - `itemUid`는 없다(사용하지 않는다).
@@ -69,15 +69,15 @@ NOTE:
 
 ### C-2) `type == RewardType.Currency`
 
-- `CurrencyBalances[currencyType] += amount`
+- `_storage.AddCurrency(currencyType, amount)`
 - 없는 키는 생성된다.
 
 ### C-3) `type == RewardType.Item`
 
-- `_storage.BagItems[itemId].AddCount(amount)` (= `mItemAbility.AddStat(StatType.ItemCount, amount)`)
+- `_storage.BagItems[itemId].AddAmount(amount)` (= `mItemAbility.AddStat(StatType.ItemAmount, amount)`)
 - 없는 키는 `_storage.AddItem(itemId, ability)`로 생성된다.
   - 새 ItemData의 모든 stat은 0(기본값)으로 시작한다.
-- Apply는 `StatType.ItemCount`만 변경한다 (다른 stat은 보존).
+- Apply는 `StatType.ItemAmount`만 변경한다 (다른 stat은 보존).
 
 
 ---

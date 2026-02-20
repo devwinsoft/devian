@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
@@ -7,7 +6,6 @@ namespace Devian
 {
     public sealed class InventoryManager : CompoSingleton<InventoryManager>
     {
-        readonly Dictionary<string, long> _currencyBalances = new();
         readonly InventoryStorage _storage = new();
 
         public InventoryStorage Storage => _storage;
@@ -50,7 +48,7 @@ namespace Devian
 
                 if (r.Type == RewardType.Currency)
                 {
-                    _applyCurrency(r.Id, r.Amount);
+                    _storage.AddCurrency(r.Id, r.Amount);
                 }
                 else // RewardType.Item
                 {
@@ -65,13 +63,13 @@ namespace Devian
         {
             if (type == nameof(RewardType.Currency))
             {
-                return _currencyBalances.TryGetValue(id, out var balance) ? balance : 0L;
+                return _storage.GetCurrencyBalance(id);
             }
 
             if (type == nameof(RewardType.Item))
             {
                 var item = _storage.GetItem(id);
-                return item != null ? item.Count : 0L;
+                return item != null ? item.Amount : 0L;
             }
 
             return 0L;
@@ -79,20 +77,12 @@ namespace Devian
 
         // ── Internal ──
 
-        void _applyCurrency(string currencyId, long amount)
-        {
-            if (_currencyBalances.TryGetValue(currencyId, out var current))
-                _currencyBalances[currencyId] = current + amount;
-            else
-                _currencyBalances[currencyId] = amount;
-        }
-
         void _applyItem(string itemId, long amount)
         {
             var existing = _storage.GetItem(itemId);
             if (existing != null)
             {
-                existing.AddCount(amount);
+                existing.AddAmount((int)amount);
             }
             else
             {
@@ -102,7 +92,7 @@ namespace Devian
                     ability.Init(table);
 
                 var data = _storage.AddItem(itemId, ability);
-                data.AddCount(amount);
+                data.AddAmount((int)amount);
             }
         }
     }

@@ -43,7 +43,7 @@ namespace Devian
             if (string.IsNullOrEmpty(itemId) || count <= 0)
                 return;
 
-            list.Add(new RewardData(RewardType.Item, itemId, (long)count));
+            list.Add(new RewardData(RewardType.Item, itemId, count));
         }
     }
 }

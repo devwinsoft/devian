@@ -26,7 +26,7 @@ Ability는 **컨텐츠(Game) 레이어에만 존재**한다.
 ## 2. 클래스 계층
 
 ```
-BaseAbility              ← Dict<StatType, int>, indexer, AddStat
+BaseAbility              ← Dict<StatType, int>, indexer, GetInt, GetFloat, AddStat, SetStat, ClearStat
   └─ ItemAbility         ← Inventory 연동용 (최소 구현)
 ```
 
@@ -65,6 +65,14 @@ namespace Devian
                 AddStat(kv.Key, kv.Value);
         }
 
+        public int GetInt(StatType type) => mStats.TryGetValue(type, out var v) ? v : 0;
+
+        public float GetFloat(StatType type) => GetInt(type) * 0.0001f;
+
+        public void SetStat(StatType type, int value) => mStats[type] = value;
+
+        public void ClearStat(StatType type) => mStats.Remove(type);
+
         public void ClearStats() => mStats.Clear();
     }
 }
@@ -72,8 +80,13 @@ namespace Devian
 
 - `Dictionary<StatType, int>` — 스탯 정규화 저장소
 - indexer `this[StatType]` — 없는 키는 `0` 반환
+- `GetInt(type)` — indexer와 동일 (명시적 int 반환)
+- `GetFloat(type)` — 1만분율 변환 (stat value 1 → 0.0001f)
 - `AddStat(type, value)` — 누적 합산
 - `AddStat(BaseAbility)` — 다른 Ability의 스탯 전체를 합산 (버프/장비 합산)
+- `SetStat(type, value)` — 특정 stat을 절대값으로 설정 (기존값 무시, 덮어쓰기)
+- `ClearStat(type)` — 특정 stat 제거 (dict에서 key 삭제, indexer 조회 시 0 반환)
+- `ClearStats()` — 전체 stat 초기화
 
 ---
 

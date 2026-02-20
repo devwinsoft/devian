@@ -6,7 +6,7 @@ namespace Devian
     {
         public string ItemId => mItemAbility.ItemId;
         public ItemAbility Ability => mItemAbility;
-        public long Count => mItemAbility[StatType.ItemCount];
+        public int Amount => mItemAbility[StatType.ItemAmount];
         public int EquippedSlotNumber => mItemAbility[StatType.ItemSlotNumber];
         public bool IsEquipped => mItemAbility[StatType.ItemSlotNumber] > 0;
 
@@ -17,24 +17,19 @@ namespace Devian
             mItemAbility = ability;
         }
 
-        internal void AddCount(long delta)
+        internal void AddAmount(int delta)
         {
-            mItemAbility.AddStat(StatType.ItemCount, (int)delta);
+            mItemAbility.AddStat(StatType.ItemAmount, delta);
         }
 
-        internal void SetEquippedSlot(int slotIndex)
+        internal void SetEquippedSlot(int slotNumber)
         {
-            int currentSlot = mItemAbility[StatType.ItemSlotNumber];
-            if (currentSlot != 0)
-                mItemAbility.AddStat(StatType.ItemSlotNumber, -currentSlot);
-            mItemAbility.AddStat(StatType.ItemSlotNumber, slotIndex);
+            mItemAbility.SetStat(StatType.ItemSlotNumber, slotNumber);
         }
 
         internal void ClearEquippedSlot()
         {
-            int currentSlot = mItemAbility[StatType.ItemSlotNumber];
-            if (currentSlot != 0)
-                mItemAbility.AddStat(StatType.ItemSlotNumber, -currentSlot);
+            mItemAbility.ClearStat(StatType.ItemSlotNumber);
         }
     }
 }

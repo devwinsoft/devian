@@ -8,7 +8,7 @@ AppliesTo: v10
 InventoryManager(구현 규약)는 `RewardData[]` 입력을 받아 인벤토리 상태에 적용(Apply)한다.
 
 - `type=RewardType.Currency`: `currencyType -> amount(long)` 잔고 누적
-- `type=RewardType.Item`: `itemId(pk)` → `ItemData.Count` (`StatType.ItemCount`) 누적
+- `type=RewardType.Item`: `itemId(pk)` → `ItemData.Amount` (`StatType.ItemAmount`) 누적
 
 InventoryManager는 **단일 concrete 클래스**이다.
 InventoryStorage를 소유하며, AddRewards 시 BagItems에 ItemData를 추가/갱신한다.
@@ -76,9 +76,9 @@ CompoSingleton<InventoryManager>.Instance
 - 변경 이벤트를 제공한다(개념).
 
 NOTE:
-- 아이템 수량 SSOT = `ItemData.Count` (= `mItemAbility[StatType.ItemCount]`).
+- 아이템 수량 SSOT = `ItemData.Amount` (= `mItemAbility[StatType.ItemAmount]`).
 - `InventoryItem` 클래스는 사용하지 않는다 — `ItemData`가 수량/능력치/장비 슬롯을 모두 관리한다.
-- Apply는 `StatType.ItemCount`만 변경한다 (다른 stat은 보존).
+- Apply는 `StatType.ItemAmount`만 변경한다 (다른 stat은 보존).
 
 비책임:
 - 멱등/기록/복구는 호출자(Mission/Purchase)가 책임진다.
@@ -103,8 +103,8 @@ NOTE:
   - 입력 전체를 선검증한다.
   - 하나라도 invalid면 `CommonResult.Failure(error)`를 반환하고 상태를 변경하지 않는다.
   - 전체 valid이면 Apply 한다(멱등 아님):
-    - `type=RewardType.Currency`: `_currencyBalances[currencyType] += amount`
-    - `type=RewardType.Item`: `_storage.BagItems`에 ItemData 추가(없으면 생성) + `ItemData.AddCount(amount)`
+    - `type=RewardType.Currency`: `_storage.AddCurrency(currencyType, amount)`
+    - `type=RewardType.Item`: `_storage.BagItems`에 ItemData 추가(없으면 생성) + `ItemData.AddAmount(amount)`
   - 성공 시 `CommonResult.Ok()`를 반환한다.
 - `GetAmount(string type, string id) -> long`
   - `(type,id)`에 대한 현재 수량을 반환한다.
@@ -128,7 +128,7 @@ NOTE:
 
 - `AddRewards`는 원자적으로 동작한다.
 - 입력 중 invalid가 하나라도 있으면 전체 실패한다.
-- 전체 실패 시 내부 상태(`_currencyBalances`, `_storage.BagItems`)는 호출 전과 동일해야 한다.
+- 전체 실패 시 내부 상태(`_storage.CurrencyBalances`, `_storage.BagItems`)는 호출 전과 동일해야 한다.
 
 
 ## Error Mapping (정본)
@@ -168,13 +168,13 @@ NOTE:
 
 ```csharp
 // InventoryManager 내부
-Dictionary<string, long> _currencyBalances = new();
 readonly InventoryStorage _storage = new();
 ```
 
 - `InventoryItem` 클래스는 사용하지 않는다.
+- 통화 상태는 `_storage.CurrencyBalances[currencyId]` → `long`으로 관리한다.
 - 아이템 상태는 `_storage.BagItems[itemId]` → `ItemData`가 전담한다.
-- 수량 = `ItemData.Count` (= `mItemAbility[StatType.ItemCount]`)
+- 수량 = `ItemData.Amount` (= `mItemAbility[StatType.ItemAmount]`)
 - 능력치/장비 슬롯 = `ItemAbility` (StatType 기반 정규화)
 
 
