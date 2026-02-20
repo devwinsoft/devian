@@ -23,10 +23,9 @@ namespace Devian
             SetProductCatalog(new GameProductCatalog());
         }
 
-        // (REQ-5) internalProductId -> rewardId 변환: TB_PRODUCT 직접 참조
-        string ResolveRewardId(string internalProductId)
+        string ResolveRewardGroupId(string internalProductId)
         {
-            return TB_PRODUCT.Get(internalProductId).RewardId;
+            return TB_PRODUCT.Get(internalProductId).RewardGroupId;
         }
 
 #if UNITY_PURCHASING
@@ -330,12 +329,12 @@ namespace Devian
 
                     if (status == "GRANTED")
                     {
-                        var rewardId = ResolveRewardId(internalProductId);
-                        Singleton.Get<RewardManager>().ApplyRewardId(rewardId);
+                        var rewardGroupId = ResolveRewardGroupId(internalProductId);
+                        Singleton.Get<RewardManager>().ApplyRewardGroupId(rewardGroupId);
                     }
 
                     return CommonResult<PurchaseFinalResult>.Success(
-                        new PurchaseFinalResult(internalProductId, kind, status, response.Grants));
+                        new PurchaseFinalResult(internalProductId, kind, status));
                 }
 
                 return CommonResult<PurchaseFinalResult>.Failure(
@@ -367,14 +366,12 @@ namespace Devian
             var response = result.Value!;
             var resultStatus = response.TryGetValue("resultStatus", out var rs) ? rs as string ?? "" : "";
 
-            var grants = parseGrants(response);
-
             EntitlementsSnapshot? snapshot = null;
             if (response.TryGetValue("entitlementsSnapshot", out var snapObj) && snapObj is Dictionary<string, object> snap)
                 snapshot = ParseEntitlementsSnapshot(snap);
 
             return CommonResult<VerifyPurchaseResponse>.Success(
-                new VerifyPurchaseResponse(resultStatus, grants, snapshot));
+                new VerifyPurchaseResponse(resultStatus, snapshot));
         }
 
         // ── Event Handlers ────────────────────────────────────────
@@ -472,25 +469,6 @@ namespace Devian
             return new EntitlementsSnapshot(noAds, seasonPasses, balances);
         }
 
-        static List<PurchaseGrant> parseGrants(Dictionary<string, object> response)
-        {
-            var grants = new List<PurchaseGrant>();
-            if (!response.TryGetValue("grants", out var grantsObj) || !(grantsObj is IEnumerable<object> grantList))
-                return grants;
-
-            foreach (var item in grantList)
-            {
-                if (item is Dictionary<string, object> g)
-                {
-                    grants.Add(new PurchaseGrant(
-                        getString(g, "type"),
-                        getString(g, "id"),
-                        getLong(g, "amount")));
-                }
-            }
-            return grants;
-        }
-
         static string PurchaseKindToString(PurchaseKind kind)
         {
             switch (kind)
@@ -551,30 +529,14 @@ namespace Devian
 
         public readonly struct VerifyPurchaseResponse
         {
-            public VerifyPurchaseResponse(string resultStatus, IReadOnlyList<PurchaseGrant> grants, EntitlementsSnapshot? snapshot)
+            public VerifyPurchaseResponse(string resultStatus, EntitlementsSnapshot? snapshot)
             {
                 ResultStatus = resultStatus;
-                Grants = grants;
                 Snapshot = snapshot;
             }
 
             public string ResultStatus { get; }
-            public IReadOnlyList<PurchaseGrant> Grants { get; }
             public EntitlementsSnapshot? Snapshot { get; }
-        }
-
-        public readonly struct PurchaseGrant
-        {
-            public PurchaseGrant(string type, string id, long amount)
-            {
-                Type = type;
-                Id = id;
-                Amount = amount;
-            }
-
-            public string Type { get; }
-            public string Id { get; }
-            public long Amount { get; }
         }
 
         public readonly struct EntitlementsSnapshot
@@ -593,18 +555,16 @@ namespace Devian
 
         public readonly struct PurchaseFinalResult
         {
-            public PurchaseFinalResult(string internalProductId, PurchaseKind kind, string resultStatus, IReadOnlyList<PurchaseGrant> grants)
+            public PurchaseFinalResult(string internalProductId, PurchaseKind kind, string resultStatus)
             {
                 InternalProductId = internalProductId;
                 Kind = kind;
                 ResultStatus = resultStatus;
-                Grants = grants;
             }
 
             public string InternalProductId { get; }
             public PurchaseKind Kind { get; }
             public string ResultStatus { get; }
-            public IReadOnlyList<PurchaseGrant> Grants { get; }
         }
 
         public enum PurchaseKind

@@ -48,21 +48,19 @@ Game 도메인은 Devian 프레임워크의 **예제 도메인**이다.
 | 파일 | 시트(테이블) | 컨테이너 | PK | 설명 |
 |---|---|---|---|---|
 | `PurchaseTable.xlsx` | PRODUCT | TB_PRODUCT | `InternalProductId` (string) | 상품 테이블 |
-| `RewardTable.xlsx` | REWARD | TB_REWARD | `RewardId` (string) | 보상 테이블 |
+| `RewardTable.xlsx` | REWARD | TB_REWARD | `RewardNum` (int) | 보상 테이블 |
 | `MissionTable.xlsx` | MISSION_DAILY | TB_MISSION_DAILY | `MissionId` (string) | 일일 미션 |
 | `MissionTable.xlsx` | MISSION_WEEKLY | TB_MISSION_WEEKLY | `MissionId` (string) | 주간 미션 |
 | `MissionTable.xlsx` | MISSION_ACHIEVEMENT | TB_MISSION_ACHIEVEMENT | `MissionId` (string) | 업적 미션 |
-| `TestTable.xlsx` | TestSheet | TB_TestSheet | `Number` (int) | 테스트 예제 |
-| `ItemTable.xlsx` | ITEM | TB_ITEM | `ItemId` (string) | 아이템 테이블 (ItemId, ItemNameId, ItemDescId 필수) |
-| `TestTable.xlsx` | VECTOR3 | TB_VECTOR3 | _(없음)_ | PK 없는 테이블 예제 |
+| `ItemTable.xlsx` | EQUIP | TB_EQUIP | `EquipId` (string) | 장비 테이블 (EquipId, NameId, DescId) |
+| `ItemTable.xlsx` | CARD | TB_CARD | `CardId` (string) | 카드 테이블 (CardId, NameId, DescId) |
 
 ### Contracts (`input/Domains/Game/`)
 
 | 파일 | 생성 타입 | 설명 |
 |---|---|---|
-| `CurrencyType.json` | `enum CurrencyType` | 통화 종류 (Gold, JewelFree, JewelPaid, Stamina, Friendship, GuildCoin, ArenaCoin) |
+| `EnumTypes.json` | `enum CurrencyType`, `enum RewardType`, `enum StatType` | 통화/보상/능력치 enum 통합 |
 | `ProductKind.json` | `enum ProductKind` | 상품 유형 (Consumable, Rental, Subscription, SeasonPass) |
-| `StatType.json` | `enum StatType` | 능력치 유형 (Ability 시스템) |
 | `TestContract.json` | `enum UserType`, `class UserProfile` | 테스트 예제 (UserType: Guest/Member/Admin, UserProfile: Id/Name/UserType) |
 
 ---
@@ -89,7 +87,7 @@ Game 도메인을 사용하는 스킬:
 
 | 스킬 | 핵심 타입 | 설명 |
 |---|---|---|
-| [12-game-ability](../12-game-ability/SKILL.md) | BaseAbility, ItemAbility, StatType | 능력치 정규화 시스템 |
+| [12-game-ability](../12-game-ability/SKILL.md) | AbilityBase, AbilityEquip, AbilityCard, StatType | 능력치 정규화 시스템 |
 | [21-game-net-manager](../21-game-net-manager/SKILL.md) | GameNetManager, Game2CStub | 네트워크 샘플 |
 
 ### MobileSystem (`com.devian.samples/Samples~/MobileSystem`)
@@ -99,7 +97,7 @@ Game 도메인을 사용하는 스킬:
 | [30-samples-purchase-manager](../../50-mobile-system/30-purchase-system/30-samples-purchase-manager/SKILL.md) | PurchaseManager | 구매 (TB_PRODUCT 직접 참조) |
 | [10-reward-manager](../../50-mobile-system/49-reward-system/10-reward-manager/SKILL.md) | RewardManager | 보상 (TB_REWARD 직접 참조) |
 | [10-inventory-manager](../../50-mobile-system/52-inventory-system/10-inventory-manager/SKILL.md) | InventoryManager | 인벤토리 + InventoryStorage |
-| [11-inventory-storage](../../50-mobile-system/52-inventory-system/11-inventory-storage/SKILL.md) | InventoryStorage, ItemData | 인벤토리 데이터 컨테이너 |
+| [11-inventory-storage](../../50-mobile-system/52-inventory-system/11-inventory-storage/SKILL.md) | InventoryStorage | 인벤토리 데이터 컨테이너 |
 
 개요: [40-game-system/00-overview](../00-overview/SKILL.md)
 

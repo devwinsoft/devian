@@ -38,7 +38,7 @@ Inventory System은 "인벤토리 상태(아이템/통화)"를 시스템 레이�
 | [03-ssot](../03-ssot/SKILL.md) | RewardData 참조 규약 + Inventory 적용 규칙 |
 | [09-ssot-operations](../09-ssot-operations/SKILL.md) | 운영 시나리오/테스트/DoD |
 | [10-inventory-manager](../10-inventory-manager/SKILL.md) | InventoryManager 설계(필수) |
-| [11-inventory-storage](../11-inventory-storage/SKILL.md) | InventoryStorage / ItemData (데이터 컨테이너) |
+| [11-inventory-storage](../11-inventory-storage/SKILL.md) | InventoryStorage (데이터 컨테이너) |
 
 
 ---

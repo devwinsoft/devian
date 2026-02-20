@@ -31,9 +31,13 @@ namespace Devian
                 break;
             }
 
-            foreach (var row in TB_REWARD.GetAll())
+            foreach (var groupKey in TB_REWARD.GetGroupKeys())
             {
-                AddItem(row.GetKey().ToString());
+                if (TB_REWARD.TryGetGroupPrimaryKey(groupKey, out var pk))
+                {
+                    // key = PK string (applied to Value), display = groupKey
+                    AddItem(pk.ToString(), groupKey.ToString());
+                }
             }
         }
     }
@@ -48,6 +52,29 @@ namespace Devian
             w.titleContent = new GUIContent("Select REWARD");
             w.ShowUtility();
             return w;
+        }
+
+        protected override string GetValueDisplayString(SerializedProperty valueProp)
+        {
+            // Show groupKey by default if available
+            if (valueProp.propertyType == SerializedPropertyType.Integer)
+            {
+                var pk = valueProp.intValue;
+                TB_REWARD.Clear();
+                var textAssets = AssetManager.FindAssets<TextAsset>("REWARD");
+                foreach (var ta in textAssets)
+                {
+                    var assetPath = AssetDatabase.GetAssetPath(ta);
+                    if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    TB_REWARD.LoadFromNdjson(ta.text);
+                    break;
+                }
+                if (TB_REWARD.TryGetGroupKeyByKey(pk, out var groupKey))
+                    return groupKey.ToString();
+                return pk.ToString();
+            }
+            return base.GetValueDisplayString(valueProp);
         }
     }
 }

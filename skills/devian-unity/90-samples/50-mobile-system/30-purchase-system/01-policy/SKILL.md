@@ -56,8 +56,8 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 
 ### 4) Purchase의 실제 지급 실행은 RewardManager에 위임한다
 
-- 서버 `verifyPurchase` 결과가 `GRANTED`일 때만 `rewardId`를 RewardManager에 전달해 적용한다.
-- `rewardId`는 `internalProductId -> rewardId` 매핑으로 얻는다(PurchaseManager가 `TB_PRODUCT` 테이블을 직접 조회하여 변환).
+- 서버 `verifyPurchase` 결과가 `GRANTED`일 때만 `rewardGroupId`를 RewardManager에 전달해 적용한다.
+- `rewardGroupId`는 `internalProductId -> rewardGroupId` 매핑으로 얻는다(PurchaseManager가 `TB_PRODUCT` 테이블을 직접 조회하여 변환).
 - `ALREADY_GRANTED`는 서버 멱등 결과이며, 클라에서 중복 적용을 시도하지 않는다.
 - 멱등/기록/복구 정본은 Purchase 시스템이다. Reward는 지급 실행만 담당한다.
 

@@ -12,7 +12,7 @@ AppliesTo: v10
 `StatType`은 Game 도메인 contract에서 빌드 파이프라인으로 생성되는 enum이다.
 모든 Ability 시스템([12-game-ability](../12-game-ability/SKILL.md))의 key로 사용된다.
 
-- 입력: `input/Domains/Game/StatType.json`
+- 입력: `input/Domains/Game/EnumTypes.json`
 - 생성: `Devian.Domain.Game.StatType` enum
 - 네임스페이스: `Devian.Domain.Game`
 
@@ -22,19 +22,30 @@ AppliesTo: v10
 
 ## 2. StatType Values
 
-### Item
+### Card (1~)
 
 | name | value | 설명 |
 |---|---|---|
-| `ItemAmount` | 1 | 아이템 수량(Amount) |
-| `ItemLevel` | 2 | 아이템 레벨 |
-| `ItemSlotNumber` | 3 | 장착 슬롯 인덱스 (0 = 미장착) |
+| `CardAmount` | 1 | 카드 수량(Amount) |
+| `CardLevel` | 2 | 카드 레벨 |
 
-> 추후 Hero, Skill 등 다른 카테고리의 StatType도 이 스킬에 추가한다.
+### Equip (10~)
+
+| name | value | 설명 |
+|---|---|---|
+| `EquipLevel` | 11 | 장비 레벨 |
+
+### Unit (20~)
+
+| name | value | 설명 |
+|---|---|---|
+| `UnitAmount` | 20 | 유닛 수량(Amount) |
+| `UnitLevel` | 21 | 유닛 레벨 |
+| `UnitHpMax` | 100 | 유닛 최대 HP |
 
 ---
 
-## 3. StatType.json (SSOT)
+## 3. EnumTypes.json — StatType 부분 (SSOT)
 
 ```json
 {
@@ -43,9 +54,13 @@ AppliesTo: v10
       "name": "StatType",
       "values": [
         { "name": "None", "value": 0 },
-        { "name": "ItemAmount", "value": 1 },
-        { "name": "ItemLevel", "value": 2 },
-        { "name": "ItemSlotNumber", "value": 3 }
+        { "name": "CardAmount", "value": 1 },
+        { "name": "CardLevel", "value": 2 },
+        { "name": "EquipLevel", "value": 11 },
+
+        { "name": "UnitAmount", "value": 20 },
+        { "name": "UnitLevel", "value": 21 },
+        { "name": "UnitHpMax", "value": 100 }
       ]
     }
   ]
@@ -56,48 +71,61 @@ AppliesTo: v10
 
 ## 4. 사용 예
 
-### ItemData 수량 (ItemAmount)
+### AbilityCard 수량 (CardAmount)
 
-`mItemAbility[StatType.ItemAmount]`를 사용한다.
+`AbilityCard[StatType.CardAmount]`를 사용한다.
 
 ```csharp
 // 수량 읽기
-int amount = itemData.Ability[StatType.ItemAmount];
+int amount = abilityCard.Amount;  // = this[StatType.CardAmount]
 
 // 수량 누적
-itemData.Ability.AddStat(StatType.ItemAmount, delta);
+abilityCard.AddAmount(delta);     // = AddStat(StatType.CardAmount, delta)
 ```
 
-- `BaseAbility.mStats`의 `StatType.ItemAmount` 값이 아이템 수량 SSOT이다.
-- 별도 수량 필드가 불필요해진다 (`ItemData.Amount`로 접근).
+- `AbilityBase.mStats`의 `StatType.CardAmount` 값이 카드 수량 SSOT이다.
 
-### ItemData 장착 슬롯 (ItemSlotNumber)
+### AbilityUnitHero 수량 (UnitAmount)
 
-`mItemAbility[StatType.ItemSlotNumber]`을 사용한다.
+`AbilityUnitHero[StatType.UnitAmount]`를 사용한다.
 
 ```csharp
-// 장착 슬롯 읽기
-int slot = itemData.Ability[StatType.ItemSlotNumber];  // 0 = 미장착
+// 수량 읽기
+int amount = hero[StatType.UnitAmount];
 
-// 장착 설정
-itemData.Ability.SetStat(StatType.ItemSlotNumber, slotNumber);
+// 수량 누적
+hero.AddStat(StatType.UnitAmount, delta);
 ```
 
-- `BaseAbility.mStats`의 `StatType.ItemSlotNumber` 값이 장착 슬롯 SSOT이다.
-- 별도 슬롯 필드가 불필요해진다.
+### AbilityEquip 장착 정보 (Owner)
+
+장착 정보는 StatType이 아닌 **AbilityEquip의 별도 필드**로 관리한다.
+
+```csharp
+// 장착 여부
+bool equipped = abilityEquip.IsEquipped;           // mOwnerSlotNumber > 0
+
+// 소유자 정보
+string unitId = abilityEquip.OwnerUnitId;          // 장착된 영웅 UnitId
+int slot = abilityEquip.OwnerSlotNumber;           // 장착 슬롯 번호 (0 = 미장착)
+
+// 장착/해제는 AbilityUnitHero.Equip/Unequip을 통해 수행
+hero.Equip(equip, slotNumber);
+hero.Unequip(slotNumber);
+```
 
 ---
 
 ## 5. Hard Rules
 
 - `StatType`은 Generated enum이다. 수동 정의 금지.
-- 새 StatType 값 추가 시 이 스킬 → `StatType.json` → 빌드 순서로 진행한다.
+- 새 StatType 값 추가 시 이 스킬 → `EnumTypes.json` → 빌드 순서로 진행한다.
 - value 번호는 카테고리별로 범위를 관리한다 (충돌 방지).
 
 ---
 
 ## 6. Related
 
-- [12-game-ability](../12-game-ability/SKILL.md) — BaseAbility, ItemAbility (StatType 소비자)
-- [11-domain-game](../11-domain-game/SKILL.md) — Game 도메인 허브 (StatType.json contract)
-- [11-inventory-storage](../../50-mobile-system/52-inventory-system/11-inventory-storage/SKILL.md) — ItemData (StatType.ItemSlotNumber 사용처)
+- [12-game-ability](../12-game-ability/SKILL.md) — AbilityBase, AbilityEquip (StatType 소비자)
+- [11-domain-game](../11-domain-game/SKILL.md) — Game 도메인 허브 (EnumTypes.json contract)
+- [11-inventory-storage](../../50-mobile-system/52-inventory-system/11-inventory-storage/SKILL.md) — InventoryStorage

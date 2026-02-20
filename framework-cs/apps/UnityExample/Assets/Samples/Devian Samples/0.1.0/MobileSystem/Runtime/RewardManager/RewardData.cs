@@ -1,11 +1,7 @@
+using Devian.Domain.Game;
+
 namespace Devian
 {
-    public enum RewardType
-    {
-        Item = 0,
-        Currency = 1,
-    }
-
     public readonly struct RewardData
     {
         public RewardData(RewardType type, string id, long amount)

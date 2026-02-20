@@ -1,95 +1,307 @@
 using System.Collections.Generic;
+using System.Linq;
+using Newtonsoft.Json.Linq;
+using Devian.Domain.Game;
 
 namespace Devian
 {
     public sealed class InventoryStorage
     {
         // ── Currency ──
-        readonly Dictionary<string, long> mCurrencyBalances = new();
-        public IReadOnlyDictionary<string, long> CurrencyBalances => mCurrencyBalances;
+        readonly Dictionary<string, long> mWallet = new();
+        public IReadOnlyDictionary<string, long> Wallet => mWallet;
 
-        // ── Bag ──
-        readonly Dictionary<string, ItemData> mBagItems = new();
-        public IReadOnlyDictionary<string, ItemData> BagItems => mBagItems;
+        // ── Equips ──
+        readonly Dictionary<string, AbilityEquip> mEquipments = new();
+        public IReadOnlyDictionary<string, AbilityEquip> Equipments => mEquipments;
 
-        // ── Equipment Slots ──
-        readonly Dictionary<int, string> mEquipmentSlots = new();
-        public IReadOnlyDictionary<int, string> EquipmentSlots => mEquipmentSlots;
+        // ── Cards ──
+        readonly Dictionary<string, AbilityCard> mCards = new();
+        public IReadOnlyDictionary<string, AbilityCard> Cards => mCards;
+
+        // ── Heroes ──
+        readonly Dictionary<string, AbilityUnitHero> mHeroes = new();
+        public IReadOnlyDictionary<string, AbilityUnitHero> Heroes => mHeroes;
 
         // ── Currency Operations ──
 
         public long GetCurrencyBalance(string currencyId)
         {
-            return mCurrencyBalances.TryGetValue(currencyId, out var balance) ? balance : 0L;
+            return mWallet.TryGetValue(currencyId, out var balance) ? balance : 0L;
         }
 
         public void AddCurrency(string currencyId, long amount)
         {
-            mCurrencyBalances.TryGetValue(currencyId, out var current);
-            mCurrencyBalances[currencyId] = current + amount;
+            mWallet.TryGetValue(currencyId, out var current);
+            mWallet[currencyId] = current + amount;
         }
 
-        // ── Bag Operations ──
+        // ── Equip Operations ──
 
-        public ItemData GetItem(string itemId)
+        public AbilityEquip GetEquip(string itemUid)
         {
-            return mBagItems.TryGetValue(itemId, out var data) ? data : null;
+            return mEquipments.TryGetValue(itemUid, out var equip) ? equip : null;
         }
 
-        public ItemData AddItem(string itemId, ItemAbility ability)
+        public List<AbilityEquip> GetEquipsByEquipId(string equipId)
         {
-            if (mBagItems.ContainsKey(itemId)) return mBagItems[itemId];
-            var data = new ItemData(ability);
-            mBagItems[itemId] = data;
-            return data;
+            return mEquipments.Values.Where(e => e.EquipId == equipId).ToList();
         }
 
-        public bool RemoveItem(string itemId)
+        public AbilityEquip AddEquip(string itemUid, AbilityEquip ability)
         {
-            if (!mBagItems.TryGetValue(itemId, out var data)) return false;
-            if (data.IsEquipped) UnequipItem(itemId);
-            mBagItems.Remove(itemId);
+            if (mEquipments.ContainsKey(itemUid)) return mEquipments[itemUid];
+            mEquipments[itemUid] = ability;
+            return ability;
+        }
+
+        public bool RemoveEquip(string itemUid)
+        {
+            if (!mEquipments.TryGetValue(itemUid, out var equip)) return false;
+            if (equip.IsEquipped) equip.ClearOwner();
+            mEquipments.Remove(itemUid);
             return true;
         }
 
-        // ── Equipment Operations ──
+        // ── Card Operations ──
 
-        public bool EquipItem(string itemId, int slotNumber)
+        public AbilityCard GetCard(string cardId)
         {
-            if (!mBagItems.TryGetValue(itemId, out var data)) return false;
-            if (data.IsEquipped) UnequipItem(itemId);
-            if (mEquipmentSlots.ContainsKey(slotNumber))
-                UnequipSlot(slotNumber);
-            data.SetEquippedSlot(slotNumber);
-            mEquipmentSlots[slotNumber] = itemId;
-            return true;
+            return mCards.TryGetValue(cardId, out var card) ? card : null;
         }
 
-        public bool UnequipItem(string itemId)
+        public AbilityCard AddCard(string cardId, AbilityCard ability)
         {
-            if (!mBagItems.TryGetValue(itemId, out var data)) return false;
-            if (!data.IsEquipped) return false;
-            mEquipmentSlots.Remove(data.EquippedSlotNumber);
-            data.ClearEquippedSlot();
-            return true;
+            if (mCards.ContainsKey(cardId)) return mCards[cardId];
+            mCards[cardId] = ability;
+            return ability;
         }
 
-        public bool UnequipSlot(int slotNumber)
+        // ── Hero Operations ──
+
+        public AbilityUnitHero GetHero(string heroId)
         {
-            if (!mEquipmentSlots.TryGetValue(slotNumber, out var itemId)) return false;
-            if (mBagItems.TryGetValue(itemId, out var data))
-                data.ClearEquippedSlot();
-            mEquipmentSlots.Remove(slotNumber);
-            return true;
+            return mHeroes.TryGetValue(heroId, out var hero) ? hero : null;
         }
+
+        public AbilityUnitHero AddHero(string heroId, AbilityUnitHero ability)
+        {
+            if (mHeroes.ContainsKey(heroId)) return mHeroes[heroId];
+            mHeroes[heroId] = ability;
+            return ability;
+        }
+
+        // ── Equip Operations (장착/해제) ──
+
+        public bool Equip(string heroId, int equipSlot, string equipUid)
+        {
+            if (!mHeroes.TryGetValue(heroId, out var hero)) return false;
+            if (!mEquipments.TryGetValue(equipUid, out var equip)) return false;
+            return hero.Equip(equip, equipSlot);
+        }
+
+        public bool Unequip(string heroId, int equipSlot)
+        {
+            if (!mHeroes.TryGetValue(heroId, out var hero)) return false;
+            return hero.Unequip(equipSlot);
+        }
+
+        // ── JSON ──
+
+        public string ToJson()
+        {
+            var root = new JObject();
+
+            // wallet
+            var walletObj = new JObject();
+            foreach (var kv in mWallet)
+                walletObj[kv.Key] = kv.Value;
+            root["wallet"] = walletObj;
+
+            // equipments
+            var equipsObj = new JObject();
+            foreach (var kv in mEquipments)
+            {
+                var e = kv.Value;
+                var obj = new JObject
+                {
+                    ["equipId"] = e.EquipId,
+                    ["itemUid"] = e.ItemUid,
+                    ["ownerUnitId"] = e.OwnerUnitId,
+                    ["ownerSlotNumber"] = e.OwnerSlotNumber,
+                };
+                var stats = new JObject();
+                foreach (var s in e.GetStats())
+                    stats[s.Key.ToString()] = s.Value;
+                obj["stats"] = stats;
+                equipsObj[kv.Key] = obj;
+            }
+            root["equipments"] = equipsObj;
+
+            // cards
+            var cardsObj = new JObject();
+            foreach (var kv in mCards)
+            {
+                var c = kv.Value;
+                var obj = new JObject
+                {
+                    ["cardId"] = c.CardId,
+                };
+                var stats = new JObject();
+                foreach (var s in c.GetStats())
+                    stats[s.Key.ToString()] = s.Value;
+                obj["stats"] = stats;
+                cardsObj[kv.Key] = obj;
+            }
+            root["cards"] = cardsObj;
+
+            // heroes
+            var heroesObj = new JObject();
+            foreach (var kv in mHeroes)
+            {
+                var h = kv.Value;
+                var obj = new JObject
+                {
+                    ["unitId"] = h.UnitId,
+                };
+                var stats = new JObject();
+                foreach (var s in h.GetStats())
+                    stats[s.Key.ToString()] = s.Value;
+                obj["stats"] = stats;
+
+                var equipsMap = new JObject();
+                foreach (var eq in h.Equips)
+                    equipsMap[eq.Key.ToString()] = eq.Value.ItemUid;
+                obj["equips"] = equipsMap;
+
+                heroesObj[kv.Key] = obj;
+            }
+            root["heroes"] = heroesObj;
+
+            return root.ToString();
+        }
+
+        public void FromJson(string json)
+        {
+            var root = JObject.Parse(json);
+            Clear();
+
+            // wallet
+            if (root["wallet"] is JObject walletObj)
+            {
+                foreach (var prop in walletObj.Properties())
+                    mWallet[prop.Name] = prop.Value.Value<long>();
+            }
+
+            // equipments
+            if (root["equipments"] is JObject equipsObj)
+            {
+                foreach (var prop in equipsObj.Properties())
+                {
+                    var obj = (JObject)prop.Value;
+                    var equipId = obj.Value<string>("equipId");
+                    var itemUid = obj.Value<string>("itemUid");
+
+                    var ability = new AbilityEquip();
+                    var table = TB_EQUIP.Get(equipId);
+                    if (table != null)
+                        ability.Init(table, itemUid);
+
+                    if (obj["stats"] is JObject statsObj)
+                    {
+                        foreach (var sp in statsObj.Properties())
+                        {
+                            if (System.Enum.TryParse<StatType>(sp.Name, out var statType))
+                                ability.SetStat(statType, sp.Value.Value<int>());
+                        }
+                    }
+
+                    var ownerUnitId = obj.Value<string>("ownerUnitId") ?? string.Empty;
+                    var ownerSlot = obj.Value<int>("ownerSlotNumber");
+                    if (ownerSlot > 0 && !string.IsNullOrEmpty(ownerUnitId))
+                        ability.SetOwner(ownerUnitId, ownerSlot);
+
+                    mEquipments[itemUid] = ability;
+                }
+            }
+
+            // cards
+            if (root["cards"] is JObject cardsObj)
+            {
+                foreach (var prop in cardsObj.Properties())
+                {
+                    var obj = (JObject)prop.Value;
+                    var cardId = obj.Value<string>("cardId");
+
+                    var ability = new AbilityCard();
+                    var table = TB_CARD.Get(cardId);
+                    if (table != null)
+                        ability.Init(table);
+
+                    if (obj["stats"] is JObject statsObj)
+                    {
+                        foreach (var sp in statsObj.Properties())
+                        {
+                            if (System.Enum.TryParse<StatType>(sp.Name, out var statType))
+                                ability.SetStat(statType, sp.Value.Value<int>());
+                        }
+                    }
+
+                    mCards[cardId] = ability;
+                }
+            }
+
+            // heroes (last: equip slot references need mEquipments)
+            if (root["heroes"] is JObject heroesObj)
+            {
+                foreach (var prop in heroesObj.Properties())
+                {
+                    var obj = (JObject)prop.Value;
+                    var unitId = obj.Value<string>("unitId");
+
+                    var ability = new AbilityUnitHero();
+                    var table = TB_UNIT_HERO.Get(unitId);
+                    if (table != null)
+                        ability.Init(table);
+
+                    ability.ClearStats();
+                    if (obj["stats"] is JObject statsObj)
+                    {
+                        foreach (var sp in statsObj.Properties())
+                        {
+                            if (System.Enum.TryParse<StatType>(sp.Name, out var statType))
+                                ability.SetStat(statType, sp.Value.Value<int>());
+                        }
+                    }
+
+                    mHeroes[unitId] = ability;
+
+                    if (obj["equips"] is JObject equipsMap)
+                    {
+                        foreach (var ep in equipsMap.Properties())
+                        {
+                            if (int.TryParse(ep.Name, out var slotNumber))
+                            {
+                                var equipUid = ep.Value.Value<string>();
+                                if (mEquipments.TryGetValue(equipUid, out var equip))
+                                    ability.Equip(equip, slotNumber);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Clear ──
 
         public void Clear()
         {
-            mCurrencyBalances.Clear();
-            mEquipmentSlots.Clear();
-            foreach (var kv in mBagItems)
-                kv.Value.ClearEquippedSlot();
-            mBagItems.Clear();
+            mWallet.Clear();
+            mCards.Clear();
+            mHeroes.Clear();
+            foreach (var kv in mEquipments)
+                kv.Value.ClearOwner();
+            mEquipments.Clear();
         }
     }
 }

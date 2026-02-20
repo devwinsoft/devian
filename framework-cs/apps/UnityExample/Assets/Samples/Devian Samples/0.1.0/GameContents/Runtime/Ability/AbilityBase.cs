@@ -3,7 +3,7 @@ using Devian.Domain.Game;
 
 namespace Devian
 {
-    public abstract class BaseAbility
+    public abstract class AbilityBase
     {
         Dictionary<StatType, int> mStats = new();
 
@@ -18,7 +18,7 @@ namespace Devian
             mStats[type] = cur + value;
         }
 
-        public void AddStat(BaseAbility other)
+        public void AddStat(AbilityBase other)
         {
             foreach (var kv in other.mStats)
                 AddStat(kv.Key, kv.Value);
@@ -33,5 +33,15 @@ namespace Devian
         public void ClearStat(StatType type) => mStats.Remove(type);
 
         public void ClearStats() => mStats.Clear();
+
+        public IReadOnlyDictionary<StatType, int> GetStats() => mStats;
+
+        public abstract AbilityBase Clone();
+
+        protected void CopyStatsFrom(AbilityBase source)
+        {
+            foreach (var kv in source.mStats)
+                mStats[kv.Key] = kv.Value;
+        }
     }
 }

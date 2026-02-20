@@ -6,9 +6,9 @@ namespace Devian
 {
     public sealed class RewardManager : CompoSingleton<RewardManager>
     {
-        public void ApplyRewardId(string rewardId)
+        public void ApplyRewardGroupId(string rewardGroupId)
         {
-            var deltas = ResolveRewardDeltas(rewardId);
+            var deltas = ResolveRewardDeltas(rewardGroupId);
             ApplyRewardDatas(deltas);
         }
 
@@ -17,33 +17,20 @@ namespace Devian
             Singleton.Get<InventoryManager>().AddRewards(deltas);
         }
 
-        // (REQ-2) 원격 호출 없음 → 동기 변환 (TB_REWARD 직접 참조)
-        RewardData[] ResolveRewardDeltas(string rewardId)
+        RewardData[] ResolveRewardDeltas(string rewardGroupId)
         {
-            var row = TB_REWARD.Get(rewardId);
+            var rows = TB_REWARD.GetByGroup(rewardGroupId);
+            var list = new List<RewardData>(rows.Count);
 
-            var list = new List<RewardData>(8);
-
-            addItem(list, row.ItemId_00, row.ItemCount_00);
-            addItem(list, row.ItemId_01, row.ItemCount_01);
-            addItem(list, row.ItemId_02, row.ItemCount_02);
-            addItem(list, row.ItemId_03, row.ItemCount_03);
-
-            if (row.CurrencyAmount > 0)
+            foreach (var row in rows)
             {
-                // (REQ-7) amount는 long 유지
-                list.Add(new RewardData(RewardType.Currency, row.CurrencyType.ToString(), row.CurrencyAmount));
+                if (string.IsNullOrEmpty(row.Id) || row.Amount <= 0)
+                    continue;
+
+                list.Add(new RewardData(row.Type, row.Id, row.Amount));
             }
 
             return list.ToArray();
-        }
-
-        static void addItem(List<RewardData> list, string itemId, int count)
-        {
-            if (string.IsNullOrEmpty(itemId) || count <= 0)
-                return;
-
-            list.Add(new RewardData(RewardType.Item, itemId, count));
         }
     }
 }

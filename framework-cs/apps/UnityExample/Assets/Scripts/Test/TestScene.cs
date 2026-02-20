@@ -14,7 +14,6 @@ public class TestScene : BaseScene
     public CFloat b;
     public CString c;
     public COMPLEX_POLICY_ID policyId;
-    public TestSheet_ID testSheetId;
     public COMMON_EFFECT_ID effectId;
     public SOUND_ID soundId;
     public VOICE_ID voiceId;

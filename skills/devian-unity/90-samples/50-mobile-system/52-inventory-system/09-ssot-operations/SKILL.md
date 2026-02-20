@@ -32,7 +32,8 @@ SSOT 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
 
 - UI는 조회 API(개념)를 통해 현재 값을 반영한다.
   - 통화: `type=RewardType.Currency` + `currencyType` 잔고
-  - 아이템: `type=RewardType.Item` + `itemId(pk)` 스택 수량
+  - 장비: `type=RewardType.Equip` + `equipId(pk)` 스택 수량
+  - 카드: `type=RewardType.Card` + `cardId(pk)` 수량
 - 아이템 `options`(업그레이드/레벨 등) 표시는 별도 조회/수정 경로가 필요하다(NEEDS CHECK).
 - 변경 이벤트 기반 최적화는 구현 단계에서 확정한다(NEEDS CHECK).
 

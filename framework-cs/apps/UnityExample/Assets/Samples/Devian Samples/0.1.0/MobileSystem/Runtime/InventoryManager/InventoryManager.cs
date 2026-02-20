@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
@@ -25,7 +26,7 @@ namespace Devian
             {
                 var r = rewards[i];
 
-                if (r.Type != RewardType.Item && r.Type != RewardType.Currency)
+                if (r.Type != RewardType.Card && r.Type != RewardType.Currency && r.Type != RewardType.Equip && r.Type != RewardType.Hero)
                     return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_TYPE_INVALID,
                         $"rewards[{i}] invalid type: {r.Type}");
 
@@ -50,9 +51,17 @@ namespace Devian
                 {
                     _storage.AddCurrency(r.Id, r.Amount);
                 }
-                else // RewardType.Item
+                else if (r.Type == RewardType.Card)
                 {
-                    _applyItem(r.Id, r.Amount);
+                    _applyCard(r.Id, r.Amount);
+                }
+                else if (r.Type == RewardType.Equip)
+                {
+                    _applyEquip(r.Id, r.Amount);
+                }
+                else // RewardType.Hero
+                {
+                    _applyHero(r.Id, r.Amount);
                 }
             }
 
@@ -66,10 +75,21 @@ namespace Devian
                 return _storage.GetCurrencyBalance(id);
             }
 
-            if (type == nameof(RewardType.Item))
+            if (type == nameof(RewardType.Card))
             {
-                var item = _storage.GetItem(id);
-                return item != null ? item.Amount : 0L;
+                var card = _storage.GetCard(id);
+                return card != null ? card.Amount : 0L;
+            }
+
+            if (type == nameof(RewardType.Equip))
+            {
+                return _storage.GetEquipsByEquipId(id).Count;
+            }
+
+            if (type == nameof(RewardType.Hero))
+            {
+                var hero = _storage.GetHero(id);
+                return hero != null ? hero[StatType.UnitAmount] : 0L;
             }
 
             return 0L;
@@ -77,22 +97,52 @@ namespace Devian
 
         // ── Internal ──
 
-        void _applyItem(string itemId, long amount)
+        void _applyCard(string cardId, long amount)
         {
-            var existing = _storage.GetItem(itemId);
+            var existing = _storage.GetCard(cardId);
             if (existing != null)
             {
                 existing.AddAmount((int)amount);
             }
             else
             {
-                var table = TB_ITEM.Get(itemId);
-                var ability = new ItemAbility();
+                var table = TB_CARD.Get(cardId);
+                var ability = new AbilityCard();
                 if (table != null)
                     ability.Init(table);
 
-                var data = _storage.AddItem(itemId, ability);
-                data.AddAmount((int)amount);
+                _storage.AddCard(cardId, ability);
+                ability.AddAmount((int)amount);
+            }
+        }
+
+        void _applyEquip(string equipId, long amount)
+        {
+            var itemUid = Guid.NewGuid().ToString("N");
+            var table = TB_EQUIP.Get(equipId);
+            var ability = new AbilityEquip();
+            if (table != null)
+                ability.Init(table, itemUid);
+
+            _storage.AddEquip(itemUid, ability);
+        }
+
+        void _applyHero(string heroId, long amount)
+        {
+            var existing = _storage.GetHero(heroId);
+            if (existing != null)
+            {
+                existing.AddStat(StatType.UnitAmount, (int)amount);
+            }
+            else
+            {
+                var table = TB_UNIT_HERO.Get(heroId);
+                var ability = new AbilityUnitHero();
+                if (table != null)
+                    ability.Init(table);
+
+                _storage.AddHero(heroId, ability);
+                ability.AddStat(StatType.UnitAmount, (int)amount);
             }
         }
     }

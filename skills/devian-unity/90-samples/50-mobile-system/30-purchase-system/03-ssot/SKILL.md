@@ -110,8 +110,8 @@ AppliesTo: v10
 PurchaseManager는 `TB_PRODUCT` 테이블을 **직접 참조**하여 카탈로그를 구성한다.
 `Devian.Samples.MobileSystem.asmdef`에 `Devian.Domain.Game` 참조가 포함되어 있다.
 
-Purchase 지급을 위해 `internalProductId -> rewardId` 변환이 필요하다.
-- `PurchaseManager`가 `ResolveRewardId(internalProductId)` → `TB_PRODUCT.Get(internalProductId).RewardId`로 직접 변환한다.
+Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요하다.
+- `PurchaseManager`가 `ResolveRewardGroupId(internalProductId)` → `TB_PRODUCT.Get(internalProductId).RewardGroupId`로 직접 변환한다.
 - `BuildProductDefinitions()` → `TB_PRODUCT.GetAll()`에서 `isActive` 필터링 후 ProductDefinition 목록을 생성한다.
 
 ### Unity IAP 5.x (v5) Catalog Notes
@@ -133,7 +133,7 @@ Purchase 지급을 위해 `internalProductId -> rewardId` 변환이 필요하다
   - 경로는 컨텐츠 레이어 SSOT에서 관리
 - [x] PRODUCT 테이블 스키마/필드: — 결정됨
   - `internalProductId` (string, pk) — 내부 상품 ID (정본)
-  - `rewardId` (string) — 지급 Reward Key, `internalProductId -> rewardId` 변환의 SSOT
+  - `rewardGroupId` (string) — 지급 Reward Key, `internalProductId -> rewardGroupId` 변환의 SSOT
   - `kind` (ProductKind) — 상품 타입 (`Consumable` / `Rental` / `Subscription` / `SeasonPass`)
   - `title` (string) — 표시용 상품명(요약)
   - `isActive` (bool) — 운영 활성 토글
@@ -204,7 +204,7 @@ Purchase 지급을 위해 `internalProductId -> rewardId` 변환이 필요하다
 | Callable JSON response | C# (`VerifyPurchaseResponse`) | 비고 |
 |------------------------|-------------------------------|------|
 | `resultStatus` | `ResultStatus` | 위 enum 값 |
-| `grants[]` | `Grants` (`IReadOnlyList<PurchaseGrant>`) | `{ type, id, amount }` (`type="item"|"currency"`, `amount>=0`) |
+| `grants[]` | (클라이언트 미사용 — 무시) | 서버 informational. 보상은 `rewardGroupId` 경로로 지급 |
 | `entitlementsSnapshot` | `Snapshot` (`EntitlementsSnapshot?`) | optional |
 
 #### 2) getEntitlements (Callable/HTTPS 중 택1)
@@ -251,9 +251,9 @@ Purchase 지급을 위해 `internalProductId -> rewardId` 변환이 필요하다
 #### Reward 적용(클라) 규칙
 
 - `verifyPurchase` 응답 `resultStatus`가 `GRANTED`일 때만:
-  - 컨텐츠 레이어 매핑(`internalProductId -> rewardId`) 후 RewardManager의 `ApplyRewardId(rewardId)`를 호출한다.
+  - 컨텐츠 레이어 매핑(`internalProductId -> rewardGroupId`) 후 RewardManager의 `ApplyRewardGroupId(rewardGroupId)`를 호출한다.
 - `ALREADY_GRANTED`는 "이미 지급됨(멱등)" 결과이며, 클라에서 중복 지급을 시도하지 않는다.
-- `grants[]`는 응답 스키마에 존재할 수 있으나, **클라 지급 입력으로 사용하지 않는다**(지급 호출은 rewardId 기반).
+- `grants[]`는 응답 스키마에 존재할 수 있으나, **클라 지급 입력으로 사용하지 않는다**(지급 호출은 rewardGroupId 기반).
 - RewardManager는 지급 실행만 담당하며, 멱등/기록/복구는 PurchaseManager(+서버)가 책임진다.
 
 연관:

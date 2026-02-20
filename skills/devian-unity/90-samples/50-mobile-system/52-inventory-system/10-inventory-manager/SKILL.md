@@ -8,10 +8,12 @@ AppliesTo: v10
 InventoryManager(구현 규약)는 `RewardData[]` 입력을 받아 인벤토리 상태에 적용(Apply)한다.
 
 - `type=RewardType.Currency`: `currencyType -> amount(long)` 잔고 누적
-- `type=RewardType.Item`: `itemId(pk)` → `ItemData.Amount` (`StatType.ItemAmount`) 누적
+- `type=RewardType.Equip`: 매 Apply마다 새 인스턴스(`itemUid=GUID` pk) 생성, amount 무시
+- `type=RewardType.Card`: `cardId(pk)` → `AbilityCard.Amount` (`StatType.CardAmount`) 누적
+- `type=RewardType.Hero`: `heroId(pk)` → `AbilityUnitHero` (`StatType.UnitAmount`) 누적
 
 InventoryManager는 **단일 concrete 클래스**이다.
-InventoryStorage를 소유하며, AddRewards 시 BagItems에 ItemData를 추가/갱신한다.
+InventoryStorage를 소유하며, AddRewards 시 Equipments/Cards/Heroes에 AbilityEquip/AbilityCard/AbilityUnitHero를 추가/갱신한다.
 
 
 ---
@@ -65,20 +67,27 @@ CompoSingleton<InventoryManager>.Instance
 ## Responsibilities (정본)
 
 - `RewardData[]`를 AddRewards로 적용한다.
-  - `type=RewardType.Currency`와 `type=RewardType.Item`의 처리 로직은 분기된다(정본).
-  - `type=RewardType.Item`일 때 InventoryStorage.BagItems에 ItemData를 추가/갱신한다.
+  - `type=RewardType.Currency`와 `type=RewardType.Equip`과 `type=RewardType.Card`와 `type=RewardType.Hero`의 처리 로직은 분기된다(정본).
+  - `type=RewardType.Equip`일 때 새 itemUid(GUID)로 AbilityEquip 인스턴스를 생성하여 InventoryStorage.Equipments에 추가한다.
+  - `type=RewardType.Card`일 때 InventoryStorage.Cards에 AbilityCard를 추가/갱신한다.
+  - `type=RewardType.Hero`일 때 InventoryStorage.Heroes에 AbilityUnitHero를 추가/갱신한다.
   - 입력 검증 실패 시 `CommonResult.Failure`를 반환하고 상태를 변경하지 않는다.
   - 성공 시 `CommonResult.Ok()`를 반환한다.
 - 수량 조회를 제공한다.
   - `type=RewardType.Currency`: 잔고 조회
-  - `type=RewardType.Item`: 해당 `itemId(pk)` 스택 수량 조회
+  - `type=RewardType.Equip`: 해당 `equipId`를 가진 인스턴스 수 반환
+  - `type=RewardType.Card`: 해당 `cardId(pk)` 수량 조회
+  - `type=RewardType.Hero`: 해당 `heroId(pk)` 수량 조회
 - InventoryStorage를 소유한다.
 - 변경 이벤트를 제공한다(개념).
 
 NOTE:
-- 아이템 수량 SSOT = `ItemData.Amount` (= `mItemAbility[StatType.ItemAmount]`).
-- `InventoryItem` 클래스는 사용하지 않는다 — `ItemData`가 수량/능력치/장비 슬롯을 모두 관리한다.
-- Apply는 `StatType.ItemAmount`만 변경한다 (다른 stat은 보존).
+- 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `equipId`에 여러 인스턴스가 존재할 수 있다.
+- `GetAmount(Equip, equipId)`는 해당 equipId를 가진 인스턴스 수를 반환한다.
+- 카드 수량 SSOT = `AbilityCard.Amount` (= `this[StatType.CardAmount]`).
+- 영웅 수량 = `AbilityUnitHero[StatType.UnitAmount]`.
+- `AbilityEquip`이 능력치를 관리한다 (`ItemData`는 `AbilityEquip`에 통합됨). 장비 장착은 `AbilityUnitHero`가 담당한다.
+- Apply는 카드/영웅의 Amount stat만 변경한다 (다른 stat은 보존). 장비는 매번 새 인스턴스를 생성한다.
 
 비책임:
 - 멱등/기록/복구는 호출자(Mission/Purchase)가 책임진다.
@@ -104,7 +113,9 @@ NOTE:
   - 하나라도 invalid면 `CommonResult.Failure(error)`를 반환하고 상태를 변경하지 않는다.
   - 전체 valid이면 Apply 한다(멱등 아님):
     - `type=RewardType.Currency`: `_storage.AddCurrency(currencyType, amount)`
-    - `type=RewardType.Item`: `_storage.BagItems`에 ItemData 추가(없으면 생성) + `ItemData.AddAmount(amount)`
+    - `type=RewardType.Equip`: 새 `itemUid`(GUID)로 AbilityEquip 생성 + `_storage.AddEquip(itemUid, ability)`. amount 무시(항상 1개)
+    - `type=RewardType.Card`: `_storage.Cards`에 AbilityCard 추가(없으면 생성) + `AbilityCard.AddAmount(amount)`
+    - `type=RewardType.Hero`: `_storage.Heroes`에 AbilityUnitHero 추가(없으면 생성) + `AddStat(StatType.UnitAmount, amount)`
   - 성공 시 `CommonResult.Ok()`를 반환한다.
 - `GetAmount(string type, string id) -> long`
   - `(type,id)`에 대한 현재 수량을 반환한다.
@@ -117,7 +128,7 @@ NOTE:
 
 - `rewards == null`이면 invalid다.
 - 각 reward에 대해 아래 조건을 모두 만족해야 valid다.
-  - `type`은 `RewardType.Item` 또는 `RewardType.Currency`여야 한다.
+  - `type`은 `RewardType.Currency`, `RewardType.Equip`, `RewardType.Card`, `RewardType.Hero` 중 하나여야 한다.
   - `id`는 null/empty/whitespace가 아니어야 한다.
   - `amount >= 0` 이어야 한다.
 - `rewards.Length == 0`은 valid no-op으로 처리한다(`CommonResult.Ok()` 반환).
@@ -128,7 +139,7 @@ NOTE:
 
 - `AddRewards`는 원자적으로 동작한다.
 - 입력 중 invalid가 하나라도 있으면 전체 실패한다.
-- 전체 실패 시 내부 상태(`_storage.CurrencyBalances`, `_storage.BagItems`)는 호출 전과 동일해야 한다.
+- 전체 실패 시 내부 상태(`_storage.Wallet`, `_storage.Equipments`, `_storage.Cards`, `_storage.Heroes`)는 호출 전과 동일해야 한다.
 
 
 ## Error Mapping (정본)
@@ -156,7 +167,7 @@ NOTE:
 | 코드 | 용도 |
 |---|---|
 | `INVENTORY_DELTAS_NULL` | `rewards == null` |
-| `INVENTORY_DELTA_TYPE_INVALID` | `type`이 `RewardType.Item`/`RewardType.Currency`가 아님 |
+| `INVENTORY_DELTA_TYPE_INVALID` | `type`이 `RewardType.Currency`/`RewardType.Equip`/`RewardType.Card`/`RewardType.Hero`가 아님 |
 | `INVENTORY_DELTA_ID_EMPTY` | `id`가 null/empty/whitespace |
 | `INVENTORY_DELTA_AMOUNT_NEGATIVE` | `amount < 0` |
 
@@ -172,10 +183,15 @@ readonly InventoryStorage _storage = new();
 ```
 
 - `InventoryItem` 클래스는 사용하지 않는다.
-- 통화 상태는 `_storage.CurrencyBalances[currencyId]` → `long`으로 관리한다.
-- 아이템 상태는 `_storage.BagItems[itemId]` → `ItemData`가 전담한다.
-- 수량 = `ItemData.Amount` (= `mItemAbility[StatType.ItemAmount]`)
-- 능력치/장비 슬롯 = `ItemAbility` (StatType 기반 정규화)
+- 통화 상태는 `_storage.Wallet[currencyId]` → `long`으로 관리한다.
+- 장비 상태는 `_storage.Equipments[itemUid]` → `AbilityEquip`이 전담한다.
+- 카드 상태는 `_storage.Cards[cardId]` → `AbilityCard`가 전담한다.
+- 영웅 상태는 `_storage.Heroes[heroId]` → `AbilityUnitHero`가 전담한다.
+- 장비 보유 = itemUid(들) 존재. `GetEquipsByEquipId(equipId)`로 equipId별 인스턴스 조회
+- 카드 수량 = `this[StatType.CardAmount]` (AbilityCard)
+- 영웅 수량 = `this[StatType.UnitAmount]` (AbilityUnitHero)
+- 능력치 = `AbilityEquip` (StatType 기반 정규화)
+- 장비 장착 = `AbilityUnitHero.Equip/Unequip` (AbilityEquip.OwnerUnitId/OwnerSlotNumber)
 
 
 ---
@@ -185,7 +201,7 @@ readonly InventoryStorage _storage = new();
 
 `Devian.Samples.MobileSystem.asmdef`에 포함된 참조:
 - `Devian.Domain.Common` — `CommonResult`, `CommonError`, `CommonErrorType`
-- `Devian.Domain.Game` — `StatType` (ItemAbility → BaseAbility 경유, InventoryStorage/ItemData 의존)
+- `Devian.Domain.Game` — `StatType` (AbilityEquip → AbilityBase 경유, InventoryStorage 의존)
 - `RewardData` 타입은 Reward 시스템 정본 규약(49-reward-system) 기반으로 사용한다.
 
 
@@ -215,7 +231,7 @@ readonly InventoryStorage _storage = new();
 
 ## Related
 
-- [11-inventory-storage](../11-inventory-storage/SKILL.md) — InventoryStorage / ItemData (소유 대상)
+- [11-inventory-storage](../11-inventory-storage/SKILL.md) — InventoryStorage (소유 대상)
 - [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md) — RewardData 스키마 정본
 - [03-ssot](../03-ssot/SKILL.md) — Inventory 상태/Apply 규칙 SSOT
 - [01-policy](../01-policy/SKILL.md) — Inventory 하드룰

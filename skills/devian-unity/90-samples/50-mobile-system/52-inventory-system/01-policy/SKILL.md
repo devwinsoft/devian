@@ -23,9 +23,10 @@ Inventory System의 모듈 경계/하드룰을 정의한다.
 - 컨텐츠 도메인 테이블/enum/구현체를 직접 참조 금지.
 - Inventory는 아래 "시스템 레이어 상태"만 다룬다:
   - 통화: `currencyType -> amount(long)`
-  - 아이템: `itemId(pk) -> ItemData` (수량/능력치/장비 슬롯을 StatType 기반으로 관리)
-- `itemUid`는 사용하지 않는다(아이템 PK는 `itemId`).
-- 아이템 내부 속성(수량/레벨/장착 등)은 `ItemAbility : BaseAbility` → `mStats[StatType.X]`로 정규화한다.
+  - 장비: `itemUid(pk, GUID) -> AbilityEquip` (능력치/장비 슬롯을 StatType 기반으로 관리)
+- 장비 PK는 `itemUid`(GUID)이다. `equipId`는 템플릿 ID(EQUIP 테이블 키)로 사용한다.
+- 같은 `equipId`에 여러 인스턴스(각각 고유 `itemUid`)가 존재할 수 있다.
+- 장비 내부 속성(레벨/장착 등)은 `AbilityEquip : AbilityBase` → `mStats[StatType.X]`로 정규화한다.
 
 
 ### 2) RewardData 규약은 고정이다 (호환성)

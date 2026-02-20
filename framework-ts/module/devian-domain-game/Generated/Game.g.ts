@@ -19,20 +19,31 @@ export enum CurrencyType {
     ArenaCoin = 6,
 }
 
+/** RewardType enum */
+export enum RewardType {
+    Card = 0,
+    Currency = 1,
+    Equip = 2,
+    Hero = 3,
+}
+
+/** StatType enum */
+export enum StatType {
+    None = 0,
+    CardAmount = 1,
+    CardLevel = 2,
+    EquipLevel = 11,
+    UnitAmount = 20,
+    UnitLevel = 21,
+    UnitHpMax = 100,
+}
+
 /** ProductKind enum */
 export enum ProductKind {
     Consumable = 0,
     Rental = 1,
     Subscription = 2,
     SeasonPass = 3,
-}
-
-/** StatType enum */
-export enum StatType {
-    None = 0,
-    ItemAmount = 1,
-    ItemLevel = 2,
-    ItemSlotNumber = 3,
 }
 
 /** UserType enum */
@@ -53,10 +64,17 @@ export interface UserProfile extends IEntity {
 // Tables
 // ================================================================
 
-export interface ITEM extends IEntityKey<string> {
-    ItemId: string;
-    ItemNameId: string;
-    ItemDescId: string;
+export interface EQUIP extends IEntityKey<string> {
+    EquipId: string;
+    NameId: string;
+    DescId: string;
+    getKey(): string;
+}
+
+export interface CARD extends IEntityKey<string> {
+    CardId: string;
+    NameId: string;
+    DescId: string;
     getKey(): string;
 }
 
@@ -95,7 +113,7 @@ export interface MISSION_ACHIEVEMENT extends IEntityKey<string> {
 
 export interface PRODUCT extends IEntityKey<string> {
     InternalProductId: string;
-    RewardId: string;
+    RewardGroupId: string;
     Kind: ProductKind;
     Title: string;
     IsActive: boolean;
@@ -104,44 +122,38 @@ export interface PRODUCT extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface REWARD extends IEntityKey<string> {
-    RewardId: string;
-    ItemId_00: string;
-    ItemCount_00: number;
-    ItemId_01: string;
-    ItemCount_01: number;
-    ItemId_02: string;
-    ItemCount_02: number;
-    ItemId_03: string;
-    ItemCount_03: number;
-    CurrencyType: CurrencyType;
-    CurrencyAmount: number;
-    getKey(): string;
-}
-
-export interface TestSheet extends IEntityKey<number> {
-    UserType: UserType;
-    Number: number;
-    IntArr: number[];
-    StringArr: string[];
-    FloatArr: number[];
-    UserProfile: UserProfile | null;
+export interface REWARD extends IEntityKey<number> {
+    RewardNum: number;
+    RewardGroupId: string;
+    Type: RewardType;
+    Id: string;
+    Amount: number;
     getKey(): number;
 }
 
-export interface VECTOR3 extends IEntity {
-    X: number;
-    Y: number;
-    Z: number;
+export interface UNIT_HERO extends IEntityKey<string> {
+    UnitId: string;
+    NameId: string;
+    DescId: string;
+    MaxHp: number;
+    getKey(): string;
+}
+
+export interface UNIT_MONSTER extends IEntityKey<string> {
+    UnitId: string;
+    NameId: string;
+    DescId: string;
+    MaxHp: number;
+    getKey(): string;
 }
 
 // ================================================================
 // Table Containers
 // ================================================================
 
-export class TB_ITEM {
-    private static _dict: Map<string, ITEM> = new Map();
-    private static _list: ITEM[] = [];
+export class TB_EQUIP {
+    private static _dict: Map<string, EQUIP> = new Map();
+    private static _list: EQUIP[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -150,9 +162,9 @@ export class TB_ITEM {
         this._list = [];
     }
 
-    static getAll(): readonly ITEM[] { return this._list; }
+    static getAll(): readonly EQUIP[] { return this._list; }
 
-    static get(key: string): ITEM | undefined {
+    static get(key: string): EQUIP | undefined {
         return this._dict.get(key);
     }
 
@@ -164,9 +176,45 @@ export class TB_ITEM {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as ITEM;
+            const row = JSON.parse(line) as EQUIP;
             this._list.push(row);
-            this._dict.set(row.ItemId, row);
+            this._dict.set(row.EquipId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_CARD {
+    private static _dict: Map<string, CARD> = new Map();
+    private static _list: CARD[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly CARD[] { return this._list; }
+
+    static get(key: string): CARD | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as CARD;
+            this._list.push(row);
+            this._dict.set(row.CardId, row);
         }
     }
 
@@ -320,7 +368,7 @@ export class TB_PRODUCT {
 }
 
 export class TB_REWARD {
-    private static _dict: Map<string, REWARD> = new Map();
+    private static _dict: Map<number, REWARD> = new Map();
     private static _list: REWARD[] = [];
 
     static get count(): number { return this._list.length; }
@@ -332,43 +380,7 @@ export class TB_REWARD {
 
     static getAll(): readonly REWARD[] { return this._list; }
 
-    static get(key: string): REWARD | undefined {
-        return this._dict.get(key);
-    }
-
-    static has(key: string): boolean {
-        return this._dict.has(key);
-    }
-
-    static loadFromJson(json: string): void {
-        this.clear();
-        const lines = json.split('\n').filter(l => l.trim());
-        for (const line of lines) {
-            const row = JSON.parse(line) as REWARD;
-            this._list.push(row);
-            this._dict.set(row.RewardId, row);
-        }
-    }
-
-    static saveToJson(): string {
-        return this._list.map(r => JSON.stringify(r)).join('\n');
-    }
-}
-
-export class TB_TestSheet {
-    private static _dict: Map<number, TestSheet> = new Map();
-    private static _list: TestSheet[] = [];
-
-    static get count(): number { return this._list.length; }
-
-    static clear(): void {
-        this._dict.clear();
-        this._list = [];
-    }
-
-    static getAll(): readonly TestSheet[] { return this._list; }
-
-    static get(key: number): TestSheet | undefined {
+    static get(key: number): REWARD | undefined {
         return this._dict.get(key);
     }
 
@@ -380,9 +392,9 @@ export class TB_TestSheet {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as TestSheet;
+            const row = JSON.parse(line) as REWARD;
             this._list.push(row);
-            this._dict.set(row.Number, row);
+            this._dict.set(row.RewardNum, row);
         }
     }
 
@@ -391,23 +403,70 @@ export class TB_TestSheet {
     }
 }
 
-export class TB_VECTOR3 {
-    private static _list: VECTOR3[] = [];
+export class TB_UNIT_HERO {
+    private static _dict: Map<string, UNIT_HERO> = new Map();
+    private static _list: UNIT_HERO[] = [];
 
     static get count(): number { return this._list.length; }
 
     static clear(): void {
+        this._dict.clear();
         this._list = [];
     }
 
-    static getAll(): readonly VECTOR3[] { return this._list; }
+    static getAll(): readonly UNIT_HERO[] { return this._list; }
+
+    static get(key: string): UNIT_HERO | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
 
     static loadFromJson(json: string): void {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as VECTOR3;
+            const row = JSON.parse(line) as UNIT_HERO;
             this._list.push(row);
+            this._dict.set(row.UnitId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_UNIT_MONSTER {
+    private static _dict: Map<string, UNIT_MONSTER> = new Map();
+    private static _list: UNIT_MONSTER[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly UNIT_MONSTER[] { return this._list; }
+
+    static get(key: string): UNIT_MONSTER | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as UNIT_MONSTER;
+            this._list.push(row);
+            this._dict.set(row.UnitId, row);
         }
     }
 

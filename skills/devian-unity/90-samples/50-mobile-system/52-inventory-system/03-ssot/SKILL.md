@@ -28,30 +28,54 @@ AppliesTo: v10
 
 ## B) Inventory State (개념)
 
-Inventory 상태는 "통화"와 "아이템"으로 분리된다.
+Inventory 상태는 "통화", "아이템", "영웅"으로 분리된다.
 
-### B-1) CurrencyBalances
+### B-1) Wallet
 
 - key: `currencyType` (=`RewardData.id` when `type=RewardType.Currency`)
 - value: `amount (long)`
 
-### B-2) Items
+### B-2) Equips
 
-- key: `itemId` (=`RewardData.id` when `type=RewardType.Item`, pk)
-- value: `ItemData`
+- key: `itemUid` (string, GUID, 인스턴스별 고유 pk)
+- value: `AbilityEquip`
 
-`ItemData` 필드 (구현: [11-inventory-storage](../11-inventory-storage/SKILL.md)):
-- `ItemId: string` (== key, `mItemAbility.ItemId`)
-- `Amount: int` (= `mItemAbility[StatType.ItemAmount]`)
-- 능력치: `ItemAbility : BaseAbility` → `mStats[StatType.X]` (StatType 기반 정규화)
-  - 수량 = `StatType.ItemAmount`
-  - 장착 슬롯 = `StatType.ItemSlotNumber`
-  - 레벨 = `StatType.ItemLevel`
-  - Reward/Purchase grants에서는 `StatType.ItemAmount`만 변경된다
+`AbilityEquip` 필드 (구현: [12-game-ability](../../../40-game-system/12-game-ability/SKILL.md)):
+- `ItemUid: string` (== key, 인스턴스 고유 ID, GUID)
+- `EquipId: string` (템플릿 ID, `mTable.EquipId`)
+- `OwnerUnitId: string` (장착된 영웅 UnitId, 미장착 시 empty)
+- `OwnerSlotNumber: int` (장착 슬롯 번호, 0 = 미장착)
+- `IsEquipped: bool` (= `OwnerSlotNumber > 0`)
+- 능력치: `AbilityEquip : AbilityBase` → `mStats[StatType.X]` (StatType 기반 정규화)
+  - 레벨 = `StatType.EquipLevel`
 
 NOTE:
-- `itemUid`는 없다(사용하지 않는다).
-- `InventoryItem` 클래스는 사용하지 않는다 — `ItemData`가 전담한다.
+- 같은 `equipId`에 여러 인스턴스(각각 고유 `itemUid`)가 존재할 수 있다.
+- `RewardData.Id`는 `equipId`(템플릿 ID)이다. `itemUid`는 InventoryManager가 Apply 시 생성한다.
+- `ItemData` 클래스는 `AbilityEquip`에 통합되어 삭제되었다.
+
+### B-3) Cards
+
+- key: `cardId` (=`RewardData.id` when `type=RewardType.Card`, pk)
+- value: `AbilityCard`
+
+`AbilityCard` 필드 (구현: [12-game-ability](../../../40-game-system/12-game-ability/SKILL.md)):
+- `CardId: string` (== key, `mTable.CardId`)
+- `Amount: int` (= `this[StatType.CardAmount]`)
+- 능력치: `AbilityCard : AbilityBase` → `mStats[StatType.X]` (StatType 기반 정규화)
+  - 수량 = `StatType.CardAmount`
+  - 레벨 = `StatType.CardLevel`
+  - Reward/Purchase grants에서는 `StatType.CardAmount`만 변경된다
+
+### B-4) Heroes
+
+- key: `heroId` (=`RewardData.id` when `type=RewardType.Hero`, pk)
+- value: `AbilityUnitHero`
+
+`AbilityUnitHero` 필드 (구현: [12-game-ability](../../../40-game-system/12-game-ability/SKILL.md)):
+- `UnitId: string` (== key, `mTable.UnitId`)
+- 수량 = `StatType.UnitAmount` (Reward grants에서 변경되는 유일한 stat)
+- 능력치: `AbilityUnitHero : AbilityUnitBase : AbilityBase` → `mStats[StatType.X]` (StatType 기반 정규화)
 
 
 ---
@@ -72,18 +96,89 @@ NOTE:
 - `_storage.AddCurrency(currencyType, amount)`
 - 없는 키는 생성된다.
 
-### C-3) `type == RewardType.Item`
+### C-3) `type == RewardType.Equip`
 
-- `_storage.BagItems[itemId].AddAmount(amount)` (= `mItemAbility.AddStat(StatType.ItemAmount, amount)`)
-- 없는 키는 `_storage.AddItem(itemId, ability)`로 생성된다.
-  - 새 ItemData의 모든 stat은 0(기본값)으로 시작한다.
-- Apply는 `StatType.ItemAmount`만 변경한다 (다른 stat은 보존).
+- 매 Apply마다 새 `itemUid`(GUID)를 생성하여 새 AbilityEquip 인스턴스를 추가한다.
+- `_storage.AddEquip(itemUid, ability)`로 생성된다.
+  - 새 AbilityEquip의 모든 stat은 0(기본값)으로 시작한다.
+- `amount`는 무시한다 (항상 1개 인스턴스 생성).
+
+### C-5) `type == RewardType.Card`
+
+- `_storage.Cards[cardId].AddAmount(amount)` (= `AddStat(StatType.CardAmount, amount)`)
+- 없는 키는 `_storage.AddCard(cardId, ability)`로 생성된다.
+  - 새 AbilityCard의 모든 stat은 0(기본값)으로 시작한다.
+- Apply는 `StatType.CardAmount`만 변경한다 (다른 stat은 보존).
+
+### C-4) `type == RewardType.Hero`
+
+- `_storage.Heroes[heroId].AddStat(StatType.UnitAmount, amount)`
+- 없는 키는 `_storage.AddHero(heroId, ability)`로 생성된다.
+  - 새 AbilityUnitHero는 `TB_UNIT_HERO.Get(heroId)`로 Init한다.
+- Apply는 `StatType.UnitAmount`만 변경한다 (다른 stat은 보존).
 
 
 ---
 
 
-## D) Error Code Source (정본)
+## C-6) 장비 장착/해제
+
+InventoryStorage가 hero/equip 조회 + AbilityUnitHero에 위임하는 편의 메서드를 제공한다.
+
+- `Equip(string heroId, int equipSlot, string equipUid)`:
+  1. `mHeroes[heroId]` 조회 → 없으면 false
+  2. `mEquipments[equipUid]` 조회 → 없으면 false
+  3. `hero.Equip(equip, equipSlot)` 위임
+- `Unequip(string heroId, int equipSlot)`:
+  1. `mHeroes[heroId]` 조회 → 없으면 false
+  2. `hero.Unequip(equipSlot)` 위임
+
+
+---
+
+
+## D) JSON Persistence Schema (정본)
+
+InventoryStorage의 `ToJson()`/`FromJson(string)` 스키마 정본.
+
+```json
+{
+  "wallet": { "<currencyId>": <long> },
+  "equipments": {
+    "<itemUid>": {
+      "equipId": "<string>",
+      "itemUid": "<string>",
+      "ownerUnitId": "<string>",
+      "ownerSlotNumber": <int>,
+      "stats": { "<StatType.ToString()>": <int> }
+    }
+  },
+  "cards": {
+    "<cardId>": {
+      "cardId": "<string>",
+      "stats": { "<StatType.ToString()>": <int> }
+    }
+  },
+  "heroes": {
+    "<heroId>": {
+      "unitId": "<string>",
+      "stats": { "<StatType.ToString()>": <int> },
+      "equips": { "<slotNumber>": "<equipUid>" }
+    }
+  }
+}
+```
+
+- StatType key: enum name 문자열 (예: `"EquipLevel"`, `"CardAmount"`)
+- Hero equips: slotNumber(string key) → equipUid(string value). 중복 데이터 없음.
+- 역직렬화 시 테이블 참조: `TB_EQUIP.Get`/`TB_CARD.Get`/`TB_UNIT_HERO.Get`으로 `mTable` 복원.
+- 역직렬화 순서: wallet → equipments → cards → heroes (heroes 마지막: equip 슬롯 참조 필요).
+
+
+---
+
+
+## E) Error Code Source (정본)
 
 - `AddRewards` 실패 에러 코드는 `CommonErrorType`을 사용한다.
 - inventory 전용 에러 코드는 `ERROR_COMMON`을 SSOT로 추가/관리한다.

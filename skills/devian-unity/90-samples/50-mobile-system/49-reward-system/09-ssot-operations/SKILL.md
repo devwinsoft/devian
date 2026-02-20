@@ -19,7 +19,7 @@ SSOT 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
 
 - PurchaseManager가 서버 `verifyPurchase`를 호출한다.
 - `resultStatus == GRANTED`일 때만:
-  - 컨텐츠 레이어 매핑(`internalProductId -> rewardId`) 후 `ApplyRewardId(rewardId)`로 적용한다.
+  - 컨텐츠 레이어 매핑(`internalProductId -> rewardGroupId`) 후 `ApplyRewardGroupId(rewardGroupId)`로 적용한다.
 - 멱등/복구/원장 정본은 Purchase 쪽이다.
 
 연관:

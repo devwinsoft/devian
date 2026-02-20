@@ -18,7 +18,7 @@ MobileSystem 샘플에서 Reward(보상 지급 **적용/실행**) 설계를 정�
 
 ## Scope
 
-- 입력으로 들어온 **RewardData[]** 또는 rewardId(컨텐츠 레이어에서 RewardData로 해석된 결과)를 **로컬 인벤토리에 적용**한다.
+- 입력으로 들어온 **RewardData[]** 또는 rewardGroupId(컨텐츠 레이어에서 RewardData로 해석된 결과)를 **로컬 인벤토리에 적용**한다.
 - Reward는 "지급 실행기"이며, 서버 호출/ledger 확정/중복 방지는 하지 않는다.
 
 
@@ -39,7 +39,7 @@ MobileSystem 샘플에서 Reward(보상 지급 **적용/실행**) 설계를 정�
 | Document | Description |
 |----------|-------------|
 | [01-policy](../01-policy/SKILL.md) | 모듈 경계/하드룰(Reward=지급 실행기, 멱등/기록/복구=호출자) |
-| [03-ssot](../03-ssot/SKILL.md) | RewardData 규약 + rewardId 해석(컨텐츠 책임) |
+| [03-ssot](../03-ssot/SKILL.md) | RewardData 규약 + rewardGroupId 해석(컨텐츠 책임) |
 | [09-ssot-operations](../09-ssot-operations/SKILL.md) | 운영 시나리오/테스트/DoD |
 | [10-reward-manager](../10-reward-manager/SKILL.md) | RewardManager 설계(지급 실행기) |
 
