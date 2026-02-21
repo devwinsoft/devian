@@ -162,7 +162,7 @@ com.devian.domain.common/
 - staging에 포함되지 않은 파일은 clean+copy 이후 삭제된다.
 - 따라서 Features(Variant)는 **빌더가 staging에 복사**해야 한다.
 - Common 모듈일 때만 `framework-cs/module/Devian.Domain.Common/features/` → staging `Runtime/Features/`로 복사.
-- Complex는 `com.devian.foundation`으로 이동됨 (skills/devian/10-module/31-variable-complex/SKILL.md 참조).
+- Complex는 `com.devian.foundation`으로 이동됨 (skills/devian/10-module/20-core/31-variable-complex/SKILL.md 참조).
 - `upmConfig.packageDir`가 UnityExample/Packages를 가리키면 해당 디렉토리는 **generated output**으로 취급된다.
 
 ---
@@ -233,5 +233,5 @@ keyed table(primaryKey 있는 테이블)이 있으면 `Editor/Generated/`에 Tab
 - Related: `skills/devian-unity/02-unity-bundles/SKILL.md`
 - Related: `skills/devian-unity/04-package-metadata/SKILL.md`
 - Related: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)
-- Related: `skills/devian/10-module/32-variable-variant/SKILL.md`
-- Related: `skills/devian/10-module/31-variable-complex/SKILL.md`
+- Related: `skills/devian/10-module/20-core/32-variable-variant/SKILL.md`
+- Related: `skills/devian/10-module/20-core/31-variable-complex/SKILL.md`

@@ -15,7 +15,7 @@
     <package>com.google.firebase:firebase-firestore-unity:13.7.0</package>
     <package>com.google.firebase:firebase-functions:22.1.0</package>
     <package>com.google.firebase:firebase-functions-unity:13.7.0</package>
-    <package>com.google.games:gpgs-plugin-support:2.0.0</package>
+    <package>com.google.games:gpgs-plugin-support:2.1.0</package>
   </packages>
   <files>
     <file>Assets/GeneratedLocalRepo/Firebase/m2repository/com/google/firebase/firebase-analytics-unity/13.7.0/firebase-analytics-unity-13.7.0.aar</file>

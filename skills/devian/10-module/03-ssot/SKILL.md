@@ -171,6 +171,30 @@ finalConfig = deepMerge(config.json, input.json)
 
 ---
 
+## Consumption Flow (소비 청사진)
+
+Devian 산출물을 실제 앱(클라/서버/툴)에서 소비하는 기본 흐름을 정의한다.
+구체적인 타입/시그니처/호출 예시는 **런타임/제너레이터 코드**를 정답으로 본다.
+
+### DATA 소비
+
+1. 테이블 데이터를 로드한다:
+   - NDJSON: `{tableDir}/ndjson/*.json`
+   - pb64: `{tableDir}/pb64/*.asset` (pk 옵션 있는 테이블만)
+   - String Table: `{stringDir}/ndjson/{Language}/*.json`, `{stringDir}/pb64/{Language}/*.asset`
+2. generated 컨테이너/로더를 통해 테이블을 구성한다.
+3. `enum:*` / `class:*` 셀 원문이 필요한 경우 DFF 규약으로 해석한다.
+
+### PROTOCOL 소비
+
+1. transport adapter(WebSocket 등)를 준비한다.
+2. 수신: bytes → opcode 라우팅 → decode → 유저 핸들러 호출 구조를 만든다.
+3. 발신: generated 프록시를 통해 "message → frame(bytes)"로 만든 뒤 transport로 보낸다.
+
+> Transport 상세: [skills/devian/10-module/60-net/70-ws-transport-adapter](../60-net/70-ws-transport-adapter/SKILL.md)
+
+---
+
 ## Hard Conflicts (DoD)
 
 아래는 발견 즉시 FAIL(반드시 0개)로 취급한다.

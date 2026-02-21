@@ -60,7 +60,7 @@ Game 도메인은 Devian 프레임워크의 **예제 도메인**이다.
 | 파일 | 생성 타입 | 설명 |
 |---|---|---|
 | `ENUM_TYPES.json` | `enum CURRENCY_TYPE`, `enum REWARD_TYPE`, `enum STAT_TYPE` | 통화/보상/능력치 enum 통합 |
-| `ProductKind.json` | `enum ProductKind` | 상품 유형 (Consumable, Rental, Subscription, SeasonPass) |
+| `ProductKind.json` | `enum ProductKind` | 상품 유형 (Consumable, Subscription, SeasonPass) |
 | `TestContract.json` | `enum UserType`, `class UserProfile` | 테스트 예제 (UserType: Guest/Member/Admin, UserProfile: Id/Name/UserType) |
 
 ---

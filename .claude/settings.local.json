@@ -139,7 +139,8 @@
       "Bash(xxd:*)",
       "Bash(file:*)",
       "Bash(npm ls:*)",
-      "Bash(__NEW_LINE_80b337b96326856b__ echo \"ItemData.cs deleted from all 4 paths\")"
+      "Bash(__NEW_LINE_80b337b96326856b__ echo \"ItemData.cs deleted from all 4 paths\")",
+      "Bash(md5:*)"
     ]
   },
   "project": {

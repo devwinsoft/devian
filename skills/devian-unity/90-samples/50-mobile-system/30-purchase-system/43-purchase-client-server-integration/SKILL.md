@@ -36,7 +36,7 @@ AppliesTo: v10
 SSOT의 "C# ↔ Callable 필드 매핑"을 그대로 따른다.
 
 - 요청 키:
-  - `storeKey`, `internalProductId`, `kind` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`), `payload`
+  - `storeKey`, `internalProductId`, `kind` (`"Consumable" | "Subscription" | "SeasonPass"`), `payload`
 - 응답 키:
   - `resultStatus`, `grants`, `entitlementsSnapshot`
 
@@ -77,12 +77,12 @@ Reward는 멱등/복구를 담당하지 않으며, Purchase의 멱등은 서버 
 ---
 
 
-## C3. Rental 최신 1건 조회 (정식 API 연결)
+## C3. 최근 구매 조회 (kind 파라미터)
 
-- Client: `PurchaseManager.GetLatestRentalPurchase30dAsync()`
-- Server: `getRecentRentalPurchases30d` (`pageSize=1`)
+- Client: `PurchaseManager.GetLatestConsumablePurchase30dAsync()`
+- Server: `getRecentPurchases30d` (`kind="Consumable"`, `pageSize=1`)
 - 서버가 "최근 30일"을 계산한다. 클라/기기 시간 사용 금지.
-- 최근 30일 내 Rental 내역이 없으면 `CommonResult.Failure(COMMON_SERVER, ...)` 반환.
+- 최근 30일 내 해당 kind 내역이 없으면 `CommonResult.Failure(COMMON_SERVER, ...)` 반환.
 
 
 ---

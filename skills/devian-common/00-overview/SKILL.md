@@ -13,9 +13,9 @@ Devian Common 도메인 및 공용 Feature 모듈을 담당한다.
 |----------|-------------|
 | [01-policy](../01-policy/SKILL.md) | Common 그룹 정책 (도메인 정책) |
 | [02-module-policy](../02-module-policy/SKILL.md) | 모듈 정책 |
-| [32-variable-variant](../../devian/10-module/32-variable-variant/SKILL.md) | Variant Feature |
-| [12-logger](../../devian/10-module/12-logger/SKILL.md) | Logger Feature |
-| [31-variable-complex](../../devian/10-module/31-variable-complex/SKILL.md) | Complex Feature |
+| [32-variable-variant](../../devian/10-module/20-core/32-variable-variant/SKILL.md) | Variant Feature |
+| [12-logger](../../devian/10-module/20-core/12-logger/SKILL.md) | Logger Feature |
+| [31-variable-complex](../../devian/10-module/20-core/31-variable-complex/SKILL.md) | Complex Feature |
 | [14-string-table](../14-string-table/SKILL.md) | String Table Feature |
 
 ---

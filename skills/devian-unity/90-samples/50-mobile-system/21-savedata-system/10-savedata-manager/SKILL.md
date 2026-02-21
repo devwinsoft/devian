@@ -76,8 +76,8 @@ SaveDataManager는 Slot 설정을 `SaveSlotConfig`로 캡슐화한다. (단일 �
 - `Task<CommonResult<bool>> ResolveConflictAsync(string slot, SyncResolution resolution, CancellationToken ct)`
 
 ### Save
-- `Task<CommonResult<bool>> SaveDataAsync(string slot, string payload, CancellationToken ct)`
-- `Task<CommonResult<bool>> SaveDataAsync(string slot, string payload, bool includeCloud, CancellationToken ct)`
+- `Task<CommonResult<bool>> SaveDataAsync(string slot, string data, CancellationToken ct)`
+- `Task<CommonResult<bool>> SaveDataAsync(string slot, string data, bool includeCloud, CancellationToken ct)`
 - `Task<CommonResult<bool>> SaveDataAsync<T>(string slot, T data, CancellationToken ct)`
 - `Task<CommonResult<bool>> SaveDataAsync<T>(string slot, T data, bool includeCloud, CancellationToken ct)`
 

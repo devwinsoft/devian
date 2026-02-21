@@ -45,5 +45,5 @@ MUST NOT
 ## Reference
 
 - Policy SSOT: `skills/devian/10-module/03-ssot/SKILL.md`
-- Transport adapter: `skills/devian/10-module/70-ws-transport-adapter/SKILL.md`
+- Transport adapter: `skills/devian/10-module/60-net/70-ws-transport-adapter/SKILL.md`
 - 동작 정본: 런타임/제너레이터 코드

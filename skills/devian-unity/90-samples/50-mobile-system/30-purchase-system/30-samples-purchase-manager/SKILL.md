@@ -54,8 +54,11 @@ CompoSingleton<PurchaseManager>.Instance
   - 시즌별 1회 구매(Subscription 아님)
 - `RestoreAsync(ct)` (iOS 복원)
 - `SyncEntitlementsAsync(ct)` (서버 상태 동기화)
-- `GetLatestRentalPurchase30dAsync(ct)` → `Task<CommonResult<RentalPurchaseItem>>`
-  - 서버에서 최근 30일 내 최신 Rental 구매 1건 조회
+- `GetLatestConsumablePurchase30dAsync(ct)` → `Task<CommonResult<RecentPurchaseItem>>`
+  - 서버에서 최근 30일 내 최신 Consumable 구매 1건 조회
+- `DeleteMyPurchasesAsync(ct)` → `Task<CommonResult<int>>` (개발/테스트 전용)
+  - 본인 uid의 모든 purchase 기록 + entitlements 초기화. 삭제된 문서 수 반환.
+  - 서버 환경변수 `ALLOW_PURCHASE_DELETE=true` 필요.
 
 
 ---
@@ -68,7 +71,7 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 - `ResolveRewardGroupId(internalProductId)`: `TB_PRODUCT.Get(internalProductId).RewardGroupId` — 테이블 조회로 변환
 - `BuildProductDefinitions()`: `TB_PRODUCT.GetAll()`에서 `isActive` 필터링 후 ProductDefinition 목록 생성
   - 플랫폼별 StoreSku 매핑: `#if UNITY_IOS` → `StoreSkuApple`, `#elif UNITY_ANDROID` → `StoreSkuGoogle`
-  - `Kind` → `ProductType` 매핑: Consumable→Consumable, Subscription→Subscription, SeasonPass→NonConsumable, Rental→NonConsumable
+  - `Kind` → `ProductType` 매핑: Consumable→Consumable, Subscription→Subscription, SeasonPass→NonConsumable
 
 
 ---

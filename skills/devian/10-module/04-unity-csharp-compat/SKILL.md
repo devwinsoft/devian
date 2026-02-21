@@ -202,12 +202,12 @@ Unity의 `.asmdef` 파일에서 `precompiledReferences`로 선언된 DLL은 **�
 | 경로 | `Assets/Plugins/` 또는 Unity가 인식하는 위치 |
 | .gitignore | DLL을 ignore했다면 clone 후 수동 복사 필요 |
 
-> **참고:** 이 정책은 `skills/devian/10-module/08-protobuf-serializer-policy/SKILL.md`의 "Unity Google.Protobuf.dll 정책"과 연계된다.
+> **참고:** 이 정책은 `skills/devian/10-module/40-proto/08-protobuf-serializer-policy/SKILL.md`의 "Unity Google.Protobuf.dll 정책"과 연계된다.
 
 ---
 
 ## Reference
 
 - SSOT: `skills/devian/10-module/03-ssot/SKILL.md`
-- Protobuf DLL 정책: `skills/devian/10-module/08-protobuf-serializer-policy/SKILL.md`
+- Protobuf DLL 정책: `skills/devian/10-module/40-proto/08-protobuf-serializer-policy/SKILL.md`
 - 적용 대상: `framework-cs/upm/`, `framework-cs/apps/**/Packages/`

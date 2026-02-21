@@ -21,7 +21,7 @@ dependencies {
     implementation 'com.google.firebase:firebase-firestore-unity:13.7.0' // Assets/Firebase/Editor/FirestoreDependencies.xml:23
     implementation 'com.google.firebase:firebase-functions:22.1.0' // Assets/Firebase/Editor/FunctionsDependencies.xml:16
     implementation 'com.google.firebase:firebase-functions-unity:13.7.0' // Assets/Firebase/Editor/FunctionsDependencies.xml:23
-    implementation 'com.google.games:gpgs-plugin-support:2.0.0' // Assets/GooglePlayGames/com.google.play.games/Editor/GooglePlayGamesPluginDependencies.xml:11
+    implementation 'com.google.games:gpgs-plugin-support:2.1.0' // Assets/GooglePlayGames/com.google.play.games/Editor/GooglePlayGamesPluginDependencies.xml:11
 // Android Resolver Dependencies End
 **DEPS**}
 

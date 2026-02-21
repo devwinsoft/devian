@@ -1,3 +1,10 @@
+// google cloud 설정
+// firebase 설정
+
+// firebase deploy
+firebase deploy --only functions
+
+
 // 보안 해제
 xattr -dr com.apple.quarantine Assets/Firebase
 xattr -dr com.apple.quarantine Assets/Plugins

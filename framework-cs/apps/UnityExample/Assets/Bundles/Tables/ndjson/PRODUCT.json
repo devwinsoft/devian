@@ -1,2 +1,2 @@
-{"InternalProductId":"com.devian.framework.noads_month","RewardGroupId":"","Kind":"Rental","Title":"","IsActive":false,"StoreSkuApple":"","StoreSkuGoogle":"com.devian.framework.noads_month"}
-{"InternalProductId":"com.devian.framework.noads_subscription","RewardGroupId":"","Kind":"Subscription","Title":"","IsActive":false,"StoreSkuApple":"","StoreSkuGoogle":"com.devian.framework.noads_subscription"}
+{"InternalProductId":"com.devian.framework.noads_month","RewardGroupId":"","Kind":"Consumable","Title":"","IsActive":true,"StoreSkuApple":"","StoreSkuGoogle":"com.devian.framework.noads_month"}
+{"InternalProductId":"com.devian.framework.noads_subscription","RewardGroupId":"","Kind":"Subscription","Title":"","IsActive":true,"StoreSkuApple":"","StoreSkuGoogle":"com.devian.framework.noads_subscription"}

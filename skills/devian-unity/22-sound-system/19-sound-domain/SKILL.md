@@ -254,7 +254,7 @@ Phase 2는 아래가 **모두 참**이어야 DONE이다:
 - `skills/devian-unity/10-foundation/11-table-manager/SKILL.md` — **TbLoader SSOT / 중복 등록 금지** Hard Rule
 - `skills/devian-tools/11-builder/42-tablegen-implementation/SKILL.md` — **AfterLoad hook 계약** Hard Rule
 - `skills/devian/05-workspace/SKILL.md` — **npm ci / lock 동기화** 규약
-- `skills/devian/10-module/22-generated-integration/SKILL.md` — **임시 stub 금지** 규약
+- `skills/devian/10-module/05-generated-integration/SKILL.md` — **임시 stub 금지** 규약
 
 Sound 도메인 관련:
 

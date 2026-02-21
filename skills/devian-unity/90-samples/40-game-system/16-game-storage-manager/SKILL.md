@@ -42,7 +42,6 @@ GameStorageManager : CompoSingleton<GameStorageManager> (GameContents 레이어)
 │
 ├── Public Methods
 │   ├── ToJson() → string
-│   ├── ToPayload() → string (obfuscated)
 │   ├── LoadFromPayload(string payload) → void
 │   ├── LoadFromJson(string json) → void
 │   └── Clear()
@@ -83,16 +82,6 @@ GameStorageManager : CompoSingleton<GameStorageManager>
 - `_inventory.Heroes` → `IReadOnlyDictionary<string, AbilityUnitHero>`
 
 직렬화 순서: wallet → equipments → cards → heroes (기존 유지).
-
-
-### ToPayload()
-
-`ToJson()` 결과를 `ComplexUtil.Encrypt_Base64()`로 난독화하여 반환한다.
-bootstrap(composition root)에서 저장 시스템에 전달하는 obfuscated string을 생성한다.
-
-```
-ToPayload() = ComplexUtil.Encrypt_Base64(ToJson())
-```
 
 
 ### LoadFromPayload()

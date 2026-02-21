@@ -324,7 +324,8 @@ namespace Devian
                     var tcs1 = new TaskCompletionSource<bool>();
                     var cb1 = createAction1(signInStatusType, (obj) =>
                     {
-                        tcs1.TrySetResult(string.Equals(obj?.ToString(), "Success", StringComparison.OrdinalIgnoreCase));
+                        var status = obj?.ToString() ?? "null";
+                        tcs1.TrySetResult(string.Equals(status, "Success", StringComparison.OrdinalIgnoreCase));
                     });
                     silentAuth.Invoke(_platformInstance, new object[] { cb1 });
                     authenticated = await tcs1.Task;
@@ -337,7 +338,8 @@ namespace Devian
                     var tcs2 = new TaskCompletionSource<bool>();
                     var cb2 = createAction1(signInStatusType, (obj) =>
                     {
-                        tcs2.TrySetResult(string.Equals(obj?.ToString(), "Success", StringComparison.OrdinalIgnoreCase));
+                        var status = obj?.ToString() ?? "null";
+                        tcs2.TrySetResult(string.Equals(status, "Success", StringComparison.OrdinalIgnoreCase));
                     });
                     manualAuth.Invoke(_platformInstance, new object[] { cb2 });
                     authenticated = await tcs2.Task;

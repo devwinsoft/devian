@@ -205,4 +205,4 @@ export class TB_COMPLEX_POLICY {
 
 - Table Authoring Rules: `skills/devian-tools/11-builder/30-table-authoring-rules/SKILL.md`
 - TableGen Implementation: `skills/devian-tools/11-builder/42-tablegen-implementation/SKILL.md`
-- Variant Feature: `skills/devian/10-module/32-variable-variant/SKILL.md`
+- Variant Feature: `skills/devian/10-module/20-core/32-variable-variant/SKILL.md`

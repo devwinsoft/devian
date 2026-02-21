@@ -127,30 +127,47 @@ namespace Devian
             return CommonResult<EntitlementsSnapshot>.Success(ParseEntitlementsSnapshot(result.Value!));
         }
 
-        public async Task<CommonResult<RentalPurchaseItem>> GetLatestRentalPurchase30dAsync(CancellationToken ct = default)
+        public async Task<CommonResult<RecentPurchaseItem>> GetLatestConsumablePurchase30dAsync(CancellationToken ct = default)
         {
 #if UNITY_EDITOR
-            return CommonResult<RentalPurchaseItem>.Failure(
+            return CommonResult<RecentPurchaseItem>.Failure(
                 CommonErrorType.PURCHASE_UNSUPPORTED_PLATFORM,
                 "PurchaseManager is not supported in Editor.");
 #endif
             if (!_iapInitialized)
-                return CommonResult<RentalPurchaseItem>.Failure(
+                return CommonResult<RecentPurchaseItem>.Failure(
                     CommonErrorType.PURCHASE_INIT_REQUIRED,
                     "PurchaseManager not initialized. Call InitializeAsync() first.");
 
-            var data = new Dictionary<string, object> { ["pageSize"] = 1 };
-            var result = await callFunctionAsync("getRecentRentalPurchases30d", data, ct);
+            var data = new Dictionary<string, object> { ["pageSize"] = 1, ["kind"] = "Consumable" };
+            var result = await callFunctionAsync("getRecentPurchases30d", data, ct);
             if (result.IsFailure)
-                return CommonResult<RentalPurchaseItem>.Failure(result.Error!);
+                return CommonResult<RecentPurchaseItem>.Failure(result.Error!);
 
-            var item = parseFirstRentalPurchaseItem(result.Value!);
+            var item = parseFirstRecentPurchaseItem(result.Value!);
             if (item == null)
-                return CommonResult<RentalPurchaseItem>.Failure(
-                    CommonErrorType.PURCHASE_RENTAL_LATEST_NOT_FOUND,
-                    "No recent rental purchase within 30 days.");
+                return CommonResult<RecentPurchaseItem>.Failure(
+                    CommonErrorType.PURCHASE_RECENT_NOT_FOUND,
+                    "No recent consumable purchase within 30 days.");
 
-            return CommonResult<RentalPurchaseItem>.Success(item);
+            return CommonResult<RecentPurchaseItem>.Success(item);
+        }
+
+        /// <summary>
+        /// [개발/테스트 전용] 본인 uid의 모든 purchase 기록 + entitlements를 삭제/초기화한다.
+        /// 서버 환경 변수 ALLOW_PURCHASE_DELETE=true 필요.
+        /// </summary>
+        public async Task<CommonResult<int>> DeleteMyPurchasesAsync(CancellationToken ct = default)
+        {
+            var result = await callFunctionAsync("deleteMyPurchases", null, ct);
+            if (result.IsFailure)
+                return CommonResult<int>.Failure(result.Error!);
+
+            var deletedCount = 0;
+            if (result.Value!.TryGetValue("deletedCount", out var dc))
+                deletedCount = (int)Convert.ToInt64(dc);
+
+            return CommonResult<int>.Success(deletedCount);
         }
 
         // ── Firebase Callable Helper ─────────────────────────────
@@ -431,8 +448,11 @@ namespace Devian
         static readonly Task<CommonResult<EntitlementsSnapshot>> _notSupportedSnapshot =
             Task.FromResult(CommonResult<EntitlementsSnapshot>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
-        static readonly Task<CommonResult<RentalPurchaseItem>> _notSupportedRental =
-            Task.FromResult(CommonResult<RentalPurchaseItem>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+        static readonly Task<CommonResult<RecentPurchaseItem>> _notSupportedRecent =
+            Task.FromResult(CommonResult<RecentPurchaseItem>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+
+        static readonly Task<CommonResult<int>> _notSupportedInt =
+            Task.FromResult(CommonResult<int>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
         public Task<CommonResult> InitializeAsync(CancellationToken ct = default) => _notSupportedInit;
         public Task<CommonResult<PurchaseFinalResult>> PurchaseConsumableAsync(string internalProductId, CancellationToken ct = default) => _notSupported;
@@ -440,7 +460,8 @@ namespace Devian
         public Task<CommonResult<PurchaseFinalResult>> PurchaseSeasonPassAsync(string internalProductId, CancellationToken ct = default) => _notSupported;
         public Task<CommonResult<EntitlementsSnapshot>> RestoreAsync(CancellationToken ct = default) => _notSupportedSnapshot;
         public Task<CommonResult<EntitlementsSnapshot>> SyncEntitlementsAsync(CancellationToken ct = default) => _notSupportedSnapshot;
-        public Task<CommonResult<RentalPurchaseItem>> GetLatestRentalPurchase30dAsync(CancellationToken ct = default) => _notSupportedRental;
+        public Task<CommonResult<RecentPurchaseItem>> GetLatestConsumablePurchase30dAsync(CancellationToken ct = default) => _notSupportedRecent;
+        public Task<CommonResult<int>> DeleteMyPurchasesAsync(CancellationToken ct = default) => _notSupportedInt;
 #endif
 
         // ── Helpers ───────────────────────────────────────────────
@@ -474,20 +495,19 @@ namespace Devian
             switch (kind)
             {
                 case PurchaseKind.Consumable: return "Consumable";
-                case PurchaseKind.Rental: return "Rental";
                 case PurchaseKind.Subscription: return "Subscription";
                 case PurchaseKind.SeasonPass: return "SeasonPass";
                 default: return "Consumable";
             }
         }
 
-        static RentalPurchaseItem parseFirstRentalPurchaseItem(Dictionary<string, object> root)
+        static RecentPurchaseItem parseFirstRecentPurchaseItem(Dictionary<string, object> root)
         {
             if (!root.TryGetValue("items", out var itemsObj)) return null;
             if (!(itemsObj is IList<object> items) || items.Count == 0) return null;
             if (!(items[0] is IDictionary<string, object> first)) return null;
 
-            return new RentalPurchaseItem
+            return new RecentPurchaseItem
             {
                 purchaseId = getString(first, "purchaseId"),
                 internalProductId = getString(first, "internalProductId"),
@@ -570,12 +590,11 @@ namespace Devian
         public enum PurchaseKind
         {
             Consumable = 0,
-            Rental = 1,
-            Subscription = 2,
-            SeasonPass = 3,
+            Subscription = 1,
+            SeasonPass = 2,
         }
 
-        public sealed class RentalPurchaseItem
+        public sealed class RecentPurchaseItem
         {
             public string purchaseId;
             public string internalProductId;

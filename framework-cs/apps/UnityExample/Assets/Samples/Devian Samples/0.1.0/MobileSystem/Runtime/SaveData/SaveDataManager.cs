@@ -369,15 +369,15 @@ namespace Devian
         //  Public: Save API
         // ──────────────────────────────────────────────
 
-        public Task<CommonResult<bool>> SaveDataAsync(string slot, string payload, CancellationToken ct)
+        public Task<CommonResult<bool>> SaveDataAsync(string slot, string data, CancellationToken ct)
         {
-            return SaveDataAsync(slot, payload, includeCloud: false, ct);
+            return SaveDataAsync(slot, data, includeCloud: false, ct);
         }
 
         public async Task<CommonResult<bool>> SaveDataAsync(
-            string slot, string payload, bool includeCloud, CancellationToken ct)
+            string slot, string data, bool includeCloud, CancellationToken ct)
         {
-            var local = await saveLocalAsync(slot, payload, ct);
+            var local = await saveLocalAsync(slot, data, ct);
             if (local.IsFailure) return local;
 
             if (!includeCloud)
@@ -394,7 +394,7 @@ namespace Devian
             if (init.IsFailure)
                 return CommonResult<bool>.Failure(init.Error!);
 
-            var cloud = await saveCloudAsync(slot, payload, ct);
+            var cloud = await saveCloudAsync(slot, data, ct);
             if (cloud.IsFailure) return cloud;
 
             return CommonResult<bool>.Success(true);
@@ -661,7 +661,7 @@ namespace Devian
             return Task.FromResult(loadLocalRecord(slot));
         }
 
-        private CommonResult<bool> saveLocal(string slot, string payload)
+        private CommonResult<bool> saveLocal(string slot, string data)
         {
             if (string.IsNullOrWhiteSpace(slot))
             {
@@ -678,7 +678,7 @@ namespace Devian
                 return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_FILENAME_INVALID, fnError);
             }
 
-            var plain = payload ?? string.Empty;
+            var plain = data ?? string.Empty;
             var obfuscated = ComplexUtil.Encrypt_Base64(plain);
 
             var save = new SaveLocalPayload(
@@ -694,7 +694,7 @@ namespace Devian
                 : CommonResult<bool>.Failure(write.Error!);
         }
 
-        private Task<CommonResult<bool>> saveLocalAsync(string slot, string payload, CancellationToken ct)
+        private Task<CommonResult<bool>> saveLocalAsync(string slot, string data, CancellationToken ct)
         {
             if (ct.IsCancellationRequested)
             {
@@ -702,7 +702,7 @@ namespace Devian
                     CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_CANCELLED, "Cancelled."));
             }
 
-            return Task.FromResult(saveLocal(slot, payload));
+            return Task.FromResult(saveLocal(slot, data));
         }
 
         // ──────────────────────────────────────────────
@@ -729,7 +729,7 @@ namespace Devian
             return loadCloudRecordInternal(cloudSlot, ct);
         }
 
-        private Task<CommonResult<bool>> saveCloudAsync(string slot, string payload, CancellationToken ct)
+        private Task<CommonResult<bool>> saveCloudAsync(string slot, string data, CancellationToken ct)
         {
 #if UNITY_EDITOR
             return Task.FromResult(editorNoCloud<bool>());
@@ -746,12 +746,12 @@ namespace Devian
                 return Task.FromResult(
                     CommonResult<bool>.Failure(CommonErrorType.CLOUDSAVE_SLOT_MISSING, $"Slot '{slot}' not configured."));
 
-            if (!isLikelyJson(payload))
+            if (!isLikelyJson(data))
                 return Task.FromResult(
                     CommonResult<bool>.Failure(CommonErrorType.CLOUDSAVE_PAYLOAD_INVALID,
                         "Payload must be JSON (object or array)."));
 
-            return saveCloudInternal(cloudSlot, payload, ct);
+            return saveCloudInternal(cloudSlot, data, ct);
         }
 
         private async Task<CommonResult<SaveCloudResult>> signInCloudInternal(CancellationToken ct)
@@ -765,9 +765,9 @@ namespace Devian
         }
 
         private async Task<CommonResult<bool>> saveCloudInternal(
-            string cloudSlot, string payload, CancellationToken ct)
+            string cloudSlot, string data, CancellationToken ct)
         {
-            var plain = payload ?? string.Empty;
+            var plain = data ?? string.Empty;
             var obfuscated = ComplexUtil.Encrypt_Base64(plain);
 
             var csPayload = new SaveCloudPayload(

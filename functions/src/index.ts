@@ -4,7 +4,7 @@
  * Callable 이름은 46 스킬 B 섹션에서 고정:
  *   - verifyPurchase
  *   - getEntitlements
- *   - getRecentRentalPurchases30d
+ *   - getRecentPurchases30d
  */
 
 import * as admin from "firebase-admin";
@@ -15,4 +15,5 @@ admin.initializeApp();
 // ── Purchase Callables ──
 export {verifyPurchase} from "./purchase/verifyPurchase";
 export {getEntitlements} from "./purchase/getEntitlements";
-export {getRecentRentalPurchases30d} from "./purchase/getRecentRentalPurchases30d";
+export {getRecentPurchases30d} from "./purchase/getRecentPurchases30d";
+export {deleteMyPurchases} from "./purchase/deleteMyPurchases";

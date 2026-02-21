@@ -95,22 +95,27 @@ namespace GooglePlayGames.Android
 
             string methodName = isAutoSignIn ? "isAuthenticated" : "signIn";
 
-            OurUtils.Logger.d("Starting Auth using the method " + methodName);
-            using (var client = getGamesSignInClient())
-            using (
-                var task = client.Call<AndroidJavaObject>(methodName))
-            {
-                AndroidTaskUtils.AddOnSuccessListener<AndroidJavaObject>(task, authenticationResult =>
+            try {
+                using (var client = getGamesSignInClient())
                 {
-                    bool isAuthenticated = authenticationResult.Call<bool>("isAuthenticated");
-                    SignInOnResult(isAuthenticated, callback);
-                });
+                    using (var task = client.Call<AndroidJavaObject>(methodName))
+                    {
+                        AndroidTaskUtils.AddOnSuccessListener<AndroidJavaObject>(task, authenticationResult =>
+                        {
+                            bool isAuthenticated = authenticationResult.Call<bool>("isAuthenticated");
+                            SignInOnResult(isAuthenticated, callback);
+                        });
 
-                AndroidTaskUtils.AddOnFailureListener(task, exception =>
-                {
-                    OurUtils.Logger.e("Authentication failed - " + exception.Call<string>("toString"));
-                    callback(SignInStatus.InternalError);
-                });
+                        AndroidTaskUtils.AddOnFailureListener(task, exception =>
+                        {
+                            OurUtils.Logger.e("Authentication failed - " + exception.Call<string>("toString"));
+                            callback(SignInStatus.InternalError);
+                        });
+                    }
+                }
+            } catch (Exception e) {
+                OurUtils.Logger.e("Authentication exception - " + e.ToString());
+                callback(SignInStatus.InternalError);
             }
         }
 
@@ -173,7 +178,6 @@ namespace GooglePlayGames.Android
             {
                 lock (AuthStateLock)
                 {
-                    OurUtils.Logger.e("Returning an error code.");
                     InvokeCallbackOnGameThread(callback, SignInStatus.Canceled);
                 }
             }

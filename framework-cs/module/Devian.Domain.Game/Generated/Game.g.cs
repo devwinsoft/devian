@@ -53,9 +53,8 @@ namespace Devian.Domain.Game
     public enum ProductKind
     {
         Consumable = 0,
-        Rental = 1,
-        Subscription = 2,
-        SeasonPass = 3,
+        Subscription = 1,
+        SeasonPass = 2,
     }
 
     /// <summary>UserType enum</summary>

@@ -18,7 +18,7 @@
 
                   <!-- Required for Nearby Connections API -->
              <meta-data android:name="com.google.android.gms.nearby.connection.SERVICE_ID"
-                  android:value="com.devian.example" />
+                  android:value="com.devian.framework" />
 
 
         <!-- The space in these forces it to be interpreted as a string vs. int -->
@@ -27,7 +27,7 @@
 
         <!-- Keep track of which plugin is being used -->
         <meta-data android:name="com.google.android.gms.games.unityVersion"
-            android:value="\u0032.0.0" />
+            android:value="\u0032.1.0" />
 
         <activity android:name="com.google.games.bridge.NativeBridgeActivity"
             android:theme="@android:style/Theme.Translucent.NoTitleBar.Fullscreen" />

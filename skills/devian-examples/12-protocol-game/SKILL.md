@@ -77,8 +77,8 @@ AppliesTo: v10
 | 프로토콜 코드젠 규칙 | `skills/devian-tools/11-builder/40-codegen-protocol/SKILL.md` |
 | 프로토콜 생성 구현 | `skills/devian-tools/11-builder/44-protocolgen-implementation/SKILL.md` |
 | Network 샘플 템플릿 | `skills/devian-unity/90-samples/40-game-system/21-game-net-manager/SKILL.md` |
-| WebSocket 클라이언트 | `skills/devian/10-module/72-network-ws-client/SKILL.md` |
-| 네트워크 서버 | `skills/devian/10-module/74-network-server/SKILL.md` |
+| WebSocket 클라이언트 | `skills/devian/10-module/60-net/72-network-ws-client/SKILL.md` |
+| 네트워크 서버 | `skills/devian/10-module/60-net/74-network-server/SKILL.md` |
 
 ---
 

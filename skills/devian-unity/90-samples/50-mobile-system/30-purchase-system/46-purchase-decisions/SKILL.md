@@ -40,7 +40,8 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
 - Callable 이름(고정):
   - `verifyPurchase`
   - `getEntitlements`
-  - `getRecentRentalPurchases30d`
+  - `getRecentPurchases30d`
+  - `deleteMyPurchases` (개발/테스트 전용)
 
 - 인증 정책:
   - Callable은 `context.auth.uid` 필수(unauthenticated 거부)
@@ -50,7 +51,7 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
 - 요청 스키마(고정 키):
   - `storeKey` (`"apple" | "google"`)
   - `internalProductId` (string)
-  - `kind` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`) (=`ProductKind` string)
+  - `kind` (`"Consumable" | "Subscription" | "SeasonPass"`) (=`ProductKind` string)
   - `payload` (string, Unity IAP receipt raw)
 
 - 응답 스키마(고정 키):
@@ -85,7 +86,7 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
 - storePurchaseId 규칙(고정): `purchaseToken`
 - 제품/구독 분기:
   - `kind == Subscription` → `purchases.subscriptions.get`
-  - `kind == Rental` / `Consumable` / `SeasonPass` → `purchases.products.get` (one-time 검증 경로)
+  - `kind == Consumable` / `SeasonPass` → `purchases.products.get` (one-time 검증 경로)
 
 
 ---
@@ -117,13 +118,13 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
 ---
 
 
-## F2. storePurchasedAt / Rental 30일 조회 (결정)
+## F2. storePurchasedAt / 최근 30일 조회 (결정)
 
 
-- "최근 30일 Rental 구매 내역"의 기준 시각은 `storePurchasedAt`(영수증 날짜)이다.
+- "최근 30일 구매 내역"의 기준 시각은 `storePurchasedAt`(영수증 날짜)이다.
 - 서버 기준 `now`로 threshold(`now − 30일`)를 계산하며, 클라이언트/디바이스 시간은 사용 금지.
-- `kind` 값은 ProductKind SSOT(PascalCase) 기준으로 `"Rental"`을 사용한다.
-- Callable 이름은 `getRecentRentalPurchases30d`로 고정한다.
+- `kind` 값은 ProductKind SSOT(PascalCase) 기준이며, 호출 시 파라미터로 전달한다.
+- Callable 이름은 `getRecentPurchases30d`로 고정한다.
 - `storePurchasedAt` 값은 스토어 검증 응답에서 추출한 구매 시각이며, 서버에서만 생성한다:
   - Google: `purchaseTimeMillis` (products) / `startTimeMillis` (subscriptions)
   - Apple: `purchase_date_ms` (in_app 트랜잭션 중 `purchase_date_ms` 최댓값)
@@ -133,10 +134,30 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
   - 최신 = `storePurchasedAt`가 가장 큰 항목
   - 동률이면 문서 ID(desc)로 tie-break
 - `PurchaseManager`는 page 없이 최신 1건만 필요하므로:
-  - `getRecentRentalPurchases30d`를 `pageSize=1`로 호출하고 `items[0]`만 사용한다.
-- `getRecentRentalPurchases30d` 페이지네이션:
+  - `getRecentPurchases30d`를 `kind="Consumable"`, `pageSize=1`로 호출하고 `items[0]`만 사용한다.
+- `getRecentPurchases30d` 페이지네이션:
   - `nextCursor`는 `"storePurchasedAtMs|docId"` 문자열 토큰 형식이다.
   - `storePurchasedAtMs`는 `storePurchasedAt`의 `toMillis` 값이다.
+
+
+---
+
+
+## F3. deleteMyPurchases (개발/테스트 전용, 결정)
+
+
+- 용도: 개발/테스트 중 Firestore의 purchase 원장 + entitlements 스냅샷을 초기화한다.
+- Callable 이름: `deleteMyPurchases` (고정)
+- 인증: `context.auth.uid` 필수 (unauthenticated 거부)
+- 요청: 없음 (null)
+- 응답: `{ deletedCount: number }` — 삭제된 purchase 문서 수
+- 삭제 대상:
+  - `/users/{uid}/purchases/*` 전체 문서 삭제 (batch)
+  - `/users/{uid}/entitlements/current` 초기값으로 리셋
+    (`{ noAdsActive: false, ownedSeasonPasses: [], currencyBalances: {}, updatedAt: serverTimestamp() }`)
+- 프로덕션 가드: 환경 변수 `ALLOW_PURCHASE_DELETE`가 `"true"`일 때만 동작한다.
+  기본값은 false이며, 개발/스테이징 환경에서만 활성화한다.
+- 리전: `asia-northeast3` (기존 Callable과 동일)
 
 
 ---

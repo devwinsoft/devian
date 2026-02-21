@@ -20,12 +20,6 @@ namespace Devian
             return root.ToString();
         }
 
-        public string ToPayload()
-        {
-            var json = ToJson();
-            return ComplexUtil.Encrypt_Base64(json);
-        }
-
         public void LoadFromPayload(string payload)
         {
             var json = ComplexUtil.Decrypt_Base64(payload);

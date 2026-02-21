@@ -100,7 +100,6 @@ AppliesTo: v10
 - Consumable: 재화 등 반복 구매/즉시 지급
 - Subscription: "구독 기반 NoAds" 등 상태 기반
 - Season Pass: 시즌별 구매 1회성 Entitlement로 운영
-- Rental: 기간 한정 이용권(1회 구매, 기간 만료 후 비활성) — one-time(products) 검증 경로
 
 - kind의 정본 enum은 컨텐츠 레이어가 정의한 `ProductKind`다.
 - 테이블(`PurchaseTable.xlsx` PRODUCT.kind)의 타입은 `ProductKind`를 사용한다.
@@ -134,7 +133,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 - [x] PRODUCT 테이블 스키마/필드: — 결정됨
   - `internalProductId` (string, pk) — 내부 상품 ID (정본)
   - `rewardGroupId` (string) — 지급 Reward Key, `internalProductId -> rewardGroupId` 변환의 SSOT
-  - `kind` (ProductKind) — 상품 타입 (`Consumable` / `Rental` / `Subscription` / `SeasonPass`)
+  - `kind` (ProductKind) — 상품 타입 (`Consumable` / `Subscription` / `SeasonPass`)
   - `title` (string) — 표시용 상품명(요약)
   - `isActive` (bool) — 운영 활성 토글
   - `storeSkuApple` (string) — Apple Store SKU
@@ -180,7 +179,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
   - `uid` — Auth context에서 확보 (클라가 보내지 않음)
   - `storeKey: string` — "apple" | "google"
   - `internalProductId: string`
-  - `kind: string` — "Consumable" | "Rental" | "Subscription" | "SeasonPass" (=`ProductKind` string)
+  - `kind: string` — "Consumable" | "Subscription" | "SeasonPass" (=`ProductKind` string)
   - `payload: string` — 스토어 영수증/검증 데이터 (클라에서 `BuildVerifyPayload(receipt)` 결과)
 - 처리
   1) 스토어 서버 검증(Apple/Google)
@@ -197,7 +196,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 | C# (`VerifyPurchaseRequest`) | Callable JSON key | 비고 |
 |------------------------------|-------------------|------|
 | `InternalProductId` | `internalProductId` | |
-| `Kind` (enum → string) | `kind` | `"Consumable"` / `"Rental"` / `"Subscription"` / `"SeasonPass"` |
+| `Kind` (enum → string) | `kind` | `"Consumable"` / `"Subscription"` / `"SeasonPass"` |
 | `Store` | `storeKey` | |
 | `Payload` | `payload` | |
 
@@ -218,24 +217,35 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 | `ownedSeasonPasses` | `OwnedSeasonPasses: IReadOnlyList<string>` | |
 | `currencyBalances` | `CurrencyBalances: IReadOnlyDictionary<string, long>` | key=재화ID, value=잔고 |
 
-#### 3) getRecentRentalPurchases30d (Callable)
+#### 3) getRecentPurchases30d (Callable)
 
-- 목적: "최근 30일 이내" Rental 구매 내역 조회
+- 목적: "최근 30일 이내" 구매 내역 조회 (kind 파라미터로 필터)
 - 기준 시각: `storePurchasedAt`(영수증 날짜)
 - 30일 기준: 서버 now − 30일 (클라/기기 시간 금지)
 - 최신(latest): `storePurchasedAt` desc, 동률이면 docId desc
 - 인증: `context.auth.uid` 필수
-- 입력: `pageSize` (optional, 기본 20)
+- 입력: `kind` (string, 필수 — ProductKind 값), `pageSize` (optional, 기본 20)
 - 출력:
   - `items: array` — 각 원소: `{ purchaseId, internalProductId, storePurchasedAt, status }`
   - `nextCursor: string | null` — 형식: `"storePurchasedAtMs|docId"` (페이지네이션 토큰)
 
+#### 4) deleteMyPurchases (Callable, 개발/테스트 전용)
+
+- 입력: 없음 (`uid`는 Auth context에서 확보)
+- 처리: `/users/{uid}/purchases` 전체 삭제 + `/users/{uid}/entitlements/current` 초기값 리셋
+- 출력: `{ deletedCount: number }`
+- 가드: 환경변수 `ALLOW_PURCHASE_DELETE=true` 일 때만 동작 (기본 false, 개발/스테이징 전용)
+
 #### PurchaseManager 정식 API
 
-- `GetLatestRentalPurchase30dAsync()`
-  - 서버 Callable: `getRecentRentalPurchases30d` (`pageSize=1`로 호출, `items[0]`만 사용)
-  - 최근 30일 내 Rental 내역이 없으면 실패(`CommonErrorType.COMMON_SERVER` + 메시지)로 처리
+- `GetLatestConsumablePurchase30dAsync()`
+  - 서버 Callable: `getRecentPurchases30d` (`kind="Consumable"`, `pageSize=1`로 호출, `items[0]`만 사용)
+  - 최근 30일 내 해당 kind 내역이 없으면 실패(`CommonErrorType.COMMON_SERVER` + 메시지)로 처리
   - 페이지네이션 없이 최신 1건만 반환하는 단일 API
+- `DeleteMyPurchasesAsync()` (개발/테스트 전용)
+  - 서버 Callable: `deleteMyPurchases`
+  - 본인 uid의 모든 purchase 기록 + entitlements 초기화
+  - 삭제된 문서 수를 `int`로 반환
 
 
 ### Client-Side Purchase Flow (정본)

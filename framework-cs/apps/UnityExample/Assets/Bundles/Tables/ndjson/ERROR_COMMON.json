@@ -67,8 +67,8 @@
 {"Id":"LOGIN_SYNC_SAVE_CLOUD_FAILED","Msg_key":"","Msg":"Sync failed while saving cloud data"}
 {"Id":"LOGIN_SYNC_RESOLVE_FAILED","Msg_key":"","Msg":"Sync failed while resolving conflict"}
 {"Id":"SAVEDATA_PAYLOAD_PARSE_FAILED","Msg_key":"","Msg":"Failed to parse save payload json"}
-{"Id":"PURCHASE_RENTAL_LATEST_NOT_FOUND","Msg_key":"","Msg":"No recent rental purchase within 30 days."}
-{"Id":"PURCHASE_RENTAL_LATEST_CALL_FAILED","Msg_key":"","Msg":"Failed to fetch latest rental purchase within 30 days."}
+{"Id":"PURCHASE_RECENT_NOT_FOUND","Msg_key":"","Msg":"No recent purchase within 30 days."}
+{"Id":"PURCHASE_RECENT_CALL_FAILED","Msg_key":"","Msg":"Failed to fetch recent purchase within 30 days."}
 {"Id":"PURCHASE_NETWORK_UNAVAILABLE","Msg_key":"","Msg":"Network unavailable."}
 {"Id":"PURCHASE_UNAUTHENTICATED","Msg_key":"","Msg":"Authentication required."}
 {"Id":"PURCHASE_UNSUPPORTED_PLATFORM","Msg_key":"","Msg":"PurchaseManager is not supported in Editor."}

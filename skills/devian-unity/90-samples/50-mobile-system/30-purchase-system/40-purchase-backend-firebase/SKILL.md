@@ -11,10 +11,11 @@ AppliesTo: v10
 
 `PurchaseManager`가 호출할 **검증 서버(Firebase Cloud Functions)** 와 **원장/entitlements 저장소(Firestore)** 를 "스텁 없이" 구현하기 위한 **구현 정본 스킬**이다.
 
-이 스킬은 아래 2개 Callable의 "프로젝트 구조/배포/Firestore 스키마/멱등 규칙"을 고정한다.
+이 스킬은 아래 Callable의 "프로젝트 구조/배포/Firestore 스키마/멱등 규칙"을 고정한다.
 
 - `verifyPurchase`
 - `getEntitlements`
+- `deleteMyPurchases` (개발/테스트 전용 — 46 스킬 F3 참조)
 
 
 ---
@@ -50,7 +51,7 @@ NEEDS CHECK: Firebase CLI 사용 여부/버전이 레포에서 고정돼 있어�
 - `purchaseId: string` (doc id와 동일)
 - `storeKey: string` (`"apple" | "google"`)
 - `internalProductId: string`
-- `kind: string` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`) (=`ProductKind` string)
+- `kind: string` (`"Consumable" | "Subscription" | "SeasonPass"`) (=`ProductKind` string)
 - `status: string` (SSOT의 resultStatus에 대응하는 소문자 저장: `"granted" | "already_granted" | "rejected" | "pending" | "revoked" | "refunded"`)
 - `storePurchasedAt: Timestamp` — 영수증/스토어 검증 응답에서 추출한 구매 시각(서버에서만 생성, 클라 시간 사용 금지)
 - `createdAt: Timestamp`
@@ -111,6 +112,8 @@ NEEDS CHECK:
 
 SSOT의 "C# ↔ Callable 필드 매핑"을 그대로 따른다. (SSOT: 03-ssot 문서 C 섹션)
 
+`deleteMyPurchases` Callable은 개발/테스트 전용이며, 환경 변수 `ALLOW_PURCHASE_DELETE=true`일 때만 동작한다. 상세 계약은 46 스킬 F3 참조.
+
 NEEDS CHECK:
 - 실제 TS/JS Functions 구현 시 요청/응답 타입 파일을 어디에 둘지(예: `functions/src/types`)를 레포 구조에 맞게 고정한다.
 
@@ -120,13 +123,13 @@ NEEDS CHECK:
 
 ## F. Firestore Index (정본)
 
-`getRecentRentalPurchases30d` 쿼리는 복합 인덱스를 요구한다:
+`getRecentPurchases30d` 쿼리는 복합 인덱스를 요구한다:
 - `kind` ASC
 - `storePurchasedAt` DESC
 - `__name__` DESC (docId tie-break)
 
 쿼리 조건:
-- `where(kind == "Rental")`
+- `where(kind == <kind 파라미터>)` (ProductKind 값)
 - `where(storePurchasedAt >= threshold)` (서버 now − 30일)
 - `orderBy(storePurchasedAt, desc)`
 - `orderBy(documentId(), desc)`

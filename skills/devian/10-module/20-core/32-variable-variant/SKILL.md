@@ -111,4 +111,4 @@ TypeScript:
 
 ## Reference
 
-- SSOT: 이 파일 (`skills/devian/10-module/32-variable-variant/SKILL.md`)
+- SSOT: 이 파일 (`skills/devian/10-module/20-core/32-variable-variant/SKILL.md`)

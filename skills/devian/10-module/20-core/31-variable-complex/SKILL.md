@@ -247,7 +247,7 @@ PropertyDrawer 파일:
 
 ## Reference
 
-- CBigInt Skill: skills/devian/10-module/35-variable-bigint/SKILL.md
+- CBigInt Skill: skills/devian/10-module/20-core/35-variable-bigint/SKILL.md
 - Unity Components Index: skills/devian-unity/10-foundation/SKILL.md
 - Foundation Package SSOT: skills/devian/10-module/03-ssot/SKILL.md
 - Domain Common Package: skills/devian-unity/06-domain-packages/com.devian.domain.common/SKILL.md

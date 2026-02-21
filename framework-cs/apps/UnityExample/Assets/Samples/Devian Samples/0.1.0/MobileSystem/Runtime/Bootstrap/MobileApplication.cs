@@ -57,11 +57,16 @@ namespace Devian
             {
                 // GPGS v2 first, then v1 fallback.
                 var platformType = Type.GetType("GooglePlayGames.PlayGamesPlatform, Google.Play.Games");
-                if (platformType == null)
-                    platformType = Type.GetType("GooglePlayGames.PlayGamesPlatform, GooglePlayGames");
 
                 if (platformType == null)
+                {
+                    platformType = Type.GetType("GooglePlayGames.PlayGamesPlatform, GooglePlayGames");
+                }
+
+                if (platformType == null)
+                {
                     return;
+                }
 
                 var activate = platformType.GetMethod(
                     "Activate",
@@ -70,11 +75,15 @@ namespace Devian
                     types: Type.EmptyTypes,
                     modifiers: null);
 
-                activate?.Invoke(null, null);
+                if (activate == null)
+                {
+                    return;
+                }
+
+                activate.Invoke(null, null);
             }
-            catch
+            catch (Exception)
             {
-                // Intentionally ignore: plugin may be partially missing or stripped.
             }
         }
         #endif

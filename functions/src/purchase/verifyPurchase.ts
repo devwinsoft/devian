@@ -44,7 +44,7 @@ async function readEntitlementsSnapshot(uid: string) {
 
 // ── 입력 검증 ──
 type StoreKey = "apple" | "google";
-type Kind = "Consumable" | "Rental" | "Subscription" | "SeasonPass";
+type Kind = "Consumable" | "Subscription" | "SeasonPass";
 
 interface VerifyRequest {
   storeKey: StoreKey;
@@ -62,8 +62,8 @@ function validateRequest(data: any): VerifyRequest {
   if (!internalProductId || typeof internalProductId !== "string") {
     throw new HttpsError("invalid-argument", "internalProductId is required");
   }
-  if (!kind || !["Consumable", "Rental", "Subscription", "SeasonPass"].includes(kind)) {
-    throw new HttpsError("invalid-argument", "kind must be Consumable/Rental/Subscription/SeasonPass");
+  if (!kind || !["Consumable", "Subscription", "SeasonPass"].includes(kind)) {
+    throw new HttpsError("invalid-argument", "kind must be Consumable/Subscription/SeasonPass");
   }
   if (!payload || typeof payload !== "string") {
     throw new HttpsError("invalid-argument", "payload is required");

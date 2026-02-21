@@ -42,7 +42,7 @@ NEEDS CHECK:
 
 검증 엔드포인트 분기 (kind 기준):
 - `kind == Subscription` → `purchases.subscriptions.get`
-- `kind == Rental` / `Consumable` / `SeasonPass` → `purchases.products.get` (one-time 검증 경로)
+- `kind == Consumable` / `SeasonPass` → `purchases.products.get` (one-time 검증 경로)
 
 서버가 최소로 저장해야 할 필드(원장):
 - `internalProductId`
@@ -66,7 +66,6 @@ NEEDS CHECK:
 
 검증 엔드포인트:
 - Apple `verifyReceipt`는 kind에 관계없이 동일 엔드포인트를 사용한다.
-- `Rental`은 Apple에서도 one-time 구매로 처리된다.
 
 서버가 최소로 저장해야 할 필드(원장):
 - `internalProductId`

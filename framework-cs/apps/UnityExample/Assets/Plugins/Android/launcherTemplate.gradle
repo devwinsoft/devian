@@ -5,10 +5,10 @@ apply from: '../shared/common.gradle'
 
 dependencies {
     implementation project(':unityLibrary')
-    // gpgs-plugin-support:2.0.0 이 play-services-games-v2:20.1.2 를 transitive 의존으로 포함.
-    // "+" (dynamic version) 사용 시 최신 SDK(21.x+)가 해석되어 isAuthenticated() 서명 불일치 발생.
+    // gpgs-plugin-support:2.1.0 이 play-services-games-v2:21.0.0 를 transitive 의존으로 포함.
+    // "+" (dynamic version) 사용 시 최신 SDK가 해석되어 서명 불일치 발생 가능.
     // gpgs-plugin-support 버전과 일치하도록 고정한다.
-    implementation "com.google.android.gms:play-services-games-v2:20.1.2"
+    implementation "com.google.android.gms:play-services-games-v2:21.0.0"
 }
 
 android {

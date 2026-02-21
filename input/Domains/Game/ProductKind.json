@@ -8,16 +8,12 @@
           "value": 0
         },
         {
-          "name": "Rental",
+          "name": "Subscription",
           "value": 1
         },
         {
-          "name": "Subscription",
-          "value": 2
-        },
-        {
           "name": "SeasonPass",
-          "value": 3
+          "value": 2
         }
       ]
     }

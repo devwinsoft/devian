@@ -13,7 +13,6 @@ namespace Devian
                     return PurchaseProductType.Subscription;
                 case ProductKind.Consumable:
                     return PurchaseProductType.Consumable;
-                case ProductKind.Rental:
                 case ProductKind.SeasonPass:
                 default:
                     return PurchaseProductType.NonConsumable;

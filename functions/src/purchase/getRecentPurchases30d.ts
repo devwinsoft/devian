@@ -1,11 +1,11 @@
 /**
- * getRecentRentalPurchases30d.ts — Firebase Callable: 최근 30일 Rental 구매 내역 조회
+ * getRecentPurchases30d.ts — Firebase Callable: 최근 30일 구매 내역 조회
  *
  * 46 스킬 F2 결정사항 준수:
  *   - 기준 시각: storePurchasedAt (영수증 날짜) — 클라이언트/디바이스 시간 사용 금지
  *   - threshold: 서버 now − 30일
- *   - kind == "Rental" (ProductKind PascalCase)
- *   - Callable 이름: getRecentRentalPurchases30d
+ *   - kind: 클라이언트 파라미터 (필수, "Consumable" | "Subscription" | "SeasonPass")
+ *   - Callable 이름: getRecentPurchases30d
  *   - 리전: asia-northeast3
  */
 
@@ -15,15 +15,22 @@ import * as logger from "firebase-functions/logger";
 
 const DEFAULT_PAGE_SIZE = 20;
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+const VALID_KINDS = ["Consumable", "Subscription", "SeasonPass"];
 
-export const getRecentRentalPurchases30d = onCall(
+export const getRecentPurchases30d = onCall(
   {region: "asia-northeast3"},
   async (request) => {
-    // 인증 필수 (46 스킬 B)
+    // 인증 필수
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Authentication required");
     }
     const uid = request.auth.uid;
+
+    // kind (필수)
+    const kind = request.data?.kind;
+    if (!kind || !VALID_KINDS.includes(kind)) {
+      throw new HttpsError("invalid-argument", `kind must be one of: ${VALID_KINDS.join(", ")}`);
+    }
 
     // pageSize (기본 20)
     const pageSize = Math.min(
@@ -36,17 +43,17 @@ export const getRecentRentalPurchases30d = onCall(
     const thresholdMs = nowMs - THIRTY_DAYS_MS;
     const threshold = admin.firestore.Timestamp.fromMillis(thresholdMs);
 
-    logger.info(`[getRecentRentalPurchases30d] uid=${uid} threshold=${threshold.toDate().toISOString()} pageSize=${pageSize}`);
+    logger.info(`[getRecentPurchases30d] uid=${uid} kind=${kind} threshold=${threshold.toDate().toISOString()} pageSize=${pageSize}`);
 
     // Firestore 쿼리:
-    //   where(kind == "Rental")
+    //   where(kind == <kind>)
     //   where(storePurchasedAt >= threshold)
     //   orderBy(storePurchasedAt desc)
     //   limit(pageSize + 1) — 다음 페이지 존재 여부 확인용
     let query = admin.firestore()
       .collection("users").doc(uid)
       .collection("purchases")
-      .where("kind", "==", "Rental")
+      .where("kind", "==", kind)
       .where("storePurchasedAt", ">=", threshold)
       .orderBy("storePurchasedAt", "desc")
       .orderBy(admin.firestore.FieldPath.documentId(), "desc")

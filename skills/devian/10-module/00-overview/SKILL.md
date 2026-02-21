@@ -3,10 +3,19 @@
 Devian 프레임워크의 핵심 정책, SSOT, 런타임, 직렬화, 네트워크 어댑터를 담당한다.
 
 - **SSOT**: 문서/코드 정합성의 단일 정본
-- **스킬 규격**: 스킬 문서 작성 규칙
-- **Core Runtime**: 언어 공통 런타임 인터페이스
-- **Serializer**: Protobuf 기반 직렬화
-- **Network Adapters**: WebSocket, HTTP-RPC 클라이언트/서버
+- **Core Runtime**: 언어 공통 런타임 인터페이스, 유틸리티, Variable 타입
+- **Proto**: Protobuf 기반 직렬화 정책
+- **Net**: WebSocket, HTTP-RPC 클라이언트/서버, WebGL 브릿지
+
+---
+
+## Sub-groups
+
+| Sub-group | Description | Maps to |
+|-----------|-------------|---------|
+| [20-core](../20-core/00-overview/SKILL.md) | Core 런타임 (Crypto, Logger, Variable) | `src/Core/`, `src/Variable/` |
+| [40-proto](../40-proto/00-overview/SKILL.md) | Serializer/Protobuf 정책 | `src/Proto/` |
+| [60-net](../60-net/00-overview/SKILL.md) | Network Adapters | `src/Net/` |
 
 ---
 
@@ -14,11 +23,15 @@ Devian 프레임워크의 핵심 정책, SSOT, 런타임, 직렬화, 네트워�
 
 | Document | Description |
 |----------|-------------|
-| [01-policy](../01-policy/SKILL.md) | Core 그룹 정책 |
+| [01-policy](../01-policy/SKILL.md) | 런타임 레이어 정책 + 의존성 규칙 |
 | [03-ssot](../03-ssot/SKILL.md) | SSOT (Single Source of Truth) |
-| [02-skill-specification](../02-skill-specification/SKILL.md) | 스킬 문서 작성 규격 |
-| [05-consumption-blueprint](../05-consumption-blueprint/SKILL.md) | 소비자 관점 통합 가이드 |
-| [10-feature-crypto](../10-feature-crypto/SKILL.md) | Crypto Feature |
+
+## Cross-cutting Policies
+
+| Document | Description |
+|----------|-------------|
+| [04-unity-csharp-compat](../04-unity-csharp-compat/SKILL.md) | Unity C# 문법/언어버전 제한 |
+| [05-generated-integration](../05-generated-integration/SKILL.md) | Generated 코드 통합 정책 |
 
 ---
 

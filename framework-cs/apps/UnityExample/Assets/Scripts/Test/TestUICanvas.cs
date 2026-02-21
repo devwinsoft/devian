@@ -51,25 +51,50 @@ public class TestUICanvas : UICanvas<TestUICanvas>
     }
     
 
-    public async void OnClick_Connect()
+    public async void OnClick_Purchase_Request()
     {
         //GameNetManager.Instance.Connect("ws://localhost:8080");
         var source = new CancellationTokenSource(System.TimeSpan.FromSeconds(15));
-        
-        var init = await Singleton.Get<PurchaseManager>().InitializeAsync(source.Token);
+        var init = await PurchaseManager.Instance.InitializeAsync(source.Token);
         if (init.IsFailure)
         {
             Debug.Log(init.Error.Code);
+            return;
         }
         
-        var rental = await Singleton.Get<PurchaseManager>().GetLatestRentalPurchase30dAsync(source.Token);
-        if (rental.IsSuccess)
+        var purchase = await PurchaseManager.Instance.PurchaseConsumableAsync("com.devian.framework.noads_month", source.Token);
+        if (purchase.IsSuccess)
         {
-            Debug.Log(rental.Value.storePurchasedAtMs);
+            Debug.Log(purchase.Value.ResultStatus);
         }
         else
         {
-            Debug.Log(rental.Error.Code);
+            Debug.Log(purchase.Error.Code);
+            return;
+        }
+        
+        var recent = await PurchaseManager.Instance.GetLatestConsumablePurchase30dAsync(source.Token);
+        if (recent.IsSuccess)
+        {
+            Debug.Log(recent.Value.storePurchasedAtMs);
+        }
+        else
+        {
+            Debug.Log(recent.Error.Code);
+        }
+    }
+
+    public async void OnClick_Purchase_Delete()
+    {
+        var source = new CancellationTokenSource(System.TimeSpan.FromSeconds(15));
+        var delete = await PurchaseManager.Instance.DeleteMyPurchasesAsync(source.Token);
+        if (delete.IsSuccess)
+        {
+            Debug.Log(delete.Value);
+        }
+        else
+        {
+            Debug.Log(delete.Error.Code);
         }
     }
     
@@ -92,10 +117,7 @@ public class TestUICanvas : UICanvas<TestUICanvas>
         {
             case SyncState.Initial:
             {
-                TestSaveData data = new TestSaveData();
-                data.name = "devian framework";
-                data.items.Add(new TestSaveData.TestItemData());
-                data.items[0].item_id = "devian item 001";
+                var data = GameStorageManager.Instance.ToJson();
                 var init = await SaveDataManager.Instance.SaveDataAsync("main", data, includeCloud: true, source.Token);
                 Debug.Log($"SaveData: {init.Value}");
                 break;
@@ -111,6 +133,10 @@ public class TestUICanvas : UICanvas<TestUICanvas>
                 Debug.Log($"Sync success: {sync.IsSuccess}");
                 Debug.Log($"LocalPayload: {sync.Value.LocalPayload?.payload}");
                 Debug.Log($"CloudPayload: {sync.Value.CloudPayload?.Payload}");
+                if (sync.IsSuccess)
+                {
+                    GameStorageManager.Instance.LoadFromPayload(sync.Value.LocalPayload?.payload);
+                }
                 break;
         }
     }
