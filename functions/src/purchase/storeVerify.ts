@@ -28,7 +28,7 @@ export interface StoreVerifyResult {
 
 export async function verifyGooglePlay(
   packageName: string,
-  internalProductId: string,
+  storeProductId: string,
   kind: string,
   purchaseToken: string,
 ): Promise<StoreVerifyResult> {
@@ -46,14 +46,14 @@ export async function verifyGooglePlay(
     // 46 스킬 D: kind == Subscription → purchases.subscriptions.get
     response = await androidPublisher.purchases.subscriptions.get({
       packageName,
-      subscriptionId: internalProductId,
+      subscriptionId: storeProductId,
       token: purchaseToken,
     });
   } else {
     // 46 스킬 D: 그 외 → purchases.products.get
     response = await androidPublisher.purchases.products.get({
       packageName,
-      productId: internalProductId,
+      productId: storeProductId,
       token: purchaseToken,
     });
   }

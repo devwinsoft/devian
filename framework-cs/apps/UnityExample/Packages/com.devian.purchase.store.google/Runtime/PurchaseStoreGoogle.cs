@@ -1,5 +1,8 @@
+using UnityEngine.Scripting;
+
 namespace Devian
 {
+    [Preserve]
     public sealed class PurchaseStoreGoogle : IPurchaseStore
     {
         public string StoreKey => "google";

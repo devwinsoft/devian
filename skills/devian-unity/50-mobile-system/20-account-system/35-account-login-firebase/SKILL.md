@@ -34,3 +34,4 @@ await AccountManager.Instance.LoginAsync(LoginType.GuestLogin, CancellationToken
 ## Notes
 - Firebase SDK가 프로젝트에 설치되어 있어야 컴파일된다(FirebaseApp, FirebaseAuth 사용).
 - Firebase 의존을 "AccountManager의 Guest 경로"에만 두고, GPGS/Apple 로그인 매니저는 Firebase와 독립 유지한다.
+- 인증 상태의 최종 판단은 AccountManager가 담당하며, 다른 시스템에서 FirebaseAuth를 직접 로그인 판정 게이트로 사용하지 않는다.

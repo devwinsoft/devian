@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Devian;
+using Devian.Domain.Game;
 using Devian.Protocol.Game;
 #if UNITY_ANDROID && !UNITY_EDITOR
 using GooglePlayGames;
@@ -51,52 +52,65 @@ public class TestUICanvas : UICanvas<TestUICanvas>
     }
     
 
-    public async void OnClick_Purchase_Request()
+    public async void OnClick_Purchase_1()
     {
-        //GameNetManager.Instance.Connect("ws://localhost:8080");
+        Debug.Log(TestBootstrap.GetVersionCode());
+
         var source = new CancellationTokenSource(System.TimeSpan.FromSeconds(15));
         var init = await PurchaseManager.Instance.InitializeAsync(source.Token);
         if (init.IsFailure)
         {
-            Debug.Log(init.Error.Code);
+            Debug.Log($"{init.Error.Code}: {init.Error.Message}");
             return;
         }
         
-        var purchase = await PurchaseManager.Instance.PurchaseConsumableAsync("com.devian.framework.noads_month", source.Token);
+        var purchase = await PurchaseManager.Instance.PurchaseAsync("com.devian.framework.noads_month", source.Token);
         if (purchase.IsSuccess)
         {
             Debug.Log(purchase.Value.ResultStatus);
         }
         else
         {
-            Debug.Log(purchase.Error.Code);
+            Debug.Log($"{purchase.Error.Code}: {purchase.Error.Message}");
             return;
         }
-        
-        var recent = await PurchaseManager.Instance.GetLatestConsumablePurchase30dAsync(source.Token);
+
+        var recent = await PurchaseManager.Instance.GetLatestRentalPurchase30dAsync(source.Token);
         if (recent.IsSuccess)
         {
             Debug.Log(recent.Value.storePurchasedAtMs);
         }
         else
         {
-            Debug.Log(recent.Error.Code);
+            Debug.Log($"{recent.Error.Code}: {recent.Error.Message}");
         }
     }
 
-    public async void OnClick_Purchase_Delete()
+    
+    public async void OnClick_Purchase_2()
     {
+        Debug.Log(TestBootstrap.GetVersionCode());
+
         var source = new CancellationTokenSource(System.TimeSpan.FromSeconds(15));
-        var delete = await PurchaseManager.Instance.DeleteMyPurchasesAsync(source.Token);
-        if (delete.IsSuccess)
+        var init = await PurchaseManager.Instance.InitializeAsync(source.Token);
+        if (init.IsFailure)
         {
-            Debug.Log(delete.Value);
+            Debug.Log($"{init.Error.Code}: {init.Error.Message}");
+            return;
+        }
+        
+        var purchase = await PurchaseManager.Instance.PurchaseAsync("com.devian.framework.chest_001", source.Token);
+        if (purchase.IsSuccess)
+        {
+            Debug.Log(purchase.Value.ResultStatus);
         }
         else
         {
-            Debug.Log(delete.Error.Code);
+            Debug.Log($"{purchase.Error.Code}: {purchase.Error.Message}");
+            return;
         }
     }
+    
     
     public async void OnClick_Echo()
     {

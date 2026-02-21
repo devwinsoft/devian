@@ -4,6 +4,14 @@
 // firebase deploy
 firebase deploy --only functions
 
+// 특정 유저 구매만 삭제
+firebase firestore:delete users/<UID>/purchases --recursive -f --project devian-framwork-example
+
+// 해당 유저 entitlement 문서도 제거(또는 콘솔에서 수동 초기화)
+firebase firestore:delete users/<UID>/entitlements/current -f --project devian-framwork-example
+
+// DB 전체 삭제(진짜 전체 초기화, 매우 위험)
+firebase firestore:delete --all-collections -f --project devian-framwork-example
 
 // 보안 해제
 xattr -dr com.apple.quarantine Assets/Firebase

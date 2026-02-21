@@ -63,6 +63,14 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 
 연관: [49-reward-system](../../49-reward-system/00-overview/SKILL.md)
 
+### 5) 구매 전 인증 판정은 AccountManager 단일 책임이다
+
+- PurchaseManager는 "로그인 여부"를 `FirebaseAuth.CurrentUser`로 직접 판정하지 않는다.
+- 구매 가능 여부는 AccountManager의 로그인 상태 API(`IsPurchaseLoginReady` 등)로 판단한다.
+- Android 정책: GPGS silent 인증이 이미 성립한 경우, 구매 진입 시 AccountManager가 Google 로그인(Firebase 연동)을
+  자동 보정해 구매 가능 상태로 승격할 수 있다(사용자 명시 로그인 버튼 없이 가능).
+- Firebase Auth context(`context.auth.uid`)는 서버 `verifyPurchase`에서 최종 검증한다.
+
 
 ---
 

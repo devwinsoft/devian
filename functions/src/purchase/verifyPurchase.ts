@@ -3,7 +3,7 @@
  *
  * 46 스킬 결정사항 전수 준수:
  *   B. Callable 이름 = "verifyPurchase", context.auth.uid 필수
- *   B. 요청 키: storeKey, internalProductId, kind, payload
+ *   B. 요청 키: storeKey, internalProductId, kind, payload (+ optional storeProductId)
  *   B. 응답 키: resultStatus, grants, entitlementsSnapshot
  *   C. 멱등키: purchaseId = "{storeKey}_{storePurchaseId}"
  *   F. grants 빈 배열 허용, GRANTED/ALREADY_GRANTED 시 entitlementsSnapshot 반환
@@ -44,17 +44,18 @@ async function readEntitlementsSnapshot(uid: string) {
 
 // ── 입력 검증 ──
 type StoreKey = "apple" | "google";
-type Kind = "Consumable" | "Subscription" | "SeasonPass";
+type Kind = "Consumable" | "Rental" | "Subscription" | "SeasonPass";
 
 interface VerifyRequest {
   storeKey: StoreKey;
   internalProductId: string;
+  storeProductId?: string;
   kind: Kind;
   payload: string;
 }
 
 function validateRequest(data: any): VerifyRequest {
-  const {storeKey, internalProductId, kind, payload} = data;
+  const {storeKey, internalProductId, storeProductId, kind, payload} = data;
 
   if (!storeKey || !["apple", "google"].includes(storeKey)) {
     throw new HttpsError("invalid-argument", "storeKey must be 'apple' or 'google'");
@@ -62,14 +63,71 @@ function validateRequest(data: any): VerifyRequest {
   if (!internalProductId || typeof internalProductId !== "string") {
     throw new HttpsError("invalid-argument", "internalProductId is required");
   }
-  if (!kind || !["Consumable", "Subscription", "SeasonPass"].includes(kind)) {
-    throw new HttpsError("invalid-argument", "kind must be Consumable/Subscription/SeasonPass");
+  if (storeProductId !== undefined && typeof storeProductId !== "string") {
+    throw new HttpsError("invalid-argument", "storeProductId must be string when provided");
+  }
+  if (!kind || !["Consumable", "Rental", "Subscription", "SeasonPass"].includes(kind)) {
+    throw new HttpsError("invalid-argument", "kind must be Consumable/Rental/Subscription/SeasonPass");
   }
   if (!payload || typeof payload !== "string") {
     throw new HttpsError("invalid-argument", "payload is required");
   }
 
-  return {storeKey, internalProductId, kind, payload};
+  return {storeKey, internalProductId, storeProductId, kind, payload};
+}
+
+interface GoogleReceiptInfo {
+  packageName: string;
+  productId: string;
+  purchaseToken: string;
+}
+
+function parseGoogleReceipt(payload: string, fallbackProductId: string): GoogleReceiptInfo {
+  const outer = JSON.parse(payload);
+  if (!outer || typeof outer !== "object") {
+    throw new Error("Google receipt payload is not an object.");
+  }
+
+  // Unity receipt shape:
+  //   { Store, TransactionID, Payload }
+  // where Payload is:
+  //   - stringified { json, signature } OR
+  //   - direct { purchaseToken, packageName, productId } in some SDK variants.
+  let payloadNode: any = outer.Payload ?? outer.payload ?? outer;
+  if (typeof payloadNode === "string") {
+    payloadNode = JSON.parse(payloadNode);
+  }
+
+  let purchaseData: any = payloadNode;
+  if (payloadNode && typeof payloadNode === "object" && typeof payloadNode.json === "string") {
+    purchaseData = JSON.parse(payloadNode.json);
+  }
+
+  const packageName =
+    purchaseData?.packageName ??
+    payloadNode?.packageName ??
+    outer.packageName ??
+    "";
+  const productId =
+    purchaseData?.productId ??
+    payloadNode?.productId ??
+    outer.productId ??
+    fallbackProductId;
+  const purchaseToken =
+    purchaseData?.purchaseToken ??
+    payloadNode?.purchaseToken ??
+    outer.purchaseToken ??
+    "";
+
+  if (!packageName || !productId || !purchaseToken) {
+    throw new Error(`Google receipt is missing required fields. package=${!!packageName} product=${!!productId} token=${!!purchaseToken}`);
+  }
+
+  return {
+    packageName: String(packageName),
+    productId: String(productId),
+    purchaseToken: String(purchaseToken),
+  };
 }
 
 // ═══════════════════════════════════════════
@@ -94,15 +152,12 @@ export const verifyPurchase = onCall(
     let storeResult;
     try {
       if (req.storeKey === "google") {
-        // Google: payload = purchaseToken (Unity IAP receipt에서 추출)
-        const receiptJson = JSON.parse(req.payload);
-        const purchaseToken = receiptJson.purchaseToken ?? receiptJson.Payload ?? req.payload;
-        const packageName = receiptJson.packageName ?? receiptJson.Store ?? "";
+        const googleReceipt = parseGoogleReceipt(req.payload, req.storeProductId ?? req.internalProductId);
         storeResult = await verifyGooglePlay(
-          packageName,
-          req.internalProductId,
+          googleReceipt.packageName,
+          googleReceipt.productId,
           req.kind,
-          purchaseToken,
+          googleReceipt.purchaseToken,
         );
       } else {
         // Apple: payload = receipt raw (base64)
@@ -137,11 +192,59 @@ export const verifyPurchase = onCall(
       };
     }
 
-    // ── 2) 멱등키 생성 (46 스킬 C 섹션) ──
+    // ── 2) kind별 구매 제한 검사 ──
+    // Consumable: 제한 없음
+    // Rental: 동일 internalProductId로 30일 이내 구매 기록 있으면 거부
+    // SeasonPass: 동일 internalProductId로 구매 기록 1건이라도 있으면 거부
+    if (req.kind === "Rental") {
+      const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+      const thresholdMs = admin.firestore.Timestamp.now().toMillis() - THIRTY_DAYS_MS;
+      const threshold = admin.firestore.Timestamp.fromMillis(thresholdMs);
+
+      const recentSnap = await admin.firestore()
+        .collection("users").doc(uid)
+        .collection("purchases")
+        .where("internalProductId", "==", req.internalProductId)
+        .where("kind", "==", "Rental")
+        .where("status", "==", "GRANTED")
+        .where("storePurchasedAt", ">=", threshold)
+        .limit(1)
+        .get();
+
+      if (!recentSnap.empty) {
+        logger.warn(`[verifyPurchase] Rental purchase blocked: uid=${uid} product=${req.internalProductId} (already purchased within 30 days)`);
+        return {
+          resultStatus: "REJECTED",
+          rejectReason: "RENTAL_ALREADY_ACTIVE",
+          grants: [],
+        };
+      }
+    } else if (req.kind === "SeasonPass") {
+      const existingSnap = await admin.firestore()
+        .collection("users").doc(uid)
+        .collection("purchases")
+        .where("internalProductId", "==", req.internalProductId)
+        .where("kind", "==", "SeasonPass")
+        .where("status", "==", "GRANTED")
+        .limit(1)
+        .get();
+
+      if (!existingSnap.empty) {
+        logger.warn(`[verifyPurchase] SeasonPass purchase blocked: uid=${uid} product=${req.internalProductId} (already purchased)`);
+        return {
+          resultStatus: "REJECTED",
+          rejectReason: "SEASON_PASS_ALREADY_OWNED",
+          grants: [],
+        };
+      }
+    }
+    // Consumable, Subscription: 제한 없음
+
+    // ── 3) 멱등키 생성 (46 스킬 C 섹션) ──
     // purchaseId = "{storeKey}_{storePurchaseId}"
     const purchaseId = `${req.storeKey}_${storeResult.storePurchaseId}`;
 
-    // ── 3) Firestore 트랜잭션: 원장 upsert + 중복 지급 방지 ──
+    // ── 4) Firestore 트랜잭션: 원장 upsert + 중복 지급 방지 ──
     const db = admin.firestore();
     const purchaseRef = purchaseDocRef(uid, purchaseId);
     const entitlementRef = entitlementsDocRef(uid);
@@ -182,7 +285,7 @@ export const verifyPurchase = onCall(
       return "GRANTED";
     });
 
-    // ── 4) 응답 구성 (46 스킬 B + F 섹션) ──
+    // ── 5) 응답 구성 (46 스킬 B + F 섹션) ──
     // 46 스킬 F: grants 빈 배열 허용
     // 46 스킬 F: GRANTED/ALREADY_GRANTED 시 entitlementsSnapshot 반환
     const entitlementsSnapshot = await readEntitlementsSnapshot(uid);

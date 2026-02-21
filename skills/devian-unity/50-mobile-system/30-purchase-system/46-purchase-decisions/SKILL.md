@@ -41,7 +41,6 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
   - `verifyPurchase`
   - `getEntitlements`
   - `getRecentPurchases30d`
-  - `deleteMyPurchases` (개발/테스트 전용)
 
 - 인증 정책:
   - Callable은 `context.auth.uid` 필수(unauthenticated 거부)
@@ -138,26 +137,6 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
 - `getRecentPurchases30d` 페이지네이션:
   - `nextCursor`는 `"storePurchasedAtMs|docId"` 문자열 토큰 형식이다.
   - `storePurchasedAtMs`는 `storePurchasedAt`의 `toMillis` 값이다.
-
-
----
-
-
-## F3. deleteMyPurchases (개발/테스트 전용, 결정)
-
-
-- 용도: 개발/테스트 중 Firestore의 purchase 원장 + entitlements 스냅샷을 초기화한다.
-- Callable 이름: `deleteMyPurchases` (고정)
-- 인증: `context.auth.uid` 필수 (unauthenticated 거부)
-- 요청: 없음 (null)
-- 응답: `{ deletedCount: number }` — 삭제된 purchase 문서 수
-- 삭제 대상:
-  - `/users/{uid}/purchases/*` 전체 문서 삭제 (batch)
-  - `/users/{uid}/entitlements/current` 초기값으로 리셋
-    (`{ noAdsActive: false, ownedSeasonPasses: [], currencyBalances: {}, updatedAt: serverTimestamp() }`)
-- 프로덕션 가드: 환경 변수 `ALLOW_PURCHASE_DELETE`가 `"true"`일 때만 동작한다.
-  기본값은 false이며, 개발/스테이징 환경에서만 활성화한다.
-- 리전: `asia-northeast3` (기존 Callable과 동일)
 
 
 ---

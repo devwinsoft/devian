@@ -1,81 +1,96 @@
-{"Id":"COMMON_UNKNOWN","Msg_key":"","Msg":"Unknown error"}
-{"Id":"COMMON_NETWORK","Msg_key":"","Msg":"Network error"}
+{"Id":"CLOUDSAVE_CHECKSUM","Msg_key":"","Msg":"Checksum mismatch"}
+{"Id":"CLOUDSAVE_DELETE","Msg_key":"","Msg":"Cloud delete failed"}
+{"Id":"CLOUDSAVE_KEYIV","Msg_key":"","Msg":"Key/IV error"}
+{"Id":"CLOUDSAVE_LOAD","Msg_key":"","Msg":"Cloud load failed"}
+{"Id":"CLOUDSAVE_NOCLIENT","Msg_key":"","Msg":"Client not configured"}
+{"Id":"CLOUDSAVE_PAYLOAD_INVALID","Msg_key":"","Msg":"Payload must be JSON"}
+{"Id":"CLOUDSAVE_SAVE","Msg_key":"","Msg":"Cloud save failed"}
+{"Id":"CLOUDSAVE_SIGNIN","Msg_key":"","Msg":"Cloud save sign-in failed"}
+{"Id":"CLOUDSAVE_SLOT_EMPTY","Msg_key":"","Msg":"Slot is empty"}
+{"Id":"CLOUDSAVE_SLOT_MISSING","Msg_key":"","Msg":"Slot not configured"}
 {"Id":"COMMON_AUTH","Msg_key":"","Msg":"Authorization error"}
+{"Id":"COMMON_NETWORK","Msg_key":"","Msg":"Network error"}
 {"Id":"COMMON_RATE_LIMIT","Msg_key":"","Msg":"Too many requests"}
 {"Id":"COMMON_SERVER","Msg_key":"","Msg":"Server error"}
-{"Id":"FIREBASE_DEPENDENCY","Msg_key":"","Msg":"Firebase dependency error"}
-{"Id":"FIREBASE_NOT_INITIALIZED","Msg_key":"","Msg":"Firebase is not initialized"}
-{"Id":"FIREBASE_SIGNIN","Msg_key":"","Msg":"Firebase sign-in failed"}
-{"Id":"FIREBASE_NO_USER","Msg_key":"","Msg":"No signed-in user"}
-{"Id":"FIREBASE_TOKEN","Msg_key":"","Msg":"Failed to get ID token"}
-{"Id":"FIREBASE_GOOGLE_TOKEN","Msg_key":"","Msg":"Google idToken is empty"}
-{"Id":"FIREBASE_GOOGLE_SIGNIN","Msg_key":"","Msg":"Google sign-in failed"}
-{"Id":"FIREBASE_GOOGLE_REAUTH_REQUIRED","Msg_key":"","Msg":"Google re-authentication required"}
-{"Id":"FIREBASE_APPLE_TOKEN","Msg_key":"","Msg":"Apple identity token is empty"}
-{"Id":"FIREBASE_APPLE_SIGNIN","Msg_key":"","Msg":"Apple sign-in failed"}
+{"Id":"COMMON_UNKNOWN","Msg_key":"","Msg":"Unknown error"}
 {"Id":"FIREBASE_APPLE_BRIDGE","Msg_key":"","Msg":"Apple sign-in bridge is not wired"}
+{"Id":"FIREBASE_APPLE_SIGNIN","Msg_key":"","Msg":"Apple sign-in failed"}
+{"Id":"FIREBASE_APPLE_TOKEN","Msg_key":"","Msg":"Apple identity token is empty"}
+{"Id":"FIREBASE_DEPENDENCY","Msg_key":"","Msg":"Firebase dependency error"}
 {"Id":"FIREBASE_FACEBOOK_NOT_IMPLEMENTED","Msg_key":"","Msg":"Facebook sign-in is not implemented"}
+{"Id":"FIREBASE_GOOGLE_REAUTH_REQUIRED","Msg_key":"","Msg":"Google re-authentication required"}
+{"Id":"FIREBASE_GOOGLE_SIGNIN","Msg_key":"","Msg":"Google sign-in failed"}
+{"Id":"FIREBASE_GOOGLE_TOKEN","Msg_key":"","Msg":"Google idToken is empty"}
+{"Id":"FIREBASE_NOT_INITIALIZED","Msg_key":"","Msg":"Firebase is not initialized"}
+{"Id":"FIREBASE_NO_USER","Msg_key":"","Msg":"No signed-in user"}
 {"Id":"FIREBASE_REAUTH_UNKNOWN","Msg_key":"","Msg":"Unknown re-authentication type"}
-{"Id":"LOGIN_FIREBASE_DEPENDENCY","Msg_key":"","Msg":"Firebase dependency error"}
+{"Id":"FIREBASE_SIGNIN","Msg_key":"","Msg":"Firebase sign-in failed"}
+{"Id":"FIREBASE_TOKEN","Msg_key":"","Msg":"Failed to get ID token"}
+{"Id":"IAP_NOT_INITIALIZED","Msg_key":"","Msg":"Store not initialized"}
+{"Id":"IAP_NOT_SUPPORTED","Msg_key":"","Msg":"Unity Purchasing not available"}
+{"Id":"INVENTORY_DELTAS_NULL","Msg_key":"","Msg":"rewards array is null"}
+{"Id":"INVENTORY_DELTA_AMOUNT_NEGATIVE","Msg_key":"","Msg":"reward amount is negative"}
+{"Id":"INVENTORY_DELTA_ID_EMPTY","Msg_key":"","Msg":"reward id is null or empty"}
+{"Id":"INVENTORY_DELTA_TYPE_INVALID","Msg_key":"","Msg":"reward type is not Item or Currency"}
+{"Id":"LOCALSAVE_CANCELLED","Msg_key":"","Msg":"Operation cancelled"}
+{"Id":"LOCALSAVE_CHECKSUM","Msg_key":"","Msg":"Checksum mismatch"}
+{"Id":"LOCALSAVE_FILENAME_EMPTY","Msg_key":"","Msg":"Filename is empty"}
+{"Id":"LOCALSAVE_FILENAME_INVALID","Msg_key":"","Msg":"Invalid filename"}
+{"Id":"LOCALSAVE_KEYIV","Msg_key":"","Msg":"Key/IV error"}
+{"Id":"LOCALSAVE_PATH_EMPTY","Msg_key":"","Msg":"Root path is empty"}
+{"Id":"LOCALSAVE_READ","Msg_key":"","Msg":"Read failed"}
+{"Id":"LOCALSAVE_SLOT_EMPTY","Msg_key":"","Msg":"Slot is empty"}
+{"Id":"LOCALSAVE_SLOT_MISSING","Msg_key":"","Msg":"Slot not configured"}
+{"Id":"LOCALSAVE_WRITE","Msg_key":"","Msg":"Write failed"}
+{"Id":"LOGIN_ANONYMOUS_EXCEPTION","Msg_key":"","Msg":"Anonymous sign-in exception"}
+{"Id":"LOGIN_ANONYMOUS_FAILED","Msg_key":"","Msg":"Anonymous sign-in returned no user"}
+{"Id":"LOGIN_APPLE_EXCEPTION","Msg_key":"","Msg":"Apple sign-in exception"}
+{"Id":"LOGIN_APPLE_LINK_FAILED","Msg_key":"","Msg":"Failed to link Apple credential"}
+{"Id":"LOGIN_APPLE_MISSING_TOKEN","Msg_key":"","Msg":"Apple IdToken and RawNonce required"}
+{"Id":"LOGIN_APPLE_SIGNIN_FAILED","Msg_key":"","Msg":"Failed to sign in with Apple credential"}
 {"Id":"LOGIN_CREDENTIAL_UNSUPPORTED","Msg_key":"","Msg":"Internal credential acquisition not supported"}
+{"Id":"LOGIN_FIREBASE_DEPENDENCY","Msg_key":"","Msg":"Firebase dependency error"}
+{"Id":"LOGIN_GOOGLE_EXCEPTION","Msg_key":"","Msg":"Google sign-in exception"}
+{"Id":"LOGIN_GOOGLE_LINK_FAILED","Msg_key":"","Msg":"Failed to link Google credential"}
+{"Id":"LOGIN_GOOGLE_MISSING_AUTH_CODE","Msg_key":"","Msg":"Google ServerAuthCode is required"}
+{"Id":"LOGIN_GOOGLE_SIGNIN_FAILED","Msg_key":"","Msg":"Failed to sign in with Google credential"}
+{"Id":"LOGIN_GPGS_AUTH_FAILED","Msg_key":"","Msg":"Google Play Games authentication failed"}
+{"Id":"LOGIN_GPGS_EXCEPTION","Msg_key":"","Msg":"GPGS credential exception"}
 {"Id":"LOGIN_GPGS_NOT_FOUND","Msg_key":"","Msg":"GooglePlayGames plugin is not installed"}
 {"Id":"LOGIN_GPGS_NOT_INITIALIZED","Msg_key":"","Msg":"PlayGamesPlatform.Instance is null"}
 {"Id":"LOGIN_GPGS_NO_AUTHENTICATE","Msg_key":"","Msg":"PlayGamesPlatform.Authenticate not found"}
-{"Id":"LOGIN_GPGS_AUTH_FAILED","Msg_key":"","Msg":"Google Play Games authentication failed"}
-{"Id":"LOGIN_GPGS_NO_SERVER_ACCESS","Msg_key":"","Msg":"PlayGamesPlatform.RequestServerSideAccess not found"}
 {"Id":"LOGIN_GPGS_NO_AUTH_CODE","Msg_key":"","Msg":"Failed to obtain server auth code from GPGS"}
-{"Id":"LOGIN_GPGS_EXCEPTION","Msg_key":"","Msg":"GPGS credential exception"}
-{"Id":"LOGIN_UNSUPPORTED","Msg_key":"","Msg":"LoginType not supported on this platform"}
-{"Id":"LOGIN_ANONYMOUS_FAILED","Msg_key":"","Msg":"Anonymous sign-in returned no user"}
-{"Id":"LOGIN_ANONYMOUS_EXCEPTION","Msg_key":"","Msg":"Anonymous sign-in exception"}
-{"Id":"LOGIN_GOOGLE_MISSING_AUTH_CODE","Msg_key":"","Msg":"Google ServerAuthCode is required"}
-{"Id":"LOGIN_GOOGLE_LINK_FAILED","Msg_key":"","Msg":"Failed to link Google credential"}
-{"Id":"LOGIN_GOOGLE_SIGNIN_FAILED","Msg_key":"","Msg":"Failed to sign in with Google credential"}
-{"Id":"LOGIN_GOOGLE_EXCEPTION","Msg_key":"","Msg":"Google sign-in exception"}
-{"Id":"LOGIN_APPLE_MISSING_TOKEN","Msg_key":"","Msg":"Apple IdToken and RawNonce required"}
-{"Id":"LOGIN_APPLE_LINK_FAILED","Msg_key":"","Msg":"Failed to link Apple credential"}
-{"Id":"LOGIN_APPLE_SIGNIN_FAILED","Msg_key":"","Msg":"Failed to sign in with Apple credential"}
-{"Id":"LOGIN_APPLE_EXCEPTION","Msg_key":"","Msg":"Apple sign-in exception"}
-{"Id":"CLOUDSAVE_KEYIV","Msg_key":"","Msg":"Key/IV error"}
-{"Id":"CLOUDSAVE_NOCLIENT","Msg_key":"","Msg":"Client not configured"}
-{"Id":"CLOUDSAVE_SLOT_EMPTY","Msg_key":"","Msg":"Slot is empty"}
-{"Id":"CLOUDSAVE_SLOT_MISSING","Msg_key":"","Msg":"Slot not configured"}
-{"Id":"CLOUDSAVE_PAYLOAD_INVALID","Msg_key":"","Msg":"Payload must be JSON"}
-{"Id":"CLOUDSAVE_SIGNIN","Msg_key":"","Msg":"Cloud save sign-in failed"}
-{"Id":"CLOUDSAVE_SAVE","Msg_key":"","Msg":"Cloud save failed"}
-{"Id":"CLOUDSAVE_LOAD","Msg_key":"","Msg":"Cloud load failed"}
-{"Id":"CLOUDSAVE_CHECKSUM","Msg_key":"","Msg":"Checksum mismatch"}
-{"Id":"CLOUDSAVE_DELETE","Msg_key":"","Msg":"Cloud delete failed"}
-{"Id":"LOCALSAVE_KEYIV","Msg_key":"","Msg":"Key/IV error"}
-{"Id":"LOCALSAVE_SLOT_EMPTY","Msg_key":"","Msg":"Slot is empty"}
-{"Id":"LOCALSAVE_SLOT_MISSING","Msg_key":"","Msg":"Slot not configured"}
-{"Id":"LOCALSAVE_FILENAME_INVALID","Msg_key":"","Msg":"Invalid filename"}
-{"Id":"LOCALSAVE_CANCELLED","Msg_key":"","Msg":"Operation cancelled"}
-{"Id":"LOCALSAVE_CHECKSUM","Msg_key":"","Msg":"Checksum mismatch"}
-{"Id":"LOCALSAVE_PATH_EMPTY","Msg_key":"","Msg":"Root path is empty"}
-{"Id":"LOCALSAVE_FILENAME_EMPTY","Msg_key":"","Msg":"Filename is empty"}
-{"Id":"LOCALSAVE_WRITE","Msg_key":"","Msg":"Write failed"}
-{"Id":"LOCALSAVE_READ","Msg_key":"","Msg":"Read failed"}
-{"Id":"IAP_NOT_INITIALIZED","Msg_key":"","Msg":"Store not initialized"}
-{"Id":"IAP_NOT_SUPPORTED","Msg_key":"","Msg":"Unity Purchasing not available"}
-{"Id":"PURCHASE_STORE_FAILED","Msg_key":"","Msg":"Purchase store failed"}
+{"Id":"LOGIN_GPGS_NO_SERVER_ACCESS","Msg_key":"","Msg":"PlayGamesPlatform.RequestServerSideAccess not found"}
 {"Id":"LOGIN_SYNC_CANCELLED","Msg_key":"","Msg":"Sync cancelled"}
-{"Id":"LOGIN_SYNC_SLOT_LIST_FAILED","Msg_key":"","Msg":"Sync failed while listing slots"}
-{"Id":"LOGIN_SYNC_LOAD_LOCAL_FAILED","Msg_key":"","Msg":"Sync failed while loading local data"}
 {"Id":"LOGIN_SYNC_LOAD_CLOUD_FAILED","Msg_key":"","Msg":"Sync failed while loading cloud data"}
-{"Id":"LOGIN_SYNC_SAVE_LOCAL_FAILED","Msg_key":"","Msg":"Sync failed while saving local data"}
-{"Id":"LOGIN_SYNC_SAVE_CLOUD_FAILED","Msg_key":"","Msg":"Sync failed while saving cloud data"}
+{"Id":"LOGIN_SYNC_LOAD_LOCAL_FAILED","Msg_key":"","Msg":"Sync failed while loading local data"}
 {"Id":"LOGIN_SYNC_RESOLVE_FAILED","Msg_key":"","Msg":"Sync failed while resolving conflict"}
-{"Id":"SAVEDATA_PAYLOAD_PARSE_FAILED","Msg_key":"","Msg":"Failed to parse save payload json"}
-{"Id":"PURCHASE_RECENT_NOT_FOUND","Msg_key":"","Msg":"No recent purchase within 30 days."}
-{"Id":"PURCHASE_RECENT_CALL_FAILED","Msg_key":"","Msg":"Failed to fetch recent purchase within 30 days."}
-{"Id":"PURCHASE_NETWORK_UNAVAILABLE","Msg_key":"","Msg":"Network unavailable."}
-{"Id":"PURCHASE_UNAUTHENTICATED","Msg_key":"","Msg":"Authentication required."}
-{"Id":"PURCHASE_UNSUPPORTED_PLATFORM","Msg_key":"","Msg":"PurchaseManager is not supported in Editor."}
+{"Id":"LOGIN_SYNC_SAVE_CLOUD_FAILED","Msg_key":"","Msg":"Sync failed while saving cloud data"}
+{"Id":"LOGIN_SYNC_SAVE_LOCAL_FAILED","Msg_key":"","Msg":"Sync failed while saving local data"}
+{"Id":"LOGIN_SYNC_SLOT_LIST_FAILED","Msg_key":"","Msg":"Sync failed while listing slots"}
+{"Id":"LOGIN_UNSUPPORTED","Msg_key":"","Msg":"LoginType not supported on this platform"}
+{"Id":"PURCHASE_ENTITLEMENTS_CALL_FAILED","Msg_key":"","Msg":"Failed to fetch entitlements snapshot."}
+{"Id":"PURCHASE_FUNCTION_RESPONSE_INVALID","Msg_key":"","Msg":"Callable returned invalid or null response payload."}
 {"Id":"PURCHASE_INIT_FAILED","Msg_key":"","Msg":"IAP initialization failed."}
 {"Id":"PURCHASE_INIT_REQUIRED","Msg_key":"","Msg":"PurchaseManager not initialized. Call InitializeAsync() first."}
+{"Id":"PURCHASE_NETWORK_UNAVAILABLE","Msg_key":"","Msg":"Network unavailable."}
 {"Id":"PURCHASE_PRODUCT_FETCH_FAILED","Msg_key":"","Msg":"Failed to fetch products from store."}
-{"Id":"INVENTORY_DELTAS_NULL","Msg_key":"","Msg":"rewards array is null"}
-{"Id":"INVENTORY_DELTA_TYPE_INVALID","Msg_key":"","Msg":"reward type is not Item or Currency"}
-{"Id":"INVENTORY_DELTA_ID_EMPTY","Msg_key":"","Msg":"reward id is null or empty"}
-{"Id":"INVENTORY_DELTA_AMOUNT_NEGATIVE","Msg_key":"","Msg":"reward amount is negative"}
+{"Id":"PURCHASE_PRODUCT_NOT_FOUND","Msg_key":"","Msg":"Product not found in TB_PRODUCT."}
+{"Id":"PURCHASE_PURCHASE_IN_PROGRESS","Msg_key":"","Msg":"Another purchase is already in progress."}
+{"Id":"PURCHASE_PURCHASE_REQUEST_FAILED","Msg_key":"","Msg":"Store purchase request failed before verification."}
+{"Id":"PURCHASE_RECENT_CALL_FAILED","Msg_key":"","Msg":"Failed to fetch recent purchases."}
+{"Id":"PURCHASE_RECENT_NOT_FOUND","Msg_key":"","Msg":"No recent rental purchase within 30 days."}
+{"Id":"PURCHASE_RENTAL_ALREADY_ACTIVE","Msg_key":"","Msg":"Rental repurchase rejected within 30 days."}
+{"Id":"PURCHASE_RENTAL_LATEST_CALL_FAILED","Msg_key":"","Msg":"Failed to fetch latest rental purchase within 30 days."}
+{"Id":"PURCHASE_RENTAL_LATEST_NOT_FOUND","Msg_key":"","Msg":"No recent rental purchase within 30 days."}
+{"Id":"PURCHASE_RESTORE_FAILED","Msg_key":"","Msg":"Restore transactions failed at store."}
+{"Id":"PURCHASE_SEASON_PASS_ALREADY_OWNED","Msg_key":"","Msg":"Season pass duplicate purchase is not allowed."}
+{"Id":"PURCHASE_STORE_FAILED","Msg_key":"","Msg":"Purchase store failed"}
+{"Id":"PURCHASE_STORE_NOT_SET","Msg_key":"","Msg":"PurchaseStore not set. Call SetPurchaseStore()."}
+{"Id":"PURCHASE_UNAUTHENTICATED","Msg_key":"","Msg":"Authentication required."}
+{"Id":"PURCHASE_UNSUPPORTED_PLATFORM","Msg_key":"","Msg":"PurchaseManager is not supported in Editor."}
+{"Id":"PURCHASE_VERIFY_CALL_FAILED","Msg_key":"","Msg":"verifyPurchase callable failed."}
+{"Id":"PURCHASE_VERIFY_FAILED_PRECONDITION","Msg_key":"","Msg":"verifyPurchase failed precondition."}
+{"Id":"PURCHASE_VERIFY_INVALID_ARGUMENT","Msg_key":"","Msg":"verifyPurchase was called with invalid arguments."}
+{"Id":"PURCHASE_VERIFY_REJECTED_UNKNOWN","Msg_key":"","Msg":"verifyPurchase rejected purchase with unknown reason."}
+{"Id":"SAVEDATA_PAYLOAD_PARSE_FAILED","Msg_key":"","Msg":"Failed to parse save payload json"}

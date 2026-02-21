@@ -2,7 +2,8 @@
   "name": "Devian.Purchase.Store.Google",
   "rootNamespace": "Devian",
   "references": [
-    "Devian.Samples.MobileSystem"
+    "Devian.Samples.MobileSystem",
+    "Devian.Unity"
   ],
   "includePlatforms": [ "Android" ],
   "excludePlatforms": [],

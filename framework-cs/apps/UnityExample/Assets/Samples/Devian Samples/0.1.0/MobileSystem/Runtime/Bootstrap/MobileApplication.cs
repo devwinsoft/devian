@@ -20,31 +20,33 @@ namespace Devian
             tryActivateGooglePlayGames();
             #endif
 
-            // Purchase store injection (platform-dependent packages)
-            trySetPurchaseStore();
-
             yield break;
         }
 
-        private static void trySetPurchaseStore()
+        /// <summary>
+        /// 플랫폼별 빌드 넘버(int)를 반환한다.
+        /// Android: PackageInfo.versionCode
+        /// Editor/기타: 0
+        /// </summary>
+        public static int GetVersionCode()
         {
-#if UNITY_IOS || UNITY_TVOS
-            // Devian.PurchaseStoreApple, Devian.Purchase.Store.Apple
-            var t = Type.GetType("Devian.PurchaseStoreApple, Devian.Purchase.Store.Apple");
-#elif UNITY_ANDROID
-            // Devian.PurchaseStoreGoogle, Devian.Purchase.Store.Google
-            var t = Type.GetType("Devian.PurchaseStoreGoogle, Devian.Purchase.Store.Google");
+#if UNITY_ANDROID && !UNITY_EDITOR
+            try
+            {
+                using var player = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+                using var activity = player.GetStatic<AndroidJavaObject>("currentActivity");
+                using var context = activity.Call<AndroidJavaObject>("getApplicationContext");
+                using var pm = context.Call<AndroidJavaObject>("getPackageManager");
+                using var info = pm.Call<AndroidJavaObject>("getPackageInfo", context.Call<string>("getPackageName"), 0);
+                return info.Get<int>("versionCode");
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
 #else
-            Type t = null;
+            return 0;
 #endif
-            if (t == null)
-                return;
-
-            var instance = Activator.CreateInstance(t) as IPurchaseStore;
-            if (instance == null)
-                return;
-
-            Singleton.Get<PurchaseManager>().SetPurchaseStore(instance);
         }
 
         #if UNITY_ANDROID && !UNITY_EDITOR

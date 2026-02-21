@@ -35,6 +35,15 @@
 
 Sync는 AccountManager의 책임이 아니며, [10-savedata-manager](../../21-savedata-system/10-savedata-manager/SKILL.md)가 담당한다.
 
+## Auth Ownership (Hard Rule)
+- 로그인/인증 상태의 최종 판단은 **AccountManager 단일 책임**이다.
+- PurchaseManager/SaveDataManager 등 다른 시스템은 `FirebaseAuth.DefaultInstance.CurrentUser`를 직접 읽어
+  "로그인 여부"를 판정하지 않는다.
+- 구매 전 인증 게이트는 AccountManager 공개 상태(`IsPurchaseLoginReady` 등)를 통해 판단한다.
+- FirebaseAuth 접근은 AccountManager 내부의 sign-in/link 구현 범위에서만 사용한다.
+- Android에서는 구매 진입 시 `EditorLogin` 상태라도, AccountManager가 GPGS silent 인증을 사용해
+  Google 로그인(Firebase credential sign-in/link)을 자동 보정할 수 있다(UI 없는 silent 경로 우선).
+
 
 ## LoginCredential
 - Guest/Editor: `LoginCredential.Empty()` 또는 `null`

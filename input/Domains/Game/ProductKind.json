@@ -8,6 +8,10 @@
           "value": 0
         },
         {
+          "name": "Rental",
+          "value": 3
+        },
+        {
           "name": "Subscription",
           "value": 1
         },

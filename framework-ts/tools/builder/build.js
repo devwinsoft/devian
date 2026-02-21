@@ -3040,7 +3040,7 @@ export * from './features';
         console.log(`    [OK] Staged to ${stagingUpm}`);
 
         // GUARD: Validate UPM sample structure (Runtime/Editor separation)
-        // SSOT: skills/devian-unity/90-samples/02-samples-authoring-guide/SKILL.md
+        // SSOT: skills/devian-unity/07-samples-creation-guide/SKILL.md
         this.validateUpmSampleStructure(stagingUpm, upmName);
     }
 
@@ -3049,7 +3049,7 @@ export * from './features';
     /**
      * GUARD: Validate UPM sample structure (Runtime/Editor separation).
      * Throws Error if sample structure is invalid.
-     * SSOT: skills/devian-unity/90-samples/02-samples-authoring-guide/SKILL.md
+     * SSOT: skills/devian-unity/07-samples-creation-guide/SKILL.md
      */
     validateUpmSampleStructure(stagingUpm, upmName) {
         const samplesDir = path.join(stagingUpm, 'Samples~');
@@ -3240,7 +3240,7 @@ export * from './features';
     /**
      * Copy entire sample package from upm to packageDir (clean copy).
      * Sample packages are not generated - they are manually authored.
-     * SSOT: skills/devian-unity/90-samples/02-samples-authoring-guide/SKILL.md
+     * SSOT: skills/devian-unity/07-samples-creation-guide/SKILL.md
      * @param {string} upmName - Sample package name (e.g., "com.devian.samples")
      */
     async copySamplePackageToTarget(upmName) {

@@ -56,9 +56,6 @@ CompoSingleton<PurchaseManager>.Instance
 - `SyncEntitlementsAsync(ct)` (서버 상태 동기화)
 - `GetLatestConsumablePurchase30dAsync(ct)` → `Task<CommonResult<RecentPurchaseItem>>`
   - 서버에서 최근 30일 내 최신 Consumable 구매 1건 조회
-- `DeleteMyPurchasesAsync(ct)` → `Task<CommonResult<int>>` (개발/테스트 전용)
-  - 본인 uid의 모든 purchase 기록 + entitlements 초기화. 삭제된 문서 수 반환.
-  - 서버 환경변수 `ALLOW_PURCHASE_DELETE=true` 필요.
 
 
 ---
@@ -99,6 +96,7 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 - 최종 지급/상태 반영은 서버(Cloud Functions) 결과(verifyPurchase/getEntitlements)만 기준으로 한다.
 - 지급 여부는 서버 `verifyPurchase.resultStatus`만 기준으로 한다(스토어 콜백만으로 지급 금지).
 - `resultStatus == GRANTED`일 때만 `ResolveRewardGroupId(internalProductId)` → `rewardGroupId` 변환 후 `Singleton.Get<RewardManager>().ApplyRewardGroupId(rewardGroupId)`로 지급 실행을 위임한다.
+- 구매 전 인증 게이트는 AccountManager 로그인 상태 API를 사용한다. (`FirebaseAuth.CurrentUser` 직접 판정 금지)
 
 
 ---

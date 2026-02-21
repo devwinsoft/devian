@@ -17,15 +17,60 @@ namespace Devian
     {
         const string Tag = "PurchaseManager";
 
+        string _functionsRegion = "asia-northeast3";
+
         protected override void Awake()
         {
             base.Awake();
             SetProductCatalog(new GameProductCatalog());
+            SetPurchaseStore(CreateDefaultStore());
+        }
+
+        /// <summary>
+        /// Firebase Cloud Functions 리전을 설정한다.
+        /// 설정하지 않으면 기본 리전(us-central1)을 사용한다.
+        /// </summary>
+        public void SetFunctionsRegion(string region)
+        {
+            _functionsRegion = region;
+        }
+
+        static IPurchaseStore CreateDefaultStore()
+        {
+#if UNITY_IOS || UNITY_TVOS
+            return new DefaultPurchaseStore("apple");
+#elif UNITY_ANDROID
+            return new DefaultPurchaseStore("google");
+#else
+            return new DefaultPurchaseStore("unknown");
+#endif
+        }
+
+        sealed class DefaultPurchaseStore : IPurchaseStore
+        {
+            public string StoreKey { get; }
+            public DefaultPurchaseStore(string storeKey) { StoreKey = storeKey; }
+            public string BuildVerifyPayload(string receipt) => receipt;
         }
 
         string ResolveRewardGroupId(string internalProductId)
         {
             return TB_PRODUCT.Get(internalProductId).RewardGroupId;
+        }
+
+        string ResolveStoreProductId(string internalProductId)
+        {
+            var product = TB_PRODUCT.Get(internalProductId);
+            if (product == null)
+                return internalProductId;
+
+#if UNITY_IOS || UNITY_TVOS
+            return string.IsNullOrEmpty(product.StoreSkuApple) ? internalProductId : product.StoreSkuApple;
+#elif UNITY_ANDROID
+            return string.IsNullOrEmpty(product.StoreSkuGoogle) ? internalProductId : product.StoreSkuGoogle;
+#else
+            return internalProductId;
+#endif
         }
 
 #if UNITY_PURCHASING
@@ -38,6 +83,7 @@ namespace Devian
 
         TaskCompletionSource<PendingOrder> _purchaseTcs;
         bool _purchaseInProgress;
+        readonly List<PendingOrder> _deferredPendingOrders = new List<PendingOrder>();
 
         IPurchaseStore _purchaseStore;
         IPurchaseProductCatalog _productCatalog;
@@ -74,22 +120,20 @@ namespace Devian
 #endif
         }
 
-        public Task<CommonResult<PurchaseFinalResult>> PurchaseConsumableAsync(
+        /// <summary>
+        /// 상품 구매를 수행한다. TB_PRODUCT에서 Kind를 조회하여 자동으로 구매 유형을 결정한다.
+        /// </summary>
+        public Task<CommonResult<PurchaseFinalResult>> PurchaseAsync(
             string internalProductId, CancellationToken ct = default)
         {
-            return purchaseAndVerifyAsync(internalProductId, PurchaseKind.Consumable, ct);
-        }
+            var product = TB_PRODUCT.Get(internalProductId);
+            if (product == null)
+                return Task.FromResult(CommonResult<PurchaseFinalResult>.Failure(
+                    CommonErrorType.PURCHASE_PRODUCT_NOT_FOUND,
+                    $"Product not found: {internalProductId}"));
 
-        public Task<CommonResult<PurchaseFinalResult>> PurchaseSubscriptionAsync(
-            string internalProductId, CancellationToken ct = default)
-        {
-            return purchaseAndVerifyAsync(internalProductId, PurchaseKind.Subscription, ct);
-        }
-
-        public Task<CommonResult<PurchaseFinalResult>> PurchaseSeasonPassAsync(
-            string internalProductId, CancellationToken ct = default)
-        {
-            return purchaseAndVerifyAsync(internalProductId, PurchaseKind.SeasonPass, ct);
+            var kind = ProductKindToPurchaseKind(product.Kind);
+            return purchaseAndVerifyAsync(internalProductId, kind, ct);
         }
 
         public async Task<CommonResult<EntitlementsSnapshot>> RestoreAsync(CancellationToken ct = default)
@@ -105,7 +149,7 @@ namespace Devian
                 if (success)
                     tcs.TrySetResult(CommonResult<bool>.Success(true));
                 else
-                    tcs.TrySetResult(CommonResult<bool>.Failure(CommonErrorType.PURCHASE_STORE_FAILED, error ?? "RestoreTransactions failed."));
+                    tcs.TrySetResult(CommonResult<bool>.Failure(CommonErrorType.PURCHASE_RESTORE_FAILED, error ?? "RestoreTransactions failed."));
             });
 
             if (ct.CanBeCanceled)
@@ -153,21 +197,30 @@ namespace Devian
             return CommonResult<RecentPurchaseItem>.Success(item);
         }
 
-        /// <summary>
-        /// [개발/테스트 전용] 본인 uid의 모든 purchase 기록 + entitlements를 삭제/초기화한다.
-        /// 서버 환경 변수 ALLOW_PURCHASE_DELETE=true 필요.
-        /// </summary>
-        public async Task<CommonResult<int>> DeleteMyPurchasesAsync(CancellationToken ct = default)
+        public async Task<CommonResult<RentalPurchaseItem>> GetLatestRentalPurchase30dAsync(CancellationToken ct = default)
         {
-            var result = await callFunctionAsync("deleteMyPurchases", null, ct);
+#if UNITY_EDITOR
+            return CommonResult<RentalPurchaseItem>.Failure(
+                CommonErrorType.PURCHASE_UNSUPPORTED_PLATFORM,
+                "PurchaseManager is not supported in Editor.");
+#endif
+            if (!_iapInitialized)
+                return CommonResult<RentalPurchaseItem>.Failure(
+                    CommonErrorType.PURCHASE_INIT_REQUIRED,
+                    "PurchaseManager not initialized. Call InitializeAsync() first.");
+
+            var data = new Dictionary<string, object> { ["pageSize"] = 1 };
+            var result = await callFunctionAsync("getRecentRentalPurchases30d", data, ct);
             if (result.IsFailure)
-                return CommonResult<int>.Failure(result.Error!);
+                return CommonResult<RentalPurchaseItem>.Failure(result.Error!);
 
-            var deletedCount = 0;
-            if (result.Value!.TryGetValue("deletedCount", out var dc))
-                deletedCount = (int)Convert.ToInt64(dc);
+            var item = parseFirstRentalPurchaseItem(result.Value!);
+            if (item == null)
+                return CommonResult<RentalPurchaseItem>.Failure(
+                    CommonErrorType.PURCHASE_RENTAL_LATEST_NOT_FOUND,
+                    "No recent rental purchase within 30 days.");
 
-            return CommonResult<int>.Success(deletedCount);
+            return CommonResult<RentalPurchaseItem>.Success(item);
         }
 
         // ── Firebase Callable Helper ─────────────────────────────
@@ -177,7 +230,10 @@ namespace Devian
         {
             try
             {
-                var callable = FirebaseFunctions.DefaultInstance.GetHttpsCallable(functionName);
+                var functions = string.IsNullOrEmpty(_functionsRegion)
+                    ? FirebaseFunctions.DefaultInstance
+                    : FirebaseFunctions.GetInstance(_functionsRegion);
+                var callable = functions.GetHttpsCallable(functionName);
                 var result = data != null
                     ? await callable.CallAsync(data)
                     : await callable.CallAsync();
@@ -187,7 +243,8 @@ namespace Devian
                 var response = result.Data as Dictionary<string, object>;
                 if (response == null)
                     return CommonResult<Dictionary<string, object>>.Failure(
-                        CommonErrorType.COMMON_SERVER, $"{functionName} returned null.");
+                        CommonErrorType.PURCHASE_FUNCTION_RESPONSE_INVALID,
+                        $"{functionName} returned null.");
 
                 return CommonResult<Dictionary<string, object>>.Success(response);
             }
@@ -195,11 +252,22 @@ namespace Devian
             catch (Exception ex)
             {
                 var mapped = mapFirebaseException(functionName, ex);
-                if (mapped.HasValue) return mapped.Value;
+                if (mapped.HasValue)
+                {
+                    var mappedError = mapped.Value.Error;
+                    var firebaseCode = ex is FunctionsException fex ? fex.ErrorCode.ToString() : "N/A";
+                    if (mappedError != null)
+                    {
+                        Debug.LogWarning(
+                            $"[{Tag}] {functionName} mapped firebase error: {mappedError.Code} " +
+                            $"(firebase={firebaseCode}) {mappedError.Message}");
+                    }
+                    return mapped.Value;
+                }
 
                 Debug.LogError($"[{Tag}] {functionName} failed: {ex.Message}");
                 return CommonResult<Dictionary<string, object>>.Failure(
-                    CommonErrorType.COMMON_SERVER, ex.Message);
+                    mapUnhandledFunctionErrorType(functionName), ex.Message);
             }
         }
 
@@ -207,20 +275,90 @@ namespace Devian
         {
             if (!(ex is FunctionsException fex)) return null;
 
+            var isVerifyPurchase = functionName == "verifyPurchase";
+            var isGetRecentPurchases = functionName == "getRecentPurchases30d";
+            var isGetRecentRentalPurchases = functionName == "getRecentRentalPurchases30d";
+            var isGetEntitlements = functionName == "getEntitlements";
+
             switch (fex.ErrorCode)
             {
                 case FunctionsErrorCode.Unauthenticated:
                     return CommonResult<Dictionary<string, object>>.Failure(
-                        CommonErrorType.PURCHASE_UNAUTHENTICATED, "Authentication required.");
+                        CommonErrorType.PURCHASE_UNAUTHENTICATED,
+                        "Authentication required.");
+
+                case FunctionsErrorCode.InvalidArgument:
+                    if (isVerifyPurchase)
+                    {
+                        return CommonResult<Dictionary<string, object>>.Failure(
+                            CommonErrorType.PURCHASE_VERIFY_INVALID_ARGUMENT,
+                            "Invalid verifyPurchase arguments.");
+                    }
+                    if (isGetRecentPurchases || isGetRecentRentalPurchases)
+                    {
+                        return CommonResult<Dictionary<string, object>>.Failure(
+                            CommonErrorType.PURCHASE_RECENT_CALL_FAILED,
+                            "Invalid getRecentPurchases request arguments.");
+                    }
+                    return CommonResult<Dictionary<string, object>>.Failure(
+                        mapUnhandledFunctionErrorType(functionName), fex.Message);
+
+                case FunctionsErrorCode.FailedPrecondition:
+                    if (isVerifyPurchase)
+                    {
+                        return CommonResult<Dictionary<string, object>>.Failure(
+                            CommonErrorType.PURCHASE_VERIFY_FAILED_PRECONDITION,
+                            "verifyPurchase failed precondition.");
+                    }
+                    return CommonResult<Dictionary<string, object>>.Failure(
+                        mapUnhandledFunctionErrorType(functionName), fex.Message);
+
+                case FunctionsErrorCode.PermissionDenied:
+                    return CommonResult<Dictionary<string, object>>.Failure(
+                        CommonErrorType.COMMON_AUTH, "Permission denied.");
 
                 case FunctionsErrorCode.Unavailable:
                 case FunctionsErrorCode.DeadlineExceeded:
                     return CommonResult<Dictionary<string, object>>.Failure(
-                        CommonErrorType.PURCHASE_NETWORK_UNAVAILABLE, "Network unavailable.");
+                        mapNetworkFunctionErrorType(functionName),
+                        "Network unavailable.");
 
                 default:
                     return CommonResult<Dictionary<string, object>>.Failure(
-                        CommonErrorType.COMMON_SERVER, fex.Message);
+                        mapUnhandledFunctionErrorType(functionName),
+                        fex.Message);
+            }
+        }
+
+        static CommonErrorType mapUnhandledFunctionErrorType(string functionName)
+        {
+            switch (functionName)
+            {
+                case "getRecentPurchases30d":
+                    return CommonErrorType.PURCHASE_RECENT_CALL_FAILED;
+                case "getRecentRentalPurchases30d":
+                    return CommonErrorType.PURCHASE_RENTAL_LATEST_CALL_FAILED;
+                case "getEntitlements":
+                    return CommonErrorType.PURCHASE_ENTITLEMENTS_CALL_FAILED;
+                case "verifyPurchase":
+                    return CommonErrorType.PURCHASE_VERIFY_CALL_FAILED;
+                default:
+                    return CommonErrorType.COMMON_SERVER;
+            }
+        }
+
+        static CommonErrorType mapNetworkFunctionErrorType(string functionName)
+        {
+            switch (functionName)
+            {
+                case "getRecentPurchases30d":
+                    return CommonErrorType.PURCHASE_RECENT_CALL_FAILED;
+                case "getRecentRentalPurchases30d":
+                    return CommonErrorType.PURCHASE_RENTAL_LATEST_CALL_FAILED;
+                case "getEntitlements":
+                    return CommonErrorType.PURCHASE_ENTITLEMENTS_CALL_FAILED;
+                default:
+                    return CommonErrorType.PURCHASE_NETWORK_UNAVAILABLE;
             }
         }
 
@@ -303,37 +441,53 @@ namespace Devian
                 return CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.PURCHASE_INIT_REQUIRED,
                     "PurchaseManager not initialized. Call InitializeAsync() first.");
 
+            var purchaseLoginReady = await ensurePurchaseLoginReadyAsync(ct);
+            if (purchaseLoginReady.IsFailure)
+                Debug.LogWarning($"[{Tag}] purchase login readiness failed: {purchaseLoginReady.Error}");
+            if (purchaseLoginReady.IsFailure || !purchaseLoginReady.Value)
+                return CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.PURCHASE_UNAUTHENTICATED,
+                    "Authentication required before purchase. Sign in with Guest, Google, or Apple first.");
+
             if (_purchaseStore == null)
-                return CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.COMMON_UNKNOWN, "PurchaseStore not set. Call SetPurchaseStore().");
+                return CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.PURCHASE_STORE_NOT_SET, "PurchaseStore not set. Call SetPurchaseStore().");
 
             if (_purchaseInProgress)
-                return CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.PURCHASE_STORE_FAILED, "Another purchase is already in progress.");
+                return CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.PURCHASE_PURCHASE_IN_PROGRESS, "Another purchase is already in progress.");
 
             _purchaseInProgress = true;
             try
             {
-                _purchaseTcs = new TaskCompletionSource<PendingOrder>();
-                _controller.PurchaseProduct(internalProductId);
-
                 PendingOrder pendingOrder;
-                try
+
+                var storeProductId = ResolveStoreProductId(internalProductId);
+                if (!TryTakeDeferredPendingOrder(storeProductId, out pendingOrder))
                 {
-                    pendingOrder = await _purchaseTcs.Task;
+                    _purchaseTcs = new TaskCompletionSource<PendingOrder>();
+                    _controller.PurchaseProduct(internalProductId);
+
+                    try
+                    {
+                        pendingOrder = await _purchaseTcs.Task;
+                    }
+                    catch (Exception ex)
+                    {
+                        return CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.PURCHASE_PURCHASE_REQUEST_FAILED, ex.Message);
+                    }
+                    finally
+                    {
+                        _purchaseTcs = null;
+                    }
                 }
-                catch (Exception ex)
+                else
                 {
-                    return CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.PURCHASE_STORE_FAILED, ex.Message);
-                }
-                finally
-                {
-                    _purchaseTcs = null;
+                    Debug.Log($"[{Tag}] Reusing deferred pending order for {storeProductId}.");
                 }
 
                 ct.ThrowIfCancellationRequested();
 
                 var store = _purchaseStore.StoreKey;
                 var payload = _purchaseStore.BuildVerifyPayload(pendingOrder.Info.Receipt);
-                var verifyResult = await verifyPurchaseAsync(internalProductId, kind, store, payload, ct);
+                var verifyResult = await verifyPurchaseAsync(internalProductId, storeProductId, kind, store, payload, ct);
                 if (verifyResult.IsFailure)
                     return CommonResult<PurchaseFinalResult>.Failure(verifyResult.Error!);
 
@@ -354,9 +508,17 @@ namespace Devian
                         new PurchaseFinalResult(internalProductId, kind, status));
                 }
 
+                var rejectReason = response.RejectReason;
+                CommonErrorType errorType;
+                if (rejectReason == "RENTAL_ALREADY_ACTIVE")
+                    errorType = CommonErrorType.PURCHASE_RENTAL_ALREADY_ACTIVE;
+                else if (rejectReason == "SEASON_PASS_ALREADY_OWNED")
+                    errorType = CommonErrorType.PURCHASE_SEASON_PASS_ALREADY_OWNED;
+                else
+                    errorType = CommonErrorType.PURCHASE_VERIFY_REJECTED_UNKNOWN;
+
                 return CommonResult<PurchaseFinalResult>.Failure(
-                    CommonErrorType.PURCHASE_STORE_FAILED,
-                    $"Purchase verify returned non-granted status: {status}");
+                    errorType, $"{status}:{rejectReason}");
             }
             finally
             {
@@ -365,13 +527,14 @@ namespace Devian
         }
 
         async Task<CommonResult<VerifyPurchaseResponse>> verifyPurchaseAsync(
-            string internalProductId, PurchaseKind kind, string store, string payload,
+            string internalProductId, string storeProductId, PurchaseKind kind, string store, string payload,
             CancellationToken ct)
         {
             var data = new Dictionary<string, object>
             {
                 ["storeKey"] = store,
                 ["internalProductId"] = internalProductId,
+                ["storeProductId"] = storeProductId,
                 ["kind"] = PurchaseKindToString(kind),
                 ["payload"] = payload,
             };
@@ -382,20 +545,29 @@ namespace Devian
 
             var response = result.Value!;
             var resultStatus = response.TryGetValue("resultStatus", out var rs) ? rs as string ?? "" : "";
+            var rejectReason = response.TryGetValue("rejectReason", out var rr) ? rr as string ?? "" : "";
 
             EntitlementsSnapshot? snapshot = null;
             if (response.TryGetValue("entitlementsSnapshot", out var snapObj) && snapObj is Dictionary<string, object> snap)
                 snapshot = ParseEntitlementsSnapshot(snap);
 
             return CommonResult<VerifyPurchaseResponse>.Success(
-                new VerifyPurchaseResponse(resultStatus, snapshot));
+                new VerifyPurchaseResponse(resultStatus, rejectReason, snapshot));
         }
 
         // ── Event Handlers ────────────────────────────────────────
 
         void onPurchasePending(PendingOrder order)
         {
-            _purchaseTcs?.TrySetResult(order);
+            if (_purchaseTcs != null)
+            {
+                _purchaseTcs.TrySetResult(order);
+                return;
+            }
+
+            _deferredPendingOrders.Add(order);
+            var storeProductId = TryExtractStoreProductIdFromReceipt(order.Info.Receipt);
+            Debug.LogWarning($"[{Tag}] Deferred pending purchase queued. storeProductId={storeProductId}");
         }
 
         void onPurchaseFailed(FailedOrder order)
@@ -451,17 +623,15 @@ namespace Devian
         static readonly Task<CommonResult<RecentPurchaseItem>> _notSupportedRecent =
             Task.FromResult(CommonResult<RecentPurchaseItem>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
-        static readonly Task<CommonResult<int>> _notSupportedInt =
-            Task.FromResult(CommonResult<int>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+        static readonly Task<CommonResult<RentalPurchaseItem>> _notSupportedRental =
+            Task.FromResult(CommonResult<RentalPurchaseItem>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
         public Task<CommonResult> InitializeAsync(CancellationToken ct = default) => _notSupportedInit;
-        public Task<CommonResult<PurchaseFinalResult>> PurchaseConsumableAsync(string internalProductId, CancellationToken ct = default) => _notSupported;
-        public Task<CommonResult<PurchaseFinalResult>> PurchaseSubscriptionAsync(string internalProductId, CancellationToken ct = default) => _notSupported;
-        public Task<CommonResult<PurchaseFinalResult>> PurchaseSeasonPassAsync(string internalProductId, CancellationToken ct = default) => _notSupported;
+        public Task<CommonResult<PurchaseFinalResult>> PurchaseAsync(string internalProductId, CancellationToken ct = default) => _notSupported;
         public Task<CommonResult<EntitlementsSnapshot>> RestoreAsync(CancellationToken ct = default) => _notSupportedSnapshot;
         public Task<CommonResult<EntitlementsSnapshot>> SyncEntitlementsAsync(CancellationToken ct = default) => _notSupportedSnapshot;
         public Task<CommonResult<RecentPurchaseItem>> GetLatestConsumablePurchase30dAsync(CancellationToken ct = default) => _notSupportedRecent;
-        public Task<CommonResult<int>> DeleteMyPurchasesAsync(CancellationToken ct = default) => _notSupportedInt;
+        public Task<CommonResult<RentalPurchaseItem>> GetLatestRentalPurchase30dAsync(CancellationToken ct = default) => _notSupportedRental;
 #endif
 
         // ── Helpers ───────────────────────────────────────────────
@@ -490,15 +660,98 @@ namespace Devian
             return new EntitlementsSnapshot(noAds, seasonPasses, balances);
         }
 
+        static PurchaseKind ProductKindToPurchaseKind(ProductKind kind)
+        {
+            switch (kind)
+            {
+                case ProductKind.Consumable: return PurchaseKind.Consumable;
+                case ProductKind.Rental: return PurchaseKind.Rental;
+                case ProductKind.Subscription: return PurchaseKind.Subscription;
+                case ProductKind.SeasonPass: return PurchaseKind.SeasonPass;
+                default: return PurchaseKind.Consumable;
+            }
+        }
+
         static string PurchaseKindToString(PurchaseKind kind)
         {
             switch (kind)
             {
                 case PurchaseKind.Consumable: return "Consumable";
+                case PurchaseKind.Rental: return "Rental";
                 case PurchaseKind.Subscription: return "Subscription";
                 case PurchaseKind.SeasonPass: return "SeasonPass";
                 default: return "Consumable";
             }
+        }
+
+        static async Task<CommonResult<bool>> ensurePurchaseLoginReadyAsync(CancellationToken ct)
+        {
+            try
+            {
+                var accountManager = AccountManager.Instance;
+                if (accountManager == null)
+                    return CommonResult<bool>.Success(false);
+
+                return await accountManager.EnsurePurchaseLoginReadyAsync(ct);
+            }
+            catch
+            {
+                return CommonResult<bool>.Success(false);
+            }
+        }
+
+        bool TryTakeDeferredPendingOrder(string expectedStoreProductId, out PendingOrder pendingOrder)
+        {
+            for (var i = 0; i < _deferredPendingOrders.Count; i++)
+            {
+                var candidate = _deferredPendingOrders[i];
+                var candidateStoreProductId = TryExtractStoreProductIdFromReceipt(candidate.Info.Receipt);
+
+                if (!string.IsNullOrEmpty(candidateStoreProductId))
+                {
+                    if (!string.Equals(candidateStoreProductId, expectedStoreProductId, StringComparison.Ordinal))
+                        continue;
+                }
+                else if (_deferredPendingOrders.Count != 1)
+                {
+                    continue;
+                }
+
+                _deferredPendingOrders.RemoveAt(i);
+                pendingOrder = candidate;
+                return true;
+            }
+
+            pendingOrder = default;
+            return false;
+        }
+
+        static string TryExtractStoreProductIdFromReceipt(string receipt)
+        {
+            if (string.IsNullOrEmpty(receipt))
+                return string.Empty;
+
+            const string plainMarker = "\"productId\":\"";
+            var plainIndex = receipt.IndexOf(plainMarker, StringComparison.Ordinal);
+            if (plainIndex >= 0)
+            {
+                var start = plainIndex + plainMarker.Length;
+                var end = receipt.IndexOf('"', start);
+                if (end > start)
+                    return receipt.Substring(start, end - start);
+            }
+
+            const string escapedMarker = "\\\"productId\\\":\\\"";
+            var escapedIndex = receipt.IndexOf(escapedMarker, StringComparison.Ordinal);
+            if (escapedIndex >= 0)
+            {
+                var start = escapedIndex + escapedMarker.Length;
+                var end = receipt.IndexOf("\\\"", start, StringComparison.Ordinal);
+                if (end > start)
+                    return receipt.Substring(start, end - start);
+            }
+
+            return string.Empty;
         }
 
         static RecentPurchaseItem parseFirstRecentPurchaseItem(Dictionary<string, object> root)
@@ -508,6 +761,21 @@ namespace Devian
             if (!(items[0] is IDictionary<string, object> first)) return null;
 
             return new RecentPurchaseItem
+            {
+                purchaseId = getString(first, "purchaseId"),
+                internalProductId = getString(first, "internalProductId"),
+                storePurchasedAtMs = getLong(first, "storePurchasedAt"),
+                status = getString(first, "status"),
+            };
+        }
+
+        static RentalPurchaseItem parseFirstRentalPurchaseItem(Dictionary<string, object> root)
+        {
+            if (!root.TryGetValue("items", out var itemsObj)) return null;
+            if (!(itemsObj is IList<object> items) || items.Count == 0) return null;
+            if (!(items[0] is IDictionary<string, object> first)) return null;
+
+            return new RentalPurchaseItem
             {
                 purchaseId = getString(first, "purchaseId"),
                 internalProductId = getString(first, "internalProductId"),
@@ -549,13 +817,15 @@ namespace Devian
 
         public readonly struct VerifyPurchaseResponse
         {
-            public VerifyPurchaseResponse(string resultStatus, EntitlementsSnapshot? snapshot)
+            public VerifyPurchaseResponse(string resultStatus, string rejectReason, EntitlementsSnapshot? snapshot)
             {
                 ResultStatus = resultStatus;
+                RejectReason = rejectReason;
                 Snapshot = snapshot;
             }
 
             public string ResultStatus { get; }
+            public string RejectReason { get; }
             public EntitlementsSnapshot? Snapshot { get; }
         }
 
@@ -590,11 +860,20 @@ namespace Devian
         public enum PurchaseKind
         {
             Consumable = 0,
-            Subscription = 1,
-            SeasonPass = 2,
+            Rental = 1,
+            Subscription = 2,
+            SeasonPass = 3,
         }
 
         public sealed class RecentPurchaseItem
+        {
+            public string purchaseId;
+            public string internalProductId;
+            public long storePurchasedAtMs;
+            public string status;
+        }
+
+        public sealed class RentalPurchaseItem
         {
             public string purchaseId;
             public string internalProductId;

@@ -15,7 +15,6 @@ AppliesTo: v10
 
 - `verifyPurchase`
 - `getEntitlements`
-- `deleteMyPurchases` (개발/테스트 전용 — 46 스킬 F3 참조)
 
 
 ---
@@ -111,8 +110,6 @@ NEEDS CHECK:
 ## E. Callable API 계약 (정본)
 
 SSOT의 "C# ↔ Callable 필드 매핑"을 그대로 따른다. (SSOT: 03-ssot 문서 C 섹션)
-
-`deleteMyPurchases` Callable은 개발/테스트 전용이며, 환경 변수 `ALLOW_PURCHASE_DELETE=true`일 때만 동작한다. 상세 계약은 46 스킬 F3 참조.
 
 NEEDS CHECK:
 - 실제 TS/JS Functions 구현 시 요청/응답 타입 파일을 어디에 둘지(예: `functions/src/types`)를 레포 구조에 맞게 고정한다.

@@ -19,6 +19,9 @@
 - **GPGS v2 전용** — `Google.Play.Games` 어셈블리만 참조한다.
 - GPGS 플러그인이 없는 환경에서도 컴파일 가능해야 한다(Reflection 기반).
 - Android 런타임 외에서는 `NotAvailable`로 안전하게 처리한다.
+- 인증 시도 순서: `Authenticate`(silent) 우선, 실패 시 `ManuallyAuthenticate`(UI) fallback.
+- AccountManager 로그인 경로에서는 `RequestServerSideAccess` auth code가 필수다. auth code가 비어 있으면 성공으로 처리하지 않고 실패로 반환한다.
+- 구매 진입 자동보정 경로에서는 `GetServerAuthCodeCredentialSilentAsync`(silent-only, UI 없음)를 사용한다.
 - 기존 기능(1) AccountManager의 GPGS auth code 획득, (2) SaveCloudClientGoogle의 Saved Games 호출을 `AccountLoginGpgs`로 모은다.
 - 완료 후 기존 분산 로직은 삭제(리팩터링)한다.
 

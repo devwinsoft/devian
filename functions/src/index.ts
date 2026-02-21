@@ -16,4 +16,4 @@ admin.initializeApp();
 export {verifyPurchase} from "./purchase/verifyPurchase";
 export {getEntitlements} from "./purchase/getEntitlements";
 export {getRecentPurchases30d} from "./purchase/getRecentPurchases30d";
-export {deleteMyPurchases} from "./purchase/deleteMyPurchases";
+export {getRecentRentalPurchases30d} from "./purchase/getRecentRentalPurchases30d";

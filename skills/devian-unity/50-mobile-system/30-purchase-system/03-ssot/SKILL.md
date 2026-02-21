@@ -229,23 +229,12 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
   - `items: array` — 각 원소: `{ purchaseId, internalProductId, storePurchasedAt, status }`
   - `nextCursor: string | null` — 형식: `"storePurchasedAtMs|docId"` (페이지네이션 토큰)
 
-#### 4) deleteMyPurchases (Callable, 개발/테스트 전용)
-
-- 입력: 없음 (`uid`는 Auth context에서 확보)
-- 처리: `/users/{uid}/purchases` 전체 삭제 + `/users/{uid}/entitlements/current` 초기값 리셋
-- 출력: `{ deletedCount: number }`
-- 가드: 환경변수 `ALLOW_PURCHASE_DELETE=true` 일 때만 동작 (기본 false, 개발/스테이징 전용)
-
 #### PurchaseManager 정식 API
 
 - `GetLatestConsumablePurchase30dAsync()`
   - 서버 Callable: `getRecentPurchases30d` (`kind="Consumable"`, `pageSize=1`로 호출, `items[0]`만 사용)
   - 최근 30일 내 해당 kind 내역이 없으면 실패(`CommonErrorType.COMMON_SERVER` + 메시지)로 처리
   - 페이지네이션 없이 최신 1건만 반환하는 단일 API
-- `DeleteMyPurchasesAsync()` (개발/테스트 전용)
-  - 서버 Callable: `deleteMyPurchases`
-  - 본인 uid의 모든 purchase 기록 + entitlements 초기화
-  - 삭제된 문서 수를 `int`로 반환
 
 
 ### Client-Side Purchase Flow (정본)

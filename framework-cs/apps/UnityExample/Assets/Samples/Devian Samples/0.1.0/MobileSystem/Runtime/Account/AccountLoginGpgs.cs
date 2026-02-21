@@ -254,7 +254,24 @@ namespace Devian
         /// Acquires Google GPGS server auth code via Reflection (for backend sign-in / account linking).
         /// GPGS v2 only (Action&lt;SignInStatus&gt; + Action&lt;AuthResponse&gt;).
         /// </summary>
-        public async Task<CommonResult<LoginCredential>> GetServerAuthCodeCredentialAsync(CancellationToken ct)
+        public Task<CommonResult<LoginCredential>> GetServerAuthCodeCredentialAsync(CancellationToken ct)
+        {
+            return getServerAuthCodeCredentialAsync(ct, allowManualAuthenticate: true);
+        }
+
+        /// <summary>
+        /// Silent-only variant.
+        /// - Uses Authenticate(Action&lt;SignInStatus&gt;) only
+        /// - Never invokes ManuallyAuthenticate(UI)
+        /// </summary>
+        public Task<CommonResult<LoginCredential>> GetServerAuthCodeCredentialSilentAsync(CancellationToken ct)
+        {
+            return getServerAuthCodeCredentialAsync(ct, allowManualAuthenticate: false);
+        }
+
+        private async Task<CommonResult<LoginCredential>> getServerAuthCodeCredentialAsync(
+            CancellationToken ct,
+            bool allowManualAuthenticate)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
             ensureReflection();
@@ -271,8 +288,9 @@ namespace Devian
                 // GPGS v2 has two distinct methods:
                 //   Authenticate(Action<SignInStatus>)         → silent (automatic) sign-in only
                 //   ManuallyAuthenticate(Action<SignInStatus>) → shows sign-in UI dialog
-                // We try ManuallyAuthenticate first so the user sees the sign-in prompt.
-                // If it doesn't exist, fall back to Authenticate (silent).
+                // Policy:
+                // - allowManualAuthenticate=true  => silent 먼저, 실패 시 manual(UI) fallback
+                // - allowManualAuthenticate=false => silent only (UI 호출 금지)
                 var asmName = _platformType.Assembly.GetName().Name;
                 var signInStatusType = Type.GetType($"GooglePlayGames.BasicApi.SignInStatus, {asmName}");
 
@@ -310,10 +328,12 @@ namespace Devian
                     else if (m.Name == "ManuallyAuthenticate") manualAuth = m;
                 }
 
-                if (silentAuth == null && manualAuth == null)
+                if (silentAuth == null && (!allowManualAuthenticate || manualAuth == null))
                 {
                     return CommonResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_NO_AUTHENTICATE,
-                        "PlayGamesPlatform.ManuallyAuthenticate/Authenticate not found.");
+                        allowManualAuthenticate
+                            ? "PlayGamesPlatform.ManuallyAuthenticate/Authenticate not found."
+                            : "PlayGamesPlatform.Authenticate not found.");
                 }
 
                 bool authenticated = false;
@@ -332,8 +352,8 @@ namespace Devian
                     ct.ThrowIfCancellationRequested();
                 }
 
-                // 2) Manual (UI) — silent 실패 시
-                if (!authenticated && manualAuth != null)
+                // 2) Manual (UI) — silent 실패 시 (optional)
+                if (!authenticated && allowManualAuthenticate && manualAuth != null)
                 {
                     var tcs2 = new TaskCompletionSource<bool>();
                     var cb2 = createAction1(signInStatusType, (obj) =>
@@ -349,7 +369,9 @@ namespace Devian
                 if (!authenticated)
                 {
                     return CommonResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_AUTH_FAILED,
-                        "Google Play Games authentication failed.");
+                        allowManualAuthenticate
+                            ? "Google Play Games authentication failed."
+                            : "Google Play Games silent authentication failed.");
                 }
 
                 // ── RequestServerSideAccess (v2: dynamic discovery) ──
@@ -369,9 +391,9 @@ namespace Devian
                     break;
                 }
 
-                // ── RequestServerSideAccess (optional — 실패해도 cloud save에는 영향 없음) ──
-                // GPGS 인증 자체는 위에서 성공했으므로, server auth code 획득은 best-effort.
-                // WebClientId 미설정, ApiException: 10 등의 오류 시 빈 credential로 계속 진행한다.
+                // ── RequestServerSideAccess (required for Firebase login/link) ──
+                // GPGS 인증이 성공해도 server auth code가 없으면 Firebase credential을 만들 수 없다.
+                // 따라서 계정 로그인 경로에서는 반드시 실패로 반환한다.
                 string serverAuthCode = null;
                 try
                 {
@@ -386,8 +408,9 @@ namespace Devian
 
                 if (string.IsNullOrEmpty(serverAuthCode))
                 {
-                    Debug.LogWarning("[AccountLoginGpgs] RequestServerSideAccess failed, proceeding without server auth code.");
-                    return CommonResult<LoginCredential>.Success(LoginCredential.Empty());
+                    return CommonResult<LoginCredential>.Failure(
+                        CommonErrorType.LOGIN_GPGS_NO_AUTH_CODE,
+                        "RequestServerSideAccess returned no auth code. Configure GPGS server-side access (Web client ID).");
                 }
 
                 return CommonResult<LoginCredential>.Success(new LoginCredential(null, null, null, serverAuthCode));

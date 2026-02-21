@@ -134,7 +134,7 @@ GameObject:
   - component: {fileID: 256777098}
   - component: {fileID: 256777097}
   m_Layer: 5
-  m_Name: Button (Purchase-Request)
+  m_Name: Button (Purchase-1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -206,7 +206,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2085270393}
         m_TargetAssemblyTypeName: TestUICanvas, Assembly-CSharp
-        m_MethodName: OnClick_Purchase_Request
+        m_MethodName: OnClick_Purchase_1
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -1084,7 +1084,7 @@ GameObject:
   - component: {fileID: 798284166}
   - component: {fileID: 798284165}
   m_Layer: 5
-  m_Name: Button (Purchase-Delete)
+  m_Name: Button (Purchase-2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1192,7 +1192,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 2085270393}
         m_TargetAssemblyTypeName: TestUICanvas, Assembly-CSharp
-        m_MethodName: OnClick_Purchase_Delete
+        m_MethodName: OnClick_Purchase_2
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

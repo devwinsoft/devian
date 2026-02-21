@@ -41,6 +41,7 @@ export enum STAT_TYPE {
 /** ProductKind enum */
 export enum ProductKind {
     Consumable = 0,
+    Rental = 3,
     Subscription = 1,
     SeasonPass = 2,
 }
