@@ -390,7 +390,7 @@ yield return dm.PatchProc(
 - Related: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)
 - Related: `skills/devian-unity/10-foundation/15-singleton/SKILL.md` (ResSingleton)
 - Related: `skills/devian-unity/10-foundation/18-asset-manager/SKILL.md` (AssetManager)
-- Related: `skills/devian-common/14-string-table/SKILL.md` (String Table 규약)
+- Related: `skills/devian-unity/11-common-system/14-string-table/SKILL.md` (String Table 규약)
 
 ---
 

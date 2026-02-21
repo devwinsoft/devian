@@ -15,7 +15,7 @@ AppliesTo: v10
 
 이 스킬은 "저장(포장) 규약"만 정의한다. pb64 payload 자체 규약은 각 생성 스킬이 정의/참조한다:
 - 일반 Table pb64 payload: DVGB 컨테이너 (이 문서에서 정의)
-- String Table pb64 payload: `skills/devian-common/14-string-table/SKILL.md`의 StringChunk 규약
+- String Table pb64 payload: `skills/devian-unity/11-common-system/14-string-table/SKILL.md`의 StringChunk 규약
 
 ---
 
@@ -83,7 +83,7 @@ TextAsset:
 - 문자: `A-Za-z0-9+/=` 만 허용
 - 길이 4 미만이면 base64가 아님
 
-> **Reference:** `skills/devian-common/14-string-table/SKILL.md`의 "pb64 Encoding/Decoding 규칙" 섹션
+> **Reference:** `skills/devian-unity/11-common-system/14-string-table/SKILL.md`의 "pb64 Encoding/Decoding 규칙" 섹션
 
 ---
 
@@ -214,4 +214,4 @@ Pb64Loader.ParseRows(rawBinary, json => {
 
 - Policy SSOT: `skills/devian/10-module/03-ssot/SKILL.md`
 - 일반 Table: `skills/devian-tools/11-builder/32-json-row-io/SKILL.md`
-- String Table: `skills/devian-common/14-string-table/SKILL.md`
+- String Table: `skills/devian-unity/11-common-system/14-string-table/SKILL.md`

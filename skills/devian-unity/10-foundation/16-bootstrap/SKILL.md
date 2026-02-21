@@ -13,7 +13,7 @@
 - **부트 컨테이너 프리팹**: `Assets/Resources/Devian/Bootstrap.prefab`
 - **BaseBootstrap** (abstract MonoBehaviour): 개발자가 상속하여 부트 로직을 구현하는 베이스 클래스
 
-프리팹 생성 규칙은 [11-mobile-application](../../90-samples/50-mobile-system/11-mobile-application/SKILL.md)에서 다룬다.
+프리팹 생성 규칙은 [11-mobile-application](../../50-mobile-system/11-mobile-application/SKILL.md)에서 다룬다.
 
 ---
 
@@ -170,4 +170,4 @@ PlayMode 테스트는 테스트 씬에 부트 컨테이너를 배치하거나, S
 - DevianSettings: `skills/devian-unity/10-foundation/14-devian-settings/SKILL.md`
 - SceneTransManager: `skills/devian-unity/10-foundation/17-scene-trans-manager/SKILL.md`
 - Singleton: `skills/devian-unity/10-foundation/15-singleton/SKILL.md`
-- UIManager: `skills/devian-unity/40-ui-system/10-ui-manager/SKILL.md`
+- UIManager: `skills/devian-unity/30-ui-system/10-ui-manager/SKILL.md`

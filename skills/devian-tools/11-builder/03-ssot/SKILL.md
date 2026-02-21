@@ -197,7 +197,7 @@ DATA 입력은 `{buildInputJson}`의 `domains` 섹션이 정의한다.
   - C#: `Devian.Domain.Common` (프로젝트명)
   - TS: `@devian/module-common` (폴더명: `devian-domain-common`)
 
-> Common 모듈의 상세 정책은 [skills/devian-common/02-module-policy](../../../devian-common/02-module-policy/SKILL.md)를 참조한다.
+> Common 모듈의 상세 정책은 [skills/devian-unity/11-common-system/02-module-policy](../../11-common-system/02-module-policy/SKILL.md)를 참조한다.
 
 ### 필수 개념
 

@@ -12,7 +12,7 @@ AppliesTo: v10
 이 문서는 **UnityExample embedded 패키지 묶음(번들)**의 **구성/레이아웃/의존성/asmdef 규약**을 정의한다.
 
 > **주의:** 이 문서는 "패키지"가 아니라 **번들 정책(embedded 패키지 묶음)**을 정의한다.
-> 개별 패키지 상세는 각 패키지 스킬(`skills/devian-unity/06-domain-packages/`)을 참조한다.
+> 도메인 모듈 정책은 `skills/devian-unity/11-common-system/02-module-policy/SKILL.md`를 참조한다.
 
 ---
 
@@ -144,4 +144,4 @@ com.devian.domain.* (module packages - foundation 의존)
 - Related: `skills/devian-unity/01-policy/SKILL.md`
 - Related: `skills/devian-unity/04-package-metadata/SKILL.md`
 - Related: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)
-- Related: `skills/devian-unity/06-domain-packages/com.devian.domain.common/SKILL.md`
+- Related: `skills/devian-unity/11-common-system/02-module-policy/SKILL.md`

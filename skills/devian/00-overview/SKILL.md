@@ -32,11 +32,11 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | **devian/10-module** | Root SSOT, 스킬 규격, 런타임 | [00-overview](../10-module/00-overview/SKILL.md) | [01-policy](../10-module/01-policy/SKILL.md) | [03-ssot](../10-module/03-ssot/SKILL.md) |
 | **devian-tools** | CLI, 아카이브 | [00-overview](../../devian-tools/00-overview/SKILL.md) | [01-policy](../../devian-tools/01-policy/SKILL.md) | [03-ssot](../../devian-tools/03-ssot/SKILL.md) |
 | **devian-tools/11-builder** | Build, Table, Contract, NDJSON, PB64, Protocol Codegen, Error Reporting | [00-overview](../../devian-tools/11-builder/00-overview/SKILL.md) | [01-policy](../../devian-tools/11-builder/01-policy/SKILL.md) | [03-ssot](../../devian-tools/11-builder/03-ssot/SKILL.md) |
-| **devian-common** | Common 도메인, Feature 모듈 | [00-overview](../../devian-common/00-overview/SKILL.md) | [01-policy](../../devian-common/01-policy/SKILL.md) | — |
+| **devian-unity/11-common-system** | Common 도메인, Feature 모듈 | [00-overview](../../devian-unity/11-common-system/00-overview/SKILL.md) | [01-policy](../../devian-unity/11-common-system/01-policy/SKILL.md) | — |
 | **devian-unity** | UPM 패키지, Unity 런타임, 컴포넌트 | [00-overview](../../devian-unity/00-overview/SKILL.md) | [01-policy](../../devian-unity/01-policy/SKILL.md) | [03-ssot](../../devian-unity/03-ssot/SKILL.md) |
 | **devian-examples** | 예제 도메인, 예제 프로토콜 | [00-overview](../../devian-examples/00-overview/SKILL.md) | [01-policy](../../devian-examples/01-policy/SKILL.md) | [03-ssot](../../devian-examples/03-ssot/SKILL.md) |
-| **devian-unity/50-mobile-system** | MobileSystem (Devian Samples) | [00-overview](../../devian-unity/90-samples/50-mobile-system/00-overview/SKILL.md) | — | — |
-| **devian-unity/90-samples** | Unity 샘플 작성 가이드, 네트워크 샘플 | [00-overview](../../devian-unity/90-samples/00-overview/SKILL.md) | [01-policy](../../devian-unity/90-samples/01-policy/SKILL.md) | — |
+| **devian-unity/40-game-system** | Game System (Devian Samples) | [00-overview](../../devian-unity/40-game-system/00-overview/SKILL.md) | [01-policy](../../devian-unity/40-game-system/01-policy/SKILL.md) | — |
+| **devian-unity/50-mobile-system** | MobileSystem (Devian Samples) | [00-overview](../../devian-unity/50-mobile-system/00-overview/SKILL.md) | [01-policy](../../devian-unity/50-mobile-system/01-policy/SKILL.md) | — |
 
 ---
 
@@ -48,21 +48,21 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 ### Group Routing
 
 - Unity 일반 컴포넌트(Non-UI) → `skills/devian-unity/10-foundation/00-overview/SKILL.md`
-- Unity UI 컴포넌트(UI/Canvas/Frame/UIManager) → `skills/devian-unity/40-ui-system/00-overview/skill.md`
+- Unity UI 컴포넌트(UI/Canvas/Frame/UIManager) → `skills/devian-unity/30-ui-system/00-overview/skill.md`
 
 ### Routing Keywords
 
 | keyword | route-to |
 |---|---|
-| StringTable, string-table, ST_, 다국어, localization, localizing, TEXT table, LocalizedText, 번역 | `skills/devian-common/14-string-table/SKILL.md` |
+| StringTable, string-table, ST_, 다국어, localization, localizing, TEXT table, LocalizedText, 번역 | `skills/devian-unity/11-common-system/14-string-table/SKILL.md` |
 | NDJSON, ndjson, .json 스토리지 | `skills/devian-tools/11-builder/34-ndjson-storage/SKILL.md` |
 | PB64, pb64, .asset 바이너리 | `skills/devian-tools/11-builder/35-pb64-storage/SKILL.md` |
 | TableGen, 테이블 생성 | `skills/devian-tools/11-builder/42-tablegen-implementation/SKILL.md` |
 | TableManager, LoadStringsAsync | `skills/devian-unity/10-foundation/11-table-manager/SKILL.md` |
 | DownloadManager, Addressables | `skills/devian-unity/10-foundation/19-download-manager/SKILL.md` |
-| UIManager, UICanvas, UIFrame | `skills/devian-unity/40-ui-system/10-ui-manager/skill.md` |
-| UI Canvas Frames, UICanvasFrames | `skills/devian-unity/40-ui-system/20-ui-canvas-frames/skill.md` |
-| PurchaseManager, purchase, IAP, in-app purchase, 결제, 인앱 | `skills/devian-unity/90-samples/50-mobile-system/30-purchase-system/00-overview/SKILL.md` |
+| UIManager, UICanvas, UIFrame | `skills/devian-unity/30-ui-system/10-ui-manager/skill.md` |
+| UI Canvas Frames, UICanvasFrames | `skills/devian-unity/30-ui-system/20-ui-canvas-frames/skill.md` |
+| PurchaseManager, purchase, IAP, in-app purchase, 결제, 인앱 | `skills/devian-unity/50-mobile-system/30-purchase-system/00-overview/SKILL.md` |
 
 ---
 

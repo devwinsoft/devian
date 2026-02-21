@@ -82,7 +82,7 @@ return go.GetComponent(poolType);
 
 ### DestroyInstance(instance)
 
-`../05-unity-object-destruction/SKILL.md` 규약 준수:
+Unity Object Destroy 규약 준수 (Editor: `DestroyImmediate`, Runtime: `Destroy`, 항상 `instance.gameObject`):
 
 ```csharp
 #if UNITY_EDITOR
@@ -232,7 +232,7 @@ BundlePoolFactory.Instance.Despawn(enemy);
 - [x] `BundlePoolFactory`가 `SimpleSingleton<BundlePoolFactory>` 상속
 - [x] `BundlePoolFactory.GetPrefab<TAsset>(name)` Generic API 제공
 - [x] `BundlePool`이 static facade로 존재하며 사용자 권장 API로 명시
-- [x] `DestroyInstance`는 `05-unity-object-destruction` 규약 준수
+- [x] `DestroyInstance`는 Unity Object Destroy 규약 준수 (Editor: DestroyImmediate, Runtime: Destroy, gameObject 대상)
 - [x] 모든 public API에 메인 스레드 강제
 
 ---
@@ -242,5 +242,4 @@ BundlePoolFactory.Instance.Despawn(enemy);
 - Parent: `skills/devian-unity/10-foundation/SKILL.md`
 - Related: `10-pool-manager/SKILL.md` (IPoolFactory 인터페이스 정의)
 - Related: `15-singleton/SKILL.md` (SimpleSingleton 베이스)
-- Related: `../05-unity-object-destruction/SKILL.md` (Destroy 규약)
 - Related: `18-asset-manager/SKILL.md` (AssetManager API)

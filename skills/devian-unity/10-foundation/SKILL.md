@@ -44,5 +44,4 @@ Type: Index / Directory
 ## Reference
 
 - Parent: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)
-- UI 관련 컴포넌트는 `skills/devian-unity/40-ui-system/SKILL.md` 참고
-- Object Destruction 규약은 `skills/devian-unity/05-unity-object-destruction/SKILL.md`로 이동됨
+- UI 관련 컴포넌트는 `skills/devian-unity/30-ui-system/SKILL.md` 참고

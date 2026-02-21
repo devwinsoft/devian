@@ -157,5 +157,5 @@ const decrypted = await decryptAes(encrypted, key, iv);
 
 ## Reference
 
-- Module Policy: `skills/devian-common/02-module-policy/SKILL.md`
-- Domain Policy: `skills/devian-common/01-policy/SKILL.md`
+- Module Policy: `skills/devian-unity/11-common-system/02-module-policy/SKILL.md`
+- Domain Policy: `skills/devian-unity/11-common-system/01-policy/SKILL.md`

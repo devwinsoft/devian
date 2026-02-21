@@ -261,4 +261,4 @@ Sound 도메인 관련:
 - `skills/devian-unity/22-sound-system/16-sound-tables/SKILL.md` — TB_SOUND/TB_VOICE 테이블 규약
 - `skills/devian-unity/22-sound-system/17-sound-manager/SKILL.md` — SoundManager 규약
 - `skills/devian-unity/22-sound-system/18-voice-table-resolve/SKILL.md` — Voice Resolve 규약
-- `skills/devian-unity/06-domain-packages/SKILL.md` — 도메인 아키텍처 규약
+- `skills/devian-unity/11-common-system/02-module-policy/SKILL.md` — 도메인 모듈 정책
