@@ -32,4 +32,4 @@ MobileSystem은 **Devian Samples**(`com.devian.samples`)에 포함된 Unity Samp
 - [50-leaderboard](../50-leaderboard/00-overview/SKILL.md)
 - [61-virtual-gamepad](../61-virtual-gamepad/SKILL.md)
 
-> **Note:** inventory-system은 [40-game-system/15-game-inventory-system](../../40-game-system/15-game-inventory-system/00-overview/SKILL.md)으로 이전되었다.
+> **Note:** inventory-system 스킬 그룹은 `40-game-system/15-game-inventory-system`에서 [50-mobile-system/93-game-inventory-system](../93-game-inventory-system/00-overview/SKILL.md)으로 이동되었다.

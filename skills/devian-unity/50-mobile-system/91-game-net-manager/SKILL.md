@@ -1,7 +1,7 @@
-# 21-game-net-manager
+# 91-game-net-manager
 
 > **패키지:** com.devian.samples
-> **샘플명:** GameContents
+> **샘플명:** MobileSystem
 > **도메인:** devian-upm-samples
 > **문서 버전:** v21
 
@@ -35,13 +35,13 @@
 ### 2.1 원본 (upm)
 
 ```
-framework-cs/upm/com.devian.samples/Samples~/GameContents/
+framework-cs/upm/com.devian.samples/Samples~/MobileSystem/
 ```
 
 ### 2.2 설치 후 위치 (Unity 프로젝트)
 
 ```
-Assets/Samples/Devian Samples/0.1.0/GameContents/
+Assets/Samples/Devian Samples/0.1.0/MobileSystem/
 ```
 
 ---
@@ -49,11 +49,11 @@ Assets/Samples/Devian Samples/0.1.0/GameContents/
 ## 3. 폴더 구조 (Hard Rule)
 
 ```
-Samples~/GameContents/
+Samples~/MobileSystem/
 ├── README.md
 └── Runtime/
-    ├── Devian.Samples.GameContents.asmdef
-    └── Network/
+    ├── Devian.Samples.MobileSystem.asmdef
+    └── Net/
         ├── GameNetManager.cs          (CompoSingleton, Stub/Proxy/Connector 소유)
         └── Game2CStub.cs              (partial, inbound 메시지 처리)
 ```
@@ -64,17 +64,22 @@ Samples~/GameContents/
 
 ### 4.1 Runtime asmdef
 
-**파일명:** `Devian.Samples.GameContents.asmdef`
+**파일명:** `Devian.Samples.MobileSystem.asmdef`
 
 ```json
 {
-  "name": "Devian.Samples.GameContents",
+  "name": "Devian.Samples.MobileSystem",
   "rootNamespace": "Devian",
   "references": [
     "Devian.Core",
     "Devian.Unity",
+    "Devian.Domain.Common",
     "Devian.Protocol.Game",
-    "Devian.Domain.Game"
+    "Devian.Domain.Game",
+    "Unity.InputSystem",
+    "Devian.UI",
+    "Unity.Purchasing",
+    "Devian.Samples.GameContents"
   ]
 }
 ```
@@ -333,7 +338,7 @@ namespace Devian
 1. Unity 프로젝트 열기
 2. Window → Package Manager
 3. `Devian Samples` 패키지 선택
-4. Samples 섹션에서 "GameContents" → "Import" 클릭
+4. Samples 섹션에서 "MobileSystem" → "Import" 클릭
 
 ---
 

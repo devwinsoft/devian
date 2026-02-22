@@ -71,6 +71,20 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
   자동 보정해 구매 가능 상태로 승격할 수 있다(사용자 명시 로그인 버튼 없이 가능).
 - Firebase Auth context(`context.auth.uid`)는 서버 `verifyPurchase`에서 최종 검증한다.
 
+### 6) 상품 종류별 구매 제한 정책 (현재)
+
+- `Consumable`: 반복 구매 허용 (제한 없음)
+- `Rental`: 반복 구매 허용 (30일 재구매 제한 없음)
+- `Subscription`: 스토어/서버 상태 기준으로 검증 (클라에서 임의 제한 금지)
+- `SeasonPass`: 동일 `internalProductId` 중복 구매 금지 (서버에서 거부)
+
+### 7) 구매 로컬 상태 저장은 GameStorageManager 소유 PurchaseStorage에 한정한다
+
+- `PurchaseStorage`는 `GameStorageManager`가 소유하며 SaveData(local/cloud) 경로로 저장될 수 있다.
+- 저장 범위는 "진행 중 구매 1건 + 최근 결과 요약 1건"의 최소 스냅샷으로 제한한다.
+- 전체 구매 이력/영수증/토큰 저장 금지. 서버 원장(Firestore) 대체 금지.
+- 정본: [33-purchase-storage](../33-purchase-storage/SKILL.md)
+
 
 ---
 
@@ -107,8 +121,9 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 ## PurchaseManager (Client Entry Point)
 
 
-- 샘플 구현: `com.devian.samples` — `Samples~/MobileSystem/Runtime/PurchaseManager/PurchaseManager.cs`
+- 샘플 구현: `com.devian.samples` — `Samples~/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
 - 구현: `PurchaseManager : CompoSingleton<PurchaseManager>`
+- 구매 상태 스냅샷 저장: `GameStorageManager.Instance.Purchase` (`PurchaseStorage`)
 
 
 ### 공개 메소드 규약(Policy)

@@ -1,4 +1,4 @@
-# 03-ssot — 15-game-inventory-system (SSOT)
+# 03-ssot — 93-game-inventory-system (SSOT)
 
 
 Status: ACTIVE
@@ -18,8 +18,8 @@ AppliesTo: v10
 ## A) RewardData Contract Source (정본)
 
 - `RewardData` 스키마의 단일 정본은 아래 문서다:
-  - [49-reward-system/03-ssot](../../../50-mobile-system/49-reward-system/03-ssot/SKILL.md)
-- 본 문서(15-game-inventory-system)는 `RewardData` 필드 스키마를 재정의하지 않는다.
+  - [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md)
+- 본 문서(93-game-inventory-system)는 `RewardData` 필드 스키마를 재정의하지 않는다.
 - Inventory는 위 정본 규약을 입력 계약으로 사용한다.
 
 
@@ -40,7 +40,7 @@ Inventory 상태는 "통화", "아이템", "영웅"으로 분리된다.
 - key: `itemUid` (string, GUID, 인스턴스별 고유 pk)
 - value: `AbilityEquip`
 
-`AbilityEquip` 필드 (구현: [12-game-ability](../../12-game-ability/SKILL.md)):
+`AbilityEquip` 필드 (구현: [12-game-ability](../../../40-game-system/12-game-ability/SKILL.md)):
 - `ItemUid: string` (== key, 인스턴스 고유 ID, GUID)
 - `EquipId: string` (템플릿 ID, `mTable.EquipId`)
 - `OwnerUnitId: string` (장착된 영웅 UnitId, 미장착 시 empty)
@@ -59,7 +59,7 @@ NOTE:
 - key: `cardId` (=`RewardData.id` when `type=REWARD_TYPE.CARD`, pk)
 - value: `AbilityCard`
 
-`AbilityCard` 필드 (구현: [12-game-ability](../../12-game-ability/SKILL.md)):
+`AbilityCard` 필드 (구현: [12-game-ability](../../../40-game-system/12-game-ability/SKILL.md)):
 - `CardId: string` (== key, `mTable.CardId`)
 - `Amount: int` (= `this[STAT_TYPE.CARD_AMOUNT]`)
 - 능력치: `AbilityCard : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)
@@ -72,7 +72,7 @@ NOTE:
 - key: `heroId` (=`RewardData.id` when `type=REWARD_TYPE.HERO`, pk)
 - value: `AbilityUnitHero`
 
-`AbilityUnitHero` 필드 (구현: [12-game-ability](../../12-game-ability/SKILL.md)):
+`AbilityUnitHero` 필드 (구현: [12-game-ability](../../../40-game-system/12-game-ability/SKILL.md)):
 - `UnitId: string` (== key, `mTable.UnitId`)
 - 수량 = `STAT_TYPE.UNIT_AMOUNT` (Reward grants에서 변경되는 유일한 stat)
 - 능력치: `AbilityUnitHero : AbilityUnitBase : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)
@@ -86,7 +86,7 @@ NOTE:
 ### C-1) 공통
 
 - `AddRewards`의 반환 타입은 `CommonResult`다.
-- 입력 검증은 `RewardData` 정본([49-reward-system/03-ssot](../../../50-mobile-system/49-reward-system/03-ssot/SKILL.md))을 따른다.
+- 입력 검증은 `RewardData` 정본([49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md))을 따른다.
 - `rewards.Length == 0`은 valid no-op이다 (`CommonResult.Ok()`).
 - invalid가 하나라도 있으면 `CommonResult.Failure`를 반환하고 전체 미적용(원자성)한다.
 - 차감/소비/회수(환불/철회 포함)는 RewardData로 처리하지 않는다(별도 시스템/경로).
@@ -140,7 +140,7 @@ InventoryStorage가 hero/equip 조회 + AbilityUnitHero에 위임하는 편의 �
 ## D) JSON Persistence Schema (정본)
 
 > **변경**: `InventoryStorage.ToJson()`/`FromJson()` 메서드는 **삭제**되었다.
-> 직렬화 책임은 [16-game-storage-manager](../../16-game-storage-manager/SKILL.md)의 **GameStorageManager**가 담당한다.
+> 직렬화 책임은 [95-game-storage-manager](../../95-game-storage-manager/SKILL.md)의 **GameStorageManager**가 담당한다.
 > 아래 스키마는 GameStorageManager JSON의 `"inventory"` 섹션에 해당한다.
 
 Inventory 직렬화 스키마 정본 (GameStorageManager.inventory 섹션).

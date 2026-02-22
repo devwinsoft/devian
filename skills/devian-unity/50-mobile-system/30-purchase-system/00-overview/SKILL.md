@@ -13,6 +13,13 @@ Firebase Cloud Functions + Firestore 기반의 **결제 검증/멱등 지급/구
 
 Purchase(유료) 경로의 실제 지급 실행은 `rewardGroupId`를 RewardManager(49-reward-system)에 전달해 위임한다.
 
+문서 중복 방지 라우팅:
+- 정책/모듈 경계는 `01-policy`
+- 통합 SSOT/핵심 합의는 `03-ssot`
+- 운영/보안/테스트/DoD는 `09-ssot-operations`
+- Firebase Functions 구현/셋업은 `40` / `44`
+- 로컬/클라우드 저장용 구매 상태 스냅샷은 `33`
+
 
 ---
 
@@ -26,6 +33,7 @@ Purchase(유료) 경로의 실제 지급 실행은 `rewardGroupId`를 RewardMana
 | [03-ssot](../03-ssot/SKILL.md) | 통합 SSOT (Unity IAP, Product Catalog, Verify/Idempotency, NoAds, Season Pass) |
 | [09-ssot-operations](../09-ssot-operations/SKILL.md) | 운영/보안/테스트/DoD |
 | [30-samples-purchase-manager](../30-samples-purchase-manager/SKILL.md) | PurchaseManager(구매) 샘플 |
+| [33-purchase-storage](../33-purchase-storage/SKILL.md) | PurchaseStorage(구매 상태 스냅샷, GameStorageManager 소유) |
 | [40-purchase-backend-firebase](../40-purchase-backend-firebase/SKILL.md) | Firebase Backend(Functions+Firestore) 구현 정본 |
 | [41-purchase-store-verification](../41-purchase-store-verification/SKILL.md) | Apple/Google 스토어 검증 및 storePurchaseId 정본 |
 | [42-purchase-entitlements-grants](../42-purchase-entitlements-grants/SKILL.md) | grants/entitlements 계산 및 저장 규칙 정본 |
@@ -40,7 +48,8 @@ Purchase(유료) 경로의 실제 지급 실행은 `rewardGroupId`를 RewardMana
 ## Related
 
 
-- [PurchaseManager Sample](../30-samples-purchase-manager/SKILL.md) — `com.devian.samples` / `Samples~/MobileSystem/Runtime/PurchaseManager/PurchaseManager.cs`
+- [PurchaseManager Sample](../30-samples-purchase-manager/SKILL.md) — `com.devian.samples` / `Samples~/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
+- [PurchaseStorage](../33-purchase-storage/SKILL.md) — `GameStorageManager` 소유, `purchase` JSON 섹션(로컬/클라우드 저장)
 - [Root SSOT](../../../../devian/10-module/03-ssot/SKILL.md)
 - [Unity SSOT](../../../03-ssot/SKILL.md)
 - [Devian Index](../../../../devian/SKILL.md)

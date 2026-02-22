@@ -59,10 +59,10 @@ MobileApplication에 부착된 RequireComponent:
 
 - `AccountManager`
 - `SaveDataManager`
-- `GameStorageManager` — [16-game-storage-manager](../../40-game-system/16-game-storage-manager/SKILL.md)
+- `GameStorageManager` — [95-game-storage-manager](../95-game-storage-manager/SKILL.md)
 
 
 ## Links
 - [16-bootstrap](../../../10-foundation/16-bootstrap/SKILL.md) — BaseBootstrap 런타임 스펙
-- [16-game-storage-manager](../../40-game-system/16-game-storage-manager/SKILL.md) — GameStorageManager (게임 저장 파일 직렬화)
+- [95-game-storage-manager](../95-game-storage-manager/SKILL.md) — GameStorageManager (게임 저장 파일 직렬화)
 - [50-mobile-system overview](../00-overview/SKILL.md) — MobileSystem (Devian Samples) 그룹 개요

@@ -454,9 +454,12 @@ namespace Devian
             if (_purchaseInProgress)
                 return CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.PURCHASE_PURCHASE_IN_PROGRESS, "Another purchase is already in progress.");
 
+            var purchaseStorage = getPurchaseStorageOrNull();
             _purchaseInProgress = true;
             try
             {
+                purchaseStorage?.BeginPurchase(internalProductId, PurchaseKindToString(kind), _purchaseStore.StoreKey);
+
                 PendingOrder pendingOrder;
 
                 var storeProductId = ResolveStoreProductId(internalProductId);
@@ -471,6 +474,7 @@ namespace Devian
                     }
                     catch (Exception ex)
                     {
+                        purchaseStorage?.MarkStoreFailed(CommonErrorType.PURCHASE_PURCHASE_REQUEST_FAILED.ToString(), ex.Message);
                         return CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.PURCHASE_PURCHASE_REQUEST_FAILED, ex.Message);
                     }
                     finally
@@ -480,6 +484,7 @@ namespace Devian
                 }
                 else
                 {
+                    purchaseStorage?.MarkStorePending();
                     Debug.Log($"[{Tag}] Reusing deferred pending order for {storeProductId}.");
                 }
 
@@ -489,13 +494,18 @@ namespace Devian
                 var payload = _purchaseStore.BuildVerifyPayload(pendingOrder.Info.Receipt);
                 var verifyResult = await verifyPurchaseAsync(internalProductId, storeProductId, kind, store, payload, ct);
                 if (verifyResult.IsFailure)
+                {
+                    var error = verifyResult.Error!;
+                    purchaseStorage?.MarkVerifyFailed(error.Code.ToString(), error.Message);
                     return CommonResult<PurchaseFinalResult>.Failure(verifyResult.Error!);
+                }
 
                 var response = verifyResult.Value!;
                 var status = response.ResultStatus;
 
                 if (status == "GRANTED" || status == "ALREADY_GRANTED")
                 {
+                    purchaseStorage?.MarkVerifySucceeded(status);
                     _controller.ConfirmPurchase(pendingOrder);
 
                     if (status == "GRANTED")
@@ -510,19 +520,22 @@ namespace Devian
 
                 var rejectReason = response.RejectReason;
                 CommonErrorType errorType;
-                if (rejectReason == "RENTAL_ALREADY_ACTIVE")
-                    errorType = CommonErrorType.PURCHASE_RENTAL_ALREADY_ACTIVE;
-                else if (rejectReason == "SEASON_PASS_ALREADY_OWNED")
+                if (rejectReason == "SEASON_PASS_ALREADY_OWNED")
                     errorType = CommonErrorType.PURCHASE_SEASON_PASS_ALREADY_OWNED;
                 else
                     errorType = CommonErrorType.PURCHASE_VERIFY_REJECTED_UNKNOWN;
 
+                purchaseStorage?.MarkVerifyFailed(
+                    errorType.ToString(),
+                    $"{status}:{rejectReason}",
+                    status);
                 return CommonResult<PurchaseFinalResult>.Failure(
                     errorType, $"{status}:{rejectReason}");
             }
             finally
             {
                 _purchaseInProgress = false;
+                purchaseStorage?.ClearCurrent();
             }
         }
 
@@ -559,6 +572,7 @@ namespace Devian
 
         void onPurchasePending(PendingOrder order)
         {
+            getPurchaseStorageOrNull()?.MarkStorePending();
             if (_purchaseTcs != null)
             {
                 _purchaseTcs.TrySetResult(order);
@@ -795,6 +809,19 @@ namespace Devian
             if (v is double d) return (long)d;
             if (long.TryParse(v.ToString(), out var parsed)) return parsed;
             return 0;
+        }
+
+        static PurchaseStorage getPurchaseStorageOrNull()
+        {
+            try
+            {
+                var gameStorageManager = GameStorageManager.Instance;
+                return gameStorageManager != null ? gameStorageManager.Purchase : null;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         // ── Data Types ─────────────────────────────────────────────

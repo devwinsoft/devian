@@ -4,6 +4,13 @@
 Status: ACTIVE
 AppliesTo: v10
 
+## 문서 경계 (Scope)
+
+- 이 문서는 **운영/보안/테스트/DoD 체크리스트** 정본이다.
+- Firebase Functions 구현 상세(함수 내부 로직/Firestore 스키마/멱등 구현)는 이 문서에 두지 않는다.
+- 레포 구성/배포 명령/설정 파일 위치는 이 문서에 두지 않는다.
+- 구현/셋업/결정사항은 아래 "Functions 관련 정본 링크"로 라우팅한다.
+
 
 ## 보안/운영 체크 (SSOT)
 
@@ -37,6 +44,18 @@ AppliesTo: v10
 - Subscription NoAds: 활성/만료 상태 변경이 NoAds에 반영됨(서버 기준)
 - Consumable(보물상자): 네트워크 재시도/중복 콜백에도 1회만 지급(서버 멱등 원장 기준)
 - Pending/Deferred: 지급되지 않음
+
+
+---
+
+## Functions 관련 정본 링크 (중복 금지)
+
+- 구현 정본(Functions + Firestore 스키마/멱등): `../40-purchase-backend-firebase/SKILL.md`
+- 레포/배포/CLI/설정 파일 정본: `../44-purchase-repo-firebase-functions-setup/SKILL.md`
+- 클라-서버 호출/ConfirmPurchase 규칙 정본: `../43-purchase-client-server-integration/SKILL.md`
+- 고정 결정사항(Callable 이름/스키마/시크릿/경로): `../46-purchase-decisions/SKILL.md`
+
+운영 문서(09)에는 체크리스트/테스트/DoD만 유지하고, 구현 상세는 위 문서들에만 기록한다.
 
 
 ---

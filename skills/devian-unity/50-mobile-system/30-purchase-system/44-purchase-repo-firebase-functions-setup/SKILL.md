@@ -3,6 +3,14 @@
 Status: ACTIVE
 AppliesTo: v10
 
+## 문서 경계 (Scope)
+
+- 이 문서는 **Firebase Functions 레포 구성/CLI/배포 셋업 정본**이다.
+- 포함: 폴더 위치, 설정 파일 위치, rules/indexes 파일 위치, 배포/에뮬레이터 명령
+- 비포함: 함수 내부 구현 로직/Firestore 스키마/멱등 구현 상세 (→ `40`)
+- 비포함: 운영 체크리스트/장애 대응/테스트 시나리오 (→ `09`)
+- 비포함: 고정 결정사항의 단일 합의 문서 역할 (→ `46`)
+
 ## 목적
 
 이 레포에 **Firebase Cloud Functions(서버리스 백엔드)** 를 추가하기 위한 "레포 구성 정본"을 정의한다.
@@ -90,6 +98,8 @@ NEEDS CHECK:
 
 이 스킬은 "명령의 위치"만 고정한다. 실제 값(프로젝트 ID 등)은 NEEDS CHECK로 남긴다.
 
+함수 내부 구현/검증 로직은 `40-purchase-backend-firebase` 문서를 따른다.
+
 - Firebase CLI 설치 필요
 - 초기화:
   - `firebase init functions`
@@ -116,6 +126,8 @@ PurchaseManager가 완료되려면, 다음 스킬의 미결정 항목이 추가�
 - 41: storePurchaseId 규칙(Apple/Google)
 - 42: grants type/id 규칙
 - 43: 클라 ↔ 서버 호출 방식(Callable vs HTTP RPC)
+
+운영 체크리스트/보안 점검/최소 테스트 시나리오는 `09-ssot-operations` 문서를 따른다.
 
 
 ---

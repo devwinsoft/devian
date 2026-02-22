@@ -80,7 +80,6 @@
 {"Id":"PURCHASE_PURCHASE_REQUEST_FAILED","Msg_key":"","Msg":"Store purchase request failed before verification."}
 {"Id":"PURCHASE_RECENT_CALL_FAILED","Msg_key":"","Msg":"Failed to fetch recent purchases."}
 {"Id":"PURCHASE_RECENT_NOT_FOUND","Msg_key":"","Msg":"No recent rental purchase within 30 days."}
-{"Id":"PURCHASE_RENTAL_ALREADY_ACTIVE","Msg_key":"","Msg":"Rental repurchase rejected within 30 days."}
 {"Id":"PURCHASE_RENTAL_LATEST_CALL_FAILED","Msg_key":"","Msg":"Failed to fetch latest rental purchase within 30 days."}
 {"Id":"PURCHASE_RENTAL_LATEST_NOT_FOUND","Msg_key":"","Msg":"No recent rental purchase within 30 days."}
 {"Id":"PURCHASE_RESTORE_FAILED","Msg_key":"","Msg":"Restore transactions failed at store."}

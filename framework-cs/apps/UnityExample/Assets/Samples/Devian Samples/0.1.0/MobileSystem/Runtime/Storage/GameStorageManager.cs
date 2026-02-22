@@ -8,15 +8,19 @@ namespace Devian
 {
     public sealed class GameStorageManager : CompoSingleton<GameStorageManager>
     {
-        const int CurrentVersion = 1;
+        const int CurrentVersion = 2;
 
         InventoryStorage _inventory => InventoryManager.Instance.Storage;
+        readonly PurchaseStorage _purchase = new();
+
+        public PurchaseStorage Purchase => _purchase;
 
         public string ToJson()
         {
             var root = new JObject();
             root["version"] = CurrentVersion;
             root["inventory"] = _serializeInventory();
+            root["purchase"] = _serializePurchase();
             return root.ToString();
         }
 
@@ -29,17 +33,23 @@ namespace Devian
         public void LoadFromJson(string json)
         {
             var root = JObject.Parse(json);
-            var version = root.Value<int>("version");
-            if (version != CurrentVersion)
+            var version = root.Value<int?>("version") ?? 0;
+            if (version != 1 && version != CurrentVersion)
                 return;
 
             if (root["inventory"] is JObject inventoryObj)
                 _deserializeInventory(inventoryObj);
+
+            if (version >= 2 && root["purchase"] is JObject purchaseObj)
+                _deserializePurchase(purchaseObj);
+            else
+                _purchase.ClearAll();
         }
 
         public void Clear()
         {
             _inventory.Clear();
+            _purchase.ClearAll();
         }
 
         // ── Serialize ──
@@ -116,6 +126,39 @@ namespace Devian
             inv["heroes"] = heroesObj;
 
             return inv;
+        }
+
+        JObject _serializePurchase()
+        {
+            var purchase = _purchase;
+
+            var current = new JObject
+            {
+                ["isPurchaseInProgress"] = purchase.IsPurchaseInProgress,
+                ["internalProductId"] = purchase.CurrentInternalProductId,
+                ["kind"] = purchase.CurrentKind,
+                ["storeKey"] = purchase.CurrentStoreKey,
+                ["startedAtUtcMs"] = purchase.CurrentStartedAtUtcMs,
+                ["isStorePending"] = purchase.CurrentStorePending,
+                ["storePendingAtUtcMs"] = purchase.CurrentStorePendingAtUtcMs,
+            };
+
+            var last = new JObject
+            {
+                ["internalProductId"] = purchase.LastInternalProductId,
+                ["kind"] = purchase.LastKind,
+                ["storeKey"] = purchase.LastStoreKey,
+                ["resultStatus"] = purchase.LastResultStatus,
+                ["errorCode"] = purchase.LastErrorCode,
+                ["errorMessage"] = purchase.LastErrorMessage,
+                ["updatedAtUtcMs"] = purchase.LastUpdatedAtUtcMs,
+            };
+
+            return new JObject
+            {
+                ["current"] = current,
+                ["last"] = last,
+            };
         }
 
         // ── Deserialize ──
@@ -230,6 +273,35 @@ namespace Devian
                         }
                     }
                 }
+            }
+        }
+
+        void _deserializePurchase(JObject purchaseObj)
+        {
+            _purchase.ClearAll();
+
+            if (purchaseObj["current"] is JObject currentObj)
+            {
+                _purchase.RestoreCurrent(
+                    currentObj.Value<bool?>("isPurchaseInProgress") ?? false,
+                    currentObj.Value<string>("internalProductId") ?? string.Empty,
+                    currentObj.Value<string>("kind") ?? string.Empty,
+                    currentObj.Value<string>("storeKey") ?? string.Empty,
+                    currentObj.Value<long?>("startedAtUtcMs") ?? 0L,
+                    currentObj.Value<bool?>("isStorePending") ?? false,
+                    currentObj.Value<long?>("storePendingAtUtcMs") ?? 0L);
+            }
+
+            if (purchaseObj["last"] is JObject lastObj)
+            {
+                _purchase.RestoreLast(
+                    lastObj.Value<string>("internalProductId") ?? string.Empty,
+                    lastObj.Value<string>("kind") ?? string.Empty,
+                    lastObj.Value<string>("storeKey") ?? string.Empty,
+                    lastObj.Value<string>("resultStatus") ?? string.Empty,
+                    lastObj.Value<string>("errorCode") ?? string.Empty,
+                    lastObj.Value<string>("errorMessage") ?? string.Empty,
+                    lastObj.Value<long?>("updatedAtUtcMs") ?? 0L);
             }
         }
     }

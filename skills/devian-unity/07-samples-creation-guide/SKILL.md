@@ -13,7 +13,7 @@
 >
 > **세부 문서:**
 > - Templates 원본: `framework-cs/upm/com.devian.samples/Samples~/`
-> - Network Sample: `skills/devian-unity/40-game-system/21-game-net-manager/SKILL.md`
+> - Network Sample: `skills/devian-unity/50-mobile-system/91-game-net-manager/SKILL.md`
 > - LocalSave Manager Sample: `skills/devian-unity/50-mobile-system/21-savedata-system/41-savedata-savelocal/SKILL.md`
 > - CloudSave Manager Sample: `skills/devian-unity/50-mobile-system/21-savedata-system/42-savedata-savecloud/SKILL.md`
 
@@ -86,7 +86,7 @@ upm/<packageName>/Samples~/GameContents/
 ├── README.md                         ← 샘플 루트에 위치
 ├── Runtime/
 │   ├── [asmdef: Devian.Samples.GameContents]     ← Runtime asmdef
-│   └── Network/
+│   └── Net/
 │       ├── GameNetManager.cs         ← partial 네트워크 매니저 (Stub/Proxy 내부 생성)
 │       └── Game2CStub.cs             ← partial 메시지 스텁 (핸들러 내부 처리)
 └── Editor/

@@ -101,7 +101,7 @@ NOTE:
 - InventoryManager는 SaveDataManager를 직접 참조하지 않는다.
 - SaveDataManager는 InventoryManager/Inventory 스키마를 직접 참조하지 않는다.
 - 저장/로드 결합은 상위 조립(bootstrap/composition root)에서만 수행한다.
-- [GameStorageManager](../../16-game-storage-manager/SKILL.md)는 `InventoryManager.Instance.Storage`로 InventoryStorage를 참조한다. InventoryManager는 GameStorageManager를 알지 못한다 (단방향 의존).
+- [GameStorageManager](../../95-game-storage-manager/SKILL.md)는 `InventoryManager.Instance.Storage`로 InventoryStorage를 참조한다. InventoryManager는 GameStorageManager를 알지 못한다 (단방향 의존).
 
 
 ---
@@ -200,7 +200,7 @@ readonly InventoryStorage _storage = new();
 
 ## asmdef
 
-`Devian.Samples.GameContents.asmdef`에 포함된 참조:
+`Devian.Samples.MobileSystem.asmdef`에 포함된 참조:
 - `Devian.Domain.Common` — `CommonResult`, `CommonError`, `CommonErrorType`
 - `Devian.Domain.Game` — `STAT_TYPE` (AbilityEquip → AbilityBase 경유, InventoryStorage 의존)
 - `RewardData` 타입은 Reward 시스템 정본 규약(49-reward-system) 기반으로 사용한다.
@@ -211,9 +211,9 @@ readonly InventoryStorage _storage = new();
 
 ## Implementation Location (SSOT)
 
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/GameContents/Runtime/InventoryManager/InventoryManager.cs`
-- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/GameContents/Runtime/InventoryManager/InventoryManager.cs`
-- Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/GameContents/Runtime/InventoryManager/InventoryManager.cs`
+- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Inventory/InventoryManager.cs`
+- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Inventory/InventoryManager.cs`
+- Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Inventory/InventoryManager.cs`
 
 
 ---
@@ -222,9 +222,9 @@ readonly InventoryStorage _storage = new();
 ## Notes
 
 - 내부 구현 메서드는 Devian 정책에 따라 `_MethodName` 네이밍을 사용한다(구현 단계).
-- `RewardData` 스키마 정본은 [49-reward-system/03-ssot](../../../50-mobile-system/49-reward-system/03-ssot/SKILL.md)다.
+- `RewardData` 스키마 정본은 [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md)다.
 - Inventory 시스템은 위 정본을 입력 계약으로 참조한다.
-- `RewardData` 런타임 타입 파일은 `RewardManager/RewardData.cs`(49-reward-system 미러 경로)에 위치한다.
+- `RewardData` 런타임 타입 파일은 `Reward/RewardData.cs`(49-reward-system 미러 경로)에 위치한다.
 
 
 ---
@@ -233,9 +233,9 @@ readonly InventoryStorage _storage = new();
 ## Related
 
 - [11-inventory-storage](../11-inventory-storage/SKILL.md) — InventoryStorage (소유 대상)
-- [49-reward-system/03-ssot](../../../50-mobile-system/49-reward-system/03-ssot/SKILL.md) — RewardData 스키마 정본
+- [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md) — RewardData 스키마 정본
 - [03-ssot](../03-ssot/SKILL.md) — Inventory 상태/Apply 규칙 SSOT
 - [01-policy](../01-policy/SKILL.md) — Inventory 하드룰
-- [10-reward-manager](../../../50-mobile-system/49-reward-system/10-reward-manager/SKILL.md) — RewardManager (AddRewards 위임 호출자)
-- [16-game-storage-manager](../../16-game-storage-manager/SKILL.md) — GameStorageManager (InventoryManager.Instance.Storage 참조자)
+- [10-reward-manager](../../49-reward-system/10-reward-manager/SKILL.md) — RewardManager (AddRewards 위임 호출자)
+- [95-game-storage-manager](../../95-game-storage-manager/SKILL.md) — GameStorageManager (InventoryManager.Instance.Storage 참조자)
 - [15-singleton](../../../10-foundation/15-singleton/SKILL.md) — CompoSingleton 규약

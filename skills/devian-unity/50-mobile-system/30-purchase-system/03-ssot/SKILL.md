@@ -11,6 +11,16 @@ AppliesTo: v10
 기존 04~08 분할 문서의 핵심 내용이 이 문서에 통합되었다.
 운영/보안/테스트/DoD는 [09-ssot-operations](../09-ssot-operations/SKILL.md)를 참조한다.
 
+## 관심사별 라우팅 (중복 금지)
+
+- 운영/보안/테스트/DoD 체크리스트: `../09-ssot-operations/SKILL.md`
+- PurchaseStorage(로컬/클라우드 저장용 최소 상태 스냅샷): `../33-purchase-storage/SKILL.md`
+- Firebase Functions + Firestore 구현 상세: `../40-purchase-backend-firebase/SKILL.md`
+- Firebase 레포 구성/CLI/배포 셋업: `../44-purchase-repo-firebase-functions-setup/SKILL.md`
+- 고정 결정사항(Callable 이름/경로/시크릿/정책 결정): `../46-purchase-decisions/SKILL.md`
+
+이 문서(03)는 통합 SSOT 허브/핵심 합의에 집중하고, 구현/운영 상세의 원문은 위 문서로 분리한다.
+
 
 ## 우선순위
 
@@ -153,6 +163,8 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 - 클라이언트는 결제 원장에 직접 write 하지 않는다. (서버 write only)
 - 멱등 처리(Idempotency)로 중복 verify/중복 지급을 방지한다.
 
+구현 상세(함수 구조/스키마/인덱스)는 `40`, 레포/배포 셋업은 `44`, 최종 고정 결정값은 `46`을 참조한다.
+
 
 ### resultStatus (정본 enum)
 
@@ -246,6 +258,13 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
   - `REJECTED` → Confirm **하지 않음** (Unity가 자동 환불 처리)
   - `PENDING` → Confirm **하지 않음** (스토어 확정 대기)
 - Confirm을 호출하지 않으면 Unity IAP가 다음 앱 실행 시 `OnPurchasePending`을 재전달한다.
+
+#### Client-side local snapshot (PurchaseStorage)
+
+- 클라이언트는 `GameStorageManager`가 소유하는 `PurchaseStorage`에 **최소 상태 스냅샷**만 기록할 수 있다.
+- 목적: 구매 진행 중 상태 / 최근 결과 요약의 local/cloud 저장 (복구/UX/진단 보조)
+- 금지: 전체 구매 이력 저장, raw receipt 저장, 서버 원장/멱등 대체
+- 정본 문서: `33-purchase-storage`
 
 #### Reward 적용(클라) 규칙
 

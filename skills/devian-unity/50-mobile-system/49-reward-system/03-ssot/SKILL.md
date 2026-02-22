@@ -44,7 +44,7 @@ Reward 관련 규칙의 단일 SSOT는 이 문서다.
 - `amount: long` (`>= 0`만 허용)
 
 이 스키마 문단이 `RewardData`의 단일 정본이다.
-`15-game-inventory-system`에서는 스키마를 재정의하지 않고 본 문서를 참조한다.
+`93-game-inventory-system`에서는 스키마를 재정의하지 않고 본 문서를 참조한다.
 
 NOTE:
 - `type=REWARD_TYPE.EQUIP`의 `id`는 `equipId(pk)`를 의미한다.
@@ -127,9 +127,9 @@ NOTE:
 - `REWARD_TYPE` enum은 Generated이다 (입력: `input/Domains/Game/ENUM_TYPES.json`, 네임스페이스: `Devian.Domain.Game`).
 - `RewardData` struct만 아래 파일에 수동 정의한다 (`using Devian.Domain.Game;` 필요).
 - UPM original file:
-  `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/RewardManager/RewardData.cs`
+  `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardData.cs`
 - UnityExample Packages mirror:
-  `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/RewardManager/RewardData.cs`
+  `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardData.cs`
 - UnityExample Assets mirror:
-  `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/RewardManager/RewardData.cs`
+  `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Reward/RewardData.cs`
 - 정본/미러링 하드룰은 상위 정책 [devian-unity/01-policy](../../../01-policy/SKILL.md)를 따른다.

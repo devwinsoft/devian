@@ -7,6 +7,14 @@ AppliesTo: v10
 
 > Purchase SSOT: `skills/devian-unity/50-mobile-system/30-purchase-system/03-ssot/SKILL.md` (특히 C 섹션)
 
+## 문서 경계 (Scope)
+
+- 이 문서는 **Firebase Functions + Firestore 서버 구현 정본**이다.
+- 포함: Callable 책임, Firestore 스키마, 멱등 규칙, 인덱스 요구사항
+- 비포함: 레포 배치/`firebase.json`/`.firebaserc`/CLI 배포 셋업 상세 (→ `44`)
+- 비포함: 운영 체크리스트/테스트 최소 시나리오/운영 DoD (→ `09`)
+- 비포함: 최종 고정 결정값(Callable 이름/시크릿/경로)의 결정 관리 (→ `46`)
+
 ## 목적
 
 `PurchaseManager`가 호출할 **검증 서버(Firebase Cloud Functions)** 와 **원장/entitlements 저장소(Firestore)** 를 "스텁 없이" 구현하기 위한 **구현 정본 스킬**이다.
@@ -27,6 +35,8 @@ NEEDS CHECK: 레포 내 Functions 위치가 아직 고정돼 있지 않으면, �
 - Option B: `{repoRoot}/server/firebase/functions` (서버 분리)
 
 결정 후, 이 문서의 모든 경로는 결정된 위치로 통일한다.
+
+레포에 실제로 어떤 파일을 어디에 둘지와 Firebase CLI 셋업 절차는 `44-purchase-repo-firebase-functions-setup` 문서를 우선한다.
 
 
 ### A1. 배포 명령 (정본)
@@ -50,7 +60,7 @@ NEEDS CHECK: Firebase CLI 사용 여부/버전이 레포에서 고정돼 있어�
 - `purchaseId: string` (doc id와 동일)
 - `storeKey: string` (`"apple" | "google"`)
 - `internalProductId: string`
-- `kind: string` (`"Consumable" | "Subscription" | "SeasonPass"`) (=`ProductKind` string)
+- `kind: string` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`) (=`ProductKind` string)
 - `status: string` (SSOT의 resultStatus에 대응하는 소문자 저장: `"granted" | "already_granted" | "rejected" | "pending" | "revoked" | "refunded"`)
 - `storePurchasedAt: Timestamp` — 영수증/스토어 검증 응답에서 추출한 구매 시각(서버에서만 생성, 클라 시간 사용 금지)
 - `createdAt: Timestamp`
@@ -110,6 +120,8 @@ NEEDS CHECK:
 ## E. Callable API 계약 (정본)
 
 SSOT의 "C# ↔ Callable 필드 매핑"을 그대로 따른다. (SSOT: 03-ssot 문서 C 섹션)
+
+Callable 이름/요청·응답 키의 최종 고정값은 `46-purchase-decisions`를 우선한다. 이 문서는 구현 관점의 구조/책임/스키마 설명에 집중한다.
 
 NEEDS CHECK:
 - 실제 TS/JS Functions 구현 시 요청/응답 타입 파일을 어디에 둘지(예: `functions/src/types`)를 레포 구조에 맞게 고정한다.

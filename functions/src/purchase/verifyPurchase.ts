@@ -193,33 +193,9 @@ export const verifyPurchase = onCall(
     }
 
     // ── 2) kind별 구매 제한 검사 ──
-    // Consumable: 제한 없음
-    // Rental: 동일 internalProductId로 30일 이내 구매 기록 있으면 거부
+    // Consumable / Rental / Subscription: 제한 없음
     // SeasonPass: 동일 internalProductId로 구매 기록 1건이라도 있으면 거부
-    if (req.kind === "Rental") {
-      const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-      const thresholdMs = admin.firestore.Timestamp.now().toMillis() - THIRTY_DAYS_MS;
-      const threshold = admin.firestore.Timestamp.fromMillis(thresholdMs);
-
-      const recentSnap = await admin.firestore()
-        .collection("users").doc(uid)
-        .collection("purchases")
-        .where("internalProductId", "==", req.internalProductId)
-        .where("kind", "==", "Rental")
-        .where("status", "==", "GRANTED")
-        .where("storePurchasedAt", ">=", threshold)
-        .limit(1)
-        .get();
-
-      if (!recentSnap.empty) {
-        logger.warn(`[verifyPurchase] Rental purchase blocked: uid=${uid} product=${req.internalProductId} (already purchased within 30 days)`);
-        return {
-          resultStatus: "REJECTED",
-          rejectReason: "RENTAL_ALREADY_ACTIVE",
-          grants: [],
-        };
-      }
-    } else if (req.kind === "SeasonPass") {
+    if (req.kind === "SeasonPass") {
       const existingSnap = await admin.firestore()
         .collection("users").doc(uid)
         .collection("purchases")
@@ -238,7 +214,7 @@ export const verifyPurchase = onCall(
         };
       }
     }
-    // Consumable, Subscription: 제한 없음
+    // Consumable, Rental, Subscription: 제한 없음
 
     // ── 3) 멱등키 생성 (46 스킬 C 섹션) ──
     // purchaseId = "{storeKey}_{storePurchaseId}"

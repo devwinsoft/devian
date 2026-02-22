@@ -77,13 +77,13 @@ CompoSingleton<RewardManager>.Instance
 ## Implementation Location (SSOT)
 
 - RewardManager:
-  - UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/RewardManager/RewardManager.cs`
-  - Packages: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/RewardManager/RewardManager.cs`
-  - Assets: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/RewardManager/RewardManager.cs`
+  - UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardManager.cs`
+  - Packages: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardManager.cs`
+  - Assets: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Reward/RewardManager.cs`
 - RewardData:
-  - UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/RewardManager/RewardData.cs`
-  - Packages: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/RewardManager/RewardData.cs`
-  - Assets: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/RewardManager/RewardData.cs`
+  - UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardData.cs`
+  - Packages: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardData.cs`
+  - Assets: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Reward/RewardData.cs`
 - 미러링/정본 정책은 상위 정책 [devian-unity/01-policy](../../../01-policy/SKILL.md)를 따른다.
 
 asmdef:
@@ -122,5 +122,5 @@ asmdef:
 ## Related
 
 - [49-reward-system/03-ssot](../03-ssot/SKILL.md) — RewardData 스키마 정본
-- [15-game-inventory-system/10-inventory-manager](../../../40-game-system/15-game-inventory-system/10-inventory-manager/SKILL.md) — InventoryManager (AddRewards 위임 대상)
+- [93-game-inventory-system/10-inventory-manager](../../93-game-inventory-system/10-inventory-manager/SKILL.md) — InventoryManager (AddRewards 위임 대상)
 - [30-purchase-system/30-samples-purchase-manager](../../30-purchase-system/30-samples-purchase-manager/SKILL.md) — PurchaseManager (지급 요청 원점)

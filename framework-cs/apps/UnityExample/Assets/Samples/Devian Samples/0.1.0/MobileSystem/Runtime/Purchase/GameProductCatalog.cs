@@ -12,7 +12,7 @@ namespace Devian
                 case ProductKind.Subscription:
                     return PurchaseProductType.Subscription;
                 case ProductKind.Rental:
-                    // Rental is policy-limited by backend (30d), so it must stay repurchasable at store level.
+                    // Rental must stay repurchasable at store level (policy allows repeated purchase).
                     return PurchaseProductType.Consumable;
                 case ProductKind.Consumable:
                     return PurchaseProductType.Consumable;

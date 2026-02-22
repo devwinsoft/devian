@@ -1,4 +1,4 @@
-# 15-game-inventory-system — Policy
+# 93-game-inventory-system — Policy
 
 
 Status: ACTIVE
@@ -33,7 +33,7 @@ Inventory System의 모듈 경계/하드룰을 정의한다.
 
 RewardData 스키마는 Reward 시스템 문서가 단일 정본이다.
 
-- 정본: [49-reward-system/03-ssot](../../../50-mobile-system/49-reward-system/03-ssot/SKILL.md)
+- 정본: [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md)
 - Inventory 문서는 스키마를 재정의하지 않고 참조만 한다.
 
 

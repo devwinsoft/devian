@@ -6,7 +6,7 @@ AppliesTo: v10
 InventoryStorage는 InventoryManager의 **인벤토리 데이터 컨테이너**이다.
 통화 잔고 / 장비(AbilityEquip) / 카드(AbilityCard) / 영웅(AbilityUnitHero)을 통합 관리한다.
 
-InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.GameContents` asmdef에 속한다.
+InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobileSystem` asmdef에 속한다.
 
 ---
 
@@ -24,8 +24,8 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.GameContent
 - `Unequip(heroId, equipSlot)` — 편의 메서드: hero.Unequip 위임
 - `GetCard/AddCard` — 카드 CRUD
 - `GetHero/AddHero` — 영웅 CRUD
-- ~~`ToJson()`~~ — **삭제됨**. [16-game-storage-manager](../../16-game-storage-manager/SKILL.md)의 GameStorageManager로 이전.
-- ~~`FromJson(string json)`~~ — **삭제됨**. [16-game-storage-manager](../../16-game-storage-manager/SKILL.md)의 GameStorageManager로 이전.
+- ~~`ToJson()`~~ — **삭제됨**. [95-game-storage-manager](../../95-game-storage-manager/SKILL.md)의 GameStorageManager로 이전.
+- ~~`FromJson(string json)`~~ — **삭제됨**. [95-game-storage-manager](../../95-game-storage-manager/SKILL.md)의 GameStorageManager로 이전.
 
 ### 장비 장착
 
@@ -68,18 +68,18 @@ public sealed class InventoryManager : MonoBehaviour
 
 ## 3. Implementation Location (SSOT)
 
-### 파일 위치 (GameContents 샘플)
+### 파일 위치 (MobileSystem 샘플)
 
 ```
-GameContents/Runtime/InventoryManager/
+MobileSystem/Runtime/Inventory/
 ├── InventoryManager.cs   (10-inventory-manager)
 └── InventoryStorage.cs
 ```
 
 3경로 미러:
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/GameContents/Runtime/InventoryManager/`
-- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/GameContents/Runtime/InventoryManager/`
-- Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/GameContents/Runtime/InventoryManager/`
+- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Inventory/`
+- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Inventory/`
+- Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Inventory/`
 
 NOTE: `ItemData` 클래스는 `AbilityEquip`에 통합되어 삭제되었다. `BagItems`는 `Equipments`로 리네임되었다.
 
@@ -87,7 +87,7 @@ NOTE: `ItemData` 클래스는 `AbilityEquip`에 통합되어 삭제되었다. `B
 
 ## 4. asmdef
 
-`Devian.Samples.GameContents.asmdef`에 포함된 참조:
+`Devian.Samples.MobileSystem.asmdef`에 포함된 참조:
 - `Devian.Domain.Game` (STAT_TYPE — AbilityEquip → AbilityBase 경유)
 
 ---
@@ -119,21 +119,21 @@ namespace Devian
 ## 7. JSON 직렬화 — GameStorageManager로 이전됨
 
 > **변경**: `ToJson()` / `FromJson()` 메서드는 **삭제**되었다.
-> 직렬화 책임은 [16-game-storage-manager](../../16-game-storage-manager/SKILL.md)의 **GameStorageManager**가 담당한다.
+> 직렬화 책임은 [95-game-storage-manager](../../95-game-storage-manager/SKILL.md)의 **GameStorageManager**가 담당한다.
 
 InventoryStorage는 **ReadOnly 프로퍼티**(`Wallet`, `Equipments`, `Cards`, `Heroes`)와 **CRUD 메서드**만 제공한다.
 GameStorageManager가 이 프로퍼티/메서드를 사용하여 직렬화/역직렬화를 수행한다.
 
 JSON 스키마: [03-ssot](../03-ssot/SKILL.md) 참조.
-GameStorageManager 설계: [16-game-storage-manager](../../16-game-storage-manager/SKILL.md) 참조.
+GameStorageManager 설계: [95-game-storage-manager](../../95-game-storage-manager/SKILL.md) 참조.
 
 ---
 
 ## 8. Related
 
-- [12-game-ability](../../12-game-ability/SKILL.md) — AbilityBase, AbilityEquip, AbilityCard, AbilityUnitHero (Equipments/Cards/Heroes 직접 관리)
-- [13-game-stat-type](../../13-game-stat-type/SKILL.md) — STAT_TYPE enum
+- [12-game-ability](../../../40-game-system/12-game-ability/SKILL.md) — AbilityBase, AbilityEquip, AbilityCard, AbilityUnitHero (Equipments/Cards/Heroes 직접 관리)
+- [13-game-stat-type](../../../40-game-system/13-game-stat-type/SKILL.md) — STAT_TYPE enum
 - [10-inventory-manager](../10-inventory-manager/SKILL.md) — InventoryManager (InventoryStorage 소유자, 수량 SSOT)
 - [03-ssot](../03-ssot/SKILL.md) — Inventory State/Apply Rules
 - [00-overview](../00-overview/SKILL.md) — Inventory System 개요
-- [16-game-storage-manager](../../16-game-storage-manager/SKILL.md) — GameStorageManager (JSON 직렬화 담당)
+- [95-game-storage-manager](../../95-game-storage-manager/SKILL.md) — GameStorageManager (JSON 직렬화 담당)

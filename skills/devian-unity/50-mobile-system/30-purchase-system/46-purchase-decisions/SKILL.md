@@ -50,7 +50,7 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
 - 요청 스키마(고정 키):
   - `storeKey` (`"apple" | "google"`)
   - `internalProductId` (string)
-  - `kind` (`"Consumable" | "Subscription" | "SeasonPass"`) (=`ProductKind` string)
+  - `kind` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`) (=`ProductKind` string)
   - `payload` (string, Unity IAP receipt raw)
 
 - 응답 스키마(고정 키):
@@ -85,7 +85,7 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
 - storePurchaseId 규칙(고정): `purchaseToken`
 - 제품/구독 분기:
   - `kind == Subscription` → `purchases.subscriptions.get`
-  - `kind == Consumable` / `SeasonPass` → `purchases.products.get` (one-time 검증 경로)
+  - `kind == Consumable` / `Rental` / `SeasonPass` → `purchases.products.get` (one-time 검증 경로)
 
 
 ---
@@ -112,6 +112,13 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
 
 > NOTE: 추후 42 스킬(Grants/Entitlements 정본)이 완성되면,
 > 이 문서의 최소 정책을 42의 규칙으로 교체한다.
+
+### F1. 상품 종류별 구매 제한 정책 (결정)
+
+- `Consumable`: 반복 구매 허용
+- `Rental`: 반복 구매 허용 (30일 재구매 제한 없음)
+- `Subscription`: 스토어 검증/상태 기준 (별도 서버 상태 계산)
+- `SeasonPass`: 동일 `internalProductId` 1회만 허용 (기존 구매 기록 있으면 `REJECTED`)
 
 
 ---

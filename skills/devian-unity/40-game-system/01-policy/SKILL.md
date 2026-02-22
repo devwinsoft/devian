@@ -133,7 +133,7 @@ framework-cs/upm/com.devian.samples/
 │   ├── GameContents/
 │   │   ├── Runtime/
 │   │   │   ├── [asmdef: Devian.Samples.GameContents]
-│   │   │   └── Network/*.cs
+│   │   │   └── Net/*.cs
 │   │   ├── Editor/
 │   │   │   ├── [asmdef: Devian.Samples.GameContents.Editor]
 │   │   │   └── *.cs

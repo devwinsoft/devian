@@ -1,4 +1,4 @@
-# 15-game-inventory-system — Overview
+# 93-game-inventory-system — Overview
 
 
 Status: ACTIVE
@@ -46,7 +46,7 @@ Inventory System은 "인벤토리 상태(아이템/통화)"를 시스템 레이�
 
 ## Related
 
-- [49-reward-system](../../../50-mobile-system/49-reward-system/00-overview/SKILL.md)
-- [48-mission-system](../../../50-mobile-system/48-mission-system/00-overview/SKILL.md)
-- [30-purchase-system](../../../50-mobile-system/30-purchase-system/00-overview/SKILL.md)
-- [21-savedata-system](../../../50-mobile-system/21-savedata-system/00-overview/SKILL.md)
+- [49-reward-system](../../49-reward-system/00-overview/SKILL.md)
+- [48-mission-system](../../48-mission-system/00-overview/SKILL.md)
+- [30-purchase-system](../../30-purchase-system/00-overview/SKILL.md)
+- [21-savedata-system](../../21-savedata-system/00-overview/SKILL.md)

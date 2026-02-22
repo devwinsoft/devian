@@ -3,6 +3,12 @@
 
 PurchaseManager(구매 샘플)의 위치/역할/규약을 설명한다.
 
+## 문서 경계 (Scope)
+
+- 이 문서는 **PurchaseManager 클라이언트 샘플 코드의 위치/흐름/규약**을 설명한다.
+- Firebase Functions 구현 상세, Firestore 스키마, 배포/레포 셋업을 이 문서에 복제하지 않는다.
+- 서버 관련 정본은 `40`(구현), `44`(셋업), `46`(결정), `43`(클라-서버 연동 규약)를 참조한다.
+
 PurchaseManager는 **단일 concrete 클래스**이다.
 `TB_PRODUCT` 테이블을 직접 참조하여 `internalProductId -> rewardGroupId` 변환과 ProductDefinition 빌드를 수행한다.
 
@@ -13,9 +19,12 @@ PurchaseManager는 **단일 concrete 클래스**이다.
 ## Implementation Location (SSOT)
 
 
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/PurchaseManager/PurchaseManager.cs`
-- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/PurchaseManager/PurchaseManager.cs`
-- Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/PurchaseManager/PurchaseManager.cs`
+- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
+- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseStorage.cs` (상태 스냅샷)
+- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
+- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseStorage.cs`
+- Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
+- Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Purchase/PurchaseStorage.cs`
 
 
 - asmdef:
@@ -76,6 +85,8 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 
 ## Server Integration (구현 완료)
 
+서버 구현의 상세 규칙/스키마/배포 절차는 이 문서가 아니라 `40/44/46` 문서를 우선한다.
+
 
 - **VerifyPurchaseAsync**: Firebase Functions Callable (`verifyPurchase`) 사용 — ✅ 구현됨
   - 요청 키: `storeKey`, `internalProductId`, `kind`, `payload`
@@ -97,6 +108,8 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 - 지급 여부는 서버 `verifyPurchase.resultStatus`만 기준으로 한다(스토어 콜백만으로 지급 금지).
 - `resultStatus == GRANTED`일 때만 `ResolveRewardGroupId(internalProductId)` → `rewardGroupId` 변환 후 `Singleton.Get<RewardManager>().ApplyRewardGroupId(rewardGroupId)`로 지급 실행을 위임한다.
 - 구매 전 인증 게이트는 AccountManager 로그인 상태 API를 사용한다. (`FirebaseAuth.CurrentUser` 직접 판정 금지)
+- 로컬/클라우드 저장용 구매 상태는 `PurchaseManager`가 직접 소유하지 않고 `GameStorageManager.Instance.Purchase`(`PurchaseStorage`)에 기록한다.
+- `PurchaseStorage`는 최소 스냅샷만 저장한다(진행 중 1건 + 최근 결과 1건). 전체 이력/영수증 저장 금지.
 
 
 ---
@@ -144,4 +157,9 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 
 
 - `skills/devian-unity/50-mobile-system/30-purchase-system/03-ssot/SKILL.md`
+- `skills/devian-unity/50-mobile-system/30-purchase-system/33-purchase-storage/SKILL.md`
 - `skills/devian-unity/50-mobile-system/30-purchase-system/09-ssot-operations/SKILL.md`
+- `skills/devian-unity/50-mobile-system/30-purchase-system/40-purchase-backend-firebase/SKILL.md`
+- `skills/devian-unity/50-mobile-system/30-purchase-system/43-purchase-client-server-integration/SKILL.md`
+- `skills/devian-unity/50-mobile-system/30-purchase-system/44-purchase-repo-firebase-functions-setup/SKILL.md`
+- `skills/devian-unity/50-mobile-system/30-purchase-system/46-purchase-decisions/SKILL.md`

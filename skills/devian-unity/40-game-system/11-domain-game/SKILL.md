@@ -88,15 +88,14 @@ Game 도메인을 사용하는 스킬:
 | 스킬 | 핵심 타입 | 설명 |
 |---|---|---|
 | [12-game-ability](../12-game-ability/SKILL.md) | AbilityBase, AbilityEquip, AbilityCard, STAT_TYPE | 능력치 정규화 시스템 |
-| [21-game-net-manager](../21-game-net-manager/SKILL.md) | GameNetManager, Game2CStub | 네트워크 샘플 |
-
-| [10-inventory-manager](../15-game-inventory-system/10-inventory-manager/SKILL.md) | InventoryManager | 인벤토리 + InventoryStorage |
-| [11-inventory-storage](../15-game-inventory-system/11-inventory-storage/SKILL.md) | InventoryStorage | 인벤토리 데이터 컨테이너 |
 
 ### MobileSystem (`com.devian.samples/Samples~/MobileSystem`)
 
 | 스킬 | 핵심 타입 | 설명 |
 |---|---|---|
+| [91-game-net-manager](../../50-mobile-system/91-game-net-manager/SKILL.md) | GameNetManager, Game2CStub | 네트워크 샘플 |
+| [10-inventory-manager](../../50-mobile-system/93-game-inventory-system/10-inventory-manager/SKILL.md) | InventoryManager | 인벤토리 + InventoryStorage |
+| [11-inventory-storage](../../50-mobile-system/93-game-inventory-system/11-inventory-storage/SKILL.md) | InventoryStorage | 인벤토리 데이터 컨테이너 |
 | [30-samples-purchase-manager](../../50-mobile-system/30-purchase-system/30-samples-purchase-manager/SKILL.md) | PurchaseManager | 구매 (TB_PRODUCT 직접 참조) |
 | [10-reward-manager](../../50-mobile-system/49-reward-system/10-reward-manager/SKILL.md) | RewardManager | 보상 (TB_REWARD 직접 참조) |
 

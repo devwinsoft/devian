@@ -36,7 +36,7 @@ AppliesTo: v10
 SSOT의 "C# ↔ Callable 필드 매핑"을 그대로 따른다.
 
 - 요청 키:
-  - `storeKey`, `internalProductId`, `kind` (`"Consumable" | "Subscription" | "SeasonPass"`), `payload`
+  - `storeKey`, `internalProductId`, `kind` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`), `payload`
 - 응답 키:
   - `resultStatus`, `grants`, `entitlementsSnapshot`
 
