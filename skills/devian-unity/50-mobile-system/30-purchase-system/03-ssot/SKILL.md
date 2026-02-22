@@ -179,7 +179,9 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 | `REVOKED` | 환불/취소 등으로 사후 철회 |
 | `REFUNDED` | 스토어 환불 확인 |
 
-- Firestore `purchases.status` 필드도 동일 값 세트를 소문자로 저장한다(`"granted"`, `"already_granted"`, …).
+- Firestore purchase 문서의 정본 상태 필드는 `verifyStatus`다. (`resultStatus`와 같은 의미의 서버 상태)
+- `clientGrantStatus`는 클라이언트 로컬 지급 결과 보고 상태를 별도로 저장한다. (`PENDING` / `APPLIED_ACKED` / `FAILED_REPORTED`)
+- `storeConfirmStatus`는 스토어 `ConfirmPurchase` 처리 상태를 별도로 저장한다. (`PENDING` / `CONFIRMED`)
 - 01-policy의 기존 표기(`GRANTED|ALREADY_GRANTED|REJECTED|PENDING`)와 정합.
 
 
@@ -200,6 +202,10 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
   4) 결과 반환
 - 출력
   - `resultStatus: string` — 위 enum 중 하나
+  - `purchaseId: string` — `{storeKey}_{storePurchaseId}`
+  - `verifyStatus: string` — 서버 purchase 상태 필드(`verifyStatus`)와 정합
+  - `clientGrantStatus: string` — `"PENDING" | "APPLIED_ACKED" | "FAILED_REPORTED"`
+  - `storeConfirmStatus: string` — `"PENDING" | "CONFIRMED"`
   - `grants: array` — 지급 내역(RewardData[]) (각 항목: `{ type, id, amount }`, `type="item"|"currency"`, `amount>=0`)
   - `entitlementsSnapshot: object?` — (optional) 갱신된 entitlements 스냅샷
 
@@ -215,8 +221,40 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 | Callable JSON response | C# (`VerifyPurchaseResponse`) | 비고 |
 |------------------------|-------------------------------|------|
 | `resultStatus` | `ResultStatus` | 위 enum 값 |
+| `purchaseId` | `PurchaseId` | verify 멱등키 |
+| `verifyStatus` | `VerifyStatus` | Firestore purchase 상태 필드와 정합 |
+| `clientGrantStatus` | `ClientGrantStatus` | 로컬 지급 결과 보고 상태 |
+| `storeConfirmStatus` | `StoreConfirmStatus` | 스토어 Confirm 처리 상태 |
 | `grants[]` | (클라이언트 미사용 — 무시) | 서버 informational. 보상은 `rewardGroupId` 경로로 지급 |
 | `entitlementsSnapshot` | `Snapshot` (`EntitlementsSnapshot?`) | optional |
+
+#### 1-1) ackPurchaseClientGrant (Callable)
+
+- 입력
+  - `uid` — Auth context에서 확보 (클라가 보내지 않음)
+  - `purchaseId: string`
+  - `clientGrantStatus: string` — `"APPLIED_ACKED"` | `"FAILED_REPORTED"`
+- 처리
+  1) purchase 문서 소유자/상태 확인 (`verifyStatus == GRANTED`)
+  2) `clientGrantStatus = APPLIED_ACKED | FAILED_REPORTED` 멱등 업데이트
+- 출력
+  - `purchaseId`
+  - `verifyStatus`
+  - `clientGrantStatus`
+
+#### 1-2) ackPurchaseStoreConfirm (Callable)
+
+- 입력
+  - `uid` — Auth context에서 확보 (클라가 보내지 않음)
+  - `purchaseId: string`
+- 처리
+  1) purchase 문서 소유자/상태 확인 (`verifyStatus == GRANTED`)
+  2) `storeConfirmStatus = CONFIRMED` 멱등 업데이트
+- 출력
+  - `purchaseId`
+  - `verifyStatus`
+  - `clientGrantStatus`
+  - `storeConfirmStatus`
 
 #### 2) getEntitlements (Callable/HTTPS 중 택1)
 
@@ -225,9 +263,10 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 
 | Callable JSON response | C# (`EntitlementsSnapshot`) | 비고 |
 |------------------------|------------------------------|------|
-| `noAdsActive` | `NoAdsActive: bool` | |
 | `ownedSeasonPasses` | `OwnedSeasonPasses: IReadOnlyList<string>` | |
+| `rentals` | `Rentals: IReadOnlyDictionary<string, long>` | key=`internalProductId`, value=`expiresAtServerUtcMs` |
 | `currencyBalances` | `CurrencyBalances: IReadOnlyDictionary<string, long>` | key=재화ID, value=잔고 |
+| `serverNowUtcMs` | `ServerNowUtcMs: long` | Rental 남은시간 계산 기준 |
 
 #### 3) getRecentPurchases30d (Callable)
 
@@ -236,9 +275,10 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 - 30일 기준: 서버 now − 30일 (클라/기기 시간 금지)
 - 최신(latest): `storePurchasedAt` desc, 동률이면 docId desc
 - 인증: `context.auth.uid` 필수
-- 입력: `kind` (string, 필수 — ProductKind 값), `pageSize` (optional, 기본 20)
+- 입력: `kind` (string, 필수 — ProductKind 값. `Consumable`/`Rental` 등), `pageSize` (optional, 기본 20)
 - 출력:
-  - `items: array` — 각 원소: `{ purchaseId, internalProductId, storePurchasedAt, status }`
+  - `items: array` — 각 원소: `{ purchaseId, internalProductId, storePurchasedAt, verifyStatus, status }`
+    - `status`는 legacy response compatibility alias (temporary)
   - `nextCursor: string | null` — 형식: `"storePurchasedAtMs|docId"` (페이지네이션 토큰)
 
 #### PurchaseManager 정식 API
@@ -247,6 +287,8 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
   - 서버 Callable: `getRecentPurchases30d` (`kind="Consumable"`, `pageSize=1`로 호출, `items[0]`만 사용)
   - 최근 30일 내 해당 kind 내역이 없으면 실패(`CommonErrorType.COMMON_SERVER` + 메시지)로 처리
   - 페이지네이션 없이 최신 1건만 반환하는 단일 API
+- `GetLatestRentalPurchase30dAsync()`
+  - 서버 Callable: `getRecentPurchases30d` (`kind="Rental"`, `pageSize=1`로 호출, `items[0]`만 사용)
 
 
 ### Client-Side Purchase Flow (정본)
@@ -254,7 +296,16 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 #### ConfirmPurchase 타이밍 정책
 
 - `verifyPurchase` 응답의 `resultStatus`에 따라:
-  - `GRANTED` 또는 `ALREADY_GRANTED` → `controller.ConfirmPurchase(pendingOrder)` **실행**
+  - `GRANTED`
+    - `controller.ConfirmPurchase(pendingOrder)` → `ackPurchaseStoreConfirm` **먼저 실행** (스토어 잠김 방지 우선)
+    - 이후 로컬 지급 → `ackPurchaseClientGrant(APPLIED_ACKED)` 수행
+    - `PurchaseStorage.current`는 `Confirm + storeConfirm ACK + clientGrant report` 종결 후 clear
+    - 로컬 지급 실패 → `ackPurchaseClientGrant(FAILED_REPORTED)` 보고 가능, 단 `storeConfirmStatus != CONFIRMED`이면 clear 금지
+  - `ALREADY_GRANTED`
+    - `storeConfirmStatus == PENDING`이고 로컬에서 이미 Confirm 완료(`storeConfirmedLocal`) 상태면 `ackPurchaseStoreConfirm` 복구 먼저 수행
+    - `clientGrantStatus == APPLIED_ACKED` → 중복 지급 없이 Confirm/ACK 복구만 진행
+    - `clientGrantStatus == PENDING` 또는 `FAILED_REPORTED` → 로컬 지급 복구 재시도 허용 → APPLIED_ACKED 보고
+    - `PurchaseStorage.current`는 복구 단계가 모두 종결될 때만 clear
   - `REJECTED` → Confirm **하지 않음** (Unity가 자동 환불 처리)
   - `PENDING` → Confirm **하지 않음** (스토어 확정 대기)
 - Confirm을 호출하지 않으면 Unity IAP가 다음 앱 실행 시 `OnPurchasePending`을 재전달한다.
@@ -262,15 +313,19 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 #### Client-side local snapshot (PurchaseStorage)
 
 - 클라이언트는 `GameStorageManager`가 소유하는 `PurchaseStorage`에 **최소 상태 스냅샷**만 기록할 수 있다.
-- 목적: 구매 진행 중 상태 / 최근 결과 요약의 local/cloud 저장 (복구/UX/진단 보조)
-- 금지: 전체 구매 이력 저장, raw receipt 저장, 서버 원장/멱등 대체
+- 목적: 구매 진행 중 상태(current)의 local/cloud 저장 (복구 보조) + 환불/지원 대응용 최소 로그(refundSupportLogs)
+- `current`는 복구 워크아이템이며, `Confirm + storeConfirm ACK + clientGrant report`가 종결되기 전에는 clear하지 않는다.
+- 금지: 전체 구매 이력 정본 저장, 구매 실패 상세(코드/메시지) 저장, raw receipt 저장, 서버 원장/멱등 대체
+- `PurchaseStorage` local/cloud 캐시에는 `noAdsExpireAtClientUtcMs`(long, client clock)와 `SeasonPass ownership`(internalProductId→bool)를 저장할 수 있다. (구현됨)
+- `Rental` local/cloud 캐시는 future 확장 항목이며 현재 구현 범위가 아니다.
+- `NoAds`의 실제 적용/해석은 게임 로직 영역이며, PurchaseManager는 서버 `rentals` projection에서 남은 시간(ms)을 조회하고 `noAdsExpireAtClientUtcMs`를 갱신한다.
+- `RetryInterruptedPurchaseAsync()`는 "재구매"가 아니라 `PurchaseStorage.current` + 서버 상태를 바탕으로 **중단된 상태 전이를 재개**하는 경로다.
 - 정본 문서: `33-purchase-storage`
 
 #### Reward 적용(클라) 규칙
 
-- `verifyPurchase` 응답 `resultStatus`가 `GRANTED`일 때만:
-  - 컨텐츠 레이어 매핑(`internalProductId -> rewardGroupId`) 후 RewardManager의 `ApplyRewardGroupId(rewardGroupId)`를 호출한다.
-- `ALREADY_GRANTED`는 "이미 지급됨(멱등)" 결과이며, 클라에서 중복 지급을 시도하지 않는다.
+- `GRANTED`이면 컨텐츠 레이어 매핑(`internalProductId -> rewardGroupId`) 후 RewardManager의 `ApplyRewardGroup(rewardGroupId)`를 호출한다. (`AppliedRewards` 수집 가능)
+- `ALREADY_GRANTED`는 기본적으로 재지급 금지이나, `clientGrantStatus == PENDING` 또는 `FAILED_REPORTED`인 경우에는 로컬 지급 복구 경로를 허용한다.
 - `grants[]`는 응답 스키마에 존재할 수 있으나, **클라 지급 입력으로 사용하지 않는다**(지급 호출은 rewardGroupId 기반).
 - RewardManager는 지급 실행만 담당하며, 멱등/기록/복구는 PurchaseManager(+서버)가 책임진다.
 
@@ -302,7 +357,10 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
   - `storePurchaseId: string`
   - `internalProductId: string`
   - `kind: string`
-  - `status: string`  // "granted" | "already_granted" | "rejected" | "pending" | "revoked" | "refunded" (resultStatus enum 소문자)
+  - `verifyStatus: string`  // "GRANTED" | "REJECTED" | "PENDING" | "REVOKED" | "REFUNDED"
+  - `clientGrantStatus: string` // "PENDING" | "APPLIED_ACKED" | "FAILED_REPORTED"
+  - `storeConfirmStatus: string` // "PENDING" | "CONFIRMED"
+  - `status: string`  // legacy compatibility field (temporary)
   - `lastStatusChangeAt: timestamp` // server timestamp (상태 변경 시각)
   - `statusReason: string`          // "refund" | "refund_reversed" | "chargeback" | "manual" 등
   - `payloadHash: string` // 원문 저장 대신 해시 권장
@@ -316,9 +374,18 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 
 - 최소 필드(프로젝트 확장 가능)
   - `updatedAt: timestamp` (server timestamp)
-  - (예시) `noAdsActive: bool`
   - (예시) `ownedSeasonPasses: array<string>`
+  - (예시) `rentals: map<string, number>` // `internalProductId -> expiresAtServerUtcMs`
   - (예시) `currencyBalances: map<string, number>`
+
+### SeasonPass / Rental Restore Projection (design fixed, partial implementation)
+
+- `SeasonPass` 복원은 서버 entitlement/projection의 `ownedSeasonPasses`(internalProductId 목록) 기준으로 수행한다.
+- `Rental` 복원은 서버 entitlement/projection의 `rentals` map(`internalProductId -> expiresAtServerUtcMs`) 기준으로 수행한다.
+- `RestoreAsync()`(스토어 복원)는 manual/fallback 경로이며, 위 projection 기반 복원과 동일 개념이 아니다.
+- `PurchaseManager.GetRentalRemainingMsAsync(internalProductId)`는 서버에 `rentals`를 질의하고 남은 시간을 반환하며, 성공 시 `PurchaseStorage.noAdsExpireAtClientUtcMs`를 클라이언트 시간 기준으로 갱신한다. (구현됨)
+- `Rental` 재구매 만료일 계산 정책(서버):
+  - `newExpiry = max(existingExpiry, serverNow) + 30일` (연장 방식)
 
 
 ### Idempotency (멱등) 규칙
@@ -338,8 +405,8 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
   - `/users/{uid}/entitlements/current`만 제한적으로 허용을 권장
   - purchases 원장 direct read는 기본 비권장
 - Refund visibility (minimum)
-  - 환불 발생 시: `status="refunded"`, `statusReason="refund"`, `lastStatusChangeAt=serverTimestamp`
-  - 환불 취소(철회) 시: `status`를 정상 상태로 되돌리고, `statusReason="refund_reversed"`, `lastStatusChangeAt=serverTimestamp`
+  - 환불 발생 시: `verifyStatus="REFUNDED"`, `statusReason="refund"`, `lastStatusChangeAt=serverTimestamp`
+  - 환불 취소(철회) 시: `verifyStatus`를 정상 상태로 되돌리고, `statusReason="refund_reversed"`, `lastStatusChangeAt=serverTimestamp`
   - 이 2개 필드로 "환불/환불취소가 실제로 있었는지"를 `purchaseId` 단건 조회에서 확인 가능하다.
 
 ### Privacy (Raw 데이터)

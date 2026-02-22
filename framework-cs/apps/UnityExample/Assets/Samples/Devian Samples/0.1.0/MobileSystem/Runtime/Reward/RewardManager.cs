@@ -1,20 +1,42 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Devian.Domain.Common;
 using Devian.Domain.Game;
 
 namespace Devian
 {
     public sealed class RewardManager : CompoSingleton<RewardManager>
     {
-        public void ApplyRewardGroupId(string rewardGroupId)
+        public CommonResult ApplyRewardGroupId(string rewardGroupId)
         {
-            var deltas = ResolveRewardDeltas(rewardGroupId);
-            ApplyRewardDatas(deltas);
+            var result = ApplyRewardGroup(rewardGroupId);
+            if (result.IsFailure)
+                return CommonResult.Failure(result.Error!);
+
+            return CommonResult.Ok();
         }
 
-        public void ApplyRewardDatas(RewardData[] deltas)
+        public CommonResult<RewardApplyResult> ApplyRewardGroup(string rewardGroupId)
         {
-            Singleton.Get<InventoryManager>().AddRewards(deltas);
+            if (string.IsNullOrEmpty(rewardGroupId))
+            {
+                return CommonResult<RewardApplyResult>.Success(
+                    new RewardApplyResult(string.Empty, Array.Empty<RewardData>()));
+            }
+
+            var deltas = ResolveRewardDeltas(rewardGroupId);
+            var apply = ApplyRewardDatas(deltas);
+            if (apply.IsFailure)
+                return CommonResult<RewardApplyResult>.Failure(apply.Error!);
+
+            return CommonResult<RewardApplyResult>.Success(
+                new RewardApplyResult(rewardGroupId, deltas ?? Array.Empty<RewardData>()));
+        }
+
+        public CommonResult ApplyRewardDatas(RewardData[] deltas)
+        {
+            return Singleton.Get<InventoryManager>().AddRewards(deltas);
         }
 
         RewardData[] ResolveRewardDeltas(string rewardGroupId)
@@ -31,6 +53,18 @@ namespace Devian
             }
 
             return list.ToArray();
+        }
+
+        public readonly struct RewardApplyResult
+        {
+            public RewardApplyResult(string rewardGroupId, RewardData[] appliedRewards)
+            {
+                RewardGroupId = rewardGroupId ?? string.Empty;
+                AppliedRewards = appliedRewards ?? Array.Empty<RewardData>();
+            }
+
+            public string RewardGroupId { get; }
+            public RewardData[] AppliedRewards { get; }
         }
     }
 }

@@ -21,8 +21,9 @@ InventoryStorage와 PurchaseStorage(최소 구매 상태 스냅샷)를 포함하
 이 책임을 **GameStorageManager**로 이전하여:
 
 1. InventoryStorage는 데이터 관리(CRUD)에만 집중
-2. GameStorageManager가 전체 게임 상태의 직렬화/역직렬화를 통합
-3. 새 저장 섹션 추가 시 GameStorageManager만 확장
+2. GameStorageManager가 전체 게임 상태의 직렬화/역직렬화 진입점을 통합
+3. 직렬화 구현은 `GameStorageJsonCodec` + 섹션 codec(`Inventory`, `Purchase`)로 분리하여 파일 책임을 축소
+4. 새 저장 섹션 추가 시 GameStorageManager(진입점) + GameStorageJsonCodec(root orchestration) + 섹션 codec(구현)를 함께 확장
 
 
 ---
@@ -33,9 +34,6 @@ InventoryStorage와 PurchaseStorage(최소 구매 상태 스냅샷)를 포함하
 
 ```
 GameStorageManager : CompoSingleton<GameStorageManager> (MobileSystem 레이어)
-│
-├── Constants
-│   └── CurrentVersion = 2
 │
 ├── Fields
 │   └── _inventory : InventoryStorage (InventoryManager.Instance에서 획득)
@@ -50,11 +48,10 @@ GameStorageManager : CompoSingleton<GameStorageManager> (MobileSystem 레이어)
 │   ├── LoadFromJson(string json) → void
 │   └── Clear()
 │
-├── Private Methods
-│   ├── _serializeInventory() → JObject
-│   └── _deserializeInventory(JObject inv) → void
-│   ├── _serializePurchase() → JObject
-│   └── _deserializePurchase(JObject purchase) → void
+├── Delegates To
+│   ├── GameStorageJsonCodec (root version / inventory,purchase 섹션 orchestration)
+│   ├── GameStorageJsonCodecInventory (inventory 섹션 serialize/deserialize)
+│   └── GameStorageJsonCodecPurchase (purchase 섹션 serialize/deserialize)
 │
 └── 확장 예정
     ├── (향후) missions 섹션
@@ -92,7 +89,7 @@ GameStorageManager : CompoSingleton<GameStorageManager>
 - `_inventory.Equipments` → `IReadOnlyDictionary<string, AbilityEquip>`
 - `_inventory.Cards` → `IReadOnlyDictionary<string, AbilityCard>`
 - `_inventory.Heroes` → `IReadOnlyDictionary<string, AbilityUnitHero>`
-- `_purchase` → `purchase.current`, `purchase.last` (최소 스냅샷)
+- `_purchase` → `purchase.current` (진행 중 결제 복구 상태)
 
 직렬화 순서: wallet → equipments → cards → heroes (기존 유지).
 
@@ -112,7 +109,7 @@ LoadFromPayload(payload) = LoadFromJson(ComplexUtil.Decrypt_Base64(payload))
 
 - `_inventory.Clear()`
 - `_inventory.AddCurrency()`, `_inventory.AddEquip()`, `_inventory.AddCard()`, `_inventory.AddHero()`
-- `_purchase.ClearAll()`, `_purchase.RestoreCurrent()`, `_purchase.RestoreLast()`
+- `_purchase.ClearAll()`, `_purchase.RestoreCurrent()`, `_purchase.RestoreRefundSupportLogs()`
 
 역직렬화 순서: wallet → equipments → cards → heroes (equip slot 참조를 위해 heroes는 마지막).
 
@@ -125,7 +122,7 @@ LoadFromPayload(payload) = LoadFromJson(ComplexUtil.Decrypt_Base64(payload))
 
 ```json
 {
-  "version": 2,
+  "version": 6,
   "inventory": {
     "wallet": {
       "<CURRENCY_TYPE.ToString()>": "<long>"
@@ -162,6 +159,10 @@ LoadFromPayload(payload) = LoadFromJson(ComplexUtil.Decrypt_Base64(payload))
     }
   },
   "purchase": {
+    "noAdsExpireAtClientUtcMs": "<long>",
+    "seasonPassOwnership": {
+      "<internalProductId>": "<bool>"
+    },
     "current": {
       "isPurchaseInProgress": "<bool>",
       "internalProductId": "<string>",
@@ -169,27 +170,40 @@ LoadFromPayload(payload) = LoadFromJson(ComplexUtil.Decrypt_Base64(payload))
       "storeKey": "<string>",
       "startedAtUtcMs": "<long>",
       "isStorePending": "<bool>",
-      "storePendingAtUtcMs": "<long>"
+      "storePendingAtUtcMs": "<long>",
+      "purchaseId": "<string>",
+      "verifyStatus": "<string>",
+      "clientGrantApplied": "<bool>",
+      "clientGrantReported": "<bool>"
     },
-    "last": {
-      "internalProductId": "<string>",
-      "kind": "<string>",
-      "storeKey": "<string>",
-      "resultStatus": "<string>",
-      "errorCode": "<string>",
-      "errorMessage": "<string>",
-      "updatedAtUtcMs": "<long>"
-    }
+    "refundSupportLogs": [
+      {
+        "purchaseId": "<string>",
+        "internalProductId": "<string>",
+        "kind": "<string>",
+        "storeKey": "<string>",
+        "verifyStatus": "<string>",
+        "clientGrantStatus": "<string>",
+        "storeConfirmStatus": "<string>",
+        "firstSeenAtUtcMs": "<long>",
+        "lastUpdatedAtUtcMs": "<long>"
+      }
+    ]
   }
 }
 ```
 
 ### version
 
-- 현재: `2`
+- 현재: `7`
 - 스키마 변경 시 version을 증가시키고 마이그레이션 코드를 추가한다.
 - LoadFromJson()에서 version을 확인하고, 지원하지 않는 버전이면 실패를 반환한다.
 - v1 payload 로드 시 `purchase` 섹션은 없는 것으로 간주하고 `_purchase.ClearAll()`로 초기화한다.
+- v2 payload 로드 시 `purchase.last`는 무시하고 `purchase.current`만 복원한다.
+- v5 payload부터 `purchase.refundSupportLogs[]`를 함께 복원한다. (없으면 빈 배열)
+- v6 payload의 legacy `purchase.noAds`(bool) 필드는 무시하고, `purchase.seasonPassOwnership`만 복원한다. (없으면 기본값)
+- v7 payload부터 `purchase.noAdsExpireAtClientUtcMs`(long, client clock)와 `purchase.seasonPassOwnership`를 복원한다. (없으면 기본값)
+- v8 payload부터 `purchase.current.storeConfirmedLocal`을 복원한다. (없으면 `false`)
 
 
 ### inventory
@@ -199,8 +213,10 @@ LoadFromPayload(payload) = LoadFromJson(ComplexUtil.Decrypt_Base64(payload))
 
 ### purchase
 
-- `purchase` 섹션은 `PurchaseStorage`의 **최소 스냅샷(current + last)** 만 저장한다.
+- `purchase` 섹션은 `PurchaseStorage`의 **current(진행 중 결제 복구 상태)**, **refundSupportLogs(환불/지원 대응용 최소 로그)**, **game logic cache(noAdsExpireAtClientUtcMs)**, **entitlement cache(seasonPassOwnership)** 를 저장한다.
+- `ToJson()` 경로에서 `PurchaseStorage.PruneRefundSupportLogs()`를 먼저 호출하여 TTL/Cap 정책을 적용한 뒤 직렬화한다.
 - 전체 구매 이력/영수증/토큰/서버 ledger 정보는 저장하지 않는다.
+- 구매 실패 내역(에러 코드/메시지)도 저장하지 않는다.
 - 정본: [30-purchase-system/33-purchase-storage](../30-purchase-system/33-purchase-storage/SKILL.md)
 
 
@@ -225,7 +241,8 @@ LoadFromPayload(payload) = LoadFromJson(ComplexUtil.Decrypt_Base64(payload))
 ### 3) InventoryStorage 직렬화 삭제
 
 - `InventoryStorage.ToJson()` / `InventoryStorage.FromJson()` 삭제.
-- 직렬화 책임은 **GameStorageManager만** 담당한다.
+- 직렬화 **진입점/상태 소유 책임**은 GameStorageManager가 담당한다.
+- JSON 직렬화/역직렬화 구현은 `GameStorageJsonCodec`(root) + `GameStorageJsonCodecInventory` / `GameStorageJsonCodecPurchase`(섹션 구현)로 분리한다.
 - InventoryStorage는 **ReadOnly 프로퍼티 + CRUD 메서드**만 제공한다.
 
 
@@ -233,7 +250,8 @@ LoadFromPayload(payload) = LoadFromJson(ComplexUtil.Decrypt_Base64(payload))
 
 - JSON 루트에 `"version"` 필드가 반드시 포함된다.
 - 스키마 변경 시 version을 증가시키고, 하위 호환 마이그레이션을 제공한다.
-- 현재 구현은 v1(legacy inventory-only)와 v2(inventory + purchase snapshot)를 읽을 수 있어야 한다.
+- 현재 구현은 v1(legacy inventory-only), v2(purchase current+last), v3(purchase current-only, `serverAcked`), v4(purchase current-only, `clientGrantReported`), v5(purchase current + `refundSupportLogs`), v6(purchase legacy `noAds` + `seasonPassOwnership`), v7(purchase `noAdsExpireAtClientUtcMs` + `seasonPassOwnership`), v8(purchase `current.storeConfirmedLocal`)를 읽을 수 있어야 한다.
+- `refundSupportLogs` 보관 정책(TTL 30일 + 32개 cap)은 schema 변경이 아니므로 버전 증가 사유가 아니다.
 
 
 ### 5) 직렬화 순서
@@ -268,6 +286,11 @@ LoadFromPayload(payload) = LoadFromJson(ComplexUtil.Decrypt_Base64(payload))
 - UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Storage/`
 - UnityExample/Packages: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Storage/`
 - Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Storage/`
+- 핵심 파일:
+  - `GameStorageManager.cs` (상태 소유 + ToJson/LoadFromJson 진입점)
+  - `GameStorageJsonCodec.cs` (root JSON serialize/deserialize orchestration, version/migration 포함)
+  - `GameStorageJsonCodecInventory.cs` (inventory 섹션 serialize/deserialize)
+  - `GameStorageJsonCodecPurchase.cs` (purchase 섹션 serialize/deserialize)
 
 
 ---

@@ -9,6 +9,7 @@ AppliesTo: v10
 
 `PurchaseManager`의 스텁:
 - `VerifyPurchaseAsync`
+- `AckPurchaseClientGrantAsync`
 - `SyncEntitlementsAsync`
 를 어떤 호출 방식으로 서버(Functions)에 연결할지 "정본"으로 고정한다.
 
@@ -38,7 +39,15 @@ SSOT의 "C# ↔ Callable 필드 매핑"을 그대로 따른다.
 - 요청 키:
   - `storeKey`, `internalProductId`, `kind` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`), `payload`
 - 응답 키:
-  - `resultStatus`, `grants`, `entitlementsSnapshot`
+  - `resultStatus`, `purchaseId`, `verifyStatus`, `clientGrantStatus`, `storeConfirmStatus`, `grants`, `entitlementsSnapshot`
+
+- ACK(로컬 지급 결과 보고) 요청 키:
+  - `purchaseId`, `clientGrantStatus`
+- ACK 응답 키:
+  - `purchaseId`, `verifyStatus`, `clientGrantStatus`, `storeConfirmStatus`
+- Confirm ACK 요청/응답 키:
+  - 요청: `purchaseId`
+  - 응답: `purchaseId`, `verifyStatus`, `clientGrantStatus`, `storeConfirmStatus`
 
 
 ---
@@ -46,17 +55,23 @@ SSOT의 "C# ↔ Callable 필드 매핑"을 그대로 따른다.
 
 ## C. ConfirmPurchase 타이밍 (하드룰)
 
-클라이언트는 서버 응답의 `resultStatus`에 따라 Confirm 여부를 결정한다.
+클라이언트는 서버 응답의 `resultStatus`와 `clientGrantStatus`에 따라
+로컬 지급 복구/ACK/Confirm 순서를 결정한다.
 
-- `GRANTED` / `ALREADY_GRANTED` → `ConfirmPurchase(pendingOrder)`
+- `GRANTED` → (로컬 지급 성공) → `ackPurchaseClientGrant(APPLIED_ACKED)` 성공 → `PurchaseStorage.current` clear → `ConfirmPurchase(pendingOrder)` → `ackPurchaseStoreConfirm`
+- `GRANTED` 로컬 지급 실패 → `ackPurchaseClientGrant(FAILED_REPORTED)` 성공 → `PurchaseStorage.current` clear → Confirm 하지 않음
+- `ALREADY_GRANTED`
+  - `clientGrantStatus == APPLIED_ACKED` → 중복 지급 없이 `ConfirmPurchase(pendingOrder)` (필요 시 `ackPurchaseStoreConfirm`)
+  - `clientGrantStatus == PENDING` → 로컬 지급 복구 후 `ackPurchaseClientGrant(APPLIED_ACKED)` 성공 → `PurchaseStorage.current` clear → `ConfirmPurchase(pendingOrder)` → `ackPurchaseStoreConfirm`
+  - `clientGrantStatus == FAILED_REPORTED` → 로컬 지급 복구 재시도 허용 (성공 시 APPLIED_ACKED 보고 후 Confirm 경로)
 - `REJECTED` / `PENDING` / `REVOKED` / `REFUNDED` → Confirm 하지 않음
 
 (SSOT의 resultStatus 규칙과 불일치하면 이 문서/코드가 아니라 SSOT를 기준으로 수정한다.)
 
 > ~~**현재 코드 위반**~~ → ✅ **수정됨**: `resultStatus` 확인 후 `GRANTED`/`ALREADY_GRANTED`만 Confirm, 나머지는 Confirm 하지 않음.
 
-또한 `resultStatus == GRANTED`인 경우에만 컨텐츠 레이어 매핑(`internalProductId -> rewardGroupId`) 후 RewardManager의 `ApplyRewardGroupId(rewardGroupId)`를 호출해 실제 지급을 적용한다.
-Reward는 멱등/복구를 담당하지 않으며, Purchase의 멱등은 서버 verify 결과로 보장한다.
+또한 로컬 지급은 `GRANTED` 또는 `ALREADY_GRANTED + clientGrantStatus == PENDING/FAILED_REPORTED` 복구 경로에서만 수행한다.
+Reward는 지급 실행만 담당하며, 멱등/복구 판단은 PurchaseManager(+서버 상태) 기준으로 한다.
 
 
 ---
@@ -81,6 +96,7 @@ Reward는 멱등/복구를 담당하지 않으며, Purchase의 멱등은 서버 
 
 - Client: `PurchaseManager.GetLatestConsumablePurchase30dAsync()`
 - Server: `getRecentPurchases30d` (`kind="Consumable"`, `pageSize=1`)
+- Rental latest 조회도 별도 callable을 만들지 않고 동일하게 `getRecentPurchases30d`를 `kind="Rental"`로 호출한다.
 - 서버가 "최근 30일"을 계산한다. 클라/기기 시간 사용 금지.
 - 최근 30일 내 해당 kind 내역이 없으면 `CommonResult.Failure(COMMON_SERVER, ...)` 반환.
 
@@ -101,7 +117,7 @@ Reward는 멱등/복구를 담당하지 않으며, Purchase의 멱등은 서버 
 
 Hard (must be 0)
 - [x] Verify/Sync 호출 방식이 단일 옵션으로 확정됐다. → Firebase Functions Callable
-- [x] SSOT 필드 매핑과 동일하다. → 코드에서 storeKey/internalProductId/kind/payload → resultStatus/grants/entitlementsSnapshot 사용 확인
+- [x] SSOT 필드 매핑과 동일하다. → 코드에서 verify/ack 요청·응답 키 사용 확인
 - [x] ConfirmPurchase 하드룰이 문서에 명시돼 있다.
 
 Soft

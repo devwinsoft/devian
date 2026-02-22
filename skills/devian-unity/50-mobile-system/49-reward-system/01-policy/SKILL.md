@@ -68,6 +68,8 @@ Reward 시스템의 모듈 경계/하드룰/API 규약을 정의한다.
 - `ApplyRewardGroupId(rewardGroupId)`
   - rewardGroupId를 `ResolveRewardDeltas(rewardGroupId)`(추상/override 강제)로 `RewardData[]`를 만든 뒤 적용한다.
   - rewardGroupId의 정본/해석 규칙은 컨텐츠 레이어에서 정의한다.
+- `ApplyRewardGroup(rewardGroupId)`
+  - 실제 지급 + `RewardApplyResult.AppliedRewards` 반환이 필요한 호출부(Purchase 결과 payload 등)에서 사용한다.
 
 
 ---
@@ -75,5 +77,5 @@ Reward 시스템의 모듈 경계/하드룰/API 규약을 정의한다.
 
 ## Integration Notes
 
-- Purchase: 서버 검증 결과가 `GRANTED`일 때만 컨텐츠 레이어 매핑(`internalProductId -> rewardGroupId`)을 거쳐 RewardManager의 `ApplyRewardGroupId(rewardGroupId)`를 호출한다.
+- Purchase: 서버 검증 결과가 `GRANTED`일 때만 컨텐츠 레이어 매핑(`internalProductId -> rewardGroupId`)을 거쳐 RewardManager의 `ApplyRewardGroup(rewardGroupId)`를 호출한다.
 - Mission: MissionManager가 로컬 ledger 기준으로 "지급 결정/중복 방지" 후 RewardManager에 `rewardGroupId` 지급 실행을 위임한다.

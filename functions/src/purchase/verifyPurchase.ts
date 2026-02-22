@@ -4,7 +4,7 @@
  * 46 스킬 결정사항 전수 준수:
  *   B. Callable 이름 = "verifyPurchase", context.auth.uid 필수
  *   B. 요청 키: storeKey, internalProductId, kind, payload (+ optional storeProductId)
- *   B. 응답 키: resultStatus, grants, entitlementsSnapshot
+ *   B. 응답 키: resultStatus, grants, entitlementsSnapshot (+ purchaseId, verifyStatus, clientGrantStatus, storeConfirmStatus)
  *   C. 멱등키: purchaseId = "{storeKey}_{storePurchaseId}"
  *   F. grants 빈 배열 허용, GRANTED/ALREADY_GRANTED 시 entitlementsSnapshot 반환
  *   G. 리전: asia-northeast3
@@ -28,17 +28,60 @@ function entitlementsDocRef(uid: string) {
     .collection("entitlements").doc("current");
 }
 
+type VerifyStatus = "GRANTED" | "REJECTED" | "PENDING" | "REVOKED" | "REFUNDED";
+type ClientGrantStatus = "PENDING" | "APPLIED_ACKED" | "FAILED_REPORTED";
+type StoreConfirmStatus = "PENDING" | "CONFIRMED";
+const RENTAL_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
+
+// Restore projection policy (implemented in verifyPurchase transaction for new GRANTED purchases):
+// - SeasonPass: keep internalProductId ownership projection on server (e.g. ownedSeasonPasses[]).
+// - Rental: keep simple map { [internalProductId]: expiresAtServerUtcMs } on server.
+// - Rental expiry policy on new GRANTED purchase:
+//     newExpiry = max(existingExpiry, serverNowUtcMs) + 30 days
+// - DO NOT extend rental expiry on ALREADY_GRANTED (idempotent retry).
+
+function getVerifyStatus(data: FirebaseFirestore.DocumentData | undefined): string {
+  return String(data?.verifyStatus ?? data?.status ?? "");
+}
+
+function getClientGrantStatus(data: FirebaseFirestore.DocumentData | undefined): ClientGrantStatus {
+  const raw = String(data?.clientGrantStatus ?? "");
+  if (raw === "APPLIED_ACKED") return "APPLIED_ACKED";
+  if (raw === "FAILED_REPORTED") return "FAILED_REPORTED";
+  if (raw === "PENDING") return "PENDING";
+
+  // Legacy documents (pre-clientGrantStatus) are treated as already delivered
+  // to avoid duplicate local reward on first app after migration.
+  if (getVerifyStatus(data) === "GRANTED") return "APPLIED_ACKED";
+
+  return "PENDING";
+}
+
+function getStoreConfirmStatus(data: FirebaseFirestore.DocumentData | undefined): StoreConfirmStatus {
+  const raw = String(data?.storeConfirmStatus ?? "");
+  if (raw === "CONFIRMED") return "CONFIRMED";
+  if (raw === "PENDING") return "PENDING";
+
+  // Legacy documents (pre-storeConfirmStatus) are treated as confirmed so we do not
+  // regress into duplicate/unsafe confirm attempts after migration.
+  if (getVerifyStatus(data) === "GRANTED") return "CONFIRMED";
+
+  return "PENDING";
+}
+
 // ── Entitlements 스냅샷 읽기 헬퍼 ──
 async function readEntitlementsSnapshot(uid: string) {
   const snap = await entitlementsDocRef(uid).get();
+  const serverNowUtcMs = Date.now();
   if (!snap.exists) {
-    return {noAdsActive: false, ownedSeasonPasses: [], currencyBalances: {}};
+    return {ownedSeasonPasses: [], rentals: {}, currencyBalances: {}, serverNowUtcMs};
   }
   const d = snap.data()!;
   return {
-    noAdsActive: d.noAdsActive ?? false,
     ownedSeasonPasses: d.ownedSeasonPasses ?? [],
+    rentals: d.rentals ?? {},
     currencyBalances: d.currencyBalances ?? {},
+    serverNowUtcMs,
   };
 }
 
@@ -50,12 +93,13 @@ interface VerifyRequest {
   storeKey: StoreKey;
   internalProductId: string;
   storeProductId?: string;
+  packageName?: string;
   kind: Kind;
   payload: string;
 }
 
 function validateRequest(data: any): VerifyRequest {
-  const {storeKey, internalProductId, storeProductId, kind, payload} = data;
+  const {storeKey, internalProductId, storeProductId, packageName, kind, payload} = data;
 
   if (!storeKey || !["apple", "google"].includes(storeKey)) {
     throw new HttpsError("invalid-argument", "storeKey must be 'apple' or 'google'");
@@ -66,6 +110,9 @@ function validateRequest(data: any): VerifyRequest {
   if (storeProductId !== undefined && typeof storeProductId !== "string") {
     throw new HttpsError("invalid-argument", "storeProductId must be string when provided");
   }
+  if (packageName !== undefined && typeof packageName !== "string") {
+    throw new HttpsError("invalid-argument", "packageName must be string when provided");
+  }
   if (!kind || !["Consumable", "Rental", "Subscription", "SeasonPass"].includes(kind)) {
     throw new HttpsError("invalid-argument", "kind must be Consumable/Rental/Subscription/SeasonPass");
   }
@@ -73,7 +120,7 @@ function validateRequest(data: any): VerifyRequest {
     throw new HttpsError("invalid-argument", "payload is required");
   }
 
-  return {storeKey, internalProductId, storeProductId, kind, payload};
+  return {storeKey, internalProductId, storeProductId, packageName, kind, payload};
 }
 
 interface GoogleReceiptInfo {
@@ -82,8 +129,43 @@ interface GoogleReceiptInfo {
   purchaseToken: string;
 }
 
-function parseGoogleReceipt(payload: string, fallbackProductId: string): GoogleReceiptInfo {
-  const outer = JSON.parse(payload);
+function tryParseJsonObject(input: string): Record<string, unknown> | null {
+  try {
+    const parsed = JSON.parse(input);
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return null;
+    }
+    return parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function parseGoogleReceipt(payload: string, fallbackProductId: string, fallbackPackageName = ""): GoogleReceiptInfo {
+  const trimmed = String(payload ?? "").trim();
+  // Some Unity IAP / store flows may hand us a raw purchase token instead of JSON receipt.
+  // In this case, req.storeProductId and req.packageName must be supplied by the client.
+  if (trimmed && !trimmed.startsWith("{")) {
+    const purchaseToken = trimmed;
+    const packageName = String(fallbackPackageName ?? "");
+    const productId = String(fallbackProductId ?? "");
+    if (!packageName || !productId || !purchaseToken) {
+      throw new Error(
+        `Google receipt token payload requires fallback package/product. package=${!!packageName} product=${!!productId} token=${!!purchaseToken}`,
+      );
+    }
+    return {
+      packageName,
+      productId,
+      purchaseToken,
+    };
+  }
+
+  const outerParsed = tryParseJsonObject(trimmed);
+  if (!outerParsed) {
+    throw new Error("Google receipt payload is not a valid JSON object.");
+  }
+  const outer = outerParsed;
   if (!outer || typeof outer !== "object") {
     throw new Error("Google receipt payload is not an object.");
   }
@@ -95,18 +177,33 @@ function parseGoogleReceipt(payload: string, fallbackProductId: string): GoogleR
   //   - direct { purchaseToken, packageName, productId } in some SDK variants.
   let payloadNode: any = outer.Payload ?? outer.payload ?? outer;
   if (typeof payloadNode === "string") {
-    payloadNode = JSON.parse(payloadNode);
+    const payloadNodeTrimmed = payloadNode.trim();
+    const parsedPayloadNode = payloadNodeTrimmed.startsWith("{") ? tryParseJsonObject(payloadNodeTrimmed) : null;
+    if (parsedPayloadNode) {
+      payloadNode = parsedPayloadNode;
+    } else {
+      // Some SDK variants place the raw Google purchaseToken in outer.Payload.
+      payloadNode = {purchaseToken: payloadNodeTrimmed};
+    }
   }
 
   let purchaseData: any = payloadNode;
   if (payloadNode && typeof payloadNode === "object" && typeof payloadNode.json === "string") {
-    purchaseData = JSON.parse(payloadNode.json);
+    const purchaseJson = payloadNode.json.trim();
+    const parsedPurchaseJson = purchaseJson.startsWith("{") ? tryParseJsonObject(purchaseJson) : null;
+    if (parsedPurchaseJson) {
+      purchaseData = parsedPurchaseJson;
+    } else {
+      // Some SDK variants put the raw Google purchaseToken in payload.json.
+      purchaseData = {purchaseToken: purchaseJson};
+    }
   }
 
   const packageName =
     purchaseData?.packageName ??
     payloadNode?.packageName ??
     outer.packageName ??
+    fallbackPackageName ??
     "";
   const productId =
     purchaseData?.productId ??
@@ -130,6 +227,9 @@ function parseGoogleReceipt(payload: string, fallbackProductId: string): GoogleR
   };
 }
 
+// Exposed only for unit tests. Do not use from production call paths other than verifyPurchase.
+export const __test_parseGoogleReceipt = parseGoogleReceipt;
+
 // ═══════════════════════════════════════════
 //  verifyPurchase Callable (46 스킬 B 섹션)
 // ═══════════════════════════════════════════
@@ -152,10 +252,33 @@ export const verifyPurchase = onCall(
     let storeResult;
     try {
       if (req.storeKey === "google") {
-        const googleReceipt = parseGoogleReceipt(req.payload, req.storeProductId ?? req.internalProductId);
+        let googleReceipt: GoogleReceiptInfo;
+        try {
+          googleReceipt = parseGoogleReceipt(
+            req.payload,
+            req.storeProductId ?? req.internalProductId,
+            req.packageName ?? "",
+          );
+        } catch (err: any) {
+          logger.error(`[verifyPurchase] Google receipt parse error: ${err?.message ?? String(err)}`);
+          return {
+            resultStatus: "REJECTED",
+            verifyStatus: "REJECTED",
+            rejectReason: "STORE_VERIFY_PARSE_ERROR_GOOGLE_RECEIPT",
+            grants: [],
+          };
+        }
+
+        const googleVerifyProductId = req.storeProductId ?? googleReceipt.productId;
+        if (googleReceipt.productId && req.storeProductId && googleReceipt.productId !== req.storeProductId) {
+          logger.warn(
+            `[verifyPurchase] Google receipt productId mismatch. uid=${uid} internal=${req.internalProductId} ` +
+            `receiptProductId=${googleReceipt.productId} requestStoreProductId=${req.storeProductId} (using requestStoreProductId)`,
+          );
+        }
         storeResult = await verifyGooglePlay(
           googleReceipt.packageName,
-          googleReceipt.productId,
+          googleVerifyProductId,
           req.kind,
           googleReceipt.purchaseToken,
         );
@@ -167,6 +290,8 @@ export const verifyPurchase = onCall(
       logger.error(`[verifyPurchase] Store verification error: ${err.message}`);
       return {
         resultStatus: "REJECTED",
+        verifyStatus: "REJECTED",
+        rejectReason: "STORE_VERIFY_ERROR",
         grants: [],
       };
     }
@@ -176,6 +301,8 @@ export const verifyPurchase = onCall(
       logger.warn(`[verifyPurchase] Store verification failed for uid=${uid}`);
       return {
         resultStatus: "REJECTED",
+        verifyStatus: "REJECTED",
+        rejectReason: "STORE_VERIFY_INVALID",
         grants: [],
       };
     }
@@ -188,6 +315,8 @@ export const verifyPurchase = onCall(
       );
       return {
         resultStatus: "REJECTED",
+        verifyStatus: "REJECTED",
+        rejectReason: "STORE_VERIFY_MISSING_PURCHASE_TIME",
         grants: [],
       };
     }
@@ -201,14 +330,26 @@ export const verifyPurchase = onCall(
         .collection("purchases")
         .where("internalProductId", "==", req.internalProductId)
         .where("kind", "==", "SeasonPass")
-        .where("status", "==", "GRANTED")
+        .where("verifyStatus", "==", "GRANTED")
         .limit(1)
         .get();
 
-      if (!existingSnap.empty) {
+      const existingLegacySnap = existingSnap.empty
+        ? await admin.firestore()
+          .collection("users").doc(uid)
+          .collection("purchases")
+          .where("internalProductId", "==", req.internalProductId)
+          .where("kind", "==", "SeasonPass")
+          .where("status", "==", "GRANTED")
+          .limit(1)
+          .get()
+        : existingSnap;
+
+      if (!existingLegacySnap.empty) {
         logger.warn(`[verifyPurchase] SeasonPass purchase blocked: uid=${uid} product=${req.internalProductId} (already purchased)`);
         return {
           resultStatus: "REJECTED",
+          verifyStatus: "REJECTED",
           rejectReason: "SEASON_PASS_ALREADY_OWNED",
           grants: [],
         };
@@ -225,14 +366,32 @@ export const verifyPurchase = onCall(
     const purchaseRef = purchaseDocRef(uid, purchaseId);
     const entitlementRef = entitlementsDocRef(uid);
 
-    const resultStatus = await db.runTransaction(async (tx) => {
+    const txResult = await db.runTransaction(async (tx) => {
       const existingDoc = await tx.get(purchaseRef);
 
       // 46 스킬 C: 이미 지급 완료면 ALREADY_GRANTED 반환(중복 지급 금지)
       if (existingDoc.exists) {
         const existing = existingDoc.data()!;
-        if (existing.status === "GRANTED") {
-          return "ALREADY_GRANTED";
+        if (getVerifyStatus(existing) === "GRANTED") {
+          const clientGrantStatus = getClientGrantStatus(existing);
+          const storeConfirmStatus = getStoreConfirmStatus(existing);
+
+          // Backfill new fields for legacy docs without changing idempotent semantics.
+          if (!existing.verifyStatus || !existing.clientGrantStatus || !existing.storeConfirmStatus) {
+            tx.set(purchaseRef, {
+              verifyStatus: "GRANTED",
+              status: "GRANTED", // legacy compatibility (temporary)
+              clientGrantStatus,
+              storeConfirmStatus,
+            }, {merge: true});
+          }
+
+          return {
+            resultStatus: "ALREADY_GRANTED",
+            verifyStatus: "GRANTED" as VerifyStatus,
+            clientGrantStatus,
+            storeConfirmStatus,
+          };
         }
       }
 
@@ -248,17 +407,47 @@ export const verifyPurchase = onCall(
         kind: req.kind,
         storePurchaseId: storeResult.storePurchaseId,
         storePurchasedAt,
-        status: "GRANTED",
+        verifyStatus: "GRANTED",
+        status: "GRANTED", // legacy compatibility (temporary)
+        clientGrantStatus: "PENDING",
+        storeConfirmStatus: "PENDING",
         grantedAt: admin.firestore.FieldValue.serverTimestamp(),
         storeResponse: JSON.stringify(storeResult.rawResponse),
       });
 
-      // entitlements 스냅샷 갱신 (최소: updatedAt 타임스탬프)
-      tx.set(entitlementRef, {
+      // entitlements projection 갱신 (SeasonPass ownership / Rental expiry)
+      const entitlementSnap = await tx.get(entitlementRef);
+      const entitlementData = (entitlementSnap.exists ? entitlementSnap.data() : undefined) ?? {};
+      const entitlementPatch: Record<string, unknown> = {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-      }, {merge: true});
+      };
 
-      return "GRANTED";
+      if (req.kind === "SeasonPass") {
+        const ownedSeasonPasses = Array.isArray(entitlementData.ownedSeasonPasses)
+          ? [...entitlementData.ownedSeasonPasses]
+          : [];
+        if (!ownedSeasonPasses.includes(req.internalProductId)) {
+          ownedSeasonPasses.push(req.internalProductId);
+        }
+        entitlementPatch.ownedSeasonPasses = ownedSeasonPasses;
+      } else if (req.kind === "Rental") {
+        const serverNowUtcMs = Date.now();
+        const rentalsRaw = (entitlementData.rentals && typeof entitlementData.rentals === "object") ? entitlementData.rentals : {};
+        const rentals: Record<string, number> = {...rentalsRaw as Record<string, number>};
+        const existingExpiryRaw = rentals[req.internalProductId];
+        const existingExpiry = Number.isFinite(existingExpiryRaw) ? Number(existingExpiryRaw) : 0;
+        rentals[req.internalProductId] = Math.max(existingExpiry, serverNowUtcMs) + RENTAL_DURATION_MS;
+        entitlementPatch.rentals = rentals;
+      }
+
+      tx.set(entitlementRef, entitlementPatch, {merge: true});
+
+      return {
+        resultStatus: "GRANTED",
+        verifyStatus: "GRANTED" as VerifyStatus,
+        clientGrantStatus: "PENDING" as ClientGrantStatus,
+        storeConfirmStatus: "PENDING" as StoreConfirmStatus,
+      };
     });
 
     // ── 5) 응답 구성 (46 스킬 B + F 섹션) ──
@@ -266,10 +455,14 @@ export const verifyPurchase = onCall(
     // 46 스킬 F: GRANTED/ALREADY_GRANTED 시 entitlementsSnapshot 반환
     const entitlementsSnapshot = await readEntitlementsSnapshot(uid);
 
-    logger.info(`[verifyPurchase] uid=${uid} purchaseId=${purchaseId} result=${resultStatus}`);
+    logger.info(`[verifyPurchase] uid=${uid} purchaseId=${purchaseId} result=${txResult.resultStatus} clientGrant=${txResult.clientGrantStatus} confirm=${txResult.storeConfirmStatus}`);
 
     return {
-      resultStatus,
+      purchaseId,
+      resultStatus: txResult.resultStatus,
+      verifyStatus: txResult.verifyStatus,
+      clientGrantStatus: txResult.clientGrantStatus,
+      storeConfirmStatus: txResult.storeConfirmStatus,
       grants: [],
       entitlementsSnapshot,
     };

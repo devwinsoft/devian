@@ -15,9 +15,9 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 
 ## Purpose
 
-- `PurchaseManager`의 구매 진행 상태와 최근 결과 요약을 **최소 정보만** 저장한다.
+- `PurchaseManager`의 **진행 중인 결제 상태(current)** 만 최소 정보로 저장한다.
 - `GameStorageManager`가 소유하여 SaveData(local/cloud) 경로에 포함될 수 있게 한다.
-- 앱 재시작/동기화 이후에도 구매 진행 중 상태/최근 실패 코드 등을 진단/UX 보조용으로 사용할 수 있다.
+- 앱 재시작/동기화 이후에도 미완료 구매 흐름(verify 성공 후 ACK/Confirm 이전 등)의 복구 보조용으로 사용할 수 있다.
 
 
 ---
@@ -26,7 +26,7 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 ## Ownership (SSOT)
 
 - 소유자: `GameStorageManager`
-- 사용처: `PurchaseManager` (구매 시작/스토어 pending/verify 성공·실패 시점에 기록)
+- 사용처: `PurchaseManager` (구매 시작/스토어 pending/verify 성공/로컬지급 완료/ACK 완료 시점에 기록)
 - 저장 경로: `GameStorageManager.ToJson()` / `LoadFromJson()`의 `purchase` 섹션
 
 중요:
@@ -52,9 +52,15 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 ## Data Scope (Minimal Snapshot)
 
 `PurchaseStorage`는 "전체 구매 기록 배열"을 저장하지 않는다.
-저장 범위는 아래 2개 스냅샷으로 제한한다.
+저장 범위는 아래 4개로 제한한다.
+- `current` (진행 중 결제 1건)
+- `refundSupportLogs` (환불/지원 대응용 최소 로그, bounded)
+- `noAdsExpireAtClientUtcMs` (long, 클라이언트 시간 기준 만기 캐시)
+- `seasonPassOwnership` (`internalProductId -> bool`, entitlement cache)
 
 ### 1) current (진행 중 구매, 최대 1건)
+
+- 코드 구조는 `PurchaseStorage.Current` (중첩 클래스 `CurrentPurchaseState`)로 묶어 관리한다.
 
 - `isPurchaseInProgress`
 - `internalProductId`
@@ -63,16 +69,73 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 - `startedAtUtcMs`
 - `isStorePending`
 - `storePendingAtUtcMs`
+- `purchaseId` (서버 verify 후 확정되는 멱등키)
+- `verifyStatus` (`GRANTED` / `ALREADY_GRANTED` 등 verify 결과)
+- `clientGrantApplied` (로컬 지급 완료 여부)
+- `clientGrantReported` (로컬 지급 결과를 서버에 보고 완료했는지)
+- `storeConfirmedLocal` (클라가 `ConfirmPurchase`를 로컬에서 성공 호출했는지)
 
-### 2) last (최근 결과 요약, 최대 1건)
+### 2) refundSupportLogs (환불/지원 대응용 최소 로그, bounded)
 
-- `internalProductId`
-- `kind`
-- `storeKey`
-- `resultStatus`
-- `errorCode`
-- `errorMessage`
-- `updatedAtUtcMs`
+- 목적: 환불/지원 대응 시 필요한 최소 구매 상태 스냅샷 보조 로그
+- 정본 아님: 서버 purchases ledger가 정본
+- bounded: 무제한 저장 금지 (현재 구현은 개수 상한 적용)
+- 보관 정책(초기값, 구현됨):
+  - 보관 기간(TTL): `30일` (`lastUpdatedAtUtcMs` 기준)
+  - 개수 상한(Cap): `32개`
+  - 정리 순서: `TTL prune` 후 `count cap trim`
+- 정리 실행 시점(구현됨):
+  - `UpsertRefundSupportLog(...)` 직후
+  - `RestoreRefundSupportLogs(...)` 복원 직후
+  - `GameStorageManager.ToJson()` 경로의 `PurchaseStorage.PruneRefundSupportLogs()` 호출 시
+- 항목 예시:
+  - `purchaseId`
+  - `internalProductId`
+  - `kind`
+  - `storeKey`
+  - `verifyStatus`
+  - `clientGrantStatus`
+  - `storeConfirmStatus`
+  - `firstSeenAtUtcMs`
+  - `lastUpdatedAtUtcMs`
+
+### 2-1) 조회/삭제 API (구현됨)
+
+- 조회:
+  - `RefundSupportLogs` (read-only 프로퍼티)
+  - `GetRefundSupportLogs()`
+  - `TryGetRefundSupportLog(purchaseId, out entry)`
+- 삭제:
+  - `RemoveRefundSupportLog(purchaseId)` (개별 삭제)
+  - `ClearRefundSupportLogs()` (전체 삭제)
+- 식별/표시:
+  - 환불 로그 항목에는 `internalProductId`가 포함되어 있어 상품 식별에 사용할 수 있다.
+
+### 3) noAdsExpireAtClientUtcMs (game logic cache, 구현됨)
+
+- 타입: `long` (`UTC ms`, 클라이언트 시간 기준 만기 시각)
+- 용도:
+  - 게임 로직의 noAds 활성 여부 판단 캐시
+  - `PurchaseStorage.GetNoAdsExpireAtClientUtcMs()`로 만기 시각 조회
+  - `PurchaseStorage.IsNoAds()`가 클라이언트 시간으로 계산 (`now < noAdsExpireAtClientUtcMs`)
+  - `PurchaseManager.GetRentalRemainingMsAsync(...)` 성공 시 서버 응답의 남은 시간(ms)으로 갱신
+- 서버 정본 아님:
+  - 서버는 `noAds`를 모른다.
+  - 서버는 `rentals[internalProductId] = expiresAtServerUtcMs`만 관리하고,
+    클라가 이를 바탕으로 `noAdsExpireAtClientUtcMs`를 계산/캐시한다.
+
+### 4) seasonPassOwnership (entitlement cache, 구현됨)
+
+- 타입: `map<string,bool>` (`internalProductId -> owned`)
+- 용도: SeasonPass 구매/소유 여부 local/cloud 캐시
+- 정본 아님: 서버 `ownedSeasonPasses` projection이 정본
+
+### Future (지금 구현 안 함)
+
+- `Rental` 로컬 캐시 상태 (`internalProductId -> expiresAtServerUtcMs` map)
+- `lastSyncedServerUtcMs`
+
+위 항목은 필요 시 추가할 수 있으나, 현재 구현 범위에 포함되지 않는다.
 
 
 ---
@@ -82,8 +145,13 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 
 ### 1) 전체 구매 이력 저장 금지
 
-- `PurchaseStorage`는 구매 이력 리스트/배열을 저장하지 않는다.
+- `PurchaseStorage`는 구매 이력 리스트/배열(정본 로그)을 저장하지 않는다.
 - 전체 구매 내역의 정본은 서버(Firestore purchases/entitlements/grants)다.
+
+### 1-1) 구매 실패 내역 저장 금지
+
+- 실패 코드/실패 메시지/최근 실패 요약을 `PurchaseStorage`에 저장하지 않는다.
+- 사용하지 않는 진단 데이터는 클라이언트에 저장하지 않는다.
 
 ### 2) 민감정보 저장 금지
 
@@ -110,6 +178,10 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 - `PurchaseManager`는 `GameStorageManager.Instance.Purchase`에 기록한다.
 - `GameStorageManager.Clear()`는 `PurchaseStorage.ClearAll()`을 호출한다.
 - SaveData(local/cloud)는 `GameStorageManager` JSON 전체를 저장하므로 `purchase` 섹션도 함께 저장/복구된다.
+- `PurchaseStorage`는 `current`, `refundSupportLogs`, `noAdsExpireAtClientUtcMs`, `seasonPassOwnership`만 저장하며, 실패 이력/전체 구매 정본 로그는 저장하지 않는다.
+- `current`는 복구 워크아이템이며, `Confirm + storeConfirm ACK + clientGrant report`가 종결되기 전에는 clear하지 않는다.
+- `storeConfirmedLocal=true` + `storeConfirmStatus=PENDING`인 경우 `RetryInterruptedPurchaseAsync()`는 `ackPurchaseStoreConfirm`부터 재개할 수 있어야 한다.
+- `refundSupportLogs`는 지원/환불 대응 보조용이며, TTL/Cap 정책에 따라 자동 정리된다.
 
 
 ---
@@ -122,4 +194,3 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 - [30-samples-purchase-manager](../30-samples-purchase-manager/SKILL.md) — PurchaseManager 샘플
 - [95-game-storage-manager](../../95-game-storage-manager/SKILL.md) — GameStorageManager 정본
 - [21-savedata-system/00-overview](../../21-savedata-system/00-overview/SKILL.md) — local/cloud 저장 시스템 개요
-

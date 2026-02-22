@@ -1,0 +1,116 @@
+using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
+
+namespace Devian
+{
+    internal static class GameStorageJsonCodecPurchase
+    {
+        public static JObject Serialize(PurchaseStorage purchase)
+        {
+            purchase.PruneRefundSupportLogs();
+
+            var currentState = purchase.Current;
+            var current = new JObject
+            {
+                ["isPurchaseInProgress"] = currentState.IsPurchaseInProgress,
+                ["internalProductId"] = currentState.InternalProductId,
+                ["kind"] = currentState.Kind,
+                ["storeKey"] = currentState.StoreKey,
+                ["startedAtUtcMs"] = currentState.StartedAtUtcMs,
+                ["isStorePending"] = currentState.IsStorePending,
+                ["storePendingAtUtcMs"] = currentState.StorePendingAtUtcMs,
+                ["purchaseId"] = currentState.PurchaseId,
+                ["verifyStatus"] = currentState.VerifyStatus,
+                ["storeConfirmedLocal"] = currentState.StoreConfirmedLocal,
+                ["clientGrantApplied"] = currentState.ClientGrantApplied,
+                ["clientGrantReported"] = currentState.ClientGrantReported,
+            };
+
+            var refundSupportLogs = new JArray();
+            foreach (var log in purchase.RefundSupportLogs)
+            {
+                refundSupportLogs.Add(new JObject
+                {
+                    ["purchaseId"] = log.PurchaseId,
+                    ["internalProductId"] = log.InternalProductId,
+                    ["kind"] = log.Kind,
+                    ["storeKey"] = log.StoreKey,
+                    ["verifyStatus"] = log.VerifyStatus,
+                    ["clientGrantStatus"] = log.ClientGrantStatus,
+                    ["storeConfirmStatus"] = log.StoreConfirmStatus,
+                    ["firstSeenAtUtcMs"] = log.FirstSeenAtUtcMs,
+                    ["lastUpdatedAtUtcMs"] = log.LastUpdatedAtUtcMs,
+                });
+            }
+
+            var seasonPassOwnership = new JObject();
+            foreach (var kv in purchase.SeasonPassOwnership)
+                seasonPassOwnership[kv.Key] = kv.Value;
+
+            return new JObject
+            {
+                ["current"] = current,
+                ["refundSupportLogs"] = refundSupportLogs,
+                ["noAdsExpireAtClientUtcMs"] = purchase.NoAdsExpireAtClientUtcMs,
+                ["seasonPassOwnership"] = seasonPassOwnership,
+            };
+        }
+
+        public static void DeserializeInto(JObject purchaseObj, PurchaseStorage purchase)
+        {
+            purchase.ClearAll();
+
+            if (purchaseObj["current"] is JObject currentObj)
+            {
+                purchase.RestoreCurrent(
+                    currentObj.Value<bool?>("isPurchaseInProgress") ?? false,
+                    currentObj.Value<string>("internalProductId") ?? string.Empty,
+                    currentObj.Value<string>("kind") ?? string.Empty,
+                    currentObj.Value<string>("storeKey") ?? string.Empty,
+                    currentObj.Value<long?>("startedAtUtcMs") ?? 0L,
+                    currentObj.Value<bool?>("isStorePending") ?? false,
+                    currentObj.Value<long?>("storePendingAtUtcMs") ?? 0L,
+                    currentObj.Value<string>("purchaseId") ?? string.Empty,
+                    currentObj.Value<string>("verifyStatus") ?? string.Empty,
+                    currentObj.Value<bool?>("storeConfirmedLocal") ?? false,
+                    currentObj.Value<bool?>("clientGrantApplied") ?? false,
+                    currentObj.Value<bool?>("clientGrantReported")
+                        ?? currentObj.Value<bool?>("serverAcked")
+                        ?? false);
+            }
+
+            if (purchaseObj["refundSupportLogs"] is JArray refundLogsArr)
+            {
+                var restoreItems = new List<PurchaseStorage.RefundSupportLogRestoreItem>(refundLogsArr.Count);
+                foreach (var token in refundLogsArr)
+                {
+                    if (!(token is JObject logObj))
+                        continue;
+
+                    restoreItems.Add(new PurchaseStorage.RefundSupportLogRestoreItem(
+                        logObj.Value<string>("purchaseId") ?? string.Empty,
+                        logObj.Value<string>("internalProductId") ?? string.Empty,
+                        logObj.Value<string>("kind") ?? string.Empty,
+                        logObj.Value<string>("storeKey") ?? string.Empty,
+                        logObj.Value<string>("verifyStatus") ?? string.Empty,
+                        logObj.Value<string>("clientGrantStatus") ?? string.Empty,
+                        logObj.Value<string>("storeConfirmStatus") ?? string.Empty,
+                        logObj.Value<long?>("firstSeenAtUtcMs") ?? 0L,
+                        logObj.Value<long?>("lastUpdatedAtUtcMs") ?? 0L));
+                }
+
+                purchase.RestoreRefundSupportLogs(restoreItems);
+            }
+
+            var noAdsExpireAtClientUtcMs = purchaseObj.Value<long?>("noAdsExpireAtClientUtcMs") ?? 0L;
+            var seasonPassOwnership = new Dictionary<string, bool>();
+            if (purchaseObj["seasonPassOwnership"] is JObject seasonPassObj)
+            {
+                foreach (var prop in seasonPassObj.Properties())
+                    seasonPassOwnership[prop.Name] = prop.Value.Value<bool?>() ?? false;
+            }
+
+            purchase.RestoreLocalCache(noAdsExpireAtClientUtcMs, seasonPassOwnership);
+        }
+    }
+}

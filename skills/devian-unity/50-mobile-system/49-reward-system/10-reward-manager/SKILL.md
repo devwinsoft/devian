@@ -57,7 +57,10 @@ CompoSingleton<RewardManager>.Instance
       Singleton.Get<InventoryManager>().AddRewards(deltas);
   }
   ```
-- `ApplyRewardGroupId(rewardGroupId)` — `rewardGroupId`를 RewardData[]로 변환 후 적용
+- `ApplyRewardGroupId(rewardGroupId)` — `rewardGroupId`를 RewardData[]로 변환 후 적용 (기존 API 유지)
+- `ApplyRewardGroup(rewardGroupId)` — `CommonResult<RewardApplyResult>` 반환
+  - `RewardApplyResult.AppliedRewards`로 이번 호출에서 실제 적용한 `RewardData[]`를 조회할 수 있다.
+  - `rewardGroupId`가 비어 있으면 성공 + 빈 배열(`AppliedRewards=[]`) 반환
 
 
 ---
@@ -102,7 +105,7 @@ asmdef:
 1) PurchaseManager → 서버 `verifyPurchase`
 2) 응답 `resultStatus == GRANTED`
 3) PurchaseManager: `ResolveRewardGroupId(internalProductId)` → `rewardGroupId`
-4) PurchaseManager → `Singleton.Get<RewardManager>().ApplyRewardGroupId(rewardGroupId)`
+4) PurchaseManager → `Singleton.Get<RewardManager>().ApplyRewardGroup(rewardGroupId)` (구매 결과 payload용 `AppliedRewards` 확보)
 5) RewardManager: `ResolveRewardDeltas(rewardGroupId)` → `RewardData[]` → `ApplyRewardDatas(deltas)`
 6) UI/표시는 서버 `entitlementsSnapshot` 기준으로 갱신
 

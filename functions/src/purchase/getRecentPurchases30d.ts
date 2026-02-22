@@ -4,7 +4,7 @@
  * 46 스킬 F2 결정사항 준수:
  *   - 기준 시각: storePurchasedAt (영수증 날짜) — 클라이언트/디바이스 시간 사용 금지
  *   - threshold: 서버 now − 30일
- *   - kind: 클라이언트 파라미터 (필수, "Consumable" | "Subscription" | "SeasonPass")
+ *   - kind: 클라이언트 파라미터 (필수, "Consumable" | "Rental" | "Subscription" | "SeasonPass")
  *   - Callable 이름: getRecentPurchases30d
  *   - 리전: asia-northeast3
  */
@@ -15,7 +15,7 @@ import * as logger from "firebase-functions/logger";
 
 const DEFAULT_PAGE_SIZE = 20;
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-const VALID_KINDS = ["Consumable", "Subscription", "SeasonPass"];
+const VALID_KINDS = ["Consumable", "Rental", "Subscription", "SeasonPass"];
 
 export const getRecentPurchases30d = onCall(
   {region: "asia-northeast3"},
@@ -75,16 +75,18 @@ export const getRecentPurchases30d = onCall(
 
     const snapshot = await query.get();
 
-    // 최소 필드만 반환 (purchaseId, internalProductId, storePurchasedAt, status)
+    // 최소 필드만 반환 (purchaseId, internalProductId, storePurchasedAt, verifyStatus)
     const docs = snapshot.docs;
     const hasMore = docs.length > pageSize;
     const items = docs.slice(0, pageSize).map((doc) => {
       const d = doc.data();
+      const verifyStatus = d.verifyStatus ?? d.status ?? "";
       return {
         purchaseId: d.purchaseId ?? doc.id,
         internalProductId: d.internalProductId ?? "",
         storePurchasedAt: d.storePurchasedAt?.toMillis() ?? 0,
-        status: d.status ?? "",
+        verifyStatus,
+        status: verifyStatus, // legacy response compatibility
       };
     });
 

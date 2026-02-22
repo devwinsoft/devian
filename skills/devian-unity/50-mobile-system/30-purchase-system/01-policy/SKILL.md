@@ -81,7 +81,8 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 ### 7) 구매 로컬 상태 저장은 GameStorageManager 소유 PurchaseStorage에 한정한다
 
 - `PurchaseStorage`는 `GameStorageManager`가 소유하며 SaveData(local/cloud) 경로로 저장될 수 있다.
-- 저장 범위는 "진행 중 구매 1건 + 최근 결과 요약 1건"의 최소 스냅샷으로 제한한다.
+- 저장 범위는 **진행 중 구매 1건(current)** 의 최소 복구 상태로 제한한다.
+- 구매 실패 내역/최근 실패 요약은 저장하지 않는다.
 - 전체 구매 이력/영수증/토큰 저장 금지. 서버 원장(Firestore) 대체 금지.
 - 정본: [33-purchase-storage](../33-purchase-storage/SKILL.md)
 

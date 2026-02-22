@@ -22,6 +22,8 @@ AppliesTo: v10
 이 스킬은 아래 Callable의 "프로젝트 구조/배포/Firestore 스키마/멱등 규칙"을 고정한다.
 
 - `verifyPurchase`
+- `ackPurchaseClientGrant`
+- `ackPurchaseStoreConfirm`
 - `getEntitlements`
 
 
@@ -44,7 +46,7 @@ NEEDS CHECK: 레포 내 Functions 위치가 아직 고정돼 있지 않으면, �
 NEEDS CHECK: Firebase CLI 사용 여부/버전이 레포에서 고정돼 있어야 한다.
 
 - 예시 (결정 후 고정):
-  - `firebase deploy --only functions:verifyPurchase,functions:getEntitlements`
+  - `firebase deploy --only functions:verifyPurchase,functions:ackPurchaseClientGrant,functions:ackPurchaseStoreConfirm,functions:getEntitlements`
 
 
 ---
@@ -61,7 +63,12 @@ NEEDS CHECK: Firebase CLI 사용 여부/버전이 레포에서 고정돼 있어�
 - `storeKey: string` (`"apple" | "google"`)
 - `internalProductId: string`
 - `kind: string` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`) (=`ProductKind` string)
-- `status: string` (SSOT의 resultStatus에 대응하는 소문자 저장: `"granted" | "already_granted" | "rejected" | "pending" | "revoked" | "refunded"`)
+- `verifyStatus: string` (SSOT의 resultStatus에 대응하는 대문자 저장: `"GRANTED" | "REJECTED" | "PENDING" | "REVOKED" | "REFUNDED"`)
+- `clientGrantStatus: string` (`"PENDING" | "APPLIED_ACKED" | "FAILED_REPORTED"`) — 클라이언트 로컬 지급 결과 보고 상태
+- `storeConfirmStatus: string` (`"PENDING" | "CONFIRMED"`) — 스토어 Confirm 처리 상태
+- `clientGrantReportedAt: Timestamp` (optional)
+- `storeConfirmedAt: Timestamp` (optional)
+- `status: string` (legacy compatibility, temporary)
 - `storePurchasedAt: Timestamp` — 영수증/스토어 검증 응답에서 추출한 구매 시각(서버에서만 생성, 클라 시간 사용 금지)
 - `createdAt: Timestamp`
 - `updatedAt: Timestamp`
@@ -73,9 +80,11 @@ NEEDS CHECK: Firebase CLI 사용 여부/버전이 레포에서 고정돼 있어�
 
 필드 (최소):
 - `updatedAt: Timestamp`
-- `noAds: bool`
-- `subscriptions: object` (구독 상태 요약)
-- `seasonPass: object` (시즌 패스 상태 요약)
+- `ownedSeasonPasses: string[]` (SeasonPass 복원 projection)
+- `rentals: object` (`internalProductId -> expiresAtServerUtcMs`, Rental 복원 projection; simple map)
+- `currencyBalances: object` (필요 시; 현재 구현에서 사용)
+- `subscriptions: object` (구독 상태 요약, 필요 시)
+- `seasonPass: object` (legacy/프로젝트별 상태 요약, 필요 시)
 - `consumables: object` (필요 시)
 
 
@@ -109,9 +118,18 @@ NEEDS CHECK:
 ### D2. 멱등 처리 규칙
 
 - 동일 `purchaseId`로 `verifyPurchase`가 재호출되면:
-  - 이미 `granted` 상태면 `ALREADY_GRANTED`를 반환한다.
-  - 상태가 `pending`이면 `PENDING`을 유지한다.
-  - `rejected`인 경우 정책에 따라 재검증 허용 여부를 SSOT 기준으로 결정한다. (NEEDS CHECK)
+  - 이미 `verifyStatus=GRANTED`이면 `ALREADY_GRANTED`를 반환한다.
+  - 응답에 `clientGrantStatus`를 포함하여 클라 로컬 지급 복구 여부를 판단할 수 있게 한다.
+  - `Rental` 만료일 projection은 멱등 재시도에서 다시 증가시키지 않는다. (`ALREADY_GRANTED` 시 연장 금지)
+  - `verifyStatus=PENDING`이면 `PENDING`을 유지한다.
+  - `verifyStatus=REJECTED`인 경우 정책에 따라 재검증 허용 여부를 SSOT 기준으로 결정한다. (NEEDS CHECK)
+
+### D3. Rental 만료일 projection 계산 (결정 반영, 구현됨)
+
+- `verifyPurchase`의 신규 `GRANTED` 처리 트랜잭션에서 서버 UTC 기준으로 계산한다.
+- 정책: 연장 방식
+  - `newExpiry = max(existingExpiry, serverNow) + 30일`
+- 저장 위치(정본): `/users/{uid}/entitlements/current.rentals[internalProductId] = expiresAtServerUtcMs`
 
 
 ---
@@ -152,10 +170,11 @@ NEEDS CHECK:
 ## DoD
 
 Hard (must be 0)
-- [ ] `verifyPurchase`, `getEntitlements` 2개 Callable의 프로젝트 구조/배포 경로가 모호하지 않다.
+- [ ] `verifyPurchase`, `ackPurchaseClientGrant`, `ackPurchaseStoreConfirm`, `getEntitlements` Callable의 프로젝트 구조/배포 경로가 모호하지 않다.
 - [ ] Firestore 스키마(2개 Path)가 문서에 고정돼 있다.
 - [ ] "클라 write 금지 / 서버 write only" 규칙이 명시돼 있다.
 - [ ] purchaseId 규칙이 문서에 고정돼 있다.
 
 Soft
 - [ ] 로컬 에뮬레이터 실행 커맨드 예시 추가
+- `noAds`는 게임 로직 전용 상태이며, Purchase Functions 서버(entitlements/current)에서 관리하지 않는다.

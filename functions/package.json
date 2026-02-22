@@ -4,6 +4,7 @@
   "scripts": {
     "lint": "eslint --ext .ts src/",
     "build": "tsc",
+    "test:parser": "npm run build && node --test test/parseGoogleReceipt.test.js",
     "build:watch": "tsc --watch",
     "serve": "npm run build && firebase emulators:start --only functions",
     "deploy": "firebase deploy --only functions"

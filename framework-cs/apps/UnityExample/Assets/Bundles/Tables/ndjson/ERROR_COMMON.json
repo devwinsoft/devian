@@ -73,6 +73,9 @@
 {"Id":"PURCHASE_FUNCTION_RESPONSE_INVALID","Msg_key":"","Msg":"Callable returned invalid or null response payload."}
 {"Id":"PURCHASE_INIT_FAILED","Msg_key":"","Msg":"IAP initialization failed."}
 {"Id":"PURCHASE_INIT_REQUIRED","Msg_key":"","Msg":"PurchaseManager not initialized. Call InitializeAsync() first."}
+{"Id":"PURCHASE_INTERRUPTED_SNAPSHOT_KIND_INVALID","Msg_key":"","Msg":"Interrupted purchase snapshot has invalid purchase kind."}
+{"Id":"PURCHASE_INTERRUPTED_SNAPSHOT_PRODUCT_ID_MISSING","Msg_key":"","Msg":"Interrupted purchase snapshot is missing internalProductId."}
+{"Id":"PURCHASE_INTERRUPTED_STORAGE_UNAVAILABLE","Msg_key":"","Msg":"PurchaseStorage is not available for interrupted purchase retry."}
 {"Id":"PURCHASE_NETWORK_UNAVAILABLE","Msg_key":"","Msg":"Network unavailable."}
 {"Id":"PURCHASE_PRODUCT_FETCH_FAILED","Msg_key":"","Msg":"Failed to fetch products from store."}
 {"Id":"PURCHASE_PRODUCT_NOT_FOUND","Msg_key":"","Msg":"Product not found in TB_PRODUCT."}

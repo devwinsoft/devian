@@ -56,15 +56,9 @@ public class TestUICanvas : UICanvas<TestUICanvas>
     {
         Debug.Log(TestBootstrap.GetVersionCode());
 
-        var source = new CancellationTokenSource(System.TimeSpan.FromSeconds(15));
-        var init = await PurchaseManager.Instance.InitializeAsync(source.Token);
-        if (init.IsFailure)
-        {
-            Debug.Log($"{init.Error.Code}: {init.Error.Message}");
-            return;
-        }
-        
-        var purchase = await PurchaseManager.Instance.PurchaseAsync("com.devian.framework.noads_month", source.Token);
+        var purchase = await PurchaseManager.Instance.PurchaseAsync(
+            "com.devian.framework.noads_month",
+            CancellationToken.None);
         if (purchase.IsSuccess)
         {
             Debug.Log(purchase.Value.ResultStatus);
@@ -75,6 +69,7 @@ public class TestUICanvas : UICanvas<TestUICanvas>
             return;
         }
 
+        var source = new CancellationTokenSource(System.TimeSpan.FromSeconds(15));
         var recent = await PurchaseManager.Instance.GetLatestRentalPurchase30dAsync(source.Token);
         if (recent.IsSuccess)
         {
@@ -91,18 +86,16 @@ public class TestUICanvas : UICanvas<TestUICanvas>
     {
         Debug.Log(TestBootstrap.GetVersionCode());
 
-        var source = new CancellationTokenSource(System.TimeSpan.FromSeconds(15));
-        var init = await PurchaseManager.Instance.InitializeAsync(source.Token);
-        if (init.IsFailure)
-        {
-            Debug.Log($"{init.Error.Code}: {init.Error.Message}");
-            return;
-        }
-        
-        var purchase = await PurchaseManager.Instance.PurchaseAsync("com.devian.framework.chest_001", source.Token);
+        var purchase = await PurchaseManager.Instance.PurchaseAsync(
+            "com.devian.framework.chest_001",
+            CancellationToken.None);
         if (purchase.IsSuccess)
         {
             Debug.Log(purchase.Value.ResultStatus);
+            foreach (var reward in purchase.Value.AppliedRewards)
+            {
+                Debug.Log($"{reward.Type}, {reward.Id}, {reward.Amount}");
+            }
         }
         else
         {

@@ -52,7 +52,7 @@ CompoSingleton<PurchaseManager>.Instance
 
 
 - `InitializeAsync(ct)` → `Task<CommonResult>`
-  - IAP 초기화 (Connect + FetchProducts). 명시적 호출 필수.
+  - IAP 초기화 (Connect + FetchProducts). 선택적 prewarm 호출이며, Purchase/RetryInterruptedPurchase/Restore 경로에서 lazy-init로 자동 호출될 수 있음.
   - Idempotent: 여러 번 호출해도 동일 Task 반환.
   - Editor에서는 즉시 `PURCHASE_UNSUPPORTED_PLATFORM` 반환.
 - `PurchaseConsumableAsync(internalProductId, ct)`
@@ -61,8 +61,19 @@ CompoSingleton<PurchaseManager>.Instance
   - 예: NoAds 구독
 - `PurchaseSeasonPassAsync(internalProductId, ct)`
   - 시즌별 1회 구매(Subscription 아님)
-- `RestoreAsync(ct)` (iOS 복원)
+- `RetryInterruptedPurchaseAsync(ct)` → `Task<CommonResult<RetryInterruptedPurchaseResult>>`
+  - `PurchaseStorage.current`에 중단된 결제가 있으면 새 구매를 시작하지 않고 상태 전이를 재개/마무리
+  - 중단 내역이 없으면 `Success(Status=SkippedNoCurrent)` (skip, 정상)
+  - UI/Debug 표시는 반환 payload(`Status`, `InternalProductId`, `ResultStatus`, `AppliedRewards`)를 사용
+- `RestoreAsync(ct)` (iOS 스토어 복원, manual/fallback)
+  - 일반적인 SeasonPass/Rental 복원 정본 경로는 서버 상태 동기화(`SyncEntitlementsAsync` + 향후 restore projection)이며, `RestoreAsync()`와 개념을 분리한다.
 - `SyncEntitlementsAsync(ct)` (서버 상태 동기화)
+  - `PurchaseStorage` local/cloud 캐시 중 `seasonPassOwnership`를 갱신한다.
+- `GetRentalRemainingMsAsync(internalProductId, ct)` → `Task<CommonResult<long>>`
+  - 서버(`getEntitlements`)의 `rentals` projection을 질의하여 남은 시간(ms)을 반환
+  - 성공 시 `PurchaseStorage.noAdsExpireAtClientUtcMs`를 클라이언트 시간 기준으로 갱신한다.
+  - 게임 로직은 `PurchaseStorage.GetNoAdsExpireAtClientUtcMs()` / `PurchaseStorage.IsNoAds()`로 만기 시각/활성 여부를 판단한다.
+  - rental 정보 없음이면 `Success(0)`
 - `GetLatestConsumablePurchase30dAsync(ct)` → `Task<CommonResult<RecentPurchaseItem>>`
   - 서버에서 최근 30일 내 최신 Consumable 구매 1건 조회
 
@@ -74,7 +85,10 @@ CompoSingleton<PurchaseManager>.Instance
 
 PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 
-- `ResolveRewardGroupId(internalProductId)`: `TB_PRODUCT.Get(internalProductId).RewardGroupId` — 테이블 조회로 변환
+- `ResolveRewardGroupId(internalProductId)`: `TB_PRODUCT`에서 `RewardGroupId` 조회 (없으면 빈 값)
+- `PurchaseFinalResult`, `RetryInterruptedPurchaseResult`
+  - `RewardGroupId`와 `AppliedRewards: RewardData[]`를 포함한다.
+  - `skip`/`rewardGroupId 없음`/이번 호출에서 지급 없음(`ALREADY_GRANTED + APPLIED_ACKED`)은 `AppliedRewards=[]`가 정상이다.
 - `BuildProductDefinitions()`: `TB_PRODUCT.GetAll()`에서 `isActive` 필터링 후 ProductDefinition 목록 생성
   - 플랫폼별 StoreSku 매핑: `#if UNITY_IOS` → `StoreSkuApple`, `#elif UNITY_ANDROID` → `StoreSkuGoogle`
   - `Kind` → `ProductType` 매핑: Consumable→Consumable, Subscription→Subscription, SeasonPass→NonConsumable
@@ -90,7 +104,13 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 
 - **VerifyPurchaseAsync**: Firebase Functions Callable (`verifyPurchase`) 사용 — ✅ 구현됨
   - 요청 키: `storeKey`, `internalProductId`, `kind`, `payload`
-  - 응답 키: `resultStatus`, `grants`, `entitlementsSnapshot`
+  - 응답 키: `resultStatus`, `purchaseId`, `verifyStatus`, `clientGrantStatus`, `storeConfirmStatus`, `grants`, `entitlementsSnapshot`
+- **reportPurchaseClientGrantResultAsync**: Firebase Functions Callable (`ackPurchaseClientGrant`) 사용 — ✅ 구현됨
+  - 요청 키: `purchaseId`, `clientGrantStatus`
+  - 용도: 로컬 지급 결과 보고(성공/실패) (`APPLIED_ACKED` / `FAILED_REPORTED`)
+- **ackPurchaseStoreConfirmAsync**: Firebase Functions Callable (`ackPurchaseStoreConfirm`) 사용 — ✅ 구현됨
+  - 요청 키: `purchaseId`
+  - 용도: `ConfirmPurchase` 완료 후 서버 `storeConfirmStatus=CONFIRMED` 기록
 - **SyncEntitlementsAsync**: Firebase Functions Callable (`getEntitlements`) 사용 — ✅ 구현됨
   - `uid`는 Firebase Auth context에서 자동 전달
 - SDK: `Firebase.Functions` (Firebase Unity SDK 13.7.0)
@@ -106,10 +126,18 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 - Unity IAP "스토어 구매 성공 콜백"만으로 지급/NoAds 적용 금지
 - 최종 지급/상태 반영은 서버(Cloud Functions) 결과(verifyPurchase/getEntitlements)만 기준으로 한다.
 - 지급 여부는 서버 `verifyPurchase.resultStatus`만 기준으로 한다(스토어 콜백만으로 지급 금지).
-- `resultStatus == GRANTED`일 때만 `ResolveRewardGroupId(internalProductId)` → `rewardGroupId` 변환 후 `Singleton.Get<RewardManager>().ApplyRewardGroupId(rewardGroupId)`로 지급 실행을 위임한다.
+- `resultStatus == GRANTED`이면 `ConfirmPurchase` + `ackPurchaseStoreConfirm`를 먼저 수행한 뒤 로컬 지급/`ackPurchaseClientGrant(APPLIED_ACKED)`를 진행한다.
+- `PurchaseStorage.current`는 `Confirm + storeConfirm ACK + clientGrant report`가 종결되기 전에는 clear하지 않는다.
+- 로컬 지급 실패 시 `FAILED_REPORTED`를 서버에 기록할 수 있으나, confirm 미완 상태에서는 `current`를 유지해 복구 경로를 보존한다.
+- `resultStatus == ALREADY_GRANTED`라도 `clientGrantStatus == PENDING` 또는 `FAILED_REPORTED`이면 로컬 지급 복구 경로를 사용할 수 있다.
+- `rewardGroupId`가 비어 있으면 로컬 보상 지급은 스킵하고, 클라이언트 지급 완료 처리만 진행한다. (결제/재구매 동일 규칙)
 - 구매 전 인증 게이트는 AccountManager 로그인 상태 API를 사용한다. (`FirebaseAuth.CurrentUser` 직접 판정 금지)
 - 로컬/클라우드 저장용 구매 상태는 `PurchaseManager`가 직접 소유하지 않고 `GameStorageManager.Instance.Purchase`(`PurchaseStorage`)에 기록한다.
-- `PurchaseStorage`는 최소 스냅샷만 저장한다(진행 중 1건 + 최근 결과 1건). 전체 이력/영수증 저장 금지.
+- `PurchaseStorage`는 진행 중 결제(`current`), 환불/지원 대응용 최소 로그(`refundSupportLogs`), game logic cache(`noAdsExpireAtClientUtcMs`), entitlement cache(`seasonPassOwnership`)를 저장한다.
+- 실패 코드/메시지/최근 실패 요약/전체 이력/영수증(raw receipt)은 저장 금지.
+- 환불/지원 UI용으로 `PurchaseManager`는 환불 로그 조회/삭제 래퍼 API를 제공한다.
+  - `GetRefundSupportLogs()`, `TryGetRefundSupportLog(...)`
+  - `DeleteRefundSupportLog(purchaseId)`, `ClearRefundSupportLogs()`
 
 
 ---
