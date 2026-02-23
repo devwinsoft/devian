@@ -1,5 +1,14 @@
-// google cloud 설정
+// google 설정
+Google Play Android Developer API
+Google Play Games Services API
+firebase-adminsdk -> View financial data 권한 부여.
+
+// gpgs
+firebase 계정 등록 및 권한 부여.
+
 // firebase 설정
+firebase functions:secrets:destroy GOOGLE_APPLICATION_CREDENTIALS_JSON
+firebase functions:secrets:set GOOGLE_APPLICATION_CREDENTIALS_JSON
 
 // firebase deploy
 firebase deploy --only functions
@@ -12,6 +21,10 @@ firebase firestore:delete users/<UID>/entitlements/current -f --project devian-f
 
 // DB 전체 삭제(진짜 전체 초기화, 매우 위험)
 firebase firestore:delete --all-collections -f --project devian-framwork-example
+
+// 함수 로그 확인
+firebase functions:log --only verifyPurchase --project devian-framwork-example
+
 
 // 보안 해제
 xattr -dr com.apple.quarantine Assets/Firebase

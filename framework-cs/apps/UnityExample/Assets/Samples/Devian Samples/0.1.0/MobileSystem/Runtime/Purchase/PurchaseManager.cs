@@ -287,7 +287,7 @@ namespace Devian
         public async Task<CommonResult<long>> GetRentalRemainingMsAsync(string internalProductId, CancellationToken ct = default)
         {
             if (string.IsNullOrEmpty(internalProductId))
-                return CommonResult<long>.Failure(CommonErrorType.COMMON_SERVER, "internalProductId is required.");
+                return CommonResult<long>.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, "internalProductId is required.");
 
             var sync = await SyncEntitlementsAsync(ct);
             if (sync.IsFailure)
@@ -534,6 +534,8 @@ namespace Devian
                 case "verifyPurchase":
                 case "ackPurchaseClientGrant":
                     return CommonErrorType.PURCHASE_VERIFY_CALL_FAILED;
+                case "ackPurchaseStoreConfirm":
+                    return CommonErrorType.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED;
                 default:
                     return CommonErrorType.COMMON_SERVER;
             }
@@ -547,6 +549,8 @@ namespace Devian
                     return CommonErrorType.PURCHASE_RECENT_CALL_FAILED;
                 case "getEntitlements":
                     return CommonErrorType.PURCHASE_ENTITLEMENTS_CALL_FAILED;
+                case "ackPurchaseStoreConfirm":
+                    return CommonErrorType.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED;
                 case "ackPurchaseClientGrant":
                 default:
                     return CommonErrorType.PURCHASE_NETWORK_UNAVAILABLE;
@@ -684,6 +688,61 @@ namespace Devian
                 PendingOrder pendingOrder;
 
                 var storeProductId = ResolveStoreProductId(internalProductId);
+
+                // Consumable/Rental: 스토어에 미소비 아이템이 이미 있을 수 있으므로
+                // PurchaseProduct() 호출 전에 FetchPurchases()로 먼저 확인한다.
+                // - Recovery call: 이전 세션에서 중단된 구매의 미소비 아이템 복구
+                // - Normal call: 앱 재설치 등으로 PurchaseStorage가 초기화되었지만 스토어에 미소비 잔류하는 경우
+                // 이를 통해 불필요한 "already owned" 에러를 사전에 회피한다.
+                if (isRepurchasableStoreKind(kind) &&
+                    !TryTakeDeferredPendingOrder(storeProductId, out pendingOrder))
+                {
+                    Debug.Log($"[{Tag}] Pre-fetching pending purchases before PurchaseProduct (isRecovery={isRecoveryCall}). storeProductId={storeProductId}");
+                    var preFetch = await fetchPendingPurchasesAsync(ct);
+                    if (preFetch.IsSuccess)
+                    {
+                        // 1차: deferred queue (OnPurchasePending이 새 transactionID에 대해 발생한 경우)
+                        if (TryTakeDeferredPendingOrder(storeProductId, out pendingOrder))
+                        {
+                            purchaseStorage?.MarkStorePending();
+                            Debug.Log($"[{Tag}] Pre-fetch: found pending order in deferred queue. storeProductId={storeProductId}");
+                            goto PendingOrderReady;
+                        }
+                        // 2차: Orders.PendingOrders 직접 검색
+                        if (TryFindPendingOrderFromFetchedOrders(preFetch.Value, storeProductId, out pendingOrder))
+                        {
+                            purchaseStorage?.MarkStorePending();
+                            Debug.Log($"[{Tag}] Pre-fetch: found pending order directly from fetched Orders.PendingOrders. storeProductId={storeProductId}");
+                            goto PendingOrderReady;
+                        }
+
+                        // 매칭 안 되는 stale pending orders를 ConfirmPurchase로 소비 처리
+                        // (서버 검증 실패로 stuck된 취소/만료 구매를 정리하여 재구매를 가능하게 함)
+                        if (preFetch.Value?.PendingOrders != null && preFetch.Value.PendingOrders.Count > 0)
+                        {
+                            Debug.Log($"[{Tag}] Pre-fetch: consuming {preFetch.Value.PendingOrders.Count} stale pending order(s) to unblock store.");
+                            foreach (var stale in preFetch.Value.PendingOrders)
+                            {
+                                try
+                                {
+                                    Debug.Log($"[{Tag}] Consuming stale pending order. transactionID={stale.Info.TransactionID}");
+                                    _controller.ConfirmPurchase(stale);
+                                }
+                                catch (Exception ex)
+                                {
+                                    Debug.LogWarning($"[{Tag}] ConfirmPurchase for stale order failed: {ex.Message}");
+                                }
+                            }
+                        }
+
+                        Debug.Log($"[{Tag}] Pre-fetch: no matching pending order found. Proceeding to PurchaseProduct. storeProductId={storeProductId}");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[{Tag}] Pre-fetch failed: {preFetch.Error?.Message}. Proceeding to PurchaseProduct. storeProductId={storeProductId}");
+                    }
+                }
+
                 if (!TryTakeDeferredPendingOrder(storeProductId, out pendingOrder))
                 {
                     _purchaseTcs = new TaskCompletionSource<PendingOrder>();
@@ -717,9 +776,45 @@ namespace Devian
 
                             if (!gotPendingOrder)
                             {
+                                // Polling alone failed — force-fetch unconsumed purchases from the store.
+                                // Unity IAP's WasPurchaseAlreadyProcessed blocks OnPurchasePending for
+                                // transactions already seen in this session, so we must read Orders.PendingOrders
+                                // directly instead of relying on the _deferredPendingOrders callback queue.
                                 Debug.LogWarning(
-                                    $"[{Tag}] Store reported already-owned for repurchasable item, but no deferred pending order arrived " +
-                                    $"within recovery window. storeProductId={storeProductId}");
+                                    $"[{Tag}] Deferred polling failed for already-owned item. " +
+                                    $"Attempting FetchPurchases fallback (direct Orders access). storeProductId={storeProductId}");
+
+                                var fetchResult = await fetchPendingPurchasesAsync(ct);
+                                if (fetchResult.IsSuccess)
+                                {
+                                    var fetchedOrders = fetchResult.Value;
+
+                                    // 1차: _deferredPendingOrders 확인 (새 세션이거나 다른 transactionID인 경우 OnPurchasePending이 발생할 수 있음)
+                                    if (TryTakeDeferredPendingOrder(storeProductId, out pendingOrder))
+                                    {
+                                        purchaseStorage?.MarkStorePending();
+                                        gotPendingOrder = true;
+                                        Debug.LogWarning($"[{Tag}] Recovered pending order via deferred queue after FetchPurchases. storeProductId={storeProductId}");
+                                    }
+                                    // 2차: Orders.PendingOrders에서 직접 검색 (WasPurchaseAlreadyProcessed 우회)
+                                    else if (TryFindPendingOrderFromFetchedOrders(fetchedOrders, storeProductId, out pendingOrder))
+                                    {
+                                        purchaseStorage?.MarkStorePending();
+                                        gotPendingOrder = true;
+                                        Debug.LogWarning($"[{Tag}] Recovered pending order directly from FetchPurchases Orders.PendingOrders. storeProductId={storeProductId}");
+                                    }
+                                    else
+                                    {
+                                        Debug.LogWarning(
+                                            $"[{Tag}] FetchPurchases succeeded but no matching pending order found " +
+                                            $"(pendingOrders={fetchedOrders?.PendingOrders?.Count ?? 0}). storeProductId={storeProductId}");
+                                    }
+                                }
+                                else
+                                {
+                                    Debug.LogWarning(
+                                        $"[{Tag}] FetchPurchases fallback failed: {fetchResult.Error?.Message}. storeProductId={storeProductId}");
+                                }
                             }
                         }
 
@@ -944,6 +1039,31 @@ namespace Devian
                 }
 
                 var rejectReason = response.RejectReason;
+
+                // 취소된 구매(purchaseState=1) 감지 → ConfirmPurchase로 스토어에서 제거
+                if (!string.IsNullOrEmpty(rejectReason) &&
+                    rejectReason.Contains("purchaseState=1") &&
+                    pendingOrder.Info != null)
+                {
+                    Debug.Log($"[{Tag}] Cancelled purchase detected (purchaseState=1). " +
+                              $"Consuming to clear from store. storeProductId={storeProductId}");
+                    try
+                    {
+                        _controller.ConfirmPurchase(pendingOrder);
+                        Debug.Log($"[{Tag}] ConfirmPurchase succeeded for cancelled purchase. storeProductId={storeProductId}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"[{Tag}] ConfirmPurchase for cancelled purchase failed: {ex.Message}");
+                    }
+                    // 스토어에서 제거 완료 → current 클리어하여 재구매 가능하게 함
+                    purchaseStorage?.ClearCurrent();
+                    clearCurrentOnExit = false;
+                    return CommonResult<PurchaseFinalResult>.Failure(
+                        CommonErrorType.PURCHASE_VERIFY_REJECTED_UNKNOWN,
+                        $"{status}:{rejectReason} (cancelled purchase consumed, retry possible)");
+                }
+
                 var keepCurrentForRecovery =
                     status == "PENDING" ||
                     (status == "REJECTED" && (
@@ -1184,6 +1304,87 @@ namespace Devian
             return CommonResult.Ok();
         }
 
+        // ── Store Fetch Helpers ────────────────────────────────────
+
+        /// <summary>
+        /// FetchPurchases()를 호출하여 스토어의 미소비/미확인 구매 목록을 가져온다.
+        /// OnPurchasePending 콜백에 의존하지 않고 Orders.PendingOrders를 직접 반환한다.
+        /// Unity IAP의 WasPurchaseAlreadyProcessed가 동일 세션 내 재처리를 차단하기 때문에,
+        /// OnPurchasePending 콜백이 발생하지 않을 수 있으므로 직접 접근이 필수.
+        /// </summary>
+        async Task<CommonResult<Orders>> fetchPendingPurchasesAsync(CancellationToken ct)
+        {
+            var tcs = new TaskCompletionSource<CommonResult<Orders>>();
+
+            void onFetched(Orders orders)
+            {
+                var p = orders?.PendingOrders?.Count ?? 0;
+                var c = orders?.ConfirmedOrders?.Count ?? 0;
+                var d = orders?.DeferredOrders?.Count ?? 0;
+                Debug.Log($"[{Tag}] fetchPendingPurchasesAsync.onFetched: pending={p}, confirmed={c}, deferred={d}");
+                tcs.TrySetResult(CommonResult<Orders>.Success(orders));
+            }
+            void onFailed(PurchasesFetchFailureDescription failure)
+            {
+                Debug.LogWarning($"[{Tag}] fetchPendingPurchasesAsync.onFailed: {failure.Message}");
+                tcs.TrySetResult(CommonResult<Orders>.Failure(
+                    CommonErrorType.PURCHASE_PURCHASE_REQUEST_FAILED,
+                    $"FetchPurchases failed: {failure.Message}"));
+            }
+
+            _controller.OnPurchasesFetched += onFetched;
+            _controller.OnPurchasesFetchFailed += onFailed;
+
+            try
+            {
+                _controller.FetchPurchases();
+
+                if (ct.CanBeCanceled)
+                    ct.Register(() => tcs.TrySetCanceled(ct));
+
+                return await tcs.Task;
+            }
+            finally
+            {
+                _controller.OnPurchasesFetched -= onFetched;
+                _controller.OnPurchasesFetchFailed -= onFailed;
+            }
+        }
+
+        /// <summary>
+        /// Orders.PendingOrders에서 storeProductId가 일치하는 PendingOrder를 직접 찾는다.
+        /// WasPurchaseAlreadyProcessed로 인해 OnPurchasePending이 발생하지 않는 경우의 fallback.
+        /// </summary>
+        static bool TryFindPendingOrderFromFetchedOrders(Orders orders, string storeProductId, out PendingOrder found)
+        {
+            found = default;
+            if (orders?.PendingOrders == null)
+            {
+                Debug.LogWarning($"[{Tag}] TryFindPendingOrderFromFetchedOrders: orders or PendingOrders is null.");
+                return false;
+            }
+
+            var pendingCount = orders.PendingOrders.Count;
+            var confirmedCount = orders.ConfirmedOrders?.Count ?? 0;
+            var deferredCount = orders.DeferredOrders?.Count ?? 0;
+            Debug.Log($"[{Tag}] FetchedOrders: pending={pendingCount}, confirmed={confirmedCount}, deferred={deferredCount}, expected={storeProductId}");
+
+            foreach (var pending in orders.PendingOrders)
+            {
+                // Receipt에서 productId를 추출하여 매칭
+                var candidateStoreProductId = TryExtractStoreProductIdFromReceipt(pending.Info.Receipt);
+                Debug.Log($"[{Tag}] PendingOrder candidate: extracted={candidateStoreProductId}, transactionID={pending.Info.TransactionID}, receiptLen={pending.Info.Receipt?.Length ?? 0}");
+                if (!string.IsNullOrEmpty(candidateStoreProductId) &&
+                    string.Equals(candidateStoreProductId, storeProductId, StringComparison.Ordinal))
+                {
+                    found = pending;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         // ── Event Handlers ────────────────────────────────────────
 
         void onPurchasePending(PendingOrder order)
@@ -1418,29 +1619,75 @@ namespace Devian
             return false;
         }
 
+        /// <summary>
+        /// Receipt 문자열에서 productId를 추출한다.
+        /// Unity IAP v6 Google Play receipt은 UnifiedReceipt 래핑(이중 JSON 이스케이프)으로 인해
+        /// productId가 다양한 이스케이프 깊이로 존재한다.
+        /// 이스케이프 레벨과 무관하게 "productId" 키워드를 찾은 후,
+        /// 그 뒤에 오는 SKU 형태의 값(알파벳/숫자/점/밑줄/하이픈)을 직접 추출한다.
+        /// </summary>
         static string TryExtractStoreProductIdFromReceipt(string receipt)
         {
             if (string.IsNullOrEmpty(receipt))
                 return string.Empty;
 
-            const string plainMarker = "\"productId\":\"";
-            var plainIndex = receipt.IndexOf(plainMarker, StringComparison.Ordinal);
-            if (plainIndex >= 0)
+            // "productId" 문자열을 찾는다 (이스케이프 관계없이 리터럴 텍스트 "productId"는 항상 존재)
+            const string keyword = "productId";
+            var searchStart = 0;
+            while (searchStart < receipt.Length)
             {
-                var start = plainIndex + plainMarker.Length;
-                var end = receipt.IndexOf('"', start);
-                if (end > start)
-                    return receipt.Substring(start, end - start);
-            }
+                var kwIndex = receipt.IndexOf(keyword, searchStart, StringComparison.Ordinal);
+                if (kwIndex < 0)
+                    break;
 
-            const string escapedMarker = "\\\"productId\\\":\\\"";
-            var escapedIndex = receipt.IndexOf(escapedMarker, StringComparison.Ordinal);
-            if (escapedIndex >= 0)
-            {
-                var start = escapedIndex + escapedMarker.Length;
-                var end = receipt.IndexOf("\\\"", start, StringComparison.Ordinal);
-                if (end > start)
-                    return receipt.Substring(start, end - start);
+                // productId 뒤의 구분자(이스케이프된 따옴표, 콜론, 공백 등)를 건너뛰고
+                // SKU 값 시작점을 찾는다.
+                var afterKeyword = kwIndex + keyword.Length;
+                var valueStart = -1;
+                for (var i = afterKeyword; i < receipt.Length && i < afterKeyword + 20; i++)
+                {
+                    var c = receipt[i];
+                    // SKU에 유효한 첫 문자를 만나면 값 시작
+                    if (char.IsLetterOrDigit(c))
+                    {
+                        valueStart = i;
+                        break;
+                    }
+                    // 구분자 문자 (따옴표, 역슬래시, 콜론, 공백) 는 건너뜀
+                    if (c == '"' || c == '\\' || c == ':' || c == ' ')
+                        continue;
+                    // 예상 외 문자면 이 위치의 productId는 아님
+                    break;
+                }
+
+                if (valueStart < 0)
+                {
+                    searchStart = afterKeyword;
+                    continue;
+                }
+
+                // SKU 값 추출: 알파벳, 숫자, 점, 밑줄, 하이픈만 허용
+                var valueEnd = valueStart;
+                for (var i = valueStart; i < receipt.Length; i++)
+                {
+                    var c = receipt[i];
+                    if (char.IsLetterOrDigit(c) || c == '.' || c == '_' || c == '-')
+                    {
+                        valueEnd = i + 1;
+                        continue;
+                    }
+                    break;
+                }
+
+                if (valueEnd > valueStart)
+                {
+                    var extracted = receipt.Substring(valueStart, valueEnd - valueStart);
+                    // 최소 길이 검증 (너무 짧은 값은 무시)
+                    if (extracted.Length >= 3)
+                        return extracted;
+                }
+
+                searchStart = afterKeyword;
             }
 
             return string.Empty;

@@ -140,7 +140,23 @@
       "Bash(file:*)",
       "Bash(npm ls:*)",
       "Bash(__NEW_LINE_80b337b96326856b__ echo \"ItemData.cs deleted from all 4 paths\")",
-      "Bash(md5:*)"
+      "Bash(md5:*)",
+      "Bash(CLOUDSDK_PYTHON=/Users/maoshy/.pyenv/shims/python3 gcloud version:*)",
+      "Bash(CLOUDSDK_PYTHON=/Users/maoshy/.pyenv/shims/python3 /opt/homebrew/share/google-cloud-sdk/bin/gcloud:*)",
+      "Bash(brew uninstall:*)",
+      "Bash(brew install:*)",
+      "Bash(curl:*)",
+      "Bash(tar:*)",
+      "Bash(CLOUDSDK_PYTHON=/Users/maoshy/.pyenv/shims/python3 /tmp/google-cloud-sdk/bin/gcloud version:*)",
+      "Bash(CLOUDSDK_PYTHON=/Users/maoshy/.pyenv/shims/python3 /tmp/google-cloud-sdk/bin/gcloud iam service-accounts list:*)",
+      "Bash(CLOUDSDK_PYTHON=/Users/maoshy/.pyenv/shims/python3 /tmp/google-cloud-sdk/bin/gcloud iam service-accounts keys create:*)",
+      "Bash(firebase functions:secrets:access:*)",
+      "Bash(firebase functions:log:*)",
+      "Bash(firebase functions:secrets:get:*)",
+      "Bash(gcloud services enable:*)",
+      "WebFetch(domain:support.google.com)",
+      "WebFetch(domain:documentation.qonversion.io)",
+      "WebFetch(domain:adapty.io)"
     ]
   },
   "project": {

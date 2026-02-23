@@ -26,7 +26,7 @@
 {"Id":"FIREBASE_REAUTH_UNKNOWN","Msg_key":"","Msg":"Unknown re-authentication type"}
 {"Id":"FIREBASE_SIGNIN","Msg_key":"","Msg":"Firebase sign-in failed"}
 {"Id":"FIREBASE_TOKEN","Msg_key":"","Msg":"Failed to get ID token"}
-{"Id":"IAP_NOT_INITIALIZED","Msg_key":"","Msg":"Store not initialized"}
+{"Id":"COMMON_INVALID_ARGUMENT","Msg_key":"","Msg":"Invalid argument"}
 {"Id":"IAP_NOT_SUPPORTED","Msg_key":"","Msg":"Unity Purchasing not available"}
 {"Id":"INVENTORY_DELTAS_NULL","Msg_key":"","Msg":"rewards array is null"}
 {"Id":"INVENTORY_DELTA_AMOUNT_NEGATIVE","Msg_key":"","Msg":"reward amount is negative"}
@@ -82,8 +82,8 @@
 {"Id":"PURCHASE_PURCHASE_IN_PROGRESS","Msg_key":"","Msg":"Another purchase is already in progress."}
 {"Id":"PURCHASE_PURCHASE_REQUEST_FAILED","Msg_key":"","Msg":"Store purchase request failed before verification."}
 {"Id":"PURCHASE_RECENT_CALL_FAILED","Msg_key":"","Msg":"Failed to fetch recent purchases."}
-{"Id":"PURCHASE_RECENT_NOT_FOUND","Msg_key":"","Msg":"No recent rental purchase within 30 days."}
-{"Id":"PURCHASE_RENTAL_LATEST_CALL_FAILED","Msg_key":"","Msg":"Failed to fetch latest rental purchase within 30 days."}
+{"Id":"PURCHASE_RECENT_NOT_FOUND","Msg_key":"","Msg":"No recent purchase within 30 days."}
+{"Id":"PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED","Msg_key":"","Msg":"ackPurchaseStoreConfirm callable failed."}
 {"Id":"PURCHASE_RENTAL_LATEST_NOT_FOUND","Msg_key":"","Msg":"No recent rental purchase within 30 days."}
 {"Id":"PURCHASE_RESTORE_FAILED","Msg_key":"","Msg":"Restore transactions failed at store."}
 {"Id":"PURCHASE_SEASON_PASS_ALREADY_OWNED","Msg_key":"","Msg":"Season pass duplicate purchase is not allowed."}

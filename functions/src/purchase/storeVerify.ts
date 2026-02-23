@@ -8,10 +8,12 @@
 
 import {google} from "googleapis";
 import * as functions from "firebase-functions";
-import {defineString} from "firebase-functions/params";
+import {defineString, defineSecret} from "firebase-functions/params";
 
 // ── 시크릿 (46 스킬 G 섹션) ──
-const GOOGLE_CREDENTIALS_JSON = defineString("GOOGLE_APPLICATION_CREDENTIALS_JSON");
+// defineSecret: Cloud Secret Manager에서 시크릿을 읽는다. (.env 파일의 값은 무시됨)
+export const GOOGLE_CREDENTIALS_SECRET = defineSecret("GOOGLE_APPLICATION_CREDENTIALS_JSON");
+const GOOGLE_CREDENTIALS_JSON = GOOGLE_CREDENTIALS_SECRET;
 const APPLE_SHARED_SECRET = defineString("APPLE_SHARED_SECRET");
 
 // ── 타입 ──
@@ -59,6 +61,7 @@ export async function verifyGooglePlay(
   }
 
   const data = response.data;
+  functions.logger.info(`[storeVerify] purchaseState=${data.purchaseState} orderId=${data.orderId ?? "N/A"}`);
   const valid = kind === "Subscription"
     ? (data.paymentState !== undefined) // subscriptions: paymentState exists
     : (data.purchaseState === 0); // products: 0 = purchased

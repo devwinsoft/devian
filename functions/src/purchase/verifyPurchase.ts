@@ -1,5 +1,5 @@
 /**
- * verifyPurchase.ts — Firebase Callable: 결제 검증 + 멱등 지급
+ * verifyPurchase.ts — Firebase Callable: 결제 검증 + 멱등 지급 (v3)
  *
  * 46 스킬 결정사항 전수 준수:
  *   B. Callable 이름 = "verifyPurchase", context.auth.uid 필수
@@ -13,7 +13,7 @@
 import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
-import {verifyGooglePlay, verifyApple} from "./storeVerify";
+import {verifyGooglePlay, verifyApple, GOOGLE_CREDENTIALS_SECRET} from "./storeVerify";
 
 // ── Firestore 참조 헬퍼 ──
 function purchaseDocRef(uid: string, purchaseId: string) {
@@ -235,7 +235,7 @@ export const __test_parseGoogleReceipt = parseGoogleReceipt;
 // ═══════════════════════════════════════════
 
 export const verifyPurchase = onCall(
-  {region: "asia-northeast3"},
+  {region: "asia-northeast3", secrets: [GOOGLE_CREDENTIALS_SECRET]},
   async (request) => {
     // 46 스킬 B: context.auth.uid 필수(unauthenticated 거부)
     if (!request.auth) {
@@ -287,7 +287,8 @@ export const verifyPurchase = onCall(
         storeResult = await verifyApple(req.payload);
       }
     } catch (err: any) {
-      logger.error(`[verifyPurchase] Store verification error: ${err.message}`);
+      const errCode = err?.code ?? err?.response?.status ?? "unknown";
+      logger.error(`[verifyPurchase] Store verification error: ${err.message} | code=${errCode}`);
       return {
         resultStatus: "REJECTED",
         verifyStatus: "REJECTED",
@@ -298,11 +299,14 @@ export const verifyPurchase = onCall(
 
     // 검증 실패 → REJECTED
     if (!storeResult.valid) {
-      logger.warn(`[verifyPurchase] Store verification failed for uid=${uid}`);
+      // purchaseState를 rejectReason에 포함: 클라이언트가 취소된 구매(state=1)를 ConfirmPurchase로 제거 가능
+      const purchaseState = storeResult.rawResponse?.purchaseState;
+      const rejectDetail = purchaseState !== undefined ? `STORE_VERIFY_INVALID:purchaseState=${purchaseState}` : "STORE_VERIFY_INVALID";
+      logger.warn(`[verifyPurchase] Store verification failed for uid=${uid} product=${req.internalProductId} store=${req.storeKey} kind=${req.kind} ${rejectDetail}`);
       return {
         resultStatus: "REJECTED",
         verifyStatus: "REJECTED",
-        rejectReason: "STORE_VERIFY_INVALID",
+        rejectReason: rejectDetail,
         grants: [],
       };
     }
@@ -367,7 +371,9 @@ export const verifyPurchase = onCall(
     const entitlementRef = entitlementsDocRef(uid);
 
     const txResult = await db.runTransaction(async (tx) => {
+      // Firestore 트랜잭션: 모든 read를 write보다 먼저 수행해야 함
       const existingDoc = await tx.get(purchaseRef);
+      const entitlementSnap = await tx.get(entitlementRef);
 
       // 46 스킬 C: 이미 지급 완료면 ALREADY_GRANTED 반환(중복 지급 금지)
       if (existingDoc.exists) {
@@ -416,7 +422,6 @@ export const verifyPurchase = onCall(
       });
 
       // entitlements projection 갱신 (SeasonPass ownership / Rental expiry)
-      const entitlementSnap = await tx.get(entitlementRef);
       const entitlementData = (entitlementSnap.exists ? entitlementSnap.data() : undefined) ?? {};
       const entitlementPatch: Record<string, unknown> = {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),

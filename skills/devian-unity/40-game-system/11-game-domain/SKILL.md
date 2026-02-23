@@ -1,4 +1,4 @@
-# 11-domain-game
+# 11-game-domain
 
 Status: ACTIVE
 AppliesTo: v10

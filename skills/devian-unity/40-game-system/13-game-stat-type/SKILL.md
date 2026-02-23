@@ -127,5 +127,5 @@ hero.Unequip(slotNumber);
 ## 6. Related
 
 - [12-game-ability](../12-game-ability/SKILL.md) — AbilityBase, AbilityEquip (STAT_TYPE 소비자)
-- [11-domain-game](../11-domain-game/SKILL.md) — Game 도메인 허브 (ENUM_TYPES.json contract)
+- [11-game-domain](../11-game-domain/SKILL.md) — Game 도메인 허브 (ENUM_TYPES.json contract)
 - [11-inventory-storage](../../50-mobile-system/93-game-inventory-system/11-inventory-storage/SKILL.md) — InventoryStorage

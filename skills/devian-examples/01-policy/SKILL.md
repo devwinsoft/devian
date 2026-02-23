@@ -59,7 +59,7 @@ Network 샘플 템플릿 작성 방법:
 
 | 스킬 | 설명 |
 |------|------|
-| `skills/devian-unity/40-game-system/11-domain-game/SKILL.md` | Game 도메인 허브 (테이블/컨트랙트/생성물) |
+| `skills/devian-unity/40-game-system/11-game-domain/SKILL.md` | Game 도메인 허브 (테이블/컨트랙트/생성물) |
 | `skills/devian-examples/12-protocol-game/SKILL.md` | Game 프로토콜(C2Game/Game2C) 예제 |
 
 ---

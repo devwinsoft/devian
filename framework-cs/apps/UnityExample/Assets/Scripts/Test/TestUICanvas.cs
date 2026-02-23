@@ -56,8 +56,28 @@ public class TestUICanvas : UICanvas<TestUICanvas>
     {
         Debug.Log(TestBootstrap.GetVersionCode());
 
+        var retry = await PurchaseManager.Instance.RetryInterruptedPurchaseAsync(CancellationToken.None);
+        if (retry.IsSuccess)
+        {
+            Debug.Log($"RetryInterruptedPurchaseAsync: {retry.Value.Status}");
+            foreach (var reward in retry.Value.AppliedRewards)
+            {
+                Debug.Log($"{reward.Type}, {reward.Id}, {reward.Amount}");
+            }
+
+            if (retry.Value.Status == PurchaseManager.RetryInterruptedPurchaseStatus.Retried)
+            {
+                Debug.Log($"Interrupted purchase recovered. product={retry.Value.InternalProductId} result={retry.Value.ResultStatus}");
+                return;
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"RetryInterruptedPurchaseAsync failed: {retry.Error.Code}: {retry.Error.Message}");
+        }
+
         var purchase = await PurchaseManager.Instance.PurchaseAsync(
-            "com.devian.framework.noads_month",
+            "noads_month",
             CancellationToken.None);
         if (purchase.IsSuccess)
         {
@@ -86,8 +106,28 @@ public class TestUICanvas : UICanvas<TestUICanvas>
     {
         Debug.Log(TestBootstrap.GetVersionCode());
 
+        var retry = await PurchaseManager.Instance.RetryInterruptedPurchaseAsync(CancellationToken.None);
+        if (retry.IsSuccess)
+        {
+            Debug.Log($"RetryInterruptedPurchaseAsync: {retry.Value.Status}");
+
+            if (retry.Value.Status == PurchaseManager.RetryInterruptedPurchaseStatus.Retried)
+            {
+                Debug.Log($"Interrupted purchase recovered. product={retry.Value.InternalProductId} result={retry.Value.ResultStatus}");
+                foreach (var reward in retry.Value.AppliedRewards)
+                {
+                    Debug.Log($"{reward.Type}, {reward.Id}, {reward.Amount}");
+                }
+                return;
+            }
+        }
+        else
+        {
+            Debug.LogWarning($"RetryInterruptedPurchaseAsync failed: {retry.Error.Code}: {retry.Error.Message}");
+        }
+
         var purchase = await PurchaseManager.Instance.PurchaseAsync(
-            "com.devian.framework.chest_001",
+            "chest_003",
             CancellationToken.None);
         if (purchase.IsSuccess)
         {
