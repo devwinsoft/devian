@@ -50,6 +50,7 @@ namespace Devian
         private const int SchemaVersion = 1;
         private const string UpdateTimeFormat = "yyyyMMdd:HHmmss";
         private const string DeviceIdPrefsKey = "Devian.DeviceId";
+        private const string SaveSeqPrefsKey = "Devian.SaveSeq";
 
         [Header("Local Storage")]
         [SerializeField] private SaveLocalRoot _localRoot = SaveLocalRoot.PersistentData;
@@ -230,7 +231,7 @@ namespace Devian
                 return CommonResult<SyncResult>.Success(new SyncResult(st, slot));
             }
 
-            // cloud -> local (+ cloud resave)
+            // cloud -> local
             if (local2 == null && cloud2 != null)
             {
                 var jsonR = decryptCloudPayloadToJson(cloud2);
@@ -248,20 +249,11 @@ namespace Devian
                         new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_LOCAL_FAILED, $"Sync save local failed. slot='{slot}'", saveLocalR.Error!.ToString()));
                 }
 
-                var cloudResaveR = await saveCloudAsync(slot, jsonR.Value, ct);
-                if (cloudResaveR.IsFailure)
-                {
-                    return CommonResult<SyncResult>.Failure(
-                        new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_CLOUD_FAILED, $"Sync re-save cloud failed. slot='{slot}'", cloudResaveR.Error!.ToString()));
-                }
-
-                // reload to return payloads
+                // Reload local to return the newly-written saveSeq/deviceId.
                 var reLocal = await loadLocalRecordAsync(slot, ct);
-                var reCloud = await loadCloudRecordAsync(slot, ct);
                 var lp = reLocal.IsSuccess ? reLocal.Value : null;
-                var cp = reCloud.IsSuccess ? reCloud.Value : null;
                 return CommonResult<SyncResult>.Success(new SyncResult(
-                    SyncState.Success, slot, lp, cp, lp?.deviceId, cp?.DeviceId));
+                    SyncState.Success, slot, lp, cloud2, lp?.deviceId, cloud2?.DeviceId));
             }
 
             // local -> cloud
@@ -296,17 +288,72 @@ namespace Devian
             // both exist
             if (local2 != null && cloud2 != null)
             {
+                if (hasSameObfuscatedPayload(local2, cloud2))
+                {
+                    return CommonResult<SyncResult>.Success(new SyncResult(
+                        SyncState.Success, slot, local2, cloud2, local2.deviceId, cloud2.DeviceId));
+                }
+
                 var localDeviceId = local2.deviceId ?? string.Empty;
                 var cloudDeviceId = cloud2.DeviceId ?? string.Empty;
 
                 if (!string.Equals(localDeviceId, cloudDeviceId, StringComparison.Ordinal))
                 {
                     return CommonResult<SyncResult>.Success(new SyncResult(
-                        SyncState.Conflict, slot, local2, cloud2, localDeviceId, cloudDeviceId));
+                            SyncState.Conflict, slot, local2, cloud2, localDeviceId, cloudDeviceId));
                 }
 
+                if (TryCompareSaveSeq(local2, cloud2, out var seqCompare))
+                {
+                    if (seqCompare > 0)
+                    {
+                        var jsonR = decryptLocalPayloadToJson(local2);
+                        if (jsonR.IsFailure)
+                        {
+                            return CommonResult<SyncResult>.Failure(
+                                new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_CLOUD_FAILED, $"Sync decrypt local failed. slot='{slot}'", jsonR.Error!.ToString()));
+                        }
+
+                        var saveCloudR = await saveCloudAsync(slot, jsonR.Value, ct);
+                        if (saveCloudR.IsFailure)
+                        {
+                            return CommonResult<SyncResult>.Failure(
+                                new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_CLOUD_FAILED, $"Sync save cloud failed. slot='{slot}'", saveCloudR.Error!.ToString()));
+                        }
+
+                        var reCloud = await loadCloudRecordAsync(slot, ct);
+                        var cp = reCloud.IsSuccess ? reCloud.Value : cloud2;
+                        return CommonResult<SyncResult>.Success(new SyncResult(
+                            SyncState.Success, slot, local2, cp, localDeviceId, cp?.DeviceId));
+                    }
+
+                    {
+                        var jsonR = decryptCloudPayloadToJson(cloud2);
+                        if (jsonR.IsFailure)
+                        {
+                            return CommonResult<SyncResult>.Failure(
+                                new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_LOCAL_FAILED, $"Sync decrypt cloud failed. slot='{slot}'", jsonR.Error!.ToString()));
+                        }
+
+                        _needsCloudSave = false;
+                        var saveLocalR = await saveLocalAsync(slot, jsonR.Value, ct);
+                        if (saveLocalR.IsFailure)
+                        {
+                            return CommonResult<SyncResult>.Failure(
+                                new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_LOCAL_FAILED, $"Sync save local failed. slot='{slot}'", saveLocalR.Error!.ToString()));
+                        }
+
+                        var reLocal = await loadLocalRecordAsync(slot, ct);
+                        var lp = reLocal.IsSuccess ? reLocal.Value : local2;
+                        return CommonResult<SyncResult>.Success(new SyncResult(
+                            SyncState.Success, slot, lp, cloud2, lp?.deviceId, cloudDeviceId));
+                    }
+                }
+
+                // Same device but payload differs and saveSeq is missing/invalid/tied.
+                // Fall back to explicit user conflict resolution.
                 return CommonResult<SyncResult>.Success(new SyncResult(
-                    SyncState.Success, slot, local2, cloud2, localDeviceId, cloudDeviceId));
+                    SyncState.Conflict, slot, local2, cloud2, localDeviceId, cloudDeviceId));
             }
 
             // fallback (should not reach)
@@ -372,11 +419,6 @@ namespace Devian
                         var saveLocalR = await saveLocalAsync(slot, jsonR.Value, ct);
                         if (saveLocalR.IsFailure)
                             return CommonResult<bool>.Failure(saveLocalR.Error!);
-
-                        // Re-save same payload to cloud to update deviceId and prevent next Sync conflict.
-                        var cloudSave = await saveCloudAsync(slot, jsonR.Value, ct);
-                        if (cloudSave.IsFailure)
-                            return CommonResult<bool>.Failure(cloudSave.Error!);
 
                         return CommonResult<bool>.Success(true);
                     }
@@ -712,7 +754,8 @@ namespace Devian
                 SchemaVersion,
                 nowUpdateTime(),
                 obfuscated,
-                _getOrCreateDeviceId()
+                _getOrCreateDeviceId(),
+                nextSaveSeq()
             );
 
             var write = SaveLocalFileStore.WriteAtomic(getRootPath(), filename, save);
@@ -801,7 +844,8 @@ namespace Devian
                 SchemaVersion,
                 nowUpdateTime(),
                 obfuscated,
-                _getOrCreateDeviceId()
+                _getOrCreateDeviceId(),
+                nextSaveSeq()
             );
 
             var r = await _cloudClient.SaveAsync(cloudSlot, csPayload, ct);
@@ -984,13 +1028,6 @@ namespace Devian
                                 new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_LOCAL_FAILED, $"Sync save local failed. slot='{slot}'", saveLocalR.Error!.ToString()));
                         }
 
-                        // Re-save to cloud to update deviceId and prevent next Sync conflict.
-                        var cloudResaveR = await saveCloudAsync(slot, jsonR.Value, ct);
-                        if (cloudResaveR.IsFailure)
-                        {
-                            return CommonResult<SyncResult>.Failure(
-                                new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_CLOUD_FAILED, $"Sync re-save cloud failed. slot='{slot}'", cloudResaveR.Error!.ToString()));
-                        }
                         continue;
                     }
 
@@ -1017,7 +1054,12 @@ namespace Devian
                         continue;
                     }
 
-                    // Both exist: check deviceId
+                    if (hasSameObfuscatedPayload(local, cloud))
+                    {
+                        continue;
+                    }
+
+                    // Both exist: compare deviceId first, then saveSeq for same-device divergence.
                     var localDeviceId = local.deviceId ?? string.Empty;
                     var cloudDeviceId = cloud.DeviceId ?? string.Empty;
 
@@ -1031,6 +1073,53 @@ namespace Devian
                             localDeviceId,
                             cloudDeviceId));
                     }
+
+                    if (TryCompareSaveSeq(local, cloud, out var seqCompare))
+                    {
+                        if (seqCompare > 0)
+                        {
+                            var jsonR = decryptLocalPayloadToJson(local);
+                            if (jsonR.IsFailure)
+                            {
+                                return CommonResult<SyncResult>.Failure(
+                                    new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_CLOUD_FAILED, $"Sync decrypt local failed. slot='{slot}'", jsonR.Error!.ToString()));
+                            }
+
+                            var saveCloudR = await saveCloudAsync(slot, jsonR.Value, ct);
+                            if (saveCloudR.IsFailure)
+                            {
+                                return CommonResult<SyncResult>.Failure(
+                                    new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_CLOUD_FAILED, $"Sync save cloud failed. slot='{slot}'", saveCloudR.Error!.ToString()));
+                            }
+                            continue;
+                        }
+
+                        {
+                            var jsonR = decryptCloudPayloadToJson(cloud);
+                            if (jsonR.IsFailure)
+                            {
+                                return CommonResult<SyncResult>.Failure(
+                                    new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_LOCAL_FAILED, $"Sync decrypt cloud failed. slot='{slot}'", jsonR.Error!.ToString()));
+                            }
+
+                            _needsCloudSave = false;
+                            var saveLocalR = await saveLocalAsync(slot, jsonR.Value, ct);
+                            if (saveLocalR.IsFailure)
+                            {
+                                return CommonResult<SyncResult>.Failure(
+                                    new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_LOCAL_FAILED, $"Sync save local failed. slot='{slot}'", saveLocalR.Error!.ToString()));
+                            }
+                            continue;
+                        }
+                    }
+
+                    return CommonResult<SyncResult>.Success(new SyncResult(
+                        SyncState.Conflict,
+                        slot,
+                        local,
+                        cloud,
+                        localDeviceId,
+                        cloudDeviceId));
                 }
 
                 if (!hasAnyLocal && !hasAnyCloud)
@@ -1054,6 +1143,43 @@ namespace Devian
         // ──────────────────────────────────────────────
         //  Private: Shared helpers
         // ──────────────────────────────────────────────
+
+        private static bool hasSameObfuscatedPayload(SaveLocalPayload local, SaveCloudPayload cloud)
+        {
+            if (local == null || cloud == null)
+                return false;
+
+            return string.Equals(local.payload ?? string.Empty, cloud.Payload ?? string.Empty, StringComparison.Ordinal);
+        }
+
+        private static bool TryCompareSaveSeq(SaveLocalPayload local, SaveCloudPayload cloud, out int compare)
+        {
+            compare = 0;
+
+            var localSeq = local != null ? local.saveSeq : 0L;
+            var cloudSeq = cloud != null ? cloud.SaveSeq : 0L;
+            if (localSeq <= 0 || cloudSeq <= 0 || localSeq == cloudSeq)
+                return false;
+
+            compare = localSeq > cloudSeq ? 1 : -1;
+            return true;
+        }
+
+        private static long nextSaveSeq()
+        {
+            long seq = 0L;
+            var raw = PlayerPrefs.GetString(SaveSeqPrefsKey, null);
+            if (!string.IsNullOrEmpty(raw))
+                long.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out seq);
+
+            if (seq < 0)
+                seq = 0;
+
+            seq++;
+            PlayerPrefs.SetString(SaveSeqPrefsKey, seq.ToString(CultureInfo.InvariantCulture));
+            PlayerPrefs.Save();
+            return seq;
+        }
 
         private static string _getOrCreateDeviceId()
         {

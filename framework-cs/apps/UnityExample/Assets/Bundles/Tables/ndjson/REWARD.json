@@ -1,2 +1,4 @@
-{"RewardNum":1,"RewardGroupId":"reward_001","Type":"CURRENCY","Id":"GOLD","Amount":1000}
-{"RewardNum":2,"RewardGroupId":"reward_001","Type":"CURRENCY","Id":"JEWEL_PAID","Amount":300}
+{"RewardNum":1,"RewardGroupId":"reward_chest_001","Type":"CURRENCY","Id":"GOLD","Amount":1000}
+{"RewardNum":2,"RewardGroupId":"reward_chest_001","Type":"CURRENCY","Id":"JEWEL_PAID","Amount":300}
+{"RewardNum":3,"RewardGroupId":"reward_noads_month","Type":"RENTAL","Id":"NO_ADS","Amount":1}
+{"RewardNum":4,"RewardGroupId":"reward_pass_001","Type":"SEASON_PASS","Id":"S2026_01","Amount":1}

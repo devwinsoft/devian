@@ -67,9 +67,10 @@
   - 문서 1개 = 슬롯 1개
 - 저장 필드(문서):
   - `Version` (int)
-  - `UpdateTime` (string)
+  - `UpdateTime` (string, 표시/진단용)
   - `Payload` (string)
   - `DeviceId` (string)
+  - `SaveSeq` (long, same-device Sync 최신성 판정용)
   - *(legacy `UtcTime`/`Checksum` 필드는 SaveAsync 시 `FieldValue.Delete`로 제거)*
 
 ### Runtime behavior
@@ -82,6 +83,10 @@
 - `LoadAsync`:
   - 슬롯 문서를 읽어 payload 복원
   - `SaveCloudResult.NotFound`는 "클라우드 데이터 없음(첫 저장 전)"을 의미하며, Sync에서는 실패가 아닌 `Success(null)`로 취급한다.
+- SaveDataManager Sync 규칙:
+  - `Payload` 동일하면 deviceId가 달라도 `Success`
+  - `DeviceId` 동일 + `Payload` 상이하면 `SaveSeq`로 same-device 최신본 자동 선택
+  - `DeviceId` 상이하면 `Conflict` (유저 선택)
 - `DeleteAsync`:
   - 슬롯 문서 삭제
 

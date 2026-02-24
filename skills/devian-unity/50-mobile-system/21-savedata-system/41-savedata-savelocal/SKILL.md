@@ -23,9 +23,10 @@
 
 ## SaveLocalPayload Fields
 - `version` (int): 스키마 버전
-- `updateTime` (string): 저장 시점
+- `updateTime` (string): 저장 시점(표시/진단용; Sync 최신성 판정 기준 아님)
 - `payload` (string): 난독화된 게임 데이터 (Base64)
 - `deviceId` (string): 디바이스 식별자
+- `saveSeq` (long): 기기별 단조 증가 저장 순번 (same-device Sync 최신성 판정용)
 
 
 ## What it does
