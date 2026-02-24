@@ -255,13 +255,15 @@ namespace Devian
 
 ---
 
-## 6. Implementation Location (SSOT)
+## 6. Implementation Location (3-path mirror)
+
+> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../07-samples-creation-guide/SKILL.md)
 
 ### Ability 클래스 (GameContents 샘플)
 
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/GameContents/Runtime/Ability/`
-- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/GameContents/Runtime/Ability/`
-- Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/GameContents/Runtime/Ability/`
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/GameContents/Runtime/Ability/`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/GameContents/Runtime/Ability/`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/GameContents/Runtime/Ability/`
 
 파일 목록:
 ```

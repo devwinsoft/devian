@@ -77,7 +77,7 @@ AppliesTo: v10
 
 - iOS는 재설치/기기 변경 시 Restore 플로우가 필요하다.
 - Restore는 "스토어 구매 이력 재동기화 트리거"이며,
-  최종 Entitlement는 서버 `getEntitlements` 결과로 확정한다.
+  최종 Entitlement는 서버 상태(purchases/entitlements)를 기준으로 확정한다.
 
 #### Android: 복원 UX
 
@@ -108,6 +108,7 @@ AppliesTo: v10
 #### 2) 타입 규칙
 
 - Consumable: 재화 등 반복 구매/즉시 지급
+- Rental: 기간제 구매(예: NoAds 30일). 반복 구매 허용, 만료일 연장 방식
 - Subscription: "구독 기반 NoAds" 등 상태 기반
 - Season Pass: 시즌별 구매 1회성 Entitlement로 운영
 
@@ -143,7 +144,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 - [x] PRODUCT 테이블 스키마/필드: — 결정됨
   - `internalProductId` (string, pk) — 내부 상품 ID (정본)
   - `rewardGroupId` (string) — 지급 Reward Key, `internalProductId -> rewardGroupId` 변환의 SSOT
-  - `kind` (ProductKind) — 상품 타입 (`Consumable` / `Subscription` / `SeasonPass`)
+  - `kind` (ProductKind) — 상품 타입 (`Consumable` / `Rental` / `Subscription` / `SeasonPass`)
   - `title` (string) — 표시용 상품명(요약)
   - `isActive` (bool) — 운영 활성 토글
   - `storeSkuApple` (string) — Apple Store SKU
@@ -193,28 +194,27 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
   - `uid` — Auth context에서 확보 (클라가 보내지 않음)
   - `storeKey: string` — "apple" | "google"
   - `internalProductId: string`
-  - `kind: string` — "Consumable" | "Subscription" | "SeasonPass" (=`ProductKind` string)
+  - `kind: string` — "Consumable" | "Rental" | "Subscription" | "SeasonPass" (=`ProductKind` string)
   - `payload: string` — 스토어 영수증/검증 데이터 (클라에서 `BuildVerifyPayload(receipt)` 결과)
 - 처리
   1) 스토어 서버 검증(Apple/Google)
   2) Firestore 원장 기록 upsert (멱등)
-  3) entitlements/current 재계산 후 upsert
-  4) 결과 반환
+  3) 결과 반환 (entitlements 갱신은 별도 `getEntitlements` 호출로 분리)
 - 출력
   - `resultStatus: string` — 위 enum 중 하나
   - `purchaseId: string` — `{storeKey}_{storePurchaseId}`
   - `verifyStatus: string` — 서버 purchase 상태 필드(`verifyStatus`)와 정합
   - `clientGrantStatus: string` — `"PENDING" | "APPLIED_ACKED" | "FAILED_REPORTED"`
   - `storeConfirmStatus: string` — `"PENDING" | "CONFIRMED"`
-  - `grants: array` — 지급 내역(RewardData[]) (각 항목: `{ type, id, amount }`, `type="item"|"currency"`, `amount>=0`)
-  - `entitlementsSnapshot: object?` — (optional) 갱신된 entitlements 스냅샷
+  - `grants: array` — (server informational, 클라 지급 입력으로 미사용) 지급 내역 참고용. 보상은 `rewardGroupId` 경로로 지급
+  - `entitlementsSnapshot: object?` — (optional) 갱신된 entitlements 스냅샷. GRANTED/ALREADY_GRANTED 시 포함. 클라는 `ParseEntitlementsSnapshot`으로 파싱 + `cacheEntitlementsSnapshot`으로 InventoryStorage에 동기화
 
 ##### C# ↔ Callable 필드 매핑
 
 | C# (`VerifyPurchaseRequest`) | Callable JSON key | 비고 |
 |------------------------------|-------------------|------|
 | `InternalProductId` | `internalProductId` | |
-| `Kind` (enum → string) | `kind` | `"Consumable"` / `"Subscription"` / `"SeasonPass"` |
+| `Kind` (enum → string) | `kind` | `"Consumable"` / `"Rental"` / `"Subscription"` / `"SeasonPass"` |
 | `Store` | `storeKey` | |
 | `Payload` | `payload` | |
 
@@ -316,9 +316,9 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 - 목적: 구매 진행 중 상태(current)의 local/cloud 저장 (복구 보조) + 환불/지원 대응용 최소 로그(refundSupportLogs)
 - `current`는 복구 워크아이템이며, `Confirm + storeConfirm ACK + clientGrant report`가 종결되기 전에는 clear하지 않는다.
 - 금지: 전체 구매 이력 정본 저장, 구매 실패 상세(코드/메시지) 저장, raw receipt 저장, 서버 원장/멱등 대체
-- `PurchaseStorage` local/cloud 캐시에는 `noAdsExpireAtClientUtcMs`(long, client clock)와 `SeasonPass ownership`(internalProductId→bool)를 저장할 수 있다. (구현됨)
-- `Rental` local/cloud 캐시는 future 확장 항목이며 현재 구현 범위가 아니다.
-- `NoAds`의 실제 적용/해석은 게임 로직 영역이며, PurchaseManager는 서버 `rentals` projection에서 남은 시간(ms)을 조회하고 `noAdsExpireAtClientUtcMs`를 갱신한다.
+- Rental 만료 시각(`expiresAtClientUtcMs`) / SeasonPass 소유권은 **InventoryStorage**에서 관리한다 (PurchaseStorage 범위 아님).
+  - InventoryStorage: `Rentals` (rentalTypeId → expiresAtClientUtcMs), `SeasonPasses` (seasonPassTypeId → owned)
+  - Reward 파이프라인(`REWARD_TYPE.RENTAL` / `REWARD_TYPE.SEASON_PASS`)을 통해 설정하고, 만료 시각은 서버 데이터 Sync에서 갱신한다.
 - `RetryInterruptedPurchaseAsync()`는 "재구매"가 아니라 `PurchaseStorage.current` + 서버 상태를 바탕으로 **중단된 상태 전이를 재개**하는 경로다.
 - 정본 문서: `33-purchase-storage`
 
@@ -378,12 +378,12 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
   - (예시) `rentals: map<string, number>` // `internalProductId -> expiresAtServerUtcMs`
   - (예시) `currencyBalances: map<string, number>`
 
-### SeasonPass / Rental Restore Projection (design fixed, partial implementation)
+### SeasonPass / Rental Restore Projection (design fixed, server-side)
 
 - `SeasonPass` 복원은 서버 entitlement/projection의 `ownedSeasonPasses`(internalProductId 목록) 기준으로 수행한다.
 - `Rental` 복원은 서버 entitlement/projection의 `rentals` map(`internalProductId -> expiresAtServerUtcMs`) 기준으로 수행한다.
 - `RestoreAsync()`(스토어 복원)는 manual/fallback 경로이며, 위 projection 기반 복원과 동일 개념이 아니다.
-- `PurchaseManager.GetRentalRemainingMsAsync(internalProductId)`는 서버에 `rentals`를 질의하고 남은 시간을 반환하며, 성공 시 `PurchaseStorage.noAdsExpireAtClientUtcMs`를 클라이언트 시간 기준으로 갱신한다. (구현됨)
+- Rental/SeasonPass 조회: `SyncEntitlementsAsync`로 서버 entitlements를 InventoryStorage에 동기화, `GetRentalRemainingMsAsync`로 남은 시간(ms) 조회 가능.
 - `Rental` 재구매 만료일 계산 정책(서버):
   - `newExpiry = max(existingExpiry, serverNow) + 30일` (연장 방식)
 
@@ -464,7 +464,8 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 
 ### 클라이언트 적용 규칙
 
-- 앱 시작/포그라운드/로그인 시 `getEntitlements`로 NoAds 상태를 갱신한다.
+- NoAds 상태의 정본은 서버 entitlements이다. 클라이언트는 적절한 시점(앱 시작/포그라운드/로그인 등)에 서버 상태를 동기화한다.
+- 동기화 방식(Callable 호출 등)은 프로젝트 요구에 따라 구현한다. 현재 PurchaseManager에는 동기화 전용 API가 포함되지 않는다.
 - NoAds는 광고 표시 로직의 단일 입력값으로 사용한다(여러 군데 중복 판정 금지).
 
 

@@ -17,6 +17,7 @@ namespace Devian
     public sealed class PurchaseManager : CompoSingleton<PurchaseManager>
     {
         const string Tag = "PurchaseManager";
+        const int MaxVerifyRecoveryRetries = 3;
 
         string _functionsRegion = "asia-northeast3";
 
@@ -54,10 +55,32 @@ namespace Devian
             public string BuildVerifyPayload(string receipt) => receipt;
         }
 
-        string ResolveRewardGroupId(string internalProductId)
+        static string ResolveRewardGroupId(string internalProductId)
         {
             var product = TB_PRODUCT.Get(internalProductId);
             return product != null ? product.RewardGroupId ?? string.Empty : string.Empty;
+        }
+
+        static RewardData[] ResolveRewardDatas(string rewardGroupId)
+        {
+            if (string.IsNullOrEmpty(rewardGroupId))
+                return Array.Empty<RewardData>();
+
+            var rows = TB_REWARD.GetByGroup(rewardGroupId);
+            if (rows == null || rows.Count == 0)
+                return Array.Empty<RewardData>();
+
+            var list = new List<RewardData>(rows.Count);
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (row == null || string.IsNullOrEmpty(row.Id) || row.Amount <= 0)
+                    continue;
+
+                list.Add(new RewardData(row.Type, row.Id, row.Amount));
+            }
+
+            return list.Count == 0 ? Array.Empty<RewardData>() : list.ToArray();
         }
 
         string ResolveStoreProductId(string internalProductId)
@@ -75,41 +98,128 @@ namespace Devian
 #endif
         }
 
-        public IReadOnlyList<PurchaseStorage.RefundSupportLogEntry> GetRefundSupportLogs()
+        public async Task<CommonResult<RefundResult>> RefundAsync(CancellationToken ct = default)
         {
-            var purchaseStorage = getPurchaseStorageOrNull();
-            return purchaseStorage != null
-                ? purchaseStorage.GetRefundSupportLogs()
-                : Array.Empty<PurchaseStorage.RefundSupportLogEntry>();
-        }
+#if !UNITY_PURCHASING
+            return CommonResult<RefundResult>.Failure(
+                CommonErrorType.IAP_NOT_SUPPORTED,
+                "Unity Purchasing not available.");
+#else
+            int pageCount = 0;
+            int handledCount = 0;
+            int inventoryAppliedCount = 0;
+            int noOpCount = 0;
+            int skippedCount = 0;
+            int ackFailedCount = 0;
 
-        public bool TryGetRefundSupportLog(string purchaseId, out PurchaseStorage.RefundSupportLogEntry entry)
-        {
-            var purchaseStorage = getPurchaseStorageOrNull();
-            if (purchaseStorage == null)
+            // Always start from the newest (cursor=empty) on each RefundAsync call.
+            // desc ordering returns newest-first.
+            // Server-side clientRefundApplied filter prevents duplicate processing.
+            string pageCursor = string.Empty;
+
+            while (true)
             {
-                entry = null;
-                return false;
+                ct.ThrowIfCancellationRequested();
+
+                var prevCursor = pageCursor;
+                var pageResult = await syncRefundsPageAsync(prevCursor, 50, ct);
+                if (pageResult.IsFailure)
+                    return CommonResult<RefundResult>.Failure(pageResult.Error!);
+
+                var page = pageResult.Value!;
+                pageCount++;
+
+                for (var i = 0; i < page.Items.Length; i++)
+                {
+                    var item = page.Items[i];
+
+                    // 보상 없는 환불 → 서버에 ACK만 보내고 넘어간다
+                    if (item.Rewards == null || item.Rewards.Length == 0)
+                    {
+                        handledCount++;
+                        noOpCount++;
+                        if (!string.IsNullOrEmpty(item.PurchaseId))
+                        {
+                            var noOpAck = await ackRefundAppliedAsync(item.PurchaseId, ct);
+                            if (noOpAck.IsFailure)
+                            {
+                                ackFailedCount++;
+                                Debug.LogWarning($"[{Tag}] Refund ACK failed for no-op item. purchaseId={item.PurchaseId}: {noOpAck.Error?.Message}");
+                            }
+                        }
+                        continue;
+                    }
+
+                    // RevokeRewards 실행 — 실패해도 다음 아이템으로 계속 진행
+                    CommonResult apply;
+                    try
+                    {
+                        apply = InventoryManager.Instance.RevokeRewardsPartial(item.Rewards);
+                    }
+                    catch (Exception ex)
+                    {
+                        skippedCount++;
+                        Debug.LogWarning(
+                            $"[{Tag}] Refund RevokeRewards exception (skipped). " +
+                            $"purchaseId={item.PurchaseId} product={item.InternalProductId}: {ex.Message}");
+                        continue;
+                    }
+
+                    if (apply.IsFailure)
+                    {
+                        skippedCount++;
+                        Debug.LogWarning(
+                            $"[{Tag}] Refund RevokeRewards failed (skipped). " +
+                            $"purchaseId={item.PurchaseId} product={item.InternalProductId}: {apply.Error?.Message}");
+                        continue;
+                    }
+
+                    handledCount++;
+                    inventoryAppliedCount++;
+
+                    // 서버에 ACK — 실패해도 다음 RefundAsync 호출에서 재처리됨 (중복 RevokeRewards 가능하나 서버 ACK 미완료이므로 재시도 정당)
+                    if (!string.IsNullOrEmpty(item.PurchaseId))
+                    {
+                        var ack = await ackRefundAppliedAsync(item.PurchaseId, ct);
+                        if (ack.IsFailure)
+                        {
+                            ackFailedCount++;
+                            Debug.LogWarning($"[{Tag}] Refund ACK failed after revoke. purchaseId={item.PurchaseId}: {ack.Error?.Message}");
+                        }
+                    }
+                }
+
+                if (page.HasMore && string.IsNullOrEmpty(page.NextCursor))
+                {
+                    return CommonResult<RefundResult>.Failure(
+                        CommonErrorType.PURCHASE_REFUND_APPLY_FAILED,
+                        "Refund sync cursor is empty while hasMore=true.");
+                }
+
+                if (page.HasMore && string.Equals(prevCursor, page.NextCursor ?? string.Empty, StringComparison.Ordinal))
+                {
+                    return CommonResult<RefundResult>.Failure(
+                        CommonErrorType.PURCHASE_REFUND_APPLY_FAILED,
+                        "Refund sync cursor did not advance.");
+                }
+
+                pageCursor = page.NextCursor ?? string.Empty;
+                getPurchaseStorageOrNull()?.PruneRefundSupportLogs();
+
+                if (!page.HasMore)
+                {
+                    return CommonResult<RefundResult>.Success(
+                        new RefundResult(
+                            pageCount,
+                            handledCount,
+                            inventoryAppliedCount,
+                            noOpCount,
+                            skippedCount,
+                            ackFailedCount,
+                            pageCursor));
+                }
             }
-
-            return purchaseStorage.TryGetRefundSupportLog(purchaseId, out entry);
-        }
-
-        public bool DeleteRefundSupportLog(string purchaseId)
-        {
-            var purchaseStorage = getPurchaseStorageOrNull();
-            return purchaseStorage != null && purchaseStorage.RemoveRefundSupportLog(purchaseId);
-        }
-
-        public void ClearRefundSupportLogs()
-        {
-            getPurchaseStorageOrNull()?.ClearRefundSupportLogs();
-        }
-
-        public bool HasCachedSeasonPass(string internalProductId)
-        {
-            var purchaseStorage = getPurchaseStorageOrNull();
-            return purchaseStorage != null && purchaseStorage.IsSeasonPassOwned(internalProductId);
+#endif
         }
 
 #if UNITY_PURCHASING
@@ -152,7 +262,17 @@ namespace Devian
                 "PurchaseManager is not supported in Editor."));
 #else
             if (_initializeTask != null)
-                return _initializeTask;
+            {
+                // 이전 초기화가 실패했으면 캐시를 리셋하여 재시도를 허용한다.
+                if (_initializeTask.IsCompleted && _initializeTask.Result.IsFailure)
+                {
+                    _initializeTask = null;
+                }
+                else
+                {
+                    return _initializeTask;
+                }
+            }
 
             _initializeTask = initializeIapAsync(ct);
             return _initializeTask;
@@ -189,10 +309,13 @@ namespace Devian
                     new RetryInterruptedPurchaseResult(
                         RetryInterruptedPurchaseStatus.SkippedNoCurrent,
                         string.Empty,
+                        string.Empty,
                         null,
                         string.Empty,
                         string.Empty,
-                        Array.Empty<RewardData>()));
+                        Array.Empty<RewardData>(),
+                        string.Empty,
+                        false));
 
             if (string.IsNullOrEmpty(current.InternalProductId))
                 return CommonResult<RetryInterruptedPurchaseResult>.Failure(
@@ -208,19 +331,37 @@ namespace Devian
 
             if (current.StoreConfirmedLocal && !string.IsNullOrEmpty(current.PurchaseId))
             {
-                var resumed = await resumeAfterStoreConfirmAsync(current.InternalProductId, currentKind, ct);
-                if (resumed.IsFailure)
-                    return CommonResult<RetryInterruptedPurchaseResult>.Failure(resumed.Error!);
+                // resumeAfterStoreConfirmAsync는 purchaseAndVerifyAsync를 거치지 않으므로
+                // _purchaseInProgress 가드를 여기서 직접 관리한다.
+                if (_purchaseInProgress)
+                    return CommonResult<RetryInterruptedPurchaseResult>.Failure(
+                        CommonErrorType.PURCHASE_PURCHASE_IN_PROGRESS,
+                        "Another purchase is already in progress.");
 
-                var finalAfterConfirm = resumed.Value!;
-                return CommonResult<RetryInterruptedPurchaseResult>.Success(
-                    new RetryInterruptedPurchaseResult(
-                        RetryInterruptedPurchaseStatus.Retried,
-                        finalAfterConfirm.InternalProductId,
-                        finalAfterConfirm.Kind,
-                        finalAfterConfirm.ResultStatus,
-                        finalAfterConfirm.RewardGroupId,
-                        finalAfterConfirm.AppliedRewards));
+                _purchaseInProgress = true;
+                try
+                {
+                    var resumed = await resumeAfterStoreConfirmAsync(current.InternalProductId, currentKind, ct);
+                    if (resumed.IsFailure)
+                        return CommonResult<RetryInterruptedPurchaseResult>.Failure(resumed.Error!);
+
+                    var finalAfterConfirm = resumed.Value!;
+                    return CommonResult<RetryInterruptedPurchaseResult>.Success(
+                        new RetryInterruptedPurchaseResult(
+                            RetryInterruptedPurchaseStatus.Retried,
+                            finalAfterConfirm.PurchaseId,
+                            finalAfterConfirm.InternalProductId,
+                            finalAfterConfirm.Kind,
+                            finalAfterConfirm.ResultStatus,
+                            finalAfterConfirm.RewardGroupId,
+                            finalAfterConfirm.AppliedRewards,
+                            finalAfterConfirm.ClientGrantStatus,
+                            finalAfterConfirm.NeedsClientGrantDelivery));
+                }
+                finally
+                {
+                    _purchaseInProgress = false;
+                }
             }
 
             var resume = await purchaseAndVerifyAsync(current.InternalProductId, currentKind, ct, isRecoveryCall: true);
@@ -231,15 +372,23 @@ namespace Devian
             return CommonResult<RetryInterruptedPurchaseResult>.Success(
                 new RetryInterruptedPurchaseResult(
                     RetryInterruptedPurchaseStatus.Retried,
+                    finalResult.PurchaseId,
                     finalResult.InternalProductId,
                     finalResult.Kind,
                     finalResult.ResultStatus,
                     finalResult.RewardGroupId,
-                    finalResult.AppliedRewards));
+                    finalResult.AppliedRewards,
+                    finalResult.ClientGrantStatus,
+                    finalResult.NeedsClientGrantDelivery));
         }
 
-        // Store restore (manual/fallback). This is not the same as domain restore for SeasonPass/Rental.
-        // Product-type restore should use server projection sync (future entitlements/restore snapshot path).
+        public Task<CommonResult> AckPurchaseClientGrantAppliedAsync(string purchaseId, CancellationToken ct = default)
+            => completePurchaseClientGrantAsync(purchaseId, "APPLIED_ACKED", ct);
+
+        public Task<CommonResult> ReportPurchaseClientGrantFailureAsync(string purchaseId, CancellationToken ct = default)
+            => completePurchaseClientGrantAsync(purchaseId, "FAILED_REPORTED", ct);
+
+        // Store restore only (manual/fallback). Domain grant/revoke handling is managed by caller-side sync.
         public async Task<CommonResult<EntitlementsSnapshot>> RestoreAsync(CancellationToken ct = default)
         {
             if (!_iapInitialized)
@@ -269,8 +418,7 @@ namespace Devian
             return await SyncEntitlementsAsync(ct);
         }
 
-        // SyncEntitlementsAsync updates PurchaseStorage local/cloud cache for purchase-domain restore state
-        // (SeasonPass ownership only). noAds is game logic state and must not be sourced from server entitlements.
+        // SyncEntitlementsAsync updates InventoryStorage for Rental expiry and SeasonPass ownership.
         // Rental remaining time is queried from server on demand via GetRentalRemainingMsAsync().
         // noAds 판단은 게임 로직이 남은 시간(ms) 기반으로 처리한다.
         public async Task<CommonResult<EntitlementsSnapshot>> SyncEntitlementsAsync(CancellationToken ct = default)
@@ -287,7 +435,7 @@ namespace Devian
         public async Task<CommonResult<long>> GetRentalRemainingMsAsync(string internalProductId, CancellationToken ct = default)
         {
             if (string.IsNullOrEmpty(internalProductId))
-                return CommonResult<long>.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, "internalProductId is required.");
+                return CommonResult<long>.Failure(CommonErrorType.COMMON_SERVER, "internalProductId is required.");
 
             var sync = await SyncEntitlementsAsync(ct);
             if (sync.IsFailure)
@@ -295,17 +443,13 @@ namespace Devian
 
             var snapshot = sync.Value!;
             if (!snapshot.Rentals.TryGetValue(internalProductId, out var expiresAtUtcMs) || expiresAtUtcMs <= 0)
-            {
-                getPurchaseStorageOrNull()?.SetNoAdsRemainingMs(0L);
                 return CommonResult<long>.Success(0L);
-            }
 
             var serverNowUtcMs = snapshot.ServerNowUtcMs > 0
                 ? snapshot.ServerNowUtcMs
                 : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             var remainingMs = expiresAtUtcMs - serverNowUtcMs;
             var clampedRemainingMs = remainingMs > 0 ? remainingMs : 0L;
-            getPurchaseStorageOrNull()?.SetNoAdsRemainingMs(clampedRemainingMs);
             return CommonResult<long>.Success(clampedRemainingMs);
         }
 
@@ -315,7 +459,7 @@ namespace Devian
             return CommonResult<RecentPurchaseItem>.Failure(
                 CommonErrorType.PURCHASE_UNSUPPORTED_PLATFORM,
                 "PurchaseManager is not supported in Editor.");
-#endif
+#else
             if (!_iapInitialized)
                 return CommonResult<RecentPurchaseItem>.Failure(
                     CommonErrorType.PURCHASE_INIT_REQUIRED,
@@ -333,6 +477,7 @@ namespace Devian
                     "No recent consumable purchase within 30 days.");
 
             return CommonResult<RecentPurchaseItem>.Success(item);
+#endif
         }
 
         public async Task<CommonResult<RentalPurchaseItem>> GetLatestRentalPurchase30dAsync(CancellationToken ct = default)
@@ -341,7 +486,7 @@ namespace Devian
             return CommonResult<RentalPurchaseItem>.Failure(
                 CommonErrorType.PURCHASE_UNSUPPORTED_PLATFORM,
                 "PurchaseManager is not supported in Editor.");
-#endif
+#else
             if (!_iapInitialized)
                 return CommonResult<RentalPurchaseItem>.Failure(
                     CommonErrorType.PURCHASE_INIT_REQUIRED,
@@ -359,6 +504,34 @@ namespace Devian
                     "No recent rental purchase within 30 days.");
 
             return CommonResult<RentalPurchaseItem>.Success(item);
+#endif
+        }
+
+        async Task<CommonResult<RefundSyncResult>> syncRefundsPageAsync(
+            string cursor = null,
+            int pageSize = 50,
+            CancellationToken ct = default)
+        {
+            if (pageSize <= 0)
+                pageSize = 50;
+            if (pageSize > 200)
+                pageSize = 200;
+
+            var data = new Dictionary<string, object>
+            {
+                ["pageSize"] = pageSize,
+            };
+            if (!string.IsNullOrEmpty(cursor))
+                data["cursor"] = cursor;
+
+            var result = await callFunctionAsync("getPurchaseAdjustments", data, ct);
+            if (result.IsFailure)
+                return CommonResult<RefundSyncResult>.Failure(result.Error!);
+
+            // Server filters out already-ACKed items (clientRefundApplied===true).
+            // Client-side dedup is no longer needed.
+            var syncResult = ParseRefundSyncResult(result.Value!);
+            return CommonResult<RefundSyncResult>.Success(syncResult);
         }
 
         // ── Firebase Callable Helper ─────────────────────────────
@@ -415,8 +588,8 @@ namespace Devian
 
             var isVerifyPurchase = functionName == "verifyPurchase";
             var isAckPurchaseClientGrant = functionName == "ackPurchaseClientGrant";
+            var isGetPurchaseAdjustments = functionName == "getPurchaseAdjustments";
             var isGetRecentPurchases = functionName == "getRecentPurchases30d";
-            var isGetEntitlements = functionName == "getEntitlements";
 
             switch (fex.ErrorCode)
             {
@@ -437,6 +610,12 @@ namespace Devian
                         return CommonResult<Dictionary<string, object>>.Failure(
                             CommonErrorType.PURCHASE_RECENT_CALL_FAILED,
                             "Invalid getRecentPurchases request arguments.");
+                    }
+                    if (isGetPurchaseAdjustments)
+                    {
+                        return CommonResult<Dictionary<string, object>>.Failure(
+                            CommonErrorType.COMMON_INVALID_ARGUMENT,
+                            "Invalid getPurchaseAdjustments request arguments.");
                     }
                     return CommonResult<Dictionary<string, object>>.Failure(
                         mapUnhandledFunctionErrorType(functionName), fex.Message);
@@ -529,6 +708,8 @@ namespace Devian
             {
                 case "getRecentPurchases30d":
                     return CommonErrorType.PURCHASE_RECENT_CALL_FAILED;
+                case "getPurchaseAdjustments":
+                    return CommonErrorType.PURCHASE_ADJUSTMENTS_CALL_FAILED;
                 case "getEntitlements":
                     return CommonErrorType.PURCHASE_ENTITLEMENTS_CALL_FAILED;
                 case "verifyPurchase":
@@ -536,6 +717,8 @@ namespace Devian
                     return CommonErrorType.PURCHASE_VERIFY_CALL_FAILED;
                 case "ackPurchaseStoreConfirm":
                     return CommonErrorType.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED;
+                case "ackRefundApplied":
+                    return CommonErrorType.PURCHASE_REFUND_APPLY_FAILED;
                 default:
                     return CommonErrorType.COMMON_SERVER;
             }
@@ -547,10 +730,14 @@ namespace Devian
             {
                 case "getRecentPurchases30d":
                     return CommonErrorType.PURCHASE_RECENT_CALL_FAILED;
+                case "getPurchaseAdjustments":
+                    return CommonErrorType.PURCHASE_ADJUSTMENTS_CALL_FAILED;
                 case "getEntitlements":
                     return CommonErrorType.PURCHASE_ENTITLEMENTS_CALL_FAILED;
                 case "ackPurchaseStoreConfirm":
                     return CommonErrorType.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED;
+                case "ackRefundApplied":
+                    return CommonErrorType.PURCHASE_REFUND_APPLY_FAILED;
                 case "ackPurchaseClientGrant":
                 default:
                     return CommonErrorType.PURCHASE_NETWORK_UNAVAILABLE;
@@ -683,7 +870,10 @@ namespace Devian
             _purchaseInProgress = true;
             try
             {
-                purchaseStorage?.BeginPurchase(internalProductId, purchaseKindString, _purchaseStore.StoreKey);
+                // Recovery call은 이전 세션의 Current 스냅샷(PurchaseId, StoreConfirmedLocal 등)을
+                // 보존해야 한다. BeginPurchase()는 이를 초기화하므로, recovery 시에는 스킵한다.
+                if (!isRecoveryCall)
+                    purchaseStorage?.BeginPurchase(internalProductId, purchaseKindString, _purchaseStore.StoreKey);
 
                 PendingOrder pendingOrder;
 
@@ -716,13 +906,22 @@ namespace Devian
                             goto PendingOrderReady;
                         }
 
-                        // 매칭 안 되는 stale pending orders를 ConfirmPurchase로 소비 처리
+                        // 동일 storeProductId의 stale pending orders만 ConfirmPurchase로 소비 처리
                         // (서버 검증 실패로 stuck된 취소/만료 구매를 정리하여 재구매를 가능하게 함)
+                        // 다른 상품의 pending order는 건드리지 않는다.
                         if (preFetch.Value?.PendingOrders != null && preFetch.Value.PendingOrders.Count > 0)
                         {
-                            Debug.Log($"[{Tag}] Pre-fetch: consuming {preFetch.Value.PendingOrders.Count} stale pending order(s) to unblock store.");
+                            Debug.Log($"[{Tag}] Pre-fetch: checking {preFetch.Value.PendingOrders.Count} pending order(s) for stale cleanup. storeProductId={storeProductId}");
                             foreach (var stale in preFetch.Value.PendingOrders)
                             {
+                                var staleStoreProductId = TryExtractStoreProductIdFromReceipt(stale.Info.Receipt);
+                                if (string.IsNullOrEmpty(staleStoreProductId) ||
+                                    !string.Equals(staleStoreProductId, storeProductId, StringComparison.Ordinal))
+                                {
+                                    Debug.Log($"[{Tag}] Skipping stale pending order (different product). staleProductId={staleStoreProductId}, expected={storeProductId}");
+                                    continue;
+                                }
+
                                 try
                                 {
                                     Debug.Log($"[{Tag}] Consuming stale pending order. transactionID={stale.Info.TransactionID}");
@@ -920,122 +1119,35 @@ namespace Devian
                     }
 
                     var rewardGroupId = ResolveRewardGroupId(internalProductId);
-                    var appliedRewards = Array.Empty<RewardData>();
-                    var shouldApplyLocalReward = status == "GRANTED";
-                    if (!shouldApplyLocalReward && status == "ALREADY_GRANTED" &&
+                    var rewards = Array.Empty<RewardData>();
+                    var needsClientGrantDelivery = status == "GRANTED";
+                    if (!needsClientGrantDelivery && status == "ALREADY_GRANTED" &&
                         (clientGrantStatus == "PENDING" || clientGrantStatus == "FAILED_REPORTED"))
                     {
-                        shouldApplyLocalReward = !(purchaseStorage?.CurrentClientGrantApplied ?? false);
+                        needsClientGrantDelivery = !(purchaseStorage?.CurrentClientGrantApplied ?? false);
                     }
 
-                    if (shouldApplyLocalReward)
+                    if (needsClientGrantDelivery)
                     {
-                        if (!string.IsNullOrEmpty(rewardGroupId))
-                        {
-                            CommonResult<RewardManager.RewardApplyResult> localGrant;
-                            try
-                            {
-                                localGrant = Singleton.Get<RewardManager>().ApplyRewardGroup(rewardGroupId);
-                            }
-                            catch (Exception ex)
-                            {
-                                if (!string.IsNullOrEmpty(response.PurchaseId))
-                                {
-                                    var report = await reportPurchaseClientGrantResultAsync(response.PurchaseId, "FAILED_REPORTED", finalizeCt);
-                                    if (report.IsSuccess)
-                                    {
-                                        clientGrantStatus = "FAILED_REPORTED";
-                                        purchaseStorage?.UpsertRefundSupportLog(
-                                            response.PurchaseId,
-                                            internalProductId,
-                                            purchaseKindString,
-                                            _purchaseStore.StoreKey,
-                                            response.VerifyStatus,
-                                            clientGrantStatus,
-                                            storeConfirmStatus);
-                                        clearCurrentOnExit = false;
-                                    }
-                                    else
-                                    {
-                                        clearCurrentOnExit = false;
-                                    }
-                                }
-                                else
-                                {
-                                    clearCurrentOnExit = false;
-                                }
-                                return CommonResult<PurchaseFinalResult>.Failure(
-                                    CommonErrorType.PURCHASE_STORE_FAILED,
-                                    $"Local reward apply threw exception: {ex.Message}");
-                            }
-
-                            if (localGrant.IsFailure)
-                            {
-                                if (!string.IsNullOrEmpty(response.PurchaseId))
-                                {
-                                    var report = await reportPurchaseClientGrantResultAsync(response.PurchaseId, "FAILED_REPORTED", finalizeCt);
-                                    if (report.IsSuccess)
-                                    {
-                                        clientGrantStatus = "FAILED_REPORTED";
-                                        purchaseStorage?.UpsertRefundSupportLog(
-                                            response.PurchaseId,
-                                            internalProductId,
-                                            purchaseKindString,
-                                            _purchaseStore.StoreKey,
-                                            response.VerifyStatus,
-                                            clientGrantStatus,
-                                            storeConfirmStatus);
-                                        clearCurrentOnExit = false;
-                                    }
-                                    else
-                                    {
-                                        clearCurrentOnExit = false;
-                                    }
-                                }
-                                else
-                                {
-                                    clearCurrentOnExit = false;
-                                }
-                                return CommonResult<PurchaseFinalResult>.Failure(localGrant.Error!);
-                            }
-
-                            var rewardApply = localGrant.Value!;
-                            rewardGroupId = rewardApply.RewardGroupId;
-                            appliedRewards = rewardApply.AppliedRewards ?? Array.Empty<RewardData>();
-                        }
-
-                        purchaseStorage?.MarkClientGrantApplied();
+                        rewards = ResolveRewardDatas(rewardGroupId);
+                        clearCurrentOnExit = false; // caller must ack/report client grant result
+                    }
+                    else
+                    {
+                        purchaseStorage?.ClearCurrent();
+                        clearCurrentOnExit = false;
                     }
 
-                    var needClientGrantReport =
-                        (purchaseStorage?.CurrentClientGrantApplied ?? false) &&
-                        !(purchaseStorage?.CurrentClientGrantReported ?? false) &&
-                        clientGrantStatus != "APPLIED_ACKED";
-
-                    if (needClientGrantReport && !string.IsNullOrEmpty(response.PurchaseId) && !(purchaseStorage?.CurrentClientGrantReported ?? false))
-                    {
-                        var report = await reportPurchaseClientGrantResultAsync(response.PurchaseId, "APPLIED_ACKED", finalizeCt);
-                        if (report.IsFailure)
-                        {
-                            clearCurrentOnExit = false;
-                            return CommonResult<PurchaseFinalResult>.Failure(report.Error!);
-                        }
-                        purchaseStorage?.MarkClientGrantReported();
-                        clientGrantStatus = "APPLIED_ACKED";
-                        purchaseStorage?.UpsertRefundSupportLog(
+                    return CommonResult<PurchaseFinalResult>.Success(
+                        new PurchaseFinalResult(
                             response.PurchaseId,
                             internalProductId,
-                            purchaseKindString,
-                            _purchaseStore.StoreKey,
-                            response.VerifyStatus,
+                            kind,
+                            status,
+                            rewardGroupId,
+                            rewards,
                             clientGrantStatus,
-                            storeConfirmStatus);
-                    }
-
-                    purchaseStorage?.ClearCurrent();
-                    clearCurrentOnExit = false;
-                    return CommonResult<PurchaseFinalResult>.Success(
-                        new PurchaseFinalResult(internalProductId, kind, status, rewardGroupId, appliedRewards));
+                            needsClientGrantDelivery));
                 }
 
                 var rejectReason = response.RejectReason;
@@ -1064,15 +1176,42 @@ namespace Devian
                         $"{status}:{rejectReason} (cancelled purchase consumed, retry possible)");
                 }
 
-                var keepCurrentForRecovery =
+                // 재시도 대상: 스토어 API 일시적 오류(네트워크/타임아웃)만 해당.
+                // STORE_VERIFY_MISSING_PURCHASE_TIME, STORE_VERIFY_PARSE_ERROR_*는 동일 영수증으로
+                // 재시도해도 결과가 동일하므로 즉시 소비+클리어한다.
+                var isRecoverableRejection =
                     status == "PENDING" ||
-                    (status == "REJECTED" && (
-                        rejectReason == "STORE_VERIFY_ERROR" ||
-                        rejectReason == "STORE_VERIFY_MISSING_PURCHASE_TIME" ||
-                        (!string.IsNullOrEmpty(rejectReason) && rejectReason.StartsWith("STORE_VERIFY_PARSE_ERROR", StringComparison.Ordinal))
-                    ));
+                    (status == "REJECTED" && rejectReason == "STORE_VERIFY_ERROR");
+
+                var retryCount = purchaseStorage?.Current.VerifyRetryCount ?? 0;
+                var keepCurrentForRecovery = isRecoverableRejection && retryCount < MaxVerifyRecoveryRetries;
+
+                if (isRecoverableRejection)
+                    purchaseStorage?.IncrementVerifyRetryCount();
+
+                if (isRecoverableRejection && !keepCurrentForRecovery)
+                {
+                    Debug.LogWarning($"[{Tag}] Verify recovery retry limit exceeded ({MaxVerifyRecoveryRetries}). " +
+                        $"Consuming pending order and clearing current. rejectReason={rejectReason}");
+                }
+
                 if (keepCurrentForRecovery)
                     clearCurrentOnExit = false;
+
+                // 영구 거부 또는 재시도 상한 초과 → pending order를 ConfirmPurchase로 스토어에서 제거하여
+                // Consumable/Rental의 보상 없는 소비, NonConsumable의 영구 already-owned를 방지한다.
+                if (!keepCurrentForRecovery && pendingOrder.Info != null)
+                {
+                    try
+                    {
+                        Debug.Log($"[{Tag}] Permanently rejected purchase. Consuming pending order to clear from store. storeProductId={storeProductId} reason={rejectReason}");
+                        _controller.ConfirmPurchase(pendingOrder);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogWarning($"[{Tag}] ConfirmPurchase for rejected purchase failed: {ex.Message}");
+                    }
+                }
 
                 CommonErrorType errorType;
                 if (rejectReason == "SEASON_PASS_ALREADY_OWNED")
@@ -1140,100 +1279,49 @@ namespace Devian
             }
 
             var rewardGroupId = ResolveRewardGroupId(internalProductId);
-            var appliedRewards = Array.Empty<RewardData>();
-            var shouldApplyLocalReward =
+            var rewards = Array.Empty<RewardData>();
+            var needsClientGrantDelivery =
                 !purchaseStorage.CurrentClientGrantApplied &&
                 (clientGrantStatus == "PENDING" || clientGrantStatus == "FAILED_REPORTED");
-
-            if (shouldApplyLocalReward)
+            if (needsClientGrantDelivery)
             {
-                if (!string.IsNullOrEmpty(rewardGroupId))
+                rewards = ResolveRewardDatas(rewardGroupId);
+            }
+            else
+            {
+                // 보상 적용 완료(ClientGrantApplied)이지만 서버 ACK 미완료(ClientGrantReported=false)인 경우,
+                // 서버에 APPLIED_ACKED를 보고하여 clientGrantStatus를 확정한다.
+                if (purchaseStorage.CurrentClientGrantApplied && !purchaseStorage.CurrentClientGrantReported)
                 {
-                    CommonResult<RewardManager.RewardApplyResult> localGrant;
-                    try
+                    var ackResult = await reportPurchaseClientGrantResultAsync(current.PurchaseId, "APPLIED_ACKED", ct);
+                    if (ackResult.IsSuccess)
                     {
-                        localGrant = Singleton.Get<RewardManager>().ApplyRewardGroup(rewardGroupId);
+                        purchaseStorage.MarkClientGrantReported();
+                        clientGrantStatus = "APPLIED_ACKED";
+                        purchaseStorage.UpsertRefundSupportLog(
+                            current.PurchaseId,
+                            internalProductId,
+                            purchaseKindString,
+                            current.StoreKey,
+                            verifyStatus,
+                            clientGrantStatus,
+                            storeConfirmStatus);
                     }
-                    catch (Exception ex)
-                    {
-                        if (!string.IsNullOrEmpty(current.PurchaseId))
-                        {
-                            var report = await reportPurchaseClientGrantResultAsync(current.PurchaseId, "FAILED_REPORTED", ct);
-                            if (report.IsSuccess)
-                            {
-                                clientGrantStatus = "FAILED_REPORTED";
-                                purchaseStorage.UpsertRefundSupportLog(
-                                    current.PurchaseId,
-                                    internalProductId,
-                                    purchaseKindString,
-                                    current.StoreKey,
-                                    verifyStatus,
-                                    clientGrantStatus,
-                                    storeConfirmStatus);
-                            }
-                        }
-
-                        return CommonResult<PurchaseFinalResult>.Failure(
-                            CommonErrorType.PURCHASE_STORE_FAILED,
-                            $"Local reward apply threw exception: {ex.Message}");
-                    }
-
-                    if (localGrant.IsFailure)
-                    {
-                        if (!string.IsNullOrEmpty(current.PurchaseId))
-                        {
-                            var report = await reportPurchaseClientGrantResultAsync(current.PurchaseId, "FAILED_REPORTED", ct);
-                            if (report.IsSuccess)
-                            {
-                                clientGrantStatus = "FAILED_REPORTED";
-                                purchaseStorage.UpsertRefundSupportLog(
-                                    current.PurchaseId,
-                                    internalProductId,
-                                    purchaseKindString,
-                                    current.StoreKey,
-                                    verifyStatus,
-                                    clientGrantStatus,
-                                    storeConfirmStatus);
-                            }
-                        }
-
-                        return CommonResult<PurchaseFinalResult>.Failure(localGrant.Error!);
-                    }
-
-                    var rewardApply = localGrant.Value!;
-                    rewardGroupId = rewardApply.RewardGroupId;
-                    appliedRewards = rewardApply.AppliedRewards ?? Array.Empty<RewardData>();
                 }
 
-                purchaseStorage.MarkClientGrantApplied();
+                purchaseStorage.ClearCurrent();
             }
 
-            var needClientGrantReport =
-                purchaseStorage.CurrentClientGrantApplied &&
-                !purchaseStorage.CurrentClientGrantReported &&
-                clientGrantStatus != "APPLIED_ACKED";
-
-            if (needClientGrantReport)
-            {
-                var report = await reportPurchaseClientGrantResultAsync(current.PurchaseId, "APPLIED_ACKED", ct);
-                if (report.IsFailure)
-                    return CommonResult<PurchaseFinalResult>.Failure(report.Error!);
-
-                purchaseStorage.MarkClientGrantReported();
-                clientGrantStatus = "APPLIED_ACKED";
-                purchaseStorage.UpsertRefundSupportLog(
+            return CommonResult<PurchaseFinalResult>.Success(
+                new PurchaseFinalResult(
                     current.PurchaseId,
                     internalProductId,
-                    purchaseKindString,
-                    current.StoreKey,
-                    verifyStatus,
+                    kind,
+                    "ALREADY_GRANTED",
+                    rewardGroupId,
+                    rewards,
                     clientGrantStatus,
-                    storeConfirmStatus);
-            }
-
-            purchaseStorage.ClearCurrent();
-            return CommonResult<PurchaseFinalResult>.Success(
-                new PurchaseFinalResult(internalProductId, kind, "ALREADY_GRANTED", rewardGroupId, appliedRewards));
+                    needsClientGrantDelivery));
         }
 
         async Task<CommonResult<VerifyPurchaseResponse>> verifyPurchaseAsync(
@@ -1275,6 +1363,75 @@ namespace Devian
                 new VerifyPurchaseResponse(resultStatus, rejectReason, purchaseId, verifyStatus, clientGrantStatus, storeConfirmStatus, snapshot));
         }
 
+        async Task<CommonResult> completePurchaseClientGrantAsync(string purchaseId, string clientGrantStatus, CancellationToken ct)
+        {
+            if (string.IsNullOrEmpty(purchaseId))
+            {
+                return CommonResult.Failure(
+                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    "purchaseId is required.");
+            }
+
+            var report = await reportPurchaseClientGrantResultAsync(purchaseId, clientGrantStatus, ct);
+            if (report.IsFailure)
+                return report;
+
+            var purchaseStorage = getPurchaseStorageOrNull();
+            if (purchaseStorage == null)
+                return CommonResult.Ok();
+
+            var current = purchaseStorage.Current;
+            var isCurrent =
+                current.IsPurchaseInProgress &&
+                string.Equals(current.PurchaseId, purchaseId, StringComparison.Ordinal);
+            var isAppliedAcked = clientGrantStatus == "APPLIED_ACKED";
+
+            if (isCurrent && isAppliedAcked)
+            {
+                purchaseStorage.MarkClientGrantApplied();
+                purchaseStorage.MarkClientGrantReported();
+            }
+
+            var internalProductId = string.Empty;
+            var kind = string.Empty;
+            var storeKey = string.Empty;
+            var verifyStatus = string.Empty;
+            var storeConfirmStatus = string.Empty;
+
+            if (purchaseStorage.TryGetRefundSupportLog(purchaseId, out var log))
+            {
+                internalProductId = log.InternalProductId;
+                kind = log.Kind;
+                storeKey = log.StoreKey;
+                verifyStatus = log.VerifyStatus;
+                storeConfirmStatus = log.StoreConfirmStatus;
+            }
+            else if (isCurrent)
+            {
+                internalProductId = current.InternalProductId;
+                kind = current.Kind;
+                storeKey = current.StoreKey;
+                verifyStatus = current.VerifyStatus;
+                storeConfirmStatus = current.StoreConfirmedLocal ? "CONFIRMED" : "PENDING";
+            }
+
+            purchaseStorage.UpsertRefundSupportLog(
+                purchaseId,
+                internalProductId,
+                kind,
+                storeKey,
+                string.IsNullOrEmpty(verifyStatus) ? "GRANTED" : verifyStatus,
+                clientGrantStatus,
+                string.IsNullOrEmpty(storeConfirmStatus) ? "CONFIRMED" : storeConfirmStatus);
+
+            // APPLIED_ACKED: grant 성공 완료 → current 클리어
+            // FAILED_REPORTED: grant 최종 실패 → current 클리어하여 재구매 차단 방지
+            if (isCurrent)
+                purchaseStorage.ClearCurrent();
+
+            return CommonResult.Ok();
+        }
+
         async Task<CommonResult> reportPurchaseClientGrantResultAsync(string purchaseId, string clientGrantStatus, CancellationToken ct)
         {
             var data = new Dictionary<string, object>
@@ -1302,6 +1459,17 @@ namespace Devian
                 return CommonResult.Failure(result.Error!);
 
             return CommonResult.Ok();
+        }
+
+        async Task<CommonResult> ackRefundAppliedAsync(string purchaseId, CancellationToken ct)
+        {
+            var data = new Dictionary<string, object>
+            {
+                ["purchaseId"] = purchaseId,
+            };
+
+            var result = await callFunctionAsync("ackRefundApplied", data, ct);
+            return result.IsFailure ? CommonResult.Failure(result.Error!) : CommonResult.Ok();
         }
 
         // ── Store Fetch Helpers ────────────────────────────────────
@@ -1448,16 +1616,17 @@ namespace Devian
         static readonly Task<CommonResult<PurchaseFinalResult>> _notSupported =
             Task.FromResult(CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
-        static readonly Task<CommonResult<EntitlementsSnapshot>> _notSupportedSnapshot =
-            Task.FromResult(CommonResult<EntitlementsSnapshot>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
-
         static readonly Task<CommonResult<RecentPurchaseItem>> _notSupportedRecent =
             Task.FromResult(CommonResult<RecentPurchaseItem>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
         static readonly Task<CommonResult<RentalPurchaseItem>> _notSupportedRental =
             Task.FromResult(CommonResult<RentalPurchaseItem>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+        static readonly Task<CommonResult<EntitlementsSnapshot>> _notSupportedSnapshot =
+            Task.FromResult(CommonResult<EntitlementsSnapshot>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
         static readonly Task<CommonResult<long>> _notSupportedLong =
             Task.FromResult(CommonResult<long>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+        static readonly Task<CommonResult<RefundSyncResult>> _notSupportedRefundSync =
+            Task.FromResult(CommonResult<RefundSyncResult>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
         public Task<CommonResult> InitializeAsync(CancellationToken ct = default) => _notSupportedInit;
         public Task<CommonResult<PurchaseFinalResult>> PurchaseAsync(string internalProductId, CancellationToken ct = default) => _notSupported;
@@ -1466,11 +1635,15 @@ namespace Devian
 
         public Task<CommonResult<RetryInterruptedPurchaseResult>> RetryInterruptedPurchaseAsync(CancellationToken ct = default)
             => _notSupportedRetryInterrupted;
+        public Task<CommonResult> AckPurchaseClientGrantAppliedAsync(string purchaseId, CancellationToken ct = default) => _notSupportedInit;
+        public Task<CommonResult> ReportPurchaseClientGrantFailureAsync(string purchaseId, CancellationToken ct = default) => _notSupportedInit;
         public Task<CommonResult<EntitlementsSnapshot>> RestoreAsync(CancellationToken ct = default) => _notSupportedSnapshot;
         public Task<CommonResult<EntitlementsSnapshot>> SyncEntitlementsAsync(CancellationToken ct = default) => _notSupportedSnapshot;
         public Task<CommonResult<long>> GetRentalRemainingMsAsync(string internalProductId, CancellationToken ct = default) => _notSupportedLong;
         public Task<CommonResult<RecentPurchaseItem>> GetLatestConsumablePurchase30dAsync(CancellationToken ct = default) => _notSupportedRecent;
         public Task<CommonResult<RentalPurchaseItem>> GetLatestRentalPurchase30dAsync(CancellationToken ct = default) => _notSupportedRental;
+        async Task<CommonResult<RefundSyncResult>> syncRefundsPageAsync(string cursor = null, int pageSize = 50, CancellationToken ct = default)
+            => await _notSupportedRefundSync;
 #endif
 
         // ── Helpers ───────────────────────────────────────────────
@@ -1508,11 +1681,40 @@ namespace Devian
 
         static void cacheEntitlementsSnapshot(EntitlementsSnapshot snapshot)
         {
-            var purchaseStorage = getPurchaseStorageOrNull();
-            if (purchaseStorage == null)
+            var inventory = getInventoryStorageOrNull();
+            if (inventory == null)
                 return;
 
-            purchaseStorage.ReplaceSeasonPassOwnership(snapshot.OwnedSeasonPasses);
+            // serverNowUtcMs 기반으로 expiresAtServerUtcMs → expiresAtClientUtcMs 변환
+            var serverNow = snapshot.ServerNowUtcMs > 0
+                ? snapshot.ServerNowUtcMs
+                : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var clientNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var clockDelta = clientNow - serverNow;
+
+            foreach (var kv in snapshot.Rentals)
+            {
+                var expiresAtClientUtcMs = kv.Value + clockDelta;
+                inventory.SetRental(kv.Key, expiresAtClientUtcMs);
+            }
+
+            foreach (var id in snapshot.OwnedSeasonPasses)
+            {
+                inventory.SetSeasonPass(id, true);
+            }
+        }
+
+        static InventoryStorage getInventoryStorageOrNull()
+        {
+            try
+            {
+                var inventoryManager = InventoryManager.Instance;
+                return inventoryManager?.Storage;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         static PurchaseKind ProductKindToPurchaseKind(ProductKind kind)
@@ -1742,8 +1944,70 @@ namespace Devian
             };
         }
 
+        static RefundSyncResult ParseRefundSyncResult(Dictionary<string, object> root)
+        {
+            var items = new List<PurchaseAdjustmentResult>();
+            if (root.TryGetValue("items", out var itemsObj) && itemsObj is IList<object> itemList)
+            {
+                for (var i = 0; i < itemList.Count; i++)
+                {
+                    if (!(itemList[i] is IDictionary<string, object> item))
+                        continue;
+
+                    var purchaseId = getString(item, "purchaseId");
+                    var internalProductId = getString(item, "internalProductId");
+                    var resultStatus = getString(item, "resultStatus");
+                    var reason = getString(item, "reason");
+                    var updatedAtUtcMs = getLong(item, "updatedAtUtcMs");
+
+                    if (string.IsNullOrEmpty(resultStatus))
+                        resultStatus = getString(item, "status");
+                    if (updatedAtUtcMs <= 0)
+                        updatedAtUtcMs = getLong(item, "updatedAt");
+                    if (updatedAtUtcMs <= 0)
+                    {
+                        // 개별 아이템 파싱 실패 → skip (전체 페이지를 실패시키지 않음)
+                        Debug.LogWarning($"[{Tag}] Skipping refund adjustment with invalid updatedAt. purchaseId={purchaseId}");
+                        continue;
+                    }
+
+                    var rewardGroupId = ResolveRewardGroupId(internalProductId);
+                    var rewards = ResolveRewardDatas(rewardGroupId);
+
+                    PurchaseKind? kind = null;
+                    if (TryParseStoredPurchaseKind(getString(item, "kind"), out var parsedKind))
+                        kind = parsedKind;
+
+                    items.Add(new PurchaseAdjustmentResult(
+                        purchaseId,
+                        internalProductId,
+                        kind,
+                        resultStatus,
+                        rewardGroupId,
+                        rewards,
+                        reason,
+                        updatedAtUtcMs));
+                }
+            }
+
+            var nextCursor = getString(root, "nextCursor");
+            var hasMore = getBool(root, "hasMore");
+            return new RefundSyncResult(items.ToArray(), nextCursor, hasMore);
+        }
+
         static string getString(IDictionary<string, object> m, string key)
             => (m.TryGetValue(key, out var v) && v != null) ? v.ToString() : "";
+
+        static bool getBool(IDictionary<string, object> m, string key)
+        {
+            if (!m.TryGetValue(key, out var v) || v == null) return false;
+            if (v is bool b) return b;
+            if (v is int i) return i != 0;
+            if (v is long l) return l != 0;
+            if (v is double d) return Math.Abs(d) > double.Epsilon;
+            if (bool.TryParse(v.ToString(), out var parsed)) return parsed;
+            return false;
+        }
 
         static long getLong(IDictionary<string, object> m, string key)
         {
@@ -1828,6 +2092,7 @@ namespace Devian
                 Rentals = rentals;
                 ServerNowUtcMs = serverNowUtcMs;
             }
+
             public IReadOnlyList<string> OwnedSeasonPasses { get; }
             public IReadOnlyDictionary<string, long> CurrencyBalances { get; }
             public IReadOnlyDictionary<string, long> Rentals { get; }
@@ -1842,19 +2107,39 @@ namespace Devian
                 string resultStatus,
                 string rewardGroupId,
                 RewardData[] appliedRewards)
+                : this(string.Empty, internalProductId, kind, resultStatus, rewardGroupId, appliedRewards, string.Empty, false)
             {
+            }
+
+            public PurchaseFinalResult(
+                string purchaseId,
+                string internalProductId,
+                PurchaseKind kind,
+                string resultStatus,
+                string rewardGroupId,
+                RewardData[] appliedRewards,
+                string clientGrantStatus,
+                bool needsClientGrantDelivery)
+            {
+                PurchaseId = purchaseId ?? string.Empty;
                 InternalProductId = internalProductId;
                 Kind = kind;
                 ResultStatus = resultStatus;
                 RewardGroupId = rewardGroupId ?? string.Empty;
                 AppliedRewards = appliedRewards ?? Array.Empty<RewardData>();
+                ClientGrantStatus = clientGrantStatus ?? string.Empty;
+                NeedsClientGrantDelivery = needsClientGrantDelivery;
             }
 
+            public string PurchaseId { get; }
             public string InternalProductId { get; }
             public PurchaseKind Kind { get; }
             public string ResultStatus { get; }
             public string RewardGroupId { get; }
             public RewardData[] AppliedRewards { get; }
+            public string ClientGrantStatus { get; }
+            public bool NeedsClientGrantDelivery { get; }
+            public RewardData[] Rewards => AppliedRewards;
         }
 
         public readonly struct RetryInterruptedPurchaseResult
@@ -1866,21 +2151,117 @@ namespace Devian
                 string resultStatus,
                 string rewardGroupId,
                 RewardData[] appliedRewards)
+                : this(status, string.Empty, internalProductId, kind, resultStatus, rewardGroupId, appliedRewards, string.Empty, false)
+            {
+            }
+
+            public RetryInterruptedPurchaseResult(
+                RetryInterruptedPurchaseStatus status,
+                string purchaseId,
+                string internalProductId,
+                PurchaseKind? kind,
+                string resultStatus,
+                string rewardGroupId,
+                RewardData[] appliedRewards,
+                string clientGrantStatus,
+                bool needsClientGrantDelivery)
             {
                 Status = status;
+                PurchaseId = purchaseId ?? string.Empty;
                 InternalProductId = internalProductId ?? string.Empty;
                 Kind = kind;
                 ResultStatus = resultStatus ?? string.Empty;
                 RewardGroupId = rewardGroupId ?? string.Empty;
                 AppliedRewards = appliedRewards ?? Array.Empty<RewardData>();
+                ClientGrantStatus = clientGrantStatus ?? string.Empty;
+                NeedsClientGrantDelivery = needsClientGrantDelivery;
             }
 
             public RetryInterruptedPurchaseStatus Status { get; }
+            public string PurchaseId { get; }
             public string InternalProductId { get; }
             public PurchaseKind? Kind { get; }
             public string ResultStatus { get; }
             public string RewardGroupId { get; }
             public RewardData[] AppliedRewards { get; }
+            public string ClientGrantStatus { get; }
+            public bool NeedsClientGrantDelivery { get; }
+            public RewardData[] Rewards => AppliedRewards;
+        }
+
+        readonly struct PurchaseAdjustmentResult
+        {
+            public PurchaseAdjustmentResult(
+                string purchaseId,
+                string internalProductId,
+                PurchaseKind? kind,
+                string resultStatus,
+                string rewardGroupId,
+                RewardData[] rewards,
+                string reason,
+                long updatedAtUtcMs)
+            {
+                PurchaseId = purchaseId ?? string.Empty;
+                InternalProductId = internalProductId ?? string.Empty;
+                Kind = kind;
+                ResultStatus = resultStatus ?? string.Empty;
+                RewardGroupId = rewardGroupId ?? string.Empty;
+                Rewards = rewards ?? Array.Empty<RewardData>();
+                Reason = reason ?? string.Empty;
+                UpdatedAtUtcMs = updatedAtUtcMs;
+            }
+
+            public string PurchaseId { get; }
+            public string InternalProductId { get; }
+            public PurchaseKind? Kind { get; }
+            public string ResultStatus { get; }
+            public string RewardGroupId { get; }
+            public RewardData[] Rewards { get; }
+            public string Reason { get; }
+            public long UpdatedAtUtcMs { get; }
+        }
+
+        readonly struct RefundSyncResult
+        {
+            public RefundSyncResult(PurchaseAdjustmentResult[] items, string nextCursor, bool hasMore)
+            {
+                Items = items ?? Array.Empty<PurchaseAdjustmentResult>();
+                NextCursor = nextCursor ?? string.Empty;
+                HasMore = hasMore;
+            }
+
+            public PurchaseAdjustmentResult[] Items { get; }
+            public string NextCursor { get; }
+            public bool HasMore { get; }
+        }
+
+        public readonly struct RefundResult
+        {
+            public RefundResult(
+                int pageCount,
+                int handledAdjustmentCount,
+                int inventoryAppliedAdjustmentCount,
+                int noOpAdjustmentCount,
+                int skippedAdjustmentCount,
+                int ackFailedCount,
+                string cursor)
+            {
+                PageCount = pageCount;
+                HandledAdjustmentCount = handledAdjustmentCount;
+                InventoryAppliedAdjustmentCount = inventoryAppliedAdjustmentCount;
+                NoOpAdjustmentCount = noOpAdjustmentCount;
+                SkippedAdjustmentCount = skippedAdjustmentCount;
+                AckFailedCount = ackFailedCount;
+                Cursor = cursor ?? string.Empty;
+            }
+
+            public int PageCount { get; }
+            public int HandledAdjustmentCount { get; }
+            public int InventoryAppliedAdjustmentCount { get; }
+            public int NoOpAdjustmentCount { get; }
+            public int SkippedAdjustmentCount { get; }
+            public int AckFailedCount { get; }
+            public string Cursor { get; }
         }
 
         public enum RetryInterruptedPurchaseStatus

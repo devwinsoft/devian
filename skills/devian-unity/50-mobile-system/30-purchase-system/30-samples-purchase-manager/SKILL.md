@@ -16,15 +16,16 @@ PurchaseManager는 **단일 concrete 클래스**이다.
 ---
 
 
-## Implementation Location (SSOT)
+## Implementation Location (3-path mirror)
 
+> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../../devian-unity/07-samples-creation-guide/SKILL.md), [devian-unity/03-ssot](../../../../devian-unity/03-ssot/SKILL.md) §UPM Packages Sync
 
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseStorage.cs` (상태 스냅샷)
-- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
-- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseStorage.cs`
-- Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
-- Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Purchase/PurchaseStorage.cs`
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseStorage.cs` (상태 스냅샷)
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseStorage.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Purchase/PurchaseStorage.cs`
 
 
 - asmdef:
@@ -55,27 +56,24 @@ CompoSingleton<PurchaseManager>.Instance
   - IAP 초기화 (Connect + FetchProducts). 선택적 prewarm 호출이며, Purchase/RetryInterruptedPurchase/Restore 경로에서 lazy-init로 자동 호출될 수 있음.
   - Idempotent: 여러 번 호출해도 동일 Task 반환.
   - Editor에서는 즉시 `PURCHASE_UNSUPPORTED_PLATFORM` 반환.
-- `PurchaseConsumableAsync(internalProductId, ct)`
-  - 예: 보물상자(소모성)
-- `PurchaseSubscriptionAsync(internalProductId, ct)`
-  - 예: NoAds 구독
-- `PurchaseSeasonPassAsync(internalProductId, ct)`
-  - 시즌별 1회 구매(Subscription 아님)
+- `PurchaseAsync(internalProductId, ct)` → `Task<CommonResult<PurchaseFinalResult>>`
+  - 단일 구매 진입점. `TB_PRODUCT`에서 `Kind`를 조회하여 구매 유형(Consumable/Rental/Subscription/SeasonPass)을 자동 결정
+  - 최종 지급은 서버 `verifyPurchase` 결과만 신뢰
+  - **Caller-managed client grant**: `NeedsClientGrantDelivery=true`이면 호출자가 보상을 적용한 뒤 `AckPurchaseClientGrantAppliedAsync`로 ACK
 - `RetryInterruptedPurchaseAsync(ct)` → `Task<CommonResult<RetryInterruptedPurchaseResult>>`
   - `PurchaseStorage.current`에 중단된 결제가 있으면 새 구매를 시작하지 않고 상태 전이를 재개/마무리
   - 중단 내역이 없으면 `Success(Status=SkippedNoCurrent)` (skip, 정상)
   - UI/Debug 표시는 반환 payload(`Status`, `InternalProductId`, `ResultStatus`, `AppliedRewards`)를 사용
+- `AckPurchaseClientGrantAppliedAsync(purchaseId, ct)` — 로컬 지급 성공 보고
+- `ReportPurchaseClientGrantFailureAsync(purchaseId, ct)` — 로컬 지급 실패 보고
 - `RestoreAsync(ct)` (iOS 스토어 복원, manual/fallback)
-  - 일반적인 SeasonPass/Rental 복원 정본 경로는 서버 상태 동기화(`SyncEntitlementsAsync` + 향후 restore projection)이며, `RestoreAsync()`와 개념을 분리한다.
-- `SyncEntitlementsAsync(ct)` (서버 상태 동기화)
-  - `PurchaseStorage` local/cloud 캐시 중 `seasonPassOwnership`를 갱신한다.
-- `GetRentalRemainingMsAsync(internalProductId, ct)` → `Task<CommonResult<long>>`
-  - 서버(`getEntitlements`)의 `rentals` projection을 질의하여 남은 시간(ms)을 반환
-  - 성공 시 `PurchaseStorage.noAdsExpireAtClientUtcMs`를 클라이언트 시간 기준으로 갱신한다.
-  - 게임 로직은 `PurchaseStorage.GetNoAdsExpireAtClientUtcMs()` / `PurchaseStorage.IsNoAds()`로 만기 시각/활성 여부를 판단한다.
-  - rental 정보 없음이면 `Success(0)`
+  - 일반적인 SeasonPass/Rental 복원 정본 경로는 서버 상태 동기화이며, `RestoreAsync()`와 개념을 분리한다.
 - `GetLatestConsumablePurchase30dAsync(ct)` → `Task<CommonResult<RecentPurchaseItem>>`
   - 서버에서 최근 30일 내 최신 Consumable 구매 1건 조회
+- `GetLatestRentalPurchase30dAsync(ct)` → `Task<CommonResult<RecentPurchaseItem>>`
+  - 서버에서 최근 30일 내 최신 Rental 구매 1건 조회
+- `RefundAsync(ct)` → `Task<CommonResult<RefundResult>>`
+  - 서버에서 환불/조정 내역을 조회하여 로컬 인벤토리 회수 적용
 
 
 ---
@@ -111,8 +109,6 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 - **ackPurchaseStoreConfirmAsync**: Firebase Functions Callable (`ackPurchaseStoreConfirm`) 사용 — ✅ 구현됨
   - 요청 키: `purchaseId`
   - 용도: `ConfirmPurchase` 완료 후 서버 `storeConfirmStatus=CONFIRMED` 기록
-- **SyncEntitlementsAsync**: Firebase Functions Callable (`getEntitlements`) 사용 — ✅ 구현됨
-  - `uid`는 Firebase Auth context에서 자동 전달
 - SDK: `Firebase.Functions` (Firebase Unity SDK 13.7.0)
 - asmdef: `overrideReferences: false` → Plugins의 `Firebase.Functions.dll` 자동 참조 (명시 추가 불필요)
 
@@ -124,7 +120,7 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 
 
 - Unity IAP "스토어 구매 성공 콜백"만으로 지급/NoAds 적용 금지
-- 최종 지급/상태 반영은 서버(Cloud Functions) 결과(verifyPurchase/getEntitlements)만 기준으로 한다.
+- 최종 지급/상태 반영은 서버(Cloud Functions) 결과(verifyPurchase)만 기준으로 한다.
 - 지급 여부는 서버 `verifyPurchase.resultStatus`만 기준으로 한다(스토어 콜백만으로 지급 금지).
 - `resultStatus == GRANTED`이면 `ConfirmPurchase` + `ackPurchaseStoreConfirm`를 먼저 수행한 뒤 로컬 지급/`ackPurchaseClientGrant(APPLIED_ACKED)`를 진행한다.
 - `PurchaseStorage.current`는 `Confirm + storeConfirm ACK + clientGrant report`가 종결되기 전에는 clear하지 않는다.
@@ -133,11 +129,10 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 - `rewardGroupId`가 비어 있으면 로컬 보상 지급은 스킵하고, 클라이언트 지급 완료 처리만 진행한다. (결제/재구매 동일 규칙)
 - 구매 전 인증 게이트는 AccountManager 로그인 상태 API를 사용한다. (`FirebaseAuth.CurrentUser` 직접 판정 금지)
 - 로컬/클라우드 저장용 구매 상태는 `PurchaseManager`가 직접 소유하지 않고 `GameStorageManager.Instance.Purchase`(`PurchaseStorage`)에 기록한다.
-- `PurchaseStorage`는 진행 중 결제(`current`), 환불/지원 대응용 최소 로그(`refundSupportLogs`), game logic cache(`noAdsExpireAtClientUtcMs`), entitlement cache(`seasonPassOwnership`)를 저장한다.
+- `PurchaseStorage`는 진행 중 결제(`current`), 환불/지원 대응용 최소 로그(`refundSupportLogs`), 환불 동기화 상태(`refundSync`)를 저장한다.
 - 실패 코드/메시지/최근 실패 요약/전체 이력/영수증(raw receipt)은 저장 금지.
-- 환불/지원 UI용으로 `PurchaseManager`는 환불 로그 조회/삭제 래퍼 API를 제공한다.
-  - `GetRefundSupportLogs()`, `TryGetRefundSupportLog(...)`
-  - `DeleteRefundSupportLog(purchaseId)`, `ClearRefundSupportLogs()`
+- 환불/지원 로그 조회/삭제는 `PurchaseStorage` API를 직접 사용한다.
+  - `GetRefundSupportLogs()`, `TryGetRefundSupportLog(...)`, `RemoveRefundSupportLog(purchaseId)`, `ClearRefundSupportLogs()`
 
 
 ---

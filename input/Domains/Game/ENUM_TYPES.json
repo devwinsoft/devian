@@ -18,7 +18,21 @@
         { "name": "CARD", "value": 0 },
         { "name": "CURRENCY", "value": 1 },
         { "name": "EQUIP", "value": 2 },
-        { "name": "HERO", "value": 3 }
+        { "name": "HERO", "value": 3 },
+        { "name": "RENTAL", "value": 4 },
+        { "name": "SEASON_PASS", "value": 5 }
+      ]
+    },
+    {
+      "name": "RENTAL_TYPE",
+      "values": [
+        { "name": "NO_ADS", "value": 0 }
+      ]
+    },
+    {
+      "name": "SEASON_PASS_TYPE",
+      "values": [
+        { "name": "S2026_01", "value": 0 }
       ]
     },
     {

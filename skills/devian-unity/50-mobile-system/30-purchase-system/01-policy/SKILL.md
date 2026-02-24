@@ -130,22 +130,18 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 ### 공개 메소드 규약(Policy)
 
 
-- `PurchaseConsumableAsync(internalProductId, ct)`
-  - 예: 보물상자/재화팩
-  - 최종 지급(grants/currencyDelta)은 서버 `verifyPurchase` 결과만 신뢰
-
-
-- `PurchaseSubscriptionAsync(internalProductId, ct)`
-  - 예: NoAds 구독
-  - NoAds 판정은 "현재 Active 상태(서버)" 기준 (클라 콜백만으로 영구 적용 금지)
-
-
-- `PurchaseSeasonPassAsync(internalProductId, ct)`
-  - 시즌별 1회 구매(Subscription 아님)
-
-
-- `RestoreAsync(ct)` (iOS)
-- `SyncEntitlementsAsync(ct)` / `getEntitlements`
+- `PurchaseAsync(internalProductId, ct)` → `Task<CommonResult<PurchaseFinalResult>>`
+  - 단일 구매 진입점. `TB_PRODUCT`에서 `Kind`를 조회하여 구매 유형(Consumable/Rental/Subscription/SeasonPass)을 자동 결정
+  - 최종 지급은 서버 `verifyPurchase` 결과만 신뢰
+  - **Caller-managed client grant**: `NeedsClientGrantDelivery=true`이면 호출자가 보상을 적용한 뒤 `AckPurchaseClientGrantAppliedAsync`로 ACK
+- `RetryInterruptedPurchaseAsync(ct)` → `Task<CommonResult<RetryInterruptedPurchaseResult>>`
+  - `PurchaseStorage.current`에 중단된 결제가 있으면 상태 전이를 재개/마무리
+- `AckPurchaseClientGrantAppliedAsync(purchaseId, ct)` — 로컬 지급 성공 보고
+- `ReportPurchaseClientGrantFailureAsync(purchaseId, ct)` — 로컬 지급 실패 보고
+- `RestoreAsync(ct)` (iOS 스토어 복원, manual/fallback)
+- `GetLatestConsumablePurchase30dAsync(ct)` — 최근 30일 Consumable 최신 1건 조회
+- `GetLatestRentalPurchase30dAsync(ct)` — 최근 30일 Rental 최신 1건 조회
+- `RefundAsync(ct)` — 환불 상태 동기화/처리
 
 
 ### Hard

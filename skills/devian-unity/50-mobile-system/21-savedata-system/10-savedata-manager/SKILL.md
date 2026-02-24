@@ -90,6 +90,17 @@ SaveDataManager는 Slot 설정을 `SaveSlotConfig`로 캡슐화한다. (단일 �
 
 항상 local + cloud 모두 삭제.
 
+### NeedsCloudSave
+- `bool NeedsCloudSave` — 저장하지 못한 구매 내역이 있는지 상태 조회 (read-only, 인메모리)
+- `void MarkNeedsCloudSave()` — 구매/환불 후 cloud 저장 실패 시 호출.
+- `void ClearNeedsCloudSave()` — cloud 저장 성공 시 호출.
+
+동작:
+- 인메모리 flag. 앱 재시작 시 false로 초기화.
+- Cloud→Local 데이터 수신 시 자동 리셋 (Sync "Local없음+Cloud있음", Resolve UseCloud).
+- Resolve(UseLocal) 성공 시 자동 Clear.
+- Sync/Resolve와 독립적. Conflict 판정은 deviceId 기반.
+
 ### Payload Parsing
 - `static CommonResult<T> ParsePayloadResult<T>(SaveLocalPayload payload)`
 - `static CommonResult<T> ParsePayloadResult<T>(SaveCloudPayload payload)`

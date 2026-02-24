@@ -38,7 +38,7 @@ Reward 관련 규칙의 단일 SSOT는 이 문서다.
 
 `RewardData`는 `{ type, id, amount }` 형태다.
 
-- `type: REWARD_TYPE(enum, Generated)` — `REWARD_TYPE.CARD` | `REWARD_TYPE.CURRENCY` | `REWARD_TYPE.EQUIP` | `REWARD_TYPE.HERO`
+- `type: REWARD_TYPE(enum, Generated)` — `REWARD_TYPE.CARD` | `REWARD_TYPE.CURRENCY` | `REWARD_TYPE.EQUIP` | `REWARD_TYPE.HERO` | `REWARD_TYPE.RENTAL` | `REWARD_TYPE.SEASON_PASS`
   - 입력: `input/Domains/Game/ENUM_TYPES.json` → 생성: `Devian.Domain.Game.REWARD_TYPE`
 - `id: string`
 - `amount: long` (`>= 0`만 허용)
@@ -50,6 +50,8 @@ NOTE:
 - `type=REWARD_TYPE.EQUIP`의 `id`는 `equipId(pk)`를 의미한다.
 - `type=REWARD_TYPE.CARD`의 `id`는 `cardId(pk)`를 의미한다.
 - `type=REWARD_TYPE.HERO`의 `id`는 `heroId(pk)`를 의미한다(TB_UNIT_HERO 테이블 키).
+- `type=REWARD_TYPE.RENTAL`의 `id`는 `RENTAL_TYPE` enum name 문자열이다 (예: `"NO_ADS"`). Amount=1은 "활성화" 의미.
+- `type=REWARD_TYPE.SEASON_PASS`의 `id`는 `SEASON_PASS_TYPE` enum name 문자열이다 (예: `"S2026_01"`). Amount=1은 "소유" 의미.
 - Reward/Purchase grants에는 `options`가 없다. `options`는 Inventory 내부 속성으로만 관리된다.
 
 정합:
@@ -72,7 +74,7 @@ REWARD 테이블은 정규화된 1행=1보상 구조다.
 |------|------|-----------|------|
 | `RewardNum` | int | pk | 행별 고유 PK |
 | `RewardGroupId` | string | group:true | 보상 그룹 키 (여러 행을 묶음) |
-| `Type` | enum:REWARD_TYPE | | CARD / CURRENCY / EQUIP / HERO |
+| `Type` | enum:REWARD_TYPE | | CARD / CURRENCY / EQUIP / HERO / RENTAL / SEASON_PASS |
 | `Id` | string | | 대상 ID (cardId, equipId, heroId, 또는 CurrencyType enum name) |
 | `Amount` | int | | 수량 |
 
@@ -126,10 +128,10 @@ NOTE:
 
 - `REWARD_TYPE` enum은 Generated이다 (입력: `input/Domains/Game/ENUM_TYPES.json`, 네임스페이스: `Devian.Domain.Game`).
 - `RewardData` struct만 아래 파일에 수동 정의한다 (`using Devian.Domain.Game;` 필요).
-- UPM original file:
+- UPM (정본):
   `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardData.cs`
-- UnityExample Packages mirror:
+- Packages (sync):
   `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardData.cs`
-- UnityExample Assets mirror:
-  `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Reward/RewardData.cs`
-- 정본/미러링 하드룰은 상위 정책 [devian-unity/01-policy](../../../01-policy/SKILL.md)를 따른다.
+- Assets/Samples (import):
+  `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Reward/RewardData.cs`
+- 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../07-samples-creation-guide/SKILL.md)

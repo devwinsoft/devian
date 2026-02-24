@@ -56,19 +56,25 @@ SSOT의 "C# ↔ Callable 필드 매핑"을 그대로 따른다.
 ## C. ConfirmPurchase 타이밍 (하드룰)
 
 클라이언트는 서버 응답의 `resultStatus`와 `clientGrantStatus`에 따라
-로컬 지급 복구/ACK/Confirm 순서를 결정한다.
+Confirm/ACK/로컬 지급 순서를 결정한다.
 
-- `GRANTED` → (로컬 지급 성공) → `ackPurchaseClientGrant(APPLIED_ACKED)` 성공 → `PurchaseStorage.current` clear → `ConfirmPurchase(pendingOrder)` → `ackPurchaseStoreConfirm`
-- `GRANTED` 로컬 지급 실패 → `ackPurchaseClientGrant(FAILED_REPORTED)` 성공 → `PurchaseStorage.current` clear → Confirm 하지 않음
+계정/SKU 잠김(`already owned`) 방지를 위해 **`ConfirmPurchase` + `ackPurchaseStoreConfirm`을 로컬 지급/`ackPurchaseClientGrant`보다 앞에 둔다.**
+
+- `GRANTED`
+  - `ConfirmPurchase(pendingOrder)` → `ackPurchaseStoreConfirm` **먼저 실행** (스토어 잠김 방지 우선)
+  - 이후 로컬 지급 → `ackPurchaseClientGrant(APPLIED_ACKED)` 수행
+  - `PurchaseStorage.current`는 `Confirm + storeConfirm ACK + clientGrant report` 종결 후 clear
+  - 로컬 지급 실패 → `ackPurchaseClientGrant(FAILED_REPORTED)` 보고 가능, 단 `storeConfirmStatus != CONFIRMED`이면 clear 금지
 - `ALREADY_GRANTED`
-  - `clientGrantStatus == APPLIED_ACKED` → 중복 지급 없이 `ConfirmPurchase(pendingOrder)` (필요 시 `ackPurchaseStoreConfirm`)
-  - `clientGrantStatus == PENDING` → 로컬 지급 복구 후 `ackPurchaseClientGrant(APPLIED_ACKED)` 성공 → `PurchaseStorage.current` clear → `ConfirmPurchase(pendingOrder)` → `ackPurchaseStoreConfirm`
-  - `clientGrantStatus == FAILED_REPORTED` → 로컬 지급 복구 재시도 허용 (성공 시 APPLIED_ACKED 보고 후 Confirm 경로)
-- `REJECTED` / `PENDING` / `REVOKED` / `REFUNDED` → Confirm 하지 않음
+  - `storeConfirmStatus == PENDING`이고 로컬에서 이미 Confirm 완료(`storeConfirmedLocal`) 상태면 `ackPurchaseStoreConfirm` 복구 먼저 수행
+  - `clientGrantStatus == APPLIED_ACKED` → 중복 지급 없이 Confirm/ACK 복구만 진행
+  - `clientGrantStatus == PENDING` 또는 `FAILED_REPORTED` → 로컬 지급 복구 재시도 허용 → APPLIED_ACKED 보고
+  - `PurchaseStorage.current`는 복구 단계가 모두 종결될 때만 clear
+- `REJECTED` (영구 거부) → `ConfirmPurchase(pendingOrder)`로 pending order 소비 후 종료 (Consumable/Rental 재구매 잠김 방지)
+- `PENDING` → Confirm **하지 않음** (스토어 확정 대기)
+- `REVOKED` / `REFUNDED` → Confirm 하지 않음
 
 (SSOT의 resultStatus 규칙과 불일치하면 이 문서/코드가 아니라 SSOT를 기준으로 수정한다.)
-
-> ~~**현재 코드 위반**~~ → ✅ **수정됨**: `resultStatus` 확인 후 `GRANTED`/`ALREADY_GRANTED`만 Confirm, 나머지는 Confirm 하지 않음.
 
 또한 로컬 지급은 `GRANTED` 또는 `ALREADY_GRANTED + clientGrantStatus == PENDING/FAILED_REPORTED` 복구 경로에서만 수행한다.
 Reward는 지급 실행만 담당하며, 멱등/복구 판단은 PurchaseManager(+서버 상태) 기준으로 한다.
@@ -106,8 +112,11 @@ Reward는 지급 실행만 담당하며, 멱등/복구 판단은 PurchaseManager
 
 ## D. Entitlements 동기화 (정본)
 
-- 앱 시작/로그인/복원 트리거 시 `getEntitlements`를 호출하여
-  클라 표시/UI 상태를 서버 스냅샷으로 맞춘다.
+- 앱 시작/로그인/복원 트리거 시 `SyncEntitlementsAsync()`로 `getEntitlements`를 호출하여
+  InventoryStorage의 Rental 만료 시각 + SeasonPass 소유권을 서버 스냅샷으로 갱신한다.
+- `GetRentalRemainingMsAsync(internalProductId)`로 서버 기준 Rental 남은 시간(ms)을 on-demand 조회한다.
+- `cacheEntitlementsSnapshot()`은 서버 `rentals[id]=expiresAtServerUtcMs`를 클라이언트 시간 기준으로 변환하여 `InventoryStorage.SetRental(id, expiresAtClientUtcMs)`로 저장한다.
+- `verifyPurchaseAsync` 응답의 `entitlementsSnapshot`도 동일하게 파싱+캐싱된다.
 
 
 ---

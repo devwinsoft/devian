@@ -35,6 +35,20 @@ namespace Devian.Domain.Game
         CURRENCY = 1,
         EQUIP = 2,
         HERO = 3,
+        RENTAL = 4,
+        SEASON_PASS = 5,
+    }
+
+    /// <summary>RENTAL_TYPE enum</summary>
+    public enum RENTAL_TYPE
+    {
+        NO_ADS = 0,
+    }
+
+    /// <summary>SEASON_PASS_TYPE enum</summary>
+    public enum SEASON_PASS_TYPE
+    {
+        S2026_01 = 0,
     }
 
     /// <summary>STAT_TYPE enum</summary>

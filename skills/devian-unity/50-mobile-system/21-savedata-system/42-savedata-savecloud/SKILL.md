@@ -8,8 +8,8 @@
 - 외부 진입점: `SaveDataManager.Instance._initializeCloudAsync(ct)` (AccountManager에서 호출).
 
 
-## Locations (mirrored)
-- UPM:
+## Implementation Location (3-path mirror)
+- UPM (정본):
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/SaveCloud/AppleSaveCloudClient.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/SaveCloud/SaveCloudTypes.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/SaveCloud/ISaveCloudClient.cs`
@@ -18,7 +18,7 @@
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/SaveCloud/SaveCloudCrypto.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/SaveCloud/SaveCloudPayload.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/SaveCloud/SaveCloudResult.cs`
-- UnityExample mirror (직접 수정 금지):
+- Packages (sync, 직접 수정 금지):
   - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/...`
 
 

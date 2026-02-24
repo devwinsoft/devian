@@ -7,13 +7,13 @@
 - AccountManager의 Guest/Editor 로그인 경로에서 이 매니저를 사용한다.
 
 
-## Locations (mirrored)
-- UPM:
+## Implementation Location (3-path mirror)
+- UPM (정본):
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Account/AccountLoginFirebase.cs`
-- UnityExample (Packages mirror):
+- Packages (sync):
   - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Account/AccountLoginFirebase.cs`
-- UnityExample (Assets mirror):
-  - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Account/AccountLoginFirebase.cs`
+- Assets/Samples (import):
+  - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Account/AccountLoginFirebase.cs`
 
 
 ## Public API (runtime)

@@ -283,9 +283,11 @@ LoadFromPayload(payload) = LoadFromJson(ComplexUtil.Decrypt_Base64(payload))
 
 ## Implementation Location (3-path mirror)
 
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Storage/`
-- UnityExample/Packages: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Storage/`
-- Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Storage/`
+> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../07-samples-creation-guide/SKILL.md), [devian-unity/03-ssot](../../../03-ssot/SKILL.md) §UPM Packages Sync
+
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Storage/`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Storage/`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Storage/`
 - 핵심 파일:
   - `GameStorageManager.cs` (상태 소유 + ToJson/LoadFromJson 진입점)
   - `GameStorageJsonCodec.cs` (root JSON serialize/deserialize orchestration, version/migration 포함)

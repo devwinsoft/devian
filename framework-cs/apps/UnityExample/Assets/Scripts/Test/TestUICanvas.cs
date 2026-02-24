@@ -30,6 +30,39 @@ public class TestUICanvas : UICanvas<TestUICanvas>
         {
             var sync = await SaveDataManager.Instance.SyncAsync(CancellationToken.None);
             Debug.Log($"Sync: {sync.IsSuccess}");
+
+            var initResult = await PurchaseManager.Instance.InitializeAsync();
+            if (initResult.IsFailure)
+            {
+                Debug.LogError($"IAP init failed: {initResult.Error}");
+                return;
+            }
+
+            // 중단된 구매 복구 시도
+            var retryResult = await PurchaseManager.Instance.RetryInterruptedPurchaseAsync();
+            if (retryResult.IsSuccess)
+            {
+                var retry = retryResult.Value;
+                if (retry.Status == PurchaseManager.RetryInterruptedPurchaseStatus.Retried)
+                {
+                    await HandlePurchaseClientGrantAsync(retry);
+                    Debug.Log($"Interrupted purchase recovered: {retry.InternalProductId}");
+                }
+            }
+
+            // 환불 처리
+            var refund = await PurchaseManager.Instance.RefundAsync(CancellationToken.None);
+            if (refund.IsSuccess)
+            {
+                Debug.Log(
+                    $"Refund handled={refund.Value.HandledAdjustmentCount} " +
+                    $"applied={refund.Value.InventoryAppliedAdjustmentCount} " +
+                    $"noop={refund.Value.NoOpAdjustmentCount}");
+            }
+            else
+            {
+                Debug.LogWarning($"RefundAsync failed: {refund.Error.Code}: {refund.Error.Message}");
+            }
         }
     }
 
@@ -67,6 +100,7 @@ public class TestUICanvas : UICanvas<TestUICanvas>
 
             if (retry.Value.Status == PurchaseManager.RetryInterruptedPurchaseStatus.Retried)
             {
+                await HandlePurchaseClientGrantAsync(retry.Value);
                 Debug.Log($"Interrupted purchase recovered. product={retry.Value.InternalProductId} result={retry.Value.ResultStatus}");
                 return;
             }
@@ -81,6 +115,7 @@ public class TestUICanvas : UICanvas<TestUICanvas>
             CancellationToken.None);
         if (purchase.IsSuccess)
         {
+            await HandlePurchaseClientGrantAsync(purchase.Value);
             Debug.Log(purchase.Value.ResultStatus);
         }
         else
@@ -113,6 +148,7 @@ public class TestUICanvas : UICanvas<TestUICanvas>
 
             if (retry.Value.Status == PurchaseManager.RetryInterruptedPurchaseStatus.Retried)
             {
+                await HandlePurchaseClientGrantAsync(retry.Value);
                 Debug.Log($"Interrupted purchase recovered. product={retry.Value.InternalProductId} result={retry.Value.ResultStatus}");
                 foreach (var reward in retry.Value.AppliedRewards)
                 {
@@ -131,6 +167,7 @@ public class TestUICanvas : UICanvas<TestUICanvas>
             CancellationToken.None);
         if (purchase.IsSuccess)
         {
+            await HandlePurchaseClientGrantAsync(purchase.Value);
             Debug.Log(purchase.Value.ResultStatus);
             foreach (var reward in purchase.Value.AppliedRewards)
             {
@@ -192,5 +229,43 @@ public class TestUICanvas : UICanvas<TestUICanvas>
     {
         //GameNetManager.Instance.Disconnect();
         SaveDataManager.Instance.ClearSlotAsync("main", CancellationToken.None);
+    }
+
+    async Task HandlePurchaseClientGrantAsync(PurchaseManager.PurchaseFinalResult result)
+    {
+        if (!result.NeedsClientGrantDelivery)
+            return;
+
+        var apply = RewardManager.Instance.ApplyRewardDatas(result.Rewards);
+        if (apply.IsSuccess)
+        {
+            var ack = await PurchaseManager.Instance.AckPurchaseClientGrantAppliedAsync(result.PurchaseId, CancellationToken.None);
+            if (ack.IsFailure)
+                Debug.LogWarning($"AckPurchaseClientGrantAppliedAsync failed: {ack.Error}");
+            return;
+        }
+
+        var report = await PurchaseManager.Instance.ReportPurchaseClientGrantFailureAsync(result.PurchaseId, CancellationToken.None);
+        if (report.IsFailure)
+            Debug.LogWarning($"ReportPurchaseClientGrantFailureAsync failed: {report.Error}");
+    }
+
+    async Task HandlePurchaseClientGrantAsync(PurchaseManager.RetryInterruptedPurchaseResult result)
+    {
+        if (!result.NeedsClientGrantDelivery)
+            return;
+
+        var apply = RewardManager.Instance.ApplyRewardDatas(result.Rewards);
+        if (apply.IsSuccess)
+        {
+            var ack = await PurchaseManager.Instance.AckPurchaseClientGrantAppliedAsync(result.PurchaseId, CancellationToken.None);
+            if (ack.IsFailure)
+                Debug.LogWarning($"AckPurchaseClientGrantAppliedAsync failed: {ack.Error}");
+            return;
+        }
+
+        var report = await PurchaseManager.Instance.ReportPurchaseClientGrantFailureAsync(result.PurchaseId, CancellationToken.None);
+        if (report.IsFailure)
+            Debug.LogWarning($"ReportPurchaseClientGrantFailureAsync failed: {report.Error}");
     }
 }

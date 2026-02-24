@@ -77,17 +77,18 @@ CompoSingleton<RewardManager>.Instance
 ---
 
 
-## Implementation Location (SSOT)
+## Implementation Location (3-path mirror)
+
+> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../07-samples-creation-guide/SKILL.md), [devian-unity/03-ssot](../../../03-ssot/SKILL.md) §UPM Packages Sync
 
 - RewardManager:
-  - UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardManager.cs`
-  - Packages: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardManager.cs`
-  - Assets: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Reward/RewardManager.cs`
+  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardManager.cs`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardManager.cs`
+  - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Reward/RewardManager.cs`
 - RewardData:
-  - UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardData.cs`
-  - Packages: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardData.cs`
-  - Assets: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Reward/RewardData.cs`
-- 미러링/정본 정책은 상위 정책 [devian-unity/01-policy](../../../01-policy/SKILL.md)를 따른다.
+  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardData.cs`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardData.cs`
+  - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Reward/RewardData.cs`
 
 asmdef:
 - `Devian.Samples.MobileSystem.asmdef`

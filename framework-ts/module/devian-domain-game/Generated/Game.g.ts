@@ -25,6 +25,18 @@ export enum REWARD_TYPE {
     CURRENCY = 1,
     EQUIP = 2,
     HERO = 3,
+    RENTAL = 4,
+    SEASON_PASS = 5,
+}
+
+/** RENTAL_TYPE enum */
+export enum RENTAL_TYPE {
+    NO_ADS = 0,
+}
+
+/** SEASON_PASS_TYPE enum */
+export enum SEASON_PASS_TYPE {
+    S2026_01 = 0,
 }
 
 /** STAT_TYPE enum */

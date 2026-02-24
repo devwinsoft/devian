@@ -18,12 +18,16 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobileSyste
 - `Equipments` — `Dictionary<string, AbilityEquip>` (itemUid → 장비)
 - `Cards` — `Dictionary<string, AbilityCard>` (cardId → 카드)
 - `Heroes` — `Dictionary<string, AbilityUnitHero>` (heroId → 영웅)
+- `Rentals` — `Dictionary<string, long>` (rentalTypeId → expiresAtClientUtcMs)
+- `SeasonPasses` — `Dictionary<string, bool>` (seasonPassTypeId → owned)
 - `GetEquip/AddEquip/RemoveEquip` — 장비 CRUD (key=itemUid)
 - `GetEquipsByEquipId` — equipId로 인스턴스 목록 조회
 - `Equip(heroId, equipSlot, equipUid)` — 편의 메서드: itemUid(PK)로 장비 조회 후 hero.Equip 위임
 - `Unequip(heroId, equipSlot)` — 편의 메서드: hero.Unequip 위임
 - `GetCard/AddCard` — 카드 CRUD
 - `GetHero/AddHero` — 영웅 CRUD
+- `SetRental(id, expiresAtClientUtcMs)` / `GetRentalExpiry(id)` / `HasActiveRental(id)` / `RemoveRental(id)` — 렌탈 CRUD
+- `SetSeasonPass(id, owned)` / `HasSeasonPass(id)` / `RemoveSeasonPass(id)` — 시즌패스 CRUD
 - ~~`ToJson()`~~ — **삭제됨**. [95-game-storage-manager](../../95-game-storage-manager/SKILL.md)의 GameStorageManager로 이전.
 - ~~`FromJson(string json)`~~ — **삭제됨**. [95-game-storage-manager](../../95-game-storage-manager/SKILL.md)의 GameStorageManager로 이전.
 
@@ -43,7 +47,7 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
 | 타입 | 책임 |
 |---|---|
 | `InventoryManager` | `GetAmount`, InventoryStorage 소유, AddRewards 검증/연동 |
-| `InventoryStorage` | Wallet (CURRENCY_TYPE → long), Equipments (itemUid → AbilityEquip), Cards (cardId → AbilityCard), Heroes (heroId → AbilityUnitHero) |
+| `InventoryStorage` | Wallet (CURRENCY_TYPE → long), Equipments (itemUid → AbilityEquip), Cards (cardId → AbilityCard), Heroes (heroId → AbilityUnitHero), Rentals (rentalTypeId → expiresAtClientUtcMs), SeasonPasses (seasonPassTypeId → owned) |
 | `AbilityEquip` | OwnerUnitId/OwnerSlotNumber(별도 필드) + 능력치(STAT_TYPE 기반) 관리 |
 | `AbilityCard` | 수량(`STAT_TYPE.CARD_AMOUNT`) + 능력치(STAT_TYPE 기반) 관리 |
 | `AbilityUnitHero` | 수량(`STAT_TYPE.UNIT_AMOUNT`) + 영웅 능력치(STAT_TYPE 기반) + 장비 슬롯(`Dict<int, AbilityEquip>`) 관리 |
@@ -53,6 +57,8 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
 - `AddRewards` 시 `REWARD_TYPE.CARD`이면 `_storage.Cards`에 AbilityCard를 추가하고 `AddAmount(delta)`로 수량 누적한다.
 - `AddRewards` 시 `REWARD_TYPE.EQUIP`이면 새 `itemUid`(GUID)로 AbilityEquip을 생성하여 `_storage.Equipments`에 추가한다.
 - `AddRewards` 시 `REWARD_TYPE.HERO`이면 `_storage.Heroes`에 AbilityUnitHero를 추가하고 `AddStat(STAT_TYPE.UNIT_AMOUNT, delta)`로 수량 누적한다.
+- `AddRewards` 시 `REWARD_TYPE.RENTAL`이면 `_storage.SetRental(id, long.MaxValue)`로 활성화 flag를 설정한다. 만료 시각은 데이터 Sync에서 서버로부터 갱신한다.
+- `AddRewards` 시 `REWARD_TYPE.SEASON_PASS`이면 `_storage.SetSeasonPass(id, true)`로 소유권을 설정한다.
 
 ```csharp
 public sealed class InventoryManager : MonoBehaviour
@@ -66,7 +72,7 @@ public sealed class InventoryManager : MonoBehaviour
 
 ---
 
-## 3. Implementation Location (SSOT)
+## 3. Implementation Location (3-path mirror)
 
 ### 파일 위치 (MobileSystem 샘플)
 
@@ -76,10 +82,10 @@ MobileSystem/Runtime/Inventory/
 └── InventoryStorage.cs
 ```
 
-3경로 미러:
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Inventory/`
-- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Inventory/`
-- Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Inventory/`
+3-path mirror ([정책](../../../07-samples-creation-guide/SKILL.md)):
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Inventory/`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Inventory/`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Inventory/`
 
 NOTE: `ItemData` 클래스는 `AbilityEquip`에 통합되어 삭제되었다. `BagItems`는 `Equipments`로 리네임되었다.
 
@@ -110,6 +116,8 @@ namespace Devian
 - `Equipments` key = `itemUid` (string). value = `AbilityEquip`.
 - `Cards` key = `cardId` (string). value = `AbilityCard`.
 - `Heroes` key = `heroId` (string). value = `AbilityUnitHero`.
+- `Rentals` key = `rentalTypeId` (string, `RENTAL_TYPE` enum name). value = `long` expiresAtClientUtcMs.
+- `SeasonPasses` key = `seasonPassTypeId` (string, `SEASON_PASS_TYPE` enum name). value = `bool` owned.
 - 장비 장착/해제의 핵심 로직은 `AbilityUnitHero`가 담당한다. InventoryStorage는 편의 메서드(`Equip`/`Unequip`)로 위임한다.
 - InventoryStorage는 InventoryManager가 소유한다 (싱글톤 등록 안 함).
 - "Sample" 접두사 금지 (정책).
@@ -121,7 +129,7 @@ namespace Devian
 > **변경**: `ToJson()` / `FromJson()` 메서드는 **삭제**되었다.
 > 직렬화 책임은 [95-game-storage-manager](../../95-game-storage-manager/SKILL.md)의 **GameStorageManager**가 담당한다.
 
-InventoryStorage는 **ReadOnly 프로퍼티**(`Wallet`, `Equipments`, `Cards`, `Heroes`)와 **CRUD 메서드**만 제공한다.
+InventoryStorage는 **ReadOnly 프로퍼티**(`Wallet`, `Equipments`, `Cards`, `Heroes`, `Rentals`, `SeasonPasses`)와 **CRUD 메서드**만 제공한다.
 GameStorageManager가 이 프로퍼티/메서드를 사용하여 직렬화/역직렬화를 수행한다.
 
 JSON 스키마: [03-ssot](../03-ssot/SKILL.md) 참조.

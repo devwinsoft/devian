@@ -83,9 +83,10 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
   - `serverNowUtcMs` (number)
 
 > NOTE:
-> `PurchaseManager`는 `SeasonPass ownership`를 local/cloud cache(PurchaseStorage)에 저장할 수 있다.
-> `Rental` 복원 정본은 서버 `rentals` projection이며, `GetRentalRemainingMsAsync(internalProductId)`는 서버 질의 결과(남은 시간 ms)로 클라이언트 cache(`noAdsExpireAtClientUtcMs`)를 갱신한다.
-> `noAds`는 서버가 아니라 클라이언트 게임 로직 상태(local/cloud cache)로만 관리한다.
+> `Rental` 복원 정본은 서버 `rentals` projection이다.
+> `SeasonPass` 복원 정본은 서버 `ownedSeasonPasses` projection이다.
+> `noAds`는 서버가 아니라 클라이언트 게임 로직 상태로만 관리한다.
+> game logic cache(`noAdsExpireAtClientUtcMs`, `seasonPassOwnership` 등)는 현재 PurchaseStorage에 포함되지 않으며, 향후 필요 시 추가한다.
 
 
 ---

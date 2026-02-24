@@ -59,6 +59,30 @@ namespace Devian
 
         private ISaveCloudClient _cloudClient;
 
+        private bool _needsCloudSave;
+
+        /// <summary>
+        /// 저장하지 못한 구매 내역이 있는지 나타내는 상태 조회용 플래그 (인메모리).
+        /// 앱 재시작 시 false로 초기화된다.
+        /// </summary>
+        public bool NeedsCloudSave => _needsCloudSave;
+
+        /// <summary>
+        /// 구매/환불 성공 후 cloud 저장이 실패했을 때 호출.
+        /// </summary>
+        public void MarkNeedsCloudSave()
+        {
+            _needsCloudSave = true;
+        }
+
+        /// <summary>
+        /// Cloud 저장 성공 또는 Resolve 완료 시 호출하여 플래그를 해제한다.
+        /// </summary>
+        public void ClearNeedsCloudSave()
+        {
+            _needsCloudSave = false;
+        }
+
         // ──────────────────────────────────────────────
         //  Public: Sync API
         // ──────────────────────────────────────────────
@@ -216,6 +240,7 @@ namespace Devian
                         new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_LOCAL_FAILED, $"Sync decrypt cloud failed. slot='{slot}'", jsonR.Error!.ToString()));
                 }
 
+                _needsCloudSave = false;
                 var saveLocalR = await saveLocalAsync(slot, jsonR.Value, ct);
                 if (saveLocalR.IsFailure)
                 {
@@ -327,6 +352,7 @@ namespace Devian
                         if (saveCloud.IsFailure)
                             return CommonResult<bool>.Failure(saveCloud.Error!);
 
+                        _needsCloudSave = false;
                         return CommonResult<bool>.Success(true);
                     }
 
@@ -342,6 +368,7 @@ namespace Devian
                         if (jsonR.IsFailure)
                             return CommonResult<bool>.Failure(jsonR.Error!);
 
+                        _needsCloudSave = false;
                         var saveLocalR = await saveLocalAsync(slot, jsonR.Value, ct);
                         if (saveLocalR.IsFailure)
                             return CommonResult<bool>.Failure(saveLocalR.Error!);
@@ -949,6 +976,7 @@ namespace Devian
                                 new CommonError(CommonErrorType.LOGIN_SYNC_SAVE_LOCAL_FAILED, $"Sync decrypt cloud failed. slot='{slot}'", jsonR.Error!.ToString()));
                         }
 
+                        _needsCloudSave = false;
                         var saveLocalR = await saveLocalAsync(slot, jsonR.Value, ct);
                         if (saveLocalR.IsFailure)
                         {

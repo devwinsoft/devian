@@ -8,9 +8,10 @@
 - 중복/스텁 로직을 신규 `AccountLoginApple`로 점진 치환한다.
 
 
-## 파일 위치(미러 구조)
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Account/AccountLoginApple.cs`
-- Example: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Account/AccountLoginApple.cs`
+## Implementation Location (3-path mirror)
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Account/AccountLoginApple.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Account/AccountLoginApple.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Account/AccountLoginApple.cs`
 
 
 ## 핵심 정책

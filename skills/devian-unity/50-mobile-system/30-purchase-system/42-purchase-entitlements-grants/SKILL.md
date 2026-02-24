@@ -34,8 +34,9 @@ AppliesTo: v10
 - `amount: long` (`>= 0`만 허용)
 
 Hard Rule:
-- `grants[]`는 inventory 지급 전용이다.
-- 권한/플래그 변화는 `grants[]`로 표현하지 않고, `entitlements/current` 스냅샷(`entitlementsSnapshot`)으로만 처리한다.
+- `grants[]`는 inventory 지급 전용이며, 클라이언트 지급 입력으로 사용하지 않는다 (서버 informational).
+- 클라 지급은 `rewardGroupId` 경로로 수행한다.
+- 권한/플래그 변화는 `grants[]`로 표현하지 않고, `entitlements/current` 스냅샷으로 처리한다.
 
 NOTE:
 - `type=item`의 `id`는 `itemId(pk)`를 의미한다(`itemUid` 없음).
@@ -52,10 +53,13 @@ NEEDS CHECK:
 
 서버는 `verifyPurchase` 처리 후 entitlements를 재계산하여 `/users/{uid}/entitlements/current` 에 upsert 한다.
 
-최소 필드:
-- `noAds: bool`
-- `subscriptions: object`
-- `seasonPass: object`
+> NOTE: `verifyPurchase` 응답의 `entitlementsSnapshot`은 optional이며, 현재 클라에 미포함이다 (03-ssot §C 참조).
+> 클라이언트가 entitlements를 동기화하려면 별도 `getEntitlements` Callable을 호출한다.
+
+최소 필드 (서버 Firestore `/users/{uid}/entitlements/current`):
+- `ownedSeasonPasses: string[]`
+- `rentals: object` (`internalProductId -> expiresAtServerUtcMs`)
+- `currencyBalances: object`
 - `updatedAt: Timestamp`
 
 

@@ -39,9 +39,11 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 
 ## Implementation Location (3-path mirror)
 
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseStorage.cs`
-- UnityExample/Packages: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseStorage.cs`
-- Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Purchase/PurchaseStorage.cs`
+> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../../devian-unity/07-samples-creation-guide/SKILL.md), [devian-unity/03-ssot](../../../../devian-unity/03-ssot/SKILL.md) §UPM Packages Sync
+
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseStorage.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseStorage.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Purchase/PurchaseStorage.cs`
 
 - asmdef: `Devian.Samples.MobileSystem` (`Samples~/MobileSystem/Runtime/Devian.Samples.MobileSystem.asmdef`)
 
@@ -52,11 +54,10 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 ## Data Scope (Minimal Snapshot)
 
 `PurchaseStorage`는 "전체 구매 기록 배열"을 저장하지 않는다.
-저장 범위는 아래 4개로 제한한다.
+저장 범위는 아래 3개로 제한한다.
 - `current` (진행 중 결제 1건)
 - `refundSupportLogs` (환불/지원 대응용 최소 로그, bounded)
-- `noAdsExpireAtClientUtcMs` (long, 클라이언트 시간 기준 만기 캐시)
-- `seasonPassOwnership` (`internalProductId -> bool`, entitlement cache)
+- `refundSync` (환불 동기화 처리 완료 키, bounded)
 
 ### 1) current (진행 중 구매, 최대 1건)
 
@@ -111,31 +112,33 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 - 식별/표시:
   - 환불 로그 항목에는 `internalProductId`가 포함되어 있어 상품 식별에 사용할 수 있다.
 
-### 3) noAdsExpireAtClientUtcMs (game logic cache, 구현됨)
+### 3) refundSync (환불 동기화 상태, 구현됨)
 
-- 타입: `long` (`UTC ms`, 클라이언트 시간 기준 만기 시각)
-- 용도:
-  - 게임 로직의 noAds 활성 여부 판단 캐시
-  - `PurchaseStorage.GetNoAdsExpireAtClientUtcMs()`로 만기 시각 조회
-  - `PurchaseStorage.IsNoAds()`가 클라이언트 시간으로 계산 (`now < noAdsExpireAtClientUtcMs`)
-  - `PurchaseManager.GetRentalRemainingMsAsync(...)` 성공 시 서버 응답의 남은 시간(ms)으로 갱신
-- 서버 정본 아님:
-  - 서버는 `noAds`를 모른다.
-  - 서버는 `rentals[internalProductId] = expiresAtServerUtcMs`만 관리하고,
-    클라가 이를 바탕으로 `noAdsExpireAtClientUtcMs`를 계산/캐시한다.
-
-### 4) seasonPassOwnership (entitlement cache, 구현됨)
-
-- 타입: `map<string,bool>` (`internalProductId -> owned`)
-- 용도: SeasonPass 구매/소유 여부 local/cloud 캐시
-- 정본 아님: 서버 `ownedSeasonPasses` projection이 정본
+- 목적: `RefundAsync()`가 서버의 환불/조정 내역을 페이지네이션 조회할 때, 처리 완료 위치와 이미 처리한 항목을 저장하여 중복 처리를 방지
+- 필드:
+  - `cursor` (string) — 서버 페이지네이션 커서. `RefundAsync()` 호출마다 newest부터 재스캔하므로 **런타임에서 사용하지 않는다**. JSON codec에서 persist되지만 `RefundAsync()`는 항상 빈 커서로 시작한다. (dead field, 향후 정리 대상)
+  - `processedKeys` (string[]) — 이미 처리 완료한 refund adjustment 키 목록. 중복 처리 방지용으로 persist
+- 개수 상한(Cap): `128개` (`MaxProcessedRefundSyncKeys`)
+  - 초과 시 가장 오래된 키부터 FIFO 제거
+- API (구현됨):
+  - `RefundSyncCursor` (read-only 프로퍼티)
+  - `ProcessedRefundSyncKeys` (read-only 프로퍼티)
+  - `SetRefundSyncCursor(cursor)`
+  - `IsRefundAdjustmentProcessed(key)`
+  - `MarkRefundAdjustmentProcessed(key)`
+  - `ClearRefundSyncState()` (커서 + 처리 키 전체 초기화)
+  - `RestoreRefundSyncState(cursor, processedKeys)` (SaveData 복원 시)
 
 ### Future (지금 구현 안 함)
 
-- `Rental` 로컬 캐시 상태 (`internalProductId -> expiresAtServerUtcMs` map)
 - `lastSyncedServerUtcMs`
 
 위 항목은 필요 시 추가할 수 있으나, 현재 구현 범위에 포함되지 않는다.
+
+NOTE:
+- `noAdsExpireAtClientUtcMs`, `seasonPassOwnership`, `Rental 로컬 캐시 상태`는 **InventoryStorage로 이동됨** (PurchaseStorage 범위 아님).
+  - InventoryStorage: `Rentals` (rentalTypeId → expiresAtClientUtcMs), `SeasonPasses` (seasonPassTypeId → owned)
+  - Reward 파이프라인(`REWARD_TYPE.RENTAL` / `REWARD_TYPE.SEASON_PASS`)을 통해 관리된다.
 
 
 ---
@@ -178,7 +181,7 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 - `PurchaseManager`는 `GameStorageManager.Instance.Purchase`에 기록한다.
 - `GameStorageManager.Clear()`는 `PurchaseStorage.ClearAll()`을 호출한다.
 - SaveData(local/cloud)는 `GameStorageManager` JSON 전체를 저장하므로 `purchase` 섹션도 함께 저장/복구된다.
-- `PurchaseStorage`는 `current`, `refundSupportLogs`, `noAdsExpireAtClientUtcMs`, `seasonPassOwnership`만 저장하며, 실패 이력/전체 구매 정본 로그는 저장하지 않는다.
+- `PurchaseStorage`는 `current`, `refundSupportLogs`, `refundSync`만 저장하며, 실패 이력/전체 구매 정본 로그는 저장하지 않는다.
 - `current`는 복구 워크아이템이며, `Confirm + storeConfirm ACK + clientGrant report`가 종결되기 전에는 clear하지 않는다.
 - `storeConfirmedLocal=true` + `storeConfirmStatus=PENDING`인 경우 `RetryInterruptedPurchaseAsync()`는 `ackPurchaseStoreConfirm`부터 재개할 수 있어야 한다.
 - `refundSupportLogs`는 지원/환불 대응 보조용이며, TTL/Cap 정책에 따라 자동 정리된다.

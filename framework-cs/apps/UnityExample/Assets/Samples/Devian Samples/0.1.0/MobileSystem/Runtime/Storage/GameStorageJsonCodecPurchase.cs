@@ -24,6 +24,7 @@ namespace Devian
                 ["storeConfirmedLocal"] = currentState.StoreConfirmedLocal,
                 ["clientGrantApplied"] = currentState.ClientGrantApplied,
                 ["clientGrantReported"] = currentState.ClientGrantReported,
+                ["verifyRetryCount"] = currentState.VerifyRetryCount,
             };
 
             var refundSupportLogs = new JArray();
@@ -43,16 +44,10 @@ namespace Devian
                 });
             }
 
-            var seasonPassOwnership = new JObject();
-            foreach (var kv in purchase.SeasonPassOwnership)
-                seasonPassOwnership[kv.Key] = kv.Value;
-
             return new JObject
             {
                 ["current"] = current,
                 ["refundSupportLogs"] = refundSupportLogs,
-                ["noAdsExpireAtClientUtcMs"] = purchase.NoAdsExpireAtClientUtcMs,
-                ["seasonPassOwnership"] = seasonPassOwnership,
             };
         }
 
@@ -76,7 +71,8 @@ namespace Devian
                     currentObj.Value<bool?>("clientGrantApplied") ?? false,
                     currentObj.Value<bool?>("clientGrantReported")
                         ?? currentObj.Value<bool?>("serverAcked")
-                        ?? false);
+                        ?? false,
+                    currentObj.Value<int?>("verifyRetryCount") ?? 0);
             }
 
             if (purchaseObj["refundSupportLogs"] is JArray refundLogsArr)
@@ -102,15 +98,8 @@ namespace Devian
                 purchase.RestoreRefundSupportLogs(restoreItems);
             }
 
-            var noAdsExpireAtClientUtcMs = purchaseObj.Value<long?>("noAdsExpireAtClientUtcMs") ?? 0L;
-            var seasonPassOwnership = new Dictionary<string, bool>();
-            if (purchaseObj["seasonPassOwnership"] is JObject seasonPassObj)
-            {
-                foreach (var prop in seasonPassObj.Properties())
-                    seasonPassOwnership[prop.Name] = prop.Value.Value<bool?>() ?? false;
-            }
-
-            purchase.RestoreLocalCache(noAdsExpireAtClientUtcMs, seasonPassOwnership);
+            // 하위호환: 기존 저장 데이터에 "refundSync" 키가 있어도 무시.
+            // Refund 중복 방지는 서버 clientRefundApplied 필드로 처리.
         }
     }
 }

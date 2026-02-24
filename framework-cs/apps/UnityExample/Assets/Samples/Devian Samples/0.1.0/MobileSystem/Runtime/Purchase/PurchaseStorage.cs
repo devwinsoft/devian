@@ -7,9 +7,7 @@ namespace Devian
     /// Minimal client-side purchase progress snapshot.
     /// Stores only the current in-progress purchase state required for local recovery.
     /// Does not store purchase failure history, raw receipts, or tokens.
-    /// Local/cloud cache stores only minimal product-type restore state
-    /// (e.g. noAds expiry cache, SeasonPass ownership map) in addition to current/refundSupportLogs.
-    /// Does not store lastSyncedServerUtcMs.
+    /// Stores current/refundSupportLogs only. Refund deduplication is server-side (clientRefundApplied).
     /// </summary>
     public sealed class PurchaseStorage
     {
@@ -19,12 +17,8 @@ namespace Devian
 
         readonly CurrentPurchaseState _current = new();
         readonly List<RefundSupportLogEntry> _refundSupportLogs = new();
-        readonly Dictionary<string, bool> _seasonPassOwnership = new();
-        long _noAdsExpireAtClientUtcMs;
         public CurrentPurchaseState Current => _current;
         public IReadOnlyList<RefundSupportLogEntry> RefundSupportLogs => _refundSupportLogs;
-        public long NoAdsExpireAtClientUtcMs => _noAdsExpireAtClientUtcMs;
-        public IReadOnlyDictionary<string, bool> SeasonPassOwnership => _seasonPassOwnership;
 
         // Compatibility accessors for existing callers. The canonical shape is Current.
         public bool IsPurchaseInProgress => _current.IsPurchaseInProgress;
@@ -39,62 +33,6 @@ namespace Devian
         public bool CurrentStoreConfirmedLocal => _current.StoreConfirmedLocal;
         public bool CurrentClientGrantApplied => _current.ClientGrantApplied;
         public bool CurrentClientGrantReported => _current.ClientGrantReported;
-
-        public bool IsNoAds()
-        {
-            return _noAdsExpireAtClientUtcMs > 0 && nowUtcMs() < _noAdsExpireAtClientUtcMs;
-        }
-
-        public long GetNoAdsExpireAtClientUtcMs()
-        {
-            return _noAdsExpireAtClientUtcMs;
-        }
-
-        public void SetNoAdsExpireAtClientUtcMs(long expiresAtClientUtcMs)
-        {
-            _noAdsExpireAtClientUtcMs = expiresAtClientUtcMs > 0 ? expiresAtClientUtcMs : 0L;
-        }
-
-        public void SetNoAdsRemainingMs(long remainingMs)
-        {
-            if (remainingMs <= 0)
-            {
-                _noAdsExpireAtClientUtcMs = 0L;
-                return;
-            }
-
-            _noAdsExpireAtClientUtcMs = nowUtcMs() + remainingMs;
-        }
-
-        public bool IsSeasonPassOwned(string internalProductId)
-        {
-            return !string.IsNullOrEmpty(internalProductId) &&
-                   _seasonPassOwnership.TryGetValue(internalProductId, out var owned) &&
-                   owned;
-        }
-
-        public void SetSeasonPassOwned(string internalProductId, bool owned)
-        {
-            if (string.IsNullOrEmpty(internalProductId))
-                return;
-
-            _seasonPassOwnership[internalProductId] = owned;
-        }
-
-        public void ReplaceSeasonPassOwnership(IEnumerable<string> internalProductIds)
-        {
-            _seasonPassOwnership.Clear();
-            if (internalProductIds == null)
-                return;
-
-            foreach (var id in internalProductIds)
-            {
-                if (string.IsNullOrEmpty(id))
-                    continue;
-
-                _seasonPassOwnership[id] = true;
-            }
-        }
 
         public void BeginPurchase(string internalProductId, string kind, string storeKey)
         {
@@ -111,6 +49,7 @@ namespace Devian
             _current.StoreConfirmedLocal = false;
             _current.ClientGrantApplied = false;
             _current.ClientGrantReported = false;
+            _current.VerifyRetryCount = 0;
         }
 
         public void MarkStorePending()
@@ -154,6 +93,14 @@ namespace Devian
                 return;
 
             _current.ClientGrantReported = true;
+        }
+
+        public void IncrementVerifyRetryCount()
+        {
+            if (!_current.IsPurchaseInProgress)
+                return;
+
+            _current.VerifyRetryCount++;
         }
 
         public void UpsertRefundSupportLog(
@@ -280,14 +227,13 @@ namespace Devian
             _current.StoreConfirmedLocal = false;
             _current.ClientGrantApplied = false;
             _current.ClientGrantReported = false;
+            _current.VerifyRetryCount = 0;
         }
 
         public void ClearAll()
         {
             ClearCurrent();
             ClearRefundSupportLogs();
-            _noAdsExpireAtClientUtcMs = 0L;
-            _seasonPassOwnership.Clear();
         }
 
         public void RestoreCurrent(
@@ -302,7 +248,8 @@ namespace Devian
             string verifyStatus,
             bool storeConfirmedLocal,
             bool clientGrantApplied,
-            bool clientGrantReported)
+            bool clientGrantReported,
+            int verifyRetryCount)
         {
             _current.IsPurchaseInProgress = isPurchaseInProgress;
             _current.InternalProductId = internalProductId ?? string.Empty;
@@ -316,6 +263,7 @@ namespace Devian
             _current.StoreConfirmedLocal = storeConfirmedLocal;
             _current.ClientGrantApplied = clientGrantApplied;
             _current.ClientGrantReported = clientGrantReported;
+            _current.VerifyRetryCount = verifyRetryCount;
         }
 
         public void RestoreRefundSupportLogs(IEnumerable<RefundSupportLogRestoreItem> items)
@@ -342,23 +290,6 @@ namespace Devian
             }
 
             PruneRefundSupportLogs();
-        }
-
-        public void RestoreLocalCache(long noAdsExpireAtClientUtcMs, IDictionary<string, bool> seasonPassOwnership)
-        {
-            _noAdsExpireAtClientUtcMs = noAdsExpireAtClientUtcMs > 0 ? noAdsExpireAtClientUtcMs : 0L;
-            _seasonPassOwnership.Clear();
-
-            if (seasonPassOwnership == null)
-                return;
-
-            foreach (var kv in seasonPassOwnership)
-            {
-                if (string.IsNullOrEmpty(kv.Key))
-                    continue;
-
-                _seasonPassOwnership[kv.Key] = kv.Value;
-            }
         }
 
         void trimRefundSupportLogs()
@@ -395,6 +326,7 @@ namespace Devian
             public bool StoreConfirmedLocal { get; internal set; }
             public bool ClientGrantApplied { get; internal set; }
             public bool ClientGrantReported { get; internal set; }
+            public int VerifyRetryCount { get; internal set; }
         }
 
         public sealed class RefundSupportLogEntry

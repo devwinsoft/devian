@@ -41,7 +41,7 @@ framework-cs/upm/com.devian.samples/Samples~/MobileSystem/
 ### 2.2 설치 후 위치 (Unity 프로젝트)
 
 ```
-Assets/Samples/Devian Samples/0.1.0/MobileSystem/
+Assets/Samples/Devian Samples/{version}/MobileSystem/
 ```
 
 ---

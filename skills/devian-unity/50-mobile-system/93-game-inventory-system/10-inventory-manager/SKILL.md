@@ -11,6 +11,8 @@ InventoryManager(구현 규약)는 `RewardData[]` 입력을 받아 인벤토리 
 - `type=REWARD_TYPE.EQUIP`: 매 Apply마다 새 인스턴스(`itemUid=GUID` pk) 생성, amount 무시
 - `type=REWARD_TYPE.CARD`: `cardId(pk)` → `AbilityCard.Amount` (`STAT_TYPE.CARD_AMOUNT`) 누적
 - `type=REWARD_TYPE.HERO`: `heroId(pk)` → `AbilityUnitHero` (`STAT_TYPE.UNIT_AMOUNT`) 누적
+- `type=REWARD_TYPE.RENTAL`: `RENTAL_TYPE` id → `InventoryStorage.SetRental(id, long.MaxValue)` (활성화 flag 설정, 만료 시각은 데이터 Sync에서 별도 갱신)
+- `type=REWARD_TYPE.SEASON_PASS`: `SEASON_PASS_TYPE` id → `InventoryStorage.SetSeasonPass(id, true)` (소유권 설정)
 
 InventoryManager는 **단일 concrete 클래스**이다.
 InventoryStorage를 소유하며, AddRewards 시 Equipments/Cards/Heroes에 AbilityEquip/AbilityCard/AbilityUnitHero를 추가/갱신한다.
@@ -67,10 +69,12 @@ CompoSingleton<InventoryManager>.Instance
 ## Responsibilities (정본)
 
 - `RewardData[]`를 AddRewards로 적용한다.
-  - `type=REWARD_TYPE.CURRENCY`와 `type=REWARD_TYPE.EQUIP`과 `type=REWARD_TYPE.CARD`와 `type=REWARD_TYPE.HERO`의 처리 로직은 분기된다(정본).
+  - `type=REWARD_TYPE.CURRENCY`와 `type=REWARD_TYPE.EQUIP`과 `type=REWARD_TYPE.CARD`와 `type=REWARD_TYPE.HERO`와 `type=REWARD_TYPE.RENTAL`과 `type=REWARD_TYPE.SEASON_PASS`의 처리 로직은 분기된다(정본).
   - `type=REWARD_TYPE.EQUIP`일 때 새 itemUid(GUID)로 AbilityEquip 인스턴스를 생성하여 InventoryStorage.Equipments에 추가한다.
   - `type=REWARD_TYPE.CARD`일 때 InventoryStorage.Cards에 AbilityCard를 추가/갱신한다.
   - `type=REWARD_TYPE.HERO`일 때 InventoryStorage.Heroes에 AbilityUnitHero를 추가/갱신한다.
+  - `type=REWARD_TYPE.RENTAL`일 때 `InventoryStorage.SetRental(id, long.MaxValue)`로 활성화 flag를 설정한다. 실제 만료 시각은 데이터 Sync에서 서버로부터 갱신한다.
+  - `type=REWARD_TYPE.SEASON_PASS`일 때 `InventoryStorage.SetSeasonPass(id, true)`로 소유권을 설정한다.
   - 입력 검증 실패 시 `CommonResult.Failure`를 반환하고 상태를 변경하지 않는다.
   - 성공 시 `CommonResult.Ok()`를 반환한다.
 - 수량 조회를 제공한다.
@@ -78,6 +82,8 @@ CompoSingleton<InventoryManager>.Instance
   - `type=REWARD_TYPE.EQUIP`: 해당 `equipId`를 가진 인스턴스 수 반환
   - `type=REWARD_TYPE.CARD`: 해당 `cardId(pk)` 수량 조회
   - `type=REWARD_TYPE.HERO`: 해당 `heroId(pk)` 수량 조회
+  - `type=REWARD_TYPE.RENTAL`: `HasActiveRental(id) ? 1 : 0`
+  - `type=REWARD_TYPE.SEASON_PASS`: `HasSeasonPass(id) ? 1 : 0`
 - InventoryStorage를 소유한다.
 - 변경 이벤트를 제공한다(개념).
 
@@ -117,6 +123,8 @@ NOTE:
     - `type=REWARD_TYPE.EQUIP`: 새 `itemUid`(GUID)로 AbilityEquip 생성 + `_storage.AddEquip(itemUid, ability)`. amount 무시(항상 1개)
     - `type=REWARD_TYPE.CARD`: `_storage.Cards`에 AbilityCard 추가(없으면 생성) + `AbilityCard.AddAmount(amount)`
     - `type=REWARD_TYPE.HERO`: `_storage.Heroes`에 AbilityUnitHero 추가(없으면 생성) + `AddStat(STAT_TYPE.UNIT_AMOUNT, amount)`
+    - `type=REWARD_TYPE.RENTAL`: `_storage.SetRental(id, long.MaxValue)` (활성화 flag, 만료 시각은 데이터 Sync에서 별도 갱신)
+    - `type=REWARD_TYPE.SEASON_PASS`: `_storage.SetSeasonPass(id, true)` (소유권 설정)
   - 성공 시 `CommonResult.Ok()`를 반환한다.
 - `GetAmount(string type, string id) -> long`
   - `(type,id)`에 대한 현재 수량을 반환한다.
@@ -129,7 +137,7 @@ NOTE:
 
 - `rewards == null`이면 invalid다.
 - 각 reward에 대해 아래 조건을 모두 만족해야 valid다.
-  - `type`은 `REWARD_TYPE.CURRENCY`, `REWARD_TYPE.EQUIP`, `REWARD_TYPE.CARD`, `REWARD_TYPE.HERO` 중 하나여야 한다.
+  - `type`은 `REWARD_TYPE.CURRENCY`, `REWARD_TYPE.EQUIP`, `REWARD_TYPE.CARD`, `REWARD_TYPE.HERO`, `REWARD_TYPE.RENTAL`, `REWARD_TYPE.SEASON_PASS` 중 하나여야 한다.
   - `id`는 null/empty/whitespace가 아니어야 한다.
   - `amount >= 0` 이어야 한다.
 - `rewards.Length == 0`은 valid no-op으로 처리한다(`CommonResult.Ok()` 반환).
@@ -140,7 +148,7 @@ NOTE:
 
 - `AddRewards`는 원자적으로 동작한다.
 - 입력 중 invalid가 하나라도 있으면 전체 실패한다.
-- 전체 실패 시 내부 상태(`_storage.Wallet`, `_storage.Equipments`, `_storage.Cards`, `_storage.Heroes`)는 호출 전과 동일해야 한다.
+- 전체 실패 시 내부 상태(`_storage.Wallet`, `_storage.Equipments`, `_storage.Cards`, `_storage.Heroes`, `_storage.Rentals`, `_storage.SeasonPasses`)는 호출 전과 동일해야 한다.
 
 
 ## Error Mapping (정본)
@@ -168,7 +176,7 @@ NOTE:
 | 코드 | 용도 |
 |---|---|
 | `INVENTORY_DELTAS_NULL` | `rewards == null` |
-| `INVENTORY_DELTA_TYPE_INVALID` | `type`이 `REWARD_TYPE.CURRENCY`/`REWARD_TYPE.EQUIP`/`REWARD_TYPE.CARD`/`REWARD_TYPE.HERO`가 아님 |
+| `INVENTORY_DELTA_TYPE_INVALID` | `type`이 `REWARD_TYPE.CURRENCY`/`REWARD_TYPE.EQUIP`/`REWARD_TYPE.CARD`/`REWARD_TYPE.HERO`/`REWARD_TYPE.RENTAL`/`REWARD_TYPE.SEASON_PASS`가 아님 |
 | `INVENTORY_DELTA_ID_EMPTY` | `id`가 null/empty/whitespace |
 | `INVENTORY_DELTA_AMOUNT_NEGATIVE` | `amount < 0` |
 
@@ -188,6 +196,8 @@ readonly InventoryStorage _storage = new();
 - 장비 상태는 `_storage.Equipments[itemUid]` → `AbilityEquip`이 전담한다.
 - 카드 상태는 `_storage.Cards[cardId]` → `AbilityCard`가 전담한다.
 - 영웅 상태는 `_storage.Heroes[heroId]` → `AbilityUnitHero`가 전담한다.
+- 렌탈 상태는 `_storage.Rentals[rentalTypeId]` → `long`(expiresAtClientUtcMs)으로 관리한다.
+- 시즌패스 상태는 `_storage.SeasonPasses[seasonPassTypeId]` → `bool`(owned)으로 관리한다.
 - 장비 보유 = itemUid(들) 존재. `GetEquipsByEquipId(equipId)`로 equipId별 인스턴스 조회
 - 카드 수량 = `this[STAT_TYPE.CARD_AMOUNT]` (AbilityCard)
 - 영웅 수량 = `this[STAT_TYPE.UNIT_AMOUNT]` (AbilityUnitHero)
@@ -209,11 +219,13 @@ readonly InventoryStorage _storage = new();
 ---
 
 
-## Implementation Location (SSOT)
+## Implementation Location (3-path mirror)
 
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Inventory/InventoryManager.cs`
-- UnityExample: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Inventory/InventoryManager.cs`
-- Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Inventory/InventoryManager.cs`
+> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../07-samples-creation-guide/SKILL.md)
+
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Inventory/InventoryManager.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Inventory/InventoryManager.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Inventory/InventoryManager.cs`
 
 
 ---

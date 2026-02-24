@@ -10,9 +10,10 @@
 - GPGS v1 (`GooglePlayGames` assembly)은 지원하지 않는다.
 
 
-## 파일 위치(미러 구조)
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Account/AccountLoginGpgs.cs`
-- Example: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Account/AccountLoginGpgs.cs`
+## Implementation Location (3-path mirror)
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Account/AccountLoginGpgs.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Account/AccountLoginGpgs.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Account/AccountLoginGpgs.cs`
 
 
 ## 핵심 정책

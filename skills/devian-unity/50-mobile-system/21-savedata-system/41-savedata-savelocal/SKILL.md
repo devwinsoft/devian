@@ -7,18 +7,25 @@
 - 외부에서 직접 호출 불가. `SaveDataManager.SyncAsync` / `ResolveConflictAsync`를 통해 간접 사용.
 
 
-## Locations (mirrored)
-- UPM:
+## Implementation Location (3-path mirror)
+- UPM (정본):
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/SaveLocal/SaveLocalTypes.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/SaveLocal/SaveLocalPayload.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/SaveLocal/SaveLocalCrypto.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/SaveLocal/SaveLocalFileStore.cs`
-- UnityExample mirror (직접 수정 금지):
+- Packages (sync, 직접 수정 금지):
   - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/...`
 
 
 ## Assembly Definition (asmdef)
 - 단일 asmdef(`Devian.Samples.MobileSystem`)에 포함되어 MobileSystem 번들 샘플과 함께 설치된다.
+
+
+## SaveLocalPayload Fields
+- `version` (int): 스키마 버전
+- `updateTime` (string): 저장 시점
+- `payload` (string): 난독화된 게임 데이터 (Base64)
+- `deviceId` (string): 디바이스 식별자
 
 
 ## What it does

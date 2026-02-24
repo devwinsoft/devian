@@ -22,6 +22,14 @@ namespace Devian
         readonly Dictionary<string, AbilityUnitHero> mHeroes = new();
         public IReadOnlyDictionary<string, AbilityUnitHero> Heroes => mHeroes;
 
+        // ── Rentals ──
+        readonly Dictionary<string, long> mRentals = new();
+        public IReadOnlyDictionary<string, long> Rentals => mRentals;
+
+        // ── SeasonPasses ──
+        readonly Dictionary<string, bool> mSeasonPasses = new();
+        public IReadOnlyDictionary<string, bool> SeasonPasses => mSeasonPasses;
+
         // ── Currency Operations ──
 
         public long GetCurrencyBalance(CURRENCY_TYPE currencyType)
@@ -105,6 +113,46 @@ namespace Devian
             return hero.Unequip(equipSlot);
         }
 
+        // ── Rental Operations ──
+
+        public void SetRental(string id, long expiresAtClientUtcMs)
+        {
+            mRentals[id] = expiresAtClientUtcMs;
+        }
+
+        public long GetRentalExpiry(string id)
+        {
+            return mRentals.TryGetValue(id, out var expiry) ? expiry : 0L;
+        }
+
+        public bool HasActiveRental(string id)
+        {
+            if (!mRentals.TryGetValue(id, out var expiry)) return false;
+            return System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < expiry;
+        }
+
+        public void RemoveRental(string id)
+        {
+            mRentals.Remove(id);
+        }
+
+        // ── SeasonPass Operations ──
+
+        public void SetSeasonPass(string id, bool owned)
+        {
+            mSeasonPasses[id] = owned;
+        }
+
+        public bool HasSeasonPass(string id)
+        {
+            return mSeasonPasses.TryGetValue(id, out var owned) && owned;
+        }
+
+        public void RemoveSeasonPass(string id)
+        {
+            mSeasonPasses.Remove(id);
+        }
+
         // ── Clear ──
 
         public void Clear()
@@ -115,6 +163,8 @@ namespace Devian
             foreach (var kv in mEquipments)
                 kv.Value.ClearOwner();
             mEquipments.Clear();
+            mRentals.Clear();
+            mSeasonPasses.Clear();
         }
     }
 }

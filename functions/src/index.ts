@@ -7,6 +7,7 @@
  *   - ackPurchaseStoreConfirm
  *   - getEntitlements
  *   - getRecentPurchases30d
+ *   - getPurchaseAdjustments
  */
 
 import * as admin from "firebase-admin";
@@ -20,3 +21,5 @@ export {ackPurchaseClientGrant} from "./purchase/ackPurchaseClientGrant";
 export {ackPurchaseStoreConfirm} from "./purchase/ackPurchaseStoreConfirm";
 export {getEntitlements} from "./purchase/getEntitlements";
 export {getRecentPurchases30d} from "./purchase/getRecentPurchases30d";
+export {getPurchaseAdjustments} from "./purchase/getPurchaseAdjustments";
+export {ackRefundApplied} from "./purchase/ackRefundApplied";

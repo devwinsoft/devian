@@ -26,7 +26,7 @@ namespace Devian
             {
                 var r = rewards[i];
 
-                if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY && r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO)
+                if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY && r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO && r.Type != REWARD_TYPE.RENTAL && r.Type != REWARD_TYPE.SEASON_PASS)
                     return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_TYPE_INVALID,
                         $"rewards[{i}] invalid type: {r.Type}");
 
@@ -60,9 +60,279 @@ namespace Devian
                 {
                     _applyEquip(r.Id, r.Amount);
                 }
-                else // REWARD_TYPE.HERO
+                else if (r.Type == REWARD_TYPE.HERO)
                 {
                     _applyHero(r.Id, r.Amount);
+                }
+                else if (r.Type == REWARD_TYPE.RENTAL)
+                {
+                    // Amount=1은 활성화 flag. 만료 시각은 데이터 Sync에서 서버로부터 갱신.
+                    _storage.SetRental(r.Id, long.MaxValue);
+                }
+                else if (r.Type == REWARD_TYPE.SEASON_PASS)
+                {
+                    _storage.SetSeasonPass(r.Id, true);
+                }
+            }
+
+            return CommonResult.Ok();
+        }
+
+        public CommonResult RevokeRewards(RewardData[] rewards)
+        {
+            if (rewards == null)
+                return CommonResult.Failure(CommonErrorType.INVENTORY_DELTAS_NULL, "rewards is null");
+
+            if (rewards.Length == 0)
+                return CommonResult.Ok();
+
+            // Validate first (all-or-nothing).
+            for (int i = 0; i < rewards.Length; i++)
+            {
+                var r = rewards[i];
+
+                if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY && r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO && r.Type != REWARD_TYPE.RENTAL && r.Type != REWARD_TYPE.SEASON_PASS)
+                    return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_TYPE_INVALID,
+                        $"rewards[{i}] invalid type: {r.Type}");
+
+                if (string.IsNullOrWhiteSpace(r.Id))
+                    return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_ID_EMPTY,
+                        $"rewards[{i}] id is empty");
+
+                if (r.Amount < 0)
+                    return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_AMOUNT_NEGATIVE,
+                        $"rewards[{i}] amount is negative: {r.Amount}");
+
+                if (r.Amount == 0)
+                    continue;
+
+                if (r.Type == REWARD_TYPE.CURRENCY)
+                {
+                    if (!Enum.TryParse<CURRENCY_TYPE>(r.Id, out var currencyType))
+                    {
+                        return CommonResult.Failure(
+                            CommonErrorType.INVENTORY_DELTA_ID_EMPTY,
+                            $"rewards[{i}] invalid currency id: {r.Id}");
+                    }
+
+                    var balance = _storage.GetCurrencyBalance(currencyType);
+                    if (balance < r.Amount)
+                    {
+                        return CommonResult.Failure(
+                            CommonErrorType.INVENTORY_REFUND_INSUFFICIENT,
+                            $"rewards[{i}] insufficient currency. id={r.Id} need={r.Amount} have={balance}");
+                    }
+                }
+                else if (r.Type == REWARD_TYPE.CARD)
+                {
+                    var card = _storage.GetCard(r.Id);
+                    var amount = card != null ? card.Amount : 0L;
+                    if (amount < r.Amount)
+                    {
+                        return CommonResult.Failure(
+                            CommonErrorType.INVENTORY_REFUND_INSUFFICIENT,
+                            $"rewards[{i}] insufficient card amount. id={r.Id} need={r.Amount} have={amount}");
+                    }
+                }
+                else if (r.Type == REWARD_TYPE.EQUIP)
+                {
+                    var count = _storage.GetEquipsByEquipId(r.Id).Count;
+                    if (count < r.Amount)
+                    {
+                        return CommonResult.Failure(
+                            CommonErrorType.INVENTORY_REFUND_INSUFFICIENT,
+                            $"rewards[{i}] insufficient equip count. id={r.Id} need={r.Amount} have={count}");
+                    }
+                }
+                else if (r.Type == REWARD_TYPE.HERO)
+                {
+                    var hero = _storage.GetHero(r.Id);
+                    var amount = hero != null ? hero[STAT_TYPE.UNIT_AMOUNT] : 0L;
+                    if (amount < r.Amount)
+                    {
+                        return CommonResult.Failure(
+                            CommonErrorType.INVENTORY_REFUND_INSUFFICIENT,
+                            $"rewards[{i}] insufficient hero amount. id={r.Id} need={r.Amount} have={amount}");
+                    }
+                }
+                else if (r.Type == REWARD_TYPE.RENTAL)
+                {
+                    if (!_storage.HasActiveRental(r.Id))
+                    {
+                        return CommonResult.Failure(
+                            CommonErrorType.INVENTORY_REFUND_INSUFFICIENT,
+                            $"rewards[{i}] rental not active. id={r.Id}");
+                    }
+                }
+                else if (r.Type == REWARD_TYPE.SEASON_PASS)
+                {
+                    if (!_storage.HasSeasonPass(r.Id))
+                    {
+                        return CommonResult.Failure(
+                            CommonErrorType.INVENTORY_REFUND_INSUFFICIENT,
+                            $"rewards[{i}] season pass not owned. id={r.Id}");
+                    }
+                }
+            }
+
+            // Apply revoke.
+            for (int i = 0; i < rewards.Length; i++)
+            {
+                var r = rewards[i];
+                if (r.Amount == 0)
+                    continue;
+
+                if (r.Type == REWARD_TYPE.CURRENCY)
+                {
+                    var currencyType = (CURRENCY_TYPE)Enum.Parse(typeof(CURRENCY_TYPE), r.Id);
+                    _storage.AddCurrency(currencyType, -r.Amount);
+                }
+                else if (r.Type == REWARD_TYPE.CARD)
+                {
+                    var card = _storage.GetCard(r.Id);
+                    if (card == null)
+                    {
+                        return CommonResult.Failure(
+                            CommonErrorType.PURCHASE_REFUND_APPLY_FAILED,
+                            $"Card disappeared while revoking reward. id={r.Id}");
+                    }
+                    card.AddAmount(-(int)r.Amount);
+                }
+                else if (r.Type == REWARD_TYPE.EQUIP)
+                {
+                    var equips = _storage.GetEquipsByEquipId(r.Id);
+                    for (var j = 0; j < r.Amount; j++)
+                    {
+                        if (j >= equips.Count || equips[j] == null || string.IsNullOrEmpty(equips[j].ItemUid) ||
+                            !_storage.RemoveEquip(equips[j].ItemUid))
+                        {
+                            return CommonResult.Failure(
+                                CommonErrorType.PURCHASE_REFUND_APPLY_FAILED,
+                                $"Equip revoke failed while removing item. equipId={r.Id}");
+                        }
+                    }
+                }
+                else if (r.Type == REWARD_TYPE.HERO)
+                {
+                    var hero = _storage.GetHero(r.Id);
+                    if (hero == null)
+                    {
+                        return CommonResult.Failure(
+                            CommonErrorType.PURCHASE_REFUND_APPLY_FAILED,
+                            $"Hero disappeared while revoking reward. id={r.Id}");
+                    }
+                    hero.AddStat(STAT_TYPE.UNIT_AMOUNT, -(int)r.Amount);
+                }
+                else if (r.Type == REWARD_TYPE.RENTAL)
+                {
+                    _storage.RemoveRental(r.Id);
+                }
+                else if (r.Type == REWARD_TYPE.SEASON_PASS)
+                {
+                    _storage.RemoveSeasonPass(r.Id);
+                }
+            }
+
+            return CommonResult.Ok();
+        }
+
+        /// <summary>
+        /// 보상을 가능한 만큼 회수한다 (partial revoke).
+        /// 잔액이 부족하면 보유량까지만 차감하고 성공으로 처리한다.
+        /// type/id/amount 데이터 오류는 여전히 Failure를 반환한다.
+        /// </summary>
+        public CommonResult RevokeRewardsPartial(RewardData[] rewards)
+        {
+            if (rewards == null)
+                return CommonResult.Failure(CommonErrorType.INVENTORY_DELTAS_NULL, "rewards is null");
+
+            if (rewards.Length == 0)
+                return CommonResult.Ok();
+
+            // 기본 유효성 검증 (type, id, amount 부호 — 데이터 오류이므로 Failure)
+            for (int i = 0; i < rewards.Length; i++)
+            {
+                var r = rewards[i];
+
+                if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY && r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO && r.Type != REWARD_TYPE.RENTAL && r.Type != REWARD_TYPE.SEASON_PASS)
+                    return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_TYPE_INVALID,
+                        $"rewards[{i}] invalid type: {r.Type}");
+
+                if (string.IsNullOrWhiteSpace(r.Id))
+                    return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_ID_EMPTY,
+                        $"rewards[{i}] id is empty");
+
+                if (r.Amount < 0)
+                    return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_AMOUNT_NEGATIVE,
+                        $"rewards[{i}] amount is negative: {r.Amount}");
+
+                if (r.Amount == 0)
+                    continue;
+
+                if (r.Type == REWARD_TYPE.CURRENCY)
+                {
+                    if (!Enum.TryParse<CURRENCY_TYPE>(r.Id, out _))
+                    {
+                        return CommonResult.Failure(
+                            CommonErrorType.INVENTORY_DELTA_ID_EMPTY,
+                            $"rewards[{i}] invalid currency id: {r.Id}");
+                    }
+                }
+            }
+
+            // 클램프 + 적용 (보유량 이하로 차감)
+            for (int i = 0; i < rewards.Length; i++)
+            {
+                var r = rewards[i];
+                if (r.Amount == 0)
+                    continue;
+
+                if (r.Type == REWARD_TYPE.CURRENCY)
+                {
+                    var currencyType = (CURRENCY_TYPE)Enum.Parse(typeof(CURRENCY_TYPE), r.Id);
+                    var balance = _storage.GetCurrencyBalance(currencyType);
+                    var clampedAmount = Math.Min(r.Amount, balance);
+                    if (clampedAmount > 0)
+                        _storage.AddCurrency(currencyType, -clampedAmount);
+                }
+                else if (r.Type == REWARD_TYPE.CARD)
+                {
+                    var card = _storage.GetCard(r.Id);
+                    var have = card != null ? card.Amount : 0L;
+                    var clampedAmount = (int)Math.Min(r.Amount, have);
+                    if (clampedAmount > 0 && card != null)
+                        card.AddAmount(-clampedAmount);
+                }
+                else if (r.Type == REWARD_TYPE.EQUIP)
+                {
+                    var equips = _storage.GetEquipsByEquipId(r.Id);
+                    var clampedAmount = (int)Math.Min(r.Amount, equips.Count);
+                    for (var j = 0; j < clampedAmount; j++)
+                    {
+                        if (j < equips.Count && equips[j] != null && !string.IsNullOrEmpty(equips[j].ItemUid))
+                            _storage.RemoveEquip(equips[j].ItemUid);
+                    }
+                }
+                else if (r.Type == REWARD_TYPE.HERO)
+                {
+                    var hero = _storage.GetHero(r.Id);
+                    if (hero != null)
+                    {
+                        var have = hero[STAT_TYPE.UNIT_AMOUNT];
+                        var clampedAmount = (int)Math.Min(r.Amount, have);
+                        if (clampedAmount > 0)
+                            hero.AddStat(STAT_TYPE.UNIT_AMOUNT, -clampedAmount);
+                    }
+                }
+                else if (r.Type == REWARD_TYPE.RENTAL)
+                {
+                    if (_storage.HasActiveRental(r.Id))
+                        _storage.RemoveRental(r.Id);
+                }
+                else if (r.Type == REWARD_TYPE.SEASON_PASS)
+                {
+                    if (_storage.HasSeasonPass(r.Id))
+                        _storage.RemoveSeasonPass(r.Id);
                 }
             }
 
@@ -94,6 +364,16 @@ namespace Devian
                 return hero != null ? hero[STAT_TYPE.UNIT_AMOUNT] : 0L;
             }
 
+            if (type == nameof(REWARD_TYPE.RENTAL))
+            {
+                return _storage.HasActiveRental(id) ? 1L : 0L;
+            }
+
+            if (type == nameof(REWARD_TYPE.SEASON_PASS))
+            {
+                return _storage.HasSeasonPass(id) ? 1L : 0L;
+            }
+
             return 0L;
         }
 
@@ -120,13 +400,19 @@ namespace Devian
 
         void _applyEquip(string equipId, long amount)
         {
-            var itemUid = Guid.NewGuid().ToString("N");
-            var table = TB_EQUIP.Get(equipId);
-            var ability = new AbilityEquip();
-            if (table != null)
-                ability.Init(table, itemUid);
+            if (amount <= 0)
+                return;
 
-            _storage.AddEquip(itemUid, ability);
+            var table = TB_EQUIP.Get(equipId);
+            for (var i = 0; i < amount; i++)
+            {
+                var itemUid = Guid.NewGuid().ToString("N");
+                var ability = new AbilityEquip();
+                if (table != null)
+                    ability.Init(table, itemUid);
+
+                _storage.AddEquip(itemUid, ability);
+            }
         }
 
         void _applyHero(string heroId, long amount)

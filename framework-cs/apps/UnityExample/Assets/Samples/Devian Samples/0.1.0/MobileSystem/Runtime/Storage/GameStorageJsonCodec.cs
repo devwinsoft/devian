@@ -4,9 +4,11 @@ namespace Devian
 {
     internal static class GameStorageJsonCodec
     {
-        const int CurrentVersion = 8;
+        const int CurrentVersion = 9;
 
-        public static string Serialize(InventoryStorage inventory, PurchaseStorage purchase)
+        public static string Serialize(
+            InventoryStorage inventory,
+            PurchaseStorage purchase)
         {
             var root = new JObject
             {
@@ -17,7 +19,10 @@ namespace Devian
             return root.ToString();
         }
 
-        public static void DeserializeInto(string json, InventoryStorage inventory, PurchaseStorage purchase)
+        public static void DeserializeInto(
+            string json,
+            InventoryStorage inventory,
+            PurchaseStorage purchase)
         {
             var root = JObject.Parse(json);
             var version = root.Value<int?>("version") ?? 0;
@@ -34,6 +39,6 @@ namespace Devian
         }
 
         static bool isSupportedVersion(int version)
-            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == CurrentVersion;
+            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 8 || version == CurrentVersion;
     }
 }
