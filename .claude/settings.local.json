@@ -156,7 +156,9 @@
       "Bash(gcloud services enable:*)",
       "WebFetch(domain:support.google.com)",
       "WebFetch(domain:documentation.qonversion.io)",
-      "WebFetch(domain:adapty.io)"
+      "WebFetch(domain:adapty.io)",
+      "Bash(dotnet --version:*)",
+      "Bash(cat:*)"
     ]
   },
   "project": {

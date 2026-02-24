@@ -13,7 +13,7 @@
 - **부트 컨테이너 프리팹**: `Assets/Resources/Devian/Bootstrap.prefab`
 - **BaseBootstrap** (abstract MonoBehaviour): 개발자가 상속하여 부트 로직을 구현하는 베이스 클래스
 
-프리팹 생성 규칙은 [11-mobile-application](../../50-mobile-system/11-mobile-application/SKILL.md)에서 다룬다.
+프리팹 생성 규칙은 [11-mobile-bootstrap](../../50-mobile-system/11-mobile-bootstrap/SKILL.md)에서 다룬다.
 
 ---
 
@@ -42,7 +42,7 @@ public const string DefaultPrefabPath = "Devian/Bootstrap";
 ### 정적 상태
 
 ```csharp
-private static BaseBootstrap? _instance;
+private static BaseBootstrap _instance;
 private static bool _booted;
 
 public static bool IsCreated => _instance != null;
@@ -66,13 +66,13 @@ public static bool CreateFromResources()
 ```
 
 동작:
-1. 이미 생성되었으면 true 반환
+1. `_instance != null` → 이미 생성되었으면 true 반환
 2. `Resources.Load<GameObject>(DefaultPrefabPath)`로 프리팹 로드
 3. 프리팹이 없으면 false 반환
 4. `Object.Instantiate(prefab)` 실행
-5. `Object.DontDestroyOnLoad(instance)` 적용
-6. 프리팹에서 `BaseBootstrap` 컴포넌트 확인 (정확히 1개 필수)
-7. `_instance`에 저장 후 true 반환
+5. `GetComponentInChildren<BaseBootstrap>(true)`로 컴포넌트 탐색 (없으면 Destroy 후 false)
+6. `_instance`에 저장
+7. `Object.DontDestroyOnLoad(go)` 적용 후 true 반환
 
 #### BootProc
 
@@ -95,22 +95,23 @@ private static void ResetStatics()
 {
     _instance = null;
     _booted = false;
+    IsShuttingDown = false;
 }
 ```
 
 ---
 
-## 5. BaseScene과의 통합
+## 5. SceneBoot과의 통합
 
-BaseScene은 `UseBootstrap` 프로퍼티로 Bootstrap 사용 여부를 제어한다.
+SceneBoot은 SceneBase를 상속하며, Awake에서 Bootstrap 생성을 트리거하고 Start에서 BootProc 완료를 보장한다.
 
 ### Awake: 생성 트리거
 
 ```csharp
-private void Awake()
+protected override void Awake()
 {
-    OnInitAwake();
-    if (UseBootstrap && !BaseBootstrap.IsCreated)
+    base.Awake();
+    if (!BaseBootstrap.IsCreated)
     {
         BaseBootstrap.CreateFromResources();
     }
@@ -125,15 +126,12 @@ yield return BaseBootstrap.BootProc();  // 이미 부팅이면 즉시 종료
 yield return scene.OnEnter();
 ```
 
-### BaseScene.Start(): OnStart 전에 BootProc 호출
+### SceneBoot.Start(): OnStart 전에 BootProc 호출
 
 ```csharp
-private IEnumerator Start()
+private new IEnumerator Start()
 {
-    if (UseBootstrap)
-    {
-        yield return BaseBootstrap.BootProc();  // 이미 부팅이면 즉시 종료
-    }
+    yield return BaseBootstrap.BootProc();  // 이미 부팅이면 즉시 종료
     yield return OnStart();
 }
 ```

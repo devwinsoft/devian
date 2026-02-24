@@ -1,6 +1,5 @@
-// SSOT: skills/devian-unity/10-base-system/27-bootstrap/SKILL.md
+// SSOT: skills/devian-unity/10-foundation/16-bootstrap/SKILL.md
 
-using System;
 using System.Collections;
 using UnityEngine;
 
@@ -22,7 +21,7 @@ namespace Devian
         /// </summary>
         public const string DefaultPrefabPath = "Devian/Bootstrap";
 
-        private static BaseBootstrap? _instance;
+        private static BaseBootstrap _instance;
         private static bool _booted;
 
         /// <summary>
@@ -89,27 +88,22 @@ namespace Devian
                 return false;
             }
 
-            var go = UnityEngine.Object.Instantiate(prefab);
+            var go = Object.Instantiate(prefab);
 
             // instantiate된 결과에서 BaseBootstrap 찾기
-            var bootstraps = go.GetComponentsInChildren<BaseBootstrap>(true);
+            var bootstrap = go.GetComponentInChildren<BaseBootstrap>(true);
 
-            if (bootstraps == null || bootstraps.Length == 0)
+            if (bootstrap == null)
             {
                 Debug.LogError($"[BaseBootstrap] Prefab '{DefaultPrefabPath}' does not contain any BaseBootstrap component");
+                Object.Destroy(go);
                 return false;
             }
 
-            if (bootstraps.Length > 1)
-            {
-                Debug.LogError($"[BaseBootstrap] Prefab '{DefaultPrefabPath}' contains multiple BaseBootstrap components ({bootstraps.Length}). Expected exactly 1.");
-                return false;
-            }
-
-            _instance = bootstraps[0];
+            _instance = bootstrap;
 
             // 부트 컨테이너는 유지되어야 함
-            UnityEngine.Object.DontDestroyOnLoad(go);
+            Object.DontDestroyOnLoad(go);
 
             return true;
         }

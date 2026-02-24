@@ -4,12 +4,12 @@ using UnityEngine;
 namespace Devian
 {
     /// <summary>
-    /// BaseController 기반 입력 소비 컨트롤러.
+    /// ActorController 기반 입력 소비 컨트롤러.
     /// onInit에서 InputManager.RegisterController, Clear에서 UnregisterController.
     /// InputEnabled == false이면 콜백 무시.
     /// 변화가 있을 때만 4개 virtual 콜백을 호출한다.
     /// </summary>
-    public abstract class BaseInputController : BaseController, IBaseInputController
+    public abstract class BaseInputController : ActorController<ActorObject>, IBaseInputController
     {
         [SerializeField] private float _axisEpsilon = 0.001f;
 
@@ -28,7 +28,7 @@ namespace Devian
 
         // ---- Actor lifecycle ----
 
-        protected override void onInit(BaseActor actor)
+        protected override void onInit(ActorObject actor)
         {
             InputManager.Instance.RegisterController(this);
 

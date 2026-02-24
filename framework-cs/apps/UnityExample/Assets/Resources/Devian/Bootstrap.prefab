@@ -14,9 +14,9 @@ GameObject:
   - component: {fileID: 1856151958633733160}
   - component: {fileID: 8802484957537992892}
   - component: {fileID: 7627467817636175406}
-  - component: {fileID: 8321347923667030604}
   - component: {fileID: 4706526706863056144}
   - component: {fileID: 8648204434353560985}
+  - component: {fileID: 8321347923667030604}
   - component: {fileID: 230484287148134745}
   - component: {fileID: 3514971825711784064}
   - component: {fileID: 2516925715426756820}
@@ -114,18 +114,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 945aaaac012ccc1498cd10c7eea4ada7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Unity::Devian.TableManager
---- !u!114 &8321347923667030604
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2454387350981742136}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 14c7b65e654c0457e9530444a013b19a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Devian.Samples.GameContents::Devian.GameNetManager
 --- !u!114 &4706526706863056144
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -167,6 +155,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58edb072859a9475285a3a211485df5b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.VirtualGamepadDriver
+--- !u!114 &8321347923667030604
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2454387350981742136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 14c7b65e654c0457e9530444a013b19a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Samples.GameContents::Devian.GameNetManager
 --- !u!114 &230484287148134745
 MonoBehaviour:
   m_ObjectHideFlags: 0

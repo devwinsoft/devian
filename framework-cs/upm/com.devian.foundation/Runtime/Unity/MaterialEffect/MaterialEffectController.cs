@@ -8,7 +8,7 @@ namespace Devian
     /// Controller ↔ Driver 1:1 매칭. PropertyBlock/Common 기능 제거됨.
     /// SSOT: skills/devian-unity/14-effect-system/28-material-effect-controller/SKILL.md
     /// </summary>
-    public sealed class MaterialEffectController : BaseController<GameObject>
+    public sealed class MaterialEffectController : MonoBehaviour
     {
         [Tooltip("Driver component to use. If null, will search for BaseMaterialEffectDriver on this GameObject.")]
         [SerializeField] private BaseMaterialEffectDriver _driverComponent;
@@ -35,9 +35,6 @@ namespace Devian
 
         private void Awake()
         {
-            // 0. BaseController 바인딩
-            Init(gameObject);
-
             // 1. driver resolve
             if (_driverComponent == null)
             {

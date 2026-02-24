@@ -8,7 +8,9 @@ namespace Devian
     [RequireComponent(typeof(AccountManager))]
     [RequireComponent(typeof(SaveDataManager))]
     [RequireComponent(typeof(GameStorageManager))]
-    public abstract class MobileApplication : BaseBootstrap
+    [RequireComponent(typeof(PurchaseManager))]
+    [RequireComponent(typeof(RewardManager))]
+    public abstract class MobileBootstrap : BaseBootstrap
     {
         protected override IEnumerator OnBootProc()
         {

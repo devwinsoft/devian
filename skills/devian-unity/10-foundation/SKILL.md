@@ -24,7 +24,7 @@ Type: Index / Directory
 | 12 | DownloadManager | Addressables Label 기반 Patch/Download (CompoSingleton) | `19-download-manager/SKILL.md` |
 | 13 | Pb64Storage | pb64를 Unity TextAsset .asset로 저장하는 규약 | `skills/devian-tools/11-builder/35-pb64-storage/SKILL.md` |
 | 14 | TableManager | TB_/ST_ 테이블 로딩/캐시/언로드 (ndjson/pb64) | `11-table-manager/SKILL.md` |
-| 15 | SceneTransManager | Scene 전환 직렬화 + 페이드 + BaseScene Enter/Exit | `17-scene-trans-manager/SKILL.md` |
+| 15 | SceneTransManager | Scene 전환 직렬화 + 페이드 + SceneBase/SceneBoot Enter/Exit | `17-scene-trans-manager/SKILL.md` |
 | 16 | SoundTables | TB_SOUND/TB_VOICE 테이블 규약 (컬럼/책임 분리) | `../22-sound-system/16-sound-tables/SKILL.md` |
 | 17 | SoundManager | 테이블 기반 사운드 재생/풀/채널/쿨타임 관리 | `../22-sound-system/17-sound-manager/SKILL.md` |
 | 18 | VoiceTableResolve | Voice 로딩 시 언어별 Resolve 캐시 + 재생 시 캐시 조회 | `../22-sound-system/18-voice-table-resolve/SKILL.md` |
@@ -36,6 +36,7 @@ Type: Index / Directory
 | 26 | FsmController | FIFO 큐 기반 FSM 컨트롤러 (미등록 throw, self-transition 분리) | `24-fsm-controller/SKILL.md` |
 | 27 | Bootstrap | Resources 기반 Bootstrap Root + BaseBootstrap 부팅 파이프라인 | `16-bootstrap/SKILL.md` |
 | 32 | InputManager | InputActionAsset 기반 입력 수집/정규화/발행 (InputFrame, InputBus, ButtonMap) | `31-input-manager/SKILL.md` |
+| 30 | ActorObject / ActorController | Actor-Controller 패턴 공통 베이스 (ActorObject, ActorController) | `25-actor-system/SKILL.md` |
 | 33 | InputController | 오브젝트 부착형 입력 소비 (BaseInputController, IInputSpace) | `32-input-controller/SKILL.md` |
 | 34 | VirtualGamepad | InputSystem 커스텀 가상 디바이스 + CompoSingleton Driver | `../50-mobile-system/61-virtual-gamepad/SKILL.md` |
 

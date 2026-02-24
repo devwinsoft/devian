@@ -6,9 +6,9 @@ Type: Component Specification
 
 ## 목적
 
-`BaseInputController`는 **BaseController 기반 입력 소비** 컨트롤러이다.
+`BaseInputController`는 **ActorController\<ActorObject\> 기반 입력 소비** 컨트롤러이다.
 
-- `BaseController`를 상속하여 Actor lifecycle에 통합
+- `ActorController<ActorObject>`를 상속하여 Actor lifecycle에 통합
 - `onInit(actor)`에서 `InputManager.Instance.RegisterController(this)` — 등록
 - `Clear()` override에서 `UnregisterController(this)` + `base.Clear()` — 해제
   - `BaseBootstrap.IsShuttingDown` 시 매니저 접근 없이 `base.Clear()` 호출
@@ -24,7 +24,7 @@ Type: Component Specification
 ### 포함
 
 - `IBaseInputController` — 입력 컨트롤러 계약
-- `BaseInputController` — BaseController 상속, Actor lifecycle 기반 컨트롤러 등록/해제, change-only 콜백
+- `BaseInputController` — ActorController\<ActorObject\> 상속, Actor lifecycle 기반 컨트롤러 등록/해제, change-only 콜백
 - `IInputSpace` — Move(Vector2) → World(Vector3) 변환 전략 인터페이스
 - `WorldXZSpace` — `(x, y) → (x, 0, y)` 탑다운/2D용
 - `ViewFlattenedSpace` — 카메라 forward/right y=0 평탄화 후 합성
@@ -48,13 +48,13 @@ namespace Devian
 
 ### 1. 컨트롤러 등록 lifecycle (Actor 기반)
 
-- `BaseController`를 상속 → Actor의 Init/Clear lifecycle에 통합
-- `onInit(BaseActor actor)`: `InputManager.Instance.RegisterController(this)` + prev 상태 리셋
+- `ActorController<ActorObject>`를 상속 → Actor의 Init/Clear lifecycle에 통합
+- `onInit(ActorObject actor)`: `InputManager.Instance.RegisterController(this)` + prev 상태 리셋
 - `Clear()` override: 종료 방어 + `UnregisterController(this)` + prev 리셋 + `base.Clear()`
   - `BaseBootstrap.IsShuttingDown` 시 매니저 접근 없이 `base.Clear()` 호출
   - `IsCleared` 체크 + `SingletonRegistry.TryGet<InputManager>` 로 안전한 해제
 - Actor가 `RegisterController<T>()`로 등록, `Init()` 루프에서 초기화 (자동 등록 없음)
-- Priority는 BaseController에서 상속 (`virtual int Priority => 0`) — 중복 선언 없음
+- Priority는 ActorController\<TOwner\>에서 상속 (`virtual int Priority => 0`) — 중복 선언 없음
 - InputManager는 싱글톤을 신뢰 (Bootstrap 보장, SerializeField 없음)
 - Bus(IInputBus/InputBus)는 삭제됨 — InputManager가 직접 `__Consume(frame)`을 호출
 
@@ -113,13 +113,13 @@ public interface IBaseInputController
 }
 
 // --- BaseInputController ---
-public abstract class BaseInputController : BaseController, IBaseInputController
+public abstract class BaseInputController : ActorController<ActorObject>, IBaseInputController
 {
     public bool InputEnabled { get; set; }
     public IInputSpace InputSpace { get; set; }
 
-    // Actor lifecycle (BaseController overrides)
-    protected override void onInit(BaseActor actor);   // RegisterController + reset prev
+    // Actor lifecycle (ActorController<ActorObject> overrides)
+    protected override void onInit(ActorObject actor);   // RegisterController + reset prev
     public override void Clear();                       // UnregisterController + reset prev + base.Clear()
 
     public void __Consume(InputFrame frame);
@@ -167,12 +167,12 @@ public class ViewFlattenedSpace : IInputSpace
 ## DoD (Definition of Done)
 
 - [ ] 모든 파일이 `namespace Devian` 사용
-- [ ] BaseInputController가 BaseController를 상속 (abstract class)
+- [ ] BaseInputController가 ActorController\<ActorObject\>를 상속 (abstract class)
 - [ ] 자동 등록 없음 — Actor가 `RegisterController<T>()`로 등록
 - [ ] `onInit`에서 RegisterController (Actor lifecycle)
 - [ ] `Clear()` override에서 UnregisterController + base.Clear()
 - [ ] `Clear()` 종료 방어: `BaseBootstrap.IsShuttingDown` + `SingletonRegistry.TryGet`
-- [ ] Priority는 BaseController에서 상속 (중복 선언 없음)
+- [ ] Priority는 ActorController\<TOwner\>에서 상속 (중복 선언 없음)
 - [ ] InputManager.Instance(싱글톤)으로만 접근 (SerializeField 없음)
 - [ ] InputEnabled guard 적용
 - [ ] 4개 virtual 콜백: onInputMove, onInputLook, onButtonPress, onButtonRelease

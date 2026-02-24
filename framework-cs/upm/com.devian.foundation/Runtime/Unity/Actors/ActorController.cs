@@ -2,9 +2,9 @@ using UnityEngine;
 
 namespace Devian
 {
-    public abstract class BaseController : MonoBehaviour
+    public abstract class ActorController<TOwner> : MonoBehaviour
     {
-        private BaseActor _actor;
+        private TOwner _owner;
         private bool _initialized;
         private bool _cleared;
 
@@ -18,23 +18,23 @@ namespace Devian
         protected virtual void onAwake() { }
 
         /// <summary>
-        /// Called by BaseActor.RegisterController&lt;T&gt;() when added to actor list.
+        /// Called by owner Init loop or standalone Awake.
         /// </summary>
-        public void Init(BaseActor actor)
+        public void Init(TOwner owner)
         {
             if (_initialized) return;
             if (_cleared) return;
 
-            _actor = actor;
+            _owner = owner;
             _initialized = true;
 
-            onInit(actor);
+            onInit(owner);
         }
 
-        protected virtual void onInit(BaseActor actor) { }
+        protected virtual void onInit(TOwner owner) { }
 
         /// <summary>
-        /// Called by actor.Clear() (also on pool despawn / destroy).
+        /// Called by owner.Clear() (also on pool despawn / destroy).
         /// </summary>
         public virtual void Clear()
         {
@@ -44,12 +44,12 @@ namespace Devian
             onClear();
 
             _initialized = false;
-            _actor = null;
+            _owner = default;
         }
 
         protected virtual void onClear() { }
 
-        public BaseActor Actor => _actor;
+        public TOwner Owner => _owner;
         public bool IsInitialized => _initialized;
         public bool IsCleared => _cleared;
     }

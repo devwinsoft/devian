@@ -1,4 +1,4 @@
-# 11-mobile-application — MobileApplication (Bootstrap Sample)
+# 11-mobile-bootstrap — MobileBootstrap (Bootstrap Sample)
 
 
 Status: ACTIVE
@@ -6,8 +6,8 @@ AppliesTo: v10
 
 
 ## Purpose
-MobileApplication 기반 부트스트랩 샘플.
-`BaseBootstrap`을 상속한 추상 클래스 `MobileApplication`을 제공하여, 앱별 초기화 로직의 진입점을 정의한다.
+MobileBootstrap 기반 부트스트랩 샘플.
+`BaseBootstrap`을 상속한 추상 클래스 `MobileBootstrap`을 제공하여, 앱별 초기화 로직의 진입점을 정의한다.
 
 
 ## Sample SSOT
@@ -18,9 +18,9 @@ MobileApplication 기반 부트스트랩 샘플.
 
 > 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../07-samples-creation-guide/SKILL.md)
 
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Bootstrap/MobileApplication.cs`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Bootstrap/MobileApplication.cs`
-- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Bootstrap/MobileApplication.cs`
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Bootstrap/MobileBootstrap.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Bootstrap/MobileBootstrap.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Bootstrap/MobileBootstrap.cs`
 
 
 ## Usage
@@ -28,7 +28,7 @@ MobileApplication 기반 부트스트랩 샘플.
 ```csharp
 namespace MyApp
 {
-    public sealed class MyApp : MobileApplication
+    public sealed class MyApp : MobileBootstrap
     {
         protected override System.Collections.IEnumerator OnBootProc()
         {
@@ -42,7 +42,7 @@ namespace MyApp
 }
 ```
 
-1. `MobileApplication`을 상속한 클래스를 만든다.
+1. `MobileBootstrap`을 상속한 클래스를 만든다.
 2. `OnBootProc()`을 override하고, `yield return base.OnBootProc();`을 호출하여 공통 초기화를 수행한다.
 3. `base.OnBootProc()` 이후에 앱별 초기화 로직을 구현한다.
 4. Bootstrap prefab에 해당 컴포넌트를 부착한다.
@@ -51,14 +51,14 @@ namespace MyApp
 ## Resource Prefab 생성 규칙
 
 - Bootstrap prefab 경로: `Assets/Resources/Devian/Bootstrap.prefab`
-- prefab에 `MobileApplication` 파생 컴포넌트를 **정확히 1개** 부착해야 한다.
+- prefab에 `MobileBootstrap` 파생 컴포넌트를 **정확히 1개** 부착해야 한다.
 - 프레임워크가 파생 컴포넌트를 자동 추가하지 않는다 — 개발자가 직접 추가해야 한다.
 - prefab은 수동으로 생성한다 (자동 생성 코드 없음).
 
 
 ## RequireComponent
 
-MobileApplication에 부착된 RequireComponent:
+MobileBootstrap에 부착된 RequireComponent:
 
 - `AccountManager`
 - `SaveDataManager`

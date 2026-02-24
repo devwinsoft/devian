@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/10-base-system/15-scene-trans-manager/SKILL.md
+// SSOT: skills/devian-unity/10-foundation/17-scene-trans-manager/SKILL.md
 
 #nullable enable
 
@@ -12,7 +12,7 @@ namespace Devian
     /// <summary>
     /// Scene 전환 파이프라인을 단일화(직렬화)하는 싱글턴.
     /// 전환 순서: FadeOut → beforeUnload → OnExit → Load → afterLoad → BootProc → OnEnter → FadeIn
-    /// OnStart는 각 BaseScene.Start()에서 호출된다.
+    /// OnStart는 각 SceneBase.Start() (또는 SceneBoot.Start())에서 호출된다.
     ///
     /// 이 Manager는 페이드 UI를 직접 소유하지 않으며, FadeOutRequested/FadeInRequested 이벤트로 위임한다.
     ///
@@ -52,14 +52,14 @@ namespace Devian
 
         /// <summary>
         /// 부팅 시 첫 씬의 OnEnter()를 호출한다 (LoadSceneAsync를 거치지 않는 케이스).
-        /// OnStart는 BaseScene.Start()에서 호출된다.
+        /// OnStart는 SceneBase.Start() (또는 SceneBoot.Start())에서 호출된다.
         /// </summary>
         private IEnumerator Start()
         {
             if (_isTransitioning)
                 yield break;
 
-            var scene = FindActiveBaseScene();
+            var scene = FindActiveSceneBase();
             if (scene == null)
                 yield break;
 
@@ -121,7 +121,7 @@ namespace Devian
             }
 
             // 3) Exit current scene (best-effort)
-            var current = FindActiveBaseScene();
+            var current = FindActiveSceneBase();
             if (current != null)
             {
                 yield return current.OnExit();
@@ -137,7 +137,7 @@ namespace Devian
             }
 
             // 6) Enter next scene
-            var next = FindActiveBaseScene();
+            var next = FindActiveSceneBase();
             if (next != null)
             {
                 // BootProc 호출 (이미 부팅이면 즉시 종료)
@@ -160,20 +160,20 @@ namespace Devian
         // Internal Helpers
         // ====================================================================
 
-        private BaseScene? FindActiveBaseScene()
+        private SceneBase? FindActiveSceneBase()
         {
-            // 활성 씬 root objects에서만 BaseScene 탐색 (정책: 1개 권장)
+            // 활성 씬 root objects에서만 SceneBase 탐색 (정책: 1개 권장)
             var active = SceneManager.GetActiveScene();
             if (!active.IsValid())
                 return null;
 
             var roots = active.GetRootGameObjects();
-            BaseScene? first = null;
+            SceneBase? first = null;
             int count = 0;
 
             for (int i = 0; i < roots.Length; i++)
             {
-                var found = roots[i].GetComponentsInChildren<BaseScene>(includeInactive: true);
+                var found = roots[i].GetComponentsInChildren<SceneBase>(includeInactive: true);
                 if (found == null || found.Length == 0) continue;
 
                 for (int j = 0; j < found.Length; j++)
@@ -185,7 +185,7 @@ namespace Devian
             }
 
             if (count > 1)
-                Log.Warn("SceneTransManager: multiple BaseScene found in active scene. Using the first one.");
+                Log.Warn("SceneTransManager: multiple SceneBase found in active scene. Using the first one.");
 
             return first;
         }

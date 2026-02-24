@@ -3,9 +3,9 @@ using UnityEngine;
 
 namespace Devian
 {
-    public abstract class BaseActor : MonoBehaviour, IPoolable<BaseActor>
+    public abstract class ActorObject : MonoBehaviour, IPoolable<ActorObject>
     {
-        private readonly List<BaseController> _controllers = new();
+        private readonly List<ActorController<ActorObject>> _controllers = new();
         private bool _initialized;
         private bool _cleared;
 
@@ -90,7 +90,7 @@ namespace Devian
 
         // --- Controller registry ---
 
-        public T RegisterController<T>() where T : BaseController
+        public T RegisterController<T>() where T : ActorController<ActorObject>
         {
             T controller = gameObject.GetComponent<T>();
             if (controller == null)
@@ -102,7 +102,7 @@ namespace Devian
             return controller;
         }
 
-        public T RegisterController<T>(GameObject obj) where T : BaseController
+        public T RegisterController<T>(GameObject obj) where T : ActorController<ActorObject>
         {
             T controller = obj.GetComponent<T>();
             if (controller == null)
@@ -114,13 +114,13 @@ namespace Devian
             return controller;
         }
 
-        public bool UnregisterController(BaseController controller)
+        public bool UnregisterController(ActorController<ActorObject> controller)
         {
             if (controller == null) return false;
             return _controllers.Remove(controller);
         }
 
-        public IReadOnlyList<BaseController> Controllers => _controllers;
+        public IReadOnlyList<ActorController<ActorObject>> Controllers => _controllers;
         public bool IsInitialized => _initialized;
         public bool IsCleared => _cleared;
     }

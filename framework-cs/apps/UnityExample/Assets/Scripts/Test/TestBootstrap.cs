@@ -8,7 +8,7 @@ using System.Threading;
 /// BaseBootstrap 파생 예제.
 /// Bootstrap.prefab에 이 컴포넌트를 추가하여 사용한다.
 /// </summary>
-public class TestBootstrap : MobileApplication
+public class TestBootstrap : MobileBootstrap
 {
     protected override IEnumerator OnBootProc()
     {

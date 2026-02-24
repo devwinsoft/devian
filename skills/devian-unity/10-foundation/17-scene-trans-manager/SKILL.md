@@ -6,41 +6,43 @@ Type: Component
 
 ## Purpose
 
-Scene 전환 파이프라인을 단일화(직렬화)하고, 씬별 초기화/정리를 BaseScene 훅으로 분리한다.
+Scene 전환 파이프라인을 단일화(직렬화)하고, 씬별 초기화/정리를 SceneBase 훅으로 분리한다.
 
 ---
 
 ## Files (SSOT)
 
-- `framework-cs/upm/com.devian.foundation/Runtime/Unity/Scene/BaseScene.cs`
+- `framework-cs/upm/com.devian.foundation/Runtime/Unity/Scene/SceneBase.cs`
+- `framework-cs/upm/com.devian.foundation/Runtime/Unity/Scene/SceneBoot.cs`
 - `framework-cs/upm/com.devian.foundation/Runtime/Unity/Scene/SceneTransManager.cs`
 
 ---
 
 ## Concepts
 
-### BaseScene
+### SceneBase
 
+씬 라이프사이클 훅을 제공하는 추상 베이스 클래스. Bootstrap과 무관한 순수 라이프사이클만 담당한다.
 씬 루트(또는 유일한 오브젝트)에 1개만 존재하는 것을 권장한다. 2개 이상이면 경고 로그를 출력하고 첫 번째만 사용한다.
 
 **라이프사이클 훅:**
 
 | 훅 | 호출 시점 | 호출 주체 | 용도 |
 |----|----------|----------|------|
-| `OnInitAwake()` | Unity Awake()에서 항상 1회 | BaseScene.Awake | 레퍼런스 캐싱, 초기 상태 구성, 컴포넌트 연결 등 전환과 무관한 준비 작업 |
+| `OnInitAwake()` | Unity Awake()에서 항상 1회 | SceneBase.Awake | 레퍼런스 캐싱, 초기 상태 구성, 컴포넌트 연결 등 전환과 무관한 준비 작업 |
 | `OnEnter()` | 씬 진입 시 (전환 또는 부팅) | SceneTransManager | 씬 진입 상태 초기화 |
-| `OnStart()` | Unity Start 시점 | BaseScene.Start | 씬 시작 로직 |
+| `OnStart()` | Unity Start 시점 | SceneBase.Start | 씬 시작 로직 |
 | `OnExit()` | 전환으로 이탈 시 | SceneTransManager | 정리 작업 |
+
+### SceneBoot
+
+`SceneBase`를 상속하여 Bootstrap 통합 로직을 추가한 클래스. 대부분의 게임 씬은 이 클래스를 상속한다.
 
 **Bootstrap 통합:**
 
-| 프로퍼티 | 설명 |
-|---------|------|
-| `UseBootstrap` | Bootstrap 사용 여부 (기본 true). false로 override하면 해당 씬에서는 부트 트리거를 스킵 |
-
-- Awake()에서 `UseBootstrap`이 true이고 Bootstrap이 아직 생성되지 않았으면 `BaseBootstrap.CreateFromResources()`로 생성 트리거
+- Awake()에서 Bootstrap이 아직 생성되지 않았으면 `BaseBootstrap.CreateFromResources()`로 생성 트리거
 - SceneTransManager는 OnEnter 전에 `BaseBootstrap.BootProc()`를 호출한다 (이미 부팅이면 즉시 종료)
-- BaseScene.Start()에서 OnStart 전에 `BaseBootstrap.BootProc()`를 호출한다 (이미 부팅이면 즉시 종료)
+- SceneBoot.Start()에서 OnStart 전에 `BaseBootstrap.BootProc()`를 호출한다 (이미 부팅이면 즉시 종료)
 
 ### SceneTransManager
 
@@ -50,17 +52,17 @@ Bootstrap prefab에 포함되어 부팅 시 자동 등록된다.
 **책임:**
 - 전환 흐름 직렬화 (동시 전환 방지)
 - Fade 시간 전달 (이벤트 위임)
-- BaseScene OnExit/OnEnter 호출
+- SceneBase OnExit/OnEnter 호출
 - Hook(beforeUnload/afterLoad) 실행
 
 **전환 순서 (LoadSceneAsync):**
 1. FadeOutRequested 이벤트 발생 (fadeOutSeconds > 0인 경우)
 2. beforeUnload 훅 실행 (있으면)
-3. 현재 씬의 `BaseScene.OnExit()` 호출
+3. 현재 씬의 `SceneBase.OnExit()` 호출
 4. `AssetManager.LoadSceneAsync()` 로 새 씬 로드
 5. afterLoad 훅 실행 (있으면)
 6. `BaseBootstrap.BootProc()` 호출 (이미 부팅이면 즉시 종료)
-7. 새 씬의 `BaseScene.OnEnter()` 호출
+7. 새 씬의 `SceneBase.OnEnter()` 호출
 8. FadeInRequested 이벤트 발생 (fadeInSeconds > 0인 경우)
 
 **특징:**
@@ -87,10 +89,10 @@ public event Func<float, IEnumerator>? FadeInRequested;
 
 ### 부팅 씬 (첫 씬) 처리
 
-SceneTransManager는 `Start()`에서 Active Scene의 BaseScene을 찾아:
+SceneTransManager는 `Start()`에서 Active Scene의 SceneBase를 찾아:
 - `BaseBootstrap.BootProc()`를 호출한다 (이미 부팅이면 즉시 종료)
 - `OnEnter()`를 호출한다
-- OnStart는 BaseScene.Start()에서 호출된다
+- OnStart는 SceneBase.Start() (또는 SceneBoot.Start())에서 호출된다
 
 ### Additive 모드
 
@@ -130,7 +132,7 @@ public IEnumerator LoadSceneAsync(
 
 - 로깅은 `Devian.Log` 사용 (메시지 1개만, 필요하면 ex 문자열 포함)
 - 실패 시 `Devian.Log.Error("...")`
-- BaseScene이 여러 개 발견되면 `Devian.Log.Warn(...)` 로 경고 후 첫 번째 사용
+- SceneBase가 여러 개 발견되면 `Devian.Log.Warn(...)` 로 경고 후 첫 번째 사용
 
 ---
 
@@ -222,14 +224,11 @@ IEnumerator OnFadeIn(float seconds)
 }
 ```
 
-### BaseScene 구현 예시
+### SceneBoot 구현 예시
 
 ```csharp
-public class MainScene : BaseScene
+public class MainScene : SceneBoot
 {
-    // Bootstrap 사용 여부 (기본 true). false면 부트 트리거 스킵
-    // protected override bool UseBootstrap => true;
-
     // 전환과 무관하게 항상 1회 호출 (Unity Awake 시점)
     protected override void OnInitAwake()
     {
@@ -243,7 +242,7 @@ public class MainScene : BaseScene
         yield return null;
     }
 
-    // Unity Start 시점에 호출 (BaseScene.Start()가 호출)
+    // Unity Start 시점에 호출 (SceneBoot.Start()가 호출)
     public override IEnumerator OnStart()
     {
         // 씬 시작 로직

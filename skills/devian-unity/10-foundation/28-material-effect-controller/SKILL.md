@@ -18,7 +18,7 @@
 ## 클래스 선언
 
 ```csharp
-MaterialEffectController : BaseController<GameObject>
+MaterialEffectController : MonoBehaviour
 ```
 
 ## 핵심 구성요소
@@ -82,8 +82,7 @@ if (selectedEffect != null) selectedEffect.Apply(driver)
 
 ## Awake 순서
 
-1. `Init(gameObject)` 호출 (BaseController 바인딩)
-2. driver resolve (driverComponent 우선, 없으면 자동 탐색)
+1. driver resolve (driverComponent 우선, 없으면 자동 탐색)
 3. `driver.CaptureBaseline()`
 4. effect 0개 상태이므로 baseline(handle 0) 적용
 
@@ -177,7 +176,7 @@ public sealed class MaterialSetMaterialEffectAsset : MaterialEffectAsset
 ### Play Mode 진입 시 자동 클린업
 
 `MaterialEffectEditorHooks`가 `EditorApplication.playModeStateChanged` 구독:
-- `ExitingEditMode` 시 모든 `MaterialEffectController`의 `_EditorPreviewOff()` 호출
+- `ExitingEditMode` 시 모든 `MaterialEffectController`의 `EditorPreviewOff()` 호출
 - baseline 오염 방지 (Preview 상태가 Play 시작 baseline으로 캡처되는 사고 방지)
 
 ### Custom Inspector (MaterialEffectControllerEditor)
