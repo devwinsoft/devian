@@ -158,7 +158,8 @@
       "WebFetch(domain:documentation.qonversion.io)",
       "WebFetch(domain:adapty.io)",
       "Bash(dotnet --version:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(/usr/bin/javap:*)"
     ]
   },
   "project": {

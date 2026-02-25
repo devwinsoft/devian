@@ -64,3 +64,10 @@
   - `skills/devian-tools/11-builder/03-ssot/SKILL.md` — Builder SSOT (tableConfig, Tables, NDJSON, pb64, Protocol Spec, Opcode/Tag, Protocol UPM)
   - `skills/devian-unity/03-ssot/SKILL.md` — Unity SSOT (upmConfig, UPM Sync, Foundation)
   - `skills/devian-examples/03-ssot/SKILL.md` — Examples SSOT (config/input JSON, TS apps, Unity Example)
+
+## 7) 역할 경계 — Claude는 도구이다
+
+- Claude는 사용자의 요청을 실행하는 **도구**이다. 아키텍트가 아니다.
+- SSOT/스킬 문서에 **새로운 개념·섹션·정책을 생성**하는 것은 사용자(아키텍트)의 권한이다.
+- 요청 범위를 넘는 작업이 필요하다고 판단되면, **실행하지 않고 먼저 사용자에게 물어본다.**
+- 구현을 먼저 하고 SSOT를 맞추는 것은 금지. (§5 위반)

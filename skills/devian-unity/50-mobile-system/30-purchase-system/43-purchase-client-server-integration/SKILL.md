@@ -102,7 +102,6 @@ Reward는 지급 실행만 담당하며, 멱등/복구 판단은 PurchaseManager
 
 - Client: `PurchaseManager.GetLatestConsumablePurchase30dAsync()`
 - Server: `getRecentPurchases30d` (`kind="Consumable"`, `pageSize=1`)
-- Rental latest 조회도 별도 callable을 만들지 않고 동일하게 `getRecentPurchases30d`를 `kind="Rental"`로 호출한다.
 - 서버가 "최근 30일"을 계산한다. 클라/기기 시간 사용 금지.
 - 최근 30일 내 해당 kind 내역이 없으면 `CommonResult.Failure(COMMON_SERVER, ...)` 반환.
 

@@ -130,6 +130,8 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 ### 공개 메소드 규약(Policy)
 
 
+- `InitializeAsync(ct)` → `Task<CommonResult>`
+  - IAP 초기화 (Connect + FetchProducts). Idempotent.
 - `PurchaseAsync(internalProductId, ct)` → `Task<CommonResult<PurchaseFinalResult>>`
   - 단일 구매 진입점. `TB_PRODUCT`에서 `Kind`를 조회하여 구매 유형(Consumable/Rental/Subscription/SeasonPass)을 자동 결정
   - 최종 지급은 서버 `verifyPurchase` 결과만 신뢰
@@ -140,7 +142,7 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 - `ReportPurchaseClientGrantFailureAsync(purchaseId, ct)` — 로컬 지급 실패 보고
 - `RestoreAsync(ct)` (iOS 스토어 복원, manual/fallback)
 - `GetLatestConsumablePurchase30dAsync(ct)` — 최근 30일 Consumable 최신 1건 조회
-- `GetLatestRentalPurchase30dAsync(ct)` — 최근 30일 Rental 최신 1건 조회
+- `SyncEntitlementsAsync(ct)` → `Task<CommonResult>` — 서버 entitlements 동기화 (Rental/SeasonPass → InventoryStorage)
 - `RefundAsync(ct)` — 환불 상태 동기화/처리
 
 

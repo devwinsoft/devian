@@ -70,8 +70,11 @@ CompoSingleton<PurchaseManager>.Instance
   - 일반적인 SeasonPass/Rental 복원 정본 경로는 서버 상태 동기화이며, `RestoreAsync()`와 개념을 분리한다.
 - `GetLatestConsumablePurchase30dAsync(ct)` → `Task<CommonResult<RecentPurchaseItem>>`
   - 서버에서 최근 30일 내 최신 Consumable 구매 1건 조회
-- `GetLatestRentalPurchase30dAsync(ct)` → `Task<CommonResult<RecentPurchaseItem>>`
-  - 서버에서 최근 30일 내 최신 Rental 구매 1건 조회
+- `SyncEntitlementsAsync(ct)` → `Task<CommonResult>`
+  - 서버 `getEntitlements`를 호출하여 Rental/SeasonPass/Currency 상태를 InventoryStorage에 동기화
+  - Rental의 `expiresAtServerUtcMs`를 `clockDelta`로 클라이언트 시간(`expiresAtClientUtcMs`)으로 변환하여 저장
+  - Post-Sync Orchestration에서 Rental 데이터 존재 시(`Inventory.Rentals.Count > 0`) 조건부 호출
+  - 실패 시 non-fatal (stale 값 유지, 다음 성공 시 교정)
 - `RefundAsync(ct)` → `Task<CommonResult<RefundResult>>`
   - 서버에서 환불/조정 내역을 조회하여 로컬 인벤토리 회수 적용
 
@@ -111,6 +114,23 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
   - 용도: `ConfirmPurchase` 완료 후 서버 `storeConfirmStatus=CONFIRMED` 기록
 - SDK: `Firebase.Functions` (Firebase Unity SDK 13.7.0)
 - asmdef: `overrideReferences: false` → Plugins의 `Firebase.Functions.dll` 자동 참조 (명시 추가 불필요)
+
+
+---
+
+
+## Post-Sync Orchestration (SaveData 로드 후 표준 순서)
+
+1. `SaveDataManager.SyncAsync(slot, ct)` → `SyncResult`
+2. `GameStorageManager.LoadFromPayload(payload)` → inventory, purchase 역직렬화
+3. `if (Inventory.Rentals.Count > 0)` `PurchaseManager.SyncEntitlementsAsync(ct)` → Rental 서버 시간 재동기화 (조건부)
+4. `PurchaseManager.InitializeAsync(ct)` → IAP 초기화
+5. `PurchaseManager.RetryInterruptedPurchaseAsync(ct)` → 중단 구매 복구
+6. `PurchaseManager.RefundAsync(ct)` → 환불 처리
+
+- **Step 3 이유**: `Inventory.Rentals`의 `expiresAtClientUtcMs`는 저장 시점의 클라이언트 시간 기준. 다른 기기/시간 경과 후 로드하면 stale. `SyncEntitlementsAsync`가 서버 `serverNowUtcMs`로 clock delta를 재계산하여 교정.
+- **조건부**: Rental 데이터가 없으면 불필요한 서버 호출을 하지 않는다.
+- **실패 non-fatal**: 오프라인/Guest 시 stale 값 유지, 다음 성공 시 교정.
 
 
 ---

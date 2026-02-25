@@ -5,6 +5,7 @@ namespace Devian
         InventoryStorage _inventory => InventoryManager.Instance.Storage;
         readonly PurchaseStorage _purchase = new();
 
+        public InventoryStorage Inventory => _inventory;
         public PurchaseStorage Purchase => _purchase;
 
         public string ToJson() => GameStorageJsonCodec.Serialize(_inventory, _purchase);

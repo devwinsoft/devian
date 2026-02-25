@@ -101,3 +101,6 @@
 {"Id":"PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED","Msg_key":"","Msg":"ackPurchaseStoreConfirm callable failed."}
 {"Id":"PURCHASE_REFUND_APPLY_FAILED","Msg_key":"","Msg":"Failed to apply refund adjustment."}
 {"Id":"INVENTORY_REFUND_INSUFFICIENT","Msg_key":"","Msg":"Insufficient inventory to revoke refund rewards."}
+{"Id":"ACCOUNT_SWITCH_UNSUPPORTED","Msg_key":"","Msg":"Account switch is not supported for this login combination."}
+{"Id":"ACCOUNT_SWITCH_GUEST_UPGRADE_FAILED","Msg_key":"","Msg":"Failed to upgrade guest account during account switch."}
+{"Id":"ACCOUNT_SWITCH_LOGIN_FAILED","Msg_key":"","Msg":"Failed to sign in target account during account switch."}

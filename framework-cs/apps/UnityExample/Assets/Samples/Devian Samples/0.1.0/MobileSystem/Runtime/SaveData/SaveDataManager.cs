@@ -144,6 +144,21 @@ namespace Devian
 
         public async Task<CommonResult<SyncResult>> SyncAsync(string slot, CancellationToken ct)
         {
+            var result = await syncSlotCoreAsync(slot, ct);
+
+            if (result.IsSuccess
+                && result.Value.State == SyncState.Success
+                && result.Value.LocalPayload?.payload != null)
+            {
+                GameStorageManager.Instance.LoadFromPayload(result.Value.LocalPayload.payload);
+                await postSyncEntitlementsAsync(ct);
+            }
+
+            return result;
+        }
+
+        private async Task<CommonResult<SyncResult>> syncSlotCoreAsync(string slot, CancellationToken ct)
+        {
             var loginType = AccountManager.Instance._getCurrentLoginType();
 
             // Guest/Editor: local-only. 반드시 slot 단일을 로드하여 payload를 채워 반환.
@@ -400,6 +415,9 @@ namespace Devian
                             return CommonResult<bool>.Failure(saveCloud.Error!);
 
                         _needsCloudSave = false;
+                        GameStorageManager.Instance.LoadFromPayload(localR.Value.payload);
+                        await postSyncEntitlementsAsync(ct);
+
                         return CommonResult<bool>.Success(true);
                     }
 
@@ -420,6 +438,9 @@ namespace Devian
                         if (saveLocalR.IsFailure)
                             return CommonResult<bool>.Failure(saveLocalR.Error!);
 
+                        GameStorageManager.Instance.LoadFromJson(jsonR.Value);
+                        await postSyncEntitlementsAsync(ct);
+
                         return CommonResult<bool>.Success(true);
                     }
 
@@ -432,6 +453,22 @@ namespace Devian
                 return CommonResult<bool>.Failure(
                     new CommonError(CommonErrorType.LOGIN_SYNC_CANCELLED, "Resolve cancelled.", ex.Message));
             }
+        }
+
+        private async Task<CommonResult> postSyncEntitlementsAsync(CancellationToken ct)
+        {
+            if (GameStorageManager.Instance.Inventory.Rentals.Count <= 0)
+                return CommonResult.Ok();
+
+            var result = await PurchaseManager.Instance.SyncEntitlementsAsync(ct);
+            if (result.IsFailure)
+            {
+                UnityEngine.Debug.LogWarning(
+                    $"[SaveDataManager] PostSync SyncEntitlements failed (non-fatal): {result.Error}");
+                return CommonResult.Failure(result.Error!);
+            }
+
+            return CommonResult.Ok();
         }
 
         // ──────────────────────────────────────────────

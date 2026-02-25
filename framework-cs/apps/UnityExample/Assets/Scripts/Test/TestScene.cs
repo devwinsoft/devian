@@ -32,11 +32,6 @@ public class TestScene : SceneBoot
         yield return null;
     }
 
-    void _tryActivateGpgsSavedGames()
-    {
-        // Cloud initialization is now handled by AccountManager.LoginAsync (non-Guest/non-Editor).
-        Debug.Log("[TestScene] Cloud init is handled by AccountManager login flow.");
-    }
     
     public override IEnumerator OnStart()
     {
@@ -49,13 +44,13 @@ public class TestScene : SceneBoot
             }
         );
 
-        _tryActivateGpgsSavedGames();
-
+        #if UNITY_EDITOR
         yield return TableManager.Instance.LoadTablesAsync("table-ndjson", TableFormat.Json);
-        yield return Devian.TableManager.Instance.LoadStringsAsync(
-            "string-pb64",
-            Devian.TableFormat.Pb64,
-            UnityEngine.SystemLanguage.Korean);
+        yield return TableManager.Instance.LoadStringsAsync("string-ndjson", TableFormat.Json, SystemLanguage.Korean);
+        #else
+        yield return TableManager.Instance.LoadTablesAsync("table-pb64", TableFormat.Pb64);
+        yield return TableManager.Instance.LoadStringsAsync("string-pb64", TableFormat.Pb64, SystemLanguage.Korean);
+        #endif
         
         yield return SoundManager.Instance.LoadByBundleKeyAsync("sounds");
         yield return AssetManager.LoadBundleAssets<GameObject>("common-effects");
@@ -68,12 +63,8 @@ public class TestScene : SceneBoot
         CommonEffectManager.Instance.CreateEffect(effectId, null, Vector3.zero, Quaternion.identity, COMMON_EFFECT_ATTACH_TYPE.World);
 
         Log.Debug(ST_TEXT.Get("loading"));
-        var obj = BundlePool.Spawn<TestPoolObject>("Cube", Vector3.zero, Quaternion.identity, null);
-        Debug.Log(obj);
+        BundlePool.Spawn<TestPoolObject>("Cube", Vector3.zero, Quaternion.identity, null);
 
-
-        CBigInt x = new CBigInt(12345, 1);
-        Debug.Log(x * bigInt);
     }
 
     public override IEnumerator OnExit()

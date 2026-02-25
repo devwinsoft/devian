@@ -287,8 +287,6 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
   - 서버 Callable: `getRecentPurchases30d` (`kind="Consumable"`, `pageSize=1`로 호출, `items[0]`만 사용)
   - 최근 30일 내 해당 kind 내역이 없으면 실패(`CommonErrorType.COMMON_SERVER` + 메시지)로 처리
   - 페이지네이션 없이 최신 1건만 반환하는 단일 API
-- `GetLatestRentalPurchase30dAsync()`
-  - 서버 Callable: `getRecentPurchases30d` (`kind="Rental"`, `pageSize=1`로 호출, `items[0]`만 사용)
 
 
 ### Client-Side Purchase Flow (정본)
@@ -465,7 +463,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 ### 클라이언트 적용 규칙
 
 - NoAds 상태의 정본은 서버 entitlements이다. 클라이언트는 적절한 시점(앱 시작/포그라운드/로그인 등)에 서버 상태를 동기화한다.
-- 동기화 방식(Callable 호출 등)은 프로젝트 요구에 따라 구현한다. 현재 PurchaseManager에는 동기화 전용 API가 포함되지 않는다.
+- 동기화 방식: `PurchaseManager.SyncEntitlementsAsync(ct)`가 서버 `getEntitlements`를 호출하여 Rental/SeasonPass 상태를 InventoryStorage에 동기화한다.
 - NoAds는 광고 표시 로직의 단일 입력값으로 사용한다(여러 군데 중복 판정 금지).
 
 

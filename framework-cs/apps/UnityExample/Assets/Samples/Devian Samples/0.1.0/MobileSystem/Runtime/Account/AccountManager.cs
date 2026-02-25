@@ -25,10 +25,18 @@ namespace Devian
     /// </summary>
     public sealed class AccountManager : CompoSingleton<AccountManager>
     {
+        private const string LoginTypePrefsKey = "devian_login_type";
+
         private AccountLoginFirebase _firebaseLogin = new AccountLoginFirebase();
         private AccountLoginGpgs _gpgs = new AccountLoginGpgs();
         private AccountLoginApple _apple = new AccountLoginApple();
         private LoginType _currentLoginType;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            _currentLoginType = loadPersistedLoginType();
+        }
 
         /// <summary>
         /// Convenience overload — internally acquires credential for the given LoginType.
@@ -55,7 +63,7 @@ namespace Devian
                 return signInResult;
             }
 
-            _currentLoginType = loginType;
+            persistLoginType(loginType);
 
             // 2. SaveCloud init policy:
             // - Guest: never
@@ -95,7 +103,7 @@ namespace Devian
 #endif
 
             // 4) Reset state
-            _currentLoginType = LoginType.EditorLogin;
+            persistLoginType(LoginType.EditorLogin);
         }
 
         public LoginType _getCurrentLoginType()
@@ -134,7 +142,7 @@ namespace Devian
             if (signIn.IsFailure)
                 return CommonResult<bool>.Failure(signIn.Error!);
 
-            _currentLoginType = LoginType.GoogleLogin;
+            persistLoginType(LoginType.GoogleLogin);
             return CommonResult<bool>.Success(true);
 #else
             return CommonResult<bool>.Success(false);
@@ -326,6 +334,25 @@ namespace Devian
             {
                 return CommonResult<bool>.Failure(signInErrorType, ex.Message);
             }
+        }
+
+        private void persistLoginType(LoginType loginType)
+        {
+            _currentLoginType = loginType;
+            PlayerPrefs.SetInt(LoginTypePrefsKey, (int)loginType);
+            PlayerPrefs.Save();
+        }
+
+        private static LoginType loadPersistedLoginType()
+        {
+            if (!PlayerPrefs.HasKey(LoginTypePrefsKey))
+                return LoginType.EditorLogin;
+
+            var raw = PlayerPrefs.GetInt(LoginTypePrefsKey, 0);
+            if (Enum.IsDefined(typeof(LoginType), raw))
+                return (LoginType)raw;
+
+            return LoginType.EditorLogin;
         }
 
     }

@@ -79,6 +79,20 @@ Sync는 AccountManager의 책임이 아니며, [10-savedata-manager](../../21-sa
 - 공통: `_auth.SignOut()` 호출하여 Firebase 세션 종료.
 
 
+## LoginType 영속화
+- `_currentLoginType`을 `PlayerPrefs`(`devian_login_type` key)에 int로 저장한다.
+- 로그인 성공, 로그아웃, 구매 인증 보정 시 `persistLoginType()`으로 갱신.
+- 앱 재시작 시 `Awake()`에서 `loadPersistedLoginType()`으로 복원하여 Upgrade 상태 가드가 정확히 동작한다.
+- 유효하지 않은 값이면 `EditorLogin` fallback.
+
+
+## 계정 Upgrade (Guest/Editor → Social)
+- `LoginAsync`가 내부적으로 Anonymous → Social 업그레이드를 처리한다.
+- Anonymous 유저가 존재하면 `signInOrLinkFirebaseCredentialAsync` 경로에서 `LinkWithCredentialAsync`로 UID를 유지한다.
+- 별도의 Upgrade 전용 메서드는 없다 — `LoginAsync(LoginType, CancellationToken)`을 직접 호출한다.
+- **Sync는 caller 책임** — AccountManager는 Sync를 호출하지 않는다.
+
+
 ## Location
 - MobileSystem 번들 샘플 내부, 단일 asmdef(`Devian.Samples.MobileSystem`)에 포함되어 함께 설치된다.
 - UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Account/AccountManager.cs`

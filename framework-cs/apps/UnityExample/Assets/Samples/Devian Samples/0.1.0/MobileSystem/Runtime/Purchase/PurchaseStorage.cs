@@ -20,20 +20,6 @@ namespace Devian
         public CurrentPurchaseState Current => _current;
         public IReadOnlyList<RefundSupportLogEntry> RefundSupportLogs => _refundSupportLogs;
 
-        // Compatibility accessors for existing callers. The canonical shape is Current.
-        public bool IsPurchaseInProgress => _current.IsPurchaseInProgress;
-        public string CurrentInternalProductId => _current.InternalProductId;
-        public string CurrentKind => _current.Kind;
-        public string CurrentStoreKey => _current.StoreKey;
-        public long CurrentStartedAtUtcMs => _current.StartedAtUtcMs;
-        public bool CurrentStorePending => _current.IsStorePending;
-        public long CurrentStorePendingAtUtcMs => _current.StorePendingAtUtcMs;
-        public string CurrentPurchaseId => _current.PurchaseId;
-        public string CurrentVerifyStatus => _current.VerifyStatus;
-        public bool CurrentStoreConfirmedLocal => _current.StoreConfirmedLocal;
-        public bool CurrentClientGrantApplied => _current.ClientGrantApplied;
-        public bool CurrentClientGrantReported => _current.ClientGrantReported;
-
         public void BeginPurchase(string internalProductId, string kind, string storeKey)
         {
             _current.IsPurchaseInProgress = true;

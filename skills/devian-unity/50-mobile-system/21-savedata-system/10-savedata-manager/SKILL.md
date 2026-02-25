@@ -33,7 +33,8 @@
 - `string LocalDeviceId` — 로컬 deviceId (nullable)
 - `string CloudDeviceId` — 클라우드 deviceId (nullable)
 
-`SyncAsync(string slot)` 반환 시 payload가 채워지므로 호출 측 reload 불필요.
+`SyncAsync(string slot)` 반환 시 payload가 `SyncResult`에 포함되므로 추가 파일 I/O(reload)는 불필요하다.
+단, **인메모리 게임 상태 복원은 호출 측 책임**이다: `GameStorageManager.Instance.LoadFromPayload(sync.Value.LocalPayload.payload)`를 별도 호출하여 Inventory/Purchase를 역직렬화해야 한다.
 
 
 ## Scenario

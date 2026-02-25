@@ -40,6 +40,7 @@ GameStorageManager : CompoSingleton<GameStorageManager> (MobileSystem 레이어)
 │   └── _purchase : PurchaseStorage (GameStorageManager 소유)
 │
 ├── Public Properties
+│   ├── Inventory : InventoryStorage (read-only, InventoryManager.Instance.Storage 참조)
 │   └── Purchase : PurchaseStorage
 │
 ├── Public Methods
@@ -218,6 +219,39 @@ LoadFromPayload(payload) = LoadFromJson(ComplexUtil.Decrypt_Base64(payload))
 - 전체 구매 이력/영수증/토큰/서버 ledger 정보는 저장하지 않는다.
 - 구매 실패 내역(에러 코드/메시지)도 저장하지 않는다.
 - 정본: [30-purchase-system/33-purchase-storage](../30-purchase-system/33-purchase-storage/SKILL.md)
+
+
+---
+
+
+## SaveDataManager와의 관계
+
+GameStorageManager와 SaveDataManager는 **별도의 관심사**를 담당한다.
+
+| | **SaveDataManager** | **GameStorageManager** |
+|---|---|---|
+| 책임 | 영속화 엔진 (Local/Cloud I/O, Sync, Conflict) | 직렬화 컨테이너 (ToJson, LoadFromJson) |
+| 소유 데이터 | 슬롯 설정, deviceId, saveSeq | PurchaseStorage, InventoryStorage 참조 |
+| 서버 연동 | Firestore (Cloud Save) | 없음 |
+
+### 데이터 흐름 (호출 측 배선)
+
+SaveDataManager는 난독화된 payload blob을 반환하고, GameStorageManager는 이를 인메모리 게임 상태로 역직렬화한다.
+**두 매니저 간의 연결은 호출 측이 수동으로 수행한다.**
+
+```
+[Load 경로]
+SaveDataManager.SyncAsync(slot, ct) → SyncResult (난독화 payload 포함)
+    ↓ 호출 측
+GameStorageManager.LoadFromPayload(payload) → _inventory, _purchase 복원
+
+[Save 경로]
+GameStorageManager.ToJson() → JSON string
+    ↓ 호출 측
+SaveDataManager.SaveDataAsync(slot, data, includeCloud, ct) → Local/Cloud 저장
+```
+
+- 표준 Post-Sync 오케스트레이션 순서는 [30-purchase-system/30-samples-purchase-manager](../30-purchase-system/30-samples-purchase-manager/SKILL.md) §Post-Sync Orchestration을 참조한다.
 
 
 ---
