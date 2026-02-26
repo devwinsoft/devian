@@ -10,6 +10,30 @@ namespace Devian
     /// </summary>
     public static class Singleton
     {
+        private static bool _isShuttingDown;
+
+        static Singleton()
+        {
+            Application.quitting += onQuitting;
+        }
+
+        /// <summary>
+        /// Shutdown 구간 여부. 앱 종료/플레이 종료 중이면 true.
+        /// Create/CreateFromResources 계열은 shutdown 중 생성을 억제한다.
+        /// </summary>
+        public static bool IsShuttingDown => _isShuttingDown || !Application.isPlaying;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void resetOnSubsystemRegistration()
+        {
+            _isShuttingDown = false;
+        }
+
+        private static void onQuitting()
+        {
+            _isShuttingDown = true;
+        }
+
         /// <summary>
         /// 인스턴스 조회. 없으면 예외.
         /// </summary>
@@ -47,6 +71,74 @@ namespace Devian
         }
 
         /// <summary>
+        /// GameObject 생성 + AddComponent + Registry 등록(Boot). key=T.
+        /// 이미 등록되어 있으면 기존 인스턴스 반환.
+        /// IL2CPP 안전: 리플렉션 없음.
+        /// </summary>
+        public static T Create<T>() where T : MonoBehaviour
+        {
+            if (TryGet<T>(out var existing))
+                return existing;
+
+            if (IsShuttingDown)
+            {
+                Debug.LogWarning(
+                    $"[Singleton] Suppressed Create<{typeof(T).Name}> during shutdown.");
+                return null;
+            }
+
+            var instance = CreateAndAddComponent<T>();
+            if (instance == null)
+                return null;
+
+            var debugSource = $"Singleton.Create<{typeof(T).Name}>()";
+            if (!Register(instance, SingletonSource.Boot, debugSource))
+            {
+                Object.Destroy(instance.gameObject);
+                return TryGet<T>(out var adopted) ? adopted : null;
+            }
+
+            Object.DontDestroyOnLoad(instance.gameObject);
+            return instance;
+        }
+
+        /// <summary>
+        /// GameObject 생성 + AddComponent + Registry 등록(Boot). key=TBase.
+        /// 이미 등록되어 있으면 기존 인스턴스 반환 (TSelf로 캐스팅).
+        /// IL2CPP 안전: 리플렉션 없음.
+        /// </summary>
+        public static TSelf Create<TBase, TSelf>()
+            where TBase : MonoBehaviour
+            where TSelf : TBase
+        {
+            if (TryGet<TBase>(out var baseExisting) && baseExisting is TSelf existingSelf)
+                return existingSelf;
+
+            if (IsShuttingDown)
+            {
+                Debug.LogWarning(
+                    $"[Singleton] Suppressed Create<{typeof(TBase).Name},{typeof(TSelf).Name}> during shutdown.");
+                return null;
+            }
+
+            var instance = CreateAndAddComponent<TSelf>();
+            if (instance == null)
+                return null;
+
+            var debugSource = $"Singleton.Create<{typeof(TBase).Name},{typeof(TSelf).Name}>()";
+            if (!Register<TBase>(instance, SingletonSource.Boot, debugSource))
+            {
+                Object.Destroy(instance.gameObject);
+                if (TryGet<TBase>(out var adopted) && adopted is TSelf adoptedSelf)
+                    return adoptedSelf;
+                return null;
+            }
+
+            Object.DontDestroyOnLoad(instance.gameObject);
+            return instance;
+        }
+
+        /// <summary>
         /// Resources에서 프리팹 로드 + Registry 등록(Boot). key=T.
         /// 이미 등록되어 있으면 기존 인스턴스 반환.
         /// IL2CPP 안전: 리플렉션 없음.
@@ -57,10 +149,10 @@ namespace Devian
             if (TryGet<T>(out var existing))
                 return existing;
 
-            if (!Application.isPlaying)
+            if (IsShuttingDown)
             {
                 Debug.LogWarning(
-                    $"[Singleton] Suppressed CreateFromResources<{typeof(T).Name}> (not playing).");
+                    $"[Singleton] Suppressed CreateFromResources<{typeof(T).Name}> during shutdown.");
                 return null;
             }
 
@@ -92,10 +184,10 @@ namespace Devian
             if (TryGet<TBase>(out var baseExisting) && baseExisting is TSelf existingSelf)
                 return existingSelf;
 
-            if (!Application.isPlaying)
+            if (IsShuttingDown)
             {
                 Debug.LogWarning(
-                    $"[Singleton] Suppressed CreateFromResources<{typeof(TBase).Name},{typeof(TSelf).Name}> (not playing).");
+                    $"[Singleton] Suppressed CreateFromResources<{typeof(TBase).Name},{typeof(TSelf).Name}> during shutdown.");
                 return null;
             }
 
@@ -114,6 +206,16 @@ namespace Devian
             }
 
             Object.DontDestroyOnLoad(instance.gameObject);
+            return instance;
+        }
+
+        /// <summary>
+        /// 빈 GameObject 생성 + AddComponent.
+        /// </summary>
+        private static T CreateAndAddComponent<T>() where T : MonoBehaviour
+        {
+            var go = new GameObject($"[{typeof(T).Name}]");
+            var instance = go.AddComponent<T>();
             return instance;
         }
 

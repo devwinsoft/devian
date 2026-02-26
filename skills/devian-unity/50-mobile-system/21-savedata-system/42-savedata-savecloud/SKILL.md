@@ -71,6 +71,7 @@
   - `Payload` (string)
   - `DeviceId` (string)
   - `SaveSeq` (long, same-device Sync 최신성 판정용)
+  - `Account` (object: `loginType`, `socialUserId`, `lastUpdatedAtUtcMs`)
   - *(legacy `UtcTime`/`Checksum` 필드는 SaveAsync 시 `FieldValue.Delete`로 제거)*
 
 ### Runtime behavior

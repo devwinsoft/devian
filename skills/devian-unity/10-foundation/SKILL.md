@@ -15,11 +15,10 @@ Type: Index / Directory
 | ID | 컴포넌트 | 설명 | 스킬 |
 |----|----------|------|------|
 | 00 | Overview | 진입점/범위 | `00-overview/SKILL.md` |
-| 09 | UnityMainThread | Unity 메인스레드 강제 유틸 (UnityMainThread, UnityMainThreadDispatcher) | `23-unity-main-thread/SKILL.md` |
+| 09 | UnityUtils | Unity 유틸리티 모음 (MainThread, Dispatcher, UnityCoroutineRunner) | `23-unity-utils/SKILL.md` |
 | 31 | Singleton v3 | 2종 싱글톤 (AutoSingleton 기본, CompoSingleton 선택) + Registry SSOT | `15-singleton/SKILL.md` |
-| 02 | PoolManager | Type당 1풀 + prefab name 기반 Spawn + Factory 추상화 | `10-pool-manager/SKILL.md` |
+| 02 | PoolSystem | Type당 1풀 + prefab name 기반 Spawn + Factory 추상화 + InspectorPoolFactory/BundlePoolFactory/BundlePool | `10-pool-system/SKILL.md` |
 | 03 | MessageSystem | ownerKey + enum msgKey 기반 메시지/트리거 시스템 (timer 제외) | `22-message-system/SKILL.md` |
-| 04 | PoolFactories | InspectorPoolFactory, BundlePoolFactory | `21-pool-factories/SKILL.md` |
 | 10 | AssetManager | AssetBundle 기반 로딩/캐시/언로드 | `18-asset-manager/SKILL.md` |
 | 12 | DownloadManager | Addressables Label 기반 Patch/Download (CompoSingleton) | `19-download-manager/SKILL.md` |
 | 13 | Pb64Storage | pb64를 Unity TextAsset .asset로 저장하는 규약 | `skills/devian-tools/11-builder/35-pb64-storage/SKILL.md` |

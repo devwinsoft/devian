@@ -38,10 +38,12 @@ GameStorageManager : CompoSingleton<GameStorageManager> (MobileSystem 레이어)
 ├── Fields
 │   └── _inventory : InventoryStorage (InventoryManager.Instance에서 획득)
 │   └── _purchase : PurchaseStorage (GameStorageManager 소유)
+│   └── _account : AccountStorage (GameStorageManager 소유)
 │
 ├── Public Properties
 │   ├── Inventory : InventoryStorage (read-only, InventoryManager.Instance.Storage 참조)
 │   └── Purchase : PurchaseStorage
+│   └── Account : AccountStorage
 │
 ├── Public Methods
 │   ├── ToJson() → string
@@ -50,9 +52,10 @@ GameStorageManager : CompoSingleton<GameStorageManager> (MobileSystem 레이어)
 │   └── Clear()
 │
 ├── Delegates To
-│   ├── GameStorageJsonCodec (root version / inventory,purchase 섹션 orchestration)
+│   ├── GameStorageJsonCodec (root version / inventory,purchase,account 섹션 orchestration)
 │   ├── GameStorageJsonCodecInventory (inventory 섹션 serialize/deserialize)
-│   └── GameStorageJsonCodecPurchase (purchase 섹션 serialize/deserialize)
+│   ├── GameStorageJsonCodecPurchase (purchase 섹션 serialize/deserialize)
+│   └── GameStorageJsonCodecAccount (account 섹션 serialize/deserialize)
 │
 └── 확장 예정
     ├── (향후) missions 섹션
@@ -81,16 +84,23 @@ GameStorageManager : CompoSingleton<GameStorageManager>
 - PurchaseManager는 `GameStorageManager.Instance.Purchase`를 통해 상태를 기록한다.
 - 목적은 local/cloud 저장 가능한 **최소 구매 상태 스냅샷**이며, 전체 구매 이력이 아니다.
 
+### _account 필드
+
+- `_account : AccountStorage`는 **GameStorageManager가 직접 소유**한다.
+- AccountManager는 로그인/로그아웃 성공 시 `GameStorageManager.Instance.Account`를 갱신한다.
+- SaveData 복원 후에는 `AccountManager` 런타임 상태를 `AccountStorage` 기준으로 재적용한다.
+
 
 ### ToJson()
 
-`_inventory`의 **ReadOnly 프로퍼티**와 `_purchase` 스냅샷을 사용하여 직렬화:
+`_inventory`의 **ReadOnly 프로퍼티**, `_purchase` 스냅샷, `_account` 스냅샷을 사용하여 직렬화:
 
 - `_inventory.Wallet` → `IReadOnlyDictionary<CURRENCY_TYPE, long>`
 - `_inventory.Equipments` → `IReadOnlyDictionary<string, AbilityEquip>`
 - `_inventory.Cards` → `IReadOnlyDictionary<string, AbilityCard>`
 - `_inventory.Heroes` → `IReadOnlyDictionary<string, AbilityUnitHero>`
 - `_purchase` → `purchase.current` (진행 중 결제 복구 상태)
+- `_account` → `account` (loginType/socialUserId/lastUpdatedAtUtcMs)
 
 직렬화 순서: wallet → equipments → cards → heroes (기존 유지).
 
@@ -106,11 +116,12 @@ LoadFromPayload(payload) = LoadFromJson(ComplexUtil.Decrypt_Base64(payload))
 
 ### LoadFromJson()
 
-`_inventory`의 **public 메서드**와 `_purchase` restore API를 사용하여 역직렬화:
+`_inventory`의 **public 메서드**, `_purchase` restore API, `_account` restore API를 사용하여 역직렬화:
 
 - `_inventory.Clear()`
 - `_inventory.AddCurrency()`, `_inventory.AddEquip()`, `_inventory.AddCard()`, `_inventory.AddHero()`
 - `_purchase.ClearAll()`, `_purchase.RestoreCurrent()`, `_purchase.RestoreRefundSupportLogs()`
+- `_account.Clear()` + `account` 섹션 복원
 
 역직렬화 순서: wallet → equipments → cards → heroes (equip slot 참조를 위해 heroes는 마지막).
 
@@ -231,7 +242,7 @@ GameStorageManager와 SaveDataManager는 **별도의 관심사**를 담당한다
 | | **SaveDataManager** | **GameStorageManager** |
 |---|---|---|
 | 책임 | 영속화 엔진 (Local/Cloud I/O, Sync, Conflict) | 직렬화 컨테이너 (ToJson, LoadFromJson) |
-| 소유 데이터 | 슬롯 설정, deviceId, saveSeq | PurchaseStorage, InventoryStorage 참조 |
+| 소유 데이터 | 슬롯 설정, deviceId, saveSeq | PurchaseStorage, AccountStorage, InventoryStorage 참조 |
 | 서버 연동 | Firestore (Cloud Save) | 없음 |
 
 ### 데이터 흐름 (호출 측 배선)
@@ -243,7 +254,7 @@ SaveDataManager는 난독화된 payload blob을 반환하고, GameStorageManager
 [Load 경로]
 SaveDataManager.SyncAsync(slot, ct) → SyncResult (난독화 payload 포함)
     ↓ 호출 측
-GameStorageManager.LoadFromPayload(payload) → _inventory, _purchase 복원
+GameStorageManager.LoadFromPayload(payload) → _inventory, _purchase, _account 복원
 
 [Save 경로]
 GameStorageManager.ToJson() → JSON string
@@ -311,6 +322,12 @@ SaveDataManager.SaveDataAsync(slot, data, includeCloud, ct) → Local/Cloud 저�
 - `PurchaseStorage`는 local/cloud 저장 가능한 구매 상태 스냅샷이며, 전체 구매 내역 저장소가 아니다.
 - PurchaseManager는 `GameStorageManager.Instance.Purchase`에 기록만 수행한다.
 
+### 9) AccountStorage 소유
+
+- GameStorageManager는 `_account : AccountStorage`를 직접 소유한다.
+- AccountStorage는 `account` JSON 섹션으로 local/cloud 저장 payload에 포함된다.
+- AccountManager는 PlayerPrefs 대신 `GameStorageManager.Instance.Account`를 계정 메타 영속화 소스로 사용한다.
+
 
 ---
 
@@ -327,6 +344,7 @@ SaveDataManager.SaveDataAsync(slot, data, includeCloud, ct) → Local/Cloud 저�
   - `GameStorageJsonCodec.cs` (root JSON serialize/deserialize orchestration, version/migration 포함)
   - `GameStorageJsonCodecInventory.cs` (inventory 섹션 serialize/deserialize)
   - `GameStorageJsonCodecPurchase.cs` (purchase 섹션 serialize/deserialize)
+  - `GameStorageJsonCodecAccount.cs` (account 섹션 serialize/deserialize)
 
 
 ---

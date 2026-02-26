@@ -3,7 +3,7 @@
 #nullable enable
 
 using System;
-using System.Collections;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -11,8 +11,8 @@ namespace Devian
 {
     /// <summary>
     /// Scene 전환 파이프라인을 단일화(직렬화)하는 싱글턴.
-    /// 전환 순서: FadeOut → beforeUnload → OnExit → Load → afterLoad → BootProc → OnEnter → FadeIn
-    /// OnStart는 각 SceneBase.Start() (또는 SceneBoot.Start())에서 호출된다.
+    /// 전환 순서: FadeOut → beforeUnload → Exit → Load → afterLoad → BootProc → Enter → FadeIn
+    /// onStart는 각 SceneBase.Start()에서 호출된다.
     ///
     /// 이 Manager는 페이드 UI를 직접 소유하지 않으며, FadeOutRequested/FadeInRequested 이벤트로 위임한다.
     ///
@@ -32,14 +32,14 @@ namespace Devian
         // ====================================================================
 
         /// <summary>
-        /// 페이드 아웃 요청 이벤트. 구독자는 fadeOutSeconds 동안 페이드 아웃을 수행하는 코루틴을 반환한다.
+        /// 페이드 아웃 요청 이벤트. 구독자는 fadeOutSeconds 동안 페이드 아웃을 수행하는 Task를 반환한다.
         /// </summary>
-        public event Func<float, IEnumerator>? FadeOutRequested;
+        public event Func<float, Task>? FadeOutRequested;
 
         /// <summary>
-        /// 페이드 인 요청 이벤트. 구독자는 fadeInSeconds 동안 페이드 인을 수행하는 코루틴을 반환한다.
+        /// 페이드 인 요청 이벤트. 구독자는 fadeInSeconds 동안 페이드 인을 수행하는 Task를 반환한다.
         /// </summary>
-        public event Func<float, IEnumerator>? FadeInRequested;
+        public event Func<float, Task>? FadeInRequested;
 
         // ====================================================================
         // Lifecycle
@@ -51,23 +51,32 @@ namespace Devian
         }
 
         /// <summary>
-        /// 부팅 시 첫 씬의 OnEnter()를 호출한다 (LoadSceneAsync를 거치지 않는 케이스).
-        /// OnStart는 SceneBase.Start() (또는 SceneBoot.Start())에서 호출된다.
+        /// 부팅 시 첫 씬의 Enter()를 호출한다 (LoadSceneAsync를 거치지 않는 케이스).
+        /// onStart는 SceneBase.Start()에서 호출된다.
         /// </summary>
-        private IEnumerator Start()
+        private async void Start()
         {
             if (_isTransitioning)
-                yield break;
+                return;
 
             var scene = FindActiveSceneBase();
             if (scene == null)
-                yield break;
+                return;
 
-            // BootProc 호출 (이미 부팅이면 즉시 종료)
-            yield return BaseBootstrap.BootProc();
+            try
+            {
+                // BootProc 호출 (이미 부팅이면 즉시 종료)
+                var boot = BaseBootstrap.Instance;
+                if (boot != null)
+                    await boot.BootProc();
 
-            // OnEnter 호출
-            yield return scene.OnEnter();
+                // Enter 호출
+                await scene.Enter();
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"SceneTransManager.Start failed: {ex}");
+            }
         }
 
         // ====================================================================
@@ -81,79 +90,92 @@ namespace Devian
         /// <param name="mode">씬 로드 모드 (기본: Single)</param>
         /// <param name="fadeOutSeconds">페이드 아웃 시간 (0 이하면 스킵)</param>
         /// <param name="fadeInSeconds">페이드 인 시간 (0 이하면 스킵)</param>
-        /// <param name="beforeUnload">언로드 전 실행할 코루틴 (optional)</param>
-        /// <param name="afterLoad">로드 후 실행할 코루틴 (optional)</param>
+        /// <param name="beforeUnload">언로드 전 실행할 Task (optional)</param>
+        /// <param name="afterLoad">로드 후 실행할 Task (optional)</param>
         /// <param name="onError">에러 발생 시 콜백 (optional)</param>
-        public IEnumerator LoadSceneAsync(
+        public async Task LoadSceneAsync(
             string sceneKey,
             LoadSceneMode mode = LoadSceneMode.Single,
             float fadeOutSeconds = 0.2f,
             float fadeInSeconds = 0.2f,
-            Func<IEnumerator>? beforeUnload = null,
-            Func<IEnumerator>? afterLoad = null,
+            Func<Task>? beforeUnload = null,
+            Func<Task>? afterLoad = null,
             Action<string>? onError = null)
         {
             if (string.IsNullOrWhiteSpace(sceneKey))
             {
                 Log.Error("SceneTransManager.LoadSceneAsync failed: sceneKey is null/empty.");
                 onError?.Invoke("sceneKey is null/empty");
-                yield break;
+                return;
             }
 
             if (_isTransitioning)
             {
                 Log.Warn("SceneTransManager.LoadSceneAsync ignored: already transitioning.");
-                yield break;
+                return;
             }
 
             _isTransitioning = true;
 
-            // 1) FadeOut (이벤트 위임)
-            if (fadeOutSeconds > 0f)
+            try
             {
-                yield return InvokeFadeEvent(FadeOutRequested, fadeOutSeconds);
-            }
+                // 1) FadeOut (이벤트 위임)
+                if (fadeOutSeconds > 0f)
+                {
+                    await InvokeFadeEvent(FadeOutRequested, fadeOutSeconds);
+                }
 
-            // 2) beforeUnload hook
-            if (beforeUnload != null)
+                // 2) beforeUnload hook
+                if (beforeUnload != null)
+                {
+                    await beforeUnload();
+                }
+
+                // 3) Exit current scene (best-effort)
+                var current = FindActiveSceneBase();
+                if (current != null)
+                {
+                    await current.Exit();
+                }
+
+                // 4) Load next scene (코루틴 브릿지)
+                await UnityCoroutineRunner.RunAsync(this,
+                    AssetManager.LoadSceneAsync(sceneKey, mode, activateOnLoad: true, priority: 100));
+
+                // 5) afterLoad hook
+                if (afterLoad != null)
+                {
+                    await afterLoad();
+                }
+
+                // 6) Enter next scene
+                var next = FindActiveSceneBase();
+                if (next != null)
+                {
+                    // BootProc 호출 (이미 부팅이면 즉시 종료)
+                    var bootNext = BaseBootstrap.Instance;
+                    if (bootNext != null)
+                        await bootNext.BootProc();
+
+                    // Enter 호출
+                    await next.Enter();
+                }
+
+                // 7) FadeIn (이벤트 위임)
+                if (fadeInSeconds > 0f)
+                {
+                    await InvokeFadeEvent(FadeInRequested, fadeInSeconds);
+                }
+            }
+            catch (Exception ex)
             {
-                yield return beforeUnload();
+                Log.Error($"SceneTransManager.LoadSceneAsync failed: {ex}");
+                onError?.Invoke(ex.Message);
             }
-
-            // 3) Exit current scene (best-effort)
-            var current = FindActiveSceneBase();
-            if (current != null)
+            finally
             {
-                yield return current.OnExit();
+                _isTransitioning = false;
             }
-
-            // 4) Load next scene
-            yield return AssetManager.LoadSceneAsync(sceneKey, mode, activateOnLoad: true, priority: 100);
-
-            // 5) afterLoad hook
-            if (afterLoad != null)
-            {
-                yield return afterLoad();
-            }
-
-            // 6) Enter next scene
-            var next = FindActiveSceneBase();
-            if (next != null)
-            {
-                // BootProc 호출 (이미 부팅이면 즉시 종료)
-                yield return BaseBootstrap.BootProc();
-
-                // OnEnter 호출
-                yield return next.OnEnter();
-            }
-
-            // 7) FadeIn (이벤트 위임)
-            if (fadeInSeconds > 0f)
-            {
-                yield return InvokeFadeEvent(FadeInRequested, fadeInSeconds);
-            }
-
-            _isTransitioning = false;
         }
 
         // ====================================================================
@@ -193,22 +215,18 @@ namespace Devian
         /// <summary>
         /// 이벤트에 등록된 모든 델리게이트를 순차 실행한다.
         /// </summary>
-        private IEnumerator InvokeFadeEvent(Func<float, IEnumerator>? fadeEvent, float seconds)
+        private async Task InvokeFadeEvent(Func<float, Task>? fadeEvent, float seconds)
         {
             if (fadeEvent == null)
-                yield break;
+                return;
 
             var invocationList = fadeEvent.GetInvocationList();
             for (int i = 0; i < invocationList.Length; i++)
             {
-                var handler = invocationList[i] as Func<float, IEnumerator>;
+                var handler = invocationList[i] as Func<float, Task>;
                 if (handler != null)
                 {
-                    var coroutine = handler(seconds);
-                    if (coroutine != null)
-                    {
-                        yield return coroutine;
-                    }
+                    await handler(seconds);
                 }
             }
         }

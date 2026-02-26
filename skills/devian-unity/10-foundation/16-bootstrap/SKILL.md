@@ -33,59 +33,34 @@
 
 ## 4. BaseBootstrap 클래스
 
-### 정적 상수
-
-```csharp
-public const string DefaultPrefabPath = "Devian/Bootstrap";
-```
-
 ### 정적 상태
 
 ```csharp
 private static BaseBootstrap _instance;
 private static bool _booted;
 
-public static bool IsCreated => _instance != null;
-public static bool IsBooted => _booted;
+public static BaseBootstrap Instance => _instance;
 ```
+
+`_instance`는 `Awake()`에서 자동 등록된다. Bootstrap 프리팹의 생성(Instantiate + DontDestroyOnLoad)은 contents 레이어가 담당한다.
 
 ### 추상 메서드
 
 ```csharp
-protected abstract IEnumerator OnBootProc();
+protected abstract Task OnBootProc();
 ```
 
 개발자가 구현해야 하는 부팅 로직. BootProc()에서 1회만 호출된다.
 
-### 정적 API
-
-#### CreateFromResources
+### BootProc (인스턴스 메서드)
 
 ```csharp
-public static bool CreateFromResources()
+public async Task BootProc()
 ```
 
 동작:
-1. `_instance != null` → 이미 생성되었으면 true 반환
-2. `Resources.Load<GameObject>(DefaultPrefabPath)`로 프리팹 로드
-3. 프리팹이 없으면 false 반환
-4. `Object.Instantiate(prefab)` 실행
-5. `GetComponentInChildren<BaseBootstrap>(true)`로 컴포넌트 탐색 (없으면 Destroy 후 false)
-6. `_instance`에 저장
-7. `Object.DontDestroyOnLoad(go)` 적용 후 true 반환
-
-#### BootProc
-
-```csharp
-public static IEnumerator BootProc()
-```
-
-동작:
-1. `_booted == true`면 `yield break`
-2. `_instance == null`이면 `CreateFromResources()` 시도
-   - 실패 시 에러 로그 후 `yield break`
-3. `CreateFromResources()` 후에도 `_instance == null`이면 에러 로그 후 `yield break`
-4. `try { yield return _instance.OnBootProc(); } finally { _booted = true; }`
+1. `_booted == true`면 즉시 return
+2. `try { await OnBootProc(); } finally { _booted = true; }`
 
 ### Domain Reload 대응
 
@@ -101,40 +76,18 @@ private static void ResetStatics()
 
 ---
 
-## 5. SceneBoot과의 통합
+## 5. SceneTransManager와의 통합
 
-SceneBoot은 SceneBase를 상속하며, Awake에서 Bootstrap 생성을 트리거하고 Start에서 BootProc 완료를 보장한다.
-
-### Awake: 생성 트리거
-
-```csharp
-protected override void Awake()
-{
-    base.Awake();
-    if (!BaseBootstrap.IsCreated)
-    {
-        BaseBootstrap.CreateFromResources();
-    }
-}
-```
-
-### SceneTransManager: OnEnter 전에 BootProc 호출
+SceneTransManager는 OnEnter 전에 BootProc 호출을 보장한다:
 
 ```csharp
 // SceneTransManager.Start() 또는 LoadSceneAsync()에서
-yield return BaseBootstrap.BootProc();  // 이미 부팅이면 즉시 종료
-yield return scene.OnEnter();
+var boot = BaseBootstrap.Instance;
+if (boot != null) await boot.BootProc();  // 이미 부팅이면 즉시 종료
+await scene.Enter();
 ```
 
-### SceneBoot.Start(): OnStart 전에 BootProc 호출
-
-```csharp
-private new IEnumerator Start()
-{
-    yield return BaseBootstrap.BootProc();  // 이미 부팅이면 즉시 종료
-    yield return OnStart();
-}
-```
+Bootstrap 통합이 필요한 씬 클래스(Awake에서 CreateFromResources, Start에서 BootProc 대기)는 프레임워크가 제공하지 않으며, contents 레이어에서 SceneBase를 상속하여 직접 구현한다.
 
 ---
 

@@ -22,7 +22,6 @@
 - `Success` (0) — 동기화 정상 완료, 데이터 존재
 - `Conflict` (1) — 자동 승자 결정 불가(주로 cross-device payload 충돌, 또는 same-device `saveSeq` fallback)
 - `Initial` (2) — 어떤 슬롯에도 데이터 없음 (신규 유저 / 초기 상태)
-- `ConnectionFailed` (3) — Cloud 초기화 실패 + Local 데이터 없음. 호출 측에서 재시도 또는 오프라인 안내 필요
 
 
 ## SyncResult
@@ -30,11 +29,12 @@
 - `string Slot` — 처리 대상 슬롯 key (전체 순회 시 Conflict 발생 슬롯, 단일 슬롯 시 해당 슬롯)
 - `SaveLocalPayload LocalPayload` — 동기화 후 로컬 payload (nullable)
 - `SaveCloudPayload CloudPayload` — 동기화 후 클라우드 payload (nullable)
+- `LocalPayload.account` / `CloudPayload.Account` — 계정 메타 미러 (`loginType`, `socialUserId`, `lastUpdatedAtUtcMs`)
 - `string LocalDeviceId` — 로컬 deviceId (nullable)
 - `string CloudDeviceId` — 클라우드 deviceId (nullable)
 
 `SyncAsync(string slot)` 반환 시 payload가 `SyncResult`에 포함되므로 추가 파일 I/O(reload)는 불필요하다.
-단, **인메모리 게임 상태 복원은 호출 측 책임**이다: `GameStorageManager.Instance.LoadFromPayload(sync.Value.LocalPayload.payload)`를 별도 호출하여 Inventory/Purchase를 역직렬화해야 한다.
+단, **인메모리 게임 상태 복원은 호출 측 책임**이다: `GameStorageManager.Instance.LoadFromPayload(sync.Value.LocalPayload.payload)`를 별도 호출하여 Inventory/Purchase/Account를 역직렬화해야 한다.
 
 
 ## Scenario
@@ -45,8 +45,12 @@
 - `SyncAsync(slot, ct)`: 해당 슬롯만 로드 — 데이터 있으면 `Success`(payload 포함), 없으면 `Initial`
 
 ### Cloud Init 실패 (Non-Guest)
-- Cloud 초기화 실패 + Local 없음 → `ConnectionFailed`
+- Cloud 초기화 실패 + Local 없음 → `SyncAsync` 실패 (`_initializeCloudAsync` 에러 반환)
 - Cloud 초기화 실패 + Local 있음 → local-only 모드로 진행 (`SyncAsync(ct)`: syncAsync 계속 / `SyncAsync(slot)`: local payload로 `Success` 반환)
+
+### Cloud Load/Save 실패 (Non-Guest)
+- Cloud `LoadAsync`/`SaveAsync` 시도 실패는 `SyncAsync`/`SaveDataAsync(includeCloud:true)`의 **실패**로 반환한다.
+- Cloud 연결 계층 실패는 `CommonErrorType.CLOUDSAVE_CONNECTION_FAILED`를 사용한다.
 
 ### Local 없음 + Cloud 있음
 - Cloud 데이터를 Local에 저장
@@ -72,7 +76,6 @@
 ### Initial (데이터 없음)
 - Guest: Local 슬롯 전체 검사 후 데이터가 하나도 없으면 `Initial`
 - Non-Guest: 모든 슬롯(Local + Cloud) 순회 후 `hasAnyLocal == false && hasAnyCloud == false`이면 `Initial`
-- Cloud 연결 실패 + 데이터 없음 → `ConnectionFailed` (Initial이 아닌 ConnectionFailed)
 
 
 ## Unified Settings
@@ -108,6 +111,14 @@ SaveDataManager는 Slot 설정을 `SaveSlotConfig`로 캡슐화한다. (단일 �
 - `includeCloud` 생략 시 기본값은 `false` (local만 저장).
 - `includeCloud: true` — local 저장 후, `isLocalOnly(loginType)`이 false이면 cloud도 저장. Guest/Editor는 자동 스킵.
 - `includeCloud: false` — local만 저장. cloud 시도 없음.
+
+### Load
+- `CommonResult<bool> LoadLocalData(string slot)`
+
+로컬 슬롯에서 `SaveLocalPayload`를 읽어 `GameStorageManager.Instance.LoadFromPayload()`로 Inventory/Purchase/Account를 세팅한다.
+- 데이터 존재 → `Success(true)` + GameStorageManager 세팅
+- 데이터 없음 → `Failure(LOCALSAVE_NOT_FOUND)`
+- 읽기 실패 → `Failure`
 
 ### Clear
 - `Task<CommonResult<bool>> ClearSlotAsync(string slot, CancellationToken ct)`

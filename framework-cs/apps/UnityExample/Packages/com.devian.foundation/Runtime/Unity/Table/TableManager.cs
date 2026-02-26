@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/10-base-system/14-table-manager/SKILL.md
+// SSOT: skills/devian-unity/10-foundation/11-table-manager/SKILL.md
 // Devian Unity TableManager - Raw data loading for TB_/ST_
 //
 // Key Design:
@@ -14,8 +14,8 @@
 #nullable enable
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -158,7 +158,7 @@ namespace Devian
         private void ReleaseShared(CachedData data)
         {
             if (data.Shared == null) return;
-            
+
             data.Shared.RefCount--;
             if (data.Shared.RefCount <= 0 && data.Shared.Handle.IsValid())
             {
@@ -178,7 +178,7 @@ namespace Devian
         /// <param name="key">Addressables key to load TextAssets</param>
         /// <param name="format">Json or Pb64</param>
         /// <param name="onError">Error callback (per-asset errors, does not stop loading)</param>
-        public IEnumerator LoadTablesAsync(
+        public async Task LoadTablesAsync(
             string key,
             TableFormat format,
             Action<string>? onError = null)
@@ -188,19 +188,19 @@ namespace Devian
             if (!UnityEditor.EditorApplication.isPlaying)
             {
                 onError?.Invoke("[TableManager] Runtime-only. Enter Play Mode.");
-                yield break;
+                return;
             }
 #endif
 
             // Load multiple assets via Addressables
             var loadHandle = Addressables.LoadAssetsAsync<TextAsset>(key, null);
-            yield return loadHandle;
+            await loadHandle.Task;
 
             if (loadHandle.Status != AsyncOperationStatus.Succeeded)
             {
                 onError?.Invoke($"[TableManager] Failed to load '{key}': {loadHandle.OperationException?.Message}");
                 Addressables.Release(loadHandle);
-                yield break;
+                return;
             }
 
             var assets = loadHandle.Result;
@@ -208,7 +208,7 @@ namespace Devian
             {
                 onError?.Invoke($"[TableManager] No TextAssets found for '{key}'");
                 Addressables.Release(loadHandle);
-                yield break;
+                return;
             }
 
             // Create shared handle with initial RefCount = 0
@@ -291,7 +291,7 @@ namespace Devian
         /// <param name="format">Json or Pb64</param>
         /// <param name="language">Language for this string table</param>
         /// <param name="onError">Error callback (per-asset errors, does not stop loading)</param>
-        public IEnumerator LoadStringsAsync(
+        public async Task LoadStringsAsync(
             string key,
             TableFormat format,
             SystemLanguage language,
@@ -302,7 +302,7 @@ namespace Devian
             if (!UnityEditor.EditorApplication.isPlaying)
             {
                 onError?.Invoke("[TableManager] Runtime-only. Enter Play Mode.");
-                yield break;
+                return;
             }
 #endif
 
@@ -317,13 +317,13 @@ namespace Devian
                 Addressables.MergeMode.Intersection,
                 releaseDependenciesOnFailure: true
             );
-            yield return loadHandle;
+            await loadHandle.Task;
 
             if (loadHandle.Status != AsyncOperationStatus.Succeeded)
             {
                 onError?.Invoke($"[TableManager] Failed to load string '{key}' for {language}: {loadHandle.OperationException?.Message}");
                 Addressables.Release(loadHandle);
-                yield break;
+                return;
             }
 
             var assets = loadHandle.Result;
@@ -331,7 +331,7 @@ namespace Devian
             {
                 onError?.Invoke($"[TableManager] No TextAssets found for string '{key}' with language {language}");
                 Addressables.Release(loadHandle);
-                yield break;
+                return;
             }
 
             // Create shared handle with initial RefCount = 0
@@ -385,7 +385,7 @@ namespace Devian
                 {
                     var text = textAsset.text;
                     cachedData.NdjsonText = text; // Store raw text for both formats
-                    
+
                     // ST loader receives raw text (ndjson or pb64 text) and parses internally
                     if (format == TableFormat.Json)
                     {

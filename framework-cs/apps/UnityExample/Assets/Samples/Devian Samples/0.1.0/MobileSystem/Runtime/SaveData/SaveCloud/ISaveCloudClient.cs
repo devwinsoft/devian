@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Devian.Domain.Common;
 
 
 namespace Devian
@@ -12,7 +13,7 @@ namespace Devian
 
         Task<(SaveCloudResult result, SaveCloudPayload payload)> LoadAsync(string slot, CancellationToken ct);
 
-        Task<SaveCloudResult> SaveAsync(string slot, SaveCloudPayload payload, CancellationToken ct);
+        Task<CommonResult> SaveAsync(string slot, SaveCloudPayload payload, CancellationToken ct);
 
         Task<SaveCloudResult> DeleteAsync(string slot, CancellationToken ct);
     }

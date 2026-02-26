@@ -34,6 +34,14 @@ Hard Rule:
 - 중간 삽입/정렬/행 재배치 금지 (기존 enum 값이 변동될 수 있음)
 - 새 코드가 필요하면 `ERROR_COMMON`에 추가한 뒤 **생성 파이프라인을 실행**해 `CommonErrorType`을 갱신한다.
 
+### Numeric Value Rule (Hard)
+
+- `CommonErrorType.SUCCESS`는 **예약된 센티넬 코드**이며, 값은 **반드시 `0`** 이어야 한다.
+- `CommonErrorType`의 **실패 코드들은 모두 `> 0`** 이어야 한다.
+- `ERROR_COMMON`의 첫 항목(값 `0`)은 `SUCCESS`여야 한다. (예: `id=SUCCESS`, `msg=Success`)
+- `SUCCESS`는 주로 기본값/외부 연동/테이블 정합성 용도이며, 정상 경로 자체는 `CommonResult`의 성공 상태(`Error == null`)로 표현한다.
+- 초기 정렬(부트스트랩) 이후에는 append-only 규칙을 계속 유지한다. (`SUCCESS=0` 고정, 실패 코드는 뒤에만 추가)
+
 ---
 
 ## Runtime Type: CommonError
@@ -51,6 +59,7 @@ Hard Rule:
 ### 생성 규칙
 
 - 정상 경로: `new CommonError(CommonErrorType.X, message, details?)`
+- 금지: `new CommonError(CommonErrorType.SUCCESS, ...)` (정상 경로는 `CommonResult` 성공으로 표현)
 - 레거시 문자열 코드가 들어오는 경로가 남아있다면:
   - `CommonErrorType.COMMON_UNKNOWN`으로 매핑하고
   - 레거시 코드는 `Details`에 `legacyCode=...` 형태로 보존한다.
@@ -71,6 +80,7 @@ Hard Rule:
 Hard
 - `ERROR_COMMON`에 새 항목 추가 시 **append만** 수행되었음
 - 런타임 에러의 `Code`는 `CommonErrorType`으로 유지됨
+- `CommonErrorType.SUCCESS == 0` 이고, 실패 코드는 `> 0` 임
 
 Soft
 - 없음

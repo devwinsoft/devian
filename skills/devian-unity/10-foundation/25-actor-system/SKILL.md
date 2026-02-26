@@ -25,7 +25,7 @@ Type: Component Specification
 
 - 구체적 Actor/Controller 구현 (서브클래스)
 - 입력 컨트롤러 (→ `32-input-controller`)
-- 풀 매니저 (→ `10-pool-manager`)
+- 풀 매니저 (→ `10-pool-system`)
 
 ---
 
@@ -87,8 +87,12 @@ namespace Devian
 ### 5. Pool 지원
 
 - `IPoolable<ActorObject>` 구현
-- `OnPoolSpawned()`: `_cleared = false`, `_initialized = false` — 재사용 준비
-- `OnPoolDespawned()`: `Clear()` — 정리
+- `OnPoolSpawned()` — 재사용 준비 (non-virtual)
+  1. `_cleared = false`, `_initialized = false`
+  2. `onPoolSpawned()` — 서브클래스 확장 훅
+- `OnPoolDespawned()` — 정리 (non-virtual)
+  1. `onPoolDespawned()` — 서브클래스 정리 훅 (Clear 전)
+  2. `Clear()`
 
 ### 6. Priority
 
@@ -115,8 +119,10 @@ public abstract class ActorObject : MonoBehaviour, IPoolable<ActorObject>
     protected virtual void OnDestroy();
 
     // Pool
-    public virtual void OnPoolSpawned();
-    public virtual void OnPoolDespawned();
+    public void OnPoolSpawned();
+    protected virtual void onPoolSpawned() { }
+    public void OnPoolDespawned();
+    protected virtual void onPoolDespawned() { }
 
     // Controller registry
     public T RegisterController<T>() where T : ActorController<ActorObject>;
@@ -169,7 +175,7 @@ public abstract class ActorController<TOwner> : MonoBehaviour
 - [ ] Actor.Clear()에서 컨트롤러 역순 Clear
 - [ ] 모든 protected virtual 훅 소문자 시작 (onAwake, onInit, onClear, onPostInit, onPostClear)
 - [ ] Controller.Init/Clear idempotent (1회만 실행)
-- [ ] Pool 훅: OnPoolSpawned(리셋), OnPoolDespawned(Clear)
+- [ ] Pool 훅: OnPoolSpawned(리셋→onPoolSpawned), OnPoolDespawned(onPoolDespawned→Clear)
 - [ ] UPM ↔ UnityExample 동일
 
 ---
@@ -178,4 +184,4 @@ public abstract class ActorController<TOwner> : MonoBehaviour
 
 - 인덱스: `10-foundation/SKILL.md`
 - 입력 컨트롤러: `32-input-controller/SKILL.md`
-- 풀 매니저: `10-pool-manager/SKILL.md`
+- 풀 매니저: `10-pool-system/SKILL.md`

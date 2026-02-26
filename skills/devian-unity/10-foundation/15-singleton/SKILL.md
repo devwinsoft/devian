@@ -8,7 +8,7 @@ Type: Component Specification
 
 - 개발자가 실수 없이 싱글톤을 사용하도록 **기본 AutoSingleton**을 제공한다.
 - 필요 시 **CompoSingleton**으로 배치 책임(component)을 명시한다.
-- 필요 시 **`Singleton.CreateFromResources`**로 Resources 프리팹 기반 싱글톤을 생성한다.
+- 필요 시 **`Singleton.Create`** 또는 **`Singleton.CreateFromResources`**로 Boot 싱글톤을 명시 생성한다.
 - 모든 싱글톤은 **단일 저장소(SingletonRegistry)**를 통해 통합 관리한다.
 
 ---
@@ -86,16 +86,16 @@ where TSelf : TBase
 | TBase 접근 | `Singleton.Get<T>()` | `Singleton.Get<TBase>()` |
 | 용도 | Base 분리 불필요한 경우 | 시스템 레이어(Base) / 컨텐츠 레이어(파생) 분리 |
 
-### Auto vs Compo vs CreateFromResources 선택 기준
+### Auto vs Compo vs Create vs CreateFromResources 선택 기준
 
-| | Auto | Compo | CreateFromResources |
-|---|---|---|---|
-| 생성 방식 | new GameObject + AddComponent | 씬/프리팹에 직접 배치 | **Resources.Load\<GameObject\> + Instantiate** |
-| 우선순위 | Auto(0) 최저 | Compo(2) 최고 | **Boot(1) 중간** |
-| SerializeField | 불가 (빈 GO 생성) | 가능 (씬/프리팹에 설정) | **가능 (프리팹에 미리 설정)** |
-| Instance 자동 생성 | O (Instance getter) | X (씬 배치 필요) | **X (명시적 호출 필요)** |
-| Base 상속 | 1-param: 불가 / 2-param: 가능 | 1-param: 불가 / 2-param: 가능 | **가능 (제약 없음)** |
-| 용도 | 설정 불필요한 싱글톤 | 씬 배치가 필요한 싱글톤 | **프리팹 설정값이 필요한 싱글톤** |
+| | Auto | Compo | Create | CreateFromResources |
+|---|---|---|---|---|
+| 생성 방식 | new GameObject + AddComponent | 씬/프리팹에 직접 배치 | **new GameObject + AddComponent (명시 호출)** | **Resources.Load\<GameObject\> + Instantiate** |
+| 우선순위 | Auto(0) 최저 | Compo(2) 최고 | **Boot(1) 중간** | **Boot(1) 중간** |
+| SerializeField | 불가 (빈 GO 생성) | 가능 (씬/프리팹에 설정) | 불가 (빈 GO 생성) | **가능 (프리팹에 미리 설정)** |
+| 자동 생성 | O (Instance getter) | X (씬 배치 필요) | **X (명시적 호출 필요)** | **X (명시적 호출 필요)** |
+| Base 상속 | 1-param: 불가 / 2-param: 가능 | 1-param: 불가 / 2-param: 가능 | **가능 (2-param)** | **가능 (2-param)** |
+| 용도 | 설정 불필요한 싱글톤 | 씬 배치가 필요한 싱글톤 | **런타임에서 명시 부트 생성** | **프리팹 설정값이 필요한 부트 싱글톤** |
 
 ---
 
@@ -124,6 +124,9 @@ Registry에 Auto/Boot가 등록된 상태에서 Compo가 등록되면:
 |-----|------|
 | `Singleton.Get<T>()` | 없으면 예외 (Fail-fast) |
 | `Singleton.TryGet<T>(out T)` | 없으면 false |
+| `Singleton.IsShuttingDown` | Shutdown 구간 여부. `Create*` / `CreateFromResources*` 생성 억제 기준 |
+| `Singleton.Create<T>()` | 빈 GameObject 생성 + AddComponent + Registry 등록(Boot). key=T |
+| `Singleton.Create<TBase,TSelf>()` | 빈 GameObject 생성 + AddComponent + Registry 등록(Boot). key=TBase |
 | `Singleton.CreateFromResources<T>(path)` | Resources에서 프리팹 로드 + Registry 등록(Boot). key=T |
 | `Singleton.CreateFromResources<TBase,TSelf>(path)` | Resources에서 프리팹 로드 + Registry 등록(Boot). key=TBase |
 | `T.Instance` | AutoSingleton/CompoSingleton이 제공하는 편의. Shutdown 중 null 반환 |
@@ -203,7 +206,24 @@ private readonly struct Entry
 
 ---
 
-## 9. CreateFromResources 규칙
+## 9. Create / CreateFromResources 규칙
+
+### Create 규칙
+
+**생성 방식**:
+- 빈 `GameObject` 생성 → `AddComponent<T>()` 또는 `AddComponent<TSelf>()`
+- 이름은 `"[TypeName]"` 형식
+
+**등록 소스**: `SingletonSource.Boot` (중간 우선순위)
+
+**적합한 경우**:
+- `AutoSingleton` 자동 생성이 아니라 **부트 시점에 명시 생성**하고 싶을 때
+- 프리팹/`SerializeField` 설정이 필요 없을 때
+
+**Shutdown 억제**:
+- `Singleton.IsShuttingDown == true`이면 생성하지 않고 `null` 반환 (경고 로그)
+
+### CreateFromResources 규칙
 
 **경로**: 호출자가 `string resourcePath`로 직접 지정한다.
 
@@ -213,6 +233,9 @@ private readonly struct Entry
 - 프리팹 루트에 싱글톤 컴포넌트가 반드시 붙어있어야 함
 
 **등록 소스**: `SingletonSource.Boot` (중간 우선순위)
+
+**Shutdown 억제**:
+- `Singleton.IsShuttingDown == true`이면 생성하지 않고 `null` 반환 (경고 로그)
 
 ---
 
@@ -242,6 +265,16 @@ public class UIRoot : CompoSingleton<UIRoot>
 // 만약 AutoSingleton/Boot으로 먼저 접근했어도 CompoSingleton이 대체함
 ```
 
+### 명시 생성 (Singleton.Create)
+
+```csharp
+// 부트스트랩 등에서 1회 명시 생성 (빈 GameObject + AddComponent)
+Singleton.Create<GameRuntimeManager>();
+
+// Base key로 등록하면서 구체 타입 생성 (시스템/컨텐츠 분리)
+Singleton.Create<BaseTelemetrySystem, GameTelemetrySystem>();
+```
+
 ### 1-param vs 2-param 선택 기준 (중요)
 
 ```
@@ -253,9 +286,10 @@ public class UIRoot : CompoSingleton<UIRoot>
   → Foo의 base class = ActorObject
   → Auto/Compo는 static helper 사용
   → Resources 기반은 Singleton.CreateFromResources<ActorObject, Foo>("path") 사용
+  → 빈 GO 명시 생성은 Singleton.Create<ActorObject, Foo>() 사용
 ```
 
-**Base 클래스를 상속해야 하면 2-param 또는 CreateFromResources를 사용한다.**
+**Base 클래스를 상속해야 하면 2-param helper (`Auto/Compo/Singleton.Create`) 또는 `CreateFromResources`를 사용한다.**
 이는 C# 단일 상속 제약이다.
 
 ### Base 상속 + Resources 기반 싱글톤 (Singleton.CreateFromResources)

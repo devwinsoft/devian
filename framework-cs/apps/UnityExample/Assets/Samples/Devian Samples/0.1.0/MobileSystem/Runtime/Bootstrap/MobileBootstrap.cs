@@ -1,6 +1,6 @@
 using System;
-using System.Collections;
 using System.Reflection;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Devian
@@ -8,11 +8,9 @@ namespace Devian
     [RequireComponent(typeof(AccountManager))]
     [RequireComponent(typeof(SaveDataManager))]
     [RequireComponent(typeof(GameStorageManager))]
-    [RequireComponent(typeof(PurchaseManager))]
-    [RequireComponent(typeof(RewardManager))]
     public abstract class MobileBootstrap : BaseBootstrap
     {
-        protected override IEnumerator OnBootProc()
+        protected override Task OnBootProc()
         {
             // MobileSystem common initialization
             Log.SetSink(new UnityLogSink());
@@ -22,7 +20,7 @@ namespace Devian
             tryActivateGooglePlayGames();
             #endif
 
-            yield break;
+            return Task.CompletedTask;
         }
 
         /// <summary>

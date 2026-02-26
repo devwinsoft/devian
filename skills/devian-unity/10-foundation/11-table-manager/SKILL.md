@@ -48,7 +48,7 @@ TableManager는 전달받은 key로 TextAsset을 로드만 한다.
 
 ```csharp
 // key는 개발자가 전달 - TableManager는 강제/조립 안함
-yield return TableManager.Instance.LoadTablesAsync(
+await TableManager.Instance.LoadTablesAsync(
     "my/custom/key/Monsters",  // 프로젝트 정책에 따른 key
     TableFormat.Json,
     ...
@@ -184,14 +184,14 @@ public enum TableFormat
 ### LoadTablesAsync (TB 전용)
 
 ```csharp
-public IEnumerator LoadTablesAsync(
+public async Task LoadTablesAsync(
     string key,                           // Addressables key (NOT enforced)
     TableFormat format,                   // Json or Pb64
     Action<string>? onError = null)       // Error callback
 ```
 
 **내부 동작 (복수 asset 로딩):**
-1. **`Addressables.LoadAssetsAsync<TextAsset>(key, null)`**로 여러 TextAsset 로드
+1. **`Addressables.LoadAssetsAsync<TextAsset>(key, null)`**로 여러 TextAsset 로드 (`await loadHandle.Task`)
 2. 성공 시 `IList<TextAsset>` 순회:
    - `baseName = ExtractBaseName(textAsset.name)` (@ 앞부분)
    - TB loader 조회 → 미등록이면 `onError` 호출 후 **해당 asset만 스킵**
@@ -202,12 +202,12 @@ public IEnumerator LoadTablesAsync(
 **에러 처리 규칙:**
 - 복수 asset 중 일부 실패 시 전체 로딩을 중단하지 않음
 - loader 없음 / 파싱 실패는 `onError` 호출 후 해당 asset만 스킵
-- Addressables 로드 자체 실패 시에만 `yield break`
+- Addressables 로드 자체 실패 시에만 `return`
 
 ### LoadStringsAsync (ST 전용)
 
 ```csharp
-public IEnumerator LoadStringsAsync(
+public async Task LoadStringsAsync(
     string key,                           // Addressables key (NOT enforced)
     TableFormat format,                   // Json or Pb64
     SystemLanguage language,
@@ -215,7 +215,7 @@ public IEnumerator LoadStringsAsync(
 ```
 
 **내부 동작 (복수 asset + language Intersection):**
-1. **`Addressables.LoadAssetsAsync<TextAsset>(keys, null, MergeMode.Intersection)`**
+1. **`Addressables.LoadAssetsAsync<TextAsset>(keys, null, MergeMode.Intersection)`** (`await loadHandle.Task`)
    - `keys = new object[] { key, language.ToString() }`
    - `MergeMode.Intersection`으로 둘 다 만족하는 asset만 대상
 2. 성공 시 `IList<TextAsset>` 순회:
@@ -229,7 +229,7 @@ public IEnumerator LoadStringsAsync(
 **에러 처리 규칙:**
 - 복수 asset 중 일부 실패 시 전체 로딩을 중단하지 않음
 - loader 없음 / 언어 충돌 / 파싱 실패는 `onError` 호출 후 해당 asset만 스킵
-- Addressables 로드 자체 실패 시에만 `yield break`
+- Addressables 로드 자체 실패 시에만 `return`
 
 ### RegisterStLoader
 
@@ -316,13 +316,13 @@ bool IsCached(TableFormat format, string fileName)
 
 ```csharp
 // Preload - onProgress 없음
-yield return ST_UIText.PreloadAsync(key, TableFormat.Json, SystemLanguage.Korean, onError);
+await ST_UIText.PreloadAsync(key, TableFormat.Json, SystemLanguage.Korean, onError);
 
 // Get - language 파라미터 없음
 var text = ST_UIText.Get("greeting");
 
 // 언어 변경 - ReloadAsync 사용
-yield return ST_UIText.ReloadAsync(key, TableFormat.Json, SystemLanguage.English, onError);
+await ST_UIText.ReloadAsync(key, TableFormat.Json, SystemLanguage.English, onError);
 ```
 
 ### Get API
@@ -412,12 +412,12 @@ message StringChunk {
 ```csharp
 public static partial class TB_{TableName}
 {
-    public static IEnumerator PreloadAsync(
+    public static async Task PreloadAsync(
         string key,
         global::Devian.TableFormat format,
         Action<string>? onError = null)
     {
-        yield return global::Devian.TableManager.Instance.LoadTablesAsync(
+        await global::Devian.TableManager.Instance.LoadTablesAsync(
             key, format, onError
         );
         _isLoaded = true;
@@ -432,7 +432,7 @@ public static partial class TB_{TableName}
 ```csharp
 public static class ST_{TableName}
 {
-    public static IEnumerator PreloadAsync(
+    public static async Task PreloadAsync(
         string key,
         global::Devian.TableFormat format,
         SystemLanguage language,
@@ -443,8 +443,8 @@ public static class ST_{TableName}
         return _cache.TryGetValue(id, out var text) ? text : id;
     }
 
-    public static IEnumerator ReloadAsync(...) { ... }
-    
+    public static async Task ReloadAsync(...) { ... }
+
     // DomainTableRegistry가 호출하는 internal 진입점
     internal static void _LoadFromNdjson(string text, SystemLanguage lang);
     internal static void _LoadFromPb64(string pb64Text, SystemLanguage lang);
@@ -527,10 +527,10 @@ internal static class DomainTableRegistry
 
 ### PASS 조건
 
-- [ ] `LoadTablesAsync(key, format, onError?)` 시그니처 (onLoaded/onProgress 없음)
-- [ ] `LoadTablesAsync`가 `LoadAssetsAsync<TextAsset>(key)`로 여러 asset 처리
-- [ ] `LoadStringsAsync(key, format, language, onError?)` 시그니처 (onLoaded/onProgress 없음)
-- [ ] `LoadStringsAsync`가 `LoadAssetsAsync<TextAsset>([key, language], MergeMode.Intersection)`로 여러 asset 처리
+- [ ] `async Task LoadTablesAsync(key, format, onError?)` 시그니처 (onLoaded/onProgress 없음)
+- [ ] `LoadTablesAsync`가 `LoadAssetsAsync<TextAsset>(key)`로 여러 asset 처리 (`await loadHandle.Task`)
+- [ ] `async Task LoadStringsAsync(key, format, language, onError?)` 시그니처 (onLoaded/onProgress 없음)
+- [ ] `LoadStringsAsync`가 `LoadAssetsAsync<TextAsset>([key, language], MergeMode.Intersection)`로 여러 asset 처리 (`await loadHandle.Task`)
 - [ ] 복수 asset 중 일부 실패 시 해당 asset만 스킵 (전체 중단 금지)
 - [ ] **SharedHandle(refcount)** 방식으로 중복 Release 방지
 - [ ] TB loader 미등록이면 해당 asset만 스킵 + onError
@@ -550,7 +550,7 @@ internal static class DomainTableRegistry
 
 - LoadTablesAsync에 onLoaded/onProgress 파라미터 존재
 - LoadStringsAsync에 onLoaded/onProgress 파라미터 존재
-- 복수 asset 중 일부 실패 시 전체 yield break
+- 복수 asset 중 일부 실패 시 전체 return
 - CachedData마다 Addressables.Release(handle) 직접 호출 (중복 릴리즈)
 - Addressables key 규약을 Hard로 강제하는 코드/문서
 - `@` 뒤 문자열을 코드 테이블명으로 사용

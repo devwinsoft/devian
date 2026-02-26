@@ -1,7 +1,7 @@
 # 19-download-manager
 
 Status: ACTIVE  
-AppliesTo: v10
+AppliesTo: v13
 
 ## SSOT
 
@@ -14,7 +14,6 @@ AppliesTo: v10
 **Addressables Label 기반 패치/다운로드를 제공하는 Unity 전용 컴포넌트.**
 
 - **CompoSingleton**: Bootstrap에서 생성/등록되거나 씬에 배치해야 함
-- **인스펙터**: `patchLabels` (Label 리스트) 설정 가능
 - **PatchProc**: 라벨별 다운로드 필요 용량 계산
 - **DownloadProc**: 라벨별 의존 번들 다운로드 (가중치 기반 진행률)
 - **실패 처리**: `onError` 콜백 반드시 호출 ("조용히 종료" 금지)
@@ -65,7 +64,6 @@ AppliesTo: v10
 
 | 필드 | 타입 | 기본값 | 설명 |
 |------|------|--------|------|
-| `patchLabels` | `List<string>` | `[]` | Addressables Labels (다운로드 대상) |
 | `forceClearDependencyCache` | `bool` | `false` | Size 계산 전 캐시 삭제 (운영 위험, 테스트용) |
 
 > **주의**: `forceClearDependencyCache`를 `true`로 설정하면 매번 캐시를 삭제하므로 운영 환경에서 사용 금지.
@@ -104,60 +102,54 @@ namespace Devian
         // ====================================================================
         // Inspector Fields (Serialized)
         // ====================================================================
-        
-        [SerializeField] private List<string> patchLabels;
+
         [SerializeField] private bool forceClearDependencyCache;
-        
+
         // ====================================================================
         // Events
         // ====================================================================
-        
+
         /// <summary>
         /// 에러 발생 시 추가 알림 (onError 콜백과 별도)
         /// </summary>
         public event Action<string> OnError;
-        
+
         // ====================================================================
         // Properties
         // ====================================================================
-        
-        /// <summary>
-        /// 설정된 patch labels (읽기 전용)
-        /// </summary>
-        public IReadOnlyList<string> PatchLabels { get; }
-        
+
         /// <summary>
         /// 마지막 PatchProc 결과 캐시
         /// </summary>
         public PatchInfo LastPatchInfo { get; }
-        
+
         // ====================================================================
         // Methods
         // ====================================================================
-        
+
         /// <summary>
         /// 라벨별 다운로드 크기 계산
         /// </summary>
+        /// <param name="labels">다운로드 대상 라벨</param>
         /// <param name="onDone">성공 시 PatchInfo 전달</param>
         /// <param name="onError">실패 시 에러 메시지 전달 (반드시 호출)</param>
-        /// <param name="overrideLabels">patchLabels 대신 사용할 라벨 (optional)</param>
         public IEnumerator PatchProc(
+            IReadOnlyList<string> labels,
             Action<PatchInfo> onDone,
-            Action<string> onError = null,
-            IReadOnlyList<string> overrideLabels = null);
-        
+            Action<string> onError = null);
+
         /// <summary>
         /// 라벨별 의존 번들 다운로드
         /// </summary>
+        /// <param name="labels">다운로드 대상 라벨</param>
         /// <param name="onProgress">진행률 0~1</param>
         /// <param name="onSuccess">성공 완료</param>
         /// <param name="onError">실패 시 에러 메시지 전달 (반드시 호출, onSuccess는 호출 안함)</param>
-        /// <param name="overrideLabels">patchLabels 대신 사용할 라벨 (optional)</param>
         public IEnumerator DownloadProc(
+            IReadOnlyList<string> labels,
             Action<float> onProgress,
             Action onSuccess,
-            Action<string> onError = null,
-            IReadOnlyList<string> overrideLabels = null);
+            Action<string> onError = null);
     }
 }
 ```
@@ -176,23 +168,15 @@ DownloadManager.Load("Devian/DownloadManager");
 
 // 이후 사용
 var dm = DownloadManager.Instance;
-StartCoroutine(dm.PatchProc(info => { ... }));
+StartCoroutine(dm.PatchProc(labels, info => { ... }));
 ```
 
 - 프로젝트에 `Assets/Resources/Devian/DownloadManager.prefab` 필요
 - 프리팹에 `DownloadManager` 컴포넌트 부착
-- 인스펙터에서 `patchLabels` 설정
 
-### 2. 라벨 정규화
+### 2. 빈 라벨 처리
 
-**PatchProc/DownloadProc 실행 전 라벨 정규화**
-
-- `Trim()`
-- Empty 제거
-- `Distinct()` (Ordinal)
-- `Sort()` (Ordinal)
-
-**정규화된 리스트가 비어있으면:**
+**라벨 리스트가 비어있으면:**
 - PatchProc: `TotalSize = 0` 결과 즉시 반환
 - DownloadProc: 즉시 `onProgress(1)` + `onSuccess()` 호출
 
@@ -251,7 +235,7 @@ if (sizeOp.Status == AsyncOperationStatus.Failed)
 
 ```csharp
 // 다운로드 (DownloadManager)
-yield return dm.DownloadProc(..., labels: new[] { "prefabs", "table-ndjson" });
+yield return dm.DownloadProc(new[] { "prefabs", "table-ndjson" }, ...);
 
 // 로딩 (AssetManager) - 동일한 label/key 사용
 yield return AssetManager.LoadBundleAssets<GameObject>("prefabs");
@@ -269,7 +253,7 @@ yield return AssetManager.LoadBundleAssets<TextAsset>("table-ndjson");
 1. **이미 캐시에 존재**: 이전에 다운로드한 번들이 캐시에 남아있음
 2. **Editor Play Mode**: AssetDatabase 기반으로 동작하여 다운로드 개념이 없음
 3. **Local-only 그룹**: Addressables 그룹이 로컬 빌드로 설정되어 있음
-4. **빈 라벨 리스트**: 정규화 후 라벨이 없음
+4. **빈 라벨 리스트**: 전달된 라벨이 없음
 
 ### 로딩 실패 원인 분석
 
@@ -294,59 +278,50 @@ using UnityEngine;
 
 public class BootSequence : MonoBehaviour
 {
+    private readonly string[] downloadLabels = { "prefabs", "table-ndjson" };
+
     IEnumerator Start()
     {
         // 1. DownloadManager 로드
         DownloadManager.Load("Devian/DownloadManager");
         var dm = DownloadManager.Instance;
-        
+
         // 2. 패치 크기 확인
         PatchInfo patchInfo = null;
         yield return dm.PatchProc(
+            downloadLabels,
             info => patchInfo = info,
             err => Debug.LogError($"Patch failed: {err}")
         );
-        
+
         if (patchInfo == null)
         {
             // 에러 발생
             yield break;
         }
-        
+
         Debug.Log($"Total download: {patchInfo.TotalSize} bytes");
-        
+
         // 3. 다운로드 실행
         if (patchInfo.TotalSize > 0)
         {
             bool success = false;
             yield return dm.DownloadProc(
+                downloadLabels,
                 progress => Debug.Log($"Progress: {progress * 100:F1}%"),
                 () => success = true,
                 err => Debug.LogError($"Download failed: {err}")
             );
-            
+
             if (!success)
             {
                 yield break;
             }
         }
-        
+
         Debug.Log("Download complete!");
     }
 }
-```
-
-### 특정 라벨만 다운로드
-
-```csharp
-// overrideLabels로 특정 라벨만 처리
-var customLabels = new List<string> { "table-ndjson", "prefabs" };
-
-yield return dm.PatchProc(
-    info => Debug.Log($"Custom download size: {info.TotalSize}"),
-    err => Debug.LogError(err),
-    customLabels
-);
 ```
 
 ---
@@ -357,7 +332,6 @@ yield return dm.PatchProc(
 
 1. **프리팹 생성**: `Assets/Resources/Devian/DownloadManager.prefab`
 2. **컴포넌트 부착**: `DownloadManager` 스크립트 추가
-3. **인스펙터 설정**: `patchLabels`에 다운로드할 Addressables Label 입력
 
 > **Note**: 이 프리팹 생성은 Unity Editor 작업이므로 레포에 YAML로 강제 추가하지 않는다.
 
@@ -369,9 +343,7 @@ yield return dm.PatchProc(
 
 - [ ] `DownloadManager.cs` (UPM + UnityExample) 최상단 SSOT가 이 문서를 가리킴
 - [ ] `DownloadManager`가 `ResSingleton<DownloadManager>` 상속
-- [ ] `patchLabels: List<string>` 인스펙터 필드 존재
 - [ ] `forceClearDependencyCache: bool` 기본값 `false`
-- [ ] `PatchProc`/`DownloadProc`가 라벨 정규화 적용
 - [ ] 실패 시 `onError` 반드시 호출 (조용히 종료 0건)
 - [ ] `Resources.` 직접 호출 0건 (ResSingleton.Load 사용은 예외)
 
@@ -411,25 +383,25 @@ string/ndjson/Korean/UIText
 string/pb64/English/ItemName
 ```
 
-### overrideLabels 사용 규칙
+### labels 파라미터 사용 규칙
 
-**String Table 다운로드는 반드시 `overrideLabels` 파라미터를 사용한다.**
+**String Table 다운로드는 `labels` 파라미터에 라벨을 전달한다.**
 
 ```csharp
 // String Table 다운로드 예시
 var labels = new[] { "string/ndjson/Korean/UIText" };
 
 yield return dm.PatchProc(
+    labels,
     info => { },
-    err => Debug.LogError(err),
-    overrideLabels: labels
+    err => Debug.LogError(err)
 );
 
 yield return dm.DownloadProc(
+    labels,
     p => { },
     () => { },
-    err => Debug.LogError(err),
-    overrideLabels: labels
+    err => Debug.LogError(err)
 );
 ```
 

@@ -159,7 +159,9 @@
       "WebFetch(domain:adapty.io)",
       "Bash(dotnet --version:*)",
       "Bash(cat:*)",
-      "Bash(/usr/bin/javap:*)"
+      "Bash(/usr/bin/javap:*)",
+      "Bash(git -C /Users/maoshy/Documents/Projects/devian rev-parse:*)",
+      "Bash(git -C /Users/maoshy/Documents/Projects/devian status:*)"
     ]
   },
   "project": {

@@ -25,8 +25,6 @@ namespace Devian
     /// </summary>
     public sealed class AccountManager : CompoSingleton<AccountManager>
     {
-        private const string LoginTypePrefsKey = "devian_login_type";
-
         private AccountLoginFirebase _firebaseLogin = new AccountLoginFirebase();
         private AccountLoginGpgs _gpgs = new AccountLoginGpgs();
         private AccountLoginApple _apple = new AccountLoginApple();
@@ -35,7 +33,9 @@ namespace Devian
         protected override void Awake()
         {
             base.Awake();
-            _currentLoginType = loadPersistedLoginType();
+            _currentLoginType = LoginType.EditorLogin;
+            if (GameStorageManager.TryGet(out var gameStorage))
+                ApplyStorage(gameStorage.Account);
         }
 
         /// <summary>
@@ -43,18 +43,18 @@ namespace Devian
         /// Google(Android) uses GPGS Reflection.
         /// Apple(iOS) requires Apple provider implementation; otherwise use the credential overload.
         /// </summary>
-        public async Task<CommonResult<bool>> LoginAsync(LoginType loginType, CancellationToken ct)
+        public async Task<CommonResult> LoginAsync(LoginType loginType, CancellationToken ct)
         {
             var credResult = await getLoginCredentialAsync(loginType, ct);
             if (credResult.IsFailure)
             {
-                return CommonResult<bool>.Failure(credResult.Error!);
+                return CommonResult.Failure(credResult.Error!);
             }
 
             return await LoginAsync(loginType, credResult.Value, ct);
         }
 
-        public async Task<CommonResult<bool>> LoginAsync(LoginType loginType, LoginCredential credential, CancellationToken ct)
+        public async Task<CommonResult> LoginAsync(LoginType loginType, LoginCredential credential, CancellationToken ct)
         {
             // 1. Sign-in
             var signInResult = await signInAsync(loginType, credential ?? LoginCredential.Empty(), ct);
@@ -63,7 +63,7 @@ namespace Devian
                 return signInResult;
             }
 
-            persistLoginType(loginType);
+            writeAccountState(loginType);
 
             // 2. SaveCloud init policy:
             // - Guest: never
@@ -81,7 +81,7 @@ namespace Devian
 #endif
             }
 
-            return CommonResult<bool>.Success(true);
+            return CommonResult.Ok();
         }
 
         public void Logout()
@@ -103,7 +103,7 @@ namespace Devian
 #endif
 
             // 4) Reset state
-            persistLoginType(LoginType.EditorLogin);
+            writeAccountState(LoginType.EditorLogin);
         }
 
         public LoginType _getCurrentLoginType()
@@ -142,7 +142,7 @@ namespace Devian
             if (signIn.IsFailure)
                 return CommonResult<bool>.Failure(signIn.Error!);
 
-            persistLoginType(LoginType.GoogleLogin);
+            writeAccountState(LoginType.GoogleLogin);
             return CommonResult<bool>.Success(true);
 #else
             return CommonResult<bool>.Success(false);
@@ -184,7 +184,7 @@ namespace Devian
 
         internal AccountLoginApple _getAccountLoginApple() => _apple;
 
-        private async Task<CommonResult<bool>> signInAsync(LoginType loginType, LoginCredential credential, CancellationToken ct)
+        private async Task<CommonResult> signInAsync(LoginType loginType, LoginCredential credential, CancellationToken ct)
         {
             switch (loginType)
             {
@@ -193,8 +193,8 @@ namespace Devian
                 {
                     var r = await _firebaseLogin.SignInAnonymouslyAsync(ct);
                     return r.IsSuccess
-                        ? CommonResult<bool>.Success(true)
-                        : CommonResult<bool>.Failure(r.Error!);
+                        ? CommonResult.Ok()
+                        : CommonResult.Failure(r.Error!);
                 }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -212,22 +212,22 @@ namespace Devian
 #endif
 
                 default:
-                    return CommonResult<bool>.Failure(CommonErrorType.LOGIN_UNSUPPORTED, $"LoginType {loginType} is not supported on this platform.");
+                    return CommonResult.Failure(CommonErrorType.LOGIN_UNSUPPORTED, $"LoginType {loginType} is not supported on this platform.");
             }
         }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
-        async Task<CommonResult<bool>> signInWithGoogleCredentialAsync(LoginCredential credential, CancellationToken ct)
+        async Task<CommonResult> signInWithGoogleCredentialAsync(LoginCredential credential, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(credential?.ServerAuthCode))
             {
-                return CommonResult<bool>.Failure(CommonErrorType.LOGIN_GOOGLE_MISSING_AUTH_CODE,
+                return CommonResult.Failure(CommonErrorType.LOGIN_GOOGLE_MISSING_AUTH_CODE,
                     "Google server auth code is missing. Configure GPGS server-side access and Web client ID.");
             }
 
             var init = await _firebaseLogin.InitializeAsync(ct);
             if (init.IsFailure)
-                return CommonResult<bool>.Failure(init.Error!);
+                return CommonResult.Failure(init.Error!);
 
             Credential firebaseCredential;
             try
@@ -236,7 +236,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult<bool>.Failure(CommonErrorType.LOGIN_GOOGLE_SIGNIN_FAILED, ex.Message);
+                return CommonResult.Failure(CommonErrorType.LOGIN_GOOGLE_SIGNIN_FAILED, ex.Message);
             }
 
             return await signInOrLinkFirebaseCredentialAsync(
@@ -248,17 +248,17 @@ namespace Devian
 #endif
 
 #if UNITY_IOS && !UNITY_EDITOR
-        async Task<CommonResult<bool>> signInWithAppleCredentialAsync(LoginCredential credential, CancellationToken ct)
+        async Task<CommonResult> signInWithAppleCredentialAsync(LoginCredential credential, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(credential?.IdToken) || string.IsNullOrWhiteSpace(credential?.RawNonce))
             {
-                return CommonResult<bool>.Failure(CommonErrorType.LOGIN_APPLE_MISSING_TOKEN,
+                return CommonResult.Failure(CommonErrorType.LOGIN_APPLE_MISSING_TOKEN,
                     "Apple IdToken and RawNonce are required.");
             }
 
             var init = await _firebaseLogin.InitializeAsync(ct);
             if (init.IsFailure)
-                return CommonResult<bool>.Failure(init.Error!);
+                return CommonResult.Failure(init.Error!);
 
             Credential firebaseCredential;
             try
@@ -271,7 +271,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult<bool>.Failure(CommonErrorType.LOGIN_APPLE_SIGNIN_FAILED, ex.Message);
+                return CommonResult.Failure(CommonErrorType.LOGIN_APPLE_SIGNIN_FAILED, ex.Message);
             }
 
             return await signInOrLinkFirebaseCredentialAsync(
@@ -282,7 +282,7 @@ namespace Devian
         }
 #endif
 
-        async Task<CommonResult<bool>> signInOrLinkFirebaseCredentialAsync(
+        async Task<CommonResult> signInOrLinkFirebaseCredentialAsync(
             Credential credential,
             CommonErrorType linkErrorType,
             CommonErrorType signInErrorType,
@@ -290,7 +290,7 @@ namespace Devian
         {
             var init = await _firebaseLogin.InitializeAsync(ct);
             if (init.IsFailure)
-                return CommonResult<bool>.Failure(init.Error!);
+                return CommonResult.Failure(init.Error!);
 
             FirebaseAuth auth;
             try
@@ -299,11 +299,11 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult<bool>.Failure(CommonErrorType.FIREBASE_NOT_INITIALIZED, ex.Message);
+                return CommonResult.Failure(CommonErrorType.FIREBASE_NOT_INITIALIZED, ex.Message);
             }
 
             if (auth == null)
-                return CommonResult<bool>.Failure(CommonErrorType.FIREBASE_NOT_INITIALIZED, "FirebaseAuth is null.");
+                return CommonResult.Failure(CommonErrorType.FIREBASE_NOT_INITIALIZED, "FirebaseAuth is null.");
 
             var currentUser = auth.CurrentUser;
             if (currentUser != null && currentUser.IsAnonymous)
@@ -313,8 +313,8 @@ namespace Devian
                     var linked = await currentUser.LinkWithCredentialAsync(credential);
                     ct.ThrowIfCancellationRequested();
                     if (linked?.User == null)
-                        return CommonResult<bool>.Failure(linkErrorType, "Firebase link succeeded but user is null.");
-                    return CommonResult<bool>.Success(true);
+                        return CommonResult.Failure(linkErrorType, "Firebase link succeeded but user is null.");
+                    return CommonResult.Ok();
                 }
                 catch (Exception linkEx)
                 {
@@ -327,32 +327,51 @@ namespace Devian
                 var user = await auth.SignInWithCredentialAsync(credential);
                 ct.ThrowIfCancellationRequested();
                 if (user == null)
-                    return CommonResult<bool>.Failure(signInErrorType, "Firebase sign-in succeeded but user is null.");
-                return CommonResult<bool>.Success(true);
+                    return CommonResult.Failure(signInErrorType, "Firebase sign-in succeeded but user is null.");
+                return CommonResult.Ok();
             }
             catch (Exception ex)
             {
-                return CommonResult<bool>.Failure(signInErrorType, ex.Message);
+                return CommonResult.Failure(signInErrorType, ex.Message);
             }
         }
 
-        private void persistLoginType(LoginType loginType)
+        internal void ApplyStorage(AccountStorage storage)
         {
-            _currentLoginType = loginType;
-            PlayerPrefs.SetInt(LoginTypePrefsKey, (int)loginType);
-            PlayerPrefs.Save();
+            var raw = storage != null ? (int)storage.loginType : (int)LoginType.EditorLogin;
+            _currentLoginType = Enum.IsDefined(typeof(LoginType), raw)
+                ? (LoginType)raw
+                : LoginType.EditorLogin;
         }
 
-        private static LoginType loadPersistedLoginType()
+        private void writeAccountState(LoginType loginType)
         {
-            if (!PlayerPrefs.HasKey(LoginTypePrefsKey))
-                return LoginType.EditorLogin;
+            _currentLoginType = loginType;
 
-            var raw = PlayerPrefs.GetInt(LoginTypePrefsKey, 0);
-            if (Enum.IsDefined(typeof(LoginType), raw))
-                return (LoginType)raw;
+            if (!GameStorageManager.TryGet(out var gameStorage))
+                return;
 
-            return LoginType.EditorLogin;
+            gameStorage.Account.Set(
+                loginType,
+                resolveSocialUserId(loginType),
+                DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        }
+
+        private static string resolveSocialUserId(LoginType loginType)
+        {
+            if (loginType != LoginType.GoogleLogin && loginType != LoginType.AppleLogin)
+                return null;
+
+            try
+            {
+                var user = FirebaseAuth.DefaultInstance?.CurrentUser;
+                var uid = user?.UserId;
+                return string.IsNullOrWhiteSpace(uid) ? null : uid;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
     }

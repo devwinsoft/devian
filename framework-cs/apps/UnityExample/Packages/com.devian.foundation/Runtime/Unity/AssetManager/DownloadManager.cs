@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/10-base-system/12-download-manager/SKILL.md
+// SSOT: skills/devian-unity/10-foundation/19-download-manager/SKILL.md
 // Devian Unity Download Manager - Addressables Label based Patch/Download
 // CompoSingleton: Bootstrap에서 생성/등록되거나 씬에 배치해야 함
 
@@ -7,7 +7,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -38,7 +37,7 @@ namespace Devian
 
     /// <summary>
     /// Addressables Label-based Patch/Download manager.
-    /// Inspector에서 patchLabels를 설정하고, PatchProc/DownloadProc로 다운로드 수행.
+    /// PatchProc/DownloadProc에 labels를 전달하여 다운로드 수행.
     ///
     /// CompoSingleton-based: Bootstrap에서 생성/등록되거나 씬에 배치해야 함.
     /// </summary>
@@ -47,11 +46,7 @@ namespace Devian
         // ====================================================================
         // Inspector Fields
         // ====================================================================
-        
-        [SerializeField]
-        [Tooltip("Addressables Labels to patch/download")]
-        private List<string> patchLabels = new List<string>();
-        
+
         [SerializeField]
         [Tooltip("Clear dependency cache before calculating size (DANGER: use only for testing)")]
         private bool forceClearDependencyCache = false;
@@ -69,37 +64,12 @@ namespace Devian
         // ====================================================================
         // Public Properties
         // ====================================================================
-        
-        /// <summary>
-        /// Read-only access to configured patch labels.
-        /// </summary>
-        public IReadOnlyList<string> PatchLabels => patchLabels;
-        
+
         /// <summary>
         /// Cached PatchInfo from last PatchProc call.
         /// </summary>
         public PatchInfo? LastPatchInfo { get; private set; }
-        
-        // ====================================================================
-        // Label Normalization
-        // ====================================================================
-        
-        /// <summary>
-        /// Normalizes labels: trim, remove empty, distinct, sort (Ordinal).
-        /// </summary>
-        private static List<string> NormalizeLabels(IReadOnlyList<string>? labels)
-        {
-            if (labels == null || labels.Count == 0)
-                return new List<string>();
-            
-            return labels
-                .Select(l => l?.Trim() ?? string.Empty)
-                .Where(l => !string.IsNullOrEmpty(l))
-                .Distinct(StringComparer.Ordinal)
-                .OrderBy(l => l, StringComparer.Ordinal)
-                .ToList();
-        }
-        
+
         // ====================================================================
         // PatchProc - Calculate download sizes
         // ====================================================================
@@ -107,16 +77,14 @@ namespace Devian
         /// <summary>
         /// Calculates download size for each label.
         /// </summary>
+        /// <param name="labels">Labels to check download size</param>
         /// <param name="onDone">Called with PatchInfo on success</param>
         /// <param name="onError">Called with error message on failure (never silent)</param>
-        /// <param name="overrideLabels">Optional: override patchLabels for this call</param>
         public IEnumerator PatchProc(
+            IReadOnlyList<string> labels,
             Action<PatchInfo> onDone,
-            Action<string>? onError = null,
-            IReadOnlyList<string>? overrideLabels = null)
+            Action<string>? onError = null)
         {
-            var labels = NormalizeLabels(overrideLabels ?? patchLabels);
-            
             // Empty labels = 0 bytes, immediate success
             if (labels.Count == 0)
             {
@@ -125,10 +93,10 @@ namespace Devian
                 onDone?.Invoke(emptyInfo);
                 yield break;
             }
-            
+
             var labelSizes = new Dictionary<string, long>();
             long totalSize = 0;
-            
+
             foreach (var label in labels)
             {
                 // Optional: Clear dependency cache (DANGEROUS - only for testing)
@@ -179,18 +147,16 @@ namespace Devian
         /// <summary>
         /// Downloads dependencies for each label.
         /// </summary>
+        /// <param name="labels">Labels to download</param>
         /// <param name="onProgress">Called with progress 0~1</param>
         /// <param name="onSuccess">Called on successful completion</param>
         /// <param name="onError">Called with error message on failure (never silent)</param>
-        /// <param name="overrideLabels">Optional: override patchLabels for this call</param>
         public IEnumerator DownloadProc(
+            IReadOnlyList<string> labels,
             Action<float>? onProgress,
             Action onSuccess,
-            Action<string>? onError = null,
-            IReadOnlyList<string>? overrideLabels = null)
+            Action<string>? onError = null)
         {
-            var labels = NormalizeLabels(overrideLabels ?? patchLabels);
-            
             // Empty labels = immediate success
             if (labels.Count == 0)
             {
@@ -198,31 +164,31 @@ namespace Devian
                 onSuccess?.Invoke();
                 yield break;
             }
-            
+
             // Need PatchInfo for weighted progress
             PatchInfo? patchInfo = LastPatchInfo;
-            
+
             // If no cached PatchInfo or labels differ, run PatchProc first
             if (patchInfo == null || !LabelsMatch(labels, patchInfo.LabelSizes.Keys))
             {
                 PatchInfo? fetchedInfo = null;
                 string? patchError = null;
-                
+
                 yield return PatchProc(
+                    labels,
                     info => fetchedInfo = info,
-                    err => patchError = err,
-                    labels
+                    err => patchError = err
                 );
-                
+
                 if (patchError != null)
                 {
                     // PatchProc already raised error
                     yield break;
                 }
-                
+
                 patchInfo = fetchedInfo!;
             }
-            
+
             // Nothing to download
             if (patchInfo.TotalSize == 0)
             {
@@ -230,10 +196,10 @@ namespace Devian
                 onSuccess?.Invoke();
                 yield break;
             }
-            
+
             long downloadedBytes = 0;
             long totalBytes = patchInfo.TotalSize;
-            
+
             foreach (var label in labels)
             {
                 if (!patchInfo.LabelSizes.TryGetValue(label, out var labelSize) || labelSize == 0)

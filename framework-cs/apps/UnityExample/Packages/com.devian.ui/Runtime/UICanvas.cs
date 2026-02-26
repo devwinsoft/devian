@@ -16,13 +16,18 @@ namespace Devian
 
     /// <summary>
     /// Base class for UI Canvas owners.
-    /// Inherits from CompoSingleton for scene-placed singleton pattern.
+    /// 씬 종속 MonoBehaviour 싱글톤. DontDestroyOnLoad 미적용 — 씬 전환 시 자동 파괴.
     /// Frames are initialized when Init() is called.
     /// </summary>
     /// <typeparam name="TCanvas">The derived canvas type.</typeparam>
-    public abstract class UICanvas<TCanvas> : CompoSingleton<TCanvas>
+    public abstract class UICanvas<TCanvas> : MonoBehaviour
         where TCanvas : MonoBehaviour
     {
+        /// <summary>
+        /// 씬 종속 싱글톤 인스턴스. Awake에서 설정, OnDestroy에서 클린업.
+        /// </summary>
+        public static TCanvas Instance { get; private set; }
+
         /// <summary>
         /// The Unity Canvas component cached on Awake.
         /// </summary>
@@ -32,14 +37,23 @@ namespace Devian
         List<BaseUIFrame> mFrames = new List<BaseUIFrame>();
 
         /// <summary>
-        /// Unity Awake callback. Overrides CompoSingleton.Awake().
+        /// Unity Awake callback. Instance 설정 + canvas 캐시.
         /// Use onAwake for custom initialization in derived classes.
         /// </summary>
-        protected override void Awake()
+        protected virtual void Awake()
         {
-            base.Awake();
+            Instance = this as TCanvas;
             canvas = GetComponent<Canvas>();
             onAwake();
+        }
+
+        /// <summary>
+        /// Unity OnDestroy callback. Instance 클린업.
+        /// </summary>
+        protected virtual void OnDestroy()
+        {
+            if (Instance == (this as TCanvas))
+                Instance = null;
         }
 
         /// <summary>
@@ -105,7 +119,7 @@ namespace Devian
         /// <param name="parent">Parent transform. Defaults to this frame's transform if null.</param>
         /// <returns>The created and initialized frame instance.</returns>
         public FRAME CreateFrame<FRAME>(string prefabName, Transform parent = null)
-            where FRAME : Component, IPoolable<FRAME>
+            where FRAME : Component, IPoolable
         {
             var instance = BundlePool.Spawn<FRAME>(
                 prefabName,

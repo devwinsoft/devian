@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Devian.Domain.Common;
 
 
 namespace Devian
@@ -33,12 +34,14 @@ namespace Devian
         }
 
 
-        public Task<SaveCloudResult> SaveAsync(string slot, SaveCloudPayload payload, CancellationToken ct)
+        public async Task<CommonResult> SaveAsync(string slot, SaveCloudPayload payload, CancellationToken ct)
         {
 #if UNITY_IOS && !UNITY_EDITOR
-            return AccountManager.Instance._getAccountLoginApple().SaveAsync(slot, payload, ct);
+            var result = await AccountManager.Instance._getAccountLoginApple().SaveAsync(slot, payload, ct);
+            return mapSaveResult(result);
 #else
-            return Task.FromResult(SaveCloudResult.NotAvailable);
+            return CommonResult.Failure(CommonErrorType.CLOUDSAVE_CONNECTION_FAILED,
+                "Cloud save is not available on this platform.");
 #endif
         }
 
@@ -50,6 +53,13 @@ namespace Devian
 #else
             return Task.FromResult(SaveCloudResult.NotAvailable);
 #endif
+        }
+
+        private static CommonResult mapSaveResult(SaveCloudResult result)
+        {
+            return result == SaveCloudResult.Success
+                ? CommonResult.Ok()
+                : CommonResult.Failure(CommonErrorType.CLOUDSAVE_CONNECTION_FAILED, $"Cloud save failed: {result}");
         }
     }
 }

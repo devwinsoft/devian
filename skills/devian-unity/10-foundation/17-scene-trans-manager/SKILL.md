@@ -13,7 +13,6 @@ Scene 전환 파이프라인을 단일화(직렬화)하고, 씬별 초기화/정
 ## Files (SSOT)
 
 - `framework-cs/upm/com.devian.foundation/Runtime/Unity/Scene/SceneBase.cs`
-- `framework-cs/upm/com.devian.foundation/Runtime/Unity/Scene/SceneBoot.cs`
 - `framework-cs/upm/com.devian.foundation/Runtime/Unity/Scene/SceneTransManager.cs`
 
 ---
@@ -29,20 +28,14 @@ Scene 전환 파이프라인을 단일화(직렬화)하고, 씬별 초기화/정
 
 | 훅 | 호출 시점 | 호출 주체 | 용도 |
 |----|----------|----------|------|
-| `OnInitAwake()` | Unity Awake()에서 항상 1회 | SceneBase.Awake | 레퍼런스 캐싱, 초기 상태 구성, 컴포넌트 연결 등 전환과 무관한 준비 작업 |
-| `OnEnter()` | 씬 진입 시 (전환 또는 부팅) | SceneTransManager | 씬 진입 상태 초기화 |
-| `OnStart()` | Unity Start 시점 | SceneBase.Start | 씬 시작 로직 |
-| `OnExit()` | 전환으로 이탈 시 | SceneTransManager | 정리 작업 |
+| `onInitAwake()` | Unity Awake()에서 항상 1회 | SceneBase.Awake | 레퍼런스 캐싱, 초기 상태 구성, 컴포넌트 연결 등 전환과 무관한 준비 작업 |
+| `Enter()` → `onEnter()` | 씬 진입 시 (전환 또는 부팅) | SceneTransManager | 씬 진입 상태 초기화 |
+| `onStart()` | Unity Start 시점 | SceneBase.Start | 씬 시작 로직 |
+| `Exit()` → `onExit()` | 전환으로 이탈 시 | SceneTransManager | 정리 작업 |
 
-### SceneBoot
-
-`SceneBase`를 상속하여 Bootstrap 통합 로직을 추가한 클래스. 대부분의 게임 씬은 이 클래스를 상속한다.
-
-**Bootstrap 통합:**
-
-- Awake()에서 Bootstrap이 아직 생성되지 않았으면 `BaseBootstrap.CreateFromResources()`로 생성 트리거
-- SceneTransManager는 OnEnter 전에 `BaseBootstrap.BootProc()`를 호출한다 (이미 부팅이면 즉시 종료)
-- SceneBoot.Start()에서 OnStart 전에 `BaseBootstrap.BootProc()`를 호출한다 (이미 부팅이면 즉시 종료)
+**Template Method 패턴:**
+- `Enter()` / `Exit()` — public 파사드. SceneTransManager가 호출한다.
+- `onEnter()` / `onExit()` / `onStart()` / `onInitAwake()` — protected 훅. 파생 클래스가 구현한다.
 
 ### SceneTransManager
 
@@ -52,17 +45,17 @@ Bootstrap prefab에 포함되어 부팅 시 자동 등록된다.
 **책임:**
 - 전환 흐름 직렬화 (동시 전환 방지)
 - Fade 시간 전달 (이벤트 위임)
-- SceneBase OnExit/OnEnter 호출
+- SceneBase Exit/Enter 호출
 - Hook(beforeUnload/afterLoad) 실행
 
 **전환 순서 (LoadSceneAsync):**
 1. FadeOutRequested 이벤트 발생 (fadeOutSeconds > 0인 경우)
 2. beforeUnload 훅 실행 (있으면)
-3. 현재 씬의 `SceneBase.OnExit()` 호출
+3. 현재 씬의 `SceneBase.Exit()` 호출
 4. `AssetManager.LoadSceneAsync()` 로 새 씬 로드
 5. afterLoad 훅 실행 (있으면)
-6. `BaseBootstrap.BootProc()` 호출 (이미 부팅이면 즉시 종료)
-7. 새 씬의 `SceneBase.OnEnter()` 호출
+6. `BaseBootstrap.Instance.BootProc()` 호출 (이미 부팅이면 즉시 종료)
+7. 새 씬의 `SceneBase.Enter()` 호출
 8. FadeInRequested 이벤트 발생 (fadeInSeconds > 0인 경우)
 
 **특징:**
@@ -79,20 +72,20 @@ Bootstrap prefab에 포함되어 부팅 시 자동 등록된다.
 
 ```csharp
 // 페이드 이벤트
-public event Func<float, IEnumerator>? FadeOutRequested;
-public event Func<float, IEnumerator>? FadeInRequested;
+public event Func<float, Task>? FadeOutRequested;
+public event Func<float, Task>? FadeInRequested;
 ```
 
-- 구독자는 fadeSeconds 동안 페이드를 수행하는 코루틴을 반환한다.
+- 구독자는 fadeSeconds 동안 페이드를 수행하는 Task를 반환한다.
 - 여러 구독자가 있으면 등록 순서대로 순차 실행된다.
 - fadeSeconds가 0 이하면 이벤트 호출을 스킵한다.
 
 ### 부팅 씬 (첫 씬) 처리
 
 SceneTransManager는 `Start()`에서 Active Scene의 SceneBase를 찾아:
-- `BaseBootstrap.BootProc()`를 호출한다 (이미 부팅이면 즉시 종료)
-- `OnEnter()`를 호출한다
-- OnStart는 SceneBase.Start() (또는 SceneBoot.Start())에서 호출된다
+- `BaseBootstrap.Instance.BootProc()`를 호출한다 (이미 부팅이면 즉시 종료)
+- `Enter()`를 호출한다
+- onStart는 SceneBase.Start()에서 호출된다
 
 ### Additive 모드
 
@@ -106,13 +99,13 @@ SceneTransManager는 `Start()`에서 Active Scene의 SceneBase를 찾아:
 ### LoadSceneAsync
 
 ```csharp
-public IEnumerator LoadSceneAsync(
+public async Task LoadSceneAsync(
     string sceneKey,
     LoadSceneMode mode = LoadSceneMode.Single,
     float fadeOutSeconds = 0.2f,
     float fadeInSeconds = 0.2f,
-    Func<IEnumerator>? beforeUnload = null,
-    Func<IEnumerator>? afterLoad = null,
+    Func<Task>? beforeUnload = null,
+    Func<Task>? afterLoad = null,
     Action<string>? onError = null)
 ```
 
@@ -122,8 +115,8 @@ public IEnumerator LoadSceneAsync(
 | mode | LoadSceneMode.Single 또는 Additive | Single |
 | fadeOutSeconds | 페이드 아웃 시간 (0 이하면 스킵) | 0.2f |
 | fadeInSeconds | 페이드 인 시간 (0 이하면 스킵) | 0.2f |
-| beforeUnload | 언로드 전 실행할 코루틴 | null |
-| afterLoad | 로드 후 실행할 코루틴 | null |
+| beforeUnload | 언로드 전 실행할 Task | null |
+| afterLoad | 로드 후 실행할 Task | null |
 | onError | 에러 콜백 | null |
 
 ---
@@ -142,39 +135,39 @@ public IEnumerator LoadSceneAsync(
 
 ```csharp
 // 기본 전환 (페이드 0.2초)
-StartCoroutine(SceneTransManager.Instance.LoadSceneAsync("SceneKey_Main"));
+await SceneTransManager.Instance.LoadSceneAsync("SceneKey_Main");
 
 // 페이드 시간 커스텀
-StartCoroutine(SceneTransManager.Instance.LoadSceneAsync(
+await SceneTransManager.Instance.LoadSceneAsync(
     "SceneKey_Game",
     LoadSceneMode.Single,
     fadeOutSeconds: 0.5f,
     fadeInSeconds: 0.3f
-));
+);
 ```
 
 ### Hook 사용 (beforeUnload/afterLoad)
 
 ```csharp
-StartCoroutine(SceneTransManager.Instance.LoadSceneAsync(
+await SceneTransManager.Instance.LoadSceneAsync(
     "SceneKey_Game",
     LoadSceneMode.Single,
     fadeOutSeconds: 0.25f,
     fadeInSeconds: 0.25f,
-    beforeUnload: () => SaveBeforeLeave(),
-    afterLoad: () => WarmupAfterEnter()
-));
+    beforeUnload: () => SaveBeforeLeaveAsync(),
+    afterLoad: () => WarmupAfterEnterAsync()
+);
 
-IEnumerator SaveBeforeLeave()
+async Task SaveBeforeLeaveAsync()
 {
     // 씬 떠나기 전 저장 로직
-    yield return null;
+    await Task.CompletedTask;
 }
 
-IEnumerator WarmupAfterEnter()
+async Task WarmupAfterEnterAsync()
 {
     // 씬 로드 후 워밍업 로직
-    yield return null;
+    await Task.CompletedTask;
 }
 ```
 
@@ -197,7 +190,7 @@ void OnDisable()
     }
 }
 
-IEnumerator OnFadeOut(float seconds)
+async Task OnFadeOut(float seconds)
 {
     // CanvasGroup alpha를 0 → 1로 변경
     float t = 0f;
@@ -205,12 +198,12 @@ IEnumerator OnFadeOut(float seconds)
     {
         t += Time.unscaledDeltaTime;
         _canvasGroup.alpha = Mathf.Clamp01(t / seconds);
-        yield return null;
+        await Task.Yield();
     }
     _canvasGroup.alpha = 1f;
 }
 
-IEnumerator OnFadeIn(float seconds)
+async Task OnFadeIn(float seconds)
 {
     // CanvasGroup alpha를 1 → 0로 변경
     float t = 0f;
@@ -218,42 +211,44 @@ IEnumerator OnFadeIn(float seconds)
     {
         t += Time.unscaledDeltaTime;
         _canvasGroup.alpha = 1f - Mathf.Clamp01(t / seconds);
-        yield return null;
+        await Task.Yield();
     }
     _canvasGroup.alpha = 0f;
 }
 ```
 
-### SceneBoot 구현 예시
+### SceneBase 구현 예시
+
+Bootstrap 통합이 필요하면 contents 레이어에서 SceneBase를 상속하여 직접 구현한다 (프레임워크는 SceneBoot을 제공하지 않는다).
 
 ```csharp
-public class MainScene : SceneBoot
+public class MainScene : SceneBase
 {
     // 전환과 무관하게 항상 1회 호출 (Unity Awake 시점)
-    protected override void OnInitAwake()
+    protected override void onInitAwake()
     {
         // 레퍼런스 캐싱, 컴포넌트 연결 등
     }
 
-    // 씬 진입 시 호출 (SceneTransManager가 호출)
-    public override IEnumerator OnEnter()
+    // 씬 진입 시 호출 (SceneTransManager가 Enter() 호출)
+    protected override async Task onEnter()
     {
         // 씬 진입 시 초기화 로직
-        yield return null;
+        await Task.CompletedTask;
     }
 
-    // Unity Start 시점에 호출 (SceneBoot.Start()가 호출)
-    public override IEnumerator OnStart()
+    // Unity Start 시점에 호출 (SceneBase.Start()가 호출)
+    protected override async Task onStart()
     {
         // 씬 시작 로직
-        yield return null;
+        await Task.CompletedTask;
     }
 
-    // 전환으로 이탈 시 호출
-    public override IEnumerator OnExit()
+    // 전환으로 이탈 시 호출 (SceneTransManager가 Exit() 호출)
+    protected override async Task onExit()
     {
         // 씬 퇴장 시 정리 로직
-        yield return null;
+        await Task.CompletedTask;
     }
 }
 ```

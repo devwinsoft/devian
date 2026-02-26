@@ -47,7 +47,7 @@ namespace Devian
         /// <param name="parent">Optional parent transform.</param>
         /// <returns>The canvas instance (existing or newly created).</returns>
         public TCanvas CreateCanvas<TCanvas>(string prefabName, Transform parent = null)
-            where TCanvas : MonoBehaviour, IPoolable<TCanvas>
+            where TCanvas : MonoBehaviour, IPoolable
         {
             var spawned = BundlePool.Spawn<TCanvas>(prefabName, parent: parent);
 
@@ -70,7 +70,7 @@ namespace Devian
         /// <param name="parent">Optional parent transform (used only if creation needed).</param>
         /// <returns>The canvas instance.</returns>
         public TCanvas EnsureCanvas<TCanvas>(string prefabName, Transform parent = null)
-            where TCanvas : MonoBehaviour, IPoolable<TCanvas>
+            where TCanvas : MonoBehaviour, IPoolable
         {
             if (TryGetCanvas<TCanvas>(out var canvas))
             {

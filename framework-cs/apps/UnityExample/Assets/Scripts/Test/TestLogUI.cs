@@ -57,7 +57,7 @@ public class TestLogUI : MonoBehaviour
                 break;
         }
 
-        if (mLogMessages.Count > 6)
+        if (mLogMessages.Count > 8)
         {
             mLogMessages.RemoveAt(0);
         }

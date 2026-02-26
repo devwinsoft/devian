@@ -172,7 +172,7 @@ Address: string/ndjson/Korean/UIText
 Label:   string/ndjson/Korean/UIText
 ```
 
-> **이유**: DownloadManager가 label 기반으로 동작하므로, label = key로 통일해야 `overrideLabels`로 개별 다운로드 가능.
+> **이유**: DownloadManager가 label 기반으로 동작하므로, label = key로 통일해야 `labels` 파라미터로 개별 다운로드 가능.
 
 ---
 

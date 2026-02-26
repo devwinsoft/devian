@@ -14,7 +14,6 @@ namespace Devian
         Success,
         Conflict,
         Initial,
-        ConnectionFailed,
     }
 
     public sealed class SyncResult
@@ -121,7 +120,7 @@ namespace Devian
             }
 
             // Try to initialize cloud so Sync can actually read cloud records.
-            // If it fails, continue as local-only (same effective behavior as before).
+            // If it fails and local data exists, continue so caller can still use local data.
             {
                 var init = await _initializeCloudAsync(ct);
                 if (init.IsFailure)
@@ -129,12 +128,12 @@ namespace Devian
                     UnityEngine.Debug.LogWarning(
                         $"[SaveDataManager] SyncAsync: cloud init failed, proceeding local-only. error={init.Error}");
 
-                    // If no local payload exists, caller cannot proceed -> explicit ConnectionFailed state.
-                    // If local payload exists, caller can still handle using local data, so do NOT return ConnectionFailed.
+                    // If no local payload exists, caller cannot proceed.
+                    // If local payload exists, caller can still handle using local data, so continue.
                     var hasAnyLocal = await hasAnyLocalAsync(ct);
                     if (!hasAnyLocal)
                     {
-                        return CommonResult<SyncResult>.Success(new SyncResult(SyncState.ConnectionFailed));
+                        return CommonResult<SyncResult>.Failure(init.Error!);
                     }
                 }
             }
@@ -151,6 +150,7 @@ namespace Devian
                 && result.Value.LocalPayload?.payload != null)
             {
                 GameStorageManager.Instance.LoadFromPayload(result.Value.LocalPayload.payload);
+                applyLoadedAccountStorageToRuntime();
                 await postSyncEntitlementsAsync(ct);
             }
 
@@ -185,7 +185,8 @@ namespace Devian
                     null));
             }
 
-            // Cloud init 시도. 실패하면 local-only로 진행하되 slot 기준으로만 판정.
+            // Cloud init 시도. 실패하면 local-only로 진행하되 slot 기준으로만 판정한다.
+            // slot 기준 local 데이터가 없으면 실패를 반환한다.
             {
                 var init = await _initializeCloudAsync(ct);
                 if (init.IsFailure)
@@ -194,7 +195,7 @@ namespace Devian
                         $"[SaveDataManager] SyncAsync(slot): cloud init failed, proceeding local-only. error={init.Error}");
 
                     if (string.IsNullOrWhiteSpace(slot))
-                        return CommonResult<SyncResult>.Success(new SyncResult(SyncState.ConnectionFailed));
+                        return CommonResult<SyncResult>.Failure(init.Error!);
 
                     var localR = await loadLocalRecordAsync(slot, ct);
                     if (localR.IsFailure)
@@ -202,7 +203,7 @@ namespace Devian
 
                     var local = localR.Value;
                     if (local == null)
-                        return CommonResult<SyncResult>.Success(new SyncResult(SyncState.ConnectionFailed, slot));
+                        return CommonResult<SyncResult>.Failure(init.Error!);
 
                     return CommonResult<SyncResult>.Success(new SyncResult(
                         SyncState.Success,
@@ -226,14 +227,13 @@ namespace Devian
                     new CommonError(CommonErrorType.LOGIN_SYNC_LOAD_LOCAL_FAILED, $"Sync load local failed. slot='{slot}'", localR2.Error!.ToString()));
             }
 
-            var cloudWritable = true;
             var cloudR2 = await loadCloudRecordAsync(slot, ct);
             if (cloudR2.IsFailure)
             {
                 UnityEngine.Debug.LogWarning(
                     $"[SaveDataManager] SyncAsync(slot) load cloud failed. slot='{slot}'. " +
-                    $"Proceeding with local-only. error={cloudR2.Error}");
-                cloudWritable = false;
+                    $"Failing sync. error={cloudR2.Error}");
+                return CommonResult<SyncResult>.Failure(cloudR2.Error!);
             }
 
             var local2 = localR2.Value;
@@ -242,8 +242,7 @@ namespace Devian
             // both missing
             if (local2 == null && cloud2 == null)
             {
-                var st = cloudWritable ? SyncState.Initial : SyncState.ConnectionFailed;
-                return CommonResult<SyncResult>.Success(new SyncResult(st, slot));
+                return CommonResult<SyncResult>.Success(new SyncResult(SyncState.Initial, slot));
             }
 
             // cloud -> local
@@ -274,12 +273,6 @@ namespace Devian
             // local -> cloud
             if (local2 != null && cloud2 == null)
             {
-                if (!cloudWritable)
-                {
-                    return CommonResult<SyncResult>.Success(new SyncResult(
-                        SyncState.Success, slot, local2, null, local2.deviceId, null));
-                }
-
                 var jsonR = decryptLocalPayloadToJson(local2);
                 if (jsonR.IsFailure)
                 {
@@ -416,6 +409,7 @@ namespace Devian
 
                         _needsCloudSave = false;
                         GameStorageManager.Instance.LoadFromPayload(localR.Value.payload);
+                        applyLoadedAccountStorageToRuntime();
                         await postSyncEntitlementsAsync(ct);
 
                         return CommonResult<bool>.Success(true);
@@ -439,6 +433,7 @@ namespace Devian
                             return CommonResult<bool>.Failure(saveLocalR.Error!);
 
                         GameStorageManager.Instance.LoadFromJson(jsonR.Value);
+                        applyLoadedAccountStorageToRuntime();
                         await postSyncEntitlementsAsync(ct);
 
                         return CommonResult<bool>.Success(true);
@@ -516,6 +511,24 @@ namespace Devian
         {
             var json = JsonUtility.ToJson(data);
             return SaveDataAsync(slot, json, includeCloud, ct);
+        }
+
+        // ──────────────────────────────────────────────
+        //  Public: Load API
+        // ──────────────────────────────────────────────
+
+        public CommonResult<bool> LoadLocalData(string slot)
+        {
+            var record = loadLocalRecord(slot);
+            if (record.IsFailure) return CommonResult<bool>.Failure(record.Error!);
+
+            var payload = record.Value;
+            if (payload?.payload == null)
+                return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_NOT_FOUND, "No local data found.");
+
+            GameStorageManager.Instance.LoadFromPayload(payload.payload);
+            applyLoadedAccountStorageToRuntime();
+            return CommonResult<bool>.Success(true);
         }
 
         // ──────────────────────────────────────────────
@@ -792,7 +805,8 @@ namespace Devian
                 nowUpdateTime(),
                 obfuscated,
                 _getOrCreateDeviceId(),
-                nextSaveSeq()
+                nextSaveSeq(),
+                snapshotAccountMeta()
             );
 
             var write = SaveLocalFileStore.WriteAtomic(getRootPath(), filename, save);
@@ -882,13 +896,14 @@ namespace Devian
                 nowUpdateTime(),
                 obfuscated,
                 _getOrCreateDeviceId(),
-                nextSaveSeq()
+                nextSaveSeq(),
+                snapshotAccountMeta()
             );
 
             var r = await _cloudClient.SaveAsync(cloudSlot, csPayload, ct);
-            return r == SaveCloudResult.Success
-                ? CommonResult<bool>.Success(true)
-                : CommonResult<bool>.Failure(CommonErrorType.CLOUDSAVE_SAVE, $"Save failed: {r}");
+            return r.IsFailure
+                ? CommonResult<bool>.Failure(r.Error!)
+                : CommonResult<bool>.Success(true);
         }
 
         private async Task<CommonResult<SaveCloudPayload>> loadCloudRecordInternal(
@@ -903,7 +918,10 @@ namespace Devian
 
             if (result != SaveCloudResult.Success)
             {
-                return CommonResult<SaveCloudPayload>.Failure(CommonErrorType.CLOUDSAVE_LOAD, $"Load failed: {result}");
+                var errorType = isCloudConnectionFailureResult(result)
+                    ? CommonErrorType.CLOUDSAVE_CONNECTION_FAILED
+                    : CommonErrorType.CLOUDSAVE_LOAD;
+                return CommonResult<SaveCloudPayload>.Failure(errorType, $"Load failed: {result}");
             }
 
             if (loaded == null)
@@ -914,6 +932,20 @@ namespace Devian
             // Payload Contract (Obfuscated-only):
             // - 반환 SaveCloudPayload.Payload 는 저장 포맷 그대로(난독화 시 obfuscated)여야 한다.
             return CommonResult<SaveCloudPayload>.Success(loaded);
+        }
+
+        private static bool isCloudConnectionFailureResult(SaveCloudResult result)
+        {
+            switch (result)
+            {
+                case SaveCloudResult.NotAvailable:
+                case SaveCloudResult.AuthRequired:
+                case SaveCloudResult.TemporaryFailure:
+                case SaveCloudResult.FatalFailure:
+                    return true;
+                default:
+                    return false;
+            }
         }
 
         private static ISaveCloudClient createDefaultClient()
@@ -993,7 +1025,6 @@ namespace Devian
         {
             try
             {
-                var hasCloudConnectionFailure = false;
                 var slotSet = new HashSet<string>(StringComparer.Ordinal);
 
                 var localKeys = _slotConfig.GetLocalSlotKeys();
@@ -1024,17 +1055,13 @@ namespace Devian
                             new CommonError(CommonErrorType.LOGIN_SYNC_LOAD_LOCAL_FAILED, $"Sync load local failed. slot='{slot}'", localR.Error!.ToString()));
                     }
 
-                    var cloudWritable = true;
-
                     var cloudR = await loadCloudRecordAsync(slot, ct);
                     if (cloudR.IsFailure)
                     {
                         UnityEngine.Debug.LogWarning(
                             $"[SaveDataManager] Sync load cloud failed. slot='{slot}'. " +
-                            $"Proceeding with local-only. error={cloudR.Error}");
-
-                        hasCloudConnectionFailure = true;
-                        cloudWritable = false;
+                            $"Failing sync. error={cloudR.Error}");
+                        return CommonResult<SyncResult>.Failure(cloudR.Error!);
                     }
 
                     var local = localR.Value;
@@ -1070,11 +1097,6 @@ namespace Devian
 
                     if (local != null && cloud == null)
                     {
-                        if (!cloudWritable)
-                        {
-                            continue;
-                        }
-
                         var jsonR = decryptLocalPayloadToJson(local);
                         if (jsonR.IsFailure)
                         {
@@ -1161,13 +1183,9 @@ namespace Devian
 
                 if (!hasAnyLocal && !hasAnyCloud)
                 {
-                    if (hasCloudConnectionFailure)
-                        return CommonResult<SyncResult>.Success(new SyncResult(SyncState.ConnectionFailed));
                     return CommonResult<SyncResult>.Success(new SyncResult(SyncState.Initial));
                 }
 
-                if (hasCloudConnectionFailure && !hasAnyLocal)
-                    return CommonResult<SyncResult>.Success(new SyncResult(SyncState.ConnectionFailed));
                 return CommonResult<SyncResult>.Success(new SyncResult(SyncState.Success));
             }
             catch (OperationCanceledException ex)
@@ -1180,6 +1198,25 @@ namespace Devian
         // ──────────────────────────────────────────────
         //  Private: Shared helpers
         // ──────────────────────────────────────────────
+
+        private static AccountStorage snapshotAccountMeta()
+        {
+            if (GameStorageManager.TryGet(out var gameStorage) && gameStorage.Account != null)
+                return gameStorage.Account.Clone();
+
+            return null;
+        }
+
+        private static void applyLoadedAccountStorageToRuntime()
+        {
+            if (!GameStorageManager.TryGet(out var gameStorage))
+                return;
+
+            if (!AccountManager.TryGet(out var accountManager))
+                return;
+
+            accountManager.ApplyStorage(gameStorage.Account);
+        }
 
         private static bool hasSameObfuscatedPayload(SaveLocalPayload local, SaveCloudPayload cloud)
         {

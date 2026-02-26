@@ -16,7 +16,7 @@ Canvas owner와 UI 기능 단위(Frame)의 초기화 수명주기를 표준화�
 
 | Term | Definition |
 |------|------------|
-| **UICanvas** | Canvas owner. CompoSingleton 기반 싱글톤으로, Init() 호출 시 자식 Frame들을 초기화 |
+| **UICanvas** | Canvas owner. 씬 종속 MonoBehaviour 싱글톤으로, Init() 호출 시 자식 Frame들을 초기화. 씬 전환 시 자동 파괴됨 (DontDestroyOnLoad 미적용) |
 | **UIFrame** | Canvas 하위 UI 기능 단위. UICanvas로부터 _InitFromCanvas 호출을 받아 초기화됨 |
 | **BaseUIFrame** | UIFrame의 비제네릭 기반 클래스. _InitFromCanvas(MonoBehaviour) 진입점 제공 |
 | **UIFrame\<TCanvas\>** | 타입 안전 버전. 강타입 owner 참조 + onInit(TCanvas) 확장점 제공 |
@@ -29,7 +29,7 @@ Canvas owner와 UI 기능 단위(Frame)의 초기화 수명주기를 표준화�
        └── 자식에 UIFrame<MyCanvas> 컴포넌트들 배치
 
 2. UICanvas.Awake()
-   ├── base.Awake()                    ← Singleton 등록
+   ├── Instance = this as TCanvas      ← static Instance 설정
    ├── canvas = GetComponent<Canvas>()
    └── onAwake()                       ← custom logic
 
@@ -98,7 +98,8 @@ C# 메서드 네이밍(internal `_` 접두어, protected lowerCamelCase)은 상�
 | Rule | Description |
 |------|-------------|
 | **MUST** | `Awake()` → `onAwake()` 패턴 사용 |
-| **MUST** | UICanvas.Awake()는 `override` + `base.Awake()` 호출 (CompoSingleton 상속) |
+| **MUST** | UICanvas.Awake()는 `virtual` (MonoBehaviour 직접 상속). Instance 설정 + canvas 캐시 수행 |
+| **MUST** | UICanvas.OnDestroy()에서 Instance 클린업 수행 |
 | **MUST** | UIFrame.Awake()는 non-virtual (MonoBehaviour 직접 상속) |
 | **MUST** | UICanvas.Init()에서 child frame `_InitFromCanvas(this)` 수행 |
 | **MUST** | BaseUIFrame._InitFromCanvas()는 owner 저장만 수행 |
@@ -118,7 +119,7 @@ C# 메서드 네이밍(internal `_` 접두어, protected lowerCamelCase)은 상�
 | Action | Reason |
 |--------|--------|
 | UIFrame.`Awake()`를 `virtual`로 선언 | 수명주기 순서 보장 불가 |
-| UICanvas.Awake()에서 `base.Awake()` 누락 | CompoSingleton 등록 실패 |
+| UICanvas.Awake()에서 Instance 설정 누락 | 파생 클래스에서 `base.Awake()` 호출 필수 |
 | IUiCanvasOwner 인터페이스 사용 | 제거됨, 타입 캐스팅 방식으로 대체 |
 | 자동 billboard 컴포넌트 / 자동 업데이트 | helper 메서드만 제공 |
 | Canvas 설정 변경 API (`UseSharedWorldCamera` 등) | Inspector에서 설정, 코드는 검증/헬퍼만 |
@@ -174,14 +175,18 @@ namespace Devian
 ```csharp
 namespace Devian
 {
-    public abstract class UICanvas<TCanvas> : CompoSingleton<TCanvas>
+    public abstract class UICanvas<TCanvas> : MonoBehaviour
         where TCanvas : MonoBehaviour
     {
+        // Singleton (씬 종속 — DontDestroyOnLoad 미적용)
+        public static TCanvas Instance { get; }
+
         // Properties
         public Canvas canvas { get; }
 
-        // Lifecycle (override from CompoSingleton)
-        protected override void Awake();  // calls base.Awake() first
+        // Lifecycle
+        protected virtual void Awake();   // Instance 설정 + canvas 캐시 + onAwake()
+        protected virtual void OnDestroy(); // Instance 클린업
         protected virtual void onAwake();
         protected virtual void onInit();
         protected virtual void onInitComplete();
@@ -258,8 +263,8 @@ namespace Devian
 #### UICanvas Initialization
 
 ```
-UICanvas.Awake()  (override from CompoSingleton)
-├── 1. base.Awake()                      ← CompoSingleton 등록
+UICanvas.Awake()
+├── 1. Instance = this as TCanvas        ← static Instance 설정
 ├── 2. canvas = GetComponent<Canvas>()
 └── 3. onAwake()                         ← override point
 
@@ -303,6 +308,15 @@ UICanvas.CreateFrame<FRAME>(prefabName, parent)
     └── frameBase._InitFromCanvas(this)
 ```
 
+### Singleton Behavior
+
+| 항목 | 설명 |
+|------|------|
+| **상속** | `MonoBehaviour` 직접 상속 (CompoSingleton 미사용) |
+| **Instance** | `static TCanvas Instance` — Awake에서 설정, OnDestroy에서 클린업 |
+| **DontDestroyOnLoad** | 미적용 — 씬 전환 시 자동 파괴 |
+| **Singleton Registry** | 미사용 — 자체 static 필드로 관리 |
+
 ### Type Constraints
 
 | Generic | Constraint |
@@ -315,7 +329,6 @@ UICanvas.CreateFrame<FRAME>(prefabName, parent)
 
 | Dependency | Location |
 |------------|----------|
-| `CompoSingleton<T>` | `com.devian.foundation/Runtime/Unity/Singletons/CompoSingleton.cs` |
 | `BundlePool` | `com.devian.foundation/Runtime/Unity/Pool/Factory/BundlePool.cs` |
 | `IPoolable<T>` | `com.devian.foundation/Runtime/Unity/Pool/IPoolable.cs` |
 
@@ -335,9 +348,10 @@ UICanvas.CreateFrame<FRAME>(prefabName, parent)
 - [ ] `Devian.UI` 등 하위 네임스페이스 없음
 
 ### Lifecycle Compliance
-- [ ] `UICanvas.Awake()`가 `override` + `base.Awake()` 호출
+- [ ] `UICanvas.Awake()`가 `virtual` (MonoBehaviour 직접 상속)
+- [ ] `UICanvas.Awake()` 순서: Instance 설정 → canvas 캐시 → onAwake
+- [ ] `UICanvas.OnDestroy()`에서 Instance 클린업
 - [ ] `UIFrame.Awake()`가 `virtual`이 아님
-- [ ] `UICanvas.Awake()` 순서: base.Awake → canvas 캐시 → onAwake
 - [ ] `UICanvas.Init()` 순서: mInitialized 체크 → mFrames 스캔 → onInit → _InitFromCanvas 반복 → onInitComplete → Notify(InitOnce)
 - [ ] `UICanvas`가 child frames를 `_InitFromCanvas(this)`로 초기화
 - [ ] `UIFrame<TCanvas>`가 `onInit(TCanvas owner)`를 확장 포인트로 제공
@@ -359,5 +373,5 @@ UICanvas.CreateFrame<FRAME>(prefabName, parent)
 ## Reference
 
 - **Singleton**: [10-foundation/15-singleton/SKILL.md](../../10-foundation/15-singleton/SKILL.md)
-- **Pool Factories**: [10-foundation/21-pool-factories/SKILL.md](../../10-foundation/21-pool-factories/SKILL.md)
+- **Pool System**: [10-foundation/10-pool-system/SKILL.md](../../10-foundation/10-pool-system/SKILL.md)
 - **UIManager**: [10-ui-manager/SKILL.md](../10-ui-manager/SKILL.md)

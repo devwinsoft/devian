@@ -1762,7 +1762,16 @@ export function collectEnumGenSpecs(tables) {
         }
 
         // Sort member names ascending (deterministic)
-        memberNames.sort();
+        // CommonErrorType reserves SUCCESS as the sentinel success code and fixes it to 0.
+        if (enumName === 'CommonErrorType') {
+            memberNames.sort((a, b) => {
+                if (a === 'SUCCESS' && b !== 'SUCCESS') return -1;
+                if (a !== 'SUCCESS' && b === 'SUCCESS') return 1;
+                return a.localeCompare(b);
+            });
+        } else {
+            memberNames.sort();
+        }
 
         // Opt-in: enum value from 'code' column if gen field has 'code' flag (Options Row)
         const useCodeAsEnumValue = genField.enumValueFromCode === true;

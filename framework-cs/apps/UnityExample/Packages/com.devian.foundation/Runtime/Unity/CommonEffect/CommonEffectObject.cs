@@ -9,7 +9,7 @@ namespace Devian
     /// Contains players (components implementing ICommonEffectPlayer).
     /// SSOT: skills/devian-unity/14-effect-system/22-common-effect-manager/SKILL.md
     /// </summary>
-    public sealed class CommonEffectObject : MonoBehaviour, IPoolable<CommonEffectObject>
+    public sealed class CommonEffectObject : MonoBehaviour, IPoolable
     {
         public event Action<CommonEffectObject> OnRemove;
 

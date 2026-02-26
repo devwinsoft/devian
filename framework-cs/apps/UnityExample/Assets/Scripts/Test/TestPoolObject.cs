@@ -1,7 +1,7 @@
 using UnityEngine;
 using Devian;
 
-public class TestPoolObject : MonoBehaviour, IPoolable<TestPoolObject>
+public class TestPoolObject : MonoBehaviour, IPoolable
 {
     public AnimSequencePlayer player;
 

@@ -51,6 +51,7 @@ Sync는 AccountManager의 책임이 아니며, [10-savedata-manager](../../21-sa
 - Apple(iOS): `IdToken` + `RawNonce` 필수 (caller가 직접 전달)
 
 ## Convenience Overload
+- 반환형: `Task<CommonResult>` (성공 payload 없음, 실패 시 `CommonErrorType` 기반 `CommonError`)
 - `LoginAsync(LoginType, CancellationToken)` — credential을 내부에서 획득한다.
   - Editor/Guest: `LoginCredential.Empty()` 자동 생성
   - Google(Android): `getGoogleGpgsCredentialAsync` → GPGS Reflection으로 `PlayGamesPlatform.Authenticate` + `RequestServerSideAccess` 호출
@@ -71,7 +72,7 @@ Sync는 AccountManager의 책임이 아니며, [10-savedata-manager](../../21-sa
 
 
 ## Logout
-- `Logout()` — 동기 메서드, `CoreResult<bool>` 반환.
+- `Logout()` — 동기 메서드, 반환형은 `void`.
 - `_initialized`(Firebase init 상태)는 유지한다. 재로그인 시 Firebase 의존성 체크를 건너뛴다.
 - 플랫폼별 sign-out 처리를 `#if` 전처리기로 분리한다:
   - `#if UNITY_ANDROID && !UNITY_EDITOR` → `signOutGoogle()` (GPGS v2.0.0은 SignOut API 미제공, 현재 no-op)
@@ -80,10 +81,12 @@ Sync는 AccountManager의 책임이 아니며, [10-savedata-manager](../../21-sa
 
 
 ## LoginType 영속화
-- `_currentLoginType`을 `PlayerPrefs`(`devian_login_type` key)에 int로 저장한다.
-- 로그인 성공, 로그아웃, 구매 인증 보정 시 `persistLoginType()`으로 갱신.
-- 앱 재시작 시 `Awake()`에서 `loadPersistedLoginType()`으로 복원하여 Upgrade 상태 가드가 정확히 동작한다.
-- 유효하지 않은 값이면 `EditorLogin` fallback.
+- `PlayerPrefs` 기반 LoginType 영속화는 제거되었다.
+- 계정 메타 영속화는 `GameStorageManager.Instance.Account`(`AccountStorage`)로 통일한다.
+- 저장 필드(최소): `loginType`, `socialUserId`, `lastUpdatedAtUtcMs`
+- 로그인 성공, 로그아웃, 구매 인증 보정 시 `AccountManager`가 `GameStorageManager.Instance.Account`를 갱신한다.
+- `SaveDataManager`가 local/cloud payload를 로드한 뒤 `AccountManager.ApplyStorage(...)`로 런타임 `_currentLoginType`을 재적용한다.
+- 계정 메타 미복원/유효하지 않은 값이면 `EditorLogin` fallback.
 
 
 ## 계정 Upgrade (Guest/Editor → Social)

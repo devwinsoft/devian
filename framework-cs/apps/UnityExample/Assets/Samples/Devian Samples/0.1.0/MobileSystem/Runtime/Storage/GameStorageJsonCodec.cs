@@ -4,17 +4,19 @@ namespace Devian
 {
     internal static class GameStorageJsonCodec
     {
-        const int CurrentVersion = 9;
+        const int CurrentVersion = 10;
 
         public static string Serialize(
             InventoryStorage inventory,
-            PurchaseStorage purchase)
+            PurchaseStorage purchase,
+            AccountStorage account)
         {
             var root = new JObject
             {
                 ["version"] = CurrentVersion,
                 ["inventory"] = GameStorageJsonCodecInventory.Serialize(inventory),
                 ["purchase"] = GameStorageJsonCodecPurchase.Serialize(purchase),
+                ["account"] = GameStorageJsonCodecAccount.Serialize(account),
             };
             return root.ToString();
         }
@@ -22,7 +24,8 @@ namespace Devian
         public static void DeserializeInto(
             string json,
             InventoryStorage inventory,
-            PurchaseStorage purchase)
+            PurchaseStorage purchase,
+            AccountStorage account)
         {
             var root = JObject.Parse(json);
             var version = root.Value<int?>("version") ?? 0;
@@ -36,9 +39,14 @@ namespace Devian
                 GameStorageJsonCodecPurchase.DeserializeInto(purchaseObj, purchase);
             else
                 purchase.ClearAll();
+
+            if (version >= 10 && root["account"] is JObject accountObj)
+                GameStorageJsonCodecAccount.DeserializeInto(accountObj, account);
+            else
+                account?.Clear();
         }
 
         static bool isSupportedVersion(int version)
-            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 8 || version == CurrentVersion;
+            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 8 || version == 9 || version == CurrentVersion;
     }
 }

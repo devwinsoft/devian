@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Devian
 {
-    public abstract class ActorObject : MonoBehaviour, IPoolable<ActorObject>
+    public abstract class ActorObject : MonoBehaviour, IPoolable
     {
         private readonly List<ActorController<ActorObject>> _controllers = new();
         private bool _initialized;
@@ -75,18 +75,24 @@ namespace Devian
             Clear();
         }
 
-        // --- Pool hooks (SSOT: 02-pool-manager / 04-pool-factories) ---
+        // --- Pool hooks (SSOT: 10-pool-system) ---
 
-        public virtual void OnPoolSpawned()
+        public void OnPoolSpawned()
         {
             _cleared = false;
             _initialized = false;
+            onPoolSpawned();
         }
 
-        public virtual void OnPoolDespawned()
+        protected virtual void onPoolSpawned() { }
+
+        public void OnPoolDespawned()
         {
+            onPoolDespawned();
             Clear();
         }
+
+        protected virtual void onPoolDespawned() { }
 
         // --- Controller registry ---
 

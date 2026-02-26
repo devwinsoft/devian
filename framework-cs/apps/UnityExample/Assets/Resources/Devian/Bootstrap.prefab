@@ -11,9 +11,7 @@ GameObject:
   - component: {fileID: 6965000095625495815}
   - component: {fileID: 3329868128984831037}
   - component: {fileID: -4201736480531811430}
-  - component: {fileID: 1856151958633733160}
   - component: {fileID: 8802484957537992892}
-  - component: {fileID: 7627467817636175406}
   - component: {fileID: 4706526706863056144}
   - component: {fileID: 8648204434353560985}
   - component: {fileID: 8321347923667030604}
@@ -70,26 +68,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8ba7955ebf80efe41b1e7927e85f3ff0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Unity::Devian.DownloadManager
-  patchLabels:
-  - common-effects
-  - prefabs
-  - sounds
-  - table-ndjson
-  - table-pb64
   forceClearDependencyCache: 0
---- !u!114 &1856151958633733160
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2454387350981742136}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cea22c7adac94c947bfce5285e037dbd, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Devian.Unity::Devian.MaterialEffectManager
-  _addressablesKey: 
 --- !u!114 &8802484957537992892
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -102,18 +81,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 105dc48e1c625c44db4b6fa48ae1bd97, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Unity::Devian.SceneTransManager
---- !u!114 &7627467817636175406
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2454387350981742136}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 945aaaac012ccc1498cd10c7eea4ada7, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Devian.Unity::Devian.TableManager
 --- !u!114 &4706526706863056144
 MonoBehaviour:
   m_ObjectHideFlags: 0

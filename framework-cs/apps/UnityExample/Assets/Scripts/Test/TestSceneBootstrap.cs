@@ -1,0 +1,33 @@
+using System.Collections.Generic;
+using System.Threading.Tasks;
+using UnityEngine;
+using Devian;
+
+/// <summary>
+/// SceneBase에 Bootstrap 통합 로직을 추가한 클래스.
+/// Awake()에서 Bootstrap 생성을 트리거하고,
+/// Start()에서 BootProc 완료를 보장한 뒤 OnStart()를 호출한다.
+/// </summary>
+public abstract class TestSceneBootstrap : SceneBase
+{
+    protected override void Awake()
+    {
+        base.Awake();
+        TestApplication.Create();
+    }
+
+    protected override async Task onStart()
+    {
+        await TestApplication.Instance.BootProc();
+        
+        await UnityCoroutineRunner.RunAsync(this, DownloadManager.Instance.PatchProc(
+            TestApplication.Instance.patchList,
+            onDone: (patch) =>
+            {
+                Debug.Log(patch.TotalSize);
+            }
+        ));
+
+        await TestApplication.Instance.LoadPatchList();
+    }
+}

@@ -27,6 +27,7 @@
 - `payload` (string): 난독화된 게임 데이터 (Base64)
 - `deviceId` (string): 디바이스 식별자
 - `saveSeq` (long): 기기별 단조 증가 저장 순번 (same-device Sync 최신성 판정용)
+- `account` (`AccountStorage`): 계정 메타 미러 (`loginType`, `socialUserId`, `lastUpdatedAtUtcMs`)
 
 
 ## What it does

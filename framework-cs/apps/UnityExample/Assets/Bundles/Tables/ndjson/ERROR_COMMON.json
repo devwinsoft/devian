@@ -1,3 +1,4 @@
+{"Id":"SUCCESS","Msg_key":"","Msg":"Success"}
 {"Id":"CLOUDSAVE_CHECKSUM","Msg_key":"","Msg":"Checksum mismatch"}
 {"Id":"CLOUDSAVE_DELETE","Msg_key":"","Msg":"Cloud delete failed"}
 {"Id":"CLOUDSAVE_KEYIV","Msg_key":"","Msg":"Key/IV error"}
@@ -104,3 +105,5 @@
 {"Id":"ACCOUNT_SWITCH_UNSUPPORTED","Msg_key":"","Msg":"Account switch is not supported for this login combination."}
 {"Id":"ACCOUNT_SWITCH_GUEST_UPGRADE_FAILED","Msg_key":"","Msg":"Failed to upgrade guest account during account switch."}
 {"Id":"ACCOUNT_SWITCH_LOGIN_FAILED","Msg_key":"","Msg":"Failed to sign in target account during account switch."}
+{"Id":"LOCALSAVE_NOT_FOUND","Msg_key":"","Msg":"Local save not found"}
+{"Id":"CLOUDSAVE_CONNECTION_FAILED","Msg_key":"","Msg":"Cloud connection failed"}

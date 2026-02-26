@@ -1,6 +1,7 @@
 // SSOT: skills/devian-unity/10-foundation/16-bootstrap/SKILL.md
 
-using System.Collections;
+using System;
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Devian
@@ -16,11 +17,6 @@ namespace Devian
     /// </summary>
     public abstract class BaseBootstrap : MonoBehaviour
     {
-        /// <summary>
-        /// Bootstrap prefab의 기본 Resources 경로.
-        /// </summary>
-        public const string DefaultPrefabPath = "Devian/Bootstrap";
-
         private static BaseBootstrap _instance;
         private static bool _booted;
 
@@ -35,6 +31,7 @@ namespace Devian
         /// </summary>
         protected virtual void Awake()
         {
+            if (_instance == null) _instance = this;
             ensureRequiredComponents();
         }
 
@@ -58,82 +55,26 @@ namespace Devian
         }
 
         /// <summary>
-        /// Bootstrap 인스턴스가 생성되었는지 여부.
+        /// Bootstrap 인스턴스 참조.
         /// </summary>
-        public static bool IsCreated => _instance != null;
-
-        /// <summary>
-        /// BootProc가 완료되었는지 여부.
-        /// </summary>
-        public static bool IsBooted => _booted;
+        public static BaseBootstrap Instance => _instance;
 
         /// <summary>
         /// 개발자가 구현할 부트 프로세스.
         /// </summary>
-        protected abstract IEnumerator OnBootProc();
-
-        /// <summary>
-        /// Resources에서 Bootstrap prefab을 로드하여 인스턴스를 생성한다.
-        /// </summary>
-        /// <returns>성공 여부</returns>
-        public static bool CreateFromResources()
-        {
-            if (_instance != null)
-                return true;
-
-            var prefab = Resources.Load<GameObject>(DefaultPrefabPath);
-            if (prefab == null)
-            {
-                Debug.LogError($"[BaseBootstrap] Prefab not found at Resources path: {DefaultPrefabPath}");
-                return false;
-            }
-
-            var go = Object.Instantiate(prefab);
-
-            // instantiate된 결과에서 BaseBootstrap 찾기
-            var bootstrap = go.GetComponentInChildren<BaseBootstrap>(true);
-
-            if (bootstrap == null)
-            {
-                Debug.LogError($"[BaseBootstrap] Prefab '{DefaultPrefabPath}' does not contain any BaseBootstrap component");
-                Object.Destroy(go);
-                return false;
-            }
-
-            _instance = bootstrap;
-
-            // 부트 컨테이너는 유지되어야 함
-            Object.DontDestroyOnLoad(go);
-
-            return true;
-        }
+        protected abstract Task OnBootProc();
 
         /// <summary>
         /// BootProc를 실행한다. 1회만 실행된다.
         /// </summary>
-        public static IEnumerator BootProc()
+        public async Task BootProc()
         {
             if (_booted)
-                yield break;
-
-            if (_instance == null)
-            {
-                if (!CreateFromResources())
-                {
-                    Debug.LogError("[BaseBootstrap] BootProc failed: Bootstrap instance not available");
-                    yield break;
-                }
-            }
-
-            if (_instance == null)
-            {
-                Debug.LogError("[BaseBootstrap] BootProc failed: Bootstrap instance is null after CreateFromResources");
-                yield break;
-            }
+                return;
 
             try
             {
-                yield return _instance.OnBootProc();
+                await OnBootProc();
             }
             finally
             {
