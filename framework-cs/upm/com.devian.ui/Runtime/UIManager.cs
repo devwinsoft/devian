@@ -5,7 +5,7 @@ namespace Devian
     /// <summary>
     /// Central manager for UI Canvas lifecycle.
     /// Provides Canvas lookup, creation, utility methods.
-    /// AutoSingleton: auto-created on first Instance access.
+    /// AutoSingleton: script-created on first Instance access.
     /// </summary>
     public sealed class UIManager : AutoSingleton<UIManager>
     {

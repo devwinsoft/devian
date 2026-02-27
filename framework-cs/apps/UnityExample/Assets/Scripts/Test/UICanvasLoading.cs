@@ -1,13 +1,20 @@
 using UnityEngine;
 using System.Threading;
 using System.Threading.Tasks;
+using TMPro;
 using Devian;
 using Devian.Domain.Common;
 
 public class UICanvasLoading : UICanvas<UICanvasLoading>
 {
+    public TextMeshProUGUI message;
     public GameObject buttonGuest;
     public GameObject buttonGoogle;
+
+    protected override void onInit()
+    {
+        message.text = TestApplication.GetVersionCode().ToString();
+    }
 
     public void ShowLoginButtons()
     {
@@ -23,6 +30,10 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
         {
             SceneTransManager.Instance.LoadSceneAsync("SceneSample");
         }
+        else
+        {
+            message.text = $"{code}";
+        }
     }
 
     public async void OnClick_GoogleLogin()
@@ -32,6 +43,10 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
         if (code == CommonErrorType.SUCCESS)
         {
             SceneTransManager.Instance.LoadSceneAsync("SceneSample");
+        }
+        else
+        {
+            message.text = $"{code}";
         }
     }
     

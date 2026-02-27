@@ -10,6 +10,7 @@ namespace Devian
     ///
     /// - TBase: MonoBehaviour 기반 Base 타입 (시스템 레이어 접근 키)
     /// - TSelf: 실제 구현 타입 (컨텐츠 레이어 접근)
+    /// - script code가 Instance를 통해 생성하는 패턴만 지원한다.
     ///
     /// 특징:
     /// - 상속 기반이 아니라 정적 helper로 제공한다. (TSelf는 오직 TBase만 상속)
@@ -59,25 +60,7 @@ namespace Devian
                         return castOrThrow(baseExisting, "AutoSingleton.Instance (registry-hit/locked)");
                     }
 
-                    // 1) 씬에서 기존 TSelf 컴포넌트 탐색 (비활성 포함)
-                    var found = findExistingInstance();
-                    if (found != null)
-                    {
-                        var debugSource =
-                            $"AutoSingleton<{typeof(TBase).Name},{typeof(TSelf).Name}>.Instance (found in scene)";
-
-                        if (!Singleton.Register<TBase>(found, SingletonSource.Auto, debugSource))
-                        {
-                            // 더 높은 우선순위가 이미 등록됨 - 재조회 반환
-                            var adopted = Singleton.Get<TBase>();
-                            return castOrThrow(adopted, "AutoSingleton.Instance (adopted)");
-                        }
-
-                        UnityEngine.Object.DontDestroyOnLoad(found.gameObject);
-                        return found;
-                    }
-
-                    // 2) 없으면 생성 (shutdown 중이면 억제)
+                    // 1) 없으면 생성 (shutdown 중이면 억제)
                     if (IsShuttingDown)
                     {
                         Debug.LogWarning(
@@ -134,20 +117,16 @@ namespace Devian
                 $"Expected '{typeof(TSelf).Name}'. Context: {context}");
         }
 
-        private static TSelf findExistingInstance()
-        {
-#if UNITY_2023_1_OR_NEWER
-            var found = UnityEngine.Object.FindObjectsByType<TSelf>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-#else
-            var found = UnityEngine.Object.FindObjectsOfType<TSelf>(true);
-#endif
-            return (found != null && found.Length > 0) ? found[0] : null;
-        }
-
         private static TSelf createInstance()
         {
             var go = new GameObject($"[{typeof(TSelf).Name}]");
             return go.AddComponent<TSelf>();
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void resetOnSubsystemRegistration()
+        {
+            _isShuttingDown = false;
         }
     }
 }

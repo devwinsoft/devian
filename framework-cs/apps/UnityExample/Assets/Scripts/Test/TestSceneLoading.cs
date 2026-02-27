@@ -67,11 +67,10 @@ public class TestSceneLoading : TestSceneBootstrap
             return login.Error.Code;
         }
         
-#if UNITY_EDITOR
-        return CommonErrorType.SUCCESS;
-#else
-        return await initPurchase();
+#if !UNITY_EDITOR
+        await initPurchase();
 #endif
+        return CommonErrorType.SUCCESS;
     }
     
 
@@ -80,11 +79,11 @@ public class TestSceneLoading : TestSceneBootstrap
         var ct = CancellationToken.None;
         
         // 1. IAP 초기화
-        var initIAP = await PurchaseManager.Instance.InitializeAsync(ct);
-        if (initIAP.IsFailure)
+        var initResult = await PurchaseManager.Instance.InitializeAsync(ct);
+        if (initResult.IsFailure)
         {
-            Debug.LogError($"IAP init failed: {initIAP.Error}");
-            return initIAP.Error.Code;
+            Debug.LogError($"IAP init failed: {initResult.Error}");
+            return initResult.Error.Code;
         }
 
         // 2. 중단 구매 복구

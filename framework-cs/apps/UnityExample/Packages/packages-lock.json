@@ -6,6 +6,7 @@
       "source": "embedded",
       "dependencies": {
         "com.devian.foundation": "0.1.0",
+        "com.unity.inputsystem": "1.18.0",
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       }
     },
@@ -80,7 +81,7 @@
       "url": "https://package.openupm.com"
     },
     "com.ivanmurzak.unity.mcp": {
-      "version": "0.50.1",
+      "version": "0.51.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {

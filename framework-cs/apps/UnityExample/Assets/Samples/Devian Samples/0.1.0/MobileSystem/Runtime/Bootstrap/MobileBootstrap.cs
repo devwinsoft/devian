@@ -8,6 +8,7 @@ namespace Devian
     [RequireComponent(typeof(AccountManager))]
     [RequireComponent(typeof(SaveDataManager))]
     [RequireComponent(typeof(GameStorageManager))]
+    [RequireComponent(typeof(InputManager))]
     public abstract class MobileBootstrap : BaseBootstrap
     {
         protected override Task OnBootProc()

@@ -6,8 +6,8 @@ Type: Component Specification
 
 ## 0. 목표
 
-- 개발자가 실수 없이 싱글톤을 사용하도록 **기본 AutoSingleton**을 제공한다.
-- 필요 시 **CompoSingleton**으로 배치 책임(component)을 명시한다.
+- 개발자가 실수 없이 싱글톤을 사용하도록 **script-created AutoSingleton**을 제공한다.
+- 필요 시 **CompoSingleton**으로 씬/프리팹 배치 책임(component)을 명시한다.
 - 필요 시 **`Singleton.Create`** 또는 **`Singleton.CreateFromResources`**로 Boot 싱글톤을 명시 생성한다.
 - 모든 싱글톤은 **단일 저장소(SingletonRegistry)**를 통해 통합 관리한다.
 
@@ -22,11 +22,11 @@ Type: Component Specification
 
 `T.Instance` 접근 시:
 1. Registry 조회
-2. 씬/자식에서 기존 컴포넌트 탐색(비활성 포함)
-3. 없으면 새 GameObject 생성 + AddComponent
-4. Registry 등록 + DontDestroyOnLoad 적용
+2. 없으면 새 GameObject 생성 + AddComponent
+3. `Awake()`에서 Registry 등록 + DontDestroyOnLoad 적용
 
-**"없으면 자동 생성"이 기본 동작이다.**
+**원칙**: `AutoSingleton`은 script code가 `Instance` 또는 프레임워크 생성 경로를 통해 만드는 패턴만 지원한다.  
+씬/프리팹에 미리 부착해서 사용하는 것은 금지다.
 
 **Shutdown 억제**: 에디터 종료/플레이 종료/앱 종료 중(`IsShuttingDown == true`)에는 자동 생성이 억제되며 `Instance`는 `null`을 반환한다. Shutdown 방어가 필요하면:
 - `AutoSingleton<T>.IsShuttingDown`으로 사전 체크
@@ -35,6 +35,7 @@ Type: Component Specification
 #### CompoSingleton\<T\> (선택)
 
 - 씬/프리팹에 컴포넌트로 붙여서 사용한다.
+- 런타임 `AddComponent`로 생성하는 것은 패턴 위반이다.
 - `Awake()`에서 Registry에 등록한다.
 - **우선순위 최고**: CompoSingleton이 등록되면 같은 타입의 Auto/Boot 인스턴스를 대체한다(Adopt).
 
@@ -46,7 +47,8 @@ Type: Component Specification
 
 #### AutoSingleton\<TBase, TSelf\>
 
-`AutoSingleton<T>`와 동일하되, **Registry key가 `TBase`**다.
+`AutoSingleton<T>`와 동일하되, **Registry key가 `TBase`**다.  
+`TSelf`는 scene/prefab에 미리 부착하지 않고, script code가 `Instance`를 통해 생성해야 한다.
 
 - `TBase`: Registry key. 반드시 `MonoBehaviour` 기반 Base 타입(보통 abstract class).
 - `TSelf`: 실제 MonoBehaviour 타입. `TSelf : TBase`
@@ -61,7 +63,8 @@ where TSelf : TBase
 
 #### CompoSingleton\<TBase, TSelf\>
 
-`CompoSingleton<T>`와 동일하되, **Registry key가 `TBase`**다.
+`CompoSingleton<T>`와 동일하되, **Registry key가 `TBase`**다.  
+`TSelf`는 scene/prefab에 미리 부착하고, `Awake()`에서 `Register(this)`를 호출해야 한다.
 
 - `TBase`: Registry key. 반드시 `MonoBehaviour` 기반 Base 타입(보통 abstract class).
 - `TSelf`: 실제 MonoBehaviour 타입. `TSelf : TBase`
@@ -90,12 +93,12 @@ where TSelf : TBase
 
 | | Auto | Compo | Create | CreateFromResources |
 |---|---|---|---|---|
-| 생성 방식 | new GameObject + AddComponent | 씬/프리팹에 직접 배치 | **new GameObject + AddComponent (명시 호출)** | **Resources.Load\<GameObject\> + Instantiate** |
+| 생성 방식 | **script code가 Instance로 new GameObject + AddComponent** | **씬/프리팹에 미리 직접 배치** | **new GameObject + AddComponent (명시 호출)** | **Resources.Load\<GameObject\> + Instantiate** |
 | 우선순위 | Auto(0) 최저 | Compo(2) 최고 | **Boot(1) 중간** | **Boot(1) 중간** |
 | SerializeField | 불가 (빈 GO 생성) | 가능 (씬/프리팹에 설정) | 불가 (빈 GO 생성) | **가능 (프리팹에 미리 설정)** |
-| 자동 생성 | O (Instance getter) | X (씬 배치 필요) | **X (명시적 호출 필요)** | **X (명시적 호출 필요)** |
+| 자동 생성 | O (`Instance`가 script-create) | X (씬/프리팹 사전 배치 필요) | **X (명시적 호출 필요)** | **X (명시적 호출 필요)** |
 | Base 상속 | 1-param: 불가 / 2-param: 가능 | 1-param: 불가 / 2-param: 가능 | **가능 (2-param)** | **가능 (2-param)** |
-| 용도 | 설정 불필요한 싱글톤 | 씬 배치가 필요한 싱글톤 | **런타임에서 명시 부트 생성** | **프리팹 설정값이 필요한 부트 싱글톤** |
+| 용도 | 설정 불필요한 script-created 싱글톤 | 씬/프리팹 배치가 필요한 싱글톤 | **런타임에서 명시 부트 생성** | **프리팹 설정값이 필요한 부트 싱글톤** |
 
 ---
 
@@ -129,7 +132,7 @@ Registry에 Auto/Boot가 등록된 상태에서 Compo가 등록되면:
 | `Singleton.Create<TBase,TSelf>()` | 빈 GameObject 생성 + AddComponent + Registry 등록(Boot). key=TBase |
 | `Singleton.CreateFromResources<T>(path)` | Resources에서 프리팹 로드 + Registry 등록(Boot). key=T |
 | `Singleton.CreateFromResources<TBase,TSelf>(path)` | Resources에서 프리팹 로드 + Registry 등록(Boot). key=TBase |
-| `T.Instance` | AutoSingleton/CompoSingleton이 제공하는 편의. Shutdown 중 null 반환 |
+| `T.Instance` | AutoSingleton/CompoSingleton이 제공하는 편의. Auto는 script-create, Compo는 기등록 인스턴스 조회. Shutdown 중 null 반환 |
 | `AutoSingleton<T>.IsShuttingDown` | Shutdown 구간 여부 (`OnApplicationQuit` 또는 `!Application.isPlaying`) |
 
 ---
@@ -249,7 +252,7 @@ public class GameManager : AutoSingleton<GameManager>
     public void StartGame() { ... }
 }
 
-// 어디서든 접근 - 없으면 자동 생성
+// 어디서든 접근 - script code가 필요 시 생성
 GameManager.Instance.StartGame();
 ```
 
@@ -261,8 +264,8 @@ public class UIRoot : CompoSingleton<UIRoot>
     [SerializeField] private Canvas _mainCanvas;
 }
 
-// 씬에 배치된 인스턴스가 정본이 됨
-// 만약 AutoSingleton/Boot으로 먼저 접근했어도 CompoSingleton이 대체함
+// UIRoot는 scene/prefab에 미리 부착해야 한다.
+// runtime AddComponent로 생성하지 않는다.
 ```
 
 ### 명시 생성 (Singleton.Create)
@@ -282,11 +285,11 @@ Singleton.Create<BaseTelemetrySystem, GameTelemetrySystem>();
   → Foo의 base class = AutoSingleton<Foo> (= MonoBehaviour)
   → 다른 base class 상속 불가
 
-2-param: class Foo : ActorObject { ... }
-  → Foo의 base class = ActorObject
+2-param: class Foo : BaseTelemetrySystem { ... }
+  → Foo의 base class = BaseTelemetrySystem
   → Auto/Compo는 static helper 사용
-  → Resources 기반은 Singleton.CreateFromResources<ActorObject, Foo>("path") 사용
-  → 빈 GO 명시 생성은 Singleton.Create<ActorObject, Foo>() 사용
+  → Resources 기반은 Singleton.CreateFromResources<BaseTelemetrySystem, Foo>("path") 사용
+  → 빈 GO 명시 생성은 Singleton.Create<BaseTelemetrySystem, Foo>() 사용
 ```
 
 **Base 클래스를 상속해야 하면 2-param helper (`Auto/Compo/Singleton.Create`) 또는 `CreateFromResources`를 사용한다.**
@@ -371,6 +374,12 @@ public sealed class GameUISystem : BaseUISystem
 Singleton.Get<BaseUISystem>()          // OK (반환 타입: BaseUISystem — 시스템 레이어용)
 GameUISystem.Instance                  // OK (반환 타입: GameUISystem — 컨텐츠 레이어용)
 ```
+
+### 규칙 요약
+
+- `AutoSingleton`: scene/prefab에 미리 붙이지 않는다. script code가 만든다.
+- `CompoSingleton`: scene/prefab에 미리 붙인다. runtime AddComponent로 만들지 않는다.
+- `Singleton.Create*`: Boot 소스로 명시 생성할 때만 사용한다.
 
 ---
 

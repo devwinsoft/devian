@@ -64,7 +64,7 @@ com.devian.domain.common/Editor/Generated/
 
 ## 6. CommonEffectManager 규약
 
-- Singleton은 `AutoSingleton<CommonEffectManager>` 사용 (자동 생성, 씬 배치 가능)
+- Singleton은 `AutoSingleton<CommonEffectManager>` 사용 (script-created only)
 - 외부 API는 `CreateEffect(..., attachType, parent = null)` / `Remove(...)` 제공
 - Pooling은 내부적으로 `BundlePool.Spawn<CommonEffectObject>(effectId.Value, ...)` / `BundlePool.Despawn(effectObject)` 사용
 

@@ -1,6 +1,6 @@
 // SSOT: skills/devian-unity/10-foundation/19-download-manager/SKILL.md
 // Devian Unity Download Manager - Addressables Label based Patch/Download
-// CompoSingleton: Bootstrap에서 생성/등록되거나 씬에 배치해야 함
+// CompoSingleton: scene/prefab에 미리 부착해 초기화해야 함
 
 #nullable enable
 
@@ -39,7 +39,7 @@ namespace Devian
     /// Addressables Label-based Patch/Download manager.
     /// PatchProc/DownloadProc에 labels를 전달하여 다운로드 수행.
     ///
-    /// CompoSingleton-based: Bootstrap에서 생성/등록되거나 씬에 배치해야 함.
+    /// CompoSingleton-based: scene/prefab에 미리 부착해 초기화해야 함.
     /// </summary>
     public sealed class DownloadManager : CompoSingleton<DownloadManager>
     {

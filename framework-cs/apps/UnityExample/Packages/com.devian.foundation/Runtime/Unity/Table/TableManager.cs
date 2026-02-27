@@ -2,7 +2,7 @@
 // Devian Unity TableManager - Raw data loading for TB_/ST_
 //
 // Key Design:
-// - AutoSingleton-based (없으면 자동 생성)
+// - AutoSingleton-based (Instance 접근 시 script code로 자동 생성)
 // - Addressables key is NOT enforced by Devian (project policy)
 // - Cache key is (format, fileName) where fileName = TextAsset.name
 // - If fileName is {TableName}@{Description}, baseName = part before @
@@ -27,7 +27,7 @@ namespace Devian
     /// - LoadTablesAsync: TB_ loading with auto-insert (multiple assets)
     /// - LoadStringsAsync: ST_ loading with auto-insert (multiple assets + language intersection)
     ///
-    /// AutoSingleton-based: 없으면 자동 생성. 씬에 CompoSingleton으로 배치하면 우선.
+    /// AutoSingleton-based: 없으면 script code가 자동 생성한다.
     /// Runtime-only: Editor (non-Play Mode) calls will fail.
     /// </summary>
     public sealed class TableManager : AutoSingleton<TableManager>

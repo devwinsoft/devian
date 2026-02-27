@@ -27,7 +27,7 @@ namespace Devian
         public static bool IsShuttingDown { get; private set; }
 
         /// <summary>
-        /// Unity Awake. Ensures required CompoSingleton components exist on Bootstrap.
+        /// Unity Awake. Validates/bootstrap-specific wiring for components already attached to Bootstrap.
         /// </summary>
         protected virtual void Awake()
         {
@@ -36,22 +36,11 @@ namespace Devian
         }
 
         /// <summary>
-        /// Ensures required CompoSingleton components are attached to Bootstrap.
-        /// Override in derived class to add more components.
+        /// Validates bootstrap requirements.
+        /// CompoSingleton은 런타임 AddComponent로 생성하지 말고 prefab/scene에 미리 부착해야 한다.
         /// </summary>
         protected virtual void ensureRequiredComponents()
         {
-            ensureComponent<InputManager>();
-        }
-
-        /// <summary>
-        /// Gets or adds a component of type T to this GameObject.
-        /// </summary>
-        private T ensureComponent<T>() where T : Component
-        {
-            var c = GetComponent<T>();
-            if (c != null) return c;
-            return gameObject.AddComponent<T>();
         }
 
         /// <summary>

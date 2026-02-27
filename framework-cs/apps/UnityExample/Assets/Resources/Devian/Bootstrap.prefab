@@ -92,7 +92,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 71f0f7e76459f4b958901c06af063737, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Unity::Devian.InputManager
+  m_EditorClassIdentifier: Devian.Domain.Common::Devian.InputManager
   _asset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   _gameplayMapName: Player
   _uiMapName: UI

@@ -42,7 +42,7 @@ framework-cs/upm/com.devian.ui/Runtime/
 `com.devian.foundation`은 `com.devian.ui`를 참조하지 않는다 (순환 의존 방지).
 Foundation → UI 하드 참조가 존재하지 않는다.
 
-> **UIManager는 AutoSingleton**이다. `Instance` 접근 시 자동 생성되므로 Bootstrap 부착이 불필요하다.
+> **UIManager는 AutoSingleton**이다. `Instance` 접근 시 script code가 생성하며, scene/prefab에 미리 부착하지 않는다.
 
 ### Assembly Definitions
 

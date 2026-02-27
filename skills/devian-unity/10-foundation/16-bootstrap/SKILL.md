@@ -101,11 +101,13 @@ Bootstrap 통합이 필요한 씬 클래스(Awake에서 CreateFromResources, Sta
 
 **프레임워크가 BaseBootstrap 파생 컴포넌트를 자동 추가하지 않는다.** 개발자가 직접 추가해야 한다.
 
-### 필수 CompoSingleton 컴포넌트
+### 필수 컴포넌트 부착
 
 BaseBootstrap.Awake()에서 `ensureRequiredComponents()`가 호출된다.
 
-> **UIManager는 Bootstrap 관리 대상이 아니다.** UIManager는 AutoSingleton으로 전환되어 `Instance` 접근 시 자동 생성된다.
+- BaseBootstrap 기본 구현은 필수 매니저를 추가하지 않는다.
+- `CompoSingleton` 계열은 런타임 `AddComponent`로 만들지 않고, bootstrap prefab/scene object에 미리 부착해야 한다.
+- 소비자 모듈/도메인은 파생 bootstrap에서 필요한 컴포넌트가 이미 부착되었는지 검증/보장한다.
 
 ---
 
@@ -118,7 +120,5 @@ PlayMode 테스트는 테스트 씬에 부트 컨테이너를 배치하거나, S
 ## 8. Reference
 
 - Parent: `skills/devian-unity/10-foundation/SKILL.md`
-- DevianSettings: `skills/devian-unity/11-common-system/11-devian-settings/SKILL.md`
 - SceneTransManager: `skills/devian-unity/10-foundation/17-scene-trans-manager/SKILL.md`
 - Singleton: `skills/devian-unity/10-foundation/15-singleton/SKILL.md`
-- UIManager: `skills/devian-unity/30-ui-system/10-ui-manager/SKILL.md`

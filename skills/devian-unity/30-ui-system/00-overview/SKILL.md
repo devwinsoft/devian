@@ -7,7 +7,7 @@ UIManager 및 UI Canvas/Frame 규약을 포함한다.
 ## Scope
 
 ### Includes
-- UIManager (AutoSingleton, Canvas 수명주기)
+- UIManager (AutoSingleton, script-created Canvas 수명주기)
 - UI Canvas/Frame 규약 및 UI 관련 보조 컴포넌트
 
 ### Excludes

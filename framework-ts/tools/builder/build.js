@@ -4525,7 +4525,7 @@ export * from './features';
     /**
      * Guard: Detect SimpleSingleton.Instance access from InitializeOnLoad or static constructors.
      * This pattern causes Unity Editor ScriptableSingleton conflicts.
-     * SSOT: skills/devian-unity/10-base-system/31-singleton/SKILL.md (8.5)
+     * SSOT: skills/devian-unity/10-foundation/15-singleton/SKILL.md (8.5)
      */
     checkSingletonEarlyInit() {
         const targetDirs = [
@@ -4546,7 +4546,7 @@ export * from './features';
             console.error('Policy: Do not access SimpleSingleton.Instance from:');
             console.error('  - [InitializeOnLoad] / [InitializeOnLoadMethod] attributed code');
             console.error('  - Static constructors (static ClassName())');
-            console.error('Reference: skills/devian-unity/10-base-system/31-singleton/SKILL.md (8.5)');
+            console.error('Reference: skills/devian-unity/10-foundation/15-singleton/SKILL.md (8.5)');
             console.error('\nViolations:');
             for (const v of violations) {
                 console.error(`  - ${v.file}:${v.line}: ${v.reason}`);
@@ -4555,7 +4555,7 @@ export * from './features';
             throw new Error(
                 '[FAIL] SimpleSingleton early init pattern detected. ' +
                 'Do not access SimpleSingleton.Instance from InitializeOnLoad or static constructors. ' +
-                'See: skills/devian-unity/10-base-system/31-singleton/SKILL.md (8.5)'
+                'See: skills/devian-unity/10-foundation/15-singleton/SKILL.md (8.5)'
             );
         }
 

@@ -1,11 +1,12 @@
-// SSOT: skills/devian-unity/10-base-system/31-singleton/SKILL.md
+// SSOT: skills/devian-unity/10-foundation/15-singleton/SKILL.md
 
 using UnityEngine;
 
 namespace Devian
 {
     /// <summary>
-    /// 씬/프리팹에 컴포넌트로 붙여서 사용하는 싱글톤.
+    /// 씬/프리팹에 미리 부착된 컴포넌트로 초기화하는 싱글톤.
+    /// 런타임 AddComponent로 생성하는 경로는 패턴 위반이다.
     /// 우선순위 최고: CompoSingleton이 등록되면 같은 타입의 Auto/Boot 인스턴스를 대체(Adopt).
     /// Compo 중복은 즉시 예외.
     /// </summary>

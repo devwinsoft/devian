@@ -201,15 +201,14 @@ protected override void OnDestroy()
 
 ## 7. 사용 흐름 (표준)
 
-### Step 1: GameNetManager 추가
+### Step 1: GameNetManager 배치
 
 ```csharp
 // 방법 1: 에디터 메뉴
 // Devian → Samples → Network → Create GameNetManager
 
-// 방법 2: 코드에서
-var go = new GameObject("GameNetManager");
-go.AddComponent<GameNetManager>();
+// 방법 2: Bootstrap prefab 또는 scene object에
+// GameNetManager 컴포넌트를 미리 부착
 ```
 
 ### Step 2: Connect

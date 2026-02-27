@@ -4,6 +4,7 @@
   "references": [
     "Devian.Core",
     "Devian.Unity",
+    "Unity.InputSystem",
     "Newtonsoft.Json"
   ],
   "includePlatforms": [],

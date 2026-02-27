@@ -8,7 +8,8 @@ namespace Devian
     /// <summary>
     /// 2-param CompoSingleton (Registry key = TBase).
     ///
-    /// - 씬/프리팹에 배치된 TSelf가 Awake()에서 Register(this)를 호출해 등록한다.
+    /// - 씬/프리팹에 미리 부착된 TSelf가 Awake()에서 Register(this)를 호출해 등록한다.
+    /// - 런타임 AddComponent로 생성하는 경로는 패턴 위반이다.
     /// - Instance는 TSelf를 반환하여 캐스팅을 최소화한다.
     /// - 우선순위는 Registry 규칙(Compo > Boot > Auto)을 따른다.
     /// </summary>

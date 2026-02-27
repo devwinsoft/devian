@@ -12,7 +12,7 @@ namespace Devian
 {
     /// <summary>
     /// Central registry for object pools.
-    /// AutoSingleton-based MonoBehaviour that manages:
+    /// AutoSingleton-based MonoBehaviour that script code creates on first Instance access.
     /// - Pool registration by (factory, type, poolName) key
     /// - Debug hierarchy: [PoolManager]/Type/PoolName/Inactive
     /// - PoolTag-based despawn routing
@@ -20,7 +20,7 @@ namespace Devian
     /// Usage: Use IPoolFactory extension methods (factory.Spawn/Despawn),
     /// not PoolManager directly for spawning.
     ///
-    /// v3: AutoSingleton 기본. 없으면 자동 생성. 씬에 배치하면 CompoSingleton이 우선.
+    /// v3: AutoSingleton 기본. 없으면 script code가 자동 생성한다.
     /// </summary>
     public sealed class PoolManager : AutoSingleton<PoolManager>
     {

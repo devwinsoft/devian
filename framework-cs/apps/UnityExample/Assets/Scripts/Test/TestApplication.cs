@@ -13,7 +13,7 @@ public class TestApplication : MobileBootstrap
     {
         if (_instance == null)
         {
-            _instance = Singleton.CreateFromResources<MobileBootstrap, TestApplication>("Devian/Bootstrap");
+            _instance = Singleton.CreateFromResources<BaseBootstrap, TestApplication>("Devian/Bootstrap");
         }
         return _instance;
     }

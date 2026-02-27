@@ -5,7 +5,7 @@
 UI Canvas의 수명주기를 관리하는 중앙 매니저.
 Canvas 조회, 생성, 보장 및 유틸리티 기능을 제공한다.
 
-**AutoSingleton** 기반. `Instance` 접근 시 자동 생성된다.
+**AutoSingleton** 기반. `Instance` 접근 시 script code가 생성한다. scene/prefab에 미리 부착하지 않는다.
 
 ---
 
@@ -47,7 +47,7 @@ namespace Devian
 
 ### Singleton Type
 - **AutoSingleton** — `Instance` 접근 시 자동 생성
-- Bootstrap 부착 불필요
+- scene/prefab 사전 부착 금지
 
 ---
 

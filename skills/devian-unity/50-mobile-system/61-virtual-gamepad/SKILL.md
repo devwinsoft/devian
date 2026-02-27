@@ -38,7 +38,7 @@ Type: Component Specification
 
 ### 제외
 
-- 바인딩 설치 (→ `31-input-manager` InputManagerInspector)
+- 바인딩 설치 (→ `24-input-manager` InputManagerInspector)
 - InputManager 수정
 
 ---
@@ -213,7 +213,7 @@ Hierarchy 예시:
 ## Reference
 
 - 인덱스: `../../10-foundation/SKILL.md`
-- 입력 관리: `../../10-foundation/31-input-manager/SKILL.md`
-- 입력 소비: `../../10-foundation/32-input-controller/SKILL.md`
+- 입력 관리: `../../11-common-system/24-input-manager/SKILL.md`
+- 입력 소비: `../../11-common-system/25-input-controller/SKILL.md`
 - 정책 문서: `skills/devian-unity/50-mobile-system/01-policy/SKILL.md`
 - 샘플 작성 가이드: `skills/devian-unity/07-samples-creation-guide/SKILL.md`

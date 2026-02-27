@@ -13,7 +13,7 @@ AppliesTo: v13
 
 **Addressables Label 기반 패치/다운로드를 제공하는 Unity 전용 컴포넌트.**
 
-- **CompoSingleton**: Bootstrap에서 생성/등록되거나 씬에 배치해야 함
+- **CompoSingleton**: Bootstrap prefab/scene object에 미리 부착해야 함
 - **PatchProc**: 라벨별 다운로드 필요 용량 계산
 - **DownloadProc**: 라벨별 의존 번들 다운로드 (가중치 기반 진행률)
 - **실패 처리**: `onError` 콜백 반드시 호출 ("조용히 종료" 금지)
@@ -97,7 +97,7 @@ namespace Devian
 ```csharp
 namespace Devian
 {
-    public sealed class DownloadManager : ResSingleton<DownloadManager>
+    public sealed class DownloadManager : CompoSingleton<DownloadManager>
     {
         // ====================================================================
         // Inspector Fields (Serialized)
@@ -158,21 +158,17 @@ namespace Devian
 
 ## Hard Rules (정책)
 
-### 1. ResSingleton 계약
+### 1. CompoSingleton 계약
 
-**`Load(resourcePath)` 선행 호출 필수**
+**Bootstrap prefab/scene object에 `DownloadManager`를 미리 부착해야 한다.**
 
 ```csharp
-// 부팅 시
-DownloadManager.Load("Devian/DownloadManager");
-
-// 이후 사용
 var dm = DownloadManager.Instance;
 StartCoroutine(dm.PatchProc(labels, info => { ... }));
 ```
 
-- 프로젝트에 `Assets/Resources/Devian/DownloadManager.prefab` 필요
-- 프리팹에 `DownloadManager` 컴포넌트 부착
+- 프로젝트에 `DownloadManager`가 부착된 bootstrap prefab 또는 scene object가 필요
+- 런타임 `AddComponent<DownloadManager>()` 생성 경로는 사용하지 않는다
 
 ### 2. 빈 라벨 처리
 
@@ -215,8 +211,8 @@ if (sizeOp.Status == AsyncOperationStatus.Failed)
 
 **DownloadManager 내부에서 `Resources.` 직접 호출 금지**
 
-- 리소스 로딩은 `ResSingleton<T>.Load(path)`를 통해서만 발생
-- 상속받은 ResSingleton이 Resources.Load 수행 (허용)
+- DownloadManager는 Resources 기반 singleton 로딩을 담당하지 않는다
+- prefab/scene 배치와 bootstrap wiring은 소비자 레이어가 담당한다
 
 ### 6. AssetManager 연동 규칙
 
@@ -282,8 +278,7 @@ public class BootSequence : MonoBehaviour
 
     IEnumerator Start()
     {
-        // 1. DownloadManager 로드
-        DownloadManager.Load("Devian/DownloadManager");
+        // 1. bootstrap prefab/scene object에 미리 부착된 DownloadManager 조회
         var dm = DownloadManager.Instance;
 
         // 2. 패치 크기 확인
@@ -326,14 +321,14 @@ public class BootSequence : MonoBehaviour
 
 ---
 
-## 프리팹 요구사항 (문서 안내만, 레포 강제 금지)
+## 배치 요구사항 (문서 안내만, 레포 강제 금지)
 
-프로젝트에서 아래 프리팹을 생성해야 한다:
+프로젝트에서 아래 둘 중 하나로 `DownloadManager`를 배치해야 한다:
 
-1. **프리팹 생성**: `Assets/Resources/Devian/DownloadManager.prefab`
-2. **컴포넌트 부착**: `DownloadManager` 스크립트 추가
+1. Bootstrap prefab에 `DownloadManager` 컴포넌트를 미리 부착
+2. 씬의 고정 GameObject/Prefab object에 `DownloadManager` 컴포넌트를 미리 부착
 
-> **Note**: 이 프리팹 생성은 Unity Editor 작업이므로 레포에 YAML로 강제 추가하지 않는다.
+> **Note**: CompoSingleton은 런타임 `AddComponent`로 생성하지 않는다.
 
 ---
 
@@ -342,17 +337,17 @@ public class BootSequence : MonoBehaviour
 ### PASS 조건
 
 - [ ] `DownloadManager.cs` (UPM + UnityExample) 최상단 SSOT가 이 문서를 가리킴
-- [ ] `DownloadManager`가 `ResSingleton<DownloadManager>` 상속
+- [ ] `DownloadManager`가 `CompoSingleton<DownloadManager>` 상속
 - [ ] `forceClearDependencyCache: bool` 기본값 `false`
 - [ ] 실패 시 `onError` 반드시 호출 (조용히 종료 0건)
-- [ ] `Resources.` 직접 호출 0건 (ResSingleton.Load 사용은 예외)
+- [ ] `Resources.` 직접 호출 0건
 
 ### FAIL 조건
 
-- `DownloadManager`가 ResSingleton을 상속하지 않음
+- `DownloadManager`가 CompoSingleton을 상속하지 않음
 - 실패 시 `onError` 호출 없이 `yield break`만 수행
 - `forceClearDependencyCache` 기본값이 `true`
-- `Resources.` 직접 호출 존재 (ResSingleton 제외)
+- `Resources.` 직접 호출 존재
 - SSOT 주석이 다른 문서를 가리킴
 
 ---
@@ -360,9 +355,8 @@ public class BootSequence : MonoBehaviour
 ## Reference
 
 - Related: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)
-- Related: `skills/devian-unity/10-foundation/15-singleton/SKILL.md` (ResSingleton)
+- Related: `skills/devian-unity/10-foundation/15-singleton/SKILL.md` (CompoSingleton)
 - Related: `skills/devian-unity/10-foundation/18-asset-manager/SKILL.md` (AssetManager)
-- Related: `skills/devian-unity/11-common-system/31-string-table/SKILL.md` (String Table 규약)
 
 ---
 

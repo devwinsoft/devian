@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: material-effects
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: material-effects
+  m_GUID: 7733cbcebe0614a0d89c33587b7eca57
+  m_SerializeEntries:
+  - m_GUID: 9091e4e8486f96d4bb00a60d88346664
+    m_Address: Assets/Bundles/MaterialEffects
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - material-effects
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: daa0599a24d6ad242b59de8ab32c5cb5, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 4b4d4e7f7f33e40e2ab73d44ad66ea9b, type: 2}
+    - {fileID: 11400000, guid: 3123956d25abf4043aedda046fda4252, type: 2}

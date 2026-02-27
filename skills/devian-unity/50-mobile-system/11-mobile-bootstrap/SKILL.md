@@ -53,6 +53,7 @@ namespace MyApp
 - Bootstrap prefab 경로: `Assets/Resources/Devian/Bootstrap.prefab`
 - prefab에 `MobileBootstrap` 파생 컴포넌트를 **정확히 1개** 부착해야 한다.
 - 프레임워크가 파생 컴포넌트를 자동 추가하지 않는다 — 개발자가 직접 추가해야 한다.
+- `InputManager` 같은 `CompoSingleton` 의존성도 bootstrap prefab/object에 미리 부착해야 한다.
 - prefab은 수동으로 생성한다 (자동 생성 코드 없음).
 
 
@@ -61,11 +62,13 @@ namespace MyApp
 MobileBootstrap에 부착된 RequireComponent:
 
 - `AccountManager`
+- `InputManager` — [24-input-manager](../../11-common-system/24-input-manager/SKILL.md)
 - `SaveDataManager`
 - `GameStorageManager` — [95-game-storage-manager](../95-game-storage-manager/SKILL.md)
 
 
 ## Links
 - [16-bootstrap](../../../10-foundation/16-bootstrap/SKILL.md) — BaseBootstrap 런타임 스펙
+- [24-input-manager](../../11-common-system/24-input-manager/SKILL.md) — InputManager 공용 입력 관리자
 - [95-game-storage-manager](../95-game-storage-manager/SKILL.md) — GameStorageManager (게임 저장 파일 직렬화)
 - [50-mobile-system overview](../00-overview/SKILL.md) — MobileSystem (Devian Samples) 그룹 개요

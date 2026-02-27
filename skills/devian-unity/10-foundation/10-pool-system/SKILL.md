@@ -8,6 +8,7 @@ Type: Component Specification
 
 Unity에서 프리팹 기반 객체 재사용을 위한 PoolManager 템플릿 제공.
 PoolManager는 **AutoSingleton 기반 Registry**이며, 사용자는 **IPoolFactory 확장 메서드로 Spawn/Despawn**한다.
+`PoolManager`는 scene/prefab에 미리 붙이지 않고, script code의 `Instance` 접근으로 생성된다.
 
 ---
 
@@ -17,7 +18,7 @@ PoolManager는 **AutoSingleton 기반 Registry**이며, 사용자는 **IPoolFact
 
 - `IPoolable` 인터페이스
 - `IPoolFactory` 인터페이스
-- `PoolManager` CompoSingleton 클래스 (Registry 역할)
+- `PoolManager` AutoSingleton 클래스 (Registry 역할)
 - `Pool<T>` 제네릭 풀 및 비제네릭 `IPool` 인터페이스
 - `PoolTag` MonoBehaviour (인스턴스→풀 결정적 매핑)
 - `PoolFactoryExtensions` 확장 메서드 (factory.Spawn/Despawn)

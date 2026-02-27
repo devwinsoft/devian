@@ -19,7 +19,7 @@ AppliesTo: v10
 public sealed class TableManager : AutoSingleton<TableManager>
 ```
 
-AutoSingleton 기반: 없으면 자동 생성. 씬에 CompoSingleton으로 배치하면 우선.
+AutoSingleton 기반: `Instance` 접근 시 script code가 자동 생성한다. scene/prefab에 미리 부착하지 않는다.
 
 ### 책임
 
@@ -565,6 +565,5 @@ internal static class DomainTableRegistry
 
 - pb64 저장: `skills/devian-tools/11-builder/35-pb64-storage/SKILL.md`
 - ndjson 저장: `skills/devian-tools/11-builder/34-ndjson-storage/SKILL.md`
-- String Table: `skills/devian-unity/11-common-system/31-string-table/SKILL.md`
 - Table Authoring: `skills/devian-tools/11-builder/30-table-authoring-rules/SKILL.md`
 - TableGen: `skills/devian-tools/11-builder/42-tablegen-implementation/SKILL.md`
