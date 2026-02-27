@@ -1,5 +1,5 @@
-// SSOT: skills/devian-unity/10-base-system/10-asset-manager/SKILL.md
-// Devian Unity Asset Manager - Addressables 기반 로딩/캐시 + Resources(옵션) + Editor Find
+// SSOT: skills/devian-unity/10-foundation/18-asset-manager/SKILL.md
+// Devian Unity Asset Manager - Addressables 기반 로딩/캐시 + Resources(옵션) + Scene(Addressables + Build Profile fallback) + Editor Find
 // DownloadManager와 연동: DownloadManager가 다운로드 → AssetManager가 로딩/캐시
 
 #nullable enable
@@ -614,6 +614,9 @@ namespace Devian
                 }
             }
             mResourceAssets.Clear();
+
+            // Clear Build Profile scene tracking
+            mBuildProfileScenes.Clear();
         }
 
         // ====================================================================
@@ -630,15 +633,16 @@ namespace Devian
         }
 
         // ====================================================================
-        // Scene Load/Unload (Addressables)
+        // Scene Load/Unload (Addressables + Build Profile fallback)
         // ====================================================================
 
         private static readonly Dictionary<string, AsyncOperationHandle<SceneInstance>> mScenes = new();
+        private static readonly HashSet<string> mBuildProfileScenes = new();
 
         /// <summary>
-        /// Load a scene by Addressables key.
+        /// Load a scene. Addressables 키가 존재하면 Addressables로, 없으면 Build Profile(SceneManager) fallback.
         /// </summary>
-        /// <param name="key">Addressables scene key</param>
+        /// <param name="key">Scene key (Addressables key 또는 Build Profile scene path)</param>
         /// <param name="mode">LoadSceneMode (Single or Additive)</param>
         /// <param name="activateOnLoad">Activate scene on load</param>
         /// <param name="priority">Loading priority</param>
@@ -652,24 +656,51 @@ namespace Devian
 
             PruneStaleSceneHandles();
 
-            if (mScenes.ContainsKey(key))
+            if (mScenes.ContainsKey(key) || mBuildProfileScenes.Contains(key))
             {
                 Log.Warn($"AssetManager.LoadSceneAsync ignored: '{key}' already loaded.");
                 yield break;
             }
 
-            var handle = Addressables.LoadSceneAsync(key, mode, activateOnLoad, priority);
-            yield return handle;
+            // Addressables 카탈로그에서 키 존재 여부 확인
+            var locHandle = Addressables.LoadResourceLocationsAsync(key, typeof(SceneInstance));
+            yield return locHandle;
+            bool isAddressable = locHandle.Status == AsyncOperationStatus.Succeeded
+                                 && locHandle.Result != null
+                                 && locHandle.Result.Count > 0;
+            Addressables.Release(locHandle);
 
-            if (handle.Status != AsyncOperationStatus.Succeeded)
+            if (isAddressable)
             {
-                Log.Error($"AssetManager.LoadSceneAsync failed: {key}");
-                if (handle.IsValid())
-                    Addressables.Release(handle);
-                yield break;
-            }
+                // Addressables path
+                var handle = Addressables.LoadSceneAsync(key, mode, activateOnLoad, priority);
+                yield return handle;
 
-            mScenes[key] = handle;
+                if (handle.Status != AsyncOperationStatus.Succeeded)
+                {
+                    Log.Error($"AssetManager.LoadSceneAsync failed: {key}");
+                    if (handle.IsValid())
+                        Addressables.Release(handle);
+                    yield break;
+                }
+
+                mScenes[key] = handle;
+            }
+            else
+            {
+                // Build Profile fallback: SceneManager
+                var op = SceneManager.LoadSceneAsync(key, mode);
+                if (op == null)
+                {
+                    Log.Error($"AssetManager.LoadSceneAsync failed (BuildProfile): {key}");
+                    yield break;
+                }
+                op.allowSceneActivation = activateOnLoad;
+                op.priority = priority;
+                yield return op;
+
+                mBuildProfileScenes.Add(key);
+            }
 
             // Single 전환으로 이전 씬이 자동 언로드된 경우 stale handle을 정리한다.
             PruneStaleSceneHandles();
@@ -678,8 +709,8 @@ namespace Devian
         /// <summary>
         /// Unload a scene loaded by LoadSceneAsync.
         /// </summary>
-        /// <param name="key">Addressables scene key used in LoadSceneAsync</param>
-        /// <param name="autoReleaseHandle">Auto-release handle after unload</param>
+        /// <param name="key">Scene key used in LoadSceneAsync</param>
+        /// <param name="autoReleaseHandle">Auto-release handle after unload (Addressables only)</param>
         public static IEnumerator UnloadSceneAsync(string key, bool autoReleaseHandle = true)
         {
             if (string.IsNullOrWhiteSpace(key))
@@ -687,6 +718,21 @@ namespace Devian
 
             PruneStaleSceneHandles();
 
+            // Build Profile scene path
+            if (mBuildProfileScenes.Contains(key))
+            {
+                var sceneName = Path.GetFileNameWithoutExtension(key);
+                var scene = SceneManager.GetSceneByName(sceneName);
+                if (scene.IsValid() && scene.isLoaded)
+                {
+                    var op = SceneManager.UnloadSceneAsync(scene);
+                    yield return op;
+                }
+                mBuildProfileScenes.Remove(key);
+                yield break;
+            }
+
+            // Addressables path
             if (!mScenes.TryGetValue(key, out var handle))
                 yield break;
 
@@ -715,29 +761,53 @@ namespace Devian
 
         private static void PruneStaleSceneHandles()
         {
-            if (mScenes.Count == 0)
-                return;
-
-            List<string>? staleKeys = null;
-
-            foreach (var pair in mScenes)
+            // Addressables scene prune
+            if (mScenes.Count > 0)
             {
-                if (TryGetLoadedScene(pair.Value, out _))
-                    continue;
+                List<string>? staleKeys = null;
 
-                staleKeys ??= new List<string>();
-                staleKeys.Add(pair.Key);
+                foreach (var pair in mScenes)
+                {
+                    if (TryGetLoadedScene(pair.Value, out _))
+                        continue;
+
+                    staleKeys ??= new List<string>();
+                    staleKeys.Add(pair.Key);
+                }
+
+                if (staleKeys != null)
+                {
+                    for (int i = 0; i < staleKeys.Count; i++)
+                    {
+                        var staleKey = staleKeys[i];
+                        if (mScenes.TryGetValue(staleKey, out var staleHandle))
+                        {
+                            RemoveStaleSceneHandle(staleKey, staleHandle);
+                        }
+                    }
+                }
             }
 
-            if (staleKeys == null)
-                return;
-
-            for (int i = 0; i < staleKeys.Count; i++)
+            // Build Profile scene prune
+            if (mBuildProfileScenes.Count > 0)
             {
-                var staleKey = staleKeys[i];
-                if (mScenes.TryGetValue(staleKey, out var staleHandle))
+                List<string>? staleBpKeys = null;
+
+                foreach (var bpKey in mBuildProfileScenes)
                 {
-                    RemoveStaleSceneHandle(staleKey, staleHandle);
+                    var sceneName = Path.GetFileNameWithoutExtension(bpKey);
+                    var scene = SceneManager.GetSceneByName(sceneName);
+                    if (!scene.IsValid() || !scene.isLoaded)
+                    {
+                        staleBpKeys ??= new List<string>();
+                        staleBpKeys.Add(bpKey);
+                    }
+                }
+
+                if (staleBpKeys != null)
+                {
+                    for (int i = 0; i < staleBpKeys.Count; i++)
+                        mBuildProfileScenes.Remove(staleBpKeys[i]);
                 }
             }
         }

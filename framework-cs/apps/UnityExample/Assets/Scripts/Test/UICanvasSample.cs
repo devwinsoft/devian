@@ -68,7 +68,6 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         else
         {
             Debug.Log($"{purchase.Error.Code}: {purchase.Error.Message}");
-            return;
         }
     }
 
@@ -89,7 +88,6 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         else
         {
             Debug.Log($"{purchase.Error.Code}: {purchase.Error.Message}");
-            return;
         }
     }
     

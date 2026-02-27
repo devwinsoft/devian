@@ -11,9 +11,10 @@ AppliesTo: v10
 
 ## 목적/범위
 
-**Addressables 기반 로딩/캐시 + Resources 로딩(옵션) + Editor Find를 제공하는 Unity 전용 컴포넌트.**
+**Addressables 기반 로딩/캐시 + Resources 로딩(옵션) + Scene 로딩(Addressables + Build Profile fallback) + Editor Find를 제공하는 Unity 전용 컴포넌트.**
 
 - **런타임(필수)**: Addressables로 라벨/키 기반 에셋 로드 → 캐시에 등록 → 이름으로 조회
+- **런타임(씬)**: Addressables 키 우선, Build Profile(SceneManager) fallback으로 씬 로드
 - **런타임(옵션)**: Resources 로드/언로드 (캐시 포함)
 - **에디터**: `UNITY_EDITOR` 전용 Find 메서드 (AssetDatabase 기반)
 
@@ -62,11 +63,11 @@ namespace Devian
         public static IEnumerable<string> UnloadBundleAssets(string key);
 
         // ====================================================================
-        // Addressables Scene
+        // Scene Load/Unload (Addressables + Build Profile fallback)
         // ====================================================================
 
         /// <summary>
-        /// Addressables 씬을 로드하고 scene handle cache에 등록한다.
+        /// 씬을 로드한다. Addressables 키가 존재하면 Addressables로, 없으면 Build Profile(SceneManager) fallback.
         /// </summary>
         public static IEnumerator LoadSceneAsync(
             string key,
@@ -75,7 +76,7 @@ namespace Devian
             int priority = 100);
 
         /// <summary>
-        /// 캐시된 scene handle로 Addressables 씬을 언로드한다.
+        /// LoadSceneAsync로 로드한 씬을 언로드한다. Addressables/Build Profile 자동 분기.
         /// </summary>
         public static IEnumerator UnloadSceneAsync(string key, bool autoReleaseHandle = true);
         
@@ -238,7 +239,17 @@ if (typeDict.ContainsKey(assetKey))
     yield break;
 }
 
-### 7. Scene handle cache 정리 정책
+### 7. Scene 로딩 분기 정책
+
+**Scene 로딩은 Addressables 우선, Build Profile fallback으로 동작한다.**
+
+- `LoadSceneAsync(key)` 호출 시 `Addressables.LoadResourceLocationsAsync`로 키 존재 여부를 확인
+- Addressables 키 존재 → `Addressables.LoadSceneAsync` 사용 (기존 동작)
+- Addressables 키 미존재 → `SceneManager.LoadSceneAsync` fallback (Build Profile 씬)
+- Addressables 씬은 `mScenes` (handle cache), Build Profile 씬은 `mBuildProfileScenes` (HashSet)로 별도 추적
+- `UnloadSceneAsync(key)` 호출 시 Build Profile/Addressables 자동 분기
+
+### 8. Scene handle cache 정리 정책
 
 **Scene cache는 `Scene.isLoaded == false` 인 stale handle을 자동 정리해야 한다.**
 
@@ -246,6 +257,7 @@ if (typeDict.ContainsKey(assetKey))
 - `LoadSceneMode.Single` 로드 성공 후 stale scene handle prune 재수행
 - `UnloadSceneAsync()` 호출 시 invalid/unloaded handle이면 캐시에서 제거하고 handle release
 - stale handle 검사/해제 중 예외가 발생해도 로드 흐름은 계속 진행하고, 캐시만 안전하게 정리
+- Build Profile 씬도 stale 정리 대상 (`SceneManager.GetSceneByName`으로 확인)
 ```
 
 > **Note:** `LoadBundleAssets(key, lang)` 오버로드도 동일하게 `key`로 중복 체크 및 저장한다. 언로드는 항상 `UnloadBundleAssets(key)`로 수행.
