@@ -10,7 +10,7 @@
       ],
       "stringDir": "Domains/Common",
       "stringFiles": [
-        "LocalizedText.xlsx"
+        "StringTable.xlsx"
       ]
     },
     "Game": {

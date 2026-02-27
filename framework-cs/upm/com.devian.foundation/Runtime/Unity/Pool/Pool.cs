@@ -100,7 +100,7 @@ namespace Devian
             
             var t = instance.transform;
 
-            // Parent policy: if parent is null, use Root; otherwise use provided parent
+            // If the caller omits parent, detach from any previous parent (for example InactiveRoot).
             if (parent != null)
             {
                 t.SetParent(parent, false);
@@ -108,6 +108,10 @@ namespace Devian
             else if (_root != null)
             {
                 t.SetParent(_root, false);
+            }
+            else
+            {
+                t.SetParent(null, false);
             }
 
             t.position = position;

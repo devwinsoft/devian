@@ -11,10 +11,10 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 38c7f9684bd14454b879f056f5f7cfff, type: 3}
   m_Name: DevianSettings
-  m_EditorClassIdentifier: Devian.Unity::Devian.DevianSettings
+  m_EditorClassIdentifier: Devian.Domain.Common::Devian.DevianSettings
   _assetId:
   - GroupKey: COMMON_EFFECT
-    SearchDir: Assets/Bundles/Effects
+    SearchDir: Assets/Bundles/CommonEffects
   - GroupKey: MATERIAL_EFFECT
     SearchDir: Assets/Bundles/MaterialEffects
   _playerPrefsPrefix: devian.game.

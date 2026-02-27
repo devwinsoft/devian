@@ -9,10 +9,11 @@ namespace Devian
 {
     public enum LoginType
     {
-        EditorLogin = 0,
-        GuestLogin = 1,
-        GoogleLogin = 2,
-        AppleLogin = 3,
+        NONE = 0,
+        EDITOR = 1,
+        GUEST = 2,
+        GOOGLE = 3,
+        APPLE = 4,
     }
 
     /// <summary>
@@ -33,7 +34,7 @@ namespace Devian
         protected override void Awake()
         {
             base.Awake();
-            _currentLoginType = LoginType.EditorLogin;
+            _currentLoginType = LoginType.NONE;
             if (GameStorageManager.TryGet(out var gameStorage))
                 ApplyStorage(gameStorage.Account);
         }
@@ -69,7 +70,7 @@ namespace Devian
             // - Guest: never
             // - Editor: never (use SaveLocal only)
             // Cloud init 실패는 login 실패가 아님 — cloud save만 비활성화되고 login은 성공 처리.
-            if (loginType != LoginType.GuestLogin && loginType != LoginType.EditorLogin)
+            if (loginType != LoginType.GUEST && loginType != LoginType.EDITOR)
             {
 #if !UNITY_EDITOR
                 var initResult = await SaveDataManager.Instance._initializeCloudAsync(ct);
@@ -103,7 +104,7 @@ namespace Devian
 #endif
 
             // 4) Reset state
-            writeAccountState(LoginType.EditorLogin);
+            writeAccountState(LoginType.NONE);
         }
 
         public LoginType _getCurrentLoginType()
@@ -113,11 +114,11 @@ namespace Devian
 
         /// <summary>
         /// Purchase 인증 여부는 AccountManager 로그인 상태를 기준으로 판단한다.
-        /// EditorLogin(기본/로그아웃 상태)만 미인증으로 본다.
+        /// NONE(미로그인/로그아웃 상태)만 미인증으로 본다.
         /// </summary>
         public bool IsPurchaseLoginReady()
         {
-            return _currentLoginType != LoginType.EditorLogin;
+            return _currentLoginType != LoginType.NONE;
         }
 
         /// <summary>
@@ -142,7 +143,7 @@ namespace Devian
             if (signIn.IsFailure)
                 return CommonResult<bool>.Failure(signIn.Error!);
 
-            writeAccountState(LoginType.GoogleLogin);
+            writeAccountState(LoginType.GOOGLE);
             return CommonResult<bool>.Success(true);
 #else
             return CommonResult<bool>.Success(false);
@@ -153,17 +154,17 @@ namespace Devian
         {
             switch (loginType)
             {
-                case LoginType.EditorLogin:
-                case LoginType.GuestLogin:
+                case LoginType.EDITOR:
+                case LoginType.GUEST:
                     return CommonResult<LoginCredential>.Success(LoginCredential.Empty());
 
 #if UNITY_ANDROID && !UNITY_EDITOR
-                case LoginType.GoogleLogin:
+                case LoginType.GOOGLE:
                     return await getGoogleGpgsCredentialAsync(ct);
 #endif
 
 #if UNITY_IOS && !UNITY_EDITOR
-                case LoginType.AppleLogin:
+                case LoginType.APPLE:
                     return await _apple.SignInAsync(ct);
 #endif
 
@@ -188,8 +189,8 @@ namespace Devian
         {
             switch (loginType)
             {
-                case LoginType.EditorLogin:
-                case LoginType.GuestLogin:
+                case LoginType.EDITOR:
+                case LoginType.GUEST:
                 {
                     var r = await _firebaseLogin.SignInAnonymouslyAsync(ct);
                     return r.IsSuccess
@@ -198,14 +199,14 @@ namespace Devian
                 }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
-                case LoginType.GoogleLogin:
+                case LoginType.GOOGLE:
                 {
                     return await signInWithGoogleCredentialAsync(credential, ct);
                 }
 #endif
 
 #if UNITY_IOS && !UNITY_EDITOR
-                case LoginType.AppleLogin:
+                case LoginType.APPLE:
                 {
                     return await signInWithAppleCredentialAsync(credential, ct);
                 }
@@ -338,10 +339,10 @@ namespace Devian
 
         internal void ApplyStorage(AccountStorage storage)
         {
-            var raw = storage != null ? (int)storage.loginType : (int)LoginType.EditorLogin;
+            var raw = storage != null ? (int)storage.loginType : (int)LoginType.NONE;
             _currentLoginType = Enum.IsDefined(typeof(LoginType), raw)
                 ? (LoginType)raw
-                : LoginType.EditorLogin;
+                : LoginType.NONE;
         }
 
         private void writeAccountState(LoginType loginType)
@@ -359,7 +360,7 @@ namespace Devian
 
         private static string resolveSocialUserId(LoginType loginType)
         {
-            if (loginType != LoginType.GoogleLogin && loginType != LoginType.AppleLogin)
+            if (loginType != LoginType.GOOGLE && loginType != LoginType.APPLE)
                 return null;
 
             try

@@ -60,6 +60,24 @@ namespace Devian
         /// 지정된 key로 로드된 에셋들을 캐시에서 제거하고 Addressables handle을 해제한다.
         /// </summary>
         public static IEnumerable<string> UnloadBundleAssets(string key);
+
+        // ====================================================================
+        // Addressables Scene
+        // ====================================================================
+
+        /// <summary>
+        /// Addressables 씬을 로드하고 scene handle cache에 등록한다.
+        /// </summary>
+        public static IEnumerator LoadSceneAsync(
+            string key,
+            UnityEngine.SceneManagement.LoadSceneMode mode = UnityEngine.SceneManagement.LoadSceneMode.Single,
+            bool activateOnLoad = true,
+            int priority = 100);
+
+        /// <summary>
+        /// 캐시된 scene handle로 Addressables 씬을 언로드한다.
+        /// </summary>
+        public static IEnumerator UnloadSceneAsync(string key, bool autoReleaseHandle = true);
         
         // ====================================================================
         // Cache Access (즉시 반환)
@@ -219,6 +237,15 @@ if (typeDict.ContainsKey(assetKey))
     Addressables.Release(handle);  // 기존 에셋 우선, 새 handle 해제
     yield break;
 }
+
+### 7. Scene handle cache 정리 정책
+
+**Scene cache는 `Scene.isLoaded == false` 인 stale handle을 자동 정리해야 한다.**
+
+- `LoadSceneAsync()` 진입 전 stale scene handle prune 수행
+- `LoadSceneMode.Single` 로드 성공 후 stale scene handle prune 재수행
+- `UnloadSceneAsync()` 호출 시 invalid/unloaded handle이면 캐시에서 제거하고 handle release
+- stale handle 검사/해제 중 예외가 발생해도 로드 흐름은 계속 진행하고, 캐시만 안전하게 정리
 ```
 
 > **Note:** `LoadBundleAssets(key, lang)` 오버로드도 동일하게 `key`로 중복 체크 및 저장한다. 언로드는 항상 `UnloadBundleAssets(key)`로 수행.
@@ -318,7 +345,7 @@ yield return ST_UIText.PreloadAsync("ndjson", SystemLanguage.Korean);
 var text = ST_UIText.Get("ndjson", SystemLanguage.Korean, "greeting");
 ```
 
-> **Reference**: `skills/devian-unity/11-common-system/14-string-table/SKILL.md`, `skills/devian-unity/10-foundation/11-table-manager/SKILL.md`
+> **Reference**: `skills/devian-unity/11-common-system/31-string-table/SKILL.md`, `skills/devian-unity/10-foundation/11-table-manager/SKILL.md`
 
 ---
 
@@ -344,5 +371,5 @@ var text = ST_UIText.Get("ndjson", SystemLanguage.Korean, "greeting");
 
 - Related: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)
 - Related: `skills/devian-unity/10-foundation/19-download-manager/SKILL.md` (다운로드 정책)
-- Related: `skills/devian-unity/11-common-system/14-string-table/SKILL.md` (String Table 규약)
+- Related: `skills/devian-unity/11-common-system/31-string-table/SKILL.md` (String Table 규약)
 - Related: `skills/devian-unity/01-policy/SKILL.md` (component policy)

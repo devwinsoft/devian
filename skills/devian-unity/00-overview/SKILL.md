@@ -19,6 +19,7 @@ Devian Unity 런타임, UPM 패키지, 컴포넌트를 담당한다.
 | [03-ssot](../03-ssot/SKILL.md) | Unity SSOT (upmConfig, UPM Sync, Foundation) |
 |[02-unity-bundles](../02-unity-bundles/SKILL.md) | Unity 번들 정책 |
 | [10-foundation](../10-foundation/SKILL.md) | Unity 컴포넌트 인덱스 |
+| [11-common-system](../11-common-system/00-overview/SKILL.md) | Common Domain + 공용 Unity 런타임 기능 |
 | [22-sound-system](../22-sound-system/00-overview/SKILL.md) | Sound System (Tables/Manager/Voice Resolve/Domain/BaseAudio) |
 | [30-purchase-system](../50-mobile-system/30-purchase-system/00-overview/SKILL.md) | Purchase System (Unity IAP + verification + entitlements) |
 | [40-game-system](../40-game-system/00-overview/SKILL.md) | Game System 샘플 |

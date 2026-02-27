@@ -16,7 +16,7 @@ MonoBehaviour:
   m_GUID: d2dfefd718e7d8c429e02c7a469989e1
   m_SerializeEntries:
   - m_GUID: 3cc69d5db52467444a1203aa11a34b89
-    m_Address: Assets/Bundles/Effects
+    m_Address: Assets/Bundles/CommonEffects
     m_ReadOnly: 0
     m_SerializedLabels:
     - common-effects

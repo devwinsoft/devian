@@ -4881,7 +4881,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 79c13710c6c27d2429135cac8e793b26, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Unity::Devian.CommonEffectObject
+  m_EditorClassIdentifier: Devian.Domain.Common::Devian.CommonEffectObject
 --- !u!114 &9010505415325107353
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4893,6 +4893,6 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 5cc6fadbfe440bd4f8b89f22dd3310c5, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Unity::Devian.ParticleEffectPlayer
+  m_EditorClassIdentifier: Devian.Domain.Common::Devian.ParticleEffectPlayer
   playTime: 0
   fadeOutTime: 0

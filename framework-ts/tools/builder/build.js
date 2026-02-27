@@ -2345,7 +2345,7 @@ export * from './features';
         lines.push('    }');
         lines.push('');
 
-        // Drawer class (no caching - SSOT: skills/devian-unity/10-base-system/21-asset-id/SKILL.md)
+        // Drawer class (no caching - SSOT: skills/devian-unity/11-common-system/12-asset-id/SKILL.md)
         lines.push(`    /// <summary>PropertyDrawer for ${tableName}_ID</summary>`);
         lines.push(`    [CustomPropertyDrawer(typeof(${tableName}_ID))]`);
         lines.push(`    public class ${drawerClassName} : BaseEditorID_Drawer<${selectorClassName}>`);

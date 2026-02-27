@@ -13,6 +13,7 @@ Unity 런타임 컴포넌트(비-UI)의 스킬 인덱스와 진입점이다.
 ### Excludes
 - UI 관련 컴포넌트 / Canvas / UI 입력 등 → `skills/devian-unity/30-ui-system/`
 - 게임/도메인 기능(프로젝트별 구성)
+- 공용 이펙트/머티리얼 효과 → `skills/devian-unity/11-common-system/00-overview/SKILL.md`
 
 ## Where to start
 - Index: `skills/devian-unity/10-foundation/SKILL.md`
@@ -22,13 +23,9 @@ Unity 런타임 컴포넌트(비-UI)의 스킬 인덱스와 진입점이다.
 - 번호 `00-*`는 overview 전용이다.
 - 이 영역의 스킬 파일명은 `SKILL.md`를 사용한다.
 
-## Effect System (migrated from 14-effect-system)
-
-이 그룹에는 Effect 시스템 스킬이 통합되었다.
+## Related
 
 | Topic | Link | Notes |
 | --- | --- | --- |
-| Policy | [01-policy](../01-policy/SKILL.md) | Effect 시스템 정책 |
-| CommonEffectManager | [29-common-effect-manager](../29-common-effect-manager/SKILL.md) | 공통 이펙트 |
-| MaterialEffectController | [28-material-effect-controller](../28-material-effect-controller/SKILL.md) | 머티리얼 스위치 |
-| MaterialEffectId | [13-material-effect-id](../13-material-effect-id/SKILL.md) | MATERIAL_EFFECT_ID |
+| CommonSystem | [11-common-system](../../11-common-system/00-overview/SKILL.md) | 공용 도메인 + 공용 런타임 기능 |
+| DevianSettings | [11-devian-settings](../../11-common-system/11-devian-settings/SKILL.md) | CommonSystem 소유 설정 자산 |

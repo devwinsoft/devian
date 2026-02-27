@@ -25,7 +25,7 @@ namespace Devian
         /// Creates or reuses a Pool for the given (factory, type, poolName) combination.
         ///
         /// Parent policy:
-        /// - If parent is null, instance goes under [PoolManager]/{Type}/{Name}
+        /// - If parent is null, instance is spawned with no parent unless options.Root is provided
         /// - If parent is provided, instance goes under that parent (game logic priority)
         /// </summary>
         /// <typeparam name="T">The poolable component type</typeparam>
@@ -33,7 +33,7 @@ namespace Devian
         /// <param name="name">Prefab name to spawn (also used as pool name for hierarchy)</param>
         /// <param name="position">World position (default: Vector3.zero)</param>
         /// <param name="rotation">Rotation (default: Quaternion.identity)</param>
-        /// <param name="parent">Optional parent transform (if null, uses debug hierarchy)</param>
+        /// <param name="parent">Optional parent transform (if null, leaves the instance unparented unless options.Root is set)</param>
         /// <param name="options">Pool options (MaxSize, etc.)</param>
         /// <returns>The spawned instance</returns>
         public static T Spawn<T>(

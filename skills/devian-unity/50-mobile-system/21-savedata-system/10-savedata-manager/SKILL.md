@@ -21,7 +21,7 @@
 ## SyncState
 - `Success` (0) — 동기화 정상 완료, 데이터 존재
 - `Conflict` (1) — 자동 승자 결정 불가(주로 cross-device payload 충돌, 또는 same-device `saveSeq` fallback)
-- `Initial` (2) — 어떤 슬롯에도 데이터 없음 (신규 유저 / 초기 상태)
+- `Initial` (2) — 데이터 없음, 또는 데이터는 있지만 sign-in 성공한 적 없음 (`Account.loginType == NONE`)
 
 
 ## SyncResult
@@ -39,14 +39,18 @@
 
 ## Scenario
 
+### NONE (미로그인)
+- `LoginType.NONE`은 sign-in 성공 전 초기 상태이다.
+- 로컬 데이터를 로드한 뒤, `Account.loginType == NONE`이면 `Initial`을 반환한다 (payload 포함).
+- 로컬 데이터가 없어도 `Initial`을 반환한다.
+
 ### Guest 로그인
 - CloudSave 경로 비활성: Cloud 호출 금지 (Guest는 Cloud 기능 비활성)
-- `SyncAsync(ct)`: Local 슬롯 전체 검사 — 데이터 있으면 `Success`, 없으면 `Initial`
 - `SyncAsync(slot, ct)`: 해당 슬롯만 로드 — 데이터 있으면 `Success`(payload 포함), 없으면 `Initial`
 
 ### Cloud Init 실패 (Non-Guest)
 - Cloud 초기화 실패 + Local 없음 → `SyncAsync` 실패 (`_initializeCloudAsync` 에러 반환)
-- Cloud 초기화 실패 + Local 있음 → local-only 모드로 진행 (`SyncAsync(ct)`: syncAsync 계속 / `SyncAsync(slot)`: local payload로 `Success` 반환)
+- Cloud 초기화 실패 + Local 있음 → local-only 모드로 진행 (`SyncAsync(slot)`: local payload로 `Success` 반환)
 
 ### Cloud Load/Save 실패 (Non-Guest)
 - Cloud `LoadAsync`/`SaveAsync` 시도 실패는 `SyncAsync`/`SaveDataAsync(includeCloud:true)`의 **실패**로 반환한다.
@@ -73,9 +77,9 @@
   - **Cloud 선택**: Cloud → Local 저장 (즉시 Cloud 저장 금지, DeviceId overwrite용 Cloud 재저장 금지)
 - 다른 기기 간 충돌 자체는 허용 (전용 서버/CAS 없는 스냅샷 저장 제약)
 
-### Initial (데이터 없음)
-- Guest: Local 슬롯 전체 검사 후 데이터가 하나도 없으면 `Initial`
-- Non-Guest: 모든 슬롯(Local + Cloud) 순회 후 `hasAnyLocal == false && hasAnyCloud == false`이면 `Initial`
+### Initial
+- 데이터 없음 (로컬/클라우드 모두 null) → `Initial`
+- 데이터 있지만 `Account.loginType == NONE` (sign-in 성공한 적 없음) → `Initial` (payload 포함)
 
 
 ## Unified Settings
@@ -98,7 +102,6 @@ SaveDataManager는 Slot 설정을 `SaveSlotConfig`로 캡슐화한다. (단일 �
 ## Public API
 
 ### Sync
-- `Task<CommonResult<SyncResult>> SyncAsync(CancellationToken ct)`
 - `Task<CommonResult<SyncResult>> SyncAsync(string slot, CancellationToken ct)`
 - `Task<CommonResult<bool>> ResolveConflictAsync(string slot, SyncResolution resolution, CancellationToken ct)`
 

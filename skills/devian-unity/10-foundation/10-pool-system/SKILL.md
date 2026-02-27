@@ -64,7 +64,7 @@ Unity Hierarchy에서 풀 오브젝트가 Type → PoolName → Inactive로 정�
 ```
 
 - **Active 폴더는 생성하지 않는다.**
-- Spawn(parent=null) 시 오브젝트는 `[PoolManager]/{Type}/{PoolName}` 아래로 정렬한다.
+- Spawn(parent=null) 시 오브젝트는 parent 없이 스폰된다.
 - Despawn 시 오브젝트는 항상 `Inactive` 아래로 이동한다.
 
 ### 예시
@@ -106,7 +106,7 @@ Spawn 시 `parent` 인자에 따라 오브젝트 부모가 결정된다:
 
 | parent 인자 | 결과 |
 |-------------|------|
-| `null` | `[PoolManager]/{Type}/{PoolName}` 아래로 이동 (디버깅 기본값) |
+| `null` | parent 없이 스폰됨 (`PoolOptions.Root` 지정 시 해당 루트 사용) |
 | `Transform` 제공 | 제공된 parent 아래로 이동 (게임 로직 우선) |
 
 ### Despawn
@@ -423,13 +423,13 @@ public static class PoolFactoryExtensions
 public struct PoolOptions
 {
     public int MaxSize;           // 최대 비활성 인스턴스 수 (기본 512)
-    public Transform Root;        // Spawn 시 parent=null일 때 정렬 루트 (PoolManager가 설정)
+    public Transform Root;        // Spawn 시 parent=null일 때 사용할 선택적 루트 (caller가 지정)
     public Transform InactiveRoot;// Despawn 시 사용 (PoolManager가 설정)
     public int Prewarm;           // 프리웜 수량 (기본 0)
 }
 ```
 
-> **Note**: `Root`와 `InactiveRoot`는 PoolManager가 자동으로 설정함. 사용자가 직접 설정할 필요 없음.
+> **Note**: `InactiveRoot`는 PoolManager가 자동으로 설정한다. `Root`는 `parent=null` 기본 동작을 덮어쓰고 싶을 때만 caller가 직접 지정한다.
 
 ---
 

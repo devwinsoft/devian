@@ -21,7 +21,7 @@ namespace Devian
         
         /// <summary>
         /// Optional transform to parent spawned instances under when parent=null.
-        /// Set automatically by PoolManager for debug hierarchy.
+        /// Caller-controlled opt-in; PoolManager does not override this value.
         /// </summary>
         public Transform Root;
         

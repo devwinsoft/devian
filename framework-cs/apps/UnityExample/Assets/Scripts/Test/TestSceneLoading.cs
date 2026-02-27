@@ -26,7 +26,7 @@ public class TestSceneLoading : TestSceneBootstrap
         
         UICanvasLoading.Instance.Init();
         
-        var sync = SaveDataManager.Instance.SyncAsync(CancellationToken.None);
+        var sync = SaveDataManager.Instance.SyncAsync("main", CancellationToken.None);
         if (sync.Result.IsSuccess)
         {
             Debug.Log($"Sync completed: {sync.Result.Value.State}");
@@ -34,17 +34,22 @@ public class TestSceneLoading : TestSceneBootstrap
             switch (sync.Result.Value.State)
             {
                 case SyncState.Initial:
+                    var data = GameStorageManager.Instance.ToJson();
+                    var init = await SaveDataManager.Instance.SaveDataAsync("main", data, includeCloud: false, CancellationToken.None);
                     UICanvasLoading.Instance.ShowLoginButtons();
                     break;
                 case SyncState.Conflict:
                     break;
                 case SyncState.Success:
-                    var loginResult = await Login(GameStorageManager.Instance.Account.loginType);
-                    SceneTransManager.Instance.LoadSceneAsync("SceneSample");
+                    var loginCode = await Login(GameStorageManager.Instance.Account.loginType);
+                    if (loginCode == CommonErrorType.SUCCESS)
+                    {
+                        SceneTransManager.Instance.LoadSceneAsync("SceneSample");
+                    }
                     break;
             }
         }
-        else
+        else if (sync.Result.IsFailure)
         {
             Debug.Log($"{sync.Result.Error.Code}: {sync.Result.Error.Message}");
         }
@@ -55,11 +60,13 @@ public class TestSceneLoading : TestSceneBootstrap
     {
         var login = await AccountManager.Instance.LoginAsync(loginType, CancellationToken.None);
         Debug.Log($"LoginAsync: {loginType}, {(login.IsFailure ? login.Error?.ToString() : "")}");
+        
         if (login.IsFailure)
         {
             Debug.LogError($"SignIn failed: code={login.Error.Code}, message={login.Error.Message}");
             return login.Error.Code;
         }
+        
 #if UNITY_EDITOR
         return CommonErrorType.SUCCESS;
 #else
@@ -89,6 +96,10 @@ public class TestSceneLoading : TestSceneBootstrap
             {
                 Debug.Log($"Interrupted purchase recovered: {retry.InternalProductId}");
             }
+        }
+        else
+        {
+            Debug.LogWarning($"RetryInterruptedPurchaseAsync failed: {retryResult.Error.Code}: {retryResult.Error.Message}");
         }
 
         // 3. 환불 처리

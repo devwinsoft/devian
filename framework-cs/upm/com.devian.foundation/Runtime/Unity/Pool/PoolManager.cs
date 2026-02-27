@@ -164,9 +164,8 @@ namespace Devian
             // Get name roots for debug hierarchy
             var nameRoots = _GetNameRoots(typeof(T), normalizedName);
 
-            // Set options with roots
+            // Preserve caller-provided active Root. PoolManager only owns inactive hierarchy.
             var optionsWithRoots = options;
-            optionsWithRoots.Root = nameRoots.Root;
             optionsWithRoots.InactiveRoot = nameRoots.Inactive;
             
             // Create new pool

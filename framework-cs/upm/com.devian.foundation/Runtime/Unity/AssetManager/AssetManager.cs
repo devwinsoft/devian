@@ -650,6 +650,8 @@ namespace Devian
                 yield break;
             }
 
+            PruneStaleSceneHandles();
+
             if (mScenes.ContainsKey(key))
             {
                 Log.Warn($"AssetManager.LoadSceneAsync ignored: '{key}' already loaded.");
@@ -668,6 +670,9 @@ namespace Devian
             }
 
             mScenes[key] = handle;
+
+            // Single 전환으로 이전 씬이 자동 언로드된 경우 stale handle을 정리한다.
+            PruneStaleSceneHandles();
         }
 
         /// <summary>
@@ -680,8 +685,16 @@ namespace Devian
             if (string.IsNullOrWhiteSpace(key))
                 yield break;
 
+            PruneStaleSceneHandles();
+
             if (!mScenes.TryGetValue(key, out var handle))
                 yield break;
+
+            if (!TryGetLoadedScene(handle, out _))
+            {
+                RemoveStaleSceneHandle(key, handle);
+                yield break;
+            }
 
             var unload = Addressables.UnloadSceneAsync(handle, autoReleaseHandle);
             yield return unload;
@@ -689,7 +702,7 @@ namespace Devian
             if (unload.Status != AsyncOperationStatus.Succeeded)
             {
                 Log.Error($"AssetManager.UnloadSceneAsync failed: {key}");
-                // 실패 시 캐시 유지 (초안 정책). 성공하면 제거.
+                PruneStaleSceneHandles();
                 yield break;
             }
 
@@ -698,6 +711,72 @@ namespace Devian
             // autoReleaseHandle=false인 케이스 방어 (초안에서는 거의 안 쓰지만 안전하게)
             if (!autoReleaseHandle && handle.IsValid())
                 Addressables.Release(handle);
+        }
+
+        private static void PruneStaleSceneHandles()
+        {
+            if (mScenes.Count == 0)
+                return;
+
+            List<string>? staleKeys = null;
+
+            foreach (var pair in mScenes)
+            {
+                if (TryGetLoadedScene(pair.Value, out _))
+                    continue;
+
+                staleKeys ??= new List<string>();
+                staleKeys.Add(pair.Key);
+            }
+
+            if (staleKeys == null)
+                return;
+
+            for (int i = 0; i < staleKeys.Count; i++)
+            {
+                var staleKey = staleKeys[i];
+                if (mScenes.TryGetValue(staleKey, out var staleHandle))
+                {
+                    RemoveStaleSceneHandle(staleKey, staleHandle);
+                }
+            }
+        }
+
+        private static bool TryGetLoadedScene(AsyncOperationHandle<SceneInstance> handle, out Scene scene)
+        {
+            scene = default;
+
+            try
+            {
+                if (!handle.IsValid())
+                    return false;
+
+                if (handle.Status != AsyncOperationStatus.Succeeded)
+                    return false;
+
+                scene = handle.Result.Scene;
+                return scene.IsValid() && scene.isLoaded;
+            }
+            catch
+            {
+                scene = default;
+                return false;
+            }
+        }
+
+        private static void RemoveStaleSceneHandle(string key, AsyncOperationHandle<SceneInstance> handle)
+        {
+            mScenes.Remove(key);
+
+            try
+            {
+                if (handle.IsValid())
+                    Addressables.Release(handle);
+            }
+            catch (Exception ex)
+            {
+                Log.Warn($"AssetManager stale scene handle cleanup failed: '{key}', {ex.Message}");
+            }
         }
 
         // ====================================================================

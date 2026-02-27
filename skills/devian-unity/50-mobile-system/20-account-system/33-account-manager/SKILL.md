@@ -8,10 +8,10 @@
 
 ## Scope
 - Firebase Auth 기반 로그인 오케스트레이터.
-- Editor/Guest는 Firebase Anonymous를 사용한다.
-- 실기기에서는 Guest + Google(Android) + Apple(iOS)을 지원한다.
-- Google(Android)는 GPGS(Google Play Games Services) 인증을 Reflection으로 내부 획득하며, `PlayGamesAuthProvider.GetCredential(serverAuthCode)`로 Firebase에 연결한다.
-- Apple(iOS)은 caller(UI/네이티브)에서 IdToken + RawNonce를 받아 AccountManager에 전달한다.
+- EDITOR/GUEST는 Firebase Anonymous를 사용한다.
+- 실기기에서는 GUEST + GOOGLE(Android) + APPLE(iOS)을 지원한다.
+- GOOGLE(Android)는 GPGS(Google Play Games Services) 인증을 Reflection으로 내부 획득하며, `PlayGamesAuthProvider.GetCredential(serverAuthCode)`로 Firebase에 연결한다.
+- APPLE(iOS)은 caller(UI/네이티브)에서 IdToken + RawNonce를 받아 AccountManager에 전달한다.
 - Anonymous → Google/Apple은 `LinkWithCredentialAsync`로 UID를 유지한다.
 
 
@@ -22,10 +22,11 @@
 
 
 ## Login Type (Platform)
-- **Editor Login**: Firebase Anonymous
-- **Guest Login (device)**: Firebase Anonymous — SaveCloudManager를 Initialize/Load/Save 호출하지 않음 (로컬 저장만 사용). Sync 호출이 있어도 Cloud 접근 없이 no-op.
-- **Google Login (Android device)**: GPGS Reflection → `PlayGamesAuthProvider.GetCredential(serverAuthCode)` → Firebase sign-in / link
-- **Apple Login (iOS device)**: Sign-in/link to Firebase using Apple credential (caller-provided IdToken + RawNonce)
+- **NONE**: 초기 상태 / 로그아웃 상태 (값: 0)
+- **EDITOR**: Firebase Anonymous (값: 1)
+- **GUEST (device)**: Firebase Anonymous — SaveCloudManager를 Initialize/Load/Save 호출하지 않음 (로컬 저장만 사용). Sync 호출이 있어도 Cloud 접근 없이 no-op. (값: 2)
+- **GOOGLE (Android device)**: GPGS Reflection → `PlayGamesAuthProvider.GetCredential(serverAuthCode)` → Firebase sign-in / link (값: 3)
+- **APPLE (iOS device)**: Sign-in/link to Firebase using Apple credential (caller-provided IdToken + RawNonce) (값: 4)
 
 
 ## Order (fixed)
@@ -41,21 +42,21 @@ Sync는 AccountManager의 책임이 아니며, [10-savedata-manager](../../21-sa
   "로그인 여부"를 판정하지 않는다.
 - 구매 전 인증 게이트는 AccountManager 공개 상태(`IsPurchaseLoginReady` 등)를 통해 판단한다.
 - FirebaseAuth 접근은 AccountManager 내부의 sign-in/link 구현 범위에서만 사용한다.
-- Android에서는 구매 진입 시 `EditorLogin` 상태라도, AccountManager가 GPGS silent 인증을 사용해
-  Google 로그인(Firebase credential sign-in/link)을 자동 보정할 수 있다(UI 없는 silent 경로 우선).
+- Android에서는 구매 진입 시 `NONE`/`EDITOR` 상태라도, AccountManager가 GPGS silent 인증을 사용해
+  GOOGLE 로그인(Firebase credential sign-in/link)을 자동 보정할 수 있다(UI 없는 silent 경로 우선).
 
 
 ## LoginCredential
-- Guest/Editor: `LoginCredential.Empty()` 또는 `null`
-- Google(Android): `ServerAuthCode` 필수 (convenience 오버로드 사용 시 GPGS Reflection으로 내부 획득)
-- Apple(iOS): `IdToken` + `RawNonce` 필수 (caller가 직접 전달)
+- GUEST/EDITOR: `LoginCredential.Empty()` 또는 `null`
+- GOOGLE(Android): `ServerAuthCode` 필수 (convenience 오버로드 사용 시 GPGS Reflection으로 내부 획득)
+- APPLE(iOS): `IdToken` + `RawNonce` 필수 (caller가 직접 전달)
 
 ## Convenience Overload
 - 반환형: `Task<CommonResult>` (성공 payload 없음, 실패 시 `CommonErrorType` 기반 `CommonError`)
 - `LoginAsync(LoginType, CancellationToken)` — credential을 내부에서 획득한다.
-  - Editor/Guest: `LoginCredential.Empty()` 자동 생성
-  - Google(Android): `getGoogleGpgsCredentialAsync` → GPGS Reflection으로 `PlayGamesPlatform.Authenticate` + `RequestServerSideAccess` 호출
-  - Apple(iOS): 지원하지 않음 — `LoginAsync(LoginType, LoginCredential, CancellationToken)` 사용
+  - EDITOR/GUEST: `LoginCredential.Empty()` 자동 생성
+  - GOOGLE(Android): `getGoogleGpgsCredentialAsync` → GPGS Reflection으로 `PlayGamesPlatform.Authenticate` + `RequestServerSideAccess` 호출
+  - APPLE(iOS): 지원하지 않음 — `LoginAsync(LoginType, LoginCredential, CancellationToken)` 사용
 
 ## Google GPGS Internal Acquisition
 - `getGoogleGpgsCredentialAsync(CancellationToken)` — Reflection 기반, GPGS 플러그인 미설치 시 컴파일 안전.
@@ -86,7 +87,7 @@ Sync는 AccountManager의 책임이 아니며, [10-savedata-manager](../../21-sa
 - 저장 필드(최소): `loginType`, `socialUserId`, `lastUpdatedAtUtcMs`
 - 로그인 성공, 로그아웃, 구매 인증 보정 시 `AccountManager`가 `GameStorageManager.Instance.Account`를 갱신한다.
 - `SaveDataManager`가 local/cloud payload를 로드한 뒤 `AccountManager.ApplyStorage(...)`로 런타임 `_currentLoginType`을 재적용한다.
-- 계정 메타 미복원/유효하지 않은 값이면 `EditorLogin` fallback.
+- 계정 메타 미복원/유효하지 않은 값이면 `NONE` fallback.
 
 
 ## 계정 Upgrade (Guest/Editor → Social)

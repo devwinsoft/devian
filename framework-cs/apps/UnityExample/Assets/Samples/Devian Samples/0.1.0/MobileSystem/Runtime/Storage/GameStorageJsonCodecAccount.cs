@@ -27,10 +27,10 @@ namespace Devian
                 return;
             }
 
-            var rawLoginType = accountObj.Value<int?>("loginType") ?? (int)LoginType.EditorLogin;
+            var rawLoginType = accountObj.Value<int?>("loginType") ?? (int)LoginType.NONE;
             account.loginType = System.Enum.IsDefined(typeof(LoginType), rawLoginType)
                 ? (LoginType)rawLoginType
-                : LoginType.EditorLogin;
+                : LoginType.NONE;
             account.socialUserId = accountObj.Value<string>("socialUserId");
             account.lastUpdatedAtUtcMs = accountObj.Value<long?>("lastUpdatedAtUtcMs") ?? 0L;
         }

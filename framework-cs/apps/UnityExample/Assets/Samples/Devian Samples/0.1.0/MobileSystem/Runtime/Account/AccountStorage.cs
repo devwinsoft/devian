@@ -9,7 +9,7 @@ namespace Devian
         public string socialUserId;
         public long lastUpdatedAtUtcMs;
 
-        public AccountStorage(LoginType loginType = LoginType.EditorLogin, string socialUserId = null, long lastUpdatedAtUtcMs = 0L)
+        public AccountStorage(LoginType loginType = LoginType.NONE, string socialUserId = null, long lastUpdatedAtUtcMs = 0L)
         {
             this.loginType = loginType;
             this.socialUserId = socialUserId;
@@ -18,7 +18,7 @@ namespace Devian
 
         public void Clear()
         {
-            loginType = LoginType.EditorLogin;
+            loginType = LoginType.NONE;
             socialUserId = null;
             lastUpdatedAtUtcMs = 0L;
         }
