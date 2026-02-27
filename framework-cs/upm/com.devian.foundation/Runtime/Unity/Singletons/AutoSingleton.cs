@@ -12,14 +12,13 @@ namespace Devian
     public abstract class AutoSingleton<T> : MonoBehaviour where T : MonoBehaviour
     {
         private static readonly object _lock = new object();
-        private static bool _isShuttingDown;
         private static bool _isCreating;
 
         /// <summary>
-        /// Shutdown 구간 여부. 에디터 종료/플레이 종료/앱 종료 중이면 true.
+        /// Shutdown 구간 여부. Singleton.IsShuttingDown에 위임.
         /// shutdown 중에는 Instance가 자동 생성을 억제하고 null을 반환한다.
         /// </summary>
-        public static bool IsShuttingDown => _isShuttingDown || !Application.isPlaying;
+        public static bool IsShuttingDown => Singleton.IsShuttingDown;
 
         /// <summary>
         /// DontDestroyOnLoad 적용 여부. 기본 true.
@@ -130,18 +129,6 @@ namespace Devian
             {
                 DontDestroyOnLoad(gameObject);
             }
-        }
-
-        protected virtual void OnApplicationQuit()
-        {
-            _isShuttingDown = true;
-        }
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void resetOnSubsystemRegistration()
-        {
-            _isShuttingDown = false;
-            _isCreating = false;
         }
 
         protected virtual void OnDestroy()

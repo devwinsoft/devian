@@ -133,7 +133,7 @@ Registry에 Auto/Boot가 등록된 상태에서 Compo가 등록되면:
 | `Singleton.CreateFromResources<T>(path)` | Resources에서 프리팹 로드 + Registry 등록(Boot). key=T |
 | `Singleton.CreateFromResources<TBase,TSelf>(path)` | Resources에서 프리팹 로드 + Registry 등록(Boot). key=TBase |
 | `T.Instance` | AutoSingleton/CompoSingleton이 제공하는 편의. Auto는 script-create, Compo는 기등록 인스턴스 조회. Shutdown 중 null 반환 |
-| `AutoSingleton<T>.IsShuttingDown` | Shutdown 구간 여부 (`OnApplicationQuit` 또는 `!Application.isPlaying`) |
+| `AutoSingleton<T>.IsShuttingDown` | Shutdown 구간 여부 (`Singleton.IsShuttingDown`에 위임) |
 
 ---
 

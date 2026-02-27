@@ -22,23 +22,12 @@ namespace Devian
         where TSelf : TBase
     {
         private static readonly object _lock = new object();
-        private static bool _isShuttingDown;
-
-        static AutoSingleton()
-        {
-            Application.quitting += onQuitting;
-        }
-
-        private static void onQuitting()
-        {
-            _isShuttingDown = true;
-        }
 
         /// <summary>
-        /// Shutdown 구간 여부. 에디터 종료/플레이 종료/앱 종료 중이면 true.
+        /// Shutdown 구간 여부. Singleton.IsShuttingDown에 위임.
         /// shutdown 중에는 Instance가 자동 생성을 억제하고 null을 반환한다.
         /// </summary>
-        public static bool IsShuttingDown => _isShuttingDown || !Application.isPlaying;
+        public static bool IsShuttingDown => Singleton.IsShuttingDown;
 
         /// <summary>
         /// 인스턴스 조회 (TSelf 반환). 없으면 자동 생성.
@@ -123,10 +112,5 @@ namespace Devian
             return go.AddComponent<TSelf>();
         }
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void resetOnSubsystemRegistration()
-        {
-            _isShuttingDown = false;
-        }
     }
 }
