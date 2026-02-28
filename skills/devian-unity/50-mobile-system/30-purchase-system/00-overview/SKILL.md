@@ -18,6 +18,8 @@ Purchase(유료) 경로의 실제 지급 실행은 `rewardGroupId`를 RewardMana
 - 통합 SSOT/핵심 합의는 `03-ssot`
 - 운영/보안/테스트/DoD는 `09-ssot-operations`
 - Firebase Functions 구현/셋업은 `40` / `44`
+- 환불 감지/처리 파이프라인은 `45`
+- 인프라 셋업 실행 가이드는 `47`
 - 로컬/클라우드 저장용 구매 상태 스냅샷은 `33`
 
 
@@ -39,7 +41,9 @@ Purchase(유료) 경로의 실제 지급 실행은 `rewardGroupId`를 RewardMana
 | [42-purchase-entitlements-grants](../42-purchase-entitlements-grants/SKILL.md) | grants/entitlements 계산 및 저장 규칙 정본 |
 | [43-purchase-client-server-integration](../43-purchase-client-server-integration/SKILL.md) | Verify/Sync 호출 방식 및 ConfirmPurchase 하드룰 |
 | [44-purchase-repo-firebase-functions-setup](../44-purchase-repo-firebase-functions-setup/SKILL.md) | Firebase Functions를 레포에 추가하기 위한 구성 정본(파일/폴더/배포) |
+| [45-purchase-refund-processing](../45-purchase-refund-processing/SKILL.md) | 환불 감지(RTDN) → 상태 변경 → 클라이언트 회수 파이프라인 정본 |
 | [46-purchase-decisions](../46-purchase-decisions/SKILL.md) | 결제 검증(Firebase Callable) 결정사항 정본(경로/검증방식/멱등/시크릿/스키마) |
+| [47-purchase-verification-setup](../47-purchase-verification-setup/SKILL.md) | 구매 검증 인프라 셋업 실행 가이드 (Secret/IAM/RTDN/배포/검증) |
 
 
 ---

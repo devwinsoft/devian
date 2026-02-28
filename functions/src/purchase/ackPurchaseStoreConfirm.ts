@@ -21,7 +21,6 @@ function getVerifyStatus(data: FirebaseFirestore.DocumentData | undefined): stri
 }
 
 export const ackPurchaseStoreConfirm = onCall(
-  {region: "asia-northeast3"},
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Authentication required");

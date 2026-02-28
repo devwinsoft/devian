@@ -193,7 +193,9 @@
       "Bash(gcloud logging read 'resource.type=\"\"cloud_run_revision\"\" AND resource.labels.service_name=\"\"handlegoogleplaynotification\"\"' --project=devian-framwork-example --limit=10 --format=\"table\\(timestamp,severity,textPayload\\)\" --freshness=5m)",
       "Bash(firebase firestore:indexes --project=devian-framwork-example)",
       "Bash(gcloud firestore indexes composite list --project=devian-framwork-example --database=\"\\(default\\)\" --format=\"table\\(name.basename\\(\\),state,queryScope,fields\\)\")",
-      "Bash(gcloud logging read 'resource.type=\"\"cloud_run_revision\"\" AND resource.labels.service_name=\"\"handlegoogleplaynotification\"\"' --project=devian-framwork-example --limit=10 --format=\"table\\(timestamp,severity,textPayload\\)\" --freshness=3m)"
+      "Bash(gcloud logging read 'resource.type=\"\"cloud_run_revision\"\" AND resource.labels.service_name=\"\"handlegoogleplaynotification\"\"' --project=devian-framwork-example --limit=10 --format=\"table\\(timestamp,severity,textPayload\\)\" --freshness=3m)",
+      "Bash(git stash)",
+      "Bash(git stash pop)"
     ]
   },
   "project": {

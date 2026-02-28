@@ -17,7 +17,6 @@ import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 
 export const getEntitlements = onCall(
-  {region: "asia-northeast3"},
   async (request) => {
     // 46 스킬 B: context.auth.uid 필수
     if (!request.auth) {

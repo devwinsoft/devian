@@ -11,6 +11,10 @@
  */
 
 import * as admin from "firebase-admin";
+import {setGlobalOptions} from "firebase-functions/v2";
+
+// 전역 옵션 (모든 함수에 적용)
+setGlobalOptions({region: "asia-northeast3"});
 
 // Firebase Admin 초기화 (프로젝트 기본 서비스 계정 사용)
 admin.initializeApp();

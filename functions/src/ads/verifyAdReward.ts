@@ -122,7 +122,6 @@ function adRewardDocRef(uid: string, transactionId: string) {
 // ────────────────────────────────────────────
 
 export const verifyAdReward = onRequest(
-  {region: "asia-northeast3"},
   async (req, res) => {
     // GET만 허용
     if (req.method !== "GET") {

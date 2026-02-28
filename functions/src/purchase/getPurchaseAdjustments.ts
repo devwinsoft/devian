@@ -58,7 +58,6 @@ function docToItem(doc: FirebaseFirestore.QueryDocumentSnapshot) {
 }
 
 export const getPurchaseAdjustments = onCall(
-  {region: "asia-northeast3"},
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Authentication required");

@@ -18,7 +18,6 @@ const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const VALID_KINDS = ["Consumable", "Rental", "Subscription", "SeasonPass"];
 
 export const getRecentPurchases30d = onCall(
-  {region: "asia-northeast3"},
   async (request) => {
     // 인증 필수
     if (!request.auth) {

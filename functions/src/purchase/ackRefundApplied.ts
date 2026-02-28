@@ -23,7 +23,6 @@ function purchaseDocRef(uid: string, purchaseId: string) {
 }
 
 export const ackRefundApplied = onCall(
-  {region: "asia-northeast3"},
   async (request) => {
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Authentication required");

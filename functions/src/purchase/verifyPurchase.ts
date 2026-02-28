@@ -239,7 +239,7 @@ export const __test_parseGoogleReceipt = parseGoogleReceipt;
 // ═══════════════════════════════════════════
 
 export const verifyPurchase = onCall(
-  {region: "asia-northeast3", secrets: [GOOGLE_CREDENTIALS_SECRET]},
+  {secrets: [GOOGLE_CREDENTIALS_SECRET]},
   async (request) => {
     // 46 스킬 B: context.auth.uid 필수(unauthenticated 거부)
     if (!request.auth) {

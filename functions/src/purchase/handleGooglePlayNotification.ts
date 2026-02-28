@@ -16,7 +16,8 @@ import * as logger from "firebase-functions/logger";
 import {verifyGooglePlay, GOOGLE_CREDENTIALS_SECRET} from "./storeVerify";
 
 // ── Constants ──
-const RTDN_TOPIC = "devian-play-rtdn";
+// .env.{project} 에서 RTDN_TOPIC 읽음 (Firebase CLI가 deploy 전 process.env에 로드)
+const RTDN_TOPIC = process.env.RTDN_TOPIC!;
 const ONE_TIME_PRODUCT_CANCELED = 2;
 const SUBSCRIPTION_REVOKED = 12;
 
@@ -88,7 +89,6 @@ function parseDeveloperNotification(data: unknown): DeveloperNotification | null
 export const handleGooglePlayNotification = onMessagePublished(
   {
     topic: RTDN_TOPIC,
-    region: "asia-northeast3",
     secrets: [GOOGLE_CREDENTIALS_SECRET],
   },
   async (event) => {
