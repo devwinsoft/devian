@@ -27,6 +27,7 @@ MobileSystem은 **Devian Samples**(`com.devian.samples`)에 포함된 Unity Samp
 - [11-mobile-bootstrap](../11-mobile-bootstrap/SKILL.md)
 - [20-account-system](../20-account-system/00-overview/SKILL.md)
 - [21-savedata-system](../21-savedata-system/00-overview/SKILL.md)
+- [47-advertise-system](../47-advertise-system/00-overview/SKILL.md)
 - [48-mission-system](../48-mission-system/00-overview/SKILL.md)
 - [49-reward-system](../49-reward-system/00-overview/SKILL.md)
 - [50-leaderboard](../50-leaderboard/00-overview/SKILL.md)

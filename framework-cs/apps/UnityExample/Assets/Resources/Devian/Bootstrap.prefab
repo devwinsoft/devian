@@ -20,6 +20,7 @@ GameObject:
   - component: {fileID: 2516925715426756820}
   - component: {fileID: 2537868090205220357}
   - component: {fileID: 4155021989470765156}
+  - component: {fileID: 1291505014731965610}
   - component: {fileID: 7691740064264017214}
   m_Layer: 0
   m_Name: Bootstrap
@@ -200,6 +201,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0aa01257beca5440f890ff75cc134c60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.GameContents::Devian.GameStorageManager
+--- !u!114 &1291505014731965610
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2454387350981742136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0322595b4fdf94ad5a2a323defb07e1e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.AdManager
 --- !u!114 &7691740064264017214
 MonoBehaviour:
   m_ObjectHideFlags: 0

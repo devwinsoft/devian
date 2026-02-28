@@ -19,6 +19,20 @@ namespace Devian.Domain.Game
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Register()
         {
+            global::Devian.TableManager.Instance.RegisterTbLoader("ADVERTISE", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_ADVERTISE.LoadFromNdjson(text);
+                    TB_ADVERTISE._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_ADVERTISE.LoadFromPb64Binary(bin);
+                    TB_ADVERTISE._AfterLoad();
+                }
+            });
+
             global::Devian.TableManager.Instance.RegisterTbLoader("EQUIP", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)

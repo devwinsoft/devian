@@ -39,6 +39,22 @@ namespace Devian.Domain.Game
         SEASON_PASS = 5,
     }
 
+    /// <summary>ADVERTISE_FORMAT enum</summary>
+    public enum ADVERTISE_FORMAT
+    {
+        BANNER = 0,
+        INTERSTITIAL = 1,
+        REWARDED = 2,
+        APP_OPEN = 3,
+    }
+
+    /// <summary>ADVERTISE_PROVIDER enum</summary>
+    public enum ADVERTISE_PROVIDER
+    {
+        GOOGLE_MOBILE_ADS = 0,
+        MOCK = 1,
+    }
+
     /// <summary>RENTAL_TYPE enum</summary>
     public enum RENTAL_TYPE
     {
@@ -91,6 +107,22 @@ namespace Devian.Domain.Game
     // ================================================================
     // Table Entities
     // ================================================================
+
+    /// <summary>ADVERTISE row</summary>
+    public sealed class ADVERTISE : IEntityKey<string>
+    {
+        public string AdvertiseId { get; set; } = string.Empty;
+        public ADVERTISE_FORMAT Format { get; set; }
+        public ADVERTISE_PROVIDER Provider { get; set; }
+        public string RewardGroupId { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public bool AutoLoad { get; set; }
+        public int CooldownSec { get; set; }
+        public string AndroidAdUnitId { get; set; } = string.Empty;
+        public string IosAdUnitId { get; set; } = string.Empty;
+
+        public string GetKey() => AdvertiseId;
+    }
 
     /// <summary>EQUIP row</summary>
     public sealed class EQUIP : IEntityKey<string>
@@ -205,6 +237,89 @@ namespace Devian.Domain.Game
     // ================================================================
     // Table Containers
     // ================================================================
+
+    /// <summary>TB_ADVERTISE container</summary>
+    public static partial class TB_ADVERTISE
+    {
+        private static readonly Dictionary<string, ADVERTISE> _dict = new();
+        private static readonly List<ADVERTISE> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<ADVERTISE> GetAll() => _list;
+
+        public static ADVERTISE? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out ADVERTISE? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(ADVERTISE row)
+        {
+            _list.Add(row);
+            _dict[row.AdvertiseId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<ADVERTISE>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<ADVERTISE>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<ADVERTISE>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
 
     /// <summary>TB_EQUIP container</summary>
     public static partial class TB_EQUIP
@@ -1001,6 +1116,16 @@ namespace Devian.Domain.Game
     // Table ID Types (for Inspector binding)
     // ================================================================
 
+    /// <summary>Inspector-bindable ID for ADVERTISE</summary>
+    [Serializable]
+    public sealed class ADVERTISE_ID
+    {
+        public string Value;
+
+        public static implicit operator string(ADVERTISE_ID id) => id.Value;
+        public static implicit operator ADVERTISE_ID(string value) => new ADVERTISE_ID { Value = value };
+    }
+
     /// <summary>Inspector-bindable ID for EQUIP</summary>
     [Serializable]
     public sealed class EQUIP_ID
@@ -1094,6 +1219,7 @@ namespace Devian.Domain.Game
     /// <summary>Table ID validation extensions</summary>
     public static class TableIdExtensions
     {
+        public static bool IsValid(this ADVERTISE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this EQUIP_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this CARD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MISSION_DAILY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);

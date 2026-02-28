@@ -29,6 +29,20 @@ export enum REWARD_TYPE {
     SEASON_PASS = 5,
 }
 
+/** ADVERTISE_FORMAT enum */
+export enum ADVERTISE_FORMAT {
+    BANNER = 0,
+    INTERSTITIAL = 1,
+    REWARDED = 2,
+    APP_OPEN = 3,
+}
+
+/** ADVERTISE_PROVIDER enum */
+export enum ADVERTISE_PROVIDER {
+    GOOGLE_MOBILE_ADS = 0,
+    MOCK = 1,
+}
+
 /** RENTAL_TYPE enum */
 export enum RENTAL_TYPE {
     NO_ADS = 0,
@@ -75,6 +89,19 @@ export interface UserProfile extends IEntity {
 // ================================================================
 // Tables
 // ================================================================
+
+export interface ADVERTISE extends IEntityKey<string> {
+    AdvertiseId: string;
+    Format: ADVERTISE_FORMAT;
+    Provider: ADVERTISE_PROVIDER;
+    RewardGroupId: string;
+    IsActive: boolean;
+    AutoLoad: boolean;
+    CooldownSec: number;
+    AndroidAdUnitId: string;
+    IosAdUnitId: string;
+    getKey(): string;
+}
 
 export interface EQUIP extends IEntityKey<string> {
     EquipId: string;
@@ -162,6 +189,42 @@ export interface UNIT_MONSTER extends IEntityKey<string> {
 // ================================================================
 // Table Containers
 // ================================================================
+
+export class TB_ADVERTISE {
+    private static _dict: Map<string, ADVERTISE> = new Map();
+    private static _list: ADVERTISE[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly ADVERTISE[] { return this._list; }
+
+    static get(key: string): ADVERTISE | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as ADVERTISE;
+            this._list.push(row);
+            this._dict.set(row.AdvertiseId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
 
 export class TB_EQUIP {
     private static _dict: Map<string, EQUIP> = new Map();

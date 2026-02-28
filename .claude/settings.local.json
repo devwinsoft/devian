@@ -161,7 +161,8 @@
       "Bash(cat:*)",
       "Bash(/usr/bin/javap:*)",
       "Bash(git -C /Users/maoshy/Documents/Projects/devian rev-parse:*)",
-      "Bash(git -C /Users/maoshy/Documents/Projects/devian status:*)"
+      "Bash(git -C /Users/maoshy/Documents/Projects/devian status:*)",
+      "WebFetch(domain:gstatic.com)"
     ]
   },
   "project": {

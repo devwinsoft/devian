@@ -24,6 +24,22 @@
       ]
     },
     {
+      "name": "ADVERTISE_FORMAT",
+      "values": [
+        { "name": "BANNER", "value": 0 },
+        { "name": "INTERSTITIAL", "value": 1 },
+        { "name": "REWARDED", "value": 2 },
+        { "name": "APP_OPEN", "value": 3 }
+      ]
+    },
+    {
+      "name": "ADVERTISE_PROVIDER",
+      "values": [
+        { "name": "GOOGLE_MOBILE_ADS", "value": 0 },
+        { "name": "MOCK", "value": 1 }
+      ]
+    },
+    {
       "name": "RENTAL_TYPE",
       "values": [
         { "name": "NO_ADS", "value": 0 }

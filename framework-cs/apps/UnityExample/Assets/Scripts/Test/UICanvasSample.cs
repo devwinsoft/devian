@@ -74,26 +74,39 @@ public class UICanvasSample : UICanvas<UICanvasSample>
 
     public async void OnClick_Purchase_2()
     {
-        var purchase = await PurchaseManager.Instance.PurchaseAsync(
+        var result = await PurchaseManager.Instance.PurchaseAsync(
             "chest_003",
             CancellationToken.None);
-        if (purchase.IsSuccess)
+        if (result.IsSuccess)
         {
-            Debug.Log(purchase.Value.ResultStatus);
-            foreach (var reward in purchase.Value.AppliedRewards)
+            Debug.Log(result.Value.ResultStatus);
+            foreach (var reward in result.Value.AppliedRewards)
             {
                 Debug.Log($"{reward.Type}, {reward.Id}, {reward.Amount}");
             }
         }
         else
         {
-            Debug.Log($"{purchase.Error.Code}: {purchase.Error.Message}");
+            Debug.Log($"{result.Error.Code}: {result.Error.Message}");
         }
     }
     
     
-    public async void OnClick_Echo()
+    public async void OnClick_InAppAd()
     {
+        var result = await AdManager.Instance.ShowAsync("ad_rewarded_001");
+        if (result.IsSuccess)
+        {
+            foreach (var reward in result.Value.AppliedRewards)
+            {
+                Debug.Log($"{reward.Type}, {reward.Id}, {reward.Amount}");
+            }
+        }
+        else if (result.IsFailure)
+        {
+            Debug.LogWarning($"{result.Error.Code}: {result.Error.Message}");
+        }
+        
         /*
         var msg = new C2Game.Echo();
         msg.Message = "Echo Message";

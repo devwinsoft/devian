@@ -23,3 +23,6 @@ export {getEntitlements} from "./purchase/getEntitlements";
 export {getRecentPurchases30d} from "./purchase/getRecentPurchases30d";
 export {getPurchaseAdjustments} from "./purchase/getPurchaseAdjustments";
 export {ackRefundApplied} from "./purchase/ackRefundApplied";
+
+// ── Ads SSV ──
+export {verifyAdReward} from "./ads/verifyAdReward";

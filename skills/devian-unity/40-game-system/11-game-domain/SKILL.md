@@ -48,6 +48,7 @@ Game 도메인은 Devian 프레임워크의 **예제 도메인**이다.
 | 파일 | 시트(테이블) | 컨테이너 | PK | 설명 |
 |---|---|---|---|---|
 | `PurchaseTable.xlsx` | PRODUCT | TB_PRODUCT | `InternalProductId` (string) | 상품 테이블 |
+| `AdvertiseTable.xlsx` | ADVERTISE | TB_ADVERTISE | `AdvertiseId` (string) | 광고 placement 테이블 |
 | `RewardTable.xlsx` | REWARD | TB_REWARD | `RewardNum` (int) | 보상 테이블 |
 | `MissionTable.xlsx` | MISSION_DAILY | TB_MISSION_DAILY | `MissionId` (string) | 일일 미션 |
 | `MissionTable.xlsx` | MISSION_WEEKLY | TB_MISSION_WEEKLY | `MissionId` (string) | 주간 미션 |
@@ -59,7 +60,7 @@ Game 도메인은 Devian 프레임워크의 **예제 도메인**이다.
 
 | 파일 | 생성 타입 | 설명 |
 |---|---|---|
-| `ENUM_TYPES.json` | `enum CURRENCY_TYPE`, `enum REWARD_TYPE`, `enum STAT_TYPE` | 통화/보상/능력치 enum 통합 |
+| `ENUM_TYPES.json` | `enum CURRENCY_TYPE`, `enum REWARD_TYPE`, `enum ADVERTISE_FORMAT`, `enum ADVERTISE_PROVIDER`, `enum STAT_TYPE` | 통화/보상/광고/능력치 enum 통합 |
 | `ProductKind.json` | `enum ProductKind` | 상품 유형 (Consumable, Subscription, SeasonPass) |
 | `TestContract.json` | `enum UserType`, `class UserProfile` | 테스트 예제 (UserType: Guest/Member/Admin, UserProfile: Id/Name/UserType) |
 
@@ -96,6 +97,7 @@ Game 도메인을 사용하는 스킬:
 | [91-game-net-manager](../../50-mobile-system/91-game-net-manager/SKILL.md) | GameNetManager, Game2CStub | 네트워크 샘플 |
 | [10-inventory-manager](../../50-mobile-system/93-game-inventory-system/10-inventory-manager/SKILL.md) | InventoryManager | 인벤토리 + InventoryStorage |
 | [11-inventory-storage](../../50-mobile-system/93-game-inventory-system/11-inventory-storage/SKILL.md) | InventoryStorage | 인벤토리 데이터 컨테이너 |
+| [30-ad-manager](../../50-mobile-system/47-advertise-system/30-ad-manager/SKILL.md) | AdManager | 광고 (TB_ADVERTISE 직접 참조) |
 | [30-samples-purchase-manager](../../50-mobile-system/30-purchase-system/30-samples-purchase-manager/SKILL.md) | PurchaseManager | 구매 (TB_PRODUCT 직접 참조) |
 | [10-reward-manager](../../50-mobile-system/49-reward-system/10-reward-manager/SKILL.md) | RewardManager | 보상 (TB_REWARD 직접 참조) |
 

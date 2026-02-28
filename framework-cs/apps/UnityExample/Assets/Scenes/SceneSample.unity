@@ -579,7 +579,7 @@ GameObject:
   - component: {fileID: 352972579}
   - component: {fileID: 352972578}
   m_Layer: 5
-  m_Name: Button (Sync)
+  m_Name: Button (InAppAd)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -650,8 +650,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 2085270393}
-        m_TargetAssemblyTypeName: TestUICanvas, Assembly-CSharp
-        m_MethodName: OnClick_Echo
+        m_TargetAssemblyTypeName: UICanvasSample, Assembly-CSharp
+        m_MethodName: OnClick_InAppAd
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2197,7 +2197,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Sync
+  m_text: In App Ad
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b38cfe6c1181eb246bb01f3c8b44dde1, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 38e19179181d37c4da742485d6443b22, type: 2}
@@ -2374,7 +2374,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1948504543}
   m_HandleRect: {fileID: 1948504542}
   m_Direction: 2
-  m_Value: 0
+  m_Value: 1
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
