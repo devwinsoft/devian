@@ -94,12 +94,13 @@ AdManager는 `TB_ADVERTISE`를 직접 참조하여 placement 설정을 읽는다
 
 Rewarded 광고는 아래 순서를 따른다.
 
-1. 상위 로직이 `ShowAsync(advertiseId, ct)`를 호출한다.
+1. 상위 로직이 `ShowAsync(advertiseId, skip, ct)`를 호출한다.
 2. AdManager가 `TB_ADVERTISE.Get(advertiseId)`로 row를 읽는다.
-3. provider가 rewarded 광고를 표시한다.
-4. provider에서 `reward earned` 콜백이 오면, AdManager가 해당 show cycle의 중복 여부를 확인한다.
-5. `RewardGroupId`가 유효하면 `RewardManager.ApplyRewardGroupId(rewardGroupId)`를 호출한다.
-6. show cycle 종료 결과를 반환한다.
+3. `skip=true`이면 광고 없이 `SkipAndReward`로 Reward만 즉시 지급하고 반환한다.
+4. provider가 rewarded 광고를 표시한다.
+5. provider에서 `reward earned` 콜백이 오면, AdManager가 해당 show cycle의 중복 여부를 확인한다.
+6. `RewardGroupId`가 유효하면 `RewardManager.ApplyRewardGroup(rewardGroupId)`를 호출한다.
+7. show cycle 종료 결과를 반환한다.
 
 정본 규칙:
 - 광고 시스템은 `RewardData[]`를 직접 생성하지 않는다.

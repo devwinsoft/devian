@@ -299,6 +299,11 @@ namespace Devian
                 await applyClientGrantIfNeededAsync(
                     final_.PurchaseId, final_.AppliedRewards,
                     final_.NeedsClientGrantDelivery, ct);
+
+                // 구매 결과를 local + cloud에 저장 (cloud 실패는 non-fatal)
+                var save = await SaveDataManager.Instance.SaveGameStateAsync(ct);
+                if (save.IsFailure)
+                    Debug.LogWarning($"[{Tag}] Post-purchase save failed (non-fatal): {save.Error}");
             }
             return result;
         }
@@ -1349,6 +1354,21 @@ namespace Devian
                 ["payload"] = payload,
             };
 
+            // Rental: REWARD table Id를 서버 entitlements 키로 전달
+            if (kind == PurchaseKind.Rental)
+            {
+                var rgId = ResolveRewardGroupId(internalProductId);
+                var rewards = ResolveRewardDatas(rgId);
+                for (int i = 0; i < rewards.Length; i++)
+                {
+                    if (rewards[i].Type == REWARD_TYPE.RENTAL)
+                    {
+                        data["rentalId"] = rewards[i].Id;
+                        break;
+                    }
+                }
+            }
+
             var result = await callFunctionAsync("verifyPurchase", data, ct);
             if (result.IsFailure)
                 return CommonResult<VerifyPurchaseResponse>.Failure(result.Error!);
@@ -1698,10 +1718,27 @@ namespace Devian
             var clientNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             var clockDelta = clientNow - serverNow;
 
+            // 서버 snapshot에 없는 로컬 rental 제거 (환불 등으로 서버에서 사라진 경우)
+            var localRentalKeys = new List<string>(inventory.Rentals.Keys);
+            for (int i = 0; i < localRentalKeys.Count; i++)
+            {
+                if (!snapshot.Rentals.ContainsKey(localRentalKeys[i]))
+                    inventory.RemoveRental(localRentalKeys[i]);
+            }
+
             foreach (var kv in snapshot.Rentals)
             {
                 var expiresAtClientUtcMs = kv.Value + clockDelta;
                 inventory.SetRental(kv.Key, expiresAtClientUtcMs);
+            }
+
+            // 서버 snapshot에 없는 로컬 seasonPass 제거 (환불 등으로 서버에서 사라진 경우)
+            var serverSeasonPassSet = new HashSet<string>(snapshot.OwnedSeasonPasses);
+            var localSeasonPassKeys = new List<string>(inventory.SeasonPasses.Keys);
+            for (int i = 0; i < localSeasonPassKeys.Count; i++)
+            {
+                if (!serverSeasonPassSet.Contains(localSeasonPassKeys[i]))
+                    inventory.RemoveSeasonPass(localSeasonPassKeys[i]);
             }
 
             foreach (var id in snapshot.OwnedSeasonPasses)

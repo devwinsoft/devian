@@ -39,7 +39,7 @@ mission row의 `rewardGroupId`는 컨텐츠 레이어의 reward 키를 사용하
 - `OnGameEvent(eventKey, value, ct)`
     - 조건 평가 입력(표현만, 구현은 이후)
 - `TryClaimAsync(missionId, ct)`
-    - `grantId` 생성 → 로컬 ledger 중복 체크/`pending` 기록 → `rewardGroupId` 확보 → RewardManager로 지급 실행(ApplyRewardGroupId 또는 deltas 적용) 위임 → 성공 시 `granted` 확정 저장
+    - `grantId` 생성 → 로컬 ledger 중복 체크/`pending` 기록 → `rewardGroupId` 확보 → RewardManager로 지급 실행(ApplyRewardGroup 또는 deltas 적용) 위임 → 성공 시 `granted` 확정 저장
 
 
 ---

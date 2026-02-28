@@ -39,7 +39,7 @@ AppliesTo: v10
 ### 4) Rewarded 지급 검증
 
 - rewarded 완료 전에는 보상이 지급되지 않아야 한다
-- reward callback 발생 시 `RewardManager.ApplyRewardGroupId(rewardGroupId)`가 1회만 호출되어야 한다
+- reward callback 발생 시 `RewardManager.ApplyRewardGroup(rewardGroupId)`가 1회만 호출되어야 한다
 - close-only / fail / no fill 경로에서는 보상 지급이 없어야 한다
 
 

@@ -57,7 +57,6 @@ CompoSingleton<RewardManager>.Instance
       Singleton.Get<InventoryManager>().AddRewards(deltas);
   }
   ```
-- `ApplyRewardGroupId(rewardGroupId)` — `rewardGroupId`를 RewardData[]로 변환 후 적용 (기존 API 유지)
 - `ApplyRewardGroup(rewardGroupId)` — `CommonResult<RewardApplyResult>` 반환
   - `RewardApplyResult.AppliedRewards`로 이번 호출에서 실제 적용한 `RewardData[]`를 조회할 수 있다.
   - `rewardGroupId`가 비어 있으면 성공 + 빈 배열(`AppliedRewards=[]`) 반환
@@ -115,7 +114,7 @@ asmdef:
 
 1) MissionManager가 로컬 ledger에서 `grantId` 지급 여부 확인
 2) 미지급이면 ledger를 `pending`으로 기록
-3) MissionManager → `Singleton.Get<RewardManager>().ApplyRewardGroupId(rewardGroupId)`
+3) MissionManager → `Singleton.Get<RewardManager>().ApplyRewardGroup(rewardGroupId)`
 4) RewardManager: `ResolveRewardDeltas(rewardGroupId)` → RewardData[] → `ApplyRewardDatas(deltas)`
 5) 성공 시 ledger를 `granted`로 확정, 실패 시 `pending` 유지(재시도)
 

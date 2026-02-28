@@ -26,12 +26,12 @@ public class TestSceneLoading : TestSceneBootstrap
         
         UICanvasLoading.Instance.Init();
         
-        var sync = SaveDataManager.Instance.SyncAsync("main", CancellationToken.None);
-        if (sync.Result.IsSuccess)
+        var sync = await SaveDataManager.Instance.SyncAsync("main", CancellationToken.None);
+        if (sync.IsSuccess)
         {
-            Debug.Log($"Sync completed: {sync.Result.Value.State}");
+            Debug.Log($"Sync completed: {sync.Value.State}");
 
-            switch (sync.Result.Value.State)
+            switch (sync.Value.State)
             {
                 case SyncState.Initial:
                     var data = GameStorageManager.Instance.ToJson();
@@ -41,7 +41,7 @@ public class TestSceneLoading : TestSceneBootstrap
                 case SyncState.Conflict:
                     break;
                 case SyncState.Success:
-                    var loginCode = await Login(GameStorageManager.Instance.Account.loginType);
+                    var loginCode = await Login(GameStorageManager.Instance.Account.loginType, false);
                     if (loginCode == CommonErrorType.SUCCESS)
                     {
                         SceneTransManager.Instance.LoadSceneAsync("SceneSample");
@@ -49,14 +49,14 @@ public class TestSceneLoading : TestSceneBootstrap
                     break;
             }
         }
-        else if (sync.Result.IsFailure)
+        else if (sync.IsFailure)
         {
-            Debug.Log($"{sync.Result.Error.Code}: {sync.Result.Error.Message}");
+            Debug.Log($"{sync.Error.Code}: {sync.Error.Message}");
         }
     }
     
     
-    public async Task<CommonErrorType> Login(LoginType loginType)
+    public async Task<CommonErrorType> Login(LoginType loginType, bool saveData)
     {
         var login = await AccountManager.Instance.LoginAsync(loginType, CancellationToken.None);
         Debug.Log($"LoginAsync: {loginType}, {(login.IsFailure ? login.Error?.ToString() : "")}");
@@ -70,6 +70,10 @@ public class TestSceneLoading : TestSceneBootstrap
 #if !UNITY_EDITOR
         await initPurchase();
 #endif
+        await SaveDataManager.Instance.SaveDataAsync("main",
+            GameStorageManager.Instance.ToJson(),
+            true,
+            CancellationToken.None);
         return CommonErrorType.SUCCESS;
     }
     

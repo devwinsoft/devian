@@ -131,6 +131,14 @@ namespace Devian
             return System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() < expiry;
         }
 
+        public long GetRentalRemainingMs(string id)
+        {
+            if (!mRentals.TryGetValue(id, out var expiry)) return 0L;
+            if (expiry == long.MaxValue) return long.MaxValue;
+            var remaining = expiry - System.DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            return remaining > 0L ? remaining : 0L;
+        }
+
         public void RemoveRental(string id)
         {
             mRentals.Remove(id);

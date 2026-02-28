@@ -29,7 +29,7 @@ CompoSingleton<AdManager>.Instance
 - preload/show 상태 관리
 - placement별 cooldown 검사
 - NoAds/consent/unsupported platform gating
-- Rewarded 성공 시 `RewardManager.ApplyRewardGroupId(rewardGroupId)` 호출
+- Rewarded 성공 시 `RewardManager.ApplyRewardGroup(rewardGroupId)` 호출
 
 비책임(금지):
 - `TB_REWARD` 직접 조회
@@ -59,8 +59,9 @@ CompoSingleton<AdManager>.Instance
   - `TB_ADVERTISE` row 기준 preload 수행
 - `CanShow(advertiseId)` → `bool`
   - 활성 여부, cooldown, no-ads, readiness를 종합 판정
-- `ShowAsync(advertiseId, ct)` → `Task<CommonResult<AdShowResult>>`
+- `ShowAsync(advertiseId, skip, ct)` → `Task<CommonResult<AdShowResult>>`
   - 단일 광고 진입점
+  - `skip=true`이면 광고 노출 없이 Reward만 즉시 지급 (`ProviderStatus=Skipped`)
   - format에 따라 show/hide 또는 one-shot show 수행
   - Rewarded는 성공 콜백 시 RewardManager 호출
 - `HideBanner(advertiseId)` → `void`
@@ -96,13 +97,14 @@ AdManager가 Game 도메인 테이블을 직접 참조한다.
 
 ## Rewarded Sequence (정본)
 
-1. `ShowAsync(advertiseId, ct)`
+1. `ShowAsync(advertiseId, skip, ct)`
 2. row 조회: `TB_ADVERTISE.Get(advertiseId)`
-3. `Format == REWARDED` 확인
-4. provider show
-5. `reward earned` 콜백 수신
-6. 현재 show cycle에서 아직 미지급이면 `RewardManager.ApplyRewardGroupId(row.RewardGroupId)` 호출
-7. close/final result 반환
+3. `skip=true`이면 → 광고 없이 `SkipAndReward` → 즉시 반환
+4. `Format == REWARDED` 확인
+5. provider show
+6. `reward earned` 콜백 수신
+7. 현재 show cycle에서 아직 미지급이면 `RewardManager.ApplyRewardGroup(row.RewardGroupId)` 호출
+8. close/final result 반환
 
 
 ---

@@ -41,5 +41,6 @@ namespace Devian
         Shown,
         NotReady,
         Failed,
+        Skipped,
     }
 }

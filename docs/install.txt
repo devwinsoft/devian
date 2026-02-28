@@ -1,3 +1,7 @@
+// 기본 설정
+project_id: devian-framwork-example
+
+
 // google 설정
 Google Play Android Developer API
 Google Play Games Services API
@@ -45,3 +49,21 @@ keytool -exportcert -rfc \
   -storepass {passwd} -keypass {passwd} \
 | openssl x509 -noout -fingerprint -sha1
 
+
+// 환불 처리
+Google Cloud Console → Pub/Sub → 토픽 devian-play-rtdn 생성
+> https://docs.cloud.google.com/pubsub/docs/publish-receive-messages-console?authuser=1&hl=ko
+> gcloud pubsub topics create devian-play-rtdn --project=devian-framwork-example
+> gcloud pubsub topics add-iam-policy-binding devian-play-rtdn \
+  --member="serviceAccount:google-play-developer-notifications@system.gserviceaccount.com" \
+  --role="roles/pubsub.publisher" \
+  --project=devian-framwork-example
+> gcloud run services add-iam-policy-binding handlegoogleplaynotification \
+  --region=asia-northeast3 \
+  --member="serviceAccount:119226054667-compute@developer.gserviceaccount.com" \
+  --role="roles/run.invoker" \
+  --project=devian-framwork-example
+
+IAM → google-play-developer-notifications@system.gserviceaccount.com에 Pub/Sub Publisher 역할 부여
+Google Play Console → Monetization setup → RTDN → 토픽 projects/devian-framwork-example/topics/devian-play-rtdn 설정
+배포: firebase deploy --only functions,firestore:indexes

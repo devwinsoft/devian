@@ -34,7 +34,7 @@ Devian의 인앱 광고 모듈(클라이언트) 설계/코딩 규약을 정의�
 
 ### 2) Rewarded 보상 지급은 RewardManager 단일 경로를 따른다
 
-- Rewarded에서 실제 보상 적용은 `RewardManager.ApplyRewardGroupId(rewardGroupId)`만 사용한다.
+- Rewarded에서 실제 보상 적용은 `RewardManager.ApplyRewardGroup(rewardGroupId)`만 사용한다.
 - RewardManager가 `TB_REWARD`를 통해 보상 그룹을 해석하며, 광고 시스템은 보상 내용(`RewardData[]`)을 직접 계산하지 않는다.
 - `reward earned` 콜백이 없는 종료/실패 경로에서는 지급하지 않는다.
 - 동일 show cycle에서 보상은 최대 1회만 지급한다.

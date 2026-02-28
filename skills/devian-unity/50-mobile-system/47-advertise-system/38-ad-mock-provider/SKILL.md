@@ -35,7 +35,7 @@ MockAdProvider는 광고 SDK를 호출하지 않고 scripted callback으로 동�
 - 외부 네트워크 요청 금지
 - 실 ad unit 사용 금지
 - scripted scenario만으로 결과를 재현
-- Rewarded 테스트에서 `RewardManager.ApplyRewardGroupId`가 1회만 호출되는지 검증 가능해야 한다
+- Rewarded 테스트에서 `RewardManager.ApplyRewardGroup`이 1회만 호출되는지 검증 가능해야 한다
 
 
 ---

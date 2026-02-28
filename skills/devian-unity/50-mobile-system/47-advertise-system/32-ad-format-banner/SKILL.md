@@ -22,6 +22,6 @@ Banner 광고 포맷 규약을 정의한다.
 ## AdManager 기대 동작
 
 - `PreloadAsync(advertiseId, ct)`로 준비 가능
-- `ShowAsync(advertiseId, ct)`는 banner 표시로 해석할 수 있다
+- `ShowAsync(advertiseId, skip, ct)`는 banner 표시로 해석할 수 있다
 - `HideBanner(advertiseId)` 또는 동등 API로 숨김 처리
 - banner load fail은 non-fatal

@@ -152,10 +152,12 @@ namespace Devian
         /// <summary>
         /// 단일 광고 표시.
         /// Banner: 즉시 반환. 풀스크린: close까지 대기 후 반환.
-        /// Rewarded 성공 시 RewardManager.ApplyRewardGroupId 호출.
+        /// Rewarded 성공 시 RewardManager.ApplyRewardGroup 호출.
+        /// skip=true이면 광고 노출 없이 Reward만 즉시 지급한다.
         /// </summary>
         public async Task<CommonResult<AdShowResult>> ShowAsync(
             string advertiseId,
+            bool skip = false,
             CancellationToken ct = default)
         {
             // ── row 조회 ──
@@ -165,6 +167,12 @@ namespace Devian
                 return CommonResult<AdShowResult>.Failure(
                     CommonErrorType.COMMON_INVALID_ARGUMENT,
                     $"ADVERTISE not found or inactive: {advertiseId}");
+            }
+
+            // ── skip: 광고 없이 보상만 지급 ──
+            if (skip)
+            {
+                return SkipAndReward(advertiseId, row);
             }
 
             // ── NoAds gating (REWARDED 제외) ──
@@ -347,6 +355,44 @@ namespace Devian
         // ────────────────────────────────────────────
         // Internal helpers
         // ────────────────────────────────────────────
+
+        CommonResult<AdShowResult> SkipAndReward(string advertiseId, ADVERTISE row)
+        {
+            RewardData[] appliedRewards = Array.Empty<RewardData>();
+            bool rewardApplied = false;
+
+            if (row.Format == ADVERTISE_FORMAT.REWARDED
+                && !string.IsNullOrEmpty(row.RewardGroupId))
+            {
+                try
+                {
+                    var rewardResult = Singleton.Get<RewardManager>()
+                        .ApplyRewardGroup(row.RewardGroupId);
+                    if (rewardResult.IsSuccess)
+                    {
+                        rewardApplied = true;
+                        appliedRewards = rewardResult.Value.AppliedRewards;
+                        Debug.Log($"[{Tag}] Skip reward applied: {row.RewardGroupId} ({appliedRewards.Length} items)");
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"[{Tag}] Skip reward failed: {rewardResult.Error}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[{Tag}] Skip RewardManager call failed: {ex.Message}");
+                }
+            }
+
+            return CommonResult<AdShowResult>.Success(new AdShowResult(
+                advertiseId,
+                row.Format,
+                row.RewardGroupId,
+                rewardApplied,
+                appliedRewards,
+                AdProviderShowResult.Skipped));
+        }
 
         IAdProvider GetOrCreateProvider(ADVERTISE_PROVIDER providerType)
         {

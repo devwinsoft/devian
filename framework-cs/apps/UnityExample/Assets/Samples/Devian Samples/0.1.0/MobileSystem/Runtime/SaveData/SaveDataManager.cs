@@ -59,6 +59,7 @@ namespace Devian
 
         private ISaveCloudClient _cloudClient;
 
+        private string _activeSyncSlot;
         private bool _needsCloudSave;
 
         /// <summary>
@@ -104,6 +105,7 @@ namespace Devian
                 && result.Value.State == SyncState.Success
                 && result.Value.LocalPayload?.payload != null)
             {
+                _activeSyncSlot = slot;
                 GameStorageManager.Instance.LoadFromPayload(result.Value.LocalPayload.payload);
                 applyLoadedAccountStorageToRuntime();
                 await postSyncEntitlementsAsync(ct);
@@ -131,8 +133,11 @@ namespace Devian
                 if (local == null)
                     return CommonResult<SyncResult>.Success(new SyncResult(SyncState.Initial, slot));
 
-                // 데이터 있지만 sign-in 성공한 적 없음 → Initial (payload 포함)
-                if (loginType == LoginType.NONE)
+                // 로컬 파일의 AccountMeta에서 loginType 확인.
+                // 런타임 loginType은 아직 NONE이지만, 파일에 저장된 loginType이
+                // NONE이 아니면 이전에 로그인 성공한 데이터이므로 Success로 처리한다.
+                var persistedLoginType = local.account?.loginType ?? LoginType.NONE;
+                if (persistedLoginType == LoginType.NONE)
                     return CommonResult<SyncResult>.Success(new SyncResult(
                         SyncState.Initial, slot, local, null, local.deviceId, null));
 
@@ -430,6 +435,57 @@ namespace Devian
         //  Public: Save API
         // ──────────────────────────────────────────────
 
+        /// <summary>
+        /// GameStorageManager 전체 상태를 local + cloud에 저장한다.
+        /// SyncAsync 성공 후 사용 가능. cloud 저장 실패 시 MarkNeedsCloudSave 처리.
+        /// </summary>
+        public async Task<CommonResult<bool>> SaveGameStateAsync(CancellationToken ct)
+        {
+            if (string.IsNullOrEmpty(_activeSyncSlot))
+                return CommonResult<bool>.Failure(
+                    CommonErrorType.LOCALSAVE_SLOT_EMPTY, "No active sync slot. Call SyncAsync first.");
+
+            var json = GameStorageManager.Instance.ToJson();
+            var local = await saveLocalAsync(_activeSyncSlot, json, ct);
+            if (local.IsFailure)
+                return local;
+
+            var loginType = AccountManager.Instance._getCurrentLoginType();
+            if (!isLocalOnly(loginType))
+            {
+                try
+                {
+                    var init = await _initializeCloudAsync(ct);
+                    if (init.IsSuccess)
+                    {
+                        var cloud = await saveCloudAsync(_activeSyncSlot, json, ct);
+                        if (cloud.IsFailure)
+                        {
+                            MarkNeedsCloudSave();
+                            UnityEngine.Debug.LogWarning(
+                                $"[SaveDataManager] SaveGameStateAsync cloud save failed (non-fatal): {cloud.Error}");
+                        }
+                        else
+                        {
+                            ClearNeedsCloudSave();
+                        }
+                    }
+                    else
+                    {
+                        MarkNeedsCloudSave();
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    MarkNeedsCloudSave();
+                    UnityEngine.Debug.LogWarning(
+                        $"[SaveDataManager] SaveGameStateAsync cloud exception (non-fatal): {ex.Message}");
+                }
+            }
+
+            return CommonResult<bool>.Success(true);
+        }
+
         public Task<CommonResult<bool>> SaveDataAsync(string slot, string data, CancellationToken ct)
         {
             return SaveDataAsync(slot, data, includeCloud: false, ct);
@@ -440,6 +496,8 @@ namespace Devian
         {
             var local = await saveLocalAsync(slot, data, ct);
             if (local.IsFailure) return local;
+
+            _activeSyncSlot = slot;
 
             if (!includeCloud)
                 return CommonResult<bool>.Success(true);
@@ -536,6 +594,8 @@ namespace Devian
             if (isLocalOnly(loginType))
             {
                 // Guest/Editor: cloud is silently ignored
+                _activeSyncSlot = null;
+                GameStorageManager.Instance.Clear();
                 return CommonResult<bool>.Success(true);
             }
 
@@ -569,6 +629,9 @@ namespace Devian
                 UnityEngine.Debug.LogWarning(
                     $"[SaveDataManager] ClearSlotAsync: cloud delete failed. slot='{slot}' cloudSlot='{cloudSlot}' result={del}");
             }
+
+            _activeSyncSlot = null;
+            GameStorageManager.Instance.Clear();
 
             return CommonResult<bool>.Success(true);
         }

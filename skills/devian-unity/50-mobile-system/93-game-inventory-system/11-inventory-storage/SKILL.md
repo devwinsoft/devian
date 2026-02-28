@@ -26,7 +26,7 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobileSyste
 - `Unequip(heroId, equipSlot)` — 편의 메서드: hero.Unequip 위임
 - `GetCard/AddCard` — 카드 CRUD
 - `GetHero/AddHero` — 영웅 CRUD
-- `SetRental(id, expiresAtClientUtcMs)` / `GetRentalExpiry(id)` / `HasActiveRental(id)` / `RemoveRental(id)` — 렌탈 CRUD
+- `SetRental(id, expiresAtClientUtcMs)` / `GetRentalExpiry(id)` / `HasActiveRental(id)` / `GetRentalRemainingMs(id)` / `RemoveRental(id)` — 렌탈 CRUD
 - `SetSeasonPass(id, owned)` / `HasSeasonPass(id)` / `RemoveSeasonPass(id)` — 시즌패스 CRUD
 - ~~`ToJson()`~~ — **삭제됨**. [95-game-storage-manager](../../95-game-storage-manager/SKILL.md)의 GameStorageManager로 이전.
 - ~~`FromJson(string json)`~~ — **삭제됨**. [95-game-storage-manager](../../95-game-storage-manager/SKILL.md)의 GameStorageManager로 이전.

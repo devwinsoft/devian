@@ -65,7 +65,7 @@ Reward 시스템의 모듈 경계/하드룰/API 규약을 정의한다.
 
 - `ApplyRewardDatas(deltas)`
   - `RewardData[]`를 로컬 인벤토리에 적용한다.
-- `ApplyRewardGroupId(rewardGroupId)`
+- `ApplyRewardGroup(rewardGroupId)`
   - rewardGroupId를 `ResolveRewardDeltas(rewardGroupId)`(추상/override 강제)로 `RewardData[]`를 만든 뒤 적용한다.
   - rewardGroupId의 정본/해석 규칙은 컨텐츠 레이어에서 정의한다.
 - `ApplyRewardGroup(rewardGroupId)`

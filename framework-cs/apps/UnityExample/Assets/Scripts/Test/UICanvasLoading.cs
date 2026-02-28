@@ -24,7 +24,7 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
 
     public async void OnClick_GuestLogin()
     {
-        var code = await TestSceneLoading.Instance.Login(LoginType.GUEST);
+        var code = await TestSceneLoading.Instance.Login(LoginType.GUEST, true);
         Debug.Log($"LoginAsync: {code}");
         if (code == CommonErrorType.SUCCESS)
         {
@@ -38,7 +38,7 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
 
     public async void OnClick_GoogleLogin()
     {
-        var code = await TestSceneLoading.Instance.Login(LoginType.GOOGLE);
+        var code = await TestSceneLoading.Instance.Login(LoginType.GOOGLE, true);
         Debug.Log($"LoginAsync: {code}");
         if (code == CommonErrorType.SUCCESS)
         {

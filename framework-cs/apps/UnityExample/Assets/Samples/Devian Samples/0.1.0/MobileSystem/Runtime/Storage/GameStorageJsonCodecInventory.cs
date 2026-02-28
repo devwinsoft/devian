@@ -75,6 +75,18 @@ namespace Devian
             }
             inv["heroes"] = heroesObj;
 
+            // rentals
+            var rentalsObj = new JObject();
+            foreach (var kv in inventory.Rentals)
+                rentalsObj[kv.Key] = kv.Value;
+            inv["rentals"] = rentalsObj;
+
+            // seasonPasses
+            var seasonPassesObj = new JObject();
+            foreach (var kv in inventory.SeasonPasses)
+                seasonPassesObj[kv.Key] = kv.Value;
+            inv["seasonPasses"] = seasonPassesObj;
+
             return inv;
         }
 
@@ -187,6 +199,20 @@ namespace Devian
                         }
                     }
                 }
+            }
+
+            // rentals
+            if (inv["rentals"] is JObject rentalsObj)
+            {
+                foreach (var prop in rentalsObj.Properties())
+                    inventory.SetRental(prop.Name, prop.Value.Value<long>());
+            }
+
+            // seasonPasses
+            if (inv["seasonPasses"] is JObject seasonPassesObj)
+            {
+                foreach (var prop in seasonPassesObj.Properties())
+                    inventory.SetSeasonPass(prop.Name, prop.Value.Value<bool>());
             }
         }
     }

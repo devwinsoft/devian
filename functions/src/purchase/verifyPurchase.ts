@@ -35,7 +35,7 @@ const RENTAL_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 
 // Restore projection policy (implemented in verifyPurchase transaction for new GRANTED purchases):
 // - SeasonPass: keep internalProductId ownership projection on server (e.g. ownedSeasonPasses[]).
-// - Rental: keep simple map { [internalProductId]: expiresAtServerUtcMs } on server.
+// - Rental: keep simple map { [rentalId || internalProductId]: expiresAtServerUtcMs } on server.
 // - Rental expiry policy on new GRANTED purchase:
 //     newExpiry = max(existingExpiry, serverNowUtcMs) + 30 days
 // - DO NOT extend rental expiry on ALREADY_GRANTED (idempotent retry).
@@ -96,10 +96,11 @@ interface VerifyRequest {
   packageName?: string;
   kind: Kind;
   payload: string;
+  rentalId?: string; // Rental: REWARD table Id (entitlements key). Falls back to internalProductId.
 }
 
 function validateRequest(data: any): VerifyRequest {
-  const {storeKey, internalProductId, storeProductId, packageName, kind, payload} = data;
+  const {storeKey, internalProductId, storeProductId, packageName, kind, payload, rentalId} = data;
 
   if (!storeKey || !["apple", "google"].includes(storeKey)) {
     throw new HttpsError("invalid-argument", "storeKey must be 'apple' or 'google'");
@@ -119,8 +120,11 @@ function validateRequest(data: any): VerifyRequest {
   if (!payload || typeof payload !== "string") {
     throw new HttpsError("invalid-argument", "payload is required");
   }
+  if (rentalId !== undefined && typeof rentalId !== "string") {
+    throw new HttpsError("invalid-argument", "rentalId must be string when provided");
+  }
 
-  return {storeKey, internalProductId, storeProductId, packageName, kind, payload};
+  return {storeKey, internalProductId, storeProductId, packageName, kind, payload, rentalId};
 }
 
 interface GoogleReceiptInfo {
@@ -409,6 +413,7 @@ export const verifyPurchase = onCall(
         purchaseId,
         uid,
         storeKey: req.storeKey,
+        storeProductId: req.storeProductId, // Google Play SKU (RTDN 재검증용)
         internalProductId: req.internalProductId,
         kind: req.kind,
         storePurchaseId: storeResult.storePurchaseId,
@@ -419,6 +424,8 @@ export const verifyPurchase = onCall(
         storeConfirmStatus: "PENDING",
         grantedAt: admin.firestore.FieldValue.serverTimestamp(),
         storeResponse: JSON.stringify(storeResult.rawResponse),
+        // Rental: rentalId 저장 (RTDN 환불 시 entitlements 정리용)
+        ...(req.kind === "Rental" ? {rentalId: req.rentalId || req.internalProductId} : {}),
       });
 
       // entitlements projection 갱신 (SeasonPass ownership / Rental expiry)
@@ -439,9 +446,11 @@ export const verifyPurchase = onCall(
         const serverNowUtcMs = Date.now();
         const rentalsRaw = (entitlementData.rentals && typeof entitlementData.rentals === "object") ? entitlementData.rentals : {};
         const rentals: Record<string, number> = {...rentalsRaw as Record<string, number>};
-        const existingExpiryRaw = rentals[req.internalProductId];
+        // rentalId: REWARD table Id (canonical key). Falls back to internalProductId for backward compatibility.
+        const rentalKey = req.rentalId || req.internalProductId;
+        const existingExpiryRaw = rentals[rentalKey];
         const existingExpiry = Number.isFinite(existingExpiryRaw) ? Number(existingExpiryRaw) : 0;
-        rentals[req.internalProductId] = Math.max(existingExpiry, serverNowUtcMs) + RENTAL_DURATION_MS;
+        rentals[rentalKey] = Math.max(existingExpiry, serverNowUtcMs) + RENTAL_DURATION_MS;
         entitlementPatch.rentals = rentals;
       }
 

@@ -65,6 +65,15 @@ namespace Devian
                 return CommonResult<string>.Failure(CommonErrorType.FIREBASE_NOT_INITIALIZED, "FirebaseAuth is null.");
 
 
+            // 기존 anonymous user가 있으면 재사용 (새 UID 생성 방지).
+            // Firebase SDK auth state 복원이 비동기적이므로,
+            // SignInAnonymouslyAsync()를 바로 호출하면 CurrentUser가 null 상태에서
+            // 새 계정이 생성될 수 있다.
+            var current = _auth.CurrentUser;
+            if (current != null && current.IsAnonymous)
+                return CommonResult<string>.Success(current.UserId);
+
+
             try
             {
                 var result = await _auth.SignInAnonymouslyAsync();

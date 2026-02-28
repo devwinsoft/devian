@@ -8,15 +8,6 @@ namespace Devian
 {
     public sealed class RewardManager : CompoSingleton<RewardManager>
     {
-        public CommonResult ApplyRewardGroupId(string rewardGroupId)
-        {
-            var result = ApplyRewardGroup(rewardGroupId);
-            if (result.IsFailure)
-                return CommonResult.Failure(result.Error!);
-
-            return CommonResult.Ok();
-        }
-
         public CommonResult<RewardApplyResult> ApplyRewardGroup(string rewardGroupId)
         {
             if (string.IsNullOrEmpty(rewardGroupId))

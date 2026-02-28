@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -69,6 +70,10 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         {
             Debug.Log($"{purchase.Error.Code}: {purchase.Error.Message}");
         }
+        foreach (var key in GameStorageManager.Instance.Inventory.Rentals.Keys)
+        {
+            Debug.LogWarning($"Rentals: {key}");
+        }
     }
 
 
@@ -94,12 +99,19 @@ public class UICanvasSample : UICanvas<UICanvasSample>
     
     public async void OnClick_InAppAd()
     {
-        var result = await AdManager.Instance.ShowAsync("ad_rewarded_001");
+        var remainMs = GameStorageManager.Instance.Inventory.GetRentalRemainingMs("NO_ADS");
+        var result = await AdManager.Instance.ShowAsync("ad_rewarded_001", remainMs > 0);
         if (result.IsSuccess)
         {
             foreach (var reward in result.Value.AppliedRewards)
             {
                 Debug.Log($"{reward.Type}, {reward.Id}, {reward.Amount}");
+            }
+
+            if (remainMs > 0)
+            {
+                var span = TimeSpan.FromMilliseconds(remainMs);
+                Debug.Log($"remain ms: {span.ToString("d:hh:mm:ss")}");
             }
         }
         else if (result.IsFailure)
