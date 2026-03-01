@@ -30,22 +30,22 @@ namespace MyApp
 {
     public sealed class MyApp : MobileBootstrap
     {
-        protected override System.Collections.IEnumerator OnBootProc()
+        protected override async Task OnBootProc()
         {
             // MobileSystem common initialization (Log, GPGS Activate, AccountManager)
-            yield return base.OnBootProc();
+            await base.OnBootProc();
 
             // App-specific initialization here.
-            yield break;
         }
     }
 }
 ```
 
 1. `MobileBootstrap`을 상속한 클래스를 만든다.
-2. `OnBootProc()`을 override하고, `yield return base.OnBootProc();`을 호출하여 공통 초기화를 수행한다.
+2. `OnBootProc()`을 override하고, `await base.OnBootProc();`을 호출하여 공통 초기화를 수행한다.
 3. `base.OnBootProc()` 이후에 앱별 초기화 로직을 구현한다.
 4. Bootstrap prefab에 해당 컴포넌트를 부착한다.
+5. app/contents layer가 Bootstrap prefab을 명시적으로 생성하고 `BootProc()`를 호출한다.
 
 
 ## Resource Prefab 생성 규칙

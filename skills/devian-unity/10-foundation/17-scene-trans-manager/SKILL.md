@@ -40,13 +40,14 @@ Scene 전환 파이프라인을 단일화(직렬화)하고, 씬별 초기화/정
 ### SceneTransManager
 
 **CompoSingleton 기반 전역 흐름 제어자**로, Scene 전환을 직렬화(동시 전환 방지)한다.
-Bootstrap prefab에 포함되어 부팅 시 자동 등록된다.
+소비자 bootstrap prefab 또는 scene object가 인스턴스를 명시적으로 배치해야 한다.
 
 **책임:**
 - 전환 흐름 직렬화 (동시 전환 방지)
 - Fade 시간 전달 (이벤트 위임)
 - SceneBase Exit/Enter 호출
 - Hook(beforeUnload/afterLoad) 실행
+- Bootstrap/`BootProc()` 실행은 책임 범위가 아님
 
 **전환 순서 (LoadSceneAsync):**
 1. FadeOutRequested 이벤트 발생 (fadeOutSeconds > 0인 경우)
@@ -54,12 +55,12 @@ Bootstrap prefab에 포함되어 부팅 시 자동 등록된다.
 3. 현재 씬의 `SceneBase.Exit()` 호출
 4. `AssetManager.LoadSceneAsync()` 로 새 씬 로드
 5. afterLoad 훅 실행 (있으면)
-6. `BaseBootstrap.Instance.BootProc()` 호출 (이미 부팅이면 즉시 종료)
-7. 새 씬의 `SceneBase.Enter()` 호출
-8. FadeInRequested 이벤트 발생 (fadeInSeconds > 0인 경우)
+6. 새 씬의 `SceneBase.Enter()` 호출
+7. FadeInRequested 이벤트 발생 (fadeInSeconds > 0인 경우)
 
 **특징:**
-- `CompoSingleton<SceneTransManager>` 상속 (Bootstrap prefab에 포함)
+- `CompoSingleton<SceneTransManager>` 상속
+- bootstrap prefab 또는 scene object에 명시적으로 배치
 - `_isTransitioning` 플래그로 중복 전환 방지
 - Delegate 기반 Hook (beforeUnload, afterLoad)
 - 페이드는 이벤트로 위임 (FadeOutRequested, FadeInRequested)
@@ -83,9 +84,10 @@ public event Func<float, Task>? FadeInRequested;
 ### 부팅 씬 (첫 씬) 처리
 
 SceneTransManager는 `Start()`에서 Active Scene의 SceneBase를 찾아:
-- `BaseBootstrap.Instance.BootProc()`를 호출한다 (이미 부팅이면 즉시 종료)
 - `Enter()`를 호출한다
 - onStart는 SceneBase.Start()에서 호출된다
+
+Bootstrap이 필요하면, contents/app layer가 Scene 진입 전 별도로 `BootProc()`를 보장해야 한다.
 
 ### Additive 모드
 

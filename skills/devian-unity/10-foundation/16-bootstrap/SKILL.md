@@ -4,7 +4,8 @@
 
 부트 컨테이너 프리팹과 BaseBootstrap 추상 클래스를 정의한다.
 
-**프레임워크는 SceneTransManager 파이프라인을 통해 BootProc를 자동 트리거한다.**
+**프레임워크는 Bootstrap prefab 생성이나 `BootProc()` 호출을 자동 처리하지 않는다.**
+Bootstrap 생성과 `BootProc()` 호출은 app/contents layer 책임이다.
 
 ---
 
@@ -42,7 +43,7 @@ private static bool _booted;
 public static BaseBootstrap Instance => _instance;
 ```
 
-`_instance`는 `Awake()`에서 자동 등록된다. Bootstrap 프리팹의 생성(Instantiate + DontDestroyOnLoad)은 contents 레이어가 담당한다.
+`_instance`는 `Awake()`에서 등록된다. Bootstrap 프리팹의 생성(Instantiate + DontDestroyOnLoad 포함 여부)은 app/contents layer가 명시적으로 담당한다.
 
 ### 추상 메서드
 
@@ -60,7 +61,13 @@ public async Task BootProc()
 
 동작:
 1. `_booted == true`면 즉시 return
-2. `try { await OnBootProc(); } finally { _booted = true; }`
+2. `_booted = true`
+3. `await OnBootProc()`
+
+의미:
+- `OnBootProc()` 예외는 상위 호출자까지 그대로 전파된다.
+- 한번 시도한 `BootProc()`는 실패해도 재시도하지 않는다.
+- Bootstrap 오류로 앱 시작이 중단되는 것은 정상 동작이다.
 
 ### Domain Reload 대응
 
@@ -76,18 +83,21 @@ private static void ResetStatics()
 
 ---
 
-## 5. SceneTransManager와의 통합
+## 5. 호출 책임
 
-SceneTransManager는 OnEnter 전에 BootProc 호출을 보장한다:
+프레임워크 `SceneTransManager`는 `BootProc()`를 호출하지 않는다.
+Bootstrap은 app/contents layer가 명시적으로 생성하고 실행해야 한다.
+
+예시:
 
 ```csharp
-// SceneTransManager.Start() 또는 LoadSceneAsync()에서
-var boot = BaseBootstrap.Instance;
-if (boot != null) await boot.BootProc();  // 이미 부팅이면 즉시 종료
-await scene.Enter();
+var app = Singleton.CreateFromResources<BaseBootstrap, TestApplication>("Devian/Bootstrap");
+await app.BootProc();
 ```
 
-Bootstrap 통합이 필요한 씬 클래스(Awake에서 CreateFromResources, Start에서 BootProc 대기)는 프레임워크가 제공하지 않으며, contents 레이어에서 SceneBase를 상속하여 직접 구현한다.
+샘플 구현도 같은 구조다:
+- bootstrap 생성: [`TestApplication.Create()`](/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Scripts/Test/TestApplication.cs)
+- boot 실행 보장: [`TestSceneBootstrap.onStart()`](/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Scripts/Test/TestSceneBootstrap.cs)
 
 ---
 
@@ -100,6 +110,7 @@ Bootstrap 통합이 필요한 씬 클래스(Awake에서 CreateFromResources, Sta
 - 추가로 필요한 Manager 컴포넌트들을 함께 부착 가능
 
 **프레임워크가 BaseBootstrap 파생 컴포넌트를 자동 추가하지 않는다.** 개발자가 직접 추가해야 한다.
+**프레임워크가 Bootstrap prefab을 자동 생성하지도 않는다.**
 
 ### 필수 컴포넌트 부착
 

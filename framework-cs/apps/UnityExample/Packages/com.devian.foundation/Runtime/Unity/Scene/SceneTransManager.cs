@@ -16,7 +16,7 @@ namespace Devian
     ///
     /// 이 Manager는 페이드 UI를 직접 소유하지 않으며, FadeOutRequested/FadeInRequested 이벤트로 위임한다.
     ///
-    /// CompoSingleton-based: Bootstrap(부트 컨테이너)에 포함되어 등록된다.
+    /// CompoSingleton-based: consumer bootstrap prefab 또는 scene object가 명시적으로 배치/등록한다.
     /// </summary>
     public sealed class SceneTransManager : CompoSingleton<SceneTransManager>
     {

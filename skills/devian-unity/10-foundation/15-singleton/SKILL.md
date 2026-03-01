@@ -8,7 +8,7 @@ Type: Component Specification
 
 - 개발자가 실수 없이 싱글톤을 사용하도록 **script-created AutoSingleton**을 제공한다.
 - 필요 시 **CompoSingleton**으로 씬/프리팹 배치 책임(component)을 명시한다.
-- 필요 시 **`Singleton.Create`** 또는 **`Singleton.CreateFromResources`**로 Boot 싱글톤을 명시 생성한다.
+- 필요 시 **`Singleton.Create`** 또는 **`Singleton.CreateFromResources`**로 Boot source 싱글톤을 명시 생성한다.
 - 모든 싱글톤은 **단일 저장소(SingletonRegistry)**를 통해 통합 관리한다.
 
 ---
@@ -132,15 +132,23 @@ Registry에 Auto/Boot가 등록된 상태에서 Compo가 등록되면:
 | `Singleton.Create<TBase,TSelf>()` | 빈 GameObject 생성 + AddComponent + Registry 등록(Boot). key=TBase |
 | `Singleton.CreateFromResources<T>(path)` | Resources에서 프리팹 로드 + Registry 등록(Boot). key=T |
 | `Singleton.CreateFromResources<TBase,TSelf>(path)` | Resources에서 프리팹 로드 + Registry 등록(Boot). key=TBase |
-| `T.Instance` | AutoSingleton/CompoSingleton이 제공하는 편의. Auto는 script-create, Compo는 기등록 인스턴스 조회. Shutdown 중 null 반환 |
+| `T.Instance` | AutoSingleton/CompoSingleton이 제공하는 편의. Auto 계열은 script-create, Compo 계열은 기등록 인스턴스 조회. **Shutdown 중 null 반환은 Auto 계열만 해당** |
 | `AutoSingleton<T>.IsShuttingDown` | Shutdown 구간 여부 (`Singleton.IsShuttingDown`에 위임) |
+
+---
+
+## 4.1 Boot source 의미
+
+- `SingletonSource.Boot`는 **Registry 우선순위 이름**이다.
+- 이것이 **프레임워크가 Bootstrap prefab 생성이나 `BootProc()` 호출을 자동 처리한다**는 뜻은 아니다.
+- Bootstrap 생성/`BootProc()` 호출은 app/contents layer가 명시적으로 수행한다.
 
 ---
 
 ## 5. 금지 (Hard Rule)
 
 - 기존 싱글톤 시스템(SceneSingleton/MonoSingleton 등)을 새로 사용/추가하지 않는다.
-- "조용히 Destroy로 중복을 숨기는 정책"을 기본값으로 두지 않는다.
+- Registry의 Adopt/Destroy는 구현 정책으로 존재한다. 호출자는 이 동작에 의존해 중복 생성 흐름을 설계하지 않는다.
 - Registry를 우회하는 static instance 보관을 금지한다 (모든 인스턴스는 Registry가 SSOT).
 
 ---
