@@ -34,14 +34,14 @@ public class TestSceneLoading : TestSceneBootstrap
             switch (sync.Value.State)
             {
                 case SyncState.Initial:
-                    var data = GameStorageManager.Instance.ToJson();
+                    var data = SaveDataManager.Instance.ToJson();
                     var init = await SaveDataManager.Instance.SaveDataAsync("main", data, includeCloud: false, CancellationToken.None);
                     UICanvasLoading.Instance.ShowLoginButtons();
                     break;
                 case SyncState.Conflict:
                     break;
                 case SyncState.Success:
-                    var loginCode = await Login(GameStorageManager.Instance.Account.loginType, false);
+                    var loginCode = await Login(AccountManager.Instance.Storage.loginType, false);
                     if (loginCode == CommonErrorType.SUCCESS)
                     {
                         SceneTransManager.Instance.LoadSceneAsync("SceneSample");
@@ -71,7 +71,7 @@ public class TestSceneLoading : TestSceneBootstrap
         await initPurchase();
 #endif
         await SaveDataManager.Instance.SaveDataAsync("main",
-            GameStorageManager.Instance.ToJson(),
+            SaveDataManager.Instance.ToJson(),
             true,
             CancellationToken.None);
         return CommonErrorType.SUCCESS;

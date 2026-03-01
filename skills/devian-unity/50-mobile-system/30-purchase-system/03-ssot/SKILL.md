@@ -310,7 +310,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 
 #### Client-side local snapshot (PurchaseStorage)
 
-- 클라이언트는 `GameStorageManager`가 소유하는 `PurchaseStorage`에 **최소 상태 스냅샷**만 기록할 수 있다.
+- 클라이언트는 `PurchaseManager`가 소유하는 `PurchaseStorage`에 **최소 상태 스냅샷**만 기록할 수 있다.
 - 목적: 구매 진행 중 상태(current)의 local/cloud 저장 (복구 보조) + 환불/지원 대응용 최소 로그(refundSupportLogs)
 - `current`는 복구 워크아이템이며, `Confirm + storeConfirm ACK + clientGrant report`가 종결되기 전에는 clear하지 않는다.
 - 금지: 전체 구매 이력 정본 저장, 구매 실패 상세(코드/메시지) 저장, raw receipt 저장, 서버 원장/멱등 대체

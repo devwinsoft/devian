@@ -29,14 +29,15 @@ namespace Devian
         private AccountLoginFirebase _firebaseLogin = new AccountLoginFirebase();
         private AccountLoginGpgs _gpgs = new AccountLoginGpgs();
         private AccountLoginApple _apple = new AccountLoginApple();
-        private LoginType _currentLoginType;
+        private readonly AccountStorage _storage = new();
+
+        public AccountStorage Storage => _storage;
+        public LoginType CurrentLoginType => sanitizeLoginType(_storage.loginType);
 
         protected override void Awake()
         {
             base.Awake();
-            _currentLoginType = LoginType.NONE;
-            if (GameStorageManager.TryGet(out var gameStorage))
-                ApplyStorage(gameStorage.Account);
+            ApplyStorage(_storage);
         }
 
         /// <summary>
@@ -107,18 +108,13 @@ namespace Devian
             writeAccountState(LoginType.NONE);
         }
 
-        public LoginType _getCurrentLoginType()
-        {
-            return _currentLoginType;
-        }
-
         /// <summary>
         /// Purchase 인증 여부는 AccountManager 로그인 상태를 기준으로 판단한다.
         /// NONE(미로그인/로그아웃 상태)만 미인증으로 본다.
         /// </summary>
         public bool IsPurchaseLoginReady()
         {
-            return _currentLoginType != LoginType.NONE;
+            return CurrentLoginType != LoginType.NONE;
         }
 
         /// <summary>
@@ -339,23 +335,32 @@ namespace Devian
 
         internal void ApplyStorage(AccountStorage storage)
         {
-            var raw = storage != null ? (int)storage.loginType : (int)LoginType.NONE;
-            _currentLoginType = Enum.IsDefined(typeof(LoginType), raw)
-                ? (LoginType)raw
-                : LoginType.NONE;
+            if (storage == null)
+            {
+                _storage.Clear();
+                return;
+            }
+
+            _storage.Set(
+                sanitizeLoginType(storage.loginType),
+                storage.socialUserId,
+                storage.lastUpdatedAtUtcMs);
         }
 
         private void writeAccountState(LoginType loginType)
         {
-            _currentLoginType = loginType;
-
-            if (!GameStorageManager.TryGet(out var gameStorage))
-                return;
-
-            gameStorage.Account.Set(
-                loginType,
+            _storage.Set(
+                sanitizeLoginType(loginType),
                 resolveSocialUserId(loginType),
                 DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+        }
+
+        private static LoginType sanitizeLoginType(LoginType loginType)
+        {
+            var raw = (int)loginType;
+            return Enum.IsDefined(typeof(LoginType), raw)
+                ? loginType
+                : LoginType.NONE;
         }
 
         private static string resolveSocialUserId(LoginType loginType)

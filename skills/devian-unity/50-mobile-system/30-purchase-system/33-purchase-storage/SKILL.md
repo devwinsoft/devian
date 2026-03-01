@@ -5,7 +5,7 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 
 ## 문서 경계 (Scope)
 
-- 이 문서는 `PurchaseStorage`의 **역할/필드 범위/소유자(GameStorageManager)** 를 정의한다.
+- 이 문서는 `PurchaseStorage`의 **역할/필드 범위/소유자(PurchaseManager)** 를 정의한다.
 - 전체 구매 이력(ledger) 설계, 서버 검증/멱등, 환불/복구 정책은 이 문서의 범위가 아니다.
 - 서버 정본은 `40/41/42/46`, 클라이언트 구매 흐름은 `30-samples-purchase-manager`를 참조한다.
 
@@ -16,7 +16,7 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 ## Purpose
 
 - `PurchaseManager`의 **진행 중인 결제 상태(current)** 만 최소 정보로 저장한다.
-- `GameStorageManager`가 소유하여 SaveData(local/cloud) 경로에 포함될 수 있게 한다.
+- `PurchaseManager`가 소유하며 SaveData(local/cloud) 경로에 포함될 수 있게 한다.
 - 앱 재시작/동기화 이후에도 미완료 구매 흐름(verify 성공 후 ACK/Confirm 이전 등)의 복구 보조용으로 사용할 수 있다.
 
 
@@ -25,12 +25,12 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 
 ## Ownership (SSOT)
 
-- 소유자: `GameStorageManager`
+- 소유자: `PurchaseManager`
 - 사용처: `PurchaseManager` (구매 시작/스토어 pending/verify 성공/로컬지급 완료/ACK 완료 시점에 기록)
-- 저장 경로: `GameStorageManager.ToJson()` / `LoadFromJson()`의 `purchase` 섹션
+- 저장 경로: `SaveDataManager` JSON의 `purchase` 섹션
 
 중요:
-- `PurchaseStorage`는 **PurchaseManager 소유 필드가 아니다**.
+- `PurchaseStorage`는 **PurchaseManager 소유 필드**이다.
 - `PurchaseStorage`는 **서버 구매 원장(Firestore purchases/grants/entitlements) 대체가 아니다**.
 
 
@@ -88,7 +88,7 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 - 정리 실행 시점(구현됨):
   - `UpsertRefundSupportLog(...)` 직후
   - `RestoreRefundSupportLogs(...)` 복원 직후
-  - `GameStorageManager.ToJson()` 경로의 `PurchaseStorage.PruneRefundSupportLogs()` 호출 시
+  - `SaveDataManager.ToJson()` 경로의 `PurchaseStorage.PruneRefundSupportLogs()` 호출 시
 - 항목 예시:
   - `purchaseId`
   - `internalProductId`
@@ -167,10 +167,10 @@ NOTE:
 - `PurchaseStorage`의 값으로 지급 결정/환불 판정/중복 지급 방지를 수행하지 않는다.
 - 지급/엔타이틀먼트 최종 판정은 서버 `verifyPurchase` / `getEntitlements` 결과만 사용한다.
 
-### 4) GameStorageManager 소유 유지
+### 4) PurchaseManager 소유 유지
 
-- 로컬/클라우드 저장 연동을 위해 `GameStorageManager`가 `PurchaseStorage`를 소유한다.
-- `PurchaseManager`는 상태 기록만 수행한다.
+- 로컬/클라우드 저장 연동을 위해 `PurchaseManager`가 `PurchaseStorage`를 직접 소유한다.
+- `SaveDataManager`는 직렬화/역직렬화 시 `PurchaseManager.Instance.Storage`를 사용한다.
 
 
 ---
@@ -178,9 +178,9 @@ NOTE:
 
 ## Integration Notes
 
-- `PurchaseManager`는 `GameStorageManager.Instance.Purchase`에 기록한다.
-- `GameStorageManager.Clear()`는 `PurchaseStorage.ClearAll()`을 호출한다.
-- SaveData(local/cloud)는 `GameStorageManager` JSON 전체를 저장하므로 `purchase` 섹션도 함께 저장/복구된다.
+- `PurchaseManager`는 자신의 `Storage`에 기록한다.
+- `SaveDataManager.ClearGameState()`는 `PurchaseStorage.ClearAll()`을 호출한다.
+- SaveData(local/cloud)는 `SaveDataManager` JSON 전체를 저장하므로 `purchase` 섹션도 함께 저장/복구된다.
 - `PurchaseStorage`는 `current`, `refundSupportLogs`, `refundSync`만 저장하며, 실패 이력/전체 구매 정본 로그는 저장하지 않는다.
 - `current`는 복구 워크아이템이며, `Confirm + storeConfirm ACK + clientGrant report`가 종결되기 전에는 clear하지 않는다.
 - `storeConfirmedLocal=true` + `storeConfirmStatus=PENDING`인 경우 `RetryInterruptedPurchaseAsync()`는 `ackPurchaseStoreConfirm`부터 재개할 수 있어야 한다.
@@ -195,5 +195,5 @@ NOTE:
 - [00-overview](../00-overview/SKILL.md) — Purchase System 개요
 - [03-ssot](../03-ssot/SKILL.md) — Purchase 통합 SSOT
 - [30-samples-purchase-manager](../30-samples-purchase-manager/SKILL.md) — PurchaseManager 샘플
-- [95-game-storage-manager](../../95-game-storage-manager/SKILL.md) — GameStorageManager 정본
+- [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 정본
 - [21-savedata-system/00-overview](../../21-savedata-system/00-overview/SKILL.md) — local/cloud 저장 시스템 개요

@@ -62,13 +62,14 @@ namespace MyApp
 MobileBootstrap에 부착된 RequireComponent:
 
 - `AccountManager`
+- `InventoryManager`
+- `PurchaseManager`
 - `InputManager` — [24-input-manager](../../11-common-system/24-input-manager/SKILL.md)
 - `SaveDataManager`
-- `GameStorageManager` — [95-game-storage-manager](../95-game-storage-manager/SKILL.md)
 
 
 ## Links
 - [16-bootstrap](../../../10-foundation/16-bootstrap/SKILL.md) — BaseBootstrap 런타임 스펙
 - [24-input-manager](../../11-common-system/24-input-manager/SKILL.md) — InputManager 공용 입력 관리자
-- [95-game-storage-manager](../95-game-storage-manager/SKILL.md) — GameStorageManager (게임 저장 파일 직렬화)
+- [21-savedata-system/43-savedata-json-codec](../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 규약
 - [50-mobile-system overview](../00-overview/SKILL.md) — MobileSystem (Devian Samples) 그룹 개요

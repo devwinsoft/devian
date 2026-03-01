@@ -3,7 +3,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Devian
 {
-    internal static class GameStorageJsonCodecPurchase
+    internal static class SaveDataJsonCodecPurchase
     {
         public static JObject Serialize(PurchaseStorage purchase)
         {

@@ -83,11 +83,17 @@ Sync는 AccountManager의 책임이 아니며, [10-savedata-manager](../../21-sa
 
 ## LoginType 영속화
 - `PlayerPrefs` 기반 LoginType 영속화는 제거되었다.
-- 계정 메타 영속화는 `GameStorageManager.Instance.Account`(`AccountStorage`)로 통일한다.
+- 계정 메타 영속화는 `AccountManager`가 직접 소유하는 `AccountStorage`로 통일한다.
 - 저장 필드(최소): `loginType`, `socialUserId`, `lastUpdatedAtUtcMs`
-- 로그인 성공, 로그아웃, 구매 인증 보정 시 `AccountManager`가 `GameStorageManager.Instance.Account`를 갱신한다.
-- `SaveDataManager`가 local/cloud payload를 로드한 뒤 `AccountManager.ApplyStorage(...)`로 런타임 `_currentLoginType`을 재적용한다.
+- 로그인 성공, 로그아웃, 구매 인증 보정 시 `AccountManager`가 자신의 `Storage`를 갱신한다.
+- `SaveDataManager`가 local/cloud payload를 로드한 뒤 `AccountManager.Storage`를 복원하고 `AccountManager.ApplyStorage(...)`로 런타임 `_currentLoginType`을 재적용한다.
 - 계정 메타 미복원/유효하지 않은 값이면 `NONE` fallback.
+
+
+## Storage Ownership
+- `AccountManager`는 `AccountStorage`를 직접 소유한다.
+- `SaveDataManager`는 `AccountManager.Instance.Storage`를 저장/복원 대상으로 사용한다.
+- JSON 직렬화 규약은 [43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)를 따른다.
 
 
 ## 계정 Upgrade (Guest/Editor → Social)

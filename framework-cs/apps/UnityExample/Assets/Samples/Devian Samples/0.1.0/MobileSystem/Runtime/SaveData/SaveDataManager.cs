@@ -106,8 +106,7 @@ namespace Devian
                 && result.Value.LocalPayload?.payload != null)
             {
                 _activeSyncSlot = slot;
-                GameStorageManager.Instance.LoadFromPayload(result.Value.LocalPayload.payload);
-                applyLoadedAccountStorageToRuntime();
+                LoadFromPayload(result.Value.LocalPayload.payload);
                 await postSyncEntitlementsAsync(ct);
             }
 
@@ -116,7 +115,7 @@ namespace Devian
 
         private async Task<CommonResult<SyncResult>> syncSlotCoreAsync(string slot, CancellationToken ct)
         {
-            var loginType = AccountManager.Instance._getCurrentLoginType();
+            var loginType = AccountManager.Instance.CurrentLoginType;
 
             // NONE/Guest/Editor: local-only. slot 단일을 로드하여 payload를 채워 반환.
             if (isLocalOnly(loginType))
@@ -336,7 +335,7 @@ namespace Devian
         public async Task<CommonResult<bool>> ResolveConflictAsync(
             string slot, SyncResolution resolution, CancellationToken ct)
         {
-            var loginType = AccountManager.Instance._getCurrentLoginType();
+            var loginType = AccountManager.Instance.CurrentLoginType;
 
             if (isLocalOnly(loginType))
             {
@@ -373,8 +372,7 @@ namespace Devian
                             return CommonResult<bool>.Failure(saveCloud.Error!);
 
                         _needsCloudSave = false;
-                        GameStorageManager.Instance.LoadFromPayload(localR.Value.payload);
-                        applyLoadedAccountStorageToRuntime();
+                        LoadFromPayload(localR.Value.payload);
                         await postSyncEntitlementsAsync(ct);
 
                         return CommonResult<bool>.Success(true);
@@ -397,8 +395,7 @@ namespace Devian
                         if (saveLocalR.IsFailure)
                             return CommonResult<bool>.Failure(saveLocalR.Error!);
 
-                        GameStorageManager.Instance.LoadFromJson(jsonR.Value);
-                        applyLoadedAccountStorageToRuntime();
+                        LoadFromJson(jsonR.Value);
                         await postSyncEntitlementsAsync(ct);
 
                         return CommonResult<bool>.Success(true);
@@ -417,7 +414,8 @@ namespace Devian
 
         private async Task<CommonResult> postSyncEntitlementsAsync(CancellationToken ct)
         {
-            if (GameStorageManager.Instance.Inventory.Rentals.Count <= 0)
+            var inventory = getInventoryStorageOrNull();
+            if (inventory == null || inventory.Rentals.Count <= 0)
                 return CommonResult.Ok();
 
             var result = await PurchaseManager.Instance.SyncEntitlementsAsync(ct);
@@ -436,7 +434,7 @@ namespace Devian
         // ──────────────────────────────────────────────
 
         /// <summary>
-        /// GameStorageManager 전체 상태를 local + cloud에 저장한다.
+        /// 현재 Account/Inventory/Purchase 상태를 local + cloud에 저장한다.
         /// SyncAsync 성공 후 사용 가능. cloud 저장 실패 시 MarkNeedsCloudSave 처리.
         /// </summary>
         public async Task<CommonResult<bool>> SaveGameStateAsync(CancellationToken ct)
@@ -445,12 +443,12 @@ namespace Devian
                 return CommonResult<bool>.Failure(
                     CommonErrorType.LOCALSAVE_SLOT_EMPTY, "No active sync slot. Call SyncAsync first.");
 
-            var json = GameStorageManager.Instance.ToJson();
+            var json = ToJson();
             var local = await saveLocalAsync(_activeSyncSlot, json, ct);
             if (local.IsFailure)
                 return local;
 
-            var loginType = AccountManager.Instance._getCurrentLoginType();
+            var loginType = AccountManager.Instance.CurrentLoginType;
             if (!isLocalOnly(loginType))
             {
                 try
@@ -503,7 +501,7 @@ namespace Devian
                 return CommonResult<bool>.Success(true);
 
             // In Editor / Guest, silently ignore cloud save and return success.
-            var loginType = AccountManager.Instance._getCurrentLoginType();
+            var loginType = AccountManager.Instance.CurrentLoginType;
             if (isLocalOnly(loginType))
             {
                 return CommonResult<bool>.Success(true);
@@ -544,8 +542,7 @@ namespace Devian
             if (payload?.payload == null)
                 return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_NOT_FOUND, "No local data found.");
 
-            GameStorageManager.Instance.LoadFromPayload(payload.payload);
-            applyLoadedAccountStorageToRuntime();
+            LoadFromPayload(payload.payload);
             return CommonResult<bool>.Success(true);
         }
 
@@ -590,12 +587,12 @@ namespace Devian
             }
 
             // 2) Cloud delete
-            var loginType = AccountManager.Instance._getCurrentLoginType();
+            var loginType = AccountManager.Instance.CurrentLoginType;
             if (isLocalOnly(loginType))
             {
                 // Guest/Editor: cloud is silently ignored
                 _activeSyncSlot = null;
-                GameStorageManager.Instance.Clear();
+                ClearGameState();
                 return CommonResult<bool>.Success(true);
             }
 
@@ -631,9 +628,46 @@ namespace Devian
             }
 
             _activeSyncSlot = null;
-            GameStorageManager.Instance.Clear();
+            ClearGameState();
 
             return CommonResult<bool>.Success(true);
+        }
+
+        public string ToJson()
+        {
+            var inventory = getInventoryStorageOrNull();
+            var purchase = getPurchaseStorageOrNull();
+            var account = getAccountStorageOrNull();
+            return SaveDataJsonCodec.Serialize(
+                inventory ?? new InventoryStorage(),
+                purchase ?? new PurchaseStorage(),
+                account ?? new AccountStorage());
+        }
+
+        public void LoadFromPayload(string payload)
+        {
+            var json = ComplexUtil.Decrypt_Base64(payload);
+            LoadFromJson(json);
+        }
+
+        public void LoadFromJson(string json)
+        {
+            var inventory = getInventoryStorageOrNull();
+            var purchase = getPurchaseStorageOrNull();
+            var account = getAccountStorageOrNull();
+            if (inventory == null || purchase == null || account == null)
+                return;
+
+            SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, account);
+            applyLoadedAccountStorageToRuntime();
+        }
+
+        public void ClearGameState()
+        {
+            getInventoryStorageOrNull()?.Clear();
+            getPurchaseStorageOrNull()?.ClearAll();
+            getAccountStorageOrNull()?.Clear();
+            applyLoadedAccountStorageToRuntime();
         }
 
         // ──────────────────────────────────────────────
@@ -1046,21 +1080,58 @@ namespace Devian
 
         private static AccountStorage snapshotAccountMeta()
         {
-            if (GameStorageManager.TryGet(out var gameStorage) && gameStorage.Account != null)
-                return gameStorage.Account.Clone();
+            var accountStorage = getAccountStorageOrNull();
+            if (accountStorage != null)
+                return accountStorage.Clone();
 
             return null;
         }
 
         private static void applyLoadedAccountStorageToRuntime()
         {
-            if (!GameStorageManager.TryGet(out var gameStorage))
-                return;
-
             if (!AccountManager.TryGet(out var accountManager))
                 return;
 
-            accountManager.ApplyStorage(gameStorage.Account);
+            accountManager.ApplyStorage(accountManager.Storage);
+        }
+
+        private static InventoryStorage getInventoryStorageOrNull()
+        {
+            try
+            {
+                var inventoryManager = InventoryManager.Instance;
+                return inventoryManager != null ? inventoryManager.Storage : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static PurchaseStorage getPurchaseStorageOrNull()
+        {
+            try
+            {
+                var purchaseManager = PurchaseManager.Instance;
+                return purchaseManager != null ? purchaseManager.Storage : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static AccountStorage getAccountStorageOrNull()
+        {
+            try
+            {
+                var accountManager = AccountManager.Instance;
+                return accountManager != null ? accountManager.Storage : null;
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         private static bool hasSameObfuscatedPayload(SaveLocalPayload local, SaveCloudPayload cloud)

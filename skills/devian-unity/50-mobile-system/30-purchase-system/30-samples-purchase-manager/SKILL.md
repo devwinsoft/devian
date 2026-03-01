@@ -122,7 +122,7 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 ## Post-Sync Orchestration (SaveData 로드 후 표준 순서)
 
 1. `SaveDataManager.SyncAsync(slot, ct)` → `SyncResult`
-2. `GameStorageManager.LoadFromPayload(payload)` → inventory, purchase 역직렬화
+2. `SaveDataManager.LoadFromPayload(payload)` → inventory, purchase, account 역직렬화
 3. `if (Inventory.Rentals.Count > 0)` `PurchaseManager.SyncEntitlementsAsync(ct)` → Rental 서버 시간 재동기화 (조건부)
 4. `PurchaseManager.InitializeAsync(ct)` → IAP 초기화
 5. `PurchaseManager.RetryInterruptedPurchaseAsync(ct)` → 중단 구매 복구
@@ -148,7 +148,7 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 - `resultStatus == ALREADY_GRANTED`라도 `clientGrantStatus == PENDING` 또는 `FAILED_REPORTED`이면 로컬 지급 복구 경로를 사용할 수 있다.
 - `rewardGroupId`가 비어 있으면 로컬 보상 지급은 스킵하고, 클라이언트 지급 완료 처리만 진행한다. (결제/재구매 동일 규칙)
 - 구매 전 인증 게이트는 AccountManager 로그인 상태 API를 사용한다. (`FirebaseAuth.CurrentUser` 직접 판정 금지)
-- 로컬/클라우드 저장용 구매 상태는 `PurchaseManager`가 직접 소유하지 않고 `GameStorageManager.Instance.Purchase`(`PurchaseStorage`)에 기록한다.
+- 로컬/클라우드 저장용 구매 상태는 `PurchaseManager.Instance.Storage`(`PurchaseStorage`)에 기록한다.
 - `PurchaseStorage`는 진행 중 결제(`current`), 환불/지원 대응용 최소 로그(`refundSupportLogs`), 환불 동기화 상태(`refundSync`)를 저장한다.
 - 실패 코드/메시지/최근 실패 요약/전체 이력/영수증(raw receipt)은 저장 금지.
 - 환불/지원 로그 조회/삭제는 `PurchaseStorage` API를 직접 사용한다.

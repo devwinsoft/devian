@@ -140,10 +140,10 @@ InventoryStorage가 hero/equip 조회 + AbilityUnitHero에 위임하는 편의 �
 ## D) JSON Persistence Schema (정본)
 
 > **변경**: `InventoryStorage.ToJson()`/`FromJson()` 메서드는 **삭제**되었다.
-> 직렬화 책임은 [95-game-storage-manager](../../95-game-storage-manager/SKILL.md)의 **GameStorageManager**가 담당한다.
-> 아래 스키마는 GameStorageManager JSON의 `"inventory"` 섹션에 해당한다.
+> 직렬화 책임은 [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)의 **`SaveDataJsonCodec`**가 담당한다.
+> 아래 스키마는 SaveData JSON의 `"inventory"` 섹션에 해당한다.
 
-Inventory 직렬화 스키마 정본 (GameStorageManager.inventory 섹션).
+Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 
 ```json
 {

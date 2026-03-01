@@ -20,6 +20,9 @@ namespace Devian
         const int MaxVerifyRecoveryRetries = 3;
 
         string _functionsRegion = "asia-northeast3";
+        readonly PurchaseStorage _storage = new();
+
+        public PurchaseStorage Storage => _storage;
 
         protected override void Awake()
         {
@@ -2051,8 +2054,8 @@ namespace Devian
         {
             try
             {
-                var gameStorageManager = GameStorageManager.Instance;
-                return gameStorageManager != null ? gameStorageManager.Purchase : null;
+                var purchaseManager = PurchaseManager.Instance;
+                return purchaseManager != null ? purchaseManager.Storage : null;
             }
             catch
             {

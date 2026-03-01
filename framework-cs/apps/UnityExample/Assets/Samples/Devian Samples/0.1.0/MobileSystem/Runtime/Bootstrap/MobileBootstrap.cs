@@ -6,8 +6,9 @@ using UnityEngine;
 namespace Devian
 {
     [RequireComponent(typeof(AccountManager))]
+    [RequireComponent(typeof(InventoryManager))]
+    [RequireComponent(typeof(PurchaseManager))]
     [RequireComponent(typeof(SaveDataManager))]
-    [RequireComponent(typeof(GameStorageManager))]
     [RequireComponent(typeof(InputManager))]
     public abstract class MobileBootstrap : BaseBootstrap
     {

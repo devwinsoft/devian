@@ -2,7 +2,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Devian
 {
-    internal static class GameStorageJsonCodecAccount
+    internal static class SaveDataJsonCodecAccount
     {
         public static JObject Serialize(AccountStorage account)
         {

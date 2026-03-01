@@ -105,9 +105,9 @@ NOTE:
 ## Dependencies (개념)
 
 - InventoryManager는 SaveDataManager를 직접 참조하지 않는다.
-- SaveDataManager는 InventoryManager/Inventory 스키마를 직접 참조하지 않는다.
-- 저장/로드 결합은 상위 조립(bootstrap/composition root)에서만 수행한다.
-- [GameStorageManager](../../95-game-storage-manager/SKILL.md)는 `InventoryManager.Instance.Storage`로 InventoryStorage를 참조한다. InventoryManager는 GameStorageManager를 알지 못한다 (단방향 의존).
+- SaveDataManager는 저장/로드 시 `InventoryManager.Instance.Storage`를 사용한다.
+- 저장/로드 결합은 SaveDataManager에서만 수행한다.
+- JSON 직렬화 규약은 [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)를 따른다.
 
 
 ---
@@ -249,5 +249,5 @@ readonly InventoryStorage _storage = new();
 - [03-ssot](../03-ssot/SKILL.md) — Inventory 상태/Apply 규칙 SSOT
 - [01-policy](../01-policy/SKILL.md) — Inventory 하드룰
 - [10-reward-manager](../../49-reward-system/10-reward-manager/SKILL.md) — RewardManager (AddRewards 위임 호출자)
-- [95-game-storage-manager](../../95-game-storage-manager/SKILL.md) — GameStorageManager (InventoryManager.Instance.Storage 참조자)
+- [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 정본
 - [15-singleton](../../../10-foundation/15-singleton/SKILL.md) — CompoSingleton 규약

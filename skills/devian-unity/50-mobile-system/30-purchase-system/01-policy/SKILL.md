@@ -78,9 +78,9 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 - `Subscription`: 스토어/서버 상태 기준으로 검증 (클라에서 임의 제한 금지)
 - `SeasonPass`: 동일 `internalProductId` 중복 구매 금지 (서버에서 거부)
 
-### 7) 구매 로컬 상태 저장은 GameStorageManager 소유 PurchaseStorage에 한정한다
+### 7) 구매 로컬 상태 저장은 PurchaseManager 소유 PurchaseStorage에 한정한다
 
-- `PurchaseStorage`는 `GameStorageManager`가 소유하며 SaveData(local/cloud) 경로로 저장될 수 있다.
+- `PurchaseStorage`는 `PurchaseManager`가 소유하며 SaveData(local/cloud) 경로로 저장될 수 있다.
 - 저장 범위는 **진행 중 구매 1건(current)** 의 최소 복구 상태로 제한한다.
 - 구매 실패 내역/최근 실패 요약은 저장하지 않는다.
 - 전체 구매 이력/영수증/토큰 저장 금지. 서버 원장(Firestore) 대체 금지.
@@ -124,7 +124,7 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 
 - 샘플 구현: `com.devian.samples` — `Samples~/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
 - 구현: `PurchaseManager : CompoSingleton<PurchaseManager>`
-- 구매 상태 스냅샷 저장: `GameStorageManager.Instance.Purchase` (`PurchaseStorage`)
+- 구매 상태 스냅샷 저장: `PurchaseManager.Instance.Storage` (`PurchaseStorage`)
 
 
 ### 공개 메소드 규약(Policy)

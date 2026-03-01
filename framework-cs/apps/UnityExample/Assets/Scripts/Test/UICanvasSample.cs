@@ -39,7 +39,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         }
 
         // ── Rental 상태 확인 ──
-        var noAds = GameStorageManager.Instance.Inventory.HasActiveRental("noads_month");
+        var noAds = InventoryManager.Instance.Storage.HasActiveRental("noads_month");
         Debug.Log($"no_ads:{noAds}");
     }
     
@@ -70,7 +70,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         {
             Debug.Log($"{purchase.Error.Code}: {purchase.Error.Message}");
         }
-        foreach (var key in GameStorageManager.Instance.Inventory.Rentals.Keys)
+        foreach (var key in InventoryManager.Instance.Storage.Rentals.Keys)
         {
             Debug.LogWarning($"Rentals: {key}");
         }
@@ -99,7 +99,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
     
     public async void OnClick_InAppAd()
     {
-        var remainMs = GameStorageManager.Instance.Inventory.GetRentalRemainingMs("NO_ADS");
+        var remainMs = InventoryManager.Instance.Storage.GetRentalRemainingMs("NO_ADS");
         var result = await AdManager.Instance.ShowAsync("ad_rewarded_001", remainMs > 0);
         if (result.IsSuccess)
         {

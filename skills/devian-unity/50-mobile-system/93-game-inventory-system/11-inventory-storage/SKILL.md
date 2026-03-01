@@ -28,8 +28,8 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobileSyste
 - `GetHero/AddHero` — 영웅 CRUD
 - `SetRental(id, expiresAtClientUtcMs)` / `GetRentalExpiry(id)` / `HasActiveRental(id)` / `GetRentalRemainingMs(id)` / `RemoveRental(id)` — 렌탈 CRUD
 - `SetSeasonPass(id, owned)` / `HasSeasonPass(id)` / `RemoveSeasonPass(id)` — 시즌패스 CRUD
-- ~~`ToJson()`~~ — **삭제됨**. [95-game-storage-manager](../../95-game-storage-manager/SKILL.md)의 GameStorageManager로 이전.
-- ~~`FromJson(string json)`~~ — **삭제됨**. [95-game-storage-manager](../../95-game-storage-manager/SKILL.md)의 GameStorageManager로 이전.
+- ~~`ToJson()`~~ — **삭제됨**. [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)의 `SaveDataJsonCodec`으로 이전.
+- ~~`FromJson(string json)`~~ — **삭제됨**. [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)의 `SaveDataJsonCodec`으로 이전.
 
 ### 장비 장착
 
@@ -124,16 +124,16 @@ namespace Devian
 
 ---
 
-## 7. JSON 직렬화 — GameStorageManager로 이전됨
+## 7. JSON 직렬화 — SaveDataJsonCodec으로 이전됨
 
 > **변경**: `ToJson()` / `FromJson()` 메서드는 **삭제**되었다.
-> 직렬화 책임은 [95-game-storage-manager](../../95-game-storage-manager/SKILL.md)의 **GameStorageManager**가 담당한다.
+> 직렬화 책임은 [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)의 **`SaveDataJsonCodec`**가 담당한다.
 
 InventoryStorage는 **ReadOnly 프로퍼티**(`Wallet`, `Equipments`, `Cards`, `Heroes`, `Rentals`, `SeasonPasses`)와 **CRUD 메서드**만 제공한다.
-GameStorageManager가 이 프로퍼티/메서드를 사용하여 직렬화/역직렬화를 수행한다.
+`SaveDataJsonCodec`이 이 프로퍼티/메서드를 사용하여 직렬화/역직렬화를 수행한다.
 
 JSON 스키마: [03-ssot](../03-ssot/SKILL.md) 참조.
-GameStorageManager 설계: [95-game-storage-manager](../../95-game-storage-manager/SKILL.md) 참조.
+`SaveDataJsonCodec` 설계: [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md) 참조.
 
 ---
 
@@ -144,4 +144,4 @@ GameStorageManager 설계: [95-game-storage-manager](../../95-game-storage-manag
 - [10-inventory-manager](../10-inventory-manager/SKILL.md) — InventoryManager (InventoryStorage 소유자, 수량 SSOT)
 - [03-ssot](../03-ssot/SKILL.md) — Inventory State/Apply Rules
 - [00-overview](../00-overview/SKILL.md) — Inventory System 개요
-- [95-game-storage-manager](../../95-game-storage-manager/SKILL.md) — GameStorageManager (JSON 직렬화 담당)
+- [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 담당

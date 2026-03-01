@@ -3,7 +3,7 @@ using Devian.Domain.Game;
 
 namespace Devian
 {
-    internal static class GameStorageJsonCodecInventory
+    internal static class SaveDataJsonCodecInventory
     {
         public static JObject Serialize(InventoryStorage inventory)
         {

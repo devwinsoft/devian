@@ -35,7 +35,7 @@ Purchase(유료) 경로의 실제 지급 실행은 `rewardGroupId`를 RewardMana
 | [03-ssot](../03-ssot/SKILL.md) | 통합 SSOT (Unity IAP, Product Catalog, Verify/Idempotency, NoAds, Season Pass) |
 | [09-ssot-operations](../09-ssot-operations/SKILL.md) | 운영/보안/테스트/DoD |
 | [30-samples-purchase-manager](../30-samples-purchase-manager/SKILL.md) | PurchaseManager(구매) 샘플 |
-| [33-purchase-storage](../33-purchase-storage/SKILL.md) | PurchaseStorage(구매 상태 스냅샷, GameStorageManager 소유) |
+| [33-purchase-storage](../33-purchase-storage/SKILL.md) | PurchaseStorage(구매 상태 스냅샷, PurchaseManager 소유) |
 | [40-purchase-backend-firebase](../40-purchase-backend-firebase/SKILL.md) | Firebase Backend(Functions+Firestore) 구현 정본 |
 | [41-purchase-store-verification](../41-purchase-store-verification/SKILL.md) | Apple/Google 스토어 검증 및 storePurchaseId 정본 |
 | [42-purchase-entitlements-grants](../42-purchase-entitlements-grants/SKILL.md) | grants/entitlements 계산 및 저장 규칙 정본 |
@@ -53,7 +53,7 @@ Purchase(유료) 경로의 실제 지급 실행은 `rewardGroupId`를 RewardMana
 
 
 - [PurchaseManager Sample](../30-samples-purchase-manager/SKILL.md) — `com.devian.samples` / `Samples~/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
-- [PurchaseStorage](../33-purchase-storage/SKILL.md) — `GameStorageManager` 소유, `purchase` JSON 섹션(로컬/클라우드 저장)
+- [PurchaseStorage](../33-purchase-storage/SKILL.md) — `PurchaseManager` 소유, `purchase` JSON 섹션(로컬/클라우드 저장)
 - [Root SSOT](../../../../devian/10-module/03-ssot/SKILL.md)
 - [Unity SSOT](../../../03-ssot/SKILL.md)
 - [Devian Index](../../../../devian/SKILL.md)

@@ -2,7 +2,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Devian
 {
-    internal static class GameStorageJsonCodec
+    internal static class SaveDataJsonCodec
     {
         const int CurrentVersion = 10;
 
@@ -14,9 +14,9 @@ namespace Devian
             var root = new JObject
             {
                 ["version"] = CurrentVersion,
-                ["inventory"] = GameStorageJsonCodecInventory.Serialize(inventory),
-                ["purchase"] = GameStorageJsonCodecPurchase.Serialize(purchase),
-                ["account"] = GameStorageJsonCodecAccount.Serialize(account),
+                ["inventory"] = SaveDataJsonCodecInventory.Serialize(inventory),
+                ["purchase"] = SaveDataJsonCodecPurchase.Serialize(purchase),
+                ["account"] = SaveDataJsonCodecAccount.Serialize(account),
             };
             return root.ToString();
         }
@@ -33,15 +33,15 @@ namespace Devian
                 return;
 
             if (root["inventory"] is JObject inventoryObj)
-                GameStorageJsonCodecInventory.DeserializeInto(inventoryObj, inventory);
+                SaveDataJsonCodecInventory.DeserializeInto(inventoryObj, inventory);
 
             if (version >= 2 && root["purchase"] is JObject purchaseObj)
-                GameStorageJsonCodecPurchase.DeserializeInto(purchaseObj, purchase);
+                SaveDataJsonCodecPurchase.DeserializeInto(purchaseObj, purchase);
             else
                 purchase.ClearAll();
 
             if (version >= 10 && root["account"] is JObject accountObj)
-                GameStorageJsonCodecAccount.DeserializeInto(accountObj, account);
+                SaveDataJsonCodecAccount.DeserializeInto(accountObj, account);
             else
                 account?.Clear();
         }

@@ -34,7 +34,7 @@
 - `string CloudDeviceId` — 클라우드 deviceId (nullable)
 
 `SyncAsync(string slot)` 반환 시 payload가 `SyncResult`에 포함되므로 추가 파일 I/O(reload)는 불필요하다.
-단, **인메모리 게임 상태 복원은 호출 측 책임**이다: `GameStorageManager.Instance.LoadFromPayload(sync.Value.LocalPayload.payload)`를 별도 호출하여 Inventory/Purchase/Account를 역직렬화해야 한다.
+인메모리 게임 상태 복원은 `SaveDataManager` 내부 책임이다. `LoadFromPayload()`가 `AccountManager.Instance.Storage`, `InventoryManager.Instance.Storage`, `PurchaseManager.Instance.Storage`를 직접 복원한다.
 
 
 ## Scenario
@@ -118,8 +118,8 @@ SaveDataManager는 Slot 설정을 `SaveSlotConfig`로 캡슐화한다. (단일 �
 ### Load
 - `CommonResult<bool> LoadLocalData(string slot)`
 
-로컬 슬롯에서 `SaveLocalPayload`를 읽어 `GameStorageManager.Instance.LoadFromPayload()`로 Inventory/Purchase/Account를 세팅한다.
-- 데이터 존재 → `Success(true)` + GameStorageManager 세팅
+로컬 슬롯에서 `SaveLocalPayload`를 읽어 `SaveDataManager.LoadFromPayload()`로 Inventory/Purchase/Account를 세팅한다.
+- 데이터 존재 → `Success(true)` + 각 manager storage 세팅
 - 데이터 없음 → `Failure(LOCALSAVE_NOT_FOUND)`
 - 읽기 실패 → `Failure`
 
@@ -157,6 +157,17 @@ SaveDataManager는 Slot 설정을 `SaveSlotConfig`로 캡슐화한다. (단일 �
 - UPM: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/SaveDataManager.cs`
 - UnityExample mirror: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/SaveDataManager.cs`
 - [50-mobile-system overview](../../00-overview/SKILL.md)
+
+
+## Json Ownership
+
+- `SaveDataManager`가 게임 상태 JSON 직렬화/역직렬화의 유일한 진입점이다.
+- JSON 구현은 [43-savedata-json-codec](../43-savedata-json-codec/SKILL.md)를 따른다.
+- 각 시스템은 자신의 storage를 직접 소유한다.
+  - `AccountManager.Instance.Storage`
+  - `InventoryManager.Instance.Storage`
+  - `PurchaseManager.Instance.Storage`
+- `SaveLocalPayload.account` / `SaveCloudPayload.Account` 메타는 account mirror 용도로 유지한다.
 
 
 ## Out of Scope
