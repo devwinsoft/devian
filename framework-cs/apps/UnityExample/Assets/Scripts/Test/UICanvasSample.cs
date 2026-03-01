@@ -30,11 +30,11 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         }
 
         // 1. SaveData Sync
-        var sync = await SaveDataManager.Instance.SyncAsync(timeout.Token);
+        var sync = await SaveDataManager.Instance.SyncGameStorageAsync(timeout.Token);
         Debug.Log($"Sync state: {sync.Value?.State}");
         if (sync.IsFailure)
         {
-            Debug.LogWarning($"[TestUICanvas] SyncAsync failed: {sync.Error}");
+            Debug.LogWarning($"[TestUICanvas] SyncGameStorageAsync failed: {sync.Error}");
             return;
         }
 

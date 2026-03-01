@@ -46,8 +46,8 @@
 - `string LocalDeviceId`
 - `string CloudDeviceId`
 
-`SyncAsync(ct)` 반환 시 payload가 `SyncResult`에 포함되므로 추가 파일 I/O는 불필요하다.
-인메모리 게임 상태 복원은 `SaveDataManager` 내부 책임이다. `SyncAsync(ct)` 성공 시 `LoadFromPayload()`가 직접 manager storage를 복원한다.
+`SyncGameStorageAsync(ct)` 반환 시 payload가 `SyncResult`에 포함되므로 추가 파일 I/O는 불필요하다.
+인메모리 게임 상태 복원은 `SaveDataManager` 내부 책임이다. `SyncGameStorageAsync(ct)` 성공 시 `LoadFromPayload()`가 직접 manager storage를 복원한다.
 
 
 ## Scenario
@@ -59,14 +59,14 @@
 
 ### Guest 로그인
 - CloudSave 경로 비활성: Cloud 호출 금지
-- `SyncAsync(ct)`: primary local save만 로드 — 데이터 있으면 `Success`, 없으면 `Initial`
+- `SyncGameStorageAsync(ct)`: primary local save만 로드 — 데이터 있으면 `Success`, 없으면 `Initial`
 
 ### Cloud Init 실패 (Non-Guest)
-- Cloud 초기화 실패 + Local 없음 → `SyncAsync` 실패 (`_initializeCloudAsync` 에러 반환)
-- Cloud 초기화 실패 + Local 있음 → local-only 모드로 진행 (`SyncAsync`: local payload로 `Success` 반환)
+- Cloud 초기화 실패 + Local 없음 → `SyncGameStorageAsync` 실패 (`_initializeCloudAsync` 에러 반환)
+- Cloud 초기화 실패 + Local 있음 → local-only 모드로 진행 (`SyncGameStorageAsync`: local payload로 `Success` 반환)
 
 ### Cloud Load/Save 실패 (Non-Guest)
-- Cloud `LoadAsync`/`SaveAsync` 실패는 `SyncAsync`의 실패로 반환한다.
+- Cloud `LoadAsync`/`SaveAsync` 실패는 `SyncGameStorageAsync`의 실패로 반환한다.
 - Cloud 연결 계층 실패는 `CommonErrorType.CLOUDSAVE_CONNECTION_FAILED`를 사용한다.
 
 ### Local 없음 + Cloud 있음
@@ -91,14 +91,14 @@
 ## Public API
 
 ### Sync
-- `Task<CommonResult<SyncResult>> SyncAsync(CancellationToken ct)`
+- `Task<CommonResult<SyncResult>> SyncGameStorageAsync(CancellationToken ct)`
 - `Task<CommonResult<bool>> ResolveConflictAsync(SyncResolution resolution, CancellationToken ct)`
 
 ### Save
-- `Task<CommonResult<bool>> SaveGameStateAsync(CancellationToken ct)`
+- `Task<CommonResult<bool>> SaveGameStorageAsync(CancellationToken ct)`
 
 규칙:
-- `SyncAsync(ct)` 성공 후에만 저장 가능하다.
+- `SyncGameStorageAsync(ct)` 성공 후에만 저장 가능하다.
 - `Initial`도 primary save context를 활성화하므로 첫 저장이 가능하다.
 - cloud 저장 실패는 non-fatal이며 `NeedsCloudSave`만 올린다.
 

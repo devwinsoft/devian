@@ -84,10 +84,10 @@ namespace Devian
         }
 
         // ──────────────────────────────────────────────
-        //  Public: Sync API
+        //  Public: Game Storage Sync API
         // ──────────────────────────────────────────────
 
-        public async Task<CommonResult<SyncResult>> SyncAsync(CancellationToken ct)
+        public async Task<CommonResult<SyncResult>> SyncGameStorageAsync(CancellationToken ct)
         {
             var result = await syncPrimaryCoreAsync(ct);
 
@@ -147,7 +147,7 @@ namespace Devian
                 if (init.IsFailure)
                 {
                     UnityEngine.Debug.LogWarning(
-                        $"[SaveDataManager] SyncAsync: cloud init failed, proceeding local-only. error={init.Error}");
+                        $"[SaveDataManager] SyncGameStorageAsync: cloud init failed, proceeding local-only. error={init.Error}");
 
                     var localR = await loadPrimaryLocalRecordAsync(ct);
                     if (localR.IsFailure)
@@ -178,7 +178,7 @@ namespace Devian
             if (cloudR2.IsFailure)
             {
                 UnityEngine.Debug.LogWarning(
-                    $"[SaveDataManager] SyncAsync load cloud failed for primary save. " +
+                    $"[SaveDataManager] SyncGameStorageAsync load cloud failed for primary save. " +
                     $"Failing sync. error={cloudR2.Error}");
                 return CommonResult<SyncResult>.Failure(cloudR2.Error!);
             }
@@ -413,18 +413,18 @@ namespace Devian
         }
 
         // ──────────────────────────────────────────────
-        //  Public: Save API
+        //  Public: Game Storage Save API
         // ──────────────────────────────────────────────
 
         /// <summary>
         /// 현재 Account/Inventory/Purchase 상태를 local + cloud에 저장한다.
-        /// SyncAsync 성공 후 사용 가능. cloud 저장 실패 시 MarkNeedsCloudSave 처리.
+        /// SyncGameStorageAsync 성공 후 사용 가능. cloud 저장 실패 시 MarkNeedsCloudSave 처리.
         /// </summary>
-        public async Task<CommonResult<bool>> SaveGameStateAsync(CancellationToken ct)
+        public async Task<CommonResult<bool>> SaveGameStorageAsync(CancellationToken ct)
         {
             if (!_hasPrimarySaveContext)
                 return CommonResult<bool>.Failure(
-                    CommonErrorType.SAVEDATA_SYNC_REQUIRED, "Primary save is not initialized. Call SyncAsync first.");
+                    CommonErrorType.SAVEDATA_SYNC_REQUIRED, "Primary save is not initialized. Call SyncGameStorageAsync first.");
 
             var json = ToJson();
             var local = await savePrimaryLocalAsync(json, ct);
@@ -443,7 +443,7 @@ namespace Devian
                         {
                             MarkNeedsCloudSave();
                             UnityEngine.Debug.LogWarning(
-                                $"[SaveDataManager] SaveGameStateAsync cloud save failed (non-fatal): {cloud.Error}");
+                                $"[SaveDataManager] SaveGameStorageAsync cloud save failed (non-fatal): {cloud.Error}");
                         }
                         else
                         {
@@ -459,7 +459,7 @@ namespace Devian
                 {
                     MarkNeedsCloudSave();
                     UnityEngine.Debug.LogWarning(
-                        $"[SaveDataManager] SaveGameStateAsync cloud exception (non-fatal): {ex.Message}");
+                        $"[SaveDataManager] SaveGameStorageAsync cloud exception (non-fatal): {ex.Message}");
                 }
             }
 

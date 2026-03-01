@@ -110,7 +110,7 @@
 {"Id":"PURCHASE_VERIFY_FAILED_PRECONDITION","Msg_key":"","Msg":"verifyPurchase failed precondition."}
 {"Id":"PURCHASE_VERIFY_INVALID_ARGUMENT","Msg_key":"","Msg":"verifyPurchase was called with invalid arguments."}
 {"Id":"PURCHASE_VERIFY_REJECTED_UNKNOWN","Msg_key":"","Msg":"verifyPurchase rejected purchase with unknown reason."}
-{"Id":"SAVEDATA_SYNC_REQUIRED","Msg_key":"","Msg":"Primary save is not initialized. Call SyncAsync first."}
+{"Id":"SAVEDATA_SYNC_REQUIRED","Msg_key":"","Msg":"Primary save is not initialized. Call SyncGameStorageAsync first."}
 {"Id":"SAVEDATA_PAYLOAD_PARSE_FAILED","Msg_key":"","Msg":"Failed to parse save payload json"}
 {"Id":"SAVEDATA_SYNC_CANCELLED","Msg_key":"","Msg":"SaveData sync resolve cancelled."}
 {"Id":"SAVEDATA_SYNC_LOAD_LOCAL_FAILED","Msg_key":"","Msg":"SaveData sync failed to load local payload."}

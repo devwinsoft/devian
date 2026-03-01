@@ -4,7 +4,7 @@
 ## Purpose
 - 로컬 파일 기반 저장/불러오기 기능 (ComplexUtil 난독화, atomic write 지원).
 - **SaveLocalManager는 삭제됨.** 모든 로컬 저장 로직은 `SaveDataManager`의 private 메서드로 통합되었다.
-- 외부에서 직접 호출 불가. `SaveDataManager.SyncAsync` / `ResolveConflictAsync`를 통해 간접 사용.
+- 외부에서 직접 호출 불가. `SaveDataManager.SyncGameStorageAsync` / `ResolveConflictAsync`를 통해 간접 사용.
 
 
 ## Implementation Location (3-path mirror)

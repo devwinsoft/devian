@@ -26,7 +26,7 @@ public class TestSceneLoading : TestSceneBootstrap
 
         UICanvasLoading.Instance.Init();
 
-        var sync = await SaveDataManager.Instance.SyncAsync(CancellationToken.None);
+        var sync = await SaveDataManager.Instance.SyncGameStorageAsync(CancellationToken.None);
         if (sync.IsFailure)
         {
             Debug.Log($"{sync.Error.Code}: {sync.Error.Message}");
@@ -37,7 +37,7 @@ public class TestSceneLoading : TestSceneBootstrap
         switch (sync.Value.State)
         {
             case SyncState.Initial:
-                var init = await SaveDataManager.Instance.SaveGameStateAsync(CancellationToken.None);
+                var init = await SaveDataManager.Instance.SaveGameStorageAsync(CancellationToken.None);
                 if (init.IsFailure)
                 {
                     Debug.LogError($"Initial save failed: code={init.Error.Code}, message={init.Error.Message}");
@@ -102,7 +102,7 @@ public class TestSceneLoading : TestSceneBootstrap
         if (purchaseSyncCode != CommonErrorType.SUCCESS)
             return purchaseSyncCode;
 #endif
-        var save = await SaveDataManager.Instance.SaveGameStateAsync(CancellationToken.None);
+        var save = await SaveDataManager.Instance.SaveGameStorageAsync(CancellationToken.None);
         if (save.IsFailure)
             return save.Error.Code;
         return CommonErrorType.SUCCESS;
@@ -155,7 +155,7 @@ public class TestSceneLoading : TestSceneBootstrap
 
         if (result.SaveError != null)
         {
-            Debug.LogWarning($"SaveGameStateAsync failed: {result.SaveError.Code}: {result.SaveError.Message}");
+            Debug.LogWarning($"SaveGameStorageAsync failed: {result.SaveError.Code}: {result.SaveError.Message}");
         }
 
         return CommonErrorType.SUCCESS;

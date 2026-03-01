@@ -42,7 +42,7 @@
 ## Usage
 - **직접 호출 불가.** SaveCloudManager는 삭제됨.
 - `AccountManager.LoginAsync` → 내부에서 `SaveDataManager.Instance._initializeCloudAsync(ct)` 호출.
-- Sync/Resolve는 `SaveDataManager.SyncAsync` / `ResolveConflictAsync`를 통해 간접 사용.
+- Sync/Resolve는 `SaveDataManager.SyncGameStorageAsync` / `ResolveConflictAsync`를 통해 간접 사용.
 
 
 ## Non-goals

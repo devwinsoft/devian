@@ -121,7 +121,7 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 
 ## Post-Sync Orchestration (SaveData 로드 후 표준 순서)
 
-1. `SaveDataManager.SyncAsync(ct)` → `SyncResult`
+1. `SaveDataManager.SyncGameStorageAsync(ct)` → `SyncResult`
 2. `SaveDataManager`가 성공 시 payload를 직접 복원 → inventory, purchase, account 역직렬화
 3. `if (Inventory.Rentals.Count > 0)` `PurchaseManager.SyncEntitlementsAsync(ct)` → Rental 서버 시간 재동기화 (조건부)
 4. `PurchaseManager.InitializeAsync(ct)` → IAP 초기화
