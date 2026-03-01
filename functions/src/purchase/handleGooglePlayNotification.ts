@@ -14,10 +14,11 @@ import {onMessagePublished} from "firebase-functions/v2/pubsub";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 import {verifyGooglePlay, GOOGLE_CREDENTIALS_SECRET} from "./storeVerify";
+import {appendPurchaseAuditRow, PURCHASE_AUDIT_CREDENTIALS_SECRET} from "./purchaseAuditSheet";
 
 // ── Constants ──
-// .env.{project} 에서 RTDN_TOPIC 읽음 (Firebase CLI가 deploy 전 process.env에 로드)
-const RTDN_TOPIC = process.env.RTDN_TOPIC!;
+// Current project RTDN topic is fixed. Keep the .env value in sync if this changes.
+const RTDN_TOPIC = "devian-play-rtdn";
 const ONE_TIME_PRODUCT_CANCELED = 2;
 const SUBSCRIPTION_REVOKED = 12;
 
@@ -52,6 +53,24 @@ interface DeveloperNotification {
   voidedPurchaseNotification?: VoidedPurchaseNotification;
   testNotification?: unknown;
 }
+
+type RefundTransactionResult =
+  | {applied: false}
+  | {
+    applied: true;
+    purchaseId: string;
+    uid: string;
+    storeKey: string;
+    internalProductId: string;
+    kind: string;
+    storeProductId: string;
+    storePurchaseId: string;
+    verifyStatus: "REFUNDED" | "REVOKED";
+    clientGrantStatus: string;
+    storeConfirmStatus: string;
+    refundSource: string;
+    storePurchasedAtMs: number;
+  };
 
 // ── Helpers ──
 function entitlementsDocRef(uid: string) {
@@ -89,7 +108,7 @@ function parseDeveloperNotification(data: unknown): DeveloperNotification | null
 export const handleGooglePlayNotification = onMessagePublished(
   {
     topic: RTDN_TOPIC,
-    secrets: [GOOGLE_CREDENTIALS_SECRET],
+    secrets: [GOOGLE_CREDENTIALS_SECRET, PURCHASE_AUDIT_CREDENTIALS_SECRET],
   },
   async (event) => {
     // ── 1) RTDN 메시지 디코딩 ──
@@ -246,7 +265,7 @@ export const handleGooglePlayNotification = onMessagePublished(
     const purchaseRef = purchaseDoc.ref;
     const entitlementRef = entitlementsDocRef(uid);
 
-    await admin.firestore().runTransaction(async (tx) => {
+    const transactionResult = await admin.firestore().runTransaction<RefundTransactionResult>(async (tx) => {
       const [txPurchaseSnap, txEntitlementSnap] = await Promise.all([
         tx.get(purchaseRef),
         tx.get(entitlementRef),
@@ -254,7 +273,7 @@ export const handleGooglePlayNotification = onMessagePublished(
 
       if (!txPurchaseSnap.exists) {
         logger.error("[handleGooglePlayNotification] Purchase doc disappeared during transaction.");
-        return;
+        return {applied: false};
       }
 
       const txPurchaseData = txPurchaseSnap.data()!;
@@ -262,8 +281,14 @@ export const handleGooglePlayNotification = onMessagePublished(
 
       // 멱등성: 트랜잭션 내 재확인
       if (txVerifyStatus === "REFUNDED" || txVerifyStatus === "REVOKED") {
-        return;
+        return {applied: false};
       }
+
+      const txPurchaseKind = String(txPurchaseData.kind ?? "");
+      const txStorePurchasedAt = txPurchaseData.storePurchasedAt;
+      const txStorePurchasedAtMs = txStorePurchasedAt && typeof txStorePurchasedAt.toMillis === "function"
+        ? txStorePurchasedAt.toMillis()
+        : 0;
 
       // 6-a) purchase 문서 업데이트
       tx.set(purchaseRef, {
@@ -276,16 +301,29 @@ export const handleGooglePlayNotification = onMessagePublished(
 
       // 6-b) entitlements 정리
       if (!txEntitlementSnap.exists) {
-        return; // entitlements 없으면 정리 불필요
+        return {
+          applied: true,
+          purchaseId: String(txPurchaseData.purchaseId ?? purchaseRef.id),
+          uid: String(txPurchaseData.uid ?? uid),
+          storeKey: String(txPurchaseData.storeKey ?? "google"),
+          internalProductId: String(txPurchaseData.internalProductId ?? ""),
+          kind: txPurchaseKind,
+          storeProductId: String(txPurchaseData.storeProductId ?? resolvedStoreProductId ?? ""),
+          storePurchaseId: String(txPurchaseData.storePurchaseId ?? purchaseToken),
+          verifyStatus: targetVerifyStatus,
+          clientGrantStatus: String(txPurchaseData.clientGrantStatus ?? ""),
+          storeConfirmStatus: String(txPurchaseData.storeConfirmStatus ?? ""),
+          refundSource: "RTDN",
+          storePurchasedAtMs: txStorePurchasedAtMs,
+        }; // entitlements 없으면 정리 불필요
       }
 
       const entitlementData = txEntitlementSnap.data()!;
-      const purchaseKind = String(txPurchaseData.kind ?? "");
       const entitlementPatch: Record<string, unknown> = {
         updatedAt: admin.firestore.FieldValue.serverTimestamp(),
       };
 
-      if (purchaseKind === "Rental") {
+      if (txPurchaseKind === "Rental") {
         // rentalId가 저장되어 있으면 사용, 없으면 internalProductId fallback
         const rentalKey = String(txPurchaseData.rentalId ?? txPurchaseData.internalProductId ?? "");
         const rentals = {...(entitlementData.rentals ?? {})} as Record<string, number>;
@@ -293,12 +331,12 @@ export const handleGooglePlayNotification = onMessagePublished(
           delete rentals[rentalKey];
           entitlementPatch.rentals = rentals;
         }
-      } else if (purchaseKind === "SeasonPass") {
+      } else if (txPurchaseKind === "SeasonPass") {
         const ownedSeasonPasses = Array.isArray(entitlementData.ownedSeasonPasses)
           ? [...entitlementData.ownedSeasonPasses]
           : [];
-        const internalProductId = String(txPurchaseData.internalProductId ?? "");
-        const idx = ownedSeasonPasses.indexOf(internalProductId);
+        const seasonPassKey = String(txPurchaseData.seasonPassId ?? txPurchaseData.internalProductId ?? "");
+        const idx = ownedSeasonPasses.indexOf(seasonPassKey);
         if (idx >= 0) {
           ownedSeasonPasses.splice(idx, 1);
           entitlementPatch.ownedSeasonPasses = ownedSeasonPasses;
@@ -308,7 +346,45 @@ export const handleGooglePlayNotification = onMessagePublished(
       // Subscription: 현재 서버 entitlements projection 없음
 
       tx.set(entitlementRef, entitlementPatch, {merge: true});
+
+      return {
+        applied: true,
+        purchaseId: String(txPurchaseData.purchaseId ?? purchaseRef.id),
+        uid: String(txPurchaseData.uid ?? uid),
+        storeKey: String(txPurchaseData.storeKey ?? "google"),
+        internalProductId: String(txPurchaseData.internalProductId ?? ""),
+        kind: txPurchaseKind,
+        storeProductId: String(txPurchaseData.storeProductId ?? resolvedStoreProductId ?? ""),
+        storePurchaseId: String(txPurchaseData.storePurchaseId ?? purchaseToken),
+        verifyStatus: targetVerifyStatus,
+        clientGrantStatus: String(txPurchaseData.clientGrantStatus ?? ""),
+        storeConfirmStatus: String(txPurchaseData.storeConfirmStatus ?? ""),
+        refundSource: "RTDN",
+        storePurchasedAtMs: txStorePurchasedAtMs,
+      };
     });
+
+    if (transactionResult.applied) {
+      try {
+        await appendPurchaseAuditRow({
+          purchaseId: transactionResult.purchaseId,
+          storeKey: transactionResult.storeKey,
+          internalProductId: transactionResult.internalProductId,
+          kind: transactionResult.kind,
+          storeProductId: transactionResult.storeProductId,
+          storePurchaseId: transactionResult.storePurchaseId,
+          verifyStatus: transactionResult.verifyStatus,
+          storePurchasedAtMs: transactionResult.storePurchasedAtMs,
+          eventOccurredAtMs: Date.now(),
+        });
+      } catch (err: any) {
+        logger.error("[handleGooglePlayNotification] Purchase audit append failed", {
+          purchaseId: transactionResult.purchaseId,
+          eventType: targetVerifyStatus === "REVOKED" ? "PURCHASE_REVOKED" : "PURCHASE_REFUNDED",
+          error: err?.message ?? String(err),
+        });
+      }
+    }
 
     logger.info(
       `[handleGooglePlayNotification] Refund processed. ` +

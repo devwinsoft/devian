@@ -1,9 +1,14 @@
-# 47-purchase-verification-setup — Purchase Verification Infrastructure Setup
+---
+name: 12-purchase-verification-setup
+description: Set up purchase verification infrastructure for the Firebase Functions purchase backend. Use when provisioning Secret Manager, IAM, Pub/Sub, RTDN, Play Console integration, and deployment checks for purchase verification.
+---
+
+# 12-purchase-verification-setup — Purchase Verification Infrastructure Setup
 
 Status: ACTIVE
 AppliesTo: v10
 
-> Repo 구조 정본: `../44-purchase-repo-firebase-functions-setup/SKILL.md`
+> Repo 구조 정본: `../11-purchase-repo-firebase-functions-setup/SKILL.md`
 
 > 결정사항 정본: `../46-purchase-decisions/SKILL.md`
 
@@ -84,14 +89,17 @@ echo -n "{APPLE_SHARED_SECRET_VALUE}" | \
 ### B3. Secret Manager 접근 권한
 
 ```bash
+# 프로젝트 번호 확인 (Gen2 runtime service account)
+PROJECT_NUMBER=$(gcloud projects describe {PROJECT_ID} --format="value(projectNumber)")
+
 # Functions 런타임 서비스 계정에 시크릿 접근 허용
 gcloud secrets add-iam-policy-binding GOOGLE_APPLICATION_CREDENTIALS_JSON \
-  --member="serviceAccount:{PROJECT_ID}@appspot.gserviceaccount.com" \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
   --role="roles/secretmanager.secretAccessor" \
   --project={PROJECT_ID}
 
 gcloud secrets add-iam-policy-binding APPLE_SHARED_SECRET \
-  --member="serviceAccount:{PROJECT_ID}@appspot.gserviceaccount.com" \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
   --role="roles/secretmanager.secretAccessor" \
   --project={PROJECT_ID}
 ```
@@ -292,7 +300,7 @@ gcloud logging read \
 |------------|-----------|------|------|
 | Pub/Sub 토픽 | `google-play-developer-notifications@system.gserviceaccount.com` | `roles/pubsub.publisher` | Google Play → Pub/Sub |
 | Cloud Run 서비스 | `{PROJECT_NUMBER}-compute@developer.gserviceaccount.com` | `roles/run.invoker` | Pub/Sub → Cloud Run |
-| Secret Manager | `{PROJECT_ID}@appspot.gserviceaccount.com` | `roles/secretmanager.secretAccessor` | Functions → 시크릿 |
+| Secret Manager | `{PROJECT_NUMBER}-compute@developer.gserviceaccount.com` | `roles/secretmanager.secretAccessor` | Functions → 시크릿 |
 
 
 ---
@@ -329,7 +337,7 @@ gcloud firestore indexes composite list --project={PROJECT_ID} --database="(defa
 Error: 7 PERMISSION_DENIED: Permission denied on secret
 ```
 
-원인: Functions 서비스 계정에 `secretAccessor` 없음.
+원인: Functions runtime 서비스 계정에 `secretAccessor` 없음.
 해결: B3 실행.
 
 ### G4. RTDN 미수신 (라이선스 테스터)
@@ -352,7 +360,7 @@ The purchase token does not match the product ID.
 
 ## H. 관련 정본 링크
 
-- Repo 구조(44): `../44-purchase-repo-firebase-functions-setup/SKILL.md`
+- Repo 구조(11): `../11-purchase-repo-firebase-functions-setup/SKILL.md`
 - Refund(45): `../45-purchase-refund-processing/SKILL.md`
 - Decisions(46): `../46-purchase-decisions/SKILL.md`
 - Backend(40): `../40-purchase-backend-firebase/SKILL.md`

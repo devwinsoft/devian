@@ -1,4 +1,9 @@
-# 44-purchase-repo-firebase-functions-setup — Repo Setup for Firebase Functions (Serverless Backend)
+---
+name: 11-purchase-repo-firebase-functions-setup
+description: Define the repository layout and deployment setup for Firebase Functions in the purchase backend. Use when adding Functions to a repo, deciding where firebase config and firestore rules live, or documenting the canonical CLI deployment structure.
+---
+
+# 11-purchase-repo-firebase-functions-setup — Repo Setup for Firebase Functions (Serverless Backend)
 
 Status: ACTIVE
 AppliesTo: v10
@@ -25,13 +30,9 @@ AppliesTo: v10
 
 ## A. 레포 내 Functions 위치 (정본)
 
-NEEDS CHECK (단일 선택 필요):
-- Option A: `{repoRoot}/functions`
-- Option B: `{repoRoot}/server/firebase/functions`
-
-선택 기준(권장):
-- 서버 관련 코드가 이미 `server/` 트리로 모여있으면 B
-- 아니면 Firebase 표준에 맞춰 A
+- 정본 위치: `{repoRoot}/functions`
+- 현재 레포는 Firebase 표준 위치를 사용한다.
+- `firebase.json` 의 `functions[].source` 도 `functions` 로 고정한다.
 
 
 ---
@@ -43,15 +44,17 @@ Functions 위치가 확정되면, `{repoRoot}` 기준 아래 파일이 반드시
 
 ### B1. `.firebaserc`
 - 목적: Firebase 프로젝트 alias/ID 연결
-
-NEEDS CHECK:
-- 실제 Firebase projectId / alias는 레포/팀 정책으로 확정해야 한다.
+- 위치: `{repoRoot}/.firebaserc`
+- 규칙: `projects.default = {PROJECT_ID}` 형식으로 유지한다.
+- 현재 레포 예시: `default -> devian-framwork-example`
 
 ### B2. `firebase.json`
 - 목적: functions 소스 경로, firestore rules(사용 시) 등의 엔트리포인트
-
-NEEDS CHECK:
-- Firestore rules 파일 경로를 어디로 둘지 C 섹션에서 확정한다.
+- 위치: `{repoRoot}/firebase.json`
+- 현재 정본:
+  - `functions[].source = "functions"`
+  - `firestore.rules = "firestore.rules"`
+  - `firestore.indexes = "firestore.indexes.json"`
 
 
 ---
@@ -59,14 +62,9 @@ NEEDS CHECK:
 
 ## C. Firestore rules 파일 위치 (정본)
 
-NEEDS CHECK (단일 선택 필요):
-- Option A: `{repoRoot}/firestore.rules`
-- Option B: `{repoRoot}/server/firebase/firestore.rules`
-- Option C: `{repoRoot}/{functionsRoot}/firestore.rules` (functions와 동거)
-
-선택 기준(권장):
-- 서버 설정을 `server/firebase/`로 모으면 B
-- 간단히 루트에 두고 관리하면 A
+- 정본 위치: `{repoRoot}/firestore.rules`
+- 인덱스 정본 위치: `{repoRoot}/firestore.indexes.json`
+- 현재 레포는 rules/indexes 를 repo root 에 둔다.
 
 규칙(하드룰):
 - Purchase ledger / entitlements 문서에 대해 **클라이언트 write 금지**
@@ -81,14 +79,21 @@ NEEDS CHECK (단일 선택 필요):
 Functions root(= A 섹션에서 선택한 위치) 아래에 최소 구성:
 
 - `package.json`
-- `tsconfig.json` (TS 사용 시)
+- `tsconfig.json`
 - `src/index.ts` (엔트리)
 - `src/purchase/verifyPurchase.ts`
 - `src/purchase/getEntitlements.ts`
-- (선택) `src/types/*` (요청/응답 타입)
+- `src/purchase/ackPurchaseClientGrant.ts`
+- `src/purchase/ackPurchaseStoreConfirm.ts`
+- `src/purchase/ackRefundApplied.ts`
+- `src/purchase/handleGooglePlayNotification.ts`
+- `src/purchase/storeVerify.ts`
+- `src/purchase/purchaseAuditSheet.ts`
 
-NEEDS CHECK:
-- TS vs JS 선택. 권장: TS(타입/계약 강제)
+언어/런타임 정본:
+- TypeScript 사용
+- Node.js `20`
+- `main = "lib/index.js"`
 
 
 ---
@@ -96,22 +101,27 @@ NEEDS CHECK:
 
 ## E. 배포/로컬 실행 명령 (정본)
 
-이 스킬은 "명령의 위치"만 고정한다. 실제 값(프로젝트 ID 등)은 NEEDS CHECK로 남긴다.
-
 함수 내부 구현/검증 로직은 `40-purchase-backend-firebase` 문서를 따른다.
 
 - Firebase CLI 설치 필요
-- 초기화:
-  - `firebase init functions`
-- 로컬 에뮬레이터(권장):
-  - `firebase emulators:start`
-- 배포(최소):
-  - `firebase deploy --only functions`
-- 배포(개별 함수):
-  - `firebase deploy --only functions:verifyPurchase,functions:getEntitlements`
+- 의존성 설치:
+  - `npm --prefix functions install`
+- lint:
+  - `npm --prefix functions run lint`
+- build:
+  - `npm --prefix functions run build`
+- 로컬 에뮬레이터:
+  - `npm --prefix functions run serve`
+- Functions 배포:
+  - `npm --prefix functions run deploy -- --project {PROJECT_ID}`
+- 전체 Firebase 배포:
+  - `firebase deploy --project {PROJECT_ID}`
 
-NEEDS CHECK:
-- 레포에서 공식적으로 사용할 명령(스크립트)을 `package.json`에 넣을지 여부
+현재 `functions/package.json` 스크립트:
+- `lint`
+- `build`
+- `serve`
+- `deploy`
 
 
 ---
@@ -136,9 +146,9 @@ PurchaseManager가 완료되려면, 다음 스킬의 미결정 항목이 추가�
 ## DoD
 
 Hard (must be 0)
-- [ ] Functions 위치가 Option A/B 중 하나로 확정되어 문서에 반영되어 있다.
+- [ ] Functions 위치가 `{repoRoot}/functions` 로 확정되어 문서에 반영되어 있다.
 - [ ] `.firebaserc`, `firebase.json`의 존재가 문서에 고정되어 있다.
-- [ ] Firestore rules 파일 위치가 단일 옵션으로 확정되어 있다.
+- [ ] Firestore rules/indexes 파일 위치가 repo root 로 확정되어 있다.
 - [ ] Functions 소스 최소 구조(엔트리 + 2개 purchase 함수 파일 경로)가 문서에 고정되어 있다.
 - [ ] 배포/에뮬레이터 명령이 문서에 포함되어 있다.
 

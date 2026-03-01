@@ -51,7 +51,7 @@ AppliesTo: v10
 ## Functions 관련 정본 링크 (중복 금지)
 
 - 구현 정본(Functions + Firestore 스키마/멱등): `../40-purchase-backend-firebase/SKILL.md`
-- 레포/배포/CLI/설정 파일 정본: `../44-purchase-repo-firebase-functions-setup/SKILL.md`
+- 레포/배포/CLI/설정 파일 정본: `../11-purchase-repo-firebase-functions-setup/SKILL.md`
 - 클라-서버 호출/ConfirmPurchase 규칙 정본: `../43-purchase-client-server-integration/SKILL.md`
 - 고정 결정사항(Callable 이름/스키마/시크릿/경로): `../46-purchase-decisions/SKILL.md`
 

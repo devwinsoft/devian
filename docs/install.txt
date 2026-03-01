@@ -1,5 +1,5 @@
 // 기본 설정
-project_id: devian-framwork-example
+PROJECT_ID: devian-framwork-example
 
 
 // google 설정
@@ -67,3 +67,26 @@ Google Cloud Console → Pub/Sub → 토픽 devian-play-rtdn 생성
 IAM → google-play-developer-notifications@system.gserviceaccount.com에 Pub/Sub Publisher 역할 부여
 Google Play Console → Monetization setup → RTDN → 토픽 projects/devian-framwork-example/topics/devian-play-rtdn 설정
 배포: firebase deploy --only functions,firestore:indexes
+
+
+// 결제 로그 설정
+gcloud services enable drive.googleapis.com sheets.googleapis.com --project={PROJECT_ID}
+
+gcloud iam service-accounts create purchase-audit-writer \
+  --project={PROJECT_ID}
+
+gcloud iam service-accounts keys create purchase-audit-writer.json \
+  --iam-account=purchase-audit-writer@{PROJECT_ID}.iam.gserviceaccount.com \
+  --project={PROJECT_ID}
+
+gcloud secrets create GOOGLE_DRIVE_AUDIT_CREDENTIALS_JSON \
+  --project={PROJECT_ID}
+
+gcloud secrets versions add GOOGLE_DRIVE_AUDIT_CREDENTIALS_JSON \
+  --data-file=purchase-audit-writer.json \
+  --project={PROJECT_ID}
+
+gcloud secrets add-iam-policy-binding GOOGLE_DRIVE_AUDIT_CREDENTIALS_JSON \
+  --member="serviceAccount:{PROJECT_ID}@appspot.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor" \
+  --project={PROJECT_ID}

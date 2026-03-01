@@ -33,17 +33,28 @@ public class TestApplication : MobileBootstrap
     , "table-pb64"
 #endif
     };
-    bool _isInitialized = false;
 
     protected override async Task OnBootProc()
     {
         await base.OnBootProc();
-    }
+        
+        await UnityCoroutineRunner.RunAsync(this, DownloadManager.Instance.PatchProc(
+            patchList,
+            onDone: (patch) =>
+            {
+                Debug.Log(patch.TotalSize);
+            }
+        ));
 
-    public async Task LoadPatchList()
-    {
-        if (_isInitialized) return;
-        _isInitialized = true;
+        // await UnityCoroutineRunner.RunAsync(this, DownloadManager.Instance.DownloadProc(
+        //     patchList,
+        //     onProgress: (progress) =>
+        //     {
+        //     },
+        //     onSuccess: () =>
+        //     {
+        //     }
+        // ));
         
 #if UNITY_EDITOR
         await TableManager.Instance.LoadTablesAsync("table-ndjson", TableFormat.Json);

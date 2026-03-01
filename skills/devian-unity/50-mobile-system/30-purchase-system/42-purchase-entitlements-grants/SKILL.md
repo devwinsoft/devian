@@ -1,3 +1,8 @@
+---
+name: 42-purchase-entitlements-grants
+description: Define grants and entitlement projection rules for the purchase system. Use when deciding what the server stores in entitlements, how products map to grants, and how restore or sync data is represented for clients.
+---
+
 # 42-purchase-entitlements-grants — Grants & Entitlements Rules (Server-side)
 
 Status: ACTIVE
@@ -57,8 +62,8 @@ NEEDS CHECK:
 > 클라이언트가 entitlements를 동기화하려면 별도 `getEntitlements` Callable을 호출한다.
 
 최소 필드 (서버 Firestore `/users/{uid}/entitlements/current`):
-- `ownedSeasonPasses: string[]`
-- `rentals: object` (`internalProductId -> expiresAtServerUtcMs`)
+- `ownedSeasonPasses: string[]` (`seasonPassId` 목록)
+- `rentals: object` (`rentalId -> expiresAtServerUtcMs`)
 - `currencyBalances: object`
 - `updatedAt: Timestamp`
 

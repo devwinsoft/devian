@@ -86,6 +86,25 @@ namespace Devian
             return list.Count == 0 ? Array.Empty<RewardData>() : list.ToArray();
         }
 
+        static string ResolveSeasonPassId(string internalProductIdOrSeasonPassId)
+        {
+            if (string.IsNullOrEmpty(internalProductIdOrSeasonPassId))
+                return string.Empty;
+
+            var product = TB_PRODUCT.Get(internalProductIdOrSeasonPassId);
+            if (product == null || product.Kind != ProductKind.SeasonPass)
+                return internalProductIdOrSeasonPassId;
+
+            var rewards = ResolveRewardDatas(product.RewardGroupId);
+            for (var i = 0; i < rewards.Length; i++)
+            {
+                if (rewards[i].Type == REWARD_TYPE.SEASON_PASS)
+                    return rewards[i].Id;
+            }
+
+            return internalProductIdOrSeasonPassId;
+        }
+
         string ResolveStoreProductId(string internalProductId)
         {
             var product = TB_PRODUCT.Get(internalProductId);
@@ -1041,7 +1060,7 @@ namespace Devian
                 if (!TryTakeDeferredPendingOrder(storeProductId, out pendingOrder))
                 {
                     _purchaseTcs = new TaskCompletionSource<PendingOrder>();
-                    _controller.PurchaseProduct(internalProductId);
+                    _controller.PurchaseProduct(storeProductId);
 
                     var gotPendingOrder = false;
                     try
@@ -1436,16 +1455,21 @@ namespace Devian
                 ["payload"] = payload,
             };
 
-            // Rental: REWARD table Id를 서버 entitlements 키로 전달
-            if (kind == PurchaseKind.Rental)
+            // Rental / SeasonPass: REWARD table Id를 서버 entitlements 키로 전달
+            if (kind == PurchaseKind.Rental || kind == PurchaseKind.SeasonPass)
             {
                 var rgId = ResolveRewardGroupId(internalProductId);
                 var rewards = ResolveRewardDatas(rgId);
                 for (int i = 0; i < rewards.Length; i++)
                 {
-                    if (rewards[i].Type == REWARD_TYPE.RENTAL)
+                    if (kind == PurchaseKind.Rental && rewards[i].Type == REWARD_TYPE.RENTAL)
                     {
                         data["rentalId"] = rewards[i].Id;
+                        break;
+                    }
+                    if (kind == PurchaseKind.SeasonPass && rewards[i].Type == REWARD_TYPE.SEASON_PASS)
+                    {
+                        data["seasonPassId"] = rewards[i].Id;
                         break;
                     }
                 }
@@ -1761,12 +1785,17 @@ namespace Devian
         static EntitlementsSnapshot ParseEntitlementsSnapshot(Dictionary<string, object> snap)
         {
             var seasonPasses = new List<string>();
+            var seasonPassSet = new HashSet<string>(StringComparer.Ordinal);
             if (snap.TryGetValue("ownedSeasonPasses", out var sp) && sp is IEnumerable<object> spList)
             {
                 foreach (var s in spList)
                 {
                     if (s is string str)
-                        seasonPasses.Add(str);
+                    {
+                        var seasonPassId = ResolveSeasonPassId(str);
+                        if (!string.IsNullOrEmpty(seasonPassId) && seasonPassSet.Add(seasonPassId))
+                            seasonPasses.Add(seasonPassId);
+                    }
                 }
             }
 

@@ -12,8 +12,8 @@ namespace Devian
     /// 그 컴포넌트를 Bootstrap prefab에 붙여서 사용한다.
     ///
     /// Bootstrap/BootProc/씬 구성은 개발자가 처리한다.
-    /// 프레임워크는 BaseScene 로드 시 Bootstrap prefab을 자동 instantiate하고,
-    /// OnEnter/OnStart 직전에 BootProc를 1회 보장한다.
+    /// 프레임워크는 BaseScene 로드 시 Bootstrap prefab을 자동 instantiate한다.
+    /// BootProc 실행 시점은 SceneTransManager가 아니라 씬/앱 쪽에서 명시적으로 관리한다.
     /// </summary>
     public abstract class BaseBootstrap : MonoBehaviour
     {
@@ -60,15 +60,9 @@ namespace Devian
         {
             if (_booted)
                 return;
+            _booted = true;
 
-            try
-            {
-                await OnBootProc();
-            }
-            finally
-            {
-                _booted = true;
-            }
+            await OnBootProc();
         }
 
         /// <summary>

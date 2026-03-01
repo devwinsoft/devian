@@ -1,3 +1,8 @@
+---
+name: 45-purchase-refund-processing
+description: Define refund and revoke processing for the purchase backend. Use when implementing RTDN handling, purchase state transitions to REFUNDED or REVOKED, entitlement cleanup, and client refund adjustment workflows.
+---
+
 # 45-purchase-refund-processing — Refund Detection & Processing
 
 Status: ACTIVE
@@ -84,7 +89,7 @@ AppliesTo: v10
    - purchase 문서: `verifyStatus → REFUNDED/REVOKED`, `updatedAt`, `refundedAt`, `refundSource: "RTDN"`
    - entitlements 정리:
      - Rental: `rentals` 맵에서 `rentalId` (fallback: `internalProductId`) 키 삭제
-     - SeasonPass: `ownedSeasonPasses[]` 에서 `internalProductId` 제거
+     - SeasonPass: `ownedSeasonPasses[]` 에서 `seasonPassId` 제거
      - Consumable: entitlements 변경 없음
 
 ### B4. 에러 처리

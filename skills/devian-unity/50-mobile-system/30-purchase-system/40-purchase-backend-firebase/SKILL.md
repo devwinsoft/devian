@@ -1,3 +1,8 @@
+---
+name: 40-purchase-backend-firebase
+description: Define the Firebase Functions and Firestore implementation for the purchase backend. Use when implementing verifyPurchase, refund processing, entitlement projection, Firestore schema, and idempotent server-side purchase state transitions.
+---
+
 # 40-purchase-backend-firebase — Firebase Backend Implementation (Functions + Firestore)
 
 Status: ACTIVE
@@ -11,7 +16,7 @@ AppliesTo: v10
 
 - 이 문서는 **Firebase Functions + Firestore 서버 구현 정본**이다.
 - 포함: Callable 책임, Firestore 스키마, 멱등 규칙, 인덱스 요구사항
-- 비포함: 레포 배치/`firebase.json`/`.firebaserc`/CLI 배포 셋업 상세 (→ `44`)
+- 비포함: 레포 배치/`firebase.json`/`.firebaserc`/CLI 배포 셋업 상세 (→ `11`)
 - 비포함: 운영 체크리스트/테스트 최소 시나리오/운영 DoD (→ `09`)
 - 비포함: 최종 고정 결정값(Callable 이름/시크릿/경로)의 결정 관리 (→ `46`)
 
@@ -38,7 +43,7 @@ NEEDS CHECK: 레포 내 Functions 위치가 아직 고정돼 있지 않으면, �
 
 결정 후, 이 문서의 모든 경로는 결정된 위치로 통일한다.
 
-레포에 실제로 어떤 파일을 어디에 둘지와 Firebase CLI 셋업 절차는 `44-purchase-repo-firebase-functions-setup` 문서를 우선한다.
+레포에 실제로 어떤 파일을 어디에 둘지와 Firebase CLI 셋업 절차는 `11-purchase-repo-firebase-functions-setup` 문서를 우선한다.
 
 
 ### A1. 배포 명령 (정본)
@@ -81,7 +86,7 @@ NEEDS CHECK: Firebase CLI 사용 여부/버전이 레포에서 고정돼 있어�
 필드 (최소):
 - `updatedAt: Timestamp`
 - `ownedSeasonPasses: string[]` (SeasonPass 복원 projection)
-- `rentals: object` (`internalProductId -> expiresAtServerUtcMs`, Rental 복원 projection; simple map)
+- `rentals: object` (`rentalId -> expiresAtServerUtcMs`, Rental 복원 projection; simple map)
 - `currencyBalances: object` (필요 시; 현재 구현에서 사용)
 - `subscriptions: object` (구독 상태 요약, 필요 시)
 - `seasonPass: object` (legacy/프로젝트별 상태 요약, 필요 시)

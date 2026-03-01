@@ -55,7 +55,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
     }
     
 
-    public async void OnClick_Purchase_1()
+    public async void OnClick_Purchase_NoAds()
     {
         Debug.Log(TestApplication.GetVersionCode());
 
@@ -75,9 +75,30 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             Debug.LogWarning($"Rentals: {key}");
         }
     }
+    
+    
+    
+    public async void OnClick_Purchase_Pass()
+    {
+        var result = await PurchaseManager.Instance.PurchaseAsync(
+            "pass_001",
+            CancellationToken.None);
+        if (result.IsSuccess)
+        {
+            Debug.Log(result.Value.ResultStatus);
+            foreach (var reward in result.Value.AppliedRewards)
+            {
+                Debug.Log($"{reward.Type}, {reward.Id}, {reward.Amount}");
+            }
+        }
+        else
+        {
+            Debug.Log($"{result.Error.Code}: {result.Error.Message}");
+        }
+    }
 
 
-    public async void OnClick_Purchase_2()
+    public async void OnClick_Purchase_Chest()
     {
         var result = await PurchaseManager.Instance.PurchaseAsync(
             "chest_003",
@@ -95,6 +116,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             Debug.Log($"{result.Error.Code}: {result.Error.Message}");
         }
     }
+
     
     
     public async void OnClick_InAppAd()
@@ -111,7 +133,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             if (remainMs > 0)
             {
                 var span = TimeSpan.FromMilliseconds(remainMs);
-                Debug.Log($"remain ms: {span.ToString("d:hh:mm:ss")}");
+                Debug.Log($"remain ms: {span.ToString(@"d\:hh\:mm\:ss")}");
             }
         }
         else if (result.IsFailure)

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Purchase Audit Setup"
+  short_description: "Google Sheets audit logging setup"
+  default_prompt: "Use $13-purchase-audit-google-sheets-setup to set up Google Sheets purchase audit logging for this project."

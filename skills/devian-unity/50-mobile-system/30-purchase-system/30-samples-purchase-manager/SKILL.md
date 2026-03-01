@@ -204,5 +204,5 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 - `skills/devian-unity/50-mobile-system/30-purchase-system/09-ssot-operations/SKILL.md`
 - `skills/devian-unity/50-mobile-system/30-purchase-system/40-purchase-backend-firebase/SKILL.md`
 - `skills/devian-unity/50-mobile-system/30-purchase-system/43-purchase-client-server-integration/SKILL.md`
-- `skills/devian-unity/50-mobile-system/30-purchase-system/44-purchase-repo-firebase-functions-setup/SKILL.md`
+- `skills/devian-unity/50-mobile-system/30-purchase-system/11-purchase-repo-firebase-functions-setup/SKILL.md`
 - `skills/devian-unity/50-mobile-system/30-purchase-system/46-purchase-decisions/SKILL.md`

@@ -42,6 +42,15 @@ public class TestSceneSample : TestSceneBootstrap
 
         Log.Debug(ST_TEXT.Get("loading"));
         BundlePool.Spawn<TestPoolObject>("Cube", Vector3.zero, Quaternion.identity, null);
+
+        foreach (var key in InventoryManager.Instance.Storage.Rentals.Keys)
+        {
+            Debug.Log($"Rental: {key}");
+        }
+        foreach (var key in InventoryManager.Instance.Storage.SeasonPasses.Keys)
+        {
+            Debug.Log($"SeasonPass: {key}");
+        }
     }
 
     protected override Task onExit()

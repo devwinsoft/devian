@@ -14,6 +14,7 @@ import {onCall, HttpsError} from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 import {verifyGooglePlay, verifyApple, GOOGLE_CREDENTIALS_SECRET} from "./storeVerify";
+import {appendPurchaseAuditRow, PURCHASE_AUDIT_CREDENTIALS_SECRET} from "./purchaseAuditSheet";
 
 // ── Firestore 참조 헬퍼 ──
 function purchaseDocRef(uid: string, purchaseId: string) {
@@ -34,7 +35,7 @@ type StoreConfirmStatus = "PENDING" | "CONFIRMED";
 const RENTAL_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 
 // Restore projection policy (implemented in verifyPurchase transaction for new GRANTED purchases):
-// - SeasonPass: keep internalProductId ownership projection on server (e.g. ownedSeasonPasses[]).
+// - SeasonPass: keep simple list [seasonPassId || internalProductId] on server.
 // - Rental: keep simple map { [rentalId || internalProductId]: expiresAtServerUtcMs } on server.
 // - Rental expiry policy on new GRANTED purchase:
 //     newExpiry = max(existingExpiry, serverNowUtcMs) + 30 days
@@ -97,10 +98,11 @@ interface VerifyRequest {
   kind: Kind;
   payload: string;
   rentalId?: string; // Rental: REWARD table Id (entitlements key). Falls back to internalProductId.
+  seasonPassId?: string; // SeasonPass: REWARD table Id (entitlements key). Falls back to internalProductId.
 }
 
 function validateRequest(data: any): VerifyRequest {
-  const {storeKey, internalProductId, storeProductId, packageName, kind, payload, rentalId} = data;
+  const {storeKey, internalProductId, storeProductId, packageName, kind, payload, rentalId, seasonPassId} = data;
 
   if (!storeKey || !["apple", "google"].includes(storeKey)) {
     throw new HttpsError("invalid-argument", "storeKey must be 'apple' or 'google'");
@@ -123,8 +125,11 @@ function validateRequest(data: any): VerifyRequest {
   if (rentalId !== undefined && typeof rentalId !== "string") {
     throw new HttpsError("invalid-argument", "rentalId must be string when provided");
   }
+  if (seasonPassId !== undefined && typeof seasonPassId !== "string") {
+    throw new HttpsError("invalid-argument", "seasonPassId must be string when provided");
+  }
 
-  return {storeKey, internalProductId, storeProductId, packageName, kind, payload, rentalId};
+  return {storeKey, internalProductId, storeProductId, packageName, kind, payload, rentalId, seasonPassId};
 }
 
 interface GoogleReceiptInfo {
@@ -239,7 +244,7 @@ export const __test_parseGoogleReceipt = parseGoogleReceipt;
 // ═══════════════════════════════════════════
 
 export const verifyPurchase = onCall(
-  {secrets: [GOOGLE_CREDENTIALS_SECRET]},
+  {secrets: [GOOGLE_CREDENTIALS_SECRET, PURCHASE_AUDIT_CREDENTIALS_SECRET]},
   async (request) => {
     // 46 스킬 B: context.auth.uid 필수(unauthenticated 거부)
     if (!request.auth) {
@@ -426,6 +431,8 @@ export const verifyPurchase = onCall(
         storeResponse: JSON.stringify(storeResult.rawResponse),
         // Rental: rentalId 저장 (RTDN 환불 시 entitlements 정리용)
         ...(req.kind === "Rental" ? {rentalId: req.rentalId || req.internalProductId} : {}),
+        // SeasonPass: seasonPassId 저장 (entitlements 복원/RTDN 환불 정리용)
+        ...(req.kind === "SeasonPass" ? {seasonPassId: req.seasonPassId || req.internalProductId} : {}),
       });
 
       // entitlements projection 갱신 (SeasonPass ownership / Rental expiry)
@@ -438,8 +445,9 @@ export const verifyPurchase = onCall(
         const ownedSeasonPasses = Array.isArray(entitlementData.ownedSeasonPasses)
           ? [...entitlementData.ownedSeasonPasses]
           : [];
-        if (!ownedSeasonPasses.includes(req.internalProductId)) {
-          ownedSeasonPasses.push(req.internalProductId);
+        const seasonPassKey = req.seasonPassId || req.internalProductId;
+        if (!ownedSeasonPasses.includes(seasonPassKey)) {
+          ownedSeasonPasses.push(seasonPassKey);
         }
         entitlementPatch.ownedSeasonPasses = ownedSeasonPasses;
       } else if (req.kind === "Rental") {
@@ -468,6 +476,28 @@ export const verifyPurchase = onCall(
     // 46 스킬 F: grants 빈 배열 허용
     // 46 스킬 F: GRANTED/ALREADY_GRANTED 시 entitlementsSnapshot 반환
     const entitlementsSnapshot = await readEntitlementsSnapshot(uid);
+
+    if (txResult.resultStatus === "GRANTED") {
+      try {
+        await appendPurchaseAuditRow({
+          purchaseId,
+          storeKey: req.storeKey,
+          internalProductId: req.internalProductId,
+          kind: req.kind,
+          storeProductId: req.storeProductId ?? "",
+          storePurchaseId: storeResult.storePurchaseId,
+          verifyStatus: txResult.verifyStatus,
+          storePurchasedAtMs: storeResult.purchasedAtMs,
+          eventOccurredAtMs: Date.now(),
+        });
+      } catch (err: any) {
+        logger.error("[verifyPurchase] Purchase audit append failed", {
+          purchaseId,
+          eventType: "PURCHASE_GRANTED",
+          error: err?.message ?? String(err),
+        });
+      }
+    }
 
     logger.info(`[verifyPurchase] uid=${uid} purchaseId=${purchaseId} result=${txResult.resultStatus} clientGrant=${txResult.clientGrantStatus} confirm=${txResult.storeConfirmStatus}`);
 

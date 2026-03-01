@@ -19,15 +19,5 @@ public abstract class TestSceneBootstrap : SceneBase
     protected override async Task onStart()
     {
         await TestApplication.Instance.BootProc();
-        
-        await UnityCoroutineRunner.RunAsync(this, DownloadManager.Instance.PatchProc(
-            TestApplication.Instance.patchList,
-            onDone: (patch) =>
-            {
-                Debug.Log(patch.TotalSize);
-            }
-        ));
-
-        await TestApplication.Instance.LoadPatchList();
     }
 }

@@ -17,9 +17,11 @@ Purchase(유료) 경로의 실제 지급 실행은 `rewardGroupId`를 RewardMana
 - 정책/모듈 경계는 `01-policy`
 - 통합 SSOT/핵심 합의는 `03-ssot`
 - 운영/보안/테스트/DoD는 `09-ssot-operations`
-- Firebase Functions 구현/셋업은 `40` / `44`
+- Firebase Functions 구현/레포 셋업은 `40` / `11`
 - 환불 감지/처리 파이프라인은 `45`
-- 인프라 셋업 실행 가이드는 `47`
+- 구매 검증 인프라 셋업은 `12`
+- Google Sheets 감사 로그 셋업은 `13`
+- Google Sheets 감사 로그 정본은 `48`
 - 로컬/클라우드 저장용 구매 상태 스냅샷은 `33`
 
 
@@ -40,10 +42,12 @@ Purchase(유료) 경로의 실제 지급 실행은 `rewardGroupId`를 RewardMana
 | [41-purchase-store-verification](../41-purchase-store-verification/SKILL.md) | Apple/Google 스토어 검증 및 storePurchaseId 정본 |
 | [42-purchase-entitlements-grants](../42-purchase-entitlements-grants/SKILL.md) | grants/entitlements 계산 및 저장 규칙 정본 |
 | [43-purchase-client-server-integration](../43-purchase-client-server-integration/SKILL.md) | Verify/Sync 호출 방식 및 ConfirmPurchase 하드룰 |
-| [44-purchase-repo-firebase-functions-setup](../44-purchase-repo-firebase-functions-setup/SKILL.md) | Firebase Functions를 레포에 추가하기 위한 구성 정본(파일/폴더/배포) |
+| [11-purchase-repo-firebase-functions-setup](../11-purchase-repo-firebase-functions-setup/SKILL.md) | Firebase Functions를 레포에 추가하기 위한 구성 정본(파일/폴더/배포) |
+| [12-purchase-verification-setup](../12-purchase-verification-setup/SKILL.md) | 구매 검증 인프라 셋업 실행 가이드 (Secret/IAM/RTDN/배포/검증) |
+| [13-purchase-audit-google-sheets-setup](../13-purchase-audit-google-sheets-setup/SKILL.md) | Google Sheets 감사 로그 셋업 실행 가이드 (API/서비스계정/시크릿/공유/.env) |
 | [45-purchase-refund-processing](../45-purchase-refund-processing/SKILL.md) | 환불 감지(RTDN) → 상태 변경 → 클라이언트 회수 파이프라인 정본 |
 | [46-purchase-decisions](../46-purchase-decisions/SKILL.md) | 결제 검증(Firebase Callable) 결정사항 정본(경로/검증방식/멱등/시크릿/스키마) |
-| [47-purchase-verification-setup](../47-purchase-verification-setup/SKILL.md) | 구매 검증 인프라 셋업 실행 가이드 (Secret/IAM/RTDN/배포/검증) |
+| [48-purchase-audit-google-sheets](../48-purchase-audit-google-sheets/SKILL.md) | Google Sheets 기반 purchase/refund 감사 로그 정본 |
 
 
 ---
@@ -54,6 +58,8 @@ Purchase(유료) 경로의 실제 지급 실행은 `rewardGroupId`를 RewardMana
 
 - [PurchaseManager Sample](../30-samples-purchase-manager/SKILL.md) — `com.devian.samples` / `Samples~/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
 - [PurchaseStorage](../33-purchase-storage/SKILL.md) — `PurchaseManager` 소유, `purchase` JSON 섹션(로컬/클라우드 저장)
+- [Purchase Audit Sheet Setup](../13-purchase-audit-google-sheets-setup/SKILL.md) — Spreadsheet/API/서비스 계정/시크릿 셋업
+- [Purchase Audit Sheet](../48-purchase-audit-google-sheets/SKILL.md) — Firebase Functions 서버에서 Google Sheets 감사 로그 기록
 - [Root SSOT](../../../../devian/10-module/03-ssot/SKILL.md)
 - [Unity SSOT](../../../03-ssot/SKILL.md)
 - [Devian Index](../../../../devian/SKILL.md)

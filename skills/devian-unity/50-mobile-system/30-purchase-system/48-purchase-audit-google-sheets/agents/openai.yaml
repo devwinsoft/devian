@@ -1,0 +1,4 @@
+interface:
+  display_name: "Purchase Sheet Audit"
+  short_description: "Google Sheets purchase/refund audit log"
+  default_prompt: "Use $48-purchase-audit-google-sheets to design or update Google Sheets audit logging for purchase and refund events."

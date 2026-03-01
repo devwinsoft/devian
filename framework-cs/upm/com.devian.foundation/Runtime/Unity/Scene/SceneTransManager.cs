@@ -11,7 +11,7 @@ namespace Devian
 {
     /// <summary>
     /// Scene 전환 파이프라인을 단일화(직렬화)하는 싱글턴.
-    /// 전환 순서: FadeOut → beforeUnload → Exit → Load → afterLoad → BootProc → Enter → FadeIn
+    /// 전환 순서: FadeOut → beforeUnload → Exit → Load → afterLoad → Enter → FadeIn
     /// onStart는 각 SceneBase.Start()에서 호출된다.
     ///
     /// 이 Manager는 페이드 UI를 직접 소유하지 않으며, FadeOutRequested/FadeInRequested 이벤트로 위임한다.
@@ -65,11 +65,6 @@ namespace Devian
 
             try
             {
-                // BootProc 호출 (이미 부팅이면 즉시 종료)
-                var boot = BaseBootstrap.Instance;
-                if (boot != null)
-                    await boot.BootProc();
-
                 // Enter 호출
                 await scene.Enter();
             }
@@ -152,11 +147,6 @@ namespace Devian
                 var next = FindActiveSceneBase();
                 if (next != null)
                 {
-                    // BootProc 호출 (이미 부팅이면 즉시 종료)
-                    var bootNext = BaseBootstrap.Instance;
-                    if (bootNext != null)
-                        await bootNext.BootProc();
-
                     // Enter 호출
                     await next.Enter();
                 }

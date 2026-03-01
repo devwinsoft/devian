@@ -1,3 +1,8 @@
+---
+name: 03-ssot
+description: Define the single source of truth for the purchase system across Unity IAP, backend verification, entitlements, restore rules, and routing. Use when deciding canonical purchase concepts and cross-document invariants for the purchase module.
+---
+
 # 03-ssot — 30-purchase-system (통합 SSOT)
 
 
@@ -16,7 +21,7 @@ AppliesTo: v10
 - 운영/보안/테스트/DoD 체크리스트: `../09-ssot-operations/SKILL.md`
 - PurchaseStorage(로컬/클라우드 저장용 최소 상태 스냅샷): `../33-purchase-storage/SKILL.md`
 - Firebase Functions + Firestore 구현 상세: `../40-purchase-backend-firebase/SKILL.md`
-- Firebase 레포 구성/CLI/배포 셋업: `../44-purchase-repo-firebase-functions-setup/SKILL.md`
+- Firebase 레포 구성/CLI/배포 셋업: `../11-purchase-repo-firebase-functions-setup/SKILL.md`
 - 고정 결정사항(Callable 이름/경로/시크릿/정책 결정): `../46-purchase-decisions/SKILL.md`
 
 이 문서(03)는 통합 SSOT 허브/핵심 합의에 집중하고, 구현/운영 상세의 원문은 위 문서로 분리한다.
@@ -378,8 +383,8 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 
 ### SeasonPass / Rental Restore Projection (design fixed, server-side)
 
-- `SeasonPass` 복원은 서버 entitlement/projection의 `ownedSeasonPasses`(internalProductId 목록) 기준으로 수행한다.
-- `Rental` 복원은 서버 entitlement/projection의 `rentals` map(`internalProductId -> expiresAtServerUtcMs`) 기준으로 수행한다.
+- `SeasonPass` 복원은 서버 entitlement/projection의 `ownedSeasonPasses`(`seasonPassId` 목록) 기준으로 수행한다.
+- `Rental` 복원은 서버 entitlement/projection의 `rentals` map(`rentalId -> expiresAtServerUtcMs`) 기준으로 수행한다.
 - `RestoreAsync()`(스토어 복원)는 manual/fallback 경로이며, 위 projection 기반 복원과 동일 개념이 아니다.
 - Rental/SeasonPass 조회: `SyncEntitlementsAsync`로 서버 entitlements를 InventoryStorage에 동기화, `GetRentalRemainingMsAsync`로 남은 시간(ms) 조회 가능.
 - `Rental` 재구매 만료일 계산 정책(서버):
