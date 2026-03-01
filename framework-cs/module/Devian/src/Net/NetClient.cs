@@ -15,18 +15,36 @@ namespace Devian
     /// </summary>
     public sealed class NetClient
     {
-        private readonly INetRuntime _runtime;
+        private readonly NetInboundDispatcher _dispatcher;
 
         /// <summary>
         /// Optional callback for unhandled messages.
         /// Note: payload is a Span (cannot be stored). Copy if needed.
         /// </summary>
-        public NetUnhandledFrameHandler? OnUnhandled { get; set; }
+        public NetUnhandledFrameHandler? OnUnhandled
+        {
+            get => _dispatcher.OnUnhandled;
+            set => _dispatcher.OnUnhandled = value;
+        }
 
         /// <summary>
         /// Optional callback for parse errors.
         /// </summary>
-        public Action<int, Exception>? OnParseError { get; set; }
+        public Action<int, Exception>? OnParseError
+        {
+            get => _dispatcher.OnParseError;
+            set => _dispatcher.OnParseError = value;
+        }
+
+        /// <summary>
+        /// Optional callback for runtime dispatch errors.
+        /// Fired when protocol handler code throws during inbound dispatch.
+        /// </summary>
+        public Action<int, int, Exception>? OnDispatchError
+        {
+            get => _dispatcher.OnDispatchError;
+            set => _dispatcher.OnDispatchError = value;
+        }
 
         /// <summary>
         /// Creates a new NetClient with the specified runtime.
@@ -34,7 +52,7 @@ namespace Devian
         /// <param name="runtime">The runtime that handles message dispatch.</param>
         public NetClient(INetRuntime runtime)
         {
-            _runtime = runtime ?? throw new ArgumentNullException(nameof(runtime));
+            _dispatcher = new NetInboundDispatcher(runtime);
         }
 
         /// <summary>
@@ -46,40 +64,7 @@ namespace Devian
         /// <param name="frame">Complete frame bytes.</param>
         public void OnFrame(int sessionId, ReadOnlySpan<byte> frame)
         {
-            int opcode;
-            ReadOnlySpan<byte> payload;
-
-            try
-            {
-                if (!NetFrameV1.TryParse(frame, out opcode, out payload))
-                {
-                    OnParseError?.Invoke(sessionId, new InvalidOperationException("Frame too short to parse"));
-                    return;
-                }
-            }
-            catch (Exception ex)
-            {
-                OnParseError?.Invoke(sessionId, ex);
-                return;
-            }
-
-            var handled = false;
-            try
-            {
-                handled = _runtime.TryDispatchInbound(sessionId, opcode, payload);
-            }
-            catch
-            {
-                // Runtime handler exception is swallowed to prevent transport crash.
-                // In production, consider logging.
-                handled = true; // Treat exception as "handled" to avoid OnUnhandled noise.
-            }
-
-            if (!handled)
-            {
-                // Pass payload span directly (no copy). Callback must copy if storage needed.
-                OnUnhandled?.Invoke(sessionId, opcode, payload);
-            }
+            _dispatcher.DispatchFrame(sessionId, frame);
         }
     }
 }

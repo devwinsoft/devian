@@ -56,7 +56,7 @@ namespace Devian
         /// </summary>
         private void Start()
         {
-            _ = StartAsync();
+            UnityTaskRunner.Run(StartAsync, $"{nameof(SceneTransManager)}.Start");
         }
 
         private async Task StartAsync()
@@ -68,15 +68,8 @@ namespace Devian
             if (scene == null)
                 return;
 
-            try
-            {
-                // Enter 호출
-                await scene.Enter();
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"SceneTransManager.Start failed: {ex}");
-            }
+            // Enter 호출
+            await scene.Enter();
         }
 
         // ====================================================================

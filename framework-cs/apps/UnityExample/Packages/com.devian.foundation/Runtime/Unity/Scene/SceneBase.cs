@@ -2,7 +2,6 @@
 
 #nullable enable
 
-using System;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -32,19 +31,7 @@ namespace Devian
         /// </summary>
         private void Start()
         {
-            _ = StartAsync();
-        }
-
-        private async Task StartAsync()
-        {
-            try
-            {
-                await onStart();
-            }
-            catch (Exception ex)
-            {
-                Log.Error($"SceneBase.onStart failed: {ex}");
-            }
+            UnityTaskRunner.Run(onStart, $"{GetType().Name}.onStart");
         }
 
         // ====================================================================

@@ -14,6 +14,7 @@ AppliesTo: v11
 - Unity 메인 스레드 강제 보장 유틸리티 제공
 - 백그라운드 스레드에서 메인 스레드로 작업을 디스패치하는 큐 시스템 제공
 - Coroutine → async/await 브릿지 제공 (UnityCoroutineRunner)
+- Unity `void` 진입점에서 fire-and-forget `Task` 예외를 관측하는 유틸 제공 (UnityTaskRunner)
 
 ---
 
@@ -26,6 +27,7 @@ AppliesTo: v11
 | `com.devian.foundation/Runtime/Unity/_Shared/UnityMainThread.cs` | 메인 스레드 감지 헬퍼 |
 | `com.devian.foundation/Runtime/Unity/_Shared/UnityMainThreadDispatcher.cs` | 백그라운드→메인 스레드 디스패처 |
 | `com.devian.foundation/Runtime/Unity/_Shared/UnityCoroutineRunner.cs` | Coroutine→Task 브릿지 |
+| `com.devian.foundation/Runtime/Unity/_Shared/UnityTaskRunner.cs` | Unity `void` entry point용 fire-and-forget Task 관측기 |
 
 ### 소유권 정책 (Hard Rule)
 
@@ -105,6 +107,34 @@ public static void EnsureOrThrow(string context)
 await UnityCoroutineRunner.RunAsync(this, FadeOut(canvasGroup, 0.5f), ct);
 ```
 
+### UnityTaskRunner
+
+- `public static class`
+- Unity `Start()`, UI 버튼 `OnClick()` 같은 `void` 진입점에서 `Task`를 fire-and-forget로 실행할 때 사용
+- `async void` 본문 대신 `Task` 메서드로 분리하고, 예외 관측/로그를 공용화한다
+
+- **메서드:**
+  - `Run(Task task, string operation)`: 이미 생성된 `Task`를 관측하고 실패 시 `Debug.LogError` 출력
+  - `Run(Func<Task> taskFactory, string operation)`: `Task` 생성 전 동기 예외까지 포함해 관측
+  - 일반적으로는 `Run(Func<Task>, ...)` 오버로드를 우선 사용한다
+
+- **사용 패턴:**
+```csharp
+public void OnClick_Login()
+{
+    UnityTaskRunner.Run(OnClickLoginAsync, "UICanvasLoading.OnClick_Login");
+}
+
+private async Task OnClickLoginAsync()
+{
+    await LoginAsync();
+}
+```
+
+- **의도 (Hard Rule):**
+  - Unity `void` entry point에서 `async void`를 직접 구현하지 않는다
+  - 내부 로직은 `Task` 메서드로 분리하고, wrapper는 `UnityTaskRunner`로 연결한다
+
 ---
 
 ## 의존 관계
@@ -112,7 +142,8 @@ await UnityCoroutineRunner.RunAsync(this, FadeOut(canvasGroup, 0.5f), ct);
 ```
 UnityMainThread           ← Singleton, Pool, PoolManager (EnsureOrThrow 사용)
 UnityMainThreadDispatcher ← UnityLogSink (백그라운드 로그 디스패치)
-UnityCoroutineRunner                ← (신규, 현재 의존처 없음)
+UnityCoroutineRunner      ← SceneTransManager 등 Coroutine→Task 브릿지
+UnityTaskRunner           ← UICanvas, SceneBase, SceneTransManager 의 void entry point
 ```
 
 ---
@@ -122,12 +153,14 @@ UnityCoroutineRunner                ← (신규, 현재 의존처 없음)
 - [ ] `com.devian.foundation/Runtime/Unity/_Shared/UnityMainThread.cs` 존재
 - [ ] `com.devian.foundation/Runtime/Unity/_Shared/UnityMainThreadDispatcher.cs` 존재
 - [ ] `com.devian.foundation/Runtime/Unity/_Shared/UnityCoroutineRunner.cs` 존재
+- [ ] `com.devian.foundation/Runtime/Unity/_Shared/UnityTaskRunner.cs` 존재
 - [ ] UPM 경로와 UnityExample/Packages 경로의 파일 내용이 동일함
 - [ ] Dispatcher는 `maxPerFrame` 제한(500)을 가짐
 - [ ] Unity API 호출(`Debug.Log*`)은 메인 스레드에서만 수행됨
 - [ ] UnityMainThread 캡처 타이밍이 `SubsystemRegistration`임
 - [ ] `EnsureOrThrow`가 `InitIfNeeded()`를 먼저 호출하여 초기화 전 오판 방지
 - [ ] UnityCoroutineRunner가 CancellationToken 지원
+- [ ] Unity `void` entry point의 fire-and-forget `Task`가 `UnityTaskRunner`로 예외 관측됨
 
 **FAIL 조건:**
 

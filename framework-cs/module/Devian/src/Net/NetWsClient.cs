@@ -27,12 +27,9 @@ namespace Devian
     {
         private readonly NetClient _core;
         private readonly int _sessionId;
+        private readonly NetDispatchQueue _dispatchQueue;
 
         private volatile bool _running;
-
-        // Dispatch queue for Unity main thread (shared by all platforms)
-        private readonly object _dispatchLock = new();
-        private readonly Queue<Action> _dispatchQueue = new();
 
 #if UNITY_WEBGL && !UNITY_EDITOR
         // ========== WebGL Implementation (Polling-based) ==========
@@ -96,6 +93,11 @@ namespace Devian
         public event Action<Exception>? OnError;
 
         /// <summary>
+        /// Fired when a queued callback throws during Tick() dispatch.
+        /// </summary>
+        public event Action<Exception>? OnDispatchError;
+
+        /// <summary>
         /// Creates a new NetWsClient.
         /// </summary>
         /// <param name="core">The core that handles frame dispatch.</param>
@@ -104,6 +106,7 @@ namespace Devian
         {
             _core = core ?? throw new ArgumentNullException(nameof(core));
             _sessionId = sessionId;
+            _dispatchQueue = new NetDispatchQueue(HandleDispatchQueueError);
         }
 
         /// <summary>
@@ -267,40 +270,17 @@ namespace Devian
 
         private void SafeDispatch(Action action)
         {
-            lock (_dispatchLock)
-            {
-                _dispatchQueue.Enqueue(action);
-            }
+            _dispatchQueue.Enqueue(action);
         }
 
         private void DrainDispatchQueue()
         {
-            while (true)
-            {
-                Action? action;
-                lock (_dispatchLock)
-                {
-                    if (_dispatchQueue.Count == 0) return;
-                    action = _dispatchQueue.Dequeue();
-                }
-
-                try
-                {
-                    action();
-                }
-                catch
-                {
-                    // Swallow user handler exceptions
-                }
-            }
+            _dispatchQueue.Drain(int.MaxValue);
         }
 
         private void ClearDispatchQueueNoThrow()
         {
-            lock (_dispatchLock)
-            {
-                _dispatchQueue.Clear();
-            }
+            _dispatchQueue.Clear();
         }
 
         private string ReadAndFreeString(IntPtr ptr)
@@ -373,6 +353,11 @@ namespace Devian
         public event Action<Exception>? OnError;
 
         /// <summary>
+        /// Fired when a queued callback throws during Tick() dispatch.
+        /// </summary>
+        public event Action<Exception>? OnDispatchError;
+
+        /// <summary>
         /// Creates a new NetWsClient.
         /// </summary>
         /// <param name="core">The core that handles frame dispatch.</param>
@@ -381,6 +366,7 @@ namespace Devian
         {
             _core = core ?? throw new ArgumentNullException(nameof(core));
             _sessionId = sessionId;
+            _dispatchQueue = new NetDispatchQueue(HandleDispatchQueueError);
         }
 
         /// <summary>
@@ -481,28 +467,7 @@ namespace Devian
         /// </summary>
         public void Tick()
         {
-            var processedEvents = 0;
-
-            while (processedEvents < MaxEventsPerTick)
-            {
-                Action? action;
-                lock (_dispatchLock)
-                {
-                    if (_dispatchQueue.Count == 0) return;
-                    action = _dispatchQueue.Dequeue();
-                }
-
-                processedEvents++;
-
-                try
-                {
-                    action();
-                }
-                catch
-                {
-                    // Swallow user handler exceptions
-                }
-            }
+            var processedEvents = _dispatchQueue.Drain(MaxEventsPerTick);
 
 #if DEVIAN_NET_DEBUG
             if (processedEvents >= MaxEventsPerTick)
@@ -536,18 +501,12 @@ namespace Devian
 
         private void SafeDispatch(Action action)
         {
-            lock (_dispatchLock)
-            {
-                _dispatchQueue.Enqueue(action);
-            }
+            _dispatchQueue.Enqueue(action);
         }
 
         private void ClearDispatchQueueNoThrow()
         {
-            lock (_dispatchLock)
-            {
-                _dispatchQueue.Clear();
-            }
+            _dispatchQueue.Clear();
         }
 
         private void EnqueueClose()
@@ -779,5 +738,22 @@ namespace Devian
             }
         }
 #endif
+
+        private void HandleDispatchQueueError(Exception ex)
+        {
+            Log.Error($"[NetWsClient] Dispatch callback failed: {ex}");
+
+            if (OnDispatchError == null)
+                return;
+
+            try
+            {
+                OnDispatchError(ex);
+            }
+            catch (Exception callbackEx)
+            {
+                Log.Error($"[NetWsClient] OnDispatchError handler failed: {callbackEx}");
+            }
+        }
     }
 }

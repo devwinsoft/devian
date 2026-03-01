@@ -16,35 +16,52 @@ public class UICanvasSample : UICanvas<UICanvasSample>
     protected override void onAwake()
     {
     }
+
+    public void OnClick_Connect()
+    {
+        GameNetManager.Instance.Connect("ws://127.0.0.1:8080");
+    }
+
+    public void OnClick_Echo()
+    {
+        var msg = new C2Game.Echo();
+        msg.Message = "Echo Message";
+        GameNetManager.Proxy.SendEcho(msg);
+    }
+
+    public void OnClick_Disconnect()
+    {
+        GameNetManager.Instance.Disconnect();
+    }
     
     public void OnClick_SignIn_Google()
     {
-        runUiTask(OnClickSignInGoogleAsync(), nameof(OnClick_SignIn_Google));
+        UnityTaskRunner.Run(OnClickSignInGoogleAsync, $"{nameof(UICanvasSample)}.{nameof(OnClick_SignIn_Google)}");
     }
 
     public void OnClick_Logout()
     {
-        runUiTask(OnClickLogoutAsync(), nameof(OnClick_Logout));
+        UnityTaskRunner.Run(OnClickLogoutAsync, $"{nameof(UICanvasSample)}.{nameof(OnClick_Logout)}");
     }
 
     public void OnClick_Purchase_NoAds()
     {
-        runUiTask(OnClickPurchaseNoAdsAsync(), nameof(OnClick_Purchase_NoAds));
+        UnityTaskRunner.Run(OnClickPurchaseNoAdsAsync, $"{nameof(UICanvasSample)}.{nameof(OnClick_Purchase_NoAds)}");
     }
 
     public void OnClick_Purchase_Pass()
     {
-        runUiTask(OnClickPurchasePassAsync(), nameof(OnClick_Purchase_Pass));
+        UnityTaskRunner.Run(OnClickPurchasePassAsync, $"{nameof(UICanvasSample)}.{nameof(OnClick_Purchase_Pass)}");
     }
 
     public void OnClick_Purchase_Chest()
     {
-        runUiTask(OnClickPurchaseChestAsync(), nameof(OnClick_Purchase_Chest));
+        UnityTaskRunner.Run(OnClickPurchaseChestAsync, $"{nameof(UICanvasSample)}.{nameof(OnClick_Purchase_Chest)}");
     }
 
     public void OnClick_InAppAd()
     {
-        runUiTask(OnClickInAppAdAsync(), nameof(OnClick_InAppAd));
+        UnityTaskRunner.Run(OnClickInAppAdAsync, $"{nameof(UICanvasSample)}.{nameof(OnClick_InAppAd)}");
     }
 
     private async Task OnClickSignInGoogleAsync()
@@ -177,20 +194,4 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         */
     }
 
-    private void runUiTask(Task task, string operation)
-    {
-        _ = observeUiTaskAsync(task, operation);
-    }
-
-    private static async Task observeUiTaskAsync(Task task, string operation)
-    {
-        try
-        {
-            await task;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"UICanvasSample.{operation} failed: {ex}");
-        }
-    }
 }

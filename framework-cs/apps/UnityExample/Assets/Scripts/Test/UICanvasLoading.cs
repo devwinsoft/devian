@@ -1,6 +1,4 @@
-using System;
 using UnityEngine;
-using System.Threading;
 using System.Threading.Tasks;
 using TMPro;
 using Devian;
@@ -25,12 +23,12 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
 
     public void OnClick_GuestLogin()
     {
-        runUiTask(OnClickGuestLoginAsync(), nameof(OnClick_GuestLogin));
+        UnityTaskRunner.Run(OnClickGuestLoginAsync, $"{nameof(UICanvasLoading)}.{nameof(OnClick_GuestLogin)}");
     }
 
     public void OnClick_GoogleLogin()
     {
-        runUiTask(OnClickGoogleLoginAsync(), nameof(OnClick_GoogleLogin));
+        UnityTaskRunner.Run(OnClickGoogleLoginAsync, $"{nameof(UICanvasLoading)}.{nameof(OnClick_GoogleLogin)}");
     }
 
     private async Task OnClickGuestLoginAsync()
@@ -61,20 +59,4 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
         }
     }
 
-    private void runUiTask(Task task, string operation)
-    {
-        _ = observeUiTaskAsync(task, operation);
-    }
-
-    private static async Task observeUiTaskAsync(Task task, string operation)
-    {
-        try
-        {
-            await task;
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"UICanvasLoading.{operation} failed: {ex}");
-        }
-    }
 }
