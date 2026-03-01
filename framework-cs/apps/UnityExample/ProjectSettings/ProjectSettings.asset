@@ -166,8 +166,8 @@ PlayerSettings:
   androidMinAspectRatio: 1
   applicationIdentifier:
     Android: com.devian.framework
-    Standalone: com.Unity-Technologies.com.unity.template.urp-blank
-    iPhone: com.Unity-Technologies.com.unity.template.urp-blank
+    Standalone: com.devian.framework
+    iPhone: com.devian.framework
   buildNumber:
     Standalone: 0
     VisionOS: 0

@@ -195,7 +195,9 @@
       "Bash(gcloud firestore indexes composite list --project=devian-framwork-example --database=\"\\(default\\)\" --format=\"table\\(name.basename\\(\\),state,queryScope,fields\\)\")",
       "Bash(gcloud logging read 'resource.type=\"\"cloud_run_revision\"\" AND resource.labels.service_name=\"\"handlegoogleplaynotification\"\"' --project=devian-framwork-example --limit=10 --format=\"table\\(timestamp,severity,textPayload\\)\" --freshness=3m)",
       "Bash(git stash)",
-      "Bash(git stash pop)"
+      "Bash(git stash pop)",
+      "mcp__mcp-registry__search_mcp_registry",
+      "Bash(sort -k1 -n -r)"
     ]
   },
   "project": {

@@ -58,6 +58,44 @@ namespace Devian
             public string BuildVerifyPayload(string receipt) => receipt;
         }
 
+        static RetryInterruptedPurchaseResult CreateNoOpRetryInterruptedPurchaseResult()
+        {
+            return new RetryInterruptedPurchaseResult(
+                RetryInterruptedPurchaseStatus.SkippedNoCurrent,
+                string.Empty,
+                string.Empty,
+                null,
+                string.Empty,
+                string.Empty,
+                Array.Empty<RewardData>(),
+                string.Empty,
+                false);
+        }
+
+        static RefundResult CreateNoOpRefundResult()
+        {
+            return new RefundResult(
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                string.Empty);
+        }
+
+        static PurchaseSyncResult CreateNoOpPurchaseSyncResult()
+        {
+            return new PurchaseSyncResult(
+                CreateNoOpRetryInterruptedPurchaseResult(),
+                null,
+                CreateNoOpRefundResult(),
+                null,
+                null,
+                null,
+                null);
+        }
+
         static string ResolveRewardGroupId(string internalProductId)
         {
             var product = TB_PRODUCT.Get(internalProductId);
@@ -120,13 +158,17 @@ namespace Devian
 #endif
         }
 
+#if UNITY_EDITOR
+        public Task<CommonResult<RefundResult>> RefundAsync(CancellationToken ct = default)
+            => Task.FromResult(CommonResult<RefundResult>.Success(CreateNoOpRefundResult()));
+#elif !UNITY_PURCHASING
+        public Task<CommonResult<RefundResult>> RefundAsync(CancellationToken ct = default)
+            => Task.FromResult(CommonResult<RefundResult>.Failure(
+                CommonErrorType.IAP_NOT_SUPPORTED,
+                "Unity Purchasing not available."));
+#else
         public async Task<CommonResult<RefundResult>> RefundAsync(CancellationToken ct = default)
         {
-#if !UNITY_PURCHASING
-            return CommonResult<RefundResult>.Failure(
-                CommonErrorType.IAP_NOT_SUPPORTED,
-                "Unity Purchasing not available.");
-#else
             int pageCount = 0;
             int handledCount = 0;
             int inventoryAppliedCount = 0;
@@ -241,8 +283,8 @@ namespace Devian
                             pageCursor));
                 }
             }
-#endif
         }
+#endif
 
 #if UNITY_PURCHASING
         StoreController _controller;
@@ -311,6 +353,10 @@ namespace Devian
         /// Retry/refund/entitlements/save 실패는 경고로 남기고 전체 sync는 계속 진행한다.
         /// Initialize 실패만 fatal로 처리한다.
         /// </summary>
+#if UNITY_EDITOR
+        public Task<CommonResult<PurchaseSyncResult>> SyncAsync(CancellationToken ct = default)
+            => Task.FromResult(CommonResult<PurchaseSyncResult>.Success(CreateNoOpPurchaseSyncResult()));
+#else
         public async Task<CommonResult<PurchaseSyncResult>> SyncAsync(CancellationToken ct = default)
         {
             var init = await InitializeAsync(ct);
@@ -377,6 +423,7 @@ namespace Devian
                     entitlementsError,
                     saveError));
         }
+#endif
 
         /// <summary>
         /// 상품 구매를 수행한다. TB_PRODUCT에서 Kind를 조회하여 자동으로 구매 유형을 결정한다.
@@ -407,6 +454,10 @@ namespace Devian
             return result;
         }
 
+#if UNITY_EDITOR
+        public Task<CommonResult<RetryInterruptedPurchaseResult>> RetryInterruptedPurchaseAsync(CancellationToken ct = default)
+            => Task.FromResult(CommonResult<RetryInterruptedPurchaseResult>.Success(CreateNoOpRetryInterruptedPurchaseResult()));
+#else
         public async Task<CommonResult<RetryInterruptedPurchaseResult>> RetryInterruptedPurchaseAsync(CancellationToken ct = default)
         {
             var purchaseStorage = getPurchaseStorageOrNull();
@@ -499,6 +550,7 @@ namespace Devian
                     finalResult.ClientGrantStatus,
                     finalResult.NeedsClientGrantDelivery));
         }
+#endif
 
         public Task<CommonResult> AckPurchaseClientGrantAppliedAsync(string purchaseId, CancellationToken ct = default)
             => completePurchaseClientGrantAsync(purchaseId, "APPLIED_ACKED", ct);
@@ -1755,8 +1807,13 @@ namespace Devian
 
         static readonly Task<CommonResult<EntitlementsSnapshot>> _notSupportedSnapshot =
             Task.FromResult(CommonResult<EntitlementsSnapshot>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+#if UNITY_EDITOR
+        static readonly Task<CommonResult<PurchaseSyncResult>> _notSupportedSync =
+            Task.FromResult(CommonResult<PurchaseSyncResult>.Success(CreateNoOpPurchaseSyncResult()));
+#else
         static readonly Task<CommonResult<PurchaseSyncResult>> _notSupportedSync =
             Task.FromResult(CommonResult<PurchaseSyncResult>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+#endif
         static readonly Task<CommonResult<long>> _notSupportedLong =
             Task.FromResult(CommonResult<long>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
         static readonly Task<CommonResult<RefundSyncResult>> _notSupportedRefundSync =
@@ -1765,8 +1822,13 @@ namespace Devian
         public Task<CommonResult> InitializeAsync(CancellationToken ct = default) => _notSupportedInit;
         public Task<CommonResult<PurchaseSyncResult>> SyncAsync(CancellationToken ct = default) => _notSupportedSync;
         public Task<CommonResult<PurchaseFinalResult>> PurchaseAsync(string internalProductId, CancellationToken ct = default) => _notSupported;
+#if UNITY_EDITOR
+        static readonly Task<CommonResult<RetryInterruptedPurchaseResult>> _notSupportedRetryInterrupted =
+            Task.FromResult(CommonResult<RetryInterruptedPurchaseResult>.Success(CreateNoOpRetryInterruptedPurchaseResult()));
+#else
         static readonly Task<CommonResult<RetryInterruptedPurchaseResult>> _notSupportedRetryInterrupted =
             Task.FromResult(CommonResult<RetryInterruptedPurchaseResult>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+#endif
 
         public Task<CommonResult<RetryInterruptedPurchaseResult>> RetryInterruptedPurchaseAsync(CancellationToken ct = default)
             => _notSupportedRetryInterrupted;
