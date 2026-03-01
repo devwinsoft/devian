@@ -3,8 +3,6 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Devian;
 using Devian.Domain.Common;
-using NUnit.Framework.Internal;
-
 public class TestSceneLoading : TestSceneBootstrap
 {
     public static TestSceneLoading Instance => Singleton.Create<TestSceneLoading>();
@@ -80,7 +78,7 @@ public class TestSceneLoading : TestSceneBootstrap
                     return;
                 }
 
-                SceneTransManager.Instance.LoadSceneAsync("SceneSample");
+                await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
                 break;
         }
     }

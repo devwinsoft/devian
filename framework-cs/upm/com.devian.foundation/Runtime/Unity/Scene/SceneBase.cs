@@ -30,7 +30,12 @@ namespace Devian
         /// <summary>
         /// Unity Start 시점. onStart()를 호출한다.
         /// </summary>
-        private async void Start()
+        private void Start()
+        {
+            _ = StartAsync();
+        }
+
+        private async Task StartAsync()
         {
             try
             {

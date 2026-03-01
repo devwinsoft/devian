@@ -54,7 +54,12 @@ namespace Devian
         /// 부팅 시 첫 씬의 Enter()를 호출한다 (LoadSceneAsync를 거치지 않는 케이스).
         /// onStart는 SceneBase.Start()에서 호출된다.
         /// </summary>
-        private async void Start()
+        private void Start()
+        {
+            _ = StartAsync();
+        }
+
+        private async Task StartAsync()
         {
             if (_isTransitioning)
                 return;

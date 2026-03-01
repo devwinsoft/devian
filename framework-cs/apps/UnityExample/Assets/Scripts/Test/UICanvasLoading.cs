@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,13 +23,23 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
         buttonGoogle.SetActive(true);
     }
 
-    public async void OnClick_GuestLogin()
+    public void OnClick_GuestLogin()
+    {
+        runUiTask(OnClickGuestLoginAsync(), nameof(OnClick_GuestLogin));
+    }
+
+    public void OnClick_GoogleLogin()
+    {
+        runUiTask(OnClickGoogleLoginAsync(), nameof(OnClick_GoogleLogin));
+    }
+
+    private async Task OnClickGuestLoginAsync()
     {
         var code = await TestSceneLoading.Instance.LoginSessionAsync(LoginType.GUEST);
         Debug.Log($"LoginAsync: {code}");
         if (code == CommonErrorType.SUCCESS)
         {
-            SceneTransManager.Instance.LoadSceneAsync("SceneSample");
+            await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
         }
         else
         {
@@ -36,18 +47,34 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
         }
     }
 
-    public async void OnClick_GoogleLogin()
+    private async Task OnClickGoogleLoginAsync()
     {
         var code = await TestSceneLoading.Instance.LoginSessionAsync(LoginType.GOOGLE);
         Debug.Log($"LoginAsync: {code}");
         if (code == CommonErrorType.SUCCESS)
         {
-            SceneTransManager.Instance.LoadSceneAsync("SceneSample");
+            await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
         }
         else
         {
             message.text = $"{code}";
         }
     }
-    
+
+    private void runUiTask(Task task, string operation)
+    {
+        _ = observeUiTaskAsync(task, operation);
+    }
+
+    private static async Task observeUiTaskAsync(Task task, string operation)
+    {
+        try
+        {
+            await task;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"UICanvasLoading.{operation} failed: {ex}");
+        }
+    }
 }

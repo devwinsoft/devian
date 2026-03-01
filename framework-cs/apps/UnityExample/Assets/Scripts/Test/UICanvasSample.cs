@@ -17,10 +17,40 @@ public class UICanvasSample : UICanvas<UICanvasSample>
     {
     }
     
-    public async void OnClick_SignIn_Google()
+    public void OnClick_SignIn_Google()
+    {
+        runUiTask(OnClickSignInGoogleAsync(), nameof(OnClick_SignIn_Google));
+    }
+
+    public void OnClick_Logout()
+    {
+        runUiTask(OnClickLogoutAsync(), nameof(OnClick_Logout));
+    }
+
+    public void OnClick_Purchase_NoAds()
+    {
+        runUiTask(OnClickPurchaseNoAdsAsync(), nameof(OnClick_Purchase_NoAds));
+    }
+
+    public void OnClick_Purchase_Pass()
+    {
+        runUiTask(OnClickPurchasePassAsync(), nameof(OnClick_Purchase_Pass));
+    }
+
+    public void OnClick_Purchase_Chest()
+    {
+        runUiTask(OnClickPurchaseChestAsync(), nameof(OnClick_Purchase_Chest));
+    }
+
+    public void OnClick_InAppAd()
+    {
+        runUiTask(OnClickInAppAdAsync(), nameof(OnClick_InAppAd));
+    }
+
+    private async Task OnClickSignInGoogleAsync()
     {
         var ct = CancellationToken.None;
-        var timeout = new CancellationTokenSource(System.TimeSpan.FromSeconds(15));
+        using var timeout = new CancellationTokenSource(System.TimeSpan.FromSeconds(15));
         var login = await AccountManager.Instance.LoginAsync(LoginType.GOOGLE, ct);
         Debug.Log($"SignIn Google: {login.IsSuccess} {(login.IsFailure ? login.Error?.ToString() : "")}");
         if (login.IsFailure)
@@ -43,19 +73,22 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         Debug.Log($"no_ads:{noAds}");
     }
     
-
-    public void OnClick_Logout()
+    private async Task OnClickLogoutAsync()
     {
         Debug.Log(Application.persistentDataPath);
         PoolManager.Instance.ClearAll();
         AccountManager.Instance.Logout();
         SoundManager.Instance.StopAll();
-        SaveDataManager.Instance.ClearSaveAsync(CancellationToken.None);
-        SceneTransManager.Instance.LoadSceneAsync("SceneLoading");
+        var clear = await SaveDataManager.Instance.ClearSaveAsync(CancellationToken.None);
+        if (clear.IsFailure)
+        {
+            Debug.LogWarning($"ClearSaveAsync failed: {clear.Error.Code}: {clear.Error.Message}");
+        }
+
+        await SceneTransManager.Instance.LoadSceneAsync("SceneLoading");
     }
     
-
-    public async void OnClick_Purchase_NoAds()
+    private async Task OnClickPurchaseNoAdsAsync()
     {
         Debug.Log(TestApplication.GetVersionCode());
 
@@ -76,9 +109,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         }
     }
     
-    
-    
-    public async void OnClick_Purchase_Pass()
+    private async Task OnClickPurchasePassAsync()
     {
         var result = await PurchaseManager.Instance.PurchaseAsync(
             "pass_001",
@@ -98,7 +129,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
     }
 
 
-    public async void OnClick_Purchase_Chest()
+    private async Task OnClickPurchaseChestAsync()
     {
         var result = await PurchaseManager.Instance.PurchaseAsync(
             "chest_003",
@@ -117,9 +148,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         }
     }
 
-    
-    
-    public async void OnClick_InAppAd()
+    private async Task OnClickInAppAdAsync()
     {
         var remainMs = InventoryManager.Instance.Storage.GetRentalRemainingMs("NO_ADS");
         var result = await AdManager.Instance.ShowAsync("ad_rewarded_001", remainMs > 0);
@@ -148,4 +177,20 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         */
     }
 
+    private void runUiTask(Task task, string operation)
+    {
+        _ = observeUiTaskAsync(task, operation);
+    }
+
+    private static async Task observeUiTaskAsync(Task task, string operation)
+    {
+        try
+        {
+            await task;
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"UICanvasSample.{operation} failed: {ex}");
+        }
+    }
 }
