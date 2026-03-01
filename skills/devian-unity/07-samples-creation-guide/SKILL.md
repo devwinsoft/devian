@@ -157,7 +157,7 @@ Disconnect/OnClosed 버그 수정 시, 반드시 `Packages/com.devian.foundation
 - `Packages/`에서 직접 수정한 경우 **정책 위반** (다음 sync에서 손실)
 
 **동기화 누락 발견 시:**
-1. 빌더 실행: `node build.js ../../../{buildInputJson}` (예: `node build.js ../../../input/input_common.json`)
+1. 빌더 실행: `node build.js ../../../{buildInputJson}` (예: `node build.js ../../../input/build_input.json`)
 2. 또는 수동 sync: `rm -rf Packages/{pkg} && cp -r upm/{pkg} Packages/{pkg}`
 
 ---
@@ -213,7 +213,7 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 
 ### samplePackages 설정
 
-`input/config.json`에 샘플 패키지를 등록:
+`{projectConfigJson}` (예: `input/build_config.json`)에 샘플 패키지를 등록:
 
 ```json
 {

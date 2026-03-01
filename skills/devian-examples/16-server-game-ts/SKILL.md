@@ -96,5 +96,5 @@ npm -w GameServer run start
 
 - [18-client-game-ts](../18-client-game-ts/SKILL.md) — Game Protocol TS 클라이언트 예제
 - [03-ssot](../03-ssot/SKILL.md) — Example Apps SSOT
-- [12-protocol-game](../12-protocol-game/SKILL.md) — Game Protocol 예제
-- [Protocol SSOT](../../devian-tools/11-builder/03-ssot/SKILL.md) — Opcode/Tag, Protocol UPM
+- [14-game-protocol](../../devian-unity/40-game-system/14-game-protocol/SKILL.md) — Game Protocol 예제
+- [Protocol SSOT](../../devian/90-tools/11-builder/03-ssot/SKILL.md) — Opcode/Tag, Protocol UPM

@@ -69,7 +69,7 @@ MobileBootstrap에 부착된 RequireComponent:
 
 
 ## Links
-- [16-bootstrap](../../../10-foundation/16-bootstrap/SKILL.md) — BaseBootstrap 런타임 스펙
+- [16-bootstrap](../../10-foundation/16-bootstrap/SKILL.md) — BaseBootstrap 런타임 스펙
 - [24-input-manager](../../11-common-system/24-input-manager/SKILL.md) — InputManager 공용 입력 관리자
 - [21-savedata-system/43-savedata-json-codec](../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 규약
 - [50-mobile-system overview](../00-overview/SKILL.md) — MobileSystem (Devian Samples) 그룹 개요

@@ -43,15 +43,15 @@
 
 | Placeholder | 설명 | 예시 |
 |-------------|------|------|
-| `{buildInputJson}` | 빌드 입력 JSON 경로 | `input/input_common.json` |
-| `{projectConfigJson}` | 프로젝트 설정 JSON 경로 | `input/config.json` |
+| `{buildInputJson}` | 빌드 입력 JSON 경로 | `input/build_input.json` |
+| `{projectConfigJson}` | 프로젝트 설정 JSON 경로 | `input/build_config.json` |
 
 ### 사용 규칙
 
 1. 문서에서 특정 파일명을 하드코딩하지 않는다.
 2. 플레이스홀더를 사용하고, 예시는 괄호로 표기한다.
-   - Good: `{buildInputJson}` (예: `input/input_common.json`)
-   - Bad: `input/input_common.json`
+   - Good: `{buildInputJson}` (예: `input/build_input.json`)
+   - Bad: `input/build_input.json`
 
 ---
 

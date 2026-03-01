@@ -16,12 +16,12 @@ ParentSSOT: skills/devian/10-module/03-ssot/SKILL.md
 
 ## UPM 전역 설정 (upmConfig) — Hard Rule
 
-**`upmConfig`는 `input/config.json`에 존재해야 한다.**
+**`upmConfig`는 `{projectConfigJson}` (예: `input/build_config.json`)에 존재해야 한다.**
 
-`{buildInputJson}` (예: `input_common.json`)에 `upmConfig`가 존재하면 **FAIL**.
+`{buildInputJson}` (예: `build_input.json`)에 `upmConfig`가 존재하면 **FAIL**.
 
 ```json
-// config.json 구조
+// {projectConfigJson} 예시 구조
 {
   "configVersion": 1,
   "upmConfig": {

@@ -152,22 +152,19 @@ function shouldExclude(relPath, patterns, isDir = false) {
 }
 
 /**
- * input_common.json 또는 .git을 찾아 프로젝트 루트를 결정합니다.
+ * .git, skills, input/build_config.json 등을 찾아 프로젝트 루트를 결정합니다.
  */
 function findProjectRoot(startPath) {
     let current = path.resolve(startPath);
 
     while (current !== path.dirname(current)) {
-        if (fs.existsSync(path.join(current, 'input', 'input_common.json'))) {
-            return current;
-        }
-        if (fs.existsSync(path.join(current, 'input_common.json'))) {
-            return current;
-        }
         if (fs.existsSync(path.join(current, '.git'))) {
             return current;
         }
         if (fs.existsSync(path.join(current, 'skills'))) {
+            return current;
+        }
+        if (fs.existsSync(path.join(current, 'input', 'build_config.json'))) {
             return current;
         }
         current = path.dirname(current);
@@ -179,23 +176,56 @@ function findProjectRoot(startPath) {
 /**
  * buildInputJson 경로를 찾습니다.
  * 탐지 우선순위:
- * 1. ${root}/input/input_common.json
- * 2. ${root}/input_common.json
- * 3. null (없으면)
+ * 1. ${root}/input/build_input.json (현재 예시 파일명)
+ * 2. ${root}/build_input.json
+ * 3. ${root}/input/*.json 중 build input 형태와 일치하는 파일
+ * 4. ${root}/*.json 중 build input 형태와 일치하는 파일
+ * 5. null (없으면)
  */
 function findBuildInputJson(root) {
-    const candidates = [
-        path.join(root, 'input', 'input_common.json'),
-        path.join(root, 'input_common.json'),
+    const preferredCandidates = [
+        path.join(root, 'input', 'build_input.json'),
+        path.join(root, 'build_input.json'),
     ];
 
-    for (const candidate of candidates) {
+    for (const candidate of preferredCandidates) {
         if (fs.existsSync(candidate)) {
             return candidate;
         }
     }
 
+    const scanDirs = [path.join(root, 'input'), root];
+    for (const dir of scanDirs) {
+        if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {
+            continue;
+        }
+
+        const candidates = fs.readdirSync(dir)
+            .filter((name) => name.endsWith('.json'))
+            .sort();
+
+        for (const name of candidates) {
+            const candidate = path.join(dir, name);
+            if (looksLikeBuildInputJson(candidate)) {
+                return candidate;
+            }
+        }
+    }
+
     return null;
+}
+
+function looksLikeBuildInputJson(filePath) {
+    try {
+        const parsed = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        return typeof parsed === 'object' &&
+            parsed !== null &&
+            typeof parsed.tempDir === 'string' &&
+            typeof parsed.configPath === 'string' &&
+            (Array.isArray(parsed.protocols) || typeof parsed.domains === 'object');
+    } catch (e) {
+        return false;
+    }
 }
 
 /**

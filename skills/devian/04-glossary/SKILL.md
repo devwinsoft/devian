@@ -33,7 +33,7 @@ Devian 스킬 문서 전반에서 사용되는 핵심 용어와 플레이스홀�
 
 빌드 입력 JSON 파일 경로.
 
-- 예: `input/input_common.json`
+- 예: `input/build_input.json`
 - 포함 키: `tempDir`, `csConfig`, `tsConfig`, `upmConfig`, `domains`, `protocols`
 - 상대 경로 해석 기준: 이 파일의 위치
 
@@ -41,7 +41,7 @@ Devian 스킬 문서 전반에서 사용되는 핵심 용어와 플레이스홀�
 
 프로젝트 설정 JSON 파일 경로.
 
-- 예: `input/config.json`
+- 예: `input/build_config.json`
 - 포함 키: `tableConfig` (tableDirs, stringDirs, soundDirs)
 
 ---

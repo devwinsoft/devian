@@ -1,11 +1,11 @@
 #!/bin/bash
 # Devian Build System v10 - Build Script
 # Usage: ./build.sh [buildJson]
-# Example: ./build.sh input_common.json
+# Example: ./build.sh build_input.json
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 FRAMEWORK_TS_DIR="$SCRIPT_DIR/../framework-ts"
-INPUT_JSON="${1:-$SCRIPT_DIR/input_common.json}"
+INPUT_JSON="${1:-$SCRIPT_DIR/build_input.json}"
 
 # Bootstrap: install dependencies if node_modules missing (root only)
 if [ ! -d "$FRAMEWORK_TS_DIR/node_modules" ]; then

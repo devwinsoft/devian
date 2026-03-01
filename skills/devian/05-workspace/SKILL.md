@@ -53,7 +53,7 @@ Devian TypeScript 프로젝트의 단일 workspace 구조와 npm 정책을 정�
 
 | 명령어 | 설명 |
 |--------|------|
-| `npm run builder -- ../{buildInputJson}` | 빌드 실행 (예: `npm run builder -- ../input/input_common.json`) |
+| `npm run builder -- ../{buildInputJson}` | 빌드 실행 (예: `npm run builder -- ../input/build_input.json`) |
 | `npm run archive -- <args>` | 프로젝트 아카이브 |
 | `npm run dev:client` | 클라이언트 개발 서버 |
 | `npm run start:server` | 게임 서버 시작 |
@@ -95,6 +95,6 @@ npm install
 
 ## See Also
 
-- Archive: `skills/devian-tools/90-project-archive/SKILL.md`
+- Archive: `skills/devian/90-tools/90-project-archive/SKILL.md`
 - SSOT: `skills/devian/10-module/03-ssot/SKILL.md`
-- Build: `skills/devian-tools/11-builder/20-build-domain/SKILL.md`
+- Build: `skills/devian/90-tools/11-builder/20-build-domain/SKILL.md`

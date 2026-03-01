@@ -46,7 +46,7 @@ AppliesTo: v10
 - sheet/table 정본 이름: `ADVERTISE`
 - 생성 대상: `TB_ADVERTISE`
 - **도메인 소속**: `com.devian.domain.game` (기존 `TB_REWARD`와 동일)
-- **빌더 등록**: 추가 등록 불필요. `input/input_common.json`의 `domains.Game.tableFiles=["*.xlsx"]`에 이미 포함된다.
+- **빌더 등록**: 추가 등록 불필요. `{buildInputJson}` (예: `input/build_input.json`)의 `domains.Game.tableFiles=["*.xlsx"]`에 이미 포함된다.
 
 AdManager는 `TB_ADVERTISE`를 직접 참조하여 placement 설정을 읽는다.
 

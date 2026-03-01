@@ -142,7 +142,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 - [x] SSOT 저장 위치: **(A) Devian input 테이블(Excel) 기반** — 결정됨
   - PRODUCT 테이블 스키마를 이 문서(03-ssot)에서 SSOT로 정의한다.
   - `PurchaseTable.xlsx`에 PRODUCT 시트를 생성하여 데이터를 관리한다.
-- [x] input_common.json 도메인 등록: — 결정됨
+- [x] `{buildInputJson}` 도메인 등록: — 결정됨
   - 도메인 등록 정보는 컨텐츠 레이어 SSOT에서 관리
 - [x] PurchaseTable.xlsx 경로: — 결정됨
   - 경로는 컨텐츠 레이어 SSOT에서 관리

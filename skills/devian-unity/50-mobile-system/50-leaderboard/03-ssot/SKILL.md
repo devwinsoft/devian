@@ -54,7 +54,7 @@ AppliesTo: v10
 
 - (권장) Devian input 테이블(Excel) 기반
   - 예: `input/Domains/Leaderboard/LeaderboardTable.xlsx`
-  - `input/input_common.json`에 DomainKey 등록
+  - `{buildInputJson}` (예: `input/build_input.json`)에 DomainKey 등록
 - (대안) 샘플 코드에 const/JSON으로 내장 (초기 MVP)
 
 

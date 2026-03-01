@@ -19,7 +19,7 @@ Game 도메인은 Devian 프레임워크의 **예제 도메인**이다.
 
 ---
 
-## 2. Input JSON (`input/input_common.json`)
+## 2. Input JSON (`{buildInputJson}` 예시)
 
 `domains.Game` 설정:
 
@@ -76,7 +76,7 @@ Game 도메인은 Devian 프레임워크의 **예제 도메인**이다.
 | Data (ndjson) | `*.json` | `{tableConfig.tableDirs}/ndjson/` |
 | Data (pb64) | `*.asset` | `{tableConfig.tableDirs}/pb64/` |
 
-빌드 실행: `bash input/build.sh input/input_common.json`
+빌드 실행: `bash input/build.sh {buildInputJson}` (예: `bash input/build.sh input/build_input.json`)
 
 ---
 
@@ -117,7 +117,7 @@ Game 도메인을 사용하는 스킬:
 - **UPM:** `com.devian.protocol.game`
 - **TS:** `@devian/protocol-game`
 
-상세: [12-protocol-game](../../../devian-examples/12-protocol-game/SKILL.md)
+상세: [14-game-protocol](../14-game-protocol/SKILL.md)
 
 ---
 
@@ -126,9 +126,9 @@ Game 도메인을 사용하는 스킬:
 | 주제 | 스킬 |
 |---|---|
 | STAT_TYPE enum 값 관리 | [13-game-stat-type](../13-game-stat-type/SKILL.md) |
-| Game 프로토콜 예제 | [devian-examples/12-protocol-game](../../../devian-examples/12-protocol-game/SKILL.md) |
+| Game 프로토콜 예제 | [14-game-protocol](../14-game-protocol/SKILL.md) |
 | Examples SSOT (config/input) | [devian-examples/03-ssot](../../../devian-examples/03-ssot/SKILL.md) |
-| Builder SSOT (테이블/컨트랙트 규칙) | [devian-tools/11-builder/03-ssot](../../../devian-tools/11-builder/03-ssot/SKILL.md) |
+| Builder SSOT (테이블/컨트랙트 규칙) | [devian/90-tools/11-builder/03-ssot](../../../devian/90-tools/11-builder/03-ssot/SKILL.md) |
 | Root SSOT (용어/경로) | [devian/10-module/03-ssot](../../../devian/10-module/03-ssot/SKILL.md) |
 | 40-game-system 개요 | [00-overview](../00-overview/SKILL.md) |
 | MobileSystem 개요 | [50-mobile-system/00-overview](../../50-mobile-system/00-overview/SKILL.md) |

@@ -235,7 +235,7 @@ Phase 2는 아래가 **모두 참**이어야 DONE이다:
 1. `framework-cs/upm/com.devian.domain.sound/Runtime/Generated/`가 존재하고, `DomainTableRegistry.g.cs`가 존재한다.
 2. `framework-cs/upm/com.devian.domain.game/Runtime/Generated/`에 `TB_SOUND*`, `TB_VOICE*` 생성물이 더 이상 존재하지 않는다.
 3. repo 전체에서 `RegisterTbLoader("SOUND")`, `RegisterTbLoader("VOICE")` 호출은 **Generated DomainTableRegistry**에만 존재한다.
-4. `input/build.sh {buildInputJson}` (예: `input/build.sh input/input_common.json`)가 성공한다. (npm ci 포함)
+4. `input/build.sh {buildInputJson}` (예: `input/build.sh input/build_input.json`)가 성공한다. (npm ci 포함)
 
 ---
 
@@ -252,7 +252,7 @@ Phase 2는 아래가 **모두 참**이어야 DONE이다:
 범용 빌드/생성 규칙은 아래 스킬이 SSOT이다:
 
 - `skills/devian-unity/10-foundation/11-table-manager/SKILL.md` — **TbLoader SSOT / 중복 등록 금지** Hard Rule
-- `skills/devian-tools/11-builder/42-tablegen-implementation/SKILL.md` — **AfterLoad hook 계약** Hard Rule
+- `skills/devian/90-tools/11-builder/42-tablegen-implementation/SKILL.md` — **AfterLoad hook 계약** Hard Rule
 - `skills/devian/05-workspace/SKILL.md` — **npm ci / lock 동기화** 규약
 - `skills/devian/10-module/05-generated-integration/SKILL.md` — **임시 stub 금지** 규약
 

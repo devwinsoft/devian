@@ -6,8 +6,8 @@
  * - non-meta 파일은 절대 건드리지 않음
  *
  * Usage:
- *   node tools/sync-meta.js <config.json>
- *   npm -w builder run sync-meta -- ../input/config.json
+ *   node tools/sync-meta.js <projectConfigJson>
+ *   npm -w builder run sync-meta -- ../input/build_config.json
  *
  * SSOT: skills/devian-unity/01-policy/SKILL.md
  */
@@ -147,8 +147,8 @@ function main() {
     const args = process.argv.slice(2);
 
     if (args.length < 1) {
-        console.log('Usage: node tools/sync-meta.js <config.json>');
-        console.log('  or:  npm -w builder run sync-meta -- <config.json>');
+        console.log('Usage: node tools/sync-meta.js <projectConfigJson>');
+        console.log('  or:  npm -w builder run sync-meta -- <projectConfigJson>');
         process.exit(1);
     }
 

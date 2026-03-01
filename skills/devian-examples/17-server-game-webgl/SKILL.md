@@ -133,4 +133,4 @@ WEBGL_ROOT=output/unity-webgl/UnityExample WEBGL_PORT=8091 npm -w webgl-server r
 - [16-server-game-ts](../16-server-game-ts/SKILL.md) — Game Protocol TS 서버 예제
 - [18-client-game-ts](../18-client-game-ts/SKILL.md) — Game Protocol TS 클라이언트 예제
 - [03-ssot](../03-ssot/SKILL.md) — Example Apps SSOT
-- [30-env-management](../../devian-tools/30-env-management/SKILL.md) — 환경변수 관리 정책
+- [30-env-management](../../devian/90-tools/30-env-management/SKILL.md) — 환경변수 관리 정책

@@ -14,10 +14,10 @@ Devian Example 앱의 **설정 파일, 입력 파일, 런타임 앱 경로**를 
 
 | 파일 | 경로 | 역할 |
 |------|------|------|
-| **config.json** | `input/config.json` | 빌드 출력 경로 설정 (csConfig, tsConfig, upmConfig, tableConfig) |
-| **input_common.json** | `input/input_common.json` | 빌드 입력 정의 (domains, protocols, tempDir) |
+| **{projectConfigJson}** | 예: `input/build_config.json` | 빌드 출력 경로 설정 (csConfig, tsConfig, upmConfig, tableConfig) |
+| **{buildInputJson}** | 예: `input/build_input.json` | 빌드 입력 정의 (domains, protocols, tempDir) |
 
-### config.json 구조
+### `{projectConfigJson}` 예시 구조
 
 ```json
 {
@@ -37,12 +37,12 @@ Devian Example 앱의 **설정 파일, 입력 파일, 런타임 앱 경로**를 
 }
 ```
 
-### input_common.json 구조
+### `{buildInputJson}` 예시 구조
 
 ```json
 {
   "version": "10",
-  "configPath": "./config.json",
+  "configPath": "./build_config.json",
   "tempDir": "temp",
   "domains": {
     "Common": { "contractDir": "...", "tableDir": "...", "stringDir": "..." },
@@ -128,5 +128,5 @@ npm -w GameClient run start
 ## Related
 
 - Config/Input 상세: `skills/devian/10-module/03-ssot/SKILL.md`
-- Protocol 빌드: `skills/devian-tools/11-builder/03-ssot/SKILL.md`
+- Protocol 빌드: `skills/devian/90-tools/11-builder/03-ssot/SKILL.md`
 - UPM 패키지: `skills/devian-unity/01-policy/SKILL.md`

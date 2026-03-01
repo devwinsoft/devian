@@ -19,8 +19,8 @@ SSOT: this file
 
 | Category | SSOT | 범위 |
 |----------|------|------|
-| **Tools** | [devian-tools/03-ssot](../../../devian-tools/03-ssot/SKILL.md) | 빌드 파이프라인, Phase, Validate, tempDir, Clean+Copy, TS Workspace |
-| **Builder** | [devian-tools/11-builder/03-ssot](../../../devian-tools/11-builder/03-ssot/SKILL.md) | tableConfig, Tables, NDJSON, pb64, DATA 산출물, Protocol Spec, Opcode/Tag, Protocol UPM |
+| **Tools** | [devian/90-tools/03-ssot](../../90-tools/03-ssot/SKILL.md) | 빌드 파이프라인, Phase, Validate, tempDir, Clean+Copy, TS Workspace |
+| **Builder** | [devian/90-tools/11-builder/03-ssot](../../90-tools/11-builder/03-ssot/SKILL.md) | tableConfig, Tables, NDJSON, pb64, DATA 산출물, Protocol Spec, Opcode/Tag, Protocol UPM |
 | **Unity** | [devian-unity/03-ssot](../../../devian-unity/03-ssot/SKILL.md) | upmConfig, UPM Sync, Foundation, samplePackages, Unity Gate |
 
 ---
@@ -29,7 +29,7 @@ SSOT: this file
 
 1. **`skills/devian/10-module/03-ssot/SKILL.md`** (이 문서) — 공통 정책 정본
 2. **Category SSOT** — 카테고리별 정책 정본
-3. **`{buildInputJson}`** (예: `input/input_common.json`) — 실제 빌드 스키마/경로 정본
+3. **`{buildInputJson}`** (예: `input/build_input.json`) — 실제 빌드 스키마/경로 정본
 4. **런타임/제너레이터 코드** — 실제 동작 정본
 
 SSOT 간 충돌이 발생하면:
@@ -85,18 +85,18 @@ Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 
 
 ## Input 포맷 분리 (Hard Rule)
 
-**빌드 설정은 config.json과 input.json으로 분리한다.**
+**빌드 설정은 `{projectConfigJson}`과 input json으로 분리한다.**
 
 | 파일 | 역할 | 허용 키 |
 |------|------|---------|
-| `input/config.json` | 공통 설정 (경로/타겟) | csConfig, tsConfig, tableConfig, upmConfig, samplePackages |
+| `{projectConfigJson}` (예: `input/build_config.json`) | 공통 설정 (경로/타겟) | csConfig, tsConfig, tableConfig, upmConfig, samplePackages |
 | `input/input_*.json` | 빌드 스펙 (도메인/프로토콜) | version, configPath, tempDir, domains, protocols |
 
 **금지 키 (Hard FAIL):**
-- config.json에 `tempDir`, `domains`, `protocols` 존재 → FAIL
-- config.json에 `staticUpmPackages` 존재 → FAIL (forbidden, `samplePackages` 사용)
+- `{projectConfigJson}`에 `tempDir`, `domains`, `protocols` 존재 → FAIL
+- `{projectConfigJson}`에 `staticUpmPackages` 존재 → FAIL (forbidden, `samplePackages` 사용)
 - input.json에 `csConfig`, `tsConfig`, `tableConfig`, `upmConfig`, `samplePackages` 존재 → FAIL
-- config.json에 `dataConfig` 존재 → FAIL (deprecated, `tableConfig` 사용)
+- `{projectConfigJson}`에 `dataConfig` 존재 → FAIL (deprecated, `tableConfig` 사용)
 
 **Deprecated 금지 (Hard FAIL):**
 - framework/upm 내에서 deprecated/fallback 레이어를 추가하거나 유지하는 것을 금지한다.
@@ -104,11 +104,11 @@ Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 
 
 **상대경로 기준 (중요):**
 - 모든 상대경로 해석 기준은 **input json 파일이 있는 폴더 (buildJsonDir, 보통 `input/`)**
-- config.json 자신의 디렉토리를 기준으로 해석하면 **FAIL**
+- `{projectConfigJson}` 자신의 디렉토리를 기준으로 해석하면 **FAIL**
 
 **머지 규칙:**
 ```
-finalConfig = deepMerge(config.json, input.json)
+finalConfig = deepMerge({projectConfigJson}, input.json)
 ```
 - tempDir은 input.json 값이 최종값 (input 우선)
 - 그 외 키가 양쪽에 있으면 **FAIL**
@@ -235,9 +235,9 @@ Devian 산출물을 실제 앱(클라/서버/툴)에서 소비하는 기본 흐�
 
 - **공통 정책 정본:** 이 문서 (`skills/devian/10-module/03-ssot/SKILL.md`)
 - **카테고리 SSOT:**
-  - [Tools SSOT](../../../devian-tools/03-ssot/SKILL.md)
-  - [Data SSOT](../../../devian-tools/11-builder/03-ssot/SKILL.md)
-  - [Protocol SSOT](../../../devian-tools/11-builder/03-ssot/SKILL.md)
+  - [Tools SSOT](../../90-tools/03-ssot/SKILL.md)
+  - [Data SSOT](../../90-tools/11-builder/03-ssot/SKILL.md)
+  - [Protocol SSOT](../../90-tools/11-builder/03-ssot/SKILL.md)
   - [Unity SSOT](../../../devian-unity/03-ssot/SKILL.md)
-- **빌드 스키마 정본:** `{buildInputJson}` (예: `input/input_common.json`)
+- **빌드 스키마 정본:** `{buildInputJson}` (예: `input/build_input.json`)
 - **동작 정본:** 런타임/제너레이터 코드

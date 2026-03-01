@@ -83,9 +83,9 @@ Soft Rules (SHOULD)
 | Group | Policy |
 |-------|--------|
 | **devian** | `skills/devian/SKILL.md` — 공통 인덱스, 용어, workspace |
-| **tools** | `skills/devian-tools/01-policy/SKILL.md` |
-| **data** | `skills/devian-tools/11-builder/01-policy/SKILL.md` |
-| **protocol** | `skills/devian-tools/11-builder/01-policy/SKILL.md` |
+| **tools** | `skills/devian/90-tools/01-policy/SKILL.md` |
+| **data** | `skills/devian/90-tools/11-builder/01-policy/SKILL.md` |
+| **protocol** | `skills/devian/90-tools/11-builder/01-policy/SKILL.md` |
 | **unity** | `skills/devian-unity/01-policy/SKILL.md` |
 
 ---

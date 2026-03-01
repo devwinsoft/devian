@@ -28,7 +28,7 @@ const __dirname = path.dirname(__filename);
 class DevianToolBuilder {
     constructor(buildJsonPath) {
         this.buildJsonPath = path.resolve(buildJsonPath);
-        // input/input_common.json -> input (buildJsonDir) -> devian (rootDir)
+        // e.g. input/build_input.json -> input (buildJsonDir) -> devian (rootDir)
         // All relative paths in input json are relative to buildJsonDir
         this.buildJsonDir = path.dirname(this.buildJsonPath);
         this.rootDir = path.dirname(this.buildJsonDir);
@@ -51,8 +51,8 @@ class DevianToolBuilder {
      * SSOT: skills/devian-core/03-ssot/SKILL.md
      * 
      * Rules:
-     * - config.json: csConfig/tsConfig/dataConfig/upmConfig/samplePackages only
-     *   Forbidden in config: tempDir, domains, protocols, staticUpmPackages (forbidden)
+     * - project config json: csConfig/tsConfig/dataConfig/upmConfig/samplePackages only
+     *   Forbidden in project config: tempDir, domains, protocols, staticUpmPackages (forbidden)
      * - input.json: version/configPath/tempDir/domains/protocols only
      *   Forbidden in input: csConfig/tsConfig/dataConfig/upmConfig/samplePackages
      * - All relative paths resolved from buildJsonDir (input json directory)
@@ -70,8 +70,8 @@ class DevianToolBuilder {
                     `[FAIL] Forbidden key in input json!\n` +
                     `  Key: ${key}\n` +
                     `  File: ${this.buildJsonPath}\n` +
-                    `  These keys must be in config.json, not input json.\n` +
-                    `  Add "configPath": "./config.json" to input json and move ${key} to config.json.`
+                    `  These keys must be in the project config json, not input json.\n` +
+                    `  Add "configPath" to input json (e.g. "./build_config.json") and move ${key} there.`
                 );
             }
         }
@@ -81,26 +81,26 @@ class DevianToolBuilder {
             throw new Error(
                 `[FAIL] Missing configPath in input json!\n` +
                 `  File: ${this.buildJsonPath}\n` +
-                `  Add "configPath": "./config.json" to input json.\n` +
-                `  Then move csConfig/tsConfig/dataConfig/upmConfig/samplePackages to config.json.`
+                `  Add "configPath" to input json (e.g. "./build_config.json").\n` +
+                `  Then move csConfig/tsConfig/dataConfig/upmConfig/samplePackages to the project config json.`
             );
         }
         
-        // Load config json (path resolved from buildJsonDir)
+        // Load project config json (path resolved from buildJsonDir)
         const configPath = this.resolvePath(inputJson.configPath);
         if (!fs.existsSync(configPath)) {
             throw new Error(
                 `[FAIL] Config file not found!\n` +
                 `  configPath: ${inputJson.configPath}\n` +
                 `  Resolved: ${configPath}\n` +
-                `  Create config.json with csConfig/tsConfig/dataConfig/upmConfig/samplePackages.`
+                `  Create the project config json (e.g. build_config.json) with csConfig/tsConfig/dataConfig/upmConfig/samplePackages.`
             );
         }
         
         const configJson = JSON.parse(fs.readFileSync(configPath, 'utf-8'));
         console.log(`  [Config] Loaded: ${configPath}`);
         
-        // Forbidden keys in config json
+        // Forbidden keys in project config json
         const forbiddenInConfig = ['tempDir', 'domains', 'protocols'];
         for (const key of forbiddenInConfig) {
             if (configJson[key] !== undefined) {
@@ -108,7 +108,7 @@ class DevianToolBuilder {
                     `[FAIL] Forbidden key in config json!\n` +
                     `  Key: ${key}\n` +
                     `  File: ${configPath}\n` +
-                    `  These keys must be in input json, not config.json.\n` +
+                    `  These keys must be in input json, not the project config json.\n` +
                     `  Move ${key} to input json.`
                 );
             }
@@ -3870,7 +3870,7 @@ export * from './features';
 
         if (!upmConfig) {
             throw new Error(
-                '[FAIL] Missing required "upmConfig" section in config.json.\n' +
+                '[FAIL] Missing required "upmConfig" section in project config json.\n' +
                 '  Required fields:\n' +
                 '    "upmConfig": {\n' +
                 '      "sourceDir": "../framework-cs/upm",\n' +
@@ -3952,7 +3952,7 @@ export * from './features';
         if (this.config.dataConfig !== undefined) {
             throw new Error(
                 `[FAIL] dataConfig is forbidden.\n` +
-                `  File: input/config.json\n` +
+                `  File: {projectConfigJson} (e.g. input/build_config.json)\n` +
                 `  Fix: Remove "dataConfig" entirely and use "tableConfig".\n` +
                 `  tableConfig keys: soundDirs, stringDirs, tableDirs`
             );
@@ -3961,7 +3961,7 @@ export * from './features';
         const tableConfig = this.config.tableConfig;
         if (!tableConfig || typeof tableConfig !== 'object') {
             throw new Error(
-                `[FAIL] Missing required "tableConfig" section in config.json.\n` +
+                `[FAIL] Missing required "tableConfig" section in project config json.\n` +
                 `  Required keys: soundDirs, stringDirs, tableDirs (each is string[]).\n` +
                 `  Example:\n` +
                 `    "tableConfig": {\n` +
@@ -3977,7 +3977,7 @@ export * from './features';
             if (!Array.isArray(v)) {
                 throw new Error(
                     `[FAIL] tableConfig.${key} must exist and must be string[].\n` +
-                    `  File: input/config.json\n` +
+                    `  File: {projectConfigJson} (e.g. input/build_config.json)\n` +
                     `  Fix: Add "${key}": [] (or a list of paths)`
                 );
             }
@@ -4156,7 +4156,7 @@ export * from './features';
         if (!tc || typeof tc !== 'object') {
             errors.push(
                 `tableConfig is required.\n` +
-                `  Add tableConfig to config.json.\n` +
+                `  Add tableConfig to the project config json.\n` +
                 `  Required keys: soundDirs, stringDirs, tableDirs (each is string[]).`
             );
         } else {
@@ -4669,7 +4669,7 @@ async function main() {
 
     if (args.length < 1) {
         console.log('Usage: node build.js <input.json>');
-        console.log('Example: node build.js ../../../input/input_common.json');
+        console.log('Example: node build.js ../../../input/build_input.json');
         process.exit(1);
     }
 

@@ -30,8 +30,8 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | Group | Description | Overview | Policy | SSOT |
 |-------|-------------|----------|--------|------|
 | **devian/10-module** | Root SSOT, 스킬 규격, 런타임 | [00-overview](../10-module/00-overview/SKILL.md) | [01-policy](../10-module/01-policy/SKILL.md) | [03-ssot](../10-module/03-ssot/SKILL.md) |
-| **devian-tools** | CLI, 아카이브 | [00-overview](../../devian-tools/00-overview/SKILL.md) | [01-policy](../../devian-tools/01-policy/SKILL.md) | [03-ssot](../../devian-tools/03-ssot/SKILL.md) |
-| **devian-tools/11-builder** | Build, Table, Contract, NDJSON, PB64, Protocol Codegen, Error Reporting | [00-overview](../../devian-tools/11-builder/00-overview/SKILL.md) | [01-policy](../../devian-tools/11-builder/01-policy/SKILL.md) | [03-ssot](../../devian-tools/11-builder/03-ssot/SKILL.md) |
+| **devian/90-tools** | CLI, 아카이브 | [00-overview](../90-tools/00-overview/SKILL.md) | [01-policy](../90-tools/01-policy/SKILL.md) | [03-ssot](../90-tools/03-ssot/SKILL.md) |
+| **devian/90-tools/11-builder** | Build, Table, Contract, NDJSON, PB64, Protocol Codegen, Error Reporting | [00-overview](../90-tools/11-builder/00-overview/SKILL.md) | [01-policy](../90-tools/11-builder/01-policy/SKILL.md) | [03-ssot](../90-tools/11-builder/03-ssot/SKILL.md) |
 | **devian-unity/11-common-system** | Common 도메인, Feature 모듈 | [00-overview](../../devian-unity/11-common-system/00-overview/SKILL.md) | [01-policy](../../devian-unity/11-common-system/01-policy/SKILL.md) | — |
 | **devian-unity** | UPM 패키지, Unity 런타임, 컴포넌트 | [00-overview](../../devian-unity/00-overview/SKILL.md) | [01-policy](../../devian-unity/01-policy/SKILL.md) | [03-ssot](../../devian-unity/03-ssot/SKILL.md) |
 | **devian-examples** | 예제 도메인, 예제 프로토콜 | [00-overview](../../devian-examples/00-overview/SKILL.md) | [01-policy](../../devian-examples/01-policy/SKILL.md) | [03-ssot](../../devian-examples/03-ssot/SKILL.md) |
@@ -58,9 +58,9 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | ActorObject, ActorController, actor-system, actor controller | `skills/devian-unity/11-common-system/23-actor-system/SKILL.md` |
 | InputManager, input manager, InputActionAsset, input action asset | `skills/devian-unity/11-common-system/24-input-manager/SKILL.md` |
 | BaseInputController, input-controller, input controller, InputSpace | `skills/devian-unity/11-common-system/25-input-controller/SKILL.md` |
-| NDJSON, ndjson, .json 스토리지 | `skills/devian-tools/11-builder/34-ndjson-storage/SKILL.md` |
-| PB64, pb64, .asset 바이너리 | `skills/devian-tools/11-builder/35-pb64-storage/SKILL.md` |
-| TableGen, 테이블 생성 | `skills/devian-tools/11-builder/42-tablegen-implementation/SKILL.md` |
+| NDJSON, ndjson, .json 스토리지 | `skills/devian/90-tools/11-builder/34-ndjson-storage/SKILL.md` |
+| PB64, pb64, .asset 바이너리 | `skills/devian/90-tools/11-builder/35-pb64-storage/SKILL.md` |
+| TableGen, 테이블 생성 | `skills/devian/90-tools/11-builder/42-tablegen-implementation/SKILL.md` |
 | TableManager, LoadStringsAsync | `skills/devian-unity/10-foundation/11-table-manager/SKILL.md` |
 | DownloadManager, Addressables | `skills/devian-unity/10-foundation/19-download-manager/SKILL.md` |
 | UIManager, UICanvas, UIFrame | `skills/devian-unity/30-ui-system/10-ui-manager/skill.md` |
@@ -79,9 +79,9 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | 용어 정의 | [04-glossary](../04-glossary/SKILL.md) |
 | Workspace 구조 | [05-workspace](../05-workspace/SKILL.md) |
 | 공통 정책 | [01-policy](../01-policy/SKILL.md) |
-| 빌드 실행 | [devian-tools/11-builder/20-build-domain](../../devian-tools/11-builder/20-build-domain/SKILL.md) |
-| 테이블 작성 규칙 | [devian-tools/11-builder/30-table-authoring-rules](../../devian-tools/11-builder/30-table-authoring-rules/SKILL.md) |
-| 프로토콜 코드젠 | [devian-tools/11-builder/40-codegen-protocol](../../devian-tools/11-builder/40-codegen-protocol/SKILL.md) |
+| 빌드 실행 | [devian/90-tools/11-builder/20-build-domain](../90-tools/11-builder/20-build-domain/SKILL.md) |
+| 테이블 작성 규칙 | [devian/90-tools/11-builder/30-table-authoring-rules](../90-tools/11-builder/30-table-authoring-rules/SKILL.md) |
+| 프로토콜 코드젠 | [devian/90-tools/11-builder/40-codegen-protocol](../90-tools/11-builder/40-codegen-protocol/SKILL.md) |
 | Unity 정책 | [devian-unity/01-policy](../../devian-unity/01-policy/SKILL.md) |
 
 ---

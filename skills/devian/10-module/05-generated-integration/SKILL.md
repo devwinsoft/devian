@@ -183,7 +183,7 @@ Unity는 `com.unity.nuget.newtonsoft-json` 패키지로 Newtonsoft.Json을 기�
 MUST
 
 - generated를 import하는 "수동 코드(manual)"는 generated와 분리된 폴더에서 관리한다.
-- `{buildInputJson}`의 csConfig/tsConfig + config.json의 tableConfig 설계로 산출 충돌을 방지한다.
+- `{buildInputJson}`의 csConfig/tsConfig + `{projectConfigJson}`의 tableConfig 설계로 산출 충돌을 방지한다.
 - TypeScript 프로젝트는 paths alias를 설정하여 @devian/core 등을 import한다.
 
 MUST NOT

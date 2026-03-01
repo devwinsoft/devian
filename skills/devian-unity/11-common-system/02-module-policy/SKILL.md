@@ -18,7 +18,8 @@ Common 모듈(C# 프로젝트명: `Devian.Domain.Common`, TS `@devian/module-com
 
 Devian v10 프로젝트는 DATA DomainKey로 `Common`을 **반드시** 포함한다.
 
-- `{buildInputJson}` (예: `input/input_common.json`)에서 `domains.Common`은 필수 항목이다.
+- `{buildInputJson}` (예: `input/build_input.json`)에서 `domains.Common`은 필수 항목이다.
+- `configPath`는 `{projectConfigJson}` (예: `input/build_config.json`)을 가리켜야 한다.
 - 결과로 Common 모듈(C#/TS)은 항상 생성/유지된다:
   - C#: `Devian.Domain.Common` (프로젝트명)
   - TS: `@devian/module-common` (폴더명: `devian-domain-common`)

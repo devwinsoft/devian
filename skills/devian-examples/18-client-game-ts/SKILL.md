@@ -100,5 +100,5 @@ npm -w GameClient run start
 
 - [16-server-game-ts](../16-server-game-ts/SKILL.md) — Game Protocol TS 서버 예제
 - [03-ssot](../03-ssot/SKILL.md) — Example Apps SSOT
-- [12-protocol-game](../12-protocol-game/SKILL.md) — Game Protocol 예제
-- [Protocol SSOT](../../devian-tools/11-builder/03-ssot/SKILL.md) — Opcode/Tag, Protocol UPM
+- [14-game-protocol](../../devian-unity/40-game-system/14-game-protocol/SKILL.md) — Game Protocol 예제
+- [Protocol SSOT](../../devian/90-tools/11-builder/03-ssot/SKILL.md) — Opcode/Tag, Protocol UPM
