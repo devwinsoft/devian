@@ -23,40 +23,70 @@ public class TestSceneLoading : TestSceneBootstrap
     {
         Debug.Log("TestSceneLoading...");
         await base.onStart();
-        
-        UICanvasLoading.Instance.Init();
-        
-        var sync = await SaveDataManager.Instance.SyncAsync("main", CancellationToken.None);
-        if (sync.IsSuccess)
-        {
-            Debug.Log($"Sync completed: {sync.Value.State}");
 
-            switch (sync.Value.State)
-            {
-                case SyncState.Initial:
-                    var data = SaveDataManager.Instance.ToJson();
-                    var init = await SaveDataManager.Instance.SaveDataAsync("main", data, includeCloud: false, CancellationToken.None);
-                    UICanvasLoading.Instance.ShowLoginButtons();
-                    break;
-                case SyncState.Conflict:
-                    break;
-                case SyncState.Success:
-                    var loginCode = await Login(AccountManager.Instance.Storage.loginType, false);
-                    if (loginCode == CommonErrorType.SUCCESS)
-                    {
-                        SceneTransManager.Instance.LoadSceneAsync("SceneSample");
-                    }
-                    break;
-            }
-        }
-        else if (sync.IsFailure)
+        UICanvasLoading.Instance.Init();
+
+        var sync = await SaveDataManager.Instance.SyncAsync(CancellationToken.None);
+        if (sync.IsFailure)
         {
             Debug.Log($"{sync.Error.Code}: {sync.Error.Message}");
+            return;
+        }
+
+        Debug.Log($"Sync completed: {sync.Value.State}");
+        switch (sync.Value.State)
+        {
+            case SyncState.Initial:
+                var init = await SaveDataManager.Instance.SaveGameStateAsync(CancellationToken.None);
+                if (init.IsFailure)
+                {
+                    Debug.LogError($"Initial save failed: code={init.Error.Code}, message={init.Error.Message}");
+                    UICanvasLoading.Instance.message.text = $"{init.Error.Code}";
+                    return;
+                }
+                UICanvasLoading.Instance.ShowLoginButtons();
+                break;
+            
+            case SyncState.Conflict:
+                break;
+            
+            case SyncState.Success:
+                var restore = await AccountManager.Instance.EnsureRuntimeSessionAsync(CancellationToken.None);
+                Debug.Log($"EnsureRuntimeSessionAsync: success={restore.IsSuccess} restored={(restore.IsSuccess ? restore.Value : false)}");
+
+                if (restore.IsFailure)
+                {
+                    Debug.LogError(
+                        $"Runtime session restore failed: code={restore.Error.Code}, message={restore.Error.Message}");
+                    UICanvasLoading.Instance.message.text = $"{restore.Error.Code}";
+                    UICanvasLoading.Instance.ShowLoginButtons();
+                    return;
+                }
+
+                if (!restore.Value)
+                {
+                    var loginType = AccountManager.Instance.CurrentLoginType;
+                    Debug.LogWarning($"Runtime session restore skipped. loginType={loginType}");
+                    UICanvasLoading.Instance.message.text = $"Restore required: {loginType}";
+                    UICanvasLoading.Instance.ShowLoginButtons();
+                    return;
+                }
+
+                var purchaseSyncCode = await syncPurchaseStateAsync();
+                if (purchaseSyncCode != CommonErrorType.SUCCESS)
+                {
+                    UICanvasLoading.Instance.message.text = $"Purchase SyncCode: {purchaseSyncCode}";
+                    UICanvasLoading.Instance.ShowLoginButtons();
+                    return;
+                }
+
+                SceneTransManager.Instance.LoadSceneAsync("SceneSample");
+                break;
         }
     }
-    
-    
-    public async Task<CommonErrorType> Login(LoginType loginType, bool saveData)
+
+
+    public async Task<CommonErrorType> LoginSessionAsync(LoginType loginType)
     {
         var login = await AccountManager.Instance.LoginAsync(loginType, CancellationToken.None);
         Debug.Log($"LoginAsync: {loginType}, {(login.IsFailure ? login.Error?.ToString() : "")}");
@@ -68,57 +98,66 @@ public class TestSceneLoading : TestSceneBootstrap
         }
         
 #if !UNITY_EDITOR
-        await initPurchase();
+        var purchaseSyncCode = await syncPurchaseStateAsync();
+        if (purchaseSyncCode != CommonErrorType.SUCCESS)
+            return purchaseSyncCode;
 #endif
-        await SaveDataManager.Instance.SaveDataAsync("main",
-            SaveDataManager.Instance.ToJson(),
-            true,
-            CancellationToken.None);
+        var save = await SaveDataManager.Instance.SaveGameStateAsync(CancellationToken.None);
+        if (save.IsFailure)
+            return save.Error.Code;
         return CommonErrorType.SUCCESS;
     }
     
 
-    async Task<CommonErrorType> initPurchase()
+    async Task<CommonErrorType> syncPurchaseStateAsync()
     {
         var ct = CancellationToken.None;
-        
-        // 1. IAP 초기화
-        var initResult = await PurchaseManager.Instance.InitializeAsync(ct);
-        if (initResult.IsFailure)
+
+        var sync = await PurchaseManager.Instance.SyncAsync(ct);
+        if (sync.IsFailure)
         {
-            Debug.LogError($"IAP init failed: {initResult.Error}");
-            return initResult.Error.Code;
+            Debug.LogError($"Purchase sync failed: {sync.Error}");
+            return sync.Error.Code;
         }
 
-        // 2. 중단 구매 복구
-        var retryResult = await PurchaseManager.Instance.RetryInterruptedPurchaseAsync(ct);
-        if (retryResult.IsSuccess)
+        var result = sync.Value;
+
+        if (result.RetryInterruptedPurchase.HasValue)
         {
-            var retry = retryResult.Value;
+            var retry = result.RetryInterruptedPurchase.Value;
             if (retry.Status == PurchaseManager.RetryInterruptedPurchaseStatus.Retried)
             {
                 Debug.Log($"Interrupted purchase recovered: {retry.InternalProductId}");
             }
         }
-        else
+        else if (result.RetryInterruptedError != null)
         {
-            Debug.LogWarning($"RetryInterruptedPurchaseAsync failed: {retryResult.Error.Code}: {retryResult.Error.Message}");
+            Debug.LogWarning($"RetryInterruptedPurchaseAsync failed: {result.RetryInterruptedError.Code}: {result.RetryInterruptedError.Message}");
         }
 
-        // 3. 환불 처리
-        var refund = await PurchaseManager.Instance.RefundAsync(ct);
-        if (refund.IsSuccess)
+        if (result.Refund.HasValue)
         {
+            var refund = result.Refund.Value;
             Debug.Log(
-                $"Refund handled={refund.Value.HandledAdjustmentCount} " +
-                $"applied={refund.Value.InventoryAppliedAdjustmentCount} " +
-                $"noop={refund.Value.NoOpAdjustmentCount}");
+                $"Refund handled={refund.HandledAdjustmentCount} " +
+                $"applied={refund.InventoryAppliedAdjustmentCount} " +
+                $"noop={refund.NoOpAdjustmentCount}");
         }
-        else
+        else if (result.RefundError != null)
         {
-            Debug.LogWarning($"RefundAsync failed: {refund.Error.Code}: {refund.Error.Message}");
+            Debug.LogWarning($"RefundAsync failed: {result.RefundError.Code}: {result.RefundError.Message}");
         }
-        
+
+        if (result.EntitlementsError != null)
+        {
+            Debug.LogWarning($"SyncEntitlementsAsync failed: {result.EntitlementsError.Code}: {result.EntitlementsError.Message}");
+        }
+
+        if (result.SaveError != null)
+        {
+            Debug.LogWarning($"SaveGameStateAsync failed: {result.SaveError.Code}: {result.SaveError.Message}");
+        }
+
         return CommonErrorType.SUCCESS;
     }
 }

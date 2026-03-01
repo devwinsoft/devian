@@ -33,6 +33,9 @@ namespace Devian
 
         public AccountStorage Storage => _storage;
         public LoginType CurrentLoginType => sanitizeLoginType(_storage.loginType);
+        public bool HasAuthenticatedSession => CurrentLoginType != LoginType.NONE && tryHasFirebaseSession();
+        public bool CanAttemptCloudSave => canAttemptCloudSave(CurrentLoginType);
+        public bool IsLocalOnlySaveMode => !CanAttemptCloudSave;
 
         protected override void Awake()
         {
@@ -71,7 +74,7 @@ namespace Devian
             // - Guest: never
             // - Editor: never (use SaveLocal only)
             // Cloud init 실패는 login 실패가 아님 — cloud save만 비활성화되고 login은 성공 처리.
-            if (loginType != LoginType.GUEST && loginType != LoginType.EDITOR)
+            if (canAttemptCloudSave(loginType))
             {
 #if !UNITY_EDITOR
                 var initResult = await SaveDataManager.Instance._initializeCloudAsync(ct);
@@ -109,23 +112,80 @@ namespace Devian
         }
 
         /// <summary>
-        /// Purchase 인증 여부는 AccountManager 로그인 상태를 기준으로 판단한다.
-        /// NONE(미로그인/로그아웃 상태)만 미인증으로 본다.
+        /// 게임 진입 전에 현재 계정 메타를 기준으로 런타임 인증 세션을 복구한다.
+        /// - Guest/Editor: anonymous sign-in으로 복구
+        /// - Google(Android): GPGS silent auth 기반으로 복구
+        /// - Apple(iOS): 현재는 caller-provided credential이 없으므로 자동 복구하지 않음
+        /// </summary>
+        public async Task<CommonResult<bool>> EnsureRuntimeSessionAsync(CancellationToken ct)
+        {
+            if (HasAuthenticatedSession)
+                return CommonResult<bool>.Success(true);
+
+            switch (CurrentLoginType)
+            {
+                case LoginType.NONE:
+                    return CommonResult<bool>.Success(false);
+
+                case LoginType.EDITOR:
+                case LoginType.GUEST:
+                {
+                    var login = await LoginAsync(CurrentLoginType, ct);
+                    return login.IsFailure
+                        ? CommonResult<bool>.Failure(login.Error!)
+                        : CommonResult<bool>.Success(true);
+                }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+                case LoginType.GOOGLE:
+                {
+                    var silentCredential = await _gpgs.GetServerAuthCodeCredentialSilentAsync(ct);
+                    if (silentCredential.IsFailure)
+                    {
+                        Debug.Log($"[AccountManager] Runtime session restore skipped (silent GPGS unavailable): {silentCredential.Error}");
+                        return CommonResult<bool>.Success(false);
+                    }
+
+                    var signIn = await signInWithGoogleCredentialAsync(silentCredential.Value, ct);
+                    if (signIn.IsFailure)
+                        return CommonResult<bool>.Failure(signIn.Error!);
+
+                    writeAccountState(LoginType.GOOGLE);
+                    return CommonResult<bool>.Success(true);
+                }
+#endif
+
+                case LoginType.APPLE:
+                default:
+                    return CommonResult<bool>.Success(false);
+            }
+        }
+
+        /// <summary>
+        /// Purchase 인증 여부는 저장된 loginType이 아니라 현재 Firebase 세션 기준으로 판단한다.
         /// </summary>
         public bool IsPurchaseLoginReady()
         {
-            return CurrentLoginType != LoginType.NONE;
+            return HasAuthenticatedSession;
         }
 
         /// <summary>
         /// Purchase 진입 시 인증 보정:
-        /// - 이미 로그인 상태면 즉시 성공
+        /// - 이미 Firebase 세션이 있으면 즉시 성공
+        /// - Guest/Editor는 anonymous sign-in으로 세션을 복구
         /// - Android에서는 GPGS silent auth 기반으로 Google login을 자동 시도(UI 없음)
         /// </summary>
         public async Task<CommonResult<bool>> EnsurePurchaseLoginReadyAsync(CancellationToken ct)
         {
-            if (IsPurchaseLoginReady())
+            var runtimeSession = await EnsureRuntimeSessionAsync(ct);
+            if (runtimeSession.IsFailure)
+                return runtimeSession;
+
+            if (runtimeSession.Value)
                 return CommonResult<bool>.Success(true);
+
+            if (CurrentLoginType != LoginType.NONE)
+                return CommonResult<bool>.Success(false);
 
 #if UNITY_ANDROID && !UNITY_EDITOR
             var silentCredential = await _gpgs.GetServerAuthCodeCredentialSilentAsync(ct);
@@ -146,27 +206,28 @@ namespace Devian
 #endif
         }
 
-        private async Task<CommonResult<LoginCredential>> getLoginCredentialAsync(LoginType loginType, CancellationToken ct)
+        private Task<CommonResult<LoginCredential>> getLoginCredentialAsync(LoginType loginType, CancellationToken ct)
         {
             switch (loginType)
             {
                 case LoginType.EDITOR:
                 case LoginType.GUEST:
-                    return CommonResult<LoginCredential>.Success(LoginCredential.Empty());
+                    return Task.FromResult(CommonResult<LoginCredential>.Success(LoginCredential.Empty()));
 
 #if UNITY_ANDROID && !UNITY_EDITOR
                 case LoginType.GOOGLE:
-                    return await getGoogleGpgsCredentialAsync(ct);
+                    return getGoogleGpgsCredentialAsync(ct);
 #endif
 
 #if UNITY_IOS && !UNITY_EDITOR
                 case LoginType.APPLE:
-                    return await _apple.SignInAsync(ct);
+                    return _apple.SignInAsync(ct);
 #endif
 
                 default:
-                    return CommonResult<LoginCredential>.Failure(CommonErrorType.LOGIN_CREDENTIAL_UNSUPPORTED,
-                        $"Internal credential acquisition is not supported for {loginType}. Use LoginAsync(LoginType, LoginCredential, CancellationToken) instead.");
+                    return Task.FromResult(CommonResult<LoginCredential>.Failure(
+                        CommonErrorType.LOGIN_CREDENTIAL_UNSUPPORTED,
+                        $"Internal credential acquisition is not supported for {loginType}. Use LoginAsync(LoginType, LoginCredential, CancellationToken) instead."));
             }
         }
 
@@ -361,6 +422,34 @@ namespace Devian
             return Enum.IsDefined(typeof(LoginType), raw)
                 ? loginType
                 : LoginType.NONE;
+        }
+
+        private static bool canAttemptCloudSave(LoginType loginType)
+        {
+#if UNITY_EDITOR
+            return false;
+#else
+            switch (sanitizeLoginType(loginType))
+            {
+                case LoginType.GOOGLE:
+                case LoginType.APPLE:
+                    return true;
+                default:
+                    return false;
+            }
+#endif
+        }
+
+        private static bool tryHasFirebaseSession()
+        {
+            try
+            {
+                return FirebaseAuth.DefaultInstance?.CurrentUser != null;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         private static string resolveSocialUserId(LoginType loginType)

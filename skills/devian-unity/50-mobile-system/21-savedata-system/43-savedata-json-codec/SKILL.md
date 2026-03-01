@@ -25,6 +25,7 @@ SaveDataManager가 local/cloud payload에 저장할 게임 상태 JSON의 직렬
 - `PurchaseManager` 소유: `PurchaseStorage`
 - `SaveDataManager` 책임:
   - 위 3개 storage를 수집
+  - primary save binding(local filename + cloud slot) 관리
   - JSON serialize/deserialize 호출
   - payload encrypt/decrypt
   - local/cloud save, load, sync, conflict
@@ -63,6 +64,13 @@ SaveDataManager : CompoSingleton<SaveDataManager>
 - account section: `SaveDataJsonCodecAccount`
 
 section codec은 manager를 직접 알지 않고, `Storage` 타입만 다룬다.
+
+
+## Primary Save Rule
+
+- public save API는 멀티 슬롯을 노출하지 않는다.
+- `SaveDataManager`는 단일 primary save binding만 가진다.
+- codec은 binding을 모르고, 순수하게 게임 상태 JSON만 다룬다.
 
 
 ---

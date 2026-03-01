@@ -1,5 +1,9 @@
 {"Id":"SUCCESS","Msg_key":"","Msg":"Success"}
+{"Id":"ACCOUNT_SWITCH_GUEST_UPGRADE_FAILED","Msg_key":"","Msg":"Failed to upgrade guest account during account switch."}
+{"Id":"ACCOUNT_SWITCH_LOGIN_FAILED","Msg_key":"","Msg":"Failed to sign in target account during account switch."}
+{"Id":"ACCOUNT_SWITCH_UNSUPPORTED","Msg_key":"","Msg":"Account switch is not supported for this login combination."}
 {"Id":"CLOUDSAVE_CHECKSUM","Msg_key":"","Msg":"Checksum mismatch"}
+{"Id":"CLOUDSAVE_CONNECTION_FAILED","Msg_key":"","Msg":"Cloud connection failed"}
 {"Id":"CLOUDSAVE_DELETE","Msg_key":"","Msg":"Cloud delete failed"}
 {"Id":"CLOUDSAVE_KEYIV","Msg_key":"","Msg":"Key/IV error"}
 {"Id":"CLOUDSAVE_LOAD","Msg_key":"","Msg":"Cloud load failed"}
@@ -10,6 +14,7 @@
 {"Id":"CLOUDSAVE_SLOT_EMPTY","Msg_key":"","Msg":"Slot is empty"}
 {"Id":"CLOUDSAVE_SLOT_MISSING","Msg_key":"","Msg":"Slot not configured"}
 {"Id":"COMMON_AUTH","Msg_key":"","Msg":"Authorization error"}
+{"Id":"COMMON_INVALID_ARGUMENT","Msg_key":"","Msg":"Invalid request arguments."}
 {"Id":"COMMON_NETWORK","Msg_key":"","Msg":"Network error"}
 {"Id":"COMMON_RATE_LIMIT","Msg_key":"","Msg":"Too many requests"}
 {"Id":"COMMON_SERVER","Msg_key":"","Msg":"Server error"}
@@ -22,22 +27,24 @@
 {"Id":"FIREBASE_GOOGLE_REAUTH_REQUIRED","Msg_key":"","Msg":"Google re-authentication required"}
 {"Id":"FIREBASE_GOOGLE_SIGNIN","Msg_key":"","Msg":"Google sign-in failed"}
 {"Id":"FIREBASE_GOOGLE_TOKEN","Msg_key":"","Msg":"Google idToken is empty"}
-{"Id":"FIREBASE_NOT_INITIALIZED","Msg_key":"","Msg":"Firebase is not initialized"}
 {"Id":"FIREBASE_NO_USER","Msg_key":"","Msg":"No signed-in user"}
+{"Id":"FIREBASE_NOT_INITIALIZED","Msg_key":"","Msg":"Firebase is not initialized"}
 {"Id":"FIREBASE_REAUTH_UNKNOWN","Msg_key":"","Msg":"Unknown re-authentication type"}
 {"Id":"FIREBASE_SIGNIN","Msg_key":"","Msg":"Firebase sign-in failed"}
 {"Id":"FIREBASE_TOKEN","Msg_key":"","Msg":"Failed to get ID token"}
 {"Id":"IAP_NOT_INITIALIZED","Msg_key":"","Msg":"Store not initialized"}
 {"Id":"IAP_NOT_SUPPORTED","Msg_key":"","Msg":"Unity Purchasing not available"}
-{"Id":"INVENTORY_DELTAS_NULL","Msg_key":"","Msg":"rewards array is null"}
 {"Id":"INVENTORY_DELTA_AMOUNT_NEGATIVE","Msg_key":"","Msg":"reward amount is negative"}
 {"Id":"INVENTORY_DELTA_ID_EMPTY","Msg_key":"","Msg":"reward id is null or empty"}
 {"Id":"INVENTORY_DELTA_TYPE_INVALID","Msg_key":"","Msg":"reward type is not Item or Currency"}
+{"Id":"INVENTORY_DELTAS_NULL","Msg_key":"","Msg":"rewards array is null"}
+{"Id":"INVENTORY_REFUND_INSUFFICIENT","Msg_key":"","Msg":"Insufficient inventory to revoke refund rewards."}
 {"Id":"LOCALSAVE_CANCELLED","Msg_key":"","Msg":"Operation cancelled"}
 {"Id":"LOCALSAVE_CHECKSUM","Msg_key":"","Msg":"Checksum mismatch"}
 {"Id":"LOCALSAVE_FILENAME_EMPTY","Msg_key":"","Msg":"Filename is empty"}
 {"Id":"LOCALSAVE_FILENAME_INVALID","Msg_key":"","Msg":"Invalid filename"}
 {"Id":"LOCALSAVE_KEYIV","Msg_key":"","Msg":"Key/IV error"}
+{"Id":"LOCALSAVE_NOT_FOUND","Msg_key":"","Msg":"Local save not found"}
 {"Id":"LOCALSAVE_PATH_EMPTY","Msg_key":"","Msg":"Root path is empty"}
 {"Id":"LOCALSAVE_READ","Msg_key":"","Msg":"Read failed"}
 {"Id":"LOCALSAVE_SLOT_EMPTY","Msg_key":"","Msg":"Slot is empty"}
@@ -57,11 +64,11 @@
 {"Id":"LOGIN_GOOGLE_SIGNIN_FAILED","Msg_key":"","Msg":"Failed to sign in with Google credential"}
 {"Id":"LOGIN_GPGS_AUTH_FAILED","Msg_key":"","Msg":"Google Play Games authentication failed"}
 {"Id":"LOGIN_GPGS_EXCEPTION","Msg_key":"","Msg":"GPGS credential exception"}
+{"Id":"LOGIN_GPGS_NO_AUTH_CODE","Msg_key":"","Msg":"Failed to obtain server auth code from GPGS"}
+{"Id":"LOGIN_GPGS_NO_AUTHENTICATE","Msg_key":"","Msg":"PlayGamesPlatform.Authenticate not found"}
+{"Id":"LOGIN_GPGS_NO_SERVER_ACCESS","Msg_key":"","Msg":"PlayGamesPlatform.RequestServerSideAccess not found"}
 {"Id":"LOGIN_GPGS_NOT_FOUND","Msg_key":"","Msg":"GooglePlayGames plugin is not installed"}
 {"Id":"LOGIN_GPGS_NOT_INITIALIZED","Msg_key":"","Msg":"PlayGamesPlatform.Instance is null"}
-{"Id":"LOGIN_GPGS_NO_AUTHENTICATE","Msg_key":"","Msg":"PlayGamesPlatform.Authenticate not found"}
-{"Id":"LOGIN_GPGS_NO_AUTH_CODE","Msg_key":"","Msg":"Failed to obtain server auth code from GPGS"}
-{"Id":"LOGIN_GPGS_NO_SERVER_ACCESS","Msg_key":"","Msg":"PlayGamesPlatform.RequestServerSideAccess not found"}
 {"Id":"LOGIN_SYNC_CANCELLED","Msg_key":"","Msg":"Sync cancelled"}
 {"Id":"LOGIN_SYNC_LOAD_CLOUD_FAILED","Msg_key":"","Msg":"Sync failed while loading cloud data"}
 {"Id":"LOGIN_SYNC_LOAD_LOCAL_FAILED","Msg_key":"","Msg":"Sync failed while loading local data"}
@@ -70,10 +77,15 @@
 {"Id":"LOGIN_SYNC_SAVE_LOCAL_FAILED","Msg_key":"","Msg":"Sync failed while saving local data"}
 {"Id":"LOGIN_SYNC_SLOT_LIST_FAILED","Msg_key":"","Msg":"Sync failed while listing slots"}
 {"Id":"LOGIN_UNSUPPORTED","Msg_key":"","Msg":"LoginType not supported on this platform"}
+{"Id":"PURCHASE_ADJUSTMENTS_CALL_FAILED","Msg_key":"","Msg":"Failed to fetch purchase adjustments."}
+{"Id":"PURCHASE_ADJUSTMENTS_INVALID_ARGUMENT","Msg_key":"","Msg":"Invalid getPurchaseAdjustments request arguments."}
+{"Id":"PURCHASE_CLIENT_GRANT_PURCHASE_ID_EMPTY","Msg_key":"","Msg":"purchaseId is required for client grant completion."}
 {"Id":"PURCHASE_ENTITLEMENTS_CALL_FAILED","Msg_key":"","Msg":"Failed to fetch entitlements snapshot."}
+{"Id":"PURCHASE_FUNCTION_CALL_FAILED","Msg_key":"","Msg":"Purchase callable failed."}
 {"Id":"PURCHASE_FUNCTION_RESPONSE_INVALID","Msg_key":"","Msg":"Callable returned invalid or null response payload."}
 {"Id":"PURCHASE_INIT_FAILED","Msg_key":"","Msg":"IAP initialization failed."}
 {"Id":"PURCHASE_INIT_REQUIRED","Msg_key":"","Msg":"PurchaseManager not initialized. Call InitializeAsync() first."}
+{"Id":"PURCHASE_INTERNAL_PRODUCT_ID_EMPTY","Msg_key":"","Msg":"internalProductId is required."}
 {"Id":"PURCHASE_INTERRUPTED_SNAPSHOT_KIND_INVALID","Msg_key":"","Msg":"Interrupted purchase snapshot has invalid purchase kind."}
 {"Id":"PURCHASE_INTERRUPTED_SNAPSHOT_PRODUCT_ID_MISSING","Msg_key":"","Msg":"Interrupted purchase snapshot is missing internalProductId."}
 {"Id":"PURCHASE_INTERRUPTED_STORAGE_UNAVAILABLE","Msg_key":"","Msg":"PurchaseStorage is not available for interrupted purchase retry."}
@@ -84,10 +96,12 @@
 {"Id":"PURCHASE_PURCHASE_REQUEST_FAILED","Msg_key":"","Msg":"Store purchase request failed before verification."}
 {"Id":"PURCHASE_RECENT_CALL_FAILED","Msg_key":"","Msg":"Failed to fetch recent purchases."}
 {"Id":"PURCHASE_RECENT_NOT_FOUND","Msg_key":"","Msg":"No recent rental purchase within 30 days."}
+{"Id":"PURCHASE_REFUND_APPLY_FAILED","Msg_key":"","Msg":"Failed to apply refund adjustment."}
 {"Id":"PURCHASE_RENTAL_LATEST_CALL_FAILED","Msg_key":"","Msg":"Failed to fetch latest rental purchase within 30 days."}
 {"Id":"PURCHASE_RENTAL_LATEST_NOT_FOUND","Msg_key":"","Msg":"No recent rental purchase within 30 days."}
 {"Id":"PURCHASE_RESTORE_FAILED","Msg_key":"","Msg":"Restore transactions failed at store."}
 {"Id":"PURCHASE_SEASON_PASS_ALREADY_OWNED","Msg_key":"","Msg":"Season pass duplicate purchase is not allowed."}
+{"Id":"PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED","Msg_key":"","Msg":"ackPurchaseStoreConfirm callable failed."}
 {"Id":"PURCHASE_STORE_FAILED","Msg_key":"","Msg":"Purchase store failed"}
 {"Id":"PURCHASE_STORE_NOT_SET","Msg_key":"","Msg":"PurchaseStore not set. Call SetPurchaseStore()."}
 {"Id":"PURCHASE_UNAUTHENTICATED","Msg_key":"","Msg":"Authentication required."}
@@ -96,14 +110,10 @@
 {"Id":"PURCHASE_VERIFY_FAILED_PRECONDITION","Msg_key":"","Msg":"verifyPurchase failed precondition."}
 {"Id":"PURCHASE_VERIFY_INVALID_ARGUMENT","Msg_key":"","Msg":"verifyPurchase was called with invalid arguments."}
 {"Id":"PURCHASE_VERIFY_REJECTED_UNKNOWN","Msg_key":"","Msg":"verifyPurchase rejected purchase with unknown reason."}
+{"Id":"SAVEDATA_SYNC_REQUIRED","Msg_key":"","Msg":"Primary save is not initialized. Call SyncAsync first."}
 {"Id":"SAVEDATA_PAYLOAD_PARSE_FAILED","Msg_key":"","Msg":"Failed to parse save payload json"}
-{"Id":"COMMON_INVALID_ARGUMENT","Msg_key":"","Msg":"Invalid request arguments."}
-{"Id":"PURCHASE_ADJUSTMENTS_CALL_FAILED","Msg_key":"","Msg":"Failed to fetch purchase adjustments."}
-{"Id":"PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED","Msg_key":"","Msg":"ackPurchaseStoreConfirm callable failed."}
-{"Id":"PURCHASE_REFUND_APPLY_FAILED","Msg_key":"","Msg":"Failed to apply refund adjustment."}
-{"Id":"INVENTORY_REFUND_INSUFFICIENT","Msg_key":"","Msg":"Insufficient inventory to revoke refund rewards."}
-{"Id":"ACCOUNT_SWITCH_UNSUPPORTED","Msg_key":"","Msg":"Account switch is not supported for this login combination."}
-{"Id":"ACCOUNT_SWITCH_GUEST_UPGRADE_FAILED","Msg_key":"","Msg":"Failed to upgrade guest account during account switch."}
-{"Id":"ACCOUNT_SWITCH_LOGIN_FAILED","Msg_key":"","Msg":"Failed to sign in target account during account switch."}
-{"Id":"LOCALSAVE_NOT_FOUND","Msg_key":"","Msg":"Local save not found"}
-{"Id":"CLOUDSAVE_CONNECTION_FAILED","Msg_key":"","Msg":"Cloud connection failed"}
+{"Id":"SAVEDATA_SYNC_CANCELLED","Msg_key":"","Msg":"SaveData sync resolve cancelled."}
+{"Id":"SAVEDATA_SYNC_LOAD_LOCAL_FAILED","Msg_key":"","Msg":"SaveData sync failed to load local payload."}
+{"Id":"SAVEDATA_SYNC_RESOLVE_FAILED","Msg_key":"","Msg":"SaveData sync conflict resolution failed."}
+{"Id":"SAVEDATA_SYNC_SAVE_CLOUD_FAILED","Msg_key":"","Msg":"SaveData sync failed to save cloud payload."}
+{"Id":"SAVEDATA_SYNC_SAVE_LOCAL_FAILED","Msg_key":"","Msg":"SaveData sync failed to save local payload."}

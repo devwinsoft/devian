@@ -44,10 +44,6 @@ namespace Devian
 
             try
             {
-                // v11 필수: 콜백을 Unity 메인 스레드에서 발화시킨다.
-                // Initialize 이전에 호출해야 한다.
-                MobileAds.RaiseAdEventsOnUnityMainThread = true;
-
                 MobileAds.Initialize(status =>
                 {
                     _sdkInitialized = true;

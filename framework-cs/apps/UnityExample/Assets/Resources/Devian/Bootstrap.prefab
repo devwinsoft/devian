@@ -159,11 +159,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.SaveDataManager
   _localRoot: 0
-  _slotConfig:
-    slots:
-    - slotKey: main
-      filename: save/main.json
-      cloudSlot: main
+  _primaryLocalFilename: save/main.json
+  _primaryCloudSlot: main
 --- !u!114 &2516925715426756820
 MonoBehaviour:
   m_ObjectHideFlags: 0

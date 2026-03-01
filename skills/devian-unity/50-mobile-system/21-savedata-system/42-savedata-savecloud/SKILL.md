@@ -6,6 +6,7 @@
 - **SaveCloudManager는 삭제됨.** 모든 클라우드 로직은 `SaveDataManager`의 private/internal 메서드로 통합되었다.
 - **Editor/Guest에서는 CloudSave를 사용하지 않는다(Failure 반환).**
 - 외부 진입점: `SaveDataManager.Instance._initializeCloudAsync(ct)` (AccountManager에서 호출).
+- public API는 단일 primary save만 다루며, cloud client는 내부적으로 primary cloud slot에 접근한다.
 
 
 ## Implementation Location (3-path mirror)

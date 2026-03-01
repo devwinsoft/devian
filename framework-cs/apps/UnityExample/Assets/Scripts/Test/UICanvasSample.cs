@@ -30,7 +30,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         }
 
         // 1. SaveData Sync
-        var sync = await SaveDataManager.Instance.SyncAsync("main", timeout.Token);
+        var sync = await SaveDataManager.Instance.SyncAsync(timeout.Token);
         Debug.Log($"Sync state: {sync.Value?.State}");
         if (sync.IsFailure)
         {
@@ -50,7 +50,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         PoolManager.Instance.ClearAll();
         AccountManager.Instance.Logout();
         SoundManager.Instance.StopAll();
-        SaveDataManager.Instance.ClearSlotAsync("main", CancellationToken.None);
+        SaveDataManager.Instance.ClearSaveAsync(CancellationToken.None);
         SceneTransManager.Instance.LoadSceneAsync("SceneLoading");
     }
     

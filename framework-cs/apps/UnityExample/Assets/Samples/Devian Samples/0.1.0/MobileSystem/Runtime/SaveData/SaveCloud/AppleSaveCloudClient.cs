@@ -34,16 +34,20 @@ namespace Devian
         }
 
 
+#if UNITY_IOS && !UNITY_EDITOR
         public async Task<CommonResult> SaveAsync(string slot, SaveCloudPayload payload, CancellationToken ct)
         {
-#if UNITY_IOS && !UNITY_EDITOR
             var result = await AccountManager.Instance._getAccountLoginApple().SaveAsync(slot, payload, ct);
             return mapSaveResult(result);
-#else
-            return CommonResult.Failure(CommonErrorType.CLOUDSAVE_CONNECTION_FAILED,
-                "Cloud save is not available on this platform.");
-#endif
         }
+#else
+        public Task<CommonResult> SaveAsync(string slot, SaveCloudPayload payload, CancellationToken ct)
+        {
+            return Task.FromResult(CommonResult.Failure(
+                CommonErrorType.CLOUDSAVE_CONNECTION_FAILED,
+                "Cloud save is not available on this platform."));
+        }
+#endif
 
 
         public Task<SaveCloudResult> DeleteAsync(string slot, CancellationToken ct)

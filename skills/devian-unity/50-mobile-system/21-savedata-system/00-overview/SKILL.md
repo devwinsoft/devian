@@ -18,8 +18,6 @@ SaveDataManager가 유일한 진입점이며, SaveLocal/SaveCloud 로직을 단�
 | Document | Description |
 |----------|-------------|
 | [10-savedata-manager](../10-savedata-manager/SKILL.md) | SaveDataManager 설계(단일 진입점) |
-| [38-savedata-saveslot](../38-savedata-saveslot/SKILL.md) | SaveSlotConfig 인터페이스 |
-| [39-savedata-saveconfig](../39-savedata-saveconfig/SKILL.md) | SaveSlot/SaveSlotConfig 파일 분리 |
 | [41-savedata-savelocal](../41-savedata-savelocal/SKILL.md) | SaveLocal(Internal) |
 | [42-savedata-savecloud](../42-savedata-savecloud/SKILL.md) | SaveCloud(Internal) |
 | [43-savedata-json-codec](../43-savedata-json-codec/SKILL.md) | SaveData JSON 직렬화/역직렬화 규약 |

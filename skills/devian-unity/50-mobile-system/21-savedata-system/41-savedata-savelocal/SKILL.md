@@ -31,7 +31,7 @@
 
 
 ## What it does
-- `SaveDataManager` 내부 private 메서드가 파일 I/O를 수행한다(slot 단위 저장/불러오기).
+- `SaveDataManager` 내부 private 메서드가 primary local file 기준으로 파일 I/O를 수행한다.
 - `SaveLocalCrypto`로 SHA-256 체크섬을 생성/검증한다.
 - `ComplexUtil`로 payload 난독화/역난독화를 수행한다 (경량 바이트 치환, Key/IV 불필요).
 - `SaveLocalFileStore`가 atomic write(임시 파일 → rename)로 파일을 안전하게 기록한다.

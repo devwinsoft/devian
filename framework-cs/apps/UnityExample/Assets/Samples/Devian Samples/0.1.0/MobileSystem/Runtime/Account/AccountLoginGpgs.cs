@@ -192,9 +192,9 @@ namespace Devian
 
         // ───── Sign-in ─────
 
+#if UNITY_ANDROID && !UNITY_EDITOR
         public async Task<SaveCloudResult> SignInIfNeededAsync(CancellationToken ct)
         {
-#if UNITY_ANDROID && !UNITY_EDITOR
             // SavedGame 프로퍼티는 인증 완료 직후 바로 사용 가능하지 않을 수 있다.
             // 최대 10회 × 500ms = 5초 대기하며 재시도한다.
             const int maxRetries = 10;
@@ -232,10 +232,13 @@ namespace Devian
             }
 
             return await tcs.Task;
-#else
-            return SaveCloudResult.NotAvailable;
-#endif
         }
+#else
+        public Task<SaveCloudResult> SignInIfNeededAsync(CancellationToken ct)
+        {
+            return Task.FromResult(SaveCloudResult.NotAvailable);
+        }
+#endif
 
         public void SignOut()
         {
@@ -269,11 +272,11 @@ namespace Devian
             return getServerAuthCodeCredentialAsync(ct, allowManualAuthenticate: false);
         }
 
+#if UNITY_ANDROID && !UNITY_EDITOR
         private async Task<CommonResult<LoginCredential>> getServerAuthCodeCredentialAsync(
             CancellationToken ct,
             bool allowManualAuthenticate)
         {
-#if UNITY_ANDROID && !UNITY_EDITOR
             ensureReflection();
 
             try
@@ -419,18 +422,24 @@ namespace Devian
             {
                 return CommonResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_EXCEPTION, ex.ToString());
             }
-#else
-            return CommonResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_NOT_FOUND,
-                "GPGS is not available on this platform.");
-#endif
         }
+#else
+        private Task<CommonResult<LoginCredential>> getServerAuthCodeCredentialAsync(
+            CancellationToken ct,
+            bool allowManualAuthenticate)
+        {
+            return Task.FromResult(CommonResult<LoginCredential>.Failure(
+                CommonErrorType.LOGIN_GPGS_NOT_FOUND,
+                "GPGS is not available on this platform."));
+        }
+#endif
 
         // ───── Cloud Save (Saved Games) ─────
 
+#if UNITY_ANDROID && !UNITY_EDITOR
         public async Task<(SaveCloudResult result, SaveCloudPayload payload)> LoadAsync(
             string slot, CancellationToken ct)
         {
-#if UNITY_ANDROID && !UNITY_EDITOR
             ensureSavedGameClient();
             if (!_isAvailable)
                 return (SaveCloudResult.NotAvailable, null);
@@ -465,15 +474,19 @@ namespace Devian
                 Debug.LogWarning($"[AccountLoginGpgs] LoadAsync failed: {e.Message}");
                 return (SaveCloudResult.FatalFailure, null);
             }
-#else
-            return (SaveCloudResult.NotAvailable, null);
-#endif
         }
+#else
+        public Task<(SaveCloudResult result, SaveCloudPayload payload)> LoadAsync(
+            string slot, CancellationToken ct)
+        {
+            return Task.FromResult((SaveCloudResult.NotAvailable, (SaveCloudPayload)null));
+        }
+#endif
 
+#if UNITY_ANDROID && !UNITY_EDITOR
         public async Task<SaveCloudResult> SaveAsync(
             string slot, SaveCloudPayload payload, CancellationToken ct)
         {
-#if UNITY_ANDROID && !UNITY_EDITOR
             ensureSavedGameClient();
             if (!_isAvailable) return SaveCloudResult.NotAvailable;
 
@@ -495,14 +508,18 @@ namespace Devian
                 Debug.LogWarning($"[AccountLoginGpgs] SaveAsync failed: {e.Message}");
                 return SaveCloudResult.FatalFailure;
             }
-#else
-            return SaveCloudResult.NotAvailable;
-#endif
         }
+#else
+        public Task<SaveCloudResult> SaveAsync(
+            string slot, SaveCloudPayload payload, CancellationToken ct)
+        {
+            return Task.FromResult(SaveCloudResult.NotAvailable);
+        }
+#endif
 
+#if UNITY_ANDROID && !UNITY_EDITOR
         public async Task<SaveCloudResult> DeleteAsync(string slot, CancellationToken ct)
         {
-#if UNITY_ANDROID && !UNITY_EDITOR
             ensureSavedGameClient();
             if (!_isAvailable) return SaveCloudResult.NotAvailable;
 
@@ -534,10 +551,13 @@ namespace Devian
             {
                 return SaveCloudResult.FatalFailure;
             }
-#else
-            return SaveCloudResult.NotAvailable;
-#endif
         }
+#else
+        public Task<SaveCloudResult> DeleteAsync(string slot, CancellationToken ct)
+        {
+            return Task.FromResult(SaveCloudResult.NotAvailable);
+        }
+#endif
 
         // ───── Reflection wrappers ─────
 

@@ -227,7 +227,6 @@ namespace Devian
 
 #if UNITY_PURCHASING
         StoreController _controller;
-        bool _connected;
         bool _iapInitialized;
         string _initError;
 
@@ -280,6 +279,84 @@ namespace Devian
             _initializeTask = initializeIapAsync(ct);
             return _initializeTask;
 #endif
+        }
+
+        /// <summary>
+        /// Session restore/login 직후 구매 상태를 정합화한다.
+        /// 순서:
+        /// 1. IAP initialize
+        /// 2. interrupted purchase retry
+        /// 3. refund apply
+        /// 4. entitlements sync
+        /// 5. local/cloud save (non-fatal)
+        /// Retry/refund/entitlements/save 실패는 경고로 남기고 전체 sync는 계속 진행한다.
+        /// Initialize 실패만 fatal로 처리한다.
+        /// </summary>
+        public async Task<CommonResult<PurchaseSyncResult>> SyncAsync(CancellationToken ct = default)
+        {
+            var init = await InitializeAsync(ct);
+            if (init.IsFailure)
+                return CommonResult<PurchaseSyncResult>.Failure(init.Error!);
+
+            RetryInterruptedPurchaseResult? retryInterruptedPurchase = null;
+            CommonError retryInterruptedError = null;
+
+            var retry = await RetryInterruptedPurchaseAsync(ct);
+            if (retry.IsSuccess)
+            {
+                retryInterruptedPurchase = retry.Value;
+            }
+            else
+            {
+                retryInterruptedError = retry.Error;
+                Debug.LogWarning($"[{Tag}] RetryInterruptedPurchaseAsync failed during sync (non-fatal): {retryInterruptedError}");
+            }
+
+            RefundResult? refund = null;
+            CommonError refundError = null;
+
+            var refundResult = await RefundAsync(ct);
+            if (refundResult.IsSuccess)
+            {
+                refund = refundResult.Value;
+            }
+            else
+            {
+                refundError = refundResult.Error;
+                Debug.LogWarning($"[{Tag}] RefundAsync failed during sync (non-fatal): {refundError}");
+            }
+
+            EntitlementsSnapshot? entitlements = null;
+            CommonError entitlementsError = null;
+
+            var entitlementsResult = await SyncEntitlementsAsync(ct);
+            if (entitlementsResult.IsSuccess)
+            {
+                entitlements = entitlementsResult.Value;
+            }
+            else
+            {
+                entitlementsError = entitlementsResult.Error;
+                Debug.LogWarning($"[{Tag}] SyncEntitlementsAsync failed during sync (non-fatal): {entitlementsError}");
+            }
+
+            CommonError saveError = null;
+            var save = await SaveDataManager.Instance.SaveGameStateAsync(ct);
+            if (save.IsFailure)
+            {
+                saveError = save.Error;
+                Debug.LogWarning($"[{Tag}] Post-sync save failed (non-fatal): {saveError}");
+            }
+
+            return CommonResult<PurchaseSyncResult>.Success(
+                new PurchaseSyncResult(
+                    retryInterruptedPurchase,
+                    retryInterruptedError,
+                    refund,
+                    refundError,
+                    entitlements,
+                    entitlementsError,
+                    saveError));
         }
 
         /// <summary>
@@ -479,7 +556,7 @@ namespace Devian
         public async Task<CommonResult<long>> GetRentalRemainingMsAsync(string internalProductId, CancellationToken ct = default)
         {
             if (string.IsNullOrEmpty(internalProductId))
-                return CommonResult<long>.Failure(CommonErrorType.COMMON_SERVER, "internalProductId is required.");
+                return CommonResult<long>.Failure(CommonErrorType.PURCHASE_INTERNAL_PRODUCT_ID_EMPTY, "internalProductId is required.");
 
             var sync = await SyncEntitlementsAsync(ct);
             if (sync.IsFailure)
@@ -497,13 +574,16 @@ namespace Devian
             return CommonResult<long>.Success(clampedRemainingMs);
         }
 
+#if UNITY_EDITOR
+        public Task<CommonResult<RecentPurchaseItem>> GetLatestConsumablePurchase30dAsync(CancellationToken ct = default)
+        {
+            return Task.FromResult(CommonResult<RecentPurchaseItem>.Failure(
+                CommonErrorType.PURCHASE_UNSUPPORTED_PLATFORM,
+                "PurchaseManager is not supported in Editor."));
+        }
+#else
         public async Task<CommonResult<RecentPurchaseItem>> GetLatestConsumablePurchase30dAsync(CancellationToken ct = default)
         {
-#if UNITY_EDITOR
-            return CommonResult<RecentPurchaseItem>.Failure(
-                CommonErrorType.PURCHASE_UNSUPPORTED_PLATFORM,
-                "PurchaseManager is not supported in Editor.");
-#else
             if (!_iapInitialized)
                 return CommonResult<RecentPurchaseItem>.Failure(
                     CommonErrorType.PURCHASE_INIT_REQUIRED,
@@ -521,8 +601,8 @@ namespace Devian
                     "No recent consumable purchase within 30 days.");
 
             return CommonResult<RecentPurchaseItem>.Success(item);
-#endif
         }
+#endif
 
         async Task<CommonResult<RefundSyncResult>> syncRefundsPageAsync(
             string cursor = null,
@@ -631,7 +711,7 @@ namespace Devian
                     if (isGetPurchaseAdjustments)
                     {
                         return CommonResult<Dictionary<string, object>>.Failure(
-                            CommonErrorType.COMMON_INVALID_ARGUMENT,
+                            CommonErrorType.PURCHASE_ADJUSTMENTS_INVALID_ARGUMENT,
                             "Invalid getPurchaseAdjustments request arguments.");
                     }
                     return CommonResult<Dictionary<string, object>>.Failure(
@@ -737,7 +817,7 @@ namespace Devian
                 case "ackRefundApplied":
                     return CommonErrorType.PURCHASE_REFUND_APPLY_FAILED;
                 default:
-                    return CommonErrorType.COMMON_SERVER;
+                    return CommonErrorType.PURCHASE_FUNCTION_CALL_FAILED;
             }
         }
 
@@ -777,7 +857,6 @@ namespace Devian
                 _controller.OnStoreDisconnected += onStoreDisconnected;
 
                 await _controller.Connect();
-                _connected = true;
                 Debug.Log($"[{Tag}] Store connected.");
 
                 ct.ThrowIfCancellationRequested();
@@ -1400,7 +1479,7 @@ namespace Devian
             if (string.IsNullOrEmpty(purchaseId))
             {
                 return CommonResult.Failure(
-                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    CommonErrorType.PURCHASE_CLIENT_GRANT_PURCHASE_ID_EMPTY,
                     "purchaseId is required.");
             }
 
@@ -1608,7 +1687,6 @@ namespace Devian
 
         void onStoreDisconnected(StoreConnectionFailureDescription desc)
         {
-            _connected = false;
             Debug.LogWarning($"[{Tag}] Store disconnected: {desc}");
         }
 
@@ -1653,12 +1731,15 @@ namespace Devian
 
         static readonly Task<CommonResult<EntitlementsSnapshot>> _notSupportedSnapshot =
             Task.FromResult(CommonResult<EntitlementsSnapshot>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+        static readonly Task<CommonResult<PurchaseSyncResult>> _notSupportedSync =
+            Task.FromResult(CommonResult<PurchaseSyncResult>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
         static readonly Task<CommonResult<long>> _notSupportedLong =
             Task.FromResult(CommonResult<long>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
         static readonly Task<CommonResult<RefundSyncResult>> _notSupportedRefundSync =
             Task.FromResult(CommonResult<RefundSyncResult>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
         public Task<CommonResult> InitializeAsync(CancellationToken ct = default) => _notSupportedInit;
+        public Task<CommonResult<PurchaseSyncResult>> SyncAsync(CancellationToken ct = default) => _notSupportedSync;
         public Task<CommonResult<PurchaseFinalResult>> PurchaseAsync(string internalProductId, CancellationToken ct = default) => _notSupported;
         static readonly Task<CommonResult<RetryInterruptedPurchaseResult>> _notSupportedRetryInterrupted =
             Task.FromResult(CommonResult<RetryInterruptedPurchaseResult>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
@@ -2171,6 +2252,40 @@ namespace Devian
             public string ClientGrantStatus { get; }
             public bool NeedsClientGrantDelivery { get; }
             public RewardData[] Rewards => AppliedRewards;
+        }
+
+        public readonly struct PurchaseSyncResult
+        {
+            public PurchaseSyncResult(
+                RetryInterruptedPurchaseResult? retryInterruptedPurchase,
+                CommonError retryInterruptedError,
+                RefundResult? refund,
+                CommonError refundError,
+                EntitlementsSnapshot? entitlements,
+                CommonError entitlementsError,
+                CommonError saveError)
+            {
+                RetryInterruptedPurchase = retryInterruptedPurchase;
+                RetryInterruptedError = retryInterruptedError;
+                Refund = refund;
+                RefundError = refundError;
+                Entitlements = entitlements;
+                EntitlementsError = entitlementsError;
+                SaveError = saveError;
+            }
+
+            public RetryInterruptedPurchaseResult? RetryInterruptedPurchase { get; }
+            public CommonError RetryInterruptedError { get; }
+            public RefundResult? Refund { get; }
+            public CommonError RefundError { get; }
+            public EntitlementsSnapshot? Entitlements { get; }
+            public CommonError EntitlementsError { get; }
+            public CommonError SaveError { get; }
+            public bool HasNonFatalIssues =>
+                RetryInterruptedError != null ||
+                RefundError != null ||
+                EntitlementsError != null ||
+                SaveError != null;
         }
 
         public readonly struct RetryInterruptedPurchaseResult
