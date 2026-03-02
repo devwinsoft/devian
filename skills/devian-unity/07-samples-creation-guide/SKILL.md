@@ -269,7 +269,8 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 
 **Stub/Proxy는 GameNetManager가 내부에서 생성/보관:**
 - `_stub = new Game2CStub()` — 생성자에서 내부 생성
-- `_proxy = new C2Game.Proxy(...)` — OnTransportCreated()에서 내부 생성
+- `_proxy = new C2Game.Proxy()` — manager 내부 생성
+- `_sessionHost = new ClientSessionHost(_stub, _proxy)` — Awake에서 lifecycle owner 생성
 
 **사용자 확장은 partial 클래스로:**
 ```csharp

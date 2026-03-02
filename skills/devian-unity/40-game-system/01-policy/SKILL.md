@@ -81,7 +81,8 @@ namespace Devian
 
 1. **GameNetManager:** Stub/Proxy를 내부에서 생성/보관
    - `_stub = new Game2CStub()` — 생성자에서 내부 생성
-   - `_proxy = new C2Game.Proxy(...)` — OnTransportCreated()에서 내부 생성
+   - `_proxy = new C2Game.Proxy()` — manager 내부 생성
+   - `_sessionHost = new ClientSessionHost(_stub, _proxy)` — Awake에서 session lifecycle owner 생성
    - 외부 주입/등록 없음
 
 2. **Game2CStub:** partial 클래스로 확장 가능

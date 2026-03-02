@@ -118,62 +118,71 @@ Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴�
 ### 제거 사유
 
 - WsClient/Handlers는 중복 레이어로 오해 유발
-- 표준 흐름인 `GameNetManager + Proxy.Connect() + Proxy.Tick()` 패턴으로 충분
+- 표준 흐름인 `GameNetManager + generated ClientSessionHost + send-only Proxy` 패턴으로 충분
 - 사용자는 Stub를 직접 상속하거나, 별도 partial class를 수기로 작성
 
 ### 표준 연결 흐름 (권장)
 
 ```csharp
-// GameNetManager에서 직접 Proxy 사용
+// GameNetManager는 session host를 통해 lifecycle을 관리
 private readonly Game2CStub _stub = new();
 private readonly C2Game.Proxy _proxy = new();
-private readonly INetConnector _connector = new NetWsConnector();
+private ClientSessionHost? _sessionHost;
+
+protected override void Awake()
+{
+    base.Awake();
+    _sessionHost = new ClientSessionHost(_stub, _proxy);
+}
 
 public void Connect(string url)
 {
-    _proxy.Connect(_stub, url, _connector);
+    SessionHost.Connect(url);
 }
 
-public void Tick()
+private void Update()
 {
-    _proxy.Tick();
+    _sessionHost?.Tick();
 }
 ```
 
-### Proxy.Connect 재진입 가드 (Hard Rule)
+### SessionHost 연결 규칙 (Hard Rule)
 
-**Generated Proxy.Connect는 재진입 가능성이 있으므로, Connecting/Connected 상태에서 Connect는 reject한다.**
-
-| 상태 | 동작 |
-|------|------|
-| `Faulted` | DisposeConnection() 후 새 연결 시작 |
-| `_isConnecting == true` | reject (OnError 1회, dedup) |
-| `session.State != Disconnected` | reject (OnError 1회, dedup) |
-| `session == null` 또는 `Disconnected` | 새 연결 시작 |
+**Generated Proxy는 연결 수명주기를 다시 가지면 안 된다. 연결/정리/이벤트/state는 session owner 한 곳에만 둔다.**
 
 **핵심 규칙:**
-1. **이전 세션 무조건 폐기**: Connect() 진입 시 `_session != null`이면 상태와 관계없이 `DisposeConnection()`으로 폐기 (이전 세션의 비동기 continuation이 새 세션에 에러를 전파하는 것을 방지)
-2. `_isConnecting = true`는 세션 생성 전에 설정 (같은 프레임 재호출 방지)
-3. 연결 상태 플래그는 `HandleOpen`/`HandleClose`/`HandleError`에서 해제
+1. generated `Proxy` public API는 `AttachSession()`, `DetachSession()`, `SendXxx()`로 설명 가능해야 한다
+2. session owner가 paired inbound runtime 생성, `INetSession` 생성, 이벤트 구독, `AttachSession()` 호출을 맡는다
+3. 세션 해제 시 session owner가 먼저 이벤트를 끊고 `DetachSession()`으로 stale binding을 제거한다
 
 **생성 코드 핵심부:**
 ```csharp
+var runtime = new Game2C.Runtime(_stub);
+var session = _connector.CreateSession(runtime, url);
+
+session.OnOpen += _sessionOpenHandler;
+session.OnClose += _sessionCloseHandler;
+session.OnError += _sessionErrorHandler;
+
+_proxy.AttachSession(session);
+```
+
+**금지:**
+
+```csharp
 public void Connect(Stub stub, string url, INetConnector connector)
 {
-    // Always dispose previous session to prevent stale event handler leaks.
-    if (_session != null)
-        DisposeConnection();
-
-    _isConnecting = true; // Set before session creation
-    // ... create session and connect
+    // Do not reintroduce lifecycle ownership into generated proxy.
 }
 ```
 
 ### OnError 디듀프 가드 (Hard Rule)
 
-**Proxy는 연결 실패 시 OnError를 Attempt당 최대 1회만 발생시킨다(디듀프 가드).**
+**`NetClientSessionHost`는 연결 실패 시 OnError를 Attempt당 최대 1회만 발생시킨다(디듀프 가드).**
 
-**필드:**
+> 이 로직은 foundation 수기 코드(`NetClientSessionHost`)에 구현되어 있다. Generated Proxy는 send-only이며 에러 가드를 갖지 않는다.
+
+**필드 (NetClientSessionHost 내부):**
 ```csharp
 private bool _errorNotified; // Error dedup guard (max 1 OnError per attempt)
 ```
@@ -183,18 +192,26 @@ private bool _errorNotified; // Error dedup guard (max 1 OnError per attempt)
 |--------|-------------|
 | `Connect()` | 새 연결 시작 전 |
 | `HandleOpen()` | 연결 성공 시 |
-| `DisposeConnection()` | 세션 정리 시 |
+| `ReleaseSession()` | 세션 정리 시 |
 
 **HandleError 구현:**
 ```csharp
-private void HandleError(Exception ex)
+private void HandleError(INetSession session, Exception ex)
 {
+    if (!ReferenceEquals(_session, session))
+        return;
+
     _isConnecting = false;
     _lastError = ex.Message;
+
     if (_errorNotified)
         return;
+
     _errorNotified = true;
     OnError?.Invoke(ex);
+
+    if (_session?.State == NetClientState.Faulted)
+        ReleaseSession(disposeSession: true, detachBindings: true);
 }
 ```
 
@@ -202,6 +219,7 @@ private void HandleError(Exception ex)
 1. 한 연결 시도에서 OnError는 최대 1회만 Invoke
 2. _errorNotified가 true이면 추가 에러 무시
 3. 새 연결/연결 성공/세션 정리 시 플래그 리셋
+4. stale session 이벤트는 `ReferenceEquals` 가드로 무시
 
 ---
 
@@ -356,6 +374,7 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 | `framework-ts/tools/builder/build.js` | `generateCsproj(...)` | C# csproj 생성/보정 (ProtocolGroup 포함) |
 | `framework-ts/tools/builder/build.js` | `ensureProtocolPackageJson(...)` | TS package.json 생성/보정 |
 | `framework-ts/tools/builder/generators/protocol-cs.js` | `generateCSharpProtocol(...)` | C# `{ProtocolName}.g.cs` 생성 |
+| `framework-ts/tools/builder/generators/protocol-cs.js` | `generateCSharpClientSessionHost(...)` | C# `ClientSessionHost.g.cs` 생성 |
 
 **의존성 Hard Rule이 실제로 강제되는 지점:**
 
@@ -527,7 +546,6 @@ public void SendFoo(Foo message)
 ### Legacy API 보존 (호환성)
 
 - `ICodec.Encode<T>()`: 내부적으로 `EncodeTo` 호출 후 `ToArray()` (레거시 호환)
-- `Frame.Pack()`: 보존되지만 SendXxx에서 미사용
 
 ### DoD (완료 정의)
 

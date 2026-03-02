@@ -57,31 +57,30 @@ Devian 런타임에 **WebSocket 기반 클라이언트 런타임**을 추가한�
 
 **프로토콜 생성 코드가 네트워크 구현을 끌고 들어가면 안 된다 (Hard Rule).**
 
-Generated Protocol Proxy는 **인터페이스에만 의존**하며, 구체 타입(NetWsTransport, BaseNetClient 등)을 참조하지 않는다.
+Generated Protocol Proxy는 **send path에 필요한 인터페이스에만 의존**하며, 구체 타입(NetWsTransport, BaseNetClient 등)을 참조하지 않는다.
 
-**프로토콜 Proxy가 만드는 runtime(stub)은 수신 방향 프로토콜(Runtime/Stub)을 사용한다.**
-- C2Game 송신 Proxy → Game2C Runtime (수신)
-- Game2C 송신 Proxy → C2Game Runtime (수신)
+**paired runtime(stub) 조립은 generated session host가 맡고, send-only Proxy는 조립 로직을 모른다.**
+- C2Game 송신 Proxy는 `Game2C.Runtime`를 직접 만들지 않는다
+- generated `ClientSessionHost`가 `Game2C.Stub`로 `Game2C.Runtime`를 만든 뒤 session을 생성한다
 
 **규칙:**
 
 1. **Proxy는 기본 ctor로 생성 가능해야 한다**
    - `new C2Game.Proxy()` (파라미터 없음)
 
-2. **Proxy는 INetSession/INetConnector 인터페이스에만 의존한다**
-   - `C2Game.Proxy.Connect(Game2C.Stub stub, string url, INetConnector connector)` 시그니처
-   - 내부에서:
-     - `var runtime = new Game2C.Runtime(stub);` — **수신 방향 프로토콜 런타임 생성**
-     - `var session = connector.CreateSession(runtime, url);` — 세션 생성 (인터페이스)
-     - 이벤트 핸들러 연결 + ConnectAsync 시작
+2. **Proxy는 bound session을 통한 송신만 담당한다**
+   - `AttachSession(INetSession session)`
+   - `DetachSession()`
+   - `SendXxx(...)`
+   - `INetConnector`에는 직접 의존하지 않는다
 
-3. **Proxy가 연결 수명관리 API를 제공한다**
-   - `Connect({InboundProtocol}.Stub stub, string url, INetConnector connector)` — 연결 시작
+3. **Session owner가 연결 수명관리 API를 제공한다**
+   - `Connect(url)` — 연결 시작
    - `Tick()` — 네트워크 이벤트 처리 (Unity Update에서 호출)
    - `Disconnect()` — 연결 종료
    - `Dispose()` — 리소스 정리
 
-4. **Proxy가 이벤트를 외부로 노출한다**
+4. **Session owner가 이벤트와 상태를 외부로 노출한다**
    - `event Action? OnOpen`
    - `event Action<ushort, string>? OnClose` — code/reason 정보 끝까지 전달
    - `event Action<Exception>? OnError`
@@ -93,20 +92,21 @@ Generated Protocol Proxy는 **인터페이스에만 의존**하며, 구체 타�
    - `BaseNetClient : INetSession` — 세션 구현
    - `NetWsConnector : INetConnector` — WebSocket 세션 생성 (공통 구현)
 
-6. **Unity 샘플(Network)에서는 Manager가 Stub/Proxy/Connector를 소유한다**
+6. **Unity 샘플에서는 Manager가 Stub/Proxy/SessionHost를 소유한다**
    - GameNetManager는 CompoSingleton (중복 인스턴스 방지)
-   - Awake에서 stub(Game2CStub)/proxy(C2Game.Proxy)/connector 생성 + proxy 이벤트 구독
-   - Connect에서 `_proxy.Connect(_stub, url, _connector)` 호출
-   - Update에서 `_proxy.Tick()` 호출
+   - Awake에서 stub(Game2CStub)/proxy(C2Game.Proxy)/sessionHost 생성 + host 이벤트 구독
+   - Connect에서 `SessionHost.Connect(url)` 호출
+   - Update에서 `_sessionHost?.Tick()` 호출
 
-7. **WsClient에서는 AttachSession 사용**
-   - `proxy.AttachSession(session)` — 공유 세션 부착
+7. **Session owner가 session binding을 수행한다**
+   - `proxy.AttachSession(session)` — 현재 세션 부착
+   - cleanup 시 `proxy.DetachSession()` — stale binding 제거
    - sender 기반 wiring 금지
 
 **이유:**
 - Generated Proxy가 구체 네트워크 구현을 참조하지 않아 의존성 분리
-- NetWsConnector가 "공통 구현"이며, Proxy는 interface에만 의존
-- Manager는 stub/url/connector만 전달하고 연결 세부사항을 몰라도 됨
+- NetWsConnector가 "공통 구현"이며, session owner가 connector를 사용
+- Manager는 host에 lifecycle을 위임하고, Proxy는 송신에만 집중
 - 샘플 문서(`50-mobile-system/91-game-net-manager`)의 규칙과 일관성 유지
 - 상태 관리와 전송이 INetSession으로 통합되어 안정적인 lifecycle 관리
 

@@ -71,6 +71,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
     protected override void onInitComplete()
     {
         MissionManager.Instance.RefreshRuntimes();
+        Debug.Log($"[UICanvasSample] remainSec={MissionManager.Instance.GetRemainTime(MISSION_TYPE.DAY).TotalSeconds}");
     }
 
     public void OnClick_Connect()

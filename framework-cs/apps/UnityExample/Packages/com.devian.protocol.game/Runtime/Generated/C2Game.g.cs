@@ -7,7 +7,6 @@
 using System;
 using System.Buffers;
 using System.Collections.Generic;
-using System.IO;
 using System.Text;
 using Devian;
 
@@ -20,33 +19,6 @@ namespace Devian.Protocol.Game
     /// </summary>
     public static partial class C2Game
     {
-        /// <summary>
-        /// Frame helper for protocol framing.
-        /// Frame format: [opcode:int32LE][payload...]
-        /// </summary>
-        internal static class Frame
-        {
-            public static int ReadOpcode(ReadOnlySpan<byte> frame)
-            {
-                if (frame.Length < 4) throw new ArgumentException("Frame too short");
-                return BitConverter.ToInt32(frame.Slice(0, 4));
-            }
-
-            public static ReadOnlySpan<byte> ReadPayload(ReadOnlySpan<byte> frame)
-            {
-                if (frame.Length < 4) return ReadOnlySpan<byte>.Empty;
-                return frame.Slice(4);
-            }
-
-            public static byte[] Pack(int opcode, ReadOnlySpan<byte> payload)
-            {
-                var frame = new byte[4 + payload.Length];
-                BitConverter.TryWriteBytes(frame.AsSpan(0, 4), opcode);
-                payload.CopyTo(frame.AsSpan(4));
-                return frame;
-            }
-        }
-
         /// <summary>Envelope metadata (sessionId 등)</summary>
         public readonly struct EnvelopeMeta
         {
@@ -469,12 +441,6 @@ namespace Devian.Protocol.Game
 
         }
 
-        /// <summary>Sender interface for Proxy</summary>
-        public interface ISender
-        {
-            void SendTo(ReadOnlySpan<byte> frame);
-        }
-
         /// <summary>
         /// Abstract stub for C2Game handlers.
         /// Inherit and implement all On* methods.
@@ -543,159 +509,40 @@ namespace Devian.Protocol.Game
 
         /// <summary>
         /// Proxy for sending C2Game messages.
-        /// Uses INetSession/INetConnector for protocol-agnostic session management.
-        /// Inbound dispatch uses Game2C.Runtime.
         /// </summary>
-        public sealed class Proxy : IDisposable
+        public sealed class Proxy : INetSessionBindable
         {
-            // ======== Session (interface-based, no concrete types) ========
             private INetSession? _session;
-            private string _url = string.Empty;
-            private string _lastError = string.Empty;
-            private volatile bool _isConnecting; // Re-entry guard flag
-            private bool _errorNotified; // Error dedup guard (max 1 OnError per attempt)
 
-            // ======== Codec ========
             private readonly ICodec _codec;
 
-            // ======== Events ========
-            public event Action? OnOpen;
-            public event Action<ushort, string>? OnClose;
-            public event Action<Exception>? OnError;
-
-            // ======== Properties ========
-            public bool IsConnected => _session?.State == NetClientState.Connected;
-            public bool IsConnecting => _isConnecting;
-            public string Url => _url;
-            public string LastError => _lastError;
-
-            // ======== Constructor ========
             public Proxy(ICodec? codec = null)
             {
                 _codec = codec ?? new CodecProtobuf();
             }
 
-            // ======== Connection Lifecycle API ========
-
             /// <summary>
-            /// Connect to server using the provided connector.
-            /// Previous session is always disposed before creating a new one.
-            /// Stub must be Game2C.Stub for inbound message dispatch.
-            /// </summary>
-            public void Connect(Game2C.Stub stub, string url, INetConnector connector)
-            {
-                if (stub == null) throw new ArgumentNullException(nameof(stub));
-                if (string.IsNullOrEmpty(url)) throw new ArgumentException("url is empty", nameof(url));
-                if (connector == null) throw new ArgumentNullException(nameof(connector));
-
-                // Always dispose previous session to prevent stale event handler leaks.
-                // Without this, prior session continuations can fire HandleError on the
-                // current Proxy after a new session is already created.
-                if (_session != null)
-                    DisposeConnection();
-
-                _url = url;
-                _lastError = string.Empty;
-                _isConnecting = true; // Set before session creation to prevent re-entry
-                _errorNotified = false; // Reset error dedup guard for new attempt
-
-                // Inbound dispatch runtime (Game2C)
-                var runtime = new Game2C.Runtime(stub);
-
-                // Create session via connector (no concrete types here)
-                var session = connector.CreateSession(runtime, url);
-                session.OnOpen += HandleOpen;
-                session.OnClose += HandleClose;
-                session.OnError += HandleError;
-
-                _session = session;
-                _ = session.ConnectAsync().ContinueWith(t => { var ex = t.Exception; }, System.Threading.Tasks.TaskContinuationOptions.OnlyOnFaulted | System.Threading.Tasks.TaskContinuationOptions.ExecuteSynchronously);
-            }
-
-            /// <summary>
-            /// Process network events. Call from Update() loop.
-            /// </summary>
-            public void Tick()
-            {
-                _session?.Tick();
-            }
-
-            /// <summary>
-            /// Request graceful disconnect.
-            /// </summary>
-            public void Disconnect()
-            {
-                if (_session == null) return;
-                _ = _session.CloseAsync();
-            }
-
-            /// <summary>
-            /// Dispose connection resources.
-            /// </summary>
-            public void Dispose()
-            {
-                DisposeConnection();
-            }
-
-            private void DisposeConnection()
-            {
-                _isConnecting = false; // Clear flag first
-                _errorNotified = false; // Reset error dedup guard
-
-                var s = _session;
-                if (s == null) return;
-
-                s.OnOpen -= HandleOpen;
-                s.OnClose -= HandleClose;
-                s.OnError -= HandleError;
-
-                if (s is IDisposable d) d.Dispose();
-                _session = null;
-            }
-
-            // ======== Internal Event Handlers ========
-
-            private void HandleOpen()
-            {
-                _isConnecting = false;
-                _errorNotified = false; // Reset for connected state
-                OnOpen?.Invoke();
-            }
-
-            private void HandleClose(ushort code, string reason)
-            {
-                _isConnecting = false;
-                OnClose?.Invoke(code, reason);
-            }
-
-            private void HandleError(Exception ex)
-            {
-                _isConnecting = false;
-                _lastError = ex.Message;
-                if (_errorNotified)
-                    return;
-                _errorNotified = true;
-                OnError?.Invoke(ex);
-            }
-
-            // ======== Session Attachment (for WsClient shared session) ========
-
-            /// <summary>
-            /// Attach an externally created session for sending.
-            /// Used by WsClient to share a single session across protocols.
+            /// Attach a session for outbound sends.
             /// </summary>
             public void AttachSession(INetSession session)
             {
                 _session = session ?? throw new ArgumentNullException(nameof(session));
             }
 
-            // ======== Send Methods ========
-            // Uses PooledBufferWriter + EncodeTo for zero GC allocation.
+            /// <summary>
+            /// Detach the currently bound session.
+            /// </summary>
+            public void DetachSession()
+            {
+                _session = null;
+            }
+
+            // Send methods use PooledBufferWriter + EncodeTo for zero GC allocation.
             // Frame format: [opcode:int32LE][payload...]
 
             public void SendPing(Ping message)
             {
-                var session = _session ?? throw new InvalidOperationException("Proxy is not connected. Call Connect() or AttachSession() first.");
+                var session = _session ?? throw new InvalidOperationException("Proxy has no session attached. Call AttachSession() before sending.");
 
                 using var bw = new PooledBufferWriter(256);
 
@@ -713,7 +560,7 @@ namespace Devian.Protocol.Game
 
             public void SendEcho(Echo message)
             {
-                var session = _session ?? throw new InvalidOperationException("Proxy is not connected. Call Connect() or AttachSession() first.");
+                var session = _session ?? throw new InvalidOperationException("Proxy has no session attached. Call AttachSession() before sending.");
 
                 using var bw = new PooledBufferWriter(256);
 

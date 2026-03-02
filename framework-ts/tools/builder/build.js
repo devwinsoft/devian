@@ -9,9 +9,9 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 // Generators
-import { generateCSharpProtocol } from './generators/protocol-cs.js';
+import { generateCSharpProtocol, generateCSharpClientSessionHost } from './generators/protocol-cs.js';
 // NOTE: generateCSharpProtocolHandlers, generateCSharpProtocolGroupWsClient removed
-// Handlers/WsClient are no longer generated - use GameNetManager + Proxy pattern instead
+// Handlers/WsClient are no longer generated - use GameNetManager + session host + send-only Proxy pattern instead
 import { generateTypeScriptProtocol, generateServerRuntime, generateClientRuntime } from './generators/protocol-ts.js';
 import { generateCSharpContract, generateCSharpContractBody } from './generators/contract-cs.js';
 import { generateTypeScriptContract, generateTypeScriptContractBody } from './generators/contract-ts.js';
@@ -1156,6 +1156,12 @@ class DevianToolBuilder {
             fs.writeFileSync(path.join(stagingTsGenerated, `${protocolName}.g.ts`), tsCode);
         }
 
+        const clientSessionHostCode = generateCSharpClientSessionHost(groupName, protocolInfos);
+        if (clientSessionHostCode !== null) {
+            fs.writeFileSync(path.join(stagingCsGenerated, 'ClientSessionHost.g.cs'), clientSessionHostCode);
+            console.log(`    [ClientSessionHost] Generated/ClientSessionHost.g.cs`);
+        }
+
         // NOTE: .csproj 생성 제거 (수기/고정 파일, 빌더가 생성/수정 금지)
         // SSOT: skills/devian-builder/03-ssot/SKILL.md
 
@@ -1175,7 +1181,7 @@ class DevianToolBuilder {
             console.log(`    [ClientRuntime] Generated/ClientRuntime.g.ts`);
         }
 
-        // NOTE: WsClient generation removed - use GameNetManager + Proxy.Connect() pattern instead
+        // NOTE: WsClient generation removed - use GameNetManager + session host + send-only Proxy pattern instead
         // SSOT: skills/devian-builder/40-codegen-protocol/SKILL.md
 
         // NOTE: index.ts 생성 제거 (수기/고정 파일, 빌더가 생성/수정 금지)
