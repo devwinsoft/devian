@@ -126,13 +126,13 @@ namespace Devian.Domain.Game
         UNIT_HP_MAX = 100,
     }
 
-    /// <summary>ProductKind enum</summary>
-    public enum ProductKind
+    /// <summary>PRODUCT_KIND enum</summary>
+    public enum PRODUCT_KIND
     {
-        Consumable = 0,
-        Rental = 3,
-        Subscription = 1,
-        SeasonPass = 2,
+        CONSUMABLE = 0,
+        SUBSCRIPTION = 1,
+        SEASON_PASS = 2,
+        RENTAL = 3,
     }
 
     /// <summary>UserType enum</summary>
@@ -227,7 +227,7 @@ namespace Devian.Domain.Game
     {
         public string InternalProductId { get; set; } = string.Empty;
         public string RewardGroupId { get; set; } = string.Empty;
-        public ProductKind Kind { get; set; }
+        public PRODUCT_KIND Kind { get; set; }
         public string Title { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public string StoreSkuApple { get; set; } = string.Empty;

@@ -5,18 +5,18 @@ namespace Devian
 {
     public sealed class GameProductCatalog : IPurchaseProductCatalog
     {
-        static PurchaseProductType mapProductType(ProductKind kind)
+        static PurchaseProductType mapProductType(PRODUCT_KIND kind)
         {
             switch (kind)
             {
-                case ProductKind.Subscription:
+                case PRODUCT_KIND.SUBSCRIPTION:
                     return PurchaseProductType.Subscription;
-                case ProductKind.Rental:
+                case PRODUCT_KIND.RENTAL:
                     // Rental must stay repurchasable at store level (policy allows repeated purchase).
                     return PurchaseProductType.Consumable;
-                case ProductKind.Consumable:
+                case PRODUCT_KIND.CONSUMABLE:
                     return PurchaseProductType.Consumable;
-                case ProductKind.SeasonPass:
+                case PRODUCT_KIND.SEASON_PASS:
                 default:
                     return PurchaseProductType.NonConsumable;
             }

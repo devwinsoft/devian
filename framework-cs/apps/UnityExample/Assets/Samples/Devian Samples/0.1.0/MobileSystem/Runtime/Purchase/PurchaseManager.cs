@@ -130,7 +130,7 @@ namespace Devian
                 return string.Empty;
 
             var product = TB_PRODUCT.Get(internalProductIdOrSeasonPassId);
-            if (product == null || product.Kind != ProductKind.SeasonPass)
+            if (product == null || product.Kind != PRODUCT_KIND.SEASON_PASS)
                 return internalProductIdOrSeasonPassId;
 
             var rewards = ResolveRewardDatas(product.RewardGroupId);
@@ -1935,14 +1935,14 @@ namespace Devian
             }
         }
 
-        static PurchaseKind ProductKindToPurchaseKind(ProductKind kind)
+        static PurchaseKind ProductKindToPurchaseKind(PRODUCT_KIND kind)
         {
             switch (kind)
             {
-                case ProductKind.Consumable: return PurchaseKind.Consumable;
-                case ProductKind.Rental: return PurchaseKind.Rental;
-                case ProductKind.Subscription: return PurchaseKind.Subscription;
-                case ProductKind.SeasonPass: return PurchaseKind.SeasonPass;
+                case PRODUCT_KIND.CONSUMABLE: return PurchaseKind.Consumable;
+                case PRODUCT_KIND.RENTAL: return PurchaseKind.Rental;
+                case PRODUCT_KIND.SUBSCRIPTION: return PurchaseKind.Subscription;
+                case PRODUCT_KIND.SEASON_PASS: return PurchaseKind.SeasonPass;
                 default: return PurchaseKind.Consumable;
             }
         }

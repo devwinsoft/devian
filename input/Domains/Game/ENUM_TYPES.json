@@ -62,6 +62,15 @@
         { "name": "UNIT_LEVEL", "value": 21 },
         { "name": "UNIT_HP_MAX", "value": 100 }
       ]
+    },
+    {
+      "name": "PRODUCT_KIND",
+      "values": [
+        { "name": "CONSUMABLE", "value": 0 },
+        { "name": "SUBSCRIPTION", "value": 1 },
+        { "name": "SEASON_PASS", "value": 2 },
+        { "name": "RENTAL", "value": 3 }
+      ]
     }
   ]
 }

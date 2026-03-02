@@ -107,12 +107,12 @@ export enum STAT_TYPE {
     UNIT_HP_MAX = 100,
 }
 
-/** ProductKind enum */
-export enum ProductKind {
-    Consumable = 0,
-    Rental = 3,
-    Subscription = 1,
-    SeasonPass = 2,
+/** PRODUCT_KIND enum */
+export enum PRODUCT_KIND {
+    CONSUMABLE = 0,
+    SUBSCRIPTION = 1,
+    SEASON_PASS = 2,
+    RENTAL = 3,
 }
 
 /** UserType enum */
@@ -188,7 +188,7 @@ export interface MISSION_ACHIEVE extends IEntityKey<number> {
 export interface PRODUCT extends IEntityKey<string> {
     InternalProductId: string;
     RewardGroupId: string;
-    Kind: ProductKind;
+    Kind: PRODUCT_KIND;
     Title: string;
     IsActive: boolean;
     StoreSkuApple: string;
