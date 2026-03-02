@@ -10,8 +10,13 @@
   "samples": [
     {
       "displayName": "GameContents",
-      "description": "Bundle sample: installs GameNetManager + Game2CStub (Network) together.",
+      "description": "Bundle sample: installs Ability system examples.",
       "path": "Samples~/GameContents"
+    },
+    {
+      "displayName": "GameNetwork",
+      "description": "Bundle sample: installs GameNetManager + Game2CStub (WebSocket client).",
+      "path": "Samples~/GameNetwork"
     },
     {
       "displayName": "MobileSystem",

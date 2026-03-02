@@ -40,7 +40,7 @@ Inventory 상태는 "통화", "아이템", "영웅"으로 분리된다.
 - key: `itemUid` (string, GUID, 인스턴스별 고유 pk)
 - value: `AbilityEquip`
 
-`AbilityEquip` 필드 (구현: [12-game-ability](../../../40-game-system/12-game-ability/SKILL.md)):
+`AbilityEquip` 필드 (구현: [12-game-ability](../../../40-game-contents/12-game-ability/SKILL.md)):
 - `ItemUid: string` (== key, 인스턴스 고유 ID, GUID)
 - `EquipId: string` (템플릿 ID, `mTable.EquipId`)
 - `OwnerUnitId: string` (장착된 영웅 UnitId, 미장착 시 empty)
@@ -59,7 +59,7 @@ NOTE:
 - key: `cardId` (=`RewardData.id` when `type=REWARD_TYPE.CARD`, pk)
 - value: `AbilityCard`
 
-`AbilityCard` 필드 (구현: [12-game-ability](../../../40-game-system/12-game-ability/SKILL.md)):
+`AbilityCard` 필드 (구현: [12-game-ability](../../../40-game-contents/12-game-ability/SKILL.md)):
 - `CardId: string` (== key, `mTable.CardId`)
 - `Amount: int` (= `this[STAT_TYPE.CARD_AMOUNT]`)
 - 능력치: `AbilityCard : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)
@@ -72,7 +72,7 @@ NOTE:
 - key: `heroId` (=`RewardData.id` when `type=REWARD_TYPE.HERO`, pk)
 - value: `AbilityUnitHero`
 
-`AbilityUnitHero` 필드 (구현: [12-game-ability](../../../40-game-system/12-game-ability/SKILL.md)):
+`AbilityUnitHero` 필드 (구현: [12-game-ability](../../../40-game-contents/12-game-ability/SKILL.md)):
 - `UnitId: string` (== key, `mTable.UnitId`)
 - 수량 = `STAT_TYPE.UNIT_AMOUNT` (Reward grants에서 변경되는 유일한 stat)
 - 능력치: `AbilityUnitHero : AbilityUnitBase : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)

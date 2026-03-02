@@ -139,8 +139,8 @@ JSON 스키마: [03-ssot](../03-ssot/SKILL.md) 참조.
 
 ## 8. Related
 
-- [12-game-ability](../../../40-game-system/12-game-ability/SKILL.md) — AbilityBase, AbilityEquip, AbilityCard, AbilityUnitHero (Equipments/Cards/Heroes 직접 관리)
-- [13-game-stat-type](../../../40-game-system/13-game-stat-type/SKILL.md) — STAT_TYPE enum
+- [12-game-ability](../../../40-game-contents/12-game-ability/SKILL.md) — AbilityBase, AbilityEquip, AbilityCard, AbilityUnitHero (Equipments/Cards/Heroes 직접 관리)
+- [13-game-stat-type](../../../40-game-contents/13-game-stat-type/SKILL.md) — STAT_TYPE enum
 - [10-inventory-manager](../10-inventory-manager/SKILL.md) — InventoryManager (InventoryStorage 소유자, 수량 SSOT)
 - [03-ssot](../03-ssot/SKILL.md) — Inventory State/Apply Rules
 - [00-overview](../00-overview/SKILL.md) — Inventory System 개요

@@ -148,7 +148,7 @@ com.devian.foundation/
 
 ## Unity C# Compatibility Gate (Hard Rule)
 
-**Unity C# 문법 제한은 [skills/devian/10-module/04-unity-csharp-compat](../../devian/10-module/04-unity-csharp-compat/SKILL.md)가 정본이다.**
+**Unity C# 문법 제한은 [skills/devian-unity/05-unity-csharp-compat](../05-unity-csharp-compat/SKILL.md)가 정본이다.**
 
 ### DoD (완료 정의) — 하드 게이트
 
@@ -186,5 +186,5 @@ com.devian.foundation/
 
 - [Root SSOT](../../devian/10-module/03-ssot/SKILL.md) — 공통 용어/플레이스홀더/머지 규칙
 - [Unity Policy](../01-policy/SKILL.md)
-- [Unity C# Compat](../../devian/10-module/04-unity-csharp-compat/SKILL.md)
+- [Unity C# Compat](../05-unity-csharp-compat/SKILL.md)
 - [Package Metadata](../04-package-metadata/SKILL.md)

@@ -2,23 +2,10 @@
 
 This sample bundles the following sub-samples in one import:
 
-- Network (GameNetManager + Game2CStub + ClientSessionHost)
+- Ability system (AbilityBase, AbilityCard, AbilityEquip, AbilityUnit)
 
 Importing `GameContents` installs all sub-codes together under this folder.
 
-## Network
+## Related
 
-Unity WebSocket client sample using `Devian.Protocol.Game` with a session-host-owned Tick-based pump.
-
-### Requirements
-
-- `com.devian.foundation` - Core network infrastructure (INetSession, INetConnector, NetWsConnector)
-- `com.devian.protocol.game` - Game protocol (C2Game/Game2C)
-
-### Quick Start
-
-1. Add `GameNetManager` component to a GameObject
-2. Call `Connect(url)` to establish connection
-3. Use `GameNetManager.Proxy` to send messages
-4. `GameNetManager` internally owns generated `ClientSessionHost` for session lifecycle
-5. Extend via partial class (`Game2CStub.Partial.cs`) for custom handling
+- **GameNetwork** sample provides WebSocket client wiring (`GameNetManager`, `Game2CStub`, `ClientSessionHost`). Import separately.

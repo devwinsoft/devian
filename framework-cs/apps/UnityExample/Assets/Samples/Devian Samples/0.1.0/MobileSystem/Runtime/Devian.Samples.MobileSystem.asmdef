@@ -6,7 +6,6 @@
     "Devian.Core",
     "Devian.Domain.Common",
     "Devian.Domain.Game",
-    "Devian.Protocol.Game",
     "Unity.InputSystem",
     "Devian.UI",
     "Unity.Purchasing",

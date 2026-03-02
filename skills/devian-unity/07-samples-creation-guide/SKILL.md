@@ -13,7 +13,7 @@
 >
 > **세부 문서:**
 > - Templates 원본: `framework-cs/upm/com.devian.samples/Samples~/`
-> - Network Sample: `skills/devian-unity/50-mobile-system/91-game-net-manager/SKILL.md`
+> - Network Sample: `skills/devian-unity/41-game-network/11-game-net-manager/SKILL.md`
 > - LocalSave Manager Sample: `skills/devian-unity/50-mobile-system/21-savedata-system/41-savedata-savelocal/SKILL.md`
 > - CloudSave Manager Sample: `skills/devian-unity/50-mobile-system/21-savedata-system/42-savedata-savecloud/SKILL.md`
 
@@ -25,7 +25,7 @@ Type: Policy / Requirements / Checklist
 
 ## Prerequisites
 
-**Unity C# 문법 제한:** 샘플 코드는 `skills/devian/10-module/04-unity-csharp-compat/SKILL.md`를 준수한다 (금지 문법 사용 시 FAIL).
+**Unity C# 문법 제한:** 샘플 코드는 `skills/devian-unity/05-unity-csharp-compat/SKILL.md`를 준수한다 (금지 문법 사용 시 FAIL).
 
 ## SSOT
 

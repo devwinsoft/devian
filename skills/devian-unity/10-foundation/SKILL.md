@@ -21,7 +21,7 @@ Type: Index / Directory
 | 03 | MessageSystem | ownerKey + enum msgKey 기반 메시지/트리거 시스템 (timer 제외) | `22-message-system/SKILL.md` |
 | 10 | AssetManager | AssetBundle 기반 로딩/캐시/언로드 | `18-asset-manager/SKILL.md` |
 | 12 | DownloadManager | Addressables Label 기반 Patch/Download (CompoSingleton) | `19-download-manager/SKILL.md` |
-| 13 | Pb64Storage | pb64를 Unity TextAsset .asset로 저장하는 규약 | `skills/devian/90-tools/11-builder/35-pb64-storage/SKILL.md` |
+| 13 | Pb64Storage | pb64를 Unity TextAsset .asset로 저장하는 규약 | `skills/devian/80-tools/11-builder/35-pb64-storage/SKILL.md` |
 | 14 | TableManager | TB_/ST_ 테이블 로딩/캐시/언로드 (ndjson/pb64) | `11-table-manager/SKILL.md` |
 | 15 | SceneTransManager | Scene 전환 직렬화 + 페이드 + SceneBase/SceneBoot Enter/Exit | `17-scene-trans-manager/SKILL.md` |
 | 24 | PlayerPrefs Wrapper | Primitive/Enum/Json 기반 PlayerPrefs 래퍼 | `20-player-prefs/SKILL.md` |

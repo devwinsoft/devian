@@ -60,8 +60,8 @@
   - `skills/devian/SKILL.md` — Devian main index (includes SSOT Hub)
 - SSOT hierarchy:
   - `skills/devian/10-module/03-ssot/SKILL.md` — **Root SSOT** (공통 용어, 플레이스홀더, 입력 분리, 머지 규칙)
-  - `skills/devian-tools/03-ssot/SKILL.md` — Tools SSOT (빌드 파이프라인, Phase, Validate, tempDir)
-  - `skills/devian-tools/11-builder/03-ssot/SKILL.md` — Builder SSOT (tableConfig, Tables, NDJSON, pb64, Protocol Spec, Opcode/Tag, Protocol UPM)
+  - `skills/devian/80-tools/03-ssot/SKILL.md` — Tools SSOT (빌드 파이프라인, Phase, Validate, tempDir)
+  - `skills/devian/80-tools/11-builder/03-ssot/SKILL.md` — Builder SSOT (tableConfig, Tables, NDJSON, pb64, Protocol Spec, Opcode/Tag, Protocol UPM)
   - `skills/devian-unity/03-ssot/SKILL.md` — Unity SSOT (upmConfig, UPM Sync, Foundation)
   - `skills/devian-examples/03-ssot/SKILL.md` — Examples SSOT (config/input JSON, TS apps, Unity Example)
 

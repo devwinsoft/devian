@@ -5,7 +5,7 @@ AppliesTo: v10
 
 ## Prerequisites
 
-**Unity C# 문법 제한:** 이 문서에서 다루는 모든 UPM 패키지 코드는 `skills/devian/10-module/04-unity-csharp-compat/SKILL.md`를 준수한다 (금지 문법 사용 시 FAIL).
+**Unity C# 문법 제한:** 이 문서에서 다루는 모든 UPM 패키지 코드는 `skills/devian-unity/05-unity-csharp-compat/SKILL.md`를 준수한다 (금지 문법 사용 시 FAIL).
 
 ## SSOT
 

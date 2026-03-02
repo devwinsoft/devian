@@ -19,8 +19,8 @@ SSOT: this file
 
 | Category | SSOT | 범위 |
 |----------|------|------|
-| **Tools** | [devian/90-tools/03-ssot](../../90-tools/03-ssot/SKILL.md) | 빌드 파이프라인, Phase, Validate, tempDir, Clean+Copy, TS Workspace |
-| **Builder** | [devian/90-tools/11-builder/03-ssot](../../90-tools/11-builder/03-ssot/SKILL.md) | tableConfig, Tables, NDJSON, pb64, DATA 산출물, Protocol Spec, Opcode/Tag, Protocol UPM |
+| **Tools** | [devian/80-tools/03-ssot](../../80-tools/03-ssot/SKILL.md) | 빌드 파이프라인, Phase, Validate, tempDir, Clean+Copy, TS Workspace |
+| **Builder** | [devian/80-tools/11-builder/03-ssot](../../80-tools/11-builder/03-ssot/SKILL.md) | tableConfig, Tables, NDJSON, pb64, DATA 산출물, Protocol Spec, Opcode/Tag, Protocol UPM |
 | **Unity** | [devian-unity/03-ssot](../../../devian-unity/03-ssot/SKILL.md) | upmConfig, UPM Sync, Foundation, samplePackages, Unity Gate |
 
 ---
@@ -235,9 +235,9 @@ Devian 산출물을 실제 앱(클라/서버/툴)에서 소비하는 기본 흐�
 
 - **공통 정책 정본:** 이 문서 (`skills/devian/10-module/03-ssot/SKILL.md`)
 - **카테고리 SSOT:**
-  - [Tools SSOT](../../90-tools/03-ssot/SKILL.md)
-  - [Data SSOT](../../90-tools/11-builder/03-ssot/SKILL.md)
-  - [Protocol SSOT](../../90-tools/11-builder/03-ssot/SKILL.md)
+  - [Tools SSOT](../../80-tools/03-ssot/SKILL.md)
+  - [Data SSOT](../../80-tools/11-builder/03-ssot/SKILL.md)
+  - [Protocol SSOT](../../80-tools/11-builder/03-ssot/SKILL.md)
   - [Unity SSOT](../../../devian-unity/03-ssot/SKILL.md)
 - **빌드 스키마 정본:** `{buildInputJson}` (예: `input/build_input.json`)
 - **동작 정본:** 런타임/제너레이터 코드

@@ -128,5 +128,5 @@ npm -w GameClient run start
 ## Related
 
 - Config/Input 상세: `skills/devian/10-module/03-ssot/SKILL.md`
-- Protocol 빌드: `skills/devian/90-tools/11-builder/03-ssot/SKILL.md`
+- Protocol 빌드: `skills/devian/80-tools/11-builder/03-ssot/SKILL.md`
 - UPM 패키지: `skills/devian-unity/01-policy/SKILL.md`

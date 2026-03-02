@@ -107,7 +107,7 @@ Generated Protocol Proxy는 **send path에 필요한 인터페이스에만 의�
 - Generated Proxy가 구체 네트워크 구현을 참조하지 않아 의존성 분리
 - NetWsConnector가 "공통 구현"이며, session owner가 connector를 사용
 - Manager는 host에 lifecycle을 위임하고, Proxy는 송신에만 집중
-- 샘플 문서(`50-mobile-system/91-game-net-manager`)의 규칙과 일관성 유지
+- 샘플 문서(`41-game-network/11-game-net-manager`)의 규칙과 일관성 유지
 - 상태 관리와 전송이 INetSession으로 통합되어 안정적인 lifecycle 관리
 
 ---
