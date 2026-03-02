@@ -142,7 +142,6 @@ namespace Devian
                 }
 
                 case MISSION_TYPE.ACHIEVE:
-                default:
                 {
                     var runtime = new MissionRuntimeAchieve
                     {
@@ -168,6 +167,9 @@ namespace Devian
 
                     return runtime;
                 }
+
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(args.MissionType), args.MissionType, "Unsupported mission type for MissionRuntime restore.");
             }
         }
     }

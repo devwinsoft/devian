@@ -63,6 +63,7 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
     - 외부 UI가 mission 목록을 다시 바인딩할 때 사용한다
     - 단, `MISSION_TYPE.DAY`의 남은 시간이 `TimeSpan.Zero`가 되었거나 현재 runtime이 stale period에 속하면 daily runtime을 reset/delete 후 재생성(초기화 로직)한다
     - 이 경우 새 runtime들의 `RUNTIME_INIT`는 rebuild 경로에서만 발행하고, 추가 재발행으로 두 번 notify하지 않는다
+    - 즉, 이 API는 "UI 재초기화용 재통지"가 주목적이지만, day 만료 처리도 함께 수행하는 side-effectful refresh API다
 - `TryGetServerNowUtcMs(out serverNowUtcMs)`
     - cached snapshot이 있으면 현재 서버 시각 추정값 반환
 - `triggerSystem`
@@ -171,6 +172,8 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
 - MissionManager는 trigger를 직접 처리하지 않고, MissionRuntime의 onChanged/onCompleted 콜백만 수신한다
 - MissionScheduler는 `nextMissionUid++`를 기본으로 사용하되, 현재 `runtimes`에 이미 존재하는 UID는 건너뛰고 다음 빈 UID를 발급한다
 - MissionRuntime이 목표값에 도달하면 MissionManager는 해당 runtime을 `CLAIMABLE`로 본다
+- mission type 확장은 registry보다 explicit switch를 사용한다. mission type 수가 많지 않기 때문이다
+- 대신 unsupported mission type이 들어오면 restore/deserialize는 조용히 다른 runtime으로 대체하지 말고 즉시 실패 또는 skip해야 한다
 - daily는 init/reset cycle마다 `MISSION_DAY` 전체 active row에서 최대 5개만 runtime으로 생성한다
   - `fixed=true`는 항상 선택
   - 남은 슬롯은 `fixed=false` active row에서 random selection

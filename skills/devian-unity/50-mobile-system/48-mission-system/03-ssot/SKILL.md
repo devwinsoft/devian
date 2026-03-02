@@ -273,6 +273,9 @@ MissionManager는 backend에서 아래 payload를 받아 timed mission의 현재
 - `MissionManager.GetRemainTime(MISSION_TYPE.DAY)`는 현재 anchor 기준으로 다음 daily reset까지 남은 `TimeSpan`을 반환한다.
 - `MissionManager.GetRemainTime(MISSION_TYPE.ACHIEVE)`는 `default(TimeSpan)`을 반환한다.
 - `MissionManager.RefreshRuntimes()`는 일반적으로 현재 runtime 전체에 대해 `RUNTIME_INIT`를 재발행한다.
+- 이 API의 주목적은 외부 UI의 mission 목록 재초기화다.
+- 다만 `MISSION_TYPE.DAY`가 만료된 상태라면, 같은 호출에서 daily runtime reset/delete/recreate까지 수행한다.
+- 이 side effect는 의도된 동작이며, 별도 API로 분리하지 않는다.
 - 단, `DAY`의 남은 시간이 `TimeSpan.Zero`가 되었거나 runtime이 stale period에 속하면 daily runtime set을 reset/delete 후 현재 구간 기준으로 다시 생성한다.
 - reset/recreate가 발생한 경우 `RUNTIME_INIT`는 rebuild 경로에서 한 번만 발행해야 한다.
 - stale clock을 별도 예외 상태로 두지 않는다. 마지막으로 동기화한 서버 시간을 기준으로 클라이언트가 계속 판정한다.

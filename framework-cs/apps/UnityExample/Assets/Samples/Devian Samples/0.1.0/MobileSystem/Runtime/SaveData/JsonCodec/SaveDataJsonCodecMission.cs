@@ -129,7 +129,6 @@ namespace Devian
                             break;
 
                         case MISSION_TYPE.DAY:
-                        default:
                             runtime = new MissionRuntimeDaily
                             {
                                 missionType = missionType,
@@ -142,6 +141,10 @@ namespace Devian
                                 rewardGroupId = runtimeObj.Value<string>("rewardGroupId") ?? string.Empty,
                             };
                             break;
+
+                        default:
+                            UnityEngine.Debug.LogError($"[SaveDataJsonCodecMission] Unsupported missionType in runtime restore: {missionType}");
+                            continue;
                     }
 
                     storage.runtimes[runtime.missionUid] = runtime;

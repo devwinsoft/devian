@@ -84,6 +84,7 @@ public static class MissionRuntimeFactory
 - achievement는 단계형 생성 규칙이 daily와 다르므로 공통 create args로 합치지 않는다.
 - `Restore`는 저장된 `progressValue` / `isCompleted` / `missionUid`를 그대로 사용한다.
 - `Restore`는 저장된 runtime type에 따라 concrete subclass를 복원한다.
+- `Restore`는 unsupported `MISSION_TYPE`을 다른 runtime subclass로 fallback 하지 않는다. 즉시 실패해야 한다.
 - `Restore`는 저장된 runtime을 앱 시작/load 시 재구성할 때만 사용한다.
 - 새 daily period 진입은 restore가 아니라 새 create 경로를 사용한다.
 - achievement level up은 새 runtime 생성이 아니라 같은 runtime mutation이다.
