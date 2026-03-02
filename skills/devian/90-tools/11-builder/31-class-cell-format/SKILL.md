@@ -76,6 +76,19 @@ displayName=Hello\, World
 2) 오브젝트 리스트는 `[...]`만 허용한다.
 3) `{...}`는 오브젝트를 포함하면 안 된다.
 
+### 예외: `class:CBigInt` shorthand
+
+`class:CBigInt`는 작성 편의를 위해 전용 shorthand를 추가로 허용한다.
+
+| 형식 | 예시 | 의미 |
+|------|------|------|
+| `{base, pow}` | `{5.5, 6}` | `5.5 * 10^6` |
+
+규칙:
+- 이 형식은 `class:CBigInt`에서만 허용한다.
+- 일반 `class:*`에서는 `{...}`를 오브젝트 shorthand로 해석하지 않는다.
+- `pow`는 int여야 하며, 요소 개수는 정확히 2개여야 한다.
+
 ---
 
 ## Notes

@@ -30,11 +30,11 @@ Contract spec는 `enums`와 `classes`로 구성된다.
 
 ```json
 {
-  "name": "UserType",
+  "name": "USER_TYPE",
   "doc": "optional doc",
   "values": [
-    { "name": "Guest", "value": 0 },
-    { "name": "Member", "value": 1 }
+    { "name": "GUEST", "value": 0 },
+    { "name": "MEMBER", "value": 1 }
   ]
 }
 ```
@@ -48,7 +48,7 @@ Contract spec는 `enums`와 `classes`로 구성된다.
   "fields": [
     { "name": "id", "type": "int" },
     { "name": "name", "type": "string" },
-    { "name": "userType", "type": "enum:UserType" }
+    { "name": "userType", "type": "enum:USER_TYPE" }
   ]
 }
 ```
@@ -92,6 +92,14 @@ Contract는 Domain 단위로 Table과 함께 **단일 파일에 통합** 생성�
 
 - JSON 파싱 실패 → 빌드 실패
 - enum/class 이름 중복 등 명백한 충돌 → 빌드 실패
+
+## Naming Rules (Hard Rule)
+
+- enum 타입명은 **대문자 SNAKE_CASE**를 사용한다.
+- enum 멤버명도 **대문자 SNAKE_CASE**를 사용한다.
+- 예:
+  - Good: `MISSION_TYPE`, `USER_TYPE`, `APP_OPEN`
+  - Bad: `MissionType`, `UserType`, `AppOpen`
 
 ---
 

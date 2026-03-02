@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -8,6 +9,7 @@ namespace Devian
     [RequireComponent(typeof(AccountManager))]
     [RequireComponent(typeof(InventoryManager))]
     [RequireComponent(typeof(PurchaseManager))]
+    [RequireComponent(typeof(MissionManager))]
     [RequireComponent(typeof(SaveDataManager))]
     [RequireComponent(typeof(InputManager))]
     public abstract class MobileBootstrap : BaseBootstrap
@@ -23,6 +25,11 @@ namespace Devian
             #endif
 
             return Task.CompletedTask;
+        }
+
+        protected override void OnEnterForeground()
+        {
+            _ = refreshMissionClockAsync();
         }
 
         /// <summary>
@@ -91,5 +98,20 @@ namespace Devian
             }
         }
         #endif
+
+        private static async Task refreshMissionClockAsync()
+        {
+            if (!MissionManager.TryGet(out var missionManager))
+                return;
+
+            if (!missionManager.IsInitialized)
+                return;
+
+            var refresh = await missionManager.RefreshClockAsync(CancellationToken.None);
+            if (refresh.IsFailure)
+            {
+                Debug.LogWarning($"[MobileBootstrap] Mission clock refresh failed on foreground: {refresh.Error}");
+            }
+        }
     }
 }

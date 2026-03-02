@@ -366,6 +366,204 @@ export class CString {
 }
 
 // ============================================================================
+// CBigInt
+// ============================================================================
+
+/**
+ * Large number representation using scientific notation: mBase * 10^mPow.
+ * Field names match the C# runtime and generated table JSON shape.
+ */
+export class CBigInt {
+    mBase: CFloat = new CFloat(0);
+    mPow: CInt = new CInt(0);
+
+    constructor(base?: number, pow?: number) {
+        if (base !== undefined) {
+            this.setValue(base, pow ?? 0);
+        }
+    }
+
+    static zero(): CBigInt {
+        return new CBigInt(0, 0);
+    }
+
+    static fromInt(value: number): CBigInt {
+        if (!Number.isInteger(value)) {
+            throw new Error(`CBigInt.fromInt requires integer input: ${value}`);
+        }
+        return new CBigInt(value, 0);
+    }
+
+    static fromLong(value: number): CBigInt {
+        if (!Number.isInteger(value)) {
+            throw new Error(`CBigInt.fromLong requires integer input: ${value}`);
+        }
+        return CBigInt.fromNumber(value);
+    }
+
+    isZero(): boolean {
+        return this.mBase.getValue() === 0;
+    }
+
+    setValue(base: number, pow: number): void {
+        const normalized = CBigInt.normalize(base, pow);
+        this.mBase = new CFloat(normalized.base);
+        this.mPow = new CInt(normalized.pow);
+    }
+
+    add(other: CBigInt): CBigInt {
+        if (this.isZero()) return new CBigInt(other.mBase.getValue(), other.mPow.getValue());
+        if (other.isZero()) return new CBigInt(this.mBase.getValue(), this.mPow.getValue());
+
+        const targetPow = Math.max(this.mPow.getValue(), other.mPow.getValue());
+        const sumBase =
+            this.mBase.getValue() * Math.pow(10, this.mPow.getValue() - targetPow) +
+            other.mBase.getValue() * Math.pow(10, other.mPow.getValue() - targetPow);
+
+        return new CBigInt(sumBase, targetPow);
+    }
+
+    subtract(other: CBigInt): CBigInt {
+        return this.add(other.multiplyScalar(-1));
+    }
+
+    multiply(other: CBigInt): CBigInt {
+        return new CBigInt(
+            this.mBase.getValue() * other.mBase.getValue(),
+            this.mPow.getValue() + other.mPow.getValue(),
+        );
+    }
+
+    multiplyScalar(value: number): CBigInt {
+        return new CBigInt(this.mBase.getValue() * value, this.mPow.getValue());
+    }
+
+    static max(a: CBigInt, b: CBigInt): CBigInt {
+        return a.compareTo(b) >= 0 ? new CBigInt(a.mBase.getValue(), a.mPow.getValue()) : new CBigInt(b.mBase.getValue(), b.mPow.getValue());
+    }
+
+    static min(a: CBigInt, b: CBigInt): CBigInt {
+        return a.compareTo(b) <= 0 ? new CBigInt(a.mBase.getValue(), a.mPow.getValue()) : new CBigInt(b.mBase.getValue(), b.mPow.getValue());
+    }
+
+    compareTo(other: CBigInt): number {
+        const aBase = this.mBase.getValue();
+        const aPow = this.mPow.getValue();
+        const bBase = other.mBase.getValue();
+        const bPow = other.mPow.getValue();
+
+        const aSign = aBase > 0 ? 1 : (aBase < 0 ? -1 : 0);
+        const bSign = bBase > 0 ? 1 : (bBase < 0 ? -1 : 0);
+
+        if (aSign !== bSign) return aSign - bSign;
+        if (aSign === 0) return 0;
+
+        if (aPow !== bPow) {
+            return aSign > 0 ? aPow - bPow : bPow - aPow;
+        }
+
+        if (aBase < bBase) return -1;
+        if (aBase > bBase) return 1;
+        return 0;
+    }
+
+    toString(): string {
+        const b = this.mBase.getValue();
+        const p = this.mPow.getValue();
+
+        if (b === 0) return '0';
+
+        if (p < 3) {
+            const v = b * Math.pow(10, p);
+            return Math.round(v).toString();
+        }
+
+        const mode = p % 3;
+        const group = Math.floor(p / 3);
+        const display = b * Math.pow(10, mode);
+        const sym = CBigInt.getSymbol(group);
+
+        const rounded2 = Math.round(display * 100) / 100;
+        const frac2 = rounded2 - Math.trunc(rounded2);
+        if (Math.abs(frac2) < 1e-9) return `${Math.trunc(rounded2)}${sym}`;
+
+        const rounded1 = Math.round(display * 10) / 10;
+        const frac1 = rounded1 - Math.trunc(rounded1);
+        if (Math.abs(frac1) < 1e-9) return `${rounded1.toFixed(1)}${sym}`;
+
+        return `${rounded2.toFixed(2)}${sym}`;
+    }
+
+    private static normalize(base: number, pow: number): { base: number; pow: number } {
+        if (!Number.isFinite(base) || !Number.isInteger(pow)) {
+            throw new Error(`CBigInt invalid value: base=${base}, pow=${pow}`);
+        }
+
+        if (base === 0) {
+            return { base: 0, pow: 0 };
+        }
+
+        let normalizedBase = base;
+        let normalizedPow = pow;
+        let abs = Math.abs(normalizedBase);
+
+        while (abs >= 10) {
+            normalizedBase /= 10;
+            normalizedPow += 1;
+            abs = Math.abs(normalizedBase);
+        }
+
+        while (abs < 1) {
+            normalizedBase *= 10;
+            normalizedPow -= 1;
+            abs = Math.abs(normalizedBase);
+        }
+
+        return { base: normalizedBase, pow: normalizedPow };
+    }
+
+    private static fromNumber(value: number): CBigInt {
+        if (!Number.isFinite(value)) {
+            throw new Error(`CBigInt cannot represent non-finite number: ${value}`);
+        }
+        if (value === 0) {
+            return CBigInt.zero();
+        }
+
+        let pow = 0;
+        let normalized = value;
+        let abs = Math.abs(normalized);
+
+        while (abs >= 10) {
+            normalized /= 10;
+            pow += 1;
+            abs = Math.abs(normalized);
+        }
+
+        while (abs > 0 && abs < 1) {
+            normalized *= 10;
+            pow -= 1;
+            abs = Math.abs(normalized);
+        }
+
+        return new CBigInt(normalized, pow);
+    }
+
+    private static getSymbol(group: number): string {
+        if (group <= 0) return '';
+
+        let value = group - 1;
+        let result = '';
+        while (value >= 0) {
+            const rem = value % 26;
+            result = String.fromCharCode('a'.charCodeAt(0) + rem) + result;
+            value = Math.floor(value / 26) - 1;
+        }
+        return result;
+    }
+}
+
+// ============================================================================
 // Factory functions (convenience)
 // ============================================================================
 
@@ -379,4 +577,8 @@ export function cFloat(value: number): CFloat {
 
 export function cString(value: string): CString {
     return new CString(value);
+}
+
+export function cBigInt(base: number, pow: number): CBigInt {
+    return new CBigInt(base, pow);
 }

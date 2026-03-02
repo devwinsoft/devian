@@ -67,6 +67,17 @@ Devian Unity C#에서 abstract base class 네이밍은 `{Category}Base`를 금�
 이 규칙은 **repo 전체**에 적용되며, 리네임 시 `git mv`로 `.meta` GUID를 유지하고,
 UPM(`framework-cs/upm/{pkg}`)과 UnityExample/Packages(`framework-cs/apps/UnityExample/Packages/{pkg}`)를 **동일하게** 갱신한다.
 
+### Enum Naming (Hard Rule)
+
+Generated enum의 타입명과 멤버명은 **대문자 SNAKE_CASE**를 사용한다.
+
+- Good type: `MISSION_TYPE`, `ADVERTISE_FORMAT`
+- Bad type: `MissionType`, `AdvertiseFormat`
+- Good member: `APP_OPEN`, `JEWEL_FREE`
+- Bad member: `AppOpen`, `JewelFree`
+
+이 규칙은 `ENUM_TYPES.json` 계약 enum과 table `gen:<EnumName>`으로 생성되는 enum 모두에 적용한다.
+
 ### 5. 대규모 리네임 작업 규칙 (Hard Rule)
 
 **C# 파일 대규모 리네임 시 다음 절차를 따른다:**

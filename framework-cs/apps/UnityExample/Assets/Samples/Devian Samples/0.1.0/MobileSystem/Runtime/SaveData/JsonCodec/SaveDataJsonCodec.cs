@@ -4,12 +4,13 @@ namespace Devian
 {
     internal static class SaveDataJsonCodec
     {
-        const int CurrentVersion = 10;
+        const int CurrentVersion = 11;
 
         public static string Serialize(
             InventoryStorage inventory,
             PurchaseStorage purchase,
-            AccountStorage account)
+            AccountStorage account,
+            MissionStorage mission)
         {
             var root = new JObject
             {
@@ -17,6 +18,7 @@ namespace Devian
                 ["inventory"] = SaveDataJsonCodecInventory.Serialize(inventory),
                 ["purchase"] = SaveDataJsonCodecPurchase.Serialize(purchase),
                 ["account"] = SaveDataJsonCodecAccount.Serialize(account),
+                ["mission"] = SaveDataJsonCodecMission.Serialize(mission),
             };
             return root.ToString();
         }
@@ -25,7 +27,8 @@ namespace Devian
             string json,
             InventoryStorage inventory,
             PurchaseStorage purchase,
-            AccountStorage account)
+            AccountStorage account,
+            MissionStorage mission)
         {
             var root = JObject.Parse(json);
             var version = root.Value<int?>("version") ?? 0;
@@ -44,9 +47,14 @@ namespace Devian
                 SaveDataJsonCodecAccount.DeserializeInto(accountObj, account);
             else
                 account?.Clear();
+
+            if (version >= 11 && root["mission"] is JObject missionObj)
+                SaveDataJsonCodecMission.DeserializeInto(missionObj, mission);
+            else
+                mission?.Clear();
         }
 
         static bool isSupportedVersion(int version)
-            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 8 || version == 9 || version == CurrentVersion;
+            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 8 || version == 9 || version == 10 || version == CurrentVersion;
     }
 }

@@ -63,6 +63,14 @@ Sheet 이름이 `{TableName}@{Description}` 형식일 때:
 - PrimaryKey가 있는 sheet → `TB_{SheetName}` 생성
 - PrimaryKey가 없는 sheet → Container 생성 안함 (Entity만 생성)
 
+### Enum Naming (Hard Rule)
+
+- generated enum 타입명은 **대문자 SNAKE_CASE**를 사용한다.
+- generated enum 멤버명도 **대문자 SNAKE_CASE**를 사용한다.
+- 예:
+  - Good: `MISSION_TYPE`, `APP_OPEN`
+  - Bad: `MissionType`, `AppOpen`
+
 ### Namespace (C#)
 
 - `Devian.Domain.{DomainKey}`를 사용한다.

@@ -81,7 +81,7 @@ Row 5부터 데이터다.
 |------|------|------|
 | `flag` | `pk` | PrimaryKey 지정 (= `pk:true`) |
 | `key:value` | `optional:true` | key-value 쌍 |
-| `prefix:value` | `gen:ComplexPolicyType` | prefix별 특수 해석 |
+| `prefix:value` | `gen:COMPLEX_POLICY_TYPE` | prefix별 특수 해석 |
 
 **주의:** `key:true`, `key` 옵션은 **미지원**이며 사용 시 빌드가 실패한다.
 
@@ -111,12 +111,14 @@ Row 5부터 데이터다.
 
 2. **gen 컬럼의 타입 (권장)**
    - gen 컬럼의 type은 `enum:<EnumName>`을 권장한다.
-   - (예: `gen:ComplexPolicyType` → type은 `enum:ComplexPolicyType`)
+   - (예: `gen:COMPLEX_POLICY_TYPE` → type은 `enum:COMPLEX_POLICY_TYPE`)
 
 3. **EnumName은 유효한 식별자**여야 한다 (`^[A-Za-z_][A-Za-z0-9_]*$`).
+   - enum 타입명은 **대문자 SNAKE_CASE**를 사용한다.
 
 4. **Enum 멤버**
    - gen/PK 컬럼의 각 row 값이 enum 멤버 이름이 된다.
+   - enum 멤버 이름도 **대문자 SNAKE_CASE**를 사용한다.
    - enum 멤버 값은 **결정적 자동 할당**: 멤버 이름을 오름차순 정렬 후 0부터 순차 할당.
 
 조건 불만족 시 빌드가 실패한다.
@@ -125,17 +127,17 @@ Row 5부터 데이터다.
 
 ```
 Row 1 (Header):    key                      | fallbackValue | minValue | maxValue
-Row 2 (Type):      enum:ComplexPolicyType   | variant       | variant  | variant
-Row 3 (Options):   pk, gen:ComplexPolicyType |              |          |
+Row 2 (Type):      enum:COMPLEX_POLICY_TYPE   | variant       | variant  | variant
+Row 3 (Options):   pk, gen:COMPLEX_POLICY_TYPE |              |          |
 Row 4 (Comment):   (ignored)
-Row 5+ (Data):     AttackPower              | i:0           | i:0      | i:10000
-                   CriRate                  | f:0           | f:0      | f:3.5
+Row 5+ (Data):     ATTACK_POWER             | i:0           | i:0      | i:10000
+                   CRI_RATE                 | f:0           | f:0      | f:3.5
 ```
 
 여기서:
-- `key` 컬럼이 PK이자 gen 컬럼 (같은 컬럼, 옵션: `pk, gen:ComplexPolicyType`)
-- `key` 컬럼의 값(`AttackPower`, `CriRate`)이 enum 멤버 이름
-- enum 값은 자동 할당: `AttackPower=0`, `CriRate=1` (이름 정렬 순)
+- `key` 컬럼이 PK이자 gen 컬럼 (같은 컬럼, 옵션: `pk, gen:COMPLEX_POLICY_TYPE`)
+- `key` 컬럼의 값(`ATTACK_POWER`, `CRI_RATE`)이 enum 멤버 이름
+- enum 값은 자동 할당: `ATTACK_POWER=0`, `CRI_RATE=1` (이름 정렬 순)
 
 상세 규칙은 `skills/devian/90-tools/11-builder/45-tablegen-enumgen/SKILL.md` 참조.
 
@@ -195,8 +197,25 @@ Plain Value 입력은 등록된 클래스 파서가 있을 때만 동작하며, 
 | `class:Devian.CInt` | `100` | `{save1,save2}` object |
 | `class:Devian.CFloat` | `1.25` | `{save1,save2}` object |
 | `class:Devian.CString` | `hello` | `{data}` object (ComplexUtil 마스킹 후 base64 인코딩) |
+| `class:CBigInt` | `{5.5, 6}` | `{mBase,mPow}` object (`5.5 * 10^6`) |
 
 빈 셀은 `null`로 처리된다.
+
+### `class:CBigInt` 전용 shorthand
+
+`class:CBigInt`는 일반 object 문법 외에 아래 plain shorthand를 지원한다.
+
+| 셀 값 | 의미 |
+|------|------|
+| `{5.5, 6}` | `5.5 * 10^6` |
+| `{2, 3}` | `2 * 10^3` |
+| `{-7.25, 12}` | `-7.25 * 10^12` |
+
+규칙:
+- 형식은 정확히 `{base, pow}`다.
+- `base`는 float, `pow`는 int다.
+- 공백은 무시한다.
+- builder는 이를 NDJSON의 `{mBase,mPow}` shape로 결정적으로 변환한다.
 
 ### 결정성 규약
 

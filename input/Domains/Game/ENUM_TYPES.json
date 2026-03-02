@@ -62,6 +62,31 @@
         { "name": "UNIT_LEVEL", "value": 21 },
         { "name": "UNIT_HP_MAX", "value": 100 }
       ]
+    },
+    {
+      "name": "MISSION_TYPE",
+      "values": [
+        { "name": "DAILY", "value": 0 },
+        { "name": "ACHIEVEMENT", "value": 1 }
+      ]
+    },
+    {
+      "name": "MISSION_CONDITION_TYPE",
+      "values": [
+        { "name": "NONE", "value": 0 },
+        { "name": "LOGIN", "value": 1 },
+        { "name": "STAGE_CLEAR", "value": 2 },
+        { "name": "ACHIEVEMENT_UNLOCKED", "value": 3 }
+      ]
+    },
+    {
+      "name": "MISSION_OP_TYPE",
+      "values": [
+        { "name": "NONE", "value": 0 },
+        { "name": "MAX", "value": 1 },
+        { "name": "SUM", "value": 2 },
+        { "name": "TOTAL", "value": 3 }
+      ]
     }
   ]
 }

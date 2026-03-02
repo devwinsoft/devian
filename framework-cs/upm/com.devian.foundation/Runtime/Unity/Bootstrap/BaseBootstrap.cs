@@ -19,6 +19,7 @@ namespace Devian
     {
         private static BaseBootstrap _instance;
         private static bool _booted;
+        private bool _isForeground = true;
 
         /// <summary>
         /// 에디터 종료/플레이 종료/씬 종료 정리 단계 여부.
@@ -32,6 +33,7 @@ namespace Devian
         protected virtual void Awake()
         {
             if (_instance == null) _instance = this;
+            _isForeground = Application.isFocused;
             ensureRequiredComponents();
         }
 
@@ -67,6 +69,32 @@ namespace Devian
         }
 
         /// <summary>
+        /// 앱이 foreground로 진입할 때 호출되는 semantic hook.
+        /// Unity raw callback을 override하지 말고 이 메서드를 사용한다.
+        /// </summary>
+        protected virtual void OnEnterForeground()
+        {
+        }
+
+        /// <summary>
+        /// 앱이 background로 전환될 때 호출되는 semantic hook.
+        /// Unity raw callback을 override하지 말고 이 메서드를 사용한다.
+        /// </summary>
+        protected virtual void OnEnterBackground()
+        {
+        }
+
+        protected void OnApplicationPause(bool paused)
+        {
+            updateForegroundState(!paused);
+        }
+
+        protected void OnApplicationFocus(bool focused)
+        {
+            updateForegroundState(focused);
+        }
+
+        /// <summary>
         /// 도메인 리로드 시 상태 리셋.
         /// </summary>
         protected virtual void OnApplicationQuit()
@@ -85,6 +113,19 @@ namespace Devian
             _instance = null;
             _booted = false;
             IsShuttingDown = false;
+        }
+
+        private void updateForegroundState(bool isForeground)
+        {
+            if (_isForeground == isForeground)
+                return;
+
+            _isForeground = isForeground;
+
+            if (isForeground)
+                OnEnterForeground();
+            else
+                OnEnterBackground();
         }
     }
 }

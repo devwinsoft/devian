@@ -37,6 +37,11 @@ namespace MyApp
 
             // App-specific initialization here.
         }
+
+        protected override void OnEnterForeground()
+        {
+            // Resume sync here.
+        }
     }
 }
 ```
@@ -44,8 +49,13 @@ namespace MyApp
 1. `MobileBootstrap`을 상속한 클래스를 만든다.
 2. `OnBootProc()`을 override하고, `await base.OnBootProc();`을 호출하여 공통 초기화를 수행한다.
 3. `base.OnBootProc()` 이후에 앱별 초기화 로직을 구현한다.
-4. Bootstrap prefab에 해당 컴포넌트를 부착한다.
-5. app/contents layer가 Bootstrap prefab을 명시적으로 생성하고 `BootProc()`를 호출한다.
+4. 포그라운드 복귀 처리가 필요하면 `BaseBootstrap.OnEnterForeground()`를 override한다.
+5. Bootstrap prefab에 해당 컴포넌트를 부착한다.
+6. app/contents layer가 Bootstrap prefab을 명시적으로 생성하고 `BootProc()`를 호출한다.
+
+주의:
+- Unity `OnApplicationPause` / `OnApplicationFocus`를 직접 override하지 않는다.
+- lifecycle 처리는 `BaseBootstrap`의 semantic hook을 사용한다.
 
 
 ## Resource Prefab 생성 규칙

@@ -802,11 +802,29 @@ class DevianToolBuilder {
         }
 
         if (hasContractClasses || hasTables) {
-            const imports = ['IEntity'];
+            const coreImports = new Set(['IEntity']);
             if (hasKeyedTables) {
-                imports.push('IEntityKey');
+                coreImports.add('IEntityKey');
             }
-            lines.push(`import { ${imports.join(', ')} } from '@devian/core';`);
+
+            for (const table of tables) {
+                for (const field of (table.fields || [])) {
+                    const fieldType = field.type || '';
+                    const baseType = fieldType.endsWith('[]') ? fieldType.slice(0, -2) : fieldType;
+                    if (!baseType.startsWith('class:')) {
+                        continue;
+                    }
+
+                    const classType = baseType.slice(6).split('.').pop();
+                    if (['CInt', 'CFloat', 'CString', 'CBigInt'].includes(classType)) {
+                        coreImports.add(classType);
+                    }
+                }
+            }
+
+            const orderedCoreImports = ['IEntity', 'IEntityKey', 'CInt', 'CFloat', 'CString', 'CBigInt']
+                .filter(name => coreImports.has(name));
+            lines.push(`import { ${orderedCoreImports.join(', ')} } from '@devian/core';`);
             lines.push('');
         }
 

@@ -75,31 +75,17 @@ namespace Devian.Domain.Game
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("MISSION_WEEKLY", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("MISSION_ACHIEVE", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_MISSION_WEEKLY.LoadFromNdjson(text);
-                    TB_MISSION_WEEKLY._AfterLoad();
+                    TB_MISSION_ACHIEVE.LoadFromNdjson(text);
+                    TB_MISSION_ACHIEVE._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_MISSION_WEEKLY.LoadFromPb64Binary(bin);
-                    TB_MISSION_WEEKLY._AfterLoad();
-                }
-            });
-
-            global::Devian.TableManager.Instance.RegisterTbLoader("MISSION_ACHIEVEMENT", (format, text, bin) =>
-            {
-                if (format == global::Devian.TableFormat.Json && text != null)
-                {
-                    TB_MISSION_ACHIEVEMENT.LoadFromNdjson(text);
-                    TB_MISSION_ACHIEVEMENT._AfterLoad();
-                }
-                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
-                {
-                    TB_MISSION_ACHIEVEMENT.LoadFromPb64Binary(bin);
-                    TB_MISSION_ACHIEVEMENT._AfterLoad();
+                    TB_MISSION_ACHIEVE.LoadFromPb64Binary(bin);
+                    TB_MISSION_ACHIEVE._AfterLoad();
                 }
             });
 

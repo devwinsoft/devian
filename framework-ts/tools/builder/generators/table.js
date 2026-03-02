@@ -17,7 +17,7 @@ const classParsers = new Map();
 
 /**
  * Register a class parser
- * @param {string} typeName - Full type name (e.g., 'Devian.CInt')
+ * @param {string} typeName - Type name (e.g., 'Devian.CInt', 'CBigInt')
  * @param {Function} parser - Parser function (cellText, ctx) => object|null
  */
 function registerClassParser(typeName, parser) {
@@ -213,6 +213,114 @@ function parseCStringCell(cellText, ctx) {
 registerClassParser('Devian.CInt', parseCIntCell);
 registerClassParser('Devian.CFloat', parseCFloatCell);
 registerClassParser('Devian.CString', parseCStringCell);
+registerClassParser('CInt', parseCIntCell);
+registerClassParser('CFloat', parseCFloatCell);
+registerClassParser('CString', parseCStringCell);
+
+/**
+ * Build normalized CBigInt JSON shape.
+ * Output shape matches C# struct fields: { mBase, mPow }.
+ */
+function buildCBigIntCell(baseValue, powValue, baseText, powText, ctx) {
+    if (!Number.isFinite(baseValue)) {
+        throw new Error(`[CBigInt] Invalid base value '${baseText}'`);
+    }
+    if (!Number.isInteger(powValue)) {
+        throw new Error(`[CBigInt] Invalid pow value '${powText}'. pow must be int.`);
+    }
+
+    const baseCtx = {
+        ...ctx,
+        columnName: `${ctx.columnName}.mBase`,
+        typeName: 'CFloat',
+    };
+    const powCtx = {
+        ...ctx,
+        columnName: `${ctx.columnName}.mPow`,
+        typeName: 'CInt',
+    };
+
+    return {
+        mBase: parseCFloatCellDeterministic(baseValue, baseText, baseCtx),
+        mPow: parseCIntCellDeterministic(powValue, powText, powCtx),
+    };
+}
+
+function parseCBigIntFloat(raw) {
+    if (typeof raw === 'number') {
+        if (!Number.isFinite(raw)) {
+            throw new Error(`[CBigInt] Invalid float value '${raw}'`);
+        }
+        return { value: raw, text: String(raw) };
+    }
+
+    const text = String(raw).trim();
+    const value = parseFloat(text);
+    if (!Number.isFinite(value)) {
+        throw new Error(`[CBigInt] Invalid float value '${text}'`);
+    }
+    return { value, text };
+}
+
+function parseCBigIntInt(raw) {
+    if (typeof raw === 'number') {
+        if (!Number.isInteger(raw)) {
+            throw new Error(`[CBigInt] Invalid int value '${raw}'`);
+        }
+        return { value: raw, text: String(raw) };
+    }
+
+    const text = String(raw).trim();
+    if (!/^-?\d+$/.test(text)) {
+        throw new Error(`[CBigInt] Invalid int value '${text}'`);
+    }
+    return { value: parseInt(text, 10), text };
+}
+
+/**
+ * CBigInt parser:
+ * - Plain shorthand: "{5.5, 6}"
+ * - Raw JSON fallback: {"base":5.5,"pow":6}
+ * - Final JSON shape passthrough: {"mBase":{"save1":...},"mPow":{"save1":...}}
+ */
+function parseCBigIntCell(cellText, ctx) {
+    const text = String(cellText).trim();
+
+    if (text === '') return null;
+
+    if (text.startsWith('{')) {
+        try {
+            const parsed = JSON.parse(text);
+            if (parsed && typeof parsed === 'object') {
+                if ('mBase' in parsed && 'mPow' in parsed) {
+                    return parsed;
+                }
+
+                if (('base' in parsed || 'mBase' in parsed) && ('pow' in parsed || 'mPow' in parsed)) {
+                    const baseRaw = 'base' in parsed ? parsed.base : parsed.mBase;
+                    const powRaw = 'pow' in parsed ? parsed.pow : parsed.mPow;
+                    const base = parseCBigIntFloat(baseRaw);
+                    const pow = parseCBigIntInt(powRaw);
+                    return buildCBigIntCell(base.value, pow.value, base.text, pow.text, ctx);
+                }
+            }
+        } catch (e) {
+            // Not JSON. Fall through to shorthand parsing.
+        }
+
+        const match = text.match(/^\{\s*([^,{}]+)\s*,\s*([^,{}]+)\s*\}$/);
+        if (match) {
+            const base = parseCBigIntFloat(match[1]);
+            const pow = parseCBigIntInt(match[2]);
+            return buildCBigIntCell(base.value, pow.value, base.text, pow.text, ctx);
+        }
+    }
+
+    throw new Error(`[CBigInt] Invalid format '${text}'. Expected '{base, pow}' or raw JSON.`);
+}
+
+registerClassParser('CBigInt', parseCBigIntCell);
+registerClassParser('Devian.CBigInt', parseCBigIntCell);
 
 // ============================================================================
 // Variant Parser (Simple format: {i} | {f} | {s})

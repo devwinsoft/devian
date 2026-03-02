@@ -78,6 +78,15 @@ public class TestSceneLoading : TestSceneBootstrap
                     return;
                 }
 
+                var missionInitCode = await initializeMissionAsync();
+                if (missionInitCode != CommonErrorType.SUCCESS)
+                {
+                    Debug.LogError($"Mission initialize failed: code={missionInitCode}");
+                    UICanvasLoading.Instance.message.text = $"Mission InitCode: {missionInitCode}";
+                    UICanvasLoading.Instance.ShowLoginButtons();
+                    return;
+                }
+
                 await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
                 break;
         }
@@ -100,9 +109,10 @@ public class TestSceneLoading : TestSceneBootstrap
         if (purchaseSyncCode != CommonErrorType.SUCCESS)
             return purchaseSyncCode;
 #endif
-        var save = await SaveDataManager.Instance.SaveGameStorageAsync(CancellationToken.None);
-        if (save.IsFailure)
-            return save.Error.Code;
+
+        var missionInitCode = await initializeMissionAsync();
+        if (missionInitCode != CommonErrorType.SUCCESS)
+            return missionInitCode;
         return CommonErrorType.SUCCESS;
     }
     
@@ -114,8 +124,8 @@ public class TestSceneLoading : TestSceneBootstrap
         var sync = await PurchaseManager.Instance.SyncAsync(ct);
         if (sync.IsFailure)
         {
-            Debug.LogError($"Purchase sync failed: {sync.Error}");
-            return sync.Error.Code;
+            Debug.LogWarning($"Purchase sync failed: {sync.Error}");
+            return CommonErrorType.SUCCESS;
         }
 
         var result = sync.Value;
@@ -154,6 +164,25 @@ public class TestSceneLoading : TestSceneBootstrap
         if (result.SaveError != null)
         {
             Debug.LogWarning($"SaveGameStorageAsync failed: {result.SaveError.Code}: {result.SaveError.Message}");
+        }
+
+        return CommonErrorType.SUCCESS;
+    }
+
+    async Task<CommonErrorType> initializeMissionAsync()
+    {
+        var init = await MissionManager.Instance.InitializeAsync(CancellationToken.None);
+        if (init.IsFailure)
+        {
+            Debug.LogError($"MissionManager.InitializeAsync failed: {init.Error.Code}: {init.Error.Message}");
+            return init.Error.Code;
+        }
+
+        var save = await SaveDataManager.Instance.SaveGameStorageAsync(CancellationToken.None);
+        if (save.IsFailure)
+        {
+            Debug.LogError($"Mission init save failed: {save.Error.Code}: {save.Error.Message}");
+            return save.Error.Code;
         }
 
         return CommonErrorType.SUCCESS;

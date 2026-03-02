@@ -37,6 +37,13 @@ DATA 테이블(예: XLSX)의 Options Row(3번째 줄)에서 `gen:<EnumName>` 옵
 
 - gen/PK 컬럼의 각 row 값이 enum 멤버 이름이 된다.
 - 멤버 이름은 유효한 식별자여야 한다 (`^[A-Za-z_][A-Za-z0-9_]*$`).
+- enum 멤버 이름은 **대문자 SNAKE_CASE**를 사용한다.
+
+### 2.1 Enum Type Name = UPPER_SNAKE_CASE
+
+- `gen:<EnumName>`의 `EnumName`은 **대문자 SNAKE_CASE**를 사용한다.
+- Good: `MISSION_CONDITION_TYPE`, `COMPLEX_POLICY_TYPE`
+- Bad: `MissionConditionType`, `ComplexPolicyType`
 
 ### 3. Enum Member Value = Deterministic Auto-Assignment
 
@@ -56,7 +63,7 @@ enum 멤버 값은 **결정적 자동 할당**으로 생성된다:
 
 Options Row(3번째 줄)에서 gen 컬럼(=PK 컬럼)에 `code` 키워드를 함께 선언하면:
 
-- 예: `pk, gen:ServerErrorType, code`
+- 예: `pk, gen:SERVER_ERROR_TYPE, code`
 - 이 경우 enum 멤버 value는 0..N-1 자동 할당이 아니라, **같은 row의 `code` 컬럼(int) 값**을 사용한다.
 - 출력 순서는 여전히 **멤버 이름 오름차순(결정적)** 으로 유지한다.
 
@@ -101,18 +108,18 @@ Failure Conditions (MUST fail):
 
 ```
 Row 1 (Header):    key                      | fallbackValue | minValue | maxValue
-Row 2 (Type):      enum:ComplexPolicyType   | Variant       | Variant  | Variant
-Row 3 (Options):   pk, gen:ComplexPolicyType |              |          |
+Row 2 (Type):      enum:COMPLEX_POLICY_TYPE   | Variant       | Variant  | Variant
+Row 3 (Options):   pk, gen:COMPLEX_POLICY_TYPE |              |          |
 Row 4 (Comment):   (ignored)
-Row 5+ (Data):     AttackPower              | i:0           | i:0      | i:10000
-                   CriRate                  | f:0           | f:0      | f:3.5
-                   MaxHealth                | i:100         | i:1      | i:99999
+Row 5+ (Data):     ATTACK_POWER             | i:0           | i:0      | i:10000
+                   CRI_RATE                 | f:0           | f:0      | f:3.5
+                   MAX_HEALTH               | i:100         | i:1      | i:99999
 ```
 
 여기서:
-- `key` 컬럼 = PK = gen 컬럼 (같은 컬럼, 옵션: `pk, gen:ComplexPolicyType`)
+- `key` 컬럼 = PK = gen 컬럼 (같은 컬럼, 옵션: `pk, gen:COMPLEX_POLICY_TYPE`)
 - `key` 컬럼의 값이 enum 멤버 이름
-- enum 값은 자동 할당: `AttackPower=0`, `CriRate=1`, `MaxHealth=2` (이름 정렬 순)
+- enum 값은 자동 할당: `ATTACK_POWER=0`, `CRI_RATE=1`, `MAX_HEALTH=2` (이름 정렬 순)
 - **Variant 컬럼은 NDJSON에서 `{k, i|f|s}` 오브젝트로 저장되며, `i`/`f`/`s`는 Complex shape(CInt/CFloat/CString)이다.**
 
 ---
@@ -124,11 +131,11 @@ Row 5+ (Data):     AttackPower              | i:0           | i:0      | i:10000
 ```csharp
 namespace Devian.Domain.Common
 {
-    public enum ComplexPolicyType : int
+    public enum COMPLEX_POLICY_TYPE : int
     {
-        AttackPower = 0,
-        CriRate = 1,
-        MaxHealth = 2,
+        ATTACK_POWER = 0,
+        CRI_RATE = 1,
+        MAX_HEALTH = 2,
     }
 }
 ```
@@ -141,18 +148,18 @@ public static class TB_COMPLEX_POLICY
     // 기존 Get/TryGet 유지...
 
     // Find/TryFind - keyType이 enum이므로 기본 버전만 생성
-    public static Row Find(ComplexPolicyType key) { ... }
-    public static bool TryFind(ComplexPolicyType key, out Row? row) { ... }
+    public static Row Find(COMPLEX_POLICY_TYPE key) { ... }
+    public static bool TryFind(COMPLEX_POLICY_TYPE key, out Row? row) { ... }
 }
 ```
 
 ### TypeScript Enum
 
 ```typescript
-export enum ComplexPolicyType {
-    AttackPower = 0,
-    CriRate = 1,
-    MaxHealth = 2,
+export enum COMPLEX_POLICY_TYPE {
+    ATTACK_POWER = 0,
+    CRI_RATE = 1,
+    MAX_HEALTH = 2,
 }
 ```
 
@@ -163,8 +170,8 @@ export class TB_COMPLEX_POLICY {
     // 기존 get/tryGet 유지...
 
     // keyType이 enum이므로 기본 버전만
-    static find(key: ComplexPolicyType): Row { ... }
-    static tryFind(key: ComplexPolicyType): Row | undefined { ... }
+    static find(key: COMPLEX_POLICY_TYPE): Row { ... }
+    static tryFind(key: COMPLEX_POLICY_TYPE): Row | undefined { ... }
 }
 ```
 

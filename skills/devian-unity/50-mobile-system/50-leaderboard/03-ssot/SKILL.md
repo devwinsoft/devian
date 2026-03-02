@@ -111,10 +111,10 @@ Reward 연동은 "이벤트 신호"로만 한다.
 - 예: `achievement:{achievementId}`
 
 
-### 3) (선택) Achievement → RewardKey 매핑(정본)
+### 3) (선택) Achievement → RewardGroupId 매핑(정본)
 
 - key: `achievementId`
-- value: `rewardKey`
+- value: `rewardGroupId`
 
 이 매핑은 **이벤트 소비자**가 참조한다(RewardManager는 멱등/트리거 해석 책임 없음).
 

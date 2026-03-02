@@ -24,14 +24,12 @@
 ## Operators (source-compatible)
 
 
-- `+` : `CBigInt + float`
+- `+` : `CBigInt + CBigInt`, `CBigInt + float`
 - `-` : `CBigInt - CBigInt`, `float - CBigInt`, `CBigInt - float`
 - `*` : `CBigInt * CBigInt`, `float * CBigInt`, `CBigInt * float`
 - `/` : `CBigInt / CBigInt`, `float / CBigInt`, `CBigInt / float`
 - 비교: `<, >, <=, >=` (CompareTo 기반)
-
-
-> `CBigInt + CBigInt`는 이 스킬 범위에 포함하지 않는다(추가 설계).
+- helper: `Zero`, `FromInt`, `FromLong`, `Max`, `Min`
 
 
 ---
@@ -68,6 +66,7 @@ namespace Devian.Examples
 
             var seasonBonus = new Devian.CBigInt(2f, 3); // 2000
             var boosted = gold * seasonBonus;
+            var total = gold + seasonBonus;
 
 
             if (boosted > gold)
@@ -98,13 +97,24 @@ namespace Devian.Examples
             var remain = gold - spend;
 
 
-            // source-compatible: CBigInt + float only
             var plusSmall = gold + 123f;
 
 
             Console.WriteLine($"remain: {remain}");
+            Console.WriteLine($"total: {total}");
             Console.WriteLine($"plusSmall: {plusSmall}");
         }
     }
 }
 ```
+
+---
+
+
+## Table Authoring
+
+`class:CBigInt`를 XLSX 테이블에 기입할 때의 권장 plain format은 `{base, pow}`다.
+
+- 예: `{5.5, 6}` → `5.5 * 10^6`
+- 예: `{2, 3}` → `2000`
+- raw JSON fallback도 허용할 수 있지만, authoring 기본값은 shorthand를 우선한다.

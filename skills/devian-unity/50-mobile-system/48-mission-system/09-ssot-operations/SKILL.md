@@ -18,28 +18,69 @@ AppliesTo: v10
 ### 1) 앱 시작 시
 
 - 저장된 미션 상태(진행도/완료/클레임)를 로드한다.
-- 서버 시간 기준으로 daily/weekly 경계를 계산하고, resetRule에 따라 리셋한다.
-- NEEDS CHECK: 서버 시간 소스/갱신 주기/오프라인 정책은 구현 단계에서 확정한다.
-- 리셋 후 UI 상태(클레임 가능 여부)를 갱신한다.
+- `MissionClockSnapshot`을 로드/갱신한다.
+- `MissionManager.Storage.dailyMissionStartUtcMs`가 없으면 첫 sync의 `serverNowUtcMs`를 기록한다.
+- 현재 sync의 `serverNowUtcMs`와 `dailyMissionStartUtcMs`의 차이가 7일 초과면 현재 `serverNowUtcMs`를 새 `dailyMissionStartUtcMs`로 사용하고 daily를 다시 시작한다.
+- timed mission은 `dailyMissionStartUtcMs` anchor 기준으로 현재 `dailyKey`를 결정한다.
+- 기존 state를 destructive reset 하지 않는다. 현재 period의 `missionUid`로 읽고, 이전 period 데이터는 prune 대상으로 둔다.
+- 현재 scope에서 이미 `ACTIVE`인 미션은 `missionUid`별 runtime을 보장한다. 이 시점이 mission start다.
+- achievement는 저장된 runtime의 `level` / `progressValue` / `isCompleted`를 그대로 restore 한다.
+- UI 상태(클레임 가능 여부)를 갱신한다.
+- 첫 시작에서는 `isActive=true`인 미션을 활성화한다.
+
+
+### 1-1) 오프라인/네트워크 장애 시
+
+- 마지막으로 동기화한 `MissionClockSnapshot`이 있으면:
+  - timed mission 화면 조회는 허용
+  - period key 계산은 허용
+  - claim도 클라이언트 추정 서버 시각 기준으로 수행할 수 있다
+- 네트워크가 복구되면:
+  - `BaseBootstrap.OnEnterForeground()` 같은 resume hook에서
+  - `MissionManager.RefreshClockAsync()`를 호출해 서버 시간 기준을 다시 보정한다
+- 첫 실행에서는 guest/google/apple login 이후에만 mission을 초기화한다.
+- 현재 샘플 구조에서는 이 초기화 위치가 `TestSceneLoading.syncPurchaseStateAsync()` 이후 구간에 들어가는 것이 자연스럽다.
+- 첫 login에서 `getMissionClock` 실패 시 MissionManager 초기화 실패로 보고 login 실패 처리한다.
 
 
 ### 2) 플레이 중(조건 평가)
 
-- 게임 이벤트/스탯 변경 입력을 받으면:
-  - `MISSION` 테이블의 조건을 평가하여 진행도를 갱신한다.
-  - 완료 조건을 만족하면 "완료"로 전환한다(클레임 가능 상태).
+- gameplay/system 레이어가 `MissionTriggerSystem.Notify(msgType, msgValue)`를 발행하면:
+  - 현재 scope에서 `ACTIVE`이면서 `conditionOp != NONE`인 row만 자기 `conditionType` trigger를 직접 구독하는 concrete runtime을 가진다.
+  - runtime이 trigger를 받으면 자신의 `conditionOp` 규칙으로 `progressValue`를 갱신한다.
+  - `conditionOp=MAX`면 max 갱신, `conditionOp=SUM`이면 `conditionValue` 상한까지 누적, `conditionOp=TOTAL`이면 상한 없이 누적한다.
+  - 갱신 후 `progressValue >= conditionValue`이면 현재 `missionUid`를 `CLAIMABLE` 상태로 전환한다.
+  - daily는 `CLAIMABLE` 시 구독을 해지한다.
+  - achievement는 `CLAIMABLE`/`COMPLETED`여도 삭제 전까지 구독을 유지한다.
 
 
 ### 3) 클레임(보상 수령)
 
-- MissionManager는 category에 따라 `grantId`를 생성한다(정본: [03-ssot](../03-ssot/SKILL.md)).
-- MissionManager는 로컬 ledger에서 `grantId` 상태를 확인한다:
-  - 이미 `granted`면 즉시 실패/무시(중복 지급 방지)
+- MissionManager는 achievement면 현재 활성 runtime의 level을 내부에서 찾고, 이를 포함해 현재 period의 `grantId`를 생성한다(정본: [03-ssot](../03-ssot/SKILL.md)).
+- MissionManager는 local claim record에서 `grantId` 존재 여부를 확인한다:
+  - 이미 존재하면 즉시 실패/무시(중복 지급 방지)
 - 미지급이면:
-  1) ledger를 `pending`으로 기록
-  2) RewardManager로 "지급 실행(Apply)"을 위임
-  3) 성공 시 ledger를 `granted`로 확정 + claimed 상태 저장
-  4) 실패 시 ledger `pending` 유지(앱 시작 시/수동 재시도에서 다시 Apply)
+  1) timed mission이면 `dailyMissionStartUtcMs` anchor 기준 period key를 계산한다
+  2) RewardManager로 "지급 실행(Apply)"을 위임한다
+  3) local apply 성공 후 local claim record를 저장하고 현재 runtime을 `COMPLETED`로 전환한다
+  4) achievement면 현재 활성 runtime 기준으로 다음 level row 존재 여부를 확인한다:
+     다음 level row가 있으면 같은 runtime을 level up 한다
+  5) `SaveDataManager`로 local save를 즉시 시도하고, 이어서 cloud save도 시도한다
+  6) local save 실패 시 에러를 표시하고 플레이 불가능 상태로 전환한다(TODO)
+
+권장 수렴 규칙:
+- local save 성공 시 동일 `grantId`에 대한 중복 지급은 막을 수 있다.
+- cloud save는 best effort이며, Firebase는 mission 정보를 저장하지 않는다.
+- achievement는 수동 claim 모델이므로 `CLAIMABLE` runtime은 claim 전까지 유지한다.
+- 마지막 level achievement는 `COMPLETED` 상태로 유지한다.
+
+
+### 4) 기간 전환
+
+- daily 전환은 "초기화 루프"가 아니라 "현재 key 교체"로 처리한다.
+- 예:
+  - `mission:daily:login_01:day:0` -> `mission:daily:login_01:day:1`
+- 이전 key의 완료/지급 정보는 새 period에 영향을 주지 않는다.
 
 
 ---
@@ -47,11 +88,20 @@ AppliesTo: v10
 
 ## 테스트 체크리스트(정본)
 
-- daily/weekly 리셋 경계에서 중복 지급 0건(grantId 기준, Mission ledger 기준)
+- daily 경계에서 중복 지급 0건(grantId 기준, local claim record 기준)
 - 앱 재시작/크래시 후:
   - 완료/클레임 상태가 일관됨
-  - 클레임 재시도 시 Mission ledger 기준으로 중복 지급 0건 (Reward는 멱등 책임 없음)
-- `MISSION` 테이블 변경(isActive 토글) 시 UI/상태가 안전하게 동작
+  - local claim record 기준으로 중복 지급 0건 (Reward는 멱등 책임 없음)
+- 서버 시간 재동기화 후:
+  - timed mission period key가 다시 서버 기준으로 수렴한다
+  - 현재 sync 시각과 `dailyMissionStartUtcMs` 차이가 7일 초과면 daily anchor reset이 정상 동작한다
+- 메시지 누적 사용 시:
+  - `MAX` row는 더 작은 값 trigger로 `progressValue`가 감소하지 않는다
+  - `SUM` row는 trigger replay가 없을 때만 정확한 누적값을 유지하며, `conditionValue`를 넘지 않는다
+  - `TOTAL` row는 trigger replay가 없을 때만 정확한 누적값을 유지하며, `conditionValue`를 넘어설 수 있다
+  - daily는 runtime claimable/completed/dispose 시 구독 해지가 정상 동작한다
+  - achievement는 삭제/파기 시 구독 해지가 정상 동작한다
+- 컨텐츠 패치/테이블 교체로 `isActive` 값이 달라져도 UI/상태가 안전하게 동작
 
 
 ---
@@ -61,8 +111,9 @@ AppliesTo: v10
 
 
 Hard (반드시 0)
-- 동일 기간(daily/weekly) 내 중복 지급 0건 (`grantId` 멱등)
-- 리셋 경계에서 상태 꼬임 0건(진행/완료/클레임)
+- 동일 기간(daily) 내 중복 지급 0건 (`grantId` 멱등)
+- 기간 경계에서 상태 꼬임 0건(진행/완료/클레임)
+- `MAX` / `SUM` / `TOTAL` 누적 규칙 오동작 0건
 - 테이블 스키마와 실제 평가 로직 불일치 0건
 
 Soft

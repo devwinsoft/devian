@@ -580,10 +580,12 @@ namespace Devian
             var inventory = getInventoryStorageOrNull();
             var purchase = getPurchaseStorageOrNull();
             var account = getAccountStorageOrNull();
+            var mission = getMissionStorageOrNull();
             return SaveDataJsonCodec.Serialize(
                 inventory ?? new InventoryStorage(),
                 purchase ?? new PurchaseStorage(),
-                account ?? new AccountStorage());
+                account ?? new AccountStorage(),
+                mission ?? new MissionStorage());
         }
 
         public void LoadFromPayload(string payload)
@@ -597,10 +599,13 @@ namespace Devian
             var inventory = getInventoryStorageOrNull();
             var purchase = getPurchaseStorageOrNull();
             var account = getAccountStorageOrNull();
-            if (inventory == null || purchase == null || account == null)
+            var missionManager = getMissionManagerOrNull();
+            var mission = missionManager != null ? missionManager.Storage : null;
+            if (inventory == null || purchase == null || account == null || mission == null)
                 return;
 
-            SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, account);
+            missionManager.ClearStorage();
+            SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, account, mission);
             applyLoadedAccountStorageToRuntime();
         }
 
@@ -609,6 +614,7 @@ namespace Devian
             getInventoryStorageOrNull()?.Clear();
             getPurchaseStorageOrNull()?.ClearAll();
             getAccountStorageOrNull()?.Clear();
+            getMissionManagerOrNull()?.ClearStorage();
             applyLoadedAccountStorageToRuntime();
         }
 
@@ -1081,6 +1087,32 @@ namespace Devian
             {
                 var accountManager = AccountManager.Instance;
                 return accountManager != null ? accountManager.Storage : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static MissionManager getMissionManagerOrNull()
+        {
+            try
+            {
+                var missionManager = MissionManager.Instance;
+                return missionManager != null ? missionManager : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static MissionStorage getMissionStorageOrNull()
+        {
+            try
+            {
+                var missionManager = MissionManager.Instance;
+                return missionManager != null ? missionManager.Storage : null;
             }
             catch
             {

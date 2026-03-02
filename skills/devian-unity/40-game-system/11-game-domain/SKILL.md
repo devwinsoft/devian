@@ -52,7 +52,7 @@ Game 도메인은 Devian 프레임워크의 **예제 도메인**이다.
 | `RewardTable.xlsx` | REWARD | TB_REWARD | `RewardNum` (int) | 보상 테이블 |
 | `MissionTable.xlsx` | MISSION_DAILY | TB_MISSION_DAILY | `MissionId` (string) | 일일 미션 |
 | `MissionTable.xlsx` | MISSION_WEEKLY | TB_MISSION_WEEKLY | `MissionId` (string) | 주간 미션 |
-| `MissionTable.xlsx` | MISSION_ACHIEVEMENT | TB_MISSION_ACHIEVEMENT | `MissionId` (string) | 업적 미션 |
+| `MissionTable.xlsx` | MISSION_ACHIEVE | TB_MISSION_ACHIEVE | `Index` (int) | 업적 미션 |
 | `ItemTable.xlsx` | EQUIP | TB_EQUIP | `EquipId` (string) | 장비 테이블 (EquipId, NameId, DescId) |
 | `ItemTable.xlsx` | CARD | TB_CARD | `CardId` (string) | 카드 테이블 (CardId, NameId, DescId) |
 

@@ -53,6 +53,22 @@ protected abstract Task OnBootProc();
 
 개발자가 구현해야 하는 부팅 로직. BootProc()에서 1회만 호출된다.
 
+### Foreground / Background Hook
+
+```csharp
+protected virtual void OnEnterForeground() {}
+protected virtual void OnEnterBackground() {}
+```
+
+의미:
+- `BaseBootstrap`이 Unity `OnApplicationPause(bool)` / `OnApplicationFocus(bool)`를 수신한다.
+- 내부에서 foreground 상태 변화를 dedupe한 뒤 semantic hook을 호출한다.
+- app/contents layer는 Unity raw callback을 직접 override하지 말고 `OnEnterForeground()` / `OnEnterBackground()`를 override한다.
+- 대표 사용처:
+  - 포그라운드 복귀 시 서버 시간 재동기화
+  - App Open 광고 gating
+  - 일시 정지/복귀 telemetry
+
 ### BootProc (인스턴스 메서드)
 
 ```csharp
@@ -93,6 +109,15 @@ Bootstrap은 app/contents layer가 명시적으로 생성하고 실행해야 한
 ```csharp
 var app = Singleton.CreateFromResources<BaseBootstrap, TestApplication>("Devian/Bootstrap");
 await app.BootProc();
+```
+
+foreground resume 처리 예시:
+
+```csharp
+protected override void OnEnterForeground()
+{
+    // 서버 시간 재동기화, resume 처리 등
+}
 ```
 
 샘플 구현도 같은 구조다:

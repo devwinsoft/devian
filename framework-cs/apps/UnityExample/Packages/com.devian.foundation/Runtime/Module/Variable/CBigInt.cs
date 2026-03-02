@@ -14,12 +14,18 @@ namespace Devian
         public CFloat mBase;
         public CInt mPow;
 
+        public static CBigInt Zero => new CBigInt(0f, 0);
+        public bool IsZero => (float)mBase == 0f;
+
         public CBigInt(float @base, int pow)
         {
             mBase = new CFloat(@base);
             mPow = new CInt(pow);
             Normalize(ref mBase, ref mPow);
         }
+
+        public static CBigInt FromInt(int value) => new CBigInt(value, 0);
+        public static CBigInt FromLong(long value) => FromDouble(value);
 
         // --- Compare ---
 
@@ -45,6 +51,19 @@ namespace Devian
         }
 
         // --- Operators: CBigInt * CBigInt ---
+
+        public static CBigInt operator +(CBigInt a, CBigInt b)
+        {
+            if (a.IsZero) return b;
+            if (b.IsZero) return a;
+
+            int targetPow = Math.Max((int)a.mPow, (int)b.mPow);
+            double sumBase =
+                (double)(float)a.mBase * Pow10((int)a.mPow - targetPow) +
+                (double)(float)b.mBase * Pow10((int)b.mPow - targetPow);
+
+            return new CBigInt((float)sumBase, targetPow);
+        }
 
         public static CBigInt operator *(CBigInt a, CBigInt b)
         {
@@ -102,68 +121,30 @@ namespace Devian
 
         public static CBigInt operator +(CBigInt a, float b)
         {
-            double aVal = (double)(float)a.mBase * Pow10(a.mPow);
-            double result = aVal + (double)b;
-            if (result == 0d) return new CBigInt(0f, 0);
-
-            int pow = 0;
-            double r = result;
-            double abs = Math.Abs(r);
-            while (abs >= 10d) { r /= 10d; pow++; abs = Math.Abs(r); }
-            while (abs > 0d && abs < 1d) { r *= 10d; pow--; abs = Math.Abs(r); }
-
-            return new CBigInt((float)r, pow);
+            return a + FromDouble(b);
         }
 
         // --- Operators: CBigInt - CBigInt ---
 
         public static CBigInt operator -(CBigInt a, CBigInt b)
         {
-            double aVal = (double)(float)a.mBase * Pow10(a.mPow);
-            double bVal = (double)(float)b.mBase * Pow10(b.mPow);
-            double result = aVal - bVal;
-            if (result == 0d) return new CBigInt(0f, 0);
-
-            int pow = 0;
-            double r = result;
-            double abs = Math.Abs(r);
-            while (abs >= 10d) { r /= 10d; pow++; abs = Math.Abs(r); }
-            while (abs > 0d && abs < 1d) { r *= 10d; pow--; abs = Math.Abs(r); }
-
-            return new CBigInt((float)r, pow);
+            return a + (b * -1f);
         }
 
         // --- Operators: CBigInt - float, float - CBigInt ---
 
         public static CBigInt operator -(CBigInt a, float b)
         {
-            double aVal = (double)(float)a.mBase * Pow10(a.mPow);
-            double result = aVal - (double)b;
-            if (result == 0d) return new CBigInt(0f, 0);
-
-            int pow = 0;
-            double r = result;
-            double abs = Math.Abs(r);
-            while (abs >= 10d) { r /= 10d; pow++; abs = Math.Abs(r); }
-            while (abs > 0d && abs < 1d) { r *= 10d; pow--; abs = Math.Abs(r); }
-
-            return new CBigInt((float)r, pow);
+            return a + (-b);
         }
 
         public static CBigInt operator -(float a, CBigInt b)
         {
-            double bVal = (double)(float)b.mBase * Pow10(b.mPow);
-            double result = (double)a - bVal;
-            if (result == 0d) return new CBigInt(0f, 0);
-
-            int pow = 0;
-            double r = result;
-            double abs = Math.Abs(r);
-            while (abs >= 10d) { r /= 10d; pow++; abs = Math.Abs(r); }
-            while (abs > 0d && abs < 1d) { r *= 10d; pow--; abs = Math.Abs(r); }
-
-            return new CBigInt((float)r, pow);
+            return FromDouble(a) - b;
         }
+
+        public static CBigInt Max(CBigInt a, CBigInt b) => a >= b ? a : b;
+        public static CBigInt Min(CBigInt a, CBigInt b) => a <= b ? a : b;
 
         // --- Comparison operators ---
 
@@ -229,6 +210,35 @@ namespace Devian
 
             @base = new CFloat(b);
             pow = new CInt(p);
+        }
+
+        private static CBigInt FromDouble(double value)
+        {
+            if (double.IsNaN(value) || double.IsInfinity(value))
+                throw new ArgumentOutOfRangeException(nameof(value), "CBigInt cannot represent NaN or Infinity.");
+
+            if (value == 0d)
+                return Zero;
+
+            int pow = 0;
+            double normalized = value;
+            double abs = Math.Abs(normalized);
+
+            while (abs >= 10d)
+            {
+                normalized /= 10d;
+                pow += 1;
+                abs = Math.Abs(normalized);
+            }
+
+            while (abs > 0d && abs < 1d)
+            {
+                normalized *= 10d;
+                pow -= 1;
+                abs = Math.Abs(normalized);
+            }
+
+            return new CBigInt((float)normalized, pow);
         }
 
         private static void NormalizeRaw(ref float @base, ref int pow)
