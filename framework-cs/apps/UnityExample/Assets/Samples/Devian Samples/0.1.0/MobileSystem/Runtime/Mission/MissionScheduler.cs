@@ -13,6 +13,7 @@ namespace Devian
 
         readonly MissionStorage _storage;
         readonly MissionTriggerSystem _triggerSystem;
+        readonly Action<MissionRuntimeBase> _onInitialized;
         readonly Action<MissionRuntimeBase> _onChanged;
         readonly Action<MissionRuntimeBase> _onClaimable;
         readonly Func<string> _getCurrentDailyKey;
@@ -21,6 +22,7 @@ namespace Devian
         public MissionScheduler(
             MissionStorage storage,
             MissionTriggerSystem triggerSystem,
+            Action<MissionRuntimeBase> onInitialized,
             Action<MissionRuntimeBase> onChanged,
             Action<MissionRuntimeBase> onClaimable,
             Func<string> getCurrentDailyKey,
@@ -28,6 +30,7 @@ namespace Devian
         {
             _storage = storage ?? throw new ArgumentNullException(nameof(storage));
             _triggerSystem = triggerSystem ?? throw new ArgumentNullException(nameof(triggerSystem));
+            _onInitialized = onInitialized ?? throw new ArgumentNullException(nameof(onInitialized));
             _onChanged = onChanged ?? throw new ArgumentNullException(nameof(onChanged));
             _onClaimable = onClaimable ?? throw new ArgumentNullException(nameof(onClaimable));
             _getCurrentDailyKey = getCurrentDailyKey ?? throw new ArgumentNullException(nameof(getCurrentDailyKey));
@@ -41,6 +44,18 @@ namespace Devian
             ensureAchievementRuntimes();
         }
 
+        public bool HasDailyRuntimeOutsideCurrentPeriod()
+        {
+            var currentPeriodKey = _getCurrentDailyKey();
+            foreach (var runtime in _storage.runtimes.Values.OfType<MissionRuntimeDaily>())
+            {
+                if (!string.Equals(runtime.periodKey, currentPeriodKey, StringComparison.Ordinal))
+                    return true;
+            }
+
+            return false;
+        }
+
         public void DetachAll()
         {
             foreach (var runtime in _storage.runtimes.Values)
@@ -52,7 +67,7 @@ namespace Devian
             var removeRuntimeKeys = new List<int>();
             foreach (var kv in _storage.runtimes)
             {
-                if (kv.Value == null || kv.Value.missionKind != MISSION_TYPE.DAY)
+                if (kv.Value == null || kv.Value.missionType != MISSION_TYPE.DAY)
                     continue;
 
                 kv.Value.Detach();
@@ -65,7 +80,7 @@ namespace Devian
             var removeClaimKeys = new List<string>();
             foreach (var kv in _storage.claimRecords)
             {
-                if (kv.Value != null && kv.Value.missionKind == MISSION_TYPE.DAY)
+                if (kv.Value != null && kv.Value.missionType == MISSION_TYPE.DAY)
                     removeClaimKeys.Add(kv.Key);
             }
 
@@ -80,7 +95,7 @@ namespace Devian
             foreach (var kv in _storage.runtimes)
             {
                 var runtime = kv.Value;
-                if (runtime == null || runtime.missionKind != MISSION_TYPE.DAY)
+                if (runtime == null || runtime.missionType != MISSION_TYPE.DAY)
                     continue;
 
                 if (!TryParseDailyPeriodIndex(runtime.periodKey, out var runtimeDailyIndex))
@@ -100,7 +115,7 @@ namespace Devian
             foreach (var kv in _storage.claimRecords)
             {
                 var record = kv.Value;
-                if (record == null || record.missionKind != MISSION_TYPE.DAY)
+                if (record == null || record.missionType != MISSION_TYPE.DAY)
                     continue;
 
                 if (!TryParseDailyPeriodIndex(record.periodKey, out var claimDailyIndex))
@@ -124,7 +139,7 @@ namespace Devian
                 if (runtime is not MissionRuntimeDaily dailyRuntime)
                     continue;
 
-                if (dailyRuntime.missionKind != MISSION_TYPE.DAY)
+                if (dailyRuntime.missionType != MISSION_TYPE.DAY)
                     continue;
 
                 if (!string.Equals(dailyRuntime.missionId, missionId, StringComparison.Ordinal))
@@ -150,7 +165,7 @@ namespace Devian
                 if (runtime is not MissionRuntimeAchieve achieveRuntime)
                     continue;
 
-                if (achieveRuntime.missionKind != MISSION_TYPE.ACHIEVE)
+                if (achieveRuntime.missionType != MISSION_TYPE.ACHIEVE)
                     continue;
 
                 if (!string.Equals(achieveRuntime.missionId, missionId, StringComparison.Ordinal))
@@ -188,6 +203,7 @@ namespace Devian
 
             var selectedRows = selectDailyRows(periodKey);
             var selectedIds = new HashSet<string>(selectedRows.Select(row => row.MissionId), StringComparer.Ordinal);
+            var initializedRuntimes = new List<MissionRuntimeDaily>();
 
             var removeKeys = new List<int>();
             foreach (var runtime in _storage.runtimes.Values.OfType<MissionRuntimeDaily>())
@@ -212,7 +228,7 @@ namespace Devian
                 {
                     var restored = MissionRuntimeFactory.Restore(new MissionRuntimeRestoreArgs
                     {
-                        MissionKind = MISSION_TYPE.DAY,
+                        MissionType = MISSION_TYPE.DAY,
                         MissionId = existing.missionId,
                         PeriodKey = existing.periodKey,
                         MissionUid = existing.missionUid,
@@ -220,6 +236,7 @@ namespace Devian
                         StartValue = CBigInt.Zero,
                         ProgressValue = existing.progressValue,
                         IsCompleted = existing.isCompleted,
+                        Index = existing.index,
                         ConditionType = row.ConditionType,
                         ConditionOp = row.ConditionOp,
                         ConditionValue = row.ConditionValue!.Value,
@@ -230,15 +247,17 @@ namespace Devian
                     });
 
                     _storage.runtimes[restored.missionUid] = restored;
+                    initializedRuntimes.Add((MissionRuntimeDaily)restored);
                     continue;
                 }
 
                 var created = MissionRuntimeFactory.CreateDaily(new DailyMissionRuntimeCreateArgs
                 {
-                    MissionKind = MISSION_TYPE.DAY,
+                    MissionType = MISSION_TYPE.DAY,
                     MissionId = row.MissionId,
                     PeriodKey = periodKey,
                     MissionUid = AllocateMissionUid(),
+                    Index = 0,
                     ConditionType = row.ConditionType,
                     ConditionOp = row.ConditionOp,
                     ConditionValue = row.ConditionValue!.Value,
@@ -249,7 +268,13 @@ namespace Devian
                 });
 
                 _storage.runtimes[created.missionUid] = created;
+                initializedRuntimes.Add(created);
             }
+
+            assignDailyIndices(periodKey, selectedRows);
+
+            foreach (var runtime in initializedRuntimes)
+                _onInitialized(runtime);
         }
 
         void ensureAchievementRuntimes()
@@ -281,7 +306,7 @@ namespace Devian
                     {
                         var restored = MissionRuntimeFactory.Restore(new MissionRuntimeRestoreArgs
                         {
-                            MissionKind = MISSION_TYPE.ACHIEVE,
+                            MissionType = MISSION_TYPE.ACHIEVE,
                             MissionId = existing.missionId,
                             PeriodKey = existing.periodKey,
                             MissionUid = existing.missionUid,
@@ -299,6 +324,7 @@ namespace Devian
                         });
 
                         _storage.runtimes[restored.missionUid] = restored;
+                        _onInitialized(restored);
                         continue;
                     }
 
@@ -316,7 +342,7 @@ namespace Devian
 
                 var created = MissionRuntimeFactory.CreateAchieve(new AchieveMissionRuntimeCreateArgs
                 {
-                    MissionKind = MISSION_TYPE.ACHIEVE,
+                    MissionType = MISSION_TYPE.ACHIEVE,
                     MissionId = startRow!.MissionId,
                     Level = startRow.Level,
                     PeriodKey = "once",
@@ -332,6 +358,7 @@ namespace Devian
                 });
 
                 _storage.runtimes[created.missionUid] = created;
+                _onInitialized(created);
             }
         }
 
@@ -385,6 +412,24 @@ namespace Devian
             }
 
             return selected;
+        }
+
+        void assignDailyIndices(string periodKey, IReadOnlyList<MISSION_DAY> selectedRows)
+        {
+            var rowByMissionId = new Dictionary<string, MISSION_DAY>(StringComparer.Ordinal);
+            foreach (var row in selectedRows)
+                rowByMissionId[row.MissionId] = row;
+
+            var orderedRuntimes = _storage.runtimes.Values
+                .OfType<MissionRuntimeDaily>()
+                .Where(runtime => string.Equals(runtime.periodKey, periodKey, StringComparison.Ordinal))
+                .Where(runtime => rowByMissionId.ContainsKey(runtime.missionId))
+                .OrderBy(runtime => rowByMissionId[runtime.missionId].OrderNum)
+                .ThenBy(runtime => runtime.missionId, StringComparer.Ordinal)
+                .ToList();
+
+            for (var i = 0; i < orderedRuntimes.Count; i++)
+                orderedRuntimes[i].index = i;
         }
 
         static bool isEligibleDailyRow(MISSION_DAY row)

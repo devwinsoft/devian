@@ -36,11 +36,11 @@ namespace Devian.Domain.Game
         TEST_003 = 9003,
         TEST_004 = 9004,
         TEST_005 = 9005,
-        TEST_006 = 9006,
-        TEST_007 = 9007,
-        TEST_008 = 9008,
-        TEST_009 = 9009,
-        TEST_010 = 9010,
+        ACHIEVE_001 = 9101,
+        ACHIEVE_002 = 9102,
+        ACHIEVE_003 = 9103,
+        ACHIEVE_004 = 9104,
+        ACHIEVE_005 = 9105,
     }
 
     /// <summary>MISSION_OP_TYPE enum</summary>
@@ -49,6 +49,18 @@ namespace Devian.Domain.Game
         NONE = 0,
         MAX = 1,
         SUM = 2,
+    }
+
+    /// <summary>MISSION_MESSAGE enum</summary>
+    public enum MISSION_MESSAGE
+    {
+        NONE = 0,
+        RUNTIME_INIT = 1,
+        RUNTIME_PROGRESS = 2,
+        RUNTIME_CLAIMABLE = 3,
+        RUNTIME_REWARDED = 4,
+        DAY_RESET = 5,
+        ACHIEVE_LEVEL_UP = 6,
     }
 
     /// <summary>CURRENCY_TYPE enum</summary>
@@ -185,6 +197,7 @@ namespace Devian.Domain.Game
         public string MissionId { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public bool Fixed { get; set; }
+        public int OrderNum { get; set; }
         public MISSION_CONDITION_TYPE ConditionType { get; set; }
         public MISSION_OP_TYPE ConditionOp { get; set; }
         public CBigInt? ConditionValue { get; set; }
@@ -199,9 +212,10 @@ namespace Devian.Domain.Game
         public int Index { get; set; }
         public string MissionId { get; set; } = string.Empty;
         public bool IsActive { get; set; }
-        public int Level { get; set; }
+        public int OrderNum { get; set; }
         public MISSION_CONDITION_TYPE ConditionType { get; set; }
         public MISSION_OP_TYPE ConditionOp { get; set; }
+        public int Level { get; set; }
         public CBigInt? ConditionValue { get; set; }
         public string RewardGroupId { get; set; } = string.Empty;
 

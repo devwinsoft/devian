@@ -406,7 +406,7 @@ namespace Devian
             }
 
             CommonError saveError = null;
-            var save = await SaveDataManager.Instance.SaveGameStorageAsync(ct);
+            var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
             if (save.IsFailure)
             {
                 saveError = save.Error;
@@ -447,7 +447,7 @@ namespace Devian
                     final_.NeedsClientGrantDelivery, ct);
 
                 // 구매 결과를 local + cloud에 저장 (cloud 실패는 non-fatal)
-                var save = await SaveDataManager.Instance.SaveGameStorageAsync(ct);
+                var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
                 if (save.IsFailure)
                     Debug.LogWarning($"[{Tag}] Post-purchase save failed (non-fatal): {save.Error}");
             }

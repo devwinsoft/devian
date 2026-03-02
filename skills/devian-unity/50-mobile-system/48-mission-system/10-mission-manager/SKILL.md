@@ -6,7 +6,7 @@ daily 기간 키는 **`MissionManager.Storage.dailyMissionStartUtcMs` + 현재 �
 achievement도 동일한 클레임 흐름을 사용하지만, period reset은 없다.
 Firebase는 시계 역할만 하며, mission 정보는 저장하지 않는다.
 mission row의 `rewardGroupId`는 컨텐츠 레이어의 reward 키(`49-reward-system`의 `rewardGroupId`)를 사용하며, 실제 지급 실행(Apply)은 RewardManager에 위임한다(구현은 이후).
-MissionManager는 `MissionTriggerSystem`과 `MissionScheduler`를 소유한다.
+MissionManager는 `MissionTriggerSystem`, `MissionMessageSystem`, `MissionScheduler`를 소유한다.
 각 concrete runtime은 자신의 `MISSION_CONDITION_TYPE` trigger를 직접 구독하고 진행도를 갱신한다.
 미션 평가는 `conditionType + conditionOp + conditionValue` 조합으로 해석한다.
 `mTriggerSystem`은 field initializer에서 즉시 생성하며 null/optional 접근을 허용하지 않는다.
@@ -20,6 +20,7 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
 
 - `MISSION_*` 테이블 로드
 - `MissionTriggerSystem` 소유
+- `MissionMessageSystem` 소유
 - `MissionScheduler` 소유
 - `MissionClockSnapshot` 로드/갱신
 - `MissionManager.Storage.dailyMissionStartUtcMs` 초기화/보존
@@ -57,17 +58,31 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
 - `RefreshClockAsync(ct)`
     - backend `getMissionClock`에서 최신 `MissionClockSnapshot` 갱신
     - `BaseApplication.OnEnterForeground()` 같은 외부 lifecycle hook은 raw callable 대신 이 API를 호출한다
+- `RefreshRuntimes()`
+    - 현재 생성/복원되어 있는 runtime 전체에 대해 `MISSION_MESSAGE.RUNTIME_INIT`를 다시 발행한다
+    - 외부 UI가 mission 목록을 다시 바인딩할 때 사용한다
+    - 단, `MISSION_TYPE.DAY`의 남은 시간이 `TimeSpan.Zero`가 되었거나 현재 runtime이 stale period에 속하면 daily runtime을 reset/delete 후 재생성(초기화 로직)한다
+    - 이 경우 새 runtime들의 `RUNTIME_INIT`는 rebuild 경로에서만 발행하고, 추가 재발행으로 두 번 notify하지 않는다
 - `TryGetServerNowUtcMs(out serverNowUtcMs)`
     - cached snapshot이 있으면 현재 서버 시각 추정값 반환
 - `triggerSystem`
     - 타입은 `MissionTriggerSystem`
     - 다른 시스템은 이 인스턴스로 Mission trigger를 발행한다
-- `GetMissionRuntimeState(missionKind, missionId)`
+- `messageSystem`
+    - 타입은 `MissionMessageSystem`
+    - 외부 UI/GameObject는 이 인스턴스로 mission 변화 메시지를 구독한다
+- `GetMissionRuntimeState(missionType, missionId)`
     - `ACTIVE` / `CLAIMABLE` / `COMPLETED`를 계산한다
     - `isActive == false` row는 런타임 상태 대상이 아니다
-- `ClaimAsync(missionKind, missionId, ct)`
-    - `missionKind`의 타입은 `MISSION_TYPE`이다.
+- `GetRemainTime(missionType)`
+    - 반환 타입은 `TimeSpan`
+    - `MISSION_TYPE.DAY`는 다음 daily reset까지 남은 시간을 반환한다
+    - `MISSION_TYPE.ACHIEVE`는 `default(TimeSpan)`을 반환한다
+    - clock snapshot 또는 `dailyMissionStartUtcMs`가 없으면 `default(TimeSpan)`을 반환한다
+- `ClaimAsync(missionType, missionId, ct)`
+    - `missionType`의 타입은 `MISSION_TYPE`이다.
     - 같은 missionId가 daily/achievement 간 재사용될 수 있기 때문에 필수다.
+    - 대표 실패 코드는 `MISSION_NOT_FOUND`, `MISSION_RUNTIME_MISSING`, `MISSION_RUNTIME_STALE`, `MISSION_NOT_CLAIMABLE`, `MISSION_ALREADY_CLAIMED`를 사용한다.
     - 흐름:
       1. achievement면 현재 활성 runtime의 level을 내부에서 결정한다
       2. 현재 period의 `grantId` 생성
@@ -96,10 +111,15 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
 
 ## Outputs (설계)
 
-- `OnMissionCompleted(missionKind, missionId, level)` (선택)
-- `OnMissionClaimable(missionKind, missionId, level)` (선택)
-- `OnMissionPeriodChanged(missionKind, oldPeriodKey, newPeriodKey)` (선택)
-- UI는 저장 상태 + 테이블을 기반으로 렌더링한다(구현은 이후).
+- MissionManager는 callback hook 대신 `MissionMessageSystem` notify를 사용한다.
+- 주요 notify:
+  - `MISSION_MESSAGE.RUNTIME_INIT`
+  - `MISSION_MESSAGE.RUNTIME_PROGRESS`
+  - `MISSION_MESSAGE.RUNTIME_CLAIMABLE`
+  - `MISSION_MESSAGE.RUNTIME_REWARDED`
+  - `MISSION_MESSAGE.DAY_RESET`
+  - `MISSION_MESSAGE.ACHIEVE_LEVEL_UP`
+- UI는 저장 상태 + 테이블 + `MissionMessageSystem` notify를 기반으로 렌더링한다.
 
 
 ---
@@ -140,8 +160,8 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
   - `claimedAtClientUtcMs`
   - `rewardGroupId`
 - `MissionDefinitionIndex`
-  - daily: `missionKind + missionId -> row`
-  - achievement: `missionKind + missionId + level -> row`
+  - daily: `missionType + missionId -> row`
+  - achievement: `missionType + missionId + level -> row`
   - row 조회 용도
 
 정본 방향:
@@ -175,12 +195,13 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
 
 1. `InitializeAsync`에서 `getMissionClock`
 2. `BaseApplication.OnEnterForeground()` 같은 resume hook은 `MissionManager.RefreshClockAsync()`를 호출
-3. 첫 login에서 `getMissionClock` 실패 시 MissionManager 초기화 실패를 반환하고 login 실패로 처리
-4. `MissionManager.Storage.dailyMissionStartUtcMs`가 없으면 첫 sync 시점의 `serverNowUtcMs`로 초기화
-5. 현재 sync 시각과 `dailyMissionStartUtcMs`의 차이가 7일 초과면 현재 `serverNowUtcMs`를 새 `dailyMissionStartUtcMs`로 사용하고 daily를 재초기화
-6. MissionManager가 current `periodKey` 계산
-7. `ClaimAsync` 호출 시 local claim record 중복 검사
-8. RewardManager가 `ApplyRewardGroup(rewardGroupId)` 실행
-9. local apply 성공 후 local claim record 저장
-10. `SaveDataManager`가 local save를 즉시 시도하고, 이어서 cloud save도 시도
-11. local save 실패 시 fatal error로 처리
+3. 외부 UI가 mission 목록을 다시 그릴 필요가 있으면 `MissionManager.RefreshRuntimes()`를 호출해 현재 runtime 전체에 대한 `RUNTIME_INIT`를 재발행할 수 있다
+4. 첫 login에서 `getMissionClock` 실패 시 MissionManager 초기화 실패를 반환하고 login 실패로 처리
+5. `MissionManager.Storage.dailyMissionStartUtcMs`가 없으면 첫 sync 시점의 `serverNowUtcMs`로 초기화
+6. 현재 sync 시각과 `dailyMissionStartUtcMs`의 차이가 7일 초과면 현재 `serverNowUtcMs`를 새 `dailyMissionStartUtcMs`로 사용하고 daily를 재초기화
+7. MissionManager가 current `periodKey` 계산
+8. `ClaimAsync` 호출 시 local claim record 중복 검사
+9. RewardManager가 `ApplyRewardGroup(rewardGroupId)` 실행
+10. local apply 성공 후 local claim record 저장
+11. `SaveDataManager`가 local save를 즉시 시도하고, 이어서 cloud save도 시도
+12. local save 실패 시 fatal error로 처리

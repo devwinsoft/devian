@@ -6,7 +6,7 @@ namespace Devian
     [Serializable]
     public abstract class MissionRuntimeBase
     {
-        public MISSION_TYPE missionKind;
+        public MISSION_TYPE missionType;
         public string missionId = string.Empty;
         public string periodKey = string.Empty;
         public int missionUid;
@@ -18,7 +18,7 @@ namespace Devian
         [NonSerialized] protected MISSION_OP_TYPE _conditionOp;
         [NonSerialized] protected CBigInt _conditionValue = CBigInt.Zero;
         [NonSerialized] protected MissionTriggerSystem _triggerSystem;
-        [NonSerialized] private Action<MissionRuntimeBase> _onChanged;
+        [NonSerialized] private Action<MissionRuntimeBase> _onProgress;
         [NonSerialized] private Action<MissionRuntimeBase> _onClaimable;
         [NonSerialized] private bool _isSubscribed;
 
@@ -27,6 +27,7 @@ namespace Devian
         public CBigInt ConditionValue => _conditionValue;
         public bool IsSubscribed => _isSubscribed;
         public bool IsClaimable => !isCompleted && progressValue >= _conditionValue;
+        public abstract int Index { get; }
 
         internal void Bind(
             MISSION_CONDITION_TYPE conditionType,
@@ -34,7 +35,7 @@ namespace Devian
             CBigInt conditionValue,
             string nextRewardGroupId,
             MissionTriggerSystem triggerSystem,
-            Action<MissionRuntimeBase> onChanged,
+            Action<MissionRuntimeBase> onProgress,
             Action<MissionRuntimeBase> onClaimable)
         {
             UnsubscribeInternal();
@@ -44,7 +45,7 @@ namespace Devian
             _conditionValue = conditionValue;
             rewardGroupId = nextRewardGroupId ?? string.Empty;
             _triggerSystem = triggerSystem;
-            _onChanged = onChanged;
+            _onProgress = onProgress;
             _onClaimable = onClaimable;
 
             SubscribeIfNeeded();
@@ -57,7 +58,7 @@ namespace Devian
         {
             UnsubscribeInternal();
             _triggerSystem = null;
-            _onChanged = null;
+            _onProgress = null;
             _onClaimable = null;
         }
 
@@ -75,7 +76,6 @@ namespace Devian
         {
             isCompleted = true;
             OnCompletedCore();
-            _onChanged?.Invoke(this);
         }
 
         protected void SubscribeIfNeeded()
@@ -98,7 +98,7 @@ namespace Devian
 
         protected void RaiseChanged()
         {
-            _onChanged?.Invoke(this);
+            _onProgress?.Invoke(this);
         }
 
         protected void RaiseClaimableIfNeeded()
@@ -149,7 +149,6 @@ namespace Devian
 
             progressValue = nextProgress;
             RaiseChanged();
-
             if (!wasClaimable && IsClaimable)
             {
                 OnClaimableCore();
@@ -203,6 +202,10 @@ namespace Devian
     [Serializable]
     public sealed class MissionRuntimeDaily : MissionRuntimeBase
     {
+        public int index;
+
+        public override int Index => index;
+
         protected override bool ShouldSubscribe()
         {
             return base.ShouldSubscribe() && !isCompleted && !IsClaimable;
@@ -230,6 +233,21 @@ namespace Devian
         public int level = 1;
         public CBigInt startValue = CBigInt.Zero;
 
+        public override int Index
+        {
+            get
+            {
+                var row = TB_MISSION_ACHIEVE.GetByGroup(missionId);
+                foreach (var candidate in row)
+                {
+                    if (candidate.Level == level)
+                        return Math.Max(0, candidate.OrderNum - 1);
+                }
+
+                return 0;
+            }
+        }
+
         protected override bool ShouldSubscribe()
         {
             return base.ShouldSubscribe();
@@ -256,7 +274,6 @@ namespace Devian
             ReplaceBinding(nextConditionType, nextConditionOp, nextConditionValue, nextRewardGroupId);
 
             SubscribeIfNeeded();
-            RaiseChanged();
             RaiseClaimableIfNeeded();
         }
     }

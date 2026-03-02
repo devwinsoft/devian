@@ -9,6 +9,7 @@ MobileSystem 샘플에서 Mission(일일/업적) 시스템을 정의한다.
 
 - MissionManager는 `MISSION_*` 테이블을 읽고, **조건 평가/진행도/완료 판정**을 책임진다.
 - MissionManager는 `MissionTriggerSystem`을 소유한다.
+- MissionManager는 `MissionMessageSystem`을 소유한다.
 - MissionManager는 `MissionScheduler`를 통해 `MissionRuntimeBase` 계열 runtime의 생성/복구/파기/lifetime을 관리한다.
 - concrete runtime은 `conditionOp` 규칙에 따라 자신의 `ProgressValue`를 갱신하고 완료를 판정한다.
 - MissionManager는 **보상 지급 조회/로컬 claim record/기간 전환 처리**를 책임진다. 실제 보상 적용은 RewardManager(49-reward-system)에 위임한다.
@@ -35,6 +36,7 @@ MobileSystem 샘플에서 Mission(일일/업적) 시스템을 정의한다.
 | [13-mission-runtime](../13-mission-runtime/SKILL.md) | MissionRuntime 진행도/완료/리셋 규약 |
 | [14-mission-factory](../14-mission-factory/SKILL.md) | MissionRuntimeFactory 생성/복구 규약 |
 | [15-mission-scheduler](../15-mission-scheduler/SKILL.md) | MissionScheduler lifetime 관리 규약 |
+| [16-mission-message-system](../16-mission-message-system/SKILL.md) | MissionMessageSystem notify 규약 |
 
 
 ---

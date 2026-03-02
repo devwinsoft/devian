@@ -5,10 +5,11 @@ namespace Devian
 {
     public struct DailyMissionRuntimeCreateArgs
     {
-        public MISSION_TYPE MissionKind { get; set; }
+        public MISSION_TYPE MissionType { get; set; }
         public string MissionId { get; set; }
         public string PeriodKey { get; set; }
         public int MissionUid { get; set; }
+        public int Index { get; set; }
         public MISSION_CONDITION_TYPE ConditionType { get; set; }
         public MISSION_OP_TYPE ConditionOp { get; set; }
         public CBigInt ConditionValue { get; set; }
@@ -20,7 +21,7 @@ namespace Devian
 
     public struct AchieveMissionRuntimeCreateArgs
     {
-        public MISSION_TYPE MissionKind { get; set; }
+        public MISSION_TYPE MissionType { get; set; }
         public string MissionId { get; set; }
         public int Level { get; set; }
         public string PeriodKey { get; set; }
@@ -37,7 +38,7 @@ namespace Devian
 
     public struct MissionRuntimeRestoreArgs
     {
-        public MISSION_TYPE MissionKind { get; set; }
+        public MISSION_TYPE MissionType { get; set; }
         public string MissionId { get; set; }
         public string PeriodKey { get; set; }
         public int MissionUid { get; set; }
@@ -45,6 +46,7 @@ namespace Devian
         public CBigInt StartValue { get; set; }
         public CBigInt ProgressValue { get; set; }
         public bool IsCompleted { get; set; }
+        public int Index { get; set; }
         public MISSION_CONDITION_TYPE ConditionType { get; set; }
         public MISSION_OP_TYPE ConditionOp { get; set; }
         public CBigInt ConditionValue { get; set; }
@@ -60,10 +62,11 @@ namespace Devian
         {
             var runtime = new MissionRuntimeDaily
             {
-                missionKind = args.MissionKind,
+                missionType = args.MissionType,
                 missionId = args.MissionId ?? string.Empty,
                 periodKey = args.PeriodKey ?? string.Empty,
                 missionUid = args.MissionUid,
+                index = args.Index,
                 progressValue = CBigInt.Zero,
                 isCompleted = false,
                 rewardGroupId = args.RewardGroupId ?? string.Empty,
@@ -85,7 +88,7 @@ namespace Devian
         {
             var runtime = new MissionRuntimeAchieve
             {
-                missionKind = args.MissionKind,
+                missionType = args.MissionType,
                 missionId = args.MissionId ?? string.Empty,
                 periodKey = args.PeriodKey ?? string.Empty,
                 missionUid = args.MissionUid,
@@ -110,16 +113,17 @@ namespace Devian
 
         public static MissionRuntimeBase Restore(MissionRuntimeRestoreArgs args)
         {
-            switch (args.MissionKind)
+            switch (args.MissionType)
             {
                 case MISSION_TYPE.DAY:
                 {
                     var runtime = new MissionRuntimeDaily
                     {
-                        missionKind = args.MissionKind,
+                        missionType = args.MissionType,
                         missionId = args.MissionId ?? string.Empty,
                         periodKey = args.PeriodKey ?? string.Empty,
                         missionUid = args.MissionUid,
+                        index = args.Index,
                         progressValue = args.ProgressValue,
                         isCompleted = args.IsCompleted,
                         rewardGroupId = args.RewardGroupId ?? string.Empty,
@@ -142,7 +146,7 @@ namespace Devian
                 {
                     var runtime = new MissionRuntimeAchieve
                     {
-                        missionKind = args.MissionKind,
+                        missionType = args.MissionType,
                         missionId = args.MissionId ?? string.Empty,
                         periodKey = args.PeriodKey ?? string.Empty,
                         missionUid = args.MissionUid,

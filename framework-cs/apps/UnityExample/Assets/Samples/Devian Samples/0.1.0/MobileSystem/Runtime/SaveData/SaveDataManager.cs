@@ -420,7 +420,7 @@ namespace Devian
         /// 현재 Account/Inventory/Purchase 상태를 local + cloud에 저장한다.
         /// SyncGameStorageAsync 성공 후 사용 가능. cloud 저장 실패 시 MarkNeedsCloudSave 처리.
         /// </summary>
-        public async Task<CommonResult<bool>> SaveGameStorageAsync(CancellationToken ct)
+        public async Task<CommonResult<bool>> SaveGameStorageAsync(bool saveCloud, CancellationToken ct)
         {
             if (!_hasPrimarySaveContext)
                 return CommonResult<bool>.Failure(
@@ -431,7 +431,7 @@ namespace Devian
             if (local.IsFailure)
                 return local;
 
-            if (!AccountManager.Instance.IsLocalOnlySaveMode)
+            if (saveCloud && !AccountManager.Instance.IsLocalOnlySaveMode)
             {
                 try
                 {

@@ -42,7 +42,7 @@ MissionManager : CompoSingleton<MissionManager>
 │   ├── load storage
 │   ├── refresh MissionClockSnapshot
 │   └── scheduler rebuild/prune
-└── ClaimAsync(missionKind, missionId, ...)
+└── ClaimAsync(missionType, missionId, ...)
     ├── apply reward locally
     ├── write claimRecords[grantId]
     ├── save local/cloud immediately
@@ -81,7 +81,7 @@ public sealed class MissionStorage
 ```csharp
 public abstract class MissionRuntimeBase
 {
-    public MISSION_TYPE missionKind;
+    public MISSION_TYPE missionType;
     public string missionId = "";
     public string periodKey = "";
     public int missionUid;
@@ -92,6 +92,7 @@ public abstract class MissionRuntimeBase
 
 public sealed class MissionRuntimeDaily : MissionRuntimeBase
 {
+    public int index;
 }
 
 public sealed class MissionRuntimeAchieve : MissionRuntimeBase
@@ -106,6 +107,8 @@ public sealed class MissionRuntimeAchieve : MissionRuntimeBase
 - `missionUid`는 `nextMissionUid++`를 기본으로 사용하되, 현재 `runtimes`에 이미 존재하는 UID는 건너뛴다.
 - `nextMissionUid`의 초기값은 `1`이다.
 - `periodKey`는 현재 runtime의 claim/reset 구간 메타데이터를 복구하기 위한 값이다.
+- daily runtime은 0-based `Index`를 저장/복구한다.
+- achievement runtime의 `Index`는 현재 row의 `orderNum - 1` 계산값이다.
 - runtime 생성 = 해당 미션 definition의 runtime 시작이다.
 - daily는 `level = 1`, `startValue = 0`을 사용한다.
 - achievement는 `missionId`가 그룹 ID이고 `level`이 실제 단계다.
@@ -124,7 +127,7 @@ public sealed class MissionRuntimeAchieve : MissionRuntimeBase
 ```csharp
 public sealed class MissionClaimRecord
 {
-    public MISSION_TYPE missionKind;
+    public MISSION_TYPE missionType;
     public string missionId = "";
     public int level;
     public string grantId = "";
@@ -155,7 +158,7 @@ public sealed class MissionClaimRecord
 - daily period key는 `dailyMissionStartUtcMs` anchor에서 24시간 단위 index로 계산한다.
 - daily는 현재 cycle에서 선택된 최대 5개 runtime만 유지한다.
 - achievement는 active group별 runtime 1개만 유지한다.
-- MissionStorage는 `missionKind`, `missionId`, `rewardGroupId` 같은 runtime 식별/복구 정보는 저장한다.
+- MissionStorage는 `missionType`, `missionId`, `rewardGroupId` 같은 runtime 식별/복구 정보는 저장한다.
 - MissionStorage는 MissionRuntimeBase 계열 concrete runtime 객체를 직접 저장한다.
 - 다만 row 전체를 정본으로 저장하지 않는다. 컨텐츠 정본은 항상 `MISSION_*` 테이블이다.
 - `rewardGroupId`는 claim 복구/디버깅을 위해 state/record에 함께 남길 수 있다.

@@ -58,13 +58,14 @@ Type: Design / Runtime SSOT
 ```csharp
 public abstract class MissionRuntimeBase
 {
-    public MISSION_TYPE missionKind;
+    public MISSION_TYPE missionType;
     public string missionId = "";
     public string periodKey = "";
     public int missionUid;
     public CBigInt progressValue;
     public bool isCompleted;
     public string rewardGroupId = "";
+    public abstract int Index { get; }
 
     protected abstract void SubscribeCore(MissionTriggerSystem triggerSystem);
     protected abstract void UnsubscribeCore(MissionTriggerSystem triggerSystem);
@@ -89,6 +90,8 @@ public sealed class MissionRuntimeAchieve : MissionRuntimeBase
 - runtime 존재 = 해당 미션 definition에서 미션이 시작되었음을 의미한다.
 - 별도 `isStarted` bool은 두지 않는다.
 - 저장 필드 이름은 `ProgressValue`를 사용한다.
+- 저장/표시 정렬용 runtime 프로퍼티 이름은 `Index`를 사용한다.
+- `Index`는 0-based다.
 - 계산용 읽기 프로퍼티가 따로 필요하면 `CurrentProgress` 같은 이름을 별도로 둘 수 있다.
 - `isCompleted == true`는 claim 완료 상태를 의미한다.
 - daily/achievement 차이는 abstract base의 override로 구현한다. interface는 두지 않는다.
@@ -129,6 +132,8 @@ runtime 생성 규칙:
 - achievement level up은 새 runtime 생성이 아니라 같은 runtime mutation이다.
 - daily runtime은 `level = 1`, `startValue = 0`을 사용한다.
 - achievement 최초 create는 `level = 1` row에서 시작한다.
+- daily runtime의 `Index`는 최종 선택된 row를 `orderNum ASC`, `missionId ASC`로 정렬한 뒤 0부터 다시 부여한다.
+- achievement runtime의 `Index`는 현재 바인딩 row의 `orderNum - 1`을 반환한다.
 
 
 ---

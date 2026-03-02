@@ -22,12 +22,10 @@ public class TestSceneSample : TestSceneBootstrap
     protected override void onInitAwake()
     {
         base.onInitAwake();
-        Debug.Log("[SceneTest::OnInitAwake]");
     }
 
     protected override Task onEnter()
     {
-        Debug.Log("[SceneTest::onEnter]");
         return Task.CompletedTask;
     }
 

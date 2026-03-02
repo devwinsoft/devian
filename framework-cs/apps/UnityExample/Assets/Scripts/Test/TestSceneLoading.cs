@@ -36,7 +36,7 @@ public class TestSceneLoading : TestSceneBootstrap
         switch (sync.Value.State)
         {
             case SyncState.Initial:
-                var init = await SaveDataManager.Instance.SaveGameStorageAsync(CancellationToken.None);
+                var init = await SaveDataManager.Instance.SaveGameStorageAsync(true, CancellationToken.None);
                 if (init.IsFailure)
                 {
                     Debug.LogError($"Initial save failed: code={init.Error.Code}, message={init.Error.Message}");
@@ -180,7 +180,7 @@ public class TestSceneLoading : TestSceneBootstrap
         }
 
         // Todo: 최적화
-        var save = await SaveDataManager.Instance.SaveGameStorageAsync(CancellationToken.None);
+        var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, CancellationToken.None);
         if (save.IsFailure)
         {
             Debug.LogError($"Mission init save failed: {save.Error.Code}: {save.Error.Message}");

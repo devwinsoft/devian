@@ -17,6 +17,62 @@ public class UICanvasSample : UICanvas<UICanvasSample>
     {
     }
 
+    protected override void OnDestroy()
+    {
+        MissionManager.Instance?.messageSystem.UnSubcribe(GetEntityId());
+        base.OnDestroy();
+    }
+
+    protected override void onInit()
+    {
+        MissionManager.Instance.messageSystem.Subcribe(GetEntityId(),
+            MISSION_MESSAGE.RUNTIME_INIT,
+            (args) =>
+            {
+                MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
+                Debug.Log($"missionId={mission.missionId}, missionType={mission.missionType}, progressValue={mission.progressValue}");
+                return false;
+            });
+
+        MissionManager.Instance.messageSystem.Subcribe(GetEntityId(),
+            MISSION_MESSAGE.RUNTIME_PROGRESS,
+            (args) =>
+            {
+                MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
+                Debug.Log($"missionId={mission.missionId}, progressValue={mission.progressValue}");
+                return false;
+            });
+        
+        MissionManager.Instance.messageSystem.Subcribe(GetEntityId(),
+            MISSION_MESSAGE.RUNTIME_CLAIMABLE,
+            (args) =>
+            {
+                MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
+                Debug.Log($"missionId={mission.missionId}, RUNTIME_CLAIMABLE");
+                return false;
+            });
+        
+        MissionManager.Instance.messageSystem.Subcribe(GetEntityId(),
+            MISSION_MESSAGE.RUNTIME_REWARDED,
+            (args) =>
+            {
+                MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
+                RewardData[] rewards = args[1] as RewardData[];
+                foreach (var rewward in rewards)
+                {
+                    Debug.Log($"type={rewward.Type}, id={rewward.Id}, amount={rewward.Amount}");
+                }
+
+                MissionManager.Instance.triggerSystem.Notify(MISSION_CONDITION_TYPE.MISSION_CLEAR);
+                return false;
+            });
+    }
+
+    protected override void onInitComplete()
+    {
+        MissionManager.Instance.RefreshRuntimes();
+    }
+
     public void OnClick_Connect()
     {
         GameNetManager.Instance.Connect("ws://127.0.0.1:8080");
@@ -36,11 +92,12 @@ public class UICanvasSample : UICanvas<UICanvasSample>
 
     public void OnClick_Mission()
     {
-        MissionManager.Instance.triggerSystem.Notify(MISSION_CONDITION_TYPE.TEST_002, 1);
-        foreach (var mission in MissionManager.Instance.Storage.runtimes.Values)
-        {
-            Debug.Log($"id={mission.missionId}, value={mission.progressValue}");
-        }
+        MissionManager.Instance.triggerSystem.Notify(MISSION_CONDITION_TYPE.TEST_001, 1);
+    }
+    
+    public void OnClick_Mission_Claim()
+    {
+        UnityTaskRunner.Run(MissionManager.Instance.ClaimAsync(MISSION_TYPE.DAY, "mission_day_002"), "MissionManager.ClaimAsync");
     }
     
     public void OnClick_SignIn_Google()

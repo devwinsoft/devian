@@ -12,6 +12,7 @@ AppliesTo: v10
 - `MISSION_DAY` 테이블 스키마 (일일 미션)
 - `MISSION_ACHIEVE` 테이블 스키마 (업적 미션)
 - `MissionTriggerSystem` 규약
+- `MissionMessageSystem` 규약
 - `MissionClockSnapshot` / mission daily clock 규약
 - grantId 생성 규칙
 - missionUid 생성 규칙
@@ -25,7 +26,7 @@ AppliesTo: v10
 ## A) Core Terms (정본)
 
 - `missionId`: daily에서는 내부 표준 미션 ID, achievement에서는 그룹 ID(string)
-- `missionKind`: `MISSION_TYPE` enum. 값은 `DAY` | `ACHIEVE`
+- `missionType`: `MISSION_TYPE` enum. 값은 `DAY` | `ACHIEVE`
 - `conditionType`: `MISSION_CONDITION_TYPE` enum. MissionTriggerSystem에서 어떤 trigger를 받을지 결정한다.
 - `conditionOp`: `MISSION_OP_TYPE` enum. runtime의 `ProgressValue`를 어떤 방식으로 갱신할지 결정한다.
 - `conditionValue`: 목표값(`CBigInt`). 누적 진행도가 이 값 이상이면 완료다.
@@ -35,11 +36,13 @@ AppliesTo: v10
   - daily: 현재 daily claim/reset 구간 메타데이터인 `day:{dailyPeriodIndex}`
   - achievement: 고정값 `once`
 - `MissionRuntimeBase`: `missionUid` 단위 미션 runtime 추상 베이스. 생성 = 해당 미션 definition의 runtime 시작
+- `Index`: UI 표시용 0-based runtime 정렬 값
 - `MissionScheduler`: Mission runtime의 생성/복구/리바인드/period 정리/uid 발급을 담당하는 내부 scheduler
 - `MissionTriggerSystem`: `MessageSystem<int, MISSION_CONDITION_TYPE>` 특화 인스턴스
+- `MissionMessageSystem`: `MessageSystem<EntityId, MISSION_MESSAGE>` 특화 인스턴스
 - `MissionClockSnapshot`: 서버가 내려주는 "현재 서버 시각" 스냅샷
 - `missionUid`: MissionScheduler가 발급하는 runtime 식별용 `int` UID
-- `grantId`: `missionKind + missionId + level? + periodKey` 기반 지급 기록 키
+- `grantId`: `missionType + missionId + level? + periodKey` 기반 지급 기록 키
 
 NOTE:
 - 일일/업적은 **테이블을 분리**한다:
@@ -60,6 +63,7 @@ NOTE:
 | `missionId` | string (pk) | 내부 표준 ID |
 | `isActive` | bool | 운영 토글 |
 | `fixed` | bool | `true`면 daily selection에서 무조건 포함 |
+| `orderNum` | int | UI 정렬 기준 값. 1부터 시작 |
 | `conditionType` | `MISSION_CONDITION_TYPE` | Mission 조건 타입 enum |
 | `conditionOp` | `MISSION_OP_TYPE` | runtime progress 처리 방식 enum |
 | `conditionValue` | `class:CBigInt` | 목표값 |
@@ -73,6 +77,7 @@ NOTE:
 | `missionId` | string | 업적 그룹 ID |
 | `isActive` | bool | 운영 토글 |
 | `level` | int | 업적 단계 |
+| `orderNum` | int | UI 정렬 기준 값. 1부터 시작. 같은 `missionId` group은 같은 값을 사용 |
 | `conditionType` | `MISSION_CONDITION_TYPE` | Mission 조건 타입 enum |
 | `conditionOp` | `MISSION_OP_TYPE` | runtime progress 처리 방식 enum |
 | `conditionValue` | `class:CBigInt` | 목표값 |
@@ -84,9 +89,10 @@ NOTE:
   - `ACHIEVE`
 - daily는 `missionId`가 실제 미션 식별자다.
 - achievement는 `missionId`가 그룹 ID이고, 실제 단계 미션 식별은 `missionId + level`이다.
+- `orderNum`은 테이블 authoring 정렬 값이고 1부터 시작한다.
 - achievement row의 `missionId + level` 유일성은 data layer에서 보장한다.
 - `missionUid`는 runtime pk이고, `missionId + level`은 achievement definition 식별자다.
-- `MISSION_TYPE`, `MISSION_CONDITION_TYPE`, `MISSION_OP_TYPE`은 `ENUM_MISSION.json`에서 선언한다.
+- `MISSION_TYPE`, `MISSION_CONDITION_TYPE`, `MISSION_OP_TYPE`, `MISSION_MESSAGE`는 `ENUM_MISSION.json`에서 선언한다.
 - `MISSION_CONDITION_TYPE`의 v1 값 집합:
   - `NONE`
   - `LOGIN`
@@ -96,8 +102,18 @@ NOTE:
   - `NONE`
   - `MAX`
   - `SUM`
+- `MISSION_MESSAGE`는 v1에서 아래 값 집합을 사용한다:
+  - `NONE`
+  - `RUNTIME_INIT`
+  - `RUNTIME_PROGRESS`
+  - `RUNTIME_CLAIMABLE`
+  - `RUNTIME_REWARDED`
+  - `DAY_RESET`
+  - `ACHIEVE_LEVEL_UP`
 - `conditionType + conditionOp + conditionValue` 조합이 미션 판정 입력의 정본이다.
 - daily selection은 `fixed`를 먼저 적용한다.
+- daily runtime의 `Index`는 최종 선택된 row를 `orderNum ASC`, `missionId ASC`로 정렬한 뒤 0부터 다시 부여한다.
+- achieve runtime의 `Index`는 현재 row의 `orderNum - 1`이다.
 - `conditionValue`의 authoring plain format은 `{base, pow}`다. 예: `{5.5, 6}`
 - `MISSION_CONDITION_TYPE.NONE`은 placeholder/default row에서만 사용한다.
 
@@ -196,6 +212,46 @@ MissionManager는 `MissionTriggerSystem`을 소유하고, 각 MissionRuntime이 
 ---
 
 
+## D-2) MissionMessageSystem 규약(정본)
+
+MissionManager는 `MissionMessageSystem`을 소유하고, mission 변화가 발생할 때마다 외부 UI/GameObject로 notify 한다.
+
+| item | type | note |
+|------|------|------|
+| `MissionMessageSystem` | `MessageSystem<EntityId, MISSION_MESSAGE>` | 미션 변화 알림 시스템 |
+| `ownerKey` | `EntityId` | 외부 UI GameObject의 EntityId |
+| `msgType` | `MISSION_MESSAGE` | 알림 종류 |
+| `args[0]` | `MissionRuntimeBase` | 해당 mission runtime (`DAY_RESET`은 예외로 no args) |
+| `args[1+]` | `object` | message별 추가 payload |
+
+정본 규칙:
+- MissionManager는 `mMessageSystem`을 field initializer에서 즉시 생성한다.
+- MissionManager가 notify 발행 책임을 가진다.
+- MissionRuntime / MissionScheduler는 UI와 직접 결합하지 않는다.
+- 외부 UI/GameObject는 자신의 `EntityId`로 subscribe/unsubscribe 한다.
+- MissionMessageSystem 주석에는 callback 형식을 아래처럼 명시한다:
+  - 기본: `args[0] = MissionRuntimeBase runtime`
+  - 기본: `args[1+] = message-specific extra payload`
+  - 예외: `DAY_RESET = no args`
+- 최소 notify 시점:
+  - runtime 신규 생성/복원 직후: `RUNTIME_INIT`
+  - progress 변경 직후(level up 제외): `RUNTIME_PROGRESS`
+  - claimable 상태 알림: `RUNTIME_CLAIMABLE`
+  - claim 성공 후 reward apply 직후, save 직전: `RUNTIME_REWARDED`
+  - daily reset 직후 global 1회: `DAY_RESET`
+  - achievement level up 직후: `ACHIEVE_LEVEL_UP`
+- 메시지별 추가 payload:
+  - `RUNTIME_INIT`: 없음
+  - `RUNTIME_PROGRESS`: 없음
+  - `RUNTIME_CLAIMABLE`: 없음
+  - `RUNTIME_REWARDED`: `args[1] = RewardData[] rewards`
+  - `DAY_RESET`: no args
+  - `ACHIEVE_LEVEL_UP`: 없음
+
+
+---
+
+
 ## E) MissionClockSnapshot / MissionStorage Daily Clock 규약(정본)
 
 MissionManager는 backend에서 아래 payload를 받아 timed mission의 현재 period를 해석한다.
@@ -214,6 +270,11 @@ MissionManager는 backend에서 아래 payload를 받아 timed mission의 현재
   - `dailyPeriodIndex = floor(max(0, estimatedServerNowUtcMs - dailyMissionStartUtcMs) / 86400000)`
 - timed mission period key는 아래 문자열 규칙을 사용한다:
   - `dailyKey = "day:{dailyPeriodIndex}"`
+- `MissionManager.GetRemainTime(MISSION_TYPE.DAY)`는 현재 anchor 기준으로 다음 daily reset까지 남은 `TimeSpan`을 반환한다.
+- `MissionManager.GetRemainTime(MISSION_TYPE.ACHIEVE)`는 `default(TimeSpan)`을 반환한다.
+- `MissionManager.RefreshRuntimes()`는 일반적으로 현재 runtime 전체에 대해 `RUNTIME_INIT`를 재발행한다.
+- 단, `DAY`의 남은 시간이 `TimeSpan.Zero`가 되었거나 runtime이 stale period에 속하면 daily runtime set을 reset/delete 후 현재 구간 기준으로 다시 생성한다.
+- reset/recreate가 발생한 경우 `RUNTIME_INIT`는 rebuild 경로에서 한 번만 발행해야 한다.
 - stale clock을 별도 예외 상태로 두지 않는다. 마지막으로 동기화한 서버 시간을 기준으로 클라이언트가 계속 판정한다.
 - `getMissionClock` 호출 책임은 MissionManager에 있다.
 - 로그인 시점(= 앱 시작)에는 `MissionManager.InitializeAsync()` 내부에서 `getMissionClock`을 호출한다.
@@ -245,7 +306,7 @@ MissionManager/ MissionScheduler는 아래 규칙으로 `grantId`와 `missionUid
 정본 규칙:
 - 새 MissionRuntime을 만들 때마다 MissionScheduler는 새 `missionUid(int)`를 발급한다.
 - restore 시에는 저장된 `missionUid`를 그대로 사용한다.
-- MissionRuntime은 자신의 `missionKind + missionId + periodKey` 정보를 함께 저장해야 한다.
+- MissionRuntime은 자신의 `missionType + missionId + periodKey` 정보를 함께 저장해야 한다.
 - daily runtime은 `missionId`당 1개만 존재해야 한다.
 - achievement runtime은 `missionId`당 1개만 존재해야 한다.
 - achievement MissionRuntime은 `level`과 `startValue`도 함께 저장해야 한다.
@@ -262,7 +323,7 @@ MissionManager/ MissionScheduler는 아래 규칙으로 `grantId`와 `missionUid
 MissionManager는 `grantId` 단위로 local claim record를 저장한다.
 
 - key: `grantId`
-- value(최소): `missionKind`, `missionId`, `level`, `periodKey`, `rewardGroupId`, `claimedAtClientUtcMs`
+- value(최소): `missionType`, `missionId`, `level`, `periodKey`, `rewardGroupId`, `claimedAtClientUtcMs`
 
 정본 규칙:
 - local claim record 존재 = 해당 `grantId` 보상은 이미 로컬 적용이 끝났고 mission state는 `COMPLETED`다

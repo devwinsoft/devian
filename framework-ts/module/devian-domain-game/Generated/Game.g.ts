@@ -26,11 +26,11 @@ export enum MISSION_CONDITION_TYPE {
     TEST_003 = 9003,
     TEST_004 = 9004,
     TEST_005 = 9005,
-    TEST_006 = 9006,
-    TEST_007 = 9007,
-    TEST_008 = 9008,
-    TEST_009 = 9009,
-    TEST_010 = 9010,
+    ACHIEVE_001 = 9101,
+    ACHIEVE_002 = 9102,
+    ACHIEVE_003 = 9103,
+    ACHIEVE_004 = 9104,
+    ACHIEVE_005 = 9105,
 }
 
 /** MISSION_OP_TYPE enum */
@@ -38,6 +38,17 @@ export enum MISSION_OP_TYPE {
     NONE = 0,
     MAX = 1,
     SUM = 2,
+}
+
+/** MISSION_MESSAGE enum */
+export enum MISSION_MESSAGE {
+    NONE = 0,
+    RUNTIME_INIT = 1,
+    RUNTIME_PROGRESS = 2,
+    RUNTIME_CLAIMABLE = 3,
+    RUNTIME_REWARDED = 4,
+    DAY_RESET = 5,
+    ACHIEVE_LEVEL_UP = 6,
 }
 
 /** CURRENCY_TYPE enum */
@@ -153,6 +164,7 @@ export interface MISSION_DAY extends IEntityKey<string> {
     MissionId: string;
     IsActive: boolean;
     Fixed: boolean;
+    OrderNum: number;
     ConditionType: MISSION_CONDITION_TYPE;
     ConditionOp: MISSION_OP_TYPE;
     ConditionValue: CBigInt | null;
@@ -164,9 +176,10 @@ export interface MISSION_ACHIEVE extends IEntityKey<number> {
     Index: number;
     MissionId: string;
     IsActive: boolean;
-    Level: number;
+    OrderNum: number;
     ConditionType: MISSION_CONDITION_TYPE;
     ConditionOp: MISSION_OP_TYPE;
+    Level: number;
     ConditionValue: CBigInt | null;
     RewardGroupId: string;
     getKey(): number;

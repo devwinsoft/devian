@@ -6,7 +6,7 @@ namespace Devian
     [Serializable]
     public sealed class MissionClaimRecord
     {
-        public MISSION_TYPE missionKind;
+        public MISSION_TYPE missionType;
         public string missionId = string.Empty;
         public int level = 1;
         public string grantId = string.Empty;

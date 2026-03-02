@@ -115,6 +115,7 @@ public sealed class MissionScheduler
 - scheduler는 그중 최대 5개만 선택해 runtime set을 만든다.
 - `fixed=true` row는 항상 먼저 포함한다.
 - 남은 슬롯은 `fixed=false` active row에서 random하게 선택한다.
+- 최종 선택된 daily runtime set은 `orderNum ASC`, `missionId ASC`로 정렬한 뒤 `Index = 0..N-1`을 다시 부여한다.
 - 저장 runtime이 있으면 restore 하고, 없으면 create 한다.
 - cycle 전환 시 기존 daily runtime set을 정리하고 새 set을 다시 만든다.
 - daily는 `CLAIMABLE` / `COMPLETED` runtime을 다시 구독하지 않는다.

@@ -20,11 +20,13 @@ namespace Devian
 
         readonly MissionStorage _storage = new();
         readonly MissionTriggerSystem _triggerSystem = new();
+        readonly MissionMessageSystem _messageSystem = new();
         MissionScheduler _scheduler;
         bool _initialized;
 
         public MissionStorage Storage => _storage;
         public MissionTriggerSystem triggerSystem => _triggerSystem;
+        public MissionMessageSystem messageSystem => _messageSystem;
         public bool IsInitialized => _initialized;
 
         protected override void Awake()
@@ -33,6 +35,7 @@ namespace Devian
             _scheduler = new MissionScheduler(
                 _storage,
                 _triggerSystem,
+                onRuntimeInitialized,
                 onRuntimeChanged,
                 onRuntimeClaimable,
                 getCurrentDailyKey,
@@ -86,6 +89,34 @@ namespace Devian
             return clock;
         }
 
+        public void RefreshRuntimes()
+        {
+            if (!_initialized)
+                return;
+
+            var dayExpired = GetRemainTime(MISSION_TYPE.DAY) == TimeSpan.Zero
+                             || _scheduler.HasDailyRuntimeOutsideCurrentPeriod();
+            if (dayExpired)
+            {
+                rebuildRuntimeBindings();
+                pruneExpiredMissionState();
+                return;
+            }
+
+            if (_storage.runtimes.Count <= 0)
+                return;
+
+            var runtimes = new List<MissionRuntimeBase>(_storage.runtimes.Count);
+            foreach (var runtime in _storage.runtimes.Values)
+            {
+                if (runtime != null)
+                    runtimes.Add(runtime);
+            }
+
+            foreach (var runtime in runtimes)
+                onRuntimeInitialized(runtime);
+        }
+
         public bool TryGetServerNowUtcMs(out long serverNowUtcMs)
         {
             serverNowUtcMs = 0L;
@@ -98,12 +129,12 @@ namespace Devian
             return true;
         }
 
-        public MissionRuntimeState GetMissionRuntimeState(MISSION_TYPE missionKind, string missionId)
+        public MissionRuntimeState GetMissionRuntimeState(MISSION_TYPE missionType, string missionId)
         {
             if (string.IsNullOrWhiteSpace(missionId))
                 return MissionRuntimeState.NONE;
 
-            switch (missionKind)
+            switch (missionType)
             {
                 case MISSION_TYPE.DAY:
                     return getDailyRuntimeState(missionId);
@@ -116,7 +147,36 @@ namespace Devian
             }
         }
 
-        public async Task<CommonResult> ClaimAsync(MISSION_TYPE missionKind, string missionId, CancellationToken ct = default)
+        public TimeSpan GetRemainTime(MISSION_TYPE missionType)
+        {
+            switch (missionType)
+            {
+                case MISSION_TYPE.DAY:
+                    if (!TryGetServerNowUtcMs(out var serverNowUtcMs))
+                        return default;
+
+                    if (_storage.dailyMissionStartUtcMs <= 0L)
+                        return default;
+
+                    var elapsedMs = Math.Max(0L, serverNowUtcMs - _storage.dailyMissionStartUtcMs);
+                    if (elapsedMs <= 0L)
+                        return TimeSpan.FromMilliseconds(DayMs);
+
+                    var remainderMs = elapsedMs % DayMs;
+                    if (remainderMs == 0L)
+                        return TimeSpan.Zero;
+
+                    var remainMs = DayMs - remainderMs;
+
+                    return TimeSpan.FromMilliseconds(remainMs);
+
+                case MISSION_TYPE.ACHIEVE:
+                default:
+                    return default;
+            }
+        }
+
+        public async Task<CommonResult> ClaimAsync(MISSION_TYPE missionType, string missionId, CancellationToken ct = default)
         {
             if (!_initialized)
                 return CommonResult.Failure(CommonErrorType.SAVEDATA_SYNC_REQUIRED, "MissionManager is not initialized.");
@@ -124,7 +184,7 @@ namespace Devian
             if (string.IsNullOrWhiteSpace(missionId))
                 return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, "missionId is empty.");
 
-            switch (missionKind)
+            switch (missionType)
             {
                 case MISSION_TYPE.DAY:
                     return await claimDailyAsync(missionId, ct);
@@ -133,7 +193,7 @@ namespace Devian
                     return await claimAchievementAsync(missionId, ct);
 
                 default:
-                    return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Unsupported missionKind: {missionKind}");
+                    return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Unsupported missionType: {missionType}");
             }
         }
 
@@ -173,22 +233,22 @@ namespace Devian
         {
             var row = TB_MISSION_DAY.Get(missionId);
             if (row == null || !row.IsActive || row.ConditionOp == MISSION_OP_TYPE.NONE || !row.ConditionValue.HasValue)
-                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Daily mission not found: {missionId}");
+                return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
 
             var periodKey = getCurrentDailyKey();
             var runtime = findDailyRuntime(missionId);
             if (runtime == null)
-                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Daily runtime missing: {missionId}");
+                return CommonResult.Failure(CommonErrorType.MISSION_RUNTIME_MISSING, $"Daily runtime missing: {missionId}");
 
             if (!string.Equals(runtime.periodKey, periodKey, StringComparison.Ordinal))
-                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Daily runtime stale: {missionId}/{runtime.periodKey}->{periodKey}");
+                return CommonResult.Failure(CommonErrorType.MISSION_RUNTIME_STALE, $"Daily runtime stale: {missionId}/{runtime.periodKey}->{periodKey}");
 
             if (!runtime.IsClaimable)
-                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Daily mission is not claimable: {missionId}");
+                return CommonResult.Failure(CommonErrorType.MISSION_NOT_CLAIMABLE, $"Daily mission is not claimable: {missionId}");
 
             var grantId = buildGrantId(MISSION_TYPE.DAY, missionId, 1, periodKey);
             if (_storage.claimRecords.ContainsKey(grantId))
-                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Daily mission already claimed: {grantId}");
+                return CommonResult.Failure(CommonErrorType.MISSION_ALREADY_CLAIMED, $"Daily mission already claimed: {grantId}");
 
             var apply = RewardManager.Instance.ApplyRewardGroup(runtime.rewardGroupId);
             if (apply.IsFailure)
@@ -196,22 +256,30 @@ namespace Devian
 
             runtime.MarkCompleted();
             _storage.claimRecords[grantId] = createClaimRecord(MISSION_TYPE.DAY, missionId, 1, grantId, periodKey, runtime.rewardGroupId);
+            _messageSystem.Notify(MISSION_MESSAGE.RUNTIME_REWARDED, runtime, apply.Value.AppliedRewards);
 
-            return await saveMissionStateAsync(ct);
+            var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
+            if (save.IsFailure)
+            {
+                Debug.LogError($"[{Tag}] Mission save failed: {save.Error}");
+                return CommonResult.Failure(save.Error!);
+            }
+
+            return CommonResult.Ok();
         }
 
         async Task<CommonResult> claimAchievementAsync(string missionId, CancellationToken ct)
         {
             var runtime = findAchievementRuntime(missionId);
             if (runtime == null)
-                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Achievement runtime missing: {missionId}");
+                return CommonResult.Failure(CommonErrorType.MISSION_RUNTIME_MISSING, $"Achievement runtime missing: {missionId}");
 
             if (!runtime.IsClaimable)
-                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Achievement is not claimable: {missionId}");
+                return CommonResult.Failure(CommonErrorType.MISSION_NOT_CLAIMABLE, $"Achievement is not claimable: {missionId}");
 
             var grantId = buildGrantId(MISSION_TYPE.ACHIEVE, missionId, runtime.level, PeriodOnce);
             if (_storage.claimRecords.ContainsKey(grantId))
-                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Achievement already claimed: {grantId}");
+                return CommonResult.Failure(CommonErrorType.MISSION_ALREADY_CLAIMED, $"Achievement already claimed: {grantId}");
 
             var apply = RewardManager.Instance.ApplyRewardGroup(runtime.rewardGroupId);
             if (apply.IsFailure)
@@ -235,18 +303,16 @@ namespace Devian
                     nextRow.ConditionOp,
                     nextRow.ConditionValue.Value,
                     nextRow.RewardGroupId);
+                _messageSystem.Notify(MISSION_MESSAGE.ACHIEVE_LEVEL_UP, runtime);
             }
             else
             {
                 runtime.MarkCompleted();
             }
 
-            return await saveMissionStateAsync(ct);
-        }
+            _messageSystem.Notify(MISSION_MESSAGE.RUNTIME_REWARDED, runtime, apply.Value.AppliedRewards);
 
-        async Task<CommonResult> saveMissionStateAsync(CancellationToken ct)
-        {
-            var save = await SaveDataManager.Instance.SaveGameStorageAsync(ct);
+            var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
             if (save.IsFailure)
             {
                 Debug.LogError($"[{Tag}] Mission save failed: {save.Error}");
@@ -256,14 +322,19 @@ namespace Devian
             return CommonResult.Ok();
         }
 
+        void onRuntimeInitialized(MissionRuntimeBase runtime)
+        {
+            _messageSystem.Notify(MISSION_MESSAGE.RUNTIME_INIT, runtime);
+        }
+
         void onRuntimeChanged(MissionRuntimeBase runtime)
         {
-            // Reserved for future mission UI/event invalidation.
+            _messageSystem.Notify(MISSION_MESSAGE.RUNTIME_PROGRESS, runtime);
         }
 
         void onRuntimeClaimable(MissionRuntimeBase runtime)
         {
-            // Reserved for future claimable notification hook.
+            _messageSystem.Notify(MISSION_MESSAGE.RUNTIME_CLAIMABLE, runtime);
         }
 
         void detachAllRuntimes()
@@ -274,11 +345,15 @@ namespace Devian
         void clearDailyScopeData()
         {
             _scheduler.ClearDailyScope();
+            _messageSystem.Notify(MISSION_MESSAGE.DAY_RESET);
         }
 
         void rebuildRuntimeBindings()
         {
+            var didResetDay = _scheduler.HasDailyRuntimeOutsideCurrentPeriod();
             _scheduler.RebuildBindings();
+            if (didResetDay)
+                _messageSystem.Notify(MISSION_MESSAGE.DAY_RESET);
         }
 
         void pruneExpiredMissionState()
@@ -328,18 +403,18 @@ namespace Devian
             return (int)(diff / DayMs);
         }
 
-        static string buildGrantId(MISSION_TYPE missionKind, string missionId, int level, string periodKey)
+        static string buildGrantId(MISSION_TYPE missionType, string missionId, int level, string periodKey)
         {
-            return missionKind switch
+            return missionType switch
             {
                 MISSION_TYPE.DAY => $"mission:daily:{missionId}:{periodKey}",
                 MISSION_TYPE.ACHIEVE => $"mission:achievement:{missionId}:{level}:{periodKey}",
-                _ => $"mission:{missionKind}:{missionId}:{periodKey}",
+                _ => $"mission:{missionType}:{missionId}:{periodKey}",
             };
         }
 
         static MissionClaimRecord createClaimRecord(
-            MISSION_TYPE missionKind,
+            MISSION_TYPE missionType,
             string missionId,
             int level,
             string grantId,
@@ -348,7 +423,7 @@ namespace Devian
         {
             return new MissionClaimRecord
             {
-                missionKind = missionKind,
+                missionType = missionType,
                 missionId = missionId ?? string.Empty,
                 level = level,
                 grantId = grantId ?? string.Empty,

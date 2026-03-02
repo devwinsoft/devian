@@ -26,7 +26,7 @@ namespace Devian
 
                 var runtimeObj = new JObject
                 {
-                    ["missionKind"] = (int)runtime.missionKind,
+                    ["missionType"] = (int)runtime.missionType,
                     ["missionId"] = runtime.missionId,
                     ["periodKey"] = runtime.periodKey,
                     ["missionUid"] = runtime.missionUid,
@@ -39,6 +39,10 @@ namespace Devian
                 {
                     runtimeObj["level"] = achieveRuntime.level;
                     runtimeObj["startValue"] = SerializeBigInt(achieveRuntime.startValue);
+                }
+                else if (runtime is MissionRuntimeDaily dailyRuntime)
+                {
+                    runtimeObj["index"] = dailyRuntime.index;
                 }
 
                 runtimes.Add(runtimeObj);
@@ -54,7 +58,7 @@ namespace Devian
 
                 claimRecords.Add(new JObject
                 {
-                    ["missionKind"] = (int)claimRecord.missionKind,
+                    ["missionType"] = (int)claimRecord.missionType,
                     ["missionId"] = claimRecord.missionId,
                     ["level"] = claimRecord.level,
                     ["grantId"] = claimRecord.grantId,
@@ -95,22 +99,24 @@ namespace Devian
                     if (token is not JObject runtimeObj)
                         continue;
 
-                    var missionKindRaw = runtimeObj.Value<int?>("missionKind") ?? (int)MISSION_TYPE.DAY;
-                    if (!System.Enum.IsDefined(typeof(MISSION_TYPE), missionKindRaw))
+                    var missionTypeRaw = runtimeObj.Value<int?>("missionType")
+                        ?? runtimeObj.Value<int?>("missionKind")
+                        ?? (int)MISSION_TYPE.DAY;
+                    if (!System.Enum.IsDefined(typeof(MISSION_TYPE), missionTypeRaw))
                         continue;
 
-                    var missionKind = (MISSION_TYPE)missionKindRaw;
+                    var missionType = (MISSION_TYPE)missionTypeRaw;
                     var missionUid = runtimeObj.Value<int?>("missionUid") ?? 0;
                     if (missionUid <= 0)
                         continue;
 
                     MissionRuntimeBase runtime;
-                    switch (missionKind)
+                    switch (missionType)
                     {
                         case MISSION_TYPE.ACHIEVE:
                             runtime = new MissionRuntimeAchieve
                             {
-                                missionKind = missionKind,
+                                missionType = missionType,
                                 missionId = runtimeObj.Value<string>("missionId") ?? string.Empty,
                                 periodKey = runtimeObj.Value<string>("periodKey") ?? string.Empty,
                                 missionUid = missionUid,
@@ -126,10 +132,11 @@ namespace Devian
                         default:
                             runtime = new MissionRuntimeDaily
                             {
-                                missionKind = missionKind,
+                                missionType = missionType,
                                 missionId = runtimeObj.Value<string>("missionId") ?? string.Empty,
                                 periodKey = runtimeObj.Value<string>("periodKey") ?? string.Empty,
                                 missionUid = missionUid,
+                                index = runtimeObj.Value<int?>("index") ?? 0,
                                 progressValue = DeserializeBigInt(runtimeObj["progressValue"]),
                                 isCompleted = runtimeObj.Value<bool?>("isCompleted") ?? false,
                                 rewardGroupId = runtimeObj.Value<string>("rewardGroupId") ?? string.Empty,
@@ -148,13 +155,15 @@ namespace Devian
                     if (token is not JObject claimObj)
                         continue;
 
-                    var missionKindRaw = claimObj.Value<int?>("missionKind") ?? (int)MISSION_TYPE.DAY;
-                    if (!System.Enum.IsDefined(typeof(MISSION_TYPE), missionKindRaw))
+                    var missionTypeRaw = claimObj.Value<int?>("missionType")
+                        ?? claimObj.Value<int?>("missionKind")
+                        ?? (int)MISSION_TYPE.DAY;
+                    if (!System.Enum.IsDefined(typeof(MISSION_TYPE), missionTypeRaw))
                         continue;
 
                     var record = new MissionClaimRecord
                     {
-                        missionKind = (MISSION_TYPE)missionKindRaw,
+                        missionType = (MISSION_TYPE)missionTypeRaw,
                         missionId = claimObj.Value<string>("missionId") ?? string.Empty,
                         level = claimObj.Value<int?>("level") ?? 1,
                         grantId = claimObj.Value<string>("grantId") ?? string.Empty,

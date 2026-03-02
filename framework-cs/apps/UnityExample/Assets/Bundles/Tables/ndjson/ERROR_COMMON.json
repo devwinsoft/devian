@@ -117,3 +117,8 @@
 {"Id":"SAVEDATA_SYNC_RESOLVE_FAILED","Msg_key":"","Msg":"SaveData sync conflict resolution failed."}
 {"Id":"SAVEDATA_SYNC_SAVE_CLOUD_FAILED","Msg_key":"","Msg":"SaveData sync failed to save cloud payload."}
 {"Id":"SAVEDATA_SYNC_SAVE_LOCAL_FAILED","Msg_key":"","Msg":"SaveData sync failed to save local payload."}
+{"Id":"MISSION_NOT_FOUND","Msg_key":"","Msg":"Mission table row not found or inactive."}
+{"Id":"MISSION_RUNTIME_MISSING","Msg_key":"","Msg":"Mission runtime is missing."}
+{"Id":"MISSION_RUNTIME_STALE","Msg_key":"","Msg":"Mission runtime belongs to a stale daily period."}
+{"Id":"MISSION_NOT_CLAIMABLE","Msg_key":"","Msg":"Mission is not claimable."}
+{"Id":"MISSION_ALREADY_CLAIMED","Msg_key":"","Msg":"Mission reward already claimed."}

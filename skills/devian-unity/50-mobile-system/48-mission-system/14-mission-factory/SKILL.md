@@ -100,10 +100,11 @@ public static class MissionRuntimeFactory
 ```csharp
 public readonly struct DailyMissionRuntimeCreateArgs
 {
-    public MISSION_TYPE MissionKind;         // DAY
+    public MISSION_TYPE MissionType;         // DAY
     public string MissionId;                // row id
     public string PeriodKey;                // day:{index}
     public int MissionUid;                  // manager allocated
+    public int Index;                       // 0-based UI sort index
     public MISSION_CONDITION_TYPE ConditionType;
     public MISSION_OP_TYPE ConditionOp;
     public CBigInt ConditionValue;
@@ -114,6 +115,7 @@ public readonly struct DailyMissionRuntimeCreateArgs
 규칙:
 - daily는 `missionId` 단일 ID를 사용한다.
 - 새 runtime의 `ProgressValue`는 0에서 시작한다.
+- daily create args의 `Index`는 scheduler가 최종 선택 정렬 후 0부터 부여한다.
 - `startValue`를 받지 않는다.
 - daily create는 scheduler가 현재 cycle에서 선택한 row에 대해서만 호출한다.
 - daily selection 자체는 factory 책임이 아니다.
@@ -124,7 +126,7 @@ public readonly struct DailyMissionRuntimeCreateArgs
 ```csharp
 public readonly struct AchieveMissionRuntimeCreateArgs
 {
-    public MISSION_TYPE MissionKind;         // ACHIEVE
+    public MISSION_TYPE MissionType;         // ACHIEVE
     public string MissionId;                // group id
     public int Level;                       // step level
     public string PeriodKey;                // once
@@ -152,7 +154,7 @@ public readonly struct AchieveMissionRuntimeCreateArgs
 ```csharp
 public readonly struct MissionRuntimeRestoreArgs
 {
-    public MISSION_TYPE MissionKind;
+    public MISSION_TYPE MissionType;
     public string MissionId;
     public string PeriodKey;
     public int MissionUid;
@@ -203,7 +205,9 @@ public readonly struct MissionRuntimeRestoreArgs
 - 앱 시작 시 `MissionStorage.runtimes`를 메모리로 재구성할 때 사용한다.
 - local/cloud save에서 저장된 MissionRuntime을 복원할 때 사용한다.
 - daily restore는 `Level = 1`, `StartValue = 0`을 사용한다.
+- daily restore는 저장된 `Index`를 함께 복원한다.
 - achievement restore는 저장된 `Level` / `StartValue` / `ProgressValue` / `IsCompleted`를 그대로 사용한다.
+- achievement runtime의 `Index`는 create/restore args가 아니라 현재 row의 `orderNum - 1` 계산으로 결정한다.
 
 
 ---

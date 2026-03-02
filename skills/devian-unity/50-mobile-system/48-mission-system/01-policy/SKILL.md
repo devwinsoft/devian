@@ -27,6 +27,7 @@ Mission(일일/업적) 시스템의 모듈 경계와 하드룰을 정의한다.
 ### 1-1) 미션 진행도 입력은 MissionTriggerSystem으로만 받는다
 
 - MissionManager는 `MessageSystem<int, MISSION_CONDITION_TYPE>` 특화 인스턴스인 `MissionTriggerSystem`을 소유한다.
+- MissionManager는 `MessageSystem<EntityId, MISSION_MESSAGE>` 특화 인스턴스인 `MissionMessageSystem`을 소유한다.
 - MissionManager는 `CompoSingleton<MissionManager>`다.
 - `mTriggerSystem`은 field initializer에서 `new MissionTriggerSystem()`으로 즉시 생성한다.
 - `MissionManager.triggerSystem` 접근은 optional/null 허용 없이 `Instance.mTriggerSystem`을 사용한다.
@@ -50,7 +51,7 @@ Mission(일일/업적) 시스템의 모듈 경계와 하드룰을 정의한다.
 ### 3) grantId는 Mission 반복 지급을 정확히 표현해야 한다
 
 - 일일 미션은 기간이 바뀌면 같은 missionId라도 다시 지급 가능해야 한다.
-- 따라서 MissionManager는 `missionKind + missionId + level? + periodKey` 조합으로 `grantId`를 생성해야 한다.
+- 따라서 MissionManager는 `missionType + missionId + level? + periodKey` 조합으로 `grantId`를 생성해야 한다.
 - `grantId` 규칙 정본은 [03-ssot](../03-ssot/SKILL.md)이다.
 - missionId가 카테고리 간 재사용되어도 충돌하면 안 되므로, `grantId`에는 category가 반드시 포함되어야 한다.
 

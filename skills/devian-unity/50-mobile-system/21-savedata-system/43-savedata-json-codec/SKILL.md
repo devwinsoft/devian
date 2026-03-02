@@ -122,7 +122,7 @@ deserialize 시 target:
 - `AccountManager.ApplyStorage(AccountManager.Instance.Storage)`
 - 필요 시 `PurchaseManager.SyncEntitlementsAsync(ct)`로 rental stale 상태 보정
 - Mission은 `MissionManager`가 자신의 `MissionStorage`를 기준으로 runtime state를 재구성한다
-- Mission claim 직후에는 `SaveDataManager`가 mission 섹션을 포함한 root payload 저장을 즉시 시도해야 한다
+- Mission claim 직후에는 `SaveDataManager.SaveGameStorageAsync(true, ct)`로 mission 섹션을 포함한 root payload 저장을 즉시 시도해야 한다
 - 이 local save가 실패하면 mission 시스템은 플레이 불가능 상태로 처리한다(TODO)
 
 

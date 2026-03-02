@@ -95,11 +95,13 @@
 - `Task<CommonResult<bool>> ResolveConflictAsync(SyncResolution resolution, CancellationToken ct)`
 
 ### Save
-- `Task<CommonResult<bool>> SaveGameStorageAsync(CancellationToken ct)`
+- `Task<CommonResult<bool>> SaveGameStorageAsync(bool saveCloud, CancellationToken ct)`
 
 규칙:
 - `SyncGameStorageAsync(ct)` 성공 후에만 저장 가능하다.
 - `Initial`도 primary save context를 활성화하므로 첫 저장이 가능하다.
+- `saveCloud=false`이면 local save만 수행하고 cloud save는 시도하지 않는다.
+- `saveCloud=true`이면 local save 후 cloud save를 best effort로 시도한다.
 - cloud 저장 실패는 non-fatal이며 `NeedsCloudSave`만 올린다.
 
 ### Load
