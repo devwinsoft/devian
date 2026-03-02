@@ -22,9 +22,12 @@ AppliesTo: v10
 - `MissionManager.Storage.dailyMissionStartUtcMs`가 없으면 첫 sync의 `serverNowUtcMs`를 기록한다.
 - 현재 sync의 `serverNowUtcMs`와 `dailyMissionStartUtcMs`의 차이가 7일 초과면 현재 `serverNowUtcMs`를 새 `dailyMissionStartUtcMs`로 사용하고 daily를 다시 시작한다.
 - timed mission은 `dailyMissionStartUtcMs` anchor 기준으로 현재 `dailyKey`를 결정한다.
-- 기존 state를 destructive reset 하지 않는다. 현재 period의 `missionUid`로 읽고, 이전 period 데이터는 prune 대상으로 둔다.
+- daily period 전환 시 기존 daily runtime set을 정리하고, `MISSION_DAILY` 전체 active row 중 최대 5개를 다시 선택해 runtime을 생성한다.
+  - `fixed=true`는 항상 포함
+  - 남은 슬롯은 `fixed=false` active row에서 random selection
 - 현재 scope에서 이미 `ACTIVE`인 미션은 `missionUid`별 runtime을 보장한다. 이 시점이 mission start다.
-- achievement는 저장된 runtime의 `level` / `progressValue` / `isCompleted`를 그대로 restore 한다.
+- achievement는 `MISSION_ACHIEVE` 전체 active row를 검색하고, group별 저장 runtime이 있으면 restore 한다.
+- achievement는 group별 저장 runtime이 없으면 `level=1` row로 최초 runtime을 생성한다.
 - UI 상태(클레임 가능 여부)를 갱신한다.
 - 첫 시작에서는 `isActive=true`인 미션을 활성화한다.
 
@@ -36,7 +39,7 @@ AppliesTo: v10
   - period key 계산은 허용
   - claim도 클라이언트 추정 서버 시각 기준으로 수행할 수 있다
 - 네트워크가 복구되면:
-  - `BaseBootstrap.OnEnterForeground()` 같은 resume hook에서
+  - `BaseApplication.OnEnterForeground()` 같은 resume hook에서
   - `MissionManager.RefreshClockAsync()`를 호출해 서버 시간 기준을 다시 보정한다
 - 첫 실행에서는 guest/google/apple login 이후에만 mission을 초기화한다.
 - 현재 샘플 구조에서는 이 초기화 위치가 `TestSceneLoading.syncPurchaseStateAsync()` 이후 구간에 들어가는 것이 자연스럽다.
@@ -46,9 +49,13 @@ AppliesTo: v10
 ### 2) 플레이 중(조건 평가)
 
 - gameplay/system 레이어가 `MissionTriggerSystem.Notify(msgType, msgValue)`를 발행하면:
-  - 현재 scope에서 `ACTIVE`이면서 `conditionOp != NONE`인 row만 자기 `conditionType` trigger를 직접 구독하는 concrete runtime을 가진다.
+  - daily는 현재 cycle에서 선택된 row만 concrete runtime을 가진다.
+  - achievement는 active group별 현재 runtime만 concrete runtime을 가진다.
   - runtime이 trigger를 받으면 자신의 `conditionOp` 규칙으로 `progressValue`를 갱신한다.
-  - `conditionOp=MAX`면 max 갱신, `conditionOp=SUM`이면 `conditionValue` 상한까지 누적, `conditionOp=TOTAL`이면 상한 없이 누적한다.
+  - `conditionOp=MAX`면 max 갱신한다.
+  - `conditionOp=SUM`이면 concrete runtime 구현이 누적 방식을 결정한다.
+    - daily runtime: `conditionValue` 상한까지 누적
+    - achieve runtime: 상한 없이 누적
   - 갱신 후 `progressValue >= conditionValue`이면 현재 `missionUid`를 `CLAIMABLE` 상태로 전환한다.
   - daily는 `CLAIMABLE` 시 구독을 해지한다.
   - achievement는 `CLAIMABLE`/`COMPLETED`여도 삭제 전까지 구독을 유지한다.
@@ -77,10 +84,10 @@ AppliesTo: v10
 
 ### 4) 기간 전환
 
-- daily 전환은 "초기화 루프"가 아니라 "현재 key 교체"로 처리한다.
-- 예:
-  - `mission:daily:login_01:day:0` -> `mission:daily:login_01:day:1`
-- 이전 key의 완료/지급 정보는 새 period에 영향을 주지 않는다.
+- daily 전환 시 기존 daily runtime set을 정리하고 새 cycle용 runtime set을 다시 만든다.
+- 새 cycle에서도 `MISSION_DAILY` 전체 active row를 검색하지만 실제 생성은 최대 5개까지만 한다.
+- `periodKey`는 현재 claim/reset 구간을 나타내는 메타데이터다.
+- 이전 period의 지급 정보는 `grantId` 기준으로만 분리된다.
 
 
 ---
@@ -97,8 +104,9 @@ AppliesTo: v10
   - 현재 sync 시각과 `dailyMissionStartUtcMs` 차이가 7일 초과면 daily anchor reset이 정상 동작한다
 - 메시지 누적 사용 시:
   - `MAX` row는 더 작은 값 trigger로 `progressValue`가 감소하지 않는다
-  - `SUM` row는 trigger replay가 없을 때만 정확한 누적값을 유지하며, `conditionValue`를 넘지 않는다
-  - `TOTAL` row는 trigger replay가 없을 때만 정확한 누적값을 유지하며, `conditionValue`를 넘어설 수 있다
+  - `SUM` row는 trigger replay가 없을 때만 정확한 누적값을 유지한다
+  - daily runtime의 `SUM`은 `conditionValue`를 넘지 않는다
+  - achieve runtime의 `SUM`은 `conditionValue`를 넘어설 수 있다
   - daily는 runtime claimable/completed/dispose 시 구독 해지가 정상 동작한다
   - achievement는 삭제/파기 시 구독 해지가 정상 동작한다
 - 컨텐츠 패치/테이블 교체로 `isActive` 값이 달라져도 UI/상태가 안전하게 동작
@@ -113,7 +121,7 @@ AppliesTo: v10
 Hard (반드시 0)
 - 동일 기간(daily) 내 중복 지급 0건 (`grantId` 멱등)
 - 기간 경계에서 상태 꼬임 0건(진행/완료/클레임)
-- `MAX` / `SUM` / `TOTAL` 누적 규칙 오동작 0건
+- `MAX` / `SUM` 누적 규칙 오동작 0건
 - 테이블 스키마와 실제 평가 로직 불일치 0건
 
 Soft

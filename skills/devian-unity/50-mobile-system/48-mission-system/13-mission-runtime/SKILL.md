@@ -8,7 +8,7 @@ Type: Design / Runtime SSOT
 
 ## Purpose
 
-`MissionRuntimeBase`는 MissionManager가 소유하는 **미션 1개당 runtime 상태 객체의 추상 베이스**다.
+`MissionRuntimeBase`는 MissionManager가 `MissionScheduler`를 통해 소유하는 **미션 1개당 runtime 상태 객체의 추상 베이스**다.
 
 - key는 `missionUid`다.
 - `MissionRuntimeDaily` / `MissionRuntimeAchieve`가 실제 concrete runtime이다.
@@ -26,7 +26,7 @@ Type: Design / Runtime SSOT
 - `MissionManager`가 `MissionRuntimeBase` 계열 runtime을 단일 소유한다.
 - `MissionStorage.runtimes[missionUid]`가 runtime 저장 정본이다.
 - `MissionTriggerSystem`은 입력 라우터다.
-- MissionManager는 runtime 생성/복구/파기와 저장 orchestration을 담당한다.
+- MissionScheduler는 runtime 생성/복구/reset/파기를 담당하고, MissionManager는 저장 orchestration을 담당한다.
 - `MissionRuntimeBase`는 공통 상태/공통 흐름을 담당한다.
 - concrete runtime은 trigger 구독/해지, 누적, claim 가능 판정의 차이를 override로 구현한다.
 
@@ -37,13 +37,13 @@ Type: Design / Runtime SSOT
 ## Core Terms
 
 - `mission start`
-  - 현재 scope의 `missionUid`에 대해 runtime을 생성하는 시점
+  - 해당 미션 definition의 runtime을 처음 생성하는 시점
 - `mission claimable`
   - 현재 `ProgressValue`가 `conditionValue` 이상이고 아직 claim 하지 않은 상태
 - `mission completed`
   - claim 완료 상태
 - `reset`
-  - 기존 runtime을 제자리 초기화하는 것이 아니라, 새 scope의 새 `missionUid`에 새 runtime을 생성하는 방식
+  - 기존 runtime을 현재 구간 기준으로 제자리 초기화하는 방식
 - `ProgressValue`
   - 현재 runtime이 저장하는 단일 누적값
 
@@ -86,7 +86,7 @@ public sealed class MissionRuntimeAchieve : MissionRuntimeBase
 정본 규칙:
 - `MissionRuntimeBase`는 `missionUid` 단위 객체다.
 - concrete runtime은 `MissionRuntimeDaily`, `MissionRuntimeAchieve` 두 종류다.
-- runtime 존재 = 해당 scope에서 미션이 시작되었음을 의미한다.
+- runtime 존재 = 해당 미션 definition에서 미션이 시작되었음을 의미한다.
 - 별도 `isStarted` bool은 두지 않는다.
 - 저장 필드 이름은 `ProgressValue`를 사용한다.
 - 계산용 읽기 프로퍼티가 따로 필요하면 `CurrentProgress` 같은 이름을 별도로 둘 수 있다.
@@ -102,9 +102,9 @@ public sealed class MissionRuntimeAchieve : MissionRuntimeBase
 runtime 생성 규칙:
 
 1. 현재 scope의 mission row가 `ACTIVE`이고 `conditionOp != NONE`이면 현재 `periodKey`를 계산한다.
-2. 현재 scope와 일치하는 저장 runtime이 없으면 새 concrete runtime을 생성한다.
-   - daily scope: `missionKind + missionId + periodKey`
-   - achievement scope: `missionKind + missionId + level + periodKey`
+2. 현재 미션 definition과 일치하는 저장 runtime이 없으면 새 concrete runtime을 생성한다.
+   - daily: 현재 cycle에서 선택된 row에 대해서만 create
+   - achievement: active group별 현재 row에 대해 create/restore
 3. 새 생성(create) 시 기본값:
    - daily: `progressValue = 0`
    - achievement: `progressValue = startValue`
@@ -112,20 +112,23 @@ runtime 생성 규칙:
 4. 저장된 runtime이 있으면 restore 한다:
    - `progressValue`는 저장값을 그대로 사용한다.
    - `isCompleted`는 저장값을 그대로 사용한다.
-5. create 시 `missionUid`는 `MissionManager.Storage.nextMissionUid++`를 기본으로 사용하되, 현재 `runtimes`에 이미 존재하는 UID는 건너뛰고 다음 빈 `int` UID를 발급한다.
+5. create 시 `missionUid`는 `MissionScheduler`가 `MissionStorage.nextMissionUid++`를 기본으로 사용하되, 현재 `runtimes`에 이미 존재하는 UID는 건너뛰고 다음 빈 `int` UID를 발급한다.
 6. create / restore 모두 row의 `conditionType`, `conditionOp`, `conditionValue`와 `MissionTriggerSystem`을 받아 concrete runtime을 재구성한다.
 7. achievement create는 `missionId + level + startValue`를 기준 정보로 사용한다.
 
 정본 규칙:
-- 앱 시작 시 `InitializeAsync()`는 현재 scope에서 이미 `ACTIVE`이고 `conditionOp != NONE`인 미션들의 runtime을 보장해야 한다.
-- 새 period 진입 시 현재 scope의 `ACTIVE`이고 `conditionOp != NONE`인 미션들에 대해 새 runtime을 생성한다.
+- 앱 시작 시 `InitializeAsync()`는 daily는 최대 5개 selected row, achievement는 active group 전체에 대해 runtime을 보장해야 한다.
+- 새 period 진입 시 daily runtime set을 다시 만든다.
+- daily selected row는 `fixed=true` 우선, 나머지는 random selection으로 결정한다.
 - daily `CLAIMABLE` 또는 `COMPLETED` 상태로 restore 된 runtime은 다시 구독하지 않는다.
 - achievement runtime은 삭제/파기 전까지 구독을 유지한다.
 - `conditionOp == NONE`인 row는 runtime을 생성하지 않는다.
 - restore는 저장된 MissionRuntime을 앱 시작/load 시 재구성할 때만 사용한다.
-- 새 daily period 진입은 restore가 아니라 새 create 경로를 사용한다.
+- daily는 현재 cycle에서 선택된 row에 대해서만 runtime이 존재해야 한다.
+- achievement는 group별 현재 runtime 1개만 존재해야 한다.
 - achievement level up은 새 runtime 생성이 아니라 같은 runtime mutation이다.
 - daily runtime은 `level = 1`, `startValue = 0`을 사용한다.
+- achievement 최초 create는 `level = 1` row에서 시작한다.
 
 
 ---
@@ -143,9 +146,9 @@ runtime은 자신이 생성될 때 등록한 `conditionType` trigger를 직접 �
 - `MISSION_OP_TYPE.MAX`
   - `runtime.progressValue = max(runtime.progressValue, value)`
 - `MISSION_OP_TYPE.SUM`
-  - `runtime.progressValue = min(conditionValue, runtime.progressValue + value)`
-- `MISSION_OP_TYPE.TOTAL`
-  - `runtime.progressValue = runtime.progressValue + value`
+  - 누적형 progress다.
+  - `MissionRuntimeDaily`: `runtime.progressValue = min(conditionValue, runtime.progressValue + value)`
+  - `MissionRuntimeAchieve`: `runtime.progressValue = runtime.progressValue + value`
 
 정본 규칙:
 - 갱신 규칙은 각 mission row의 `conditionOp`가 직접 결정한다.
@@ -164,9 +167,8 @@ Mission row는 자신의 runtime `progressValue`를 읽어 완료를 판정한�
 - `MISSION_OP_TYPE.MAX`
   - `progressValue`는 max 갱신 결과다
 - `MISSION_OP_TYPE.SUM`
-  - `progressValue`는 누적합이며 `conditionValue`를 넘지 않는다
-- `MISSION_OP_TYPE.TOTAL`
-  - `progressValue`는 누적합이며 `conditionValue`를 넘어설 수 있다
+  - daily runtime에서는 `conditionValue`를 넘지 않는다
+  - achieve runtime에서는 `conditionValue`를 넘어설 수 있다
 - `MISSION_OP_TYPE.NONE`
   - `progressValue`를 갱신하지 않는다. placeholder/default 전용이다.
 
@@ -194,9 +196,10 @@ claim 가능 판정:
   - achievement final level은 completed 후에도 유지된다.
 
 - daily reset
-  - 새 `dailyKey`가 되면 새 `missionUid`가 생긴다.
-  - 새 `missionUid`는 새 MissionRuntime을 사용한다.
-  - 이전 runtime은 prune 대상일 뿐, 제자리 reset하지 않는다.
+  - 새 `dailyKey`가 되면 기존 daily runtime set을 정리한다.
+  - `MISSION_DAILY` 전체 active row 중 최대 5개를 다시 선택해 새 MissionRuntimeDaily를 생성한다.
+  - `fixed=true` row는 항상 포함한다.
+  - 새 runtime은 새 `missionUid`, 새 `periodKey`, `progressValue = 0`, `isCompleted = false`로 시작한다.
 
 - achievement
   - `once` scope를 사용하므로 자동 period reset이 없다.
@@ -218,7 +221,7 @@ claim 가능 판정:
 정본 규칙:
 - `progressValue`는 runtime 생성 시 create args의 초기값으로 시작한다.
 - daily create는 `0`에서 시작하고, achievement create는 `startValue`에서 시작한다.
-- "reset 하지 않는다"는 같은 runtime 생명주기 안에서 제자리 초기화를 하지 않는다는 의미다.
+- daily reset은 기존 runtime set 폐기 후 새 runtime set 생성이다.
 - achievement level up은 같은 `missionUid` runtime에서 일어난다.
 
 

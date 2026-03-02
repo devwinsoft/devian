@@ -27,7 +27,7 @@ Type: Index / Directory
 | 24 | PlayerPrefs Wrapper | Primitive/Enum/Json 기반 PlayerPrefs 래퍼 | `20-player-prefs/SKILL.md` |
 | 25 | AnimSequencePlayer | Playables 기반 애니메이션 시퀀스 재생 컴포넌트 | `26-anim-sequence-player/SKILL.md` |
 | 26 | FsmController | FIFO 큐 기반 FSM 컨트롤러 (미등록 throw, self-transition 분리) | `24-fsm-controller/SKILL.md` |
-| 27 | Bootstrap | Resources 기반 Bootstrap Root + BaseBootstrap 부팅 파이프라인 | `16-bootstrap/SKILL.md` |
+| 27 | Base Application | Resources 기반 Bootstrap Root + BaseApplication 부팅 파이프라인 | `16-base-application/SKILL.md` |
 
 ---
 

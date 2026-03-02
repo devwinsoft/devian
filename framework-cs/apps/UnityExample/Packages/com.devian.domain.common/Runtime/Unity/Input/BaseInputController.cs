@@ -45,7 +45,7 @@ namespace Devian
         public override void Clear()
         {
             // 에디터 종료/플레이 종료/씬 종료 정리 중이면 매니저 접근 금지
-            if (BaseBootstrap.IsShuttingDown)
+            if (BaseApplication.IsShuttingDown)
             {
                 base.Clear();
                 return;

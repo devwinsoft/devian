@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
@@ -17,16 +16,28 @@ namespace Devian
         const string PeriodOnce = "once";
         const long DayMs = 24L * 60L * 60L * 1000L;
         const long ResetAnchorThresholdMs = 7L * DayMs;
-
-        [SerializeField] private string _functionsRegion = string.Empty;
+        string _functionsRegion = string.Empty;
 
         readonly MissionStorage _storage = new();
         readonly MissionTriggerSystem _triggerSystem = new();
+        MissionScheduler _scheduler;
         bool _initialized;
 
         public MissionStorage Storage => _storage;
         public MissionTriggerSystem triggerSystem => _triggerSystem;
         public bool IsInitialized => _initialized;
+
+        protected override void Awake()
+        {
+            base.Awake();
+            _scheduler = new MissionScheduler(
+                _storage,
+                _triggerSystem,
+                onRuntimeChanged,
+                onRuntimeClaimable,
+                getCurrentDailyKey,
+                getCurrentDailyPeriodIndex);
+        }
 
         public void SetFunctionsRegion(string region)
         {
@@ -139,8 +150,14 @@ namespace Devian
             if (row == null || !row.IsActive || row.ConditionOp == MISSION_OP_TYPE.NONE || !row.ConditionValue.HasValue)
                 return MissionRuntimeState.NONE;
 
-            var runtime = findDailyRuntime(missionId, getCurrentDailyKey());
-            return runtime?.GetState() ?? MissionRuntimeState.ACTIVE;
+            var runtime = findDailyRuntime(missionId);
+            if (runtime == null)
+                return MissionRuntimeState.NONE;
+
+            if (!string.Equals(runtime.periodKey, getCurrentDailyKey(), StringComparison.Ordinal))
+                return MissionRuntimeState.NONE;
+
+            return runtime.GetState();
         }
 
         MissionRuntimeState getAchievementRuntimeState(string missionId)
@@ -159,9 +176,12 @@ namespace Devian
                 return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Daily mission not found: {missionId}");
 
             var periodKey = getCurrentDailyKey();
-            var runtime = findDailyRuntime(missionId, periodKey);
+            var runtime = findDailyRuntime(missionId);
             if (runtime == null)
-                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Daily runtime missing: {missionId}/{periodKey}");
+                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Daily runtime missing: {missionId}");
+
+            if (!string.Equals(runtime.periodKey, periodKey, StringComparison.Ordinal))
+                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Daily runtime stale: {missionId}/{runtime.periodKey}->{periodKey}");
 
             if (!runtime.IsClaimable)
                 return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Daily mission is not claimable: {missionId}");
@@ -236,128 +256,6 @@ namespace Devian
             return CommonResult.Ok();
         }
 
-        void rebuildRuntimeBindings()
-        {
-            detachAllRuntimes();
-
-            ensureDailyRuntimes();
-            ensureAchievementRuntimes();
-        }
-
-        void ensureDailyRuntimes()
-        {
-            var periodKey = getCurrentDailyKey();
-            foreach (var row in TB_MISSION_DAILY.GetAll())
-            {
-                if (!row.IsActive || row.ConditionOp == MISSION_OP_TYPE.NONE || !row.ConditionValue.HasValue)
-                    continue;
-
-                var existing = findDailyRuntime(row.MissionId, periodKey);
-                if (existing != null)
-                {
-                    var restored = MissionRuntimeFactory.Restore(new MissionRuntimeRestoreArgs
-                    {
-                        MissionKind = MISSION_TYPE.DAILY,
-                        MissionId = existing.missionId,
-                        PeriodKey = existing.periodKey,
-                        MissionUid = existing.missionUid,
-                        Level = 1,
-                        StartValue = CBigInt.Zero,
-                        ProgressValue = existing.progressValue,
-                        IsCompleted = existing.isCompleted,
-                        ConditionType = row.ConditionType,
-                        ConditionOp = row.ConditionOp,
-                        ConditionValue = row.ConditionValue.Value,
-                        RewardGroupId = row.RewardGroupId,
-                        TriggerSystem = _triggerSystem,
-                        OnChanged = onRuntimeChanged,
-                        OnClaimable = onRuntimeClaimable,
-                    });
-
-                    _storage.runtimes[restored.missionUid] = restored;
-                    continue;
-                }
-
-                var missionUid = allocateMissionUid();
-                var created = MissionRuntimeFactory.CreateDaily(new DailyMissionRuntimeCreateArgs
-                {
-                    MissionKind = MISSION_TYPE.DAILY,
-                    MissionId = row.MissionId,
-                    PeriodKey = periodKey,
-                    MissionUid = missionUid,
-                    ConditionType = row.ConditionType,
-                    ConditionOp = row.ConditionOp,
-                    ConditionValue = row.ConditionValue.Value,
-                    RewardGroupId = row.RewardGroupId,
-                    TriggerSystem = _triggerSystem,
-                    OnChanged = onRuntimeChanged,
-                    OnClaimable = onRuntimeClaimable,
-                });
-
-                _storage.runtimes[missionUid] = created;
-            }
-        }
-
-        void ensureAchievementRuntimes()
-        {
-            foreach (var groupKey in TB_MISSION_ACHIEVE.GetGroupKeys())
-            {
-                var existing = findAchievementRuntime(groupKey);
-                if (existing != null)
-                {
-                    var row = findAchievementRow(existing.missionId, existing.level);
-                    if (row == null || !row.IsActive || row.ConditionOp == MISSION_OP_TYPE.NONE || !row.ConditionValue.HasValue)
-                        continue;
-
-                    var restored = MissionRuntimeFactory.Restore(new MissionRuntimeRestoreArgs
-                    {
-                        MissionKind = MISSION_TYPE.ACHIEVEMENT,
-                        MissionId = existing.missionId,
-                        PeriodKey = existing.periodKey,
-                        MissionUid = existing.missionUid,
-                        Level = existing.level,
-                        StartValue = existing.startValue,
-                        ProgressValue = existing.progressValue,
-                        IsCompleted = existing.isCompleted,
-                        ConditionType = row.ConditionType,
-                        ConditionOp = row.ConditionOp,
-                        ConditionValue = row.ConditionValue.Value,
-                        RewardGroupId = row.RewardGroupId,
-                        TriggerSystem = _triggerSystem,
-                        OnChanged = onRuntimeChanged,
-                        OnClaimable = onRuntimeClaimable,
-                    });
-
-                    _storage.runtimes[restored.missionUid] = restored;
-                    continue;
-                }
-
-                var firstRow = findAchievementFirstRow(groupKey);
-                if (firstRow == null || !firstRow.IsActive || firstRow.ConditionOp == MISSION_OP_TYPE.NONE || !firstRow.ConditionValue.HasValue)
-                    continue;
-
-                var missionUid = allocateMissionUid();
-                var created = MissionRuntimeFactory.CreateAchieve(new AchieveMissionRuntimeCreateArgs
-                {
-                    MissionKind = MISSION_TYPE.ACHIEVEMENT,
-                    MissionId = firstRow.MissionId,
-                    Level = firstRow.Level,
-                    PeriodKey = PeriodOnce,
-                    MissionUid = missionUid,
-                    StartValue = CBigInt.Zero,
-                    ConditionType = firstRow.ConditionType,
-                    ConditionOp = firstRow.ConditionOp,
-                    ConditionValue = firstRow.ConditionValue.Value,
-                    RewardGroupId = firstRow.RewardGroupId,
-                    TriggerSystem = _triggerSystem,
-                    OnChanged = onRuntimeChanged,
-                    OnClaimable = onRuntimeClaimable,
-                });
-
-                _storage.runtimes[missionUid] = created;
-            }
-        }
-
         void onRuntimeChanged(MissionRuntimeBase runtime)
         {
         }
@@ -368,138 +266,37 @@ namespace Devian
 
         void detachAllRuntimes()
         {
-            foreach (var runtime in _storage.runtimes.Values)
-                runtime?.Detach();
+            _scheduler.DetachAll();
         }
 
         void clearDailyScopeData()
         {
-            var removeRuntimeKeys = new List<int>();
-            foreach (var kv in _storage.runtimes)
-            {
-                if (kv.Value != null && kv.Value.missionKind == MISSION_TYPE.DAILY)
-                {
-                    kv.Value.Detach();
-                    removeRuntimeKeys.Add(kv.Key);
-                }
-            }
+            _scheduler.ClearDailyScope();
+        }
 
-            foreach (var key in removeRuntimeKeys)
-                _storage.runtimes.Remove(key);
-
-            var removeClaimKeys = new List<string>();
-            foreach (var kv in _storage.claimRecords)
-            {
-                if (kv.Value != null && kv.Value.missionKind == MISSION_TYPE.DAILY)
-                    removeClaimKeys.Add(kv.Key);
-            }
-
-            foreach (var key in removeClaimKeys)
-                _storage.claimRecords.Remove(key);
+        void rebuildRuntimeBindings()
+        {
+            _scheduler.RebuildBindings();
         }
 
         void pruneExpiredMissionState()
         {
-            var currentDailyIndex = getCurrentDailyPeriodIndex();
-            var removeRuntimeKeys = new List<int>();
-            foreach (var kv in _storage.runtimes)
-            {
-                var runtime = kv.Value;
-                if (runtime == null || runtime.missionKind != MISSION_TYPE.DAILY)
-                    continue;
-
-                if (!TryParseDailyPeriodIndex(runtime.periodKey, out var runtimeDailyIndex))
-                    continue;
-
-                if (runtimeDailyIndex >= currentDailyIndex - 1)
-                    continue;
-
-                runtime.Detach();
-                removeRuntimeKeys.Add(kv.Key);
-            }
-
-            foreach (var key in removeRuntimeKeys)
-                _storage.runtimes.Remove(key);
-
-            var removeClaimKeys = new List<string>();
-            foreach (var kv in _storage.claimRecords)
-            {
-                var record = kv.Value;
-                if (record == null || record.missionKind != MISSION_TYPE.DAILY)
-                    continue;
-
-                if (!TryParseDailyPeriodIndex(record.periodKey, out var claimDailyIndex))
-                    continue;
-
-                if (claimDailyIndex >= currentDailyIndex - 1)
-                    continue;
-
-                removeClaimKeys.Add(kv.Key);
-            }
-
-            foreach (var key in removeClaimKeys)
-                _storage.claimRecords.Remove(key);
+            _scheduler.PruneExpiredState();
         }
 
         int allocateMissionUid()
         {
-            if (_storage.nextMissionUid <= 0)
-                _storage.nextMissionUid = 1;
-
-            var candidate = _storage.nextMissionUid;
-            while (_storage.runtimes.ContainsKey(candidate))
-                candidate++;
-
-            _storage.nextMissionUid = candidate + 1;
-            return candidate;
+            return _scheduler.AllocateMissionUid();
         }
 
-        MissionRuntimeDaily findDailyRuntime(string missionId, string periodKey)
+        MissionRuntimeDaily findDailyRuntime(string missionId)
         {
-            foreach (var runtime in _storage.runtimes.Values)
-            {
-                if (runtime is not MissionRuntimeDaily dailyRuntime)
-                    continue;
-
-                if (dailyRuntime.missionKind != MISSION_TYPE.DAILY)
-                    continue;
-
-                if (!string.Equals(dailyRuntime.missionId, missionId, StringComparison.Ordinal))
-                    continue;
-
-                if (!string.Equals(dailyRuntime.periodKey, periodKey, StringComparison.Ordinal))
-                    continue;
-
-                return dailyRuntime;
-            }
-
-            return null;
+            return _scheduler.FindDaily(missionId);
         }
 
         MissionRuntimeAchieve findAchievementRuntime(string missionId)
         {
-            MissionRuntimeAchieve found = null;
-            foreach (var runtime in _storage.runtimes.Values)
-            {
-                if (runtime is not MissionRuntimeAchieve achieveRuntime)
-                    continue;
-
-                if (achieveRuntime.missionKind != MISSION_TYPE.ACHIEVEMENT)
-                    continue;
-
-                if (!string.Equals(achieveRuntime.missionId, missionId, StringComparison.Ordinal))
-                    continue;
-
-                if (found != null)
-                {
-                    Debug.LogError($"[{Tag}] Duplicate achievement runtime detected for missionId='{missionId}'.");
-                    return found;
-                }
-
-                found = achieveRuntime;
-            }
-
-            return found;
+            return _scheduler.FindAchieve(missionId);
         }
 
         static MISSION_ACHIEVE findAchievementRow(string missionId, int level)
@@ -527,18 +324,6 @@ namespace Devian
             }
 
             return next;
-        }
-
-        static MISSION_ACHIEVE findAchievementFirstRow(string missionId)
-        {
-            MISSION_ACHIEVE first = null;
-            foreach (var row in TB_MISSION_ACHIEVE.GetByGroup(missionId))
-            {
-                if (first == null || row.Level < first.Level)
-                    first = row;
-            }
-
-            return first;
         }
 
         string getCurrentDailyKey()

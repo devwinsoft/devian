@@ -91,8 +91,19 @@ namespace Devian.Domain.Game
     {
         NONE = 0,
         LOGIN = 1,
-        STAGE_CLEAR = 2,
-        ACHIEVEMENT_UNLOCKED = 3,
+        MISSION_CLEAR = 2,
+        STAGE_CLEAR = 3,
+        ACHIEVEMENT_UNLOCKED = 4,
+        TEST_001 = 9001,
+        TEST_002 = 9002,
+        TEST_003 = 9003,
+        TEST_004 = 9004,
+        TEST_005 = 9005,
+        TEST_006 = 9006,
+        TEST_007 = 9007,
+        TEST_008 = 9008,
+        TEST_009 = 9009,
+        TEST_010 = 9010,
     }
 
     /// <summary>MISSION_OP_TYPE enum</summary>
@@ -101,7 +112,6 @@ namespace Devian.Domain.Game
         NONE = 0,
         MAX = 1,
         SUM = 2,
-        TOTAL = 3,
     }
 
     /// <summary>ProductKind enum</summary>
@@ -174,6 +184,7 @@ namespace Devian.Domain.Game
     {
         public string MissionId { get; set; } = string.Empty;
         public bool IsActive { get; set; }
+        public bool Fixed { get; set; }
         public MISSION_CONDITION_TYPE ConditionType { get; set; }
         public MISSION_OP_TYPE ConditionOp { get; set; }
         public CBigInt? ConditionValue { get; set; }

@@ -132,6 +132,8 @@ namespace Devian
         {
         }
 
+        protected abstract CBigInt CalculateSumProgress(CBigInt delta);
+
         private bool handleTrigger(object[] args)
         {
             if (!TryReadProgressDelta(args, out var delta))
@@ -165,10 +167,7 @@ namespace Devian
                     return CBigInt.Max(progressValue, delta);
 
                 case MISSION_OP_TYPE.SUM:
-                    return CBigInt.Min(_conditionValue, progressValue + delta);
-
-                case MISSION_OP_TYPE.TOTAL:
-                    return progressValue + delta;
+                    return CalculateSumProgress(delta);
 
                 default:
                     return progressValue;
@@ -218,6 +217,11 @@ namespace Devian
         {
             UnsubscribeInternal();
         }
+
+        protected override CBigInt CalculateSumProgress(CBigInt delta)
+        {
+            return CBigInt.Min(_conditionValue, progressValue + delta);
+        }
     }
 
     [Serializable]
@@ -229,6 +233,11 @@ namespace Devian
         protected override bool ShouldSubscribe()
         {
             return base.ShouldSubscribe();
+        }
+
+        protected override CBigInt CalculateSumProgress(CBigInt delta)
+        {
+            return progressValue + delta;
         }
 
         public void LevelUp(

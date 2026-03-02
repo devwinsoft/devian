@@ -98,4 +98,4 @@ var settings = Resources.Load<DevianSettings>(DevianSettings.ResourcesPath);
 ## 8. Reference
 
 - Parent: `skills/devian-unity/11-common-system/00-overview/SKILL.md`
-- Bootstrap: `skills/devian-unity/10-foundation/16-bootstrap/SKILL.md`
+- Base Application: `skills/devian-unity/10-foundation/16-base-application/SKILL.md`

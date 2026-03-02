@@ -32,12 +32,13 @@ AppliesTo: v10
 - `rewardGroupId`: 보상 키(string). `49-reward-system`의 `rewardGroupId` 정본을 그대로 사용한다.
 - `dailyMissionStartUtcMs`: `MissionManager.Storage.dailyMissionStartUtcMs`. 첫 로그인 성공 시 받은 서버 시각. daily period의 개인별 시작 anchor
 - `periodKey`: 반복 지급 구간 식별 키
-  - daily: `day:{dailyPeriodIndex}`
-  - achievement: `once`
-- `MissionRuntimeBase`: `missionUid` 단위 미션 runtime 추상 베이스. 생성 = 현재 scope에서 미션 시작
+  - daily: 현재 daily claim/reset 구간 메타데이터인 `day:{dailyPeriodIndex}`
+  - achievement: 고정값 `once`
+- `MissionRuntimeBase`: `missionUid` 단위 미션 runtime 추상 베이스. 생성 = 해당 미션 definition의 runtime 시작
+- `MissionScheduler`: Mission runtime의 생성/복구/리바인드/period 정리/uid 발급을 담당하는 내부 scheduler
 - `MissionTriggerSystem`: `MessageSystem<int, MISSION_CONDITION_TYPE>` 특화 인스턴스
 - `MissionClockSnapshot`: 서버가 내려주는 "현재 서버 시각" 스냅샷
-- `missionUid`: MissionManager가 발급하는 runtime 식별용 `int` UID
+- `missionUid`: MissionScheduler가 발급하는 runtime 식별용 `int` UID
 - `grantId`: `missionKind + missionId + level? + periodKey` 기반 지급 기록 키
 
 NOTE:
@@ -58,6 +59,7 @@ NOTE:
 |------|------|------|
 | `missionId` | string (pk) | 내부 표준 ID |
 | `isActive` | bool | 운영 토글 |
+| `fixed` | bool | `true`면 daily selection에서 무조건 포함 |
 | `conditionType` | `MISSION_CONDITION_TYPE` | Mission 조건 타입 enum |
 | `conditionOp` | `MISSION_OP_TYPE` | runtime progress 처리 방식 enum |
 | `conditionValue` | `class:CBigInt` | 목표값 |
@@ -94,8 +96,8 @@ NOTE:
   - `NONE`
   - `MAX`
   - `SUM`
-  - `TOTAL`
 - `conditionType + conditionOp + conditionValue` 조합이 미션 판정 입력의 정본이다.
+- daily selection은 `fixed`를 먼저 적용한다.
 - `conditionValue`의 authoring plain format은 `{base, pow}`다. 예: `{5.5, 6}`
 - `MISSION_CONDITION_TYPE.NONE`은 placeholder/default row에서만 사용한다.
 
@@ -151,26 +153,29 @@ MissionManager는 `MissionTriggerSystem`을 소유하고, 각 MissionRuntime이 
 - payload 타입이 잘못되었거나 인자가 부족하면 해당 메시지는 무시한다.
 - `MessageSystem`은 중복 구독을 허용한다. 중복 초기화를 막는 책임은 사용 측에 있다.
 - `MissionTriggerSystem`은 trigger 큐/재생/영속성을 제공하지 않는다.
-- MissionTriggerSystem은 trigger 전달만 담당한다. runtime 생성/복구/파기 책임은 MissionManager, 누적/완료/구독해지 책임은 MissionRuntime이 담당한다.
+- MissionTriggerSystem은 trigger 전달만 담당한다. runtime 생성/복구/파기 책임은 MissionScheduler, 누적/완료/구독해지 책임은 MissionRuntime이 담당한다.
 
 갱신/읽기 규칙:
 - `MISSION_OP_TYPE.MAX` (`conditionOp=MAX`):
   - `runtime.progressValue = max(runtime.progressValue, msgValue)`
 - `MISSION_OP_TYPE.SUM` (`conditionOp=SUM`):
-  - `runtime.progressValue = min(conditionValue, runtime.progressValue + msgValue)`
-- `MISSION_OP_TYPE.TOTAL` (`conditionOp=TOTAL`):
-  - `runtime.progressValue = runtime.progressValue + msgValue`
+  - 누적형 progress다.
+  - `MissionRuntimeDaily`: `runtime.progressValue = min(conditionValue, runtime.progressValue + msgValue)`
+  - `MissionRuntimeAchieve`: `runtime.progressValue = runtime.progressValue + msgValue`
 - `MISSION_OP_TYPE.NONE` (`conditionOp=NONE`):
   - MissionRuntime을 생성하지 않는다
 - claim 가능 판정:
   - `runtime.progressValue >= conditionValue && runtime.isCompleted == false`이면 `CLAIMABLE`
 
 주의:
-- `SUM` / `TOTAL`은 delta trigger 전제를 가진다. 동일 gameplay 이벤트를 중복 notify하면 값이 중복 누적된다.
+- `SUM`은 delta trigger 전제를 가진다. 동일 gameplay 이벤트를 중복 notify하면 값이 중복 누적된다.
 - `MAX`는 "지금까지 관찰한 최고값"을 유지할 때만 사용한다.
-- `SUM`은 `progressValue`가 `conditionValue` 값을 넘어설 수 없다.
-- `TOTAL`은 `progressValue`가 `conditionValue`를 넘어설 수 있다.
+- daily runtime의 `SUM`은 `progressValue`가 `conditionValue` 값을 넘어설 수 없다.
+- achieve runtime의 `SUM`은 `progressValue`가 `conditionValue`를 넘어설 수 있다.
+- daily는 init 시점과 daily reset 시점마다 `MISSION_DAILY` 전체 active row를 다시 스캔하고, 그중 최대 5개만 runtime으로 생성한다.
+- daily active candidate가 5개 미만이면 가능한 개수만 생성하고 나머지는 skip 한다.
 - achievement는 `ClaimAsync()`에서 보상을 지급한다.
+- achievement는 init 시 `MISSION_ACHIEVE` 전체 active row를 검색하고, 각 `missionId` group에 대해 runtime을 create/restore 한다.
 - achievement `ClaimAsync()` 시 현재 활성 runtime 기준으로 다음 level row가 있으면 같은 runtime이 level up 한다.
 - 수동 claim 모델이므로 `CLAIMABLE` runtime은 claim 전까지 유지한다.
 - 다음 level row가 없으면 현재 `COMPLETED` runtime을 그대로 유지한다.
@@ -212,7 +217,7 @@ MissionManager는 backend에서 아래 payload를 받아 timed mission의 현재
 - stale clock을 별도 예외 상태로 두지 않는다. 마지막으로 동기화한 서버 시간을 기준으로 클라이언트가 계속 판정한다.
 - `getMissionClock` 호출 책임은 MissionManager에 있다.
 - 로그인 시점(= 앱 시작)에는 `MissionManager.InitializeAsync()` 내부에서 `getMissionClock`을 호출한다.
-- `BaseBootstrap.OnEnterForeground()` 같은 resume hook은 MissionManager의 `RefreshClockAsync()` 진입점만 호출한다.
+- `BaseApplication.OnEnterForeground()` 같은 resume hook은 MissionManager의 `RefreshClockAsync()` 진입점만 호출한다.
 - 첫 실행에서 `dailyMissionStartUtcMs`가 없으면, 첫 successful `getMissionClock` 직후 이를 기록하고 미션을 초기화한다.
 - 현재 sync 시각과 `dailyMissionStartUtcMs`의 차이가 7일(`604800000ms`) 초과면 현재 `serverNowUtcMs`를 새 `dailyMissionStartUtcMs`로 사용한다.
 - 첫 login에서 `getMissionClock` 호출이 실패하면 MissionManager 초기화 실패로 처리한다.
@@ -223,12 +228,12 @@ MissionManager는 backend에서 아래 payload를 받아 timed mission의 현재
 
 ## F) grantId / missionUid 규칙(정본)
 
-MissionManager는 아래 규칙으로 `grantId`와 `missionUid`를 생성한다.
+MissionManager/ MissionScheduler는 아래 규칙으로 `grantId`와 `missionUid`를 생성한다.
 
 - `grantId`는 반드시 mission kind를 포함한다.
-- `missionUid`는 MissionManager가 발급하는 증가형 `int`다.
+- `missionUid`는 MissionScheduler가 발급하는 증가형 `int`다.
 - `missionUid`는 1부터 시작한다.
-- MissionManager는 `nextMissionUid++`를 기본으로 사용하되, 현재 `runtimes`에 존재하는 사용 중 UID를 피해서 새 UID를 발급한다.
+- MissionScheduler는 `nextMissionUid++`를 기본으로 사용하되, 현재 `runtimes`에 존재하는 사용 중 UID를 피해서 새 UID를 발급한다.
 - period key는 `dailyMissionStartUtcMs + MissionClockSnapshot` 기준으로 계산한다.
 - daily 경계는 계정별 `dailyMissionStartUtcMs` anchor에서 24시간 간격으로 끊는다.
 
@@ -238,12 +243,13 @@ MissionManager는 아래 규칙으로 `grantId`와 `missionUid`를 생성한다.
   - `grantId = "mission:achievement:{missionId}:{level}:once"`
 
 정본 규칙:
-- 새 MissionRuntime을 만들 때마다 MissionManager는 새 `missionUid(int)`를 발급한다.
+- 새 MissionRuntime을 만들 때마다 MissionScheduler는 새 `missionUid(int)`를 발급한다.
 - restore 시에는 저장된 `missionUid`를 그대로 사용한다.
-- MissionRuntime은 자신의 `missionKind + missionId + periodKey` scope 정보를 함께 저장해야 한다.
-- achievement scope는 `missionKind + missionId + level + periodKey`로 해석한다.
+- MissionRuntime은 자신의 `missionKind + missionId + periodKey` 정보를 함께 저장해야 한다.
+- daily runtime은 `missionId`당 1개만 존재해야 한다.
+- achievement runtime은 `missionId`당 1개만 존재해야 한다.
 - achievement MissionRuntime은 `level`과 `startValue`도 함께 저장해야 한다.
-- period 전환 시 기존 progress entry를 제자리 초기화하지 않는다. 이전 key는 prune 대상일 뿐이다.
+- daily period 전환 시 새 runtime을 만들지 않는다. 기존 daily runtime의 `periodKey`, `progressValue`, `isCompleted`를 현재 구간 기준으로 제자리 갱신한다.
 
 연관: [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md)
 

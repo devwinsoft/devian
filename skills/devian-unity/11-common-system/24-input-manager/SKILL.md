@@ -76,7 +76,7 @@ ulong bitset이므로 최대 64개 버튼. 초과 시 `InvalidOperationException
 
 - `CompoSingleton<InputManager>` — `Awake()`에서 `base.Awake()` 호출 → 타입 등록
 - `IInputManager`는 `OnEnable`에서 `Singleton.Register<IInputManager>` (Compo), `OnDisable`에서 `Unregister`
-- BaseBootstrap은 InputManager를 자동 추가하지 않는다.
+- BaseApplication은 InputManager를 자동 추가하지 않는다.
 - 입력을 사용하는 소비자 bootstrap/prefab이 `InputManager`를 미리 부착한다.
 - 런타임 `AddComponent<InputManager>()`는 패턴 위반이다.
 

@@ -1,4 +1,4 @@
-# 11-mobile-bootstrap — MobileBootstrap (Bootstrap Sample)
+# 11-mobile-application — MobileApplication (Bootstrap Sample)
 
 
 Status: ACTIVE
@@ -6,8 +6,8 @@ AppliesTo: v10
 
 
 ## Purpose
-MobileBootstrap 기반 부트스트랩 샘플.
-`BaseBootstrap`을 상속한 추상 클래스 `MobileBootstrap`을 제공하여, 앱별 초기화 로직의 진입점을 정의한다.
+MobileApplication 기반 부트스트랩 샘플.
+`BaseApplication`을 상속한 추상 클래스 `MobileApplication`을 제공하여, 앱별 초기화 로직의 진입점을 정의한다.
 
 
 ## Sample SSOT
@@ -18,9 +18,9 @@ MobileBootstrap 기반 부트스트랩 샘플.
 
 > 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../07-samples-creation-guide/SKILL.md)
 
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Bootstrap/MobileBootstrap.cs`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Bootstrap/MobileBootstrap.cs`
-- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Bootstrap/MobileBootstrap.cs`
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Bootstrap/MobileApplication.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Bootstrap/MobileApplication.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Bootstrap/MobileApplication.cs`
 
 
 ## Usage
@@ -28,7 +28,7 @@ MobileBootstrap 기반 부트스트랩 샘플.
 ```csharp
 namespace MyApp
 {
-    public sealed class MyApp : MobileBootstrap
+    public sealed class MyApp : MobileApplication
     {
         protected override async Task OnBootProc()
         {
@@ -46,22 +46,24 @@ namespace MyApp
 }
 ```
 
-1. `MobileBootstrap`을 상속한 클래스를 만든다.
+1. `MobileApplication`을 상속한 클래스를 만든다.
 2. `OnBootProc()`을 override하고, `await base.OnBootProc();`을 호출하여 공통 초기화를 수행한다.
 3. `base.OnBootProc()` 이후에 앱별 초기화 로직을 구현한다.
-4. 포그라운드 복귀 처리가 필요하면 `BaseBootstrap.OnEnterForeground()`를 override한다.
+4. 포그라운드 복귀 처리가 필요하면 `BaseApplication.OnEnterForeground()`를 override한다.
 5. Bootstrap prefab에 해당 컴포넌트를 부착한다.
 6. app/contents layer가 Bootstrap prefab을 명시적으로 생성하고 `BootProc()`를 호출한다.
+7. 샘플에서는 Firebase Functions region 같은 앱 설정값을 `MobileApplication`에 하드코딩하고, `MissionManager`/`PurchaseManager` 같은 하위 manager에 setter로 주입한다.
 
 주의:
 - Unity `OnApplicationPause` / `OnApplicationFocus`를 직접 override하지 않는다.
-- lifecycle 처리는 `BaseBootstrap`의 semantic hook을 사용한다.
+- lifecycle 처리는 `BaseApplication`의 semantic hook을 사용한다.
+- manager가 inspector/serialized field로 Firebase region 같은 앱 설정을 직접 소유하지 않는다. 설정 owner는 bootstrap/app layer다.
 
 
 ## Resource Prefab 생성 규칙
 
 - Bootstrap prefab 경로: `Assets/Resources/Devian/Bootstrap.prefab`
-- prefab에 `MobileBootstrap` 파생 컴포넌트를 **정확히 1개** 부착해야 한다.
+- prefab에 `MobileApplication` 파생 컴포넌트를 **정확히 1개** 부착해야 한다.
 - 프레임워크가 파생 컴포넌트를 자동 추가하지 않는다 — 개발자가 직접 추가해야 한다.
 - `InputManager` 같은 `CompoSingleton` 의존성도 bootstrap prefab/object에 미리 부착해야 한다.
 - prefab은 수동으로 생성한다 (자동 생성 코드 없음).
@@ -69,7 +71,7 @@ namespace MyApp
 
 ## RequireComponent
 
-MobileBootstrap에 부착된 RequireComponent:
+MobileApplication에 부착된 RequireComponent:
 
 - `AccountManager`
 - `InventoryManager`
@@ -79,7 +81,7 @@ MobileBootstrap에 부착된 RequireComponent:
 
 
 ## Links
-- [16-bootstrap](../../10-foundation/16-bootstrap/SKILL.md) — BaseBootstrap 런타임 스펙
+- [16-base-application](../../10-foundation/16-base-application/SKILL.md) — BaseApplication 런타임 스펙
 - [24-input-manager](../../11-common-system/24-input-manager/SKILL.md) — InputManager 공용 입력 관리자
 - [21-savedata-system/43-savedata-json-codec](../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 규약
 - [50-mobile-system overview](../00-overview/SKILL.md) — MobileSystem (Devian Samples) 그룹 개요

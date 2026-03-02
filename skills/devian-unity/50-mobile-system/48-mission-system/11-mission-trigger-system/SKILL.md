@@ -113,8 +113,7 @@ MissionManager.triggerSystem.Notify(msgType, msgValue);
 |-----------------|------|
 | `NONE` | 갱신하지 않음 |
 | `MAX` | `runtime.progressValue`를 max 갱신 |
-| `SUM` | `runtime.progressValue`를 누적하되 `conditionValue`를 상한으로 clamp |
-| `TOTAL` | `runtime.progressValue`를 상한 없이 누적 |
+| `SUM` | 누적형 progress. clamp 여부는 concrete runtime이 결정 |
 
 claim 가능 판정:
 - `runtime.progressValue >= conditionValue && runtime.isCompleted == false`이면 claimable

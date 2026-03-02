@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
-public class TestApplication : MobileBootstrap
+public class TestApplication : MobileApplication
 {
     public static TestApplication Instance => _instance;
     static TestApplication _instance = null;
@@ -14,7 +14,7 @@ public class TestApplication : MobileBootstrap
     {
         if (_instance == null)
         {
-            _instance = Singleton.CreateFromResources<BaseBootstrap, TestApplication>("Devian/Bootstrap");
+            _instance = Singleton.CreateFromResources<BaseApplication, TestApplication>("Devian/Bootstrap");
         }
         return _instance;
     }

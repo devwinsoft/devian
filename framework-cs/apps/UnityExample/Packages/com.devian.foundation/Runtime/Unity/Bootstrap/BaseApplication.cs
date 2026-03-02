@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/10-foundation/16-bootstrap/SKILL.md
+// SSOT: skills/devian-unity/10-foundation/16-base-application/SKILL.md
 
 using System;
 using System.Threading.Tasks;
@@ -8,16 +8,16 @@ namespace Devian
 {
     /// <summary>
     /// Bootstrap 프리팹용 추상 베이스.
-    /// 개발자는 모듈 밖(asmdef)에서 BaseBootstrap 파생 클래스를 선언하고,
+    /// 개발자는 모듈 밖(asmdef)에서 BaseApplication 파생 클래스를 선언하고,
     /// 그 컴포넌트를 Bootstrap prefab에 붙여서 사용한다.
     ///
     /// Bootstrap/BootProc/씬 구성은 개발자가 처리한다.
     /// 프레임워크는 Bootstrap prefab을 자동 instantiate하거나 BootProc를 자동 호출하지 않는다.
     /// BootProc 실행 시점은 SceneTransManager가 아니라 씬/앱 쪽에서 명시적으로 관리한다.
     /// </summary>
-    public abstract class BaseBootstrap : MonoBehaviour
+    public abstract class BaseApplication : MonoBehaviour
     {
-        private static BaseBootstrap _instance;
+        private static BaseApplication _instance;
         private static bool _booted;
         private bool _isForeground = true;
 
@@ -48,7 +48,7 @@ namespace Devian
         /// <summary>
         /// Bootstrap 인스턴스 참조.
         /// </summary>
-        public static BaseBootstrap Instance => _instance;
+        public static BaseApplication Instance => _instance;
 
         /// <summary>
         /// 개발자가 구현할 부트 프로세스.

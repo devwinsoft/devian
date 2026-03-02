@@ -26,6 +26,10 @@ Type: Design / Factory SSOT
 ## Responsibility Boundary
 
 `MissionManager`
+- public API 오케스트레이션
+- claim / save / clock refresh
+
+`MissionScheduler`
 - row 조회
 - 현재 scope 판단
 - 기존 runtime 존재 여부 판단
@@ -54,7 +58,7 @@ Type: Design / Factory SSOT
 - create와 restore는 분리된 진입점을 가진다.
 - `conditionOp == NONE`이면 Factory는 runtime을 만들지 않는다.
 - runtime 구독 ownerKey는 `missionUid(int)`를 그대로 사용한다.
-- `missionUid`는 MissionManager가 `nextMissionUid++`를 기본으로 발급하되, 사용 중 UID는 건너뛴다.
+- `missionUid`는 MissionScheduler가 `nextMissionUid++`를 기본으로 발급하되, 사용 중 UID는 건너뛴다.
 - daily restore는 `CLAIMABLE`/`COMPLETED`면 구독하지 않는다.
 - achievement restore는 삭제/파기 전까지 구독을 유지한다.
 
@@ -111,6 +115,8 @@ public readonly struct DailyMissionRuntimeCreateArgs
 - daily는 `missionId` 단일 ID를 사용한다.
 - 새 runtime의 `ProgressValue`는 0에서 시작한다.
 - `startValue`를 받지 않는다.
+- daily create는 scheduler가 현재 cycle에서 선택한 row에 대해서만 호출한다.
+- daily selection 자체는 factory 책임이 아니다.
 
 
 ### Achievement
@@ -136,7 +142,9 @@ public readonly struct AchieveMissionRuntimeCreateArgs
 - 실제 단계 미션 식별은 `missionId + level`이다.
 - achievement definition의 `missionId + level` 유일성은 data layer에서 보장한다.
 - `StartValue`는 직전 완료 미션의 `ProgressValue`다.
-- 새 level runtime의 초기 `ProgressValue`는 `StartValue`로 시작한다.
+- 최초 create 시 `StartValue`는 보통 `0`이다.
+- 최초 create는 `level=1` row를 사용한다.
+- level up은 새 runtime create가 아니라 같은 runtime mutation으로 처리한다.
 
 
 ### Restore
@@ -171,6 +179,7 @@ public readonly struct MissionRuntimeRestoreArgs
 - `ProgressValue = 0`
 - `IsCompleted = false`
 - 생성 직후 구독 시작
+- scheduler는 `MISSION_DAILY` active row 전체 중 최대 5개까지만 `CreateDaily(...)`를 호출한다.
 
 ### Achievement create
 
@@ -178,6 +187,7 @@ public readonly struct MissionRuntimeRestoreArgs
 - `ProgressValue = StartValue`
 - `IsCompleted = false`
 - 생성 직후 구독 시작
+- scheduler는 init 시 `MISSION_ACHIEVE` active row 전체를 검색하고 group별로 `CreateAchieve(...)` 또는 `Restore(...)`를 결정한다.
 - 현재 level이 `CLAIMABLE`이 되어도 다음 level을 생성하지 않는다.
 - `ClaimAsync()` 성공 후 다음 level row가 있으면 같은 runtime이 level up 한다.
 - 수동 claim 모델이므로 현재 `CLAIMABLE` runtime은 claim 전까지 storage에 유지한다.
@@ -216,9 +226,9 @@ Factory는 아래 조건을 만족할 때만 runtime 구독을 연결해야 한�
 
 ## Why Daily / Achievement Args Differ
 
-- daily는 새 period마다 0부터 시작하는 반복 미션이다.
+- daily는 매 cycle마다 선택된 row set만 생성하는 반복 미션이다.
 - achievement는 `missionId`가 그룹 ID이고 `level`이 실제 단계다.
-- achievement는 다음 단계 생성 시 `StartValue`가 필요하다.
+- achievement 최초 create와 restore에만 factory args가 필요하고, 이후 level 전환은 runtime mutation이다.
 - 따라서 두 create 경로를 하나의 args로 억지 통합하지 않는다.
 
 
@@ -231,3 +241,4 @@ Factory는 아래 조건을 만족할 때만 runtime 구독을 연결해야 한�
 - [10-mission-manager](../10-mission-manager/SKILL.md)
 - [12-mission-storage](../12-mission-storage/SKILL.md)
 - [13-mission-runtime](../13-mission-runtime/SKILL.md)
+- [15-mission-scheduler](../15-mission-scheduler/SKILL.md)

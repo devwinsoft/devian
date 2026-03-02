@@ -82,16 +82,17 @@ Mission(일일/업적) 시스템의 모듈 경계와 하드룰을 정의한다.
 - MissionManager는 미션별 `MissionRuntimeBase` 계열 runtime을 관리한다.
 - MissionRuntime은 자신이 구독한 trigger를 내부 로직으로 처리한다.
 - `MISSION_OP_TYPE.MAX`: `runtime.progressValue = max(runtime.progressValue, msgValue)`로 갱신한다.
-- `MISSION_OP_TYPE.SUM`: `runtime.progressValue = min(conditionValue, runtime.progressValue + msgValue)`로 갱신한다.
-- `MISSION_OP_TYPE.TOTAL`: `runtime.progressValue = runtime.progressValue + msgValue`로 갱신한다.
+- `MISSION_OP_TYPE.SUM`: 누적형 progress다. 실제 누적 방식은 concrete runtime 구현이 결정한다.
+  - `MissionRuntimeDaily`: `runtime.progressValue = min(conditionValue, runtime.progressValue + msgValue)`
+  - `MissionRuntimeAchieve`: `runtime.progressValue = runtime.progressValue + msgValue`
 - `runtime.progressValue >= conditionValue && runtime.isCompleted == false`이면 `CLAIMABLE`이다.
 - `COMPLETED`는 수동 claim까지 끝난 상태다.
 - achievement는 `ClaimAsync()` 시 보상을 지급하고 다음 level로 전환한다.
 - 다음 level row가 있으면 같은 runtime이 level up 한다.
 - 마지막 level이면 `COMPLETED`로 유지한다.
 - `MISSION_OP_TYPE.NONE`: 아무 기능도 하지 않는다. `isActive=true` row라도 MissionRuntime을 생성하지 않는다.
-- `SUM`은 `progressValue`가 `conditionValue` 값을 넘어설 수 없다.
-- `TOTAL`은 `progressValue`가 `conditionValue`를 넘어설 수 있다.
+- daily runtime의 `SUM`은 `progressValue`가 `conditionValue` 값을 넘어설 수 없다.
+- achieve runtime의 `SUM`은 `progressValue`가 `conditionValue`를 넘어설 수 있다.
 - `ProgressValue`는 저장되는 실제 누적값 이름이다. 계산용 getter 이름이 필요하면 `CurrentProgress`를 별도로 둘 수 있다.
 
 

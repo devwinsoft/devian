@@ -12,12 +12,16 @@ namespace Devian
     [RequireComponent(typeof(MissionManager))]
     [RequireComponent(typeof(SaveDataManager))]
     [RequireComponent(typeof(InputManager))]
-    public abstract class MobileBootstrap : BaseBootstrap
+    public abstract class MobileApplication : BaseApplication
     {
+        const string FirebaseFunctionsRegion = "asia-northeast3";
+
         protected override Task OnBootProc()
         {
             // MobileSystem common initialization
             Log.SetSink(new UnityLogSink());
+
+            configureFunctionsRegion();
 
             // Must be activated before Google login is attempted.
             #if UNITY_ANDROID && !UNITY_EDITOR
@@ -110,8 +114,15 @@ namespace Devian
             var refresh = await missionManager.RefreshClockAsync(CancellationToken.None);
             if (refresh.IsFailure)
             {
-                Debug.LogWarning($"[MobileBootstrap] Mission clock refresh failed on foreground: {refresh.Error}");
+                Debug.LogWarning($"[MobileApplication] Mission clock refresh failed on foreground: {refresh.Error}");
             }
+        }
+
+        void configureFunctionsRegion()
+        {
+            var region = FirebaseFunctionsRegion;
+            GetComponent<PurchaseManager>()?.SetFunctionsRegion(region);
+            GetComponent<MissionManager>()?.SetFunctionsRegion(region);
         }
     }
 }

@@ -271,7 +271,7 @@ public class MainScene : SceneBase
 SceneTransManager는 Bootstrap prefab에 포함된다.
 이로써 부팅과 씬 전환이 일관된 파이프라인으로 동작한다.
 
-Bootstrap prefab에는 BaseBootstrap 파생 컴포넌트가 정확히 1개 필요하다 (개발자가 직접 추가).
+Bootstrap prefab에는 BaseApplication 파생 컴포넌트가 정확히 1개 필요하다 (개발자가 직접 추가).
 
 ---
 
@@ -280,4 +280,4 @@ Bootstrap prefab에는 BaseBootstrap 파생 컴포넌트가 정확히 1개 필�
 - Parent: `skills/devian-unity/10-foundation/SKILL.md`
 - AssetManager: `skills/devian-unity/10-foundation/18-asset-manager/SKILL.md`
 - Singleton: `skills/devian-unity/10-foundation/15-singleton/SKILL.md`
-- Bootstrap: `skills/devian-unity/10-foundation/16-bootstrap/SKILL.md`
+- Base Application: `skills/devian-unity/10-foundation/16-base-application/SKILL.md`
