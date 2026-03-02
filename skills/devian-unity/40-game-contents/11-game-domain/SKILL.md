@@ -98,8 +98,8 @@ Game 도메인을 사용하는 스킬:
 | [11-game-net-manager](../../41-game-network/11-game-net-manager/SKILL.md) | GameNetManager, Game2CStub | 네트워크 샘플 |
 
 ### MobileSystem (`com.devian.samples/Samples~/MobileSystem`)
-| [10-inventory-manager](../../50-mobile-system/93-game-inventory-system/10-inventory-manager/SKILL.md) | InventoryManager | 인벤토리 + InventoryStorage |
-| [11-inventory-storage](../../50-mobile-system/93-game-inventory-system/11-inventory-storage/SKILL.md) | InventoryStorage | 인벤토리 데이터 컨테이너 |
+| [10-inventory-manager](../../50-mobile-system/22-inventory-system/10-inventory-manager/SKILL.md) | InventoryManager | 인벤토리 + InventoryStorage |
+| [11-inventory-storage](../../50-mobile-system/22-inventory-system/11-inventory-storage/SKILL.md) | InventoryStorage | 인벤토리 데이터 컨테이너 |
 | [30-ad-manager](../../50-mobile-system/47-advertise-system/30-ad-manager/SKILL.md) | AdManager | 광고 (TB_ADVERTISE 직접 참조) |
 | [30-samples-purchase-manager](../../50-mobile-system/30-purchase-system/30-samples-purchase-manager/SKILL.md) | PurchaseManager | 구매 (TB_PRODUCT 직접 참조) |
 | [10-reward-manager](../../50-mobile-system/49-reward-system/10-reward-manager/SKILL.md) | RewardManager | 보상 (TB_REWARD 직접 참조) |

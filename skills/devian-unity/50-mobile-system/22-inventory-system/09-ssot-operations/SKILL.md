@@ -1,4 +1,4 @@
-# 09-ssot-operations — 93-game-inventory-system
+# 09-ssot-operations — 22-inventory-system
 
 
 Status: ACTIVE
@@ -49,7 +49,7 @@ SSOT 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
 - invalid delta 포함 입력은 전체 미적용(호출 전/후 상태 동일)이다
 - `rewards.Length == 0` 입력은 `CommonResult.Ok()` no-op이다
 - 컨텐츠 테이블/enum을 참조하지 않는다
-- SaveDataManager↔InventoryManager 상호 비의존이 Policy/InventoryManager 문서에 명시되어 있다
+- InventoryManager↔저장 시스템 상호 비의존이 Policy/InventoryManager 문서에 명시되어 있다
 - (NEEDS CHECK) 저장/로드 경계에서 값이 일관된다
 
 

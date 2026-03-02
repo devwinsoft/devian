@@ -178,6 +178,6 @@ deserialize 시 target:
 - [41-savedata-savelocal](../41-savedata-savelocal/SKILL.md) — Local payload 저장
 - [42-savedata-savecloud](../42-savedata-savecloud/SKILL.md) — Cloud payload 저장
 - [33-account-manager](../../20-account-system/33-account-manager/SKILL.md) — AccountStorage 소유자
-- [10-inventory-manager](../../93-game-inventory-system/10-inventory-manager/SKILL.md) — InventoryStorage 소유자
+- [10-inventory-manager](../../22-inventory-system/10-inventory-manager/SKILL.md) — InventoryStorage 소유자
 - [33-purchase-storage](../../30-purchase-system/33-purchase-storage/SKILL.md) — PurchaseStorage 규약
 - [12-mission-storage](../48-mission-system/12-mission-storage/SKILL.md) — MissionStorage 규약

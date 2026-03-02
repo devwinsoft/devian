@@ -15,9 +15,7 @@ Reward 관련 규칙의 단일 SSOT는 이 문서다.
 - REWARD 테이블 스키마(정규화)
 
 비정본(이 문서에서 다루지 않음):
-- 멱등/기록/복구(ledger/pending/서버 확정)
-  - Mission: `48-mission-system`
-  - Purchase: `30-purchase-system`
+- 멱등/기록/복구(ledger/pending/서버 확정) — 호출자 시스템의 정본을 참조한다.
 
 
 ---
@@ -44,7 +42,7 @@ Reward 관련 규칙의 단일 SSOT는 이 문서다.
 - `amount: long` (`>= 0`만 허용)
 
 이 스키마 문단이 `RewardData`의 단일 정본이다.
-`93-game-inventory-system`에서는 스키마를 재정의하지 않고 본 문서를 참조한다.
+`22-inventory-system`에서는 스키마를 재정의하지 않고 본 문서를 참조한다.
 
 NOTE:
 - `type=REWARD_TYPE.EQUIP`의 `id`는 `equipId(pk)`를 의미한다.
@@ -55,9 +53,8 @@ NOTE:
 - Reward/Purchase grants에는 `options`가 없다. `options`는 Inventory 내부 속성으로만 관리된다.
 
 정합:
-- Purchase `verifyPurchase` 응답 `grants[]`(지급 내역)과 동일 형태를 사용한다.
-- `grants[]`는 inventory 지급 전용이며, 권한/플래그 변화는 `entitlementsSnapshot`으로 처리한다.
-  - 연관: `30-purchase-system/42-purchase-entitlements-grants`
+- 서버 검증 응답 `grants[]`(지급 내역)과 동일 형태를 사용한다.
+- `grants[]`는 inventory 지급 전용이며, 권한/플래그 변화는 별도 경로로 처리한다.
 
 NEEDS CHECK (형준 결정 필요):
 - `id` 네이밍 규칙(예: `gem`, `gold`, `item_sword_01`)
@@ -113,18 +110,7 @@ NOTE:
 ---
 
 
-## E) 책임 분리 링크(정본)
-
-- Mission(무료): 지급 조회/기록/개별 지급 기록/리셋 정본
-  - [48-mission-system/01-policy](../../48-mission-system/01-policy/SKILL.md)
-- Purchase(유료): 멱등/기록/복구(restore 포함) 정본
-  - [30-purchase-system/03-ssot](../../30-purchase-system/03-ssot/SKILL.md)
-
-
----
-
-
-## F) RewardData Runtime Type Location (reference)
+## E) RewardData Runtime Type Location (reference)
 
 - `REWARD_TYPE` enum은 Generated이다 (입력: `input/Domains/Game/ENUM_TYPES.json`, 네임스페이스: `Devian.Domain.Game`).
 - `RewardData` struct만 아래 파일에 수동 정의한다 (`using Devian.Domain.Game;` 필요).

@@ -1,4 +1,4 @@
-# 03-ssot — 93-game-inventory-system (SSOT)
+# 03-ssot — 22-inventory-system (SSOT)
 
 
 Status: ACTIVE
@@ -19,7 +19,7 @@ AppliesTo: v10
 
 - `RewardData` 스키마의 단일 정본은 아래 문서다:
   - [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md)
-- 본 문서(93-game-inventory-system)는 `RewardData` 필드 스키마를 재정의하지 않는다.
+- 본 문서(22-inventory-system)는 `RewardData` 필드 스키마를 재정의하지 않는다.
 - Inventory는 위 정본 규약을 입력 계약으로 사용한다.
 
 

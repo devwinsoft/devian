@@ -1,4 +1,4 @@
-# 93-game-inventory-system — Policy
+# 22-inventory-system — Policy
 
 
 Status: ACTIVE
@@ -40,7 +40,7 @@ RewardData 스키마는 Reward 시스템 문서가 단일 정본이다.
 ### 3) Apply는 멱등을 보장하지 않는다
 
 - Inventory는 Apply(적용)만 수행한다.
-- 중복 방지/지급 기록/복구는 호출자(Mission/Purchase)가 책임진다.
+- 중복 방지/지급 기록/복구는 호출자가 책임진다.
 
 
 ### 4) invalid 입력은 실패(CommonResult) + 전체 미적용(원자성)
@@ -65,10 +65,9 @@ RewardData 스키마는 Reward 시스템 문서가 단일 정본이다.
   - 시트: `ERROR_COMMON`
 
 
-### 7) SaveDataManager와 InventoryManager는 서로를 모른다
+### 7) InventoryManager는 저장 시스템을 직접 참조하지 않는다
 
-- InventoryManager는 SaveDataManager를 직접 참조하지 않는다.
-- SaveDataManager는 InventoryManager/Inventory 스키마를 직접 참조하지 않는다.
+- InventoryManager는 저장 시스템을 직접 참조하지 않는다.
 - 저장/로드 결합은 상위 조립(bootstrap/composition root)에서만 수행한다.
 
 

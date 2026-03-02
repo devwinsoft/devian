@@ -126,14 +126,6 @@ npm -w webgl-server run env:check && npm -w game-server run env:check
 
 ---
 
-## Change Log
-
-| 날짜 | 변경 | 영향 범위 |
-|------|------|----------|
-| 2026-02-04 | 초기 정책 생성 | WebGLServer, GameServer |
-
----
-
 ## Related
 
 - [03-ssot](../03-ssot/SKILL.md) — Tools SSOT

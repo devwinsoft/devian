@@ -1,4 +1,4 @@
-# 93-game-inventory-system — Overview
+# 22-inventory-system — Overview
 
 
 Status: ACTIVE
@@ -23,7 +23,7 @@ Inventory System은 "인벤토리 상태(아이템/통화)"를 시스템 레이�
 
 - 컨텐츠 도메인 테이블/enum을 직접 참조하지 않는다.
 - 보상 정의 테이블 → Delta 변환은 컨텐츠 레이어 책임이다.
-- 멱등/기록/복구(ledger)는 호출자(Mission/Purchase)가 책임진다.
+- 멱등/기록/복구(ledger)는 호출자가 책임진다.
 
 
 ---
@@ -47,6 +47,3 @@ Inventory System은 "인벤토리 상태(아이템/통화)"를 시스템 레이�
 ## Related
 
 - [49-reward-system](../../49-reward-system/00-overview/SKILL.md)
-- [48-mission-system](../../48-mission-system/00-overview/SKILL.md)
-- [30-purchase-system](../../30-purchase-system/00-overview/SKILL.md)
-- [21-savedata-system](../../21-savedata-system/00-overview/SKILL.md)

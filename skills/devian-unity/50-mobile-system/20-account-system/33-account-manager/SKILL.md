@@ -34,11 +34,11 @@
 2. FirebaseAuth sign-in (Anonymous / credential / link — LoginType에 따라 분기)
 3. `SaveCloudManager.Instance.InitializeAsync(ct)` — Guest 로그인에서는 스킵
 
-Sync는 AccountManager의 책임이 아니며, [10-savedata-manager](../../21-savedata-system/10-savedata-manager/SKILL.md)가 담당한다.
+Sync는 AccountManager의 책임이 아니며, 상위 시스템이 담당한다.
 
 ## Auth Ownership (Hard Rule)
 - 로그인/인증 상태의 최종 판단은 **AccountManager 단일 책임**이다.
-- PurchaseManager/SaveDataManager 등 다른 시스템은 `FirebaseAuth.DefaultInstance.CurrentUser`를 직접 읽어
+- 다른 시스템은 `FirebaseAuth.DefaultInstance.CurrentUser`를 직접 읽어
   "로그인 여부"를 판정하지 않는다.
 - 구매 전 인증 게이트는 AccountManager 공개 상태(`IsPurchaseLoginReady` 등)를 통해 판단한다.
 - FirebaseAuth 접근은 AccountManager 내부의 sign-in/link 구현 범위에서만 사용한다.
@@ -86,13 +86,13 @@ Sync는 AccountManager의 책임이 아니며, [10-savedata-manager](../../21-sa
 - 계정 메타 영속화는 `AccountManager`가 직접 소유하는 `AccountStorage`로 통일한다.
 - 저장 필드(최소): `loginType`, `socialUserId`, `lastUpdatedAtUtcMs`
 - 로그인 성공, 로그아웃, 구매 인증 보정 시 `AccountManager`가 자신의 `Storage`를 갱신한다.
-- `SaveDataManager`가 local/cloud payload를 로드한 뒤 `AccountManager.Storage`를 복원하고 `AccountManager.ApplyStorage(...)`로 런타임 `_currentLoginType`을 재적용한다.
+- 상위 시스템이 local/cloud payload를 로드한 뒤 `AccountManager.Storage`를 복원하고 `AccountManager.ApplyStorage(...)`로 런타임 `_currentLoginType`을 재적용한다.
 - 계정 메타 미복원/유효하지 않은 값이면 `NONE` fallback.
 
 
 ## Storage Ownership
 - `AccountManager`는 `AccountStorage`를 직접 소유한다.
-- `SaveDataManager`는 `AccountManager.Instance.Storage`를 저장/복원 대상으로 사용한다.
+- 상위 시스템은 `AccountManager.Instance.Storage`를 저장/복원 대상으로 사용한다.
 - JSON 직렬화 규약은 [43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)를 따른다.
 
 
@@ -112,5 +112,5 @@ Sync는 AccountManager의 책임이 아니며, [10-savedata-manager](../../21-sa
 
 ## Out of Scope
 - Apple Sign-in UI/네이티브 토큰 획득 — AccountManager는 Apple 토큰을 "받아서" Firebase Auth에 연결만 한다.
-- Sync 오케스트레이션 — SaveDataManager가 담당
+- Sync 오케스트레이션 — 상위 시스템이 담당
 - SaveSystem 샘플(CloudSave/LocalSave) 로직 변경

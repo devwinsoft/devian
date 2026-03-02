@@ -97,26 +97,11 @@ asmdef:
 ---
 
 
-## Sequence Examples
+## Sequence Example
 
-
-### A) Purchase
-
-1) PurchaseManager → 서버 `verifyPurchase`
-2) 응답 `resultStatus == GRANTED`
-3) PurchaseManager: `ResolveRewardGroupId(internalProductId)` → `rewardGroupId`
-4) PurchaseManager → `Singleton.Get<RewardManager>().ApplyRewardGroup(rewardGroupId)` (구매 결과 payload용 `AppliedRewards` 확보)
-5) RewardManager: `ResolveRewardDeltas(rewardGroupId)` → `RewardData[]` → `ApplyRewardDatas(deltas)`
-6) UI/표시는 서버 `entitlementsSnapshot` 기준으로 갱신
-
-
-### B) Mission
-
-1) MissionManager가 로컬 ledger에서 `grantId` 지급 여부 확인
-2) 미지급이면 ledger를 `pending`으로 기록
-3) MissionManager → `Singleton.Get<RewardManager>().ApplyRewardGroup(rewardGroupId)`
-4) RewardManager: `ResolveRewardDeltas(rewardGroupId)` → RewardData[] → `ApplyRewardDatas(deltas)`
-5) 성공 시 ledger를 `granted`로 확정, 실패 시 `pending` 유지(재시도)
+1) 호출자가 `rewardGroupId`를 결정한다.
+2) 호출자 → `Singleton.Get<RewardManager>().ApplyRewardGroup(rewardGroupId)`
+3) RewardManager: `ResolveRewardDeltas(rewardGroupId)` → `RewardData[]` → `ApplyRewardDatas(deltas)`
 
 
 ---
@@ -125,5 +110,4 @@ asmdef:
 ## Related
 
 - [49-reward-system/03-ssot](../03-ssot/SKILL.md) — RewardData 스키마 정본
-- [93-game-inventory-system/10-inventory-manager](../../93-game-inventory-system/10-inventory-manager/SKILL.md) — InventoryManager (AddRewards 위임 대상)
-- [30-purchase-system/30-samples-purchase-manager](../../30-purchase-system/30-samples-purchase-manager/SKILL.md) — PurchaseManager (지급 요청 원점)
+- [22-inventory-system/10-inventory-manager](../../22-inventory-system/10-inventory-manager/SKILL.md) — InventoryManager (AddRewards 위임 대상)

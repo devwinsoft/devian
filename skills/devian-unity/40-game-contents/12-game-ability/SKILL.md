@@ -332,5 +332,5 @@ namespace Devian
 
 - [13-game-stat-type](../13-game-stat-type/SKILL.md) — STAT_TYPE enum 값 정의/관리
 - [00-overview](../00-overview/SKILL.md) — GameContents 개요
-- [11-inventory-storage](../../50-mobile-system/93-game-inventory-system/11-inventory-storage/SKILL.md) — InventoryStorage (AbilityEquip, AbilityCard 사용처)
-- [10-inventory-manager](../../50-mobile-system/93-game-inventory-system/10-inventory-manager/SKILL.md) — InventoryManager (InventoryStorage 소유)
+- [11-inventory-storage](../../50-mobile-system/22-inventory-system/11-inventory-storage/SKILL.md) — InventoryStorage (AbilityEquip, AbilityCard 사용처)
+- [10-inventory-manager](../../50-mobile-system/22-inventory-system/10-inventory-manager/SKILL.md) — InventoryManager (InventoryStorage 소유)

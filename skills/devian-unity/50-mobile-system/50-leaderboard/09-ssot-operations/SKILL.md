@@ -26,7 +26,6 @@ ID 매핑/트리거 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
 
 연관:
 - [48-mission-system/09-ssot-operations](../../48-mission-system/09-ssot-operations/SKILL.md)
-- [49-reward-system/09-ssot-operations](../../49-reward-system/09-ssot-operations/SKILL.md)
 
 
 ### 2) 업적 달성 시점

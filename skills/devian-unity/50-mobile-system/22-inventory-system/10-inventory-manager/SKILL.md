@@ -104,9 +104,8 @@ NOTE:
 
 ## Dependencies (개념)
 
-- InventoryManager는 SaveDataManager를 직접 참조하지 않는다.
-- SaveDataManager는 저장/로드 시 `InventoryManager.Instance.Storage`를 사용한다.
-- 저장/로드 결합은 SaveDataManager에서만 수행한다.
+- InventoryManager는 저장 시스템을 직접 참조하지 않는다.
+- 저장/로드 결합은 상위 조립(bootstrap/composition root)에서만 수행한다.
 - JSON 직렬화 규약은 [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)를 따른다.
 
 

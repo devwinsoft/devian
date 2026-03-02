@@ -46,6 +46,15 @@ AppliesTo: v10
 - Pending/Deferred: 지급되지 않음
 
 
+### 5) Reward 지급 연동
+
+- `resultStatus == GRANTED`일 때만 컨텐츠 레이어 매핑(`internalProductId -> rewardGroupId`) 후 `RewardManager.ApplyRewardGroup(rewardGroupId)`로 적용한다.
+- 멱등/복구/원장 정본은 Purchase 쪽이다. Reward는 지급 실행만 담당한다.
+
+연관:
+- [49-reward-system/01-policy](../../49-reward-system/01-policy/SKILL.md)
+
+
 ---
 
 ## Functions 관련 정본 링크 (중복 금지)
