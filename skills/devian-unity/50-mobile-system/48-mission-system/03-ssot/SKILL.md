@@ -9,7 +9,7 @@ AppliesTo: v10
 
 - 컨텐츠 도메인 Mission 테이블(상위 컨텐츠 레이어 SSOT)
 - 컨텐츠 도메인 Reward 테이블(상위 컨텐츠 레이어 SSOT)
-- `MISSION_DAILY` 테이블 스키마 (일일 미션)
+- `MISSION_DAY` 테이블 스키마 (일일 미션)
 - `MISSION_ACHIEVE` 테이블 스키마 (업적 미션)
 - `MissionTriggerSystem` 규약
 - `MissionClockSnapshot` / mission daily clock 규약
@@ -25,7 +25,7 @@ AppliesTo: v10
 ## A) Core Terms (정본)
 
 - `missionId`: daily에서는 내부 표준 미션 ID, achievement에서는 그룹 ID(string)
-- `missionKind`: `MISSION_TYPE` enum. 값은 `DAILY` | `ACHIEVEMENT`
+- `missionKind`: `MISSION_TYPE` enum. 값은 `DAY` | `ACHIEVE`
 - `conditionType`: `MISSION_CONDITION_TYPE` enum. MissionTriggerSystem에서 어떤 trigger를 받을지 결정한다.
 - `conditionOp`: `MISSION_OP_TYPE` enum. runtime의 `ProgressValue`를 어떤 방식으로 갱신할지 결정한다.
 - `conditionValue`: 목표값(`CBigInt`). 누적 진행도가 이 값 이상이면 완료다.
@@ -43,7 +43,7 @@ AppliesTo: v10
 
 NOTE:
 - 일일/업적은 **테이블을 분리**한다:
-  - `MISSION_DAILY`
+  - `MISSION_DAY`
 - `MISSION_ACHIEVE`
 - `uiGroup` 컬럼은 사용하지 않는다.
 
@@ -53,7 +53,7 @@ NOTE:
 
 ## B) Table Schema (설계 정본)
 
-### `MISSION_DAILY`
+### `MISSION_DAY`
 
 | field | type | note |
 |------|------|------|
@@ -80,13 +80,13 @@ NOTE:
 
 NOTE:
 - `MISSION_TYPE`은 v1에서 아래 값 집합을 사용한다:
-  - `DAILY`
-  - `ACHIEVEMENT`
+  - `DAY`
+  - `ACHIEVE`
 - daily는 `missionId`가 실제 미션 식별자다.
 - achievement는 `missionId`가 그룹 ID이고, 실제 단계 미션 식별은 `missionId + level`이다.
 - achievement row의 `missionId + level` 유일성은 data layer에서 보장한다.
 - `missionUid`는 runtime pk이고, `missionId + level`은 achievement definition 식별자다.
-- `MISSION_CONDITION_TYPE`은 `ENUM_TYPES.json`에서 선언한다.
+- `MISSION_TYPE`, `MISSION_CONDITION_TYPE`, `MISSION_OP_TYPE`은 `ENUM_MISSION.json`에서 선언한다.
 - `MISSION_CONDITION_TYPE`의 v1 값 집합:
   - `NONE`
   - `LOGIN`
@@ -172,7 +172,7 @@ MissionManager는 `MissionTriggerSystem`을 소유하고, 각 MissionRuntime이 
 - `MAX`는 "지금까지 관찰한 최고값"을 유지할 때만 사용한다.
 - daily runtime의 `SUM`은 `progressValue`가 `conditionValue` 값을 넘어설 수 없다.
 - achieve runtime의 `SUM`은 `progressValue`가 `conditionValue`를 넘어설 수 있다.
-- daily는 init 시점과 daily reset 시점마다 `MISSION_DAILY` 전체 active row를 다시 스캔하고, 그중 최대 5개만 runtime으로 생성한다.
+- daily는 init 시점과 daily reset 시점마다 `MISSION_DAY` 전체 active row를 다시 스캔하고, 그중 최대 5개만 runtime으로 생성한다.
 - daily active candidate가 5개 미만이면 가능한 개수만 생성하고 나머지는 skip 한다.
 - achievement는 `ClaimAsync()`에서 보상을 지급한다.
 - achievement는 init 시 `MISSION_ACHIEVE` 전체 active row를 검색하고, 각 `missionId` group에 대해 runtime을 create/restore 한다.
@@ -237,7 +237,7 @@ MissionManager/ MissionScheduler는 아래 규칙으로 `grantId`와 `missionUid
 - period key는 `dailyMissionStartUtcMs + MissionClockSnapshot` 기준으로 계산한다.
 - daily 경계는 계정별 `dailyMissionStartUtcMs` anchor에서 24시간 간격으로 끊는다.
 
-- daily (`MISSION_DAILY`):
+- daily (`MISSION_DAY`):
   - `grantId = "mission:daily:{missionId}:{dailyKey}"`
 - achievement (`MISSION_ACHIEVE`):
   - `grantId = "mission:achievement:{missionId}:{level}:once"`

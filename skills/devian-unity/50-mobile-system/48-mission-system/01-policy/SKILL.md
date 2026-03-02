@@ -57,7 +57,7 @@ Mission(일일/업적) 시스템의 모듈 경계와 하드룰을 정의한다.
 
 ### 4) timed mission의 period key는 MissionStorage anchor로 계산한다
 
-- timed mission = `MISSION_TYPE.DAILY`
+- timed mission = `MISSION_TYPE.DAY`
 - MissionManager는 첫 로그인 성공 시의 서버 시각을 `MissionManager.Storage.dailyMissionStartUtcMs`로 저장한다.
 - 이후에는 backend가 제공한 `MissionClockSnapshot.serverNowUtcMs`로 현재 서버 시각을 추정하고,
   `dailyMissionStartUtcMs`에서 24시간 단위 index를 계산해 `dailyKey`를 만든다.

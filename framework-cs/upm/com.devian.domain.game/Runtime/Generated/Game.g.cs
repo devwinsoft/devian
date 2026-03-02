@@ -16,6 +16,41 @@ namespace Devian.Domain.Game
     // Contracts
     // ================================================================
 
+    /// <summary>MISSION_TYPE enum</summary>
+    public enum MISSION_TYPE
+    {
+        DAY = 0,
+        ACHIEVE = 1,
+    }
+
+    /// <summary>MISSION_CONDITION_TYPE enum</summary>
+    public enum MISSION_CONDITION_TYPE
+    {
+        NONE = 0,
+        LOGIN = 1,
+        MISSION_CLEAR = 2,
+        STAGE_CLEAR = 3,
+        ACHIEVEMENT_UNLOCKED = 4,
+        TEST_001 = 9001,
+        TEST_002 = 9002,
+        TEST_003 = 9003,
+        TEST_004 = 9004,
+        TEST_005 = 9005,
+        TEST_006 = 9006,
+        TEST_007 = 9007,
+        TEST_008 = 9008,
+        TEST_009 = 9009,
+        TEST_010 = 9010,
+    }
+
+    /// <summary>MISSION_OP_TYPE enum</summary>
+    public enum MISSION_OP_TYPE
+    {
+        NONE = 0,
+        MAX = 1,
+        SUM = 2,
+    }
+
     /// <summary>CURRENCY_TYPE enum</summary>
     public enum CURRENCY_TYPE
     {
@@ -77,41 +112,6 @@ namespace Devian.Domain.Game
         UNIT_AMOUNT = 20,
         UNIT_LEVEL = 21,
         UNIT_HP_MAX = 100,
-    }
-
-    /// <summary>MISSION_TYPE enum</summary>
-    public enum MISSION_TYPE
-    {
-        DAILY = 0,
-        ACHIEVEMENT = 1,
-    }
-
-    /// <summary>MISSION_CONDITION_TYPE enum</summary>
-    public enum MISSION_CONDITION_TYPE
-    {
-        NONE = 0,
-        LOGIN = 1,
-        MISSION_CLEAR = 2,
-        STAGE_CLEAR = 3,
-        ACHIEVEMENT_UNLOCKED = 4,
-        TEST_001 = 9001,
-        TEST_002 = 9002,
-        TEST_003 = 9003,
-        TEST_004 = 9004,
-        TEST_005 = 9005,
-        TEST_006 = 9006,
-        TEST_007 = 9007,
-        TEST_008 = 9008,
-        TEST_009 = 9009,
-        TEST_010 = 9010,
-    }
-
-    /// <summary>MISSION_OP_TYPE enum</summary>
-    public enum MISSION_OP_TYPE
-    {
-        NONE = 0,
-        MAX = 1,
-        SUM = 2,
     }
 
     /// <summary>ProductKind enum</summary>
@@ -179,8 +179,8 @@ namespace Devian.Domain.Game
         public string GetKey() => CardId;
     }
 
-    /// <summary>MISSION_DAILY row</summary>
-    public sealed class MISSION_DAILY : IEntityKey<string>
+    /// <summary>MISSION_DAY row</summary>
+    public sealed class MISSION_DAY : IEntityKey<string>
     {
         public string MissionId { get; set; } = string.Empty;
         public bool IsActive { get; set; }
@@ -509,11 +509,11 @@ namespace Devian.Domain.Game
         static partial void _OnAfterLoad();
     }
 
-    /// <summary>TB_MISSION_DAILY container</summary>
-    public static partial class TB_MISSION_DAILY
+    /// <summary>TB_MISSION_DAY container</summary>
+    public static partial class TB_MISSION_DAY
     {
-        private static readonly Dictionary<string, MISSION_DAILY> _dict = new();
-        private static readonly List<MISSION_DAILY> _list = new();
+        private static readonly Dictionary<string, MISSION_DAY> _dict = new();
+        private static readonly List<MISSION_DAY> _list = new();
 
         public static int Count => _list.Count;
 
@@ -523,19 +523,19 @@ namespace Devian.Domain.Game
             _list.Clear();
         }
 
-        public static IReadOnlyList<MISSION_DAILY> GetAll() => _list;
+        public static IReadOnlyList<MISSION_DAY> GetAll() => _list;
 
-        public static MISSION_DAILY? Get(string key)
+        public static MISSION_DAY? Get(string key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(string key, out MISSION_DAILY? row)
+        public static bool TryGet(string key, out MISSION_DAY? row)
         {
             return _dict.TryGetValue(key, out row);
         }
 
-        private static void AddRow(MISSION_DAILY row)
+        private static void AddRow(MISSION_DAY row)
         {
             _list.Add(row);
             _dict[row.MissionId] = row;
@@ -544,7 +544,7 @@ namespace Devian.Domain.Game
         public static void LoadFromJson(string json)
         {
             Clear();
-            var rows = JsonConvert.DeserializeObject<List<MISSION_DAILY>>(json);
+            var rows = JsonConvert.DeserializeObject<List<MISSION_DAY>>(json);
             if (rows == null) return;
             foreach (var row in rows)
             {
@@ -561,7 +561,7 @@ namespace Devian.Domain.Game
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<MISSION_DAILY>(line);
+                var row = JsonConvert.DeserializeObject<MISSION_DAY>(line);
                 if (row == null) continue;
                 AddRow(row);
             }
@@ -573,7 +573,7 @@ namespace Devian.Domain.Game
             Pb64Loader.ParseRows(rawBinary, jsonRow =>
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<MISSION_DAILY>(jsonRow);
+                var row = JsonConvert.DeserializeObject<MISSION_DAY>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -1129,14 +1129,14 @@ namespace Devian.Domain.Game
         public static implicit operator CARD_ID(string value) => new CARD_ID { Value = value };
     }
 
-    /// <summary>Inspector-bindable ID for MISSION_DAILY</summary>
+    /// <summary>Inspector-bindable ID for MISSION_DAY</summary>
     [Serializable]
-    public sealed class MISSION_DAILY_ID
+    public sealed class MISSION_DAY_ID
     {
         public string Value;
 
-        public static implicit operator string(MISSION_DAILY_ID id) => id.Value;
-        public static implicit operator MISSION_DAILY_ID(string value) => new MISSION_DAILY_ID { Value = value };
+        public static implicit operator string(MISSION_DAY_ID id) => id.Value;
+        public static implicit operator MISSION_DAY_ID(string value) => new MISSION_DAY_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for MISSION_ACHIEVE</summary>
@@ -1195,7 +1195,7 @@ namespace Devian.Domain.Game
         public static bool IsValid(this ADVERTISE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this EQUIP_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this CARD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
-        public static bool IsValid(this MISSION_DAILY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this MISSION_DAY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MISSION_ACHIEVE_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this PRODUCT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);

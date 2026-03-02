@@ -12,13 +12,13 @@ using UnityEngine;
 
 namespace Devian.Domain.Game
 {
-    public static partial class TB_MISSION_DAILY
+    public static partial class TB_MISSION_DAY
     {
         private static global::Devian.TableFormat _loadedFormat;
         private static bool _isLoaded;
 
         /// <summary>
-        /// Preload MISSION_DAILY table via TableManager.
+        /// Preload MISSION_DAY table via TableManager.
         /// TableManager handles: TextAsset load + TB insert + cache.
         /// </summary>
         /// <param name="key">Addressables key to load TextAsset</param>
@@ -39,7 +39,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Unload MISSION_DAILY table and clear data.
+        /// Unload MISSION_DAY table and clear data.
         /// </summary>
         public static void Unload()
         {
@@ -48,7 +48,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Check if MISSION_DAILY table is loaded.
+        /// Check if MISSION_DAY table is loaded.
         /// </summary>
         public static bool IsLoaded => _isLoaded;
 

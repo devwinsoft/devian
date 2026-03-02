@@ -151,7 +151,7 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
 - MissionManager는 trigger를 직접 처리하지 않고, MissionRuntime의 onChanged/onCompleted 콜백만 수신한다
 - MissionScheduler는 `nextMissionUid++`를 기본으로 사용하되, 현재 `runtimes`에 이미 존재하는 UID는 건너뛰고 다음 빈 UID를 발급한다
 - MissionRuntime이 목표값에 도달하면 MissionManager는 해당 runtime을 `CLAIMABLE`로 본다
-- daily는 init/reset cycle마다 `MISSION_DAILY` 전체 active row에서 최대 5개만 runtime으로 생성한다
+- daily는 init/reset cycle마다 `MISSION_DAY` 전체 active row에서 최대 5개만 runtime으로 생성한다
   - `fixed=true`는 항상 선택
   - 남은 슬롯은 `fixed=false` active row에서 random selection
 - achievement는 `MISSION_ACHIEVE` 전체 active row를 검색해 group별 runtime 1개를 create/restore 한다

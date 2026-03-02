@@ -22,7 +22,7 @@ AppliesTo: v10
 - `MissionManager.Storage.dailyMissionStartUtcMs`가 없으면 첫 sync의 `serverNowUtcMs`를 기록한다.
 - 현재 sync의 `serverNowUtcMs`와 `dailyMissionStartUtcMs`의 차이가 7일 초과면 현재 `serverNowUtcMs`를 새 `dailyMissionStartUtcMs`로 사용하고 daily를 다시 시작한다.
 - timed mission은 `dailyMissionStartUtcMs` anchor 기준으로 현재 `dailyKey`를 결정한다.
-- daily period 전환 시 기존 daily runtime set을 정리하고, `MISSION_DAILY` 전체 active row 중 최대 5개를 다시 선택해 runtime을 생성한다.
+- daily period 전환 시 기존 daily runtime set을 정리하고, `MISSION_DAY` 전체 active row 중 최대 5개를 다시 선택해 runtime을 생성한다.
   - `fixed=true`는 항상 포함
   - 남은 슬롯은 `fixed=false` active row에서 random selection
 - 현재 scope에서 이미 `ACTIVE`인 미션은 `missionUid`별 runtime을 보장한다. 이 시점이 mission start다.
@@ -85,7 +85,7 @@ AppliesTo: v10
 ### 4) 기간 전환
 
 - daily 전환 시 기존 daily runtime set을 정리하고 새 cycle용 runtime set을 다시 만든다.
-- 새 cycle에서도 `MISSION_DAILY` 전체 active row를 검색하지만 실제 생성은 최대 5개까지만 한다.
+- 새 cycle에서도 `MISSION_DAY` 전체 active row를 검색하지만 실제 생성은 최대 5개까지만 한다.
 - `periodKey`는 현재 claim/reset 구간을 나타내는 메타데이터다.
 - 이전 period의 지급 정보는 `grantId` 기준으로만 분리된다.
 

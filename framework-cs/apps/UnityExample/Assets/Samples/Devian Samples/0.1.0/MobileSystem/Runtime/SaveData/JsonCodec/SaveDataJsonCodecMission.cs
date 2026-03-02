@@ -95,7 +95,7 @@ namespace Devian
                     if (token is not JObject runtimeObj)
                         continue;
 
-                    var missionKindRaw = runtimeObj.Value<int?>("missionKind") ?? (int)MISSION_TYPE.DAILY;
+                    var missionKindRaw = runtimeObj.Value<int?>("missionKind") ?? (int)MISSION_TYPE.DAY;
                     if (!System.Enum.IsDefined(typeof(MISSION_TYPE), missionKindRaw))
                         continue;
 
@@ -107,7 +107,7 @@ namespace Devian
                     MissionRuntimeBase runtime;
                     switch (missionKind)
                     {
-                        case MISSION_TYPE.ACHIEVEMENT:
+                        case MISSION_TYPE.ACHIEVE:
                             runtime = new MissionRuntimeAchieve
                             {
                                 missionKind = missionKind,
@@ -122,7 +122,7 @@ namespace Devian
                             };
                             break;
 
-                        case MISSION_TYPE.DAILY:
+                        case MISSION_TYPE.DAY:
                         default:
                             runtime = new MissionRuntimeDaily
                             {
@@ -148,7 +148,7 @@ namespace Devian
                     if (token is not JObject claimObj)
                         continue;
 
-                    var missionKindRaw = claimObj.Value<int?>("missionKind") ?? (int)MISSION_TYPE.DAILY;
+                    var missionKindRaw = claimObj.Value<int?>("missionKind") ?? (int)MISSION_TYPE.DAY;
                     if (!System.Enum.IsDefined(typeof(MISSION_TYPE), missionKindRaw))
                         continue;
 

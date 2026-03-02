@@ -33,6 +33,15 @@ public class UICanvasSample : UICanvas<UICanvasSample>
     {
         GameNetManager.Instance.Disconnect();
     }
+
+    public void OnClick_Mission()
+    {
+        MissionManager.Instance.triggerSystem.Notify(MISSION_CONDITION_TYPE.TEST_002, 1);
+        foreach (var mission in MissionManager.Instance.Storage.runtimes.Values)
+        {
+            Debug.Log($"id={mission.missionId}, value={mission.progressValue}");
+        }
+    }
     
     public void OnClick_SignIn_Google()
     {

@@ -112,7 +112,7 @@ namespace Devian
         {
             switch (args.MissionKind)
             {
-                case MISSION_TYPE.DAILY:
+                case MISSION_TYPE.DAY:
                 {
                     var runtime = new MissionRuntimeDaily
                     {
@@ -137,7 +137,7 @@ namespace Devian
                     return runtime;
                 }
 
-                case MISSION_TYPE.ACHIEVEMENT:
+                case MISSION_TYPE.ACHIEVE:
                 default:
                 {
                     var runtime = new MissionRuntimeAchieve

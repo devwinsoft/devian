@@ -61,17 +61,17 @@ namespace Devian.Domain.Game
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("MISSION_DAILY", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("MISSION_DAY", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_MISSION_DAILY.LoadFromNdjson(text);
-                    TB_MISSION_DAILY._AfterLoad();
+                    TB_MISSION_DAY.LoadFromNdjson(text);
+                    TB_MISSION_DAY._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_MISSION_DAILY.LoadFromPb64Binary(bin);
-                    TB_MISSION_DAILY._AfterLoad();
+                    TB_MISSION_DAY.LoadFromPb64Binary(bin);
+                    TB_MISSION_DAY._AfterLoad();
                 }
             });
 

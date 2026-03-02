@@ -18,7 +18,7 @@ MissionManager가 단일 인스턴스를 소유하고, 각 MissionRuntime이 여
 | Term | Definition |
 |------|------------|
 | `MissionTriggerSystem` | `MessageSystem<int, MISSION_CONDITION_TYPE>` 특화 클래스 |
-| `MISSION_CONDITION_TYPE` | 미션 조건 타입 enum (`ENUM_TYPES.json` source) |
+| `MISSION_CONDITION_TYPE` | 미션 조건 타입 enum (`ENUM_MISSION.json` source) |
 | `ownerKey` | `int`; `missionUid`를 그대로 사용 |
 | `msgValue` | 진행도 갱신에 사용하는 `CBigInt` 또는 `long` payload |
 
@@ -98,7 +98,7 @@ MissionManager.triggerSystem.Notify(msgType, msgValue);
 | `ACHIEVEMENT_UNLOCKED` | 업적 달성 입력 |
 
 정본 source:
-- `input/Domains/Game/ENUM_TYPES.json`
+- `input/Domains/Game/ENUM_MISSION.json`
 
 
 ---

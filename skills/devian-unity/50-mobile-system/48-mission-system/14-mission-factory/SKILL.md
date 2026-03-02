@@ -100,7 +100,7 @@ public static class MissionRuntimeFactory
 ```csharp
 public readonly struct DailyMissionRuntimeCreateArgs
 {
-    public MISSION_TYPE MissionKind;         // DAILY
+    public MISSION_TYPE MissionKind;         // DAY
     public string MissionId;                // row id
     public string PeriodKey;                // day:{index}
     public int MissionUid;                  // manager allocated
@@ -124,7 +124,7 @@ public readonly struct DailyMissionRuntimeCreateArgs
 ```csharp
 public readonly struct AchieveMissionRuntimeCreateArgs
 {
-    public MISSION_TYPE MissionKind;         // ACHIEVEMENT
+    public MISSION_TYPE MissionKind;         // ACHIEVE
     public string MissionId;                // group id
     public int Level;                       // step level
     public string PeriodKey;                // once
@@ -179,7 +179,7 @@ public readonly struct MissionRuntimeRestoreArgs
 - `ProgressValue = 0`
 - `IsCompleted = false`
 - 생성 직후 구독 시작
-- scheduler는 `MISSION_DAILY` active row 전체 중 최대 5개까지만 `CreateDaily(...)`를 호출한다.
+- scheduler는 `MISSION_DAY` active row 전체 중 최대 5개까지만 `CreateDaily(...)`를 호출한다.
 
 ### Achievement create
 

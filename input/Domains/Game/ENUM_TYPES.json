@@ -62,41 +62,6 @@
         { "name": "UNIT_LEVEL", "value": 21 },
         { "name": "UNIT_HP_MAX", "value": 100 }
       ]
-    },
-    {
-      "name": "MISSION_TYPE",
-      "values": [
-        { "name": "DAILY", "value": 0 },
-        { "name": "ACHIEVEMENT", "value": 1 }
-      ]
-    },
-    {
-      "name": "MISSION_CONDITION_TYPE",
-      "values": [
-        { "name": "NONE", "value": 0 },
-        { "name": "LOGIN", "value": 1 },
-        { "name": "MISSION_CLEAR", "value": 2 },
-        { "name": "STAGE_CLEAR", "value": 3 },
-        { "name": "ACHIEVEMENT_UNLOCKED", "value": 4 },
-        { "name": "TEST_001", "value": 9001 },
-        { "name": "TEST_002", "value": 9002 },
-        { "name": "TEST_003", "value": 9003 },
-        { "name": "TEST_004", "value": 9004 },
-        { "name": "TEST_005", "value": 9005 },
-        { "name": "TEST_006", "value": 9006 },
-        { "name": "TEST_007", "value": 9007 },
-        { "name": "TEST_008", "value": 9008 },
-        { "name": "TEST_009", "value": 9009 },
-        { "name": "TEST_010", "value": 9010 }
-      ]
-    },
-    {
-      "name": "MISSION_OP_TYPE",
-      "values": [
-        { "name": "NONE", "value": 0 },
-        { "name": "MAX", "value": 1 },
-        { "name": "SUM", "value": 2 }
-      ]
     }
   ]
 }

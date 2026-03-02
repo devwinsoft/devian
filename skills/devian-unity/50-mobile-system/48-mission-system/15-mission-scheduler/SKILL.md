@@ -111,7 +111,7 @@ public sealed class MissionScheduler
 
 ### Daily
 
-- daily는 init/reset cycle마다 `MISSION_DAILY` 전체 active row를 스캔한다.
+- daily는 init/reset cycle마다 `MISSION_DAY` 전체 active row를 스캔한다.
 - scheduler는 그중 최대 5개만 선택해 runtime set을 만든다.
 - `fixed=true` row는 항상 먼저 포함한다.
 - 남은 슬롯은 `fixed=false` active row에서 random하게 선택한다.

@@ -105,10 +105,10 @@ namespace Devian
 
             switch (missionKind)
             {
-                case MISSION_TYPE.DAILY:
+                case MISSION_TYPE.DAY:
                     return getDailyRuntimeState(missionId);
 
-                case MISSION_TYPE.ACHIEVEMENT:
+                case MISSION_TYPE.ACHIEVE:
                     return getAchievementRuntimeState(missionId);
 
                 default:
@@ -126,10 +126,10 @@ namespace Devian
 
             switch (missionKind)
             {
-                case MISSION_TYPE.DAILY:
+                case MISSION_TYPE.DAY:
                     return await claimDailyAsync(missionId, ct);
 
-                case MISSION_TYPE.ACHIEVEMENT:
+                case MISSION_TYPE.ACHIEVE:
                     return await claimAchievementAsync(missionId, ct);
 
                 default:
@@ -146,7 +146,7 @@ namespace Devian
 
         MissionRuntimeState getDailyRuntimeState(string missionId)
         {
-            var row = TB_MISSION_DAILY.Get(missionId);
+            var row = TB_MISSION_DAY.Get(missionId);
             if (row == null || !row.IsActive || row.ConditionOp == MISSION_OP_TYPE.NONE || !row.ConditionValue.HasValue)
                 return MissionRuntimeState.NONE;
 
@@ -171,7 +171,7 @@ namespace Devian
 
         async Task<CommonResult> claimDailyAsync(string missionId, CancellationToken ct)
         {
-            var row = TB_MISSION_DAILY.Get(missionId);
+            var row = TB_MISSION_DAY.Get(missionId);
             if (row == null || !row.IsActive || row.ConditionOp == MISSION_OP_TYPE.NONE || !row.ConditionValue.HasValue)
                 return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Daily mission not found: {missionId}");
 
@@ -186,7 +186,7 @@ namespace Devian
             if (!runtime.IsClaimable)
                 return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Daily mission is not claimable: {missionId}");
 
-            var grantId = buildGrantId(MISSION_TYPE.DAILY, missionId, 1, periodKey);
+            var grantId = buildGrantId(MISSION_TYPE.DAY, missionId, 1, periodKey);
             if (_storage.claimRecords.ContainsKey(grantId))
                 return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Daily mission already claimed: {grantId}");
 
@@ -195,7 +195,7 @@ namespace Devian
                 return CommonResult.Failure(apply.Error!);
 
             runtime.MarkCompleted();
-            _storage.claimRecords[grantId] = createClaimRecord(MISSION_TYPE.DAILY, missionId, 1, grantId, periodKey, runtime.rewardGroupId);
+            _storage.claimRecords[grantId] = createClaimRecord(MISSION_TYPE.DAY, missionId, 1, grantId, periodKey, runtime.rewardGroupId);
 
             return await saveMissionStateAsync(ct);
         }
@@ -209,7 +209,7 @@ namespace Devian
             if (!runtime.IsClaimable)
                 return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Achievement is not claimable: {missionId}");
 
-            var grantId = buildGrantId(MISSION_TYPE.ACHIEVEMENT, missionId, runtime.level, PeriodOnce);
+            var grantId = buildGrantId(MISSION_TYPE.ACHIEVE, missionId, runtime.level, PeriodOnce);
             if (_storage.claimRecords.ContainsKey(grantId))
                 return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Achievement already claimed: {grantId}");
 
@@ -218,7 +218,7 @@ namespace Devian
                 return CommonResult.Failure(apply.Error!);
 
             _storage.claimRecords[grantId] = createClaimRecord(
-                MISSION_TYPE.ACHIEVEMENT,
+                MISSION_TYPE.ACHIEVE,
                 missionId,
                 runtime.level,
                 grantId,
@@ -332,8 +332,8 @@ namespace Devian
         {
             return missionKind switch
             {
-                MISSION_TYPE.DAILY => $"mission:daily:{missionId}:{periodKey}",
-                MISSION_TYPE.ACHIEVEMENT => $"mission:achievement:{missionId}:{level}:{periodKey}",
+                MISSION_TYPE.DAY => $"mission:daily:{missionId}:{periodKey}",
+                MISSION_TYPE.ACHIEVE => $"mission:achievement:{missionId}:{level}:{periodKey}",
                 _ => $"mission:{missionKind}:{missionId}:{periodKey}",
             };
         }

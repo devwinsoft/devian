@@ -197,7 +197,7 @@ claim 가능 판정:
 
 - daily reset
   - 새 `dailyKey`가 되면 기존 daily runtime set을 정리한다.
-  - `MISSION_DAILY` 전체 active row 중 최대 5개를 다시 선택해 새 MissionRuntimeDaily를 생성한다.
+  - `MISSION_DAY` 전체 active row 중 최대 5개를 다시 선택해 새 MissionRuntimeDaily를 생성한다.
   - `fixed=true` row는 항상 포함한다.
   - 새 runtime은 새 `missionUid`, 새 `periodKey`, `progressValue = 0`, `isCompleted = false`로 시작한다.
 

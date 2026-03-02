@@ -8,6 +8,38 @@ import { IEntity, IEntityKey, CBigInt } from '@devian/core';
 // Contracts
 // ================================================================
 
+/** MISSION_TYPE enum */
+export enum MISSION_TYPE {
+    DAY = 0,
+    ACHIEVE = 1,
+}
+
+/** MISSION_CONDITION_TYPE enum */
+export enum MISSION_CONDITION_TYPE {
+    NONE = 0,
+    LOGIN = 1,
+    MISSION_CLEAR = 2,
+    STAGE_CLEAR = 3,
+    ACHIEVEMENT_UNLOCKED = 4,
+    TEST_001 = 9001,
+    TEST_002 = 9002,
+    TEST_003 = 9003,
+    TEST_004 = 9004,
+    TEST_005 = 9005,
+    TEST_006 = 9006,
+    TEST_007 = 9007,
+    TEST_008 = 9008,
+    TEST_009 = 9009,
+    TEST_010 = 9010,
+}
+
+/** MISSION_OP_TYPE enum */
+export enum MISSION_OP_TYPE {
+    NONE = 0,
+    MAX = 1,
+    SUM = 2,
+}
+
 /** CURRENCY_TYPE enum */
 export enum CURRENCY_TYPE {
     GOLD = 0,
@@ -64,38 +96,6 @@ export enum STAT_TYPE {
     UNIT_HP_MAX = 100,
 }
 
-/** MISSION_TYPE enum */
-export enum MISSION_TYPE {
-    DAILY = 0,
-    ACHIEVEMENT = 1,
-}
-
-/** MISSION_CONDITION_TYPE enum */
-export enum MISSION_CONDITION_TYPE {
-    NONE = 0,
-    LOGIN = 1,
-    MISSION_CLEAR = 2,
-    STAGE_CLEAR = 3,
-    ACHIEVEMENT_UNLOCKED = 4,
-    TEST_001 = 9001,
-    TEST_002 = 9002,
-    TEST_003 = 9003,
-    TEST_004 = 9004,
-    TEST_005 = 9005,
-    TEST_006 = 9006,
-    TEST_007 = 9007,
-    TEST_008 = 9008,
-    TEST_009 = 9009,
-    TEST_010 = 9010,
-}
-
-/** MISSION_OP_TYPE enum */
-export enum MISSION_OP_TYPE {
-    NONE = 0,
-    MAX = 1,
-    SUM = 2,
-}
-
 /** ProductKind enum */
 export enum ProductKind {
     Consumable = 0,
@@ -149,7 +149,7 @@ export interface CARD extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface MISSION_DAILY extends IEntityKey<string> {
+export interface MISSION_DAY extends IEntityKey<string> {
     MissionId: string;
     IsActive: boolean;
     Fixed: boolean;
@@ -320,9 +320,9 @@ export class TB_CARD {
     }
 }
 
-export class TB_MISSION_DAILY {
-    private static _dict: Map<string, MISSION_DAILY> = new Map();
-    private static _list: MISSION_DAILY[] = [];
+export class TB_MISSION_DAY {
+    private static _dict: Map<string, MISSION_DAY> = new Map();
+    private static _list: MISSION_DAY[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -331,9 +331,9 @@ export class TB_MISSION_DAILY {
         this._list = [];
     }
 
-    static getAll(): readonly MISSION_DAILY[] { return this._list; }
+    static getAll(): readonly MISSION_DAY[] { return this._list; }
 
-    static get(key: string): MISSION_DAILY | undefined {
+    static get(key: string): MISSION_DAY | undefined {
         return this._dict.get(key);
     }
 
@@ -345,7 +345,7 @@ export class TB_MISSION_DAILY {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as MISSION_DAILY;
+            const row = JSON.parse(line) as MISSION_DAY;
             this._list.push(row);
             this._dict.set(row.MissionId, row);
         }
