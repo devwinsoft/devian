@@ -6,6 +6,7 @@
  *   - ackPurchaseClientGrant
  *   - ackPurchaseStoreConfirm
  *   - getEntitlements
+ *   - getMissionClock
  *   - getRecentPurchases30d
  *   - getPurchaseAdjustments
  */
@@ -27,6 +28,9 @@ export {getEntitlements} from "./purchase/getEntitlements";
 export {getRecentPurchases30d} from "./purchase/getRecentPurchases30d";
 export {getPurchaseAdjustments} from "./purchase/getPurchaseAdjustments";
 export {ackRefundApplied} from "./purchase/ackRefundApplied";
+
+// ── Mission Callables ──
+export {getMissionClock} from "./mission/getMissionClock";
 
 // ── Google Play RTDN (Pub/Sub) ──
 export {handleGooglePlayNotification} from "./purchase/handleGooglePlayNotification";

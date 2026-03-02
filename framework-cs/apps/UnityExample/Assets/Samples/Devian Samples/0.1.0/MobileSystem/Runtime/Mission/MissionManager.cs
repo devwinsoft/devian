@@ -258,10 +258,12 @@ namespace Devian
 
         void onRuntimeChanged(MissionRuntimeBase runtime)
         {
+            // Reserved for future mission UI/event invalidation.
         }
 
         void onRuntimeClaimable(MissionRuntimeBase runtime)
         {
+            // Reserved for future claimable notification hook.
         }
 
         void detachAllRuntimes()
@@ -284,11 +286,6 @@ namespace Devian
             _scheduler.PruneExpiredState();
         }
 
-        int allocateMissionUid()
-        {
-            return _scheduler.AllocateMissionUid();
-        }
-
         MissionRuntimeDaily findDailyRuntime(string missionId)
         {
             return _scheduler.FindDaily(missionId);
@@ -297,18 +294,6 @@ namespace Devian
         MissionRuntimeAchieve findAchievementRuntime(string missionId)
         {
             return _scheduler.FindAchieve(missionId);
-        }
-
-        static MISSION_ACHIEVE findAchievementRow(string missionId, int level)
-        {
-            var rows = TB_MISSION_ACHIEVE.GetByGroup(missionId);
-            foreach (var row in rows)
-            {
-                if (row.Level == level)
-                    return row;
-            }
-
-            return null;
         }
 
         static MISSION_ACHIEVE findAchievementNextRow(string missionId, int level)
@@ -341,18 +326,6 @@ namespace Devian
 
             var diff = Math.Max(0L, estimatedServerNowUtcMs - _storage.dailyMissionStartUtcMs);
             return (int)(diff / DayMs);
-        }
-
-        static bool TryParseDailyPeriodIndex(string periodKey, out int periodIndex)
-        {
-            periodIndex = 0;
-            if (string.IsNullOrWhiteSpace(periodKey))
-                return false;
-
-            if (!periodKey.StartsWith("day:", StringComparison.Ordinal))
-                return false;
-
-            return int.TryParse(periodKey.Substring(4), out periodIndex);
         }
 
         static string buildGrantId(MISSION_TYPE missionKind, string missionId, int level, string periodKey)

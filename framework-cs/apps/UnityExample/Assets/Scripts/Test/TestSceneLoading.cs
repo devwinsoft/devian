@@ -20,6 +20,7 @@ public class TestSceneLoading : TestSceneBootstrap
     protected override async Task onStart()
     {
         Debug.Log("TestSceneLoading...");
+        Debug.Log(Application.persistentDataPath);
         await base.onStart();
 
         UICanvasLoading.Instance.Init();
@@ -178,6 +179,7 @@ public class TestSceneLoading : TestSceneBootstrap
             return init.Error.Code;
         }
 
+        // Todo: 최적화
         var save = await SaveDataManager.Instance.SaveGameStorageAsync(CancellationToken.None);
         if (save.IsFailure)
         {

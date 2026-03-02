@@ -192,6 +192,8 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         msg.Message = "Echo Message";
         GameNetManager.Proxy.SendEcho(msg);
         */
+        
+        MissionManager.Instance.triggerSystem.Notify(MISSION_CONDITION_TYPE.TEST_001, 1);
     }
 
 }
