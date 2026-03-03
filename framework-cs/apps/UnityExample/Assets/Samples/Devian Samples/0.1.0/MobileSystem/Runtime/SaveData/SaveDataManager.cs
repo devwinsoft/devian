@@ -588,6 +588,17 @@ namespace Devian
                 mission ?? new MissionStorage());
         }
 
+        /// <summary>
+        /// 평문 JSON을 런타임에 적용하고 local(+cloud)에 영속화한다.
+        /// Recovery Import 전용. Sync 없이 직접 복원이 가능하다.
+        /// </summary>
+        public async Task<CommonResult<bool>> RestoreFromPlainJsonAsync(string json, bool saveCloud, CancellationToken ct)
+        {
+            LoadFromJson(json);
+            _hasPrimarySaveContext = true;
+            return await SaveGameStorageAsync(saveCloud, ct);
+        }
+
         public void LoadFromPayload(string payload)
         {
             var json = ComplexUtil.Decrypt_Base64(payload);

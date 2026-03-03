@@ -119,6 +119,24 @@
 - `static CommonResult<T> ParsePayloadResult<T>(SaveLocalPayload payload)`
 - `static CommonResult<T> ParsePayloadResult<T>(SaveCloudPayload payload)`
 
+### Serialization
+- `string ToJson()`
+
+현재 런타임 게임 상태(Inventory, Purchase, Account, Mission)를 평문 JSON으로 직렬화한다.
+내부적으로 `SaveDataJsonCodec.Serialize()`를 호출한다.
+
+### Recovery
+- `Task<CommonResult<bool>> RestoreFromPlainJsonAsync(string json, bool saveCloud, CancellationToken ct)`
+
+평문 JSON을 런타임에 적용하고 local(+cloud)에 영속화한다.
+`_hasPrimarySaveContext`를 활성화하므로 Sync 없이 직접 복원이 가능하다.
+RecoveryManager(25-recovery-system)에서 Import 시 사용한다.
+
+내부 동작:
+1. `LoadFromJson(json)` — 런타임 스토리지에 적용
+2. `_hasPrimarySaveContext = true` — primary save context 활성화
+3. `SaveGameStorageAsync(saveCloud, ct)` — local(+cloud) 영속화
+
 
 ## Internal API
 - `internal Task<CommonResult<SaveCloudResult>> _initializeCloudAsync(CancellationToken ct)` — AccountManager에서 호출

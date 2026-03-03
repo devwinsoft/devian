@@ -1,0 +1,69 @@
+========================================
+ DevianShare — Android FileProvider 설정
+========================================
+
+DevianShare.java는 OS 공유 시트를 통해 .dvn 파일을 공유한다.
+Android에서 FileProvider가 필요하며, .androidlib 형식으로 프로젝트에 배치해야 한다.
+(Samples~ 내부 파일은 Unity manifest merge 대상이 아니고,
+ Assets/Plugins/Android/res/ 도 Unity에서 지원 중단되었으므로,
+ .androidlib를 사용한다.)
+
+
+DevianShare.androidlib
+──────────────────────
+위치: Assets/Plugins/Android/DevianShare.androidlib/
+
+구조:
+  DevianShare.androidlib/
+    project.properties          ← Android Library 선언
+    AndroidManifest.xml         ← FileProvider 선언
+    res/xml/devian_file_paths.xml  ← 파일 경로 공개 설정
+
+
+1) project.properties
+─────────────────────
+    target=android-25
+    android.library=true
+
+
+2) AndroidManifest.xml
+──────────────────────
+    <?xml version="1.0" encoding="utf-8"?>
+    <manifest xmlns:android="http://schemas.android.com/apk/res/android"
+        package="com.devian.share">
+        <application>
+            <provider
+                android:name="androidx.core.content.FileProvider"
+                android:authorities="${applicationId}.devianfileprovider"
+                android:exported="false"
+                android:grantUriPermissions="true">
+                <meta-data
+                    android:name="android.support.FILE_PROVIDER_PATHS"
+                    android:resource="@xml/devian_file_paths" />
+            </provider>
+        </application>
+    </manifest>
+
+- ${applicationId}는 빌드 시 실제 패키지명으로 치환된다.
+- authority는 DevianShare.java의 authority 문자열과 일치해야 한다:
+  activity.getPackageName() + ".devianfileprovider"
+
+
+3) res/xml/devian_file_paths.xml
+────────────────────────────────
+    <?xml version="1.0" encoding="utf-8"?>
+    <paths>
+        <cache-path name="internal_cache" path="/" />
+        <external-cache-path name="external_cache" path="/" />
+    </paths>
+
+- <cache-path>: Context.getCacheDir() (internal cache)
+- <external-cache-path>: Context.getExternalCacheDir() (external cache)
+- Unity의 Application.temporaryCachePath는 Android에서 external cache를 반환한다.
+- 두 경로 모두 포함하여 환경에 관계없이 동작하도록 한다.
+
+
+참고
+────
+- 스킬 정본: skills/devian-unity/50-mobile-system/25-recovery-system/30-recovery-platform/SKILL.md
+- DevianShare.java: 같은 디렉토리의 com/devian/share/DevianShare.java

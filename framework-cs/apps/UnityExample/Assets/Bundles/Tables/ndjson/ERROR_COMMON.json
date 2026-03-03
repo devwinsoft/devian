@@ -122,3 +122,5 @@
 {"Id":"MISSION_RUNTIME_STALE","Msg_key":"","Msg":"Mission runtime belongs to a stale daily period."}
 {"Id":"MISSION_NOT_CLAIMABLE","Msg_key":"","Msg":"Mission is not claimable."}
 {"Id":"MISSION_ALREADY_CLAIMED","Msg_key":"","Msg":"Mission reward already claimed."}
+{"Id":"RECOVERY_DECODE_FAILED","Msg_key":"","Msg":"Recovery decode error."}
+{"Id":"RECOVERY_UNSUPPORTED_VERSION","Msg_key":"","Msg":"Recovery version error."}

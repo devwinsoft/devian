@@ -197,7 +197,10 @@
       "Bash(git stash)",
       "Bash(git stash pop)",
       "mcp__mcp-registry__search_mcp_registry",
-      "Bash(sort -k1 -n -r)"
+      "Bash(sort -k1 -n -r)",
+      "Bash(pkill -f \"vite --host\")",
+      "mcp__Claude_Preview__preview_start",
+      "WebFetch(domain:api.github.com)"
     ]
   },
   "project": {

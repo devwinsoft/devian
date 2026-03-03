@@ -263,4 +263,8 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         MissionManager.Instance.triggerSystem.Notify(MISSION_CONDITION_TYPE.TEST_001, 1);
     }
 
+    public void OnClick_SendDVN()
+    {
+        UnityTaskRunner.Run(RecoveryManager.Instance.ExportDvnViaEmailAsync("maoshy@gmail.com", CancellationToken.None), "OnClick_SendDVN");
+    }
 }
