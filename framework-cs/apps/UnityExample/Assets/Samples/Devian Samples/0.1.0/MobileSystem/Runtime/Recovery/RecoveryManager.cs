@@ -129,9 +129,10 @@ namespace Devian
                 var json = decodeResult.Value;
 
                 // 3. JSON 기본 검증 (파싱 가능 여부)
+                JObject jsonObj;
                 try
                 {
-                    JObject.Parse(json);
+                    jsonObj = JObject.Parse(json);
                 }
                 catch (Exception ex)
                 {
@@ -140,7 +141,19 @@ namespace Devian
                         $"Invalid JSON: {ex.Message}");
                 }
 
-                // 4. SaveDataManager로 복원
+                // 4. socialUserId 일치 검증
+                var fileSocialUserId = jsonObj["account"]?.Value<string>("socialUserId");
+                var currentSocialUserId = AccountManager.Instance.Storage.socialUserId;
+                if (!string.IsNullOrEmpty(fileSocialUserId)
+                    && !string.IsNullOrEmpty(currentSocialUserId)
+                    && !string.Equals(fileSocialUserId, currentSocialUserId, StringComparison.Ordinal))
+                {
+                    return CommonResult<bool>.Failure(
+                        CommonErrorType.RECOVERY_HMAC_FAILED,
+                        "socialUserId mismatch: recovery data belongs to a different account");
+                }
+
+                // 5. SaveDataManager로 복원
                 var restoreResult = await SaveDataManager.Instance
                     .RestoreFromPlainJsonAsync(json, true, ct);
 
@@ -149,7 +162,7 @@ namespace Devian
                     return CommonResult<bool>.Failure(restoreResult.Error!);
                 }
 
-                // 5. 임시 .dvn 파일 삭제
+                // 6. 임시 .dvn 파일 삭제
                 try
                 {
                     File.Delete(filePath);

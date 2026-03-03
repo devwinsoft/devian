@@ -139,7 +139,7 @@ export function createSaveDataTab(container: HTMLElement) {
   }
 
   // Import: file → 2-level decode
-  importBtn.addEventListener('click', () => {
+  importBtn.addEventListener('click', async () => {
     if (!fileContent || !fileExt) {
       setStatus('No file loaded.', 'error');
       return;
@@ -148,7 +148,7 @@ export function createSaveDataTab(container: HTMLElement) {
     try {
       // Level 1: get wrapper JSON string
       const jsonStr = fileExt === 'dvn'
-        ? decodeDvn(fileContent)
+        ? await decodeDvn(fileContent)
         : fileContent;
 
       const wrapper = JSON.parse(jsonStr);
@@ -182,7 +182,7 @@ export function createSaveDataTab(container: HTMLElement) {
   });
 
   // Export: 2-level encode → download
-  exportBtn.addEventListener('click', () => {
+  exportBtn.addEventListener('click', async () => {
     if (!fileExt) {
       setStatus('Import a file first to determine export format.', 'error');
       return;
@@ -217,7 +217,7 @@ export function createSaveDataTab(container: HTMLElement) {
 
       // Level 1: format-specific encoding
       const fullJson = JSON.stringify(wrapperObj);
-      const output = fileExt === 'dvn' ? encodeDvn(fullJson) : fullJson;
+      const output = fileExt === 'dvn' ? await encodeDvn(fullJson) : fullJson;
 
       downloadFile(output, fileExt);
       setStatus('Export complete. File downloaded.', 'success');

@@ -43,7 +43,8 @@ CompoSingleton<RecoveryManager>.Instance
 ## Dependencies (개념)
 
 - SaveDataManager — 평문 JSON 획득 및 복원 위임
-- RecoveryCodec — .dvn 인코딩/디코딩
+- RecoveryCodec — .dvn 인코딩/디코딩 + HMAC 무결성 검증
+- AccountManager — 현재 로그인된 socialUserId 획득 (Import 시 계정 검증)
 - DevianShare 네이티브 플러그인 — OS 공유 시트 호출 (Export 시, [30-recovery-platform](../30-recovery-platform/SKILL.md) 참조)
 - Platform Native Layer — .dvn 파일 수신 (Import 시, [30-recovery-platform](../30-recovery-platform/SKILL.md) 참조)
 
@@ -60,7 +61,7 @@ CompoSingleton<RecoveryManager>.Instance
 
 ```
 1. SaveDataManager.Instance.ToJson() → 평문 JSON 획득
-2. RecoveryCodec.Encode(json) → .dvn string
+2. RecoveryCodec.Encode(json) → .dvn string (v2: HMAC 포함)
 3. 임시 파일 저장 (Application.temporaryCachePath)
    파일명: recovery_{timestamp}.dvn
 4. DevianShare.ShareFile로 OS 공유 시트 열기
@@ -74,7 +75,7 @@ CompoSingleton<RecoveryManager>.Instance
 - `Task<CommonResult<bool>> ExportDvnViaEmailAsync(string recipient, CancellationToken ct)`
 
 ```
-1~3. ExportDvnAsync와 동일 (PrepareDvnFileAsync 공유)
+1~3. ExportDvnAsync와 동일 (PrepareDvnFileAsync 공유, v2 HMAC 포함)
 4. DevianShare.SendEmail로 이메일 앱 열기
    - 수신자: recipient (프리셋)
    - Subject: 앱 이름 + "Save Data Recovery"
@@ -92,10 +93,15 @@ CompoSingleton<RecoveryManager>.Instance
 ```
 1. filePath에서 .dvn 파일 읽기
 2. RecoveryCodec.Decode(content) → CommonResult<string> 평문 JSON
+   - v2: HMAC 무결성 검증 포함 (RecoveryCodec 내부)
+   - v1: 하위호환 (HMAC 없이 디코딩)
 3. JSON 기본 검증 (파싱 가능 여부)
-4. SaveDataManager.Instance.RestoreFromPlainJsonAsync(json, true, ct)
+4. socialUserId 일치 검증:
+   json 내부 account.socialUserId vs AccountManager.Instance.Storage.socialUserId
+   - 불일치 → 에러 반환 (다른 계정의 데이터)
+5. SaveDataManager.Instance.RestoreFromPlainJsonAsync(json, true, ct)
    → 런타임 적용 + local/cloud 영속화
-5. 임시 .dvn 파일 삭제
+6. 임시 .dvn 파일 삭제
 ```
 
 
@@ -122,6 +128,8 @@ RecoveryManager는 SaveDataManager의 아래 public API를 사용한다:
 | 공유 시트 호출 실패 | `CommonErrorType` 에러 반환 |
 | .dvn 파일 읽기 실패 | 에러 반환 + 유저에게 안내 |
 | RecoveryCodec.Decode 실패 (손상/위조) | 에러 반환 + "복원 실패" 안내 |
+| HMAC 불일치 (v2, RecoveryCodec 내부) | `RECOVERY_HMAC_FAILED` 에러 반환 |
+| socialUserId 불일치 (다른 계정) | 에러 반환 + "다른 계정의 데이터" 안내 |
 | JSON version 불일치 | 에러 반환 + 버전 안내 |
 | SaveDataManager 복원 실패 | 에러 반환, 기존 데이터 유지 |
 
@@ -147,7 +155,7 @@ RecoveryManager는 SaveDataManager의 아래 public API를 사용한다:
 1. 유저가 이메일에서 .dvn 첨부파일 탭
 2. OS가 게임으로 파일 전달 (Custom File Type Association)
 3. 네이티브 레이어 → `RecoveryManager.ImportDvnAsync(filePath, ct)` 호출
-4. 디코딩 → 검증 → 복원 → 유저에게 "복원 완료" 안내
+4. 디코딩 (v2: HMAC 검증) → socialUserId 일치 확인 → 복원 → 유저에게 "복원 완료" 안내
 
 
 ---
