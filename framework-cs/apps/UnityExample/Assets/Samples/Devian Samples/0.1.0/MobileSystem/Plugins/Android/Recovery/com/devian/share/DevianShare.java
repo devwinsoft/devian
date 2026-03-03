@@ -17,14 +17,19 @@ public class DevianShare {
 
     /**
      * OS 파일 선택 다이얼로그를 열어 사용자가 파일을 선택하게 한다.
-     * 결과는 UnitySendMessage("RecoveryManager", "OnFilePickerResult", filePath)로 전달된다.
+     * 결과는 UnitySendMessage(gameObjectName, "OnFilePickerResult", filePath)로 전달된다.
      *
-     * @param activity  현재 Activity (UnityPlayer.currentActivity)
+     * @param activity        현재 Activity (UnityPlayer.currentActivity)
+     * @param gameObjectName  UnitySendMessage 수신 GameObject 이름
      */
-    public static void pickFile(Activity activity) {
+    public static void pickFile(Activity activity, String gameObjectName) {
         if (activity == null) return;
 
+        android.os.Bundle args = new android.os.Bundle();
+        args.putString("gameObjectName", gameObjectName != null ? gameObjectName : "RecoveryManager");
+
         DevianFilePickerFragment fragment = new DevianFilePickerFragment();
+        fragment.setArguments(args);
         FragmentTransaction ft = activity.getFragmentManager().beginTransaction();
         ft.add(fragment, FRAGMENT_TAG);
         ft.commitAllowingStateLoss();

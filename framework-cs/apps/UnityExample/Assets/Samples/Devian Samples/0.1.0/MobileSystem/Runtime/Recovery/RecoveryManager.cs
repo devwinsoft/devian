@@ -321,15 +321,16 @@ namespace Devian
 #endif
         }
 
-        private static void PickFile()
+        private void PickFile()
         {
+            var goName = gameObject.name;
 #if UNITY_IOS && !UNITY_EDITOR
-            DevianShare_PickFile();
+            DevianShare_PickFile(goName);
 #elif UNITY_ANDROID && !UNITY_EDITOR
             using var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
             using var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
             using var cls = new AndroidJavaClass("com.devian.share.DevianShare");
-            cls.CallStatic("pickFile", activity);
+            cls.CallStatic("pickFile", activity, goName);
 #else
             Debug.Log("[RecoveryManager] PickFile not supported on this platform.");
 #endif
@@ -343,7 +344,7 @@ namespace Devian
         private static extern void DevianShare_SendEmail(string filePath, string recipient, string subject);
 
         [DllImport("__Internal")]
-        private static extern void DevianShare_PickFile();
+        private static extern void DevianShare_PickFile(string gameObjectName);
 #endif
     }
 }

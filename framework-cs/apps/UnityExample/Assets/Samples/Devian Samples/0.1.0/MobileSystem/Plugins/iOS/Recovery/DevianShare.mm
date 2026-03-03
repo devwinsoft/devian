@@ -25,23 +25,26 @@ static DevianMailDelegate *_mailDelegate = nil;
 // UIDocumentPickerViewController delegate
 // ──────────────────────────────────────
 @interface DevianFilePickerDelegate : NSObject <UIDocumentPickerDelegate>
+@property (nonatomic, copy) NSString *gameObjectName;
 @end
 
 @implementation DevianFilePickerDelegate
 
 - (void)documentPicker:(UIDocumentPickerViewController *)controller
     didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    const char *goName = [self.gameObjectName UTF8String];
     if (urls.count > 0) {
         NSString *filePath = urls.firstObject.path;
-        UnitySendMessage("RecoveryManager", "OnFilePickerResult",
+        UnitySendMessage(goName, "OnFilePickerResult",
                          [filePath UTF8String]);
     } else {
-        UnitySendMessage("RecoveryManager", "OnFilePickerResult", "");
+        UnitySendMessage(goName, "OnFilePickerResult", "");
     }
 }
 
 - (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
-    UnitySendMessage("RecoveryManager", "OnFilePickerResult", "");
+    const char *goName = [self.gameObjectName UTF8String];
+    UnitySendMessage(goName, "OnFilePickerResult", "");
 }
 
 @end
@@ -127,10 +130,12 @@ void DevianShare_SendEmail(const char* filePath, const char* recipient, const ch
 // ──────────────────────────────────────
 // 파일 선택 다이얼로그 (UIDocumentPickerViewController)
 // ──────────────────────────────────────
-void DevianShare_PickFile() {
+void DevianShare_PickFile(const char* gameObjectName) {
     if (_filePickerDelegate == nil) {
         _filePickerDelegate = [[DevianFilePickerDelegate alloc] init];
     }
+    _filePickerDelegate.gameObjectName =
+        (gameObjectName != NULL) ? [NSString stringWithUTF8String:gameObjectName] : @"RecoveryManager";
 
     NSArray *documentTypes = @[@"public.data"];
     UIDocumentPickerViewController *picker =

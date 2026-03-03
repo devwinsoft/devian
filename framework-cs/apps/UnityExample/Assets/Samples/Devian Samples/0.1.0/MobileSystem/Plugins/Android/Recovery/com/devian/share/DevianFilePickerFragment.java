@@ -110,10 +110,15 @@ public class DevianFilePickerFragment extends Fragment {
         }
     }
 
+    private String getGameObjectName() {
+        android.os.Bundle args = getArguments();
+        return (args != null) ? args.getString("gameObjectName", "RecoveryManager") : "RecoveryManager";
+    }
+
     private void sendResult(String filePath) {
         try {
             com.unity3d.player.UnityPlayer.UnitySendMessage(
-                "RecoveryManager", "OnFilePickerResult", filePath);
+                getGameObjectName(), "OnFilePickerResult", filePath);
         } catch (Exception ignored) {}
     }
 
