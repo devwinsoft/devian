@@ -1,16 +1,34 @@
 package com.devian.share;
 
 import android.app.Activity;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.net.Uri;
 import androidx.core.content.FileProvider;
 import java.io.File;
 
 /**
- * OS 공유 시트 / 이메일을 통해 파일을 공유한다.
+ * OS 공유 시트 / 이메일을 통해 파일을 공유하고, 파일 선택 다이얼로그를 연다.
  * RecoveryManager (C#) → AndroidJavaClass 브릿지로 호출.
  */
 public class DevianShare {
+
+    private static final String FRAGMENT_TAG = "DevianFilePickerFragment";
+
+    /**
+     * OS 파일 선택 다이얼로그를 열어 사용자가 파일을 선택하게 한다.
+     * 결과는 UnitySendMessage("RecoveryManager", "OnFilePickerResult", filePath)로 전달된다.
+     *
+     * @param activity  현재 Activity (UnityPlayer.currentActivity)
+     */
+    public static void pickFile(Activity activity) {
+        if (activity == null) return;
+
+        DevianFilePickerFragment fragment = new DevianFilePickerFragment();
+        FragmentTransaction ft = activity.getFragmentManager().beginTransaction();
+        ft.add(fragment, FRAGMENT_TAG);
+        ft.commitAllowingStateLoss();
+    }
 
     /**
      * OS 범용 공유 시트를 열어 파일을 공유한다.

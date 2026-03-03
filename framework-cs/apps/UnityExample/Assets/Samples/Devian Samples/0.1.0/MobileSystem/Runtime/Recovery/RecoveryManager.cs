@@ -17,6 +17,7 @@ namespace Devian
     /// </summary>
     public sealed class RecoveryManager : CompoSingleton<RecoveryManager>
     {
+        TaskCompletionSource<string> _filePickerTcs;
         /// <summary>
         /// 현재 save data를 .dvn 파일로 Export하고 OS 공유 시트를 연다.
         /// </summary>
@@ -189,11 +190,76 @@ namespace Devian
         }
 
         /// <summary>
-        /// 네이티브 레이어에서 UnitySendMessage로 호출됨.
+        /// 네이티브 레이어에서 UnitySendMessage로 호출됨 (경로 A: OS 파일 연결).
         /// </summary>
         public void OnRecoveryFileReceived(string filePath)
         {
             _ = ImportDvnAsync(filePath, CancellationToken.None);
+        }
+
+        /// <summary>
+        /// 네이티브 파일 선택 다이얼로그를 열어 .dvn 파일을 선택하고 Import한다 (경로 B: 앱 내 File Picker).
+        /// </summary>
+        public async Task<CommonResult<bool>> PickAndImportDvnAsync(CancellationToken ct)
+        {
+            try
+            {
+#if (UNITY_IOS || UNITY_ANDROID) && !UNITY_EDITOR
+                // 1. TaskCompletionSource 준비
+                _filePickerTcs = new TaskCompletionSource<string>();
+
+                // 2. 네이티브 파일 선택 다이얼로그 열기
+                PickFile();
+                Debug.Log("[RecoveryManager] PickAndImportDvnAsync: PickFile called, waiting for result...");
+
+                // 3. 네이티브 콜백 대기 (OnFilePickerResult에서 SetResult 호출)
+                using (ct.Register(() => _filePickerTcs.TrySetCanceled()))
+                {
+                    var filePath = await _filePickerTcs.Task;
+
+                    // 4. 취소 확인
+                    if (string.IsNullOrEmpty(filePath))
+                    {
+                        Debug.Log("[RecoveryManager] PickAndImportDvnAsync: user cancelled");
+                        return CommonResult<bool>.Failure(
+                            CommonErrorType.COMMON_UNKNOWN,
+                            "File selection cancelled");
+                    }
+
+                    Debug.Log($"[RecoveryManager] PickAndImportDvnAsync: file selected → {filePath}");
+
+                    // 5. 기존 Import 로직 재사용
+                    return await ImportDvnAsync(filePath, ct);
+                }
+#else
+                Debug.Log("[RecoveryManager] PickAndImportDvnAsync: File Picker is only supported on iOS/Android device builds. Skipping.");
+                await Task.CompletedTask;
+                return CommonResult<bool>.Success(true);
+#endif
+            }
+            catch (OperationCanceledException)
+            {
+                Debug.LogWarning("[RecoveryManager] PickAndImportDvnAsync: cancelled");
+                return CommonResult<bool>.Failure(
+                    CommonErrorType.COMMON_UNKNOWN,
+                    "Pick and import cancelled");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[RecoveryManager] PickAndImportDvnAsync: failed — {ex}");
+                return CommonResult<bool>.Failure(
+                    CommonErrorType.COMMON_UNKNOWN,
+                    $"Pick and import failed: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// 네이티브 파일 선택 결과를 수신한다 (UnitySendMessage 콜백).
+        /// filePath가 빈 문자열이면 사용자가 취소한 것이다.
+        /// </summary>
+        public void OnFilePickerResult(string filePath)
+        {
+            _filePickerTcs?.TrySetResult(filePath ?? string.Empty);
         }
 
         // ──────────────────────────────────────
@@ -255,12 +321,29 @@ namespace Devian
 #endif
         }
 
+        private static void PickFile()
+        {
+#if UNITY_IOS && !UNITY_EDITOR
+            DevianShare_PickFile();
+#elif UNITY_ANDROID && !UNITY_EDITOR
+            using var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+            using var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+            using var cls = new AndroidJavaClass("com.devian.share.DevianShare");
+            cls.CallStatic("pickFile", activity);
+#else
+            Debug.Log("[RecoveryManager] PickFile not supported on this platform.");
+#endif
+        }
+
 #if UNITY_IOS && !UNITY_EDITOR
         [DllImport("__Internal")]
         private static extern void DevianShare_ShareFile(string filePath, string subject);
 
         [DllImport("__Internal")]
         private static extern void DevianShare_SendEmail(string filePath, string recipient, string subject);
+
+        [DllImport("__Internal")]
+        private static extern void DevianShare_PickFile();
 #endif
     }
 }

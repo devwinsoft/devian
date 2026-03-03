@@ -31,11 +31,18 @@ SaveDataManager → 평문 JSON (~100KB)
 
 ========= Import (Player ← 개발자) =========
 
+경로 A: Custom File Type Association (OS 파일 연결)
 이메일에서 .dvn 첨부파일 탭
     ↓ OS가 게임으로 전달 (Custom File Type Association)
     ↓ RecoveryCodec.Decode
     ↓ version parse → ComplexUtil.Decrypt_Base64 → 평문 JSON
     ↓ 검증 → SaveDataManager로 복원
+
+경로 B: 앱 내 File Picker
+설정 화면에서 "데이터 복원" 버튼 탭
+    ↓ OS 파일 선택 다이얼로그 (SAF / UIDocumentPicker)
+    ↓ .dvn 파일 선택 → 임시 경로로 복사
+    ↓ RecoveryCodec.Decode → 검증 → SaveDataManager로 복원
 ```
 
 
@@ -60,7 +67,7 @@ SaveDataManager → 평문 JSON (~100KB)
 ## Dependencies
 
 - [21-savedata-system](../../21-savedata-system/00-overview/SKILL.md) — SaveDataManager (평문 JSON 획득/복원)
-- DevianShare 네이티브 플러그인 — OS 공유 시트 호출 (Export 시, [30-recovery-platform](../30-recovery-platform/SKILL.md) 참조)
+- DevianShare 네이티브 플러그인 — OS 공유 시트 호출 (Export), 파일 선택 다이얼로그 (Import 경로 B) ([30-recovery-platform](../30-recovery-platform/SKILL.md) 참조)
 
 운영툴:
 - [50-operation](../../../../devian/80-tools/50-operation/00-overview/SKILL.md) — 게임 운영 도구 (encode/decode 등)

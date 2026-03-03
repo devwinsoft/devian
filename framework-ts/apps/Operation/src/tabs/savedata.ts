@@ -138,7 +138,7 @@ export function createSaveDataTab(container: HTMLElement) {
     reader.readAsText(file);
   }
 
-  // Import: file → 2-level decode
+  // Import: file → decode (format-aware)
   importBtn.addEventListener('click', async () => {
     if (!fileContent || !fileExt) {
       setStatus('No file loaded.', 'error');
@@ -146,34 +146,45 @@ export function createSaveDataTab(container: HTMLElement) {
     }
 
     try {
-      // Level 1: get wrapper JSON string
-      const jsonStr = fileExt === 'dvn'
-        ? await decodeDvn(fileContent)
-        : fileContent;
+      if (fileExt === 'dvn') {
+        // DVN: decodeDvn → 평문 JSON (game state directly, no payload wrapper)
+        const plainJson = await decodeDvn(fileContent);
+        const parsed = JSON.parse(plainJson);
 
-      const wrapper = JSON.parse(jsonStr);
+        // Wrapper editor: empty (DVN has no wrapper)
+        wrapperEditor.dispatch({
+          changes: { from: 0, to: wrapperEditor.state.doc.length, insert: '' },
+        });
 
-      // Extract payload
-      const rawPayload = wrapper.payload;
-      if (typeof rawPayload !== 'string') {
-        throw new Error('payload field not found or not a string');
+        // Payload editor: full game state
+        const formatted = JSON.stringify(parsed, null, 2);
+        payloadEditor.dispatch({
+          changes: { from: 0, to: payloadEditor.state.doc.length, insert: formatted },
+        });
+      } else {
+        // JSON (cloud save format): wrapper.payload → deobfuscate → game state
+        const wrapper = JSON.parse(fileContent);
+
+        const rawPayload = wrapper.payload;
+        if (typeof rawPayload !== 'string') {
+          throw new Error('payload field not found or not a string');
+        }
+
+        const payloadJson = deobfuscate(rawPayload);
+
+        // Wrapper without payload → Editor 1
+        const { payload: _, ...wrapperWithoutPayload } = wrapper;
+        const wrapperFormatted = JSON.stringify(wrapperWithoutPayload, null, 2);
+        wrapperEditor.dispatch({
+          changes: { from: 0, to: wrapperEditor.state.doc.length, insert: wrapperFormatted },
+        });
+
+        // Decoded payload → Editor 2
+        const payloadFormatted = JSON.stringify(JSON.parse(payloadJson), null, 2);
+        payloadEditor.dispatch({
+          changes: { from: 0, to: payloadEditor.state.doc.length, insert: payloadFormatted },
+        });
       }
-
-      // Level 2: deobfuscate payload
-      const payloadJson = deobfuscate(rawPayload);
-
-      // Wrapper without payload → Editor 1
-      const { payload: _, ...wrapperWithoutPayload } = wrapper;
-      const wrapperFormatted = JSON.stringify(wrapperWithoutPayload, null, 2);
-      wrapperEditor.dispatch({
-        changes: { from: 0, to: wrapperEditor.state.doc.length, insert: wrapperFormatted },
-      });
-
-      // Decoded payload → Editor 2
-      const payloadFormatted = JSON.stringify(JSON.parse(payloadJson), null, 2);
-      payloadEditor.dispatch({
-        changes: { from: 0, to: payloadEditor.state.doc.length, insert: payloadFormatted },
-      });
 
       setStatus('Import complete.', 'success');
     } catch (e) {
@@ -181,26 +192,16 @@ export function createSaveDataTab(container: HTMLElement) {
     }
   });
 
-  // Export: 2-level encode → download
+  // Export: encode → download (format-aware)
   exportBtn.addEventListener('click', async () => {
     if (!fileExt) {
       setStatus('Import a file first to determine export format.', 'error');
       return;
     }
 
-    const wrapperStr = wrapperEditor.state.doc.toString().trim();
     const payloadStr = payloadEditor.state.doc.toString().trim();
-
-    if (!wrapperStr || !payloadStr) {
-      setStatus('Both editors must have content.', 'error');
-      return;
-    }
-
-    let wrapperObj: Record<string, unknown>;
-    try {
-      wrapperObj = JSON.parse(wrapperStr);
-    } catch {
-      setStatus('Invalid wrapper JSON.', 'error');
+    if (!payloadStr) {
+      setStatus('Payload editor must have content.', 'error');
       return;
     }
 
@@ -212,14 +213,34 @@ export function createSaveDataTab(container: HTMLElement) {
     }
 
     try {
-      // Level 2: obfuscate payload
-      wrapperObj.payload = obfuscate(payloadStr);
+      if (fileExt === 'dvn') {
+        // DVN: 평문 JSON → encodeDvn (no payload wrapper)
+        const compactJson = JSON.stringify(JSON.parse(payloadStr));
+        const output = await encodeDvn(compactJson);
 
-      // Level 1: format-specific encoding
-      const fullJson = JSON.stringify(wrapperObj);
-      const output = fileExt === 'dvn' ? await encodeDvn(fullJson) : fullJson;
+        downloadFile(output, fileExt);
+      } else {
+        // JSON (cloud save format): wrapper + obfuscate(payload)
+        const wrapperStr = wrapperEditor.state.doc.toString().trim();
+        if (!wrapperStr) {
+          setStatus('Wrapper editor must have content for .json export.', 'error');
+          return;
+        }
 
-      downloadFile(output, fileExt);
+        let wrapperObj: Record<string, unknown>;
+        try {
+          wrapperObj = JSON.parse(wrapperStr);
+        } catch {
+          setStatus('Invalid wrapper JSON.', 'error');
+          return;
+        }
+
+        wrapperObj.payload = obfuscate(payloadStr);
+        const fullJson = JSON.stringify(wrapperObj);
+
+        downloadFile(fullJson, fileExt);
+      }
+
       setStatus('Export complete. File downloaded.', 'success');
     } catch (e) {
       setStatus(`Encode error: ${e instanceof Error ? e.message : String(e)}`, 'error');

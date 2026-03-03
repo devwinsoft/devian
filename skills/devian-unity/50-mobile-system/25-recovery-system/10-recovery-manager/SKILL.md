@@ -28,7 +28,8 @@ CompoSingleton<RecoveryManager>.Instance
 ## Responsibilities (정본)
 
 - Export: 현재 save data → .dvn 파일 생성 → DevianShare로 공유
-- Import: .dvn 파일 수신 → 디코딩 → 검증 → SaveDataManager로 복원
+- Import (경로 A): OS 파일 연결로 .dvn 수신 → 디코딩 → 검증 → SaveDataManager로 복원
+- Import (경로 B): 앱 내 File Picker로 .dvn 선택 → 디코딩 → 검증 → SaveDataManager로 복원
 
 비책임(금지):
 - 자동 복구
@@ -45,8 +46,8 @@ CompoSingleton<RecoveryManager>.Instance
 - SaveDataManager — 평문 JSON 획득 및 복원 위임
 - RecoveryCodec — .dvn 인코딩/디코딩 + HMAC 무결성 검증
 - AccountManager — 현재 로그인된 socialUserId 획득 (Import 시 계정 검증)
-- DevianShare 네이티브 플러그인 — OS 공유 시트 호출 (Export 시, [30-recovery-platform](../30-recovery-platform/SKILL.md) 참조)
-- Platform Native Layer — .dvn 파일 수신 (Import 시, [30-recovery-platform](../30-recovery-platform/SKILL.md) 참조)
+- DevianShare 네이티브 플러그인 — OS 공유 시트 호출 (Export), 파일 선택 다이얼로그 (Import 경로 B) ([30-recovery-platform](../30-recovery-platform/SKILL.md) 참조)
+- Platform Native Layer — .dvn 파일 수신 (Import 경로 A, [30-recovery-platform](../30-recovery-platform/SKILL.md) 참조)
 
 
 ---
@@ -86,7 +87,7 @@ CompoSingleton<RecoveryManager>.Instance
 - iOS: `MFMailComposeViewController`, Android: `message/rfc822` + `EXTRA_EMAIL`
 
 
-### Import
+### Import (경로 A: OS 파일 연결)
 
 - `Task<CommonResult<bool>> ImportDvnAsync(string filePath, CancellationToken ct)`
 
@@ -103,6 +104,26 @@ CompoSingleton<RecoveryManager>.Instance
    → 런타임 적용 + local/cloud 영속화
 6. 임시 .dvn 파일 삭제
 ```
+
+
+### Import (경로 B: 앱 내 File Picker)
+
+- `Task<CommonResult<bool>> PickAndImportDvnAsync(CancellationToken ct)`
+
+```
+1. 네이티브 파일 선택 다이얼로그 열기 (DevianShare.PickFile)
+   - Android: ACTION_OPEN_DOCUMENT (application/octet-stream, 기본 폴더: Downloads)
+   - iOS: UIDocumentPickerViewController (public.data UTI, 기본 폴더: Downloads)
+   - TaskCompletionSource로 네이티브 콜백을 async/await 변환
+   - iOS/Android 디바이스 빌드에서만 동작. Editor/기타 플랫폼에서는 skip + 성공 반환.
+2. 사용자가 파일 선택 → 네이티브가 임시 경로로 복사 → OnFilePickerResult 콜백
+   - 취소 시: 에러 반환 (사용자 취소, 정상 플로우)
+3. ImportDvnAsync(filePath, ct) 호출 (기존 로직 재사용)
+```
+
+- 기존 `ImportDvnAsync`를 재사용하므로, 디코딩/검증/복원 로직은 동일하다.
+- File Picker에서 .dvn 이외 파일을 선택해도, Decode 단계에서 실패로 처리된다.
+- 네이티브 구현: [30-recovery-platform](../30-recovery-platform/SKILL.md) §Import — DevianFilePicker 참조
 
 
 ---
@@ -126,6 +147,7 @@ RecoveryManager는 SaveDataManager의 아래 public API를 사용한다:
 | 상황 | 처리 |
 |------|------|
 | 공유 시트 호출 실패 | `CommonErrorType` 에러 반환 |
+| 파일 선택 취소 (File Picker) | 에러 반환 (사용자 취소, 정상 플로우) |
 | .dvn 파일 읽기 실패 | 에러 반환 + 유저에게 안내 |
 | RecoveryCodec.Decode 실패 (손상/위조) | 에러 반환 + "복원 실패" 안내 |
 | HMAC 불일치 (v2, RecoveryCodec 내부) | `RECOVERY_HMAC_FAILED` 에러 반환 |
@@ -151,11 +173,19 @@ RecoveryManager는 SaveDataManager의 아래 public API를 사용한다:
 3. 평문 JSON 획득 → RecoveryCodec.Encode → .dvn 파일 생성 → DevianShare.SendEmail
 4. 이메일 앱이 수신자 프리셋 상태로 열림 → 유저가 전송
 
-### Import
+### Import (경로 A: OS 파일 연결)
 1. 유저가 이메일에서 .dvn 첨부파일 탭
 2. OS가 게임으로 파일 전달 (Custom File Type Association)
 3. 네이티브 레이어 → `RecoveryManager.ImportDvnAsync(filePath, ct)` 호출
 4. 디코딩 (v2: HMAC 검증) → socialUserId 일치 확인 → 복원 → 유저에게 "복원 완료" 안내
+
+### Import (경로 B: 앱 내 File Picker)
+1. 유저가 설정 화면에서 "데이터 복원" 버튼 탭
+2. `RecoveryManager.PickAndImportDvnAsync(ct)` 호출
+3. 네이티브 파일 선택 다이얼로그 표시 (SAF / UIDocumentPicker)
+4. 유저가 .dvn 파일 선택
+5. 네이티브 → 임시 경로 복사 → `OnFilePickerResult(filePath)` 콜백
+6. `ImportDvnAsync(filePath, ct)` → 디코딩 → 검증 → 복원 → 유저에게 "복원 완료" 안내
 
 
 ---
@@ -181,5 +211,5 @@ asmdef:
 
 - [25-recovery-system/03-ssot](../03-ssot/SKILL.md) — DVN 포맷 정본
 - [20-recovery-codec](../20-recovery-codec/SKILL.md) — RecoveryCodec (인코딩/디코딩)
-- [30-recovery-platform](../30-recovery-platform/SKILL.md) — 플랫폼 파일 수신부 + 공유 시트
+- [30-recovery-platform](../30-recovery-platform/SKILL.md) — 플랫폼 파일 수신부 + 공유 시트 + 파일 선택
 - [10-savedata-manager](../../21-savedata-system/10-savedata-manager/SKILL.md) — SaveDataManager 진입점

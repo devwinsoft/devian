@@ -21,6 +21,34 @@
 static DevianMailDelegate *_mailDelegate = nil;
 
 
+// ──────────────────────────────────────
+// UIDocumentPickerViewController delegate
+// ──────────────────────────────────────
+@interface DevianFilePickerDelegate : NSObject <UIDocumentPickerDelegate>
+@end
+
+@implementation DevianFilePickerDelegate
+
+- (void)documentPicker:(UIDocumentPickerViewController *)controller
+    didPickDocumentsAtURLs:(NSArray<NSURL *> *)urls {
+    if (urls.count > 0) {
+        NSString *filePath = urls.firstObject.path;
+        UnitySendMessage("RecoveryManager", "OnFilePickerResult",
+                         [filePath UTF8String]);
+    } else {
+        UnitySendMessage("RecoveryManager", "OnFilePickerResult", "");
+    }
+}
+
+- (void)documentPickerWasCancelled:(UIDocumentPickerViewController *)controller {
+    UnitySendMessage("RecoveryManager", "OnFilePickerResult", "");
+}
+
+@end
+
+static DevianFilePickerDelegate *_filePickerDelegate = nil;
+
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -94,6 +122,51 @@ void DevianShare_SendEmail(const char* filePath, const char* recipient, const ch
 
     UIViewController *rootVC = UnityGetGLViewController();
     [rootVC presentViewController:mailVC animated:YES completion:nil];
+}
+
+// ──────────────────────────────────────
+// 파일 선택 다이얼로그 (UIDocumentPickerViewController)
+// ──────────────────────────────────────
+void DevianShare_PickFile() {
+    if (_filePickerDelegate == nil) {
+        _filePickerDelegate = [[DevianFilePickerDelegate alloc] init];
+    }
+
+    NSArray *documentTypes = @[@"public.data"];
+    UIDocumentPickerViewController *picker =
+        [[UIDocumentPickerViewController alloc] initWithDocumentTypes:documentTypes
+                                                              inMode:UIDocumentPickerModeImport];
+    picker.delegate = _filePickerDelegate;
+    picker.allowsMultipleSelection = NO;
+
+    if (@available(iOS 13.0, *)) {
+        picker.shouldShowFileExtensions = YES;
+    }
+
+    // iOS 14+: Downloads 폴더를 초기 위치로 힌트
+    if (@available(iOS 14.0, *)) {
+        NSURL *downloadsURL = [[NSFileManager defaultManager]
+            URLForDirectory:NSDownloadsDirectory
+                   inDomain:NSUserDomainMask
+          appropriateForURL:nil
+                     create:NO
+                      error:nil];
+        if (downloadsURL != nil) {
+            picker.directoryURL = downloadsURL;
+        }
+    }
+
+    UIViewController *rootVC = UnityGetGLViewController();
+
+    // iPad: popoverPresentationController 필수
+    if (picker.popoverPresentationController != nil) {
+        picker.popoverPresentationController.sourceView = rootVC.view;
+        picker.popoverPresentationController.sourceRect =
+            CGRectMake(rootVC.view.bounds.size.width / 2, rootVC.view.bounds.size.height / 2, 0, 0);
+        picker.popoverPresentationController.permittedArrowDirections = 0;
+    }
+
+    [rootVC presentViewController:picker animated:YES completion:nil];
 }
 
 #ifdef __cplusplus

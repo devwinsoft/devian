@@ -3,7 +3,8 @@
 
 iOS/Android 플랫폼별 네이티브 기능을 정의한다.
 
-- **Import**: Custom File Type Association으로 `.dvn` 파일을 게임에 연결하고, 네이티브 → Unity 파일 경로를 전달한다.
+- **Import (경로 A)**: Custom File Type Association으로 `.dvn` 파일을 게임에 연결하고, 네이티브 → Unity 파일 경로를 전달한다.
+- **Import (경로 B)**: 앱 내 File Picker로 사용자가 `.dvn` 파일을 직접 선택한다.
 - **Export**: OS 공유 시트(Share Sheet)를 호출하여 `.dvn` 파일을 이메일 등으로 공유한다.
 
 
@@ -238,6 +239,100 @@ cls.CallStatic("sendEmail", activity, filePath, recipient, subject);
 ---
 
 
+## Import — DevianFilePicker (앱 내 파일 선택)
+
+RecoveryManager.PickAndImportDvnAsync에서 OS 파일 선택 다이얼로그를 열어 `.dvn` 파일을 가져온다.
+NativeFilePicker(yasirkula) 패턴을 참고한 구현이다.
+
+
+### Android — Headless Fragment + ACTION_OPEN_DOCUMENT
+
+```java
+// 진입점: DevianShare.java
+public static void pickFile(Activity activity)
+```
+
+```
+DevianFilePickerFragment (headless Fragment):
+1. DevianShare.pickFile(activity) 호출
+2. DevianFilePickerFragment를 Unity Activity에 추가 (commitAllowingStateLoss)
+3. Fragment.onResume에서 ACTION_OPEN_DOCUMENT intent 실행
+   - setType("application/octet-stream")
+   - addCategory(Intent.CATEGORY_OPENABLE)
+   - API 26+: EXTRA_INITIAL_URI로 Downloads 폴더를 초기 위치로 힌트
+4. onActivityResult에서 결과 수신:
+   - RESULT_OK: content URI → ContentResolver.openInputStream → 임시 파일 복사
+     → UnitySendMessage("RecoveryManager", "OnFilePickerResult", tempFilePath)
+   - 그 외 (취소): UnitySendMessage("RecoveryManager", "OnFilePickerResult", "")
+5. Fragment 자체 제거
+```
+
+- `content://` URI는 직접 파일 경로 접근이 불가하므로, `ContentResolver.openInputStream()`으로 임시 경로에 복사한다.
+- 임시 파일 경로: `activity.getCacheDir() + "/recovery_pick_" + timestamp + ".dvn"`
+- 구현 파일: `DevianFilePickerFragment.java` (신규), `DevianShare.java` (pickFile 추가)
+
+
+### iOS — UIDocumentPickerViewController
+
+```objective-c
+extern "C" void DevianShare_PickFile()
+```
+
+```
+1. DevianShare_PickFile() P/Invoke 호출
+2. UIDocumentPickerViewController 생성
+   - documentTypes: @[@"public.data"] (UTI)
+   - inMode: UIDocumentPickerModeImport
+   - iOS 14+: directoryURL로 Downloads 폴더를 초기 위치로 힌트
+3. UnityGetGLViewController에 모달 표시
+   - iPad: popoverPresentationController 설정
+4. UIDocumentPickerDelegate 콜백:
+   - didPickDocumentsAtURLs: 선택된 파일 경로 → UnitySendMessage("RecoveryManager", "OnFilePickerResult", filePath)
+     (Import mode에서는 OS가 자동으로 앱 sandbox 임시 경로에 복사본을 제공)
+   - documentPickerWasCancelled: UnitySendMessage("RecoveryManager", "OnFilePickerResult", "")
+```
+
+- `UIDocumentPickerDelegate`를 구현하는 delegate 객체가 필요하다 (static 참조로 해제 방지).
+- 구현 파일: `DevianShare.mm` (기존 파일에 추가)
+
+
+### C# Bridge
+
+```csharp
+// RecoveryManager 내부
+
+private static void PickFile()
+{
+#if UNITY_IOS && !UNITY_EDITOR
+    DevianShare_PickFile();
+#elif UNITY_ANDROID && !UNITY_EDITOR
+    using var unityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
+    using var activity = unityPlayer.GetStatic<AndroidJavaObject>("currentActivity");
+    using var cls = new AndroidJavaClass("com.devian.share.DevianShare");
+    cls.CallStatic("pickFile", activity);
+#endif
+}
+
+// UnitySendMessage 콜백
+public void OnFilePickerResult(string filePath)
+{
+    // filePath가 empty → 사용자 취소
+    // filePath가 있으면 → ImportDvnAsync(filePath, ct) 진행
+}
+
+#if UNITY_IOS && !UNITY_EDITOR
+[DllImport("__Internal")]
+private static extern void DevianShare_PickFile();
+#endif
+```
+
+- `PickAndImportDvnAsync`에서 `TaskCompletionSource`를 사용하여 네이티브 콜백을 async/await으로 변환한다.
+- `OnFilePickerResult`에서 `TaskCompletionSource.SetResult`를 호출하여 대기를 해제한다.
+
+
+---
+
+
 ## Unity Build Integration
 
 iOS와 Android 네이티브 설정은 Unity 빌드 프로세스에 통합해야 한다.
@@ -278,6 +373,11 @@ iOS와 Android 네이티브 설정은 Unity 빌드 프로세스에 통합해야 
   - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Plugins/Android/Recovery/com/devian/share/DevianShare.java`
   - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Plugins/Android/Recovery/com/devian/share/DevianShare.java`
   - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Plugins/Android/Recovery/com/devian/share/DevianShare.java`
+
+- DevianFilePickerFragment (Android, 신규):
+  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Plugins/Android/Recovery/com/devian/share/DevianFilePickerFragment.java`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Plugins/Android/Recovery/com/devian/share/DevianFilePickerFragment.java`
+  - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Plugins/Android/Recovery/com/devian/share/DevianFilePickerFragment.java`
 
 - DevianShare.androidlib (프로젝트 레벨, 3-path mirror 아님):
   - `framework-cs/apps/UnityExample/Assets/Plugins/Android/DevianShare.androidlib/`
