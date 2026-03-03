@@ -246,16 +246,11 @@ namespace Devian
             if (!runtime.IsClaimable)
                 return CommonResult.Failure(CommonErrorType.MISSION_NOT_CLAIMABLE, $"Daily mission is not claimable: {missionId}");
 
-            var grantId = buildGrantId(MISSION_TYPE.DAY, missionId, 1, periodKey);
-            if (_storage.claimRecords.ContainsKey(grantId))
-                return CommonResult.Failure(CommonErrorType.MISSION_ALREADY_CLAIMED, $"Daily mission already claimed: {grantId}");
-
-            var apply = RewardManager.Instance.ApplyRewardGroup(runtime.rewardGroupId);
+            var apply = RewardManager.Instance.ApplyRewardGroup(row.RewardGroupId);
             if (apply.IsFailure)
                 return CommonResult.Failure(apply.Error!);
 
             runtime.MarkCompleted();
-            _storage.claimRecords[grantId] = createClaimRecord(MISSION_TYPE.DAY, missionId, 1, grantId, periodKey, runtime.rewardGroupId);
             _messageSystem.Notify(MISSION_MESSAGE.RUNTIME_REWARDED, runtime, apply.Value.AppliedRewards);
 
             var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
@@ -277,21 +272,13 @@ namespace Devian
             if (!runtime.IsClaimable)
                 return CommonResult.Failure(CommonErrorType.MISSION_NOT_CLAIMABLE, $"Achievement is not claimable: {missionId}");
 
-            var grantId = buildGrantId(MISSION_TYPE.ACHIEVE, missionId, runtime.level, PeriodOnce);
-            if (_storage.claimRecords.ContainsKey(grantId))
-                return CommonResult.Failure(CommonErrorType.MISSION_ALREADY_CLAIMED, $"Achievement already claimed: {grantId}");
+            var currentRow = findAchievementCurrentRow(runtime.missionId, runtime.level);
+            if (currentRow == null)
+                return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Achievement row not found: {missionId}/{runtime.level}");
 
-            var apply = RewardManager.Instance.ApplyRewardGroup(runtime.rewardGroupId);
+            var apply = RewardManager.Instance.ApplyRewardGroup(currentRow.RewardGroupId);
             if (apply.IsFailure)
                 return CommonResult.Failure(apply.Error!);
-
-            _storage.claimRecords[grantId] = createClaimRecord(
-                MISSION_TYPE.ACHIEVE,
-                missionId,
-                runtime.level,
-                grantId,
-                PeriodOnce,
-                runtime.rewardGroupId);
 
             var nextRow = findAchievementNextRow(runtime.missionId, runtime.level);
             if (nextRow != null && nextRow.IsActive && nextRow.ConditionOp != MISSION_OP_TYPE.NONE && nextRow.ConditionValue.HasValue)
@@ -301,8 +288,7 @@ namespace Devian
                     runtime.progressValue,
                     nextRow.ConditionType,
                     nextRow.ConditionOp,
-                    nextRow.ConditionValue.Value,
-                    nextRow.RewardGroupId);
+                    nextRow.ConditionValue.Value);
                 _messageSystem.Notify(MISSION_MESSAGE.ACHIEVE_LEVEL_UP, runtime);
             }
             else
@@ -403,34 +389,15 @@ namespace Devian
             return (int)(diff / DayMs);
         }
 
-        static string buildGrantId(MISSION_TYPE missionType, string missionId, int level, string periodKey)
+        static MISSION_ACHIEVE findAchievementCurrentRow(string missionId, int level)
         {
-            return missionType switch
+            foreach (var row in TB_MISSION_ACHIEVE.GetByGroup(missionId))
             {
-                MISSION_TYPE.DAY => $"mission:daily:{missionId}:{periodKey}",
-                MISSION_TYPE.ACHIEVE => $"mission:achievement:{missionId}:{level}:{periodKey}",
-                _ => $"mission:{missionType}:{missionId}:{periodKey}",
-            };
-        }
+                if (row.Level == level)
+                    return row;
+            }
 
-        static MissionClaimRecord createClaimRecord(
-            MISSION_TYPE missionType,
-            string missionId,
-            int level,
-            string grantId,
-            string periodKey,
-            string rewardGroupId)
-        {
-            return new MissionClaimRecord
-            {
-                missionType = missionType,
-                missionId = missionId ?? string.Empty,
-                level = level,
-                grantId = grantId ?? string.Empty,
-                periodKey = periodKey ?? string.Empty,
-                rewardGroupId = rewardGroupId ?? string.Empty,
-                claimedAtClientUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-            };
+            return null;
         }
 
         async Task<CommonResult<MissionClockSnapshot>> getMissionClockAsync(CancellationToken ct)

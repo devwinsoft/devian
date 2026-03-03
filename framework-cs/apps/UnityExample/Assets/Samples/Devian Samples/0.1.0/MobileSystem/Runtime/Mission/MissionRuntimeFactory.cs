@@ -13,7 +13,6 @@ namespace Devian
         public MISSION_CONDITION_TYPE ConditionType { get; set; }
         public MISSION_OP_TYPE ConditionOp { get; set; }
         public CBigInt ConditionValue { get; set; }
-        public string RewardGroupId { get; set; }
         public MissionTriggerSystem TriggerSystem { get; set; }
         public Action<MissionRuntimeBase> OnChanged { get; set; }
         public Action<MissionRuntimeBase> OnClaimable { get; set; }
@@ -30,7 +29,6 @@ namespace Devian
         public MISSION_CONDITION_TYPE ConditionType { get; set; }
         public MISSION_OP_TYPE ConditionOp { get; set; }
         public CBigInt ConditionValue { get; set; }
-        public string RewardGroupId { get; set; }
         public MissionTriggerSystem TriggerSystem { get; set; }
         public Action<MissionRuntimeBase> OnChanged { get; set; }
         public Action<MissionRuntimeBase> OnClaimable { get; set; }
@@ -50,7 +48,6 @@ namespace Devian
         public MISSION_CONDITION_TYPE ConditionType { get; set; }
         public MISSION_OP_TYPE ConditionOp { get; set; }
         public CBigInt ConditionValue { get; set; }
-        public string RewardGroupId { get; set; }
         public MissionTriggerSystem TriggerSystem { get; set; }
         public Action<MissionRuntimeBase> OnChanged { get; set; }
         public Action<MissionRuntimeBase> OnClaimable { get; set; }
@@ -69,14 +66,12 @@ namespace Devian
                 index = args.Index,
                 progressValue = CBigInt.Zero,
                 isCompleted = false,
-                rewardGroupId = args.RewardGroupId ?? string.Empty,
             };
 
             runtime.Bind(
                 args.ConditionType,
                 args.ConditionOp,
                 args.ConditionValue,
-                args.RewardGroupId,
                 args.TriggerSystem,
                 args.OnChanged,
                 args.OnClaimable);
@@ -96,14 +91,12 @@ namespace Devian
                 startValue = args.StartValue,
                 progressValue = args.StartValue,
                 isCompleted = false,
-                rewardGroupId = args.RewardGroupId ?? string.Empty,
             };
 
             runtime.Bind(
                 args.ConditionType,
                 args.ConditionOp,
                 args.ConditionValue,
-                args.RewardGroupId,
                 args.TriggerSystem,
                 args.OnChanged,
                 args.OnClaimable);
@@ -126,14 +119,12 @@ namespace Devian
                         index = args.Index,
                         progressValue = args.ProgressValue,
                         isCompleted = args.IsCompleted,
-                        rewardGroupId = args.RewardGroupId ?? string.Empty,
                     };
 
                     runtime.Bind(
                         args.ConditionType,
                         args.ConditionOp,
                         args.ConditionValue,
-                        args.RewardGroupId,
                         args.TriggerSystem,
                         args.OnChanged,
                         args.OnClaimable);
@@ -153,14 +144,12 @@ namespace Devian
                         startValue = args.StartValue,
                         progressValue = args.ProgressValue,
                         isCompleted = args.IsCompleted,
-                        rewardGroupId = args.RewardGroupId ?? string.Empty,
                     };
 
                     runtime.Bind(
                         args.ConditionType,
                         args.ConditionOp,
                         args.ConditionValue,
-                        args.RewardGroupId,
                         args.TriggerSystem,
                         args.OnChanged,
                         args.OnClaimable);

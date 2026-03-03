@@ -12,7 +12,6 @@ namespace Devian
         public int missionUid;
         public CBigInt progressValue = CBigInt.Zero;
         public bool isCompleted;
-        public string rewardGroupId = string.Empty;
 
         [NonSerialized] protected MISSION_CONDITION_TYPE _conditionType;
         [NonSerialized] protected MISSION_OP_TYPE _conditionOp;
@@ -33,7 +32,6 @@ namespace Devian
             MISSION_CONDITION_TYPE conditionType,
             MISSION_OP_TYPE conditionOp,
             CBigInt conditionValue,
-            string nextRewardGroupId,
             MissionTriggerSystem triggerSystem,
             Action<MissionRuntimeBase> onProgress,
             Action<MissionRuntimeBase> onClaimable)
@@ -43,7 +41,6 @@ namespace Devian
             _conditionType = conditionType;
             _conditionOp = conditionOp;
             _conditionValue = conditionValue;
-            rewardGroupId = nextRewardGroupId ?? string.Empty;
             _triggerSystem = triggerSystem;
             _onProgress = onProgress;
             _onClaimable = onClaimable;
@@ -110,13 +107,11 @@ namespace Devian
         protected void ReplaceBinding(
             MISSION_CONDITION_TYPE conditionType,
             MISSION_OP_TYPE conditionOp,
-            CBigInt conditionValue,
-            string nextRewardGroupId)
+            CBigInt conditionValue)
         {
             _conditionType = conditionType;
             _conditionOp = conditionOp;
             _conditionValue = conditionValue;
-            rewardGroupId = nextRewardGroupId ?? string.Empty;
         }
 
         protected virtual bool ShouldSubscribe()
@@ -263,15 +258,14 @@ namespace Devian
             CBigInt nextStartValue,
             MISSION_CONDITION_TYPE nextConditionType,
             MISSION_OP_TYPE nextConditionOp,
-            CBigInt nextConditionValue,
-            string nextRewardGroupId)
+            CBigInt nextConditionValue)
         {
             UnsubscribeInternal();
 
             level = nextLevel;
             startValue = nextStartValue;
             isCompleted = false;
-            ReplaceBinding(nextConditionType, nextConditionOp, nextConditionValue, nextRewardGroupId);
+            ReplaceBinding(nextConditionType, nextConditionOp, nextConditionValue);
 
             SubscribeIfNeeded();
             RaiseClaimableIfNeeded();

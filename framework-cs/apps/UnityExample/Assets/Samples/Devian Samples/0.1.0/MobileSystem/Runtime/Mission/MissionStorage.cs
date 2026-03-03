@@ -12,7 +12,6 @@ namespace Devian
         public long clockReceivedAtClientUtcMs;
         public int nextMissionUid = 1;
         public Dictionary<int, MissionRuntimeBase> runtimes = new();
-        public Dictionary<string, MissionClaimRecord> claimRecords = new();
 
         public void Clear()
         {
@@ -22,7 +21,6 @@ namespace Devian
             clockReceivedAtClientUtcMs = 0L;
             nextMissionUid = 1;
             runtimes.Clear();
-            claimRecords.Clear();
         }
     }
 }

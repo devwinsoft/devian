@@ -32,7 +32,6 @@ namespace Devian
                     ["missionUid"] = runtime.missionUid,
                     ["progressValue"] = SerializeBigInt(runtime.progressValue),
                     ["isCompleted"] = runtime.isCompleted,
-                    ["rewardGroupId"] = runtime.rewardGroupId,
                 };
 
                 if (runtime is MissionRuntimeAchieve achieveRuntime)
@@ -49,26 +48,6 @@ namespace Devian
             }
 
             missionObj["runtimes"] = runtimes;
-
-            var claimRecords = new JArray();
-            foreach (var claimRecord in storage.claimRecords.Values)
-            {
-                if (claimRecord == null)
-                    continue;
-
-                claimRecords.Add(new JObject
-                {
-                    ["missionType"] = (int)claimRecord.missionType,
-                    ["missionId"] = claimRecord.missionId,
-                    ["level"] = claimRecord.level,
-                    ["grantId"] = claimRecord.grantId,
-                    ["periodKey"] = claimRecord.periodKey,
-                    ["rewardGroupId"] = claimRecord.rewardGroupId,
-                    ["claimedAtClientUtcMs"] = claimRecord.claimedAtClientUtcMs,
-                });
-            }
-
-            missionObj["claimRecords"] = claimRecords;
             return missionObj;
         }
 
@@ -122,7 +101,6 @@ namespace Devian
                                 missionUid = missionUid,
                                 progressValue = DeserializeBigInt(runtimeObj["progressValue"]),
                                 isCompleted = runtimeObj.Value<bool?>("isCompleted") ?? false,
-                                rewardGroupId = runtimeObj.Value<string>("rewardGroupId") ?? string.Empty,
                                 level = runtimeObj.Value<int?>("level") ?? 1,
                                 startValue = DeserializeBigInt(runtimeObj["startValue"]),
                             };
@@ -138,7 +116,6 @@ namespace Devian
                                 index = runtimeObj.Value<int?>("index") ?? 0,
                                 progressValue = DeserializeBigInt(runtimeObj["progressValue"]),
                                 isCompleted = runtimeObj.Value<bool?>("isCompleted") ?? false,
-                                rewardGroupId = runtimeObj.Value<string>("rewardGroupId") ?? string.Empty,
                             };
                             break;
 
@@ -148,37 +125,6 @@ namespace Devian
                     }
 
                     storage.runtimes[runtime.missionUid] = runtime;
-                }
-            }
-
-            if (missionObj["claimRecords"] is JArray claimRecordArray)
-            {
-                foreach (var token in claimRecordArray)
-                {
-                    if (token is not JObject claimObj)
-                        continue;
-
-                    var missionTypeRaw = claimObj.Value<int?>("missionType")
-                        ?? claimObj.Value<int?>("missionKind")
-                        ?? (int)MISSION_TYPE.DAY;
-                    if (!System.Enum.IsDefined(typeof(MISSION_TYPE), missionTypeRaw))
-                        continue;
-
-                    var record = new MissionClaimRecord
-                    {
-                        missionType = (MISSION_TYPE)missionTypeRaw,
-                        missionId = claimObj.Value<string>("missionId") ?? string.Empty,
-                        level = claimObj.Value<int?>("level") ?? 1,
-                        grantId = claimObj.Value<string>("grantId") ?? string.Empty,
-                        periodKey = claimObj.Value<string>("periodKey") ?? string.Empty,
-                        rewardGroupId = claimObj.Value<string>("rewardGroupId") ?? string.Empty,
-                        claimedAtClientUtcMs = claimObj.Value<long?>("claimedAtClientUtcMs") ?? 0L,
-                    };
-
-                    if (string.IsNullOrWhiteSpace(record.grantId))
-                        continue;
-
-                    storage.claimRecords[record.grantId] = record;
                 }
             }
 

@@ -76,16 +76,6 @@ namespace Devian
 
             foreach (var key in removeRuntimeKeys)
                 _storage.runtimes.Remove(key);
-
-            var removeClaimKeys = new List<string>();
-            foreach (var kv in _storage.claimRecords)
-            {
-                if (kv.Value != null && kv.Value.missionType == MISSION_TYPE.DAY)
-                    removeClaimKeys.Add(kv.Key);
-            }
-
-            foreach (var key in removeClaimKeys)
-                _storage.claimRecords.Remove(key);
         }
 
         public void PruneExpiredState()
@@ -110,25 +100,6 @@ namespace Devian
 
             foreach (var key in removeRuntimeKeys)
                 _storage.runtimes.Remove(key);
-
-            var removeClaimKeys = new List<string>();
-            foreach (var kv in _storage.claimRecords)
-            {
-                var record = kv.Value;
-                if (record == null || record.missionType != MISSION_TYPE.DAY)
-                    continue;
-
-                if (!TryParseDailyPeriodIndex(record.periodKey, out var claimDailyIndex))
-                    continue;
-
-                if (claimDailyIndex >= currentDailyIndex - 1)
-                    continue;
-
-                removeClaimKeys.Add(kv.Key);
-            }
-
-            foreach (var key in removeClaimKeys)
-                _storage.claimRecords.Remove(key);
         }
 
         public MissionRuntimeDaily FindDaily(string missionId)
@@ -240,7 +211,6 @@ namespace Devian
                         ConditionType = row.ConditionType,
                         ConditionOp = row.ConditionOp,
                         ConditionValue = row.ConditionValue!.Value,
-                        RewardGroupId = row.RewardGroupId,
                         TriggerSystem = _triggerSystem,
                         OnChanged = _onChanged,
                         OnClaimable = _onClaimable,
@@ -261,7 +231,6 @@ namespace Devian
                     ConditionType = row.ConditionType,
                     ConditionOp = row.ConditionOp,
                     ConditionValue = row.ConditionValue!.Value,
-                    RewardGroupId = row.RewardGroupId,
                     TriggerSystem = _triggerSystem,
                     OnChanged = _onChanged,
                     OnClaimable = _onClaimable,
@@ -317,7 +286,6 @@ namespace Devian
                             ConditionType = row.ConditionType,
                             ConditionOp = row.ConditionOp,
                             ConditionValue = row.ConditionValue!.Value,
-                            RewardGroupId = row.RewardGroupId,
                             TriggerSystem = _triggerSystem,
                             OnChanged = _onChanged,
                             OnClaimable = _onClaimable,
@@ -351,7 +319,6 @@ namespace Devian
                     ConditionType = startRow.ConditionType,
                     ConditionOp = startRow.ConditionOp,
                     ConditionValue = startRow.ConditionValue!.Value,
-                    RewardGroupId = startRow.RewardGroupId,
                     TriggerSystem = _triggerSystem,
                     OnChanged = _onChanged,
                     OnClaimable = _onClaimable,

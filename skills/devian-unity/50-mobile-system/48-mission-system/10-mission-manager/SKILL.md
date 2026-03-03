@@ -27,8 +27,7 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
 - runtime 콜백 기반 조건 평가/진행도 저장
 - 런타임 상태(`ACTIVE`, `CLAIMABLE`, `COMPLETED`) 계산
 - 서버 시간 기준 daily period 전환 처리
-- 클레임 요청 시 `grantId` 생성 + `rewardGroupId` 조회 후 RewardManager(`ApplyRewardGroup`)로 지급 실행 위임
-- `grantId` 단위 local claim record 관리
+- 클레임 요청 시 `rewardGroupId`를 테이블에서 조회 후 RewardManager(`ApplyRewardGroup`)로 지급 실행 위임
 - claim 직후 local/cloud save 실행
 
 
@@ -88,9 +87,9 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
       1. achievement면 현재 활성 runtime의 level을 내부에서 결정한다
       2. 현재 period의 `grantId` 생성
       3. timed mission이면 `MissionManager.Storage.dailyMissionStartUtcMs` + 현재 추정 서버 시각 기준 period key 확인
-      4. local claim record 중복 체크
-      5. `rewardGroupId` 확보 후 RewardManager로 지급 실행 위임
-      6. local apply 성공 후 local claim record 저장
+      4. runtime이 claimable 상태인지 확인 (`!isCompleted && progressValue >= conditionValue`)
+      5. 테이블에서 `rewardGroupId` 조회 후 RewardManager로 지급 실행 위임
+      6. runtime의 `isCompleted = true`로 설정
       7. achievement면 현재 활성 runtime 기준으로 다음 level row 존재 여부를 확인한다
       8. 다음 level row가 있으면 같은 runtime을 level up 한다
       9. 다음 level row가 없으면 현재 achievement runtime은 `COMPLETED` 상태로 유지한다
@@ -100,11 +99,11 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
       1. 현재 `progressValue`를 다음 level `startValue`로 잡는다
       2. 기존 trigger 구독을 해지한다
       3. 같은 `missionUid` runtime의 `level`, `startValue`, `isCompleted`를 갱신한다
-      4. 다음 row 기준 condition/reward 바인딩으로 교체한다
+      4. 다음 row 기준 condition 바인딩으로 교체한다
       5. 새 condition trigger로 다시 구독한다
 - `PruneExpiredMissionState()`
-    - 이전 daily key 데이터 지연 정리
-    - 실제 runtime/claim 정리 구현은 `MissionScheduler`가 담당한다
+    - 이전 daily key의 expired runtime 정리
+    - 실제 runtime 정리 구현은 `MissionScheduler`가 담당한다
 
 
 ---
@@ -136,7 +135,6 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
   - `clockReceivedAtClientUtcMs`
   - `nextMissionUid`
   - `runtimes[missionUid]`
-  - `claimRecords[grantId]`
 - `MissionRuntimeBase`
   - `missionUid` 단위 runtime 객체
   - 생성 = mission start
@@ -157,9 +155,6 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
 - `MissionTriggerSystem`
   - `MessageSystem<int, MISSION_CONDITION_TYPE>` 특화 인스턴스
   - MissionManager가 단일 소유
-- `MissionClaimRecord`
-  - `claimedAtClientUtcMs`
-  - `rewardGroupId`
 - `MissionDefinitionIndex`
   - daily: `missionType + missionId -> row`
   - achievement: `missionType + missionId + level -> row`
@@ -167,7 +162,7 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
 
 정본 방향:
 - progress/completion은 `missionUid`의 MissionRuntime을 기준으로 계산한다
-- local duplicate 방지는 `grantId` claim record
+- local duplicate 방지는 `runtime.isCompleted` 체크
 - trigger-driven progress는 concrete runtime 내부 로직에서 기록한다
 - MissionManager는 trigger를 직접 처리하지 않고, MissionRuntime의 onChanged/onCompleted 콜백만 수신한다
 - MissionScheduler는 `nextMissionUid++`를 기본으로 사용하되, 현재 `runtimes`에 이미 존재하는 UID는 건너뛰고 다음 빈 UID를 발급한다
@@ -203,8 +198,8 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
 5. `MissionManager.Storage.dailyMissionStartUtcMs`가 없으면 첫 sync 시점의 `serverNowUtcMs`로 초기화
 6. 현재 sync 시각과 `dailyMissionStartUtcMs`의 차이가 7일 초과면 현재 `serverNowUtcMs`를 새 `dailyMissionStartUtcMs`로 사용하고 daily를 재초기화
 7. MissionManager가 current `periodKey` 계산
-8. `ClaimAsync` 호출 시 local claim record 중복 검사
-9. RewardManager가 `ApplyRewardGroup(rewardGroupId)` 실행
-10. local apply 성공 후 local claim record 저장
+8. `ClaimAsync` 호출 시 runtime claimable 상태 확인
+9. 테이블에서 `rewardGroupId` 조회 후 RewardManager가 `ApplyRewardGroup(rewardGroupId)` 실행
+10. runtime `isCompleted = true` 설정
 11. `SaveDataManager`가 local save를 즉시 시도하고, 이어서 cloud save도 시도
 12. local save 실패 시 fatal error로 처리

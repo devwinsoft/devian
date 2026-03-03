@@ -64,7 +64,6 @@ public abstract class MissionRuntimeBase
     public int missionUid;
     public CBigInt progressValue;
     public bool isCompleted;
-    public string rewardGroupId = "";
     public abstract int Index { get; }
 
     protected abstract void SubscribeCore(MissionTriggerSystem triggerSystem);
@@ -219,7 +218,7 @@ claim 가능 판정:
     1. 현재 `progressValue`를 다음 level `startValue`로 잡는다
     2. 기존 `conditionType` 구독을 해지한다
     3. 같은 runtime의 `level` / `startValue` / `isCompleted`를 갱신한다
-    4. 다음 row 기준 condition/reward 바인딩을 교체한다
+    4. 다음 row 기준 condition 바인딩을 교체한다
     5. `progressValue`는 유지한다
     6. 새 `conditionType`으로 다시 구독한다
 

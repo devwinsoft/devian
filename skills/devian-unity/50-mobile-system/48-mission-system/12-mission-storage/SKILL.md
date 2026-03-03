@@ -11,7 +11,6 @@ Type: Design / SSOT
 MissionManager가 소유하는 `MissionStorage`의 로컬 저장 구조와 복구 규칙을 정의한다.
 
 - Mission 진행도/완료 상태의 저장 정본이다.
-- local claim record는 "이미 로컬 지급됨"의 기준이다.
 - timed mission은 destructive reset 대신 period-scoped key를 저장한다.
 - timed mission의 day 경계는 `dailyMissionStartUtcMs` anchor를 기준으로 계산한다.
 
@@ -44,7 +43,7 @@ MissionManager : CompoSingleton<MissionManager>
 │   └── scheduler rebuild/prune
 └── ClaimAsync(missionType, missionId, ...)
     ├── apply reward locally
-    ├── write claimRecords[grantId]
+    ├── mark runtime isCompleted = true
     ├── save local/cloud immediately
     └── local save failure -> fatal error (TODO)
 ```
@@ -64,7 +63,6 @@ public sealed class MissionStorage
     public long clockReceivedAtClientUtcMs;
     public int nextMissionUid;
     public Dictionary<int, MissionRuntimeBase> runtimes;
-    public Dictionary<string, MissionClaimRecord> claimRecords;
 }
 ```
 
@@ -74,7 +72,6 @@ public sealed class MissionStorage
 - `clockReceivedAtClientUtcMs`: snapshot 수신 시점의 client utc ms
 - `nextMissionUid`: MissionScheduler가 새 runtime에 발급할 다음 UID
 - `runtimes`: `missionUid(int) -> MissionRuntimeBase`
-- `claimRecords`: `grantId -> MissionClaimRecord`
 
 ### MissionRuntimeBase / MissionRuntimeDaily / MissionRuntimeAchieve
 
@@ -87,7 +84,6 @@ public abstract class MissionRuntimeBase
     public int missionUid;
     public CBigInt progressValue;
     public bool isCompleted;
-    public string rewardGroupId = "";
 }
 
 public sealed class MissionRuntimeDaily : MissionRuntimeBase
@@ -122,46 +118,24 @@ public sealed class MissionRuntimeAchieve : MissionRuntimeBase
 - codec은 concrete runtime type을 보존해야 하며, restore 시 matching subclass로 복원해야 한다.
 
 
-### MissionClaimRecord
-
-```csharp
-public sealed class MissionClaimRecord
-{
-    public MISSION_TYPE missionType;
-    public string missionId = "";
-    public int level;
-    public string grantId = "";
-    public string periodKey = "";
-    public string rewardGroupId = "";
-    public long claimedAtClientUtcMs;
-}
-```
-
-규칙:
-- local claim record 존재 = 해당 `grantId` 보상은 이미 로컬 적용이 끝난 상태다.
-- achievement claim record는 `missionId + level + once` scope를 식별할 수 있어야 한다.
-- 상태 enum(`pending`, `granted`)은 두지 않는다.
-- duplicate check는 claim record 존재 여부만 본다.
-
-
 ## Persistence Rules
 
 - daily는 init/reset cycle마다 기존 daily runtime set을 정리하고 새 runtime set을 만든다.
-- 새 period는 새 `grantId` 공간으로 진입하고, daily runtime도 새로 생성될 수 있다.
+- 새 period로 진입하면 daily runtime이 현재 구간 기준으로 reset 된다.
 - achievement는 `once` scope를 사용한다.
 - achievement는 수동 claim 모델이다.
 - achievement `CLAIMABLE` runtime은 claim 전까지 유지한다.
 - achievement `ClaimAsync()` 성공 시 다음 level row가 있으면 같은 runtime이 level up 한다.
 - 단, 다음 level row가 없으면 현재 completed runtime은 유지한다.
-- achievement level up 시 `missionUid`는 유지하고, `level` / `startValue` / `isCompleted` / `rewardGroupId`만 다음 row 기준으로 갱신한다.
+- achievement level up 시 `missionUid`는 유지하고, `level` / `startValue` / `isCompleted`만 다음 row 기준으로 갱신한다.
 - achievement level up 시 `progressValue`는 현재 값을 그대로 유지한다.
 - daily period key는 `dailyMissionStartUtcMs` anchor에서 24시간 단위 index로 계산한다.
 - daily는 현재 cycle에서 선택된 최대 5개 runtime만 유지한다.
 - achievement는 active group별 runtime 1개만 유지한다.
-- MissionStorage는 `missionType`, `missionId`, `rewardGroupId` 같은 runtime 식별/복구 정보는 저장한다.
+- MissionStorage는 `missionType`, `missionId` 같은 runtime 식별/복구 정보는 저장한다.
 - MissionStorage는 MissionRuntimeBase 계열 concrete runtime 객체를 직접 저장한다.
 - 다만 row 전체를 정본으로 저장하지 않는다. 컨텐츠 정본은 항상 `MISSION_*` 테이블이다.
-- `rewardGroupId`는 claim 복구/디버깅을 위해 state/record에 함께 남길 수 있다.
+- `rewardGroupId`는 runtime에 저장하지 않는다. claim 시 테이블에서 직접 조회한다.
 
 
 ---
@@ -179,19 +153,12 @@ public sealed class MissionClaimRecord
    - achievement runtime은 저장된 `level` / `progressValue` / `isCompleted`를 그대로 restore 한다.
 6. daily runtime의 저장된 `periodKey`가 현재 `dailyKey`와 다르면 같은 runtime을 현재 구간 기준으로 reset 한다.
 7. 저장된 runtime이 없으면 현재 scope에서 필요한 MissionRuntime을 새로 만든다.
-8. 현재 period 기준으로 expired runtime/claim entry를 prune 한다.
-
-
-### Claim Recovery
-
-- `claimRecords`는 이미 로컬 지급이 끝난 항목만 저장한다.
-- 앱 재시작 후 `claimRecords`가 있으면 동일 `grantId` reward는 다시 지급하지 않는다.
-- local save 실패 직후 종료된 케이스는 복구 보장이 없다. v1에서는 fatal error로 취급한다.
+8. 현재 period 기준으로 expired runtime을 prune 한다.
 
 
 ### Clear
 
-- `MissionStorage.Clear()`는 `dailyMissionStartUtcMs`, `clockSnapshot`, `runtimes`, `claimRecords`를 모두 비운다.
+- `MissionStorage.Clear()`는 `dailyMissionStartUtcMs`, `clockSnapshot`, `runtimes`를 모두 비운다.
 - `SaveDataManager.ClearGameState()`는 MissionStorage도 함께 초기화해야 한다.
 
 
@@ -201,9 +168,9 @@ public sealed class MissionClaimRecord
 ## Prune Rules
 
 - daily:
-  - claim record는 현재 `dailyKey`와 직전 1개 key만 유지 가능
+  - stale period의 daily runtime을 정리한다
 - achievement:
-  - 완료/클레임 기록을 유지한다
+  - 완료된 runtime을 유지한다
 - prune 시점:
   - `InitializeAsync`
   - `RefreshClockAsync` 성공 직후
@@ -240,8 +207,8 @@ MissionStorage는 `21-savedata-system` 루트 save에 별도 섹션으로 들어
 
 ## Hard Rules
 
-- `claimRecords` 존재 항목에 대해 reward를 재지급하지 않는다.
-- `runtimes`, `claimRecords`는 각각 `missionUid(int)`, `grantId`를 key로 사용한다.
+- `isCompleted == true`인 runtime에 대해 reward를 재지급하지 않는다.
+- `runtimes`는 `missionUid(int)`를 key로 사용한다.
 - `MissionStorage`는 서버 절대 시간을 만들지 않는다. 서버 시간은 `MissionClockSnapshot`에서만 온다.
 - timed mission claim/period 판정은 `dailyMissionStartUtcMs`와 마지막으로 동기화한 `MissionClockSnapshot` 기준 추정 서버 시각으로 수행한다.
 - `MissionStorage`는 `MissionManager` 외부에서 직접 mutate하지 않는다.

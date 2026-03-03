@@ -16,7 +16,6 @@ AppliesTo: v10
 - `MissionClockSnapshot` / mission daily clock 규약
 - grantId 생성 규칙
 - missionUid 생성 규칙
-- claim record 규약
 - daily 기간 키 계산 규칙(서버 시간 기준)
 
 
@@ -30,7 +29,7 @@ AppliesTo: v10
 - `conditionType`: `MISSION_CONDITION_TYPE` enum. MissionTriggerSystem에서 어떤 trigger를 받을지 결정한다.
 - `conditionOp`: `MISSION_OP_TYPE` enum. runtime의 `ProgressValue`를 어떤 방식으로 갱신할지 결정한다.
 - `conditionValue`: 목표값(`CBigInt`). 누적 진행도가 이 값 이상이면 완료다.
-- `rewardGroupId`: 보상 키(string). `49-reward-system`의 `rewardGroupId` 정본을 그대로 사용한다.
+- `rewardGroupId`: 보상 키(string). `49-reward-system`의 `rewardGroupId` 정본을 그대로 사용한다. 정본은 `MISSION_DAY` / `MISSION_ACHIEVE` 테이블이며, runtime에는 저장하지 않는다.
 - `dailyMissionStartUtcMs`: `MissionManager.Storage.dailyMissionStartUtcMs`. 첫 로그인 성공 시 받은 서버 시각. daily period의 개인별 시작 anchor
 - `periodKey`: 반복 지급 구간 식별 키
   - daily: 현재 daily claim/reset 구간 메타데이터인 `day:{dailyPeriodIndex}`
@@ -138,7 +137,7 @@ Mission의 런타임 상태는 아래 세 가지로 해석한다.
 - `row.isActive == false`는 런타임 상태가 아니다. 테이블 데이터에만 존재하는 비활성 row다.
 - `pending`, `granted` 같은 별도 상태 enum은 두지 않는다.
 - `isCompleted == true`는 claim 완료 상태를 의미한다.
-- claim record mutation 직후에는 `SaveDataManager` 저장을 바로 시도한다.
+- claim 완료 mutation 직후에는 `SaveDataManager` 저장을 바로 시도한다.
 - `conditionOp != NONE`인 미션에서만 MissionRuntime을 만든다.
 - runtime 존재 = 현재 scope에서 구독/진행이 필요한 미션이 시작된 상태다.
 - concrete runtime은 자신의 `conditionType` trigger를 직접 구독한다.
@@ -204,7 +203,7 @@ MissionManager는 `MissionTriggerSystem`을 소유하고, 각 MissionRuntime이 
   4. `startValue`를 갱신한다
   5. `progressValue`는 유지한다
   6. `isCompleted = false`로 되돌린다
-  7. 다음 row 기준 `rewardGroupId`, `conditionType`, `conditionOp`, `conditionValue` 바인딩을 교체한다
+  7. 다음 row 기준 `conditionType`, `conditionOp`, `conditionValue` 바인딩을 교체한다
   8. 새 `conditionType`으로 다시 구독한다
 - achievement level up 시 `missionUid`는 유지한다.
 
@@ -321,29 +320,6 @@ MissionManager/ MissionScheduler는 아래 규칙으로 `grantId`와 `missionUid
 ---
 
 
-## G) Local Claim Record (정본)
-
-MissionManager는 `grantId` 단위로 local claim record를 저장한다.
-
-- key: `grantId`
-- value(최소): `missionType`, `missionId`, `level`, `periodKey`, `rewardGroupId`, `claimedAtClientUtcMs`
-
-정본 규칙:
-- local claim record 존재 = 해당 `grantId` 보상은 이미 로컬 적용이 끝났고 mission state는 `COMPLETED`다
-- `pending`, `granted` 같은 상태 enum은 두지 않는다.
-- UI claim 상태는:
-  - Mission state가 `ACTIVE`: not claimable
-  - Mission state가 `CLAIMABLE`: claimable
-  - Mission state가 `COMPLETED`: already claimed
-- local claim record를 갱신한 직후에는 `SaveDataManager`를 통해 local save를 즉시 시도해야 한다.
-- local save 성공 후에는 cloud save도 즉시 시도한다.
-- local save 실패는 매우 심각한 오류다. 사용자에게 에러를 노출하고 플레이 불가능 상태로 처리하며, 구현에는 TODO를 남긴다.
-- achievement는 수동 claim 모델이다.
-- achievement `CLAIMABLE` runtime은 claim 전까지 storage에 유지해야 한다.
-- achievement claim 성공 시 해당 runtime은 `COMPLETED`가 된다.
-- achievement claim 성공 후 다음 level row가 있으면 같은 runtime이 level up 한다.
-
-
 ---
 
 
@@ -357,7 +333,7 @@ MissionManager는 `grantId` 단위로 local claim record를 저장한다.
 - 이후 로그인(= 앱 시작) 시점에 `getMissionClock.serverNowUtcMs`와 기존 `dailyMissionStartUtcMs`의 차이가 7일(`604800000ms`)을 초과하면,
   현재 `serverNowUtcMs`를 새로운 `dailyMissionStartUtcMs`로 사용한다.
 - `dailyMissionStartUtcMs`를 새로 잡는 경우 daily 미션은 새 기준으로 다시 시작한다.
-- 이 reset 시 achievement claim/progress는 유지하고, daily의 `runtimes` 및 `claimRecords`만 정리한다.
+- 이 reset 시 achievement claim/progress는 유지하고, daily의 `runtimes`만 정리한다.
 
 
 ---

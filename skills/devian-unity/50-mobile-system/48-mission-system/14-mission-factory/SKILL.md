@@ -109,7 +109,6 @@ public readonly struct DailyMissionRuntimeCreateArgs
     public MISSION_CONDITION_TYPE ConditionType;
     public MISSION_OP_TYPE ConditionOp;
     public CBigInt ConditionValue;
-    public string RewardGroupId;
 }
 ```
 
@@ -136,7 +135,6 @@ public readonly struct AchieveMissionRuntimeCreateArgs
     public MISSION_CONDITION_TYPE ConditionType;
     public MISSION_OP_TYPE ConditionOp;
     public CBigInt ConditionValue;
-    public string RewardGroupId;
 }
 ```
 
@@ -166,7 +164,6 @@ public readonly struct MissionRuntimeRestoreArgs
     public MISSION_CONDITION_TYPE ConditionType;
     public MISSION_OP_TYPE ConditionOp;
     public CBigInt ConditionValue;
-    public string RewardGroupId;
 }
 ```
 
