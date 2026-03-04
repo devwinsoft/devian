@@ -125,6 +125,22 @@ body {
   cursor: default;
 }
 
+.io-section input[type="text"] {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.io-section input[type="text"]:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 /* --- Buttons --- */
 
 .btn-row {

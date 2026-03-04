@@ -11,7 +11,7 @@ Type: Component Specification
 - `ActorController<ActorObject>`를 상속하여 Actor lifecycle에 통합
 - `onInit(actor)`에서 `InputManager.Instance.RegisterController(this)` — 등록
 - `Clear()` override에서 `UnregisterController(this)` + `base.Clear()` — 해제
-  - `BaseApplication.IsShuttingDown` 시 매니저 접근 없이 `base.Clear()` 호출
+  - `ApplicationManager.IsShuttingDown` 시 매니저 접근 없이 `base.Clear()` 호출
   - `SingletonRegistry.TryGet<InputManager>` 로 안전한 싱글톤 접근
 - `IInputSpace` 전략으로 Move 입력을 월드 공간 벡터로 변환
 - `InputEnabled` guard로 입력 수신 on/off
@@ -51,7 +51,7 @@ namespace Devian
 - `ActorController<ActorObject>`를 상속 → Actor의 Init/Clear lifecycle에 통합
 - `onInit(ActorObject actor)`: `InputManager.Instance.RegisterController(this)` + prev 상태 리셋
 - `Clear()` override: 종료 방어 + `UnregisterController(this)` + prev 리셋 + `base.Clear()`
-  - `BaseApplication.IsShuttingDown` 시 매니저 접근 없이 `base.Clear()` 호출
+  - `ApplicationManager.IsShuttingDown` 시 매니저 접근 없이 `base.Clear()` 호출
   - `IsCleared` 체크 + `SingletonRegistry.TryGet<InputManager>` 로 안전한 해제
 - Actor가 `RegisterController<T>()`로 등록, `Init()` 루프에서 초기화 (자동 등록 없음)
 - Priority는 ActorController\<TOwner\>에서 상속 (`virtual int Priority => 0`) — 중복 선언 없음
@@ -171,7 +171,7 @@ public class ViewFlattenedSpace : IInputSpace
 - [ ] 자동 등록 없음 — Actor가 `RegisterController<T>()`로 등록
 - [ ] `onInit`에서 RegisterController (Actor lifecycle)
 - [ ] `Clear()` override에서 UnregisterController + base.Clear()
-- [ ] `Clear()` 종료 방어: `BaseApplication.IsShuttingDown` + `SingletonRegistry.TryGet`
+- [ ] `Clear()` 종료 방어: `ApplicationManager.IsShuttingDown` + `SingletonRegistry.TryGet`
 - [ ] Priority는 ActorController\<TOwner\>에서 상속 (중복 선언 없음)
 - [ ] InputManager.Instance(싱글톤)으로만 접근 (SerializeField 없음)
 - [ ] InputEnabled guard 적용

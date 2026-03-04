@@ -1,11 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
-using Firebase.Functions;
 using UnityEngine;
 
 namespace Devian
@@ -16,8 +14,6 @@ namespace Devian
         const string PeriodOnce = "once";
         const long DayMs = 24L * 60L * 60L * 1000L;
         const long ResetAnchorThresholdMs = 7L * DayMs;
-        string _functionsRegion = string.Empty;
-
         readonly MissionStorage _storage = new();
         readonly MissionTriggerSystem _triggerSystem = new();
         readonly MissionMessageSystem _messageSystem = new();
@@ -40,11 +36,6 @@ namespace Devian
                 onRuntimeClaimable,
                 getCurrentDailyKey,
                 getCurrentDailyPeriodIndex);
-        }
-
-        public void SetFunctionsRegion(string region)
-        {
-            _functionsRegion = string.IsNullOrWhiteSpace(region) ? string.Empty : region.Trim();
         }
 
         public async Task<CommonResult> InitializeAsync(CancellationToken ct = default)
@@ -399,135 +390,15 @@ namespace Devian
             return null;
         }
 
-        async Task<CommonResult<MissionClockSnapshot>> getMissionClockAsync(CancellationToken ct)
+        Task<CommonResult<MissionClockSnapshot>> getMissionClockAsync(CancellationToken ct)
         {
 #if UNITY_EDITOR
-            await Task.CompletedTask;
-            return CommonResult<MissionClockSnapshot>.Success(
-                new MissionClockSnapshot(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()));
+            return Task.FromResult(CommonResult<MissionClockSnapshot>.Success(
+                new MissionClockSnapshot(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())));
 #else
-            try
-            {
-                var functions = string.IsNullOrEmpty(_functionsRegion)
-                    ? FirebaseFunctions.DefaultInstance
-                    : FirebaseFunctions.GetInstance(_functionsRegion);
-                var callable = functions.GetHttpsCallable("getMissionClock");
-                var result = await callable.CallAsync();
-                ct.ThrowIfCancellationRequested();
-
-                var response = normalizeCallableResponse(result.Data);
-                if (response == null)
-                    return CommonResult<MissionClockSnapshot>.Failure(
-                        CommonErrorType.COMMON_SERVER,
-                        "getMissionClock returned unsupported response.");
-
-                var serverNowUtcMs = readLong(response, "serverNowUtcMs");
-                if (serverNowUtcMs <= 0L)
-                    serverNowUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-
-                return CommonResult<MissionClockSnapshot>.Success(new MissionClockSnapshot(serverNowUtcMs));
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (FunctionsException fex) when (
-                fex.ErrorCode == FunctionsErrorCode.Unavailable ||
-                fex.ErrorCode == FunctionsErrorCode.DeadlineExceeded)
-            {
-                return CommonResult<MissionClockSnapshot>.Failure(CommonErrorType.COMMON_NETWORK, "Mission clock network unavailable.");
-            }
-            catch (FunctionsException fex) when (
-                fex.ErrorCode == FunctionsErrorCode.Unauthenticated ||
-                fex.ErrorCode == FunctionsErrorCode.PermissionDenied)
-            {
-                return CommonResult<MissionClockSnapshot>.Failure(CommonErrorType.COMMON_AUTH, fex.Message);
-            }
-            catch (Exception ex)
-            {
-                return CommonResult<MissionClockSnapshot>.Failure(CommonErrorType.COMMON_SERVER, ex.Message);
-            }
+            return FirebaseManager.Instance.GetMissionClockAsync(ct);
 #endif
         }
 
-        static Dictionary<string, object> normalizeCallableResponse(object data)
-        {
-            if (data == null)
-                return null;
-
-            if (data is IDictionary<string, object> stringObjectMap)
-                return normalizeStringObjectMap(stringObjectMap);
-
-            if (data is IDictionary anyMap)
-                return normalizeAnyMap(anyMap);
-
-            return null;
-        }
-
-        static Dictionary<string, object> normalizeStringObjectMap(IDictionary<string, object> source)
-        {
-            var result = new Dictionary<string, object>(source.Count);
-            foreach (var kv in source)
-                result[kv.Key] = normalizeCallableValue(kv.Value);
-            return result;
-        }
-
-        static Dictionary<string, object> normalizeAnyMap(IDictionary source)
-        {
-            var result = new Dictionary<string, object>(source.Count);
-            foreach (DictionaryEntry entry in source)
-            {
-                if (entry.Key == null)
-                    continue;
-
-                result[entry.Key.ToString()] = normalizeCallableValue(entry.Value);
-            }
-
-            return result;
-        }
-
-        static object normalizeCallableValue(object value)
-        {
-            if (value == null)
-                return null;
-
-            if (value is IDictionary<string, object> stringObjectMap)
-                return normalizeStringObjectMap(stringObjectMap);
-
-            if (value is IDictionary anyMap)
-                return normalizeAnyMap(anyMap);
-
-            if (value is IList list && value is not string)
-            {
-                var normalized = new List<object>(list.Count);
-                foreach (var item in list)
-                    normalized.Add(normalizeCallableValue(item));
-                return normalized;
-            }
-
-            return value;
-        }
-
-        static long readLong(Dictionary<string, object> source, string key)
-        {
-            if (source == null || !source.TryGetValue(key, out var raw) || raw == null)
-                return 0L;
-
-            switch (raw)
-            {
-                case long longValue:
-                    return longValue;
-                case int intValue:
-                    return intValue;
-                case double doubleValue:
-                    return Convert.ToInt64(doubleValue);
-                case float floatValue:
-                    return Convert.ToInt64(floatValue);
-                case string stringValue when long.TryParse(stringValue, out var parsed):
-                    return parsed;
-                default:
-                    return 0L;
-            }
-        }
     }
 }

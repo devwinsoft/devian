@@ -44,7 +44,12 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
 
 
 권장 backend callable:
-- `getMissionClock`
+- `getMissionClock` — `{ serverNowUtcMs, minVersion?, currentVersion? }` 반환. 버전 정보는 Firestore `/config/appVersion` 문서에서 읽는다.
+
+Firebase Functions 통합:
+- callable 호출/에러 매핑/응답 파싱은 [23-firebase-manager](../../23-firebase-manager/SKILL.md)에 통합.
+  MissionManager는 `FirebaseManager.Instance.GetMissionClockAsync(ct)` → `CommonResult<MissionClockSnapshot>`을 사용한다.
+  `FunctionsException`을 직접 catch하지 않는다. `using Firebase.Functions` 불필요.
 
 
 ---
@@ -55,8 +60,8 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
 - `InitializeAsync(ct)`
     - 로그인 성공 이후 호출한다. 내부에서 `getMissionClock`을 호출한다. 첫 `getMissionClock` 실패 시 초기화 실패를 반환한다. 테이블 로드 + 저장 상태 로드 + `MissionClockSnapshot` 복원/갱신 + 필요 시 daily anchor 초기화/재설정까지 수행하고, runtime 생성/복구/정리는 `MissionScheduler`에 위임한다
 - `RefreshClockAsync(ct)`
-    - backend `getMissionClock`에서 최신 `MissionClockSnapshot` 갱신
-    - `BaseApplication.OnEnterForeground()` 같은 외부 lifecycle hook은 raw callable 대신 이 API를 호출한다
+    - backend `getMissionClock`에서 최신 `MissionClockSnapshot` 갱신 (버전 정보 포함)
+    - `ApplicationManager.OnEnterForeground()` 같은 외부 lifecycle hook은 raw callable 대신 이 API를 호출한다
 - `RefreshRuntimes()`
     - 현재 생성/복원되어 있는 runtime 전체에 대해 `MISSION_MESSAGE.RUNTIME_INIT`를 다시 발행한다
     - 외부 UI가 mission 목록을 다시 바인딩할 때 사용한다
@@ -192,7 +197,7 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
 ## Backend Flow (권장)
 
 1. `InitializeAsync`에서 `getMissionClock`
-2. `BaseApplication.OnEnterForeground()` 같은 resume hook은 `MissionManager.RefreshClockAsync()`를 호출
+2. `ApplicationManager.OnEnterForeground()` 같은 resume hook은 `MissionManager.RefreshClockAsync()`를 호출
 3. 외부 UI가 mission 목록을 다시 그릴 필요가 있으면 `MissionManager.RefreshRuntimes()`를 호출해 현재 runtime 전체에 대한 `RUNTIME_INIT`를 재발행할 수 있다
 4. 첫 login에서 `getMissionClock` 실패 시 MissionManager 초기화 실패를 반환하고 login 실패로 처리
 5. `MissionManager.Storage.dailyMissionStartUtcMs`가 없으면 첫 sync 시점의 `serverNowUtcMs`로 초기화

@@ -68,7 +68,7 @@ public sealed class MissionStorage
 
 - `schemaVersion`: mission storage schema version
 - `dailyMissionStartUtcMs`: 첫 login 성공 시의 서버 시각. daily period anchor
-- `clockSnapshot`: 마지막으로 수신한 서버 clock snapshot
+- `clockSnapshot`: 마지막으로 수신한 서버 clock snapshot (`serverNowUtcMs`, `minVersion`, `currentVersion` 포함)
 - `clockReceivedAtClientUtcMs`: snapshot 수신 시점의 client utc ms
 - `nextMissionUid`: MissionScheduler가 새 runtime에 발급할 다음 UID
 - `runtimes`: `missionUid(int) -> MissionRuntimeBase`

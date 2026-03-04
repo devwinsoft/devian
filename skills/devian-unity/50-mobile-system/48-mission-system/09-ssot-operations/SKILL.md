@@ -39,7 +39,7 @@ AppliesTo: v10
   - period key 계산은 허용
   - claim도 클라이언트 추정 서버 시각 기준으로 수행할 수 있다
 - 네트워크가 복구되면:
-  - `BaseApplication.OnEnterForeground()` 같은 resume hook에서
+  - `ApplicationManager.OnEnterForeground()` 같은 resume hook에서
   - `MissionManager.RefreshClockAsync()`를 호출해 서버 시간 기준을 다시 보정한다
 - 첫 실행에서는 guest/google/apple login 이후에만 mission을 초기화한다.
 - 현재 샘플 구조에서는 이 초기화 위치가 `TestSceneLoading.syncPurchaseStateAsync()` 이후 구간에 들어가는 것이 자연스럽다.

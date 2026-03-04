@@ -2,6 +2,7 @@ import './style.css';
 import { createObfuscateTab } from './tabs/obfuscate';
 import { createDeobfuscateTab } from './tabs/deobfuscate';
 import { createSaveDataTab } from './tabs/savedata';
+import { createVersionConfigTab } from './tabs/version-config';
 
 interface TabDef {
   id: string;
@@ -11,6 +12,12 @@ interface TabDef {
 }
 
 const tabs: TabDef[] = [
+  {
+    id: 'version-config',
+    label: 'Version Config',
+    pipeline: 'Firestore /config/appVersion read/write',
+    create: createVersionConfigTab,
+  },
   {
     id: 'obfuscate',
     label: 'Obfuscate',

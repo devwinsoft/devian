@@ -7,7 +7,7 @@ Unity PlayerPrefs를 실전적으로 안전/일관되게 사용하기 위해,
 - class(복합 설정) 저장을 JSON(1-key)로 표준화한다.
 
 본 스킬은 Devian Foundation Runtime에서 제공하는 Prefs 래퍼의 정본이다.
-설정 자산 SSOT는 CommonSystem의 DevianSettings를 따른다.
+설정 자산 SSOT는 CommonSystem의 BundleSettings를 따른다.
 
 ---
 
@@ -21,9 +21,8 @@ Unity PlayerPrefs를 실전적으로 안전/일관되게 사용하기 위해,
 ## 2. Key 네이밍 규약 (Hard)
 - 키는 prefix를 포함한 dot-style을 사용한다.
   - 예: `devian.game.audio.bgm`
-- **prefix의 SSOT는 `DevianSettings.asset`의 `playerPrefsPrefix`다.**
-- 코드에서 prefix 상수를 쓰는 것은 허용하되, 그 값은 DevianSettings의 값과 동일해야 한다(불일치 금지).
-  - 예: `const string Prefix = "devian.game."; // SSOT: DevianSettings.playerPrefsPrefix`
+- prefix는 코드에서 상수로 직접 선언한다.
+  - 예: `const string Prefix = "devian.game.";`
 
 ---
 
@@ -85,7 +84,6 @@ namespace Devian
 
     public static class GamePrefs
     {
-        // SSOT: DevianSettings.playerPrefsPrefix
         private const string Prefix = "devian.game.";
 
         public static readonly FloatPrefs BgmVolume = new(Prefix + "audio.bgm", 1f);

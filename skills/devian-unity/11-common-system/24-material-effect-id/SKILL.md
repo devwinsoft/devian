@@ -35,7 +35,7 @@ public sealed class MATERIAL_EFFECT_ID
 - **클릭 즉시 적용 + 창 자동 닫기**
 
 ### SearchDir 공급
-- DevianSettings.GetEntry(`"MATERIAL_EFFECT_ID"`)로 조회
+- BundleSettings.GetEntry(`"MATERIAL_EFFECT_ID"`)로 조회
 - 실패/폴더 없음이면 `"Assets"` fallback
 
 ### 스캔 대상
@@ -44,7 +44,7 @@ public sealed class MATERIAL_EFFECT_ID
 - `@` prefix 이름 제외
 - case-insensitive 중복 name은 에러 로그 후 스킵
 
-## DevianSettings 등록
+## BundleSettings 등록
 
 ```
 entries[MATERIAL_EFFECT_ID] = "Assets/Bundles/MaterialEffects"

@@ -1,13 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
-using Firebase.Functions;
-
 #if UNITY_PURCHASING
 using UnityEngine.Purchasing;
 #endif
@@ -19,7 +16,6 @@ namespace Devian
         const string Tag = "PurchaseManager";
         const int MaxVerifyRecoveryRetries = 3;
 
-        string _functionsRegion = "asia-northeast3";
         readonly PurchaseStorage _storage = new();
 
         public PurchaseStorage Storage => _storage;
@@ -29,15 +25,6 @@ namespace Devian
             base.Awake();
             SetProductCatalog(new GameProductCatalog());
             SetPurchaseStore(CreateDefaultStore());
-        }
-
-        /// <summary>
-        /// Firebase Cloud Functions 리전을 설정한다.
-        /// 설정하지 않으면 기본 리전(us-central1)을 사용한다.
-        /// </summary>
-        public void SetFunctionsRegion(string region)
-        {
-            _functionsRegion = region;
         }
 
         static IPurchaseStore CreateDefaultStore()
@@ -615,11 +602,11 @@ namespace Devian
         // noAds 판단은 게임 로직이 남은 시간(ms) 기반으로 처리한다.
         public async Task<CommonResult<EntitlementsSnapshot>> SyncEntitlementsAsync(CancellationToken ct = default)
         {
-            var result = await callFunctionAsync("getEntitlements", null, ct);
+            var result = await FirebaseManager.Instance.GetEntitlementsAsync(ct);
             if (result.IsFailure)
                 return CommonResult<EntitlementsSnapshot>.Failure(result.Error!);
 
-            var snapshot = ParseEntitlementsSnapshot(result.Value!);
+            var snapshot = resolveEntitlementsSeasonPasses(result.Value!);
             cacheEntitlementsSnapshot(snapshot);
             return CommonResult<EntitlementsSnapshot>.Success(snapshot);
         }
@@ -661,17 +648,7 @@ namespace Devian
                     "PurchaseManager not initialized. Call InitializeAsync() first.");
 
             var data = new Dictionary<string, object> { ["pageSize"] = 1, ["kind"] = "Consumable" };
-            var result = await callFunctionAsync("getRecentPurchases30d", data, ct);
-            if (result.IsFailure)
-                return CommonResult<RecentPurchaseItem>.Failure(result.Error!);
-
-            var item = parseFirstRecentPurchaseItem(result.Value!);
-            if (item == null)
-                return CommonResult<RecentPurchaseItem>.Failure(
-                    CommonErrorType.PURCHASE_RECENT_NOT_FOUND,
-                    "No recent consumable purchase within 30 days.");
-
-            return CommonResult<RecentPurchaseItem>.Success(item);
+            return await FirebaseManager.Instance.GetRecentPurchases30dAsync(data, ct);
         }
 #endif
 
@@ -692,224 +669,14 @@ namespace Devian
             if (!string.IsNullOrEmpty(cursor))
                 data["cursor"] = cursor;
 
-            var result = await callFunctionAsync("getPurchaseAdjustments", data, ct);
+            var result = await FirebaseManager.Instance.GetPurchaseAdjustmentsAsync(data, ct);
             if (result.IsFailure)
                 return CommonResult<RefundSyncResult>.Failure(result.Error!);
 
             // Server filters out already-ACKed items (clientRefundApplied===true).
             // Client-side dedup is no longer needed.
-            var syncResult = ParseRefundSyncResult(result.Value!);
+            var syncResult = enrichAdjustmentItems(result.Value!);
             return CommonResult<RefundSyncResult>.Success(syncResult);
-        }
-
-        // ── Firebase Callable Helper ─────────────────────────────
-
-        async Task<CommonResult<Dictionary<string, object>>> callFunctionAsync(
-            string functionName, Dictionary<string, object> data, CancellationToken ct)
-        {
-            try
-            {
-                var functions = string.IsNullOrEmpty(_functionsRegion)
-                    ? FirebaseFunctions.DefaultInstance
-                    : FirebaseFunctions.GetInstance(_functionsRegion);
-                var callable = functions.GetHttpsCallable(functionName);
-                var result = data != null
-                    ? await callable.CallAsync(data)
-                    : await callable.CallAsync();
-
-                ct.ThrowIfCancellationRequested();
-
-                var response = normalizeCallableResponse(result.Data);
-                if (response == null)
-                    return CommonResult<Dictionary<string, object>>.Failure(
-                        CommonErrorType.PURCHASE_FUNCTION_RESPONSE_INVALID,
-                        $"{functionName} returned unsupported response type: {(result.Data == null ? "null" : result.Data.GetType().FullName)}");
-
-                return CommonResult<Dictionary<string, object>>.Success(response);
-            }
-            catch (OperationCanceledException) { throw; }
-            catch (Exception ex)
-            {
-                var mapped = mapFirebaseException(functionName, ex);
-                if (mapped.HasValue)
-                {
-                    var mappedError = mapped.Value.Error;
-                    var firebaseCode = ex is FunctionsException fex ? fex.ErrorCode.ToString() : "N/A";
-                    if (mappedError != null)
-                    {
-                        Debug.LogWarning(
-                            $"[{Tag}] {functionName} mapped firebase error: {mappedError.Code} " +
-                            $"(firebase={firebaseCode}) {mappedError.Message}");
-                    }
-                    return mapped.Value;
-                }
-
-                Debug.LogError($"[{Tag}] {functionName} failed: {ex.Message}");
-                return CommonResult<Dictionary<string, object>>.Failure(
-                    mapUnhandledFunctionErrorType(functionName), ex.Message);
-            }
-        }
-
-        static CommonResult<Dictionary<string, object>>? mapFirebaseException(string functionName, Exception ex)
-        {
-            if (!(ex is FunctionsException fex)) return null;
-
-            var isVerifyPurchase = functionName == "verifyPurchase";
-            var isAckPurchaseClientGrant = functionName == "ackPurchaseClientGrant";
-            var isGetPurchaseAdjustments = functionName == "getPurchaseAdjustments";
-            var isGetRecentPurchases = functionName == "getRecentPurchases30d";
-
-            switch (fex.ErrorCode)
-            {
-                case FunctionsErrorCode.Unauthenticated:
-                    return CommonResult<Dictionary<string, object>>.Failure(
-                        CommonErrorType.PURCHASE_UNAUTHENTICATED,
-                        "Authentication required.");
-
-                case FunctionsErrorCode.InvalidArgument:
-                    if (isVerifyPurchase || isAckPurchaseClientGrant)
-                    {
-                        return CommonResult<Dictionary<string, object>>.Failure(
-                            CommonErrorType.PURCHASE_VERIFY_INVALID_ARGUMENT,
-                            $"Invalid {functionName} arguments.");
-                    }
-                    if (isGetRecentPurchases)
-                    {
-                        return CommonResult<Dictionary<string, object>>.Failure(
-                            CommonErrorType.PURCHASE_RECENT_CALL_FAILED,
-                            "Invalid getRecentPurchases request arguments.");
-                    }
-                    if (isGetPurchaseAdjustments)
-                    {
-                        return CommonResult<Dictionary<string, object>>.Failure(
-                            CommonErrorType.PURCHASE_ADJUSTMENTS_INVALID_ARGUMENT,
-                            "Invalid getPurchaseAdjustments request arguments.");
-                    }
-                    return CommonResult<Dictionary<string, object>>.Failure(
-                        mapUnhandledFunctionErrorType(functionName), fex.Message);
-
-                case FunctionsErrorCode.FailedPrecondition:
-                    if (isVerifyPurchase || isAckPurchaseClientGrant)
-                    {
-                        return CommonResult<Dictionary<string, object>>.Failure(
-                            CommonErrorType.PURCHASE_VERIFY_FAILED_PRECONDITION,
-                            $"{functionName} failed precondition.");
-                    }
-                    return CommonResult<Dictionary<string, object>>.Failure(
-                        mapUnhandledFunctionErrorType(functionName), fex.Message);
-
-                case FunctionsErrorCode.PermissionDenied:
-                    return CommonResult<Dictionary<string, object>>.Failure(
-                        CommonErrorType.COMMON_AUTH, "Permission denied.");
-
-                case FunctionsErrorCode.Unavailable:
-                case FunctionsErrorCode.DeadlineExceeded:
-                    return CommonResult<Dictionary<string, object>>.Failure(
-                        mapNetworkFunctionErrorType(functionName),
-                        "Network unavailable.");
-
-                default:
-                    return CommonResult<Dictionary<string, object>>.Failure(
-                        mapUnhandledFunctionErrorType(functionName),
-                        fex.Message);
-            }
-        }
-
-        static Dictionary<string, object> normalizeCallableResponse(object data)
-        {
-            if (data == null)
-                return null;
-
-            if (data is IDictionary<string, object> stringObjectMap)
-                return normalizeStringObjectMap(stringObjectMap);
-
-            if (data is IDictionary anyMap)
-                return normalizeAnyMap(anyMap);
-
-            return null;
-        }
-
-        static Dictionary<string, object> normalizeStringObjectMap(IDictionary<string, object> source)
-        {
-            var result = new Dictionary<string, object>(source.Count);
-            foreach (var kv in source)
-                result[kv.Key] = normalizeCallableValue(kv.Value);
-            return result;
-        }
-
-        static Dictionary<string, object> normalizeAnyMap(IDictionary source)
-        {
-            var result = new Dictionary<string, object>(source.Count);
-            foreach (DictionaryEntry entry in source)
-            {
-                if (entry.Key == null) continue;
-                result[entry.Key.ToString()] = normalizeCallableValue(entry.Value);
-            }
-            return result;
-        }
-
-        static object normalizeCallableValue(object value)
-        {
-            if (value == null)
-                return null;
-
-            if (value is IDictionary<string, object> stringObjectMap)
-                return normalizeStringObjectMap(stringObjectMap);
-
-            if (value is IDictionary anyMap)
-                return normalizeAnyMap(anyMap);
-
-            if (value is IList list && !(value is string))
-            {
-                var normalized = new List<object>(list.Count);
-                foreach (var item in list)
-                    normalized.Add(normalizeCallableValue(item));
-                return normalized;
-            }
-
-            return value;
-        }
-
-        static CommonErrorType mapUnhandledFunctionErrorType(string functionName)
-        {
-            switch (functionName)
-            {
-                case "getRecentPurchases30d":
-                    return CommonErrorType.PURCHASE_RECENT_CALL_FAILED;
-                case "getPurchaseAdjustments":
-                    return CommonErrorType.PURCHASE_ADJUSTMENTS_CALL_FAILED;
-                case "getEntitlements":
-                    return CommonErrorType.PURCHASE_ENTITLEMENTS_CALL_FAILED;
-                case "verifyPurchase":
-                case "ackPurchaseClientGrant":
-                    return CommonErrorType.PURCHASE_VERIFY_CALL_FAILED;
-                case "ackPurchaseStoreConfirm":
-                    return CommonErrorType.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED;
-                case "ackRefundApplied":
-                    return CommonErrorType.PURCHASE_REFUND_APPLY_FAILED;
-                default:
-                    return CommonErrorType.PURCHASE_FUNCTION_CALL_FAILED;
-            }
-        }
-
-        static CommonErrorType mapNetworkFunctionErrorType(string functionName)
-        {
-            switch (functionName)
-            {
-                case "getRecentPurchases30d":
-                    return CommonErrorType.PURCHASE_RECENT_CALL_FAILED;
-                case "getPurchaseAdjustments":
-                    return CommonErrorType.PURCHASE_ADJUSTMENTS_CALL_FAILED;
-                case "getEntitlements":
-                    return CommonErrorType.PURCHASE_ENTITLEMENTS_CALL_FAILED;
-                case "ackPurchaseStoreConfirm":
-                    return CommonErrorType.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED;
-                case "ackRefundApplied":
-                    return CommonErrorType.PURCHASE_REFUND_APPLY_FAILED;
-                case "ackPurchaseClientGrant":
-                default:
-                    return CommonErrorType.PURCHASE_NETWORK_UNAVAILABLE;
-            }
         }
 
         // ── Core Flow ──────────────────────────────────────────────
@@ -1527,27 +1294,21 @@ namespace Devian
                 }
             }
 
-            var result = await callFunctionAsync("verifyPurchase", data, ct);
+            var result = await FirebaseManager.Instance.VerifyPurchaseAsync(data, ct);
             if (result.IsFailure)
-                return CommonResult<VerifyPurchaseResponse>.Failure(result.Error!);
+                return result;
 
-            var response = result.Value!;
-            var resultStatus = response.TryGetValue("resultStatus", out var rs) ? rs as string ?? "" : "";
-            var rejectReason = response.TryGetValue("rejectReason", out var rr) ? rr as string ?? "" : "";
-            var purchaseId = response.TryGetValue("purchaseId", out var pid) ? pid as string ?? "" : "";
-            var verifyStatus = response.TryGetValue("verifyStatus", out var vs) ? vs as string ?? "" : resultStatus;
-            var clientGrantStatus = response.TryGetValue("clientGrantStatus", out var cgs) ? cgs as string ?? "" : "";
-            var storeConfirmStatus = response.TryGetValue("storeConfirmStatus", out var scs) ? scs as string ?? "" : "";
+            var verifyResponse = result.Value!;
 
-            EntitlementsSnapshot? snapshot = null;
-            if (response.TryGetValue("entitlementsSnapshot", out var snapObj) && snapObj is Dictionary<string, object> snap)
+            // FirebaseManager가 반환한 EntitlementsSnapshot은 raw season pass ID를 사용한다.
+            // domain 변환(ResolveSeasonPassId) 후 캐시한다.
+            if (verifyResponse.Snapshot.HasValue)
             {
-                snapshot = ParseEntitlementsSnapshot(snap);
-                cacheEntitlementsSnapshot(snapshot.Value);
+                var resolved = resolveEntitlementsSeasonPasses(verifyResponse.Snapshot.Value);
+                cacheEntitlementsSnapshot(resolved);
             }
 
-            return CommonResult<VerifyPurchaseResponse>.Success(
-                new VerifyPurchaseResponse(resultStatus, rejectReason, purchaseId, verifyStatus, clientGrantStatus, storeConfirmStatus, snapshot));
+            return result;
         }
 
         async Task<CommonResult> completePurchaseClientGrantAsync(string purchaseId, string clientGrantStatus, CancellationToken ct)
@@ -1627,11 +1388,7 @@ namespace Devian
                 ["clientGrantStatus"] = clientGrantStatus,
             };
 
-            var result = await callFunctionAsync("ackPurchaseClientGrant", data, ct);
-            if (result.IsFailure)
-                return CommonResult.Failure(result.Error!);
-
-            return CommonResult.Ok();
+            return await FirebaseManager.Instance.AckPurchaseClientGrantAsync(data, ct);
         }
 
         async Task<CommonResult> ackPurchaseStoreConfirmAsync(string purchaseId, CancellationToken ct)
@@ -1641,11 +1398,7 @@ namespace Devian
                 ["purchaseId"] = purchaseId,
             };
 
-            var result = await callFunctionAsync("ackPurchaseStoreConfirm", data, ct);
-            if (result.IsFailure)
-                return CommonResult.Failure(result.Error!);
-
-            return CommonResult.Ok();
+            return await FirebaseManager.Instance.AckPurchaseStoreConfirmAsync(data, ct);
         }
 
         async Task<CommonResult> ackRefundAppliedAsync(string purchaseId, CancellationToken ct)
@@ -1655,8 +1408,7 @@ namespace Devian
                 ["purchaseId"] = purchaseId,
             };
 
-            var result = await callFunctionAsync("ackRefundApplied", data, ct);
-            return result.IsFailure ? CommonResult.Failure(result.Error!) : CommonResult.Ok();
+            return await FirebaseManager.Instance.AckRefundAppliedAsync(data, ct);
         }
 
         // ── Store Fetch Helpers ────────────────────────────────────
@@ -1844,40 +1596,56 @@ namespace Devian
 
         // ── Helpers ───────────────────────────────────────────────
 
-        static EntitlementsSnapshot ParseEntitlementsSnapshot(Dictionary<string, object> snap)
+        /// <summary>
+        /// FirebaseManager가 반환한 raw EntitlementsSnapshot의 season pass ID를
+        /// ResolveSeasonPassId로 변환한 새 snapshot을 반환한다.
+        /// </summary>
+        static EntitlementsSnapshot resolveEntitlementsSeasonPasses(EntitlementsSnapshot raw)
         {
             var seasonPasses = new List<string>();
             var seasonPassSet = new HashSet<string>(StringComparer.Ordinal);
-            if (snap.TryGetValue("ownedSeasonPasses", out var sp) && sp is IEnumerable<object> spList)
+            if (raw.OwnedSeasonPasses != null)
             {
-                foreach (var s in spList)
+                for (var i = 0; i < raw.OwnedSeasonPasses.Count; i++)
                 {
-                    if (s is string str)
-                    {
-                        var seasonPassId = ResolveSeasonPassId(str);
-                        if (!string.IsNullOrEmpty(seasonPassId) && seasonPassSet.Add(seasonPassId))
-                            seasonPasses.Add(seasonPassId);
-                    }
+                    var resolved = ResolveSeasonPassId(raw.OwnedSeasonPasses[i]);
+                    if (!string.IsNullOrEmpty(resolved) && seasonPassSet.Add(resolved))
+                        seasonPasses.Add(resolved);
                 }
             }
 
-            var balances = new Dictionary<string, long>();
-            if (snap.TryGetValue("currencyBalances", out var cb) && cb is Dictionary<string, object> cbMap)
+            return new EntitlementsSnapshot(seasonPasses, raw.CurrencyBalances, raw.Rentals, raw.ServerNowUtcMs);
+        }
+
+        /// <summary>
+        /// FirebaseManager가 반환한 RefundPageResult의 raw item을
+        /// domain 보강(rewardGroupId, rewards, parsed kind) 후 RefundSyncResult로 변환한다.
+        /// </summary>
+        static RefundSyncResult enrichAdjustmentItems(RefundPageResult page)
+        {
+            var items = new List<PurchaseAdjustmentResult>();
+            for (var i = 0; i < page.Items.Length; i++)
             {
-                foreach (var kv in cbMap)
-                    balances[kv.Key] = Convert.ToInt64(kv.Value);
+                var raw = page.Items[i];
+                var rewardGroupId = ResolveRewardGroupId(raw.InternalProductId);
+                var rewards = ResolveRewardDatas(rewardGroupId);
+
+                PurchaseKind? kind = null;
+                if (TryParseStoredPurchaseKind(raw.KindString, out var parsedKind))
+                    kind = parsedKind;
+
+                items.Add(new PurchaseAdjustmentResult(
+                    raw.PurchaseId,
+                    raw.InternalProductId,
+                    kind,
+                    raw.ResultStatus,
+                    rewardGroupId,
+                    rewards,
+                    raw.Reason,
+                    raw.UpdatedAtUtcMs));
             }
 
-            var rentals = new Dictionary<string, long>();
-            if (snap.TryGetValue("rentals", out var rentalsObj) && rentalsObj is Dictionary<string, object> rentalsMap)
-            {
-                foreach (var kv in rentalsMap)
-                    rentals[kv.Key] = Convert.ToInt64(kv.Value);
-            }
-
-            var serverNowUtcMs = getLong(snap, "serverNowUtcMs");
-
-            return new EntitlementsSnapshot(seasonPasses, balances, rentals, serverNowUtcMs);
+            return new RefundSyncResult(items.ToArray(), page.NextCursor, page.HasMore);
         }
 
         static void cacheEntitlementsSnapshot(EntitlementsSnapshot snapshot)
@@ -2132,95 +1900,6 @@ namespace Devian
                    lower.Contains("이미 보유");
         }
 
-        static RecentPurchaseItem parseFirstRecentPurchaseItem(Dictionary<string, object> root)
-        {
-            if (!root.TryGetValue("items", out var itemsObj)) return null;
-            if (!(itemsObj is IList<object> items) || items.Count == 0) return null;
-            if (!(items[0] is IDictionary<string, object> first)) return null;
-
-            return new RecentPurchaseItem
-            {
-                purchaseId = getString(first, "purchaseId"),
-                internalProductId = getString(first, "internalProductId"),
-                storePurchasedAtMs = getLong(first, "storePurchasedAt"),
-                status = getString(first, "status"),
-            };
-        }
-
-        static RefundSyncResult ParseRefundSyncResult(Dictionary<string, object> root)
-        {
-            var items = new List<PurchaseAdjustmentResult>();
-            if (root.TryGetValue("items", out var itemsObj) && itemsObj is IList<object> itemList)
-            {
-                for (var i = 0; i < itemList.Count; i++)
-                {
-                    if (!(itemList[i] is IDictionary<string, object> item))
-                        continue;
-
-                    var purchaseId = getString(item, "purchaseId");
-                    var internalProductId = getString(item, "internalProductId");
-                    var resultStatus = getString(item, "resultStatus");
-                    var reason = getString(item, "reason");
-                    var updatedAtUtcMs = getLong(item, "updatedAtUtcMs");
-
-                    if (string.IsNullOrEmpty(resultStatus))
-                        resultStatus = getString(item, "status");
-                    if (updatedAtUtcMs <= 0)
-                        updatedAtUtcMs = getLong(item, "updatedAt");
-                    if (updatedAtUtcMs <= 0)
-                    {
-                        // 개별 아이템 파싱 실패 → skip (전체 페이지를 실패시키지 않음)
-                        Debug.LogWarning($"[{Tag}] Skipping refund adjustment with invalid updatedAt. purchaseId={purchaseId}");
-                        continue;
-                    }
-
-                    var rewardGroupId = ResolveRewardGroupId(internalProductId);
-                    var rewards = ResolveRewardDatas(rewardGroupId);
-
-                    PurchaseKind? kind = null;
-                    if (TryParseStoredPurchaseKind(getString(item, "kind"), out var parsedKind))
-                        kind = parsedKind;
-
-                    items.Add(new PurchaseAdjustmentResult(
-                        purchaseId,
-                        internalProductId,
-                        kind,
-                        resultStatus,
-                        rewardGroupId,
-                        rewards,
-                        reason,
-                        updatedAtUtcMs));
-                }
-            }
-
-            var nextCursor = getString(root, "nextCursor");
-            var hasMore = getBool(root, "hasMore");
-            return new RefundSyncResult(items.ToArray(), nextCursor, hasMore);
-        }
-
-        static string getString(IDictionary<string, object> m, string key)
-            => (m.TryGetValue(key, out var v) && v != null) ? v.ToString() : "";
-
-        static bool getBool(IDictionary<string, object> m, string key)
-        {
-            if (!m.TryGetValue(key, out var v) || v == null) return false;
-            if (v is bool b) return b;
-            if (v is int i) return i != 0;
-            if (v is long l) return l != 0;
-            if (v is double d) return Math.Abs(d) > double.Epsilon;
-            if (bool.TryParse(v.ToString(), out var parsed)) return parsed;
-            return false;
-        }
-
-        static long getLong(IDictionary<string, object> m, string key)
-        {
-            if (!m.TryGetValue(key, out var v) || v == null) return 0;
-            if (v is long l) return l;
-            if (v is int i) return i;
-            if (v is double d) return (long)d;
-            if (long.TryParse(v.ToString(), out var parsed)) return parsed;
-            return 0;
-        }
 
         static PurchaseStorage getPurchaseStorageOrNull()
         {
@@ -2253,54 +1932,6 @@ namespace Devian
             public string Payload { get; }
         }
 
-        public readonly struct VerifyPurchaseResponse
-        {
-            public VerifyPurchaseResponse(
-                string resultStatus,
-                string rejectReason,
-                string purchaseId,
-                string verifyStatus,
-                string clientGrantStatus,
-                string storeConfirmStatus,
-                EntitlementsSnapshot? snapshot)
-            {
-                ResultStatus = resultStatus;
-                RejectReason = rejectReason;
-                PurchaseId = purchaseId;
-                VerifyStatus = verifyStatus;
-                ClientGrantStatus = clientGrantStatus;
-                StoreConfirmStatus = storeConfirmStatus;
-                Snapshot = snapshot;
-            }
-
-            public string ResultStatus { get; }
-            public string RejectReason { get; }
-            public string PurchaseId { get; }
-            public string VerifyStatus { get; }
-            public string ClientGrantStatus { get; }
-            public string StoreConfirmStatus { get; }
-            public EntitlementsSnapshot? Snapshot { get; }
-        }
-
-        public readonly struct EntitlementsSnapshot
-        {
-            public EntitlementsSnapshot(
-                IReadOnlyList<string> ownedSeasonPasses,
-                IReadOnlyDictionary<string, long> currencyBalances,
-                IReadOnlyDictionary<string, long> rentals,
-                long serverNowUtcMs)
-            {
-                OwnedSeasonPasses = ownedSeasonPasses;
-                CurrencyBalances = currencyBalances;
-                Rentals = rentals;
-                ServerNowUtcMs = serverNowUtcMs;
-            }
-
-            public IReadOnlyList<string> OwnedSeasonPasses { get; }
-            public IReadOnlyDictionary<string, long> CurrencyBalances { get; }
-            public IReadOnlyDictionary<string, long> Rentals { get; }
-            public long ServerNowUtcMs { get; }
-        }
 
         public readonly struct PurchaseFinalResult
         {
@@ -2513,14 +2144,6 @@ namespace Devian
             Rental = 1,
             Subscription = 2,
             SeasonPass = 3,
-        }
-
-        public sealed class RecentPurchaseItem
-        {
-            public string purchaseId;
-            public string internalProductId;
-            public long storePurchasedAtMs;
-            public string status;
         }
 
     }

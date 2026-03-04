@@ -90,3 +90,31 @@ gcloud secrets add-iam-policy-binding GOOGLE_DRIVE_AUDIT_CREDENTIALS_JSON \
   --member="serviceAccount:{PROJECT_ID}@appspot.gserviceaccount.com" \
   --role="roles/secretmanager.secretAccessor" \
   --project={PROJECT_ID}
+
+
+
+/*
+ * firebase web
+ *
+ */
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyCrQ5YqSYVauRvAv0zedLu5jgLQfEu1mTE",
+  authDomain: "devian-framwork-example.firebaseapp.com",
+  projectId: "devian-framwork-example",
+  storageBucket: "devian-framwork-example.firebasestorage.app",
+  messagingSenderId: "119226054667",
+  appId: "1:119226054667:web:eb6b3e71c7f7a441ab6f0e",
+  measurementId: "G-D4GYWN4XHC"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);

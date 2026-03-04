@@ -25,6 +25,7 @@ MobileSystem은 **Devian Samples**(`com.devian.samples`)에 포함된 Unity Samp
 
 - [30-purchase-system](../30-purchase-system/00-overview/SKILL.md)
 - [11-mobile-application](../11-mobile-application/SKILL.md)
+- [23-firebase-manager](../23-firebase-manager/SKILL.md)
 - [20-account-system](../20-account-system/00-overview/SKILL.md)
 - [21-savedata-system](../21-savedata-system/00-overview/SKILL.md)
 - [25-recovery-system](../25-recovery-system/00-overview/SKILL.md)

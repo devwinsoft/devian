@@ -278,7 +278,7 @@ MissionManager는 backend에서 아래 payload를 받아 timed mission의 현재
 - stale clock을 별도 예외 상태로 두지 않는다. 마지막으로 동기화한 서버 시간을 기준으로 클라이언트가 계속 판정한다.
 - `getMissionClock` 호출 책임은 MissionManager에 있다.
 - 로그인 시점(= 앱 시작)에는 `MissionManager.InitializeAsync()` 내부에서 `getMissionClock`을 호출한다.
-- `BaseApplication.OnEnterForeground()` 같은 resume hook은 MissionManager의 `RefreshClockAsync()` 진입점만 호출한다.
+- `ApplicationManager.OnEnterForeground()` 같은 resume hook은 MissionManager의 `RefreshClockAsync()` 진입점만 호출한다.
 - 첫 실행에서 `dailyMissionStartUtcMs`가 없으면, 첫 successful `getMissionClock` 직후 이를 기록하고 미션을 초기화한다.
 - 현재 sync 시각과 `dailyMissionStartUtcMs`의 차이가 7일(`604800000ms`) 초과면 현재 `serverNowUtcMs`를 새 `dailyMissionStartUtcMs`로 사용한다.
 - 첫 login에서 `getMissionClock` 호출이 실패하면 MissionManager 초기화 실패로 처리한다.

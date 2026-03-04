@@ -58,6 +58,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d1185151d0d97f4fbdbc96d48eb784a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TestBootstrap
+  _appVersion:
+    Major: 0
+    Minor: 1
+    Patch: 0
 --- !u!114 &-4201736480531811430
 MonoBehaviour:
   m_ObjectHideFlags: 0

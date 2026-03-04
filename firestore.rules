@@ -3,6 +3,11 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ── 앱 버전 설정: Operation(localhost) 도구에서 read/write ──
+    match /config/appVersion {
+      allow read, write: if true;
+    }
+
     // ── 사용자 purchases 원장: 서버(Functions)만 write 가능 ──
     match /users/{uid}/purchases/{purchaseId} {
       allow read: if request.auth != null && request.auth.uid == uid;

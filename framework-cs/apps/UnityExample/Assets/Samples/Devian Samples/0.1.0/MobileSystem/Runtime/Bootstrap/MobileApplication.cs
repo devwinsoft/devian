@@ -12,7 +12,8 @@ namespace Devian
     [RequireComponent(typeof(MissionManager))]
     [RequireComponent(typeof(SaveDataManager))]
     [RequireComponent(typeof(InputManager))]
-    public abstract class MobileApplication : BaseApplication
+    [RequireComponent(typeof(FirebaseManager))]
+    public abstract class MobileApplication : ApplicationManager
     {
         const string FirebaseFunctionsRegion = "asia-northeast3";
 
@@ -103,6 +104,38 @@ namespace Devian
         }
         #endif
 
+        /// <summary>
+        /// MissionClockSnapshot의 버전 정보와 AppVersion을 비교하여 업데이트 필요 여부를 판정한다.
+        /// MissionManager.InitializeAsync() 또는 RefreshClockAsync() 이후에 호출해야 한다.
+        /// </summary>
+        public VersionCheckResult VersionCheck()
+        {
+            if (!MissionManager.TryGet(out var missionManager))
+                return VersionCheckResult.Success;
+
+            var snapshot = missionManager.Storage.clockSnapshot;
+            if (snapshot == null)
+                return VersionCheckResult.Success;
+
+            // minVersion 체크 (ForceUpdate)
+            if (!string.IsNullOrEmpty(snapshot.minVersion)
+                && VersionNumber.TryParse(snapshot.minVersion, out var min)
+                && AppVersion < min)
+            {
+                return VersionCheckResult.ForceUpdate;
+            }
+
+            // currentVersion 체크 (RecommendUpdate)
+            if (!string.IsNullOrEmpty(snapshot.currentVersion)
+                && VersionNumber.TryParse(snapshot.currentVersion, out var recommend)
+                && AppVersion < recommend)
+            {
+                return VersionCheckResult.RecommendUpdate;
+            }
+
+            return VersionCheckResult.Success;
+        }
+
         private static async Task refreshMissionClockAsync()
         {
             if (!MissionManager.TryGet(out var missionManager))
@@ -120,9 +153,7 @@ namespace Devian
 
         void configureFunctionsRegion()
         {
-            var region = FirebaseFunctionsRegion;
-            GetComponent<PurchaseManager>()?.SetFunctionsRegion(region);
-            GetComponent<MissionManager>()?.SetFunctionsRegion(region);
+            GetComponent<FirebaseManager>()?.SetFunctionsRegion(FirebaseFunctionsRegion);
         }
     }
 }

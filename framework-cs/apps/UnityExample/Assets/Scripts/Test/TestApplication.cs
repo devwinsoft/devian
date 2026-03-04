@@ -14,7 +14,7 @@ public class TestApplication : MobileApplication
     {
         if (_instance == null)
         {
-            _instance = Singleton.CreateFromResources<BaseApplication, TestApplication>("Devian/Bootstrap");
+            _instance = Singleton.CreateFromResources<ApplicationManager, TestApplication>("Devian/Bootstrap");
         }
         return _instance;
     }
