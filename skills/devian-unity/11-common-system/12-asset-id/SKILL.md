@@ -21,51 +21,52 @@ Inspector에서 string 기반 ID를 선택할 수 있도록 하는 **AssetId 패
 
 ---
 
-## 3. 생성 대상 패키지
+## 3. 패키지
 
-- 생성기/selector 기반은 `com.devian.domain.common`
-- runtime ID 타입과 owning asset feature는 해당 owning package에 둔다
+- selector base 클래스는 `com.devian.foundation` (Editor)
+- runtime ID 타입과 Generated selector는 해당 owning package에 둔다
 
 ---
 
 ## 4. 파일 위치 (정본)
 
-Editor:
+Editor (base — `com.devian.foundation`):
 
 ```
-com.devian.domain.common/Editor/AssetId/
+com.devian.foundation/Editor/AssetId/
 ├── BaseEditorAssetIdSelector.cs
-├── BaseEditorScriptableAssetIdSelector.cs
-└── Generated/
-    └── {ASSET}_ID.Editor.cs
+└── BaseEditorScriptableAssetIdSelector.cs
 ```
 
 Settings (단일 정본):
 
 - `Assets/Resources/Devian/DevianSettings.asset` (JSON 형태 금지)
+- `com.devian.foundation/Runtime/Unity/Settings/DevianSettings.cs`
 
-Runtime ID 타입(예: COMMON_EFFECT_ID, owning package 기준):
+Runtime ID 타입 + Generated selector는 owning package 기준:
 
 ```
-com.devian.domain.common/Runtime/CommonEffect/
-└── COMMON_EFFECT_ID.cs
+{owning-package}/Runtime/{Feature}/
+└── {ASSET}_ID.cs
+{owning-package}/Editor/Generated/
+└── {ASSET}_ID.Editor.cs
 ```
 
 Parent:
 
-- `skills/devian-unity/11-common-system/00-overview/SKILL.md`
-- `skills/devian-unity/11-common-system/11-devian-settings/SKILL.md`
+- `skills/devian-unity/11-common-system/SKILL.md`
+- `skills/devian-unity/11-common-system/18-devian-settings/SKILL.md`
 
 ---
 
 ## 5. SearchDir 공급 규약(Hard)
 
-Selector는 `DevianSettings.asset`에서 GroupKey로 SearchDir를 찾는다.
+Selector는 `DevianSettings.asset`에서 key로 SearchDir를 찾는다.
 
-- `DevianSettings.AssetId`에서 `{GroupKey, SearchDir}` 매칭
+- `DevianSettings.GetEntry(key)`로 조회 (key = ID 타입명, e.g. `COMMON_EFFECT_ID`)
 - 매칭 실패 시 `"Assets"` fallback (최후 수단)
 
-AssetId 그룹은 **단일 SearchDir(string)** 만 지원한다.
+AssetId key는 **단일 SearchDir(string)** 만 지원한다.
 
 ---
 

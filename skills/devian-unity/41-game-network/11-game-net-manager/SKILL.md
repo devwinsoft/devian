@@ -77,7 +77,6 @@ Samples~/GameNetwork/
   "rootNamespace": "Devian",
   "references": [
     "Devian.Core",
-    "Devian.Unity",
     "Devian.Domain.Common",
     "Devian.Protocol.Game"
   ]

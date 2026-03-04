@@ -31,7 +31,7 @@ Devian 프레임워크의 핵심 정책, SSOT, 런타임, 직렬화, 네트워�
 | Document | Description |
 |----------|-------------|
 | [05-unity-csharp-compat](../../../devian-unity/05-unity-csharp-compat/SKILL.md) | Unity C# 문법/언어버전 제한 (moved to devian-unity) |
-| [05-generated-integration](../05-generated-integration/SKILL.md) | Generated 코드 통합 정책 |
+| [06-generated-integration](../../06-generated-integration/SKILL.md) | Generated 코드 통합 정책 (moved to devian/) |
 
 ---
 

@@ -160,5 +160,5 @@ C# 메서드 네이밍(internal `_` 접두어, protected lowerCamelCase)은 상�
 
 - [UICanvas/UIFrame](../20-ui-canvas-frames/SKILL.md)
 - [UIMessageSystem](../33-ui-message-system/SKILL.md)
-- [Singleton](../../10-foundation/15-singleton/SKILL.md)
-- [Pool System](../../10-foundation/10-pool-system/SKILL.md)
+- [Singleton](../../11-common-system/29-singleton/SKILL.md)
+- [Pool System](../../11-common-system/27-pool-system/SKILL.md)

@@ -48,7 +48,7 @@
 ### 6-2) 교차 관심사 (Cross-cutting concerns)
 - **3-path mirror**: `com.devian.samples` Samples~ 파일은 3곳에 미러링된다.
   - 정본: `devian-unity/07-samples-creation-guide/SKILL.md`
-  - 동기화 규칙: `devian-unity/03-ssot/SKILL.md` §UPM Packages Sync
+  - 동기화 규칙: `devian-unity/01-policy/SKILL.md` §SSOT 원칙
   - 하위 스킬에서는 상위 정책을 **참조만** 하고, 규칙을 중복 정의하지 않는다.
 - **Implementation Location 표기 규칙**:
   - 섹션 제목: `Implementation Location (3-path mirror)`

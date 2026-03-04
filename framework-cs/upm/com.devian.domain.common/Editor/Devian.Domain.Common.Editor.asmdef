@@ -3,7 +3,6 @@
   "rootNamespace": "Devian.Domain.Common.Editor",
   "references": [
     "Devian.Domain.Common",
-    "Devian.Unity",
     "Devian.Unity.Editor",
     "Unity.InputSystem"
   ],

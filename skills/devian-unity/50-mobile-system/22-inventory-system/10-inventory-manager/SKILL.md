@@ -249,4 +249,4 @@ readonly InventoryStorage _storage = new();
 - [01-policy](../01-policy/SKILL.md) — Inventory 하드룰
 - [10-reward-manager](../../49-reward-system/10-reward-manager/SKILL.md) — RewardManager (AddRewards 위임 호출자)
 - [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 정본
-- [15-singleton](../../../10-foundation/15-singleton/SKILL.md) — CompoSingleton 규약
+- [15-singleton](../../../11-common-system/29-singleton/SKILL.md) — CompoSingleton 규약

@@ -3,7 +3,8 @@
   "rootNamespace": "Devian.Domain.Common",
   "references": [
     "Devian.Core",
-    "Devian.Unity",
+    "Unity.Addressables",
+    "Unity.ResourceManager",
     "Unity.InputSystem",
     "Newtonsoft.Json"
   ],

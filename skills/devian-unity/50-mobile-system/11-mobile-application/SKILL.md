@@ -76,12 +76,12 @@ MobileApplication에 부착된 RequireComponent:
 - `AccountManager`
 - `InventoryManager`
 - `PurchaseManager`
-- `InputManager` — [24-input-manager](../../11-common-system/24-input-manager/SKILL.md)
+- `InputManager` — [24-input-manager](../../11-common-system/22-input-manager/SKILL.md)
 - `SaveDataManager`
 
 
 ## Links
-- [16-base-application](../../10-foundation/16-base-application/SKILL.md) — BaseApplication 런타임 스펙
-- [24-input-manager](../../11-common-system/24-input-manager/SKILL.md) — InputManager 공용 입력 관리자
+- [16-base-application](../../11-common-system/14-base-application/SKILL.md) — BaseApplication 런타임 스펙
+- [24-input-manager](../../11-common-system/22-input-manager/SKILL.md) — InputManager 공용 입력 관리자
 - [21-savedata-system/43-savedata-json-codec](../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 규약
 - [50-mobile-system overview](../00-overview/SKILL.md) — MobileSystem (Devian Samples) 그룹 개요

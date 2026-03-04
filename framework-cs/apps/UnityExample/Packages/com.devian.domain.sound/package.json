@@ -8,6 +8,7 @@
     "name": "Devian"
   },
   "dependencies": {
-    "com.devian.foundation": "0.1.0"
+    "com.devian.foundation": "0.1.0",
+    "com.devian.domain.common": "0.1.0"
   }
 }

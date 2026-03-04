@@ -3217,6 +3217,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d1427b4cbc1019e409706d7eeee9ad39, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SceneTest
+  version:
+    Major: 1
+    Minor: 0
+    Patch: 0
   a:
     save1: 0
     save2: 0

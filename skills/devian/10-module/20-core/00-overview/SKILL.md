@@ -9,6 +9,7 @@ Maps to: `framework-cs/module/Devian/src/Core/`, `framework-cs/module/Devian/src
 - **Variable/Complex**: 마스킹 타입 (CInt, CFloat, CString)
 - **Variable/Variant**: 태그 유니온 (Int/Float/String)
 - **Variable/BigInt**: 과학적 표기 큰 정수 (CBigInt)
+- **VersionNumber**: `#.#.#` 버전 비교 유틸리티 (Major.Minor.Patch)
 
 ---
 
@@ -18,6 +19,7 @@ Maps to: `framework-cs/module/Devian/src/Core/`, `framework-cs/module/Devian/src
 |----------|-------------|
 | [10-feature-crypto](../10-feature-crypto/SKILL.md) | Crypto Feature |
 | [12-logger](../12-logger/SKILL.md) | Logger Feature |
+| [14-version-number](../14-version-number/SKILL.md) | VersionNumber (Major.Minor.Patch) |
 | [31-variable-complex](../31-variable-complex/SKILL.md) | Complex (masking) types |
 | [32-variable-variant](../32-variable-variant/SKILL.md) | Variant tagged union |
 | [35-variable-bigint](../35-variable-bigint/SKILL.md) | CBigInt large number |

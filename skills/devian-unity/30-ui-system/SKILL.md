@@ -30,7 +30,7 @@ framework-cs/upm/com.devian.ui/Runtime/
 
 | 패키지 | 버전 | 비고 |
 |--------|------|------|
-| `com.devian.foundation` | `0.1.0` | Core + Unity 런타임 기반 |
+| `com.devian.foundation` | `0.1.0` | Core 모듈 래핑 + 모듈 타입 Editor |
 | `com.devian.domain.common` | `0.1.0` | 필수 (향후 사용 고정) |
 | `com.devian.domain.sound` | `0.1.0` | 필수 (향후 사용 고정) |
 
@@ -48,8 +48,8 @@ Foundation → UI 하드 참조가 존재하지 않는다.
 
 | asmdef | name | references | 위치 |
 |--------|------|------------|------|
-| `Devian.UI.asmdef` | `Devian.UI` | `["Devian.Core", "Devian.Unity", "Devian.Domain.Common", "Devian.Domain.Sound", "Unity.TextMeshPro"]` | `Runtime/` |
-| `Devian.UI.Editor.asmdef` | `Devian.UI.Editor` | `["Devian.UI", "Devian.Unity", "Devian.Unity.Editor"]` | `Editor/` |
+| `Devian.UI.asmdef` | `Devian.UI` | `["Devian.Core", "Devian.Domain.Common", "Devian.Domain.Sound", "Unity.TextMeshPro"]` | `Runtime/` |
+| `Devian.UI.Editor.asmdef` | `Devian.UI.Editor` | `["Devian.UI", "Devian.Domain.Common", "Devian.Unity.Editor"]` | `Editor/` |
 
 ---
 

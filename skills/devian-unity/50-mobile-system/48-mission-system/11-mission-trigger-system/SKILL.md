@@ -124,7 +124,7 @@ claim 가능 판정:
 
 ## Reference
 
-- [22-message-system](../../10-foundation/22-message-system/SKILL.md)
+- [22-message-system](../../11-common-system/25-message-system/SKILL.md)
 - [10-mission-manager](../10-mission-manager/SKILL.md)
 - [03-ssot](../03-ssot/SKILL.md)
 - [13-mission-runtime](../13-mission-runtime/SKILL.md)

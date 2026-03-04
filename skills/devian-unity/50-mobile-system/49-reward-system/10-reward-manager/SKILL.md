@@ -78,7 +78,7 @@ CompoSingleton<RewardManager>.Instance
 
 ## Implementation Location (3-path mirror)
 
-> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../07-samples-creation-guide/SKILL.md), [devian-unity/03-ssot](../../../03-ssot/SKILL.md) §UPM Packages Sync
+> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../07-samples-creation-guide/SKILL.md), [devian-unity/01-policy](../../../01-policy/SKILL.md) §SSOT 원칙
 
 - RewardManager:
   - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardManager.cs`

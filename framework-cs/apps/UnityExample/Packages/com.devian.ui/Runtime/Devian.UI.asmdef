@@ -3,7 +3,6 @@
   "rootNamespace": "Devian",
   "references": [
     "Devian.Core",
-    "Devian.Unity",
     "Devian.Domain.Common",
     "Devian.Domain.Sound",
     "Unity.TextMeshPro"

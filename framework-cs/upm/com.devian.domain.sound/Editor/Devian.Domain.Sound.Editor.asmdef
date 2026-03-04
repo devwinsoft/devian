@@ -3,7 +3,8 @@
   "rootNamespace": "Devian.Domain.Sound.Editor",
   "references": [
     "Devian.Domain.Sound",
-    "Devian.Unity",
+    "Devian.Domain.Common",
+    "Devian.Domain.Common.Editor",
     "Devian.Unity.Editor"
   ],
   "includePlatforms": ["Editor"],

@@ -1,7 +1,7 @@
 # devian-unity — Policy
 
 Status: ACTIVE  
-AppliesTo: v10  
+AppliesTo: v11  
 Type: Policy / Entry Point
 
 ## Purpose
@@ -144,7 +144,7 @@ rm -f UnityExample/Packages/{pkg}/.../OldName.cs.meta
 - `skills/devian-unity/11-common-system/02-module-policy/SKILL.md`
 
 ### Unity Components
-- AssetManager: `skills/devian-unity/10-foundation/18-asset-manager/SKILL.md`
+- AssetManager: `skills/devian-unity/11-common-system/13-asset-manager/SKILL.md`
 
 ---
 

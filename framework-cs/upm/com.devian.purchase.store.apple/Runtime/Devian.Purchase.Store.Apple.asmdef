@@ -3,7 +3,7 @@
   "rootNamespace": "Devian",
   "references": [
     "Devian.Samples.MobileSystem",
-    "Devian.Unity"
+    "Devian.Domain.Common"
   ],
   "includePlatforms": [ "iOS", "tvOS" ],
   "excludePlatforms": [],

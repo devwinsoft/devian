@@ -200,7 +200,15 @@
       "Bash(sort -k1 -n -r)",
       "Bash(pkill -f \"vite --host\")",
       "mcp__Claude_Preview__preview_start",
-      "WebFetch(domain:api.github.com)"
+      "WebFetch(domain:api.github.com)",
+      "Bash(BASE=\"skills/devian-unity/11-common-system\")",
+      "Bash(SRC=\"skills/devian-unity/10-foundation\")",
+      "Bash(DST=\"skills/devian-unity/11-common-system\")",
+      "Bash(SRC=\"framework-cs/apps/UnityExample/Packages/com.devian.foundation/Runtime/Unity\")",
+      "Bash(DST=\"framework-cs/apps/UnityExample/Packages/com.devian.domain.common/Runtime/Unity\")",
+      "Bash(git -C /Users/maoshy/Documents/Projects/devian add \"framework-cs/upm/com.devian.domain.common/Editor/Unity/AssetId/\" \"framework-cs/upm/com.devian.domain.common/Editor/Unity/Settings/\")",
+      "Bash(git -C /Users/maoshy/Documents/Projects/devian add \"framework-cs/apps/UnityExample/Packages/com.devian.domain.common/Editor/Unity/AssetId/\" \"framework-cs/apps/UnityExample/Packages/com.devian.domain.common/Editor/Unity/AssetId.meta\" \"framework-cs/apps/UnityExample/Packages/com.devian.domain.common/Editor/Unity/Settings/\" \"framework-cs/apps/UnityExample/Packages/com.devian.domain.common/Editor/Unity/Settings.meta\")",
+      "Bash(do diff -rq \"/Users/maoshy/Documents/Projects/devian/framework-cs/upm/$pkg/\" \"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Packages/$pkg/\" --exclude=\"*.meta\")"
     ]
   },
   "project": {

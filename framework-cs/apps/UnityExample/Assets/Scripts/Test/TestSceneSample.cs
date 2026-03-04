@@ -9,6 +9,7 @@ using TMPro;
 
 public class TestSceneSample : TestSceneBootstrap
 {
+    public VersionNumber version;
     public CInt a;
     public CFloat b;
     public CString c;

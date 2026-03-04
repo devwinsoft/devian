@@ -3,7 +3,8 @@
   "rootNamespace": "Devian.Domain.Game.Editor",
   "references": [
     "Devian.Domain.Game",
-    "Devian.Unity",
+    "Devian.Domain.Common",
+    "Devian.Domain.Common.Editor",
     "Devian.Unity.Editor"
   ],
   "includePlatforms": [

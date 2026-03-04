@@ -3,7 +3,7 @@
   "rootNamespace": "Devian.Domain.Game",
   "references": [
     "Devian.Core",
-    "Devian.Unity",
+    "Devian.Domain.Common",
     "Devian.Domain.Sound"
   ],
   "includePlatforms": [],

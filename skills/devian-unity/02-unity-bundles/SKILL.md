@@ -1,7 +1,7 @@
 # 02-unity-bundles
 
-Status: ACTIVE  
-AppliesTo: v10
+Status: ACTIVE
+AppliesTo: v11
 
 ## Prerequisites
 
@@ -9,7 +9,7 @@ AppliesTo: v10
 
 ## SSOT
 
-이 문서는 **UnityExample embedded 패키지 묶음(번들)**의 **구성/레이아웃/의존성/asmdef 규약**을 정의한다.
+이 문서는 **UnityExample embedded 패키지 묶음(번들)**의 **구성/레이아웃/asmdef 규약**을 정의한다.
 
 > **주의:** 이 문서는 "패키지"가 아니라 **번들 정책(embedded 패키지 묶음)**을 정의한다.
 > 도메인 모듈 정책은 `skills/devian-unity/11-common-system/02-module-policy/SKILL.md`를 참조한다.
@@ -20,9 +20,9 @@ AppliesTo: v10
 
 - UnityEngine.dll을 외부 .NET 빌드에서 직접 참조하지 않는다.
 - UnityExample에 embedded UPM 패키지로 다음을 제공한다:
-  - `com.devian.foundation` (Devian 런타임 통합: Core + Unity)
+  - `com.devian.foundation` (모듈 래핑: Core + 모듈 타입 Editor)
   - `com.devian.ui` (UI 컴포넌트: UIManager, UICanvas, UIFrame, Plugins)
-  - `com.devian.domain.common` (Devian.Domain.Common 소스 + Complex PropertyDrawer)
+  - `com.devian.domain.common` (Unity 런타임 + 도메인 공통)
   - `com.devian.domain.sound` (Sound/Voice 도메인)
   - `com.devian.samples` (UPM Samples~ 기반 샘플 코드)
 
@@ -45,16 +45,14 @@ framework-cs/apps/UnityExample/Packages/
 
 | 패키지 | 역할 |
 |--------|------|
-| `com.devian.foundation` | Devian 런타임 통합 (Core + Unity) |
+| `com.devian.foundation` | 모듈 래핑 (Core + 모듈 타입 Editor) |
 | `com.devian.ui` | UI 컴포넌트 (UIManager, UICanvas, UIFrame, Plugins) |
-| `com.devian.domain.common` | Devian.Domain.Common 소스 (Complex types + PropertyDrawers) |
+| `com.devian.domain.common` | Unity 런타임 + 도메인 공통 (Devian.Domain.Common) |
 | `com.devian.domain.game` | Devian.Domain.Game 소스 (테이블 생성 예제) |
 | `com.devian.domain.sound` | Sound/Voice 도메인 |
 | `com.devian.samples` | UPM Samples~ 기반 샘플 코드 |
 
-> **패키지 통합 정책 (Hard Rule):**
-> - `com.devian.core`, `com.devian.unity`는 더 이상 별도 패키지로 존재하지 않는다.
-> - 모든 런타임 기능은 `com.devian.foundation` 단일 패키지에 포함된다.
+> 패키지 통합 정책(com.devian.core/unity 금지)은 [03-ssot](../03-ssot/SKILL.md) §Base UPM package를 참조한다.
 
 ## 버전 정책
 
@@ -65,15 +63,17 @@ framework-cs/apps/UnityExample/Packages/
 ## 의존 방향 정책 (핵심)
 
 ```
-com.devian.foundation (base - Core + Unity 통합)
-       ↑
-com.devian.ui (UI 컴포넌트 - foundation + domain.common + domain.sound 의존)
+com.devian.foundation (base - Core + 모듈 타입 Editor)
        ↑
 com.devian.domain.* (module packages - foundation 의존)
+       ↑
+com.devian.ui (UI 컴포넌트 - foundation + domain.common + domain.sound 의존)
 ```
 
 > **Hard Rule:** `com.devian.foundation` → `com.devian.domain.*` 의존 **금지** (순환 방지)
 > **Hard Rule:** `com.devian.foundation` → `com.devian.ui` 의존 **금지** (순환 방지)
+
+dependencies 상세 테이블은 [04-package-metadata](../04-package-metadata/SKILL.md) §dependencies 정책을 참조한다.
 
 ---
 
@@ -84,64 +84,25 @@ com.devian.domain.* (module packages - foundation 의존)
 | asmdef | name | references | 패키지 |
 |--------|------|------------|--------|
 | `Devian.Core.asmdef` | `Devian.Core` | `[]` | com.devian.foundation/Runtime/Module |
-| `Devian.Unity.asmdef` | `Devian.Unity` | `["Devian.Core"]` | com.devian.foundation/Runtime/Unity |
-| `Devian.UI.asmdef` | `Devian.UI` | `["Devian.Core", "Devian.Unity", "Devian.Domain.Sound"]` | com.devian.ui/Runtime |
-| `Devian.Domain.Common.asmdef` | `Devian.Domain.Common` | `["Devian.Core", "Devian.Unity", "Newtonsoft.Json"]` | com.devian.domain.common |
-| `Devian.Domain.Sound.asmdef` | `Devian.Domain.Sound` | `["Devian.Core", "Devian.Unity"]` | com.devian.domain.sound |
+| `Devian.UI.asmdef` | `Devian.UI` | `["Devian.Core", "Devian.Domain.Common", "Devian.Domain.Sound"]` | com.devian.ui/Runtime |
+| `Devian.Domain.Common.asmdef` | `Devian.Domain.Common` | `["Devian.Core", "Unity.Addressables", "Unity.ResourceManager", "Unity.InputSystem", "Newtonsoft.Json"]` | com.devian.domain.common |
+| `Devian.Domain.Sound.asmdef` | `Devian.Domain.Sound` | `["Devian.Core", "Devian.Domain.Common"]` | com.devian.domain.sound |
 
 ### Editor asmdef
 
 | asmdef | name | references | 패키지 |
 |--------|------|------------|--------|
-| `Devian.Unity.Editor.asmdef` | `Devian.Unity.Editor` | `["Devian.Core", "Devian.Unity"]` | com.devian.foundation/Editor |
-| `Devian.UI.Editor.asmdef` | `Devian.UI.Editor` | `["Devian.UI", "Devian.Unity", "Devian.Unity.Editor"]` | com.devian.ui/Editor |
-| `Devian.Domain.Common.Editor.asmdef` | `Devian.Domain.Common.Editor` | `["Devian.Domain.Common", "Devian.Unity", "Devian.Unity.Editor"]` | com.devian.domain.common |
-| `Devian.Domain.Sound.Editor.asmdef` | `Devian.Domain.Sound.Editor` | `["Devian.Domain.Sound", "Devian.Unity", "Devian.Unity.Editor"]` | com.devian.domain.sound |
-
----
-
-## dependencies 규약 (package.json)
-
-| 패키지 | dependencies |
-|--------|--------------|
-| `com.devian.foundation` | `com.unity.addressables` |
-| `com.devian.ui` | `com.devian.foundation`, `com.devian.domain.common`, `com.devian.domain.sound` |
-| `com.devian.domain.common` | `com.devian.foundation`, `com.unity.nuget.newtonsoft-json` |
-| `com.devian.domain.sound` | `com.devian.foundation` |
-| `com.devian.domain.game` | `com.devian.foundation`, `com.devian.domain.sound` |
-| `com.devian.samples` | (없음) |
-
----
-
-## SSOT 경로
-
-| 유형 | 경로 |
-|------|------|
-| 정적 UPM 패키지 (SSOT) | `framework-cs/upm/` |
-| 생성 UPM 패키지 | `framework-cs/upm/` |
-| UnityExample 최종 패키지 | `framework-cs/apps/UnityExample/Packages/` |
-
----
-
-## 패키지 동기화 규칙 (Hard Rule)
-
-**UnityExample/Packages는 빌더가 clean+copy로 갱신한다.**
-
-| 정본 | 복사본 | 동작 |
-|------|--------|------|
-| `upm/{pkg}` | `Packages/{pkg}` | clean + copy |
-
-**수정은 upm/에서만 한다.**
-
-- `Packages/`에서 수정한 코드는 다음 sync에서 덮어써지며, **정책 위반**이다.
-- 수동 패키지(`com.devian.foundation`, `com.devian.samples` 등)는 `upm/`에서 수정
-- 생성 패키지(`com.devian.domain.common`, `com.devian.protocol.*` 등)는 빌더가 `upm/`에 생성
+| `Devian.Unity.Editor.asmdef` | `Devian.Unity.Editor` | `["Devian.Core", "Devian.Domain.Common"]` | com.devian.foundation/Editor |
+| `Devian.UI.Editor.asmdef` | `Devian.UI.Editor` | `["Devian.UI", "Devian.Domain.Common", "Devian.Unity.Editor"]` | com.devian.ui/Editor |
+| `Devian.Domain.Common.Editor.asmdef` | `Devian.Domain.Common.Editor` | `["Devian.Domain.Common", "Devian.Unity.Editor"]` | com.devian.domain.common |
+| `Devian.Domain.Game.Editor.asmdef` | `Devian.Domain.Game.Editor` | `["Devian.Domain.Game", "Devian.Domain.Common", "Devian.Domain.Common.Editor", "Devian.Unity.Editor"]` | com.devian.domain.game |
+| `Devian.Domain.Sound.Editor.asmdef` | `Devian.Domain.Sound.Editor` | `["Devian.Domain.Sound", "Devian.Domain.Common", "Devian.Domain.Common.Editor", "Devian.Unity.Editor"]` | com.devian.domain.sound |
 
 ---
 
 ## Reference
 
-- Related: `skills/devian-unity/01-policy/SKILL.md`
-- Related: `skills/devian-unity/04-package-metadata/SKILL.md`
-- Related: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)
-- Related: `skills/devian-unity/11-common-system/02-module-policy/SKILL.md`
+- [Unity Policy](../01-policy/SKILL.md) — UPM Sync/동기화 규칙
+- [Package Metadata](../04-package-metadata/SKILL.md) — package.json 메타데이터/dependencies
+- [Root SSOT](../../devian/10-module/03-ssot/SKILL.md) — Foundation Package SSOT
+- [Module Policy](../11-common-system/02-module-policy/SKILL.md) — 도메인 모듈 정책

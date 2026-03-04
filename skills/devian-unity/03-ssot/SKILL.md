@@ -1,16 +1,18 @@
 # 03-ssot — Unity
 
 Status: ACTIVE
-AppliesTo: v10
+AppliesTo: v11
 ParentSSOT: skills/devian/10-module/03-ssot/SKILL.md
 
 ---
 
 ## Scope
 
-이 문서는 **Unity UPM 패키지, Packages Sync, Unity 게이트** 관련 SSOT를 정의한다.
+이 문서는 **Unity UPM 패키지 구조, 빌드 동기화, 게이트** 관련 SSOT를 정의한다.
 
 **중복 금지:** 공통 용어/플레이스홀더/입력 분리/머지 규칙은 [Root SSOT](../../devian/10-module/03-ssot/SKILL.md)가 정본이며, 이 문서는 재정의하지 않는다.
+
+**Sync 정책:** UPM 경로/동기화/미러 규칙은 [Unity Policy](../01-policy/SKILL.md)가 정본이다.
 
 ---
 
@@ -40,87 +42,55 @@ ParentSSOT: skills/devian/10-module/03-ssot/SKILL.md
 
 ---
 
-## UPM Packages Sync 정본 (Hard Rule)
+## 필수 검증 대상 패키지 (Hard Rule)
 
-**Packages는 derived output이며 직접 수정 금지.**
+Sync 후 아래 패키지는 반드시 upm ↔ Packages 일치를 검증한다:
 
-| 구분 | 경로 | 역할 |
-|------|------|------|
-| 정본 (수동) | `framework-cs/upm/{pkg}` | 수동 관리 패키지 원본 |
-| 정본 (생성) | `framework-cs/upm/{pkg}` | 빌더가 생성하는 패키지 원본 |
-| 복사본 (실행) | `framework-cs/apps/UnityExample/Packages/{pkg}` | Unity 실행용 복사본 |
-
-**Hard DoD: Packages 동기화 불일치 FAIL**
-
-sync 후 아래 조건이면 **즉시 FAIL**:
-- `Packages/{pkg}`가 선택된 소스(upm)와 내용이 다름
-- 정본 소스에 있는데 Packages에 반영되지 않음
-- Packages에서 직접 수정한 코드 발견 (다음 sync에서 덮어써짐)
-
-**필수 검증 대상 패키지:**
-- `com.devian.foundation` — Core + Unity 통합 패키지
+- `com.devian.foundation` — Core + 모듈 타입 Editor 패키지
+- `com.devian.domain.common` — Unity 런타임 + 도메인 공통 패키지
 - `com.devian.samples` — 샘플 패키지
 
-> **WARNING:** `Packages/` 직접 수정은 정책 위반이며, sync 시 손실된다.
+> Sync 규칙 자체는 [Unity Policy](../01-policy/SKILL.md) §SSOT 원칙이 정본이다.
 
 ---
 
-## UPM 동기화 흐름 (Hard Rule)
+## UPM 동기화 충돌 정책 (Hard Rule)
 
-빌드 최종 단계에서 다음 동기화가 수행된다:
+upm에 **동일 `package.json.name`이 있으면 무조건 빌드 FAIL**.
 
-1. **staging(tempDir)** → **upm**: Domain/Protocol UPM 패키지 생성
-2. **upm** → **packageDir**: 최종 동기화
-
-**동기화 규칙:**
-- 패키지 단위 clean+copy (packageDir 전체 rm -rf 금지)
-
-**충돌 정책 (HARD RULE):**
-- upm에 **동일 `package.json.name`이 있으면 무조건 빌드 FAIL**
 - 예외 없음 — 충돌 해결: 패키지 이름 변경 또는 하나 제거
 
 ---
 
-## Unity UPM 패키지 구조 (Hard Rule)
+## Foundation 패키지 구조 (Hard Rule)
 
-**Devian Unity 런타임은 단일 패키지(com.devian.foundation)로 제공한다.**
+**`com.devian.foundation`은 모듈 래핑 + 모듈 타입 Editor만 제공한다.**
 
 | 구분 | 경로 | 설명 |
 |------|------|------|
-| Foundation 패키지 | `framework-cs/upm/com.devian.foundation` | Core + Unity 통합 |
+| Foundation 패키지 | `framework-cs/upm/com.devian.foundation` | Core(모듈) + 모듈 타입 Editor |
 
-**패키지 내부 폴더 구조 (Hard Rule):**
+**패키지 내부 폴더 구조:**
 
 ```
 com.devian.foundation/
   Runtime/
-    Core/                     # UnityEngine 의존 없는 순수 C# 코드
-      Devian.Core.asmdef      # noEngineReferences: true
-    Unity/                    # UnityEngine 의존 코드
-      Devian.Unity.asmdef
+    Module/                     # devian/10-module 래핑 (순수 C#)
+      Devian.Core.asmdef        # noEngineReferences: true
   Editor/
-    Devian.Unity.Editor.asmdef
+    Devian.Unity.Editor.asmdef  # Complex/VersionNumber Drawer
 ```
 
-**패키지 내부 asmdef (Hard Rule):**
+**패키지 내부 asmdef:**
 
 | asmdef | 위치 | namespace | 역할 |
 |--------|------|-----------|------|
 | `Devian.Core` | `Runtime/Module/` | `Devian` | 순수 C# 런타임 (UnityEngine 의존 없음) |
-| `Devian.Unity` | `Runtime/Unity/` | `Devian.Unity` | Unity 어댑터 (UnityEngine 사용) |
-| `Devian.Unity.Editor` | `Editor/` | `Devian.Unity` | Unity Editor 전용 |
+| `Devian.Unity.Editor` | `Editor/` | `Devian.Unity` | 모듈 타입 Drawer (Complex/VersionNumber) |
 
 > **asmdef 분리 정책:**
 > - `Devian.Core`는 `noEngineReferences: true`로 UnityEngine 참조를 금지한다.
-> - `Devian.Unity`는 `Devian.Core`를 참조한다.
-
----
-
-## Foundation Package (SSOT)
-
-- 공통 기반 라이브러리는 `com.devian.foundation` UPM 패키지가 SSOT다.
-- 이 패키지 안에 `Devian.Core` / `Devian.Unity` asmdef가 존재한다.
-- Sound/Voice는 foundation에 포함하지 않고 `com.devian.domain.sound`로 분리 유지한다.
+> - Unity 런타임 컴포넌트는 `com.devian.domain.common` 패키지(`Devian.Domain.Common` asmdef)에 위치한다.
 
 ---
 
@@ -148,23 +118,9 @@ com.devian.foundation/
 
 ## Unity C# Compatibility Gate (Hard Rule)
 
-**Unity C# 문법 제한은 [skills/devian-unity/05-unity-csharp-compat](../05-unity-csharp-compat/SKILL.md)가 정본이다.**
+**Unity C# 문법 제한은 [05-unity-csharp-compat](../05-unity-csharp-compat/SKILL.md)가 정본이다.**
 
-### DoD (완료 정의) — 하드 게이트
-
-아래 패턴이 적용 범위 경로에서 **1개라도 발견되면 FAIL**:
-
-| 금지 패턴 (정규식) | 탐지 대상 |
-|-------------------|-----------|
-| `\bclass\s+\w+\s*\(` | class primary constructor |
-| `\brecord\b` | record 타입 |
-| `\brequired\b` | required 멤버 |
-| `^\s*namespace\s+.*;\s*$` | file-scoped namespace |
-
-**검사 대상 경로:**
-- `framework-cs/upm/`
-- `framework-cs/apps/**/Packages/`
-- UPM 패키지 내부의 `Samples~/` 및 템플릿/샘플 코드도 검사 대상에 포함한다.
+이 문서에서는 금지 패턴/검사 경로를 재정의하지 않는다.
 
 ---
 
@@ -185,6 +141,7 @@ com.devian.foundation/
 ## See Also
 
 - [Root SSOT](../../devian/10-module/03-ssot/SKILL.md) — 공통 용어/플레이스홀더/머지 규칙
-- [Unity Policy](../01-policy/SKILL.md)
-- [Unity C# Compat](../05-unity-csharp-compat/SKILL.md)
-- [Package Metadata](../04-package-metadata/SKILL.md)
+- [Unity Policy](../01-policy/SKILL.md) — UPM Sync/미러/경로 규칙
+- [Unity Bundles](../02-unity-bundles/SKILL.md) — 패키지 묶음/asmdef/의존 방향
+- [Unity C# Compat](../05-unity-csharp-compat/SKILL.md) — C# 문법 제한
+- [Package Metadata](../04-package-metadata/SKILL.md) — package.json 메타데이터/dependencies

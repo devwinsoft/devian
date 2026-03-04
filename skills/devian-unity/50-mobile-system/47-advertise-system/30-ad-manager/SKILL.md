@@ -112,7 +112,7 @@ AdManager가 Game 도메인 테이블을 직접 참조한다.
 
 ## Implementation Location (3-path mirror, planned)
 
-> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../07-samples-creation-guide/SKILL.md), [devian-unity/03-ssot](../../../03-ssot/SKILL.md) §UPM Packages Sync
+> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../07-samples-creation-guide/SKILL.md), [devian-unity/01-policy](../../../01-policy/SKILL.md) §SSOT 원칙
 
 - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Ads/AdManager.cs`
 - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Ads/AdManager.cs`

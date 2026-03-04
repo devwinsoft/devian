@@ -3,7 +3,7 @@
   "rootNamespace": "Devian.Domain.Sound",
   "references": [
     "Devian.Core",
-    "Devian.Unity"
+    "Devian.Domain.Common"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

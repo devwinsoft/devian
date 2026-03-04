@@ -2,13 +2,14 @@
   "name": "com.devian.domain.common",
   "version": "0.1.0",
   "displayName": "Devian Domain Common",
-  "description": "Devian Domain Common - common domain tables, DevianSettings, actor/input runtime, AssetId, and shared CommonEffect/MaterialEffect runtime-editor systems.",
+  "description": "Devian Domain Common - common domain tables, actor/input runtime, and shared CommonEffect/MaterialEffect runtime-editor systems.",
   "unity": "2021.3",
   "author": {
     "name": "Devian"
   },
   "dependencies": {
     "com.devian.foundation": "0.1.0",
+    "com.unity.addressables": "2.7.6",
     "com.unity.inputsystem": "1.18.0",
     "com.unity.nuget.newtonsoft-json": "3.2.1"
   }
