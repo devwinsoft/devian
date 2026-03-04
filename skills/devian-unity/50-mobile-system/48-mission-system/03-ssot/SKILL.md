@@ -197,14 +197,12 @@ MissionManager는 `MissionTriggerSystem`을 소유하고, 각 MissionRuntime이 
 - achievement runtime은 삭제/파기 전까지 구독을 유지한다.
 - achievement restore는 저장된 `level` / `progressValue` / `isCompleted`를 그대로 복원한다.
 - achievement level up mutation 순서:
-  1. 현재 `progressValue`를 다음 level의 `startValue`로 잡는다
-  2. 기존 `conditionType` 구독을 해지한다
-  3. `level`을 다음 level로 갱신한다
-  4. `startValue`를 갱신한다
-  5. `progressValue`는 유지한다
-  6. `isCompleted = false`로 되돌린다
-  7. 다음 row 기준 `conditionType`, `conditionOp`, `conditionValue` 바인딩을 교체한다
-  8. 새 `conditionType`으로 다시 구독한다
+  1. 기존 `conditionType` 구독을 해지한다
+  2. `level`을 다음 level로 갱신한다
+  3. `progressValue`는 유지한다
+  4. `isCompleted = false`로 되돌린다
+  5. 다음 row 기준 `conditionType`, `conditionOp`, `conditionValue` 바인딩을 교체한다
+  6. 새 `conditionType`으로 다시 구독한다
 - achievement level up 시 `missionUid`는 유지한다.
 
 
@@ -311,7 +309,7 @@ MissionManager/ MissionScheduler는 아래 규칙으로 `grantId`와 `missionUid
 - MissionRuntime은 자신의 `missionType + missionId + periodKey` 정보를 함께 저장해야 한다.
 - daily runtime은 `missionId`당 1개만 존재해야 한다.
 - achievement runtime은 `missionId`당 1개만 존재해야 한다.
-- achievement MissionRuntime은 `level`과 `startValue`도 함께 저장해야 한다.
+- achievement MissionRuntime은 `level`도 함께 저장해야 한다.
 - daily period 전환 시 새 runtime을 만들지 않는다. 기존 daily runtime의 `periodKey`, `progressValue`, `isCompleted`를 현재 구간 기준으로 제자리 갱신한다.
 
 연관: [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md)

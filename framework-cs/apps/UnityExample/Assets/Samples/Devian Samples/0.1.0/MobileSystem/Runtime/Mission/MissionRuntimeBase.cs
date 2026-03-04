@@ -226,7 +226,6 @@ namespace Devian
     public sealed class MissionRuntimeAchieve : MissionRuntimeBase
     {
         public int level = 1;
-        public CBigInt startValue = CBigInt.Zero;
 
         public override int Index
         {
@@ -255,7 +254,6 @@ namespace Devian
 
         public void LevelUp(
             int nextLevel,
-            CBigInt nextStartValue,
             MISSION_CONDITION_TYPE nextConditionType,
             MISSION_OP_TYPE nextConditionOp,
             CBigInt nextConditionValue)
@@ -263,7 +261,6 @@ namespace Devian
             UnsubscribeInternal();
 
             level = nextLevel;
-            startValue = nextStartValue;
             isCompleted = false;
             ReplaceBinding(nextConditionType, nextConditionOp, nextConditionValue);
 

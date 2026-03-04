@@ -10,29 +10,12 @@ namespace Devian
     /// </summary>
     public static class Singleton
     {
-        private static bool _isShuttingDown;
-
-        static Singleton()
-        {
-            Application.quitting += onQuitting;
-        }
-
         /// <summary>
         /// Shutdown 구간 여부. 앱 종료/플레이 종료 중이면 true.
+        /// BaseApplication.IsApplicationQuitting에 위임한다.
         /// Create/CreateFromResources 계열은 shutdown 중 생성을 억제한다.
         /// </summary>
-        public static bool IsShuttingDown => _isShuttingDown || !Application.isPlaying;
-
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void resetOnSubsystemRegistration()
-        {
-            _isShuttingDown = false;
-        }
-
-        private static void onQuitting()
-        {
-            _isShuttingDown = true;
-        }
+        public static bool IsShuttingDown => BaseApplication.IsApplicationQuitting || !Application.isPlaying;
 
         /// <summary>
         /// 인스턴스 조회. 없으면 예외.

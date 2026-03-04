@@ -41,9 +41,15 @@ private static BaseApplication _instance;
 private static bool _booted;
 
 public static BaseApplication Instance => _instance;
+public static bool IsApplicationQuitting { get; private set; }
+public static bool IsShuttingDown { get; private set; }
 ```
 
 `_instance`는 `Awake()`에서 등록된다. Bootstrap 프리팹의 생성(Instantiate + DontDestroyOnLoad 포함 여부)은 app/contents layer가 명시적으로 담당한다.
+
+**IsApplicationQuitting**: Unity `Application.quitting` 이벤트로 설정된다. 인스턴스 없이도 동작한다 (`[RuntimeInitializeOnLoadMethod]`로 정적 구독). `Singleton.IsShuttingDown` 등 외부 시스템이 앱 종료 상태를 판단할 때 사용한다.
+
+**IsShuttingDown**: `OnApplicationQuit()` 및 `OnDestroy()`에서 `true`로 설정된다. 에디터 종료/플레이 종료/씬 종료 정리 단계에서 싱글톤/매니저 접근을 스킵하는 데 사용한다.
 
 ### 추상 메서드
 
@@ -85,6 +91,23 @@ public async Task BootProc()
 - 한번 시도한 `BootProc()`는 실패해도 재시도하지 않는다.
 - Bootstrap 오류로 앱 시작이 중단되는 것은 정상 동작이다.
 
+### Application.quitting 구독
+
+```csharp
+[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+private static void SubscribeQuitting()
+{
+    Application.quitting += onQuitting;
+}
+
+private static void onQuitting()
+{
+    IsApplicationQuitting = true;
+}
+```
+
+`Application.quitting`은 정적 이벤트로, MonoBehaviour 인스턴스 없이도 동작한다. `BeforeSceneLoad` 타이밍에 구독하여 도메인 리로드 후에도 항상 재구독된다.
+
 ### Domain Reload 대응
 
 ```csharp
@@ -93,6 +116,7 @@ private static void ResetStatics()
 {
     _instance = null;
     _booted = false;
+    IsApplicationQuitting = false;
     IsShuttingDown = false;
 }
 ```

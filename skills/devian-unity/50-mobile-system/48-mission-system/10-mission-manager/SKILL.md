@@ -96,10 +96,10 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
       10. `SaveDataManager`로 local save를 즉시 시도하고, 이어서 cloud save도 시도
       11. local save 실패 시 에러를 표시하고 플레이 불가능 상태로 전환한다(TODO)
     - achievement level up 내부 순서:
-      1. 현재 `progressValue`를 다음 level `startValue`로 잡는다
-      2. 기존 trigger 구독을 해지한다
-      3. 같은 `missionUid` runtime의 `level`, `startValue`, `isCompleted`를 갱신한다
-      4. 다음 row 기준 condition 바인딩으로 교체한다
+      1. 기존 trigger 구독을 해지한다
+      2. 같은 `missionUid` runtime의 `level`, `isCompleted`를 갱신한다
+      3. 다음 row 기준 condition 바인딩으로 교체한다
+      4. `progressValue`는 유지한다
       5. 새 condition trigger로 다시 구독한다
 - `PruneExpiredMissionState()`
     - 이전 daily key의 expired runtime 정리
@@ -150,7 +150,7 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
   - `ACTIVE` 상태에서만 `MissionTriggerSystem` 직접 구독
 - `MissionRuntimeAchieve`
   - achievement 전용 runtime
-  - `level` / `startValue` 보유
+  - `level` 보유
   - 삭제/파기 전까지 `MissionTriggerSystem` 구독을 유지한다
 - `MissionTriggerSystem`
   - `MessageSystem<int, MISSION_CONDITION_TYPE>` 특화 인스턴스

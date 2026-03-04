@@ -116,7 +116,6 @@ public readonly struct DailyMissionRuntimeCreateArgs
 - daily는 `missionId` 단일 ID를 사용한다.
 - 새 runtime의 `ProgressValue`는 0에서 시작한다.
 - daily create args의 `Index`는 scheduler가 최종 선택 정렬 후 0부터 부여한다.
-- `startValue`를 받지 않는다.
 - daily create는 scheduler가 현재 cycle에서 선택한 row에 대해서만 호출한다.
 - daily selection 자체는 factory 책임이 아니다.
 
@@ -131,7 +130,6 @@ public readonly struct AchieveMissionRuntimeCreateArgs
     public int Level;                       // step level
     public string PeriodKey;                // once
     public int MissionUid;                  // manager allocated
-    public CBigInt StartValue;              // previous completed progress
     public MISSION_CONDITION_TYPE ConditionType;
     public MISSION_OP_TYPE ConditionOp;
     public CBigInt ConditionValue;
@@ -142,9 +140,8 @@ public readonly struct AchieveMissionRuntimeCreateArgs
 - achievement의 `missionId`는 그룹 ID다.
 - 실제 단계 미션 식별은 `missionId + level`이다.
 - achievement definition의 `missionId + level` 유일성은 data layer에서 보장한다.
-- `StartValue`는 직전 완료 미션의 `ProgressValue`다.
-- 최초 create 시 `StartValue`는 보통 `0`이다.
 - 최초 create는 `level=1` row를 사용한다.
+- 새 runtime의 `progressValue`는 `0`에서 시작한다.
 - level up은 새 runtime create가 아니라 같은 runtime mutation으로 처리한다.
 
 
@@ -158,7 +155,6 @@ public readonly struct MissionRuntimeRestoreArgs
     public string PeriodKey;
     public int MissionUid;
     public int? Level;                      // achievement only
-    public CBigInt StartValue;
     public CBigInt ProgressValue;
     public bool IsCompleted;
     public MISSION_CONDITION_TYPE ConditionType;
@@ -184,7 +180,7 @@ public readonly struct MissionRuntimeRestoreArgs
 ### Achievement create
 
 - `conditionOp != NONE`일 때만 생성한다.
-- `ProgressValue = StartValue`
+- `ProgressValue = 0`
 - `IsCompleted = false`
 - 생성 직후 구독 시작
 - scheduler는 init 시 `MISSION_ACHIEVE` active row 전체를 검색하고 group별로 `CreateAchieve(...)` 또는 `Restore(...)`를 결정한다.
@@ -202,9 +198,9 @@ public readonly struct MissionRuntimeRestoreArgs
 - achievement는 삭제/파기 전까지 구독을 유지한다.
 - 앱 시작 시 `MissionStorage.runtimes`를 메모리로 재구성할 때 사용한다.
 - local/cloud save에서 저장된 MissionRuntime을 복원할 때 사용한다.
-- daily restore는 `Level = 1`, `StartValue = 0`을 사용한다.
+- daily restore는 `Level = 1`을 사용한다.
 - daily restore는 저장된 `Index`를 함께 복원한다.
-- achievement restore는 저장된 `Level` / `StartValue` / `ProgressValue` / `IsCompleted`를 그대로 사용한다.
+- achievement restore는 저장된 `Level` / `ProgressValue` / `IsCompleted`를 그대로 사용한다.
 - achievement runtime의 `Index`는 create/restore args가 아니라 현재 row의 `orderNum - 1` 계산으로 결정한다.
 
 

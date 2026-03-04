@@ -19,7 +19,10 @@ public class UICanvasSample : UICanvas<UICanvasSample>
 
     protected override void OnDestroy()
     {
-        MissionManager.Instance?.messageSystem.UnSubcribe(GetEntityId());
+        if (TestApplication.IsApplicationQuitting == false)
+        {
+            MissionManager.Instance?.messageSystem.UnSubcribe(GetEntityId());
+        }
         base.OnDestroy();
     }
 

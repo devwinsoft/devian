@@ -285,7 +285,6 @@ namespace Devian
             {
                 runtime.LevelUp(
                     nextRow.Level,
-                    runtime.progressValue,
                     nextRow.ConditionType,
                     nextRow.ConditionOp,
                     nextRow.ConditionValue.Value);

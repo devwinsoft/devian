@@ -37,7 +37,6 @@ namespace Devian
                 if (runtime is MissionRuntimeAchieve achieveRuntime)
                 {
                     runtimeObj["level"] = achieveRuntime.level;
-                    runtimeObj["startValue"] = SerializeBigInt(achieveRuntime.startValue);
                 }
                 else if (runtime is MissionRuntimeDaily dailyRuntime)
                 {
@@ -102,7 +101,6 @@ namespace Devian
                                 progressValue = DeserializeBigInt(runtimeObj["progressValue"]),
                                 isCompleted = runtimeObj.Value<bool?>("isCompleted") ?? false,
                                 level = runtimeObj.Value<int?>("level") ?? 1,
-                                startValue = DeserializeBigInt(runtimeObj["startValue"]),
                             };
                             break;
 

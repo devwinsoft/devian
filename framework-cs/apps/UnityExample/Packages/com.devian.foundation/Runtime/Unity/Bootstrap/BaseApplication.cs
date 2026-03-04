@@ -22,6 +22,13 @@ namespace Devian
         private bool _isForeground = true;
 
         /// <summary>
+        /// Unity Application이 종료(Quit) 중인지 여부.
+        /// Application.quitting 이벤트로 설정되며, 인스턴스 없이도 동작한다.
+        /// Singleton 등 외부 시스템이 앱 종료 상태를 판단할 때 사용한다.
+        /// </summary>
+        public static bool IsApplicationQuitting { get; private set; }
+
+        /// <summary>
         /// 에디터 종료/플레이 종료/씬 종료 정리 단계 여부.
         /// 정리 경로에서 싱글톤/매니저 접근을 스킵하는 데 사용한다.
         /// </summary>
@@ -112,7 +119,19 @@ namespace Devian
         {
             _instance = null;
             _booted = false;
+            IsApplicationQuitting = false;
             IsShuttingDown = false;
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void SubscribeQuitting()
+        {
+            Application.quitting += onQuitting;
+        }
+
+        private static void onQuitting()
+        {
+            IsApplicationQuitting = true;
         }
 
         private void updateForegroundState(bool isForeground)

@@ -94,7 +94,6 @@ public sealed class MissionRuntimeDaily : MissionRuntimeBase
 public sealed class MissionRuntimeAchieve : MissionRuntimeBase
 {
     public int level;
-    public CBigInt startValue;
 }
 ```
 
@@ -106,10 +105,8 @@ public sealed class MissionRuntimeAchieve : MissionRuntimeBase
 - daily runtime은 0-based `Index`를 저장/복구한다.
 - achievement runtime의 `Index`는 현재 row의 `orderNum - 1` 계산값이다.
 - runtime 생성 = 해당 미션 definition의 runtime 시작이다.
-- daily는 `level = 1`, `startValue = 0`을 사용한다.
 - achievement는 `missionId`가 그룹 ID이고 `level`이 실제 단계다.
 - achievement definition의 `missionId + level` 유일성은 data layer에서 보장한다.
-- achievement의 `startValue`는 직전 완료 runtime의 `progressValue`다.
 - `progressValue`는 같은 runtime 생명주기 안에서 유지되는 누적값이다.
 - `isCompleted == true`는 claim 완료 상태를 의미한다.
 - `progressValue >= conditionValue && isCompleted == false`이면 `CLAIMABLE` 상태로 해석한다.
@@ -127,7 +124,7 @@ public sealed class MissionRuntimeAchieve : MissionRuntimeBase
 - achievement `CLAIMABLE` runtime은 claim 전까지 유지한다.
 - achievement `ClaimAsync()` 성공 시 다음 level row가 있으면 같은 runtime이 level up 한다.
 - 단, 다음 level row가 없으면 현재 completed runtime은 유지한다.
-- achievement level up 시 `missionUid`는 유지하고, `level` / `startValue` / `isCompleted`만 다음 row 기준으로 갱신한다.
+- achievement level up 시 `missionUid`는 유지하고, `level` / `isCompleted`만 다음 row 기준으로 갱신한다.
 - achievement level up 시 `progressValue`는 현재 값을 그대로 유지한다.
 - daily period key는 `dailyMissionStartUtcMs` anchor에서 24시간 단위 index로 계산한다.
 - daily는 현재 cycle에서 선택된 최대 5개 runtime만 유지한다.

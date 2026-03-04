@@ -25,7 +25,6 @@ namespace Devian
         public int Level { get; set; }
         public string PeriodKey { get; set; }
         public int MissionUid { get; set; }
-        public CBigInt StartValue { get; set; }
         public MISSION_CONDITION_TYPE ConditionType { get; set; }
         public MISSION_OP_TYPE ConditionOp { get; set; }
         public CBigInt ConditionValue { get; set; }
@@ -41,7 +40,6 @@ namespace Devian
         public string PeriodKey { get; set; }
         public int MissionUid { get; set; }
         public int Level { get; set; }
-        public CBigInt StartValue { get; set; }
         public CBigInt ProgressValue { get; set; }
         public bool IsCompleted { get; set; }
         public int Index { get; set; }
@@ -88,8 +86,7 @@ namespace Devian
                 periodKey = args.PeriodKey ?? string.Empty,
                 missionUid = args.MissionUid,
                 level = args.Level,
-                startValue = args.StartValue,
-                progressValue = args.StartValue,
+                progressValue = CBigInt.Zero,
                 isCompleted = false,
             };
 
@@ -141,7 +138,6 @@ namespace Devian
                         periodKey = args.PeriodKey ?? string.Empty,
                         missionUid = args.MissionUid,
                         level = args.Level,
-                        startValue = args.StartValue,
                         progressValue = args.ProgressValue,
                         isCompleted = args.IsCompleted,
                     };

@@ -79,7 +79,6 @@ public sealed class MissionRuntimeDaily : MissionRuntimeBase
 public sealed class MissionRuntimeAchieve : MissionRuntimeBase
 {
     public int level;
-    public CBigInt startValue;
 }
 ```
 
@@ -109,14 +108,14 @@ runtime 생성 규칙:
    - achievement: active group별 현재 row에 대해 create/restore
 3. 새 생성(create) 시 기본값:
    - daily: `progressValue = 0`
-   - achievement: `progressValue = startValue`
+   - achievement: `progressValue = 0`
    - `isCompleted = false`
 4. 저장된 runtime이 있으면 restore 한다:
    - `progressValue`는 저장값을 그대로 사용한다.
    - `isCompleted`는 저장값을 그대로 사용한다.
 5. create 시 `missionUid`는 `MissionScheduler`가 `MissionStorage.nextMissionUid++`를 기본으로 사용하되, 현재 `runtimes`에 이미 존재하는 UID는 건너뛰고 다음 빈 `int` UID를 발급한다.
 6. create / restore 모두 row의 `conditionType`, `conditionOp`, `conditionValue`와 `MissionTriggerSystem`을 받아 concrete runtime을 재구성한다.
-7. achievement create는 `missionId + level + startValue`를 기준 정보로 사용한다.
+7. achievement create는 `missionId + level`을 기준 정보로 사용한다.
 
 정본 규칙:
 - 앱 시작 시 `InitializeAsync()`는 daily는 최대 5개 selected row, achievement는 active group 전체에 대해 runtime을 보장해야 한다.
@@ -129,7 +128,7 @@ runtime 생성 규칙:
 - daily는 현재 cycle에서 선택된 row에 대해서만 runtime이 존재해야 한다.
 - achievement는 group별 현재 runtime 1개만 존재해야 한다.
 - achievement level up은 새 runtime 생성이 아니라 같은 runtime mutation이다.
-- daily runtime은 `level = 1`, `startValue = 0`을 사용한다.
+- daily runtime은 `level = 1`을 사용한다.
 - achievement 최초 create는 `level = 1` row에서 시작한다.
 - daily runtime의 `Index`는 최종 선택된 row를 `orderNum ASC`, `missionId ASC`로 정렬한 뒤 0부터 다시 부여한다.
 - achievement runtime의 `Index`는 현재 바인딩 row의 `orderNum - 1`을 반환한다.
@@ -215,16 +214,14 @@ claim 가능 판정:
   - restore 시에는 저장된 `level` / `progressValue` / `isCompleted`를 그대로 사용한다.
   - level up 시에는 새 runtime을 만들지 않는다.
   - level up 순서:
-    1. 현재 `progressValue`를 다음 level `startValue`로 잡는다
-    2. 기존 `conditionType` 구독을 해지한다
-    3. 같은 runtime의 `level` / `startValue` / `isCompleted`를 갱신한다
-    4. 다음 row 기준 condition 바인딩을 교체한다
-    5. `progressValue`는 유지한다
-    6. 새 `conditionType`으로 다시 구독한다
+    1. 기존 `conditionType` 구독을 해지한다
+    2. 같은 runtime의 `level` / `isCompleted`를 갱신한다
+    3. 다음 row 기준 condition 바인딩을 교체한다
+    4. `progressValue`는 유지한다
+    5. 새 `conditionType`으로 다시 구독한다
 
 정본 규칙:
-- `progressValue`는 runtime 생성 시 create args의 초기값으로 시작한다.
-- daily create는 `0`에서 시작하고, achievement create는 `startValue`에서 시작한다.
+- `progressValue`는 runtime 생성 시 `0`에서 시작한다.
 - daily reset은 기존 runtime set 폐기 후 새 runtime set 생성이다.
 - achievement level up은 같은 `missionUid` runtime에서 일어난다.
 
