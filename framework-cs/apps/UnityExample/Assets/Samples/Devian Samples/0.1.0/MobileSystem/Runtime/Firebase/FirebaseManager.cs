@@ -13,7 +13,7 @@ namespace Devian
     /// Firebase Cloud Functions callable 통합 래퍼.
     /// 함수별 typed public API, 에러 매핑, 응답 파싱, region 관리, 값 추출 헬퍼를 통합한다.
     /// </summary>
-    public sealed class FirebaseManager : CompoSingleton<FirebaseManager>
+    internal sealed class FirebaseManager : CompoSingleton<FirebaseManager>
     {
         const string Tag = "FirebaseManager";
 

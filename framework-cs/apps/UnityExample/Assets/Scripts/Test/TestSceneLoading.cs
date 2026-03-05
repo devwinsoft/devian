@@ -51,7 +51,7 @@ public class TestSceneLoading : TestSceneBootstrap
             
             case SyncState.Success:
                 var restore = await AccountManager.Instance.EnsureRuntimeSessionAsync(CancellationToken.None);
-                Debug.Log($"EnsureRuntimeSessionAsync: success={restore.IsSuccess} restored={(restore.IsSuccess ? restore.Value : false)}");
+                Debug.Log($"EnsureRuntimeSessionAsync: success={restore.IsSuccess} snapshot={restore.Value?.GetType().Name ?? "null"}");
 
                 if (restore.IsFailure)
                 {
@@ -62,7 +62,7 @@ public class TestSceneLoading : TestSceneBootstrap
                     return;
                 }
 
-                if (!restore.Value)
+                if (restore.Value == null)
                 {
                     var loginType = AccountManager.Instance.CurrentLoginType;
                     Debug.LogWarning($"Runtime session restore skipped. loginType={loginType}");
@@ -71,18 +71,7 @@ public class TestSceneLoading : TestSceneBootstrap
                     return;
                 }
 
-                SessionInitSnapshot? snapshot = null;
-#if !UNITY_EDITOR
-                var initSession = await FirebaseManager.Instance.InitSessionAsync(null, CancellationToken.None);
-                if (initSession.IsFailure)
-                {
-                    Debug.LogError($"InitSession failed: code={initSession.Error.Code}, message={initSession.Error.Message}");
-                    UICanvasLoading.Instance.message.text = $"InitSession: {initSession.Error.Code}";
-                    UICanvasLoading.Instance.ShowLoginButtons();
-                    return;
-                }
-                snapshot = initSession.Value;
-#endif
+                var snapshot = restore.Value;
 
                 var purchaseSyncCode = await syncPurchaseStateAsync(snapshot);
                 if (purchaseSyncCode != CommonErrorType.SUCCESS)
@@ -111,27 +100,18 @@ public class TestSceneLoading : TestSceneBootstrap
     {
         var login = await AccountManager.Instance.LoginAsync(loginType, CancellationToken.None);
         Debug.Log($"LoginAsync: {loginType}, {(login.IsFailure ? login.Error?.ToString() : "")}");
-        
+
         if (login.IsFailure)
         {
             Debug.LogError($"SignIn failed: code={login.Error.Code}, message={login.Error.Message}");
             return login.Error.Code;
         }
-        
-        SessionInitSnapshot? snapshot = null;
-#if !UNITY_EDITOR
-        var initSession = await FirebaseManager.Instance.InitSessionAsync(null, CancellationToken.None);
-        if (initSession.IsFailure)
-        {
-            Debug.LogError($"InitSession failed: code={initSession.Error.Code}, message={initSession.Error.Message}");
-            return initSession.Error.Code;
-        }
-        snapshot = initSession.Value;
+
+        var snapshot = login.Value;
 
         var purchaseSyncCode = await syncPurchaseStateAsync(snapshot);
         if (purchaseSyncCode != CommonErrorType.SUCCESS)
             return purchaseSyncCode;
-#endif
 
         var missionInitCode = await initializeMissionAsync(snapshot?.MissionClock);
         if (missionInitCode != CommonErrorType.SUCCESS)
