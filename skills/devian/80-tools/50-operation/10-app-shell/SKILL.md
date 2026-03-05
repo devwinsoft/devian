@@ -17,6 +17,8 @@ Operation 웹앱의 프로젝트 구조, 빌드 설정, 탭 네비게이션을 �
 
 - 빌드 도구: **Vite**
 - dev: `npm run dev` → `vite` (localhost dev server, HMR)
+- reward id catalog import: `npm run import:reward-id-catalog`
+- dev server endpoint: `POST /__operation/import-reward-id-catalog` (탭 버튼에서 호출)
 - `framework-ts/` 워크스페이스 앱으로 등록
 
 
@@ -35,6 +37,8 @@ framework-ts/apps/Operation/
 ├── package.json
 ├── tsconfig.json
 ├── vite.config.ts
+├── scripts/
+│   └── import-reward-id-catalog.mjs ← ENUM_TYPES + xlsx id -> Firestore import
 └── src/
     ├── main.ts                  ← 엔트리: 탭 초기화, 라우팅
     ├── style.css                ← 전역 스타일

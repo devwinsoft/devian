@@ -38,9 +38,10 @@ Operation 웹앱의 **기능(탭) 정의**를 관리한다.
 | 항목 | 값 |
 |------|-----|
 | Firestore 문서 | `/config/initialInventory` |
-| 입력 | `rewards: RewardData[]` (JSON) |
+| 입력 | `rewards: RewardData[]` (UI row 입력) |
 | 출력 | 저장/로드 상태 메시지 + 유효성 검증 결과 |
-| 버튼 | row [ - ] / add [ + ] / [Save] |
+| 버튼 | row [ - ] / add [ + ] / [Import Reward IDs] / [Save] |
+| ID 소스 | `/config/rewardIdCatalog` (`currencyIds/equipIds/cardIds/heroIds`) |
 
 ### RewardData[] 스키마
 
@@ -58,6 +59,15 @@ Operation 웹앱의 **기능(탭) 정의**를 관리한다.
 - `id`: 비어있지 않은 문자열
 - `amount`: 양의 정수
 
+ID listbox 규칙:
+- `CURRENCY` 선택 시 `/config/rewardIdCatalog.currencyIds`를 listbox 옵션으로 사용한다.
+- `EQUIP`/`CARD`/`HERO` 선택 시 `/config/rewardIdCatalog`의 `equipIds/cardIds/heroIds`를 listbox 옵션으로 사용한다.
+- `RENTAL`/`SEASON_PASS`는 Initial Inventory UI에서 추가 선택을 지원하지 않는다.
+
+catalog 문서 정본:
+- `/config/rewardIdCatalog`
+- import 경로: [20-excel-reward-id-export](../20-excel-reward-id-export/SKILL.md) (`ENUM_TYPES.json` + xlsx)
+
 서버 연동 정본:
 - callable: `getInitialInventory`
 - core: `functions/src/inventory/getInitialInventoryCore.ts`
@@ -66,8 +76,11 @@ Operation 웹앱의 **기능(탭) 정의**를 관리한다.
 
 UI 동작 정본:
 - 탭(form) 생성 완료 직후 Firestore 문서를 자동 로드한다.
+- 탭(form) 생성 완료 직후 `/config/rewardIdCatalog`도 함께 로드한다.
 - 기존 reward row는 우측 `-` 버튼으로 제거한다.
-- 하단 입력 row(`type/id/amount`)에서 `+` 버튼으로 신규 row를 append한다.
+- 하단 입력 row(`type/id-listbox/amount`)에서 `+` 버튼으로 신규 row를 append한다.
+- `Import Reward IDs` 버튼은 local dev server endpoint(`POST /__operation/import-reward-id-catalog`)로 importer 스크립트를 실행한다.
+- importer stdout/stderr는 status message로 표시한다.
 - 하단 `Save` 버튼으로 전체 `rewards` 배열을 저장한다.
 
 
@@ -190,4 +203,5 @@ Import (.dvn): .dvn → version parse (0x01) → ComplexUtil.Decrypt_Base64 → 
 
 - [00-overview](../00-overview/SKILL.md) — Operation 개요
 - [01-policy](../01-policy/SKILL.md) — 정책
+- [20-excel-reward-id-export](../20-excel-reward-id-export/SKILL.md) — xlsx id catalog import
 - [Tools SSOT](../../03-ssot/SKILL.md) — 상위 SSOT

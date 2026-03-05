@@ -110,4 +110,5 @@ asmdef:
 ## Related
 
 - [49-reward-system/03-ssot](../03-ssot/SKILL.md) — RewardData 스키마 정본
+- [11-rewarddata-interpretation](../11-rewarddata-interpretation/SKILL.md) — RewardData 해석 가이드
 - [22-inventory-system/10-inventory-manager](../../22-inventory-system/10-inventory-manager/SKILL.md) — InventoryManager (AddRewards 위임 대상)

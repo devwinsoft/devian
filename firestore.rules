@@ -13,6 +13,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // ── Initial Inventory ID 카탈로그: Operation exporter/read UI ──
+    match /config/rewardIdCatalog {
+      allow read, write: if true;
+    }
+
     // ── 사용자 purchases 원장: 서버(Functions)만 write 가능 ──
     match /users/{uid}/purchases/{purchaseId} {
       allow read: if request.auth != null && request.auth.uid == uid;

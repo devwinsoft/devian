@@ -164,6 +164,7 @@ body {
 .btn-row {
   display: flex;
   justify-content: flex-end;
+  gap: 8px;
   padding: 8px 0;
 }
 
@@ -196,6 +197,15 @@ body {
 
 .btn-danger:hover {
   background: #f17c99;
+}
+
+.btn-secondary {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+  background: #3b3b58;
 }
 
 .reward-action-btn {
@@ -253,6 +263,18 @@ body {
   grid-template-columns: 180px 1fr 140px 46px;
   gap: 8px;
   align-items: center;
+}
+
+.reward-interpret {
+  font-size: 12px;
+  color: var(--accent);
+  padding-top: 2px;
+}
+
+.reward-guide {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
 }
 
 /* --- Save Data --- */

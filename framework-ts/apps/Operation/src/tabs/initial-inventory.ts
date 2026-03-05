@@ -2,6 +2,7 @@ import { db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 const DOC_PATH = 'config/initialInventory';
+const ID_CATALOG_DOC_PATH = 'config/rewardIdCatalog';
 
 const REWARD_TYPES = [
   'CARD',
@@ -20,8 +21,63 @@ interface RewardRow {
   amount: number;
 }
 
+interface RewardIdCatalog {
+  currencyIds: string[];
+  equipIds: string[];
+  cardIds: string[];
+  heroIds: string[];
+}
+
+interface RewardTypeMeta {
+  amountGuide: string;
+  interpretation: string;
+  fixedAmount?: number;
+  unsupported?: boolean;
+}
+
+const REWARD_TYPE_META: Record<RewardType, RewardTypeMeta> = {
+  CURRENCY: {
+    amountGuide: 'Amount는 잔고 증가 수량이다.',
+    interpretation: 'Currency balance accumulates.',
+  },
+  EQUIP: {
+    amountGuide: 'Amount만큼 장비 인스턴스를 생성한다.',
+    interpretation: 'Create equipment instances by amount.',
+  },
+  CARD: {
+    amountGuide: 'Amount만큼 카드 보유량을 누적한다.',
+    interpretation: 'Card amount accumulates.',
+  },
+  HERO: {
+    amountGuide: 'Amount만큼 영웅 수량(UNIT_AMOUNT)을 누적한다.',
+    interpretation: 'Hero UNIT_AMOUNT accumulates.',
+  },
+  RENTAL: {
+    amountGuide: 'Operation Initial Inventory UI에서는 선택을 지원하지 않는다.',
+    interpretation: 'Not selectable in this page.',
+    fixedAmount: 1,
+    unsupported: true,
+  },
+  SEASON_PASS: {
+    amountGuide: 'Operation Initial Inventory UI에서는 선택을 지원하지 않는다.',
+    interpretation: 'Not selectable in this page.',
+    fixedAmount: 1,
+    unsupported: true,
+  },
+};
+
 function isRewardType(value: string): value is RewardType {
   return (REWARD_TYPES as readonly string[]).includes(value);
+}
+
+function getRewardTypeMeta(type: RewardType): RewardTypeMeta {
+  return REWARD_TYPE_META[type];
+}
+
+function normalizeAmountByType(type: RewardType, amount: number): number {
+  const fixed = getRewardTypeMeta(type).fixedAmount;
+  if (fixed !== undefined) return fixed;
+  return amount;
 }
 
 function normalizeReward(raw: unknown): RewardRow | null {
@@ -36,7 +92,54 @@ function normalizeReward(raw: unknown): RewardRow | null {
   if (!id) return null;
   if (!Number.isInteger(amount) || amount <= 0) return null;
 
-  return { type, id, amount };
+  return { type, id, amount: normalizeAmountByType(type, amount) };
+}
+
+function normalizeIdList(raw: unknown): string[] {
+  if (!Array.isArray(raw)) return [];
+
+  const dedup = new Set<string>();
+  for (let i = 0; i < raw.length; i++) {
+    const id = String(raw[i] ?? '').trim();
+    if (id) dedup.add(id);
+  }
+
+  return Array.from(dedup).sort((a, b) => a.localeCompare(b));
+}
+
+function validateRewardRow(row: RewardRow, rowIndex: number): string | null {
+  if (!isRewardType(row.type))
+    return `Row ${rowIndex + 1}: invalid type.`;
+
+  if (!row.id?.trim())
+    return `Row ${rowIndex + 1}: id is empty.`;
+
+  if (!Number.isInteger(row.amount) || row.amount <= 0)
+    return `Row ${rowIndex + 1}: amount must be a positive integer.`;
+
+  const meta = getRewardTypeMeta(row.type);
+  if (meta.fixedAmount !== undefined && row.amount !== meta.fixedAmount) {
+    return `Row ${rowIndex + 1}: amount for ${row.type} must be ${meta.fixedAmount}.`;
+  }
+
+  return null;
+}
+
+function getTypeIdOptions(type: RewardType, catalog: RewardIdCatalog): string[] {
+  switch (type) {
+    case 'CURRENCY':
+      return catalog.currencyIds;
+    case 'EQUIP':
+      return catalog.equipIds;
+    case 'CARD':
+      return catalog.cardIds;
+    case 'HERO':
+      return catalog.heroIds;
+    case 'RENTAL':
+    case 'SEASON_PASS':
+    default:
+      return [];
+  }
 }
 
 export function createInitialInventoryTab(container: HTMLElement) {
@@ -52,6 +155,7 @@ export function createInitialInventoryTab(container: HTMLElement) {
             <th>Type</th>
             <th>ID</th>
             <th>Amount</th>
+            <th>Interpretation</th>
             <th class="reward-action-col">Action</th>
           </tr>
         </thead>
@@ -59,15 +163,18 @@ export function createInitialInventoryTab(container: HTMLElement) {
       </table>
     </div>
 
-    <label>Add Reward</label>
+    <label>Add Reward (RewardData)</label>
     <div class="reward-input-row">
       <select id="ii-type"></select>
-      <input type="text" id="ii-id" placeholder="reward id (e.g. GOLD)" />
+      <select id="ii-id"></select>
       <input type="number" id="ii-amount" min="1" step="1" placeholder="amount" />
       <button class="btn reward-action-btn" id="ii-add" title="Add reward">+</button>
     </div>
+    <div class="reward-interpret" id="ii-interpret"></div>
+    <div class="reward-guide" id="ii-guide"></div>
 
     <div class="btn-row">
+      <button class="btn btn-secondary" id="ii-import-catalog">Import Reward IDs</button>
       <button class="btn" id="ii-save">Save</button>
     </div>
 
@@ -78,13 +185,18 @@ export function createInitialInventoryTab(container: HTMLElement) {
 
   const rewardList = section.querySelector<HTMLTableSectionElement>('#ii-reward-list')!;
   const typeSelect = section.querySelector<HTMLSelectElement>('#ii-type')!;
-  const idInput = section.querySelector<HTMLInputElement>('#ii-id')!;
+  const idSelect = section.querySelector<HTMLSelectElement>('#ii-id')!;
   const amountInput = section.querySelector<HTMLInputElement>('#ii-amount')!;
   const addBtn = section.querySelector<HTMLButtonElement>('#ii-add')!;
+  const importCatalogBtn = section.querySelector<HTMLButtonElement>('#ii-import-catalog')!;
   const saveBtn = section.querySelector<HTMLButtonElement>('#ii-save')!;
+  const interpretation = section.querySelector<HTMLElement>('#ii-interpret')!;
+  const guide = section.querySelector<HTMLElement>('#ii-guide')!;
   const status = section.querySelector<HTMLElement>('#ii-status')!;
 
   let rewards: RewardRow[] = [];
+  let idCatalog: RewardIdCatalog = { currencyIds: [], equipIds: [], cardIds: [], heroIds: [] };
+  let catalogState = '';
 
   function setStatus(msg: string, type: 'success' | 'error' | '') {
     status.textContent = msg;
@@ -92,11 +204,27 @@ export function createInitialInventoryTab(container: HTMLElement) {
     if (type) status.classList.add(type);
   }
 
+  function tailLog(log: string, maxLines = 6): string {
+    const lines = log
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => (line.length > 160 ? `${line.slice(0, 157)}...` : line));
+
+    if (lines.length <= 0) return '';
+    const joined = (
+      lines.length <= maxLines
+        ? lines.join(' | ')
+        : `... ${lines.slice(-maxLines).join(' | ')}`
+    );
+    return joined.length > 600 ? `${joined.slice(0, 597)}...` : joined;
+  }
+
   function renderRewardList() {
     if (rewards.length === 0) {
       rewardList.innerHTML = `
         <tr>
-          <td colspan="4" class="reward-empty">No rewards configured.</td>
+          <td colspan="5" class="reward-empty">No rewards configured.</td>
         </tr>
       `;
       return;
@@ -107,6 +235,7 @@ export function createInitialInventoryTab(container: HTMLElement) {
         <td>${row.type}</td>
         <td>${row.id}</td>
         <td>${row.amount}</td>
+        <td>${getRewardTypeMeta(row.type).interpretation}</td>
         <td class="reward-action-col">
           <button class="btn btn-danger reward-action-btn" data-index="${index}" title="Delete reward">-</button>
         </td>
@@ -114,56 +243,149 @@ export function createInitialInventoryTab(container: HTMLElement) {
     `).join('');
   }
 
+  function renderIdOptions(options: string[], disabledLabel: string) {
+    if (options.length <= 0) {
+      idSelect.innerHTML = `<option value="">${disabledLabel}</option>`;
+      return;
+    }
+
+    idSelect.innerHTML = options
+      .map((id) => `<option value="${id}">${id}</option>`)
+      .join('');
+  }
+
+  function syncInputForType() {
+    const selected = typeSelect.value.trim().toUpperCase();
+    const type: RewardType = isRewardType(selected) ? selected : 'CURRENCY';
+    const meta = getRewardTypeMeta(type);
+    const options = getTypeIdOptions(type, idCatalog);
+
+    interpretation.textContent = `Interpretation: ${meta.interpretation}`;
+
+    if (meta.fixedAmount !== undefined) {
+      amountInput.value = String(meta.fixedAmount);
+      amountInput.disabled = true;
+    } else {
+      amountInput.disabled = false;
+      if (!amountInput.value.trim()) amountInput.value = '1';
+    }
+
+    if (meta.unsupported) {
+      renderIdOptions([], 'Not selectable');
+      idSelect.disabled = true;
+      addBtn.disabled = true;
+      guide.textContent = `${meta.amountGuide}`;
+      return;
+    }
+
+    if (options.length <= 0) {
+      renderIdOptions([], 'No IDs imported');
+      idSelect.disabled = true;
+      addBtn.disabled = true;
+
+      if (type === 'CURRENCY' || type === 'EQUIP' || type === 'CARD' || type === 'HERO') {
+        guide.textContent = `ID source: /config/rewardIdCatalog. Run reward-id import first. ${catalogState}`.trim();
+      } else {
+        guide.textContent = 'No selectable ID.';
+      }
+
+      return;
+    }
+
+    renderIdOptions(options, 'No selectable ID');
+    idSelect.disabled = false;
+    addBtn.disabled = false;
+
+    if (type === 'CURRENCY') {
+      guide.textContent = 'ID source: /config/rewardIdCatalog (from ENUM_TYPES.json:CURRENCY_TYPE).';
+      return;
+    }
+
+    guide.textContent = `ID source: /config/rewardIdCatalog (${type}). ${meta.amountGuide}`;
+  }
+
   function addRewardFromInput() {
     const type = typeSelect.value.trim().toUpperCase();
-    const id = idInput.value.trim();
-    const amount = Number(amountInput.value.trim());
-
     if (!isRewardType(type)) {
       setStatus('Invalid reward type.', 'error');
       return;
     }
 
-    if (!id) {
-      setStatus('Reward id is required.', 'error');
+    const meta = getRewardTypeMeta(type);
+    if (meta.unsupported) {
+      setStatus(`${type} is not selectable in this page.`, 'error');
       return;
     }
 
-    if (!Number.isInteger(amount) || amount <= 0) {
-      setStatus('Amount must be a positive integer.', 'error');
+    const id = idSelect.value.trim();
+    const rawAmount = Number(amountInput.value.trim());
+    const amount = normalizeAmountByType(type, rawAmount);
+    const row: RewardRow = { type, id, amount };
+
+    const error = validateRewardRow(row, rewards.length);
+    if (error) {
+      setStatus(error, 'error');
       return;
     }
 
-    rewards.push({ type, id, amount });
+    rewards.push(row);
     renderRewardList();
 
-    idInput.value = '';
-    amountInput.value = '';
+    if (!amountInput.disabled) amountInput.value = '';
+    syncInputForType();
     setStatus('Reward added. Click Save to persist.', '');
   }
 
   function validateAllRewards(): string | null {
+    rewards = rewards.map((row) => ({
+      ...row,
+      amount: normalizeAmountByType(row.type, row.amount),
+    }));
+
     for (let i = 0; i < rewards.length; i++) {
-      const row = rewards[i];
-      if (!isRewardType(row.type)) return `Row ${i + 1}: invalid type.`;
-      if (!row.id?.trim()) return `Row ${i + 1}: id is empty.`;
-      if (!Number.isInteger(row.amount) || row.amount <= 0) {
-        return `Row ${i + 1}: amount must be a positive integer.`;
-      }
+      const error = validateRewardRow(rewards[i], i);
+      if (error) return error;
     }
 
     return null;
   }
 
+  async function loadRewardIdCatalog() {
+    try {
+      const snap = await getDoc(doc(db, ID_CATALOG_DOC_PATH));
+      if (!snap.exists()) {
+        idCatalog = { currencyIds: [], equipIds: [], cardIds: [], heroIds: [] };
+        catalogState = 'Catalog document not found.';
+        return;
+      }
+
+      const data = snap.data();
+      idCatalog = {
+        currencyIds: normalizeIdList(data.currencyIds),
+        equipIds: normalizeIdList(data.equipIds),
+        cardIds: normalizeIdList(data.cardIds),
+        heroIds: normalizeIdList(data.heroIds),
+      };
+
+      catalogState = `Catalog loaded: CUR=${idCatalog.currencyIds.length}, E=${idCatalog.equipIds.length}, C=${idCatalog.cardIds.length}, H=${idCatalog.heroIds.length}.`;
+    } catch (e) {
+      idCatalog = { currencyIds: [], equipIds: [], cardIds: [], heroIds: [] };
+      catalogState = `Catalog load failed: ${e instanceof Error ? e.message : String(e)}`;
+    }
+  }
+
   async function load() {
     setStatus('Loading...', '');
+
+    await loadRewardIdCatalog();
 
     try {
       const snap = await getDoc(doc(db, DOC_PATH));
       if (!snap.exists()) {
         rewards = [];
         renderRewardList();
-        setStatus('No config found. Document does not exist yet.', '');
+        syncInputForType();
+        setStatus(`No config found. Document does not exist yet. ${catalogState}`.trim(), '');
         return;
       }
 
@@ -171,13 +393,15 @@ export function createInitialInventoryTab(container: HTMLElement) {
       if (rawRewards == null) {
         rewards = [];
         renderRewardList();
-        setStatus('Loaded. rewards is empty.', 'success');
+        syncInputForType();
+        setStatus(`Loaded. rewards is empty. ${catalogState}`.trim(), 'success');
         return;
       }
 
       if (!Array.isArray(rawRewards)) {
         rewards = [];
         renderRewardList();
+        syncInputForType();
         setStatus('Load error: rewards must be an array.', 'error');
         return;
       }
@@ -190,19 +414,72 @@ export function createInitialInventoryTab(container: HTMLElement) {
           invalidCount++;
           continue;
         }
+
         parsed.push(reward);
       }
 
       rewards = parsed;
       renderRewardList();
+      syncInputForType();
 
+      const messages: string[] = ['Loaded from Firestore.'];
+      let type: 'success' | 'error' = 'success';
       if (invalidCount > 0) {
-        setStatus(`Loaded with warning: ${invalidCount} invalid row(s) skipped.`, 'error');
-      } else {
-        setStatus('Loaded from Firestore.', 'success');
+        messages.push(`${invalidCount} invalid row(s) skipped.`);
+        type = 'error';
       }
+      if (catalogState) {
+        messages.push(catalogState);
+      }
+
+      setStatus(messages.join(' '), type);
     } catch (e) {
       setStatus(`Load error: ${e instanceof Error ? e.message : String(e)}`, 'error');
+    }
+  }
+
+  async function importRewardIdCatalog() {
+    setStatus('Importing reward ID catalog...', '');
+    importCatalogBtn.disabled = true;
+
+    try {
+      const response = await fetch('/__operation/import-reward-id-catalog', {
+        method: 'POST',
+      });
+
+      const rawBody = await response.text();
+      let payload: {
+        ok?: boolean;
+        error?: string;
+        stdout?: string;
+        stderr?: string;
+      } | null = null;
+
+      try {
+        payload = rawBody ? JSON.parse(rawBody) : null;
+      } catch {
+        payload = null;
+      }
+
+      if (!response.ok || payload?.ok !== true) {
+        const errorLog = payload?.stderr || payload?.error || rawBody || response.statusText;
+        setStatus(`Import error: ${tailLog(errorLog) || 'Unknown error.'}`, 'error');
+        return;
+      }
+
+      await loadRewardIdCatalog();
+      syncInputForType();
+
+      const out = tailLog(payload.stdout ?? '');
+      if (out) {
+        setStatus(`Imported catalog. ${out}`, 'success');
+      } else {
+        setStatus('Imported catalog successfully.', 'success');
+      }
+    } catch (e) {
+      setStatus(`Import error: ${e instanceof Error ? e.message : String(e)}`, 'error');
+    } finally {
+      importCatalogBtn.disabled = false;
     }
   }
 
@@ -223,9 +500,11 @@ export function createInitialInventoryTab(container: HTMLElement) {
   }
 
   typeSelect.innerHTML = REWARD_TYPES
-    .map(type => `<option value="${type}">${type}</option>`)
+    .map((type) => `<option value="${type}">${type}</option>`)
     .join('');
   typeSelect.value = 'CURRENCY';
+
+  typeSelect.addEventListener('change', syncInputForType);
 
   rewardList.addEventListener('click', (event) => {
     const btn = (event.target as HTMLElement).closest('button[data-index]') as HTMLButtonElement | null;
@@ -240,8 +519,10 @@ export function createInitialInventoryTab(container: HTMLElement) {
   });
 
   addBtn.addEventListener('click', addRewardFromInput);
+  importCatalogBtn.addEventListener('click', importRewardIdCatalog);
   saveBtn.addEventListener('click', save);
 
   renderRewardList();
+  syncInputForType();
   load();
 }

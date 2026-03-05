@@ -121,3 +121,12 @@ NOTE:
 - Assets/Samples (import):
   `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Reward/RewardData.cs`
 - 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../07-samples-creation-guide/SKILL.md)
+
+
+---
+
+
+## Related
+
+- [11-rewarddata-interpretation](../11-rewarddata-interpretation/SKILL.md) — RewardData 해석 절차/타입별 의미/소스별 파싱 가이드
+- [10-reward-manager](../10-reward-manager/SKILL.md) — rewardGroupId 변환과 적용 실행기

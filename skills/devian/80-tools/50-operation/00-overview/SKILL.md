@@ -19,7 +19,7 @@ AppliesTo: v10
 | 탭 | 상태 | 버튼 | 설명 |
 |----|------|------|------|
 | Version Config | 구현됨 | [Load] / [Save] | Firestore `/config/appVersion` 버전 설정 |
-| Initial Inventory | 구현됨 | [-] / [+] / [Save] | Firestore `/config/initialInventory` 초기 지급 `RewardData[]` 설정 (2번째 탭, 자동 로드) |
+| Initial Inventory | 구현됨 | [-] / [+] / [Import Reward IDs] / [Save] | Firestore `/config/initialInventory` 초기 지급 `RewardData[]` 설정 (`id` listbox: `/config/rewardIdCatalog`) |
 | Obfuscate | 구현됨 | [Obfuscate] | 평문 → 난독화 (byte-substitution) |
 | Deobfuscate | 구현됨 | [Deobfuscate] | 난독화 → 평문 |
 | Save Data | 구현됨 | [Import] / [Export & Download] | .dvn ↔ JSON 통합 워크플로우 |
@@ -65,6 +65,7 @@ framework-ts/apps/Operation/
 | [17-page-deobfuscate](../17-page-deobfuscate/SKILL.md) | Deobfuscate 탭 UI |
 | [18-page-savedata](../18-page-savedata/SKILL.md) | Save Data 탭 UI |
 | [19-page-initial-inventory](../19-page-initial-inventory/SKILL.md) | Initial Inventory 탭 UI |
+| [20-excel-reward-id-export](../20-excel-reward-id-export/SKILL.md) | xlsx -> Firestore reward id catalog import |
 
 
 ---
