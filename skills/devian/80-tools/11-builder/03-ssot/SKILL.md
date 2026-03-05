@@ -14,6 +14,46 @@ ParentSSOT: skills/devian/10-module/03-ssot/SKILL.md
 
 ---
 
+## Build Target
+
+빌드는 `-[target]` 옵션으로 실행 범위를 지정한다.
+
+```bash
+bash input/build.sh -[target] <buildInputJson>
+node framework-ts/tools/builder/build.js -[target] <buildInputJson>
+```
+
+| Target | 설명 |
+|--------|------|
+| `-all` | 전체 빌드 (기본값). domain-code + protocol + domain-data 모두 실행 |
+| `-domain-code` | Domain codegen (C#/TS). contracts/tables → C#/TS 코드 생성, UPM domain 패키지, validate, sync |
+| `-protocol` | Protocol codegen (C#/TS). protocol JSON → C#/TS 코드 생성, UPM protocol 패키지, validate, sync |
+| `-domain-data` | Domain 데이터 파일 출력. tables → NDJSON/pb64 파일 (tableConfig dirs로 출력) |
+
+### Target별 Phase 실행 범위
+
+| Phase | -all | -domain-code | -protocol | -domain-data |
+|-------|------|-------------|-----------|--------------|
+| Phase 0: Config 로딩 + Guard | ✅ | ✅ | ✅ | ✅ |
+| Phase 1: Generate (domain codegen) | ✅ | ✅ | — | — |
+| Phase 1: Generate (protocol codegen) | ✅ | — | ✅ | — |
+| Phase 1: Generate (data files) | ✅ | — | — | ✅ |
+| Phase 2: Materialize (code → module/upm) | ✅ | ✅ | ✅ | — |
+| Phase 2: Materialize (data → tableConfig dirs) | ✅ | — | — | ✅ |
+| Phase 3: Validate | ✅ | ✅ | ✅ | — |
+| Phase 4: Sync (upm → packageDir) | ✅ | ✅ | ✅ | — |
+| Phase 5: Sample metadata sync | ✅ | ✅ | — | — |
+
+### Target ↔ 스킬 문서 매핑
+
+| Target | 관련 스킬 문서 |
+|--------|---------------|
+| `-domain-code` | Input: 30-table-cell-format, 31-table-row-format, 32-table-authoring / Target: 50-contract-codegen, 51-table-codegen, 52-table-enumgen |
+| `-domain-data` | Target: 53-data-ndjson, 54-data-pb64 |
+| `-protocol` | Input: 33-protocol-spec, 34-protocol-gen-policy / Target: 55-protocol-codegen |
+
+---
+
 ## PROTOCOL SSOT
 
 ### DomainType = PROTOCOL
@@ -49,7 +89,7 @@ PROTOCOL 입력은 `{buildInputJson}`의 `protocols` 섹션(배열)이 정의한
 - 입력 파일은 **JSON**이며 `protocolDir` 아래 `protocolFiles`에 명시된 파일을 처리한다.
 - 파일명 base를 **ProtocolName**으로 간주한다. (예: `C2Game.json` → `C2Game`)
 
-상세 규칙: [skills/devian/80-tools/11-builder/40-codegen-protocol](../40-codegen-protocol/SKILL.md)
+상세 규칙: [skills/devian/80-tools/11-builder/33-protocol-spec](../33-protocol-spec/SKILL.md)
 
 ### Opcode/Tag 레지스트리 (결정성)
 
@@ -233,7 +273,7 @@ DATA 입력은 `{buildInputJson}`의 `domains` 섹션이 정의한다.
 - `optional:true`는 "nullable/optional column" 힌트로만 사용
 - 그 외 `parser:*` 등은 **Reserved** (있어도 무시 / 의미 부여 금지)
 
-상세 규칙: [skills/devian/80-tools/11-builder/30-table-authoring-rules](../30-table-authoring-rules/SKILL.md)
+상세 규칙: [skills/devian/80-tools/11-builder/32-table-authoring](../32-table-authoring/SKILL.md)
 
 ---
 
@@ -287,7 +327,7 @@ DATA Domain 생성물의 C# 네임스페이스:
 
 **파일 확장자는 `.json`이지만, `ndjson/` 폴더의 파일 내용은 NDJSON(라인 단위 JSON)이다.**
 
-상세 규칙: [skills/devian/80-tools/11-builder/34-ndjson-storage](../34-ndjson-storage/SKILL.md)
+상세 규칙: [skills/devian/80-tools/11-builder/53-data-ndjson](../53-data-ndjson/SKILL.md)
 
 ---
 
@@ -299,7 +339,7 @@ DATA Domain 생성물의 C# 네임스페이스:
 - 저장 형식: Unity TextAsset YAML
 - pk 옵션이 없는 테이블은 export 안함
 
-상세 규칙: [skills/devian/80-tools/11-builder/35-pb64-storage](../35-pb64-storage/SKILL.md)
+상세 규칙: [skills/devian/80-tools/11-builder/54-data-pb64](../54-data-pb64/SKILL.md)
 
 ---
 
@@ -317,9 +357,9 @@ DATA Domain 생성물의 C# 네임스페이스:
 
 - [Root SSOT](../../../10-module/03-ssot/SKILL.md) — 공통 용어/플레이스홀더/머지 규칙
 - [Builder Policy](../01-policy/SKILL.md)
-- [Table Authoring Rules](../30-table-authoring-rules/SKILL.md)
-- [NDJSON Storage](../34-ndjson-storage/SKILL.md)
-- [PB64 Storage](../35-pb64-storage/SKILL.md)
-- [Codegen Protocol](../40-codegen-protocol/SKILL.md)
-- [Codegen Protocol C#/TS](../41-codegen-protocol-csharp-ts/SKILL.md)
+- [Table Authoring Rules](../32-table-authoring/SKILL.md)
+- [NDJSON Storage](../53-data-ndjson/SKILL.md)
+- [PB64 Storage](../54-data-pb64/SKILL.md)
+- [Codegen Protocol](../33-protocol-spec/SKILL.md)
+- [Codegen Protocol C#/TS](../34-protocol-gen-policy/SKILL.md)
 - [Package Metadata](../../../../devian-unity/04-package-metadata/SKILL.md) — UPM package.json 정책

@@ -10,9 +10,9 @@ using Devian;
 /// </summary>
 public abstract class TestSceneBootstrap : SceneBase
 {
-    protected override void Awake()
+    protected override void onInitAwake()
     {
-        base.Awake();
+        base.onInitAwake();
         TestApplication.Create();
     }
 

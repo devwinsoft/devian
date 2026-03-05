@@ -1,4 +1,4 @@
-# 35-pb64-storage
+# 54-data-pb64
 
 Status: ACTIVE  
 AppliesTo: v10
@@ -213,5 +213,5 @@ Pb64Loader.ParseRows(rawBinary, json => {
 ## Reference
 
 - Policy SSOT: `skills/devian/10-module/03-ssot/SKILL.md`
-- 일반 Table: `skills/devian/80-tools/11-builder/32-json-row-io/SKILL.md`
+- 일반 Table: `skills/devian/80-tools/11-builder/31-table-row-format/SKILL.md`
 - String Table: `skills/devian-unity/11-common-system/30-string-table/SKILL.md`

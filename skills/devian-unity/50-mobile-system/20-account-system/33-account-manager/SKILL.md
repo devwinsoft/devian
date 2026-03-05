@@ -32,7 +32,8 @@
 ## Order (fixed)
 1. Firebase dependencies init (`CheckAndFixDependenciesAsync`)
 2. FirebaseAuth sign-in (Anonymous / credential / link — LoginType에 따라 분기)
-3. `SaveCloudManager.Instance.InitializeAsync(ct)` — Guest 로그인에서는 스킵
+3. Cloud init 시도 (`SaveDataManager.Instance._initializeCloudAsync(ct)`) — GOOGLE/APPLE에서만 시도
+4. `FirebaseManager.Instance.InitSessionAsync(null, ct)` — missionClock + entitlements + purchaseAdjustments 통합 1회 왕복 (`#if !UNITY_EDITOR`)
 
 Sync는 AccountManager의 책임이 아니며, 상위 시스템이 담당한다.
 
@@ -51,12 +52,29 @@ Sync는 AccountManager의 책임이 아니며, 상위 시스템이 담당한다.
 - GOOGLE(Android): `ServerAuthCode` 필수 (convenience 오버로드 사용 시 GPGS Reflection으로 내부 획득)
 - APPLE(iOS): `IdToken` + `RawNonce` 필수 (caller가 직접 전달)
 
-## Convenience Overload
-- 반환형: `Task<CommonResult>` (성공 payload 없음, 실패 시 `CommonErrorType` 기반 `CommonError`)
+## LoginAsync
+- 반환형: `Task<CommonResult<SessionInitSnapshot?>>` (성공 시 InitSession 결과, UNITY_EDITOR에서는 null)
 - `LoginAsync(LoginType, CancellationToken)` — credential을 내부에서 획득한다.
   - EDITOR/GUEST: `LoginCredential.Empty()` 자동 생성
   - GOOGLE(Android): `getGoogleGpgsCredentialAsync` → GPGS Reflection으로 `PlayGamesPlatform.Authenticate` + `RequestServerSideAccess` 호출
   - APPLE(iOS): 지원하지 않음 — `LoginAsync(LoginType, LoginCredential, CancellationToken)` 사용
+- `LoginAsync(LoginType, LoginCredential, CancellationToken)` — credential을 직접 전달한다.
+- 내부 순서: sign-in → cloud save init → `FirebaseManager.InitSessionAsync` → snapshot 반환
+
+## EnsureRuntimeSessionAsync
+- 반환형: `Task<CommonResult<SessionInitSnapshot?>>` (세션 복구 + InitSession 결과, 세션 없으면 null)
+- 게임 진입 전에 현재 계정 메타를 기준으로 런타임 인증 세션을 복구한다.
+  - `HasAuthenticatedSession` → 즉시 InitSession 호출 후 snapshot 반환
+  - NONE → `Success(null)` (세션 없음)
+  - EDITOR/GUEST → `LoginAsync` 위임 (LoginAsync가 InitSession 포함)
+  - GOOGLE(Android) → GPGS silent auth → Firebase sign-in → InitSession
+  - APPLE(iOS) → `Success(null)` (자동 복구 미지원)
+- `UNITY_EDITOR`에서는 `SessionInitSnapshot`이 `null`일 수 있으므로, 상위 흐름은 `CurrentLoginType` + `IsLocalOnlySaveMode`를 함께 판단해 진입 여부를 결정한다.
+
+## EnsurePurchaseLoginReadyAsync
+- 반환형: `Task<CommonResult<bool>>` (purchase ready 여부)
+- `EnsureRuntimeSessionAsync` 호출 후 snapshot 존재 여부로 ready 판단한다.
+- NONE 상태에서 Android → GPGS silent auth로 자동 보정 시도.
 
 ## Google GPGS Internal Acquisition
 - `getGoogleGpgsCredentialAsync(CancellationToken)` — Reflection 기반, GPGS 플러그인 미설치 시 컴파일 안전.
@@ -82,10 +100,11 @@ Sync는 AccountManager의 책임이 아니며, 상위 시스템이 담당한다.
 
 
 ## LoginType 영속화
-- `PlayerPrefs` 기반 LoginType 영속화는 제거되었다.
-- 계정 메타 영속화는 `AccountManager`가 직접 소유하는 `AccountStorage`로 통일한다.
+- `PlayerPrefs`에 마지막 로그인 타입(`Devian.Account.LastLoginType`)을 캐시한다.
+- 앱 재시작 시 `Awake()`에서 캐시된 LoginType을 복원하여 silent sign-in 대상 타입(EDITOR/GUEST/GOOGLE/APPLE)을 결정한다.
+- 계정 메타 영속화의 본체는 여전히 `AccountStorage`이다.
 - 저장 필드(최소): `loginType`, `socialUserId`, `lastUpdatedAtUtcMs`
-- 로그인 성공, 로그아웃, 구매 인증 보정 시 `AccountManager`가 자신의 `Storage`를 갱신한다.
+- 로그인 성공, 로그아웃, 구매 인증 보정 시 `AccountManager`가 자신의 `Storage`와 LoginType 캐시를 함께 갱신한다.
 - 상위 시스템이 local/cloud payload를 로드한 뒤 `AccountManager.Storage`를 복원하고 `AccountManager.ApplyStorage(...)`로 런타임 `_currentLoginType`을 재적용한다.
 - 계정 메타 미복원/유효하지 않은 값이면 `NONE` fallback.
 

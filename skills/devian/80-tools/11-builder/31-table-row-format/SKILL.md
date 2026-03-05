@@ -1,4 +1,4 @@
-# 32-json-row-io
+# 31-table-row-format
 
 Status: ACTIVE  
 AppliesTo: v10  
@@ -10,8 +10,8 @@ XLSX 테이블에서 추출된 데이터를 JSON object로 내보낼 때의 규�
 
 이 문서는 "row → JSON 변환 규칙"만 정의한다.
 
-- **NDJSON 저장 규약**: `skills/devian/80-tools/11-builder/34-ndjson-storage/SKILL.md` 참조
-- **pb64 저장 규약**: `skills/devian/80-tools/11-builder/35-pb64-storage/SKILL.md` 참조
+- **NDJSON 저장 규약**: `skills/devian/80-tools/11-builder/53-data-ndjson/SKILL.md` 참조
+- **pb64 저장 규약**: `skills/devian/80-tools/11-builder/54-data-pb64/SKILL.md` 참조
 
 생성되는 로더/컨테이너 API는 **런타임/제너레이터 코드**가 정답이다.
 
@@ -101,14 +101,14 @@ SSOT 경로 규약을 따른다. (`{tableConfig.tableDirs}`는 배열이므로 �
 ## Notes
 
 - `enum:*` / `class:*` 컬럼의 셀 값은 DFF 원문 문자열로 보존될 수 있다.
-- DFF 문법은 `skills/devian/80-tools/11-builder/31-class-cell-format/SKILL.md`를 따른다.
+- DFF 문법은 `skills/devian/80-tools/11-builder/30-table-cell-format/SKILL.md`를 따른다.
 
 ---
 
 ## Reference
 
 - Policy SSOT: `skills/devian/10-module/03-ssot/SKILL.md`
-- NDJSON 저장: `skills/devian/80-tools/11-builder/34-ndjson-storage/SKILL.md`
-- pb64 저장: `skills/devian/80-tools/11-builder/35-pb64-storage/SKILL.md`
-- DFF 규약: `skills/devian/80-tools/11-builder/31-class-cell-format/SKILL.md`
+- NDJSON 저장: `skills/devian/80-tools/11-builder/53-data-ndjson/SKILL.md`
+- pb64 저장: `skills/devian/80-tools/11-builder/54-data-pb64/SKILL.md`
+- DFF 규약: `skills/devian/80-tools/11-builder/30-table-cell-format/SKILL.md`
 - 동작 정본: 런타임/제너레이터 코드

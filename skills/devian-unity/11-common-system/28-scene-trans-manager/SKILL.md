@@ -12,8 +12,8 @@ Scene 전환 파이프라인을 단일화(직렬화)하고, 씬별 초기화/정
 
 ## Files (SSOT)
 
-- `framework-cs/upm/com.devian.foundation/Runtime/Unity/Scene/SceneBase.cs`
-- `framework-cs/upm/com.devian.foundation/Runtime/Unity/Scene/SceneTransManager.cs`
+- `framework-cs/upm/com.devian.domain.common/Runtime/Unity/Scene/SceneBase.cs`
+- `framework-cs/upm/com.devian.domain.common/Runtime/Unity/Scene/SceneTransManager.cs`
 
 ---
 
@@ -28,14 +28,16 @@ Scene 전환 파이프라인을 단일화(직렬화)하고, 씬별 초기화/정
 
 | 훅 | 호출 시점 | 호출 주체 | 용도 |
 |----|----------|----------|------|
-| `onInitAwake()` | Unity Awake()에서 항상 1회 | SceneBase.Awake | 레퍼런스 캐싱, 초기 상태 구성, 컴포넌트 연결 등 전환과 무관한 준비 작업 |
+| `onInitAwake()` | Unity Awake()에서 항상 1회 | SceneBase.Awake (private) | 레퍼런스 캐싱, 초기 상태 구성, 컴포넌트 연결 등 전환과 무관한 준비 작업 |
 | `Enter()` → `onEnter()` | 씬 진입 시 (전환 또는 부팅) | SceneTransManager | 씬 진입 상태 초기화 |
-| `onStart()` | Unity Start 시점 | SceneBase.Start | 씬 시작 로직 |
+| `onStart()` | Unity Start 시점 | SceneBase.Start (private) | 씬 시작 로직 |
 | `Exit()` → `onExit()` | 전환으로 이탈 시 | SceneTransManager | 정리 작업 |
+| `onDestroy()` | Unity OnDestroy() 시점 | SceneBase.OnDestroy (private) | 오브젝트 파괴 시 정리 작업 |
 
 **Template Method 패턴:**
+- `Awake()` / `Start()` / `OnDestroy()` — private. Unity 콜백을 SceneBase가 소유하며 파생 클래스에서 override 불가.
 - `Enter()` / `Exit()` — public 파사드. SceneTransManager가 호출한다.
-- `onEnter()` / `onExit()` / `onStart()` / `onInitAwake()` — protected 훅. 파생 클래스가 구현한다.
+- `onEnter()` / `onExit()` / `onStart()` / `onInitAwake()` / `onDestroy()` — protected 훅. 파생 클래스가 구현한다.
 
 ### SceneTransManager
 

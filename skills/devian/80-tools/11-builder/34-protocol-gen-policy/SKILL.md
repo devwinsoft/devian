@@ -1,4 +1,4 @@
-# 41-codegen-protocol-csharp-ts
+# 34-protocol-gen-policy
 
 Status: ACTIVE  
 AppliesTo: v10  
@@ -46,6 +46,6 @@ Protocol codegen의 언어별 산출물(C#/TS)에 대한 **문서 정책**을 �
 
 ## Reference
 
-- Overview: `skills/devian/80-tools/11-builder/40-codegen-protocol/SKILL.md`
+- Overview: `skills/devian/80-tools/11-builder/33-protocol-spec/SKILL.md`
 - Policy SSOT: `skills/devian/10-module/03-ssot/SKILL.md`
 - 동작 정본: 런타임/제너레이터 코드

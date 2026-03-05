@@ -1,4 +1,4 @@
-# 20-build-domain
+# 20-build-pipeline
 
 Status: ACTIVE  
 AppliesTo: v10
@@ -45,17 +45,21 @@ AppliesTo: v10
 ### 스크립트 실행
 
 ```bash
-bash input/build.sh <buildInputJson>
+bash input/build.sh -[target] <buildInputJson>
 ```
 
 ### 직접 실행
 
 ```bash
-node framework-ts/tools/builder/build.js <buildInputJson>
+node framework-ts/tools/builder/build.js -[target] <buildInputJson>
 ```
 
+- `-[target]`은 빌드 타겟 옵션: `-all` (기본값), `-domain-code`, `-protocol`, `-domain-data`
 - `<buildInputJson>`은 빌드 입력 JSON 파일 경로 (예: `input/build_input.json`)
 - 빌더는 `buildInputJson`을 읽고, 그 안의 `configPath`로 설정 파일을 로드한다.
+- `build.sh`에서 target 옵션 생략 시 기본값 `-all`
+
+> Build Target 정의 및 Phase 매핑: [03-ssot/SKILL.md § Build Target](../03-ssot/SKILL.md)
 
 ---
 
@@ -158,6 +162,15 @@ node framework-ts/tools/builder/build.js <buildInputJson>
 - **도메인/프로토콜 추가에 따라 출력이 늘어남 (동적)**
 - 개별 도메인 고정표 대신 **템플릿 기반**으로 산출물 경로가 결정됨
 - **정확한 디렉토리/파일 배치는 빌더 구현이 SSOT**
+
+### Target별 산출물 범위
+
+| Target | 산출물 |
+|--------|--------|
+| `-domain-code` | C# Domain 모듈, TS Domain 모듈, UPM Domain 패키지 |
+| `-protocol` | C# Protocol 모듈, TS Protocol 모듈, UPM Protocol 패키지 |
+| `-domain-data` | NDJSON 파일, pb64 파일 (tableConfig dirs) |
+| `-all` | 위 모두 |
 
 ### C# Domain 템플릿
 

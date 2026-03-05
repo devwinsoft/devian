@@ -16,11 +16,13 @@ AppliesTo: v10
 
 ## Features (탭)
 
-| 탭 | 버튼 | 설명 |
-|----|------|------|
-| Obfuscate | [Obfuscate] | 평문 → 난독화 (byte-substitution) |
-| Deobfuscate | [Deobfuscate] | 난독화 → 평문 |
-| Save Data | [Import] / [Export & Download] | .dvn ↔ JSON 통합 워크플로우 |
+| 탭 | 상태 | 버튼 | 설명 |
+|----|------|------|------|
+| Version Config | 구현됨 | [Load] / [Save] | Firestore `/config/appVersion` 버전 설정 |
+| Initial Inventory | 구현됨 | [-] / [+] / [Save] | Firestore `/config/initialInventory` 초기 지급 `RewardData[]` 설정 (2번째 탭, 자동 로드) |
+| Obfuscate | 구현됨 | [Obfuscate] | 평문 → 난독화 (byte-substitution) |
+| Deobfuscate | 구현됨 | [Deobfuscate] | 난독화 → 평문 |
+| Save Data | 구현됨 | [Import] / [Export & Download] | .dvn ↔ JSON 통합 워크플로우 |
 
 > 탭 이름, 버튼 이름은 영문으로 표기한다. 탭은 필요에 따라 추가한다.
 
@@ -58,7 +60,11 @@ framework-ts/apps/Operation/
 | [01-policy](../01-policy/SKILL.md) | 정책 (localhost 전용, 바닐라 TS, 보안) |
 | [03-ssot](../03-ssot/SKILL.md) | 기능(탭) 정의 (입출력, 파이프라인) |
 | [10-app-shell](../10-app-shell/SKILL.md) | 앱 셸 (빌드, 프로젝트 구조, 탭 네비게이션) |
-| [15-ui-design](../15-ui-design/SKILL.md) | UI 디자인 (레이아웃, 컴포넌트, 스타일) |
+| [15-layout](../15-layout/SKILL.md) | 레이아웃, 스타일 가이드 |
+| [16-page-obfuscate](../16-page-obfuscate/SKILL.md) | Obfuscate 탭 UI |
+| [17-page-deobfuscate](../17-page-deobfuscate/SKILL.md) | Deobfuscate 탭 UI |
+| [18-page-savedata](../18-page-savedata/SKILL.md) | Save Data 탭 UI |
+| [19-page-initial-inventory](../19-page-initial-inventory/SKILL.md) | Initial Inventory 탭 UI |
 
 
 ---

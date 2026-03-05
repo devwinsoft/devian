@@ -3,6 +3,7 @@ import { createObfuscateTab } from './tabs/obfuscate';
 import { createDeobfuscateTab } from './tabs/deobfuscate';
 import { createSaveDataTab } from './tabs/savedata';
 import { createVersionConfigTab } from './tabs/version-config';
+import { createInitialInventoryTab } from './tabs/initial-inventory';
 
 interface TabDef {
   id: string;
@@ -17,6 +18,12 @@ const tabs: TabDef[] = [
     label: 'Version Config',
     pipeline: 'Firestore /config/appVersion read/write',
     create: createVersionConfigTab,
+  },
+  {
+    id: 'initial-inventory',
+    label: 'Initial Inventory',
+    pipeline: 'Firestore /config/initialInventory read/write',
+    create: createInitialInventoryTab,
   },
   {
     id: 'obfuscate',

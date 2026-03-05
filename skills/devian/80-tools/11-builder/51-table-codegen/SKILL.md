@@ -1,4 +1,4 @@
-# 42-tablegen-implementation
+# 51-table-codegen
 
 Status: ACTIVE  
 AppliesTo: v10  
@@ -162,8 +162,8 @@ Domain 내 모든 Contract, Table Entity, Table Container는 **단일 파일에 
 | NDJSON Data | `{SheetName}.json` | `TestSheet.json` | PrimaryKey 있는 sheet만 |
 | pb64 Data | `{SheetName}.asset` | `TestSheet.asset` | PrimaryKey 있는 sheet만 |
 
-> **NDJSON 저장 규약:** 내용은 NDJSON이며 확장자는 `.json` 고정. 정본: `skills/devian/80-tools/11-builder/34-ndjson-storage/SKILL.md`
-> **pb64 저장 규약:** Unity TextAsset `.asset` 형식. 정본: `skills/devian/80-tools/11-builder/35-pb64-storage/SKILL.md`
+> **NDJSON 저장 규약:** 내용은 NDJSON이며 확장자는 `.json` 고정. 정본: `skills/devian/80-tools/11-builder/53-data-ndjson/SKILL.md`
+> **pb64 저장 규약:** Unity TextAsset `.asset` 형식. 정본: `skills/devian/80-tools/11-builder/54-data-pb64/SKILL.md`
 
 ---
 
@@ -304,5 +304,5 @@ SKILL은 위 내용을 단정해서는 안 된다.
 ## Reference
 
 - Policy SSOT: `skills/devian/10-module/03-ssot/SKILL.md`
-- 입력 규칙: `skills/devian/80-tools/11-builder/30-table-authoring-rules/SKILL.md`
+- 입력 규칙: `skills/devian/80-tools/11-builder/32-table-authoring/SKILL.md`
 - 동작 정본: 런타임/제너레이터 코드

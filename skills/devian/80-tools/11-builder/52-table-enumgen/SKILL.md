@@ -1,4 +1,4 @@
-# 45-tablegen-enumgen
+# 52-table-enumgen
 
 Status: ACTIVE  
 AppliesTo: v10  
@@ -210,6 +210,6 @@ export class TB_COMPLEX_POLICY {
 
 ## Reference
 
-- Table Authoring Rules: `skills/devian/80-tools/11-builder/30-table-authoring-rules/SKILL.md`
-- TableGen Implementation: `skills/devian/80-tools/11-builder/42-tablegen-implementation/SKILL.md`
+- Table Authoring Rules: `skills/devian/80-tools/11-builder/32-table-authoring/SKILL.md`
+- TableGen Implementation: `skills/devian/80-tools/11-builder/51-table-codegen/SKILL.md`
 - Variant Feature: `skills/devian/10-module/20-core/32-variable-variant/SKILL.md`

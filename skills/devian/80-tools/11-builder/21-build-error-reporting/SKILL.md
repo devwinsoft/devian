@@ -241,7 +241,7 @@ build-{yyyyMMdd-HHmmss}-{pid}.ndjson
 
 ### 빌드 관련
 
-- `skills/devian/80-tools/11-builder/20-build-domain/SKILL.md`
+- `skills/devian/80-tools/11-builder/20-build-pipeline/SKILL.md`
 - `skills/devian/10-module/03-ssot/SKILL.md`
 
 ### 입력 규약 (연결 후보)

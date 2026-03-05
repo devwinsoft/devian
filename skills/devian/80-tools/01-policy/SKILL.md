@@ -19,7 +19,7 @@ The canonical workspace document is `skills/devian/05-workspace/SKILL.md`.
 
 | Document | Description |
 |----------|-------------|
-| `20-build-domain/` | 빌드 실행 정책 |
+| `20-build-pipeline/` | 빌드 실행 정책 |
 | `21-build-error-reporting/` | 빌드 에러 리포팅 |
 | `90-project-archive/` | 프로젝트 아카이브 |
 

@@ -26,6 +26,7 @@ namespace Devian
     /// </summary>
     public sealed class AccountManager : CompoSingleton<AccountManager>
     {
+        private const string LastLoginTypePrefsKey = "Devian.Account.LastLoginType";
         private AccountLoginFirebase _firebaseLogin = new AccountLoginFirebase();
         private AccountLoginGpgs _gpgs = new AccountLoginGpgs();
         private AccountLoginApple _apple = new AccountLoginApple();
@@ -40,6 +41,7 @@ namespace Devian
         protected override void Awake()
         {
             base.Awake();
+            restoreCachedLoginType();
             ApplyStorage(_storage);
         }
 
@@ -432,21 +434,42 @@ namespace Devian
             if (storage == null)
             {
                 _storage.Clear();
+                cacheLoginType(LoginType.NONE);
                 return;
             }
 
+            var loginType = sanitizeLoginType(storage.loginType);
             _storage.Set(
-                sanitizeLoginType(storage.loginType),
+                loginType,
                 storage.socialUserId,
                 storage.lastUpdatedAtUtcMs);
+            cacheLoginType(loginType);
         }
 
         private void writeAccountState(LoginType loginType)
         {
+            var safeLoginType = sanitizeLoginType(loginType);
             _storage.Set(
-                sanitizeLoginType(loginType),
-                resolveSocialUserId(loginType),
+                safeLoginType,
+                resolveSocialUserId(safeLoginType),
                 DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
+            cacheLoginType(safeLoginType);
+        }
+
+        private void restoreCachedLoginType()
+        {
+            var raw = PlayerPrefs.GetInt(LastLoginTypePrefsKey, (int)LoginType.NONE);
+            var cached = sanitizeLoginType((LoginType)raw);
+            if (cached == LoginType.NONE)
+                return;
+
+            _storage.Set(cached, _storage.socialUserId, _storage.lastUpdatedAtUtcMs);
+        }
+
+        private static void cacheLoginType(LoginType loginType)
+        {
+            PlayerPrefs.SetInt(LastLoginTypePrefsKey, (int)sanitizeLoginType(loginType));
+            PlayerPrefs.Save();
         }
 
         private static LoginType sanitizeLoginType(LoginType loginType)

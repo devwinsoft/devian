@@ -393,7 +393,7 @@ Session connected
 - 정책 문서: `skills/devian-examples/01-policy/SKILL.md`
 - **Core/Net 정본**: `com.devian.foundation/Runtime/Module/Net/`
 - NetClient/NetWsClient: `skills/devian/10-module/60-net/72-network-ws-client/SKILL.md`
-- Protocol 코드젠: `skills/devian/80-tools/11-builder/41-codegen-protocol-csharp-ts/SKILL.md`
+- Protocol 코드젠: `skills/devian/80-tools/11-builder/34-protocol-gen-policy/SKILL.md`
 
 ---
 

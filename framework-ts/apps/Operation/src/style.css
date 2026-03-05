@@ -141,6 +141,24 @@ body {
   border-color: var(--accent);
 }
 
+.io-section input[type="number"],
+.io-section select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+
+.io-section input[type="number"]:focus,
+.io-section select:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
 /* --- Buttons --- */
 
 .btn-row {
@@ -169,6 +187,72 @@ body {
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: var(--bg-primary);
+}
+
+.btn-danger:hover {
+  background: #f17c99;
+}
+
+.reward-action-btn {
+  width: 34px;
+  min-width: 34px;
+  padding: 0;
+  height: 30px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.reward-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.reward-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--bg-secondary);
+}
+
+.reward-table th,
+.reward-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 10px 12px;
+  font-size: 13px;
+  text-align: left;
+}
+
+.reward-table th {
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-size: 12px;
+}
+
+.reward-table tr:last-child td {
+  border-bottom: none;
+}
+
+.reward-action-col {
+  width: 72px;
+  text-align: center !important;
+}
+
+.reward-empty {
+  text-align: center !important;
+  color: var(--text-muted);
+}
+
+.reward-input-row {
+  display: grid;
+  grid-template-columns: 180px 1fr 140px 46px;
+  gap: 8px;
+  align-items: center;
 }
 
 /* --- Save Data --- */

@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Devian;
 using Devian.Domain.Common;
+
 public class TestSceneLoading : TestSceneBootstrap
 {
     public static TestSceneLoading Instance => Singleton.Create<TestSceneLoading>();
@@ -25,74 +26,44 @@ public class TestSceneLoading : TestSceneBootstrap
 
         UICanvasLoading.Instance.Init();
 
-        var sync = await SaveDataManager.Instance.SyncGameStorageAsync(CancellationToken.None);
-        if (sync.IsFailure)
+        var restore = await AccountManager.Instance.EnsureRuntimeSessionAsync(CancellationToken.None);
+        Debug.Log($"EnsureRuntimeSessionAsync: success={restore.IsSuccess} snapshot={restore.Value?.GetType().Name ?? "null"}");
+
+        if (restore.IsFailure)
         {
-            Debug.Log($"{sync.Error.Code}: {sync.Error.Message}");
+            Debug.LogError(
+                $"Runtime session restore failed: code={restore.Error.Code}, message={restore.Error.Message}");
+            UICanvasLoading.Instance.message.text = $"{restore.Error.Code}";
+            UICanvasLoading.Instance.ShowLoginButtons();
             return;
         }
 
-        Debug.Log($"Sync completed: {sync.Value.State}");
-        switch (sync.Value.State)
+        if (restore.Value == null)
         {
-            case SyncState.Initial:
-                var init = await SaveDataManager.Instance.SaveGameStorageAsync(true, CancellationToken.None);
-                if (init.IsFailure)
-                {
-                    Debug.LogError($"Initial save failed: code={init.Error.Code}, message={init.Error.Message}");
-                    UICanvasLoading.Instance.message.text = $"{init.Error.Code}";
-                    return;
-                }
+            var loginType = AccountManager.Instance.CurrentLoginType;
+            var canProceedWithoutSnapshot = loginType != LoginType.NONE &&
+                                            AccountManager.Instance.IsLocalOnlySaveMode;
+            if (!canProceedWithoutSnapshot)
+            {
+                Debug.LogWarning($"Runtime session restore skipped. loginType={loginType}");
+                UICanvasLoading.Instance.message.text = $"Restore required: {loginType}";
                 UICanvasLoading.Instance.ShowLoginButtons();
-                break;
-            
-            case SyncState.Conflict:
-                break;
-            
-            case SyncState.Success:
-                var restore = await AccountManager.Instance.EnsureRuntimeSessionAsync(CancellationToken.None);
-                Debug.Log($"EnsureRuntimeSessionAsync: success={restore.IsSuccess} snapshot={restore.Value?.GetType().Name ?? "null"}");
+                return;
+            }
 
-                if (restore.IsFailure)
-                {
-                    Debug.LogError(
-                        $"Runtime session restore failed: code={restore.Error.Code}, message={restore.Error.Message}");
-                    UICanvasLoading.Instance.message.text = $"{restore.Error.Code}";
-                    UICanvasLoading.Instance.ShowLoginButtons();
-                    return;
-                }
-
-                if (restore.Value == null)
-                {
-                    var loginType = AccountManager.Instance.CurrentLoginType;
-                    Debug.LogWarning($"Runtime session restore skipped. loginType={loginType}");
-                    UICanvasLoading.Instance.message.text = $"Restore required: {loginType}";
-                    UICanvasLoading.Instance.ShowLoginButtons();
-                    return;
-                }
-
-                var snapshot = restore.Value;
-
-                var purchaseSyncCode = await syncPurchaseStateAsync(snapshot);
-                if (purchaseSyncCode != CommonErrorType.SUCCESS)
-                {
-                    UICanvasLoading.Instance.message.text = $"Purchase SyncCode: {purchaseSyncCode}";
-                    UICanvasLoading.Instance.ShowLoginButtons();
-                    return;
-                }
-
-                var missionInitCode = await initializeMissionAsync(snapshot?.MissionClock);
-                if (missionInitCode != CommonErrorType.SUCCESS)
-                {
-                    Debug.LogError($"Mission initialize failed: code={missionInitCode}");
-                    UICanvasLoading.Instance.message.text = $"Mission InitCode: {missionInitCode}";
-                    UICanvasLoading.Instance.ShowLoginButtons();
-                    return;
-                }
-
-                await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
-                break;
+            Debug.Log(
+                $"Proceeding without SessionInitSnapshot for local-only loginType={loginType}.");
         }
+
+        var code = await syncAndInitializeAsync(restore.Value, CancellationToken.None);
+        if (code != CommonErrorType.SUCCESS)
+        {
+            UICanvasLoading.Instance.message.text = $"{code}";
+            UICanvasLoading.Instance.ShowLoginButtons();
+            return;
+        }
+
+        await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
     }
 
 
@@ -107,20 +78,51 @@ public class TestSceneLoading : TestSceneBootstrap
             return login.Error.Code;
         }
 
-        var snapshot = login.Value;
+        return await syncAndInitializeAsync(login.Value, CancellationToken.None);
+    }
 
-        var purchaseSyncCode = await syncPurchaseStateAsync(snapshot);
-        if (purchaseSyncCode != CommonErrorType.SUCCESS)
-            return purchaseSyncCode;
+    async Task<CommonErrorType> syncAndInitializeAsync(
+        SessionInitSnapshot? snapshot, CancellationToken ct)
+    {
+        // sign-in/restore 이후 data-sync는 항상 먼저 수행한다.
+        var sync = await SaveDataManager.Instance.SyncGameStorageAsync(ct);
+        if (sync.IsFailure)
+        {
+            Debug.LogError($"SyncGameStorageAsync failed: {sync.Error.Code}: {sync.Error.Message}");
+            return sync.Error.Code;
+        }
 
-        var missionInitCode = await initializeMissionAsync(snapshot?.MissionClock);
-        if (missionInitCode != CommonErrorType.SUCCESS)
-            return missionInitCode;
-        return CommonErrorType.SUCCESS;
+        Debug.Log($"Sync completed: {sync.Value.State}");
+        if (sync.Value.State == SyncState.Conflict)
+        {
+            Debug.LogWarning("Sync conflict detected. ResolveConflictAsync is required.");
+            return CommonErrorType.SAVEDATA_SYNC_RESOLVE_FAILED;
+        }
+
+        if (sync.Value.State == SyncState.Initial)
+        {
+            var firstInit = await InventoryManager.Instance.FirstInitAsync(ct);
+            if (firstInit.IsFailure)
+            {
+                Debug.LogError($"FirstInitAsync failed: code={firstInit.Error.Code}, message={firstInit.Error.Message}");
+                return firstInit.Error.Code;
+            }
+
+            // 초기 지급 직후 즉시 저장하여 이후 단계 실패 시 지급 손실을 방지한다.
+            var saveInit = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
+            if (saveInit.IsFailure)
+            {
+                Debug.LogError($"Initial save failed: code={saveInit.Error.Code}, message={saveInit.Error.Message}");
+                return saveInit.Error.Code;
+            }
+        }
+
+        return await syncGameStateAsync(snapshot, ct);
     }
     
 
-    async Task<CommonErrorType> syncPurchaseStateAsync(SessionInitSnapshot? snapshot = null)
+    async Task<CommonErrorType> syncGameStateAsync(
+        SessionInitSnapshot? snapshot = null, CancellationToken ct = default)
     {
         var sync = await PurchaseManager.Instance.SyncAsync(snapshot);
         if (sync.IsFailure)
@@ -167,20 +169,15 @@ public class TestSceneLoading : TestSceneBootstrap
             Debug.LogWarning($"SaveGameStorageAsync failed: {result.SaveError.Code}: {result.SaveError.Message}");
         }
 
-        return CommonErrorType.SUCCESS;
-    }
-
-    async Task<CommonErrorType> initializeMissionAsync(MissionClockSnapshot preloadedClock = null)
-    {
-        var init = await MissionManager.Instance.InitializeAsync(preloadedClock);
-        if (init.IsFailure)
+        var initClock = await MissionManager.Instance.InitializeAsync(snapshot?.MissionClock);
+        if (initClock.IsFailure)
         {
-            Debug.LogError($"MissionManager.InitializeAsync failed: {init.Error.Code}: {init.Error.Message}");
-            return init.Error.Code;
+            Debug.LogError($"MissionManager.InitializeAsync failed: {initClock.Error.Code}: {initClock.Error.Message}");
+            return initClock.Error.Code;
         }
 
         // Todo: 최적화
-        var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, CancellationToken.None);
+        var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
         if (save.IsFailure)
         {
             Debug.LogError($"Mission init save failed: {save.Error.Code}: {save.Error.Message}");

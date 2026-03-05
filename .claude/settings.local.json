@@ -208,7 +208,21 @@
       "Bash(DST=\"framework-cs/apps/UnityExample/Packages/com.devian.domain.common/Runtime/Unity\")",
       "Bash(git -C /Users/maoshy/Documents/Projects/devian add \"framework-cs/upm/com.devian.domain.common/Editor/Unity/AssetId/\" \"framework-cs/upm/com.devian.domain.common/Editor/Unity/Settings/\")",
       "Bash(git -C /Users/maoshy/Documents/Projects/devian add \"framework-cs/apps/UnityExample/Packages/com.devian.domain.common/Editor/Unity/AssetId/\" \"framework-cs/apps/UnityExample/Packages/com.devian.domain.common/Editor/Unity/AssetId.meta\" \"framework-cs/apps/UnityExample/Packages/com.devian.domain.common/Editor/Unity/Settings/\" \"framework-cs/apps/UnityExample/Packages/com.devian.domain.common/Editor/Unity/Settings.meta\")",
-      "Bash(do diff -rq \"/Users/maoshy/Documents/Projects/devian/framework-cs/upm/$pkg/\" \"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Packages/$pkg/\" --exclude=\"*.meta\")"
+      "Bash(do diff -rq \"/Users/maoshy/Documents/Projects/devian/framework-cs/upm/$pkg/\" \"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Packages/$pkg/\" --exclude=\"*.meta\")",
+      "Bash(perl -pi -e 's/`42-pb64-storage`/`41-pb64-storage`/g' skills/devian-unity/11-common-system/30-string-table/SKILL.md)",
+      "Bash(perl -pi -e 's/`43-tablegen-implementation`/`34-tablegen-implementation`/g' skills/devian-unity/22-sound-system/19-sound-domain/SKILL.md)",
+      "Bash(BASE=\"/Users/maoshy/Documents/Projects/devian/skills/devian/80-tools/11-builder\")",
+      "Bash(perl -pi -e 's/^# 30-contract-class-cell-format/# 30-table-cell-format/' \"$BASE/30-table-cell-format/SKILL.md\")",
+      "Bash(perl -pi -e 's/^# 31-contract-json-row-io/# 31-table-row-format/' \"$BASE/31-table-row-format/SKILL.md\")",
+      "Bash(perl -pi -e 's/^# 33-table-authoring-rules/# 32-table-authoring/' \"$BASE/32-table-authoring/SKILL.md\")",
+      "Bash(perl -pi -e 's/^# 50-protocol-codegen$/# 33-protocol-spec/' \"$BASE/33-protocol-spec/SKILL.md\")",
+      "Bash(perl -pi -e 's/^# 51-protocol-codegen-csharp-ts/# 34-protocol-gen-policy/' \"$BASE/34-protocol-gen-policy/SKILL.md\")",
+      "Bash(perl -pi -e 's/^# 32-contract-codegen/# 50-contract-codegen/' \"$BASE/50-contract-codegen/SKILL.md\")",
+      "Bash(perl -pi -e 's/^# 34-table-codegen/# 51-table-codegen/' \"$BASE/51-table-codegen/SKILL.md\")",
+      "Bash(perl -pi -e 's/^# 35-table-enumgen/# 52-table-enumgen/' \"$BASE/52-table-enumgen/SKILL.md\")",
+      "Bash(perl -pi -e 's/^# 40-data-ndjson-storage/# 53-data-ndjson/' \"$BASE/53-data-ndjson/SKILL.md\")",
+      "Bash(perl -pi -e 's/^# 41-data-pb64-storage/# 54-data-pb64/' \"$BASE/54-data-pb64/SKILL.md\")",
+      "Bash(perl -pi -e 's/^# 52-protocol-codegen-impl/# 55-protocol-codegen/' \"$BASE/55-protocol-codegen/SKILL.md\")"
     ]
   },
   "project": {

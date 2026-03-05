@@ -35,7 +35,7 @@ AppliesTo: v10
 | `C2Game` | Client → Server | 클라이언트가 서버로 보내는 메시지 |
 | `Game2C` | Server → Client | 서버가 클라이언트로 보내는 메시지 |
 
-> **상세 규칙:** `skills/devian/80-tools/11-builder/40-codegen-protocol/SKILL.md` 참조
+> **상세 규칙:** `skills/devian/80-tools/11-builder/33-protocol-spec/SKILL.md` 참조
 
 ### 빌드 생성물
 
@@ -75,8 +75,8 @@ AppliesTo: v10
 | 주제 | 스킬 경로 |
 |------|-----------|
 | Game 도메인 허브 | `skills/devian-unity/40-game-contents/11-game-domain/SKILL.md` |
-| 프로토콜 코드젠 규칙 | `skills/devian/80-tools/11-builder/40-codegen-protocol/SKILL.md` |
-| 프로토콜 생성 구현 | `skills/devian/80-tools/11-builder/44-protocolgen-implementation/SKILL.md` |
+| 프로토콜 코드젠 규칙 | `skills/devian/80-tools/11-builder/33-protocol-spec/SKILL.md` |
+| 프로토콜 생성 구현 | `skills/devian/80-tools/11-builder/55-protocol-codegen/SKILL.md` |
 | Network 샘플 템플릿 | `skills/devian-unity/41-game-network/11-game-net-manager/SKILL.md` |
 | WebSocket 클라이언트 | `skills/devian/10-module/60-net/72-network-ws-client/SKILL.md` |
 | 네트워크 서버 | `skills/devian/10-module/60-net/74-network-server/SKILL.md` |
@@ -95,5 +95,5 @@ AppliesTo: v10
 
 - Related: `skills/devian-unity/40-game-contents/01-policy/SKILL.md`
 - Related: `skills/devian-examples/03-ssot/SKILL.md`
-- Related: `skills/devian/80-tools/11-builder/40-codegen-protocol/SKILL.md`
+- Related: `skills/devian/80-tools/11-builder/33-protocol-spec/SKILL.md`
 - Related: `skills/devian-unity/41-game-network/11-game-net-manager/SKILL.md`

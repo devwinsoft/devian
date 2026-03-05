@@ -1,4 +1,4 @@
-# 40-codegen-protocol
+# 33-protocol-spec
 
 Status: ACTIVE  
 AppliesTo: v10  

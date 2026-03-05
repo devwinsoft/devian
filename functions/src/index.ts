@@ -7,6 +7,7 @@
  *   - ackPurchaseStoreConfirm
  *   - getEntitlements
  *   - getMissionClock
+ *   - getInitialInventory
  *   - getRecentPurchases30d
  *   - getPurchaseAdjustments
  *   - initSession
@@ -32,6 +33,9 @@ export {ackRefundApplied} from "./purchase/ackRefundApplied";
 
 // ── Mission Callables ──
 export {getMissionClock} from "./mission/getMissionClock";
+
+// ── Inventory Callables ──
+export {getInitialInventory} from "./inventory/getInitialInventory";
 
 // ── Session ──
 export {initSession} from "./session/initSession";

@@ -40,6 +40,16 @@ AppliesTo: v10
 - 정본: [Tools SSOT](../../03-ssot/SKILL.md) §TypeScript Workspace 정본
 
 
+## 6) Firestore Config 문서 정책
+
+- Operation에서 직접 수정 가능한 config 문서는 아래 두 경로로 제한한다.
+  - `/config/appVersion`
+  - `/config/initialInventory`
+- `/config/initialInventory` 저장 시 `rewards: RewardData[]` 스키마 검증을 선행한다.
+- 서버(`getInitialInventory`)도 동일 스키마를 강검증하며, invalid 데이터가 있으면 `failed-precondition`을 반환하고 marker를 남기지 않는다.
+- 초기 지급은 서버 callable(`getInitialInventory`)의 transaction marker로 1회 보장되므로, 클라이언트에서 중복 지급 로직을 추가하지 않는다.
+
+
 ---
 
 

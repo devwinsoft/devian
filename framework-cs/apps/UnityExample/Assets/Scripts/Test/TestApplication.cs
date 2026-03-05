@@ -1,9 +1,9 @@
 using UnityEngine;
-using Devian;
-using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Devian;
+using Devian.Domain.Game;
 
 public class TestApplication : MobileApplication
 {
@@ -75,4 +75,5 @@ public class TestApplication : MobileApplication
             Debug.LogWarning($"{adResult.Error.Code}: {adResult.Error.Message}");
         }
     }
+
 }

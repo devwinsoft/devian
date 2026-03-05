@@ -43,13 +43,13 @@ AppliesTo: v10
 
 | 목적 | 문서 |
 |------|------|
-| 빌드 실행하기 | [skills/devian/80-tools/11-builder/20-build-domain](./80-tools/11-builder/20-build-domain/SKILL.md) |
+| 빌드 실행하기 | [skills/devian/80-tools/11-builder/20-build-pipeline](./80-tools/11-builder/20-build-pipeline/SKILL.md) |
 | 빌드 에러 이해하기 | [skills/devian/80-tools/11-builder/21-build-error-reporting](./80-tools/11-builder/21-build-error-reporting/SKILL.md) |
 | 아카이브/배포하기 | [skills/devian/80-tools/90-project-archive](./80-tools/90-project-archive/SKILL.md) |
-| 테이블 작성하기 | [skills/devian/80-tools/11-builder/30-table-authoring-rules](./80-tools/11-builder/30-table-authoring-rules/SKILL.md) |
-| NDJSON/Row IO 이해하기 | [skills/devian/80-tools/11-builder/32-json-row-io](./80-tools/11-builder/32-json-row-io/SKILL.md) |
-| ContractGen 구현 보기 | [skills/devian/80-tools/11-builder/43-contractgen-implementation](./80-tools/11-builder/43-contractgen-implementation/SKILL.md) |
-| 프로토콜 코드젠 보기 | [skills/devian/80-tools/11-builder/40-codegen-protocol](./80-tools/11-builder/40-codegen-protocol/SKILL.md) |
+| 테이블 작성하기 | [skills/devian/80-tools/11-builder/32-table-authoring](./80-tools/11-builder/32-table-authoring/SKILL.md) |
+| NDJSON/Row IO 이해하기 | [skills/devian/80-tools/11-builder/31-table-row-format](./80-tools/11-builder/31-table-row-format/SKILL.md) |
+| ContractGen 구현 보기 | [skills/devian/80-tools/11-builder/50-contract-codegen](./80-tools/11-builder/50-contract-codegen/SKILL.md) |
+| 프로토콜 코드젠 보기 | [skills/devian/80-tools/11-builder/33-protocol-spec](./80-tools/11-builder/33-protocol-spec/SKILL.md) |
 | Unity 정책 확인하기 | [skills/devian-unity/01-policy](../devian-unity/01-policy/SKILL.md) |
 | 샘플 작성하기 | [skills/devian-unity/07-samples-creation-guide](../devian-unity/07-samples-creation-guide/SKILL.md) |
 | Game 도메인 전체 보기 | [40-game-contents/11-game-domain](../devian-unity/40-game-contents/11-game-domain/SKILL.md) |

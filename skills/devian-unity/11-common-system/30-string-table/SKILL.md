@@ -20,8 +20,8 @@ AppliesTo: v10
 - **런타임**: DownloadManager 다운로드 → TableManager 로드/캐시/조회 → ST_{TableName} wrapper
 
 저장 규약 참조:
-- **NDJSON 저장**: `skills/devian/80-tools/11-builder/34-ndjson-storage/SKILL.md`
-- **pb64 저장**: `skills/devian/80-tools/11-builder/35-pb64-storage/SKILL.md`
+- **NDJSON 저장**: `skills/devian/80-tools/11-builder/53-data-ndjson/SKILL.md`
+- **pb64 저장**: `skills/devian/80-tools/11-builder/54-data-pb64/SKILL.md`
 
 ---
 
@@ -178,7 +178,7 @@ Label:   string/ndjson/Korean/UIText
 
 ## ndjson 포맷 규칙
 
-**NDJSON 저장 규약은 `skills/devian/80-tools/11-builder/34-ndjson-storage/SKILL.md`를 따른다.**
+**NDJSON 저장 규약은 `skills/devian/80-tools/11-builder/53-data-ndjson/SKILL.md`를 따른다.**
 
 ### String Table ndjson 필드 구조
 
@@ -198,7 +198,7 @@ Label:   string/ndjson/Korean/UIText
 
 ## pb64 포맷 규칙 (청크 기반)
 
-**pb64 저장(확장자/포장)은 `skills/devian/80-tools/11-builder/35-pb64-storage/SKILL.md`를 따르며, Unity 소비를 위해 `.asset`로 저장한다.**
+**pb64 저장(확장자/포장)은 `skills/devian/80-tools/11-builder/54-data-pb64/SKILL.md`를 따르며, Unity 소비를 위해 `.asset`로 저장한다.**
 
 ### 페이로드 구조
 
@@ -240,7 +240,7 @@ message StringChunk {
 
 1. `StringChunk`(protobuf bytes)를 base64로 인코딩
 2. 청크 여러 개면 여러 라인으로 저장 (canonical: `\n` 구분)
-3. 저장(포장)은 `35-pb64-storage` 규약에 따라 `.asset` YAML로 감싼다 (block scalar `m_Script: |`)
+3. 저장(포장)은 `54-data-pb64` 규약에 따라 `.asset` YAML로 감싼다 (block scalar `m_Script: |`)
 
 ### Decoding (Runtime) — Hard Rule
 
@@ -461,8 +461,8 @@ public sealed class {TableName}_ID_Drawer : BaseEditorID_Drawer<{TableName}IdSel
 ## Reference
 
 - Parent: `skills/devian-unity/11-common-system/00-overview/SKILL.md`
-- NDJSON 저장: `skills/devian/80-tools/11-builder/34-ndjson-storage/SKILL.md`
-- pb64 저장: `skills/devian/80-tools/11-builder/35-pb64-storage/SKILL.md`
+- NDJSON 저장: `skills/devian/80-tools/11-builder/53-data-ndjson/SKILL.md`
+- pb64 저장: `skills/devian/80-tools/11-builder/54-data-pb64/SKILL.md`
 - Related: `skills/devian-unity/11-common-system/19-download-manager/SKILL.md` (다운로드 연동)
 - Related: `skills/devian-unity/11-common-system/13-asset-manager/SKILL.md` (캐시 금지 규칙)
-- Related: `skills/devian/80-tools/11-builder/32-json-row-io/SKILL.md` (일반 테이블 포맷)
+- Related: `skills/devian/80-tools/11-builder/31-table-row-format/SKILL.md` (일반 테이블 포맷)

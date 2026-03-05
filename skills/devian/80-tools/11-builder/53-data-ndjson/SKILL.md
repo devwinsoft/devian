@@ -1,4 +1,4 @@
-# 34-ndjson-storage
+# 53-data-ndjson
 
 Status: ACTIVE  
 AppliesTo: v10
@@ -15,7 +15,7 @@ AppliesTo: v10
 
 이 스킬은 "저장 포맷"만 정의한다. 구체적인 폴더 경로/라우팅은 각 도메인 스킬에서 정한다:
 - String Table: `skills/devian-unity/11-common-system/30-string-table/SKILL.md` → `.../string/ndjson/...`
-- 일반 Table: `skills/devian/80-tools/11-builder/32-json-row-io/SKILL.md` → `.../ndjson/...`
+- 일반 Table: `skills/devian/80-tools/11-builder/31-table-row-format/SKILL.md` → `.../ndjson/...`
 
 ---
 
@@ -62,7 +62,7 @@ AppliesTo: v10
 ### 소스 경로
 
 ```
-framework-ts/tools/builder/generators/ndjson-storage.js
+framework-ts/tools/builder/generators/data-ndjson-storage.js
 ```
 
 ### Export 함수
@@ -120,5 +120,5 @@ export function encodeNdjsonFromLines(lines);
 
 ## Reference
 
-- Consumer: `skills/devian/80-tools/11-builder/32-json-row-io/SKILL.md` (일반 Table)
+- Consumer: `skills/devian/80-tools/11-builder/31-table-row-format/SKILL.md` (일반 Table)
 - Consumer: `skills/devian-unity/11-common-system/30-string-table/SKILL.md` (String Table)

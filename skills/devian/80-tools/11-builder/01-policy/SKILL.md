@@ -14,15 +14,15 @@ This folder contains DATA and PROTOCOL-related documents:
 The Single Source of Truth (SSOT) is at `skills/devian/10-module/03-ssot/SKILL.md`.
 
 ## Canonical Documents
-- `skills/devian/80-tools/11-builder/30-table-authoring-rules/SKILL.md` — Table authoring rules
-- `skills/devian/80-tools/11-builder/31-class-cell-format/SKILL.md` — Class cell format (DFF)
-- `skills/devian/80-tools/11-builder/32-json-row-io/SKILL.md` — JSON row I/O
+- `skills/devian/80-tools/11-builder/32-table-authoring/SKILL.md` — Table authoring rules
+- `skills/devian/80-tools/11-builder/30-table-cell-format/SKILL.md` — Class cell format (DFF)
+- `skills/devian/80-tools/11-builder/31-table-row-format/SKILL.md` — JSON row I/O
 - `skills/devian-unity/11-common-system/30-string-table/SKILL.md` — String table conventions
-- `skills/devian/80-tools/11-builder/34-ndjson-storage/SKILL.md` — NDJSON storage format
-- `skills/devian/80-tools/11-builder/35-pb64-storage/SKILL.md` — pb64 storage format
-- `skills/devian/80-tools/11-builder/42-tablegen-implementation/SKILL.md` — TableGen implementation
-- `skills/devian/80-tools/11-builder/43-contractgen-implementation/SKILL.md` — ContractGen implementation
-- `skills/devian/80-tools/11-builder/45-tablegen-enumgen/SKILL.md` — EnumGen implementation
-- `skills/devian/80-tools/11-builder/40-codegen-protocol/SKILL.md` — Protocol codegen overview
-- `skills/devian/80-tools/11-builder/41-codegen-protocol-csharp-ts/SKILL.md` — C#/TS protocol generation
-- `skills/devian/80-tools/11-builder/44-protocolgen-implementation/SKILL.md` — Protocol generator implementation
+- `skills/devian/80-tools/11-builder/53-data-ndjson/SKILL.md` — NDJSON storage format
+- `skills/devian/80-tools/11-builder/54-data-pb64/SKILL.md` — pb64 storage format
+- `skills/devian/80-tools/11-builder/51-table-codegen/SKILL.md` — TableGen implementation
+- `skills/devian/80-tools/11-builder/50-contract-codegen/SKILL.md` — ContractGen implementation
+- `skills/devian/80-tools/11-builder/52-table-enumgen/SKILL.md` — EnumGen implementation
+- `skills/devian/80-tools/11-builder/33-protocol-spec/SKILL.md` — Protocol codegen overview
+- `skills/devian/80-tools/11-builder/34-protocol-gen-policy/SKILL.md` — C#/TS protocol generation
+- `skills/devian/80-tools/11-builder/55-protocol-codegen/SKILL.md` — Protocol generator implementation

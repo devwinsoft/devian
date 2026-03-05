@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
+using Devian.Domain.Game;
 using Firebase.Functions;
 using UnityEngine;
 
@@ -151,6 +152,47 @@ namespace Devian
             catch (Exception ex)
             {
                 return CommonResult<SessionInitSnapshot>.Failure(
+                    CommonErrorType.COMMON_SERVER, ex.Message);
+            }
+        }
+
+        // ── Inventory Callable ────────────────────────────────────
+
+        public async Task<CommonResult<RewardData[]>> GetInitialInventoryAsync(CancellationToken ct)
+        {
+            try
+            {
+                var response = await callFunctionAsync("getInitialInventory", null, ct);
+                if (response == null)
+                    return CommonResult<RewardData[]>.Failure(
+                        CommonErrorType.COMMON_SERVER,
+                        "getInitialInventory returned unsupported response.");
+
+                return CommonResult<RewardData[]>.Success(
+                    parseInitialInventoryRewards(response));
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (FunctionsException fex)
+            {
+                switch (fex.ErrorCode)
+                {
+                    case FunctionsErrorCode.Unavailable:
+                    case FunctionsErrorCode.DeadlineExceeded:
+                        return CommonResult<RewardData[]>.Failure(
+                            CommonErrorType.COMMON_NETWORK,
+                            "Initial inventory network unavailable.");
+                    case FunctionsErrorCode.Unauthenticated:
+                    case FunctionsErrorCode.PermissionDenied:
+                        return CommonResult<RewardData[]>.Failure(
+                            CommonErrorType.COMMON_AUTH, fex.Message);
+                    default:
+                        return CommonResult<RewardData[]>.Failure(
+                            CommonErrorType.COMMON_SERVER, fex.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                return CommonResult<RewardData[]>.Failure(
                     CommonErrorType.COMMON_SERVER, ex.Message);
             }
         }
@@ -681,6 +723,80 @@ namespace Devian
             var serverNowUtcMs = ReadLong(snap, "serverNowUtcMs");
 
             return new EntitlementsSnapshot(seasonPasses, balances, rentals, serverNowUtcMs);
+        }
+
+        static RewardData[] parseInitialInventoryRewards(Dictionary<string, object> root)
+        {
+            if (!root.TryGetValue("rewards", out var rewardsObj) || rewardsObj is not IList<object> rewardsList)
+                return Array.Empty<RewardData>();
+
+            var parsed = new List<RewardData>(rewardsList.Count);
+            for (var i = 0; i < rewardsList.Count; i++)
+            {
+                if (rewardsList[i] is not IDictionary<string, object> item)
+                    continue;
+
+                var id = ReadString(item, "id");
+                if (string.IsNullOrWhiteSpace(id))
+                    continue;
+
+                if (!tryReadRewardType(item, out var rewardType))
+                    continue;
+
+                if (rewardType == REWARD_TYPE.CURRENCY &&
+                    !Enum.TryParse<CURRENCY_TYPE>(id, out _))
+                {
+                    Debug.LogWarning($"[{Tag}] Skipping initial inventory reward with invalid currency id: {id}");
+                    continue;
+                }
+
+                var amountLong = ReadLong(item, "amount");
+                if (amountLong <= 0)
+                    continue;
+
+                var amount = amountLong > int.MaxValue ? int.MaxValue : (int)amountLong;
+                parsed.Add(new RewardData(rewardType, id, amount));
+            }
+
+            return parsed.Count == 0 ? Array.Empty<RewardData>() : parsed.ToArray();
+        }
+
+        static bool tryReadRewardType(
+            IDictionary<string, object> source, out REWARD_TYPE rewardType)
+        {
+            rewardType = REWARD_TYPE.CARD;
+
+            if (source == null || !source.TryGetValue("type", out var rawType) || rawType == null)
+                return false;
+
+            if (rawType is string str)
+            {
+                if (Enum.TryParse<REWARD_TYPE>(str, true, out rewardType))
+                    return true;
+
+                if (int.TryParse(str, out var fromStringInt) &&
+                    Enum.IsDefined(typeof(REWARD_TYPE), fromStringInt))
+                {
+                    rewardType = (REWARD_TYPE)fromStringInt;
+                    return true;
+                }
+
+                return false;
+            }
+
+            try
+            {
+                var intValue = Convert.ToInt32(rawType);
+                if (!Enum.IsDefined(typeof(REWARD_TYPE), intValue))
+                    return false;
+
+                rewardType = (REWARD_TYPE)intValue;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         static RecentPurchaseItem parseRecentPurchaseItem(Dictionary<string, object> root)

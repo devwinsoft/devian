@@ -12,7 +12,7 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobileSyste
 
 ## 1. InventoryStorage
 
-코드는 실제 `InventoryStorage.cs` 참조. 주요 필드/메서드:
+코드는 실제 `InventoryStorage.cs` 참조. `sealed class`이다.
 
 - `Wallet` — `Dictionary<CURRENCY_TYPE, long>` (CURRENCY_TYPE → 잔고)
 - `Equipments` — `Dictionary<string, AbilityEquip>` (itemUid → 장비)
@@ -28,6 +28,7 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobileSyste
 - `GetHero/AddHero` — 영웅 CRUD
 - `SetRental(id, expiresAtClientUtcMs)` / `GetRentalExpiry(id)` / `HasActiveRental(id)` / `GetRentalRemainingMs(id)` / `RemoveRental(id)` — 렌탈 CRUD
 - `SetSeasonPass(id, owned)` / `HasSeasonPass(id)` / `RemoveSeasonPass(id)` — 시즌패스 CRUD
+- 초기 인벤토리 지급 트리거는 `InventoryStorage`가 아니라 `InventoryManager.FirstInitAsync()`에서 처리한다.
 - ~~`ToJson()`~~ — **삭제됨**. [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)의 `SaveDataJsonCodec`으로 이전.
 - ~~`FromJson(string json)`~~ — **삭제됨**. [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)의 `SaveDataJsonCodec`으로 이전.
 

@@ -8,9 +8,12 @@ AppliesTo: v10
 ## Purpose
 
 Firebase Cloud Functions callable 통합 래퍼.
-함수별 typed public API, 에러 매핑, 응답 파싱, region 관리, 값 추출 헬퍼를 통합한다.
+함수별 typed API, 에러 매핑, 응답 파싱, region 관리, 값 추출 헬퍼를 통합한다.
 `FirebaseFunctions` 인스턴스는 외부에 노출하지 않는다.
 game 도메인 테이블(TB_PRODUCT 등)은 참조하지 않는다 — 서버 응답의 raw 값을 typed result에 그대로 저장한다.
+
+**`internal sealed class`** — 같은 어셈블리(`Devian.Samples.MobileSystem`) 내부에서만 접근 가능하다.
+외부 어셈블리(Assembly-CSharp 등)에서는 직접 접근할 수 없으며, `AccountManager`를 통해 간접 사용한다.
 
 
 ## Scope
@@ -18,7 +21,7 @@ game 도메인 테이블(TB_PRODUCT 등)은 참조하지 않는다 — 서버 �
 | 포함 | 제외 |
 |------|------|
 | Functions region 관리 | Firebase Auth (AccountLoginFirebase 소관) |
-| 함수별 typed public API (8개) | Firebase 의존성 초기화 (`CheckAndFixDependenciesAsync`) |
+| 함수별 typed public API (9개) | Firebase 의존성 초기화 (`CheckAndFixDependenciesAsync`) |
 | FunctionsException 에러 매핑 (per-function) | 도메인 변환 (ResolveSeasonPassId, ResolveRewardGroupId 등) |
 | 응답 파싱 → typed result | Editor 전용 mock (각 manager 자체 처리) |
 | 응답 정규화 (internal) | |
@@ -45,7 +48,9 @@ Bootstrap prefab에 부착한다.
 `MobileApplication`에 `[RequireComponent(typeof(FirebaseManager))]`로 선언.
 
 
-## Public API
+## API
+
+> FirebaseManager는 `internal` 클래스이므로 같은 어셈블리 내부에서만 접근 가능하다.
 
 ### Instance Methods — Region
 
@@ -53,6 +58,22 @@ Bootstrap prefab에 부착한다.
   - Firebase Functions 리전을 설정한다.
   - 빈 문자열 또는 null이면 기본 리전(us-central1)을 사용한다.
   - `MobileApplication.OnBootProc()`에서 호출한다.
+
+### Instance Methods — Session Init callable (1개)
+
+- `InitSessionAsync(data, ct) → Task<CommonResult<SessionInitSnapshot>>`
+  - `initSession` callable 호출 → `getMissionClock` + `getEntitlements` + `getPurchaseAdjustments` 통합 1회 왕복
+  - 반환: `SessionInitSnapshot` (MissionClock, Entitlements, PurchaseAdjustments)
+  - 에러 매핑: `COMMON_NETWORK`, `COMMON_AUTH`, `COMMON_SERVER`
+  - **외부 어셈블리에서 직접 호출 불가** — `AccountManager.LoginAsync` / `EnsureRuntimeSessionAsync`가 내부 호출한다.
+  - 주의: 초기 인벤토리 지급 데이터는 포함하지 않는다 (`getInitialInventory` 별도 호출).
+
+### Instance Methods — Inventory callable (1개)
+
+- `GetInitialInventoryAsync(ct) → Task<CommonResult<RewardData[]>>`
+  - `getInitialInventory` callable 호출
+  - 서버 transaction marker 기반 1회 지급 데이터(`RewardData[]`)를 반환한다.
+  - marker가 이미 있으면 빈 배열을 반환한다.
 
 ### Instance Methods — Mission callable (1개)
 
@@ -108,6 +129,14 @@ Bootstrap prefab에 부착한다.
 
 ## Integration
 
+### AccountManager (InitSession 통합)
+`LoginAsync` / `EnsureRuntimeSessionAsync`가 내부에서 `FirebaseManager.Instance.InitSessionAsync()`를 호출한다.
+외부 어셈블리는 `AccountManager`의 반환값(`SessionInitSnapshot?`)으로 결과를 받는다.
+
+### InventoryManager (초기 지급 통합)
+`InventoryManager.FirstInitAsync`가 `FirebaseManager.Instance.GetInitialInventoryAsync()`를 호출한다.
+초기 지급은 `SyncState.Initial` 경로에서만 수행한다.
+
 ### PurchaseManager
 ```csharp
 var result = await FirebaseManager.Instance.VerifyPurchaseAsync(data, ct);
@@ -117,12 +146,14 @@ var response = result.Value!;
 ```
 PurchaseManager는 `FunctionsException`을 catch하지 않는다. 에러 매핑은 FirebaseManager가 수행한다.
 domain 변환(ResolveSeasonPassId 등)은 PurchaseManager가 typed result 수신 후 수행한다.
+PurchaseManager는 같은 어셈블리이므로 `internal` FirebaseManager에 직접 접근 가능하다.
 
 ### MissionManager
 ```csharp
 var result = await FirebaseManager.Instance.GetMissionClockAsync(ct);
 ```
 Editor mock (`#if UNITY_EDITOR`)은 MissionManager가 자체 처리한다.
+MissionManager는 같은 어셈블리이므로 `internal` FirebaseManager에 직접 접근 가능하다.
 
 ### MobileApplication
 ```csharp

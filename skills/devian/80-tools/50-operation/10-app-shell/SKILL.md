@@ -39,6 +39,8 @@ framework-ts/apps/Operation/
     ├── main.ts                  ← 엔트리: 탭 초기화, 라우팅
     ├── style.css                ← 전역 스타일
     ├── tabs/
+    │   ├── version-config.ts    ← Version Config 탭
+    │   ├── initial-inventory.ts ← Initial Inventory 탭 (2번째 탭)
     │   ├── obfuscate.ts         ← Obfuscate 탭
     │   ├── deobfuscate.ts       ← Deobfuscate 탭
     │   └── savedata.ts          ← Save Data 탭
@@ -54,7 +56,12 @@ framework-ts/apps/Operation/
 ## Navigation
 
 - **단일 페이지** + **탭 전환**으로 기능을 구분한다.
-- 탭 목록: Obfuscate / Deobfuscate / Save Data
+- 탭 목록(순서):
+  - Version Config
+  - Initial Inventory (2번째 탭)
+  - Obfuscate
+  - Deobfuscate
+  - Save Data
 - 탭 정의는 [03-ssot](../03-ssot/SKILL.md) 참조.
 
 

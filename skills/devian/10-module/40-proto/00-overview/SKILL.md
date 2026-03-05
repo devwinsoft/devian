@@ -20,5 +20,5 @@ Maps to: `framework-cs/module/Devian/src/Proto/`
 
 - [Parent Policy](../../01-policy/SKILL.md)
 - [SSOT](../../03-ssot/SKILL.md)
-- [DFF format](../../../80-tools/11-builder/31-class-cell-format/SKILL.md)
+- [DFF format](../../../80-tools/11-builder/30-table-cell-format/SKILL.md)
 - [Devian Index](../../../SKILL.md)

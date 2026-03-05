@@ -8,6 +8,11 @@ service cloud.firestore {
       allow read, write: if true;
     }
 
+    // ── 초기 인벤토리 설정: Operation(localhost) 도구에서 read/write ──
+    match /config/initialInventory {
+      allow read, write: if true;
+    }
+
     // ── 사용자 purchases 원장: 서버(Functions)만 write 가능 ──
     match /users/{uid}/purchases/{purchaseId} {
       allow read: if request.auth != null && request.auth.uid == uid;

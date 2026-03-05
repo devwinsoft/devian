@@ -108,7 +108,7 @@ private static void _register()
 - `BuildBundleIndices()` — sound_id/key_bundle 인덱스 빌드 (key_group 제거됨)
 - `SoundVoiceTableRegistry.ClearSoundAdapterCache()` / `ClearVoiceAdapterCache()` — 어댑터 캐시 초기화
 
-> **Note**: AfterLoad hook 계약 자체는 `42-tablegen-implementation` 스킬이 SSOT.
+> **Note**: AfterLoad hook 계약 자체는 `51-table-codegen` 스킬이 SSOT.
 
 ---
 
@@ -252,7 +252,7 @@ Phase 2는 아래가 **모두 참**이어야 DONE이다:
 범용 빌드/생성 규칙은 아래 스킬이 SSOT이다:
 
 - `skills/devian-unity/11-common-system/31-table-manager/SKILL.md` — **TbLoader SSOT / 중복 등록 금지** Hard Rule
-- `skills/devian/80-tools/11-builder/42-tablegen-implementation/SKILL.md` — **AfterLoad hook 계약** Hard Rule
+- `skills/devian/80-tools/11-builder/51-table-codegen/SKILL.md` — **AfterLoad hook 계약** Hard Rule
 - `skills/devian/05-workspace/SKILL.md` — **npm ci / lock 동기화** 규약
 - `skills/devian/06-generated-integration/SKILL.md` — **임시 stub 금지** 규약
 

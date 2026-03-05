@@ -58,9 +58,9 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | ActorObject, ActorController, actor-system, actor controller | `skills/devian-unity/11-common-system/10-actor-system/SKILL.md` |
 | InputManager, input manager, InputActionAsset, input action asset | `skills/devian-unity/11-common-system/22-input-manager/SKILL.md` |
 | BaseInputController, input-controller, input controller, InputSpace | `skills/devian-unity/11-common-system/21-input-controller/SKILL.md` |
-| NDJSON, ndjson, .json 스토리지 | `skills/devian/80-tools/11-builder/34-ndjson-storage/SKILL.md` |
-| PB64, pb64, .asset 바이너리 | `skills/devian/80-tools/11-builder/35-pb64-storage/SKILL.md` |
-| TableGen, 테이블 생성 | `skills/devian/80-tools/11-builder/42-tablegen-implementation/SKILL.md` |
+| NDJSON, ndjson, .json 스토리지 | `skills/devian/80-tools/11-builder/53-data-ndjson/SKILL.md` |
+| PB64, pb64, .asset 바이너리 | `skills/devian/80-tools/11-builder/54-data-pb64/SKILL.md` |
+| TableGen, 테이블 생성 | `skills/devian/80-tools/11-builder/51-table-codegen/SKILL.md` |
 | TableManager, LoadStringsAsync | `skills/devian-unity/11-common-system/31-table-manager/SKILL.md` |
 | DownloadManager, Addressables | `skills/devian-unity/11-common-system/19-download-manager/SKILL.md` |
 | UIManager, UICanvas, UIFrame | `skills/devian-unity/30-ui-system/10-ui-manager/skill.md` |
@@ -79,9 +79,9 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | 용어 정의 | [04-glossary](../04-glossary/SKILL.md) |
 | Workspace 구조 | [05-workspace](../05-workspace/SKILL.md) |
 | 공통 정책 | [01-policy](../01-policy/SKILL.md) |
-| 빌드 실행 | [devian/80-tools/11-builder/20-build-domain](../80-tools/11-builder/20-build-domain/SKILL.md) |
-| 테이블 작성 규칙 | [devian/80-tools/11-builder/30-table-authoring-rules](../80-tools/11-builder/30-table-authoring-rules/SKILL.md) |
-| 프로토콜 코드젠 | [devian/80-tools/11-builder/40-codegen-protocol](../80-tools/11-builder/40-codegen-protocol/SKILL.md) |
+| 빌드 실행 | [devian/80-tools/11-builder/20-build-pipeline](../80-tools/11-builder/20-build-pipeline/SKILL.md) |
+| 테이블 작성 규칙 | [devian/80-tools/11-builder/32-table-authoring](../80-tools/11-builder/32-table-authoring/SKILL.md) |
+| 프로토콜 코드젠 | [devian/80-tools/11-builder/33-protocol-spec](../80-tools/11-builder/33-protocol-spec/SKILL.md) |
 | Unity 정책 | [devian-unity/01-policy](../../devian-unity/01-policy/SKILL.md) |
 
 ---

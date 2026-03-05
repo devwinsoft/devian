@@ -1,4 +1,4 @@
-# 31-class-cell-format
+# 30-table-cell-format
 
 Status: ACTIVE  
 AppliesTo: v10  

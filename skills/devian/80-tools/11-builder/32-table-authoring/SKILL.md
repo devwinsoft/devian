@@ -1,4 +1,4 @@
-# 30-table-authoring-rules
+# 32-table-authoring
 
 Status: ACTIVE  
 AppliesTo: v10  
@@ -139,7 +139,7 @@ Row 5+ (Data):     ATTACK_POWER             | i:0           | i:0      | i:10000
 - `key` 컬럼의 값(`ATTACK_POWER`, `CRI_RATE`)이 enum 멤버 이름
 - enum 값은 자동 할당: `ATTACK_POWER=0`, `CRI_RATE=1` (이름 정렬 순)
 
-상세 규칙은 `skills/devian/80-tools/11-builder/45-tablegen-enumgen/SKILL.md` 참조.
+상세 규칙은 `skills/devian/80-tools/11-builder/52-table-enumgen/SKILL.md` 참조.
 
 ### Reserved 옵션
 
@@ -171,7 +171,7 @@ Row 5+ (Data):     ATTACK_POWER             | i:0           | i:0      | i:10000
 
 지원 타입 문자열과 C#/TS 매핑은 Reference가 정답이다.
 
-참조 타입 셀 값의 텍스트 규약(DFF)은 `skills/devian/80-tools/11-builder/31-class-cell-format/SKILL.md`를 따른다.
+참조 타입 셀 값의 텍스트 규약(DFF)은 `skills/devian/80-tools/11-builder/30-table-cell-format/SKILL.md`를 따른다.
 
 ---
 
@@ -236,14 +236,14 @@ Complex 타입의 `save2` 값(마스크)은 다음 규칙에 따라 결정적으
 - staging: `{tempDir}/{DomainKey}/cs/Generated/**`, `{tempDir}/{DomainKey}/ts/Generated/**`, `{tempDir}/{DomainKey}/data/ndjson/{TableName}.json` (내용은 NDJSON), `{tempDir}/{DomainKey}/data/pb64/{TableName}.asset` (pk 옵션 있는 테이블만)
 - final (각 `{tableDir}` 요소에 대해): `{csConfig.generateDir}/Devian.Domain.{DomainKey}/Generated/**`, `{tsConfig.generateDir}/devian-domain-{domainkey}/Generated/**`, `{tableDir}/ndjson/{TableName}.json` (내용은 NDJSON), `{tableDir}/pb64/{TableName}.asset` (pk 옵션 있는 테이블만)
 
-> **NDJSON 저장 규약:** 파일 확장자는 `.json`이지만, `ndjson/` 폴더의 파일 내용은 NDJSON(라인 단위 JSON)이다. 정본: `skills/devian/80-tools/11-builder/34-ndjson-storage/SKILL.md`
-> **pb64 저장 규약:** 정본: `skills/devian/80-tools/11-builder/35-pb64-storage/SKILL.md`
+> **NDJSON 저장 규약:** 파일 확장자는 `.json`이지만, `ndjson/` 폴더의 파일 내용은 NDJSON(라인 단위 JSON)이다. 정본: `skills/devian/80-tools/11-builder/53-data-ndjson/SKILL.md`
+> **pb64 저장 규약:** 정본: `skills/devian/80-tools/11-builder/54-data-pb64/SKILL.md`
 
 ---
 
 ## Reference
 
 - Policy SSOT: `skills/devian/10-module/03-ssot/SKILL.md`
-- DFF 규약: `skills/devian/80-tools/11-builder/31-class-cell-format/SKILL.md`
-- Enum Generation: `skills/devian/80-tools/11-builder/45-tablegen-enumgen/SKILL.md`
+- DFF 규약: `skills/devian/80-tools/11-builder/30-table-cell-format/SKILL.md`
+- Enum Generation: `skills/devian/80-tools/11-builder/52-table-enumgen/SKILL.md`
 - 동작 정본: 런타임/제너레이터 코드

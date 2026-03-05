@@ -1,5 +1,6 @@
 using System;
-using UnityEngine;
+using System.Threading;
+using System.Threading.Tasks;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
 
@@ -12,6 +13,42 @@ namespace Devian
         public InventoryStorage Storage => _storage;
 
         // ── Public API ──
+
+        public async Task<CommonResult> FirstInitAsync(CancellationToken ct = default)
+        {
+#if UNITY_EDITOR
+            return CommonResult.Ok();
+#else
+            if (!AccountManager.TryGet(out var accountManager))
+            {
+                return CommonResult.Failure(
+                    CommonErrorType.COMMON_SERVER,
+                    "AccountManager is not available.");
+            }
+
+            if (accountManager.IsLocalOnlySaveMode || !accountManager.HasAuthenticatedSession)
+                return CommonResult.Ok();
+
+            var fetch = await FirebaseManager.Instance.GetInitialInventoryAsync(ct);
+            if (fetch.IsFailure)
+                return CommonResult.Failure(fetch.Error!);
+
+            var rewards = fetch.Value ?? Array.Empty<RewardData>();
+            if (rewards.Length == 0)
+                return CommonResult.Ok();
+
+            try
+            {
+                return AddRewards(rewards);
+            }
+            catch (Exception ex)
+            {
+                return CommonResult.Failure(
+                    CommonErrorType.COMMON_SERVER,
+                    $"FirstInit apply failed: {ex.Message}");
+            }
+#endif
+        }
 
         public CommonResult AddRewards(RewardData[] rewards)
         {

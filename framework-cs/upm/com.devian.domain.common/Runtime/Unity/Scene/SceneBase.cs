@@ -21,7 +21,7 @@ namespace Devian
         /// </summary>
         protected virtual void onInitAwake() { }
 
-        protected virtual void Awake()
+        private void Awake()
         {
             onInitAwake();
         }
@@ -73,5 +73,15 @@ namespace Devian
         /// 씬 퇴장 시 정리.
         /// </summary>
         protected abstract Task onExit();
+
+        /// <summary>
+        /// Unity OnDestroy 시점에 호출되는 정리 훅.
+        /// </summary>
+        protected virtual void onDestroy() { }
+
+        private void OnDestroy()
+        {
+            onDestroy();
+        }
     }
 }
