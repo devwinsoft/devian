@@ -273,6 +273,134 @@ namespace Devian
         }
 #endif
 
+        /// <summary>
+        /// initSession에서 pre-loaded된 첫 페이지로 시작하는 RefundAsync.
+        /// 첫 페이지는 서버 호출 없이 처리하고, hasMore일 때만 후속 페이지를 서버에서 가져온다.
+        /// </summary>
+        async Task<CommonResult<RefundResult>> refundWithPreloadedPageAsync(
+            RefundPageResult preloadedFirstPage, CancellationToken ct)
+        {
+            int pageCount = 0;
+            int handledCount = 0;
+            int inventoryAppliedCount = 0;
+            int noOpCount = 0;
+            int skippedCount = 0;
+            int ackFailedCount = 0;
+
+            string pageCursor = string.Empty;
+            bool usePreloaded = true;
+
+            while (true)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                RefundSyncResult page;
+                string prevCursor = pageCursor;
+
+                if (usePreloaded)
+                {
+                    page = enrichAdjustmentItems(preloadedFirstPage);
+                    usePreloaded = false;
+                }
+                else
+                {
+                    var pageResult = await syncRefundsPageAsync(prevCursor, 50, ct);
+                    if (pageResult.IsFailure)
+                        return CommonResult<RefundResult>.Failure(pageResult.Error!);
+                    page = pageResult.Value!;
+                }
+
+                pageCount++;
+
+                for (var i = 0; i < page.Items.Length; i++)
+                {
+                    var item = page.Items[i];
+
+                    if (item.Rewards == null || item.Rewards.Length == 0)
+                    {
+                        handledCount++;
+                        noOpCount++;
+                        if (!string.IsNullOrEmpty(item.PurchaseId))
+                        {
+                            var noOpAck = await ackRefundAppliedAsync(item.PurchaseId, ct);
+                            if (noOpAck.IsFailure)
+                            {
+                                ackFailedCount++;
+                                Debug.LogWarning($"[{Tag}] Refund ACK failed for no-op item. purchaseId={item.PurchaseId}: {noOpAck.Error?.Message}");
+                            }
+                        }
+                        continue;
+                    }
+
+                    CommonResult apply;
+                    try
+                    {
+                        apply = InventoryManager.Instance.RevokeRewardsPartial(item.Rewards);
+                    }
+                    catch (Exception ex)
+                    {
+                        skippedCount++;
+                        Debug.LogWarning(
+                            $"[{Tag}] Refund RevokeRewards exception (skipped). " +
+                            $"purchaseId={item.PurchaseId} product={item.InternalProductId}: {ex.Message}");
+                        continue;
+                    }
+
+                    if (apply.IsFailure)
+                    {
+                        skippedCount++;
+                        Debug.LogWarning(
+                            $"[{Tag}] Refund RevokeRewards failed (skipped). " +
+                            $"purchaseId={item.PurchaseId} product={item.InternalProductId}: {apply.Error?.Message}");
+                        continue;
+                    }
+
+                    handledCount++;
+                    inventoryAppliedCount++;
+
+                    if (!string.IsNullOrEmpty(item.PurchaseId))
+                    {
+                        var ack = await ackRefundAppliedAsync(item.PurchaseId, ct);
+                        if (ack.IsFailure)
+                        {
+                            ackFailedCount++;
+                            Debug.LogWarning($"[{Tag}] Refund ACK failed after revoke. purchaseId={item.PurchaseId}: {ack.Error?.Message}");
+                        }
+                    }
+                }
+
+                if (page.HasMore && string.IsNullOrEmpty(page.NextCursor))
+                {
+                    return CommonResult<RefundResult>.Failure(
+                        CommonErrorType.PURCHASE_REFUND_APPLY_FAILED,
+                        "Refund sync cursor is empty while hasMore=true.");
+                }
+
+                if (page.HasMore && string.Equals(prevCursor, page.NextCursor ?? string.Empty, StringComparison.Ordinal))
+                {
+                    return CommonResult<RefundResult>.Failure(
+                        CommonErrorType.PURCHASE_REFUND_APPLY_FAILED,
+                        "Refund sync cursor did not advance.");
+                }
+
+                pageCursor = page.NextCursor ?? string.Empty;
+                getPurchaseStorageOrNull()?.PruneRefundSupportLogs();
+
+                if (!page.HasMore)
+                {
+                    return CommonResult<RefundResult>.Success(
+                        new RefundResult(
+                            pageCount,
+                            handledCount,
+                            inventoryAppliedCount,
+                            noOpCount,
+                            skippedCount,
+                            ackFailedCount,
+                            pageCursor));
+                }
+            }
+        }
+
 #if UNITY_PURCHASING
         StoreController _controller;
         bool _iapInitialized;
@@ -341,10 +469,12 @@ namespace Devian
         /// Initialize 실패만 fatal로 처리한다.
         /// </summary>
 #if UNITY_EDITOR
-        public Task<CommonResult<PurchaseSyncResult>> SyncAsync(CancellationToken ct = default)
+        public Task<CommonResult<PurchaseSyncResult>> SyncAsync(
+            SessionInitSnapshot? initSnapshot = null, CancellationToken ct = default)
             => Task.FromResult(CommonResult<PurchaseSyncResult>.Success(CreateNoOpPurchaseSyncResult()));
 #else
-        public async Task<CommonResult<PurchaseSyncResult>> SyncAsync(CancellationToken ct = default)
+        public async Task<CommonResult<PurchaseSyncResult>> SyncAsync(
+            SessionInitSnapshot? initSnapshot = null, CancellationToken ct = default)
         {
             var init = await InitializeAsync(ct);
             if (init.IsFailure)
@@ -367,7 +497,9 @@ namespace Devian
             RefundResult? refund = null;
             CommonError refundError = null;
 
-            var refundResult = await RefundAsync(ct);
+            var refundResult = initSnapshot.HasValue
+                ? await refundWithPreloadedPageAsync(initSnapshot.Value.PurchaseAdjustments, ct)
+                : await RefundAsync(ct);
             if (refundResult.IsSuccess)
             {
                 refund = refundResult.Value;
@@ -381,15 +513,24 @@ namespace Devian
             EntitlementsSnapshot? entitlements = null;
             CommonError entitlementsError = null;
 
-            var entitlementsResult = await SyncEntitlementsAsync(ct);
-            if (entitlementsResult.IsSuccess)
+            if (initSnapshot.HasValue)
             {
-                entitlements = entitlementsResult.Value;
+                var snapshot = resolveEntitlementsSeasonPasses(initSnapshot.Value.Entitlements);
+                cacheEntitlementsSnapshot(snapshot);
+                entitlements = snapshot;
             }
             else
             {
-                entitlementsError = entitlementsResult.Error;
-                Debug.LogWarning($"[{Tag}] SyncEntitlementsAsync failed during sync (non-fatal): {entitlementsError}");
+                var entitlementsResult = await SyncEntitlementsAsync(ct);
+                if (entitlementsResult.IsSuccess)
+                {
+                    entitlements = entitlementsResult.Value;
+                }
+                else
+                {
+                    entitlementsError = entitlementsResult.Error;
+                    Debug.LogWarning($"[{Tag}] SyncEntitlementsAsync failed during sync (non-fatal): {entitlementsError}");
+                }
             }
 
             CommonError saveError = null;
@@ -1572,7 +1713,8 @@ namespace Devian
             Task.FromResult(CommonResult<RefundSyncResult>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
         public Task<CommonResult> InitializeAsync(CancellationToken ct = default) => _notSupportedInit;
-        public Task<CommonResult<PurchaseSyncResult>> SyncAsync(CancellationToken ct = default) => _notSupportedSync;
+        public Task<CommonResult<PurchaseSyncResult>> SyncAsync(
+            SessionInitSnapshot? initSnapshot = null, CancellationToken ct = default) => _notSupportedSync;
         public Task<CommonResult<PurchaseFinalResult>> PurchaseAsync(string internalProductId, CancellationToken ct = default) => _notSupported;
 #if UNITY_EDITOR
         static readonly Task<CommonResult<RetryInterruptedPurchaseResult>> _notSupportedRetryInterrupted =

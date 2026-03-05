@@ -10,15 +10,16 @@
  *   - rentals(map) / serverNowUtcMs를 함께 반환하여 Rental 만료 복구/남은시간 계산에 사용한다.
  *   - ownedSeasonPasses / rentals 는 클라이언트 local/cloud cache(PurchaseStorage)에 저장될 수 있다.
  *   - noAds 는 게임 로직 전용이므로 서버 entitlements 스냅샷에 포함하지 않는다.
+ *
+ * core 로직은 getEntitlementsCore.ts 에 위치 (initSession과 공유).
  */
 
 import {onCall, HttpsError} from "firebase-functions/v2/https";
-import * as admin from "firebase-admin";
+import {fetchEntitlements} from "./getEntitlementsCore";
 import * as logger from "firebase-functions/logger";
 
 export const getEntitlements = onCall(
   async (request) => {
-    // 46 스킬 B: context.auth.uid 필수
     if (!request.auth) {
       throw new HttpsError("unauthenticated", "Authentication required");
     }
@@ -26,30 +27,6 @@ export const getEntitlements = onCall(
 
     logger.info(`[getEntitlements] uid=${uid}`);
 
-    // /users/{uid}/entitlements/current 읽기
-    const docRef = admin.firestore()
-      .collection("users").doc(uid)
-      .collection("entitlements").doc("current");
-    const snap = await docRef.get();
-
-    // 46 스킬 B: 스냅샷 키(고정) — 문서 없으면 기본값 반환
-    if (!snap.exists) {
-      logger.info(`[getEntitlements] uid=${uid} — no entitlements doc, returning defaults`);
-      return {
-        ownedSeasonPasses: [],
-        rentals: {},
-        currencyBalances: {},
-        serverNowUtcMs: Date.now(),
-      };
-    }
-
-    const data = snap.data()!;
-
-    return {
-      ownedSeasonPasses: data.ownedSeasonPasses ?? [],
-      rentals: data.rentals ?? {},
-      currencyBalances: data.currencyBalances ?? {},
-      serverNowUtcMs: Date.now(),
-    };
+    return await fetchEntitlements(uid);
   },
 );

@@ -9,6 +9,7 @@
  *   - getMissionClock
  *   - getRecentPurchases30d
  *   - getPurchaseAdjustments
+ *   - initSession
  */
 
 import * as admin from "firebase-admin";
@@ -31,6 +32,9 @@ export {ackRefundApplied} from "./purchase/ackRefundApplied";
 
 // ── Mission Callables ──
 export {getMissionClock} from "./mission/getMissionClock";
+
+// ── Session ──
+export {initSession} from "./session/initSession";
 
 // ── Google Play RTDN (Pub/Sub) ──
 export {handleGooglePlayNotification} from "./purchase/handleGooglePlayNotification";

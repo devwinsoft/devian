@@ -7,10 +7,12 @@
  *   - 응답 = { serverNowUtcMs, minVersion?, currentVersion? }
  *   - mission 상태/진행도/claim 기록은 서버가 관리하지 않음
  *   - 버전 정보는 Firestore /config/appVersion 문서에서 읽음
+ *
+ * core 로직은 getMissionClockCore.ts 에 위치 (initSession과 공유).
  */
 
 import {onCall, HttpsError} from "firebase-functions/v2/https";
-import {getFirestore} from "firebase-admin/firestore";
+import {fetchMissionClock} from "./getMissionClockCore";
 import * as logger from "firebase-functions/logger";
 
 export const getMissionClock = onCall(
@@ -20,22 +22,10 @@ export const getMissionClock = onCall(
     }
 
     const uid = request.auth.uid;
-    const serverNowUtcMs = Date.now();
+    const result = await fetchMissionClock();
 
-    // Read app version config from Firestore
-    const db = getFirestore();
-    const configDoc = await db.doc("config/appVersion").get();
-    const configData = configDoc.exists ? configDoc.data() : undefined;
+    logger.info(`[getMissionClock] uid=${uid} serverNowUtcMs=${result.serverNowUtcMs}`);
 
-    const minVersion = configData?.minVersion ?? "";
-    const currentVersion = configData?.currentVersion ?? "";
-
-    logger.info(`[getMissionClock] uid=${uid} serverNowUtcMs=${serverNowUtcMs}`);
-
-    return {
-      serverNowUtcMs,
-      minVersion,
-      currentVersion,
-    };
+    return result;
   },
 );

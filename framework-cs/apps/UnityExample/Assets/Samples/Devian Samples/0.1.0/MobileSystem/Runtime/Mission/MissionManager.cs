@@ -38,9 +38,12 @@ namespace Devian
                 getCurrentDailyPeriodIndex);
         }
 
-        public async Task<CommonResult> InitializeAsync(CancellationToken ct = default)
+        public async Task<CommonResult> InitializeAsync(
+            MissionClockSnapshot preloadedClock = null, CancellationToken ct = default)
         {
-            var refresh = await RefreshClockAsync(ct);
+            var refresh = preloadedClock != null
+                ? applyClockSnapshot(preloadedClock)
+                : await RefreshClockAsync(ct);
             if (refresh.IsFailure)
                 return CommonResult.Failure(refresh.Error!);
 
@@ -398,6 +401,20 @@ namespace Devian
 #else
             return FirebaseManager.Instance.GetMissionClockAsync(ct);
 #endif
+        }
+
+        CommonResult<MissionClockSnapshot> applyClockSnapshot(MissionClockSnapshot snapshot)
+        {
+            _storage.clockSnapshot = snapshot;
+            _storage.clockReceivedAtClientUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            if (_initialized)
+            {
+                rebuildRuntimeBindings();
+                pruneExpiredMissionState();
+            }
+
+            return CommonResult<MissionClockSnapshot>.Success(snapshot);
         }
 
     }

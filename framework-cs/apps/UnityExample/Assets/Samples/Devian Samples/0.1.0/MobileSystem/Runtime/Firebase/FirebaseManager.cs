@@ -73,6 +73,88 @@ namespace Devian
             }
         }
 
+        // ── Session Init (로그인 시 일괄 조회) ──────────────────────
+
+        /// <summary>
+        /// initSession callable — getMissionClock + getEntitlements + getPurchaseAdjustments 통합 호출.
+        /// 서버에서 3개 Firestore 읽기를 병렬 실행하여 1회 왕복으로 전체 초기 데이터를 반환한다.
+        /// </summary>
+        public async Task<CommonResult<SessionInitSnapshot>> InitSessionAsync(
+            Dictionary<string, object> data, CancellationToken ct)
+        {
+            try
+            {
+                var response = await callFunctionAsync("initSession", data, ct);
+                if (response == null)
+                    return CommonResult<SessionInitSnapshot>.Failure(
+                        CommonErrorType.COMMON_SERVER,
+                        "initSession returned unsupported response.");
+
+                // missionClock
+                Dictionary<string, object> clockDict = null;
+                if (response.TryGetValue("missionClock", out var clockObj) && clockObj is Dictionary<string, object> cd)
+                    clockDict = cd;
+
+                if (clockDict == null)
+                    return CommonResult<SessionInitSnapshot>.Failure(
+                        CommonErrorType.COMMON_SERVER,
+                        "initSession: missionClock missing.");
+
+                var missionClock = parseMissionClockSnapshot(clockDict);
+
+                // entitlements
+                Dictionary<string, object> entDict = null;
+                if (response.TryGetValue("entitlements", out var entObj) && entObj is Dictionary<string, object> ed)
+                    entDict = ed;
+
+                if (entDict == null)
+                    return CommonResult<SessionInitSnapshot>.Failure(
+                        CommonErrorType.COMMON_SERVER,
+                        "initSession: entitlements missing.");
+
+                var entitlements = parseEntitlementsSnapshot(entDict);
+
+                // purchaseAdjustments
+                Dictionary<string, object> adjDict = null;
+                if (response.TryGetValue("purchaseAdjustments", out var adjObj) && adjObj is Dictionary<string, object> ad)
+                    adjDict = ad;
+
+                if (adjDict == null)
+                    return CommonResult<SessionInitSnapshot>.Failure(
+                        CommonErrorType.COMMON_SERVER,
+                        "initSession: purchaseAdjustments missing.");
+
+                var purchaseAdjustments = parseRefundPageResult(adjDict);
+
+                return CommonResult<SessionInitSnapshot>.Success(
+                    new SessionInitSnapshot(missionClock, entitlements, purchaseAdjustments));
+            }
+            catch (OperationCanceledException) { throw; }
+            catch (FunctionsException fex)
+            {
+                switch (fex.ErrorCode)
+                {
+                    case FunctionsErrorCode.Unavailable:
+                    case FunctionsErrorCode.DeadlineExceeded:
+                        return CommonResult<SessionInitSnapshot>.Failure(
+                            CommonErrorType.COMMON_NETWORK,
+                            "initSession network unavailable.");
+                    case FunctionsErrorCode.Unauthenticated:
+                    case FunctionsErrorCode.PermissionDenied:
+                        return CommonResult<SessionInitSnapshot>.Failure(
+                            CommonErrorType.COMMON_AUTH, fex.Message);
+                    default:
+                        return CommonResult<SessionInitSnapshot>.Failure(
+                            CommonErrorType.COMMON_SERVER, fex.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                return CommonResult<SessionInitSnapshot>.Failure(
+                    CommonErrorType.COMMON_SERVER, ex.Message);
+            }
+        }
+
         // ── Purchase Callable — Query ─────────────────────────────
 
         public async Task<CommonResult<VerifyPurchaseResponse>> VerifyPurchaseAsync(

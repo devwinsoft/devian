@@ -71,7 +71,20 @@ public class TestSceneLoading : TestSceneBootstrap
                     return;
                 }
 
-                var purchaseSyncCode = await syncPurchaseStateAsync();
+                SessionInitSnapshot? snapshot = null;
+#if !UNITY_EDITOR
+                var initSession = await FirebaseManager.Instance.InitSessionAsync(null, CancellationToken.None);
+                if (initSession.IsFailure)
+                {
+                    Debug.LogError($"InitSession failed: code={initSession.Error.Code}, message={initSession.Error.Message}");
+                    UICanvasLoading.Instance.message.text = $"InitSession: {initSession.Error.Code}";
+                    UICanvasLoading.Instance.ShowLoginButtons();
+                    return;
+                }
+                snapshot = initSession.Value;
+#endif
+
+                var purchaseSyncCode = await syncPurchaseStateAsync(snapshot);
                 if (purchaseSyncCode != CommonErrorType.SUCCESS)
                 {
                     UICanvasLoading.Instance.message.text = $"Purchase SyncCode: {purchaseSyncCode}";
@@ -79,7 +92,7 @@ public class TestSceneLoading : TestSceneBootstrap
                     return;
                 }
 
-                var missionInitCode = await initializeMissionAsync();
+                var missionInitCode = await initializeMissionAsync(snapshot?.MissionClock);
                 if (missionInitCode != CommonErrorType.SUCCESS)
                 {
                     Debug.LogError($"Mission initialize failed: code={missionInitCode}");
@@ -105,24 +118,31 @@ public class TestSceneLoading : TestSceneBootstrap
             return login.Error.Code;
         }
         
+        SessionInitSnapshot? snapshot = null;
 #if !UNITY_EDITOR
-        var purchaseSyncCode = await syncPurchaseStateAsync();
+        var initSession = await FirebaseManager.Instance.InitSessionAsync(null, CancellationToken.None);
+        if (initSession.IsFailure)
+        {
+            Debug.LogError($"InitSession failed: code={initSession.Error.Code}, message={initSession.Error.Message}");
+            return initSession.Error.Code;
+        }
+        snapshot = initSession.Value;
+
+        var purchaseSyncCode = await syncPurchaseStateAsync(snapshot);
         if (purchaseSyncCode != CommonErrorType.SUCCESS)
             return purchaseSyncCode;
 #endif
 
-        var missionInitCode = await initializeMissionAsync();
+        var missionInitCode = await initializeMissionAsync(snapshot?.MissionClock);
         if (missionInitCode != CommonErrorType.SUCCESS)
             return missionInitCode;
         return CommonErrorType.SUCCESS;
     }
     
 
-    async Task<CommonErrorType> syncPurchaseStateAsync()
+    async Task<CommonErrorType> syncPurchaseStateAsync(SessionInitSnapshot? snapshot = null)
     {
-        var ct = CancellationToken.None;
-
-        var sync = await PurchaseManager.Instance.SyncAsync(ct);
+        var sync = await PurchaseManager.Instance.SyncAsync(snapshot);
         if (sync.IsFailure)
         {
             Debug.LogWarning($"Purchase sync failed: {sync.Error}");
@@ -170,9 +190,9 @@ public class TestSceneLoading : TestSceneBootstrap
         return CommonErrorType.SUCCESS;
     }
 
-    async Task<CommonErrorType> initializeMissionAsync()
+    async Task<CommonErrorType> initializeMissionAsync(MissionClockSnapshot preloadedClock = null)
     {
-        var init = await MissionManager.Instance.InitializeAsync(CancellationToken.None);
+        var init = await MissionManager.Instance.InitializeAsync(preloadedClock);
         if (init.IsFailure)
         {
             Debug.LogError($"MissionManager.InitializeAsync failed: {init.Error.Code}: {init.Error.Message}");
