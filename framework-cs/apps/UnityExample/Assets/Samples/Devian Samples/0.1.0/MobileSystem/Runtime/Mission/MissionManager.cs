@@ -21,8 +21,6 @@ namespace Devian
         bool _initialized;
 
         public MissionStorage Storage => _storage;
-        public MissionTriggerSystem triggerSystem => _triggerSystem;
-        public MissionMessageSystem messageSystem => _messageSystem;
         public bool IsInitialized => _initialized;
 
         protected override void Awake()
@@ -191,6 +189,37 @@ namespace Devian
             }
         }
 
+        public void Notify(MISSION_STAT_TYPE msgType, long msgValue)
+        {
+            Notify(msgType, CBigInt.FromLong(msgValue));
+        }
+
+        public void Notify(MISSION_STAT_TYPE msgType, int msgValue)
+        {
+            Notify(msgType, CBigInt.FromInt(msgValue));
+        }
+
+        public void Notify(MISSION_STAT_TYPE msgType, CBigInt msgValue)
+        {
+            onBeforeTriggerNotify(msgType, msgValue);
+            _triggerSystem.Notify(msgType, msgValue);
+        }
+
+        public void Subcribe(EntityId ownerKey, MISSION_MESSAGE msgType, MessageSystem<EntityId, MISSION_MESSAGE>.Handler handler)
+        {
+            _messageSystem.Subcribe(ownerKey, msgType, handler);
+        }
+
+        public void SubcribeOnce(EntityId ownerKey, MISSION_MESSAGE msgType, Action<object[]> handler)
+        {
+            _messageSystem.SubcribeOnce(ownerKey, msgType, handler);
+        }
+
+        public void UnSubcribe(EntityId ownerKey)
+        {
+            _messageSystem.UnSubcribe(ownerKey);
+        }
+
         public void ClearStorage()
         {
             detachAllRuntimes();
@@ -201,7 +230,10 @@ namespace Devian
         MissionRuntimeState getDailyRuntimeState(string missionId)
         {
             var row = TB_MISSION_DAY.Get(missionId);
-            if (row == null || !row.IsActive || row.ConditionOp == MISSION_OP_TYPE.NONE || !row.ConditionValue.HasValue)
+            if (row == null || !row.IsActive || !row.ConditionValue.HasValue)
+                return MissionRuntimeState.NONE;
+
+            if (!TryResolveMissionStat(row.MissionStatId, out var missionStat) || missionStat.OpType == MISSION_OP_TYPE.NONE)
                 return MissionRuntimeState.NONE;
 
             var runtime = findDailyRuntime(missionId);
@@ -226,7 +258,10 @@ namespace Devian
         async Task<CommonResult> claimDailyAsync(string missionId, CancellationToken ct)
         {
             var row = TB_MISSION_DAY.Get(missionId);
-            if (row == null || !row.IsActive || row.ConditionOp == MISSION_OP_TYPE.NONE || !row.ConditionValue.HasValue)
+            if (row == null || !row.IsActive || !row.ConditionValue.HasValue)
+                return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
+
+            if (!TryResolveMissionStat(row.MissionStatId, out var missionStat) || missionStat.OpType == MISSION_OP_TYPE.NONE)
                 return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
 
             var periodKey = getCurrentDailyKey();
@@ -275,13 +310,19 @@ namespace Devian
                 return CommonResult.Failure(apply.Error!);
 
             var nextRow = findAchievementNextRow(runtime.missionId, runtime.level);
-            if (nextRow != null && nextRow.IsActive && nextRow.ConditionOp != MISSION_OP_TYPE.NONE && nextRow.ConditionValue.HasValue)
+            if (nextRow != null
+                && nextRow.IsActive
+                && nextRow.ConditionValue.HasValue
+                && TryResolveMissionStat(nextRow.MissionStatId, out var nextMissionStat)
+                && nextMissionStat.OpType != MISSION_OP_TYPE.NONE)
             {
                 runtime.LevelUp(
                     nextRow.Level,
-                    nextRow.ConditionType,
-                    nextRow.ConditionOp,
-                    nextRow.ConditionValue.Value);
+                    nextRow.MissionStatId,
+                    nextMissionStat.StatType,
+                    nextMissionStat.OpType,
+                    nextRow.ConditionValue.Value,
+                    createMissionStatProgressReader(nextRow.MissionStatId));
                 _messageSystem.Notify(MISSION_MESSAGE.ACHIEVE_LEVEL_UP, runtime);
             }
             else
@@ -304,6 +345,40 @@ namespace Devian
         void onRuntimeInitialized(MissionRuntimeBase runtime)
         {
             _messageSystem.Notify(MISSION_MESSAGE.RUNTIME_INIT, runtime);
+        }
+
+        void onBeforeTriggerNotify(MISSION_STAT_TYPE statType, CBigInt delta)
+        {
+            foreach (var missionStat in TB_MISSION_STAT.GetAll())
+            {
+                if (missionStat == null
+                    || missionStat.StatType != statType
+                    || string.IsNullOrWhiteSpace(missionStat.MissionStatId))
+                {
+                    continue;
+                }
+
+                var current = _storage.GetStat(missionStat.MissionStatId);
+                CBigInt next;
+                switch (missionStat.OpType)
+                {
+                    case MISSION_OP_TYPE.SUM:
+                        next = current + delta;
+                        break;
+
+                    case MISSION_OP_TYPE.MAX:
+                        next = CBigInt.Max(current, delta);
+                        break;
+
+                    default:
+                        continue;
+                }
+
+                if (next.CompareTo(current) == 0)
+                    continue;
+
+                _storage.SetStat(missionStat.MissionStatId, next);
+            }
         }
 
         void onRuntimeChanged(MissionRuntimeBase runtime)
@@ -348,6 +423,25 @@ namespace Devian
         MissionRuntimeAchieve findAchievementRuntime(string missionId)
         {
             return _scheduler.FindAchieve(missionId);
+        }
+
+        static bool TryResolveMissionStat(string missionStatId, out MISSION_STAT missionStat)
+        {
+            missionStat = null;
+            if (string.IsNullOrWhiteSpace(missionStatId))
+                return false;
+
+            missionStat = TB_MISSION_STAT.Get(missionStatId);
+            return missionStat != null;
+        }
+
+        Func<CBigInt> createMissionStatProgressReader(string missionStatId)
+        {
+            if (string.IsNullOrWhiteSpace(missionStatId))
+                return static () => CBigInt.Zero;
+
+            var key = missionStatId;
+            return () => _storage.GetStat(key);
         }
 
         static MISSION_ACHIEVE findAchievementNextRow(string missionId, int level)

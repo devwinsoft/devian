@@ -5,11 +5,6 @@ using UnityEngine;
 using Devian;
 using Devian.Domain.Game;
 using Devian.Protocol.Game;
-#if UNITY_ANDROID && !UNITY_EDITOR
-using GooglePlayGames;
-using GooglePlayGames.BasicApi;
-#endif
-
 
 public class UICanvasSample : UICanvas<UICanvasSample>
 {
@@ -21,14 +16,14 @@ public class UICanvasSample : UICanvas<UICanvasSample>
     {
         if (TestApplication.IsApplicationQuitting == false)
         {
-            MissionManager.Instance?.messageSystem.UnSubcribe(GetEntityId());
+            MissionManager.Instance?.UnSubcribe(GetEntityId());
         }
         base.OnDestroy();
     }
 
     protected override void onInit()
     {
-        MissionManager.Instance.messageSystem.Subcribe(GetEntityId(),
+        MissionManager.Instance.Subcribe(GetEntityId(),
             MISSION_MESSAGE.RUNTIME_INIT,
             (args) =>
             {
@@ -37,7 +32,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
                 return false;
             });
 
-        MissionManager.Instance.messageSystem.Subcribe(GetEntityId(),
+        MissionManager.Instance.Subcribe(GetEntityId(),
             MISSION_MESSAGE.RUNTIME_PROGRESS,
             (args) =>
             {
@@ -46,7 +41,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
                 return false;
             });
         
-        MissionManager.Instance.messageSystem.Subcribe(GetEntityId(),
+        MissionManager.Instance.Subcribe(GetEntityId(),
             MISSION_MESSAGE.RUNTIME_CLAIMABLE,
             (args) =>
             {
@@ -55,7 +50,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
                 return false;
             });
         
-        MissionManager.Instance.messageSystem.Subcribe(GetEntityId(),
+        MissionManager.Instance.Subcribe(GetEntityId(),
             MISSION_MESSAGE.RUNTIME_REWARDED,
             (args) =>
             {
@@ -66,7 +61,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
                     Debug.Log($"type={rewward.Type}, id={rewward.Id}, amount={rewward.Amount}");
                 }
 
-                MissionManager.Instance.triggerSystem.Notify(MISSION_CONDITION_TYPE.MISSION_CLEAR);
+                MissionManager.Instance.Notify(MISSION_STAT_TYPE.MISSION_CLEAR, 1);
                 return false;
             });
     }
@@ -96,7 +91,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
 
     public void OnClick_Mission()
     {
-        MissionManager.Instance.triggerSystem.Notify(MISSION_CONDITION_TYPE.TEST_001, 1);
+        MissionManager.Instance.Notify(MISSION_STAT_TYPE.TEST_001, 1);
     }
     
     public void OnClick_Mission_Claim()
@@ -263,7 +258,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         GameNetManager.Proxy.SendEcho(msg);
         */
         
-        MissionManager.Instance.triggerSystem.Notify(MISSION_CONDITION_TYPE.TEST_001, 1);
+        MissionManager.Instance.Notify(MISSION_STAT_TYPE.TEST_001, 1);
     }
 
     public void OnClick_DVN_Import()

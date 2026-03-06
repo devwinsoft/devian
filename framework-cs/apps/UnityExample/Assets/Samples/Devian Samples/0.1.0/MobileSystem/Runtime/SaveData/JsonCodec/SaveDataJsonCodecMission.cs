@@ -28,9 +28,8 @@ namespace Devian
                 {
                     ["missionType"] = (int)runtime.missionType,
                     ["missionId"] = runtime.missionId,
-                    ["periodKey"] = runtime.periodKey,
+                    ["missionStatId"] = runtime.missionStatId,
                     ["missionUid"] = runtime.missionUid,
-                    ["progressValue"] = SerializeBigInt(runtime.progressValue),
                     ["isCompleted"] = runtime.isCompleted,
                 };
 
@@ -40,12 +39,24 @@ namespace Devian
                 }
                 else if (runtime is MissionRuntimeDaily dailyRuntime)
                 {
+                    runtimeObj["periodKey"] = dailyRuntime.periodKey;
                     runtimeObj["index"] = dailyRuntime.index;
+                    runtimeObj["progressValue"] = SerializeBigInt(dailyRuntime.progressValue);
                 }
 
                 runtimes.Add(runtimeObj);
             }
 
+            var statsObj = new JObject();
+            foreach (var stat in storage.stats)
+            {
+                if (string.IsNullOrWhiteSpace(stat.Key))
+                    continue;
+
+                statsObj[stat.Key] = SerializeBigInt(stat.Value);
+            }
+
+            missionObj["stats"] = statsObj;
             missionObj["runtimes"] = runtimes;
             return missionObj;
         }
@@ -60,7 +71,7 @@ namespace Devian
             if (missionObj == null)
                 return;
 
-            storage.schemaVersion = missionObj.Value<int?>("schemaVersion") ?? 1;
+            storage.schemaVersion = missionObj.Value<int?>("schemaVersion") ?? 2;
             storage.dailyMissionStartUtcMs = missionObj.Value<long?>("dailyMissionStartUtcMs") ?? 0L;
             storage.clockReceivedAtClientUtcMs = missionObj.Value<long?>("clockReceivedAtClientUtcMs") ?? 0L;
             storage.nextMissionUid = missionObj.Value<int?>("nextMissionUid") ?? 1;
@@ -70,6 +81,17 @@ namespace Devian
             else
                 storage.clockSnapshot = new MissionClockSnapshot();
 
+            if (missionObj["stats"] is JObject statsObj)
+            {
+                foreach (var property in statsObj.Properties())
+                {
+                    if (string.IsNullOrWhiteSpace(property.Name))
+                        continue;
+
+                    storage.SetStat(property.Name, DeserializeBigInt(property.Value));
+                }
+            }
+
             if (missionObj["runtimes"] is JArray runtimeArray)
             {
                 foreach (var token in runtimeArray)
@@ -78,7 +100,6 @@ namespace Devian
                         continue;
 
                     var missionTypeRaw = runtimeObj.Value<int?>("missionType")
-                        ?? runtimeObj.Value<int?>("missionKind")
                         ?? (int)MISSION_TYPE.DAY;
                     if (!System.Enum.IsDefined(typeof(MISSION_TYPE), missionTypeRaw))
                         continue;
@@ -96,9 +117,10 @@ namespace Devian
                             {
                                 missionType = missionType,
                                 missionId = runtimeObj.Value<string>("missionId") ?? string.Empty,
-                                periodKey = runtimeObj.Value<string>("periodKey") ?? string.Empty,
+                                missionStatId = runtimeObj.Value<string>("missionStatId") ?? string.Empty,
+                                periodKey = "once",
                                 missionUid = missionUid,
-                                progressValue = DeserializeBigInt(runtimeObj["progressValue"]),
+                                progressValue = CBigInt.Zero,
                                 isCompleted = runtimeObj.Value<bool?>("isCompleted") ?? false,
                                 level = runtimeObj.Value<int?>("level") ?? 1,
                             };
@@ -109,6 +131,7 @@ namespace Devian
                             {
                                 missionType = missionType,
                                 missionId = runtimeObj.Value<string>("missionId") ?? string.Empty,
+                                missionStatId = runtimeObj.Value<string>("missionStatId") ?? string.Empty,
                                 periodKey = runtimeObj.Value<string>("periodKey") ?? string.Empty,
                                 missionUid = missionUid,
                                 index = runtimeObj.Value<int?>("index") ?? 0,

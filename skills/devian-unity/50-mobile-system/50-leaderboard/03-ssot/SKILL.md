@@ -48,20 +48,18 @@ AppliesTo: v10
 - Google(GPGS v2): `googleLeaderboardId`, `googleAchievementId`
 
 
-### NEEDS CHECK (구현 단계에서 SSOT 저장 위치 결정)
+### SSOT 저장 위치 (확정)
 
-아래 중 하나를 SSOT로 선택한다(문서상 설계만 정의).
-
-- (권장) Devian input 테이블(Excel) 기반
-  - 예: `input/Domains/Leaderboard/LeaderboardTable.xlsx`
-  - `{buildInputJson}` (예: `input/build_input.json`)에 DomainKey 등록
-- (대안) 샘플 코드에 const/JSON으로 내장 (초기 MVP)
+- 파일: `input/Domains/Game/LeaderboardTable.xlsx`
+- 시트: `LEADERBOARD`, `ACHIEVEMENT`
+- `{buildInputJson}`은 기존 `Game.tableFiles = "*.xlsx"` 규칙으로 포함되므로 DomainKey 추가 등록은 하지 않는다.
+- 샘플 코드 const/JSON 내장(임시 SSOT)은 금지한다.
 
 
 ---
 
 
-## C. Suggested Table Schema (설계)
+## C. Table Schema (정본)
 
 
 ### 1) LEADERBOARD (내부 리더보드 정의)
@@ -73,7 +71,7 @@ AppliesTo: v10
 | `isActive` | bool | 운영 토글 |
 | `appleLeaderboardId` | string | Game Center ID |
 | `googleLeaderboardId` | string | GPGS ID |
-| `scoreOrder` | string | `"HighBetter"` / `"LowBetter"` (표현만, 구현은 구현 단계) |
+| `scoreOrder` | enum: `LEADERBOARD_SCORE_ORDER` | `HighBetter` / `LowBetter` |
 
 
 ### 2) ACHIEVEMENT (내부 업적 정의)
@@ -85,8 +83,17 @@ AppliesTo: v10
 | `isActive` | bool | 운영 토글 |
 | `appleAchievementId` | string | Game Center ID |
 | `googleAchievementId` | string | GPGS ID |
-| `kind` | string | `"Binary"` / `"Percent"` / `"Steps"` (표현만, 구현은 구현 단계) |
+| `kind` | enum: `ACHIEVEMENT_KIND` | `Binary` / `Percent` / `Steps` |
 | `stepsTotal` | int | kind=Steps일 때만 사용 |
+| `rewardGroupId` | string | 비어 있으면 보상 없음 |
+
+
+### 테이블 제약 (정본)
+
+- `kind=Steps`이면 `stepsTotal > 0`이어야 한다.
+- `kind=Binary` 또는 `kind=Percent`이면 `stepsTotal = 0`으로 고정한다.
+- `isActive=true`인 행은 "출시 대상 플랫폼"에 해당하는 플랫폼 ID를 반드시 채운다.
+- `apple*Id`, `google*Id`는 매핑 전용 데이터이며, 외부 API payload에 그대로 노출하지 않는다.
 
 
 ---
@@ -105,16 +112,17 @@ Reward 연동은 "이벤트 신호"로만 한다.
     - "신규로 달성된 업적"에 대해서만 발생한다(이미 달성은 발생 금지).
 
 
-### 2) (선택) 소비자 ledger 키 규칙
+### 2) 소비자 ledger 키 규칙 (정본)
 
-- 이벤트 소비자(MissionManager/상위 로직)가 중복 방지를 위해 자체 키를 사용할 수 있다.
-- 예: `achievement:{achievementId}`
+- 이벤트 소비자(MissionManager/상위 로직)는 중복 방지를 위해 아래 키를 사용한다.
+- 키 규칙: `achievement:{achievementId}`
 
 
-### 3) (선택) Achievement → RewardGroupId 매핑(정본)
+### 3) Achievement → RewardGroupId 매핑 (정본)
 
-- key: `achievementId`
-- value: `rewardGroupId`
+- 매핑 원천은 `ACHIEVEMENT.rewardGroupId`다.
+- `rewardGroupId`가 비어 있지 않으면 이벤트 소비자가 보상 지급 대상으로 해석한다.
+- `rewardGroupId`가 비어 있으면 업적 이벤트만 발생하고 보상 지급은 없다.
 
 이 매핑은 **이벤트 소비자**가 참조한다(RewardManager는 멱등/트리거 해석 책임 없음).
 

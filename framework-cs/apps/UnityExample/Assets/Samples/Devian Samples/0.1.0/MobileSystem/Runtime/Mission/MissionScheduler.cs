@@ -194,6 +194,12 @@ namespace Devian
 
             foreach (var row in selectedRows)
             {
+                if (!TryResolveMissionStat(row.MissionStatId, out var missionStat))
+                {
+                    Debug.LogError($"[{Tag}] MISSION_STAT not found for daily mission: missionId='{row.MissionId}', missionStatId='{row.MissionStatId}'.");
+                    continue;
+                }
+
                 var existing = FindDaily(row.MissionId);
                 if (existing != null)
                 {
@@ -201,14 +207,15 @@ namespace Devian
                     {
                         MissionType = MISSION_TYPE.DAY,
                         MissionId = existing.missionId,
+                        MissionStatId = row.MissionStatId,
                         PeriodKey = existing.periodKey,
                         MissionUid = existing.missionUid,
                         Level = 1,
                         ProgressValue = existing.progressValue,
                         IsCompleted = existing.isCompleted,
                         Index = existing.index,
-                        ConditionType = row.ConditionType,
-                        ConditionOp = row.ConditionOp,
+                        StatType = missionStat.StatType,
+                        OpType = missionStat.OpType,
                         ConditionValue = row.ConditionValue!.Value,
                         TriggerSystem = _triggerSystem,
                         OnChanged = _onChanged,
@@ -224,11 +231,12 @@ namespace Devian
                 {
                     MissionType = MISSION_TYPE.DAY,
                     MissionId = row.MissionId,
+                    MissionStatId = row.MissionStatId,
                     PeriodKey = periodKey,
                     MissionUid = AllocateMissionUid(),
                     Index = 0,
-                    ConditionType = row.ConditionType,
-                    ConditionOp = row.ConditionOp,
+                    StatType = missionStat.StatType,
+                    OpType = missionStat.OpType,
                     ConditionValue = row.ConditionValue!.Value,
                     TriggerSystem = _triggerSystem,
                     OnChanged = _onChanged,
@@ -272,19 +280,28 @@ namespace Devian
                     var row = findAchievementRow(existing.missionId, existing.level);
                     if (isEligibleAchievementRow(row))
                     {
+                        if (!TryResolveMissionStat(row!.MissionStatId, out var missionStat))
+                        {
+                            existing.Detach();
+                            _storage.runtimes.Remove(existing.missionUid);
+                            continue;
+                        }
+
                         var restored = MissionRuntimeFactory.Restore(new MissionRuntimeRestoreArgs
                         {
                             MissionType = MISSION_TYPE.ACHIEVE,
                             MissionId = existing.missionId,
+                            MissionStatId = row.MissionStatId,
                             PeriodKey = existing.periodKey,
                             MissionUid = existing.missionUid,
                             Level = existing.level,
                             ProgressValue = existing.progressValue,
                             IsCompleted = existing.isCompleted,
-                            ConditionType = row.ConditionType,
-                            ConditionOp = row.ConditionOp,
+                            StatType = missionStat.StatType,
+                            OpType = missionStat.OpType,
                             ConditionValue = row.ConditionValue!.Value,
                             TriggerSystem = _triggerSystem,
+                            ReadProgress = createMissionStatProgressReader(row.MissionStatId),
                             OnChanged = _onChanged,
                             OnClaimable = _onClaimable,
                         });
@@ -306,17 +323,25 @@ namespace Devian
                     continue;
                 }
 
+                if (!TryResolveMissionStat(startRow!.MissionStatId, out var startMissionStat))
+                {
+                    Debug.LogError($"[{Tag}] MISSION_STAT not found for achievement mission: missionId='{startRow.MissionId}', missionStatId='{startRow.MissionStatId}'.");
+                    continue;
+                }
+
                 var created = MissionRuntimeFactory.CreateAchieve(new AchieveMissionRuntimeCreateArgs
                 {
                     MissionType = MISSION_TYPE.ACHIEVE,
                     MissionId = startRow!.MissionId,
+                    MissionStatId = startRow.MissionStatId,
                     Level = startRow.Level,
                     PeriodKey = "once",
                     MissionUid = AllocateMissionUid(),
-                    ConditionType = startRow.ConditionType,
-                    ConditionOp = startRow.ConditionOp,
+                    StatType = startMissionStat.StatType,
+                    OpType = startMissionStat.OpType,
                     ConditionValue = startRow.ConditionValue!.Value,
                     TriggerSystem = _triggerSystem,
+                    ReadProgress = createMissionStatProgressReader(startRow.MissionStatId),
                     OnChanged = _onChanged,
                     OnClaimable = _onClaimable,
                 });
@@ -398,12 +423,39 @@ namespace Devian
 
         static bool isEligibleDailyRow(MISSION_DAY row)
         {
-            return row != null && row.IsActive && row.ConditionOp != MISSION_OP_TYPE.NONE && row.ConditionValue.HasValue;
+            return row != null
+                   && row.IsActive
+                   && row.ConditionValue.HasValue
+                   && TryResolveMissionStat(row.MissionStatId, out var missionStat)
+                   && missionStat.OpType != MISSION_OP_TYPE.NONE;
         }
 
         static bool isEligibleAchievementRow(MISSION_ACHIEVE row)
         {
-            return row != null && row.IsActive && row.ConditionOp != MISSION_OP_TYPE.NONE && row.ConditionValue.HasValue;
+            return row != null
+                   && row.IsActive
+                   && row.ConditionValue.HasValue
+                   && TryResolveMissionStat(row.MissionStatId, out var missionStat)
+                   && missionStat.OpType != MISSION_OP_TYPE.NONE;
+        }
+
+        static bool TryResolveMissionStat(string missionStatId, out MISSION_STAT missionStat)
+        {
+            missionStat = null;
+            if (string.IsNullOrWhiteSpace(missionStatId))
+                return false;
+
+            missionStat = TB_MISSION_STAT.Get(missionStatId);
+            return missionStat != null;
+        }
+
+        Func<CBigInt> createMissionStatProgressReader(string missionStatId)
+        {
+            if (string.IsNullOrWhiteSpace(missionStatId))
+                return static () => CBigInt.Zero;
+
+            var key = missionStatId;
+            return () => _storage.GetStat(key);
         }
 
         static System.Random createDailySelectionRandom(string periodKey)

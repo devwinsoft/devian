@@ -14,8 +14,8 @@ export enum MISSION_TYPE {
     ACHIEVE = 1,
 }
 
-/** MISSION_CONDITION_TYPE enum */
-export enum MISSION_CONDITION_TYPE {
+/** MISSION_STAT_TYPE enum */
+export enum MISSION_STAT_TYPE {
     NONE = 0,
     LOGIN = 1,
     MISSION_CLEAR = 2,
@@ -160,13 +160,39 @@ export interface CARD extends IEntityKey<string> {
     getKey(): string;
 }
 
+export interface LEADERBOARD extends IEntityKey<string> {
+    LeaderboardId: string;
+    IsActive: boolean;
+    AppleLeaderboardId: string;
+    GoogleLeaderboardId: string;
+    ScoreOrder: string;
+    getKey(): string;
+}
+
+export interface ACHIEVEMENT extends IEntityKey<string> {
+    AchievementId: string;
+    IsActive: boolean;
+    AppleAchievementId: string;
+    GoogleAchievementId: string;
+    Kind: string;
+    StepsTotal: number;
+    RewardGroupId: string;
+    getKey(): string;
+}
+
+export interface MISSION_STAT extends IEntityKey<string> {
+    MissionStatId: string;
+    StatType: MISSION_STAT_TYPE;
+    OpType: MISSION_OP_TYPE;
+    getKey(): string;
+}
+
 export interface MISSION_DAY extends IEntityKey<string> {
     MissionId: string;
     IsActive: boolean;
     Fixed: boolean;
     OrderNum: number;
-    ConditionType: MISSION_CONDITION_TYPE;
-    ConditionOp: MISSION_OP_TYPE;
+    MissionStatId: string;
     ConditionValue: CBigInt | null;
     RewardGroupId: string;
     getKey(): string;
@@ -177,8 +203,7 @@ export interface MISSION_ACHIEVE extends IEntityKey<number> {
     MissionId: string;
     IsActive: boolean;
     OrderNum: number;
-    ConditionType: MISSION_CONDITION_TYPE;
-    ConditionOp: MISSION_OP_TYPE;
+    MissionStatId: string;
     Level: number;
     ConditionValue: CBigInt | null;
     RewardGroupId: string;
@@ -325,6 +350,114 @@ export class TB_CARD {
             const row = JSON.parse(line) as CARD;
             this._list.push(row);
             this._dict.set(row.CardId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_LEADERBOARD {
+    private static _dict: Map<string, LEADERBOARD> = new Map();
+    private static _list: LEADERBOARD[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly LEADERBOARD[] { return this._list; }
+
+    static get(key: string): LEADERBOARD | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as LEADERBOARD;
+            this._list.push(row);
+            this._dict.set(row.LeaderboardId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_ACHIEVEMENT {
+    private static _dict: Map<string, ACHIEVEMENT> = new Map();
+    private static _list: ACHIEVEMENT[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly ACHIEVEMENT[] { return this._list; }
+
+    static get(key: string): ACHIEVEMENT | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as ACHIEVEMENT;
+            this._list.push(row);
+            this._dict.set(row.AchievementId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_MISSION_STAT {
+    private static _dict: Map<string, MISSION_STAT> = new Map();
+    private static _list: MISSION_STAT[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly MISSION_STAT[] { return this._list; }
+
+    static get(key: string): MISSION_STAT | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as MISSION_STAT;
+            this._list.push(row);
+            this._dict.set(row.MissionStatId, row);
         }
     }
 

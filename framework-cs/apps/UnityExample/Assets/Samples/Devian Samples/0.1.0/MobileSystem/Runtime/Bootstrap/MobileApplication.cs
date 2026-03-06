@@ -9,6 +9,7 @@ namespace Devian
     [RequireComponent(typeof(AccountManager))]
     [RequireComponent(typeof(InventoryManager))]
     [RequireComponent(typeof(PurchaseManager))]
+    [RequireComponent(typeof(LeaderboardManager))]
     [RequireComponent(typeof(MissionManager))]
     [RequireComponent(typeof(SaveDataManager))]
     [RequireComponent(typeof(InputManager))]

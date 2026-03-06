@@ -8,7 +8,7 @@
       ]
     },
     {
-      "name": "MISSION_CONDITION_TYPE",
+      "name": "MISSION_STAT_TYPE",
       "values": [
         { "name": "NONE", "value": 0 },
         { "name": "LOGIN", "value": 1 },

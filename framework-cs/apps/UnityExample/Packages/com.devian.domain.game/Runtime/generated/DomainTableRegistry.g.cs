@@ -61,6 +61,48 @@ namespace Devian.Domain.Game
                 }
             });
 
+            global::Devian.TableManager.Instance.RegisterTbLoader("LEADERBOARD", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_LEADERBOARD.LoadFromNdjson(text);
+                    TB_LEADERBOARD._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_LEADERBOARD.LoadFromPb64Binary(bin);
+                    TB_LEADERBOARD._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("ACHIEVEMENT", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_ACHIEVEMENT.LoadFromNdjson(text);
+                    TB_ACHIEVEMENT._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_ACHIEVEMENT.LoadFromPb64Binary(bin);
+                    TB_ACHIEVEMENT._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("MISSION_STAT", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_MISSION_STAT.LoadFromNdjson(text);
+                    TB_MISSION_STAT._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_MISSION_STAT.LoadFromPb64Binary(bin);
+                    TB_MISSION_STAT._AfterLoad();
+                }
+            });
+
             global::Devian.TableManager.Instance.RegisterTbLoader("MISSION_DAY", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)

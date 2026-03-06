@@ -21,7 +21,7 @@ ID 매핑/트리거 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
 - `SyncAsync(ct)`:
   - 플랫폼 업적 상태를 읽는다.
   - "신규 달성으로 전환된 업적"만 `OnAchievementUnlocked(achievementId)`를 발생시킨다.
-- Sync로 "신규 달성"을 감지하면 `OnAchievementUnlocked(achievementId)`를 발생시킨다.
+- Manager는 `knownUnlockedAchievementIds`(내부 set)를 갱신하며, set에 새로 추가되는 업적만 이벤트를 발생시킨다.
 - 이벤트 소비자(MissionManager/상위 로직)가 이 이벤트를 소비해 중복 방지(자체 ledger) 후 RewardManager로 "지급 실행(Apply)"을 수행한다.
 
 연관:
@@ -32,7 +32,8 @@ ID 매핑/트리거 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
 
 - 상위 로직이 "업적 달성 조건 충족"을 결정한다(플랫폼이 결정하지 않음).
 - 즉시 `UnlockAchievementAsync(achievementId, ct)` 호출(플랫폼 반영)
-- 성공 시(또는 Sync에서 신규 달성 판별 시) `OnAchievementUnlocked(achievementId)` 신호가 발생한다.
+- `UnlockAchievementAsync` 성공 시에도 내부 set 전이(`false -> true`)가 확인될 때만 `OnAchievementUnlocked(achievementId)`를 발생시킨다.
+- 같은 업적에서 `UnlockAchievementAsync` 후 `SyncAsync`가 연속 호출되어도 이벤트는 1회만 발생해야 한다.
 - Reward 지급은 이벤트 소비자(MissionManager/상위 로직)가 자체 ledger로 중복 방지 후 RewardManager로 지급 실행을 위임한다.
 
 
@@ -60,22 +61,27 @@ ID 매핑/트리거 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
   - Sync에서 신규 달성만 이벤트 발생
 - 이벤트 소비자 중복 방지:
   - 동일 achievementId로 이벤트가 재발생해도 이벤트 소비자(MissionManager/상위 로직)의 자체 ledger 기준으로 중복 지급이 일어나지 않음
+- Manager 이벤트 중복 방지:
+  - 같은 업적에 대해 `UnlockAchievementAsync` + `SyncAsync` 연속 호출 시 이벤트가 1회만 발생
+- 플랫폼 의존성 비노출:
+  - Leaderboard 공개 API 시그니처/DTO에서 `apple`, `google`, `gpgs`, `gamecenter` 명칭 및 플랫폼 SDK 타입이 노출되지 않음
 
 
 ---
 
 
-## DoD (구현 단계 기준)
+## DoD (구현 기준)
 
 
 ### Hard (반드시 0)
 
-- 중복 지급(동일 achievementId) 0건 — `grantId` 멱등 처리로 보장
+- 중복 지급(동일 achievementId) 0건 — `achievement:{achievementId}` 멱등 키 처리로 보장
 - 초기화 전 API 호출 시 안전 실패(정해진 실패 결과) 0건 예외
 - 미지원 플랫폼/Editor에서 크래시 0건
 - Sync가 "신규 달성"만 이벤트 발생(이미 달성은 무시)
+- 공개 API/DTO에 플랫폼 의존 타입/필드 노출 0건
 
 
 ### Soft
 
-- 플랫폼 UI(리더보드/업적 화면) 제공 여부는 제품 요구에 따라 선택
+- 플랫폼 native UI(리더보드/업적 화면) 제공은 v1 범위 밖이며, 필요 시 별도 API 문서로 확장

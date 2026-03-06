@@ -23,8 +23,8 @@ namespace Devian.Domain.Game
         ACHIEVE = 1,
     }
 
-    /// <summary>MISSION_CONDITION_TYPE enum</summary>
-    public enum MISSION_CONDITION_TYPE
+    /// <summary>MISSION_STAT_TYPE enum</summary>
+    public enum MISSION_STAT_TYPE
     {
         NONE = 0,
         LOGIN = 1,
@@ -191,6 +191,42 @@ namespace Devian.Domain.Game
         public string GetKey() => CardId;
     }
 
+    /// <summary>LEADERBOARD row</summary>
+    public sealed class LEADERBOARD : IEntityKey<string>
+    {
+        public string LeaderboardId { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public string AppleLeaderboardId { get; set; } = string.Empty;
+        public string GoogleLeaderboardId { get; set; } = string.Empty;
+        public string ScoreOrder { get; set; } = string.Empty;
+
+        public string GetKey() => LeaderboardId;
+    }
+
+    /// <summary>ACHIEVEMENT row</summary>
+    public sealed class ACHIEVEMENT : IEntityKey<string>
+    {
+        public string AchievementId { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public string AppleAchievementId { get; set; } = string.Empty;
+        public string GoogleAchievementId { get; set; } = string.Empty;
+        public string Kind { get; set; } = string.Empty;
+        public int StepsTotal { get; set; }
+        public string RewardGroupId { get; set; } = string.Empty;
+
+        public string GetKey() => AchievementId;
+    }
+
+    /// <summary>MISSION_STAT row</summary>
+    public sealed class MISSION_STAT : IEntityKey<string>
+    {
+        public string MissionStatId { get; set; } = string.Empty;
+        public MISSION_STAT_TYPE StatType { get; set; }
+        public MISSION_OP_TYPE OpType { get; set; }
+
+        public string GetKey() => MissionStatId;
+    }
+
     /// <summary>MISSION_DAY row</summary>
     public sealed class MISSION_DAY : IEntityKey<string>
     {
@@ -198,8 +234,7 @@ namespace Devian.Domain.Game
         public bool IsActive { get; set; }
         public bool Fixed { get; set; }
         public int OrderNum { get; set; }
-        public MISSION_CONDITION_TYPE ConditionType { get; set; }
-        public MISSION_OP_TYPE ConditionOp { get; set; }
+        public string MissionStatId { get; set; } = string.Empty;
         public CBigInt? ConditionValue { get; set; }
         public string RewardGroupId { get; set; } = string.Empty;
 
@@ -213,8 +248,7 @@ namespace Devian.Domain.Game
         public string MissionId { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public int OrderNum { get; set; }
-        public MISSION_CONDITION_TYPE ConditionType { get; set; }
-        public MISSION_OP_TYPE ConditionOp { get; set; }
+        public string MissionStatId { get; set; } = string.Empty;
         public int Level { get; set; }
         public CBigInt? ConditionValue { get; set; }
         public string RewardGroupId { get; set; } = string.Empty;
@@ -505,6 +539,255 @@ namespace Devian.Domain.Game
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
                 var row = JsonConvert.DeserializeObject<CARD>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_LEADERBOARD container</summary>
+    public static partial class TB_LEADERBOARD
+    {
+        private static readonly Dictionary<string, LEADERBOARD> _dict = new();
+        private static readonly List<LEADERBOARD> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<LEADERBOARD> GetAll() => _list;
+
+        public static LEADERBOARD? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out LEADERBOARD? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(LEADERBOARD row)
+        {
+            _list.Add(row);
+            _dict[row.LeaderboardId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<LEADERBOARD>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<LEADERBOARD>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<LEADERBOARD>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_ACHIEVEMENT container</summary>
+    public static partial class TB_ACHIEVEMENT
+    {
+        private static readonly Dictionary<string, ACHIEVEMENT> _dict = new();
+        private static readonly List<ACHIEVEMENT> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<ACHIEVEMENT> GetAll() => _list;
+
+        public static ACHIEVEMENT? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out ACHIEVEMENT? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(ACHIEVEMENT row)
+        {
+            _list.Add(row);
+            _dict[row.AchievementId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<ACHIEVEMENT>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<ACHIEVEMENT>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<ACHIEVEMENT>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_MISSION_STAT container</summary>
+    public static partial class TB_MISSION_STAT
+    {
+        private static readonly Dictionary<string, MISSION_STAT> _dict = new();
+        private static readonly List<MISSION_STAT> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<MISSION_STAT> GetAll() => _list;
+
+        public static MISSION_STAT? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out MISSION_STAT? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(MISSION_STAT row)
+        {
+            _list.Add(row);
+            _dict[row.MissionStatId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<MISSION_STAT>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<MISSION_STAT>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<MISSION_STAT>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -1143,6 +1426,36 @@ namespace Devian.Domain.Game
         public static implicit operator CARD_ID(string value) => new CARD_ID { Value = value };
     }
 
+    /// <summary>Inspector-bindable ID for LEADERBOARD</summary>
+    [Serializable]
+    public sealed class LEADERBOARD_ID
+    {
+        public string Value;
+
+        public static implicit operator string(LEADERBOARD_ID id) => id.Value;
+        public static implicit operator LEADERBOARD_ID(string value) => new LEADERBOARD_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for ACHIEVEMENT</summary>
+    [Serializable]
+    public sealed class ACHIEVEMENT_ID
+    {
+        public string Value;
+
+        public static implicit operator string(ACHIEVEMENT_ID id) => id.Value;
+        public static implicit operator ACHIEVEMENT_ID(string value) => new ACHIEVEMENT_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for MISSION_STAT</summary>
+    [Serializable]
+    public sealed class MISSION_STAT_ID
+    {
+        public string Value;
+
+        public static implicit operator string(MISSION_STAT_ID id) => id.Value;
+        public static implicit operator MISSION_STAT_ID(string value) => new MISSION_STAT_ID { Value = value };
+    }
+
     /// <summary>Inspector-bindable ID for MISSION_DAY</summary>
     [Serializable]
     public sealed class MISSION_DAY_ID
@@ -1209,6 +1522,9 @@ namespace Devian.Domain.Game
         public static bool IsValid(this ADVERTISE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this EQUIP_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this CARD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this LEADERBOARD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this ACHIEVEMENT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this MISSION_STAT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MISSION_DAY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MISSION_ACHIEVE_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this PRODUCT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
