@@ -102,6 +102,6 @@ MissionMessageSystem 주석에는 callback payload 형식을 아래처럼 명시
 
 ## Related
 
-- [22-message-system](../../11-common-system/25-message-system/SKILL.md)
+- [22-message-system](../../20-domain-common-system/25-message-system/SKILL.md)
 - [03-ssot](../03-ssot/SKILL.md)
 - [10-mission-manager](../10-mission-manager/SKILL.md)

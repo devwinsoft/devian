@@ -213,7 +213,7 @@ Hierarchy 예시:
 ## Reference
 
 - 인덱스: `../../10-foundation/SKILL.md`
-- 입력 관리: `../../11-common-system/22-input-manager/SKILL.md`
-- 입력 소비: `../../11-common-system/21-input-controller/SKILL.md`
+- 입력 관리: `../../20-domain-common-system/22-input-manager/SKILL.md`
+- 입력 소비: `../../20-domain-common-system/21-input-controller/SKILL.md`
 - 정책 문서: `skills/devian-unity/50-mobile-system/01-policy/SKILL.md`
 - 샘플 작성 가이드: `skills/devian-unity/07-samples-creation-guide/SKILL.md`

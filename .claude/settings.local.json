@@ -222,7 +222,8 @@
       "Bash(perl -pi -e 's/^# 35-table-enumgen/# 52-table-enumgen/' \"$BASE/52-table-enumgen/SKILL.md\")",
       "Bash(perl -pi -e 's/^# 40-data-ndjson-storage/# 53-data-ndjson/' \"$BASE/53-data-ndjson/SKILL.md\")",
       "Bash(perl -pi -e 's/^# 41-data-pb64-storage/# 54-data-pb64/' \"$BASE/54-data-pb64/SKILL.md\")",
-      "Bash(perl -pi -e 's/^# 52-protocol-codegen-impl/# 55-protocol-codegen/' \"$BASE/55-protocol-codegen/SKILL.md\")"
+      "Bash(perl -pi -e 's/^# 52-protocol-codegen-impl/# 55-protocol-codegen/' \"$BASE/55-protocol-codegen/SKILL.md\")",
+      "Bash(git log --full-history --diff-filter=D --summary)"
     ]
   },
   "project": {

@@ -446,35 +446,51 @@ namespace Devian.Protocol.Game
         }
 
         /// <summary>
-        /// Abstract stub for Game2C handlers.
-        /// Inherit and implement all On* methods.
+        /// Handler interface for Game2C inbound messages.
         /// </summary>
-        public abstract class Stub
+        public interface IHandler
         {
-            protected ICodec Codec { get; }
+            void OnPong(EnvelopeMeta meta, Pong message);
+            void OnEchoReply(EnvelopeMeta meta, EchoReply message);
+        }
 
-            protected Stub(ICodec? codec = null)
+        /// <summary>
+        /// Sealed stub for Game2C dispatch.
+        /// Register handler via SetHandler(IHandler).
+        /// </summary>
+        public sealed class Stub
+        {
+            private ICodec Codec { get; }
+            private IHandler? _handler;
+
+            public Stub(ICodec? codec = null)
             {
                 Codec = codec ?? new CodecProtobuf();
             }
 
+            public void SetHandler(IHandler handler)
+            {
+                _handler = handler ?? throw new ArgumentNullException(nameof(handler));
+            }
+
             public void Dispatch(PacketEnvelope envelope)
             {
+                var handler = _handler ?? throw new InvalidOperationException("No handler registered. Call SetHandler() before dispatching.");
                 switch (envelope.Opcode)
                 {
                     case Opcodes.Pong:
                         var pong = Codec.Decode<Pong>(envelope.Payload);
-                        OnPong(envelope.Meta, pong);
+                        handler.OnPong(envelope.Meta, pong);
                         break;
                     case Opcodes.EchoReply:
                         var echoReply = Codec.Decode<EchoReply>(envelope.Payload);
-                        OnEchoReply(envelope.Meta, echoReply);
+                        handler.OnEchoReply(envelope.Meta, echoReply);
+                        break;
+                    default:
+                        Log.Warn($"[Game2C.Stub] Unknown opcode: {envelope.Opcode}");
                         break;
                 }
             }
-
-            protected abstract void OnPong(EnvelopeMeta meta, Pong message);
-            protected abstract void OnEchoReply(EnvelopeMeta meta, EchoReply message);
         }
 
         /// <summary>

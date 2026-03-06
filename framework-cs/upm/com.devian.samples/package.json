@@ -14,11 +14,6 @@
       "path": "Samples~/GameContents"
     },
     {
-      "displayName": "GameNetwork",
-      "description": "Bundle sample: installs GameNetManager + Game2CStub (WebSocket client).",
-      "path": "Samples~/GameNetwork"
-    },
-    {
       "displayName": "MobileSystem",
       "description": "Bundle sample: installs FirebaseManager + SaveSystem + AccountManager + PurchaseManager together.",
       "path": "Samples~/MobileSystem"

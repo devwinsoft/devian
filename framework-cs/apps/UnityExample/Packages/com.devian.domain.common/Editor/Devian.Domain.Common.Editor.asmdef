@@ -4,7 +4,8 @@
   "references": [
     "Devian.Domain.Common",
     "Devian.Unity.Editor",
-    "Unity.InputSystem"
+    "Unity.InputSystem",
+    "Devian.Unity"
   ],
   "includePlatforms": [
     "Editor"

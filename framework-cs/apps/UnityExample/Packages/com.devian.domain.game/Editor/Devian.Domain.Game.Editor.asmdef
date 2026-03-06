@@ -5,7 +5,8 @@
     "Devian.Domain.Game",
     "Devian.Domain.Common",
     "Devian.Domain.Common.Editor",
-    "Devian.Unity.Editor"
+    "Devian.Unity.Editor",
+    "Devian.Unity"
   ],
   "includePlatforms": [
     "Editor"

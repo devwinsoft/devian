@@ -70,7 +70,7 @@ SaveDataManager → 평문 JSON (~100KB)
 - DevianShare 네이티브 플러그인 — OS 공유 시트 호출 (Export), 파일 선택 다이얼로그 (Import 경로 B) ([30-recovery-platform](../30-recovery-platform/SKILL.md) 참조)
 
 운영툴:
-- [50-operation](../../../../devian/80-tools/50-operation/00-overview/SKILL.md) — 게임 운영 도구 (encode/decode 등)
+- [20-operation](../../../../devian/80-tools/20-operation/00-overview/SKILL.md) — 게임 운영 도구 (encode/decode 등)
 
 
 ---

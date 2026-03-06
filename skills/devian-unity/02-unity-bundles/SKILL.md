@@ -12,7 +12,7 @@ AppliesTo: v11
 이 문서는 **UnityExample embedded 패키지 묶음(번들)**의 **구성/레이아웃/asmdef 규약**을 정의한다.
 
 > **주의:** 이 문서는 "패키지"가 아니라 **번들 정책(embedded 패키지 묶음)**을 정의한다.
-> 도메인 모듈 정책은 `skills/devian-unity/11-common-system/02-module-policy/SKILL.md`를 참조한다.
+> 도메인 모듈 정책은 `skills/devian/20-domain-common/02-module-policy/SKILL.md`를 참조한다.
 
 ---
 
@@ -105,4 +105,4 @@ dependencies 상세 테이블은 [04-package-metadata](../04-package-metadata/SK
 - [Unity Policy](../01-policy/SKILL.md) — UPM Sync/동기화 규칙
 - [Package Metadata](../04-package-metadata/SKILL.md) — package.json 메타데이터/dependencies
 - [Root SSOT](../../devian/10-module/03-ssot/SKILL.md) — Foundation Package SSOT
-- [Module Policy](../11-common-system/02-module-policy/SKILL.md) — 도메인 모듈 정책
+- [Module Policy](../../devian/20-domain-common/02-module-policy/SKILL.md) — 도메인 모듈 정책

@@ -4,6 +4,7 @@ import { defineConfig } from 'vite';
 
 const IMPORT_ENDPOINT = '/__operation/import-reward-id-catalog';
 const operationDir = __dirname;
+const cacheDir = path.resolve(operationDir, '../../node_modules/.vite/operation');
 
 function writeJson(
   res: {
@@ -20,6 +21,7 @@ function writeJson(
 }
 
 export default defineConfig({
+  cacheDir,
   plugins: [
     {
       name: 'operation-import-reward-id-catalog-api',

@@ -106,114 +106,150 @@ Registry는 "생성된 입력" 파일로, 기계가 생성하지만 입력 폴�
 
 ---
 
-## Handlers / WsClient 미생성 (Hard Rule)
+## Networker / SessionHost 생성 (Hard Rule)
 
-**현재 프로토콜 코드젠은 Handlers와 WsClient를 생성하지 않는다.**
+**프로토콜 코드젠은 Stub, Proxy, Runtime 외에 Networker와 SessionHost를 프로토콜별로 생성한다.**
 
-### 제거된 생성물
+### Stub 변경 (기존 `.g.cs` 내부)
 
-- `{ProtocolName}_Handlers.g.cs` (예: C2Game_Handlers.g.cs, Game2C_Handlers.g.cs)
-- `{GroupName}WsClient.g.cs` (예: GameWsClient.g.cs)
+| 항목 | 기존 | 변경 |
+|------|------|------|
+| 클래스 | `abstract class Stub` / `protected` 생성자 | `sealed class Stub` / `public` 생성자 |
+| 메시지 핸들링 | `protected abstract void OnXxx()` | `_handler.OnXxx()` (IHandler 위임) |
+| 확장 방식 | 상속 (override) | `IHandler` 구현 + `SetHandler()` 호출 |
 
-### 제거 사유
+### IHandler 인터페이스
 
-- WsClient/Handlers는 중복 레이어로 오해 유발
-- 표준 흐름인 `GameNetManager + generated ClientSessionHost + send-only Proxy` 패턴으로 충분
-- 사용자는 Stub를 직접 상속하거나, 별도 partial class를 수기로 작성
-
-### 표준 연결 흐름 (권장)
+각 `{Protocol}.g.cs`의 `static partial class {Protocol}` 내부에 `IHandler` 인터페이스를 생성한다.
 
 ```csharp
-// GameNetManager는 session host를 통해 lifecycle을 관리
-private readonly Game2CStub _stub = new();
-private readonly C2Game.Proxy _proxy = new();
-private ClientSessionHost? _sessionHost;
-
-protected override void Awake()
+// Game2C.g.cs 내부
+public interface IHandler
 {
-    base.Awake();
-    _sessionHost = new ClientSessionHost(_stub, _proxy);
+    void OnPong(EnvelopeMeta meta, Pong message);
+    void OnEchoReply(EnvelopeMeta meta, EchoReply message);
 }
 
-public void Connect(string url)
+public sealed class Stub
 {
-    SessionHost.Connect(url);
+    private IHandler _handler = null!;
+    public Stub(ICodec? codec = null) { ... }
+    public void SetHandler(IHandler handler) => _handler = handler;
+    public void Dispatch(PacketEnvelope envelope) { /* _handler.OnXxx() 호출, unknown opcode → Log.Warn */ }
+}
+```
+
+### {Protocol}SessionHost
+
+프로토콜별 세션 호스트. 기존 그룹 단위 `ClientSessionHost.g.cs`를 대체한다.
+교차 프로토콜 조합: `{Protocol}.Stub`(수신) + `{CounterProtocol}.Proxy`(송신).
+
+```csharp
+// Game2CSessionHost.g.cs
+public sealed class Game2CSessionHost : NetClientSessionHost
+{
+    public Game2CSessionHost(
+        Game2C.Stub stub,
+        C2Game.Proxy proxy,
+        INetConnector? connector = null)
+        : base(
+            () => new Game2C.Runtime(stub),
+            new INetSessionBindable[] { proxy },
+            connector)
+    { }
+}
+```
+
+### {Protocol}Networker
+
+프로토콜별 Networker (plain C#).
+
+```csharp
+// Game2CNetworker.g.cs
+public sealed class Game2CNetworker
+{
+    private readonly Game2C.Stub _stub;
+    private readonly C2Game.Proxy _proxy;
+    private readonly Game2CSessionHost _session;
+
+    public C2Game.Proxy Proxy => _proxy;
+
+    public Game2CNetworker(INetConnector? connector = null)
+    {
+        _stub = new Game2C.Stub();
+        _proxy = new C2Game.Proxy();
+        _session = new Game2CSessionHost(_stub, _proxy, connector);
+    }
+
+    public void SetHandler(Game2C.IHandler handler) => _stub.SetHandler(handler);
+
+    public void Connect(string url)
+    {
+        Log.Info($"[Game2CNetworker] Connect: {url}");
+        _session.Connect(url);
+    }
+
+    public void Tick() => _session.Tick();
+
+    public void Disconnect()
+    {
+        Log.Info("[Game2CNetworker] Disconnect");
+        _session.Disconnect();
+    }
+}
+```
+
+### 교차 프로토콜 조합 규칙
+
+프로토콜 그룹 내에서 direction이 반대인 프로토콜끼리 페어링된다.
+
+```
+Game 그룹:
+  Game2C (server_to_client) ↔ C2Game (client_to_server)
+
+  Game2CNetworker  = Game2C.Stub  + C2Game.Proxy  (클라이언트용)
+  C2GameNetworker  = C2Game.Stub  + Game2C.Proxy  (서버용)
+```
+
+### 표준 사용 흐름
+
+```csharp
+// 1. IHandler 구현
+public class MyGameHandler : Game2C.IHandler
+{
+    public void OnPong(Game2C.EnvelopeMeta meta, Game2C.Pong message) { ... }
+    public void OnEchoReply(Game2C.EnvelopeMeta meta, Game2C.EchoReply message) { ... }
 }
 
-private void Update()
-{
-    _sessionHost?.Tick();
-}
+// 2. 생성 + 핸들러 설정 + 연결
+var networker = new Game2CNetworker();
+networker.SetHandler(new MyGameHandler());
+networker.Connect("ws://localhost:8080");
+
+// 3. 매 프레임
+networker.Tick();
+
+// 4. 송신
+networker.Proxy.SendPing(new C2Game.Ping { Timestamp = now });
+
+// 5. 정리
+networker.Disconnect();
 ```
 
 ### SessionHost 연결 규칙 (Hard Rule)
 
-**Generated Proxy는 연결 수명주기를 다시 가지면 안 된다. 연결/정리/이벤트/state는 session owner 한 곳에만 둔다.**
+**Generated Proxy는 연결 수명주기를 다시 가지면 안 된다. 연결/정리/이벤트/state는 Networker/SessionHost 한 곳에만 둔다.**
 
 **핵심 규칙:**
 1. generated `Proxy` public API는 `AttachSession()`, `DetachSession()`, `SendXxx()`로 설명 가능해야 한다
-2. session owner가 paired inbound runtime 생성, `INetSession` 생성, 이벤트 구독, `AttachSession()` 호출을 맡는다
-3. 세션 해제 시 session owner가 먼저 이벤트를 끊고 `DetachSession()`으로 stale binding을 제거한다
-
-**생성 코드 핵심부:**
-```csharp
-var runtime = new Game2C.Runtime(_stub);
-var session = _connector.CreateSession(runtime, url);
-
-session.OnOpen += _sessionOpenHandler;
-session.OnClose += _sessionCloseHandler;
-session.OnError += _sessionErrorHandler;
-
-_proxy.AttachSession(session);
-```
-
-**금지:**
-
-```csharp
-public void Connect(Stub stub, string url, INetConnector connector)
-{
-    // Do not reintroduce lifecycle ownership into generated proxy.
-}
-```
+2. Networker/SessionHost가 paired inbound runtime 생성, `INetSession` 생성, 이벤트 구독, `AttachSession()` 호출을 맡는다
+3. 세션 해제 시 Networker/SessionHost가 먼저 이벤트를 끊고 `DetachSession()`으로 stale binding을 제거한다
 
 ### OnError 디듀프 가드 (Hard Rule)
 
 **`NetClientSessionHost`는 연결 실패 시 OnError를 Attempt당 최대 1회만 발생시킨다(디듀프 가드).**
 
 > 이 로직은 foundation 수기 코드(`NetClientSessionHost`)에 구현되어 있다. Generated Proxy는 send-only이며 에러 가드를 갖지 않는다.
-
-**필드 (NetClientSessionHost 내부):**
-```csharp
-private bool _errorNotified; // Error dedup guard (max 1 OnError per attempt)
-```
-
-**리셋 위치:**
-| 메서드 | 리셋 타이밍 |
-|--------|-------------|
-| `Connect()` | 새 연결 시작 전 |
-| `HandleOpen()` | 연결 성공 시 |
-| `ReleaseSession()` | 세션 정리 시 |
-
-**HandleError 구현:**
-```csharp
-private void HandleError(INetSession session, Exception ex)
-{
-    if (!ReferenceEquals(_session, session))
-        return;
-
-    _isConnecting = false;
-    _lastError = ex.Message;
-
-    if (_errorNotified)
-        return;
-
-    _errorNotified = true;
-    OnError?.Invoke(ex);
-
-    if (_session?.State == NetClientState.Faulted)
-        ReleaseSession(disposeSession: true, detachBindings: true);
-}
-```
 
 **핵심 규칙:**
 1. 한 연결 시도에서 OnError는 최대 1회만 Invoke
@@ -231,6 +267,9 @@ private void HandleError(INetSession session, Exception ex)
 |-----------|----------|
 | `Runtime/Devian.Protocol.{Group}.asmdef` | 수기 파일 (빌더 수정 금지) |
 | `Runtime/Generated/{ProtocolName}.g.cs` | ✅ 생성/갱신 |
+| `Runtime/Generated/{Protocol}SessionHost.g.cs` | ✅ 생성/갱신 |
+| `Runtime/Generated/{Protocol}Networker.g.cs` | ✅ 생성/갱신 |
+| ~~`Runtime/Generated/ClientSessionHost.g.cs`~~ | ❌ 삭제 (프로토콜별 SessionHost로 대체) |
 | `package.json` | 수기 파일 (빌더 수정 금지) |
 | `Editor/` 폴더 | ❌ 생성 금지, 존재 시 레거시 청소로 삭제 |
 
@@ -374,7 +413,8 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 | `framework-ts/tools/builder/build.js` | `generateCsproj(...)` | C# csproj 생성/보정 (ProtocolGroup 포함) |
 | `framework-ts/tools/builder/build.js` | `ensureProtocolPackageJson(...)` | TS package.json 생성/보정 |
 | `framework-ts/tools/builder/generators/protocol-cs.js` | `generateCSharpProtocol(...)` | C# `{ProtocolName}.g.cs` 생성 |
-| `framework-ts/tools/builder/generators/protocol-cs.js` | `generateCSharpClientSessionHost(...)` | C# `ClientSessionHost.g.cs` 생성 |
+| `framework-ts/tools/builder/generators/protocol-cs.js` | `generateCSharpSessionHost(...)` | C# `{Protocol}SessionHost.g.cs` 생성 |
+| `framework-ts/tools/builder/generators/protocol-cs.js` | `generateCSharpNetworker(...)` | C# `{Protocol}Networker.g.cs` 생성 |
 
 **의존성 Hard Rule이 실제로 강제되는 지점:**
 

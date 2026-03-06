@@ -52,7 +52,7 @@ AppliesTo: v10
 | 프로토콜 코드젠 보기 | [skills/devian/80-tools/11-builder/33-protocol-spec](./80-tools/11-builder/33-protocol-spec/SKILL.md) |
 | Unity 정책 확인하기 | [skills/devian-unity/01-policy](../devian-unity/01-policy/SKILL.md) |
 | 샘플 작성하기 | [skills/devian-unity/07-samples-creation-guide](../devian-unity/07-samples-creation-guide/SKILL.md) |
-| Game 도메인 전체 보기 | [40-game-contents/11-game-domain](../devian-unity/40-game-contents/11-game-domain/SKILL.md) |
+| Game 도메인 전체 보기 | [21-domain-game-system/11-game-domain](../devian-unity/21-domain-game-system/11-game-domain/SKILL.md) |
 
 ---
 
@@ -62,12 +62,13 @@ AppliesTo: v10
 |-------|----------|--------|------|------|
 | **devian** | [00-overview](./00-overview/SKILL.md) | [01-policy](./01-policy/SKILL.md) | — | 공통 인덱스, 용어, workspace |
 | **devian/10-module** | [00-overview](./10-module/00-overview/SKILL.md) | [01-policy](./10-module/01-policy/SKILL.md) | [03-ssot](./10-module/03-ssot/SKILL.md) | Root SSOT, 스킬 규격, 런타임 |
+| **devian/20-domain-common** | [00-overview](./20-domain-common/00-overview/SKILL.md) | [01-policy](./20-domain-common/01-policy/SKILL.md) | — | Common Domain C#/TS 공통 정책 |
 | **devian/80-tools** | [00-overview](./80-tools/00-overview/SKILL.md) | [01-policy](./80-tools/01-policy/SKILL.md) | [03-ssot](./80-tools/03-ssot/SKILL.md) | 아카이브, CLI 도구 |
 | **devian/80-tools/11-builder** | [00-overview](./80-tools/11-builder/00-overview/SKILL.md) | [01-policy](./80-tools/11-builder/01-policy/SKILL.md) | [03-ssot](./80-tools/11-builder/03-ssot/SKILL.md) | 빌드, 테이블, 계약, NDJSON, PB64, 프로토콜 코드젠, 에러 리포팅 |
-| **devian-unity/11-common-system** | [00-overview](../devian-unity/11-common-system/00-overview/SKILL.md) | [01-policy](../devian-unity/11-common-system/01-policy/SKILL.md) | — | Common 도메인, Feature 모듈 |
+| **devian-unity/20-domain-common-system** | [00-overview](../devian-unity/20-domain-common-system/00-overview/SKILL.md) | — | — | Unity 공용 런타임 컴포넌트 |
 | **devian-unity** | [00-overview](../devian-unity/00-overview/SKILL.md) | [01-policy](../devian-unity/01-policy/SKILL.md) | [03-ssot](../devian-unity/03-ssot/SKILL.md) | Unity UPM, 컴포넌트 |
 | **devian-examples** | [00-overview](../devian-examples/00-overview/SKILL.md) | [01-policy](../devian-examples/01-policy/SKILL.md) | [03-ssot](../devian-examples/03-ssot/SKILL.md) | 예제 도메인/프로토콜 |
-| **devian-unity/40-game-contents** | [00-overview](../devian-unity/40-game-contents/00-overview/SKILL.md) | [01-policy](../devian-unity/40-game-contents/01-policy/SKILL.md) | — | Game Contents 샘플 |
+| **devian-unity/21-domain-game-system** | [00-overview](../devian-unity/21-domain-game-system/00-overview/SKILL.md) | [01-policy](../devian-unity/21-domain-game-system/01-policy/SKILL.md) | — | Game Contents 샘플 |
 | **devian-unity/50-mobile-system** | [00-overview](../devian-unity/50-mobile-system/00-overview/SKILL.md) | [01-policy](../devian-unity/50-mobile-system/01-policy/SKILL.md) | — | MobileSystem 샘플 |
 
 ---

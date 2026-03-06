@@ -109,7 +109,12 @@ PROTOCOL 입력은 `{buildInputJson}`의 `protocols` 섹션(배열)이 정의한
 
 **C# (ProtocolGroup = {ProtocolGroup}):**
 - staging: `{tempDir}/Devian.Protocol.{ProtocolGroup}/cs/Generated/{ProtocolName}.g.cs`
+- staging: `{tempDir}/Devian.Protocol.{ProtocolGroup}/cs/Generated/{Protocol}SessionHost.g.cs`
+- staging: `{tempDir}/Devian.Protocol.{ProtocolGroup}/cs/Generated/{Protocol}Networker.g.cs`
 - final: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/Generated/{ProtocolName}.g.cs`
+- final: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/Generated/{Protocol}SessionHost.g.cs`
+- final: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/Generated/{Protocol}Networker.g.cs`
+- ~~`ClientSessionHost.g.cs`~~ — 삭제 (프로토콜별 `{Protocol}SessionHost`로 대체)
 - 프로젝트 파일: `{csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/Devian.Protocol.{ProtocolGroup}.csproj` (수기/고정, 빌더가 생성/수정 금지)
 - namespace: `Devian.Protocol.{ProtocolGroup}` (변경 금지)
 
@@ -129,6 +134,8 @@ PROTOCOL 입력은 `{buildInputJson}`의 `protocols` 섹션(배열)이 정의한
 **UPM 산출물 경로:**
 - staging 생성/수정 허용 대상: `{tempDir}/Devian.Protocol.{ProtocolGroup}/cs/Generated/**`
 - final 반영 대상 (빌더가 touch 가능한 범위): `{upmConfig.sourceDir}/com.devian.protocol.{suffix}/Runtime/Generated/**`
+- final 포함 파일: `{Protocol}.g.cs`, `{Protocol}SessionHost.g.cs`, `{Protocol}Networker.g.cs`
+- ~~`ClientSessionHost.g.cs`~~ — 삭제 대상
 
 > UPM은 별도 `-upm` staging을 만들지 않으며, C# staging(`…/cs/Generated`)을 그대로 UPM `Runtime/Generated`로 copy한다.
 
@@ -237,7 +244,7 @@ DATA 입력은 `{buildInputJson}`의 `domains` 섹션이 정의한다.
   - C#: `Devian.Domain.Common` (프로젝트명)
   - TS: `@devian/module-common` (폴더명: `devian-domain-common`)
 
-> Common 모듈의 상세 정책은 [skills/devian-unity/11-common-system/02-module-policy](../../../../devian-unity/11-common-system/02-module-policy/SKILL.md)를 참조한다.
+> Common 모듈의 상세 정책은 [skills/devian/20-domain-common/02-module-policy](../../../../devian/20-domain-common/02-module-policy/SKILL.md)를 참조한다.
 
 ### 필수 개념
 

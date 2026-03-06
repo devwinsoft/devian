@@ -23,6 +23,7 @@ GameObject:
   - component: {fileID: 7691740064264017214}
   - component: {fileID: 4270489610711966219}
   - component: {fileID: 8572747815453236100}
+  - component: {fileID: 8705769377174467348}
   m_Layer: 0
   m_Name: Bootstrap
   m_TagString: Untagged
@@ -137,7 +138,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2454387350981742136}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 14c7b65e654c0457e9530444a013b19a, type: 3}
+  m_Script: {fileID: 11500000, guid: ecf6605031bb1471f9cad7d5b69bbcb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.GameContents::Devian.GameNetManager
 --- !u!114 &230484287148134745
@@ -239,6 +240,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 573f2a8cb90944e4aa546a8879926dcb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.RecoveryManager
+--- !u!114 &8705769377174467348
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2454387350981742136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 54481cdbb4780434eb9b48ffbc015a53, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.FirebaseManager
 --- !u!1 &6261706322476616027
 GameObject:
   m_ObjectHideFlags: 0

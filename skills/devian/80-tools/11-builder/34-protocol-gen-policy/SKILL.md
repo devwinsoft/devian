@@ -16,7 +16,11 @@ Protocol codegen의 언어별 산출물(C#/TS)에 대한 **문서 정책**을 �
 ## C# Output Policy
 
 - ProtocolName 단위로 하나의 C# 생성물 파일을 만든다.
-- 생성물은 “메시지 정의 + codec + 소비자 구현 지점(handlers/stub 등) + 발신 프록시(sender/proxy 등)”을 제공해야 한다.
+- 생성물은 “메시지 정의 + codec + Stub(sealed, IHandler 위임) + Proxy(발신) + SessionHost + Networker”를 제공해야 한다.
+- Stub: `sealed class` / `public` 생성자. `IHandler` 인터페이스 + `SetHandler()` (abstract 상속 대신 handler 위임).
+- 프로토콜 파일당 `{Protocol}SessionHost.g.cs` + `{Protocol}Networker.g.cs` 추가 생성.
+- Networker는 교차 프로토콜 조합: `{Protocol}.Stub`(수신) + `{CounterProtocol}.Proxy`(송신).
+- 기존 그룹 단위 `ClientSessionHost.g.cs`는 삭제 (프로토콜별 SessionHost로 대체).
 - C# 생성물은 **Unity 호환(IL2CPP/Span 제한 고려)** 을 전제로 한다.
 
 ## TypeScript Output Policy

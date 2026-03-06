@@ -372,6 +372,6 @@ UICanvas.CreateFrame<FRAME>(prefabName, parent)
 
 ## Reference
 
-- **Singleton**: [11-common-system/29-singleton/SKILL.md](../../11-common-system/29-singleton/SKILL.md)
-- **Pool System**: [11-common-system/27-pool-system/SKILL.md](../../11-common-system/27-pool-system/SKILL.md)
+- **Singleton**: [20-domain-common-system/29-singleton/SKILL.md](../../20-domain-common-system/29-singleton/SKILL.md)
+- **Pool System**: [20-domain-common-system/27-pool-system/SKILL.md](../../20-domain-common-system/27-pool-system/SKILL.md)
 - **UIManager**: [10-ui-manager/SKILL.md](../10-ui-manager/SKILL.md)

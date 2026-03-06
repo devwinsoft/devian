@@ -2,7 +2,6 @@
 
 #nullable enable
 
-using System;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -26,7 +25,7 @@ namespace Devian
         {
             onInitAwake();
         }
-        
+
         /// <summary>
         /// Unity Start 시점. onStart()를 호출한다.
         /// </summary>

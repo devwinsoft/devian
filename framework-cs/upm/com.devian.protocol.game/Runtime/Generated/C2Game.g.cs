@@ -442,35 +442,51 @@ namespace Devian.Protocol.Game
         }
 
         /// <summary>
-        /// Abstract stub for C2Game handlers.
-        /// Inherit and implement all On* methods.
+        /// Handler interface for C2Game inbound messages.
         /// </summary>
-        public abstract class Stub
+        public interface IHandler
         {
-            protected ICodec Codec { get; }
+            void OnPing(EnvelopeMeta meta, Ping message);
+            void OnEcho(EnvelopeMeta meta, Echo message);
+        }
 
-            protected Stub(ICodec? codec = null)
+        /// <summary>
+        /// Sealed stub for C2Game dispatch.
+        /// Register handler via SetHandler(IHandler).
+        /// </summary>
+        public sealed class Stub
+        {
+            private ICodec Codec { get; }
+            private IHandler? _handler;
+
+            public Stub(ICodec? codec = null)
             {
                 Codec = codec ?? new CodecProtobuf();
             }
 
+            public void SetHandler(IHandler handler)
+            {
+                _handler = handler ?? throw new ArgumentNullException(nameof(handler));
+            }
+
             public void Dispatch(PacketEnvelope envelope)
             {
+                var handler = _handler ?? throw new InvalidOperationException("No handler registered. Call SetHandler() before dispatching.");
                 switch (envelope.Opcode)
                 {
                     case Opcodes.Ping:
                         var ping = Codec.Decode<Ping>(envelope.Payload);
-                        OnPing(envelope.Meta, ping);
+                        handler.OnPing(envelope.Meta, ping);
                         break;
                     case Opcodes.Echo:
                         var echo = Codec.Decode<Echo>(envelope.Payload);
-                        OnEcho(envelope.Meta, echo);
+                        handler.OnEcho(envelope.Meta, echo);
+                        break;
+                    default:
+                        Log.Warn($"[C2Game.Stub] Unknown opcode: {envelope.Opcode}");
                         break;
                 }
             }
-
-            protected abstract void OnPing(EnvelopeMeta meta, Ping message);
-            protected abstract void OnEcho(EnvelopeMeta meta, Echo message);
         }
 
         /// <summary>

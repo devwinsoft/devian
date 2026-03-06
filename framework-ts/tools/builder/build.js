@@ -9,7 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 
 // Generators
-import { generateCSharpProtocol, generateCSharpClientSessionHost } from './generators/protocol-cs.js';
+import { generateCSharpProtocol, generateCSharpSessionHost, generateCSharpNetworker } from './generators/protocol-cs.js';
 // NOTE: generateCSharpProtocolHandlers, generateCSharpProtocolGroupWsClient removed
 // Handlers/WsClient are no longer generated - use GameNetManager + session host + send-only Proxy pattern instead
 import { generateTypeScriptProtocol, generateServerRuntime, generateClientRuntime } from './generators/protocol-ts.js';
@@ -1156,10 +1156,28 @@ class DevianToolBuilder {
             fs.writeFileSync(path.join(stagingTsGenerated, `${protocolName}.g.ts`), tsCode);
         }
 
-        const clientSessionHostCode = generateCSharpClientSessionHost(groupName, protocolInfos);
-        if (clientSessionHostCode !== null) {
-            fs.writeFileSync(path.join(stagingCsGenerated, 'ClientSessionHost.g.cs'), clientSessionHostCode);
-            console.log(`    [ClientSessionHost] Generated/ClientSessionHost.g.cs`);
+        // Generate per-protocol SessionHost + Networker (cross-protocol pairing)
+        for (const proto of protocolInfos) {
+            // Find counter-protocol with opposite direction
+            const counterProtos = protocolInfos.filter(p => {
+                if (p.name === proto.name) return false;
+                if (proto.direction === 'server_to_client') return p.direction === 'client_to_server' || p.direction === 'bidirectional';
+                if (proto.direction === 'client_to_server') return p.direction === 'server_to_client' || p.direction === 'bidirectional';
+                if (proto.direction === 'bidirectional') return p.name !== proto.name;
+                return false;
+            });
+
+            if (counterProtos.length === 1) {
+                const counter = counterProtos[0];
+
+                const sessionHostCode = generateCSharpSessionHost(proto.name, counter.name, groupName);
+                fs.writeFileSync(path.join(stagingCsGenerated, `${proto.name}SessionHost.g.cs`), sessionHostCode);
+                console.log(`    [SessionHost] Generated/${proto.name}SessionHost.g.cs`);
+
+                const networkerCode = generateCSharpNetworker(proto.name, counter.name, groupName);
+                fs.writeFileSync(path.join(stagingCsGenerated, `${proto.name}Networker.g.cs`), networkerCode);
+                console.log(`    [Networker] Generated/${proto.name}Networker.g.cs`);
+            }
         }
 
         // NOTE: .csproj 생성 제거 (수기/고정 파일, 빌더가 생성/수정 금지)
@@ -3303,26 +3321,26 @@ export * from './features';
     }
 
     /**
-     * Verify that unity-common TableId base files exist.
-     * Prevents build from succeeding when critical files are missing.
+     * Verify that domain.common TableId base files exist.
+     * Prevents build from succeeding when critical base classes are missing.
+     * Runs after code generation + UPM sync so generated Editor files are in place.
      */
     async verifyUnityCommonTableIdFiles() {
         // Use upmPackageDir from upmConfig (validated in run())
         if (!this.upmPackageDir) {
-            console.log('  [SKIP] No upmPackageDir configured, skipping unity-common guard check');
+            console.log('  [SKIP] No upmPackageDir configured, skipping domain.common guard check');
             return;
         }
 
-        const foundationPath = path.join(this.upmPackageDir, 'com.devian.foundation');
+        const domainCommonPath = path.join(this.upmPackageDir, 'com.devian.domain.common');
         const requiredFiles = [
-            'Editor/TableId/BaseEditorID_Selector.cs',
-            'Editor/TableId/BaseEditorID_Drawer.cs',
-            'Editor/Devian.Unity.Editor.asmdef'
+            'Editor/Unity/TableId/BaseEditorID_Selector.cs',
+            'Editor/Unity/TableId/BaseEditorID_Drawer.cs'
         ];
 
         const missingFiles = [];
         for (const relPath of requiredFiles) {
-            const fullPath = path.join(foundationPath, relPath);
+            const fullPath = path.join(domainCommonPath, relPath);
             if (!fs.existsSync(fullPath)) {
                 missingFiles.push(relPath);
             }
@@ -3330,18 +3348,18 @@ export * from './features';
 
         if (missingFiles.length > 0) {
             console.error();
-            console.error('[FAIL] com.devian.foundation is missing Editor/TableId base files:');
+            console.error('[FAIL] com.devian.domain.common is missing Editor/Unity/TableId base files:');
             for (const file of missingFiles) {
                 console.error(`       - ${file}`);
             }
             console.error();
-            console.error('Fix: Ensure com.devian.foundation package contains Editor/TableId base files.');
-            console.error('     These files should be in: upm/com.devian.foundation/Editor/TableId/');
+            console.error('Fix: Ensure com.devian.domain.common package contains Editor/Unity/TableId base files.');
+            console.error('     These files should be in: upm/com.devian.domain.common/Editor/Unity/TableId/');
             console.error();
-            throw new Error('[FAIL] Foundation package is missing Editor/TableId base files.');
+            throw new Error('[FAIL] domain.common package is missing Editor/Unity/TableId base files.');
         }
 
-        console.log('  [Guard] foundation TableId base files verified');
+        console.log('  [Guard] domain.common TableId base files verified');
     }
 
 

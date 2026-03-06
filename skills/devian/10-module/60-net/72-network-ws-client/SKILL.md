@@ -92,11 +92,10 @@ Generated Protocol Proxy는 **send path에 필요한 인터페이스에만 의�
    - `BaseNetClient : INetSession` — 세션 구현
    - `NetWsConnector : INetConnector` — WebSocket 세션 생성 (공통 구현)
 
-6. **Unity 샘플에서는 Manager가 Stub/Proxy/SessionHost를 소유한다**
-   - GameNetManager는 CompoSingleton (중복 인스턴스 방지)
-   - Awake에서 stub(Game2CStub)/proxy(C2Game.Proxy)/sessionHost 생성 + host 이벤트 구독
-   - Connect에서 `SessionHost.Connect(url)` 호출
-   - Update에서 `_sessionHost?.Tick()` 호출
+6. **Generated Networker가 Stub/Proxy/SessionHost를 소유한다**
+   - `Game2CNetworker`는 plain C# (IDisposable)
+   - `Game2C.Stub`(수신) + `C2Game.Proxy`(송신) + `Game2CSessionHost` 조합
+   - `SetHandler()` → `Connect()` → `Tick()` → `Proxy.Send*()` → `Dispose()`
 
 7. **Session owner가 session binding을 수행한다**
    - `proxy.AttachSession(session)` — 현재 세션 부착
@@ -106,8 +105,7 @@ Generated Protocol Proxy는 **send path에 필요한 인터페이스에만 의�
 **이유:**
 - Generated Proxy가 구체 네트워크 구현을 참조하지 않아 의존성 분리
 - NetWsConnector가 "공통 구현"이며, session owner가 connector를 사용
-- Manager는 host에 lifecycle을 위임하고, Proxy는 송신에만 집중
-- 샘플 문서(`41-game-network/11-game-net-manager`)의 규칙과 일관성 유지
+- Networker가 SessionHost에 lifecycle을 위임하고, Proxy는 송신에만 집중
 - 상태 관리와 전송이 INetSession으로 통합되어 안정적인 lifecycle 관리
 
 ---

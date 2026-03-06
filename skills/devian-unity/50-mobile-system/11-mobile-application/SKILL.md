@@ -121,12 +121,12 @@ MobileApplication에 부착된 RequireComponent:
 - `PurchaseManager`
 - `MissionManager`
 - `SaveDataManager`
-- `InputManager` — [24-input-manager](../../11-common-system/22-input-manager/SKILL.md)
+- `InputManager` — [24-input-manager](../../20-domain-common-system/22-input-manager/SKILL.md)
 - `FirebaseManager` — [23-firebase-manager](../23-firebase-manager/SKILL.md)
 
 
 ## Links
-- [16-base-application](../../11-common-system/14-application-manager/SKILL.md) — ApplicationManager 런타임 스펙
-- [24-input-manager](../../11-common-system/22-input-manager/SKILL.md) — InputManager 공용 입력 관리자
+- [16-base-application](../../20-domain-common-system/14-application-manager/SKILL.md) — ApplicationManager 런타임 스펙
+- [24-input-manager](../../20-domain-common-system/22-input-manager/SKILL.md) — InputManager 공용 입력 관리자
 - [21-savedata-system/43-savedata-json-codec](../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 규약
 - [50-mobile-system overview](../00-overview/SKILL.md) — MobileSystem (Devian Samples) 그룹 개요

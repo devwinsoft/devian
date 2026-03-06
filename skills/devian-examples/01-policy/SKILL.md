@@ -39,7 +39,7 @@ AppliesTo: v10
 
 도메인 패키지(`com.devian.domain.*`)의 공통 규약:
 
-- `skills/devian-unity/11-common-system/02-module-policy/SKILL.md`
+- `skills/devian/20-domain-common/02-module-policy/SKILL.md`
 
 ### UPM 번들/복사 흐름
 
@@ -47,20 +47,14 @@ UPM 패키지가 staging → upm → Packages로 복사되는 개념:
 
 - `skills/devian-unity/02-unity-bundles/SKILL.md`
 
-### Protocol 샘플 (네트워크 템플릿)
-
-Network 샘플 템플릿 작성 방법:
-
-- `skills/devian-unity/41-game-network/11-game-net-manager/SKILL.md`
-
 ---
 
 ## 예제 세부 문서
 
 | 스킬 | 설명 |
 |------|------|
-| `skills/devian-unity/40-game-contents/11-game-domain/SKILL.md` | Game 도메인 허브 (테이블/컨트랙트/생성물) |
-| `skills/devian-unity/40-game-contents/14-game-protocol/SKILL.md` | Game 프로토콜(C2Game/Game2C) 예제 |
+| `skills/devian-unity/21-domain-game-system/11-game-domain/SKILL.md` | Game 도메인 허브 (테이블/컨트랙트/생성물) |
+| `skills/devian-unity/21-domain-game-system/14-game-protocol/SKILL.md` | Game 프로토콜(C2Game/Game2C) 예제 |
 
 ---
 
@@ -74,6 +68,6 @@ Network 샘플 템플릿 작성 방법:
 ## Reference
 
 - Related: `skills/devian/10-module/03-ssot/SKILL.md`
-- Related: `skills/devian-unity/11-common-system/02-module-policy/SKILL.md`
+- Related: `skills/devian/20-domain-common/02-module-policy/SKILL.md`
 - Related: `skills/devian-unity/02-unity-bundles/SKILL.md`
-- Related: `skills/devian-unity/41-game-network/11-game-net-manager/SKILL.md`
+- Related: `skills/devian/80-tools/11-builder/33-protocol-spec/SKILL.md`

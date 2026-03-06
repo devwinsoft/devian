@@ -38,7 +38,7 @@ Firebase Functions region 같은 앱 설정값은 MissionManager가 serialized f
 
 - Reward 지급: `49-reward-system` (RewardManager)
 - 로컬 저장: `21-savedata-system/10-savedata-manager`
-- 로컬 메시지 라우팅: `11-common-system/25-message-system`
+- 로컬 메시지 라우팅: `20-domain-common-system/25-message-system`
 - 서버 clock authority: backend(Firebase Functions 등)
 - (선택) 플랫폼 업적/리더보드 연동: `50-leaderboard`
 

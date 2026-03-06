@@ -5,9 +5,12 @@
     "Devian.Domain.Sound",
     "Devian.Domain.Common",
     "Devian.Domain.Common.Editor",
-    "Devian.Unity.Editor"
+    "Devian.Unity.Editor",
+    "Devian.Unity"
   ],
-  "includePlatforms": ["Editor"],
+  "includePlatforms": [
+    "Editor"
+  ],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,

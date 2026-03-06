@@ -157,5 +157,5 @@ Samples~가 존재하는 패키지에 한해 적용:
 ## Reference
 
 - Related: `skills/devian-unity/02-unity-bundles/SKILL.md`
-- Related: `skills/devian-unity/11-common-system/02-module-policy/SKILL.md`
+- Related: `skills/devian/20-domain-common/02-module-policy/SKILL.md`
 - Related: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)
