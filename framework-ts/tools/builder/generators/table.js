@@ -316,7 +316,24 @@ function parseCBigIntCell(cellText, ctx) {
         }
     }
 
-    throw new Error(`[CBigInt] Invalid format '${text}'. Expected '{base, pow}' or raw JSON.`);
+    // Plain long: "1000", "-500", "0" (long.TryParse equivalent)
+    if (/^-?\d+$/.test(text)) {
+        const longValue = Number(text);
+        if (!Number.isFinite(longValue) || longValue > Number.MAX_SAFE_INTEGER || longValue < Number.MIN_SAFE_INTEGER) {
+            throw new Error(`[CBigInt] Plain integer value '${text}' exceeds safe integer range.`);
+        }
+        let base = longValue;
+        let pow = 0;
+        if (base !== 0) {
+            while (Math.abs(base) >= 10) {
+                base /= 10;
+                pow++;
+            }
+        }
+        return buildCBigIntCell(base, pow, String(base), String(pow), ctx);
+    }
+
+    throw new Error(`[CBigInt] Invalid format '${text}'. Expected '{base, pow}', raw JSON, or plain long.`);
 }
 
 registerClassParser('CBigInt', parseCBigIntCell);
