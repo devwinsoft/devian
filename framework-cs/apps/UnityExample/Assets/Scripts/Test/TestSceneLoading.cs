@@ -183,6 +183,25 @@ public class TestSceneLoading : TestSceneBootstrap
             return initAchieve.Error.Code;
         }
 
+        var initLeaderboard = await LeaderboardManager.Instance.InitializeAsync(ct);
+        if (initLeaderboard.IsFailure)
+        {
+            Debug.LogWarning($"LeaderboardManager.InitializeAsync failed (non-fatal): {initLeaderboard.Error.Code}: {initLeaderboard.Error.Message}");
+        }
+
+        var initSeasonReward = await LeaderboardSeasonRewardManager.Instance.InitializeAsync(ct);
+        if (initSeasonReward.IsFailure)
+        {
+            Debug.LogError($"LeaderboardSeasonRewardManager.InitializeAsync failed: {initSeasonReward.Error.Code}: {initSeasonReward.Error.Message}");
+            return initSeasonReward.Error.Code;
+        }
+
+        var syncSeasonReward = await LeaderboardSeasonRewardManager.Instance.SyncSeasonTransitionRewardsAsync(ct);
+        if (syncSeasonReward.IsFailure)
+        {
+            Debug.LogWarning($"LeaderboardSeasonRewardManager.SyncSeasonTransitionRewardsAsync failed (non-fatal): {syncSeasonReward.Error.Code}: {syncSeasonReward.Error.Message}");
+        }
+
         // Todo: 최적화
         var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
         if (save.IsFailure)

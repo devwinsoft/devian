@@ -12,32 +12,44 @@ import { IEntity, IEntityKey, CBigInt } from '@devian/core';
 export enum GAME_MESSAGE_TYPE {
     NONE = 0,
     LOGIN = 1,
-    MISSION_CLEAR = 2,
     STAGE_CLEAR = 3,
-    ACHIEVEMENT_UNLOCKED = 4,
-    TEST_001 = 9001,
-    TEST_002 = 9002,
-    TEST_003 = 9003,
-    TEST_004 = 9004,
-    TEST_005 = 9005,
-    ACHIEVE_001 = 9101,
-    ACHIEVE_002 = 9102,
-    ACHIEVE_003 = 9103,
-    ACHIEVE_004 = 9104,
-    ACHIEVE_005 = 9105,
+    STAGE_SCORE = 4,
+    MISSION_CLEAR = 5,
+    TEST_001 = 8001,
+    TEST_002 = 8002,
+    TEST_003 = 8003,
+    TEST_004 = 8004,
+    TEST_005 = 8005,
+    ACHIEVE_UNLOCKED = 9000,
+    ACHIEVE_001 = 9001,
+    ACHIEVE_002 = 9002,
+    ACHIEVE_003 = 9003,
+    ACHIEVE_004 = 9004,
+    ACHIEVE_005 = 9005,
 }
 
 /** GAME_MESSAGE_SAVE_TYPE enum */
 export enum GAME_MESSAGE_SAVE_TYPE {
     NONE = 0,
-    MAX = 1,
-    SUM = 2,
+    SESSION_SUM = 1,
+    SESSION_MAX = 2,
+    TOTAL_SUM = 3,
+    TOTAL_MAX = 4,
+}
+
+/** LEADERBOARD_MODE enum */
+export enum LEADERBOARD_MODE {
+    NONE = 0,
+    NORMAL = 1,
+    HARDCORE = 2,
 }
 
 /** MISSION_TYPE enum */
 export enum MISSION_TYPE {
-    DAY = 0,
-    ACHIEVE = 1,
+    NONE = 0,
+    DAY = 1,
+    PASS_FREE = 2,
+    PASS_PAID = 3,
 }
 
 /** MISSION_MESSAGE enum */
@@ -60,13 +72,6 @@ export enum ACHIEVE_MESSAGE {
     RUNTIME_LEVEL_UP = 4,
     RUNTIME_REWARDED = 5,
     ACHIEVEMENT_UNLOCKED = 6,
-}
-
-/** ACHIEVE_TYPE enum */
-export enum ACHIEVE_TYPE {
-    Binary = 0,
-    Percent = 1,
-    Steps = 2,
 }
 
 /** CURRENCY_TYPE enum */
@@ -171,8 +176,9 @@ export interface MESSAGE extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface MISSION_DAY extends IEntityKey<string> {
+export interface MISSION extends IEntityKey<string> {
     MissionId: string;
+    MissionType: MISSION_TYPE;
     IsActive: boolean;
     Fixed: boolean;
     OrderNum: number;
@@ -185,26 +191,37 @@ export interface MISSION_DAY extends IEntityKey<string> {
 export interface ACHIEVE extends IEntityKey<number> {
     Index: number;
     AchieveId: string;
-    AchieveType: ACHIEVE_TYPE;
     IsActive: boolean;
+    Level: number;
     OrderNum: number;
     MessageId: string;
-    Level: number;
     ConditionValue: CBigInt | null;
     RewardGroupId: string;
     AppleAchievementId: string;
     GoogleAchievementId: string;
-    StepsTotal: number;
     getKey(): number;
 }
 
 export interface LEADERBOARD extends IEntityKey<string> {
     LeaderboardId: string;
     IsActive: boolean;
+    MessageId: string;
     AppleLeaderboardId: string;
     GoogleLeaderboardId: string;
-    ScoreOrder: string;
+    SeasonId: string;
+    Mode: LEADERBOARD_MODE;
+    SeasonStartUtcMs: number;
+    SeasonEndUtcMs: number;
     getKey(): string;
+}
+
+export interface LEADERBOARD_REWARD extends IEntityKey<number> {
+    Index: number;
+    LeaderboardId: string;
+    RankFrom: number;
+    RankTo: number;
+    RewardGroupId: string;
+    getKey(): number;
 }
 
 export interface EQUIP extends IEntityKey<string> {
@@ -333,9 +350,9 @@ export class TB_MESSAGE {
     }
 }
 
-export class TB_MISSION_DAY {
-    private static _dict: Map<string, MISSION_DAY> = new Map();
-    private static _list: MISSION_DAY[] = [];
+export class TB_MISSION {
+    private static _dict: Map<string, MISSION> = new Map();
+    private static _list: MISSION[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -344,9 +361,9 @@ export class TB_MISSION_DAY {
         this._list = [];
     }
 
-    static getAll(): readonly MISSION_DAY[] { return this._list; }
+    static getAll(): readonly MISSION[] { return this._list; }
 
-    static get(key: string): MISSION_DAY | undefined {
+    static get(key: string): MISSION | undefined {
         return this._dict.get(key);
     }
 
@@ -358,7 +375,7 @@ export class TB_MISSION_DAY {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as MISSION_DAY;
+            const row = JSON.parse(line) as MISSION;
             this._list.push(row);
             this._dict.set(row.MissionId, row);
         }
@@ -433,6 +450,42 @@ export class TB_LEADERBOARD {
             const row = JSON.parse(line) as LEADERBOARD;
             this._list.push(row);
             this._dict.set(row.LeaderboardId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_LEADERBOARD_REWARD {
+    private static _dict: Map<number, LEADERBOARD_REWARD> = new Map();
+    private static _list: LEADERBOARD_REWARD[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly LEADERBOARD_REWARD[] { return this._list; }
+
+    static get(key: number): LEADERBOARD_REWARD | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: number): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as LEADERBOARD_REWARD;
+            this._list.push(row);
+            this._dict.set(row.Index, row);
         }
     }
 

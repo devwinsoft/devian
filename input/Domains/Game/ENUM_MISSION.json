@@ -3,8 +3,10 @@
     {
       "name": "MISSION_TYPE",
       "values": [
-        { "name": "DAY", "value": 0 },
-        { "name": "ACHIEVE", "value": 1 }
+        { "name": "NONE", "value": 0 },
+        { "name": "DAY", "value": 1 },
+        { "name": "PASS_FREE", "value": 2 },
+        { "name": "PASS_PAID", "value": 3 }
       ]
     },
     {
@@ -29,14 +31,6 @@
         { "name": "RUNTIME_LEVEL_UP", "value": 4 },
         { "name": "RUNTIME_REWARDED", "value": 5 },
         { "name": "ACHIEVEMENT_UNLOCKED", "value": 6 }
-      ]
-    },
-    {
-      "name": "ACHIEVE_TYPE",
-      "values": [
-        { "name": "Binary", "value": 0 },
-        { "name": "Percent", "value": 1 },
-        { "name": "Steps", "value": 2 }
       ]
     }
   ]

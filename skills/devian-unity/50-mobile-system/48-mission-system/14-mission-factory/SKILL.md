@@ -1,6 +1,6 @@
 ---
 name: mission-factory
-description: Use this skill when defining or implementing MissionRuntimeFactory for mission create/restore paths with missionStatId binding and achieve external-progress reader wiring.
+description: Use this skill when defining or implementing MissionRuntimeFactory for mission create/restore paths with messageId binding.
 ---
 
 # 14-mission-factory
@@ -14,8 +14,7 @@ Type: Design / Factory SSOT
 `MissionRuntimeFactory`는 runtime create/restore 경로를 표준화한다.
 
 - `missionUid` 발급/저장소 조회는 담당하지 않는다.
-- `missionStatId` + `MISSION_STAT(statType/opType)` 바인딩을 생성한다.
-- achieve external progress reader 연결을 담당한다.
+- `messageId` + `MISSION_STAT(statType/opType)` 바인딩을 생성한다.
 
 ---
 
@@ -34,7 +33,6 @@ Type: Design / Factory SSOT
 public static class MissionRuntimeFactory
 {
     public static MissionRuntimeDaily CreateDaily(DailyMissionRuntimeCreateArgs args);
-    public static MissionRuntimeAchieve CreateAchieve(AchieveMissionRuntimeCreateArgs args);
     public static MissionRuntimeBase Restore(MissionRuntimeRestoreArgs args);
 }
 ```
@@ -45,23 +43,14 @@ public static class MissionRuntimeFactory
 
 `DailyMissionRuntimeCreateArgs`
 
-- `MissionType`, `MissionId`, `MissionStatId`
+- `MissionId`, `MessageId`
 - `PeriodKey`, `MissionUid`, `Index`
 - `StatType`, `OpType`, `ConditionValue`
-- `TriggerSystem`, callbacks
-
-`AchieveMissionRuntimeCreateArgs`
-
-- `MissionType`, `MissionId`, `MissionStatId`
-- `Level`, `PeriodKey`, `MissionUid`
-- `StatType`, `OpType`, `ConditionValue`
-- `ReadProgress` (`Func<CBigInt>`)
-- `TriggerSystem`, callbacks
+- `SubscribeTrigger`, `UnsubscribeTrigger`, callbacks
 
 `MissionRuntimeRestoreArgs`
 
-- 공통: create args + `ProgressValue`, `IsCompleted`
-- achieve restore는 `ReadProgress`를 반드시 전달한다.
+- create args + `ProgressValue`, `IsCompleted`
 
 ---
 
@@ -70,12 +59,8 @@ public static class MissionRuntimeFactory
 - Daily create:
   - `progressValue = 0`
   - internal progress mode
-- Achieve create:
-  - `progressValue = 0`
-  - external progress mode(`ReadProgress`)
 - Restore:
-  - daily는 저장 progress 사용
-  - achieve는 external reader로 sync되는 구조를 사용
+  - 저장된 progress 사용
 
 ---
 

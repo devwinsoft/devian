@@ -49,19 +49,11 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
   - runtime 상태 갱신
   - message notify
   - save 실행
-- `ACHIEVE`에서 다음 row가 존재하면 같은 runtime level-up:
-  1. 기존 statType 구독 해지
-  2. level/state 갱신
-  3. 새 `missionStatId/statType/opType/conditionValue` 바인딩
-  4. 새 stat reader(`stats[missionStatId]`) 연결
-  5. 새 statType 재구독
 
 ---
 
 ## Notes
 
-- `LevelUp`에서 progress 수동 set은 하지 않는다.
-- `ACHIEVE` progress 정본은 항상 `MissionStorage.stats[missionStatId]`.
 - legacy 포맷 fallback은 사용하지 않는다.
 
 ---

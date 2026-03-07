@@ -11,6 +11,7 @@ namespace Devian
     [RequireComponent(typeof(PurchaseManager))]
     [RequireComponent(typeof(AchieveManager))]
     [RequireComponent(typeof(LeaderboardManager))]
+    [RequireComponent(typeof(LeaderboardSeasonRewardManager))]
     [RequireComponent(typeof(GameMessageManager))]
     [RequireComponent(typeof(MissionManager))]
     [RequireComponent(typeof(SaveDataManager))]
@@ -151,6 +152,20 @@ namespace Devian
             if (refresh.IsFailure)
             {
                 Debug.LogWarning($"[MobileApplication] Mission clock refresh failed on foreground: {refresh.Error}");
+                return;
+            }
+
+            if (!LeaderboardSeasonRewardManager.TryGet(out var seasonRewardManager)
+                || seasonRewardManager == null
+                || !seasonRewardManager.IsInitialized)
+            {
+                return;
+            }
+
+            var syncSeasonReward = await seasonRewardManager.SyncSeasonTransitionRewardsAsync(CancellationToken.None);
+            if (syncSeasonReward.IsFailure)
+            {
+                Debug.LogWarning($"[MobileApplication] Season reward sync failed on foreground: {syncSeasonReward.Error}");
             }
         }
 

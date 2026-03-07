@@ -6,7 +6,7 @@ AppliesTo: v10
 MobileSystem 샘플의 Mission 시스템 개요다.
 현재 Mission 시스템은 `DAY` 미션만 담당한다.
 
-- Mission row는 `MISSION_DAY`만 사용한다.
+- Mission row는 `MISSION` 테이블을 사용한다.
 - 조건 타입/연산자 정본은 `MISSION_STAT(missionStatId, statType, opType)`다.
 - MissionManager는 `MissionMessageTrigger`과 `MissionScheduler`를 소유한다.
 - daily runtime 구독은 `GameMessageTrigger`를 직접 사용한다.

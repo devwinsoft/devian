@@ -4,6 +4,7 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
+using Devian.Domain.Game;
 using UnityEngine;
 using UnityEngine.SocialPlatforms;
 
@@ -17,13 +18,6 @@ namespace Devian
     {
         private const string Tag = nameof(LeaderboardManager);
 
-        [Serializable]
-        private enum LeaderboardScoreOrder
-        {
-            HighBetter = 0,
-            LowBetter = 1,
-        }
-
         private enum RuntimePlatformKind
         {
             Unsupported = 0,
@@ -31,14 +25,45 @@ namespace Devian
             Google = 2,
         }
 
-        [Serializable]
+        public enum LeaderboardPlayerSnapshotStatus
+        {
+            Success = 0,
+            NoScore = 1,
+            PlatformUnavailable = 2,
+            NotLoggedIn = 3,
+            Failed = 4,
+        }
+
+        public readonly struct LeaderboardPlayerSnapshot
+        {
+            public LeaderboardPlayerSnapshot(
+                string leaderboardId,
+                long score,
+                long rank,
+                bool hasScore,
+                LeaderboardPlayerSnapshotStatus status)
+            {
+                LeaderboardId = leaderboardId ?? string.Empty;
+                Score = score;
+                Rank = rank;
+                HasScore = hasScore;
+                Status = status;
+            }
+
+            public string LeaderboardId { get; }
+            public long Score { get; }
+            public long Rank { get; }
+            public bool HasScore { get; }
+            public LeaderboardPlayerSnapshotStatus Status { get; }
+        }
+
         private sealed class LeaderboardMapEntry
         {
             public string leaderboardId = string.Empty;
             public bool isActive = true;
             public string appleLeaderboardId = string.Empty;
             public string googleLeaderboardId = string.Empty;
-            public LeaderboardScoreOrder scoreOrder = LeaderboardScoreOrder.HighBetter;
+            public string messageId = string.Empty;
 
             public string InternalId => (leaderboardId ?? string.Empty).Trim();
 
@@ -60,14 +85,17 @@ namespace Devian
         {
             Task<CommonResult> InitializeAsync(CancellationToken ct);
             Task<CommonResult> ReportScoreAsync(string platformLeaderboardId, long score, CancellationToken ct);
+            Task<CommonResult<LeaderboardPlayerSnapshot>> LoadPlayerSnapshotAsync(
+                string platformLeaderboardId,
+                string internalLeaderboardId,
+                CancellationToken ct);
         }
-
-        [SerializeField] private List<LeaderboardMapEntry> leaderboardMappings = new List<LeaderboardMapEntry>();
 
         private readonly Dictionary<string, LeaderboardMapEntry> _leaderboardById
             = new Dictionary<string, LeaderboardMapEntry>(StringComparer.Ordinal);
 
         private readonly SemaphoreSlim _initializeGate = new SemaphoreSlim(1, 1);
+        private static readonly CBigInt LongMaxScore = CBigInt.FromLong(long.MaxValue);
 
         private ILeaderboardPlatformAdapter _adapter;
         private bool _initialized;
@@ -102,7 +130,7 @@ namespace Devian
             }
         }
 
-        public async Task<CommonResult> ReportScoreAsync(string leaderboardId, long score, CancellationToken ct = default)
+        public async Task<CommonResult> ReportScoreAsync(string leaderboardId, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -110,18 +138,38 @@ namespace Devian
             if (guard.IsFailure)
                 return guard;
 
-            if (score < 0)
-            {
-                return CommonResult.Failure(
-                    CommonErrorType.COMMON_INVALID_ARGUMENT,
-                    $"Invalid leaderboard score: {score}");
-            }
-
-            var resolve = tryResolveLeaderboardPlatformId(leaderboardId, out var platformLeaderboardId);
+            var resolve = tryResolveLeaderboardPlatformId(leaderboardId, out var entry, out var platformLeaderboardId);
             if (resolve.IsFailure)
                 return resolve;
 
+            var scoreResolve = tryResolveLeaderboardScore(entry!, out var score);
+            if (scoreResolve.IsFailure)
+                return scoreResolve;
+
             return await _adapter.ReportScoreAsync(platformLeaderboardId, score, ct);
+        }
+
+        public async Task<CommonResult<LeaderboardPlayerSnapshot>> GetPlayerSnapshotAsync(
+            string leaderboardId,
+            CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var guard = ensureInitialized();
+            if (guard.IsFailure)
+                return CommonResult<LeaderboardPlayerSnapshot>.Failure(guard.Error!);
+
+            var resolve = tryResolveLeaderboardPlatformId(leaderboardId, out var entry, out var platformLeaderboardId);
+            if (resolve.IsFailure)
+                return CommonResult<LeaderboardPlayerSnapshot>.Failure(resolve.Error!);
+
+            return await _adapter.LoadPlayerSnapshotAsync(platformLeaderboardId, entry!.InternalId, ct);
+        }
+
+        [Obsolete("Use ReportScoreAsync(string leaderboardId, CancellationToken ct = default). Score is resolved from LEADERBOARD.messageId.")]
+        public Task<CommonResult> ReportScoreAsync(string leaderboardId, long score, CancellationToken ct = default)
+        {
+            return ReportScoreAsync(leaderboardId, ct);
         }
 
         private CommonResult ensureInitialized()
@@ -134,8 +182,9 @@ namespace Devian
                 "LeaderboardManager.InitializeAsync must be called before API use.");
         }
 
-        private CommonResult tryResolveLeaderboardPlatformId(string leaderboardId, out string platformLeaderboardId)
+        private CommonResult tryResolveLeaderboardPlatformId(string leaderboardId, out LeaderboardMapEntry entry, out string platformLeaderboardId)
         {
+            entry = null;
             platformLeaderboardId = string.Empty;
 
             if (string.IsNullOrWhiteSpace(leaderboardId))
@@ -145,7 +194,7 @@ namespace Devian
                     "leaderboardId is empty.");
             }
 
-            if (!_leaderboardById.TryGetValue(leaderboardId.Trim(), out var entry) || entry == null || !entry.isActive)
+            if (!_leaderboardById.TryGetValue(leaderboardId.Trim(), out entry) || entry == null || !entry.isActive)
             {
                 return CommonResult.Failure(
                     CommonErrorType.COMMON_INVALID_ARGUMENT,
@@ -163,23 +212,135 @@ namespace Devian
             return CommonResult.Ok();
         }
 
+        private CommonResult tryResolveLeaderboardScore(LeaderboardMapEntry entry, out long score)
+        {
+            score = 0L;
+            if (entry == null)
+            {
+                return CommonResult.Failure(
+                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    "Leaderboard entry is null.");
+            }
+
+            var messageId = (entry.messageId ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(messageId))
+            {
+                return CommonResult.Failure(
+                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    $"LEADERBOARD.messageId is empty: {entry.InternalId}");
+            }
+
+            var message = TB_MESSAGE.Get(messageId);
+            if (message == null)
+            {
+                Debug.LogError($"[{Tag}] MESSAGE not found for leaderboard score. leaderboardId={entry.InternalId}, messageId={messageId}");
+                score = 0L;
+                return CommonResult.Ok();
+            }
+
+            if (!isLeaderboardSupportedSaveType(message.SaveType))
+            {
+                Debug.LogError(
+                    $"[{Tag}] Invalid MESSAGE.saveType for leaderboard score. " +
+                    $"leaderboardId={entry.InternalId}, messageId={messageId}, saveType={message.SaveType}. " +
+                    $"Expected TOTAL_SUM or TOTAL_MAX.");
+                score = 0L;
+                return CommonResult.Ok();
+            }
+
+            if (!GameMessageManager.TryGet(out var messageManager) || messageManager == null)
+            {
+                return CommonResult.Failure(
+                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    "GameMessageManager is not initialized.");
+            }
+
+            var stat = messageManager.GetStat(messageId);
+            if (stat < CBigInt.Zero)
+            {
+                return CommonResult.Failure(
+                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    $"Leaderboard score must be non-negative: leaderboardId={entry.InternalId}, messageId={messageId}, value={stat}");
+            }
+
+            if (stat > LongMaxScore)
+                Debug.LogWarning($"[{Tag}] Leaderboard score clamped to long.MaxValue. leaderboardId={entry.InternalId}, messageId={messageId}, value={stat}");
+
+            score = convertScoreToLong(stat);
+            return CommonResult.Ok();
+        }
+
+        private static long convertScoreToLong(CBigInt value)
+        {
+            if (value <= CBigInt.Zero)
+                return 0L;
+
+            if (value >= LongMaxScore)
+                return long.MaxValue;
+
+            try
+            {
+                var numeric = (double)value;
+                if (double.IsNaN(numeric) || numeric <= 0d)
+                    return 0L;
+                if (double.IsInfinity(numeric) || numeric >= long.MaxValue)
+                    return long.MaxValue;
+
+                return (long)Math.Floor(numeric);
+            }
+            catch (OverflowException)
+            {
+                return long.MaxValue;
+            }
+        }
+
+        private static bool isLeaderboardSupportedSaveType(GAME_MESSAGE_SAVE_TYPE saveType)
+        {
+            return saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
+                   || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX;
+        }
+
+        private static LeaderboardPlayerSnapshot createSnapshot(
+            string leaderboardId,
+            long score,
+            long rank,
+            bool hasScore,
+            LeaderboardPlayerSnapshotStatus status)
+        {
+            return new LeaderboardPlayerSnapshot(
+                leaderboardId,
+                Math.Max(0L, score),
+                Math.Max(0L, rank),
+                hasScore,
+                status);
+        }
+
         private void rebuildMappingCaches()
         {
             _leaderboardById.Clear();
-            for (var i = 0; i < leaderboardMappings.Count; i++)
+
+            foreach (var row in TB_LEADERBOARD.GetAll())
             {
-                var row = leaderboardMappings[i];
                 if (row == null)
                     continue;
 
-                var id = row.InternalId;
+                var id = (row.LeaderboardId ?? string.Empty).Trim();
                 if (string.IsNullOrEmpty(id))
                     continue;
+
+                var entry = new LeaderboardMapEntry
+                {
+                    leaderboardId = id,
+                    isActive = row.IsActive,
+                    appleLeaderboardId = row.AppleLeaderboardId ?? string.Empty,
+                    googleLeaderboardId = row.GoogleLeaderboardId ?? string.Empty,
+                    messageId = row.MessageId ?? string.Empty,
+                };
 
                 if (_leaderboardById.ContainsKey(id))
                     Debug.LogWarning($"[{Tag}] Duplicate leaderboardId mapping. override id={id}");
 
-                _leaderboardById[id] = row;
+                _leaderboardById[id] = entry;
             }
         }
 
@@ -218,6 +379,18 @@ namespace Devian
                 => Task.FromResult(CommonResult.Failure(
                     CommonErrorType.LOGIN_UNSUPPORTED,
                     "Leaderboard is not supported on this platform."));
+
+            public Task<CommonResult<LeaderboardPlayerSnapshot>> LoadPlayerSnapshotAsync(
+                string platformLeaderboardId,
+                string internalLeaderboardId,
+                CancellationToken ct)
+                => Task.FromResult(CommonResult<LeaderboardPlayerSnapshot>.Success(
+                    createSnapshot(
+                        internalLeaderboardId,
+                        score: 0L,
+                        rank: 0L,
+                        hasScore: false,
+                        status: LeaderboardPlayerSnapshotStatus.PlatformUnavailable)));
         }
 
         private sealed class AppleLeaderboardPlatformAdapter : ILeaderboardPlatformAdapter
@@ -259,12 +432,124 @@ namespace Devian
 #endif
             }
 
+            public async Task<CommonResult<LeaderboardPlayerSnapshot>> LoadPlayerSnapshotAsync(
+                string platformLeaderboardId,
+                string internalLeaderboardId,
+                CancellationToken ct)
+            {
+#if UNITY_IOS && !UNITY_EDITOR
+                var auth = ensureAuthenticated();
+                if (auth.IsFailure)
+                {
+                    return CommonResult<LeaderboardPlayerSnapshot>.Success(
+                        createSnapshot(
+                            internalLeaderboardId,
+                            score: 0L,
+                            rank: 0L,
+                            hasScore: false,
+                            status: LeaderboardPlayerSnapshotStatus.NotLoggedIn));
+                }
+
+                try
+                {
+                    var loaded = await loadLocalUserScoreAsync(platformLeaderboardId, ct);
+                    if (!loaded.success)
+                    {
+                        return CommonResult<LeaderboardPlayerSnapshot>.Success(
+                            createSnapshot(
+                                internalLeaderboardId,
+                                score: 0L,
+                                rank: 0L,
+                                hasScore: false,
+                                status: LeaderboardPlayerSnapshotStatus.Failed));
+                    }
+
+                    if (!loaded.hasScore)
+                    {
+                        return CommonResult<LeaderboardPlayerSnapshot>.Success(
+                            createSnapshot(
+                                internalLeaderboardId,
+                                score: 0L,
+                                rank: 0L,
+                                hasScore: false,
+                                status: LeaderboardPlayerSnapshotStatus.NoScore));
+                    }
+
+                    return CommonResult<LeaderboardPlayerSnapshot>.Success(
+                        createSnapshot(
+                            internalLeaderboardId,
+                            loaded.score,
+                            loaded.rank,
+                            hasScore: true,
+                            status: LeaderboardPlayerSnapshotStatus.Success));
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[{Tag}] Game Center snapshot load failed: {ex.Message}");
+                    return CommonResult<LeaderboardPlayerSnapshot>.Success(
+                        createSnapshot(
+                            internalLeaderboardId,
+                            score: 0L,
+                            rank: 0L,
+                            hasScore: false,
+                            status: LeaderboardPlayerSnapshotStatus.Failed));
+                }
+#else
+                return CommonResult<LeaderboardPlayerSnapshot>.Success(
+                    createSnapshot(
+                        internalLeaderboardId,
+                        score: 0L,
+                        rank: 0L,
+                        hasScore: false,
+                        status: LeaderboardPlayerSnapshotStatus.PlatformUnavailable));
+#endif
+            }
+
             private static CommonResult ensureAuthenticated()
             {
                 if (Social.localUser != null && Social.localUser.authenticated)
                     return CommonResult.Ok();
 
                 return CommonResult.Failure(CommonErrorType.COMMON_AUTH, "Game Center authentication required.");
+            }
+
+            private static async Task<(bool success, bool hasScore, long score, long rank)> loadLocalUserScoreAsync(
+                string platformLeaderboardId,
+                CancellationToken ct)
+            {
+                ct.ThrowIfCancellationRequested();
+                var leaderboard = Social.CreateLeaderboard();
+                if (leaderboard == null)
+                    return (false, false, 0L, 0L);
+
+                leaderboard.id = platformLeaderboardId;
+                leaderboard.userScope = UserScope.Global;
+                leaderboard.timeScope = TimeScope.AllTime;
+                leaderboard.range = new UnityEngine.SocialPlatforms.Range(1, 1);
+
+                var tcs = new TaskCompletionSource<bool>();
+                leaderboard.LoadScores(success => tcs.TrySetResult(success));
+
+                using var cancelReg = ct.Register(() => tcs.TrySetCanceled(ct));
+                var success = await tcs.Task;
+                if (!success)
+                    return (false, false, 0L, 0L);
+
+                var localScore = leaderboard.localUserScore;
+                if (localScore == null)
+                    return (true, false, 0L, 0L);
+
+                var score = Math.Max(0L, localScore.value);
+                var rank = Math.Max(0L, localScore.rank);
+                var hasScore = rank > 0 || score > 0;
+                if (!hasScore)
+                    return (true, false, 0L, 0L);
+
+                return (true, true, score, rank);
             }
         }
 
@@ -373,6 +658,95 @@ namespace Devian
 #endif
             }
 
+            public async Task<CommonResult<LeaderboardPlayerSnapshot>> LoadPlayerSnapshotAsync(
+                string platformLeaderboardId,
+                string internalLeaderboardId,
+                CancellationToken ct)
+            {
+#if UNITY_ANDROID && !UNITY_EDITOR
+                var init = await InitializeAsync(ct);
+                if (init.IsFailure)
+                {
+                    return CommonResult<LeaderboardPlayerSnapshot>.Success(
+                        createSnapshot(
+                            internalLeaderboardId,
+                            score: 0L,
+                            rank: 0L,
+                            hasScore: false,
+                            status: LeaderboardPlayerSnapshotStatus.PlatformUnavailable));
+                }
+
+                var auth = ensureAuthenticated();
+                if (auth.IsFailure)
+                {
+                    return CommonResult<LeaderboardPlayerSnapshot>.Success(
+                        createSnapshot(
+                            internalLeaderboardId,
+                            score: 0L,
+                            rank: 0L,
+                            hasScore: false,
+                            status: LeaderboardPlayerSnapshotStatus.NotLoggedIn));
+                }
+
+                try
+                {
+                    var loaded = await loadLocalUserScoreAsync(platformLeaderboardId, ct);
+                    if (!loaded.success)
+                    {
+                        return CommonResult<LeaderboardPlayerSnapshot>.Success(
+                            createSnapshot(
+                                internalLeaderboardId,
+                                score: 0L,
+                                rank: 0L,
+                                hasScore: false,
+                                status: LeaderboardPlayerSnapshotStatus.Failed));
+                    }
+
+                    if (!loaded.hasScore)
+                    {
+                        return CommonResult<LeaderboardPlayerSnapshot>.Success(
+                            createSnapshot(
+                                internalLeaderboardId,
+                                score: 0L,
+                                rank: 0L,
+                                hasScore: false,
+                                status: LeaderboardPlayerSnapshotStatus.NoScore));
+                    }
+
+                    return CommonResult<LeaderboardPlayerSnapshot>.Success(
+                        createSnapshot(
+                            internalLeaderboardId,
+                            loaded.score,
+                            loaded.rank,
+                            hasScore: true,
+                            status: LeaderboardPlayerSnapshotStatus.Success));
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[{Tag}] GPGS snapshot load failed: {ex.Message}");
+                    return CommonResult<LeaderboardPlayerSnapshot>.Success(
+                        createSnapshot(
+                            internalLeaderboardId,
+                            score: 0L,
+                            rank: 0L,
+                            hasScore: false,
+                            status: LeaderboardPlayerSnapshotStatus.Failed));
+                }
+#else
+                return CommonResult<LeaderboardPlayerSnapshot>.Success(
+                    createSnapshot(
+                        internalLeaderboardId,
+                        score: 0L,
+                        rank: 0L,
+                        hasScore: false,
+                        status: LeaderboardPlayerSnapshotStatus.PlatformUnavailable));
+#endif
+            }
+
             private static MethodInfo findMethod(Type type, string methodName, params Type[] paramTypes)
             {
                 var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance);
@@ -409,6 +783,41 @@ namespace Devian
                     return CommonResult.Ok();
 
                 return CommonResult.Failure(CommonErrorType.COMMON_AUTH, "Google Play Games authentication required.");
+            }
+
+            private static async Task<(bool success, bool hasScore, long score, long rank)> loadLocalUserScoreAsync(
+                string platformLeaderboardId,
+                CancellationToken ct)
+            {
+                ct.ThrowIfCancellationRequested();
+                var leaderboard = Social.CreateLeaderboard();
+                if (leaderboard == null)
+                    return (false, false, 0L, 0L);
+
+                leaderboard.id = platformLeaderboardId;
+                leaderboard.userScope = UserScope.Global;
+                leaderboard.timeScope = TimeScope.AllTime;
+                leaderboard.range = new UnityEngine.SocialPlatforms.Range(1, 1);
+
+                var tcs = new TaskCompletionSource<bool>();
+                leaderboard.LoadScores(success => tcs.TrySetResult(success));
+
+                using var cancelReg = ct.Register(() => tcs.TrySetCanceled(ct));
+                var success = await tcs.Task;
+                if (!success)
+                    return (false, false, 0L, 0L);
+
+                var localScore = leaderboard.localUserScore;
+                if (localScore == null)
+                    return (true, false, 0L, 0L);
+
+                var score = Math.Max(0L, localScore.value);
+                var rank = Math.Max(0L, localScore.rank);
+                var hasScore = rank > 0 || score > 0;
+                if (!hasScore)
+                    return (true, false, 0L, 0L);
+
+                return (true, true, score, rank);
             }
         }
     }

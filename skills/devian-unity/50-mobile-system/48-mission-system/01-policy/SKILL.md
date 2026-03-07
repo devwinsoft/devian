@@ -14,7 +14,7 @@ Mission(`DAY`) 시스템의 모듈 경계와 하드룰을 정의한다.
 
 ### 1) 미션 조건 정본은 `MISSION_STAT`이다
 
-- `MISSION_DAY`는 `missionStatId`만 가진다.
+- `MISSION`은 `missionStatId`만 가진다.
 - 조건 타입/연산자 정본은 `MISSION_STAT(missionStatId, statType, opType)`다.
 - MissionManager/Scheduler는 `missionStatId -> MISSION_STAT`를 resolve해서 runtime 바인딩을 만든다.
 

@@ -138,12 +138,6 @@ namespace Devian
                 case MISSION_TYPE.DAY:
                     return getDailyRuntimeState(missionId);
 
-                case MISSION_TYPE.ACHIEVE:
-                    if (!AchieveManager.TryGet(out var achieveManager))
-                        return MissionRuntimeState.NONE;
-
-                    return achieveManager.GetRuntimeState(missionId);
-
                 default:
                     return MissionRuntimeState.NONE;
             }
@@ -190,16 +184,6 @@ namespace Devian
                 case MISSION_TYPE.DAY:
                     return await claimDailyAsync(missionId, ct);
 
-                case MISSION_TYPE.ACHIEVE:
-                    if (!AchieveManager.TryGet(out var achieveManager))
-                    {
-                        return CommonResult.Failure(
-                            CommonErrorType.MISSION_RUNTIME_MISSING,
-                            "AchieveManager is not available.");
-                    }
-
-                    return await achieveManager.ClaimAsync(missionId, ct);
-
                 default:
                     return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Unsupported missionType: {missionType}");
             }
@@ -239,7 +223,7 @@ namespace Devian
 
         MissionRuntimeState getDailyRuntimeState(string missionId)
         {
-            var row = TB_MISSION_DAY.Get(missionId);
+            var row = TB_MISSION.Get(missionId);
             if (row == null || !row.IsActive || !row.ConditionValue.HasValue)
                 return MissionRuntimeState.NONE;
 
@@ -258,7 +242,7 @@ namespace Devian
 
         async Task<CommonResult> claimDailyAsync(string missionId, CancellationToken ct)
         {
-            var row = TB_MISSION_DAY.Get(missionId);
+            var row = TB_MISSION.Get(missionId);
             if (row == null || !row.IsActive || !row.ConditionValue.HasValue)
                 return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
 

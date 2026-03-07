@@ -97,11 +97,11 @@ namespace Devian
                 CBigInt next;
                 switch (binding.SaveType)
                 {
-                    case GAME_MESSAGE_SAVE_TYPE.SUM:
+                    case GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM:
                         next = current + delta;
                         break;
 
-                    case GAME_MESSAGE_SAVE_TYPE.MAX:
+                    case GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX:
                         next = CBigInt.Max(current, delta);
                         break;
 
@@ -124,7 +124,7 @@ namespace Devian
             {
                 if (message == null
                     || string.IsNullOrWhiteSpace(message.MessageId)
-                    || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+                    || !isTotalSaveType(message.SaveType))
                 {
                     continue;
                 }
@@ -137,6 +137,12 @@ namespace Devian
 
                 bindings.Add(new MessageSaveBinding(message.MessageId, message.SaveType));
             }
+        }
+
+        static bool isTotalSaveType(GAME_MESSAGE_SAVE_TYPE saveType)
+        {
+            return saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
+                   || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX;
         }
     }
 }

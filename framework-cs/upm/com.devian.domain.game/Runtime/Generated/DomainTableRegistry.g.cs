@@ -47,17 +47,17 @@ namespace Devian.Domain.Game
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("MISSION_DAY", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("MISSION", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_MISSION_DAY.LoadFromNdjson(text);
-                    TB_MISSION_DAY._AfterLoad();
+                    TB_MISSION.LoadFromNdjson(text);
+                    TB_MISSION._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_MISSION_DAY.LoadFromPb64Binary(bin);
-                    TB_MISSION_DAY._AfterLoad();
+                    TB_MISSION.LoadFromPb64Binary(bin);
+                    TB_MISSION._AfterLoad();
                 }
             });
 
@@ -86,6 +86,20 @@ namespace Devian.Domain.Game
                 {
                     TB_LEADERBOARD.LoadFromPb64Binary(bin);
                     TB_LEADERBOARD._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("LEADERBOARD_REWARD", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_LEADERBOARD_REWARD.LoadFromNdjson(text);
+                    TB_LEADERBOARD_REWARD._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_LEADERBOARD_REWARD.LoadFromPb64Binary(bin);
+                    TB_LEADERBOARD_REWARD._AfterLoad();
                 }
             });
 

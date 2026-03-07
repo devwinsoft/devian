@@ -51,7 +51,7 @@ Game 도메인은 Devian 프레임워크의 **예제 도메인**이다.
 | `AdvertiseTable.xlsx` | ADVERTISE | TB_ADVERTISE | `AdvertiseId` (string) | 광고 placement 테이블 |
 | `RewardTable.xlsx` | REWARD | TB_REWARD | `RewardNum` (int) | 보상 테이블 |
 | `GameTable.xlsx` | MESSAGE | TB_MESSAGE | `MessageId` (string) | 메시지 stat 정의 테이블 |
-| `GameTable.xlsx` | MISSION_DAY | TB_MISSION_DAY | `MissionId` (string) | 일일 미션 |
+| `GameTable.xlsx` | MISSION | TB_MISSION | `MissionId` (string) | 미션 |
 | `GameTable.xlsx` | ACHIEVE | TB_ACHIEVE | `Index` (int) | 업적 런타임 + 플랫폼 매핑 테이블 |
 | `GameTable.xlsx` | LEADERBOARD | TB_LEADERBOARD | `LeaderboardId` (string) | 리더보드 정의 |
 | `ItemTable.xlsx` | EQUIP | TB_EQUIP | `EquipId` (string) | 장비 테이블 (EquipId, NameId, DescId) |

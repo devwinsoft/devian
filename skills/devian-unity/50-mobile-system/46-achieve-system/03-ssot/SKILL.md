@@ -35,8 +35,6 @@ AppliesTo: v10
 | `rewardGroupId` | string | claim 보상 키 |
 | `appleAchievementId` | string | Game Center ID (missionId group 공통) |
 | `googleAchievementId` | string | GPGS ID (missionId group 공통) |
-| `kind` | string | `Binary` / `Percent` / `Steps` |
-| `stepsTotal` | int | `kind=Steps`일 때 사용 |
 
 ---
 

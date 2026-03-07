@@ -9,27 +9,6 @@ namespace Devian
         public int schemaVersion = 1;
         public int nextAchieveUid = 1;
         public Dictionary<int, AchieveRuntime> runtimes = new();
-        public Dictionary<string, CBigInt> stats = new(StringComparer.Ordinal);
-
-        public bool TryGetStat(string messageId, out CBigInt value)
-        {
-            value = CBigInt.Zero;
-            return !string.IsNullOrWhiteSpace(messageId)
-                   && stats.TryGetValue(messageId, out value);
-        }
-
-        public CBigInt GetStat(string messageId)
-        {
-            return TryGetStat(messageId, out var value) ? value : CBigInt.Zero;
-        }
-
-        public void SetStat(string messageId, CBigInt value)
-        {
-            if (string.IsNullOrWhiteSpace(messageId))
-                return;
-
-            stats[messageId] = value;
-        }
 
         public int AllocateAchieveUid()
         {
@@ -49,7 +28,6 @@ namespace Devian
             schemaVersion = 1;
             nextAchieveUid = 1;
             runtimes.Clear();
-            stats.Clear();
         }
     }
 }

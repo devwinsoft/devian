@@ -59,6 +59,10 @@ namespace MyApp
 - lifecycle 처리는 `ApplicationManager`의 semantic hook을 사용한다.
 - manager가 inspector/serialized field로 Firebase region 같은 앱 설정을 직접 소유하지 않는다. 설정 owner는 bootstrap/app layer다.
 
+foreground 복귀 기준 동작:
+- `MissionManager.RefreshClockAsync(...)`
+- refresh 성공 시 `LeaderboardSeasonRewardManager.SyncSeasonTransitionRewardsAsync(...)` best-effort 호출
+
 
 ## Resource Prefab 생성 규칙
 
@@ -122,6 +126,8 @@ MobileApplication에 부착된 RequireComponent:
 - `AchieveManager`
 - `MissionManager`
 - `LeaderboardManager`
+- `LeaderboardSeasonRewardManager`
+- `GameMessageManager`
 - `SaveDataManager`
 - `InputManager` — [24-input-manager](../../20-domain-common-system/22-input-manager/SKILL.md)
 - `FirebaseManager` — [23-firebase-manager](../23-firebase-manager/SKILL.md)
@@ -131,4 +137,5 @@ MobileApplication에 부착된 RequireComponent:
 - [16-base-application](../../20-domain-common-system/14-application-manager/SKILL.md) — ApplicationManager 런타임 스펙
 - [24-input-manager](../../20-domain-common-system/22-input-manager/SKILL.md) — InputManager 공용 입력 관리자
 - [21-savedata-system/43-savedata-json-codec](../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 규약
+- [50-leaderboard/13-leaderboard-season-reward-manager](../50-leaderboard/13-leaderboard-season-reward-manager/SKILL.md) — 시즌 보상 sync 흐름
 - [50-mobile-system overview](../00-overview/SKILL.md) — MobileSystem (Devian Samples) 그룹 개요

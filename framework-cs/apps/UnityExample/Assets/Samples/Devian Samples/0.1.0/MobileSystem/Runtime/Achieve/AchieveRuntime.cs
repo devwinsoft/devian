@@ -100,7 +100,11 @@ namespace Devian
             _opType = nextOpType;
             _conditionValue = nextConditionValue;
             _externalProgressReader = readExternalProgress;
-            RefreshProgressFromExternal(emitProgressEvent: false);
+
+            if (nextOpType == GAME_MESSAGE_SAVE_TYPE.SESSION_SUM)
+                progressValue = CBigInt.Zero;
+            else if (isTotalSaveType(nextOpType))
+                RefreshProgressFromExternal(emitProgressEvent: false);
 
             RaiseClaimableIfNeeded();
         }
@@ -135,12 +139,46 @@ namespace Devian
                 RaiseClaimableIfNeeded();
         }
 
-        internal void OnMessageStatUpdated(GAME_MESSAGE_TYPE messageType)
+        internal void OnMessageStatUpdated(GAME_MESSAGE_TYPE messageType, CBigInt delta)
         {
             if (isCompleted || _opType == GAME_MESSAGE_SAVE_TYPE.NONE || _statType != messageType)
                 return;
 
-            RefreshProgressFromExternal(emitProgressEvent: true);
+            if (isTotalSaveType(_opType))
+            {
+                RefreshProgressFromExternal(emitProgressEvent: true);
+                return;
+            }
+
+            var wasClaimable = IsClaimable;
+            CBigInt nextProgress;
+            switch (_opType)
+            {
+                case GAME_MESSAGE_SAVE_TYPE.SESSION_SUM:
+                    nextProgress = progressValue + delta;
+                    break;
+
+                case GAME_MESSAGE_SAVE_TYPE.SESSION_MAX:
+                    nextProgress = CBigInt.Max(progressValue, delta);
+                    break;
+
+                default:
+                    return;
+            }
+
+            if (nextProgress.CompareTo(progressValue) == 0)
+                return;
+
+            progressValue = nextProgress;
+            RaiseChanged();
+            if (!wasClaimable && IsClaimable)
+                RaiseClaimableIfNeeded();
+        }
+
+        static bool isTotalSaveType(GAME_MESSAGE_SAVE_TYPE saveType)
+        {
+            return saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
+                   || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX;
         }
     }
 }

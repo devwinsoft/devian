@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
 using UnityEngine;
-using UnityEngine.SocialPlatforms;
 
 namespace Devian
 {
@@ -32,11 +30,8 @@ namespace Devian
             public bool isActive = true;
             public string appleAchievementId = string.Empty;
             public string googleAchievementId = string.Empty;
-            public ACHIEVE_TYPE achieveType = ACHIEVE_TYPE.Binary;
-            public int stepsTotal = 0;
 
             public string InternalId => (achievementId ?? string.Empty).Trim();
-            public int StepsTotal => achieveType == ACHIEVE_TYPE.Steps ? Mathf.Max(1, stepsTotal) : 0;
 
             public string ResolvePlatformId(RuntimePlatformKind platform)
             {
@@ -50,13 +45,6 @@ namespace Devian
                         return string.Empty;
                 }
             }
-        }
-
-        private interface IAchievePlatformAdapter
-        {
-            Task<CommonResult> InitializeAsync(CancellationToken ct);
-            Task<CommonResult> UnlockAchievementAsync(string platformAchievementId, ACHIEVE_TYPE achieveType, int stepsTotal, CancellationToken ct);
-            Task<CommonResult<Dictionary<string, bool>>> FetchAchievementStatesAsync(CancellationToken ct);
         }
 
         private readonly Dictionary<string, AchievementMapEntry> _achievementById
@@ -189,7 +177,7 @@ namespace Devian
                     nextMessage.MessageType,
                     nextMessage.SaveType,
                     nextRow.ConditionValue!.Value,
-                    createMissionStatProgressReader(nextRow.MessageId));
+                    createExternalProgressReader(nextRow.MessageId, nextMessage.SaveType));
                 emitRuntimeLevelUp(runtime);
             }
             else
@@ -308,8 +296,7 @@ namespace Devian
 
         void onGameMessageNotify(GAME_MESSAGE_TYPE msgType, CBigInt msgValue)
         {
-            onBeforeTriggerNotify(msgType, msgValue);
-            notifyRuntimesByMessage(msgType);
+            notifyRuntimesByMessage(msgType, msgValue);
         }
 
         public async Task<CommonResult> UnlockAchievementAsync(string achievementId, CancellationToken ct = default)
@@ -328,7 +315,7 @@ namespace Devian
             if (resolve.IsFailure)
                 return resolve;
 
-            var unlock = await _adapter.UnlockAchievementAsync(platformAchievementId, entry.achieveType, entry.StepsTotal, ct);
+            var unlock = await _adapter.UnlockAchievementAsync(platformAchievementId, ct);
             if (unlock.IsFailure)
                 return unlock;
 
@@ -622,8 +609,6 @@ namespace Devian
                 isActive = row != null && row.IsActive,
                 appleAchievementId = (row?.AppleAchievementId ?? string.Empty).Trim(),
                 googleAchievementId = (row?.GoogleAchievementId ?? string.Empty).Trim(),
-                achieveType = row?.AchieveType ?? ACHIEVE_TYPE.Binary,
-                stepsTotal = Math.Max(0, row?.StepsTotal ?? 0),
             };
         }
 
@@ -684,7 +669,7 @@ namespace Devian
                             StatType = message.MessageType,
                             OpType = message.SaveType,
                             ConditionValue = row.ConditionValue!.Value,
-                            ReadProgress = createMissionStatProgressReader(row.MessageId),
+                            ReadProgress = createExternalProgressReader(row.MessageId, message.SaveType),
                             OnChanged = onRuntimeChanged,
                             OnClaimable = onRuntimeClaimable,
                         });
@@ -721,47 +706,13 @@ namespace Devian
                     StatType = startMessage.MessageType,
                     OpType = startMessage.SaveType,
                     ConditionValue = startRow.ConditionValue!.Value,
-                    ReadProgress = createMissionStatProgressReader(startRow.MessageId),
+                    ReadProgress = createExternalProgressReader(startRow.MessageId, startMessage.SaveType),
                     OnChanged = onRuntimeChanged,
                     OnClaimable = onRuntimeClaimable,
                 });
 
                 _storage.runtimes[created.achieveUid] = created;
                 emitRuntimeInitialized(created);
-            }
-        }
-
-        void onBeforeTriggerNotify(GAME_MESSAGE_TYPE statType, CBigInt delta)
-        {
-            foreach (var message in TB_MESSAGE.GetAll())
-            {
-                if (message == null
-                    || message.MessageType != statType
-                    || string.IsNullOrWhiteSpace(message.MessageId))
-                {
-                    continue;
-                }
-
-                var current = _storage.GetStat(message.MessageId);
-                CBigInt next;
-                switch (message.SaveType)
-                {
-                    case GAME_MESSAGE_SAVE_TYPE.SUM:
-                        next = current + delta;
-                        break;
-
-                    case GAME_MESSAGE_SAVE_TYPE.MAX:
-                        next = CBigInt.Max(current, delta);
-                        break;
-
-                    default:
-                        continue;
-                }
-
-                if (next.CompareTo(current) == 0)
-                    continue;
-
-                _storage.SetStat(message.MessageId, next);
             }
         }
 
@@ -775,7 +726,7 @@ namespace Devian
             emitRuntimeClaimable(runtime);
         }
 
-        void notifyRuntimesByMessage(GAME_MESSAGE_TYPE messageType)
+        void notifyRuntimesByMessage(GAME_MESSAGE_TYPE messageType, CBigInt messageDelta)
         {
             if (_storage.runtimes.Count <= 0)
                 return;
@@ -788,7 +739,7 @@ namespace Devian
             }
 
             foreach (var runtime in runtimes)
-                runtime.OnMessageStatUpdated(messageType);
+                runtime.OnMessageStatUpdated(messageType, messageDelta);
         }
 
         AchieveRuntime findRuntime(string achieveId)
@@ -870,13 +821,25 @@ namespace Devian
             return message != null;
         }
 
-        Func<CBigInt> createMissionStatProgressReader(string messageId)
+        static Func<CBigInt> createExternalProgressReader(string messageId, GAME_MESSAGE_SAVE_TYPE saveType)
         {
             if (string.IsNullOrWhiteSpace(messageId))
-                return static () => CBigInt.Zero;
+                return null;
+
+            if (saveType != GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
+                && saveType != GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX)
+            {
+                return null;
+            }
 
             var key = messageId;
-            return () => _storage.GetStat(key);
+            return () =>
+            {
+                if (!GameMessageManager.TryGet(out var messageManager) || messageManager == null)
+                    return CBigInt.Zero;
+
+                return messageManager.GetStat(key);
+            };
         }
 
         static RuntimePlatformKind getRuntimePlatform()
@@ -903,317 +866,5 @@ namespace Devian
             }
         }
 
-        private sealed class UnsupportedAchievePlatformAdapter : IAchievePlatformAdapter
-        {
-            public Task<CommonResult> InitializeAsync(CancellationToken ct)
-                => Task.FromResult(CommonResult.Failure(
-                    CommonErrorType.LOGIN_UNSUPPORTED,
-                    "Achievement is not supported on this platform."));
-
-            public Task<CommonResult> UnlockAchievementAsync(string platformAchievementId, ACHIEVE_TYPE achieveType, int stepsTotal, CancellationToken ct)
-                => Task.FromResult(CommonResult.Failure(
-                    CommonErrorType.LOGIN_UNSUPPORTED,
-                    "Achievement is not supported on this platform."));
-
-            public Task<CommonResult<Dictionary<string, bool>>> FetchAchievementStatesAsync(CancellationToken ct)
-                => Task.FromResult(CommonResult<Dictionary<string, bool>>.Failure(
-                    CommonErrorType.LOGIN_UNSUPPORTED,
-                    "Achievement is not supported on this platform."));
-        }
-
-        private sealed class AppleAchievePlatformAdapter : IAchievePlatformAdapter
-        {
-            public Task<CommonResult> InitializeAsync(CancellationToken ct)
-            {
-#if UNITY_IOS && !UNITY_EDITOR
-                return Task.FromResult(CommonResult.Ok());
-#else
-                return Task.FromResult(CommonResult.Failure(
-                    CommonErrorType.LOGIN_UNSUPPORTED,
-                    "Game Center adapter is not available on this platform."));
-#endif
-            }
-
-            public async Task<CommonResult> UnlockAchievementAsync(string platformAchievementId, ACHIEVE_TYPE achieveType, int stepsTotal, CancellationToken ct)
-            {
-#if UNITY_IOS && !UNITY_EDITOR
-                var auth = ensureAuthenticated();
-                if (auth.IsFailure)
-                    return auth;
-
-                try
-                {
-                    var tcs = new TaskCompletionSource<bool>();
-                    Social.ReportProgress(platformAchievementId, 100d, success => tcs.TrySetResult(success));
-                    var success = await tcs.Task;
-
-                    return success
-                        ? CommonResult.Ok()
-                        : CommonResult.Failure(CommonErrorType.COMMON_SERVER, "Game Center achievement unlock failed.");
-                }
-                catch (Exception ex)
-                {
-                    return CommonResult.Failure(CommonErrorType.COMMON_SERVER, ex.Message);
-                }
-#else
-                return CommonResult.Failure(CommonErrorType.LOGIN_UNSUPPORTED, "Game Center adapter is not available on this platform.");
-#endif
-            }
-
-            public async Task<CommonResult<Dictionary<string, bool>>> FetchAchievementStatesAsync(CancellationToken ct)
-            {
-#if UNITY_IOS && !UNITY_EDITOR
-                var auth = ensureAuthenticated();
-                if (auth.IsFailure)
-                    return CommonResult<Dictionary<string, bool>>.Failure(auth.Error!);
-
-                try
-                {
-                    var tcs = new TaskCompletionSource<IAchievement[]>();
-                    Social.LoadAchievements(achievements => tcs.TrySetResult(achievements));
-                    var achievements = await tcs.Task;
-
-                    if (achievements == null)
-                    {
-                        return CommonResult<Dictionary<string, bool>>.Failure(
-                            CommonErrorType.COMMON_SERVER,
-                            "Game Center achievement sync failed.");
-                    }
-
-                    return CommonResult<Dictionary<string, bool>>.Success(
-                        toAchievementStateMap(achievements));
-                }
-                catch (Exception ex)
-                {
-                    return CommonResult<Dictionary<string, bool>>.Failure(CommonErrorType.COMMON_SERVER, ex.Message);
-                }
-#else
-                return CommonResult<Dictionary<string, bool>>.Failure(
-                    CommonErrorType.LOGIN_UNSUPPORTED,
-                    "Game Center adapter is not available on this platform.");
-#endif
-            }
-
-            static CommonResult ensureAuthenticated()
-            {
-                if (Social.localUser != null && Social.localUser.authenticated)
-                    return CommonResult.Ok();
-
-                return CommonResult.Failure(CommonErrorType.COMMON_AUTH, "Game Center authentication required.");
-            }
-        }
-
-        private sealed class GoogleAchievePlatformAdapter : IAchievePlatformAdapter
-        {
-            private bool _resolved;
-            private object _platformInstance;
-            private MethodInfo _reportProgressMethod;
-            private MethodInfo _loadAchievementsMethod;
-
-            public Task<CommonResult> InitializeAsync(CancellationToken ct)
-            {
-#if UNITY_ANDROID && !UNITY_EDITOR
-                if (_resolved)
-                {
-                    return Task.FromResult(_platformInstance != null
-                        ? CommonResult.Ok()
-                        : CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, "Google Play Games plugin not found."));
-                }
-
-                _resolved = true;
-
-                try
-                {
-                    var platformType = Type.GetType("GooglePlayGames.PlayGamesPlatform, Google.Play.Games");
-                    if (platformType == null)
-                    {
-                        return Task.FromResult(CommonResult.Failure(
-                            CommonErrorType.COMMON_UNKNOWN,
-                            "Google Play Games v2 plugin not found."));
-                    }
-
-                    _platformInstance = platformType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
-                    if (_platformInstance == null)
-                    {
-                        var activate = platformType.GetMethod("Activate", BindingFlags.Public | BindingFlags.Static);
-                        activate?.Invoke(null, null);
-                        _platformInstance = platformType.GetProperty("Instance", BindingFlags.Public | BindingFlags.Static)?.GetValue(null);
-                    }
-
-                    if (_platformInstance == null)
-                    {
-                        return Task.FromResult(CommonResult.Failure(
-                            CommonErrorType.COMMON_UNKNOWN,
-                            "Google Play Games platform instance not available."));
-                    }
-
-                    _reportProgressMethod = findMethod(
-                        platformType,
-                        "ReportProgress",
-                        typeof(string), typeof(double), typeof(Action<bool>));
-
-                    _loadAchievementsMethod = findMethod(
-                        platformType,
-                        "LoadAchievements",
-                        typeof(Action<IAchievement[]>));
-
-                    if (_reportProgressMethod == null || _loadAchievementsMethod == null)
-                    {
-                        return Task.FromResult(CommonResult.Failure(
-                            CommonErrorType.COMMON_UNKNOWN,
-                            "Google Play Games API surface is missing required methods."));
-                    }
-
-                    return Task.FromResult(CommonResult.Ok());
-                }
-                catch (Exception ex)
-                {
-                    return Task.FromResult(CommonResult.Failure(CommonErrorType.COMMON_SERVER, ex.Message));
-                }
-#else
-                return Task.FromResult(CommonResult.Failure(
-                    CommonErrorType.LOGIN_UNSUPPORTED,
-                    "Google adapter is not available on this platform."));
-#endif
-            }
-
-            public async Task<CommonResult> UnlockAchievementAsync(string platformAchievementId, ACHIEVE_TYPE achieveType, int stepsTotal, CancellationToken ct)
-            {
-#if UNITY_ANDROID && !UNITY_EDITOR
-                var init = await InitializeAsync(ct);
-                if (init.IsFailure)
-                    return init;
-
-                var auth = ensureAuthenticated();
-                if (auth.IsFailure)
-                    return auth;
-
-                try
-                {
-                    var tcs = new TaskCompletionSource<bool>();
-                    var callback = new Action<bool>(success => tcs.TrySetResult(success));
-
-                    _reportProgressMethod.Invoke(_platformInstance, new object[]
-                    {
-                        platformAchievementId,
-                        100d,
-                        callback,
-                    });
-
-                    var success = await tcs.Task;
-                    return success
-                        ? CommonResult.Ok()
-                        : CommonResult.Failure(CommonErrorType.COMMON_SERVER, "GPGS achievement unlock failed.");
-                }
-                catch (Exception ex)
-                {
-                    return CommonResult.Failure(CommonErrorType.COMMON_SERVER, ex.Message);
-                }
-#else
-                return CommonResult.Failure(CommonErrorType.LOGIN_UNSUPPORTED, "Google adapter is not available on this platform.");
-#endif
-            }
-
-            public async Task<CommonResult<Dictionary<string, bool>>> FetchAchievementStatesAsync(CancellationToken ct)
-            {
-#if UNITY_ANDROID && !UNITY_EDITOR
-                var init = await InitializeAsync(ct);
-                if (init.IsFailure)
-                    return CommonResult<Dictionary<string, bool>>.Failure(init.Error!);
-
-                var auth = ensureAuthenticated();
-                if (auth.IsFailure)
-                    return CommonResult<Dictionary<string, bool>>.Failure(auth.Error!);
-
-                try
-                {
-                    var tcs = new TaskCompletionSource<IAchievement[]>();
-                    var callback = new Action<IAchievement[]>(achievements => tcs.TrySetResult(achievements));
-
-                    _loadAchievementsMethod.Invoke(_platformInstance, new object[]
-                    {
-                        callback,
-                    });
-
-                    var achievements = await tcs.Task;
-                    if (achievements == null)
-                    {
-                        return CommonResult<Dictionary<string, bool>>.Failure(
-                            CommonErrorType.COMMON_SERVER,
-                            "GPGS achievement sync failed.");
-                    }
-
-                    return CommonResult<Dictionary<string, bool>>.Success(
-                        toAchievementStateMap(achievements));
-                }
-                catch (Exception ex)
-                {
-                    return CommonResult<Dictionary<string, bool>>.Failure(CommonErrorType.COMMON_SERVER, ex.Message);
-                }
-#else
-                return CommonResult<Dictionary<string, bool>>.Failure(
-                    CommonErrorType.LOGIN_UNSUPPORTED,
-                    "Google adapter is not available on this platform.");
-#endif
-            }
-
-            static MethodInfo findMethod(Type type, string methodName, params Type[] paramTypes)
-            {
-                var methods = type.GetMethods(BindingFlags.Public | BindingFlags.Instance);
-                for (var i = 0; i < methods.Length; i++)
-                {
-                    var m = methods[i];
-                    if (!string.Equals(m.Name, methodName, StringComparison.Ordinal))
-                        continue;
-
-                    var ps = m.GetParameters();
-                    if (ps.Length != paramTypes.Length)
-                        continue;
-
-                    var matched = true;
-                    for (var p = 0; p < ps.Length; p++)
-                    {
-                        if (ps[p].ParameterType != paramTypes[p])
-                        {
-                            matched = false;
-                            break;
-                        }
-                    }
-
-                    if (matched)
-                        return m;
-                }
-
-                return null;
-            }
-
-            static CommonResult ensureAuthenticated()
-            {
-                if (Social.localUser != null && Social.localUser.authenticated)
-                    return CommonResult.Ok();
-
-                return CommonResult.Failure(CommonErrorType.COMMON_AUTH, "Google Play Games authentication required.");
-            }
-        }
-
-        static Dictionary<string, bool> toAchievementStateMap(IAchievement[] achievements)
-        {
-            var map = new Dictionary<string, bool>(StringComparer.Ordinal);
-
-            for (var i = 0; i < achievements.Length; i++)
-            {
-                var achievement = achievements[i];
-                if (achievement == null || string.IsNullOrEmpty(achievement.id))
-                    continue;
-
-                var unlocked = achievement.completed || achievement.percentCompleted >= 100d;
-                if (map.TryGetValue(achievement.id, out var prev))
-                    map[achievement.id] = prev || unlocked;
-                else
-                    map[achievement.id] = unlocked;
-            }
-
-            return map;
-        }
     }
 }

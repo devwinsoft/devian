@@ -7,7 +7,7 @@ AppliesTo: v10
 
 이 문서는 아래 항목의 정본이다.
 
-- `MISSION_DAY`, `MISSION_STAT` 스키마
+- `MISSION`, `MISSION_STAT` 스키마
 - `GAME_MESSAGE_TYPE`, `GAME_MESSAGE_SAVE_TYPE`, `MISSION_MESSAGE` 사용 규약
 - Mission trigger/update/runtime binding 규칙
 - Mission 저장 구조(`MissionStorage`, daily runtime, stats) 규칙
@@ -33,11 +33,12 @@ AppliesTo: v10
 
 ## B) Table Schema
 
-### `MISSION_DAY`
+### `MISSION`
 
 | field | type | note |
 |---|---|---|
-| `missionId` | string (pk) | daily 미션 ID |
+| `missionId` | string (pk) | 미션 ID |
+| `missionType` | `MISSION_TYPE` | 미션 유형 (NONE/DAY/PASS_FREE/PASS_PAID) |
 | `isActive` | bool | 운영 토글 |
 | `fixed` | bool | daily 선택 우선 포함 |
 | `orderNum` | int | 정렬 기준(1-base) |

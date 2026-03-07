@@ -4,7 +4,7 @@ namespace Devian
 {
     internal static class SaveDataJsonCodec
     {
-        const int CurrentVersion = 13;
+        const int CurrentVersion = 14;
 
         public static string Serialize(
             InventoryStorage inventory,
@@ -12,7 +12,8 @@ namespace Devian
             AccountStorage account,
             GameMessageStorage message,
             MissionStorage mission,
-            AchieveStorage achieve)
+            AchieveStorage achieve,
+            LeaderboardSeasonRewardStorage leaderboardReward)
         {
             var root = new JObject
             {
@@ -23,6 +24,7 @@ namespace Devian
                 ["message"] = SaveDataJsonCodecMessage.Serialize(message),
                 ["mission"] = SaveDataJsonCodecMission.Serialize(mission),
                 ["achieve"] = SaveDataJsonCodecAchieve.Serialize(achieve),
+                ["leaderboardReward"] = SaveDataJsonCodecLeaderboardReward.Serialize(leaderboardReward),
             };
             return root.ToString();
         }
@@ -34,7 +36,8 @@ namespace Devian
             AccountStorage account,
             GameMessageStorage message,
             MissionStorage mission,
-            AchieveStorage achieve)
+            AchieveStorage achieve,
+            LeaderboardSeasonRewardStorage leaderboardReward)
         {
             var root = JObject.Parse(json);
             var version = root.Value<int?>("version") ?? 0;
@@ -68,6 +71,11 @@ namespace Devian
                 SaveDataJsonCodecAchieve.DeserializeInto(achieveObj, achieve);
             else
                 achieve?.Clear();
+
+            if (version >= 14 && root["leaderboardReward"] is JObject leaderboardRewardObj)
+                SaveDataJsonCodecLeaderboardReward.DeserializeInto(leaderboardRewardObj, leaderboardReward);
+            else
+                leaderboardReward?.Clear();
         }
 
         static bool isSupportedVersion(int version)

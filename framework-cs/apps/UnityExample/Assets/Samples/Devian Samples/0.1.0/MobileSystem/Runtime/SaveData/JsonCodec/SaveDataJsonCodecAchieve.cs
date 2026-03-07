@@ -33,16 +33,6 @@ namespace Devian
                 runtimes.Add(runtimeObj);
             }
 
-            var statsObj = new JObject();
-            foreach (var stat in storage.stats)
-            {
-                if (string.IsNullOrWhiteSpace(stat.Key))
-                    continue;
-
-                statsObj[stat.Key] = SerializeBigInt(stat.Value);
-            }
-
-            achieveObj["stats"] = statsObj;
             achieveObj["runtimes"] = runtimes;
             return achieveObj;
         }
@@ -59,17 +49,6 @@ namespace Devian
 
             storage.schemaVersion = achieveObj.Value<int?>("schemaVersion") ?? 1;
             storage.nextAchieveUid = achieveObj.Value<int?>("nextAchieveUid") ?? 1;
-
-            if (achieveObj["stats"] is JObject statsObj)
-            {
-                foreach (var property in statsObj.Properties())
-                {
-                    if (string.IsNullOrWhiteSpace(property.Name))
-                        continue;
-
-                    storage.SetStat(property.Name, DeserializeBigInt(property.Value));
-                }
-            }
 
             if (achieveObj["runtimes"] is JArray runtimeArray)
             {

@@ -173,10 +173,10 @@ namespace Devian
 
             switch (_opType)
             {
-                case GAME_MESSAGE_SAVE_TYPE.MAX:
+                case GAME_MESSAGE_SAVE_TYPE.SESSION_MAX:
                     return CBigInt.Max(progressValue, delta);
 
-                case GAME_MESSAGE_SAVE_TYPE.SUM:
+                case GAME_MESSAGE_SAVE_TYPE.SESSION_SUM:
                     return CalculateSumProgress(delta);
 
                 default:

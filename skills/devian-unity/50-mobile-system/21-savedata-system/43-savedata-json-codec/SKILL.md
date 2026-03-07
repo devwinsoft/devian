@@ -11,7 +11,7 @@ Type: Design / SSOT
 SaveDataManager가 local/cloud payload에 저장할 게임 상태 JSON의 직렬화/역직렬화 규약을 정의한다.
 
 - JSON 직렬화/역직렬화의 **유일한 진입점은 SaveDataManager** 이다.
-- `AccountManager`, `InventoryManager`, `PurchaseManager`, `MissionManager`는 각자 자신의 `Storage`를 소유한다.
+- `AccountManager`, `InventoryManager`, `PurchaseManager`, `GameMessageManager`, `MissionManager`, `AchieveManager`, `LeaderboardSeasonRewardManager`는 각자 자신의 `Storage`를 소유한다.
 - JSON 구현은 `SaveDataJsonCodec` root codec + section codec으로 분리한다.
 
 
@@ -23,9 +23,12 @@ SaveDataManager가 local/cloud payload에 저장할 게임 상태 JSON의 직렬
 - `AccountManager` 소유: `AccountStorage`
 - `InventoryManager` 소유: `InventoryStorage`
 - `PurchaseManager` 소유: `PurchaseStorage`
+- `GameMessageManager` 소유: `GameMessageStorage`
 - `MissionManager` 소유: `MissionStorage`
+- `AchieveManager` 소유: `AchieveStorage`
+- `LeaderboardSeasonRewardManager` 소유: `LeaderboardSeasonRewardStorage`
 - `SaveDataManager` 책임:
-  - 위 4개 storage를 수집
+  - 위 storage를 수집
   - primary save binding(local filename + cloud slot) 관리
   - JSON serialize/deserialize 호출
   - payload encrypt/decrypt
@@ -45,10 +48,10 @@ SaveDataManager가 local/cloud payload에 저장할 게임 상태 JSON의 직렬
 SaveDataManager : CompoSingleton<SaveDataManager>
 │
 ├── ToJson()
-│   └── SaveDataJsonCodec.Serialize(inventory, purchase, account, mission)
+│   └── SaveDataJsonCodec.Serialize(inventory, purchase, account, message, mission, achieve, leaderboardReward)
 │
 ├── LoadFromJson(json)
-│   └── SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, account, mission)
+│   └── SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, account, message, mission, achieve, leaderboardReward)
 │
 ├── LoadFromPayload(payload)
 │   └── ComplexUtil.Decrypt_Base64(payload) -> LoadFromJson(json)
@@ -57,14 +60,20 @@ SaveDataManager : CompoSingleton<SaveDataManager>
     ├── AccountManager.Instance.Storage.Clear()
     ├── InventoryManager.Instance.Storage.Clear()
     ├── PurchaseManager.Instance.Storage.ClearAll()
-    └── MissionManager.Instance.Storage.Clear()
+    ├── GameMessageManager.Instance.Storage.Clear()
+    ├── MissionManager.Instance.Storage.Clear()
+    ├── AchieveManager.Instance.Storage.Clear()
+    └── LeaderboardSeasonRewardManager.Instance.Storage.Clear()
 ```
 
 - root orchestration: `SaveDataJsonCodec`
 - inventory section: `SaveDataJsonCodecInventory`
 - purchase section: `SaveDataJsonCodecPurchase`
 - account section: `SaveDataJsonCodecAccount`
+- message section: `SaveDataJsonCodecMessage`
 - mission section: `SaveDataJsonCodecMission`
+- achieve section: `SaveDataJsonCodecAchieve`
+- leaderboard reward section: `SaveDataJsonCodecLeaderboardReward`
 
 section codec은 manager를 직접 알지 않고, `Storage` 타입만 다룬다.
 
@@ -83,11 +92,14 @@ section codec은 manager를 직접 알지 않고, `Storage` 타입만 다룬다.
 
 ```json
 {
-  "version": 10,
+  "version": 14,
   "inventory": {},
   "purchase": {},
   "account": {},
-  "mission": {}
+  "message": {},
+  "mission": {},
+  "achieve": {},
+  "leaderboardReward": {}
 }
 ```
 
@@ -95,7 +107,10 @@ section codec은 manager를 직접 알지 않고, `Storage` 타입만 다룬다.
 - `inventory`: `InventoryStorage` 섹션
 - `purchase`: `PurchaseStorage` 섹션
 - `account`: `AccountStorage` 섹션
+- `message`: `GameMessageStorage` 섹션
 - `mission`: `MissionStorage` 섹션
+- `achieve`: `AchieveStorage` 섹션
+- `leaderboardReward`: `LeaderboardSeasonRewardStorage` 섹션
 
 payload wrapper(`SaveLocalPayload`, `SaveCloudPayload`)의 `account` 메타는 유지한다.
 이 메타는 sync 초기 판정과 account mirror 용도이며, root JSON의 `account` 섹션과 별개로 존재할 수 있다.
@@ -110,19 +125,25 @@ serialize 시 source:
 - `AccountManager.Instance.Storage`
 - `InventoryManager.Instance.Storage`
 - `PurchaseManager.Instance.Storage`
+- `GameMessageManager.Instance.Storage`
 - `MissionManager.Instance.Storage`
+- `AchieveManager.Instance.Storage`
+- `LeaderboardSeasonRewardManager.Instance.Storage`
 
 deserialize 시 target:
 - `AccountManager.Instance.Storage`
 - `InventoryManager.Instance.Storage`
 - `PurchaseManager.Instance.Storage`
+- `GameMessageManager.Instance.Storage`
 - `MissionManager.Instance.Storage`
+- `AchieveManager.Instance.Storage`
+- `LeaderboardSeasonRewardManager.Instance.Storage`
 
 로드 직후 런타임 재적용:
 - `AccountManager.ApplyStorage(AccountManager.Instance.Storage)`
 - 필요 시 `PurchaseManager.SyncEntitlementsAsync(ct)`로 rental stale 상태 보정
 - Mission은 `MissionManager`가 자신의 `MissionStorage`를 기준으로 runtime state를 재구성한다
-- Mission claim 직후에는 `SaveDataManager.SaveGameStorageAsync(true, ct)`로 mission 섹션을 포함한 root payload 저장을 즉시 시도해야 한다
+- Mission/Achieve/SeasonReward claim 상태 변경 직후에는 `SaveDataManager.SaveGameStorageAsync(true, ct)`로 root payload 저장을 즉시 시도해야 한다
 - 이 local save가 실패하면 mission 시스템은 플레이 불가능 상태로 처리한다(TODO)
 
 
@@ -143,7 +164,7 @@ deserialize 시 target:
 ## Hard Rules
 
 - manager가 자신의 storage를 소유하더라도, **payload JSON 직렬화 진입점은 SaveDataManager 하나만 유지**한다.
-- `InventoryStorage`, `PurchaseStorage`, `AccountStorage`, `MissionStorage`에 `ToJson()` / `FromJson()`을 다시 추가하지 않는다.
+- `InventoryStorage`, `PurchaseStorage`, `AccountStorage`, `GameMessageStorage`, `MissionStorage`, `AchieveStorage`, `LeaderboardSeasonRewardStorage`에 `ToJson()` / `FromJson()`을 다시 추가하지 않는다.
 - codec은 domain rule을 가지지 않는다. domain mutation은 각 manager가 담당한다.
 - 새 저장 섹션 추가 시:
   - root codec 수정
@@ -162,7 +183,10 @@ deserialize 시 target:
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecInventory.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecPurchase.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecAccount.cs`
+  - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecMessage.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecMission.cs`
+  - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecAchieve.cs`
+  - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecLeaderboardReward.cs`
 - Packages (sync):
   - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/...`
 - Assets/Samples (import):
@@ -180,4 +204,7 @@ deserialize 시 target:
 - [33-account-manager](../../20-account-system/33-account-manager/SKILL.md) — AccountStorage 소유자
 - [10-inventory-manager](../../22-inventory-system/10-inventory-manager/SKILL.md) — InventoryStorage 소유자
 - [33-purchase-storage](../../30-purchase-system/33-purchase-storage/SKILL.md) — PurchaseStorage 규약
-- [12-mission-storage](../48-mission-system/12-mission-storage/SKILL.md) — MissionStorage 규약
+- [45-game-message-system/14-game-message-storage](../../45-game-message-system/14-game-message-storage/SKILL.md) — GameMessageStorage 규약
+- [48-mission-system/12-mission-storage](../../48-mission-system/12-mission-storage/SKILL.md) — MissionStorage 규약
+- [46-achieve-system/14-achieve-storage](../../46-achieve-system/14-achieve-storage/SKILL.md) — AchieveStorage 규약
+- [50-leaderboard/14-leaderboard-season-reward-storage](../../50-leaderboard/14-leaderboard-season-reward-storage/SKILL.md) — 시즌 보상 저장 규약

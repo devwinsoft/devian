@@ -17,8 +17,6 @@ AppliesTo: v10
 - daily anchor(`dailyMissionStartUtcMs`) 초기화/보정
 - scheduler가 runtime 재구성
   - daily: active row 중 최대 5개 선택
-  - achieve: group별 runtime 1개 create/restore
-- achieve runtime은 `stats[missionStatId]` reader와 함께 복구된다.
 
 ### 2) 플레이 중 trigger 입력
 
@@ -29,22 +27,15 @@ AppliesTo: v10
 - daily runtime:
   - `MAX`: max 갱신
   - `SUM`: conditionValue 상한으로 누적
-- achieve runtime:
-  - 내부 누적하지 않고 `stats[missionStatId]`를 읽어 반영
 
 ### 3) claim
 
 - claimable 검증 후 RewardManager apply
-- `ACHIEVE`에서 다음 level row가 있으면 같은 runtime level-up
-  - 기존 구독 해지
-  - 새 `missionStatId/statType/opType` 바인딩
-  - 새 statType 재구독
 - save 즉시 실행
 
 ### 4) period 전환
 
 - daily cycle 전환 시 기존 daily runtime set 정리 후 재선택
-- achieve는 period reset 없음(`once`)
 
 ---
 
@@ -53,9 +44,6 @@ AppliesTo: v10
 - trigger 1회당 `stats` 갱신이 1회만 일어나는지
 - `GAME_MESSAGE_TYPE` 변경 시 정상 라우팅되는지
 - daily `SUM`이 `conditionValue`를 넘지 않는지
-- achieve progress가 `stats[missionStatId]`와 일치하는지
-- achieve level-up 시 기존 구독 해지 + 새 구독 등록이 정확한지
-- achieve 저장 payload에 `periodKey`/`progressValue`가 없는지
 - legacy fallback 없이 schema v2만으로 동작하는지
 
 ---

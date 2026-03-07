@@ -189,6 +189,7 @@ namespace Devian
                         ConditionValue = row.ConditionValue!.Value,
                         SubscribeTrigger = _subscribeTrigger,
                         UnsubscribeTrigger = _unsubscribeTrigger,
+                        ReadExternalProgress = createExternalProgressReader(row.MessageId, message.SaveType),
                         OnChanged = _onChanged,
                         OnClaimable = _onClaimable,
                     });
@@ -210,6 +211,7 @@ namespace Devian
                     ConditionValue = row.ConditionValue!.Value,
                     SubscribeTrigger = _subscribeTrigger,
                     UnsubscribeTrigger = _unsubscribeTrigger,
+                    ReadExternalProgress = createExternalProgressReader(row.MessageId, message.SaveType),
                     OnChanged = _onChanged,
                     OnClaimable = _onClaimable,
                 });
@@ -240,13 +242,13 @@ namespace Devian
                 _storage.runtimes.Remove(key);
         }
 
-        List<MISSION_DAY> selectDailyRows(string periodKey)
+        List<MISSION> selectDailyRows(string periodKey)
         {
-            var candidates = TB_MISSION_DAY.GetAll()
+            var candidates = TB_MISSION.GetAll()
                 .Where(isEligibleDailyRow)
                 .ToList();
 
-            var selected = new List<MISSION_DAY>(MaxDailyRuntimeCount);
+            var selected = new List<MISSION>(MaxDailyRuntimeCount);
             foreach (var row in candidates.Where(row => row.Fixed))
             {
                 if (selected.Count >= MaxDailyRuntimeCount)
@@ -276,9 +278,9 @@ namespace Devian
             return selected;
         }
 
-        void assignDailyIndices(string periodKey, IReadOnlyList<MISSION_DAY> selectedRows)
+        void assignDailyIndices(string periodKey, IReadOnlyList<MISSION> selectedRows)
         {
-            var rowByMissionId = new Dictionary<string, MISSION_DAY>(StringComparer.Ordinal);
+            var rowByMissionId = new Dictionary<string, MISSION>(StringComparer.Ordinal);
             foreach (var row in selectedRows)
                 rowByMissionId[row.MissionId] = row;
 
@@ -294,7 +296,7 @@ namespace Devian
                 orderedRuntimes[i].index = i;
         }
 
-        static bool isEligibleDailyRow(MISSION_DAY row)
+        static bool isEligibleDailyRow(MISSION row)
         {
             return row != null
                    && row.IsActive
@@ -339,6 +341,27 @@ namespace Devian
                 return false;
 
             return int.TryParse(periodKey.Substring(4), out periodIndex);
+        }
+
+        static Func<CBigInt> createExternalProgressReader(string messageId, GAME_MESSAGE_SAVE_TYPE saveType)
+        {
+            if (string.IsNullOrWhiteSpace(messageId))
+                return null;
+
+            if (saveType != GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
+                && saveType != GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX)
+            {
+                return null;
+            }
+
+            var key = messageId;
+            return () =>
+            {
+                if (!GameMessageManager.TryGet(out var messageManager) || messageManager == null)
+                    return CBigInt.Zero;
+
+                return messageManager.GetStat(key);
+            };
         }
     }
 }

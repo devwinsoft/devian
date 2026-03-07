@@ -15,6 +15,7 @@ namespace Devian
         public CBigInt ConditionValue { get; set; }
         public Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> SubscribeTrigger { get; set; }
         public Action<int> UnsubscribeTrigger { get; set; }
+        public Func<CBigInt> ReadExternalProgress { get; set; }
         public Action<MissionRuntimeBase> OnChanged { get; set; }
         public Action<MissionRuntimeBase> OnClaimable { get; set; }
     }
@@ -33,6 +34,7 @@ namespace Devian
         public CBigInt ConditionValue { get; set; }
         public Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> SubscribeTrigger { get; set; }
         public Action<int> UnsubscribeTrigger { get; set; }
+        public Func<CBigInt> ReadExternalProgress { get; set; }
         public Action<MissionRuntimeBase> OnChanged { get; set; }
         public Action<MissionRuntimeBase> OnClaimable { get; set; }
     }
@@ -59,7 +61,7 @@ namespace Devian
                 args.ConditionValue,
                 args.SubscribeTrigger,
                 args.UnsubscribeTrigger,
-                null,
+                args.ReadExternalProgress,
                 args.OnChanged,
                 args.OnClaimable);
 
@@ -86,7 +88,7 @@ namespace Devian
                 args.ConditionValue,
                 args.SubscribeTrigger,
                 args.UnsubscribeTrigger,
-                null,
+                args.ReadExternalProgress,
                 args.OnChanged,
                 args.OnClaimable);
 

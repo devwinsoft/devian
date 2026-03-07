@@ -7,9 +7,12 @@ MobileSystem 샘플의 `AchieveManager` 설계 문서다.
 
 ---
 
-## Implementation Location
+## Implementation Location (3-path mirror)
 
-- `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Achieve/AchieveManager.cs`
+| 파일 | UPM (정본) | Packages (sync) | Assets/Samples (import) |
+|---|---|---|---|
+| `AchieveManager.cs` | `upm/com.devian.samples/Samples~/MobileSystem/Runtime/Achieve/` | `Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Achieve/` | `Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Achieve/` |
+| `IAchievePlatformAdapter.cs` | 동일 경로 | 동일 경로 | 동일 경로 |
 
 ---
 
@@ -43,7 +46,7 @@ Events:
 - `MESSAGE` 기반 stat 누적/runtime projection 동기화
 - `ACHIEVE_MESSAGE` 기반 외부 알림 트리거 publish
 - claim 보상 적용 및 level-up 처리
-- 플랫폼 adapter(Game Center/GPGS/Unsupported) 연동
+- 플랫폼 adapter 연동 (`IAchievePlatformAdapter.cs`: Apple/Google/Unsupported)
 
 ---
 
