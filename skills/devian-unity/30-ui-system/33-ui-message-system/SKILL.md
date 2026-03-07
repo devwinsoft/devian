@@ -9,7 +9,7 @@ AppliesTo: v11
 
 ### Purpose
 
-UI 전용 메시지 시스템. `MessageSystem<EntityId, UI_MESSAGE>`를 특화한 인스턴스 클래스이다.
+UI 전용 메시지 시스템. `BaseTrigger<EntityId, UI_MESSAGE>`를 특화한 인스턴스 클래스이다.
 `UIManager.messageSystem` 정적 프로퍼티로 단일 인스턴스에 접근하며,
 UI 레벨 이벤트(초기화 완료, 텍스트 리로드, 리사이즈 등)를 ownerKey 기반으로 발행/구독할 수 있다.
 
@@ -17,7 +17,7 @@ UI 레벨 이벤트(초기화 완료, 텍스트 리로드, 리사이즈 등)를 
 
 | Term | Definition |
 |------|------------|
-| **UIMessageSystem** | `MessageSystem<EntityId, UI_MESSAGE>` 특화 클래스 |
+| **UIMessageSystem** | `BaseTrigger<EntityId, UI_MESSAGE>` 특화 클래스 |
 | **UI_MESSAGE** | UI 메시지 키 enum (`None`, `InitOnce`, `ReloadText`, `Resize`) |
 | **EntityId** | `UnityEngine.EntityId`. ownerKey로 사용 (`GetEntityId()` 반환값) |
 
@@ -44,7 +44,7 @@ namespace Devian
         Resize,
     }
 
-    public class UIMessageSystem : MessageSystem<EntityId, UI_MESSAGE>
+    public class UIMessageSystem : BaseTrigger<EntityId, UI_MESSAGE>
     {
     }
 }
@@ -64,7 +64,7 @@ public static UIMessageSystem messageSystem => Instance.mMessageSystem;
 
 ## API
 
-`MessageSystem<TOwnerKey, TMsgKey>` 인스턴스 API를 그대로 상속한다.
+`BaseTrigger<TOwnerKey, TMsgKey>` 인스턴스 API를 그대로 상속한다.
 
 | Method | Description |
 |--------|-------------|
@@ -109,7 +109,7 @@ UIManager.messageSystem.UnSubcribe(ownerEntityId);
 
 | Dependency | Location |
 |------------|----------|
-| `MessageSystem<TOwnerKey, TMsgKey>` | `com.devian.foundation/Runtime/Unity/MessageSystem/MessageSystem.cs` |
+| `BaseTrigger<TOwnerKey, TMsgKey>` | `com.devian.foundation/Runtime/Unity/BaseTrigger/BaseTrigger.cs` |
 | `UnityEngine.EntityId` | Unity 내장 (`UnityEngine.Object.GetEntityId()` 반환 타입) |
 | `UIManager` | `com.devian.ui/Runtime/UIManager.cs` |
 
@@ -117,6 +117,6 @@ UIManager.messageSystem.UnSubcribe(ownerEntityId);
 
 ## Reference
 
-- **MessageSystem**: [25-message-system/SKILL.md](../../20-domain-common-system/25-message-system/SKILL.md)
+- **BaseTrigger**: [25-trigger/SKILL.md](../../20-domain-common-system/25-trigger/SKILL.md)
 - **UIManager**: [10-ui-manager/SKILL.md](../10-ui-manager/SKILL.md)
 - **EntityId**: `UnityEngine.EntityId` (Unity 내장)

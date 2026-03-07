@@ -580,12 +580,16 @@ namespace Devian
             var inventory = getInventoryStorageOrNull();
             var purchase = getPurchaseStorageOrNull();
             var account = getAccountStorageOrNull();
+            var message = getGameMessageStorageOrNull();
             var mission = getMissionStorageOrNull();
+            var achieve = getAchieveStorageOrNull();
             return SaveDataJsonCodec.Serialize(
                 inventory ?? new InventoryStorage(),
                 purchase ?? new PurchaseStorage(),
                 account ?? new AccountStorage(),
-                mission ?? new MissionStorage());
+                message ?? new GameMessageStorage(),
+                mission ?? new MissionStorage(),
+                achieve ?? new AchieveStorage());
         }
 
         /// <summary>
@@ -610,13 +614,19 @@ namespace Devian
             var inventory = getInventoryStorageOrNull();
             var purchase = getPurchaseStorageOrNull();
             var account = getAccountStorageOrNull();
+            var messageManager = getGameMessageManagerOrNull();
             var missionManager = getMissionManagerOrNull();
+            var achieveManager = getAchieveManagerOrNull();
+            var message = messageManager != null ? messageManager.Storage : null;
             var mission = missionManager != null ? missionManager.Storage : null;
-            if (inventory == null || purchase == null || account == null || mission == null)
+            var achieve = achieveManager != null ? achieveManager.Storage : null;
+            if (inventory == null || purchase == null || account == null || message == null || mission == null || achieve == null)
                 return;
 
+            messageManager.ClearStorage();
             missionManager.ClearStorage();
-            SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, account, mission);
+            achieveManager.ClearStorage();
+            SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, account, message, mission, achieve);
             applyLoadedAccountStorageToRuntime();
         }
 
@@ -625,7 +635,9 @@ namespace Devian
             getInventoryStorageOrNull()?.Clear();
             getPurchaseStorageOrNull()?.ClearAll();
             getAccountStorageOrNull()?.Clear();
+            getGameMessageManagerOrNull()?.ClearStorage();
             getMissionManagerOrNull()?.ClearStorage();
+            getAchieveManagerOrNull()?.ClearStorage();
             applyLoadedAccountStorageToRuntime();
         }
 
@@ -1105,6 +1117,32 @@ namespace Devian
             }
         }
 
+        private static GameMessageManager getGameMessageManagerOrNull()
+        {
+            try
+            {
+                var messageManager = GameMessageManager.Instance;
+                return messageManager != null ? messageManager : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static GameMessageStorage getGameMessageStorageOrNull()
+        {
+            try
+            {
+                var messageManager = GameMessageManager.Instance;
+                return messageManager != null ? messageManager.Storage : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
         private static MissionManager getMissionManagerOrNull()
         {
             try
@@ -1124,6 +1162,32 @@ namespace Devian
             {
                 var missionManager = MissionManager.Instance;
                 return missionManager != null ? missionManager.Storage : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static AchieveManager getAchieveManagerOrNull()
+        {
+            try
+            {
+                var achieveManager = AchieveManager.Instance;
+                return achieveManager != null ? achieveManager : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static AchieveStorage getAchieveStorageOrNull()
+        {
+            try
+            {
+                var achieveManager = AchieveManager.Instance;
+                return achieveManager != null ? achieveManager.Storage : null;
             }
             catch
             {

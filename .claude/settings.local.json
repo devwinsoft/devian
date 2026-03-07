@@ -223,7 +223,21 @@
       "Bash(perl -pi -e 's/^# 40-data-ndjson-storage/# 53-data-ndjson/' \"$BASE/53-data-ndjson/SKILL.md\")",
       "Bash(perl -pi -e 's/^# 41-data-pb64-storage/# 54-data-pb64/' \"$BASE/54-data-pb64/SKILL.md\")",
       "Bash(perl -pi -e 's/^# 52-protocol-codegen-impl/# 55-protocol-codegen/' \"$BASE/55-protocol-codegen/SKILL.md\")",
-      "Bash(git log --full-history --diff-filter=D --summary)"
+      "Bash(git log --full-history --diff-filter=D --summary)",
+      "Bash(# Replace class names in all UPM .cs files find framework-cs/upm -name \"\"*.cs\"\" -exec grep -l \"\"GameMessageTriggerSystem\\\\|AchieveTriggerSystem\\\\|MissionTriggerSystem\"\" {} +)",
+      "Bash(# Sed replace in input/temp find input/temp -name \"\"*.cs\"\" -exec grep -l \"\"GameMessageTriggerSystem\\\\|AchieveTriggerSystem\\\\|MissionTriggerSystem\"\" {} +)",
+      "Bash(# Bulk sed replace in all skill docs find skills/ -name \"\"*.md\"\" -exec grep -l \"\"GameMessageTriggerSystem\\\\|AchieveTriggerSystem\\\\|MissionTriggerSystem\"\" {} +)",
+      "Bash(# Replace in UPM Samples~ find framework-cs/upm/com.devian.samples -name \"\"*.cs\"\" -exec grep -l \"\"MESSAGE_TYPE\"\" {} +)",
+      "Bash(# Assets/Samples mirror ASSETS_BASE=\"\"framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime\"\" # sed replace in all .cs files under Assets/Samples find \"\"$ASSETS_BASE\"\" -name \"\"*.cs\"\" -print0 | xargs -0 grep -l \"\"MESSAGE_TYPE\"\")",
+      "Bash(while IFS= read -r f)",
+      "Bash(do sed -i '' 's/MESSAGE_TYPE/GAME_MESSAGE_TYPE/g' \"$f\" done)",
+      "Bash(# input/temp find input/temp -name \"\"*.cs\"\" -exec grep -l \"\"MESSAGE_TYPE\"\" {} +)",
+      "Bash(# Check for remaining MESSAGE_TYPE \\(but not MESSAGE_SAVE_TYPE, MISSION_MESSAGE, ACHIEVE_MESSAGE, GAME_MESSAGE_TYPE\\) grep -rn \"\"\\\\bMESSAGE_TYPE\\\\b\"\" framework-cs/ framework-ts/ input/ --include=\"\"*.cs\"\" --include=\"\"*.ts\"\" --include=\"\"*.json\"\")",
+      "Bash(# UPM Samples~ find framework-cs/upm/com.devian.samples -name \"\"*.cs\"\" -exec grep -l \"\"MESSAGE_SAVE_TYPE\"\" {} +)",
+      "Bash(# Also handle input/temp TS files find input/temp -name \"\"*.ts\"\" -exec grep -l \"\"MESSAGE_SAVE_TYPE\"\" {} +)",
+      "Bash(# Verify no remaining MESSAGE_SAVE_TYPE anywhere grep -rn \"\"MESSAGE_SAVE_TYPE\"\" framework-cs/ framework-ts/ input/ skills/ --include=\"\"*.cs\"\" --include=\"\"*.ts\"\" --include=\"\"*.json\"\" --include=\"\"*.md\"\")",
+      "Bash(# Check for double-replacement and any remaining stale refs grep -rn \"\"GAME_GAME_MESSAGE_SAVE_TYPE\\\\|MESSAGE_SAVE_TYPE\\\\|MISSION_OP_TYPE\"\" framework-cs/ framework-ts/ input/ skills/ --include=\"\"*.cs\"\" --include=\"\"*.ts\"\" --include=\"\"*.json\"\" --include=\"\"*.md\"\")",
+      "Bash(# More targeted check grep -rn \"\"MESSAGE_SAVE_TYPE\\\\|MISSION_OP_TYPE\"\" framework-cs/upm/ framework-cs/module/ framework-cs/apps/UnityExample/Packages/ framework-cs/apps/UnityExample/Assets/Samples/ framework-cs/apps/UnityExample/Assets/Scripts/ framework-ts/ input/ skills/ --include=\"\"*.cs\"\" --include=\"\"*.ts\"\" --include=\"\"*.json\"\" --include=\"\"*.md\"\")"
     ]
   },
   "project": {

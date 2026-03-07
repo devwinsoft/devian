@@ -10,7 +10,7 @@ namespace Devian
         Resize,
     }
 
-    public class UIMessageSystem : MessageSystem<EntityId, UI_MESSAGE>
+    public class UIMessageSystem : BaseTrigger<EntityId, UI_MESSAGE>
     {
     }
 }

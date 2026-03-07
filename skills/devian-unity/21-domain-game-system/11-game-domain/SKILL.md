@@ -50,9 +50,10 @@ Game 도메인은 Devian 프레임워크의 **예제 도메인**이다.
 | `PurchaseTable.xlsx` | PRODUCT | TB_PRODUCT | `InternalProductId` (string) | 상품 테이블 |
 | `AdvertiseTable.xlsx` | ADVERTISE | TB_ADVERTISE | `AdvertiseId` (string) | 광고 placement 테이블 |
 | `RewardTable.xlsx` | REWARD | TB_REWARD | `RewardNum` (int) | 보상 테이블 |
-| `MissionTable.xlsx` | MISSION_DAY | TB_MISSION_DAY | `MissionId` (string) | 일일 미션 |
-| `MissionTable.xlsx` | MISSION_WEEKLY | TB_MISSION_WEEKLY | `MissionId` (string) | 주간 미션 |
-| `MissionTable.xlsx` | MISSION_ACHIEVE | TB_MISSION_ACHIEVE | `Index` (int) | 업적 미션 |
+| `GameTable.xlsx` | MESSAGE | TB_MESSAGE | `MessageId` (string) | 메시지 stat 정의 테이블 |
+| `GameTable.xlsx` | MISSION_DAY | TB_MISSION_DAY | `MissionId` (string) | 일일 미션 |
+| `GameTable.xlsx` | ACHIEVE | TB_ACHIEVE | `Index` (int) | 업적 런타임 + 플랫폼 매핑 테이블 |
+| `GameTable.xlsx` | LEADERBOARD | TB_LEADERBOARD | `LeaderboardId` (string) | 리더보드 정의 |
 | `ItemTable.xlsx` | EQUIP | TB_EQUIP | `EquipId` (string) | 장비 테이블 (EquipId, NameId, DescId) |
 | `ItemTable.xlsx` | CARD | TB_CARD | `CardId` (string) | 카드 테이블 (CardId, NameId, DescId) |
 
@@ -61,7 +62,8 @@ Game 도메인은 Devian 프레임워크의 **예제 도메인**이다.
 | 파일 | 생성 타입 | 설명 |
 |---|---|---|
 | `ENUM_TYPES.json` | `enum CURRENCY_TYPE`, `enum REWARD_TYPE`, `enum ADVERTISE_FORMAT`, `enum ADVERTISE_PROVIDER`, `enum STAT_TYPE` | 공통 game enum 통합 |
-| `ENUM_MISSION.json` | `enum MISSION_TYPE`, `enum MISSION_CONDITION_TYPE`, `enum MISSION_OP_TYPE` | mission 전용 enum 통합 |
+| `ENUM_GAME.json` | `enum GAME_MESSAGE_TYPE`, `enum GAME_MESSAGE_SAVE_TYPE` | game message 전용 enum |
+| `ENUM_MISSION.json` | `enum MISSION_TYPE`, `enum MISSION_MESSAGE`, `enum ACHIEVE_MESSAGE` | mission/achieve 전용 enum |
 | `ProductKind.json` | `enum ProductKind` | 상품 유형 (Consumable, Subscription, SeasonPass) |
 | `TestContract.json` | `enum UserType`, `class UserProfile` | 테스트 예제 (UserType: Guest/Member/Admin, UserProfile: Id/Name/UserType) |
 

@@ -176,6 +176,13 @@ public class TestSceneLoading : TestSceneBootstrap
             return initClock.Error.Code;
         }
 
+        var initAchieve = await AchieveManager.Instance.InitializeAsync(ct);
+        if (initAchieve.IsFailure)
+        {
+            Debug.LogError($"AchieveManager.InitializeAsync failed: {initAchieve.Error.Code}: {initAchieve.Error.Message}");
+            return initAchieve.Error.Code;
+        }
+
         // Todo: 최적화
         var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
         if (save.IsFailure)

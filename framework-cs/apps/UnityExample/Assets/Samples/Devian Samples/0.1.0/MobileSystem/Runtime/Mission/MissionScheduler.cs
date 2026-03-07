@@ -12,7 +12,8 @@ namespace Devian
         const int MaxDailyRuntimeCount = 5;
 
         readonly MissionStorage _storage;
-        readonly MissionTriggerSystem _triggerSystem;
+        readonly Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> _subscribeTrigger;
+        readonly Action<int> _unsubscribeTrigger;
         readonly Action<MissionRuntimeBase> _onInitialized;
         readonly Action<MissionRuntimeBase> _onChanged;
         readonly Action<MissionRuntimeBase> _onClaimable;
@@ -21,7 +22,8 @@ namespace Devian
 
         public MissionScheduler(
             MissionStorage storage,
-            MissionTriggerSystem triggerSystem,
+            Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> subscribeTrigger,
+            Action<int> unsubscribeTrigger,
             Action<MissionRuntimeBase> onInitialized,
             Action<MissionRuntimeBase> onChanged,
             Action<MissionRuntimeBase> onClaimable,
@@ -29,7 +31,8 @@ namespace Devian
             Func<int> getCurrentDailyPeriodIndex)
         {
             _storage = storage ?? throw new ArgumentNullException(nameof(storage));
-            _triggerSystem = triggerSystem ?? throw new ArgumentNullException(nameof(triggerSystem));
+            _subscribeTrigger = subscribeTrigger ?? throw new ArgumentNullException(nameof(subscribeTrigger));
+            _unsubscribeTrigger = unsubscribeTrigger ?? throw new ArgumentNullException(nameof(unsubscribeTrigger));
             _onInitialized = onInitialized ?? throw new ArgumentNullException(nameof(onInitialized));
             _onChanged = onChanged ?? throw new ArgumentNullException(nameof(onChanged));
             _onClaimable = onClaimable ?? throw new ArgumentNullException(nameof(onClaimable));
@@ -41,7 +44,6 @@ namespace Devian
         {
             DetachAll();
             ensureDailyRuntimes();
-            ensureAchievementRuntimes();
         }
 
         public bool HasDailyRuntimeOutsideCurrentPeriod()
@@ -67,10 +69,10 @@ namespace Devian
             var removeRuntimeKeys = new List<int>();
             foreach (var kv in _storage.runtimes)
             {
-                if (kv.Value == null || kv.Value.missionType != MISSION_TYPE.DAY)
+                if (kv.Value is not MissionRuntimeDaily runtime)
                     continue;
 
-                kv.Value.Detach();
+                runtime.Detach();
                 removeRuntimeKeys.Add(kv.Key);
             }
 
@@ -84,8 +86,7 @@ namespace Devian
             var removeRuntimeKeys = new List<int>();
             foreach (var kv in _storage.runtimes)
             {
-                var runtime = kv.Value;
-                if (runtime == null || runtime.missionType != MISSION_TYPE.DAY)
+                if (kv.Value is not MissionRuntimeDaily runtime)
                     continue;
 
                 if (!TryParseDailyPeriodIndex(runtime.periodKey, out var runtimeDailyIndex))
@@ -110,9 +111,6 @@ namespace Devian
                 if (runtime is not MissionRuntimeDaily dailyRuntime)
                     continue;
 
-                if (dailyRuntime.missionType != MISSION_TYPE.DAY)
-                    continue;
-
                 if (!string.Equals(dailyRuntime.missionId, missionId, StringComparison.Ordinal))
                     continue;
 
@@ -123,32 +121,6 @@ namespace Devian
                 }
 
                 found = dailyRuntime;
-            }
-
-            return found;
-        }
-
-        public MissionRuntimeAchieve FindAchieve(string missionId)
-        {
-            MissionRuntimeAchieve found = null;
-            foreach (var runtime in _storage.runtimes.Values)
-            {
-                if (runtime is not MissionRuntimeAchieve achieveRuntime)
-                    continue;
-
-                if (achieveRuntime.missionType != MISSION_TYPE.ACHIEVE)
-                    continue;
-
-                if (!string.Equals(achieveRuntime.missionId, missionId, StringComparison.Ordinal))
-                    continue;
-
-                if (found != null)
-                {
-                    Debug.LogError($"[{Tag}] Duplicate achievement runtime detected for missionId='{missionId}'.");
-                    return found;
-                }
-
-                found = achieveRuntime;
             }
 
             return found;
@@ -194,9 +166,9 @@ namespace Devian
 
             foreach (var row in selectedRows)
             {
-                if (!TryResolveMissionStat(row.MissionStatId, out var missionStat))
+                if (!TryResolveMessage(row.MessageId, out var message))
                 {
-                    Debug.LogError($"[{Tag}] MISSION_STAT not found for daily mission: missionId='{row.MissionId}', missionStatId='{row.MissionStatId}'.");
+                    Debug.LogError($"[{Tag}] MESSAGE not found for daily mission: missionId='{row.MissionId}', messageId='{row.MessageId}'.");
                     continue;
                 }
 
@@ -205,19 +177,18 @@ namespace Devian
                 {
                     var restored = MissionRuntimeFactory.Restore(new MissionRuntimeRestoreArgs
                     {
-                        MissionType = MISSION_TYPE.DAY,
                         MissionId = existing.missionId,
-                        MissionStatId = row.MissionStatId,
+                        MessageId = row.MessageId,
                         PeriodKey = existing.periodKey,
                         MissionUid = existing.missionUid,
-                        Level = 1,
                         ProgressValue = existing.progressValue,
                         IsCompleted = existing.isCompleted,
                         Index = existing.index,
-                        StatType = missionStat.StatType,
-                        OpType = missionStat.OpType,
+                        StatType = message.MessageType,
+                        OpType = message.SaveType,
                         ConditionValue = row.ConditionValue!.Value,
-                        TriggerSystem = _triggerSystem,
+                        SubscribeTrigger = _subscribeTrigger,
+                        UnsubscribeTrigger = _unsubscribeTrigger,
                         OnChanged = _onChanged,
                         OnClaimable = _onClaimable,
                     });
@@ -229,16 +200,16 @@ namespace Devian
 
                 var created = MissionRuntimeFactory.CreateDaily(new DailyMissionRuntimeCreateArgs
                 {
-                    MissionType = MISSION_TYPE.DAY,
                     MissionId = row.MissionId,
-                    MissionStatId = row.MissionStatId,
+                    MessageId = row.MessageId,
                     PeriodKey = periodKey,
                     MissionUid = AllocateMissionUid(),
                     Index = 0,
-                    StatType = missionStat.StatType,
-                    OpType = missionStat.OpType,
+                    StatType = message.MessageType,
+                    OpType = message.SaveType,
                     ConditionValue = row.ConditionValue!.Value,
-                    TriggerSystem = _triggerSystem,
+                    SubscribeTrigger = _subscribeTrigger,
+                    UnsubscribeTrigger = _unsubscribeTrigger,
                     OnChanged = _onChanged,
                     OnClaimable = _onClaimable,
                 });
@@ -251,104 +222,6 @@ namespace Devian
 
             foreach (var runtime in initializedRuntimes)
                 _onInitialized(runtime);
-        }
-
-        void ensureAchievementRuntimes()
-        {
-            var groupKeys = new HashSet<string>(TB_MISSION_ACHIEVE.GetGroupKeys(), StringComparer.Ordinal);
-            var strayKeys = new List<int>();
-            foreach (var runtime in _storage.runtimes.Values.OfType<MissionRuntimeAchieve>())
-            {
-                if (!groupKeys.Contains(runtime.missionId))
-                    strayKeys.Add(runtime.missionUid);
-            }
-
-            foreach (var key in strayKeys)
-            {
-                if (!_storage.runtimes.TryGetValue(key, out var runtime) || runtime == null)
-                    continue;
-
-                runtime.Detach();
-                _storage.runtimes.Remove(key);
-            }
-
-            foreach (var groupKey in groupKeys)
-            {
-                var existing = FindAchieve(groupKey);
-                if (existing != null)
-                {
-                    var row = findAchievementRow(existing.missionId, existing.level);
-                    if (isEligibleAchievementRow(row))
-                    {
-                        if (!TryResolveMissionStat(row!.MissionStatId, out var missionStat))
-                        {
-                            existing.Detach();
-                            _storage.runtimes.Remove(existing.missionUid);
-                            continue;
-                        }
-
-                        var restored = MissionRuntimeFactory.Restore(new MissionRuntimeRestoreArgs
-                        {
-                            MissionType = MISSION_TYPE.ACHIEVE,
-                            MissionId = existing.missionId,
-                            MissionStatId = row.MissionStatId,
-                            PeriodKey = existing.periodKey,
-                            MissionUid = existing.missionUid,
-                            Level = existing.level,
-                            ProgressValue = existing.progressValue,
-                            IsCompleted = existing.isCompleted,
-                            StatType = missionStat.StatType,
-                            OpType = missionStat.OpType,
-                            ConditionValue = row.ConditionValue!.Value,
-                            TriggerSystem = _triggerSystem,
-                            ReadProgress = createMissionStatProgressReader(row.MissionStatId),
-                            OnChanged = _onChanged,
-                            OnClaimable = _onClaimable,
-                        });
-
-                        _storage.runtimes[restored.missionUid] = restored;
-                        _onInitialized(restored);
-                        continue;
-                    }
-
-                    existing.Detach();
-                    _storage.runtimes.Remove(existing.missionUid);
-                }
-
-                var startRow = findAchievementStartRow(groupKey);
-                if (!isEligibleAchievementRow(startRow))
-                {
-                    if (TB_MISSION_ACHIEVE.GetByGroup(groupKey).Any(isEligibleAchievementRow))
-                        Debug.LogError($"[{Tag}] Missing level=1 achievement row for missionId='{groupKey}'.");
-                    continue;
-                }
-
-                if (!TryResolveMissionStat(startRow!.MissionStatId, out var startMissionStat))
-                {
-                    Debug.LogError($"[{Tag}] MISSION_STAT not found for achievement mission: missionId='{startRow.MissionId}', missionStatId='{startRow.MissionStatId}'.");
-                    continue;
-                }
-
-                var created = MissionRuntimeFactory.CreateAchieve(new AchieveMissionRuntimeCreateArgs
-                {
-                    MissionType = MISSION_TYPE.ACHIEVE,
-                    MissionId = startRow!.MissionId,
-                    MissionStatId = startRow.MissionStatId,
-                    Level = startRow.Level,
-                    PeriodKey = "once",
-                    MissionUid = AllocateMissionUid(),
-                    StatType = startMissionStat.StatType,
-                    OpType = startMissionStat.OpType,
-                    ConditionValue = startRow.ConditionValue!.Value,
-                    TriggerSystem = _triggerSystem,
-                    ReadProgress = createMissionStatProgressReader(startRow.MissionStatId),
-                    OnChanged = _onChanged,
-                    OnClaimable = _onClaimable,
-                });
-
-                _storage.runtimes[created.missionUid] = created;
-                _onInitialized(created);
-            }
         }
 
         void removeDailyRuntimesOutsidePeriod(string periodKey)
@@ -426,36 +299,18 @@ namespace Devian
             return row != null
                    && row.IsActive
                    && row.ConditionValue.HasValue
-                   && TryResolveMissionStat(row.MissionStatId, out var missionStat)
-                   && missionStat.OpType != MISSION_OP_TYPE.NONE;
+                   && TryResolveMessage(row.MessageId, out var message)
+                   && message.SaveType != GAME_MESSAGE_SAVE_TYPE.NONE;
         }
 
-        static bool isEligibleAchievementRow(MISSION_ACHIEVE row)
+        static bool TryResolveMessage(string messageId, out MESSAGE message)
         {
-            return row != null
-                   && row.IsActive
-                   && row.ConditionValue.HasValue
-                   && TryResolveMissionStat(row.MissionStatId, out var missionStat)
-                   && missionStat.OpType != MISSION_OP_TYPE.NONE;
-        }
-
-        static bool TryResolveMissionStat(string missionStatId, out MISSION_STAT missionStat)
-        {
-            missionStat = null;
-            if (string.IsNullOrWhiteSpace(missionStatId))
+            message = null;
+            if (string.IsNullOrWhiteSpace(messageId))
                 return false;
 
-            missionStat = TB_MISSION_STAT.Get(missionStatId);
-            return missionStat != null;
-        }
-
-        Func<CBigInt> createMissionStatProgressReader(string missionStatId)
-        {
-            if (string.IsNullOrWhiteSpace(missionStatId))
-                return static () => CBigInt.Zero;
-
-            var key = missionStatId;
-            return () => _storage.GetStat(key);
+            message = TB_MESSAGE.Get(messageId);
+            return message != null;
         }
 
         static System.Random createDailySelectionRandom(string periodKey)
@@ -472,28 +327,6 @@ namespace Devian
                 var j = random.Next(i + 1);
                 (list[i], list[j]) = (list[j], list[i]);
             }
-        }
-
-        static MISSION_ACHIEVE findAchievementRow(string missionId, int level)
-        {
-            foreach (var row in TB_MISSION_ACHIEVE.GetByGroup(missionId))
-            {
-                if (row.Level == level)
-                    return row;
-            }
-
-            return null;
-        }
-
-        static MISSION_ACHIEVE findAchievementStartRow(string missionId)
-        {
-            foreach (var row in TB_MISSION_ACHIEVE.GetByGroup(missionId))
-            {
-                if (row.Level == 1)
-                    return row;
-            }
-
-            return null;
         }
 
         static bool TryParseDailyPeriodIndex(string periodKey, out int periodIndex)

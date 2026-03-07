@@ -42,7 +42,7 @@ MissionRuntimeBase
 ## Trigger Rules
 
 - 구독 키: `missionUid`
-- 메시지 키: `MISSION_STAT_TYPE`
+- 메시지 키: `GAME_MESSAGE_TYPE`
 - `DAY`:
   - `MAX`: `max(progressValue, delta)`
   - `SUM`: `min(conditionValue, progressValue + delta)`
@@ -85,5 +85,5 @@ MissionRuntimeBase
 
 - [03-ssot](../03-ssot/SKILL.md)
 - [10-mission-manager](../10-mission-manager/SKILL.md)
-- [11-mission-trigger-system](../11-mission-trigger-system/SKILL.md)
+- [45-game-message-system/11-game-message-trigger](../../45-game-message-system/11-game-message-trigger/SKILL.md)
 - [14-mission-factory](../14-mission-factory/SKILL.md)

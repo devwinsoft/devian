@@ -6,47 +6,49 @@ namespace Devian
     [Serializable]
     public abstract class MissionRuntimeBase
     {
-        public MISSION_TYPE missionType;
         public string missionId = string.Empty;
-        public string missionStatId = string.Empty;
+        public string messageId = string.Empty;
         public string periodKey = string.Empty;
         public int missionUid;
         public CBigInt progressValue = CBigInt.Zero;
         public bool isCompleted;
 
-        [NonSerialized] protected MISSION_STAT_TYPE _statType;
-        [NonSerialized] protected MISSION_OP_TYPE _opType;
+        [NonSerialized] protected GAME_MESSAGE_TYPE _statType;
+        [NonSerialized] protected GAME_MESSAGE_SAVE_TYPE _opType;
         [NonSerialized] protected CBigInt _conditionValue = CBigInt.Zero;
-        [NonSerialized] protected MissionTriggerSystem _triggerSystem;
+        [NonSerialized] private Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> _subscribeTrigger;
+        [NonSerialized] private Action<int> _unsubscribeTrigger;
         [NonSerialized] private Action<MissionRuntimeBase> _onProgress;
         [NonSerialized] private Action<MissionRuntimeBase> _onClaimable;
         [NonSerialized] private Func<CBigInt> _externalProgressReader;
         [NonSerialized] private bool _isSubscribed;
 
-        public MISSION_STAT_TYPE StatType => _statType;
-        public MISSION_OP_TYPE OpType => _opType;
+        public GAME_MESSAGE_TYPE StatType => _statType;
+        public GAME_MESSAGE_SAVE_TYPE OpType => _opType;
         public CBigInt ConditionValue => _conditionValue;
         public bool IsSubscribed => _isSubscribed;
         public bool IsClaimable => !isCompleted && progressValue >= _conditionValue;
         public abstract int Index { get; }
 
         internal void Bind(
-            string missionStatId,
-            MISSION_STAT_TYPE statType,
-            MISSION_OP_TYPE opType,
+            string messageId,
+            GAME_MESSAGE_TYPE statType,
+            GAME_MESSAGE_SAVE_TYPE opType,
             CBigInt conditionValue,
-            MissionTriggerSystem triggerSystem,
+            Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> subscribeTrigger,
+            Action<int> unsubscribeTrigger,
             Func<CBigInt> readExternalProgress,
             Action<MissionRuntimeBase> onProgress,
             Action<MissionRuntimeBase> onClaimable)
         {
             UnsubscribeInternal();
 
-            this.missionStatId = missionStatId ?? string.Empty;
+            this.messageId = messageId ?? string.Empty;
             _statType = statType;
             _opType = opType;
             _conditionValue = conditionValue;
-            _triggerSystem = triggerSystem;
+            _subscribeTrigger = subscribeTrigger;
+            _unsubscribeTrigger = unsubscribeTrigger;
             _externalProgressReader = readExternalProgress;
             _onProgress = onProgress;
             _onClaimable = onClaimable;
@@ -61,7 +63,8 @@ namespace Devian
         public void Detach()
         {
             UnsubscribeInternal();
-            _triggerSystem = null;
+            _subscribeTrigger = null;
+            _unsubscribeTrigger = null;
             _externalProgressReader = null;
             _onProgress = null;
             _onClaimable = null;
@@ -85,19 +88,19 @@ namespace Devian
 
         protected void SubscribeIfNeeded()
         {
-            if (_triggerSystem == null || _isSubscribed || !ShouldSubscribe())
+            if (_isSubscribed || !ShouldSubscribe() || _subscribeTrigger == null)
                 return;
 
-            _triggerSystem.Subcribe(missionUid, _statType, handleTrigger);
+            _subscribeTrigger.Invoke(missionUid, _statType, handleTrigger);
             _isSubscribed = true;
         }
 
         protected void UnsubscribeInternal()
         {
-            if (_triggerSystem == null || !_isSubscribed)
+            if (!_isSubscribed)
                 return;
 
-            _triggerSystem.UnSubcribe(missionUid);
+            _unsubscribeTrigger?.Invoke(missionUid);
             _isSubscribed = false;
         }
 
@@ -112,27 +115,9 @@ namespace Devian
                 _onClaimable?.Invoke(this);
         }
 
-        protected void ReplaceBinding(
-            string missionStatId,
-            MISSION_STAT_TYPE statType,
-            MISSION_OP_TYPE opType,
-            CBigInt conditionValue,
-            Func<CBigInt> readExternalProgress)
-        {
-            this.missionStatId = missionStatId ?? string.Empty;
-            _statType = statType;
-            _opType = opType;
-            _conditionValue = conditionValue;
-            _externalProgressReader = readExternalProgress;
-        }
-
         protected virtual bool ShouldSubscribe()
         {
-            return _opType != MISSION_OP_TYPE.NONE;
-        }
-
-        protected virtual void OnClaimableCore()
-        {
+            return _opType != GAME_MESSAGE_SAVE_TYPE.NONE;
         }
 
         protected virtual void OnCompletedCore()
@@ -157,18 +142,15 @@ namespace Devian
 
             RaiseChanged();
             if (!wasClaimable && IsClaimable)
-            {
-                OnClaimableCore();
                 RaiseClaimableIfNeeded();
-            }
         }
 
-        private bool handleTrigger(object[] args)
+        bool handleTrigger(object[] args)
         {
             if (!TryReadProgressDelta(args, out var delta))
                 return false;
 
-            if (_opType == MISSION_OP_TYPE.NONE)
+            if (_opType == GAME_MESSAGE_SAVE_TYPE.NONE)
                 return false;
 
             var wasClaimable = IsClaimable;
@@ -179,25 +161,22 @@ namespace Devian
             progressValue = nextProgress;
             RaiseChanged();
             if (!wasClaimable && IsClaimable)
-            {
-                OnClaimableCore();
                 RaiseClaimableIfNeeded();
-            }
 
             return false;
         }
 
-        private CBigInt calculateNextProgress(CBigInt delta)
+        CBigInt calculateNextProgress(CBigInt delta)
         {
             if (_externalProgressReader != null)
                 return readExternalProgress();
 
             switch (_opType)
             {
-                case MISSION_OP_TYPE.MAX:
+                case GAME_MESSAGE_SAVE_TYPE.MAX:
                     return CBigInt.Max(progressValue, delta);
 
-                case MISSION_OP_TYPE.SUM:
+                case GAME_MESSAGE_SAVE_TYPE.SUM:
                     return CalculateSumProgress(delta);
 
                 default:
@@ -212,7 +191,7 @@ namespace Devian
                 : progressValue;
         }
 
-        private static bool TryReadProgressDelta(object[] args, out CBigInt value)
+        static bool TryReadProgressDelta(object[] args, out CBigInt value)
         {
             value = CBigInt.Zero;
             if (args == null || args.Length <= 0)
@@ -250,11 +229,6 @@ namespace Devian
             return base.ShouldSubscribe() && !isCompleted && !IsClaimable;
         }
 
-        protected override void OnClaimableCore()
-        {
-            UnsubscribeInternal();
-        }
-
         protected override void OnCompletedCore()
         {
             UnsubscribeInternal();
@@ -263,61 +237,6 @@ namespace Devian
         protected override CBigInt CalculateSumProgress(CBigInt delta)
         {
             return CBigInt.Min(_conditionValue, progressValue + delta);
-        }
-    }
-
-    [Serializable]
-    public sealed class MissionRuntimeAchieve : MissionRuntimeBase
-    {
-        public int level = 1;
-
-        public override int Index
-        {
-            get
-            {
-                var row = TB_MISSION_ACHIEVE.GetByGroup(missionId);
-                foreach (var candidate in row)
-                {
-                    if (candidate.Level == level)
-                        return Math.Max(0, candidate.OrderNum - 1);
-                }
-
-                return 0;
-            }
-        }
-
-        protected override bool ShouldSubscribe()
-        {
-            return base.ShouldSubscribe() && !isCompleted;
-        }
-
-        protected override void OnCompletedCore()
-        {
-            UnsubscribeInternal();
-        }
-
-        protected override CBigInt CalculateSumProgress(CBigInt delta)
-        {
-            return progressValue + delta;
-        }
-
-        public void LevelUp(
-            int nextLevel,
-            string nextMissionStatId,
-            MISSION_STAT_TYPE nextStatType,
-            MISSION_OP_TYPE nextOpType,
-            CBigInt nextConditionValue,
-            Func<CBigInt> readExternalProgress)
-        {
-            UnsubscribeInternal();
-
-            level = nextLevel;
-            isCompleted = false;
-            ReplaceBinding(nextMissionStatId, nextStatType, nextOpType, nextConditionValue, readExternalProgress);
-            RefreshProgressFromExternal(emitProgressEvent: false);
-
-            SubscribeIfNeeded();
-            RaiseClaimableIfNeeded();
         }
     }
 }

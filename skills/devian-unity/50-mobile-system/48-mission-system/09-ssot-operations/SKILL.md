@@ -51,7 +51,7 @@ AppliesTo: v10
 ## 테스트 체크리스트
 
 - trigger 1회당 `stats` 갱신이 1회만 일어나는지
-- `MISSION_STAT_TYPE` 변경 시 정상 라우팅되는지
+- `GAME_MESSAGE_TYPE` 변경 시 정상 라우팅되는지
 - daily `SUM`이 `conditionValue`를 넘지 않는지
 - achieve progress가 `stats[missionStatId]`와 일치하는지
 - achieve level-up 시 기존 구독 해지 + 새 구독 등록이 정확한지

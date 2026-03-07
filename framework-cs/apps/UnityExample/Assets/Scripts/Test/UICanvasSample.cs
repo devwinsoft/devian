@@ -28,7 +28,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             (args) =>
             {
                 MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
-                Debug.Log($"missionId={mission.missionId}, missionType={mission.missionType}, progressValue={mission.progressValue}");
+                Debug.Log($"missionId={mission.missionId}, progressValue={mission.progressValue}");
                 return false;
             });
 
@@ -61,7 +61,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
                     Debug.Log($"type={rewward.Type}, id={rewward.Id}, amount={rewward.Amount}");
                 }
 
-                MissionManager.Instance.Notify(MISSION_STAT_TYPE.MISSION_CLEAR, 1);
+                GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.MISSION_CLEAR, 1);
                 return false;
             });
     }
@@ -91,7 +91,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
 
     public void OnClick_Mission()
     {
-        MissionManager.Instance.Notify(MISSION_STAT_TYPE.TEST_001, 1);
+        GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.TEST_001, 1);
     }
     
     public void OnClick_Mission_Claim()
@@ -258,7 +258,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         GameNetManager.Proxy.SendEcho(msg);
         */
         
-        MissionManager.Instance.Notify(MISSION_STAT_TYPE.TEST_001, 1);
+        GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.TEST_001, 1);
     }
 
     public void OnClick_DVN_Import()

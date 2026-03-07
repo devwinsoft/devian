@@ -2,9 +2,10 @@
 
 MissionManager는 Mission 시스템의 오케스트레이터다.
 
-- `MissionTriggerSystem`, `MissionMessageSystem`, `MissionScheduler`를 소유한다.
+- `MissionMessageTrigger`, `MissionScheduler`를 소유한다.
+- daily runtime 구독은 `GameMessageTrigger`를 helper 경유로 연결한다.
 - row 조건은 `missionStatId -> MISSION_STAT(statType, opType)`로 해석한다.
-- trigger 입력 시 `stats` 선갱신 후 runtime notify 순서를 보장한다.
+- trigger 입력은 `GameMessageManager.NotifyGameMessage`로 위임한다.
 
 ---
 
@@ -27,7 +28,7 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
 - `GetMissionRuntimeState(missionType, missionId)`
 - `GetRemainTime(missionType)`
 - `ClaimAsync(missionType, missionId, ...)`
-- `Notify(MISSION_STAT_TYPE, long/int/CBigInt)`
+- `Notify(GAME_MESSAGE_TYPE, long/int/CBigInt)`
 - `Subcribe(EntityId, MISSION_MESSAGE, Handler)`
 - `SubcribeOnce(EntityId, MISSION_MESSAGE, Action<object[]>)`
 - `UnSubcribe(EntityId)`
@@ -36,10 +37,8 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
 
 ## Trigger 처리 규칙
 
-- `MissionManager.Notify(...)` 내부에서 `TB_MISSION_STAT`를 순회해 `stats[missionStatId]`를 먼저 갱신:
-  - `SUM`: `current + delta`
-  - `MAX`: `max(current, delta)`
-- 이후 내부 `MissionTriggerSystem`으로 runtime notify를 호출한다.
+- `MissionManager.Notify(...)`는 `GameMessageManager.NotifyGameMessage(...)`를 호출한다.
+- stats 선갱신 + game trigger publish + achieve notify 순서는 `GameMessageManager` 정본을 따른다.
 
 ---
 
@@ -70,6 +69,7 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
 ## Related
 
 - [03-ssot](../03-ssot/SKILL.md)
-- [11-mission-trigger-system](../11-mission-trigger-system/SKILL.md)
+- [45-game-message-system/11-game-message-trigger](../../45-game-message-system/11-game-message-trigger/SKILL.md)
+- [16-mission-message-trigger](../16-mission-message-trigger/SKILL.md)
 - [12-mission-storage](../12-mission-storage/SKILL.md)
 - [13-mission-runtime](../13-mission-runtime/SKILL.md)

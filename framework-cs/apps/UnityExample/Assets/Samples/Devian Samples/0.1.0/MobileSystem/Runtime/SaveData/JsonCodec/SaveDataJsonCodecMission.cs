@@ -1,4 +1,3 @@
-using Devian.Domain.Game;
 using Newtonsoft.Json.Linq;
 
 namespace Devian
@@ -21,47 +20,28 @@ namespace Devian
             var runtimes = new JArray();
             foreach (var runtime in storage.runtimes.Values)
             {
-                if (runtime == null)
+                if (runtime is not MissionRuntimeDaily dailyRuntime)
                     continue;
 
                 var runtimeObj = new JObject
                 {
-                    ["missionType"] = (int)runtime.missionType,
-                    ["missionId"] = runtime.missionId,
-                    ["missionStatId"] = runtime.missionStatId,
-                    ["missionUid"] = runtime.missionUid,
-                    ["isCompleted"] = runtime.isCompleted,
+                    ["missionId"] = dailyRuntime.missionId,
+                    ["messageId"] = dailyRuntime.messageId,
+                    ["missionUid"] = dailyRuntime.missionUid,
+                    ["periodKey"] = dailyRuntime.periodKey,
+                    ["index"] = dailyRuntime.index,
+                    ["progressValue"] = SerializeBigInt(dailyRuntime.progressValue),
+                    ["isCompleted"] = dailyRuntime.isCompleted,
                 };
-
-                if (runtime is MissionRuntimeAchieve achieveRuntime)
-                {
-                    runtimeObj["level"] = achieveRuntime.level;
-                }
-                else if (runtime is MissionRuntimeDaily dailyRuntime)
-                {
-                    runtimeObj["periodKey"] = dailyRuntime.periodKey;
-                    runtimeObj["index"] = dailyRuntime.index;
-                    runtimeObj["progressValue"] = SerializeBigInt(dailyRuntime.progressValue);
-                }
 
                 runtimes.Add(runtimeObj);
             }
 
-            var statsObj = new JObject();
-            foreach (var stat in storage.stats)
-            {
-                if (string.IsNullOrWhiteSpace(stat.Key))
-                    continue;
-
-                statsObj[stat.Key] = SerializeBigInt(stat.Value);
-            }
-
-            missionObj["stats"] = statsObj;
             missionObj["runtimes"] = runtimes;
             return missionObj;
         }
 
-        public static void DeserializeInto(JObject missionObj, MissionStorage storage)
+        public static void DeserializeInto(JObject missionObj, MissionStorage storage, GameMessageStorage messageStorage)
         {
             if (storage == null)
                 return;
@@ -81,14 +61,15 @@ namespace Devian
             else
                 storage.clockSnapshot = new MissionClockSnapshot();
 
-            if (missionObj["stats"] is JObject statsObj)
+            // v12 migration: move mission.stats -> message.stats
+            if (missionObj["stats"] is JObject statsObj && messageStorage != null)
             {
                 foreach (var property in statsObj.Properties())
                 {
                     if (string.IsNullOrWhiteSpace(property.Name))
                         continue;
 
-                    storage.SetStat(property.Name, DeserializeBigInt(property.Value));
+                    messageStorage.SetStat(property.Name, DeserializeBigInt(property.Value));
                 }
             }
 
@@ -99,51 +80,32 @@ namespace Devian
                     if (token is not JObject runtimeObj)
                         continue;
 
-                    var missionTypeRaw = runtimeObj.Value<int?>("missionType")
-                        ?? (int)MISSION_TYPE.DAY;
-                    if (!System.Enum.IsDefined(typeof(MISSION_TYPE), missionTypeRaw))
-                        continue;
+                    var missionTypeRaw = runtimeObj.Value<int?>("missionType");
+                    if (missionTypeRaw.HasValue)
+                    {
+                        if (!System.Enum.IsDefined(typeof(Devian.Domain.Game.MISSION_TYPE), missionTypeRaw.Value))
+                            continue;
 
-                    var missionType = (MISSION_TYPE)missionTypeRaw;
+                        if ((Devian.Domain.Game.MISSION_TYPE)missionTypeRaw.Value != Devian.Domain.Game.MISSION_TYPE.DAY)
+                            continue;
+                    }
+
                     var missionUid = runtimeObj.Value<int?>("missionUid") ?? 0;
                     if (missionUid <= 0)
                         continue;
 
-                    MissionRuntimeBase runtime;
-                    switch (missionType)
+                    var runtime = new MissionRuntimeDaily
                     {
-                        case MISSION_TYPE.ACHIEVE:
-                            runtime = new MissionRuntimeAchieve
-                            {
-                                missionType = missionType,
-                                missionId = runtimeObj.Value<string>("missionId") ?? string.Empty,
-                                missionStatId = runtimeObj.Value<string>("missionStatId") ?? string.Empty,
-                                periodKey = "once",
-                                missionUid = missionUid,
-                                progressValue = CBigInt.Zero,
-                                isCompleted = runtimeObj.Value<bool?>("isCompleted") ?? false,
-                                level = runtimeObj.Value<int?>("level") ?? 1,
-                            };
-                            break;
-
-                        case MISSION_TYPE.DAY:
-                            runtime = new MissionRuntimeDaily
-                            {
-                                missionType = missionType,
-                                missionId = runtimeObj.Value<string>("missionId") ?? string.Empty,
-                                missionStatId = runtimeObj.Value<string>("missionStatId") ?? string.Empty,
-                                periodKey = runtimeObj.Value<string>("periodKey") ?? string.Empty,
-                                missionUid = missionUid,
-                                index = runtimeObj.Value<int?>("index") ?? 0,
-                                progressValue = DeserializeBigInt(runtimeObj["progressValue"]),
-                                isCompleted = runtimeObj.Value<bool?>("isCompleted") ?? false,
-                            };
-                            break;
-
-                        default:
-                            UnityEngine.Debug.LogError($"[SaveDataJsonCodecMission] Unsupported missionType in runtime restore: {missionType}");
-                            continue;
-                    }
+                        missionId = runtimeObj.Value<string>("missionId") ?? string.Empty,
+                        messageId = runtimeObj.Value<string>("messageId")
+                                    ?? runtimeObj.Value<string>("missionStatId")
+                                    ?? string.Empty,
+                        periodKey = runtimeObj.Value<string>("periodKey") ?? string.Empty,
+                        missionUid = missionUid,
+                        index = runtimeObj.Value<int?>("index") ?? 0,
+                        progressValue = DeserializeBigInt(runtimeObj["progressValue"]),
+                        isCompleted = runtimeObj.Value<bool?>("isCompleted") ?? false,
+                    };
 
                     storage.runtimes[runtime.missionUid] = runtime;
                 }

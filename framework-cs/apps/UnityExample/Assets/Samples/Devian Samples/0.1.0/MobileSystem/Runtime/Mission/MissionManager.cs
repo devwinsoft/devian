@@ -11,12 +11,10 @@ namespace Devian
     public sealed class MissionManager : CompoSingleton<MissionManager>
     {
         const string Tag = nameof(MissionManager);
-        const string PeriodOnce = "once";
         const long DayMs = 24L * 60L * 60L * 1000L;
         const long ResetAnchorThresholdMs = 7L * DayMs;
         readonly MissionStorage _storage = new();
-        readonly MissionTriggerSystem _triggerSystem = new();
-        readonly MissionMessageSystem _messageSystem = new();
+        MissionMessageTrigger _missionMessageSystem;
         MissionScheduler _scheduler;
         bool _initialized;
 
@@ -26,14 +24,23 @@ namespace Devian
         protected override void Awake()
         {
             base.Awake();
+
+            _missionMessageSystem = new MissionMessageTrigger();
+
             _scheduler = new MissionScheduler(
                 _storage,
-                _triggerSystem,
+                subscribeRuntimeTrigger,
+                unSubcribeRuntimeTrigger,
                 onRuntimeInitialized,
                 onRuntimeChanged,
                 onRuntimeClaimable,
                 getCurrentDailyKey,
                 getCurrentDailyPeriodIndex);
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
         }
 
         public async Task<CommonResult> InitializeAsync(
@@ -132,7 +139,10 @@ namespace Devian
                     return getDailyRuntimeState(missionId);
 
                 case MISSION_TYPE.ACHIEVE:
-                    return getAchievementRuntimeState(missionId);
+                    if (!AchieveManager.TryGet(out var achieveManager))
+                        return MissionRuntimeState.NONE;
+
+                    return achieveManager.GetRuntimeState(missionId);
 
                 default:
                     return MissionRuntimeState.NONE;
@@ -162,7 +172,6 @@ namespace Devian
 
                     return TimeSpan.FromMilliseconds(remainMs);
 
-                case MISSION_TYPE.ACHIEVE:
                 default:
                     return default;
             }
@@ -182,42 +191,43 @@ namespace Devian
                     return await claimDailyAsync(missionId, ct);
 
                 case MISSION_TYPE.ACHIEVE:
-                    return await claimAchievementAsync(missionId, ct);
+                    if (!AchieveManager.TryGet(out var achieveManager))
+                    {
+                        return CommonResult.Failure(
+                            CommonErrorType.MISSION_RUNTIME_MISSING,
+                            "AchieveManager is not available.");
+                    }
+
+                    return await achieveManager.ClaimAsync(missionId, ct);
 
                 default:
                     return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Unsupported missionType: {missionType}");
             }
         }
 
-        public void Notify(MISSION_STAT_TYPE msgType, long msgValue)
+        public void Notify(MISSION_MESSAGE msgType)
         {
-            Notify(msgType, CBigInt.FromLong(msgValue));
+            _missionMessageSystem.Notify(msgType);
         }
 
-        public void Notify(MISSION_STAT_TYPE msgType, int msgValue)
+        public void Notify(MISSION_MESSAGE msgType, params object[] args)
         {
-            Notify(msgType, CBigInt.FromInt(msgValue));
+            _missionMessageSystem.Notify(msgType, args);
         }
 
-        public void Notify(MISSION_STAT_TYPE msgType, CBigInt msgValue)
+        public void Subcribe(EntityId ownerKey, MISSION_MESSAGE msgType, BaseTrigger<EntityId, MISSION_MESSAGE>.Handler handler)
         {
-            onBeforeTriggerNotify(msgType, msgValue);
-            _triggerSystem.Notify(msgType, msgValue);
-        }
-
-        public void Subcribe(EntityId ownerKey, MISSION_MESSAGE msgType, MessageSystem<EntityId, MISSION_MESSAGE>.Handler handler)
-        {
-            _messageSystem.Subcribe(ownerKey, msgType, handler);
+            _missionMessageSystem.Subcribe(ownerKey, msgType, handler);
         }
 
         public void SubcribeOnce(EntityId ownerKey, MISSION_MESSAGE msgType, Action<object[]> handler)
         {
-            _messageSystem.SubcribeOnce(ownerKey, msgType, handler);
+            _missionMessageSystem.SubcribeOnce(ownerKey, msgType, handler);
         }
 
         public void UnSubcribe(EntityId ownerKey)
         {
-            _messageSystem.UnSubcribe(ownerKey);
+            _missionMessageSystem.UnSubcribe(ownerKey);
         }
 
         public void ClearStorage()
@@ -233,7 +243,7 @@ namespace Devian
             if (row == null || !row.IsActive || !row.ConditionValue.HasValue)
                 return MissionRuntimeState.NONE;
 
-            if (!TryResolveMissionStat(row.MissionStatId, out var missionStat) || missionStat.OpType == MISSION_OP_TYPE.NONE)
+            if (!TryResolveMessage(row.MessageId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
                 return MissionRuntimeState.NONE;
 
             var runtime = findDailyRuntime(missionId);
@@ -246,22 +256,13 @@ namespace Devian
             return runtime.GetState();
         }
 
-        MissionRuntimeState getAchievementRuntimeState(string missionId)
-        {
-            var runtime = findAchievementRuntime(missionId);
-            if (runtime == null)
-                return MissionRuntimeState.NONE;
-
-            return runtime.GetState();
-        }
-
         async Task<CommonResult> claimDailyAsync(string missionId, CancellationToken ct)
         {
             var row = TB_MISSION_DAY.Get(missionId);
             if (row == null || !row.IsActive || !row.ConditionValue.HasValue)
                 return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
 
-            if (!TryResolveMissionStat(row.MissionStatId, out var missionStat) || missionStat.OpType == MISSION_OP_TYPE.NONE)
+            if (!TryResolveMessage(row.MessageId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
                 return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
 
             var periodKey = getCurrentDailyKey();
@@ -280,57 +281,7 @@ namespace Devian
                 return CommonResult.Failure(apply.Error!);
 
             runtime.MarkCompleted();
-            _messageSystem.Notify(MISSION_MESSAGE.RUNTIME_REWARDED, runtime, apply.Value.AppliedRewards);
-
-            var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
-            if (save.IsFailure)
-            {
-                Debug.LogError($"[{Tag}] Mission save failed: {save.Error}");
-                return CommonResult.Failure(save.Error!);
-            }
-
-            return CommonResult.Ok();
-        }
-
-        async Task<CommonResult> claimAchievementAsync(string missionId, CancellationToken ct)
-        {
-            var runtime = findAchievementRuntime(missionId);
-            if (runtime == null)
-                return CommonResult.Failure(CommonErrorType.MISSION_RUNTIME_MISSING, $"Achievement runtime missing: {missionId}");
-
-            if (!runtime.IsClaimable)
-                return CommonResult.Failure(CommonErrorType.MISSION_NOT_CLAIMABLE, $"Achievement is not claimable: {missionId}");
-
-            var currentRow = findAchievementCurrentRow(runtime.missionId, runtime.level);
-            if (currentRow == null)
-                return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Achievement row not found: {missionId}/{runtime.level}");
-
-            var apply = RewardManager.Instance.ApplyRewardGroup(currentRow.RewardGroupId);
-            if (apply.IsFailure)
-                return CommonResult.Failure(apply.Error!);
-
-            var nextRow = findAchievementNextRow(runtime.missionId, runtime.level);
-            if (nextRow != null
-                && nextRow.IsActive
-                && nextRow.ConditionValue.HasValue
-                && TryResolveMissionStat(nextRow.MissionStatId, out var nextMissionStat)
-                && nextMissionStat.OpType != MISSION_OP_TYPE.NONE)
-            {
-                runtime.LevelUp(
-                    nextRow.Level,
-                    nextRow.MissionStatId,
-                    nextMissionStat.StatType,
-                    nextMissionStat.OpType,
-                    nextRow.ConditionValue.Value,
-                    createMissionStatProgressReader(nextRow.MissionStatId));
-                _messageSystem.Notify(MISSION_MESSAGE.ACHIEVE_LEVEL_UP, runtime);
-            }
-            else
-            {
-                runtime.MarkCompleted();
-            }
-
-            _messageSystem.Notify(MISSION_MESSAGE.RUNTIME_REWARDED, runtime, apply.Value.AppliedRewards);
+            _missionMessageSystem.Notify(MISSION_MESSAGE.RUNTIME_REWARDED, runtime, apply.Value.AppliedRewards);
 
             var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
             if (save.IsFailure)
@@ -344,51 +295,27 @@ namespace Devian
 
         void onRuntimeInitialized(MissionRuntimeBase runtime)
         {
-            _messageSystem.Notify(MISSION_MESSAGE.RUNTIME_INIT, runtime);
+            _missionMessageSystem.Notify(MISSION_MESSAGE.RUNTIME_INIT, runtime);
         }
 
-        void onBeforeTriggerNotify(MISSION_STAT_TYPE statType, CBigInt delta)
+        void subscribeRuntimeTrigger(int ownerKey, GAME_MESSAGE_TYPE messageType, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler handler)
         {
-            foreach (var missionStat in TB_MISSION_STAT.GetAll())
-            {
-                if (missionStat == null
-                    || missionStat.StatType != statType
-                    || string.IsNullOrWhiteSpace(missionStat.MissionStatId))
-                {
-                    continue;
-                }
+            GameMessageManager.Instance.SubcribeGameMessageTrigger(ownerKey, messageType, handler);
+        }
 
-                var current = _storage.GetStat(missionStat.MissionStatId);
-                CBigInt next;
-                switch (missionStat.OpType)
-                {
-                    case MISSION_OP_TYPE.SUM:
-                        next = current + delta;
-                        break;
-
-                    case MISSION_OP_TYPE.MAX:
-                        next = CBigInt.Max(current, delta);
-                        break;
-
-                    default:
-                        continue;
-                }
-
-                if (next.CompareTo(current) == 0)
-                    continue;
-
-                _storage.SetStat(missionStat.MissionStatId, next);
-            }
+        void unSubcribeRuntimeTrigger(int ownerKey)
+        {
+            GameMessageManager.Instance.UnSubcribeGameMessageTrigger(ownerKey);
         }
 
         void onRuntimeChanged(MissionRuntimeBase runtime)
         {
-            _messageSystem.Notify(MISSION_MESSAGE.RUNTIME_PROGRESS, runtime);
+            _missionMessageSystem.Notify(MISSION_MESSAGE.RUNTIME_PROGRESS, runtime);
         }
 
         void onRuntimeClaimable(MissionRuntimeBase runtime)
         {
-            _messageSystem.Notify(MISSION_MESSAGE.RUNTIME_CLAIMABLE, runtime);
+            _missionMessageSystem.Notify(MISSION_MESSAGE.RUNTIME_CLAIMABLE, runtime);
         }
 
         void detachAllRuntimes()
@@ -399,7 +326,7 @@ namespace Devian
         void clearDailyScopeData()
         {
             _scheduler.ClearDailyScope();
-            _messageSystem.Notify(MISSION_MESSAGE.DAY_RESET);
+            _missionMessageSystem.Notify(MISSION_MESSAGE.DAY_RESET);
         }
 
         void rebuildRuntimeBindings()
@@ -407,7 +334,7 @@ namespace Devian
             var didResetDay = _scheduler.HasDailyRuntimeOutsideCurrentPeriod();
             _scheduler.RebuildBindings();
             if (didResetDay)
-                _messageSystem.Notify(MISSION_MESSAGE.DAY_RESET);
+                _missionMessageSystem.Notify(MISSION_MESSAGE.DAY_RESET);
         }
 
         void pruneExpiredMissionState()
@@ -420,43 +347,14 @@ namespace Devian
             return _scheduler.FindDaily(missionId);
         }
 
-        MissionRuntimeAchieve findAchievementRuntime(string missionId)
+        static bool TryResolveMessage(string messageId, out MESSAGE message)
         {
-            return _scheduler.FindAchieve(missionId);
-        }
-
-        static bool TryResolveMissionStat(string missionStatId, out MISSION_STAT missionStat)
-        {
-            missionStat = null;
-            if (string.IsNullOrWhiteSpace(missionStatId))
+            message = null;
+            if (string.IsNullOrWhiteSpace(messageId))
                 return false;
 
-            missionStat = TB_MISSION_STAT.Get(missionStatId);
-            return missionStat != null;
-        }
-
-        Func<CBigInt> createMissionStatProgressReader(string missionStatId)
-        {
-            if (string.IsNullOrWhiteSpace(missionStatId))
-                return static () => CBigInt.Zero;
-
-            var key = missionStatId;
-            return () => _storage.GetStat(key);
-        }
-
-        static MISSION_ACHIEVE findAchievementNextRow(string missionId, int level)
-        {
-            MISSION_ACHIEVE next = null;
-            foreach (var row in TB_MISSION_ACHIEVE.GetByGroup(missionId))
-            {
-                if (row.Level <= level)
-                    continue;
-
-                if (next == null || row.Level < next.Level)
-                    next = row;
-            }
-
-            return next;
+            message = TB_MESSAGE.Get(messageId);
+            return message != null;
         }
 
         string getCurrentDailyKey()
@@ -474,17 +372,6 @@ namespace Devian
 
             var diff = Math.Max(0L, estimatedServerNowUtcMs - _storage.dailyMissionStartUtcMs);
             return (int)(diff / DayMs);
-        }
-
-        static MISSION_ACHIEVE findAchievementCurrentRow(string missionId, int level)
-        {
-            foreach (var row in TB_MISSION_ACHIEVE.GetByGroup(missionId))
-            {
-                if (row.Level == level)
-                    return row;
-            }
-
-            return null;
         }
 
         Task<CommonResult<MissionClockSnapshot>> getMissionClockAsync(CancellationToken ct)

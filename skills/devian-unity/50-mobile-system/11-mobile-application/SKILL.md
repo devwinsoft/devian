@@ -119,7 +119,9 @@ MobileApplication에 부착된 RequireComponent:
 - `AccountManager`
 - `InventoryManager`
 - `PurchaseManager`
+- `AchieveManager`
 - `MissionManager`
+- `LeaderboardManager`
 - `SaveDataManager`
 - `InputManager` — [24-input-manager](../../20-domain-common-system/22-input-manager/SKILL.md)
 - `FirebaseManager` — [23-firebase-manager](../23-firebase-manager/SKILL.md)

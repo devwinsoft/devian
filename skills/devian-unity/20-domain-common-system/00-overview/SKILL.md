@@ -25,7 +25,7 @@ Devian Unity 공용 런타임 컴포넌트를 담당한다.
 | [22-input-manager](../22-input-manager/SKILL.md) | InputActionAsset 기반 입력 수집/정규화/발행 |
 | [23-material-effect-controller](../23-material-effect-controller/SKILL.md) | Material[] 기반 공용 머티리얼 효과 |
 | [24-material-effect-id](../24-material-effect-id/SKILL.md) | MATERIAL_EFFECT_ID 규약 |
-| [25-message-system](../25-message-system/SKILL.md) | ownerKey + enum msgKey 기반 메시지/트리거 |
+| [25-trigger](../25-trigger/SKILL.md) | ownerKey + enum msgKey 기반 메시지/트리거 |
 | [26-player-prefs](../26-player-prefs/SKILL.md) | Primitive/Enum/Json 기반 PlayerPrefs 래퍼 |
 | [27-pool-system](../27-pool-system/SKILL.md) | Type당 1풀 + prefab name 기반 Spawn + Factory |
 | [28-scene-trans-manager](../28-scene-trans-manager/SKILL.md) | Scene 전환 직렬화 + 페이드 |

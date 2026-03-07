@@ -4,13 +4,15 @@ namespace Devian
 {
     internal static class SaveDataJsonCodec
     {
-        const int CurrentVersion = 11;
+        const int CurrentVersion = 13;
 
         public static string Serialize(
             InventoryStorage inventory,
             PurchaseStorage purchase,
             AccountStorage account,
-            MissionStorage mission)
+            GameMessageStorage message,
+            MissionStorage mission,
+            AchieveStorage achieve)
         {
             var root = new JObject
             {
@@ -18,7 +20,9 @@ namespace Devian
                 ["inventory"] = SaveDataJsonCodecInventory.Serialize(inventory),
                 ["purchase"] = SaveDataJsonCodecPurchase.Serialize(purchase),
                 ["account"] = SaveDataJsonCodecAccount.Serialize(account),
+                ["message"] = SaveDataJsonCodecMessage.Serialize(message),
                 ["mission"] = SaveDataJsonCodecMission.Serialize(mission),
+                ["achieve"] = SaveDataJsonCodecAchieve.Serialize(achieve),
             };
             return root.ToString();
         }
@@ -28,7 +32,9 @@ namespace Devian
             InventoryStorage inventory,
             PurchaseStorage purchase,
             AccountStorage account,
-            MissionStorage mission)
+            GameMessageStorage message,
+            MissionStorage mission,
+            AchieveStorage achieve)
         {
             var root = JObject.Parse(json);
             var version = root.Value<int?>("version") ?? 0;
@@ -48,13 +54,23 @@ namespace Devian
             else
                 account?.Clear();
 
+            if (version >= 13 && root["message"] is JObject messageObj)
+                SaveDataJsonCodecMessage.DeserializeInto(messageObj, message);
+            else
+                message?.Clear();
+
             if (version >= 11 && root["mission"] is JObject missionObj)
-                SaveDataJsonCodecMission.DeserializeInto(missionObj, mission);
+                SaveDataJsonCodecMission.DeserializeInto(missionObj, mission, message);
             else
                 mission?.Clear();
+
+            if (version >= 12 && root["achieve"] is JObject achieveObj)
+                SaveDataJsonCodecAchieve.DeserializeInto(achieveObj, achieve);
+            else
+                achieve?.Clear();
         }
 
         static bool isSupportedVersion(int version)
-            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 8 || version == 9 || version == 10 || version == CurrentVersion;
+            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 8 || version == 9 || version == 10 || version == 11 || version == 12 || version == CurrentVersion;
     }
 }
