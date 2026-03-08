@@ -21,9 +21,8 @@ namespace Devian
         public MissionStorage Storage => _storage;
         public bool IsInitialized => _initialized;
 
-        protected override void Awake()
+        protected override void onInitAwake()
         {
-            base.Awake();
 
             _missionMessageSystem = new MissionMessageTrigger();
 

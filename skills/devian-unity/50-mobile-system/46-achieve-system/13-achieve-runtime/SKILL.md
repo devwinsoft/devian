@@ -16,7 +16,7 @@ Achieve runtime(`AchieveRuntime`, `AchieveRuntimeFactory`) 규약 문서다.
 
 ## Runtime Model
 
-- `missionId`: 업적 그룹 ID
+- `achieveId`: 업적 그룹 ID
 - `messageId`: 현재 level stat key
 - `achieveUid`: runtime uid
 - `level`: 현재 단계
@@ -24,8 +24,8 @@ Achieve runtime(`AchieveRuntime`, `AchieveRuntimeFactory`) 규약 문서다.
 - `isCompleted`: 완료 여부
 
 정본:
-- progress source는 `AchieveStorage.stats[messageId]`
-- runtime progress는 storage projection
+- `TOTAL_*` saveType은 `GameMessageStorage` 값으로 projection
+- `SESSION_*` saveType은 runtime 내부 `progressValue`로 유지
 
 ---
 
@@ -33,6 +33,7 @@ Achieve runtime(`AchieveRuntime`, `AchieveRuntimeFactory`) 규약 문서다.
 
 - `Bind`는 현재 row 기준 바인딩을 교체하고 stat reader를 연결한다.
 - `LevelUp`은 다음 row 기준으로 stat 바인딩을 교체한다.
+- `LevelUp`에서 `SESSION_SUM`은 progress를 0으로 리셋한다.
 - `Detach`는 콜백/reader 참조를 해제한다.
 - period 개념은 없다.
 

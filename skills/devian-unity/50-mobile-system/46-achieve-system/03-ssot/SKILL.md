@@ -10,7 +10,8 @@ AppliesTo: v10
 - 업적 runtime 테이블: `ACHIEVE`
 - 진행 stat 정본: `MESSAGE`
 - 업적 알림 enum: `ACHIEVE_MESSAGE`
-- 플랫폼 업적 매핑: `ACHIEVE.missionId -> (appleAchievementId, googleAchievementId)`
+- 업적 타입 enum: `ACHIEVE_TYPE` (`ENUM_MISSION.json`)
+- 플랫폼 업적 매핑: `ACHIEVE.achieveId -> (appleAchievementId, googleAchievementId)`
 - 저장 구조: `AchieveStorage` + `AchieveRuntime`
 
 ---
@@ -26,15 +27,16 @@ AppliesTo: v10
 | field | type | note |
 |------|------|------|
 | `index` | int (pk) | row pk |
-| `missionId` | string | 업적 그룹/내부 업적 ID |
+| `achieveId` | string | 업적 그룹/내부 업적 ID |
+| `achieveType` | `ACHIEVE_TYPE` | 업적 타입 (`DEFAULT`는 초기화 시 runtime 자동 생성) |
 | `isActive` | bool | 운영 토글 |
+| `level` | int | 단계 |
 | `orderNum` | int | 정렬 기준(1-base) |
 | `messageId` | string | `MESSAGE.messageId` FK |
-| `level` | int | 단계 |
 | `conditionValue` | `class:CBigInt` | 목표값 |
 | `rewardGroupId` | string | claim 보상 키 |
-| `appleAchievementId` | string | Game Center ID (missionId group 공통) |
-| `googleAchievementId` | string | GPGS ID (missionId group 공통) |
+| `appleAchievementId` | string | Game Center ID (`achieveId` group 공통) |
+| `googleAchievementId` | string | GPGS ID (`achieveId` group 공통) |
 
 ---
 
@@ -44,16 +46,18 @@ AppliesTo: v10
 - `schemaVersion`
 - `nextAchieveUid`
 - `runtimes: Dictionary<int, AchieveRuntime>`
-- `stats: Dictionary<string, CBigInt>`
 
 `AchieveRuntime` 저장 필드:
-- `missionId`, `messageId`, `achieveUid`, `level`, `progressValue`, `isCompleted`
+- `achieveId`, `messageId`, `achieveUid`, `level`, `progressValue`, `isCompleted`
 
 규칙:
 - period 개념 없음 (`periodKey` 없음)
-- group(`missionId`)당 runtime 1개 유지
+- group(`achieveId`)당 runtime 1개 유지
 - level-up 시 `achieveUid` 유지
-- progress source of truth는 `stats[messageId]`
+- 초기화 시 자동 runtime 생성은 `achieveType == DEFAULT`인 level=1 row만 대상
+- 진행값은 saveType 규칙을 따른다:
+  - `TOTAL_SUM`, `TOTAL_MAX`: 외부 저장(`GameMessageStorage`) 값을 projection
+  - `SESSION_SUM`, `SESSION_MAX`: runtime 내부 `progressValue`를 직접 누적/갱신
 
 ---
 

@@ -85,7 +85,7 @@ namespace Devian
             return go.AddComponent<T>();
         }
 
-        protected virtual void Awake()
+        protected void Awake()
         {
             var self = (T)(object)this;
 
@@ -111,6 +111,11 @@ namespace Devian
                     return;
                 }
                 // 이미 자신이 등록됨 (Instance 접근으로 생성된 경우)
+                if (DontDestroy)
+                {
+                    DontDestroyOnLoad(gameObject);
+                }
+                onInitAwake();
                 return;
             }
 
@@ -129,7 +134,11 @@ namespace Devian
             {
                 DontDestroyOnLoad(gameObject);
             }
+
+            onInitAwake();
         }
+
+        protected virtual void onInitAwake() { }
 
         protected virtual void OnDestroy()
         {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Devian.Domain.Common;
 using Devian.Domain.Game;
 using UnityEngine;
 
@@ -7,6 +8,8 @@ namespace Devian
 {
     public sealed class GameMessageManager : CompoSingleton<GameMessageManager>
     {
+        const string Tag = nameof(GameMessageManager);
+
         readonly struct MessageSaveBinding
         {
             public MessageSaveBinding(string messageId, GAME_MESSAGE_SAVE_TYPE saveType)
@@ -22,13 +25,20 @@ namespace Devian
         readonly GameMessageStorage _storage = new();
         readonly GameMessageTrigger _gameMessageTriggerSystem = new();
         readonly Dictionary<GAME_MESSAGE_TYPE, List<MessageSaveBinding>> _saveBindingsByMessageType = new();
+        bool _initialized;
 
         public GameMessageStorage Storage => _storage;
+        public bool IsInitialized => _initialized;
 
-        protected override void Awake()
+        protected override void onInitAwake()
         {
-            base.Awake();
+        }
+
+        public CommonResult Initialize()
+        {
             rebuildSaveBindings();
+            _initialized = true;
+            return CommonResult.Ok();
         }
 
         public bool TryGetStat(string messageId, out CBigInt value)
@@ -63,6 +73,12 @@ namespace Devian
 
         public void Notify(GAME_MESSAGE_TYPE messageType, CBigInt value)
         {
+            if (!_initialized)
+            {
+                Debug.LogError($"[{Tag}] Initialize() must be called before Notify(). messageType={messageType}");
+                return;
+            }
+
             onBeforeTriggerNotify(messageType, value);
             _gameMessageTriggerSystem.Notify(messageType, value);
         }
@@ -84,6 +100,7 @@ namespace Devian
         {
             ClearStorage();
             _gameMessageTriggerSystem.ClearAll();
+            _initialized = false;
         }
 
         void onBeforeTriggerNotify(GAME_MESSAGE_TYPE messageType, CBigInt delta)
@@ -119,8 +136,9 @@ namespace Devian
         void rebuildSaveBindings()
         {
             _saveBindingsByMessageType.Clear();
+            var messageRows = TB_MESSAGE.GetAll() ?? new List<MESSAGE>();
 
-            foreach (var message in TB_MESSAGE.GetAll())
+            foreach (var message in messageRows)
             {
                 if (message == null
                     || string.IsNullOrWhiteSpace(message.MessageId)

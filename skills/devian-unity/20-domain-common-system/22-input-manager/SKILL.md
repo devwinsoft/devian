@@ -74,7 +74,7 @@ ulong bitset이므로 최대 64개 버튼. 초과 시 `InvalidOperationException
 
 ### 6. Singleton 등록
 
-- `CompoSingleton<InputManager>` — `Awake()`에서 `base.Awake()` 호출 → 타입 등록
+- `CompoSingleton<InputManager>` — 타입 등록은 base `Awake()`에서 자동 수행, 초기화 코드는 `onInitAwake()`에서 처리
 - `IInputManager`는 `OnEnable`에서 `Singleton.Register<IInputManager>` (Compo), `OnDisable`에서 `Unregister`
 - ApplicationManager은 InputManager를 자동 추가하지 않는다.
 - 입력을 사용하는 소비자 bootstrap/prefab이 `InputManager`를 미리 부착한다.
@@ -200,7 +200,7 @@ public static class InputButtonMapBuilder
 - [ ] Inspector "Refresh Expected Button Keys" 버튼 동작
 - [ ] Inspector "Install/Ensure VirtualGamepad Bindings" 버튼 동작
 - [ ] `Devian.Unity.Editor.asmdef`에 `Unity.InputSystem` 참조 포함
-- [ ] InputManager: CompoSingleton + Awake base.Awake()
+- [ ] InputManager: CompoSingleton + onInitAwake() 훅 사용
 - [ ] 입력을 사용하는 consumer bootstrap/prefab이 InputManager를 미리 부착
 - [ ] IInputBus / InputBus 파일 삭제됨
 - [ ] Update에서 Controller registry dispatch (Priority 순 직접 호출)

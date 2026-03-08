@@ -46,9 +46,8 @@ namespace Devian
 
         private readonly Dictionary<SoundChannelType, SoundChannel> _channels = new Dictionary<SoundChannelType, SoundChannel>();
 
-        protected override void Awake()
+        protected override void onInitAwake()
         {
-            base.Awake();
             _initializeChannels();
         }
 

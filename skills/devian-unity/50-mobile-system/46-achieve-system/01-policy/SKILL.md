@@ -15,19 +15,21 @@ Type: Policy / Entry Point
 ### 1) runtime 정본은 `ACHIEVE` table + `AchieveStorage`다
 
 - 업적 row는 `ACHIEVE`를 사용한다.
-- progress 정본은 `AchieveStorage.stats[string messageId]`다.
-- runtime(`AchieveRuntime.progressValue`)는 stats projection이다.
+- 런타임 저장 정본은 `AchieveStorage.runtimes`다.
+- progress는 `MESSAGE.saveType`에 따라 결정된다.
+  - `TOTAL_*`: `GameMessageStorage` 값을 projection한다.
+  - `SESSION_*`: `AchieveRuntime.progressValue`를 직접 유지한다.
+- 초기화 자동 생성 대상은 `ACHIEVE.achieveType == ACHIEVE_TYPE.DEFAULT`인 level=1 row다.
 
 ### 2) 외부에는 내부 업적 ID만 노출한다
 
-- 공개 API는 `achievementId`(= `ACHIEVE.missionId`)만 받는다.
+- 공개 API는 `achievementId`(= `ACHIEVE.achieveId`)만 받는다.
 - `appleAchievementId`, `googleAchievementId`는 매핑 레이어 내부에만 존재한다.
 
-### 3) trigger 입력은 `AchieveManager.Notify`로만 받는다
+### 3) trigger 입력은 `GameMessageManager`를 통해 받는다
 
-- `Notify(GAME_MESSAGE_TYPE, delta)`가 유일한 외부 입력이다.
-- 같은 `messageType`을 참조하는 `MESSAGE` row를 순회해 stats를 먼저 갱신한다.
-- 그 다음 해당 `messageType` runtime projection을 즉시 동기화한다.
+- `GameMessageManager.Notify(GAME_MESSAGE_TYPE, delta)`가 유일한 외부 입력이다.
+- `AchieveManager`는 `GameMessageManager` 트리거를 구독해 해당 runtime projection을 동기화한다.
 
 ### 4) 업적 알림은 `ACHIEVE_MESSAGE`를 사용한다
 

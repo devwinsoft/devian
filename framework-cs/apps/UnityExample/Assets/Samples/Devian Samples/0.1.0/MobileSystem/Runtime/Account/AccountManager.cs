@@ -38,9 +38,8 @@ namespace Devian
         public bool CanAttemptCloudSave => canAttemptCloudSave(CurrentLoginType);
         public bool IsLocalOnlySaveMode => !CanAttemptCloudSave;
 
-        protected override void Awake()
+        protected override void onInitAwake()
         {
-            base.Awake();
             restoreCachedLoginType();
             ApplyStorage(_storage);
         }

@@ -100,9 +100,8 @@ namespace Devian
         private ILeaderboardPlatformAdapter _adapter;
         private bool _initialized;
 
-        protected override void Awake()
+        protected override void onInitAwake()
         {
-            base.Awake();
             rebuildMappingCaches();
         }
 

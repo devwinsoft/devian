@@ -27,7 +27,7 @@ namespace Devian
         /// </summary>
         public static bool TryGet(out T value) => Singleton.TryGet(out value);
 
-        protected virtual void Awake()
+        protected void Awake()
         {
             var self = (T)(object)this;
             var debugSource = $"CompoSingleton<{typeof(T).Name}>@{gameObject.scene.name}";
@@ -40,7 +40,11 @@ namespace Devian
             {
                 DontDestroyOnLoad(gameObject);
             }
+
+            onInitAwake();
         }
+
+        protected virtual void onInitAwake() { }
 
         protected virtual void OnDestroy()
         {

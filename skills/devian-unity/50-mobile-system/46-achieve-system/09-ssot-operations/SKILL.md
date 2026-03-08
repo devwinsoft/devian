@@ -17,8 +17,8 @@ AppliesTo: v10
 
 ### 2) gameplay stat 입력
 
-- 상위 로직은 `MissionManager.Notify(statType, delta)`만 호출
-- MissionManager가 AchieveManager로 동일 이벤트를 전달
+- 상위 로직은 `GameMessageManager.Notify(messageType, delta)`를 호출
+- `AchieveManager`는 `GameMessageTrigger` 구독으로 runtime 진행도를 동기화
 
 ### 3) 업적 보상 수령
 
@@ -30,6 +30,7 @@ AppliesTo: v10
 ## 테스트 체크리스트
 
 - `ACHIEVE` row 기준 runtime 생성/복구 정상
+- `ACHIEVE.achieveType == DEFAULT`인 row만 초기화 시 자동 runtime 생성
 - level-up 시 messageId 변경 + projection 동기화 정상
 - 동일 업적 `Unlock + Sync` 연속 호출 시 이벤트 1회 보장
 - claim 후 save 실패 시 오류 반환

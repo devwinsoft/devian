@@ -20,9 +20,8 @@ namespace Devian
 
         public PurchaseStorage Storage => _storage;
 
-        protected override void Awake()
+        protected override void onInitAwake()
         {
-            base.Awake();
             SetProductCatalog(new GameProductCatalog());
             SetPurchaseStore(CreateDefaultStore());
         }

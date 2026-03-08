@@ -76,9 +76,8 @@ namespace Devian
         public event Action<AchieveRuntime> OnRuntimeLevelUp;
         public event Action<AchieveRuntime, RewardData[]> OnRuntimeRewarded;
 
-        protected override void Awake()
+        protected override void onInitAwake()
         {
-            base.Awake();
         }
 
         protected override void OnDestroy()
@@ -117,6 +116,14 @@ namespace Devian
             if (!_initialized)
                 return;
 
+            rebuildMappingCaches();
+
+            if (needsRuntimeRebuild())
+            {
+                rebuildRuntimeBindings();
+                return;
+            }
+
             if (_storage.runtimes.Count <= 0)
                 return;
 
@@ -129,6 +136,43 @@ namespace Devian
 
             foreach (var runtime in runtimes)
                 emitRuntimeInitialized(runtime);
+        }
+
+        bool needsRuntimeRebuild()
+        {
+            var groupKeys = new HashSet<string>(TB_ACHIEVE.GetGroupKeys(), StringComparer.Ordinal);
+            var runtimeByAchieveId = new Dictionary<string, AchieveRuntime>(StringComparer.Ordinal);
+
+            foreach (var runtime in _storage.runtimes.Values)
+            {
+                if (runtime == null || string.IsNullOrWhiteSpace(runtime.achieveId))
+                    return true;
+
+                if (!groupKeys.Contains(runtime.achieveId))
+                    return true;
+
+                if (!runtimeByAchieveId.TryAdd(runtime.achieveId, runtime))
+                    return true;
+
+                var runtimeRow = findRow(runtime.achieveId, runtime.level);
+                if (!isEligibleRow(runtimeRow))
+                    return true;
+
+                if (!string.Equals(runtime.messageId, runtimeRow!.MessageId, StringComparison.Ordinal))
+                    return true;
+            }
+
+            foreach (var groupKey in groupKeys)
+            {
+                var startRow = findStartRow(groupKey);
+                var shouldExist = shouldAutoCreateRuntime(startRow);
+                var exists = runtimeByAchieveId.ContainsKey(groupKey);
+
+                if (shouldExist != exists)
+                    return true;
+            }
+
+            return false;
         }
 
         public MissionRuntimeState GetRuntimeState(string achievementId)
@@ -373,7 +417,6 @@ namespace Devian
         public void ClearStorage()
         {
             detachAllRuntimes();
-            _messageSystem.ClearAll();
             _storage.Clear();
             _knownUnlockedAchievementIds.Clear();
             _initialized = false;
@@ -684,14 +727,17 @@ namespace Devian
                 }
 
                 var startRow = findStartRow(groupKey);
-                if (!isEligibleRow(startRow))
+                if (startRow == null)
                 {
                     if (TB_ACHIEVE.GetByGroup(groupKey).Count > 0)
                         Debug.LogError($"[{Tag}] Missing level=1 achieve row for achieveId='{groupKey}'.");
                     continue;
                 }
 
-                if (!TryResolveMessage(startRow!.MessageId, out var startMessage))
+                if (!shouldAutoCreateRuntime(startRow))
+                    continue;
+
+                if (!TryResolveMessage(startRow.MessageId, out var startMessage))
                 {
                     Debug.LogError($"[{Tag}] MESSAGE not found for achieve: achieveId='{startRow.AchieveId}', messageId='{startRow.MessageId}'.");
                     continue;
@@ -772,6 +818,11 @@ namespace Devian
                    && row.ConditionValue.HasValue
                    && TryResolveMessage(row.MessageId, out var message)
                    && message.SaveType != GAME_MESSAGE_SAVE_TYPE.NONE;
+        }
+
+        static bool shouldAutoCreateRuntime(ACHIEVE row)
+        {
+            return isEligibleRow(row) && row!.AchieveType == ACHIEVE_TYPE.DEFAULT;
         }
 
         static ACHIEVE findRow(string achieveId, int level)

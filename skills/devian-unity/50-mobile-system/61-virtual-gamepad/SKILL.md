@@ -65,7 +65,7 @@ namespace Devian
 
 - `CompoSingleton<VirtualGamepadDriver>` 상속
 - `DontDestroy => false` — 씬 전환 시 파괴
-- `Awake()`: `base.Awake()` 호출 후 디바이스 생성
+- `onInitAwake()`: CompoSingleton base 등록 이후 디바이스 생성
 - `OnDestroy()`: 디바이스 제거 후 `base.OnDestroy()` 호출
 
 ### 3. 상태 주입 타이밍
@@ -204,7 +204,7 @@ Hierarchy 예시:
 
 - [ ] 4개 Runtime 파일이 `Samples~/MobileSystem/Runtime/VirtualGamepad/` 에 위치
 - [ ] 모든 파일이 `namespace Devian` 사용
-- [ ] VirtualGamepadDriver: CompoSingleton + DontDestroy=false + base.Awake()
+- [ ] VirtualGamepadDriver: CompoSingleton + DontDestroy=false + onInitAwake()
 - [ ] InputManager 코드 변경 없음
 - [ ] UPM ↔ UnityExample 동일
 

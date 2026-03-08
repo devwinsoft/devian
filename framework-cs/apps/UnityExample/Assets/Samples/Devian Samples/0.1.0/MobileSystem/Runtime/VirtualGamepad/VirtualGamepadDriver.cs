@@ -11,9 +11,8 @@ namespace Devian
         private VirtualGamepadState _state;
         private bool _dirty;
 
-        protected override void Awake()
+        protected override void onInitAwake()
         {
-            base.Awake();
 
             _device = VirtualGamepadUtility.CreateDevice();
             _state = VirtualGamepadState.Create(Vector2.zero, Vector2.zero, 0);

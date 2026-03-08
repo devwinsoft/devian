@@ -69,11 +69,6 @@ public class TestApplication : MobileApplication
         await UnityCoroutineRunner.RunAsync(this, SoundManager.Instance.LoadByBundleKeyAsync("sounds"));
 
         //await UnityCoroutineRunner.RunAsync(this, VoiceManager.Instance.LoadByBundleKeyAsync("", SystemLanguage.Korean, SystemLanguage.English));
-        var adResult = await AdManager.Instance.InitializeAsync(CancellationToken.None);
-        if (adResult.IsFailure)
-        {
-            Debug.LogWarning($"{adResult.Error.Code}: {adResult.Error.Message}");
-        }
     }
 
 }

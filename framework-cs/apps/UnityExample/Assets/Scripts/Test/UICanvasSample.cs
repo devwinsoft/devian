@@ -16,6 +16,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
     {
         if (TestApplication.IsApplicationQuitting == false)
         {
+            AchieveManager.Instance?.UnSubcribe(GetEntityId());
             MissionManager.Instance?.UnSubcribe(GetEntityId());
         }
         base.OnDestroy();
@@ -23,6 +24,37 @@ public class UICanvasSample : UICanvas<UICanvasSample>
 
     protected override void onInit()
     {
+        AchieveManager.Instance.Subcribe(GetEntityId(),
+            ACHIEVE_MESSAGE.RUNTIME_INIT,
+            (args) =>
+            {
+                AchieveRuntime achieve = args[0] as AchieveRuntime;
+                Debug.Log($"achieveId={achieve.achieveId}, progressValue={achieve.progressValue}");
+                return false;
+            });
+        
+        AchieveManager.Instance.Subcribe(GetEntityId(),
+            ACHIEVE_MESSAGE.RUNTIME_PROGRESS,
+            (args) =>
+            {
+                AchieveRuntime achieve = args[0] as AchieveRuntime;
+                Debug.Log($"achieveId={achieve.achieveId}, progressValue={achieve.progressValue}");
+                return false;
+            });
+        
+        AchieveManager.Instance.Subcribe(GetEntityId(),
+            ACHIEVE_MESSAGE.RUNTIME_REWARDED,
+            (args) =>
+            {
+                AchieveRuntime achieve = args[0] as AchieveRuntime;
+                RewardData[] rewards = args[1] as RewardData[];
+                foreach (var rewward in rewards)
+                {
+                    Debug.Log($"type={rewward.Type}, id={rewward.Id}, amount={rewward.Amount}");
+                }
+                return false;
+            });
+        
         MissionManager.Instance.Subcribe(GetEntityId(),
             MISSION_MESSAGE.RUNTIME_INIT,
             (args) =>
@@ -68,6 +100,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
 
     protected override void onInitComplete()
     {
+        AchieveManager.Instance.RefreshRuntimes();
         MissionManager.Instance.RefreshRuntimes();
         Debug.Log($"[UICanvasSample] remainSec={MissionManager.Instance.GetRemainTime(MISSION_TYPE.DAY).TotalSeconds}");
     }
@@ -91,14 +124,14 @@ public class UICanvasSample : UICanvas<UICanvasSample>
 
     public void OnClick_Mission()
     {
-        GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.TEST_001, 1);
+        GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.ACHIEVE_001, 1);
     }
-    
+
     public void OnClick_Mission_Claim()
     {
-        UnityTaskRunner.Run(MissionManager.Instance.ClaimAsync(MISSION_TYPE.DAY, "mission_day_002"), "MissionManager.ClaimAsync");
+        UnityTaskRunner.Run(AchieveManager.Instance.ClaimAsync("achieve_001"), "AchieveManager.ClaimAsync");
     }
-    
+
     public void OnClick_SignIn_Google()
     {
         UnityTaskRunner.Run(OnClickSignInGoogleAsync, $"{nameof(UICanvasSample)}.{nameof(OnClick_SignIn_Google)}");

@@ -74,6 +74,11 @@ export enum ACHIEVE_MESSAGE {
     ACHIEVEMENT_UNLOCKED = 6,
 }
 
+/** ACHIEVE_TYPE enum */
+export enum ACHIEVE_TYPE {
+    DEFAULT = 0,
+}
+
 /** CURRENCY_TYPE enum */
 export enum CURRENCY_TYPE {
     GOLD = 0,
@@ -191,6 +196,7 @@ export interface MISSION extends IEntityKey<string> {
 export interface ACHIEVE extends IEntityKey<number> {
     Index: number;
     AchieveId: string;
+    AchieveType: ACHIEVE_TYPE;
     IsActive: boolean;
     Level: number;
     OrderNum: number;

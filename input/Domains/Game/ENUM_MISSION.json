@@ -32,6 +32,12 @@
         { "name": "RUNTIME_REWARDED", "value": 5 },
         { "name": "ACHIEVEMENT_UNLOCKED", "value": 6 }
       ]
+    },
+    {
+      "name": "ACHIEVE_TYPE",
+      "values": [
+        { "name": "DEFAULT", "value": 0 }
+      ]
     }
   ]
 }

@@ -23,7 +23,7 @@ Type: Component Specification
 `T.Instance` 접근 시:
 1. Registry 조회
 2. 없으면 새 GameObject 생성 + AddComponent
-3. `Awake()`에서 Registry 등록 + DontDestroyOnLoad 적용
+3. `Awake()`(base 내부 고정)에서 Registry 등록 + DontDestroyOnLoad 적용 + `onInitAwake()` 훅 호출
 
 **원칙**: `AutoSingleton`은 script code가 `Instance` 또는 프레임워크 생성 경로를 통해 만드는 패턴만 지원한다.  
 씬/프리팹에 미리 부착해서 사용하는 것은 금지다.
@@ -36,7 +36,7 @@ Type: Component Specification
 
 - 씬/프리팹에 컴포넌트로 붙여서 사용한다.
 - 런타임 `AddComponent`로 생성하는 것은 패턴 위반이다.
-- `Awake()`에서 Registry에 등록한다.
+- `Awake()`(base 내부 고정)에서 Registry에 등록하고, 하위 클래스 초기화는 `onInitAwake()`에서 수행한다.
 - **우선순위 최고**: CompoSingleton이 등록되면 같은 타입의 Auto/Boot 인스턴스를 대체한다(Adopt).
 
 

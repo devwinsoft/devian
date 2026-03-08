@@ -45,9 +45,8 @@ namespace Devian
         // Lifecycle
         // ====================================================================
 
-        protected override void Awake()
+        protected override void onInitAwake()
         {
-            base.Awake();
         }
 
         /// <summary>

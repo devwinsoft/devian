@@ -28,11 +28,12 @@ AppliesTo: v10
 - `schemaVersion`
 - `nextAchieveUid`
 - `runtimes: Dictionary<int, AchieveRuntime>`
-- `stats: Dictionary<string, CBigInt>`
 
 규칙:
-- progress source of truth는 `stats[string messageId]`
-- `runtimes`는 UI/상태 projection + claim 상태 보존용
+- `runtimes`는 업적 진행/claim 상태의 저장 정본이다.
+- progress source는 runtime별 `MESSAGE.saveType` 규칙을 따른다.
+  - `TOTAL_*`: 외부 저장(`GameMessageStorage`) projection
+  - `SESSION_*`: runtime 내부 `progressValue`
 - `Clear()`는 schema 기본값 + 모든 컬렉션 초기화
 
 ---
@@ -47,10 +48,9 @@ AppliesTo: v10
   "achieve": {
     "schemaVersion": 1,
     "nextAchieveUid": 1,
-    "stats": { "<messageId>": { "base": 0, "pow": 0 } },
     "runtimes": [
       {
-        "missionId": "...",
+        "achieveId": "...",
         "messageId": "...",
         "achieveUid": 1,
         "level": 1,
@@ -64,7 +64,7 @@ AppliesTo: v10
 
 핵심 규칙:
 - achieve runtime 저장 위치는 반드시 `achieve.runtimes`
-- mission runtime 저장 위치는 `mission.runtimes`(DAY 전용)
+- period 개념은 없고 `achieve.period` 계층을 사용하지 않는다.
 
 ---
 

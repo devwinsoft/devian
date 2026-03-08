@@ -169,6 +169,13 @@ public class TestSceneLoading : TestSceneBootstrap
             Debug.LogWarning($"SaveGameStorageAsync failed: {result.SaveError.Code}: {result.SaveError.Message}");
         }
 
+        var initMessage = GameMessageManager.Instance.Initialize();
+        if (initMessage.IsFailure)
+        {
+            Debug.LogError($"GameMessageManager.Initialize failed: {initMessage.Error.Code}: {initMessage.Error.Message}");
+            return initMessage.Error.Code;
+        }
+
         var initClock = await MissionManager.Instance.InitializeAsync(snapshot?.MissionClock);
         if (initClock.IsFailure)
         {
@@ -183,6 +190,12 @@ public class TestSceneLoading : TestSceneBootstrap
             return initAchieve.Error.Code;
         }
 
+        var initAd = await AdManager.Instance.InitializeAsync(CancellationToken.None);
+        if (initAd.IsFailure)
+        {
+            Debug.LogWarning($"AdManager.InitializeAsync failed (non-fatal): {initAd.Error.Code}: {initAd.Error.Message}");
+        }
+        
         var initLeaderboard = await LeaderboardManager.Instance.InitializeAsync(ct);
         if (initLeaderboard.IsFailure)
         {
