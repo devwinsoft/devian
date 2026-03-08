@@ -23,6 +23,7 @@ Maps to: `framework-cs/module/Devian/src/Core/`, `framework-cs/module/Devian/src
 | [31-variable-complex](../31-variable-complex/SKILL.md) | Complex (masking) types |
 | [32-variable-variant](../32-variable-variant/SKILL.md) | Variant tagged union |
 | [35-variable-bigint](../35-variable-bigint/SKILL.md) | CBigInt large number |
+| [36-variable-bigint-rank-key](../36-variable-bigint-rank-key/SKILL.md) | CBigInt.RankKey encoding |
 
 ---
 

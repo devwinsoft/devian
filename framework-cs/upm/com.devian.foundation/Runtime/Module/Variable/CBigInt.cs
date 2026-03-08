@@ -153,6 +153,48 @@ namespace Devian
         public static bool operator <=(CBigInt a, CBigInt b) => a.CompareTo(b) <= 0;
         public static bool operator >=(CBigInt a, CBigInt b) => a.CompareTo(b) >= 0;
 
+        // --- RankKey (leaderboard order-preserving long encoding) ---
+        // SSOT: skills/devian/10-module/20-core/36-variable-bigint-rank-key/SKILL.md
+
+        private const int RankKeyMantissaPrecision = 1_000_000;
+        private const long RankKeyMantissaScale = 10_000_000L;
+        private const long RankKeyPowBias = 1_000_000L;
+
+        /// <summary>
+        /// Order-preserving long key for platform leaderboards.
+        /// a.CompareTo(b) == a.RankKey.CompareTo(b.RankKey) is guaranteed.
+        /// Not intended for value reconstruction.
+        /// </summary>
+        public long RankKey
+        {
+            get
+            {
+                float b = mBase;
+                int p = mPow;
+
+                if (b == 0f) return 0L;
+
+                NormalizeRaw(ref b, ref p);
+
+                int sign = b > 0f ? 1 : -1;
+                float absBase = Math.Abs(b);
+
+                long biasedPow = (long)p + RankKeyPowBias;
+
+                if (biasedPow < 0L)
+                    return sign > 0 ? 1L : long.MinValue;
+                if (biasedPow > RankKeyPowBias * 2L)
+                    return sign > 0 ? long.MaxValue : -1L;
+
+                long mantissaBucket = (long)Math.Floor((absBase - 1f) * RankKeyMantissaPrecision);
+                if (mantissaBucket < 0L) mantissaBucket = 0L;
+
+                long magnitudeKey = biasedPow * RankKeyMantissaScale + mantissaBucket;
+
+                return sign > 0 ? (1L + magnitudeKey) : -(1L + magnitudeKey);
+            }
+        }
+
         // --- Explicit conversions ---
 
         public static explicit operator float(CBigInt x)
