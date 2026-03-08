@@ -33,20 +33,20 @@ namespace Devian
                 : region.Trim();
         }
 
-        // ── Mission Callable ──────────────────────────────────────
+        // ── Remote Config Callable ─────────────────────────────────
 
-        public async Task<CommonResult<MissionClockSnapshot>> GetMissionClockAsync(CancellationToken ct)
+        public async Task<CommonResult<RemoteConfigSnapshot>> GetRemoteConfigAsync(CancellationToken ct)
         {
             try
             {
-                var response = await callFunctionAsync("getMissionClock", null, ct);
+                var response = await callFunctionAsync("getRemoteConfig", null, ct);
                 if (response == null)
-                    return CommonResult<MissionClockSnapshot>.Failure(
+                    return CommonResult<RemoteConfigSnapshot>.Failure(
                         CommonErrorType.COMMON_SERVER,
-                        "getMissionClock returned unsupported response.");
+                        "getRemoteConfig returned unsupported response.");
 
-                return CommonResult<MissionClockSnapshot>.Success(
-                    parseMissionClockSnapshot(response));
+                return CommonResult<RemoteConfigSnapshot>.Success(
+                    parseRemoteConfigSnapshot(response));
             }
             catch (OperationCanceledException) { throw; }
             catch (FunctionsException fex)
@@ -55,21 +55,21 @@ namespace Devian
                 {
                     case FunctionsErrorCode.Unavailable:
                     case FunctionsErrorCode.DeadlineExceeded:
-                        return CommonResult<MissionClockSnapshot>.Failure(
+                        return CommonResult<RemoteConfigSnapshot>.Failure(
                             CommonErrorType.COMMON_NETWORK,
-                            "Mission clock network unavailable.");
+                            "Remote config network unavailable.");
                     case FunctionsErrorCode.Unauthenticated:
                     case FunctionsErrorCode.PermissionDenied:
-                        return CommonResult<MissionClockSnapshot>.Failure(
+                        return CommonResult<RemoteConfigSnapshot>.Failure(
                             CommonErrorType.COMMON_AUTH, fex.Message);
                     default:
-                        return CommonResult<MissionClockSnapshot>.Failure(
+                        return CommonResult<RemoteConfigSnapshot>.Failure(
                             CommonErrorType.COMMON_SERVER, fex.Message);
                 }
             }
             catch (Exception ex)
             {
-                return CommonResult<MissionClockSnapshot>.Failure(
+                return CommonResult<RemoteConfigSnapshot>.Failure(
                     CommonErrorType.COMMON_SERVER, ex.Message);
             }
         }
@@ -77,7 +77,7 @@ namespace Devian
         // ── Session Init (로그인 시 일괄 조회) ──────────────────────
 
         /// <summary>
-        /// initSession callable — getMissionClock + getEntitlements + getPurchaseAdjustments 통합 호출.
+        /// initSession callable — getRemoteConfig + getEntitlements + getPurchaseAdjustments 통합 호출.
         /// 서버에서 3개 Firestore 읽기를 병렬 실행하여 1회 왕복으로 전체 초기 데이터를 반환한다.
         /// </summary>
         public async Task<CommonResult<SessionInitSnapshot>> InitSessionAsync(
@@ -91,17 +91,17 @@ namespace Devian
                         CommonErrorType.COMMON_SERVER,
                         "initSession returned unsupported response.");
 
-                // missionClock
-                Dictionary<string, object> clockDict = null;
-                if (response.TryGetValue("missionClock", out var clockObj) && clockObj is Dictionary<string, object> cd)
-                    clockDict = cd;
+                // remoteConfig
+                Dictionary<string, object> remoteConfigDict = null;
+                if (response.TryGetValue("remoteConfig", out var remoteConfigObj) && remoteConfigObj is Dictionary<string, object> rcd)
+                    remoteConfigDict = rcd;
 
-                if (clockDict == null)
+                if (remoteConfigDict == null)
                     return CommonResult<SessionInitSnapshot>.Failure(
                         CommonErrorType.COMMON_SERVER,
-                        "initSession: missionClock missing.");
+                        "initSession: remoteConfig missing.");
 
-                var missionClock = parseMissionClockSnapshot(clockDict);
+                var remoteConfig = parseRemoteConfigSnapshot(remoteConfigDict);
 
                 // entitlements
                 Dictionary<string, object> entDict = null;
@@ -128,7 +128,7 @@ namespace Devian
                 var purchaseAdjustments = parseRefundPageResult(adjDict);
 
                 return CommonResult<SessionInitSnapshot>.Success(
-                    new SessionInitSnapshot(missionClock, entitlements, purchaseAdjustments));
+                    new SessionInitSnapshot(remoteConfig, entitlements, purchaseAdjustments));
             }
             catch (OperationCanceledException) { throw; }
             catch (FunctionsException fex)
@@ -662,13 +662,13 @@ namespace Devian
 
         // ── Private — Response Parsers ────────────────────────────
 
-        static MissionClockSnapshot parseMissionClockSnapshot(Dictionary<string, object> response)
+        static RemoteConfigSnapshot parseRemoteConfigSnapshot(Dictionary<string, object> response)
         {
             var serverNowUtcMs = ReadLong(response, "serverNowUtcMs");
             if (serverNowUtcMs <= 0L)
                 serverNowUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
-            var snapshot = new MissionClockSnapshot(serverNowUtcMs);
+            var snapshot = new RemoteConfigSnapshot(serverNowUtcMs);
             snapshot.minVersion = ReadString(response, "minVersion");
             snapshot.currentVersion = ReadString(response, "currentVersion");
             return snapshot;

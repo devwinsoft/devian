@@ -5,11 +5,12 @@
 #nullable enable
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
+using Devian.Domain.Common;
 
 namespace Devian
 {
@@ -50,17 +51,17 @@ namespace Devian
         [SerializeField]
         [Tooltip("Clear dependency cache before calculating size (DANGER: use only for testing)")]
         private bool forceClearDependencyCache = false;
-        
+
         // ====================================================================
         // Events
         // ====================================================================
-        
+
         /// <summary>
         /// Fired when an error occurs during patch/download.
-        /// Note: onError callback is always called; this is an additional notification channel.
+        /// Additional notification channel (errors are also returned via CommonResult).
         /// </summary>
         public event Action<string>? OnError;
-        
+
         // ====================================================================
         // Public Properties
         // ====================================================================
@@ -73,25 +74,19 @@ namespace Devian
         // ====================================================================
         // PatchProc - Calculate download sizes
         // ====================================================================
-        
+
         /// <summary>
         /// Calculates download size for each label.
         /// </summary>
         /// <param name="labels">Labels to check download size</param>
-        /// <param name="onDone">Called with PatchInfo on success</param>
-        /// <param name="onError">Called with error message on failure (never silent)</param>
-        public IEnumerator PatchProc(
-            IReadOnlyList<string> labels,
-            Action<PatchInfo> onDone,
-            Action<string>? onError = null)
+        public async Task<CommonResult<PatchInfo>> PatchProc(IReadOnlyList<string> labels)
         {
             // Empty labels = 0 bytes, immediate success
             if (labels.Count == 0)
             {
                 var emptyInfo = new PatchInfo(0, new Dictionary<string, long>());
                 LastPatchInfo = emptyInfo;
-                onDone?.Invoke(emptyInfo);
-                yield break;
+                return CommonResult<PatchInfo>.Success(emptyInfo);
             }
 
             var labelSizes = new Dictionary<string, long>();
@@ -103,66 +98,61 @@ namespace Devian
                 if (forceClearDependencyCache)
                 {
                     var clearOp = Addressables.ClearDependencyCacheAsync(label, false);
-                    yield return clearOp;
-                    
+                    await clearOp;
+
                     if (clearOp.Status == AsyncOperationStatus.Failed)
                     {
                         var msg = $"[DownloadManager] ClearDependencyCacheAsync failed for label '{label}': {clearOp.OperationException?.Message}";
                         Debug.LogError(msg);
-                        RaiseError(msg, onError);
-                        yield break;
+                        RaiseError(msg);
+                        return CommonResult<PatchInfo>.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
                     }
-                    
+
                     Addressables.Release(clearOp);
                 }
-                
+
                 // Get download size
                 var sizeOp = Addressables.GetDownloadSizeAsync(label);
-                yield return sizeOp;
-                
+                await sizeOp;
+
                 if (sizeOp.Status == AsyncOperationStatus.Failed)
                 {
                     var msg = $"[DownloadManager] GetDownloadSizeAsync failed for label '{label}': {sizeOp.OperationException?.Message}";
                     Debug.LogError(msg);
-                    RaiseError(msg, onError);
-                    yield break;
+                    RaiseError(msg);
+                    return CommonResult<PatchInfo>.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
                 }
-                
+
                 var size = sizeOp.Result;
                 labelSizes[label] = size;
                 totalSize += size;
-                
+
                 Addressables.Release(sizeOp);
             }
-            
+
             var patchInfo = new PatchInfo(totalSize, labelSizes);
             LastPatchInfo = patchInfo;
-            onDone?.Invoke(patchInfo);
+            return CommonResult<PatchInfo>.Success(patchInfo);
         }
-        
+
         // ====================================================================
         // DownloadProc - Download dependencies
         // ====================================================================
-        
+
         /// <summary>
         /// Downloads dependencies for each label.
         /// </summary>
         /// <param name="labels">Labels to download</param>
         /// <param name="onProgress">Called with progress 0~1</param>
-        /// <param name="onSuccess">Called on successful completion</param>
-        /// <param name="onError">Called with error message on failure (never silent)</param>
-        public IEnumerator DownloadProc(
+        public async Task<CommonResult> DownloadProc(
             IReadOnlyList<string> labels,
-            Action<float>? onProgress,
-            Action onSuccess,
-            Action<string>? onError = null)
+            Action<float>? onProgress = null)
         {
             // Empty labels = immediate success
             if (labels.Count == 0)
             {
                 onProgress?.Invoke(1f);
-                onSuccess?.Invoke();
-                yield break;
+                return CommonResult.Ok();
             }
 
             // Need PatchInfo for weighted progress
@@ -171,30 +161,18 @@ namespace Devian
             // If no cached PatchInfo or labels differ, run PatchProc first
             if (patchInfo == null || !LabelsMatch(labels, patchInfo.LabelSizes.Keys))
             {
-                PatchInfo? fetchedInfo = null;
-                string? patchError = null;
+                var patchResult = await PatchProc(labels);
+                if (patchResult.IsFailure)
+                    return CommonResult.Failure(patchResult.Error!);
 
-                yield return PatchProc(
-                    labels,
-                    info => fetchedInfo = info,
-                    err => patchError = err
-                );
-
-                if (patchError != null)
-                {
-                    // PatchProc already raised error
-                    yield break;
-                }
-
-                patchInfo = fetchedInfo!;
+                patchInfo = patchResult.Value!;
             }
 
             // Nothing to download
             if (patchInfo.TotalSize == 0)
             {
                 onProgress?.Invoke(1f);
-                onSuccess?.Invoke();
-                yield break;
+                return CommonResult.Ok();
             }
 
             long downloadedBytes = 0;
@@ -207,9 +185,9 @@ namespace Devian
                     // Nothing to download for this label
                     continue;
                 }
-                
+
                 var downloadOp = Addressables.DownloadDependenciesAsync(label, false);
-                
+
                 while (!downloadOp.IsDone)
                 {
                     // Report weighted progress
@@ -217,39 +195,35 @@ namespace Devian
                     var currentLabelBytes = (long)(labelSize * labelProgress);
                     var totalProgress = (downloadedBytes + currentLabelBytes) / (float)totalBytes;
                     onProgress?.Invoke(Mathf.Clamp01(totalProgress));
-                    yield return null;
+                    await Task.Yield();
                 }
-                
+
                 if (downloadOp.Status == AsyncOperationStatus.Failed)
                 {
                     var msg = $"[DownloadManager] DownloadDependenciesAsync failed for label '{label}': {downloadOp.OperationException?.Message}";
                     Debug.LogError(msg);
                     Addressables.Release(downloadOp);
-                    RaiseError(msg, onError);
-                    // IMPORTANT: Do NOT call onSuccess after error
-                    yield break;
+                    RaiseError(msg);
+                    return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
                 }
-                
+
                 downloadedBytes += labelSize;
                 Addressables.Release(downloadOp);
             }
-            
+
             onProgress?.Invoke(1f);
-            onSuccess?.Invoke();
+            return CommonResult.Ok();
         }
-        
+
         // ====================================================================
         // Helper Methods
         // ====================================================================
-        
-        private void RaiseError(string message, Action<string>? callback)
+
+        private void RaiseError(string message)
         {
-            // Always invoke callback (never silent)
-            callback?.Invoke(message);
-            // Also raise event for additional listeners
             OnError?.Invoke(message);
         }
-        
+
         private static bool LabelsMatch(IReadOnlyList<string> a, IEnumerable<string> b)
         {
             var setA = new HashSet<string>(a);

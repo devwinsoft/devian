@@ -6,7 +6,7 @@
  *   - ackPurchaseClientGrant
  *   - ackPurchaseStoreConfirm
  *   - getEntitlements
- *   - getMissionClock
+ *   - getRemoteConfig
  *   - getInitialInventory
  *   - getRecentPurchases30d
  *   - getPurchaseAdjustments
@@ -31,8 +31,8 @@ export {getRecentPurchases30d} from "./purchase/getRecentPurchases30d";
 export {getPurchaseAdjustments} from "./purchase/getPurchaseAdjustments";
 export {ackRefundApplied} from "./purchase/ackRefundApplied";
 
-// ── Mission Callables ──
-export {getMissionClock} from "./mission/getMissionClock";
+// ── Remote Config Callables ──
+export {getRemoteConfig} from "./mission/getRemoteConfig";
 
 // ── Inventory Callables ──
 export {getInitialInventory} from "./inventory/getInitialInventory";

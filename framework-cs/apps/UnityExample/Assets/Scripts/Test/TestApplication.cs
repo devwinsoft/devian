@@ -38,23 +38,16 @@ public class TestApplication : MobileApplication
     {
         await base.OnBootProc();
         
-        await UnityCoroutineRunner.RunAsync(this, DownloadManager.Instance.PatchProc(
-            patchList,
-            onDone: (patch) =>
-            {
-                Debug.Log(patch.TotalSize);
-            }
-        ));
+        var patchResult = await DownloadManager.Instance.PatchProc(patchList);
+        if (patchResult.IsSuccess)
+            Debug.Log(patchResult.Value!.TotalSize);
 
-        // await UnityCoroutineRunner.RunAsync(this, DownloadManager.Instance.DownloadProc(
+        // var downloadResult = await DownloadManager.Instance.DownloadProc(
         //     patchList,
         //     onProgress: (progress) =>
         //     {
-        //     },
-        //     onSuccess: () =>
-        //     {
         //     }
-        // ));
+        // );
         
 #if UNITY_EDITOR
         await TableManager.Instance.LoadTablesAsync("table-ndjson", TableFormat.Json);

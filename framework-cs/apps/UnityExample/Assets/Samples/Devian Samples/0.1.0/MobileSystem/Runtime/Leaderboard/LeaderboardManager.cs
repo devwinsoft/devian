@@ -183,10 +183,10 @@ namespace Devian
             if (guard.IsFailure)
                 return guard;
 
-            if (!MissionManager.TryGet(out var missionManager) || missionManager == null)
-                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, "MissionManager is not initialized.");
+            if (!RemoteConfigManager.TryGet(out var remoteConfigManager) || remoteConfigManager == null)
+                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, "RemoteConfigManager is not initialized.");
 
-            if (!missionManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
+            if (!remoteConfigManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
                 return CommonResult.Ok();
 
             var activeRows = collectActiveSeasonRows();

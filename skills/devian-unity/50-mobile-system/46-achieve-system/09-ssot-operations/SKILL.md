@@ -16,7 +16,7 @@ AppliesTo: v10
 - 필요 시 `RefreshRuntimes()`로 UI 초기화 이벤트 재발행
 - 초기화 시 `achieveId` group 기준 runtime을 항상 생성한다.
 - `ACHIEVE_ONCE`는 `reqMsgId/reqValue`, `ACHIEVE_PASS`는 `reqPassId`/`reqSeasonId` 조건으로 `WAIT/ACTIVE`를 결정한다.
-  - `reqSeasonId` 조건은 `TB_SEASON` 기간과 `TimeManager.serverNowUtcMs`를 사용한다.
+  - `reqSeasonId` 조건은 `TB_SEASON` 기간과 `RemoteConfigManager.serverNowUtcMs`를 사용한다.
 
 ### 2) gameplay stat 입력
 
@@ -35,7 +35,7 @@ AppliesTo: v10
 - `ACHIEVE_ONCE`/`ACHIEVE_PASS` row 기준 runtime 생성/복구 정상
 - `ACHIEVE_ONCE(reqMsgId/reqValue)` WAIT 조건 정상
 - `ACHIEVE_PASS(reqPassId)` WAIT 조건 + Inventory PASS_CHANGED 재평가 정상
-- `ACHIEVE_PASS(reqSeasonId)` WAIT 조건 + season 시간 범위(`TB_SEASON` + `TimeManager`) 재평가 정상
+- `ACHIEVE_PASS(reqSeasonId)` WAIT 조건 + season 시간 범위(`TB_SEASON` + `RemoteConfigManager`) 재평가 정상
 - level-up 시 conditionMsgId 변경 + projection 동기화 정상
 - level-up 시에도 req 조건 재평가로 `WAIT/ACTIVE` 시작 상태가 올바르게 적용
 - 동일 업적 `Unlock + Sync` 연속 호출 시 이벤트 1회 보장

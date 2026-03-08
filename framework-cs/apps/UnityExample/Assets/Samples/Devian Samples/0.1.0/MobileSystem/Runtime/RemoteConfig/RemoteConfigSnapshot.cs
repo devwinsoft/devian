@@ -3,13 +3,13 @@ using System;
 namespace Devian
 {
     [Serializable]
-    public sealed class MissionClockSnapshot
+    public sealed class RemoteConfigSnapshot
     {
         public long serverNowUtcMs;
         public string minVersion = string.Empty;
         public string currentVersion = string.Empty;
 
-        public MissionClockSnapshot(long serverNowUtcMs = 0L)
+        public RemoteConfigSnapshot(long serverNowUtcMs = 0L)
         {
             this.serverNowUtcMs = serverNowUtcMs;
             minVersion = string.Empty;

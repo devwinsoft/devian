@@ -62,8 +62,8 @@ Bootstrap prefab에 부착한다.
 ### Instance Methods — Session Init callable (1개)
 
 - `InitSessionAsync(data, ct) → Task<CommonResult<SessionInitSnapshot>>`
-  - `initSession` callable 호출 → `getMissionClock` + `getEntitlements` + `getPurchaseAdjustments` 통합 1회 왕복
-  - 반환: `SessionInitSnapshot` (MissionClock, Entitlements, PurchaseAdjustments)
+  - `initSession` callable 호출 → `getRemoteConfig` + `getEntitlements` + `getPurchaseAdjustments` 통합 1회 왕복
+  - 반환: `SessionInitSnapshot` (RemoteConfig, Entitlements, PurchaseAdjustments)
   - 에러 매핑: `COMMON_NETWORK`, `COMMON_AUTH`, `COMMON_SERVER`
   - **외부 어셈블리에서 직접 호출 불가** — `AccountManager.LoginAsync` / `EnsureRuntimeSessionAsync`가 내부 호출한다.
   - 주의: 초기 인벤토리 지급 데이터는 포함하지 않는다 (`getInitialInventory` 별도 호출).
@@ -75,10 +75,10 @@ Bootstrap prefab에 부착한다.
   - 서버 transaction marker 기반 1회 지급 데이터(`RewardData[]`)를 반환한다.
   - marker가 이미 있으면 빈 배열을 반환한다.
 
-### Instance Methods — Mission callable (1개)
+### Instance Methods — Remote Config callable (1개)
 
-- `GetMissionClockAsync(ct) → Task<CommonResult<MissionClockSnapshot>>`
-  - `getMissionClock` callable 호출 → 응답 파싱 → `MissionClockSnapshot` 반환
+- `GetRemoteConfigAsync(ct) → Task<CommonResult<RemoteConfigSnapshot>>`
+  - `getRemoteConfig` callable 호출 → 응답 파싱 → `RemoteConfigSnapshot` 반환
   - 에러 매핑: `COMMON_NETWORK`, `COMMON_AUTH`, `COMMON_SERVER`
 
 ### Instance Methods — Purchase callable (7개)
@@ -124,7 +124,7 @@ Bootstrap prefab에 부착한다.
 - `getFunctionsInstance()` — 리전 기반 `FirebaseFunctions` 인스턴스 획득
 - `normalizeCallableResponse()` — 재귀적 응답 정규화
 - `normalizeStringObjectMap()`, `normalizeAnyMap()`, `normalizeCallableValue()` — 정규화 내부 헬퍼
-- `parseMissionClockSnapshot()`, `parseVerifyPurchaseResponse()`, `parseEntitlementsSnapshot()`, `parseRecentPurchaseItem()`, `parseRefundPageResult()` — 응답 파싱
+- `parseRemoteConfigSnapshot()`, `parseVerifyPurchaseResponse()`, `parseEntitlementsSnapshot()`, `parseRecentPurchaseItem()`, `parseRefundPageResult()` — 응답 파싱
 
 
 ## Integration
@@ -148,12 +148,12 @@ PurchaseManager는 `FunctionsException`을 catch하지 않는다. 에러 매핑�
 domain 변환(ResolveSeasonPassId 등)은 PurchaseManager가 typed result 수신 후 수행한다.
 PurchaseManager는 같은 어셈블리이므로 `internal` FirebaseManager에 직접 접근 가능하다.
 
-### MissionManager
+### RemoteConfigManager
 ```csharp
-var result = await FirebaseManager.Instance.GetMissionClockAsync(ct);
+var result = await FirebaseManager.Instance.GetRemoteConfigAsync(ct);
 ```
-Editor mock (`#if UNITY_EDITOR`)은 MissionManager가 자체 처리한다.
-MissionManager는 같은 어셈블리이므로 `internal` FirebaseManager에 직접 접근 가능하다.
+Editor mock (`#if UNITY_EDITOR`)은 RemoteConfigManager가 자체 처리한다.
+RemoteConfigManager는 같은 어셈블리이므로 `internal` FirebaseManager에 직접 접근 가능하다.
 
 ### MobileApplication
 ```csharp
@@ -162,7 +162,7 @@ void configureFunctionsRegion()
     GetComponent<FirebaseManager>()?.SetFunctionsRegion(FirebaseFunctionsRegion);
 }
 ```
-PurchaseManager, MissionManager에 개별 주입하지 않고 FirebaseManager에만 설정한다.
+PurchaseManager, RemoteConfigManager에 개별 주입하지 않고 FirebaseManager에만 설정한다.
 
 
 ## Hard Rules
@@ -179,5 +179,5 @@ PurchaseManager, MissionManager에 개별 주입하지 않고 FirebaseManager에
 
 - [11-mobile-application](../11-mobile-application/SKILL.md) — Bootstrap, RequireComponent, region 설정
 - [30-purchase-system](../30-purchase-system/00-overview/SKILL.md) — PurchaseManager Firebase callable
-- [48-mission-system](../48-mission-system/00-overview/SKILL.md) — MissionManager getMissionClock
+- [26-remote-config-system](../26-remote-config-system/00-overview/SKILL.md) — RemoteConfigManager getRemoteConfig
 - [20-account-system/35-account-login-firebase](../20-account-system/35-account-login-firebase/SKILL.md) — Firebase Auth (별도 소관)

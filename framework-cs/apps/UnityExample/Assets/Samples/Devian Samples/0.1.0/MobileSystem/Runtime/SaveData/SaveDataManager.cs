@@ -581,6 +581,7 @@ namespace Devian
             var purchase = getPurchaseStorageOrNull();
             var account = getAccountStorageOrNull();
             var message = getGameMessageStorageOrNull();
+            var remoteConfig = getRemoteConfigStorageOrNull();
             var mission = getMissionStorageOrNull();
             var achieve = getAchieveStorageOrNull();
             var leaderboardReward = getLeaderboardStorageOrNull();
@@ -589,6 +590,7 @@ namespace Devian
                 purchase ?? new PurchaseStorage(),
                 account ?? new AccountStorage(),
                 message ?? new GameMessageStorage(),
+                remoteConfig ?? new RemoteConfigStorage(),
                 mission ?? new MissionStorage(),
                 achieve ?? new AchieveStorage(),
                 leaderboardReward ?? new LeaderboardSeasonRewardStorage());
@@ -617,21 +619,24 @@ namespace Devian
             var purchase = getPurchaseStorageOrNull();
             var account = getAccountStorageOrNull();
             var messageManager = getGameMessageManagerOrNull();
+            var remoteConfigManager = getRemoteConfigManagerOrNull();
             var missionManager = getMissionManagerOrNull();
             var achieveManager = getAchieveManagerOrNull();
             var leaderboardManager = getLeaderboardManagerOrNull();
             var message = messageManager != null ? messageManager.Storage : null;
+            var remoteConfig = remoteConfigManager != null ? remoteConfigManager.Storage : null;
             var mission = missionManager != null ? missionManager.Storage : null;
             var achieve = achieveManager != null ? achieveManager.Storage : null;
             var leaderboardReward = leaderboardManager != null ? leaderboardManager.Storage : null;
-            if (inventory == null || purchase == null || account == null || message == null || mission == null || achieve == null || leaderboardReward == null)
+            if (inventory == null || purchase == null || account == null || message == null || remoteConfig == null || mission == null || achieve == null || leaderboardReward == null)
                 return;
 
             messageManager.ClearStorage();
+            remoteConfigManager.ClearStorage();
             missionManager.ClearStorage();
             achieveManager.ClearStorage();
             leaderboardManager.ClearStorage();
-            SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, account, message, mission, achieve, leaderboardReward);
+            SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, account, message, remoteConfig, mission, achieve, leaderboardReward);
             applyLoadedAccountStorageToRuntime();
         }
 
@@ -641,6 +646,7 @@ namespace Devian
             getPurchaseStorageOrNull()?.ClearAll();
             getAccountStorageOrNull()?.Clear();
             getGameMessageManagerOrNull()?.ClearStorage();
+            getRemoteConfigManagerOrNull()?.ClearStorage();
             getMissionManagerOrNull()?.ClearStorage();
             getAchieveManagerOrNull()?.ClearStorage();
             getLeaderboardManagerOrNull()?.ClearStorage();
@@ -1155,6 +1161,32 @@ namespace Devian
             {
                 var missionManager = MissionManager.Instance;
                 return missionManager != null ? missionManager : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static RemoteConfigManager getRemoteConfigManagerOrNull()
+        {
+            try
+            {
+                var remoteConfigManager = RemoteConfigManager.Instance;
+                return remoteConfigManager != null ? remoteConfigManager : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static RemoteConfigStorage getRemoteConfigStorageOrNull()
+        {
+            try
+            {
+                var remoteConfigManager = RemoteConfigManager.Instance;
+                return remoteConfigManager != null ? remoteConfigManager.Storage : null;
             }
             catch
             {

@@ -13,9 +13,9 @@ namespace Devian
     [RequireComponent(typeof(LeaderboardManager))]
     [RequireComponent(typeof(GameMessageManager))]
     [RequireComponent(typeof(MissionManager))]
+    [RequireComponent(typeof(RemoteConfigManager))]
     [RequireComponent(typeof(SaveDataManager))]
     [RequireComponent(typeof(InputManager))]
-    [RequireComponent(typeof(TimeManager))]
     [RequireComponent(typeof(FirebaseManager))]
     [RequireComponent(typeof(AnalyzeManager))]
     public abstract class MobileApplication : ApplicationManager
@@ -39,7 +39,7 @@ namespace Devian
 
         protected override void OnEnterForeground()
         {
-            _ = refreshMissionClockAsync();
+            _ = refreshRemoteConfigAsync();
         }
 
         /// <summary>
@@ -110,15 +110,15 @@ namespace Devian
         #endif
 
         /// <summary>
-        /// MissionClockSnapshot의 버전 정보와 AppVersion을 비교하여 업데이트 필요 여부를 판정한다.
-        /// MissionManager.InitializeAsync() 또는 RefreshClockAsync() 이후에 호출해야 한다.
+        /// RemoteConfigSnapshot의 버전 정보와 AppVersion을 비교하여 업데이트 필요 여부를 판정한다.
+        /// RemoteConfigManager.InitializeAsync() 또는 RefreshAsync() 이후에 호출해야 한다.
         /// </summary>
         public VersionCheckResult VersionCheck()
         {
-            if (!MissionManager.TryGet(out var missionManager))
+            if (!RemoteConfigManager.TryGet(out var remoteConfigManager))
                 return VersionCheckResult.Success;
 
-            var snapshot = missionManager.Storage.clockSnapshot;
+            var snapshot = remoteConfigManager.Storage.snapshot;
             if (snapshot == null)
                 return VersionCheckResult.Success;
 
@@ -141,24 +141,20 @@ namespace Devian
             return VersionCheckResult.Success;
         }
 
-        private static async Task refreshMissionClockAsync()
+        private static async Task refreshRemoteConfigAsync()
         {
-            if (!MissionManager.TryGet(out var missionManager))
+            if (!RemoteConfigManager.TryGet(out var remoteConfigManager))
                 return;
 
-            if (!missionManager.IsInitialized)
+            if (!remoteConfigManager.IsInitialized)
                 return;
 
-            var refresh = await missionManager.RefreshClockAsync(CancellationToken.None);
+            var refresh = await remoteConfigManager.RefreshAsync(CancellationToken.None);
             if (refresh.IsFailure)
             {
-                Debug.LogWarning($"[MobileApplication] Mission clock refresh failed on foreground: {refresh.Error}");
+                Debug.LogWarning($"[MobileApplication] Remote config refresh failed on foreground: {refresh.Error}");
                 return;
             }
-
-            var serverNowUtcMs = refresh.Value?.serverNowUtcMs ?? 0L;
-            if (serverNowUtcMs > 0L)
-                TimeManager.Instance.InitServerTime(serverNowUtcMs);
 
             if (!LeaderboardManager.TryGet(out var leaderboardManager)
                 || leaderboardManager == null

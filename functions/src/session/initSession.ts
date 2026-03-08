@@ -1,7 +1,7 @@
 /**
  * initSession.ts — Firebase Callable: 로그인 시 초기 데이터 일괄 조회
  *
- * getMissionClock + getEntitlements + getPurchaseAdjustments(첫 페이지)를
+ * getRemoteConfig + getEntitlements + getPurchaseAdjustments(첫 페이지)를
  * 한 번의 호출로 병렬 실행하여 클라이언트 네트워크 왕복을 줄인다.
  * 초기 인벤토리 지급은 포함하지 않는다 (getInitialInventory 별도 callable).
  *
@@ -10,7 +10,7 @@
  */
 
 import {onCall, HttpsError} from "firebase-functions/v2/https";
-import {fetchMissionClock} from "../mission/getMissionClockCore";
+import {fetchRemoteConfig} from "../mission/getRemoteConfigCore";
 import {fetchEntitlements} from "../purchase/getEntitlementsCore";
 import {fetchPurchaseAdjustments} from "../purchase/getPurchaseAdjustmentsCore";
 import * as logger from "firebase-functions/logger";
@@ -28,8 +28,8 @@ export const initSession = onCall(
     );
 
     // 3개 Firestore 읽기를 병렬 실행
-    const [missionClock, entitlements, purchaseAdjustments] = await Promise.all([
-      fetchMissionClock(),
+    const [remoteConfig, entitlements, purchaseAdjustments] = await Promise.all([
+      fetchRemoteConfig(),
       fetchEntitlements(uid),
       fetchPurchaseAdjustments(uid, adjustmentPageSize),
     ]);
@@ -40,6 +40,6 @@ export const initSession = onCall(
       `hasMore=${purchaseAdjustments.hasMore}`,
     );
 
-    return {missionClock, entitlements, purchaseAdjustments};
+    return {remoteConfig, entitlements, purchaseAdjustments};
   },
 );

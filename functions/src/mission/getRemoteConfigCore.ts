@@ -1,18 +1,18 @@
 /**
- * getMissionClockCore.ts — getMissionClock core 로직
+ * getRemoteConfigCore.ts — getRemoteConfig core 로직
  *
- * getMissionClock callable과 initSession callable이 공유한다.
+ * getRemoteConfig callable과 initSession callable이 공유한다.
  */
 
 import {getFirestore} from "firebase-admin/firestore";
 
-export interface MissionClockData {
+export interface RemoteConfigData {
   serverNowUtcMs: number;
   minVersion: string;
   currentVersion: string;
 }
 
-export async function fetchMissionClock(): Promise<MissionClockData> {
+export async function fetchRemoteConfig(): Promise<RemoteConfigData> {
   const serverNowUtcMs = Date.now();
   const db = getFirestore();
   const configDoc = await db.doc("config/appVersion").get();

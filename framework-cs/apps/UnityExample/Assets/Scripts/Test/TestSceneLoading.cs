@@ -177,17 +177,18 @@ public class TestSceneLoading : TestSceneBootstrap
             return initMessage.Error.Code;
         }
 
-        var initClock = await MissionManager.Instance.InitializeAsync(snapshot?.MissionClock);
-        if (initClock.IsFailure)
+        var initRemoteConfig = await RemoteConfigManager.Instance.InitializeAsync(snapshot?.RemoteConfig, ct);
+        if (initRemoteConfig.IsFailure)
         {
-            Debug.LogError($"MissionManager.InitializeAsync failed: {initClock.Error.Code}: {initClock.Error.Message}");
-            return initClock.Error.Code;
+            Debug.LogError($"RemoteConfigManager.InitializeAsync failed: {initRemoteConfig.Error.Code}: {initRemoteConfig.Error.Message}");
+            return initRemoteConfig.Error.Code;
         }
 
-        var serverNowUtcMs = MissionManager.Instance.Storage.clockSnapshot.serverNowUtcMs;
-        if (serverNowUtcMs > 0L)
+        var initMission = await MissionManager.Instance.InitializeAsync(ct);
+        if (initMission.IsFailure)
         {
-            TimeManager.Instance.InitServerTime(serverNowUtcMs);
+            Debug.LogError($"MissionManager.InitializeAsync failed: {initMission.Error.Code}: {initMission.Error.Message}");
+            return initMission.Error.Code;
         }
 
         var initAchieve = await AchieveManager.Instance.InitializeAsync(ct);

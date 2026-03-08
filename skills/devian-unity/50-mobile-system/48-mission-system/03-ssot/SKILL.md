@@ -7,10 +7,10 @@ AppliesTo: v10
 
 이 문서는 아래 항목의 정본이다.
 
-- `MISSION`, `MISSION_STAT` 스키마
+- `MISSION`, `MESSAGE` 스키마
 - `GAME_MESSAGE_TYPE`, `GAME_MESSAGE_SAVE_TYPE`, `MISSION_MESSAGE` 사용 규약
 - Mission trigger/update/runtime binding 규칙
-- Mission 저장 구조(`MissionStorage`, daily runtime, stats) 규칙
+- Mission 저장 구조(`MissionStorage`, daily runtime) 규칙
 
 업적(`ACHIEVE`) runtime/claim/save 정본은
 [46-achieve-system](../../46-achieve-system/00-overview/SKILL.md)에서 관리한다.
@@ -21,13 +21,13 @@ AppliesTo: v10
 
 - `missionId`: daily 미션 ID
 - `missionType`: `MISSION_TYPE.DAY`만 MissionManager에서 처리
-- `missionStatId`: mission row가 참조하는 stat key
-- `statType`: trigger key (`GAME_MESSAGE_TYPE`)
-- `opType`: stat 누적 연산 (`GAME_MESSAGE_SAVE_TYPE`)
+- `messageId`: mission row가 참조하는 message key
+- `messageType`: trigger key (`GAME_MESSAGE_TYPE`)
+- `saveType`: stat 누적 연산 (`GAME_MESSAGE_SAVE_TYPE`)
 - `conditionValue`: 목표값(`CBigInt`)
 - `periodKey`: `day:{dailyPeriodIndex}`
 - `missionUid`: runtime 식별 `int`
-- `mission stats`: `MissionStorage.stats[string missionStatId]`
+- `message stats`: `GameMessageStorage.stats[string messageId]`
 
 ---
 
@@ -42,20 +42,20 @@ AppliesTo: v10
 | `isActive` | bool | 운영 토글 |
 | `fixed` | bool | daily 선택 우선 포함 |
 | `orderNum` | int | 정렬 기준(1-base) |
-| `missionStatId` | string | `MISSION_STAT.missionStatId` FK |
+| `messageId` | string | `MESSAGE.messageId` FK |
 | `conditionValue` | `class:CBigInt` | 목표값 |
 | `rewardGroupId` | string | 보상 키 |
 
-### `MISSION_STAT`
+### `MESSAGE`
 
 | field | type | note |
 |---|---|---|
-| `missionStatId` | string (pk) | stat 식별자 |
-| `statType` | `GAME_MESSAGE_TYPE` | trigger 타입 |
-| `opType` | `GAME_MESSAGE_SAVE_TYPE` | 누적 방식 |
+| `messageId` | string (pk) | message 식별자 |
+| `messageType` | `GAME_MESSAGE_TYPE` | trigger 타입 |
+| `saveType` | `GAME_MESSAGE_SAVE_TYPE` | 누적 방식 |
 
 정본 source:
-- `input/Domains/Game/MissionTable.xlsx`
+- `input/Domains/Game/GameTable.xlsx`
 - `input/Domains/Game/ENUM_MISSION.json`
 
 ---
@@ -67,7 +67,7 @@ AppliesTo: v10
 - `COMPLETED`: `isCompleted == true`
 
 규칙:
-- `opType == NONE` row는 runtime을 생성하지 않는다.
+- `saveType == NONE` row는 runtime을 생성하지 않는다.
 - daily는 현재 cycle에서 선택된 row만 runtime을 만든다(최대 5).
 
 ---
@@ -80,12 +80,12 @@ AppliesTo: v10
 BaseTrigger<int, GAME_MESSAGE_TYPE>
 ```
 
-외부 진입점은 `MissionManager.Notify(statType, delta)`다.
+외부 진입점은 `GameMessageManager.Notify(messageType, delta)`다.
 
 trigger 처리 순서:
 
-1. `MissionManager.Notify` -> `GameMessageManager.NotifyGameMessage` 위임
-2. `TB_MESSAGE`에서 `statType` 일치 row를 순회
+1. `GameMessageManager.Notify` 호출
+2. `TB_MESSAGE`에서 `messageType` 일치 row를 순회
 3. `message.stats[messageId]` 갱신
    - `SUM`: `current + delta`
    - `MAX`: `max(current, delta)`
@@ -105,15 +105,12 @@ runtime 반영 (`DAY`):
 
 - `schemaVersion` (기본 2)
 - `dailyMissionStartUtcMs`
-- `clockSnapshot`
-- `clockReceivedAtClientUtcMs`
 - `nextMissionUid`
 - `runtimes: Dictionary<int, MissionRuntimeBase>`
-- `stats: Dictionary<string, CBigInt>`
 
 runtime 저장 규칙 (`DAY`만):
 
-- `missionId`, `missionStatId`, `missionUid`, `isCompleted`
+- `missionId`, `messageId`, `missionUid`, `isCompleted`
 - `periodKey`, `index`, `progressValue`
 
 ---

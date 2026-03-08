@@ -14,9 +14,9 @@ AppliesTo: v13
 **Addressables Label 기반 패치/다운로드를 제공하는 Unity 전용 컴포넌트.**
 
 - **CompoSingleton**: Bootstrap prefab/scene object에 미리 부착해야 함
-- **PatchProc**: 라벨별 다운로드 필요 용량 계산
-- **DownloadProc**: 라벨별 의존 번들 다운로드 (가중치 기반 진행률)
-- **실패 처리**: `onError` 콜백 반드시 호출 ("조용히 종료" 금지)
+- **PatchProc**: 라벨별 다운로드 필요 용량 계산 → `async Task<CommonResult<PatchInfo>>`
+- **DownloadProc**: 라벨별 의존 번들 다운로드 (가중치 기반 진행률) → `async Task<CommonResult>`
+- **실패 처리**: `CommonResult.Failure` 반환 + `OnError` 이벤트 ("조용히 종료" 금지)
 
 ---
 
@@ -110,7 +110,7 @@ namespace Devian
         // ====================================================================
 
         /// <summary>
-        /// 에러 발생 시 추가 알림 (onError 콜백과 별도)
+        /// 에러 발생 시 추가 알림 (CommonResult.Failure 외 추가 채널)
         /// </summary>
         public event Action<string> OnError;
 
@@ -131,25 +131,17 @@ namespace Devian
         /// 라벨별 다운로드 크기 계산
         /// </summary>
         /// <param name="labels">다운로드 대상 라벨</param>
-        /// <param name="onDone">성공 시 PatchInfo 전달</param>
-        /// <param name="onError">실패 시 에러 메시지 전달 (반드시 호출)</param>
-        public IEnumerator PatchProc(
-            IReadOnlyList<string> labels,
-            Action<PatchInfo> onDone,
-            Action<string> onError = null);
+        public async Task<CommonResult<PatchInfo>> PatchProc(
+            IReadOnlyList<string> labels);
 
         /// <summary>
         /// 라벨별 의존 번들 다운로드
         /// </summary>
         /// <param name="labels">다운로드 대상 라벨</param>
         /// <param name="onProgress">진행률 0~1</param>
-        /// <param name="onSuccess">성공 완료</param>
-        /// <param name="onError">실패 시 에러 메시지 전달 (반드시 호출, onSuccess는 호출 안함)</param>
-        public IEnumerator DownloadProc(
+        public async Task<CommonResult> DownloadProc(
             IReadOnlyList<string> labels,
-            Action<float> onProgress,
-            Action onSuccess,
-            Action<string> onError = null);
+            Action<float> onProgress = null);
     }
 }
 ```
@@ -164,7 +156,7 @@ namespace Devian
 
 ```csharp
 var dm = DownloadManager.Instance;
-StartCoroutine(dm.PatchProc(labels, info => { ... }));
+var result = await dm.PatchProc(labels);
 ```
 
 - 프로젝트에 `DownloadManager`가 부착된 bootstrap prefab 또는 scene object가 필요
@@ -173,31 +165,32 @@ StartCoroutine(dm.PatchProc(labels, info => { ... }));
 ### 2. 빈 라벨 처리
 
 **라벨 리스트가 비어있으면:**
-- PatchProc: `TotalSize = 0` 결과 즉시 반환
-- DownloadProc: 즉시 `onProgress(1)` + `onSuccess()` 호출
+- PatchProc: `TotalSize = 0` 인 `CommonResult<PatchInfo>.Success` 즉시 반환
+- DownloadProc: 즉시 `onProgress(1)` + `CommonResult.Ok()` 반환
 
-### 3. 실패 시 콜백 호출 필수 (조용히 종료 금지)
+### 3. 실패 시 CommonResult.Failure 반환 필수 (조용히 종료 금지)
 
-**실패 시 반드시 `onError` 콜백 호출**
+**실패 시 반드시 `CommonResult.Failure` 반환 + `OnError` 이벤트 발생**
 
 ```csharp
-// CORRECT: 실패 시 onError 호출
+// CORRECT: 실패 시 Failure 반환
 if (sizeOp.Status == AsyncOperationStatus.Failed)
 {
     var msg = "...";
-    onError?.Invoke(msg);
-    yield break;
+    Debug.LogError(msg);
+    RaiseError(msg);
+    return CommonResult<PatchInfo>.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
 }
 
-// WRONG: 조용히 종료 (금지)
+// WRONG: 조용히 성공 반환 (금지)
 if (sizeOp.Status == AsyncOperationStatus.Failed)
 {
-    yield break; // FAIL - 호출자가 실패 판정 불가
+    return CommonResult<PatchInfo>.Success(...); // FAIL - 호출자가 실패 판정 불가
 }
 ```
 
 - `OnError` 이벤트도 함께 발생
-- 실패 후 `onSuccess`는 호출 금지
+- 실패 시 `CommonResult.Ok()` 반환 금지
 
 ### 4. forceClearDependencyCache 기본 false
 
@@ -223,15 +216,15 @@ if (sizeOp.Status == AsyncOperationStatus.Failed)
   - `AssetManager`: 다운로드된 에셋을 로드하여 사용
 
 - **연동 흐름**:
-  1. `DownloadManager.PatchProc()` → 다운로드 필요 크기 확인
-  2. `DownloadManager.DownloadProc()` → 번들 다운로드 (Addressables 캐시에 저장)
+  1. `await DownloadManager.PatchProc()` → 다운로드 필요 크기 확인
+  2. `await DownloadManager.DownloadProc()` → 번들 다운로드 (Addressables 캐시에 저장)
   3. `AssetManager.LoadBundleAssets(label)` → 다운로드된 에셋을 로드하여 사용
 
 - **label/key 일치 권장**: 패치 대상 label과 AssetManager에서 사용하는 key는 동일 문자열로 운영하는 것을 권장
 
 ```csharp
 // 다운로드 (DownloadManager)
-yield return dm.DownloadProc(new[] { "prefabs", "table-ndjson" }, ...);
+await dm.DownloadProc(new[] { "prefabs", "table-ndjson" });
 
 // 로딩 (AssetManager) - 동일한 label/key 사용
 yield return AssetManager.LoadBundleAssets<GameObject>("prefabs");
@@ -271,46 +264,40 @@ yield return AssetManager.LoadBundleAssets<TextAsset>("table-ndjson");
 ```csharp
 using Devian;
 using UnityEngine;
+using System.Threading.Tasks;
 
 public class BootSequence : MonoBehaviour
 {
     private readonly string[] downloadLabels = { "prefabs", "table-ndjson" };
 
-    IEnumerator Start()
+    async Task Start()
     {
         // 1. bootstrap prefab/scene object에 미리 부착된 DownloadManager 조회
         var dm = DownloadManager.Instance;
 
         // 2. 패치 크기 확인
-        PatchInfo patchInfo = null;
-        yield return dm.PatchProc(
-            downloadLabels,
-            info => patchInfo = info,
-            err => Debug.LogError($"Patch failed: {err}")
-        );
-
-        if (patchInfo == null)
+        var patchResult = await dm.PatchProc(downloadLabels);
+        if (patchResult.IsFailure)
         {
-            // 에러 발생
-            yield break;
+            Debug.LogError($"Patch failed: {patchResult.Error}");
+            return;
         }
 
+        var patchInfo = patchResult.Value!;
         Debug.Log($"Total download: {patchInfo.TotalSize} bytes");
 
         // 3. 다운로드 실행
         if (patchInfo.TotalSize > 0)
         {
-            bool success = false;
-            yield return dm.DownloadProc(
+            var downloadResult = await dm.DownloadProc(
                 downloadLabels,
-                progress => Debug.Log($"Progress: {progress * 100:F1}%"),
-                () => success = true,
-                err => Debug.LogError($"Download failed: {err}")
+                progress => Debug.Log($"Progress: {progress * 100:F1}%")
             );
 
-            if (!success)
+            if (downloadResult.IsFailure)
             {
-                yield break;
+                Debug.LogError($"Download failed: {downloadResult.Error}");
+                return;
             }
         }
 
@@ -339,13 +326,13 @@ public class BootSequence : MonoBehaviour
 - [ ] `DownloadManager.cs` (UPM + UnityExample) 최상단 SSOT가 이 문서를 가리킴
 - [ ] `DownloadManager`가 `CompoSingleton<DownloadManager>` 상속
 - [ ] `forceClearDependencyCache: bool` 기본값 `false`
-- [ ] 실패 시 `onError` 반드시 호출 (조용히 종료 0건)
+- [ ] 실패 시 `CommonResult.Failure` 반환 + `OnError` 이벤트 (조용히 종료 0건)
 - [ ] `Resources.` 직접 호출 0건
 
 ### FAIL 조건
 
 - `DownloadManager`가 CompoSingleton을 상속하지 않음
-- 실패 시 `onError` 호출 없이 `yield break`만 수행
+- 실패 시 `CommonResult.Failure` 반환 없이 `CommonResult.Ok()` 반환
 - `forceClearDependencyCache` 기본값이 `true`
 - `Resources.` 직접 호출 존재
 - SSOT 주석이 다른 문서를 가리킴
@@ -385,18 +372,11 @@ string/pb64/English/ItemName
 // String Table 다운로드 예시
 var labels = new[] { "string/ndjson/Korean/UIText" };
 
-yield return dm.PatchProc(
-    labels,
-    info => { },
-    err => Debug.LogError(err)
-);
+var patchResult = await dm.PatchProc(labels);
+if (patchResult.IsFailure) { Debug.LogError(patchResult.Error); return; }
 
-yield return dm.DownloadProc(
-    labels,
-    p => { },
-    () => { },
-    err => Debug.LogError(err)
-);
+var downloadResult = await dm.DownloadProc(labels);
+if (downloadResult.IsFailure) { Debug.LogError(downloadResult.Error); return; }
 ```
 
 ### Language 미지정 시 기본값

@@ -33,7 +33,6 @@ Devian Unity 공용 런타임 컴포넌트를 담당한다.
 | [30-string-table](../30-string-table/SKILL.md) | String Table Feature |
 | [31-table-manager](../31-table-manager/SKILL.md) | TB_/ST_ 테이블 로딩/캐시/언로드 |
 | [32-unity-utils](../32-unity-utils/SKILL.md) | Unity 유틸리티 (MainThread, Dispatcher 등) |
-| [33-time-manager](../33-time-manager/SKILL.md) | 서버 UTC 시뮬레이션 시간 소스 |
 
 ---
 

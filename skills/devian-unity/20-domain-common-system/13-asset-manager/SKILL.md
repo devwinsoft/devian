@@ -274,20 +274,18 @@ using UnityEngine;
 
 public class BootSequence : MonoBehaviour
 {
-    IEnumerator Start()
+    async Task Start()
     {
         // 1. bootstrap prefab/scene object에 미리 부착된 DownloadManager로 다운로드 정책 수행
         var dm = DownloadManager.Instance;
-        
-        yield return dm.PatchProc(
-            info => Debug.Log($"Total: {info.TotalSize} bytes"),
-            err => Debug.LogError(err)
-        );
-        
-        yield return dm.DownloadProc(
-            progress => Debug.Log($"Progress: {progress * 100:F1}%"),
-            () => Debug.Log("Download complete"),
-            err => Debug.LogError(err)
+
+        var patchResult = await dm.PatchProc(labels);
+        if (patchResult.IsSuccess)
+            Debug.Log($"Total: {patchResult.Value!.TotalSize} bytes");
+
+        var downloadResult = await dm.DownloadProc(
+            labels,
+            progress => Debug.Log($"Progress: {progress * 100:F1}%")
         );
         
         // 2. AssetManager로 Addressables 에셋 로드

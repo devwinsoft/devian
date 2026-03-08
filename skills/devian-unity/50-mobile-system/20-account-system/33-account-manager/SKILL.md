@@ -33,7 +33,7 @@
 1. Firebase dependencies init (`CheckAndFixDependenciesAsync`)
 2. FirebaseAuth sign-in (Anonymous / credential / link — LoginType에 따라 분기)
 3. Cloud init 시도 (`SaveDataManager.Instance._initializeCloudAsync(ct)`) — GOOGLE/APPLE에서만 시도
-4. `FirebaseManager.Instance.InitSessionAsync(null, ct)` — missionClock + entitlements + purchaseAdjustments 통합 1회 왕복 (`#if !UNITY_EDITOR`)
+4. `FirebaseManager.Instance.InitSessionAsync(null, ct)` — remoteConfig + entitlements + purchaseAdjustments 통합 1회 왕복 (`#if !UNITY_EDITOR`)
 
 Sync는 AccountManager의 책임이 아니며, 상위 시스템이 담당한다.
 

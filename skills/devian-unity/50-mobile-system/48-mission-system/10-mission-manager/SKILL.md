@@ -4,14 +4,14 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
 
 - `MissionMessageTrigger`, `MissionScheduler`를 소유한다.
 - daily runtime 구독은 `GameMessageTrigger`를 helper 경유로 연결한다.
-- row 조건은 `missionStatId -> MISSION_STAT(statType, opType)`로 해석한다.
-- trigger 입력은 `GameMessageManager.NotifyGameMessage`로 위임한다.
+- row 조건은 `messageId -> MESSAGE(messageType, saveType)`로 해석한다.
+- trigger 입력은 `GameMessageManager.Notify(...)`를 통해 전달된다.
 
 ---
 
 ## Responsibilities
 
-- storage/clock 초기화 및 복구
+- storage 초기화 및 복구
 - daily anchor 보정
 - scheduler rebuild/prune 호출
 - claim 처리 및 보상 적용 위임
@@ -23,12 +23,11 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
 ## Public API (요약)
 
 - `InitializeAsync(...)`
-- `RefreshClockAsync(...)`
 - `RefreshRuntimes()`
 - `GetMissionRuntimeState(missionType, missionId)`
 - `GetRemainTime(missionType)`
 - `ClaimAsync(missionType, missionId, ...)`
-- `Notify(GAME_MESSAGE_TYPE, long/int/CBigInt)`
+- `Notify(MISSION_MESSAGE, ...)`
 - `Subcribe(EntityId, MISSION_MESSAGE, Handler)`
 - `SubcribeOnce(EntityId, MISSION_MESSAGE, Action<object[]>)`
 - `UnSubcribe(EntityId)`
@@ -37,7 +36,8 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
 
 ## Trigger 처리 규칙
 
-- `MissionManager.Notify(...)`는 `GameMessageManager.NotifyGameMessage(...)`를 호출한다.
+- `MissionManager` daily runtime은 `GameMessageManager` trigger 구독으로 갱신된다.
+- 서버 시각은 `RemoteConfigManager.TryGetServerNowUtcMs(...)`로 조회한다.
 - stats 선갱신 + game trigger publish + achieve notify 순서는 `GameMessageManager` 정본을 따른다.
 
 ---

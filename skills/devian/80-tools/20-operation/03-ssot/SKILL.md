@@ -187,7 +187,7 @@ Import (.dvn): .dvn → version parse (0x01) → ComplexUtil.Decrypt_Base64 → 
 
 로그인 시 서버 호출은 아래 순서를 따른다:
 
-1. `initSession` callable (`getMissionClock + getEntitlements + getPurchaseAdjustments`)
+1. `initSession` callable (`getRemoteConfig + getEntitlements + getPurchaseAdjustments`)
 2. `SyncGameStorageAsync`로 local/cloud 동기화
 3. `SyncState.Initial`일 때만 `getInitialInventory` callable 호출
 4. 서버는 transaction으로 marker를 기록하여 1회 지급을 보장

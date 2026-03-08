@@ -52,7 +52,7 @@ namespace MyApp
 4. 포그라운드 복귀 처리가 필요하면 `ApplicationManager.OnEnterForeground()`를 override한다.
 5. Bootstrap prefab에 해당 컴포넌트를 부착한다.
 6. app/contents layer가 Bootstrap prefab을 명시적으로 생성하고 `BootProc()`를 호출한다.
-7. 샘플에서는 Firebase Functions region 같은 앱 설정값을 `MobileApplication`에 하드코딩하고, `MissionManager`/`PurchaseManager` 같은 하위 manager에 setter로 주입한다.
+7. 샘플에서는 Firebase Functions region 같은 앱 설정값을 `MobileApplication`에 하드코딩하고, `RemoteConfigManager`/`PurchaseManager` 같은 하위 manager에 전달한다.
 
 주의:
 - Unity `OnApplicationPause` / `OnApplicationFocus`를 직접 override하지 않는다.
@@ -60,8 +60,7 @@ namespace MyApp
 - manager가 inspector/serialized field로 Firebase region 같은 앱 설정을 직접 소유하지 않는다. 설정 owner는 bootstrap/app layer다.
 
 foreground 복귀 기준 동작:
-- `MissionManager.RefreshClockAsync(...)`
-- refresh 성공 시 `TimeManager.InitServerTime(refresh.serverNowUtcMs)` 호출
+- `RemoteConfigManager.RefreshAsync(...)`
 - refresh 성공 시 `LeaderboardManager.SyncSeasonTransitionRewardsAsync(...)` best-effort 호출
 
 
@@ -100,15 +99,15 @@ public VersionCheckResult VersionCheck()
 ```
 
 동작:
-1. `MissionManager.TryGet()`으로 MissionManager 접근
-2. `MissionManager.Storage.clockSnapshot`에서 `minVersion`, `currentVersion` 읽기
+1. `RemoteConfigManager.TryGet()`으로 RemoteConfigManager 접근
+2. `RemoteConfigManager.Storage.snapshot`에서 `minVersion`, `currentVersion` 읽기
 3. `AppVersion < minVersion`이면 `ForceUpdate`
 4. `AppVersion < currentVersion`이면 `RecommendUpdate`
 5. 그 외 `Success`
-6. MissionManager가 없거나 snapshot이 null이면 `Success` 반환
+6. RemoteConfigManager가 없거나 snapshot이 null이면 `Success` 반환
 
-서버 버전 정보는 `getMissionClock` Firebase Callable 응답에 포함된다.
-`MissionManager.InitializeAsync()` 또는 `RefreshClockAsync()` 이후에 호출해야 유효한 결과를 얻는다.
+서버 버전 정보는 `getRemoteConfig` Firebase Callable 응답에 포함된다.
+`RemoteConfigManager.InitializeAsync()` 또는 `RefreshAsync()` 이후에 호출해야 유효한 결과를 얻는다.
 
 ### Implementation Location (3-path mirror)
 
@@ -126,6 +125,7 @@ MobileApplication에 부착된 RequireComponent:
 - `PurchaseManager`
 - `AchieveManager`
 - `MissionManager`
+- `RemoteConfigManager`
 - `LeaderboardManager`
 - `GameMessageManager`
 - `SaveDataManager`

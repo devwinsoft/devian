@@ -45,7 +45,7 @@ Achieve runtime(`AchieveRuntimeBase`, `AchieveRuntimeOnce`, `AchieveRuntimePass`
   - `ONCE`: `reqMsgId/reqValue`
   - `PASS`: `reqPassId` / `reqSeasonId`
 - `reqPassId`가 있는 `PASS` runtime은 Pass 소유 조건 충족 시 `ACTIVE`로 전이한다.
-- `reqSeasonId`가 있는 `PASS` runtime은 `TB_SEASON(startUtcTime/endUtcTime)`과 `TimeManager.serverNowUtcMs` 범위 조건 충족 시 `ACTIVE`로 전이한다.
+- `reqSeasonId`가 있는 `PASS` runtime은 `TB_SEASON(startUtcTime/endUtcTime)`과 `RemoteConfigManager.serverNowUtcMs` 범위 조건 충족 시 `ACTIVE`로 전이한다.
 
 ---
 

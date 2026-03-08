@@ -23,7 +23,6 @@ namespace Devian
 
         protected override void onInitAwake()
         {
-
             _missionMessageSystem = new MissionMessageTrigger();
 
             _scheduler = new MissionScheduler(
@@ -37,17 +36,17 @@ namespace Devian
                 getCurrentDailyPeriodIndex);
         }
 
-
-        public async Task<CommonResult> InitializeAsync(
-            MissionClockSnapshot preloadedClock = null, CancellationToken ct = default)
+        public Task<CommonResult> InitializeAsync(CancellationToken ct = default)
         {
-            var refresh = preloadedClock != null
-                ? applyClockSnapshot(preloadedClock)
-                : await RefreshClockAsync(ct);
-            if (refresh.IsFailure)
-                return CommonResult.Failure(refresh.Error!);
+            _ = ct;
 
-            var nowUtcMs = refresh.Value.serverNowUtcMs;
+            if (!TryGetServerNowUtcMs(out var nowUtcMs))
+            {
+                return Task.FromResult(CommonResult.Failure(
+                    CommonErrorType.COMMON_SERVER,
+                    "Server time is unavailable. Initialize RemoteConfigManager before MissionManager."));
+            }
+
             if (_storage.dailyMissionStartUtcMs <= 0L)
             {
                 _storage.dailyMissionStartUtcMs = nowUtcMs;
@@ -62,15 +61,7 @@ namespace Devian
             pruneExpiredMissionState();
 
             _initialized = true;
-            return CommonResult.Ok();
-        }
-
-        public async Task<CommonResult<MissionClockSnapshot>> RefreshClockAsync(CancellationToken ct = default)
-        {
-            var clock = await getMissionClockAsync(ct);
-            if (clock.IsFailure)
-                return clock;
-            return applyClockSnapshot(clock.Value);
+            return Task.FromResult(CommonResult.Ok());
         }
 
         public void RefreshRuntimes()
@@ -104,13 +95,13 @@ namespace Devian
         public bool TryGetServerNowUtcMs(out long serverNowUtcMs)
         {
             serverNowUtcMs = 0L;
-            var snapshot = _storage.clockSnapshot;
-            if (snapshot == null || snapshot.serverNowUtcMs <= 0L)
+            if (!RemoteConfigManager.TryGet(out var remoteConfigManager)
+                || remoteConfigManager == null)
+            {
                 return false;
+            }
 
-            var clientNowUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            serverNowUtcMs = snapshot.serverNowUtcMs + Math.Max(0L, clientNowUtcMs - _storage.clockReceivedAtClientUtcMs);
-            return true;
+            return remoteConfigManager.TryGetServerNowUtcMs(out serverNowUtcMs);
         }
 
         public MissionRuntimeState GetMissionRuntimeState(MISSION_TYPE missionType, string missionId)
@@ -342,30 +333,5 @@ namespace Devian
             var diff = Math.Max(0L, estimatedServerNowUtcMs - _storage.dailyMissionStartUtcMs);
             return (int)(diff / DayMs);
         }
-
-        Task<CommonResult<MissionClockSnapshot>> getMissionClockAsync(CancellationToken ct)
-        {
-#if UNITY_EDITOR
-            return Task.FromResult(CommonResult<MissionClockSnapshot>.Success(
-                new MissionClockSnapshot(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())));
-#else
-            return FirebaseManager.Instance.GetMissionClockAsync(ct);
-#endif
-        }
-
-        CommonResult<MissionClockSnapshot> applyClockSnapshot(MissionClockSnapshot snapshot)
-        {
-            _storage.clockSnapshot = snapshot;
-            _storage.clockReceivedAtClientUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-
-            if (_initialized)
-            {
-                rebuildRuntimeBindings();
-                pruneExpiredMissionState();
-            }
-
-            return CommonResult<MissionClockSnapshot>.Success(snapshot);
-        }
-
     }
 }

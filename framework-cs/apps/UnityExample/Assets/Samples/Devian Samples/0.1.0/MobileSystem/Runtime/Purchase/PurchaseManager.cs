@@ -160,13 +160,13 @@ namespace Devian
                     $"Season end time is invalid: productId={product.InternalProductId}, seasonId={product.SeasonId}");
             }
 
-            if (!TimeManager.TryGet(out var timeManager)
-                || timeManager == null
-                || !timeManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
+            if (!RemoteConfigManager.TryGet(out var remoteConfigManager)
+                || remoteConfigManager == null
+                || !remoteConfigManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
             {
                 return CommonResult.Failure(
                     CommonErrorType.COMMON_SERVER,
-                    "Server time is unavailable. Initialize TimeManager before purchase.");
+                    "Server time is unavailable. Initialize RemoteConfigManager before purchase.");
             }
 
             var seasonPurchaseBlockedBeforeEnd = TimeSpan.FromDays(_seasonPurchaseBlockedBeforeEndDays);

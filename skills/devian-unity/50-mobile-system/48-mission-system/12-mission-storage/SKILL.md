@@ -17,8 +17,6 @@ public sealed class MissionStorage
 {
     public int schemaVersion; // default: 2
     public long dailyMissionStartUtcMs;
-    public MissionClockSnapshot clockSnapshot;
-    public long clockReceivedAtClientUtcMs;
     public int nextMissionUid;
     public Dictionary<int, MissionRuntimeBase> runtimes;
 }
@@ -67,7 +65,7 @@ public abstract class MissionRuntimeBase
 ## Initialize / Recovery
 
 1. storage 로드
-2. clock/anchor 보정
+2. anchor 보정 (현재 서버시각: `RemoteConfigManager`)
 3. scheduler rebuild/prune
 4. runtime bind 시 daily runtime에 저장 progress를 그대로 복원
 

@@ -12,9 +12,7 @@ namespace Devian
             {
                 ["schemaVersion"] = storage.schemaVersion,
                 ["dailyMissionStartUtcMs"] = storage.dailyMissionStartUtcMs,
-                ["clockReceivedAtClientUtcMs"] = storage.clockReceivedAtClientUtcMs,
                 ["nextMissionUid"] = storage.nextMissionUid,
-                ["clockSnapshot"] = SerializeClockSnapshot(storage.clockSnapshot),
             };
 
             var runtimes = new JArray();
@@ -53,13 +51,7 @@ namespace Devian
 
             storage.schemaVersion = missionObj.Value<int?>("schemaVersion") ?? 2;
             storage.dailyMissionStartUtcMs = missionObj.Value<long?>("dailyMissionStartUtcMs") ?? 0L;
-            storage.clockReceivedAtClientUtcMs = missionObj.Value<long?>("clockReceivedAtClientUtcMs") ?? 0L;
             storage.nextMissionUid = missionObj.Value<int?>("nextMissionUid") ?? 1;
-
-            if (missionObj["clockSnapshot"] is JObject clockObj)
-                storage.clockSnapshot = DeserializeClockSnapshot(clockObj);
-            else
-                storage.clockSnapshot = new MissionClockSnapshot();
 
             // v12 migration: move mission.stats -> message.stats
             if (missionObj["stats"] is JObject statsObj && messageStorage != null)
@@ -113,20 +105,6 @@ namespace Devian
 
             if (storage.nextMissionUid <= 0)
                 storage.nextMissionUid = 1;
-        }
-
-        static JObject SerializeClockSnapshot(MissionClockSnapshot snapshot)
-        {
-            snapshot ??= new MissionClockSnapshot();
-            return new JObject
-            {
-                ["serverNowUtcMs"] = snapshot.serverNowUtcMs,
-            };
-        }
-
-        static MissionClockSnapshot DeserializeClockSnapshot(JObject clockObj)
-        {
-            return new MissionClockSnapshot(clockObj.Value<long?>("serverNowUtcMs") ?? 0L);
         }
 
         static JObject SerializeBigInt(CBigInt value)

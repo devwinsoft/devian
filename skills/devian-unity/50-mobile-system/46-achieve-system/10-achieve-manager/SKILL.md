@@ -48,7 +48,7 @@ Events:
 - `ACHIEVE_TYPE` 기반 runtime 타입 분기(`AchieveRuntimeOnce`, `AchieveRuntimePass`)
 - `GameMessageManager` 구독 기반 runtime projection 동기화
 - `InventoryManager` 구독 기반 PASS runtime(`reqPassId`) WAIT 전이 동기화
-- `TimeManager` + `TB_SEASON` 기반 PASS runtime(`reqSeasonId`) WAIT 전이 판정
+- `RemoteConfigManager` + `TB_SEASON` 기반 PASS runtime(`reqSeasonId`) WAIT 전이 판정
 - `ACHIEVE_MESSAGE` 기반 외부 알림 트리거 publish
 - claim 보상 적용 및 level-up 처리
 - 플랫폼 adapter 연동 (`IAchievePlatformAdapter.cs`: Apple/Google/Unsupported)
@@ -63,7 +63,7 @@ Events:
 - level-up 시 기존 stat 바인딩을 다음 level row로 교체
 - level-up 시에도 타입별 req 조건을 재평가해 `WAIT/ACTIVE` 시작 상태를 결정
 - `reqPassId`가 있는 PASS runtime은 `InventoryManager` helper 구독으로 Pass 변경 콜백을 받아 재평가한다.
-- `reqSeasonId`는 `TB_SEASON(startUtcTime/endUtcTime)` + `TimeManager.serverNowUtcMs` 범위 체크로 재평가한다.
+- `reqSeasonId`는 `TB_SEASON(startUtcTime/endUtcTime)` + `RemoteConfigManager.serverNowUtcMs` 범위 체크로 재평가한다.
 - 플랫폼 unlock 실패는 claim 전체를 롤백하지 않는다(best-effort)
 - 플랫폼 unlock은 `ACHIEVE_TYPE.ONCE` runtime에만 수행한다.
 - 저장 실패는 claim 실패로 반환한다

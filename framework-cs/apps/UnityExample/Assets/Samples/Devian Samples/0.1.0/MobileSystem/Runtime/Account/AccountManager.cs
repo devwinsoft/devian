@@ -87,7 +87,7 @@ namespace Devian
 #endif
             }
 
-            // 3. InitSession (Firebase Functions — missionClock + entitlements + purchaseAdjustments)
+            // 3. InitSession (Firebase Functions — remoteConfig + entitlements + purchaseAdjustments)
 #if !UNITY_EDITOR
             var initSession = await FirebaseManager.Instance.InitSessionAsync(null, ct);
             if (initSession.IsFailure)
