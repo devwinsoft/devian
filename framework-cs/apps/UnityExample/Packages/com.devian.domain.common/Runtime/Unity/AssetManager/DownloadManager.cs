@@ -98,7 +98,7 @@ namespace Devian
                 if (forceClearDependencyCache)
                 {
                     var clearOp = Addressables.ClearDependencyCacheAsync(label, false);
-                    await clearOp;
+                    await clearOp.Task;
 
                     if (clearOp.Status == AsyncOperationStatus.Failed)
                     {
@@ -113,7 +113,7 @@ namespace Devian
 
                 // Get download size
                 var sizeOp = Addressables.GetDownloadSizeAsync(label);
-                await sizeOp;
+                await sizeOp.Task;
 
                 if (sizeOp.Status == AsyncOperationStatus.Failed)
                 {
