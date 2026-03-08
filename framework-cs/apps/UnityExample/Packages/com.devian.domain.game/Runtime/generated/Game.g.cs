@@ -24,6 +24,11 @@ namespace Devian.Domain.Game
         STAGE_CLEAR = 3,
         STAGE_SCORE = 4,
         MISSION_CLEAR = 5,
+        BATTLE_PASS_001 = 1001,
+        BATTLE_PASS_002 = 1002,
+        BATTLE_PASS_003 = 1003,
+        BATTLE_PASS_004 = 1004,
+        BATTLE_PASS_005 = 1005,
         TEST_001 = 8001,
         TEST_002 = 8002,
         TEST_003 = 8003,
@@ -236,7 +241,9 @@ namespace Devian.Domain.Game
         public bool IsActive { get; set; }
         public int Level { get; set; }
         public int OrderNum { get; set; }
-        public string MessageId { get; set; } = string.Empty;
+        public string ReqMsgId { get; set; } = string.Empty;
+        public CBigInt? ReqValue { get; set; }
+        public string ConditionMsgId { get; set; } = string.Empty;
         public CBigInt? ConditionValue { get; set; }
         public string RewardGroupId { get; set; } = string.Empty;
         public string AppleAchievementId { get; set; } = string.Empty;
@@ -251,7 +258,6 @@ namespace Devian.Domain.Game
         public string LeaderboardId { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public string MessageId { get; set; } = string.Empty;
-        public string SeasonId { get; set; } = string.Empty;
         public LEADERBOARD_MODE Mode { get; set; }
         public CDateTime? SeasonStartUtc { get; set; }
         public CDateTime? SeasonEndUtc { get; set; }

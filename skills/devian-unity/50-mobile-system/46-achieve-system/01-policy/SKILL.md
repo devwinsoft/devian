@@ -19,7 +19,9 @@ Type: Policy / Entry Point
 - progress는 `MESSAGE.saveType`에 따라 결정된다.
   - `TOTAL_*`: `GameMessageStorage` 값을 projection한다.
   - `SESSION_*`: `AchieveRuntime.progressValue`를 직접 유지한다.
-- 초기화 자동 생성 대상은 `ACHIEVE.achieveType == ACHIEVE_TYPE.DEFAULT`인 level=1 row다.
+- 초기화 시 `ACHIEVE` group 기준 runtime을 항상 생성한다(1 group = 1 runtime).
+- `reqMsgId/reqValue`가 설정된 row는 `WAIT` 상태로 시작한다.
+- `WAIT` 상태에서는 `conditionMsgId` 진행도 반영을 하지 않고, req 조건 충족 시 `ACTIVE`로 전이한다.
 
 ### 2) 외부에는 내부 업적 ID만 노출한다
 
@@ -48,8 +50,8 @@ Type: Policy / Entry Point
 
 ### 6) level-up은 반드시 바인딩 전환을 수행한다
 
-- 다음 level row 기준으로 `messageId/messageType/saveType/conditionValue`를 교체한다.
-- 다음 `messageType` 기준 projection 동기화로 전환한다.
+- 다음 level row 기준으로 `conditionMsgId/messageType/saveType/conditionValue`를 교체한다.
+- level-up 시에도 `reqMsgId/reqValue`를 다시 평가하여 `WAIT` 또는 `ACTIVE`로 시작한다.
 
 ### 7) period 개념은 없다
 

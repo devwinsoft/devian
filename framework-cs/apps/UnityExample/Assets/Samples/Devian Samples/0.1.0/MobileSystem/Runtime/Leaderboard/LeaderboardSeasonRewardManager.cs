@@ -78,7 +78,7 @@ namespace Devian
                 if (!IsSeasonRewardEvaluationReady(getSeasonEndUtcMs(prevRow), serverNowUtcMs))
                     continue;
 
-                var claimKey = buildClaimKey(prevRow.SeasonId, mode);
+                var claimKey = buildClaimKey(prevRow.LeaderboardId);
                 if (_storage.TryGetClaim(claimKey, out _))
                     continue;
 
@@ -175,8 +175,7 @@ namespace Devian
             if (row == null || !row.IsActive)
                 return false;
 
-            if (string.IsNullOrWhiteSpace(row.LeaderboardId)
-                || string.IsNullOrWhiteSpace(row.SeasonId))
+            if (string.IsNullOrWhiteSpace(row.LeaderboardId))
             {
                 return false;
             }
@@ -253,9 +252,9 @@ namespace Devian
             return seasonRow != null;
         }
 
-        private static string buildClaimKey(string seasonId, LEADERBOARD_MODE mode)
+        private static string buildClaimKey(string leaderboardId)
         {
-            return $"{(seasonId ?? string.Empty).Trim()}|{mode}";
+            return (leaderboardId ?? string.Empty).Trim();
         }
 
         private static bool tryResolveRewardGroupId(string leaderboardId, long rank, out string rewardGroupId)

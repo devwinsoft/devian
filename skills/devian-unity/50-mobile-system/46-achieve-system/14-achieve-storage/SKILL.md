@@ -51,10 +51,11 @@ AppliesTo: v10
     "runtimes": [
       {
         "achieveId": "...",
-        "messageId": "...",
+        "messageId": "...", // runtime의 conditionMsgId
         "achieveUid": 1,
         "level": 1,
         "progressValue": { "base": 0, "pow": 0 },
+        "isWaiting": false,
         "isCompleted": false
       }
     ]

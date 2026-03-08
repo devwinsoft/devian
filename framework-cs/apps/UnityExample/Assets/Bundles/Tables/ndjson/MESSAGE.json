@@ -9,3 +9,8 @@
 {"MessageId":"msg_mission_003_sum","MessageType":"TEST_003","SaveType":"SESSION_SUM"}
 {"MessageId":"msg_mission_004_sum","MessageType":"TEST_004","SaveType":"SESSION_SUM"}
 {"MessageId":"msg_score_max","MessageType":"STAGE_SCORE","SaveType":"TOTAL_MAX"}
+{"MessageId":"msg_battle_pass_001","MessageType":"BATTLE_PASS_001","SaveType":"TOTAL_MAX"}
+{"MessageId":"msg_battle_pass_002","MessageType":"BATTLE_PASS_002","SaveType":"TOTAL_MAX"}
+{"MessageId":"msg_battle_pass_003","MessageType":"BATTLE_PASS_003","SaveType":"TOTAL_MAX"}
+{"MessageId":"msg_battle_pass_004","MessageType":"BATTLE_PASS_004","SaveType":"TOTAL_MAX"}
+{"MessageId":"msg_battle_pass_005","MessageType":"BATTLE_PASS_005","SaveType":"TOTAL_MAX"}

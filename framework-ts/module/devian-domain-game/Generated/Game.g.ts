@@ -15,6 +15,11 @@ export enum GAME_MESSAGE_TYPE {
     STAGE_CLEAR = 3,
     STAGE_SCORE = 4,
     MISSION_CLEAR = 5,
+    BATTLE_PASS_001 = 1001,
+    BATTLE_PASS_002 = 1002,
+    BATTLE_PASS_003 = 1003,
+    BATTLE_PASS_004 = 1004,
+    BATTLE_PASS_005 = 1005,
     TEST_001 = 8001,
     TEST_002 = 8002,
     TEST_003 = 8003,
@@ -200,7 +205,9 @@ export interface ACHIEVE extends IEntityKey<number> {
     IsActive: boolean;
     Level: number;
     OrderNum: number;
-    MessageId: string;
+    ReqMsgId: string;
+    ReqValue: CBigInt | null;
+    ConditionMsgId: string;
     ConditionValue: CBigInt | null;
     RewardGroupId: string;
     AppleAchievementId: string;
@@ -212,7 +219,6 @@ export interface LEADERBOARD extends IEntityKey<string> {
     LeaderboardId: string;
     IsActive: boolean;
     MessageId: string;
-    SeasonId: string;
     Mode: LEADERBOARD_MODE;
     SeasonStartUtc: number;
     SeasonEndUtc: number;

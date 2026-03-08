@@ -9,7 +9,7 @@ AppliesTo: v10
 
 - 내부 리더보드 ID
 - 플랫폼 리더보드 ID 매핑
-- 시즌 식별/기간/모드
+- 시즌 기간/모드
 - 구간별 보상 매핑(`LEADERBOARD_REWARD`)
 - 시즌 보상 저장(`processedClaims`)
 
@@ -33,7 +33,6 @@ AppliesTo: v10
 | `messageId` | string | 점수 소스 MESSAGE key |
 | `appleLeaderboardId` | string | Game Center ID |
 | `googleLeaderboardId` | string | GPGS ID |
-| `seasonId` | string | 시즌 식별자 |
 | `mode` | `LEADERBOARD_MODE` | `NORMAL`/`HARDCORE` |
 | `seasonStartUtc` | `class:CDateTime` | 시즌 시작 UTC (raw string 입력, runtime은 `utcTimeMs` 사용) |
 | `seasonEndUtc` | `class:CDateTime` | 시즌 종료 UTC (raw string 입력, runtime은 `utcTimeMs` 사용) |
@@ -76,7 +75,7 @@ AppliesTo: v10
 - 시즌 보상 저장:
   - payload key: `leaderboardReward`
   - core map: `processedClaims: Dictionary<string, LeaderboardSeasonRewardClaimRecord>`
-  - key format: `{seasonId}|{mode}`
+  - key format: `{leaderboardId}`
 
 `LeaderboardSeasonRewardClaimRecord` 필드:
 - `resultType`
@@ -110,7 +109,7 @@ AppliesTo: v10
 |------|----|---------------|------|
 | `MESSAGE` | `messageId` | - | 메시지 타입/저장 방식(`saveType`) 정의 |
 | `MISSION` | `missionId` | `messageId -> MESSAGE.messageId` | 일일 미션 정의 및 조건 |
-| `ACHIEVE` | `index` | `messageId -> MESSAGE.messageId` | 업적 단계 정의 및 조건 |
+| `ACHIEVE` | `index` | `conditionMsgId/reqMsgId -> MESSAGE.messageId` | 업적 단계 정의 및 조건 |
 | `LEADERBOARD` | `leaderboardId` | `messageId -> MESSAGE.messageId` | 점수 소스 + 시즌 구간 + 플랫폼 ID 매핑 |
 | `LEADERBOARD_REWARD` | `index` | `leaderboardId (group)` | 랭크 구간별 `rewardGroupId` 매핑 |
 
@@ -119,10 +118,11 @@ AppliesTo: v10
 ```text
 GAME_MESSAGE -> MESSAGE(messageId)
                     ├─ MISSION.messageId
-                    ├─ ACHIEVE.messageId
+                    ├─ ACHIEVE.conditionMsgId
+                    ├─ ACHIEVE.reqMsgId
                     └─ LEADERBOARD.messageId
 
-LEADERBOARD(leaderboardId, seasonId, mode, seasonStartUtc/seasonEndUtc)
+LEADERBOARD(leaderboardId, mode, seasonStartUtc/seasonEndUtc)
         └─ LEADERBOARD_REWARD(leaderboardId group, rankFrom~rankTo, rewardGroupId)
 ```
 

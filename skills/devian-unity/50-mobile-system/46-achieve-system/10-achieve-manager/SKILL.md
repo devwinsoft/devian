@@ -54,8 +54,10 @@ Events:
 ## Hard Rules
 
 - 공개 API는 내부 `achievementId`만 사용
-- 초기화 자동 runtime 생성은 `ACHIEVE.achieveType == ACHIEVE_TYPE.DEFAULT` row만 허용
+- 초기화 시 `ACHIEVE` group 기준 runtime 항상 생성
+- `reqMsgId/reqValue` 설정 row는 `WAIT` 상태로 시작 후 req 충족 시 `ACTIVE` 전이
 - level-up 시 기존 stat 바인딩을 다음 level row로 교체
+- level-up 시에도 req 조건을 재평가해 `WAIT/ACTIVE` 시작 상태를 결정
 - 플랫폼 unlock 실패는 claim 전체를 롤백하지 않는다(best-effort)
 - 저장 실패는 claim 실패로 반환한다
 

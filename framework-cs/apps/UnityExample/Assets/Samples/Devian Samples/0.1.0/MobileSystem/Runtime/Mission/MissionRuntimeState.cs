@@ -9,5 +9,6 @@ namespace Devian
         ACTIVE = 1,
         CLAIMABLE = 2,
         COMPLETED = 3,
+        WAIT = 4,
     }
 }

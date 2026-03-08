@@ -158,17 +158,16 @@ namespace Devian
                 if (!isEligibleRow(runtimeRow))
                     return true;
 
-                if (!string.Equals(runtime.messageId, runtimeRow!.MessageId, StringComparison.Ordinal))
+                if (!string.Equals(runtime.messageId, runtimeRow!.ConditionMsgId, StringComparison.Ordinal))
+                    return true;
+
+                if (runtime.isCompleted && runtime.isWaiting)
                     return true;
             }
 
             foreach (var groupKey in groupKeys)
             {
-                var startRow = findStartRow(groupKey);
-                var shouldExist = shouldAutoCreateRuntime(startRow);
-                var exists = runtimeByAchieveId.ContainsKey(groupKey);
-
-                if (shouldExist != exists)
+                if (!runtimeByAchieveId.ContainsKey(groupKey))
                     return true;
             }
 
@@ -210,18 +209,28 @@ namespace Devian
                 return CommonResult.Failure(apply.Error!);
 
             var nextRow = findNextRow(runtime.achieveId, runtime.level);
-            if (nextRow != null
-                && isEligibleRow(nextRow)
-                && TryResolveMessage(nextRow.MessageId, out var nextMessage)
-                && nextMessage.SaveType != GAME_MESSAGE_SAVE_TYPE.NONE)
+            if (nextRow != null && isEligibleRow(nextRow))
             {
-                runtime.LevelUp(
-                    nextRow.Level,
-                    nextRow.MessageId,
-                    nextMessage.MessageType,
-                    nextMessage.SaveType,
-                    nextRow.ConditionValue!.Value,
-                    createExternalProgressReader(nextRow.MessageId, nextMessage.SaveType));
+                if (hasActivationRequirement(nextRow, out _, out _))
+                {
+                    runtime.LevelUpToWaiting(nextRow.Level, nextRow.ConditionMsgId);
+                    tryActivateRuntime(runtime, nextRow, GAME_MESSAGE_TYPE.NONE, CBigInt.Zero);
+                }
+                else if (TryResolveMessage(nextRow.ConditionMsgId, out var nextMessage))
+                {
+                    runtime.LevelUp(
+                        nextRow.Level,
+                        nextRow.ConditionMsgId,
+                        nextMessage.MessageType,
+                        nextMessage.SaveType,
+                        nextRow.ConditionValue!.Value,
+                        createExternalProgressReader(nextRow.ConditionMsgId, nextMessage.SaveType));
+                }
+                else
+                {
+                    runtime.MarkCompleted();
+                }
+
                 emitRuntimeLevelUp(runtime);
             }
             else
@@ -340,6 +349,7 @@ namespace Devian
 
         void onGameMessageNotify(GAME_MESSAGE_TYPE msgType, CBigInt msgValue)
         {
+            tryActivateWaitingRuntimes(msgType, msgValue);
             notifyRuntimesByMessage(msgType, msgValue);
         }
 
@@ -698,28 +708,15 @@ namespace Devian
                 if (existing != null)
                 {
                     var row = findRow(existing.achieveId, existing.level);
-                    if (isEligibleRow(row)
-                        && TryResolveMessage(row!.MessageId, out var message))
+                    if (isEligibleRow(row))
                     {
-                        var restored = AchieveRuntimeFactory.Restore(new AchieveRuntimeRestoreArgs
+                        var restored = restoreRuntimeForRow(existing, row!);
+                        if (restored != null)
                         {
-                            AchieveId = existing.achieveId,
-                            MessageId = row.MessageId,
-                            AchieveUid = existing.achieveUid,
-                            Level = existing.level,
-                            ProgressValue = existing.progressValue,
-                            IsCompleted = existing.isCompleted,
-                            StatType = message.MessageType,
-                            OpType = message.SaveType,
-                            ConditionValue = row.ConditionValue!.Value,
-                            ReadProgress = createExternalProgressReader(row.MessageId, message.SaveType),
-                            OnChanged = onRuntimeChanged,
-                            OnClaimable = onRuntimeClaimable,
-                        });
-
-                        _storage.runtimes[restored.achieveUid] = restored;
-                        emitRuntimeInitialized(restored);
-                        continue;
+                            _storage.runtimes[restored.achieveUid] = restored;
+                            emitRuntimeInitialized(restored);
+                            continue;
+                        }
                     }
 
                     existing.Detach();
@@ -734,32 +731,19 @@ namespace Devian
                     continue;
                 }
 
-                if (!shouldAutoCreateRuntime(startRow))
+                if (!isEligibleRow(startRow))
                     continue;
 
-                if (!TryResolveMessage(startRow.MessageId, out var startMessage))
-                {
-                    Debug.LogError($"[{Tag}] MESSAGE not found for achieve: achieveId='{startRow.AchieveId}', messageId='{startRow.MessageId}'.");
+                var created = createRuntimeForRow(startRow);
+                if (created == null)
                     continue;
-                }
-
-                var created = AchieveRuntimeFactory.Create(new AchieveRuntimeCreateArgs
-                {
-                    AchieveId = startRow.AchieveId,
-                    MessageId = startRow.MessageId,
-                    Level = startRow.Level,
-                    AchieveUid = _storage.AllocateAchieveUid(),
-                    StatType = startMessage.MessageType,
-                    OpType = startMessage.SaveType,
-                    ConditionValue = startRow.ConditionValue!.Value,
-                    ReadProgress = createExternalProgressReader(startRow.MessageId, startMessage.SaveType),
-                    OnChanged = onRuntimeChanged,
-                    OnClaimable = onRuntimeClaimable,
-                });
 
                 _storage.runtimes[created.achieveUid] = created;
                 emitRuntimeInitialized(created);
             }
+
+            // TOTAL_* requirement rows can be activated immediately from stored message stats.
+            tryActivateWaitingRuntimes(GAME_MESSAGE_TYPE.NONE, CBigInt.Zero);
         }
 
         void onRuntimeChanged(AchieveRuntime runtime)
@@ -770,6 +754,155 @@ namespace Devian
         void onRuntimeClaimable(AchieveRuntime runtime)
         {
             emitRuntimeClaimable(runtime);
+        }
+
+        AchieveRuntime restoreRuntimeForRow(AchieveRuntime existing, ACHIEVE row)
+        {
+            if (existing == null || row == null)
+                return null;
+
+            if (existing.isWaiting && !existing.isCompleted)
+            {
+                return AchieveRuntimeFactory.Restore(new AchieveRuntimeRestoreArgs
+                {
+                    AchieveId = existing.achieveId,
+                    MessageId = row.ConditionMsgId,
+                    AchieveUid = existing.achieveUid,
+                    Level = existing.level,
+                    IsWaiting = true,
+                    ProgressValue = CBigInt.Zero,
+                    IsCompleted = false,
+                    StatType = GAME_MESSAGE_TYPE.NONE,
+                    OpType = GAME_MESSAGE_SAVE_TYPE.NONE,
+                    ConditionValue = CBigInt.Zero,
+                    ReadProgress = null,
+                    OnChanged = onRuntimeChanged,
+                    OnClaimable = onRuntimeClaimable,
+                });
+            }
+
+            if (!TryResolveMessage(row.ConditionMsgId, out var message))
+            {
+                Debug.LogError($"[{Tag}] MESSAGE not found for achieve: achieveId='{row.AchieveId}', conditionMsgId='{row.ConditionMsgId}'.");
+                return null;
+            }
+
+            return AchieveRuntimeFactory.Restore(new AchieveRuntimeRestoreArgs
+            {
+                AchieveId = existing.achieveId,
+                MessageId = row.ConditionMsgId,
+                AchieveUid = existing.achieveUid,
+                Level = existing.level,
+                IsWaiting = false,
+                ProgressValue = existing.progressValue,
+                IsCompleted = existing.isCompleted,
+                StatType = message.MessageType,
+                OpType = message.SaveType,
+                ConditionValue = row.ConditionValue!.Value,
+                ReadProgress = createExternalProgressReader(row.ConditionMsgId, message.SaveType),
+                OnChanged = onRuntimeChanged,
+                OnClaimable = onRuntimeClaimable,
+            });
+        }
+
+        AchieveRuntime createRuntimeForRow(ACHIEVE row)
+        {
+            if (row == null)
+                return null;
+
+            var achieveUid = _storage.AllocateAchieveUid();
+            if (hasActivationRequirement(row, out _, out _))
+            {
+                return AchieveRuntimeFactory.Create(new AchieveRuntimeCreateArgs
+                {
+                    AchieveId = row.AchieveId,
+                    MessageId = row.ConditionMsgId,
+                    Level = row.Level,
+                    AchieveUid = achieveUid,
+                    IsWaiting = true,
+                    StatType = GAME_MESSAGE_TYPE.NONE,
+                    OpType = GAME_MESSAGE_SAVE_TYPE.NONE,
+                    ConditionValue = CBigInt.Zero,
+                    ReadProgress = null,
+                    OnChanged = onRuntimeChanged,
+                    OnClaimable = onRuntimeClaimable,
+                });
+            }
+
+            if (!TryResolveMessage(row.ConditionMsgId, out var message))
+            {
+                Debug.LogError($"[{Tag}] MESSAGE not found for achieve: achieveId='{row.AchieveId}', conditionMsgId='{row.ConditionMsgId}'.");
+                return null;
+            }
+
+            return AchieveRuntimeFactory.Create(new AchieveRuntimeCreateArgs
+            {
+                AchieveId = row.AchieveId,
+                MessageId = row.ConditionMsgId,
+                Level = row.Level,
+                AchieveUid = achieveUid,
+                IsWaiting = false,
+                StatType = message.MessageType,
+                OpType = message.SaveType,
+                ConditionValue = row.ConditionValue!.Value,
+                ReadProgress = createExternalProgressReader(row.ConditionMsgId, message.SaveType),
+                OnChanged = onRuntimeChanged,
+                OnClaimable = onRuntimeClaimable,
+            });
+        }
+
+        void tryActivateWaitingRuntimes(GAME_MESSAGE_TYPE triggeredType, CBigInt triggeredValue)
+        {
+            if (_storage.runtimes.Count <= 0)
+                return;
+
+            var runtimes = new List<AchieveRuntime>(_storage.runtimes.Count);
+            foreach (var runtime in _storage.runtimes.Values)
+            {
+                if (runtime != null)
+                    runtimes.Add(runtime);
+            }
+
+            foreach (var runtime in runtimes)
+            {
+                if (runtime == null || !runtime.isWaiting || runtime.isCompleted)
+                    continue;
+
+                var row = findRow(runtime.achieveId, runtime.level);
+                if (!isEligibleRow(row))
+                    continue;
+
+                tryActivateRuntime(runtime, row!, triggeredType, triggeredValue);
+            }
+        }
+
+        bool tryActivateRuntime(AchieveRuntime runtime, ACHIEVE row, GAME_MESSAGE_TYPE triggeredType, CBigInt triggeredValue)
+        {
+            if (runtime == null || row == null || runtime.isCompleted || !runtime.isWaiting)
+                return false;
+
+            if (hasActivationRequirement(row, out var reqMessage, out var reqValue)
+                && !isRequirementSatisfied(row, reqMessage, reqValue, triggeredType, triggeredValue))
+            {
+                return false;
+            }
+
+            if (!TryResolveMessage(row.ConditionMsgId, out var conditionMessage))
+            {
+                Debug.LogError($"[{Tag}] MESSAGE not found for achieve: achieveId='{row.AchieveId}', conditionMsgId='{row.ConditionMsgId}'.");
+                return false;
+            }
+
+            runtime.Bind(
+                row.ConditionMsgId,
+                conditionMessage.MessageType,
+                conditionMessage.SaveType,
+                row.ConditionValue!.Value,
+                createExternalProgressReader(row.ConditionMsgId, conditionMessage.SaveType),
+                onRuntimeChanged,
+                onRuntimeClaimable);
+            emitRuntimeProgress(runtime);
+            return true;
         }
 
         void notifyRuntimesByMessage(GAME_MESSAGE_TYPE messageType, CBigInt messageDelta)
@@ -816,13 +949,61 @@ namespace Devian
             return row != null
                    && row.IsActive
                    && row.ConditionValue.HasValue
-                   && TryResolveMessage(row.MessageId, out var message)
+                   && TryResolveMessage(row.ConditionMsgId, out var message)
                    && message.SaveType != GAME_MESSAGE_SAVE_TYPE.NONE;
         }
 
-        static bool shouldAutoCreateRuntime(ACHIEVE row)
+        bool hasActivationRequirement(ACHIEVE row, out MESSAGE reqMessage, out CBigInt reqValue)
         {
-            return isEligibleRow(row) && row!.AchieveType == ACHIEVE_TYPE.DEFAULT;
+            reqMessage = null;
+            reqValue = CBigInt.Zero;
+
+            if (row == null
+                || string.IsNullOrWhiteSpace(row.ReqMsgId)
+                || !row.ReqValue.HasValue)
+            {
+                return false;
+            }
+
+            if (!TryResolveMessage(row.ReqMsgId, out reqMessage) || reqMessage.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            {
+                Debug.LogError($"[{Tag}] Invalid req message for achieve: achieveId='{row.AchieveId}', reqMsgId='{row.ReqMsgId}'.");
+                reqMessage = null;
+                return false;
+            }
+
+            reqValue = row.ReqValue.Value;
+            return true;
+        }
+
+        static bool isRequirementSatisfied(
+            ACHIEVE row,
+            MESSAGE reqMessage,
+            CBigInt reqValue,
+            GAME_MESSAGE_TYPE triggeredType,
+            CBigInt triggeredValue)
+        {
+            if (row == null || reqMessage == null)
+                return false;
+
+            if (isTotalSaveType(reqMessage.SaveType))
+            {
+                if (!GameMessageManager.TryGet(out var messageManager) || messageManager == null)
+                    return false;
+
+                return messageManager.GetStat(row.ReqMsgId) >= reqValue;
+            }
+
+            if (triggeredType == GAME_MESSAGE_TYPE.NONE || reqMessage.MessageType != triggeredType)
+                return false;
+
+            return triggeredValue >= reqValue;
+        }
+
+        static bool isTotalSaveType(GAME_MESSAGE_SAVE_TYPE saveType)
+        {
+            return saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
+                   || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX;
         }
 
         static ACHIEVE findRow(string achieveId, int level)

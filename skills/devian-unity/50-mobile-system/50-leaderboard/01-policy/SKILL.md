@@ -27,7 +27,7 @@ Leaderboard 점수 제출 + 시즌 전환 보상 시스템의 모듈 경계와 �
 
 ### 3) Season reward 지급 여부는 processedClaims 단일 기준이다
 
-- claim dedupe 기준은 `processedClaims[seasonId|mode]` 단일 키다.
+- claim dedupe 기준은 `processedClaims[leaderboardId]` 단일 키다.
 - `lastProcessedSeasonId` 같은 이중 상태를 두지 않는다.
 
 ### 4) grace period는 하드코딩 금지, 상수만 사용한다

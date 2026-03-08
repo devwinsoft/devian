@@ -11,6 +11,7 @@ namespace Devian
         public int achieveUid;
         public int level = 1;
         public CBigInt progressValue = CBigInt.Zero;
+        public bool isWaiting;
         public bool isCompleted;
 
         [NonSerialized] private GAME_MESSAGE_TYPE _statType;
@@ -23,7 +24,7 @@ namespace Devian
         public GAME_MESSAGE_TYPE StatType => _statType;
         public GAME_MESSAGE_SAVE_TYPE OpType => _opType;
         public CBigInt ConditionValue => _conditionValue;
-        public bool IsClaimable => !isCompleted && progressValue >= _conditionValue;
+        public bool IsClaimable => !isCompleted && !isWaiting && progressValue >= _conditionValue;
 
         public int Index
         {
@@ -50,6 +51,7 @@ namespace Devian
             Action<AchieveRuntime> onClaimable)
         {
             this.messageId = messageId ?? string.Empty;
+            isWaiting = false;
             _statType = statType;
             _opType = opType;
             _conditionValue = conditionValue;
@@ -61,6 +63,22 @@ namespace Devian
 
             if (IsClaimable)
                 _onClaimable?.Invoke(this);
+        }
+
+        internal void BindWaiting(
+            string messageId,
+            Action<AchieveRuntime> onProgress,
+            Action<AchieveRuntime> onClaimable)
+        {
+            this.messageId = messageId ?? string.Empty;
+            isWaiting = !isCompleted;
+            _statType = GAME_MESSAGE_TYPE.NONE;
+            _opType = GAME_MESSAGE_SAVE_TYPE.NONE;
+            _conditionValue = CBigInt.Zero;
+            _externalProgressReader = null;
+            _onProgress = onProgress;
+            _onClaimable = onClaimable;
+            progressValue = CBigInt.Zero;
         }
 
         public void Detach()
@@ -75,6 +93,9 @@ namespace Devian
             if (isCompleted)
                 return MissionRuntimeState.COMPLETED;
 
+            if (isWaiting)
+                return MissionRuntimeState.WAIT;
+
             return IsClaimable
                 ? MissionRuntimeState.CLAIMABLE
                 : MissionRuntimeState.ACTIVE;
@@ -82,6 +103,7 @@ namespace Devian
 
         public void MarkCompleted()
         {
+            isWaiting = false;
             isCompleted = true;
         }
 
@@ -94,6 +116,7 @@ namespace Devian
             Func<CBigInt> readExternalProgress)
         {
             level = nextLevel;
+            isWaiting = false;
             isCompleted = false;
             messageId = nextMessageId ?? string.Empty;
             _statType = nextStatType;
@@ -107,6 +130,19 @@ namespace Devian
                 RefreshProgressFromExternal(emitProgressEvent: false);
 
             RaiseClaimableIfNeeded();
+        }
+
+        public void LevelUpToWaiting(int nextLevel, string nextMessageId)
+        {
+            level = nextLevel;
+            isCompleted = false;
+            isWaiting = true;
+            messageId = nextMessageId ?? string.Empty;
+            _statType = GAME_MESSAGE_TYPE.NONE;
+            _opType = GAME_MESSAGE_SAVE_TYPE.NONE;
+            _conditionValue = CBigInt.Zero;
+            _externalProgressReader = null;
+            progressValue = CBigInt.Zero;
         }
 
         void RaiseChanged()
@@ -141,7 +177,7 @@ namespace Devian
 
         internal void OnMessageStatUpdated(GAME_MESSAGE_TYPE messageType, CBigInt delta)
         {
-            if (isCompleted || _opType == GAME_MESSAGE_SAVE_TYPE.NONE || _statType != messageType)
+            if (isCompleted || isWaiting || _opType == GAME_MESSAGE_SAVE_TYPE.NONE || _statType != messageType)
                 return;
 
             if (isTotalSaveType(_opType))

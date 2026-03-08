@@ -9,6 +9,7 @@ namespace Devian
         public string MessageId { get; set; }
         public int Level { get; set; }
         public int AchieveUid { get; set; }
+        public bool IsWaiting { get; set; }
         public GAME_MESSAGE_TYPE StatType { get; set; }
         public GAME_MESSAGE_SAVE_TYPE OpType { get; set; }
         public CBigInt ConditionValue { get; set; }
@@ -23,6 +24,7 @@ namespace Devian
         public string MessageId { get; set; }
         public int Level { get; set; }
         public int AchieveUid { get; set; }
+        public bool IsWaiting { get; set; }
         public CBigInt ProgressValue { get; set; }
         public bool IsCompleted { get; set; }
         public GAME_MESSAGE_TYPE StatType { get; set; }
@@ -44,17 +46,28 @@ namespace Devian
                 achieveUid = args.AchieveUid,
                 level = args.Level,
                 progressValue = CBigInt.Zero,
+                isWaiting = args.IsWaiting,
                 isCompleted = false,
             };
 
-            runtime.Bind(
-                args.MessageId,
-                args.StatType,
-                args.OpType,
-                args.ConditionValue,
-                args.ReadProgress,
-                args.OnChanged,
-                args.OnClaimable);
+            if (args.IsWaiting)
+            {
+                runtime.BindWaiting(
+                    args.MessageId,
+                    args.OnChanged,
+                    args.OnClaimable);
+            }
+            else
+            {
+                runtime.Bind(
+                    args.MessageId,
+                    args.StatType,
+                    args.OpType,
+                    args.ConditionValue,
+                    args.ReadProgress,
+                    args.OnChanged,
+                    args.OnClaimable);
+            }
 
             return runtime;
         }
@@ -68,17 +81,28 @@ namespace Devian
                 achieveUid = args.AchieveUid,
                 level = args.Level,
                 progressValue = args.ProgressValue,
+                isWaiting = args.IsWaiting && !args.IsCompleted,
                 isCompleted = args.IsCompleted,
             };
 
-            runtime.Bind(
-                args.MessageId,
-                args.StatType,
-                args.OpType,
-                args.ConditionValue,
-                args.ReadProgress,
-                args.OnChanged,
-                args.OnClaimable);
+            if (args.IsWaiting && !args.IsCompleted)
+            {
+                runtime.BindWaiting(
+                    args.MessageId,
+                    args.OnChanged,
+                    args.OnClaimable);
+            }
+            else
+            {
+                runtime.Bind(
+                    args.MessageId,
+                    args.StatType,
+                    args.OpType,
+                    args.ConditionValue,
+                    args.ReadProgress,
+                    args.OnChanged,
+                    args.OnClaimable);
+            }
 
             return runtime;
         }

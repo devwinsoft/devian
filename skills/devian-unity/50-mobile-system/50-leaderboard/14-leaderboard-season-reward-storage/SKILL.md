@@ -55,8 +55,8 @@ Type: Design / Storage SSOT
 
 ## Key Format
 
-- claim key: `{seasonId}|{mode}`
-- 예: `s2026_q1|NORMAL`
+- claim key: `{leaderboardId}`
+- 예: `leaderboard_001`
 
 ---
 
@@ -71,7 +71,7 @@ Type: Design / Storage SSOT
   "leaderboardReward": {
     "schemaVersion": 1,
     "processedClaims": {
-      "s2026_q1|NORMAL": {
+      "leaderboard_001": {
         "resultType": 1,
         "rank": 77,
         "score": 123456,

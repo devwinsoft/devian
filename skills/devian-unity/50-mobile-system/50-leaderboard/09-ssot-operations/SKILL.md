@@ -47,7 +47,7 @@ AppliesTo: v10
 - grace period 경계:
   - 시즌 종료 + 9분: 미평가
   - 시즌 종료 + 10분: 평가 시작
-- `processedClaims` 중복 지급 방지(같은 `seasonId|mode` 1회)
+- `processedClaims` 중복 지급 방지(같은 `leaderboardId` 1회)
 - `LEADERBOARD_REWARD` 구간 매칭/미매칭 분기
 - 공개 API에서 플랫폼 의존 타입/필드 비노출
 

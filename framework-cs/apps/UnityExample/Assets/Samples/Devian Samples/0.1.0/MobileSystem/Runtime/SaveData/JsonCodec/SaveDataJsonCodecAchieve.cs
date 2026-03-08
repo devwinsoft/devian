@@ -27,6 +27,7 @@ namespace Devian
                     ["achieveUid"] = runtime.achieveUid,
                     ["level"] = runtime.level,
                     ["progressValue"] = SerializeBigInt(runtime.progressValue),
+                    ["isWaiting"] = runtime.isWaiting,
                     ["isCompleted"] = runtime.isCompleted,
                 };
 
@@ -68,6 +69,7 @@ namespace Devian
                         achieveUid = achieveUid,
                         level = runtimeObj.Value<int?>("level") ?? 1,
                         progressValue = DeserializeBigInt(runtimeObj["progressValue"]),
+                        isWaiting = runtimeObj.Value<bool?>("isWaiting") ?? false,
                         isCompleted = runtimeObj.Value<bool?>("isCompleted") ?? false,
                     };
 
