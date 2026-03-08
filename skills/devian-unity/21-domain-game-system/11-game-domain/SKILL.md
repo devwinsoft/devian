@@ -66,7 +66,7 @@ Game 도메인은 Devian 프레임워크의 **예제 도메인**이다.
 |---|---|---|
 | `ENUM_TYPES.json` | `enum CURRENCY_TYPE`, `enum REWARD_TYPE`, `enum ADVERTISE_FORMAT`, `enum ADVERTISE_PROVIDER`, `enum STAT_TYPE`, `enum INVENTORY_MESSAGE` | 공통 game enum 통합 |
 | `ENUM_GAME.json` | `enum GAME_MESSAGE_TYPE`, `enum GAME_MESSAGE_SAVE_TYPE` | game message 전용 enum |
-| `ENUM_MISSION.json` | `enum MISSION_TYPE`, `enum MISSION_MESSAGE`, `enum ACHIEVE_MESSAGE`, `enum ACHIEVE_TYPE` | mission/achieve 전용 enum |
+| `ENUM_MISSION.json` | `enum MISSION_TYPE`, `enum MISSION_MESSAGE`, `enum ACHIEVE_MESSAGE` | mission/achieve 전용 enum |
 | `ProductKind.json` | `enum ProductKind` | 상품 유형 (Consumable, Subscription, SeasonPass) |
 | `TestContract.json` | `enum UserType`, `class UserProfile` | 테스트 예제 (UserType: Guest/Member/Admin, UserProfile: Id/Name/UserType) |
 

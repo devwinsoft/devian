@@ -10,7 +10,6 @@ AppliesTo: v10
 - 업적 runtime 테이블: `ACHIEVE`
 - 진행 stat 정본: `MESSAGE`
 - 업적 알림 enum: `ACHIEVE_MESSAGE`
-- 업적 타입 enum: `ACHIEVE_TYPE` (`ENUM_MISSION.json`)
 - 플랫폼 업적 매핑: `ACHIEVE.achieveId -> (appleAchievementId, googleAchievementId)`
 - 저장 구조: `AchieveStorage` + `AchieveRuntime`
 
@@ -28,7 +27,6 @@ AppliesTo: v10
 |------|------|------|
 | `index` | int (pk) | row pk |
 | `achieveId` | string | 업적 그룹/내부 업적 ID |
-| `achieveType` | `ACHIEVE_TYPE` | 업적 타입 |
 | `isActive` | bool | 운영 토글 |
 | `level` | int | 단계 |
 | `orderNum` | int | 정렬 기준(1-base) |

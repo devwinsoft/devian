@@ -94,12 +94,6 @@ namespace Devian.Domain.Game
         RUNTIME_ACTIVE = 7,
     }
 
-    /// <summary>ACHIEVE_TYPE enum</summary>
-    public enum ACHIEVE_TYPE
-    {
-        DEFAULT = 0,
-    }
-
     /// <summary>CURRENCY_TYPE enum</summary>
     public enum CURRENCY_TYPE
     {
@@ -233,7 +227,6 @@ namespace Devian.Domain.Game
     {
         public int Index { get; set; }
         public string AchieveId { get; set; } = string.Empty;
-        public ACHIEVE_TYPE AchieveType { get; set; }
         public bool IsActive { get; set; }
         public int Level { get; set; }
         public int OrderNum { get; set; }
