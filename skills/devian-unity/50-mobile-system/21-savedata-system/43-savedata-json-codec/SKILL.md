@@ -11,7 +11,7 @@ Type: Design / SSOT
 SaveDataManager가 local/cloud payload에 저장할 게임 상태 JSON의 직렬화/역직렬화 규약을 정의한다.
 
 - JSON 직렬화/역직렬화의 **유일한 진입점은 SaveDataManager** 이다.
-- `AccountManager`, `InventoryManager`, `PurchaseManager`, `GameMessageManager`, `MissionManager`, `AchieveManager`, `LeaderboardSeasonRewardManager`는 각자 자신의 `Storage`를 소유한다.
+- `AccountManager`, `InventoryManager`, `PurchaseManager`, `GameMessageManager`, `MissionManager`, `AchieveManager`, `LeaderboardManager`는 각자 자신의 `Storage`를 소유한다.
 - JSON 구현은 `SaveDataJsonCodec` root codec + section codec으로 분리한다.
 
 
@@ -26,7 +26,7 @@ SaveDataManager가 local/cloud payload에 저장할 게임 상태 JSON의 직렬
 - `GameMessageManager` 소유: `GameMessageStorage`
 - `MissionManager` 소유: `MissionStorage`
 - `AchieveManager` 소유: `AchieveStorage`
-- `LeaderboardSeasonRewardManager` 소유: `LeaderboardSeasonRewardStorage`
+- `LeaderboardManager` 소유: `LeaderboardSeasonRewardStorage`
 - `SaveDataManager` 책임:
   - 위 storage를 수집
   - primary save binding(local filename + cloud slot) 관리
@@ -63,7 +63,7 @@ SaveDataManager : CompoSingleton<SaveDataManager>
     ├── GameMessageManager.Instance.Storage.Clear()
     ├── MissionManager.Instance.Storage.Clear()
     ├── AchieveManager.Instance.Storage.Clear()
-    └── LeaderboardSeasonRewardManager.Instance.Storage.Clear()
+    └── LeaderboardManager.Instance.Storage.Clear()
 ```
 
 - root orchestration: `SaveDataJsonCodec`
@@ -128,7 +128,7 @@ serialize 시 source:
 - `GameMessageManager.Instance.Storage`
 - `MissionManager.Instance.Storage`
 - `AchieveManager.Instance.Storage`
-- `LeaderboardSeasonRewardManager.Instance.Storage`
+- `LeaderboardManager.Instance.Storage`
 
 deserialize 시 target:
 - `AccountManager.Instance.Storage`
@@ -137,7 +137,7 @@ deserialize 시 target:
 - `GameMessageManager.Instance.Storage`
 - `MissionManager.Instance.Storage`
 - `AchieveManager.Instance.Storage`
-- `LeaderboardSeasonRewardManager.Instance.Storage`
+- `LeaderboardManager.Instance.Storage`
 
 로드 직후 런타임 재적용:
 - `AccountManager.ApplyStorage(AccountManager.Instance.Storage)`

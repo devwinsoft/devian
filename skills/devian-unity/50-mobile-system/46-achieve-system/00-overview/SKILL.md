@@ -7,11 +7,12 @@ MobileSystem 샘플의 Achieve 시스템 개요다.
 `AchieveManager`가 업적 runtime + 플랫폼 업적 연동을 함께 담당한다.
 
 이 스킬 그룹 책임:
-- 업적 runtime 생성/복구/level-up (`ACHIEVE` table)
+- 업적 runtime 생성/복구/level-up (`ACHIEVE_ONCE`, `ACHIEVE_PASS` table)
 - 업적 claim/reward/save orchestration
 - 내부 업적 ID -> 플랫폼 업적 ID 매핑
 - 플랫폼 업적 Unlock/Sync
 - 신규 달성 이벤트(`OnAchievementUnlocked`) 발행
+- runtime 타입 분기(`ACHIEVE_TYPE`: `ONCE`, `PASS`)
 
 ---
 
@@ -25,7 +26,7 @@ MobileSystem 샘플의 Achieve 시스템 개요다.
 | [10-achieve-manager](../10-achieve-manager/SKILL.md) | AchieveManager 설계 |
 | [11-achieve-platform-apple](../11-achieve-platform-apple/SKILL.md) | Apple(Game Center) 연동 |
 | [12-achieve-platform-google](../12-achieve-platform-google/SKILL.md) | Google(GPGS v2) 연동 |
-| [13-achieve-runtime](../13-achieve-runtime/SKILL.md) | AchieveRuntime 규약 |
+| [13-achieve-runtime](../13-achieve-runtime/SKILL.md) | AchieveRuntimeBase/Once/Pass 규약 |
 | [14-achieve-storage](../14-achieve-storage/SKILL.md) | AchieveStorage/SaveData 규약 |
 | [15-achieve-message-trigger](../15-achieve-message-trigger/SKILL.md) | AchieveMessageTrigger notify 규약 |
 

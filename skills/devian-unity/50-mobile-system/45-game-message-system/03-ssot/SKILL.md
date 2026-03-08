@@ -28,14 +28,13 @@ AppliesTo: v10
 
 - ownerKey: subscriber-defined `int`
 - key: `GAME_MESSAGE_TYPE`
-- 외부 진입점: `MissionManager.Notify(...)` (GameMessageManager helper 경유)
+- 외부 진입점: `GameMessageManager.Notify(...)` (일부 시스템은 manager helper를 경유 가능)
 
 처리 순서:
-1. `MissionManager.Notify(...)` 또는 `GameMessageManager.NotifyGameMessage(...)` 진입
-2. `GameMessageManager`가 `TB_MESSAGE` 기준 `message.stats[messageId]` 갱신
+1. `GameMessageManager.Notify(messageType, delta)` 진입
+2. `GameMessageManager`가 `TB_MESSAGE` 기준 `TOTAL_*` 바인딩만 `message.stats[messageId]` 갱신
 3. `GameMessageManager` game trigger publish
-4. mission runtime 구독자 수신 (GameMessageTrigger direct)
-5. `GameMessageManager`가 `AchieveManager.Notify(messageType, delta)` 호출
+4. mission/achieve runtime 구독자 수신 (각 manager가 trigger를 직접 구독)
 
 ---
 

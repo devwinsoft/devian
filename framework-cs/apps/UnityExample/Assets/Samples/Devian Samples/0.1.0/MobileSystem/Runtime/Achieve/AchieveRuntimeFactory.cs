@@ -5,25 +5,29 @@ namespace Devian
 {
     public struct AchieveRuntimeCreateArgs
     {
+        public ACHIEVE_TYPE AchieveType { get; set; }
         public string AchieveId { get; set; }
         public string MessageId { get; set; }
         public int Level { get; set; }
         public int AchieveUid { get; set; }
+        public int Index { get; set; }
         public bool IsWaiting { get; set; }
         public GAME_MESSAGE_TYPE StatType { get; set; }
         public GAME_MESSAGE_SAVE_TYPE OpType { get; set; }
         public CBigInt ConditionValue { get; set; }
         public Func<CBigInt> ReadProgress { get; set; }
-        public Action<AchieveRuntime> OnChanged { get; set; }
-        public Action<AchieveRuntime> OnClaimable { get; set; }
+        public Action<AchieveRuntimeBase> OnChanged { get; set; }
+        public Action<AchieveRuntimeBase> OnClaimable { get; set; }
     }
 
     public struct AchieveRuntimeRestoreArgs
     {
+        public ACHIEVE_TYPE AchieveType { get; set; }
         public string AchieveId { get; set; }
         public string MessageId { get; set; }
         public int Level { get; set; }
         public int AchieveUid { get; set; }
+        public int Index { get; set; }
         public bool IsWaiting { get; set; }
         public CBigInt ProgressValue { get; set; }
         public bool IsCompleted { get; set; }
@@ -31,24 +35,26 @@ namespace Devian
         public GAME_MESSAGE_SAVE_TYPE OpType { get; set; }
         public CBigInt ConditionValue { get; set; }
         public Func<CBigInt> ReadProgress { get; set; }
-        public Action<AchieveRuntime> OnChanged { get; set; }
-        public Action<AchieveRuntime> OnClaimable { get; set; }
+        public Action<AchieveRuntimeBase> OnChanged { get; set; }
+        public Action<AchieveRuntimeBase> OnClaimable { get; set; }
     }
 
     public static class AchieveRuntimeFactory
     {
-        public static AchieveRuntime Create(AchieveRuntimeCreateArgs args)
+        public static AchieveRuntimeBase Create(AchieveRuntimeCreateArgs args)
         {
-            var runtime = new AchieveRuntime
-            {
-                achieveId = args.AchieveId ?? string.Empty,
-                messageId = args.MessageId ?? string.Empty,
-                achieveUid = args.AchieveUid,
-                level = args.Level,
-                progressValue = CBigInt.Zero,
-                isWaiting = args.IsWaiting,
-                isCompleted = false,
-            };
+            var runtime = createRuntime(args.AchieveType);
+            if (runtime == null)
+                return null;
+
+            runtime.achieveId = args.AchieveId ?? string.Empty;
+            runtime.messageId = args.MessageId ?? string.Empty;
+            runtime.achieveUid = args.AchieveUid;
+            runtime.level = args.Level;
+            runtime.index = args.Index;
+            runtime.progressValue = CBigInt.Zero;
+            runtime.isWaiting = args.IsWaiting;
+            runtime.isCompleted = false;
 
             if (args.IsWaiting)
             {
@@ -72,18 +78,20 @@ namespace Devian
             return runtime;
         }
 
-        public static AchieveRuntime Restore(AchieveRuntimeRestoreArgs args)
+        public static AchieveRuntimeBase Restore(AchieveRuntimeRestoreArgs args)
         {
-            var runtime = new AchieveRuntime
-            {
-                achieveId = args.AchieveId ?? string.Empty,
-                messageId = args.MessageId ?? string.Empty,
-                achieveUid = args.AchieveUid,
-                level = args.Level,
-                progressValue = args.ProgressValue,
-                isWaiting = args.IsWaiting && !args.IsCompleted,
-                isCompleted = args.IsCompleted,
-            };
+            var runtime = createRuntime(args.AchieveType);
+            if (runtime == null)
+                return null;
+
+            runtime.achieveId = args.AchieveId ?? string.Empty;
+            runtime.messageId = args.MessageId ?? string.Empty;
+            runtime.achieveUid = args.AchieveUid;
+            runtime.level = args.Level;
+            runtime.index = args.Index;
+            runtime.progressValue = args.ProgressValue;
+            runtime.isWaiting = args.IsWaiting && !args.IsCompleted;
+            runtime.isCompleted = args.IsCompleted;
 
             if (args.IsWaiting && !args.IsCompleted)
             {
@@ -105,6 +113,21 @@ namespace Devian
             }
 
             return runtime;
+        }
+
+        static AchieveRuntimeBase createRuntime(ACHIEVE_TYPE achieveType)
+        {
+            switch (achieveType)
+            {
+                case ACHIEVE_TYPE.ONCE:
+                    return new AchieveRuntimeOnce();
+
+                case ACHIEVE_TYPE.PASS:
+                    return new AchieveRuntimePass();
+
+                default:
+                    return null;
+            }
         }
     }
 }

@@ -101,6 +101,7 @@
 {"Id":"PURCHASE_RENTAL_LATEST_NOT_FOUND","Msg_key":"","Msg":"No recent rental purchase within 30 days."}
 {"Id":"PURCHASE_RESTORE_FAILED","Msg_key":"","Msg":"Restore transactions failed at store."}
 {"Id":"PURCHASE_SEASON_PASS_ALREADY_OWNED","Msg_key":"","Msg":"Season pass duplicate purchase is not allowed."}
+{"Id":"PURCHASE_SEASON_END_SOON_BLOCKED","Msg_key":"","Msg":"Product purchase is blocked near season end."}
 {"Id":"PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED","Msg_key":"","Msg":"ackPurchaseStoreConfirm callable failed."}
 {"Id":"PURCHASE_STORE_FAILED","Msg_key":"","Msg":"Purchase store failed"}
 {"Id":"PURCHASE_STORE_NOT_SET","Msg_key":"","Msg":"PurchaseStore not set. Call SetPurchaseStore()."}

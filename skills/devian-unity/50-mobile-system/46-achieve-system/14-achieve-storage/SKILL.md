@@ -27,7 +27,7 @@ AppliesTo: v10
 `AchieveStorage` 필드:
 - `schemaVersion`
 - `nextAchieveUid`
-- `runtimes: Dictionary<int, AchieveRuntime>`
+- `runtimes: Dictionary<int, AchieveRuntimeBase>`
 
 규칙:
 - `runtimes`는 업적 진행/claim 상태의 저장 정본이다.
@@ -44,16 +44,18 @@ AppliesTo: v10
 
 ```json
 {
-  "version": 12,
+  "version": 15,
   "achieve": {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "nextAchieveUid": 1,
     "runtimes": [
       {
+        "achieveType": 1,
         "achieveId": "...",
         "messageId": "...", // runtime의 conditionMsgId
         "achieveUid": 1,
         "level": 1,
+        "index": 0,
         "progressValue": { "base": 0, "pow": 0 },
         "isWaiting": false,
         "isCompleted": false
@@ -75,3 +77,4 @@ AppliesTo: v10
 - uid <= 0 항목은 무시
 - `nextAchieveUid <= 0`이면 1로 보정
 - 누락 키는 안전 기본값 사용
+- 구버전 payload에 `achieveType`이 없으면 table(`TB_ACHIEVE_ONCE`, `TB_ACHIEVE_PASS`) 기반으로 타입을 추론한다.

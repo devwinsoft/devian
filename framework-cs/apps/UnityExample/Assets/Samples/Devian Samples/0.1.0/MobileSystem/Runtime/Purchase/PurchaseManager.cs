@@ -15,15 +15,25 @@ namespace Devian
     {
         const string Tag = "PurchaseManager";
         const int MaxVerifyRecoveryRetries = 3;
+        const int DefaultSeasonPurchaseBlockedBeforeEndDays = 3;
+
+        [SerializeField] int _seasonPurchaseBlockedBeforeEndDays = DefaultSeasonPurchaseBlockedBeforeEndDays;
 
         readonly PurchaseStorage _storage = new();
 
         public PurchaseStorage Storage => _storage;
+        public int SeasonPurchaseBlockedBeforeEndDays => _seasonPurchaseBlockedBeforeEndDays;
 
         protected override void onInitAwake()
         {
+            _seasonPurchaseBlockedBeforeEndDays = Math.Max(0, _seasonPurchaseBlockedBeforeEndDays);
             SetProductCatalog(new GameProductCatalog());
             SetPurchaseStore(CreateDefaultStore());
+        }
+
+        public void SetSeasonPurchaseBlockedBeforeEndDays(int days)
+        {
+            _seasonPurchaseBlockedBeforeEndDays = Math.Max(0, days);
         }
 
         static IPurchaseStore CreateDefaultStore()
@@ -127,6 +137,48 @@ namespace Devian
             }
 
             return internalProductIdOrSeasonPassId;
+        }
+
+        CommonResult validateSeasonPurchaseWindow(PRODUCT product)
+        {
+            if (product == null || string.IsNullOrWhiteSpace(product.SeasonId))
+                return CommonResult.Ok();
+
+            var season = TB_SEASON.Get(product.SeasonId);
+            if (season == null)
+            {
+                return CommonResult.Failure(
+                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    $"Season not found for product: productId={product.InternalProductId}, seasonId={product.SeasonId}");
+            }
+
+            var seasonEndUtcMs = season.EndUtcTime?.utcTimeMs ?? 0L;
+            if (seasonEndUtcMs <= 0L)
+            {
+                return CommonResult.Failure(
+                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    $"Season end time is invalid: productId={product.InternalProductId}, seasonId={product.SeasonId}");
+            }
+
+            if (!TimeManager.TryGet(out var timeManager)
+                || timeManager == null
+                || !timeManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
+            {
+                return CommonResult.Failure(
+                    CommonErrorType.COMMON_SERVER,
+                    "Server time is unavailable. Initialize TimeManager before purchase.");
+            }
+
+            var seasonPurchaseBlockedBeforeEnd = TimeSpan.FromDays(_seasonPurchaseBlockedBeforeEndDays);
+            var blockStartUtcMs = seasonEndUtcMs - (long)seasonPurchaseBlockedBeforeEnd.TotalMilliseconds;
+            if (serverNowUtcMs >= blockStartUtcMs)
+            {
+                return CommonResult.Failure(
+                    CommonErrorType.PURCHASE_SEASON_END_SOON_BLOCKED,
+                    $"Product purchase is blocked near season end: blockDays={_seasonPurchaseBlockedBeforeEndDays}, productId={product.InternalProductId}, seasonId={product.SeasonId}");
+            }
+
+            return CommonResult.Ok();
         }
 
         string ResolveStoreProductId(string internalProductId)
@@ -563,6 +615,10 @@ namespace Devian
                 return CommonResult<PurchaseFinalResult>.Failure(
                     CommonErrorType.PURCHASE_PRODUCT_NOT_FOUND,
                     $"Product not found: {internalProductId}");
+
+            var seasonWindow = validateSeasonPurchaseWindow(product);
+            if (seasonWindow.IsFailure)
+                return CommonResult<PurchaseFinalResult>.Failure(seasonWindow.Error!);
 
             var kind = ProductKindToPurchaseKind(product.Kind);
             var result = await purchaseAndVerifyAsync(internalProductId, kind, ct);

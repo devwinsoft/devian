@@ -583,7 +583,7 @@ namespace Devian
             var message = getGameMessageStorageOrNull();
             var mission = getMissionStorageOrNull();
             var achieve = getAchieveStorageOrNull();
-            var leaderboardReward = getLeaderboardSeasonRewardStorageOrNull();
+            var leaderboardReward = getLeaderboardStorageOrNull();
             return SaveDataJsonCodec.Serialize(
                 inventory ?? new InventoryStorage(),
                 purchase ?? new PurchaseStorage(),
@@ -619,18 +619,18 @@ namespace Devian
             var messageManager = getGameMessageManagerOrNull();
             var missionManager = getMissionManagerOrNull();
             var achieveManager = getAchieveManagerOrNull();
-            var leaderboardSeasonRewardManager = getLeaderboardSeasonRewardManagerOrNull();
+            var leaderboardManager = getLeaderboardManagerOrNull();
             var message = messageManager != null ? messageManager.Storage : null;
             var mission = missionManager != null ? missionManager.Storage : null;
             var achieve = achieveManager != null ? achieveManager.Storage : null;
-            var leaderboardReward = leaderboardSeasonRewardManager != null ? leaderboardSeasonRewardManager.Storage : null;
+            var leaderboardReward = leaderboardManager != null ? leaderboardManager.Storage : null;
             if (inventory == null || purchase == null || account == null || message == null || mission == null || achieve == null || leaderboardReward == null)
                 return;
 
             messageManager.ClearStorage();
             missionManager.ClearStorage();
             achieveManager.ClearStorage();
-            leaderboardSeasonRewardManager.ClearStorage();
+            leaderboardManager.ClearStorage();
             SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, account, message, mission, achieve, leaderboardReward);
             applyLoadedAccountStorageToRuntime();
         }
@@ -643,7 +643,7 @@ namespace Devian
             getGameMessageManagerOrNull()?.ClearStorage();
             getMissionManagerOrNull()?.ClearStorage();
             getAchieveManagerOrNull()?.ClearStorage();
-            getLeaderboardSeasonRewardManagerOrNull()?.ClearStorage();
+            getLeaderboardManagerOrNull()?.ClearStorage();
             applyLoadedAccountStorageToRuntime();
         }
 
@@ -1201,11 +1201,11 @@ namespace Devian
             }
         }
 
-        private static LeaderboardSeasonRewardManager getLeaderboardSeasonRewardManagerOrNull()
+        private static LeaderboardManager getLeaderboardManagerOrNull()
         {
             try
             {
-                var manager = LeaderboardSeasonRewardManager.Instance;
+                var manager = LeaderboardManager.Instance;
                 return manager != null ? manager : null;
             }
             catch
@@ -1214,11 +1214,11 @@ namespace Devian
             }
         }
 
-        private static LeaderboardSeasonRewardStorage getLeaderboardSeasonRewardStorageOrNull()
+        private static LeaderboardSeasonRewardStorage getLeaderboardStorageOrNull()
         {
             try
             {
-                var manager = LeaderboardSeasonRewardManager.Instance;
+                var manager = LeaderboardManager.Instance;
                 return manager != null ? manager.Storage : null;
             }
             catch

@@ -17,11 +17,11 @@ Leaderboard 점수 제출 + 시즌 전환 보상 시스템의 모듈 경계와 �
 - 외부 API는 `leaderboardId`(내부 ID)만 사용한다.
 - 플랫폼 문자열 ID는 SSOT 매핑 레이어에만 존재한다.
 
-### 2) LeaderboardManager는 점수/스냅샷만 책임진다
+### 2) LeaderboardManager는 점수/스냅샷 + 시즌 보상을 책임진다
 
-- `ReportScoreAsync` / `GetPlayerSnapshotAsync`까지만 책임진다.
+- `ReportScoreAsync` / `GetPlayerSnapshotAsync` / `SyncSeasonTransitionRewardsAsync`를 책임진다.
 - 업적 Unlock/Sync는 `AchieveManager` 책임이다.
-- 시즌 보상 평가/지급은 `LeaderboardSeasonRewardManager` 책임이다.
+- 시즌 보상 평가/지급은 `LeaderboardManager` 내부 기능이다.
 
 연관: [46-achieve-system/01-policy](../../46-achieve-system/01-policy/SKILL.md)
 
@@ -47,7 +47,7 @@ Leaderboard 점수 제출 + 시즌 전환 보상 시스템의 모듈 경계와 �
 
 ### 7) Initialize는 명시적 호출이며 자동 초기화 금지
 
-- `LeaderboardManager.InitializeAsync(ct)` / `LeaderboardSeasonRewardManager.InitializeAsync(ct)`는 명시적으로 호출한다.
+- `LeaderboardManager.InitializeAsync(ct)`는 명시적으로 호출한다.
 - 초기화 전 API 호출은 실패 반환.
 
 ### 8) 미지원 플랫폼/에디터는 안전 실패
@@ -67,7 +67,4 @@ Leaderboard 점수 제출 + 시즌 전환 보상 시스템의 모듈 경계와 �
 - `InitializeAsync(ct)` -> `Task<CommonResult>`
 - `ReportScoreAsync(leaderboardId, ct)` -> `Task<CommonResult>`
 - `GetPlayerSnapshotAsync(leaderboardId, ct)` -> `Task<CommonResult<LeaderboardPlayerSnapshot>>`
-
-`LeaderboardSeasonRewardManager`
-- `InitializeAsync(ct)` -> `Task<CommonResult>`
 - `SyncSeasonTransitionRewardsAsync(ct)` -> `Task<CommonResult>`

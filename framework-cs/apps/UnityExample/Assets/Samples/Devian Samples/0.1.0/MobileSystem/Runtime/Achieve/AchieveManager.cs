@@ -48,8 +48,28 @@ namespace Devian
             }
         }
 
+        private sealed class AchieveTableRow
+        {
+            public ACHIEVE_TYPE achieveType;
+            public string AchieveId = string.Empty;
+            public bool IsActive;
+            public int Level;
+            public int OrderNum;
+            public string ReqMsgId = string.Empty;
+            public CBigInt? ReqValue;
+            public string ReqPassId = string.Empty;
+            public string ReqSeasonId = string.Empty;
+            public string ConditionMsgId = string.Empty;
+            public CBigInt? ConditionValue;
+            public string RewardGroupId = string.Empty;
+            public string AppleAchievementId = string.Empty;
+            public string GoogleAchievementId = string.Empty;
+        }
+
         private readonly Dictionary<string, AchievementMapEntry> _achievementById
             = new Dictionary<string, AchievementMapEntry>(StringComparer.Ordinal);
+        private readonly Dictionary<string, List<AchieveTableRow>> _rowsByAchieveId
+            = new Dictionary<string, List<AchieveTableRow>>(StringComparer.Ordinal);
 
         private readonly HashSet<string> _knownUnlockedAchievementIds
             = new HashSet<string>(StringComparer.Ordinal);
@@ -72,12 +92,12 @@ namespace Devian
         public bool IsInitialized => _initialized;
 
         public event Action<string> OnAchievementUnlocked;
-        public event Action<AchieveRuntime> OnRuntimeInitialized;
-        public event Action<AchieveRuntime> OnRuntimeActive;
-        public event Action<AchieveRuntime> OnRuntimeProgress;
-        public event Action<AchieveRuntime> OnRuntimeClaimable;
-        public event Action<AchieveRuntime> OnRuntimeLevelUp;
-        public event Action<AchieveRuntime, RewardData[]> OnRuntimeRewarded;
+        public event Action<AchieveRuntimeBase> OnRuntimeInitialized;
+        public event Action<AchieveRuntimeBase> OnRuntimeActive;
+        public event Action<AchieveRuntimeBase> OnRuntimeProgress;
+        public event Action<AchieveRuntimeBase> OnRuntimeClaimable;
+        public event Action<AchieveRuntimeBase> OnRuntimeLevelUp;
+        public event Action<AchieveRuntimeBase, RewardData[]> OnRuntimeRewarded;
 
         protected override void onInitAwake()
         {
@@ -134,7 +154,7 @@ namespace Devian
             if (_storage.runtimes.Count <= 0)
                 return;
 
-            var runtimes = new List<AchieveRuntime>(_storage.runtimes.Count);
+            var runtimes = new List<AchieveRuntimeBase>(_storage.runtimes.Count);
             foreach (var runtime in _storage.runtimes.Values)
             {
                 if (runtime != null)
@@ -147,8 +167,8 @@ namespace Devian
 
         bool needsRuntimeRebuild()
         {
-            var groupKeys = new HashSet<string>(TB_ACHIEVE.GetGroupKeys(), StringComparer.Ordinal);
-            var runtimeByAchieveId = new Dictionary<string, AchieveRuntime>(StringComparer.Ordinal);
+            var groupKeys = new HashSet<string>(_rowsByAchieveId.Keys, StringComparer.Ordinal);
+            var runtimeByAchieveId = new Dictionary<string, AchieveRuntimeBase>(StringComparer.Ordinal);
 
             foreach (var runtime in _storage.runtimes.Values)
             {
@@ -165,7 +185,10 @@ namespace Devian
                 if (!isEligibleRow(runtimeRow))
                     return true;
 
-                if (!string.Equals(runtime.messageId, runtimeRow!.ConditionMsgId, StringComparison.Ordinal))
+                if (!string.Equals(runtime.messageId, runtimeRow!.ConditionMsgId ?? string.Empty, StringComparison.Ordinal))
+                    return true;
+
+                if (runtime.RuntimeType != runtimeRow.achieveType)
                     return true;
 
                 if (runtime.isCompleted && runtime.isWaiting)
@@ -218,20 +241,21 @@ namespace Devian
             var nextRow = findNextRow(runtime.achieveId, runtime.level);
             if (nextRow != null && isEligibleRow(nextRow))
             {
-                if (hasActivationRequirement(nextRow, out _, out _, out _, out _))
+                if (hasActivationRequirement(nextRow, out _, out _, out _, out _, out _))
                 {
-                    runtime.LevelUpToWaiting(nextRow.Level, nextRow.ConditionMsgId);
+                    runtime.LevelUpToWaiting(nextRow.Level, toRuntimeIndex(nextRow), nextRow.ConditionMsgId);
                     tryActivateRuntime(runtime, nextRow, GAME_MESSAGE_TYPE.NONE, CBigInt.Zero);
                 }
-                else if (TryResolveMessage(nextRow.ConditionMsgId, out var nextMessage))
+                else if (tryResolveRuntimeBinding(nextRow, true, out var nextMessageId, out var nextStatType, out var nextOpType, out var nextConditionValue, out var nextReader))
                 {
                     runtime.LevelUp(
                         nextRow.Level,
-                        nextRow.ConditionMsgId,
-                        nextMessage.MessageType,
-                        nextMessage.SaveType,
-                        nextRow.ConditionValue!.Value,
-                        createExternalProgressReader(nextRow.ConditionMsgId, nextMessage.SaveType));
+                        toRuntimeIndex(nextRow),
+                        nextMessageId,
+                        nextStatType,
+                        nextOpType,
+                        nextConditionValue,
+                        nextReader);
                 }
                 else
                 {
@@ -247,9 +271,12 @@ namespace Devian
 
             emitRuntimeRewarded(runtime, apply.Value.AppliedRewards);
 
-            var unlock = await UnlockAchievementAsync(runtime.achieveId, ct);
-            if (unlock.IsFailure)
-                Debug.LogWarning($"[{Tag}] Platform unlock failed: achieveId={runtime.achieveId}, error={unlock.Error}");
+            if (runtime.RuntimeType == ACHIEVE_TYPE.ONCE)
+            {
+                var unlock = await UnlockAchievementAsync(runtime.achieveId, ct);
+                if (unlock.IsFailure)
+                    Debug.LogWarning($"[{Tag}] Platform unlock failed: achieveId={runtime.achieveId}, error={unlock.Error}");
+            }
 
             var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
             if (save.IsFailure)
@@ -580,7 +607,7 @@ namespace Devian
             }
         }
 
-        void emitRuntimeInitialized(AchieveRuntime runtime)
+        void emitRuntimeInitialized(AchieveRuntimeBase runtime)
         {
             _messageSystem.Notify(ACHIEVE_MESSAGE.RUNTIME_INIT, runtime);
 
@@ -598,7 +625,7 @@ namespace Devian
             }
         }
 
-        void emitRuntimeProgress(AchieveRuntime runtime)
+        void emitRuntimeProgress(AchieveRuntimeBase runtime)
         {
             _messageSystem.Notify(ACHIEVE_MESSAGE.RUNTIME_PROGRESS, runtime);
 
@@ -616,7 +643,7 @@ namespace Devian
             }
         }
 
-        void emitRuntimeActive(AchieveRuntime runtime)
+        void emitRuntimeActive(AchieveRuntimeBase runtime)
         {
             _messageSystem.Notify(ACHIEVE_MESSAGE.RUNTIME_ACTIVE, runtime);
 
@@ -634,7 +661,7 @@ namespace Devian
             }
         }
 
-        void emitRuntimeClaimable(AchieveRuntime runtime)
+        void emitRuntimeClaimable(AchieveRuntimeBase runtime)
         {
             _messageSystem.Notify(ACHIEVE_MESSAGE.RUNTIME_CLAIMABLE, runtime);
 
@@ -652,7 +679,7 @@ namespace Devian
             }
         }
 
-        void emitRuntimeLevelUp(AchieveRuntime runtime)
+        void emitRuntimeLevelUp(AchieveRuntimeBase runtime)
         {
             _messageSystem.Notify(ACHIEVE_MESSAGE.RUNTIME_LEVEL_UP, runtime);
 
@@ -670,7 +697,7 @@ namespace Devian
             }
         }
 
-        void emitRuntimeRewarded(AchieveRuntime runtime, RewardData[] rewards)
+        void emitRuntimeRewarded(AchieveRuntimeBase runtime, RewardData[] rewards)
         {
             var safeRewards = rewards ?? Array.Empty<RewardData>();
             _messageSystem.Notify(ACHIEVE_MESSAGE.RUNTIME_REWARDED, runtime, safeRewards);
@@ -691,11 +718,13 @@ namespace Devian
 
         void rebuildMappingCaches()
         {
+            rebuildAchieveRows();
+
             _achievementById.Clear();
-            foreach (var achieveId in TB_ACHIEVE.GetGroupKeys())
+            foreach (var achieveId in _rowsByAchieveId.Keys)
             {
                 var mappingRow = findAchievementMappingRow(achieveId);
-                if (mappingRow == null)
+                if (mappingRow == null || mappingRow.achieveType != ACHIEVE_TYPE.ONCE)
                     continue;
 
                 var entry = createAchievementMapEntry(mappingRow);
@@ -710,19 +739,108 @@ namespace Devian
             }
         }
 
-        static ACHIEVE findAchievementMappingRow(string achieveId)
+        void rebuildAchieveRows()
+        {
+            _rowsByAchieveId.Clear();
+
+            foreach (var row in TB_ACHIEVE_ONCE.GetAll())
+            {
+                addAchieveRow(new AchieveTableRow
+                {
+                    achieveType = ACHIEVE_TYPE.ONCE,
+                    AchieveId = row.AchieveId ?? string.Empty,
+                    IsActive = row.IsActive,
+                    Level = row.Level,
+                    OrderNum = row.OrderNum,
+                    ReqMsgId = row.ReqMsgId ?? string.Empty,
+                    ReqValue = row.ReqValue,
+                    ReqPassId = string.Empty,
+                    ReqSeasonId = string.Empty,
+                    ConditionMsgId = row.ConditionMsgId ?? string.Empty,
+                    ConditionValue = row.ConditionValue,
+                    RewardGroupId = row.RewardGroupId ?? string.Empty,
+                    AppleAchievementId = row.AppleAchievementId ?? string.Empty,
+                    GoogleAchievementId = row.GoogleAchievementId ?? string.Empty,
+                });
+            }
+
+            foreach (var row in TB_ACHIEVE_PASS.GetAll())
+            {
+                addAchieveRow(new AchieveTableRow
+                {
+                    achieveType = ACHIEVE_TYPE.PASS,
+                    AchieveId = row.AchieveId ?? string.Empty,
+                    IsActive = row.IsActive,
+                    Level = row.Level,
+                    OrderNum = row.OrderNum,
+                    ReqMsgId = string.Empty,
+                    ReqValue = null,
+                    ReqPassId = row.ReqPassId ?? string.Empty,
+                    ReqSeasonId = row.ReqSeasonId ?? string.Empty,
+                    ConditionMsgId = row.ConditionMsgId ?? string.Empty,
+                    ConditionValue = row.ConditionValue,
+                    RewardGroupId = row.RewardGroupId ?? string.Empty,
+                    AppleAchievementId = string.Empty,
+                    GoogleAchievementId = string.Empty,
+                });
+            }
+
+            foreach (var rows in _rowsByAchieveId.Values)
+            {
+                rows.Sort((x, y) =>
+                {
+                    var levelCompare = x.Level.CompareTo(y.Level);
+                    if (levelCompare != 0)
+                        return levelCompare;
+
+                    var orderCompare = x.OrderNum.CompareTo(y.OrderNum);
+                    if (orderCompare != 0)
+                        return orderCompare;
+
+                    return x.achieveType.CompareTo(y.achieveType);
+                });
+            }
+        }
+
+        void addAchieveRow(AchieveTableRow row)
+        {
+            if (row == null)
+                return;
+
+            var achieveId = (row.AchieveId ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(achieveId))
+                return;
+
+            row.AchieveId = achieveId;
+
+            if (!_rowsByAchieveId.TryGetValue(achieveId, out var rows))
+            {
+                rows = new List<AchieveTableRow>();
+                _rowsByAchieveId[achieveId] = rows;
+            }
+
+            if (rows.Count > 0 && rows[0].achieveType != row.achieveType)
+            {
+                Debug.LogError($"[{Tag}] Mixed achieve types in same group: achieveId='{achieveId}'.");
+                return;
+            }
+
+            rows.Add(row);
+        }
+
+        AchieveTableRow findAchievementMappingRow(string achieveId)
         {
             var levelOne = findStartRow(achieveId);
             if (levelOne != null)
                 return levelOne;
 
-            foreach (var row in TB_ACHIEVE.GetByGroup(achieveId))
-                return row;
+            if (!_rowsByAchieveId.TryGetValue(achieveId, out var rows) || rows == null || rows.Count <= 0)
+                return null;
 
-            return null;
+            return rows[0];
         }
 
-        static AchievementMapEntry createAchievementMapEntry(ACHIEVE row)
+        static AchievementMapEntry createAchievementMapEntry(AchieveTableRow row)
         {
             var achieveId = (row?.AchieveId ?? string.Empty).Trim();
             return new AchievementMapEntry
@@ -748,7 +866,7 @@ namespace Devian
 
         void ensureAchievementRuntimes()
         {
-            var groupKeys = new HashSet<string>(TB_ACHIEVE.GetGroupKeys(), StringComparer.Ordinal);
+            var groupKeys = new HashSet<string>(_rowsByAchieveId.Keys, StringComparer.Ordinal);
             var seenAchieveIds = new HashSet<string>(StringComparer.Ordinal);
             var removeKeys = new List<int>();
 
@@ -795,7 +913,7 @@ namespace Devian
                 var startRow = findStartRow(groupKey);
                 if (startRow == null)
                 {
-                    if (TB_ACHIEVE.GetByGroup(groupKey).Count > 0)
+                    if (_rowsByAchieveId.TryGetValue(groupKey, out var rows) && rows.Count > 0)
                         Debug.LogError($"[{Tag}] Missing level=1 achieve row for achieveId='{groupKey}'.");
                     continue;
                 }
@@ -811,21 +929,20 @@ namespace Devian
                 emitRuntimeInitialized(created);
             }
 
-            // TOTAL_* requirement rows can be activated immediately from stored message stats.
             tryActivateWaitingRuntimes(GAME_MESSAGE_TYPE.NONE, CBigInt.Zero);
         }
 
-        void onRuntimeChanged(AchieveRuntime runtime)
+        void onRuntimeChanged(AchieveRuntimeBase runtime)
         {
             emitRuntimeProgress(runtime);
         }
 
-        void onRuntimeClaimable(AchieveRuntime runtime)
+        void onRuntimeClaimable(AchieveRuntimeBase runtime)
         {
             emitRuntimeClaimable(runtime);
         }
 
-        AchieveRuntime restoreRuntimeForRow(AchieveRuntime existing, ACHIEVE row)
+        AchieveRuntimeBase restoreRuntimeForRow(AchieveRuntimeBase existing, AchieveTableRow row)
         {
             if (existing == null || row == null)
                 return null;
@@ -834,10 +951,12 @@ namespace Devian
             {
                 return AchieveRuntimeFactory.Restore(new AchieveRuntimeRestoreArgs
                 {
+                    AchieveType = row.achieveType,
                     AchieveId = existing.achieveId,
                     MessageId = row.ConditionMsgId,
                     AchieveUid = existing.achieveUid,
                     Level = existing.level,
+                    Index = toRuntimeIndex(row),
                     IsWaiting = true,
                     ProgressValue = CBigInt.Zero,
                     IsCompleted = false,
@@ -850,43 +969,44 @@ namespace Devian
                 });
             }
 
-            if (!TryResolveMessage(row.ConditionMsgId, out var message))
-            {
-                Debug.LogError($"[{Tag}] MESSAGE not found for achieve: achieveId='{row.AchieveId}', conditionMsgId='{row.ConditionMsgId}'.");
+            if (!tryResolveRuntimeBinding(row, true, out var messageId, out var statType, out var opType, out var conditionValue, out var readProgress))
                 return null;
-            }
 
             return AchieveRuntimeFactory.Restore(new AchieveRuntimeRestoreArgs
             {
+                AchieveType = row.achieveType,
                 AchieveId = existing.achieveId,
-                MessageId = row.ConditionMsgId,
+                MessageId = messageId,
                 AchieveUid = existing.achieveUid,
                 Level = existing.level,
+                Index = toRuntimeIndex(row),
                 IsWaiting = false,
                 ProgressValue = existing.progressValue,
                 IsCompleted = existing.isCompleted,
-                StatType = message.MessageType,
-                OpType = message.SaveType,
-                ConditionValue = row.ConditionValue!.Value,
-                ReadProgress = createExternalProgressReader(row.ConditionMsgId, message.SaveType),
+                StatType = statType,
+                OpType = opType,
+                ConditionValue = conditionValue,
+                ReadProgress = readProgress,
                 OnChanged = onRuntimeChanged,
                 OnClaimable = onRuntimeClaimable,
             });
         }
 
-        AchieveRuntime createRuntimeForRow(ACHIEVE row)
+        AchieveRuntimeBase createRuntimeForRow(AchieveTableRow row)
         {
             if (row == null)
                 return null;
 
             var achieveUid = _storage.AllocateAchieveUid();
-            if (hasActivationRequirement(row, out _, out _, out _, out _))
+            if (hasActivationRequirement(row, out _, out _, out _, out _, out _))
             {
                 return AchieveRuntimeFactory.Create(new AchieveRuntimeCreateArgs
                 {
+                    AchieveType = row.achieveType,
                     AchieveId = row.AchieveId,
                     MessageId = row.ConditionMsgId,
                     Level = row.Level,
+                    Index = toRuntimeIndex(row),
                     AchieveUid = achieveUid,
                     IsWaiting = true,
                     StatType = GAME_MESSAGE_TYPE.NONE,
@@ -898,23 +1018,22 @@ namespace Devian
                 });
             }
 
-            if (!TryResolveMessage(row.ConditionMsgId, out var message))
-            {
-                Debug.LogError($"[{Tag}] MESSAGE not found for achieve: achieveId='{row.AchieveId}', conditionMsgId='{row.ConditionMsgId}'.");
+            if (!tryResolveRuntimeBinding(row, true, out var messageId, out var statType, out var opType, out var conditionValue, out var readProgress))
                 return null;
-            }
 
             return AchieveRuntimeFactory.Create(new AchieveRuntimeCreateArgs
             {
+                AchieveType = row.achieveType,
                 AchieveId = row.AchieveId,
-                MessageId = row.ConditionMsgId,
+                MessageId = messageId,
                 Level = row.Level,
+                Index = toRuntimeIndex(row),
                 AchieveUid = achieveUid,
                 IsWaiting = false,
-                StatType = message.MessageType,
-                OpType = message.SaveType,
-                ConditionValue = row.ConditionValue!.Value,
-                ReadProgress = createExternalProgressReader(row.ConditionMsgId, message.SaveType),
+                StatType = statType,
+                OpType = opType,
+                ConditionValue = conditionValue,
+                ReadProgress = readProgress,
                 OnChanged = onRuntimeChanged,
                 OnClaimable = onRuntimeClaimable,
             });
@@ -925,7 +1044,7 @@ namespace Devian
             if (_storage.runtimes.Count <= 0)
                 return;
 
-            var runtimes = new List<AchieveRuntime>(_storage.runtimes.Count);
+            var runtimes = new List<AchieveRuntimeBase>(_storage.runtimes.Count);
             foreach (var runtime in _storage.runtimes.Values)
             {
                 if (runtime != null)
@@ -945,29 +1064,26 @@ namespace Devian
             }
         }
 
-        bool tryActivateRuntime(AchieveRuntime runtime, ACHIEVE row, GAME_MESSAGE_TYPE triggeredType, CBigInt triggeredValue)
+        bool tryActivateRuntime(AchieveRuntimeBase runtime, AchieveTableRow row, GAME_MESSAGE_TYPE triggeredType, CBigInt triggeredValue)
         {
             if (runtime == null || row == null || runtime.isCompleted || !runtime.isWaiting)
                 return false;
 
-            if (hasActivationRequirement(row, out var reqMessage, out var reqValue, out var reqPassId, out var hasReqMessage)
-                && !isRequirementSatisfied(row, hasReqMessage, reqMessage, reqValue, reqPassId, triggeredType, triggeredValue))
+            if (hasActivationRequirement(row, out var reqMessage, out var reqValue, out var reqPassId, out var reqSeasonId, out var hasReqMessage)
+                && !isRequirementSatisfied(row, hasReqMessage, reqMessage, reqValue, reqPassId, reqSeasonId, triggeredType, triggeredValue))
             {
                 return false;
             }
 
-            if (!TryResolveMessage(row.ConditionMsgId, out var conditionMessage))
-            {
-                Debug.LogError($"[{Tag}] MESSAGE not found for achieve: achieveId='{row.AchieveId}', conditionMsgId='{row.ConditionMsgId}'.");
+            if (!tryResolveRuntimeBinding(row, true, out var messageId, out var statType, out var opType, out var conditionValue, out var readProgress))
                 return false;
-            }
 
             runtime.Bind(
-                row.ConditionMsgId,
-                conditionMessage.MessageType,
-                conditionMessage.SaveType,
-                row.ConditionValue!.Value,
-                createExternalProgressReader(row.ConditionMsgId, conditionMessage.SaveType),
+                messageId,
+                statType,
+                opType,
+                conditionValue,
+                readProgress,
                 onRuntimeChanged,
                 onRuntimeClaimable);
             emitRuntimeActive(runtime);
@@ -979,7 +1095,7 @@ namespace Devian
             if (_storage.runtimes.Count <= 0)
                 return;
 
-            var runtimes = new List<AchieveRuntime>(_storage.runtimes.Count);
+            var runtimes = new List<AchieveRuntimeBase>(_storage.runtimes.Count);
             foreach (var runtime in _storage.runtimes.Values)
             {
                 if (runtime != null)
@@ -990,9 +1106,9 @@ namespace Devian
                 runtime.OnMessageStatUpdated(messageType, messageDelta);
         }
 
-        AchieveRuntime findRuntime(string achieveId)
+        AchieveRuntimeBase findRuntime(string achieveId)
         {
-            AchieveRuntime found = null;
+            AchieveRuntimeBase found = null;
             foreach (var runtime in _storage.runtimes.Values)
             {
                 if (runtime == null)
@@ -1013,40 +1129,50 @@ namespace Devian
             return found;
         }
 
-        static bool isEligibleRow(ACHIEVE row)
+        bool isEligibleRow(AchieveTableRow row)
         {
-            return row != null
-                   && row.IsActive
-                   && row.ConditionValue.HasValue
-                   && TryResolveMessage(row.ConditionMsgId, out var message)
-                   && message.SaveType != GAME_MESSAGE_SAVE_TYPE.NONE;
+            if (row == null || !row.IsActive)
+                return false;
+
+            return tryResolveRuntimeBinding(row, false, out _, out _, out _, out _, out _);
         }
 
         bool hasActivationRequirement(
-            ACHIEVE row,
+            AchieveTableRow row,
             out MESSAGE reqMessage,
             out CBigInt reqValue,
             out string reqPassId,
+            out string reqSeasonId,
             out bool hasReqMessage)
         {
             reqMessage = null;
             reqValue = CBigInt.Zero;
             reqPassId = string.Empty;
+            reqSeasonId = string.Empty;
             hasReqMessage = false;
 
             if (row == null)
                 return false;
 
             reqPassId = (row.ReqPassId ?? string.Empty).Trim();
+            reqSeasonId = (row.ReqSeasonId ?? string.Empty).Trim();
             var hasReqPass = !string.IsNullOrWhiteSpace(reqPassId);
-            hasReqMessage = !string.IsNullOrWhiteSpace(row.ReqMsgId);
+            var hasReqSeason = !string.IsNullOrWhiteSpace(reqSeasonId);
 
-            if (!hasReqMessage)
+            if (hasReqSeason && TB_SEASON.Get(reqSeasonId) == null)
             {
-                return hasReqPass;
+                Debug.LogError($"[{Tag}] Invalid req season for achieve: achieveId='{row.AchieveId}', reqSeasonId='{row.ReqSeasonId}'.");
+                return true;
             }
 
-            if (string.IsNullOrWhiteSpace(row.ReqMsgId) || !row.ReqValue.HasValue)
+            if (row.achieveType == ACHIEVE_TYPE.PASS)
+                return hasReqPass || hasReqSeason;
+
+            hasReqMessage = !string.IsNullOrWhiteSpace(row.ReqMsgId);
+            if (!hasReqMessage)
+                return hasReqPass || hasReqSeason;
+
+            if (!row.ReqValue.HasValue)
             {
                 Debug.LogError($"[{Tag}] Invalid req condition for achieve: achieveId='{row.AchieveId}', reqMsgId='{row.ReqMsgId}', reqValue='{row.ReqValue}'.");
                 return true;
@@ -1063,12 +1189,13 @@ namespace Devian
             return true;
         }
 
-        static bool isRequirementSatisfied(
-            ACHIEVE row,
+        bool isRequirementSatisfied(
+            AchieveTableRow row,
             bool hasReqMessage,
             MESSAGE reqMessage,
             CBigInt reqValue,
             string reqPassId,
+            string reqSeasonId,
             GAME_MESSAGE_TYPE triggeredType,
             CBigInt triggeredValue)
         {
@@ -1081,8 +1208,17 @@ namespace Devian
                 if (inventoryManager == null)
                     return false;
 
-                if (!inventoryManager.Storage.HasPass(reqPassId))
+                if (!string.IsNullOrWhiteSpace(reqPassId)
+                    && !inventoryManager.Storage.HasPass(reqPassId))
+                {
                     return false;
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(reqSeasonId)
+                && !isSeasonRequirementSatisfied(reqSeasonId))
+            {
+                return false;
             }
 
             if (!hasReqMessage)
@@ -1105,15 +1241,40 @@ namespace Devian
             return triggeredValue >= reqValue;
         }
 
+        static bool isSeasonRequirementSatisfied(string reqSeasonId)
+        {
+            if (string.IsNullOrWhiteSpace(reqSeasonId))
+                return false;
+
+            var season = TB_SEASON.Get(reqSeasonId);
+            if (season == null)
+                return false;
+
+            var seasonStartUtcMs = season.StartUtcTime?.utcTimeMs ?? 0L;
+            var seasonEndUtcMs = season.EndUtcTime?.utcTimeMs ?? 0L;
+            if (seasonStartUtcMs <= 0L || seasonEndUtcMs <= seasonStartUtcMs)
+                return false;
+
+            if (!TimeManager.TryGet(out var timeManager)
+                || timeManager == null
+                || !timeManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
+                return false;
+
+            return serverNowUtcMs >= seasonStartUtcMs && serverNowUtcMs < seasonEndUtcMs;
+        }
+
         static bool isTotalSaveType(GAME_MESSAGE_SAVE_TYPE saveType)
         {
             return saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
                    || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX;
         }
 
-        static ACHIEVE findRow(string achieveId, int level)
+        AchieveTableRow findRow(string achieveId, int level)
         {
-            foreach (var row in TB_ACHIEVE.GetByGroup(achieveId))
+            if (!_rowsByAchieveId.TryGetValue(achieveId, out var rows))
+                return null;
+
+            foreach (var row in rows)
             {
                 if (row.Level == level)
                     return row;
@@ -1122,9 +1283,12 @@ namespace Devian
             return null;
         }
 
-        static ACHIEVE findStartRow(string achieveId)
+        AchieveTableRow findStartRow(string achieveId)
         {
-            foreach (var row in TB_ACHIEVE.GetByGroup(achieveId))
+            if (!_rowsByAchieveId.TryGetValue(achieveId, out var rows))
+                return null;
+
+            foreach (var row in rows)
             {
                 if (row.Level == 1)
                     return row;
@@ -1133,10 +1297,13 @@ namespace Devian
             return null;
         }
 
-        static ACHIEVE findNextRow(string achieveId, int level)
+        AchieveTableRow findNextRow(string achieveId, int level)
         {
-            ACHIEVE next = null;
-            foreach (var row in TB_ACHIEVE.GetByGroup(achieveId))
+            if (!_rowsByAchieveId.TryGetValue(achieveId, out var rows))
+                return null;
+
+            AchieveTableRow next = null;
+            foreach (var row in rows)
             {
                 if (row.Level <= level)
                     continue;
@@ -1146,6 +1313,73 @@ namespace Devian
             }
 
             return next;
+        }
+
+        static int toRuntimeIndex(AchieveTableRow row)
+        {
+            return row != null ? Math.Max(0, row.OrderNum - 1) : 0;
+        }
+
+        bool tryResolveRuntimeBinding(
+            AchieveTableRow row,
+            bool logError,
+            out string messageId,
+            out GAME_MESSAGE_TYPE statType,
+            out GAME_MESSAGE_SAVE_TYPE opType,
+            out CBigInt conditionValue,
+            out Func<CBigInt> readProgress)
+        {
+            messageId = string.Empty;
+            statType = GAME_MESSAGE_TYPE.NONE;
+            opType = GAME_MESSAGE_SAVE_TYPE.NONE;
+            conditionValue = CBigInt.Zero;
+            readProgress = null;
+
+            if (row == null)
+                return false;
+
+            var conditionMsgId = (row.ConditionMsgId ?? string.Empty).Trim();
+            if (string.IsNullOrEmpty(conditionMsgId))
+            {
+                if (row.achieveType == ACHIEVE_TYPE.ONCE)
+                {
+                    if (logError)
+                    {
+                        Debug.LogError(
+                            $"[{Tag}] Invalid once achieve condition: achieveId='{row.AchieveId}', conditionMsgId='{row.ConditionMsgId}', conditionValue='{row.ConditionValue}'.");
+                    }
+
+                    return false;
+                }
+
+                conditionValue = CBigInt.Zero;
+                return true;
+            }
+
+            if (!row.ConditionValue.HasValue)
+            {
+                if (logError)
+                {
+                    Debug.LogError(
+                        $"[{Tag}] Invalid achieve condition value: achieveId='{row.AchieveId}', conditionMsgId='{conditionMsgId}', conditionValue='{row.ConditionValue}'.");
+                }
+
+                return false;
+            }
+
+            if (!TryResolveMessage(conditionMsgId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            {
+                if (logError)
+                    Debug.LogError($"[{Tag}] MESSAGE not found for achieve: achieveId='{row.AchieveId}', conditionMsgId='{conditionMsgId}'.");
+                return false;
+            }
+
+            messageId = conditionMsgId;
+            statType = message.MessageType;
+            opType = message.SaveType;
+            conditionValue = row.ConditionValue.Value;
+            readProgress = createExternalProgressReader(conditionMsgId, message.SaveType);
+            return true;
         }
 
         static bool TryResolveMessage(string messageId, out MESSAGE message)

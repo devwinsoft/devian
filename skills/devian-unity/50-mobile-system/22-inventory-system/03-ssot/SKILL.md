@@ -208,4 +208,4 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 
 사용 목적:
 
-- `ACHIEVE.reqPassId` 조건이 있는 runtime의 `WAIT -> ACTIVE` 전이를 위해 Pass 변동을 구독한다.
+- `ACHIEVE_PASS.reqPassId` 조건이 있는 runtime의 `WAIT -> ACTIVE` 전이를 위해 Pass 변동을 구독한다.

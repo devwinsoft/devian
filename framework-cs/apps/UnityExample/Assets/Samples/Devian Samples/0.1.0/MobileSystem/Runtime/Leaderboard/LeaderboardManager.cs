@@ -17,6 +17,8 @@ namespace Devian
     public sealed class LeaderboardManager : CompoSingleton<LeaderboardManager>
     {
         private const string Tag = nameof(LeaderboardManager);
+        private static readonly TimeSpan SeasonRewardGracePeriod = TimeSpan.FromMinutes(10);
+        internal static long SeasonRewardGracePeriodMs => (long)SeasonRewardGracePeriod.TotalMilliseconds;
 
         private enum RuntimePlatformKind
         {
@@ -93,12 +95,15 @@ namespace Devian
 
         private readonly Dictionary<string, LeaderboardMapEntry> _leaderboardById
             = new Dictionary<string, LeaderboardMapEntry>(StringComparer.Ordinal);
+        private readonly LeaderboardSeasonRewardStorage _storage = new();
 
         private readonly SemaphoreSlim _initializeGate = new SemaphoreSlim(1, 1);
         private static readonly CBigInt LongMaxScore = CBigInt.FromLong(long.MaxValue);
 
         private ILeaderboardPlatformAdapter _adapter;
         private bool _initialized;
+        public bool IsInitialized => _initialized;
+        public LeaderboardSeasonRewardStorage Storage => _storage;
 
         protected override void onInitAwake()
         {
@@ -127,6 +132,11 @@ namespace Devian
             {
                 _initializeGate.Release();
             }
+        }
+
+        public void ClearStorage()
+        {
+            _storage.Clear();
         }
 
         public async Task<CommonResult> ReportScoreAsync(string leaderboardId, CancellationToken ct = default)
@@ -163,6 +173,114 @@ namespace Devian
                 return CommonResult<LeaderboardPlayerSnapshot>.Failure(resolve.Error!);
 
             return await _adapter.LoadPlayerSnapshotAsync(platformLeaderboardId, entry!.InternalId, ct);
+        }
+
+        public async Task<CommonResult> SyncSeasonTransitionRewardsAsync(CancellationToken ct = default)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var guard = ensureInitialized();
+            if (guard.IsFailure)
+                return guard;
+
+            if (!MissionManager.TryGet(out var missionManager) || missionManager == null)
+                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, "MissionManager is not initialized.");
+
+            if (!missionManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
+                return CommonResult.Ok();
+
+            var activeRows = collectActiveSeasonRows();
+            if (activeRows.Count <= 0)
+                return CommonResult.Ok();
+
+            var hasAnyClaimWrite = false;
+            foreach (var mode in GetAllModes())
+            {
+                if (mode == LEADERBOARD_MODE.NONE)
+                    continue;
+
+                if (!tryFindCurrentSeasonStart(activeRows, mode, serverNowUtcMs, out var currentSeasonStartUtcMs))
+                    continue;
+
+                if (!tryFindPreviousSeasonRow(activeRows, mode, currentSeasonStartUtcMs, out var prevRow) || prevRow == null)
+                    continue;
+
+                if (!IsSeasonRewardEvaluationReady(getSeasonEndUtcMs(prevRow), serverNowUtcMs))
+                    continue;
+
+                var claimKey = buildClaimKey(prevRow.LeaderboardId);
+                if (_storage.TryGetClaim(claimKey, out _))
+                    continue;
+
+                var snapshotResult = await GetPlayerSnapshotAsync(prevRow.LeaderboardId, ct);
+                if (snapshotResult.IsFailure)
+                {
+                    Debug.LogWarning($"[{Tag}] Snapshot load failed: leaderboardId={prevRow.LeaderboardId}, error={snapshotResult.Error}");
+                    continue;
+                }
+
+                var snapshot = snapshotResult.Value;
+                if (snapshot.Status == LeaderboardPlayerSnapshotStatus.PlatformUnavailable
+                    || snapshot.Status == LeaderboardPlayerSnapshotStatus.NotLoggedIn
+                    || snapshot.Status == LeaderboardPlayerSnapshotStatus.Failed)
+                {
+                    continue;
+                }
+
+                if (snapshot.Status == LeaderboardPlayerSnapshotStatus.NoScore || !snapshot.HasScore)
+                {
+                    _storage.SetClaim(claimKey, new LeaderboardSeasonRewardClaimRecord
+                    {
+                        resultType = LeaderboardSeasonRewardResultType.NO_PARTICIPATION,
+                        rank = 0L,
+                        score = 0L,
+                        rewardGroupId = string.Empty,
+                        evaluatedAtServerUtcMs = serverNowUtcMs,
+                    });
+                    hasAnyClaimWrite = true;
+                    continue;
+                }
+
+                if (!tryResolveRewardGroupId(prevRow.LeaderboardId, snapshot.Rank, out var rewardGroupId))
+                {
+                    _storage.SetClaim(claimKey, new LeaderboardSeasonRewardClaimRecord
+                    {
+                        resultType = LeaderboardSeasonRewardResultType.RANK_OUT_OF_REWARD,
+                        rank = snapshot.Rank,
+                        score = snapshot.Score,
+                        rewardGroupId = string.Empty,
+                        evaluatedAtServerUtcMs = serverNowUtcMs,
+                    });
+                    hasAnyClaimWrite = true;
+                    continue;
+                }
+
+                var apply = RewardManager.Instance.ApplyRewardGroup(rewardGroupId);
+                if (apply.IsFailure)
+                {
+                    Debug.LogWarning($"[{Tag}] Reward apply failed: leaderboardId={prevRow.LeaderboardId}, rewardGroupId={rewardGroupId}, error={apply.Error}");
+                    continue;
+                }
+
+                _storage.SetClaim(claimKey, new LeaderboardSeasonRewardClaimRecord
+                {
+                    resultType = LeaderboardSeasonRewardResultType.CLAIMED,
+                    rank = snapshot.Rank,
+                    score = snapshot.Score,
+                    rewardGroupId = rewardGroupId,
+                    evaluatedAtServerUtcMs = serverNowUtcMs,
+                });
+                hasAnyClaimWrite = true;
+            }
+
+            if (!hasAnyClaimWrite)
+                return CommonResult.Ok();
+
+            var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
+            if (save.IsFailure)
+                return CommonResult.Failure(save.Error!);
+
+            return CommonResult.Ok();
         }
 
         [Obsolete("Use ReportScoreAsync(string leaderboardId, CancellationToken ct = default). Score is resolved from LEADERBOARD.messageId.")]
@@ -297,6 +415,155 @@ namespace Devian
         {
             return saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
                    || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX;
+        }
+
+        private static LEADERBOARD_MODE[] GetAllModes()
+        {
+            return (LEADERBOARD_MODE[])Enum.GetValues(typeof(LEADERBOARD_MODE));
+        }
+
+        private static List<LEADERBOARD> collectActiveSeasonRows()
+        {
+            var rows = new List<LEADERBOARD>();
+            foreach (var row in TB_LEADERBOARD.GetAll())
+            {
+                if (isActiveSeasonRow(row))
+                    rows.Add(row);
+            }
+
+            return rows;
+        }
+
+        private static bool isActiveSeasonRow(LEADERBOARD row)
+        {
+            if (row == null || !row.IsActive)
+                return false;
+
+            if (string.IsNullOrWhiteSpace(row.LeaderboardId))
+                return false;
+
+            var seasonStartUtcMs = getSeasonStartUtcMs(row);
+            var seasonEndUtcMs = getSeasonEndUtcMs(row);
+            if (seasonStartUtcMs <= 0L || seasonEndUtcMs <= seasonStartUtcMs)
+                return false;
+
+            return row.Mode != LEADERBOARD_MODE.NONE;
+        }
+
+        private static bool tryFindCurrentSeasonStart(
+            List<LEADERBOARD> rows,
+            LEADERBOARD_MODE mode,
+            long serverNowUtcMs,
+            out long seasonStartUtcMs)
+        {
+            seasonStartUtcMs = 0L;
+            var found = false;
+            foreach (var row in rows)
+            {
+                if (row == null || row.Mode != mode)
+                    continue;
+
+                var seasonStartUtcMsValue = getSeasonStartUtcMs(row);
+                var seasonEndUtcMsValue = getSeasonEndUtcMs(row);
+                if (serverNowUtcMs < seasonStartUtcMsValue || serverNowUtcMs >= seasonEndUtcMsValue)
+                    continue;
+
+                if (!found || seasonStartUtcMsValue < seasonStartUtcMs)
+                {
+                    seasonStartUtcMs = seasonStartUtcMsValue;
+                    found = true;
+                }
+            }
+
+            return found;
+        }
+
+        private static bool tryFindPreviousSeasonRow(
+            List<LEADERBOARD> rows,
+            LEADERBOARD_MODE mode,
+            long currentSeasonStartUtcMs,
+            out LEADERBOARD seasonRow)
+        {
+            seasonRow = null;
+            long latestEndUtcMs = long.MinValue;
+
+            foreach (var row in rows)
+            {
+                if (row == null || row.Mode != mode)
+                    continue;
+
+                var seasonEndUtcMs = getSeasonEndUtcMs(row);
+                if (seasonEndUtcMs > currentSeasonStartUtcMs)
+                    continue;
+
+                if (seasonEndUtcMs > latestEndUtcMs)
+                {
+                    latestEndUtcMs = seasonEndUtcMs;
+                    seasonRow = row;
+                    continue;
+                }
+
+                if (seasonEndUtcMs == latestEndUtcMs
+                    && seasonRow != null
+                    && string.CompareOrdinal(row.LeaderboardId, seasonRow.LeaderboardId) < 0)
+                {
+                    seasonRow = row;
+                }
+            }
+
+            return seasonRow != null;
+        }
+
+        private static string buildClaimKey(string leaderboardId)
+        {
+            return (leaderboardId ?? string.Empty).Trim();
+        }
+
+        private static bool tryResolveRewardGroupId(string leaderboardId, long rank, out string rewardGroupId)
+        {
+            rewardGroupId = string.Empty;
+            if (string.IsNullOrWhiteSpace(leaderboardId) || rank <= 0L)
+                return false;
+
+            var rewardRows = TB_LEADERBOARD_REWARD.GetByGroup(leaderboardId.Trim());
+            if (rewardRows == null || rewardRows.Count <= 0)
+                return false;
+
+            for (var i = 0; i < rewardRows.Count; i++)
+            {
+                var row = rewardRows[i];
+                if (row == null)
+                    continue;
+
+                if (row.RankFrom <= 0L || row.RankTo < row.RankFrom)
+                    continue;
+
+                if (rank < row.RankFrom || rank > row.RankTo)
+                    continue;
+
+                if (string.IsNullOrWhiteSpace(row.RewardGroupId))
+                    return false;
+
+                rewardGroupId = row.RewardGroupId.Trim();
+                return rewardGroupId.Length > 0;
+            }
+
+            return false;
+        }
+
+        private static long getSeasonStartUtcMs(LEADERBOARD row)
+        {
+            return row?.SeasonStartUtc?.utcTimeMs ?? 0L;
+        }
+
+        private static long getSeasonEndUtcMs(LEADERBOARD row)
+        {
+            return row?.SeasonEndUtc?.utcTimeMs ?? 0L;
+        }
+
+        internal static bool IsSeasonRewardEvaluationReady(long prevSeasonEndUtcMs, long serverNowUtcMs)
+        {
+            return serverNowUtcMs >= prevSeasonEndUtcMs + SeasonRewardGracePeriodMs;
         }
 
         private static LeaderboardPlayerSnapshot createSnapshot(

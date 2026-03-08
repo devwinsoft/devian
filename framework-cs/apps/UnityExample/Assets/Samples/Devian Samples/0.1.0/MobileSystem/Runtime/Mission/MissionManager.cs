@@ -70,17 +70,7 @@ namespace Devian
             var clock = await getMissionClockAsync(ct);
             if (clock.IsFailure)
                 return clock;
-
-            _storage.clockSnapshot = clock.Value;
-            _storage.clockReceivedAtClientUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-
-            if (_initialized)
-            {
-                rebuildRuntimeBindings();
-                pruneExpiredMissionState();
-            }
-
-            return clock;
+            return applyClockSnapshot(clock.Value);
         }
 
         public void RefreshRuntimes()

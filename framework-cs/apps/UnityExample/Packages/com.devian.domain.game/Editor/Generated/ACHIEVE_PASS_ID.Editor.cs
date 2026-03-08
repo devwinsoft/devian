@@ -10,30 +10,30 @@ using Devian.Domain.Game;
 
 namespace Devian
 {
-    /// <summary>Selector for ACHIEVE_ID</summary>
-    public class Game_ACHIEVE_ID_Selector : BaseEditorID_Selector
+    /// <summary>Selector for ACHIEVE_PASS_ID</summary>
+    public class Game_ACHIEVE_PASS_ID_Selector : BaseEditorID_Selector
     {
-        protected override string GetDisplayTypeName() => "ACHIEVE";
+        protected override string GetDisplayTypeName() => "ACHIEVE_PASS";
 
         public override void Reload()
         {
             ClearItems();
-            TB_ACHIEVE.Clear();
+            TB_ACHIEVE_PASS.Clear();
 
-            var textAssets = AssetManager.FindAssets<TextAsset>("ACHIEVE");
+            var textAssets = AssetManager.FindAssets<TextAsset>("ACHIEVE_PASS");
             foreach (var ta in textAssets)
             {
                 var assetPath = AssetDatabase.GetAssetPath(ta);
                 if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                TB_ACHIEVE.LoadFromNdjson(ta.text);
+                TB_ACHIEVE_PASS.LoadFromNdjson(ta.text);
                 break;
             }
 
-            foreach (var groupKey in TB_ACHIEVE.GetGroupKeys())
+            foreach (var groupKey in TB_ACHIEVE_PASS.GetGroupKeys())
             {
-                if (TB_ACHIEVE.TryGetGroupPrimaryKey(groupKey, out var pk))
+                if (TB_ACHIEVE_PASS.TryGetGroupPrimaryKey(groupKey, out var pk))
                 {
                     // key = PK string (applied to Value), display = groupKey
                     AddItem(pk.ToString(), groupKey.ToString());
@@ -42,14 +42,14 @@ namespace Devian
         }
     }
 
-    /// <summary>PropertyDrawer for ACHIEVE_ID</summary>
-    [CustomPropertyDrawer(typeof(ACHIEVE_ID))]
-    public class Game_ACHIEVE_ID_Drawer : BaseEditorID_Drawer<Game_ACHIEVE_ID_Selector>
+    /// <summary>PropertyDrawer for ACHIEVE_PASS_ID</summary>
+    [CustomPropertyDrawer(typeof(ACHIEVE_PASS_ID))]
+    public class Game_ACHIEVE_PASS_ID_Drawer : BaseEditorID_Drawer<Game_ACHIEVE_PASS_ID_Selector>
     {
-        protected override Game_ACHIEVE_ID_Selector GetSelector()
+        protected override Game_ACHIEVE_PASS_ID_Selector GetSelector()
         {
-            var w = ScriptableObject.CreateInstance<Game_ACHIEVE_ID_Selector>();
-            w.titleContent = new GUIContent("Select ACHIEVE");
+            var w = ScriptableObject.CreateInstance<Game_ACHIEVE_PASS_ID_Selector>();
+            w.titleContent = new GUIContent("Select ACHIEVE_PASS");
             w.ShowUtility();
             return w;
         }
@@ -60,17 +60,17 @@ namespace Devian
             if (valueProp.propertyType == SerializedPropertyType.Integer)
             {
                 var pk = valueProp.intValue;
-                TB_ACHIEVE.Clear();
-                var textAssets = AssetManager.FindAssets<TextAsset>("ACHIEVE");
+                TB_ACHIEVE_PASS.Clear();
+                var textAssets = AssetManager.FindAssets<TextAsset>("ACHIEVE_PASS");
                 foreach (var ta in textAssets)
                 {
                     var assetPath = AssetDatabase.GetAssetPath(ta);
                     if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))
                         continue;
-                    TB_ACHIEVE.LoadFromNdjson(ta.text);
+                    TB_ACHIEVE_PASS.LoadFromNdjson(ta.text);
                     break;
                 }
-                if (TB_ACHIEVE.TryGetGroupKeyByKey(pk, out var groupKey))
+                if (TB_ACHIEVE_PASS.TryGetGroupKeyByKey(pk, out var groupKey))
                     return groupKey.ToString();
                 return pk.ToString();
             }

@@ -12,7 +12,6 @@ AppliesTo: v10
 ### 1) 앱 시작/로그인
 
 - `LeaderboardManager.InitializeAsync(ct)`
-- `LeaderboardSeasonRewardManager.InitializeAsync(ct)`
 
 ### 2) 점수 갱신 시점
 
@@ -22,7 +21,7 @@ AppliesTo: v10
 
 ### 3) 시즌 전환 보상 평가 시점
 
-- foreground 전이/앱 시작 시 `SyncSeasonTransitionRewardsAsync(ct)` 호출
+- foreground 전이/앱 시작 시 `LeaderboardManager.SyncSeasonTransitionRewardsAsync(ct)` 호출
 - 서버 시간(`MissionManager.TryGetServerNowUtcMs`)이 없으면 스킵
 - 평가 대상: 현재 시즌의 직전 시즌(모드별)
 - grace period 통과 후(`+10분`)에만 평가

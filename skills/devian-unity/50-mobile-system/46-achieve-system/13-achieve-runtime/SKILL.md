@@ -3,7 +3,7 @@
 Status: ACTIVE
 AppliesTo: v10
 
-Achieve runtime(`AchieveRuntime`, `AchieveRuntimeFactory`) 규약 문서다.
+Achieve runtime(`AchieveRuntimeBase`, `AchieveRuntimeOnce`, `AchieveRuntimePass`, `AchieveRuntimeFactory`) 규약 문서다.
 
 ---
 
@@ -16,10 +16,12 @@ Achieve runtime(`AchieveRuntime`, `AchieveRuntimeFactory`) 규약 문서다.
 
 ## Runtime Model
 
+- `runtimeType`: `ACHIEVE_TYPE` (`ONCE`, `PASS`)
 - `achieveId`: 업적 그룹 ID
 - `messageId`: 현재 level의 `conditionMsgId` key
 - `achieveUid`: runtime uid
 - `level`: 현재 단계
+- `index`: UI 정렬 인덱스(`orderNum - 1`)
 - `progressValue`: projection value
 - `isWaiting`: req 조건 대기 상태
 - `isCompleted`: 완료 여부
@@ -39,8 +41,11 @@ Achieve runtime(`AchieveRuntime`, `AchieveRuntimeFactory`) 규약 문서다.
 - `LevelUp`에서 `SESSION_SUM`은 progress를 0으로 리셋한다.
 - `Detach`는 콜백/reader 참조를 해제한다.
 - period 개념은 없다.
-- WAIT 진입 사유는 `reqMsgId/reqValue` 또는 `reqPassId`다.
-- `reqPassId`가 있는 WAIT runtime은 Pass 소유 조건 충족 시 `ACTIVE`로 전이한다.
+- WAIT 진입 사유는 runtime 타입별 req 조건이다.
+  - `ONCE`: `reqMsgId/reqValue`
+  - `PASS`: `reqPassId` / `reqSeasonId`
+- `reqPassId`가 있는 `PASS` runtime은 Pass 소유 조건 충족 시 `ACTIVE`로 전이한다.
+- `reqSeasonId`가 있는 `PASS` runtime은 `TB_SEASON(startUtcTime/endUtcTime)`과 `TimeManager.serverNowUtcMs` 범위 조건 충족 시 `ACTIVE`로 전이한다.
 
 ---
 
@@ -57,6 +62,9 @@ Achieve runtime(`AchieveRuntime`, `AchieveRuntimeFactory`) 규약 문서다.
 
 - `Create`: 신규 runtime 생성 + (WAIT 또는 ACTIVE) bind
 - `Restore`: 저장값 복원 + (WAIT 또는 ACTIVE) bind
+- `AchieveType`에 맞는 runtime 클래스를 생성한다.
+  - `ONCE` -> `AchieveRuntimeOnce`
+  - `PASS` -> `AchieveRuntimePass`
 - restore 후 progress는 stat reader 값으로 동기화된다.
 
 ---

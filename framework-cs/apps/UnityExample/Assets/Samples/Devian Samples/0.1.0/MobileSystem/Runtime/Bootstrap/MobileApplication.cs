@@ -11,11 +11,11 @@ namespace Devian
     [RequireComponent(typeof(PurchaseManager))]
     [RequireComponent(typeof(AchieveManager))]
     [RequireComponent(typeof(LeaderboardManager))]
-    [RequireComponent(typeof(LeaderboardSeasonRewardManager))]
     [RequireComponent(typeof(GameMessageManager))]
     [RequireComponent(typeof(MissionManager))]
     [RequireComponent(typeof(SaveDataManager))]
     [RequireComponent(typeof(InputManager))]
+    [RequireComponent(typeof(TimeManager))]
     [RequireComponent(typeof(FirebaseManager))]
     [RequireComponent(typeof(AnalyzeManager))]
     public abstract class MobileApplication : ApplicationManager
@@ -156,14 +156,18 @@ namespace Devian
                 return;
             }
 
-            if (!LeaderboardSeasonRewardManager.TryGet(out var seasonRewardManager)
-                || seasonRewardManager == null
-                || !seasonRewardManager.IsInitialized)
+            var serverNowUtcMs = refresh.Value?.serverNowUtcMs ?? 0L;
+            if (serverNowUtcMs > 0L)
+                TimeManager.Instance.InitServerTime(serverNowUtcMs);
+
+            if (!LeaderboardManager.TryGet(out var leaderboardManager)
+                || leaderboardManager == null
+                || !leaderboardManager.IsInitialized)
             {
                 return;
             }
 
-            var syncSeasonReward = await seasonRewardManager.SyncSeasonTransitionRewardsAsync(CancellationToken.None);
+            var syncSeasonReward = await leaderboardManager.SyncSeasonTransitionRewardsAsync(CancellationToken.None);
             if (syncSeasonReward.IsFailure)
             {
                 Debug.LogWarning($"[MobileApplication] Season reward sync failed on foreground: {syncSeasonReward.Error}");

@@ -23,6 +23,8 @@ MobileSystem 샘플의 `LeaderboardManager` 설계 문서다.
 - `InitializeAsync(ct)` -> `Task<CommonResult>`
 - `ReportScoreAsync(leaderboardId, ct)` -> `Task<CommonResult>`
 - `GetPlayerSnapshotAsync(leaderboardId, ct)` -> `Task<CommonResult<LeaderboardPlayerSnapshot>>`
+- `SyncSeasonTransitionRewardsAsync(ct)` -> `Task<CommonResult>`
+- `ClearStorage()`
 
 obsolete:
 - `ReportScoreAsync(leaderboardId, score, ct)` (deprecated shim)
@@ -71,7 +73,7 @@ season reward 평가는 위 status를 그대로 사용한다.
 
 - 외부 API는 내부 `leaderboardId`만 사용
 - 업적 Unlock/Sync 로직 포함 금지 (`AchieveManager` 책임)
-- 시즌 보상 claim 상태 저장/관리 책임 없음 (`LeaderboardSeasonRewardManager` 책임)
+- 시즌 보상 claim 상태 저장/관리 책임은 `LeaderboardManager.Storage(LeaderboardSeasonRewardStorage)`가 가진다.
 - 미지원 플랫폼 안전 실패
 
 ---
@@ -79,5 +81,4 @@ season reward 평가는 위 status를 그대로 사용한다.
 ## Related
 
 - [03-ssot](../03-ssot/SKILL.md)
-- [13-leaderboard-season-reward-manager](../13-leaderboard-season-reward-manager/SKILL.md)
 - [45-game-message-system/10-game-message-manager](../../45-game-message-system/10-game-message-manager/SKILL.md)

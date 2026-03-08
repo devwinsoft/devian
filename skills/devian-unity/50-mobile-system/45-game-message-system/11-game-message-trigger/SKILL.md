@@ -24,7 +24,7 @@ public sealed class GameMessageTrigger : BaseTrigger<int, GAME_MESSAGE_TYPE>
 규칙:
 
 - TriggerSystem은 순수 구독 라우터다.
-- 외부 입력 진입점은 `MissionManager.Notify(...)`다.
+- 외부 입력 진입점은 `GameMessageManager.Notify(...)`다.
 - GameMessageManager는 helper를 통해 publish/subscribe를 중개한다.
 - TriggerSystem 자체는 큐/재생/영속성 책임이 없다.
 
@@ -32,8 +32,8 @@ public sealed class GameMessageTrigger : BaseTrigger<int, GAME_MESSAGE_TYPE>
 
 ## Subscription
 
-- Mission runtime은 MissionManager helper를 통해 game trigger를 직접 구독한다.
-- 업적(`ACHIEVE`) notify는 MissionManager 경유로 AchieveManager에 전달된다.
+- Mission runtime은 MissionManager helper를 통해 game trigger를 구독한다.
+- Achieve runtime은 AchieveManager가 game trigger를 직접 구독한다.
 
 ---
 

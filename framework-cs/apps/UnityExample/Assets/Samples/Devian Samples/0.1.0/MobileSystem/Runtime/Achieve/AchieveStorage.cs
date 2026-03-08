@@ -6,9 +6,9 @@ namespace Devian
     [Serializable]
     public sealed class AchieveStorage
     {
-        public int schemaVersion = 1;
+        public int schemaVersion = 2;
         public int nextAchieveUid = 1;
-        public Dictionary<int, AchieveRuntime> runtimes = new();
+        public Dictionary<int, AchieveRuntimeBase> runtimes = new();
 
         public int AllocateAchieveUid()
         {
@@ -25,7 +25,7 @@ namespace Devian
 
         public void Clear()
         {
-            schemaVersion = 1;
+            schemaVersion = 2;
             nextAchieveUid = 1;
             runtimes.Clear();
         }

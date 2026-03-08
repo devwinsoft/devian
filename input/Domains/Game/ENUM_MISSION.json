@@ -33,6 +33,14 @@
         { "name": "RUNTIME_UNLOCKED", "value": 6 },
         { "name": "RUNTIME_ACTIVE", "value": 7 }
       ]
+    },
+    {
+      "name": "ACHIEVE_TYPE",
+      "values": [
+        { "name": "NONE", "value": 0 },
+        { "name": "ONCE", "value": 1 },
+        { "name": "PASS", "value": 2 }
+      ]
     }
   ]
 }

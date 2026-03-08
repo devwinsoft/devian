@@ -61,7 +61,8 @@ namespace MyApp
 
 foreground 복귀 기준 동작:
 - `MissionManager.RefreshClockAsync(...)`
-- refresh 성공 시 `LeaderboardSeasonRewardManager.SyncSeasonTransitionRewardsAsync(...)` best-effort 호출
+- refresh 성공 시 `TimeManager.InitServerTime(refresh.serverNowUtcMs)` 호출
+- refresh 성공 시 `LeaderboardManager.SyncSeasonTransitionRewardsAsync(...)` best-effort 호출
 
 
 ## Resource Prefab 생성 규칙
@@ -126,7 +127,6 @@ MobileApplication에 부착된 RequireComponent:
 - `AchieveManager`
 - `MissionManager`
 - `LeaderboardManager`
-- `LeaderboardSeasonRewardManager`
 - `GameMessageManager`
 - `SaveDataManager`
 - `InputManager` — [24-input-manager](../../20-domain-common-system/22-input-manager/SKILL.md)

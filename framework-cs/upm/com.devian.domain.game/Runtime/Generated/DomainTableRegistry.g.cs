@@ -61,17 +61,31 @@ namespace Devian.Domain.Game
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("ACHIEVE", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("ACHIEVE_ONCE", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_ACHIEVE.LoadFromNdjson(text);
-                    TB_ACHIEVE._AfterLoad();
+                    TB_ACHIEVE_ONCE.LoadFromNdjson(text);
+                    TB_ACHIEVE_ONCE._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_ACHIEVE.LoadFromPb64Binary(bin);
-                    TB_ACHIEVE._AfterLoad();
+                    TB_ACHIEVE_ONCE.LoadFromPb64Binary(bin);
+                    TB_ACHIEVE_ONCE._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("ACHIEVE_PASS", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_ACHIEVE_PASS.LoadFromNdjson(text);
+                    TB_ACHIEVE_PASS._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_ACHIEVE_PASS.LoadFromPb64Binary(bin);
+                    TB_ACHIEVE_PASS._AfterLoad();
                 }
             });
 
@@ -156,6 +170,20 @@ namespace Devian.Domain.Game
                 {
                     TB_ITEM_PASS.LoadFromPb64Binary(bin);
                     TB_ITEM_PASS._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("SEASON", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_SEASON.LoadFromNdjson(text);
+                    TB_SEASON._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_SEASON.LoadFromPb64Binary(bin);
+                    TB_SEASON._AfterLoad();
                 }
             });
 

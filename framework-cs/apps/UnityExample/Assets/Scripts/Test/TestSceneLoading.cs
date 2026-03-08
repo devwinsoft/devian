@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -183,13 +184,19 @@ public class TestSceneLoading : TestSceneBootstrap
             return initClock.Error.Code;
         }
 
+        var serverNowUtcMs = MissionManager.Instance.Storage.clockSnapshot.serverNowUtcMs;
+        if (serverNowUtcMs > 0L)
+        {
+            TimeManager.Instance.InitServerTime(serverNowUtcMs);
+        }
+
         var initAchieve = await AchieveManager.Instance.InitializeAsync(ct);
         if (initAchieve.IsFailure)
         {
             Debug.LogError($"AchieveManager.InitializeAsync failed: {initAchieve.Error.Code}: {initAchieve.Error.Message}");
             return initAchieve.Error.Code;
         }
-
+        
         var initAd = await AdManager.Instance.InitializeAsync(CancellationToken.None);
         if (initAd.IsFailure)
         {
@@ -202,17 +209,10 @@ public class TestSceneLoading : TestSceneBootstrap
             Debug.LogWarning($"LeaderboardManager.InitializeAsync failed (non-fatal): {initLeaderboard.Error.Code}: {initLeaderboard.Error.Message}");
         }
 
-        var initSeasonReward = await LeaderboardSeasonRewardManager.Instance.InitializeAsync(ct);
-        if (initSeasonReward.IsFailure)
-        {
-            Debug.LogError($"LeaderboardSeasonRewardManager.InitializeAsync failed: {initSeasonReward.Error.Code}: {initSeasonReward.Error.Message}");
-            return initSeasonReward.Error.Code;
-        }
-
-        var syncSeasonReward = await LeaderboardSeasonRewardManager.Instance.SyncSeasonTransitionRewardsAsync(ct);
+        var syncSeasonReward = await LeaderboardManager.Instance.SyncSeasonTransitionRewardsAsync(ct);
         if (syncSeasonReward.IsFailure)
         {
-            Debug.LogWarning($"LeaderboardSeasonRewardManager.SyncSeasonTransitionRewardsAsync failed (non-fatal): {syncSeasonReward.Error.Code}: {syncSeasonReward.Error.Message}");
+            Debug.LogWarning($"LeaderboardManager.SyncSeasonTransitionRewardsAsync failed (non-fatal): {syncSeasonReward.Error.Code}: {syncSeasonReward.Error.Message}");
         }
 
         // Todo: 최적화

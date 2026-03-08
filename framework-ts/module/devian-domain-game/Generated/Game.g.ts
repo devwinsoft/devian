@@ -80,6 +80,13 @@ export enum ACHIEVE_MESSAGE {
     RUNTIME_ACTIVE = 7,
 }
 
+/** ACHIEVE_TYPE enum */
+export enum ACHIEVE_TYPE {
+    NONE = 0,
+    ONCE = 1,
+    PASS = 2,
+}
+
 /** CURRENCY_TYPE enum */
 export enum CURRENCY_TYPE {
     GOLD = 0,
@@ -190,7 +197,7 @@ export interface MISSION extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface ACHIEVE extends IEntityKey<number> {
+export interface ACHIEVE_ONCE extends IEntityKey<number> {
     Index: number;
     AchieveId: string;
     IsActive: boolean;
@@ -198,12 +205,25 @@ export interface ACHIEVE extends IEntityKey<number> {
     OrderNum: number;
     ReqMsgId: string;
     ReqValue: CBigInt | null;
-    ReqPassId: string;
     ConditionMsgId: string;
     ConditionValue: CBigInt | null;
     RewardGroupId: string;
     AppleAchievementId: string;
     GoogleAchievementId: string;
+    getKey(): number;
+}
+
+export interface ACHIEVE_PASS extends IEntityKey<number> {
+    Index: number;
+    AchieveId: string;
+    IsActive: boolean;
+    Level: number;
+    OrderNum: number;
+    ReqPassId: string;
+    ConditionMsgId: string;
+    ConditionValue: CBigInt | null;
+    RewardGroupId: string;
+    ReqSeasonId: string;
     getKey(): number;
 }
 
@@ -256,6 +276,15 @@ export interface ITEM_PASS extends IEntityKey<string> {
     getKey(): string;
 }
 
+export interface SEASON extends IEntityKey<string> {
+    SeasonId: string;
+    NameId: string;
+    DescId: string;
+    StartUtcTime: number;
+    EndUtcTime: number;
+    getKey(): string;
+}
+
 export interface PRODUCT extends IEntityKey<string> {
     InternalProductId: string;
     RewardGroupId: string;
@@ -264,6 +293,7 @@ export interface PRODUCT extends IEntityKey<string> {
     IsActive: boolean;
     StoreSkuApple: string;
     StoreSkuGoogle: string;
+    SeasonId: string;
     getKey(): string;
 }
 
@@ -404,9 +434,9 @@ export class TB_MISSION {
     }
 }
 
-export class TB_ACHIEVE {
-    private static _dict: Map<number, ACHIEVE> = new Map();
-    private static _list: ACHIEVE[] = [];
+export class TB_ACHIEVE_ONCE {
+    private static _dict: Map<number, ACHIEVE_ONCE> = new Map();
+    private static _list: ACHIEVE_ONCE[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -415,9 +445,9 @@ export class TB_ACHIEVE {
         this._list = [];
     }
 
-    static getAll(): readonly ACHIEVE[] { return this._list; }
+    static getAll(): readonly ACHIEVE_ONCE[] { return this._list; }
 
-    static get(key: number): ACHIEVE | undefined {
+    static get(key: number): ACHIEVE_ONCE | undefined {
         return this._dict.get(key);
     }
 
@@ -429,7 +459,43 @@ export class TB_ACHIEVE {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as ACHIEVE;
+            const row = JSON.parse(line) as ACHIEVE_ONCE;
+            this._list.push(row);
+            this._dict.set(row.Index, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_ACHIEVE_PASS {
+    private static _dict: Map<number, ACHIEVE_PASS> = new Map();
+    private static _list: ACHIEVE_PASS[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly ACHIEVE_PASS[] { return this._list; }
+
+    static get(key: number): ACHIEVE_PASS | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: number): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as ACHIEVE_PASS;
             this._list.push(row);
             this._dict.set(row.Index, row);
         }
@@ -648,6 +714,42 @@ export class TB_ITEM_PASS {
             const row = JSON.parse(line) as ITEM_PASS;
             this._list.push(row);
             this._dict.set(row.PassId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_SEASON {
+    private static _dict: Map<string, SEASON> = new Map();
+    private static _list: SEASON[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly SEASON[] { return this._list; }
+
+    static get(key: string): SEASON | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as SEASON;
+            this._list.push(row);
+            this._dict.set(row.SeasonId, row);
         }
     }
 

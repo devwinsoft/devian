@@ -152,6 +152,7 @@ namespace Devian.Domain.Common
         SAVEDATA_SYNC_RESOLVE_FAILED = 124,
         SAVEDATA_SYNC_SAVE_CLOUD_FAILED = 125,
         SAVEDATA_SYNC_SAVE_LOCAL_FAILED = 126,
+        PURCHASE_SEASON_END_SOON_BLOCKED = 127,
     }
 
     /// <summary>Auto-generated enum from TB_ERROR_SERVER.id</summary>

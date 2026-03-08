@@ -1,4 +1,5 @@
 using Newtonsoft.Json.Linq;
+using Devian.Domain.Game;
 
 namespace Devian
 {
@@ -22,10 +23,12 @@ namespace Devian
 
                 var runtimeObj = new JObject
                 {
+                    ["achieveType"] = (int)runtime.RuntimeType,
                     ["achieveId"] = runtime.achieveId,
                     ["messageId"] = runtime.messageId,
                     ["achieveUid"] = runtime.achieveUid,
                     ["level"] = runtime.level,
+                    ["index"] = runtime.index,
                     ["progressValue"] = SerializeBigInt(runtime.progressValue),
                     ["isWaiting"] = runtime.isWaiting,
                     ["isCompleted"] = runtime.isCompleted,
@@ -62,16 +65,28 @@ namespace Devian
                     if (achieveUid <= 0)
                         continue;
 
-                    var runtime = new AchieveRuntime
+                    var achieveId = runtimeObj.Value<string>("achieveId") ?? string.Empty;
+                    var achieveType = parseAchieveType(runtimeObj.Value<int?>("achieveType"), achieveId);
+                    var runtime = AchieveRuntimeFactory.Restore(new AchieveRuntimeRestoreArgs
                     {
-                        achieveId = runtimeObj.Value<string>("achieveId") ?? string.Empty,
-                        messageId = runtimeObj.Value<string>("messageId") ?? string.Empty,
-                        achieveUid = achieveUid,
-                        level = runtimeObj.Value<int?>("level") ?? 1,
-                        progressValue = DeserializeBigInt(runtimeObj["progressValue"]),
-                        isWaiting = runtimeObj.Value<bool?>("isWaiting") ?? false,
-                        isCompleted = runtimeObj.Value<bool?>("isCompleted") ?? false,
-                    };
+                        AchieveType = achieveType,
+                        AchieveId = achieveId,
+                        MessageId = runtimeObj.Value<string>("messageId") ?? string.Empty,
+                        AchieveUid = achieveUid,
+                        Level = runtimeObj.Value<int?>("level") ?? 1,
+                        Index = runtimeObj.Value<int?>("index") ?? 0,
+                        ProgressValue = DeserializeBigInt(runtimeObj["progressValue"]),
+                        IsWaiting = runtimeObj.Value<bool?>("isWaiting") ?? false,
+                        IsCompleted = runtimeObj.Value<bool?>("isCompleted") ?? false,
+                        StatType = GAME_MESSAGE_TYPE.NONE,
+                        OpType = GAME_MESSAGE_SAVE_TYPE.NONE,
+                        ConditionValue = CBigInt.Zero,
+                        ReadProgress = null,
+                        OnChanged = null,
+                        OnClaimable = null,
+                    });
+                    if (runtime == null)
+                        continue;
 
                     storage.runtimes[runtime.achieveUid] = runtime;
                 }
@@ -79,6 +94,27 @@ namespace Devian
 
             if (storage.nextAchieveUid <= 0)
                 storage.nextAchieveUid = 1;
+        }
+
+        static ACHIEVE_TYPE parseAchieveType(int? rawType, string achieveId)
+        {
+            if (rawType.HasValue && System.Enum.IsDefined(typeof(ACHIEVE_TYPE), rawType.Value))
+            {
+                var typed = (ACHIEVE_TYPE)rawType.Value;
+                if (typed == ACHIEVE_TYPE.ONCE || typed == ACHIEVE_TYPE.PASS)
+                    return typed;
+            }
+
+            if (!string.IsNullOrWhiteSpace(achieveId))
+            {
+                if (TB_ACHIEVE_PASS.GetByGroup(achieveId).Count > 0)
+                    return ACHIEVE_TYPE.PASS;
+
+                if (TB_ACHIEVE_ONCE.GetByGroup(achieveId).Count > 0)
+                    return ACHIEVE_TYPE.ONCE;
+            }
+
+            return ACHIEVE_TYPE.ONCE;
         }
 
         static JObject SerializeBigInt(CBigInt value)

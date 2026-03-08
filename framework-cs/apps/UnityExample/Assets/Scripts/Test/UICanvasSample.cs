@@ -25,11 +25,11 @@ public class UICanvasSample : UICanvas<UICanvasSample>
 
     protected override void onInit()
     {
-        AchieveManager.Instance.Subcribe(GetEntityId(),
+                AchieveManager.Instance.Subcribe(GetEntityId(),
             ACHIEVE_MESSAGE.RUNTIME_INIT,
             (args) =>
             {
-                AchieveRuntime achieve = args[0] as AchieveRuntime;
+                AchieveRuntimeBase achieve = args[0] as AchieveRuntimeBase;
                 Debug.Log($"Init: achieveId={achieve.achieveId}, progressValue={achieve.progressValue}");
                 return false;
             });
@@ -38,7 +38,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             ACHIEVE_MESSAGE.RUNTIME_PROGRESS,
             (args) =>
             {
-                AchieveRuntime achieve = args[0] as AchieveRuntime;
+                AchieveRuntimeBase achieve = args[0] as AchieveRuntimeBase;
                 Debug.Log($"Progress: achieveId={achieve.achieveId}, progressValue={achieve.progressValue}");
                 return false;
             });
@@ -47,7 +47,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             ACHIEVE_MESSAGE.RUNTIME_REWARDED,
             (args) =>
             {
-                AchieveRuntime achieve = args[0] as AchieveRuntime;
+                AchieveRuntimeBase achieve = args[0] as AchieveRuntimeBase;
                 RewardData[] rewards = args[1] as RewardData[];
                 foreach (var rewward in rewards)
                 {

@@ -4,12 +4,13 @@ using Devian.Domain.Game;
 namespace Devian
 {
     [Serializable]
-    public sealed class AchieveRuntime
+    public abstract class AchieveRuntimeBase
     {
         public string achieveId = string.Empty;
         public string messageId = string.Empty;
         public int achieveUid;
         public int level = 1;
+        public int index;
         public CBigInt progressValue = CBigInt.Zero;
         public bool isWaiting;
         public bool isCompleted;
@@ -17,40 +18,28 @@ namespace Devian
         [NonSerialized] private GAME_MESSAGE_TYPE _statType;
         [NonSerialized] private GAME_MESSAGE_SAVE_TYPE _opType;
         [NonSerialized] private CBigInt _conditionValue = CBigInt.Zero;
-        [NonSerialized] private Action<AchieveRuntime> _onProgress;
-        [NonSerialized] private Action<AchieveRuntime> _onClaimable;
+        [NonSerialized] private Action<AchieveRuntimeBase> _onProgress;
+        [NonSerialized] private Action<AchieveRuntimeBase> _onClaimable;
         [NonSerialized] private Func<CBigInt> _externalProgressReader;
+
+        public abstract ACHIEVE_TYPE RuntimeType { get; }
 
         public GAME_MESSAGE_TYPE StatType => _statType;
         public GAME_MESSAGE_SAVE_TYPE OpType => _opType;
         public CBigInt ConditionValue => _conditionValue;
         public bool IsClaimable => !isCompleted && !isWaiting && progressValue >= _conditionValue;
-
-        public int Index
-        {
-            get
-            {
-                var rows = TB_ACHIEVE.GetByGroup(achieveId);
-                foreach (var row in rows)
-                {
-                    if (row.Level == level)
-                        return Math.Max(0, row.OrderNum - 1);
-                }
-
-                return 0;
-            }
-        }
+        public int Index => index;
 
         internal void Bind(
-            string messageId,
+            string nextMessageId,
             GAME_MESSAGE_TYPE statType,
             GAME_MESSAGE_SAVE_TYPE opType,
             CBigInt conditionValue,
             Func<CBigInt> readExternalProgress,
-            Action<AchieveRuntime> onProgress,
-            Action<AchieveRuntime> onClaimable)
+            Action<AchieveRuntimeBase> onProgress,
+            Action<AchieveRuntimeBase> onClaimable)
         {
-            this.messageId = messageId ?? string.Empty;
+            messageId = nextMessageId ?? string.Empty;
             isWaiting = false;
             _statType = statType;
             _opType = opType;
@@ -66,11 +55,11 @@ namespace Devian
         }
 
         internal void BindWaiting(
-            string messageId,
-            Action<AchieveRuntime> onProgress,
-            Action<AchieveRuntime> onClaimable)
+            string nextMessageId,
+            Action<AchieveRuntimeBase> onProgress,
+            Action<AchieveRuntimeBase> onClaimable)
         {
-            this.messageId = messageId ?? string.Empty;
+            messageId = nextMessageId ?? string.Empty;
             isWaiting = !isCompleted;
             _statType = GAME_MESSAGE_TYPE.NONE;
             _opType = GAME_MESSAGE_SAVE_TYPE.NONE;
@@ -109,6 +98,7 @@ namespace Devian
 
         public void LevelUp(
             int nextLevel,
+            int nextIndex,
             string nextMessageId,
             GAME_MESSAGE_TYPE nextStatType,
             GAME_MESSAGE_SAVE_TYPE nextOpType,
@@ -116,6 +106,7 @@ namespace Devian
             Func<CBigInt> readExternalProgress)
         {
             level = nextLevel;
+            index = nextIndex;
             isWaiting = false;
             isCompleted = false;
             messageId = nextMessageId ?? string.Empty;
@@ -128,13 +119,16 @@ namespace Devian
                 progressValue = CBigInt.Zero;
             else if (isTotalSaveType(nextOpType))
                 RefreshProgressFromExternal(emitProgressEvent: false);
+            else if (nextOpType == GAME_MESSAGE_SAVE_TYPE.NONE && nextConditionValue.CompareTo(CBigInt.Zero) <= 0)
+                progressValue = CBigInt.Zero;
 
             RaiseClaimableIfNeeded();
         }
 
-        public void LevelUpToWaiting(int nextLevel, string nextMessageId)
+        public void LevelUpToWaiting(int nextLevel, int nextIndex, string nextMessageId)
         {
             level = nextLevel;
+            index = nextIndex;
             isCompleted = false;
             isWaiting = true;
             messageId = nextMessageId ?? string.Empty;
@@ -216,5 +210,17 @@ namespace Devian
             return saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
                    || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX;
         }
+    }
+
+    [Serializable]
+    public sealed class AchieveRuntimeOnce : AchieveRuntimeBase
+    {
+        public override ACHIEVE_TYPE RuntimeType => ACHIEVE_TYPE.ONCE;
+    }
+
+    [Serializable]
+    public sealed class AchieveRuntimePass : AchieveRuntimeBase
+    {
+        public override ACHIEVE_TYPE RuntimeType => ACHIEVE_TYPE.PASS;
     }
 }

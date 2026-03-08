@@ -4,7 +4,7 @@ namespace Devian
 {
     internal static class SaveDataJsonCodec
     {
-        const int CurrentVersion = 14;
+        const int CurrentVersion = 15;
 
         public static string Serialize(
             InventoryStorage inventory,
@@ -79,6 +79,6 @@ namespace Devian
         }
 
         static bool isSupportedVersion(int version)
-            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 8 || version == 9 || version == 10 || version == 11 || version == 12 || version == CurrentVersion;
+            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 8 || version == 9 || version == 10 || version == 11 || version == 12 || version == 13 || version == 14 || version == CurrentVersion;
     }
 }

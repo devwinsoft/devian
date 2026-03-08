@@ -27,8 +27,8 @@ Type: Design / Storage SSOT
 
 ## Ownership
 
-- `LeaderboardSeasonRewardManager`가 storage를 소유한다.
-- 정본 접근 경계: `LeaderboardSeasonRewardManager.Storage`
+- `LeaderboardManager`가 storage를 소유한다.
+- 정본 접근 경계: `LeaderboardManager.Storage`
 
 ---
 
@@ -104,5 +104,5 @@ Type: Design / Storage SSOT
 ## Related
 
 - [03-ssot](../03-ssot/SKILL.md)
-- [13-leaderboard-season-reward-manager](../13-leaderboard-season-reward-manager/SKILL.md)
+- [10-leaderboard-manager](../10-leaderboard-manager/SKILL.md)
 - [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)

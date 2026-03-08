@@ -12,13 +12,13 @@ using UnityEngine;
 
 namespace Devian.Domain.Game
 {
-    public static partial class TB_ACHIEVE
+    public static partial class TB_SEASON
     {
         private static global::Devian.TableFormat _loadedFormat;
         private static bool _isLoaded;
 
         /// <summary>
-        /// Preload ACHIEVE table via TableManager.
+        /// Preload SEASON table via TableManager.
         /// TableManager handles: TextAsset load + TB insert + cache.
         /// </summary>
         /// <param name="key">Addressables key to load TextAsset</param>
@@ -39,7 +39,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Unload ACHIEVE table and clear data.
+        /// Unload SEASON table and clear data.
         /// </summary>
         public static void Unload()
         {
@@ -48,7 +48,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Check if ACHIEVE table is loaded.
+        /// Check if SEASON table is loaded.
         /// </summary>
         public static bool IsLoaded => _isLoaded;
 

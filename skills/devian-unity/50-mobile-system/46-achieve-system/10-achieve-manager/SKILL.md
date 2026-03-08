@@ -33,6 +33,7 @@ MobileSystem 샘플의 `AchieveManager` 설계 문서다.
 
 Events:
 - `OnRuntimeInitialized`
+- `OnRuntimeActive`
 - `OnRuntimeProgress`
 - `OnRuntimeClaimable`
 - `OnRuntimeLevelUp`
@@ -43,9 +44,11 @@ Events:
 
 ## Internal Responsibilities
 
-- `TB_ACHIEVE` 기반 runtime 생성/복구
+- `TB_ACHIEVE_ONCE` + `TB_ACHIEVE_PASS` 기반 runtime 생성/복구
+- `ACHIEVE_TYPE` 기반 runtime 타입 분기(`AchieveRuntimeOnce`, `AchieveRuntimePass`)
 - `GameMessageManager` 구독 기반 runtime projection 동기화
-- `InventoryManager` 구독 기반 reqPassId WAIT 전이 동기화
+- `InventoryManager` 구독 기반 PASS runtime(`reqPassId`) WAIT 전이 동기화
+- `TimeManager` + `TB_SEASON` 기반 PASS runtime(`reqSeasonId`) WAIT 전이 판정
 - `ACHIEVE_MESSAGE` 기반 외부 알림 트리거 publish
 - claim 보상 적용 및 level-up 처리
 - 플랫폼 adapter 연동 (`IAchievePlatformAdapter.cs`: Apple/Google/Unsupported)
@@ -55,12 +58,14 @@ Events:
 ## Hard Rules
 
 - 공개 API는 내부 `achievementId`만 사용
-- 초기화 시 `ACHIEVE` group 기준 runtime 항상 생성
-- `reqMsgId/reqValue` 또는 `reqPassId` 설정 row는 `WAIT` 상태로 시작 후 req 충족 시 `ACTIVE` 전이
+- 초기화 시 `achieveId` group 기준 runtime 항상 생성
+- `ACHIEVE_ONCE`의 `reqMsgId/reqValue`, `ACHIEVE_PASS`의 `reqPassId`/`reqSeasonId` 설정 row는 `WAIT` 시작 후 req 충족 시 `ACTIVE` 전이
 - level-up 시 기존 stat 바인딩을 다음 level row로 교체
-- level-up 시에도 req 조건(`reqMsgId/reqValue`, `reqPassId`)을 재평가해 `WAIT/ACTIVE` 시작 상태를 결정
-- `reqPassId`가 있는 runtime은 `InventoryManager` helper 구독으로 Pass 변경 콜백을 받아 재평가한다.
+- level-up 시에도 타입별 req 조건을 재평가해 `WAIT/ACTIVE` 시작 상태를 결정
+- `reqPassId`가 있는 PASS runtime은 `InventoryManager` helper 구독으로 Pass 변경 콜백을 받아 재평가한다.
+- `reqSeasonId`는 `TB_SEASON(startUtcTime/endUtcTime)` + `TimeManager.serverNowUtcMs` 범위 체크로 재평가한다.
 - 플랫폼 unlock 실패는 claim 전체를 롤백하지 않는다(best-effort)
+- 플랫폼 unlock은 `ACHIEVE_TYPE.ONCE` runtime에만 수행한다.
 - 저장 실패는 claim 실패로 반환한다
 
 ---

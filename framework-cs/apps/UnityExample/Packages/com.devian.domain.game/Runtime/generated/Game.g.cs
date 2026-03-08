@@ -94,6 +94,14 @@ namespace Devian.Domain.Game
         RUNTIME_ACTIVE = 7,
     }
 
+    /// <summary>ACHIEVE_TYPE enum</summary>
+    public enum ACHIEVE_TYPE
+    {
+        NONE = 0,
+        ONCE = 1,
+        PASS = 2,
+    }
+
     /// <summary>CURRENCY_TYPE enum</summary>
     public enum CURRENCY_TYPE
     {
@@ -222,8 +230,8 @@ namespace Devian.Domain.Game
         public string GetKey() => MissionId;
     }
 
-    /// <summary>ACHIEVE row</summary>
-    public sealed class ACHIEVE : IEntityKey<int>
+    /// <summary>ACHIEVE_ONCE row</summary>
+    public sealed class ACHIEVE_ONCE : IEntityKey<int>
     {
         public int Index { get; set; }
         public string AchieveId { get; set; } = string.Empty;
@@ -232,12 +240,28 @@ namespace Devian.Domain.Game
         public int OrderNum { get; set; }
         public string ReqMsgId { get; set; } = string.Empty;
         public CBigInt? ReqValue { get; set; }
-        public string ReqPassId { get; set; } = string.Empty;
         public string ConditionMsgId { get; set; } = string.Empty;
         public CBigInt? ConditionValue { get; set; }
         public string RewardGroupId { get; set; } = string.Empty;
         public string AppleAchievementId { get; set; } = string.Empty;
         public string GoogleAchievementId { get; set; } = string.Empty;
+
+        public int GetKey() => Index;
+    }
+
+    /// <summary>ACHIEVE_PASS row</summary>
+    public sealed class ACHIEVE_PASS : IEntityKey<int>
+    {
+        public int Index { get; set; }
+        public string AchieveId { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public int Level { get; set; }
+        public int OrderNum { get; set; }
+        public string ReqPassId { get; set; } = string.Empty;
+        public string ConditionMsgId { get; set; } = string.Empty;
+        public CBigInt? ConditionValue { get; set; }
+        public string RewardGroupId { get; set; } = string.Empty;
+        public string ReqSeasonId { get; set; } = string.Empty;
 
         public int GetKey() => Index;
     }
@@ -309,6 +333,18 @@ namespace Devian.Domain.Game
         public string GetKey() => PassId;
     }
 
+    /// <summary>SEASON row</summary>
+    public sealed class SEASON : IEntityKey<string>
+    {
+        public string SeasonId { get; set; } = string.Empty;
+        public string NameId { get; set; } = string.Empty;
+        public string DescId { get; set; } = string.Empty;
+        public CDateTime? StartUtcTime { get; set; }
+        public CDateTime? EndUtcTime { get; set; }
+
+        public string GetKey() => SeasonId;
+    }
+
     /// <summary>PRODUCT row</summary>
     public sealed class PRODUCT : IEntityKey<string>
     {
@@ -319,6 +355,7 @@ namespace Devian.Domain.Game
         public bool IsActive { get; set; }
         public string StoreSkuApple { get; set; } = string.Empty;
         public string StoreSkuGoogle { get; set; } = string.Empty;
+        public string SeasonId { get; set; } = string.Empty;
 
         public string GetKey() => InternalProductId;
     }
@@ -610,13 +647,13 @@ namespace Devian.Domain.Game
         static partial void _OnAfterLoad();
     }
 
-    /// <summary>TB_ACHIEVE container</summary>
-    public static partial class TB_ACHIEVE
+    /// <summary>TB_ACHIEVE_ONCE container</summary>
+    public static partial class TB_ACHIEVE_ONCE
     {
-        private static readonly Dictionary<int, ACHIEVE> _dict = new();
-        private static readonly List<ACHIEVE> _list = new();
+        private static readonly Dictionary<int, ACHIEVE_ONCE> _dict = new();
+        private static readonly List<ACHIEVE_ONCE> _list = new();
 
-        private static readonly Dictionary<string, List<ACHIEVE>> _groupDict = new();
+        private static readonly Dictionary<string, List<ACHIEVE_ONCE>> _groupDict = new();
         private static readonly List<string> _groupList = new();
         private static readonly Dictionary<string, int> _groupPrimaryKey = new();
         private static readonly Dictionary<int, string> _keyToGroup = new();
@@ -633,13 +670,13 @@ namespace Devian.Domain.Game
             _keyToGroup.Clear();
         }
 
-        public static IReadOnlyList<ACHIEVE> GetAll() => _list;
+        public static IReadOnlyList<ACHIEVE_ONCE> GetAll() => _list;
 
         public static IReadOnlyList<string> GetGroupKeys() => _groupList;
 
-        public static IReadOnlyList<ACHIEVE> GetByGroup(string groupKey)
+        public static IReadOnlyList<ACHIEVE_ONCE> GetByGroup(string groupKey)
         {
-            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<ACHIEVE>();
+            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<ACHIEVE_ONCE>();
         }
 
         public static bool TryGetGroupPrimaryKey(string groupKey, out int key)
@@ -652,17 +689,17 @@ namespace Devian.Domain.Game
             return _keyToGroup.TryGetValue(key, out groupKey);
         }
 
-        public static ACHIEVE? Get(int key)
+        public static ACHIEVE_ONCE? Get(int key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(int key, out ACHIEVE? row)
+        public static bool TryGet(int key, out ACHIEVE_ONCE? row)
         {
             return _dict.TryGetValue(key, out row);
         }
 
-        private static void AddRow(ACHIEVE row)
+        private static void AddRow(ACHIEVE_ONCE row)
         {
             _list.Add(row);
             _dict[row.Index] = row;
@@ -670,7 +707,7 @@ namespace Devian.Domain.Game
             _keyToGroup[row.Index] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
-                groupList = new List<ACHIEVE>();
+                groupList = new List<ACHIEVE_ONCE>();
                 _groupDict[groupKey] = groupList;
                 _groupList.Add(groupKey);
             }
@@ -689,7 +726,7 @@ namespace Devian.Domain.Game
         public static void LoadFromJson(string json)
         {
             Clear();
-            var rows = JsonConvert.DeserializeObject<List<ACHIEVE>>(json);
+            var rows = JsonConvert.DeserializeObject<List<ACHIEVE_ONCE>>(json);
             if (rows == null) return;
             foreach (var row in rows)
             {
@@ -706,7 +743,7 @@ namespace Devian.Domain.Game
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<ACHIEVE>(line);
+                var row = JsonConvert.DeserializeObject<ACHIEVE_ONCE>(line);
                 if (row == null) continue;
                 AddRow(row);
             }
@@ -718,7 +755,134 @@ namespace Devian.Domain.Game
             Pb64Loader.ParseRows(rawBinary, jsonRow =>
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<ACHIEVE>(jsonRow);
+                var row = JsonConvert.DeserializeObject<ACHIEVE_ONCE>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_ACHIEVE_PASS container</summary>
+    public static partial class TB_ACHIEVE_PASS
+    {
+        private static readonly Dictionary<int, ACHIEVE_PASS> _dict = new();
+        private static readonly List<ACHIEVE_PASS> _list = new();
+
+        private static readonly Dictionary<string, List<ACHIEVE_PASS>> _groupDict = new();
+        private static readonly List<string> _groupList = new();
+        private static readonly Dictionary<string, int> _groupPrimaryKey = new();
+        private static readonly Dictionary<int, string> _keyToGroup = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+            _groupDict.Clear();
+            _groupList.Clear();
+            _groupPrimaryKey.Clear();
+            _keyToGroup.Clear();
+        }
+
+        public static IReadOnlyList<ACHIEVE_PASS> GetAll() => _list;
+
+        public static IReadOnlyList<string> GetGroupKeys() => _groupList;
+
+        public static IReadOnlyList<ACHIEVE_PASS> GetByGroup(string groupKey)
+        {
+            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<ACHIEVE_PASS>();
+        }
+
+        public static bool TryGetGroupPrimaryKey(string groupKey, out int key)
+        {
+            return _groupPrimaryKey.TryGetValue(groupKey, out key);
+        }
+
+        public static bool TryGetGroupKeyByKey(int key, out string groupKey)
+        {
+            return _keyToGroup.TryGetValue(key, out groupKey);
+        }
+
+        public static ACHIEVE_PASS? Get(int key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(int key, out ACHIEVE_PASS? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(ACHIEVE_PASS row)
+        {
+            _list.Add(row);
+            _dict[row.Index] = row;
+            var groupKey = row.AchieveId;
+            _keyToGroup[row.Index] = groupKey;
+            if (!_groupDict.TryGetValue(groupKey, out var groupList))
+            {
+                groupList = new List<ACHIEVE_PASS>();
+                _groupDict[groupKey] = groupList;
+                _groupList.Add(groupKey);
+            }
+            groupList.Add(row);
+            if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
+            {
+                if (Comparer<int>.Default.Compare(row.Index, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.Index;
+            }
+            else
+            {
+                _groupPrimaryKey[groupKey] = row.Index;
+            }
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<ACHIEVE_PASS>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<ACHIEVE_PASS>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<ACHIEVE_PASS>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -1279,6 +1443,89 @@ namespace Devian.Domain.Game
         static partial void _OnAfterLoad();
     }
 
+    /// <summary>TB_SEASON container</summary>
+    public static partial class TB_SEASON
+    {
+        private static readonly Dictionary<string, SEASON> _dict = new();
+        private static readonly List<SEASON> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<SEASON> GetAll() => _list;
+
+        public static SEASON? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out SEASON? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(SEASON row)
+        {
+            _list.Add(row);
+            _dict[row.SeasonId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<SEASON>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<SEASON>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<SEASON>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
     /// <summary>TB_PRODUCT container</summary>
     public static partial class TB_PRODUCT
     {
@@ -1689,14 +1936,24 @@ namespace Devian.Domain.Game
         public static implicit operator MISSION_ID(string value) => new MISSION_ID { Value = value };
     }
 
-    /// <summary>Inspector-bindable ID for ACHIEVE</summary>
+    /// <summary>Inspector-bindable ID for ACHIEVE_ONCE</summary>
     [Serializable]
-    public sealed class ACHIEVE_ID
+    public sealed class ACHIEVE_ONCE_ID
     {
         public int Value;
 
-        public static implicit operator int(ACHIEVE_ID id) => id.Value;
-        public static implicit operator ACHIEVE_ID(int value) => new ACHIEVE_ID { Value = value };
+        public static implicit operator int(ACHIEVE_ONCE_ID id) => id.Value;
+        public static implicit operator ACHIEVE_ONCE_ID(int value) => new ACHIEVE_ONCE_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for ACHIEVE_PASS</summary>
+    [Serializable]
+    public sealed class ACHIEVE_PASS_ID
+    {
+        public int Value;
+
+        public static implicit operator int(ACHIEVE_PASS_ID id) => id.Value;
+        public static implicit operator ACHIEVE_PASS_ID(int value) => new ACHIEVE_PASS_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for LEADERBOARD</summary>
@@ -1759,6 +2016,16 @@ namespace Devian.Domain.Game
         public static implicit operator ITEM_PASS_ID(string value) => new ITEM_PASS_ID { Value = value };
     }
 
+    /// <summary>Inspector-bindable ID for SEASON</summary>
+    [Serializable]
+    public sealed class SEASON_ID
+    {
+        public string Value;
+
+        public static implicit operator string(SEASON_ID id) => id.Value;
+        public static implicit operator SEASON_ID(string value) => new SEASON_ID { Value = value };
+    }
+
     /// <summary>Inspector-bindable ID for PRODUCT</summary>
     [Serializable]
     public sealed class PRODUCT_ID
@@ -1805,13 +2072,15 @@ namespace Devian.Domain.Game
         public static bool IsValid(this ADVERTISE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MESSAGE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MISSION_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
-        public static bool IsValid(this ACHIEVE_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
+        public static bool IsValid(this ACHIEVE_ONCE_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
+        public static bool IsValid(this ACHIEVE_PASS_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this LEADERBOARD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this LEADERBOARD_REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this ITEM_EQUIP_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this ITEM_CARD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this ITEM_RENTAL_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this ITEM_PASS_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this SEASON_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this PRODUCT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this UNIT_HERO_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);

@@ -12,7 +12,7 @@ namespace Devian
             const long seasonEndUtcMs = 1_000_000L;
             var serverNowUtcMs = seasonEndUtcMs + (long)TimeSpan.FromMinutes(9).TotalMilliseconds;
 
-            var ready = LeaderboardSeasonRewardManager.IsSeasonRewardEvaluationReady(seasonEndUtcMs, serverNowUtcMs);
+            var ready = LeaderboardManager.IsSeasonRewardEvaluationReady(seasonEndUtcMs, serverNowUtcMs);
 
             Assert.That(ready, Is.False);
         }
@@ -21,9 +21,9 @@ namespace Devian
         public void IsSeasonRewardEvaluationReady_ShouldReturnTrue_AtTenMinutesAfterSeasonEnd()
         {
             const long seasonEndUtcMs = 1_000_000L;
-            var serverNowUtcMs = seasonEndUtcMs + LeaderboardSeasonRewardManager.SeasonRewardGracePeriodMs;
+            var serverNowUtcMs = seasonEndUtcMs + LeaderboardManager.SeasonRewardGracePeriodMs;
 
-            var ready = LeaderboardSeasonRewardManager.IsSeasonRewardEvaluationReady(seasonEndUtcMs, serverNowUtcMs);
+            var ready = LeaderboardManager.IsSeasonRewardEvaluationReady(seasonEndUtcMs, serverNowUtcMs);
 
             Assert.That(ready, Is.True);
         }

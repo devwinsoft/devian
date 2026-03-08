@@ -45,7 +45,7 @@ public sealed class AchieveMessageTrigger : BaseTrigger<EntityId, ACHIEVE_MESSAG
 
 ## Payload Rules
 
-- `RUNTIME_*`: `args[0] = AchieveRuntime`
+- `RUNTIME_*`: `args[0] = AchieveRuntimeBase`
 - `RUNTIME_REWARDED`: `args[1] = RewardData[]`
 - `RUNTIME_UNLOCKED`: `args[0] = string achievementId`
 

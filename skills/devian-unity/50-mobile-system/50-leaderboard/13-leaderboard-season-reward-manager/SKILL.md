@@ -1,21 +1,21 @@
 # 13-leaderboard-season-reward-manager
 
-Status: ACTIVE
+Status: DEPRECATED
 AppliesTo: v10
 Type: Design / Runtime Orchestration
 
-`LeaderboardSeasonRewardManager`의 시즌 전환 보상 평가/지급 규약 정본이다.
+시즌 전환 보상 평가/지급 로직은 `LeaderboardManager`로 통합되었다.
 
 ---
 
 ## Implementation Location (3-path mirror)
 
 - UPM (정본):
-  - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Leaderboard/LeaderboardSeasonRewardManager.cs`
+  - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Leaderboard/LeaderboardManager.cs`
 - Packages (sync):
-  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Leaderboard/LeaderboardSeasonRewardManager.cs`
+  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Leaderboard/LeaderboardManager.cs`
 - Assets/Samples (import):
-  - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Leaderboard/LeaderboardSeasonRewardManager.cs`
+  - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Leaderboard/LeaderboardManager.cs`
 - Bootstrap 연동:
   - `.../Runtime/Bootstrap/MobileApplication.cs`
   - `framework-cs/apps/UnityExample/Assets/Scripts/Test/TestSceneLoading.cs`
@@ -24,16 +24,14 @@ Type: Design / Runtime Orchestration
 
 ## Ownership
 
-- `LeaderboardSeasonRewardManager`가 `LeaderboardSeasonRewardStorage`를 소유한다.
-- 시즌 보상 지급 여부 판단의 SSOT는 `Storage.processedClaims`다.
+- `LeaderboardManager`가 `LeaderboardSeasonRewardStorage`를 소유한다.
+- 시즌 보상 지급 여부 판단의 SSOT는 `LeaderboardManager.Storage.processedClaims`다.
 
 ---
 
 ## Public API
 
-- `InitializeAsync(ct)` -> `Task<CommonResult>`
-- `SyncSeasonTransitionRewardsAsync(ct)` -> `Task<CommonResult>`
-- `ClearStorage()`
+- `LeaderboardManager.SyncSeasonTransitionRewardsAsync(ct)` -> `Task<CommonResult>`
 
 ---
 

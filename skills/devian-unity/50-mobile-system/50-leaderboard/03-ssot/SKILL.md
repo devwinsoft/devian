@@ -109,7 +109,8 @@ AppliesTo: v10
 |------|----|---------------|------|
 | `MESSAGE` | `messageId` | - | 메시지 타입/저장 방식(`saveType`) 정의 |
 | `MISSION` | `missionId` | `messageId -> MESSAGE.messageId` | 일일 미션 정의 및 조건 |
-| `ACHIEVE` | `index` | `conditionMsgId/reqMsgId -> MESSAGE.messageId` | 업적 단계 정의 및 조건 |
+| `ACHIEVE_ONCE` | `index` | `conditionMsgId/reqMsgId -> MESSAGE.messageId` | 일반 업적 단계 정의 및 조건 |
+| `ACHIEVE_PASS` | `index` | `conditionMsgId -> MESSAGE.messageId` | 패스 업적 단계 정의 및 pass 조건 |
 | `LEADERBOARD` | `leaderboardId` | `messageId -> MESSAGE.messageId` | 점수 소스 + 시즌 구간 + 플랫폼 ID 매핑 |
 | `LEADERBOARD_REWARD` | `index` | `leaderboardId (group)` | 랭크 구간별 `rewardGroupId` 매핑 |
 
@@ -118,8 +119,9 @@ AppliesTo: v10
 ```text
 GAME_MESSAGE -> MESSAGE(messageId)
                     ├─ MISSION.messageId
-                    ├─ ACHIEVE.conditionMsgId
-                    ├─ ACHIEVE.reqMsgId
+                    ├─ ACHIEVE_ONCE.conditionMsgId
+                    ├─ ACHIEVE_ONCE.reqMsgId
+                    ├─ ACHIEVE_PASS.conditionMsgId
                     └─ LEADERBOARD.messageId
 
 LEADERBOARD(leaderboardId, mode, seasonStartUtc/seasonEndUtc)
