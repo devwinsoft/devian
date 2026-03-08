@@ -899,7 +899,7 @@ namespace Devian
         // Lifecycle
         // ====================================================================
 
-        protected override void OnDestroy()
+        protected override void onDestroy()
         {
             StopAll();
             _clipCacheByRowId.Clear();
@@ -908,7 +908,6 @@ namespace Devian
             _bundleKeyIsBundle.Clear();
             _channelByRuntimeId.Clear();
             _channels.Clear();
-            base.OnDestroy();
         }
 
     }

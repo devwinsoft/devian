@@ -175,7 +175,7 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 
 - STAT_TYPE key: enum name 문자열 (예: `"EQUIP_LEVEL"`, `"CARD_AMOUNT"`)
 - Hero equips: slotNumber(string key) → equipUid(string value). 중복 데이터 없음.
-- 역직렬화 시 테이블 참조: `TB_EQUIP.Get`/`TB_CARD.Get`/`TB_UNIT_HERO.Get`으로 `mTable` 복원.
+- 역직렬화 시 테이블 참조: `TB_ITEM_EQUIP.Get`/`TB_ITEM_CARD.Get`/`TB_UNIT_HERO.Get`으로 `mTable` 복원.
 - 역직렬화 순서: wallet → equipments → cards → heroes (heroes 마지막: equip 슬롯 참조 필요).
 
 
@@ -188,3 +188,24 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 - inventory 전용 에러 코드는 `ERROR_COMMON`을 SSOT로 추가/관리한다.
   - 파일: `input/Domains/Common/CommonTable.xlsx`
   - 시트: `ERROR_COMMON`
+
+
+---
+
+
+## F) Inventory Message Trigger (정본)
+
+- Inventory 변경 알림 key는 `INVENTORY_MESSAGE` enum을 사용한다.
+  - 입력 파일: `input/Domains/Game/ENUM_TYPES.json`
+- Trigger 소유자: `InventoryManager`
+- 외부 노출: `InventoryManager` helper(`Subcribe/UnSubcribe`)만 허용
+- Trigger 직접 참조 금지
+
+현재 최소 메시지:
+
+- `PASS_CHANGED`
+  - payload: `args[0] = passId(string)`, `args[1] = owned(bool)`
+
+사용 목적:
+
+- `ACHIEVE.reqPassId` 조건이 있는 runtime의 `WAIT -> ACTIVE` 전이를 위해 Pass 변동을 구독한다.

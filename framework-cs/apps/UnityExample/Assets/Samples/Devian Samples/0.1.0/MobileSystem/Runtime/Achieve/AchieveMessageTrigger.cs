@@ -6,11 +6,12 @@ namespace Devian
     /// <summary>
     /// Achieve message callback payload convention:
     /// - RUNTIME_INIT: args[0] = AchieveRuntime
+    /// - RUNTIME_ACTIVE: args[0] = AchieveRuntime
     /// - RUNTIME_PROGRESS: args[0] = AchieveRuntime
     /// - RUNTIME_CLAIMABLE: args[0] = AchieveRuntime
     /// - RUNTIME_LEVEL_UP: args[0] = AchieveRuntime
     /// - RUNTIME_REWARDED: args[0] = AchieveRuntime, args[1] = RewardData[]
-    /// - ACHIEVEMENT_UNLOCKED: args[0] = string achievementId
+    /// - RUNTIME_UNLOCKED: args[0] = string achievementId
     /// </summary>
     public sealed class AchieveMessageTrigger : BaseTrigger<EntityId, ACHIEVE_MESSAGE>
     {

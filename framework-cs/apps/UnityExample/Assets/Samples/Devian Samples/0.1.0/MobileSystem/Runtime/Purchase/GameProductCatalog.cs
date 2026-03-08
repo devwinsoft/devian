@@ -16,7 +16,7 @@ namespace Devian
                     return PurchaseProductType.Consumable;
                 case PRODUCT_KIND.CONSUMABLE:
                     return PurchaseProductType.Consumable;
-                case PRODUCT_KIND.SEASON_PASS:
+                case PRODUCT_KIND.PASS:
                 default:
                     return PurchaseProductType.NonConsumable;
             }

@@ -12,13 +12,13 @@ using UnityEngine;
 
 namespace Devian.Domain.Game
 {
-    public static partial class TB_CARD
+    public static partial class TB_ITEM_CARD
     {
         private static global::Devian.TableFormat _loadedFormat;
         private static bool _isLoaded;
 
         /// <summary>
-        /// Preload CARD table via TableManager.
+        /// Preload ITEM_CARD table via TableManager.
         /// TableManager handles: TextAsset load + TB insert + cache.
         /// </summary>
         /// <param name="key">Addressables key to load TextAsset</param>
@@ -39,7 +39,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Unload CARD table and clear data.
+        /// Unload ITEM_CARD table and clear data.
         /// </summary>
         public static void Unload()
         {
@@ -48,7 +48,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Check if CARD table is loaded.
+        /// Check if ITEM_CARD table is loaded.
         /// </summary>
         public static bool IsLoaded => _isLoaded;
 

@@ -10,7 +10,7 @@ const REWARD_TYPES = [
   'EQUIP',
   'HERO',
   'RENTAL',
-  'SEASON_PASS',
+  'PASS',
 ] as const;
 
 type RewardType = typeof REWARD_TYPES[number];
@@ -31,8 +31,6 @@ interface RewardIdCatalog {
 interface RewardTypeMeta {
   amountGuide: string;
   interpretation: string;
-  fixedAmount?: number;
-  unsupported?: boolean;
 }
 
 const REWARD_TYPE_META: Record<RewardType, RewardTypeMeta> = {
@@ -53,16 +51,12 @@ const REWARD_TYPE_META: Record<RewardType, RewardTypeMeta> = {
     interpretation: 'Hero UNIT_AMOUNT accumulates.',
   },
   RENTAL: {
-    amountGuide: 'Operation Initial Inventory UI에서는 선택을 지원하지 않는다.',
-    interpretation: 'Not selectable in this page.',
-    fixedAmount: 1,
-    unsupported: true,
+    amountGuide: '양수 amount면 RENTAL 활성화로 해석한다.',
+    interpretation: 'Positive amount enables rental.',
   },
-  SEASON_PASS: {
-    amountGuide: 'Operation Initial Inventory UI에서는 선택을 지원하지 않는다.',
-    interpretation: 'Not selectable in this page.',
-    fixedAmount: 1,
-    unsupported: true,
+  PASS: {
+    amountGuide: '양수 amount면 PASS 소유로 해석한다.',
+    interpretation: 'Positive amount grants pass ownership.',
   },
 };
 
@@ -75,16 +69,21 @@ function getRewardTypeMeta(type: RewardType): RewardTypeMeta {
 }
 
 function normalizeAmountByType(type: RewardType, amount: number): number {
-  const fixed = getRewardTypeMeta(type).fixedAmount;
-  if (fixed !== undefined) return fixed;
+  void type;
   return amount;
+}
+
+function normalizeRewardType(rawType: string): string {
+  // Legacy compatibility: previously saved value
+  if (rawType === 'SEASON_PASS') return 'PASS';
+  return rawType;
 }
 
 function normalizeReward(raw: unknown): RewardRow | null {
   if (raw == null || typeof raw !== 'object') return null;
 
   const row = raw as Record<string, unknown>;
-  const type = String(row.type ?? '').trim().toUpperCase();
+  const type = normalizeRewardType(String(row.type ?? '').trim().toUpperCase());
   const id = String(row.id ?? '').trim();
   const amount = Number(row.amount);
 
@@ -117,11 +116,6 @@ function validateRewardRow(row: RewardRow, rowIndex: number): string | null {
   if (!Number.isInteger(row.amount) || row.amount <= 0)
     return `Row ${rowIndex + 1}: amount must be a positive integer.`;
 
-  const meta = getRewardTypeMeta(row.type);
-  if (meta.fixedAmount !== undefined && row.amount !== meta.fixedAmount) {
-    return `Row ${rowIndex + 1}: amount for ${row.type} must be ${meta.fixedAmount}.`;
-  }
-
   return null;
 }
 
@@ -136,7 +130,7 @@ function getTypeIdOptions(type: RewardType, catalog: RewardIdCatalog): string[] 
     case 'HERO':
       return catalog.heroIds;
     case 'RENTAL':
-    case 'SEASON_PASS':
+    case 'PASS':
     default:
       return [];
   }
@@ -167,6 +161,7 @@ export function createInitialInventoryTab(container: HTMLElement) {
     <div class="reward-input-row">
       <select id="ii-type"></select>
       <select id="ii-id"></select>
+      <input type="text" id="ii-id-text" placeholder="id" style="display:none;" />
       <input type="number" id="ii-amount" min="1" step="1" placeholder="amount" />
       <button class="btn reward-action-btn" id="ii-add" title="Add reward">+</button>
     </div>
@@ -186,6 +181,7 @@ export function createInitialInventoryTab(container: HTMLElement) {
   const rewardList = section.querySelector<HTMLTableSectionElement>('#ii-reward-list')!;
   const typeSelect = section.querySelector<HTMLSelectElement>('#ii-type')!;
   const idSelect = section.querySelector<HTMLSelectElement>('#ii-id')!;
+  const idTextInput = section.querySelector<HTMLInputElement>('#ii-id-text')!;
   const amountInput = section.querySelector<HTMLInputElement>('#ii-amount')!;
   const addBtn = section.querySelector<HTMLButtonElement>('#ii-add')!;
   const importCatalogBtn = section.querySelector<HTMLButtonElement>('#ii-import-catalog')!;
@@ -197,6 +193,7 @@ export function createInitialInventoryTab(container: HTMLElement) {
   let rewards: RewardRow[] = [];
   let idCatalog: RewardIdCatalog = { currencyIds: [], equipIds: [], cardIds: [], heroIds: [] };
   let catalogState = '';
+  let useManualIdInput = false;
 
   function setStatus(msg: string, type: 'success' | 'error' | '') {
     status.textContent = msg;
@@ -254,44 +251,47 @@ export function createInitialInventoryTab(container: HTMLElement) {
       .join('');
   }
 
+  function setManualIdInput(enabled: boolean, placeholder = 'id') {
+    useManualIdInput = enabled;
+    idSelect.style.display = enabled ? 'none' : '';
+    idSelect.disabled = enabled;
+    idTextInput.style.display = enabled ? '' : 'none';
+    idTextInput.disabled = !enabled;
+    idTextInput.placeholder = placeholder;
+  }
+
+  function getSelectedId(): string {
+    return useManualIdInput ? idTextInput.value.trim() : idSelect.value.trim();
+  }
+
   function syncInputForType() {
     const selected = typeSelect.value.trim().toUpperCase();
     const type: RewardType = isRewardType(selected) ? selected : 'CURRENCY';
     const meta = getRewardTypeMeta(type);
     const options = getTypeIdOptions(type, idCatalog);
+    const requiresCatalog = type === 'CURRENCY' || type === 'EQUIP' || type === 'CARD' || type === 'HERO';
 
     interpretation.textContent = `Interpretation: ${meta.interpretation}`;
 
-    if (meta.fixedAmount !== undefined) {
-      amountInput.value = String(meta.fixedAmount);
-      amountInput.disabled = true;
-    } else {
-      amountInput.disabled = false;
-      if (!amountInput.value.trim()) amountInput.value = '1';
-    }
-
-    if (meta.unsupported) {
-      renderIdOptions([], 'Not selectable');
-      idSelect.disabled = true;
-      addBtn.disabled = true;
-      guide.textContent = `${meta.amountGuide}`;
-      return;
-    }
+    amountInput.disabled = false;
+    if (!amountInput.value.trim()) amountInput.value = '1';
 
     if (options.length <= 0) {
-      renderIdOptions([], 'No IDs imported');
-      idSelect.disabled = true;
-      addBtn.disabled = true;
-
-      if (type === 'CURRENCY' || type === 'EQUIP' || type === 'CARD' || type === 'HERO') {
+      if (requiresCatalog) {
+        setManualIdInput(false);
+        renderIdOptions([], 'No IDs imported');
+        idSelect.disabled = true;
+        addBtn.disabled = true;
         guide.textContent = `ID source: /config/rewardIdCatalog. Run reward-id import first. ${catalogState}`.trim();
       } else {
-        guide.textContent = 'No selectable ID.';
+        setManualIdInput(true, `${type} ID`);
+        addBtn.disabled = false;
+        guide.textContent = `ID source: manual input (${type}). ${meta.amountGuide}`;
       }
-
       return;
     }
 
+    setManualIdInput(false);
     renderIdOptions(options, 'No selectable ID');
     idSelect.disabled = false;
     addBtn.disabled = false;
@@ -311,13 +311,7 @@ export function createInitialInventoryTab(container: HTMLElement) {
       return;
     }
 
-    const meta = getRewardTypeMeta(type);
-    if (meta.unsupported) {
-      setStatus(`${type} is not selectable in this page.`, 'error');
-      return;
-    }
-
-    const id = idSelect.value.trim();
+    const id = getSelectedId();
     const rawAmount = Number(amountInput.value.trim());
     const amount = normalizeAmountByType(type, rawAmount);
     const row: RewardRow = { type, id, amount };

@@ -116,13 +116,13 @@ namespace Devian
                 return string.Empty;
 
             var product = TB_PRODUCT.Get(internalProductIdOrSeasonPassId);
-            if (product == null || product.Kind != PRODUCT_KIND.SEASON_PASS)
+            if (product == null || product.Kind != PRODUCT_KIND.PASS)
                 return internalProductIdOrSeasonPassId;
 
             var rewards = ResolveRewardDatas(product.RewardGroupId);
             for (var i = 0; i < rewards.Length; i++)
             {
-                if (rewards[i].Type == REWARD_TYPE.SEASON_PASS)
+                if (rewards[i].Type == REWARD_TYPE.PASS)
                     return rewards[i].Id;
             }
 
@@ -1426,7 +1426,7 @@ namespace Devian
                         data["rentalId"] = rewards[i].Id;
                         break;
                     }
-                    if (kind == PurchaseKind.SeasonPass && rewards[i].Type == REWARD_TYPE.SEASON_PASS)
+                    if (kind == PurchaseKind.SeasonPass && rewards[i].Type == REWARD_TYPE.PASS)
                     {
                         data["seasonPassId"] = rewards[i].Id;
                         break;
@@ -1658,7 +1658,7 @@ namespace Devian
             Debug.LogWarning($"[{Tag}] Store disconnected: {desc}");
         }
 
-        protected override void OnDestroy()
+        protected override void onDestroy()
         {
             if (_controller != null)
             {
@@ -1666,7 +1666,6 @@ namespace Devian
                 _controller.OnPurchaseFailed -= onPurchaseFailed;
                 _controller.OnStoreDisconnected -= onStoreDisconnected;
             }
-            base.OnDestroy();
         }
 
         // ── Catalog Helpers ────────────────────────────────────────
@@ -1791,8 +1790,9 @@ namespace Devian
 
         static void cacheEntitlementsSnapshot(EntitlementsSnapshot snapshot)
         {
-            var inventory = getInventoryStorageOrNull();
-            if (inventory == null)
+            var inventoryManager = getInventoryManagerOrNull();
+            var inventory = inventoryManager?.Storage;
+            if (inventoryManager == null || inventory == null)
                 return;
 
             // serverNowUtcMs 기반으로 expiresAtServerUtcMs → expiresAtClientUtcMs 변환
@@ -1818,25 +1818,24 @@ namespace Devian
 
             // 서버 snapshot에 없는 로컬 seasonPass 제거 (환불 등으로 서버에서 사라진 경우)
             var serverSeasonPassSet = new HashSet<string>(snapshot.OwnedSeasonPasses);
-            var localSeasonPassKeys = new List<string>(inventory.SeasonPasses.Keys);
+            var localSeasonPassKeys = new List<string>(inventory.Passes.Keys);
             for (int i = 0; i < localSeasonPassKeys.Count; i++)
             {
                 if (!serverSeasonPassSet.Contains(localSeasonPassKeys[i]))
-                    inventory.RemoveSeasonPass(localSeasonPassKeys[i]);
+                    inventoryManager.RemovePassOwnership(localSeasonPassKeys[i]);
             }
 
             foreach (var id in snapshot.OwnedSeasonPasses)
             {
-                inventory.SetSeasonPass(id, true);
+                inventoryManager.SetPassOwnership(id, true);
             }
         }
 
-        static InventoryStorage getInventoryStorageOrNull()
+        static InventoryManager getInventoryManagerOrNull()
         {
             try
             {
-                var inventoryManager = InventoryManager.Instance;
-                return inventoryManager?.Storage;
+                return InventoryManager.Instance;
             }
             catch
             {
@@ -1851,7 +1850,7 @@ namespace Devian
                 case PRODUCT_KIND.CONSUMABLE: return PurchaseKind.Consumable;
                 case PRODUCT_KIND.RENTAL: return PurchaseKind.Rental;
                 case PRODUCT_KIND.SUBSCRIPTION: return PurchaseKind.Subscription;
-                case PRODUCT_KIND.SEASON_PASS: return PurchaseKind.SeasonPass;
+                case PRODUCT_KIND.PASS: return PurchaseKind.SeasonPass;
                 default: return PurchaseKind.Consumable;
             }
         }

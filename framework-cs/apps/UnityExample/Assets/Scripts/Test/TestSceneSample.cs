@@ -44,11 +44,11 @@ public class TestSceneSample : TestSceneBootstrap
 
         foreach (var key in InventoryManager.Instance.Storage.Rentals.Keys)
         {
-            Debug.Log($"Rental: {key}");
+            Debug.Log($"Rentals: {key}");
         }
-        foreach (var key in InventoryManager.Instance.Storage.SeasonPasses.Keys)
+        foreach (var key in InventoryManager.Instance.Storage.Passes.Keys)
         {
-            Debug.Log($"SeasonPass: {key}");
+            Debug.Log($"Passes: {key}");
         }
     }
 

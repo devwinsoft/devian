@@ -26,9 +26,9 @@ namespace Devian
         readonly Dictionary<string, long> mRentals = new();
         public IReadOnlyDictionary<string, long> Rentals => mRentals;
 
-        // ── SeasonPasses ──
-        readonly Dictionary<string, bool> mSeasonPasses = new();
-        public IReadOnlyDictionary<string, bool> SeasonPasses => mSeasonPasses;
+        // ── Passes ──
+        readonly Dictionary<string, bool> mPasses = new();
+        public IReadOnlyDictionary<string, bool> Passes => mPasses;
 
         // ── Currency Operations ──
 
@@ -144,21 +144,31 @@ namespace Devian
             mRentals.Remove(id);
         }
 
-        // ── SeasonPass Operations ──
+        // ── Pass Operations ──
 
-        public void SetSeasonPass(string id, bool owned)
+        public bool SetPass(string id, bool owned)
         {
-            mSeasonPasses[id] = owned;
+            if (string.IsNullOrWhiteSpace(id))
+                return false;
+
+            if (!owned)
+                return mPasses.Remove(id);
+
+            if (mPasses.TryGetValue(id, out var currentOwned) && currentOwned)
+                return false;
+
+            mPasses[id] = true;
+            return true;
         }
 
-        public bool HasSeasonPass(string id)
+        public bool HasPass(string id)
         {
-            return mSeasonPasses.TryGetValue(id, out var owned) && owned;
+            return mPasses.TryGetValue(id, out var owned) && owned;
         }
 
-        public void RemoveSeasonPass(string id)
+        public bool RemovePass(string id)
         {
-            mSeasonPasses.Remove(id);
+            return mPasses.Remove(id);
         }
 
         // ── Clear ──
@@ -172,7 +182,7 @@ namespace Devian
                 kv.Value.ClearOwner();
             mEquipments.Clear();
             mRentals.Clear();
-            mSeasonPasses.Clear();
+            mPasses.Clear();
         }
     }
 }

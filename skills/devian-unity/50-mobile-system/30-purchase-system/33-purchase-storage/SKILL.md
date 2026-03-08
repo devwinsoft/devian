@@ -138,7 +138,7 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 NOTE:
 - `noAdsExpireAtClientUtcMs`, `seasonPassOwnership`, `Rental 로컬 캐시 상태`는 **InventoryStorage로 이동됨** (PurchaseStorage 범위 아님).
   - InventoryStorage: `Rentals` (rentalTypeId → expiresAtClientUtcMs), `SeasonPasses` (seasonPassTypeId → owned)
-  - Reward 파이프라인(`REWARD_TYPE.RENTAL` / `REWARD_TYPE.SEASON_PASS`)을 통해 관리된다.
+  - Reward 파이프라인(`REWARD_TYPE.RENTAL` / `REWARD_TYPE.PASS`)을 통해 관리된다.
 
 
 ---

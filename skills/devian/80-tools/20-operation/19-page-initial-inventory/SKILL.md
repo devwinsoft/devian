@@ -29,11 +29,11 @@ Pipeline: Firestore /config/initialInventory read/write (auto-load on form init)
 
 검증 규칙:
 - `type`: `REWARD_TYPE` enum 문자열
-- `id`: drop listbox에서 선택
+- `id`: type별로 listbox 또는 수동 입력
 - `amount`: 양의 정수
 - `CURRENCY`: `id`는 `/config/rewardIdCatalog.currencyIds`에서 채운다. (`ENUM_TYPES.json:CURRENCY_TYPE` import 결과)
 - `EQUIP`/`CARD`/`HERO`: `/config/rewardIdCatalog`에서 로드한 id를 listbox에 채운다.
-- `RENTAL`/`SEASON_PASS`: 이 페이지에서 선택 불가(UI add 비활성)
+- `RENTAL`/`PASS`: catalog import 없이 수동 id 입력으로 추가 가능하다.
 - 잘못된 row는 저장 전에 에러로 표시
 
 
@@ -43,7 +43,7 @@ Pipeline: Firestore /config/initialInventory read/write (auto-load on form init)
 2. 현재 리스트는 우측 `-` 버튼으로 row 삭제 가능하다.
 3. 탭 로드시 `/config/rewardIdCatalog`를 읽어 `CURRENCY`/`EQUIP`/`CARD`/`HERO` id listbox 소스로 사용한다.
 4. 하단 입력 row에서 `type` 선택 시 listbox 옵션과 `RewardData` 해석 가이드를 갱신한다.
-5. `RENTAL`/`SEASON_PASS` 선택 시 id 선택과 add 버튼이 비활성화된다.
+5. `RENTAL`/`PASS` 선택 시 manual id input 모드로 전환된다.
 6. 하단 입력 row에서 `+` 버튼으로 신규 reward를 append한다.
 7. `Import Reward IDs` 버튼은 local dev server API를 통해 importer 스크립트를 실행한다.
 8. importer 결과(stdout/stderr)는 화면 status message에 표시된다.

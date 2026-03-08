@@ -3,16 +3,43 @@ using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
+using UnityEngine;
 
 namespace Devian
 {
     public sealed class InventoryManager : CompoSingleton<InventoryManager>
     {
         readonly InventoryStorage _storage = new();
+        readonly InventoryMessageTrigger _messageTrigger = new();
 
         public InventoryStorage Storage => _storage;
 
         // ── Public API ──
+
+        public void Subcribe(EntityId ownerKey, INVENTORY_MESSAGE msgType, BaseTrigger<EntityId, INVENTORY_MESSAGE>.Handler handler)
+        {
+            _messageTrigger.Subcribe(ownerKey, msgType, handler);
+        }
+
+        public void SubcribeOnce(EntityId ownerKey, INVENTORY_MESSAGE msgType, Action<object[]> handler)
+        {
+            _messageTrigger.SubcribeOnce(ownerKey, msgType, handler);
+        }
+
+        public void UnSubcribe(EntityId ownerKey)
+        {
+            _messageTrigger.UnSubcribe(ownerKey);
+        }
+
+        public void SetPassOwnership(string passId, bool owned)
+        {
+            setPassOwnership(passId, owned);
+        }
+
+        public void RemovePassOwnership(string passId)
+        {
+            removePassOwnership(passId);
+        }
 
         public async Task<CommonResult> FirstInitAsync(CancellationToken ct = default)
         {
@@ -63,7 +90,7 @@ namespace Devian
             {
                 var r = rewards[i];
 
-                if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY && r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO && r.Type != REWARD_TYPE.RENTAL && r.Type != REWARD_TYPE.SEASON_PASS)
+                if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY && r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO && r.Type != REWARD_TYPE.RENTAL && r.Type != REWARD_TYPE.PASS)
                     return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_TYPE_INVALID,
                         $"rewards[{i}] invalid type: {r.Type}");
 
@@ -106,9 +133,9 @@ namespace Devian
                     // Amount=1은 활성화 flag. 만료 시각은 데이터 Sync에서 서버로부터 갱신.
                     _storage.SetRental(r.Id, long.MaxValue);
                 }
-                else if (r.Type == REWARD_TYPE.SEASON_PASS)
+                else if (r.Type == REWARD_TYPE.PASS)
                 {
-                    _storage.SetSeasonPass(r.Id, true);
+                    setPassOwnership(r.Id, true);
                 }
             }
 
@@ -128,7 +155,7 @@ namespace Devian
             {
                 var r = rewards[i];
 
-                if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY && r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO && r.Type != REWARD_TYPE.RENTAL && r.Type != REWARD_TYPE.SEASON_PASS)
+                if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY && r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO && r.Type != REWARD_TYPE.RENTAL && r.Type != REWARD_TYPE.PASS)
                     return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_TYPE_INVALID,
                         $"rewards[{i}] invalid type: {r.Type}");
 
@@ -201,13 +228,13 @@ namespace Devian
                             $"rewards[{i}] rental not active. id={r.Id}");
                     }
                 }
-                else if (r.Type == REWARD_TYPE.SEASON_PASS)
+                else if (r.Type == REWARD_TYPE.PASS)
                 {
-                    if (!_storage.HasSeasonPass(r.Id))
+                    if (!_storage.HasPass(r.Id))
                     {
                         return CommonResult.Failure(
                             CommonErrorType.INVENTORY_REFUND_INSUFFICIENT,
-                            $"rewards[{i}] season pass not owned. id={r.Id}");
+                            $"rewards[{i}] pass not owned. id={r.Id}");
                     }
                 }
             }
@@ -264,9 +291,9 @@ namespace Devian
                 {
                     _storage.RemoveRental(r.Id);
                 }
-                else if (r.Type == REWARD_TYPE.SEASON_PASS)
+                else if (r.Type == REWARD_TYPE.PASS)
                 {
-                    _storage.RemoveSeasonPass(r.Id);
+                    removePassOwnership(r.Id);
                 }
             }
 
@@ -291,7 +318,7 @@ namespace Devian
             {
                 var r = rewards[i];
 
-                if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY && r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO && r.Type != REWARD_TYPE.RENTAL && r.Type != REWARD_TYPE.SEASON_PASS)
+                if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY && r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO && r.Type != REWARD_TYPE.RENTAL && r.Type != REWARD_TYPE.PASS)
                     return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_TYPE_INVALID,
                         $"rewards[{i}] invalid type: {r.Type}");
 
@@ -366,10 +393,10 @@ namespace Devian
                     if (_storage.HasActiveRental(r.Id))
                         _storage.RemoveRental(r.Id);
                 }
-                else if (r.Type == REWARD_TYPE.SEASON_PASS)
+                else if (r.Type == REWARD_TYPE.PASS)
                 {
-                    if (_storage.HasSeasonPass(r.Id))
-                        _storage.RemoveSeasonPass(r.Id);
+                    if (_storage.HasPass(r.Id))
+                        removePassOwnership(r.Id);
                 }
             }
 
@@ -406,9 +433,9 @@ namespace Devian
                 return _storage.HasActiveRental(id) ? 1L : 0L;
             }
 
-            if (type == nameof(REWARD_TYPE.SEASON_PASS))
+            if (type == nameof(REWARD_TYPE.PASS))
             {
-                return _storage.HasSeasonPass(id) ? 1L : 0L;
+                return _storage.HasPass(id) ? 1L : 0L;
             }
 
             return 0L;
@@ -425,7 +452,7 @@ namespace Devian
             }
             else
             {
-                var table = TB_CARD.Get(cardId);
+                var table = TB_ITEM_CARD.Get(cardId);
                 var ability = new AbilityCard();
                 if (table != null)
                     ability.Init(table);
@@ -440,7 +467,7 @@ namespace Devian
             if (amount <= 0)
                 return;
 
-            var table = TB_EQUIP.Get(equipId);
+            var table = TB_ITEM_EQUIP.Get(equipId);
             for (var i = 0; i < amount; i++)
             {
                 var itemUid = Guid.NewGuid().ToString("N");
@@ -469,6 +496,18 @@ namespace Devian
                 _storage.AddHero(heroId, ability);
                 ability.AddStat(STAT_TYPE.UNIT_AMOUNT, (int)amount);
             }
+        }
+
+        void setPassOwnership(string passId, bool owned)
+        {
+            if (_storage.SetPass(passId, owned))
+                _messageTrigger.Notify(INVENTORY_MESSAGE.PASS_CHANGED, passId, owned);
+        }
+
+        void removePassOwnership(string passId)
+        {
+            if (_storage.RemovePass(passId))
+                _messageTrigger.Notify(INVENTORY_MESSAGE.PASS_CHANGED, passId, false);
         }
     }
 }

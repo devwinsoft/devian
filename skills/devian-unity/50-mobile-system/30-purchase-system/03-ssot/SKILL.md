@@ -118,7 +118,7 @@ AppliesTo: v10
 - Season Pass: 시즌별 구매 1회성 Entitlement로 운영
 
 - kind의 정본 enum은 컨텐츠 레이어가 정의한 `ProductKind`다.
-- 테이블(`PurchaseTable.xlsx` PRODUCT.kind)의 타입은 `ProductKind`를 사용한다.
+- 테이블(`ItemTable.xlsx` PRODUCT.kind)의 타입은 `ProductKind`를 사용한다.
 
 ### 카탈로그 통합
 
@@ -141,10 +141,10 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 #### Product Catalog (상품 요약/매핑) SSOT — ✅ 전체 결정됨
 - [x] SSOT 저장 위치: **(A) Devian input 테이블(Excel) 기반** — 결정됨
   - PRODUCT 테이블 스키마를 이 문서(03-ssot)에서 SSOT로 정의한다.
-  - `PurchaseTable.xlsx`에 PRODUCT 시트를 생성하여 데이터를 관리한다.
+  - `ItemTable.xlsx`의 PRODUCT 시트에서 데이터를 관리한다.
 - [x] `{buildInputJson}` 도메인 등록: — 결정됨
   - 도메인 등록 정보는 컨텐츠 레이어 SSOT에서 관리
-- [x] PurchaseTable.xlsx 경로: — 결정됨
+- [x] ItemTable.xlsx 경로: — 결정됨
   - 경로는 컨텐츠 레이어 SSOT에서 관리
 - [x] PRODUCT 테이블 스키마/필드: — 결정됨
   - `internalProductId` (string, pk) — 내부 상품 ID (정본)
@@ -321,7 +321,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 - 금지: 전체 구매 이력 정본 저장, 구매 실패 상세(코드/메시지) 저장, raw receipt 저장, 서버 원장/멱등 대체
 - Rental 만료 시각(`expiresAtClientUtcMs`) / SeasonPass 소유권은 **InventoryStorage**에서 관리한다 (PurchaseStorage 범위 아님).
   - InventoryStorage: `Rentals` (rentalTypeId → expiresAtClientUtcMs), `SeasonPasses` (seasonPassTypeId → owned)
-  - Reward 파이프라인(`REWARD_TYPE.RENTAL` / `REWARD_TYPE.SEASON_PASS`)을 통해 설정하고, 만료 시각은 서버 데이터 Sync에서 갱신한다.
+  - Reward 파이프라인(`REWARD_TYPE.RENTAL` / `REWARD_TYPE.PASS`)을 통해 설정하고, 만료 시각은 서버 데이터 Sync에서 갱신한다.
 - `RetryInterruptedPurchaseAsync()`는 "재구매"가 아니라 `PurchaseStorage.current` + 서버 상태를 바탕으로 **중단된 상태 전이를 재개**하는 경로다.
 - 정본 문서: `33-purchase-storage`
 

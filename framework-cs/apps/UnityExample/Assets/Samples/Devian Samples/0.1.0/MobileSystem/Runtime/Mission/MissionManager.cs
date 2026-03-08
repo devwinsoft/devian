@@ -37,10 +37,6 @@ namespace Devian
                 getCurrentDailyPeriodIndex);
         }
 
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-        }
 
         public async Task<CommonResult> InitializeAsync(
             MissionClockSnapshot preloadedClock = null, CancellationToken ct = default)

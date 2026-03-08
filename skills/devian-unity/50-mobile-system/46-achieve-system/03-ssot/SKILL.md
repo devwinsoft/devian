@@ -33,6 +33,7 @@ AppliesTo: v10
 | `level` | int | 단계 |
 | `orderNum` | int | 정렬 기준(1-base) |
 | `reqMsgId` | string | runtime 활성화 조건 메시지 (`MESSAGE.messageId` FK) |
+| `reqPassId` | string | runtime 활성화 조건 시즌패스 ID (`InventoryStorage.Passes` key) |
 | `reqValue` | `class:CBigInt` | runtime 활성화 조건값 |
 | `conditionMsgId` | string | 진행도 계산 메시지 (`MESSAGE.messageId` FK) |
 | `conditionValue` | `class:CBigInt` | 목표값 |
@@ -58,9 +59,12 @@ AppliesTo: v10
 - group(`achieveId`)당 runtime 1개 유지
 - level-up 시 `achieveUid` 유지
 - 초기화 시 `ACHIEVE` group 기준 runtime을 항상 생성한다.
-- `reqMsgId/reqValue`가 있으면 `WAIT`, 없으면 `ACTIVE`로 시작한다.
+- `reqMsgId/reqValue` 또는 `reqPassId`가 있으면 `WAIT`, 둘 다 없으면 `ACTIVE`로 시작한다.
 - `WAIT` 상태는 `conditionMsgId` 진행도 반영을 하지 않는다.
 - req 조건을 만족하면 `WAIT -> ACTIVE`로 전이한다.
+  - `reqMsgId/reqValue` 조건: 기존 규칙(`GameMessageManager` stat/trigger 기반)
+  - `reqPassId` 조건: `InventoryManager.Instance.Storage.Passes`에 해당 pass가 `owned=true`
+  - 둘 다 존재하면 AND 조건으로 평가한다.
 - 진행값은 saveType 규칙을 따른다:
   - `TOTAL_SUM`, `TOTAL_MAX`: 외부 저장(`GameMessageStorage`) 값을 projection
   - `SESSION_SUM`, `SESSION_MAX`: runtime 내부 `progressValue`를 직접 누적/갱신
@@ -82,6 +86,7 @@ claim 성공 시:
 ## D. Event
 
 - `OnRuntimeInitialized(AchieveRuntime)`
+- `OnRuntimeActive(AchieveRuntime)` (`WAIT -> ACTIVE` 전이 시 1회)
 - `OnRuntimeProgress(AchieveRuntime)`
 - `OnRuntimeClaimable(AchieveRuntime)`
 - `OnRuntimeLevelUp(AchieveRuntime)`
@@ -92,7 +97,7 @@ claim 성공 시:
 - key: `ACHIEVE_MESSAGE`
 - `RUNTIME_*`: `args[0] = AchieveRuntime`
 - `RUNTIME_REWARDED`: `args[1] = RewardData[]`
-- `ACHIEVEMENT_UNLOCKED`: `args[0] = string achievementId`
+- `RUNTIME_UNLOCKED`: `args[0] = string achievementId`
 
 ---
 

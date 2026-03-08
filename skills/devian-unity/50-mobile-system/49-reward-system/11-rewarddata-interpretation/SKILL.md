@@ -44,7 +44,7 @@ AppliesTo: v10
 ## Common Validation
 
 - `type`은 허용 enum 값이어야 한다:
-  - `CARD`, `CURRENCY`, `EQUIP`, `HERO`, `RENTAL`, `SEASON_PASS`
+  - `CARD`, `CURRENCY`, `EQUIP`, `HERO`, `RENTAL`, `PASS`
 - `id`는 공백이 아니어야 한다.
 - `amount`는 정수여야 한다.
 - 적용 경로 기준으로 `amount <= 0`은 지급 대상에서 제외(no-op 또는 skip)한다.
@@ -61,11 +61,11 @@ AppliesTo: v10
 | `EQUIP` | `equipId` | 생성 개수 | 개수만큼 `itemUid` 인스턴스 생성 |
 | `CARD` | `cardId` | 증가 수량 | 카드 보유량 누적 |
 | `HERO` | `heroId` | 증가 수량 | 영웅 수량(`UNIT_AMOUNT`) 누적 |
-| `RENTAL` | `RENTAL_TYPE` enum name | 활성화 플래그(양수) | 활성 상태 설정 (`SetRental`) |
-| `SEASON_PASS` | `SEASON_PASS_TYPE` enum name | 소유 플래그(양수) | 소유 상태 설정 (`SetSeasonPass`) |
+| `RENTAL` | rental key(string) | 활성화 플래그(양수) | 활성 상태 설정 (`SetRental`) |
+| `PASS` | season pass key(string) | 소유 플래그(양수) | 소유 상태 설정 (`SetSeasonPass`) |
 
 주의:
-- `RENTAL`/`SEASON_PASS`는 양수 여부만 의미가 있다(값의 크기 자체는 의미 없음).
+- `RENTAL`/`PASS`는 양수 여부만 의미가 있다(값의 크기 자체는 의미 없음).
 - `EQUIP`은 `amount`를 무시하지 않는다. `amount`만큼 인스턴스를 생성한다.
 
 

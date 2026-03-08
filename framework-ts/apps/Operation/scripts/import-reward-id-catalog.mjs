@@ -139,8 +139,8 @@ async function main() {
   }
 
   const currencyIds = extractCurrencyIdsFromEnumJson(enumTypesPath);
-  const equipIds = extractIdsFromSheet(itemTablePath, 'EQUIP', 'equipId');
-  const cardIds = extractIdsFromSheet(itemTablePath, 'CARD', 'cardId');
+  const equipIds = extractIdsFromSheet(itemTablePath, 'ITEM_EQUIP', 'equipId');
+  const cardIds = extractIdsFromSheet(itemTablePath, 'ITEM_CARD', 'cardId');
   const heroIds = extractIdsFromSheet(unitTablePath, 'UNIT_HERO', 'unitId');
 
   const basePayload = {

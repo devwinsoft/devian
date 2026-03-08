@@ -76,7 +76,8 @@ export enum ACHIEVE_MESSAGE {
     RUNTIME_CLAIMABLE = 3,
     RUNTIME_LEVEL_UP = 4,
     RUNTIME_REWARDED = 5,
-    ACHIEVEMENT_UNLOCKED = 6,
+    RUNTIME_UNLOCKED = 6,
+    RUNTIME_ACTIVE = 7,
 }
 
 /** ACHIEVE_TYPE enum */
@@ -102,7 +103,7 @@ export enum REWARD_TYPE {
     EQUIP = 2,
     HERO = 3,
     RENTAL = 4,
-    SEASON_PASS = 5,
+    PASS = 5,
 }
 
 /** ADVERTISE_FORMAT enum */
@@ -117,16 +118,6 @@ export enum ADVERTISE_FORMAT {
 export enum ADVERTISE_PROVIDER {
     GOOGLE_MOBILE_ADS = 0,
     MOCK = 1,
-}
-
-/** RENTAL_TYPE enum */
-export enum RENTAL_TYPE {
-    NO_ADS = 0,
-}
-
-/** SEASON_PASS_TYPE enum */
-export enum SEASON_PASS_TYPE {
-    S2026_01 = 0,
 }
 
 /** STAT_TYPE enum */
@@ -144,8 +135,14 @@ export enum STAT_TYPE {
 export enum PRODUCT_KIND {
     CONSUMABLE = 0,
     SUBSCRIPTION = 1,
-    SEASON_PASS = 2,
+    PASS = 2,
     RENTAL = 3,
+}
+
+/** INVENTORY_MESSAGE enum */
+export enum INVENTORY_MESSAGE {
+    NONE = 0,
+    PASS_CHANGED = 1,
 }
 
 /** UserType enum */
@@ -207,6 +204,7 @@ export interface ACHIEVE extends IEntityKey<number> {
     OrderNum: number;
     ReqMsgId: string;
     ReqValue: CBigInt | null;
+    ReqPassId: string;
     ConditionMsgId: string;
     ConditionValue: CBigInt | null;
     RewardGroupId: string;
@@ -236,15 +234,29 @@ export interface LEADERBOARD_REWARD extends IEntityKey<number> {
     getKey(): number;
 }
 
-export interface EQUIP extends IEntityKey<string> {
+export interface ITEM_EQUIP extends IEntityKey<string> {
     EquipId: string;
     NameId: string;
     DescId: string;
     getKey(): string;
 }
 
-export interface CARD extends IEntityKey<string> {
+export interface ITEM_CARD extends IEntityKey<string> {
     CardId: string;
+    NameId: string;
+    DescId: string;
+    getKey(): string;
+}
+
+export interface ITEM_RENTAL extends IEntityKey<string> {
+    RentalId: string;
+    NameId: string;
+    DescId: string;
+    getKey(): string;
+}
+
+export interface ITEM_PASS extends IEntityKey<string> {
+    PassId: string;
     NameId: string;
     DescId: string;
     getKey(): string;
@@ -506,9 +518,9 @@ export class TB_LEADERBOARD_REWARD {
     }
 }
 
-export class TB_EQUIP {
-    private static _dict: Map<string, EQUIP> = new Map();
-    private static _list: EQUIP[] = [];
+export class TB_ITEM_EQUIP {
+    private static _dict: Map<string, ITEM_EQUIP> = new Map();
+    private static _list: ITEM_EQUIP[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -517,9 +529,9 @@ export class TB_EQUIP {
         this._list = [];
     }
 
-    static getAll(): readonly EQUIP[] { return this._list; }
+    static getAll(): readonly ITEM_EQUIP[] { return this._list; }
 
-    static get(key: string): EQUIP | undefined {
+    static get(key: string): ITEM_EQUIP | undefined {
         return this._dict.get(key);
     }
 
@@ -531,7 +543,7 @@ export class TB_EQUIP {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as EQUIP;
+            const row = JSON.parse(line) as ITEM_EQUIP;
             this._list.push(row);
             this._dict.set(row.EquipId, row);
         }
@@ -542,9 +554,9 @@ export class TB_EQUIP {
     }
 }
 
-export class TB_CARD {
-    private static _dict: Map<string, CARD> = new Map();
-    private static _list: CARD[] = [];
+export class TB_ITEM_CARD {
+    private static _dict: Map<string, ITEM_CARD> = new Map();
+    private static _list: ITEM_CARD[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -553,9 +565,9 @@ export class TB_CARD {
         this._list = [];
     }
 
-    static getAll(): readonly CARD[] { return this._list; }
+    static getAll(): readonly ITEM_CARD[] { return this._list; }
 
-    static get(key: string): CARD | undefined {
+    static get(key: string): ITEM_CARD | undefined {
         return this._dict.get(key);
     }
 
@@ -567,9 +579,81 @@ export class TB_CARD {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as CARD;
+            const row = JSON.parse(line) as ITEM_CARD;
             this._list.push(row);
             this._dict.set(row.CardId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_ITEM_RENTAL {
+    private static _dict: Map<string, ITEM_RENTAL> = new Map();
+    private static _list: ITEM_RENTAL[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly ITEM_RENTAL[] { return this._list; }
+
+    static get(key: string): ITEM_RENTAL | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as ITEM_RENTAL;
+            this._list.push(row);
+            this._dict.set(row.RentalId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_ITEM_PASS {
+    private static _dict: Map<string, ITEM_PASS> = new Map();
+    private static _list: ITEM_PASS[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly ITEM_PASS[] { return this._list; }
+
+    static get(key: string): ITEM_PASS | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as ITEM_PASS;
+            this._list.push(row);
+            this._dict.set(row.PassId, row);
         }
     }
 

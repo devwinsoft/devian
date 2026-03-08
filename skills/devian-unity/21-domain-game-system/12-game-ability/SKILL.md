@@ -116,7 +116,7 @@ namespace Devian
 {
     public sealed class AbilityEquip : AbilityBase
     {
-        EQUIP mTable = null;
+        ITEM_EQUIP mTable = null;
         string mItemUid = string.Empty;
         string mOwnerUnitId = string.Empty;
         int mOwnerSlotNumber = 0;
@@ -127,7 +127,7 @@ namespace Devian
         public int OwnerSlotNumber => mOwnerSlotNumber;
         public bool IsEquipped => mOwnerSlotNumber > 0;
 
-        public void Init(EQUIP table, string itemUid)
+        public void Init(ITEM_EQUIP table, string itemUid)
         {
             mTable = table;
             mItemUid = itemUid;
@@ -155,11 +155,11 @@ namespace Devian
 {
     public sealed class AbilityCard : AbilityBase
     {
-        CARD mTable = null;
+        ITEM_CARD mTable = null;
 
         public string CardId => mTable?.CardId ?? string.Empty;
 
-        public void Init(CARD table)
+        public void Init(ITEM_CARD table)
         {
             mTable = table;
         }
@@ -167,9 +167,9 @@ namespace Devian
 }
 ```
 
-- `AbilityEquip` — EQUIP 테이블 entity를 직접 참조하여 초기화한다. `ItemUid`(인스턴스 고유 GUID)와 `EquipId`(템플릿 ID) 프로퍼티 노출. 같은 `equipId`에 여러 인스턴스가 존재할 수 있다.
+- `AbilityEquip` — ITEM_EQUIP 테이블 entity를 직접 참조하여 초기화한다. `ItemUid`(인스턴스 고유 GUID)와 `EquipId`(템플릿 ID) 프로퍼티 노출. 같은 `equipId`에 여러 인스턴스가 존재할 수 있다.
 - `AbilityEquip`: `mTable` 참조 + `Init(table, itemUid)` + `ItemUid` + `OwnerUnitId` + `OwnerSlotNumber` + `IsEquipped` + `SetOwner(unitId, slot)` + `ClearOwner()` + `Clone()`. pk는 `itemUid`(GUID).
-- `AbilityCard` — CARD 테이블 entity를 직접 참조하여 초기화한다. `CardId` 프로퍼티 노출. `CARD`는 Generated entity (TB_CARD 컨테이너).
+- `AbilityCard` — ITEM_CARD 테이블 entity를 직접 참조하여 초기화한다. `CardId` 프로퍼티 노출. `ITEM_CARD`는 Generated entity (TB_ITEM_CARD 컨테이너).
 - `AbilityCard`: `mTable` 참조 + `Init(table)` + `Amount` + `AddAmount(delta)` + `Clone()`.
 
 ---

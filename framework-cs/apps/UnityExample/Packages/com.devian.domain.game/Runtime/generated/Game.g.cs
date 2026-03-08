@@ -90,7 +90,8 @@ namespace Devian.Domain.Game
         RUNTIME_CLAIMABLE = 3,
         RUNTIME_LEVEL_UP = 4,
         RUNTIME_REWARDED = 5,
-        ACHIEVEMENT_UNLOCKED = 6,
+        RUNTIME_UNLOCKED = 6,
+        RUNTIME_ACTIVE = 7,
     }
 
     /// <summary>ACHIEVE_TYPE enum</summary>
@@ -119,7 +120,7 @@ namespace Devian.Domain.Game
         EQUIP = 2,
         HERO = 3,
         RENTAL = 4,
-        SEASON_PASS = 5,
+        PASS = 5,
     }
 
     /// <summary>ADVERTISE_FORMAT enum</summary>
@@ -136,18 +137,6 @@ namespace Devian.Domain.Game
     {
         GOOGLE_MOBILE_ADS = 0,
         MOCK = 1,
-    }
-
-    /// <summary>RENTAL_TYPE enum</summary>
-    public enum RENTAL_TYPE
-    {
-        NO_ADS = 0,
-    }
-
-    /// <summary>SEASON_PASS_TYPE enum</summary>
-    public enum SEASON_PASS_TYPE
-    {
-        S2026_01 = 0,
     }
 
     /// <summary>STAT_TYPE enum</summary>
@@ -167,8 +156,15 @@ namespace Devian.Domain.Game
     {
         CONSUMABLE = 0,
         SUBSCRIPTION = 1,
-        SEASON_PASS = 2,
+        PASS = 2,
         RENTAL = 3,
+    }
+
+    /// <summary>INVENTORY_MESSAGE enum</summary>
+    public enum INVENTORY_MESSAGE
+    {
+        NONE = 0,
+        PASS_CHANGED = 1,
     }
 
     /// <summary>UserType enum</summary>
@@ -243,6 +239,7 @@ namespace Devian.Domain.Game
         public int OrderNum { get; set; }
         public string ReqMsgId { get; set; } = string.Empty;
         public CBigInt? ReqValue { get; set; }
+        public string ReqPassId { get; set; } = string.Empty;
         public string ConditionMsgId { get; set; } = string.Empty;
         public CBigInt? ConditionValue { get; set; }
         public string RewardGroupId { get; set; } = string.Empty;
@@ -279,8 +276,8 @@ namespace Devian.Domain.Game
         public int GetKey() => Index;
     }
 
-    /// <summary>EQUIP row</summary>
-    public sealed class EQUIP : IEntityKey<string>
+    /// <summary>ITEM_EQUIP row</summary>
+    public sealed class ITEM_EQUIP : IEntityKey<string>
     {
         public string EquipId { get; set; } = string.Empty;
         public string NameId { get; set; } = string.Empty;
@@ -289,14 +286,34 @@ namespace Devian.Domain.Game
         public string GetKey() => EquipId;
     }
 
-    /// <summary>CARD row</summary>
-    public sealed class CARD : IEntityKey<string>
+    /// <summary>ITEM_CARD row</summary>
+    public sealed class ITEM_CARD : IEntityKey<string>
     {
         public string CardId { get; set; } = string.Empty;
         public string NameId { get; set; } = string.Empty;
         public string DescId { get; set; } = string.Empty;
 
         public string GetKey() => CardId;
+    }
+
+    /// <summary>ITEM_RENTAL row</summary>
+    public sealed class ITEM_RENTAL : IEntityKey<string>
+    {
+        public string RentalId { get; set; } = string.Empty;
+        public string NameId { get; set; } = string.Empty;
+        public string DescId { get; set; } = string.Empty;
+
+        public string GetKey() => RentalId;
+    }
+
+    /// <summary>ITEM_PASS row</summary>
+    public sealed class ITEM_PASS : IEntityKey<string>
+    {
+        public string PassId { get; set; } = string.Empty;
+        public string NameId { get; set; } = string.Empty;
+        public string DescId { get; set; } = string.Empty;
+
+        public string GetKey() => PassId;
     }
 
     /// <summary>PRODUCT row</summary>
@@ -937,11 +954,11 @@ namespace Devian.Domain.Game
         static partial void _OnAfterLoad();
     }
 
-    /// <summary>TB_EQUIP container</summary>
-    public static partial class TB_EQUIP
+    /// <summary>TB_ITEM_EQUIP container</summary>
+    public static partial class TB_ITEM_EQUIP
     {
-        private static readonly Dictionary<string, EQUIP> _dict = new();
-        private static readonly List<EQUIP> _list = new();
+        private static readonly Dictionary<string, ITEM_EQUIP> _dict = new();
+        private static readonly List<ITEM_EQUIP> _list = new();
 
         public static int Count => _list.Count;
 
@@ -951,19 +968,19 @@ namespace Devian.Domain.Game
             _list.Clear();
         }
 
-        public static IReadOnlyList<EQUIP> GetAll() => _list;
+        public static IReadOnlyList<ITEM_EQUIP> GetAll() => _list;
 
-        public static EQUIP? Get(string key)
+        public static ITEM_EQUIP? Get(string key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(string key, out EQUIP? row)
+        public static bool TryGet(string key, out ITEM_EQUIP? row)
         {
             return _dict.TryGetValue(key, out row);
         }
 
-        private static void AddRow(EQUIP row)
+        private static void AddRow(ITEM_EQUIP row)
         {
             _list.Add(row);
             _dict[row.EquipId] = row;
@@ -972,7 +989,7 @@ namespace Devian.Domain.Game
         public static void LoadFromJson(string json)
         {
             Clear();
-            var rows = JsonConvert.DeserializeObject<List<EQUIP>>(json);
+            var rows = JsonConvert.DeserializeObject<List<ITEM_EQUIP>>(json);
             if (rows == null) return;
             foreach (var row in rows)
             {
@@ -989,7 +1006,7 @@ namespace Devian.Domain.Game
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<EQUIP>(line);
+                var row = JsonConvert.DeserializeObject<ITEM_EQUIP>(line);
                 if (row == null) continue;
                 AddRow(row);
             }
@@ -1001,7 +1018,7 @@ namespace Devian.Domain.Game
             Pb64Loader.ParseRows(rawBinary, jsonRow =>
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<EQUIP>(jsonRow);
+                var row = JsonConvert.DeserializeObject<ITEM_EQUIP>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -1020,11 +1037,11 @@ namespace Devian.Domain.Game
         static partial void _OnAfterLoad();
     }
 
-    /// <summary>TB_CARD container</summary>
-    public static partial class TB_CARD
+    /// <summary>TB_ITEM_CARD container</summary>
+    public static partial class TB_ITEM_CARD
     {
-        private static readonly Dictionary<string, CARD> _dict = new();
-        private static readonly List<CARD> _list = new();
+        private static readonly Dictionary<string, ITEM_CARD> _dict = new();
+        private static readonly List<ITEM_CARD> _list = new();
 
         public static int Count => _list.Count;
 
@@ -1034,19 +1051,19 @@ namespace Devian.Domain.Game
             _list.Clear();
         }
 
-        public static IReadOnlyList<CARD> GetAll() => _list;
+        public static IReadOnlyList<ITEM_CARD> GetAll() => _list;
 
-        public static CARD? Get(string key)
+        public static ITEM_CARD? Get(string key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(string key, out CARD? row)
+        public static bool TryGet(string key, out ITEM_CARD? row)
         {
             return _dict.TryGetValue(key, out row);
         }
 
-        private static void AddRow(CARD row)
+        private static void AddRow(ITEM_CARD row)
         {
             _list.Add(row);
             _dict[row.CardId] = row;
@@ -1055,7 +1072,7 @@ namespace Devian.Domain.Game
         public static void LoadFromJson(string json)
         {
             Clear();
-            var rows = JsonConvert.DeserializeObject<List<CARD>>(json);
+            var rows = JsonConvert.DeserializeObject<List<ITEM_CARD>>(json);
             if (rows == null) return;
             foreach (var row in rows)
             {
@@ -1072,7 +1089,7 @@ namespace Devian.Domain.Game
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<CARD>(line);
+                var row = JsonConvert.DeserializeObject<ITEM_CARD>(line);
                 if (row == null) continue;
                 AddRow(row);
             }
@@ -1084,7 +1101,173 @@ namespace Devian.Domain.Game
             Pb64Loader.ParseRows(rawBinary, jsonRow =>
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<CARD>(jsonRow);
+                var row = JsonConvert.DeserializeObject<ITEM_CARD>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_ITEM_RENTAL container</summary>
+    public static partial class TB_ITEM_RENTAL
+    {
+        private static readonly Dictionary<string, ITEM_RENTAL> _dict = new();
+        private static readonly List<ITEM_RENTAL> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<ITEM_RENTAL> GetAll() => _list;
+
+        public static ITEM_RENTAL? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out ITEM_RENTAL? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(ITEM_RENTAL row)
+        {
+            _list.Add(row);
+            _dict[row.RentalId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<ITEM_RENTAL>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<ITEM_RENTAL>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<ITEM_RENTAL>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_ITEM_PASS container</summary>
+    public static partial class TB_ITEM_PASS
+    {
+        private static readonly Dictionary<string, ITEM_PASS> _dict = new();
+        private static readonly List<ITEM_PASS> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<ITEM_PASS> GetAll() => _list;
+
+        public static ITEM_PASS? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out ITEM_PASS? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(ITEM_PASS row)
+        {
+            _list.Add(row);
+            _dict[row.PassId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<ITEM_PASS>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<ITEM_PASS>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<ITEM_PASS>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -1543,24 +1726,44 @@ namespace Devian.Domain.Game
         public static implicit operator LEADERBOARD_REWARD_ID(int value) => new LEADERBOARD_REWARD_ID { Value = value };
     }
 
-    /// <summary>Inspector-bindable ID for EQUIP</summary>
+    /// <summary>Inspector-bindable ID for ITEM_EQUIP</summary>
     [Serializable]
-    public sealed class EQUIP_ID
+    public sealed class ITEM_EQUIP_ID
     {
         public string Value;
 
-        public static implicit operator string(EQUIP_ID id) => id.Value;
-        public static implicit operator EQUIP_ID(string value) => new EQUIP_ID { Value = value };
+        public static implicit operator string(ITEM_EQUIP_ID id) => id.Value;
+        public static implicit operator ITEM_EQUIP_ID(string value) => new ITEM_EQUIP_ID { Value = value };
     }
 
-    /// <summary>Inspector-bindable ID for CARD</summary>
+    /// <summary>Inspector-bindable ID for ITEM_CARD</summary>
     [Serializable]
-    public sealed class CARD_ID
+    public sealed class ITEM_CARD_ID
     {
         public string Value;
 
-        public static implicit operator string(CARD_ID id) => id.Value;
-        public static implicit operator CARD_ID(string value) => new CARD_ID { Value = value };
+        public static implicit operator string(ITEM_CARD_ID id) => id.Value;
+        public static implicit operator ITEM_CARD_ID(string value) => new ITEM_CARD_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for ITEM_RENTAL</summary>
+    [Serializable]
+    public sealed class ITEM_RENTAL_ID
+    {
+        public string Value;
+
+        public static implicit operator string(ITEM_RENTAL_ID id) => id.Value;
+        public static implicit operator ITEM_RENTAL_ID(string value) => new ITEM_RENTAL_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for ITEM_PASS</summary>
+    [Serializable]
+    public sealed class ITEM_PASS_ID
+    {
+        public string Value;
+
+        public static implicit operator string(ITEM_PASS_ID id) => id.Value;
+        public static implicit operator ITEM_PASS_ID(string value) => new ITEM_PASS_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for PRODUCT</summary>
@@ -1612,8 +1815,10 @@ namespace Devian.Domain.Game
         public static bool IsValid(this ACHIEVE_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this LEADERBOARD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this LEADERBOARD_REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
-        public static bool IsValid(this EQUIP_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
-        public static bool IsValid(this CARD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this ITEM_EQUIP_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this ITEM_CARD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this ITEM_RENTAL_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this ITEM_PASS_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this PRODUCT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this UNIT_HERO_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);

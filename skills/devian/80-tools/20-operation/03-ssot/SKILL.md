@@ -55,14 +55,14 @@ Operation 웹앱의 **기능(탭) 정의**를 관리한다.
 ```
 
 필드 규칙:
-- `type`: `REWARD_TYPE` enum 이름 문자열 (`CARD|CURRENCY|EQUIP|HERO|RENTAL|SEASON_PASS`)
+- `type`: `REWARD_TYPE` enum 이름 문자열 (`CARD|CURRENCY|EQUIP|HERO|RENTAL|PASS`)
 - `id`: 비어있지 않은 문자열
 - `amount`: 양의 정수
 
 ID listbox 규칙:
 - `CURRENCY` 선택 시 `/config/rewardIdCatalog.currencyIds`를 listbox 옵션으로 사용한다.
 - `EQUIP`/`CARD`/`HERO` 선택 시 `/config/rewardIdCatalog`의 `equipIds/cardIds/heroIds`를 listbox 옵션으로 사용한다.
-- `RENTAL`/`SEASON_PASS`는 Initial Inventory UI에서 추가 선택을 지원하지 않는다.
+- `RENTAL`/`PASS` 선택 시 catalog 기반 listbox 대신 수동 ID 입력을 사용한다.
 
 catalog 문서 정본:
 - `/config/rewardIdCatalog`

@@ -514,14 +514,13 @@ namespace Devian
         // ====================================================================
 
         /// <summary>
-        /// OnDestroy: Clear cache and release handles.
+        /// onDestroy: Clear cache and release handles.
         /// </summary>
-        protected override void OnDestroy()
+        protected override void onDestroy()
         {
             UnloadAll();
             mTbLoaders.Clear();
             mStLoaders.Clear();
-            base.OnDestroy();
         }
     }
 }

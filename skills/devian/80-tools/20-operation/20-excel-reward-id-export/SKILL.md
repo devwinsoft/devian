@@ -28,10 +28,10 @@ Initial Inventory 탭의 `RewardData.id` listbox 데이터 원천이다.
   - enum: `CURRENCY_TYPE`
   - 값: `values[].name`
 - 파일: `OP_REWARD_ITEM_TABLE_XLSX_PATH`
-  - 시트: `EQUIP`
+  - 시트: `ITEM_EQUIP`
   - 컬럼: `equipId`
 - 파일: `OP_REWARD_ITEM_TABLE_XLSX_PATH`
-  - 시트: `CARD`
+  - 시트: `ITEM_CARD`
   - 컬럼: `cardId`
 - 파일: `OP_REWARD_UNIT_TABLE_XLSX_PATH`
   - 시트: `UNIT_HERO`

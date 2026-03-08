@@ -16,6 +16,7 @@ namespace Devian
     {
         private const string Tag = nameof(AchieveManager);
         private const int GameMessageOwnerKey = 3001001;
+        private static readonly EntityId InventoryMessageOwnerKey = 3001002;
 
         private enum RuntimePlatformKind
         {
@@ -65,12 +66,14 @@ namespace Devian
         private CommonError _platformInitError;
         private bool _initialized;
         private bool _isGameMessageSubscribed;
+        private bool _isInventoryMessageSubscribed;
 
         public AchieveStorage Storage => _storage;
         public bool IsInitialized => _initialized;
 
         public event Action<string> OnAchievementUnlocked;
         public event Action<AchieveRuntime> OnRuntimeInitialized;
+        public event Action<AchieveRuntime> OnRuntimeActive;
         public event Action<AchieveRuntime> OnRuntimeProgress;
         public event Action<AchieveRuntime> OnRuntimeClaimable;
         public event Action<AchieveRuntime> OnRuntimeLevelUp;
@@ -80,10 +83,13 @@ namespace Devian
         {
         }
 
-        protected override void OnDestroy()
+        protected override void onDestroy()
         {
-            unSubcribeGameMessageTrigger();
-            base.OnDestroy();
+            if (!ApplicationManager.IsApplicationQuitting)
+            {
+                unSubcribeGameMessageTrigger();
+                unSubcribeInventoryMessageTrigger();
+            }
         }
 
         public async Task<CommonResult> InitializeAsync(CancellationToken ct = default)
@@ -95,6 +101,7 @@ namespace Devian
                     return CommonResult.Ok();
 
                 subscribeGameMessageTrigger();
+                subscribeInventoryMessageTrigger();
                 rebuildMappingCaches();
                 rebuildRuntimeBindings();
 
@@ -211,7 +218,7 @@ namespace Devian
             var nextRow = findNextRow(runtime.achieveId, runtime.level);
             if (nextRow != null && isEligibleRow(nextRow))
             {
-                if (hasActivationRequirement(nextRow, out _, out _))
+                if (hasActivationRequirement(nextRow, out _, out _, out _, out _))
                 {
                     runtime.LevelUpToWaiting(nextRow.Level, nextRow.ConditionMsgId);
                     tryActivateRuntime(runtime, nextRow, GAME_MESSAGE_TYPE.NONE, CBigInt.Zero);
@@ -314,6 +321,39 @@ namespace Devian
             _isGameMessageSubscribed = false;
         }
 
+        void subscribeInventoryMessageTrigger()
+        {
+            if (_isInventoryMessageSubscribed)
+                return;
+
+            var inventoryManager = InventoryManager.Instance;
+            if (inventoryManager == null)
+                return;
+
+            inventoryManager.Subcribe(
+                InventoryMessageOwnerKey,
+                INVENTORY_MESSAGE.PASS_CHANGED,
+                args =>
+                {
+                    onInventoryPassChanged(args);
+                    return false;
+                });
+
+            _isInventoryMessageSubscribed = true;
+        }
+
+        void unSubcribeInventoryMessageTrigger()
+        {
+            if (!_isInventoryMessageSubscribed)
+                return;
+
+            var inventoryManager = InventoryManager.Instance;
+            if (inventoryManager != null)
+                inventoryManager.UnSubcribe(InventoryMessageOwnerKey);
+
+            _isInventoryMessageSubscribed = false;
+        }
+
         void onGameMessageTriggered(GAME_MESSAGE_TYPE messageType, object[] args)
         {
             if (args == null || args.Length <= 0)
@@ -351,6 +391,17 @@ namespace Devian
         {
             tryActivateWaitingRuntimes(msgType, msgValue);
             notifyRuntimesByMessage(msgType, msgValue);
+        }
+
+        void onInventoryPassChanged(object[] args)
+        {
+            if (args == null || args.Length <= 0)
+                return;
+
+            if (args[0] is not string)
+                return;
+
+            tryActivateWaitingRuntimes(GAME_MESSAGE_TYPE.NONE, CBigInt.Zero);
         }
 
         public async Task<CommonResult> UnlockAchievementAsync(string achievementId, CancellationToken ct = default)
@@ -513,7 +564,7 @@ namespace Devian
 
         void emitAchievementUnlocked(string achievementId)
         {
-            _messageSystem.Notify(ACHIEVE_MESSAGE.ACHIEVEMENT_UNLOCKED, achievementId);
+            _messageSystem.Notify(ACHIEVE_MESSAGE.RUNTIME_UNLOCKED, achievementId);
 
             var handler = OnAchievementUnlocked;
             if (handler == null)
@@ -562,6 +613,24 @@ namespace Devian
             catch (Exception ex)
             {
                 Debug.LogWarning($"[{Tag}] OnRuntimeProgress listener threw: {ex.Message}");
+            }
+        }
+
+        void emitRuntimeActive(AchieveRuntime runtime)
+        {
+            _messageSystem.Notify(ACHIEVE_MESSAGE.RUNTIME_ACTIVE, runtime);
+
+            var handler = OnRuntimeActive;
+            if (handler == null)
+                return;
+
+            try
+            {
+                handler.Invoke(runtime);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[{Tag}] OnRuntimeActive listener threw: {ex.Message}");
             }
         }
 
@@ -811,7 +880,7 @@ namespace Devian
                 return null;
 
             var achieveUid = _storage.AllocateAchieveUid();
-            if (hasActivationRequirement(row, out _, out _))
+            if (hasActivationRequirement(row, out _, out _, out _, out _))
             {
                 return AchieveRuntimeFactory.Create(new AchieveRuntimeCreateArgs
                 {
@@ -881,8 +950,8 @@ namespace Devian
             if (runtime == null || row == null || runtime.isCompleted || !runtime.isWaiting)
                 return false;
 
-            if (hasActivationRequirement(row, out var reqMessage, out var reqValue)
-                && !isRequirementSatisfied(row, reqMessage, reqValue, triggeredType, triggeredValue))
+            if (hasActivationRequirement(row, out var reqMessage, out var reqValue, out var reqPassId, out var hasReqMessage)
+                && !isRequirementSatisfied(row, hasReqMessage, reqMessage, reqValue, reqPassId, triggeredType, triggeredValue))
             {
                 return false;
             }
@@ -901,7 +970,7 @@ namespace Devian
                 createExternalProgressReader(row.ConditionMsgId, conditionMessage.SaveType),
                 onRuntimeChanged,
                 onRuntimeClaimable);
-            emitRuntimeProgress(runtime);
+            emitRuntimeActive(runtime);
             return true;
         }
 
@@ -953,23 +1022,41 @@ namespace Devian
                    && message.SaveType != GAME_MESSAGE_SAVE_TYPE.NONE;
         }
 
-        bool hasActivationRequirement(ACHIEVE row, out MESSAGE reqMessage, out CBigInt reqValue)
+        bool hasActivationRequirement(
+            ACHIEVE row,
+            out MESSAGE reqMessage,
+            out CBigInt reqValue,
+            out string reqPassId,
+            out bool hasReqMessage)
         {
             reqMessage = null;
             reqValue = CBigInt.Zero;
+            reqPassId = string.Empty;
+            hasReqMessage = false;
 
-            if (row == null
-                || string.IsNullOrWhiteSpace(row.ReqMsgId)
-                || !row.ReqValue.HasValue)
-            {
+            if (row == null)
                 return false;
+
+            reqPassId = (row.ReqPassId ?? string.Empty).Trim();
+            var hasReqPass = !string.IsNullOrWhiteSpace(reqPassId);
+            hasReqMessage = !string.IsNullOrWhiteSpace(row.ReqMsgId);
+
+            if (!hasReqMessage)
+            {
+                return hasReqPass;
+            }
+
+            if (string.IsNullOrWhiteSpace(row.ReqMsgId) || !row.ReqValue.HasValue)
+            {
+                Debug.LogError($"[{Tag}] Invalid req condition for achieve: achieveId='{row.AchieveId}', reqMsgId='{row.ReqMsgId}', reqValue='{row.ReqValue}'.");
+                return true;
             }
 
             if (!TryResolveMessage(row.ReqMsgId, out reqMessage) || reqMessage.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
             {
                 Debug.LogError($"[{Tag}] Invalid req message for achieve: achieveId='{row.AchieveId}', reqMsgId='{row.ReqMsgId}'.");
                 reqMessage = null;
-                return false;
+                return true;
             }
 
             reqValue = row.ReqValue.Value;
@@ -978,12 +1065,30 @@ namespace Devian
 
         static bool isRequirementSatisfied(
             ACHIEVE row,
+            bool hasReqMessage,
             MESSAGE reqMessage,
             CBigInt reqValue,
+            string reqPassId,
             GAME_MESSAGE_TYPE triggeredType,
             CBigInt triggeredValue)
         {
-            if (row == null || reqMessage == null)
+            if (row == null)
+                return false;
+
+            if (!string.IsNullOrWhiteSpace(reqPassId))
+            {
+                var inventoryManager = InventoryManager.Instance;
+                if (inventoryManager == null)
+                    return false;
+
+                if (!inventoryManager.Storage.HasPass(reqPassId))
+                    return false;
+            }
+
+            if (!hasReqMessage)
+                return true;
+
+            if (reqMessage == null)
                 return false;
 
             if (isTotalSaveType(reqMessage.SaveType))

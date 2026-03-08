@@ -408,11 +408,10 @@ namespace Devian
         // Lifecycle
         // ====================================================================
 
-        protected override void OnDestroy()
+        protected override void onDestroy()
         {
             UnloadAllVoiceBundles();
             ClearResolveCache();
-            base.OnDestroy();
         }
     }
 }

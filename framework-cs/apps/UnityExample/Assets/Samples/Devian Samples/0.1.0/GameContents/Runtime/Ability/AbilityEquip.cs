@@ -4,7 +4,7 @@ namespace Devian
 {
     public sealed class AbilityEquip : AbilityBase
     {
-        EQUIP mTable = null;
+        ITEM_EQUIP mTable = null;
         string mItemUid = string.Empty;
         string mOwnerUnitId = string.Empty;
         int mOwnerSlotNumber = 0;
@@ -15,7 +15,7 @@ namespace Devian
         public int OwnerSlotNumber => mOwnerSlotNumber;
         public bool IsEquipped => mOwnerSlotNumber > 0;
 
-        public void Init(EQUIP table, string itemUid)
+        public void Init(ITEM_EQUIP table, string itemUid)
         {
             mTable = table;
             mItemUid = itemUid;

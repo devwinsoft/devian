@@ -4,12 +4,12 @@ namespace Devian
 {
     public sealed class AbilityCard : AbilityBase
     {
-        CARD mTable = null;
+        ITEM_CARD mTable = null;
 
         public string CardId => mTable?.CardId ?? string.Empty;
         public int Amount => this[STAT_TYPE.CARD_AMOUNT];
 
-        public void Init(CARD table)
+        public void Init(ITEM_CARD table)
         {
             mTable = table;
         }

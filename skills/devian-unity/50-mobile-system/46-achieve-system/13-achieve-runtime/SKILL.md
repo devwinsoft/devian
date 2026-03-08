@@ -39,6 +39,8 @@ Achieve runtime(`AchieveRuntime`, `AchieveRuntimeFactory`) 규약 문서다.
 - `LevelUp`에서 `SESSION_SUM`은 progress를 0으로 리셋한다.
 - `Detach`는 콜백/reader 참조를 해제한다.
 - period 개념은 없다.
+- WAIT 진입 사유는 `reqMsgId/reqValue` 또는 `reqPassId`다.
+- `reqPassId`가 있는 WAIT runtime은 Pass 소유 조건 충족 시 `ACTIVE`로 전이한다.
 
 ---
 

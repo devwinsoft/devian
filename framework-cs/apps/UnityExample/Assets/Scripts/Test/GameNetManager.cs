@@ -9,7 +9,7 @@ public class GameNetManager : CompoSingleton<GameNetManager>
     
     private Game2CNetworker _networker = new Game2CNetworker();
 
-    override protected void OnDestroy()
+    protected override void onDestroy()
     {
         _networker.Disconnect();
     }

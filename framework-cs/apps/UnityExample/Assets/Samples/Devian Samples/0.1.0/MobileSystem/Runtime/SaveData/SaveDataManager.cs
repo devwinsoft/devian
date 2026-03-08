@@ -398,7 +398,7 @@ namespace Devian
         private async Task<CommonResult> postSyncEntitlementsAsync(CancellationToken ct)
         {
             var inventory = getInventoryStorageOrNull();
-            if (inventory == null || (inventory.Rentals.Count <= 0 && inventory.SeasonPasses.Count <= 0))
+            if (inventory == null || (inventory.Rentals.Count <= 0 && inventory.Passes.Count <= 0))
                 return CommonResult.Ok();
 
             var result = await PurchaseManager.Instance.SyncEntitlementsAsync(ct);

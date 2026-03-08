@@ -34,11 +34,12 @@ public sealed class AchieveMessageTrigger : BaseTrigger<EntityId, ACHIEVE_MESSAG
 ## Message Values
 
 - `RUNTIME_INIT`
+- `RUNTIME_ACTIVE`
 - `RUNTIME_PROGRESS`
 - `RUNTIME_CLAIMABLE`
 - `RUNTIME_LEVEL_UP`
 - `RUNTIME_REWARDED`
-- `ACHIEVEMENT_UNLOCKED`
+- `RUNTIME_UNLOCKED`
 
 ---
 
@@ -46,7 +47,7 @@ public sealed class AchieveMessageTrigger : BaseTrigger<EntityId, ACHIEVE_MESSAG
 
 - `RUNTIME_*`: `args[0] = AchieveRuntime`
 - `RUNTIME_REWARDED`: `args[1] = RewardData[]`
-- `ACHIEVEMENT_UNLOCKED`: `args[0] = string achievementId`
+- `RUNTIME_UNLOCKED`: `args[0] = string achievementId`
 
 ---
 

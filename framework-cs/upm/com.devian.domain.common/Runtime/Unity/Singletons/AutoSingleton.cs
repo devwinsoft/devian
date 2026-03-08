@@ -140,10 +140,13 @@ namespace Devian
 
         protected virtual void onInitAwake() { }
 
-        protected virtual void OnDestroy()
+        protected void OnDestroy()
         {
+            onDestroy();
             // 현재 인스턴스일 때만 해제
             Singleton.Unregister((T)(object)this);
         }
+
+        protected virtual void onDestroy() { }
     }
 }

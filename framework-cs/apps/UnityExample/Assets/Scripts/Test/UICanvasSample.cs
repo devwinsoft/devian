@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using com.IvanMurzak.ReflectorNet;
 using UnityEngine;
 using Devian;
 using Devian.Domain.Game;
@@ -29,7 +30,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             (args) =>
             {
                 AchieveRuntime achieve = args[0] as AchieveRuntime;
-                Debug.Log($"achieveId={achieve.achieveId}, progressValue={achieve.progressValue}");
+                Debug.Log($"Init: achieveId={achieve.achieveId}, progressValue={achieve.progressValue}");
                 return false;
             });
         
@@ -38,7 +39,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             (args) =>
             {
                 AchieveRuntime achieve = args[0] as AchieveRuntime;
-                Debug.Log($"achieveId={achieve.achieveId}, progressValue={achieve.progressValue}");
+                Debug.Log($"Progress: achieveId={achieve.achieveId}, progressValue={achieve.progressValue}");
                 return false;
             });
         
@@ -60,7 +61,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             (args) =>
             {
                 MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
-                Debug.Log($"missionId={mission.missionId}, progressValue={mission.progressValue}");
+                Debug.Log($"Init: missionId={mission.missionId}, progressValue={mission.progressValue}");
                 return false;
             });
 
@@ -69,7 +70,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             (args) =>
             {
                 MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
-                Debug.Log($"missionId={mission.missionId}, progressValue={mission.progressValue}");
+                Debug.Log($"Progress: missionId={mission.missionId}, progressValue={mission.progressValue}");
                 return false;
             });
         

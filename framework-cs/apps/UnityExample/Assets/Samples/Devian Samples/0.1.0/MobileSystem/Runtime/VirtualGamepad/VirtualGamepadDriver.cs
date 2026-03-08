@@ -19,15 +19,13 @@ namespace Devian
             _dirty = true;
         }
 
-        protected override void OnDestroy()
+        protected override void onDestroy()
         {
             if (_device != null)
             {
                 VirtualGamepadUtility.RemoveDevice(_device);
                 _device = null;
             }
-
-            base.OnDestroy();
         }
 
         public void SetMove(Vector2 value)

@@ -30,7 +30,8 @@
         { "name": "RUNTIME_CLAIMABLE", "value": 3 },
         { "name": "RUNTIME_LEVEL_UP", "value": 4 },
         { "name": "RUNTIME_REWARDED", "value": 5 },
-        { "name": "ACHIEVEMENT_UNLOCKED", "value": 6 }
+        { "name": "RUNTIME_UNLOCKED", "value": 6 },
+        { "name": "RUNTIME_ACTIVE", "value": 7 }
       ]
     },
     {

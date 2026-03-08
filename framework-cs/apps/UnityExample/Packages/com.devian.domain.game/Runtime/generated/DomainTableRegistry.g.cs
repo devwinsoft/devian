@@ -103,31 +103,59 @@ namespace Devian.Domain.Game
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("EQUIP", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("ITEM_EQUIP", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_EQUIP.LoadFromNdjson(text);
-                    TB_EQUIP._AfterLoad();
+                    TB_ITEM_EQUIP.LoadFromNdjson(text);
+                    TB_ITEM_EQUIP._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_EQUIP.LoadFromPb64Binary(bin);
-                    TB_EQUIP._AfterLoad();
+                    TB_ITEM_EQUIP.LoadFromPb64Binary(bin);
+                    TB_ITEM_EQUIP._AfterLoad();
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("CARD", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("ITEM_CARD", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_CARD.LoadFromNdjson(text);
-                    TB_CARD._AfterLoad();
+                    TB_ITEM_CARD.LoadFromNdjson(text);
+                    TB_ITEM_CARD._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_CARD.LoadFromPb64Binary(bin);
-                    TB_CARD._AfterLoad();
+                    TB_ITEM_CARD.LoadFromPb64Binary(bin);
+                    TB_ITEM_CARD._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("ITEM_RENTAL", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_ITEM_RENTAL.LoadFromNdjson(text);
+                    TB_ITEM_RENTAL._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_ITEM_RENTAL.LoadFromPb64Binary(bin);
+                    TB_ITEM_RENTAL._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("ITEM_PASS", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_ITEM_PASS.LoadFromNdjson(text);
+                    TB_ITEM_PASS._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_ITEM_PASS.LoadFromPb64Binary(bin);
+                    TB_ITEM_PASS._AfterLoad();
                 }
             });
 

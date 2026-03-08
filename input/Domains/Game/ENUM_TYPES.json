@@ -20,7 +20,7 @@
         { "name": "EQUIP", "value": 2 },
         { "name": "HERO", "value": 3 },
         { "name": "RENTAL", "value": 4 },
-        { "name": "SEASON_PASS", "value": 5 }
+        { "name": "PASS", "value": 5 }
       ]
     },
     {
@@ -40,18 +40,6 @@
       ]
     },
     {
-      "name": "RENTAL_TYPE",
-      "values": [
-        { "name": "NO_ADS", "value": 0 }
-      ]
-    },
-    {
-      "name": "SEASON_PASS_TYPE",
-      "values": [
-        { "name": "S2026_01", "value": 0 }
-      ]
-    },
-    {
       "name": "STAT_TYPE",
       "values": [
         { "name": "NONE", "value": 0 },
@@ -68,8 +56,15 @@
       "values": [
         { "name": "CONSUMABLE", "value": 0 },
         { "name": "SUBSCRIPTION", "value": 1 },
-        { "name": "SEASON_PASS", "value": 2 },
+        { "name": "PASS", "value": 2 },
         { "name": "RENTAL", "value": 3 }
+      ]
+    },
+    {
+      "name": "INVENTORY_MESSAGE",
+      "values": [
+        { "name": "NONE", "value": 0 },
+        { "name": "PASS_CHANGED", "value": 1 }
       ]
     }
   ]

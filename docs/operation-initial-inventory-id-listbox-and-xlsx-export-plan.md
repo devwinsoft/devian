@@ -10,7 +10,7 @@ Scope: Initial Inventory UI id listbox 전환 + xlsx id import skill/script
 - `type` 변경 시 `id` listbox 옵션이 동적으로 바뀌게 한다.
 - 정책:
   - `CURRENCY`: 코드 enum(`CURRENCY_TYPE`) 기반 옵션
-  - `RENTAL`, `SEASON_PASS`: 선택 불가
+  - `RENTAL`, `PASS`: 수동 id 입력
   - `EQUIP`, `CARD`, `HERO`: xlsx에서 추출해 서버(Firestore)로 import된 catalog를 listbox에 사용
 - 위 import 작업을 반복 가능하게 만드는 신규 스킬을 추가한다.
 
@@ -22,7 +22,7 @@ Scope: Initial Inventory UI id listbox 전환 + xlsx id import skill/script
 - [x] Operation UI 구현
   - [x] id input -> select listbox 전환
   - [x] type별 옵션 소스 분기
-  - [x] RENTAL/SEASON_PASS 비선택 처리
+  - [x] RENTAL/PASS 수동 id 입력 처리
   - [x] rewardIdCatalog 로드 로직 추가
 - [x] xlsx -> Firestore import 스크립트 추가
   - [x] EQUIP/CARD/HERO id 추출

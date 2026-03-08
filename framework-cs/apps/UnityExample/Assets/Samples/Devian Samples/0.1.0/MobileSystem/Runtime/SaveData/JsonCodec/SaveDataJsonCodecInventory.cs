@@ -81,11 +81,11 @@ namespace Devian
                 rentalsObj[kv.Key] = kv.Value;
             inv["rentals"] = rentalsObj;
 
-            // seasonPasses
-            var seasonPassesObj = new JObject();
-            foreach (var kv in inventory.SeasonPasses)
-                seasonPassesObj[kv.Key] = kv.Value;
-            inv["seasonPasses"] = seasonPassesObj;
+            // passes
+            var passesObj = new JObject();
+            foreach (var kv in inventory.Passes)
+                passesObj[kv.Key] = kv.Value;
+            inv["passes"] = passesObj;
 
             return inv;
         }
@@ -114,7 +114,7 @@ namespace Devian
                     var itemUid = obj.Value<string>("itemUid");
 
                     var ability = new AbilityEquip();
-                    var table = TB_EQUIP.Get(equipId);
+                    var table = TB_ITEM_EQUIP.Get(equipId);
                     if (table != null)
                         ability.Init(table, itemUid);
 
@@ -145,7 +145,7 @@ namespace Devian
                     var cardId = obj.Value<string>("cardId");
 
                     var ability = new AbilityCard();
-                    var table = TB_CARD.Get(cardId);
+                    var table = TB_ITEM_CARD.Get(cardId);
                     if (table != null)
                         ability.Init(table);
 
@@ -208,11 +208,11 @@ namespace Devian
                     inventory.SetRental(prop.Name, prop.Value.Value<long>());
             }
 
-            // seasonPasses
-            if (inv["seasonPasses"] is JObject seasonPassesObj)
+            // passes
+            if (inv["passes"] is JObject passesObj)
             {
-                foreach (var prop in seasonPassesObj.Properties())
-                    inventory.SetSeasonPass(prop.Name, prop.Value.Value<bool>());
+                foreach (var prop in passesObj.Properties())
+                    inventory.SetPass(prop.Name, prop.Value.Value<bool>());
             }
         }
     }

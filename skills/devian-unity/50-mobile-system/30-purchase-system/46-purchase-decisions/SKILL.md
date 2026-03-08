@@ -162,7 +162,7 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
 ### F1-1. SeasonPass / Rental 복원용 서버 projection (결정)
 
 - `SeasonPass` 복원용 정본 정보는 서버(Firestore) `ownedSeasonPasses`(`seasonPassId` 목록)를 사용한다.
-- `PurchaseManager`는 SeasonPass 구매 시 REWARD table의 `SEASON_PASS.Id`를 `seasonPassId`로 서버에 전달한다.
+- `PurchaseManager`는 SeasonPass 구매 시 REWARD table의 `PASS.Id`를 `seasonPassId`로 서버에 전달한다.
 - `Rental` 복원용 정본 정보는 서버(Firestore) `rentals` map(`rentalId -> expiresAtServerUtcMs`)을 사용한다.
 - `PurchaseManager`는 `noAds`를 별도 구매 복원 타입으로 취급하지 않는다. (`noAds` 해석/적용은 게임 로직 영역)
 
