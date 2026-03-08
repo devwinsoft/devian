@@ -17,6 +17,7 @@ namespace Devian
     [RequireComponent(typeof(SaveDataManager))]
     [RequireComponent(typeof(InputManager))]
     [RequireComponent(typeof(FirebaseManager))]
+    [RequireComponent(typeof(AnalyzeManager))]
     public abstract class MobileApplication : ApplicationManager
     {
         const string FirebaseFunctionsRegion = "asia-northeast3";
