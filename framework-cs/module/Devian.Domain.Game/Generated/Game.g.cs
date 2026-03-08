@@ -251,12 +251,12 @@ namespace Devian.Domain.Game
         public string LeaderboardId { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public string MessageId { get; set; } = string.Empty;
-        public string AppleLeaderboardId { get; set; } = string.Empty;
-        public string GoogleLeaderboardId { get; set; } = string.Empty;
         public string SeasonId { get; set; } = string.Empty;
         public LEADERBOARD_MODE Mode { get; set; }
-        public long SeasonStartUtcMs { get; set; }
-        public long SeasonEndUtcMs { get; set; }
+        public CDateTime? SeasonStartUtc { get; set; }
+        public CDateTime? SeasonEndUtc { get; set; }
+        public string AppleLeaderboardId { get; set; } = string.Empty;
+        public string GoogleLeaderboardId { get; set; } = string.Empty;
 
         public string GetKey() => LeaderboardId;
     }

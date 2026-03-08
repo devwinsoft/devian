@@ -89,7 +89,24 @@ displayName=Hello\, World
 - 이 형식은 `class:CBigInt`에서만 허용한다.
 - 일반 `class:*`에서는 `{...}`를 오브젝트 shorthand로 해석하지 않는다.
 - `{base, pow}`: `pow`는 int여야 하며, 요소 개수는 정확히 2개여야 한다.
-- plain long: `{}`가 없는 long 범위 정수 문자열. 빌드 시 정규화하여 `{mBase, mPow}`로 변환한다.
+- plain long: `{}`가 없는 long 범위 정수 문자열.
+- NDJSON/pb64에는 **rankKey (long)** 값으로 저장한다. 빌드 시 base/pow → rankKey 변환.
+
+### 예외: `class:CDateTime`
+
+`class:CDateTime`은 datetime 문자열을 입력받아 `utcTimeMs` (long)로 변환한다.
+
+| 셀 값 | 의미 |
+|------|------|
+| `2024-03-08 15:30:45.123` | UTC 밀리초 long 값으로 변환 |
+| `20240308153045` | 동일 (non-digit 문자 무시) |
+| `2024/03/08 15:30` | 동일 (숫자만 추출) |
+
+규칙:
+- 문자열에서 숫자만 추출하여 순서대로 `year(4) → month(2) → day(2) → hour(2) → minute(2) → second(2) → millisecond(3)` 파싱.
+- 자릿수가 부족하면 0으로 채운다.
+- 범위를 벗어나면 유효 범위로 clamp한다.
+- NDJSON/pb64에는 `utcTimeMs` long 값만 저장한다.
 
 ---
 

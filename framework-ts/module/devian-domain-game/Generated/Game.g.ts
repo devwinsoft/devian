@@ -212,12 +212,12 @@ export interface LEADERBOARD extends IEntityKey<string> {
     LeaderboardId: string;
     IsActive: boolean;
     MessageId: string;
-    AppleLeaderboardId: string;
-    GoogleLeaderboardId: string;
     SeasonId: string;
     Mode: LEADERBOARD_MODE;
-    SeasonStartUtcMs: number;
-    SeasonEndUtcMs: number;
+    SeasonStartUtc: number;
+    SeasonEndUtc: number;
+    AppleLeaderboardId: string;
+    GoogleLeaderboardId: string;
     getKey(): string;
 }
 

@@ -9,6 +9,7 @@ Maps to: `framework-cs/module/Devian/src/Core/`, `framework-cs/module/Devian/src
 - **Variable/Complex**: 마스킹 타입 (CInt, CFloat, CString)
 - **Variable/Variant**: 태그 유니온 (Int/Float/String)
 - **Variable/BigInt**: 과학적 표기 큰 정수 (CBigInt)
+- **Variable/DateTime**: UTC epoch/dateTime 단일 타입 (CDateTime)
 - **VersionNumber**: `#.#.#` 버전 비교 유틸리티 (Major.Minor.Patch)
 
 ---
@@ -24,6 +25,7 @@ Maps to: `framework-cs/module/Devian/src/Core/`, `framework-cs/module/Devian/src
 | [32-variable-variant](../32-variable-variant/SKILL.md) | Variant tagged union |
 | [35-variable-bigint](../35-variable-bigint/SKILL.md) | CBigInt large number |
 | [36-variable-bigint-rank-key](../36-variable-bigint-rank-key/SKILL.md) | CBigInt.RankKey encoding |
+| [37-variable-datetime](../37-variable-datetime/SKILL.md) | CDateTime unified UTC time |
 
 ---
 

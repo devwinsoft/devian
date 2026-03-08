@@ -1,14 +1,17 @@
 // SSOT: skills/devian-core/35-variable-bigint/SKILL.md
 
 using System;
+using Newtonsoft.Json;
 
 namespace Devian
 {
     /// <summary>
     /// Large number representation using scientific notation: mBase * 10^mPow.
     /// mBase is stored as CFloat, mPow as CInt (masked).
+    /// NDJSON/pb64 serialization uses RankKey (long) via CBigIntRankKeyConverter.
     /// </summary>
     [Serializable]
+    [JsonConverter(typeof(CBigIntRankKeyConverter))]
     public struct CBigInt : IComparable<CBigInt>
     {
         public CFloat mBase;
@@ -195,6 +198,36 @@ namespace Devian
             }
         }
 
+        /// <summary>
+        /// Reconstruct CBigInt from a RankKey (long).
+        /// Precision: mantissa 6-digit (matches float's ~7 significant digits).
+        /// </summary>
+        public static CBigInt FromRankKey(long rankKey)
+        {
+            if (rankKey == 0L) return Zero;
+
+            int sign;
+            long magnitudeKey;
+
+            if (rankKey > 0L)
+            {
+                sign = 1;
+                magnitudeKey = rankKey - 1L;
+            }
+            else
+            {
+                sign = -1;
+                magnitudeKey = -(rankKey + 1L);
+            }
+
+            long biasedPow = magnitudeKey / RankKeyMantissaScale;
+            long mantissaBucket = magnitudeKey % RankKeyMantissaScale;
+            int pow = (int)(biasedPow - RankKeyPowBias);
+            float absBase = 1.0f + (float)mantissaBucket / RankKeyMantissaPrecision;
+
+            return new CBigInt(sign > 0 ? absBase : -absBase, pow);
+        }
+
         // --- Explicit conversions ---
 
         public static explicit operator float(CBigInt x)
@@ -328,6 +361,40 @@ namespace Devian
                 group = (group / 26) - 1;
             }
             return result;
+        }
+    }
+
+    /// <summary>
+    /// Serializes CBigInt as RankKey (long) for NDJSON/pb64.
+    /// </summary>
+    internal sealed class CBigIntRankKeyConverter : JsonConverter<CBigInt>
+    {
+        public override CBigInt ReadJson(
+            JsonReader reader,
+            Type objectType,
+            CBigInt existingValue,
+            bool hasExistingValue,
+            JsonSerializer serializer)
+        {
+            if (reader.TokenType == JsonToken.Integer)
+            {
+                var rankKey = Convert.ToInt64(reader.Value);
+                return CBigInt.FromRankKey(rankKey);
+            }
+
+            if (reader.TokenType == JsonToken.Null)
+                return CBigInt.Zero;
+
+            throw new JsonSerializationException(
+                $"Unexpected token {reader.TokenType} when reading CBigInt.");
+        }
+
+        public override void WriteJson(
+            JsonWriter writer,
+            CBigInt value,
+            JsonSerializer serializer)
+        {
+            writer.WriteValue(value.RankKey);
         }
     }
 }

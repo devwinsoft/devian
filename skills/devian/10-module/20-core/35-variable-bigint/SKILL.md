@@ -117,4 +117,6 @@ namespace Devian.Examples
 
 - `{base, pow}` shorthand: `{5.5, 6}` → `5.5 * 10^6`, `{2, 3}` → `2000`
 - plain long: `1000` → `1 * 10^3` (빌드 시 정규화)
-- raw JSON fallback: `{"base":5.5,"pow":6}` 또는 최종 shape `{"mBase":{...},"mPow":{...}}`
+- raw JSON: `{"base":5.5,"pow":6}`
+
+NDJSON/pb64에는 **rankKey (long)** 값으로 저장된다. 로드 시 `CBigInt.FromRankKey(long)`으로 복원.

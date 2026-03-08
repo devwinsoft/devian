@@ -197,7 +197,8 @@ Plain Value 입력은 등록된 클래스 파서가 있을 때만 동작하며, 
 | `class:Devian.CInt` | `100` | `{save1,save2}` object |
 | `class:Devian.CFloat` | `1.25` | `{save1,save2}` object |
 | `class:Devian.CString` | `hello` | `{data}` object (ComplexUtil 마스킹 후 base64 인코딩) |
-| `class:CBigInt` | `{5.5, 6}` | `{mBase,mPow}` object (`5.5 * 10^6`) |
+| `class:CBigInt` | `{5.5, 6}` | `rankKey` long 값 |
+| `class:CDateTime` | `2024-03-08 15:30:45` | `utcTimeMs` long 값 |
 
 빈 셀은 `null`로 처리된다.
 
@@ -216,7 +217,7 @@ Plain Value 입력은 등록된 클래스 파서가 있을 때만 동작하며, 
 규칙:
 - `{base, pow}`: `base`는 float, `pow`는 int. 공백은 무시한다.
 - plain long: `{}`가 없는 long 범위 정수 문자열. 빌드 시 정규화(`abs(base) < 10`)하여 변환한다.
-- builder는 이를 NDJSON의 `{mBase,mPow}` shape로 결정적으로 변환한다.
+- builder는 이를 rankKey (long) 값으로 변환하여 NDJSON/pb64에 저장한다.
 
 ### 결정성 규약
 

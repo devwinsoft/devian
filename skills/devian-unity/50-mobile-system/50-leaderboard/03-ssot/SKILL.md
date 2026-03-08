@@ -35,8 +35,8 @@ AppliesTo: v10
 | `googleLeaderboardId` | string | GPGS ID |
 | `seasonId` | string | 시즌 식별자 |
 | `mode` | `LEADERBOARD_MODE` | `NORMAL`/`HARDCORE` |
-| `seasonStartUtcMs` | long | 시즌 시작 UTC ms |
-| `seasonEndUtcMs` | long | 시즌 종료 UTC ms |
+| `seasonStartUtc` | `class:CDateTime` | 시즌 시작 UTC (raw string 입력, runtime은 `utcTimeMs` 사용) |
+| `seasonEndUtc` | `class:CDateTime` | 시즌 종료 UTC (raw string 입력, runtime은 `utcTimeMs` 사용) |
 
 ---
 
@@ -122,7 +122,7 @@ GAME_MESSAGE -> MESSAGE(messageId)
                     ├─ ACHIEVE.messageId
                     └─ LEADERBOARD.messageId
 
-LEADERBOARD(leaderboardId, seasonId, mode, start/end)
+LEADERBOARD(leaderboardId, seasonId, mode, seasonStartUtc/seasonEndUtc)
         └─ LEADERBOARD_REWARD(leaderboardId group, rankFrom~rankTo, rewardGroupId)
 ```
 

@@ -69,13 +69,31 @@ key = sign × (1 + biasedPow × MANTISSA_SCALE + mantissaBucket)
 ## Public API
 
 ```csharp
-// CBigInt struct 내부 프로퍼티
+// CBigInt struct 내부
 public long RankKey { get; }
+public static CBigInt FromRankKey(long rankKey);
 ```
 
+### RankKey (CBigInt → long)
 - 0이면 `0L` 반환
 - 정규화 후 인코딩 (private `NormalizeRaw` 재활용)
 - mPow 범위 초과 시 양수면 `long.MaxValue`, 음수면 `long.MinValue`로 clamp
+
+### FromRankKey (long → CBigInt)
+- `0` → `CBigInt.Zero`
+- 양수: `magnitudeKey = rankKey - 1` → biasedPow/mantissaBucket 분리 → mPow/mBase 복원
+- 음수: `magnitudeKey = -(rankKey + 1)` → 동일 역변환 후 mBase 부호 반전
+- 정밀도: mantissa 6자리 (float ~7자리와 거의 동일)
+
+---
+
+## NDJSON/pb64 저장
+
+`class:CBigInt` 타입의 테이블 필드는 NDJSON/pb64에 **rankKey (long)** 값으로 저장된다.
+
+- 빌드 시: XLSX 셀 → base/pow 파싱 → `computeCBigIntRankKey()` → long 저장
+- 로드 시: long → `CBigInt.FromRankKey(long)` → CBigInt 복원
+- `CBigIntRankKeyConverter` (JsonConverter)가 자동 변환 처리
 
 ---
 

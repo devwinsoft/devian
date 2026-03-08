@@ -75,7 +75,7 @@ namespace Devian
                 if (!tryFindPreviousSeasonRow(activeRows, mode, currentSeasonStartUtcMs, out var prevRow) || prevRow == null)
                     continue;
 
-                if (!IsSeasonRewardEvaluationReady(prevRow.SeasonEndUtcMs, serverNowUtcMs))
+                if (!IsSeasonRewardEvaluationReady(getSeasonEndUtcMs(prevRow), serverNowUtcMs))
                     continue;
 
                 var claimKey = buildClaimKey(prevRow.SeasonId, mode);
@@ -181,7 +181,9 @@ namespace Devian
                 return false;
             }
 
-            if (row.SeasonStartUtcMs <= 0L || row.SeasonEndUtcMs <= row.SeasonStartUtcMs)
+            var seasonStartUtcMs = getSeasonStartUtcMs(row);
+            var seasonEndUtcMs = getSeasonEndUtcMs(row);
+            if (seasonStartUtcMs <= 0L || seasonEndUtcMs <= seasonStartUtcMs)
                 return false;
 
             return row.Mode != LEADERBOARD_MODE.NONE;
@@ -200,12 +202,14 @@ namespace Devian
                 if (row == null || row.Mode != mode)
                     continue;
 
-                if (serverNowUtcMs < row.SeasonStartUtcMs || serverNowUtcMs >= row.SeasonEndUtcMs)
+                var seasonStartUtcMsValue = getSeasonStartUtcMs(row);
+                var seasonEndUtcMsValue = getSeasonEndUtcMs(row);
+                if (serverNowUtcMs < seasonStartUtcMsValue || serverNowUtcMs >= seasonEndUtcMsValue)
                     continue;
 
-                if (!found || row.SeasonStartUtcMs < seasonStartUtcMs)
+                if (!found || seasonStartUtcMsValue < seasonStartUtcMs)
                 {
-                    seasonStartUtcMs = row.SeasonStartUtcMs;
+                    seasonStartUtcMs = seasonStartUtcMsValue;
                     found = true;
                 }
             }
@@ -227,17 +231,18 @@ namespace Devian
                 if (row == null || row.Mode != mode)
                     continue;
 
-                if (row.SeasonEndUtcMs > currentSeasonStartUtcMs)
+                var seasonEndUtcMs = getSeasonEndUtcMs(row);
+                if (seasonEndUtcMs > currentSeasonStartUtcMs)
                     continue;
 
-                if (row.SeasonEndUtcMs > latestEndUtcMs)
+                if (seasonEndUtcMs > latestEndUtcMs)
                 {
-                    latestEndUtcMs = row.SeasonEndUtcMs;
+                    latestEndUtcMs = seasonEndUtcMs;
                     seasonRow = row;
                     continue;
                 }
 
-                if (row.SeasonEndUtcMs == latestEndUtcMs
+                if (seasonEndUtcMs == latestEndUtcMs
                     && seasonRow != null
                     && string.CompareOrdinal(row.LeaderboardId, seasonRow.LeaderboardId) < 0)
                 {
@@ -283,6 +288,16 @@ namespace Devian
             }
 
             return false;
+        }
+
+        private static long getSeasonStartUtcMs(LEADERBOARD row)
+        {
+            return row?.SeasonStartUtc?.utcTimeMs ?? 0L;
+        }
+
+        private static long getSeasonEndUtcMs(LEADERBOARD row)
+        {
+            return row?.SeasonEndUtc?.utcTimeMs ?? 0L;
         }
 
         internal static bool IsSeasonRewardEvaluationReady(long prevSeasonEndUtcMs, long serverNowUtcMs)

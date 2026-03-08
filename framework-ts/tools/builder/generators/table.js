@@ -218,32 +218,43 @@ registerClassParser('CFloat', parseCFloatCell);
 registerClassParser('CString', parseCStringCell);
 
 /**
- * Build normalized CBigInt JSON shape.
- * Output shape matches C# struct fields: { mBase, mPow }.
+ * Compute CBigInt RankKey (long) from base/pow values.
+ * Mirrors C# CBigInt.RankKey encoding.
+ * Returns a plain number (long) for NDJSON/pb64 storage.
  */
-function buildCBigIntCell(baseValue, powValue, baseText, powText, ctx) {
+function computeCBigIntRankKey(baseValue, powValue) {
     if (!Number.isFinite(baseValue)) {
-        throw new Error(`[CBigInt] Invalid base value '${baseText}'`);
+        throw new Error(`[CBigInt] Invalid base value '${baseValue}'`);
     }
     if (!Number.isInteger(powValue)) {
-        throw new Error(`[CBigInt] Invalid pow value '${powText}'. pow must be int.`);
+        throw new Error(`[CBigInt] Invalid pow value '${powValue}'. pow must be int.`);
     }
 
-    const baseCtx = {
-        ...ctx,
-        columnName: `${ctx.columnName}.mBase`,
-        typeName: 'CFloat',
-    };
-    const powCtx = {
-        ...ctx,
-        columnName: `${ctx.columnName}.mPow`,
-        typeName: 'CInt',
-    };
+    if (baseValue === 0) return 0;
 
-    return {
-        mBase: parseCFloatCellDeterministic(baseValue, baseText, baseCtx),
-        mPow: parseCIntCellDeterministic(powValue, powText, powCtx),
-    };
+    // Normalize: 1 <= abs(base) < 10
+    let b = baseValue;
+    let p = powValue;
+    let abs = Math.abs(b);
+    while (abs >= 10) { b /= 10; p++; abs = Math.abs(b); }
+    while (abs < 1)   { b *= 10; p--; abs = Math.abs(b); }
+
+    const MANTISSA_PRECISION = 1_000_000;
+    const MANTISSA_SCALE = 10_000_000;
+    const POW_BIAS = 1_000_000;
+
+    const sign = b > 0 ? 1 : -1;
+    const absBase = Math.abs(b);
+    const biasedPow = p + POW_BIAS;
+
+    if (biasedPow < 0)   return sign > 0 ? 1 : Number.MIN_SAFE_INTEGER;
+    if (biasedPow > POW_BIAS * 2) return sign > 0 ? Number.MAX_SAFE_INTEGER : -1;
+
+    let mantissaBucket = Math.floor((absBase - 1) * MANTISSA_PRECISION);
+    if (mantissaBucket < 0) mantissaBucket = 0;
+
+    const magnitudeKey = biasedPow * MANTISSA_SCALE + mantissaBucket;
+    return sign > 0 ? (1 + magnitudeKey) : -(1 + magnitudeKey);
 }
 
 function parseCBigIntFloat(raw) {
@@ -280,10 +291,11 @@ function parseCBigIntInt(raw) {
 /**
  * CBigInt parser:
  * - Plain shorthand: "{5.5, 6}"
- * - Raw JSON fallback: {"base":5.5,"pow":6}
- * - Final JSON shape passthrough: {"mBase":{"save1":...},"mPow":{"save1":...}}
+ * - Raw JSON: {"base":5.5,"pow":6}
+ * - Plain long: "1000"
+ * Returns: rankKey (long) for NDJSON/pb64 storage.
  */
-function parseCBigIntCell(cellText, ctx) {
+function parseCBigIntCell(cellText, _ctx) {
     const text = String(cellText).trim();
 
     if (text === '') return null;
@@ -292,16 +304,12 @@ function parseCBigIntCell(cellText, ctx) {
         try {
             const parsed = JSON.parse(text);
             if (parsed && typeof parsed === 'object') {
-                if ('mBase' in parsed && 'mPow' in parsed) {
-                    return parsed;
-                }
-
                 if (('base' in parsed || 'mBase' in parsed) && ('pow' in parsed || 'mPow' in parsed)) {
                     const baseRaw = 'base' in parsed ? parsed.base : parsed.mBase;
                     const powRaw = 'pow' in parsed ? parsed.pow : parsed.mPow;
                     const base = parseCBigIntFloat(baseRaw);
                     const pow = parseCBigIntInt(powRaw);
-                    return buildCBigIntCell(base.value, pow.value, base.text, pow.text, ctx);
+                    return computeCBigIntRankKey(base.value, pow.value);
                 }
             }
         } catch (e) {
@@ -312,7 +320,7 @@ function parseCBigIntCell(cellText, ctx) {
         if (match) {
             const base = parseCBigIntFloat(match[1]);
             const pow = parseCBigIntInt(match[2]);
-            return buildCBigIntCell(base.value, pow.value, base.text, pow.text, ctx);
+            return computeCBigIntRankKey(base.value, pow.value);
         }
     }
 
@@ -322,15 +330,7 @@ function parseCBigIntCell(cellText, ctx) {
         if (!Number.isFinite(longValue) || longValue > Number.MAX_SAFE_INTEGER || longValue < Number.MIN_SAFE_INTEGER) {
             throw new Error(`[CBigInt] Plain integer value '${text}' exceeds safe integer range.`);
         }
-        let base = longValue;
-        let pow = 0;
-        if (base !== 0) {
-            while (Math.abs(base) >= 10) {
-                base /= 10;
-                pow++;
-            }
-        }
-        return buildCBigIntCell(base, pow, String(base), String(pow), ctx);
+        return computeCBigIntRankKey(longValue, 0);
     }
 
     throw new Error(`[CBigInt] Invalid format '${text}'. Expected '{base, pow}', raw JSON, or plain long.`);
@@ -338,6 +338,67 @@ function parseCBigIntCell(cellText, ctx) {
 
 registerClassParser('CBigInt', parseCBigIntCell);
 registerClassParser('Devian.CBigInt', parseCBigIntCell);
+
+// ============================================================================
+// CDateTime Parser
+// SSOT: skills/devian/10-module/20-core/37-variable-datetime/SKILL.md
+// ============================================================================
+
+/**
+ * CDateTime parser:
+ * - Datetime string: "2024-03-08 15:30:45.123", "20240308", etc.
+ * - Extracts digits, parses year(4)/month(2)/day(2)/hour(2)/minute(2)/second(2)/ms(3)
+ * - Returns utcTimeMs (long) — plain number stored in NDJSON/pb64
+ */
+function parseCDateTimeCell(cellText, _ctx) {
+    const text = String(cellText).trim();
+    if (text === '') return null;
+
+    const digits = text.replace(/\D/g, '');
+    let idx = 0;
+
+    function readPart(len) {
+        if (idx >= digits.length || len <= 0) return 0;
+        const count = Math.min(digits.length - idx, len);
+        let value = 0;
+        for (let i = 0; i < count; i++) {
+            value = value * 10 + (digits.charCodeAt(idx + i) - 48);
+        }
+        idx += count;
+        return value;
+    }
+
+    function clamp(v, lo, hi) {
+        return v < lo ? lo : v > hi ? hi : v;
+    }
+
+    let year = readPart(4);
+    let month = readPart(2);
+    let day = readPart(2);
+    let hour = readPart(2);
+    let minute = readPart(2);
+    let second = readPart(2);
+    let millisecond = readPart(3);
+
+    year = clamp(year, 1, 9999);
+    month = clamp(month, 1, 12);
+    const maxDay = new Date(year, month, 0).getDate();
+    day = clamp(day, 1, maxDay);
+    hour = clamp(hour, 0, 23);
+    minute = clamp(minute, 0, 59);
+    second = clamp(second, 0, 59);
+    millisecond = clamp(millisecond, 0, 999);
+
+    const date = new Date(Date.UTC(year, month - 1, day, hour, minute, second, millisecond));
+    if (year < 100) {
+        date.setUTCFullYear(year);
+    }
+
+    return date.getTime();
+}
+
+registerClassParser('CDateTime', parseCDateTimeCell);
+registerClassParser('Devian.CDateTime', parseCDateTimeCell);
 
 // ============================================================================
 // Variant Parser (Simple format: {i} | {f} | {s})
@@ -1290,11 +1351,18 @@ function mapTableTypeToTypeScript(type) {
                 tsType = tsType.split('.').pop();
             }
         } else if (baseType.startsWith('class:')) {
-            tsType = baseType.slice(6);
-            if (tsType.includes('.')) {
-                tsType = tsType.split('.').pop();
+            let classType = baseType.slice(6);
+            if (classType.includes('.')) {
+                classType = classType.split('.').pop();
             }
-            isClassType = true;
+
+            // CDateTime table values are stored as utcTimeMs (number) in TS.
+            if (classType === 'CDateTime') {
+                tsType = 'number';
+            } else {
+                tsType = classType;
+                isClassType = true;
+            }
         } else {
             tsType = baseType;
         }
