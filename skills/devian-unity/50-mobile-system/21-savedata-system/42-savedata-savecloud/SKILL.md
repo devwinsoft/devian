@@ -5,7 +5,7 @@
 - Android(GPGS) / iOS(iCloud) 공통 클라우드 저장 기능을 제공한다.
 - **SaveCloudManager는 삭제됨.** 모든 클라우드 로직은 `SaveDataManager`의 private/internal 메서드로 통합되었다.
 - **Editor/Guest에서는 CloudSave를 사용하지 않는다(Failure 반환).**
-- 외부 진입점: `SaveDataManager.Instance._initializeCloudAsync(ct)` (AccountManager에서 호출).
+- 외부 진입점은 없고, `SaveDataManager` 내부(`SyncGameStorageAsync`/`ResolveConflictAsync`/`SaveGameStorageAsync`)에서만 `SaveDataManager.Instance._initializeCloudAsync(ct)`를 호출한다.
 - public API는 단일 primary save만 다루며, cloud client는 내부적으로 primary cloud slot에 접근한다.
 
 
@@ -41,7 +41,8 @@
 
 ## Usage
 - **직접 호출 불가.** SaveCloudManager는 삭제됨.
-- `AccountManager.LoginAsync` → 내부에서 `SaveDataManager.Instance._initializeCloudAsync(ct)` 호출.
+- `LoginManager`/상위 흐름은 `SaveDataManager` public API(`SyncGameStorageAsync`, `ResolveConflictAsync`, `SaveGameStorageAsync`)만 호출한다.
+- cloud client 초기화/로그인은 `SaveDataManager` 내부 `_initializeCloudAsync` 경로에서 처리된다.
 - Sync/Resolve는 `SaveDataManager.SyncGameStorageAsync` / `ResolveConflictAsync`를 통해 간접 사용.
 
 
@@ -94,8 +95,9 @@
 
 ### How to use (iOS)
 
-정책: **Unity Editor에서는 CloudSave를 사용하지 않는다(LocalSave only).** SaveCloudManager가 Failure를 반환한다.
-iOS 런타임 빌드에서 iCloud 미구현 시에만, 프로젝트 요구에 따라 `SaveCloudManager.Instance.Configure(client: new SaveCloudClient())` 방식으로 client를 주입한다.
+정책: **Unity Editor에서는 CloudSave를 사용하지 않는다(LocalSave only).** `SaveDataManager._initializeCloudAsync`가 Failure를 반환한다.
+iOS 런타임 빌드 기본 client는 `AppleSaveCloudClient`를 사용한다.
+현재 샘플은 외부 client 주입 API를 노출하지 않는다.
 
 주의:
 - `AppleSaveCloudClient`(iCloud)는 "설계대로 유지"하며, 준비 완료 후 iOS 분기 주입을 교체한다.
@@ -114,7 +116,7 @@ Firebase Unity SDK가 프로젝트에 포함되어 있어야 한다.
 
 ### Firebase Notes
 
-- `SaveCloudClient`는 CloudSave 저장소 접근만 담당하며, 로그인(anonymous 포함)은 AccountManager/FirebaseManager가 선행되어야 한다. SaveCloudClient 내부에서 별도 sign-in을 시도하지 않는다.
+- `SaveCloudClient`는 `SignInIfNeededAsync`를 통해 클라우드 인증을 자체 처리한다.
 - 플랫폼 네이티브 저장소(GPGS/iCloud)와의 크로스플랫폼 세이브 공유는 비목표다.
 - Firebase 저장소는 "Editor/iOS 임시/대체 구현" 또는 "향후 통합 백엔드" 옵션으로 사용한다.
 

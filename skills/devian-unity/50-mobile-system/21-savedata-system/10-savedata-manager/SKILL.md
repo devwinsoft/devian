@@ -45,9 +45,25 @@
 - `LocalPayload.account` / `CloudPayload.Account` — 계정 메타 미러
 - `string LocalDeviceId`
 - `string CloudDeviceId`
+- `SaveRecordSummary LocalSummary`
+- `SaveRecordSummary CloudSummary`
 
 `SyncGameStorageAsync(ct)` 반환 시 payload가 `SyncResult`에 포함되므로 추가 파일 I/O는 불필요하다.
 인메모리 게임 상태 복원은 `SaveDataManager` 내부 책임이다. `SyncGameStorageAsync(ct)` 성공 시 `LoadFromPayload()`가 직접 manager storage를 복원한다.
+
+## Save Summary (payload 해석)
+- `SaveRecordSummary`
+  - `Exists`, `SchemaVersion`, `UpdateTime`, `SaveSeq`, `DeviceId`, `LoginType`, `SocialUserId`
+  - `PayloadSummary`
+- `SavePayloadSummary`
+  - `HasPayload`, `ParseSuccess`, `ParseError`, `JsonVersion`
+  - inventory count: `WalletCurrencyCount`, `HeroCount`, `CardCount`, `EquipCount`, `RentalCount`, `PassCount`
+  - runtime count: `MissionRuntimeCount`, `MissionCompletedCount`, `AchieveRuntimeCount`, `AchieveWaitingCount`, `AchieveCompletedCount`
+  - message/remoteConfig: `MessageStatCount`, `RemoteConfigServerNowUtcMs`
+
+규칙:
+- 요약 생성(복호화 + JSON 파싱)은 `SaveDataManager` 내부에서 수행한다.
+- payload 파싱 실패여도 Sync 자체는 실패로 승격하지 않고 `ParseSuccess=false`로 요약에 반영한다.
 
 
 ## Scenario
@@ -93,6 +109,7 @@
 ### Sync
 - `Task<CommonResult<SyncResult>> SyncGameStorageAsync(CancellationToken ct)`
 - `Task<CommonResult<bool>> ResolveConflictAsync(SyncResolution resolution, CancellationToken ct)`
+  - local-only(`GUEST/EDITOR`) 모드에서는 cloud conflict 해소를 수행하지 않고 **no-op success(true)**를 반환한다.
 
 ### Save
 - `Task<CommonResult<bool>> SaveGameStorageAsync(bool saveCloud, CancellationToken ct)`
@@ -139,7 +156,7 @@ RecoveryManager(25-recovery-system)에서 Import 시 사용한다.
 
 
 ## Internal API
-- `internal Task<CommonResult<SaveCloudResult>> _initializeCloudAsync(CancellationToken ct)` — AccountManager에서 호출
+- `internal Task<CommonResult<SaveCloudResult>> _initializeCloudAsync(CancellationToken ct)` — `SaveDataManager` 내부 sync/resolve/save 경로에서 호출
 - `internal bool _isCloudAvailable`
 
 

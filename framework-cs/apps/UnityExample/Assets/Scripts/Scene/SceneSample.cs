@@ -31,7 +31,6 @@ public class SceneSample : SceneBootstrap
     {
         Debug.Log("TestSceneSample...");
         await base.onStart();
-        await TestApplication.Instance.LoadAsync(SystemLanguage.Korean, null);
 
         UICanvasSample.Instance.Init();
         

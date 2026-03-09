@@ -1965,11 +1965,11 @@ namespace Devian
         {
             try
             {
-                var accountManager = AccountManager.Instance;
-                if (accountManager == null)
+                var loginManager = LoginManager.Instance;
+                if (loginManager == null)
                     return CommonResult<bool>.Success(false);
 
-                return await accountManager.EnsurePurchaseLoginReadyAsync(ct);
+                return await loginManager.EnsurePurchaseLoginReadyAsync(ct);
             }
             catch
             {

@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Devian.Domain.Common;
+using Newtonsoft.Json.Linq;
 
 namespace Devian
 {
@@ -16,6 +17,210 @@ namespace Devian
         Initial,
     }
 
+    public sealed class SavePayloadSummary
+    {
+        public bool HasPayload { get; }
+        public bool ParseSuccess { get; }
+        public string ParseError { get; }
+        public int JsonVersion { get; }
+        public int WalletCurrencyCount { get; }
+        public int HeroCount { get; }
+        public int CardCount { get; }
+        public int EquipCount { get; }
+        public int RentalCount { get; }
+        public int PassCount { get; }
+        public int MissionRuntimeCount { get; }
+        public int MissionCompletedCount { get; }
+        public int AchieveRuntimeCount { get; }
+        public int AchieveWaitingCount { get; }
+        public int AchieveCompletedCount { get; }
+        public int MessageStatCount { get; }
+        public long RemoteConfigServerNowUtcMs { get; }
+
+        SavePayloadSummary(
+            bool hasPayload,
+            bool parseSuccess,
+            string parseError,
+            int jsonVersion,
+            int walletCurrencyCount,
+            int heroCount,
+            int cardCount,
+            int equipCount,
+            int rentalCount,
+            int passCount,
+            int missionRuntimeCount,
+            int missionCompletedCount,
+            int achieveRuntimeCount,
+            int achieveWaitingCount,
+            int achieveCompletedCount,
+            int messageStatCount,
+            long remoteConfigServerNowUtcMs)
+        {
+            HasPayload = hasPayload;
+            ParseSuccess = parseSuccess;
+            ParseError = parseError ?? string.Empty;
+            JsonVersion = jsonVersion;
+            WalletCurrencyCount = walletCurrencyCount;
+            HeroCount = heroCount;
+            CardCount = cardCount;
+            EquipCount = equipCount;
+            RentalCount = rentalCount;
+            PassCount = passCount;
+            MissionRuntimeCount = missionRuntimeCount;
+            MissionCompletedCount = missionCompletedCount;
+            AchieveRuntimeCount = achieveRuntimeCount;
+            AchieveWaitingCount = achieveWaitingCount;
+            AchieveCompletedCount = achieveCompletedCount;
+            MessageStatCount = messageStatCount;
+            RemoteConfigServerNowUtcMs = remoteConfigServerNowUtcMs;
+        }
+
+        public static SavePayloadSummary MissingPayload()
+        {
+            return new SavePayloadSummary(
+                false,
+                false,
+                string.Empty,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0L);
+        }
+
+        public static SavePayloadSummary ParseFailed(string parseError)
+        {
+            return new SavePayloadSummary(
+                true,
+                false,
+                parseError ?? string.Empty,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0,
+                0L);
+        }
+
+        public static SavePayloadSummary Parsed(
+            int jsonVersion,
+            int walletCurrencyCount,
+            int heroCount,
+            int cardCount,
+            int equipCount,
+            int rentalCount,
+            int passCount,
+            int missionRuntimeCount,
+            int missionCompletedCount,
+            int achieveRuntimeCount,
+            int achieveWaitingCount,
+            int achieveCompletedCount,
+            int messageStatCount,
+            long remoteConfigServerNowUtcMs)
+        {
+            return new SavePayloadSummary(
+                true,
+                true,
+                string.Empty,
+                jsonVersion,
+                walletCurrencyCount,
+                heroCount,
+                cardCount,
+                equipCount,
+                rentalCount,
+                passCount,
+                missionRuntimeCount,
+                missionCompletedCount,
+                achieveRuntimeCount,
+                achieveWaitingCount,
+                achieveCompletedCount,
+                messageStatCount,
+                remoteConfigServerNowUtcMs);
+        }
+    }
+
+    public sealed class SaveRecordSummary
+    {
+        public bool Exists { get; }
+        public int SchemaVersion { get; }
+        public string UpdateTime { get; }
+        public long SaveSeq { get; }
+        public string DeviceId { get; }
+        public LoginType LoginType { get; }
+        public string SocialUserId { get; }
+        public SavePayloadSummary PayloadSummary { get; }
+
+        SaveRecordSummary(
+            bool exists,
+            int schemaVersion,
+            string updateTime,
+            long saveSeq,
+            string deviceId,
+            LoginType loginType,
+            string socialUserId,
+            SavePayloadSummary payloadSummary)
+        {
+            Exists = exists;
+            SchemaVersion = schemaVersion;
+            UpdateTime = updateTime ?? string.Empty;
+            SaveSeq = saveSeq;
+            DeviceId = deviceId ?? string.Empty;
+            LoginType = loginType;
+            SocialUserId = socialUserId ?? string.Empty;
+            PayloadSummary = payloadSummary ?? SavePayloadSummary.MissingPayload();
+        }
+
+        public static SaveRecordSummary Missing()
+        {
+            return new SaveRecordSummary(
+                false,
+                0,
+                string.Empty,
+                0L,
+                string.Empty,
+                LoginType.NONE,
+                string.Empty,
+                SavePayloadSummary.MissingPayload());
+        }
+
+        public static SaveRecordSummary Create(
+            int schemaVersion,
+            string updateTime,
+            long saveSeq,
+            string deviceId,
+            LoginType loginType,
+            string socialUserId,
+            SavePayloadSummary payloadSummary)
+        {
+            return new SaveRecordSummary(
+                true,
+                schemaVersion,
+                updateTime,
+                saveSeq,
+                deviceId,
+                loginType,
+                socialUserId,
+                payloadSummary);
+        }
+    }
+
     public sealed class SyncResult
     {
         public SyncState State { get; }
@@ -23,16 +228,33 @@ namespace Devian
         public SaveCloudPayload CloudPayload { get; }
         public string LocalDeviceId { get; }
         public string CloudDeviceId { get; }
+        public SaveRecordSummary LocalSummary { get; }
+        public SaveRecordSummary CloudSummary { get; }
 
         public SyncResult(SyncState state,
             SaveLocalPayload localPayload = null, SaveCloudPayload cloudPayload = null,
-            string localDeviceId = null, string cloudDeviceId = null)
+            string localDeviceId = null, string cloudDeviceId = null,
+            SaveRecordSummary localSummary = null, SaveRecordSummary cloudSummary = null)
         {
             State = state;
             LocalPayload = localPayload;
             CloudPayload = cloudPayload;
             LocalDeviceId = localDeviceId;
             CloudDeviceId = cloudDeviceId;
+            LocalSummary = localSummary ?? SaveRecordSummary.Missing();
+            CloudSummary = cloudSummary ?? SaveRecordSummary.Missing();
+        }
+
+        public SyncResult WithSummaries(SaveRecordSummary localSummary, SaveRecordSummary cloudSummary)
+        {
+            return new SyncResult(
+                State,
+                LocalPayload,
+                CloudPayload,
+                LocalDeviceId,
+                CloudDeviceId,
+                localSummary,
+                cloudSummary);
         }
     }
 
@@ -97,16 +319,20 @@ namespace Devian
                 return result;
             }
 
-            _hasPrimarySaveContext = result.Value.State != SyncState.Conflict;
+            var syncResult = result.Value.WithSummaries(
+                buildLocalSummary(result.Value.LocalPayload),
+                buildCloudSummary(result.Value.CloudPayload));
 
-            if (result.Value.State == SyncState.Success
-                && result.Value.LocalPayload?.payload != null)
+            _hasPrimarySaveContext = syncResult.State != SyncState.Conflict;
+
+            if (syncResult.State == SyncState.Success
+                && syncResult.LocalPayload?.payload != null)
             {
-                LoadFromPayload(result.Value.LocalPayload.payload);
+                LoadFromPayload(syncResult.LocalPayload.payload);
                 await postSyncEntitlementsAsync(ct);
             }
 
-            return result;
+            return CommonResult<SyncResult>.Success(syncResult);
         }
 
         private async Task<CommonResult<SyncResult>> syncPrimaryCoreAsync(CancellationToken ct)
@@ -320,9 +546,9 @@ namespace Devian
         {
             if (AccountManager.Instance.IsLocalOnlySaveMode)
             {
-                return CommonResult<bool>.Failure(
-                    CommonErrorType.SAVEDATA_SYNC_RESOLVE_FAILED,
-                    "Cloud sync conflict resolution is not available in Guest/Editor (Local-only).");
+                UnityEngine.Debug.LogWarning(
+                    "[SaveDataManager] ResolveConflictAsync skipped: local-only mode (Guest/Editor).");
+                return CommonResult<bool>.Success(true);
             }
 
             // Resolve requires cloud access (load/save). Ensure cloud client is initialized.
@@ -695,6 +921,129 @@ namespace Devian
             {
                 return CommonResult<string>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, $"Cloud deobfuscate failed: {ex.Message}");
             }
+        }
+
+        SaveRecordSummary buildLocalSummary(SaveLocalPayload payload)
+        {
+            if (payload == null)
+                return SaveRecordSummary.Missing();
+
+            var account = payload.account;
+            var payloadSummary = buildPayloadSummary(decryptLocalPayloadToJson(payload));
+            return SaveRecordSummary.Create(
+                payload.version,
+                payload.updateTime,
+                payload.saveSeq,
+                payload.deviceId,
+                account?.loginType ?? LoginType.NONE,
+                account?.socialUserId ?? string.Empty,
+                payloadSummary);
+        }
+
+        SaveRecordSummary buildCloudSummary(SaveCloudPayload payload)
+        {
+            if (payload == null)
+                return SaveRecordSummary.Missing();
+
+            var account = payload.Account;
+            var payloadSummary = buildPayloadSummary(decryptCloudPayloadToJson(payload));
+            return SaveRecordSummary.Create(
+                payload.Version,
+                payload.UpdateTime,
+                payload.SaveSeq,
+                payload.DeviceId,
+                account?.loginType ?? LoginType.NONE,
+                account?.socialUserId ?? string.Empty,
+                payloadSummary);
+        }
+
+        static SavePayloadSummary buildPayloadSummary(CommonResult<string> parseResult)
+        {
+            if (parseResult.IsFailure)
+                return SavePayloadSummary.ParseFailed(parseResult.Error?.Message ?? "payload parse failed");
+
+            return parsePayloadSummaryFromJson(parseResult.Value ?? string.Empty);
+        }
+
+        static SavePayloadSummary parsePayloadSummaryFromJson(string json)
+        {
+            if (string.IsNullOrWhiteSpace(json))
+                return SavePayloadSummary.MissingPayload();
+
+            try
+            {
+                var root = JObject.Parse(json);
+                var jsonVersion = root.Value<int?>("version") ?? 0;
+
+                var inventoryObj = root["inventory"] as JObject;
+                var walletCount = countObjectProperties(inventoryObj?["wallet"] as JObject);
+                var heroCount = countObjectProperties(inventoryObj?["heroes"] as JObject);
+                var cardCount = countObjectProperties(inventoryObj?["cards"] as JObject);
+                var equipCount = countObjectProperties(inventoryObj?["equipments"] as JObject);
+                var rentalCount = countObjectProperties(inventoryObj?["rentals"] as JObject);
+                var passCount = countObjectProperties(inventoryObj?["passes"] as JObject);
+
+                var missionObj = root["mission"] as JObject;
+                var missionRuntimes = missionObj?["runtimes"] as JArray;
+                var missionRuntimeCount = missionRuntimes?.Count ?? 0;
+                var missionCompletedCount = countRuntimeByBoolFlag(missionRuntimes, "isCompleted");
+
+                var achieveObj = root["achieve"] as JObject;
+                var achieveRuntimes = achieveObj?["runtimes"] as JArray;
+                var achieveRuntimeCount = achieveRuntimes?.Count ?? 0;
+                var achieveWaitingCount = countRuntimeByBoolFlag(achieveRuntimes, "isWaiting");
+                var achieveCompletedCount = countRuntimeByBoolFlag(achieveRuntimes, "isCompleted");
+
+                var messageObj = root["message"] as JObject;
+                var messageStatCount = countObjectProperties(messageObj?["stats"] as JObject);
+
+                var remoteConfigObj = root["remoteConfig"] as JObject;
+                var snapshotObj = remoteConfigObj?["snapshot"] as JObject;
+                var remoteConfigServerNowUtcMs = snapshotObj?.Value<long?>("serverNowUtcMs") ?? 0L;
+
+                return SavePayloadSummary.Parsed(
+                    jsonVersion,
+                    walletCount,
+                    heroCount,
+                    cardCount,
+                    equipCount,
+                    rentalCount,
+                    passCount,
+                    missionRuntimeCount,
+                    missionCompletedCount,
+                    achieveRuntimeCount,
+                    achieveWaitingCount,
+                    achieveCompletedCount,
+                    messageStatCount,
+                    remoteConfigServerNowUtcMs);
+            }
+            catch (Exception ex)
+            {
+                return SavePayloadSummary.ParseFailed(ex.Message);
+            }
+        }
+
+        static int countObjectProperties(JObject obj)
+        {
+            return obj?.Count ?? 0;
+        }
+
+        static int countRuntimeByBoolFlag(JArray runtimes, string flagName)
+        {
+            if (runtimes == null || string.IsNullOrWhiteSpace(flagName))
+                return 0;
+
+            var count = 0;
+            foreach (var token in runtimes)
+            {
+                if (token is not JObject runtimeObj)
+                    continue;
+
+                if (runtimeObj.Value<bool?>(flagName) == true)
+                    count++;
+            }
+
+            return count;
         }
 
         // ──────────────────────────────────────────────

@@ -1,5 +1,5 @@
 // Unity Shared - UnityTaskRunner
-// SSOT: skills/devian-unity/11-common-system/32-unity-utils/SKILL.md
+// SSOT: skills/devian-unity/20-domain-common-system/32-unity-utils/SKILL.md
 // NOTE: 이 파일은 Generated 폴더 산출물이 아닌 고정 유틸(수기 유지)이며,
 //       정본은 upm 경로다. Packages는 복사본.
 
@@ -37,6 +37,42 @@ namespace Devian
             try
             {
                 Run(taskFactory(), operation);
+            }
+            catch (Exception ex)
+            {
+                LogFailure(operation, ex);
+            }
+        }
+
+        /// <summary>
+        /// Creates a Task with one argument, then observes it and logs unhandled exceptions.
+        /// </summary>
+        public static void Run<TArg>(Func<TArg, Task> taskFactory, TArg arg, string operation)
+        {
+            if (taskFactory == null) throw new ArgumentNullException(nameof(taskFactory));
+            if (string.IsNullOrWhiteSpace(operation)) throw new ArgumentException("operation is null/empty", nameof(operation));
+
+            try
+            {
+                Run(taskFactory(arg), operation);
+            }
+            catch (Exception ex)
+            {
+                LogFailure(operation, ex);
+            }
+        }
+
+        /// <summary>
+        /// Creates a Task with two arguments, then observes it and logs unhandled exceptions.
+        /// </summary>
+        public static void Run<TArg1, TArg2>(Func<TArg1, TArg2, Task> taskFactory, TArg1 arg1, TArg2 arg2, string operation)
+        {
+            if (taskFactory == null) throw new ArgumentNullException(nameof(taskFactory));
+            if (string.IsNullOrWhiteSpace(operation)) throw new ArgumentException("operation is null/empty", nameof(operation));
+
+            try
+            {
+                Run(taskFactory(arg1, arg2), operation);
             }
             catch (Exception ex)
             {

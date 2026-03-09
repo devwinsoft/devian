@@ -15,6 +15,7 @@ namespace Devian
     [RequireComponent(typeof(MissionManager))]
     [RequireComponent(typeof(RemoteConfigManager))]
     [RequireComponent(typeof(SaveDataManager))]
+    [RequireComponent(typeof(LoginManager))]
     [RequireComponent(typeof(InputManager))]
     [RequireComponent(typeof(FirebaseManager))]
     [RequireComponent(typeof(AnalyzeManager))]

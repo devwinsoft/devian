@@ -17,12 +17,11 @@ namespace Devian
     }
 
     /// <summary>
-    /// Login flow orchestrator.
-    /// Order: sign-in (type-based via 3 managers) -> SaveDataManager._initializeCloudAsync
+    /// Account authentication manager.
     /// - Editor/Guest: AccountLoginFirebase (Anonymous)
     /// - Google (Android): AccountLoginGpgs
     /// - Apple (iOS): AccountLoginApple
-    /// Sync is handled by SaveDataManager (separate responsibility).
+    /// Data sync / init-session orchestration is handled by LoginManager.
     /// </summary>
     public sealed class AccountManager : CompoSingleton<AccountManager>
     {
@@ -49,55 +48,25 @@ namespace Devian
         /// Google(Android) uses GPGS Reflection.
         /// Apple(iOS) requires Apple provider implementation; otherwise use the credential overload.
         /// </summary>
-        public async Task<CommonResult<SessionInitSnapshot?>> LoginAsync(LoginType loginType, CancellationToken ct)
+        public async Task<CommonResult> LoginAsync(LoginType loginType, CancellationToken ct)
         {
             var credResult = await getLoginCredentialAsync(loginType, ct);
             if (credResult.IsFailure)
             {
-                return CommonResult<SessionInitSnapshot?>.Failure(credResult.Error!);
+                return CommonResult.Failure(credResult.Error!);
             }
 
             return await LoginAsync(loginType, credResult.Value, ct);
         }
 
-        public async Task<CommonResult<SessionInitSnapshot?>> LoginAsync(LoginType loginType, LoginCredential credential, CancellationToken ct)
+        public async Task<CommonResult> LoginAsync(LoginType loginType, LoginCredential credential, CancellationToken ct)
         {
-            // 1. Sign-in
             var signInResult = await signInAsync(loginType, credential ?? LoginCredential.Empty(), ct);
             if (signInResult.IsFailure)
-            {
-                return CommonResult<SessionInitSnapshot?>.Failure(signInResult.Error!);
-            }
+                return CommonResult.Failure(signInResult.Error!);
 
             writeAccountState(loginType);
-
-            // 2. SaveCloud init policy:
-            // - Guest: never
-            // - Editor: never (use SaveLocal only)
-            // Cloud init 실패는 login 실패가 아님 — cloud save만 비활성화되고 login은 성공 처리.
-            if (canAttemptCloudSave(loginType))
-            {
-#if !UNITY_EDITOR
-                var cloudInit = await SaveDataManager.Instance._initializeCloudAsync(ct);
-                if (cloudInit.IsFailure)
-                {
-                    UnityEngine.Debug.LogWarning(
-                        $"[AccountManager] Cloud init failed (login proceeds): {cloudInit.Error}");
-                }
-#endif
-            }
-
-            // 3. InitSession (Firebase Functions — remoteConfig + entitlements + purchaseAdjustments)
-#if !UNITY_EDITOR
-            var initSession = await FirebaseManager.Instance.InitSessionAsync(null, ct);
-            if (initSession.IsFailure)
-            {
-                return CommonResult<SessionInitSnapshot?>.Failure(initSession.Error!);
-            }
-            return CommonResult<SessionInitSnapshot?>.Success(initSession.Value);
-#else
-            return CommonResult<SessionInitSnapshot?>.Success(null);
-#endif
+            return CommonResult.Ok();
         }
 
         public void Logout()
@@ -122,110 +91,43 @@ namespace Devian
             writeAccountState(LoginType.NONE);
         }
 
-        /// <summary>
-        /// 게임 진입 전에 현재 계정 메타를 기준으로 런타임 인증 세션을 복구한다.
-        /// - Guest/Editor: anonymous sign-in으로 복구
-        /// - Google(Android): GPGS silent auth 기반으로 복구
-        /// - Apple(iOS): 현재는 caller-provided credential이 없으므로 자동 복구하지 않음
-        /// </summary>
-        public async Task<CommonResult<SessionInitSnapshot?>> EnsureRuntimeSessionAsync(CancellationToken ct)
+        public async Task<CommonResult<bool>> EnsureRuntimeAuthSessionAsync(CancellationToken ct)
         {
-            bool sessionRestored;
-
             if (HasAuthenticatedSession)
-            {
-                sessionRestored = true;
-            }
-            else
-            {
-                switch (CurrentLoginType)
-                {
-                    case LoginType.NONE:
-                        return CommonResult<SessionInitSnapshot?>.Success(null);
-
-                    case LoginType.EDITOR:
-                    case LoginType.GUEST:
-                    {
-                        var login = await LoginAsync(CurrentLoginType, ct);
-                        if (login.IsFailure)
-                            return CommonResult<SessionInitSnapshot?>.Failure(login.Error!);
-                        // LoginAsync already called InitSession internally
-                        return CommonResult<SessionInitSnapshot?>.Success(login.Value);
-                    }
-
-#if UNITY_ANDROID && !UNITY_EDITOR
-                    case LoginType.GOOGLE:
-                    {
-                        var silentCredential = await _gpgs.GetServerAuthCodeCredentialSilentAsync(ct);
-                        if (silentCredential.IsFailure)
-                        {
-                            Debug.Log($"[AccountManager] Runtime session restore skipped (silent GPGS unavailable): {silentCredential.Error}");
-                            return CommonResult<SessionInitSnapshot?>.Success(null);
-                        }
-
-                        var signIn = await signInWithGoogleCredentialAsync(silentCredential.Value, ct);
-                        if (signIn.IsFailure)
-                            return CommonResult<SessionInitSnapshot?>.Failure(signIn.Error!);
-
-                        writeAccountState(LoginType.GOOGLE);
-                        sessionRestored = true;
-                        break;
-                    }
-#endif
-
-                    case LoginType.APPLE:
-                    default:
-                        return CommonResult<SessionInitSnapshot?>.Success(null);
-                }
-            }
-
-            // Session exists or was restored (not via LoginAsync) — call InitSession
-            if (sessionRestored)
-            {
-#if !UNITY_EDITOR
-                var initSession = await FirebaseManager.Instance.InitSessionAsync(null, ct);
-                if (initSession.IsFailure)
-                    return CommonResult<SessionInitSnapshot?>.Failure(initSession.Error!);
-                return CommonResult<SessionInitSnapshot?>.Success(initSession.Value);
-#else
-                return CommonResult<SessionInitSnapshot?>.Success(null);
-#endif
-            }
-
-            return CommonResult<SessionInitSnapshot?>.Success(null);
-        }
-
-        /// <summary>
-        /// Purchase 인증 여부는 저장된 loginType이 아니라 현재 Firebase 세션 기준으로 판단한다.
-        /// </summary>
-        public bool IsPurchaseLoginReady()
-        {
-            return HasAuthenticatedSession;
-        }
-
-        /// <summary>
-        /// Purchase 진입 시 인증 보정:
-        /// - 이미 Firebase 세션이 있으면 즉시 성공
-        /// - Guest/Editor는 anonymous sign-in으로 세션을 복구
-        /// - Android에서는 GPGS silent auth 기반으로 Google login을 자동 시도(UI 없음)
-        /// </summary>
-        public async Task<CommonResult<bool>> EnsurePurchaseLoginReadyAsync(CancellationToken ct)
-        {
-            var runtimeSession = await EnsureRuntimeSessionAsync(ct);
-            if (runtimeSession.IsFailure)
-                return CommonResult<bool>.Failure(runtimeSession.Error!);
-
-            if (runtimeSession.Value != null)
                 return CommonResult<bool>.Success(true);
 
-            if (CurrentLoginType != LoginType.NONE)
-                return CommonResult<bool>.Success(false);
+            switch (CurrentLoginType)
+            {
+                case LoginType.NONE:
+                    return CommonResult<bool>.Success(false);
 
+                case LoginType.EDITOR:
+                case LoginType.GUEST:
+                {
+                    var login = await LoginAsync(CurrentLoginType, ct);
+                    if (login.IsFailure)
+                        return CommonResult<bool>.Failure(login.Error!);
+                    return CommonResult<bool>.Success(true);
+                }
+
+#if UNITY_ANDROID && !UNITY_EDITOR
+                case LoginType.GOOGLE:
+                    return await TryRestoreGoogleAuthAsync(ct);
+#endif
+
+                case LoginType.APPLE:
+                default:
+                    return CommonResult<bool>.Success(false);
+            }
+        }
+
+        public async Task<CommonResult<bool>> TryRestoreGoogleAuthAsync(CancellationToken ct)
+        {
 #if UNITY_ANDROID && !UNITY_EDITOR
             var silentCredential = await _gpgs.GetServerAuthCodeCredentialSilentAsync(ct);
             if (silentCredential.IsFailure)
             {
-                Debug.Log($"[AccountManager] Purchase auto-login skipped (silent GPGS unavailable): {silentCredential.Error}");
+                Debug.Log($"[AccountManager] Google silent auth unavailable: {silentCredential.Error}");
                 return CommonResult<bool>.Success(false);
             }
 

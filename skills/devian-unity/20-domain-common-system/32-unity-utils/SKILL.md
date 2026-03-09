@@ -116,10 +116,13 @@ await UnityCoroutineRunner.RunAsync(this, FadeOut(canvasGroup, 0.5f), ct);
 - **메서드:**
   - `Run(Task task, string operation)`: 이미 생성된 `Task`를 관측하고 실패 시 `Debug.LogError` 출력
   - `Run(Func<Task> taskFactory, string operation)`: `Task` 생성 전 동기 예외까지 포함해 관측
-  - 일반적으로는 `Run(Func<Task>, ...)` 오버로드를 우선 사용한다
+  - `Run<TArg>(Func<TArg, Task> taskFactory, TArg arg, string operation)`: 1개 인자를 전달하여 `Task` 생성 + 관측
+  - `Run<TArg1, TArg2>(Func<TArg1, TArg2, Task> taskFactory, TArg1 arg1, TArg2 arg2, string operation)`: 2개 인자를 전달하여 `Task` 생성 + 관측
+  - 일반적으로는 `Run(Func<Task>, ...)` 또는 `Run<TArg>(...)` 오버로드를 우선 사용한다
 
 - **사용 패턴:**
 ```csharp
+// 인자 없음
 public void OnClick_Login()
 {
     UnityTaskRunner.Run(OnClickLoginAsync, "UICanvasLoading.OnClick_Login");
@@ -128,6 +131,28 @@ public void OnClick_Login()
 private async Task OnClickLoginAsync()
 {
     await LoginAsync();
+}
+
+// 1-arg
+public void OnClick_GoogleLogin()
+{
+    UnityTaskRunner.Run(OnClickLoginAsync, "google", "UICanvasLoading.OnClick_GoogleLogin");
+}
+
+private async Task OnClickLoginAsync(string provider)
+{
+    await LoginAsync(provider);
+}
+
+// 2-arg
+public void OnClick_Send()
+{
+    UnityTaskRunner.Run(OnClickSendAsync, userId, message, "UICanvas.OnClick_Send");
+}
+
+private async Task OnClickSendAsync(string userId, string message)
+{
+    await SendAsync(userId, message);
 }
 ```
 

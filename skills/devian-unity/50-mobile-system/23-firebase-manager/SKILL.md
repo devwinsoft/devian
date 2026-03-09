@@ -13,7 +13,7 @@ Firebase Cloud Functions callable 통합 래퍼.
 game 도메인 테이블(TB_PRODUCT 등)은 참조하지 않는다 — 서버 응답의 raw 값을 typed result에 그대로 저장한다.
 
 **`internal sealed class`** — 같은 어셈블리(`Devian.Samples.MobileSystem`) 내부에서만 접근 가능하다.
-외부 어셈블리(Assembly-CSharp 등)에서는 직접 접근할 수 없으며, `AccountManager`를 통해 간접 사용한다.
+외부 어셈블리(Assembly-CSharp 등)에서는 직접 접근할 수 없으며, `LoginManager`/각 시스템 매니저를 통해 간접 사용한다.
 
 
 ## Scope
@@ -65,7 +65,7 @@ Bootstrap prefab에 부착한다.
   - `initSession` callable 호출 → `getRemoteConfig` + `getEntitlements` + `getPurchaseAdjustments` 통합 1회 왕복
   - 반환: `SessionInitSnapshot` (RemoteConfig, Entitlements, PurchaseAdjustments)
   - 에러 매핑: `COMMON_NETWORK`, `COMMON_AUTH`, `COMMON_SERVER`
-  - **외부 어셈블리에서 직접 호출 불가** — `AccountManager.LoginAsync` / `EnsureRuntimeSessionAsync`가 내부 호출한다.
+  - **외부 어셈블리에서 직접 호출 불가** — `LoginManager`가 내부 호출한다.
   - 주의: 초기 인벤토리 지급 데이터는 포함하지 않는다 (`getInitialInventory` 별도 호출).
 
 ### Instance Methods — Inventory callable (1개)
@@ -129,9 +129,9 @@ Bootstrap prefab에 부착한다.
 
 ## Integration
 
-### AccountManager (InitSession 통합)
-`LoginAsync` / `EnsureRuntimeSessionAsync`가 내부에서 `FirebaseManager.Instance.InitSessionAsync()`를 호출한다.
-외부 어셈블리는 `AccountManager`의 반환값(`SessionInitSnapshot?`)으로 결과를 받는다.
+### LoginManager (InitSession 통합)
+`EnsureRuntimeSessionAndInitializeAsync` / `LoginAndInitializeAsync`가 내부에서 `FirebaseManager.Instance.InitSessionAsync()`를 호출한다.
+외부 어셈블리는 `LoginManager`의 `CommonResult` 결과만 사용한다.
 
 ### InventoryManager (초기 지급 통합)
 `InventoryManager.FirstInitAsync`가 `FirebaseManager.Instance.GetInitialInventoryAsync()`를 호출한다.

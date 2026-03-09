@@ -32,7 +32,7 @@ namespace MyApp
     {
         protected override async Task OnBootProc()
         {
-            // MobileSystem common initialization (Log, GPGS Activate, AccountManager)
+            // MobileSystem common initialization (Log, GPGS Activate, Account/Login managers)
             await base.OnBootProc();
 
             // App-specific initialization here.
@@ -128,6 +128,7 @@ MobileApplication에 부착된 RequireComponent:
 - `RemoteConfigManager`
 - `LeaderboardManager`
 - `GameMessageManager`
+- `LoginManager`
 - `SaveDataManager`
 - `InputManager` — [24-input-manager](../../20-domain-common-system/22-input-manager/SKILL.md)
 - `FirebaseManager` — [23-firebase-manager](../23-firebase-manager/SKILL.md)

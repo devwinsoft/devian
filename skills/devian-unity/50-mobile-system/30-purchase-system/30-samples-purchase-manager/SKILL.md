@@ -156,7 +156,7 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 - 로컬 지급 실패 시 `FAILED_REPORTED`를 서버에 기록할 수 있으나, confirm 미완 상태에서는 `current`를 유지해 복구 경로를 보존한다.
 - `resultStatus == ALREADY_GRANTED`라도 `clientGrantStatus == PENDING` 또는 `FAILED_REPORTED`이면 로컬 지급 복구 경로를 사용할 수 있다.
 - `rewardGroupId`가 비어 있으면 로컬 보상 지급은 스킵하고, 클라이언트 지급 완료 처리만 진행한다. (결제/재구매 동일 규칙)
-- 구매 전 인증 게이트는 AccountManager 로그인 상태 API를 사용한다. (`FirebaseAuth.CurrentUser` 직접 판정 금지)
+- 구매 전 인증 게이트는 `LoginManager` API(`IsPurchaseLoginReady`, `EnsurePurchaseLoginReadyAsync`)를 사용한다. (`FirebaseAuth.CurrentUser` 직접 판정 금지)
 - 로컬/클라우드 저장용 구매 상태는 `PurchaseManager.Instance.Storage`(`PurchaseStorage`)에 기록한다.
 - `PurchaseStorage`는 진행 중 결제(`current`), 환불/지원 대응용 최소 로그(`refundSupportLogs`), 환불 동기화 상태(`refundSync`)를 저장한다.
 - 실패 코드/메시지/최근 실패 요약/전체 이력/영수증(raw receipt)은 저장 금지.
