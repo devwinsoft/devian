@@ -5,24 +5,24 @@ namespace Devian
 {
     public sealed class GameProductCatalog : IPurchaseProductCatalog
     {
-        static PurchaseProductType mapProductType(PRODUCT_KIND kind)
+        static PurchaseProductType mapProductType(PURCHASE_KIND kind)
         {
             switch (kind)
             {
-                case PRODUCT_KIND.SUBSCRIPTION:
+                case PURCHASE_KIND.SUBSCRIPTION:
                     return PurchaseProductType.Subscription;
-                case PRODUCT_KIND.RENTAL:
+                case PURCHASE_KIND.RENTAL:
                     // Rental must stay repurchasable at store level (policy allows repeated purchase).
                     return PurchaseProductType.Consumable;
-                case PRODUCT_KIND.CONSUMABLE:
+                case PURCHASE_KIND.CONSUMABLE:
                     return PurchaseProductType.Consumable;
-                case PRODUCT_KIND.PASS:
+                case PURCHASE_KIND.PASS:
                 default:
                     return PurchaseProductType.NonConsumable;
             }
         }
 
-        static string getStoreSku(PRODUCT p)
+        static string getStoreSku(PURCHASE p)
         {
 #if UNITY_IOS || UNITY_TVOS
             return string.IsNullOrEmpty(p.StoreSkuApple) ? p.InternalProductId : p.StoreSkuApple;
@@ -35,7 +35,7 @@ namespace Devian
 
         public IReadOnlyList<PurchaseCatalogItem> GetActiveProducts()
         {
-            var products = TB_PRODUCT.GetAll();
+            var products = TB_PURCHASE.GetAll();
             var list = new List<PurchaseCatalogItem>(products.Count);
 
             foreach (var p in products)

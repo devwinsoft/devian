@@ -47,7 +47,7 @@ Game 도메인은 Devian 프레임워크의 **예제 도메인**이다.
 
 | 파일 | 시트(테이블) | 컨테이너 | PK | 설명 |
 |---|---|---|---|---|
-| `ItemTable.xlsx` | PRODUCT | TB_PRODUCT | `InternalProductId` (string) | 상품 테이블 (`seasonId` 포함) |
+| `ItemTable.xlsx` | PURCHASE | TB_PURCHASE | `InternalProductId` (string) | 상품 테이블 (`seasonId` 포함) |
 | `AdvertiseTable.xlsx` | ADVERTISE | TB_ADVERTISE | `AdvertiseId` (string) | 광고 placement 테이블 |
 | `ItemTable.xlsx` | REWARD | TB_REWARD | `RewardNum` (int) | 보상 테이블 |
 | `GameTable.xlsx` | MESSAGE | TB_MESSAGE | `MessageId` (string) | 메시지 stat 정의 테이블 |
@@ -101,7 +101,7 @@ Game 도메인을 사용하는 스킬:
 | [10-inventory-manager](../../50-mobile-system/22-inventory-system/10-inventory-manager/SKILL.md) | InventoryManager | 인벤토리 + InventoryStorage |
 | [11-inventory-storage](../../50-mobile-system/22-inventory-system/11-inventory-storage/SKILL.md) | InventoryStorage | 인벤토리 데이터 컨테이너 |
 | [30-ad-manager](../../50-mobile-system/47-advertise-system/30-ad-manager/SKILL.md) | AdManager | 광고 (TB_ADVERTISE 직접 참조) |
-| [30-samples-purchase-manager](../../50-mobile-system/30-purchase-system/30-samples-purchase-manager/SKILL.md) | PurchaseManager | 구매 (TB_PRODUCT 직접 참조) |
+| [30-samples-purchase-manager](../../50-mobile-system/30-purchase-system/30-samples-purchase-manager/SKILL.md) | PurchaseManager | 구매 (TB_PURCHASE 직접 참조) |
 | [10-reward-manager](../../50-mobile-system/49-reward-system/10-reward-manager/SKILL.md) | RewardManager | 보상 (TB_REWARD 직접 참조) |
 
 개요: [21-domain-game-system/00-overview](../00-overview/SKILL.md)

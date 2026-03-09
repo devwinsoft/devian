@@ -67,7 +67,7 @@ NEEDS CHECK: Firebase CLI 사용 여부/버전이 레포에서 고정돼 있어�
 - `purchaseId: string` (doc id와 동일)
 - `storeKey: string` (`"apple" | "google"`)
 - `internalProductId: string`
-- `kind: string` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`) (=`ProductKind` string)
+- `kind: string` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`) (=`PurchaseKind` string)
 - `verifyStatus: string` (SSOT의 resultStatus에 대응하는 대문자 저장: `"GRANTED" | "REJECTED" | "PENDING" | "REVOKED" | "REFUNDED"`)
 - `clientGrantStatus: string` (`"PENDING" | "APPLIED_ACKED" | "FAILED_REPORTED"`) — 클라이언트 로컬 지급 결과 보고 상태
 - `storeConfirmStatus: string` (`"PENDING" | "CONFIRMED"`) — 스토어 Confirm 처리 상태
@@ -161,7 +161,7 @@ NEEDS CHECK:
 - `__name__` DESC (docId tie-break)
 
 쿼리 조건:
-- `where(kind == <kind 파라미터>)` (ProductKind 값)
+- `where(kind == <kind 파라미터>)` (PurchaseKind 값)
 - `where(storePurchasedAt >= threshold)` (서버 now − 30일)
 - `orderBy(storePurchasedAt, desc)`
 - `orderBy(documentId(), desc)`

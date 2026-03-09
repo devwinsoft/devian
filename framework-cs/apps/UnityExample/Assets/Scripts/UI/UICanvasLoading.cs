@@ -56,11 +56,11 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
             {
                 message.text = "SAVEDATA_SYNC_CONFLICT";
                 this.ShowResolveFrame(login.Value.LocalSummary, login.Value.CloudSummary);
-                SaveDataManager.Instance.ResolveConflictAsync(SyncResolution.UseLocal, CancellationToken.None);
+                await SaveDataManager.Instance.ResolveConflictAsync(SyncResolution.UseLocal, CancellationToken.None);
                 return;
             }
 
-            await TestApplication.Instance.LoadAsync(SystemLanguage.Korean, null);
+            await TestApplication.Instance.LoadAsync(SystemLanguage.Korean, onLoadProgress);
             await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
         }
         else
@@ -82,7 +82,7 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
                 return;
             }
 
-            await TestApplication.Instance.LoadAsync(SystemLanguage.Korean, null);
+            await TestApplication.Instance.LoadAsync(SystemLanguage.Korean, onLoadProgress);
             await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
         }
         else
@@ -97,8 +97,13 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
         Debug.Log($"ResolveConflictAsync: success={login.IsSuccess}");
         if (login.IsSuccess)
         {
-            await TestApplication.Instance.LoadAsync(SystemLanguage.Korean, null);
+            await TestApplication.Instance.LoadAsync(SystemLanguage.Korean, onLoadProgress);
             await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
         }
+    }
+
+    void onLoadProgress(float progress)
+    {
+        message.text = $"LOADING {Mathf.RoundToInt(Mathf.Clamp01(progress) * 100f)}%";
     }
 }

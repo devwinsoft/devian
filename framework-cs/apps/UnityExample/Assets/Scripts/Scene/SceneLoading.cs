@@ -5,7 +5,20 @@ using Devian;
 
 public class SceneLoading : SceneBootstrap
 {
-    public static SceneLoading Instance => Singleton.Create<SceneLoading>();
+    public static SceneLoading Instance => singleton;
+    static SceneLoading singleton = null;
+
+    protected override void onInitAwake()
+    {
+        base.onInitAwake();
+        singleton = this;
+    }
+
+    protected override void onDestroy()
+    {
+        base.onDestroy();
+        singleton = null;
+    }
 
     protected override Task onEnter()
     {
@@ -51,7 +64,9 @@ public class SceneLoading : SceneBootstrap
             return;
         }
 
-        await TestApplication.Instance.LoadAsync(SystemLanguage.Korean, null);
+        await TestApplication.Instance.LoadAsync(
+            SystemLanguage.Korean,
+            progress => UICanvasLoading.Instance.message.text = $"LOADING {Mathf.RoundToInt(Mathf.Clamp01(progress) * 100f)}%");
         await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
     }
 }

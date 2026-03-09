@@ -33,7 +33,7 @@ AppliesTo: v10
 
 - `EnsureRuntimeSessionAndInitializeAsync(CancellationToken ct = default) : Task<CommonResult<LoginInitializeResult>>`
   - 앱 시작 시 인증 복구 + InitSession + 초기화 경로
-  - 이전 로그인 정보가 없거나(`loginType=NONE`) 자동 복구가 불가능하면 `Failure`가 아니라 `Success(null)`을 반환한다. (UI가 명시 로그인 선택 상태로 전환)
+  - 이전 로그인 정보가 없거나(`loginType=NONE`) 자동 복구가 불가능하면, 로컬 모드 초기화(`syncAndInitializeAsync`)를 먼저 수행한 뒤 `Success(null)`을 반환한다. (UI는 명시 로그인 선택 상태로 유지 가능)
 - `LoginAndInitializeAsync(LoginType loginType, CancellationToken ct = default) : Task<CommonResult<LoginInitializeResult>>`
   - 사용자 선택 로그인 + InitSession + 초기화 경로
 - `ResolveConflictAndInitializeAsync(SyncResolution resolution, CancellationToken ct = default) : Task<CommonResult<LoginInitializeResult>>`

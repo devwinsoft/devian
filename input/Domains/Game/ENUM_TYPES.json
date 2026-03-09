@@ -52,7 +52,7 @@
       ]
     },
     {
-      "name": "PRODUCT_KIND",
+      "name": "PURCHASE_KIND",
       "values": [
         { "name": "CONSUMABLE", "value": 0 },
         { "name": "SUBSCRIPTION", "value": 1 },

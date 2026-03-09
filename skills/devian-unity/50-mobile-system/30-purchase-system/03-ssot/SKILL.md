@@ -117,17 +117,17 @@ AppliesTo: v10
 - Subscription: "구독 기반 NoAds" 등 상태 기반
 - Season Pass: 시즌별 구매 1회성 Entitlement로 운영
 
-- kind의 정본 enum은 컨텐츠 레이어가 정의한 `ProductKind`다.
-- 테이블(`ItemTable.xlsx` PRODUCT.kind)의 타입은 `ProductKind`를 사용한다.
+- kind의 정본 enum은 컨텐츠 레이어가 정의한 `PurchaseKind`다.
+- 테이블(`ItemTable.xlsx` PURCHASE.kind)의 타입은 `PurchaseKind`를 사용한다.
 
 ### 카탈로그 통합
 
-PurchaseManager는 `TB_PRODUCT` 테이블을 **직접 참조**하여 카탈로그를 구성한다.
+PurchaseManager는 `TB_PURCHASE` 테이블을 **직접 참조**하여 카탈로그를 구성한다.
 `Devian.Samples.MobileSystem.asmdef`에 `Devian.Domain.Game` 참조가 포함되어 있다.
 
 Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요하다.
-- `PurchaseManager`가 `ResolveRewardGroupId(internalProductId)` → `TB_PRODUCT.Get(internalProductId).RewardGroupId`로 직접 변환한다.
-- `BuildProductDefinitions()` → `TB_PRODUCT.GetAll()`에서 `isActive` 필터링 후 ProductDefinition 목록을 생성한다.
+- `PurchaseManager`가 `ResolveRewardGroupId(internalProductId)` → `TB_PURCHASE.Get(internalProductId).RewardGroupId`로 직접 변환한다.
+- `BuildProductDefinitions()` → `TB_PURCHASE.GetAll()`에서 `isActive` 필터링 후 ProductDefinition 목록을 생성한다.
 
 ### Unity IAP 5.x (v5) Catalog Notes
 
@@ -140,16 +140,16 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 
 #### Product Catalog (상품 요약/매핑) SSOT — ✅ 전체 결정됨
 - [x] SSOT 저장 위치: **(A) Devian input 테이블(Excel) 기반** — 결정됨
-  - PRODUCT 테이블 스키마를 이 문서(03-ssot)에서 SSOT로 정의한다.
-  - `ItemTable.xlsx`의 PRODUCT 시트에서 데이터를 관리한다.
+  - PURCHASE 테이블 스키마를 이 문서(03-ssot)에서 SSOT로 정의한다.
+  - `ItemTable.xlsx`의 PURCHASE 시트에서 데이터를 관리한다.
 - [x] `{buildInputJson}` 도메인 등록: — 결정됨
   - 도메인 등록 정보는 컨텐츠 레이어 SSOT에서 관리
 - [x] ItemTable.xlsx 경로: — 결정됨
   - 경로는 컨텐츠 레이어 SSOT에서 관리
-- [x] PRODUCT 테이블 스키마/필드: — 결정됨
+- [x] PURCHASE 테이블 스키마/필드: — 결정됨
   - `internalProductId` (string, pk) — 내부 상품 ID (정본)
   - `rewardGroupId` (string) — 지급 Reward Key, `internalProductId -> rewardGroupId` 변환의 SSOT
-  - `kind` (ProductKind) — 상품 타입 (`Consumable` / `Rental` / `Subscription` / `SeasonPass`)
+  - `kind` (PurchaseKind) — 상품 타입 (`Consumable` / `Rental` / `Subscription` / `SeasonPass`)
   - `seasonId` (string) — 시즌 키 (`SEASON.seasonId`, PASS 상품 시즌 매핑)
   - `title` (string) — 표시용 상품명(요약)
   - `isActive` (bool) — 운영 활성 토글
@@ -200,7 +200,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
   - `uid` — Auth context에서 확보 (클라가 보내지 않음)
   - `storeKey: string` — "apple" | "google"
   - `internalProductId: string`
-  - `kind: string` — "Consumable" | "Rental" | "Subscription" | "SeasonPass" (=`ProductKind` string)
+  - `kind: string` — "Consumable" | "Rental" | "Subscription" | "SeasonPass" (=`PurchaseKind` string)
   - `payload: string` — 스토어 영수증/검증 데이터 (클라에서 `BuildVerifyPayload(receipt)` 결과)
 - 처리
   1) 스토어 서버 검증(Apple/Google)
@@ -281,7 +281,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 - 30일 기준: 서버 now − 30일 (클라/기기 시간 금지)
 - 최신(latest): `storePurchasedAt` desc, 동률이면 docId desc
 - 인증: `context.auth.uid` 필수
-- 입력: `kind` (string, 필수 — ProductKind 값. `Consumable`/`Rental` 등), `pageSize` (optional, 기본 20)
+- 입력: `kind` (string, 필수 — PurchaseKind 값. `Consumable`/`Rental` 등), `pageSize` (optional, 기본 20)
 - 출력:
   - `items: array` — 각 원소: `{ purchaseId, internalProductId, storePurchasedAt, verifyStatus, status }`
     - `status`는 legacy response compatibility alias (temporary)

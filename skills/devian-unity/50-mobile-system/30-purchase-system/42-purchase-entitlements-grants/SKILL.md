@@ -23,8 +23,8 @@ AppliesTo: v10
 ## A. 입력 정본
 
 - `internalProductId`가 정본이다.
-- 상품 메타는 SSOT에서 합의된 PRODUCT 테이블을 따른다:
-  - PRODUCT 테이블 경로/정본은 컨텐츠 레이어 SSOT를 따른다.
+- 상품 메타는 SSOT에서 합의된 PURCHASE 테이블을 따른다:
+  - PURCHASE 테이블 경로/정본은 컨텐츠 레이어 SSOT를 따른다.
 
 
 ---

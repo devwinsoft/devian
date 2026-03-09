@@ -10,7 +10,7 @@ PurchaseManager(구매 샘플)의 위치/역할/규약을 설명한다.
 - 서버 관련 정본은 `40`(구현), `44`(셋업), `46`(결정), `43`(클라-서버 연동 규약)를 참조한다.
 
 PurchaseManager는 **단일 concrete 클래스**이다.
-`TB_PRODUCT` 테이블을 직접 참조하여 `internalProductId -> rewardGroupId` 변환과 ProductDefinition 빌드를 수행한다.
+`TB_PURCHASE` 테이블을 직접 참조하여 `internalProductId -> rewardGroupId` 변환과 ProductDefinition 빌드를 수행한다.
 
 
 ---
@@ -30,7 +30,7 @@ PurchaseManager는 **단일 concrete 클래스**이다.
 
 - asmdef:
   - `Devian.Samples.MobileSystem` (`Samples~/MobileSystem/Runtime/Devian.Samples.MobileSystem.asmdef`)
-  - 참조: `Devian.Domain.Game` (TB_PRODUCT 테이블), `Devian.Domain.Common` (CommonResult)
+  - 참조: `Devian.Domain.Game` (TB_PURCHASE 테이블), `Devian.Domain.Common` (CommonResult)
 
 
 ---
@@ -57,7 +57,7 @@ CompoSingleton<PurchaseManager>.Instance
   - Idempotent: 여러 번 호출해도 동일 Task 반환.
   - Editor에서는 즉시 `PURCHASE_UNSUPPORTED_PLATFORM` 반환.
 - `PurchaseAsync(internalProductId, ct)` → `Task<CommonResult<PurchaseFinalResult>>`
-  - 단일 구매 진입점. `TB_PRODUCT`에서 `Kind`를 조회하여 구매 유형(Consumable/Rental/Subscription/SeasonPass)을 자동 결정
+  - 단일 구매 진입점. `TB_PURCHASE`에서 `Kind`를 조회하여 구매 유형(Consumable/Rental/Subscription/SeasonPass)을 자동 결정
   - 최종 지급은 서버 `verifyPurchase` 결과만 신뢰
   - **Caller-managed client grant**: `NeedsClientGrantDelivery=true`이면 호출자가 보상을 적용한 뒤 `AckPurchaseClientGrantAppliedAsync`로 ACK
 - `RetryInterruptedPurchaseAsync(ct)` → `Task<CommonResult<RetryInterruptedPurchaseResult>>`
@@ -82,15 +82,15 @@ CompoSingleton<PurchaseManager>.Instance
 ---
 
 
-## 컨텐츠 카탈로그 통합 (TB_PRODUCT 직접 참조)
+## 컨텐츠 카탈로그 통합 (TB_PURCHASE 직접 참조)
 
 PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 
-- `ResolveRewardGroupId(internalProductId)`: `TB_PRODUCT`에서 `RewardGroupId` 조회 (없으면 빈 값)
+- `ResolveRewardGroupId(internalProductId)`: `TB_PURCHASE`에서 `RewardGroupId` 조회 (없으면 빈 값)
 - `PurchaseFinalResult`, `RetryInterruptedPurchaseResult`
   - `RewardGroupId`와 `AppliedRewards: RewardData[]`를 포함한다.
   - `skip`/`rewardGroupId 없음`/이번 호출에서 지급 없음(`ALREADY_GRANTED + APPLIED_ACKED`)은 `AppliedRewards=[]`가 정상이다.
-- `BuildProductDefinitions()`: `TB_PRODUCT.GetAll()`에서 `isActive` 필터링 후 ProductDefinition 목록 생성
+- `BuildProductDefinitions()`: `TB_PURCHASE.GetAll()`에서 `isActive` 필터링 후 ProductDefinition 목록 생성
   - 플랫폼별 StoreSku 매핑: `#if UNITY_IOS` → `StoreSkuApple`, `#elif UNITY_ANDROID` → `StoreSkuGoogle`
   - `Kind` → `ProductType` 매핑: Consumable→Consumable, Subscription→Subscription, SeasonPass→NonConsumable
 
@@ -182,7 +182,7 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 
 ### ~~ISSUE-3. ProductCatalog.LoadDefaultCatalog() 사용 (SSOT 불일치)~~ — ✅ 수정됨
 
-- `TB_PRODUCT` 기반으로 교체 완료.
+- `TB_PURCHASE` 기반으로 교체 완료.
 - `isActive` 필터링: 비활성 상품은 Unity IAP에 등록하지 않음.
 - 플랫폼별 StoreSku 매핑: `#if UNITY_IOS` → `StoreSkuApple`, `#elif UNITY_ANDROID` → `StoreSkuGoogle`.
 - `Kind` → `ProductType` 매핑.
@@ -199,7 +199,7 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 - `initializeIapAsync(ct)` → `Task<CommonResult>` 반환 (async void 제거).
 - FetchProducts 콜백을 TCS로 await하여 초기화 완료를 보장.
 - 초기화 미완료 상태에서 API 호출 시 `PURCHASE_INIT_REQUIRED` 반환.
-- 에러 분류: `PURCHASE_INIT_FAILED` (Connect 실패), `PURCHASE_PRODUCT_FETCH_FAILED` (FetchProducts 실패).
+- 에러 분류: `PURCHASE_INIT_FAILED` (Connect 실패), `PURCHASE_FETCH_FAILED` (FetchProducts 실패).
 
 
 ---

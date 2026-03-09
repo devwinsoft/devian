@@ -164,8 +164,8 @@ namespace Devian.Domain.Game
         UNIT_HP_MAX = 100,
     }
 
-    /// <summary>PRODUCT_KIND enum</summary>
-    public enum PRODUCT_KIND
+    /// <summary>PURCHASE_KIND enum</summary>
+    public enum PURCHASE_KIND
     {
         CONSUMABLE = 0,
         SUBSCRIPTION = 1,
@@ -346,12 +346,12 @@ namespace Devian.Domain.Game
         public string GetKey() => PassId;
     }
 
-    /// <summary>PRODUCT row</summary>
-    public sealed class PRODUCT : IEntityKey<string>
+    /// <summary>PURCHASE row</summary>
+    public sealed class PURCHASE : IEntityKey<string>
     {
         public string InternalProductId { get; set; } = string.Empty;
         public string RewardGroupId { get; set; } = string.Empty;
-        public PRODUCT_KIND Kind { get; set; }
+        public PURCHASE_KIND Kind { get; set; }
         public string Title { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public string StoreSkuApple { get; set; } = string.Empty;
@@ -1456,11 +1456,11 @@ namespace Devian.Domain.Game
         static partial void _OnAfterLoad();
     }
 
-    /// <summary>TB_PRODUCT container</summary>
-    public static partial class TB_PRODUCT
+    /// <summary>TB_PURCHASE container</summary>
+    public static partial class TB_PURCHASE
     {
-        private static readonly Dictionary<string, PRODUCT> _dict = new();
-        private static readonly List<PRODUCT> _list = new();
+        private static readonly Dictionary<string, PURCHASE> _dict = new();
+        private static readonly List<PURCHASE> _list = new();
 
         public static int Count => _list.Count;
 
@@ -1470,19 +1470,19 @@ namespace Devian.Domain.Game
             _list.Clear();
         }
 
-        public static IReadOnlyList<PRODUCT> GetAll() => _list;
+        public static IReadOnlyList<PURCHASE> GetAll() => _list;
 
-        public static PRODUCT? Get(string key)
+        public static PURCHASE? Get(string key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(string key, out PRODUCT? row)
+        public static bool TryGet(string key, out PURCHASE? row)
         {
             return _dict.TryGetValue(key, out row);
         }
 
-        private static void AddRow(PRODUCT row)
+        private static void AddRow(PURCHASE row)
         {
             _list.Add(row);
             _dict[row.InternalProductId] = row;
@@ -1491,7 +1491,7 @@ namespace Devian.Domain.Game
         public static void LoadFromJson(string json)
         {
             Clear();
-            var rows = JsonConvert.DeserializeObject<List<PRODUCT>>(json);
+            var rows = JsonConvert.DeserializeObject<List<PURCHASE>>(json);
             if (rows == null) return;
             foreach (var row in rows)
             {
@@ -1508,7 +1508,7 @@ namespace Devian.Domain.Game
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<PRODUCT>(line);
+                var row = JsonConvert.DeserializeObject<PURCHASE>(line);
                 if (row == null) continue;
                 AddRow(row);
             }
@@ -1520,7 +1520,7 @@ namespace Devian.Domain.Game
             Pb64Loader.ParseRows(rawBinary, jsonRow =>
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<PRODUCT>(jsonRow);
+                var row = JsonConvert.DeserializeObject<PURCHASE>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -2029,14 +2029,14 @@ namespace Devian.Domain.Game
         public static implicit operator ITEM_PASS_ID(string value) => new ITEM_PASS_ID { Value = value };
     }
 
-    /// <summary>Inspector-bindable ID for PRODUCT</summary>
+    /// <summary>Inspector-bindable ID for PURCHASE</summary>
     [Serializable]
-    public sealed class PRODUCT_ID
+    public sealed class PURCHASE_ID
     {
         public string Value;
 
-        public static implicit operator string(PRODUCT_ID id) => id.Value;
-        public static implicit operator PRODUCT_ID(string value) => new PRODUCT_ID { Value = value };
+        public static implicit operator string(PURCHASE_ID id) => id.Value;
+        public static implicit operator PURCHASE_ID(string value) => new PURCHASE_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for REWARD</summary>
@@ -2093,7 +2093,7 @@ namespace Devian.Domain.Game
         public static bool IsValid(this ITEM_CARD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this ITEM_RENTAL_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this ITEM_PASS_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
-        public static bool IsValid(this PRODUCT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this PURCHASE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this SEASON_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this UNIT_HERO_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);

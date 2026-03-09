@@ -105,8 +105,12 @@ namespace Devian
 
         void onBeforeTriggerNotify(GAME_MESSAGE_TYPE messageType, CBigInt delta)
         {
-            if (!_saveBindingsByMessageType.TryGetValue(messageType, out var bindings) || bindings == null || bindings.Count <= 0)
-                return;
+            if (!tryGetSaveBindings(messageType, out var bindings))
+            {
+                tryRebuildSaveBindingsFor(messageType);
+                if (!tryGetSaveBindings(messageType, out bindings))
+                    return;
+            }
 
             foreach (var binding in bindings)
             {
@@ -144,6 +148,40 @@ namespace Devian
                     continue;
 
                 _storage.SetStat(binding.MessageId, next);
+            }
+        }
+
+        bool tryGetSaveBindings(GAME_MESSAGE_TYPE messageType, out List<MessageSaveBinding> bindings)
+        {
+            if (_saveBindingsByMessageType.TryGetValue(messageType, out bindings)
+                && bindings != null
+                && bindings.Count > 0)
+            {
+                return true;
+            }
+
+            bindings = null;
+            return false;
+        }
+
+        void tryRebuildSaveBindingsFor(GAME_MESSAGE_TYPE messageType)
+        {
+            var messageRows = TB_MESSAGE.GetAll();
+            if (messageRows == null || messageRows.Count <= 0)
+                return;
+
+            foreach (var message in messageRows)
+            {
+                if (message == null
+                    || string.IsNullOrWhiteSpace(message.MessageId)
+                    || message.MessageType != messageType
+                    || !GameMessageRule.IsTotalSaveType(message.SaveType))
+                {
+                    continue;
+                }
+
+                rebuildSaveBindings();
+                return;
             }
         }
 

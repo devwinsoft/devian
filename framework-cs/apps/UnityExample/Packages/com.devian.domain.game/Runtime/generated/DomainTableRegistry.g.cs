@@ -173,17 +173,17 @@ namespace Devian.Domain.Game
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("PRODUCT", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("PURCHASE", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_PRODUCT.LoadFromNdjson(text);
-                    TB_PRODUCT._AfterLoad();
+                    TB_PURCHASE.LoadFromNdjson(text);
+                    TB_PURCHASE._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_PRODUCT.LoadFromPb64Binary(bin);
-                    TB_PRODUCT._AfterLoad();
+                    TB_PURCHASE.LoadFromPb64Binary(bin);
+                    TB_PURCHASE._AfterLoad();
                 }
             });
 

@@ -10,7 +10,7 @@ AppliesTo: v10
 Firebase Cloud Functions callable 통합 래퍼.
 함수별 typed API, 에러 매핑, 응답 파싱, region 관리, 값 추출 헬퍼를 통합한다.
 `FirebaseFunctions` 인스턴스는 외부에 노출하지 않는다.
-game 도메인 테이블(TB_PRODUCT 등)은 참조하지 않는다 — 서버 응답의 raw 값을 typed result에 그대로 저장한다.
+game 도메인 테이블(TB_PURCHASE 등)은 참조하지 않는다 — 서버 응답의 raw 값을 typed result에 그대로 저장한다.
 
 **`internal sealed class`** — 같은 어셈블리(`Devian.Samples.MobileSystem`) 내부에서만 접근 가능하다.
 외부 어셈블리(Assembly-CSharp 등)에서는 직접 접근할 수 없으며, `LoginManager`/각 시스템 매니저를 통해 간접 사용한다.
@@ -169,7 +169,7 @@ PurchaseManager, RemoteConfigManager에 개별 주입하지 않고 FirebaseManag
 
 - `FirebaseFunctions` 인스턴스를 외부에 노출하지 않는다.
 - `FunctionsException` 에러 매핑은 FirebaseManager 각 메서드 내부에서 수행한다. 호출자는 `CommonResult`만 소비한다.
-- FirebaseManager는 game 도메인 테이블(TB_PRODUCT 등)을 참조하지 않는다. 서버 응답의 raw 값을 typed result에 그대로 저장한다.
+- FirebaseManager는 game 도메인 테이블(TB_PURCHASE 등)을 참조하지 않는다. 서버 응답의 raw 값을 typed result에 그대로 저장한다.
 - Firebase Auth 관련 로직은 `AccountLoginFirebase`가 소유한다. FirebaseManager는 Auth를 다루지 않는다.
 - 외부에서 사용하지 않는 메서드는 `private`으로 선언하고 소문자로 시작한다.
 - Editor mock 응답은 각 manager가 자체 처리한다. FirebaseManager는 Editor 전용 분기를 갖지 않는다.

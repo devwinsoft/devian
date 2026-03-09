@@ -25,7 +25,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
 
     protected override void onInit()
     {
-                AchieveManager.Instance.Subcribe(GetEntityId(),
+        AchieveManager.Instance.Subcribe(GetEntityId(),
             ACHIEVE_MESSAGE.RUNTIME_INIT,
             (args) =>
             {

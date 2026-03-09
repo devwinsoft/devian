@@ -94,7 +94,7 @@ namespace Devian
 
         static string ResolveRewardGroupId(string internalProductId)
         {
-            var product = TB_PRODUCT.Get(internalProductId);
+            var product = TB_PURCHASE.Get(internalProductId);
             return product != null ? product.RewardGroupId ?? string.Empty : string.Empty;
         }
 
@@ -125,8 +125,8 @@ namespace Devian
             if (string.IsNullOrEmpty(internalProductIdOrSeasonPassId))
                 return string.Empty;
 
-            var product = TB_PRODUCT.Get(internalProductIdOrSeasonPassId);
-            if (product == null || product.Kind != PRODUCT_KIND.PASS)
+            var product = TB_PURCHASE.Get(internalProductIdOrSeasonPassId);
+            if (product == null || product.Kind != PURCHASE_KIND.PASS)
                 return internalProductIdOrSeasonPassId;
 
             var rewards = ResolveRewardDatas(product.RewardGroupId);
@@ -139,7 +139,7 @@ namespace Devian
             return internalProductIdOrSeasonPassId;
         }
 
-        CommonResult validateSeasonPurchaseWindow(PRODUCT product)
+        CommonResult validateSeasonPurchaseWindow(PURCHASE product)
         {
             if (product == null || string.IsNullOrWhiteSpace(product.SeasonId))
                 return CommonResult.Ok();
@@ -183,7 +183,7 @@ namespace Devian
 
         string ResolveStoreProductId(string internalProductId)
         {
-            var product = TB_PRODUCT.Get(internalProductId);
+            var product = TB_PURCHASE.Get(internalProductId);
             if (product == null)
                 return internalProductId;
 
@@ -605,15 +605,15 @@ namespace Devian
 #endif
 
         /// <summary>
-        /// 상품 구매를 수행한다. TB_PRODUCT에서 Kind를 조회하여 자동으로 구매 유형을 결정한다.
+        /// 상품 구매를 수행한다. TB_PURCHASE에서 Kind를 조회하여 자동으로 구매 유형을 결정한다.
         /// </summary>
         public async Task<CommonResult<PurchaseFinalResult>> PurchaseAsync(
             string internalProductId, CancellationToken ct = default)
         {
-            var product = TB_PRODUCT.Get(internalProductId);
+            var product = TB_PURCHASE.Get(internalProductId);
             if (product == null)
                 return CommonResult<PurchaseFinalResult>.Failure(
-                    CommonErrorType.PURCHASE_PRODUCT_NOT_FOUND,
+                    CommonErrorType.PURCHASE_NOT_FOUND,
                     $"Product not found: {internalProductId}");
 
             var seasonWindow = validateSeasonPurchaseWindow(product);
@@ -940,7 +940,7 @@ namespace Devian
                 Debug.LogError($"[{Tag}] IAP initialization failed: {ex.Message}");
 
                 if (ex.Message != null && ex.Message.Contains("Products fetch failed"))
-                    return CommonResult.Failure(CommonErrorType.PURCHASE_PRODUCT_FETCH_FAILED, ex.Message);
+                    return CommonResult.Failure(CommonErrorType.PURCHASE_FETCH_FAILED, ex.Message);
 
                 return CommonResult.Failure(CommonErrorType.PURCHASE_INIT_FAILED, ex.Message);
             }
@@ -1899,14 +1899,14 @@ namespace Devian
             }
         }
 
-        static PurchaseKind ProductKindToPurchaseKind(PRODUCT_KIND kind)
+        static PurchaseKind ProductKindToPurchaseKind(PURCHASE_KIND kind)
         {
             switch (kind)
             {
-                case PRODUCT_KIND.CONSUMABLE: return PurchaseKind.Consumable;
-                case PRODUCT_KIND.RENTAL: return PurchaseKind.Rental;
-                case PRODUCT_KIND.SUBSCRIPTION: return PurchaseKind.Subscription;
-                case PRODUCT_KIND.PASS: return PurchaseKind.SeasonPass;
+                case PURCHASE_KIND.CONSUMABLE: return PurchaseKind.Consumable;
+                case PURCHASE_KIND.RENTAL: return PurchaseKind.Rental;
+                case PURCHASE_KIND.SUBSCRIPTION: return PurchaseKind.Subscription;
+                case PURCHASE_KIND.PASS: return PurchaseKind.SeasonPass;
                 default: return PurchaseKind.Consumable;
             }
         }
@@ -1950,7 +1950,7 @@ namespace Devian
             if (TryParseStoredPurchaseKind(storedKind, out kind))
                 return true;
 
-            var product = TB_PRODUCT.Get(internalProductId);
+            var product = TB_PURCHASE.Get(internalProductId);
             if (product == null)
             {
                 kind = PurchaseKind.Consumable;

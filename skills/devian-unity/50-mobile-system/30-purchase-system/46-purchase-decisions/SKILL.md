@@ -52,12 +52,12 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
 - 인증 정책:
   - Callable은 `context.auth.uid` 필수(unauthenticated 거부)
 
-- `kind`의 정본 enum은 컨텐츠 레이어 SSOT의 `ProductKind`이며, Callable에는 그 string 값을 그대로 보낸다.
+- `kind`의 정본 enum은 컨텐츠 레이어 SSOT의 `PurchaseKind`이며, Callable에는 그 string 값을 그대로 보낸다.
 
 - 요청 스키마(고정 키):
   - `storeKey` (`"apple" | "google"`)
   - `internalProductId` (string)
-  - `kind` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`) (=`ProductKind` string)
+  - `kind` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`) (=`PurchaseKind` string)
   - `payload` (string, Unity IAP receipt raw)
 
 - 응답 스키마(고정 키):
@@ -185,7 +185,7 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
 
 - "최근 30일 구매 내역"의 기준 시각은 `storePurchasedAt`(영수증 날짜)이다.
 - 서버 기준 `now`로 threshold(`now − 30일`)를 계산하며, 클라이언트/디바이스 시간은 사용 금지.
-- `kind` 값은 ProductKind SSOT(PascalCase) 기준이며, 호출 시 파라미터로 전달한다.
+- `kind` 값은 PurchaseKind SSOT(PascalCase) 기준이며, 호출 시 파라미터로 전달한다.
 - Callable 이름은 `getRecentPurchases30d`로 고정한다.
 - `storePurchasedAt` 값은 스토어 검증 응답에서 추출한 구매 시각이며, 서버에서만 생성한다:
   - Google: `purchaseTimeMillis` (products) / `startTimeMillis` (subscriptions)

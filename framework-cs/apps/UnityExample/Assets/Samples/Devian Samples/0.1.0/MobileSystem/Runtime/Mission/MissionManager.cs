@@ -79,7 +79,11 @@ namespace Devian
             }
 
             if (_storage.runtimes.Count <= 0)
+            {
+                rebuildRuntimeBindings();
+                pruneExpiredMissionState();
                 return;
+            }
 
             var runtimes = new List<MissionRuntimeBase>(_storage.runtimes.Count);
             foreach (var runtime in _storage.runtimes.Values)

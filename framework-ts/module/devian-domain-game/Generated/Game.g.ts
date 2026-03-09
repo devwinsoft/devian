@@ -143,8 +143,8 @@ export enum STAT_TYPE {
     UNIT_HP_MAX = 100,
 }
 
-/** PRODUCT_KIND enum */
-export enum PRODUCT_KIND {
+/** PURCHASE_KIND enum */
+export enum PURCHASE_KIND {
     CONSUMABLE = 0,
     SUBSCRIPTION = 1,
     PASS = 2,
@@ -288,10 +288,10 @@ export interface ITEM_PASS extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface PRODUCT extends IEntityKey<string> {
+export interface PURCHASE extends IEntityKey<string> {
     InternalProductId: string;
     RewardGroupId: string;
-    Kind: PRODUCT_KIND;
+    Kind: PURCHASE_KIND;
     Title: string;
     IsActive: boolean;
     StoreSkuApple: string;
@@ -734,9 +734,9 @@ export class TB_ITEM_PASS {
     }
 }
 
-export class TB_PRODUCT {
-    private static _dict: Map<string, PRODUCT> = new Map();
-    private static _list: PRODUCT[] = [];
+export class TB_PURCHASE {
+    private static _dict: Map<string, PURCHASE> = new Map();
+    private static _list: PURCHASE[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -745,9 +745,9 @@ export class TB_PRODUCT {
         this._list = [];
     }
 
-    static getAll(): readonly PRODUCT[] { return this._list; }
+    static getAll(): readonly PURCHASE[] { return this._list; }
 
-    static get(key: string): PRODUCT | undefined {
+    static get(key: string): PURCHASE | undefined {
         return this._dict.get(key);
     }
 
@@ -759,7 +759,7 @@ export class TB_PRODUCT {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as PRODUCT;
+            const row = JSON.parse(line) as PURCHASE;
             this._list.push(row);
             this._dict.set(row.InternalProductId, row);
         }

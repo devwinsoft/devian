@@ -44,6 +44,7 @@ namespace Devian
         public async Task<CommonResult<LoginInitializeResult>> EnsureRuntimeSessionAndInitializeAsync(CancellationToken ct = default)
         {
             var restore = await AccountManager.Instance.EnsureRuntimeAuthSessionAsync(ct);
+            await yieldMainThreadAsync(ct);
             if (restore.IsFailure)
                 return CommonResult<LoginInitializeResult>.Failure(restore.Error!);
 
@@ -51,6 +52,7 @@ namespace Devian
             if (restore.Value)
             {
                 var initSession = await initializeSessionSnapshotAsync(ct);
+                await yieldMainThreadAsync(ct);
                 if (initSession.IsFailure)
                     return CommonResult<LoginInitializeResult>.Failure(initSession.Error!);
 
@@ -61,14 +63,24 @@ namespace Devian
                 var loginType = AccountManager.Instance.CurrentLoginType;
                 if (loginType == LoginType.NONE)
                 {
-                    Debug.Log($"[{Tag}] No previous login. Waiting for explicit login.");
+                    var localInit = await syncAndInitializeAsync(snapshot, ct);
+                    await yieldMainThreadAsync(ct);
+                    if (localInit.IsFailure)
+                        return localInit;
+
+                    Debug.Log($"[{Tag}] No previous login. Runtime initialized in local mode. Waiting for explicit login.");
                     return CommonResult<LoginInitializeResult>.Success(null);
                 }
 
                 var canProceedWithoutSnapshot = AccountManager.Instance.IsLocalOnlySaveMode;
                 if (!canProceedWithoutSnapshot)
                 {
-                    Debug.Log($"[{Tag}] Runtime session restore unavailable. Waiting for explicit login. loginType={loginType}");
+                    var localInit = await syncAndInitializeAsync(snapshot, ct);
+                    await yieldMainThreadAsync(ct);
+                    if (localInit.IsFailure)
+                        return localInit;
+
+                    Debug.Log($"[{Tag}] Runtime session restore unavailable. Runtime initialized in local mode. Waiting for explicit login. loginType={loginType}");
                     return CommonResult<LoginInitializeResult>.Success(null);
                 }
 
@@ -81,10 +93,12 @@ namespace Devian
         public async Task<CommonResult<LoginInitializeResult>> LoginAndInitializeAsync(LoginType loginType, CancellationToken ct = default)
         {
             var login = await AccountManager.Instance.LoginAsync(loginType, ct);
+            await yieldMainThreadAsync(ct);
             if (login.IsFailure)
                 return CommonResult<LoginInitializeResult>.Failure(login.Error!);
 
             var initSession = await initializeSessionSnapshotAsync(ct);
+            await yieldMainThreadAsync(ct);
             if (initSession.IsFailure)
                 return CommonResult<LoginInitializeResult>.Failure(initSession.Error!);
 
@@ -96,6 +110,7 @@ namespace Devian
             CancellationToken ct = default)
         {
             var resolve = await SaveDataManager.Instance.ResolveConflictAsync(resolution, ct);
+            await yieldMainThreadAsync(ct);
             if (resolve.IsFailure)
             {
                 Debug.LogError($"[{Tag}] ResolveConflictAsync failed: {resolve.Error.Code}: {resolve.Error.Message}");
@@ -131,6 +146,7 @@ namespace Devian
         public async Task<CommonResult<bool>> EnsurePurchaseLoginReadyAsync(CancellationToken ct = default)
         {
             var runtimeAuth = await AccountManager.Instance.EnsureRuntimeAuthSessionAsync(ct);
+            await yieldMainThreadAsync(ct);
             if (runtimeAuth.IsFailure)
                 return CommonResult<bool>.Failure(runtimeAuth.Error!);
 
@@ -151,6 +167,7 @@ namespace Devian
         {
 #if !UNITY_EDITOR
             var initSession = await FirebaseManager.Instance.InitSessionAsync(null, ct);
+            await yieldMainThreadAsync(ct);
             if (initSession.IsFailure)
                 return CommonResult<SessionInitSnapshot?>.Failure(initSession.Error!);
 
@@ -164,6 +181,7 @@ namespace Devian
         {
             // sign-in/restore 이후 data-sync는 항상 먼저 수행한다.
             var sync = await SaveDataManager.Instance.SyncGameStorageAsync(ct);
+            await yieldMainThreadAsync(ct);
             if (sync.IsFailure)
             {
                 Debug.LogError($"[{Tag}] SyncGameStorageAsync failed: {sync.Error.Code}: {sync.Error.Message}");
@@ -186,6 +204,7 @@ namespace Devian
             if (sync.Value.State == SyncState.Initial)
             {
                 var firstInit = await InventoryManager.Instance.FirstInitAsync(ct);
+                await yieldMainThreadAsync(ct);
                 if (firstInit.IsFailure)
                 {
                     Debug.LogError($"[{Tag}] FirstInitAsync failed: code={firstInit.Error.Code}, message={firstInit.Error.Message}");
@@ -194,6 +213,7 @@ namespace Devian
 
                 // 초기 지급 직후 즉시 저장하여 이후 단계 실패 시 지급 손실을 방지한다.
                 var saveInit = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
+                await yieldMainThreadAsync(ct);
                 if (saveInit.IsFailure)
                 {
                     Debug.LogError($"[{Tag}] Initial save failed: code={saveInit.Error.Code}, message={saveInit.Error.Message}");
@@ -207,6 +227,7 @@ namespace Devian
         async Task<CommonResult<LoginInitializeResult>> syncGameStateAsync(SessionInitSnapshot? snapshot, SyncResult sync, CancellationToken ct)
         {
             var syncPurchase = await PurchaseManager.Instance.SyncAsync(snapshot);
+            await yieldMainThreadAsync(ct);
             if (syncPurchase.IsFailure)
             {
                 Debug.LogWarning($"[{Tag}] Purchase sync failed (non-fatal): {syncPurchase.Error}");
@@ -253,6 +274,7 @@ namespace Devian
             }
 
             var initRemoteConfig = await RemoteConfigManager.Instance.InitializeAsync(snapshot?.RemoteConfig, ct);
+            await yieldMainThreadAsync(ct);
             if (initRemoteConfig.IsFailure)
             {
                 Debug.LogError($"[{Tag}] RemoteConfigManager.InitializeAsync failed: {initRemoteConfig.Error.Code}: {initRemoteConfig.Error.Message}");
@@ -260,6 +282,7 @@ namespace Devian
             }
 
             var initMission = await MissionManager.Instance.InitializeAsync(ct);
+            await yieldMainThreadAsync(ct);
             if (initMission.IsFailure)
             {
                 Debug.LogError($"[{Tag}] MissionManager.InitializeAsync failed: {initMission.Error.Code}: {initMission.Error.Message}");
@@ -267,6 +290,7 @@ namespace Devian
             }
 
             var initAchieve = await AchieveManager.Instance.InitializeAsync(ct);
+            await yieldMainThreadAsync(ct);
             if (initAchieve.IsFailure)
             {
                 Debug.LogError($"[{Tag}] AchieveManager.InitializeAsync failed: {initAchieve.Error.Code}: {initAchieve.Error.Message}");
@@ -274,18 +298,22 @@ namespace Devian
             }
 
             var initAd = await AdManager.Instance.InitializeAsync(ct);
+            await yieldMainThreadAsync(ct);
             if (initAd.IsFailure)
                 Debug.LogWarning($"[{Tag}] AdManager.InitializeAsync failed (non-fatal): {initAd.Error.Code}: {initAd.Error.Message}");
 
             var initLeaderboard = await LeaderboardManager.Instance.InitializeAsync(ct);
+            await yieldMainThreadAsync(ct);
             if (initLeaderboard.IsFailure)
                 Debug.LogWarning($"[{Tag}] LeaderboardManager.InitializeAsync failed (non-fatal): {initLeaderboard.Error.Code}: {initLeaderboard.Error.Message}");
 
             var syncSeasonReward = await LeaderboardManager.Instance.SyncSeasonTransitionRewardsAsync(ct);
+            await yieldMainThreadAsync(ct);
             if (syncSeasonReward.IsFailure)
                 Debug.LogWarning($"[{Tag}] LeaderboardManager.SyncSeasonTransitionRewardsAsync failed (non-fatal): {syncSeasonReward.Error.Code}: {syncSeasonReward.Error.Message}");
 
             var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
+            await yieldMainThreadAsync(ct);
             if (save.IsFailure)
             {
                 Debug.LogError($"[{Tag}] SaveGameStorageAsync failed: {save.Error.Code}: {save.Error.Message}");
@@ -299,6 +327,13 @@ namespace Devian
                     sync.CloudDeviceId,
                     sync.LocalSummary,
                     sync.CloudSummary));
+        }
+
+        static async Task yieldMainThreadAsync(CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+            await Task.Yield();
+            ct.ThrowIfCancellationRequested();
         }
     }
 }
