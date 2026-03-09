@@ -130,9 +130,12 @@ namespace Devian
                     await current.Exit();
                 }
 
-                // 4) Load next scene (코루틴 브릿지)
-                await UnityCoroutineRunner.RunAsync(this,
-                    AssetManager.LoadSceneAsync(sceneKey, mode, activateOnLoad: true, priority: 100));
+                // 4) Load next scene
+                var loadResult = await AssetManager.LoadSceneAsync(sceneKey, mode, activateOnLoad: true, priority: 100);
+                if (loadResult.IsFailure)
+                {
+                    throw new Exception(loadResult.Error!.Message);
+                }
 
                 // 5) afterLoad hook
                 if (afterLoad != null)

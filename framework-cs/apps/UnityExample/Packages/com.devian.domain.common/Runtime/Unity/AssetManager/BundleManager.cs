@@ -1,6 +1,6 @@
-// SSOT: skills/devian-unity/11-common-system/19-download-manager/SKILL.md
-// Devian Unity Download Manager - Addressables Label based Patch/Download
-// CompoSingleton: scene/prefab에 미리 부착해 초기화해야 함
+// SSOT: skills/devian-unity/20-domain-common-system/19-bundle-manager/SKILL.md
+// Devian Unity Bundle Manager - Addressables Label based Patch/Download
+// CompoSingleton: Bootstrap prefab에 배치하여 사용
 
 #nullable enable
 
@@ -38,11 +38,11 @@ namespace Devian
 
     /// <summary>
     /// Addressables Label-based Patch/Download manager.
-    /// PatchProc/DownloadProc에 labels를 전달하여 다운로드 수행.
+    /// InitializeAsync/DownloadAsync에 labels를 전달하여 다운로드 수행.
     ///
-    /// CompoSingleton-based: scene/prefab에 미리 부착해 초기화해야 함.
+    /// CompoSingleton: Bootstrap prefab에 배치하여 사용.
     /// </summary>
-    public sealed class DownloadManager : CompoSingleton<DownloadManager>
+    public abstract class BundleManager<T> : CompoSingleton<T> where T : BundleManager<T>
     {
         // ====================================================================
         // Inspector Fields
@@ -67,19 +67,19 @@ namespace Devian
         // ====================================================================
 
         /// <summary>
-        /// Cached PatchInfo from last PatchProc call.
+        /// Cached PatchInfo from last InitializeAsync call.
         /// </summary>
         public PatchInfo? LastPatchInfo { get; private set; }
 
         // ====================================================================
-        // PatchProc - Calculate download sizes
+        // InitializeAsync - Calculate download sizes
         // ====================================================================
-        
+
         /// <summary>
         /// Calculates download size for each label.
         /// </summary>
         /// <param name="labels">Labels to check download size</param>
-        public async Task<CommonResult<PatchInfo>> PatchProc(IReadOnlyList<string> labels)
+        public async Task<CommonResult<PatchInfo>> InitializeAsync(IReadOnlyList<string> labels)
         {
             // Empty labels = 0 bytes, immediate success
             if (labels.Count == 0)
@@ -102,7 +102,7 @@ namespace Devian
 
                     if (clearOp.Status == AsyncOperationStatus.Failed)
                     {
-                        var msg = $"[DownloadManager] ClearDependencyCacheAsync failed for label '{label}': {clearOp.OperationException?.Message}";
+                        var msg = $"[BundleManager] ClearDependencyCacheAsync failed for label '{label}': {clearOp.OperationException?.Message}";
                         Debug.LogError(msg);
                         RaiseError(msg);
                         return CommonResult<PatchInfo>.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
@@ -117,7 +117,7 @@ namespace Devian
 
                 if (sizeOp.Status == AsyncOperationStatus.Failed)
                 {
-                    var msg = $"[DownloadManager] GetDownloadSizeAsync failed for label '{label}': {sizeOp.OperationException?.Message}";
+                    var msg = $"[BundleManager] GetDownloadSizeAsync failed for label '{label}': {sizeOp.OperationException?.Message}";
                     Debug.LogError(msg);
                     RaiseError(msg);
                     return CommonResult<PatchInfo>.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
@@ -136,7 +136,7 @@ namespace Devian
         }
         
         // ====================================================================
-        // DownloadProc - Download dependencies
+        // DownloadAsync - Download dependencies
         // ====================================================================
         
         /// <summary>
@@ -144,7 +144,7 @@ namespace Devian
         /// </summary>
         /// <param name="labels">Labels to download</param>
         /// <param name="onProgress">Called with progress 0~1</param>
-        public async Task<CommonResult> DownloadProc(
+        public async Task<CommonResult> DownloadAsync(
             IReadOnlyList<string> labels,
             Action<float>? onProgress = null)
         {
@@ -158,10 +158,10 @@ namespace Devian
             // Need PatchInfo for weighted progress
             PatchInfo? patchInfo = LastPatchInfo;
 
-            // If no cached PatchInfo or labels differ, run PatchProc first
+            // If no cached PatchInfo or labels differ, run InitializeAsync first
             if (patchInfo == null || !LabelsMatch(labels, patchInfo.LabelSizes.Keys))
             {
-                var patchResult = await PatchProc(labels);
+                var patchResult = await InitializeAsync(labels);
                 if (patchResult.IsFailure)
                     return CommonResult.Failure(patchResult.Error!);
 
@@ -200,7 +200,7 @@ namespace Devian
 
                 if (downloadOp.Status == AsyncOperationStatus.Failed)
                 {
-                    var msg = $"[DownloadManager] DownloadDependenciesAsync failed for label '{label}': {downloadOp.OperationException?.Message}";
+                    var msg = $"[BundleManager] DownloadDependenciesAsync failed for label '{label}': {downloadOp.OperationException?.Message}";
                     Debug.LogError(msg);
                     Addressables.Release(downloadOp);
                     RaiseError(msg);

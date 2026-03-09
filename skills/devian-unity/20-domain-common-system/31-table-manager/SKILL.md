@@ -293,10 +293,12 @@ private void ReleaseShared(CachedData data)
 ### UnloadStrings
 
 ```csharp
-void UnloadStrings(string baseName)
+void UnloadStrings()                // 전체 ST 캐시 제거
+void UnloadStrings(string baseName) // 특정 baseName ST 캐시 제거
 ```
 
-특정 ST의 캐시 및 언어 트래킹을 제거. 언어 변경 전 호출 필요.
+- `UnloadStrings()` — 모든 ST 캐시 및 언어 트래킹을 제거. 언어 일괄 변경 시 사용.
+- `UnloadStrings(string baseName)` — 특정 ST의 캐시 및 언어 트래킹을 제거. 개별 언어 변경 시 사용.
 
 ### Unload
 

@@ -63,7 +63,7 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | PB64, pb64, .asset 바이너리 | `skills/devian/80-tools/11-builder/54-data-pb64/SKILL.md` |
 | TableGen, 테이블 생성 | `skills/devian/80-tools/11-builder/51-table-codegen/SKILL.md` |
 | TableManager, LoadStringsAsync | `skills/devian-unity/20-domain-common-system/31-table-manager/SKILL.md` |
-| DownloadManager, Addressables | `skills/devian-unity/20-domain-common-system/19-download-manager/SKILL.md` |
+| BundleManager, Addressables | `skills/devian-unity/20-domain-common-system/19-bundle-manager/SKILL.md` |
 | UIManager, UICanvas, UIFrame | `skills/devian-unity/30-ui-system/10-ui-manager/skill.md` |
 | UI Canvas Frames, UICanvasFrames | `skills/devian-unity/30-ui-system/20-ui-canvas-frames/skill.md` |
 | PurchaseManager, purchase, IAP, in-app purchase, 결제, 인앱 | `skills/devian-unity/50-mobile-system/30-purchase-system/00-overview/SKILL.md` |

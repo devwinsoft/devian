@@ -452,6 +452,31 @@ namespace Devian
         }
 
         /// <summary>
+        /// Unload all cached string tables.
+        /// Clears all active language tracking.
+        /// Uses ReleaseShared for safe refcount-based release.
+        /// </summary>
+        public void UnloadStrings()
+        {
+            var keysToRemove = new List<CacheKey>();
+            foreach (var kvp in mCache)
+            {
+                if (kvp.Key.FileName.Contains(':'))
+                {
+                    keysToRemove.Add(kvp.Key);
+                    ReleaseShared(kvp.Value);
+                }
+            }
+
+            foreach (var key in keysToRemove)
+            {
+                mCache.Remove(key);
+            }
+
+            mStActiveLanguages.Clear();
+        }
+
+        /// <summary>
         /// Unload a cached string table by baseName.
         /// Clears the active language tracking for this baseName.
         /// Uses ReleaseShared for safe refcount-based release.

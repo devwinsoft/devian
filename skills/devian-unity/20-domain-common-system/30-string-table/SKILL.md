@@ -13,11 +13,11 @@ AppliesTo: v10
 
 **Common 도메인 기준 String Table(TEXT) 규약 및 런타임 소비 규약을 고정한다.**
 
-다국어 텍스트 테이블을 ndjson/pb64로 내보내고, DownloadManager(Addressables Label) + 런타임 Get까지 규약을 고정한다.
+다국어 텍스트 테이블을 ndjson/pb64로 내보내고, BundleManager(Addressables Label) + 런타임 Get까지 규약을 고정한다.
 
 - **입력(마스터)**: XLSX 시트, 컬럼: `id`, `description`, `{Language}`, ...
 - **출력**: 언어별 ndjson/pb64 파일
-- **런타임**: DownloadManager 다운로드 → TableManager 로드/캐시/조회 → ST_{TableName} wrapper
+- **런타임**: BundleManager 다운로드 → TableManager 로드/캐시/조회 → ST_{TableName} wrapper
 
 저장 규약 참조:
 - **NDJSON 저장**: `skills/devian/80-tools/11-builder/53-data-ndjson/SKILL.md`
@@ -154,7 +154,7 @@ temp/Game/data/string/pb64/English/UIText.asset
 
 ---
 
-## Addressables Key/Label 규약 (DownloadManager 연동 핵심)
+## Addressables Key/Label 규약 (BundleManager 연동 핵심)
 
 ### Address (Key)
 
@@ -172,7 +172,7 @@ Address: string/ndjson/Korean/UIText
 Label:   string/ndjson/Korean/UIText
 ```
 
-> **이유**: DownloadManager가 label 기반으로 동작하므로, label = key로 통일해야 `labels` 파라미터로 개별 다운로드 가능.
+> **이유**: BundleManager가 label 기반으로 동작하므로, label = key로 통일해야 `labels` 파라미터로 개별 다운로드 가능.
 
 ---
 
@@ -463,6 +463,6 @@ public sealed class {TableName}_ID_Drawer : BaseEditorID_Drawer<{TableName}IdSel
 - Parent: `skills/devian-unity/20-domain-common-system/00-overview/SKILL.md`
 - NDJSON 저장: `skills/devian/80-tools/11-builder/53-data-ndjson/SKILL.md`
 - pb64 저장: `skills/devian/80-tools/11-builder/54-data-pb64/SKILL.md`
-- Related: `skills/devian-unity/20-domain-common-system/19-download-manager/SKILL.md` (다운로드 연동)
+- Related: `skills/devian-unity/20-domain-common-system/19-bundle-manager/SKILL.md` (다운로드 연동)
 - Related: `skills/devian-unity/20-domain-common-system/13-asset-manager/SKILL.md` (캐시 금지 규칙)
 - Related: `skills/devian/80-tools/11-builder/31-table-row-format/SKILL.md` (일반 테이블 포맷)

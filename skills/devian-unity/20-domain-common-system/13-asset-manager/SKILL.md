@@ -45,18 +45,23 @@ namespace Devian
         /// <summary>
         /// Addressables에서 단일 에셋을 로드하고 캐시한다.
         /// </summary>
-        public static IEnumerator LoadBundleAsset<T>(string key) where T : UnityEngine.Object;
+        public static async Task<CommonResult> LoadBundleAsset<T>(string key) where T : UnityEngine.Object;
         
         /// <summary>
         /// Addressables에서 label/key에 해당하는 모든 에셋을 로드하고 캐시한다.
         /// </summary>
-        public static IEnumerator LoadBundleAssets<T>(string key) where T : UnityEngine.Object;
+        public static async Task<CommonResult> LoadBundleAssets<T>(string key) where T : UnityEngine.Object;
         
         /// <summary>
         /// Addressables에서 key AND lang (intersection)에 해당하는 에셋을 로드하고 캐시한다.
         /// </summary>
-        public static IEnumerator LoadBundleAssets<T>(string key, SystemLanguage lang) where T : UnityEngine.Object;
-        
+        public static async Task<CommonResult> LoadBundleAssets<T>(string key, SystemLanguage lang) where T : UnityEngine.Object;
+
+        /// <summary>
+        /// Addressables에서 key에 해당하는 에셋을 로드하고 지정된 Component를 캐시한다.
+        /// </summary>
+        public static async Task<CommonResult> LoadBundleComponents<T>(string key) where T : Component;
+
         /// <summary>
         /// 지정된 key로 로드된 에셋들을 캐시에서 제거하고 Addressables handle을 해제한다.
         /// </summary>
@@ -69,7 +74,7 @@ namespace Devian
         /// <summary>
         /// 씬을 로드한다. Addressables 키가 존재하면 Addressables로, 없으면 Build Profile(SceneManager) fallback.
         /// </summary>
-        public static IEnumerator LoadSceneAsync(
+        public static async Task<CommonResult> LoadSceneAsync(
             string key,
             UnityEngine.SceneManagement.LoadSceneMode mode = UnityEngine.SceneManagement.LoadSceneMode.Single,
             bool activateOnLoad = true,
@@ -78,7 +83,7 @@ namespace Devian
         /// <summary>
         /// LoadSceneAsync로 로드한 씬을 언로드한다. Addressables/Build Profile 자동 분기.
         /// </summary>
-        public static IEnumerator UnloadSceneAsync(string key, bool autoReleaseHandle = true);
+        public static async Task<CommonResult> UnloadSceneAsync(string key, bool autoReleaseHandle = true);
         
         // ====================================================================
         // Cache Access (즉시 반환)
@@ -225,7 +230,7 @@ if (asset.name.StartsWith("@"))
 if (mBundles.ContainsKey(key))
 {
     Debug.LogWarning($"[AssetManager] Bundle '{key}' already loaded.");
-    yield break;  // 중복 로드 방지 → handle leak 방지
+    return CommonResult.Ok();  // 중복 로드 방지 → handle leak 방지
 }
 ```
 
@@ -266,7 +271,7 @@ if (typeDict.ContainsKey(assetKey))
 
 ## 사용 예시
 
-### DownloadManager + AssetManager 연동
+### BundleManager + AssetManager 연동
 
 ```csharp
 using Devian;
@@ -276,21 +281,21 @@ public class BootSequence : MonoBehaviour
 {
     async Task Start()
     {
-        // 1. bootstrap prefab/scene object에 미리 부착된 DownloadManager로 다운로드 정책 수행
-        var dm = DownloadManager.Instance;
+        // 1. bootstrap prefab/scene object에 미리 부착된 BundleManager로 다운로드 정책 수행
+        var dm = BundleManager.Instance;
 
-        var patchResult = await dm.PatchProc(labels);
+        var patchResult = await dm.InitializeAsync(labels);
         if (patchResult.IsSuccess)
             Debug.Log($"Total: {patchResult.Value!.TotalSize} bytes");
 
-        var downloadResult = await dm.DownloadProc(
+        var downloadResult = await dm.DownloadAsync(
             labels,
             progress => Debug.Log($"Progress: {progress * 100:F1}%")
         );
         
         // 2. AssetManager로 Addressables 에셋 로드
-        yield return AssetManager.LoadBundleAssets<GameObject>("prefabs");
-        yield return AssetManager.LoadBundleAssets<TextAsset>("table-ndjson");
+        await AssetManager.LoadBundleAssets<GameObject>("prefabs");
+        await AssetManager.LoadBundleAssets<TextAsset>("table-ndjson");
         
         // 3. 캐시에서 즉시 조회
         var cube = AssetManager.LoadAsset<GameObject>("Cube");
@@ -379,5 +384,5 @@ var text = ST_UIText.Get("ndjson", SystemLanguage.Korean, "greeting");
 ## Reference
 
 - Related: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)
-- Related: `skills/devian-unity/20-domain-common-system/19-download-manager/SKILL.md` (다운로드 정책)
+- Related: `skills/devian-unity/20-domain-common-system/19-bundle-manager/SKILL.md` (다운로드 정책)
 - Related: `skills/devian-unity/01-policy/SKILL.md` (component policy)

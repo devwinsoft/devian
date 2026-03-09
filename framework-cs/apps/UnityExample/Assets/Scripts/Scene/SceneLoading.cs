@@ -5,9 +5,9 @@ using UnityEngine;
 using Devian;
 using Devian.Domain.Common;
 
-public class TestSceneLoading : TestSceneBootstrap
+public class SceneLoading : SceneBootstrap
 {
-    public static TestSceneLoading Instance => Singleton.Create<TestSceneLoading>();
+    public static SceneLoading Instance => Singleton.Create<SceneLoading>();
     
     protected override Task onEnter()
     {
@@ -24,6 +24,7 @@ public class TestSceneLoading : TestSceneBootstrap
         Debug.Log("TestSceneLoading...");
         Debug.Log(Application.persistentDataPath);
         await base.onStart();
+        await TestApplication.Instance.LoadAsync(SystemLanguage.Korean, null);
 
         UICanvasLoading.Instance.Init();
 

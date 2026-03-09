@@ -3,9 +3,10 @@
 #nullable enable
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
+using Devian.Domain.Common;
 
 namespace Devian
 {
@@ -147,21 +148,21 @@ namespace Devian
         /// <param name="language">Voice 언어</param>
         /// <param name="fallbackLanguage">Fallback 언어</param>
         /// <param name="onError">에러 콜백</param>
-        public IEnumerator LoadByBundleKeyAsync(
+        public async Task<CommonResult> LoadByBundleKeyAsync(
             string bundleKey,
             SystemLanguage language,
-            SystemLanguage fallbackLanguage,
-            Action<string>? onError = null)
+            SystemLanguage fallbackLanguage)
         {
             if (_loadedVoiceBundleKeys.Contains(bundleKey))
             {
-                yield break;
+                return CommonResult.Ok();
             }
 
             if (_currentLanguage == SystemLanguage.Unknown)
             {
-                onError?.Invoke("[VoiceManager] Language not resolved. Call ResolveForLanguage() first.");
-                yield break;
+                var msg = "[VoiceManager] Language not resolved. Call ResolveForLanguage() first.";
+                Log.Warn(msg);
+                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
             }
 
             // key_bundle에 해당하는 voice rows 수집
@@ -187,8 +188,9 @@ namespace Devian
 
             if (voiceRows == null)
             {
-                onError?.Invoke($"[VoiceManager] No voice rows found for key_bundle: {bundleKey}");
-                yield break;
+                var msg = $"[VoiceManager] No voice rows found for key_bundle: {bundleKey}";
+                Log.Warn(msg);
+                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
             }
 
             // Resolve된 voice_id만 필터링
@@ -209,34 +211,38 @@ namespace Devian
             {
                 Log.Warn($"[VoiceManager] No resolved voices for key_bundle: {bundleKey}");
                 _loadedVoiceBundleKeys.Add(bundleKey);
-                yield break;
+                return CommonResult.Ok();
             }
 
             // SoundManager 내부 헬퍼 호출 (VOICE row 직접 전달, SOUND 미참조)
-            yield return SoundManager.Instance._loadVoiceClipsAsync(
+            var result = await SoundManager.Instance._loadVoiceClipsAsync(
                 bundleKey,
                 resolvedRows,
                 language,
-                fallbackLanguage,
-                onError
+                fallbackLanguage
             );
 
+            if (result.IsFailure) return result;
+
             _loadedVoiceBundleKeys.Add(bundleKey);
+
+            return CommonResult.Ok();
         }
 
         /// <summary>
         /// 여러 key_bundle을 순차적으로 로드한다.
         /// </summary>
-        public IEnumerator LoadByBundleKeysAsync(
+        public async Task<CommonResult> LoadByBundleKeysAsync(
             IEnumerable<string> bundleKeys,
             SystemLanguage language,
-            SystemLanguage fallbackLanguage,
-            Action<string>? onError = null)
+            SystemLanguage fallbackLanguage)
         {
             foreach (var bundleKey in bundleKeys)
             {
-                yield return LoadByBundleKeyAsync(bundleKey, language, fallbackLanguage, onError);
+                var result = await LoadByBundleKeyAsync(bundleKey, language, fallbackLanguage);
+                if (result.IsFailure) return result;
             }
+            return CommonResult.Ok();
         }
 
         /// <summary>

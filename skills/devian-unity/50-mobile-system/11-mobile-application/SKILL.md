@@ -66,7 +66,7 @@ foreground 복귀 기준 동작:
 
 ## Resource Prefab 생성 규칙
 
-- Bootstrap prefab 경로: `Assets/Resources/Devian/Bootstrap.prefab`
+- Application prefab 경로: `Assets/Resources/Devian/Application.prefab`
 - prefab에 `MobileApplication` 파생 컴포넌트를 **정확히 1개** 부착해야 한다.
 - 프레임워크가 파생 컴포넌트를 자동 추가하지 않는다 — 개발자가 직접 추가해야 한다.
 - `InputManager` 같은 `CompoSingleton` 의존성도 bootstrap prefab/object에 미리 부착해야 한다.

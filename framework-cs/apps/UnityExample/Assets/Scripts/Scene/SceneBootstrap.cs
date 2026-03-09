@@ -8,7 +8,7 @@ using Devian;
 /// Awake()에서 Bootstrap 생성을 트리거하고,
 /// Start()에서 BootProc 완료를 보장한 뒤 OnStart()를 호출한다.
 /// </summary>
-public abstract class TestSceneBootstrap : SceneBase
+public abstract class SceneBootstrap : SceneBase
 {
     protected override void onInitAwake()
     {

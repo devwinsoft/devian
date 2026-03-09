@@ -19,7 +19,7 @@ Devian Unity 공용 런타임 컴포넌트를 담당한다.
 | [14-application-manager](../14-application-manager/SKILL.md) | Bootstrap Root + ApplicationManager 부팅 |
 | [15-common-effect-manager](../15-common-effect-manager/SKILL.md) | BundlePool 기반 공용 이펙트 시스템 |
 | [18-bundle-settings](../18-bundle-settings/SKILL.md) | BundleSettings ScriptableObject + Editor 메뉴 |
-| [19-download-manager](../19-download-manager/SKILL.md) | Addressables Label 기반 Patch/Download |
+| [19-bundle-manager](../19-bundle-manager/SKILL.md) | Addressables Label 기반 Patch/Download |
 | [20-fsm-controller](../20-fsm-controller/SKILL.md) | FIFO 큐 기반 FSM 컨트롤러 |
 | [21-input-controller](../21-input-controller/SKILL.md) | Actor 기반 입력 소비 + InputSpace 전략 |
 | [22-input-manager](../22-input-manager/SKILL.md) | InputActionAsset 기반 입력 수집/정규화/발행 |

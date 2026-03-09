@@ -231,7 +231,7 @@ void StopAll()                              // 전체 정지
 ### LoadByBundleKeyAsync / UnloadByBundleKey (Hard Rule)
 
 ```csharp
-yield return SoundManager.Instance.LoadByBundleKeyAsync("sound_battle");
+await SoundManager.Instance.LoadByBundleKeyAsync("sound_battle");
 SoundManager.Instance.UnloadByBundleKey("sound_battle");
 ```
 
@@ -245,7 +245,7 @@ SoundManager.Instance.UnloadByBundleKey("sound_battle");
 ### LoadByBundleKeysAsync / UnloadByBundleKeys (벌크)
 
 ```csharp
-yield return SoundManager.Instance.LoadByBundleKeysAsync(new[] { "sound_battle", "sound_ui" });
+await SoundManager.Instance.LoadByBundleKeysAsync(new[] { "sound_battle", "sound_ui" });
 SoundManager.Instance.UnloadByBundleKeys(new[] { "sound_battle", "sound_ui" });
 ```
 
@@ -274,7 +274,7 @@ private readonly Dictionary<int, AudioClip> _clipCacheByRowId;
 
 ```csharp
 // VoiceManager가 호출
-yield return SoundManager.Instance._loadVoiceClipsAsync(
+await SoundManager.Instance._loadVoiceClipsAsync(
     bundleKey,            // key_bundle
     resolvedVoiceRows,    // IVoiceRow 집합
     language,
@@ -324,8 +324,8 @@ VoiceManager.Instance.GetVoiceRowsByBundleKey = GetVoiceRowsByBundleKey;
 
 ```csharp
 // 번들 키로 사운드 로드
-yield return SoundManager.I.LoadByBundleKeyAsync("sound_global");
-yield return SoundManager.I.LoadByBundleKeysAsync(new[] { "sound_battle", "sound_ui" });
+await SoundManager.I.LoadByBundleKeyAsync("sound_global");
+await SoundManager.I.LoadByBundleKeysAsync(new[] { "sound_battle", "sound_ui" });
 
 // 기본 재생 (runtime_id 반환)
 var runtimeId = SoundManager.I.PlaySound("UI_CLICK");

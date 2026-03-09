@@ -1,18 +1,19 @@
 // SSOT: skills/devian-unity/11-common-system/13-asset-manager/SKILL.md
 // Devian Unity Asset Manager - Addressables 기반 로딩/캐시 + Resources(옵션) + Scene(Addressables + Build Profile fallback) + Editor Find
-// DownloadManager와 연동: DownloadManager가 다운로드 → AssetManager가 로딩/캐시
+// BundleManager와 연동: BundleManager가 다운로드 → AssetManager가 로딩/캐시
 
 #nullable enable
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
+using Devian.Domain.Common;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -78,46 +79,47 @@ namespace Devian
         /// </summary>
         /// <typeparam name="T">Asset type</typeparam>
         /// <param name="key">Addressables key or address</param>
-        public static IEnumerator LoadBundleAsset<T>(string key) where T : UnityEngine.Object
+        public static async Task<CommonResult> LoadBundleAsset<T>(string key) where T : UnityEngine.Object
         {
             if (string.IsNullOrEmpty(key))
             {
                 Debug.LogError("[AssetManager] LoadBundleAsset: key is null or empty.");
-                yield break;
+                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, "[AssetManager] LoadBundleAsset: key is null or empty.");
             }
 
             // Already loaded? Prevent handle leak
             if (mBundles.ContainsKey(key))
             {
                 Debug.LogWarning($"[AssetManager] Bundle '{key}' already loaded.");
-                yield break;
+                return CommonResult.Ok();
             }
 
             var handle = Addressables.LoadAssetAsync<T>(key);
-            yield return handle;
+            await handle.Task;
 
             if (handle.Status != AsyncOperationStatus.Succeeded)
             {
-                Debug.LogError($"[AssetManager] LoadBundleAsset failed for key '{key}': {handle.OperationException?.Message}");
+                var msg = $"[AssetManager] LoadBundleAsset failed for key '{key}': {handle.OperationException?.Message}";
+                Debug.LogError(msg);
                 Addressables.Release(handle);
-                yield break;
+                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
             }
 
             var asset = handle.Result;
             if (asset == null)
             {
                 Addressables.Release(handle);
-                yield break;
+                return CommonResult.Ok();
             }
 
             // Register to cache
             var assetKey = NormalizeAssetName(asset.name);
-            
+
             // Skip if name starts with @
             if (asset.name.StartsWith("@"))
             {
                 Addressables.Release(handle);
-                yield break;
+                return CommonResult.Ok();
             }
 
             var type = typeof(T);
@@ -131,7 +133,7 @@ namespace Devian
             {
                 Debug.LogError($"[AssetManager] Duplicate asset name '{assetKey}' for type {type.Name}. Ignoring.");
                 Addressables.Release(handle);
-                yield break;
+                return CommonResult.Ok();
             }
 
             typeDict[assetKey] = asset;
@@ -143,6 +145,8 @@ namespace Devian
                 mBundles[key] = bundleData;
             }
             bundleData.Names.Add(assetKey);
+
+            return CommonResult.Ok();
         }
 
         /// <summary>
@@ -150,19 +154,19 @@ namespace Devian
         /// </summary>
         /// <typeparam name="T">Asset type</typeparam>
         /// <param name="key">Addressables label or key</param>
-        public static IEnumerator LoadBundleAssets<T>(string key) where T : UnityEngine.Object
+        public static async Task<CommonResult> LoadBundleAssets<T>(string key) where T : UnityEngine.Object
         {
             if (string.IsNullOrEmpty(key))
             {
                 Debug.LogError("[AssetManager] LoadBundleAssets: key is null or empty.");
-                yield break;
+                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, "[AssetManager] LoadBundleAssets: key is null or empty.");
             }
 
             // Already loaded?
             if (mBundles.ContainsKey(key))
             {
                 Debug.LogWarning($"[AssetManager] Bundle '{key}' already loaded.");
-                yield break;
+                return CommonResult.Ok();
             }
 
             var bundleData = new BundleData(key);
@@ -196,17 +200,20 @@ namespace Devian
                 }
             );
 
-            yield return handle;
+            await handle.Task;
 
             if (handle.Status != AsyncOperationStatus.Succeeded)
             {
-                Debug.LogError($"[AssetManager] LoadBundleAssets failed for key '{key}': {handle.OperationException?.Message}");
+                var msg = $"[AssetManager] LoadBundleAssets failed for key '{key}': {handle.OperationException?.Message}";
+                Debug.LogError(msg);
                 Addressables.Release(handle);
-                yield break;
+                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
             }
 
             bundleData.Handle = handle;
             mBundles[key] = bundleData;
+
+            return CommonResult.Ok();
         }
 
         /// <summary>
@@ -215,19 +222,19 @@ namespace Devian
         /// <typeparam name="T">Asset type</typeparam>
         /// <param name="key">Addressables label</param>
         /// <param name="lang">Language filter</param>
-        public static IEnumerator LoadBundleAssets<T>(string key, SystemLanguage lang) where T : UnityEngine.Object
+        public static async Task<CommonResult> LoadBundleAssets<T>(string key, SystemLanguage lang) where T : UnityEngine.Object
         {
             if (string.IsNullOrEmpty(key))
             {
                 Debug.LogError("[AssetManager] LoadBundleAssets: key is null or empty.");
-                yield break;
+                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, "[AssetManager] LoadBundleAssets: key is null or empty.");
             }
 
             // Already loaded?
             if (mBundles.ContainsKey(key))
             {
                 Debug.LogWarning($"[AssetManager] Bundle '{key}' already loaded.");
-                yield break;
+                return CommonResult.Ok();
             }
 
             var bundleData = new BundleData(key);
@@ -264,17 +271,20 @@ namespace Devian
                 Addressables.MergeMode.Intersection
             );
 
-            yield return handle;
+            await handle.Task;
 
             if (handle.Status != AsyncOperationStatus.Succeeded)
             {
-                Debug.LogError($"[AssetManager] LoadBundleAssets failed for key '{key}': {handle.OperationException?.Message}");
+                var msg = $"[AssetManager] LoadBundleAssets failed for key '{key}': {handle.OperationException?.Message}";
+                Debug.LogError(msg);
                 Addressables.Release(handle);
-                yield break;
+                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
             }
 
             bundleData.Handle = handle;
             mBundles[key] = bundleData;
+
+            return CommonResult.Ok();
         }
 
         /// <summary>
@@ -283,19 +293,19 @@ namespace Devian
         /// </summary>
         /// <typeparam name="T">Component type</typeparam>
         /// <param name="key">Addressables label or key</param>
-        public static IEnumerator LoadBundleComponents<T>(string key) where T : Component
+        public static async Task<CommonResult> LoadBundleComponents<T>(string key) where T : Component
         {
             if (string.IsNullOrEmpty(key))
             {
                 Debug.LogError("[AssetManager] LoadBundleComponents: key is null or empty.");
-                yield break;
+                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, "[AssetManager] LoadBundleComponents: key is null or empty.");
             }
 
             // Already loaded?
             if (mBundles.ContainsKey(key))
             {
                 Debug.LogWarning($"[AssetManager] Bundle '{key}' already loaded.");
-                yield break;
+                return CommonResult.Ok();
             }
 
             var bundleData = new BundleData(key);
@@ -337,17 +347,20 @@ namespace Devian
                 }
             );
 
-            yield return handle;
+            await handle.Task;
 
             if (handle.Status != AsyncOperationStatus.Succeeded)
             {
-                Debug.LogError($"[AssetManager] LoadBundleComponents failed for key '{key}': {handle.OperationException?.Message}");
+                var msg = $"[AssetManager] LoadBundleComponents failed for key '{key}': {handle.OperationException?.Message}";
+                Debug.LogError(msg);
                 Addressables.Release(handle);
-                yield break;
+                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
             }
 
             bundleData.Handle = handle;
             mBundles[key] = bundleData;
+
+            return CommonResult.Ok();
         }
 
         /// <summary>
@@ -646,12 +659,12 @@ namespace Devian
         /// <param name="mode">LoadSceneMode (Single or Additive)</param>
         /// <param name="activateOnLoad">Activate scene on load</param>
         /// <param name="priority">Loading priority</param>
-        public static IEnumerator LoadSceneAsync(string key, LoadSceneMode mode = LoadSceneMode.Single, bool activateOnLoad = true, int priority = 100)
+        public static async Task<CommonResult> LoadSceneAsync(string key, LoadSceneMode mode = LoadSceneMode.Single, bool activateOnLoad = true, int priority = 100)
         {
             if (string.IsNullOrWhiteSpace(key))
             {
                 Log.Error("AssetManager.LoadSceneAsync failed: key is null/empty.");
-                yield break;
+                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, "AssetManager.LoadSceneAsync failed: key is null/empty.");
             }
 
             PruneStaleSceneHandles();
@@ -659,12 +672,12 @@ namespace Devian
             if (mScenes.ContainsKey(key) || mBuildProfileScenes.Contains(key))
             {
                 Log.Warn($"AssetManager.LoadSceneAsync ignored: '{key}' already loaded.");
-                yield break;
+                return CommonResult.Ok();
             }
 
             // Addressables 카탈로그에서 키 존재 여부 확인
             var locHandle = Addressables.LoadResourceLocationsAsync(key, typeof(SceneInstance));
-            yield return locHandle;
+            await locHandle.Task;
             bool isAddressable = locHandle.Status == AsyncOperationStatus.Succeeded
                                  && locHandle.Result != null
                                  && locHandle.Result.Count > 0;
@@ -674,14 +687,15 @@ namespace Devian
             {
                 // Addressables path
                 var handle = Addressables.LoadSceneAsync(key, mode, activateOnLoad, priority);
-                yield return handle;
+                await handle.Task;
 
                 if (handle.Status != AsyncOperationStatus.Succeeded)
                 {
-                    Log.Error($"AssetManager.LoadSceneAsync failed: {key}");
+                    var msg = $"AssetManager.LoadSceneAsync failed: {key}";
+                    Log.Error(msg);
                     if (handle.IsValid())
                         Addressables.Release(handle);
-                    yield break;
+                    return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
                 }
 
                 mScenes[key] = handle;
@@ -692,18 +706,21 @@ namespace Devian
                 var op = SceneManager.LoadSceneAsync(key, mode);
                 if (op == null)
                 {
-                    Log.Error($"AssetManager.LoadSceneAsync failed (BuildProfile): {key}");
-                    yield break;
+                    var msg = $"AssetManager.LoadSceneAsync failed (BuildProfile): {key}";
+                    Log.Error(msg);
+                    return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
                 }
                 op.allowSceneActivation = activateOnLoad;
                 op.priority = priority;
-                yield return op;
+                await op;
 
                 mBuildProfileScenes.Add(key);
             }
 
             // Single 전환으로 이전 씬이 자동 언로드된 경우 stale handle을 정리한다.
             PruneStaleSceneHandles();
+
+            return CommonResult.Ok();
         }
 
         /// <summary>
@@ -711,10 +728,10 @@ namespace Devian
         /// </summary>
         /// <param name="key">Scene key used in LoadSceneAsync</param>
         /// <param name="autoReleaseHandle">Auto-release handle after unload (Addressables only)</param>
-        public static IEnumerator UnloadSceneAsync(string key, bool autoReleaseHandle = true)
+        public static async Task<CommonResult> UnloadSceneAsync(string key, bool autoReleaseHandle = true)
         {
             if (string.IsNullOrWhiteSpace(key))
-                yield break;
+                return CommonResult.Ok();
 
             PruneStaleSceneHandles();
 
@@ -726,30 +743,31 @@ namespace Devian
                 if (scene.IsValid() && scene.isLoaded)
                 {
                     var op = SceneManager.UnloadSceneAsync(scene);
-                    yield return op;
+                    await op;
                 }
                 mBuildProfileScenes.Remove(key);
-                yield break;
+                return CommonResult.Ok();
             }
 
             // Addressables path
             if (!mScenes.TryGetValue(key, out var handle))
-                yield break;
+                return CommonResult.Ok();
 
             if (!TryGetLoadedScene(handle, out _))
             {
                 RemoveStaleSceneHandle(key, handle);
-                yield break;
+                return CommonResult.Ok();
             }
 
             var unload = Addressables.UnloadSceneAsync(handle, autoReleaseHandle);
-            yield return unload;
+            await unload.Task;
 
             if (unload.Status != AsyncOperationStatus.Succeeded)
             {
-                Log.Error($"AssetManager.UnloadSceneAsync failed: {key}");
+                var msg = $"AssetManager.UnloadSceneAsync failed: {key}";
+                Log.Error(msg);
                 PruneStaleSceneHandles();
-                yield break;
+                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
             }
 
             mScenes.Remove(key);
@@ -757,6 +775,8 @@ namespace Devian
             // autoReleaseHandle=false인 케이스 방어 (초안에서는 거의 안 쓰지만 안전하게)
             if (!autoReleaseHandle && handle.IsValid())
                 Addressables.Release(handle);
+
+            return CommonResult.Ok();
         }
 
         private static void PruneStaleSceneHandles()

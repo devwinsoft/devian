@@ -133,7 +133,7 @@ foreach (var row in TB_VOICE.All())
 
 ```csharp
 // Voice 로드 (key_bundle 기반)
-yield return VoiceManager.Instance.LoadByBundleKeyAsync(
+await VoiceManager.Instance.LoadByBundleKeyAsync(
     "voice_battle",              // TB_VOICE.key_bundle
     SystemLanguage.Korean,       // 언어
     SystemLanguage.English       // fallback 언어
@@ -152,7 +152,7 @@ VoiceManager.Instance.UnloadByBundleKey("voice_battle");
 ### LoadByBundleKeysAsync / UnloadByBundleKeys (벌크)
 
 ```csharp
-yield return VoiceManager.Instance.LoadByBundleKeysAsync(
+await VoiceManager.Instance.LoadByBundleKeysAsync(
     new[] { "voice_battle", "voice_ui" },
     SystemLanguage.Korean,
     SystemLanguage.English
@@ -251,14 +251,14 @@ SoundRuntimeId PlayVoice3D(
 VoiceManager.I.ResolveForLanguage(SystemLanguage.Korean);
 
 // 2. Voice clip 로드 (key_bundle 기반)
-yield return VoiceManager.I.LoadByBundleKeyAsync(
+await VoiceManager.I.LoadByBundleKeyAsync(
     "voice_battle",
     SystemLanguage.Korean,
     SystemLanguage.English
 );
 
 // 벌크 로드
-yield return VoiceManager.I.LoadByBundleKeysAsync(
+await VoiceManager.I.LoadByBundleKeysAsync(
     new[] { "voice_battle", "voice_ui" },
     SystemLanguage.Korean,
     SystemLanguage.English

@@ -133,11 +133,11 @@ Bootstrap은 app/contents layer가 명시적으로 생성하고 실행해야 한
 예시 (Resources.Load 사용 시):
 
 ```csharp
-var app = Singleton.CreateFromResources<ApplicationManager, TestApplication>("Devian/Bootstrap");
+var app = Singleton.CreateFromResources<ApplicationManager, TestApplication>("Devian/Application");
 await app.BootProc();
 ```
 
-> `"Devian/Bootstrap"` 경로는 예시이다. 앱 레이어가 프리팹 위치를 자유롭게 결정한다.
+> `"Devian/Application"` 경로는 예시이다. 앱 레이어가 프리팹 위치를 자유롭게 결정한다.
 
 foreground resume 처리 예시:
 

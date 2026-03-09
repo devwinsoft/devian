@@ -46,7 +46,7 @@ ParentSSOT: skills/devian/10-module/03-ssot/SKILL.md
 - `Runtime/Unity/Singletons/` — Singleton, SingletonRegistry, AutoSingleton, CompoSingleton
 - `Runtime/Unity/Pool/` — IPoolable, IPoolFactory, PoolManager, Pool
 - `Runtime/Unity/PoolFactories/` — InspectorPoolFactory, BundlePoolFactory
-- `Runtime/Unity/AssetManager/` — AssetManager, DownloadManager (bootstrap/download utilities)
+- `Runtime/Unity/AssetManager/` — AssetManager, BundleManager (bootstrap/download utilities)
 - `Runtime/Module/` — 순수 C# 코드 (UnityEngine 의존 없음)
 
 **레거시 경로 cleanup:**

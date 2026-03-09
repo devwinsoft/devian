@@ -13,10 +13,7 @@ Type: Component Specification
 
 ---
 
-## 1. 제공 타입 (4종)
-
-
-### 1-param (Registry key = 자기 자신)
+## 1. 제공 타입 (2종)
 
 #### AutoSingleton\<T\> (기본)
 
@@ -42,55 +39,6 @@ Type: Component Specification
 - **우선순위 최고**: CompoSingleton이 등록되면 같은 타입의 Auto/Boot 인스턴스를 대체한다(Adopt).
 
 
-### 2-param (Registry key = Base 타입)
-
-2-param은 **상속 기반이 아니라 정적 helper**로 제공한다.
-즉, `TSelf`는 **오직 `TBase : MonoBehaviour`만 상속**하면 된다. (다중 상속 문제 없음)
-
-#### AutoSingleton\<TBase, TSelf\>
-
-`AutoSingleton<T>`와 동일하되, **Registry key가 `TBase`**다.  
-`TSelf`는 scene/prefab에 미리 부착하지 않고, script code가 `Instance`를 통해 생성해야 한다.
-
-- `TBase`: Registry key. 반드시 `MonoBehaviour` 기반 Base 타입(보통 abstract class).
-- `TSelf`: 실제 MonoBehaviour 타입. `TSelf : TBase`
-- `Instance`는 **`TSelf`** 타입을 반환한다 (캐스팅 최소화).
-- 시스템 레이어에서는 `Singleton.Get<TBase>()`로 `TBase` 타입 접근.
-
-제네릭 제약:
-```
-where TBase : MonoBehaviour
-where TSelf : TBase
-```
-
-#### CompoSingleton\<TBase, TSelf\>
-
-`CompoSingleton<T>`와 동일하되, **Registry key가 `TBase`**다.  
-`TSelf`는 scene/prefab에 미리 부착하고, `Awake()`에서 `Register(this)`를 호출해야 한다.
-
-- `TBase`: Registry key. 반드시 `MonoBehaviour` 기반 Base 타입(보통 abstract class).
-- `TSelf`: 실제 MonoBehaviour 타입. `TSelf : TBase`
-- `Register(this)`를 `Awake()`에서 호출해 등록한다.
-- `Instance`는 **`TSelf`** 타입을 반환한다 (캐스팅 최소화).
-- 시스템 레이어에서는 `Singleton.Get<TBase>()`로 `TBase` 타입 접근.
-
-제네릭 제약:
-```
-where TBase : MonoBehaviour
-where TSelf : TBase
-```
-
-### 1-param vs 2-param 사용 기준
-
-| | 1-param (`<T>`) | 2-param (`<TBase, TSelf>`) |
-|---|---|---|
-| 형태 | 상속 기반 (`class X : AutoSingleton<X>`) | **정적 helper** (`static class AutoSingleton<TBase, TSelf>`) |
-| TSelf 상속 | `MonoBehaviour` (via Singleton 상속) | **`TBase`만 상속** (다중 상속 없음) |
-| Registry key | `T` (= 자기 자신) | `TBase` (= 추상 Base) |
-| Instance 반환 타입 | `T` | **`TSelf`** (구체 타입) |
-| TBase 접근 | `Singleton.Get<T>()` | `Singleton.Get<TBase>()` |
-| 용도 | Base 분리 불필요한 경우 | 시스템 레이어(Base) / 컨텐츠 레이어(파생) 분리 |
-
 ### Auto vs Compo vs Create vs CreateFromResources 선택 기준
 
 | | Auto | Compo | Create | CreateFromResources |
@@ -99,7 +47,7 @@ where TSelf : TBase
 | 우선순위 | Auto(0) 최저 | Compo(2) 최고 | **Boot(1) 중간** | **Boot(1) 중간** |
 | SerializeField | 불가 (빈 GO 생성) | 가능 (씬/프리팹에 설정) | 불가 (빈 GO 생성) | **가능 (프리팹에 미리 설정)** |
 | 자동 생성 | O (`Instance`가 script-create) | X (씬/프리팹 사전 배치 필요) | **X (명시적 호출 필요)** | **X (명시적 호출 필요)** |
-| Base 상속 | 1-param: 불가 / 2-param: 가능 | 1-param: 불가 / 2-param: 가능 | **가능 (2-param)** | **가능 (2-param)** |
+| Base 상속 | 불가 | 불가 | **가능** | **가능** |
 | 용도 | 설정 불필요한 script-created 싱글톤 | 씬/프리팹 배치가 필요한 싱글톤 | **런타임에서 명시 부트 생성** | **프리팹 설정값이 필요한 부트 싱글톤** |
 
 ---
@@ -162,10 +110,8 @@ com.devian.foundation/Runtime/Unity/Singletons/
 ├── SingletonSource.cs      # enum
 ├── SingletonRegistry.cs    # SSOT 저장소
 ├── Singleton.cs            # 정적 파사드
-├── AutoSingleton.cs        # 1-param: AutoSingleton<T>
-├── AutoSingleton2.cs       # 2-param: AutoSingleton<TBase, TSelf>
-├── CompoSingleton.cs       # 1-param: CompoSingleton<T>
-└── CompoSingleton2.cs      # 2-param: CompoSingleton<TBase, TSelf>
+├── AutoSingleton.cs        # AutoSingleton<T>
+└── CompoSingleton.cs       # CompoSingleton<T>
 ```
 
 ---
@@ -288,23 +234,6 @@ Singleton.Create<GameRuntimeManager>();
 Singleton.Create<BaseTelemetrySystem, GameTelemetrySystem>();
 ```
 
-### 1-param vs 2-param 선택 기준 (중요)
-
-```
-1-param: class Foo : AutoSingleton<Foo>
-  → Foo의 base class = AutoSingleton<Foo> (= MonoBehaviour)
-  → 다른 base class 상속 불가
-
-2-param: class Foo : BaseTelemetrySystem { ... }
-  → Foo의 base class = BaseTelemetrySystem
-  → Auto/Compo는 static helper 사용
-  → Resources 기반은 Singleton.CreateFromResources<BaseTelemetrySystem, Foo>("path") 사용
-  → 빈 GO 명시 생성은 Singleton.Create<BaseTelemetrySystem, Foo>() 사용
-```
-
-**Base 클래스를 상속해야 하면 2-param helper (`Auto/Compo/Singleton.Create`) 또는 `CreateFromResources`를 사용한다.**
-이는 C# 단일 상속 제약이다.
-
 ### Base 상속 + Resources 기반 싱글톤 (Singleton.CreateFromResources)
 
 ```csharp
@@ -328,61 +257,6 @@ Singleton.CreateFromResources<BaseAudioSystem, GameAudioSystem>("Singletons/Game
 
 // 접근 (Registry key = BaseAudioSystem)
 Singleton.Get<BaseAudioSystem>()      // OK (반환 타입: BaseAudioSystem)
-```
-
-### 시스템/컨텐츠 분리 — 2-param (CompoSingleton\<TBase, TSelf\>)
-
-```csharp
-// ── 시스템 레이어 (framework) ──
-public abstract class BaseNetworkSystem : MonoBehaviour
-{
-    protected abstract void OnConnectionEstablished();
-}
-
-// ── 컨텐츠 레이어 (game) ──
-public sealed class GameNetworkSystem : BaseNetworkSystem
-{
-    public static GameNetworkSystem Instance => CompoSingleton<BaseNetworkSystem, GameNetworkSystem>.Instance;
-
-    private void Awake()
-    {
-        CompoSingleton<BaseNetworkSystem, GameNetworkSystem>.Register(this);
-    }
-
-    protected override void OnConnectionEstablished()
-    {
-        // Game-specific connection handling
-    }
-}
-
-// 접근 (Registry key = BaseNetworkSystem)
-Singleton.Get<BaseNetworkSystem>()      // OK (반환 타입: BaseNetworkSystem — 시스템 레이어용)
-GameNetworkSystem.Instance              // OK (반환 타입: GameNetworkSystem — 컨텐츠 레이어용)
-```
-
-### 시스템/컨텐츠 분리 — 2-param (AutoSingleton\<TBase, TSelf\>)
-
-```csharp
-// ── 시스템 레이어 (framework) ──
-public abstract class BaseUISystem : MonoBehaviour
-{
-    public abstract void ShowPopup(string message);
-}
-
-// ── 컨텐츠 레이어 (game) ──
-public sealed class GameUISystem : BaseUISystem
-{
-    public static GameUISystem Instance => AutoSingleton<BaseUISystem, GameUISystem>.Instance;
-
-    public override void ShowPopup(string message)
-    {
-        // Game-specific popup implementation
-    }
-}
-
-// 접근 (Registry key = BaseUISystem)
-Singleton.Get<BaseUISystem>()          // OK (반환 타입: BaseUISystem — 시스템 레이어용)
-GameUISystem.Instance                  // OK (반환 타입: GameUISystem — 컨텐츠 레이어용)
 ```
 
 ### 규칙 요약

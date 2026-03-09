@@ -3,9 +3,10 @@
 #nullable enable
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
+using Devian.Domain.Common;
 
 namespace Devian
 {
@@ -124,24 +125,25 @@ namespace Devian
         /// key_bundle 기준으로 사운드를 로드한다.
         /// Voice 채널은 로드하지 않는다 (VoiceManager.LoadByBundleKeyAsync 사용).
         /// </summary>
-        public IEnumerator LoadByBundleKeyAsync(string bundleKey, Action<string>? onError = null)
+        public async Task<CommonResult> LoadByBundleKeyAsync(string bundleKey)
         {
             if (_loadedBundleKeys.Contains(bundleKey))
             {
-                yield break;
+                return CommonResult.Ok();
             }
 
             if (GetSoundRowsByBundleKey == null)
             {
-                onError?.Invoke("[SoundManager] GetSoundRowsByBundleKey delegate not set.");
-                yield break;
+                var msg = "[SoundManager] GetSoundRowsByBundleKey delegate not set.";
+                Log.Warn(msg);
+                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
             }
 
             var rows = GetSoundRowsByBundleKey(bundleKey);
             if (rows == null)
             {
                 _loadedBundleKeys.Add(bundleKey);
-                yield break;
+                return CommonResult.Ok();
             }
 
             // isBundle 분기를 위해 첫 row 확인
@@ -169,7 +171,7 @@ namespace Devian
             if (rowList.Count == 0)
             {
                 _loadedBundleKeys.Add(bundleKey);
-                yield break;
+                return CommonResult.Ok();
             }
 
             var loadedRowIds = new List<int>();
@@ -178,7 +180,8 @@ namespace Devian
             if (actualIsBundle)
             {
                 // Bundle 로드: AssetManager.LoadBundleAssets
-                yield return AssetManager.LoadBundleAssets<AudioClip>(bundleKey);
+                var result = await AssetManager.LoadBundleAssets<AudioClip>(bundleKey);
+                if (result.IsFailure) return result;
 
                 foreach (var row in rowList)
                 {
@@ -191,14 +194,14 @@ namespace Devian
                     }
                     else
                     {
-                        onError?.Invoke($"[SoundManager] AudioClip not found for row_id '{row.row_id}', path '{row.path}'.");
+                        Log.Warn($"[SoundManager] AudioClip not found for row_id '{row.row_id}', path '{row.path}'.");
                     }
                 }
             }
             else
             {
-                // Resource 로드: AssetManager.LoadResourceAssets (그룹 단위)
-                yield return AssetManager.LoadResourceAssets<AudioClip>(bundleKey);
+                // Resource 로드: AssetManager.LoadResourceAssets (동기)
+                AssetManager.LoadResourceAssets<AudioClip>(bundleKey);
 
                 foreach (var row in rowList)
                 {
@@ -211,7 +214,7 @@ namespace Devian
                     }
                     else
                     {
-                        onError?.Invoke($"[SoundManager] Resource AudioClip not found for row_id '{row.row_id}', path '{row.path}'.");
+                        Log.Warn($"[SoundManager] Resource AudioClip not found for row_id '{row.row_id}', path '{row.path}'.");
                     }
                 }
             }
@@ -220,17 +223,21 @@ namespace Devian
             _loadedRowIdsByBundleKey[bundleKey] = loadedRowIds;
             _bundleKeyIsBundle[bundleKey] = actualIsBundle;
             _loadedBundleKeys.Add(bundleKey);
+
+            return CommonResult.Ok();
         }
 
         /// <summary>
         /// 여러 key_bundle을 순차적으로 로드한다.
         /// </summary>
-        public IEnumerator LoadByBundleKeysAsync(IEnumerable<string> bundleKeys, Action<string>? onError = null)
+        public async Task<CommonResult> LoadByBundleKeysAsync(IEnumerable<string> bundleKeys)
         {
             foreach (var bundleKey in bundleKeys)
             {
-                yield return LoadByBundleKeyAsync(bundleKey, onError);
+                var result = await LoadByBundleKeyAsync(bundleKey);
+                if (result.IsFailure) return result;
             }
+            return CommonResult.Ok();
         }
 
         /// <summary>
@@ -288,16 +295,15 @@ namespace Devian
         /// IVoiceRow 집합을 받아 해당 voice clip을 로드한다.
         /// VOICE는 SOUND 테이블을 참조하지 않고 독립적으로 로드한다.
         /// </summary>
-        internal IEnumerator _loadVoiceClipsAsync(
+        internal async Task<CommonResult> _loadVoiceClipsAsync(
             string bundleKey,
             IEnumerable<IVoiceRow> voiceRows,
             SystemLanguage language,
-            SystemLanguage fallbackLanguage,
-            Action<string>? onError = null)
+            SystemLanguage fallbackLanguage)
         {
             if (_loadedBundleKeys.Contains(bundleKey))
             {
-                yield break;
+                return CommonResult.Ok();
             }
 
             // Voice clip 정보 수집
@@ -347,22 +353,27 @@ namespace Devian
             }
 
             // Voice 번들 로드 (VOICE는 isBundle=true 고정)
+            CommonResult loadResult;
             if (language != SystemLanguage.Unknown)
             {
-                yield return AssetManager.LoadBundleAssets<AudioClip>(bundleKey, language);
+                loadResult = await AssetManager.LoadBundleAssets<AudioClip>(bundleKey, language);
             }
             else
             {
-                yield return AssetManager.LoadBundleAssets<AudioClip>(bundleKey);
+                loadResult = await AssetManager.LoadBundleAssets<AudioClip>(bundleKey);
             }
 
+            if (loadResult.IsFailure) return loadResult;
+
             // clip 캐시 등록
-            _populateVoiceClipCache(voiceClipInfos, onError);
+            _populateVoiceClipCache(voiceClipInfos);
 
             // 언로드용 row_id 목록 저장
             _loadedRowIdsByBundleKey[bundleKey] = loadedRowIds;
             _bundleKeyIsBundle[bundleKey] = true; // VOICE는 항상 Bundle
             _loadedBundleKeys.Add(bundleKey);
+
+            return CommonResult.Ok();
         }
 
         /// <summary>
@@ -382,7 +393,7 @@ namespace Devian
             }
         }
 
-        private void _populateVoiceClipCache(List<VoiceClipLoadInfo> infos, Action<string>? onError)
+        private void _populateVoiceClipCache(List<VoiceClipLoadInfo> infos)
         {
             int loadedCount = 0;
             foreach (var info in infos)
@@ -396,13 +407,13 @@ namespace Devian
                 }
                 else
                 {
-                    onError?.Invoke($"[SoundManager] Voice AudioClip not found for voice_id '{info.Row.voice_id}', path '{info.ClipPath}'.");
+                    Log.Warn($"[SoundManager] Voice AudioClip not found for voice_id '{info.Row.voice_id}', path '{info.ClipPath}'.");
                 }
             }
 
             if (infos.Count > 0 && loadedCount == 0)
             {
-                onError?.Invoke($"[SoundManager] No Voice AudioClips loaded (expected {infos.Count} clips).");
+                Log.Warn($"[SoundManager] No Voice AudioClips loaded (expected {infos.Count} clips).");
             }
         }
 

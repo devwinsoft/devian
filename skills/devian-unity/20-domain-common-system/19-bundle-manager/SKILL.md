@@ -1,21 +1,21 @@
-# 19-download-manager
+# 19-bundle-manager
 
 Status: ACTIVE  
 AppliesTo: v13
 
 ## SSOT
 
-이 문서는 `DownloadManager` 컴포넌트의 **API, 정책, 검증 규칙**을 정의한다.
+이 문서는 `BundleManager` 컴포넌트의 **API, 정책, 검증 규칙**을 정의한다.
 
 ---
 
 ## 목적/범위
 
-**Addressables Label 기반 패치/다운로드를 제공하는 Unity 전용 컴포넌트.**
+**Addressables Label 기반 패치/다운로드를 제공하는 Unity 전용 Generic CompoSingleton.**
 
-- **CompoSingleton**: Bootstrap prefab/scene object에 미리 부착해야 함
-- **PatchProc**: 라벨별 다운로드 필요 용량 계산 → `async Task<CommonResult<PatchInfo>>`
-- **DownloadProc**: 라벨별 의존 번들 다운로드 (가중치 기반 진행률) → `async Task<CommonResult>`
+- **Generic CompoSingleton**: `BundleManager<T> : CompoSingleton<T>` — concrete 서브클래스를 Bootstrap prefab에 배치하여 사용
+- **InitializeAsync**: 라벨별 다운로드 필요 용량 계산 → `async Task<CommonResult<PatchInfo>>`
+- **DownloadAsync**: 라벨별 의존 번들 다운로드 (가중치 기반 진행률) → `async Task<CommonResult>`
 - **실패 처리**: `CommonResult.Failure` 반환 + `OnError` 이벤트 ("조용히 종료" 금지)
 
 ---
@@ -24,14 +24,14 @@ AppliesTo: v13
 
 | 위치 | 경로 |
 |------|------|
-| UPM 소스 | `framework-cs/upm/com.devian.foundation/Runtime/Unity/AssetManager/DownloadManager.cs` |
-| UnityExample | `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Runtime/Unity/AssetManager/DownloadManager.cs` (derived output) |
+| UPM 소스 | `framework-cs/upm/com.devian.domain.common/Runtime/Unity/AssetManager/BundleManager.cs` |
+| UnityExample | `framework-cs/apps/UnityExample/Packages/com.devian.domain.common/Runtime/Unity/AssetManager/BundleManager.cs` (derived output) |
 
 ---
 
 ## Prerequisites (필수 의존성)
 
-**DownloadManager는 Unity Addressables 기반이므로 다음 의존성이 필수:**
+**BundleManager는 Unity Addressables 기반이므로 다음 의존성이 필수:**
 
 ### package.json
 
@@ -92,12 +92,12 @@ namespace Devian
 }
 ```
 
-### DownloadManager
+### BundleManager\<T\>
 
 ```csharp
 namespace Devian
 {
-    public sealed class DownloadManager : CompoSingleton<DownloadManager>
+    public abstract class BundleManager<T> : CompoSingleton<T> where T : BundleManager<T>
     {
         // ====================================================================
         // Inspector Fields (Serialized)
@@ -119,7 +119,7 @@ namespace Devian
         // ====================================================================
 
         /// <summary>
-        /// 마지막 PatchProc 결과 캐시
+        /// 마지막 InitializeAsync 결과 캐시
         /// </summary>
         public PatchInfo LastPatchInfo { get; }
 
@@ -131,7 +131,7 @@ namespace Devian
         /// 라벨별 다운로드 크기 계산
         /// </summary>
         /// <param name="labels">다운로드 대상 라벨</param>
-        public async Task<CommonResult<PatchInfo>> PatchProc(
+        public async Task<CommonResult<PatchInfo>> InitializeAsync(
             IReadOnlyList<string> labels);
 
         /// <summary>
@@ -139,7 +139,7 @@ namespace Devian
         /// </summary>
         /// <param name="labels">다운로드 대상 라벨</param>
         /// <param name="onProgress">진행률 0~1</param>
-        public async Task<CommonResult> DownloadProc(
+        public async Task<CommonResult> DownloadAsync(
             IReadOnlyList<string> labels,
             Action<float> onProgress = null);
     }
@@ -150,23 +150,27 @@ namespace Devian
 
 ## Hard Rules (정책)
 
-### 1. CompoSingleton 계약
+### 1. Generic CompoSingleton 배치 규칙
 
-**Bootstrap prefab/scene object에 `DownloadManager`를 미리 부착해야 한다.**
+**BundleManager\<T\>는 `abstract class : CompoSingleton<T>`이다. 프로젝트별 concrete 서브클래스를 Bootstrap prefab에 부착한다.**
 
 ```csharp
-var dm = DownloadManager.Instance;
-var result = await dm.PatchProc(labels);
+// concrete 서브클래스 정의
+public class MyBundleManager : BundleManager<MyBundleManager> { }
+
+// 접근 — concrete 타입으로 조회 (Registry key = MyBundleManager)
+var result = await MyBundleManager.Instance.InitializeAsync(labels);
 ```
 
-- 프로젝트에 `DownloadManager`가 부착된 bootstrap prefab 또는 scene object가 필요
-- 런타임 `AddComponent<DownloadManager>()` 생성 경로는 사용하지 않는다
+- Bootstrap prefab에 concrete 서브클래스를 부착한다
+- `ConcreteType.Instance`로 접근한다 (CompoSingleton이 제공, Registry key = concrete 타입)
+- runtime `AddComponent`로 생성하지 않는다
 
 ### 2. 빈 라벨 처리
 
 **라벨 리스트가 비어있으면:**
-- PatchProc: `TotalSize = 0` 인 `CommonResult<PatchInfo>.Success` 즉시 반환
-- DownloadProc: 즉시 `onProgress(1)` + `CommonResult.Ok()` 반환
+- InitializeAsync: `TotalSize = 0` 인 `CommonResult<PatchInfo>.Success` 즉시 반환
+- DownloadAsync: 즉시 `onProgress(1)` + `CommonResult.Ok()` 반환
 
 ### 3. 실패 시 CommonResult.Failure 반환 필수 (조용히 종료 금지)
 
@@ -202,33 +206,33 @@ if (sizeOp.Status == AsyncOperationStatus.Failed)
 
 ### 5. Resources 직접 호출 금지
 
-**DownloadManager 내부에서 `Resources.` 직접 호출 금지**
+**BundleManager 내부에서 `Resources.` 직접 호출 금지**
 
-- DownloadManager는 Resources 기반 singleton 로딩을 담당하지 않는다
+- BundleManager는 Resources 기반 singleton 로딩을 담당하지 않는다
 - prefab/scene 배치와 bootstrap wiring은 소비자 레이어가 담당한다
 
 ### 6. AssetManager 연동 규칙
 
-**DownloadManager는 다운로드만 담당하고, 실제 로딩은 AssetManager가 수행한다.**
+**BundleManager는 다운로드만 담당하고, 실제 로딩은 AssetManager가 수행한다.**
 
 - **역할 분리**:
-  - `DownloadManager`: 다운로드 크기 확인 + 번들 다운로드 (캐시에 저장)
+  - `BundleManager`: 다운로드 크기 확인 + 번들 다운로드 (캐시에 저장)
   - `AssetManager`: 다운로드된 에셋을 로드하여 사용
 
 - **연동 흐름**:
-  1. `await DownloadManager.PatchProc()` → 다운로드 필요 크기 확인
-  2. `await DownloadManager.DownloadProc()` → 번들 다운로드 (Addressables 캐시에 저장)
+  1. `await bundleManager.InitializeAsync(labels)` → 다운로드 필요 크기 확인
+  2. `await bundleManager.DownloadAsync(labels)` → 번들 다운로드 (Addressables 캐시에 저장)
   3. `AssetManager.LoadBundleAssets(label)` → 다운로드된 에셋을 로드하여 사용
 
 - **label/key 일치 권장**: 패치 대상 label과 AssetManager에서 사용하는 key는 동일 문자열로 운영하는 것을 권장
 
 ```csharp
-// 다운로드 (DownloadManager)
-await dm.DownloadProc(new[] { "prefabs", "table-ndjson" });
+// 다운로드 (BundleManager)
+await dm.DownloadAsync(new[] { "prefabs", "table-ndjson" });
 
 // 로딩 (AssetManager) - 동일한 label/key 사용
-yield return AssetManager.LoadBundleAssets<GameObject>("prefabs");
-yield return AssetManager.LoadBundleAssets<TextAsset>("table-ndjson");
+await AssetManager.LoadBundleAssets<GameObject>("prefabs");
+await AssetManager.LoadBundleAssets<TextAsset>("table-ndjson");
 ```
 
 ---
@@ -237,7 +241,7 @@ yield return AssetManager.LoadBundleAssets<TextAsset>("table-ndjson");
 
 ### TotalSize = 0 은 정상일 수 있다
 
-**PatchProc에서 `TotalSize = 0`이 반환되는 경우:**
+**InitializeAsync에서 `TotalSize = 0`이 반환되는 경우:**
 
 1. **이미 캐시에 존재**: 이전에 다운로드한 번들이 캐시에 남아있음
 2. **Editor Play Mode**: AssetDatabase 기반으로 동작하여 다운로드 개념이 없음
@@ -248,7 +252,7 @@ yield return AssetManager.LoadBundleAssets<TextAsset>("table-ndjson");
 
 **다운로드 성공 후 로딩이 실패하는 경우:**
 
-- DownloadManager 문제가 **아닐** 가능성이 높음
+- BundleManager 문제가 **아닐** 가능성이 높음
 - 확인 사항:
   - Addressables 카탈로그가 최신인지
   - 에셋 키/label이 정확한지
@@ -257,65 +261,12 @@ yield return AssetManager.LoadBundleAssets<TextAsset>("table-ndjson");
 
 ---
 
-## 사용 예시
+## 배치 요구사항
 
-### 부팅 시퀀스
+`BundleManager<T>`는 abstract이므로 직접 부착할 수 없다. 프로젝트별 concrete 서브클래스를 Bootstrap prefab에 부착한다.
 
-```csharp
-using Devian;
-using UnityEngine;
-using System.Threading.Tasks;
-
-public class BootSequence : MonoBehaviour
-{
-    private readonly string[] downloadLabels = { "prefabs", "table-ndjson" };
-
-    async Task Start()
-    {
-        // 1. bootstrap prefab/scene object에 미리 부착된 DownloadManager 조회
-        var dm = DownloadManager.Instance;
-
-        // 2. 패치 크기 확인
-        var patchResult = await dm.PatchProc(downloadLabels);
-        if (patchResult.IsFailure)
-        {
-            Debug.LogError($"Patch failed: {patchResult.Error}");
-            return;
-        }
-
-        var patchInfo = patchResult.Value!;
-        Debug.Log($"Total download: {patchInfo.TotalSize} bytes");
-
-        // 3. 다운로드 실행
-        if (patchInfo.TotalSize > 0)
-        {
-            var downloadResult = await dm.DownloadProc(
-                downloadLabels,
-                progress => Debug.Log($"Progress: {progress * 100:F1}%")
-            );
-
-            if (downloadResult.IsFailure)
-            {
-                Debug.LogError($"Download failed: {downloadResult.Error}");
-                return;
-            }
-        }
-
-        Debug.Log("Download complete!");
-    }
-}
-```
-
----
-
-## 배치 요구사항 (문서 안내만, 레포 강제 금지)
-
-프로젝트에서 아래 둘 중 하나로 `DownloadManager`를 배치해야 한다:
-
-1. Bootstrap prefab에 `DownloadManager` 컴포넌트를 미리 부착
-2. 씬의 고정 GameObject/Prefab object에 `DownloadManager` 컴포넌트를 미리 부착
-
-> **Note**: CompoSingleton은 런타임 `AddComponent`로 생성하지 않는다.
+- `ConcreteType.Instance`로 접근 (CompoSingleton 제공, Registry key = concrete 타입)
+- runtime `AddComponent`로 생성 금지 (CompoSingleton 규칙)
 
 ---
 
@@ -323,15 +274,17 @@ public class BootSequence : MonoBehaviour
 
 ### PASS 조건
 
-- [ ] `DownloadManager.cs` (UPM + UnityExample) 최상단 SSOT가 이 문서를 가리킴
-- [ ] `DownloadManager`가 `CompoSingleton<DownloadManager>` 상속
+- [ ] `BundleManager.cs` (UPM + UnityExample) 최상단 SSOT가 이 문서를 가리킴
+- [ ] `BundleManager<T>`가 `abstract class BundleManager<T> : CompoSingleton<T> where T : BundleManager<T>`
+- [ ] Bootstrap prefab에 concrete 서브클래스가 부착되어 있음
 - [ ] `forceClearDependencyCache: bool` 기본값 `false`
 - [ ] 실패 시 `CommonResult.Failure` 반환 + `OnError` 이벤트 (조용히 종료 0건)
 - [ ] `Resources.` 직접 호출 0건
 
 ### FAIL 조건
 
-- `DownloadManager`가 CompoSingleton을 상속하지 않음
+- `BundleManager<T>`가 `abstract class : CompoSingleton<T> where T : BundleManager<T>`가 아님
+- Bootstrap prefab에 concrete 서브클래스가 없음
 - 실패 시 `CommonResult.Failure` 반환 없이 `CommonResult.Ok()` 반환
 - `forceClearDependencyCache` 기본값이 `true`
 - `Resources.` 직접 호출 존재
@@ -342,7 +295,7 @@ public class BootSequence : MonoBehaviour
 ## Reference
 
 - Related: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)
-- Related: `skills/devian-unity/20-domain-common-system/29-singleton/SKILL.md` (CompoSingleton)
+- Related: `skills/devian-unity/20-domain-common-system/29-singleton/SKILL.md` (Singleton)
 - Related: `skills/devian-unity/20-domain-common-system/13-asset-manager/SKILL.md` (AssetManager)
 
 ---
@@ -372,10 +325,10 @@ string/pb64/English/ItemName
 // String Table 다운로드 예시
 var labels = new[] { "string/ndjson/Korean/UIText" };
 
-var patchResult = await dm.PatchProc(labels);
+var patchResult = await dm.InitializeAsync(labels);
 if (patchResult.IsFailure) { Debug.LogError(patchResult.Error); return; }
 
-var downloadResult = await dm.DownloadProc(labels);
+var downloadResult = await dm.DownloadAsync(labels);
 if (downloadResult.IsFailure) { Debug.LogError(downloadResult.Error); return; }
 ```
 
