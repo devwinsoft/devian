@@ -14,6 +14,7 @@ namespace Devian
         public bool IsWaiting { get; set; }
         public GAME_MESSAGE_TYPE StatType { get; set; }
         public GAME_MESSAGE_SAVE_TYPE OpType { get; set; }
+        public GAME_MESSAGE_OP_TYPE ConditionOpType { get; set; }
         public CBigInt ConditionValue { get; set; }
         public Func<CBigInt> ReadProgress { get; set; }
         public Action<AchieveRuntimeBase> OnChanged { get; set; }
@@ -33,6 +34,7 @@ namespace Devian
         public bool IsCompleted { get; set; }
         public GAME_MESSAGE_TYPE StatType { get; set; }
         public GAME_MESSAGE_SAVE_TYPE OpType { get; set; }
+        public GAME_MESSAGE_OP_TYPE ConditionOpType { get; set; }
         public CBigInt ConditionValue { get; set; }
         public Func<CBigInt> ReadProgress { get; set; }
         public Action<AchieveRuntimeBase> OnChanged { get; set; }
@@ -69,6 +71,7 @@ namespace Devian
                     args.MessageId,
                     args.StatType,
                     args.OpType,
+                    args.ConditionOpType,
                     args.ConditionValue,
                     args.ReadProgress,
                     args.OnChanged,
@@ -106,6 +109,7 @@ namespace Devian
                     args.MessageId,
                     args.StatType,
                     args.OpType,
+                    args.ConditionOpType,
                     args.ConditionValue,
                     args.ReadProgress,
                     args.OnChanged,

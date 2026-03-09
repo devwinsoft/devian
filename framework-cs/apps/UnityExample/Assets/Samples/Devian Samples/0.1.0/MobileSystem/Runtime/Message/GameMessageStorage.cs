@@ -26,7 +26,7 @@ namespace Devian
             if (string.IsNullOrWhiteSpace(messageId))
                 return;
 
-            stats[messageId] = value;
+            stats[messageId] = GameMessageRule.ClampNonNegative(value);
         }
 
         public void Clear()

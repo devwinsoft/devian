@@ -151,6 +151,10 @@ namespace Devian
             if (resolve.IsFailure)
                 return resolve;
 
+            var seasonCheck = ensureWithinSeasonWindow(leaderboardId);
+            if (seasonCheck.IsFailure)
+                return seasonCheck;
+
             var scoreResolve = tryResolveLeaderboardScore(entry!, out var score);
             if (scoreResolve.IsFailure)
                 return scoreResolve;
@@ -314,7 +318,7 @@ namespace Devian
             if (!_leaderboardById.TryGetValue(leaderboardId.Trim(), out entry) || entry == null || !entry.isActive)
             {
                 return CommonResult.Failure(
-                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    CommonErrorType.LEADERBOARD_NOT_FOUND,
                     $"Active leaderboard mapping not found: {leaderboardId}");
             }
 
@@ -322,7 +326,7 @@ namespace Devian
             if (string.IsNullOrEmpty(platformLeaderboardId))
             {
                 return CommonResult.Failure(
-                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    CommonErrorType.LEADERBOARD_PLATFORM_ID_MISSING,
                     $"Platform leaderboard ID mapping missing: {leaderboardId}");
             }
 
@@ -350,19 +354,18 @@ namespace Devian
             var message = TB_MESSAGE.Get(messageId);
             if (message == null)
             {
-                Debug.LogError($"[{Tag}] MESSAGE not found for leaderboard score. leaderboardId={entry.InternalId}, messageId={messageId}");
-                score = 0L;
-                return CommonResult.Ok();
+                return CommonResult.Failure(
+                    CommonErrorType.LEADERBOARD_MESSAGE_NOT_FOUND,
+                    $"MESSAGE not found for leaderboard score: leaderboardId={entry.InternalId}, messageId={messageId}");
             }
 
             if (!isLeaderboardSupportedSaveType(message.SaveType))
             {
-                Debug.LogError(
-                    $"[{Tag}] Invalid MESSAGE.saveType for leaderboard score. " +
+                return CommonResult.Failure(
+                    CommonErrorType.LEADERBOARD_MESSAGE_SAVE_TYPE_INVALID,
+                    $"Invalid MESSAGE.saveType for leaderboard score: " +
                     $"leaderboardId={entry.InternalId}, messageId={messageId}, saveType={message.SaveType}. " +
                     $"Expected TOTAL_SUM or TOTAL_MAX.");
-                score = 0L;
-                return CommonResult.Ok();
             }
 
             if (!GameMessageManager.TryGet(out var messageManager) || messageManager == null)
@@ -519,6 +522,43 @@ namespace Devian
             return (leaderboardId ?? string.Empty).Trim();
         }
 
+        private static CommonResult ensureWithinSeasonWindow(string leaderboardId)
+        {
+            var row = TB_LEADERBOARD.Get((leaderboardId ?? string.Empty).Trim());
+            if (row == null)
+                return CommonResult.Ok();
+
+            if (string.IsNullOrWhiteSpace(row.SeasonId))
+                return CommonResult.Ok();
+
+            var season = TB_SEASON.Get(row.SeasonId);
+            if (season == null)
+                return CommonResult.Failure(
+                    CommonErrorType.LEADERBOARD_SEASON_NOT_FOUND,
+                    $"SEASON not found: leaderboardId={leaderboardId}, seasonId={row.SeasonId}");
+
+            var startUtcMs = season.StartUtcTime?.utcTimeMs ?? 0L;
+            var endUtcMs = season.EndUtcTime?.utcTimeMs ?? 0L;
+            if (startUtcMs <= 0L || endUtcMs <= startUtcMs)
+                return CommonResult.Failure(
+                    CommonErrorType.LEADERBOARD_SEASON_TIME_INVALID,
+                    $"SEASON time range invalid: seasonId={row.SeasonId}");
+
+            if (!RemoteConfigManager.TryGet(out var remoteConfigManager)
+                || remoteConfigManager == null
+                || !remoteConfigManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
+                return CommonResult.Failure(
+                    CommonErrorType.LEADERBOARD_SERVER_TIME_UNAVAILABLE,
+                    "Server time unavailable for season check.");
+
+            if (serverNowUtcMs < startUtcMs || serverNowUtcMs >= endUtcMs)
+                return CommonResult.Failure(
+                    CommonErrorType.LEADERBOARD_SEASON_NOT_ACTIVE,
+                    $"Score recording is only allowed during the active season: leaderboardId={leaderboardId}, seasonId={row.SeasonId}");
+
+            return CommonResult.Ok();
+        }
+
         private static bool tryResolveRewardGroupId(string leaderboardId, long rank, out string rewardGroupId)
         {
             rewardGroupId = string.Empty;
@@ -553,12 +593,18 @@ namespace Devian
 
         private static long getSeasonStartUtcMs(LEADERBOARD row)
         {
-            return row?.SeasonStartUtc?.utcTimeMs ?? 0L;
+            if (row == null || string.IsNullOrWhiteSpace(row.SeasonId))
+                return 0L;
+            var season = TB_SEASON.Get(row.SeasonId);
+            return season?.StartUtcTime?.utcTimeMs ?? 0L;
         }
 
         private static long getSeasonEndUtcMs(LEADERBOARD row)
         {
-            return row?.SeasonEndUtc?.utcTimeMs ?? 0L;
+            if (row == null || string.IsNullOrWhiteSpace(row.SeasonId))
+                return 0L;
+            var season = TB_SEASON.Get(row.SeasonId);
+            return season?.EndUtcTime?.utcTimeMs ?? 0L;
         }
 
         internal static bool IsSeasonRewardEvaluationReady(long prevSeasonEndUtcMs, long serverNowUtcMs)

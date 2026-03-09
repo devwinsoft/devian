@@ -203,7 +203,7 @@ namespace Devian
             if (row == null || !row.IsActive || !row.ConditionValue.HasValue)
                 return MissionRuntimeState.NONE;
 
-            if (!TryResolveMessage(row.MessageId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
                 return MissionRuntimeState.NONE;
 
             var runtime = findDailyRuntime(missionId);
@@ -222,7 +222,7 @@ namespace Devian
             if (row == null || !row.IsActive || !row.ConditionValue.HasValue)
                 return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
 
-            if (!TryResolveMessage(row.MessageId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
                 return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
 
             var periodKey = getCurrentDailyKey();

@@ -12,10 +12,10 @@ namespace Devian
     {
         /// <summary>
         /// Shutdown 구간 여부. 앱 종료/플레이 종료 중이면 true.
-        /// ApplicationManager.IsApplicationQuitting에 위임한다.
+        /// BaseApplication.IsApplicationQuitting에 위임한다.
         /// Create/CreateFromResources 계열은 shutdown 중 생성을 억제한다.
         /// </summary>
-        public static bool IsShuttingDown => ApplicationManager.IsApplicationQuitting || !Application.isPlaying;
+        public static bool IsShuttingDown => BaseApplication.IsApplicationQuitting || !Application.isPlaying;
 
         /// <summary>
         /// 인스턴스 조회. 없으면 예외.

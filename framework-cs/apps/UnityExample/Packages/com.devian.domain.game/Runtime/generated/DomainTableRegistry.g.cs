@@ -173,20 +173,6 @@ namespace Devian.Domain.Game
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("SEASON", (format, text, bin) =>
-            {
-                if (format == global::Devian.TableFormat.Json && text != null)
-                {
-                    TB_SEASON.LoadFromNdjson(text);
-                    TB_SEASON._AfterLoad();
-                }
-                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
-                {
-                    TB_SEASON.LoadFromPb64Binary(bin);
-                    TB_SEASON._AfterLoad();
-                }
-            });
-
             global::Devian.TableManager.Instance.RegisterTbLoader("PRODUCT", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
@@ -212,6 +198,20 @@ namespace Devian.Domain.Game
                 {
                     TB_REWARD.LoadFromPb64Binary(bin);
                     TB_REWARD._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("SEASON", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_SEASON.LoadFromNdjson(text);
+                    TB_SEASON._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_SEASON.LoadFromPb64Binary(bin);
+                    TB_SEASON._AfterLoad();
                 }
             });
 

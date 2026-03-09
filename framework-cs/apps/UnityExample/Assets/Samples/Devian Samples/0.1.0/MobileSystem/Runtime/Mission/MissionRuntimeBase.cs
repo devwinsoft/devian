@@ -15,7 +15,9 @@ namespace Devian
 
         [NonSerialized] protected GAME_MESSAGE_TYPE _statType;
         [NonSerialized] protected GAME_MESSAGE_SAVE_TYPE _opType;
+        [NonSerialized] protected GAME_MESSAGE_OP_TYPE _conditionOpType = GAME_MESSAGE_OP_TYPE.GTE;
         [NonSerialized] protected CBigInt _conditionValue = CBigInt.Zero;
+        [NonSerialized] private bool _hasSessionMinSample;
         [NonSerialized] private Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> _subscribeTrigger;
         [NonSerialized] private Action<int> _unsubscribeTrigger;
         [NonSerialized] private Action<MissionRuntimeBase> _onProgress;
@@ -25,15 +27,21 @@ namespace Devian
 
         public GAME_MESSAGE_TYPE StatType => _statType;
         public GAME_MESSAGE_SAVE_TYPE OpType => _opType;
+        public GAME_MESSAGE_OP_TYPE ConditionOpType => _conditionOpType;
         public CBigInt ConditionValue => _conditionValue;
         public bool IsSubscribed => _isSubscribed;
-        public bool IsClaimable => !isCompleted && progressValue >= _conditionValue;
+        public bool IsClaimable => !isCompleted
+                                   && GameMessageRule.IsConditionSatisfied(
+                                       progressValue,
+                                       _conditionOpType,
+                                       _conditionValue);
         public abstract int Index { get; }
 
         internal void Bind(
             string messageId,
             GAME_MESSAGE_TYPE statType,
             GAME_MESSAGE_SAVE_TYPE opType,
+            GAME_MESSAGE_OP_TYPE conditionOpType,
             CBigInt conditionValue,
             Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> subscribeTrigger,
             Action<int> unsubscribeTrigger,
@@ -46,7 +54,10 @@ namespace Devian
             this.messageId = messageId ?? string.Empty;
             _statType = statType;
             _opType = opType;
+            _conditionOpType = conditionOpType;
             _conditionValue = conditionValue;
+            _hasSessionMinSample = opType == GAME_MESSAGE_SAVE_TYPE.SESSION_MIN
+                                   && progressValue.CompareTo(CBigInt.Zero) != 0;
             _subscribeTrigger = subscribeTrigger;
             _unsubscribeTrigger = unsubscribeTrigger;
             _externalProgressReader = readExternalProgress;
@@ -155,6 +166,7 @@ namespace Devian
 
             var wasClaimable = IsClaimable;
             var nextProgress = calculateNextProgress(delta);
+            nextProgress = GameMessageRule.ClampNonNegative(nextProgress);
             if (nextProgress.CompareTo(progressValue) == 0)
                 return false;
 
@@ -174,10 +186,24 @@ namespace Devian
             switch (_opType)
             {
                 case GAME_MESSAGE_SAVE_TYPE.SESSION_MAX:
+                    if (delta.CompareTo(CBigInt.Zero) < 0)
+                        return progressValue;
                     return CBigInt.Max(progressValue, delta);
 
                 case GAME_MESSAGE_SAVE_TYPE.SESSION_SUM:
                     return CalculateSumProgress(delta);
+
+                case GAME_MESSAGE_SAVE_TYPE.SESSION_MIN:
+                    if (delta.CompareTo(CBigInt.Zero) < 0)
+                        return progressValue;
+
+                    if (!_hasSessionMinSample)
+                    {
+                        _hasSessionMinSample = true;
+                        return delta;
+                    }
+
+                    return CBigInt.Min(progressValue, delta);
 
                 default:
                     return progressValue;
@@ -236,7 +262,8 @@ namespace Devian
 
         protected override CBigInt CalculateSumProgress(CBigInt delta)
         {
-            return CBigInt.Min(_conditionValue, progressValue + delta);
+            var next = GameMessageRule.ClampNonNegative(progressValue + delta);
+            return CBigInt.Min(_conditionValue, next);
         }
     }
 }

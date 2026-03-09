@@ -54,6 +54,14 @@ Adapter 계약은 `internal/private` 범위로만 사용한다.
   - error log 기록
 - score가 `long.MaxValue` 초과면 clamp 후 전송한다.
 
+## Season Time Gate
+
+- `ReportScoreAsync`는 점수 제출 전 시즌 활성 기간을 확인한다.
+- 시즌 시간 조회: `LEADERBOARD.seasonId → TB_SEASON.Get(seasonId) → StartUtcTime/EndUtcTime`
+- 조건: `SEASON.StartUtcTime <= serverNowUtcMs < SEASON.EndUtcTime`
+- 시즌 외 기간이면 `CommonResult.Failure` 반환.
+- `seasonId`가 비어 있으면 시간 제한을 적용하지 않는다.
+
 ---
 
 ## Snapshot Rules
@@ -75,6 +83,7 @@ season reward 평가는 위 status를 그대로 사용한다.
 - 업적 Unlock/Sync 로직 포함 금지 (`AchieveManager` 책임)
 - 시즌 보상 claim 상태 저장/관리 책임은 `LeaderboardManager.Storage(LeaderboardSeasonRewardStorage)`가 가진다.
 - 미지원 플랫폼 안전 실패
+- 시즌 외 점수 기록 금지 (시즌 활성 기간에만 `ReportScoreAsync` 성공)
 
 ---
 

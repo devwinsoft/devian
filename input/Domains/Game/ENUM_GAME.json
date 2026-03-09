@@ -32,8 +32,19 @@
         { "name": "NONE", "value": 0 },
         { "name": "SESSION_SUM", "value": 1 },
         { "name": "SESSION_MAX", "value": 2 },
-        { "name": "TOTAL_SUM", "value": 3 },
-        { "name": "TOTAL_MAX", "value": 4 }
+        { "name": "SESSION_MIN", "value": 3 },
+        { "name": "TOTAL_SUM", "value": 4 },
+        { "name": "TOTAL_MAX", "value": 5 },
+        { "name": "TOTAL_MIN", "value": 6 }
+      ]
+    },
+    {
+      "name": "GAME_MESSAGE_OP_TYPE",
+      "values": [
+        { "name": "NONE", "value": 0 },
+        { "name": "EQ", "value": 1 },
+        { "name": "GTE", "value": 2 },
+        { "name": "LTE", "value": 3 }
       ]
     },
     {

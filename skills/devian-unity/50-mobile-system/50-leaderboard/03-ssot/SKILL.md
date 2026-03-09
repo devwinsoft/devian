@@ -34,8 +34,7 @@ AppliesTo: v10
 | `appleLeaderboardId` | string | Game Center ID |
 | `googleLeaderboardId` | string | GPGS ID |
 | `mode` | `LEADERBOARD_MODE` | `NORMAL`/`HARDCORE` |
-| `seasonStartUtc` | `class:CDateTime` | 시즌 시작 UTC (raw string 입력, runtime은 `utcTimeMs` 사용) |
-| `seasonEndUtc` | `class:CDateTime` | 시즌 종료 UTC (raw string 입력, runtime은 `utcTimeMs` 사용) |
+| `seasonId` | string | `SEASON.seasonId` FK — 시즌 기간은 TB_SEASON에서 참조 |
 
 ---
 
@@ -71,6 +70,7 @@ AppliesTo: v10
 ## E. Runtime / Storage SSOT
 
 - 점수 제출 소스: `LEADERBOARD.messageId -> TB_MESSAGE -> GameMessageStorage.stats[messageId]`
+- 시즌 시간 조회: `LEADERBOARD.seasonId → TB_SEASON.Get(seasonId) → StartUtcTime/EndUtcTime`
 - score 허용 saveType: `TOTAL_SUM`, `TOTAL_MAX` (그 외는 0 + error log)
 - 시즌 보상 저장:
   - payload key: `leaderboardReward`
@@ -88,7 +88,7 @@ AppliesTo: v10
 
 ## F. Season Reward Gate
 
-- 평가 시작 시점: `serverNowUtcMs >= prevSeasonEndUtcMs + SeasonRewardGracePeriod`
+- 평가 시작 시점: `serverNowUtcMs >= prevSeasonEndUtcMs + SeasonRewardGracePeriod` (prevSeasonEndUtcMs는 TB_SEASON 참조)
 - 정책 상수: `SeasonRewardGracePeriod = TimeSpan.FromMinutes(10)`
 - magic number(예: `600000`, `45분`) 사용 금지
 
@@ -111,7 +111,8 @@ AppliesTo: v10
 | `MISSION` | `missionId` | `messageId -> MESSAGE.messageId` | 일일 미션 정의 및 조건 |
 | `ACHIEVE_ONCE` | `index` | `conditionMsgId/reqMsgId -> MESSAGE.messageId` | 일반 업적 단계 정의 및 조건 |
 | `ACHIEVE_PASS` | `index` | `conditionMsgId -> MESSAGE.messageId` | 패스 업적 단계 정의 및 pass 조건 |
-| `LEADERBOARD` | `leaderboardId` | `messageId -> MESSAGE.messageId` | 점수 소스 + 시즌 구간 + 플랫폼 ID 매핑 |
+| `SEASON` | `seasonId` | - | 시즌 기간 정의 (`StartUtcTime`/`EndUtcTime`) |
+| `LEADERBOARD` | `leaderboardId` | `messageId -> MESSAGE.messageId`, `seasonId -> SEASON.seasonId` | 점수 소스 + 시즌 참조 + 플랫폼 ID 매핑 |
 | `LEADERBOARD_REWARD` | `index` | `leaderboardId (group)` | 랭크 구간별 `rewardGroupId` 매핑 |
 
 관계 흐름:
@@ -124,8 +125,9 @@ GAME_MESSAGE -> MESSAGE(messageId)
                     ├─ ACHIEVE_PASS.conditionMsgId
                     └─ LEADERBOARD.messageId
 
-LEADERBOARD(leaderboardId, mode, seasonStartUtc/seasonEndUtc)
-        └─ LEADERBOARD_REWARD(leaderboardId group, rankFrom~rankTo, rewardGroupId)
+SEASON(seasonId, StartUtcTime, EndUtcTime)
+        └─ LEADERBOARD(leaderboardId, mode, seasonId -> SEASON)
+                └─ LEADERBOARD_REWARD(leaderboardId group, rankFrom~rankTo, rewardGroupId)
 ```
 
 시즌 보상 평가 시 사용 경로:
@@ -134,3 +136,12 @@ LEADERBOARD(leaderboardId, mode, seasonStartUtc/seasonEndUtc)
 2. previous row의 `leaderboardId`로 `LEADERBOARD_REWARD` 구간 조회
 3. player rank를 구간 매칭해 `rewardGroupId` 결정
 4. `RewardManager.ApplyRewardGroup(rewardGroupId)` 실행
+
+---
+
+## I. Record Time Limit
+
+- 점수 기록(`ReportScoreAsync`)은 시즌 활성 기간에만 허용한다.
+- 조건: `SEASON.StartUtcTime <= serverNowUtcMs < SEASON.EndUtcTime`
+- 시즌 외 기간 → `CommonResult.Failure` 반환
+- `seasonId`가 비어 있으면 시간 제한 없음

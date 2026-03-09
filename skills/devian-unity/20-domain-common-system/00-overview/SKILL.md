@@ -3,7 +3,7 @@
 Devian Unity 공용 런타임 컴포넌트를 담당한다.
 
 - **Shared Runtime**: Actor/Input, CommonEffect, MaterialEffect, Pool, Singleton, FSM 등 공용 Unity 런타임 컴포넌트
-- **Foundation Unity Runtime**: BundleSettings, AssetManager, TableManager, SceneTransManager, ApplicationManager 등
+- **Foundation Unity Runtime**: BundleSettings, AssetManager, TableManager, SceneTransManager, BaseApplication 등
 - **Domain Common Policy**: Common Domain C#/TS 공통 정책은 `skills/devian/20-domain-common`으로 분리
 
 ---
@@ -16,7 +16,7 @@ Devian Unity 공용 런타임 컴포넌트를 담당한다.
 | [11-anim-sequence-player](../11-anim-sequence-player/SKILL.md) | Playables 기반 애니메이션 시퀀스 |
 | [12-asset-id](../12-asset-id/SKILL.md) | AssetId selector base 및 선택 규약 |
 | [13-asset-manager](../13-asset-manager/SKILL.md) | AssetBundle 기반 로딩/캐시/언로드 |
-| [14-application-manager](../14-application-manager/SKILL.md) | Bootstrap Root + ApplicationManager 부팅 |
+| [14-base-application](../14-base-application/SKILL.md) | Bootstrap Root + BaseApplication 부팅 |
 | [15-common-effect-manager](../15-common-effect-manager/SKILL.md) | BundlePool 기반 공용 이펙트 시스템 |
 | [18-bundle-settings](../18-bundle-settings/SKILL.md) | BundleSettings ScriptableObject + Editor 메뉴 |
 | [19-bundle-manager](../19-bundle-manager/SKILL.md) | Addressables Label 기반 Patch/Download |

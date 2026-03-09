@@ -12,6 +12,7 @@ namespace Devian
         public int Index { get; set; }
         public GAME_MESSAGE_TYPE StatType { get; set; }
         public GAME_MESSAGE_SAVE_TYPE OpType { get; set; }
+        public GAME_MESSAGE_OP_TYPE ConditionOpType { get; set; }
         public CBigInt ConditionValue { get; set; }
         public Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> SubscribeTrigger { get; set; }
         public Action<int> UnsubscribeTrigger { get; set; }
@@ -31,6 +32,7 @@ namespace Devian
         public int Index { get; set; }
         public GAME_MESSAGE_TYPE StatType { get; set; }
         public GAME_MESSAGE_SAVE_TYPE OpType { get; set; }
+        public GAME_MESSAGE_OP_TYPE ConditionOpType { get; set; }
         public CBigInt ConditionValue { get; set; }
         public Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> SubscribeTrigger { get; set; }
         public Action<int> UnsubscribeTrigger { get; set; }
@@ -58,6 +60,7 @@ namespace Devian
                 args.MessageId,
                 args.StatType,
                 args.OpType,
+                args.ConditionOpType,
                 args.ConditionValue,
                 args.SubscribeTrigger,
                 args.UnsubscribeTrigger,
@@ -85,6 +88,7 @@ namespace Devian
                 args.MessageId,
                 args.StatType,
                 args.OpType,
+                args.ConditionOpType,
                 args.ConditionValue,
                 args.SubscribeTrigger,
                 args.UnsubscribeTrigger,

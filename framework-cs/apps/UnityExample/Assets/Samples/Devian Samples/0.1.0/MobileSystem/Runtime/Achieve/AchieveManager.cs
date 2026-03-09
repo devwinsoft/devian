@@ -60,6 +60,7 @@ namespace Devian
             public string ReqPassId = string.Empty;
             public string ReqSeasonId = string.Empty;
             public string ConditionMsgId = string.Empty;
+            public GAME_MESSAGE_OP_TYPE ConditionOp = GAME_MESSAGE_OP_TYPE.GTE;
             public CBigInt? ConditionValue;
             public string RewardGroupId = string.Empty;
             public string AppleAchievementId = string.Empty;
@@ -105,7 +106,7 @@ namespace Devian
 
         protected override void onDestroy()
         {
-            if (!ApplicationManager.IsApplicationQuitting)
+            if (!BaseApplication.IsApplicationQuitting)
             {
                 unSubcribeGameMessageTrigger();
                 unSubcribeInventoryMessageTrigger();
@@ -246,7 +247,15 @@ namespace Devian
                     runtime.LevelUpToWaiting(nextRow.Level, toRuntimeIndex(nextRow), nextRow.ConditionMsgId);
                     tryActivateRuntime(runtime, nextRow, GAME_MESSAGE_TYPE.NONE, CBigInt.Zero);
                 }
-                else if (tryResolveRuntimeBinding(nextRow, true, out var nextMessageId, out var nextStatType, out var nextOpType, out var nextConditionValue, out var nextReader))
+                else if (tryResolveRuntimeBinding(
+                             nextRow,
+                             true,
+                             out var nextMessageId,
+                             out var nextStatType,
+                             out var nextOpType,
+                             out var nextConditionOpType,
+                             out var nextConditionValue,
+                             out var nextReader))
                 {
                     runtime.LevelUp(
                         nextRow.Level,
@@ -254,6 +263,7 @@ namespace Devian
                         nextMessageId,
                         nextStatType,
                         nextOpType,
+                        nextConditionOpType,
                         nextConditionValue,
                         nextReader);
                 }
@@ -757,6 +767,7 @@ namespace Devian
                     ReqPassId = string.Empty,
                     ReqSeasonId = string.Empty,
                     ConditionMsgId = row.ConditionMsgId ?? string.Empty,
+                    ConditionOp = row.ConditionOp,
                     ConditionValue = row.ConditionValue,
                     RewardGroupId = row.RewardGroupId ?? string.Empty,
                     AppleAchievementId = row.AppleAchievementId ?? string.Empty,
@@ -778,6 +789,7 @@ namespace Devian
                     ReqPassId = row.ReqPassId ?? string.Empty,
                     ReqSeasonId = row.ReqSeasonId ?? string.Empty,
                     ConditionMsgId = row.ConditionMsgId ?? string.Empty,
+                    ConditionOp = row.ConditionOp,
                     ConditionValue = row.ConditionValue,
                     RewardGroupId = row.RewardGroupId ?? string.Empty,
                     AppleAchievementId = string.Empty,
@@ -962,6 +974,7 @@ namespace Devian
                     IsCompleted = false,
                     StatType = GAME_MESSAGE_TYPE.NONE,
                     OpType = GAME_MESSAGE_SAVE_TYPE.NONE,
+                    ConditionOpType = GAME_MESSAGE_OP_TYPE.GTE,
                     ConditionValue = CBigInt.Zero,
                     ReadProgress = null,
                     OnChanged = onRuntimeChanged,
@@ -969,7 +982,15 @@ namespace Devian
                 });
             }
 
-            if (!tryResolveRuntimeBinding(row, true, out var messageId, out var statType, out var opType, out var conditionValue, out var readProgress))
+            if (!tryResolveRuntimeBinding(
+                    row,
+                    true,
+                    out var messageId,
+                    out var statType,
+                    out var opType,
+                    out var conditionOpType,
+                    out var conditionValue,
+                    out var readProgress))
                 return null;
 
             return AchieveRuntimeFactory.Restore(new AchieveRuntimeRestoreArgs
@@ -985,6 +1006,7 @@ namespace Devian
                 IsCompleted = existing.isCompleted,
                 StatType = statType,
                 OpType = opType,
+                ConditionOpType = conditionOpType,
                 ConditionValue = conditionValue,
                 ReadProgress = readProgress,
                 OnChanged = onRuntimeChanged,
@@ -1011,6 +1033,7 @@ namespace Devian
                     IsWaiting = true,
                     StatType = GAME_MESSAGE_TYPE.NONE,
                     OpType = GAME_MESSAGE_SAVE_TYPE.NONE,
+                    ConditionOpType = GAME_MESSAGE_OP_TYPE.GTE,
                     ConditionValue = CBigInt.Zero,
                     ReadProgress = null,
                     OnChanged = onRuntimeChanged,
@@ -1018,7 +1041,15 @@ namespace Devian
                 });
             }
 
-            if (!tryResolveRuntimeBinding(row, true, out var messageId, out var statType, out var opType, out var conditionValue, out var readProgress))
+            if (!tryResolveRuntimeBinding(
+                    row,
+                    true,
+                    out var messageId,
+                    out var statType,
+                    out var opType,
+                    out var conditionOpType,
+                    out var conditionValue,
+                    out var readProgress))
                 return null;
 
             return AchieveRuntimeFactory.Create(new AchieveRuntimeCreateArgs
@@ -1032,6 +1063,7 @@ namespace Devian
                 IsWaiting = false,
                 StatType = statType,
                 OpType = opType,
+                ConditionOpType = conditionOpType,
                 ConditionValue = conditionValue,
                 ReadProgress = readProgress,
                 OnChanged = onRuntimeChanged,
@@ -1075,13 +1107,22 @@ namespace Devian
                 return false;
             }
 
-            if (!tryResolveRuntimeBinding(row, true, out var messageId, out var statType, out var opType, out var conditionValue, out var readProgress))
+            if (!tryResolveRuntimeBinding(
+                    row,
+                    true,
+                    out var messageId,
+                    out var statType,
+                    out var opType,
+                    out var conditionOpType,
+                    out var conditionValue,
+                    out var readProgress))
                 return false;
 
             runtime.Bind(
                 messageId,
                 statType,
                 opType,
+                conditionOpType,
                 conditionValue,
                 readProgress,
                 onRuntimeChanged,
@@ -1134,7 +1175,7 @@ namespace Devian
             if (row == null || !row.IsActive)
                 return false;
 
-            return tryResolveRuntimeBinding(row, false, out _, out _, out _, out _, out _);
+            return tryResolveRuntimeBinding(row, false, out _, out _, out _, out _, out _, out _);
         }
 
         bool hasActivationRequirement(
@@ -1326,12 +1367,14 @@ namespace Devian
             out string messageId,
             out GAME_MESSAGE_TYPE statType,
             out GAME_MESSAGE_SAVE_TYPE opType,
+            out GAME_MESSAGE_OP_TYPE conditionOpType,
             out CBigInt conditionValue,
             out Func<CBigInt> readProgress)
         {
             messageId = string.Empty;
             statType = GAME_MESSAGE_TYPE.NONE;
             opType = GAME_MESSAGE_SAVE_TYPE.NONE;
+            conditionOpType = GAME_MESSAGE_OP_TYPE.GTE;
             conditionValue = CBigInt.Zero;
             readProgress = null;
 
@@ -1352,6 +1395,7 @@ namespace Devian
                     return false;
                 }
 
+                conditionOpType = row.ConditionOp;
                 conditionValue = CBigInt.Zero;
                 return true;
             }
@@ -1377,6 +1421,7 @@ namespace Devian
             messageId = conditionMsgId;
             statType = message.MessageType;
             opType = message.SaveType;
+            conditionOpType = row.ConditionOp;
             conditionValue = row.ConditionValue.Value;
             readProgress = createExternalProgressReader(conditionMsgId, message.SaveType);
             return true;

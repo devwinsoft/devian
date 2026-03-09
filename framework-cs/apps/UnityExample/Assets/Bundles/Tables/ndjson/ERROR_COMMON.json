@@ -101,7 +101,6 @@
 {"Id":"PURCHASE_RENTAL_LATEST_NOT_FOUND","Msg_key":"","Msg":"No recent rental purchase within 30 days."}
 {"Id":"PURCHASE_RESTORE_FAILED","Msg_key":"","Msg":"Restore transactions failed at store."}
 {"Id":"PURCHASE_SEASON_PASS_ALREADY_OWNED","Msg_key":"","Msg":"Season pass duplicate purchase is not allowed."}
-{"Id":"PURCHASE_SEASON_END_SOON_BLOCKED","Msg_key":"","Msg":"Product purchase is blocked near season end."}
 {"Id":"PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED","Msg_key":"","Msg":"ackPurchaseStoreConfirm callable failed."}
 {"Id":"PURCHASE_STORE_FAILED","Msg_key":"","Msg":"Purchase store failed"}
 {"Id":"PURCHASE_STORE_NOT_SET","Msg_key":"","Msg":"PurchaseStore not set. Call SetPurchaseStore()."}
@@ -126,3 +125,12 @@
 {"Id":"RECOVERY_DECODE_FAILED","Msg_key":"","Msg":"Recovery decode error."}
 {"Id":"RECOVERY_UNSUPPORTED_VERSION","Msg_key":"","Msg":"Recovery version error."}
 {"Id":"RECOVERY_HMAC_FAILED","Msg_key":"","Msg":"Recovery HMAC error."}
+{"Id":"PURCHASE_SEASON_END_SOON_BLOCKED","Msg_key":"","Msg":"Product purchase is blocked near season end."}
+{"Id":"LEADERBOARD_NOT_FOUND","Msg_key":"","Msg":"Active leaderboard mapping not found."}
+{"Id":"LEADERBOARD_PLATFORM_ID_MISSING","Msg_key":"","Msg":"Platform leaderboard ID mapping is missing."}
+{"Id":"LEADERBOARD_MESSAGE_NOT_FOUND","Msg_key":"","Msg":"MESSAGE row for leaderboard score is missing."}
+{"Id":"LEADERBOARD_MESSAGE_SAVE_TYPE_INVALID","Msg_key":"","Msg":"Leaderboard MESSAGE.saveType must be TOTAL_SUM or TOTAL_MAX."}
+{"Id":"LEADERBOARD_SEASON_NOT_FOUND","Msg_key":"","Msg":"SEASON row for leaderboard is missing."}
+{"Id":"LEADERBOARD_SEASON_TIME_INVALID","Msg_key":"","Msg":"SEASON time range is invalid."}
+{"Id":"LEADERBOARD_SERVER_TIME_UNAVAILABLE","Msg_key":"","Msg":"Server time is unavailable for leaderboard season validation."}
+{"Id":"LEADERBOARD_SEASON_NOT_ACTIVE","Msg_key":"","Msg":"Leaderboard score reporting is not allowed outside active season."}

@@ -1,8 +1,8 @@
-# 14-application-manager
+# 14-base-application
 
 ## 0. 목적
 
-부트 컨테이너 프리팹과 ApplicationManager 추상 클래스를 정의한다.
+부트 컨테이너 프리팹과 BaseApplication 추상 클래스를 정의한다.
 
 **프레임워크는 Bootstrap prefab 생성이나 `BootProc()` 호출을 자동 처리하지 않는다.**
 Bootstrap 생성과 `BootProc()` 호출은 app/contents layer 책임이다.
@@ -12,7 +12,7 @@ Bootstrap 생성과 `BootProc()` 호출은 app/contents layer 책임이다.
 ## 1. 구성
 
 - **부트 컨테이너 프리팹**: 앱 레이어가 경로와 프리팹 구조를 결정한다. 프레임워크는 경로를 강제하지 않는다.
-- **ApplicationManager** (abstract MonoBehaviour): 개발자가 상속하여 부트 로직을 구현하는 베이스 클래스
+- **BaseApplication** (abstract MonoBehaviour): 개발자가 상속하여 부트 로직을 구현하는 베이스 클래스
 
 프리팹 생성 규칙은 [11-mobile-application](../../50-mobile-system/11-mobile-application/SKILL.md)에서 다룬다.
 
@@ -20,11 +20,11 @@ Bootstrap 생성과 `BootProc()` 호출은 app/contents layer 책임이다.
 
 ## 2. Files (SSOT)
 
-- `framework-cs/upm/com.devian.domain.common/Runtime/Unity/Bootstrap/ApplicationManager.cs`
+- `framework-cs/upm/com.devian.domain.common/Runtime/Unity/Bootstrap/BaseApplication.cs`
 
 ---
 
-## 3. ApplicationManager 클래스
+## 3. BaseApplication 클래스
 
 ### 인스턴스 필드
 
@@ -39,10 +39,10 @@ public VersionNumber AppVersion => _appVersion;
 ### 정적 상태
 
 ```csharp
-private static ApplicationManager _instance;
+private static BaseApplication _instance;
 private static bool _booted;
 
-public static ApplicationManager Instance => _instance;
+public static BaseApplication Instance => _instance;
 public static bool IsApplicationQuitting { get; private set; }
 public static bool IsShuttingDown { get; private set; }
 ```
@@ -69,7 +69,7 @@ protected virtual void OnEnterBackground() {}
 ```
 
 의미:
-- `ApplicationManager`이 Unity `OnApplicationPause(bool)` / `OnApplicationFocus(bool)`를 수신한다.
+- `BaseApplication`이 Unity `OnApplicationPause(bool)` / `OnApplicationFocus(bool)`를 수신한다.
 - 내부에서 foreground 상태 변화를 dedupe한 뒤 semantic hook을 호출한다.
 - app/contents layer는 Unity raw callback을 직접 override하지 말고 `OnEnterForeground()` / `OnEnterBackground()`를 override한다.
 - 대표 사용처:
@@ -133,7 +133,7 @@ Bootstrap은 app/contents layer가 명시적으로 생성하고 실행해야 한
 예시 (Resources.Load 사용 시):
 
 ```csharp
-var app = Singleton.CreateFromResources<ApplicationManager, TestApplication>("Devian/Application");
+var app = Singleton.CreateFromResources<BaseApplication, TestApplication>("Devian/Application");
 await app.BootProc();
 ```
 
@@ -156,20 +156,20 @@ protected override void OnEnterForeground()
 
 ## 5. 부트 컨테이너 구조
 
-부트 컨테이너는 **ApplicationManager 파생 컴포넌트를 정확히 1개 포함하는 프리팹**이다:
+부트 컨테이너는 **BaseApplication 파생 컴포넌트를 정확히 1개 포함하는 프리팹**이다:
 
-- 개발자는 `ApplicationManager`을 상속한 클래스를 만들어 프리팹에 부착
+- 개발자는 `BaseApplication`을 상속한 클래스를 만들어 프리팹에 부착
 - `OnBootProc()`에서 초기화 로직 구현
 - 추가로 필요한 Manager 컴포넌트들을 함께 부착 가능
 
-**프레임워크가 ApplicationManager 파생 컴포넌트를 자동 추가하지 않는다.** 개발자가 직접 추가해야 한다.
+**프레임워크가 BaseApplication 파생 컴포넌트를 자동 추가하지 않는다.** 개발자가 직접 추가해야 한다.
 **프레임워크가 Bootstrap prefab을 자동 생성하지도 않는다.**
 
 ### 필수 컴포넌트 부착
 
-ApplicationManager.Awake()에서 `ensureRequiredComponents()`가 호출된다.
+BaseApplication.Awake()에서 `ensureRequiredComponents()`가 호출된다.
 
-- ApplicationManager 기본 구현은 필수 매니저를 추가하지 않는다.
+- BaseApplication 기본 구현은 필수 매니저를 추가하지 않는다.
 - `CompoSingleton` 계열은 런타임 `AddComponent`로 만들지 않고, bootstrap prefab/scene object에 미리 부착해야 한다.
 - 소비자 모듈/도메인은 파생 bootstrap에서 필요한 컴포넌트가 이미 부착되었는지 검증/보장한다.
 

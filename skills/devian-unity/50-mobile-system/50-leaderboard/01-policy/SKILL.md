@@ -59,6 +59,13 @@ Leaderboard 점수 제출 + 시즌 전환 보상 시스템의 모듈 경계와 �
 - 공개 API/DTO에 `apple*Id`, `google*Id`를 노출하지 않는다.
 - 공개 API 시그니처에 플랫폼 SDK 타입을 노출하지 않는다.
 
+### 10) 점수 기록은 시즌 활성 기간으로 제한한다
+
+- `ReportScoreAsync`는 `LEADERBOARD.seasonId` → `TB_SEASON` 조회 후 시간 범위를 확인한다.
+- 조건: `SEASON.StartUtcTime <= serverNowUtcMs < SEASON.EndUtcTime`
+- 범위 밖이면 `CommonResult.Failure` 반환.
+- `seasonId`가 비어 있으면 시간 제한을 적용하지 않는다.
+
 ---
 
 ## Client API

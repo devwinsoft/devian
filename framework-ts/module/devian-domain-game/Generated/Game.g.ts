@@ -38,8 +38,18 @@ export enum GAME_MESSAGE_SAVE_TYPE {
     NONE = 0,
     SESSION_SUM = 1,
     SESSION_MAX = 2,
-    TOTAL_SUM = 3,
-    TOTAL_MAX = 4,
+    SESSION_MIN = 3,
+    TOTAL_SUM = 4,
+    TOTAL_MAX = 5,
+    TOTAL_MIN = 6,
+}
+
+/** GAME_MESSAGE_OP_TYPE enum */
+export enum GAME_MESSAGE_OP_TYPE {
+    NONE = 0,
+    EQ = 1,
+    GTE = 2,
+    LTE = 3,
 }
 
 /** LEADERBOARD_MODE enum */
@@ -191,7 +201,8 @@ export interface MISSION extends IEntityKey<string> {
     IsActive: boolean;
     Fixed: boolean;
     OrderNum: number;
-    MessageId: string;
+    ConditionMsgId: string;
+    ConditionOp: GAME_MESSAGE_OP_TYPE;
     ConditionValue: CBigInt | null;
     RewardGroupId: string;
     getKey(): string;
@@ -206,6 +217,7 @@ export interface ACHIEVE_ONCE extends IEntityKey<number> {
     ReqMsgId: string;
     ReqValue: CBigInt | null;
     ConditionMsgId: string;
+    ConditionOp: GAME_MESSAGE_OP_TYPE;
     ConditionValue: CBigInt | null;
     RewardGroupId: string;
     AppleAchievementId: string;
@@ -219,11 +231,12 @@ export interface ACHIEVE_PASS extends IEntityKey<number> {
     IsActive: boolean;
     Level: number;
     OrderNum: number;
+    ReqSeasonId: string;
     ReqPassId: string;
     ConditionMsgId: string;
+    ConditionOp: GAME_MESSAGE_OP_TYPE;
     ConditionValue: CBigInt | null;
     RewardGroupId: string;
-    ReqSeasonId: string;
     getKey(): number;
 }
 
@@ -232,8 +245,7 @@ export interface LEADERBOARD extends IEntityKey<string> {
     IsActive: boolean;
     MessageId: string;
     Mode: LEADERBOARD_MODE;
-    SeasonStartUtc: number;
-    SeasonEndUtc: number;
+    SeasonId: string;
     AppleLeaderboardId: string;
     GoogleLeaderboardId: string;
     getKey(): string;
@@ -276,15 +288,6 @@ export interface ITEM_PASS extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface SEASON extends IEntityKey<string> {
-    SeasonId: string;
-    NameId: string;
-    DescId: string;
-    StartUtcTime: number;
-    EndUtcTime: number;
-    getKey(): string;
-}
-
 export interface PRODUCT extends IEntityKey<string> {
     InternalProductId: string;
     RewardGroupId: string;
@@ -304,6 +307,15 @@ export interface REWARD extends IEntityKey<number> {
     Id: string;
     Amount: number;
     getKey(): number;
+}
+
+export interface SEASON extends IEntityKey<string> {
+    SeasonId: string;
+    NameId: string;
+    DescId: string;
+    StartUtcTime: number;
+    EndUtcTime: number;
+    getKey(): string;
 }
 
 export interface UNIT_HERO extends IEntityKey<string> {
@@ -722,42 +734,6 @@ export class TB_ITEM_PASS {
     }
 }
 
-export class TB_SEASON {
-    private static _dict: Map<string, SEASON> = new Map();
-    private static _list: SEASON[] = [];
-
-    static get count(): number { return this._list.length; }
-
-    static clear(): void {
-        this._dict.clear();
-        this._list = [];
-    }
-
-    static getAll(): readonly SEASON[] { return this._list; }
-
-    static get(key: string): SEASON | undefined {
-        return this._dict.get(key);
-    }
-
-    static has(key: string): boolean {
-        return this._dict.has(key);
-    }
-
-    static loadFromJson(json: string): void {
-        this.clear();
-        const lines = json.split('\n').filter(l => l.trim());
-        for (const line of lines) {
-            const row = JSON.parse(line) as SEASON;
-            this._list.push(row);
-            this._dict.set(row.SeasonId, row);
-        }
-    }
-
-    static saveToJson(): string {
-        return this._list.map(r => JSON.stringify(r)).join('\n');
-    }
-}
-
 export class TB_PRODUCT {
     private static _dict: Map<string, PRODUCT> = new Map();
     private static _list: PRODUCT[] = [];
@@ -822,6 +798,42 @@ export class TB_REWARD {
             const row = JSON.parse(line) as REWARD;
             this._list.push(row);
             this._dict.set(row.RewardNum, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_SEASON {
+    private static _dict: Map<string, SEASON> = new Map();
+    private static _list: SEASON[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly SEASON[] { return this._list; }
+
+    static get(key: string): SEASON | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as SEASON;
+            this._list.push(row);
+            this._dict.set(row.SeasonId, row);
         }
     }
 

@@ -77,7 +77,7 @@ Registry에 Auto/Boot가 등록된 상태에서 Compo가 등록되면:
 |-----|------|
 | `Singleton.Get<T>()` | 없으면 예외 (Fail-fast) |
 | `Singleton.TryGet<T>(out T)` | 없으면 false |
-| `Singleton.IsShuttingDown` | Shutdown 구간 여부. `ApplicationManager.IsApplicationQuitting \|\| !Application.isPlaying`에 위임. `Create*` / `CreateFromResources*` 생성 억제 기준 |
+| `Singleton.IsShuttingDown` | Shutdown 구간 여부. `BaseApplication.IsApplicationQuitting \|\| !Application.isPlaying`에 위임. `Create*` / `CreateFromResources*` 생성 억제 기준 |
 | `Singleton.Create<T>()` | 빈 GameObject 생성 + AddComponent + Registry 등록(Boot). key=T |
 | `Singleton.Create<TBase,TSelf>()` | 빈 GameObject 생성 + AddComponent + Registry 등록(Boot). key=TBase |
 | `Singleton.CreateFromResources<T>(path)` | Resources에서 프리팹 로드 + Registry 등록(Boot). key=T |

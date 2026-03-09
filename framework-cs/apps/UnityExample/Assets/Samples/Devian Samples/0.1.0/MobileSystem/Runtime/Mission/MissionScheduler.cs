@@ -166,9 +166,9 @@ namespace Devian
 
             foreach (var row in selectedRows)
             {
-                if (!TryResolveMessage(row.MessageId, out var message))
+                if (!TryResolveMessage(row.ConditionMsgId, out var message))
                 {
-                    Debug.LogError($"[{Tag}] MESSAGE not found for daily mission: missionId='{row.MissionId}', messageId='{row.MessageId}'.");
+                    Debug.LogError($"[{Tag}] MESSAGE not found for daily mission: missionId='{row.MissionId}', messageId='{row.ConditionMsgId}'.");
                     continue;
                 }
 
@@ -178,7 +178,7 @@ namespace Devian
                     var restored = MissionRuntimeFactory.Restore(new MissionRuntimeRestoreArgs
                     {
                         MissionId = existing.missionId,
-                        MessageId = row.MessageId,
+                        MessageId = row.ConditionMsgId,
                         PeriodKey = existing.periodKey,
                         MissionUid = existing.missionUid,
                         ProgressValue = existing.progressValue,
@@ -186,10 +186,11 @@ namespace Devian
                         Index = existing.index,
                         StatType = message.MessageType,
                         OpType = message.SaveType,
+                        ConditionOpType = row.ConditionOp,
                         ConditionValue = row.ConditionValue!.Value,
                         SubscribeTrigger = _subscribeTrigger,
                         UnsubscribeTrigger = _unsubscribeTrigger,
-                        ReadExternalProgress = createExternalProgressReader(row.MessageId, message.SaveType),
+                        ReadExternalProgress = createExternalProgressReader(row.ConditionMsgId, message.SaveType),
                         OnChanged = _onChanged,
                         OnClaimable = _onClaimable,
                     });
@@ -202,16 +203,17 @@ namespace Devian
                 var created = MissionRuntimeFactory.CreateDaily(new DailyMissionRuntimeCreateArgs
                 {
                     MissionId = row.MissionId,
-                    MessageId = row.MessageId,
+                    MessageId = row.ConditionMsgId,
                     PeriodKey = periodKey,
                     MissionUid = AllocateMissionUid(),
                     Index = 0,
                     StatType = message.MessageType,
                     OpType = message.SaveType,
+                    ConditionOpType = row.ConditionOp,
                     ConditionValue = row.ConditionValue!.Value,
                     SubscribeTrigger = _subscribeTrigger,
                     UnsubscribeTrigger = _unsubscribeTrigger,
-                    ReadExternalProgress = createExternalProgressReader(row.MessageId, message.SaveType),
+                    ReadExternalProgress = createExternalProgressReader(row.ConditionMsgId, message.SaveType),
                     OnChanged = _onChanged,
                     OnClaimable = _onClaimable,
                 });
@@ -301,7 +303,7 @@ namespace Devian
             return row != null
                    && row.IsActive
                    && row.ConditionValue.HasValue
-                   && TryResolveMessage(row.MessageId, out var message)
+                   && TryResolveMessage(row.ConditionMsgId, out var message)
                    && message.SaveType != GAME_MESSAGE_SAVE_TYPE.NONE;
         }
 
@@ -348,8 +350,7 @@ namespace Devian
             if (string.IsNullOrWhiteSpace(messageId))
                 return null;
 
-            if (saveType != GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
-                && saveType != GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX)
+            if (!GameMessageRule.IsTotalSaveType(saveType))
             {
                 return null;
             }

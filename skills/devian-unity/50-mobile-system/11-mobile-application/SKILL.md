@@ -7,7 +7,7 @@ AppliesTo: v10
 
 ## Purpose
 MobileApplication 기반 부트스트랩 샘플.
-`ApplicationManager`을 상속한 추상 클래스 `MobileApplication`을 제공하여, 앱별 초기화 로직의 진입점을 정의한다.
+`BaseApplication`을 상속한 추상 클래스 `MobileApplication`을 제공하여, 앱별 초기화 로직의 진입점을 정의한다.
 
 
 ## Sample SSOT
@@ -49,14 +49,14 @@ namespace MyApp
 1. `MobileApplication`을 상속한 클래스를 만든다.
 2. `OnBootProc()`을 override하고, `await base.OnBootProc();`을 호출하여 공통 초기화를 수행한다.
 3. `base.OnBootProc()` 이후에 앱별 초기화 로직을 구현한다.
-4. 포그라운드 복귀 처리가 필요하면 `ApplicationManager.OnEnterForeground()`를 override한다.
+4. 포그라운드 복귀 처리가 필요하면 `BaseApplication.OnEnterForeground()`를 override한다.
 5. Bootstrap prefab에 해당 컴포넌트를 부착한다.
 6. app/contents layer가 Bootstrap prefab을 명시적으로 생성하고 `BootProc()`를 호출한다.
 7. 샘플에서는 Firebase Functions region 같은 앱 설정값을 `MobileApplication`에 하드코딩하고, `RemoteConfigManager`/`PurchaseManager` 같은 하위 manager에 전달한다.
 
 주의:
 - Unity `OnApplicationPause` / `OnApplicationFocus`를 직접 override하지 않는다.
-- lifecycle 처리는 `ApplicationManager`의 semantic hook을 사용한다.
+- lifecycle 처리는 `BaseApplication`의 semantic hook을 사용한다.
 - manager가 inspector/serialized field로 Firebase region 같은 앱 설정을 직접 소유하지 않는다. 설정 owner는 bootstrap/app layer다.
 
 foreground 복귀 기준 동작:
@@ -75,7 +75,7 @@ foreground 복귀 기준 동작:
 
 ## VersionCheck
 
-`MobileApplication`은 서버에서 받은 버전 정보와 `ApplicationManager.AppVersion`을 비교하여 업데이트 필요 여부를 판정한다.
+`MobileApplication`은 서버에서 받은 버전 정보와 `BaseApplication.AppVersion`을 비교하여 업데이트 필요 여부를 판정한다.
 
 ### VersionCheckResult
 
@@ -134,7 +134,7 @@ MobileApplication에 부착된 RequireComponent:
 
 
 ## Links
-- [16-base-application](../../20-domain-common-system/14-application-manager/SKILL.md) — ApplicationManager 런타임 스펙
+- [16-base-application](../../20-domain-common-system/14-base-application/SKILL.md) — BaseApplication 런타임 스펙
 - [24-input-manager](../../20-domain-common-system/22-input-manager/SKILL.md) — InputManager 공용 입력 관리자
 - [21-savedata-system/43-savedata-json-codec](../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 규약
 - [50-leaderboard/13-leaderboard-season-reward-manager](../50-leaderboard/13-leaderboard-season-reward-manager/SKILL.md) — 시즌 보상 sync 흐름

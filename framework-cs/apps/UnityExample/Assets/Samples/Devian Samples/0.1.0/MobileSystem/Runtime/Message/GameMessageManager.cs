@@ -110,23 +110,37 @@ namespace Devian
 
             foreach (var binding in bindings)
             {
-                var current = _storage.GetStat(binding.MessageId);
+                var hasCurrent = _storage.TryGetStat(binding.MessageId, out var rawCurrent);
+                var current = GameMessageRule.ClampNonNegative(rawCurrent);
+                var normalizedCurrentChanged = hasCurrent && current.CompareTo(rawCurrent) != 0;
                 CBigInt next;
                 switch (binding.SaveType)
                 {
                     case GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM:
-                        next = current + delta;
+                        next = GameMessageRule.ClampNonNegative(current + delta);
                         break;
 
                     case GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX:
+                        if (delta.CompareTo(CBigInt.Zero) < 0)
+                            continue;
                         next = CBigInt.Max(current, delta);
+                        break;
+
+                    case GAME_MESSAGE_SAVE_TYPE.TOTAL_MIN:
+                        if (delta.CompareTo(CBigInt.Zero) < 0)
+                            continue;
+
+                        next = hasCurrent
+                            ? CBigInt.Min(current, delta)
+                            : delta;
                         break;
 
                     default:
                         continue;
                 }
 
-                if (next.CompareTo(current) == 0)
+                next = GameMessageRule.ClampNonNegative(next);
+                if (!normalizedCurrentChanged && hasCurrent && next.CompareTo(current) == 0)
                     continue;
 
                 _storage.SetStat(binding.MessageId, next);
@@ -142,7 +156,7 @@ namespace Devian
             {
                 if (message == null
                     || string.IsNullOrWhiteSpace(message.MessageId)
-                    || !isTotalSaveType(message.SaveType))
+                    || !GameMessageRule.IsTotalSaveType(message.SaveType))
                 {
                     continue;
                 }
@@ -156,11 +170,40 @@ namespace Devian
                 bindings.Add(new MessageSaveBinding(message.MessageId, message.SaveType));
             }
         }
+    }
 
-        static bool isTotalSaveType(GAME_MESSAGE_SAVE_TYPE saveType)
+    internal static class GameMessageRule
+    {
+        public static bool IsTotalSaveType(GAME_MESSAGE_SAVE_TYPE saveType)
         {
             return saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
-                   || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX;
+                   || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX
+                   || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MIN;
+        }
+
+        public static CBigInt ClampNonNegative(CBigInt value)
+        {
+            return value.CompareTo(CBigInt.Zero) < 0
+                ? CBigInt.Zero
+                : value;
+        }
+
+        public static bool IsConditionSatisfied(CBigInt progress, GAME_MESSAGE_OP_TYPE opType, CBigInt conditionValue)
+        {
+            var compare = progress.CompareTo(conditionValue);
+            switch (opType)
+            {
+                case GAME_MESSAGE_OP_TYPE.EQ:
+                    return compare == 0;
+
+                case GAME_MESSAGE_OP_TYPE.LTE:
+                    return compare <= 0;
+
+                case GAME_MESSAGE_OP_TYPE.GTE:
+                case GAME_MESSAGE_OP_TYPE.NONE:
+                default:
+                    return compare >= 0;
+            }
         }
     }
 }

@@ -39,8 +39,8 @@ Type: Design / Runtime Orchestration
 
 1. 초기화 상태 확인
 2. 서버 시간 확보 (`MissionManager.TryGetServerNowUtcMs`)
-3. `TB_LEADERBOARD`에서 active season row 수집
-4. 모드별(`LEADERBOARD_MODE`) current season / previous season 계산
+3. `TB_LEADERBOARD`에서 active season row 수집 (`LEADERBOARD.seasonId → TB_SEASON`으로 시간 조회)
+4. 모드별(`LEADERBOARD_MODE`) current season / previous season 계산 (TB_SEASON 시간 기준)
 5. grace period 통과 여부 확인
 6. `processedClaims` 중복 체크 (`{leaderboardId}`)
 7. `LeaderboardManager.GetPlayerSnapshotAsync(...)` 조회
