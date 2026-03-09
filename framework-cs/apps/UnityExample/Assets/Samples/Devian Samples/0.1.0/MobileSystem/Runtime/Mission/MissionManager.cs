@@ -169,22 +169,22 @@ namespace Devian
             }
         }
 
-        public void Notify(MISSION_MESSAGE msgType)
+        public void Notify(MESSAGE_MISSION_TYPE msgType)
         {
             _missionMessageSystem.Notify(msgType);
         }
 
-        public void Notify(MISSION_MESSAGE msgType, params object[] args)
+        public void Notify(MESSAGE_MISSION_TYPE msgType, params object[] args)
         {
             _missionMessageSystem.Notify(msgType, args);
         }
 
-        public void Subcribe(EntityId ownerKey, MISSION_MESSAGE msgType, BaseTrigger<EntityId, MISSION_MESSAGE>.Handler handler)
+        public void Subcribe(EntityId ownerKey, MESSAGE_MISSION_TYPE msgType, BaseTrigger<EntityId, MESSAGE_MISSION_TYPE>.Handler handler)
         {
             _missionMessageSystem.Subcribe(ownerKey, msgType, handler);
         }
 
-        public void SubcribeOnce(EntityId ownerKey, MISSION_MESSAGE msgType, Action<object[]> handler)
+        public void SubcribeOnce(EntityId ownerKey, MESSAGE_MISSION_TYPE msgType, Action<object[]> handler)
         {
             _missionMessageSystem.SubcribeOnce(ownerKey, msgType, handler);
         }
@@ -207,7 +207,7 @@ namespace Devian
             if (row == null || !row.IsActive || !row.ConditionValue.HasValue)
                 return MissionRuntimeState.NONE;
 
-            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == MESSAGE_META_SAVE_TYPE.NONE)
                 return MissionRuntimeState.NONE;
 
             var runtime = findDailyRuntime(missionId);
@@ -226,7 +226,7 @@ namespace Devian
             if (row == null || !row.IsActive || !row.ConditionValue.HasValue)
                 return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
 
-            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == MESSAGE_META_SAVE_TYPE.NONE)
                 return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
 
             var periodKey = getCurrentDailyKey();
@@ -245,7 +245,7 @@ namespace Devian
                 return CommonResult.Failure(apply.Error!);
 
             runtime.MarkCompleted();
-            _missionMessageSystem.Notify(MISSION_MESSAGE.RUNTIME_REWARDED, runtime, apply.Value.AppliedRewards);
+            _missionMessageSystem.Notify(MESSAGE_MISSION_TYPE.RUNTIME_REWARDED, runtime, apply.Value.AppliedRewards);
 
             var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
             if (save.IsFailure)
@@ -259,27 +259,27 @@ namespace Devian
 
         void onRuntimeInitialized(MissionRuntimeBase runtime)
         {
-            _missionMessageSystem.Notify(MISSION_MESSAGE.RUNTIME_INIT, runtime);
+            _missionMessageSystem.Notify(MESSAGE_MISSION_TYPE.RUNTIME_INIT, runtime);
         }
 
-        void subscribeRuntimeTrigger(int ownerKey, GAME_MESSAGE_TYPE messageType, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler handler)
+        void subscribeRuntimeTrigger(int ownerKey, MESSAGE_META_TYPE messageType, BaseTrigger<int, MESSAGE_META_TYPE>.Handler handler)
         {
-            GameMessageManager.Instance.SubcribeGameMessageTrigger(ownerKey, messageType, handler);
+            MetaMessageManager.Instance.SubcribeGameMessageTrigger(ownerKey, messageType, handler);
         }
 
         void unSubcribeRuntimeTrigger(int ownerKey)
         {
-            GameMessageManager.Instance.UnSubcribeGameMessageTrigger(ownerKey);
+            MetaMessageManager.Instance.UnSubcribeGameMessageTrigger(ownerKey);
         }
 
         void onRuntimeChanged(MissionRuntimeBase runtime)
         {
-            _missionMessageSystem.Notify(MISSION_MESSAGE.RUNTIME_PROGRESS, runtime);
+            _missionMessageSystem.Notify(MESSAGE_MISSION_TYPE.RUNTIME_PROGRESS, runtime);
         }
 
         void onRuntimeClaimable(MissionRuntimeBase runtime)
         {
-            _missionMessageSystem.Notify(MISSION_MESSAGE.RUNTIME_CLAIMABLE, runtime);
+            _missionMessageSystem.Notify(MESSAGE_MISSION_TYPE.RUNTIME_CLAIMABLE, runtime);
         }
 
         void detachAllRuntimes()
@@ -290,7 +290,7 @@ namespace Devian
         void clearDailyScopeData()
         {
             _scheduler.ClearDailyScope();
-            _missionMessageSystem.Notify(MISSION_MESSAGE.DAY_RESET);
+            _missionMessageSystem.Notify(MESSAGE_MISSION_TYPE.DAY_RESET);
         }
 
         void rebuildRuntimeBindings()
@@ -298,7 +298,7 @@ namespace Devian
             var didResetDay = _scheduler.HasDailyRuntimeOutsideCurrentPeriod();
             _scheduler.RebuildBindings();
             if (didResetDay)
-                _missionMessageSystem.Notify(MISSION_MESSAGE.DAY_RESET);
+                _missionMessageSystem.Notify(MESSAGE_MISSION_TYPE.DAY_RESET);
         }
 
         void pruneExpiredMissionState()
@@ -311,13 +311,13 @@ namespace Devian
             return _scheduler.FindDaily(missionId);
         }
 
-        static bool TryResolveMessage(string messageId, out MESSAGE message)
+        static bool TryResolveMessage(string messageId, out MESSAGE_META message)
         {
             message = null;
             if (string.IsNullOrWhiteSpace(messageId))
                 return false;
 
-            message = TB_MESSAGE.Get(messageId);
+            message = TB_MESSAGE_META.Get(messageId);
             return message != null;
         }
 

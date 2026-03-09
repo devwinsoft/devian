@@ -1,4 +1,4 @@
-# 45-game-message-system — Policy
+# 45-meta-message-system — Policy
 
 Status: ACTIVE
 AppliesTo: v10
@@ -17,11 +17,11 @@ MobileSystem의 메시지/트리거 계층 하드룰을 정의한다.
 - 공통 동작 정본은 [20-domain-common-system/25-trigger](../../../20-domain-common-system/25-trigger/SKILL.md)다.
 - MobileSystem 하위 시스템은 `BaseTrigger<TOwnerKey, TMsgKey>`를 래핑해서 사용한다.
 
-### 2) Game message trigger는 45-game-message-system이 소유한다
+### 2) Game message trigger는 45-meta-message-system이 소유한다
 
-- `GameMessageTrigger`은 `GameMessageManager` 내부 소유다.
+- `GameMessageTrigger`은 `MetaMessageManager` 내부 소유다.
 - trigger 인스턴스는 외부에 직접 노출하지 않는다.
-- `GameMessageManager` helper를 통해서만 publish/subscribe한다.
+- `MetaMessageManager` helper를 통해서만 publish/subscribe한다.
 
 ### 3) Mission message trigger는 48-mission-system이 소유한다
 
@@ -39,5 +39,5 @@ MobileSystem의 메시지/트리거 계층 하드룰을 정의한다.
 ## Related
 
 - [03-ssot](../03-ssot/SKILL.md)
-- [10-game-message-manager](../10-game-message-manager/SKILL.md)
+- [10-meta-message-manager](../10-meta-message-manager/SKILL.md)
 - [48-mission-system/01-policy](../../48-mission-system/01-policy/SKILL.md)

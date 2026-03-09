@@ -17,14 +17,14 @@ namespace Devian
     /// - ACHIEVE_LEVEL_UP: args[0] = MissionRuntimeBase
     /// - DAY_RESET: no args
     /// </summary>
-    public sealed class MissionMessageTrigger : BaseTrigger<EntityId, MISSION_MESSAGE>
+    public sealed class MissionMessageTrigger : BaseTrigger<EntityId, MESSAGE_MISSION_TYPE>
     {
-        public void Notify(MISSION_MESSAGE msgType, MissionRuntimeBase runtime)
+        public void Notify(MESSAGE_MISSION_TYPE msgType, MissionRuntimeBase runtime)
         {
             base.Notify(msgType, runtime);
         }
 
-        public void Notify(MISSION_MESSAGE msgType, MissionRuntimeBase runtime, params object[] extras)
+        public void Notify(MESSAGE_MISSION_TYPE msgType, MissionRuntimeBase runtime, params object[] extras)
         {
             if (extras == null || extras.Length == 0)
             {

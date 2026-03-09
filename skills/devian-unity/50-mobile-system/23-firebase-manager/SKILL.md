@@ -57,7 +57,7 @@ Bootstrap prefab에 부착한다.
 - `SetFunctionsRegion(string region)`
   - Firebase Functions 리전을 설정한다.
   - 빈 문자열 또는 null이면 기본 리전(us-central1)을 사용한다.
-  - `MobileApplication.OnBootProc()`에서 호출한다.
+  - `MobileApplication.onBootAsync()`에서 호출한다.
 
 ### Instance Methods — Session Init callable (1개)
 

@@ -1,0 +1,402 @@
+{
+  "enums": [
+    {
+      "name": "MESSAGE_META_TYPE",
+      "values": [
+        {
+          "name": "NONE",
+          "value": 0
+        },
+        {
+          "name": "LOGIN",
+          "value": 1
+        },
+        {
+          "name": "STAGE_CLEAR",
+          "value": 3
+        },
+        {
+          "name": "STAGE_SCORE",
+          "value": 4
+        },
+        {
+          "name": "MISSION_CLEAR",
+          "value": 5
+        },
+        {
+          "name": "BATTLE_PASS_001",
+          "value": 1001
+        },
+        {
+          "name": "BATTLE_PASS_002",
+          "value": 1002
+        },
+        {
+          "name": "BATTLE_PASS_003",
+          "value": 1003
+        },
+        {
+          "name": "BATTLE_PASS_004",
+          "value": 1004
+        },
+        {
+          "name": "BATTLE_PASS_005",
+          "value": 1005
+        },
+        {
+          "name": "TEST_001",
+          "value": 8001
+        },
+        {
+          "name": "TEST_002",
+          "value": 8002
+        },
+        {
+          "name": "TEST_003",
+          "value": 8003
+        },
+        {
+          "name": "TEST_004",
+          "value": 8004
+        },
+        {
+          "name": "TEST_005",
+          "value": 8005
+        },
+        {
+          "name": "ACHIEVE_UNLOCKED",
+          "value": 9000
+        },
+        {
+          "name": "ACHIEVE_001",
+          "value": 9001
+        },
+        {
+          "name": "ACHIEVE_002",
+          "value": 9002
+        },
+        {
+          "name": "ACHIEVE_003",
+          "value": 9003
+        },
+        {
+          "name": "ACHIEVE_004",
+          "value": 9004
+        },
+        {
+          "name": "ACHIEVE_005",
+          "value": 9005
+        }
+      ]
+    },
+    {
+      "name": "MESSAGE_META_SAVE_TYPE",
+      "values": [
+        {
+          "name": "NONE",
+          "value": 0
+        },
+        {
+          "name": "SESSION_SUM",
+          "value": 1
+        },
+        {
+          "name": "SESSION_MAX",
+          "value": 2
+        },
+        {
+          "name": "SESSION_MIN",
+          "value": 3
+        },
+        {
+          "name": "TOTAL_SUM",
+          "value": 4
+        },
+        {
+          "name": "TOTAL_MAX",
+          "value": 5
+        },
+        {
+          "name": "TOTAL_MIN",
+          "value": 6
+        }
+      ]
+    },
+    {
+      "name": "MESSAGE_META_OP_TYPE",
+      "values": [
+        {
+          "name": "NONE",
+          "value": 0
+        },
+        {
+          "name": "EQ",
+          "value": 1
+        },
+        {
+          "name": "GTE",
+          "value": 2
+        },
+        {
+          "name": "LTE",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "name": "LEADERBOARD_MODE",
+      "values": [
+        {
+          "name": "NONE",
+          "value": 0
+        },
+        {
+          "name": "NORMAL",
+          "value": 1
+        },
+        {
+          "name": "HARDCORE",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "name": "MISSION_TYPE",
+      "values": [
+        {
+          "name": "NONE",
+          "value": 0
+        },
+        {
+          "name": "DAY",
+          "value": 1
+        },
+        {
+          "name": "PASS_FREE",
+          "value": 2
+        },
+        {
+          "name": "PASS_PAID",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "name": "MESSAGE_MISSION_TYPE",
+      "values": [
+        {
+          "name": "NONE",
+          "value": 0
+        },
+        {
+          "name": "RUNTIME_INIT",
+          "value": 1
+        },
+        {
+          "name": "RUNTIME_PROGRESS",
+          "value": 2
+        },
+        {
+          "name": "RUNTIME_CLAIMABLE",
+          "value": 3
+        },
+        {
+          "name": "RUNTIME_REWARDED",
+          "value": 4
+        },
+        {
+          "name": "DAY_RESET",
+          "value": 5
+        },
+        {
+          "name": "ACHIEVE_LEVEL_UP",
+          "value": 6
+        }
+      ]
+    },
+    {
+      "name": "MESSAGE_ACHIEVE_TYPE",
+      "values": [
+        {
+          "name": "NONE",
+          "value": 0
+        },
+        {
+          "name": "RUNTIME_INIT",
+          "value": 1
+        },
+        {
+          "name": "RUNTIME_PROGRESS",
+          "value": 2
+        },
+        {
+          "name": "RUNTIME_CLAIMABLE",
+          "value": 3
+        },
+        {
+          "name": "RUNTIME_LEVEL_UP",
+          "value": 4
+        },
+        {
+          "name": "RUNTIME_REWARDED",
+          "value": 5
+        },
+        {
+          "name": "RUNTIME_UNLOCKED",
+          "value": 6
+        },
+        {
+          "name": "RUNTIME_ACTIVE",
+          "value": 7
+        }
+      ]
+    },
+    {
+      "name": "ACHIEVE_TYPE",
+      "values": [
+        {
+          "name": "NONE",
+          "value": 0
+        },
+        {
+          "name": "ONCE",
+          "value": 1
+        },
+        {
+          "name": "PASS",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "name": "CURRENCY_TYPE",
+      "values": [
+        {
+          "name": "GOLD",
+          "value": 0
+        },
+        {
+          "name": "JEWEL_FREE",
+          "value": 1
+        },
+        {
+          "name": "JEWEL_PAID",
+          "value": 2
+        },
+        {
+          "name": "STAMINA",
+          "value": 3
+        },
+        {
+          "name": "FRIENDSHIP",
+          "value": 4
+        },
+        {
+          "name": "GUILD_COIN",
+          "value": 5
+        },
+        {
+          "name": "ARENA_COIN",
+          "value": 6
+        }
+      ]
+    },
+    {
+      "name": "REWARD_TYPE",
+      "values": [
+        {
+          "name": "CARD",
+          "value": 0
+        },
+        {
+          "name": "CURRENCY",
+          "value": 1
+        },
+        {
+          "name": "EQUIP",
+          "value": 2
+        },
+        {
+          "name": "HERO",
+          "value": 3
+        },
+        {
+          "name": "RENTAL",
+          "value": 4
+        },
+        {
+          "name": "PASS",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "name": "ADVERTISE_FORMAT",
+      "values": [
+        {
+          "name": "BANNER",
+          "value": 0
+        },
+        {
+          "name": "INTERSTITIAL",
+          "value": 1
+        },
+        {
+          "name": "REWARDED",
+          "value": 2
+        },
+        {
+          "name": "APP_OPEN",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "name": "ADVERTISE_PROVIDER",
+      "values": [
+        {
+          "name": "GOOGLE_MOBILE_ADS",
+          "value": 0
+        },
+        {
+          "name": "MOCK",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "name": "PURCHASE_KIND",
+      "values": [
+        {
+          "name": "CONSUMABLE",
+          "value": 0
+        },
+        {
+          "name": "SUBSCRIPTION",
+          "value": 1
+        },
+        {
+          "name": "PASS",
+          "value": 2
+        },
+        {
+          "name": "RENTAL",
+          "value": 3
+        }
+      ]
+    },
+    {
+      "name": "MESSAGE_INVENTORY_TYPE",
+      "values": [
+        {
+          "name": "NONE",
+          "value": 0
+        },
+        {
+          "name": "PASS_CHANGED",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}

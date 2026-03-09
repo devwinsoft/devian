@@ -8,7 +8,7 @@ AppliesTo: v10
 이 문서는 아래 항목의 정본이다.
 
 - `MISSION`, `MESSAGE` 스키마
-- `GAME_MESSAGE_TYPE`, `GAME_MESSAGE_SAVE_TYPE`, `MISSION_MESSAGE` 사용 규약
+- `GAME_MESSAGE_TYPE`, `GAME_MESSAGE_SAVE_TYPE`, `MESSAGE_MISSION_TYPE` 사용 규약
 - Mission trigger/update/runtime binding 규칙
 - Mission 저장 구조(`MissionStorage`, daily runtime) 규칙
 
@@ -55,8 +55,8 @@ AppliesTo: v10
 | `saveType` | `GAME_MESSAGE_SAVE_TYPE` | 누적 방식 |
 
 정본 source:
-- `input/Domains/Game/GameTable.xlsx`
-- `input/Domains/Game/ENUM_MISSION.json`
+- `input/Domains/Game/MetaTable.xlsx`
+- `input/Domains/Game/ENUM_META.json`
 
 ---
 
@@ -80,11 +80,11 @@ AppliesTo: v10
 BaseTrigger<int, GAME_MESSAGE_TYPE>
 ```
 
-외부 진입점은 `GameMessageManager.Notify(messageType, delta)`다.
+외부 진입점은 `MetaMessageManager.Notify(messageType, delta)`다.
 
 trigger 처리 순서:
 
-1. `GameMessageManager.Notify` 호출
+1. `MetaMessageManager.Notify` 호출
 2. `TB_MESSAGE`에서 `messageType` 일치 row를 순회
 3. `message.stats[messageId]` 갱신
    - `SUM`: `current + delta`
@@ -137,6 +137,6 @@ runtime 저장 규칙 (`DAY`만):
 - [46-achieve-system](../../46-achieve-system/00-overview/SKILL.md)
 - [01-policy](../01-policy/SKILL.md)
 - [10-mission-manager](../10-mission-manager/SKILL.md)
-- [45-game-message-system/11-game-message-trigger](../../45-game-message-system/11-game-message-trigger/SKILL.md)
+- [45-meta-message-system/11-game-message-trigger](../../45-meta-message-system/11-game-message-trigger/SKILL.md)
 - [12-mission-storage](../12-mission-storage/SKILL.md)
 - [13-mission-runtime](../13-mission-runtime/SKILL.md)

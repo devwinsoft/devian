@@ -18,7 +18,7 @@ Type: Design / Message SSOT
 ## Type
 
 ```csharp
-public sealed class AchieveMessageTrigger : BaseTrigger<EntityId, ACHIEVE_MESSAGE>
+public sealed class AchieveMessageTrigger : BaseTrigger<EntityId, MESSAGE_ACHIEVE_TYPE>
 {
 }
 ```
@@ -27,7 +27,7 @@ public sealed class AchieveMessageTrigger : BaseTrigger<EntityId, ACHIEVE_MESSAG
 
 - `AchieveManager`가 단일 인스턴스를 소유한다.
 - 외부 구독자는 `AchieveManager.Subcribe(...)`, `SubcribeOnce(...)`, `UnSubcribe(...)` 헬퍼를 사용한다.
-- 업적 진행 입력(`GAME_MESSAGE_TYPE`)은 `GameMessageManager.Notify(...)` 경계에서 처리되고, `AchieveMessageTrigger`는 알림 전용이다.
+- 업적 진행 입력(`GAME_MESSAGE_TYPE`)은 `MetaMessageManager.Notify(...)` 경계에서 처리되고, `AchieveMessageTrigger`는 알림 전용이다.
 
 ---
 

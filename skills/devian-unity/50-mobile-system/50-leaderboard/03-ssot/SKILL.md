@@ -19,7 +19,7 @@ AppliesTo: v10
 
 ## A. Table Source
 
-- 파일: `input/Domains/Game/GameTable.xlsx`
+- 파일: `input/Domains/Game/MetaTable.xlsx`
 - 시트: `LEADERBOARD`, `LEADERBOARD_REWARD`
 
 ---
@@ -101,7 +101,7 @@ AppliesTo: v10
 
 ---
 
-## H. Table Composition (GameTable.xlsx)
+## H. Table Composition (MetaTable.xlsx)
 
 시즌 보상 경로에서 사용하는 핵심 시트 구성도:
 

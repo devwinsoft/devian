@@ -18,7 +18,7 @@ Mission 변화 알림 전용 메시지 시스템 정본이다.
 ## Type
 
 ```csharp
-public sealed class MissionMessageTrigger : BaseTrigger<EntityId, MISSION_MESSAGE>
+public sealed class MissionMessageTrigger : BaseTrigger<EntityId, MESSAGE_MISSION_TYPE>
 {
 }
 ```
@@ -64,4 +64,4 @@ public sealed class MissionMessageTrigger : BaseTrigger<EntityId, MISSION_MESSAG
 
 - [03-ssot](../03-ssot/SKILL.md)
 - [10-mission-manager](../10-mission-manager/SKILL.md)
-- [45-game-message-system/10-game-message-manager](../../45-game-message-system/10-game-message-manager/SKILL.md)
+- [45-meta-message-system/10-meta-message-manager](../../45-meta-message-system/10-meta-message-manager/SKILL.md)

@@ -66,7 +66,7 @@ ID listbox 규칙:
 
 catalog 문서 정본:
 - `/config/rewardIdCatalog`
-- import 경로: [20-excel-reward-id-export](../20-excel-reward-id-export/SKILL.md) (`ENUM_TYPES.json` + xlsx)
+- import 경로: [20-excel-reward-id-export](../20-excel-reward-id-export/SKILL.md) (`ENUM_META.json` + xlsx)
 
 서버 연동 정본:
 - callable: `getInitialInventory`

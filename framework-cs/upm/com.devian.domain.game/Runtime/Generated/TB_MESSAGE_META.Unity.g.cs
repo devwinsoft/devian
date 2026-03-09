@@ -12,13 +12,13 @@ using UnityEngine;
 
 namespace Devian.Domain.Game
 {
-    public static partial class TB_MESSAGE
+    public static partial class TB_MESSAGE_META
     {
         private static global::Devian.TableFormat _loadedFormat;
         private static bool _isLoaded;
 
         /// <summary>
-        /// Preload MESSAGE table via TableManager.
+        /// Preload MESSAGE_META table via TableManager.
         /// TableManager handles: TextAsset load + TB insert + cache.
         /// </summary>
         /// <param name="key">Addressables key to load TextAsset</param>
@@ -39,7 +39,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Unload MESSAGE table and clear data.
+        /// Unload MESSAGE_META table and clear data.
         /// </summary>
         public static void Unload()
         {
@@ -48,7 +48,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Check if MESSAGE table is loaded.
+        /// Check if MESSAGE_META table is loaded.
         /// </summary>
         public static bool IsLoaded => _isLoaded;
 

@@ -12,7 +12,7 @@ AppliesTo: v10
 `STAT_TYPE`은 Game 도메인 contract에서 빌드 파이프라인으로 생성되는 enum이다.
 모든 Ability 시스템([12-game-ability](../12-game-ability/SKILL.md))의 key로 사용된다.
 
-- 입력: `input/Domains/Game/ENUM_TYPES.json`
+- 입력: `input/Domains/Game/ENUM_GAME.json`
 - 생성: `Devian.Domain.Game.STAT_TYPE` enum
 - 네임스페이스: `Devian.Domain.Game`
 
@@ -45,7 +45,7 @@ AppliesTo: v10
 
 ---
 
-## 3. ENUM_TYPES.json — STAT_TYPE 부분 (SSOT)
+## 3. ENUM_GAME.json — STAT_TYPE 부분 (SSOT)
 
 ```json
 {
@@ -119,7 +119,7 @@ hero.Unequip(slotNumber);
 ## 5. Hard Rules
 
 - `STAT_TYPE`은 Generated enum이다. 수동 정의 금지.
-- 새 STAT_TYPE 값 추가 시 이 스킬 → `ENUM_TYPES.json` → 빌드 순서로 진행한다.
+- 새 STAT_TYPE 값 추가 시 이 스킬 → `ENUM_GAME.json` → 빌드 순서로 진행한다.
 - value 번호는 카테고리별로 범위를 관리한다 (충돌 방지).
 
 ---
@@ -127,5 +127,5 @@ hero.Unequip(slotNumber);
 ## 6. Related
 
 - [12-game-ability](../12-game-ability/SKILL.md) — AbilityBase, AbilityEquip (STAT_TYPE 소비자)
-- [11-game-domain](../11-game-domain/SKILL.md) — Game 도메인 허브 (ENUM_TYPES.json contract)
+- [11-game-domain](../11-game-domain/SKILL.md) — Game 도메인 허브 (ENUM_GAME.json contract)
 - [11-inventory-storage](../../50-mobile-system/22-inventory-system/11-inventory-storage/SKILL.md) — InventoryStorage

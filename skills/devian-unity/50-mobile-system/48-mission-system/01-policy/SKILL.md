@@ -26,8 +26,8 @@ Mission(`DAY`) 시스템의 모듈 경계와 하드룰을 정의한다.
 
 ### 3) trigger 처리 순서는 `stats 갱신 -> game trigger publish -> achieve notify`다
 
-- MissionManager.Notify는 `GameMessageManager.NotifyGameMessage`로 위임한다.
-- `GameMessageManager`가 같은 `statType`을 참조하는 `TB_MESSAGE` row를 순회하며 `message.stats[messageId]`를 먼저 갱신한다.
+- MissionManager.Notify는 `MetaMessageManager.NotifyGameMessage`로 위임한다.
+- `MetaMessageManager`가 같은 `statType`을 참조하는 `TB_MESSAGE` row를 순회하며 `message.stats[messageId]`를 먼저 갱신한다.
   - `SUM`: `current + delta`
   - `MAX`: `max(current, delta)`
 - 그 다음 `GameMessageTrigger` publish로 daily runtime 구독자 notify를 수행한다.
@@ -52,5 +52,5 @@ Mission(`DAY`) 시스템의 모듈 경계와 하드룰을 정의한다.
 - [46-achieve-system](../../46-achieve-system/00-overview/SKILL.md)
 - [03-ssot](../03-ssot/SKILL.md)
 - [10-mission-manager](../10-mission-manager/SKILL.md)
-- [45-game-message-system/11-game-message-trigger](../../45-game-message-system/11-game-message-trigger/SKILL.md)
+- [45-meta-message-system/11-game-message-trigger](../../45-meta-message-system/11-game-message-trigger/SKILL.md)
 - [12-mission-storage](../12-mission-storage/SKILL.md)

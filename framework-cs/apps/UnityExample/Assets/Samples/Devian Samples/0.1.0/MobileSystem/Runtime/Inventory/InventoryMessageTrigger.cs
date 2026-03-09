@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Devian
 {
-    public sealed class InventoryMessageTrigger : BaseTrigger<EntityId, INVENTORY_MESSAGE>
+    public sealed class InventoryMessageTrigger : BaseTrigger<EntityId, MESSAGE_INVENTORY_TYPE>
     {
     }
 }

@@ -15,9 +15,9 @@ namespace Devian
         public bool isWaiting;
         public bool isCompleted;
 
-        [NonSerialized] private GAME_MESSAGE_TYPE _statType;
-        [NonSerialized] private GAME_MESSAGE_SAVE_TYPE _opType;
-        [NonSerialized] private GAME_MESSAGE_OP_TYPE _conditionOpType = GAME_MESSAGE_OP_TYPE.GTE;
+        [NonSerialized] private MESSAGE_META_TYPE _statType;
+        [NonSerialized] private MESSAGE_META_SAVE_TYPE _opType;
+        [NonSerialized] private MESSAGE_META_OP_TYPE _conditionOpType = MESSAGE_META_OP_TYPE.GTE;
         [NonSerialized] private CBigInt _conditionValue = CBigInt.Zero;
         [NonSerialized] private bool _hasSessionMinSample;
         [NonSerialized] private Action<AchieveRuntimeBase> _onProgress;
@@ -26,9 +26,9 @@ namespace Devian
 
         public abstract ACHIEVE_TYPE RuntimeType { get; }
 
-        public GAME_MESSAGE_TYPE StatType => _statType;
-        public GAME_MESSAGE_SAVE_TYPE OpType => _opType;
-        public GAME_MESSAGE_OP_TYPE ConditionOpType => _conditionOpType;
+        public MESSAGE_META_TYPE StatType => _statType;
+        public MESSAGE_META_SAVE_TYPE OpType => _opType;
+        public MESSAGE_META_OP_TYPE ConditionOpType => _conditionOpType;
         public CBigInt ConditionValue => _conditionValue;
         public bool IsClaimable => !isCompleted
                                    && !isWaiting
@@ -40,9 +40,9 @@ namespace Devian
 
         internal void Bind(
             string nextMessageId,
-            GAME_MESSAGE_TYPE statType,
-            GAME_MESSAGE_SAVE_TYPE opType,
-            GAME_MESSAGE_OP_TYPE conditionOpType,
+            MESSAGE_META_TYPE statType,
+            MESSAGE_META_SAVE_TYPE opType,
+            MESSAGE_META_OP_TYPE conditionOpType,
             CBigInt conditionValue,
             Func<CBigInt> readExternalProgress,
             Action<AchieveRuntimeBase> onProgress,
@@ -54,7 +54,7 @@ namespace Devian
             _opType = opType;
             _conditionOpType = conditionOpType;
             _conditionValue = conditionValue;
-            _hasSessionMinSample = opType == GAME_MESSAGE_SAVE_TYPE.SESSION_MIN
+            _hasSessionMinSample = opType == MESSAGE_META_SAVE_TYPE.SESSION_MIN
                                    && progressValue.CompareTo(CBigInt.Zero) != 0;
             _externalProgressReader = readExternalProgress;
             _onProgress = onProgress;
@@ -73,9 +73,9 @@ namespace Devian
         {
             messageId = nextMessageId ?? string.Empty;
             isWaiting = !isCompleted;
-            _statType = GAME_MESSAGE_TYPE.NONE;
-            _opType = GAME_MESSAGE_SAVE_TYPE.NONE;
-            _conditionOpType = GAME_MESSAGE_OP_TYPE.GTE;
+            _statType = MESSAGE_META_TYPE.NONE;
+            _opType = MESSAGE_META_SAVE_TYPE.NONE;
+            _conditionOpType = MESSAGE_META_OP_TYPE.GTE;
             _conditionValue = CBigInt.Zero;
             _hasSessionMinSample = false;
             _externalProgressReader = null;
@@ -114,9 +114,9 @@ namespace Devian
             int nextLevel,
             int nextIndex,
             string nextMessageId,
-            GAME_MESSAGE_TYPE nextStatType,
-            GAME_MESSAGE_SAVE_TYPE nextOpType,
-            GAME_MESSAGE_OP_TYPE nextConditionOpType,
+            MESSAGE_META_TYPE nextStatType,
+            MESSAGE_META_SAVE_TYPE nextOpType,
+            MESSAGE_META_OP_TYPE nextConditionOpType,
             CBigInt nextConditionValue,
             Func<CBigInt> readExternalProgress)
         {
@@ -129,20 +129,20 @@ namespace Devian
             _opType = nextOpType;
             _conditionOpType = nextConditionOpType;
             _conditionValue = nextConditionValue;
-            _hasSessionMinSample = nextOpType == GAME_MESSAGE_SAVE_TYPE.SESSION_MIN
+            _hasSessionMinSample = nextOpType == MESSAGE_META_SAVE_TYPE.SESSION_MIN
                                    && progressValue.CompareTo(CBigInt.Zero) != 0;
             _externalProgressReader = readExternalProgress;
 
-            if (nextOpType == GAME_MESSAGE_SAVE_TYPE.SESSION_SUM)
+            if (nextOpType == MESSAGE_META_SAVE_TYPE.SESSION_SUM)
                 progressValue = CBigInt.Zero;
-            else if (nextOpType == GAME_MESSAGE_SAVE_TYPE.SESSION_MIN)
+            else if (nextOpType == MESSAGE_META_SAVE_TYPE.SESSION_MIN)
             {
                 progressValue = CBigInt.Zero;
                 _hasSessionMinSample = false;
             }
             else if (isTotalSaveType(nextOpType))
                 RefreshProgressFromExternal(emitProgressEvent: false);
-            else if (nextOpType == GAME_MESSAGE_SAVE_TYPE.NONE && nextConditionValue.CompareTo(CBigInt.Zero) <= 0)
+            else if (nextOpType == MESSAGE_META_SAVE_TYPE.NONE && nextConditionValue.CompareTo(CBigInt.Zero) <= 0)
                 progressValue = CBigInt.Zero;
 
             RaiseClaimableIfNeeded();
@@ -155,9 +155,9 @@ namespace Devian
             isCompleted = false;
             isWaiting = true;
             messageId = nextMessageId ?? string.Empty;
-            _statType = GAME_MESSAGE_TYPE.NONE;
-            _opType = GAME_MESSAGE_SAVE_TYPE.NONE;
-            _conditionOpType = GAME_MESSAGE_OP_TYPE.GTE;
+            _statType = MESSAGE_META_TYPE.NONE;
+            _opType = MESSAGE_META_SAVE_TYPE.NONE;
+            _conditionOpType = MESSAGE_META_OP_TYPE.GTE;
             _conditionValue = CBigInt.Zero;
             _hasSessionMinSample = false;
             _externalProgressReader = null;
@@ -195,9 +195,9 @@ namespace Devian
                 RaiseClaimableIfNeeded();
         }
 
-        internal void OnMessageStatUpdated(GAME_MESSAGE_TYPE messageType, CBigInt delta)
+        internal void OnMessageStatUpdated(MESSAGE_META_TYPE messageType, CBigInt delta)
         {
-            if (isCompleted || isWaiting || _opType == GAME_MESSAGE_SAVE_TYPE.NONE || _statType != messageType)
+            if (isCompleted || isWaiting || _opType == MESSAGE_META_SAVE_TYPE.NONE || _statType != messageType)
                 return;
 
             if (isTotalSaveType(_opType))
@@ -210,17 +210,17 @@ namespace Devian
             CBigInt nextProgress;
             switch (_opType)
             {
-                case GAME_MESSAGE_SAVE_TYPE.SESSION_SUM:
+                case MESSAGE_META_SAVE_TYPE.SESSION_SUM:
                     nextProgress = GameMessageRule.ClampNonNegative(progressValue + delta);
                     break;
 
-                case GAME_MESSAGE_SAVE_TYPE.SESSION_MAX:
+                case MESSAGE_META_SAVE_TYPE.SESSION_MAX:
                     if (delta.CompareTo(CBigInt.Zero) < 0)
                         return;
                     nextProgress = CBigInt.Max(progressValue, delta);
                     break;
 
-                case GAME_MESSAGE_SAVE_TYPE.SESSION_MIN:
+                case MESSAGE_META_SAVE_TYPE.SESSION_MIN:
                     if (delta.CompareTo(CBigInt.Zero) < 0)
                         return;
 
@@ -249,11 +249,11 @@ namespace Devian
                 RaiseClaimableIfNeeded();
         }
 
-        static bool isTotalSaveType(GAME_MESSAGE_SAVE_TYPE saveType)
+        static bool isTotalSaveType(MESSAGE_META_SAVE_TYPE saveType)
         {
-            return saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
-                   || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX
-                   || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MIN;
+            return saveType == MESSAGE_META_SAVE_TYPE.TOTAL_SUM
+                   || saveType == MESSAGE_META_SAVE_TYPE.TOTAL_MAX
+                   || saveType == MESSAGE_META_SAVE_TYPE.TOTAL_MIN;
         }
     }
 

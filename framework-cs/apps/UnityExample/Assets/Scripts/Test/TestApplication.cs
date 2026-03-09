@@ -8,8 +8,6 @@ public class TestApplication : MobileApplication
     public static TestApplication Instance => _instance;
     static TestApplication _instance = null;
 
-    bool _loaded = false;
-    
     public static TestApplication Create()
     {
         if (_instance == null)
@@ -20,21 +18,13 @@ public class TestApplication : MobileApplication
     }
     
 
-    protected override async Task OnBootProc()
+    protected override async Task onBootAsync()
     {
-        await base.OnBootProc();
+        await base.onBootAsync();
     }
 
-    
-    public async Task LoadAsync(SystemLanguage language, Action<float>? onProgress = null)
+    protected override async Task onLoadAsync(SystemLanguage language, Action<float>? onProgress = null)
     {
-        if (_loaded)
-        {
-            reportProgress(onProgress, 1f);
-            return;
-        }
-        _loaded = true;
-
         reportProgress(onProgress, 0f);
 
         var patchResult = await TestBundleManager.Instance.InitializeAsync();
@@ -66,6 +56,11 @@ public class TestApplication : MobileApplication
             progress => reportProgress(onProgress, remapProgress(progress, 0.55f, 1f)));
         await Task.Yield();
         reportProgress(onProgress, 1f);
+    }
+
+    protected override Task onLoadCompletedAsync()
+    {
+        return Task.CompletedTask;
     }
 
     static void reportProgress(Action<float>? onProgress, float progress)

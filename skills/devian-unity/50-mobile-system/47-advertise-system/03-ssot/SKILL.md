@@ -42,7 +42,7 @@ AppliesTo: v10
 광고 메타데이터 정본은 Game 도메인 안의 `ADVERTISE` 테이블이다.
 
 - 위치: `input/Domains/Game/*.xlsx` 중 `ADVERTISE` sheet를 포함한 파일
-- 현재 샘플 파일: `input/Domains/Game/AdvertiseTable.xlsx`
+- 현재 샘플 파일: `input/Domains/Game/MetaTable.xlsx`
 - sheet/table 정본 이름: `ADVERTISE`
 - 생성 대상: `TB_ADVERTISE`
 - **도메인 소속**: `com.devian.domain.game` (기존 `TB_REWARD`와 동일)

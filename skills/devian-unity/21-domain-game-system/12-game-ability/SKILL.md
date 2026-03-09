@@ -15,7 +15,7 @@ Ability는 **컨텐츠(Game) 레이어에만 존재**한다.
 
 `STAT_TYPE`은 Game 도메인 contract에서 빌드 파이프라인으로 생성한다.
 
-- 입력: `input/Domains/Game/ENUM_TYPES.json`
+- 입력: `input/Domains/Game/ENUM_GAME.json`
 - 생성: `Devian.Domain.Game.STAT_TYPE` enum
 - 네임스페이스: `Devian.Domain.Game`
 
@@ -278,7 +278,7 @@ Ability/
 
 ### STAT_TYPE contract (입력)
 
-- `input/Domains/Game/ENUM_TYPES.json`
+- `input/Domains/Game/ENUM_GAME.json`
 
 ### STAT_TYPE enum (Generated)
 

@@ -6,25 +6,25 @@ using UnityEngine;
 
 namespace Devian
 {
-    public sealed class GameMessageManager : CompoSingleton<GameMessageManager>
+    public sealed class MetaMessageManager : CompoSingleton<MetaMessageManager>
     {
-        const string Tag = nameof(GameMessageManager);
+        const string Tag = nameof(MetaMessageManager);
 
         readonly struct MessageSaveBinding
         {
-            public MessageSaveBinding(string messageId, GAME_MESSAGE_SAVE_TYPE saveType)
+            public MessageSaveBinding(string messageId, MESSAGE_META_SAVE_TYPE saveType)
             {
                 MessageId = messageId;
                 SaveType = saveType;
             }
 
             public string MessageId { get; }
-            public GAME_MESSAGE_SAVE_TYPE SaveType { get; }
+            public MESSAGE_META_SAVE_TYPE SaveType { get; }
         }
 
         readonly GameMessageStorage _storage = new();
         readonly GameMessageTrigger _gameMessageTriggerSystem = new();
-        readonly Dictionary<GAME_MESSAGE_TYPE, List<MessageSaveBinding>> _saveBindingsByMessageType = new();
+        readonly Dictionary<MESSAGE_META_TYPE, List<MessageSaveBinding>> _saveBindingsByMessageType = new();
         bool _initialized;
 
         public GameMessageStorage Storage => _storage;
@@ -61,17 +61,17 @@ namespace Devian
             _storage.Clear();
         }
 
-        public void Notify(GAME_MESSAGE_TYPE messageType, long value)
+        public void Notify(MESSAGE_META_TYPE messageType, long value)
         {
             Notify(messageType, CBigInt.FromLong(value));
         }
 
-        public void Notify(GAME_MESSAGE_TYPE messageType, int value)
+        public void Notify(MESSAGE_META_TYPE messageType, int value)
         {
             Notify(messageType, CBigInt.FromInt(value));
         }
 
-        public void Notify(GAME_MESSAGE_TYPE messageType, CBigInt value)
+        public void Notify(MESSAGE_META_TYPE messageType, CBigInt value)
         {
             if (!_initialized)
             {
@@ -85,8 +85,8 @@ namespace Devian
 
         internal void SubcribeGameMessageTrigger(
             int ownerKey,
-            GAME_MESSAGE_TYPE messageType,
-            BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler handler)
+            MESSAGE_META_TYPE messageType,
+            BaseTrigger<int, MESSAGE_META_TYPE>.Handler handler)
         {
             _gameMessageTriggerSystem.Subcribe(ownerKey, messageType, handler);
         }
@@ -103,7 +103,7 @@ namespace Devian
             _initialized = false;
         }
 
-        void onBeforeTriggerNotify(GAME_MESSAGE_TYPE messageType, CBigInt delta)
+        void onBeforeTriggerNotify(MESSAGE_META_TYPE messageType, CBigInt delta)
         {
             if (!tryGetSaveBindings(messageType, out var bindings))
             {
@@ -120,17 +120,17 @@ namespace Devian
                 CBigInt next;
                 switch (binding.SaveType)
                 {
-                    case GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM:
+                    case MESSAGE_META_SAVE_TYPE.TOTAL_SUM:
                         next = GameMessageRule.ClampNonNegative(current + delta);
                         break;
 
-                    case GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX:
+                    case MESSAGE_META_SAVE_TYPE.TOTAL_MAX:
                         if (delta.CompareTo(CBigInt.Zero) < 0)
                             continue;
                         next = CBigInt.Max(current, delta);
                         break;
 
-                    case GAME_MESSAGE_SAVE_TYPE.TOTAL_MIN:
+                    case MESSAGE_META_SAVE_TYPE.TOTAL_MIN:
                         if (delta.CompareTo(CBigInt.Zero) < 0)
                             continue;
 
@@ -151,7 +151,7 @@ namespace Devian
             }
         }
 
-        bool tryGetSaveBindings(GAME_MESSAGE_TYPE messageType, out List<MessageSaveBinding> bindings)
+        bool tryGetSaveBindings(MESSAGE_META_TYPE messageType, out List<MessageSaveBinding> bindings)
         {
             if (_saveBindingsByMessageType.TryGetValue(messageType, out bindings)
                 && bindings != null
@@ -164,9 +164,9 @@ namespace Devian
             return false;
         }
 
-        void tryRebuildSaveBindingsFor(GAME_MESSAGE_TYPE messageType)
+        void tryRebuildSaveBindingsFor(MESSAGE_META_TYPE messageType)
         {
-            var messageRows = TB_MESSAGE.GetAll();
+            var messageRows = TB_MESSAGE_META.GetAll();
             if (messageRows == null || messageRows.Count <= 0)
                 return;
 
@@ -188,7 +188,7 @@ namespace Devian
         void rebuildSaveBindings()
         {
             _saveBindingsByMessageType.Clear();
-            var messageRows = TB_MESSAGE.GetAll() ?? new List<MESSAGE>();
+            var messageRows = TB_MESSAGE_META.GetAll() ?? new List<MESSAGE_META>();
 
             foreach (var message in messageRows)
             {
@@ -212,11 +212,11 @@ namespace Devian
 
     internal static class GameMessageRule
     {
-        public static bool IsTotalSaveType(GAME_MESSAGE_SAVE_TYPE saveType)
+        public static bool IsTotalSaveType(MESSAGE_META_SAVE_TYPE saveType)
         {
-            return saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
-                   || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX
-                   || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MIN;
+            return saveType == MESSAGE_META_SAVE_TYPE.TOTAL_SUM
+                   || saveType == MESSAGE_META_SAVE_TYPE.TOTAL_MAX
+                   || saveType == MESSAGE_META_SAVE_TYPE.TOTAL_MIN;
         }
 
         public static CBigInt ClampNonNegative(CBigInt value)
@@ -226,19 +226,19 @@ namespace Devian
                 : value;
         }
 
-        public static bool IsConditionSatisfied(CBigInt progress, GAME_MESSAGE_OP_TYPE opType, CBigInt conditionValue)
+        public static bool IsConditionSatisfied(CBigInt progress, MESSAGE_META_OP_TYPE opType, CBigInt conditionValue)
         {
             var compare = progress.CompareTo(conditionValue);
             switch (opType)
             {
-                case GAME_MESSAGE_OP_TYPE.EQ:
+                case MESSAGE_META_OP_TYPE.EQ:
                     return compare == 0;
 
-                case GAME_MESSAGE_OP_TYPE.LTE:
+                case MESSAGE_META_OP_TYPE.LTE:
                     return compare <= 0;
 
-                case GAME_MESSAGE_OP_TYPE.GTE:
-                case GAME_MESSAGE_OP_TYPE.NONE:
+                case MESSAGE_META_OP_TYPE.GTE:
+                case MESSAGE_META_OP_TYPE.NONE:
                 default:
                     return compare >= 0;
             }

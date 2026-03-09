@@ -351,28 +351,28 @@ namespace Devian
                     $"LEADERBOARD.messageId is empty: {entry.InternalId}");
             }
 
-            var message = TB_MESSAGE.Get(messageId);
+            var message = TB_MESSAGE_META.Get(messageId);
             if (message == null)
             {
                 return CommonResult.Failure(
                     CommonErrorType.LEADERBOARD_MESSAGE_NOT_FOUND,
-                    $"MESSAGE not found for leaderboard score: leaderboardId={entry.InternalId}, messageId={messageId}");
+                    $"MESSAGE_META not found for leaderboard score: leaderboardId={entry.InternalId}, messageId={messageId}");
             }
 
             if (!isLeaderboardSupportedSaveType(message.SaveType))
             {
                 return CommonResult.Failure(
                     CommonErrorType.LEADERBOARD_MESSAGE_SAVE_TYPE_INVALID,
-                    $"Invalid MESSAGE.saveType for leaderboard score: " +
+                    $"Invalid MESSAGE_META.saveType for leaderboard score: " +
                     $"leaderboardId={entry.InternalId}, messageId={messageId}, saveType={message.SaveType}. " +
                     $"Expected TOTAL_SUM or TOTAL_MAX.");
             }
 
-            if (!GameMessageManager.TryGet(out var messageManager) || messageManager == null)
+            if (!MetaMessageManager.TryGet(out var messageManager) || messageManager == null)
             {
                 return CommonResult.Failure(
                     CommonErrorType.COMMON_INVALID_ARGUMENT,
-                    "GameMessageManager is not initialized.");
+                    "MetaMessageManager is not initialized.");
             }
 
             var stat = messageManager.GetStat(messageId);
@@ -414,10 +414,10 @@ namespace Devian
             }
         }
 
-        private static bool isLeaderboardSupportedSaveType(GAME_MESSAGE_SAVE_TYPE saveType)
+        private static bool isLeaderboardSupportedSaveType(MESSAGE_META_SAVE_TYPE saveType)
         {
-            return saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
-                   || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX;
+            return saveType == MESSAGE_META_SAVE_TYPE.TOTAL_SUM
+                   || saveType == MESSAGE_META_SAVE_TYPE.TOTAL_MAX;
         }
 
         private static LEADERBOARD_MODE[] GetAllModes()

@@ -18,7 +18,7 @@ const targetDocPath = 'config/rewardIdCatalog';
 
 const DEFAULT_ITEM_TABLE_REL_PATH = 'input/Domains/Game/ItemTable.xlsx';
 const DEFAULT_UNIT_TABLE_REL_PATH = 'input/Domains/Game/UnitTable.xlsx';
-const DEFAULT_ENUM_TYPES_REL_PATH = 'input/Domains/Game/ENUM_TYPES.json';
+const DEFAULT_ENUM_TYPES_REL_PATH = 'input/Domains/Game/ENUM_META.json';
 const ENV_ITEM_TABLE_PATH = 'OP_REWARD_ITEM_TABLE_XLSX_PATH';
 const ENV_UNIT_TABLE_PATH = 'OP_REWARD_UNIT_TABLE_XLSX_PATH';
 const ENV_ENUM_TYPES_PATH = 'OP_REWARD_ENUM_TYPES_JSON_PATH';

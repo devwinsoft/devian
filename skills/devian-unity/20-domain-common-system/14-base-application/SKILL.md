@@ -41,6 +41,7 @@ public VersionNumber AppVersion => _appVersion;
 ```csharp
 private static BaseApplication _instance;
 private static bool _booted;
+private static bool _loaded;
 
 public static BaseApplication Instance => _instance;
 public static bool IsApplicationQuitting { get; private set; }
@@ -56,7 +57,7 @@ public static bool IsShuttingDown { get; private set; }
 ### 추상 메서드
 
 ```csharp
-protected abstract Task OnBootProc();
+protected abstract Task onBootAsync();
 ```
 
 개발자가 구현해야 하는 부팅 로직. BootProc()에서 1회만 호출된다.
@@ -86,12 +87,41 @@ public async Task BootProc()
 동작:
 1. `_booted == true`면 즉시 return
 2. `_booted = true`
-3. `await OnBootProc()`
+3. `await onBootAsync()`
 
 의미:
-- `OnBootProc()` 예외는 상위 호출자까지 그대로 전파된다.
+- `onBootAsync()` 예외는 상위 호출자까지 그대로 전파된다.
 - 한번 시도한 `BootProc()`는 실패해도 재시도하지 않는다.
 - Bootstrap 오류로 앱 시작이 중단되는 것은 정상 동작이다.
+
+### LoadAsync (템플릿 메서드)
+
+```csharp
+public async Task LoadAsync(SystemLanguage language, Action<float>? onProgress = null)
+```
+
+동작:
+1. `_loaded == true`면 `onProgress(1f)` 후 즉시 return
+2. `_loaded = true`
+3. `await onLoadAsync(language, onProgress)`
+4. `await onLoadCompletedAsync()`
+
+의미:
+- `BootProc()`와 같은 idempotent 패턴 (1회 실행, 재시도 없음)
+- 앱 리소스 로딩(번들 다운로드, 테이블 로드 등)을 위한 템플릿
+- 파생 클래스는 `onLoadAsync()`에서 리소스 로딩, `onLoadCompletedAsync()`에서 후처리를 구현한다
+
+```csharp
+protected virtual Task onLoadAsync(SystemLanguage language, Action<float>? onProgress = null)
+{
+    return Task.CompletedTask;
+}
+
+protected virtual Task onLoadCompletedAsync()
+{
+    return Task.CompletedTask;
+}
+```
 
 ### Application.quitting 구독
 
@@ -118,6 +148,7 @@ private static void ResetStatics()
 {
     _instance = null;
     _booted = false;
+    _loaded = false;
     IsApplicationQuitting = false;
     IsShuttingDown = false;
 }
@@ -159,7 +190,7 @@ protected override void OnEnterForeground()
 부트 컨테이너는 **BaseApplication 파생 컴포넌트를 정확히 1개 포함하는 프리팹**이다:
 
 - 개발자는 `BaseApplication`을 상속한 클래스를 만들어 프리팹에 부착
-- `OnBootProc()`에서 초기화 로직 구현
+- `onBootAsync()`에서 초기화 로직 구현
 - 추가로 필요한 Manager 컴포넌트들을 함께 부착 가능
 
 **프레임워크가 BaseApplication 파생 컴포넌트를 자동 추가하지 않는다.** 개발자가 직접 추가해야 한다.

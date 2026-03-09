@@ -26,7 +26,7 @@ MobileSystem 샘플의 Mission 시스템 개요다.
 | [03-ssot](../03-ssot/SKILL.md) | 테이블/저장/트리거 정본 |
 | [09-ssot-operations](../09-ssot-operations/SKILL.md) | 운영 시나리오/테스트/DoD |
 | [10-mission-manager](../10-mission-manager/SKILL.md) | MissionManager 설계 |
-| [45-game-message-system/11-game-message-trigger](../../45-game-message-system/11-game-message-trigger/SKILL.md) | GameMessageTrigger 설계 |
+| [45-meta-message-system/11-game-message-trigger](../../45-meta-message-system/11-game-message-trigger/SKILL.md) | GameMessageTrigger 설계 |
 | [12-mission-storage](../12-mission-storage/SKILL.md) | MissionStorage 저장/복구 규약 |
 | [13-mission-runtime](../13-mission-runtime/SKILL.md) | MissionRuntime 진행도/완료 규약 |
 | [14-mission-factory](../14-mission-factory/SKILL.md) | MissionRuntimeFactory 생성/복구 규약 |

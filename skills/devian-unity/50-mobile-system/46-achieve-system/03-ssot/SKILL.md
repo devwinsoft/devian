@@ -9,7 +9,7 @@ AppliesTo: v10
 
 - 업적 runtime 테이블: `ACHIEVE_ONCE`, `ACHIEVE_PASS`
 - 진행 stat 정본: `MESSAGE`
-- 업적 알림 enum: `ACHIEVE_MESSAGE`
+- 업적 알림 enum: `MESSAGE_ACHIEVE_TYPE`
 - 업적 타입 enum: `ACHIEVE_TYPE` (`NONE`, `ONCE`, `PASS`)
 - 플랫폼 업적 매핑: `ACHIEVE_ONCE.achieveId -> (appleAchievementId, googleAchievementId)`
 - 저장 구조: `AchieveStorage` + `AchieveRuntimeBase`
@@ -18,7 +18,7 @@ AppliesTo: v10
 
 ## A. Runtime Source
 
-- 파일: `input/Domains/Game/GameTable.xlsx`
+- 파일: `input/Domains/Game/MetaTable.xlsx`
 - 시트: `ACHIEVE_ONCE`
 - 컨테이너: `TB_ACHIEVE_ONCE`
 
@@ -41,7 +41,7 @@ AppliesTo: v10
 
 ### `ACHIEVE_PASS` schema
 
-- 파일: `input/Domains/Game/GameTable.xlsx`
+- 파일: `input/Domains/Game/MetaTable.xlsx`
 - 시트: `ACHIEVE_PASS`
 - 컨테이너: `TB_ACHIEVE_PASS`
 
@@ -81,7 +81,7 @@ AppliesTo: v10
   - `ACHIEVE_PASS`: `reqPassId` / `reqSeasonId`
 - `WAIT` 상태는 `conditionMsgId` 진행도 반영을 하지 않는다.
 - req 조건을 만족하면 `WAIT -> ACTIVE`로 전이한다.
-  - req message 조건: `GameMessageManager` stat/trigger 기반
+  - req message 조건: `MetaMessageManager` stat/trigger 기반
   - req pass 조건: `InventoryManager.Instance.Storage.Passes` 보유 체크
   - req season 조건: `TB_SEASON(reqSeasonId)`의 `[startUtcTime, endUtcTime)` 범위에 `RemoteConfigManager.serverNowUtcMs`가 포함되어야 한다.
 - 진행값은 saveType 규칙을 따른다:
@@ -113,7 +113,7 @@ claim 성공 시:
 - `OnAchievementUnlocked(string achievementId)`
 
 `AchieveMessageTrigger` payload 규약:
-- key: `ACHIEVE_MESSAGE`
+- key: `MESSAGE_ACHIEVE_TYPE`
 - `RUNTIME_*`: `args[0] = AchieveRuntimeBase`
 - `RUNTIME_REWARDED`: `args[1] = RewardData[]`
 - `RUNTIME_UNLOCKED`: `args[0] = string achievementId`

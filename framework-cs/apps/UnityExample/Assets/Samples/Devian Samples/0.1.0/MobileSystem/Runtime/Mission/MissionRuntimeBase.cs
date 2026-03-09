@@ -13,21 +13,21 @@ namespace Devian
         public CBigInt progressValue = CBigInt.Zero;
         public bool isCompleted;
 
-        [NonSerialized] protected GAME_MESSAGE_TYPE _statType;
-        [NonSerialized] protected GAME_MESSAGE_SAVE_TYPE _opType;
-        [NonSerialized] protected GAME_MESSAGE_OP_TYPE _conditionOpType = GAME_MESSAGE_OP_TYPE.GTE;
+        [NonSerialized] protected MESSAGE_META_TYPE _statType;
+        [NonSerialized] protected MESSAGE_META_SAVE_TYPE _opType;
+        [NonSerialized] protected MESSAGE_META_OP_TYPE _conditionOpType = MESSAGE_META_OP_TYPE.GTE;
         [NonSerialized] protected CBigInt _conditionValue = CBigInt.Zero;
         [NonSerialized] private bool _hasSessionMinSample;
-        [NonSerialized] private Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> _subscribeTrigger;
+        [NonSerialized] private Action<int, MESSAGE_META_TYPE, BaseTrigger<int, MESSAGE_META_TYPE>.Handler> _subscribeTrigger;
         [NonSerialized] private Action<int> _unsubscribeTrigger;
         [NonSerialized] private Action<MissionRuntimeBase> _onProgress;
         [NonSerialized] private Action<MissionRuntimeBase> _onClaimable;
         [NonSerialized] private Func<CBigInt> _externalProgressReader;
         [NonSerialized] private bool _isSubscribed;
 
-        public GAME_MESSAGE_TYPE StatType => _statType;
-        public GAME_MESSAGE_SAVE_TYPE OpType => _opType;
-        public GAME_MESSAGE_OP_TYPE ConditionOpType => _conditionOpType;
+        public MESSAGE_META_TYPE StatType => _statType;
+        public MESSAGE_META_SAVE_TYPE OpType => _opType;
+        public MESSAGE_META_OP_TYPE ConditionOpType => _conditionOpType;
         public CBigInt ConditionValue => _conditionValue;
         public bool IsSubscribed => _isSubscribed;
         public bool IsClaimable => !isCompleted
@@ -39,11 +39,11 @@ namespace Devian
 
         internal void Bind(
             string messageId,
-            GAME_MESSAGE_TYPE statType,
-            GAME_MESSAGE_SAVE_TYPE opType,
-            GAME_MESSAGE_OP_TYPE conditionOpType,
+            MESSAGE_META_TYPE statType,
+            MESSAGE_META_SAVE_TYPE opType,
+            MESSAGE_META_OP_TYPE conditionOpType,
             CBigInt conditionValue,
-            Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> subscribeTrigger,
+            Action<int, MESSAGE_META_TYPE, BaseTrigger<int, MESSAGE_META_TYPE>.Handler> subscribeTrigger,
             Action<int> unsubscribeTrigger,
             Func<CBigInt> readExternalProgress,
             Action<MissionRuntimeBase> onProgress,
@@ -56,7 +56,7 @@ namespace Devian
             _opType = opType;
             _conditionOpType = conditionOpType;
             _conditionValue = conditionValue;
-            _hasSessionMinSample = opType == GAME_MESSAGE_SAVE_TYPE.SESSION_MIN
+            _hasSessionMinSample = opType == MESSAGE_META_SAVE_TYPE.SESSION_MIN
                                    && progressValue.CompareTo(CBigInt.Zero) != 0;
             _subscribeTrigger = subscribeTrigger;
             _unsubscribeTrigger = unsubscribeTrigger;
@@ -128,7 +128,7 @@ namespace Devian
 
         protected virtual bool ShouldSubscribe()
         {
-            return _opType != GAME_MESSAGE_SAVE_TYPE.NONE;
+            return _opType != MESSAGE_META_SAVE_TYPE.NONE;
         }
 
         protected virtual void OnCompletedCore()
@@ -161,7 +161,7 @@ namespace Devian
             if (!TryReadProgressDelta(args, out var delta))
                 return false;
 
-            if (_opType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            if (_opType == MESSAGE_META_SAVE_TYPE.NONE)
                 return false;
 
             var wasClaimable = IsClaimable;
@@ -185,15 +185,15 @@ namespace Devian
 
             switch (_opType)
             {
-                case GAME_MESSAGE_SAVE_TYPE.SESSION_MAX:
+                case MESSAGE_META_SAVE_TYPE.SESSION_MAX:
                     if (delta.CompareTo(CBigInt.Zero) < 0)
                         return progressValue;
                     return CBigInt.Max(progressValue, delta);
 
-                case GAME_MESSAGE_SAVE_TYPE.SESSION_SUM:
+                case MESSAGE_META_SAVE_TYPE.SESSION_SUM:
                     return CalculateSumProgress(delta);
 
-                case GAME_MESSAGE_SAVE_TYPE.SESSION_MIN:
+                case MESSAGE_META_SAVE_TYPE.SESSION_MIN:
                     if (delta.CompareTo(CBigInt.Zero) < 0)
                         return progressValue;
 

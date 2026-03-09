@@ -195,8 +195,8 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 
 ## F) Inventory Message Trigger (정본)
 
-- Inventory 변경 알림 key는 `INVENTORY_MESSAGE` enum을 사용한다.
-  - 입력 파일: `input/Domains/Game/ENUM_TYPES.json`
+- Inventory 변경 알림 key는 `MESSAGE_INVENTORY_TYPE` enum을 사용한다.
+  - 입력 파일: `input/Domains/Game/ENUM_META.json`
 - Trigger 소유자: `InventoryManager`
 - 외부 노출: `InventoryManager` helper(`Subcribe/UnSubcribe`)만 허용
 - Trigger 직접 참조 금지

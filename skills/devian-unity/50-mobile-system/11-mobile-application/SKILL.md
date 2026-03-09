@@ -30,10 +30,10 @@ namespace MyApp
 {
     public sealed class MyApp : MobileApplication
     {
-        protected override async Task OnBootProc()
+        protected override async Task onBootAsync()
         {
             // MobileSystem common initialization (Log, GPGS Activate, Account/Login managers)
-            await base.OnBootProc();
+            await base.onBootAsync();
 
             // App-specific initialization here.
         }
@@ -47,8 +47,8 @@ namespace MyApp
 ```
 
 1. `MobileApplication`을 상속한 클래스를 만든다.
-2. `OnBootProc()`을 override하고, `await base.OnBootProc();`을 호출하여 공통 초기화를 수행한다.
-3. `base.OnBootProc()` 이후에 앱별 초기화 로직을 구현한다.
+2. `onBootAsync()`을 override하고, `await base.onBootAsync();`을 호출하여 공통 초기화를 수행한다.
+3. `base.onBootAsync()` 이후에 앱별 초기화 로직을 구현한다.
 4. 포그라운드 복귀 처리가 필요하면 `BaseApplication.OnEnterForeground()`를 override한다.
 5. Bootstrap prefab에 해당 컴포넌트를 부착한다.
 6. app/contents layer가 Bootstrap prefab을 명시적으로 생성하고 `BootProc()`를 호출한다.
@@ -127,7 +127,7 @@ MobileApplication에 부착된 RequireComponent:
 - `MissionManager`
 - `RemoteConfigManager`
 - `LeaderboardManager`
-- `GameMessageManager`
+- `MetaMessageManager`
 - `LoginManager`
 - `SaveDataManager`
 - `InputManager` — [24-input-manager](../../20-domain-common-system/22-input-manager/SKILL.md)

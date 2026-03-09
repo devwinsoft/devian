@@ -32,8 +32,11 @@ public class SceneSample : SceneBootstrap
         Debug.Log("TestSceneSample...");
         await base.onStart();
 
+        await TestApplication.Instance.LoadAsync(SystemLanguage.Korean);
+
         UICanvasSample.Instance.Init();
         
+        //
         SoundManager.Instance.PlaySound("bgm_title");
         CommonEffectManager.Instance.CreateEffect(effectId, null, Vector3.zero, Quaternion.identity, COMMON_EFFECT_ATTACH_TYPE.World);
 

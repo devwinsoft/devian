@@ -7,7 +7,7 @@ AppliesTo: v10
 
 ## Purpose
 
-`ENUM_TYPES.json` / `ItemTable.xlsx` / `UnitTable.xlsx`에서
+`ENUM_META.json` / `ItemTable.xlsx` / `UnitTable.xlsx`에서
 `CURRENCY`/`EQUIP`/`CARD`/`HERO` id를 추출해
 Firestore `/config/rewardIdCatalog`로 import한다.
 
@@ -20,7 +20,7 @@ Initial Inventory 탭의 `RewardData.id` listbox 데이터 원천이다.
 ## Input Source (XLSX)
 
 - `.env`에서 입력 xlsx 경로를 설정한다.
-  - `OP_REWARD_ENUM_TYPES_JSON_PATH` (기본값: `input/Domains/Game/ENUM_TYPES.json`)
+  - `OP_REWARD_ENUM_TYPES_JSON_PATH` (기본값: `input/Domains/Game/ENUM_META.json`)
   - `OP_REWARD_ITEM_TABLE_XLSX_PATH` (기본값: `input/Domains/Game/ItemTable.xlsx`)
   - `OP_REWARD_UNIT_TABLE_XLSX_PATH` (기본값: `input/Domains/Game/UnitTable.xlsx`)
 
@@ -61,7 +61,7 @@ Devian table 관례:
   "heroIds": ["hero_knight_001"],
   "importedAt": "2026-03-06T00:00:00.000Z",
   "source": {
-    "enumTypesPath": "input/Domains/Game/ENUM_TYPES.json",
+    "enumTypesPath": "input/Domains/Game/ENUM_META.json",
     "itemTablePath": "input/Domains/Game/ItemTable.xlsx",
     "unitTablePath": "input/Domains/Game/UnitTable.xlsx"
   }

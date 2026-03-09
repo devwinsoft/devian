@@ -1478,11 +1478,11 @@ namespace Devian
             }
         }
 
-        private static GameMessageManager getGameMessageManagerOrNull()
+        private static MetaMessageManager getGameMessageManagerOrNull()
         {
             try
             {
-                var messageManager = GameMessageManager.Instance;
+                var messageManager = MetaMessageManager.Instance;
                 return messageManager != null ? messageManager : null;
             }
             catch
@@ -1495,7 +1495,7 @@ namespace Devian
         {
             try
             {
-                var messageManager = GameMessageManager.Instance;
+                var messageManager = MetaMessageManager.Instance;
                 return messageManager != null ? messageManager.Storage : null;
             }
             catch

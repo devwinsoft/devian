@@ -28,8 +28,8 @@ Type: Design / SSOT
 
 ## Ownership
 
-- `GameMessageManager`가 `GameMessageStorage`를 소유한다.
-- stat 저장 접근 정본: `GameMessageManager.Storage`
+- `MetaMessageManager`가 `GameMessageStorage`를 소유한다.
+- stat 저장 접근 정본: `MetaMessageManager.Storage`
 
 ---
 
@@ -79,6 +79,6 @@ Type: Design / SSOT
 ## Related
 
 - [03-ssot](../03-ssot/SKILL.md)
-- [10-game-message-manager](../10-game-message-manager/SKILL.md)
+- [10-meta-message-manager](../10-meta-message-manager/SKILL.md)
 - [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)
 - [48-mission-system/12-mission-storage](../../48-mission-system/12-mission-storage/SKILL.md)

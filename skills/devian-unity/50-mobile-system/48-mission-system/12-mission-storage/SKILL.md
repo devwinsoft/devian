@@ -25,7 +25,7 @@ public sealed class MissionStorage
 핵심:
 
 - MissionStorage는 runtime 상태만 저장한다.
-- stat 누적 정본은 [45-game-message-system/14-game-message-storage](../../45-game-message-system/14-game-message-storage/SKILL.md)의 `message.stats`다.
+- stat 누적 정본은 [45-meta-message-system/14-game-message-storage](../../45-meta-message-system/14-game-message-storage/SKILL.md)의 `message.stats`다.
 - `schemaVersion` 기본값은 2를 사용한다.
 
 ---
@@ -84,5 +84,5 @@ public abstract class MissionRuntimeBase
 - [03-ssot](../03-ssot/SKILL.md)
 - [10-mission-manager](../10-mission-manager/SKILL.md)
 - [13-mission-runtime](../13-mission-runtime/SKILL.md)
-- [45-game-message-system/14-game-message-storage](../../45-game-message-system/14-game-message-storage/SKILL.md)
+- [45-meta-message-system/14-game-message-storage](../../45-meta-message-system/14-game-message-storage/SKILL.md)
 - [43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)

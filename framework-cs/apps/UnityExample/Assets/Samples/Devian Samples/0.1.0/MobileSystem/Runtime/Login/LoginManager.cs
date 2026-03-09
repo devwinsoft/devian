@@ -266,10 +266,10 @@ namespace Devian
                     Debug.LogWarning($"[{Tag}] SaveGameStorageAsync failed: {result.SaveError.Code}: {result.SaveError.Message}");
             }
 
-            var initMessage = GameMessageManager.Instance.Initialize();
+            var initMessage = MetaMessageManager.Instance.Initialize();
             if (initMessage.IsFailure)
             {
-                Debug.LogError($"[{Tag}] GameMessageManager.Initialize failed: {initMessage.Error.Code}: {initMessage.Error.Message}");
+                Debug.LogError($"[{Tag}] MetaMessageManager.Initialize failed: {initMessage.Error.Code}: {initMessage.Error.Message}");
                 return CommonResult<LoginInitializeResult>.Failure(initMessage.Error!);
             }
 

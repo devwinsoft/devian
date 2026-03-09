@@ -37,7 +37,7 @@ Reward 관련 규칙의 단일 SSOT는 이 문서다.
 `RewardData`는 `{ type, id, amount }` 형태다.
 
 - `type: REWARD_TYPE(enum, Generated)` — `REWARD_TYPE.CARD` | `REWARD_TYPE.CURRENCY` | `REWARD_TYPE.EQUIP` | `REWARD_TYPE.HERO` | `REWARD_TYPE.RENTAL` | `REWARD_TYPE.PASS`
-  - 입력: `input/Domains/Game/ENUM_TYPES.json` → 생성: `Devian.Domain.Game.REWARD_TYPE`
+  - 입력: `input/Domains/Game/ENUM_META.json` → 생성: `Devian.Domain.Game.REWARD_TYPE`
 - `id: string`
 - `amount: long` (`>= 0`만 허용)
 
@@ -112,7 +112,7 @@ NOTE:
 
 ## E) RewardData Runtime Type Location (reference)
 
-- `REWARD_TYPE` enum은 Generated이다 (입력: `input/Domains/Game/ENUM_TYPES.json`, 네임스페이스: `Devian.Domain.Game`).
+- `REWARD_TYPE` enum은 Generated이다 (입력: `input/Domains/Game/ENUM_META.json`, 네임스페이스: `Devian.Domain.Game`).
 - `RewardData` struct만 아래 파일에 수동 정의한다 (`using Devian.Domain.Game;` 필요).
 - UPM (정본):
   `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Reward/RewardData.cs`

@@ -46,7 +46,7 @@ public sealed class InventoryManager : MonoBehaviour
 
     public long GetAmount(string type, string id) { ... }
 
-    public void Subcribe(EntityId ownerKey, INVENTORY_MESSAGE msgType, BaseTrigger<EntityId, INVENTORY_MESSAGE>.Handler handler) { ... }
+    public void Subcribe(EntityId ownerKey, MESSAGE_INVENTORY_TYPE msgType, BaseTrigger<EntityId, MESSAGE_INVENTORY_TYPE>.Handler handler) { ... }
     public void UnSubcribe(EntityId ownerKey) { ... }
 }
 ```
@@ -131,7 +131,7 @@ NOTE:
   - 성공 시 `CommonResult.Ok()`를 반환한다.
 - `GetAmount(string type, string id) -> long`
   - `(type,id)`에 대한 현재 수량을 반환한다.
-- `Subcribe(EntityId ownerKey, INVENTORY_MESSAGE msgType, Handler handler)`
+- `Subcribe(EntityId ownerKey, MESSAGE_INVENTORY_TYPE msgType, Handler handler)`
   - Inventory 변경 메시지를 구독한다.
 - `UnSubcribe(EntityId ownerKey)`
   - ownerKey 기준 Inventory 메시지 구독을 해제한다.

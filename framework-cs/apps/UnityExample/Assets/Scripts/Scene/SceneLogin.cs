@@ -3,10 +3,10 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Devian;
 
-public class SceneLoading : SceneBootstrap
+public class SceneLogin : SceneBootstrap
 {
-    public static SceneLoading Instance => singleton;
-    static SceneLoading singleton = null;
+    public static SceneLogin Instance => singleton;
+    static SceneLogin singleton = null;
 
     protected override void onInitAwake()
     {
@@ -38,6 +38,15 @@ public class SceneLoading : SceneBootstrap
 
         UICanvasLoading.Instance.Init();
 
+        // Load assets...
+        await TestApplication.Instance.LoadAsync(
+            SystemLanguage.Korean,
+            progress =>
+            {
+                UICanvasLoading.Instance.message.text = $"LOADING {Mathf.RoundToInt(Mathf.Clamp01(progress) * 100f)}%";
+            });
+        
+        // Auto login...
         var initialize = await LoginManager.Instance.EnsureRuntimeSessionAndInitializeAsync(CancellationToken.None);
         Debug.Log($"EnsureRuntimeSessionAndInitializeAsync: success={initialize.IsSuccess}");
         if (initialize.IsFailure)
@@ -64,9 +73,6 @@ public class SceneLoading : SceneBootstrap
             return;
         }
 
-        await TestApplication.Instance.LoadAsync(
-            SystemLanguage.Korean,
-            progress => UICanvasLoading.Instance.message.text = $"LOADING {Mathf.RoundToInt(Mathf.Clamp01(progress) * 100f)}%");
         await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
     }
 }

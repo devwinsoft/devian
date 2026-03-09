@@ -60,7 +60,7 @@ namespace Devian
             public string ReqPassId = string.Empty;
             public string ReqSeasonId = string.Empty;
             public string ConditionMsgId = string.Empty;
-            public GAME_MESSAGE_OP_TYPE ConditionOp = GAME_MESSAGE_OP_TYPE.GTE;
+            public MESSAGE_META_OP_TYPE ConditionOp = MESSAGE_META_OP_TYPE.GTE;
             public CBigInt? ConditionValue;
             public string RewardGroupId = string.Empty;
             public string AppleAchievementId = string.Empty;
@@ -245,17 +245,9 @@ namespace Devian
                 if (hasActivationRequirement(nextRow, out _, out _, out _, out _, out _))
                 {
                     runtime.LevelUpToWaiting(nextRow.Level, toRuntimeIndex(nextRow), nextRow.ConditionMsgId);
-                    tryActivateRuntime(runtime, nextRow, GAME_MESSAGE_TYPE.NONE, CBigInt.Zero);
+                    tryActivateRuntime(runtime, nextRow, MESSAGE_META_TYPE.NONE, CBigInt.Zero);
                 }
-                else if (tryResolveRuntimeBinding(
-                             nextRow,
-                             true,
-                             out var nextMessageId,
-                             out var nextStatType,
-                             out var nextOpType,
-                             out var nextConditionOpType,
-                             out var nextConditionValue,
-                             out var nextReader))
+                else if (tryResolveRuntimeBinding(nextRow, true, out var nextMessageId, out var nextStatType, out var nextOpType, out var nextConditionOpType, out var nextConditionValue, out var nextReader))
                 {
                     runtime.LevelUp(
                         nextRow.Level,
@@ -298,22 +290,22 @@ namespace Devian
             return CommonResult.Ok();
         }
 
-        public void Notify(ACHIEVE_MESSAGE msgType)
+        public void Notify(MESSAGE_ACHIEVE_TYPE msgType)
         {
             _messageSystem.Notify(msgType);
         }
 
-        public void Notify(ACHIEVE_MESSAGE msgType, params object[] args)
+        public void Notify(MESSAGE_ACHIEVE_TYPE msgType, params object[] args)
         {
             _messageSystem.Notify(msgType, args);
         }
 
-        public void Subcribe(EntityId ownerKey, ACHIEVE_MESSAGE msgType, BaseTrigger<EntityId, ACHIEVE_MESSAGE>.Handler handler)
+        public void Subcribe(EntityId ownerKey, MESSAGE_ACHIEVE_TYPE msgType, BaseTrigger<EntityId, MESSAGE_ACHIEVE_TYPE>.Handler handler)
         {
             _messageSystem.Subcribe(ownerKey, msgType, handler);
         }
 
-        public void SubcribeOnce(EntityId ownerKey, ACHIEVE_MESSAGE msgType, Action<object[]> handler)
+        public void SubcribeOnce(EntityId ownerKey, MESSAGE_ACHIEVE_TYPE msgType, Action<object[]> handler)
         {
             _messageSystem.SubcribeOnce(ownerKey, msgType, handler);
         }
@@ -328,11 +320,11 @@ namespace Devian
             if (_isGameMessageSubscribed)
                 return;
 
-            var messageManager = GameMessageManager.Instance;
+            var messageManager = MetaMessageManager.Instance;
 
-            foreach (GAME_MESSAGE_TYPE messageType in Enum.GetValues(typeof(GAME_MESSAGE_TYPE)))
+            foreach (MESSAGE_META_TYPE messageType in Enum.GetValues(typeof(MESSAGE_META_TYPE)))
             {
-                if (messageType == GAME_MESSAGE_TYPE.NONE)
+                if (messageType == MESSAGE_META_TYPE.NONE)
                     continue;
 
                 var subscribedType = messageType;
@@ -354,7 +346,7 @@ namespace Devian
             if (!_isGameMessageSubscribed)
                 return;
 
-            GameMessageManager.Instance.UnSubcribeGameMessageTrigger(GameMessageOwnerKey);
+            MetaMessageManager.Instance.UnSubcribeGameMessageTrigger(GameMessageOwnerKey);
             _isGameMessageSubscribed = false;
         }
 
@@ -369,7 +361,7 @@ namespace Devian
 
             inventoryManager.Subcribe(
                 InventoryMessageOwnerKey,
-                INVENTORY_MESSAGE.PASS_CHANGED,
+                MESSAGE_INVENTORY_TYPE.PASS_CHANGED,
                 args =>
                 {
                     onInventoryPassChanged(args);
@@ -391,7 +383,7 @@ namespace Devian
             _isInventoryMessageSubscribed = false;
         }
 
-        void onGameMessageTriggered(GAME_MESSAGE_TYPE messageType, object[] args)
+        void onGameMessageTriggered(MESSAGE_META_TYPE messageType, object[] args)
         {
             if (args == null || args.Length <= 0)
                 return;
@@ -424,7 +416,7 @@ namespace Devian
             }
         }
 
-        void onGameMessageNotify(GAME_MESSAGE_TYPE msgType, CBigInt msgValue)
+        void onGameMessageNotify(MESSAGE_META_TYPE msgType, CBigInt msgValue)
         {
             tryActivateWaitingRuntimes(msgType, msgValue);
             notifyRuntimesByMessage(msgType, msgValue);
@@ -438,7 +430,7 @@ namespace Devian
             if (args[0] is not string)
                 return;
 
-            tryActivateWaitingRuntimes(GAME_MESSAGE_TYPE.NONE, CBigInt.Zero);
+            tryActivateWaitingRuntimes(MESSAGE_META_TYPE.NONE, CBigInt.Zero);
         }
 
         public async Task<CommonResult> UnlockAchievementAsync(string achievementId, CancellationToken ct = default)
@@ -601,7 +593,7 @@ namespace Devian
 
         void emitAchievementUnlocked(string achievementId)
         {
-            _messageSystem.Notify(ACHIEVE_MESSAGE.RUNTIME_UNLOCKED, achievementId);
+            _messageSystem.Notify(MESSAGE_ACHIEVE_TYPE.RUNTIME_UNLOCKED, achievementId);
 
             var handler = OnAchievementUnlocked;
             if (handler == null)
@@ -619,7 +611,7 @@ namespace Devian
 
         void emitRuntimeInitialized(AchieveRuntimeBase runtime)
         {
-            _messageSystem.Notify(ACHIEVE_MESSAGE.RUNTIME_INIT, runtime);
+            _messageSystem.Notify(MESSAGE_ACHIEVE_TYPE.RUNTIME_INIT, runtime);
 
             var handler = OnRuntimeInitialized;
             if (handler == null)
@@ -637,7 +629,7 @@ namespace Devian
 
         void emitRuntimeProgress(AchieveRuntimeBase runtime)
         {
-            _messageSystem.Notify(ACHIEVE_MESSAGE.RUNTIME_PROGRESS, runtime);
+            _messageSystem.Notify(MESSAGE_ACHIEVE_TYPE.RUNTIME_PROGRESS, runtime);
 
             var handler = OnRuntimeProgress;
             if (handler == null)
@@ -655,7 +647,7 @@ namespace Devian
 
         void emitRuntimeActive(AchieveRuntimeBase runtime)
         {
-            _messageSystem.Notify(ACHIEVE_MESSAGE.RUNTIME_ACTIVE, runtime);
+            _messageSystem.Notify(MESSAGE_ACHIEVE_TYPE.RUNTIME_ACTIVE, runtime);
 
             var handler = OnRuntimeActive;
             if (handler == null)
@@ -673,7 +665,7 @@ namespace Devian
 
         void emitRuntimeClaimable(AchieveRuntimeBase runtime)
         {
-            _messageSystem.Notify(ACHIEVE_MESSAGE.RUNTIME_CLAIMABLE, runtime);
+            _messageSystem.Notify(MESSAGE_ACHIEVE_TYPE.RUNTIME_CLAIMABLE, runtime);
 
             var handler = OnRuntimeClaimable;
             if (handler == null)
@@ -691,7 +683,7 @@ namespace Devian
 
         void emitRuntimeLevelUp(AchieveRuntimeBase runtime)
         {
-            _messageSystem.Notify(ACHIEVE_MESSAGE.RUNTIME_LEVEL_UP, runtime);
+            _messageSystem.Notify(MESSAGE_ACHIEVE_TYPE.RUNTIME_LEVEL_UP, runtime);
 
             var handler = OnRuntimeLevelUp;
             if (handler == null)
@@ -710,7 +702,7 @@ namespace Devian
         void emitRuntimeRewarded(AchieveRuntimeBase runtime, RewardData[] rewards)
         {
             var safeRewards = rewards ?? Array.Empty<RewardData>();
-            _messageSystem.Notify(ACHIEVE_MESSAGE.RUNTIME_REWARDED, runtime, safeRewards);
+            _messageSystem.Notify(MESSAGE_ACHIEVE_TYPE.RUNTIME_REWARDED, runtime, safeRewards);
 
             var handler = OnRuntimeRewarded;
             if (handler == null)
@@ -941,7 +933,7 @@ namespace Devian
                 emitRuntimeInitialized(created);
             }
 
-            tryActivateWaitingRuntimes(GAME_MESSAGE_TYPE.NONE, CBigInt.Zero);
+            tryActivateWaitingRuntimes(MESSAGE_META_TYPE.NONE, CBigInt.Zero);
         }
 
         void onRuntimeChanged(AchieveRuntimeBase runtime)
@@ -972,9 +964,9 @@ namespace Devian
                     IsWaiting = true,
                     ProgressValue = CBigInt.Zero,
                     IsCompleted = false,
-                    StatType = GAME_MESSAGE_TYPE.NONE,
-                    OpType = GAME_MESSAGE_SAVE_TYPE.NONE,
-                    ConditionOpType = GAME_MESSAGE_OP_TYPE.GTE,
+                    StatType = MESSAGE_META_TYPE.NONE,
+                    OpType = MESSAGE_META_SAVE_TYPE.NONE,
+                    ConditionOpType = MESSAGE_META_OP_TYPE.GTE,
                     ConditionValue = CBigInt.Zero,
                     ReadProgress = null,
                     OnChanged = onRuntimeChanged,
@@ -982,15 +974,7 @@ namespace Devian
                 });
             }
 
-            if (!tryResolveRuntimeBinding(
-                    row,
-                    true,
-                    out var messageId,
-                    out var statType,
-                    out var opType,
-                    out var conditionOpType,
-                    out var conditionValue,
-                    out var readProgress))
+            if (!tryResolveRuntimeBinding(row, true, out var messageId, out var statType, out var opType, out var conditionOpType, out var conditionValue, out var readProgress))
                 return null;
 
             return AchieveRuntimeFactory.Restore(new AchieveRuntimeRestoreArgs
@@ -1031,9 +1015,9 @@ namespace Devian
                     Index = toRuntimeIndex(row),
                     AchieveUid = achieveUid,
                     IsWaiting = true,
-                    StatType = GAME_MESSAGE_TYPE.NONE,
-                    OpType = GAME_MESSAGE_SAVE_TYPE.NONE,
-                    ConditionOpType = GAME_MESSAGE_OP_TYPE.GTE,
+                    StatType = MESSAGE_META_TYPE.NONE,
+                    OpType = MESSAGE_META_SAVE_TYPE.NONE,
+                    ConditionOpType = MESSAGE_META_OP_TYPE.GTE,
                     ConditionValue = CBigInt.Zero,
                     ReadProgress = null,
                     OnChanged = onRuntimeChanged,
@@ -1041,15 +1025,7 @@ namespace Devian
                 });
             }
 
-            if (!tryResolveRuntimeBinding(
-                    row,
-                    true,
-                    out var messageId,
-                    out var statType,
-                    out var opType,
-                    out var conditionOpType,
-                    out var conditionValue,
-                    out var readProgress))
+            if (!tryResolveRuntimeBinding(row, true, out var messageId, out var statType, out var opType, out var conditionOpType, out var conditionValue, out var readProgress))
                 return null;
 
             return AchieveRuntimeFactory.Create(new AchieveRuntimeCreateArgs
@@ -1071,7 +1047,7 @@ namespace Devian
             });
         }
 
-        void tryActivateWaitingRuntimes(GAME_MESSAGE_TYPE triggeredType, CBigInt triggeredValue)
+        void tryActivateWaitingRuntimes(MESSAGE_META_TYPE triggeredType, CBigInt triggeredValue)
         {
             if (_storage.runtimes.Count <= 0)
                 return;
@@ -1096,7 +1072,7 @@ namespace Devian
             }
         }
 
-        bool tryActivateRuntime(AchieveRuntimeBase runtime, AchieveTableRow row, GAME_MESSAGE_TYPE triggeredType, CBigInt triggeredValue)
+        bool tryActivateRuntime(AchieveRuntimeBase runtime, AchieveTableRow row, MESSAGE_META_TYPE triggeredType, CBigInt triggeredValue)
         {
             if (runtime == null || row == null || runtime.isCompleted || !runtime.isWaiting)
                 return false;
@@ -1107,15 +1083,7 @@ namespace Devian
                 return false;
             }
 
-            if (!tryResolveRuntimeBinding(
-                    row,
-                    true,
-                    out var messageId,
-                    out var statType,
-                    out var opType,
-                    out var conditionOpType,
-                    out var conditionValue,
-                    out var readProgress))
+            if (!tryResolveRuntimeBinding(row, true, out var messageId, out var statType, out var opType, out var conditionOpType, out var conditionValue, out var readProgress))
                 return false;
 
             runtime.Bind(
@@ -1131,7 +1099,7 @@ namespace Devian
             return true;
         }
 
-        void notifyRuntimesByMessage(GAME_MESSAGE_TYPE messageType, CBigInt messageDelta)
+        void notifyRuntimesByMessage(MESSAGE_META_TYPE messageType, CBigInt messageDelta)
         {
             if (_storage.runtimes.Count <= 0)
                 return;
@@ -1180,7 +1148,7 @@ namespace Devian
 
         bool hasActivationRequirement(
             AchieveTableRow row,
-            out MESSAGE reqMessage,
+            out MESSAGE_META reqMessage,
             out CBigInt reqValue,
             out string reqPassId,
             out string reqSeasonId,
@@ -1219,7 +1187,7 @@ namespace Devian
                 return true;
             }
 
-            if (!TryResolveMessage(row.ReqMsgId, out reqMessage) || reqMessage.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            if (!TryResolveMessage(row.ReqMsgId, out reqMessage) || reqMessage.SaveType == MESSAGE_META_SAVE_TYPE.NONE)
             {
                 Debug.LogError($"[{Tag}] Invalid req message for achieve: achieveId='{row.AchieveId}', reqMsgId='{row.ReqMsgId}'.");
                 reqMessage = null;
@@ -1233,11 +1201,11 @@ namespace Devian
         bool isRequirementSatisfied(
             AchieveTableRow row,
             bool hasReqMessage,
-            MESSAGE reqMessage,
+            MESSAGE_META reqMessage,
             CBigInt reqValue,
             string reqPassId,
             string reqSeasonId,
-            GAME_MESSAGE_TYPE triggeredType,
+            MESSAGE_META_TYPE triggeredType,
             CBigInt triggeredValue)
         {
             if (row == null)
@@ -1270,13 +1238,13 @@ namespace Devian
 
             if (isTotalSaveType(reqMessage.SaveType))
             {
-                if (!GameMessageManager.TryGet(out var messageManager) || messageManager == null)
+                if (!MetaMessageManager.TryGet(out var messageManager) || messageManager == null)
                     return false;
 
                 return messageManager.GetStat(row.ReqMsgId) >= reqValue;
             }
 
-            if (triggeredType == GAME_MESSAGE_TYPE.NONE || reqMessage.MessageType != triggeredType)
+            if (triggeredType == MESSAGE_META_TYPE.NONE || reqMessage.MessageType != triggeredType)
                 return false;
 
             return triggeredValue >= reqValue;
@@ -1304,10 +1272,11 @@ namespace Devian
             return serverNowUtcMs >= seasonStartUtcMs && serverNowUtcMs < seasonEndUtcMs;
         }
 
-        static bool isTotalSaveType(GAME_MESSAGE_SAVE_TYPE saveType)
+        static bool isTotalSaveType(MESSAGE_META_SAVE_TYPE saveType)
         {
-            return saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
-                   || saveType == GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX;
+            return saveType == MESSAGE_META_SAVE_TYPE.TOTAL_SUM
+                   || saveType == MESSAGE_META_SAVE_TYPE.TOTAL_MAX
+                   || saveType == MESSAGE_META_SAVE_TYPE.TOTAL_MIN;
         }
 
         AchieveTableRow findRow(string achieveId, int level)
@@ -1365,16 +1334,16 @@ namespace Devian
             AchieveTableRow row,
             bool logError,
             out string messageId,
-            out GAME_MESSAGE_TYPE statType,
-            out GAME_MESSAGE_SAVE_TYPE opType,
-            out GAME_MESSAGE_OP_TYPE conditionOpType,
+            out MESSAGE_META_TYPE statType,
+            out MESSAGE_META_SAVE_TYPE opType,
+            out MESSAGE_META_OP_TYPE conditionOpType,
             out CBigInt conditionValue,
             out Func<CBigInt> readProgress)
         {
             messageId = string.Empty;
-            statType = GAME_MESSAGE_TYPE.NONE;
-            opType = GAME_MESSAGE_SAVE_TYPE.NONE;
-            conditionOpType = GAME_MESSAGE_OP_TYPE.GTE;
+            statType = MESSAGE_META_TYPE.NONE;
+            opType = MESSAGE_META_SAVE_TYPE.NONE;
+            conditionOpType = MESSAGE_META_OP_TYPE.GTE;
             conditionValue = CBigInt.Zero;
             readProgress = null;
 
@@ -1411,10 +1380,10 @@ namespace Devian
                 return false;
             }
 
-            if (!TryResolveMessage(conditionMsgId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            if (!TryResolveMessage(conditionMsgId, out var message) || message.SaveType == MESSAGE_META_SAVE_TYPE.NONE)
             {
                 if (logError)
-                    Debug.LogError($"[{Tag}] MESSAGE not found for achieve: achieveId='{row.AchieveId}', conditionMsgId='{conditionMsgId}'.");
+                    Debug.LogError($"[{Tag}] MESSAGE_META not found for achieve: achieveId='{row.AchieveId}', conditionMsgId='{conditionMsgId}'.");
                 return false;
             }
 
@@ -1427,23 +1396,24 @@ namespace Devian
             return true;
         }
 
-        static bool TryResolveMessage(string messageId, out MESSAGE message)
+        static bool TryResolveMessage(string messageId, out MESSAGE_META message)
         {
             message = null;
             if (string.IsNullOrWhiteSpace(messageId))
                 return false;
 
-            message = TB_MESSAGE.Get(messageId);
+            message = TB_MESSAGE_META.Get(messageId);
             return message != null;
         }
 
-        static Func<CBigInt> createExternalProgressReader(string messageId, GAME_MESSAGE_SAVE_TYPE saveType)
+        static Func<CBigInt> createExternalProgressReader(string messageId, MESSAGE_META_SAVE_TYPE saveType)
         {
             if (string.IsNullOrWhiteSpace(messageId))
                 return null;
 
-            if (saveType != GAME_MESSAGE_SAVE_TYPE.TOTAL_SUM
-                && saveType != GAME_MESSAGE_SAVE_TYPE.TOTAL_MAX)
+            if (saveType != MESSAGE_META_SAVE_TYPE.TOTAL_SUM
+                && saveType != MESSAGE_META_SAVE_TYPE.TOTAL_MAX
+                && saveType != MESSAGE_META_SAVE_TYPE.TOTAL_MIN)
             {
                 return null;
             }
@@ -1451,7 +1421,7 @@ namespace Devian
             var key = messageId;
             return () =>
             {
-                if (!GameMessageManager.TryGet(out var messageManager) || messageManager == null)
+                if (!MetaMessageManager.TryGet(out var messageManager) || messageManager == null)
                     return CBigInt.Zero;
 
                 return messageManager.GetStat(key);

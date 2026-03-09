@@ -1,5 +1,7 @@
 // SSOT: skills/devian-unity/20-domain-common-system/14-base-application/SKILL.md
 
+#nullable enable
+
 using System;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -19,6 +21,7 @@ namespace Devian
     {
         private static BaseApplication _instance;
         private static bool _booted;
+        private static bool _loaded;
         private bool _isForeground = true;
 
         [SerializeField] private VersionNumber _appVersion;
@@ -67,7 +70,7 @@ namespace Devian
         /// <summary>
         /// 개발자가 구현할 부트 프로세스.
         /// </summary>
-        protected abstract Task OnBootProc();
+        protected abstract Task onBootAsync();
 
         /// <summary>
         /// BootProc를 실행한다. 1회만 실행된다.
@@ -79,7 +82,40 @@ namespace Devian
                 return;
             _booted = true;
 
-            await OnBootProc();
+            await onBootAsync();
+        }
+
+        /// <summary>
+        /// 앱 리소스 로딩을 실행한다. 1회만 실행된다.
+        /// 실패해도 재시도하지 않으며, 예외는 상위로 전파된다.
+        /// </summary>
+        public async Task LoadAsync(SystemLanguage language, Action<float>? onProgress = null)
+        {
+            if (_loaded)
+            {
+                onProgress?.Invoke(1f);
+                return;
+            }
+            _loaded = true;
+
+            await onLoadAsync(language, onProgress);
+            await onLoadCompletedAsync();
+        }
+
+        /// <summary>
+        /// 앱 리소스 로딩 로직. 파생 클래스가 override하여 번들 다운로드, 테이블 로드 등을 구현한다.
+        /// </summary>
+        protected virtual Task onLoadAsync(SystemLanguage language, Action<float>? onProgress = null)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 리소스 로딩 완료 후 후처리. 파생 클래스가 override하여 매니저 초기화 등을 구현한다.
+        /// </summary>
+        protected virtual Task onLoadCompletedAsync()
+        {
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -126,6 +162,7 @@ namespace Devian
         {
             _instance = null;
             _booted = false;
+            _loaded = false;
             IsApplicationQuitting = false;
             IsShuttingDown = false;
         }

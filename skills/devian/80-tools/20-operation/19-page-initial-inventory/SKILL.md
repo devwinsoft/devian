@@ -31,7 +31,7 @@ Pipeline: Firestore /config/initialInventory read/write (auto-load on form init)
 - `type`: `REWARD_TYPE` enum 문자열
 - `id`: type별로 listbox 또는 수동 입력
 - `amount`: 양의 정수
-- `CURRENCY`: `id`는 `/config/rewardIdCatalog.currencyIds`에서 채운다. (`ENUM_TYPES.json:CURRENCY_TYPE` import 결과)
+- `CURRENCY`: `id`는 `/config/rewardIdCatalog.currencyIds`에서 채운다. (`ENUM_META.json:CURRENCY_TYPE` import 결과)
 - `EQUIP`/`CARD`/`HERO`: `/config/rewardIdCatalog`에서 로드한 id를 listbox에 채운다.
 - `RENTAL`/`PASS`: catalog import 없이 수동 id 입력으로 추가 가능하다.
 - 잘못된 row는 저장 전에 에러로 표시

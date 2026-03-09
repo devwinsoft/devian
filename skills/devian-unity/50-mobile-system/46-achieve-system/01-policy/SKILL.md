@@ -33,16 +33,16 @@ Type: Policy / Entry Point
 - 공개 API는 `achievementId`만 받는다.
 - 플랫폼 ID(`appleAchievementId`, `googleAchievementId`)는 `ACHIEVE_ONCE` 매핑 레이어 내부에만 존재한다.
 
-### 3) trigger 입력은 `GameMessageManager`를 통해 받는다
+### 3) trigger 입력은 `MetaMessageManager`를 통해 받는다
 
-- `GameMessageManager.Notify(GAME_MESSAGE_TYPE, delta)`가 유일한 외부 입력이다.
-- `AchieveManager`는 `GameMessageManager` 트리거를 구독해 해당 runtime projection을 동기화한다.
+- `MetaMessageManager.Notify(GAME_MESSAGE_TYPE, delta)`가 유일한 외부 입력이다.
+- `AchieveManager`는 `MetaMessageManager` 트리거를 구독해 해당 runtime projection을 동기화한다.
 
-### 4) 업적 알림은 `ACHIEVE_MESSAGE`를 사용한다
+### 4) 업적 알림은 `MESSAGE_ACHIEVE_TYPE`를 사용한다
 
-- `AchieveMessageTrigger`의 키 타입은 `ACHIEVE_MESSAGE`다.
+- `AchieveMessageTrigger`의 키 타입은 `MESSAGE_ACHIEVE_TYPE`다.
 - 외부 구독은 `AchieveManager.Subcribe/SubcribeOnce/UnSubcribe` 헬퍼만 사용한다.
-- runtime 입력(`GAME_MESSAGE_TYPE`)과 알림(`ACHIEVE_MESSAGE`)은 서로 다른 책임으로 혼용하지 않는다.
+- runtime 입력(`GAME_MESSAGE_TYPE`)과 알림(`MESSAGE_ACHIEVE_TYPE`)은 서로 다른 책임으로 혼용하지 않는다.
 
 ### 5) claim은 AchieveManager가 orchestration 한다
 

@@ -297,7 +297,7 @@ export function createInitialInventoryTab(container: HTMLElement) {
     addBtn.disabled = false;
 
     if (type === 'CURRENCY') {
-      guide.textContent = 'ID source: /config/rewardIdCatalog (from ENUM_TYPES.json:CURRENCY_TYPE).';
+      guide.textContent = 'ID source: /config/rewardIdCatalog (from ENUM_META.json:CURRENCY_TYPE).';
       return;
     }
 

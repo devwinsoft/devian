@@ -11,7 +11,7 @@ namespace Devian
     [RequireComponent(typeof(PurchaseManager))]
     [RequireComponent(typeof(AchieveManager))]
     [RequireComponent(typeof(LeaderboardManager))]
-    [RequireComponent(typeof(GameMessageManager))]
+    [RequireComponent(typeof(MetaMessageManager))]
     [RequireComponent(typeof(MissionManager))]
     [RequireComponent(typeof(RemoteConfigManager))]
     [RequireComponent(typeof(SaveDataManager))]
@@ -23,7 +23,7 @@ namespace Devian
     {
         const string FirebaseFunctionsRegion = "asia-northeast3";
 
-        protected override Task OnBootProc()
+        protected override Task onBootAsync()
         {
             // MobileSystem common initialization
             Log.SetSink(new UnityLogSink());

@@ -11,7 +11,7 @@ Type: Design / SSOT
 SaveDataManager가 local/cloud payload에 저장할 게임 상태 JSON의 직렬화/역직렬화 규약을 정의한다.
 
 - JSON 직렬화/역직렬화의 **유일한 진입점은 SaveDataManager** 이다.
-- `AccountManager`, `InventoryManager`, `PurchaseManager`, `GameMessageManager`, `MissionManager`, `AchieveManager`, `LeaderboardManager`는 각자 자신의 `Storage`를 소유한다.
+- `AccountManager`, `InventoryManager`, `PurchaseManager`, `MetaMessageManager`, `MissionManager`, `AchieveManager`, `LeaderboardManager`는 각자 자신의 `Storage`를 소유한다.
 - JSON 구현은 `SaveDataJsonCodec` root codec + section codec으로 분리한다.
 
 
@@ -23,7 +23,7 @@ SaveDataManager가 local/cloud payload에 저장할 게임 상태 JSON의 직렬
 - `AccountManager` 소유: `AccountStorage`
 - `InventoryManager` 소유: `InventoryStorage`
 - `PurchaseManager` 소유: `PurchaseStorage`
-- `GameMessageManager` 소유: `GameMessageStorage`
+- `MetaMessageManager` 소유: `GameMessageStorage`
 - `MissionManager` 소유: `MissionStorage`
 - `AchieveManager` 소유: `AchieveStorage`
 - `LeaderboardManager` 소유: `LeaderboardSeasonRewardStorage`
@@ -60,7 +60,7 @@ SaveDataManager : CompoSingleton<SaveDataManager>
     ├── AccountManager.Instance.Storage.Clear()
     ├── InventoryManager.Instance.Storage.Clear()
     ├── PurchaseManager.Instance.Storage.ClearAll()
-    ├── GameMessageManager.Instance.Storage.Clear()
+    ├── MetaMessageManager.Instance.Storage.Clear()
     ├── MissionManager.Instance.Storage.Clear()
     ├── AchieveManager.Instance.Storage.Clear()
     └── LeaderboardManager.Instance.Storage.Clear()
@@ -125,7 +125,7 @@ serialize 시 source:
 - `AccountManager.Instance.Storage`
 - `InventoryManager.Instance.Storage`
 - `PurchaseManager.Instance.Storage`
-- `GameMessageManager.Instance.Storage`
+- `MetaMessageManager.Instance.Storage`
 - `MissionManager.Instance.Storage`
 - `AchieveManager.Instance.Storage`
 - `LeaderboardManager.Instance.Storage`
@@ -134,7 +134,7 @@ deserialize 시 target:
 - `AccountManager.Instance.Storage`
 - `InventoryManager.Instance.Storage`
 - `PurchaseManager.Instance.Storage`
-- `GameMessageManager.Instance.Storage`
+- `MetaMessageManager.Instance.Storage`
 - `MissionManager.Instance.Storage`
 - `AchieveManager.Instance.Storage`
 - `LeaderboardManager.Instance.Storage`
@@ -204,7 +204,7 @@ deserialize 시 target:
 - [33-account-manager](../../20-account-system/33-account-manager/SKILL.md) — AccountStorage 소유자
 - [10-inventory-manager](../../22-inventory-system/10-inventory-manager/SKILL.md) — InventoryStorage 소유자
 - [33-purchase-storage](../../30-purchase-system/33-purchase-storage/SKILL.md) — PurchaseStorage 규약
-- [45-game-message-system/14-game-message-storage](../../45-game-message-system/14-game-message-storage/SKILL.md) — GameMessageStorage 규약
+- [45-meta-message-system/14-game-message-storage](../../45-meta-message-system/14-game-message-storage/SKILL.md) — GameMessageStorage 규약
 - [48-mission-system/12-mission-storage](../../48-mission-system/12-mission-storage/SKILL.md) — MissionStorage 규약
 - [46-achieve-system/14-achieve-storage](../../46-achieve-system/14-achieve-storage/SKILL.md) — AchieveStorage 규약
 - [50-leaderboard/14-leaderboard-season-reward-storage](../../50-leaderboard/14-leaderboard-season-reward-storage/SKILL.md) — 시즌 보상 저장 규약

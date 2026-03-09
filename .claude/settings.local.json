@@ -232,7 +232,7 @@
       "Bash(while IFS= read -r f)",
       "Bash(do sed -i '' 's/MESSAGE_TYPE/GAME_MESSAGE_TYPE/g' \"$f\" done)",
       "Bash(# input/temp find input/temp -name \"\"*.cs\"\" -exec grep -l \"\"MESSAGE_TYPE\"\" {} +)",
-      "Bash(# Check for remaining MESSAGE_TYPE \\(but not MESSAGE_SAVE_TYPE, MISSION_MESSAGE, ACHIEVE_MESSAGE, GAME_MESSAGE_TYPE\\) grep -rn \"\"\\\\bMESSAGE_TYPE\\\\b\"\" framework-cs/ framework-ts/ input/ --include=\"\"*.cs\"\" --include=\"\"*.ts\"\" --include=\"\"*.json\"\")",
+      "Bash(# Check for remaining MESSAGE_TYPE \\(but not MESSAGE_SAVE_TYPE, MESSAGE_MISSION_TYPE, MESSAGE_ACHIEVE_TYPE, GAME_MESSAGE_TYPE\\) grep -rn \"\"\\\\bMESSAGE_TYPE\\\\b\"\" framework-cs/ framework-ts/ input/ --include=\"\"*.cs\"\" --include=\"\"*.ts\"\" --include=\"\"*.json\"\")",
       "Bash(# UPM Samples~ find framework-cs/upm/com.devian.samples -name \"\"*.cs\"\" -exec grep -l \"\"MESSAGE_SAVE_TYPE\"\" {} +)",
       "Bash(# Also handle input/temp TS files find input/temp -name \"\"*.ts\"\" -exec grep -l \"\"MESSAGE_SAVE_TYPE\"\" {} +)",
       "Bash(# Verify no remaining MESSAGE_SAVE_TYPE anywhere grep -rn \"\"MESSAGE_SAVE_TYPE\"\" framework-cs/ framework-ts/ input/ skills/ --include=\"\"*.cs\"\" --include=\"\"*.ts\"\" --include=\"\"*.json\"\" --include=\"\"*.md\"\")",

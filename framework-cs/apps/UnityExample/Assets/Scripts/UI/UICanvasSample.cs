@@ -26,7 +26,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
     protected override void onInit()
     {
         AchieveManager.Instance.Subcribe(GetEntityId(),
-            ACHIEVE_MESSAGE.RUNTIME_INIT,
+            MESSAGE_ACHIEVE_TYPE.RUNTIME_INIT,
             (args) =>
             {
                 AchieveRuntimeBase achieve = args[0] as AchieveRuntimeBase;
@@ -35,7 +35,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             });
         
         AchieveManager.Instance.Subcribe(GetEntityId(),
-            ACHIEVE_MESSAGE.RUNTIME_PROGRESS,
+            MESSAGE_ACHIEVE_TYPE.RUNTIME_PROGRESS,
             (args) =>
             {
                 AchieveRuntimeBase achieve = args[0] as AchieveRuntimeBase;
@@ -44,7 +44,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             });
         
         AchieveManager.Instance.Subcribe(GetEntityId(),
-            ACHIEVE_MESSAGE.RUNTIME_REWARDED,
+            MESSAGE_ACHIEVE_TYPE.RUNTIME_REWARDED,
             (args) =>
             {
                 AchieveRuntimeBase achieve = args[0] as AchieveRuntimeBase;
@@ -57,7 +57,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             });
         
         MissionManager.Instance.Subcribe(GetEntityId(),
-            MISSION_MESSAGE.RUNTIME_INIT,
+            MESSAGE_MISSION_TYPE.RUNTIME_INIT,
             (args) =>
             {
                 MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
@@ -66,7 +66,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             });
 
         MissionManager.Instance.Subcribe(GetEntityId(),
-            MISSION_MESSAGE.RUNTIME_PROGRESS,
+            MESSAGE_MISSION_TYPE.RUNTIME_PROGRESS,
             (args) =>
             {
                 MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
@@ -75,7 +75,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             });
         
         MissionManager.Instance.Subcribe(GetEntityId(),
-            MISSION_MESSAGE.RUNTIME_CLAIMABLE,
+            MESSAGE_MISSION_TYPE.RUNTIME_CLAIMABLE,
             (args) =>
             {
                 MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
@@ -84,7 +84,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
             });
         
         MissionManager.Instance.Subcribe(GetEntityId(),
-            MISSION_MESSAGE.RUNTIME_REWARDED,
+            MESSAGE_MISSION_TYPE.RUNTIME_REWARDED,
             (args) =>
             {
                 MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
@@ -94,7 +94,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
                     Debug.Log($"type={rewward.Type}, id={rewward.Id}, amount={rewward.Amount}");
                 }
 
-                GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.MISSION_CLEAR, 1);
+                MetaMessageManager.Instance.Notify(MESSAGE_META_TYPE.MISSION_CLEAR, 1);
                 return false;
             });
     }
@@ -125,7 +125,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
 
     public void OnClick_Mission()
     {
-        GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.ACHIEVE_001, 1);
+        MetaMessageManager.Instance.Notify(MESSAGE_META_TYPE.ACHIEVE_001, 1);
     }
 
     public void OnClick_Mission_Claim()
@@ -292,7 +292,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
         GameNetManager.Proxy.SendEcho(msg);
         */
         
-        GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.TEST_001, 1);
+        MetaMessageManager.Instance.Notify(MESSAGE_META_TYPE.TEST_001, 1);
     }
 
     public void OnClick_DVN_Import()

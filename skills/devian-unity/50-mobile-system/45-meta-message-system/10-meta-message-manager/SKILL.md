@@ -1,15 +1,15 @@
-# 10-game-message-manager
+# 10-meta-message-manager
 
 Status: ACTIVE
 AppliesTo: v10
 
-MobileSystem 샘플의 `GameMessageManager` 설계 문서다.
+MobileSystem 샘플의 `MetaMessageManager` 설계 문서다.
 
 ---
 
 ## Purpose
 
-`GameMessageManager`는 메시지/트리거 계층 리팩토링의 진입점 클래스다.
+`MetaMessageManager`는 메시지/트리거 계층 리팩토링의 진입점 클래스다.
 
 현재 역할:
 - Game message trigger 라우터를 캡슐화한다.
@@ -21,11 +21,11 @@ MobileSystem 샘플의 `GameMessageManager` 설계 문서다.
 
 ## Implementation Location (3-path mirror)
 
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Message/GameMessageManager.cs`
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Message/MetaMessageManager.cs`
 - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Message/GameMessageStorage.cs`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Message/GameMessageManager.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Message/MetaMessageManager.cs`
 - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Message/GameMessageStorage.cs`
-- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Message/GameMessageManager.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Message/MetaMessageManager.cs`
 - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Message/GameMessageStorage.cs`
 
 ---
