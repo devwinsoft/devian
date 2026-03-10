@@ -11,6 +11,7 @@ namespace Devian
         public string periodKey = string.Empty;
         public int missionUid;
         public CBigInt progressValue = CBigInt.Zero;
+        public bool isWaiting;
         public bool isCompleted;
 
         [NonSerialized] protected MESSAGE_META_TYPE _statType;
@@ -31,6 +32,7 @@ namespace Devian
         public CBigInt ConditionValue => _conditionValue;
         public bool IsSubscribed => _isSubscribed;
         public bool IsClaimable => !isCompleted
+                                   && !isWaiting
                                    && GameMessageRule.IsConditionSatisfied(
                                        progressValue,
                                        _conditionOpType,
@@ -86,6 +88,9 @@ namespace Devian
             if (isCompleted)
                 return MissionRuntimeState.COMPLETED;
 
+            if (isWaiting)
+                return MissionRuntimeState.WAIT;
+
             return IsClaimable
                 ? MissionRuntimeState.CLAIMABLE
                 : MissionRuntimeState.ACTIVE;
@@ -93,8 +98,21 @@ namespace Devian
 
         public void MarkCompleted()
         {
+            isWaiting = false;
             isCompleted = true;
             OnCompletedCore();
+        }
+
+        public bool TryActivate()
+        {
+            if (isCompleted || !isWaiting)
+                return false;
+
+            isWaiting = false;
+            RefreshProgressFromExternal(emitProgressEvent: false);
+            SubscribeIfNeeded();
+            RaiseClaimableIfNeeded();
+            return true;
         }
 
         protected void SubscribeIfNeeded()
@@ -128,7 +146,9 @@ namespace Devian
 
         protected virtual bool ShouldSubscribe()
         {
-            return _opType != MESSAGE_META_SAVE_TYPE.NONE;
+            return _opType != MESSAGE_META_SAVE_TYPE.NONE
+                   && !isCompleted
+                   && !isWaiting;
         }
 
         protected virtual void OnCompletedCore()
@@ -144,6 +164,7 @@ namespace Devian
 
             var wasClaimable = IsClaimable;
             var nextProgress = readExternalProgress();
+            nextProgress = GameMessageRule.ClampNonNegative(nextProgress);
             if (nextProgress.CompareTo(progressValue) == 0)
                 return;
 
@@ -161,7 +182,7 @@ namespace Devian
             if (!TryReadProgressDelta(args, out var delta))
                 return false;
 
-            if (_opType == MESSAGE_META_SAVE_TYPE.NONE)
+            if (isCompleted || isWaiting || _opType == MESSAGE_META_SAVE_TYPE.NONE)
                 return false;
 
             var wasClaimable = IsClaimable;
@@ -252,7 +273,31 @@ namespace Devian
 
         protected override bool ShouldSubscribe()
         {
-            return base.ShouldSubscribe() && !isCompleted && !IsClaimable;
+            return base.ShouldSubscribe() && !IsClaimable;
+        }
+
+        protected override void OnCompletedCore()
+        {
+            UnsubscribeInternal();
+        }
+
+        protected override CBigInt CalculateSumProgress(CBigInt delta)
+        {
+            var next = GameMessageRule.ClampNonNegative(progressValue + delta);
+            return CBigInt.Min(_conditionValue, next);
+        }
+    }
+
+    [Serializable]
+    public sealed class MissionRuntimePeriod : MissionRuntimeBase
+    {
+        public int day = 1;
+
+        public override int Index => day;
+
+        protected override bool ShouldSubscribe()
+        {
+            return base.ShouldSubscribe() && !IsClaimable;
         }
 
         protected override void OnCompletedCore()

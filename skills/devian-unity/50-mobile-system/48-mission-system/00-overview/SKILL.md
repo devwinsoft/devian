@@ -4,16 +4,18 @@ Status: ACTIVE
 AppliesTo: v10
 
 MobileSystem 샘플의 Mission 시스템 개요다.
-현재 Mission 시스템은 `DAY` 미션만 담당한다.
+현재 Mission 시스템은 `DAILY`/`PERIOD` 미션을 담당한다.
 
-- Mission row는 `MISSION` 테이블을 사용한다.
-- 조건 타입/연산자 정본은 `MISSION_STAT(missionStatId, statType, opType)`다.
+- Mission row는 `MISSION_DAILY`, `MISSION_PERIOD` 테이블을 사용한다.
+- 조건 타입/연산자 정본은 `MESSAGE_META(messageId, messageType, saveType, conditionOp)`다.
 - MissionManager는 `MissionMessageTrigger`과 `MissionScheduler`를 소유한다.
-- daily runtime 구독은 `GameMessageTrigger`를 직접 사용한다.
-- MissionManager는 `MissionScheduler`를 통해 daily runtime 생성/복구/정리를 수행한다.
+- runtime 구독은 `GameMessageTrigger`를 직접 사용한다.
+- MissionManager는 `MissionScheduler`를 통해 runtime 생성/복구/정리를 수행한다.
 - 외부 trigger 입력 진입점은 `MissionManager.Notify(...)`다.
 - 외부 message 구독 진입점은 `MissionManager.Subcribe(...)` 계열 헬퍼다.
-- `DAY` runtime은 `progressValue`를 자체 보유/저장한다.
+- `DAILY`/`PERIOD` runtime은 `progressValue`를 자체 보유/저장한다.
+- `PERIOD` runtime은 초기 생성 시 WAIT 상태이며, `day(1~7)` 규칙으로 활성화된다.
+- `PERIOD` cycle은 10일 주기로 리셋된다.
 - 업적(`ACHIEVE`) runtime/claim/저장은 [46-achieve-system](../../46-achieve-system/00-overview/SKILL.md) 책임이다.
 
 ---

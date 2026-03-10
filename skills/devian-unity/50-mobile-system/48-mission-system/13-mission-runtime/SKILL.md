@@ -14,42 +14,53 @@ Type: Design / Runtime SSOT
 
 ```csharp
 MissionRuntimeBase
-└─ MissionRuntimeDaily
+├─ MissionRuntimeDaily
+└─ MissionRuntimePeriod
 ```
 
 공통 필드:
 
-- `missionId`, `messageId`, `missionUid`
-- `periodKey`
+- `missionId`, `conditionMsgId`, `missionUid`
+- `periodKey`, `index`
 - `progressValue`
-- `isCompleted`
+- `isWaiting`, `isCompleted`
 
 ---
 
 ## Progress Source of Truth
 
-- `DAY`:
+- `DAILY`:
   - source of truth = runtime `progressValue`
   - trigger delta로 직접 누적
+- `PERIOD`:
+  - source of truth = runtime `progressValue`
+  - WAIT 상태에서는 누적하지 않음
 
 ---
 
 ## Trigger Rules
 
 - 구독 키: `missionUid`
-- 메시지 키: `GAME_MESSAGE_TYPE`
-- `DAY`:
-  - `MAX`: `max(progressValue, delta)`
-  - `SUM`: `min(conditionValue, progressValue + delta)`
-  - claimable/completed 시 구독 해지
+- 메시지 키: `MESSAGE_META_TYPE`
+- `DAILY/PERIOD`:
+  - `SESSION_MAX`: `max(progressValue, delta)`
+  - `SESSION_SUM`: `progressValue + delta`
+  - `SESSION_MIN`: `min(progressValue, delta)`
+  - `TOTAL_*`: external progress reader 기반 refresh
+- WAIT runtime은 trigger를 처리하지 않는다.
 
 ---
 
 ## State Rules
 
-- `CLAIMABLE`: `!isCompleted && progressValue >= conditionValue`
+- `WAIT`: `isWaiting == true`
+- `CLAIMABLE`: `!isWaiting && !isCompleted && IsClaimable`
 - `COMPLETED`: `isCompleted == true`
 - `MarkCompleted()`는 구독 해지 동작을 포함한다.
+
+`PERIOD` 전용:
+- 초기 생성 상태는 WAIT
+- day 조건 충족 시 ACTIVE 전환 후 trigger 처리 시작
 
 ---
 

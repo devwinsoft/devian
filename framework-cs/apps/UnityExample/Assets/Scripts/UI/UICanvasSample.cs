@@ -103,7 +103,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
     {
         AchieveManager.Instance.RefreshRuntimes();
         MissionManager.Instance.RefreshRuntimes();
-        Debug.Log($"[UICanvasSample] remainSec={MissionManager.Instance.GetRemainTime(MISSION_TYPE.DAY).TotalSeconds}");
+        Debug.Log($"[UICanvasSample] remainSec={MissionManager.Instance.GetRemainTime(MISSION_TYPE.DAILY).TotalSeconds}");
     }
 
     public void OnClick_Connect()

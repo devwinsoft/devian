@@ -73,9 +73,8 @@ export enum LEADERBOARD_MODE {
 /** MISSION_TYPE enum */
 export enum MISSION_TYPE {
     NONE = 0,
-    DAY = 1,
-    PASS_FREE = 2,
-    PASS_PAID = 3,
+    DAILY = 1,
+    PERIOD = 2,
 }
 
 /** MESSAGE_MISSION_TYPE enum */
@@ -240,12 +239,22 @@ export interface MESSAGE_META extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface MISSION extends IEntityKey<string> {
+export interface MISSION_DAILY extends IEntityKey<string> {
     MissionId: string;
-    MissionType: MISSION_TYPE;
     IsActive: boolean;
     Fixed: boolean;
     OrderNum: number;
+    ConditionMsgId: string;
+    ConditionOp: MESSAGE_META_OP_TYPE;
+    ConditionValue: CBigInt | null;
+    RewardGroupId: string;
+    getKey(): string;
+}
+
+export interface MISSION_PERIOD extends IEntityKey<string> {
+    MissionId: string;
+    Day: number;
+    IsActive: boolean;
     ConditionMsgId: string;
     ConditionOp: MESSAGE_META_OP_TYPE;
     ConditionValue: CBigInt | null;
@@ -626,9 +635,9 @@ export class TB_MESSAGE_META {
     }
 }
 
-export class TB_MISSION {
-    private static _dict: Map<string, MISSION> = new Map();
-    private static _list: MISSION[] = [];
+export class TB_MISSION_DAILY {
+    private static _dict: Map<string, MISSION_DAILY> = new Map();
+    private static _list: MISSION_DAILY[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -637,9 +646,9 @@ export class TB_MISSION {
         this._list = [];
     }
 
-    static getAll(): readonly MISSION[] { return this._list; }
+    static getAll(): readonly MISSION_DAILY[] { return this._list; }
 
-    static get(key: string): MISSION | undefined {
+    static get(key: string): MISSION_DAILY | undefined {
         return this._dict.get(key);
     }
 
@@ -651,7 +660,43 @@ export class TB_MISSION {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as MISSION;
+            const row = JSON.parse(line) as MISSION_DAILY;
+            this._list.push(row);
+            this._dict.set(row.MissionId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_MISSION_PERIOD {
+    private static _dict: Map<string, MISSION_PERIOD> = new Map();
+    private static _list: MISSION_PERIOD[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly MISSION_PERIOD[] { return this._list; }
+
+    static get(key: string): MISSION_PERIOD | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as MISSION_PERIOD;
             this._list.push(row);
             this._dict.set(row.MissionId, row);
         }

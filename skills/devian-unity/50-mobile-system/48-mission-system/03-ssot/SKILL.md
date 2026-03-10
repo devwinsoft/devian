@@ -7,10 +7,10 @@ AppliesTo: v10
 
 이 문서는 아래 항목의 정본이다.
 
-- `MISSION`, `MESSAGE` 스키마
-- `GAME_MESSAGE_TYPE`, `GAME_MESSAGE_SAVE_TYPE`, `MESSAGE_MISSION_TYPE` 사용 규약
+- `MISSION_DAILY`, `MISSION_PERIOD`, `MESSAGE_META` 스키마
+- `MISSION_TYPE`, `MESSAGE_META_*`, `MESSAGE_MISSION_TYPE` 사용 규약
 - Mission trigger/update/runtime binding 규칙
-- Mission 저장 구조(`MissionStorage`, daily runtime) 규칙
+- Mission 저장 구조(`MissionStorage`, daily/period runtime) 규칙
 
 업적(`ACHIEVE`) runtime/claim/save 정본은
 [46-achieve-system](../../46-achieve-system/00-overview/SKILL.md)에서 관리한다.
@@ -19,13 +19,15 @@ AppliesTo: v10
 
 ## A) Core Terms
 
-- `missionId`: daily 미션 ID
-- `missionType`: `MISSION_TYPE.DAY`만 MissionManager에서 처리
-- `messageId`: mission row가 참조하는 message key
-- `messageType`: trigger key (`GAME_MESSAGE_TYPE`)
-- `saveType`: stat 누적 연산 (`GAME_MESSAGE_SAVE_TYPE`)
+- `missionId`: 미션 ID
+- `missionType`: `MISSION_TYPE.DAILY` / `MISSION_TYPE.PERIOD`
+- `conditionMsgId`: mission row가 참조하는 `MESSAGE_META.messageId`
+- `messageType`: trigger key (`MESSAGE_META_TYPE`)
+- `saveType`: stat 누적 연산 (`MESSAGE_META_SAVE_TYPE`)
+- `conditionOp`: 비교 연산 (`MESSAGE_META_OP_TYPE`)
 - `conditionValue`: 목표값(`CBigInt`)
-- `periodKey`: `day:{dailyPeriodIndex}`
+- `periodKey`: runtime 주기 식별자 (`daily:{index}`, `period:{index}`)
+- `periodDayGroupKey`: `MISSION_PERIOD.day` (period runtime 활성화 그룹 키)
 - `missionUid`: runtime 식별 `int`
 - `message stats`: `GameMessageStorage.stats[string messageId]`
 
@@ -33,26 +35,46 @@ AppliesTo: v10
 
 ## B) Table Schema
 
-### `MISSION`
+### `MISSION_DAILY`
 
 | field | type | note |
 |---|---|---|
 | `missionId` | string (pk) | 미션 ID |
-| `missionType` | `MISSION_TYPE` | 미션 유형 (NONE/DAY/PASS_FREE/PASS_PAID) |
 | `isActive` | bool | 운영 토글 |
 | `fixed` | bool | daily 선택 우선 포함 |
 | `orderNum` | int | 정렬 기준(1-base) |
-| `messageId` | string | `MESSAGE.messageId` FK |
+| `conditionMsgId` | string | `MESSAGE_META.messageId` FK |
+| `conditionOp` | `MESSAGE_META_OP_TYPE` | 조건 비교 타입 |
 | `conditionValue` | `class:CBigInt` | 목표값 |
 | `rewardGroupId` | string | 보상 키 |
 
-### `MESSAGE`
+규칙:
+- `missionType` 필드는 없다(`MISSION_DAILY` 자체가 DAILY 타입).
+
+### `MISSION_PERIOD`
+
+| field | type | note |
+|---|---|---|
+| `missionId` | string (pk) | 미션 ID |
+| `isActive` | bool | 운영 토글 |
+| `day` | int | 활성화 day (1~7) |
+| `conditionMsgId` | string | `MESSAGE_META.messageId` FK |
+| `conditionOp` | `MESSAGE_META_OP_TYPE` | 조건 비교 타입 |
+| `conditionValue` | `class:CBigInt` | 목표값 |
+| `rewardGroupId` | string | 보상 키 |
+
+규칙:
+- `missionType`, `fixed`, `orderNum` 필드는 없다.
+- `day`는 `1~7` 범위를 사용한다.
+- `day`는 period runtime의 group key다. 동일 `day` row는 같은 activation bucket으로 처리한다.
+
+### `MESSAGE_META`
 
 | field | type | note |
 |---|---|---|
 | `messageId` | string (pk) | message 식별자 |
-| `messageType` | `GAME_MESSAGE_TYPE` | trigger 타입 |
-| `saveType` | `GAME_MESSAGE_SAVE_TYPE` | 누적 방식 |
+| `messageType` | `MESSAGE_META_TYPE` | trigger 타입 |
+| `saveType` | `MESSAGE_META_SAVE_TYPE` | 누적 방식 |
 
 정본 source:
 - `input/Domains/Game/MetaTable.xlsx`
@@ -62,13 +84,14 @@ AppliesTo: v10
 
 ## C) Runtime State
 
-- `ACTIVE`: `!isCompleted && progressValue < conditionValue`
-- `CLAIMABLE`: `!isCompleted && progressValue >= conditionValue`
+- `WAIT`: `isWaiting == true`
+- `ACTIVE`: `!isWaiting && !isCompleted && !IsClaimable`
+- `CLAIMABLE`: `!isWaiting && !isCompleted && IsClaimable`
 - `COMPLETED`: `isCompleted == true`
 
 규칙:
 - `saveType == NONE` row는 runtime을 생성하지 않는다.
-- daily는 현재 cycle에서 선택된 row만 runtime을 만든다(최대 5).
+- `PERIOD` runtime은 초기화/리셋 직후 기본 상태가 WAIT다.
 
 ---
 
@@ -77,7 +100,7 @@ AppliesTo: v10
 `GameMessageTrigger` 정본 타입:
 
 ```csharp
-BaseTrigger<int, GAME_MESSAGE_TYPE>
+BaseTrigger<int, MESSAGE_META_TYPE>
 ```
 
 외부 진입점은 `MetaMessageManager.Notify(messageType, delta)`다.
@@ -85,17 +108,20 @@ BaseTrigger<int, GAME_MESSAGE_TYPE>
 trigger 처리 순서:
 
 1. `MetaMessageManager.Notify` 호출
-2. `TB_MESSAGE`에서 `messageType` 일치 row를 순회
+2. `TB_MESSAGE_META`에서 `messageType` 일치 row를 순회
 3. `message.stats[messageId]` 갱신
-   - `SUM`: `current + delta`
-   - `MAX`: `max(current, delta)`
-4. `GameMessageTrigger` publish로 daily runtime 구독자 notify
-5. `AchieveManager.Notify`로 동일 이벤트 전달
+   - `TOTAL_SUM`: `current + delta`
+   - `TOTAL_MAX`: `max(current, delta)`
+   - `TOTAL_MIN`: `min(current, delta)`
+4. `GameMessageTrigger` publish로 mission runtime 구독자 notify
+5. `AchieveManager`로 동일 이벤트 전달
 
-runtime 반영 (`DAY`):
+runtime 반영:
 
-- `MAX`: `max(progressValue, delta)`
-- `SUM`: `min(conditionValue, progressValue + delta)`
+- `SESSION_SUM`: `progress + delta`
+- `SESSION_MAX`: `max(progress, delta)`
+- `SESSION_MIN`: `min(progress, delta)`
+- `TOTAL_*`: external reader(`message.stats[conditionMsgId]`)로 refresh
 
 ---
 
@@ -105,12 +131,13 @@ runtime 반영 (`DAY`):
 
 - `schemaVersion` (기본 2)
 - `dailyMissionStartUtcMs`
+- `periodMissionStartUtcMs`
 - `nextMissionUid`
 - `runtimes: Dictionary<int, MissionRuntimeBase>`
 
-runtime 저장 규칙 (`DAY`만):
+runtime 저장 규칙:
 
-- `missionId`, `messageId`, `missionUid`, `isCompleted`
+- `missionId`, `conditionMsgId`, `missionUid`, `isWaiting`, `isCompleted`
 - `periodKey`, `index`, `progressValue`
 
 ---
@@ -119,13 +146,27 @@ runtime 저장 규칙 (`DAY`만):
 
 - anchor: `MissionStorage.dailyMissionStartUtcMs`
 - period index:
-  - `floor(max(0, estimatedServerNowUtcMs - dailyMissionStartUtcMs) / 86400000)`
-- daily key: `day:{index}`
-- 현재 sync 시각과 anchor 차이가 7일 초과면 anchor를 현재 서버 시각으로 재설정한다.
+  - `floor(max(0, serverNowUtcMs - dailyMissionStartUtcMs) / 86400000)`
+- daily key: `daily:{index}`
+- cycle 전환 시 daily runtime set은 재구성된다.
 
 ---
 
-## G) Grant/Uid Rules
+## G) Period Clock Rules
+
+- cycle days: `10`
+- anchor: `MissionStorage.periodMissionStartUtcMs`
+- cycle index:
+  - `floor(max(0, serverNowUtcMs - periodMissionStartUtcMs) / (10 * 86400000))`
+- cycle key: `period:{index}`
+- 활성화 규칙:
+  - `day == 1` -> 초기화 직후 ACTIVE
+  - `day == n` -> `(n - 1)`일 경과 후 ACTIVE
+- cycle 전환 시 모든 period runtime을 WAIT로 재생성하고 day 규칙으로 재활성화한다.
+
+---
+
+## H) UID Rules
 
 - `missionUid`는 scheduler가 발급하는 증가형 int
 - 발급 시 사용 중 UID는 건너뛴다

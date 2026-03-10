@@ -1,6 +1,6 @@
 ---
 name: mission-factory
-description: Use this skill when defining or implementing MissionRuntimeFactory for mission create/restore paths with messageId binding.
+description: Use this skill when defining or implementing MissionRuntimeFactory for mission create/restore paths with message binding.
 ---
 
 # 14-mission-factory
@@ -14,7 +14,7 @@ Type: Design / Factory SSOT
 `MissionRuntimeFactory`는 runtime create/restore 경로를 표준화한다.
 
 - `missionUid` 발급/저장소 조회는 담당하지 않는다.
-- `messageId` + `MISSION_STAT(statType/opType)` 바인딩을 생성한다.
+- `conditionMsgId + MESSAGE_META(messageType/saveType/conditionOp)` 바인딩을 생성한다.
 
 ---
 
@@ -22,7 +22,7 @@ Type: Design / Factory SSOT
 
 - Factory는 `missionUid`를 생성하지 않는다.
 - create/restore 분기를 분리한다.
-- `opType == NONE` row는 scheduler 단계에서 걸러진다(Factory에 전달 금지).
+- `saveType == NONE` row는 scheduler 단계에서 걸러진다(Factory에 전달 금지).
 - restore는 타입 fallback을 허용하지 않는다.
 
 ---
@@ -33,6 +33,7 @@ Type: Design / Factory SSOT
 public static class MissionRuntimeFactory
 {
     public static MissionRuntimeDaily CreateDaily(DailyMissionRuntimeCreateArgs args);
+    public static MissionRuntimePeriod CreatePeriod(PeriodMissionRuntimeCreateArgs args);
     public static MissionRuntimeBase Restore(MissionRuntimeRestoreArgs args);
 }
 ```
@@ -43,14 +44,18 @@ public static class MissionRuntimeFactory
 
 `DailyMissionRuntimeCreateArgs`
 
-- `MissionId`, `MessageId`
+- `MissionId`, `ConditionMsgId`
 - `PeriodKey`, `MissionUid`, `Index`
-- `StatType`, `OpType`, `ConditionValue`
+- `MessageType`, `SaveType`, `ConditionOp`, `ConditionValue`
 - `SubscribeTrigger`, `UnsubscribeTrigger`, callbacks
+
+`PeriodMissionRuntimeCreateArgs`
+
+- daily args + `IsWaiting`
 
 `MissionRuntimeRestoreArgs`
 
-- create args + `ProgressValue`, `IsCompleted`
+- create args + `ProgressValue`, `IsWaiting`, `IsCompleted`
 
 ---
 
@@ -58,9 +63,12 @@ public static class MissionRuntimeFactory
 
 - Daily create:
   - `progressValue = 0`
-  - internal progress mode
+  - 기본 ACTIVE
+- Period create:
+  - `progressValue = 0`
+  - 기본 WAIT (`day == 1` row만 scheduler에서 즉시 ACTIVE 전환 가능)
 - Restore:
-  - 저장된 progress 사용
+  - 저장된 progress/wait/completed 상태를 그대로 사용
 
 ---
 

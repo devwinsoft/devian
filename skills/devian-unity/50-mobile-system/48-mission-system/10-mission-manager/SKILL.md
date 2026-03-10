@@ -3,8 +3,8 @@
 MissionManager는 Mission 시스템의 오케스트레이터다.
 
 - `MissionMessageTrigger`, `MissionScheduler`를 소유한다.
-- daily runtime 구독은 `GameMessageTrigger`를 helper 경유로 연결한다.
-- row 조건은 `messageId -> MESSAGE(messageType, saveType)`로 해석한다.
+- runtime 구독은 `GameMessageTrigger`를 helper 경유로 연결한다.
+- row 조건은 `conditionMsgId -> MESSAGE_META(messageType, saveType)`로 해석한다.
 - trigger 입력은 `MetaMessageManager.Notify(...)`를 통해 전달된다.
 
 ---
@@ -12,11 +12,10 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
 ## Responsibilities
 
 - storage 초기화 및 복구
-- daily anchor 보정
+- daily/period anchor 보정
 - scheduler rebuild/prune 호출
-- claim 처리 및 보상 적용 위임
-- level-up 전환 orchestration
-- save 호출
+- `DAILY`/`PERIOD` claim 처리 및 보상 적용 위임
+- 저장 호출
 
 ---
 
@@ -36,19 +35,21 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
 
 ## Trigger 처리 규칙
 
-- `MissionManager` daily runtime은 `MetaMessageManager` trigger 구독으로 갱신된다.
+- Mission runtime은 `MetaMessageManager` trigger 구독으로 갱신된다.
 - 서버 시각은 `RemoteConfigManager.TryGetServerNowUtcMs(...)`로 조회한다.
 - stats 선갱신 + game trigger publish + achieve notify 순서는 `MetaMessageManager` 정본을 따른다.
 
 ---
 
-## Claim / Level-Up 규칙
+## Runtime Lifecycle 규칙
 
-- claim 성공 시:
-  - reward apply
-  - runtime 상태 갱신
-  - message notify
-  - save 실행
+- `DAILY`:
+  - cycle마다 active row를 선택해 runtime 생성/복구
+- `PERIOD`:
+  - 초기화/리셋 시 모든 row runtime 생성
+  - 기본 WAIT 상태
+  - `MISSION_PERIOD.day`를 group key로 사용해 `day(1~7)` 규칙으로 ACTIVE 전환
+  - 10일 주기로 cycle reset
 
 ---
 

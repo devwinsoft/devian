@@ -59,7 +59,7 @@ namespace Devian
             // Show groupKey by default if available
             if (valueProp.propertyType == SerializedPropertyType.Integer)
             {
-                var pk = valueProp.intValue;
+                var pk = (int)valueProp.intValue;
                 TB_SOUND.Clear();
                 var textAssets = AssetManager.FindAssets<TextAsset>("SOUND");
                 foreach (var ta in textAssets)

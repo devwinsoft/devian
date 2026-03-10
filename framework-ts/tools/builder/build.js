@@ -2318,12 +2318,13 @@ export * from './features';
         const tableName = table.name;
         const enumSpecs = collectEnumGenSpecs([table]);
         const tableEnumSpec = enumSpecs.find(spec => spec.tableName === tableName);
+        const rawKeyType = getCSharpKeyTypeForTable(table);
         
-        let keyType;
+        let idValueType;
         if (tableEnumSpec) {
-            keyType = tableEnumSpec.enumName;
+            idValueType = tableEnumSpec.enumName;
         } else {
-            keyType = getCSharpKeyTypeForTable(table);
+            idValueType = rawKeyType;
         }
 
         // Class names with domain prefix to avoid conflicts
@@ -2402,28 +2403,94 @@ export * from './features';
 
         // Add GetValueDisplayString override for group-based display
         if (table.groupField) {
-            const groupProp = table.groupField.name.charAt(0).toUpperCase() + table.groupField.name.slice(1);
             lines.push('');
             lines.push('        protected override string GetValueDisplayString(SerializedProperty valueProp)');
             lines.push('        {');
             lines.push('            // Show groupKey by default if available');
-            lines.push('            if (valueProp.propertyType == SerializedPropertyType.Integer)');
-            lines.push('            {');
-            lines.push('                var pk = valueProp.intValue;');
-            lines.push(`                TB_${tableName}.Clear();`);
-            lines.push(`                var textAssets = AssetManager.FindAssets<TextAsset>("${tableName}");`);
-            lines.push('                foreach (var ta in textAssets)');
-            lines.push('                {');
-            lines.push('                    var assetPath = AssetDatabase.GetAssetPath(ta);');
-            lines.push('                    if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))');
-            lines.push('                        continue;');
-            lines.push(`                    TB_${tableName}.LoadFromNdjson(ta.text);`);
-            lines.push('                    break;');
-            lines.push('                }');
-            lines.push(`                if (TB_${tableName}.TryGetGroupKeyByKey(pk, out var groupKey))`);
-            lines.push('                    return groupKey.ToString();');
-            lines.push('                return pk.ToString();');
-            lines.push('            }');
+            if (rawKeyType === 'string') {
+                lines.push('            if (valueProp.propertyType == SerializedPropertyType.String)');
+                lines.push('            {');
+                lines.push('                var pk = valueProp.stringValue ?? string.Empty;');
+                lines.push(`                TB_${tableName}.Clear();`);
+                lines.push(`                var textAssets = AssetManager.FindAssets<TextAsset>("${tableName}");`);
+                lines.push('                foreach (var ta in textAssets)');
+                lines.push('                {');
+                lines.push('                    var assetPath = AssetDatabase.GetAssetPath(ta);');
+                lines.push('                    if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))');
+                lines.push('                        continue;');
+                lines.push(`                    TB_${tableName}.LoadFromNdjson(ta.text);`);
+                lines.push('                    break;');
+                lines.push('                }');
+                lines.push(`                if (TB_${tableName}.TryGetGroupKeyByKey(pk, out var groupKey))`);
+                lines.push('                    return groupKey.ToString();');
+                lines.push('                return pk;');
+                lines.push('            }');
+            } else if (rawKeyType === 'long' || rawKeyType === 'ulong') {
+                lines.push('            if (valueProp.propertyType == SerializedPropertyType.Integer)');
+                lines.push('            {');
+                lines.push(`                var pk = (${rawKeyType})valueProp.longValue;`);
+                lines.push(`                TB_${tableName}.Clear();`);
+                lines.push(`                var textAssets = AssetManager.FindAssets<TextAsset>("${tableName}");`);
+                lines.push('                foreach (var ta in textAssets)');
+                lines.push('                {');
+                lines.push('                    var assetPath = AssetDatabase.GetAssetPath(ta);');
+                lines.push('                    if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))');
+                lines.push('                        continue;');
+                lines.push(`                    TB_${tableName}.LoadFromNdjson(ta.text);`);
+                lines.push('                    break;');
+                lines.push('                }');
+                lines.push(`                if (TB_${tableName}.TryGetGroupKeyByKey(pk, out var groupKey))`);
+                lines.push('                    return groupKey.ToString();');
+                lines.push('                return pk.ToString();');
+                lines.push('            }');
+            } else if (
+                rawKeyType === 'sbyte'
+                || rawKeyType === 'byte'
+                || rawKeyType === 'short'
+                || rawKeyType === 'ushort'
+                || rawKeyType === 'int'
+                || rawKeyType === 'uint'
+                || rawKeyType === 'float'
+                || rawKeyType === 'double'
+                || rawKeyType === 'bool'
+            ) {
+                lines.push('            if (valueProp.propertyType == SerializedPropertyType.Integer)');
+                lines.push('            {');
+                lines.push(`                var pk = (${rawKeyType})valueProp.intValue;`);
+                lines.push(`                TB_${tableName}.Clear();`);
+                lines.push(`                var textAssets = AssetManager.FindAssets<TextAsset>("${tableName}");`);
+                lines.push('                foreach (var ta in textAssets)');
+                lines.push('                {');
+                lines.push('                    var assetPath = AssetDatabase.GetAssetPath(ta);');
+                lines.push('                    if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))');
+                lines.push('                        continue;');
+                lines.push(`                    TB_${tableName}.LoadFromNdjson(ta.text);`);
+                lines.push('                    break;');
+                lines.push('                }');
+                lines.push(`                if (TB_${tableName}.TryGetGroupKeyByKey(pk, out var groupKey))`);
+                lines.push('                    return groupKey.ToString();');
+                lines.push('                return pk.ToString();');
+                lines.push('            }');
+            } else {
+                // enum key, or custom value type key
+                lines.push('            if (valueProp.propertyType == SerializedPropertyType.Enum || valueProp.propertyType == SerializedPropertyType.Integer)');
+                lines.push('            {');
+                lines.push(`                var pk = (${rawKeyType})valueProp.intValue;`);
+                lines.push(`                TB_${tableName}.Clear();`);
+                lines.push(`                var textAssets = AssetManager.FindAssets<TextAsset>("${tableName}");`);
+                lines.push('                foreach (var ta in textAssets)');
+                lines.push('                {');
+                lines.push('                    var assetPath = AssetDatabase.GetAssetPath(ta);');
+                lines.push('                    if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))');
+                lines.push('                        continue;');
+                lines.push(`                    TB_${tableName}.LoadFromNdjson(ta.text);`);
+                lines.push('                    break;');
+                lines.push('                }');
+                lines.push(`                if (TB_${tableName}.TryGetGroupKeyByKey(pk, out var groupKey))`);
+                lines.push('                    return groupKey.ToString();');
+                lines.push('                return pk.ToString();');
+                lines.push('            }');
+            }
             lines.push('            return base.GetValueDisplayString(valueProp);');
             lines.push('        }');
         }

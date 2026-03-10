@@ -17,6 +17,7 @@ public sealed class MissionStorage
 {
     public int schemaVersion; // default: 2
     public long dailyMissionStartUtcMs;
+    public long periodMissionStartUtcMs;
     public int nextMissionUid;
     public Dictionary<int, MissionRuntimeBase> runtimes;
 }
@@ -36,28 +37,35 @@ public sealed class MissionStorage
 public abstract class MissionRuntimeBase
 {
     public string missionId;
-    public string messageId;
+    public string conditionMsgId;
     public string periodKey;
     public int missionUid;
+    public int index;
     public CBigInt progressValue;
+    public bool isWaiting;
     public bool isCompleted;
 }
 ```
 
 타입별 저장 규칙:
 
-- `DAY`:
+- `MissionRuntimeDaily`:
   - `periodKey` 저장
   - `index` 저장
+  - `progressValue` 저장
+- `MissionRuntimePeriod`:
+  - `periodKey` 저장
+  - `index` 저장
+  - `isWaiting` 저장
   - `progressValue` 저장
 
 ---
 
 ## Persistence Rules
 
-- `DAY progress`는 runtime 로컬 값으로 저장/복원한다.
+- `DAILY/PERIOD progress`는 runtime 로컬 값으로 저장/복원한다.
 - stat 누적 값은 mission payload에 저장하지 않는다.
-- runtime의 `messageId`는 정의 테이블 `MESSAGE.messageId`를 참조한다.
+- runtime의 `conditionMsgId`는 정의 테이블 `MESSAGE_META.messageId`를 참조한다.
 - `rewardGroupId` 등 definition 데이터는 runtime에 저장하지 않는다.
 
 ---
@@ -67,7 +75,8 @@ public abstract class MissionRuntimeBase
 1. storage 로드
 2. anchor 보정 (현재 서버시각: `RemoteConfigManager`)
 3. scheduler rebuild/prune
-4. runtime bind 시 daily runtime에 저장 progress를 그대로 복원
+4. runtime bind 시 저장 progress 복원
+5. period runtime은 WAIT 상태를 복원한 뒤 day 규칙으로 재활성화
 
 ---
 

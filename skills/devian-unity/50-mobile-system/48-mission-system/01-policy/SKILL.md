@@ -6,17 +6,19 @@ Type: Policy / Entry Point
 
 ## Purpose
 
-Mission(`DAY`) 시스템의 모듈 경계와 하드룰을 정의한다.
+Mission(`DAILY`/`PERIOD`) 시스템의 모듈 경계와 하드룰을 정의한다.
 
 ---
 
 ## Hard Rules
 
-### 1) 미션 조건 정본은 `MISSION_STAT`이다
+### 1) 미션 테이블 분리는 고정이다
 
-- `MISSION`은 `missionStatId`만 가진다.
-- 조건 타입/연산자 정본은 `MISSION_STAT(missionStatId, statType, opType)`다.
-- MissionManager/Scheduler는 `missionStatId -> MISSION_STAT`를 resolve해서 runtime 바인딩을 만든다.
+- `MISSION_DAILY`는 `missionType`을 가지지 않는다.
+- `MISSION_PERIOD`는 `missionType/fixed/orderNum`을 가지지 않는다.
+- `MISSION_PERIOD.day`는 `1~7` 정수 범위를 사용한다.
+- `MISSION_PERIOD.day`는 period runtime activation group key다(동일 day 동시 활성화).
+- 조건 타입/저장 연산/비교 연산 정본은 `MESSAGE_META`다.
 
 ### 2) 진행도 입력은 `GameMessageTrigger`를 통해 받는다
 
@@ -26,21 +28,31 @@ Mission(`DAY`) 시스템의 모듈 경계와 하드룰을 정의한다.
 
 ### 3) trigger 처리 순서는 `stats 갱신 -> game trigger publish -> achieve notify`다
 
-- MissionManager.Notify는 `MetaMessageManager.NotifyGameMessage`로 위임한다.
-- `MetaMessageManager`가 같은 `statType`을 참조하는 `TB_MESSAGE` row를 순회하며 `message.stats[messageId]`를 먼저 갱신한다.
+- MissionManager.Notify는 `MetaMessageManager.Notify`로 위임한다.
+- `MetaMessageManager`가 같은 `messageType`을 참조하는 `TB_MESSAGE_META` row를 순회하며 `message.stats[messageId]`를 먼저 갱신한다.
   - `SUM`: `current + delta`
   - `MAX`: `max(current, delta)`
+  - `MIN`: `min(current, delta)` (음수 입력 무시)
 - 그 다음 `GameMessageTrigger` publish로 daily runtime 구독자 notify를 수행한다.
 - 마지막에 `AchieveManager.Notify`를 호출해 업적 시스템으로 동일 이벤트를 전달한다.
 
-### 4) 진행도 저장 정본은 `DAY runtime.progressValue`다
+### 4) 진행도 저장 정본은 `runtime.progressValue`다
 
-- `DAY` runtime이 `progressValue`를 자체 보유/저장한다.
+- `DAILY` runtime이 `progressValue`를 자체 보유/저장한다.
+- `PERIOD` runtime이 `progressValue`를 자체 보유/저장한다.
 - `MissionStorage.stats`는 `missionStatId` 단위 누적 캐시이며 runtime 상태 정본은 아니다.
 
-### 5) 저장/복구 및 보상 처리 경계
+### 5) `PERIOD` 활성화/리셋 규칙은 고정이다
 
-- MissionManager는 `DAY` claim orchestration만 담당한다.
+- 초기화/리셋 시 `MISSION_PERIOD`의 모든 row runtime을 생성한다.
+- 생성 직후 기본 상태는 WAIT다.
+- `day == 1`이면 즉시 ACTIVE 전환한다.
+- `day == n`이면 `(n - 1)`일 경과 후 ACTIVE 전환한다.
+- `PERIOD` cycle은 10일 주기로 리셋한다.
+
+### 6) 저장/복구 및 보상 처리 경계
+
+- MissionManager는 `DAILY`/`PERIOD` claim orchestration만 담당한다.
 - Reward 적용은 RewardManager에 위임한다.
 - claim 성공 후 저장은 즉시 수행한다.
 - 업적(`ACHIEVE`) claim/runtime 책임은 AchieveManager에 있다.

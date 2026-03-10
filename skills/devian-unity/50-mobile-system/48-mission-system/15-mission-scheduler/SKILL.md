@@ -1,6 +1,6 @@
 ---
 name: mission-scheduler
-description: Use this skill when defining or implementing MissionScheduler for runtime lifecycle, missionStat resolution, and daily/achieve binding rebuild.
+description: Use this skill when defining or implementing MissionScheduler for runtime lifecycle and daily/period binding rebuild.
 ---
 
 # 15-mission-scheduler
@@ -15,7 +15,7 @@ Type: Design / Scheduler SSOT
 
 - create/restore/rebind/prune/lookup
 - `missionUid` 발급
-- `missionStatId -> MISSION_STAT` resolve 후 bind 인자 구성
+- table row resolve 후 bind 인자 구성
 
 ---
 
@@ -24,25 +24,29 @@ Type: Design / Scheduler SSOT
 - MissionManager 내부 객체로만 사용한다.
 - reward/claim/save orchestration은 하지 않는다.
 - runtime 생성/복구는 `MissionRuntimeFactory`를 통해서만 수행한다.
-- `MISSION_STAT` resolve 실패 row는 runtime 생성 금지.
+- `conditionMsgId` resolve 실패 row는 runtime 생성 금지.
 
 ---
 
 ## Lifecycle Rules
 
-### Daily
+### Daily (`MISSION_DAILY`)
 
 - active row에서 최대 5개 선택(fixed 우선 + random)
 - 선택 row만 create/restore
-- `missionStatId` resolve 후 `StatType/OpType` 전달
-- period 전환 시 기존 daily set 정리 후 재생성
+- `conditionMsgId -> MESSAGE_META` resolve 후 bind 인자 전달
+- daily cycle 전환 시 기존 daily set 정리 후 재생성
 
-### Achieve
+### Period (`MISSION_PERIOD`)
 
-- group별 runtime 1개 보장
-- create/restore 시 `missionStatId` resolve
-- external progress reader(`stats[missionStatId]`)를 factory args로 전달
-- next level create는 scheduler가 하지 않는다(Claim 흐름의 runtime mutation)
+- 초기화/리셋 시 active row 전부 create/restore
+- 기본 상태는 WAIT
+- `MISSION_PERIOD.day`를 activation group key로 사용한다.
+- 활성화 규칙:
+  - `day == 1`: 즉시 ACTIVE
+  - `day == n`: `(n - 1)`일 경과 후 ACTIVE
+- period cycle은 10일 단위
+- cycle 전환 시 기존 period runtime 전량 정리 후 WAIT 재생성
 
 ---
 
@@ -56,7 +60,7 @@ Type: Design / Scheduler SSOT
 ## Notes
 
 - legacy progress seed 브릿지는 사용하지 않는다.
-- achieve progress 정본은 storage stats다.
+- progress 정본은 runtime local state다.
 
 ---
 

@@ -1,5 +1,0 @@
-{"MissionId":"mission_day_001","MissionType":"DAY","IsActive":true,"Fixed":true,"OrderNum":1,"ConditionMsgId":"msg_mission_clear_sum","ConditionOp":"GTE","ConditionValue":10000003000001,"RewardGroupId":"reward_mission_day_001"}
-{"MissionId":"mission_day_002","MissionType":"DAY","IsActive":true,"Fixed":false,"OrderNum":2,"ConditionMsgId":"msg_mission_001_sum","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_day_002"}
-{"MissionId":"mission_day_003","MissionType":"DAY","IsActive":true,"Fixed":false,"OrderNum":3,"ConditionMsgId":"msg_mission_002_sum","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_day_003"}
-{"MissionId":"mission_day_004","MissionType":"DAY","IsActive":true,"Fixed":false,"OrderNum":4,"ConditionMsgId":"msg_mission_003_sum","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_day_004"}
-{"MissionId":"mission_day_005","MissionType":"DAY","IsActive":true,"Fixed":false,"OrderNum":5,"ConditionMsgId":"msg_mission_004_sum","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_day_005"}

@@ -25,7 +25,7 @@ public sealed class MissionMessageTrigger : BaseTrigger<EntityId, MESSAGE_MISSIO
 
 규칙:
 
-- 1차 정리 기준으로 MissionManager가 단일 인스턴스를 소유한다.
+- MissionManager가 단일 인스턴스를 소유한다.
 - MissionRuntime/Scheduler는 직접 notify하지 않는다.
 - 외부 구독자는 `MissionManager.Subcribe(...)`, `SubcribeOnce(...)`, `UnSubcribe(...)` 헬퍼를 사용한다.
 
@@ -38,7 +38,7 @@ public sealed class MissionMessageTrigger : BaseTrigger<EntityId, MESSAGE_MISSIO
 - `RUNTIME_CLAIMABLE`
 - `RUNTIME_REWARDED`
 - `DAY_RESET`
-- `ACHIEVE_LEVEL_UP` (enum reserved; mission day 흐름에서는 미사용 가능)
+- `ACHIEVE_LEVEL_UP` (reserved)
 
 ---
 
@@ -50,13 +50,13 @@ public sealed class MissionMessageTrigger : BaseTrigger<EntityId, MESSAGE_MISSIO
 
 ---
 
-## Notify Timing (DAY)
+## Notify Timing (DAILY/PERIOD)
 
 - runtime create/restore 직후: `RUNTIME_INIT`
-- progress 변경 직후: `RUNTIME_PROGRESS`
+- WAIT -> ACTIVE 전이 후 progress 변경 시: `RUNTIME_PROGRESS`
 - claimable 전이 시: `RUNTIME_CLAIMABLE`
 - claim 성공 보상 적용 후: `RUNTIME_REWARDED`
-- daily reset 시: `DAY_RESET`
+- cycle reset(DAILY/PERIOD) 시: `DAY_RESET`
 
 ---
 
