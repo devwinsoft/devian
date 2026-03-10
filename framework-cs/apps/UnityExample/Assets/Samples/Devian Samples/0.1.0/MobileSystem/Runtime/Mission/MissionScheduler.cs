@@ -12,7 +12,7 @@ namespace Devian
         const int MaxDailyRuntimeCount = 5;
 
         readonly MissionStorage _storage;
-        readonly Action<int, MESSAGE_META_TYPE, BaseTrigger<int, MESSAGE_META_TYPE>.Handler> _subscribeTrigger;
+        readonly Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> _subscribeTrigger;
         readonly Action<int> _unsubscribeTrigger;
         readonly Action<MissionRuntimeBase> _onInitialized;
         readonly Action<MissionRuntimeBase> _onChanged;
@@ -25,7 +25,7 @@ namespace Devian
 
         public MissionScheduler(
             MissionStorage storage,
-            Action<int, MESSAGE_META_TYPE, BaseTrigger<int, MESSAGE_META_TYPE>.Handler> subscribeTrigger,
+            Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> subscribeTrigger,
             Action<int> unsubscribeTrigger,
             Action<MissionRuntimeBase> onInitialized,
             Action<MissionRuntimeBase> onChanged,
@@ -293,7 +293,7 @@ namespace Devian
             {
                 if (!TryResolveMessage(row.ConditionMsgId, out var message))
                 {
-                    Debug.LogError($"[{Tag}] MESSAGE_META not found for daily mission: missionId='{row.MissionId}', messageId='{row.ConditionMsgId}'.");
+                    Debug.LogError($"[{Tag}] GAME_MESSAGE not found for daily mission: missionId='{row.MissionId}', messageId='{row.ConditionMsgId}'.");
                     continue;
                 }
 
@@ -386,7 +386,7 @@ namespace Devian
             {
                 if (!TryResolveMessage(row.ConditionMsgId, out var message))
                 {
-                    Debug.LogError($"[{Tag}] MESSAGE_META not found for period mission: missionId='{row.MissionId}', messageId='{row.ConditionMsgId}'.");
+                    Debug.LogError($"[{Tag}] GAME_MESSAGE not found for period mission: missionId='{row.MissionId}', messageId='{row.ConditionMsgId}'.");
                     continue;
                 }
 
@@ -554,7 +554,7 @@ namespace Devian
                    && row.IsActive
                    && row.ConditionValue.HasValue
                    && TryResolveMessage(row.ConditionMsgId, out var message)
-                   && message.SaveType != MESSAGE_META_SAVE_TYPE.NONE;
+                   && message.SaveType != GAME_MESSAGE_SAVE_TYPE.NONE;
         }
 
         static bool isEligiblePeriodRow(MISSION_PERIOD row)
@@ -565,16 +565,16 @@ namespace Devian
                    && row.Day <= 7
                    && row.ConditionValue.HasValue
                    && TryResolveMessage(row.ConditionMsgId, out var message)
-                   && message.SaveType != MESSAGE_META_SAVE_TYPE.NONE;
+                   && message.SaveType != GAME_MESSAGE_SAVE_TYPE.NONE;
         }
 
-        static bool TryResolveMessage(string messageId, out MESSAGE_META message)
+        static bool TryResolveMessage(string messageId, out GAME_MESSAGE message)
         {
             message = null;
             if (string.IsNullOrWhiteSpace(messageId))
                 return false;
 
-            message = TB_MESSAGE_META.Get(messageId);
+            message = TB_GAME_MESSAGE.Get(messageId);
             return message != null;
         }
 
@@ -624,18 +624,18 @@ namespace Devian
             return int.TryParse(periodKey.Substring(7), out periodIndex);
         }
 
-        static Func<CBigInt> createExternalProgressReader(string messageId, MESSAGE_META_SAVE_TYPE saveType)
+        static Func<CBigInt> createExternalProgressReader(string messageId, GAME_MESSAGE_SAVE_TYPE saveType)
         {
             if (string.IsNullOrWhiteSpace(messageId))
                 return null;
 
-            if (!MetaMessageRule.IsTotalSaveType(saveType))
+            if (!GameMessageRule.IsTotalSaveType(saveType))
                 return null;
 
             var key = messageId;
             return () =>
             {
-                if (!MetaMessageManager.TryGet(out var messageManager) || messageManager == null)
+                if (!GameMessageManager.TryGet(out var messageManager) || messageManager == null)
                     return CBigInt.Zero;
 
                 return messageManager.GetStat(key);

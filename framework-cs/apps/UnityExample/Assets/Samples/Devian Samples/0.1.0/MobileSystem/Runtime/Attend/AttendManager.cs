@@ -72,7 +72,7 @@ namespace Devian
             if (!TryGetServerNowUtcMs(out var serverNowUtcMs))
             {
                 return Task.FromResult(CommonResult.Failure(
-                    CommonErrorType.COMMON_SERVER,
+                    COMMON_ERROR_TYPE.COMMON_SERVER,
                     "Server time is unavailable. Initialize RemoteConfigManager before AttendManager."));
             }
 
@@ -165,15 +165,15 @@ namespace Devian
         public async Task<CommonResult<RewardData[]>> ClaimAsync(string attendId, CancellationToken ct = default)
         {
             if (!_initialized)
-                return CommonResult<RewardData[]>.Failure(CommonErrorType.SAVEDATA_SYNC_REQUIRED, "AttendManager is not initialized.");
+                return CommonResult<RewardData[]>.Failure(COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED, "AttendManager is not initialized.");
 
             if (string.IsNullOrWhiteSpace(attendId))
-                return CommonResult<RewardData[]>.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, "attendId is empty.");
+                return CommonResult<RewardData[]>.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "attendId is empty.");
 
             ct.ThrowIfCancellationRequested();
 
             if (!TryGetServerNowUtcMs(out var serverNowUtcMs))
-                return CommonResult<RewardData[]>.Failure(CommonErrorType.COMMON_SERVER, "Server time is unavailable.");
+                return CommonResult<RewardData[]>.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, "Server time is unavailable.");
 
             rebuildRowCache();
             refreshState(serverNowUtcMs);
@@ -181,25 +181,25 @@ namespace Devian
             if (_rowByDay.Count <= 0)
             {
                 return CommonResult<RewardData[]>.Failure(
-                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
                     "ATTEND table is empty or contains no active rows.");
             }
 
             var key = attendId.Trim();
             if (!_rowById.TryGetValue(key, out var row) || row == null)
-                return CommonResult<RewardData[]>.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Attend row not found: {key}");
+                return CommonResult<RewardData[]>.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, $"Attend row not found: {key}");
 
             if (isClaimedToday(serverNowUtcMs))
             {
                 return CommonResult<RewardData[]>.Failure(
-                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
                     "Attend reward has already been claimed today.");
             }
 
             if (_storage.nextAttendDay > MaxAttendDay)
             {
                 return CommonResult<RewardData[]>.Failure(
-                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
                     "Attend cycle is completed. Wait for next day reset.");
             }
 
@@ -208,12 +208,12 @@ namespace Devian
                 if (row.Day != _storage.nextAttendDay)
                 {
                     return CommonResult<RewardData[]>.Failure(
-                        CommonErrorType.COMMON_INVALID_ARGUMENT,
+                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
                         $"Attend day mismatch: requested={row.Day}, expected={_storage.nextAttendDay}");
                 }
 
                 return CommonResult<RewardData[]>.Failure(
-                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
                     $"Attend is not claimable: {row.AttendId}");
             }
 

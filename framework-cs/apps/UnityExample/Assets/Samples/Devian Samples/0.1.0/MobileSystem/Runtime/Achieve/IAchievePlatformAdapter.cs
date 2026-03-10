@@ -43,17 +43,17 @@ namespace Devian
     {
         public Task<CommonResult> InitializeAsync(CancellationToken ct)
             => Task.FromResult(CommonResult.Failure(
-                CommonErrorType.LOGIN_UNSUPPORTED,
+                COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED,
                 "Achievement is not supported on this platform."));
 
         public Task<CommonResult> UnlockAchievementAsync(string platformAchievementId, CancellationToken ct)
             => Task.FromResult(CommonResult.Failure(
-                CommonErrorType.LOGIN_UNSUPPORTED,
+                COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED,
                 "Achievement is not supported on this platform."));
 
         public Task<CommonResult<Dictionary<string, bool>>> FetchAchievementStatesAsync(CancellationToken ct)
             => Task.FromResult(CommonResult<Dictionary<string, bool>>.Failure(
-                CommonErrorType.LOGIN_UNSUPPORTED,
+                COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED,
                 "Achievement is not supported on this platform."));
     }
 
@@ -65,7 +65,7 @@ namespace Devian
                 return Task.FromResult(CommonResult.Ok());
 #else
             return Task.FromResult(CommonResult.Failure(
-                CommonErrorType.LOGIN_UNSUPPORTED,
+                COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED,
                 "Game Center adapter is not available on this platform."));
 #endif
         }
@@ -85,14 +85,14 @@ namespace Devian
 
                     return success
                         ? CommonResult.Ok()
-                        : CommonResult.Failure(CommonErrorType.COMMON_SERVER, "Game Center achievement unlock failed.");
+                        : CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, "Game Center achievement unlock failed.");
                 }
                 catch (Exception ex)
                 {
-                    return CommonResult.Failure(CommonErrorType.COMMON_SERVER, ex.Message);
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message);
                 }
 #else
-            return CommonResult.Failure(CommonErrorType.LOGIN_UNSUPPORTED, "Game Center adapter is not available on this platform.");
+            return CommonResult.Failure(COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED, "Game Center adapter is not available on this platform.");
 #endif
         }
 
@@ -112,7 +112,7 @@ namespace Devian
                     if (achievements == null)
                     {
                         return CommonResult<Dictionary<string, bool>>.Failure(
-                            CommonErrorType.COMMON_SERVER,
+                            COMMON_ERROR_TYPE.COMMON_SERVER,
                             "Game Center achievement sync failed.");
                     }
 
@@ -121,11 +121,11 @@ namespace Devian
                 }
                 catch (Exception ex)
                 {
-                    return CommonResult<Dictionary<string, bool>>.Failure(CommonErrorType.COMMON_SERVER, ex.Message);
+                    return CommonResult<Dictionary<string, bool>>.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message);
                 }
 #else
             return CommonResult<Dictionary<string, bool>>.Failure(
-                CommonErrorType.LOGIN_UNSUPPORTED,
+                COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED,
                 "Game Center adapter is not available on this platform.");
 #endif
         }
@@ -135,7 +135,7 @@ namespace Devian
             if (Social.localUser != null && Social.localUser.authenticated)
                 return CommonResult.Ok();
 
-            return CommonResult.Failure(CommonErrorType.COMMON_AUTH, "Game Center authentication required.");
+            return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_AUTH, "Game Center authentication required.");
         }
     }
 
@@ -153,7 +153,7 @@ namespace Devian
                 {
                     return Task.FromResult(_platformInstance != null
                         ? CommonResult.Ok()
-                        : CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, "Google Play Games plugin not found."));
+                        : CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, "Google Play Games plugin not found."));
                 }
 
                 _resolved = true;
@@ -164,7 +164,7 @@ namespace Devian
                     if (platformType == null)
                     {
                         return Task.FromResult(CommonResult.Failure(
-                            CommonErrorType.COMMON_UNKNOWN,
+                            COMMON_ERROR_TYPE.COMMON_UNKNOWN,
                             "Google Play Games v2 plugin not found."));
                     }
 
@@ -179,7 +179,7 @@ namespace Devian
                     if (_platformInstance == null)
                     {
                         return Task.FromResult(CommonResult.Failure(
-                            CommonErrorType.COMMON_UNKNOWN,
+                            COMMON_ERROR_TYPE.COMMON_UNKNOWN,
                             "Google Play Games platform instance not available."));
                     }
 
@@ -196,7 +196,7 @@ namespace Devian
                     if (_reportProgressMethod == null || _loadAchievementsMethod == null)
                     {
                         return Task.FromResult(CommonResult.Failure(
-                            CommonErrorType.COMMON_UNKNOWN,
+                            COMMON_ERROR_TYPE.COMMON_UNKNOWN,
                             "Google Play Games API surface is missing required methods."));
                     }
 
@@ -204,11 +204,11 @@ namespace Devian
                 }
                 catch (Exception ex)
                 {
-                    return Task.FromResult(CommonResult.Failure(CommonErrorType.COMMON_SERVER, ex.Message));
+                    return Task.FromResult(CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message));
                 }
 #else
             return Task.FromResult(CommonResult.Failure(
-                CommonErrorType.LOGIN_UNSUPPORTED,
+                COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED,
                 "Google adapter is not available on this platform."));
 #endif
         }
@@ -239,14 +239,14 @@ namespace Devian
                     var success = await tcs.Task;
                     return success
                         ? CommonResult.Ok()
-                        : CommonResult.Failure(CommonErrorType.COMMON_SERVER, "GPGS achievement unlock failed.");
+                        : CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, "GPGS achievement unlock failed.");
                 }
                 catch (Exception ex)
                 {
-                    return CommonResult.Failure(CommonErrorType.COMMON_SERVER, ex.Message);
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message);
                 }
 #else
-            return CommonResult.Failure(CommonErrorType.LOGIN_UNSUPPORTED, "Google adapter is not available on this platform.");
+            return CommonResult.Failure(COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED, "Google adapter is not available on this platform.");
 #endif
         }
 
@@ -275,7 +275,7 @@ namespace Devian
                     if (achievements == null)
                     {
                         return CommonResult<Dictionary<string, bool>>.Failure(
-                            CommonErrorType.COMMON_SERVER,
+                            COMMON_ERROR_TYPE.COMMON_SERVER,
                             "GPGS achievement sync failed.");
                     }
 
@@ -284,11 +284,11 @@ namespace Devian
                 }
                 catch (Exception ex)
                 {
-                    return CommonResult<Dictionary<string, bool>>.Failure(CommonErrorType.COMMON_SERVER, ex.Message);
+                    return CommonResult<Dictionary<string, bool>>.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message);
                 }
 #else
             return CommonResult<Dictionary<string, bool>>.Failure(
-                CommonErrorType.LOGIN_UNSUPPORTED,
+                COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED,
                 "Google adapter is not available on this platform.");
 #endif
         }
@@ -328,7 +328,7 @@ namespace Devian
             if (Social.localUser != null && Social.localUser.authenticated)
                 return CommonResult.Ok();
 
-            return CommonResult.Failure(CommonErrorType.COMMON_AUTH, "Google Play Games authentication required.");
+            return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_AUTH, "Google Play Games authentication required.");
         }
     }
 }

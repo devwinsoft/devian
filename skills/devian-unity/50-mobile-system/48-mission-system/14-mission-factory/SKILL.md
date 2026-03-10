@@ -14,7 +14,7 @@ Type: Design / Factory SSOT
 `MissionRuntimeFactory`는 runtime create/restore 경로를 표준화한다.
 
 - `missionUid` 발급/저장소 조회는 담당하지 않는다.
-- `conditionMsgId + MESSAGE_META(messageType/saveType/conditionOp)` 바인딩을 생성한다.
+- `conditionMsgId + GAME_MESSAGE(messageType/saveType/conditionOp)` 바인딩을 생성한다.
 
 ---
 

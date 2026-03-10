@@ -105,7 +105,7 @@ namespace Devian
                         var msg = $"[BundleManager] ClearDependencyCacheAsync failed for label '{label}': {clearOp.OperationException?.Message}";
                         Debug.LogError(msg);
                         RaiseError(msg);
-                        return CommonResult<PatchInfo>.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
+                        return CommonResult<PatchInfo>.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, msg);
                     }
 
                     Addressables.Release(clearOp);
@@ -120,7 +120,7 @@ namespace Devian
                     var msg = $"[BundleManager] GetDownloadSizeAsync failed for label '{label}': {sizeOp.OperationException?.Message}";
                     Debug.LogError(msg);
                     RaiseError(msg);
-                    return CommonResult<PatchInfo>.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
+                    return CommonResult<PatchInfo>.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, msg);
                 }
 
                 var size = sizeOp.Result;
@@ -204,7 +204,7 @@ namespace Devian
                     Debug.LogError(msg);
                     Addressables.Release(downloadOp);
                     RaiseError(msg);
-                    return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, msg);
                 }
 
                 downloadedBytes += labelSize;

@@ -48,9 +48,9 @@ public class TestApplication : MobileApplication
         reportProgress(onProgress, 1f);
     }
 
-    protected override Task onLoadCompletedAsync()
+    protected override async Task onLoadCompletedAsync()
     {
-        return Task.CompletedTask;
+        await base.onLoadCompletedAsync();
     }
 
     static void reportProgress(Action<float>? onProgress, float progress)

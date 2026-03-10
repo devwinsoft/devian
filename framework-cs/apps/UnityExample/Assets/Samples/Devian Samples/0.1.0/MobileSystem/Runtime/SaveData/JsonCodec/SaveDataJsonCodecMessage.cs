@@ -4,9 +4,9 @@ namespace Devian
 {
     internal static class SaveDataJsonCodecMessage
     {
-        public static JObject Serialize(MetaMessageStorage storage)
+        public static JObject Serialize(GameMessageStorage storage)
         {
-            storage ??= new MetaMessageStorage();
+            storage ??= new GameMessageStorage();
 
             var messageObj = new JObject
             {
@@ -26,7 +26,7 @@ namespace Devian
             return messageObj;
         }
 
-        public static void DeserializeInto(JObject messageObj, MetaMessageStorage storage)
+        public static void DeserializeInto(JObject messageObj, GameMessageStorage storage)
         {
             if (storage == null)
                 return;

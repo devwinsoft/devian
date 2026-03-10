@@ -57,12 +57,12 @@ RewardData 스키마는 Reward 시스템 문서가 단일 정본이다.
 - 차감/소비/회수(환불/철회 포함)는 별도 시스템/경로에서 처리한다.
 
 
-### 6) 에러는 CommonErrorType(= ERROR_COMMON SSOT)로 관리한다
+### 6) 에러는 COMMON_ERROR_TYPE(= COMMON_ERROR SSOT)로 관리한다
 
-- Apply 실패는 `CommonError(CommonErrorType, message, details)`로 표준화한다.
-- inventory 전용 코드는 `ERROR_COMMON`에 추가 후 생성 파이프라인으로 반영한다.
+- Apply 실패는 `CommonError(COMMON_ERROR_TYPE, message, details)`로 표준화한다.
+- inventory 전용 코드는 `COMMON_ERROR`에 추가 후 생성 파이프라인으로 반영한다.
   - 파일: `input/Domains/Common/CommonTable.xlsx`
-  - 시트: `ERROR_COMMON`
+  - 시트: `COMMON_ERROR`
 
 
 ### 7) InventoryManager는 저장 시스템을 직접 참조하지 않는다

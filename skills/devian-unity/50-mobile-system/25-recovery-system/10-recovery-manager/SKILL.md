@@ -146,7 +146,7 @@ RecoveryManager는 SaveDataManager의 아래 public API를 사용한다:
 
 | 상황 | 처리 |
 |------|------|
-| 공유 시트 호출 실패 | `CommonErrorType` 에러 반환 |
+| 공유 시트 호출 실패 | `COMMON_ERROR_TYPE` 에러 반환 |
 | 파일 선택 취소 (File Picker) | 에러 반환 (사용자 취소, 정상 플로우) |
 | .dvn 파일 읽기 실패 | 에러 반환 + 유저에게 안내 |
 | RecoveryCodec.Decode 실패 (손상/위조) | 에러 반환 + "복원 실패" 안내 |

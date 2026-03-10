@@ -1955,8 +1955,8 @@ export function collectEnumGenSpecs(tables) {
         }
 
         // Sort member names ascending (deterministic)
-        // CommonErrorType reserves SUCCESS as the sentinel success code and fixes it to 0.
-        if (enumName === 'CommonErrorType') {
+        // COMMON_ERROR_TYPE reserves SUCCESS as the sentinel success code and fixes it to 0.
+        if (enumName === 'COMMON_ERROR_TYPE') {
             memberNames.sort((a, b) => {
                 if (a === 'SUCCESS' && b !== 'SUCCESS') return -1;
                 if (a !== 'SUCCESS' && b === 'SUCCESS') return 1;

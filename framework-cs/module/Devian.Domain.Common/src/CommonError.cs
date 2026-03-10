@@ -6,21 +6,21 @@ namespace Devian.Domain.Common
     /// </summary>
     public sealed class CommonError
     {
-        public CommonErrorType Code { get; }
+        public COMMON_ERROR_TYPE Code { get; }
         public string Message { get; }
         public string? Details { get; }
 
-        public CommonError(CommonErrorType errorType, string message, string? details = null)
+        public CommonError(COMMON_ERROR_TYPE errorType, string message, string? details = null)
         {
             Code = errorType;
             Message = message;
             Details = details;
         }
 
-        [System.Obsolete("Use CommonError(CommonErrorType, ...) instead.")]
+        [System.Obsolete("Use CommonError(COMMON_ERROR_TYPE, ...) instead.")]
         public CommonError(string code, string message, string? details = null)
         {
-            Code = CommonErrorType.COMMON_UNKNOWN;
+            Code = COMMON_ERROR_TYPE.COMMON_UNKNOWN;
             Message = message;
             Details = string.IsNullOrEmpty(details) ? $"legacyCode={code}" : $"legacyCode={code}; {details}";
         }

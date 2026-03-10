@@ -31,10 +31,10 @@ namespace Devian
         public Task<CommonResult<LoginCredential>> SignInAsync(CancellationToken ct)
         {
 #if UNITY_IOS && !UNITY_EDITOR
-            return Task.FromResult(CommonResult<LoginCredential>.Failure(CommonErrorType.LOGIN_APPLE_MISSING_TOKEN,
+            return Task.FromResult(CommonResult<LoginCredential>.Failure(COMMON_ERROR_TYPE.LOGIN_APPLE_MISSING_TOKEN,
                 "Apple Sign-in is not yet implemented in AccountLoginApple. Use LoginAsync(LoginType, LoginCredential, CancellationToken) with caller-provided credential."));
 #else
-            return Task.FromResult(CommonResult<LoginCredential>.Failure(CommonErrorType.LOGIN_APPLE_MISSING_TOKEN,
+            return Task.FromResult(CommonResult<LoginCredential>.Failure(COMMON_ERROR_TYPE.LOGIN_APPLE_MISSING_TOKEN,
                 "Apple Sign-in is not available on this platform."));
 #endif
         }

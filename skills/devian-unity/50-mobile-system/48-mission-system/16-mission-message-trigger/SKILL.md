@@ -64,4 +64,4 @@ public sealed class MissionMessageTrigger : BaseTrigger<EntityId, MESSAGE_MISSIO
 
 - [03-ssot](../03-ssot/SKILL.md)
 - [10-mission-manager](../10-mission-manager/SKILL.md)
-- [45-meta-message-system/10-meta-message-manager](../../45-meta-message-system/10-meta-message-manager/SKILL.md)
+- [45-game-message-system/10-game-message-manager](../../45-game-message-system/10-game-message-manager/SKILL.md)

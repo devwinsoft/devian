@@ -19,8 +19,8 @@ export enum STAT_TYPE {
     UNIT_HP_MAX = 100,
 }
 
-/** MESSAGE_META_TYPE enum */
-export enum MESSAGE_META_TYPE {
+/** GAME_MESSAGE_TYPE enum */
+export enum GAME_MESSAGE_TYPE {
     NONE = 0,
     LOGIN = 1,
     STAGE_CLEAR = 3,
@@ -44,8 +44,8 @@ export enum MESSAGE_META_TYPE {
     ACHIEVE_005 = 9005,
 }
 
-/** MESSAGE_META_SAVE_TYPE enum */
-export enum MESSAGE_META_SAVE_TYPE {
+/** GAME_MESSAGE_SAVE_TYPE enum */
+export enum GAME_MESSAGE_SAVE_TYPE {
     NONE = 0,
     SESSION_SUM = 1,
     SESSION_MAX = 2,
@@ -55,8 +55,8 @@ export enum MESSAGE_META_SAVE_TYPE {
     TOTAL_MIN = 6,
 }
 
-/** MESSAGE_META_OP_TYPE enum */
-export enum MESSAGE_META_OP_TYPE {
+/** GAME_MESSAGE_OP_TYPE enum */
+export enum GAME_MESSAGE_OP_TYPE {
     NONE = 0,
     EQ = 1,
     GTE = 2,
@@ -232,10 +232,10 @@ export interface SEASON extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface MESSAGE_META extends IEntityKey<string> {
+export interface GAME_MESSAGE extends IEntityKey<string> {
     MessageId: string;
-    MessageType: MESSAGE_META_TYPE;
-    SaveType: MESSAGE_META_SAVE_TYPE;
+    MessageType: GAME_MESSAGE_TYPE;
+    SaveType: GAME_MESSAGE_SAVE_TYPE;
     getKey(): string;
 }
 
@@ -253,7 +253,7 @@ export interface MISSION_DAILY extends IEntityKey<string> {
     Fixed: boolean;
     OrderNum: number;
     ConditionMsgId: string;
-    ConditionOp: MESSAGE_META_OP_TYPE;
+    ConditionOp: GAME_MESSAGE_OP_TYPE;
     ConditionValue: CBigInt | null;
     RewardGroupId: string;
     getKey(): string;
@@ -264,7 +264,7 @@ export interface MISSION_PERIOD extends IEntityKey<string> {
     Day: number;
     IsActive: boolean;
     ConditionMsgId: string;
-    ConditionOp: MESSAGE_META_OP_TYPE;
+    ConditionOp: GAME_MESSAGE_OP_TYPE;
     ConditionValue: CBigInt | null;
     RewardGroupId: string;
     getKey(): string;
@@ -279,7 +279,7 @@ export interface ACHIEVE_ONCE extends IEntityKey<number> {
     ReqMsgId: string;
     ReqValue: CBigInt | null;
     ConditionMsgId: string;
-    ConditionOp: MESSAGE_META_OP_TYPE;
+    ConditionOp: GAME_MESSAGE_OP_TYPE;
     ConditionValue: CBigInt | null;
     RewardGroupId: string;
     AppleAchievementId: string;
@@ -296,7 +296,7 @@ export interface ACHIEVE_PASS extends IEntityKey<number> {
     ReqSeasonId: string;
     ReqPassId: string;
     ConditionMsgId: string;
-    ConditionOp: MESSAGE_META_OP_TYPE;
+    ConditionOp: GAME_MESSAGE_OP_TYPE;
     ConditionValue: CBigInt | null;
     RewardGroupId: string;
     getKey(): number;
@@ -607,9 +607,9 @@ export class TB_SEASON {
     }
 }
 
-export class TB_MESSAGE_META {
-    private static _dict: Map<string, MESSAGE_META> = new Map();
-    private static _list: MESSAGE_META[] = [];
+export class TB_GAME_MESSAGE {
+    private static _dict: Map<string, GAME_MESSAGE> = new Map();
+    private static _list: GAME_MESSAGE[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -618,9 +618,9 @@ export class TB_MESSAGE_META {
         this._list = [];
     }
 
-    static getAll(): readonly MESSAGE_META[] { return this._list; }
+    static getAll(): readonly GAME_MESSAGE[] { return this._list; }
 
-    static get(key: string): MESSAGE_META | undefined {
+    static get(key: string): GAME_MESSAGE | undefined {
         return this._dict.get(key);
     }
 
@@ -632,7 +632,7 @@ export class TB_MESSAGE_META {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as MESSAGE_META;
+            const row = JSON.parse(line) as GAME_MESSAGE;
             this._list.push(row);
             this._dict.set(row.MessageId, row);
         }

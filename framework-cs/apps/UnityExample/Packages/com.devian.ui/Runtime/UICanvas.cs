@@ -37,10 +37,10 @@ namespace Devian
         List<BaseUIFrame> mFrames = new List<BaseUIFrame>();
 
         /// <summary>
-        /// Unity Awake callback. Instance 설정 + canvas 캐시.
-        /// Use onAwake for custom initialization in derived classes.
+        /// Unity Awake callback. Instance 설정 + canvas 캐시 + onAwake().
+        /// non-virtual — 파생 클래스는 onAwake()를 override하여 사용한다.
         /// </summary>
-        protected virtual void Awake()
+        protected void Awake()
         {
             Instance = this as TCanvas;
             canvas = GetComponent<Canvas>();
@@ -48,10 +48,14 @@ namespace Devian
         }
 
         /// <summary>
-        /// Unity OnDestroy callback. Instance 클린업.
+        /// Unity OnDestroy callback. onDestroy() 호출 + Instance 클린업.
+        /// non-virtual — 파생 클래스는 onDestroy()를 override하여 사용한다.
+        /// IsApplicationQuitting == true이면 onDestroy()를 호출하지 않는다.
         /// </summary>
-        protected virtual void OnDestroy()
+        protected void OnDestroy()
         {
+            if (!BaseApplication.IsApplicationQuitting)
+                onDestroy();
             if (Instance == (this as TCanvas))
                 Instance = null;
         }
@@ -61,6 +65,12 @@ namespace Devian
         /// Called after canvas is cached. Frame initialization happens in Init().
         /// </summary>
         protected virtual void onAwake() { }
+
+        /// <summary>
+        /// Override this for custom cleanup logic.
+        /// Called before Instance cleanup in OnDestroy.
+        /// </summary>
+        protected virtual void onDestroy() { }
 
         protected virtual void onInit() { }
         protected virtual void onInitComplete() { }

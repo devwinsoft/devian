@@ -160,15 +160,15 @@ NOTE:
 
 ## Error Mapping (정본)
 
-- `AddRewards` 실패는 `CommonError(CommonErrorType, message, details)`를 사용한다.
-- 권장 `CommonErrorType`:
+- `AddRewards` 실패는 `CommonError(COMMON_ERROR_TYPE, message, details)`를 사용한다.
+- 권장 `COMMON_ERROR_TYPE`:
   - `INVENTORY_DELTAS_NULL`
   - `INVENTORY_DELTA_TYPE_INVALID`
   - `INVENTORY_DELTA_ID_EMPTY`
   - `INVENTORY_DELTA_AMOUNT_NEGATIVE`
-- 위 코드가 아직 없으면 `ERROR_COMMON`(SSOT)에 먼저 추가하고 생성 파이프라인으로 `CommonErrorType`을 갱신한다.
+- 위 코드가 아직 없으면 `COMMON_ERROR`(SSOT)에 먼저 추가하고 생성 파이프라인으로 `COMMON_ERROR_TYPE`을 갱신한다.
   - 파일: `input/Domains/Common/CommonTable.xlsx`
-  - 시트: `ERROR_COMMON`
+  - 시트: `COMMON_ERROR`
 
 
 ---
@@ -176,9 +176,9 @@ NOTE:
 
 ## Prerequisites (구현 전 사전 작업)
 
-### 1) ERROR_COMMON에 Inventory 에러 코드 추가 — ✅ 완료
+### 1) COMMON_ERROR에 Inventory 에러 코드 추가 — ✅ 완료
 
-`CommonErrorType`에 아래 4개 코드가 추가/생성 완료되었다.
+`COMMON_ERROR_TYPE`에 아래 4개 코드가 추가/생성 완료되었다.
 
 | 코드 | 용도 |
 |---|---|
@@ -218,7 +218,7 @@ readonly InventoryStorage _storage = new();
 ## asmdef
 
 `Devian.Samples.MobileSystem.asmdef`에 포함된 참조:
-- `Devian.Domain.Common` — `CommonResult`, `CommonError`, `CommonErrorType`
+- `Devian.Domain.Common` — `CommonResult`, `CommonError`, `COMMON_ERROR_TYPE`
 - `Devian.Domain.Game` — `STAT_TYPE` (AbilityEquip → AbilityBase 경유, InventoryStorage 의존)
 - `RewardData` 타입은 Reward 시스템 정본 규약(49-reward-system) 기반으로 사용한다.
 

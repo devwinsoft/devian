@@ -16,12 +16,12 @@ namespace Devian
             {
                 if (string.IsNullOrWhiteSpace(rootPath))
                 {
-                    return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_PATH_EMPTY, "Root path is empty.");
+                    return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_PATH_EMPTY, "Root path is empty.");
                 }
 
                 if (string.IsNullOrWhiteSpace(filename))
                 {
-                    return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_FILENAME_EMPTY, "Filename is empty.");
+                    return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_FILENAME_EMPTY, "Filename is empty.");
                 }
 
                 var path = Path.Combine(rootPath, filename);
@@ -46,7 +46,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_WRITE, ex.Message);
+                return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_WRITE, ex.Message);
             }
         }
 
@@ -56,12 +56,12 @@ namespace Devian
             {
                 if (string.IsNullOrWhiteSpace(rootPath))
                 {
-                    return CommonResult<SaveLocalPayload>.Failure(CommonErrorType.LOCALSAVE_PATH_EMPTY, "Root path is empty.");
+                    return CommonResult<SaveLocalPayload>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_PATH_EMPTY, "Root path is empty.");
                 }
 
                 if (string.IsNullOrWhiteSpace(filename))
                 {
-                    return CommonResult<SaveLocalPayload>.Failure(CommonErrorType.LOCALSAVE_FILENAME_EMPTY, "Filename is empty.");
+                    return CommonResult<SaveLocalPayload>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_FILENAME_EMPTY, "Filename is empty.");
                 }
 
                 var path = Path.Combine(rootPath, filename);
@@ -76,7 +76,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult<SaveLocalPayload>.Failure(CommonErrorType.LOCALSAVE_READ, ex.Message);
+                return CommonResult<SaveLocalPayload>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_READ, ex.Message);
             }
         }
     }

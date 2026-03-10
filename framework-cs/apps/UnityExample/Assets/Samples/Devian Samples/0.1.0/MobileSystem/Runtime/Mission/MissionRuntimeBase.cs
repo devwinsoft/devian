@@ -14,26 +14,26 @@ namespace Devian
         public bool isWaiting;
         public bool isCompleted;
 
-        [NonSerialized] protected MESSAGE_META_TYPE _statType;
-        [NonSerialized] protected MESSAGE_META_SAVE_TYPE _opType;
-        [NonSerialized] protected MESSAGE_META_OP_TYPE _conditionOpType = MESSAGE_META_OP_TYPE.GTE;
+        [NonSerialized] protected GAME_MESSAGE_TYPE _statType;
+        [NonSerialized] protected GAME_MESSAGE_SAVE_TYPE _opType;
+        [NonSerialized] protected GAME_MESSAGE_OP_TYPE _conditionOpType = GAME_MESSAGE_OP_TYPE.GTE;
         [NonSerialized] protected CBigInt _conditionValue = CBigInt.Zero;
         [NonSerialized] private bool _hasSessionMinSample;
-        [NonSerialized] private Action<int, MESSAGE_META_TYPE, BaseTrigger<int, MESSAGE_META_TYPE>.Handler> _subscribeTrigger;
+        [NonSerialized] private Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> _subscribeTrigger;
         [NonSerialized] private Action<int> _unsubscribeTrigger;
         [NonSerialized] private Action<MissionRuntimeBase> _onProgress;
         [NonSerialized] private Action<MissionRuntimeBase> _onClaimable;
         [NonSerialized] private Func<CBigInt> _externalProgressReader;
         [NonSerialized] private bool _isSubscribed;
 
-        public MESSAGE_META_TYPE StatType => _statType;
-        public MESSAGE_META_SAVE_TYPE OpType => _opType;
-        public MESSAGE_META_OP_TYPE ConditionOpType => _conditionOpType;
+        public GAME_MESSAGE_TYPE StatType => _statType;
+        public GAME_MESSAGE_SAVE_TYPE OpType => _opType;
+        public GAME_MESSAGE_OP_TYPE ConditionOpType => _conditionOpType;
         public CBigInt ConditionValue => _conditionValue;
         public bool IsSubscribed => _isSubscribed;
         public bool IsClaimable => !isCompleted
                                    && !isWaiting
-                                   && MetaMessageRule.IsConditionSatisfied(
+                                   && GameMessageRule.IsConditionSatisfied(
                                        progressValue,
                                        _conditionOpType,
                                        _conditionValue);
@@ -41,11 +41,11 @@ namespace Devian
 
         internal void Bind(
             string messageId,
-            MESSAGE_META_TYPE statType,
-            MESSAGE_META_SAVE_TYPE opType,
-            MESSAGE_META_OP_TYPE conditionOpType,
+            GAME_MESSAGE_TYPE statType,
+            GAME_MESSAGE_SAVE_TYPE opType,
+            GAME_MESSAGE_OP_TYPE conditionOpType,
             CBigInt conditionValue,
-            Action<int, MESSAGE_META_TYPE, BaseTrigger<int, MESSAGE_META_TYPE>.Handler> subscribeTrigger,
+            Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> subscribeTrigger,
             Action<int> unsubscribeTrigger,
             Func<CBigInt> readExternalProgress,
             Action<MissionRuntimeBase> onProgress,
@@ -58,7 +58,7 @@ namespace Devian
             _opType = opType;
             _conditionOpType = conditionOpType;
             _conditionValue = conditionValue;
-            _hasSessionMinSample = opType == MESSAGE_META_SAVE_TYPE.SESSION_MIN
+            _hasSessionMinSample = opType == GAME_MESSAGE_SAVE_TYPE.SESSION_MIN
                                    && progressValue.CompareTo(CBigInt.Zero) != 0;
             _subscribeTrigger = subscribeTrigger;
             _unsubscribeTrigger = unsubscribeTrigger;
@@ -146,7 +146,7 @@ namespace Devian
 
         protected virtual bool ShouldSubscribe()
         {
-            return _opType != MESSAGE_META_SAVE_TYPE.NONE
+            return _opType != GAME_MESSAGE_SAVE_TYPE.NONE
                    && !isCompleted
                    && !isWaiting;
         }
@@ -164,7 +164,7 @@ namespace Devian
 
             var wasClaimable = IsClaimable;
             var nextProgress = readExternalProgress();
-            nextProgress = MetaMessageRule.ClampNonNegative(nextProgress);
+            nextProgress = GameMessageRule.ClampNonNegative(nextProgress);
             if (nextProgress.CompareTo(progressValue) == 0)
                 return;
 
@@ -182,12 +182,12 @@ namespace Devian
             if (!TryReadProgressDelta(args, out var delta))
                 return false;
 
-            if (isCompleted || isWaiting || _opType == MESSAGE_META_SAVE_TYPE.NONE)
+            if (isCompleted || isWaiting || _opType == GAME_MESSAGE_SAVE_TYPE.NONE)
                 return false;
 
             var wasClaimable = IsClaimable;
             var nextProgress = calculateNextProgress(delta);
-            nextProgress = MetaMessageRule.ClampNonNegative(nextProgress);
+            nextProgress = GameMessageRule.ClampNonNegative(nextProgress);
             if (nextProgress.CompareTo(progressValue) == 0)
                 return false;
 
@@ -206,15 +206,15 @@ namespace Devian
 
             switch (_opType)
             {
-                case MESSAGE_META_SAVE_TYPE.SESSION_MAX:
+                case GAME_MESSAGE_SAVE_TYPE.SESSION_MAX:
                     if (delta.CompareTo(CBigInt.Zero) < 0)
                         return progressValue;
                     return CBigInt.Max(progressValue, delta);
 
-                case MESSAGE_META_SAVE_TYPE.SESSION_SUM:
+                case GAME_MESSAGE_SAVE_TYPE.SESSION_SUM:
                     return CalculateSumProgress(delta);
 
-                case MESSAGE_META_SAVE_TYPE.SESSION_MIN:
+                case GAME_MESSAGE_SAVE_TYPE.SESSION_MIN:
                     if (delta.CompareTo(CBigInt.Zero) < 0)
                         return progressValue;
 
@@ -283,7 +283,7 @@ namespace Devian
 
         protected override CBigInt CalculateSumProgress(CBigInt delta)
         {
-            var next = MetaMessageRule.ClampNonNegative(progressValue + delta);
+            var next = GameMessageRule.ClampNonNegative(progressValue + delta);
             return CBigInt.Min(_conditionValue, next);
         }
     }
@@ -307,7 +307,7 @@ namespace Devian
 
         protected override CBigInt CalculateSumProgress(CBigInt delta)
         {
-            var next = MetaMessageRule.ClampNonNegative(progressValue + delta);
+            var next = GameMessageRule.ClampNonNegative(progressValue + delta);
             return CBigInt.Min(_conditionValue, next);
         }
     }

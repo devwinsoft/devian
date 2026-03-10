@@ -7,8 +7,8 @@ AppliesTo: v10
 
 이 문서는 아래 항목의 정본이다.
 
-- `MISSION_DAILY`, `MISSION_PERIOD`, `MESSAGE_META` 스키마
-- `MISSION_TYPE`, `MESSAGE_META_*`, `MESSAGE_MISSION_TYPE` 사용 규약
+- `MISSION_DAILY`, `MISSION_PERIOD`, `GAME_MESSAGE` 스키마
+- `MISSION_TYPE`, `GAME_MESSAGE_*`, `MESSAGE_MISSION_TYPE` 사용 규약
 - Mission trigger/update/runtime binding 규칙
 - Mission 저장 구조(`MissionStorage`, daily/period runtime) 규칙
 
@@ -21,15 +21,15 @@ AppliesTo: v10
 
 - `missionId`: 미션 ID
 - `missionType`: `MISSION_TYPE.DAILY` / `MISSION_TYPE.PERIOD`
-- `conditionMsgId`: mission row가 참조하는 `MESSAGE_META.messageId`
-- `messageType`: trigger key (`MESSAGE_META_TYPE`)
-- `saveType`: stat 누적 연산 (`MESSAGE_META_SAVE_TYPE`)
-- `conditionOp`: 비교 연산 (`MESSAGE_META_OP_TYPE`)
+- `conditionMsgId`: mission row가 참조하는 `GAME_MESSAGE.messageId`
+- `messageType`: trigger key (`GAME_MESSAGE_TYPE`)
+- `saveType`: stat 누적 연산 (`GAME_MESSAGE_SAVE_TYPE`)
+- `conditionOp`: 비교 연산 (`GAME_MESSAGE_OP_TYPE`)
 - `conditionValue`: 목표값(`CBigInt`)
 - `periodKey`: runtime 주기 식별자 (`daily:{index}`, `period:{index}`)
 - `periodDayGroupKey`: `MISSION_PERIOD.day` (period runtime 활성화 그룹 키)
 - `missionUid`: runtime 식별 `int`
-- `message stats`: `MetaMessageStorage.stats[string messageId]`
+- `message stats`: `GameMessageStorage.stats[string messageId]`
 
 ---
 
@@ -43,8 +43,8 @@ AppliesTo: v10
 | `isActive` | bool | 운영 토글 |
 | `fixed` | bool | daily 선택 우선 포함 |
 | `orderNum` | int | 정렬 기준(1-base) |
-| `conditionMsgId` | string | `MESSAGE_META.messageId` FK |
-| `conditionOp` | `MESSAGE_META_OP_TYPE` | 조건 비교 타입 |
+| `conditionMsgId` | string | `GAME_MESSAGE.messageId` FK |
+| `conditionOp` | `GAME_MESSAGE_OP_TYPE` | 조건 비교 타입 |
 | `conditionValue` | `class:CBigInt` | 목표값 |
 | `rewardGroupId` | string | 보상 키 |
 
@@ -58,8 +58,8 @@ AppliesTo: v10
 | `missionId` | string (pk) | 미션 ID |
 | `isActive` | bool | 운영 토글 |
 | `day` | int | 활성화 day (1~7) |
-| `conditionMsgId` | string | `MESSAGE_META.messageId` FK |
-| `conditionOp` | `MESSAGE_META_OP_TYPE` | 조건 비교 타입 |
+| `conditionMsgId` | string | `GAME_MESSAGE.messageId` FK |
+| `conditionOp` | `GAME_MESSAGE_OP_TYPE` | 조건 비교 타입 |
 | `conditionValue` | `class:CBigInt` | 목표값 |
 | `rewardGroupId` | string | 보상 키 |
 
@@ -68,17 +68,17 @@ AppliesTo: v10
 - `day`는 `1~7` 범위를 사용한다.
 - `day`는 period runtime의 group key다. 동일 `day` row는 같은 activation bucket으로 처리한다.
 
-### `MESSAGE_META`
+### `GAME_MESSAGE`
 
 | field | type | note |
 |---|---|---|
 | `messageId` | string (pk) | message 식별자 |
-| `messageType` | `MESSAGE_META_TYPE` | trigger 타입 |
-| `saveType` | `MESSAGE_META_SAVE_TYPE` | 누적 방식 |
+| `messageType` | `GAME_MESSAGE_TYPE` | trigger 타입 |
+| `saveType` | `GAME_MESSAGE_SAVE_TYPE` | 누적 방식 |
 
 정본 source:
 - `input/Domains/Game/MetaTable.xlsx`
-- `input/Domains/Game/ENUM_META.json`
+- `input/Domains/Game/ENUM_GAME.json`
 
 ---
 
@@ -97,23 +97,23 @@ AppliesTo: v10
 
 ## D) Trigger + Stats Update
 
-`MetaMessageTrigger` 정본 타입:
+`GameMessageTrigger` 정본 타입:
 
 ```csharp
-BaseTrigger<int, MESSAGE_META_TYPE>
+BaseTrigger<int, GAME_MESSAGE_TYPE>
 ```
 
-외부 진입점은 `MetaMessageManager.Notify(messageType, delta)`다.
+외부 진입점은 `GameMessageManager.Notify(messageType, delta)`다.
 
 trigger 처리 순서:
 
-1. `MetaMessageManager.Notify` 호출
-2. `TB_MESSAGE_META`에서 `messageType` 일치 row를 순회
+1. `GameMessageManager.Notify` 호출
+2. `TB_GAME_MESSAGE`에서 `messageType` 일치 row를 순회
 3. `message.stats[messageId]` 갱신
    - `TOTAL_SUM`: `current + delta`
    - `TOTAL_MAX`: `max(current, delta)`
    - `TOTAL_MIN`: `min(current, delta)`
-4. `MetaMessageTrigger` publish로 mission runtime 구독자 notify
+4. `GameMessageTrigger` publish로 mission runtime 구독자 notify
 5. `AchieveManager`로 동일 이벤트 전달
 
 runtime 반영:
@@ -178,6 +178,6 @@ runtime 저장 규칙:
 - [46-achieve-system](../../46-achieve-system/00-overview/SKILL.md)
 - [01-policy](../01-policy/SKILL.md)
 - [10-mission-manager](../10-mission-manager/SKILL.md)
-- [45-meta-message-system/11-meta-message-trigger](../../45-meta-message-system/11-meta-message-trigger/SKILL.md)
+- [45-game-message-system/11-game-message-trigger](../../45-game-message-system/11-game-message-trigger/SKILL.md)
 - [12-mission-storage](../12-mission-storage/SKILL.md)
 - [13-mission-runtime](../13-mission-runtime/SKILL.md)

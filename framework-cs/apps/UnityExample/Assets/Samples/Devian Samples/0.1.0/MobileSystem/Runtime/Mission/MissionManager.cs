@@ -49,7 +49,7 @@ namespace Devian
             if (!TryGetServerNowUtcMs(out var nowUtcMs))
             {
                 return Task.FromResult(CommonResult.Failure(
-                    CommonErrorType.COMMON_SERVER,
+                    COMMON_ERROR_TYPE.COMMON_SERVER,
                     "Server time is unavailable. Initialize RemoteConfigManager before MissionManager."));
             }
 
@@ -162,10 +162,10 @@ namespace Devian
         public async Task<CommonResult> ClaimAsync(MISSION_TYPE missionType, string missionId, CancellationToken ct = default)
         {
             if (!_initialized)
-                return CommonResult.Failure(CommonErrorType.SAVEDATA_SYNC_REQUIRED, "MissionManager is not initialized.");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED, "MissionManager is not initialized.");
 
             if (string.IsNullOrWhiteSpace(missionId))
-                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, "missionId is empty.");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "missionId is empty.");
 
             syncRuntimeSchedule();
 
@@ -178,7 +178,7 @@ namespace Devian
                     return await claimPeriodAsync(missionId, ct);
 
                 default:
-                    return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Unsupported missionType: {missionType}");
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, $"Unsupported missionType: {missionType}");
             }
         }
 
@@ -220,7 +220,7 @@ namespace Devian
             if (row == null || !row.IsActive || !row.ConditionValue.HasValue)
                 return MissionRuntimeState.NONE;
 
-            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == MESSAGE_META_SAVE_TYPE.NONE)
+            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
                 return MissionRuntimeState.NONE;
 
             var runtime = findDailyRuntime(missionId);
@@ -239,7 +239,7 @@ namespace Devian
             if (row == null || !row.IsActive || row.Day < 1 || row.Day > 7 || !row.ConditionValue.HasValue)
                 return MissionRuntimeState.NONE;
 
-            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == MESSAGE_META_SAVE_TYPE.NONE)
+            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
                 return MissionRuntimeState.NONE;
 
             var runtime = findPeriodRuntime(missionId);
@@ -256,21 +256,21 @@ namespace Devian
         {
             var row = TB_MISSION_DAILY.Get(missionId);
             if (row == null || !row.IsActive || !row.ConditionValue.HasValue)
-                return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
 
-            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == MESSAGE_META_SAVE_TYPE.NONE)
-                return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
+            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
 
             var periodKey = getCurrentDailyKey();
             var runtime = findDailyRuntime(missionId);
             if (runtime == null)
-                return CommonResult.Failure(CommonErrorType.MISSION_RUNTIME_MISSING, $"Daily runtime missing: {missionId}");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_RUNTIME_MISSING, $"Daily runtime missing: {missionId}");
 
             if (!string.Equals(runtime.periodKey, periodKey, StringComparison.Ordinal))
-                return CommonResult.Failure(CommonErrorType.MISSION_RUNTIME_STALE, $"Daily runtime stale: {missionId}/{runtime.periodKey}->{periodKey}");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_RUNTIME_STALE, $"Daily runtime stale: {missionId}/{runtime.periodKey}->{periodKey}");
 
             if (!runtime.IsClaimable)
-                return CommonResult.Failure(CommonErrorType.MISSION_NOT_CLAIMABLE, $"Daily mission is not claimable: {missionId}");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_CLAIMABLE, $"Daily mission is not claimable: {missionId}");
 
             var apply = RewardManager.Instance.ApplyRewardGroup(row.RewardGroupId);
             if (apply.IsFailure)
@@ -293,21 +293,21 @@ namespace Devian
         {
             var row = TB_MISSION_PERIOD.Get(missionId);
             if (row == null || !row.IsActive || row.Day < 1 || row.Day > 7 || !row.ConditionValue.HasValue)
-                return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Period mission not found: {missionId}");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_FOUND, $"Period mission not found: {missionId}");
 
-            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == MESSAGE_META_SAVE_TYPE.NONE)
-                return CommonResult.Failure(CommonErrorType.MISSION_NOT_FOUND, $"Period mission not found: {missionId}");
+            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_FOUND, $"Period mission not found: {missionId}");
 
             var periodKey = getCurrentPeriodKey();
             var runtime = findPeriodRuntime(missionId);
             if (runtime == null)
-                return CommonResult.Failure(CommonErrorType.MISSION_RUNTIME_MISSING, $"Period runtime missing: {missionId}");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_RUNTIME_MISSING, $"Period runtime missing: {missionId}");
 
             if (!string.Equals(runtime.periodKey, periodKey, StringComparison.Ordinal))
-                return CommonResult.Failure(CommonErrorType.MISSION_RUNTIME_STALE, $"Period runtime stale: {missionId}/{runtime.periodKey}->{periodKey}");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_RUNTIME_STALE, $"Period runtime stale: {missionId}/{runtime.periodKey}->{periodKey}");
 
             if (!runtime.IsClaimable)
-                return CommonResult.Failure(CommonErrorType.MISSION_NOT_CLAIMABLE, $"Period mission is not claimable: {missionId}");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_CLAIMABLE, $"Period mission is not claimable: {missionId}");
 
             var apply = RewardManager.Instance.ApplyRewardGroup(row.RewardGroupId);
             if (apply.IsFailure)
@@ -331,14 +331,14 @@ namespace Devian
             _missionMessageSystem.Notify(MESSAGE_MISSION_TYPE.RUNTIME_INIT, runtime);
         }
 
-        void subscribeRuntimeTrigger(int ownerKey, MESSAGE_META_TYPE messageType, BaseTrigger<int, MESSAGE_META_TYPE>.Handler handler)
+        void subscribeRuntimeTrigger(int ownerKey, GAME_MESSAGE_TYPE messageType, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler handler)
         {
-            MetaMessageManager.Instance.SubcribeMetaMessageTrigger(ownerKey, messageType, handler);
+            GameMessageManager.Instance.SubcribeGameMessageTrigger(ownerKey, messageType, handler);
         }
 
         void unSubcribeRuntimeTrigger(int ownerKey)
         {
-            MetaMessageManager.Instance.UnSubcribeMetaMessageTrigger(ownerKey);
+            GameMessageManager.Instance.UnSubcribeGameMessageTrigger(ownerKey);
         }
 
         void onRuntimeChanged(MissionRuntimeBase runtime)
@@ -386,13 +386,13 @@ namespace Devian
             return _scheduler.FindPeriod(missionId);
         }
 
-        static bool TryResolveMessage(string messageId, out MESSAGE_META message)
+        static bool TryResolveMessage(string messageId, out GAME_MESSAGE message)
         {
             message = null;
             if (string.IsNullOrWhiteSpace(messageId))
                 return false;
 
-            message = TB_MESSAGE_META.Get(messageId);
+            message = TB_GAME_MESSAGE.Get(messageId);
             return message != null;
         }
 

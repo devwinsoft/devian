@@ -46,9 +46,9 @@ Adapter 계약은 `internal/private` 범위로만 사용한다.
 - 상위에서 점수를 직접 전달하지 않는다.
 - `LEADERBOARD.messageId`를 기준으로 score를 내부 계산한다.
 - score 소스:
-  - `MetaMessageManager.Storage.stats[messageId]`
+  - `GameMessageManager.Storage.stats[messageId]`
 - 허용 saveType:
-  - `TB_MESSAGE.saveType == TOTAL_SUM || TOTAL_MAX`
+  - `TB_GAME_MESSAGE.saveType == TOTAL_SUM || TOTAL_MAX`
 - 허용되지 않는 saveType이면:
   - 점수 `0` 반환
   - error log 기록
@@ -90,4 +90,4 @@ season reward 평가는 위 status를 그대로 사용한다.
 ## Related
 
 - [03-ssot](../03-ssot/SKILL.md)
-- [45-meta-message-system/10-meta-message-manager](../../45-meta-message-system/10-meta-message-manager/SKILL.md)
+- [45-game-message-system/10-game-message-manager](../../45-game-message-system/10-game-message-manager/SKILL.md)

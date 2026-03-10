@@ -42,7 +42,7 @@ namespace Devian
                 var response = await callFunctionAsync("getRemoteConfig", null, ct);
                 if (response == null)
                     return CommonResult<RemoteConfigSnapshot>.Failure(
-                        CommonErrorType.COMMON_SERVER,
+                        COMMON_ERROR_TYPE.COMMON_SERVER,
                         "getRemoteConfig returned unsupported response.");
 
                 return CommonResult<RemoteConfigSnapshot>.Success(
@@ -56,21 +56,21 @@ namespace Devian
                     case FunctionsErrorCode.Unavailable:
                     case FunctionsErrorCode.DeadlineExceeded:
                         return CommonResult<RemoteConfigSnapshot>.Failure(
-                            CommonErrorType.COMMON_NETWORK,
+                            COMMON_ERROR_TYPE.COMMON_NETWORK,
                             "Remote config network unavailable.");
                     case FunctionsErrorCode.Unauthenticated:
                     case FunctionsErrorCode.PermissionDenied:
                         return CommonResult<RemoteConfigSnapshot>.Failure(
-                            CommonErrorType.COMMON_AUTH, fex.Message);
+                            COMMON_ERROR_TYPE.COMMON_AUTH, fex.Message);
                     default:
                         return CommonResult<RemoteConfigSnapshot>.Failure(
-                            CommonErrorType.COMMON_SERVER, fex.Message);
+                            COMMON_ERROR_TYPE.COMMON_SERVER, fex.Message);
                 }
             }
             catch (Exception ex)
             {
                 return CommonResult<RemoteConfigSnapshot>.Failure(
-                    CommonErrorType.COMMON_SERVER, ex.Message);
+                    COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message);
             }
         }
 
@@ -88,7 +88,7 @@ namespace Devian
                 var response = await callFunctionAsync("initSession", data, ct);
                 if (response == null)
                     return CommonResult<SessionInitSnapshot>.Failure(
-                        CommonErrorType.COMMON_SERVER,
+                        COMMON_ERROR_TYPE.COMMON_SERVER,
                         "initSession returned unsupported response.");
 
                 // remoteConfig
@@ -98,7 +98,7 @@ namespace Devian
 
                 if (remoteConfigDict == null)
                     return CommonResult<SessionInitSnapshot>.Failure(
-                        CommonErrorType.COMMON_SERVER,
+                        COMMON_ERROR_TYPE.COMMON_SERVER,
                         "initSession: remoteConfig missing.");
 
                 var remoteConfig = parseRemoteConfigSnapshot(remoteConfigDict);
@@ -110,7 +110,7 @@ namespace Devian
 
                 if (entDict == null)
                     return CommonResult<SessionInitSnapshot>.Failure(
-                        CommonErrorType.COMMON_SERVER,
+                        COMMON_ERROR_TYPE.COMMON_SERVER,
                         "initSession: entitlements missing.");
 
                 var entitlements = parseEntitlementsSnapshot(entDict);
@@ -122,7 +122,7 @@ namespace Devian
 
                 if (adjDict == null)
                     return CommonResult<SessionInitSnapshot>.Failure(
-                        CommonErrorType.COMMON_SERVER,
+                        COMMON_ERROR_TYPE.COMMON_SERVER,
                         "initSession: purchaseAdjustments missing.");
 
                 var purchaseAdjustments = parseRefundPageResult(adjDict);
@@ -138,21 +138,21 @@ namespace Devian
                     case FunctionsErrorCode.Unavailable:
                     case FunctionsErrorCode.DeadlineExceeded:
                         return CommonResult<SessionInitSnapshot>.Failure(
-                            CommonErrorType.COMMON_NETWORK,
+                            COMMON_ERROR_TYPE.COMMON_NETWORK,
                             "initSession network unavailable.");
                     case FunctionsErrorCode.Unauthenticated:
                     case FunctionsErrorCode.PermissionDenied:
                         return CommonResult<SessionInitSnapshot>.Failure(
-                            CommonErrorType.COMMON_AUTH, fex.Message);
+                            COMMON_ERROR_TYPE.COMMON_AUTH, fex.Message);
                     default:
                         return CommonResult<SessionInitSnapshot>.Failure(
-                            CommonErrorType.COMMON_SERVER, fex.Message);
+                            COMMON_ERROR_TYPE.COMMON_SERVER, fex.Message);
                 }
             }
             catch (Exception ex)
             {
                 return CommonResult<SessionInitSnapshot>.Failure(
-                    CommonErrorType.COMMON_SERVER, ex.Message);
+                    COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message);
             }
         }
 
@@ -165,7 +165,7 @@ namespace Devian
                 var response = await callFunctionAsync("getInitialInventory", null, ct);
                 if (response == null)
                     return CommonResult<RewardData[]>.Failure(
-                        CommonErrorType.COMMON_SERVER,
+                        COMMON_ERROR_TYPE.COMMON_SERVER,
                         "getInitialInventory returned unsupported response.");
 
                 return CommonResult<RewardData[]>.Success(
@@ -179,21 +179,21 @@ namespace Devian
                     case FunctionsErrorCode.Unavailable:
                     case FunctionsErrorCode.DeadlineExceeded:
                         return CommonResult<RewardData[]>.Failure(
-                            CommonErrorType.COMMON_NETWORK,
+                            COMMON_ERROR_TYPE.COMMON_NETWORK,
                             "Initial inventory network unavailable.");
                     case FunctionsErrorCode.Unauthenticated:
                     case FunctionsErrorCode.PermissionDenied:
                         return CommonResult<RewardData[]>.Failure(
-                            CommonErrorType.COMMON_AUTH, fex.Message);
+                            COMMON_ERROR_TYPE.COMMON_AUTH, fex.Message);
                     default:
                         return CommonResult<RewardData[]>.Failure(
-                            CommonErrorType.COMMON_SERVER, fex.Message);
+                            COMMON_ERROR_TYPE.COMMON_SERVER, fex.Message);
                 }
             }
             catch (Exception ex)
             {
                 return CommonResult<RewardData[]>.Failure(
-                    CommonErrorType.COMMON_SERVER, ex.Message);
+                    COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message);
             }
         }
 
@@ -207,7 +207,7 @@ namespace Devian
                 var response = await callFunctionAsync("verifyPurchase", data, ct);
                 if (response == null)
                     return CommonResult<VerifyPurchaseResponse>.Failure(
-                        CommonErrorType.PURCHASE_FUNCTION_RESPONSE_INVALID,
+                        COMMON_ERROR_TYPE.PURCHASE_FUNCTION_RESPONSE_INVALID,
                         "verifyPurchase returned unsupported response type.");
 
                 return CommonResult<VerifyPurchaseResponse>.Success(
@@ -223,7 +223,7 @@ namespace Devian
             {
                 Debug.LogError($"[{Tag}] verifyPurchase failed: {ex.Message}");
                 return CommonResult<VerifyPurchaseResponse>.Failure(
-                    CommonErrorType.PURCHASE_VERIFY_CALL_FAILED, ex.Message);
+                    COMMON_ERROR_TYPE.PURCHASE_VERIFY_CALL_FAILED, ex.Message);
             }
         }
 
@@ -234,7 +234,7 @@ namespace Devian
                 var response = await callFunctionAsync("getEntitlements", null, ct);
                 if (response == null)
                     return CommonResult<EntitlementsSnapshot>.Failure(
-                        CommonErrorType.PURCHASE_FUNCTION_RESPONSE_INVALID,
+                        COMMON_ERROR_TYPE.PURCHASE_FUNCTION_RESPONSE_INVALID,
                         "getEntitlements returned unsupported response type.");
 
                 return CommonResult<EntitlementsSnapshot>.Success(
@@ -250,7 +250,7 @@ namespace Devian
             {
                 Debug.LogError($"[{Tag}] getEntitlements failed: {ex.Message}");
                 return CommonResult<EntitlementsSnapshot>.Failure(
-                    CommonErrorType.PURCHASE_ENTITLEMENTS_CALL_FAILED, ex.Message);
+                    COMMON_ERROR_TYPE.PURCHASE_ENTITLEMENTS_CALL_FAILED, ex.Message);
             }
         }
 
@@ -262,13 +262,13 @@ namespace Devian
                 var response = await callFunctionAsync("getRecentPurchases30d", data, ct);
                 if (response == null)
                     return CommonResult<RecentPurchaseItem>.Failure(
-                        CommonErrorType.PURCHASE_FUNCTION_RESPONSE_INVALID,
+                        COMMON_ERROR_TYPE.PURCHASE_FUNCTION_RESPONSE_INVALID,
                         "getRecentPurchases30d returned unsupported response type.");
 
                 var item = parseRecentPurchaseItem(response);
                 if (item == null)
                     return CommonResult<RecentPurchaseItem>.Failure(
-                        CommonErrorType.PURCHASE_RECENT_NOT_FOUND,
+                        COMMON_ERROR_TYPE.PURCHASE_RECENT_NOT_FOUND,
                         "No recent consumable purchase within 30 days.");
 
                 return CommonResult<RecentPurchaseItem>.Success(item);
@@ -283,7 +283,7 @@ namespace Devian
             {
                 Debug.LogError($"[{Tag}] getRecentPurchases30d failed: {ex.Message}");
                 return CommonResult<RecentPurchaseItem>.Failure(
-                    CommonErrorType.PURCHASE_RECENT_CALL_FAILED, ex.Message);
+                    COMMON_ERROR_TYPE.PURCHASE_RECENT_CALL_FAILED, ex.Message);
             }
         }
 
@@ -295,7 +295,7 @@ namespace Devian
                 var response = await callFunctionAsync("getPurchaseAdjustments", data, ct);
                 if (response == null)
                     return CommonResult<RefundPageResult>.Failure(
-                        CommonErrorType.PURCHASE_FUNCTION_RESPONSE_INVALID,
+                        COMMON_ERROR_TYPE.PURCHASE_FUNCTION_RESPONSE_INVALID,
                         "getPurchaseAdjustments returned unsupported response type.");
 
                 return CommonResult<RefundPageResult>.Success(
@@ -311,7 +311,7 @@ namespace Devian
             {
                 Debug.LogError($"[{Tag}] getPurchaseAdjustments failed: {ex.Message}");
                 return CommonResult<RefundPageResult>.Failure(
-                    CommonErrorType.PURCHASE_ADJUSTMENTS_CALL_FAILED, ex.Message);
+                    COMMON_ERROR_TYPE.PURCHASE_ADJUSTMENTS_CALL_FAILED, ex.Message);
             }
         }
 
@@ -334,7 +334,7 @@ namespace Devian
             {
                 Debug.LogError($"[{Tag}] ackPurchaseClientGrant failed: {ex.Message}");
                 return CommonResult.Failure(
-                    CommonErrorType.PURCHASE_VERIFY_CALL_FAILED, ex.Message);
+                    COMMON_ERROR_TYPE.PURCHASE_VERIFY_CALL_FAILED, ex.Message);
             }
         }
 
@@ -355,7 +355,7 @@ namespace Devian
             {
                 Debug.LogError($"[{Tag}] ackPurchaseStoreConfirm failed: {ex.Message}");
                 return CommonResult.Failure(
-                    CommonErrorType.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED, ex.Message);
+                    COMMON_ERROR_TYPE.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED, ex.Message);
             }
         }
 
@@ -376,7 +376,7 @@ namespace Devian
             {
                 Debug.LogError($"[{Tag}] ackRefundApplied failed: {ex.Message}");
                 return CommonResult.Failure(
-                    CommonErrorType.PURCHASE_REFUND_APPLY_FAILED, ex.Message);
+                    COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED, ex.Message);
             }
         }
 
@@ -471,30 +471,30 @@ namespace Devian
             var isGetPurchaseAdjustments = functionName == "getPurchaseAdjustments";
             var isGetRecentPurchases = functionName == "getRecentPurchases30d";
 
-            CommonErrorType errorType;
+            COMMON_ERROR_TYPE errorType;
             string message;
 
             switch (fex.ErrorCode)
             {
                 case FunctionsErrorCode.Unauthenticated:
-                    errorType = CommonErrorType.PURCHASE_UNAUTHENTICATED;
+                    errorType = COMMON_ERROR_TYPE.PURCHASE_UNAUTHENTICATED;
                     message = "Authentication required.";
                     break;
 
                 case FunctionsErrorCode.InvalidArgument:
                     if (isVerifyPurchase || isAckPurchaseClientGrant)
                     {
-                        errorType = CommonErrorType.PURCHASE_VERIFY_INVALID_ARGUMENT;
+                        errorType = COMMON_ERROR_TYPE.PURCHASE_VERIFY_INVALID_ARGUMENT;
                         message = $"Invalid {functionName} arguments.";
                     }
                     else if (isGetRecentPurchases)
                     {
-                        errorType = CommonErrorType.PURCHASE_RECENT_CALL_FAILED;
+                        errorType = COMMON_ERROR_TYPE.PURCHASE_RECENT_CALL_FAILED;
                         message = "Invalid getRecentPurchases request arguments.";
                     }
                     else if (isGetPurchaseAdjustments)
                     {
-                        errorType = CommonErrorType.PURCHASE_ADJUSTMENTS_INVALID_ARGUMENT;
+                        errorType = COMMON_ERROR_TYPE.PURCHASE_ADJUSTMENTS_INVALID_ARGUMENT;
                         message = "Invalid getPurchaseAdjustments request arguments.";
                     }
                     else
@@ -507,7 +507,7 @@ namespace Devian
                 case FunctionsErrorCode.FailedPrecondition:
                     if (isVerifyPurchase || isAckPurchaseClientGrant)
                     {
-                        errorType = CommonErrorType.PURCHASE_VERIFY_FAILED_PRECONDITION;
+                        errorType = COMMON_ERROR_TYPE.PURCHASE_VERIFY_FAILED_PRECONDITION;
                         message = $"{functionName} failed precondition.";
                     }
                     else
@@ -518,7 +518,7 @@ namespace Devian
                     break;
 
                 case FunctionsErrorCode.PermissionDenied:
-                    errorType = CommonErrorType.COMMON_AUTH;
+                    errorType = COMMON_ERROR_TYPE.COMMON_AUTH;
                     message = "Permission denied.";
                     break;
 
@@ -548,30 +548,30 @@ namespace Devian
             var isGetPurchaseAdjustments = functionName == "getPurchaseAdjustments";
             var isGetRecentPurchases = functionName == "getRecentPurchases30d";
 
-            CommonErrorType errorType;
+            COMMON_ERROR_TYPE errorType;
             string message;
 
             switch (fex.ErrorCode)
             {
                 case FunctionsErrorCode.Unauthenticated:
-                    errorType = CommonErrorType.PURCHASE_UNAUTHENTICATED;
+                    errorType = COMMON_ERROR_TYPE.PURCHASE_UNAUTHENTICATED;
                     message = "Authentication required.";
                     break;
 
                 case FunctionsErrorCode.InvalidArgument:
                     if (isVerifyPurchase || isAckPurchaseClientGrant)
                     {
-                        errorType = CommonErrorType.PURCHASE_VERIFY_INVALID_ARGUMENT;
+                        errorType = COMMON_ERROR_TYPE.PURCHASE_VERIFY_INVALID_ARGUMENT;
                         message = $"Invalid {functionName} arguments.";
                     }
                     else if (isGetRecentPurchases)
                     {
-                        errorType = CommonErrorType.PURCHASE_RECENT_CALL_FAILED;
+                        errorType = COMMON_ERROR_TYPE.PURCHASE_RECENT_CALL_FAILED;
                         message = "Invalid getRecentPurchases request arguments.";
                     }
                     else if (isGetPurchaseAdjustments)
                     {
-                        errorType = CommonErrorType.PURCHASE_ADJUSTMENTS_INVALID_ARGUMENT;
+                        errorType = COMMON_ERROR_TYPE.PURCHASE_ADJUSTMENTS_INVALID_ARGUMENT;
                         message = "Invalid getPurchaseAdjustments request arguments.";
                     }
                     else
@@ -584,7 +584,7 @@ namespace Devian
                 case FunctionsErrorCode.FailedPrecondition:
                     if (isVerifyPurchase || isAckPurchaseClientGrant)
                     {
-                        errorType = CommonErrorType.PURCHASE_VERIFY_FAILED_PRECONDITION;
+                        errorType = COMMON_ERROR_TYPE.PURCHASE_VERIFY_FAILED_PRECONDITION;
                         message = $"{functionName} failed precondition.";
                     }
                     else
@@ -595,7 +595,7 @@ namespace Devian
                     break;
 
                 case FunctionsErrorCode.PermissionDenied:
-                    errorType = CommonErrorType.COMMON_AUTH;
+                    errorType = COMMON_ERROR_TYPE.COMMON_AUTH;
                     message = "Permission denied.";
                     break;
 
@@ -618,45 +618,45 @@ namespace Devian
             return CommonResult.Failure(errorType, message);
         }
 
-        static CommonErrorType mapUnhandledFunctionErrorType(string functionName)
+        static COMMON_ERROR_TYPE mapUnhandledFunctionErrorType(string functionName)
         {
             switch (functionName)
             {
                 case "getRecentPurchases30d":
-                    return CommonErrorType.PURCHASE_RECENT_CALL_FAILED;
+                    return COMMON_ERROR_TYPE.PURCHASE_RECENT_CALL_FAILED;
                 case "getPurchaseAdjustments":
-                    return CommonErrorType.PURCHASE_ADJUSTMENTS_CALL_FAILED;
+                    return COMMON_ERROR_TYPE.PURCHASE_ADJUSTMENTS_CALL_FAILED;
                 case "getEntitlements":
-                    return CommonErrorType.PURCHASE_ENTITLEMENTS_CALL_FAILED;
+                    return COMMON_ERROR_TYPE.PURCHASE_ENTITLEMENTS_CALL_FAILED;
                 case "verifyPurchase":
                 case "ackPurchaseClientGrant":
-                    return CommonErrorType.PURCHASE_VERIFY_CALL_FAILED;
+                    return COMMON_ERROR_TYPE.PURCHASE_VERIFY_CALL_FAILED;
                 case "ackPurchaseStoreConfirm":
-                    return CommonErrorType.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED;
+                    return COMMON_ERROR_TYPE.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED;
                 case "ackRefundApplied":
-                    return CommonErrorType.PURCHASE_REFUND_APPLY_FAILED;
+                    return COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED;
                 default:
-                    return CommonErrorType.PURCHASE_FUNCTION_CALL_FAILED;
+                    return COMMON_ERROR_TYPE.PURCHASE_FUNCTION_CALL_FAILED;
             }
         }
 
-        static CommonErrorType mapNetworkFunctionErrorType(string functionName)
+        static COMMON_ERROR_TYPE mapNetworkFunctionErrorType(string functionName)
         {
             switch (functionName)
             {
                 case "getRecentPurchases30d":
-                    return CommonErrorType.PURCHASE_RECENT_CALL_FAILED;
+                    return COMMON_ERROR_TYPE.PURCHASE_RECENT_CALL_FAILED;
                 case "getPurchaseAdjustments":
-                    return CommonErrorType.PURCHASE_ADJUSTMENTS_CALL_FAILED;
+                    return COMMON_ERROR_TYPE.PURCHASE_ADJUSTMENTS_CALL_FAILED;
                 case "getEntitlements":
-                    return CommonErrorType.PURCHASE_ENTITLEMENTS_CALL_FAILED;
+                    return COMMON_ERROR_TYPE.PURCHASE_ENTITLEMENTS_CALL_FAILED;
                 case "ackPurchaseStoreConfirm":
-                    return CommonErrorType.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED;
+                    return COMMON_ERROR_TYPE.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED;
                 case "ackRefundApplied":
-                    return CommonErrorType.PURCHASE_REFUND_APPLY_FAILED;
+                    return COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED;
                 case "ackPurchaseClientGrant":
                 default:
-                    return CommonErrorType.PURCHASE_NETWORK_UNAVAILABLE;
+                    return COMMON_ERROR_TYPE.PURCHASE_NETWORK_UNAVAILABLE;
             }
         }
 

@@ -19,7 +19,7 @@ AppliesTo: v10
 - 저장 동기화 (`SaveDataManager.SyncGameStorageAsync`)
 - 충돌 해소 + 재초기화 (`ResolveConflictAndInitializeAsync`)
 - 초기 지급 (`InventoryManager.FirstInitAsync`) + 저장
-- 게임 시스템 초기화 (Message/RemoteConfig/Mission/Achieve/Ad/Leaderboard)
+- 게임 시스템 초기화 (RemoteConfig/Mission/Achieve/Ad/Leaderboard)
 - 최종 저장 (`SaveDataManager.SaveGameStorageAsync`)
 - 구매 진입 인증 보정 (`EnsurePurchaseLoginReadyAsync`, Android silent Google restore)
 - 결과 반환 (`CommonResult`)
@@ -72,7 +72,7 @@ fatal (실패 반환):
 - 저장 동기화 실패
 - Resolve 후 재충돌(명시적 resolve 경로)
 - 초기 지급/저장 실패
-- MetaMessage/RemoteConfig/Mission/Achieve 초기화 실패
+- RemoteConfig/Mission/Achieve 초기화 실패
 - 최종 저장 실패
 
 non-fatal (로그만 남기고 진행):

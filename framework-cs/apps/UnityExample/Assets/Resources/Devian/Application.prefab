@@ -293,7 +293,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 551c3549bf0d54634a8d47db41ce65f4, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.MetaMessageManager
+  m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.GameMessageManager
 --- !u!114 &6437683539928618457
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -45,7 +45,7 @@ namespace Devian
             if (string.IsNullOrEmpty(dvnContent) || dvnContent.Length < 2)
             {
                 return CommonResult<string>.Failure(
-                    CommonErrorType.RECOVERY_DECODE_FAILED,
+                    COMMON_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     "Invalid .dvn file: too short");
             }
 
@@ -59,7 +59,7 @@ namespace Devian
                     return DecodeV2(dvnContent);
                 default:
                     return CommonResult<string>.Failure(
-                        CommonErrorType.RECOVERY_UNSUPPORTED_VERSION,
+                        COMMON_ERROR_TYPE.RECOVERY_UNSUPPORTED_VERSION,
                         $"Unsupported .dvn version: {version}");
             }
         }
@@ -78,7 +78,7 @@ namespace Devian
             catch (Exception ex)
             {
                 return CommonResult<string>.Failure(
-                    CommonErrorType.RECOVERY_DECODE_FAILED,
+                    COMMON_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     $"DVN v1 decode failed: {ex.Message}");
             }
         }
@@ -97,7 +97,7 @@ namespace Devian
             catch (Exception ex)
             {
                 return CommonResult<string>.Failure(
-                    CommonErrorType.RECOVERY_DECODE_FAILED,
+                    COMMON_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     $"DVN v2 decode failed: {ex.Message}");
             }
 
@@ -106,7 +106,7 @@ namespace Devian
             if (signedPayload.Length < HMAC_HEX_LENGTH + HMAC_SEPARATOR.Length + 1)
             {
                 return CommonResult<string>.Failure(
-                    CommonErrorType.RECOVERY_DECODE_FAILED,
+                    COMMON_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     "DVN v2 signed payload too short");
             }
 
@@ -115,7 +115,7 @@ namespace Devian
             if (separator != HMAC_SEPARATOR)
             {
                 return CommonResult<string>.Failure(
-                    CommonErrorType.RECOVERY_HMAC_FAILED,
+                    COMMON_ERROR_TYPE.RECOVERY_HMAC_FAILED,
                     "DVN v2 HMAC separator not found");
             }
 
@@ -128,7 +128,7 @@ namespace Devian
             if (!string.Equals(hmacHex, expectedHmac, StringComparison.Ordinal))
             {
                 return CommonResult<string>.Failure(
-                    CommonErrorType.RECOVERY_HMAC_FAILED,
+                    COMMON_ERROR_TYPE.RECOVERY_HMAC_FAILED,
                     "DVN v2 HMAC verification failed");
             }
 

@@ -13,7 +13,7 @@ namespace Devian.Domain.Common
 
         public static CommonResult Ok() => new(null);
         public static CommonResult Failure(CommonError error) => new(error);
-        public static CommonResult Failure(CommonErrorType errorType, string message)
+        public static CommonResult Failure(COMMON_ERROR_TYPE errorType, string message)
             => new(new CommonError(errorType, message));
     }
 
@@ -38,11 +38,11 @@ namespace Devian.Domain.Common
 
         public static CommonResult<T> Failure(CommonError error) => new(default, error);
 
-        public static CommonResult<T> Failure(CommonErrorType errorType, string message)
+        public static CommonResult<T> Failure(COMMON_ERROR_TYPE errorType, string message)
             => new(default, new CommonError(errorType, message));
 
-        [System.Obsolete("Use Failure(CommonErrorType, string) instead.")]
+        [System.Obsolete("Use Failure(COMMON_ERROR_TYPE, string) instead.")]
         public static CommonResult<T> Failure(string code, string message)
-            => new(default, new CommonError(CommonErrorType.COMMON_UNKNOWN, message, $"legacyCode={code}"));
+            => new(default, new CommonError(COMMON_ERROR_TYPE.COMMON_UNKNOWN, message, $"legacyCode={code}"));
     }
 }

@@ -36,14 +36,6 @@ namespace Devian
         public string UserId { get; set; }
 
         // ────────────────────────────────────────────
-        // Lifecycle
-        // ────────────────────────────────────────────
-
-        protected override void onInitAwake()
-        {
-        }
-
-        // ────────────────────────────────────────────
         // Public API
         // ────────────────────────────────────────────
 
@@ -104,7 +96,7 @@ namespace Devian
             if (row == null || !row.IsActive)
             {
                 return CommonResult.Failure(
-                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
                     $"ADVERTISE not found or inactive: {advertiseId}");
             }
 
@@ -116,14 +108,14 @@ namespace Devian
                 if (!ok)
                 {
                     return CommonResult.Failure(
-                        CommonErrorType.COMMON_UNKNOWN,
+                        COMMON_ERROR_TYPE.COMMON_UNKNOWN,
                         $"Ad load failed: {advertiseId}");
                 }
             }
             catch (Exception ex)
             {
                 Debug.LogWarning($"[{Tag}] PreloadAsync exception: {ex.Message}");
-                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, ex.Message);
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, ex.Message);
             }
 
             return CommonResult.Ok();
@@ -164,7 +156,7 @@ namespace Devian
             if (row == null || !row.IsActive)
             {
                 return CommonResult<AdShowResult>.Failure(
-                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
                     $"ADVERTISE not found or inactive: {advertiseId}");
             }
 
@@ -178,7 +170,7 @@ namespace Devian
             if (row.Format != ADVERTISE_FORMAT.REWARDED && IsNoAdsActive())
             {
                 return CommonResult<AdShowResult>.Failure(
-                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
                     "NoAds active — ad blocked");
             }
 
@@ -186,7 +178,7 @@ namespace Devian
             if (IsCooldownActive(advertiseId, row.CooldownSec))
             {
                 return CommonResult<AdShowResult>.Failure(
-                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
                     $"Cooldown active: {advertiseId}");
             }
 
@@ -211,7 +203,7 @@ namespace Devian
             {
                 Debug.LogWarning($"[{Tag}] ShowAsync exception: {ex.Message}");
                 return CommonResult<AdShowResult>.Failure(
-                    CommonErrorType.COMMON_UNKNOWN, ex.Message);
+                    COMMON_ERROR_TYPE.COMMON_UNKNOWN, ex.Message);
             }
             finally
             {
@@ -248,7 +240,7 @@ namespace Devian
             if (showResult != AdProviderShowResult.Shown)
             {
                 return CommonResult<AdShowResult>.Failure(
-                    CommonErrorType.COMMON_UNKNOWN,
+                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
                     $"Banner show failed: {advertiseId}");
             }
 
@@ -324,7 +316,7 @@ namespace Devian
                 if (showResult != AdProviderShowResult.Shown)
                 {
                     return CommonResult<AdShowResult>.Failure(
-                        CommonErrorType.COMMON_UNKNOWN,
+                        COMMON_ERROR_TYPE.COMMON_UNKNOWN,
                         $"Ad show failed: {advertiseId}");
                 }
 

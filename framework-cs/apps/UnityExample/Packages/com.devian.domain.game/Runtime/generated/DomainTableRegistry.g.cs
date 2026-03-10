@@ -117,17 +117,17 @@ namespace Devian.Domain.Game
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("MESSAGE_META", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("GAME_MESSAGE", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_MESSAGE_META.LoadFromNdjson(text);
-                    TB_MESSAGE_META._AfterLoad();
+                    TB_GAME_MESSAGE.LoadFromNdjson(text);
+                    TB_GAME_MESSAGE._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_MESSAGE_META.LoadFromPb64Binary(bin);
-                    TB_MESSAGE_META._AfterLoad();
+                    TB_GAME_MESSAGE.LoadFromPb64Binary(bin);
+                    TB_GAME_MESSAGE._AfterLoad();
                 }
             });
 

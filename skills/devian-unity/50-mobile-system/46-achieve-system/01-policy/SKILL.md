@@ -17,7 +17,7 @@ Type: Policy / Entry Point
 - 업적 row는 `ACHIEVE_ONCE`, `ACHIEVE_PASS`를 사용한다.
 - 런타임 저장 정본은 `AchieveStorage.runtimes`다.
 - progress는 `MESSAGE.saveType`에 따라 결정된다.
-  - `TOTAL_*`: `MetaMessageStorage` 값을 projection한다.
+  - `TOTAL_*`: `GameMessageStorage` 값을 projection한다.
   - `SESSION_*`: `AchieveRuntimeBase.progressValue`를 직접 유지한다.
 - 초기화 시 `achieveId` group 기준 runtime을 항상 생성한다(1 group = 1 runtime).
 - runtime 타입은 row 소스에 따라 결정된다.
@@ -33,10 +33,10 @@ Type: Policy / Entry Point
 - 공개 API는 `achievementId`만 받는다.
 - 플랫폼 ID(`appleAchievementId`, `googleAchievementId`)는 `ACHIEVE_ONCE` 매핑 레이어 내부에만 존재한다.
 
-### 3) trigger 입력은 `MetaMessageManager`를 통해 받는다
+### 3) trigger 입력은 `GameMessageManager`를 통해 받는다
 
-- `MetaMessageManager.Notify(GAME_MESSAGE_TYPE, delta)`가 유일한 외부 입력이다.
-- `AchieveManager`는 `MetaMessageManager` 트리거를 구독해 해당 runtime projection을 동기화한다.
+- `GameMessageManager.Notify(GAME_MESSAGE_TYPE, delta)`가 유일한 외부 입력이다.
+- `AchieveManager`는 `GameMessageManager` 트리거를 구독해 해당 runtime projection을 동기화한다.
 
 ### 4) 업적 알림은 `MESSAGE_ACHIEVE_TYPE`를 사용한다
 

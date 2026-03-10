@@ -183,7 +183,7 @@ if (sizeOp.Status == AsyncOperationStatus.Failed)
     var msg = "...";
     Debug.LogError(msg);
     RaiseError(msg);
-    return CommonResult<PatchInfo>.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
+    return CommonResult<PatchInfo>.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, msg);
 }
 
 // WRONG: 조용히 성공 반환 (금지)

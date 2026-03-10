@@ -69,7 +69,7 @@ AppliesTo: v10
 
 ## E. Runtime / Storage SSOT
 
-- 점수 제출 소스: `LEADERBOARD.messageId -> TB_MESSAGE -> MetaMessageStorage.stats[messageId]`
+- 점수 제출 소스: `LEADERBOARD.messageId -> TB_GAME_MESSAGE -> GameMessageStorage.stats[messageId]`
 - 시즌 시간 조회: `LEADERBOARD.seasonId → TB_SEASON.Get(seasonId) → StartUtcTime/EndUtcTime`
 - score 허용 saveType: `TOTAL_SUM`, `TOTAL_MAX` (그 외는 0 + error log)
 - 시즌 보상 저장:

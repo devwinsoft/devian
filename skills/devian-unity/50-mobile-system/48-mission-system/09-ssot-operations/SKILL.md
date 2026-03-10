@@ -21,10 +21,10 @@ AppliesTo: v10
 
 ### 2) 플레이 중 trigger 입력
 
-- 이벤트 발행: `MetaMessageManager.Notify(messageType, delta)`
+- 이벤트 발행: `GameMessageManager.Notify(messageType, delta)`
 - 처리 순서:
   1. `message.stats[messageId]` 갱신
-  2. `MetaMessageTrigger` publish
+  2. `GameMessageTrigger` publish
   3. runtime 반영 (`DAILY`/`PERIOD`)
 - WAIT runtime은 progress 이벤트를 소비하지 않는다.
 
@@ -44,7 +44,7 @@ AppliesTo: v10
 ## 테스트 체크리스트
 
 - trigger 1회당 `message.stats` 갱신이 1회만 일어나는지
-- `MESSAGE_META_TYPE` 변경 시 정상 라우팅되는지
+- `GAME_MESSAGE_TYPE` 변경 시 정상 라우팅되는지
 - daily/period `SUM` 누적이 음수로 내려가지 않는지
 - period `day=1` 즉시 활성화가 보장되는지
 - period `day=n`이 `(n-1)`일 후에만 활성화되는지

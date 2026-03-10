@@ -33,31 +33,31 @@ namespace Devian.Domain.Common
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("ERROR_COMMON", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("COMMON_ERROR", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_ERROR_COMMON.LoadFromNdjson(text);
-                    TB_ERROR_COMMON._AfterLoad();
+                    TB_COMMON_ERROR.LoadFromNdjson(text);
+                    TB_COMMON_ERROR._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_ERROR_COMMON.LoadFromPb64Binary(bin);
-                    TB_ERROR_COMMON._AfterLoad();
+                    TB_COMMON_ERROR.LoadFromPb64Binary(bin);
+                    TB_COMMON_ERROR._AfterLoad();
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("ERROR_SERVER", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("SERVER_ERROR", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_ERROR_SERVER.LoadFromNdjson(text);
-                    TB_ERROR_SERVER._AfterLoad();
+                    TB_SERVER_ERROR.LoadFromNdjson(text);
+                    TB_SERVER_ERROR._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_ERROR_SERVER.LoadFromPb64Binary(bin);
-                    TB_ERROR_SERVER._AfterLoad();
+                    TB_SERVER_ERROR.LoadFromPb64Binary(bin);
+                    TB_SERVER_ERROR._AfterLoad();
                 }
             });
 

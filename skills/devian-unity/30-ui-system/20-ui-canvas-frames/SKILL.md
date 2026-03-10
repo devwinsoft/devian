@@ -28,10 +28,10 @@ Canvas owner와 UI 기능 단위(Frame)의 초기화 수명주기를 표준화�
    └── UICanvas<MyCanvas> 컴포넌트를 Canvas GameObject에 배치
        └── 자식에 UIFrame<MyCanvas> 컴포넌트들 배치
 
-2. UICanvas.Awake()
+2. UICanvas.Awake() (non-virtual)
    ├── Instance = this as TCanvas      ← static Instance 설정
    ├── canvas = GetComponent<Canvas>()
-   └── onAwake()                       ← custom logic
+   └── onAwake()                       ← override point
 
 3. UICanvas.Init()
    ├── mFrames.AddRange(GetComponentsInChildren<BaseUIFrame>(true))
@@ -58,7 +58,7 @@ Canvas owner와 UI 기능 단위(Frame)의 초기화 수명주기를 표준화�
 ### Includes / Excludes
 
 **Includes:**
-- Init lifecycle (Awake → onAwake, Init → onInit → _InitFromCanvas → onInitComplete)
+- Init lifecycle (Awake → onAwake, Init → onInit → _InitFromCanvas → onInitComplete, OnDestroy → onDestroy)
 - CreateFrame for dynamic frame creation via BundlePool
 - Validation helpers (Validate)
 - Coordinate conversion helpers (TryWorldToOverlayLocal)
@@ -98,8 +98,9 @@ C# 메서드 네이밍(internal `_` 접두어, protected lowerCamelCase)은 상�
 | Rule | Description |
 |------|-------------|
 | **MUST** | `Awake()` → `onAwake()` 패턴 사용 |
-| **MUST** | UICanvas.Awake()는 `virtual` (MonoBehaviour 직접 상속). Instance 설정 + canvas 캐시 수행 |
-| **MUST** | UICanvas.OnDestroy()에서 Instance 클린업 수행 |
+| **MUST** | UICanvas.Awake()는 non-virtual. Instance 설정 + canvas 캐시 + onAwake() 호출 수행 |
+| **MUST** | UICanvas.OnDestroy()는 non-virtual. `BaseApplication.IsApplicationQuitting == false`일 때만 onDestroy() 호출 + Instance 클린업 수행 |
+| **MUST** | 파생 클래스는 `onAwake()` / `onDestroy()`를 override하여 사용. Awake()/OnDestroy() 직접 override 금지 |
 | **MUST** | UIFrame.Awake()는 non-virtual (MonoBehaviour 직접 상속) |
 | **MUST** | UICanvas.Init()에서 child frame `_InitFromCanvas(this)` 수행 |
 | **MUST** | BaseUIFrame._InitFromCanvas()는 owner 저장만 수행 |
@@ -119,7 +120,8 @@ C# 메서드 네이밍(internal `_` 접두어, protected lowerCamelCase)은 상�
 | Action | Reason |
 |--------|--------|
 | UIFrame.`Awake()`를 `virtual`로 선언 | 수명주기 순서 보장 불가 |
-| UICanvas.Awake()에서 Instance 설정 누락 | 파생 클래스에서 `base.Awake()` 호출 필수 |
+| UICanvas.Awake() override | non-virtual — onAwake()를 override하여 사용 |
+| UICanvas.OnDestroy() override | non-virtual — onDestroy()를 override하여 사용 |
 | IUiCanvasOwner 인터페이스 사용 | 제거됨, 타입 캐스팅 방식으로 대체 |
 | 자동 billboard 컴포넌트 / 자동 업데이트 | helper 메서드만 제공 |
 | Canvas 설정 변경 API (`UseSharedWorldCamera` 등) | Inspector에서 설정, 코드는 검증/헬퍼만 |
@@ -185,9 +187,10 @@ namespace Devian
         public Canvas canvas { get; }
 
         // Lifecycle
-        protected virtual void Awake();   // Instance 설정 + canvas 캐시 + onAwake()
-        protected virtual void OnDestroy(); // Instance 클린업
+        protected void Awake();           // Instance 설정 + canvas 캐시 + onAwake()
+        protected void OnDestroy();       // !IsApplicationQuitting 시 onDestroy() + Instance 클린업
         protected virtual void onAwake();
+        protected virtual void onDestroy();
         protected virtual void onInit();
         protected virtual void onInitComplete();
 
@@ -263,7 +266,7 @@ namespace Devian
 #### UICanvas Initialization
 
 ```
-UICanvas.Awake()
+UICanvas.Awake() (non-virtual)
 ├── 1. Instance = this as TCanvas        ← static Instance 설정
 ├── 2. canvas = GetComponent<Canvas>()
 └── 3. onAwake()                         ← override point
@@ -348,9 +351,9 @@ UICanvas.CreateFrame<FRAME>(prefabName, parent)
 - [ ] `Devian.UI` 등 하위 네임스페이스 없음
 
 ### Lifecycle Compliance
-- [ ] `UICanvas.Awake()`가 `virtual` (MonoBehaviour 직접 상속)
-- [ ] `UICanvas.Awake()` 순서: Instance 설정 → canvas 캐시 → onAwake
-- [ ] `UICanvas.OnDestroy()`에서 Instance 클린업
+- [ ] `UICanvas.Awake()`가 non-virtual (MonoBehaviour 직접 상속)
+- [ ] `UICanvas.Awake()` 순서: Instance 설정 → canvas 캐시 → onAwake()
+- [ ] `UICanvas.OnDestroy()`가 non-virtual. `!IsApplicationQuitting` 가드 + onDestroy() 호출 + Instance 클린업
 - [ ] `UIFrame.Awake()`가 `virtual`이 아님
 - [ ] `UICanvas.Init()` 순서: mInitialized 체크 → mFrames 스캔 → onInit → _InitFromCanvas 반복 → onInitComplete → Notify(InitOnce)
 - [ ] `UICanvas`가 child frames를 `_InitFromCanvas(this)`로 초기화

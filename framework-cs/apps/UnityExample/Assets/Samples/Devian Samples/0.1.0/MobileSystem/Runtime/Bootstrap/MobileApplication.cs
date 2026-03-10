@@ -11,7 +11,7 @@ namespace Devian
     [RequireComponent(typeof(PurchaseManager))]
     [RequireComponent(typeof(AchieveManager))]
     [RequireComponent(typeof(LeaderboardManager))]
-    [RequireComponent(typeof(MetaMessageManager))]
+    [RequireComponent(typeof(GameMessageManager))]
     [RequireComponent(typeof(AttendManager))]
     [RequireComponent(typeof(MissionManager))]
     [RequireComponent(typeof(RemoteConfigManager))]
@@ -37,6 +37,18 @@ namespace Devian
             #if UNITY_ANDROID && !UNITY_EDITOR
             tryActivateGooglePlayGames();
             #endif
+
+            return Task.CompletedTask;
+        }
+
+        protected override Task onLoadCompletedAsync()
+        {
+            // 서버와 별개로 독립적으로 동작하는 Manager 초기화
+            var initMessage = GameMessageManager.Instance.Initialize();
+            if (initMessage.IsFailure)
+            {
+                Debug.LogError($"[MobileApplication] GameMessageManager.Initialize failed: {initMessage.Error.Code}: {initMessage.Error.Message}");
+            }
 
             return Task.CompletedTask;
         }

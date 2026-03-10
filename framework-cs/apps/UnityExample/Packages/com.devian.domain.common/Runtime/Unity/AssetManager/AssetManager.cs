@@ -84,7 +84,7 @@ namespace Devian
             if (string.IsNullOrEmpty(key))
             {
                 Debug.LogError("[AssetManager] LoadBundleAsset: key is null or empty.");
-                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, "[AssetManager] LoadBundleAsset: key is null or empty.");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, "[AssetManager] LoadBundleAsset: key is null or empty.");
             }
 
             // Already loaded? Prevent handle leak
@@ -102,7 +102,7 @@ namespace Devian
                 var msg = $"[AssetManager] LoadBundleAsset failed for key '{key}': {handle.OperationException?.Message}";
                 Debug.LogError(msg);
                 Addressables.Release(handle);
-                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, msg);
             }
 
             var asset = handle.Result;
@@ -159,7 +159,7 @@ namespace Devian
             if (string.IsNullOrEmpty(key))
             {
                 Debug.LogError("[AssetManager] LoadBundleAssets: key is null or empty.");
-                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, "[AssetManager] LoadBundleAssets: key is null or empty.");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, "[AssetManager] LoadBundleAssets: key is null or empty.");
             }
 
             // Already loaded?
@@ -207,7 +207,7 @@ namespace Devian
                 var msg = $"[AssetManager] LoadBundleAssets failed for key '{key}': {handle.OperationException?.Message}";
                 Debug.LogError(msg);
                 Addressables.Release(handle);
-                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, msg);
             }
 
             bundleData.Handle = handle;
@@ -227,7 +227,7 @@ namespace Devian
             if (string.IsNullOrEmpty(key))
             {
                 Debug.LogError("[AssetManager] LoadBundleAssets: key is null or empty.");
-                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, "[AssetManager] LoadBundleAssets: key is null or empty.");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, "[AssetManager] LoadBundleAssets: key is null or empty.");
             }
 
             // Already loaded?
@@ -278,7 +278,7 @@ namespace Devian
                 var msg = $"[AssetManager] LoadBundleAssets failed for key '{key}': {handle.OperationException?.Message}";
                 Debug.LogError(msg);
                 Addressables.Release(handle);
-                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, msg);
             }
 
             bundleData.Handle = handle;
@@ -298,7 +298,7 @@ namespace Devian
             if (string.IsNullOrEmpty(key))
             {
                 Debug.LogError("[AssetManager] LoadBundleComponents: key is null or empty.");
-                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, "[AssetManager] LoadBundleComponents: key is null or empty.");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, "[AssetManager] LoadBundleComponents: key is null or empty.");
             }
 
             // Already loaded?
@@ -354,7 +354,7 @@ namespace Devian
                 var msg = $"[AssetManager] LoadBundleComponents failed for key '{key}': {handle.OperationException?.Message}";
                 Debug.LogError(msg);
                 Addressables.Release(handle);
-                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, msg);
             }
 
             bundleData.Handle = handle;
@@ -664,7 +664,7 @@ namespace Devian
             if (string.IsNullOrWhiteSpace(key))
             {
                 Log.Error("AssetManager.LoadSceneAsync failed: key is null/empty.");
-                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, "AssetManager.LoadSceneAsync failed: key is null/empty.");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, "AssetManager.LoadSceneAsync failed: key is null/empty.");
             }
 
             PruneStaleSceneHandles();
@@ -695,7 +695,7 @@ namespace Devian
                     Log.Error(msg);
                     if (handle.IsValid())
                         Addressables.Release(handle);
-                    return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, msg);
                 }
 
                 mScenes[key] = handle;
@@ -708,7 +708,7 @@ namespace Devian
                 {
                     var msg = $"AssetManager.LoadSceneAsync failed (BuildProfile): {key}";
                     Log.Error(msg);
-                    return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, msg);
                 }
                 op.allowSceneActivation = activateOnLoad;
                 op.priority = priority;
@@ -767,7 +767,7 @@ namespace Devian
                 var msg = $"AssetManager.UnloadSceneAsync failed: {key}";
                 Log.Error(msg);
                 PruneStaleSceneHandles();
-                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, msg);
             }
 
             mScenes.Remove(key);

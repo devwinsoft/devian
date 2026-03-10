@@ -32,7 +32,7 @@ AppliesTo: v10
 규칙:
 - `runtimes`는 업적 진행/claim 상태의 저장 정본이다.
 - progress source는 runtime별 `MESSAGE.saveType` 규칙을 따른다.
-  - `TOTAL_*`: 외부 저장(`MetaMessageStorage`) projection
+  - `TOTAL_*`: 외부 저장(`GameMessageStorage`) projection
   - `SESSION_*`: runtime 내부 `progressValue`
 - `Clear()`는 schema 기본값 + 모든 컬렉션 초기화
 

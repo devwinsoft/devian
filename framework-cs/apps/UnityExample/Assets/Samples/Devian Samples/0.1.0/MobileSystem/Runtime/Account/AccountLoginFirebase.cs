@@ -34,7 +34,7 @@ namespace Devian
 
                 if (status != DependencyStatus.Available)
                 {
-                    return CommonResult<bool>.Failure(CommonErrorType.FIREBASE_DEPENDENCY,
+                    return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.FIREBASE_DEPENDENCY,
                         $"Firebase dependencies not available: {status}");
                 }
 
@@ -49,7 +49,7 @@ namespace Devian
             catch (Exception ex)
             {
                 Debug.LogError($"[AccountLoginFirebase] Initialize failed: {ex}");
-                return CommonResult<bool>.Failure(CommonErrorType.FIREBASE_DEPENDENCY, ex.Message);
+                return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.FIREBASE_DEPENDENCY, ex.Message);
             }
         }
 
@@ -62,7 +62,7 @@ namespace Devian
 
 
             if (_auth == null)
-                return CommonResult<string>.Failure(CommonErrorType.FIREBASE_NOT_INITIALIZED, "FirebaseAuth is null.");
+                return CommonResult<string>.Failure(COMMON_ERROR_TYPE.FIREBASE_NOT_INITIALIZED, "FirebaseAuth is null.");
 
 
             // 기존 anonymous user가 있으면 재사용 (새 UID 생성 방지).
@@ -82,7 +82,7 @@ namespace Devian
 
                 var user = result?.User;
                 if (user == null)
-                    return CommonResult<string>.Failure(CommonErrorType.FIREBASE_SIGNIN, "Sign-in succeeded but user is null.");
+                    return CommonResult<string>.Failure(COMMON_ERROR_TYPE.FIREBASE_SIGNIN, "Sign-in succeeded but user is null.");
 
 
                 return CommonResult<string>.Success(user.UserId);
@@ -90,7 +90,7 @@ namespace Devian
             catch (Exception ex)
             {
                 Debug.LogError($"[AccountLoginFirebase] SignInAnonymously failed: {ex}");
-                return CommonResult<string>.Failure(CommonErrorType.FIREBASE_SIGNIN, ex.Message);
+                return CommonResult<string>.Failure(COMMON_ERROR_TYPE.FIREBASE_SIGNIN, ex.Message);
             }
         }
 
@@ -98,7 +98,7 @@ namespace Devian
         public CommonResult<bool> SignOut()
         {
             if (!_isInitialized || _auth == null)
-                return CommonResult<bool>.Failure(CommonErrorType.FIREBASE_NOT_INITIALIZED, "Firebase is not initialized.");
+                return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.FIREBASE_NOT_INITIALIZED, "Firebase is not initialized.");
 
 
             try
@@ -109,7 +109,7 @@ namespace Devian
             catch (Exception ex)
             {
                 Debug.LogError($"[AccountLoginFirebase] SignOut failed: {ex}");
-                return CommonResult<bool>.Failure(CommonErrorType.FIREBASE_SIGNIN, ex.Message);
+                return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.FIREBASE_SIGNIN, ex.Message);
             }
         }
     }

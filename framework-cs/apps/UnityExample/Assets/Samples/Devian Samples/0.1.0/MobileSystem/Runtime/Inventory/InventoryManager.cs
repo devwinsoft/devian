@@ -49,7 +49,7 @@ namespace Devian
             if (!AccountManager.TryGet(out var accountManager))
             {
                 return CommonResult.Failure(
-                    CommonErrorType.COMMON_SERVER,
+                    COMMON_ERROR_TYPE.COMMON_SERVER,
                     "AccountManager is not available.");
             }
 
@@ -71,7 +71,7 @@ namespace Devian
             catch (Exception ex)
             {
                 return CommonResult.Failure(
-                    CommonErrorType.COMMON_SERVER,
+                    COMMON_ERROR_TYPE.COMMON_SERVER,
                     $"FirstInit apply failed: {ex.Message}");
             }
 #endif
@@ -80,7 +80,7 @@ namespace Devian
         public CommonResult AddRewards(RewardData[] rewards)
         {
             if (rewards == null)
-                return CommonResult.Failure(CommonErrorType.INVENTORY_DELTAS_NULL, "rewards is null");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTAS_NULL, "rewards is null");
 
             if (rewards.Length == 0)
                 return CommonResult.Ok();
@@ -91,15 +91,15 @@ namespace Devian
                 var r = rewards[i];
 
                 if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY && r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO && r.Type != REWARD_TYPE.RENTAL && r.Type != REWARD_TYPE.PASS)
-                    return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_TYPE_INVALID,
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTA_TYPE_INVALID,
                         $"rewards[{i}] invalid type: {r.Type}");
 
                 if (string.IsNullOrWhiteSpace(r.Id))
-                    return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_ID_EMPTY,
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
                         $"rewards[{i}] id is empty");
 
                 if (r.Amount < 0)
-                    return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_AMOUNT_NEGATIVE,
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTA_AMOUNT_NEGATIVE,
                         $"rewards[{i}] amount is negative: {r.Amount}");
             }
 
@@ -145,7 +145,7 @@ namespace Devian
         public CommonResult RevokeRewards(RewardData[] rewards)
         {
             if (rewards == null)
-                return CommonResult.Failure(CommonErrorType.INVENTORY_DELTAS_NULL, "rewards is null");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTAS_NULL, "rewards is null");
 
             if (rewards.Length == 0)
                 return CommonResult.Ok();
@@ -156,15 +156,15 @@ namespace Devian
                 var r = rewards[i];
 
                 if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY && r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO && r.Type != REWARD_TYPE.RENTAL && r.Type != REWARD_TYPE.PASS)
-                    return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_TYPE_INVALID,
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTA_TYPE_INVALID,
                         $"rewards[{i}] invalid type: {r.Type}");
 
                 if (string.IsNullOrWhiteSpace(r.Id))
-                    return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_ID_EMPTY,
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
                         $"rewards[{i}] id is empty");
 
                 if (r.Amount < 0)
-                    return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_AMOUNT_NEGATIVE,
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTA_AMOUNT_NEGATIVE,
                         $"rewards[{i}] amount is negative: {r.Amount}");
 
                 if (r.Amount == 0)
@@ -175,7 +175,7 @@ namespace Devian
                     if (!Enum.TryParse<CURRENCY_TYPE>(r.Id, out var currencyType))
                     {
                         return CommonResult.Failure(
-                            CommonErrorType.INVENTORY_DELTA_ID_EMPTY,
+                            COMMON_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
                             $"rewards[{i}] invalid currency id: {r.Id}");
                     }
 
@@ -183,7 +183,7 @@ namespace Devian
                     if (balance < r.Amount)
                     {
                         return CommonResult.Failure(
-                            CommonErrorType.INVENTORY_REFUND_INSUFFICIENT,
+                            COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
                             $"rewards[{i}] insufficient currency. id={r.Id} need={r.Amount} have={balance}");
                     }
                 }
@@ -194,7 +194,7 @@ namespace Devian
                     if (amount < r.Amount)
                     {
                         return CommonResult.Failure(
-                            CommonErrorType.INVENTORY_REFUND_INSUFFICIENT,
+                            COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
                             $"rewards[{i}] insufficient card amount. id={r.Id} need={r.Amount} have={amount}");
                     }
                 }
@@ -204,7 +204,7 @@ namespace Devian
                     if (count < r.Amount)
                     {
                         return CommonResult.Failure(
-                            CommonErrorType.INVENTORY_REFUND_INSUFFICIENT,
+                            COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
                             $"rewards[{i}] insufficient equip count. id={r.Id} need={r.Amount} have={count}");
                     }
                 }
@@ -215,7 +215,7 @@ namespace Devian
                     if (amount < r.Amount)
                     {
                         return CommonResult.Failure(
-                            CommonErrorType.INVENTORY_REFUND_INSUFFICIENT,
+                            COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
                             $"rewards[{i}] insufficient hero amount. id={r.Id} need={r.Amount} have={amount}");
                     }
                 }
@@ -224,7 +224,7 @@ namespace Devian
                     if (!_storage.HasActiveRental(r.Id))
                     {
                         return CommonResult.Failure(
-                            CommonErrorType.INVENTORY_REFUND_INSUFFICIENT,
+                            COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
                             $"rewards[{i}] rental not active. id={r.Id}");
                     }
                 }
@@ -233,7 +233,7 @@ namespace Devian
                     if (!_storage.HasPass(r.Id))
                     {
                         return CommonResult.Failure(
-                            CommonErrorType.INVENTORY_REFUND_INSUFFICIENT,
+                            COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
                             $"rewards[{i}] pass not owned. id={r.Id}");
                     }
                 }
@@ -257,7 +257,7 @@ namespace Devian
                     if (card == null)
                     {
                         return CommonResult.Failure(
-                            CommonErrorType.PURCHASE_REFUND_APPLY_FAILED,
+                            COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
                             $"Card disappeared while revoking reward. id={r.Id}");
                     }
                     card.AddAmount(-(int)r.Amount);
@@ -271,7 +271,7 @@ namespace Devian
                             !_storage.RemoveEquip(equips[j].ItemUid))
                         {
                             return CommonResult.Failure(
-                                CommonErrorType.PURCHASE_REFUND_APPLY_FAILED,
+                                COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
                                 $"Equip revoke failed while removing item. equipId={r.Id}");
                         }
                     }
@@ -282,7 +282,7 @@ namespace Devian
                     if (hero == null)
                     {
                         return CommonResult.Failure(
-                            CommonErrorType.PURCHASE_REFUND_APPLY_FAILED,
+                            COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
                             $"Hero disappeared while revoking reward. id={r.Id}");
                     }
                     hero.AddStat(STAT_TYPE.UNIT_AMOUNT, -(int)r.Amount);
@@ -308,7 +308,7 @@ namespace Devian
         public CommonResult RevokeRewardsPartial(RewardData[] rewards)
         {
             if (rewards == null)
-                return CommonResult.Failure(CommonErrorType.INVENTORY_DELTAS_NULL, "rewards is null");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTAS_NULL, "rewards is null");
 
             if (rewards.Length == 0)
                 return CommonResult.Ok();
@@ -319,15 +319,15 @@ namespace Devian
                 var r = rewards[i];
 
                 if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY && r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO && r.Type != REWARD_TYPE.RENTAL && r.Type != REWARD_TYPE.PASS)
-                    return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_TYPE_INVALID,
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTA_TYPE_INVALID,
                         $"rewards[{i}] invalid type: {r.Type}");
 
                 if (string.IsNullOrWhiteSpace(r.Id))
-                    return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_ID_EMPTY,
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
                         $"rewards[{i}] id is empty");
 
                 if (r.Amount < 0)
-                    return CommonResult.Failure(CommonErrorType.INVENTORY_DELTA_AMOUNT_NEGATIVE,
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTA_AMOUNT_NEGATIVE,
                         $"rewards[{i}] amount is negative: {r.Amount}");
 
                 if (r.Amount == 0)
@@ -338,7 +338,7 @@ namespace Devian
                     if (!Enum.TryParse<CURRENCY_TYPE>(r.Id, out _))
                     {
                         return CommonResult.Failure(
-                            CommonErrorType.INVENTORY_DELTA_ID_EMPTY,
+                            COMMON_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
                             $"rewards[{i}] invalid currency id: {r.Id}");
                     }
                 }

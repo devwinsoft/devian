@@ -46,7 +46,7 @@ Events:
 
 - `TB_ACHIEVE_ONCE` + `TB_ACHIEVE_PASS` 기반 runtime 생성/복구
 - `ACHIEVE_TYPE` 기반 runtime 타입 분기(`AchieveRuntimeOnce`, `AchieveRuntimePass`)
-- `MetaMessageManager` 구독 기반 runtime projection 동기화
+- `GameMessageManager` 구독 기반 runtime projection 동기화
 - `InventoryManager` 구독 기반 PASS runtime(`reqPassId`) WAIT 전이 동기화
 - `RemoteConfigManager` + `TB_SEASON` 기반 PASS runtime(`reqSeasonId`) WAIT 전이 판정
 - `MESSAGE_ACHIEVE_TYPE` 기반 외부 알림 트리거 publish

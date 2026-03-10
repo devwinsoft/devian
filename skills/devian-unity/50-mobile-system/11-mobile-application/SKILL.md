@@ -63,6 +63,10 @@ foreground 복귀 기준 동작:
 - `RemoteConfigManager.RefreshAsync(...)`
 - refresh 성공 시 `LeaderboardManager.SyncSeasonTransitionRewardsAsync(...)` best-effort 호출
 
+onLoadCompletedAsync:
+- 리소스 로딩 완료 후, 서버와 별개로 독립적으로 동작하는 Manager를 초기화한다.
+- `GameMessageManager.Instance.Initialize()` — 로컬 테이블 바인딩 (서버 무관)
+
 
 ## Resource Prefab 생성 규칙
 
@@ -91,7 +95,7 @@ MobileApplication에 부착된 RequireComponent:
 - `MissionManager`
 - `RemoteConfigManager`
 - `LeaderboardManager`
-- `MetaMessageManager`
+- `GameMessageManager`
 - `LoginManager`
 - `SaveDataManager`
 - `InputManager` — [24-input-manager](../../20-domain-common-system/22-input-manager/SKILL.md)

@@ -7,9 +7,9 @@ MobileSystem 샘플의 Mission 시스템 개요다.
 현재 Mission 시스템은 `DAILY`/`PERIOD` 미션을 담당한다.
 
 - Mission row는 `MISSION_DAILY`, `MISSION_PERIOD` 테이블을 사용한다.
-- 조건 타입/연산자 정본은 `MESSAGE_META(messageId, messageType, saveType, conditionOp)`다.
+- 조건 타입/연산자 정본은 `GAME_MESSAGE(messageId, messageType, saveType, conditionOp)`다.
 - MissionManager는 `MissionMessageTrigger`과 `MissionScheduler`를 소유한다.
-- runtime 구독은 `MetaMessageTrigger`를 직접 사용한다.
+- runtime 구독은 `GameMessageTrigger`를 직접 사용한다.
 - MissionManager는 `MissionScheduler`를 통해 runtime 생성/복구/정리를 수행한다.
 - 외부 trigger 입력 진입점은 `MissionManager.Notify(...)`다.
 - 외부 message 구독 진입점은 `MissionManager.Subcribe(...)` 계열 헬퍼다.
@@ -28,7 +28,7 @@ MobileSystem 샘플의 Mission 시스템 개요다.
 | [03-ssot](../03-ssot/SKILL.md) | 테이블/저장/트리거 정본 |
 | [09-ssot-operations](../09-ssot-operations/SKILL.md) | 운영 시나리오/테스트/DoD |
 | [10-mission-manager](../10-mission-manager/SKILL.md) | MissionManager 설계 |
-| [45-meta-message-system/11-meta-message-trigger](../../45-meta-message-system/11-meta-message-trigger/SKILL.md) | MetaMessageTrigger 설계 |
+| [45-game-message-system/11-game-message-trigger](../../45-game-message-system/11-game-message-trigger/SKILL.md) | GameMessageTrigger 설계 |
 | [12-mission-storage](../12-mission-storage/SKILL.md) | MissionStorage 저장/복구 규약 |
 | [13-mission-runtime](../13-mission-runtime/SKILL.md) | MissionRuntime 진행도/완료 규약 |
 | [14-mission-factory](../14-mission-factory/SKILL.md) | MissionRuntimeFactory 생성/복구 규약 |

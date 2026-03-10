@@ -134,7 +134,7 @@ namespace Devian
             if (initialize.Value.IsConflict)
             {
                 return CommonResult<LoginInitializeResult>.Failure(
-                    CommonErrorType.SAVEDATA_SYNC_RESOLVE_FAILED,
+                    COMMON_ERROR_TYPE.SAVEDATA_SYNC_RESOLVE_FAILED,
                     $"Sync conflict persists after resolve. local={initialize.Value.LocalDeviceId}, cloud={initialize.Value.CloudDeviceId}");
             }
 
@@ -361,13 +361,6 @@ namespace Devian
                     Debug.LogWarning($"[{Tag}] SaveGameStorageAsync failed: {result.SaveError.Code}: {result.SaveError.Message}");
             }
 
-            var initMessage = MetaMessageManager.Instance.Initialize();
-            if (initMessage.IsFailure)
-            {
-                Debug.LogError($"[{Tag}] MetaMessageManager.Initialize failed: {initMessage.Error.Code}: {initMessage.Error.Message}");
-                return CommonResult<LoginInitializeResult>.Failure(initMessage.Error!);
-            }
-
             var preloadedRemoteConfig = snapshot?.RemoteConfig ?? versionCheckedRemoteConfig;
             var initRemoteConfig = await RemoteConfigManager.Instance.InitializeAsync(preloadedRemoteConfig, ct);
             await yieldMainThreadAsync(ct);
@@ -452,7 +445,7 @@ namespace Devian
                 || remoteConfigManager == null)
             {
                 return CommonResult<RemoteConfigSnapshot>.Failure(
-                    CommonErrorType.COMMON_SERVER,
+                    COMMON_ERROR_TYPE.COMMON_SERVER,
                     "RemoteConfigManager is not available.");
             }
 
@@ -467,7 +460,7 @@ namespace Devian
                 || firebaseCallableManager == null)
             {
                 return CommonResult<RemoteConfigSnapshot>.Failure(
-                    CommonErrorType.COMMON_SERVER,
+                    COMMON_ERROR_TYPE.COMMON_SERVER,
                     "FirebaseCallableManager is not available.");
             }
 

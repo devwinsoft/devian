@@ -50,7 +50,7 @@ Game 도메인은 Devian 프레임워크의 **예제 도메인**이다.
 | `ItemTable.xlsx` | PURCHASE | TB_PURCHASE | `InternalProductId` (string) | 상품 테이블 (`seasonId` 포함) |
 | `MetaTable.xlsx` | ADVERTISE | TB_ADVERTISE | `AdvertiseId` (string) | 광고 placement 테이블 |
 | `ItemTable.xlsx` | REWARD | TB_REWARD | `RewardNum` (int) | 보상 테이블 |
-| `MetaTable.xlsx` | MESSAGE_META | TB_MESSAGE_META | `MessageId` (string) | 메시지 stat 정의 테이블 |
+| `MetaTable.xlsx` | GAME_MESSAGE | TB_GAME_MESSAGE | `MessageId` (string) | 메시지 stat 정의 테이블 |
 | `MetaTable.xlsx` | MISSION_DAILY | TB_MISSION_DAILY | `MissionId` (string) | 일일 미션 정의 테이블 |
 | `MetaTable.xlsx` | MISSION_PERIOD | TB_MISSION_PERIOD | `MissionId` (string) | 기간 미션 정의 테이블 (`day:1~7`, 10일 주기) |
 | `MetaTable.xlsx` | ACHIEVE_ONCE | TB_ACHIEVE_ONCE | `Index` (int) | 일반 업적 단계/플랫폼 매핑 테이블 |
@@ -67,8 +67,8 @@ Game 도메인은 Devian 프레임워크의 **예제 도메인**이다.
 
 | 파일 | 생성 타입 | 설명 |
 |---|---|---|
-| `ENUM_GAME.json` | `enum STAT_TYPE` | stat 전용 enum |
-| `ENUM_META.json` | `enum MESSAGE_META_TYPE`, `enum MESSAGE_META_SAVE_TYPE`, `enum MESSAGE_META_OP_TYPE`, `enum LEADERBOARD_MODE`, `enum MISSION_TYPE(DAILY/PERIOD)`, `enum MESSAGE_MISSION_TYPE`, `enum MESSAGE_ACHIEVE_TYPE`, `enum ACHIEVE_TYPE`, `enum CURRENCY_TYPE`, `enum REWARD_TYPE`, `enum ADVERTISE_FORMAT`, `enum ADVERTISE_PROVIDER`, `enum PURCHASE_KIND`, `enum MESSAGE_INVENTORY_TYPE` | game 공통 enum 통합 |
+| `ENUM_GAME.json` | `enum STAT_TYPE`, `enum GAME_MESSAGE_TYPE`, `enum GAME_MESSAGE_SAVE_TYPE`, `enum GAME_MESSAGE_OP_TYPE` | game/message 공통 enum |
+| `ENUM_META.json` | `enum LEADERBOARD_MODE`, `enum MISSION_TYPE(DAILY/PERIOD)`, `enum MESSAGE_MISSION_TYPE`, `enum MESSAGE_ACHIEVE_TYPE`, `enum ACHIEVE_TYPE`, `enum CURRENCY_TYPE`, `enum REWARD_TYPE`, `enum ADVERTISE_FORMAT`, `enum ADVERTISE_PROVIDER`, `enum PURCHASE_KIND`, `enum MESSAGE_INVENTORY_TYPE` | 메타 시스템 enum 통합 |
 | `TestContract.json` | `enum UserType`, `class UserProfile` | 테스트 예제 (UserType: Guest/Member/Admin, UserProfile: Id/Name/UserType) |
 
 ---

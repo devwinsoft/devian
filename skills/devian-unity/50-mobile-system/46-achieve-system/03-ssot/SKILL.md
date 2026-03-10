@@ -81,11 +81,11 @@ AppliesTo: v10
   - `ACHIEVE_PASS`: `reqPassId` / `reqSeasonId`
 - `WAIT` 상태는 `conditionMsgId` 진행도 반영을 하지 않는다.
 - req 조건을 만족하면 `WAIT -> ACTIVE`로 전이한다.
-  - req message 조건: `MetaMessageManager` stat/trigger 기반
+  - req message 조건: `GameMessageManager` stat/trigger 기반
   - req pass 조건: `InventoryManager.Instance.Storage.Passes` 보유 체크
   - req season 조건: `TB_SEASON(reqSeasonId)`의 `[startUtcTime, endUtcTime)` 범위에 `RemoteConfigManager.serverNowUtcMs`가 포함되어야 한다.
 - 진행값은 saveType 규칙을 따른다:
-  - `TOTAL_SUM`, `TOTAL_MAX`: 외부 저장(`MetaMessageStorage`) 값을 projection
+  - `TOTAL_SUM`, `TOTAL_MAX`: 외부 저장(`GameMessageStorage`) 값을 projection
   - `SESSION_SUM`, `SESSION_MAX`: runtime 내부 `progressValue`를 직접 누적/갱신
 
 ---

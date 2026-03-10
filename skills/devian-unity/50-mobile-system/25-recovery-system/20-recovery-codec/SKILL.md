@@ -108,7 +108,7 @@ offset  size  description
 | ComplexUtil 디코딩 실패 | `RECOVERY_DECODE_FAILED` |
 | HMAC 불일치 (v2) | `RECOVERY_HMAC_FAILED` |
 
-에러 타입의 정확한 이름/위치는 구현 시 `CommonErrorType` 패턴을 따른다.
+에러 타입의 정확한 이름/위치는 구현 시 `COMMON_ERROR_TYPE` 패턴을 따른다.
 
 
 ---

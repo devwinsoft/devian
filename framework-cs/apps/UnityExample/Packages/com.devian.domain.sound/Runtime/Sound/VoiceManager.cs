@@ -162,7 +162,7 @@ namespace Devian
             {
                 var msg = "[VoiceManager] Language not resolved. Call ResolveForLanguage() first.";
                 Log.Warn(msg);
-                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, msg);
             }
 
             // key_bundle에 해당하는 voice rows 수집
@@ -190,7 +190,7 @@ namespace Devian
             {
                 var msg = $"[VoiceManager] No voice rows found for key_bundle: {bundleKey}";
                 Log.Warn(msg);
-                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, msg);
             }
 
             // Resolve된 voice_id만 필터링

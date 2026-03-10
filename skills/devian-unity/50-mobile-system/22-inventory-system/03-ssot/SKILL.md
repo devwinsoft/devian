@@ -184,10 +184,10 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 
 ## E) Error Code Source (정본)
 
-- `AddRewards` 실패 에러 코드는 `CommonErrorType`을 사용한다.
-- inventory 전용 에러 코드는 `ERROR_COMMON`을 SSOT로 추가/관리한다.
+- `AddRewards` 실패 에러 코드는 `COMMON_ERROR_TYPE`을 사용한다.
+- inventory 전용 에러 코드는 `COMMON_ERROR`을 SSOT로 추가/관리한다.
   - 파일: `input/Domains/Common/CommonTable.xlsx`
-  - 시트: `ERROR_COMMON`
+  - 시트: `COMMON_ERROR`
 
 
 ---

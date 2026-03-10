@@ -28,8 +28,8 @@ namespace Devian.Domain.Game
         UNIT_HP_MAX = 100,
     }
 
-    /// <summary>MESSAGE_META_TYPE enum</summary>
-    public enum MESSAGE_META_TYPE
+    /// <summary>GAME_MESSAGE_TYPE enum</summary>
+    public enum GAME_MESSAGE_TYPE
     {
         NONE = 0,
         LOGIN = 1,
@@ -54,8 +54,8 @@ namespace Devian.Domain.Game
         ACHIEVE_005 = 9005,
     }
 
-    /// <summary>MESSAGE_META_SAVE_TYPE enum</summary>
-    public enum MESSAGE_META_SAVE_TYPE
+    /// <summary>GAME_MESSAGE_SAVE_TYPE enum</summary>
+    public enum GAME_MESSAGE_SAVE_TYPE
     {
         NONE = 0,
         SESSION_SUM = 1,
@@ -66,8 +66,8 @@ namespace Devian.Domain.Game
         TOTAL_MIN = 6,
     }
 
-    /// <summary>MESSAGE_META_OP_TYPE enum</summary>
-    public enum MESSAGE_META_OP_TYPE
+    /// <summary>GAME_MESSAGE_OP_TYPE enum</summary>
+    public enum GAME_MESSAGE_OP_TYPE
     {
         NONE = 0,
         EQ = 1,
@@ -278,12 +278,12 @@ namespace Devian.Domain.Game
         public string GetKey() => SeasonId;
     }
 
-    /// <summary>MESSAGE_META row</summary>
-    public sealed class MESSAGE_META : IEntityKey<string>
+    /// <summary>GAME_MESSAGE row</summary>
+    public sealed class GAME_MESSAGE : IEntityKey<string>
     {
         public string MessageId { get; set; } = string.Empty;
-        public MESSAGE_META_TYPE MessageType { get; set; }
-        public MESSAGE_META_SAVE_TYPE SaveType { get; set; }
+        public GAME_MESSAGE_TYPE MessageType { get; set; }
+        public GAME_MESSAGE_SAVE_TYPE SaveType { get; set; }
 
         public string GetKey() => MessageId;
     }
@@ -307,7 +307,7 @@ namespace Devian.Domain.Game
         public bool Fixed { get; set; }
         public int OrderNum { get; set; }
         public string ConditionMsgId { get; set; } = string.Empty;
-        public MESSAGE_META_OP_TYPE ConditionOp { get; set; }
+        public GAME_MESSAGE_OP_TYPE ConditionOp { get; set; }
         public CBigInt? ConditionValue { get; set; }
         public string RewardGroupId { get; set; } = string.Empty;
 
@@ -321,7 +321,7 @@ namespace Devian.Domain.Game
         public int Day { get; set; }
         public bool IsActive { get; set; }
         public string ConditionMsgId { get; set; } = string.Empty;
-        public MESSAGE_META_OP_TYPE ConditionOp { get; set; }
+        public GAME_MESSAGE_OP_TYPE ConditionOp { get; set; }
         public CBigInt? ConditionValue { get; set; }
         public string RewardGroupId { get; set; } = string.Empty;
 
@@ -339,7 +339,7 @@ namespace Devian.Domain.Game
         public string ReqMsgId { get; set; } = string.Empty;
         public CBigInt? ReqValue { get; set; }
         public string ConditionMsgId { get; set; } = string.Empty;
-        public MESSAGE_META_OP_TYPE ConditionOp { get; set; }
+        public GAME_MESSAGE_OP_TYPE ConditionOp { get; set; }
         public CBigInt? ConditionValue { get; set; }
         public string RewardGroupId { get; set; } = string.Empty;
         public string AppleAchievementId { get; set; } = string.Empty;
@@ -359,7 +359,7 @@ namespace Devian.Domain.Game
         public string ReqSeasonId { get; set; } = string.Empty;
         public string ReqPassId { get; set; } = string.Empty;
         public string ConditionMsgId { get; set; } = string.Empty;
-        public MESSAGE_META_OP_TYPE ConditionOp { get; set; }
+        public GAME_MESSAGE_OP_TYPE ConditionOp { get; set; }
         public CBigInt? ConditionValue { get; set; }
         public string RewardGroupId { get; set; } = string.Empty;
 
@@ -1059,11 +1059,11 @@ namespace Devian.Domain.Game
         static partial void _OnAfterLoad();
     }
 
-    /// <summary>TB_MESSAGE_META container</summary>
-    public static partial class TB_MESSAGE_META
+    /// <summary>TB_GAME_MESSAGE container</summary>
+    public static partial class TB_GAME_MESSAGE
     {
-        private static readonly Dictionary<string, MESSAGE_META> _dict = new();
-        private static readonly List<MESSAGE_META> _list = new();
+        private static readonly Dictionary<string, GAME_MESSAGE> _dict = new();
+        private static readonly List<GAME_MESSAGE> _list = new();
 
         public static int Count => _list.Count;
 
@@ -1073,19 +1073,19 @@ namespace Devian.Domain.Game
             _list.Clear();
         }
 
-        public static IReadOnlyList<MESSAGE_META> GetAll() => _list;
+        public static IReadOnlyList<GAME_MESSAGE> GetAll() => _list;
 
-        public static MESSAGE_META? Get(string key)
+        public static GAME_MESSAGE? Get(string key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(string key, out MESSAGE_META? row)
+        public static bool TryGet(string key, out GAME_MESSAGE? row)
         {
             return _dict.TryGetValue(key, out row);
         }
 
-        private static void AddRow(MESSAGE_META row)
+        private static void AddRow(GAME_MESSAGE row)
         {
             _list.Add(row);
             _dict[row.MessageId] = row;
@@ -1094,7 +1094,7 @@ namespace Devian.Domain.Game
         public static void LoadFromJson(string json)
         {
             Clear();
-            var rows = JsonConvert.DeserializeObject<List<MESSAGE_META>>(json);
+            var rows = JsonConvert.DeserializeObject<List<GAME_MESSAGE>>(json);
             if (rows == null) return;
             foreach (var row in rows)
             {
@@ -1111,7 +1111,7 @@ namespace Devian.Domain.Game
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<MESSAGE_META>(line);
+                var row = JsonConvert.DeserializeObject<GAME_MESSAGE>(line);
                 if (row == null) continue;
                 AddRow(row);
             }
@@ -1123,7 +1123,7 @@ namespace Devian.Domain.Game
             Pb64Loader.ParseRows(rawBinary, jsonRow =>
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<MESSAGE_META>(jsonRow);
+                var row = JsonConvert.DeserializeObject<GAME_MESSAGE>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -2222,14 +2222,14 @@ namespace Devian.Domain.Game
         public static implicit operator SEASON_ID(string value) => new SEASON_ID { Value = value };
     }
 
-    /// <summary>Inspector-bindable ID for MESSAGE_META</summary>
+    /// <summary>Inspector-bindable ID for GAME_MESSAGE</summary>
     [Serializable]
-    public sealed class MESSAGE_META_ID
+    public sealed class GAME_MESSAGE_ID
     {
         public string Value;
 
-        public static implicit operator string(MESSAGE_META_ID id) => id.Value;
-        public static implicit operator MESSAGE_META_ID(string value) => new MESSAGE_META_ID { Value = value };
+        public static implicit operator string(GAME_MESSAGE_ID id) => id.Value;
+        public static implicit operator GAME_MESSAGE_ID(string value) => new GAME_MESSAGE_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for ATTEND</summary>
@@ -2342,7 +2342,7 @@ namespace Devian.Domain.Game
         public static bool IsValid(this PURCHASE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this SEASON_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
-        public static bool IsValid(this MESSAGE_META_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this GAME_MESSAGE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this ATTEND_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MISSION_DAILY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MISSION_PERIOD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);

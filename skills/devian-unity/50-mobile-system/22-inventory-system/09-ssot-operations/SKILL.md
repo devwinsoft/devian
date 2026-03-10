@@ -63,5 +63,5 @@ Hard (반드시 0)
 - 컨텐츠 미의존(테이블/enum 직접 참조 금지)이 Policy에 명시됨
 - `AddRewards` 반환 타입이 `CommonResult`로 문서에 명시됨
 - invalid 입력 시 실패 + 전체 미적용(원자성) 규약이 문서에 명시됨
-- `ERROR_COMMON` 기반 `CommonErrorType` 사용 규약이 문서에 명시됨
+- `COMMON_ERROR` 기반 `COMMON_ERROR_TYPE` 사용 규약이 문서에 명시됨
 - 10-inventory-manager 문서가 존재하고 링크됨

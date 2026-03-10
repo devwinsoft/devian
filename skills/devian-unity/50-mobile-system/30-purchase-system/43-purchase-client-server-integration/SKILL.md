@@ -129,4 +129,4 @@ Hard (must be 0)
 - [x] ConfirmPurchase 하드룰이 문서에 명시돼 있다.
 
 Soft
-- [ ] 호출 실패 시 에러 매핑 규칙(예: CommonErrorType) 링크 추가
+- [ ] 호출 실패 시 에러 매핑 규칙(예: COMMON_ERROR_TYPE) 링크 추가

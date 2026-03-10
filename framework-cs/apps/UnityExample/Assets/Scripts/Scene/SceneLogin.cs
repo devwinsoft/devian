@@ -32,7 +32,7 @@ public class SceneLogin : SceneBootstrap
 
     protected override async Task onStart()
     {
-        Debug.Log("TestSceneLoading...");
+        Debug.Log("SceneLogin.onStart()...");
         Debug.Log(Application.persistentDataPath);
         await base.onStart();
 

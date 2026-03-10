@@ -46,7 +46,7 @@ namespace Devian
             string slot, SaveCloudPayload payload, CancellationToken ct)
         {
             return Task.FromResult(CommonResult.Failure(
-                CommonErrorType.CLOUDSAVE_CONNECTION_FAILED,
+                COMMON_ERROR_TYPE.CLOUDSAVE_CONNECTION_FAILED,
                 "Cloud save is not available on this platform."));
         }
 #endif
@@ -64,7 +64,7 @@ namespace Devian
         {
             return result == SaveCloudResult.Success
                 ? CommonResult.Ok()
-                : CommonResult.Failure(CommonErrorType.CLOUDSAVE_CONNECTION_FAILED, $"Cloud save failed: {result}");
+                : CommonResult.Failure(COMMON_ERROR_TYPE.CLOUDSAVE_CONNECTION_FAILED, $"Cloud save failed: {result}");
         }
     }
 }

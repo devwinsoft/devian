@@ -4,7 +4,7 @@ Devian Common Domain의 C#/TS 공통 정책과 결과 표현 규약을 담당한
 
 - **Domain Policy**: `Common` DomainKey의 역할/제약
 - **Module Policy**: Common 모듈의 생성물/수동 코드 경계, 의존성, namespace 규칙
-- **Error/Result**: `CommonError`, `CommonResult<T>`, `ERROR_COMMON` 규약
+- **Error/Result**: `CommonError`, `CommonResult<T>`, `COMMON_ERROR` 규약
 
 ---
 
@@ -18,7 +18,7 @@ Devian Common Domain의 C#/TS 공통 정책과 결과 표현 규약을 담당한
 |----------|-------------|
 | [01-policy](../01-policy/SKILL.md) | Common Domain 정책 |
 | [02-module-policy](../02-module-policy/SKILL.md) | Common 모듈 정책 (C#/TS 공통) |
-| [16-common-error](../16-common-error/SKILL.md) | CommonError / CommonErrorType / ERROR_COMMON |
+| [16-common-error](../16-common-error/SKILL.md) | CommonError / COMMON_ERROR_TYPE / COMMON_ERROR |
 | [17-common-result](../17-common-result/SKILL.md) | CommonResult 규약 |
 
 ---

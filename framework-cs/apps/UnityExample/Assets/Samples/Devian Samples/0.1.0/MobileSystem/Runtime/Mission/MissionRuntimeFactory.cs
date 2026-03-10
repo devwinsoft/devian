@@ -10,11 +10,11 @@ namespace Devian
         public string PeriodKey { get; set; }
         public int MissionUid { get; set; }
         public int Index { get; set; }
-        public MESSAGE_META_TYPE StatType { get; set; }
-        public MESSAGE_META_SAVE_TYPE OpType { get; set; }
-        public MESSAGE_META_OP_TYPE ConditionOpType { get; set; }
+        public GAME_MESSAGE_TYPE StatType { get; set; }
+        public GAME_MESSAGE_SAVE_TYPE OpType { get; set; }
+        public GAME_MESSAGE_OP_TYPE ConditionOpType { get; set; }
         public CBigInt ConditionValue { get; set; }
-        public Action<int, MESSAGE_META_TYPE, BaseTrigger<int, MESSAGE_META_TYPE>.Handler> SubscribeTrigger { get; set; }
+        public Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> SubscribeTrigger { get; set; }
         public Action<int> UnsubscribeTrigger { get; set; }
         public Func<CBigInt> ReadExternalProgress { get; set; }
         public Action<MissionRuntimeBase> OnChanged { get; set; }
@@ -29,11 +29,11 @@ namespace Devian
         public int MissionUid { get; set; }
         public int Day { get; set; }
         public bool IsWaiting { get; set; }
-        public MESSAGE_META_TYPE StatType { get; set; }
-        public MESSAGE_META_SAVE_TYPE OpType { get; set; }
-        public MESSAGE_META_OP_TYPE ConditionOpType { get; set; }
+        public GAME_MESSAGE_TYPE StatType { get; set; }
+        public GAME_MESSAGE_SAVE_TYPE OpType { get; set; }
+        public GAME_MESSAGE_OP_TYPE ConditionOpType { get; set; }
         public CBigInt ConditionValue { get; set; }
-        public Action<int, MESSAGE_META_TYPE, BaseTrigger<int, MESSAGE_META_TYPE>.Handler> SubscribeTrigger { get; set; }
+        public Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> SubscribeTrigger { get; set; }
         public Action<int> UnsubscribeTrigger { get; set; }
         public Func<CBigInt> ReadExternalProgress { get; set; }
         public Action<MissionRuntimeBase> OnChanged { get; set; }
@@ -52,11 +52,11 @@ namespace Devian
         public bool IsWaiting { get; set; }
         public int Index { get; set; }
         public int Day { get; set; }
-        public MESSAGE_META_TYPE StatType { get; set; }
-        public MESSAGE_META_SAVE_TYPE OpType { get; set; }
-        public MESSAGE_META_OP_TYPE ConditionOpType { get; set; }
+        public GAME_MESSAGE_TYPE StatType { get; set; }
+        public GAME_MESSAGE_SAVE_TYPE OpType { get; set; }
+        public GAME_MESSAGE_OP_TYPE ConditionOpType { get; set; }
         public CBigInt ConditionValue { get; set; }
-        public Action<int, MESSAGE_META_TYPE, BaseTrigger<int, MESSAGE_META_TYPE>.Handler> SubscribeTrigger { get; set; }
+        public Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> SubscribeTrigger { get; set; }
         public Action<int> UnsubscribeTrigger { get; set; }
         public Func<CBigInt> ReadExternalProgress { get; set; }
         public Action<MissionRuntimeBase> OnChanged { get; set; }

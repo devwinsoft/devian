@@ -14,8 +14,8 @@ export enum ComplexPolicyType {
     NameTag = 2,
 }
 
-/** Auto-generated enum from TB_ERROR_COMMON.id */
-export enum CommonErrorType {
+/** Auto-generated enum from TB_COMMON_ERROR.id */
+export enum COMMON_ERROR_TYPE {
     SUCCESS = 0,
     ACCOUNT_SWITCH_GUEST_UPGRADE_FAILED = 1,
     ACCOUNT_SWITCH_LOGIN_FAILED = 2,
@@ -155,8 +155,8 @@ export enum CommonErrorType {
     COMMON_FORCE_UPDATE_REQUIRED = 136,
 }
 
-/** Auto-generated enum from TB_ERROR_SERVER.id */
-export enum ServerErrorType {
+/** Auto-generated enum from TB_SERVER_ERROR.id */
+export enum SERVER_ERROR_TYPE {
     BAD_REQUEST = 1,
     FORBIDDEN = 3,
     INTERNAL = 100,
@@ -178,18 +178,18 @@ export interface COMPLEX_POLICY extends IEntityKey<ComplexPolicyType> {
     getKey(): ComplexPolicyType;
 }
 
-export interface ERROR_COMMON extends IEntityKey<CommonErrorType> {
-    Id: CommonErrorType;
+export interface COMMON_ERROR extends IEntityKey<COMMON_ERROR_TYPE> {
+    Id: COMMON_ERROR_TYPE;
     Msg_key: string;
     Msg: string;
-    getKey(): CommonErrorType;
+    getKey(): COMMON_ERROR_TYPE;
 }
 
-export interface ERROR_SERVER extends IEntityKey<ServerErrorType> {
-    Id: ServerErrorType;
+export interface SERVER_ERROR extends IEntityKey<SERVER_ERROR_TYPE> {
+    Id: SERVER_ERROR_TYPE;
     Code: number;
     Status: number;
-    getKey(): ServerErrorType;
+    getKey(): SERVER_ERROR_TYPE;
 }
 
 // ================================================================
@@ -242,9 +242,9 @@ export class TB_COMPLEX_POLICY {
     }
 }
 
-export class TB_ERROR_COMMON {
-    private static _dict: Map<CommonErrorType, ERROR_COMMON> = new Map();
-    private static _list: ERROR_COMMON[] = [];
+export class TB_COMMON_ERROR {
+    private static _dict: Map<COMMON_ERROR_TYPE, COMMON_ERROR> = new Map();
+    private static _list: COMMON_ERROR[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -253,23 +253,23 @@ export class TB_ERROR_COMMON {
         this._list = [];
     }
 
-    static getAll(): readonly ERROR_COMMON[] { return this._list; }
+    static getAll(): readonly COMMON_ERROR[] { return this._list; }
 
-    static get(key: CommonErrorType): ERROR_COMMON | undefined {
+    static get(key: COMMON_ERROR_TYPE): COMMON_ERROR | undefined {
         return this._dict.get(key);
     }
 
-    static has(key: CommonErrorType): boolean {
+    static has(key: COMMON_ERROR_TYPE): boolean {
         return this._dict.has(key);
     }
 
-    static find(key: CommonErrorType): ERROR_COMMON {
+    static find(key: COMMON_ERROR_TYPE): COMMON_ERROR {
         const row = this._dict.get(key);
-        if (!row) throw new Error(`TB_ERROR_COMMON: key ${key} not found`);
+        if (!row) throw new Error(`TB_COMMON_ERROR: key ${key} not found`);
         return row;
     }
 
-    static tryFind(key: CommonErrorType): ERROR_COMMON | undefined {
+    static tryFind(key: COMMON_ERROR_TYPE): COMMON_ERROR | undefined {
         return this._dict.get(key);
     }
 
@@ -277,7 +277,7 @@ export class TB_ERROR_COMMON {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as ERROR_COMMON;
+            const row = JSON.parse(line) as COMMON_ERROR;
             this._list.push(row);
             this._dict.set(row.Id, row);
         }
@@ -288,9 +288,9 @@ export class TB_ERROR_COMMON {
     }
 }
 
-export class TB_ERROR_SERVER {
-    private static _dict: Map<ServerErrorType, ERROR_SERVER> = new Map();
-    private static _list: ERROR_SERVER[] = [];
+export class TB_SERVER_ERROR {
+    private static _dict: Map<SERVER_ERROR_TYPE, SERVER_ERROR> = new Map();
+    private static _list: SERVER_ERROR[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -299,23 +299,23 @@ export class TB_ERROR_SERVER {
         this._list = [];
     }
 
-    static getAll(): readonly ERROR_SERVER[] { return this._list; }
+    static getAll(): readonly SERVER_ERROR[] { return this._list; }
 
-    static get(key: ServerErrorType): ERROR_SERVER | undefined {
+    static get(key: SERVER_ERROR_TYPE): SERVER_ERROR | undefined {
         return this._dict.get(key);
     }
 
-    static has(key: ServerErrorType): boolean {
+    static has(key: SERVER_ERROR_TYPE): boolean {
         return this._dict.has(key);
     }
 
-    static find(key: ServerErrorType): ERROR_SERVER {
+    static find(key: SERVER_ERROR_TYPE): SERVER_ERROR {
         const row = this._dict.get(key);
-        if (!row) throw new Error(`TB_ERROR_SERVER: key ${key} not found`);
+        if (!row) throw new Error(`TB_SERVER_ERROR: key ${key} not found`);
         return row;
     }
 
-    static tryFind(key: ServerErrorType): ERROR_SERVER | undefined {
+    static tryFind(key: SERVER_ERROR_TYPE): SERVER_ERROR | undefined {
         return this._dict.get(key);
     }
 
@@ -323,7 +323,7 @@ export class TB_ERROR_SERVER {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as ERROR_SERVER;
+            const row = JSON.parse(line) as SERVER_ERROR;
             this._list.push(row);
             this._dict.set(row.Id, row);
         }

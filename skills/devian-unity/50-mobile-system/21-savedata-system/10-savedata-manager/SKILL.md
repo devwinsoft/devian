@@ -83,7 +83,7 @@
 
 ### Cloud Load/Save 실패 (Non-Guest)
 - Cloud `LoadAsync`/`SaveAsync` 실패는 `SyncGameStorageAsync`의 실패로 반환한다.
-- Cloud 연결 계층 실패는 `CommonErrorType.CLOUDSAVE_CONNECTION_FAILED`를 사용한다.
+- Cloud 연결 계층 실패는 `COMMON_ERROR_TYPE.CLOUDSAVE_CONNECTION_FAILED`를 사용한다.
 
 ### Local 없음 + Cloud 있음
 - Cloud 데이터를 primary local에 저장

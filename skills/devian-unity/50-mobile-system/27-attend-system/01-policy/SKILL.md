@@ -69,4 +69,4 @@ Type: Policy / Entry Point
 
 ## NEEDS CHECK (구현 단계에서 확정)
 
-- claim 실패 에러코드 전용화(`ERROR_COMMON`에 ATTEND_* 추가 여부)
+- claim 실패 에러코드 전용화(`COMMON_ERROR`에 ATTEND_* 추가 여부)

@@ -162,7 +162,7 @@ namespace Devian
 
                 default:
                     return Task.FromResult(CommonResult<LoginCredential>.Failure(
-                        CommonErrorType.LOGIN_CREDENTIAL_UNSUPPORTED,
+                        COMMON_ERROR_TYPE.LOGIN_CREDENTIAL_UNSUPPORTED,
                         $"Internal credential acquisition is not supported for {loginType}. Use LoginAsync(LoginType, LoginCredential, CancellationToken) instead."));
             }
         }
@@ -206,7 +206,7 @@ namespace Devian
 #endif
 
                 default:
-                    return CommonResult.Failure(CommonErrorType.LOGIN_UNSUPPORTED, $"LoginType {loginType} is not supported on this platform.");
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED, $"LoginType {loginType} is not supported on this platform.");
             }
         }
 
@@ -215,7 +215,7 @@ namespace Devian
         {
             if (string.IsNullOrWhiteSpace(credential?.ServerAuthCode))
             {
-                return CommonResult.Failure(CommonErrorType.LOGIN_GOOGLE_MISSING_AUTH_CODE,
+                return CommonResult.Failure(COMMON_ERROR_TYPE.LOGIN_GOOGLE_MISSING_AUTH_CODE,
                     "Google server auth code is missing. Configure GPGS server-side access and Web client ID.");
             }
 
@@ -230,13 +230,13 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult.Failure(CommonErrorType.LOGIN_GOOGLE_SIGNIN_FAILED, ex.Message);
+                return CommonResult.Failure(COMMON_ERROR_TYPE.LOGIN_GOOGLE_SIGNIN_FAILED, ex.Message);
             }
 
             return await signInOrLinkFirebaseCredentialAsync(
                 firebaseCredential,
-                CommonErrorType.LOGIN_GOOGLE_LINK_FAILED,
-                CommonErrorType.LOGIN_GOOGLE_SIGNIN_FAILED,
+                COMMON_ERROR_TYPE.LOGIN_GOOGLE_LINK_FAILED,
+                COMMON_ERROR_TYPE.LOGIN_GOOGLE_SIGNIN_FAILED,
                 ct);
         }
 #endif
@@ -246,7 +246,7 @@ namespace Devian
         {
             if (string.IsNullOrWhiteSpace(credential?.IdToken) || string.IsNullOrWhiteSpace(credential?.RawNonce))
             {
-                return CommonResult.Failure(CommonErrorType.LOGIN_APPLE_MISSING_TOKEN,
+                return CommonResult.Failure(COMMON_ERROR_TYPE.LOGIN_APPLE_MISSING_TOKEN,
                     "Apple IdToken and RawNonce are required.");
             }
 
@@ -265,21 +265,21 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult.Failure(CommonErrorType.LOGIN_APPLE_SIGNIN_FAILED, ex.Message);
+                return CommonResult.Failure(COMMON_ERROR_TYPE.LOGIN_APPLE_SIGNIN_FAILED, ex.Message);
             }
 
             return await signInOrLinkFirebaseCredentialAsync(
                 firebaseCredential,
-                CommonErrorType.LOGIN_APPLE_LINK_FAILED,
-                CommonErrorType.LOGIN_APPLE_SIGNIN_FAILED,
+                COMMON_ERROR_TYPE.LOGIN_APPLE_LINK_FAILED,
+                COMMON_ERROR_TYPE.LOGIN_APPLE_SIGNIN_FAILED,
                 ct);
         }
 #endif
 
         async Task<CommonResult> signInOrLinkFirebaseCredentialAsync(
             Credential credential,
-            CommonErrorType linkErrorType,
-            CommonErrorType signInErrorType,
+            COMMON_ERROR_TYPE linkErrorType,
+            COMMON_ERROR_TYPE signInErrorType,
             CancellationToken ct)
         {
             var init = await _firebaseLogin.InitializeAsync(ct);
@@ -293,11 +293,11 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult.Failure(CommonErrorType.FIREBASE_NOT_INITIALIZED, ex.Message);
+                return CommonResult.Failure(COMMON_ERROR_TYPE.FIREBASE_NOT_INITIALIZED, ex.Message);
             }
 
             if (auth == null)
-                return CommonResult.Failure(CommonErrorType.FIREBASE_NOT_INITIALIZED, "FirebaseAuth is null.");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.FIREBASE_NOT_INITIALIZED, "FirebaseAuth is null.");
 
             var currentUser = auth.CurrentUser;
             if (currentUser != null && currentUser.IsAnonymous)

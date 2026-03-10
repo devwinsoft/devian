@@ -148,7 +148,7 @@ namespace Devian
             if (season == null)
             {
                 return CommonResult.Failure(
-                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
                     $"Season not found for product: productId={product.InternalProductId}, seasonId={product.SeasonId}");
             }
 
@@ -156,7 +156,7 @@ namespace Devian
             if (seasonEndUtcMs <= 0L)
             {
                 return CommonResult.Failure(
-                    CommonErrorType.COMMON_INVALID_ARGUMENT,
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
                     $"Season end time is invalid: productId={product.InternalProductId}, seasonId={product.SeasonId}");
             }
 
@@ -165,7 +165,7 @@ namespace Devian
                 || !remoteConfigManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
             {
                 return CommonResult.Failure(
-                    CommonErrorType.COMMON_SERVER,
+                    COMMON_ERROR_TYPE.COMMON_SERVER,
                     "Server time is unavailable. Initialize RemoteConfigManager before purchase.");
             }
 
@@ -174,7 +174,7 @@ namespace Devian
             if (serverNowUtcMs >= blockStartUtcMs)
             {
                 return CommonResult.Failure(
-                    CommonErrorType.PURCHASE_SEASON_END_SOON_BLOCKED,
+                    COMMON_ERROR_TYPE.PURCHASE_SEASON_END_SOON_BLOCKED,
                     $"Product purchase is blocked near season end: blockDays={_seasonPurchaseBlockedBeforeEndDays}, productId={product.InternalProductId}, seasonId={product.SeasonId}");
             }
 
@@ -202,7 +202,7 @@ namespace Devian
 #elif !UNITY_PURCHASING
         public Task<CommonResult<RefundResult>> RefundAsync(CancellationToken ct = default)
             => Task.FromResult(CommonResult<RefundResult>.Failure(
-                CommonErrorType.IAP_NOT_SUPPORTED,
+                COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED,
                 "Unity Purchasing not available."));
 #else
         public async Task<CommonResult<RefundResult>> RefundAsync(CancellationToken ct = default)
@@ -294,14 +294,14 @@ namespace Devian
                 if (page.HasMore && string.IsNullOrEmpty(page.NextCursor))
                 {
                     return CommonResult<RefundResult>.Failure(
-                        CommonErrorType.PURCHASE_REFUND_APPLY_FAILED,
+                        COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
                         "Refund sync cursor is empty while hasMore=true.");
                 }
 
                 if (page.HasMore && string.Equals(prevCursor, page.NextCursor ?? string.Empty, StringComparison.Ordinal))
                 {
                     return CommonResult<RefundResult>.Failure(
-                        CommonErrorType.PURCHASE_REFUND_APPLY_FAILED,
+                        COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
                         "Refund sync cursor did not advance.");
                 }
 
@@ -423,14 +423,14 @@ namespace Devian
                 if (page.HasMore && string.IsNullOrEmpty(page.NextCursor))
                 {
                     return CommonResult<RefundResult>.Failure(
-                        CommonErrorType.PURCHASE_REFUND_APPLY_FAILED,
+                        COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
                         "Refund sync cursor is empty while hasMore=true.");
                 }
 
                 if (page.HasMore && string.Equals(prevCursor, page.NextCursor ?? string.Empty, StringComparison.Ordinal))
                 {
                     return CommonResult<RefundResult>.Failure(
-                        CommonErrorType.PURCHASE_REFUND_APPLY_FAILED,
+                        COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
                         "Refund sync cursor did not advance.");
                 }
 
@@ -487,7 +487,7 @@ namespace Devian
         {
 #if UNITY_EDITOR
             return Task.FromResult(CommonResult.Failure(
-                CommonErrorType.PURCHASE_UNSUPPORTED_PLATFORM,
+                COMMON_ERROR_TYPE.PURCHASE_UNSUPPORTED_PLATFORM,
                 "PurchaseManager is not supported in Editor."));
 #else
             if (_initializeTask != null)
@@ -613,7 +613,7 @@ namespace Devian
             var product = TB_PURCHASE.Get(internalProductId);
             if (product == null)
                 return CommonResult<PurchaseFinalResult>.Failure(
-                    CommonErrorType.PURCHASE_NOT_FOUND,
+                    COMMON_ERROR_TYPE.PURCHASE_NOT_FOUND,
                     $"Product not found: {internalProductId}");
 
             var seasonWindow = validateSeasonPurchaseWindow(product);
@@ -646,7 +646,7 @@ namespace Devian
             var purchaseStorage = getPurchaseStorageOrNull();
             if (purchaseStorage == null)
                 return CommonResult<RetryInterruptedPurchaseResult>.Failure(
-                    CommonErrorType.PURCHASE_INTERRUPTED_STORAGE_UNAVAILABLE,
+                    COMMON_ERROR_TYPE.PURCHASE_INTERRUPTED_STORAGE_UNAVAILABLE,
                     "PurchaseStorage is not available.");
 
             var current = purchaseStorage.Current;
@@ -665,13 +665,13 @@ namespace Devian
 
             if (string.IsNullOrEmpty(current.InternalProductId))
                 return CommonResult<RetryInterruptedPurchaseResult>.Failure(
-                    CommonErrorType.PURCHASE_INTERRUPTED_SNAPSHOT_PRODUCT_ID_MISSING,
+                    COMMON_ERROR_TYPE.PURCHASE_INTERRUPTED_SNAPSHOT_PRODUCT_ID_MISSING,
                     "Interrupted purchase snapshot is missing internalProductId.");
 
             if (!TryResolveInterruptedPurchaseKind(current.InternalProductId, current.Kind, out var currentKind))
             {
                 return CommonResult<RetryInterruptedPurchaseResult>.Failure(
-                    CommonErrorType.PURCHASE_INTERRUPTED_SNAPSHOT_KIND_INVALID,
+                    COMMON_ERROR_TYPE.PURCHASE_INTERRUPTED_SNAPSHOT_KIND_INVALID,
                     $"Interrupted purchase snapshot has invalid purchase kind: {current.Kind}");
             }
 
@@ -681,7 +681,7 @@ namespace Devian
                 // _purchaseInProgress 가드를 여기서 직접 관리한다.
                 if (_purchaseInProgress)
                     return CommonResult<RetryInterruptedPurchaseResult>.Failure(
-                        CommonErrorType.PURCHASE_PURCHASE_IN_PROGRESS,
+                        COMMON_ERROR_TYPE.PURCHASE_PURCHASE_IN_PROGRESS,
                         "Another purchase is already in progress.");
 
                 _purchaseInProgress = true;
@@ -780,7 +780,7 @@ namespace Devian
                 if (success)
                     tcs.TrySetResult(CommonResult<bool>.Success(true));
                 else
-                    tcs.TrySetResult(CommonResult<bool>.Failure(CommonErrorType.PURCHASE_RESTORE_FAILED, error ?? "RestoreTransactions failed."));
+                    tcs.TrySetResult(CommonResult<bool>.Failure(COMMON_ERROR_TYPE.PURCHASE_RESTORE_FAILED, error ?? "RestoreTransactions failed."));
             });
 
             if (ct.CanBeCanceled)
@@ -810,7 +810,7 @@ namespace Devian
         public async Task<CommonResult<long>> GetRentalRemainingMsAsync(string internalProductId, CancellationToken ct = default)
         {
             if (string.IsNullOrEmpty(internalProductId))
-                return CommonResult<long>.Failure(CommonErrorType.PURCHASE_INTERNAL_PRODUCT_ID_EMPTY, "internalProductId is required.");
+                return CommonResult<long>.Failure(COMMON_ERROR_TYPE.PURCHASE_INTERNAL_PRODUCT_ID_EMPTY, "internalProductId is required.");
 
             var sync = await SyncEntitlementsAsync(ct);
             if (sync.IsFailure)
@@ -832,7 +832,7 @@ namespace Devian
         public Task<CommonResult<RecentPurchaseItem>> GetLatestConsumablePurchase30dAsync(CancellationToken ct = default)
         {
             return Task.FromResult(CommonResult<RecentPurchaseItem>.Failure(
-                CommonErrorType.PURCHASE_UNSUPPORTED_PLATFORM,
+                COMMON_ERROR_TYPE.PURCHASE_UNSUPPORTED_PLATFORM,
                 "PurchaseManager is not supported in Editor."));
         }
 #else
@@ -840,7 +840,7 @@ namespace Devian
         {
             if (!_iapInitialized)
                 return CommonResult<RecentPurchaseItem>.Failure(
-                    CommonErrorType.PURCHASE_INIT_REQUIRED,
+                    COMMON_ERROR_TYPE.PURCHASE_INIT_REQUIRED,
                     "PurchaseManager not initialized. Call InitializeAsync() first.");
 
             var data = new Dictionary<string, object> { ["pageSize"] = 1, ["kind"] = "Consumable" };
@@ -880,7 +880,7 @@ namespace Devian
         async Task<CommonResult> initializeIapAsync(CancellationToken ct)
         {
             if (_productCatalog == null)
-                return CommonResult.Failure(CommonErrorType.PURCHASE_INIT_FAILED, "ProductCatalog not set. Call SetProductCatalog().");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.PURCHASE_INIT_FAILED, "ProductCatalog not set. Call SetProductCatalog().");
 
             try
             {
@@ -940,9 +940,9 @@ namespace Devian
                 Debug.LogError($"[{Tag}] IAP initialization failed: {ex.Message}");
 
                 if (ex.Message != null && ex.Message.Contains("Products fetch failed"))
-                    return CommonResult.Failure(CommonErrorType.PURCHASE_FETCH_FAILED, ex.Message);
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.PURCHASE_FETCH_FAILED, ex.Message);
 
-                return CommonResult.Failure(CommonErrorType.PURCHASE_INIT_FAILED, ex.Message);
+                return CommonResult.Failure(COMMON_ERROR_TYPE.PURCHASE_INIT_FAILED, ex.Message);
             }
         }
 
@@ -960,20 +960,20 @@ namespace Devian
             if (purchaseLoginReady.IsFailure)
                 Debug.LogWarning($"[{Tag}] purchase login readiness failed: {purchaseLoginReady.Error}");
             if (purchaseLoginReady.IsFailure || !purchaseLoginReady.Value)
-                return CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.PURCHASE_UNAUTHENTICATED,
+                return CommonResult<PurchaseFinalResult>.Failure(COMMON_ERROR_TYPE.PURCHASE_UNAUTHENTICATED,
                     "Authentication required before purchase. Sign in with Guest, Google, or Apple first.");
 
             if (_purchaseStore == null)
-                return CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.PURCHASE_STORE_NOT_SET, "PurchaseStore not set. Call SetPurchaseStore().");
+                return CommonResult<PurchaseFinalResult>.Failure(COMMON_ERROR_TYPE.PURCHASE_STORE_NOT_SET, "PurchaseStore not set. Call SetPurchaseStore().");
 
             if (_purchaseInProgress)
-                return CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.PURCHASE_PURCHASE_IN_PROGRESS, "Another purchase is already in progress.");
+                return CommonResult<PurchaseFinalResult>.Failure(COMMON_ERROR_TYPE.PURCHASE_PURCHASE_IN_PROGRESS, "Another purchase is already in progress.");
 
             var purchaseStorage = getPurchaseStorageOrNull();
             if (!isRecoveryCall && (purchaseStorage?.Current.IsPurchaseInProgress ?? false))
             {
                 return CommonResult<PurchaseFinalResult>.Failure(
-                    CommonErrorType.PURCHASE_PURCHASE_IN_PROGRESS,
+                    COMMON_ERROR_TYPE.PURCHASE_PURCHASE_IN_PROGRESS,
                     "Interrupted purchase exists. Call RetryInterruptedPurchaseAsync() before starting a new purchase.");
             }
 
@@ -1150,7 +1150,7 @@ namespace Devian
                         if (gotPendingOrder)
                             goto PendingOrderReady;
 
-                        return CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.PURCHASE_PURCHASE_REQUEST_FAILED, ex.Message);
+                        return CommonResult<PurchaseFinalResult>.Failure(COMMON_ERROR_TYPE.PURCHASE_PURCHASE_REQUEST_FAILED, ex.Message);
                     }
                     finally
                     {
@@ -1223,7 +1223,7 @@ namespace Devian
                         {
                             clearCurrentOnExit = false;
                             return CommonResult<PurchaseFinalResult>.Failure(
-                                CommonErrorType.PURCHASE_STORE_FAILED,
+                                COMMON_ERROR_TYPE.PURCHASE_STORE_FAILED,
                                 $"ConfirmPurchase failed: {ex.Message}");
                         }
 
@@ -1302,7 +1302,7 @@ namespace Devian
                     purchaseStorage?.ClearCurrent();
                     clearCurrentOnExit = false;
                     return CommonResult<PurchaseFinalResult>.Failure(
-                        CommonErrorType.PURCHASE_VERIFY_REJECTED_UNKNOWN,
+                        COMMON_ERROR_TYPE.PURCHASE_VERIFY_REJECTED_UNKNOWN,
                         $"{status}:{rejectReason} (cancelled purchase consumed, retry possible)");
                 }
 
@@ -1343,11 +1343,11 @@ namespace Devian
                     }
                 }
 
-                CommonErrorType errorType;
+                COMMON_ERROR_TYPE errorType;
                 if (rejectReason == "SEASON_PASS_ALREADY_OWNED")
-                    errorType = CommonErrorType.PURCHASE_SEASON_PASS_ALREADY_OWNED;
+                    errorType = COMMON_ERROR_TYPE.PURCHASE_SEASON_PASS_ALREADY_OWNED;
                 else
-                    errorType = CommonErrorType.PURCHASE_VERIFY_REJECTED_UNKNOWN;
+                    errorType = COMMON_ERROR_TYPE.PURCHASE_VERIFY_REJECTED_UNKNOWN;
 
                 return CommonResult<PurchaseFinalResult>.Failure(
                     errorType, $"{status}:{rejectReason}");
@@ -1368,13 +1368,13 @@ namespace Devian
             var purchaseStorage = getPurchaseStorageOrNull();
             if (purchaseStorage == null)
                 return CommonResult<PurchaseFinalResult>.Failure(
-                    CommonErrorType.PURCHASE_INTERRUPTED_STORAGE_UNAVAILABLE,
+                    COMMON_ERROR_TYPE.PURCHASE_INTERRUPTED_STORAGE_UNAVAILABLE,
                     "PurchaseStorage is not available.");
 
             var current = purchaseStorage.Current;
             if (!current.IsPurchaseInProgress || !current.StoreConfirmedLocal || string.IsNullOrEmpty(current.PurchaseId))
                 return CommonResult<PurchaseFinalResult>.Failure(
-                    CommonErrorType.PURCHASE_INTERRUPTED_SNAPSHOT_KIND_INVALID,
+                    COMMON_ERROR_TYPE.PURCHASE_INTERRUPTED_SNAPSHOT_KIND_INVALID,
                     "Interrupted purchase is not resumable after store confirm.");
 
             var purchaseKindString = PurchaseKindToString(kind);
@@ -1512,7 +1512,7 @@ namespace Devian
             if (string.IsNullOrEmpty(purchaseId))
             {
                 return CommonResult.Failure(
-                    CommonErrorType.PURCHASE_CLIENT_GRANT_PURCHASE_ID_EMPTY,
+                    COMMON_ERROR_TYPE.PURCHASE_CLIENT_GRANT_PURCHASE_ID_EMPTY,
                     "purchaseId is required.");
             }
 
@@ -1631,7 +1631,7 @@ namespace Devian
             {
                 Debug.LogWarning($"[{Tag}] fetchPendingPurchasesAsync.onFailed: {failure.Message}");
                 tcs.TrySetResult(CommonResult<Orders>.Failure(
-                    CommonErrorType.PURCHASE_PURCHASE_REQUEST_FAILED,
+                    COMMON_ERROR_TYPE.PURCHASE_PURCHASE_REQUEST_FAILED,
                     $"FetchPurchases failed: {failure.Message}"));
             }
 
@@ -1744,27 +1744,27 @@ namespace Devian
         public void SetProductCatalog(IPurchaseProductCatalog catalog) { }
 
         static readonly Task<CommonResult> _notSupportedInit =
-            Task.FromResult(CommonResult.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+            Task.FromResult(CommonResult.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
         static readonly Task<CommonResult<PurchaseFinalResult>> _notSupported =
-            Task.FromResult(CommonResult<PurchaseFinalResult>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+            Task.FromResult(CommonResult<PurchaseFinalResult>.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
         static readonly Task<CommonResult<RecentPurchaseItem>> _notSupportedRecent =
-            Task.FromResult(CommonResult<RecentPurchaseItem>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+            Task.FromResult(CommonResult<RecentPurchaseItem>.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
         static readonly Task<CommonResult<EntitlementsSnapshot>> _notSupportedSnapshot =
-            Task.FromResult(CommonResult<EntitlementsSnapshot>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+            Task.FromResult(CommonResult<EntitlementsSnapshot>.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 #if UNITY_EDITOR
         static readonly Task<CommonResult<PurchaseSyncResult>> _notSupportedSync =
             Task.FromResult(CommonResult<PurchaseSyncResult>.Success(CreateNoOpPurchaseSyncResult()));
 #else
         static readonly Task<CommonResult<PurchaseSyncResult>> _notSupportedSync =
-            Task.FromResult(CommonResult<PurchaseSyncResult>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+            Task.FromResult(CommonResult<PurchaseSyncResult>.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 #endif
         static readonly Task<CommonResult<long>> _notSupportedLong =
-            Task.FromResult(CommonResult<long>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+            Task.FromResult(CommonResult<long>.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
         static readonly Task<CommonResult<RefundSyncResult>> _notSupportedRefundSync =
-            Task.FromResult(CommonResult<RefundSyncResult>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+            Task.FromResult(CommonResult<RefundSyncResult>.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
         public Task<CommonResult> InitializeAsync(CancellationToken ct = default) => _notSupportedInit;
         public Task<CommonResult<PurchaseSyncResult>> SyncAsync(
@@ -1775,7 +1775,7 @@ namespace Devian
             Task.FromResult(CommonResult<RetryInterruptedPurchaseResult>.Success(CreateNoOpRetryInterruptedPurchaseResult()));
 #else
         static readonly Task<CommonResult<RetryInterruptedPurchaseResult>> _notSupportedRetryInterrupted =
-            Task.FromResult(CommonResult<RetryInterruptedPurchaseResult>.Failure(CommonErrorType.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+            Task.FromResult(CommonResult<RetryInterruptedPurchaseResult>.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 #endif
 
         public Task<CommonResult<RetryInterruptedPurchaseResult>> RetryInterruptedPurchaseAsync(CancellationToken ct = default)

@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Devian;
+using Devian.Domain.Game;
 
 public class SceneGame : SceneBootstrap
 {
@@ -17,5 +18,11 @@ public class SceneGame : SceneBootstrap
     
     protected override async Task onStart()
     {
+        Debug.Log("SceneGame.onStart()...");
+        await base.onStart();
+        
+        await TestApplication.Instance.LoadAsync(SystemLanguage.Korean);
+        
+        GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.ACHIEVE_001, 1);
     }
 }

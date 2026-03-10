@@ -48,14 +48,14 @@ namespace Devian
             {
                 Debug.LogWarning("[RecoveryManager] ExportDvnAsync: cancelled");
                 return CommonResult<bool>.Failure(
-                    CommonErrorType.COMMON_UNKNOWN,
+                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
                     "Export cancelled");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[RecoveryManager] ExportDvnAsync: failed — {ex}");
                 return CommonResult<bool>.Failure(
-                    CommonErrorType.COMMON_UNKNOWN,
+                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
                     $"Export failed: {ex.Message}");
             }
         }
@@ -90,14 +90,14 @@ namespace Devian
             {
                 Debug.LogWarning("[RecoveryManager] ExportDvnViaEmailAsync: cancelled");
                 return CommonResult<bool>.Failure(
-                    CommonErrorType.COMMON_UNKNOWN,
+                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
                     "Export cancelled");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[RecoveryManager] ExportDvnViaEmailAsync: failed — {ex}");
                 return CommonResult<bool>.Failure(
-                    CommonErrorType.COMMON_UNKNOWN,
+                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
                     $"Export failed: {ex.Message}");
             }
         }
@@ -113,7 +113,7 @@ namespace Devian
                 if (!File.Exists(filePath))
                 {
                     return CommonResult<bool>.Failure(
-                        CommonErrorType.RECOVERY_DECODE_FAILED,
+                        COMMON_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                         $"File not found: {filePath}");
                 }
 
@@ -138,7 +138,7 @@ namespace Devian
                 catch (Exception ex)
                 {
                     return CommonResult<bool>.Failure(
-                        CommonErrorType.RECOVERY_DECODE_FAILED,
+                        COMMON_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                         $"Invalid JSON: {ex.Message}");
                 }
 
@@ -150,7 +150,7 @@ namespace Devian
                     && !string.Equals(fileSocialUserId, currentSocialUserId, StringComparison.Ordinal))
                 {
                     return CommonResult<bool>.Failure(
-                        CommonErrorType.RECOVERY_HMAC_FAILED,
+                        COMMON_ERROR_TYPE.RECOVERY_HMAC_FAILED,
                         "socialUserId mismatch: recovery data belongs to a different account");
                 }
 
@@ -178,13 +178,13 @@ namespace Devian
             catch (OperationCanceledException)
             {
                 return CommonResult<bool>.Failure(
-                    CommonErrorType.COMMON_UNKNOWN,
+                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
                     "Import cancelled");
             }
             catch (Exception ex)
             {
                 return CommonResult<bool>.Failure(
-                    CommonErrorType.COMMON_UNKNOWN,
+                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
                     $"Import failed: {ex.Message}");
             }
         }
@@ -222,7 +222,7 @@ namespace Devian
                     {
                         Debug.Log("[RecoveryManager] PickAndImportDvnAsync: user cancelled");
                         return CommonResult<bool>.Failure(
-                            CommonErrorType.COMMON_UNKNOWN,
+                            COMMON_ERROR_TYPE.COMMON_UNKNOWN,
                             "File selection cancelled");
                     }
 
@@ -241,14 +241,14 @@ namespace Devian
             {
                 Debug.LogWarning("[RecoveryManager] PickAndImportDvnAsync: cancelled");
                 return CommonResult<bool>.Failure(
-                    CommonErrorType.COMMON_UNKNOWN,
+                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
                     "Pick and import cancelled");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[RecoveryManager] PickAndImportDvnAsync: failed — {ex}");
                 return CommonResult<bool>.Failure(
-                    CommonErrorType.COMMON_UNKNOWN,
+                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
                     $"Pick and import failed: {ex.Message}");
             }
         }

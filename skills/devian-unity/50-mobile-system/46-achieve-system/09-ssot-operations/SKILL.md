@@ -20,8 +20,8 @@ AppliesTo: v10
 
 ### 2) gameplay stat 입력
 
-- 상위 로직은 `MetaMessageManager.Notify(messageType, delta)`를 호출
-- `AchieveManager`는 `MetaMessageTrigger` 구독으로 runtime 진행도를 동기화
+- 상위 로직은 `GameMessageManager.Notify(messageType, delta)`를 호출
+- `AchieveManager`는 `GameMessageTrigger` 구독으로 runtime 진행도를 동기화
 
 ### 3) 업적 보상 수령
 

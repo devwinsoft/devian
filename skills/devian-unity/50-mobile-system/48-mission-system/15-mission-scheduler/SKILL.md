@@ -34,7 +34,7 @@ Type: Design / Scheduler SSOT
 
 - active row에서 최대 5개 선택(fixed 우선 + random)
 - 선택 row만 create/restore
-- `conditionMsgId -> MESSAGE_META` resolve 후 bind 인자 전달
+- `conditionMsgId -> GAME_MESSAGE` resolve 후 bind 인자 전달
 - daily cycle 전환 시 기존 daily set 정리 후 재생성
 
 ### Period (`MISSION_PERIOD`)

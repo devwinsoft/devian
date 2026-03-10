@@ -397,7 +397,7 @@ namespace Devian
             if (localR2.IsFailure)
             {
                 return CommonResult<SyncResult>.Failure(
-                    new CommonError(CommonErrorType.SAVEDATA_SYNC_LOAD_LOCAL_FAILED, "Sync load local failed for primary save.", localR2.Error!.ToString()));
+                    new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_LOAD_LOCAL_FAILED, "Sync load local failed for primary save.", localR2.Error!.ToString()));
             }
 
             var cloudR2 = await loadPrimaryCloudRecordAsync(ct);
@@ -425,7 +425,7 @@ namespace Devian
                 if (jsonR.IsFailure)
                 {
                     return CommonResult<SyncResult>.Failure(
-                        new CommonError(CommonErrorType.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync decrypt cloud failed for primary save.", jsonR.Error!.ToString()));
+                        new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync decrypt cloud failed for primary save.", jsonR.Error!.ToString()));
                 }
 
                 _needsCloudSave = false;
@@ -433,7 +433,7 @@ namespace Devian
                 if (saveLocalR.IsFailure)
                 {
                     return CommonResult<SyncResult>.Failure(
-                        new CommonError(CommonErrorType.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync save local failed for primary save.", saveLocalR.Error!.ToString()));
+                        new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync save local failed for primary save.", saveLocalR.Error!.ToString()));
                 }
 
                 // Reload local to return the newly-written saveSeq/deviceId.
@@ -450,14 +450,14 @@ namespace Devian
                 if (jsonR.IsFailure)
                 {
                     return CommonResult<SyncResult>.Failure(
-                        new CommonError(CommonErrorType.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync decrypt local failed for primary save.", jsonR.Error!.ToString()));
+                        new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync decrypt local failed for primary save.", jsonR.Error!.ToString()));
                 }
 
                 var saveCloudR = await savePrimaryCloudAsync(jsonR.Value, ct);
                 if (saveCloudR.IsFailure)
                 {
                     return CommonResult<SyncResult>.Failure(
-                        new CommonError(CommonErrorType.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync save cloud failed for primary save.", saveCloudR.Error!.ToString()));
+                        new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync save cloud failed for primary save.", saveCloudR.Error!.ToString()));
                 }
 
                 var reCloud = await loadPrimaryCloudRecordAsync(ct);
@@ -492,14 +492,14 @@ namespace Devian
                         if (jsonR.IsFailure)
                         {
                             return CommonResult<SyncResult>.Failure(
-                                new CommonError(CommonErrorType.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync decrypt local failed for primary save.", jsonR.Error!.ToString()));
+                                new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync decrypt local failed for primary save.", jsonR.Error!.ToString()));
                         }
 
                         var saveCloudR = await savePrimaryCloudAsync(jsonR.Value, ct);
                         if (saveCloudR.IsFailure)
                         {
                             return CommonResult<SyncResult>.Failure(
-                                new CommonError(CommonErrorType.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync save cloud failed for primary save.", saveCloudR.Error!.ToString()));
+                                new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync save cloud failed for primary save.", saveCloudR.Error!.ToString()));
                         }
 
                         var reCloud = await loadPrimaryCloudRecordAsync(ct);
@@ -513,7 +513,7 @@ namespace Devian
                         if (jsonR.IsFailure)
                         {
                             return CommonResult<SyncResult>.Failure(
-                                new CommonError(CommonErrorType.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync decrypt cloud failed for primary save.", jsonR.Error!.ToString()));
+                                new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync decrypt cloud failed for primary save.", jsonR.Error!.ToString()));
                         }
 
                         _needsCloudSave = false;
@@ -521,7 +521,7 @@ namespace Devian
                         if (saveLocalR.IsFailure)
                         {
                             return CommonResult<SyncResult>.Failure(
-                                new CommonError(CommonErrorType.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync save local failed for primary save.", saveLocalR.Error!.ToString()));
+                                new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync save local failed for primary save.", saveLocalR.Error!.ToString()));
                         }
 
                         var reLocal = await loadPrimaryLocalRecordAsync(ct);
@@ -568,7 +568,7 @@ namespace Devian
                         if (localR.IsFailure)
                             return CommonResult<bool>.Failure(localR.Error!);
                         if (localR.Value == null)
-                            return CommonResult<bool>.Failure(CommonErrorType.SAVEDATA_SYNC_RESOLVE_FAILED, "Local payload is null.");
+                            return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.SAVEDATA_SYNC_RESOLVE_FAILED, "Local payload is null.");
 
                         var jsonR = decryptLocalPayloadToJson(localR.Value);
                         if (jsonR.IsFailure)
@@ -592,7 +592,7 @@ namespace Devian
                         if (cloudR.IsFailure)
                             return CommonResult<bool>.Failure(cloudR.Error!);
                         if (cloudR.Value == null)
-                            return CommonResult<bool>.Failure(CommonErrorType.SAVEDATA_SYNC_RESOLVE_FAILED, "Cloud payload is null.");
+                            return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.SAVEDATA_SYNC_RESOLVE_FAILED, "Cloud payload is null.");
 
                         var jsonR = decryptCloudPayloadToJson(cloudR.Value);
                         if (jsonR.IsFailure)
@@ -611,13 +611,13 @@ namespace Devian
                     }
 
                     default:
-                        return CommonResult<bool>.Failure(CommonErrorType.SAVEDATA_SYNC_RESOLVE_FAILED, $"Unknown resolution: {resolution}");
+                        return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.SAVEDATA_SYNC_RESOLVE_FAILED, $"Unknown resolution: {resolution}");
                 }
             }
             catch (OperationCanceledException ex)
             {
                 return CommonResult<bool>.Failure(
-                    new CommonError(CommonErrorType.SAVEDATA_SYNC_CANCELLED, "Resolve cancelled.", ex.Message));
+                    new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_CANCELLED, "Resolve cancelled.", ex.Message));
             }
         }
 
@@ -650,7 +650,7 @@ namespace Devian
         {
             if (!_hasPrimarySaveContext)
                 return CommonResult<bool>.Failure(
-                    CommonErrorType.SAVEDATA_SYNC_REQUIRED, "Primary save is not initialized. Call SyncGameStorageAsync first.");
+                    COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED, "Primary save is not initialized. Call SyncGameStorageAsync first.");
 
             var json = ToJson();
             var local = await savePrimaryLocalAsync(json, ct);
@@ -703,7 +703,7 @@ namespace Devian
 
             var payload = record.Value;
             if (payload?.payload == null)
-                return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_NOT_FOUND, "No local data found.");
+                return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_NOT_FOUND, "No local data found.");
 
             _hasPrimarySaveContext = true;
             LoadFromPayload(payload.payload);
@@ -717,7 +717,7 @@ namespace Devian
         public async Task<CommonResult<bool>> ClearSaveAsync(CancellationToken ct)
         {
             if (ct.IsCancellationRequested)
-                return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_CANCELLED, "Cancelled.");
+                return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_CANCELLED, "Cancelled.");
 
             // 1) Local delete (idempotent)
             var filenameR = getPrimaryLocalFilename();
@@ -732,7 +732,7 @@ namespace Devian
                 var root = getRootPath();
                 if (string.IsNullOrWhiteSpace(root))
                 {
-                    return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_PATH_EMPTY, "Root path is empty.");
+                    return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_PATH_EMPTY, "Root path is empty.");
                 }
 
                 var path = System.IO.Path.Combine(root, filename);
@@ -744,7 +744,7 @@ namespace Devian
             catch (Exception ex)
             {
                 // NOTE: dedicated LOCALSAVE_DELETE 가 없으므로 LOCALSAVE_WRITE 재사용(파일 I/O 실패)
-                return CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_WRITE, $"Local delete failed. {ex.Message}");
+                return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_WRITE, $"Local delete failed. {ex.Message}");
             }
 
             // 2) Cloud delete
@@ -806,7 +806,7 @@ namespace Devian
             var inventory = getInventoryStorageOrNull();
             var purchase = getPurchaseStorageOrNull();
             var account = getAccountStorageOrNull();
-            var message = getMetaMessageStorageOrNull();
+            var message = getGameMessageStorageOrNull();
             var remoteConfig = getRemoteConfigStorageOrNull();
             var mission = getMissionStorageOrNull();
             var achieve = getAchieveStorageOrNull();
@@ -816,7 +816,7 @@ namespace Devian
                 inventory ?? new InventoryStorage(),
                 purchase ?? new PurchaseStorage(),
                 account ?? new AccountStorage(),
-                message ?? new MetaMessageStorage(),
+                message ?? new GameMessageStorage(),
                 remoteConfig ?? new RemoteConfigStorage(),
                 mission ?? new MissionStorage(),
                 achieve ?? new AchieveStorage(),
@@ -846,7 +846,7 @@ namespace Devian
             var inventory = getInventoryStorageOrNull();
             var purchase = getPurchaseStorageOrNull();
             var account = getAccountStorageOrNull();
-            var messageManager = getMetaMessageManagerOrNull();
+            var messageManager = getGameMessageManagerOrNull();
             var remoteConfigManager = getRemoteConfigManagerOrNull();
             var missionManager = getMissionManagerOrNull();
             var achieveManager = getAchieveManagerOrNull();
@@ -876,7 +876,7 @@ namespace Devian
             getInventoryStorageOrNull()?.Clear();
             getPurchaseStorageOrNull()?.ClearAll();
             getAccountStorageOrNull()?.Clear();
-            getMetaMessageManagerOrNull()?.ClearStorage();
+            getGameMessageManagerOrNull()?.ClearStorage();
             getRemoteConfigManagerOrNull()?.ClearStorage();
             getMissionManagerOrNull()?.ClearStorage();
             getAchieveManagerOrNull()?.ClearStorage();
@@ -892,7 +892,7 @@ namespace Devian
         private CommonResult<string> decryptLocalPayloadToJson(SaveLocalPayload payload)
         {
             if (payload == null)
-                return CommonResult<string>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveLocalPayload is null.");
+                return CommonResult<string>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveLocalPayload is null.");
 
             var raw = payload.payload ?? string.Empty;
             if (string.IsNullOrEmpty(raw))
@@ -905,14 +905,14 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult<string>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, $"Local deobfuscate failed: {ex.Message}");
+                return CommonResult<string>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, $"Local deobfuscate failed: {ex.Message}");
             }
         }
 
         private CommonResult<string> decryptCloudPayloadToJson(SaveCloudPayload payload)
         {
             if (payload == null)
-                return CommonResult<string>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveCloudPayload is null.");
+                return CommonResult<string>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveCloudPayload is null.");
 
             var raw = payload.Payload ?? string.Empty;
             if (string.IsNullOrEmpty(raw))
@@ -925,7 +925,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult<string>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, $"Cloud deobfuscate failed: {ex.Message}");
+                return CommonResult<string>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, $"Cloud deobfuscate failed: {ex.Message}");
             }
         }
 
@@ -1060,7 +1060,7 @@ namespace Devian
         {
             var mgr = SaveDataManager.Instance;
             if (mgr == null)
-                return CommonResult<T>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveDataManager.Instance is null.");
+                return CommonResult<T>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveDataManager.Instance is null.");
 
             var dec = mgr.decryptLocalPayloadToJson(payload);
             if (dec.IsFailure)
@@ -1068,7 +1068,7 @@ namespace Devian
 
             var json = dec.Value;
             if (string.IsNullOrWhiteSpace(json))
-                return CommonResult<T>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "Decrypted json is empty.");
+                return CommonResult<T>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "Decrypted json is empty.");
 
             try
             {
@@ -1077,7 +1077,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult<T>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, ex.Message);
+                return CommonResult<T>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, ex.Message);
             }
         }
 
@@ -1085,7 +1085,7 @@ namespace Devian
         {
             var mgr = SaveDataManager.Instance;
             if (mgr == null)
-                return CommonResult<T>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveDataManager.Instance is null.");
+                return CommonResult<T>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveDataManager.Instance is null.");
 
             var dec = mgr.decryptCloudPayloadToJson(payload);
             if (dec.IsFailure)
@@ -1093,7 +1093,7 @@ namespace Devian
 
             var json = dec.Value;
             if (string.IsNullOrWhiteSpace(json))
-                return CommonResult<T>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, "Decrypted json is empty.");
+                return CommonResult<T>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "Decrypted json is empty.");
 
             try
             {
@@ -1102,7 +1102,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult<T>.Failure(CommonErrorType.SAVEDATA_PAYLOAD_PARSE_FAILED, ex.Message);
+                return CommonResult<T>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, ex.Message);
             }
         }
 
@@ -1136,13 +1136,13 @@ namespace Devian
             if (string.IsNullOrWhiteSpace(filename))
             {
                 return CommonResult<string>.Failure(
-                    CommonErrorType.LOCALSAVE_FILENAME_INVALID,
+                    COMMON_ERROR_TYPE.LOCALSAVE_FILENAME_INVALID,
                     "Primary local filename is empty.");
             }
 
             if (!IsValidJsonFilename(filename, out var fnError))
             {
-                return CommonResult<string>.Failure(CommonErrorType.LOCALSAVE_FILENAME_INVALID, fnError);
+                return CommonResult<string>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_FILENAME_INVALID, fnError);
             }
 
             return CommonResult<string>.Success(filename);
@@ -1154,7 +1154,7 @@ namespace Devian
             if (string.IsNullOrWhiteSpace(cloudSlot))
             {
                 return CommonResult<string>.Failure(
-                    CommonErrorType.CLOUDSAVE_SLOT_MISSING,
+                    COMMON_ERROR_TYPE.CLOUDSAVE_SLOT_MISSING,
                     "Primary cloud slot is not configured.");
             }
 
@@ -1192,7 +1192,7 @@ namespace Devian
             if (ct.IsCancellationRequested)
             {
                 return Task.FromResult(
-                    CommonResult<SaveLocalPayload>.Failure(CommonErrorType.LOCALSAVE_CANCELLED, "Cancelled."));
+                    CommonResult<SaveLocalPayload>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_CANCELLED, "Cancelled."));
             }
 
             return Task.FromResult(loadPrimaryLocalRecord());
@@ -1229,7 +1229,7 @@ namespace Devian
             if (ct.IsCancellationRequested)
             {
                 return Task.FromResult(
-                    CommonResult<bool>.Failure(CommonErrorType.LOCALSAVE_CANCELLED, "Cancelled."));
+                    CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_CANCELLED, "Cancelled."));
             }
 
             return Task.FromResult(savePrimaryLocal(data));
@@ -1246,7 +1246,7 @@ namespace Devian
 #else
             if (_cloudClient == null)
                 return Task.FromResult(
-                    CommonResult<SaveCloudPayload>.Failure(CommonErrorType.CLOUDSAVE_NOCLIENT, "Client not configured."));
+                    CommonResult<SaveCloudPayload>.Failure(COMMON_ERROR_TYPE.CLOUDSAVE_NOCLIENT, "Client not configured."));
 
             var cloudSlotR = getPrimaryCloudSlot();
             if (cloudSlotR.IsFailure)
@@ -1265,7 +1265,7 @@ namespace Devian
 #else
             if (_cloudClient == null)
                 return Task.FromResult(
-                    CommonResult<bool>.Failure(CommonErrorType.CLOUDSAVE_NOCLIENT, "Client not configured."));
+                    CommonResult<bool>.Failure(COMMON_ERROR_TYPE.CLOUDSAVE_NOCLIENT, "Client not configured."));
 
             var cloudSlotR = getPrimaryCloudSlot();
             if (cloudSlotR.IsFailure)
@@ -1274,7 +1274,7 @@ namespace Devian
 
             if (!isLikelyJson(data))
                 return Task.FromResult(
-                    CommonResult<bool>.Failure(CommonErrorType.CLOUDSAVE_PAYLOAD_INVALID,
+                    CommonResult<bool>.Failure(COMMON_ERROR_TYPE.CLOUDSAVE_PAYLOAD_INVALID,
                         "Payload must be JSON (object or array)."));
 
             var cloudSlot = cloudSlotR.Value;
@@ -1289,7 +1289,7 @@ namespace Devian
 
             return r == SaveCloudResult.Success
                 ? CommonResult<SaveCloudResult>.Success(r)
-                : CommonResult<SaveCloudResult>.Failure(CommonErrorType.CLOUDSAVE_SIGNIN, $"Sign-in failed: {r} (client={clientName})");
+                : CommonResult<SaveCloudResult>.Failure(COMMON_ERROR_TYPE.CLOUDSAVE_SIGNIN, $"Sign-in failed: {r} (client={clientName})");
         }
 
         private async Task<CommonResult<bool>> saveCloudInternal(
@@ -1326,8 +1326,8 @@ namespace Devian
             if (result != SaveCloudResult.Success)
             {
                 var errorType = isCloudConnectionFailureResult(result)
-                    ? CommonErrorType.CLOUDSAVE_CONNECTION_FAILED
-                    : CommonErrorType.CLOUDSAVE_LOAD;
+                    ? COMMON_ERROR_TYPE.CLOUDSAVE_CONNECTION_FAILED
+                    : COMMON_ERROR_TYPE.CLOUDSAVE_LOAD;
                 return CommonResult<SaveCloudPayload>.Failure(errorType, $"Load failed: {result}");
             }
 
@@ -1484,11 +1484,11 @@ namespace Devian
             }
         }
 
-        private static MetaMessageManager getMetaMessageManagerOrNull()
+        private static GameMessageManager getGameMessageManagerOrNull()
         {
             try
             {
-                var messageManager = MetaMessageManager.Instance;
+                var messageManager = GameMessageManager.Instance;
                 return messageManager != null ? messageManager : null;
             }
             catch
@@ -1497,11 +1497,11 @@ namespace Devian
             }
         }
 
-        private static MetaMessageStorage getMetaMessageStorageOrNull()
+        private static GameMessageStorage getGameMessageStorageOrNull()
         {
             try
             {
-                var messageManager = MetaMessageManager.Instance;
+                var messageManager = GameMessageManager.Instance;
                 return messageManager != null ? messageManager.Storage : null;
             }
             catch
@@ -1745,7 +1745,7 @@ namespace Devian
         private static CommonResult<T> editorNoCloud<T>()
         {
             return CommonResult<T>.Failure(
-                CommonErrorType.CLOUDSAVE_NOCLIENT,
+                COMMON_ERROR_TYPE.CLOUDSAVE_NOCLIENT,
                 "SaveCloud is not supported in Unity Editor. Use SaveLocal only.");
         }
 #endif

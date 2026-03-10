@@ -283,7 +283,7 @@ namespace Devian
             {
                 if (_platformType == null || _platformInstance == null)
                 {
-                    return CommonResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_NOT_FOUND,
+                    return CommonResult<LoginCredential>.Failure(COMMON_ERROR_TYPE.LOGIN_GPGS_NOT_FOUND,
                         "GooglePlayGames v2 plugin is not installed.");
                 }
 
@@ -299,7 +299,7 @@ namespace Devian
 
                 if (signInStatusType == null)
                 {
-                    return CommonResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_NO_AUTHENTICATE,
+                    return CommonResult<LoginCredential>.Failure(COMMON_ERROR_TYPE.LOGIN_GPGS_NO_AUTHENTICATE,
                         "GPGS SignInStatus type not found.");
                 }
 
@@ -333,7 +333,7 @@ namespace Devian
 
                 if (silentAuth == null && (!allowManualAuthenticate || manualAuth == null))
                 {
-                    return CommonResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_NO_AUTHENTICATE,
+                    return CommonResult<LoginCredential>.Failure(COMMON_ERROR_TYPE.LOGIN_GPGS_NO_AUTHENTICATE,
                         allowManualAuthenticate
                             ? "PlayGamesPlatform.ManuallyAuthenticate/Authenticate not found."
                             : "PlayGamesPlatform.Authenticate not found.");
@@ -371,7 +371,7 @@ namespace Devian
 
                 if (!authenticated)
                 {
-                    return CommonResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_AUTH_FAILED,
+                    return CommonResult<LoginCredential>.Failure(COMMON_ERROR_TYPE.LOGIN_GPGS_AUTH_FAILED,
                         allowManualAuthenticate
                             ? "Google Play Games authentication failed."
                             : "Google Play Games silent authentication failed.");
@@ -412,7 +412,7 @@ namespace Devian
                 if (string.IsNullOrEmpty(serverAuthCode))
                 {
                     return CommonResult<LoginCredential>.Failure(
-                        CommonErrorType.LOGIN_GPGS_NO_AUTH_CODE,
+                        COMMON_ERROR_TYPE.LOGIN_GPGS_NO_AUTH_CODE,
                         "RequestServerSideAccess returned no auth code. Configure GPGS server-side access (Web client ID).");
                 }
 
@@ -420,7 +420,7 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult<LoginCredential>.Failure(CommonErrorType.LOGIN_GPGS_EXCEPTION, ex.ToString());
+                return CommonResult<LoginCredential>.Failure(COMMON_ERROR_TYPE.LOGIN_GPGS_EXCEPTION, ex.ToString());
             }
         }
 #else
@@ -429,7 +429,7 @@ namespace Devian
             bool allowManualAuthenticate)
         {
             return Task.FromResult(CommonResult<LoginCredential>.Failure(
-                CommonErrorType.LOGIN_GPGS_NOT_FOUND,
+                COMMON_ERROR_TYPE.LOGIN_GPGS_NOT_FOUND,
                 "GPGS is not available on this platform."));
         }
 #endif

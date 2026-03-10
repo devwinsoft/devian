@@ -136,7 +136,7 @@ namespace Devian
             {
                 var msg = "[SoundManager] GetSoundRowsByBundleKey delegate not set.";
                 Log.Warn(msg);
-                return CommonResult.Failure(CommonErrorType.COMMON_UNKNOWN, msg);
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, msg);
             }
 
             var rows = GetSoundRowsByBundleKey(bundleKey);
