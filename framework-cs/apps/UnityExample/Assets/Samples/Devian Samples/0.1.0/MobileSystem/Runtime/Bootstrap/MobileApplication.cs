@@ -22,6 +22,8 @@ namespace Devian
     [RequireComponent(typeof(AnalyzeManager))]
     public abstract class MobileApplication : BaseApplication
     {
+        public new static MobileApplication Create() => BaseApplication.Create<MobileApplication>();
+
         const string FirebaseFunctionsRegion = "asia-northeast3";
 
         protected override Task onBootAsync()

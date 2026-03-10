@@ -19,6 +19,8 @@ namespace Devian
     /// </summary>
     public abstract class BaseApplication : MonoBehaviour
     {
+        const string ResourcePath = "Devian/Application";
+
         private static BaseApplication _instance;
         private static bool _booted;
         private static bool _loaded;
@@ -66,6 +68,14 @@ namespace Devian
         /// Bootstrap 인스턴스 참조.
         /// </summary>
         public static BaseApplication Instance => _instance;
+
+        /// <summary>
+        /// Resources에서 Bootstrap 프리팹을 로드하고 파생 타입 인스턴스를 생성한다.
+        /// </summary>
+        public static T Create<T>() where T : BaseApplication
+        {
+            return Singleton.CreateFromResources<BaseApplication, T>(ResourcePath);
+        }
 
         /// <summary>
         /// 개발자가 구현할 부트 프로세스.

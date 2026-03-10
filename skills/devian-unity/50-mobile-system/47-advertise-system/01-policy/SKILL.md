@@ -25,7 +25,7 @@ Devian의 인앱 광고 모듈(클라이언트) 설계/코딩 규약을 정의�
 ### 1) 광고 설정 정본은 `ADVERTISE` 테이블이다
 
 - placement, format, rewardGroupId, ad unit id를 코드에 하드코딩하지 않는다.
-- AdManager가 `TB_ADVERTISE`를 직접 참조하여 `advertiseId` 기준으로 설정을 해석한다.
+- AdsManager가 `TB_ADVERTISE`를 직접 참조하여 `advertiseId` 기준으로 설정을 해석한다.
 - 포맷별 분기(`BANNER`, `INTERSTITIAL`, `REWARDED`, `APP_OPEN`)와 provider 선택은 테이블 값 기준으로만 수행한다.
 
 
@@ -54,7 +54,7 @@ Devian의 인앱 광고 모듈(클라이언트) 설계/코딩 규약을 정의�
 
 - 상위 로직(UI, gameplay, Mission, Reward, Purchase)은 `GoogleMobileAds.*` 타입을 직접 참조하지 않는다.
 - SDK 초기화/로드/표시/콜백 해석은 provider adapter가 담당한다.
-- AdManager는 provider의 공통 인터페이스만 사용한다.
+- AdsManager는 provider의 공통 인터페이스만 사용한다.
 
 
 ### 5) 광고 실패는 non-fatal이다

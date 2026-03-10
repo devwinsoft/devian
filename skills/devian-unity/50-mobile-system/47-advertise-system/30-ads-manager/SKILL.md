@@ -1,7 +1,7 @@
-# 30-ad-manager
+# 30-ads-manager
 
 
-AdManager는 `ADVERTISE` 테이블 기반으로 광고 placement를 해석하고,
+AdsManager는 `ADVERTISE` 테이블 기반으로 광고 placement를 해석하고,
 provider 초기화/로드/표시를 오케스트레이션한다.
 Rewarded 광고의 실제 지급 실행은 RewardManager에 위임한다.
 
@@ -12,11 +12,11 @@ Rewarded 광고의 실제 지급 실행은 RewardManager에 위임한다.
 ## Singleton
 
 ```csharp
-CompoSingleton<AdManager>.Instance
+CompoSingleton<AdsManager>.Instance
 ```
 
-- Registry key: `AdManager`
-- 다른 매니저에서 접근: `Singleton.Get<AdManager>()`
+- Registry key: `AdsManager`
+- 다른 매니저에서 접근: `Singleton.Get<AdsManager>()`
 
 
 ---
@@ -82,7 +82,7 @@ CompoSingleton<AdManager>.Instance
 
 ## ADVERTISE 통합 (TB_ADVERTISE 직접 참조)
 
-AdManager가 Game 도메인 테이블을 직접 참조한다.
+AdsManager가 Game 도메인 테이블을 직접 참조한다.
 
 - `ResolveAdvertise(advertiseId)` → `TB_ADVERTISE.Get(advertiseId)`
 - `AutoLoadAll()` → `TB_ADVERTISE.GetAll()`에서 `IsActive && AutoLoad` 필터링
@@ -114,9 +114,9 @@ AdManager가 Game 도메인 테이블을 직접 참조한다.
 
 > 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../07-samples-creation-guide/SKILL.md), [devian-unity/01-policy](../../../01-policy/SKILL.md) §SSOT 원칙
 
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Ads/AdManager.cs`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Ads/AdManager.cs`
-- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Ads/AdManager.cs`
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Ads/AdsManager.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Ads/AdsManager.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Ads/AdsManager.cs`
 
 
 ---

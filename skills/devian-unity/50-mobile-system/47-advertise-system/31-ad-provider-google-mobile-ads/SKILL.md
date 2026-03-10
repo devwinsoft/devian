@@ -56,5 +56,5 @@
 ## Notes
 
 - 현재 레포에는 Google Mobile Ads 플러그인이 UnityExample 프로젝트에 이미 들어와 있다.
-- 샘플 구현은 SDK 직접 호출을 provider 파일로 한정해, 이후 mediation 또는 다른 provider로 바꿔도 AdManager 상위 API를 유지해야 한다.
-- Rewarded 지급은 provider가 하지 않고, AdManager가 `OnRewardEarned`를 받아 RewardManager로 위임한다.
+- 샘플 구현은 SDK 직접 호출을 provider 파일로 한정해, 이후 mediation 또는 다른 provider로 바꿔도 AdsManager 상위 API를 유지해야 한다.
+- Rewarded 지급은 provider가 하지 않고, AdsManager가 `OnRewardEarned`를 받아 RewardManager로 위임한다.

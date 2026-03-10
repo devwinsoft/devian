@@ -4,7 +4,7 @@ using Devian.Domain.Game;
 namespace Devian
 {
     /// <summary>
-    /// AdManager.ShowAsync의 반환 결과.
+    /// AdsManager.ShowAsync의 반환 결과.
     /// </summary>
     public readonly struct AdShowResult
     {

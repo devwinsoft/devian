@@ -5,18 +5,8 @@ using Devian;
 
 public class TestApplication : MobileApplication
 {
-    public static TestApplication Instance => _instance;
-    static TestApplication _instance = null;
+    public new static TestApplication Create() => BaseApplication.Create<TestApplication>();
 
-    public static TestApplication Create()
-    {
-        if (_instance == null)
-        {
-            _instance = Singleton.CreateFromResources<BaseApplication, TestApplication>("Devian/Application");
-        }
-        return _instance;
-    }
-    
 
     protected override async Task onBootAsync()
     {

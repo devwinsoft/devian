@@ -14,7 +14,7 @@ AppliesTo: v10
 - 이 문서는 **AdMob Rewarded SSV Firebase 서버 구현 정본**이다.
 - 포함: HTTP endpoint 구조, ECDSA 서명 검증, Firestore 감사 로그 스키마, custom_data 파싱, 멱등 규칙
 - 비포함: 고정 결정값(endpoint 이름, Firestore path, custom_data 포맷) (→ `41`)
-- 비포함: 클라이언트 보상 지급 흐름 (→ `03-ssot §D`, `30-ad-manager`)
+- 비포함: 클라이언트 보상 지급 흐름 (→ `03-ssot §D`, `30-ads-manager`)
 - 비포함: 운영 체크리스트/테스트 시나리오 (→ `09-ssot-operations`)
 
 

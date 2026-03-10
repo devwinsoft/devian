@@ -11,7 +11,7 @@ AppliesTo: v10
 
 - `ADVERTISE` 테이블 스키마
 - `advertiseId` / `rewardGroupId` / 포맷 규칙
-- AdManager의 책임과 provider 분리 규칙
+- AdsManager의 책임과 provider 분리 규칙
 - Rewarded 광고의 지급 위임 규칙
 
 비정본(이 문서에서 다루지 않음):
@@ -48,7 +48,7 @@ AppliesTo: v10
 - **도메인 소속**: `com.devian.domain.game` (기존 `TB_REWARD`와 동일)
 - **빌더 등록**: 추가 등록 불필요. `{buildInputJson}` (예: `input/build_input.json`)의 `domains.Game.tableFiles=["*.xlsx"]`에 이미 포함된다.
 
-AdManager는 `TB_ADVERTISE`를 직접 참조하여 placement 설정을 읽는다.
+AdsManager는 `TB_ADVERTISE`를 직접 참조하여 placement 설정을 읽는다.
 
 
 ---
@@ -83,7 +83,7 @@ AdManager는 `TB_ADVERTISE`를 직접 참조하여 placement 설정을 읽는다
 ### C-2) 광고 ID 해석 규칙
 
 - 상위 로직은 `advertiseId`만 사용한다.
-- 플랫폼별 ad unit id(`AndroidAdUnitId`, `IosAdUnitId`)는 provider/AdManager 레이어 내부에서만 해석한다.
+- 플랫폼별 ad unit id(`AndroidAdUnitId`, `IosAdUnitId`)는 provider/AdsManager 레이어 내부에서만 해석한다.
 - 상위 로직이 ad unit id를 직접 알거나 분기하지 않는다.
 
 
@@ -95,10 +95,10 @@ AdManager는 `TB_ADVERTISE`를 직접 참조하여 placement 설정을 읽는다
 Rewarded 광고는 아래 순서를 따른다.
 
 1. 상위 로직이 `ShowAsync(advertiseId, skip, ct)`를 호출한다.
-2. AdManager가 `TB_ADVERTISE.Get(advertiseId)`로 row를 읽는다.
+2. AdsManager가 `TB_ADVERTISE.Get(advertiseId)`로 row를 읽는다.
 3. `skip=true`이면 광고 없이 `SkipAndReward`로 Reward만 즉시 지급하고 반환한다.
 4. provider가 rewarded 광고를 표시한다.
-5. provider에서 `reward earned` 콜백이 오면, AdManager가 해당 show cycle의 중복 여부를 확인한다.
+5. provider에서 `reward earned` 콜백이 오면, AdsManager가 해당 show cycle의 중복 여부를 확인한다.
 6. `RewardGroupId`가 유효하면 `RewardManager.ApplyRewardGroup(rewardGroupId)`를 호출한다.
 7. show cycle 종료 결과를 반환한다.
 
@@ -116,7 +116,7 @@ Rewarded 광고는 아래 순서를 따른다.
 ---
 
 
-## E) AdManager 책임 (정본)
+## E) AdsManager 책임 (정본)
 
 - `TB_ADVERTISE` 조회
 - provider 초기화/선택
@@ -124,7 +124,7 @@ Rewarded 광고는 아래 순서를 따른다.
 - format별 gating(no-ads, consent, unsupported platform, cooldown)
 - Rewarded 성공 시 RewardManager 호출
 
-AdManager의 비책임:
+AdsManager의 비책임:
 - 보상 내용 해석(`TB_REWARD` 직접 조회 금지)
 - 결제 entitlement 저장/복구
 - 실광고 테스트 자동화

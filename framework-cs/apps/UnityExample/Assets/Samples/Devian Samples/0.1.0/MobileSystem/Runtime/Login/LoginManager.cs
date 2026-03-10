@@ -401,10 +401,10 @@ namespace Devian
                 return CommonResult<LoginInitializeResult>.Failure(initAchieve.Error!);
             }
 
-            var initAd = await AdManager.Instance.InitializeAsync(ct);
+            var initAd = await AdsManager.Instance.InitializeAsync(ct);
             await yieldMainThreadAsync(ct);
             if (initAd.IsFailure)
-                Debug.LogWarning($"[{Tag}] AdManager.InitializeAsync failed (non-fatal): {initAd.Error.Code}: {initAd.Error.Message}");
+                Debug.LogWarning($"[{Tag}] AdsManager.InitializeAsync failed (non-fatal): {initAd.Error.Code}: {initAd.Error.Message}");
 
             var initLeaderboard = await LeaderboardManager.Instance.InitializeAsync(ct);
             await yieldMainThreadAsync(ct);

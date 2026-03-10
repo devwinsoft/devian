@@ -84,5 +84,5 @@ AppliesTo: v10
 
 ### Soft
 
-- provider 전환이 AdManager 상위 API 변경 없이 가능
+- provider 전환이 AdsManager 상위 API 변경 없이 가능
 - mock scenario 스위칭이 간단한 enum/설정 수준으로 가능

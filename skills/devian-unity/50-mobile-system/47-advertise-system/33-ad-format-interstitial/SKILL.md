@@ -19,7 +19,7 @@ Interstitial 광고 포맷 규약을 정의한다.
 ---
 
 
-## AdManager 기대 동작
+## AdsManager 기대 동작
 
 - 표시 전 readiness 확인
 - show fail / no fill은 non-fatal

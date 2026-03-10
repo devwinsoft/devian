@@ -19,7 +19,7 @@ App Open 광고 포맷 규약을 정의한다.
 ---
 
 
-## AdManager 기대 동작
+## AdsManager 기대 동작
 
 - foreground 진입 직후 gating 검사
 - 최근 표시 이력과 `CooldownSec` 반영

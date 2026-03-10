@@ -70,7 +70,7 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | LoginManager, login manager, login flow, runtime session restore, 로그인 매니저 | `skills/devian-unity/50-mobile-system/24-login-manager/SKILL.md` |
 | purchase audit, refund audit, Google Sheets, spreadsheet log, audit sheet, 결제 로그, 환불 로그, 감사 로그 | `skills/devian-unity/50-mobile-system/30-purchase-system/48-purchase-audit-google-sheets/SKILL.md` |
 | purchase audit setup, Google Sheets audit setup, audit sheet setup, spreadsheet permission, spreadsheet share, PURCHASE_AUDIT_SHEET_ID, GOOGLE_DRIVE_AUDIT_CREDENTIALS_JSON | `skills/devian-unity/50-mobile-system/30-purchase-system/13-purchase-audit-google-sheets-setup/SKILL.md` |
-| AdManager, advertise, ads, AdMob, GoogleMobileAds, rewarded ad, rewarded, interstitial, banner, app open, 광고, 리워드 광고, 전면 광고, 배너 광고 | `skills/devian-unity/50-mobile-system/47-advertise-system/00-overview/SKILL.md` |
+| AdsManager, advertise, ads, AdMob, GoogleMobileAds, rewarded ad, rewarded, interstitial, banner, app open, 광고, 리워드 광고, 전면 광고, 배너 광고 | `skills/devian-unity/50-mobile-system/47-advertise-system/00-overview/SKILL.md` |
 
 ---
 

@@ -54,6 +54,32 @@ public static bool IsShuttingDown { get; private set; }
 
 **IsShuttingDown**: `OnApplicationQuit()` 및 `OnDestroy()`에서 `true`로 설정된다. 에디터 종료/플레이 종료/씬 종료 정리 단계에서 싱글톤/매니저 접근을 스킵하는 데 사용한다.
 
+### Create\<T\>() 팩토리 메서드
+
+```csharp
+const string ResourcePath = "Devian/Application";
+
+public static T Create<T>() where T : BaseApplication
+{
+    return Singleton.CreateFromResources<BaseApplication, T>(ResourcePath);
+}
+```
+
+Resources 프리팹을 로드하고 파생 타입 인스턴스를 생성한다.
+`Singleton.CreateFromResources<BaseApplication, T>`는 Registry key `BaseApplication`으로 Boot 등록하고 `DontDestroyOnLoad`를 적용한다.
+
+파생 클래스별 편의 메서드:
+
+```csharp
+// MobileApplication
+public new static MobileApplication Create() => BaseApplication.Create<MobileApplication>();
+
+// TestApplication
+public new static TestApplication Create() => BaseApplication.Create<TestApplication>();
+```
+
+> `new` 키워드가 base의 `Create` 이름 전체를 숨기므로, 편의 메서드 내부에서는 `BaseApplication.Create<T>()`로 명시 호출한다.
+
 ### 추상 메서드
 
 ```csharp
@@ -161,14 +187,12 @@ private static void ResetStatics()
 프레임워크 `SceneTransManager`는 `BootProc()`를 호출하지 않는다.
 Bootstrap은 app/contents layer가 명시적으로 생성하고 실행해야 한다.
 
-예시 (Resources.Load 사용 시):
+예시 (`Create<T>()` 사용):
 
 ```csharp
-var app = Singleton.CreateFromResources<BaseApplication, TestApplication>("Devian/Application");
+var app = TestApplication.Create();
 await app.BootProc();
 ```
-
-> `"Devian/Application"` 경로는 예시이다. 앱 레이어가 프리팹 위치를 자유롭게 결정한다.
 
 foreground resume 처리 예시:
 
@@ -198,7 +222,7 @@ protected override void OnEnterForeground()
 
 ### 필수 컴포넌트 부착
 
-BaseApplication.Awake()에서 `ensureRequiredComponents()`가 호출된다.
+`Awake()`에서 `ensureRequiredComponents()`가 호출된다.
 
 - BaseApplication 기본 구현은 필수 매니저를 추가하지 않는다.
 - `CompoSingleton` 계열은 런타임 `AddComponent`로 만들지 않고, bootstrap prefab/scene object에 미리 부착해야 한다.

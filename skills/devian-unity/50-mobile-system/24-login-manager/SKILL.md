@@ -78,7 +78,7 @@ fatal (실패 반환):
 non-fatal (로그만 남기고 진행):
 - 강제 업데이트 필요 (`VersionResult == ForceUpdate`)는 실패가 아니라 성공 결과로 반환된다.
 - `PurchaseManager.SyncAsync` 실패
-- `AdManager.InitializeAsync` 실패
+- `AdsManager.InitializeAsync` 실패
 - `LeaderboardManager.InitializeAsync` 실패
 - `LeaderboardManager.SyncSeasonTransitionRewardsAsync` 실패
 

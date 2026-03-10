@@ -22,7 +22,7 @@ Rewarded 광고 포맷 규약을 정의한다.
 ## 지급 경계
 
 - Rewarded 광고는 보상 적용을 직접 수행하지 않는다
-- AdManager가 `RewardManager.ApplyRewardGroup(rewardGroupId)`를 호출해 지급을 위임한다
+- AdsManager가 `RewardManager.ApplyRewardGroup(rewardGroupId)`를 호출해 지급을 위임한다
 - RewardManager가 `TB_REWARD`를 기준으로 `rewardGroupId`를 해석한다
 - `close without reward`, `show fail`, `load fail` 경로에서는 지급이 없다
 

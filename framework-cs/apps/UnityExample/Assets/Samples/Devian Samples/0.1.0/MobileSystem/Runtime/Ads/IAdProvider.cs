@@ -7,7 +7,7 @@ namespace Devian
 {
     /// <summary>
     /// 광고 provider 공통 인터페이스.
-    /// AdManager는 이 인터페이스만 사용하며, GoogleMobileAds.* 타입을 직접 참조하지 않는다.
+    /// AdsManager는 이 인터페이스만 사용하며, GoogleMobileAds.* 타입을 직접 참조하지 않는다.
     /// </summary>
     public interface IAdProvider
     {

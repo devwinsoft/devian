@@ -267,7 +267,7 @@ public class UICanvasSample : UICanvas<UICanvasSample>
     private async Task OnClickInAppAdAsync()
     {
         var remainMs = InventoryManager.Instance.Storage.GetRentalRemainingMs("NO_ADS");
-        var result = await AdManager.Instance.ShowAsync("ad_rewarded_001", remainMs > 0);
+        var result = await AdsManager.Instance.ShowAsync("ad_rewarded_001", remainMs > 0);
         if (result.IsSuccess)
         {
             foreach (var reward in result.Value.AppliedRewards)

@@ -13,9 +13,9 @@ namespace Devian
     /// TB_ADVERTISE 기반으로 placement를 해석하고, provider 초기화/로드/표시를 관리한다.
     /// Rewarded 성공 시 RewardManager로 지급을 위임한다.
     /// </summary>
-    public sealed class AdManager : CompoSingleton<AdManager>
+    public sealed class AdsManager : CompoSingleton<AdsManager>
     {
-        const string Tag = "AdManager";
+        const string Tag = "AdsManager";
 
         // ── State ──
 
