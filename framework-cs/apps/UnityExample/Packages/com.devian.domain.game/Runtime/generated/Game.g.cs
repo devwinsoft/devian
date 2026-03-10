@@ -16,18 +16,6 @@ namespace Devian.Domain.Game
     // Contracts
     // ================================================================
 
-    /// <summary>STAT_TYPE enum</summary>
-    public enum STAT_TYPE
-    {
-        NONE = 0,
-        CARD_AMOUNT = 1,
-        CARD_LEVEL = 2,
-        EQUIP_LEVEL = 11,
-        UNIT_AMOUNT = 20,
-        UNIT_LEVEL = 21,
-        UNIT_HP_MAX = 100,
-    }
-
     /// <summary>GAME_MESSAGE_TYPE enum</summary>
     public enum GAME_MESSAGE_TYPE
     {
@@ -73,6 +61,18 @@ namespace Devian.Domain.Game
         EQ = 1,
         GTE = 2,
         LTE = 3,
+    }
+
+    /// <summary>STAT_TYPE enum</summary>
+    public enum STAT_TYPE
+    {
+        NONE = 0,
+        CARD_AMOUNT = 1,
+        CARD_LEVEL = 2,
+        EQUIP_LEVEL = 11,
+        UNIT_AMOUNT = 20,
+        UNIT_LEVEL = 21,
+        UNIT_HP_MAX = 100,
     }
 
     /// <summary>LEADERBOARD_MODE enum</summary>

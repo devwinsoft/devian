@@ -18,7 +18,6 @@
 {"Id":"COMMON_NETWORK","Msg_key":"","Msg":"Network error"}
 {"Id":"COMMON_RATE_LIMIT","Msg_key":"","Msg":"Too many requests"}
 {"Id":"COMMON_SERVER","Msg_key":"","Msg":"Server error"}
-{"Id":"COMMON_FORCE_UPDATE_REQUIRED","Msg_key":"","Msg":"Force update is required."}
 {"Id":"COMMON_UNKNOWN","Msg_key":"","Msg":"Unknown error"}
 {"Id":"FIREBASE_APPLE_BRIDGE","Msg_key":"","Msg":"Apple sign-in bridge is not wired"}
 {"Id":"FIREBASE_APPLE_SIGNIN","Msg_key":"","Msg":"Apple sign-in failed"}

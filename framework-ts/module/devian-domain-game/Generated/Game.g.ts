@@ -8,17 +8,6 @@ import { IEntity, IEntityKey, CBigInt } from '@devian/core';
 // Contracts
 // ================================================================
 
-/** STAT_TYPE enum */
-export enum STAT_TYPE {
-    NONE = 0,
-    CARD_AMOUNT = 1,
-    CARD_LEVEL = 2,
-    EQUIP_LEVEL = 11,
-    UNIT_AMOUNT = 20,
-    UNIT_LEVEL = 21,
-    UNIT_HP_MAX = 100,
-}
-
 /** GAME_MESSAGE_TYPE enum */
 export enum GAME_MESSAGE_TYPE {
     NONE = 0,
@@ -61,6 +50,17 @@ export enum GAME_MESSAGE_OP_TYPE {
     EQ = 1,
     GTE = 2,
     LTE = 3,
+}
+
+/** STAT_TYPE enum */
+export enum STAT_TYPE {
+    NONE = 0,
+    CARD_AMOUNT = 1,
+    CARD_LEVEL = 2,
+    EQUIP_LEVEL = 11,
+    UNIT_AMOUNT = 20,
+    UNIT_LEVEL = 21,
+    UNIT_HP_MAX = 100,
 }
 
 /** LEADERBOARD_MODE enum */
