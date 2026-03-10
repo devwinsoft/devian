@@ -8,8 +8,9 @@ MobileSystem 샘플의 출석 보상 시스템 개요다.
 
 핵심 책임:
 - `ATTEND` row(`attendId`, `isActive`, `day`, `rewardGroupId`)를 런타임 규칙으로 해석한다.
-- 현재 cycle day 기준으로 claim 가능 항목을 계산한다.
+- day `1..7` 고정 `attend runtime`을 생성하고 상태(`claimable/claimed/wait`)를 계산한다.
 - claim 성공 시 `RewardManager`로 보상을 적용한다.
+- claim 성공 결과로 `RewardData[]`를 반환한다.
 - claim 상태를 `AttendStorage`에 저장/복구한다.
 - reset 조건을 고정한다: 정보 없음 / 마지막 수령 후 72시간 경과 / 7일차 수령 다음 날.
 

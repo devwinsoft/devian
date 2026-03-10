@@ -7,6 +7,42 @@ using Devian.Domain.Game;
 
 namespace Devian
 {
+    [Serializable]
+    public enum AttendRuntimeState
+    {
+        NONE = 0,
+        WAIT = 1,
+        CLAIMABLE = 2,
+        CLAIMED = 3,
+    }
+
+    [Serializable]
+    public sealed class AttendRuntime
+    {
+        public int Day { get; }
+        public string AttendId { get; }
+        public string RewardGroupId { get; }
+        public bool IsConfigured { get; }
+        public AttendRuntimeState State { get; }
+        public long ClaimedAtUtcMs { get; }
+
+        public AttendRuntime(
+            int day,
+            string attendId,
+            string rewardGroupId,
+            bool isConfigured,
+            AttendRuntimeState state,
+            long claimedAtUtcMs)
+        {
+            Day = day;
+            AttendId = attendId ?? string.Empty;
+            RewardGroupId = rewardGroupId ?? string.Empty;
+            IsConfigured = isConfigured;
+            State = state;
+            ClaimedAtUtcMs = claimedAtUtcMs > 0L ? claimedAtUtcMs : 0L;
+        }
+    }
+
     public sealed class AttendManager : CompoSingleton<AttendManager>
     {
         const int MaxAttendDay = 7;
@@ -16,14 +52,18 @@ namespace Devian
 
         readonly AttendStorage _storage = new();
         readonly List<ATTEND> _activeRows = new();
+        readonly List<AttendRuntime> _runtimes = new(MaxAttendDay);
         readonly Dictionary<string, ATTEND> _rowById = new(StringComparer.Ordinal);
         readonly Dictionary<int, ATTEND> _rowByDay = new();
+        readonly Dictionary<string, AttendRuntime> _runtimeById = new(StringComparer.Ordinal);
+        readonly Dictionary<int, AttendRuntime> _runtimeByDay = new();
 
         bool _initialized;
 
         public AttendStorage Storage => _storage;
         public bool IsInitialized => _initialized;
         public IReadOnlyList<ATTEND> ActiveRows => _activeRows;
+        public IReadOnlyList<AttendRuntime> Runtimes => _runtimes;
 
         public Task<CommonResult> InitializeAsync(CancellationToken ct = default)
         {
@@ -68,6 +108,38 @@ namespace Devian
             return clampDayForDisplay(_storage.nextAttendDay);
         }
 
+        public AttendRuntimeState GetRuntimeState(string attendId)
+        {
+            if (!_initialized || string.IsNullOrWhiteSpace(attendId))
+                return AttendRuntimeState.NONE;
+
+            if (!TryGetServerNowUtcMs(out var serverNowUtcMs))
+                return AttendRuntimeState.NONE;
+
+            rebuildRowCache();
+            refreshState(serverNowUtcMs);
+
+            return _runtimeById.TryGetValue(attendId.Trim(), out var runtime) && runtime != null
+                ? runtime.State
+                : AttendRuntimeState.NONE;
+        }
+
+        public AttendRuntime GetRuntime(int day)
+        {
+            if (!_initialized || day < 1 || day > MaxAttendDay)
+                return null;
+
+            if (!TryGetServerNowUtcMs(out var serverNowUtcMs))
+                return null;
+
+            rebuildRowCache();
+            refreshState(serverNowUtcMs);
+
+            return _runtimeByDay.TryGetValue(day, out var runtime) && runtime != null
+                ? runtime
+                : null;
+        }
+
         public bool IsClaimed(string attendId)
         {
             return _storage.IsClaimed(attendId);
@@ -90,43 +162,43 @@ namespace Devian
             return isRowClaimable(row, attendId.Trim(), serverNowUtcMs);
         }
 
-        public async Task<CommonResult> ClaimAsync(string attendId, CancellationToken ct = default)
+        public async Task<CommonResult<RewardData[]>> ClaimAsync(string attendId, CancellationToken ct = default)
         {
             if (!_initialized)
-                return CommonResult.Failure(CommonErrorType.SAVEDATA_SYNC_REQUIRED, "AttendManager is not initialized.");
+                return CommonResult<RewardData[]>.Failure(CommonErrorType.SAVEDATA_SYNC_REQUIRED, "AttendManager is not initialized.");
 
             if (string.IsNullOrWhiteSpace(attendId))
-                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, "attendId is empty.");
+                return CommonResult<RewardData[]>.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, "attendId is empty.");
 
             ct.ThrowIfCancellationRequested();
 
             if (!TryGetServerNowUtcMs(out var serverNowUtcMs))
-                return CommonResult.Failure(CommonErrorType.COMMON_SERVER, "Server time is unavailable.");
+                return CommonResult<RewardData[]>.Failure(CommonErrorType.COMMON_SERVER, "Server time is unavailable.");
 
             rebuildRowCache();
             refreshState(serverNowUtcMs);
 
             if (_rowByDay.Count <= 0)
             {
-                return CommonResult.Failure(
+                return CommonResult<RewardData[]>.Failure(
                     CommonErrorType.COMMON_INVALID_ARGUMENT,
                     "ATTEND table is empty or contains no active rows.");
             }
 
             var key = attendId.Trim();
             if (!_rowById.TryGetValue(key, out var row) || row == null)
-                return CommonResult.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Attend row not found: {key}");
+                return CommonResult<RewardData[]>.Failure(CommonErrorType.COMMON_INVALID_ARGUMENT, $"Attend row not found: {key}");
 
             if (isClaimedToday(serverNowUtcMs))
             {
-                return CommonResult.Failure(
+                return CommonResult<RewardData[]>.Failure(
                     CommonErrorType.COMMON_INVALID_ARGUMENT,
                     "Attend reward has already been claimed today.");
             }
 
             if (_storage.nextAttendDay > MaxAttendDay)
             {
-                return CommonResult.Failure(
+                return CommonResult<RewardData[]>.Failure(
                     CommonErrorType.COMMON_INVALID_ARGUMENT,
                     "Attend cycle is completed. Wait for next day reset.");
             }
@@ -135,36 +207,40 @@ namespace Devian
             {
                 if (row.Day != _storage.nextAttendDay)
                 {
-                    return CommonResult.Failure(
+                    return CommonResult<RewardData[]>.Failure(
                         CommonErrorType.COMMON_INVALID_ARGUMENT,
                         $"Attend day mismatch: requested={row.Day}, expected={_storage.nextAttendDay}");
                 }
 
-                return CommonResult.Failure(
+                return CommonResult<RewardData[]>.Failure(
                     CommonErrorType.COMMON_INVALID_ARGUMENT,
                     $"Attend is not claimable: {row.AttendId}");
             }
 
             var apply = RewardManager.Instance.ApplyRewardGroup(row.RewardGroupId);
             if (apply.IsFailure)
-                return CommonResult.Failure(apply.Error!);
+                return CommonResult<RewardData[]>.Failure(apply.Error!);
 
             _storage.SetClaimed(row.AttendId, serverNowUtcMs);
             _storage.nextAttendDay = row.Day >= MaxAttendDay
                 ? CompletedAttendDay
                 : row.Day + 1;
             _storage.MarkLogin(serverNowUtcMs);
+            rebuildRuntimeCache(serverNowUtcMs);
 
             var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
             if (save.IsFailure)
-                return CommonResult.Failure(save.Error!);
+                return CommonResult<RewardData[]>.Failure(save.Error!);
 
-            return CommonResult.Ok();
+            return CommonResult<RewardData[]>.Success(apply.Value.AppliedRewards ?? Array.Empty<RewardData>());
         }
 
         public void ClearStorage()
         {
             _storage.Clear();
+            _runtimes.Clear();
+            _runtimeById.Clear();
+            _runtimeByDay.Clear();
             _initialized = false;
         }
 
@@ -224,6 +300,51 @@ namespace Devian
                 _storage.cycleStartUtcMs = toUtcDayStart(serverNowUtcMs);
 
             _storage.MarkLogin(serverNowUtcMs);
+            rebuildRuntimeCache(serverNowUtcMs);
+        }
+
+        void rebuildRuntimeCache(long serverNowUtcMs)
+        {
+            _runtimes.Clear();
+            _runtimeById.Clear();
+            _runtimeByDay.Clear();
+
+            for (var day = 1; day <= MaxAttendDay; day++)
+            {
+                _rowByDay.TryGetValue(day, out var row);
+                var runtime = createRuntime(day, row, serverNowUtcMs);
+                _runtimes.Add(runtime);
+                _runtimeByDay[day] = runtime;
+
+                if (!runtime.IsConfigured || string.IsNullOrEmpty(runtime.AttendId))
+                    continue;
+
+                if (!_runtimeById.ContainsKey(runtime.AttendId))
+                    _runtimeById.Add(runtime.AttendId, runtime);
+            }
+        }
+
+        AttendRuntime createRuntime(int day, ATTEND row, long serverNowUtcMs)
+        {
+            if (row == null)
+                return new AttendRuntime(day, string.Empty, string.Empty, false, AttendRuntimeState.WAIT, 0L);
+
+            var attendId = (row.AttendId ?? string.Empty).Trim();
+            var rewardGroupId = (row.RewardGroupId ?? string.Empty).Trim();
+            var isConfigured = !string.IsNullOrEmpty(attendId) && !string.IsNullOrEmpty(rewardGroupId);
+            var claimedAtUtcMs = 0L;
+            var state = AttendRuntimeState.WAIT;
+
+            if (isConfigured && _storage.TryGetClaimedAtUtcMs(attendId, out claimedAtUtcMs))
+            {
+                state = AttendRuntimeState.CLAIMED;
+            }
+            else if (isConfigured && isRowClaimable(row, attendId, serverNowUtcMs))
+            {
+                state = AttendRuntimeState.CLAIMABLE;
+            }
+
+            return new AttendRuntime(day, attendId, rewardGroupId, isConfigured, state, claimedAtUtcMs);
         }
 
         void normalizeNextAttendDay()

@@ -45,6 +45,11 @@ AppliesTo: v10
 - 같은 day가 여러 개인 경우 정렬 후 첫 row를 운영 row로 사용한다.
 - 출석 보상 day 범위는 `1..7` 고정이다.
 
+`attend runtime` 생성:
+- 런타임은 day `1..7` 고정 슬롯으로 항상 7개를 생성한다.
+- 각 슬롯은 `day -> row` 매핑 결과를 참조한다.
+- 해당 day row가 없으면 `isConfigured=false` 슬롯으로 유지한다(보정 없음).
+
 ---
 
 ## C) Cycle / Day Rules (정본)
@@ -69,6 +74,7 @@ reset 동작:
 - `claimedAttendUtcMs.Clear()`
 - `lastClaimUtcMs = 0`
 - `cycleStartUtcMs = toUtcDayStart(serverNowUtcMs)`
+- reset 직후 runtime 상태는 `day1=CLAIMABLE`, `day2..7=WAIT`다.
 
 접속 시점 상태 갱신:
 - reset 판정 후 `lastLoginUtcMs = serverNowUtcMs`로 갱신한다.
@@ -83,6 +89,10 @@ reset 동작:
 
 입력:
 - `attendId` (string)
+
+출력:
+- `CommonResult<RewardData[]>`
+- 성공 시 이번 claim으로 적용된 보상 목록을 반환한다.
 
 claim 가능 조건:
 1. row 존재
@@ -100,6 +110,11 @@ claim 처리:
    - `row.day == 7`이면 `nextAttendDay = 8` (완료 상태)
 5. `SaveDataManager.SaveGameStorageAsync(true, ct)` 호출
 6. 위 저장은 SaveData cloud payload 저장이며, Firestore 저장이 아니다.
+
+claim 후 runtime 상태 전이:
+- claim 당일에는 다음 day 슬롯이 즉시 열리지 않는다.
+- 같은 UTC day 중복 claim 금지 규칙에 따라 다음 day는 `WAIT` 상태다.
+- 다음 UTC day에 `RefreshCycle/Initialize`가 수행되면 현재 `nextAttendDay` 슬롯이 `CLAIMABLE`이 된다.
 
 ---
 
@@ -161,6 +176,38 @@ public sealed class AttendStorage
   - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/...`
 - Assets/Samples (import):
   - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/...`
+
+---
+
+## H) Attend Runtime Model (정본)
+
+런타임 모델:
+
+```csharp
+public enum AttendRuntimeState
+{
+    NONE = 0,
+    WAIT = 1,
+    CLAIMABLE = 2,
+    CLAIMED = 3,
+}
+
+public sealed class AttendRuntime
+{
+    public int Day { get; }
+    public string AttendId { get; }
+    public string RewardGroupId { get; }
+    public bool IsConfigured { get; }
+    public AttendRuntimeState State { get; }
+    public long ClaimedAtUtcMs { get; }
+}
+```
+
+상태 규칙:
+- `CLAIMED`: 해당 `attendId`가 `claimedAttendUtcMs`에 존재
+- `CLAIMABLE`: `day == nextAttendDay`이고, today 중복 claim이 아니며, row가 존재
+- `WAIT`: 그 외 대기 상태(미래 day, 오늘 이미 claim, row 누락 포함)
+- `NONE`: 런타임 미초기화/무효 입력 조회 등 예외적 조회 결과
 
 ---
 

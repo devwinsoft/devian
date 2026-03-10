@@ -17,17 +17,20 @@ AppliesTo: v10
   - 출석 정보 없음
   - 마지막 출석 수령 후 72시간 경과
   - 7일차 claim 다음 UTC day
+- 초기화 직후 day `1..7` runtime을 항상 생성한다.
+- reset 케이스면 상태는 `day1=CLAIMABLE`, `day2..7=WAIT`다.
 
 ### 2) 출석 목록 표시
 
-- `TB_ATTEND` active row를 `day ASC`로 정렬한다.
-- `day 1..7`만 운영 대상으로 사용한다.
-- 각 row에 대해 `claimable / claimed / locked` 상태를 계산해 UI에 표시한다.
+- `AttendManager.Runtimes`(7개 고정 슬롯)를 UI 데이터 소스로 사용한다.
+- 각 슬롯 상태(`CLAIMABLE / CLAIMED / WAIT`)를 그대로 표시한다.
+- day row 누락 슬롯(`isConfigured=false`)은 보정 없이 `WAIT` 상태로 표시한다.
 
 ### 3) 출석 claim
 
 - UI가 `AttendManager.ClaimAsync(attendId, ct)`를 호출한다.
 - 성공 시:
+  - 반환값 `RewardData[]`로 지급 결과를 받는다.
   - `RewardManager`로 보상 적용
   - storage 반영
   - SaveData 저장
@@ -53,6 +56,10 @@ AppliesTo: v10
 - `RewardManager.ApplyRewardGroup` 실패 시 claim 상태가 기록되지 않는다.
 - 72시간 경과 reset 시 claim map이 초기화된다.
 - 7일차 claim 다음 날 reset 시 claim map이 초기화된다.
+- 초기화 직후 runtime 개수는 항상 7개다.
+- reset 직후 runtime 상태가 `1일 claimable + 2~7일 wait`인지 확인한다.
+- claim 성공 당일에는 다음 day runtime이 `WAIT` 유지인지 확인한다.
+- 다음 UTC day 진입 후 refresh 시 `nextAttendDay` runtime이 `CLAIMABLE` 전이되는지 확인한다.
 - Save/Load 이후 claim 상태가 유지된다.
 
 ---

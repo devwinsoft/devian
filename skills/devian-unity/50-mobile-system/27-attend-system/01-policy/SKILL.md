@@ -48,6 +48,12 @@ Type: Policy / Entry Point
 - (3) 7일차 보상 수령 후 다음 UTC day로 넘어갔을 때
 - reset 시 `nextAttendDay=1`, claim map clear를 수행한다.
 
+### 9) attend runtime은 day 1..7 고정 7개를 생성한다
+
+- 초기화/리프레시 시 런타임 슬롯을 항상 7개 생성한다.
+- reset 직후 상태는 `day1=CLAIMABLE`, `day2..7=WAIT`다.
+- day row 누락 슬롯은 보정 없이 `WAIT` 상태를 유지한다.
+
 ### 8) 데이터 누락 시 보정 로직을 두지 않는다
 
 - ATTEND 테이블 day 누락/비연속 상황에서 자동 보정(다음 day 재매핑/대체 보상)을 하지 않는다.

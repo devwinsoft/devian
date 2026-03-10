@@ -40,6 +40,7 @@ public sealed class AttendStorage
 - `nextAttendDay == 8`은 7일차 완료 상태(reset 대기)다.
 - reset 시 `nextAttendDay=1`, `lastClaimUtcMs=0`, `claimedAttendUtcMs.Clear()`
 - `Clear()`는 schema 기본값 + 모든 상태를 초기화한다.
+- `AttendRuntime` 리스트는 저장하지 않는다(매 접속 시 서버 시각 기준 재구성).
 
 ---
 
