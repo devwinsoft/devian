@@ -161,6 +161,7 @@ namespace Devian.Domain.Common
         SAVEDATA_SYNC_RESOLVE_FAILED = 133,
         SAVEDATA_SYNC_SAVE_CLOUD_FAILED = 134,
         SAVEDATA_SYNC_SAVE_LOCAL_FAILED = 135,
+        COMMON_FORCE_UPDATE_REQUIRED = 136,
     }
 
     /// <summary>Auto-generated enum from TB_ERROR_SERVER.id</summary>

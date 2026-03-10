@@ -27,7 +27,7 @@ Achieve runtime(`AchieveRuntimeBase`, `AchieveRuntimeOnce`, `AchieveRuntimePass`
 - `isCompleted`: 완료 여부
 
 정본:
-- `TOTAL_*` saveType은 `GameMessageStorage` 값으로 projection
+- `TOTAL_*` saveType은 `MetaMessageStorage` 값으로 projection
 - `SESSION_*` saveType은 runtime 내부 `progressValue`로 유지
 
 ---

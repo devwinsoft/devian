@@ -22,12 +22,12 @@ namespace Devian
             public MESSAGE_META_SAVE_TYPE SaveType { get; }
         }
 
-        readonly GameMessageStorage _storage = new();
-        readonly GameMessageTrigger _gameMessageTriggerSystem = new();
+        readonly MetaMessageStorage _storage = new();
+        readonly MetaMessageTrigger _metaMessageTriggerSystem = new();
         readonly Dictionary<MESSAGE_META_TYPE, List<MessageSaveBinding>> _saveBindingsByMessageType = new();
         bool _initialized;
 
-        public GameMessageStorage Storage => _storage;
+        public MetaMessageStorage Storage => _storage;
         public bool IsInitialized => _initialized;
 
         protected override void onInitAwake()
@@ -80,26 +80,26 @@ namespace Devian
             }
 
             onBeforeTriggerNotify(messageType, value);
-            _gameMessageTriggerSystem.Notify(messageType, value);
+            _metaMessageTriggerSystem.Notify(messageType, value);
         }
 
-        internal void SubcribeGameMessageTrigger(
+        internal void SubcribeMetaMessageTrigger(
             int ownerKey,
             MESSAGE_META_TYPE messageType,
             BaseTrigger<int, MESSAGE_META_TYPE>.Handler handler)
         {
-            _gameMessageTriggerSystem.Subcribe(ownerKey, messageType, handler);
+            _metaMessageTriggerSystem.Subcribe(ownerKey, messageType, handler);
         }
 
-        internal void UnSubcribeGameMessageTrigger(int ownerKey)
+        internal void UnSubcribeMetaMessageTrigger(int ownerKey)
         {
-            _gameMessageTriggerSystem.UnSubcribe(ownerKey);
+            _metaMessageTriggerSystem.UnSubcribe(ownerKey);
         }
 
         public void ClearAll()
         {
             ClearStorage();
-            _gameMessageTriggerSystem.ClearAll();
+            _metaMessageTriggerSystem.ClearAll();
             _initialized = false;
         }
 
@@ -115,13 +115,13 @@ namespace Devian
             foreach (var binding in bindings)
             {
                 var hasCurrent = _storage.TryGetStat(binding.MessageId, out var rawCurrent);
-                var current = GameMessageRule.ClampNonNegative(rawCurrent);
+                var current = MetaMessageRule.ClampNonNegative(rawCurrent);
                 var normalizedCurrentChanged = hasCurrent && current.CompareTo(rawCurrent) != 0;
                 CBigInt next;
                 switch (binding.SaveType)
                 {
                     case MESSAGE_META_SAVE_TYPE.TOTAL_SUM:
-                        next = GameMessageRule.ClampNonNegative(current + delta);
+                        next = MetaMessageRule.ClampNonNegative(current + delta);
                         break;
 
                     case MESSAGE_META_SAVE_TYPE.TOTAL_MAX:
@@ -143,7 +143,7 @@ namespace Devian
                         continue;
                 }
 
-                next = GameMessageRule.ClampNonNegative(next);
+                next = MetaMessageRule.ClampNonNegative(next);
                 if (!normalizedCurrentChanged && hasCurrent && next.CompareTo(current) == 0)
                     continue;
 
@@ -175,7 +175,7 @@ namespace Devian
                 if (message == null
                     || string.IsNullOrWhiteSpace(message.MessageId)
                     || message.MessageType != messageType
-                    || !GameMessageRule.IsTotalSaveType(message.SaveType))
+                    || !MetaMessageRule.IsTotalSaveType(message.SaveType))
                 {
                     continue;
                 }
@@ -194,7 +194,7 @@ namespace Devian
             {
                 if (message == null
                     || string.IsNullOrWhiteSpace(message.MessageId)
-                    || !GameMessageRule.IsTotalSaveType(message.SaveType))
+                    || !MetaMessageRule.IsTotalSaveType(message.SaveType))
                 {
                     continue;
                 }
@@ -210,7 +210,7 @@ namespace Devian
         }
     }
 
-    internal static class GameMessageRule
+    internal static class MetaMessageRule
     {
         public static bool IsTotalSaveType(MESSAGE_META_SAVE_TYPE saveType)
         {

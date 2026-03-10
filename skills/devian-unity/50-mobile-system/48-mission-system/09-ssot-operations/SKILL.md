@@ -24,7 +24,7 @@ AppliesTo: v10
 - 이벤트 발행: `MetaMessageManager.Notify(messageType, delta)`
 - 처리 순서:
   1. `message.stats[messageId]` 갱신
-  2. `GameMessageTrigger` publish
+  2. `MetaMessageTrigger` publish
   3. runtime 반영 (`DAILY`/`PERIOD`)
 - WAIT runtime은 progress 이벤트를 소비하지 않는다.
 

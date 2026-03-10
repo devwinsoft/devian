@@ -100,7 +100,7 @@ namespace Devian
             return Task.FromResult(CommonResult<RemoteConfigSnapshot>.Success(
                 new RemoteConfigSnapshot(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds())));
 #else
-            return FirebaseManager.Instance.GetRemoteConfigAsync(ct);
+            return FirebaseCallableManager.Instance.GetRemoteConfigAsync(ct);
 #endif
         }
 

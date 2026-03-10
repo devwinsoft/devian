@@ -25,5 +25,5 @@ MobileSystem 샘플의 Analyze 시스템 개요다.
 
 ## Related
 
-- [23-firebase-manager](../../23-firebase-manager/SKILL.md)
+- [23-firebase-callable-manager](../../23-firebase-callable-manager/SKILL.md)
 - [46-achieve-system](../../46-achieve-system/00-overview/SKILL.md)

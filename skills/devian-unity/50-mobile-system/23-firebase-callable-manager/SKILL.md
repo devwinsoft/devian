@@ -1,4 +1,4 @@
-# 23-firebase-manager — FirebaseManager
+# 23-firebase-callable-manager — FirebaseCallableManager
 
 
 Status: ACTIVE
@@ -36,21 +36,21 @@ game 도메인 테이블(TB_PURCHASE 등)은 참조하지 않는다 — 서버 �
 
 > 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../07-samples-creation-guide/SKILL.md)
 
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Firebase/FirebaseManager.cs`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Firebase/FirebaseManager.cs`
-- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Firebase/FirebaseManager.cs`
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/FirebaseCallable/FirebaseCallableManager.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/FirebaseCallable/FirebaseCallableManager.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/FirebaseCallable/FirebaseCallableManager.cs`
 
 
 ## Singleton
 
-`CompoSingleton<FirebaseManager>` 기반.
+`CompoSingleton<FirebaseCallableManager>` 기반.
 Bootstrap prefab에 부착한다.
-`MobileApplication`에 `[RequireComponent(typeof(FirebaseManager))]`로 선언.
+`MobileApplication`에 `[RequireComponent(typeof(FirebaseCallableManager))]`로 선언.
 
 
 ## API
 
-> FirebaseManager는 `internal` 클래스이므로 같은 어셈블리 내부에서만 접근 가능하다.
+> FirebaseCallableManager는 `internal` 클래스이므로 같은 어셈블리 내부에서만 접근 가능하다.
 
 ### Instance Methods — Region
 
@@ -130,49 +130,51 @@ Bootstrap prefab에 부착한다.
 ## Integration
 
 ### LoginManager (InitSession 통합)
-`EnsureRuntimeSessionAndInitializeAsync` / `LoginAndInitializeAsync`가 내부에서 `FirebaseManager.Instance.InitSessionAsync()`를 호출한다.
+`EnsureRuntimeSessionAndInitializeAsync` / `LoginAndInitializeAsync`가 내부에서 `FirebaseCallableManager.Instance.InitSessionAsync()`를 호출한다.
 외부 어셈블리는 `LoginManager`의 `CommonResult` 결과만 사용한다.
 
 ### InventoryManager (초기 지급 통합)
-`InventoryManager.FirstInitAsync`가 `FirebaseManager.Instance.GetInitialInventoryAsync()`를 호출한다.
+`InventoryManager.FirstInitAsync`가 `FirebaseCallableManager.Instance.GetInitialInventoryAsync()`를 호출한다.
 초기 지급은 `SyncState.Initial` 경로에서만 수행한다.
 
 ### PurchaseManager
 ```csharp
-var result = await FirebaseManager.Instance.VerifyPurchaseAsync(data, ct);
+var result = await FirebaseCallableManager.Instance.VerifyPurchaseAsync(data, ct);
 if (result.IsFailure)
     return CommonResult<VerifyPurchaseResponse>.Failure(result.Error!);
 var response = result.Value!;
 ```
-PurchaseManager는 `FunctionsException`을 catch하지 않는다. 에러 매핑은 FirebaseManager가 수행한다.
+PurchaseManager는 `FunctionsException`을 catch하지 않는다. 에러 매핑은 FirebaseCallableManager가 수행한다.
 domain 변환(ResolveSeasonPassId 등)은 PurchaseManager가 typed result 수신 후 수행한다.
-PurchaseManager는 같은 어셈블리이므로 `internal` FirebaseManager에 직접 접근 가능하다.
+PurchaseManager는 같은 어셈블리이므로 `internal` FirebaseCallableManager에 직접 접근 가능하다.
 
 ### RemoteConfigManager
 ```csharp
-var result = await FirebaseManager.Instance.GetRemoteConfigAsync(ct);
+var result = await FirebaseCallableManager.Instance.GetRemoteConfigAsync(ct);
 ```
 Editor mock (`#if UNITY_EDITOR`)은 RemoteConfigManager가 자체 처리한다.
-RemoteConfigManager는 같은 어셈블리이므로 `internal` FirebaseManager에 직접 접근 가능하다.
+RemoteConfigManager는 같은 어셈블리이므로 `internal` FirebaseCallableManager에 직접 접근 가능하다.
 
-### MobileApplication
+### MobileApplication / LoginManager
 ```csharp
 void configureFunctionsRegion()
 {
-    GetComponent<FirebaseManager>()?.SetFunctionsRegion(FirebaseFunctionsRegion);
+    GetComponent<FirebaseCallableManager>()?.SetFunctionsRegion(FirebaseFunctionsRegion);
 }
 ```
-PurchaseManager, RemoteConfigManager에 개별 주입하지 않고 FirebaseManager에만 설정한다.
+PurchaseManager, RemoteConfigManager에 개별 주입하지 않고 FirebaseCallableManager에만 설정한다.
+`LoginManager.VersionCheckAsync(clientVersion, ct)`는 `FirebaseCallableManager.GetRemoteConfigAsync(ct)`를 직접 호출해
+`CommonResult<VersionCheckResult>`를 반환한다.
 
 
 ## Hard Rules
 
 - `FirebaseFunctions` 인스턴스를 외부에 노출하지 않는다.
-- `FunctionsException` 에러 매핑은 FirebaseManager 각 메서드 내부에서 수행한다. 호출자는 `CommonResult`만 소비한다.
-- FirebaseManager는 game 도메인 테이블(TB_PURCHASE 등)을 참조하지 않는다. 서버 응답의 raw 값을 typed result에 그대로 저장한다.
-- Firebase Auth 관련 로직은 `AccountLoginFirebase`가 소유한다. FirebaseManager는 Auth를 다루지 않는다.
+- `FunctionsException` 에러 매핑은 FirebaseCallableManager 각 메서드 내부에서 수행한다. 호출자는 `CommonResult`만 소비한다.
+- FirebaseCallableManager는 game 도메인 테이블(TB_PURCHASE 등)을 참조하지 않는다. 서버 응답의 raw 값을 typed result에 그대로 저장한다.
+- Firebase Auth 관련 로직은 `AccountLoginFirebase`가 소유한다. FirebaseCallableManager는 Auth를 다루지 않는다.
 - 외부에서 사용하지 않는 메서드는 `private`으로 선언하고 소문자로 시작한다.
-- Editor mock 응답은 각 manager가 자체 처리한다. FirebaseManager는 Editor 전용 분기를 갖지 않는다.
+- Editor mock 응답은 각 manager가 자체 처리한다. FirebaseCallableManager는 Editor 전용 분기를 갖지 않는다.
 
 
 ## Related

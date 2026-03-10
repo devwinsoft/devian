@@ -259,7 +259,11 @@
       "Bash(tail -1 echo -n \"framework-cs/upm .cs \\(including Samples~\\): \" find ./framework-cs/upm -type f -name \"*.cs\" ! -name \"*.g.cs\" ! -name \"*.meta\" ! -path \"*/Generated/*\" -print0)",
       "Bash(# Verify: the module count already excludes obj/ ? find ./framework-cs/module -type f -name \"\"*.cs\"\" ! -name \"\"*.g.cs\"\" ! -name \"\"*.meta\"\" ! -path \"\"*/Generated/*\"\" ! -path \"\"*/obj/*\"\" ! -path \"\"*/bin/*\"\" -print0 | xargs -0 wc -l)",
       "Bash(# UPM non-generated non-Samples~ .cs lines \\(these are unique to UPM\\) find ./framework-cs/upm -type f -name \"\"*.cs\"\" ! -name \"\"*.g.cs\"\" ! -name \"\"*.meta\"\" ! -path \"\"*/Generated/*\"\" ! -path \"\"*/Samples~/*\"\" ! -path \"\"*/obj/*\"\" ! -path \"\"*/bin/*\"\" -print0 | xargs -0 wc -l)",
-      "Bash(# UPM Samples~ .cs lines find ./framework-cs/upm -path \"\"*/Samples~/*\"\" -type f -name \"\"*.cs\"\" ! -name \"\"*.g.cs\"\" ! -name \"\"*.meta\"\" ! -path \"\"*/Generated/*\"\" -print0 | xargs -0 wc -l)"
+      "Bash(# UPM Samples~ .cs lines find ./framework-cs/upm -path \"\"*/Samples~/*\"\" -type f -name \"\"*.cs\"\" ! -name \"\"*.g.cs\"\" ! -name \"\"*.meta\"\" ! -path \"\"*/Generated/*\"\" -print0 | xargs -0 wc -l)",
+      "Bash(git check-ignore -v \"framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Message/GameMessageStorage.cs\")",
+      "Bash(do sed -i '' 's/GameMessage/MetaMessage/g' \"$f\")",
+      "Bash(do sed -i '' 's/gameMessage/metaMessage/g' \"$f\")",
+      "Bash(do sed -i '' 's/FirebaseManager/FirebaseCallableManager/g' \"$f\")"
     ]
   },
   "project": {

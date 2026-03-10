@@ -20,9 +20,9 @@ Mission(`DAILY`/`PERIOD`) 시스템의 모듈 경계와 하드룰을 정의한�
 - `MISSION_PERIOD.day`는 period runtime activation group key다(동일 day 동시 활성화).
 - 조건 타입/저장 연산/비교 연산 정본은 `MESSAGE_META`다.
 
-### 2) 진행도 입력은 `GameMessageTrigger`를 통해 받는다
+### 2) 진행도 입력은 `MetaMessageTrigger`를 통해 받는다
 
-- Mission runtime은 MissionManager helper를 통해 `GameMessageTrigger`를 직접 구독한다.
+- Mission runtime은 MissionManager helper를 통해 `MetaMessageTrigger`를 직접 구독한다.
 - 다른 시스템은 `MissionManager.Notify(statType, value)`만 호출한다.
 - MissionRuntime이 별도 gameplay API를 직접 호출받는 구조는 금지한다.
 
@@ -33,7 +33,7 @@ Mission(`DAILY`/`PERIOD`) 시스템의 모듈 경계와 하드룰을 정의한�
   - `SUM`: `current + delta`
   - `MAX`: `max(current, delta)`
   - `MIN`: `min(current, delta)` (음수 입력 무시)
-- 그 다음 `GameMessageTrigger` publish로 daily runtime 구독자 notify를 수행한다.
+- 그 다음 `MetaMessageTrigger` publish로 daily runtime 구독자 notify를 수행한다.
 - 마지막에 `AchieveManager.Notify`를 호출해 업적 시스템으로 동일 이벤트를 전달한다.
 
 ### 4) 진행도 저장 정본은 `runtime.progressValue`다
@@ -64,5 +64,5 @@ Mission(`DAILY`/`PERIOD`) 시스템의 모듈 경계와 하드룰을 정의한�
 - [46-achieve-system](../../46-achieve-system/00-overview/SKILL.md)
 - [03-ssot](../03-ssot/SKILL.md)
 - [10-mission-manager](../10-mission-manager/SKILL.md)
-- [45-meta-message-system/11-game-message-trigger](../../45-meta-message-system/11-game-message-trigger/SKILL.md)
+- [45-meta-message-system/11-meta-message-trigger](../../45-meta-message-system/11-meta-message-trigger/SKILL.md)
 - [12-mission-storage](../12-mission-storage/SKILL.md)

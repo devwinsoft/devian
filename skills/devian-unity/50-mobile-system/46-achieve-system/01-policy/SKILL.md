@@ -17,7 +17,7 @@ Type: Policy / Entry Point
 - 업적 row는 `ACHIEVE_ONCE`, `ACHIEVE_PASS`를 사용한다.
 - 런타임 저장 정본은 `AchieveStorage.runtimes`다.
 - progress는 `MESSAGE.saveType`에 따라 결정된다.
-  - `TOTAL_*`: `GameMessageStorage` 값을 projection한다.
+  - `TOTAL_*`: `MetaMessageStorage` 값을 projection한다.
   - `SESSION_*`: `AchieveRuntimeBase.progressValue`를 직접 유지한다.
 - 초기화 시 `achieveId` group 기준 runtime을 항상 생성한다(1 group = 1 runtime).
 - runtime 타입은 row 소스에 따라 결정된다.

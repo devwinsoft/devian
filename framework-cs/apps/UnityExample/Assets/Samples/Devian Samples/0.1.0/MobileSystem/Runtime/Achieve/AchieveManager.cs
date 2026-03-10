@@ -15,7 +15,7 @@ namespace Devian
     public sealed class AchieveManager : CompoSingleton<AchieveManager>
     {
         private const string Tag = nameof(AchieveManager);
-        private const int GameMessageOwnerKey = 3001001;
+        private const int MetaMessageOwnerKey = 3001001;
         private static readonly EntityId InventoryMessageOwnerKey = 3001002;
 
         private enum RuntimePlatformKind
@@ -86,7 +86,7 @@ namespace Devian
         private bool _platformInitialized;
         private CommonError _platformInitError;
         private bool _initialized;
-        private bool _isGameMessageSubscribed;
+        private bool _isMetaMessageSubscribed;
         private bool _isInventoryMessageSubscribed;
 
         public AchieveStorage Storage => _storage;
@@ -108,7 +108,7 @@ namespace Devian
         {
             if (!BaseApplication.IsApplicationQuitting)
             {
-                unSubcribeGameMessageTrigger();
+                unSubcribeMetaMessageTrigger();
                 unSubcribeInventoryMessageTrigger();
             }
         }
@@ -121,7 +121,7 @@ namespace Devian
                 if (_initialized)
                     return CommonResult.Ok();
 
-                subscribeGameMessageTrigger();
+                subscribeMetaMessageTrigger();
                 subscribeInventoryMessageTrigger();
                 rebuildMappingCaches();
                 rebuildRuntimeBindings();
@@ -315,9 +315,9 @@ namespace Devian
             _messageSystem.UnSubcribe(ownerKey);
         }
 
-        void subscribeGameMessageTrigger()
+        void subscribeMetaMessageTrigger()
         {
-            if (_isGameMessageSubscribed)
+            if (_isMetaMessageSubscribed)
                 return;
 
             var messageManager = MetaMessageManager.Instance;
@@ -328,26 +328,26 @@ namespace Devian
                     continue;
 
                 var subscribedType = messageType;
-                messageManager.SubcribeGameMessageTrigger(
-                    GameMessageOwnerKey,
+                messageManager.SubcribeMetaMessageTrigger(
+                    MetaMessageOwnerKey,
                     subscribedType,
                     args =>
                     {
-                        onGameMessageTriggered(subscribedType, args);
+                        onMetaMessageTriggered(subscribedType, args);
                         return false;
                     });
             }
 
-            _isGameMessageSubscribed = true;
+            _isMetaMessageSubscribed = true;
         }
 
-        void unSubcribeGameMessageTrigger()
+        void unSubcribeMetaMessageTrigger()
         {
-            if (!_isGameMessageSubscribed)
+            if (!_isMetaMessageSubscribed)
                 return;
 
-            MetaMessageManager.Instance.UnSubcribeGameMessageTrigger(GameMessageOwnerKey);
-            _isGameMessageSubscribed = false;
+            MetaMessageManager.Instance.UnSubcribeMetaMessageTrigger(MetaMessageOwnerKey);
+            _isMetaMessageSubscribed = false;
         }
 
         void subscribeInventoryMessageTrigger()
@@ -383,7 +383,7 @@ namespace Devian
             _isInventoryMessageSubscribed = false;
         }
 
-        void onGameMessageTriggered(MESSAGE_META_TYPE messageType, object[] args)
+        void onMetaMessageTriggered(MESSAGE_META_TYPE messageType, object[] args)
         {
             if (args == null || args.Length <= 0)
                 return;
@@ -391,7 +391,7 @@ namespace Devian
             if (!tryParseMessageDelta(args[0], out var delta))
                 return;
 
-            onGameMessageNotify(messageType, delta);
+            onMetaMessageNotify(messageType, delta);
         }
 
         static bool tryParseMessageDelta(object raw, out CBigInt delta)
@@ -416,7 +416,7 @@ namespace Devian
             }
         }
 
-        void onGameMessageNotify(MESSAGE_META_TYPE msgType, CBigInt msgValue)
+        void onMetaMessageNotify(MESSAGE_META_TYPE msgType, CBigInt msgValue)
         {
             tryActivateWaitingRuntimes(msgType, msgValue);
             notifyRuntimesByMessage(msgType, msgValue);

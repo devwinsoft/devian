@@ -288,6 +288,17 @@ namespace Devian.Domain.Game
         public string GetKey() => MessageId;
     }
 
+    /// <summary>ATTEND row</summary>
+    public sealed class ATTEND : IEntityKey<string>
+    {
+        public string AttendId { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+        public int Day { get; set; }
+        public string RewardGroupId { get; set; } = string.Empty;
+
+        public string GetKey() => AttendId;
+    }
+
     /// <summary>MISSION_DAILY row</summary>
     public sealed class MISSION_DAILY : IEntityKey<string>
     {
@@ -1113,6 +1124,89 @@ namespace Devian.Domain.Game
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
                 var row = JsonConvert.DeserializeObject<MESSAGE_META>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_ATTEND container</summary>
+    public static partial class TB_ATTEND
+    {
+        private static readonly Dictionary<string, ATTEND> _dict = new();
+        private static readonly List<ATTEND> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<ATTEND> GetAll() => _list;
+
+        public static ATTEND? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out ATTEND? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(ATTEND row)
+        {
+            _list.Add(row);
+            _dict[row.AttendId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<ATTEND>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<ATTEND>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<ATTEND>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -2138,6 +2232,16 @@ namespace Devian.Domain.Game
         public static implicit operator MESSAGE_META_ID(string value) => new MESSAGE_META_ID { Value = value };
     }
 
+    /// <summary>Inspector-bindable ID for ATTEND</summary>
+    [Serializable]
+    public sealed class ATTEND_ID
+    {
+        public string Value;
+
+        public static implicit operator string(ATTEND_ID id) => id.Value;
+        public static implicit operator ATTEND_ID(string value) => new ATTEND_ID { Value = value };
+    }
+
     /// <summary>Inspector-bindable ID for MISSION_DAILY</summary>
     [Serializable]
     public sealed class MISSION_DAILY_ID
@@ -2239,6 +2343,7 @@ namespace Devian.Domain.Game
         public static bool IsValid(this REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this SEASON_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MESSAGE_META_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this ATTEND_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MISSION_DAILY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MISSION_PERIOD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this ACHIEVE_ONCE_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);

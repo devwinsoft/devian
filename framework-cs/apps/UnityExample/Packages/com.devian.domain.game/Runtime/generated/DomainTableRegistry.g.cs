@@ -131,6 +131,20 @@ namespace Devian.Domain.Game
                 }
             });
 
+            global::Devian.TableManager.Instance.RegisterTbLoader("ATTEND", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_ATTEND.LoadFromNdjson(text);
+                    TB_ATTEND._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_ATTEND.LoadFromPb64Binary(bin);
+                    TB_ATTEND._AfterLoad();
+                }
+            });
+
             global::Devian.TableManager.Instance.RegisterTbLoader("MISSION_DAILY", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)

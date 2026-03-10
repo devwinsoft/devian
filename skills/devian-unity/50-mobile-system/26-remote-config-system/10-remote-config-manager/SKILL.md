@@ -20,7 +20,7 @@ RemoteConfigManager 설계 문서다.
 
 ## Responsibilities
 
-- `getRemoteConfig` callable 호출과 응답 파싱(`FirebaseManager` 경유)
+- `getRemoteConfig` callable 호출과 응답 파싱(`FirebaseCallableManager` 경유)
 - server UTC 시각 시뮬레이션
 - 버전 정보(`minVersion/currentVersion`) 저장
 - SaveData `remoteConfig` 섹션 직렬화/역직렬화
@@ -53,5 +53,5 @@ RemoteConfigManager 설계 문서다.
 
 - [03-ssot](../03-ssot/SKILL.md)
 - [11-mobile-application](../../11-mobile-application/SKILL.md)
-- [23-firebase-manager](../../23-firebase-manager/SKILL.md)
+- [23-firebase-callable-manager](../../23-firebase-callable-manager/SKILL.md)
 - [48-mission-system/10-mission-manager](../../48-mission-system/10-mission-manager/SKILL.md)

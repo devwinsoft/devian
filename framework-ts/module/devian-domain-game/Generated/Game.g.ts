@@ -239,6 +239,14 @@ export interface MESSAGE_META extends IEntityKey<string> {
     getKey(): string;
 }
 
+export interface ATTEND extends IEntityKey<string> {
+    AttendId: string;
+    IsActive: boolean;
+    Day: number;
+    RewardGroupId: string;
+    getKey(): string;
+}
+
 export interface MISSION_DAILY extends IEntityKey<string> {
     MissionId: string;
     IsActive: boolean;
@@ -627,6 +635,42 @@ export class TB_MESSAGE_META {
             const row = JSON.parse(line) as MESSAGE_META;
             this._list.push(row);
             this._dict.set(row.MessageId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_ATTEND {
+    private static _dict: Map<string, ATTEND> = new Map();
+    private static _list: ATTEND[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly ATTEND[] { return this._list; }
+
+    static get(key: string): ATTEND | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as ATTEND;
+            this._list.push(row);
+            this._dict.set(row.AttendId, row);
         }
     }
 

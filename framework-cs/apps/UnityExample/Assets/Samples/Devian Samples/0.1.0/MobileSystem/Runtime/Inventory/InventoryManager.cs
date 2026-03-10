@@ -56,7 +56,7 @@ namespace Devian
             if (accountManager.IsLocalOnlySaveMode || !accountManager.HasAuthenticatedSession)
                 return CommonResult.Ok();
 
-            var fetch = await FirebaseManager.Instance.GetInitialInventoryAsync(ct);
+            var fetch = await FirebaseCallableManager.Instance.GetInitialInventoryAsync(ct);
             if (fetch.IsFailure)
                 return CommonResult.Failure(fetch.Error!);
 

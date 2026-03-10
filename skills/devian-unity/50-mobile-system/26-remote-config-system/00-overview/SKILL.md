@@ -25,7 +25,7 @@ MobileSystem 샘플의 원격 설정/서버 시각 동기화 계층 개요다.
 ## Related
 
 - [11-mobile-application](../../11-mobile-application/SKILL.md)
-- [23-firebase-manager](../../23-firebase-manager/SKILL.md)
+- [23-firebase-callable-manager](../../23-firebase-callable-manager/SKILL.md)
 - [48-mission-system](../../48-mission-system/00-overview/SKILL.md)
 - [46-achieve-system](../../46-achieve-system/00-overview/SKILL.md)
 - [30-purchase-system](../../30-purchase-system/00-overview/SKILL.md)

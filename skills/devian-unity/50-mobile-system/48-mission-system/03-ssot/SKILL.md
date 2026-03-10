@@ -29,7 +29,7 @@ AppliesTo: v10
 - `periodKey`: runtime 주기 식별자 (`daily:{index}`, `period:{index}`)
 - `periodDayGroupKey`: `MISSION_PERIOD.day` (period runtime 활성화 그룹 키)
 - `missionUid`: runtime 식별 `int`
-- `message stats`: `GameMessageStorage.stats[string messageId]`
+- `message stats`: `MetaMessageStorage.stats[string messageId]`
 
 ---
 
@@ -97,7 +97,7 @@ AppliesTo: v10
 
 ## D) Trigger + Stats Update
 
-`GameMessageTrigger` 정본 타입:
+`MetaMessageTrigger` 정본 타입:
 
 ```csharp
 BaseTrigger<int, MESSAGE_META_TYPE>
@@ -113,7 +113,7 @@ trigger 처리 순서:
    - `TOTAL_SUM`: `current + delta`
    - `TOTAL_MAX`: `max(current, delta)`
    - `TOTAL_MIN`: `min(current, delta)`
-4. `GameMessageTrigger` publish로 mission runtime 구독자 notify
+4. `MetaMessageTrigger` publish로 mission runtime 구독자 notify
 5. `AchieveManager`로 동일 이벤트 전달
 
 runtime 반영:
@@ -178,6 +178,6 @@ runtime 저장 규칙:
 - [46-achieve-system](../../46-achieve-system/00-overview/SKILL.md)
 - [01-policy](../01-policy/SKILL.md)
 - [10-mission-manager](../10-mission-manager/SKILL.md)
-- [45-meta-message-system/11-game-message-trigger](../../45-meta-message-system/11-game-message-trigger/SKILL.md)
+- [45-meta-message-system/11-meta-message-trigger](../../45-meta-message-system/11-meta-message-trigger/SKILL.md)
 - [12-mission-storage](../12-mission-storage/SKILL.md)
 - [13-mission-runtime](../13-mission-runtime/SKILL.md)

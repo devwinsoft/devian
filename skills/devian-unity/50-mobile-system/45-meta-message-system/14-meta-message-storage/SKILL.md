@@ -1,9 +1,9 @@
 ---
-name: game-message-storage
-description: Use this skill when implementing or refactoring GameMessageStorage and SaveData JSON codec flow for message.stats in MobileSystem.
+name: meta-message-storage
+description: Use this skill when implementing or refactoring MetaMessageStorage and SaveData JSON codec flow for message.stats in MobileSystem.
 ---
 
-# 14-game-message-storage
+# 14-meta-message-storage
 
 Status: ACTIVE
 AppliesTo: v10
@@ -11,31 +11,31 @@ Type: Design / SSOT
 
 ## Purpose
 
-`GameMessageStorage`의 저장 모델과 payload 규약 정본이다.
+`MetaMessageStorage`의 저장 모델과 payload 규약 정본이다.
 
 ---
 
 ## Implementation Location (3-path mirror)
 
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Message/GameMessageStorage.cs`
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/MetaMessage/MetaMessageStorage.cs`
 - UPM Codec: `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecMessage.cs`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Message/GameMessageStorage.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/MetaMessage/MetaMessageStorage.cs`
 - Packages Codec (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecMessage.cs`
-- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Message/GameMessageStorage.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/MetaMessage/MetaMessageStorage.cs`
 - Assets Codec (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecMessage.cs`
 
 ---
 
 ## Ownership
 
-- `MetaMessageManager`가 `GameMessageStorage`를 소유한다.
+- `MetaMessageManager`가 `MetaMessageStorage`를 소유한다.
 - stat 저장 접근 정본: `MetaMessageManager.Storage`
 
 ---
 
 ## Storage Model
 
-`GameMessageStorage` 필드:
+`MetaMessageStorage` 필드:
 - `schemaVersion`
 - `stats: Dictionary<string, CBigInt>`
 

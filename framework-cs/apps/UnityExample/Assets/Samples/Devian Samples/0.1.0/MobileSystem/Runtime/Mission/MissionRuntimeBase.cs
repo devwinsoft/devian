@@ -33,7 +33,7 @@ namespace Devian
         public bool IsSubscribed => _isSubscribed;
         public bool IsClaimable => !isCompleted
                                    && !isWaiting
-                                   && GameMessageRule.IsConditionSatisfied(
+                                   && MetaMessageRule.IsConditionSatisfied(
                                        progressValue,
                                        _conditionOpType,
                                        _conditionValue);
@@ -164,7 +164,7 @@ namespace Devian
 
             var wasClaimable = IsClaimable;
             var nextProgress = readExternalProgress();
-            nextProgress = GameMessageRule.ClampNonNegative(nextProgress);
+            nextProgress = MetaMessageRule.ClampNonNegative(nextProgress);
             if (nextProgress.CompareTo(progressValue) == 0)
                 return;
 
@@ -187,7 +187,7 @@ namespace Devian
 
             var wasClaimable = IsClaimable;
             var nextProgress = calculateNextProgress(delta);
-            nextProgress = GameMessageRule.ClampNonNegative(nextProgress);
+            nextProgress = MetaMessageRule.ClampNonNegative(nextProgress);
             if (nextProgress.CompareTo(progressValue) == 0)
                 return false;
 
@@ -283,7 +283,7 @@ namespace Devian
 
         protected override CBigInt CalculateSumProgress(CBigInt delta)
         {
-            var next = GameMessageRule.ClampNonNegative(progressValue + delta);
+            var next = MetaMessageRule.ClampNonNegative(progressValue + delta);
             return CBigInt.Min(_conditionValue, next);
         }
     }
@@ -307,7 +307,7 @@ namespace Devian
 
         protected override CBigInt CalculateSumProgress(CBigInt delta)
         {
-            var next = GameMessageRule.ClampNonNegative(progressValue + delta);
+            var next = MetaMessageRule.ClampNonNegative(progressValue + delta);
             return CBigInt.Min(_conditionValue, next);
         }
     }

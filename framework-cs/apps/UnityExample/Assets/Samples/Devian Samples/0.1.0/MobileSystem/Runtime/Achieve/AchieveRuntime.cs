@@ -32,7 +32,7 @@ namespace Devian
         public CBigInt ConditionValue => _conditionValue;
         public bool IsClaimable => !isCompleted
                                    && !isWaiting
-                                   && GameMessageRule.IsConditionSatisfied(
+                                   && MetaMessageRule.IsConditionSatisfied(
                                        progressValue,
                                        _conditionOpType,
                                        _conditionValue);
@@ -182,7 +182,7 @@ namespace Devian
 
             var wasClaimable = IsClaimable;
             var nextProgress = _externalProgressReader();
-            nextProgress = GameMessageRule.ClampNonNegative(nextProgress);
+            nextProgress = MetaMessageRule.ClampNonNegative(nextProgress);
             if (nextProgress.CompareTo(progressValue) == 0)
                 return;
 
@@ -211,7 +211,7 @@ namespace Devian
             switch (_opType)
             {
                 case MESSAGE_META_SAVE_TYPE.SESSION_SUM:
-                    nextProgress = GameMessageRule.ClampNonNegative(progressValue + delta);
+                    nextProgress = MetaMessageRule.ClampNonNegative(progressValue + delta);
                     break;
 
                 case MESSAGE_META_SAVE_TYPE.SESSION_MAX:
@@ -239,7 +239,7 @@ namespace Devian
                     return;
             }
 
-            nextProgress = GameMessageRule.ClampNonNegative(nextProgress);
+            nextProgress = MetaMessageRule.ClampNonNegative(nextProgress);
             if (nextProgress.CompareTo(progressValue) == 0)
                 return;
 

@@ -65,7 +65,8 @@ public sealed class RemoteConfigStorage
 ## D) Integration Rules
 
 - `MobileApplication.OnEnterForeground()`는 `RemoteConfigManager.RefreshAsync()`를 호출한다.
-- `VersionCheck()`는 `RemoteConfigManager.Storage.snapshot`의 `minVersion/currentVersion`을 사용한다.
+- `LoginManager.VersionCheckAsync(clientVersion, ct)`는 런타임에서 `FirebaseCallableManager.GetRemoteConfigAsync()` 응답의 `minVersion/currentVersion`으로 판정한다.
+- Unity Editor에서는 `RemoteConfigManager.RefreshAsync()` 후 snapshot 기준으로 버전 판정을 수행한다.
 - `MissionManager`, `AchieveManager`, `PurchaseManager`, `LeaderboardManager`는 서버시간을 `RemoteConfigManager`에서만 읽는다.
 - `SessionInitSnapshot`의 원격설정 필드는 `RemoteConfig`다.
 

@@ -19,7 +19,7 @@ MobileSystem의 메시지/트리거 계층 하드룰을 정의한다.
 
 ### 2) Game message trigger는 45-meta-message-system이 소유한다
 
-- `GameMessageTrigger`은 `MetaMessageManager` 내부 소유다.
+- `MetaMessageTrigger`은 `MetaMessageManager` 내부 소유다.
 - trigger 인스턴스는 외부에 직접 노출하지 않는다.
 - `MetaMessageManager` helper를 통해서만 publish/subscribe한다.
 

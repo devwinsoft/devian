@@ -13,7 +13,7 @@ MobileSystem 샘플의 `MetaMessageManager` 설계 문서다.
 
 현재 역할:
 - Game message trigger 라우터를 캡슐화한다.
-- `GameMessageStorage`를 소유하고 `message.stats`를 관리한다.
+- `MetaMessageStorage`를 소유하고 `message.stats`를 관리한다.
 - `Notify`에서 `TOTAL_*` 타입만 `message.stats`를 선갱신한다.
 - game trigger publish만 수행하고, mission/achieve는 trigger 구독으로 처리한다.
 
@@ -21,36 +21,36 @@ MobileSystem 샘플의 `MetaMessageManager` 설계 문서다.
 
 ## Implementation Location (3-path mirror)
 
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Message/MetaMessageManager.cs`
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Message/GameMessageStorage.cs`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Message/MetaMessageManager.cs`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Message/GameMessageStorage.cs`
-- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Message/MetaMessageManager.cs`
-- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Message/GameMessageStorage.cs`
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/MetaMessage/MetaMessageManager.cs`
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/MetaMessage/MetaMessageStorage.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/MetaMessage/MetaMessageManager.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/MetaMessage/MetaMessageStorage.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/MetaMessage/MetaMessageManager.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/MetaMessage/MetaMessageStorage.cs`
 
 ---
 
 ## Phase-1 API (요약)
 
-- `GameMessageStorage Storage { get; }`
+- `MetaMessageStorage Storage { get; }`
 - `Initialize()`
 - `TryGetStat(string messageId, out CBigInt)`
 - `GetStat(string messageId) / SetStat(string messageId, CBigInt)`
 - `ClearStorage()`
 - `Notify(GAME_MESSAGE_TYPE, CBigInt/long/int)` (stats update + publish)
-- `SubcribeGameMessageTrigger(...) / UnSubcribeGameMessageTrigger(...)` (internal helper)
+- `SubcribeMetaMessageTrigger(...) / UnSubcribeMetaMessageTrigger(...)` (internal helper)
 - `ClearAll()`
 
 주의:
-- game message trigger 인스턴스는 외부에 직접 노출하지 않는다.
-- MissionManager/AchieveManager는 `SubcribeGameMessageTrigger` helper를 통해 trigger를 구독한다.
+- meta message trigger 인스턴스는 외부에 직접 노출하지 않는다.
+- MissionManager/AchieveManager는 `SubcribeMetaMessageTrigger` helper를 통해 trigger를 구독한다.
 
 ---
 
 ## Related
 
 - [03-ssot](../03-ssot/SKILL.md)
-- [11-game-message-trigger](../11-game-message-trigger/SKILL.md)
-- [14-game-message-storage](../14-game-message-storage/SKILL.md)
+- [11-meta-message-trigger](../11-meta-message-trigger/SKILL.md)
+- [14-meta-message-storage](../14-meta-message-storage/SKILL.md)
 - [48-mission-system/16-mission-message-trigger](../../48-mission-system/16-mission-message-trigger/SKILL.md)
 - [48-mission-system/10-mission-manager](../../48-mission-system/10-mission-manager/SKILL.md)

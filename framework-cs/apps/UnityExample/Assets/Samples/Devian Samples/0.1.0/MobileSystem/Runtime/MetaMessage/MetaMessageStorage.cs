@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Devian
 {
     [Serializable]
-    public sealed class GameMessageStorage
+    public sealed class MetaMessageStorage
     {
         public int schemaVersion = 1;
         public Dictionary<string, CBigInt> stats = new(StringComparer.Ordinal);
@@ -26,7 +26,7 @@ namespace Devian
             if (string.IsNullOrWhiteSpace(messageId))
                 return;
 
-            stats[messageId] = GameMessageRule.ClampNonNegative(value);
+            stats[messageId] = MetaMessageRule.ClampNonNegative(value);
         }
 
         public void Clear()

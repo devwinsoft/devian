@@ -798,7 +798,7 @@ namespace Devian
         // noAds 판단은 게임 로직이 남은 시간(ms) 기반으로 처리한다.
         public async Task<CommonResult<EntitlementsSnapshot>> SyncEntitlementsAsync(CancellationToken ct = default)
         {
-            var result = await FirebaseManager.Instance.GetEntitlementsAsync(ct);
+            var result = await FirebaseCallableManager.Instance.GetEntitlementsAsync(ct);
             if (result.IsFailure)
                 return CommonResult<EntitlementsSnapshot>.Failure(result.Error!);
 
@@ -844,7 +844,7 @@ namespace Devian
                     "PurchaseManager not initialized. Call InitializeAsync() first.");
 
             var data = new Dictionary<string, object> { ["pageSize"] = 1, ["kind"] = "Consumable" };
-            return await FirebaseManager.Instance.GetRecentPurchases30dAsync(data, ct);
+            return await FirebaseCallableManager.Instance.GetRecentPurchases30dAsync(data, ct);
         }
 #endif
 
@@ -865,7 +865,7 @@ namespace Devian
             if (!string.IsNullOrEmpty(cursor))
                 data["cursor"] = cursor;
 
-            var result = await FirebaseManager.Instance.GetPurchaseAdjustmentsAsync(data, ct);
+            var result = await FirebaseCallableManager.Instance.GetPurchaseAdjustmentsAsync(data, ct);
             if (result.IsFailure)
                 return CommonResult<RefundSyncResult>.Failure(result.Error!);
 
@@ -1490,13 +1490,13 @@ namespace Devian
                 }
             }
 
-            var result = await FirebaseManager.Instance.VerifyPurchaseAsync(data, ct);
+            var result = await FirebaseCallableManager.Instance.VerifyPurchaseAsync(data, ct);
             if (result.IsFailure)
                 return result;
 
             var verifyResponse = result.Value!;
 
-            // FirebaseManager가 반환한 EntitlementsSnapshot은 raw season pass ID를 사용한다.
+            // FirebaseCallableManager가 반환한 EntitlementsSnapshot은 raw season pass ID를 사용한다.
             // domain 변환(ResolveSeasonPassId) 후 캐시한다.
             if (verifyResponse.Snapshot.HasValue)
             {
@@ -1584,7 +1584,7 @@ namespace Devian
                 ["clientGrantStatus"] = clientGrantStatus,
             };
 
-            return await FirebaseManager.Instance.AckPurchaseClientGrantAsync(data, ct);
+            return await FirebaseCallableManager.Instance.AckPurchaseClientGrantAsync(data, ct);
         }
 
         async Task<CommonResult> ackPurchaseStoreConfirmAsync(string purchaseId, CancellationToken ct)
@@ -1594,7 +1594,7 @@ namespace Devian
                 ["purchaseId"] = purchaseId,
             };
 
-            return await FirebaseManager.Instance.AckPurchaseStoreConfirmAsync(data, ct);
+            return await FirebaseCallableManager.Instance.AckPurchaseStoreConfirmAsync(data, ct);
         }
 
         async Task<CommonResult> ackRefundAppliedAsync(string purchaseId, CancellationToken ct)
@@ -1604,7 +1604,7 @@ namespace Devian
                 ["purchaseId"] = purchaseId,
             };
 
-            return await FirebaseManager.Instance.AckRefundAppliedAsync(data, ct);
+            return await FirebaseCallableManager.Instance.AckRefundAppliedAsync(data, ct);
         }
 
         // ── Store Fetch Helpers ────────────────────────────────────
@@ -1793,7 +1793,7 @@ namespace Devian
         // ── Helpers ───────────────────────────────────────────────
 
         /// <summary>
-        /// FirebaseManager가 반환한 raw EntitlementsSnapshot의 season pass ID를
+        /// FirebaseCallableManager가 반환한 raw EntitlementsSnapshot의 season pass ID를
         /// ResolveSeasonPassId로 변환한 새 snapshot을 반환한다.
         /// </summary>
         static EntitlementsSnapshot resolveEntitlementsSeasonPasses(EntitlementsSnapshot raw)
@@ -1814,7 +1814,7 @@ namespace Devian
         }
 
         /// <summary>
-        /// FirebaseManager가 반환한 RefundPageResult의 raw item을
+        /// FirebaseCallableManager가 반환한 RefundPageResult의 raw item을
         /// domain 보강(rewardGroupId, rewards, parsed kind) 후 RefundSyncResult로 변환한다.
         /// </summary>
         static RefundSyncResult enrichAdjustmentItems(RefundPageResult page)

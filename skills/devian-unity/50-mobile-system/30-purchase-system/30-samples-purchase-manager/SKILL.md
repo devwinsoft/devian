@@ -103,24 +103,24 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 서버 구현의 상세 규칙/스키마/배포 절차는 이 문서가 아니라 `40/44/46` 문서를 우선한다.
 
 
-- **VerifyPurchaseAsync**: `FirebaseManager.Instance.VerifyPurchaseAsync(data, ct)` — ✅ 구현됨
+- **VerifyPurchaseAsync**: `FirebaseCallableManager.Instance.VerifyPurchaseAsync(data, ct)` — ✅ 구현됨
   - 요청 키: `storeKey`, `internalProductId`, `kind`, `payload`
   - 응답: `CommonResult<VerifyPurchaseResponse>`
-- **reportPurchaseClientGrantResultAsync**: `FirebaseManager.Instance.AckPurchaseClientGrantAsync(data, ct)` — ✅ 구현됨
+- **reportPurchaseClientGrantResultAsync**: `FirebaseCallableManager.Instance.AckPurchaseClientGrantAsync(data, ct)` — ✅ 구현됨
   - 요청 키: `purchaseId`, `clientGrantStatus`
   - 응답: `CommonResult`
-- **ackPurchaseStoreConfirmAsync**: `FirebaseManager.Instance.AckPurchaseStoreConfirmAsync(data, ct)` — ✅ 구현됨
+- **ackPurchaseStoreConfirmAsync**: `FirebaseCallableManager.Instance.AckPurchaseStoreConfirmAsync(data, ct)` — ✅ 구현됨
   - 요청 키: `purchaseId`
   - 응답: `CommonResult`
-- **SyncEntitlementsAsync**: `FirebaseManager.Instance.GetEntitlementsAsync(ct)` — ✅ 구현됨
+- **SyncEntitlementsAsync**: `FirebaseCallableManager.Instance.GetEntitlementsAsync(ct)` — ✅ 구현됨
   - 응답: `CommonResult<EntitlementsSnapshot>` (raw season pass ID → PurchaseManager가 resolve)
-- **GetLatestConsumablePurchase30dAsync**: `FirebaseManager.Instance.GetRecentPurchases30dAsync(data, ct)` — ✅ 구현됨
+- **GetLatestConsumablePurchase30dAsync**: `FirebaseCallableManager.Instance.GetRecentPurchases30dAsync(data, ct)` — ✅ 구현됨
   - 응답: `CommonResult<RecentPurchaseItem>`
-- **syncRefundsPageAsync**: `FirebaseManager.Instance.GetPurchaseAdjustmentsAsync(data, ct)` — ✅ 구현됨
+- **syncRefundsPageAsync**: `FirebaseCallableManager.Instance.GetPurchaseAdjustmentsAsync(data, ct)` — ✅ 구현됨
   - 응답: `CommonResult<RefundPageResult>` (raw item → PurchaseManager가 domain 보강)
-- **ackRefundAppliedAsync**: `FirebaseManager.Instance.AckRefundAppliedAsync(data, ct)` — ✅ 구현됨
+- **ackRefundAppliedAsync**: `FirebaseCallableManager.Instance.AckRefundAppliedAsync(data, ct)` — ✅ 구현됨
   - 응답: `CommonResult`
-- Firebase callable 호출/에러 매핑/응답 파싱은 [23-firebase-manager](../../23-firebase-manager/SKILL.md)에 통합.
+- Firebase callable 호출/에러 매핑/응답 파싱은 [23-firebase-callable-manager](../../23-firebase-callable-manager/SKILL.md)에 통합.
   PurchaseManager는 `FunctionsException`을 직접 catch하지 않는다. `using Firebase.Functions` 불필요.
   domain 변환(ResolveSeasonPassId, ResolveRewardGroupId 등)은 PurchaseManager가 typed result 수신 후 수행한다.
 

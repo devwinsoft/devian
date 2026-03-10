@@ -73,47 +73,11 @@ foreground 복귀 기준 동작:
 - prefab은 수동으로 생성한다 (자동 생성 코드 없음).
 
 
-## VersionCheck
+## Version Check Ownership
 
-`MobileApplication`은 서버에서 받은 버전 정보와 `BaseApplication.AppVersion`을 비교하여 업데이트 필요 여부를 판정한다.
-
-### VersionCheckResult
-
-```csharp
-public enum VersionCheckResult
-{
-    Success,
-    RecommendUpdate,
-    ForceUpdate,
-}
-```
-
-- `Success`: 현재 버전이 최신이거나 문제 없음
-- `RecommendUpdate`: `currentVersion` 미만. 플레이 가능하지만 업데이트 권고
-- `ForceUpdate`: `minVersion` 미만. 해당 버전 이상으로 업데이트 필수 (플레이 불가)
-
-### VersionCheck() 메서드
-
-```csharp
-public VersionCheckResult VersionCheck()
-```
-
-동작:
-1. `RemoteConfigManager.TryGet()`으로 RemoteConfigManager 접근
-2. `RemoteConfigManager.Storage.snapshot`에서 `minVersion`, `currentVersion` 읽기
-3. `AppVersion < minVersion`이면 `ForceUpdate`
-4. `AppVersion < currentVersion`이면 `RecommendUpdate`
-5. 그 외 `Success`
-6. RemoteConfigManager가 없거나 snapshot이 null이면 `Success` 반환
-
-서버 버전 정보는 `getRemoteConfig` Firebase Callable 응답에 포함된다.
-`RemoteConfigManager.InitializeAsync()` 또는 `RefreshAsync()` 이후에 호출해야 유효한 결과를 얻는다.
-
-### Implementation Location (3-path mirror)
-
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Bootstrap/VersionCheckResult.cs`
-- Packages (sync): 위와 동일 경로 (Packages mirror)
-- Assets/Samples (import): 위와 동일 경로 (Assets/Samples mirror)
+- `MobileApplication`은 버전 판정 API를 소유하지 않는다.
+- 버전 체크는 `LoginManager`가 진입 초기 단계에서 수행한다.
+- 관련 타입/메서드는 [24-login-manager](../24-login-manager/SKILL.md)를 따른다.
 
 
 ## RequireComponent
@@ -131,7 +95,7 @@ MobileApplication에 부착된 RequireComponent:
 - `LoginManager`
 - `SaveDataManager`
 - `InputManager` — [24-input-manager](../../20-domain-common-system/22-input-manager/SKILL.md)
-- `FirebaseManager` — [23-firebase-manager](../23-firebase-manager/SKILL.md)
+- `FirebaseCallableManager` — [23-firebase-callable-manager](../23-firebase-callable-manager/SKILL.md)
 
 
 ## Links

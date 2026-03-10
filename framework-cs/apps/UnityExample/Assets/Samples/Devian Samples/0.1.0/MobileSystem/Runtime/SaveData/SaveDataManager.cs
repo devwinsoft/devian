@@ -806,20 +806,22 @@ namespace Devian
             var inventory = getInventoryStorageOrNull();
             var purchase = getPurchaseStorageOrNull();
             var account = getAccountStorageOrNull();
-            var message = getGameMessageStorageOrNull();
+            var message = getMetaMessageStorageOrNull();
             var remoteConfig = getRemoteConfigStorageOrNull();
             var mission = getMissionStorageOrNull();
             var achieve = getAchieveStorageOrNull();
             var leaderboardReward = getLeaderboardStorageOrNull();
+            var attend = getAttendStorageOrNull();
             return SaveDataJsonCodec.Serialize(
                 inventory ?? new InventoryStorage(),
                 purchase ?? new PurchaseStorage(),
                 account ?? new AccountStorage(),
-                message ?? new GameMessageStorage(),
+                message ?? new MetaMessageStorage(),
                 remoteConfig ?? new RemoteConfigStorage(),
                 mission ?? new MissionStorage(),
                 achieve ?? new AchieveStorage(),
-                leaderboardReward ?? new LeaderboardSeasonRewardStorage());
+                leaderboardReward ?? new LeaderboardSeasonRewardStorage(),
+                attend ?? new AttendStorage());
         }
 
         /// <summary>
@@ -844,17 +846,19 @@ namespace Devian
             var inventory = getInventoryStorageOrNull();
             var purchase = getPurchaseStorageOrNull();
             var account = getAccountStorageOrNull();
-            var messageManager = getGameMessageManagerOrNull();
+            var messageManager = getMetaMessageManagerOrNull();
             var remoteConfigManager = getRemoteConfigManagerOrNull();
             var missionManager = getMissionManagerOrNull();
             var achieveManager = getAchieveManagerOrNull();
             var leaderboardManager = getLeaderboardManagerOrNull();
+            var attendManager = getAttendManagerOrNull();
             var message = messageManager != null ? messageManager.Storage : null;
             var remoteConfig = remoteConfigManager != null ? remoteConfigManager.Storage : null;
             var mission = missionManager != null ? missionManager.Storage : null;
             var achieve = achieveManager != null ? achieveManager.Storage : null;
             var leaderboardReward = leaderboardManager != null ? leaderboardManager.Storage : null;
-            if (inventory == null || purchase == null || account == null || message == null || remoteConfig == null || mission == null || achieve == null || leaderboardReward == null)
+            var attend = attendManager != null ? attendManager.Storage : null;
+            if (inventory == null || purchase == null || account == null || message == null || remoteConfig == null || mission == null || achieve == null || leaderboardReward == null || attend == null)
                 return;
 
             messageManager.ClearStorage();
@@ -862,7 +866,8 @@ namespace Devian
             missionManager.ClearStorage();
             achieveManager.ClearStorage();
             leaderboardManager.ClearStorage();
-            SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, account, message, remoteConfig, mission, achieve, leaderboardReward);
+            attendManager.ClearStorage();
+            SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, account, message, remoteConfig, mission, achieve, leaderboardReward, attend);
             applyLoadedAccountStorageToRuntime();
         }
 
@@ -871,11 +876,12 @@ namespace Devian
             getInventoryStorageOrNull()?.Clear();
             getPurchaseStorageOrNull()?.ClearAll();
             getAccountStorageOrNull()?.Clear();
-            getGameMessageManagerOrNull()?.ClearStorage();
+            getMetaMessageManagerOrNull()?.ClearStorage();
             getRemoteConfigManagerOrNull()?.ClearStorage();
             getMissionManagerOrNull()?.ClearStorage();
             getAchieveManagerOrNull()?.ClearStorage();
             getLeaderboardManagerOrNull()?.ClearStorage();
+            getAttendManagerOrNull()?.ClearStorage();
             applyLoadedAccountStorageToRuntime();
         }
 
@@ -1478,7 +1484,7 @@ namespace Devian
             }
         }
 
-        private static MetaMessageManager getGameMessageManagerOrNull()
+        private static MetaMessageManager getMetaMessageManagerOrNull()
         {
             try
             {
@@ -1491,7 +1497,7 @@ namespace Devian
             }
         }
 
-        private static GameMessageStorage getGameMessageStorageOrNull()
+        private static MetaMessageStorage getMetaMessageStorageOrNull()
         {
             try
             {
@@ -1549,6 +1555,32 @@ namespace Devian
             {
                 var missionManager = MissionManager.Instance;
                 return missionManager != null ? missionManager.Storage : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static AttendManager getAttendManagerOrNull()
+        {
+            try
+            {
+                var attendManager = AttendManager.Instance;
+                return attendManager != null ? attendManager : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static AttendStorage getAttendStorageOrNull()
+        {
+            try
+            {
+                var attendManager = AttendManager.Instance;
+                return attendManager != null ? attendManager.Storage : null;
             }
             catch
             {

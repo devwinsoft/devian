@@ -48,17 +48,30 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
 
     private async Task OnClickGuestLoginAsync()
     {
-        var login = await LoginManager.Instance.LoginAndInitializeAsync(LoginType.GUEST, CancellationToken.None);
+        var login = await LoginManager.Instance.LoginAndInitializeAsync(
+            LoginType.GUEST,
+            TestApplication.Instance.AppVersion,
+            CancellationToken.None);
         Debug.Log($"LoginAsync: success={login.IsSuccess}");
         if (login.IsSuccess)
         {
-            if (login.Value != null && login.Value.IsConflict)
+            var result = login.Value;
+            if (result.IsForceUpdate)
+            {
+                message.text = $"{result.VersionResult}";
+                return;
+            }
+
+            if (result.IsConflict)
             {
                 message.text = "SAVEDATA_SYNC_CONFLICT";
-                this.ShowResolveFrame(login.Value.LocalSummary, login.Value.CloudSummary);
+                this.ShowResolveFrame(result.LocalSummary, result.CloudSummary);
                 await SaveDataManager.Instance.ResolveConflictAsync(SyncResolution.UseLocal, CancellationToken.None);
                 return;
             }
+
+            if (result.IsRecommendUpdate)
+                Debug.LogWarning($"Recommend update on guest login: {result.VersionResult}");
 
             await TestApplication.Instance.LoadAsync(SystemLanguage.Korean, onLoadProgress);
             await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
@@ -71,16 +84,29 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
 
     private async Task OnClickGoogleLoginAsync()
     {
-        var login = await LoginManager.Instance.LoginAndInitializeAsync(LoginType.GOOGLE, CancellationToken.None);
+        var login = await LoginManager.Instance.LoginAndInitializeAsync(
+            LoginType.GOOGLE,
+            TestApplication.Instance.AppVersion,
+            CancellationToken.None);
         Debug.Log($"LoginAsync: success={login.IsSuccess}");
         if (login.IsSuccess)
         {
-            if (login.Value != null && login.Value.IsConflict)
+            var result = login.Value;
+            if (result.IsForceUpdate)
             {
-                message.text = "SAVEDATA_SYNC_CONFLICT";
-                this.ShowResolveFrame(login.Value.LocalSummary, login.Value.CloudSummary);
+                message.text = $"{result.VersionResult}";
                 return;
             }
+
+            if (result.IsConflict)
+            {
+                message.text = "SAVEDATA_SYNC_CONFLICT";
+                this.ShowResolveFrame(result.LocalSummary, result.CloudSummary);
+                return;
+            }
+
+            if (result.IsRecommendUpdate)
+                Debug.LogWarning($"Recommend update on google login: {result.VersionResult}");
 
             await TestApplication.Instance.LoadAsync(SystemLanguage.Korean, onLoadProgress);
             await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
@@ -93,10 +119,27 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
 
     private async Task ResolveConflictAsync(SyncResolution syncResolution)
     {
-        var login = await LoginManager.Instance.ResolveConflictAndInitializeAsync(syncResolution, CancellationToken.None);
+        var login = await LoginManager.Instance.ResolveConflictAndInitializeAsync(
+            syncResolution,
+            TestApplication.Instance.AppVersion,
+            CancellationToken.None);
         Debug.Log($"ResolveConflictAsync: success={login.IsSuccess}");
         if (login.IsSuccess)
         {
+            var result = login.Value;
+            if (result.IsForceUpdate)
+            {
+                message.text = $"{result.VersionResult}";
+                return;
+            }
+
+            if (result.IsConflict)
+            {
+                message.text = "SAVEDATA_SYNC_CONFLICT";
+                this.ShowResolveFrame(result.LocalSummary, result.CloudSummary);
+                return;
+            }
+
             await TestApplication.Instance.LoadAsync(SystemLanguage.Korean, onLoadProgress);
             await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
         }

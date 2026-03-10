@@ -333,12 +333,12 @@ namespace Devian
 
         void subscribeRuntimeTrigger(int ownerKey, MESSAGE_META_TYPE messageType, BaseTrigger<int, MESSAGE_META_TYPE>.Handler handler)
         {
-            MetaMessageManager.Instance.SubcribeGameMessageTrigger(ownerKey, messageType, handler);
+            MetaMessageManager.Instance.SubcribeMetaMessageTrigger(ownerKey, messageType, handler);
         }
 
         void unSubcribeRuntimeTrigger(int ownerKey)
         {
-            MetaMessageManager.Instance.UnSubcribeGameMessageTrigger(ownerKey);
+            MetaMessageManager.Instance.UnSubcribeMetaMessageTrigger(ownerKey);
         }
 
         void onRuntimeChanged(MissionRuntimeBase runtime)

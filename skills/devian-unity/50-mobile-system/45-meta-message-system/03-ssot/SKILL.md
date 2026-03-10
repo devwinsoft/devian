@@ -9,15 +9,15 @@ AppliesTo: v10
 
 - `MetaMessageManager` 클래스의 1차 책임 범위
 - Game message trigger 라우터 타입 규약
-- Message stat 저장 모델(`GameMessageStorage`) 정본
+- Message stat 저장 모델(`MetaMessageStorage`) 정본
 
 ---
 
 ## A) Types
 
 - `MetaMessageManager`
-- `GameMessageStorage`
-- `GameMessageTrigger : BaseTrigger<int, GAME_MESSAGE_TYPE>`
+- `MetaMessageStorage`
+- `MetaMessageTrigger : BaseTrigger<int, GAME_MESSAGE_TYPE>`
 
 공통 trigger 동작 정본:
 - [20-domain-common-system/25-trigger](../../../20-domain-common-system/25-trigger/SKILL.md)
@@ -53,7 +53,7 @@ AppliesTo: v10
 ## Related
 
 - [10-meta-message-manager](../10-meta-message-manager/SKILL.md)
-- [11-game-message-trigger](../11-game-message-trigger/SKILL.md)
-- [14-game-message-storage](../14-game-message-storage/SKILL.md)
+- [11-meta-message-trigger](../11-meta-message-trigger/SKILL.md)
+- [14-meta-message-storage](../14-meta-message-storage/SKILL.md)
 - [48-mission-system/16-mission-message-trigger](../../48-mission-system/16-mission-message-trigger/SKILL.md)
 - [48-mission-system/03-ssot](../../48-mission-system/03-ssot/SKILL.md)

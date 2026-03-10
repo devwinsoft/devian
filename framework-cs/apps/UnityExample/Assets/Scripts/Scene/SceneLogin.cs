@@ -47,7 +47,9 @@ public class SceneLogin : SceneBootstrap
             });
         
         // Auto login...
-        var initialize = await LoginManager.Instance.EnsureRuntimeSessionAndInitializeAsync(CancellationToken.None);
+        var initialize = await LoginManager.Instance.EnsureRuntimeSessionAndInitializeAsync(
+            TestApplication.Instance.AppVersion,
+            CancellationToken.None);
         Debug.Log($"EnsureRuntimeSessionAndInitializeAsync: success={initialize.IsSuccess}");
         if (initialize.IsFailure)
         {
@@ -57,21 +59,35 @@ public class SceneLogin : SceneBootstrap
             return;
         }
 
-        if (initialize.Value == null)
+        var result = initialize.Value;
+        if (result.IsForceUpdate)
         {
-            Debug.Log("Login bootstrap pending explicit login.");
-            UICanvasLoading.Instance.ShowLoginButtons();
+            Debug.LogWarning($"Login bootstrap blocked by force update: {result.VersionResult}");
+            UICanvasLoading.Instance.message.text = $"{result.VersionResult}";
             return;
         }
 
-        if (initialize.Value.IsConflict)
+        if (!AccountManager.Instance.HasAuthenticatedSession)
         {
-            Debug.LogWarning(
-                $"Login bootstrap conflict: local={initialize.Value.LocalDeviceId}, cloud={initialize.Value.CloudDeviceId}");
-            UICanvasLoading.Instance.message.text = "SAVEDATA_SYNC_CONFLICT";
-            UICanvasLoading.Instance.ShowResolveFrame(initialize.Value.LocalSummary, initialize.Value.CloudSummary);
+            Debug.Log($"Login bootstrap pending explicit login by auth state. version={result.VersionResult}");
+            if (result.IsRecommendUpdate)
+                UICanvasLoading.Instance.message.text = $"{result.VersionResult}";
+
+            UICanvasLoading.Instance.ShowLoginButtons();
             return;
         }
+        
+        if (result.IsConflict)
+        {
+            Debug.LogWarning(
+                $"Login bootstrap conflict: local={result.LocalDeviceId}, cloud={result.CloudDeviceId}");
+            UICanvasLoading.Instance.message.text = "SAVEDATA_SYNC_CONFLICT";
+            UICanvasLoading.Instance.ShowResolveFrame(result.LocalSummary, result.CloudSummary);
+            return;
+        }
+
+        if (result.IsRecommendUpdate)
+            Debug.LogWarning($"Login bootstrap recommend update: {result.VersionResult}");
 
         await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
     }

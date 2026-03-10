@@ -1,4 +1,4 @@
-# 11-game-message-trigger
+# 11-meta-message-trigger
 
 Status: ACTIVE
 AppliesTo: v10
@@ -16,7 +16,7 @@ Game message 입력 라우터다.
 ## Contract
 
 ```csharp
-public sealed class GameMessageTrigger : BaseTrigger<int, GAME_MESSAGE_TYPE>
+public sealed class MetaMessageTrigger : BaseTrigger<int, GAME_MESSAGE_TYPE>
 {
 }
 ```

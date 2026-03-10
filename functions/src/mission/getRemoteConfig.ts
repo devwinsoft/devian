@@ -10,17 +10,13 @@
  * core 로직은 getRemoteConfigCore.ts 에 위치 (initSession과 공유).
  */
 
-import {onCall, HttpsError} from "firebase-functions/v2/https";
+import {onCall} from "firebase-functions/v2/https";
 import {fetchRemoteConfig} from "./getRemoteConfigCore";
 import * as logger from "firebase-functions/logger";
 
 export const getRemoteConfig = onCall(
   async (request) => {
-    if (!request.auth) {
-      throw new HttpsError("unauthenticated", "Authentication required");
-    }
-
-    const uid = request.auth.uid;
+    const uid = request.auth?.uid ?? "unauthenticated";
     const result = await fetchRemoteConfig();
 
     logger.info(`[getRemoteConfig] uid=${uid} serverNowUtcMs=${result.serverNowUtcMs}`);

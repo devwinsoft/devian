@@ -84,7 +84,7 @@ AppliesTo: v10
 
 ### B) Firebase callable (`rewards` / `grants`)
 
-대표 구현: `FirebaseManager.parseInitialInventoryRewards`
+대표 구현: `FirebaseCallableManager.parseInitialInventoryRewards`
 
 - `type`: 문자열 enum name 우선, 필요 시 숫자 변환 허용
 - `id`: 공백이면 skip
@@ -142,7 +142,7 @@ AppliesTo: v10
 - RewardData: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Reward/RewardData.cs`
 - RewardGroup 해석: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Reward/RewardManager.cs`
 - 실제 적용: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Inventory/InventoryManager.cs`
-- Initial callable 파싱: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Firebase/FirebaseManager.cs`
+- Initial callable 파싱: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/FirebaseCallable/FirebaseCallableManager.cs`
 
 
 ---

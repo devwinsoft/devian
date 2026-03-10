@@ -19,7 +19,7 @@ AppliesTo: v10
 
 제외:
 - SaveData sync/초기화
-- `FirebaseManager.InitSessionAsync` 호출
+- `FirebaseCallableManager.InitSessionAsync` 호출
 - 구매 진입 인증 게이트 오케스트레이션
 - Scene/UI 제어
 

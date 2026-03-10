@@ -12,12 +12,13 @@ namespace Devian
     [RequireComponent(typeof(AchieveManager))]
     [RequireComponent(typeof(LeaderboardManager))]
     [RequireComponent(typeof(MetaMessageManager))]
+    [RequireComponent(typeof(AttendManager))]
     [RequireComponent(typeof(MissionManager))]
     [RequireComponent(typeof(RemoteConfigManager))]
     [RequireComponent(typeof(SaveDataManager))]
     [RequireComponent(typeof(LoginManager))]
     [RequireComponent(typeof(InputManager))]
-    [RequireComponent(typeof(FirebaseManager))]
+    [RequireComponent(typeof(FirebaseCallableManager))]
     [RequireComponent(typeof(AnalyzeManager))]
     public abstract class MobileApplication : BaseApplication
     {
@@ -110,38 +111,6 @@ namespace Devian
         }
         #endif
 
-        /// <summary>
-        /// RemoteConfigSnapshot의 버전 정보와 AppVersion을 비교하여 업데이트 필요 여부를 판정한다.
-        /// RemoteConfigManager.InitializeAsync() 또는 RefreshAsync() 이후에 호출해야 한다.
-        /// </summary>
-        public VersionCheckResult VersionCheck()
-        {
-            if (!RemoteConfigManager.TryGet(out var remoteConfigManager))
-                return VersionCheckResult.Success;
-
-            var snapshot = remoteConfigManager.Storage.snapshot;
-            if (snapshot == null)
-                return VersionCheckResult.Success;
-
-            // minVersion 체크 (ForceUpdate)
-            if (!string.IsNullOrEmpty(snapshot.minVersion)
-                && VersionNumber.TryParse(snapshot.minVersion, out var min)
-                && AppVersion < min)
-            {
-                return VersionCheckResult.ForceUpdate;
-            }
-
-            // currentVersion 체크 (RecommendUpdate)
-            if (!string.IsNullOrEmpty(snapshot.currentVersion)
-                && VersionNumber.TryParse(snapshot.currentVersion, out var recommend)
-                && AppVersion < recommend)
-            {
-                return VersionCheckResult.RecommendUpdate;
-            }
-
-            return VersionCheckResult.Success;
-        }
-
         private static async Task refreshRemoteConfigAsync()
         {
             if (!RemoteConfigManager.TryGet(out var remoteConfigManager))
@@ -173,7 +142,7 @@ namespace Devian
 
         void configureFunctionsRegion()
         {
-            GetComponent<FirebaseManager>()?.SetFunctionsRegion(FirebaseFunctionsRegion);
+            GetComponent<FirebaseCallableManager>()?.SetFunctionsRegion(FirebaseFunctionsRegion);
         }
     }
 }

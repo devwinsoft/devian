@@ -12,18 +12,23 @@ namespace Devian
         public string CloudDeviceId { get; }
         public SaveRecordSummary LocalSummary { get; }
         public SaveRecordSummary CloudSummary { get; }
+        public VersionCheckResult VersionResult { get; }
         public bool IsConflict => SyncState == SyncState.Conflict;
+        public bool IsRecommendUpdate => VersionResult == VersionCheckResult.RecommendUpdate;
+        public bool IsForceUpdate => VersionResult == VersionCheckResult.ForceUpdate;
 
         public LoginInitializeResult(
             SyncState syncState,
             string localDeviceId = "",
             string cloudDeviceId = "",
             SaveRecordSummary localSummary = null,
-            SaveRecordSummary cloudSummary = null)
+            SaveRecordSummary cloudSummary = null,
+            VersionCheckResult versionResult = VersionCheckResult.Success)
         {
             SyncState = syncState;
             LocalSummary = localSummary ?? SaveRecordSummary.Missing();
             CloudSummary = cloudSummary ?? SaveRecordSummary.Missing();
+            VersionResult = versionResult;
             LocalDeviceId = !string.IsNullOrEmpty(localDeviceId)
                 ? localDeviceId
                 : LocalSummary.DeviceId;
@@ -37,78 +42,80 @@ namespace Devian
     {
         const string Tag = nameof(LoginManager);
 
+        readonly struct VersionCheckContext
+        {
+            public VersionCheckContext(VersionCheckResult result, RemoteConfigSnapshot snapshot)
+            {
+                Result = result;
+                Snapshot = snapshot;
+            }
+
+            public VersionCheckResult Result { get; }
+            public RemoteConfigSnapshot Snapshot { get; }
+        }
+
         protected override void onInitAwake()
         {
         }
 
-        public async Task<CommonResult<LoginInitializeResult>> EnsureRuntimeSessionAndInitializeAsync(CancellationToken ct = default)
+        public async Task<CommonResult<LoginInitializeResult>> EnsureRuntimeSessionAndInitializeAsync(
+            VersionNumber clientVersion,
+            CancellationToken ct = default)
         {
-            var restore = await AccountManager.Instance.EnsureRuntimeAuthSessionAsync(ct);
+            var versionGate = await runVersionCheckAsync(clientVersion, ct);
             await yieldMainThreadAsync(ct);
-            if (restore.IsFailure)
-                return CommonResult<LoginInitializeResult>.Failure(restore.Error!);
+            if (versionGate.IsFailure)
+                return CommonResult<LoginInitializeResult>.Failure(versionGate.Error!);
 
-            SessionInitSnapshot? snapshot = null;
-            if (restore.Value)
-            {
-                var initSession = await initializeSessionSnapshotAsync(ct);
-                await yieldMainThreadAsync(ct);
-                if (initSession.IsFailure)
-                    return CommonResult<LoginInitializeResult>.Failure(initSession.Error!);
-
-                snapshot = initSession.Value;
-            }
-            else
-            {
-                var loginType = AccountManager.Instance.CurrentLoginType;
-                if (loginType == LoginType.NONE)
-                {
-                    var localInit = await syncAndInitializeAsync(snapshot, ct);
-                    await yieldMainThreadAsync(ct);
-                    if (localInit.IsFailure)
-                        return localInit;
-
-                    Debug.Log($"[{Tag}] No previous login. Runtime initialized in local mode. Waiting for explicit login.");
-                    return CommonResult<LoginInitializeResult>.Success(null);
-                }
-
-                var canProceedWithoutSnapshot = AccountManager.Instance.IsLocalOnlySaveMode;
-                if (!canProceedWithoutSnapshot)
-                {
-                    var localInit = await syncAndInitializeAsync(snapshot, ct);
-                    await yieldMainThreadAsync(ct);
-                    if (localInit.IsFailure)
-                        return localInit;
-
-                    Debug.Log($"[{Tag}] Runtime session restore unavailable. Runtime initialized in local mode. Waiting for explicit login. loginType={loginType}");
-                    return CommonResult<LoginInitializeResult>.Success(null);
-                }
-
-                Debug.Log($"[{Tag}] Proceeding without SessionInitSnapshot for local-only loginType={loginType}.");
-            }
-
-            return await syncAndInitializeAsync(snapshot, ct);
+            return await ensureRuntimeSessionAndInitializeCoreAsync(
+                versionGate.Value.Snapshot,
+                versionGate.Value.Result,
+                ct);
         }
 
-        public async Task<CommonResult<LoginInitializeResult>> LoginAndInitializeAsync(LoginType loginType, CancellationToken ct = default)
+        public async Task<CommonResult<LoginInitializeResult>> LoginAndInitializeAsync(
+            LoginType loginType,
+            VersionNumber clientVersion,
+            CancellationToken ct = default)
         {
+            var versionGate = await runVersionCheckAsync(clientVersion, ct);
+            await yieldMainThreadAsync(ct);
+            if (versionGate.IsFailure)
+                return CommonResult<LoginInitializeResult>.Failure(versionGate.Error!);
+
             var login = await AccountManager.Instance.LoginAsync(loginType, ct);
             await yieldMainThreadAsync(ct);
             if (login.IsFailure)
                 return CommonResult<LoginInitializeResult>.Failure(login.Error!);
+
+            if (versionGate.Value.Result == VersionCheckResult.ForceUpdate)
+                return createVersionCheckResult(versionGate.Value.Result);
 
             var initSession = await initializeSessionSnapshotAsync(ct);
             await yieldMainThreadAsync(ct);
             if (initSession.IsFailure)
                 return CommonResult<LoginInitializeResult>.Failure(initSession.Error!);
 
-            return await syncAndInitializeAsync(initSession.Value, ct);
+            return await syncAndInitializeAsync(
+                initSession.Value,
+                versionGate.Value.Snapshot,
+                versionGate.Value.Result,
+                ct);
         }
 
         public async Task<CommonResult<LoginInitializeResult>> ResolveConflictAndInitializeAsync(
             SyncResolution resolution,
+            VersionNumber clientVersion,
             CancellationToken ct = default)
         {
+            var versionGate = await runVersionCheckAsync(clientVersion, ct);
+            await yieldMainThreadAsync(ct);
+            if (versionGate.IsFailure)
+                return CommonResult<LoginInitializeResult>.Failure(versionGate.Error!);
+
+            if (versionGate.Value.Result == VersionCheckResult.ForceUpdate)
+                return createVersionCheckResult(versionGate.Value.Result);
+
             var resolve = await SaveDataManager.Instance.ResolveConflictAsync(resolution, ct);
             await yieldMainThreadAsync(ct);
             if (resolve.IsFailure)
@@ -117,11 +124,14 @@ namespace Devian
                 return CommonResult<LoginInitializeResult>.Failure(resolve.Error!);
             }
 
-            var initialize = await EnsureRuntimeSessionAndInitializeAsync(ct);
+            var initialize = await ensureRuntimeSessionAndInitializeCoreAsync(
+                versionGate.Value.Snapshot,
+                versionGate.Value.Result,
+                ct);
             if (initialize.IsFailure)
                 return initialize;
 
-            if (initialize.Value != null && initialize.Value.IsConflict)
+            if (initialize.Value.IsConflict)
             {
                 return CommonResult<LoginInitializeResult>.Failure(
                     CommonErrorType.SAVEDATA_SYNC_RESOLVE_FAILED,
@@ -129,6 +139,21 @@ namespace Devian
             }
 
             return initialize;
+        }
+
+        public Task<CommonResult<VersionCheckResult>> VersionCheck(VersionNumber clientVersion, CancellationToken ct = default)
+        {
+            return VersionCheckAsync(clientVersion, ct);
+        }
+
+        public async Task<CommonResult<VersionCheckResult>> VersionCheckAsync(VersionNumber clientVersion, CancellationToken ct = default)
+        {
+            var versionGate = await runVersionCheckAsync(clientVersion, ct);
+            await yieldMainThreadAsync(ct);
+            if (versionGate.IsFailure)
+                return CommonResult<VersionCheckResult>.Failure(versionGate.Error!);
+
+            return CommonResult<VersionCheckResult>.Success(versionGate.Value.Result);
         }
 
         public bool IsPurchaseLoginReady()
@@ -163,10 +188,70 @@ namespace Devian
 #endif
         }
 
+        async Task<CommonResult<LoginInitializeResult>> ensureRuntimeSessionAndInitializeCoreAsync(
+            RemoteConfigSnapshot versionCheckedRemoteConfig,
+            VersionCheckResult versionResult,
+            CancellationToken ct)
+        {
+            var restore = await AccountManager.Instance.EnsureRuntimeAuthSessionAsync(ct);
+            await yieldMainThreadAsync(ct);
+            if (restore.IsFailure)
+                return CommonResult<LoginInitializeResult>.Failure(restore.Error!);
+
+            SessionInitSnapshot? snapshot = null;
+            if (restore.Value)
+            {
+                var initSession = await initializeSessionSnapshotAsync(ct);
+                await yieldMainThreadAsync(ct);
+                if (initSession.IsFailure)
+                    return CommonResult<LoginInitializeResult>.Failure(initSession.Error!);
+
+                snapshot = initSession.Value;
+            }
+            else
+            {
+                var loginType = AccountManager.Instance.CurrentLoginType;
+                if (loginType == LoginType.NONE)
+                {
+                    var localInit = await syncAndInitializeAsync(
+                        snapshot,
+                        versionCheckedRemoteConfig,
+                        versionResult,
+                        ct);
+                    await yieldMainThreadAsync(ct);
+                    if (localInit.IsFailure)
+                        return localInit;
+
+                    Debug.Log($"[{Tag}] No previous login. Runtime initialized in local mode. Waiting for explicit login.");
+                    return localInit;
+                }
+
+                var canProceedWithoutSnapshot = AccountManager.Instance.IsLocalOnlySaveMode;
+                if (!canProceedWithoutSnapshot)
+                {
+                    var localInit = await syncAndInitializeAsync(
+                        snapshot,
+                        versionCheckedRemoteConfig,
+                        versionResult,
+                        ct);
+                    await yieldMainThreadAsync(ct);
+                    if (localInit.IsFailure)
+                        return localInit;
+
+                    Debug.Log($"[{Tag}] Runtime session restore unavailable. Runtime initialized in local mode. Waiting for explicit login. loginType={loginType}");
+                    return localInit;
+                }
+
+                Debug.Log($"[{Tag}] Proceeding without SessionInitSnapshot for local-only loginType={loginType}.");
+            }
+
+            return await syncAndInitializeAsync(snapshot, versionCheckedRemoteConfig, versionResult, ct);
+        }
+
         async Task<CommonResult<SessionInitSnapshot?>> initializeSessionSnapshotAsync(CancellationToken ct)
         {
 #if !UNITY_EDITOR
-            var initSession = await FirebaseManager.Instance.InitSessionAsync(null, ct);
+            var initSession = await FirebaseCallableManager.Instance.InitSessionAsync(null, ct);
             await yieldMainThreadAsync(ct);
             if (initSession.IsFailure)
                 return CommonResult<SessionInitSnapshot?>.Failure(initSession.Error!);
@@ -177,7 +262,11 @@ namespace Devian
 #endif
         }
 
-        async Task<CommonResult<LoginInitializeResult>> syncAndInitializeAsync(SessionInitSnapshot? snapshot, CancellationToken ct)
+        async Task<CommonResult<LoginInitializeResult>> syncAndInitializeAsync(
+            SessionInitSnapshot? snapshot,
+            RemoteConfigSnapshot versionCheckedRemoteConfig,
+            VersionCheckResult versionResult,
+            CancellationToken ct)
         {
             // sign-in/restore 이후 data-sync는 항상 먼저 수행한다.
             var sync = await SaveDataManager.Instance.SyncGameStorageAsync(ct);
@@ -198,7 +287,8 @@ namespace Devian
                         sync.Value.LocalDeviceId,
                         sync.Value.CloudDeviceId,
                         sync.Value.LocalSummary,
-                        sync.Value.CloudSummary));
+                        sync.Value.CloudSummary,
+                        versionResult));
             }
 
             if (sync.Value.State == SyncState.Initial)
@@ -221,10 +311,15 @@ namespace Devian
                 }
             }
 
-            return await syncGameStateAsync(snapshot, sync.Value, ct);
+            return await syncGameStateAsync(snapshot, versionCheckedRemoteConfig, versionResult, sync.Value, ct);
         }
 
-        async Task<CommonResult<LoginInitializeResult>> syncGameStateAsync(SessionInitSnapshot? snapshot, SyncResult sync, CancellationToken ct)
+        async Task<CommonResult<LoginInitializeResult>> syncGameStateAsync(
+            SessionInitSnapshot? snapshot,
+            RemoteConfigSnapshot versionCheckedRemoteConfig,
+            VersionCheckResult versionResult,
+            SyncResult sync,
+            CancellationToken ct)
         {
             var syncPurchase = await PurchaseManager.Instance.SyncAsync(snapshot);
             await yieldMainThreadAsync(ct);
@@ -273,12 +368,21 @@ namespace Devian
                 return CommonResult<LoginInitializeResult>.Failure(initMessage.Error!);
             }
 
-            var initRemoteConfig = await RemoteConfigManager.Instance.InitializeAsync(snapshot?.RemoteConfig, ct);
+            var preloadedRemoteConfig = snapshot?.RemoteConfig ?? versionCheckedRemoteConfig;
+            var initRemoteConfig = await RemoteConfigManager.Instance.InitializeAsync(preloadedRemoteConfig, ct);
             await yieldMainThreadAsync(ct);
             if (initRemoteConfig.IsFailure)
             {
                 Debug.LogError($"[{Tag}] RemoteConfigManager.InitializeAsync failed: {initRemoteConfig.Error.Code}: {initRemoteConfig.Error.Message}");
                 return CommonResult<LoginInitializeResult>.Failure(initRemoteConfig.Error!);
+            }
+
+            var initAttend = await AttendManager.Instance.InitializeAsync(ct);
+            await yieldMainThreadAsync(ct);
+            if (initAttend.IsFailure)
+            {
+                Debug.LogError($"[{Tag}] AttendManager.InitializeAsync failed: {initAttend.Error.Code}: {initAttend.Error.Message}");
+                return CommonResult<LoginInitializeResult>.Failure(initAttend.Error!);
             }
 
             var initMission = await MissionManager.Instance.InitializeAsync(ct);
@@ -326,7 +430,81 @@ namespace Devian
                     sync.LocalDeviceId,
                     sync.CloudDeviceId,
                     sync.LocalSummary,
-                    sync.CloudSummary));
+                    sync.CloudSummary,
+                    versionResult));
+        }
+
+        async Task<CommonResult<VersionCheckContext>> runVersionCheckAsync(VersionNumber clientVersion, CancellationToken ct)
+        {
+            var remoteConfig = await fetchVersionRemoteConfigSnapshotAsync(ct);
+            if (remoteConfig.IsFailure)
+                return CommonResult<VersionCheckContext>.Failure(remoteConfig.Error!);
+
+            var snapshot = remoteConfig.Value ?? new RemoteConfigSnapshot();
+            var result = evaluateVersionCheck(snapshot, clientVersion);
+            return CommonResult<VersionCheckContext>.Success(new VersionCheckContext(result, snapshot));
+        }
+
+        async Task<CommonResult<RemoteConfigSnapshot>> fetchVersionRemoteConfigSnapshotAsync(CancellationToken ct)
+        {
+#if UNITY_EDITOR
+            if (!RemoteConfigManager.TryGet(out var remoteConfigManager)
+                || remoteConfigManager == null)
+            {
+                return CommonResult<RemoteConfigSnapshot>.Failure(
+                    CommonErrorType.COMMON_SERVER,
+                    "RemoteConfigManager is not available.");
+            }
+
+            var refresh = await remoteConfigManager.RefreshAsync(ct);
+            if (refresh.IsFailure)
+                return CommonResult<RemoteConfigSnapshot>.Failure(refresh.Error!);
+
+            var snapshot = refresh.Value ?? remoteConfigManager.Storage.snapshot ?? new RemoteConfigSnapshot();
+            return CommonResult<RemoteConfigSnapshot>.Success(snapshot);
+#else
+            if (!FirebaseCallableManager.TryGet(out var firebaseCallableManager)
+                || firebaseCallableManager == null)
+            {
+                return CommonResult<RemoteConfigSnapshot>.Failure(
+                    CommonErrorType.COMMON_SERVER,
+                    "FirebaseCallableManager is not available.");
+            }
+
+            var remoteConfig = await firebaseCallableManager.GetRemoteConfigAsync(ct);
+            if (remoteConfig.IsFailure)
+                return CommonResult<RemoteConfigSnapshot>.Failure(remoteConfig.Error!);
+
+            return CommonResult<RemoteConfigSnapshot>.Success(remoteConfig.Value ?? new RemoteConfigSnapshot());
+#endif
+        }
+
+        static VersionCheckResult evaluateVersionCheck(RemoteConfigSnapshot snapshot, VersionNumber clientVersion)
+        {
+            if (snapshot == null)
+                return VersionCheckResult.Success;
+
+            if (!string.IsNullOrEmpty(snapshot.minVersion)
+                && VersionNumber.TryParse(snapshot.minVersion, out var minVersion)
+                && clientVersion < minVersion)
+            {
+                return VersionCheckResult.ForceUpdate;
+            }
+
+            if (!string.IsNullOrEmpty(snapshot.currentVersion)
+                && VersionNumber.TryParse(snapshot.currentVersion, out var recommendVersion)
+                && clientVersion < recommendVersion)
+            {
+                return VersionCheckResult.RecommendUpdate;
+            }
+
+            return VersionCheckResult.Success;
+        }
+
+        static CommonResult<LoginInitializeResult> createVersionCheckResult(VersionCheckResult versionResult)
+        {
+            return CommonResult<LoginInitializeResult>.Success(
+                new LoginInitializeResult(SyncState.Success, versionResult: versionResult));
         }
 
         static async Task yieldMainThreadAsync(CancellationToken ct)

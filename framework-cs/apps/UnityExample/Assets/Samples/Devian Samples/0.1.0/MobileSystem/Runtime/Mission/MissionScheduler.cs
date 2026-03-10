@@ -629,7 +629,7 @@ namespace Devian
             if (string.IsNullOrWhiteSpace(messageId))
                 return null;
 
-            if (!GameMessageRule.IsTotalSaveType(saveType))
+            if (!MetaMessageRule.IsTotalSaveType(saveType))
                 return null;
 
             var key = messageId;

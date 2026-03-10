@@ -2,7 +2,7 @@ namespace Devian
 {
     /// <summary>
     /// 앱 버전 체크 결과.
-    /// MobileApplication.VersionCheck()의 반환값으로 사용한다.
+    /// LoginManager.VersionCheckAsync() 성공 시 Value로 사용한다.
     /// </summary>
     public enum VersionCheckResult
     {

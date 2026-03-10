@@ -3,7 +3,7 @@
 MissionManager는 Mission 시스템의 오케스트레이터다.
 
 - `MissionMessageTrigger`, `MissionScheduler`를 소유한다.
-- runtime 구독은 `GameMessageTrigger`를 helper 경유로 연결한다.
+- runtime 구독은 `MetaMessageTrigger`를 helper 경유로 연결한다.
 - row 조건은 `conditionMsgId -> MESSAGE_META(messageType, saveType)`로 해석한다.
 - trigger 입력은 `MetaMessageManager.Notify(...)`를 통해 전달된다.
 
@@ -62,7 +62,7 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
 ## Related
 
 - [03-ssot](../03-ssot/SKILL.md)
-- [45-meta-message-system/11-game-message-trigger](../../45-meta-message-system/11-game-message-trigger/SKILL.md)
+- [45-meta-message-system/11-meta-message-trigger](../../45-meta-message-system/11-meta-message-trigger/SKILL.md)
 - [16-mission-message-trigger](../16-mission-message-trigger/SKILL.md)
 - [12-mission-storage](../12-mission-storage/SKILL.md)
 - [13-mission-runtime](../13-mission-runtime/SKILL.md)

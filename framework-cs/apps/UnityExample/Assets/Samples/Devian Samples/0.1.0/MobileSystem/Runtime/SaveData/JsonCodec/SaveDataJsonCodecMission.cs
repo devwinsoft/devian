@@ -61,7 +61,7 @@ namespace Devian
             return missionObj;
         }
 
-        public static void DeserializeInto(JObject missionObj, MissionStorage storage, GameMessageStorage messageStorage)
+        public static void DeserializeInto(JObject missionObj, MissionStorage storage, MetaMessageStorage messageStorage)
         {
             if (storage == null)
                 return;
