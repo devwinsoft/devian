@@ -11,11 +11,12 @@ namespace Devian
     /// <summary>
     /// 광고 오케스트레이터.
     /// TB_ADVERTISE 기반으로 placement를 해석하고, provider 초기화/로드/표시를 관리한다.
-    /// Rewarded 성공 시 RewardManager로 지급을 위임한다.
+    /// 광고 표시만 담당하며 보상 지급은 호출자가 처리한다.
     /// </summary>
     public sealed class AdsManager : CompoSingleton<AdsManager>
     {
         const string Tag = "AdsManager";
+        const string DefaultAdvertiseIdValue = "advertise_001";
 
         // ── State ──
 
@@ -25,8 +26,7 @@ namespace Devian
         readonly Dictionary<string, long> _lastShowTicks
             = new Dictionary<string, long>();
 
-        string _currentShowCycleId;
-        bool _rewardAppliedThisCycle;
+        string _defaultAdvertiseId = DefaultAdvertiseIdValue;
         bool _initialized;
 
         /// <summary>
@@ -121,6 +121,26 @@ namespace Devian
             return CommonResult.Ok();
         }
 
+        public void SetDefaultId(string advertiseId)
+        {
+            _defaultAdvertiseId = string.IsNullOrWhiteSpace(advertiseId)
+                ? DefaultAdvertiseIdValue
+                : advertiseId.Trim();
+        }
+
+        public Task<CommonResult<AdShowResult>> ShowAsync(CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(_defaultAdvertiseId))
+            {
+                return Task.FromResult(
+                    CommonResult<AdShowResult>.Failure(
+                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                        "Default advertise id is empty."));
+            }
+
+            return ShowAsync(_defaultAdvertiseId, ct);
+        }
+
         /// <summary>
         /// 광고 표시 가능 여부. 동기 fast-gate (provider readiness는 미포함).
         /// </summary>
@@ -143,13 +163,8 @@ namespace Devian
         /// <summary>
         /// 단일 광고 표시.
         /// Banner: 즉시 반환. 풀스크린: close까지 대기 후 반환.
-        /// Rewarded 성공 시 RewardManager.ApplyRewardGroup 호출.
-        /// skip=true이면 광고 노출 없이 Reward만 즉시 지급한다.
         /// </summary>
-        public async Task<CommonResult<AdShowResult>> ShowAsync(
-            string advertiseId,
-            bool skip = false,
-            CancellationToken ct = default)
+        public async Task<CommonResult<AdShowResult>> ShowAsync(string advertiseId, CancellationToken ct = default)
         {
             // ── row 조회 ──
             var row = TB_ADVERTISE.Get(advertiseId);
@@ -158,12 +173,6 @@ namespace Devian
                 return CommonResult<AdShowResult>.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
                     $"ADVERTISE not found or inactive: {advertiseId}");
-            }
-
-            // ── skip: 광고 없이 보상만 지급 ──
-            if (skip)
-            {
-                return SkipAndReward(advertiseId, row);
             }
 
             // ── NoAds gating (REWARDED 제외) ──
@@ -184,10 +193,6 @@ namespace Devian
 
             var provider = GetOrCreateProvider(row.Provider);
 
-            // ── Show cycle 시작 ──
-            _currentShowCycleId = advertiseId;
-            _rewardAppliedThisCycle = false;
-
             try
             {
                 if (row.Format == ADVERTISE_FORMAT.BANNER)
@@ -204,10 +209,6 @@ namespace Devian
                 Debug.LogWarning($"[{Tag}] ShowAsync exception: {ex.Message}");
                 return CommonResult<AdShowResult>.Failure(
                     COMMON_ERROR_TYPE.COMMON_UNKNOWN, ex.Message);
-            }
-            finally
-            {
-                _currentShowCycleId = null;
             }
         }
 
@@ -249,9 +250,6 @@ namespace Devian
             return CommonResult<AdShowResult>.Success(new AdShowResult(
                 advertiseId,
                 row.Format,
-                row.RewardGroupId,
-                false,
-                Array.Empty<RewardData>(),
                 showResult));
         }
 
@@ -262,10 +260,8 @@ namespace Devian
             CancellationToken ct)
         {
             var closeTcs = new TaskCompletionSource<bool>();
-            RewardData[] appliedRewards = Array.Empty<RewardData>();
 
             Action<string> onClosed = null;
-            Action<string> onReward = null;
 
             onClosed = (id) =>
             {
@@ -273,42 +269,14 @@ namespace Devian
                     closeTcs.TrySetResult(true);
             };
 
-            onReward = (id) =>
-            {
-                if (id != advertiseId) return;
-                if (_rewardAppliedThisCycle) return;
-                if (row.Format != ADVERTISE_FORMAT.REWARDED) return;
-                if (string.IsNullOrEmpty(row.RewardGroupId)) return;
-
-                try
-                {
-                    var rewardResult = Singleton.Get<RewardManager>().ApplyRewardGroup(row.RewardGroupId);
-                    if (rewardResult.IsSuccess)
-                    {
-                        _rewardAppliedThisCycle = true;
-                        appliedRewards = rewardResult.Value.AppliedRewards;
-                        Debug.Log($"[{Tag}] Reward applied: {row.RewardGroupId} ({appliedRewards.Length} items)");
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"[{Tag}] Reward apply failed: {rewardResult.Error}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning($"[{Tag}] RewardManager call failed: {ex.Message}");
-                }
-            };
-
             provider.OnClosed += onClosed;
-            provider.OnRewardEarned += onReward;
 
             try
             {
                 // SSV 설정 (REWARDED only)
                 if (row.Format == ADVERTISE_FORMAT.REWARDED && !string.IsNullOrEmpty(UserId))
                 {
-                    var customData = $"{UserId}:{advertiseId}:{row.RewardGroupId}";
+                    var customData = $"{UserId}:{advertiseId}";
                     provider.SetRewardedSsvData(advertiseId, UserId, customData);
                 }
 
@@ -331,58 +299,12 @@ namespace Devian
                 return CommonResult<AdShowResult>.Success(new AdShowResult(
                     advertiseId,
                     row.Format,
-                    row.RewardGroupId,
-                    _rewardAppliedThisCycle,
-                    appliedRewards,
                     AdProviderShowResult.Shown));
             }
             finally
             {
                 provider.OnClosed -= onClosed;
-                provider.OnRewardEarned -= onReward;
             }
-        }
-
-        // ────────────────────────────────────────────
-        // Internal helpers
-        // ────────────────────────────────────────────
-
-        CommonResult<AdShowResult> SkipAndReward(string advertiseId, ADVERTISE row)
-        {
-            RewardData[] appliedRewards = Array.Empty<RewardData>();
-            bool rewardApplied = false;
-
-            if (row.Format == ADVERTISE_FORMAT.REWARDED
-                && !string.IsNullOrEmpty(row.RewardGroupId))
-            {
-                try
-                {
-                    var rewardResult = Singleton.Get<RewardManager>()
-                        .ApplyRewardGroup(row.RewardGroupId);
-                    if (rewardResult.IsSuccess)
-                    {
-                        rewardApplied = true;
-                        appliedRewards = rewardResult.Value.AppliedRewards;
-                        Debug.Log($"[{Tag}] Skip reward applied: {row.RewardGroupId} ({appliedRewards.Length} items)");
-                    }
-                    else
-                    {
-                        Debug.LogWarning($"[{Tag}] Skip reward failed: {rewardResult.Error}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning($"[{Tag}] Skip RewardManager call failed: {ex.Message}");
-                }
-            }
-
-            return CommonResult<AdShowResult>.Success(new AdShowResult(
-                advertiseId,
-                row.Format,
-                row.RewardGroupId,
-                rewardApplied,
-                appliedRewards,
-                AdProviderShowResult.Skipped));
         }
 
         IAdProvider GetOrCreateProvider(ADVERTISE_PROVIDER providerType)

@@ -1,0 +1,299 @@
+# 12-game-ability
+
+Status: ACTIVE
+AppliesTo: v10
+
+Game 도메인의 **Ability 시스템**이다.
+모든 엔티티(Hero, Item, Skill 등)의 속성 값을 `(STAT_TYPE, value)` 리스트로 정규화하여 관리한다.
+
+---
+
+## 1. STAT_TYPE (Generated enum)
+
+`STAT_TYPE`은 Game 도메인 contract에서 빌드 파이프라인으로 생성한다.
+
+- 입력: `input/Domains/Game/ENUM_GAME.json`
+- 생성: `Devian.Domain.Game.STAT_TYPE` enum
+- 네임스페이스: `Devian.Domain.Game`
+
+**STAT_TYPE 값 정의/관리:** [13-game-stat-type](../13-game-stat-type/SKILL.md)
+
+---
+
+## 2. 클래스 계층
+
+```
+AbilityBase              ← Dict<STAT_TYPE, int>, indexer, GetInt, GetFloat, AddStat, SetStat, ClearStat, GetStats, Clone
+  ├─ AbilityEquip        ← 장비 Inventory 연동용 (OwnerUnitId, OwnerSlotNumber, IsEquipped)
+  ├─ AbilityCard         ← 카드 Inventory 연동용
+  └─ AbilityUnitBase (abstract) ← Unit 공통 (UnitId)
+       ├─ AbilityUnitHero    ← UNIT_HERO 테이블 Init, Dict<int, AbilityEquip> mEquips, Equip/Unequip
+       └─ AbilityUnitMonster ← UNIT_MONSTER 테이블 Init
+```
+
+- POCO (MonoBehaviour가 아닌 순수 C# 클래스)이다.
+
+---
+
+## 3. AbilityBase
+
+```csharp
+using System.Collections.Generic;
+using Devian.Domain.Game;
+
+namespace Devian
+{
+    public abstract class AbilityBase
+    {
+        Dictionary<STAT_TYPE, int> mStats = new();
+
+        public int this[STAT_TYPE type]
+        {
+            get => mStats.TryGetValue(type, out var v) ? v : 0;
+        }
+
+        public void AddStat(STAT_TYPE type, int value)
+        {
+            mStats.TryGetValue(type, out var cur);
+            mStats[type] = cur + value;
+        }
+
+        public void AddStat(AbilityBase other)
+        {
+            foreach (var kv in other.mStats)
+                AddStat(kv.Key, kv.Value);
+        }
+
+        public int GetInt(STAT_TYPE type) => mStats.TryGetValue(type, out var v) ? v : 0;
+
+        public float GetFloat(STAT_TYPE type) => GetInt(type) * 0.0001f;
+
+        public void SetStat(STAT_TYPE type, int value) => mStats[type] = value;
+
+        public void ClearStat(STAT_TYPE type) => mStats.Remove(type);
+
+        public void ClearStats() => mStats.Clear();
+
+        public IReadOnlyDictionary<STAT_TYPE, int> GetStats() => mStats;
+
+        public abstract AbilityBase Clone();
+
+        protected void CopyStatsFrom(AbilityBase source)
+        {
+            foreach (var kv in source.mStats)
+                mStats[kv.Key] = kv.Value;
+        }
+    }
+}
+```
+
+- `Dictionary<STAT_TYPE, int>` — 스탯 정규화 저장소
+- indexer `this[STAT_TYPE]` — 없는 키는 `0` 반환
+- `GetInt(type)` — indexer와 동일 (명시적 int 반환)
+- `GetFloat(type)` — 1만분율 변환 (stat value 1 → 0.0001f)
+- `AddStat(type, value)` — 누적 합산
+- `AddStat(AbilityBase)` — 다른 Ability의 스탯 전체를 합산 (버프/장비 합산)
+- `SetStat(type, value)` — 특정 stat을 절대값으로 설정 (기존값 무시, 덮어쓰기)
+- `ClearStat(type)` — 특정 stat 제거 (dict에서 key 삭제, indexer 조회 시 0 반환)
+- `ClearStats()` — 전체 stat 초기화
+- `GetStats()` — `IReadOnlyDictionary<STAT_TYPE, int>` 반환 (직렬화/열거용 read-only view)
+- `Clone()` — abstract. leaf 클래스가 override하여 자기 타입 인스턴스를 생성하고 mTable 참조(shallow) + mStats 값(deep)을 복사한다.
+- `CopyStatsFrom(source)` — protected. Clone() 구현에서 mStats dict를 deep copy하는 헬퍼.
+
+---
+
+## 4. AbilityEquip / AbilityCard
+
+```csharp
+using Devian.Domain.Game;
+
+namespace Devian
+{
+    public sealed class AbilityEquip : AbilityBase
+    {
+        ITEM_EQUIP mTable = null;
+        string mItemUid = string.Empty;
+        string mOwnerUnitId = string.Empty;
+        int mOwnerSlotNumber = 0;
+
+        public string ItemUid => mItemUid;
+        public string EquipId => mTable?.EquipId ?? string.Empty;
+        public string OwnerUnitId => mOwnerUnitId;
+        public int OwnerSlotNumber => mOwnerSlotNumber;
+        public bool IsEquipped => mOwnerSlotNumber > 0;
+
+        public void Init(ITEM_EQUIP table, string itemUid)
+        {
+            mTable = table;
+            mItemUid = itemUid;
+        }
+
+        public void SetOwner(string unitId, int slotNumber)
+        {
+            mOwnerUnitId = unitId;
+            mOwnerSlotNumber = slotNumber;
+        }
+
+        public void ClearOwner()
+        {
+            mOwnerUnitId = string.Empty;
+            mOwnerSlotNumber = 0;
+        }
+    }
+}
+```
+
+```csharp
+using Devian.Domain.Game;
+
+namespace Devian
+{
+    public sealed class AbilityCard : AbilityBase
+    {
+        ITEM_CARD mTable = null;
+
+        public string CardId => mTable?.CardId ?? string.Empty;
+
+        public void Init(ITEM_CARD table)
+        {
+            mTable = table;
+        }
+    }
+}
+```
+
+- `AbilityEquip` — ITEM_EQUIP 테이블 entity를 직접 참조하여 초기화한다. `ItemUid`(인스턴스 고유 GUID)와 `EquipId`(템플릿 ID) 프로퍼티 노출. 같은 `equipId`에 여러 인스턴스가 존재할 수 있다.
+- `AbilityEquip`: `mTable` 참조 + `Init(table, itemUid)` + `ItemUid` + `OwnerUnitId` + `OwnerSlotNumber` + `IsEquipped` + `SetOwner(unitId, slot)` + `ClearOwner()` + `Clone()`. pk는 `itemUid`(GUID).
+- `AbilityCard` — ITEM_CARD 테이블 entity를 직접 참조하여 초기화한다. `CardId` 프로퍼티 노출. `ITEM_CARD`는 Generated entity (TB_ITEM_CARD 컨테이너).
+- `AbilityCard`: `mTable` 참조 + `Init(table)` + `Amount` + `AddAmount(delta)` + `Clone()`.
+
+---
+
+## 5. AbilityUnitBase / AbilityUnitHero / AbilityUnitMonster
+
+```csharp
+namespace Devian
+{
+    public abstract class AbilityUnitBase : AbilityBase
+    {
+        public abstract string UnitId { get; }
+    }
+}
+```
+
+```csharp
+using System.Collections.Generic;
+using Devian.Domain.Game;
+
+namespace Devian
+{
+    public sealed class AbilityUnitHero : AbilityUnitBase
+    {
+        UNIT_HERO mTable = null;
+        readonly Dictionary<int, AbilityEquip> mEquips = new();
+
+        public override string UnitId => mTable?.UnitId ?? string.Empty;
+        public IReadOnlyDictionary<int, AbilityEquip> Equips => mEquips;
+
+        public void Init(UNIT_HERO table)
+        {
+            mTable = table;
+            AddStat(STAT_TYPE.UNIT_HP_MAX, table.MaxHp);
+        }
+
+        public bool Equip(AbilityEquip equip, int slotNumber)
+        {
+            if (equip == null || slotNumber <= 0) return false;
+            if (equip.IsEquipped) equip.ClearOwner();
+            if (mEquips.TryGetValue(slotNumber, out var prev))
+                prev.ClearOwner();
+            mEquips[slotNumber] = equip;
+            equip.SetOwner(UnitId, slotNumber);
+            return true;
+        }
+
+        public bool Unequip(int slotNumber)
+        {
+            if (!mEquips.TryGetValue(slotNumber, out var equip)) return false;
+            equip.ClearOwner();
+            mEquips.Remove(slotNumber);
+            return true;
+        }
+    }
+}
+```
+
+```csharp
+using Devian.Domain.Game;
+
+namespace Devian
+{
+    public sealed class AbilityUnitMonster : AbilityUnitBase
+    {
+        UNIT_MONSTER mTable = null;
+
+        public override string UnitId => mTable?.UnitId ?? string.Empty;
+
+        public void Init(UNIT_MONSTER table)
+        {
+            mTable = table;
+            AddStat(STAT_TYPE.UNIT_HP_MAX, table.MaxHp);
+        }
+    }
+}
+```
+
+- `AbilityUnitBase`는 abstract — Unit 공통 계층. `UnitId` 추상 프로퍼티를 정의한다.
+- `AbilityUnitHero`는 `UNIT_HERO` 테이블 entity를 참조하여 초기화한다. `Init()`에서 `UNIT_HP_MAX` stat을 설정한다. `Dict<int, AbilityEquip> mEquips`로 슬롯별 장비를 직접 소유한다. `Equip(equip, slot)` / `Unequip(slot)` 메서드를 제공한다.
+- `AbilityUnitMonster`는 `UNIT_MONSTER` 테이블 entity를 참조하여 초기화한다. `Init()`에서 `UNIT_HP_MAX` stat을 설정한다.
+- `UNIT_HERO`, `UNIT_MONSTER`는 `Devian.Domain.Game` 네임스페이스의 Generated entity (UnitTable.xlsx).
+
+---
+
+## 6. Implementation Location
+
+### C# (`com.devian.domain.game`)
+
+- UPM (정본): `framework-cs/upm/com.devian.domain.game/Runtime/Ability/`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.domain.game/Runtime/Ability/`
+
+```
+Ability/
+├─ AbilityBase.cs
+├─ AbilityEquip.cs
+├─ AbilityCard.cs
+├─ AbilityUnitBase.cs
+├─ AbilityUnitHero.cs
+└─ AbilityUnitMonster.cs
+```
+
+### TypeScript (`@devian/module-game`)
+
+- `framework-ts/module/devian-domain-game/features/ability/`
+
+```
+ability/
+├─ AbilityBase.ts
+├─ AbilityEquip.ts
+├─ AbilityCard.ts
+├─ AbilityUnitBase.ts
+├─ AbilityUnitHero.ts
+├─ AbilityUnitMonster.ts
+└─ index.ts
+```
+
+---
+
+## 7. Hard Rules
+
+- `STAT_TYPE`은 Generated enum이다. 수동 정의 금지.
+- stat value 타입은 `int` (C#) / `number` (TS)이다.
+- POCO이다 (MonoBehaviour 상속 금지).
+- `AbilityBase`의 `mStats`는 `Dictionary<STAT_TYPE, int>` (C#) / `Map<STAT_TYPE, number>` (TS)이다 (정규화 SSOT).
+
+---
+
+## 8. Related
+
+- [13-game-stat-type](../13-game-stat-type/SKILL.md) — STAT_TYPE enum 값 정의/관리
+- [00-overview](../00-overview/SKILL.md) — Game 도메인 개요

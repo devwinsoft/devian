@@ -23,5 +23,5 @@ AppliesTo: v10
 | **devian-unity/20-domain-common-system** | [00-overview](./devian-unity/20-domain-common-system/00-overview/SKILL.md) | — | — | Unity 공용 런타임 컴포넌트 |
 | **devian-unity** | [00-overview](./devian-unity/00-overview/SKILL.md) | [01-policy](./devian-unity/01-policy/SKILL.md) | [03-ssot](./devian-unity/03-ssot/SKILL.md) | Unity UPM, 컴포넌트 |
 | **devian-examples** | [00-overview](./devian-examples/00-overview/SKILL.md) | [01-policy](./devian-examples/01-policy/SKILL.md) | [03-ssot](./devian-examples/03-ssot/SKILL.md) | 예제 도메인/프로토콜 |
-| **devian-unity/21-domain-game-system** | [00-overview](./devian-unity/21-domain-game-system/00-overview/SKILL.md) | [01-policy](./devian-unity/21-domain-game-system/01-policy/SKILL.md) | — | Game Contents 샘플 |
+| **devian/21-domain-game** | [00-overview](./devian/21-domain-game/00-overview/SKILL.md) | — | — | Game 도메인 정의 |
 | **devian-unity/50-mobile-system** | [00-overview](./devian-unity/50-mobile-system/00-overview/SKILL.md) | [01-policy](./devian-unity/50-mobile-system/01-policy/SKILL.md) | — | MobileSystem 샘플 |

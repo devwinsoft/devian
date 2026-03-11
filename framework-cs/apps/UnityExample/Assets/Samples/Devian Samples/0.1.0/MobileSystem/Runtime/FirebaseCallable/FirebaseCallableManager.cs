@@ -744,7 +744,10 @@ namespace Devian
                     continue;
 
                 if (rewardType == REWARD_TYPE.CURRENCY &&
-                    !Enum.TryParse<CURRENCY_TYPE>(id, out _))
+                    (!Enum.TryParse<CURRENCY_TYPE>(id, out var currencyType) ||
+                     currencyType == CURRENCY_TYPE.ADS ||
+                     currencyType == CURRENCY_TYPE.FREE ||
+                     currencyType == CURRENCY_TYPE.JEWEL))
                 {
                     Debug.LogWarning($"[{Tag}] Skipping initial inventory reward with invalid currency id: {id}");
                     continue;

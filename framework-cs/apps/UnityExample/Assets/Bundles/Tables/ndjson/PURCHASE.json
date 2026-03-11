@@ -1,5 +1,3 @@
-{"InternalProductId":"noads_month","RewardGroupId":"reward_noads_month","Kind":"RENTAL","Title":"","IsActive":true,"StoreSkuApple":"","StoreSkuGoogle":"com.devian.framework.product.noads_month","SeasonId":""}
-{"InternalProductId":"pass_001","RewardGroupId":"reward_pass_001","Kind":"PASS","Title":"","IsActive":true,"StoreSkuApple":"","StoreSkuGoogle":"com.devian.framework.product.pass_001","SeasonId":"S2026_01"}
-{"InternalProductId":"chest_001","RewardGroupId":"reward_chest_001","Kind":"CONSUMABLE","Title":"","IsActive":true,"StoreSkuApple":"","StoreSkuGoogle":"com.devian.framework.product.chest_001","SeasonId":""}
-{"InternalProductId":"chest_002","RewardGroupId":"reward_chest_001","Kind":"CONSUMABLE","Title":"","IsActive":true,"StoreSkuApple":"","StoreSkuGoogle":"com.devian.framework.product.chest_002","SeasonId":""}
-{"InternalProductId":"chest_003","RewardGroupId":"reward_chest_001","Kind":"CONSUMABLE","Title":"","IsActive":true,"StoreSkuApple":"","StoreSkuGoogle":"com.devian.framework.product.chest_003","SeasonId":""}
+{"InternalProductId":"noads_month","RewardGroupId":"reward_purchase_noads_month","Kind":"RENTAL","Title":"","IsActive":true,"StoreSkuApple":"","StoreSkuGoogle":"com.devian.framework.product.noads_month","SeasonId":""}
+{"InternalProductId":"pass_001","RewardGroupId":"reward_purchase_pass_001","Kind":"PASS","Title":"","IsActive":true,"StoreSkuApple":"","StoreSkuGoogle":"com.devian.framework.product.pass_001","SeasonId":"S2026_01"}
+{"InternalProductId":"purchase_jewel_x1000","RewardGroupId":"reward_purchase_jewel_x1000","Kind":"CONSUMABLE","Title":"","IsActive":true,"StoreSkuApple":"","StoreSkuGoogle":"com.devian.framework.product.jewel_x1000","SeasonId":""}

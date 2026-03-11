@@ -4,13 +4,15 @@ namespace Devian
 {
     internal static class SaveDataJsonCodec
     {
-        const int CurrentVersion = 17;
+        const int CurrentVersion = 18;
         const int RemoteConfigVersion = 16;
         const int AttendVersion = 17;
+        const int ShopVersion = 18;
 
         public static string Serialize(
             InventoryStorage inventory,
             PurchaseStorage purchase,
+            ShopStorage shop,
             AccountStorage account,
             GameMessageStorage message,
             RemoteConfigStorage remoteConfig,
@@ -24,6 +26,7 @@ namespace Devian
                 ["version"] = CurrentVersion,
                 ["inventory"] = SaveDataJsonCodecInventory.Serialize(inventory),
                 ["purchase"] = SaveDataJsonCodecPurchase.Serialize(purchase),
+                ["shop"] = SaveDataJsonCodecShop.Serialize(shop),
                 ["account"] = SaveDataJsonCodecAccount.Serialize(account),
                 ["message"] = SaveDataJsonCodecMessage.Serialize(message),
                 ["remoteConfig"] = SaveDataJsonCodecRemoteConfig.Serialize(remoteConfig),
@@ -39,6 +42,7 @@ namespace Devian
             string json,
             InventoryStorage inventory,
             PurchaseStorage purchase,
+            ShopStorage shop,
             AccountStorage account,
             GameMessageStorage message,
             RemoteConfigStorage remoteConfig,
@@ -59,6 +63,11 @@ namespace Devian
                 SaveDataJsonCodecPurchase.DeserializeInto(purchaseObj, purchase);
             else
                 purchase.ClearAll();
+
+            if (version >= ShopVersion && root["shop"] is JObject shopObj)
+                SaveDataJsonCodecShop.DeserializeInto(shopObj, shop);
+            else
+                shop.Clear();
 
             if (version >= 10 && root["account"] is JObject accountObj)
                 SaveDataJsonCodecAccount.DeserializeInto(accountObj, account);
@@ -105,6 +114,6 @@ namespace Devian
         }
 
         static bool isSupportedVersion(int version)
-            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 8 || version == 9 || version == 10 || version == 11 || version == 12 || version == 13 || version == 14 || version == 15 || version == 16 || version == CurrentVersion;
+            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 8 || version == 9 || version == 10 || version == 11 || version == 12 || version == 13 || version == 14 || version == 15 || version == 16 || version == 17 || version == CurrentVersion;
     }
 }

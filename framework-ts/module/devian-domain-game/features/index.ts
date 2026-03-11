@@ -4,4 +4,5 @@
 // </auto-generated>
 
 // <devian:feature-exports>
+export * from './ability';
 // </devian:feature-exports>

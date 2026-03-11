@@ -7,8 +7,8 @@ namespace Devian
     public sealed class InventoryStorage
     {
         // ── Currency ──
-        readonly Dictionary<CURRENCY_TYPE, long> mWallet = new();
-        public IReadOnlyDictionary<CURRENCY_TYPE, long> Wallet => mWallet;
+        readonly InventoryWallet mWallet = new();
+        public InventoryWallet Wallet => mWallet;
 
         // ── Equips ──
         readonly Dictionary<string, AbilityEquip> mEquipments = new();
@@ -29,19 +29,6 @@ namespace Devian
         // ── Passes ──
         readonly Dictionary<string, bool> mPasses = new();
         public IReadOnlyDictionary<string, bool> Passes => mPasses;
-
-        // ── Currency Operations ──
-
-        public long GetCurrencyBalance(CURRENCY_TYPE currencyType)
-        {
-            return mWallet.TryGetValue(currencyType, out var balance) ? balance : 0L;
-        }
-
-        public void AddCurrency(CURRENCY_TYPE currencyType, long amount)
-        {
-            mWallet.TryGetValue(currencyType, out var current);
-            mWallet[currencyType] = current + amount;
-        }
 
         // ── Equip Operations ──
 

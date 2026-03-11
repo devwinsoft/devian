@@ -1,4 +1,4 @@
-{"AdvertiseId":"banner_home_bottom","Format":"BANNER","Provider":"GOOGLE_MOBILE_ADS","RewardGroupId":"","IsActive":false,"AutoLoad":true,"CooldownSec":0,"AndroidAdUnitId":"","IosAdUnitId":""}
-{"AdvertiseId":"interstitial_stage_clear","Format":"INTERSTITIAL","Provider":"GOOGLE_MOBILE_ADS","RewardGroupId":"","IsActive":false,"AutoLoad":true,"CooldownSec":90,"AndroidAdUnitId":"","IosAdUnitId":""}
-{"AdvertiseId":"ad_rewarded_001","Format":"REWARDED","Provider":"GOOGLE_MOBILE_ADS","RewardGroupId":"reward_chest_001","IsActive":true,"AutoLoad":true,"CooldownSec":0,"AndroidAdUnitId":"ca-app-pub-3442497187818240/5199204671","IosAdUnitId":""}
-{"AdvertiseId":"app_open_launch","Format":"APP_OPEN","Provider":"GOOGLE_MOBILE_ADS","RewardGroupId":"","IsActive":false,"AutoLoad":true,"CooldownSec":300,"AndroidAdUnitId":"","IosAdUnitId":""}
+{"AdvertiseId":"banner_home_bottom","IsActive":false,"Format":"BANNER","Provider":"GOOGLE_MOBILE_ADS","AutoLoad":true,"CooldownSec":0,"AndroidAdUnitId":"","IosAdUnitId":""}
+{"AdvertiseId":"interstitial_stage_clear","IsActive":false,"Format":"INTERSTITIAL","Provider":"GOOGLE_MOBILE_ADS","AutoLoad":true,"CooldownSec":90,"AndroidAdUnitId":"","IosAdUnitId":""}
+{"AdvertiseId":"app_open_launch","IsActive":false,"Format":"APP_OPEN","Provider":"GOOGLE_MOBILE_ADS","AutoLoad":true,"CooldownSec":300,"AndroidAdUnitId":"","IosAdUnitId":""}
+{"AdvertiseId":"advertise_001","IsActive":true,"Format":"REWARDED","Provider":"GOOGLE_MOBILE_ADS","AutoLoad":true,"CooldownSec":120,"AndroidAdUnitId":"ca-app-pub-3442497187818240/5199204671","IosAdUnitId":""}

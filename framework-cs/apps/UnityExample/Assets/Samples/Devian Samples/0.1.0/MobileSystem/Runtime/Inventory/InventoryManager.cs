@@ -101,6 +101,19 @@ namespace Devian
                 if (r.Amount < 0)
                     return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTA_AMOUNT_NEGATIVE,
                         $"rewards[{i}] amount is negative: {r.Amount}");
+
+                if (r.Type == REWARD_TYPE.CURRENCY)
+                {
+                    if (!Enum.TryParse<CURRENCY_TYPE>(r.Id, out var currencyType) ||
+                        currencyType == CURRENCY_TYPE.ADS ||
+                        currencyType == CURRENCY_TYPE.FREE ||
+                        currencyType == CURRENCY_TYPE.JEWEL)
+                    {
+                        return CommonResult.Failure(
+                            COMMON_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
+                            $"rewards[{i}] invalid currency id: {r.Id}");
+                    }
+                }
             }
 
             // ── Apply ──
@@ -114,7 +127,12 @@ namespace Devian
                 if (r.Type == REWARD_TYPE.CURRENCY)
                 {
                     var currencyType = (CURRENCY_TYPE)Enum.Parse(typeof(CURRENCY_TYPE), r.Id);
-                    _storage.AddCurrency(currencyType, r.Amount);
+                    if (!_storage.Wallet.TryAdd(currencyType, r.Amount))
+                    {
+                        return CommonResult.Failure(
+                            COMMON_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
+                            $"rewards[{i}] invalid currency id: {r.Id}");
+                    }
                 }
                 else if (r.Type == REWARD_TYPE.CARD)
                 {
@@ -179,7 +197,16 @@ namespace Devian
                             $"rewards[{i}] invalid currency id: {r.Id}");
                     }
 
-                    var balance = _storage.GetCurrencyBalance(currencyType);
+                    if (currencyType == CURRENCY_TYPE.ADS ||
+                        currencyType == CURRENCY_TYPE.FREE ||
+                        currencyType == CURRENCY_TYPE.JEWEL)
+                    {
+                        return CommonResult.Failure(
+                            COMMON_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
+                            $"rewards[{i}] invalid currency id: {r.Id}");
+                    }
+
+                    var balance = _storage.Wallet.Get(currencyType);
                     if (balance < r.Amount)
                     {
                         return CommonResult.Failure(
@@ -249,7 +276,12 @@ namespace Devian
                 if (r.Type == REWARD_TYPE.CURRENCY)
                 {
                     var currencyType = (CURRENCY_TYPE)Enum.Parse(typeof(CURRENCY_TYPE), r.Id);
-                    _storage.AddCurrency(currencyType, -r.Amount);
+                    if (!_storage.Wallet.TryAdd(currencyType, -r.Amount))
+                    {
+                        return CommonResult.Failure(
+                            COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
+                            $"Currency revoke failed while applying reward. id={r.Id}");
+                    }
                 }
                 else if (r.Type == REWARD_TYPE.CARD)
                 {
@@ -335,7 +367,10 @@ namespace Devian
 
                 if (r.Type == REWARD_TYPE.CURRENCY)
                 {
-                    if (!Enum.TryParse<CURRENCY_TYPE>(r.Id, out _))
+                    if (!Enum.TryParse<CURRENCY_TYPE>(r.Id, out var currencyType) ||
+                        currencyType == CURRENCY_TYPE.ADS ||
+                        currencyType == CURRENCY_TYPE.FREE ||
+                        currencyType == CURRENCY_TYPE.JEWEL)
                     {
                         return CommonResult.Failure(
                             COMMON_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
@@ -354,10 +389,10 @@ namespace Devian
                 if (r.Type == REWARD_TYPE.CURRENCY)
                 {
                     var currencyType = (CURRENCY_TYPE)Enum.Parse(typeof(CURRENCY_TYPE), r.Id);
-                    var balance = _storage.GetCurrencyBalance(currencyType);
+                    var balance = _storage.Wallet.Get(currencyType);
                     var clampedAmount = Math.Min(r.Amount, balance);
                     if (clampedAmount > 0)
-                        _storage.AddCurrency(currencyType, -clampedAmount);
+                        _storage.Wallet.TryAdd(currencyType, -clampedAmount);
                 }
                 else if (r.Type == REWARD_TYPE.CARD)
                 {
@@ -408,7 +443,7 @@ namespace Devian
             if (type == nameof(REWARD_TYPE.CURRENCY))
             {
                 var currencyType = (CURRENCY_TYPE)Enum.Parse(typeof(CURRENCY_TYPE), id);
-                return _storage.GetCurrencyBalance(currencyType);
+                return _storage.Wallet.Get(currencyType);
             }
 
             if (type == nameof(REWARD_TYPE.CARD))

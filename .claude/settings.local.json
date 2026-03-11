@@ -263,7 +263,8 @@
       "Bash(git check-ignore -v \"framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Message/GameMessageStorage.cs\")",
       "Bash(do sed -i '' 's/GameMessage/MetaMessage/g' \"$f\")",
       "Bash(do sed -i '' 's/gameMessage/metaMessage/g' \"$f\")",
-      "Bash(do sed -i '' 's/FirebaseManager/FirebaseCallableManager/g' \"$f\")"
+      "Bash(do sed -i '' 's/FirebaseManager/FirebaseCallableManager/g' \"$f\")",
+      "Bash(git log --name-status --pretty=\"\" -- '*GameContents*')"
     ]
   },
   "project": {

@@ -39,6 +39,7 @@ Inventory System은 "인벤토리 상태(아이템/통화)"를 시스템 레이�
 | [09-ssot-operations](../09-ssot-operations/SKILL.md) | 운영 시나리오/테스트/DoD |
 | [10-inventory-manager](../10-inventory-manager/SKILL.md) | InventoryManager 설계(필수) |
 | [11-inventory-storage](../11-inventory-storage/SKILL.md) | InventoryStorage (데이터 컨테이너) |
+| [12-inventory-wallet](../12-inventory-wallet/SKILL.md) | InventoryWallet (통화 컨테이너/JEWEL 예외) |
 | [16-inventory-message-trigger](../16-inventory-message-trigger/SKILL.md) | Inventory 변경 메시지 트리거 |
 
 

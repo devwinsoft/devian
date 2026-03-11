@@ -261,11 +261,12 @@ public class UICanvasLobby : UICanvas<UICanvasLobby>
 
     private async Task OnClickInAppAdAsync()
     {
+        ShopManager.Instance.CanBuy("shop_001_ads");
         var remainMs = InventoryManager.Instance.Storage.GetRentalRemainingMs("NO_ADS");
-        var result = await AdsManager.Instance.ShowAsync("ad_rewarded_001", remainMs > 0);
+        var result = await ShopManager.Instance.BuyAsync("shop_001_ads");
         if (result.IsSuccess)
         {
-            foreach (var reward in result.Value.AppliedRewards)
+            foreach (var reward in result.Value)
             {
                 Debug.Log($"{reward.Type}, {reward.Id}, {reward.Amount}");
             }

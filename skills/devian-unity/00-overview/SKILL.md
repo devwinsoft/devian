@@ -24,7 +24,7 @@ Devian Unity 런타임, UPM 패키지, 컴포넌트를 담당한다.
 | [22-domain-sound-system](../22-domain-sound-system/00-overview/SKILL.md) | Sound System (Tables/Manager/Voice Resolve/Domain/BaseAudio) |
 | [30-purchase-system](../50-mobile-system/30-purchase-system/00-overview/SKILL.md) | Purchase System (Unity IAP + verification + entitlements) |
 | [47-advertise-system](../50-mobile-system/47-advertise-system/00-overview/SKILL.md) | Advertise System (In-App Ads + Rewarded + Mock Testing) |
-| [21-domain-game-system](../21-domain-game-system/00-overview/SKILL.md) | Game Contents 샘플 |
+| [21-domain-game](../../devian/21-domain-game/00-overview/SKILL.md) | Game 도메인 정의 |
 | [30-ui-system](../30-ui-system/SKILL.md) | UI 컴포넌트 인덱스 |
 | [50-mobile-system](../50-mobile-system/00-overview/SKILL.md) | MobileSystem (Devian Samples) |
 

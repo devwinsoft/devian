@@ -36,7 +36,7 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | **devian-unity/20-domain-common-system** | Unity 공용 런타임 컴포넌트 | [00-overview](../../devian-unity/20-domain-common-system/00-overview/SKILL.md) | — | — |
 | **devian-unity** | UPM 패키지, Unity 런타임, 컴포넌트 | [00-overview](../../devian-unity/00-overview/SKILL.md) | [01-policy](../../devian-unity/01-policy/SKILL.md) | [03-ssot](../../devian-unity/03-ssot/SKILL.md) |
 | **devian-examples** | 예제 도메인, 예제 프로토콜 | [00-overview](../../devian-examples/00-overview/SKILL.md) | [01-policy](../../devian-examples/01-policy/SKILL.md) | [03-ssot](../../devian-examples/03-ssot/SKILL.md) |
-| **devian-unity/21-domain-game-system** | Game Contents (Devian Samples) | [00-overview](../../devian-unity/21-domain-game-system/00-overview/SKILL.md) | [01-policy](../../devian-unity/21-domain-game-system/01-policy/SKILL.md) | — |
+| **devian/21-domain-game** | Game 도메인 정의 | [00-overview](../21-domain-game/00-overview/SKILL.md) | — | — |
 | **devian-unity/50-mobile-system** | MobileSystem (Devian Samples) | [00-overview](../../devian-unity/50-mobile-system/00-overview/SKILL.md) | [01-policy](../../devian-unity/50-mobile-system/01-policy/SKILL.md) | — |
 
 ---

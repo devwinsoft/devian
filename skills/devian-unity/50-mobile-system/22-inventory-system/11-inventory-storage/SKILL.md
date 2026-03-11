@@ -14,7 +14,7 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobileSyste
 
 코드는 실제 `InventoryStorage.cs` 참조. `sealed class`이다.
 
-- `Wallet` — `Dictionary<CURRENCY_TYPE, long>` (CURRENCY_TYPE → 잔고)
+- `Wallet` — `InventoryWallet` (내부 `Dictionary<CURRENCY_TYPE, long>` 기반 잔고 컨테이너)
 - `Equipments` — `Dictionary<string, AbilityEquip>` (itemUid → 장비)
 - `Cards` — `Dictionary<string, AbilityCard>` (cardId → 카드)
 - `Heroes` — `Dictionary<string, AbilityUnitHero>` (heroId → 영웅)
@@ -49,7 +49,7 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
 | 타입 | 책임 |
 |---|---|
 | `InventoryManager` | `GetAmount`, InventoryStorage 소유, AddRewards 검증/연동 |
-| `InventoryStorage` | Wallet (CURRENCY_TYPE → long), Equipments (itemUid → AbilityEquip), Cards (cardId → AbilityCard), Heroes (heroId → AbilityUnitHero), Rentals (rentalTypeId → expiresAtClientUtcMs), Passes (passId → owned) |
+| `InventoryStorage` | Wallet (`InventoryWallet`), Equipments (itemUid → AbilityEquip), Cards (cardId → AbilityCard), Heroes (heroId → AbilityUnitHero), Rentals (rentalTypeId → expiresAtClientUtcMs), Passes (passId → owned) |
 | `AbilityEquip` | OwnerUnitId/OwnerSlotNumber(별도 필드) + 능력치(STAT_TYPE 기반) 관리 |
 | `AbilityCard` | 수량(`STAT_TYPE.CARD_AMOUNT`) + 능력치(STAT_TYPE 기반) 관리 |
 | `AbilityUnitHero` | 수량(`STAT_TYPE.UNIT_AMOUNT`) + 영웅 능력치(STAT_TYPE 기반) + 장비 슬롯(`Dict<int, AbilityEquip>`) 관리 |
@@ -115,7 +115,7 @@ namespace Devian
 
 - InventoryStorage는 **sealed POCO 클래스**이다 (MonoBehaviour 금지).
 - 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `equipId`에 여러 인스턴스가 존재할 수 있다.
-- `Wallet` key = `CURRENCY_TYPE` (enum). value = `long` 잔고.
+- `Wallet`은 `InventoryWallet` API(`Get/TryAdd`)를 통해 `CURRENCY_TYPE`별 잔고를 관리한다.
 - `Equipments` key = `itemUid` (string). value = `AbilityEquip`.
 - `Cards` key = `cardId` (string). value = `AbilityCard`.
 - `Heroes` key = `heroId` (string). value = `AbilityUnitHero`.
@@ -142,9 +142,10 @@ JSON 스키마: [03-ssot](../03-ssot/SKILL.md) 참조.
 
 ## 8. Related
 
-- [12-game-ability](../../../21-domain-game-system/12-game-ability/SKILL.md) — AbilityBase, AbilityEquip, AbilityCard, AbilityUnitHero (Equipments/Cards/Heroes 직접 관리)
-- [13-game-stat-type](../../../21-domain-game-system/13-game-stat-type/SKILL.md) — STAT_TYPE enum
+- [12-game-ability](../../../../devian/21-domain-game/12-game-ability/SKILL.md) — AbilityBase, AbilityEquip, AbilityCard, AbilityUnitHero (Equipments/Cards/Heroes 직접 관리)
+- [13-game-stat-type](../../../../devian/21-domain-game/13-game-stat-type/SKILL.md) — STAT_TYPE enum
 - [10-inventory-manager](../10-inventory-manager/SKILL.md) — InventoryManager (InventoryStorage 소유자, 수량 SSOT)
+- [12-inventory-wallet](../12-inventory-wallet/SKILL.md) — InventoryWallet (Dictionary 기반 Wallet + JEWEL 파생 조회)
 - [03-ssot](../03-ssot/SKILL.md) — Inventory State/Apply Rules
 - [00-overview](../00-overview/SKILL.md) — Inventory System 개요
 - [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 담당

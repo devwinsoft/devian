@@ -98,28 +98,6 @@ namespace Devian
             return product != null ? product.RewardGroupId ?? string.Empty : string.Empty;
         }
 
-        static RewardData[] ResolveRewardDatas(string rewardGroupId)
-        {
-            if (string.IsNullOrEmpty(rewardGroupId))
-                return Array.Empty<RewardData>();
-
-            var rows = TB_REWARD.GetByGroup(rewardGroupId);
-            if (rows == null || rows.Count == 0)
-                return Array.Empty<RewardData>();
-
-            var list = new List<RewardData>(rows.Count);
-            for (var i = 0; i < rows.Count; i++)
-            {
-                var row = rows[i];
-                if (row == null || string.IsNullOrEmpty(row.Id) || row.Amount <= 0)
-                    continue;
-
-                list.Add(new RewardData(row.Type, row.Id, row.Amount));
-            }
-
-            return list.Count == 0 ? Array.Empty<RewardData>() : list.ToArray();
-        }
-
         static string ResolveSeasonPassId(string internalProductIdOrSeasonPassId)
         {
             if (string.IsNullOrEmpty(internalProductIdOrSeasonPassId))
@@ -129,7 +107,7 @@ namespace Devian
             if (product == null || product.Kind != PURCHASE_KIND.PASS)
                 return internalProductIdOrSeasonPassId;
 
-            var rewards = ResolveRewardDatas(product.RewardGroupId);
+            var rewards = RewardManager.Instance.ResolveRewardDatas(product.RewardGroupId);
             for (var i = 0; i < rewards.Length; i++)
             {
                 if (rewards[i].Type == REWARD_TYPE.PASS)
@@ -1259,7 +1237,7 @@ namespace Devian
 
                     if (needsClientGrantDelivery)
                     {
-                        rewards = ResolveRewardDatas(rewardGroupId);
+                        rewards = RewardManager.Instance.ResolveRewardDatas(rewardGroupId);
                         clearCurrentOnExit = false; // caller must ack/report client grant result
                     }
                     else
@@ -1415,7 +1393,7 @@ namespace Devian
                 (clientGrantStatus == "PENDING" || clientGrantStatus == "FAILED_REPORTED");
             if (needsClientGrantDelivery)
             {
-                rewards = ResolveRewardDatas(rewardGroupId);
+                rewards = RewardManager.Instance.ResolveRewardDatas(rewardGroupId);
             }
             else
             {
@@ -1474,7 +1452,7 @@ namespace Devian
             if (kind == PurchaseKind.Rental || kind == PurchaseKind.SeasonPass)
             {
                 var rgId = ResolveRewardGroupId(internalProductId);
-                var rewards = ResolveRewardDatas(rgId);
+                var rewards = RewardManager.Instance.ResolveRewardDatas(rgId);
                 for (int i = 0; i < rewards.Length; i++)
                 {
                     if (kind == PurchaseKind.Rental && rewards[i].Type == REWARD_TYPE.RENTAL)
@@ -1824,7 +1802,7 @@ namespace Devian
             {
                 var raw = page.Items[i];
                 var rewardGroupId = ResolveRewardGroupId(raw.InternalProductId);
-                var rewards = ResolveRewardDatas(rewardGroupId);
+                var rewards = RewardManager.Instance.ResolveRewardDatas(rewardGroupId);
 
                 PurchaseKind? kind = null;
                 if (TryParseStoredPurchaseKind(raw.KindString, out var parsedKind))

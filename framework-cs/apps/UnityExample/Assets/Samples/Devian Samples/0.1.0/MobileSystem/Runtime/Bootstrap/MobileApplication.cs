@@ -20,6 +20,8 @@ namespace Devian
     [RequireComponent(typeof(InputManager))]
     [RequireComponent(typeof(FirebaseCallableManager))]
     [RequireComponent(typeof(AnalyzeManager))]
+    [RequireComponent(typeof(AdsManager))]
+    [RequireComponent(typeof(ShopManager))]
     public abstract class MobileApplication : BaseApplication
     {
         public new static MobileApplication Create() => BaseApplication.Create<MobileApplication>();

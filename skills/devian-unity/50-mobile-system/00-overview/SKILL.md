@@ -29,6 +29,7 @@ MobileSystem은 **Devian Samples**(`com.devian.samples`)에 포함된 Unity Samp
 - [24-login-manager](../24-login-manager/SKILL.md)
 - [26-remote-config-system](../26-remote-config-system/00-overview/SKILL.md)
 - [27-attend-system](../27-attend-system/00-overview/SKILL.md)
+- [28-shop-system](../28-shop-system/00-overview/SKILL.md)
 - [20-account-system](../20-account-system/00-overview/SKILL.md)
 - [21-savedata-system](../21-savedata-system/00-overview/SKILL.md)
 - [25-recovery-system](../25-recovery-system/00-overview/SKILL.md)
@@ -41,4 +42,4 @@ MobileSystem은 **Devian Samples**(`com.devian.samples`)에 포함된 Unity Samp
 - [50-leaderboard](../50-leaderboard/00-overview/SKILL.md)
 - [61-virtual-gamepad](../61-virtual-gamepad/SKILL.md)
 
-> **Note:** inventory-system 스킬 그룹은 `21-domain-game-system/15-game-inventory-system`에서 [50-mobile-system/22-inventory-system](../22-inventory-system/00-overview/SKILL.md)으로 이동되었다.
+> **Note:** inventory-system 스킬 그룹은 `21-domain-game/15-game-inventory-system`에서 [50-mobile-system/22-inventory-system](../22-inventory-system/00-overview/SKILL.md)으로 이동되었다.

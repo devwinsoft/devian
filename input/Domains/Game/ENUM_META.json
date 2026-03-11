@@ -125,23 +125,23 @@
       "name": "CURRENCY_TYPE",
       "values": [
         {
-          "name": "GOLD",
+          "name": "ADS",
           "value": 0
         },
         {
-          "name": "JEWEL_FREE",
+          "name": "ARENA_COIN",
           "value": 1
         },
         {
-          "name": "JEWEL_PAID",
+          "name": "FREE",
           "value": 2
         },
         {
-          "name": "STAMINA",
+          "name": "FRIENDSHIP",
           "value": 3
         },
         {
-          "name": "FRIENDSHIP",
+          "name": "GOLD",
           "value": 4
         },
         {
@@ -149,8 +149,20 @@
           "value": 5
         },
         {
-          "name": "ARENA_COIN",
+          "name": "JEWEL",
           "value": 6
+        },
+        {
+          "name": "JEWEL_FREE",
+          "value": 7
+        },
+        {
+          "name": "JEWEL_PAID",
+          "value": 8
+        },
+        {
+          "name": "STAMINA",
+          "value": 9
         }
       ]
     },
@@ -180,6 +192,10 @@
         {
           "name": "PASS",
           "value": 5
+        },
+        {
+          "name": "CHEST",
+          "value": 6
         }
       ]
     },

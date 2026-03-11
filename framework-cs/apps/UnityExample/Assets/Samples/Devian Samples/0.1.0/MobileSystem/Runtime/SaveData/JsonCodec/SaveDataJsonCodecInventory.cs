@@ -11,7 +11,7 @@ namespace Devian
 
             // wallet
             var walletObj = new JObject();
-            foreach (var kv in inventory.Wallet)
+            foreach (var kv in inventory.Wallet.EnumerateForSave())
                 walletObj[kv.Key.ToString()] = kv.Value;
             inv["wallet"] = walletObj;
 
@@ -100,7 +100,13 @@ namespace Devian
                 foreach (var prop in walletObj.Properties())
                 {
                     if (System.Enum.TryParse<CURRENCY_TYPE>(prop.Name, out var currencyType))
-                        inventory.AddCurrency(currencyType, prop.Value.Value<long>());
+                    {
+                        if (currencyType == CURRENCY_TYPE.ADS
+                            || currencyType == CURRENCY_TYPE.FREE
+                            || currencyType == CURRENCY_TYPE.JEWEL)
+                            continue;
+                        inventory.Wallet.TryAdd(currencyType, prop.Value.Value<long>());
+                    }
                 }
             }
 

@@ -253,6 +253,7 @@ readonly InventoryStorage _storage = new();
 ## Related
 
 - [11-inventory-storage](../11-inventory-storage/SKILL.md) — InventoryStorage (소유 대상)
+- [12-inventory-wallet](../12-inventory-wallet/SKILL.md) — InventoryWallet (Wallet 클래스)
 - [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md) — RewardData 스키마 정본
 - [03-ssot](../03-ssot/SKILL.md) — Inventory 상태/Apply 규칙 SSOT
 - [01-policy](../01-policy/SKILL.md) — Inventory 하드룰

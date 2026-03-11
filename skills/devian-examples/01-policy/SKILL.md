@@ -53,8 +53,8 @@ UPM 패키지가 staging → upm → Packages로 복사되는 개념:
 
 | 스킬 | 설명 |
 |------|------|
-| `skills/devian-unity/21-domain-game-system/11-game-domain/SKILL.md` | Game 도메인 허브 (테이블/컨트랙트/생성물) |
-| `skills/devian-unity/21-domain-game-system/14-game-protocol/SKILL.md` | Game 프로토콜(C2Game/Game2C) 예제 |
+| `skills/devian/21-domain-game/11-game-tables/SKILL.md` | Game 도메인 테이블 정의 |
+| `skills/devian/30-protocol-game/SKILL.md` | Game 프로토콜(C2Game/Game2C) 예제 |
 
 ---
 

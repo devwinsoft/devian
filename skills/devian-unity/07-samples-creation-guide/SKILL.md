@@ -81,15 +81,13 @@ framework-cs/upm/<packageName>/Samples~/...
 
 **필수 구조:**
 ```
-upm/<packageName>/Samples~/GameContents/
+upm/<packageName>/Samples~/<SampleName>/
 ├── README.md                         ← 샘플 루트에 위치
 ├── Runtime/
-│   ├── [asmdef: Devian.Samples.GameContents]     ← Runtime asmdef
-│   └── Net/
-│       └── (네트워크 코드는 com.devian.protocol.game에서 generated Networker로 제공)
+│   └── [asmdef: Devian.Samples.<SampleName>]     ← Runtime asmdef
 └── Editor/
-    ├── [asmdef: Devian.Samples.GameContents.Editor] ← Editor-only asmdef (includePlatforms: ["Editor"])
-    └── GameContentsSampleMenu.cs     ← 에디터 메뉴
+    ├── [asmdef: Devian.Samples.<SampleName>.Editor] ← Editor-only asmdef (includePlatforms: ["Editor"])
+    └── <SampleName>SampleMenu.cs     ← 에디터 메뉴
 ```
 
 **금지:**
@@ -101,11 +99,11 @@ upm/<packageName>/Samples~/GameContents/
 **Editor-only asmdef:**
 
 ```json
-// Editor/Devian.Samples.GameContents.Editor.asmdef
+// Editor/Devian.Samples.<SampleName>.Editor.asmdef
 {
-    "name": "Devian.Samples.GameContents.Editor",
+    "name": "Devian.Samples.<SampleName>.Editor",
     "rootNamespace": "Devian",
-    "references": ["Devian.Samples.GameContents"],
+    "references": ["Devian.Samples.<SampleName>"],
     "includePlatforms": ["Editor"],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
@@ -118,14 +116,13 @@ upm/<packageName>/Samples~/GameContents/
 }
 ```
 
-### D) 에디터 메뉴 (GameContentsSampleMenu)
+### D) 에디터 메뉴 (<SampleName>SampleMenu)
 
 **역할:**
 - 사용법 안내
 
 **메뉴 경로:**
-- `Devian/Samples/GameContents/How to Use`
-- `Devian/Samples/GameContents/How to Use`
+- `Devian/Samples/<SampleName>/How to Use`
 
 ### E) Disconnect 행동 DoD (Hard DoD)
 
