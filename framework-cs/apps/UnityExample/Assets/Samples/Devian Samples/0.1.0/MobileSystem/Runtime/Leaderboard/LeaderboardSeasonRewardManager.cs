@@ -50,11 +50,7 @@ namespace Devian
             if (!_initialized)
                 return CommonResult.Failure(COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED, "LeaderboardSeasonRewardManager is not initialized.");
 
-            if (!MissionManager.TryGet(out var missionManager) || missionManager == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "MissionManager is not initialized.");
-
-            if (!missionManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
-                return CommonResult.Ok();
+            var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
 
             if (!LeaderboardManager.TryGet(out var leaderboardManager) || leaderboardManager == null)
                 return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "LeaderboardManager is not initialized.");

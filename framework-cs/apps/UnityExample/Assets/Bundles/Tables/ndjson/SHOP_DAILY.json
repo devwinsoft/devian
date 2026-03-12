@@ -1,4 +1,12 @@
-{"ShopId":"shop_001_free","NameId":"","CurrencyType":"FREE","Price":0,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":1}
-{"ShopId":"shop_001_ads","NameId":"","CurrencyType":"ADS","Price":0,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":3}
-{"ShopId":"shop_001_x01","NameId":"","CurrencyType":"JEWEL","Price":100,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":-1}
-{"ShopId":"shop_001_x10","NameId":"","CurrencyType":"JEWEL","Price":1000,"RewardGroupId":"reward_shop_001","Amount":11,"MaxCount":-1}
+{"ShopId":"shop_daily_free","NameId":"","CurrencyType":"FREE","Price":0,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":1,"SelectRate":-1}
+{"ShopId":"shop_daily_ads","NameId":"","CurrencyType":"ADS","Price":0,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":3,"SelectRate":-1}
+{"ShopId":"shop_daily_001","NameId":"","CurrencyType":"JEWEL","Price":100,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":1,"SelectRate":10}
+{"ShopId":"shop_daily_002","NameId":"","CurrencyType":"JEWEL","Price":1000,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":1,"SelectRate":10}
+{"ShopId":"shop_daily_003","NameId":"","CurrencyType":"JEWEL","Price":1000,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":1,"SelectRate":10}
+{"ShopId":"shop_daily_004","NameId":"","CurrencyType":"JEWEL","Price":1000,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":1,"SelectRate":10}
+{"ShopId":"shop_daily_005","NameId":"","CurrencyType":"JEWEL","Price":1000,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":1,"SelectRate":10}
+{"ShopId":"shop_daily_006","NameId":"","CurrencyType":"JEWEL","Price":1000,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":1,"SelectRate":10}
+{"ShopId":"shop_daily_007","NameId":"","CurrencyType":"JEWEL","Price":1000,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":1,"SelectRate":10}
+{"ShopId":"shop_daily_008","NameId":"","CurrencyType":"JEWEL","Price":1000,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":1,"SelectRate":10}
+{"ShopId":"shop_daily_009","NameId":"","CurrencyType":"JEWEL","Price":1000,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":1,"SelectRate":10}
+{"ShopId":"shop_daily_010","NameId":"","CurrencyType":"JEWEL","Price":1000,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":1,"SelectRate":10}

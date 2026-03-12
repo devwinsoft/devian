@@ -17,11 +17,21 @@ namespace Devian
                 countsObj[kv.Key] = kv.Value < 0 ? 0 : kv.Value;
             }
 
+            var adsResetObj = new JObject();
+            foreach (var kv in shop.adsCatalogResetStartedAtUtcMsByCatalog)
+            {
+                if (string.IsNullOrWhiteSpace(kv.Key))
+                    continue;
+
+                adsResetObj[kv.Key] = kv.Value > 0L ? kv.Value : 0L;
+            }
+
             return new JObject
             {
                 ["schemaVersion"] = shop.schemaVersion,
                 ["lastResetUtcDayStartMs"] = shop.lastResetUtcDayStartMs,
                 ["purchaseCounts"] = countsObj,
+                ["adsCatalogResetStartedAtUtcMsByCatalog"] = adsResetObj,
             };
         }
 
@@ -51,8 +61,39 @@ namespace Devian
                 migrateLegacyPurchaseLimits(legacyLimitsObj, shop);
             }
 
+            if (shopObj["adsCatalogResetStartedAtUtcMsByCatalog"] is JObject adsResetObj)
+            {
+                foreach (var prop in adsResetObj.Properties())
+                {
+                    var normalizedCatalogKey = prop.Name != null ? prop.Name.Trim() : string.Empty;
+                    if (string.IsNullOrEmpty(normalizedCatalogKey))
+                        continue;
+
+                    var startedAtUtcMs = prop.Value.Value<long?>() ?? 0L;
+                    shop.adsCatalogResetStartedAtUtcMsByCatalog[normalizedCatalogKey] =
+                        startedAtUtcMs > 0L ? startedAtUtcMs : 0L;
+                }
+            }
+            else if (shopObj["adsCatalogResetUtcDayStartMsByCatalog"] is JObject legacyAdsResetObj)
+            {
+                foreach (var prop in legacyAdsResetObj.Properties())
+                {
+                    var normalizedCatalogKey = prop.Name != null ? prop.Name.Trim() : string.Empty;
+                    if (string.IsNullOrEmpty(normalizedCatalogKey))
+                        continue;
+
+                    var legacyResetUtcDayStartMs = prop.Value.Value<long?>() ?? 0L;
+                    shop.adsCatalogResetStartedAtUtcMsByCatalog[normalizedCatalogKey] =
+                        legacyResetUtcDayStartMs > 0L ? legacyResetUtcDayStartMs : 0L;
+                }
+            }
+
             if (shop.schemaVersion < 2)
                 shop.schemaVersion = 2;
+            if (shop.schemaVersion < 3)
+                shop.schemaVersion = 3;
+            if (shop.schemaVersion < 4)
+                shop.schemaVersion = 4;
         }
 
         static void migrateLegacyPurchaseLimits(JObject legacyLimitsObj, ShopStorage shop)

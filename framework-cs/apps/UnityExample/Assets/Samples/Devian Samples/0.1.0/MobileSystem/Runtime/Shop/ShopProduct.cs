@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Devian.Domain.Game;
+using UnityEngine;
 
 namespace Devian
 {
@@ -182,6 +183,8 @@ namespace Devian
 
     public static class ShopProductFactory
     {
+        const int DailySelectableProductCount = 5;
+
         public static ShopCatalog BuildCatalog(SHOP_CATALOG_TYPE catalogType)
         {
             var products = BuildCatalogProducts(catalogType);
@@ -237,9 +240,10 @@ namespace Devian
         static IReadOnlyList<ShopProductBase> buildDailyProducts()
         {
             var rows = TB_SHOP_DAILY.GetAll();
-            var list = new List<ShopProductBase>(rows.Count);
-            for (var i = 0; i < rows.Count; i++)
-                list.Add(createDailyProduct(rows[i]));
+            var selectedRows = selectDailyRows(rows, DailySelectableProductCount);
+            var list = new List<ShopProductBase>(selectedRows.Count);
+            for (var i = 0; i < selectedRows.Count; i++)
+                list.Add(createDailyProduct(selectedRows[i]));
 
             return list;
         }
@@ -285,6 +289,109 @@ namespace Devian
                 row.RewardGroupId,
                 row.Amount,
                 row.MaxCount);
+        }
+
+        static List<SHOP_DAILY> selectDailyRows(IReadOnlyList<SHOP_DAILY> rows, int targetCount)
+        {
+            var mandatoryRows = new List<SHOP_DAILY>();
+            var weightedRows = new List<SHOP_DAILY>();
+            var seenShopIds = new HashSet<string>(StringComparer.Ordinal);
+
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (row == null || string.IsNullOrWhiteSpace(row.ShopId))
+                    continue;
+
+                var normalizedShopId = row.ShopId.Trim();
+                if (!seenShopIds.Add(normalizedShopId))
+                    continue;
+
+                var selectRate = sanitizeDailySelectRate(row.SelectRate);
+                if (selectRate < 0f)
+                {
+                    mandatoryRows.Add(row);
+                    continue;
+                }
+
+                if (selectRate > 0f)
+                    weightedRows.Add(row);
+            }
+
+            var selectedRows = new List<SHOP_DAILY>(Math.Max(targetCount, mandatoryRows.Count));
+            selectedRows.AddRange(mandatoryRows);
+            if (targetCount <= 0 || selectedRows.Count >= targetCount || weightedRows.Count <= 0)
+                return selectedRows;
+
+            var remainingCount = targetCount - selectedRows.Count;
+            for (var i = 0; i < remainingCount && weightedRows.Count > 0; i++)
+            {
+                if (!trySelectDailyRow(weightedRows, out var selectedRow) || selectedRow == null)
+                    break;
+
+                selectedRows.Add(selectedRow);
+                weightedRows.Remove(selectedRow);
+            }
+
+            return selectedRows;
+        }
+
+        static bool trySelectDailyRow(IReadOnlyList<SHOP_DAILY> rows, out SHOP_DAILY selectedRow)
+        {
+            selectedRow = null;
+
+            var totalRate = 0f;
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (!isSelectableDailyRow(row))
+                    continue;
+
+                totalRate += row.SelectRate;
+            }
+
+            if (!(totalRate > 0f))
+                return false;
+
+            var roll = UnityEngine.Random.value * totalRate;
+            var cumulative = 0f;
+            SHOP_DAILY lastRow = null;
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (!isSelectableDailyRow(row))
+                    continue;
+
+                cumulative += row.SelectRate;
+                lastRow = row;
+                if (roll < cumulative)
+                {
+                    selectedRow = row;
+                    return true;
+                }
+            }
+
+            if (lastRow == null)
+                return false;
+
+            selectedRow = lastRow;
+            return true;
+        }
+
+        static bool isSelectableDailyRow(SHOP_DAILY row)
+        {
+            if (row == null || string.IsNullOrWhiteSpace(row.ShopId))
+                return false;
+
+            return sanitizeDailySelectRate(row.SelectRate) > 0f;
+        }
+
+        static float sanitizeDailySelectRate(float selectRate)
+        {
+            if (float.IsNaN(selectRate) || float.IsInfinity(selectRate))
+                return 0f;
+
+            return selectRate;
         }
 
         static ShopProductBase createChestProduct(SHOP_CHEST row)

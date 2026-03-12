@@ -99,6 +99,7 @@ namespace Devian
 
         private readonly SemaphoreSlim _initializeGate = new SemaphoreSlim(1, 1);
         private static readonly CBigInt LongMaxScore = CBigInt.FromLong(long.MaxValue);
+        private bool _initializeFromApplicationRequested;
 
         private ILeaderboardPlatformAdapter _adapter;
         private bool _initialized;
@@ -108,6 +109,12 @@ namespace Devian
         protected override void onInitAwake()
         {
             rebuildMappingCaches();
+            tryInitializeFromApplication();
+        }
+
+        private void Start()
+        {
+            tryInitializeFromApplication();
         }
 
         public async Task<CommonResult> InitializeAsync(CancellationToken ct = default)
@@ -143,9 +150,9 @@ namespace Devian
         {
             ct.ThrowIfCancellationRequested();
 
-            var guard = ensureInitialized();
-            if (guard.IsFailure)
-                return guard;
+            var init = await InitializeAsync(ct);
+            if (init.IsFailure)
+                return init;
 
             var resolve = tryResolveLeaderboardPlatformId(leaderboardId, out var entry, out var platformLeaderboardId);
             if (resolve.IsFailure)
@@ -168,9 +175,9 @@ namespace Devian
         {
             ct.ThrowIfCancellationRequested();
 
-            var guard = ensureInitialized();
-            if (guard.IsFailure)
-                return CommonResult<LeaderboardPlayerSnapshot>.Failure(guard.Error!);
+            var init = await InitializeAsync(ct);
+            if (init.IsFailure)
+                return CommonResult<LeaderboardPlayerSnapshot>.Failure(init.Error!);
 
             var resolve = tryResolveLeaderboardPlatformId(leaderboardId, out var entry, out var platformLeaderboardId);
             if (resolve.IsFailure)
@@ -183,13 +190,11 @@ namespace Devian
         {
             ct.ThrowIfCancellationRequested();
 
-            var guard = ensureInitialized();
-            if (guard.IsFailure)
-                return guard;
+            var init = await InitializeAsync(ct);
+            if (init.IsFailure)
+                return init;
 
-            var serverNowUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            if (serverNowUtcMs <= 0L)
-                return CommonResult.Ok();
+            var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
 
             var activeRows = collectActiveSeasonRows();
             if (activeRows.Count <= 0)
@@ -289,16 +294,6 @@ namespace Devian
         public Task<CommonResult> ReportScoreAsync(string leaderboardId, long score, CancellationToken ct = default)
         {
             return ReportScoreAsync(leaderboardId, ct);
-        }
-
-        private CommonResult ensureInitialized()
-        {
-            if (_initialized)
-                return CommonResult.Ok();
-
-            return CommonResult.Failure(
-                COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                "LeaderboardManager.InitializeAsync must be called before API use.");
         }
 
         private CommonResult tryResolveLeaderboardPlatformId(string leaderboardId, out LeaderboardMapEntry entry, out string platformLeaderboardId)
@@ -542,11 +537,7 @@ namespace Devian
                     COMMON_ERROR_TYPE.LEADERBOARD_SEASON_TIME_INVALID,
                     $"SEASON time range invalid: seasonId={row.SeasonId}");
 
-            var serverNowUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            if (serverNowUtcMs <= 0L)
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.LEADERBOARD_SERVER_TIME_UNAVAILABLE,
-                    "Server time unavailable for season check.");
+            var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
 
             if (serverNowUtcMs < startUtcMs || serverNowUtcMs >= endUtcMs)
                 return CommonResult.Failure(
@@ -674,6 +665,29 @@ namespace Devian
                     return new GoogleLeaderboardPlatformAdapter();
                 default:
                     return new UnsupportedLeaderboardPlatformAdapter();
+            }
+        }
+
+        private void tryInitializeFromApplication()
+        {
+            if (_initializeFromApplicationRequested)
+                return;
+
+            if (MobileApplication.Instance == null)
+                return;
+
+            _initializeFromApplicationRequested = true;
+            _ = initializeFromApplicationAsync();
+        }
+
+        private async Task initializeFromApplicationAsync()
+        {
+            var init = await InitializeAsync(CancellationToken.None);
+            if (init.IsFailure)
+            {
+                Debug.LogWarning(
+                    $"[{Tag}] InitializeAsync failed during application bootstrap (non-fatal): " +
+                    $"{init.Error.Code}: {init.Error.Message}");
             }
         }
 

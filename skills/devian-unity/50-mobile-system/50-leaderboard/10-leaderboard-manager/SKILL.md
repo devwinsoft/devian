@@ -26,6 +26,11 @@ MobileSystem 샘플의 `LeaderboardManager` 설계 문서다.
 - `SyncSeasonTransitionRewardsAsync(ct)` -> `Task<CommonResult>`
 - `ClearStorage()`
 
+초기화 규약:
+- `LeaderboardManager`는 `MobileApplication.Instance`가 존재하면 Awake/Start에서 `InitializeAsync`를 자체 수행한다.
+- `ReportScoreAsync`, `GetPlayerSnapshotAsync`, `SyncSeasonTransitionRewardsAsync`는 내부에서 초기화를 보장한다.
+- 외부에서 `InitializeAsync`를 명시 호출해도 무방하지만 필수는 아니다.
+
 obsolete:
 - `ReportScoreAsync(leaderboardId, score, ct)` (deprecated shim)
 

@@ -69,12 +69,7 @@ namespace Devian
         {
             _ = ct;
 
-            if (!TryGetServerNowUtcMs(out var serverNowUtcMs))
-            {
-                return Task.FromResult(CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
-                    "Server time is unavailable."));
-            }
+            var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
 
             rebuildRowCache();
             refreshState(serverNowUtcMs);
@@ -88,8 +83,7 @@ namespace Devian
             if (!_initialized)
                 return;
 
-            if (!TryGetServerNowUtcMs(out var serverNowUtcMs))
-                return;
+            var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
 
             rebuildRowCache();
             refreshState(serverNowUtcMs);
@@ -100,8 +94,7 @@ namespace Devian
             if (!_initialized)
                 return 0;
 
-            if (!TryGetServerNowUtcMs(out var serverNowUtcMs))
-                return 0;
+            var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
 
             rebuildRowCache();
             refreshState(serverNowUtcMs);
@@ -113,8 +106,7 @@ namespace Devian
             if (!_initialized || string.IsNullOrWhiteSpace(attendId))
                 return AttendRuntimeState.NONE;
 
-            if (!TryGetServerNowUtcMs(out var serverNowUtcMs))
-                return AttendRuntimeState.NONE;
+            var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
 
             rebuildRowCache();
             refreshState(serverNowUtcMs);
@@ -129,8 +121,7 @@ namespace Devian
             if (!_initialized || day < 1 || day > MaxAttendDay)
                 return null;
 
-            if (!TryGetServerNowUtcMs(out var serverNowUtcMs))
-                return null;
+            var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
 
             rebuildRowCache();
             refreshState(serverNowUtcMs);
@@ -150,8 +141,7 @@ namespace Devian
             if (!_initialized || string.IsNullOrWhiteSpace(attendId))
                 return false;
 
-            if (!TryGetServerNowUtcMs(out var serverNowUtcMs))
-                return false;
+            var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
 
             rebuildRowCache();
             refreshState(serverNowUtcMs);
@@ -172,8 +162,7 @@ namespace Devian
 
             ct.ThrowIfCancellationRequested();
 
-            if (!TryGetServerNowUtcMs(out var serverNowUtcMs))
-                return CommonResult<RewardData[]>.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, "Server time is unavailable.");
+            var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
 
             rebuildRowCache();
             refreshState(serverNowUtcMs);
@@ -242,12 +231,6 @@ namespace Devian
             _runtimeById.Clear();
             _runtimeByDay.Clear();
             _initialized = false;
-        }
-
-        public bool TryGetServerNowUtcMs(out long serverNowUtcMs)
-        {
-            serverNowUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            return serverNowUtcMs > 0L;
         }
 
         void rebuildRowCache()

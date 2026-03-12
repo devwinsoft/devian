@@ -45,10 +45,10 @@ Leaderboard 점수 제출 + 시즌 전환 보상 시스템의 모듈 경계와 �
 - `NoScore`(정상 조회 + 미참여)에서만 `NO_PARTICIPATION` 기록.
 - `PlatformUnavailable` / `NotLoggedIn` / `Failed`는 claim을 기록하지 않고 재시도 경로로 둔다.
 
-### 7) Initialize는 명시적 호출이며 자동 초기화 금지
+### 7) Initialize는 LeaderboardManager 내부에서 보장한다
 
-- `LeaderboardManager.InitializeAsync(ct)`는 명시적으로 호출한다.
-- 초기화 전 API 호출은 실패 반환.
+- `LeaderboardManager`는 `MobileApplication.Instance`가 존재할 때 자체 초기화를 시도한다.
+- `ReportScoreAsync`/`GetPlayerSnapshotAsync`/`SyncSeasonTransitionRewardsAsync`는 내부에서 초기화를 보장한다.
 
 ### 8) 미지원 플랫폼/에디터는 안전 실패
 

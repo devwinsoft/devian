@@ -54,10 +54,9 @@ Bootstrap prefab에 부착한다.
 
 ### Instance Methods - Region
 
-- `SetFunctionsRegion(string region)`
-  - Firebase Functions 리전을 설정한다.
-  - 빈 문자열 또는 null이면 기본 리전(us-central1)을 사용한다.
-  - `MobileApplication.onBootAsync()`에서 호출한다.
+- `onInitAwake()`에서 `MobileApplication.Instance.FirebaseFunctionsRegion`을 읽어 internal region을 초기화한다.
+- region 값이 비어 있으면 기본 리전(`us-central1`)을 사용한다.
+- `getFunctionsInstance()` 호출 시 region이 비어 있으면 `MobileApplication.Instance`를 다시 참조해 lazy 초기화를 시도한다.
 
 ### Instance Methods - Session Init callable (1개)
 
@@ -130,10 +129,8 @@ PurchaseManager는 같은 어셈블리이므로 `internal` FirebaseCallableManag
 
 ### MobileApplication
 ```csharp
-void configureFunctionsRegion()
-{
-    GetComponent<FirebaseCallableManager>()?.SetFunctionsRegion(FirebaseFunctionsRegion);
-}
+// MobileApplication은 FirebaseCallableManager region을 직접 설정하지 않는다.
+// FirebaseCallableManager가 MobileApplication.Instance.FirebaseFunctionsRegion을 읽어 자체 초기화한다.
 ```
 
 
@@ -143,6 +140,7 @@ void configureFunctionsRegion()
 - `FunctionsException` 에러 매핑은 FirebaseCallableManager 각 메서드 내부에서 수행한다. 호출자는 `CommonResult`만 소비한다.
 - FirebaseCallableManager는 game 도메인 테이블(TB_PURCHASE 등)을 참조하지 않는다. 서버 응답 raw 값을 typed result에 그대로 저장한다.
 - Firebase Auth 관련 로직은 `AccountLoginFirebase`가 소유한다. FirebaseCallableManager는 Auth를 다루지 않는다.
+- Firebase Functions region 설정 owner는 `MobileApplication`이고, 실제 region 초기화는 `FirebaseCallableManager`가 `MobileApplication.Instance` 참조로 수행한다.
 - 외부에서 사용하지 않는 메서드는 `private`으로 선언하고 소문자로 시작한다.
 - Editor mock 응답은 각 manager가 자체 처리한다. FirebaseCallableManager는 Editor 전용 분기를 갖지 않는다.
 

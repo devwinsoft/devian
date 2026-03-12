@@ -1,6 +1,5 @@
 using System;
 using System.Reflection;
-using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -14,6 +13,7 @@ namespace Devian
     [RequireComponent(typeof(GameMessageManager))]
     [RequireComponent(typeof(AttendManager))]
     [RequireComponent(typeof(MissionManager))]
+    [RequireComponent(typeof(RemoteDataManager))]
     [RequireComponent(typeof(SaveDataManager))]
     [RequireComponent(typeof(LoginManager))]
     [RequireComponent(typeof(InputManager))]
@@ -35,8 +35,6 @@ namespace Devian
             // MobileSystem common initialization
             Log.SetSink(new UnityLogSink());
 
-            configureFunctionsRegion();
-
             // Must be activated before Google login is attempted.
             #if UNITY_ANDROID && !UNITY_EDITOR
             tryActivateGooglePlayGames();
@@ -55,11 +53,6 @@ namespace Devian
             }
 
             return Task.CompletedTask;
-        }
-
-        protected override void OnEnterForeground()
-        {
-            _ = syncSeasonRewardsOnForegroundAsync();
         }
 
         /// <summary>
@@ -129,25 +122,5 @@ namespace Devian
         }
         #endif
 
-        private static async Task syncSeasonRewardsOnForegroundAsync()
-        {
-            if (!LeaderboardManager.TryGet(out var leaderboardManager)
-                || leaderboardManager == null
-                || !leaderboardManager.IsInitialized)
-            {
-                return;
-            }
-
-            var syncSeasonReward = await leaderboardManager.SyncSeasonTransitionRewardsAsync(CancellationToken.None);
-            if (syncSeasonReward.IsFailure)
-            {
-                Debug.LogWarning($"[MobileApplication] Season reward sync failed on foreground: {syncSeasonReward.Error}");
-            }
-        }
-
-        void configureFunctionsRegion()
-        {
-            GetComponent<FirebaseCallableManager>()?.SetFunctionsRegion(FirebaseFunctionsRegion);
-        }
     }
 }

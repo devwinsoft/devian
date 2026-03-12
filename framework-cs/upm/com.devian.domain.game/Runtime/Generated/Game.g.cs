@@ -452,6 +452,7 @@ namespace Devian.Domain.Game
         public string RewardGroupId { get; set; } = string.Empty;
         public int Amount { get; set; }
         public int MaxCount { get; set; }
+        public float SelectRate { get; set; }
 
         public string GetKey() => ShopId;
     }

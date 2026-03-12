@@ -49,18 +49,18 @@ namespace Devian
         /// <summary>
         /// Unity Awake. Validates/bootstrap-specific wiring for components already attached to Bootstrap.
         /// </summary>
-        protected virtual void Awake()
+        protected void Awake()
         {
             if (_instance == null) _instance = this;
             _isForeground = Application.isFocused;
-            ensureRequiredComponents();
+            onInitAwake();
         }
 
         /// <summary>
-        /// Validates bootstrap requirements.
+        /// Awake 시점에 파생 클래스가 초기화 로직을 추가할 수 있는 hook.
         /// CompoSingleton은 런타임 AddComponent로 생성하지 말고 prefab/scene에 미리 부착해야 한다.
         /// </summary>
-        protected virtual void ensureRequiredComponents()
+        protected virtual void onInitAwake()
         {
         }
 

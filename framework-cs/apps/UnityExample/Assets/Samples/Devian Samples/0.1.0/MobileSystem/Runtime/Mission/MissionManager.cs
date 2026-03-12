@@ -46,12 +46,7 @@ namespace Devian
         {
             _ = ct;
 
-            if (!TryGetServerNowUtcMs(out var nowUtcMs))
-            {
-                return Task.FromResult(CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
-                    "Server time is unavailable."));
-            }
+            var nowUtcMs = RemoteDataManager.ServerNowUtcMs;
 
             if (_storage.dailyMissionStartUtcMs <= 0L)
             {
@@ -109,12 +104,6 @@ namespace Devian
 
             foreach (var runtime in runtimes)
                 onRuntimeInitialized(runtime);
-        }
-
-        public bool TryGetServerNowUtcMs(out long serverNowUtcMs)
-        {
-            serverNowUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            return serverNowUtcMs > 0L;
         }
 
         public MissionRuntimeState GetMissionRuntimeState(MISSION_TYPE missionType, string missionId)
@@ -410,8 +399,7 @@ namespace Devian
 
         TimeSpan getRemainTimeCore(long periodStartUtcMs, long periodDurationMs)
         {
-            if (!TryGetServerNowUtcMs(out var serverNowUtcMs))
-                return default;
+            var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
 
             if (periodStartUtcMs <= 0L || periodDurationMs <= 0L)
                 return default;
@@ -435,8 +423,7 @@ namespace Devian
 
         int getCurrentDailyPeriodIndex()
         {
-            if (!TryGetServerNowUtcMs(out var estimatedServerNowUtcMs))
-                return 0;
+            var estimatedServerNowUtcMs = RemoteDataManager.ServerNowUtcMs;
 
             if (_storage.dailyMissionStartUtcMs <= 0L)
                 return 0;
@@ -452,8 +439,7 @@ namespace Devian
 
         int getCurrentPeriodIndex()
         {
-            if (!TryGetServerNowUtcMs(out var estimatedServerNowUtcMs))
-                return 0;
+            var estimatedServerNowUtcMs = RemoteDataManager.ServerNowUtcMs;
 
             if (_storage.periodMissionStartUtcMs <= 0L)
                 return 0;
@@ -464,8 +450,7 @@ namespace Devian
 
         int getCurrentPeriodElapsedDay()
         {
-            if (!TryGetServerNowUtcMs(out var estimatedServerNowUtcMs))
-                return 0;
+            var estimatedServerNowUtcMs = RemoteDataManager.ServerNowUtcMs;
 
             if (_storage.periodMissionStartUtcMs <= 0L)
                 return 0;

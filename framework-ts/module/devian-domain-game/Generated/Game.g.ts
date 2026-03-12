@@ -372,6 +372,7 @@ export interface SHOP_DAILY extends IEntityKey<string> {
     RewardGroupId: string;
     Amount: number;
     MaxCount: number;
+    SelectRate: number;
     getKey(): string;
 }
 

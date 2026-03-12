@@ -32,17 +32,21 @@ public Task<CommonResult<RewardData[]>> BuyAsync(string shopId, CancellationToke
 public IReadOnlyList<ShopCatalog> GetCatalogs()
 public ShopCatalog GetCatalog(SHOP_CATALOG_TYPE catalogType)
 public IReadOnlyList<ShopProductBase> GetProducts(SHOP_CATALOG_TYPE catalogType)
+public CommonResult ResetAds(SHOP_CATALOG_TYPE catalogType)
+public CommonResult<long> GetAdsResetRemainingMs(SHOP_CATALOG_TYPE catalogType)
 ```
 
 핵심 플로우:
 
 1. `shopId`로 `ShopProductBase` 조회
-2. 전역 일일 리셋 체크(서버 시간 기준)
-3. 구매 제한(`maxCount`) 체크
-4. 카탈로그 분기
-- `PURCHASE`: `PurchaseManager.PurchaseAsync(internalProductId)` 위임
-- 그 외: 통화 차감/광고 시청 후 `RewardManager` 지급
-5. 성공 시 구매 카운트 저장 + SaveData 저장
+2. `SHOP_DAILY` 카탈로그는 초기화/리셋 시 `selectRate` 규칙으로 5개 선택 생성된다.
+3. `SHOP_DAILY` 선택 생성에서 동일 `shopId`(pk)는 중복 선택하지 않는다.
+4. 구매 제한 리셋 체크(서버 시간 기준): FREE/ADS + 구매 제한 상품은 카탈로그별 기준 시각 + 24시간, 비 ADS + 구매 제한 상품은 전역 1일(UTC day start) 기준
+5. 구매 제한(`maxCount`) 체크
+6. 카탈로그 분기: `PURCHASE`는 `PurchaseManager.PurchaseAsync(internalProductId)` 위임, 그 외는 통화 차감/광고 시청 후 `RewardManager` 지급
+7. 성공 시 구매 카운트 저장 + SaveData 저장
+8. FREE/ADS + 구매 제한 상품은 `GetAdsResetRemainingMs(catalogType) == 0`일 때만 성공 시점을 카탈로그 기준 시각(`startedAtUtcMs`)으로 기록
+9. `GetAdsResetRemainingMs(catalogType)`으로 카탈로그별 FREE/ADS 리셋까지 남은 시간(ms)을 조회
 
 ---
 
@@ -51,9 +55,9 @@ public IReadOnlyList<ShopProductBase> GetProducts(SHOP_CATALOG_TYPE catalogType)
 - `FREE`: 가격 0 구매로 사용(차감 없음)
 - `ADS`: 광고 시청 성공 시 구매 성공
 - `JEWEL`: `JEWEL_FREE` 우선 차감 후 부족분 `JEWEL_PAID` 차감
-- `NO_ADS` 대여(`InventoryStorage.GetRentalRemainingMs("NO_ADS") > 0`) 중이면:
-- `CanBuy`: `AdsManager.CanShow` 체크 skip
-- `BuyAsync`: 광고 show skip, 즉시 성공 경로
+- `NO_ADS` 대여(`InventoryStorage.GetRentalRemainingMs("NO_ADS") > 0`) 중이면 `CanBuy`의 `AdsManager.CanShow` 체크와 `BuyAsync`의 광고 show를 skip한다.
+- `ResetAds(catalogType)`: 지정 카탈로그의 ADS 구매 제한 카운트를 즉시 초기화한다.
+- `GetAdsResetRemainingMs(catalogType)`: 지정 카탈로그 FREE/ADS 구매 제한 리셋까지 남은 시간(ms)을 반환한다.
 
 ---
 

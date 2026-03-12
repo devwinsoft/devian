@@ -11,7 +11,8 @@ AppliesTo: v10
 
 ### 1) 앱 시작/로그인
 
-- `LeaderboardManager.InitializeAsync(ct)`
+- `LeaderboardManager`는 `MobileApplication.Instance`를 통해 자체 초기화한다.
+- 로그인 경로에서는 `LeaderboardManager.SyncSeasonTransitionRewardsAsync(ct)`를 호출한다.
 
 ### 2) 점수 갱신 시점
 
@@ -22,8 +23,9 @@ AppliesTo: v10
 
 ### 3) 시즌 전환 보상 평가 시점
 
-- foreground 전이/앱 시작 시 `LeaderboardManager.SyncSeasonTransitionRewardsAsync(ct)` 호출
-- 서버 시간(`MissionManager.TryGetServerNowUtcMs`)이 없으면 스킵
+- 로그인 완료 시 `LeaderboardManager.SyncSeasonTransitionRewardsAsync(ct)` 호출
+- 필요 시 상위 앱 로직에서 재호출한다.
+- 서버 시간(`RemoteDataManager.ServerNowUtcMs`)을 사용한다
 - 평가 대상: 현재 시즌의 직전 시즌(모드별)
 - grace period 통과 후(`+10분`)에만 평가
 

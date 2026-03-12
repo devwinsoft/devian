@@ -29,6 +29,7 @@ MobileSystem은 **Devian Samples**(`com.devian.samples`)에 포함된 Unity Samp
 - [24-login-manager](../24-login-manager/SKILL.md)
 - [27-attend-system](../27-attend-system/00-overview/SKILL.md)
 - [28-shop-system](../28-shop-system/00-overview/SKILL.md)
+- [29-remote-data-system](../29-remote-data-system/00-overview/SKILL.md)
 - [20-account-system](../20-account-system/00-overview/SKILL.md)
 - [21-savedata-system](../21-savedata-system/00-overview/SKILL.md)
 - [25-recovery-system](../25-recovery-system/00-overview/SKILL.md)

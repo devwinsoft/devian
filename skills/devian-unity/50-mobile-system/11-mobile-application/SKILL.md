@@ -16,8 +16,6 @@ MobileApplication 기반 부트스트랩 샘플.
 
 ## Implementation Location (3-path mirror)
 
-> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../07-samples-creation-guide/SKILL.md)
-
 - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Bootstrap/MobileApplication.cs`
 - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Bootstrap/MobileApplication.cs`
 - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Bootstrap/MobileApplication.cs`
@@ -38,10 +36,6 @@ namespace MyApp
             // App-specific initialization here.
         }
 
-        protected override void OnEnterForeground()
-        {
-            // Resume sync here.
-        }
     }
 }
 ```
@@ -57,9 +51,6 @@ namespace MyApp
 - Unity `OnApplicationPause` / `OnApplicationFocus`를 직접 override하지 않는다.
 - lifecycle 처리는 `BaseApplication`의 semantic hook을 사용한다.
 - manager가 inspector/serialized field로 Firebase region 같은 앱 설정을 직접 소유하지 않는다. 설정 owner는 bootstrap/app layer다.
-
-foreground 복귀 기준 동작:
-- refresh 성공 시 `LeaderboardManager.SyncSeasonTransitionRewardsAsync(...)` best-effort 호출
 
 onLoadCompletedAsync:
 - 리소스 로딩 완료 후, 서버와 별개로 독립적으로 동작하는 Manager를 초기화한다.
@@ -77,9 +68,15 @@ onLoadCompletedAsync:
 
 ## Version Check Ownership
 
-- `MobileApplication`은 버전 판정 API를 소유하지 않는다.
-- 버전 체크는 `LoginManager`가 진입 초기 단계에서 수행한다.
-- 관련 타입/메서드는 [24-login-manager](../24-login-manager/SKILL.md)를 따른다.
+- `MobileApplication`은 버전 체크 URL 설정(`VersionCheckAOS`, `VersionCheckIOS`)을 소유한다.
+- 실제 버전 판정/서버 UTC 동기화와 상태(property) 보유는 `RemoteDataManager`가 수행한다.
+- 로그인 진입 시 `LoginManager`는 `RemoteDataManager.InitializeAsync`를 가장 먼저 호출한다.
+
+## Firebase Functions Region Ownership
+
+- `MobileApplication`은 `FirebaseFunctionsRegion` 설정값 owner다.
+- `MobileApplication`은 `FirebaseCallableManager`를 직접 초기화(`SetFunctionsRegion`)하지 않는다.
+- `FirebaseCallableManager`가 `MobileApplication.Instance.FirebaseFunctionsRegion`을 참조해 자체 초기화한다.
 
 
 ## RequireComponent
@@ -91,17 +88,10 @@ MobileApplication에 부착된 RequireComponent:
 - `PurchaseManager`
 - `AchieveManager`
 - `MissionManager`
+- `RemoteDataManager`
 - `LeaderboardManager`
 - `GameMessageManager`
 - `LoginManager`
 - `SaveDataManager`
-- `InputManager` — [24-input-manager](../../20-domain-common-system/22-input-manager/SKILL.md)
-- `FirebaseCallableManager` — [23-firebase-callable-manager](../23-firebase-callable-manager/SKILL.md)
-
-
-## Links
-- [16-base-application](../../20-domain-common-system/14-base-application/SKILL.md) — BaseApplication 런타임 스펙
-- [24-input-manager](../../20-domain-common-system/22-input-manager/SKILL.md) — InputManager 공용 입력 관리자
-- [21-savedata-system/43-savedata-json-codec](../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 규약
-- [50-leaderboard/13-leaderboard-season-reward-manager](../50-leaderboard/13-leaderboard-season-reward-manager/SKILL.md) — 시즌 보상 sync 흐름
-- [50-mobile-system overview](../00-overview/SKILL.md) — MobileSystem (Devian Samples) 그룹 개요
+- `InputManager`
+- `FirebaseCallableManager`

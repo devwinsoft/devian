@@ -16,9 +16,9 @@ Type: Design / Runtime Orchestration
   - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Leaderboard/LeaderboardManager.cs`
 - Assets/Samples (import):
   - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Leaderboard/LeaderboardManager.cs`
-- Bootstrap 연동:
-  - `.../Runtime/Bootstrap/MobileApplication.cs`
-  - `framework-cs/apps/UnityExample/Assets/Scripts/Test/TestSceneLoading.cs`
+- Login 연동:
+  - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Login/LoginManager.cs`
+  - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Login/LoginManager.cs`
 
 ---
 
@@ -38,7 +38,7 @@ Type: Design / Runtime Orchestration
 ## Core Flow
 
 1. 초기화 상태 확인
-2. 서버 시간 확보 (`MissionManager.TryGetServerNowUtcMs`)
+2. 서버 시간 확보 (`RemoteDataManager.ServerNowUtcMs`)
 3. `TB_LEADERBOARD`에서 active season row 수집 (`LEADERBOARD.seasonId → TB_SEASON`으로 시간 조회)
 4. 모드별(`LEADERBOARD_MODE`) current season / previous season 계산 (TB_SEASON 시간 기준)
 5. grace period 통과 여부 확인
@@ -80,7 +80,8 @@ Type: Design / Runtime Orchestration
 ### 5) 스케줄러 없음
 
 - period 개념이 아니라 시즌 경계 평가이므로 별도 scheduler를 두지 않는다
-- 앱 시작/foreground 전이에서 sync 호출한다
+- 로그인 완료 경로에서 sync를 호출한다
+- 추가 평가가 필요하면 상위 앱 로직이 `SyncSeasonTransitionRewardsAsync`를 명시 호출한다
 
 ---
 

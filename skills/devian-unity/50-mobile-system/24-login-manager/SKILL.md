@@ -14,11 +14,13 @@ AppliesTo: v10
 포함:
 - 런타임 인증 세션 복구 (`AccountManager.EnsureRuntimeAuthSessionAsync`)
 - 명시 로그인 (`AccountManager.LoginAsync`)
+- RemoteData 초기화 (`RemoteDataManager.InitializeAsync`) — 버전 체크 + 서버 UTC
 - 세션 초기 스냅샷 조회 (`FirebaseCallableManager.InitSessionAsync`)
 - 저장 동기화 (`SaveDataManager.SyncGameStorageAsync`)
 - 충돌 해소 + 재초기화 (`ResolveConflictAndInitializeAsync`)
 - 초기 지급 (`InventoryManager.FirstInitAsync`) + 저장
-- 게임 시스템 초기화 (Mission/Achieve/Ad/Leaderboard)
+- 게임 시스템 초기화 (Mission/Achieve/Ad)
+- 시즌 전환 보상 sync (`LeaderboardManager.SyncSeasonTransitionRewardsAsync`)
 - 최종 저장 (`SaveDataManager.SaveGameStorageAsync`)
 - 구매 진입 인증 보정 (`EnsurePurchaseLoginReadyAsync`, Android silent Google restore)
 - 결과 반환 (`CommonResult`)
@@ -32,17 +34,17 @@ AppliesTo: v10
 ## API
 
 - `EnsureRuntimeSessionAndInitializeAsync(VersionNumber clientVersion, CancellationToken ct = default) : Task<CommonResult<LoginInitializeResult>>`
-  - 앱 시작 시 버전 체크 + 인증 복구 + InitSession + 초기화 경로
+  - 앱 시작 시 `RemoteDataManager.InitializeAsync`를 **가장 먼저** 호출한 뒤 인증 복구 + InitSession + 초기화 경로
   - 이전 로그인 정보가 없거나(`loginType=NONE`) 자동 복구가 불가능하면 로컬 모드 초기화(`syncAndInitializeAsync`) 결과를 그대로 반환한다.
 - `LoginAndInitializeAsync(LoginType loginType, VersionNumber clientVersion, CancellationToken ct = default) : Task<CommonResult<LoginInitializeResult>>`
-  - 사용자 선택 로그인 시 버전 체크 + InitSession + 초기화 경로
+  - 사용자 선택 로그인 시 `RemoteDataManager.InitializeAsync` 선행 + InitSession + 초기화 경로
 - `ResolveConflictAndInitializeAsync(SyncResolution resolution, VersionNumber clientVersion, CancellationToken ct = default) : Task<CommonResult<LoginInitializeResult>>`
-  - 충돌 해소 경로에서도 버전 체크를 먼저 수행한다.
+  - 충돌 해소 경로에서도 `RemoteDataManager.InitializeAsync`를 먼저 수행한다.
   - 전달된 `clientVersion` 기준으로 버전 체크를 수행한다.
   - 재초기화 후에도 `Conflict`면 `SAVEDATA_SYNC_RESOLVE_FAILED` 실패 반환
 - `VersionCheck(VersionNumber clientVersion, CancellationToken ct = default) : Task<CommonResult<VersionCheckResult>>`
 - `VersionCheckAsync(VersionNumber clientVersion, CancellationToken ct = default) : Task<CommonResult<VersionCheckResult>>`
-  - 버전 판정 전용 API (`Success`/`RecommendUpdate`/`ForceUpdate`)
+  - 버전 판정 API (`RemoteDataManager.InitializeAsync` 위임 결과 사용)
 - `IsPurchaseLoginReady() : bool`
   - 현재 Firebase 인증 세션 존재 여부
 - `EnsurePurchaseLoginReadyAsync(CancellationToken ct = default) : Task<CommonResult<bool>>`
@@ -75,9 +77,9 @@ fatal (실패 반환):
 
 non-fatal (로그만 남기고 진행):
 - 강제 업데이트 필요 (`VersionResult == ForceUpdate`)는 실패가 아니라 성공 결과로 반환된다.
+- 서버 UTC 동기화 실패 (클라이언트 UTC fallback)
 - `PurchaseManager.SyncAsync` 실패
 - `AdsManager.InitializeAsync` 실패
-- `LeaderboardManager.InitializeAsync` 실패
 - `LeaderboardManager.SyncSeasonTransitionRewardsAsync` 실패
 
 
@@ -85,7 +87,8 @@ non-fatal (로그만 남기고 진행):
 
 - LoginManager는 Scene/UI 레이어를 참조하지 않는다.
 - LoginManager 공개 API는 `CommonResult` 계열만 반환한다.
-- 버전 체크는 초기화 진입점의 첫 단계에서 수행한다.
+- RemoteData 초기화는 로그인 초기화 진입점의 첫 단계에서 수행한다.
+- 버전 체크/서버 UTC fetch 및 해당 상태(property) 소유는 `RemoteDataManager`가 담당한다.
 - 인증 상태 판단은 `AccountManager`를 통해서만 수행한다.
 - Save payload 해석/요약 생성은 LoginManager에서 구현하지 않는다. (`SaveDataManager` 책임)
 
@@ -111,3 +114,4 @@ non-fatal (로그만 남기고 진행):
 - [20-account-system/33-account-manager](../20-account-system/33-account-manager/SKILL.md)
 - [21-savedata-system/10-savedata-manager](../21-savedata-system/10-savedata-manager/SKILL.md)
 - [11-mobile-application](../11-mobile-application/SKILL.md)
+- [29-remote-data-system/10-remote-data-manager](../29-remote-data-system/10-remote-data-manager/SKILL.md)

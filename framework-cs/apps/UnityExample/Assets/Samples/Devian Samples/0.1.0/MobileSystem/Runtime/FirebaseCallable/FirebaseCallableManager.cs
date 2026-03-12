@@ -20,17 +20,23 @@ namespace Devian
 
         string _functionsRegion = string.Empty;
 
-        // ── Region ─────────────────────────────────────────────────
-
-        /// <summary>
-        /// Firebase Cloud Functions 리전을 설정한다.
-        /// 빈 문자열 또는 null이면 기본 리전(us-central1)을 사용한다.
-        /// </summary>
-        public void SetFunctionsRegion(string region)
+        protected override void onInitAwake()
         {
-            _functionsRegion = string.IsNullOrWhiteSpace(region)
+            tryInitializeFunctionsRegionFromApplication();
+        }
+
+        void tryInitializeFunctionsRegionFromApplication()
+        {
+            if (!string.IsNullOrEmpty(_functionsRegion))
+                return;
+
+            var app = MobileApplication.Instance;
+            if (app == null)
+                return;
+
+            _functionsRegion = string.IsNullOrWhiteSpace(app.FirebaseFunctionsRegion)
                 ? string.Empty
-                : region.Trim();
+                : app.FirebaseFunctionsRegion.Trim();
         }
 
         // ── Session Init (로그인 시 일괄 조회) ──────────────────────
@@ -363,6 +369,8 @@ namespace Devian
 
         FirebaseFunctions getFunctionsInstance()
         {
+            tryInitializeFunctionsRegionFromApplication();
+
             return string.IsNullOrEmpty(_functionsRegion)
                 ? FirebaseFunctions.DefaultInstance
                 : FirebaseFunctions.GetInstance(_functionsRegion);

@@ -1,6 +1,6 @@
 ---
 name: 12-shop-storage
-description: ShopStorage를 통해 `shopId`별 구매 횟수와 전역 일일 리셋 상태를 저장/복원할 때 사용한다. 시간 기준은 UTC 현재 시각이다.
+description: ShopStorage를 통해 `shopId`별 구매 횟수, 비광고 전역 일일 리셋 상태, FREE/ADS 카탈로그별 24시간 롤링 리셋 시작 시각을 저장/복원할 때 사용한다.
 ---
 
 # 12-shop-storage
@@ -28,18 +28,25 @@ public sealed class ShopStorage
 ## 2. State
 
 - `schemaVersion`
-- `lastResetUtcDayStartMs` : 전역 일일 리셋 기준 시각(UTC day start)
+- `lastResetUtcDayStartMs` : 비광고 구매 제한 전역 일일 리셋 기준 시각(UTC day start)
 - `purchaseCounts: Dictionary<string, int>`
 - key: `shopId`
 - value: 누적 구매 횟수(현재 리셋 주기 내)
+- `adsCatalogResetStartedAtUtcMsByCatalog: Dictionary<string, long>`
+- key: `SHOP_CATALOG_TYPE` 문자열
+- value: 해당 카탈로그 FREE/ADS 구매 제한 24시간 롤링 리셋 시작 시각(UTC ms)
 
 ---
 
 ## 3. Hard Rules
 
-- 리셋 주기는 상품별이 아니라 ShopManager 전역 1일 고정이다.
+- FREE/ADS + 구매 제한 상품은 카탈로그별 기준 시각 + 24시간 리셋을 사용한다.
+- 비 ADS + 구매 제한 상품은 전역 1일(UTC day start) 리셋을 사용한다.
 - 구매 성공 시에만 `purchaseCounts[shopId]`를 증가시킨다.
-- day start가 바뀌면 전체 카운트를 초기화한다.
+- FREE/ADS는 카탈로그별 `startedAtUtcMs` 기준 24시간 경과 시 카운트를 초기화한다.
+- FREE/ADS 성공 시 `GetAdsResetRemainingMs(catalogType)`가 0이면 해당 시각으로 `startedAtUtcMs`를 갱신한다.
+- 비 ADS는 day start가 바뀌면 전역 비 ADS 카운트를 초기화한다.
+- FREE/ADS 리셋 남은 시간은 저장하지 않고 `startedAtUtcMs`와 현재 시각으로 계산한다.
 
 ---
 

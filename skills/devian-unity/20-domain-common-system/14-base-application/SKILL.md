@@ -220,11 +220,16 @@ protected override void OnEnterForeground()
 **프레임워크가 BaseApplication 파생 컴포넌트를 자동 추가하지 않는다.** 개발자가 직접 추가해야 한다.
 **프레임워크가 Bootstrap prefab을 자동 생성하지도 않는다.**
 
-### 필수 컴포넌트 부착
+### Awake / onInitAwake
 
-`Awake()`에서 `ensureRequiredComponents()`가 호출된다.
+`Awake()`는 `protected`(non-virtual)이다. 파생 클래스에서 override하지 않는다.
+`Awake()`는 `_instance` 등록 후 `onInitAwake()`를 호출한다.
 
-- BaseApplication 기본 구현은 필수 매니저를 추가하지 않는다.
+```csharp
+protected virtual void onInitAwake() {}
+```
+
+- 파생 클래스가 Awake 시점에 초기화 로직을 추가하려면 `onInitAwake()`를 override한다.
 - `CompoSingleton` 계열은 런타임 `AddComponent`로 만들지 않고, bootstrap prefab/scene object에 미리 부착해야 한다.
 - 소비자 모듈/도메인은 파생 bootstrap에서 필요한 컴포넌트가 이미 부착되었는지 검증/보장한다.
 
