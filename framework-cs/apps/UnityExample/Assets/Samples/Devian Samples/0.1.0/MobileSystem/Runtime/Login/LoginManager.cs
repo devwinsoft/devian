@@ -1,7 +1,9 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Devian
 {
@@ -42,16 +44,12 @@ namespace Devian
     {
         const string Tag = nameof(LoginManager);
 
-        readonly struct VersionCheckContext
+        [Serializable]
+        sealed class VersionCheckConfig
         {
-            public VersionCheckContext(VersionCheckResult result, RemoteConfigSnapshot snapshot)
-            {
-                Result = result;
-                Snapshot = snapshot;
-            }
-
-            public VersionCheckResult Result { get; }
-            public RemoteConfigSnapshot Snapshot { get; }
+            public string currentVersion = string.Empty;
+            public string minVersion = string.Empty;
+            public string update_url = string.Empty;
         }
 
         protected override void onInitAwake()
@@ -67,9 +65,11 @@ namespace Devian
             if (versionGate.IsFailure)
                 return CommonResult<LoginInitializeResult>.Failure(versionGate.Error!);
 
+            if (versionGate.Value == VersionCheckResult.ForceUpdate)
+                return createVersionCheckResult(versionGate.Value);
+
             return await ensureRuntimeSessionAndInitializeCoreAsync(
-                versionGate.Value.Snapshot,
-                versionGate.Value.Result,
+                versionGate.Value,
                 ct);
         }
 
@@ -83,13 +83,13 @@ namespace Devian
             if (versionGate.IsFailure)
                 return CommonResult<LoginInitializeResult>.Failure(versionGate.Error!);
 
+            if (versionGate.Value == VersionCheckResult.ForceUpdate)
+                return createVersionCheckResult(versionGate.Value);
+
             var login = await AccountManager.Instance.LoginAsync(loginType, ct);
             await yieldMainThreadAsync(ct);
             if (login.IsFailure)
                 return CommonResult<LoginInitializeResult>.Failure(login.Error!);
-
-            if (versionGate.Value.Result == VersionCheckResult.ForceUpdate)
-                return createVersionCheckResult(versionGate.Value.Result);
 
             var initSession = await initializeSessionSnapshotAsync(ct);
             await yieldMainThreadAsync(ct);
@@ -98,8 +98,7 @@ namespace Devian
 
             return await syncAndInitializeAsync(
                 initSession.Value,
-                versionGate.Value.Snapshot,
-                versionGate.Value.Result,
+                versionGate.Value,
                 ct);
         }
 
@@ -113,8 +112,8 @@ namespace Devian
             if (versionGate.IsFailure)
                 return CommonResult<LoginInitializeResult>.Failure(versionGate.Error!);
 
-            if (versionGate.Value.Result == VersionCheckResult.ForceUpdate)
-                return createVersionCheckResult(versionGate.Value.Result);
+            if (versionGate.Value == VersionCheckResult.ForceUpdate)
+                return createVersionCheckResult(versionGate.Value);
 
             var resolve = await SaveDataManager.Instance.ResolveConflictAsync(resolution, ct);
             await yieldMainThreadAsync(ct);
@@ -125,8 +124,7 @@ namespace Devian
             }
 
             var initialize = await ensureRuntimeSessionAndInitializeCoreAsync(
-                versionGate.Value.Snapshot,
-                versionGate.Value.Result,
+                versionGate.Value,
                 ct);
             if (initialize.IsFailure)
                 return initialize;
@@ -153,7 +151,7 @@ namespace Devian
             if (versionGate.IsFailure)
                 return CommonResult<VersionCheckResult>.Failure(versionGate.Error!);
 
-            return CommonResult<VersionCheckResult>.Success(versionGate.Value.Result);
+            return CommonResult<VersionCheckResult>.Success(versionGate.Value);
         }
 
         public bool IsPurchaseLoginReady()
@@ -189,7 +187,6 @@ namespace Devian
         }
 
         async Task<CommonResult<LoginInitializeResult>> ensureRuntimeSessionAndInitializeCoreAsync(
-            RemoteConfigSnapshot versionCheckedRemoteConfig,
             VersionCheckResult versionResult,
             CancellationToken ct)
         {
@@ -215,7 +212,6 @@ namespace Devian
                 {
                     var localInit = await syncAndInitializeAsync(
                         snapshot,
-                        versionCheckedRemoteConfig,
                         versionResult,
                         ct);
                     await yieldMainThreadAsync(ct);
@@ -231,7 +227,6 @@ namespace Devian
                 {
                     var localInit = await syncAndInitializeAsync(
                         snapshot,
-                        versionCheckedRemoteConfig,
                         versionResult,
                         ct);
                     await yieldMainThreadAsync(ct);
@@ -245,7 +240,7 @@ namespace Devian
                 Debug.Log($"[{Tag}] Proceeding without SessionInitSnapshot for local-only loginType={loginType}.");
             }
 
-            return await syncAndInitializeAsync(snapshot, versionCheckedRemoteConfig, versionResult, ct);
+            return await syncAndInitializeAsync(snapshot, versionResult, ct);
         }
 
         async Task<CommonResult<SessionInitSnapshot?>> initializeSessionSnapshotAsync(CancellationToken ct)
@@ -264,7 +259,6 @@ namespace Devian
 
         async Task<CommonResult<LoginInitializeResult>> syncAndInitializeAsync(
             SessionInitSnapshot? snapshot,
-            RemoteConfigSnapshot versionCheckedRemoteConfig,
             VersionCheckResult versionResult,
             CancellationToken ct)
         {
@@ -311,12 +305,11 @@ namespace Devian
                 }
             }
 
-            return await syncGameStateAsync(snapshot, versionCheckedRemoteConfig, versionResult, sync.Value, ct);
+            return await syncGameStateAsync(snapshot, versionResult, sync.Value, ct);
         }
 
         async Task<CommonResult<LoginInitializeResult>> syncGameStateAsync(
             SessionInitSnapshot? snapshot,
-            RemoteConfigSnapshot versionCheckedRemoteConfig,
             VersionCheckResult versionResult,
             SyncResult sync,
             CancellationToken ct)
@@ -359,15 +352,6 @@ namespace Devian
 
                 if (result.SaveError != null)
                     Debug.LogWarning($"[{Tag}] SaveGameStorageAsync failed: {result.SaveError.Code}: {result.SaveError.Message}");
-            }
-
-            var preloadedRemoteConfig = snapshot?.RemoteConfig ?? versionCheckedRemoteConfig;
-            var initRemoteConfig = await RemoteConfigManager.Instance.InitializeAsync(preloadedRemoteConfig, ct);
-            await yieldMainThreadAsync(ct);
-            if (initRemoteConfig.IsFailure)
-            {
-                Debug.LogError($"[{Tag}] RemoteConfigManager.InitializeAsync failed: {initRemoteConfig.Error.Code}: {initRemoteConfig.Error.Message}");
-                return CommonResult<LoginInitializeResult>.Failure(initRemoteConfig.Error!);
             }
 
             var initAttend = await AttendManager.Instance.InitializeAsync(ct);
@@ -427,65 +411,124 @@ namespace Devian
                     versionResult));
         }
 
-        async Task<CommonResult<VersionCheckContext>> runVersionCheckAsync(VersionNumber clientVersion, CancellationToken ct)
-        {
-            var remoteConfig = await fetchVersionRemoteConfigSnapshotAsync(ct);
-            if (remoteConfig.IsFailure)
-                return CommonResult<VersionCheckContext>.Failure(remoteConfig.Error!);
-
-            var snapshot = remoteConfig.Value ?? new RemoteConfigSnapshot();
-            var result = evaluateVersionCheck(snapshot, clientVersion);
-            return CommonResult<VersionCheckContext>.Success(new VersionCheckContext(result, snapshot));
-        }
-
-        async Task<CommonResult<RemoteConfigSnapshot>> fetchVersionRemoteConfigSnapshotAsync(CancellationToken ct)
+        async Task<CommonResult<VersionCheckResult>> runVersionCheckAsync(VersionNumber clientVersion, CancellationToken ct)
         {
 #if UNITY_EDITOR
-            if (!RemoteConfigManager.TryGet(out var remoteConfigManager)
-                || remoteConfigManager == null)
-            {
-                return CommonResult<RemoteConfigSnapshot>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
-                    "RemoteConfigManager is not available.");
-            }
-
-            var refresh = await remoteConfigManager.RefreshAsync(ct);
-            if (refresh.IsFailure)
-                return CommonResult<RemoteConfigSnapshot>.Failure(refresh.Error!);
-
-            var snapshot = refresh.Value ?? remoteConfigManager.Storage.snapshot ?? new RemoteConfigSnapshot();
-            return CommonResult<RemoteConfigSnapshot>.Success(snapshot);
+            _ = clientVersion;
+            _ = ct;
+            return CommonResult<VersionCheckResult>.Success(VersionCheckResult.Success);
 #else
-            if (!FirebaseCallableManager.TryGet(out var firebaseCallableManager)
-                || firebaseCallableManager == null)
-            {
-                return CommonResult<RemoteConfigSnapshot>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
-                    "FirebaseCallableManager is not available.");
-            }
+            var config = await fetchVersionCheckConfigAsync(ct);
+            if (config.IsFailure)
+                return CommonResult<VersionCheckResult>.Failure(config.Error!);
 
-            var remoteConfig = await firebaseCallableManager.GetRemoteConfigAsync(ct);
-            if (remoteConfig.IsFailure)
-                return CommonResult<RemoteConfigSnapshot>.Failure(remoteConfig.Error!);
-
-            return CommonResult<RemoteConfigSnapshot>.Success(remoteConfig.Value ?? new RemoteConfigSnapshot());
+            var result = evaluateVersionCheck(config.Value, clientVersion);
+            return CommonResult<VersionCheckResult>.Success(result);
 #endif
         }
 
-        static VersionCheckResult evaluateVersionCheck(RemoteConfigSnapshot snapshot, VersionNumber clientVersion)
+        async Task<CommonResult<VersionCheckConfig>> fetchVersionCheckConfigAsync(CancellationToken ct)
         {
-            if (snapshot == null)
+            if (!tryResolveVersionCheckUrl(out var url))
+            {
+                return CommonResult<VersionCheckConfig>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                    "Version check URL is not configured for this platform.");
+            }
+
+            using var request = UnityWebRequest.Get(url);
+            request.downloadHandler = new DownloadHandlerBuffer();
+            var operation = request.SendWebRequest();
+
+            while (!operation.isDone)
+            {
+                if (ct.IsCancellationRequested)
+                {
+                    request.Abort();
+                    ct.ThrowIfCancellationRequested();
+                }
+
+                await Task.Yield();
+            }
+
+            ct.ThrowIfCancellationRequested();
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                return CommonResult<VersionCheckConfig>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_NETWORK,
+                    $"Version config request failed: {request.error}");
+            }
+
+            var json = request.downloadHandler?.text ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(json))
+            {
+                return CommonResult<VersionCheckConfig>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                    "Version config response is empty.");
+            }
+
+            try
+            {
+                var config = JsonUtility.FromJson<VersionCheckConfig>(json);
+                if (config == null)
+                {
+                    return CommonResult<VersionCheckConfig>.Failure(
+                        COMMON_ERROR_TYPE.COMMON_SERVER,
+                        "Version config JSON parse failed.");
+                }
+
+                return CommonResult<VersionCheckConfig>.Success(config);
+            }
+            catch (Exception ex)
+            {
+                return CommonResult<VersionCheckConfig>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                    $"Version config JSON parse failed: {ex.Message}");
+            }
+        }
+
+        static bool tryResolveVersionCheckUrl(out string url)
+        {
+            url = string.Empty;
+
+            var app = MobileApplication.Instance;
+            if (app == null)
+                return false;
+
+#if UNITY_ANDROID
+            url = app.VersionCheckAOS;
+#elif UNITY_IOS
+            url = app.VersionCheckIOS;
+#else
+            url = string.Empty;
+#endif
+
+            url = string.IsNullOrWhiteSpace(url) ? string.Empty : url.Trim();
+            return !string.IsNullOrEmpty(url);
+        }
+
+        static VersionCheckResult evaluateVersionCheck(VersionCheckConfig config, VersionNumber clientVersion)
+        {
+            if (config == null)
                 return VersionCheckResult.Success;
 
-            if (!string.IsNullOrEmpty(snapshot.minVersion)
-                && VersionNumber.TryParse(snapshot.minVersion, out var minVersion)
+            var minVersionText = string.IsNullOrWhiteSpace(config.minVersion)
+                ? string.Empty
+                : config.minVersion.Trim();
+            var currentVersionText = string.IsNullOrWhiteSpace(config.currentVersion)
+                ? string.Empty
+                : config.currentVersion.Trim();
+
+            if (!string.IsNullOrEmpty(minVersionText)
+                && VersionNumber.TryParse(minVersionText, out var minVersion)
                 && clientVersion < minVersion)
             {
                 return VersionCheckResult.ForceUpdate;
             }
 
-            if (!string.IsNullOrEmpty(snapshot.currentVersion)
-                && VersionNumber.TryParse(snapshot.currentVersion, out var recommendVersion)
+            if (!string.IsNullOrEmpty(currentVersionText)
+                && VersionNumber.TryParse(currentVersionText, out var recommendVersion)
                 && clientVersion < recommendVersion)
             {
                 return VersionCheckResult.RecommendUpdate;

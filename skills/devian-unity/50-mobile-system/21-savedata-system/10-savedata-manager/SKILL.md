@@ -59,7 +59,6 @@
   - `HasPayload`, `ParseSuccess`, `ParseError`, `JsonVersion`
   - inventory count: `WalletCurrencyCount`, `HeroCount`, `CardCount`, `EquipCount`, `RentalCount`, `PassCount`
   - runtime count: `MissionRuntimeCount`, `MissionCompletedCount`, `AchieveRuntimeCount`, `AchieveWaitingCount`, `AchieveCompletedCount`
-  - message/remoteConfig: `MessageStatCount`, `RemoteConfigServerNowUtcMs`
 
 규칙:
 - 요약 생성(복호화 + JSON 파싱)은 `SaveDataManager` 내부에서 수행한다.

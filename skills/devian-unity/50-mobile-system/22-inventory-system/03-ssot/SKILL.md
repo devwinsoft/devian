@@ -137,6 +137,21 @@ InventoryStorage가 hero/equip 조회 + AbilityUnitHero에 위임하는 편의 �
 ---
 
 
+## C-7) Initial Inventory Source (정본)
+
+- 초기 지급 데이터 소스는 `InventorySetting` ScriptableObject다.
+  - Resources 경로: `Devian/InventorySettings`
+  - 프로젝트 에셋 경로: `Assets/Resources/Devian/InventorySettings.asset`
+- `InventoryManager.FirstInitAsync()`는 위 에셋의 `InitialInventory(CString)`를 읽는다.
+- 허용 JSON:
+  - `RewardData[]`
+  - `{ "rewards": RewardData[] }`
+- 파싱/검증 실패 시 `CommonResult.Failure`를 반환하고 적용하지 않는다.
+
+
+---
+
+
 ## D) JSON Persistence Schema (정본)
 
 > **변경**: `InventoryStorage.ToJson()`/`FromJson()` 메서드는 **삭제**되었다.

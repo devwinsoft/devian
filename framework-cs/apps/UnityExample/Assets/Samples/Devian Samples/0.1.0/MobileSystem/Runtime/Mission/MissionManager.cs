@@ -50,7 +50,7 @@ namespace Devian
             {
                 return Task.FromResult(CommonResult.Failure(
                     COMMON_ERROR_TYPE.COMMON_SERVER,
-                    "Server time is unavailable. Initialize RemoteConfigManager before MissionManager."));
+                    "Server time is unavailable."));
             }
 
             if (_storage.dailyMissionStartUtcMs <= 0L)
@@ -113,14 +113,8 @@ namespace Devian
 
         public bool TryGetServerNowUtcMs(out long serverNowUtcMs)
         {
-            serverNowUtcMs = 0L;
-            if (!RemoteConfigManager.TryGet(out var remoteConfigManager)
-                || remoteConfigManager == null)
-            {
-                return false;
-            }
-
-            return remoteConfigManager.TryGetServerNowUtcMs(out serverNowUtcMs);
+            serverNowUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            return serverNowUtcMs > 0L;
         }
 
         public MissionRuntimeState GetMissionRuntimeState(MISSION_TYPE missionType, string missionId)

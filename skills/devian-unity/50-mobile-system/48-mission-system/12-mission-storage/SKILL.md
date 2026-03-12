@@ -73,7 +73,6 @@ public abstract class MissionRuntimeBase
 ## Initialize / Recovery
 
 1. storage 로드
-2. anchor 보정 (현재 서버시각: `RemoteConfigManager`)
 3. scheduler rebuild/prune
 4. runtime bind 시 저장 progress 복원
 5. period runtime은 WAIT 상태를 복원한 뒤 day 규칙으로 재활성화

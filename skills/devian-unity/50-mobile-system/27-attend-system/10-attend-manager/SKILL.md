@@ -55,7 +55,6 @@ public sealed class AttendManager : CompoSingleton<AttendManager>
 
 ## Dependencies
 
-- `RemoteConfigManager` — 서버 시각
 - `RewardManager` — 보상 적용
 - `SaveDataManager` — 영속화
 - `Devian.Domain.Game` — `TB_ATTEND`, `ATTEND`

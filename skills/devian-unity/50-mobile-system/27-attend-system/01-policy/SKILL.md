@@ -20,7 +20,6 @@ Type: Policy / Entry Point
 
 ### 2) 서버 시각 기준으로 day를 계산한다
 
-- 출석 날짜/72시간 경과 판정은 `RemoteConfigManager.TryGetServerNowUtcMs(...)` 결과를 사용한다.
 - `DateTime.Now`/디바이스 로컬 타임존 기반 계산을 금지한다.
 
 ### 3) 보상 적용은 RewardManager 단일 경로로 위임한다

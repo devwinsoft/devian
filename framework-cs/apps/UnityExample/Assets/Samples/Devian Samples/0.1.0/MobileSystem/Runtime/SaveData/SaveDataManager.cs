@@ -35,7 +35,6 @@ namespace Devian
         public int AchieveWaitingCount { get; }
         public int AchieveCompletedCount { get; }
         public int MessageStatCount { get; }
-        public long RemoteConfigServerNowUtcMs { get; }
 
         SavePayloadSummary(
             bool hasPayload,
@@ -53,8 +52,7 @@ namespace Devian
             int achieveRuntimeCount,
             int achieveWaitingCount,
             int achieveCompletedCount,
-            int messageStatCount,
-            long remoteConfigServerNowUtcMs)
+            int messageStatCount)
         {
             HasPayload = hasPayload;
             ParseSuccess = parseSuccess;
@@ -72,7 +70,6 @@ namespace Devian
             AchieveWaitingCount = achieveWaitingCount;
             AchieveCompletedCount = achieveCompletedCount;
             MessageStatCount = messageStatCount;
-            RemoteConfigServerNowUtcMs = remoteConfigServerNowUtcMs;
         }
 
         public static SavePayloadSummary MissingPayload()
@@ -93,8 +90,7 @@ namespace Devian
                 0,
                 0,
                 0,
-                0,
-                0L);
+                0);
         }
 
         public static SavePayloadSummary ParseFailed(string parseError)
@@ -115,8 +111,7 @@ namespace Devian
                 0,
                 0,
                 0,
-                0,
-                0L);
+                0);
         }
 
         public static SavePayloadSummary Parsed(
@@ -132,8 +127,7 @@ namespace Devian
             int achieveRuntimeCount,
             int achieveWaitingCount,
             int achieveCompletedCount,
-            int messageStatCount,
-            long remoteConfigServerNowUtcMs)
+            int messageStatCount)
         {
             return new SavePayloadSummary(
                 true,
@@ -151,8 +145,7 @@ namespace Devian
                 achieveRuntimeCount,
                 achieveWaitingCount,
                 achieveCompletedCount,
-                messageStatCount,
-                remoteConfigServerNowUtcMs);
+                messageStatCount);
         }
     }
 
@@ -808,7 +801,6 @@ namespace Devian
             var shop = getShopStorageOrNull();
             var account = getAccountStorageOrNull();
             var message = getGameMessageStorageOrNull();
-            var remoteConfig = getRemoteConfigStorageOrNull();
             var mission = getMissionStorageOrNull();
             var achieve = getAchieveStorageOrNull();
             var leaderboardReward = getLeaderboardStorageOrNull();
@@ -819,7 +811,6 @@ namespace Devian
                 shop ?? new ShopStorage(),
                 account ?? new AccountStorage(),
                 message ?? new GameMessageStorage(),
-                remoteConfig ?? new RemoteConfigStorage(),
                 mission ?? new MissionStorage(),
                 achieve ?? new AchieveStorage(),
                 leaderboardReward ?? new LeaderboardSeasonRewardStorage(),
@@ -850,27 +841,24 @@ namespace Devian
             var shop = getShopStorageOrNull();
             var account = getAccountStorageOrNull();
             var messageManager = getGameMessageManagerOrNull();
-            var remoteConfigManager = getRemoteConfigManagerOrNull();
             var missionManager = getMissionManagerOrNull();
             var achieveManager = getAchieveManagerOrNull();
             var leaderboardManager = getLeaderboardManagerOrNull();
             var attendManager = getAttendManagerOrNull();
             var message = messageManager != null ? messageManager.Storage : null;
-            var remoteConfig = remoteConfigManager != null ? remoteConfigManager.Storage : null;
             var mission = missionManager != null ? missionManager.Storage : null;
             var achieve = achieveManager != null ? achieveManager.Storage : null;
             var leaderboardReward = leaderboardManager != null ? leaderboardManager.Storage : null;
             var attend = attendManager != null ? attendManager.Storage : null;
-            if (inventory == null || purchase == null || shop == null || account == null || message == null || remoteConfig == null || mission == null || achieve == null || leaderboardReward == null || attend == null)
+            if (inventory == null || purchase == null || shop == null || account == null || message == null || mission == null || achieve == null || leaderboardReward == null || attend == null)
                 return;
 
             messageManager.ClearStorage();
-            remoteConfigManager.ClearStorage();
             missionManager.ClearStorage();
             achieveManager.ClearStorage();
             leaderboardManager.ClearStorage();
             attendManager.ClearStorage();
-            SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, shop, account, message, remoteConfig, mission, achieve, leaderboardReward, attend);
+            SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, shop, account, message, mission, achieve, leaderboardReward, attend);
             applyLoadedAccountStorageToRuntime();
         }
 
@@ -881,7 +869,6 @@ namespace Devian
             getShopStorageOrNull()?.Clear();
             getAccountStorageOrNull()?.Clear();
             getGameMessageManagerOrNull()?.ClearStorage();
-            getRemoteConfigManagerOrNull()?.ClearStorage();
             getMissionManagerOrNull()?.ClearStorage();
             getAchieveManagerOrNull()?.ClearStorage();
             getLeaderboardManagerOrNull()?.ClearStorage();
@@ -1007,10 +994,6 @@ namespace Devian
                 var messageObj = root["message"] as JObject;
                 var messageStatCount = countObjectProperties(messageObj?["stats"] as JObject);
 
-                var remoteConfigObj = root["remoteConfig"] as JObject;
-                var snapshotObj = remoteConfigObj?["snapshot"] as JObject;
-                var remoteConfigServerNowUtcMs = snapshotObj?.Value<long?>("serverNowUtcMs") ?? 0L;
-
                 return SavePayloadSummary.Parsed(
                     jsonVersion,
                     walletCount,
@@ -1024,8 +1007,7 @@ namespace Devian
                     achieveRuntimeCount,
                     achieveWaitingCount,
                     achieveCompletedCount,
-                    messageStatCount,
-                    remoteConfigServerNowUtcMs);
+                    messageStatCount);
             }
             catch (Exception ex)
             {
@@ -1533,32 +1515,6 @@ namespace Devian
             {
                 var missionManager = MissionManager.Instance;
                 return missionManager != null ? missionManager : null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private static RemoteConfigManager getRemoteConfigManagerOrNull()
-        {
-            try
-            {
-                var remoteConfigManager = RemoteConfigManager.Instance;
-                return remoteConfigManager != null ? remoteConfigManager : null;
-            }
-            catch
-            {
-                return null;
-            }
-        }
-
-        private static RemoteConfigStorage getRemoteConfigStorageOrNull()
-        {
-            try
-            {
-                var remoteConfigManager = RemoteConfigManager.Instance;
-                return remoteConfigManager != null ? remoteConfigManager.Storage : null;
             }
             catch
             {

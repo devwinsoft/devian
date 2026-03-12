@@ -5,6 +5,7 @@ using Devian;
 
 public class TestApplication : MobileApplication
 {
+    public new static TestApplication Instance => BaseApplication.Instance as TestApplication;
     public new static TestApplication Create() => BaseApplication.Create<TestApplication>();
 
 

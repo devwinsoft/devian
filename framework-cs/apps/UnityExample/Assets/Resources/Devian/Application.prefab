@@ -27,8 +27,10 @@ GameObject:
   - component: {fileID: 5482185139804319417}
   - component: {fileID: 466109637862956973}
   - component: {fileID: 1907570583051009835}
-  - component: {fileID: 6437683539928618457}
   - component: {fileID: 8003642668263843234}
+  - component: {fileID: 1848054736522471001}
+  - component: {fileID: 1823837048962960396}
+  - component: {fileID: 6268470757991738750}
   m_Layer: 0
   m_Name: Application
   m_TagString: Untagged
@@ -68,6 +70,9 @@ MonoBehaviour:
     Major: 0
     Minor: 1
     Patch: 0
+  FirebaseFunctionsRegion: asia-northeast3
+  VersionCheckAOS: https://github.com/devwinsoft/devian/blob/main/release/version_aos.json
+  VersionCheckIOS: https://github.com/devwinsoft/devian/blob/main/release/version_ios.json
 --- !u!114 &-8232071580534022601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -294,18 +299,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 551c3549bf0d54634a8d47db41ce65f4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.GameMessageManager
---- !u!114 &6437683539928618457
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2454387350981742136}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 76ab000b595d4ec7bcf1e21a03713ac1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.RemoteConfigManager
 --- !u!114 &8003642668263843234
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -318,6 +311,42 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 725479d69c47d4c12aa45003a3bcf962, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.AnalyzeManager
+--- !u!114 &1848054736522471001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2454387350981742136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: af75b516ceea48a2a547c8e7fa21a3bd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.AttendManager
+--- !u!114 &1823837048962960396
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2454387350981742136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 81f370fd3773d4dfa8c9c1625cd9673b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.LoginManager
+--- !u!114 &6268470757991738750
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2454387350981742136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6570de5a82704482acf6c3ebc73eb2c5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.ShopManager
 --- !u!1 &6261706322476616027
 GameObject:
   m_ObjectHideFlags: 0

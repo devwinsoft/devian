@@ -187,10 +187,8 @@ namespace Devian
             if (guard.IsFailure)
                 return guard;
 
-            if (!RemoteConfigManager.TryGet(out var remoteConfigManager) || remoteConfigManager == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "RemoteConfigManager is not initialized.");
-
-            if (!remoteConfigManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
+            var serverNowUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            if (serverNowUtcMs <= 0L)
                 return CommonResult.Ok();
 
             var activeRows = collectActiveSeasonRows();
@@ -544,9 +542,8 @@ namespace Devian
                     COMMON_ERROR_TYPE.LEADERBOARD_SEASON_TIME_INVALID,
                     $"SEASON time range invalid: seasonId={row.SeasonId}");
 
-            if (!RemoteConfigManager.TryGet(out var remoteConfigManager)
-                || remoteConfigManager == null
-                || !remoteConfigManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
+            var serverNowUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            if (serverNowUtcMs <= 0L)
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.LEADERBOARD_SERVER_TIME_UNAVAILABLE,
                     "Server time unavailable for season check.");

@@ -27,7 +27,6 @@ MobileSystem은 **Devian Samples**(`com.devian.samples`)에 포함된 Unity Samp
 - [11-mobile-application](../11-mobile-application/SKILL.md)
 - [23-firebase-callable-manager](../23-firebase-callable-manager/SKILL.md)
 - [24-login-manager](../24-login-manager/SKILL.md)
-- [26-remote-config-system](../26-remote-config-system/00-overview/SKILL.md)
 - [27-attend-system](../27-attend-system/00-overview/SKILL.md)
 - [28-shop-system](../28-shop-system/00-overview/SKILL.md)
 - [20-account-system](../20-account-system/00-overview/SKILL.md)

@@ -4,8 +4,7 @@ namespace Devian
 {
     internal static class SaveDataJsonCodec
     {
-        const int CurrentVersion = 18;
-        const int RemoteConfigVersion = 16;
+        const int CurrentVersion = 19;
         const int AttendVersion = 17;
         const int ShopVersion = 18;
 
@@ -15,7 +14,6 @@ namespace Devian
             ShopStorage shop,
             AccountStorage account,
             GameMessageStorage message,
-            RemoteConfigStorage remoteConfig,
             MissionStorage mission,
             AchieveStorage achieve,
             LeaderboardSeasonRewardStorage leaderboardReward,
@@ -29,7 +27,6 @@ namespace Devian
                 ["shop"] = SaveDataJsonCodecShop.Serialize(shop),
                 ["account"] = SaveDataJsonCodecAccount.Serialize(account),
                 ["message"] = SaveDataJsonCodecMessage.Serialize(message),
-                ["remoteConfig"] = SaveDataJsonCodecRemoteConfig.Serialize(remoteConfig),
                 ["mission"] = SaveDataJsonCodecMission.Serialize(mission),
                 ["achieve"] = SaveDataJsonCodecAchieve.Serialize(achieve),
                 ["leaderboardReward"] = SaveDataJsonCodecLeaderboardReward.Serialize(leaderboardReward),
@@ -45,7 +42,6 @@ namespace Devian
             ShopStorage shop,
             AccountStorage account,
             GameMessageStorage message,
-            RemoteConfigStorage remoteConfig,
             MissionStorage mission,
             AchieveStorage achieve,
             LeaderboardSeasonRewardStorage leaderboardReward,
@@ -79,23 +75,12 @@ namespace Devian
             else
                 message?.Clear();
 
-            JObject legacyMissionObj = null;
             if (version >= 11 && root["mission"] is JObject missionObj)
             {
-                legacyMissionObj = missionObj;
                 SaveDataJsonCodecMission.DeserializeInto(missionObj, mission, message);
             }
             else
                 mission?.Clear();
-
-            if (version >= RemoteConfigVersion && root["remoteConfig"] is JObject remoteConfigObj)
-                SaveDataJsonCodecRemoteConfig.DeserializeInto(remoteConfigObj, remoteConfig);
-            else
-            {
-                remoteConfig?.Clear();
-                if (legacyMissionObj != null)
-                    SaveDataJsonCodecRemoteConfig.MigrateFromLegacyMissionClock(legacyMissionObj, remoteConfig);
-            }
 
             if (version >= 12 && root["achieve"] is JObject achieveObj)
                 SaveDataJsonCodecAchieve.DeserializeInto(achieveObj, achieve);
@@ -114,6 +99,6 @@ namespace Devian
         }
 
         static bool isSupportedVersion(int version)
-            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 8 || version == 9 || version == 10 || version == 11 || version == 12 || version == 13 || version == 14 || version == 15 || version == 16 || version == 17 || version == CurrentVersion;
+            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 8 || version == 9 || version == 10 || version == 11 || version == 12 || version == 13 || version == 14 || version == 15 || version == 16 || version == 17 || version == 18 || version == CurrentVersion;
     }
 }

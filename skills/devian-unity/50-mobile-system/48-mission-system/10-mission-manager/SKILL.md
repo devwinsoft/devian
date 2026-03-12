@@ -36,7 +36,6 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
 ## Trigger 처리 규칙
 
 - Mission runtime은 `GameMessageManager` trigger 구독으로 갱신된다.
-- 서버 시각은 `RemoteConfigManager.TryGetServerNowUtcMs(...)`로 조회한다.
 - stats 선갱신 + game trigger publish + achieve notify 순서는 `GameMessageManager` 정본을 따른다.
 
 ---

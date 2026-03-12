@@ -1,6 +1,6 @@
 ---
 name: 12-shop-storage
-description: ShopStorage를 통해 `shopId`별 구매 횟수와 전역 일일 리셋 상태를 저장/복원할 때 사용한다. 시간 기준은 서버 시간(RemoteConfig serverNowUtcMs)이다.
+description: ShopStorage를 통해 `shopId`별 구매 횟수와 전역 일일 리셋 상태를 저장/복원할 때 사용한다. 시간 기준은 UTC 현재 시각이다.
 ---
 
 # 12-shop-storage
@@ -38,7 +38,6 @@ public sealed class ShopStorage
 ## 3. Hard Rules
 
 - 리셋 주기는 상품별이 아니라 ShopManager 전역 1일 고정이다.
-- 시간 계산은 서버 시간(`RemoteConfigManager.TryGetServerNowUtcMs`) 기준만 사용한다.
 - 구매 성공 시에만 `purchaseCounts[shopId]`를 증가시킨다.
 - day start가 바뀌면 전체 카운트를 초기화한다.
 

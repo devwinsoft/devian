@@ -14,7 +14,6 @@ namespace Devian
     [RequireComponent(typeof(GameMessageManager))]
     [RequireComponent(typeof(AttendManager))]
     [RequireComponent(typeof(MissionManager))]
-    [RequireComponent(typeof(RemoteConfigManager))]
     [RequireComponent(typeof(SaveDataManager))]
     [RequireComponent(typeof(LoginManager))]
     [RequireComponent(typeof(InputManager))]
@@ -24,9 +23,12 @@ namespace Devian
     [RequireComponent(typeof(ShopManager))]
     public abstract class MobileApplication : BaseApplication
     {
+        public new static MobileApplication Instance => BaseApplication.Instance as MobileApplication;
         public new static MobileApplication Create() => BaseApplication.Create<MobileApplication>();
 
-        const string FirebaseFunctionsRegion = "asia-northeast3";
+        [SerializeField] public string FirebaseFunctionsRegion = "asia-northeast3";
+        [SerializeField] public string VersionCheckAOS = string.Empty;
+        [SerializeField] public string VersionCheckIOS = string.Empty;
 
         protected override Task onBootAsync()
         {
@@ -57,7 +59,7 @@ namespace Devian
 
         protected override void OnEnterForeground()
         {
-            _ = refreshRemoteConfigAsync();
+            _ = syncSeasonRewardsOnForegroundAsync();
         }
 
         /// <summary>
@@ -127,21 +129,8 @@ namespace Devian
         }
         #endif
 
-        private static async Task refreshRemoteConfigAsync()
+        private static async Task syncSeasonRewardsOnForegroundAsync()
         {
-            if (!RemoteConfigManager.TryGet(out var remoteConfigManager))
-                return;
-
-            if (!remoteConfigManager.IsInitialized)
-                return;
-
-            var refresh = await remoteConfigManager.RefreshAsync(CancellationToken.None);
-            if (refresh.IsFailure)
-            {
-                Debug.LogWarning($"[MobileApplication] Remote config refresh failed on foreground: {refresh.Error}");
-                return;
-            }
-
             if (!LeaderboardManager.TryGet(out var leaderboardManager)
                 || leaderboardManager == null
                 || !leaderboardManager.IsInitialized)

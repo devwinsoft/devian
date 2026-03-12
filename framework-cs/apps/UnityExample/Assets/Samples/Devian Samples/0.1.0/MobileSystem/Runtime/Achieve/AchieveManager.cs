@@ -1264,9 +1264,8 @@ namespace Devian
             if (seasonStartUtcMs <= 0L || seasonEndUtcMs <= seasonStartUtcMs)
                 return false;
 
-            if (!RemoteConfigManager.TryGet(out var remoteConfigManager)
-                || remoteConfigManager == null
-                || !remoteConfigManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
+            var serverNowUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            if (serverNowUtcMs <= 0L)
                 return false;
 
             return serverNowUtcMs >= seasonStartUtcMs && serverNowUtcMs < seasonEndUtcMs;

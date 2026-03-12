@@ -47,5 +47,4 @@ MobileSystem 샘플의 출석 보상 시스템 개요다.
 
 - [49-reward-system](../../49-reward-system/00-overview/SKILL.md)
 - [21-savedata-system](../../21-savedata-system/00-overview/SKILL.md)
-- [26-remote-config-system](../../26-remote-config-system/00-overview/SKILL.md)
 - [48-mission-system](../../48-mission-system/00-overview/SKILL.md)

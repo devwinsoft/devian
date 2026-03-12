@@ -13,7 +13,6 @@ AppliesTo: v10
 ### 1) 앱 시작
 
 - SaveData load 후 `AttendManager.InitializeAsync(ct)`를 호출한다.
-- 서버 시각(`RemoteConfigManager`) 기준으로 reset 조건을 판정한다:
   - 출석 정보 없음
   - 마지막 출석 수령 후 72시간 경과
   - 7일차 claim 다음 UTC day

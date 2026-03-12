@@ -403,7 +403,7 @@ namespace Devian
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.SHOP_SERVER_TIME_UNAVAILABLE,
-                    "Server time is unavailable. Initialize RemoteConfigManager before shop purchase.");
+                    "Server time is unavailable.");
             }
 
             var blockedBeforeEndDays = 0;
@@ -439,7 +439,7 @@ namespace Devian
                 {
                     return CommonResult.Failure(
                         COMMON_ERROR_TYPE.SHOP_SERVER_TIME_UNAVAILABLE,
-                        "Server time is unavailable. Initialize RemoteConfigManager before shop purchase.");
+                        "Server time is unavailable.");
                 }
 
                 return CommonResult.Ok();
@@ -452,7 +452,7 @@ namespace Devian
                 {
                     return CommonResult.Failure(
                         COMMON_ERROR_TYPE.SHOP_SERVER_TIME_UNAVAILABLE,
-                        "Server time is invalid. Initialize RemoteConfigManager before shop purchase.");
+                        "Server time is invalid.");
                 }
 
                 return CommonResult.Ok();
@@ -719,14 +719,8 @@ namespace Devian
 
         static bool tryGetServerNowUtcMs(out long serverNowUtcMs)
         {
-            serverNowUtcMs = 0L;
-            if (!RemoteConfigManager.TryGet(out var remoteConfigManager)
-                || remoteConfigManager == null)
-            {
-                return false;
-            }
-
-            return remoteConfigManager.TryGetServerNowUtcMs(out serverNowUtcMs);
+            serverNowUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            return serverNowUtcMs > 0L;
         }
 
         static long toUtcDayStart(long utcMs)

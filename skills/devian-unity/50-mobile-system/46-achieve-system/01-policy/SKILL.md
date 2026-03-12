@@ -26,7 +26,6 @@ Type: Policy / Entry Point
 - `ONCE` row는 `reqMsgId/reqValue`가 있으면 `WAIT` 상태로 시작한다.
 - `PASS` row는 `reqPassId` 또는 `reqSeasonId`가 있으면 `WAIT` 상태로 시작한다.
 - `WAIT` 상태에서는 `conditionMsgId` 진행도 반영을 하지 않고, req 조건 충족 시 `ACTIVE`로 전이한다.
-  - `reqSeasonId`는 pass 소유 여부가 아니라 `TB_SEASON` 기간 + `RemoteConfigManager.serverNowUtcMs`로 판정한다.
 
 ### 2) 외부에는 내부 업적 ID만 노출한다
 

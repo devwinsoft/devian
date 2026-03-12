@@ -16,7 +16,7 @@ Operation 웹앱의 전체 레이아웃과 스타일 가이드를 정의한다.
 ## Constraints
 
 - 바닐라 TS + 경량 라이브러리 (프레임워크 없음)
-- localhost 전용 → 반응형 불필요 (데스크톱 해상도 고정)
+- localhost 전용 -> 반응형 불필요 (데스크톱 해상도 고정)
 
 
 ---
@@ -27,9 +27,9 @@ Operation 웹앱의 전체 레이아웃과 스타일 가이드를 정의한다.
 ```
 ┌──────────────────────────────────────────────────┐
 │  Operation                                       │
-├─────────────┬──────────────┬─────────────┬───────────────┬───────────┤
-│ Version Cfg │ Initial Inv. │ Obfuscate   │ Deobfuscate   │ Save Data │
-├─────────────┴──────────────┴─────────────┴───────────────┴───────────┤
+├──────────────┬───────────────┬───────────┤
+│ Obfuscate    │ Deobfuscate   │ Save Data │
+├──────────────┴───────────────┴───────────┤
 │  Pipeline: (탭별 파이프라인 설명)                    │
 ├──────────────────────────────────────────────────┤
 │                                                  │
@@ -39,7 +39,7 @@ Operation 웹앱의 전체 레이아웃과 스타일 가이드를 정의한다.
 ```
 
 - 상단: 앱 타이틀
-- 탭 바: Version Config / Initial Inventory / Obfuscate / Deobfuscate / Save Data
+- 탭 바: Obfuscate / Deobfuscate / Save Data
 - 파이프라인 설명: 현재 탭의 encode/decode 파이프라인 표시
 - 콘텐츠 영역: 탭별 UI
 
@@ -67,4 +67,3 @@ Operation 웹앱의 전체 레이아웃과 스타일 가이드를 정의한다.
 - [16-page-obfuscate](../16-page-obfuscate/SKILL.md) — Obfuscate 탭 UI
 - [17-page-deobfuscate](../17-page-deobfuscate/SKILL.md) — Deobfuscate 탭 UI
 - [18-page-savedata](../18-page-savedata/SKILL.md) — Save Data 탭 UI
-- [19-page-initial-inventory](../19-page-initial-inventory/SKILL.md) — Initial Inventory 탭 UI

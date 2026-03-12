@@ -81,6 +81,10 @@ CompoSingleton<InventoryManager>.Instance
   - `type=REWARD_TYPE.PASS`일 때 `InventoryStorage.SetPass(id, true)`로 소유권을 설정한다.
   - 입력 검증 실패 시 `CommonResult.Failure`를 반환하고 상태를 변경하지 않는다.
   - 성공 시 `CommonResult.Ok()`를 반환한다.
+- `FirstInitAsync()`로 초기 지급을 처리한다.
+  - `InventorySetting` (`Assets/Resources/Devian/InventorySettings.asset`)을 `Resources.Load`로 읽는다.
+  - `InitialInventory(CString)` JSON을 파싱/검증한다.
+  - 파싱 성공 시 `AddRewards`로 적용한다.
 - 수량 조회를 제공한다.
   - `type=REWARD_TYPE.CURRENCY`: 잔고 조회
   - `type=REWARD_TYPE.EQUIP`: 해당 `equipId`를 가진 인스턴스 수 반환
@@ -111,6 +115,7 @@ NOTE:
 - InventoryManager는 저장 시스템을 직접 참조하지 않는다.
 - 저장/로드 결합은 상위 조립(bootstrap/composition root)에서만 수행한다.
 - JSON 직렬화 규약은 [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)를 따른다.
+- 초기 지급 설정 소스는 `InventorySetting` (`Assets/Resources/Devian/InventorySettings.asset`)이다.
 
 
 ---
@@ -254,6 +259,7 @@ readonly InventoryStorage _storage = new();
 
 - [11-inventory-storage](../11-inventory-storage/SKILL.md) — InventoryStorage (소유 대상)
 - [12-inventory-wallet](../12-inventory-wallet/SKILL.md) — InventoryWallet (Wallet 클래스)
+- [13-inventory-settings](../13-inventory-settings/SKILL.md) — 초기 지급 설정 ScriptableObject
 - [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md) — RewardData 스키마 정본
 - [03-ssot](../03-ssot/SKILL.md) — Inventory 상태/Apply 규칙 SSOT
 - [01-policy](../01-policy/SKILL.md) — Inventory 하드룰

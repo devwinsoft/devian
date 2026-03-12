@@ -6,8 +6,6 @@
  *   - ackPurchaseClientGrant
  *   - ackPurchaseStoreConfirm
  *   - getEntitlements
- *   - getRemoteConfig
- *   - getInitialInventory
  *   - getRecentPurchases30d
  *   - getPurchaseAdjustments
  *   - initSession
@@ -30,12 +28,6 @@ export {getEntitlements} from "./purchase/getEntitlements";
 export {getRecentPurchases30d} from "./purchase/getRecentPurchases30d";
 export {getPurchaseAdjustments} from "./purchase/getPurchaseAdjustments";
 export {ackRefundApplied} from "./purchase/ackRefundApplied";
-
-// ── Remote Config Callables ──
-export {getRemoteConfig} from "./mission/getRemoteConfig";
-
-// ── Inventory Callables ──
-export {getInitialInventory} from "./inventory/getInitialInventory";
 
 // ── Session ──
 export {initSession} from "./session/initSession";

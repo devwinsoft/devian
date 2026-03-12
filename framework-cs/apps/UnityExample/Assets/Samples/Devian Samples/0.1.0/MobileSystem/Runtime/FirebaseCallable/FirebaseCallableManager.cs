@@ -33,52 +33,11 @@ namespace Devian
                 : region.Trim();
         }
 
-        // ── Remote Config Callable ─────────────────────────────────
-
-        public async Task<CommonResult<RemoteConfigSnapshot>> GetRemoteConfigAsync(CancellationToken ct)
-        {
-            try
-            {
-                var response = await callFunctionAsync("getRemoteConfig", null, ct);
-                if (response == null)
-                    return CommonResult<RemoteConfigSnapshot>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_SERVER,
-                        "getRemoteConfig returned unsupported response.");
-
-                return CommonResult<RemoteConfigSnapshot>.Success(
-                    parseRemoteConfigSnapshot(response));
-            }
-            catch (OperationCanceledException) { throw; }
-            catch (FunctionsException fex)
-            {
-                switch (fex.ErrorCode)
-                {
-                    case FunctionsErrorCode.Unavailable:
-                    case FunctionsErrorCode.DeadlineExceeded:
-                        return CommonResult<RemoteConfigSnapshot>.Failure(
-                            COMMON_ERROR_TYPE.COMMON_NETWORK,
-                            "Remote config network unavailable.");
-                    case FunctionsErrorCode.Unauthenticated:
-                    case FunctionsErrorCode.PermissionDenied:
-                        return CommonResult<RemoteConfigSnapshot>.Failure(
-                            COMMON_ERROR_TYPE.COMMON_AUTH, fex.Message);
-                    default:
-                        return CommonResult<RemoteConfigSnapshot>.Failure(
-                            COMMON_ERROR_TYPE.COMMON_SERVER, fex.Message);
-                }
-            }
-            catch (Exception ex)
-            {
-                return CommonResult<RemoteConfigSnapshot>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message);
-            }
-        }
-
         // ── Session Init (로그인 시 일괄 조회) ──────────────────────
 
         /// <summary>
-        /// initSession callable — getRemoteConfig + getEntitlements + getPurchaseAdjustments 통합 호출.
-        /// 서버에서 3개 Firestore 읽기를 병렬 실행하여 1회 왕복으로 전체 초기 데이터를 반환한다.
+        /// initSession callable — getEntitlements + getPurchaseAdjustments 통합 호출.
+        /// 서버에서 2개 Firestore 읽기를 병렬 실행하여 1회 왕복으로 전체 초기 데이터를 반환한다.
         /// </summary>
         public async Task<CommonResult<SessionInitSnapshot>> InitSessionAsync(
             Dictionary<string, object> data, CancellationToken ct)
@@ -90,18 +49,6 @@ namespace Devian
                     return CommonResult<SessionInitSnapshot>.Failure(
                         COMMON_ERROR_TYPE.COMMON_SERVER,
                         "initSession returned unsupported response.");
-
-                // remoteConfig
-                Dictionary<string, object> remoteConfigDict = null;
-                if (response.TryGetValue("remoteConfig", out var remoteConfigObj) && remoteConfigObj is Dictionary<string, object> rcd)
-                    remoteConfigDict = rcd;
-
-                if (remoteConfigDict == null)
-                    return CommonResult<SessionInitSnapshot>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_SERVER,
-                        "initSession: remoteConfig missing.");
-
-                var remoteConfig = parseRemoteConfigSnapshot(remoteConfigDict);
 
                 // entitlements
                 Dictionary<string, object> entDict = null;
@@ -128,7 +75,7 @@ namespace Devian
                 var purchaseAdjustments = parseRefundPageResult(adjDict);
 
                 return CommonResult<SessionInitSnapshot>.Success(
-                    new SessionInitSnapshot(remoteConfig, entitlements, purchaseAdjustments));
+                    new SessionInitSnapshot(entitlements, purchaseAdjustments));
             }
             catch (OperationCanceledException) { throw; }
             catch (FunctionsException fex)
@@ -152,47 +99,6 @@ namespace Devian
             catch (Exception ex)
             {
                 return CommonResult<SessionInitSnapshot>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message);
-            }
-        }
-
-        // ── Inventory Callable ────────────────────────────────────
-
-        public async Task<CommonResult<RewardData[]>> GetInitialInventoryAsync(CancellationToken ct)
-        {
-            try
-            {
-                var response = await callFunctionAsync("getInitialInventory", null, ct);
-                if (response == null)
-                    return CommonResult<RewardData[]>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_SERVER,
-                        "getInitialInventory returned unsupported response.");
-
-                return CommonResult<RewardData[]>.Success(
-                    parseInitialInventoryRewards(response));
-            }
-            catch (OperationCanceledException) { throw; }
-            catch (FunctionsException fex)
-            {
-                switch (fex.ErrorCode)
-                {
-                    case FunctionsErrorCode.Unavailable:
-                    case FunctionsErrorCode.DeadlineExceeded:
-                        return CommonResult<RewardData[]>.Failure(
-                            COMMON_ERROR_TYPE.COMMON_NETWORK,
-                            "Initial inventory network unavailable.");
-                    case FunctionsErrorCode.Unauthenticated:
-                    case FunctionsErrorCode.PermissionDenied:
-                        return CommonResult<RewardData[]>.Failure(
-                            COMMON_ERROR_TYPE.COMMON_AUTH, fex.Message);
-                    default:
-                        return CommonResult<RewardData[]>.Failure(
-                            COMMON_ERROR_TYPE.COMMON_SERVER, fex.Message);
-                }
-            }
-            catch (Exception ex)
-            {
-                return CommonResult<RewardData[]>.Failure(
                     COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message);
             }
         }
@@ -662,18 +568,6 @@ namespace Devian
 
         // ── Private — Response Parsers ────────────────────────────
 
-        static RemoteConfigSnapshot parseRemoteConfigSnapshot(Dictionary<string, object> response)
-        {
-            var serverNowUtcMs = ReadLong(response, "serverNowUtcMs");
-            if (serverNowUtcMs <= 0L)
-                serverNowUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-
-            var snapshot = new RemoteConfigSnapshot(serverNowUtcMs);
-            snapshot.minVersion = ReadString(response, "minVersion");
-            snapshot.currentVersion = ReadString(response, "currentVersion");
-            return snapshot;
-        }
-
         static VerifyPurchaseResponse parseVerifyPurchaseResponse(Dictionary<string, object> response)
         {
             var resultStatus = response.TryGetValue("resultStatus", out var rs) ? rs as string ?? "" : "";
@@ -723,83 +617,6 @@ namespace Devian
             var serverNowUtcMs = ReadLong(snap, "serverNowUtcMs");
 
             return new EntitlementsSnapshot(seasonPasses, balances, rentals, serverNowUtcMs);
-        }
-
-        static RewardData[] parseInitialInventoryRewards(Dictionary<string, object> root)
-        {
-            if (!root.TryGetValue("rewards", out var rewardsObj) || rewardsObj is not IList<object> rewardsList)
-                return Array.Empty<RewardData>();
-
-            var parsed = new List<RewardData>(rewardsList.Count);
-            for (var i = 0; i < rewardsList.Count; i++)
-            {
-                if (rewardsList[i] is not IDictionary<string, object> item)
-                    continue;
-
-                var id = ReadString(item, "id");
-                if (string.IsNullOrWhiteSpace(id))
-                    continue;
-
-                if (!tryReadRewardType(item, out var rewardType))
-                    continue;
-
-                if (rewardType == REWARD_TYPE.CURRENCY &&
-                    (!Enum.TryParse<CURRENCY_TYPE>(id, out var currencyType) ||
-                     currencyType == CURRENCY_TYPE.ADS ||
-                     currencyType == CURRENCY_TYPE.FREE ||
-                     currencyType == CURRENCY_TYPE.JEWEL))
-                {
-                    Debug.LogWarning($"[{Tag}] Skipping initial inventory reward with invalid currency id: {id}");
-                    continue;
-                }
-
-                var amountLong = ReadLong(item, "amount");
-                if (amountLong <= 0)
-                    continue;
-
-                var amount = amountLong > int.MaxValue ? int.MaxValue : (int)amountLong;
-                parsed.Add(new RewardData(rewardType, id, amount));
-            }
-
-            return parsed.Count == 0 ? Array.Empty<RewardData>() : parsed.ToArray();
-        }
-
-        static bool tryReadRewardType(
-            IDictionary<string, object> source, out REWARD_TYPE rewardType)
-        {
-            rewardType = REWARD_TYPE.CARD;
-
-            if (source == null || !source.TryGetValue("type", out var rawType) || rawType == null)
-                return false;
-
-            if (rawType is string str)
-            {
-                if (Enum.TryParse<REWARD_TYPE>(str, true, out rewardType))
-                    return true;
-
-                if (int.TryParse(str, out var fromStringInt) &&
-                    Enum.IsDefined(typeof(REWARD_TYPE), fromStringInt))
-                {
-                    rewardType = (REWARD_TYPE)fromStringInt;
-                    return true;
-                }
-
-                return false;
-            }
-
-            try
-            {
-                var intValue = Convert.ToInt32(rawType);
-                if (!Enum.IsDefined(typeof(REWARD_TYPE), intValue))
-                    return false;
-
-                rewardType = (REWARD_TYPE)intValue;
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
         }
 
         static RecentPurchaseItem parseRecentPurchaseItem(Dictionary<string, object> root)

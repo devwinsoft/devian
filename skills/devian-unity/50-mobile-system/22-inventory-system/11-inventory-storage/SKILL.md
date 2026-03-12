@@ -29,7 +29,7 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobileSyste
 - `SetRental(id, expiresAtClientUtcMs)` / `GetRentalExpiry(id)` / `HasActiveRental(id)` / `GetRentalRemainingMs(id)` / `RemoveRental(id)` — 렌탈 CRUD
 - `SetPass(id, owned)` / `HasPass(id)` / `RemovePass(id)` — 시즌패스 CRUD
 - Pass 변경 알림 publish는 `InventoryManager`가 담당한다 (trigger 직접 노출 금지).
-- 초기 인벤토리 지급 트리거는 `InventoryStorage`가 아니라 `InventoryManager.FirstInitAsync()`에서 처리한다.
+- 초기 인벤토리 지급 트리거는 `InventoryStorage`가 아니라 `InventoryManager.FirstInitAsync()`에서 처리한다 (`InventorySetting` source).
 - ~~`ToJson()`~~ — **삭제됨**. [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)의 `SaveDataJsonCodec`으로 이전.
 - ~~`FromJson(string json)`~~ — **삭제됨**. [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)의 `SaveDataJsonCodec`으로 이전.
 

@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
+using Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace Devian
@@ -43,38 +44,127 @@ namespace Devian
 
         public async Task<CommonResult> FirstInitAsync(CancellationToken ct = default)
         {
-#if UNITY_EDITOR
-            return CommonResult.Ok();
-#else
-            if (!AccountManager.TryGet(out var accountManager))
-            {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
-                    "AccountManager is not available.");
-            }
+            ct.ThrowIfCancellationRequested();
 
-            if (accountManager.IsLocalOnlySaveMode || !accountManager.HasAuthenticatedSession)
-                return CommonResult.Ok();
+            var parse = parseInitialInventoryRewards();
+            if (parse.IsFailure)
+                return CommonResult.Failure(parse.Error!);
 
-            var fetch = await FirebaseCallableManager.Instance.GetInitialInventoryAsync(ct);
-            if (fetch.IsFailure)
-                return CommonResult.Failure(fetch.Error!);
-
-            var rewards = fetch.Value ?? Array.Empty<RewardData>();
+            var rewards = parse.Value ?? Array.Empty<RewardData>();
             if (rewards.Length == 0)
                 return CommonResult.Ok();
 
+            var apply = AddRewards(rewards);
+            if (apply.IsFailure)
+                return CommonResult.Failure(apply.Error!);
+
+            await Task.Yield();
+            ct.ThrowIfCancellationRequested();
+            return CommonResult.Ok();
+        }
+
+        static CommonResult<RewardData[]> parseInitialInventoryRewards()
+        {
+            var setting = Resources.Load<InventorySetting>(InventorySetting.ResourcesPath);
+            if (setting == null)
+            {
+                return CommonResult<RewardData[]>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                    $"InventorySetting is not available. expected={InventorySetting.DefaultResourcesAssetPath}");
+            }
+
+            var json = ((string)setting.InitialInventory)?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(json))
+                return CommonResult<RewardData[]>.Success(Array.Empty<RewardData>());
+
+            JToken root;
             try
             {
-                return AddRewards(rewards);
+                root = JToken.Parse(json);
             }
             catch (Exception ex)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
-                    $"FirstInit apply failed: {ex.Message}");
+                return CommonResult<RewardData[]>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    $"InitialInventory JSON parse failed: {ex.Message}");
             }
-#endif
+
+            JArray rewardsArray = null;
+            if (root is JArray rootArray)
+            {
+                rewardsArray = rootArray;
+            }
+            else if (root is JObject rootObj && rootObj["rewards"] is JArray nestedArray)
+            {
+                rewardsArray = nestedArray;
+            }
+
+            if (rewardsArray == null)
+            {
+                return CommonResult<RewardData[]>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    "InitialInventory must be RewardData[] JSON or {\"rewards\": RewardData[]}.");
+            }
+
+            if (rewardsArray.Count == 0)
+                return CommonResult<RewardData[]>.Success(Array.Empty<RewardData>());
+
+            var rewards = new RewardData[rewardsArray.Count];
+            for (var i = 0; i < rewardsArray.Count; i++)
+            {
+                if (rewardsArray[i] is not JObject rewardObj)
+                {
+                    return CommonResult<RewardData[]>.Failure(
+                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                        $"InitialInventory[{i}] must be an object.");
+                }
+
+                var typeText = (rewardObj.Value<string>("type") ?? string.Empty).Trim();
+                if (string.Equals(typeText, "SEASON_PASS", StringComparison.OrdinalIgnoreCase))
+                    typeText = "PASS";
+
+                if (!Enum.TryParse(typeText, true, out REWARD_TYPE rewardType))
+                {
+                    return CommonResult<RewardData[]>.Failure(
+                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                        $"InitialInventory[{i}].type is invalid: {typeText}");
+                }
+
+                if (rewardType == REWARD_TYPE.CHEST)
+                {
+                    return CommonResult<RewardData[]>.Failure(
+                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                        $"InitialInventory[{i}].type does not support CHEST.");
+                }
+
+                var id = (rewardObj.Value<string>("id") ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(id))
+                {
+                    return CommonResult<RewardData[]>.Failure(
+                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                        $"InitialInventory[{i}].id is empty.");
+                }
+
+                var amountToken = rewardObj["amount"];
+                if (amountToken == null || amountToken.Type != JTokenType.Integer)
+                {
+                    return CommonResult<RewardData[]>.Failure(
+                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                        $"InitialInventory[{i}].amount must be an integer.");
+                }
+
+                var amountLong = amountToken.Value<long>();
+                if (amountLong <= 0 || amountLong > int.MaxValue)
+                {
+                    return CommonResult<RewardData[]>.Failure(
+                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                        $"InitialInventory[{i}].amount must be within 1..{int.MaxValue}.");
+                }
+
+                rewards[i] = new RewardData(rewardType, id, (int)amountLong);
+            }
+
+            return CommonResult<RewardData[]>.Success(rewards);
         }
 
         public CommonResult AddRewards(RewardData[] rewards)

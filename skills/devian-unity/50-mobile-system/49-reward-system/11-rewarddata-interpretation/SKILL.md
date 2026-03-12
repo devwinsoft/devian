@@ -9,7 +9,7 @@ AppliesTo: v10
 
 `RewardData`를 어디서 받아도 동일하게 해석하기 위한 실무 가이드다.
 
-- 대상: `TB_REWARD` 그룹 해석, Firebase callable 응답(`rewards`/`grants`), Operation 수동 설정값
+- 대상: `TB_REWARD` 그룹 해석, `InventorySetting.InitialInventory` 설정값
 - 목표: `type/id/amount`를 인벤토리 적용 의미로 일관되게 해석
 
 
@@ -35,7 +35,7 @@ AppliesTo: v10
 1. 입력을 `{ type, id, amount }` 형태로 정규화한다.
 2. 공통 검증을 수행한다.
 3. `type`별 의미로 해석한다.
-4. 적용 호출(`InventoryManager.AddRewards`) 또는 저장(Operation)으로 전달한다.
+4. 적용 호출(`InventoryManager.AddRewards`)로 전달한다.
 
 
 ---
@@ -82,21 +82,18 @@ AppliesTo: v10
 - 나머지는 `new RewardData(row.Type, row.Id, row.Amount)`로 변환
 
 
-### B) Firebase callable (`rewards` / `grants`)
+### B) InventorySetting Initial Inventory
 
-대표 구현: `FirebaseCallableManager.parseInitialInventoryRewards`
+구현: `InventoryManager.FirstInitAsync` -> `parseInitialInventoryRewards`
 
-- `type`: 문자열 enum name 우선, 필요 시 숫자 변환 허용
-- `id`: 공백이면 skip
-- `amount`: 정수/양수만 허용
-- `CURRENCY`는 `CURRENCY_TYPE` enum name 검증 실패 시 skip
-
-
-### C) Operation Initial Inventory (`/config/initialInventory`)
-
-- UI에서 `type/id/amount` 입력 시 즉시 검증
-- 저장 전 전체 행 재검증
-- 서버(`getInitialInventory`)에서도 동일 스키마를 강검증
+- 입력 소스: `Assets/Resources/Devian/InventorySettings.asset` -> `InventorySetting.InitialInventory` (`CString`)
+- 허용 JSON 형태:
+  - `RewardData[]`
+  - `{ "rewards": RewardData[] }`
+- `SEASON_PASS`는 legacy 호환으로 `PASS`로 변환
+- `CHEST` 타입은 허용하지 않는다
+- `amount`는 정수이며 `1..int.MaxValue` 범위만 허용
+- 검증 실패 시 `CommonResult` 실패로 중단한다
 
 
 ---
@@ -142,7 +139,6 @@ AppliesTo: v10
 - RewardData: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Reward/RewardData.cs`
 - RewardGroup 해석: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Reward/RewardManager.cs`
 - 실제 적용: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Inventory/InventoryManager.cs`
-- Initial callable 파싱: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/FirebaseCallable/FirebaseCallableManager.cs`
 
 
 ---

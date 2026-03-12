@@ -12,14 +12,13 @@ AppliesTo: v10
 ## Scope
 
 포함:
-- 진입 선행 버전 체크 (`VersionCheckAsync`, `getRemoteConfig`)
 - 런타임 인증 세션 복구 (`AccountManager.EnsureRuntimeAuthSessionAsync`)
 - 명시 로그인 (`AccountManager.LoginAsync`)
 - 세션 초기 스냅샷 조회 (`FirebaseCallableManager.InitSessionAsync`)
 - 저장 동기화 (`SaveDataManager.SyncGameStorageAsync`)
 - 충돌 해소 + 재초기화 (`ResolveConflictAndInitializeAsync`)
 - 초기 지급 (`InventoryManager.FirstInitAsync`) + 저장
-- 게임 시스템 초기화 (RemoteConfig/Mission/Achieve/Ad/Leaderboard)
+- 게임 시스템 초기화 (Mission/Achieve/Ad/Leaderboard)
 - 최종 저장 (`SaveDataManager.SaveGameStorageAsync`)
 - 구매 진입 인증 보정 (`EnsurePurchaseLoginReadyAsync`, Android silent Google restore)
 - 결과 반환 (`CommonResult`)
@@ -66,13 +65,12 @@ AppliesTo: v10
 ## Fatal / Non-fatal
 
 fatal (실패 반환):
-- 버전 체크 실패 (`getRemoteConfig` 호출 실패)
 - 계정 로그인/세션 복구 실패
 - InitSession 조회 실패
 - 저장 동기화 실패
 - Resolve 후 재충돌(명시적 resolve 경로)
 - 초기 지급/저장 실패
-- RemoteConfig/Mission/Achieve 초기화 실패
+- Mission/Achieve 초기화 실패
 - 최종 저장 실패
 
 non-fatal (로그만 남기고 진행):

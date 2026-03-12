@@ -52,7 +52,6 @@ namespace MyApp
 4. 포그라운드 복귀 처리가 필요하면 `BaseApplication.OnEnterForeground()`를 override한다.
 5. Bootstrap prefab에 해당 컴포넌트를 부착한다.
 6. app/contents layer가 Bootstrap prefab을 명시적으로 생성하고 `BootProc()`를 호출한다.
-7. 샘플에서는 Firebase Functions region 같은 앱 설정값을 `MobileApplication`에 하드코딩하고, `RemoteConfigManager`/`PurchaseManager` 같은 하위 manager에 전달한다.
 
 주의:
 - Unity `OnApplicationPause` / `OnApplicationFocus`를 직접 override하지 않는다.
@@ -60,7 +59,6 @@ namespace MyApp
 - manager가 inspector/serialized field로 Firebase region 같은 앱 설정을 직접 소유하지 않는다. 설정 owner는 bootstrap/app layer다.
 
 foreground 복귀 기준 동작:
-- `RemoteConfigManager.RefreshAsync(...)`
 - refresh 성공 시 `LeaderboardManager.SyncSeasonTransitionRewardsAsync(...)` best-effort 호출
 
 onLoadCompletedAsync:
@@ -93,7 +91,6 @@ MobileApplication에 부착된 RequireComponent:
 - `PurchaseManager`
 - `AchieveManager`
 - `MissionManager`
-- `RemoteConfigManager`
 - `LeaderboardManager`
 - `GameMessageManager`
 - `LoginManager`
