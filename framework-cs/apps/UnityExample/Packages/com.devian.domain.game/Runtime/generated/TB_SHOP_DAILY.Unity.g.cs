@@ -12,13 +12,13 @@ using UnityEngine;
 
 namespace Devian.Domain.Game
 {
-    public static partial class TB_SHOP_PRODUCT
+    public static partial class TB_SHOP_DAILY
     {
         private static global::Devian.TableFormat _loadedFormat;
         private static bool _isLoaded;
 
         /// <summary>
-        /// Preload SHOP_PRODUCT table via TableManager.
+        /// Preload SHOP_DAILY table via TableManager.
         /// TableManager handles: TextAsset load + TB insert + cache.
         /// </summary>
         /// <param name="key">Addressables key to load TextAsset</param>
@@ -39,7 +39,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Unload SHOP_PRODUCT table and clear data.
+        /// Unload SHOP_DAILY table and clear data.
         /// </summary>
         public static void Unload()
         {
@@ -48,7 +48,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Check if SHOP_PRODUCT table is loaded.
+        /// Check if SHOP_DAILY table is loaded.
         /// </summary>
         public static bool IsLoaded => _isLoaded;
 

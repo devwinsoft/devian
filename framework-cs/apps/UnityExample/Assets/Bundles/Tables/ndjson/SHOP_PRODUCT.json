@@ -1,4 +1,0 @@
-{"ProductId":"shop_001_free","NameId":"","CurrencyType":"FREE","Price":0,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":1,"ResetDays":1}
-{"ProductId":"shop_001_ads","NameId":"","CurrencyType":"ADS","Price":0,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":3,"ResetDays":1}
-{"ProductId":"shop_001_x01","NameId":"","CurrencyType":"JEWEL","Price":100,"RewardGroupId":"reward_shop_001","Amount":1,"MaxCount":-1,"ResetDays":1}
-{"ProductId":"shop_001_x10","NameId":"","CurrencyType":"JEWEL","Price":1000,"RewardGroupId":"reward_shop_001","Amount":11,"MaxCount":-1,"ResetDays":-1}

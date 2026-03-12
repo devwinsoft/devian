@@ -1,0 +1,10 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!49 &4900000
+TextAsset:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: SHOP_DAILY
+  m_Script: RFZHQgEAABAAAQAAAA0CAAC2AAAAH4sIAAAAAAACE2tgrFYKzsgv8ExRslIqzsgviDcwMIxPK0pNVdJR8kvMTQVLKOkoOZcWFaXmJVeGVBakKlkpuQW5uirpKAUUZSanKlkZ6CgFpZYnFqW4F+WXQswqAvPjYUYq6Sg55uaX5pUoWRnqKPkmVjhDObV12ByQmFKM335Hl2BqWG9c24w1ACrAWvDY7+Ua7uqDcIGhAflu0DWsbcXuCEMDUh1BmivQnQEAx6Awfw0CAAA=

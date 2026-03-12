@@ -180,7 +180,7 @@ public class UICanvasLobby : UICanvas<UICanvasLobby>
         }
 
         // ── Rental 상태 확인 ──
-        var noAds = InventoryManager.Instance.Storage.HasActiveRental("noads_month");
+        var noAds = InventoryManager.Instance.Storage.HasActiveRental("purchase_noads_month");
         Debug.Log($"no_ads:{noAds}");
     }
     
@@ -204,7 +204,7 @@ public class UICanvasLobby : UICanvas<UICanvasLobby>
         Debug.Log(TestApplication.GetVersionCode());
 
         var purchase = await PurchaseManager.Instance.PurchaseAsync(
-            "noads_month",
+            "purchase_noads_month",
             CancellationToken.None);
         if (purchase.IsSuccess)
         {
@@ -223,7 +223,7 @@ public class UICanvasLobby : UICanvas<UICanvasLobby>
     private async Task OnClickPurchasePassAsync()
     {
         var result = await PurchaseManager.Instance.PurchaseAsync(
-            "pass_001",
+            "purchase_pass_001",
             CancellationToken.None);
         if (result.IsSuccess)
         {
@@ -242,13 +242,10 @@ public class UICanvasLobby : UICanvas<UICanvasLobby>
 
     private async Task OnClickPurchaseChestAsync()
     {
-        var result = await PurchaseManager.Instance.PurchaseAsync(
-            "chest_003",
-            CancellationToken.None);
+        var result = await ShopManager.Instance.BuyAsync("shop_jewel_1000");
         if (result.IsSuccess)
         {
-            Debug.Log(result.Value.ResultStatus);
-            foreach (var reward in result.Value.AppliedRewards)
+            foreach (var reward in result.Value)
             {
                 Debug.Log($"{reward.Type}, {reward.Id}, {reward.Amount}");
             }
@@ -262,7 +259,6 @@ public class UICanvasLobby : UICanvas<UICanvasLobby>
     private async Task OnClickInAppAdAsync()
     {
         ShopManager.Instance.CanBuy("shop_001_ads");
-        var remainMs = InventoryManager.Instance.Storage.GetRentalRemainingMs("NO_ADS");
         var result = await ShopManager.Instance.BuyAsync("shop_001_ads");
         if (result.IsSuccess)
         {
@@ -271,6 +267,7 @@ public class UICanvasLobby : UICanvas<UICanvasLobby>
                 Debug.Log($"{reward.Type}, {reward.Id}, {reward.Amount}");
             }
 
+            var remainMs = InventoryManager.Instance.Storage.GetRentalRemainingMs("NO_ADS");
             if (remainMs > 0)
             {
                 var span = TimeSpan.FromMilliseconds(remainMs);

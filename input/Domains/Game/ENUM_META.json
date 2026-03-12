@@ -266,6 +266,56 @@
           "value": 1
         }
       ]
+    },
+    {
+      "name": "SHOP_CATALOG_TYPE",
+      "values": [
+        {
+          "name": "NONE",
+          "value": 0
+        },
+        {
+          "name": "DAILY",
+          "value": 1
+        },
+        {
+          "name": "CHEST",
+          "value": 2
+        },
+        {
+          "name": "PURCHASE",
+          "value": 3
+        },
+        {
+          "name": "GOLD",
+          "value": 4
+        }
+      ]
+    },
+    {
+      "name": "SHOP_PRODUCT_TYPE",
+      "values": [
+        {
+          "name": "NONE",
+          "value": 0
+        },
+        {
+          "name": "FREE",
+          "value": 1
+        },
+        {
+          "name": "ADS",
+          "value": 2
+        },
+        {
+          "name": "CURRENCY",
+          "value": 3
+        },
+        {
+          "name": "PURCHASE",
+          "value": 4
+        }
+      ]
     }
   ]
 }

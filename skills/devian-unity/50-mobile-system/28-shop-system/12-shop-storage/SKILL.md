@@ -1,6 +1,6 @@
 ---
 name: 12-shop-storage
-description: ShopStorage를 통해 SHOP_PRODUCT의 구매 제한(maxCount/resetDays) 상태를 저장/복원할 때 사용한다. 서버 기준 시간(RemoteConfig serverNowUtcMs)으로 기간을 계산한다.
+description: ShopStorage를 통해 `shopId`별 구매 횟수와 전역 일일 리셋 상태를 저장/복원할 때 사용한다. 시간 기준은 서버 시간(RemoteConfig serverNowUtcMs)이다.
 ---
 
 # 12-shop-storage
@@ -28,29 +28,29 @@ public sealed class ShopStorage
 ## 2. State
 
 - `schemaVersion`
-- `purchaseLimits: Dictionary<string, ShopPurchaseLimitState>`
-  - key: `productId`
-  - value:
-    - `periodStartUtcMs`
-    - `purchaseCount`
+- `lastResetUtcDayStartMs` : 전역 일일 리셋 기준 시각(UTC day start)
+- `purchaseCounts: Dictionary<string, int>`
+- key: `shopId`
+- value: 누적 구매 횟수(현재 리셋 주기 내)
 
 ---
 
 ## 3. Hard Rules
 
-- 구매 제한 계산 시간 기준은 **서버 시간**(`RemoteConfigManager.TryGetServerNowUtcMs`)이다.
-- 클라이언트 로컬 시간(`DateTime.Now`, `UtcNow`)으로 기간 판정하지 않는다.
-- `maxCount == -1` 또는 `resetDays == -1`이면 제한 비활성이다.
-- 제한 활성 시(`maxCount/resetDays >= 0`) 구매 성공 후에만 `purchaseCount`를 증가시킨다.
+- 리셋 주기는 상품별이 아니라 ShopManager 전역 1일 고정이다.
+- 시간 계산은 서버 시간(`RemoteConfigManager.TryGetServerNowUtcMs`) 기준만 사용한다.
+- 구매 성공 시에만 `purchaseCounts[shopId]`를 증가시킨다.
+- day start가 바뀌면 전체 카운트를 초기화한다.
 
 ---
 
 ## 4. SaveData
 
-ShopStorage는 SaveData JSON에 `shop` 섹션으로 직렬화한다.
+ShopStorage는 SaveData JSON의 `shop` 섹션으로 직렬화한다.
 
 - serialize: `SaveDataJsonCodecShop.Serialize(ShopStorage)`
 - deserialize: `SaveDataJsonCodecShop.DeserializeInto(JObject, ShopStorage)`
+- legacy `purchaseLimits` 포맷은 `purchaseCounts`로 마이그레이션한다.
 
 ---
 

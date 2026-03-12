@@ -368,7 +368,7 @@ class DevianToolBuilder {
 
         // Collect all data for unified file generation
         const contractSpecs = [];
-        const tables = [];
+        const parsedTablesAll = [];
         const stringTableNames = []; // For UPM wrapper generation
 
         // Resolve contract directory
@@ -411,24 +411,14 @@ class DevianToolBuilder {
                     for (const file of files) {
                         console.log(`    [Table] ${path.basename(file)}`);
                         const parsedTables = parseXlsx(file);
-                        tables.push(...parsedTables);
+                        const sourceFileName = path.basename(file);
 
-                        // Generate NDJSON and .asset data (individual files per table)
-                        // SSOT: Only export if PK is defined and valid rows exist
                         for (const table of parsedTables) {
-                            // NDJSON file (extension .json for tooling, content is NDJSON)
-                            const ndjsonResult = generateTableData(table);
-                            if (ndjsonResult.rowCount > 0 && ndjsonResult.data) {
-                                const ndjsonFileName = `${table.name}.json`;
-                                fs.writeFileSync(path.join(stagingNdjson, ndjsonFileName), ndjsonResult.data);
-                            }
-
-                            // Unity TextAsset .asset file (pk 옵션 있는 테이블만)
-                            // SSOT: skills/devian-builder/32-json-row-io/SKILL.md - pb64 export 규칙
-                            const assetResult = generateTableAsset(table);
-                            if (assetResult) {
-                                fs.writeFileSync(path.join(stagingPb64, `${assetResult.tableName}.asset`), assetResult.yaml);
-                            }
+                            parsedTablesAll.push({
+                                ...table,
+                                rows: Array.isArray(table.rows) ? [...table.rows] : [],
+                                sourceFile: sourceFileName,
+                            });
                         }
                     }
                 }
@@ -530,6 +520,29 @@ class DevianToolBuilder {
             console.log(`    [Skip] string tables: not configured`);
         }
 
+        // Merge tables by code table name.
+        // Rule:
+        // - Same code table name without '@' alias on both sides => FAIL (likely accidental duplicate)
+        // - If at least one side is alias sheet ({TableName}@{Description}), rows are merged (data-only extension)
+        const tables = this.mergeDomainTables(domainName, parsedTablesAll);
+
+        // Generate NDJSON and .asset data from merged tables.
+        // SSOT: Only export if PK is defined and valid rows exist
+        for (const table of tables) {
+            const ndjsonResult = generateTableData(table);
+            if (ndjsonResult.rowCount > 0 && ndjsonResult.data) {
+                const ndjsonFileName = `${table.name}.json`;
+                fs.writeFileSync(path.join(stagingNdjson, ndjsonFileName), ndjsonResult.data);
+            }
+
+            // Unity TextAsset .asset file (pk 옵션 있는 테이블만)
+            // SSOT: skills/devian-builder/32-json-row-io/SKILL.md - pb64 export 규칙
+            const assetResult = generateTableAsset(table);
+            if (assetResult) {
+                fs.writeFileSync(path.join(stagingPb64, `${assetResult.tableName}.asset`), assetResult.yaml);
+            }
+        }
+
         // Validate: TB table name and ST table name collision check
         // SSOT: skills/devian-common/14-feature-string-table/SKILL.md - Hard Rule
         const tableNameSet = new Set((tables || []).map(t => t.name));
@@ -561,6 +574,116 @@ class DevianToolBuilder {
 
         // Generate Domain UPM scaffold always (domains define module existence)
         this.generateDomainUpmScaffold(domainName, stagingCs, tables, stringTableNames);
+    }
+
+    mergeDomainTables(domainName, parsedTables) {
+        if (!parsedTables || parsedTables.length === 0) {
+            return [];
+        }
+
+        const mergedByName = new Map(); // tableName -> mergedTable
+        const mergedList = [];
+
+        for (const table of parsedTables) {
+            const existing = mergedByName.get(table.name);
+            if (!existing) {
+                const mergedTable = {
+                    ...table,
+                    rows: Array.isArray(table.rows) ? [...table.rows] : [],
+                    sourceRefs: [this.formatTableSourceRef(table)],
+                };
+                mergedByName.set(table.name, mergedTable);
+                mergedList.push(mergedTable);
+                continue;
+            }
+
+            const existingIsAlias = this.isAliasSheetName(existing.sheetName);
+            const incomingIsAlias = this.isAliasSheetName(table.sheetName);
+
+            if (!existingIsAlias && !incomingIsAlias) {
+                throw new Error(
+                    `[FAIL] Duplicate table name '${table.name}' in domain '${domainName}'.\n` +
+                    `  Sources: ${existing.sourceRefs.join(', ')}, ${this.formatTableSourceRef(table)}\n` +
+                    `  Rule: duplicate code table names are only allowed when at least one source sheet uses '{TableName}@{Description}' alias format.`
+                );
+            }
+
+            this.ensureTableMergeCompatible(domainName, existing, table);
+            if (Array.isArray(table.rows) && table.rows.length > 0) {
+                existing.rows.push(...table.rows);
+            }
+            existing.sourceRefs.push(this.formatTableSourceRef(table));
+        }
+
+        return mergedList.map(({ sourceRefs, ...table }) => table);
+    }
+
+    isAliasSheetName(sheetName) {
+        return typeof sheetName === 'string' && sheetName.includes('@');
+    }
+
+    formatTableSourceRef(table) {
+        const sourceFile = table && table.sourceFile ? table.sourceFile : '(unknown-file)';
+        const sheetName = table && table.sheetName ? table.sheetName : '(unknown-sheet)';
+        return `${sourceFile}:${sheetName}`;
+    }
+
+    ensureTableMergeCompatible(domainName, baseTable, incomingTable) {
+        const baseRef = this.formatTableSourceRef(baseTable);
+        const incomingRef = this.formatTableSourceRef(incomingTable);
+
+        const baseFields = Array.isArray(baseTable.fields) ? baseTable.fields : [];
+        const incomingFields = Array.isArray(incomingTable.fields) ? incomingTable.fields : [];
+        if (baseFields.length !== incomingFields.length) {
+            throw new Error(
+                `[FAIL] Table merge schema mismatch in domain '${domainName}' for '${baseTable.name}'.\n` +
+                `  Sources: ${baseRef} vs ${incomingRef}\n` +
+                `  Reason: field count differs (${baseFields.length} vs ${incomingFields.length}).`
+            );
+        }
+
+        for (let i = 0; i < baseFields.length; i++) {
+            const a = baseFields[i];
+            const b = incomingFields[i];
+            const sameField =
+                a.name === b.name &&
+                a.type === b.type &&
+                !!a.optional === !!b.optional &&
+                !!a.isKey === !!b.isKey &&
+                !!a.isGroup === !!b.isGroup &&
+                (a.gen || null) === (b.gen || null) &&
+                !!a.enumValueFromCode === !!b.enumValueFromCode;
+
+            if (!sameField) {
+                throw new Error(
+                    `[FAIL] Table merge schema mismatch in domain '${domainName}' for '${baseTable.name}'.\n` +
+                    `  Sources: ${baseRef} vs ${incomingRef}\n` +
+                    `  Reason: field mismatch at index ${i}.\n` +
+                    `  Base: name='${a.name}', type='${a.type}', optional=${!!a.optional}, pk=${!!a.isKey}, group=${!!a.isGroup}, gen='${a.gen || ''}', code=${!!a.enumValueFromCode}\n` +
+                    `  Incoming: name='${b.name}', type='${b.type}', optional=${!!b.optional}, pk=${!!b.isKey}, group=${!!b.isGroup}, gen='${b.gen || ''}', code=${!!b.enumValueFromCode}`
+                );
+            }
+        }
+
+        const baseKeyName = baseTable.keyField ? baseTable.keyField.name : '';
+        const incomingKeyName = incomingTable.keyField ? incomingTable.keyField.name : '';
+        if (baseKeyName !== incomingKeyName) {
+            throw new Error(
+                `[FAIL] Table merge key mismatch in domain '${domainName}' for '${baseTable.name}'.\n` +
+                `  Sources: ${baseRef} vs ${incomingRef}\n` +
+                `  Base key='${baseKeyName}', Incoming key='${incomingKeyName}'`
+            );
+        }
+
+        const baseGroupName = baseTable.groupField ? baseTable.groupField.name : '';
+        const incomingGroupName = incomingTable.groupField ? incomingTable.groupField.name : '';
+        if (baseGroupName !== incomingGroupName) {
+            throw new Error(
+                `[FAIL] Table merge group mismatch in domain '${domainName}' for '${baseTable.name}'.\n` +
+                `  Sources: ${baseRef} vs ${incomingRef}\n` +
+                `  Base group='${baseGroupName}', Incoming group='${incomingGroupName}'`
+            );
+        }
     }
 
     generateUnifiedCSharp(domainName, contractSpecs, tables, stringTableNames = []) {

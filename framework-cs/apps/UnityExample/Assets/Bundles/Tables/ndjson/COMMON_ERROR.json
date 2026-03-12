@@ -134,18 +134,17 @@
 {"Id":"LEADERBOARD_SEASON_TIME_INVALID","Msg_key":"","Msg":"SEASON time range is invalid."}
 {"Id":"LEADERBOARD_SERVER_TIME_UNAVAILABLE","Msg_key":"","Msg":"Server time is unavailable for leaderboard season validation."}
 {"Id":"LEADERBOARD_SEASON_NOT_ACTIVE","Msg_key":"","Msg":"Leaderboard score reporting is not allowed outside active season."}
-{"Id":"SHOP_PRODUCT_ID_EMPTY","Msg_key":"","Msg":"Shop productId is empty."}
+{"Id":"SHOP_PRODUCT_ID_EMPTY","Msg_key":"","Msg":"Shop shopId is empty."}
 {"Id":"SHOP_PRODUCT_NOT_FOUND","Msg_key":"","Msg":"Shop product not found."}
 {"Id":"SHOP_PRODUCT_PRICE_INVALID","Msg_key":"","Msg":"Shop product price is invalid."}
 {"Id":"SHOP_REWARD_GROUP_EMPTY","Msg_key":"","Msg":"Shop product rewardGroupId is empty."}
-{"Id":"SHOP_PSEUDO_CURRENCY_PRICE_INVALID","Msg_key":"","Msg":"Shop pseudo currency price must be zero."}
 {"Id":"SHOP_PURCHASE_LIMIT_DISABLED","Msg_key":"","Msg":"Shop purchase is disabled by maxCount=0."}
-{"Id":"SHOP_PURCHASE_LIMIT_RESET_DAYS_INVALID","Msg_key":"","Msg":"Shop resetDays must be >= 1 when purchase limit is enabled."}
 {"Id":"SHOP_SERVER_TIME_UNAVAILABLE","Msg_key":"","Msg":"Server time is unavailable for shop purchase validation."}
-{"Id":"SHOP_PURCHASE_LIMIT_STATE_UNAVAILABLE","Msg_key":"","Msg":"Shop purchase limit state is unavailable."}
 {"Id":"SHOP_PURCHASE_LIMIT_EXCEEDED","Msg_key":"","Msg":"Shop purchase limit exceeded."}
 {"Id":"SHOP_WALLET_UNAVAILABLE","Msg_key":"","Msg":"Inventory wallet is unavailable."}
 {"Id":"SHOP_CURRENCY_INSUFFICIENT","Msg_key":"","Msg":"Insufficient currency for shop purchase."}
 {"Id":"SHOP_ADS_NOT_AVAILABLE","Msg_key":"","Msg":"Shop rewarded ad is not available."}
 {"Id":"SHOP_ADS_SHOW_FAILED","Msg_key":"","Msg":"Shop rewarded ad show failed."}
 {"Id":"SHOP_REWARD_APPLY_FAILED","Msg_key":"","Msg":"Shop reward apply failed."}
+{"Id":"SHOP_CAN_BUY_FAILED","Msg_key":"","Msg":"Shop CanBuy failed."}
+{"Id":"SHOP_BUY_FAILED","Msg_key":"","Msg":"Shop BuyAsync failed."}

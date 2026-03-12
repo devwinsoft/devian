@@ -6,44 +6,53 @@ namespace Devian
     [Serializable]
     public sealed class ShopStorage
     {
-        public int schemaVersion = 1;
-        public Dictionary<string, ShopPurchaseLimitState> purchaseLimits = new();
+        public int schemaVersion = 2;
+        public long lastResetUtcDayStartMs;
+        public Dictionary<string, int> purchaseCounts = new();
 
-        public bool TryGetPurchaseLimit(string productId, out ShopPurchaseLimitState state)
+        public bool TryGetPurchaseCount(string shopId, out int purchaseCount)
         {
-            state = null;
-            if (string.IsNullOrWhiteSpace(productId))
+            purchaseCount = 0;
+            if (string.IsNullOrWhiteSpace(shopId))
                 return false;
 
-            return purchaseLimits.TryGetValue(productId.Trim(), out state);
+            return purchaseCounts.TryGetValue(shopId.Trim(), out purchaseCount);
         }
 
-        public ShopPurchaseLimitState GetOrCreatePurchaseLimit(string productId)
+        public int GetPurchaseCount(string shopId)
         {
-            var key = productId != null ? productId.Trim() : string.Empty;
+            if (!TryGetPurchaseCount(shopId, out var purchaseCount))
+                return 0;
+
+            return purchaseCount < 0 ? 0 : purchaseCount;
+        }
+
+        public void SetPurchaseCount(string shopId, int purchaseCount)
+        {
+            var key = shopId != null ? shopId.Trim() : string.Empty;
             if (string.IsNullOrEmpty(key))
-                return null;
+                return;
 
-            if (!purchaseLimits.TryGetValue(key, out var state) || state == null)
-            {
-                state = new ShopPurchaseLimitState();
-                purchaseLimits[key] = state;
-            }
+            purchaseCounts[key] = purchaseCount < 0 ? 0 : purchaseCount;
+        }
 
-            return state;
+        public void IncrementPurchaseCount(string shopId)
+        {
+            var current = GetPurchaseCount(shopId);
+            SetPurchaseCount(shopId, current + 1);
+        }
+
+        public void ResetDaily(long resetUtcDayStartMs)
+        {
+            lastResetUtcDayStartMs = resetUtcDayStartMs > 0L ? resetUtcDayStartMs : 0L;
+            purchaseCounts.Clear();
         }
 
         public void Clear()
         {
-            schemaVersion = 1;
-            purchaseLimits.Clear();
+            schemaVersion = 2;
+            lastResetUtcDayStartMs = 0L;
+            purchaseCounts.Clear();
         }
-    }
-
-    [Serializable]
-    public sealed class ShopPurchaseLimitState
-    {
-        public long periodStartUtcMs;
-        public int purchaseCount;
     }
 }

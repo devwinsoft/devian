@@ -6,48 +6,77 @@ namespace Devian
     {
         public static JObject Serialize(ShopStorage shop)
         {
-            var limitsObj = new JObject();
-            foreach (var kv in shop.purchaseLimits)
+            shop ??= new ShopStorage();
+
+            var countsObj = new JObject();
+            foreach (var kv in shop.purchaseCounts)
             {
-                if (string.IsNullOrWhiteSpace(kv.Key) || kv.Value == null)
+                if (string.IsNullOrWhiteSpace(kv.Key))
                     continue;
 
-                limitsObj[kv.Key] = new JObject
-                {
-                    ["periodStartUtcMs"] = kv.Value.periodStartUtcMs,
-                    ["purchaseCount"] = kv.Value.purchaseCount,
-                };
+                countsObj[kv.Key] = kv.Value < 0 ? 0 : kv.Value;
             }
 
             return new JObject
             {
                 ["schemaVersion"] = shop.schemaVersion,
-                ["purchaseLimits"] = limitsObj,
+                ["lastResetUtcDayStartMs"] = shop.lastResetUtcDayStartMs,
+                ["purchaseCounts"] = countsObj,
             };
         }
 
         public static void DeserializeInto(JObject shopObj, ShopStorage shop)
         {
-            shop.Clear();
-            shop.schemaVersion = shopObj.Value<int?>("schemaVersion") ?? 1;
-
-            if (shopObj["purchaseLimits"] is not JObject limitsObj)
+            if (shop == null)
                 return;
 
-            foreach (var prop in limitsObj.Properties())
+            shop.Clear();
+            shop.schemaVersion = shopObj.Value<int?>("schemaVersion") ?? 1;
+            shop.lastResetUtcDayStartMs = shopObj.Value<long?>("lastResetUtcDayStartMs") ?? 0L;
+
+            if (shopObj["purchaseCounts"] is JObject countsObj)
+            {
+                foreach (var prop in countsObj.Properties())
+                {
+                    var normalizedShopId = prop.Name != null ? prop.Name.Trim() : string.Empty;
+                    if (string.IsNullOrEmpty(normalizedShopId))
+                        continue;
+
+                    var purchaseCount = prop.Value.Value<int?>() ?? 0;
+                    shop.SetPurchaseCount(normalizedShopId, purchaseCount);
+                }
+            }
+            else if (shopObj["purchaseLimits"] is JObject legacyLimitsObj)
+            {
+                migrateLegacyPurchaseLimits(legacyLimitsObj, shop);
+            }
+
+            if (shop.schemaVersion < 2)
+                shop.schemaVersion = 2;
+        }
+
+        static void migrateLegacyPurchaseLimits(JObject legacyLimitsObj, ShopStorage shop)
+        {
+            var migratedDayStartUtcMs = 0L;
+            foreach (var prop in legacyLimitsObj.Properties())
             {
                 if (prop.Value is not JObject stateObj)
                     continue;
 
-                var state = shop.GetOrCreatePurchaseLimit(prop.Name);
-                if (state == null)
+                var normalizedShopId = prop.Name != null ? prop.Name.Trim() : string.Empty;
+                if (string.IsNullOrEmpty(normalizedShopId))
                     continue;
 
-                state.periodStartUtcMs = stateObj.Value<long?>("periodStartUtcMs") ?? 0L;
-                state.purchaseCount = stateObj.Value<int?>("purchaseCount") ?? 0;
-                if (state.purchaseCount < 0)
-                    state.purchaseCount = 0;
+                var purchaseCount = stateObj.Value<int?>("purchaseCount") ?? 0;
+                shop.SetPurchaseCount(normalizedShopId, purchaseCount);
+
+                var periodStartUtcMs = stateObj.Value<long?>("periodStartUtcMs") ?? 0L;
+                if (periodStartUtcMs > migratedDayStartUtcMs)
+                    migratedDayStartUtcMs = periodStartUtcMs;
             }
+
+            if (migratedDayStartUtcMs > 0L)
+                shop.lastResetUtcDayStartMs = migratedDayStartUtcMs;
         }
     }
 }

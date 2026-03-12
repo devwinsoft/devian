@@ -117,48 +117,6 @@ namespace Devian
             return internalProductIdOrSeasonPassId;
         }
 
-        CommonResult validateSeasonPurchaseWindow(PURCHASE product)
-        {
-            if (product == null || string.IsNullOrWhiteSpace(product.SeasonId))
-                return CommonResult.Ok();
-
-            var season = TB_SEASON.Get(product.SeasonId);
-            if (season == null)
-            {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    $"Season not found for product: productId={product.InternalProductId}, seasonId={product.SeasonId}");
-            }
-
-            var seasonEndUtcMs = season.EndUtcTime?.utcTimeMs ?? 0L;
-            if (seasonEndUtcMs <= 0L)
-            {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    $"Season end time is invalid: productId={product.InternalProductId}, seasonId={product.SeasonId}");
-            }
-
-            if (!RemoteConfigManager.TryGet(out var remoteConfigManager)
-                || remoteConfigManager == null
-                || !remoteConfigManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
-            {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
-                    "Server time is unavailable. Initialize RemoteConfigManager before purchase.");
-            }
-
-            var seasonPurchaseBlockedBeforeEnd = TimeSpan.FromDays(_seasonPurchaseBlockedBeforeEndDays);
-            var blockStartUtcMs = seasonEndUtcMs - (long)seasonPurchaseBlockedBeforeEnd.TotalMilliseconds;
-            if (serverNowUtcMs >= blockStartUtcMs)
-            {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_SEASON_END_SOON_BLOCKED,
-                    $"Product purchase is blocked near season end: blockDays={_seasonPurchaseBlockedBeforeEndDays}, productId={product.InternalProductId}, seasonId={product.SeasonId}");
-            }
-
-            return CommonResult.Ok();
-        }
-
         string ResolveStoreProductId(string internalProductId)
         {
             var product = TB_PURCHASE.Get(internalProductId);
@@ -593,10 +551,6 @@ namespace Devian
                 return CommonResult<PurchaseFinalResult>.Failure(
                     COMMON_ERROR_TYPE.PURCHASE_NOT_FOUND,
                     $"Product not found: {internalProductId}");
-
-            var seasonWindow = validateSeasonPurchaseWindow(product);
-            if (seasonWindow.IsFailure)
-                return CommonResult<PurchaseFinalResult>.Failure(seasonWindow.Error!);
 
             var kind = ProductKindToPurchaseKind(product.Kind);
             var result = await purchaseAndVerifyAsync(internalProductId, kind, ct);

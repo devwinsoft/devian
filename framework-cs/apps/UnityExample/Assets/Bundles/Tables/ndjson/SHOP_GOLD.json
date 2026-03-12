@@ -1,0 +1,3 @@
+{"ShopId":"shop_gold_001_ads","NameId":"","CurrencyType":"ADS","Price":0,"RewardGroupId":"reward_shop_001","MaxCount":5}
+{"ShopId":"shop_gold_001_paid","NameId":"","CurrencyType":"JEWEL","Price":500,"RewardGroupId":"reward_shop_001","MaxCount":-1}
+{"ShopId":"shop_gold_002","NameId":"","CurrencyType":"JEWEL","Price":1500,"RewardGroupId":"reward_shop_001","MaxCount":-1}

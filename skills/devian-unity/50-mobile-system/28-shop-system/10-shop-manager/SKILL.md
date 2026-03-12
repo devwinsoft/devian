@@ -1,5 +1,6 @@
+---
 name: 10-shop-manager
-description: MobileSystem ShopManager를 CompoSingleton으로 구현하고 BuyAsync(productId) 구매 플로우(통화 차감, ADS 시청, 구매 제한, amount 배수 보상, 실패 시 롤백)를 적용할 때 사용한다.
+description: MobileSystem ShopManager를 CompoSingleton으로 구현하고 catalog 기반 구매(`CanBuy(shopId)`, `BuyAsync(shopId)`) 플로우(통화 차감, ADS 시청, PurchaseManager 위임, 구매 제한, amount 반복 보상, 실패 래핑)를 적용할 때 사용한다.
 ---
 
 # 10-shop-manager
@@ -7,7 +8,7 @@ description: MobileSystem ShopManager를 CompoSingleton으로 구현하고 BuyAs
 Status: ACTIVE
 AppliesTo: v10
 
-ShopManager는 MobileSystem의 인게임 상점 구매 진입점이다.
+ShopManager는 MobileSystem 상점 구매 진입점이며, 카탈로그별 상품 목록을 관리한다.
 
 ---
 
@@ -19,58 +20,60 @@ public sealed class ShopManager : CompoSingleton<ShopManager>
 
 - namespace: `Devian`
 - asmdef: `Devian.Samples.MobileSystem`
-- MobileApplication에서 `RequireComponent(typeof(ShopManager))`로 보장한다.
+- `MobileApplication`에서 `RequireComponent(typeof(ShopManager))`로 보장한다.
 
 ---
 
 ## 2. Public API
 
 ```csharp
-public bool CanBuy(string productId)
-public Task<CommonResult<RewardData[]>> BuyAsync(string productId, CancellationToken ct = default)
+public bool CanBuy(string shopId)
+public Task<CommonResult<RewardData[]>> BuyAsync(string shopId, CancellationToken ct = default)
+public IReadOnlyList<ShopCatalog> GetCatalogs()
+public ShopCatalog GetCatalog(SHOP_CATALOG_TYPE catalogType)
+public IReadOnlyList<ShopProductBase> GetProducts(SHOP_CATALOG_TYPE catalogType)
 ```
 
-구매 플로우:
+핵심 플로우:
 
-1. `ShopProduct.TryGet(productId)`로 상품 조회
-2. 구매 제한(`maxCount/resetDays`) 검사 (서버 시간 기준)
-3. 결제 타입 분기
-  - `FREE`: 차감 없음
-  - `ADS`: `AdsManager.ShowAsync()` 성공 필요
-  - 기타 통화: 잔고 검증 + 가격 차감
-4. `RewardManager.Instance.ApplyRewardGroup(shopProduct.RewardGroupId, amount)` 보상 지급
-5. 지급 실패 시 차감 롤백
-6. 성공 시 제한 카운트 증가 + `AppliedRewards` 반환
+1. `shopId`로 `ShopProductBase` 조회
+2. 전역 일일 리셋 체크(서버 시간 기준)
+3. 구매 제한(`maxCount`) 체크
+4. 카탈로그 분기
+- `PURCHASE`: `PurchaseManager.PurchaseAsync(internalProductId)` 위임
+- 그 외: 통화 차감/광고 시청 후 `RewardManager` 지급
+5. 성공 시 구매 카운트 저장 + SaveData 저장
 
 ---
 
-## 3. Currency Deduction Rule
+## 3. Currency Rules
 
-- 일반 통화: `wallet.Get(currencyType) >= price` 검증 후 `wallet.TryAdd(currencyType, -price)`
-- `CURRENCY_TYPE.FREE`: 가격 0 전용(차감 없음)
-- `CURRENCY_TYPE.ADS`: `AdsManager.ShowAsync()` 성공 시 구매 성공
-- `CURRENCY_TYPE.JEWEL`:
-  - 구매 가능 조건: `JEWEL_FREE + JEWEL_PAID >= price`
-  - 차감 우선순위: `JEWEL_FREE` 먼저, 부족분은 `JEWEL_PAID`
-
-예:
-- free=70, paid=50, price=100 → free 70 차감 + paid 30 차감
+- `FREE`: 가격 0 구매로 사용(차감 없음)
+- `ADS`: 광고 시청 성공 시 구매 성공
+- `JEWEL`: `JEWEL_FREE` 우선 차감 후 부족분 `JEWEL_PAID` 차감
+- `NO_ADS` 대여(`InventoryStorage.GetRentalRemainingMs("NO_ADS") > 0`) 중이면:
+- `CanBuy`: `AdsManager.CanShow` 체크 skip
+- `BuyAsync`: 광고 show skip, 즉시 성공 경로
 
 ---
 
-## 4. Hard Rules
+## 4. Catalog Rules
 
-- `SHOP_PRODUCT.rewardGroupId`가 비어 있으면 구매 실패.
-- `SHOP_PRODUCT.amount`는 최소 1로 보정한다.
-- 구매 제한 시간 계산은 `RemoteConfigManager` 서버 시간(`serverNowUtcMs`)만 사용한다.
-- 가격 차감 성공 후 보상 지급 실패 시 반드시 롤백.
-- `TB_SHOP_PRODUCT`/`TB_REWARD`를 직접 조회하는 책임 분리:
-  - 상품 조회: ShopProduct
-  - 보상 지급: RewardManager
+- `DAILY`, `CHEST`, `GOLD`: `RewardManager` 지급
+- `PURCHASE`: `PurchaseManager` 구매 처리 사용 (`BuyAsync` 보상 지급 로직 직접 사용 금지)
+- `seasonId` 구매 제한(시즌 종료 임박 차단)은 ShopManager에서 검사한다.
 
 ---
 
-## 5. Implementation Location (3-path mirror)
+## 5. Error Rules
+
+- `CanBuy` 실패: `LastCanBuyErrorCode = SHOP_CAN_BUY_FAILED`
+- `BuyAsync` 실패: `COMMON_ERROR_TYPE.SHOP_BUY_FAILED`
+- inner 실패 코드는 메시지에 `inner=...` 형태로 포함한다.
+
+---
+
+## 6. Implementation Location (3-path mirror)
 
 - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopManager.cs`
 - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopManager.cs`
@@ -78,10 +81,11 @@ public Task<CommonResult<RewardData[]>> BuyAsync(string productId, CancellationT
 
 ---
 
-## 6. Related
+## 7. Related
 
 - [11-shop-product](../11-shop-product/SKILL.md)
 - [12-shop-storage](../12-shop-storage/SKILL.md)
+- [13-shop-catalog](../13-shop-catalog/SKILL.md)
+- [14-shop-factory](../14-shop-factory/SKILL.md)
 - [49-reward-system/10-reward-manager](../../49-reward-system/10-reward-manager/SKILL.md)
 - [22-inventory-system/12-inventory-wallet](../../22-inventory-system/12-inventory-wallet/SKILL.md)
-- [50-mobile-system/01-policy](../../01-policy/SKILL.md)

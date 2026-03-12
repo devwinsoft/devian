@@ -118,7 +118,7 @@ AppliesTo: v10
 - Season Pass: 시즌별 구매 1회성 Entitlement로 운영
 
 - kind의 정본 enum은 컨텐츠 레이어가 정의한 `PurchaseKind`다.
-- 테이블(`MetaTable.xlsx` PURCHASE.kind)의 타입은 `PurchaseKind`를 사용한다.
+- 테이블(`ShopTable.xlsx` PURCHASE.kind)의 타입은 `PurchaseKind`를 사용한다.
 
 ### 카탈로그 통합
 
@@ -141,10 +141,10 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 #### Product Catalog (상품 요약/매핑) SSOT — ✅ 전체 결정됨
 - [x] SSOT 저장 위치: **(A) Devian input 테이블(Excel) 기반** — 결정됨
   - PURCHASE 테이블 스키마를 이 문서(03-ssot)에서 SSOT로 정의한다.
-  - `MetaTable.xlsx`의 PURCHASE 시트에서 데이터를 관리한다.
+  - `ShopTable.xlsx`의 PURCHASE 시트에서 데이터를 관리한다.
 - [x] `{buildInputJson}` 도메인 등록: — 결정됨
   - 도메인 등록 정보는 컨텐츠 레이어 SSOT에서 관리
-- [x] MetaTable.xlsx 경로: — 결정됨
+- [x] ShopTable.xlsx 경로: — 결정됨
   - 경로는 컨텐츠 레이어 SSOT에서 관리
 - [x] PURCHASE 테이블 스키마/필드: — 결정됨
   - `internalProductId` (string, pk) — 내부 상품 ID (정본)

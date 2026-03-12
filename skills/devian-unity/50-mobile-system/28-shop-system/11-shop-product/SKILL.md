@@ -1,6 +1,6 @@
 ---
 name: 11-shop-product
-description: MetaTable의 SHOP_PRODUCT 테이블(TB_SHOP_PRODUCT)을 ShopProduct 클래스로 래핑하고 productId 조회/검증/필드 표준화(rewardGroupId)할 때 사용한다.
+description: ShopTable의 `SHOP_DAILY/CHEST/PURCHASE/GOLD`를 구매 방식 enum(`SHOP_PRODUCT_TYPE`) 기반의 `ShopProductBase` 계층(`Free/Ads/Currency/Purchase`)으로 구성할 때 사용한다.
 ---
 
 # 11-shop-product
@@ -8,58 +8,72 @@ description: MetaTable의 SHOP_PRODUCT 테이블(TB_SHOP_PRODUCT)을 ShopProduct
 Status: ACTIVE
 AppliesTo: v10
 
-ShopProduct는 `TB_SHOP_PRODUCT` row를 런타임에서 안전하게 사용하는 래퍼다.
+ShopProduct 모델은 카탈로그 row를 `ShopProductBase` 계층으로 분류한다.
 
 ---
 
-## 1. Source Table
+## 1. Source Tables
 
-- 입력 테이블: `input/Domains/Game/MetaTable.xlsx` 시트 `SHOP_PRODUCT`
-- 필드:
-  - `productId` (pk)
-  - `nameId`
-  - `currencyType`
-  - `price`
-  - `rewardGroupId`
-  - `amount`
-  - `maxCount`
-  - `resetDays`
+- table file: `input/Domains/Game/ShopTable.xlsx`
+- `SHOP_DAILY`
+- `SHOP_CHEST`
+- `SHOP_PURCHASE`
+- `SHOP_GOLD`
 
-주의:
-- 컨벤션은 `rewardGroupId`가 정본이다.
-- `RewardId` 이름 사용 금지.
+기존 `SHOP_PRODUCT`/`productId` 개념은 제거하고 `shopId`를 사용한다.
 
 ---
 
 ## 2. Class Contract
 
 ```csharp
-public sealed class ShopProduct
+public abstract class ShopProductBase
 {
-    public string ProductId { get; }
+    public string ShopId { get; }
+    public SHOP_CATALOG_TYPE CatalogType { get; }
+    public SHOP_PRODUCT_TYPE ProductType { get; }
     public string NameId { get; }
+    public int MaxCount { get; }
+}
+
+public abstract class ShopRewardProductBase : ShopProductBase
+{
     public CURRENCY_TYPE CurrencyType { get; }
     public int Price { get; }
     public string RewardGroupId { get; }
     public int Amount { get; }
-    public int MaxCount { get; }
-    public int ResetDays { get; }
+}
 
-    public static ShopProduct Get(string productId);
-    public static bool TryGet(string productId, out ShopProduct product);
+public sealed class ShopProductFree : ShopRewardProductBase {}
+public sealed class ShopProductAds : ShopRewardProductBase {}
+public sealed class ShopProductCurrency : ShopRewardProductBase {}
+public sealed class ShopProductPurchase : ShopProductBase
+{
+    public string InternalProductId { get; }
+    public string SeasonId { get; }
+}
+
+public sealed class ShopCatalog
+{
+    public SHOP_CATALOG_TYPE CatalogType { get; }
+    public IReadOnlyList<ShopProductBase> Products { get; }
 }
 ```
 
-- 내부적으로 `TB_SHOP_PRODUCT.Get(productId)`를 사용한다.
-- row가 없으면 null/false를 반환한다.
+- 구매 방식 분류:
+- `FREE` -> `ShopProductFree`
+- `ADS` -> `ShopProductAds`
+- `CURRENCY` -> `ShopProductCurrency`
+- `PURCHASE` -> `ShopProductPurchase`
+- `SHOP_GOLD`는 `amount`가 없으므로 `Amount=1` 고정이다.
 
 ---
 
 ## 3. Hard Rules
 
-- 필드명은 `RewardGroupId`로 유지한다 (`RewardId` 금지).
-- string 필드는 null 방어(`?? string.Empty`)를 적용한다.
-- ShopManager 외부에서 테이블 row를 직접 다루지 않도록 래퍼를 우선 사용한다.
+- `shopId`가 유일 키다.
+- `SHOP_PRODUCT_TYPE.NONE`은 placeholder 용도이며 실제 판매 상품에는 사용하지 않는다.
+- `PURCHASE` 타입은 `InternalProductId`가 필수다.
 
 ---
 
@@ -74,4 +88,5 @@ public sealed class ShopProduct
 ## 5. Related
 
 - [10-shop-manager](../10-shop-manager/SKILL.md)
-- [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md)
+- [13-shop-catalog](../13-shop-catalog/SKILL.md)
+- [14-shop-factory](../14-shop-factory/SKILL.md)
