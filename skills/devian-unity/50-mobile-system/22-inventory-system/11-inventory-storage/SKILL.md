@@ -59,7 +59,7 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
 - `AddRewards` 시 `REWARD_TYPE.CARD`이면 `_storage.Cards`에 AbilityCard를 추가하고 `AddAmount(delta)`로 수량 누적한다.
 - `AddRewards` 시 `REWARD_TYPE.EQUIP`이면 새 `itemUid`(GUID)로 AbilityEquip을 생성하여 `_storage.Equipments`에 추가한다.
 - `AddRewards` 시 `REWARD_TYPE.HERO`이면 `_storage.Heroes`에 AbilityUnitHero를 추가하고 `AddStat(STAT_TYPE.UNIT_AMOUNT, delta)`로 수량 누적한다.
-- `AddRewards` 시 `REWARD_TYPE.RENTAL`이면 `_storage.SetRental(id, long.MaxValue)`로 활성화 flag를 설정한다. 만료 시각은 데이터 Sync에서 서버로부터 갱신한다.
+- `AddRewards` 시 `REWARD_TYPE.RENTAL`이면 `_storage.SetRental(id, max(currentExpiry, now)+30days)`로 로컬 만료 시각을 설정/연장한다.
 - `AddRewards` 시 `REWARD_TYPE.PASS`이면 `_storage.SetPass(id, true)`로 소유권을 설정한다.
 - 시즌패스 상태 변경 시 `MESSAGE_INVENTORY_TYPE.PASS_CHANGED`를 publish할 수 있어야 한다(실행 위치: `InventoryManager`).
 

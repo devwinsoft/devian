@@ -147,7 +147,7 @@ deserialize 시 target:
 
 로드 직후 런타임 재적용:
 - `AccountManager.ApplyStorage(AccountManager.Instance.Storage)`
-- 필요 시 `PurchaseManager.SyncEntitlementsAsync(ct)`로 rental stale 상태 보정
+- `InventoryStorage.Rentals/Passes`는 payload(local/cloud)에 저장/복원되며, 로그인/복원 시 `PurchaseManager.SyncEntitlementsAsync()`가 서버 entitlements 값으로 재동기화한다.
 - Mission은 `MissionManager`가 자신의 `MissionStorage`를 기준으로 runtime state를 재구성한다
 - Mission/Achieve/SeasonReward claim 상태 변경 직후에는 `SaveDataManager.SaveGameStorageAsync(true, ct)`로 root payload 저장을 즉시 시도해야 한다
 - 이 local save가 실패하면 mission 시스템은 플레이 불가능 상태로 처리한다(TODO)

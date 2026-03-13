@@ -67,14 +67,14 @@ CompoSingleton<PurchaseManager>.Instance
 - `AckPurchaseClientGrantAppliedAsync(purchaseId, ct)` — 로컬 지급 성공 보고
 - `ReportPurchaseClientGrantFailureAsync(purchaseId, ct)` — 로컬 지급 실패 보고
 - `RestoreAsync(ct)` (iOS 스토어 복원, manual/fallback)
-  - 일반적인 SeasonPass/Rental 복원 정본 경로는 서버 상태 동기화이며, `RestoreAsync()`와 개념을 분리한다.
+  - 스토어 복원 직후 서버 `getEntitlements`를 조회해 `mPasses/mRentals`를 덮어써 복원한다.
+  - `pass`는 시즌 유효 구간(`TB_SEASON`)일 때만 복원한다.
+  - `rental`은 만료시각이 서버 현재시각보다 미래일 때만 복원하며, 누적 연장을 허용한다.
 - `GetLatestConsumablePurchase30dAsync(ct)` → `Task<CommonResult<RecentPurchaseItem>>`
   - 서버에서 최근 30일 내 최신 Consumable 구매 1건 조회
 - `SyncEntitlementsAsync(ct)` → `Task<CommonResult>`
-  - 서버 `getEntitlements`를 호출하여 Rental/SeasonPass/Currency 상태를 InventoryStorage에 동기화
-  - Rental의 `expiresAtServerUtcMs`를 `clockDelta`로 클라이언트 시간(`expiresAtClientUtcMs`)으로 변환하여 저장
-  - Post-Sync Orchestration에서 Rental 데이터 존재 시(`Inventory.Rentals.Count > 0`) 조건부 호출
-  - 실패 시 non-fatal (stale 값 유지, 다음 성공 시 교정)
+  - 서버 `getEntitlements`를 조회해 `mPasses/mRentals`를 덮어써 동기화하고 결과 스냅샷을 반환한다.
+  - `rental`은 만료시각 미래값만 반영하며, 누적 연장을 허용한다.
 - `RefundAsync(ct)` → `Task<CommonResult<RefundResult>>`
   - 서버에서 환불/조정 내역을 조회하여 로컬 인벤토리 회수 적용
 
@@ -112,8 +112,8 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 - **ackPurchaseStoreConfirmAsync**: `FirebaseCallableManager.Instance.AckPurchaseStoreConfirmAsync(data, ct)` — ✅ 구현됨
   - 요청 키: `purchaseId`
   - 응답: `CommonResult`
-- **SyncEntitlementsAsync**: `FirebaseCallableManager.Instance.GetEntitlementsAsync(ct)` — ✅ 구현됨
-  - 응답: `CommonResult<EntitlementsSnapshot>` (raw season pass ID → PurchaseManager가 resolve)
+- **SyncEntitlementsAsync**: `FirebaseCallableManager.Instance.GetEntitlementsAsync(ct)` 기반 복원 — ✅ 구현됨
+  - 응답: `CommonResult<EntitlementsSnapshot>` (서버 entitlements를 `mPasses/mRentals`에 덮어쓴 결과)
 - **GetLatestConsumablePurchase30dAsync**: `FirebaseCallableManager.Instance.GetRecentPurchases30dAsync(data, ct)` — ✅ 구현됨
   - 응답: `CommonResult<RecentPurchaseItem>`
 - **syncRefundsPageAsync**: `FirebaseCallableManager.Instance.GetPurchaseAdjustmentsAsync(data, ct)` — ✅ 구현됨
@@ -122,7 +122,7 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
   - 응답: `CommonResult`
 - Firebase callable 호출/에러 매핑/응답 파싱은 [23-firebase-callable-manager](../../23-firebase-callable-manager/SKILL.md)에 통합.
   PurchaseManager는 `FunctionsException`을 직접 catch하지 않는다. `using Firebase.Functions` 불필요.
-  domain 변환(ResolveSeasonPassId, ResolveRewardGroupId 등)은 PurchaseManager가 typed result 수신 후 수행한다.
+  domain 변환(ResolveRewardGroupId 등)은 PurchaseManager가 typed result 수신 후 수행한다.
 
 
 ---
@@ -132,14 +132,12 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 
 1. `SaveDataManager.SyncGameStorageAsync(ct)` → `SyncResult`
 2. `SaveDataManager`가 성공 시 payload를 직접 복원 → inventory, purchase, account 역직렬화
-3. `if (Inventory.Rentals.Count > 0)` `PurchaseManager.SyncEntitlementsAsync(ct)` → Rental 서버 시간 재동기화 (조건부)
-4. `PurchaseManager.InitializeAsync(ct)` → IAP 초기화
-5. `PurchaseManager.RetryInterruptedPurchaseAsync(ct)` → 중단 구매 복구
-6. `PurchaseManager.RefundAsync(ct)` → 환불 처리
-
-- **Step 3 이유**: `Inventory.Rentals`의 `expiresAtClientUtcMs`는 저장 시점의 클라이언트 시간 기준. 다른 기기/시간 경과 후 로드하면 stale. `SyncEntitlementsAsync`가 서버 `serverNowUtcMs`로 clock delta를 재계산하여 교정.
-- **조건부**: Rental 데이터가 없으면 불필요한 서버 호출을 하지 않는다.
-- **실패 non-fatal**: 오프라인/Guest 시 stale 값 유지, 다음 성공 시 교정.
+3. `PurchaseManager.InitializeAsync(ct)` → IAP 초기화
+4. `PurchaseManager.RetryInterruptedPurchaseAsync(ct)` → 중단 구매 복구
+5. `PurchaseManager.RefundAsync(ct)` → 환불 처리
+6. `PurchaseManager.SyncEntitlementsAsync(ct)` → 서버 `getEntitlements` 기준으로 `mPasses/mRentals` 덮어쓰기 복원
+   - `pass`: 시즌 유효 구간 체크
+   - `rental`: 만료시각 미래값만 반영, 누적 연장 허용
 
 
 ---

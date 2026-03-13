@@ -15,7 +15,6 @@ AppliesTo: v10
 - 런타임 인증 세션 복구 (`AccountManager.EnsureRuntimeAuthSessionAsync`)
 - 명시 로그인 (`AccountManager.LoginAsync`)
 - RemoteData 초기화 (`RemoteDataManager.InitializeAsync`) — 버전 체크 + 서버 UTC
-- 세션 초기 스냅샷 조회 (`FirebaseCallableManager.InitSessionAsync`)
 - 저장 동기화 (`SaveDataManager.SyncGameStorageAsync`)
 - 충돌 해소 + 재초기화 (`ResolveConflictAndInitializeAsync`)
 - 초기 지급 (`InventoryManager.FirstInitAsync`) + 저장
@@ -34,10 +33,10 @@ AppliesTo: v10
 ## API
 
 - `EnsureRuntimeSessionAndInitializeAsync(VersionNumber clientVersion, CancellationToken ct = default) : Task<CommonResult<LoginInitializeResult>>`
-  - 앱 시작 시 `RemoteDataManager.InitializeAsync`를 **가장 먼저** 호출한 뒤 인증 복구 + InitSession + 초기화 경로
+  - 앱 시작 시 `RemoteDataManager.InitializeAsync`를 **가장 먼저** 호출한 뒤 인증 복구 + 초기화 경로
   - 이전 로그인 정보가 없거나(`loginType=NONE`) 자동 복구가 불가능하면 로컬 모드 초기화(`syncAndInitializeAsync`) 결과를 그대로 반환한다.
 - `LoginAndInitializeAsync(LoginType loginType, VersionNumber clientVersion, CancellationToken ct = default) : Task<CommonResult<LoginInitializeResult>>`
-  - 사용자 선택 로그인 시 `RemoteDataManager.InitializeAsync` 선행 + InitSession + 초기화 경로
+  - 사용자 선택 로그인 시 `RemoteDataManager.InitializeAsync` 선행 + 초기화 경로
 - `ResolveConflictAndInitializeAsync(SyncResolution resolution, VersionNumber clientVersion, CancellationToken ct = default) : Task<CommonResult<LoginInitializeResult>>`
   - 충돌 해소 경로에서도 `RemoteDataManager.InitializeAsync`를 먼저 수행한다.
   - 전달된 `clientVersion` 기준으로 버전 체크를 수행한다.
@@ -68,7 +67,6 @@ AppliesTo: v10
 
 fatal (실패 반환):
 - 계정 로그인/세션 복구 실패
-- InitSession 조회 실패
 - 저장 동기화 실패
 - Resolve 후 재충돌(명시적 resolve 경로)
 - 초기 지급/저장 실패

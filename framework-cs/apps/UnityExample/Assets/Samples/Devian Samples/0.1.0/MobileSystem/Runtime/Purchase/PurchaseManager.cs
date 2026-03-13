@@ -98,25 +98,6 @@ namespace Devian
             return product != null ? product.RewardGroupId ?? string.Empty : string.Empty;
         }
 
-        static string ResolveSeasonPassId(string internalProductIdOrSeasonPassId)
-        {
-            if (string.IsNullOrEmpty(internalProductIdOrSeasonPassId))
-                return string.Empty;
-
-            var product = TB_PURCHASE.Get(internalProductIdOrSeasonPassId);
-            if (product == null || product.Kind != PURCHASE_KIND.PASS)
-                return internalProductIdOrSeasonPassId;
-
-            var rewards = RewardManager.Instance.ResolveRewardDatas(product.RewardGroupId);
-            for (var i = 0; i < rewards.Length; i++)
-            {
-                if (rewards[i].Type == REWARD_TYPE.PASS)
-                    return rewards[i].Id;
-            }
-
-            return internalProductIdOrSeasonPassId;
-        }
-
         string ResolveStoreProductId(string internalProductId)
         {
             var product = TB_PURCHASE.Get(internalProductId);
@@ -260,134 +241,6 @@ namespace Devian
         }
 #endif
 
-        /// <summary>
-        /// initSession에서 pre-loaded된 첫 페이지로 시작하는 RefundAsync.
-        /// 첫 페이지는 서버 호출 없이 처리하고, hasMore일 때만 후속 페이지를 서버에서 가져온다.
-        /// </summary>
-        async Task<CommonResult<RefundResult>> refundWithPreloadedPageAsync(
-            RefundPageResult preloadedFirstPage, CancellationToken ct)
-        {
-            int pageCount = 0;
-            int handledCount = 0;
-            int inventoryAppliedCount = 0;
-            int noOpCount = 0;
-            int skippedCount = 0;
-            int ackFailedCount = 0;
-
-            string pageCursor = string.Empty;
-            bool usePreloaded = true;
-
-            while (true)
-            {
-                ct.ThrowIfCancellationRequested();
-
-                RefundSyncResult page;
-                string prevCursor = pageCursor;
-
-                if (usePreloaded)
-                {
-                    page = enrichAdjustmentItems(preloadedFirstPage);
-                    usePreloaded = false;
-                }
-                else
-                {
-                    var pageResult = await syncRefundsPageAsync(prevCursor, 50, ct);
-                    if (pageResult.IsFailure)
-                        return CommonResult<RefundResult>.Failure(pageResult.Error!);
-                    page = pageResult.Value!;
-                }
-
-                pageCount++;
-
-                for (var i = 0; i < page.Items.Length; i++)
-                {
-                    var item = page.Items[i];
-
-                    if (item.Rewards == null || item.Rewards.Length == 0)
-                    {
-                        handledCount++;
-                        noOpCount++;
-                        if (!string.IsNullOrEmpty(item.PurchaseId))
-                        {
-                            var noOpAck = await ackRefundAppliedAsync(item.PurchaseId, ct);
-                            if (noOpAck.IsFailure)
-                            {
-                                ackFailedCount++;
-                                Debug.LogWarning($"[{Tag}] Refund ACK failed for no-op item. purchaseId={item.PurchaseId}: {noOpAck.Error?.Message}");
-                            }
-                        }
-                        continue;
-                    }
-
-                    CommonResult apply;
-                    try
-                    {
-                        apply = InventoryManager.Instance.RevokeRewardsPartial(item.Rewards);
-                    }
-                    catch (Exception ex)
-                    {
-                        skippedCount++;
-                        Debug.LogWarning(
-                            $"[{Tag}] Refund RevokeRewards exception (skipped). " +
-                            $"purchaseId={item.PurchaseId} product={item.InternalProductId}: {ex.Message}");
-                        continue;
-                    }
-
-                    if (apply.IsFailure)
-                    {
-                        skippedCount++;
-                        Debug.LogWarning(
-                            $"[{Tag}] Refund RevokeRewards failed (skipped). " +
-                            $"purchaseId={item.PurchaseId} product={item.InternalProductId}: {apply.Error?.Message}");
-                        continue;
-                    }
-
-                    handledCount++;
-                    inventoryAppliedCount++;
-
-                    if (!string.IsNullOrEmpty(item.PurchaseId))
-                    {
-                        var ack = await ackRefundAppliedAsync(item.PurchaseId, ct);
-                        if (ack.IsFailure)
-                        {
-                            ackFailedCount++;
-                            Debug.LogWarning($"[{Tag}] Refund ACK failed after revoke. purchaseId={item.PurchaseId}: {ack.Error?.Message}");
-                        }
-                    }
-                }
-
-                if (page.HasMore && string.IsNullOrEmpty(page.NextCursor))
-                {
-                    return CommonResult<RefundResult>.Failure(
-                        COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
-                        "Refund sync cursor is empty while hasMore=true.");
-                }
-
-                if (page.HasMore && string.Equals(prevCursor, page.NextCursor ?? string.Empty, StringComparison.Ordinal))
-                {
-                    return CommonResult<RefundResult>.Failure(
-                        COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
-                        "Refund sync cursor did not advance.");
-                }
-
-                pageCursor = page.NextCursor ?? string.Empty;
-                getPurchaseStorageOrNull()?.PruneRefundSupportLogs();
-
-                if (!page.HasMore)
-                {
-                    return CommonResult<RefundResult>.Success(
-                        new RefundResult(
-                            pageCount,
-                            handledCount,
-                            inventoryAppliedCount,
-                            noOpCount,
-                            skippedCount,
-                            ackFailedCount,
-                            pageCursor));
-                }
-            }
-        }
-
 #if UNITY_PURCHASING
         StoreController _controller;
         bool _iapInitialized;
@@ -450,18 +303,18 @@ namespace Devian
         /// 1. IAP initialize
         /// 2. interrupted purchase retry
         /// 3. refund apply
-        /// 4. entitlements sync
+        /// 4. server entitlements sync (mPasses/mRentals overwrite)
         /// 5. local/cloud save (non-fatal)
         /// Retry/refund/entitlements/save 실패는 경고로 남기고 전체 sync는 계속 진행한다.
         /// Initialize 실패만 fatal로 처리한다.
         /// </summary>
 #if UNITY_EDITOR
         public Task<CommonResult<PurchaseSyncResult>> SyncAsync(
-            SessionInitSnapshot? initSnapshot = null, CancellationToken ct = default)
+            CancellationToken ct = default)
             => Task.FromResult(CommonResult<PurchaseSyncResult>.Success(CreateNoOpPurchaseSyncResult()));
 #else
         public async Task<CommonResult<PurchaseSyncResult>> SyncAsync(
-            SessionInitSnapshot? initSnapshot = null, CancellationToken ct = default)
+            CancellationToken ct = default)
         {
             var init = await InitializeAsync(ct);
             if (init.IsFailure)
@@ -483,10 +336,7 @@ namespace Devian
 
             RefundResult? refund = null;
             CommonError refundError = null;
-
-            var refundResult = initSnapshot.HasValue
-                ? await refundWithPreloadedPageAsync(initSnapshot.Value.PurchaseAdjustments, ct)
-                : await RefundAsync(ct);
+            var refundResult = await RefundAsync(ct);
             if (refundResult.IsSuccess)
             {
                 refund = refundResult.Value;
@@ -499,25 +349,15 @@ namespace Devian
 
             EntitlementsSnapshot? entitlements = null;
             CommonError entitlementsError = null;
-
-            if (initSnapshot.HasValue)
+            var entitlementsSync = await SyncEntitlementsAsync(ct);
+            if (entitlementsSync.IsSuccess)
             {
-                var snapshot = resolveEntitlementsSeasonPasses(initSnapshot.Value.Entitlements);
-                cacheEntitlementsSnapshot(snapshot);
-                entitlements = snapshot;
+                entitlements = entitlementsSync.Value;
             }
             else
             {
-                var entitlementsResult = await SyncEntitlementsAsync(ct);
-                if (entitlementsResult.IsSuccess)
-                {
-                    entitlements = entitlementsResult.Value;
-                }
-                else
-                {
-                    entitlementsError = entitlementsResult.Error;
-                    Debug.LogWarning($"[{Tag}] SyncEntitlementsAsync failed during sync (non-fatal): {entitlementsError}");
-                }
+                entitlementsError = entitlementsSync.Error;
+                Debug.LogWarning($"[{Tag}] SyncEntitlementsAsync failed during sync (non-fatal): {entitlementsError}");
             }
 
             CommonError saveError = null;
@@ -695,7 +535,7 @@ namespace Devian
             return apply;
         }
 
-        // Store restore only (manual/fallback). Domain grant/revoke handling is managed by caller-side sync.
+        // Store restore 후 서버 entitlements 기준으로 mPasses/mRentals를 복원한다.
         public async Task<CommonResult<EntitlementsSnapshot>> RestoreAsync(CancellationToken ct = default)
         {
             if (!_iapInitialized)
@@ -722,42 +562,36 @@ namespace Devian
             if (restore.IsFailure)
                 return CommonResult<EntitlementsSnapshot>.Failure(restore.Error!);
 
-            return await SyncEntitlementsAsync(ct);
+            return await restoreInventoryFromServerEntitlementsAsync(ct);
         }
 
-        // SyncEntitlementsAsync updates InventoryStorage for Rental expiry and SeasonPass ownership.
-        // Rental remaining time is queried from server on demand via GetRentalRemainingMsAsync().
-        // noAds 판단은 게임 로직이 남은 시간(ms) 기반으로 처리한다.
-        public async Task<CommonResult<EntitlementsSnapshot>> SyncEntitlementsAsync(CancellationToken ct = default)
-        {
-            var result = await FirebaseCallableManager.Instance.GetEntitlementsAsync(ct);
-            if (result.IsFailure)
-                return CommonResult<EntitlementsSnapshot>.Failure(result.Error!);
+        public Task<CommonResult<EntitlementsSnapshot>> SyncEntitlementsAsync(CancellationToken ct = default)
+            => restoreInventoryFromServerEntitlementsAsync(ct);
 
-            var snapshot = resolveEntitlementsSeasonPasses(result.Value!);
-            cacheEntitlementsSnapshot(snapshot);
-            return CommonResult<EntitlementsSnapshot>.Success(snapshot);
-        }
-
-        public async Task<CommonResult<long>> GetRentalRemainingMsAsync(string internalProductId, CancellationToken ct = default)
+        public Task<CommonResult<long>> GetRentalRemainingMsAsync(string internalProductId, CancellationToken ct = default)
         {
             if (string.IsNullOrEmpty(internalProductId))
-                return CommonResult<long>.Failure(COMMON_ERROR_TYPE.PURCHASE_INTERNAL_PRODUCT_ID_EMPTY, "internalProductId is required.");
+            {
+                return Task.FromResult(CommonResult<long>.Failure(
+                    COMMON_ERROR_TYPE.PURCHASE_INTERNAL_PRODUCT_ID_EMPTY,
+                    "internalProductId is required."));
+            }
 
-            var sync = await SyncEntitlementsAsync(ct);
-            if (sync.IsFailure)
-                return CommonResult<long>.Failure(sync.Error!);
+            try
+            {
+                var inventory = InventoryManager.Instance?.Storage;
+                if (inventory == null)
+                    return Task.FromResult(CommonResult<long>.Success(0L));
 
-            var snapshot = sync.Value!;
-            if (!snapshot.Rentals.TryGetValue(internalProductId, out var expiresAtUtcMs) || expiresAtUtcMs <= 0)
-                return CommonResult<long>.Success(0L);
-
-            var serverNowUtcMs = snapshot.ServerNowUtcMs > 0
-                ? snapshot.ServerNowUtcMs
-                : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            var remainingMs = expiresAtUtcMs - serverNowUtcMs;
-            var clampedRemainingMs = remainingMs > 0 ? remainingMs : 0L;
-            return CommonResult<long>.Success(clampedRemainingMs);
+                ct.ThrowIfCancellationRequested();
+                return Task.FromResult(CommonResult<long>.Success(inventory.GetRentalRemainingMs(internalProductId)));
+            }
+            catch (Exception ex)
+            {
+                return Task.FromResult(CommonResult<long>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                    $"Failed to read rental remaining time from inventory: {ex.Message}"));
+            }
         }
 
 #if UNITY_EDITOR
@@ -1426,16 +1260,6 @@ namespace Devian
             if (result.IsFailure)
                 return result;
 
-            var verifyResponse = result.Value!;
-
-            // FirebaseCallableManager가 반환한 EntitlementsSnapshot은 raw season pass ID를 사용한다.
-            // domain 변환(ResolveSeasonPassId) 후 캐시한다.
-            if (verifyResponse.Snapshot.HasValue)
-            {
-                var resolved = resolveEntitlementsSeasonPasses(verifyResponse.Snapshot.Value);
-                cacheEntitlementsSnapshot(resolved);
-            }
-
             return result;
         }
 
@@ -1700,7 +1524,7 @@ namespace Devian
 
         public Task<CommonResult> InitializeAsync(CancellationToken ct = default) => _notSupportedInit;
         public Task<CommonResult<PurchaseSyncResult>> SyncAsync(
-            SessionInitSnapshot? initSnapshot = null, CancellationToken ct = default) => _notSupportedSync;
+            CancellationToken ct = default) => _notSupportedSync;
         public Task<CommonResult<PurchaseFinalResult>> PurchaseAsync(string internalProductId, CancellationToken ct = default) => _notSupported;
 #if UNITY_EDITOR
         static readonly Task<CommonResult<RetryInterruptedPurchaseResult>> _notSupportedRetryInterrupted =
@@ -1724,25 +1548,171 @@ namespace Devian
 
         // ── Helpers ───────────────────────────────────────────────
 
-        /// <summary>
-        /// FirebaseCallableManager가 반환한 raw EntitlementsSnapshot의 season pass ID를
-        /// ResolveSeasonPassId로 변환한 새 snapshot을 반환한다.
-        /// </summary>
-        static EntitlementsSnapshot resolveEntitlementsSeasonPasses(EntitlementsSnapshot raw)
+        async Task<CommonResult<EntitlementsSnapshot>> restoreInventoryFromServerEntitlementsAsync(CancellationToken ct)
         {
-            var seasonPasses = new List<string>();
-            var seasonPassSet = new HashSet<string>(StringComparer.Ordinal);
+            ct.ThrowIfCancellationRequested();
+
+#if UNITY_EDITOR
+            return await captureLocalEntitlementsSnapshotAsync(ct);
+#else
+            var fetch = await FirebaseCallableManager.Instance.GetEntitlementsAsync(ct);
+            if (fetch.IsFailure)
+                return CommonResult<EntitlementsSnapshot>.Failure(fetch.Error!);
+
+            var raw = fetch.Value;
+            var serverNowUtcMs = raw.ServerNowUtcMs > 0L
+                ? raw.ServerNowUtcMs
+                : RemoteDataManager.ServerNowUtcMs;
+
+            var inventory = getInventoryStorageOrNull();
+            var inventoryManager = InventoryManager.Instance;
+            if (inventory == null || inventoryManager == null)
+            {
+                return CommonResult<EntitlementsSnapshot>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                    "InventoryStorage is not available.");
+            }
+
+            var restoredPasses = new List<string>();
+            var passSet = new HashSet<string>(StringComparer.Ordinal);
             if (raw.OwnedSeasonPasses != null)
             {
                 for (var i = 0; i < raw.OwnedSeasonPasses.Count; i++)
                 {
-                    var resolved = ResolveSeasonPassId(raw.OwnedSeasonPasses[i]);
-                    if (!string.IsNullOrEmpty(resolved) && seasonPassSet.Add(resolved))
-                        seasonPasses.Add(resolved);
+                    var passId = (raw.OwnedSeasonPasses[i] ?? string.Empty).Trim();
+                    if (string.IsNullOrEmpty(passId))
+                        continue;
+                    if (!passSet.Add(passId))
+                        continue;
+                    if (!isSeasonPassValidNow(passId, serverNowUtcMs))
+                        continue;
+
+                    restoredPasses.Add(passId);
                 }
             }
 
-            return new EntitlementsSnapshot(seasonPasses, raw.CurrencyBalances, raw.Rentals, raw.ServerNowUtcMs);
+            var restoredRentals = new Dictionary<string, long>(StringComparer.Ordinal);
+            if (raw.Rentals != null)
+            {
+                foreach (var rental in raw.Rentals)
+                {
+                    var rentalId = (rental.Key ?? string.Empty).Trim();
+                    if (string.IsNullOrEmpty(rentalId))
+                        continue;
+
+                    var expiresAtUtcMs = rental.Value;
+                    if (expiresAtUtcMs <= serverNowUtcMs)
+                        continue;
+
+                    // 누적 연장을 허용하므로 상한을 두지 않고 "현재 시각 이후 만료"만 유효로 본다.
+                    restoredRentals[rentalId] = expiresAtUtcMs;
+                }
+            }
+
+            var existingPassKeys = new List<string>(inventory.Passes.Count);
+            foreach (var pass in inventory.Passes)
+            {
+                if (pass.Value && !string.IsNullOrWhiteSpace(pass.Key))
+                    existingPassKeys.Add(pass.Key);
+            }
+            for (var i = 0; i < existingPassKeys.Count; i++)
+                inventoryManager.RemovePassOwnership(existingPassKeys[i]);
+            for (var i = 0; i < restoredPasses.Count; i++)
+                inventoryManager.SetPassOwnership(restoredPasses[i], true);
+
+            var existingRentalKeys = new List<string>(inventory.Rentals.Count);
+            foreach (var rental in inventory.Rentals)
+            {
+                if (!string.IsNullOrWhiteSpace(rental.Key))
+                    existingRentalKeys.Add(rental.Key);
+            }
+            for (var i = 0; i < existingRentalKeys.Count; i++)
+                inventory.RemoveRental(existingRentalKeys[i]);
+            foreach (var rental in restoredRentals)
+                inventory.SetRental(rental.Key, rental.Value);
+
+            return CommonResult<EntitlementsSnapshot>.Success(
+                new EntitlementsSnapshot(
+                    restoredPasses,
+                    raw.CurrencyBalances ?? new Dictionary<string, long>(),
+                    restoredRentals,
+                    serverNowUtcMs));
+#endif
+        }
+
+        static bool isSeasonPassValidNow(string passId, long serverNowUtcMs)
+        {
+            if (string.IsNullOrWhiteSpace(passId) || serverNowUtcMs <= 0L)
+                return false;
+
+            if (!tryResolveSeasonIdFromPassId(passId, out var seasonId))
+                return false;
+
+            var season = TB_SEASON.Get(seasonId);
+            if (season == null)
+                return false;
+
+            var seasonStartUtcMs = season.StartUtcTime?.utcTimeMs ?? 0L;
+            var seasonEndUtcMs = season.EndUtcTime?.utcTimeMs ?? 0L;
+            if (seasonStartUtcMs <= 0L || seasonEndUtcMs <= seasonStartUtcMs)
+                return false;
+
+            return serverNowUtcMs >= seasonStartUtcMs && serverNowUtcMs < seasonEndUtcMs;
+        }
+
+        static bool tryResolveSeasonIdFromPassId(string passId, out string seasonId)
+        {
+            seasonId = string.Empty;
+            if (string.IsNullOrWhiteSpace(passId))
+                return false;
+
+            var normalizedPassId = passId.Trim();
+            if (TB_SEASON.Get(normalizedPassId) != null)
+            {
+                seasonId = normalizedPassId;
+                return true;
+            }
+
+            if (normalizedPassId.Length >= 2
+                && (normalizedPassId[0] == 'P' || normalizedPassId[0] == 'p'))
+            {
+                var derivedSeasonId = $"S{normalizedPassId.Substring(1)}";
+                if (TB_SEASON.Get(derivedSeasonId) != null)
+                {
+                    seasonId = derivedSeasonId;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        Task<CommonResult<EntitlementsSnapshot>> captureLocalEntitlementsSnapshotAsync(CancellationToken ct)
+        {
+            ct.ThrowIfCancellationRequested();
+
+            var inventory = getInventoryStorageOrNull();
+            if (inventory == null)
+            {
+                return Task.FromResult(CommonResult<EntitlementsSnapshot>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                    "InventoryStorage is not available."));
+            }
+
+            var seasonPasses = new List<string>();
+            foreach (var pass in inventory.Passes)
+            {
+                if (pass.Value && !string.IsNullOrWhiteSpace(pass.Key))
+                    seasonPasses.Add(pass.Key);
+            }
+
+            var rentals = new Dictionary<string, long>(StringComparer.Ordinal);
+            foreach (var rental in inventory.Rentals)
+                rentals[rental.Key] = rental.Value;
+
+            var nowUtcMs = RemoteDataManager.ServerNowUtcMs;
+            return Task.FromResult(CommonResult<EntitlementsSnapshot>.Success(
+                new EntitlementsSnapshot(seasonPasses, new Dictionary<string, long>(), rentals, nowUtcMs)));
         }
 
         /// <summary>
@@ -1776,54 +1746,12 @@ namespace Devian
             return new RefundSyncResult(items.ToArray(), page.NextCursor, page.HasMore);
         }
 
-        static void cacheEntitlementsSnapshot(EntitlementsSnapshot snapshot)
-        {
-            var inventoryManager = getInventoryManagerOrNull();
-            var inventory = inventoryManager?.Storage;
-            if (inventoryManager == null || inventory == null)
-                return;
-
-            // serverNowUtcMs 기반으로 expiresAtServerUtcMs → expiresAtClientUtcMs 변환
-            var serverNow = snapshot.ServerNowUtcMs > 0
-                ? snapshot.ServerNowUtcMs
-                : DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            var clientNow = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            var clockDelta = clientNow - serverNow;
-
-            // 서버 snapshot에 없는 로컬 rental 제거 (환불 등으로 서버에서 사라진 경우)
-            var localRentalKeys = new List<string>(inventory.Rentals.Keys);
-            for (int i = 0; i < localRentalKeys.Count; i++)
-            {
-                if (!snapshot.Rentals.ContainsKey(localRentalKeys[i]))
-                    inventory.RemoveRental(localRentalKeys[i]);
-            }
-
-            foreach (var kv in snapshot.Rentals)
-            {
-                var expiresAtClientUtcMs = kv.Value + clockDelta;
-                inventory.SetRental(kv.Key, expiresAtClientUtcMs);
-            }
-
-            // 서버 snapshot에 없는 로컬 seasonPass 제거 (환불 등으로 서버에서 사라진 경우)
-            var serverSeasonPassSet = new HashSet<string>(snapshot.OwnedSeasonPasses);
-            var localSeasonPassKeys = new List<string>(inventory.Passes.Keys);
-            for (int i = 0; i < localSeasonPassKeys.Count; i++)
-            {
-                if (!serverSeasonPassSet.Contains(localSeasonPassKeys[i]))
-                    inventoryManager.RemovePassOwnership(localSeasonPassKeys[i]);
-            }
-
-            foreach (var id in snapshot.OwnedSeasonPasses)
-            {
-                inventoryManager.SetPassOwnership(id, true);
-            }
-        }
-
-        static InventoryManager getInventoryManagerOrNull()
+        static InventoryStorage getInventoryStorageOrNull()
         {
             try
             {
-                return InventoryManager.Instance;
+                var inventoryManager = InventoryManager.Instance;
+                return inventoryManager != null ? inventoryManager.Storage : null;
             }
             catch
             {

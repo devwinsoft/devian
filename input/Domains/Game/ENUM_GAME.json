@@ -5,169 +5,58 @@
       "values": [
         {"name": "NONE", "value": 0},
         {"name": "LOGIN", "value": 1},
-        {
-          "name": "STAGE_CLEAR",
-          "value": 3
-        },
-        {
-          "name": "STAGE_SCORE",
-          "value": 4
-        },
-        {
-          "name": "MISSION_CLEAR",
-          "value": 5
-        },
-        {
-          "name": "BATTLE_PASS_001",
-          "value": 1001
-        },
-        {
-          "name": "BATTLE_PASS_002",
-          "value": 1002
-        },
-        {
-          "name": "BATTLE_PASS_003",
-          "value": 1003
-        },
-        {
-          "name": "BATTLE_PASS_004",
-          "value": 1004
-        },
-        {
-          "name": "BATTLE_PASS_005",
-          "value": 1005
-        },
-        {
-          "name": "TEST_001",
-          "value": 8001
-        },
-        {
-          "name": "TEST_002",
-          "value": 8002
-        },
-        {
-          "name": "TEST_003",
-          "value": 8003
-        },
-        {
-          "name": "TEST_004",
-          "value": 8004
-        },
-        {
-          "name": "TEST_005",
-          "value": 8005
-        },
-        {
-          "name": "ACHIEVE_UNLOCKED",
-          "value": 9000
-        },
-        {
-          "name": "ACHIEVE_001",
-          "value": 9001
-        },
-        {
-          "name": "ACHIEVE_002",
-          "value": 9002
-        },
-        {
-          "name": "ACHIEVE_003",
-          "value": 9003
-        },
-        {
-          "name": "ACHIEVE_004",
-          "value": 9004
-        },
-        {
-          "name": "ACHIEVE_005",
-          "value": 9005
-        }
+        {"name": "STAGE_CLEAR", "value": 3},
+        {"name": "STAGE_SCORE", "value": 4},
+        {"name": "MISSION_CLEAR", "value": 5},
+        {"name": "BATTLE_PASS_001", "value": 1001},
+        {"name": "BATTLE_PASS_002", "value": 1002},
+        {"name": "BATTLE_PASS_003", "value": 1003},
+        {"name": "BATTLE_PASS_004", "value": 1004},
+        {"name": "BATTLE_PASS_005", "value": 1005},
+        {"name": "TEST_001", "value": 8001},
+        {"name": "TEST_002", "value": 8002},
+        {"name": "TEST_003", "value": 8003},
+        {"name": "TEST_004", "value": 8004},
+        {"name": "TEST_005", "value": 8005},
+        {"name": "ACHIEVE_UNLOCKED", "value": 9000},
+        {"name": "ACHIEVE_001", "value": 9001},
+        {"name": "ACHIEVE_002", "value": 9002},
+        {"name": "ACHIEVE_003", "value": 9003},
+        {"name": "ACHIEVE_004", "value": 9004},
+        {"name": "ACHIEVE_005", "value": 9005}
       ]
     },
     {
       "name": "GAME_MESSAGE_SAVE_TYPE",
       "values": [
-        {
-          "name": "NONE",
-          "value": 0
-        },
-        {
-          "name": "SESSION_SUM",
-          "value": 1
-        },
-        {
-          "name": "SESSION_MAX",
-          "value": 2
-        },
-        {
-          "name": "SESSION_MIN",
-          "value": 3
-        },
-        {
-          "name": "TOTAL_SUM",
-          "value": 4
-        },
-        {
-          "name": "TOTAL_MAX",
-          "value": 5
-        },
-        {
-          "name": "TOTAL_MIN",
-          "value": 6
-        }
+        {"name": "NONE", "value": 0},
+        {"name": "SESSION_SUM", "value": 1},
+        {"name": "SESSION_MAX", "value": 2},
+        {"name": "SESSION_MIN", "value": 3},
+        {"name": "TOTAL_SUM", "value": 4},
+        {"name": "TOTAL_MAX", "value": 5},
+        {"name": "TOTAL_MIN", "value": 6}
       ]
     },
     {
       "name": "GAME_MESSAGE_OP_TYPE",
       "values": [
-        {
-          "name": "NONE",
-          "value": 0
-        },
-        {
-          "name": "EQ",
-          "value": 1
-        },
-        {
-          "name": "GTE",
-          "value": 2
-        },
-        {
-          "name": "LTE",
-          "value": 3
-        }
+        {"name": "NONE", "value": 0},
+        {"name": "EQ", "value": 1},
+        {"name": "GTE", "value": 2},
+        {"name": "LTE", "value": 3}
       ]
     },
     {
       "name": "STAT_TYPE",
       "values": [
-        {
-          "name": "NONE",
-          "value": 0
-        },
-        {
-          "name": "CARD_AMOUNT",
-          "value": 1
-        },
-        {
-          "name": "CARD_LEVEL",
-          "value": 2
-        },
-        {
-          "name": "EQUIP_LEVEL",
-          "value": 11
-        },
-        {
-          "name": "UNIT_AMOUNT",
-          "value": 20
-        },
-        {
-          "name": "UNIT_LEVEL",
-          "value": 21
-        },
-        {
-          "name": "UNIT_HP_MAX",
-          "value": 100
-        }
+        {"name": "NONE", "value": 0},
+        {"name": "CARD_AMOUNT", "value": 1},
+        {"name": "CARD_LEVEL", "value": 2},
+        {"name": "EQUIP_LEVEL", "value": 11},
+        {"name": "UNIT_AMOUNT", "value": 20},
+        {"name": "UNIT_LEVEL", "value": 21},
+        {"name": "UNIT_HP_MAX", "value": 100}
       ]
     }
   ]

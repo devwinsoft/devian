@@ -10,7 +10,7 @@
  *   - nextCursor: "updatedAtMs|docId" | null
  *   - hasMore: boolean
  *
- * core 로직은 getPurchaseAdjustmentsCore.ts 에 위치 (initSession과 공유).
+ * core 로직은 getPurchaseAdjustmentsCore.ts 에 위치한다.
  */
 
 import {onCall, HttpsError} from "firebase-functions/v2/https";

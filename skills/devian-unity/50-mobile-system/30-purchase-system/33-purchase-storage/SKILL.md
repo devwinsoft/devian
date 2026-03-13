@@ -165,7 +165,7 @@ NOTE:
 ### 3) 서버 검증/멱등 대체 금지
 
 - `PurchaseStorage`의 값으로 지급 결정/환불 판정/중복 지급 방지를 수행하지 않는다.
-- 지급/엔타이틀먼트 최종 판정은 서버 `verifyPurchase` / `getEntitlements` 결과만 사용한다.
+- 지급/엔타이틀먼트 최종 판정은 서버 `verifyPurchase` + `getEntitlements` 복원 결과를 사용한다.
 
 ### 4) PurchaseManager 소유 유지
 

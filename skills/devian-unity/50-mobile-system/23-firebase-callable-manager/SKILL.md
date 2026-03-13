@@ -22,7 +22,7 @@ game 도메인 테이블(TB_PURCHASE 등)은 참조하지 않는다 - 서버 응
 |------|------|
 | Functions region 관리 | Firebase Auth (AccountLoginFirebase 소관) |
 | 함수별 typed public API | Firebase 의존성 초기화 (`CheckAndFixDependenciesAsync`) |
-| FunctionsException 에러 매핑 (per-function) | 도메인 변환 (ResolveSeasonPassId, ResolveRewardGroupId 등) |
+| FunctionsException 에러 매핑 (per-function) | 도메인 변환 (ResolveRewardGroupId 등) |
 | 응답 파싱 -> typed result | Editor 전용 mock (각 manager 자체 처리) |
 | 응답 정규화 (internal) | |
 | 값 추출 헬퍼 (`ReadLong`/`ReadString`/`ReadBool`) | |
@@ -58,13 +58,6 @@ Bootstrap prefab에 부착한다.
 - region 값이 비어 있으면 기본 리전(`us-central1`)을 사용한다.
 - `getFunctionsInstance()` 호출 시 region이 비어 있으면 `MobileApplication.Instance`를 다시 참조해 lazy 초기화를 시도한다.
 
-### Instance Methods - Session Init callable (1개)
-
-- `InitSessionAsync(data, ct) -> Task<CommonResult<SessionInitSnapshot>>`
-  - 반환: `SessionInitSnapshot` (Entitlements, PurchaseAdjustments)
-  - 에러 매핑: `COMMON_NETWORK`, `COMMON_AUTH`, `COMMON_SERVER`
-  - **외부 어셈블리에서 직접 호출 불가** - `LoginManager`가 내부 호출한다.
-
 ### Instance Methods - Purchase callable (7개)
 
 - `VerifyPurchaseAsync(data, ct) -> Task<CommonResult<VerifyPurchaseResponse>>`
@@ -72,7 +65,7 @@ Bootstrap prefab에 부착한다.
   - 에러 매핑: `PURCHASE_UNAUTHENTICATED`, `PURCHASE_VERIFY_INVALID_ARGUMENT`, `PURCHASE_VERIFY_FAILED_PRECONDITION`, `PURCHASE_VERIFY_CALL_FAILED`, `PURCHASE_NETWORK_UNAVAILABLE`
 - `GetEntitlementsAsync(ct) -> Task<CommonResult<EntitlementsSnapshot>>`
   - `getEntitlements` callable 호출 -> 응답 파싱 -> `EntitlementsSnapshot` 반환
-  - `OwnedSeasonPasses`는 서버 원본 ID (raw). domain 변환은 PurchaseManager가 수행.
+  - 응답 원본 값을 그대로 반환한다.
 - `GetRecentPurchases30dAsync(data, ct) -> Task<CommonResult<RecentPurchaseItem>>`
   - `getRecentPurchases30d` callable 호출 -> items[0] 파싱 -> `RecentPurchaseItem` 반환
   - 아이템 없으면 `PURCHASE_RECENT_NOT_FOUND`
@@ -112,10 +105,6 @@ Bootstrap prefab에 부착한다.
 
 ## Integration
 
-### LoginManager (InitSession 통합)
-`EnsureRuntimeSessionAndInitializeAsync` / `LoginAndInitializeAsync`가 내부에서 `FirebaseCallableManager.Instance.InitSessionAsync()`를 호출한다.
-외부 어셈블리는 `LoginManager`의 `CommonResult` 결과만 사용한다.
-
 ### PurchaseManager
 ```csharp
 var result = await FirebaseCallableManager.Instance.VerifyPurchaseAsync(data, ct);
@@ -124,7 +113,7 @@ if (result.IsFailure)
 var response = result.Value!;
 ```
 PurchaseManager는 `FunctionsException`을 catch하지 않는다. 에러 매핑은 FirebaseCallableManager가 수행한다.
-domain 변환(ResolveSeasonPassId 등)은 PurchaseManager가 typed result 수신 후 수행한다.
+domain 변환(ResolveRewardGroupId 등)은 PurchaseManager가 typed result 수신 후 수행한다.
 PurchaseManager는 같은 어셈블리이므로 `internal` FirebaseCallableManager에 직접 접근 가능하다.
 
 ### MobileApplication

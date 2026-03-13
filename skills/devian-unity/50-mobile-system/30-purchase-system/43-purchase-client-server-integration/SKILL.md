@@ -10,7 +10,7 @@ AppliesTo: v10
 `PurchaseManager`의 스텁:
 - `VerifyPurchaseAsync`
 - `AckPurchaseClientGrantAsync`
-- `SyncEntitlementsAsync`
+- `SyncEntitlementsAsync` (server entitlements restore)
 를 어떤 호출 방식으로 서버(Functions)에 연결할지 "정본"으로 고정한다.
 
 또한 `ConfirmPurchase` 호출 타이밍을 SSOT 기준으로 하드룰로 고정한다.
@@ -109,13 +109,15 @@ Reward는 지급 실행만 담당하며, 멱등/복구 판단은 PurchaseManager
 ---
 
 
-## D. Entitlements 동기화 (정본)
+## D. Entitlements 스냅샷 (정본)
 
-- 앱 시작/로그인/복원 트리거 시 `SyncEntitlementsAsync()`로 `getEntitlements`를 호출하여
-  InventoryStorage의 Rental 만료 시각 + SeasonPass 소유권을 서버 스냅샷으로 갱신한다.
-- `GetRentalRemainingMsAsync(internalProductId)`로 서버 기준 Rental 남은 시간(ms)을 on-demand 조회한다.
-- `cacheEntitlementsSnapshot()`은 서버 `rentals[id]=expiresAtServerUtcMs`를 클라이언트 시간 기준으로 변환하여 `InventoryStorage.SetRental(id, expiresAtClientUtcMs)`로 저장한다.
-- `verifyPurchaseAsync` 응답의 `entitlementsSnapshot`도 동일하게 파싱+캐싱된다.
+- `mRentals/mPasses`는 로그인/복원 시 서버 `getEntitlements` 결과로 복원한다. (클라이언트 인벤토리 덮어쓰기)
+- `SyncEntitlementsAsync()`는 서버 `getEntitlements`를 호출해 `InventoryStorage`를 갱신한 뒤 `EntitlementsSnapshot`을 반환한다.
+- `SeasonPass`는 현재 시즌 유효 구간(`TB_SEASON`)일 때만 반영한다.
+- `Rental`은 `expiresAtServerUtcMs > serverNowUtcMs`인 항목만 반영한다.
+- Rental 만료 상한을 두지 않으며, 누적 연장을 허용한다.
+- `GetRentalRemainingMsAsync(internalProductId)`는 서버 조회 없이 `InventoryStorage.GetRentalRemainingMs(id)`를 반환한다.
+- `verifyPurchaseAsync` 응답의 `entitlementsSnapshot`은 클라이언트 인벤토리를 갱신하는 용도로 사용하지 않는다.
 
 
 ---

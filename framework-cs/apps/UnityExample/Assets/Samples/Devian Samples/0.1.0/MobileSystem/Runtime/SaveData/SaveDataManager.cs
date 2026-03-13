@@ -322,7 +322,6 @@ namespace Devian
                 && syncResult.LocalPayload?.payload != null)
             {
                 LoadFromPayload(syncResult.LocalPayload.payload);
-                await postSyncEntitlementsAsync(ct);
             }
 
             return CommonResult<SyncResult>.Success(syncResult);
@@ -574,7 +573,6 @@ namespace Devian
                         _needsCloudSave = false;
                         _hasPrimarySaveContext = true;
                         LoadFromPayload(localR.Value.payload);
-                        await postSyncEntitlementsAsync(ct);
 
                         return CommonResult<bool>.Success(true);
                     }
@@ -598,7 +596,6 @@ namespace Devian
 
                         LoadFromJson(jsonR.Value);
                         _hasPrimarySaveContext = true;
-                        await postSyncEntitlementsAsync(ct);
 
                         return CommonResult<bool>.Success(true);
                     }
@@ -612,23 +609,6 @@ namespace Devian
                 return CommonResult<bool>.Failure(
                     new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_CANCELLED, "Resolve cancelled.", ex.Message));
             }
-        }
-
-        private async Task<CommonResult> postSyncEntitlementsAsync(CancellationToken ct)
-        {
-            var inventory = getInventoryStorageOrNull();
-            if (inventory == null || (inventory.Rentals.Count <= 0 && inventory.Passes.Count <= 0))
-                return CommonResult.Ok();
-
-            var result = await PurchaseManager.Instance.SyncEntitlementsAsync(ct);
-            if (result.IsFailure)
-            {
-                UnityEngine.Debug.LogWarning(
-                    $"[SaveDataManager] PostSync SyncEntitlements failed (non-fatal): {result.Error}");
-                return CommonResult.Failure(result.Error!);
-            }
-
-            return CommonResult.Ok();
         }
 
         // ──────────────────────────────────────────────

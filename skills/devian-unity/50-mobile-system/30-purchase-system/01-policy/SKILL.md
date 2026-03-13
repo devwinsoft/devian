@@ -142,7 +142,9 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 - `ReportPurchaseClientGrantFailureAsync(purchaseId, ct)` — 로컬 지급 실패 보고
 - `RestoreAsync(ct)` (iOS 스토어 복원, manual/fallback)
 - `GetLatestConsumablePurchase30dAsync(ct)` — 최근 30일 Consumable 최신 1건 조회
-- `SyncEntitlementsAsync(ct)` → `Task<CommonResult>` — 서버 entitlements 동기화 (Rental/SeasonPass → InventoryStorage)
+- `SyncEntitlementsAsync(ct)` → `Task<CommonResult>` — 서버 `getEntitlements`로 `mPasses/mRentals`를 복원(덮어쓰기)한 뒤 snapshot 반환
+  - `pass`: 시즌 유효 구간 체크
+  - `rental`: 만료시각 미래값만 반영, 누적 연장 허용
 - `RefundAsync(ct)` — 환불 상태 동기화/처리
 
 

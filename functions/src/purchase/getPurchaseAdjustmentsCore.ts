@@ -1,8 +1,6 @@
 /**
  * getPurchaseAdjustmentsCore.ts — getPurchaseAdjustments core 로직
  *
- * getPurchaseAdjustments callable과 initSession callable이 공유한다.
- *
  * 최소 데이터 원칙:
  *   - 서버는 purchase/product 상태 중심 필드만 반환
  *   - reward payload 해석은 클라이언트(PurchaseManager)가 internalProductId로 수행

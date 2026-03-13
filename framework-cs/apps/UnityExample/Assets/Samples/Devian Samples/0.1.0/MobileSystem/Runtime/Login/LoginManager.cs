@@ -81,15 +81,7 @@ namespace Devian
             if (login.IsFailure)
                 return CommonResult<LoginInitializeResult>.Failure(login.Error!);
 
-            var initSession = await initializeSessionSnapshotAsync(ct);
-            await yieldMainThreadAsync(ct);
-            if (initSession.IsFailure)
-                return CommonResult<LoginInitializeResult>.Failure(initSession.Error!);
-
-            return await syncAndInitializeAsync(
-                initSession.Value,
-                versionGate.Value,
-                ct);
+            return await syncAndInitializeAsync(versionGate.Value, ct);
         }
 
         public async Task<CommonResult<LoginInitializeResult>> ResolveConflictAndInitializeAsync(
@@ -185,25 +177,12 @@ namespace Devian
             if (restore.IsFailure)
                 return CommonResult<LoginInitializeResult>.Failure(restore.Error!);
 
-            SessionInitSnapshot? snapshot = null;
-            if (restore.Value)
-            {
-                var initSession = await initializeSessionSnapshotAsync(ct);
-                await yieldMainThreadAsync(ct);
-                if (initSession.IsFailure)
-                    return CommonResult<LoginInitializeResult>.Failure(initSession.Error!);
-
-                snapshot = initSession.Value;
-            }
-            else
+            if (!restore.Value)
             {
                 var loginType = AccountManager.Instance.CurrentLoginType;
                 if (loginType == LoginType.NONE)
                 {
-                    var localInit = await syncAndInitializeAsync(
-                        snapshot,
-                        versionResult,
-                        ct);
+                    var localInit = await syncAndInitializeAsync(versionResult, ct);
                     await yieldMainThreadAsync(ct);
                     if (localInit.IsFailure)
                         return localInit;
@@ -212,13 +191,10 @@ namespace Devian
                     return localInit;
                 }
 
-                var canProceedWithoutSnapshot = AccountManager.Instance.IsLocalOnlySaveMode;
-                if (!canProceedWithoutSnapshot)
+                var canProceedWithoutRuntimeAuth = AccountManager.Instance.IsLocalOnlySaveMode;
+                if (!canProceedWithoutRuntimeAuth)
                 {
-                    var localInit = await syncAndInitializeAsync(
-                        snapshot,
-                        versionResult,
-                        ct);
+                    var localInit = await syncAndInitializeAsync(versionResult, ct);
                     await yieldMainThreadAsync(ct);
                     if (localInit.IsFailure)
                         return localInit;
@@ -227,28 +203,13 @@ namespace Devian
                     return localInit;
                 }
 
-                Debug.Log($"[{Tag}] Proceeding without SessionInitSnapshot for local-only loginType={loginType}.");
+                Debug.Log($"[{Tag}] Proceeding without authenticated runtime session for local-only loginType={loginType}.");
             }
 
-            return await syncAndInitializeAsync(snapshot, versionResult, ct);
-        }
-
-        async Task<CommonResult<SessionInitSnapshot?>> initializeSessionSnapshotAsync(CancellationToken ct)
-        {
-#if !UNITY_EDITOR
-            var initSession = await FirebaseCallableManager.Instance.InitSessionAsync(null, ct);
-            await yieldMainThreadAsync(ct);
-            if (initSession.IsFailure)
-                return CommonResult<SessionInitSnapshot?>.Failure(initSession.Error!);
-
-            return CommonResult<SessionInitSnapshot?>.Success(initSession.Value);
-#else
-            return CommonResult<SessionInitSnapshot?>.Success(null);
-#endif
+            return await syncAndInitializeAsync(versionResult, ct);
         }
 
         async Task<CommonResult<LoginInitializeResult>> syncAndInitializeAsync(
-            SessionInitSnapshot? snapshot,
             VersionCheckResult versionResult,
             CancellationToken ct)
         {
@@ -295,16 +256,15 @@ namespace Devian
                 }
             }
 
-            return await syncGameStateAsync(snapshot, versionResult, sync.Value, ct);
+            return await syncGameStateAsync(versionResult, sync.Value, ct);
         }
 
         async Task<CommonResult<LoginInitializeResult>> syncGameStateAsync(
-            SessionInitSnapshot? snapshot,
             VersionCheckResult versionResult,
             SyncResult sync,
             CancellationToken ct)
         {
-            var syncPurchase = await PurchaseManager.Instance.SyncAsync(snapshot);
+            var syncPurchase = await PurchaseManager.Instance.SyncAsync(ct: ct);
             await yieldMainThreadAsync(ct);
             if (syncPurchase.IsFailure)
             {

@@ -10,6 +10,8 @@ namespace Devian
 {
     public sealed class InventoryManager : CompoSingleton<InventoryManager>
     {
+        const long DefaultRentalDurationMs = 30L * 24L * 60L * 60L * 1000L;
+
         readonly InventoryStorage _storage = new();
         readonly InventoryMessageTrigger _messageTrigger = new();
 
@@ -238,8 +240,10 @@ namespace Devian
                 }
                 else if (r.Type == REWARD_TYPE.RENTAL)
                 {
-                    // Amount=1은 활성화 flag. 만료 시각은 데이터 Sync에서 서버로부터 갱신.
-                    _storage.SetRental(r.Id, long.MaxValue);
+                    var nowUtcMs = RemoteDataManager.ServerNowUtcMs;
+                    var currentExpiryUtcMs = _storage.GetRentalExpiry(r.Id);
+                    var baseUtcMs = currentExpiryUtcMs > nowUtcMs ? currentExpiryUtcMs : nowUtcMs;
+                    _storage.SetRental(r.Id, baseUtcMs + DefaultRentalDurationMs);
                 }
                 else if (r.Type == REWARD_TYPE.PASS)
                 {

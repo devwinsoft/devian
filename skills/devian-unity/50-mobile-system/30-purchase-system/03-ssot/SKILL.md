@@ -384,12 +384,16 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 
 ### SeasonPass / Rental Restore Projection (design fixed, server-side)
 
-- `SeasonPass` 복원은 서버 entitlement/projection의 `ownedSeasonPasses`(`seasonPassId` 목록) 기준으로 수행한다.
-- `Rental` 복원은 서버 entitlement/projection의 `rentals` map(`rentalId -> expiresAtServerUtcMs`) 기준으로 수행한다.
-- `RestoreAsync()`(스토어 복원)는 manual/fallback 경로이며, 위 projection 기반 복원과 동일 개념이 아니다.
-- Rental/SeasonPass 조회: `SyncEntitlementsAsync`로 서버 entitlements를 InventoryStorage에 동기화, `GetRentalRemainingMsAsync`로 남은 시간(ms) 조회 가능.
-- `Rental` 재구매 만료일 계산 정책(서버):
-  - `newExpiry = max(existingExpiry, serverNow) + 30일` (연장 방식)
+- `SeasonPass`/`Rental` 복원 정본은 서버 Firestore projection(`/users/{uid}/entitlements/current`)을 사용한다.
+- `SyncEntitlementsAsync()`는 `getEntitlements`를 호출해 `InventoryStorage.Passes/Rentals`를 서버 값으로 덮어쓴 뒤 snapshot을 반환한다.
+- `RestoreAsync()`(스토어 복원)는 스토어 복원 트리거 후 동일한 entitlements 복원 규칙을 적용한다.
+- `SeasonPass` 복원은 시즌 유효 구간(`TB_SEASON.start <= now < end`)일 때만 반영한다.
+- Rental/SeasonPass 조회: `GetRentalRemainingMsAsync`는 로컬 저장값 기준 남은 시간(ms)을 조회한다.
+- `Rental` 재구매 만료일 계산 정책(클라이언트):
+  - `newExpiry = max(existingExpiry, now) + 30일` (연장 방식)
+- Rental 복원 정책(클라이언트):
+  - `expiresAtServerUtcMs > serverNowUtcMs`만 반영
+  - 누적 연장을 허용하므로 복원 시 상한(30일 cap)을 두지 않는다.
 
 
 ### Idempotency (멱등) 규칙
@@ -404,7 +408,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 ### Write / Read Policy
 
 - Firestore write는 **서버(Functions/Admin SDK)** 만 수행한다.
-- 클라이언트는 verify/getEntitlements를 통해서만 상태를 갱신/조회한다.
+- 클라이언트는 verify + `getEntitlements` 동기화 + SaveData(local/cloud) 저장/복원으로 상태를 갱신/조회한다.
 - (정책 선택) 클라이언트 Firestore direct read를 허용한다면:
   - `/users/{uid}/entitlements/current`만 제한적으로 허용을 권장
   - purchases 원장 direct read는 기본 비권장
@@ -426,7 +430,8 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 3) 서버: 스토어 검증(Apple/Google) 수행
 4) 서버: Firestore에 purchases 기록 저장 + entitlements/current 갱신 (필수)
 5) 클라: 서버 verify 성공 응답 수신 후에만 ConfirmPendingPurchase / 지급 처리
-6) 클라: 필요 시 `getEntitlements`로 동기화
+6) 클라: `SyncEntitlementsAsync`로 entitlements/current를 반영해 `mPasses/mRentals`를 복원
+7) 클라: 반영된 상태를 SaveData(local/cloud) payload에 저장/복원
 
 ### Security Rules (High-level)
 
@@ -450,7 +455,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 
 - NoAds는 "구독 Active 상태"로만 판정한다.
 - 클라이언트 Unity IAP 콜백만으로 NoAds를 영구 적용하지 않는다.
-- 최종 상태는 `getEntitlements` 결과로 확정한다.
+- 최종 상태는 verifyPurchase + `SyncEntitlementsAsync`(server restore) + SaveData(local/cloud) 저장/복원으로 확정한다.
 
 
 ### 상태 갱신
@@ -468,8 +473,8 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 
 ### 클라이언트 적용 규칙
 
-- NoAds 상태의 정본은 서버 entitlements이다. 클라이언트는 적절한 시점(앱 시작/포그라운드/로그인 등)에 서버 상태를 동기화한다.
-- 동기화 방식: `PurchaseManager.SyncEntitlementsAsync(ct)`가 서버 `getEntitlements`를 호출하여 Rental/SeasonPass 상태를 InventoryStorage에 동기화한다.
+- NoAds 상태의 정본은 서버 entitlements 기반으로 복원된 `InventoryStorage` Rental(`NO_ADS`) 값이다.
+- 동기화 방식: `PurchaseManager.SyncEntitlementsAsync(ct)`가 서버 `getEntitlements`를 호출해 Rental/SeasonPass를 복원(덮어쓰기)한다.
 - NoAds는 광고 표시 로직의 단일 입력값으로 사용한다(여러 군데 중복 판정 금지).
 
 

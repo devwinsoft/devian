@@ -8,7 +8,6 @@
  *   - getEntitlements
  *   - getRecentPurchases30d
  *   - getPurchaseAdjustments
- *   - initSession
  */
 
 import * as admin from "firebase-admin";
@@ -28,9 +27,6 @@ export {getEntitlements} from "./purchase/getEntitlements";
 export {getRecentPurchases30d} from "./purchase/getRecentPurchases30d";
 export {getPurchaseAdjustments} from "./purchase/getPurchaseAdjustments";
 export {ackRefundApplied} from "./purchase/ackRefundApplied";
-
-// ── Session ──
-export {initSession} from "./session/initSession";
 
 // ── Google Play RTDN (Pub/Sub) ──
 export {handleGooglePlayNotification} from "./purchase/handleGooglePlayNotification";

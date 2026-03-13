@@ -19,7 +19,6 @@ AppliesTo: v10
 
 제외:
 - SaveData sync/초기화
-- `FirebaseCallableManager.InitSessionAsync` 호출
 - 구매 진입 인증 게이트 오케스트레이션
 - Scene/UI 제어
 
@@ -63,4 +62,4 @@ AppliesTo: v10
 ## Out of Scope
 - Apple Sign-in UI/네이티브 토큰 획득
 - SaveData sync 오케스트레이션
-- Firebase callable 초기화 데이터 처리 (`InitSession`)
+- 구매/원격 데이터 초기화 오케스트레이션

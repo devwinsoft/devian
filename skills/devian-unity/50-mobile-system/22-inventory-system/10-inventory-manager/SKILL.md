@@ -11,7 +11,7 @@ InventoryManager(구현 규약)는 `RewardData[]` 입력을 받아 인벤토리 
 - `type=REWARD_TYPE.EQUIP`: 매 Apply마다 새 인스턴스(`itemUid=GUID` pk) 생성, amount 무시
 - `type=REWARD_TYPE.CARD`: `cardId(pk)` → `AbilityCard.Amount` (`STAT_TYPE.CARD_AMOUNT`) 누적
 - `type=REWARD_TYPE.HERO`: `heroId(pk)` → `AbilityUnitHero` (`STAT_TYPE.UNIT_AMOUNT`) 누적
-- `type=REWARD_TYPE.RENTAL`: rental key(string) id → `InventoryStorage.SetRental(id, long.MaxValue)` (활성화 flag 설정, 만료 시각은 데이터 Sync에서 별도 갱신)
+- `type=REWARD_TYPE.RENTAL`: rental key(string) id → `InventoryStorage.SetRental(id, max(currentExpiry, now)+30days)` (로컬 만료 시각 누적)
 - `type=REWARD_TYPE.PASS`: season pass key(string) id → `InventoryStorage.SetPass(id, true)` (소유권 설정)
 
 InventoryManager는 **단일 concrete 클래스**이다.
@@ -77,7 +77,7 @@ CompoSingleton<InventoryManager>.Instance
   - `type=REWARD_TYPE.EQUIP`일 때 새 itemUid(GUID)로 AbilityEquip 인스턴스를 생성하여 InventoryStorage.Equipments에 추가한다.
   - `type=REWARD_TYPE.CARD`일 때 InventoryStorage.Cards에 AbilityCard를 추가/갱신한다.
   - `type=REWARD_TYPE.HERO`일 때 InventoryStorage.Heroes에 AbilityUnitHero를 추가/갱신한다.
-  - `type=REWARD_TYPE.RENTAL`일 때 `InventoryStorage.SetRental(id, long.MaxValue)`로 활성화 flag를 설정한다. 실제 만료 시각은 데이터 Sync에서 서버로부터 갱신한다.
+  - `type=REWARD_TYPE.RENTAL`일 때 `InventoryStorage.SetRental(id, max(currentExpiry, now)+30days)`로 로컬 만료 시각을 설정/연장한다.
   - `type=REWARD_TYPE.PASS`일 때 `InventoryStorage.SetPass(id, true)`로 소유권을 설정한다.
   - 입력 검증 실패 시 `CommonResult.Failure`를 반환하고 상태를 변경하지 않는다.
   - 성공 시 `CommonResult.Ok()`를 반환한다.
@@ -131,7 +131,7 @@ NOTE:
     - `type=REWARD_TYPE.EQUIP`: 새 `itemUid`(GUID)로 AbilityEquip 생성 + `_storage.AddEquip(itemUid, ability)`. amount 무시(항상 1개)
     - `type=REWARD_TYPE.CARD`: `_storage.Cards`에 AbilityCard 추가(없으면 생성) + `AbilityCard.AddAmount(amount)`
     - `type=REWARD_TYPE.HERO`: `_storage.Heroes`에 AbilityUnitHero 추가(없으면 생성) + `AddStat(STAT_TYPE.UNIT_AMOUNT, amount)`
-    - `type=REWARD_TYPE.RENTAL`: `_storage.SetRental(id, long.MaxValue)` (활성화 flag, 만료 시각은 데이터 Sync에서 별도 갱신)
+    - `type=REWARD_TYPE.RENTAL`: `_storage.SetRental(id, max(currentExpiry, now)+30days)` (로컬 만료 시각 누적)
     - `type=REWARD_TYPE.PASS`: `_storage.SetPass(id, true)` (소유권 설정)
   - 성공 시 `CommonResult.Ok()`를 반환한다.
 - `GetAmount(string type, string id) -> long`

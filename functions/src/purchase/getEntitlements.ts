@@ -11,7 +11,7 @@
  *   - ownedSeasonPasses / rentals 는 클라이언트 local/cloud cache(PurchaseStorage)에 저장될 수 있다.
  *   - noAds 는 게임 로직 전용이므로 서버 entitlements 스냅샷에 포함하지 않는다.
  *
- * core 로직은 getEntitlementsCore.ts 에 위치 (initSession과 공유).
+ * core 로직은 getEntitlementsCore.ts 에 위치한다.
  */
 
 import {onCall, HttpsError} from "firebase-functions/v2/https";

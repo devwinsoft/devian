@@ -1,7 +1,5 @@
 /**
  * getEntitlementsCore.ts — getEntitlements core 로직
- *
- * getEntitlements callable과 initSession callable이 공유한다.
  */
 
 import * as admin from "firebase-admin";
