@@ -30,14 +30,14 @@ SSOT: skills/devian/10-module/03-ssot/SKILL.md
 ### 2.1 Reward 지급 정책 (Hard Rule)
 
 - `rewardGroupId -> RewardData[]` 해석과 실제 지급 적용은 **RewardManager 단일 경로**를 사용한다.
-- Purchase/Ads/Attend/Mission 등 호출자는 `TB_REWARD`/`TB_ITEM_CHEST`를 직접 파싱하지 않는다.
+- Purchase/Ads/Attend/Mission 등 호출자는 `TB_REWARD`/`TB_ITEM_TREASURE`를 직접 파싱하지 않는다.
 - `REWARD` 그룹 해석은 다음 규칙을 따른다.
   - 같은 `rewardGroupId` 내 `Rate(float)`를 합산한다.
   - `random(totalRate)`로 그룹 내 **1개 REWARD row**를 선택한다.
-- 선택된 row가 `REWARD_TYPE.CHEST`면 `ITEM_CHEST(chestId group)`를 조회한다.
+- 선택된 row가 `REWARD_TYPE.TREASURE`면 `ITEM_TREASURE(chestId group)`를 조회한다.
   - 같은 `chestId`에 연결된 다중 `rewardGroupId`는 **전부 적용**한다.
   - 각 연결 `rewardGroupId`는 동일 규칙(`Rate` 기반 1개 선택)으로 해석한다.
-- `REWARD_TYPE.CHEST`는 중간 해석 타입이다. Inventory 적용 입력(`RewardData[]`)에는 CHEST row를 직접 전달하지 않는다.
+- `REWARD_TYPE.TREASURE`는 중간 해석 타입이다. Inventory 적용 입력(`RewardData[]`)에는 TREASURE row를 직접 전달하지 않는다.
 
 ---
 

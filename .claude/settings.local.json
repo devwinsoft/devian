@@ -264,7 +264,21 @@
       "Bash(do sed -i '' 's/GameMessage/MetaMessage/g' \"$f\")",
       "Bash(do sed -i '' 's/gameMessage/metaMessage/g' \"$f\")",
       "Bash(do sed -i '' 's/FirebaseManager/FirebaseCallableManager/g' \"$f\")",
-      "Bash(git log --name-status --pretty=\"\" -- '*GameContents*')"
+      "Bash(git log --name-status --pretty=\"\" -- '*GameContents*')",
+      "Bash(PKG=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem\")",
+      "Bash(AST=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem\")",
+      "Bash(__NEW_LINE_67ae576702d9ddfa__ for f in \"Runtime/Mission/MissionRuntimeState.cs\" \"Runtime/Mission/MissionRuntimeBase.cs\" \"Runtime/Mission/MissionRuntimeFactory.cs\" \"Runtime/Mission/MissionScheduler.cs\" \"Runtime/SaveData/JsonCodec/SaveDataJsonCodecMission.cs\")",
+      "Bash(cp \"$UPM/$f\" \"$PKG/$f\")",
+      "Bash(cp \"$UPM/$f\" \"$AST/$f\")",
+      "Bash(__NEW_LINE_67ae576702d9ddfa__ echo \"Copy done\")",
+      "Bash(__NEW_LINE_0c0bbf046483ceb6__ for f in \"Runtime/Mission/MissionRuntimeState.cs\" \"Runtime/Mission/MissionRuntimeBase.cs\" \"Runtime/Mission/MissionRuntimeFactory.cs\" \"Runtime/Mission/MissionScheduler.cs\" \"Runtime/SaveData/JsonCodec/SaveDataJsonCodecMission.cs\")",
+      "Read(//Users/maoshy/Documents/Projects/devian/$UPM/**)",
+      "Bash(__NEW_LINE_0c0bbf046483ceb6__ echo \"All 3-path syncs verified\")",
+      "Bash(UPM=\"framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Achieve/AchieveManager.cs\")",
+      "Bash(PKG=\"framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Achieve/AchieveManager.cs\")",
+      "Bash(AST=\"framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Achieve/AchieveManager.cs\")",
+      "Bash(__NEW_LINE_00b0d49950ad5cbb__ cp \"$UPM\" \"$PKG\")",
+      "Bash(cp \"$UPM\" \"$AST\")"
     ]
   },
   "project": {

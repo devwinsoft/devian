@@ -90,7 +90,7 @@ namespace Devian
                 if (!string.Equals(runtime.periodKey, currentPeriodKey, StringComparison.Ordinal))
                     continue;
 
-                if (!runtime.isWaiting || runtime.isCompleted)
+                if (runtime.state != MissionRuntimeState.WAIT)
                     continue;
 
                 if (!isPeriodDayActive(runtime.day, elapsedDay))
@@ -113,7 +113,7 @@ namespace Devian
                 if (!string.Equals(runtime.periodKey, currentPeriodKey, StringComparison.Ordinal))
                     continue;
 
-                if (!runtime.isWaiting || runtime.isCompleted)
+                if (runtime.state != MissionRuntimeState.WAIT)
                     continue;
 
                 if (!isPeriodDayActive(runtime.day, elapsedDay))
@@ -304,12 +304,10 @@ namespace Devian
                     {
                         MissionType = MISSION_TYPE.DAILY,
                         MissionId = existing.missionId,
-                        MessageId = row.ConditionMsgId,
                         PeriodKey = existing.periodKey,
                         MissionUid = existing.missionUid,
                         ProgressValue = existing.progressValue,
-                        IsCompleted = existing.isCompleted,
-                        IsWaiting = false,
+                        State = existing.state,
                         Index = existing.index,
                         Day = 1,
                         StatType = message.MessageType,
@@ -331,7 +329,6 @@ namespace Devian
                 var created = MissionRuntimeFactory.CreateDaily(new DailyMissionRuntimeCreateArgs
                 {
                     MissionId = row.MissionId,
-                    MessageId = row.ConditionMsgId,
                     PeriodKey = periodKey,
                     MissionUid = AllocateMissionUid(),
                     Index = 0,
@@ -394,20 +391,18 @@ namespace Devian
                 var existing = FindPeriod(row.MissionId);
                 if (existing != null)
                 {
-                    var isWaiting = existing.isWaiting && !existing.isCompleted;
-                    if (!shouldWait)
-                        isWaiting = false;
+                    var restoreState = existing.state;
+                    if (restoreState == MissionRuntimeState.WAIT && !shouldWait)
+                        restoreState = MissionRuntimeState.ACTIVE;
 
                     var restored = MissionRuntimeFactory.Restore(new MissionRuntimeRestoreArgs
                     {
                         MissionType = MISSION_TYPE.PERIOD,
                         MissionId = existing.missionId,
-                        MessageId = row.ConditionMsgId,
                         PeriodKey = existing.periodKey,
                         MissionUid = existing.missionUid,
                         ProgressValue = existing.progressValue,
-                        IsCompleted = existing.isCompleted,
-                        IsWaiting = isWaiting,
+                        State = restoreState,
                         Index = 0,
                         Day = row.Day,
                         StatType = message.MessageType,
@@ -429,7 +424,6 @@ namespace Devian
                 var created = MissionRuntimeFactory.CreatePeriod(new PeriodMissionRuntimeCreateArgs
                 {
                     MissionId = row.MissionId,
-                    MessageId = row.ConditionMsgId,
                     PeriodKey = periodKey,
                     MissionUid = AllocateMissionUid(),
                     Day = row.Day,

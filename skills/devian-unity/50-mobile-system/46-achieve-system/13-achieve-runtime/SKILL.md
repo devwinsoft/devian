@@ -18,7 +18,6 @@ Achieve runtime(`AchieveRuntimeBase`, `AchieveRuntimeOnce`, `AchieveRuntimePass`
 
 - `runtimeType`: `ACHIEVE_TYPE` (`ONCE`, `PASS`)
 - `achieveId`: 업적 그룹 ID
-- `messageId`: 현재 level의 `conditionMsgId` key
 - `achieveUid`: runtime uid
 - `level`: 현재 단계
 - `index`: UI 정렬 인덱스(`orderNum - 1`)

@@ -87,11 +87,12 @@ AppliesTo: v10
 구현: `InventoryManager.FirstInitAsync` -> `parseInitialInventoryRewards`
 
 - 입력 소스: `Assets/Resources/Devian/InventorySettings.asset` -> `InventorySetting.InitialInventory` (`CString`)
+- `CString` 값은 암호화 payload(base64)이며, `InventoryManager.InitialInventoryCryptoKey` / `InventoryManager.InitialInventoryCryptoIv`로 AES 복호화 후 해석한다
 - 허용 JSON 형태:
   - `RewardData[]`
   - `{ "rewards": RewardData[] }`
 - `SEASON_PASS`는 legacy 호환으로 `PASS`로 변환
-- `CHEST` 타입은 허용하지 않는다
+- `TREASURE` 타입은 허용하지 않는다
 - `amount`는 정수이며 `1..int.MaxValue` 범위만 허용
 - 검증 실패 시 `CommonResult` 실패로 중단한다
 

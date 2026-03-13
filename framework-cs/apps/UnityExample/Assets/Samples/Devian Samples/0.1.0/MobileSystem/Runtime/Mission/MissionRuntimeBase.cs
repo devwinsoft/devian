@@ -7,12 +7,10 @@ namespace Devian
     public abstract class MissionRuntimeBase
     {
         public string missionId = string.Empty;
-        public string messageId = string.Empty;
         public string periodKey = string.Empty;
         public int missionUid;
         public CBigInt progressValue = CBigInt.Zero;
-        public bool isWaiting;
-        public bool isCompleted;
+        public MissionRuntimeState state = MissionRuntimeState.ACTIVE;
 
         [NonSerialized] protected GAME_MESSAGE_TYPE _statType;
         [NonSerialized] protected GAME_MESSAGE_SAVE_TYPE _opType;
@@ -31,8 +29,7 @@ namespace Devian
         public GAME_MESSAGE_OP_TYPE ConditionOpType => _conditionOpType;
         public CBigInt ConditionValue => _conditionValue;
         public bool IsSubscribed => _isSubscribed;
-        public bool IsClaimable => !isCompleted
-                                   && !isWaiting
+        public bool IsClaimable => state == MissionRuntimeState.ACTIVE
                                    && GameMessageRule.IsConditionSatisfied(
                                        progressValue,
                                        _conditionOpType,
@@ -40,7 +37,6 @@ namespace Devian
         public abstract int Index { get; }
 
         internal void Bind(
-            string messageId,
             GAME_MESSAGE_TYPE statType,
             GAME_MESSAGE_SAVE_TYPE opType,
             GAME_MESSAGE_OP_TYPE conditionOpType,
@@ -53,7 +49,6 @@ namespace Devian
         {
             UnsubscribeInternal();
 
-            this.messageId = messageId ?? string.Empty;
             _statType = statType;
             _opType = opType;
             _conditionOpType = conditionOpType;
@@ -85,30 +80,24 @@ namespace Devian
 
         public MissionRuntimeState GetState()
         {
-            if (isCompleted)
-                return MissionRuntimeState.COMPLETED;
+            if (state == MissionRuntimeState.ACTIVE && IsClaimable)
+                return MissionRuntimeState.CLAIMABLE;
 
-            if (isWaiting)
-                return MissionRuntimeState.WAIT;
-
-            return IsClaimable
-                ? MissionRuntimeState.CLAIMABLE
-                : MissionRuntimeState.ACTIVE;
+            return state;
         }
 
         public void MarkCompleted()
         {
-            isWaiting = false;
-            isCompleted = true;
+            state = MissionRuntimeState.COMPLETED;
             OnCompletedCore();
         }
 
         public bool TryActivate()
         {
-            if (isCompleted || !isWaiting)
+            if (state != MissionRuntimeState.WAIT)
                 return false;
 
-            isWaiting = false;
+            state = MissionRuntimeState.ACTIVE;
             RefreshProgressFromExternal(emitProgressEvent: false);
             SubscribeIfNeeded();
             RaiseClaimableIfNeeded();
@@ -147,8 +136,7 @@ namespace Devian
         protected virtual bool ShouldSubscribe()
         {
             return _opType != GAME_MESSAGE_SAVE_TYPE.NONE
-                   && !isCompleted
-                   && !isWaiting;
+                   && state == MissionRuntimeState.ACTIVE;
         }
 
         protected virtual void OnCompletedCore()
@@ -182,7 +170,7 @@ namespace Devian
             if (!TryReadProgressDelta(args, out var delta))
                 return false;
 
-            if (isCompleted || isWaiting || _opType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            if (state != MissionRuntimeState.ACTIVE || _opType == GAME_MESSAGE_SAVE_TYPE.NONE)
                 return false;
 
             var wasClaimable = IsClaimable;

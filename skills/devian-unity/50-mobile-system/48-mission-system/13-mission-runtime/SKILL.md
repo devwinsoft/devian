@@ -20,10 +20,12 @@ MissionRuntimeBase
 
 공통 필드:
 
-- `missionId`, `conditionMsgId`, `missionUid`
+- `missionId`, `missionUid`
 - `periodKey`, `index`
 - `progressValue`
-- `isWaiting`, `isCompleted`
+- `state` (`MissionRuntimeState`: WAIT / ACTIVE / COMPLETED)
+
+참고: `conditionMsgId`는 runtime 필드가 아니다. `Bind()` 시 테이블에서 조회하여 바인딩한다.
 
 ---
 
@@ -53,10 +55,10 @@ MissionRuntimeBase
 
 ## State Rules
 
-- `WAIT`: `isWaiting == true`
-- `CLAIMABLE`: `!isWaiting && !isCompleted && IsClaimable`
-- `COMPLETED`: `isCompleted == true`
-- `MarkCompleted()`는 구독 해지 동작을 포함한다.
+- `state` 필드는 `WAIT`, `ACTIVE`, `COMPLETED` 중 하나다.
+- `GetState()`는 `state == ACTIVE && 진행도 충족` 시 `CLAIMABLE`을 반환한다(파생 상태).
+- `MarkCompleted()`: `state = COMPLETED` + 구독 해지.
+- `TryActivate()`: `state == WAIT` 일 때만 `state = ACTIVE`로 전환.
 
 `PERIOD` 전용:
 - 초기 생성 상태는 WAIT

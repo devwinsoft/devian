@@ -204,6 +204,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a3ce8d15ffc004448814b1df004fc1c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.GameContents::Devian.InventoryManager
+  _initialInventoryCryptoKey: 6R3P0w/vz7u/qrcURNysSHl33bBEsM5fZb37vDo7/bA=
+  _initialInventoryCryptoIv: PcEs7Q7BGxQjYVrSwczD5A==
 --- !u!114 &1291505014731965610
 MonoBehaviour:
   m_ObjectHideFlags: 0

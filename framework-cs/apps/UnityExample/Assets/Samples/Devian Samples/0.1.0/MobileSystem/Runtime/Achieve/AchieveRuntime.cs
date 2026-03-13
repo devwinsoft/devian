@@ -7,7 +7,6 @@ namespace Devian
     public abstract class AchieveRuntimeBase
     {
         public string achieveId = string.Empty;
-        public string messageId = string.Empty;
         public int achieveUid;
         public int level = 1;
         public int index;
@@ -39,7 +38,6 @@ namespace Devian
         public int Index => index;
 
         internal void Bind(
-            string nextMessageId,
             GAME_MESSAGE_TYPE statType,
             GAME_MESSAGE_SAVE_TYPE opType,
             GAME_MESSAGE_OP_TYPE conditionOpType,
@@ -48,7 +46,6 @@ namespace Devian
             Action<AchieveRuntimeBase> onProgress,
             Action<AchieveRuntimeBase> onClaimable)
         {
-            messageId = nextMessageId ?? string.Empty;
             isWaiting = false;
             _statType = statType;
             _opType = opType;
@@ -67,11 +64,9 @@ namespace Devian
         }
 
         internal void BindWaiting(
-            string nextMessageId,
             Action<AchieveRuntimeBase> onProgress,
             Action<AchieveRuntimeBase> onClaimable)
         {
-            messageId = nextMessageId ?? string.Empty;
             isWaiting = !isCompleted;
             _statType = GAME_MESSAGE_TYPE.NONE;
             _opType = GAME_MESSAGE_SAVE_TYPE.NONE;
@@ -113,7 +108,6 @@ namespace Devian
         public void LevelUp(
             int nextLevel,
             int nextIndex,
-            string nextMessageId,
             GAME_MESSAGE_TYPE nextStatType,
             GAME_MESSAGE_SAVE_TYPE nextOpType,
             GAME_MESSAGE_OP_TYPE nextConditionOpType,
@@ -124,7 +118,6 @@ namespace Devian
             index = nextIndex;
             isWaiting = false;
             isCompleted = false;
-            messageId = nextMessageId ?? string.Empty;
             _statType = nextStatType;
             _opType = nextOpType;
             _conditionOpType = nextConditionOpType;
@@ -148,13 +141,12 @@ namespace Devian
             RaiseClaimableIfNeeded();
         }
 
-        public void LevelUpToWaiting(int nextLevel, int nextIndex, string nextMessageId)
+        public void LevelUpToWaiting(int nextLevel, int nextIndex)
         {
             level = nextLevel;
             index = nextIndex;
             isCompleted = false;
             isWaiting = true;
-            messageId = nextMessageId ?? string.Empty;
             _statType = GAME_MESSAGE_TYPE.NONE;
             _opType = GAME_MESSAGE_SAVE_TYPE.NONE;
             _conditionOpType = GAME_MESSAGE_OP_TYPE.GTE;

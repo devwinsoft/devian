@@ -2092,10 +2092,8 @@ export * from './features';
     }
 
     cleanAndCopy(src, dest) {
-        // Clean target
-        if (fs.existsSync(dest)) {
-            fs.rmSync(dest, { recursive: true });
-        }
+        // Clean target (force: true to handle case-insensitive FS already removed by legacy cleanup)
+        fs.rmSync(dest, { recursive: true, force: true });
         fs.mkdirSync(dest, { recursive: true });
 
         // Copy files recursively

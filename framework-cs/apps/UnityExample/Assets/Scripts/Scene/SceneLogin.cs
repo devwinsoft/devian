@@ -89,6 +89,12 @@ public class SceneLogin : SceneBootstrap
         if (result.IsRecommendUpdate)
             Debug.LogWarning($"Login bootstrap recommend update: {result.VersionResult}");
 
+        if (result.IsInitial)
+        {
+            UICanvasLoading.Instance.ShowLoginButtons();
+            return;
+        }
+
         await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
     }
 }

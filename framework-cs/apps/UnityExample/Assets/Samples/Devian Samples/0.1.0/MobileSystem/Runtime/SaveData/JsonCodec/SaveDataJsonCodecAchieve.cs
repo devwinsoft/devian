@@ -25,7 +25,6 @@ namespace Devian
                 {
                     ["achieveType"] = (int)runtime.RuntimeType,
                     ["achieveId"] = runtime.achieveId,
-                    ["messageId"] = runtime.messageId,
                     ["achieveUid"] = runtime.achieveUid,
                     ["level"] = runtime.level,
                     ["index"] = runtime.index,
@@ -71,7 +70,6 @@ namespace Devian
                     {
                         AchieveType = achieveType,
                         AchieveId = achieveId,
-                        MessageId = runtimeObj.Value<string>("messageId") ?? string.Empty,
                         AchieveUid = achieveUid,
                         Level = runtimeObj.Value<int?>("level") ?? 1,
                         Index = runtimeObj.Value<int?>("index") ?? 0,

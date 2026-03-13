@@ -37,27 +37,24 @@ public sealed class MissionStorage
 public abstract class MissionRuntimeBase
 {
     public string missionId;
-    public string conditionMsgId;
     public string periodKey;
     public int missionUid;
     public int index;
     public CBigInt progressValue;
-    public bool isWaiting;
-    public bool isCompleted;
+    public MissionRuntimeState state;  // WAIT, ACTIVE, COMPLETED
 }
 ```
+
+규칙:
+- `state`는 `WAIT`, `ACTIVE`, `COMPLETED`만 저장한다. `CLAIMABLE`은 파생 상태이므로 저장하지 않는다.
+- `conditionMsgId`는 저장하지 않는다. `missionId`로 테이블(`MISSION_DAILY`/`MISSION_PERIOD`)에서 조회한다.
 
 타입별 저장 규칙:
 
 - `MissionRuntimeDaily`:
-  - `periodKey` 저장
-  - `index` 저장
-  - `progressValue` 저장
+  - `periodKey`, `index`, `state`, `progressValue` 저장
 - `MissionRuntimePeriod`:
-  - `periodKey` 저장
-  - `index` 저장
-  - `isWaiting` 저장
-  - `progressValue` 저장
+  - `periodKey`, `day`, `state`, `progressValue` 저장
 
 ---
 
@@ -65,7 +62,7 @@ public abstract class MissionRuntimeBase
 
 - `DAILY/PERIOD progress`는 runtime 로컬 값으로 저장/복원한다.
 - stat 누적 값은 mission payload에 저장하지 않는다.
-- runtime의 `conditionMsgId`는 정의 테이블 `GAME_MESSAGE.messageId`를 참조한다.
+- `conditionMsgId`는 runtime에 저장하지 않는다. restore 시 테이블에서 조회한다.
 - `rewardGroupId` 등 definition 데이터는 runtime에 저장하지 않는다.
 
 ---

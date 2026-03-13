@@ -62,8 +62,8 @@ namespace Devian
                 if (!TrySelectRewardRow(rows, out var selectedReward))
                     return Array.Empty<RewardData>();
 
-                if (selectedReward.Type == REWARD_TYPE.CHEST)
-                    return ResolveChestRewardDeltas(selectedReward, resolveGuard);
+                if (selectedReward.Type == REWARD_TYPE.TREASURE)
+                    return ResolveTreasureRewardDeltas(selectedReward, resolveGuard);
 
                 return new[] { new RewardData(selectedReward.Type, selectedReward.Id, selectedReward.Amount) };
             }
@@ -73,16 +73,16 @@ namespace Devian
             }
         }
 
-        RewardData[] ResolveChestRewardDeltas(REWARD chestReward, HashSet<string> resolveGuard)
+        RewardData[] ResolveTreasureRewardDeltas(REWARD chestReward, HashSet<string> resolveGuard)
         {
             var chestId = chestReward.Id != null ? chestReward.Id.Trim() : string.Empty;
             if (string.IsNullOrEmpty(chestId) || chestReward.Amount <= 0)
                 return Array.Empty<RewardData>();
 
-            var chestRows = TB_ITEM_CHEST.GetByGroup(chestId);
+            var chestRows = TB_ITEM_TREASURE.GetByGroup(chestId);
             if (chestRows == null || chestRows.Count == 0)
             {
-                Debug.LogWarning($"[RewardManager] ITEM_CHEST rows not found: chestId={chestId}");
+                Debug.LogWarning($"[RewardManager] ITEM_TREASURE rows not found: chestId={chestId}");
                 return Array.Empty<RewardData>();
             }
 

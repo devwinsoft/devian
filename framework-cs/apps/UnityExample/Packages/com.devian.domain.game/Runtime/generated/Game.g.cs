@@ -148,7 +148,7 @@ namespace Devian.Domain.Game
         HERO = 3,
         RENTAL = 4,
         PASS = 5,
-        CHEST = 6,
+        TREASURE = 6,
     }
 
     /// <summary>ADVERTISE_FORMAT enum</summary>
@@ -253,8 +253,8 @@ namespace Devian.Domain.Game
         public string GetKey() => CardId;
     }
 
-    /// <summary>ITEM_CHEST row</summary>
-    public sealed class ITEM_CHEST : IEntityKey<string>
+    /// <summary>ITEM_TREASURE row</summary>
+    public sealed class ITEM_TREASURE : IEntityKey<string>
     {
         public string ChestNum { get; set; } = string.Empty;
         public string ChestId { get; set; } = string.Empty;
@@ -770,13 +770,13 @@ namespace Devian.Domain.Game
         static partial void _OnAfterLoad();
     }
 
-    /// <summary>TB_ITEM_CHEST container</summary>
-    public static partial class TB_ITEM_CHEST
+    /// <summary>TB_ITEM_TREASURE container</summary>
+    public static partial class TB_ITEM_TREASURE
     {
-        private static readonly Dictionary<string, ITEM_CHEST> _dict = new();
-        private static readonly List<ITEM_CHEST> _list = new();
+        private static readonly Dictionary<string, ITEM_TREASURE> _dict = new();
+        private static readonly List<ITEM_TREASURE> _list = new();
 
-        private static readonly Dictionary<string, List<ITEM_CHEST>> _groupDict = new();
+        private static readonly Dictionary<string, List<ITEM_TREASURE>> _groupDict = new();
         private static readonly List<string> _groupList = new();
         private static readonly Dictionary<string, string> _groupPrimaryKey = new();
         private static readonly Dictionary<string, string> _keyToGroup = new();
@@ -793,13 +793,13 @@ namespace Devian.Domain.Game
             _keyToGroup.Clear();
         }
 
-        public static IReadOnlyList<ITEM_CHEST> GetAll() => _list;
+        public static IReadOnlyList<ITEM_TREASURE> GetAll() => _list;
 
         public static IReadOnlyList<string> GetGroupKeys() => _groupList;
 
-        public static IReadOnlyList<ITEM_CHEST> GetByGroup(string groupKey)
+        public static IReadOnlyList<ITEM_TREASURE> GetByGroup(string groupKey)
         {
-            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<ITEM_CHEST>();
+            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<ITEM_TREASURE>();
         }
 
         public static bool TryGetGroupPrimaryKey(string groupKey, out string key)
@@ -812,17 +812,17 @@ namespace Devian.Domain.Game
             return _keyToGroup.TryGetValue(key, out groupKey);
         }
 
-        public static ITEM_CHEST? Get(string key)
+        public static ITEM_TREASURE? Get(string key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(string key, out ITEM_CHEST? row)
+        public static bool TryGet(string key, out ITEM_TREASURE? row)
         {
             return _dict.TryGetValue(key, out row);
         }
 
-        private static void AddRow(ITEM_CHEST row)
+        private static void AddRow(ITEM_TREASURE row)
         {
             _list.Add(row);
             _dict[row.ChestNum] = row;
@@ -830,7 +830,7 @@ namespace Devian.Domain.Game
             _keyToGroup[row.ChestNum] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
-                groupList = new List<ITEM_CHEST>();
+                groupList = new List<ITEM_TREASURE>();
                 _groupDict[groupKey] = groupList;
                 _groupList.Add(groupKey);
             }
@@ -849,7 +849,7 @@ namespace Devian.Domain.Game
         public static void LoadFromJson(string json)
         {
             Clear();
-            var rows = JsonConvert.DeserializeObject<List<ITEM_CHEST>>(json);
+            var rows = JsonConvert.DeserializeObject<List<ITEM_TREASURE>>(json);
             if (rows == null) return;
             foreach (var row in rows)
             {
@@ -866,7 +866,7 @@ namespace Devian.Domain.Game
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<ITEM_CHEST>(line);
+                var row = JsonConvert.DeserializeObject<ITEM_TREASURE>(line);
                 if (row == null) continue;
                 AddRow(row);
             }
@@ -878,7 +878,7 @@ namespace Devian.Domain.Game
             Pb64Loader.ParseRows(rawBinary, jsonRow =>
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<ITEM_CHEST>(jsonRow);
+                var row = JsonConvert.DeserializeObject<ITEM_TREASURE>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -2728,14 +2728,14 @@ namespace Devian.Domain.Game
         public static implicit operator ITEM_CARD_ID(string value) => new ITEM_CARD_ID { Value = value };
     }
 
-    /// <summary>Inspector-bindable ID for ITEM_CHEST</summary>
+    /// <summary>Inspector-bindable ID for ITEM_TREASURE</summary>
     [Serializable]
-    public sealed class ITEM_CHEST_ID
+    public sealed class ITEM_TREASURE_ID
     {
         public string Value;
 
-        public static implicit operator string(ITEM_CHEST_ID id) => id.Value;
-        public static implicit operator ITEM_CHEST_ID(string value) => new ITEM_CHEST_ID { Value = value };
+        public static implicit operator string(ITEM_TREASURE_ID id) => id.Value;
+        public static implicit operator ITEM_TREASURE_ID(string value) => new ITEM_TREASURE_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for ITEM_RENTAL</summary>
@@ -2934,7 +2934,7 @@ namespace Devian.Domain.Game
         public static bool IsValid(this GAME_MESSAGE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this ITEM_EQUIP_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this ITEM_CARD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
-        public static bool IsValid(this ITEM_CHEST_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this ITEM_TREASURE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this ITEM_RENTAL_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this ITEM_PASS_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this ATTEND_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);

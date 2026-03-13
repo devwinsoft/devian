@@ -28,12 +28,11 @@ namespace Devian
                         {
                             ["missionType"] = (int)MISSION_TYPE.DAILY,
                             ["missionId"] = dailyRuntime.missionId,
-                            ["messageId"] = dailyRuntime.messageId,
                             ["missionUid"] = dailyRuntime.missionUid,
                             ["periodKey"] = dailyRuntime.periodKey,
                             ["index"] = dailyRuntime.index,
+                            ["state"] = (int)dailyRuntime.state,
                             ["progressValue"] = SerializeBigInt(dailyRuntime.progressValue),
-                            ["isCompleted"] = dailyRuntime.isCompleted,
                         };
                         break;
 
@@ -42,13 +41,11 @@ namespace Devian
                         {
                             ["missionType"] = (int)MISSION_TYPE.PERIOD,
                             ["missionId"] = periodRuntime.missionId,
-                            ["messageId"] = periodRuntime.messageId,
                             ["missionUid"] = periodRuntime.missionUid,
                             ["periodKey"] = periodRuntime.periodKey,
                             ["day"] = periodRuntime.day,
-                            ["isWaiting"] = periodRuntime.isWaiting,
+                            ["state"] = (int)periodRuntime.state,
                             ["progressValue"] = SerializeBigInt(periodRuntime.progressValue),
-                            ["isCompleted"] = periodRuntime.isCompleted,
                         };
                         break;
                 }
@@ -113,12 +110,9 @@ namespace Devian
                     }
 
                     var missionId = runtimeObj.Value<string>("missionId") ?? string.Empty;
-                    var messageId = runtimeObj.Value<string>("messageId")
-                                    ?? runtimeObj.Value<string>("missionStatId")
-                                    ?? string.Empty;
                     var periodKey = runtimeObj.Value<string>("periodKey") ?? string.Empty;
                     var progressValue = DeserializeBigInt(runtimeObj["progressValue"]);
-                    var isCompleted = runtimeObj.Value<bool?>("isCompleted") ?? false;
+                    var state = DeserializeState(runtimeObj.Value<int?>("state"));
 
                     MissionRuntimeBase runtime;
                     switch (missionType)
@@ -127,13 +121,11 @@ namespace Devian
                             runtime = new MissionRuntimePeriod
                             {
                                 missionId = missionId,
-                                messageId = messageId,
                                 periodKey = periodKey,
                                 missionUid = missionUid,
                                 day = System.Math.Clamp(runtimeObj.Value<int?>("day") ?? 1, 1, 7),
-                                isWaiting = (runtimeObj.Value<bool?>("isWaiting") ?? false) && !isCompleted,
+                                state = state,
                                 progressValue = progressValue,
-                                isCompleted = isCompleted,
                             };
                             break;
 
@@ -141,13 +133,11 @@ namespace Devian
                             runtime = new MissionRuntimeDaily
                             {
                                 missionId = missionId,
-                                messageId = messageId,
                                 periodKey = periodKey,
                                 missionUid = missionUid,
                                 index = runtimeObj.Value<int?>("index") ?? 0,
+                                state = state,
                                 progressValue = progressValue,
-                                isWaiting = false,
-                                isCompleted = isCompleted,
                             };
                             break;
                     }
@@ -158,6 +148,17 @@ namespace Devian
 
             if (storage.nextMissionUid <= 0)
                 storage.nextMissionUid = 1;
+        }
+
+        static MissionRuntimeState DeserializeState(int? raw)
+        {
+            if (!raw.HasValue || !System.Enum.IsDefined(typeof(MissionRuntimeState), raw.Value))
+                return MissionRuntimeState.ACTIVE;
+
+            var state = (MissionRuntimeState)raw.Value;
+            return state == MissionRuntimeState.NONE || state == MissionRuntimeState.CLAIMABLE
+                ? MissionRuntimeState.ACTIVE
+                : state;
         }
 
         static JObject SerializeBigInt(CBigInt value)

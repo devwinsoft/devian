@@ -186,10 +186,7 @@ namespace Devian
                 if (!isEligibleRow(runtimeRow))
                     return true;
 
-                if (!string.Equals(runtime.messageId, runtimeRow!.ConditionMsgId ?? string.Empty, StringComparison.Ordinal))
-                    return true;
-
-                if (runtime.RuntimeType != runtimeRow.achieveType)
+                if (runtime.RuntimeType != runtimeRow!.achieveType)
                     return true;
 
                 if (runtime.isCompleted && runtime.isWaiting)
@@ -244,15 +241,14 @@ namespace Devian
             {
                 if (hasActivationRequirement(nextRow, out _, out _, out _, out _, out _))
                 {
-                    runtime.LevelUpToWaiting(nextRow.Level, toRuntimeIndex(nextRow), nextRow.ConditionMsgId);
+                    runtime.LevelUpToWaiting(nextRow.Level, toRuntimeIndex(nextRow));
                     tryActivateRuntime(runtime, nextRow, GAME_MESSAGE_TYPE.NONE, CBigInt.Zero);
                 }
-                else if (tryResolveRuntimeBinding(nextRow, true, out var nextMessageId, out var nextStatType, out var nextOpType, out var nextConditionOpType, out var nextConditionValue, out var nextReader))
+                else if (tryResolveRuntimeBinding(nextRow, true, out var nextStatType, out var nextOpType, out var nextConditionOpType, out var nextConditionValue, out var nextReader))
                 {
                     runtime.LevelUp(
                         nextRow.Level,
                         toRuntimeIndex(nextRow),
-                        nextMessageId,
                         nextStatType,
                         nextOpType,
                         nextConditionOpType,
@@ -957,7 +953,6 @@ namespace Devian
                 {
                     AchieveType = row.achieveType,
                     AchieveId = existing.achieveId,
-                    MessageId = row.ConditionMsgId,
                     AchieveUid = existing.achieveUid,
                     Level = existing.level,
                     Index = toRuntimeIndex(row),
@@ -974,14 +969,13 @@ namespace Devian
                 });
             }
 
-            if (!tryResolveRuntimeBinding(row, true, out var messageId, out var statType, out var opType, out var conditionOpType, out var conditionValue, out var readProgress))
+            if (!tryResolveRuntimeBinding(row, true, out var statType, out var opType, out var conditionOpType, out var conditionValue, out var readProgress))
                 return null;
 
             return AchieveRuntimeFactory.Restore(new AchieveRuntimeRestoreArgs
             {
                 AchieveType = row.achieveType,
                 AchieveId = existing.achieveId,
-                MessageId = messageId,
                 AchieveUid = existing.achieveUid,
                 Level = existing.level,
                 Index = toRuntimeIndex(row),
@@ -1010,7 +1004,6 @@ namespace Devian
                 {
                     AchieveType = row.achieveType,
                     AchieveId = row.AchieveId,
-                    MessageId = row.ConditionMsgId,
                     Level = row.Level,
                     Index = toRuntimeIndex(row),
                     AchieveUid = achieveUid,
@@ -1025,14 +1018,13 @@ namespace Devian
                 });
             }
 
-            if (!tryResolveRuntimeBinding(row, true, out var messageId, out var statType, out var opType, out var conditionOpType, out var conditionValue, out var readProgress))
+            if (!tryResolveRuntimeBinding(row, true, out var statType, out var opType, out var conditionOpType, out var conditionValue, out var readProgress))
                 return null;
 
             return AchieveRuntimeFactory.Create(new AchieveRuntimeCreateArgs
             {
                 AchieveType = row.achieveType,
                 AchieveId = row.AchieveId,
-                MessageId = messageId,
                 Level = row.Level,
                 Index = toRuntimeIndex(row),
                 AchieveUid = achieveUid,
@@ -1083,11 +1075,10 @@ namespace Devian
                 return false;
             }
 
-            if (!tryResolveRuntimeBinding(row, true, out var messageId, out var statType, out var opType, out var conditionOpType, out var conditionValue, out var readProgress))
+            if (!tryResolveRuntimeBinding(row, true, out var statType, out var opType, out var conditionOpType, out var conditionValue, out var readProgress))
                 return false;
 
             runtime.Bind(
-                messageId,
                 statType,
                 opType,
                 conditionOpType,
@@ -1143,7 +1134,7 @@ namespace Devian
             if (row == null || !row.IsActive)
                 return false;
 
-            return tryResolveRuntimeBinding(row, false, out _, out _, out _, out _, out _, out _);
+            return tryResolveRuntimeBinding(row, false, out _, out _, out _, out _, out _);
         }
 
         bool hasActivationRequirement(
@@ -1332,14 +1323,12 @@ namespace Devian
         bool tryResolveRuntimeBinding(
             AchieveTableRow row,
             bool logError,
-            out string messageId,
             out GAME_MESSAGE_TYPE statType,
             out GAME_MESSAGE_SAVE_TYPE opType,
             out GAME_MESSAGE_OP_TYPE conditionOpType,
             out CBigInt conditionValue,
             out Func<CBigInt> readProgress)
         {
-            messageId = string.Empty;
             statType = GAME_MESSAGE_TYPE.NONE;
             opType = GAME_MESSAGE_SAVE_TYPE.NONE;
             conditionOpType = GAME_MESSAGE_OP_TYPE.GTE;
@@ -1386,7 +1375,6 @@ namespace Devian
                 return false;
             }
 
-            messageId = conditionMsgId;
             statType = message.MessageType;
             opType = message.SaveType;
             conditionOpType = row.ConditionOp;

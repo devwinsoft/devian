@@ -68,8 +68,7 @@ AppliesTo: v10
 - `runtimes: Dictionary<int, AchieveRuntimeBase>`
 
 `AchieveRuntimeBase` 저장 필드:
-- `achieveType`, `achieveId`, `messageId`, `achieveUid`, `level`, `index`, `progressValue`, `isWaiting`, `isCompleted`
-  - `messageId`는 현재 level의 `conditionMsgId`를 저장한다.
+- `achieveType`, `achieveId`, `achieveUid`, `level`, `index`, `progressValue`, `isWaiting`, `isCompleted`
 
 규칙:
 - period 개념 없음 (`periodKey` 없음)

@@ -1,8 +1,10 @@
 using System;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
@@ -11,11 +13,26 @@ namespace Devian
     public sealed class InventoryManager : CompoSingleton<InventoryManager>
     {
         const long DefaultRentalDurationMs = 30L * 24L * 60L * 60L * 1000L;
+        const int AesKeySizeBytes = 32;
+        const int AesIvSizeBytes = 16;
 
         readonly InventoryStorage _storage = new();
         readonly InventoryMessageTrigger _messageTrigger = new();
 
+        [SerializeField] string _initialInventoryCryptoKey = "";
+        [SerializeField] string _initialInventoryCryptoIv = "";
+
         public InventoryStorage Storage => _storage;
+        public string InitialInventoryCryptoKey
+        {
+            get => _initialInventoryCryptoKey;
+            set => _initialInventoryCryptoKey = value ?? string.Empty;
+        }
+        public string InitialInventoryCryptoIv
+        {
+            get => _initialInventoryCryptoIv;
+            set => _initialInventoryCryptoIv = value ?? string.Empty;
+        }
 
         // ── Public API ──
 
@@ -65,7 +82,7 @@ namespace Devian
             return CommonResult.Ok();
         }
 
-        static CommonResult<RewardData[]> parseInitialInventoryRewards()
+        CommonResult<RewardData[]> parseInitialInventoryRewards()
         {
             var setting = Resources.Load<InventorySetting>(InventorySetting.ResourcesPath);
             if (setting == null)
@@ -75,14 +92,151 @@ namespace Devian
                     $"InventorySetting is not available. expected={InventorySetting.DefaultResourcesAssetPath}");
             }
 
-            var json = ((string)setting.InitialInventory)?.Trim() ?? string.Empty;
+            var payload = ((string)setting.InitialInventory)?.Trim() ?? string.Empty;
+            return ParseInitialInventoryRewardsFromPayload(
+                payload,
+                InitialInventoryCryptoKey,
+                InitialInventoryCryptoIv,
+                allowPlainJsonFallback: true);
+        }
+
+        public CommonResult<string> EncryptInitialInventoryJson(string plainJson)
+        {
+            return EncryptInitialInventoryJson(plainJson, InitialInventoryCryptoKey, InitialInventoryCryptoIv);
+        }
+
+        public static CommonResult<string> EncryptInitialInventoryJson(string plainJson, string key, string iv)
+        {
+            var json = (plainJson ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(json))
+                return CommonResult<string>.Success(string.Empty);
+
+            var parse = ParseInitialInventoryRewardsJson(json);
+            if (parse.IsFailure)
+                return CommonResult<string>.Failure(parse.Error!);
+
+            var keyBytesResult = parseCryptoBytes(key, AesKeySizeBytes, "key");
+            if (keyBytesResult.IsFailure)
+                return CommonResult<string>.Failure(keyBytesResult.Error!);
+
+            var ivBytesResult = parseCryptoBytes(iv, AesIvSizeBytes, "iv");
+            if (ivBytesResult.IsFailure)
+                return CommonResult<string>.Failure(ivBytesResult.Error!);
+
+            try
+            {
+                var payload = Crypto.EncryptAes(json, keyBytesResult.Value!, ivBytesResult.Value!);
+                return CommonResult<string>.Success(payload ?? string.Empty);
+            }
+            catch (Exception ex)
+            {
+                return CommonResult<string>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                    $"InitialInventory encryption failed: {ex.Message}");
+            }
+        }
+
+        public CommonResult<string> DecryptInitialInventoryJson(string encryptedPayload)
+        {
+            return DecryptInitialInventoryJson(encryptedPayload, InitialInventoryCryptoKey, InitialInventoryCryptoIv);
+        }
+
+        public static CommonResult<string> DecryptInitialInventoryJson(string encryptedPayload, string key, string iv)
+        {
+            var payload = (encryptedPayload ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(payload))
+                return CommonResult<string>.Success(string.Empty);
+
+            var keyBytesResult = parseCryptoBytes(key, AesKeySizeBytes, "key");
+            if (keyBytesResult.IsFailure)
+                return CommonResult<string>.Failure(keyBytesResult.Error!);
+
+            var ivBytesResult = parseCryptoBytes(iv, AesIvSizeBytes, "iv");
+            if (ivBytesResult.IsFailure)
+                return CommonResult<string>.Failure(ivBytesResult.Error!);
+
+            try
+            {
+                var json = Crypto.DecryptAes(payload, keyBytesResult.Value!, ivBytesResult.Value!) ?? string.Empty;
+                json = json.Trim();
+                if (string.IsNullOrWhiteSpace(json))
+                {
+                    return CommonResult<string>.Failure(
+                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                        "InitialInventory decrypted json is empty.");
+                }
+
+                return CommonResult<string>.Success(json);
+            }
+            catch (Exception ex)
+            {
+                return CommonResult<string>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    $"InitialInventory decryption failed: {ex.Message}");
+            }
+        }
+
+        public CommonResult<RewardData[]> ParseInitialInventoryRewardsFromPayload(string encryptedPayload, bool allowPlainJsonFallback = false)
+        {
+            return ParseInitialInventoryRewardsFromPayload(
+                encryptedPayload,
+                InitialInventoryCryptoKey,
+                InitialInventoryCryptoIv,
+                allowPlainJsonFallback);
+        }
+
+        public static CommonResult<RewardData[]> ParseInitialInventoryRewardsFromPayload(
+            string encryptedPayload,
+            string key,
+            string iv,
+            bool allowPlainJsonFallback = false)
+        {
+            var payload = (encryptedPayload ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(payload))
+                return CommonResult<RewardData[]>.Success(Array.Empty<RewardData>());
+
+            var decrypt = DecryptInitialInventoryJson(payload, key, iv);
+            if (decrypt.IsFailure)
+            {
+                if (!allowPlainJsonFallback)
+                    return CommonResult<RewardData[]>.Failure(decrypt.Error!);
+
+                return ParseInitialInventoryRewardsJson(payload);
+            }
+
+            return ParseInitialInventoryRewardsJson(decrypt.Value ?? string.Empty);
+        }
+
+        public static string SerializeInitialInventoryRewardsJson(RewardData[] rewards)
+        {
+            if (rewards == null || rewards.Length == 0)
+                return "[]";
+
+            var rewardsArray = new JArray();
+            for (var i = 0; i < rewards.Length; i++)
+            {
+                var reward = rewards[i];
+                rewardsArray.Add(new JObject
+                {
+                    ["type"] = reward.Type.ToString(),
+                    ["id"] = reward.Id ?? string.Empty,
+                    ["amount"] = reward.Amount
+                });
+            }
+
+            return rewardsArray.ToString(Formatting.None);
+        }
+
+        public static CommonResult<RewardData[]> ParseInitialInventoryRewardsJson(string json)
+        {
+            var trimmedJson = (json ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(trimmedJson))
                 return CommonResult<RewardData[]>.Success(Array.Empty<RewardData>());
 
             JToken root;
             try
             {
-                root = JToken.Parse(json);
+                root = JToken.Parse(trimmedJson);
             }
             catch (Exception ex)
             {
@@ -132,11 +286,11 @@ namespace Devian
                         $"InitialInventory[{i}].type is invalid: {typeText}");
                 }
 
-                if (rewardType == REWARD_TYPE.CHEST)
+                if (rewardType == REWARD_TYPE.TREASURE)
                 {
                     return CommonResult<RewardData[]>.Failure(
                         COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                        $"InitialInventory[{i}].type does not support CHEST.");
+                        $"InitialInventory[{i}].type does not support TREASURE.");
                 }
 
                 var id = (rewardObj.Value<string>("id") ?? string.Empty).Trim();
@@ -167,6 +321,35 @@ namespace Devian
             }
 
             return CommonResult<RewardData[]>.Success(rewards);
+        }
+
+        static CommonResult<byte[]> parseCryptoBytes(string raw, int expectedLength, string label)
+        {
+            var text = (raw ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                return CommonResult<byte[]>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    $"InitialInventory crypto {label} is empty.");
+            }
+
+            try
+            {
+                var decoded = Convert.FromBase64String(text);
+                if (decoded.Length == expectedLength)
+                    return CommonResult<byte[]>.Success(decoded);
+            }
+            catch
+            {
+            }
+
+            var utf8 = Encoding.UTF8.GetBytes(text);
+            if (utf8.Length == expectedLength)
+                return CommonResult<byte[]>.Success(utf8);
+
+            return CommonResult<byte[]>.Failure(
+                COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                $"InitialInventory crypto {label} must be {expectedLength} bytes (base64 or utf8).");
         }
 
         public CommonResult AddRewards(RewardData[] rewards)

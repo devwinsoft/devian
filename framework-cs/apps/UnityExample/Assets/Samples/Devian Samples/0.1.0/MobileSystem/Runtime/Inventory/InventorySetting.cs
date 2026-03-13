@@ -13,6 +13,6 @@ namespace Devian
         // 프로젝트 에셋 경로 (정본 SSOT)
         public const string DefaultResourcesAssetPath = "Assets/Resources/Devian/InventorySettings.asset";
 
-        [SerializeField] public CString InitialInventory = "[{\"type\":\"CURRENCY\",\"id\":\"GOLD\",\"amount\":1000}]";
+        [SerializeField] public CString InitialInventory = "y7oR9tQzvr+hQd9BFh2hd6U0/B5itdaLwmVEboGI3xa7sJzLx9Fhlr1IYGqCCU6w";
     }
 }

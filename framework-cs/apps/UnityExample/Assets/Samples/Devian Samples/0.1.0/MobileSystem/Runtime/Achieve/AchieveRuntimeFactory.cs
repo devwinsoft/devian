@@ -7,7 +7,6 @@ namespace Devian
     {
         public ACHIEVE_TYPE AchieveType { get; set; }
         public string AchieveId { get; set; }
-        public string MessageId { get; set; }
         public int Level { get; set; }
         public int AchieveUid { get; set; }
         public int Index { get; set; }
@@ -25,7 +24,6 @@ namespace Devian
     {
         public ACHIEVE_TYPE AchieveType { get; set; }
         public string AchieveId { get; set; }
-        public string MessageId { get; set; }
         public int Level { get; set; }
         public int AchieveUid { get; set; }
         public int Index { get; set; }
@@ -50,7 +48,6 @@ namespace Devian
                 return null;
 
             runtime.achieveId = args.AchieveId ?? string.Empty;
-            runtime.messageId = args.MessageId ?? string.Empty;
             runtime.achieveUid = args.AchieveUid;
             runtime.level = args.Level;
             runtime.index = args.Index;
@@ -61,14 +58,12 @@ namespace Devian
             if (args.IsWaiting)
             {
                 runtime.BindWaiting(
-                    args.MessageId,
                     args.OnChanged,
                     args.OnClaimable);
             }
             else
             {
                 runtime.Bind(
-                    args.MessageId,
                     args.StatType,
                     args.OpType,
                     args.ConditionOpType,
@@ -88,7 +83,6 @@ namespace Devian
                 return null;
 
             runtime.achieveId = args.AchieveId ?? string.Empty;
-            runtime.messageId = args.MessageId ?? string.Empty;
             runtime.achieveUid = args.AchieveUid;
             runtime.level = args.Level;
             runtime.index = args.Index;
@@ -99,14 +93,12 @@ namespace Devian
             if (args.IsWaiting && !args.IsCompleted)
             {
                 runtime.BindWaiting(
-                    args.MessageId,
                     args.OnChanged,
                     args.OnClaimable);
             }
             else
             {
                 runtime.Bind(
-                    args.MessageId,
                     args.StatType,
                     args.OpType,
                     args.ConditionOpType,

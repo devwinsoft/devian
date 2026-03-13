@@ -44,18 +44,21 @@ public static class MissionRuntimeFactory
 
 `DailyMissionRuntimeCreateArgs`
 
-- `MissionId`, `ConditionMsgId`
-- `PeriodKey`, `MissionUid`, `Index`
-- `MessageType`, `SaveType`, `ConditionOp`, `ConditionValue`
-- `SubscribeTrigger`, `UnsubscribeTrigger`, callbacks
+- `MissionId`, `PeriodKey`, `MissionUid`, `Index`
+- `StatType`, `OpType`, `ConditionOpType`, `ConditionValue`
+- `SubscribeTrigger`, `UnsubscribeTrigger`, `ReadExternalProgress`, callbacks
 
 `PeriodMissionRuntimeCreateArgs`
 
-- daily args + `IsWaiting`
+- daily args + `Day`, `IsWaiting`
 
 `MissionRuntimeRestoreArgs`
 
-- create args + `ProgressValue`, `IsWaiting`, `IsCompleted`
+- `MissionType` + create args + `ProgressValue`, `State`
+
+참고:
+- `ConditionMsgId`/`MessageId`는 Args에 포함하지 않는다. scheduler가 테이블에서 조회하여 `Bind()` 파라미터(`StatType`, `OpType` 등)로 전달한다.
+- RestoreArgs의 `State`는 `MissionRuntimeState` enum이다(WAIT/ACTIVE/COMPLETED).
 
 ---
 
@@ -68,7 +71,7 @@ public static class MissionRuntimeFactory
   - `progressValue = 0`
   - 기본 WAIT (`day == 1` row만 scheduler에서 즉시 ACTIVE 전환 가능)
 - Restore:
-  - 저장된 progress/wait/completed 상태를 그대로 사용
+  - 저장된 progress/state를 그대로 사용
 
 ---
 

@@ -10,30 +10,30 @@ using Devian.Domain.Game;
 
 namespace Devian
 {
-    /// <summary>Selector for ITEM_CHEST_ID</summary>
-    public class Game_ITEM_CHEST_ID_Selector : BaseEditorID_Selector
+    /// <summary>Selector for ITEM_TREASURE_ID</summary>
+    public class Game_ITEM_TREASURE_ID_Selector : BaseEditorID_Selector
     {
-        protected override string GetDisplayTypeName() => "ITEM_CHEST";
+        protected override string GetDisplayTypeName() => "ITEM_TREASURE";
 
         public override void Reload()
         {
             ClearItems();
-            TB_ITEM_CHEST.Clear();
+            TB_ITEM_TREASURE.Clear();
 
-            var textAssets = AssetManager.FindAssets<TextAsset>("ITEM_CHEST");
+            var textAssets = AssetManager.FindAssets<TextAsset>("ITEM_TREASURE");
             foreach (var ta in textAssets)
             {
                 var assetPath = AssetDatabase.GetAssetPath(ta);
                 if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                TB_ITEM_CHEST.LoadFromNdjson(ta.text);
+                TB_ITEM_TREASURE.LoadFromNdjson(ta.text);
                 break;
             }
 
-            foreach (var groupKey in TB_ITEM_CHEST.GetGroupKeys())
+            foreach (var groupKey in TB_ITEM_TREASURE.GetGroupKeys())
             {
-                if (TB_ITEM_CHEST.TryGetGroupPrimaryKey(groupKey, out var pk))
+                if (TB_ITEM_TREASURE.TryGetGroupPrimaryKey(groupKey, out var pk))
                 {
                     // key = PK string (applied to Value), display = groupKey
                     AddItem(pk.ToString(), groupKey.ToString());
@@ -42,14 +42,14 @@ namespace Devian
         }
     }
 
-    /// <summary>PropertyDrawer for ITEM_CHEST_ID</summary>
-    [CustomPropertyDrawer(typeof(ITEM_CHEST_ID))]
-    public class Game_ITEM_CHEST_ID_Drawer : BaseEditorID_Drawer<Game_ITEM_CHEST_ID_Selector>
+    /// <summary>PropertyDrawer for ITEM_TREASURE_ID</summary>
+    [CustomPropertyDrawer(typeof(ITEM_TREASURE_ID))]
+    public class Game_ITEM_TREASURE_ID_Drawer : BaseEditorID_Drawer<Game_ITEM_TREASURE_ID_Selector>
     {
-        protected override Game_ITEM_CHEST_ID_Selector GetSelector()
+        protected override Game_ITEM_TREASURE_ID_Selector GetSelector()
         {
-            var w = ScriptableObject.CreateInstance<Game_ITEM_CHEST_ID_Selector>();
-            w.titleContent = new GUIContent("Select ITEM_CHEST");
+            var w = ScriptableObject.CreateInstance<Game_ITEM_TREASURE_ID_Selector>();
+            w.titleContent = new GUIContent("Select ITEM_TREASURE");
             w.ShowUtility();
             return w;
         }
@@ -60,17 +60,17 @@ namespace Devian
             if (valueProp.propertyType == SerializedPropertyType.String)
             {
                 var pk = valueProp.stringValue ?? string.Empty;
-                TB_ITEM_CHEST.Clear();
-                var textAssets = AssetManager.FindAssets<TextAsset>("ITEM_CHEST");
+                TB_ITEM_TREASURE.Clear();
+                var textAssets = AssetManager.FindAssets<TextAsset>("ITEM_TREASURE");
                 foreach (var ta in textAssets)
                 {
                     var assetPath = AssetDatabase.GetAssetPath(ta);
                     if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))
                         continue;
-                    TB_ITEM_CHEST.LoadFromNdjson(ta.text);
+                    TB_ITEM_TREASURE.LoadFromNdjson(ta.text);
                     break;
                 }
-                if (TB_ITEM_CHEST.TryGetGroupKeyByKey(pk, out var groupKey))
+                if (TB_ITEM_TREASURE.TryGetGroupKeyByKey(pk, out var groupKey))
                     return groupKey.ToString();
                 return pk;
             }

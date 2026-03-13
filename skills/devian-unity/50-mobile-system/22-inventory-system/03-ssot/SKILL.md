@@ -142,7 +142,11 @@ InventoryStorage가 hero/equip 조회 + AbilityUnitHero에 위임하는 편의 �
 - 초기 지급 데이터 소스는 `InventorySetting` ScriptableObject다.
   - Resources 경로: `Devian/InventorySettings`
   - 프로젝트 에셋 경로: `Assets/Resources/Devian/InventorySettings.asset`
-- `InventoryManager.FirstInitAsync()`는 위 에셋의 `InitialInventory(CString)`를 읽는다.
+- `InventoryManager.FirstInitAsync()`는 위 에셋의 `InitialInventory(CString)` payload를 읽는다.
+- payload는 `InventoryManager`가 소유한 key/iv로 AES 복호화한다.
+  - `InitialInventoryCryptoKey` (public property, serialized backing field)
+  - `InitialInventoryCryptoIv` (public property, serialized backing field)
+- 복호화된 원문 JSON을 `RewardData[]` 계약으로 파싱한다.
 - 허용 JSON:
   - `RewardData[]`
   - `{ "rewards": RewardData[] }`

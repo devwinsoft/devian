@@ -12,13 +12,13 @@ using UnityEngine;
 
 namespace Devian.Domain.Game
 {
-    public static partial class TB_ITEM_CHEST
+    public static partial class TB_ITEM_TREASURE
     {
         private static global::Devian.TableFormat _loadedFormat;
         private static bool _isLoaded;
 
         /// <summary>
-        /// Preload ITEM_CHEST table via TableManager.
+        /// Preload ITEM_TREASURE table via TableManager.
         /// TableManager handles: TextAsset load + TB insert + cache.
         /// </summary>
         /// <param name="key">Addressables key to load TextAsset</param>
@@ -39,7 +39,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Unload ITEM_CHEST table and clear data.
+        /// Unload ITEM_TREASURE table and clear data.
         /// </summary>
         public static void Unload()
         {
@@ -48,7 +48,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Check if ITEM_CHEST table is loaded.
+        /// Check if ITEM_TREASURE table is loaded.
         /// </summary>
         public static bool IsLoaded => _isLoaded;
 

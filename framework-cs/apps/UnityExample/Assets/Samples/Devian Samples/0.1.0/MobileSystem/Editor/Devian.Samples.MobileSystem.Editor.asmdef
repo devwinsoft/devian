@@ -3,7 +3,9 @@
     "rootNamespace": "Devian",
     "references": [
         "Devian.Samples.MobileSystem",
+        "Devian.Core",
         "Devian.Domain.Common",
+        "Devian.Domain.Game",
         "Devian.Unity.Editor"
     ],
     "includePlatforms": [

@@ -84,10 +84,18 @@ AppliesTo: v10
 
 ## C) Runtime State
 
-- `WAIT`: `isWaiting == true`
-- `ACTIVE`: `!isWaiting && !isCompleted && !IsClaimable`
-- `CLAIMABLE`: `!isWaiting && !isCompleted && IsClaimable`
-- `COMPLETED`: `isCompleted == true`
+`MissionRuntimeState` enum (lifecycle 순서):
+
+| 값 | int | 설명 |
+|---|---|---|
+| `NONE` | 0 | runtime 미존재 (필드에 저장 안 됨) |
+| `WAIT` | 1 | 대기 (Period day 미도달) |
+| `ACTIVE` | 2 | 진행 중 |
+| `CLAIMABLE` | 3 | 보상 수령 가능 (파생 상태, 필드에 저장 안 됨) |
+| `COMPLETED` | 4 | 완료 |
+
+- `state` 필드: `WAIT`, `ACTIVE`, `COMPLETED`만 저장한다.
+- `CLAIMABLE`은 `state == ACTIVE && progress가 조건 충족` 시 `GetState()`가 반환하는 파생 상태다.
 
 규칙:
 - `saveType == NONE` row는 runtime을 생성하지 않는다.
@@ -137,8 +145,9 @@ runtime 반영:
 
 runtime 저장 규칙:
 
-- `missionId`, `conditionMsgId`, `missionUid`, `isWaiting`, `isCompleted`
+- `missionId`, `missionUid`, `state`
 - `periodKey`, `index`, `progressValue`
+- `conditionMsgId`는 저장하지 않는다(`missionId`로 테이블에서 조회)
 
 ---
 

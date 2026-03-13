@@ -13,6 +13,7 @@ namespace Devian
         public SaveRecordSummary LocalSummary { get; }
         public SaveRecordSummary CloudSummary { get; }
         public VersionCheckResult VersionResult { get; }
+        public bool IsInitial => SyncState == SyncState.Initial;
         public bool IsConflict => SyncState == SyncState.Conflict;
         public bool IsRecommendUpdate => VersionResult == VersionCheckResult.RecommendUpdate;
         public bool IsForceUpdate => VersionResult == VersionCheckResult.ForceUpdate;
@@ -81,7 +82,32 @@ namespace Devian
             if (login.IsFailure)
                 return CommonResult<LoginInitializeResult>.Failure(login.Error!);
 
-            return await syncAndInitializeAsync(versionGate.Value, ct);
+            var initialize = await syncAndInitializeAsync(
+                versionGate.Value,
+                ct);
+            if (initialize.IsFailure)
+                return initialize;
+
+            if (initialize.Value.IsInitial)
+            {
+                var firstInit = await InventoryManager.Instance.FirstInitAsync(ct);
+                await yieldMainThreadAsync(ct);
+                if (firstInit.IsFailure)
+                {
+                    Debug.LogError($"[{Tag}] FirstInitAsync failed: code={firstInit.Error.Code}, message={firstInit.Error.Message}");
+                    return CommonResult<LoginInitializeResult>.Failure(firstInit.Error!);
+                }
+
+                var saveInit = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
+                await yieldMainThreadAsync(ct);
+                if (saveInit.IsFailure)
+                {
+                    Debug.LogError($"[{Tag}] Initial save failed: code={saveInit.Error.Code}, message={saveInit.Error.Message}");
+                    return CommonResult<LoginInitializeResult>.Failure(saveInit.Error!);
+                }
+            }
+
+            return initialize;
         }
 
         public async Task<CommonResult<LoginInitializeResult>> ResolveConflictAndInitializeAsync(
@@ -182,7 +208,9 @@ namespace Devian
                 var loginType = AccountManager.Instance.CurrentLoginType;
                 if (loginType == LoginType.NONE)
                 {
-                    var localInit = await syncAndInitializeAsync(versionResult, ct);
+                    var localInit = await syncAndInitializeAsync(
+                        versionResult,
+                        ct);
                     await yieldMainThreadAsync(ct);
                     if (localInit.IsFailure)
                         return localInit;
@@ -191,10 +219,11 @@ namespace Devian
                     return localInit;
                 }
 
-                var canProceedWithoutRuntimeAuth = AccountManager.Instance.IsLocalOnlySaveMode;
-                if (!canProceedWithoutRuntimeAuth)
+                if (!AccountManager.Instance.IsLocalOnlySaveMode)
                 {
-                    var localInit = await syncAndInitializeAsync(versionResult, ct);
+                    var localInit = await syncAndInitializeAsync(
+                        versionResult,
+                        ct);
                     await yieldMainThreadAsync(ct);
                     if (localInit.IsFailure)
                         return localInit;
@@ -203,7 +232,7 @@ namespace Devian
                     return localInit;
                 }
 
-                Debug.Log($"[{Tag}] Proceeding without authenticated runtime session for local-only loginType={loginType}.");
+                Debug.Log($"[{Tag}] Proceeding in local-only mode for loginType={loginType}.");
             }
 
             return await syncAndInitializeAsync(versionResult, ct);
@@ -236,26 +265,6 @@ namespace Devian
                         versionResult));
             }
 
-            if (sync.Value.State == SyncState.Initial)
-            {
-                var firstInit = await InventoryManager.Instance.FirstInitAsync(ct);
-                await yieldMainThreadAsync(ct);
-                if (firstInit.IsFailure)
-                {
-                    Debug.LogError($"[{Tag}] FirstInitAsync failed: code={firstInit.Error.Code}, message={firstInit.Error.Message}");
-                    return CommonResult<LoginInitializeResult>.Failure(firstInit.Error!);
-                }
-
-                // 초기 지급 직후 즉시 저장하여 이후 단계 실패 시 지급 손실을 방지한다.
-                var saveInit = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
-                await yieldMainThreadAsync(ct);
-                if (saveInit.IsFailure)
-                {
-                    Debug.LogError($"[{Tag}] Initial save failed: code={saveInit.Error.Code}, message={saveInit.Error.Message}");
-                    return CommonResult<LoginInitializeResult>.Failure(saveInit.Error!);
-                }
-            }
-
             return await syncGameStateAsync(versionResult, sync.Value, ct);
         }
 
@@ -264,7 +273,7 @@ namespace Devian
             SyncResult sync,
             CancellationToken ct)
         {
-            var syncPurchase = await PurchaseManager.Instance.SyncAsync(ct: ct);
+            var syncPurchase = await PurchaseManager.Instance.SyncAsync();
             await yieldMainThreadAsync(ct);
             if (syncPurchase.IsFailure)
             {
@@ -296,9 +305,6 @@ namespace Devian
                 {
                     Debug.LogWarning($"[{Tag}] RefundAsync failed: {result.RefundError.Code}: {result.RefundError.Message}");
                 }
-
-                if (result.EntitlementsError != null)
-                    Debug.LogWarning($"[{Tag}] SyncEntitlementsAsync failed: {result.EntitlementsError.Code}: {result.EntitlementsError.Message}");
 
                 if (result.SaveError != null)
                     Debug.LogWarning($"[{Tag}] SaveGameStorageAsync failed: {result.SaveError.Code}: {result.SaveError.Message}");

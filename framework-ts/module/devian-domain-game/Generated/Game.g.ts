@@ -129,7 +129,7 @@ export enum REWARD_TYPE {
     HERO = 3,
     RENTAL = 4,
     PASS = 5,
-    CHEST = 6,
+    TREASURE = 6,
 }
 
 /** ADVERTISE_FORMAT enum */
@@ -217,7 +217,7 @@ export interface ITEM_CARD extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface ITEM_CHEST extends IEntityKey<string> {
+export interface ITEM_TREASURE extends IEntityKey<string> {
     ChestNum: string;
     ChestId: string;
     NameId: string;
@@ -533,9 +533,9 @@ export class TB_ITEM_CARD {
     }
 }
 
-export class TB_ITEM_CHEST {
-    private static _dict: Map<string, ITEM_CHEST> = new Map();
-    private static _list: ITEM_CHEST[] = [];
+export class TB_ITEM_TREASURE {
+    private static _dict: Map<string, ITEM_TREASURE> = new Map();
+    private static _list: ITEM_TREASURE[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -544,9 +544,9 @@ export class TB_ITEM_CHEST {
         this._list = [];
     }
 
-    static getAll(): readonly ITEM_CHEST[] { return this._list; }
+    static getAll(): readonly ITEM_TREASURE[] { return this._list; }
 
-    static get(key: string): ITEM_CHEST | undefined {
+    static get(key: string): ITEM_TREASURE | undefined {
         return this._dict.get(key);
     }
 
@@ -558,7 +558,7 @@ export class TB_ITEM_CHEST {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as ITEM_CHEST;
+            const row = JSON.parse(line) as ITEM_TREASURE;
             this._list.push(row);
             this._dict.set(row.ChestNum, row);
         }

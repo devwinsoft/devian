@@ -6,9 +6,9 @@ namespace Devian
     public enum MissionRuntimeState
     {
         NONE = 0,
-        ACTIVE = 1,
-        CLAIMABLE = 2,
-        COMPLETED = 3,
-        WAIT = 4,
+        WAIT = 1,
+        ACTIVE = 2,
+        CLAIMABLE = 3,
+        COMPLETED = 4,
     }
 }

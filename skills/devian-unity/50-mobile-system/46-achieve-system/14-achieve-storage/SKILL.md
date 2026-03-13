@@ -52,7 +52,6 @@ AppliesTo: v10
       {
         "achieveType": 1,
         "achieveId": "...",
-        "messageId": "...", // runtime의 conditionMsgId
         "achieveUid": 1,
         "level": 1,
         "index": 0,

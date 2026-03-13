@@ -17,7 +17,7 @@ AppliesTo: v10
 - RemoteData 초기화 (`RemoteDataManager.InitializeAsync`) — 버전 체크 + 서버 UTC
 - 저장 동기화 (`SaveDataManager.SyncGameStorageAsync`)
 - 충돌 해소 + 재초기화 (`ResolveConflictAndInitializeAsync`)
-- 초기 지급 (`InventoryManager.FirstInitAsync`) + 저장
+- 초기 상태 판별 (`LoginInitializeResult.IsInitial`) — 호출자가 `InventoryManager.FirstInitAsync`를 외부에서 실행
 - 게임 시스템 초기화 (Mission/Achieve/Ad)
 - 시즌 전환 보상 sync (`LeaderboardManager.SyncSeasonTransitionRewardsAsync`)
 - 최종 저장 (`SaveDataManager.SaveGameStorageAsync`)
@@ -51,6 +51,7 @@ AppliesTo: v10
 
 `LoginInitializeResult`:
 - `SyncState` (`Success` / `Initial` / `Conflict`)
+- `IsInitial`
 - `IsConflict`
 - `VersionResult` (`Success` / `RecommendUpdate` / `ForceUpdate`)
 - `IsRecommendUpdate`, `IsForceUpdate`
@@ -69,7 +70,7 @@ fatal (실패 반환):
 - 계정 로그인/세션 복구 실패
 - 저장 동기화 실패
 - Resolve 후 재충돌(명시적 resolve 경로)
-- 초기 지급/저장 실패
+- 초기 지급/저장 실패 (호출자 책임)
 - Mission/Achieve 초기화 실패
 - 최종 저장 실패
 
@@ -95,6 +96,7 @@ non-fatal (로그만 남기고 진행):
 - `SceneLoading`은 부트 시 `EnsureRuntimeSessionAndInitializeAsync`를 호출한다.
 - `UICanvasLoading`은 버튼 로그인 시 `LoginAndInitializeAsync`를 호출한다.
 - `Conflict` 감지/선택 UI는 Scene/UI 레이어에서 처리하고, 실제 해소는 `ResolveConflictAndInitializeAsync`를 호출한다.
+- 초기 지급: `LoginAndInitializeAsync`는 `IsInitial` 시 `InventoryManager.FirstInitAsync` + `SaveDataManager.SaveGameStorageAsync`를 내부 수행한다. `EnsureRuntimeSessionAndInitializeAsync` / `ResolveConflictAndInitializeAsync` 호출자는 `result.IsInitial`을 확인한 뒤 외부에서 직접 수행한다.
 
 
 ## Implementation Location (3-path mirror)

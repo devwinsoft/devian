@@ -31,6 +31,10 @@ public sealed class InventoryManager : MonoBehaviour
     readonly InventoryStorage _storage = new();
     readonly InventoryMessageTrigger _messageTrigger = new();
     public InventoryStorage Storage => _storage;
+    [SerializeField] string _initialInventoryCryptoKey;
+    [SerializeField] string _initialInventoryCryptoIv;
+    public string InitialInventoryCryptoKey { get; set; }
+    public string InitialInventoryCryptoIv { get; set; }
 
     public static InventoryManager Instance
         => CompoSingleton<InventoryManager>.Instance;
@@ -83,8 +87,14 @@ CompoSingleton<InventoryManager>.Instance
   - 성공 시 `CommonResult.Ok()`를 반환한다.
 - `FirstInitAsync()`로 초기 지급을 처리한다.
   - `InventorySetting` (`Assets/Resources/Devian/InventorySettings.asset`)을 `Resources.Load`로 읽는다.
-  - `InitialInventory(CString)` JSON을 파싱/검증한다.
+  - `InitialInventory(CString)` payload를 읽는다.
+  - `InventoryManager.InitialInventoryCryptoKey` / `InventoryManager.InitialInventoryCryptoIv`로 AES 복호화한다.
+  - 복호화된 `RewardData[]` JSON을 파싱/검증한다.
   - 파싱 성공 시 `AddRewards`로 적용한다.
+  - `LoginManager`는 `FirstInitAsync`를 내부 호출하지 않는다. 호출자가 `LoginInitializeResult.IsInitial`을 확인한 뒤 외부에서 실행한다.
+- InitialInventory 암복호화 key/iv를 소유한다.
+  - key/iv는 `InventoryManager`의 serializable field + public property 정본이다.
+  - 인스펙터(CustomEditor)에서 `Generate key iv` 버튼으로 key/iv를 새로 생성할 수 있다.
 - 수량 조회를 제공한다.
   - `type=REWARD_TYPE.CURRENCY`: 잔고 조회
   - `type=REWARD_TYPE.EQUIP`: 해당 `equipId`를 가진 인스턴스 수 반환
@@ -210,6 +220,10 @@ readonly InventoryStorage _storage = new();
 - 영웅 상태는 `_storage.Heroes[heroId]` → `AbilityUnitHero`가 전담한다.
 - 렌탈 상태는 `_storage.Rentals[rentalTypeId]` → `long`(expiresAtClientUtcMs)으로 관리한다.
 - 시즌패스 상태는 `_storage.Passes[passId]` → `bool`(owned)으로 관리한다.
+- 초기 지급 암복호화 key/iv는 `_initialInventoryCryptoKey`, `_initialInventoryCryptoIv`(serialized)로 관리한다.
+- 외부 참조용 public property:
+  - `InitialInventoryCryptoKey`
+  - `InitialInventoryCryptoIv`
 - 장비 보유 = itemUid(들) 존재. `GetEquipsByEquipId(equipId)`로 equipId별 인스턴스 조회
 - 카드 수량 = `this[STAT_TYPE.CARD_AMOUNT]` (AbilityCard)
 - 영웅 수량 = `this[STAT_TYPE.UNIT_AMOUNT]` (AbilityUnitHero)
