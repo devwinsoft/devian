@@ -15,9 +15,10 @@ namespace Devian
     [Serializable]
     public sealed class ShopStorage
     {
-        public int schemaVersion = 6;
+        public int schemaVersion = 8;
         public Dictionary<string, int> productRemainCounts = new();
-        public Dictionary<string, long> adsCatalogResetStartedAtUtcMsByCatalog = new();
+        public Dictionary<string, long> autoRefreshUtcMsByCatalog = new();
+        public Dictionary<string, long> adsRefreshUtcMsByCatalog = new();
         public List<ShopDailyProductState> dailyCatalogProducts = new();
 
         [NonSerialized]
@@ -95,34 +96,64 @@ namespace Devian
             _legacyPurchaseCounts.Clear();
         }
 
-        public long GetAdsCatalogResetStartedAtUtcMs(SHOP_CATALOG_TYPE catalogType)
+        public long GetAutoRefreshUtcMs(SHOP_CATALOG_TYPE catalogType)
         {
             var key = normalizeCatalogKey(catalogType);
             if (string.IsNullOrEmpty(key))
                 return 0L;
 
-            if (!adsCatalogResetStartedAtUtcMsByCatalog.TryGetValue(key, out var startedAtUtcMs))
+            if (!autoRefreshUtcMsByCatalog.TryGetValue(key, out var refreshUtcMs))
                 return 0L;
 
-            return startedAtUtcMs > 0L ? startedAtUtcMs : 0L;
+            return refreshUtcMs > 0L ? refreshUtcMs : 0L;
         }
 
-        public void SetAdsCatalogResetStartedAtUtcMs(SHOP_CATALOG_TYPE catalogType, long startedAtUtcMs)
+        public void SetAutoRefreshUtcMs(SHOP_CATALOG_TYPE catalogType, long utcMs)
         {
             var key = normalizeCatalogKey(catalogType);
             if (string.IsNullOrEmpty(key))
                 return;
 
-            adsCatalogResetStartedAtUtcMsByCatalog[key] = startedAtUtcMs > 0L ? startedAtUtcMs : 0L;
+            autoRefreshUtcMsByCatalog[key] = utcMs > 0L ? utcMs : 0L;
         }
 
-        public void ClearAdsCatalogResetStartedAtUtcMs(SHOP_CATALOG_TYPE catalogType)
+        public void ClearAutoRefreshUtcMs(SHOP_CATALOG_TYPE catalogType)
         {
             var key = normalizeCatalogKey(catalogType);
             if (string.IsNullOrEmpty(key))
                 return;
 
-            adsCatalogResetStartedAtUtcMsByCatalog.Remove(key);
+            autoRefreshUtcMsByCatalog.Remove(key);
+        }
+
+        public long GetAdsRefreshUtcMs(SHOP_CATALOG_TYPE catalogType)
+        {
+            var key = normalizeCatalogKey(catalogType);
+            if (string.IsNullOrEmpty(key))
+                return 0L;
+
+            if (!adsRefreshUtcMsByCatalog.TryGetValue(key, out var refreshUtcMs))
+                return 0L;
+
+            return refreshUtcMs > 0L ? refreshUtcMs : 0L;
+        }
+
+        public void SetAdsRefreshUtcMs(SHOP_CATALOG_TYPE catalogType, long utcMs)
+        {
+            var key = normalizeCatalogKey(catalogType);
+            if (string.IsNullOrEmpty(key))
+                return;
+
+            adsRefreshUtcMsByCatalog[key] = utcMs > 0L ? utcMs : 0L;
+        }
+
+        public void ClearAdsRefreshUtcMs(SHOP_CATALOG_TYPE catalogType)
+        {
+            var key = normalizeCatalogKey(catalogType);
+            if (string.IsNullOrEmpty(key))
+                return;
+
+            adsRefreshUtcMsByCatalog.Remove(key);
         }
 
         public IReadOnlyList<ShopDailyProductState> GetDailyCatalogProducts()
@@ -230,9 +261,10 @@ namespace Devian
 
         public void Clear()
         {
-            schemaVersion = 6;
+            schemaVersion = 8;
             productRemainCounts.Clear();
-            adsCatalogResetStartedAtUtcMsByCatalog.Clear();
+            autoRefreshUtcMsByCatalog.Clear();
+            adsRefreshUtcMsByCatalog.Clear();
             dailyCatalogProducts.Clear();
             _legacyPurchaseCounts.Clear();
         }

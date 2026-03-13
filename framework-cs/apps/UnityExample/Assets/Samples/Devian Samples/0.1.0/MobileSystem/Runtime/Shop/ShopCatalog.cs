@@ -12,6 +12,7 @@ namespace Devian
         IReadOnlyList<ShopProductBase> _products = EmptyProducts;
         readonly Dictionary<string, ShopProductBase> _productsByShopId = new(StringComparer.Ordinal);
         bool _initialized;
+        protected long remainRefreshTimeMs;
 
         protected ShopCatalogBase(SHOP_CATALOG_TYPE catalogType)
         {
@@ -19,6 +20,8 @@ namespace Devian
         }
 
         public SHOP_CATALOG_TYPE CatalogType { get; }
+        public virtual int autoRefreshDay => 0;
+        public long RemainRefreshTimeMs => remainRefreshTimeMs > 0L ? remainRefreshTimeMs : 0L;
 
         public void Initialize()
         {
@@ -47,6 +50,11 @@ namespace Devian
             return _productsByShopId.TryGetValue(normalizedShopId, out var product)
                 ? product
                 : null;
+        }
+
+        internal void SetRemainRefreshTimeMs(long remainTimeMs)
+        {
+            remainRefreshTimeMs = remainTimeMs > 0L ? remainTimeMs : 0L;
         }
 
         protected static string NormalizeShopId(string shopId)
@@ -184,6 +192,7 @@ namespace Devian
         const int DailyDiscountProductCount = 3;
         readonly ShopStorage _storage;
         readonly IReadOnlyList<ShopProductBase> _prebuiltProducts;
+        public override int autoRefreshDay => 1;
 
         public ShopCatalogDaily()
             : this(storage: null, products: null)
@@ -217,10 +226,10 @@ namespace Devian
 
         static IReadOnlyList<ShopProductBase> loadOrCreateDailyProducts(ShopStorage storage)
         {
-            if (tryBuildDailyProductsFromStorage(storage, out var storedProducts))
+            var rows = TB_SHOP_DAILY.GetAll();
+            if (tryBuildDailyProductsFromStorage(storage, rows, out var storedProducts))
                 return storedProducts;
 
-            var rows = TB_SHOP_DAILY.GetAll();
             var products = createDailyProductsFromRows(rows, DailySelectableProductCount, DailyDiscountProductCount);
 
             if (storage != null)
@@ -232,7 +241,10 @@ namespace Devian
             return products;
         }
 
-        static bool tryBuildDailyProductsFromStorage(ShopStorage storage, out IReadOnlyList<ShopProductBase> products)
+        static bool tryBuildDailyProductsFromStorage(
+            ShopStorage storage,
+            IReadOnlyList<SHOP_DAILY> rows,
+            out IReadOnlyList<ShopProductBase> products)
         {
             products = null;
             if (storage == null)
@@ -242,7 +254,7 @@ namespace Devian
             if (states == null || states.Count <= 0)
                 return false;
 
-            var list = new List<ShopProductBase>(states.Count);
+            var list = new List<ShopProductBase>(states.Count + 4);
             var seenShopIds = new HashSet<string>(StringComparer.Ordinal);
             for (var i = 0; i < states.Count; i++)
             {
@@ -261,6 +273,9 @@ namespace Devian
                 if (row == null)
                     return false;
 
+                if (isAdsOrFreeCurrencyType(row.CurrencyType))
+                    return false;
+
                 var product = ShopProductFactory.CreateDailyProduct(row, normalizeDiscountType(state.discountType));
                 if (product == null)
                     return false;
@@ -269,9 +284,10 @@ namespace Devian
                 list.Add(product);
             }
 
-            if (list.Count <= 0)
+            if (list.Count != DailySelectableProductCount)
                 return false;
 
+            appendDailyFixedAdsFreeProducts(list, rows, seenShopIds);
             products = list;
             return true;
         }
@@ -286,7 +302,7 @@ namespace Devian
             for (var i = 0; i < products.Count; i++)
             {
                 var product = products[i];
-                if (product == null || product.CatalogType != SHOP_CATALOG_TYPE.DAILY)
+                if (!isDailyStoredProduct(product))
                     continue;
 
                 var normalizedShopId = NormalizeShopId(product.ShopId);
@@ -314,7 +330,8 @@ namespace Devian
         {
             var selectedRows = selectDailyRows(rows, targetCount);
             var discountTypesByShopId = selectDailyDiscountTypes(selectedRows, targetDiscountCount);
-            var products = new List<ShopProductBase>(selectedRows.Count);
+            var products = new List<ShopProductBase>(selectedRows.Count + 4);
+            var seenShopIds = new HashSet<string>(StringComparer.Ordinal);
             for (var i = 0; i < selectedRows.Count; i++)
             {
                 var row = selectedRows[i];
@@ -322,15 +339,21 @@ namespace Devian
                     continue;
 
                 var normalizedShopId = NormalizeShopId(row.ShopId);
+                if (string.IsNullOrEmpty(normalizedShopId))
+                    continue;
+
+                if (!seenShopIds.Add(normalizedShopId))
+                    continue;
+
                 var discountType = SHOP_DISCOUNT_TYPE.NONE;
-                if (!string.IsNullOrEmpty(normalizedShopId))
-                    discountTypesByShopId.TryGetValue(normalizedShopId, out discountType);
+                discountTypesByShopId.TryGetValue(normalizedShopId, out discountType);
 
                 var product = ShopProductFactory.CreateDailyProduct(row, discountType);
                 if (product != null)
                     products.Add(product);
             }
 
+            appendDailyFixedAdsFreeProducts(products, rows, seenShopIds);
             return products;
         }
 
@@ -347,6 +370,9 @@ namespace Devian
             {
                 var row = rows[i];
                 if (row == null || string.IsNullOrWhiteSpace(row.ShopId))
+                    continue;
+
+                if (isAdsOrFreeCurrencyType(row.CurrencyType))
                     continue;
 
                 var normalizedShopId = row.ShopId.Trim();
@@ -429,7 +455,48 @@ namespace Devian
             if (row == null || string.IsNullOrWhiteSpace(row.ShopId))
                 return false;
 
+            if (isAdsOrFreeCurrencyType(row.CurrencyType))
+                return false;
+
             return sanitizeDailySelectRate(row.SelectRate) > 0f;
+        }
+
+        static void appendDailyFixedAdsFreeProducts(
+            List<ShopProductBase> products,
+            IReadOnlyList<SHOP_DAILY> rows,
+            HashSet<string> seenShopIds)
+        {
+            if (products == null || rows == null || rows.Count <= 0)
+                return;
+
+            seenShopIds ??= new HashSet<string>(StringComparer.Ordinal);
+            if (seenShopIds.Count <= 0 && products.Count > 0)
+            {
+                for (var i = 0; i < products.Count; i++)
+                {
+                    var existingId = NormalizeShopId(products[i]?.ShopId);
+                    if (!string.IsNullOrEmpty(existingId))
+                        seenShopIds.Add(existingId);
+                }
+            }
+
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (row == null || !isAdsOrFreeCurrencyType(row.CurrencyType))
+                    continue;
+
+                var normalizedShopId = NormalizeShopId(row.ShopId);
+                if (string.IsNullOrEmpty(normalizedShopId))
+                    continue;
+
+                if (!seenShopIds.Add(normalizedShopId))
+                    continue;
+
+                var product = ShopProductFactory.CreateDailyProduct(row, SHOP_DISCOUNT_TYPE.NONE);
+                if (product != null)
+                    products.Add(product);
+            }
         }
 
         static float sanitizeDailySelectRate(float selectRate)
@@ -533,6 +600,21 @@ namespace Devian
             return rate > 0f ? rate : 0f;
         }
 
+        static bool isDailyStoredProduct(ShopProductBase product)
+        {
+            if (product == null || product.CatalogType != SHOP_CATALOG_TYPE.DAILY)
+                return false;
+
+            return product.ProductType != SHOP_PRODUCT_TYPE.ADS
+                && product.ProductType != SHOP_PRODUCT_TYPE.FREE;
+        }
+
+        static bool isAdsOrFreeCurrencyType(CURRENCY_TYPE currencyType)
+        {
+            return currencyType == CURRENCY_TYPE.ADS
+                || currencyType == CURRENCY_TYPE.FREE;
+        }
+
         static SHOP_DISCOUNT_TYPE normalizeDiscountType(SHOP_DISCOUNT_TYPE discountType)
         {
             switch (discountType)
@@ -551,6 +633,7 @@ namespace Devian
     public sealed class ShopCatalogChest : ShopCatalogBase
     {
         readonly IReadOnlyList<ShopProductBase> _prebuiltProducts;
+        public override int autoRefreshDay => 1;
 
         public ShopCatalogChest()
             : this(products: null)
@@ -599,6 +682,7 @@ namespace Devian
     public sealed class ShopCatalogGold : ShopCatalogBase
     {
         readonly IReadOnlyList<ShopProductBase> _prebuiltProducts;
+        public override int autoRefreshDay => 1;
 
         public ShopCatalogGold()
             : this(products: null)

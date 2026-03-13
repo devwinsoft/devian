@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using Devian.Domain.Game;
 using Newtonsoft.Json.Linq;
 
@@ -21,13 +23,22 @@ namespace Devian
                 remainObj[kv.Key] = kv.Value;
             }
 
-            var adsResetObj = new JObject();
-            foreach (var kv in shop.adsCatalogResetStartedAtUtcMsByCatalog)
+            var autoRefreshObj = new JObject();
+            foreach (var kv in shop.autoRefreshUtcMsByCatalog)
             {
                 if (string.IsNullOrWhiteSpace(kv.Key))
                     continue;
 
-                adsResetObj[kv.Key] = kv.Value > 0L ? kv.Value : 0L;
+                autoRefreshObj[kv.Key] = kv.Value > 0L ? kv.Value : 0L;
+            }
+
+            var adsRefreshObj = new JObject();
+            foreach (var kv in shop.adsRefreshUtcMsByCatalog)
+            {
+                if (string.IsNullOrWhiteSpace(kv.Key))
+                    continue;
+
+                adsRefreshObj[kv.Key] = kv.Value > 0L ? kv.Value : 0L;
             }
 
             var dailyProductsArr = new JArray();
@@ -53,7 +64,8 @@ namespace Devian
             {
                 ["schemaVersion"] = shop.schemaVersion,
                 ["productRemainCounts"] = remainObj,
-                ["adsCatalogResetStartedAtUtcMsByCatalog"] = adsResetObj,
+                ["autoRefreshUtcMsByCatalog"] = autoRefreshObj,
+                ["adsRefreshUtcMsByCatalog"] = adsRefreshObj,
                 ["dailyCatalogProducts"] = dailyProductsArr,
             };
         }
@@ -88,16 +100,29 @@ namespace Devian
                 migrateLegacyPurchaseLimits(legacyLimitsObj, shop);
             }
 
-            if (shopObj["adsCatalogResetStartedAtUtcMsByCatalog"] is JObject adsResetObj)
+            if (shopObj["autoRefreshUtcMsByCatalog"] is JObject autoRefreshObj)
             {
-                foreach (var prop in adsResetObj.Properties())
+                foreach (var prop in autoRefreshObj.Properties())
+                {
+                    var normalizedCatalogKey = prop.Name != null ? prop.Name.Trim() : string.Empty;
+                    if (string.IsNullOrEmpty(normalizedCatalogKey))
+                        continue;
+
+                    var autoRefreshUtcMs = prop.Value.Value<long?>() ?? 0L;
+                    shop.autoRefreshUtcMsByCatalog[normalizedCatalogKey] =
+                        autoRefreshUtcMs > 0L ? autoRefreshUtcMs : 0L;
+                }
+            }
+            else if (shopObj["adsCatalogResetStartedAtUtcMsByCatalog"] is JObject oldAutoRefreshObj)
+            {
+                foreach (var prop in oldAutoRefreshObj.Properties())
                 {
                     var normalizedCatalogKey = prop.Name != null ? prop.Name.Trim() : string.Empty;
                     if (string.IsNullOrEmpty(normalizedCatalogKey))
                         continue;
 
                     var startedAtUtcMs = prop.Value.Value<long?>() ?? 0L;
-                    shop.adsCatalogResetStartedAtUtcMsByCatalog[normalizedCatalogKey] =
+                    shop.autoRefreshUtcMsByCatalog[normalizedCatalogKey] =
                         startedAtUtcMs > 0L ? startedAtUtcMs : 0L;
                 }
             }
@@ -110,8 +135,22 @@ namespace Devian
                         continue;
 
                     var legacyResetUtcDayStartMs = prop.Value.Value<long?>() ?? 0L;
-                    shop.adsCatalogResetStartedAtUtcMsByCatalog[normalizedCatalogKey] =
+                    shop.autoRefreshUtcMsByCatalog[normalizedCatalogKey] =
                         legacyResetUtcDayStartMs > 0L ? legacyResetUtcDayStartMs : 0L;
+                }
+            }
+
+            if (shopObj["adsRefreshUtcMsByCatalog"] is JObject adsRefreshObj)
+            {
+                foreach (var prop in adsRefreshObj.Properties())
+                {
+                    var normalizedCatalogKey = prop.Name != null ? prop.Name.Trim() : string.Empty;
+                    if (string.IsNullOrEmpty(normalizedCatalogKey))
+                        continue;
+
+                    var refreshUtcMs = prop.Value.Value<long?>() ?? 0L;
+                    shop.adsRefreshUtcMsByCatalog[normalizedCatalogKey] =
+                        refreshUtcMs > 0L ? refreshUtcMs : 0L;
                 }
             }
 
@@ -154,6 +193,9 @@ namespace Devian
                 }
             }
 
+            if (shop.schemaVersion < 8)
+                migrateLegacyAutoRefreshStartedAtToNextRefreshTime(shop);
+
             if (shop.schemaVersion < 2)
                 shop.schemaVersion = 2;
             if (shop.schemaVersion < 3)
@@ -164,6 +206,10 @@ namespace Devian
                 shop.schemaVersion = 5;
             if (shop.schemaVersion < 6)
                 shop.schemaVersion = 6;
+            if (shop.schemaVersion < 7)
+                shop.schemaVersion = 7;
+            if (shop.schemaVersion < 8)
+                shop.schemaVersion = 8;
         }
 
         static void migrateLegacyPurchaseCounts(JObject legacyPurchaseCountsObj, ShopStorage shop)
@@ -210,6 +256,60 @@ namespace Devian
                 default:
                     return SHOP_DISCOUNT_TYPE.NONE;
             }
+        }
+
+        static void migrateLegacyAutoRefreshStartedAtToNextRefreshTime(ShopStorage shop)
+        {
+            if (shop?.autoRefreshUtcMsByCatalog == null || shop.autoRefreshUtcMsByCatalog.Count <= 0)
+                return;
+
+            var keys = new List<string>(shop.autoRefreshUtcMsByCatalog.Keys);
+            for (var i = 0; i < keys.Count; i++)
+            {
+                var key = keys[i];
+                if (string.IsNullOrWhiteSpace(key))
+                    continue;
+
+                if (!shop.autoRefreshUtcMsByCatalog.TryGetValue(key, out var startedAtUtcMs) || startedAtUtcMs <= 0L)
+                    continue;
+
+                if (!tryGetLegacyCatalogAutoRefreshIntervalMs(key, out var intervalMs) || intervalMs <= 0L)
+                    continue;
+
+                shop.autoRefreshUtcMsByCatalog[key] = safeAddUtcMs(startedAtUtcMs, intervalMs);
+            }
+        }
+
+        static bool tryGetLegacyCatalogAutoRefreshIntervalMs(string catalogKey, out long intervalMs)
+        {
+            intervalMs = 0L;
+            if (string.IsNullOrWhiteSpace(catalogKey))
+                return false;
+
+            if (!Enum.TryParse(catalogKey.Trim(), true, out SHOP_CATALOG_TYPE catalogType))
+                return false;
+
+            switch (catalogType)
+            {
+                case SHOP_CATALOG_TYPE.DAILY:
+                case SHOP_CATALOG_TYPE.CHEST:
+                case SHOP_CATALOG_TYPE.GOLD:
+                    intervalMs = 24L * 60L * 60L * 1000L;
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        static long safeAddUtcMs(long utcMs, long addMs)
+        {
+            if (utcMs <= 0L || addMs <= 0L)
+                return utcMs;
+
+            if (long.MaxValue - utcMs < addMs)
+                return long.MaxValue;
+
+            return utcMs + addMs;
         }
     }
 }
