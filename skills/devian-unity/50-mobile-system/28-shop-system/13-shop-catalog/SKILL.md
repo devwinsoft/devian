@@ -45,18 +45,20 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 - `Initialize()`가 1회 실행되며, 실제 생성은 `protected onInitialize()`에서 수행한다.
 - `CreateDefaultCatalogs(...)`/`Create(...)`는 반환 전에 `Initialize()`를 호출해 product 인덱스를 확정한다.
 - `CHEST/PURCHASE/GOLD`는 공통 row->product 빌더(`BuildProductsFromRows`)를 사용해 생성 로직을 단순화한다.
+- `DAILY`를 제외한 카탈로그(`CHEST/PURCHASE/GOLD`)는 테이블의 모든 row를 상품으로 생성한다.
 - `ShopCatalogBase`는 `virtual int autoRefreshDay`(기본 0), `RemainRefreshTimeMs`를 가진다.
-- `autoRefreshDay`는 `DAILY=1`, `CHEST=1`, `GOLD=1`을 하드코딩하고, 그 외 카탈로그는 0을 사용한다.
+- `autoRefreshDay`는 `DAILY=1`만 사용하고, `CHEST/PURCHASE/GOLD`는 기본값 `0`을 사용한다.
 
 ---
 
 ## 3. Reset Rule
 
-- 구매 제한 상품 리셋은 `autoRefreshUtcMsByCatalog`(다음 refresh 시각) 기준으로 처리한다.
-- 카탈로그 refresh 완료 시 다음 refresh 시각은 `serverNow + autoRefreshDay`로 갱신한다.
-- ADS/FREE 상품 리필은 `adsRefreshUtcMsByCatalog`(다음 ADS/FREE refill 시각) 기준으로 별도 처리한다.
-- 카탈로그 초기화/refresh 시 `adsRefreshUtcMsByCatalog`가 없거나 만료면 ADS/FREE 제한 상품을 `remainCount=maxCount`로 리필한다.
-- ADS/FREE 구매 성공 시 `adsRefreshUtcMsByCatalog = serverNow + 1day`를 기록한다.
+- 구매 제한 상품 자동 리셋은 `DAILY` catalog의 `autoRefreshUtcMs`(다음 refresh 시각) 기준으로 처리한다.
+- `DAILY` refresh 완료 시 다음 refresh 시각은 `serverNow + autoRefreshDay`로 갱신한다.
+- `CHEST/GOLD/PURCHASE`는 `autoRefreshDay=0`이므로 `autoRefreshUtcMs` 저장/사용을 하지 않는다.
+- ADS/FREE 상품 리필은 catalog 저장 버킷의 `adsRefreshUtcMs`(다음 ADS/FREE refill 시각) 기준으로 별도 처리한다.
+- 카탈로그 초기화/refresh 시 `adsRefreshUtcMs`가 없거나 만료면 ADS/FREE 제한 상품을 `remainCount=maxCount`로 리필한다.
+- ADS/FREE 구매 성공 시 `adsRefreshUtcMs = serverNow + 1day`를 기록한다.
 - `SHOP_DAILY` 카탈로그 리셋 시에는 저장된 daily 동적 상태를 비우고 5개 선택 생성을 다시 수행한다.
 - 카탈로그 리셋은 기본적으로 상품 카운트 상태를 갱신하며, `SHOP_DAILY`는 동적 상태 초기화 후 재선택 생성을 위해 카탈로그를 rebuild한다.
 - 카탈로그별 리셋 남은 시간은 `ShopManager.GetAdsResetRemainingMs(catalogType)`로 조회한다.

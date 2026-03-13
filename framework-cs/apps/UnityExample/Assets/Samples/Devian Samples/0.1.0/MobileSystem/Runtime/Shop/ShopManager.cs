@@ -714,9 +714,9 @@ namespace Devian
         {
             if (_limitedShopIdsByCatalog.TryGetValue(catalogType, out var shopIds))
             {
-                _storage.ClearProductRemainCounts(shopIds);
+                _storage.ClearProductRemainCounts(catalogType, shopIds);
                 if (catalogType != SHOP_CATALOG_TYPE.DAILY)
-                    resetProductRemainCounts(shopIds);
+                    resetProductRemainCounts(catalogType, shopIds);
             }
 
             if (catalogType == SHOP_CATALOG_TYPE.DAILY)
@@ -839,7 +839,7 @@ namespace Devian
             {
                 if (isDailyStoredProduct(product))
                 {
-                    _storage.RemoveProductRemainCount(normalizedShopId);
+                    _storage.RemoveProductRemainCount(product.CatalogType, normalizedShopId);
                     _storage.UpsertDailyCatalogProduct(
                         normalizedShopId,
                         product.DiscountType,
@@ -849,9 +849,9 @@ namespace Devian
                 {
                     _storage.RemoveDailyCatalogProduct(normalizedShopId);
                     if (product.HasPurchaseLimit)
-                        _storage.SetProductRemainCount(normalizedShopId, product.RemainCount);
+                        _storage.SetProductRemainCount(product.CatalogType, normalizedShopId, product.RemainCount);
                     else
-                        _storage.RemoveProductRemainCount(normalizedShopId);
+                        _storage.RemoveProductRemainCount(product.CatalogType, normalizedShopId);
                 }
 
                 return;
@@ -859,11 +859,11 @@ namespace Devian
 
             if (!product.HasPurchaseLimit)
             {
-                _storage.RemoveProductRemainCount(normalizedShopId);
+                _storage.RemoveProductRemainCount(product.CatalogType, normalizedShopId);
                 return;
             }
 
-            _storage.SetProductRemainCount(normalizedShopId, product.RemainCount);
+            _storage.SetProductRemainCount(product.CatalogType, normalizedShopId, product.RemainCount);
         }
 
         void syncProductRemainState(ShopProductBase product, string normalizedShopId)
@@ -874,7 +874,7 @@ namespace Devian
             if (!product.HasPurchaseLimit)
             {
                 product.SetRemainCount(-1);
-                _storage.RemoveProductRemainCount(normalizedShopId);
+                _storage.RemoveProductRemainCount(product.CatalogType, normalizedShopId);
                 if (product.CatalogType == SHOP_CATALOG_TYPE.DAILY)
                 {
                     if (isDailyStoredProduct(product))
@@ -898,7 +898,7 @@ namespace Devian
                 && dailyState != null)
             {
                 product.SetRemainCount(dailyState.remainCount);
-                _storage.RemoveProductRemainCount(normalizedShopId);
+                _storage.RemoveProductRemainCount(product.CatalogType, normalizedShopId);
                 _storage.UpsertDailyCatalogProduct(
                     normalizedShopId,
                     product.DiscountType,
@@ -906,7 +906,7 @@ namespace Devian
                 return;
             }
 
-            if (_storage.TryGetProductRemainCount(normalizedShopId, out var storedRemainCount))
+            if (_storage.TryGetProductRemainCount(product.CatalogType, normalizedShopId, out var storedRemainCount))
             {
                 product.SetRemainCount(storedRemainCount);
             }
@@ -923,7 +923,7 @@ namespace Devian
             {
                 if (isDailyStoredProduct(product))
                 {
-                    _storage.RemoveProductRemainCount(normalizedShopId);
+                    _storage.RemoveProductRemainCount(product.CatalogType, normalizedShopId);
                     _storage.UpsertDailyCatalogProduct(
                         normalizedShopId,
                         product.DiscountType,
@@ -932,16 +932,16 @@ namespace Devian
                 else
                 {
                     _storage.RemoveDailyCatalogProduct(normalizedShopId);
-                    _storage.SetProductRemainCount(normalizedShopId, product.RemainCount);
+                    _storage.SetProductRemainCount(product.CatalogType, normalizedShopId, product.RemainCount);
                 }
 
                 return;
             }
 
-            _storage.SetProductRemainCount(normalizedShopId, product.RemainCount);
+            _storage.SetProductRemainCount(product.CatalogType, normalizedShopId, product.RemainCount);
         }
 
-        void resetProductRemainCounts(IReadOnlyList<string> shopIds)
+        void resetProductRemainCounts(SHOP_CATALOG_TYPE catalogType, IReadOnlyList<string> shopIds)
         {
             if (shopIds == null || shopIds.Count <= 0)
                 return;
@@ -964,7 +964,7 @@ namespace Devian
                 {
                     if (isDailyStoredProduct(product))
                     {
-                        _storage.RemoveProductRemainCount(normalizedShopId);
+                        _storage.RemoveProductRemainCount(product.CatalogType, normalizedShopId);
                         _storage.UpsertDailyCatalogProduct(
                             normalizedShopId,
                             product.DiscountType,
@@ -973,13 +973,16 @@ namespace Devian
                     else
                     {
                         _storage.RemoveDailyCatalogProduct(normalizedShopId);
-                        _storage.SetProductRemainCount(normalizedShopId, product.RemainCount);
+                        _storage.SetProductRemainCount(product.CatalogType, normalizedShopId, product.RemainCount);
                     }
 
                     continue;
                 }
 
-                _storage.SetProductRemainCount(normalizedShopId, product.RemainCount);
+                _storage.SetProductRemainCount(
+                    catalogType != SHOP_CATALOG_TYPE.NONE ? catalogType : product.CatalogType,
+                    normalizedShopId,
+                    product.RemainCount);
             }
         }
 

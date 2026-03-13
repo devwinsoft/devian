@@ -633,7 +633,6 @@ namespace Devian
     public sealed class ShopCatalogChest : ShopCatalogBase
     {
         readonly IReadOnlyList<ShopProductBase> _prebuiltProducts;
-        public override int autoRefreshDay => 1;
 
         public ShopCatalogChest()
             : this(products: null)
@@ -682,7 +681,6 @@ namespace Devian
     public sealed class ShopCatalogGold : ShopCatalogBase
     {
         readonly IReadOnlyList<ShopProductBase> _prebuiltProducts;
-        public override int autoRefreshDay => 1;
 
         public ShopCatalogGold()
             : this(products: null)

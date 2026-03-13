@@ -13,59 +13,154 @@ namespace Devian
     }
 
     [Serializable]
+    public sealed class ShopCatalogStorageState
+    {
+        public long autoRefreshUtcMs;
+        public long adsRefreshUtcMs;
+        public Dictionary<string, int> productRemainCounts = new();
+        public List<ShopDailyProductState> dailyCatalogProducts = new();
+    }
+
+    [Serializable]
     public sealed class ShopStorage
     {
-        public int schemaVersion = 8;
-        public Dictionary<string, int> productRemainCounts = new();
-        public Dictionary<string, long> autoRefreshUtcMsByCatalog = new();
-        public Dictionary<string, long> adsRefreshUtcMsByCatalog = new();
-        public List<ShopDailyProductState> dailyCatalogProducts = new();
+        public int schemaVersion = 9;
+        public Dictionary<string, ShopCatalogStorageState> catalogs = new();
 
         [NonSerialized]
         readonly Dictionary<string, int> _legacyPurchaseCounts = new();
 
-        public bool TryGetProductRemainCount(string shopId, out int remainCount)
+        public bool TryGetProductRemainCount(
+            SHOP_CATALOG_TYPE catalogType,
+            string shopId,
+            out int remainCount)
         {
             remainCount = -1;
+            var state = getCatalogState(catalogType, createIfMissing: false);
+            if (state == null)
+                return false;
+
             var key = normalizeShopId(shopId);
             if (string.IsNullOrEmpty(key))
                 return false;
 
-            return productRemainCounts.TryGetValue(key, out remainCount);
+            return state.productRemainCounts.TryGetValue(key, out remainCount);
         }
 
-        public void SetProductRemainCount(string shopId, int remainCount)
+        public void SetProductRemainCount(
+            SHOP_CATALOG_TYPE catalogType,
+            string shopId,
+            int remainCount)
         {
             var key = normalizeShopId(shopId);
             if (string.IsNullOrEmpty(key))
+                return;
+
+            var state = getCatalogState(catalogType, createIfMissing: true);
+            if (state == null)
                 return;
 
             var normalizedRemainCount = normalizeLimitedRemainCount(remainCount);
             if (normalizedRemainCount < 0)
             {
-                productRemainCounts.Remove(key);
+                state.productRemainCounts.Remove(key);
                 return;
             }
 
-            productRemainCounts[key] = normalizedRemainCount;
+            state.productRemainCounts[key] = normalizedRemainCount;
         }
 
-        public void RemoveProductRemainCount(string shopId)
+        public void RemoveProductRemainCount(SHOP_CATALOG_TYPE catalogType, string shopId)
         {
+            var state = getCatalogState(catalogType, createIfMissing: false);
+            if (state == null)
+                return;
+
             var key = normalizeShopId(shopId);
             if (string.IsNullOrEmpty(key))
                 return;
 
-            productRemainCounts.Remove(key);
+            state.productRemainCounts.Remove(key);
         }
 
-        public void ClearProductRemainCounts(IReadOnlyList<string> shopIds)
+        public void ClearProductRemainCounts(
+            SHOP_CATALOG_TYPE catalogType,
+            IReadOnlyList<string> shopIds)
         {
-            if (shopIds == null || shopIds.Count <= 0)
+            var state = getCatalogState(catalogType, createIfMissing: false);
+            if (state == null || shopIds == null || shopIds.Count <= 0)
                 return;
 
             for (var i = 0; i < shopIds.Count; i++)
-                RemoveProductRemainCount(shopIds[i]);
+            {
+                var key = normalizeShopId(shopIds[i]);
+                if (string.IsNullOrEmpty(key))
+                    continue;
+
+                state.productRemainCounts.Remove(key);
+            }
+        }
+
+        // Backward-compatible wrapper. Prefer catalog-aware overload.
+        public bool TryGetProductRemainCount(string shopId, out int remainCount)
+        {
+            remainCount = -1;
+            var key = normalizeShopId(shopId);
+            if (string.IsNullOrEmpty(key) || catalogs == null || catalogs.Count <= 0)
+                return false;
+
+            foreach (var kv in catalogs)
+            {
+                var state = ensureCatalogStateFields(kv.Value);
+                if (state.productRemainCounts.TryGetValue(key, out remainCount))
+                    return true;
+            }
+
+            return false;
+        }
+
+        // Backward-compatible wrapper. Prefer catalog-aware overload.
+        public void SetProductRemainCount(string shopId, int remainCount)
+        {
+            var catalogType = resolveCatalogTypeFromTable(shopId);
+            if (catalogType == SHOP_CATALOG_TYPE.NONE)
+                return;
+
+            SetProductRemainCount(catalogType, shopId, remainCount);
+        }
+
+        // Backward-compatible wrapper. Prefer catalog-aware overload.
+        public void RemoveProductRemainCount(string shopId)
+        {
+            var key = normalizeShopId(shopId);
+            if (string.IsNullOrEmpty(key) || catalogs == null || catalogs.Count <= 0)
+                return;
+
+            foreach (var kv in catalogs)
+            {
+                var state = ensureCatalogStateFields(kv.Value);
+                state.productRemainCounts.Remove(key);
+            }
+        }
+
+        // Backward-compatible wrapper. Prefer catalog-aware overload.
+        public void ClearProductRemainCounts(IReadOnlyList<string> shopIds)
+        {
+            if (shopIds == null || shopIds.Count <= 0 || catalogs == null || catalogs.Count <= 0)
+                return;
+
+            foreach (var kv in catalogs)
+            {
+                var state = ensureCatalogStateFields(kv.Value);
+                for (var i = 0; i < shopIds.Count; i++)
+                {
+                    var key = normalizeShopId(shopIds[i]);
+                    if (string.IsNullOrEmpty(key))
+                        continue;
+
+                    state.productRemainCounts.Remove(key);
+                }
+            }
         }
 
         internal void SetLegacyPurchaseCount(string shopId, int purchaseCount)
@@ -98,79 +193,79 @@ namespace Devian
 
         public long GetAutoRefreshUtcMs(SHOP_CATALOG_TYPE catalogType)
         {
-            var key = normalizeCatalogKey(catalogType);
-            if (string.IsNullOrEmpty(key))
+            var state = getCatalogState(catalogType, createIfMissing: false);
+            if (state == null)
                 return 0L;
 
-            if (!autoRefreshUtcMsByCatalog.TryGetValue(key, out var refreshUtcMs))
-                return 0L;
-
-            return refreshUtcMs > 0L ? refreshUtcMs : 0L;
+            return state.autoRefreshUtcMs > 0L ? state.autoRefreshUtcMs : 0L;
         }
 
         public void SetAutoRefreshUtcMs(SHOP_CATALOG_TYPE catalogType, long utcMs)
         {
-            var key = normalizeCatalogKey(catalogType);
-            if (string.IsNullOrEmpty(key))
+            var state = getCatalogState(catalogType, createIfMissing: true);
+            if (state == null)
                 return;
 
-            autoRefreshUtcMsByCatalog[key] = utcMs > 0L ? utcMs : 0L;
+            state.autoRefreshUtcMs = utcMs > 0L ? utcMs : 0L;
         }
 
         public void ClearAutoRefreshUtcMs(SHOP_CATALOG_TYPE catalogType)
         {
-            var key = normalizeCatalogKey(catalogType);
-            if (string.IsNullOrEmpty(key))
+            var state = getCatalogState(catalogType, createIfMissing: false);
+            if (state == null)
                 return;
 
-            autoRefreshUtcMsByCatalog.Remove(key);
+            state.autoRefreshUtcMs = 0L;
         }
 
         public long GetAdsRefreshUtcMs(SHOP_CATALOG_TYPE catalogType)
         {
-            var key = normalizeCatalogKey(catalogType);
-            if (string.IsNullOrEmpty(key))
+            var state = getCatalogState(catalogType, createIfMissing: false);
+            if (state == null)
                 return 0L;
 
-            if (!adsRefreshUtcMsByCatalog.TryGetValue(key, out var refreshUtcMs))
-                return 0L;
-
-            return refreshUtcMs > 0L ? refreshUtcMs : 0L;
+            return state.adsRefreshUtcMs > 0L ? state.adsRefreshUtcMs : 0L;
         }
 
         public void SetAdsRefreshUtcMs(SHOP_CATALOG_TYPE catalogType, long utcMs)
         {
-            var key = normalizeCatalogKey(catalogType);
-            if (string.IsNullOrEmpty(key))
+            var state = getCatalogState(catalogType, createIfMissing: true);
+            if (state == null)
                 return;
 
-            adsRefreshUtcMsByCatalog[key] = utcMs > 0L ? utcMs : 0L;
+            state.adsRefreshUtcMs = utcMs > 0L ? utcMs : 0L;
         }
 
         public void ClearAdsRefreshUtcMs(SHOP_CATALOG_TYPE catalogType)
         {
-            var key = normalizeCatalogKey(catalogType);
-            if (string.IsNullOrEmpty(key))
+            var state = getCatalogState(catalogType, createIfMissing: false);
+            if (state == null)
                 return;
 
-            adsRefreshUtcMsByCatalog.Remove(key);
+            state.adsRefreshUtcMs = 0L;
         }
 
         public IReadOnlyList<ShopDailyProductState> GetDailyCatalogProducts()
         {
-            return dailyCatalogProducts;
+            var daily = getCatalogState(SHOP_CATALOG_TYPE.DAILY, createIfMissing: false);
+            return daily != null ? daily.dailyCatalogProducts : Array.Empty<ShopDailyProductState>();
         }
 
         public bool TryGetDailyCatalogProduct(string shopId, out ShopDailyProductState state)
         {
             state = null;
+            var daily = getCatalogState(SHOP_CATALOG_TYPE.DAILY, createIfMissing: false);
+            if (daily == null)
+                return false;
+
             var key = normalizeShopId(shopId);
             if (string.IsNullOrEmpty(key))
                 return false;
 
-            for (var i = 0; i < dailyCatalogProducts.Count; i++)
+            var dailyProducts = daily.dailyCatalogProducts;
+            for (var i = 0; i < dailyProducts.Count; i++)
             {
-                var item = dailyCatalogProducts[i];
+                var item = dailyProducts[i];
                 if (item == null)
                     continue;
 
@@ -186,7 +281,11 @@ namespace Devian
 
         public void SetDailyCatalogProducts(IReadOnlyList<ShopDailyProductState> states)
         {
-            dailyCatalogProducts.Clear();
+            var daily = getCatalogState(SHOP_CATALOG_TYPE.DAILY, createIfMissing: true);
+            if (daily == null)
+                return;
+
+            daily.dailyCatalogProducts.Clear();
             if (states == null || states.Count <= 0)
                 return;
 
@@ -204,7 +303,7 @@ namespace Devian
                 if (!seenShopIds.Add(key))
                     continue;
 
-                dailyCatalogProducts.Add(createDailyState(key, state.discountType, state.remainCount));
+                daily.dailyCatalogProducts.Add(createDailyState(key, state.discountType, state.remainCount));
             }
         }
 
@@ -217,56 +316,95 @@ namespace Devian
             if (string.IsNullOrEmpty(key))
                 return;
 
+            var daily = getCatalogState(SHOP_CATALOG_TYPE.DAILY, createIfMissing: true);
+            if (daily == null)
+                return;
+
             var normalizedState = createDailyState(key, discountType, remainCount);
-            for (var i = 0; i < dailyCatalogProducts.Count; i++)
+            var dailyProducts = daily.dailyCatalogProducts;
+            for (var i = 0; i < dailyProducts.Count; i++)
             {
-                var item = dailyCatalogProducts[i];
+                var item = dailyProducts[i];
                 if (item == null)
                     continue;
 
                 if (!string.Equals(normalizeShopId(item.shopId), key, StringComparison.Ordinal))
                     continue;
 
-                dailyCatalogProducts[i] = normalizedState;
+                dailyProducts[i] = normalizedState;
                 return;
             }
 
-            dailyCatalogProducts.Add(normalizedState);
+            dailyProducts.Add(normalizedState);
         }
 
         public void RemoveDailyCatalogProduct(string shopId)
         {
+            var daily = getCatalogState(SHOP_CATALOG_TYPE.DAILY, createIfMissing: false);
+            if (daily == null)
+                return;
+
             var key = normalizeShopId(shopId);
             if (string.IsNullOrEmpty(key))
                 return;
 
-            for (var i = dailyCatalogProducts.Count - 1; i >= 0; i--)
+            var dailyProducts = daily.dailyCatalogProducts;
+            for (var i = dailyProducts.Count - 1; i >= 0; i--)
             {
-                var item = dailyCatalogProducts[i];
+                var item = dailyProducts[i];
                 if (item == null)
                 {
-                    dailyCatalogProducts.RemoveAt(i);
+                    dailyProducts.RemoveAt(i);
                     continue;
                 }
 
                 if (string.Equals(normalizeShopId(item.shopId), key, StringComparison.Ordinal))
-                    dailyCatalogProducts.RemoveAt(i);
+                    dailyProducts.RemoveAt(i);
             }
         }
 
         public void ClearDailyCatalogProducts()
         {
-            dailyCatalogProducts.Clear();
+            var daily = getCatalogState(SHOP_CATALOG_TYPE.DAILY, createIfMissing: false);
+            if (daily == null)
+                return;
+
+            daily.dailyCatalogProducts.Clear();
         }
 
         public void Clear()
         {
-            schemaVersion = 8;
-            productRemainCounts.Clear();
-            autoRefreshUtcMsByCatalog.Clear();
-            adsRefreshUtcMsByCatalog.Clear();
-            dailyCatalogProducts.Clear();
+            schemaVersion = 9;
+            catalogs.Clear();
             _legacyPurchaseCounts.Clear();
+        }
+
+        ShopCatalogStorageState getCatalogState(SHOP_CATALOG_TYPE catalogType, bool createIfMissing)
+        {
+            var key = normalizeCatalogKey(catalogType);
+            if (string.IsNullOrEmpty(key))
+                return null;
+
+            if (!catalogs.TryGetValue(key, out var state) || state == null)
+            {
+                if (!createIfMissing)
+                    return null;
+
+                state = new ShopCatalogStorageState();
+                catalogs[key] = state;
+            }
+
+            state = ensureCatalogStateFields(state);
+            catalogs[key] = state;
+            return state;
+        }
+
+        static ShopCatalogStorageState ensureCatalogStateFields(ShopCatalogStorageState state)
+        {
+            state ??= new ShopCatalogStorageState();
+            state.productRemainCounts ??= new Dictionary<string, int>();
+            state.dailyCatalogProducts ??= new List<ShopDailyProductState>();
+            return state;
         }
 
         static ShopDailyProductState createDailyState(
@@ -327,6 +465,27 @@ namespace Devian
             return catalogType == SHOP_CATALOG_TYPE.NONE
                 ? string.Empty
                 : catalogType.ToString();
+        }
+
+        static SHOP_CATALOG_TYPE resolveCatalogTypeFromTable(string shopId)
+        {
+            var key = normalizeShopId(shopId);
+            if (string.IsNullOrEmpty(key))
+                return SHOP_CATALOG_TYPE.NONE;
+
+            if (TB_SHOP_DAILY.Get(key) != null)
+                return SHOP_CATALOG_TYPE.DAILY;
+
+            if (TB_SHOP_CHEST.Get(key) != null)
+                return SHOP_CATALOG_TYPE.CHEST;
+
+            if (TB_SHOP_PURCHASE.Get(key) != null)
+                return SHOP_CATALOG_TYPE.PURCHASE;
+
+            if (TB_SHOP_GOLD.Get(key) != null)
+                return SHOP_CATALOG_TYPE.GOLD;
+
+            return SHOP_CATALOG_TYPE.NONE;
         }
     }
 }
