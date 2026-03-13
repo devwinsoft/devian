@@ -18,9 +18,9 @@ AppliesTo: v10
 - 저장 동기화 (`SaveDataManager.SyncGameStorageAsync`)
 - 충돌 해소 + 재초기화 (`ResolveConflictAndInitializeAsync`)
 - 초기 상태 판별 (`LoginInitializeResult.IsInitial`) — 호출자가 `InventoryManager.FirstInitAsync`를 외부에서 실행
-- 게임 시스템 초기화 (Mission/Achieve/Ad)
+- 게임 시스템 초기화 (Mission/Achieve/Ad/Shop)
 - 시즌 전환 보상 sync (`LeaderboardManager.SyncSeasonTransitionRewardsAsync`)
-- 최종 저장 (`SaveDataManager.SaveGameStorageAsync`)
+- 최종 local 저장 (`SaveDataManager.SaveGameStorageAsync(false, ...)`)
 - 구매 진입 인증 보정 (`EnsurePurchaseLoginReadyAsync`, Android silent Google restore)
 - 결과 반환 (`CommonResult`)
 
@@ -87,6 +87,7 @@ non-fatal (로그만 남기고 진행):
 - LoginManager는 Scene/UI 레이어를 참조하지 않는다.
 - LoginManager 공개 API는 `CommonResult` 계열만 반환한다.
 - RemoteData 초기화는 로그인 초기화 진입점의 첫 단계에서 수행한다.
+- Manager 초기화 함수 내부에서 SaveData 저장을 수행하지 않고, LoginManager 마지막 단계에서만 local save를 수행한다.
 - 버전 체크/서버 UTC fetch 및 해당 상태(property) 소유는 `RemoteDataManager`가 담당한다.
 - 인증 상태 판단은 `AccountManager`를 통해서만 수행한다.
 - Save payload 해석/요약 생성은 LoginManager에서 구현하지 않는다. (`SaveDataManager` 책임)

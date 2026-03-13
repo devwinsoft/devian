@@ -59,6 +59,7 @@ CompoSingleton<PurchaseManager>.Instance
 - `PurchaseAsync(internalProductId, ct)` → `Task<CommonResult<PurchaseFinalResult>>`
   - 단일 구매 진입점. `TB_PURCHASE`에서 `Kind`를 조회하여 구매 유형(Consumable/Rental/Subscription/SeasonPass)을 자동 결정
   - 최종 지급은 서버 `verifyPurchase` 결과만 신뢰
+  - 구매 보상(`AppliedRewards`)에 `amount < 0` 값이 있으면 즉시 실패(`COMMON_INVALID_ARGUMENT`) 처리한다.
   - **Caller-managed client grant**: `NeedsClientGrantDelivery=true`이면 호출자가 보상을 적용한 뒤 `AckPurchaseClientGrantAppliedAsync`로 ACK
 - `RetryInterruptedPurchaseAsync(ct)` → `Task<CommonResult<RetryInterruptedPurchaseResult>>`
   - `PurchaseStorage.current`에 중단된 결제가 있으면 새 구매를 시작하지 않고 상태 전이를 재개/마무리
@@ -151,6 +152,7 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 - 지급 여부는 서버 `verifyPurchase.resultStatus`만 기준으로 한다(스토어 콜백만으로 지급 금지).
 - `resultStatus == GRANTED`이면 `ConfirmPurchase` + `ackPurchaseStoreConfirm`를 먼저 수행한 뒤 로컬 지급/`ackPurchaseClientGrant(APPLIED_ACKED)`를 진행한다.
 - `PurchaseStorage.current`는 `Confirm + storeConfirm ACK + clientGrant report`가 종결되기 전에는 clear하지 않는다.
+- 구매 보상(`RewardData[]`)의 `amount < 0`은 허용하지 않는다. 음수 보상이 감지되면 구매/복구 경로를 실패 처리한다.
 - 로컬 지급 실패 시 `FAILED_REPORTED`를 서버에 기록할 수 있으나, confirm 미완 상태에서는 `current`를 유지해 복구 경로를 보존한다.
 - `resultStatus == ALREADY_GRANTED`라도 `clientGrantStatus == PENDING` 또는 `FAILED_REPORTED`이면 로컬 지급 복구 경로를 사용할 수 있다.
 - `rewardGroupId`가 비어 있으면 로컬 보상 지급은 스킵하고, 클라이언트 지급 완료 처리만 진행한다. (결제/재구매 동일 규칙)

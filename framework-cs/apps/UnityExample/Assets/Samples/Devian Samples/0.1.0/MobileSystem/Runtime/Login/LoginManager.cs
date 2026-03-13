@@ -344,7 +344,14 @@ namespace Devian
             if (syncSeasonReward.IsFailure)
                 Debug.LogWarning($"[{Tag}] LeaderboardManager.SyncSeasonTransitionRewardsAsync failed (non-fatal): {syncSeasonReward.Error.Code}: {syncSeasonReward.Error.Message}");
 
-            var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
+            var initShop = ShopManager.Instance.Initialize();
+            if (initShop.IsFailure)
+            {
+                Debug.LogError($"[{Tag}] ShopManager.Initialize failed: {initShop.Error.Code}: {initShop.Error.Message}");
+                return CommonResult<LoginInitializeResult>.Failure(initShop.Error!);
+            }
+
+            var save = await SaveDataManager.Instance.SaveGameStorageAsync(false, ct);
             await yieldMainThreadAsync(ct);
             if (save.IsFailure)
             {

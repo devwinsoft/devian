@@ -293,6 +293,31 @@
       ]
     },
     {
+      "name": "SHOP_DISCOUNT_TYPE",
+      "values": [
+        {
+          "name": "NONE",
+          "value": 0
+        },
+        {
+          "name": "PER10",
+          "value": 1
+        },
+        {
+          "name": "PER20",
+          "value": 2
+        },
+        {
+          "name": "PER30",
+          "value": 3
+        },
+        {
+          "name": "PER50",
+          "value": 4
+        }
+      ]
+    },
+    {
       "name": "SHOP_PRODUCT_TYPE",
       "values": [
         {

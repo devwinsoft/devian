@@ -113,6 +113,25 @@ namespace Devian
 #endif
         }
 
+        static CommonResult validatePurchaseRewards(RewardData[] rewards, string context)
+        {
+            if (rewards == null || rewards.Length <= 0)
+                return CommonResult.Ok();
+
+            for (var i = 0; i < rewards.Length; i++)
+            {
+                var reward = rewards[i];
+                if (reward.Amount < 0)
+                {
+                    return CommonResult.Failure(
+                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                        $"Negative reward amount is not allowed: context={context}, index={i}, type={reward.Type}, id={reward.Id}, amount={reward.Amount}");
+                }
+            }
+
+            return CommonResult.Ok();
+        }
+
 #if UNITY_EDITOR
         public Task<CommonResult<RefundResult>> RefundAsync(CancellationToken ct = default)
             => Task.FromResult(CommonResult<RefundResult>.Success(CreateNoOpRefundResult()));
@@ -514,6 +533,12 @@ namespace Devian
             if (result.IsSuccess)
             {
                 var final_ = result.Value!;
+                var validateRewards = validatePurchaseRewards(
+                    final_.AppliedRewards,
+                    $"purchaseId={final_.PurchaseId}, internalProductId={final_.InternalProductId}");
+                if (validateRewards.IsFailure)
+                    return CommonResult<PurchaseFinalResult>.Failure(validateRewards.Error!);
+
                 await applyClientGrantIfNeededAsync(
                     final_.PurchaseId, final_.AppliedRewards,
                     final_.NeedsClientGrantDelivery, ct);
@@ -581,6 +606,12 @@ namespace Devian
                         return CommonResult<RetryInterruptedPurchaseResult>.Failure(resumed.Error!);
 
                     var finalAfterConfirm = resumed.Value!;
+                    var validateRewards = validatePurchaseRewards(
+                        finalAfterConfirm.AppliedRewards,
+                        $"purchaseId={finalAfterConfirm.PurchaseId}, internalProductId={finalAfterConfirm.InternalProductId}");
+                    if (validateRewards.IsFailure)
+                        return CommonResult<RetryInterruptedPurchaseResult>.Failure(validateRewards.Error!);
+
                     await applyClientGrantIfNeededAsync(
                         finalAfterConfirm.PurchaseId, finalAfterConfirm.AppliedRewards,
                         finalAfterConfirm.NeedsClientGrantDelivery, ct);
@@ -607,6 +638,12 @@ namespace Devian
                 return CommonResult<RetryInterruptedPurchaseResult>.Failure(resume.Error!);
 
             var finalResult = resume.Value!;
+            var validateRecoveredRewards = validatePurchaseRewards(
+                finalResult.AppliedRewards,
+                $"purchaseId={finalResult.PurchaseId}, internalProductId={finalResult.InternalProductId}");
+            if (validateRecoveredRewards.IsFailure)
+                return CommonResult<RetryInterruptedPurchaseResult>.Failure(validateRecoveredRewards.Error!);
+
             await applyClientGrantIfNeededAsync(
                 finalResult.PurchaseId, finalResult.AppliedRewards,
                 finalResult.NeedsClientGrantDelivery, ct);
@@ -635,6 +672,20 @@ namespace Devian
         {
             if (!needsClientGrantDelivery)
                 return CommonResult.Ok();
+
+            var validateRewards = validatePurchaseRewards(rewards, $"purchaseId={purchaseId}");
+            if (validateRewards.IsFailure)
+            {
+                UnityEngine.Debug.LogWarning($"[PurchaseManager] Invalid client grant rewards: {validateRewards.Error}");
+                var invalidReport = await ReportPurchaseClientGrantFailureAsync(purchaseId, ct);
+                if (invalidReport.IsFailure)
+                {
+                    UnityEngine.Debug.LogWarning(
+                        $"[PurchaseManager] ReportClientGrantFailure failed after invalid reward guard: {invalidReport.Error}");
+                }
+
+                return validateRewards;
+            }
 
             var apply = RewardManager.Instance.ApplyRewardDatas(rewards);
             if (apply.IsSuccess)

@@ -169,6 +169,15 @@ export enum SHOP_CATALOG_TYPE {
     GOLD = 4,
 }
 
+/** SHOP_DISCOUNT_TYPE enum */
+export enum SHOP_DISCOUNT_TYPE {
+    NONE = 0,
+    PER10 = 1,
+    PER20 = 2,
+    PER30 = 3,
+    PER50 = 4,
+}
+
 /** SHOP_PRODUCT_TYPE enum */
 export enum SHOP_PRODUCT_TYPE {
     NONE = 0,
@@ -356,11 +365,9 @@ export interface PURCHASE extends IEntityKey<string> {
     InternalProductId: string;
     RewardGroupId: string;
     Kind: PURCHASE_KIND;
-    Title: string;
     IsActive: boolean;
     StoreSkuApple: string;
     StoreSkuGoogle: string;
-    SeasonId: string;
     getKey(): string;
 }
 
@@ -373,6 +380,10 @@ export interface SHOP_DAILY extends IEntityKey<string> {
     Amount: number;
     MaxCount: number;
     SelectRate: number;
+    DiscountRate10Per: number;
+    DiscountRate20Per: number;
+    DiscountRate30Per: number;
+    DiscountRate50Per: number;
     getKey(): string;
 }
 

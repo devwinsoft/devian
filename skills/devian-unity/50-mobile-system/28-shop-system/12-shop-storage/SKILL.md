@@ -1,6 +1,6 @@
 ---
 name: 12-shop-storage
-description: ShopStorage를 통해 `shopId`별 구매 횟수, 비광고 전역 일일 리셋 상태, FREE/ADS 카탈로그별 24시간 롤링 리셋 시작 시각을 저장/복원할 때 사용한다.
+description: ShopStorage에서 `remainCount` 중심 상태(카탈로그별 24시간 리셋, DAILY 동적 상품 상태)를 저장/복원할 때 사용한다.
 ---
 
 # 12-shop-storage
@@ -27,26 +27,27 @@ public sealed class ShopStorage
 
 ## 2. State
 
-- `schemaVersion`
-- `lastResetUtcDayStartMs` : 비광고 구매 제한 전역 일일 리셋 기준 시각(UTC day start)
-- `purchaseCounts: Dictionary<string, int>`
+- `schemaVersion` (현재 `6`)
+- `productRemainCounts: Dictionary<string, int>`
 - key: `shopId`
-- value: 누적 구매 횟수(현재 리셋 주기 내)
+- value: 현재 남은 구매 가능 횟수(`remainCount`)
 - `adsCatalogResetStartedAtUtcMsByCatalog: Dictionary<string, long>`
 - key: `SHOP_CATALOG_TYPE` 문자열
-- value: 해당 카탈로그 FREE/ADS 구매 제한 24시간 롤링 리셋 시작 시각(UTC ms)
+- value: 해당 카탈로그 구매 제한 24시간 롤링 리셋 시작 시각(UTC ms)
+- `dailyCatalogProducts: List<ShopDailyProductState>`
+- `ShopDailyProductState = { shopId, discountType, remainCount }`
+- legacy migration buffer:
+- `_legacyPurchaseCounts: Dictionary<string, int>` (직렬화 안 함, 구버전 데이터 마이그레이션용)
 
 ---
 
 ## 3. Hard Rules
 
-- FREE/ADS + 구매 제한 상품은 카탈로그별 기준 시각 + 24시간 리셋을 사용한다.
-- 비 ADS + 구매 제한 상품은 전역 1일(UTC day start) 리셋을 사용한다.
-- 구매 성공 시에만 `purchaseCounts[shopId]`를 증가시킨다.
-- FREE/ADS는 카탈로그별 `startedAtUtcMs` 기준 24시간 경과 시 카운트를 초기화한다.
-- FREE/ADS 성공 시 `GetAdsResetRemainingMs(catalogType)`가 0이면 해당 시각으로 `startedAtUtcMs`를 갱신한다.
-- 비 ADS는 day start가 바뀌면 전역 비 ADS 카운트를 초기화한다.
-- FREE/ADS 리셋 남은 시간은 저장하지 않고 `startedAtUtcMs`와 현재 시각으로 계산한다.
+- 구매 제한 상품은 카탈로그별 기준 시각 + 24시간 리셋을 사용한다.
+- 구매 성공 시 `remainCount`를 갱신한다.
+- 무제한 상품(`maxCount=-1`)은 `productRemainCounts`에 저장하지 않는다.
+- DAILY 카탈로그 동적 결과(`shopId`, `discountType`, `remainCount`)는 `dailyCatalogProducts`로 저장/복원한다.
+- `purchaseCounts` 기반 저장은 사용하지 않는다.
 
 ---
 
@@ -56,7 +57,9 @@ ShopStorage는 SaveData JSON의 `shop` 섹션으로 직렬화한다.
 
 - serialize: `SaveDataJsonCodecShop.Serialize(ShopStorage)`
 - deserialize: `SaveDataJsonCodecShop.DeserializeInto(JObject, ShopStorage)`
-- legacy `purchaseLimits` 포맷은 `purchaseCounts`로 마이그레이션한다.
+- legacy `purchaseCounts`/`purchaseLimits`는 `_legacyPurchaseCounts`로 마이그레이션한다.
+- 런타임 카탈로그 동기화 시 legacy count를 `remainCount`로 1회 변환한다.
+- 최신 스키마는 `schemaVersion=6`이다.
 
 ---
 
@@ -72,4 +75,5 @@ ShopStorage는 SaveData JSON의 `shop` 섹션으로 직렬화한다.
 
 - [10-shop-manager](../10-shop-manager/SKILL.md)
 - [11-shop-product](../11-shop-product/SKILL.md)
+- [13-shop-catalog](../13-shop-catalog/SKILL.md)
 - [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)

@@ -1,6 +1,6 @@
 ---
 name: 14-shop-factory
-description: ShopProductFactory를 통해 `SHOP_CATALOG_TYPE`별 테이블(`SHOP_DAILY/CHEST/PURCHASE/GOLD`) row를 `ShopProductBase` 계층으로 생성/매핑할 때 사용한다.
+description: ShopProductFactory를 통해 테이블 row를 `ShopProductBase`로 변환하고, 카탈로그 구성은 `ShopCatalogBase` 계층에서 담당하도록 구현할 때 사용한다.
 ---
 
 # 14-shop-factory
@@ -8,7 +8,7 @@ description: ShopProductFactory를 통해 `SHOP_CATALOG_TYPE`별 테이블(`SHOP
 Status: ACTIVE
 AppliesTo: v10
 
-Shop Factory는 카탈로그 소스 테이블을 런타임 상품 모델로 변환하는 책임을 가진다.
+Shop Factory는 table row를 런타임 상품 모델로 변환하는 책임만 가진다.
 
 ---
 
@@ -26,10 +26,10 @@ public static class ShopProductFactory
 ## 2. Public Contract
 
 ```csharp
-public static ShopCatalog BuildCatalog(SHOP_CATALOG_TYPE catalogType)
-public static IReadOnlyList<ShopProductBase> BuildCatalogProducts(SHOP_CATALOG_TYPE catalogType)
-public static ShopProductBase Get(string shopId)
-public static bool TryGet(string shopId, out ShopProductBase product)
+public static ShopProductBase CreateDailyProduct(SHOP_DAILY row, SHOP_DISCOUNT_TYPE discountType)
+public static ShopProductBase CreateChestProduct(SHOP_CHEST row)
+public static ShopProductBase CreatePurchaseProduct(SHOP_PURCHASE row)
+public static ShopProductBase CreateGoldProduct(SHOP_GOLD row)
 ```
 
 ---
@@ -41,6 +41,7 @@ public static bool TryGet(string shopId, out ShopProductBase product)
 - `SHOP_CATALOG_TYPE.CHEST` -> `TB_SHOP_CHEST`
 - `SHOP_CATALOG_TYPE.PURCHASE` -> `TB_SHOP_PURCHASE`
 - `SHOP_CATALOG_TYPE.GOLD` -> `TB_SHOP_GOLD`
+- 카탈로그 구성(`DAILY/CHEST/PURCHASE/GOLD` 분기)은 `ShopCatalog.cs`의 `ShopCatalogBase` 파생 클래스가 담당한다.
 
 ---
 
@@ -51,20 +52,20 @@ public static bool TryGet(string shopId, out ShopProductBase product)
 - `FREE` -> `ShopProductFree`
 - `ADS` -> `ShopProductAds`
 - 그 외 -> `ShopProductCurrency`
+- row의 `price`는 `ShopProductBase.PriceWithoutDiscount`로 저장되고, 런타임 구매 계산은 `ShopProductBase.Price`(할인 반영)로 처리한다.
+- reward row의 `maxCount`는 테이블 값(`row.MaxCount`)을 사용한다. 값이 없거나 음수면 `-1`(무제한)로 해석한다.
 - `SHOP_GOLD`는 `amount`가 없으므로 `Amount=1`로 고정
-- `SHOP_DAILY`는 초기화/리셋 시 5개 선택 생성:
-- `SHOP_DAILY` 선택 규칙: `selectRate < 0` 무조건 포함
-- `SHOP_DAILY` 선택 규칙: `selectRate > 0` 합산 rate 기반 가중치 선택
-- `SHOP_DAILY` 선택 규칙: `selectRate == 0` 선택 후보 제외
-- `SHOP_DAILY` 선택 규칙: 동일 `shopId`(pk) 중복 선택 금지
+- `SHOP_DAILY` row -> `ShopProductFactory.CreateDailyProduct(row, discountType)`
+- `SHOP_CHEST` row -> `ShopProductFactory.CreateChestProduct(row)`
+- `SHOP_PURCHASE` row -> `ShopProductFactory.CreatePurchaseProduct(row)`
+- `SHOP_GOLD` row -> `ShopProductFactory.CreateGoldProduct(row)`
+- `SHOP_PURCHASE`는 런타임 제한을 두지 않으므로 `maxCount=-1`로 생성한다.
 
 ---
 
 ## 5. Hard Rules
 
-- `shopId`는 trim 후 lookup한다.
-- 미존재 `shopId`는 `null`을 반환한다.
-- Factory는 데이터 생성만 담당하고 구매 가능 여부/차감/지급은 `ShopManager`가 담당한다.
+- Factory는 row 변환만 담당하고, 카탈로그 단위 선택/분기/인덱싱은 `ShopCatalog.cs`/`ShopManager`에서 담당한다.
 
 ---
 

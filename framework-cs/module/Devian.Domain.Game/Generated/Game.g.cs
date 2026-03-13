@@ -193,6 +193,16 @@ namespace Devian.Domain.Game
         GOLD = 4,
     }
 
+    /// <summary>SHOP_DISCOUNT_TYPE enum</summary>
+    public enum SHOP_DISCOUNT_TYPE
+    {
+        NONE = 0,
+        PER10 = 1,
+        PER20 = 2,
+        PER30 = 3,
+        PER50 = 4,
+    }
+
     /// <summary>SHOP_PRODUCT_TYPE enum</summary>
     public enum SHOP_PRODUCT_TYPE
     {
@@ -433,11 +443,9 @@ namespace Devian.Domain.Game
         public string InternalProductId { get; set; } = string.Empty;
         public string RewardGroupId { get; set; } = string.Empty;
         public PURCHASE_KIND Kind { get; set; }
-        public string Title { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public string StoreSkuApple { get; set; } = string.Empty;
         public string StoreSkuGoogle { get; set; } = string.Empty;
-        public string SeasonId { get; set; } = string.Empty;
 
         public string GetKey() => InternalProductId;
     }
@@ -453,6 +461,10 @@ namespace Devian.Domain.Game
         public int Amount { get; set; }
         public int MaxCount { get; set; }
         public float SelectRate { get; set; }
+        public float DiscountRate10Per { get; set; }
+        public float DiscountRate20Per { get; set; }
+        public float DiscountRate30Per { get; set; }
+        public float DiscountRate50Per { get; set; }
 
         public string GetKey() => ShopId;
     }

@@ -1,29 +1,7 @@
-using System;
-using System.Collections.Generic;
 using Devian.Domain.Game;
-using UnityEngine;
 
 namespace Devian
 {
-    public sealed class ShopCatalog
-    {
-        static readonly IReadOnlyList<ShopProductBase> EmptyProducts = Array.Empty<ShopProductBase>();
-
-        public SHOP_CATALOG_TYPE CatalogType { get; }
-        public IReadOnlyList<ShopProductBase> Products { get; }
-
-        public ShopCatalog(SHOP_CATALOG_TYPE catalogType, IReadOnlyList<ShopProductBase> products)
-        {
-            CatalogType = catalogType;
-            Products = products ?? EmptyProducts;
-        }
-
-        public static ShopCatalog Empty(SHOP_CATALOG_TYPE catalogType)
-        {
-            return new ShopCatalog(catalogType, EmptyProducts);
-        }
-    }
-
     public abstract class ShopProductBase
     {
         protected ShopProductBase(
@@ -31,13 +9,16 @@ namespace Devian
             string nameId,
             SHOP_CATALOG_TYPE catalogType,
             SHOP_PRODUCT_TYPE productType,
-            int maxCount)
+            int maxCount = -1,
+            SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
         {
             ShopId = normalize(shopId);
             NameId = normalize(nameId);
             CatalogType = catalogType;
             ProductType = productType;
-            MaxCount = maxCount;
+            MaxCount = normalizeMaxCount(maxCount);
+            RemainCount = MaxCount;
+            DiscountType = normalizeDiscountType(discountType);
         }
 
         public string ShopId { get; }
@@ -45,18 +26,116 @@ namespace Devian
         public string NameId { get; }
         public SHOP_CATALOG_TYPE CatalogType { get; }
         public SHOP_PRODUCT_TYPE ProductType { get; }
+        public SHOP_DISCOUNT_TYPE DiscountType { get; }
+        public virtual int PriceWithoutDiscount => 0;
+        public int Price => applyDiscount(PriceWithoutDiscount, DiscountType);
         public int MaxCount { get; }
+        public int RemainCount { get; private set; }
 
         public bool HasPurchaseLimit => MaxCount >= 0;
+
+        public void SetRemainCount(int remainCount)
+        {
+            RemainCount = sanitizeRemainCount(remainCount, MaxCount);
+        }
+
+        public bool TryConsumeOne()
+        {
+            if (!HasPurchaseLimit)
+                return true;
+
+            if (RemainCount <= 0)
+                return false;
+
+            RemainCount -= 1;
+            return true;
+        }
+
+        public void ResetRemainCount()
+        {
+            RemainCount = MaxCount;
+        }
 
         static string normalize(string value)
         {
             return value ?? string.Empty;
         }
+
+        static int normalizeMaxCount(int maxCount)
+        {
+            return maxCount < -1 ? -1 : maxCount;
+        }
+
+        static int sanitizeRemainCount(int remainCount, int maxCount)
+        {
+            if (maxCount < 0)
+                return -1;
+
+            if (remainCount < 0)
+                return 0;
+
+            return remainCount > maxCount ? maxCount : remainCount;
+        }
+
+        static int applyDiscount(int price, SHOP_DISCOUNT_TYPE discountType)
+        {
+            if (price <= 0)
+                return price;
+
+            var discountPercent = getDiscountPercent(discountType);
+            if (discountPercent <= 0)
+                return price;
+
+            var discounted = (long)price * (100 - discountPercent);
+            if (discounted <= 0L)
+                return 0;
+
+            var discountedPrice = discounted / 100L;
+            if (discountedPrice <= 0L)
+                return 0;
+
+            if (discountedPrice > int.MaxValue)
+                return int.MaxValue;
+
+            return (int)discountedPrice;
+        }
+
+        static int getDiscountPercent(SHOP_DISCOUNT_TYPE discountType)
+        {
+            switch (discountType)
+            {
+                case SHOP_DISCOUNT_TYPE.PER10:
+                    return 10;
+                case SHOP_DISCOUNT_TYPE.PER20:
+                    return 20;
+                case SHOP_DISCOUNT_TYPE.PER30:
+                    return 30;
+                case SHOP_DISCOUNT_TYPE.PER50:
+                    return 50;
+                default:
+                    return 0;
+            }
+        }
+
+        static SHOP_DISCOUNT_TYPE normalizeDiscountType(SHOP_DISCOUNT_TYPE discountType)
+        {
+            switch (discountType)
+            {
+                case SHOP_DISCOUNT_TYPE.PER10:
+                case SHOP_DISCOUNT_TYPE.PER20:
+                case SHOP_DISCOUNT_TYPE.PER30:
+                case SHOP_DISCOUNT_TYPE.PER50:
+                    return discountType;
+                default:
+                    return SHOP_DISCOUNT_TYPE.NONE;
+            }
+        }
     }
 
     public abstract class ShopRewardProductBase : ShopProductBase
     {
+        readonly int _priceWithoutDiscount;
+
         protected ShopRewardProductBase(
             string shopId,
             string nameId,
@@ -66,25 +145,31 @@ namespace Devian
             int price,
             string rewardGroupId,
             int amount,
-            int maxCount)
-            : base(shopId, nameId, catalogType, productType, maxCount)
+            int maxCount = -1,
+            SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
+            : base(shopId, nameId, catalogType, productType, maxCount, discountType)
         {
             CurrencyType = currencyType;
-            Price = price;
+            _priceWithoutDiscount = price;
             RewardGroupId = rewardGroupId ?? string.Empty;
             Amount = amount < 1 ? 1 : amount;
         }
 
         public CURRENCY_TYPE CurrencyType { get; }
-        public int Price { get; }
+        public override int PriceWithoutDiscount => _priceWithoutDiscount;
         public string RewardGroupId { get; }
         public int Amount { get; }
     }
 
     public sealed class ShopProductNone : ShopProductBase
     {
-        public ShopProductNone(string shopId, string nameId, SHOP_CATALOG_TYPE catalogType, int maxCount)
-            : base(shopId, nameId, catalogType, SHOP_PRODUCT_TYPE.NONE, maxCount)
+        public ShopProductNone(
+            string shopId,
+            string nameId,
+            SHOP_CATALOG_TYPE catalogType,
+            int maxCount = -1,
+            SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
+            : base(shopId, nameId, catalogType, SHOP_PRODUCT_TYPE.NONE, maxCount, discountType)
         {
         }
     }
@@ -98,7 +183,8 @@ namespace Devian
             int price,
             string rewardGroupId,
             int amount,
-            int maxCount)
+            int maxCount = -1,
+            SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
             : base(
                 shopId,
                 nameId,
@@ -108,7 +194,8 @@ namespace Devian
                 price,
                 rewardGroupId,
                 amount,
-                maxCount)
+                maxCount,
+                discountType)
         {
         }
     }
@@ -122,7 +209,8 @@ namespace Devian
             int price,
             string rewardGroupId,
             int amount,
-            int maxCount)
+            int maxCount = -1,
+            SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
             : base(
                 shopId,
                 nameId,
@@ -132,7 +220,8 @@ namespace Devian
                 price,
                 rewardGroupId,
                 amount,
-                maxCount)
+                maxCount,
+                discountType)
         {
         }
     }
@@ -147,7 +236,8 @@ namespace Devian
             int price,
             string rewardGroupId,
             int amount,
-            int maxCount)
+            int maxCount = -1,
+            SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
             : base(
                 shopId,
                 nameId,
@@ -157,7 +247,8 @@ namespace Devian
                 price,
                 rewardGroupId,
                 amount,
-                maxCount)
+                maxCount,
+                discountType)
         {
         }
     }
@@ -170,8 +261,8 @@ namespace Devian
             SHOP_CATALOG_TYPE catalogType,
             string internalProductId,
             string seasonId,
-            int maxCount)
-            : base(shopId, nameId, catalogType, SHOP_PRODUCT_TYPE.PURCHASE, maxCount)
+            int maxCount = -1)
+            : base(shopId, nameId, catalogType, SHOP_PRODUCT_TYPE.PURCHASE, maxCount, SHOP_DISCOUNT_TYPE.NONE)
         {
             InternalProductId = internalProductId ?? string.Empty;
             SeasonId = seasonId ?? string.Empty;
@@ -183,103 +274,13 @@ namespace Devian
 
     public static class ShopProductFactory
     {
-        const int DailySelectableProductCount = 5;
-
-        public static ShopCatalog BuildCatalog(SHOP_CATALOG_TYPE catalogType)
+        public static ShopProductBase CreateDailyProduct(
+            SHOP_DAILY row,
+            SHOP_DISCOUNT_TYPE discountType)
         {
-            var products = BuildCatalogProducts(catalogType);
-            return new ShopCatalog(catalogType, products);
-        }
-
-        public static IReadOnlyList<ShopProductBase> BuildCatalogProducts(SHOP_CATALOG_TYPE catalogType)
-        {
-            switch (catalogType)
-            {
-                case SHOP_CATALOG_TYPE.DAILY:
-                    return buildDailyProducts();
-                case SHOP_CATALOG_TYPE.CHEST:
-                    return buildChestProducts();
-                case SHOP_CATALOG_TYPE.PURCHASE:
-                    return buildPurchaseProducts();
-                case SHOP_CATALOG_TYPE.GOLD:
-                    return buildGoldProducts();
-                default:
-                    return Array.Empty<ShopProductBase>();
-            }
-        }
-
-        public static ShopProductBase Get(string shopId)
-        {
-            if (string.IsNullOrWhiteSpace(shopId))
+            if (row == null)
                 return null;
 
-            var normalizedShopId = shopId.Trim();
-
-            var dailyRow = TB_SHOP_DAILY.Get(normalizedShopId);
-            if (dailyRow != null)
-                return createDailyProduct(dailyRow);
-
-            var chestRow = TB_SHOP_CHEST.Get(normalizedShopId);
-            if (chestRow != null)
-                return createChestProduct(chestRow);
-
-            var purchaseRow = TB_SHOP_PURCHASE.Get(normalizedShopId);
-            if (purchaseRow != null)
-                return createPurchaseProduct(purchaseRow);
-
-            var goldRow = TB_SHOP_GOLD.Get(normalizedShopId);
-            return goldRow != null ? createGoldProduct(goldRow) : null;
-        }
-
-        public static bool TryGet(string shopId, out ShopProductBase product)
-        {
-            product = Get(shopId);
-            return product != null;
-        }
-
-        static IReadOnlyList<ShopProductBase> buildDailyProducts()
-        {
-            var rows = TB_SHOP_DAILY.GetAll();
-            var selectedRows = selectDailyRows(rows, DailySelectableProductCount);
-            var list = new List<ShopProductBase>(selectedRows.Count);
-            for (var i = 0; i < selectedRows.Count; i++)
-                list.Add(createDailyProduct(selectedRows[i]));
-
-            return list;
-        }
-
-        static IReadOnlyList<ShopProductBase> buildChestProducts()
-        {
-            var rows = TB_SHOP_CHEST.GetAll();
-            var list = new List<ShopProductBase>(rows.Count);
-            for (var i = 0; i < rows.Count; i++)
-                list.Add(createChestProduct(rows[i]));
-
-            return list;
-        }
-
-        static IReadOnlyList<ShopProductBase> buildPurchaseProducts()
-        {
-            var rows = TB_SHOP_PURCHASE.GetAll();
-            var list = new List<ShopProductBase>(rows.Count);
-            for (var i = 0; i < rows.Count; i++)
-                list.Add(createPurchaseProduct(rows[i]));
-
-            return list;
-        }
-
-        static IReadOnlyList<ShopProductBase> buildGoldProducts()
-        {
-            var rows = TB_SHOP_GOLD.GetAll();
-            var list = new List<ShopProductBase>(rows.Count);
-            for (var i = 0; i < rows.Count; i++)
-                list.Add(createGoldProduct(rows[i]));
-
-            return list;
-        }
-
-        static ShopProductBase createDailyProduct(SHOP_DAILY row)
-        {
             return createRewardProduct(
                 row.ShopId,
                 row.NameId,
@@ -288,114 +289,15 @@ namespace Devian
                 row.Price,
                 row.RewardGroupId,
                 row.Amount,
-                row.MaxCount);
+                row.MaxCount,
+                discountType);
         }
 
-        static List<SHOP_DAILY> selectDailyRows(IReadOnlyList<SHOP_DAILY> rows, int targetCount)
+        public static ShopProductBase CreateChestProduct(SHOP_CHEST row)
         {
-            var mandatoryRows = new List<SHOP_DAILY>();
-            var weightedRows = new List<SHOP_DAILY>();
-            var seenShopIds = new HashSet<string>(StringComparer.Ordinal);
+            if (row == null)
+                return null;
 
-            for (var i = 0; i < rows.Count; i++)
-            {
-                var row = rows[i];
-                if (row == null || string.IsNullOrWhiteSpace(row.ShopId))
-                    continue;
-
-                var normalizedShopId = row.ShopId.Trim();
-                if (!seenShopIds.Add(normalizedShopId))
-                    continue;
-
-                var selectRate = sanitizeDailySelectRate(row.SelectRate);
-                if (selectRate < 0f)
-                {
-                    mandatoryRows.Add(row);
-                    continue;
-                }
-
-                if (selectRate > 0f)
-                    weightedRows.Add(row);
-            }
-
-            var selectedRows = new List<SHOP_DAILY>(Math.Max(targetCount, mandatoryRows.Count));
-            selectedRows.AddRange(mandatoryRows);
-            if (targetCount <= 0 || selectedRows.Count >= targetCount || weightedRows.Count <= 0)
-                return selectedRows;
-
-            var remainingCount = targetCount - selectedRows.Count;
-            for (var i = 0; i < remainingCount && weightedRows.Count > 0; i++)
-            {
-                if (!trySelectDailyRow(weightedRows, out var selectedRow) || selectedRow == null)
-                    break;
-
-                selectedRows.Add(selectedRow);
-                weightedRows.Remove(selectedRow);
-            }
-
-            return selectedRows;
-        }
-
-        static bool trySelectDailyRow(IReadOnlyList<SHOP_DAILY> rows, out SHOP_DAILY selectedRow)
-        {
-            selectedRow = null;
-
-            var totalRate = 0f;
-            for (var i = 0; i < rows.Count; i++)
-            {
-                var row = rows[i];
-                if (!isSelectableDailyRow(row))
-                    continue;
-
-                totalRate += row.SelectRate;
-            }
-
-            if (!(totalRate > 0f))
-                return false;
-
-            var roll = UnityEngine.Random.value * totalRate;
-            var cumulative = 0f;
-            SHOP_DAILY lastRow = null;
-            for (var i = 0; i < rows.Count; i++)
-            {
-                var row = rows[i];
-                if (!isSelectableDailyRow(row))
-                    continue;
-
-                cumulative += row.SelectRate;
-                lastRow = row;
-                if (roll < cumulative)
-                {
-                    selectedRow = row;
-                    return true;
-                }
-            }
-
-            if (lastRow == null)
-                return false;
-
-            selectedRow = lastRow;
-            return true;
-        }
-
-        static bool isSelectableDailyRow(SHOP_DAILY row)
-        {
-            if (row == null || string.IsNullOrWhiteSpace(row.ShopId))
-                return false;
-
-            return sanitizeDailySelectRate(row.SelectRate) > 0f;
-        }
-
-        static float sanitizeDailySelectRate(float selectRate)
-        {
-            if (float.IsNaN(selectRate) || float.IsInfinity(selectRate))
-                return 0f;
-
-            return selectRate;
-        }
-
-        static ShopProductBase createChestProduct(SHOP_CHEST row)
-        {
             return createRewardProduct(
                 row.ShopId,
                 row.NameId,
@@ -404,11 +306,15 @@ namespace Devian
                 row.Price,
                 row.RewardGroupId,
                 row.Amount,
-                row.MaxCount);
+                row.MaxCount,
+                SHOP_DISCOUNT_TYPE.NONE);
         }
 
-        static ShopProductBase createPurchaseProduct(SHOP_PURCHASE row)
+        public static ShopProductBase CreatePurchaseProduct(SHOP_PURCHASE row)
         {
+            if (row == null)
+                return null;
+
             return new ShopProductPurchase(
                 row.ShopId,
                 row.NameId,
@@ -418,8 +324,11 @@ namespace Devian
                 -1);
         }
 
-        static ShopProductBase createGoldProduct(SHOP_GOLD row)
+        public static ShopProductBase CreateGoldProduct(SHOP_GOLD row)
         {
+            if (row == null)
+                return null;
+
             return createRewardProduct(
                 row.ShopId,
                 row.NameId,
@@ -428,7 +337,8 @@ namespace Devian
                 row.Price,
                 row.RewardGroupId,
                 1,
-                row.MaxCount);
+                row.MaxCount,
+                SHOP_DISCOUNT_TYPE.NONE);
         }
 
         static ShopProductBase createRewardProduct(
@@ -439,14 +349,15 @@ namespace Devian
             int price,
             string rewardGroupId,
             int amount,
-            int maxCount)
+            int maxCount,
+            SHOP_DISCOUNT_TYPE discountType)
         {
             switch (currencyType)
             {
                 case CURRENCY_TYPE.FREE:
-                    return new ShopProductFree(shopId, nameId, catalogType, price, rewardGroupId, amount, maxCount);
+                    return new ShopProductFree(shopId, nameId, catalogType, price, rewardGroupId, amount, maxCount, discountType);
                 case CURRENCY_TYPE.ADS:
-                    return new ShopProductAds(shopId, nameId, catalogType, price, rewardGroupId, amount, maxCount);
+                    return new ShopProductAds(shopId, nameId, catalogType, price, rewardGroupId, amount, maxCount, discountType);
                 default:
                     return new ShopProductCurrency(
                         shopId,
@@ -456,7 +367,8 @@ namespace Devian
                         price,
                         rewardGroupId,
                         amount,
-                        maxCount);
+                        maxCount,
+                        discountType);
             }
         }
     }

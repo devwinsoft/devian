@@ -150,11 +150,11 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
   - `internalProductId` (string, pk) — 내부 상품 ID (정본)
   - `rewardGroupId` (string) — 지급 Reward Key, `internalProductId -> rewardGroupId` 변환의 SSOT
   - `kind` (PurchaseKind) — 상품 타입 (`Consumable` / `Rental` / `Subscription` / `SeasonPass`)
-  - `seasonId` (string) — 시즌 키 (`SEASON.seasonId`, PASS 상품 시즌 매핑)
-  - `title` (string) — 표시용 상품명(요약)
   - `isActive` (bool) — 운영 활성 토글
   - `storeSkuApple` (string) — Apple Store SKU
   - `storeSkuGoogle` (string) — Google Play SKU
+- [x] 시즌 매핑 필드 위치: — 결정됨
+  - 시즌 구매 제한용 `seasonId`는 `SHOP_PURCHASE.seasonId`에서 관리한다. (`PURCHASE` 스키마에는 포함하지 않는다.)
 
 
 ---

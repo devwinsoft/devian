@@ -47,6 +47,13 @@ namespace Devian
             _ = ct;
 
             var nowUtcMs = RemoteDataManager.ServerNowUtcMs;
+            if (nowUtcMs <= 0L)
+            {
+                return Task.FromResult(
+                    CommonResult.Failure(
+                        COMMON_ERROR_TYPE.COMMON_SERVER,
+                        "Server time is unavailable."));
+            }
 
             if (_storage.dailyMissionStartUtcMs <= 0L)
             {
@@ -400,6 +407,8 @@ namespace Devian
         TimeSpan getRemainTimeCore(long periodStartUtcMs, long periodDurationMs)
         {
             var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
+            if (serverNowUtcMs <= 0L)
+                return default;
 
             if (periodStartUtcMs <= 0L || periodDurationMs <= 0L)
                 return default;
@@ -424,6 +433,8 @@ namespace Devian
         int getCurrentDailyPeriodIndex()
         {
             var estimatedServerNowUtcMs = RemoteDataManager.ServerNowUtcMs;
+            if (estimatedServerNowUtcMs <= 0L)
+                return 0;
 
             if (_storage.dailyMissionStartUtcMs <= 0L)
                 return 0;
@@ -440,6 +451,8 @@ namespace Devian
         int getCurrentPeriodIndex()
         {
             var estimatedServerNowUtcMs = RemoteDataManager.ServerNowUtcMs;
+            if (estimatedServerNowUtcMs <= 0L)
+                return 0;
 
             if (_storage.periodMissionStartUtcMs <= 0L)
                 return 0;
@@ -451,6 +464,8 @@ namespace Devian
         int getCurrentPeriodElapsedDay()
         {
             var estimatedServerNowUtcMs = RemoteDataManager.ServerNowUtcMs;
+            if (estimatedServerNowUtcMs <= 0L)
+                return 0;
 
             if (_storage.periodMissionStartUtcMs <= 0L)
                 return 0;
@@ -459,5 +474,6 @@ namespace Devian
             var remainder = diff % PeriodMs;
             return (int)(remainder / DayMs);
         }
+
     }
 }
