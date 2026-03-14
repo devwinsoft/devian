@@ -175,6 +175,7 @@ namespace Devian.Domain.Common
         SHOP_REWARD_GROUP_EMPTY = 147,
         SHOP_SERVER_TIME_UNAVAILABLE = 148,
         SHOP_WALLET_UNAVAILABLE = 149,
+        SHOP_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED = 150,
     }
 
     /// <summary>Auto-generated enum from TB_SERVER_ERROR.id</summary>

@@ -281,7 +281,21 @@
       "Bash(cp \"$UPM\" \"$AST\")",
       "Bash(grep -c '\"\"ConditionOp\"\":null' /Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Bundles/Tables/ndjson/ACHIEVE_ONCE.json)",
       "Bash(grep -c '\"\"ConditionOp\"\":null' /Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Bundles/Tables/ndjson/MISSION_ONCE.json)",
-      "Bash(grep -c '\"\"ConditionOp\"\":null' /Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Bundles/Tables/ndjson/MISSION_DAILY.json)"
+      "Bash(grep -c '\"\"ConditionOp\"\":null' /Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Bundles/Tables/ndjson/MISSION_DAILY.json)",
+      "Bash(UPM=\"upm/com.devian.samples/Samples~/MobileSystem/Runtime\")",
+      "Bash(PKG=\"apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime\")",
+      "Bash(AST=\"apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime\")",
+      "Bash(cp \"$UPM/Shop/Catalog/ShopCatalogDaily.cs\" \"$PKG/Shop/Catalog/ShopCatalogDaily.cs\")",
+      "Bash(cp \"$UPM/Shop/Catalog/ShopCatalogDaily.cs\" \"$AST/Shop/Catalog/ShopCatalogDaily.cs\")",
+      "Bash(cp \"$UPM/Shop/Catalog/ShopCatalogBase.cs\" \"$PKG/Shop/Catalog/ShopCatalogBase.cs\")",
+      "Bash(cp \"$UPM/Shop/Catalog/ShopCatalogBase.cs\" \"$AST/Shop/Catalog/ShopCatalogBase.cs\")",
+      "Bash(cp \"$UPM/Shop/ShopStorage.cs\" \"$PKG/Shop/ShopStorage.cs\")",
+      "Bash(cp \"$UPM/Shop/ShopStorage.cs\" \"$AST/Shop/ShopStorage.cs\")",
+      "Bash(cp \"$UPM/SaveData/JsonCodec/SaveDataJsonCodecShop.cs\" \"$PKG/SaveData/JsonCodec/SaveDataJsonCodecShop.cs\")",
+      "Bash(cp \"$UPM/SaveData/JsonCodec/SaveDataJsonCodecShop.cs\" \"$AST/SaveData/JsonCodec/SaveDataJsonCodecShop.cs\")",
+      "Read(//Users/maoshy/Documents/Projects/devian/framework-cs/$UPM/Shop/Catalog/**)",
+      "Read(//Users/maoshy/Documents/Projects/devian/framework-cs/$UPM/Shop/**)",
+      "Read(//Users/maoshy/Documents/Projects/devian/framework-cs/$UPM/SaveData/JsonCodec/**)"
     ]
   },
   "project": {

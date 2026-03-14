@@ -54,6 +54,8 @@ namespace Devian
                 shop.schemaVersion = 8;
             if (shop.schemaVersion < 9)
                 shop.schemaVersion = 9;
+            if (shop.schemaVersion < 10)
+                shop.schemaVersion = 10;
         }
 
         static JObject serializeCatalogs(ShopStorage shop)
@@ -78,6 +80,8 @@ namespace Devian
                 if (catalogType == SHOP_CATALOG_TYPE.DAILY)
                 {
                     stateObj["autoRefreshUtcMs"] = state.autoRefreshUtcMs > 0L ? state.autoRefreshUtcMs : 0L;
+                    stateObj["manualRefreshUtcMs"] = state.manualRefreshUtcMs > 0L ? state.manualRefreshUtcMs : 0L;
+                    stateObj["manualRefreshCount"] = state.manualRefreshCount > 0 ? state.manualRefreshCount : 0;
                     stateObj["dailyCatalogProducts"] = serializeDailyProducts(state.dailyCatalogProducts);
                 }
 
@@ -148,6 +152,10 @@ namespace Devian
                 {
                     var autoRefreshUtcMs = stateObj.Value<long?>("autoRefreshUtcMs") ?? 0L;
                     shop.SetAutoRefreshUtcMs(catalogType, autoRefreshUtcMs);
+                    var manualRefreshUtcMs = stateObj.Value<long?>("manualRefreshUtcMs") ?? 0L;
+                    var manualRefreshCount = stateObj.Value<int?>("manualRefreshCount") ?? 0;
+                    shop.SetManualRefreshUtcMs(catalogType, manualRefreshUtcMs);
+                    shop.SetManualRefreshCount(catalogType, manualRefreshCount);
                 }
 
                 if (stateObj["productRemainCounts"] is JObject remainObj)
@@ -166,7 +174,8 @@ namespace Devian
                 if (catalogType == SHOP_CATALOG_TYPE.DAILY
                     && stateObj["dailyCatalogProducts"] is JArray dailyProductsArr)
                 {
-                    shop.SetDailyCatalogProducts(parseDailyProductStates(dailyProductsArr));
+                    var parsed = parseDailyProductStates(dailyProductsArr);
+                    shop.SetDailyCatalogProducts(parsed);
                 }
             }
         }

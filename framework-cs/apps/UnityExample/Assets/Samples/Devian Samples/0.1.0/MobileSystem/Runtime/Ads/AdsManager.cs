@@ -142,6 +142,14 @@ namespace Devian
         }
 
         /// <summary>
+        /// 기본 advertiseId 광고 표시 가능 여부.
+        /// </summary>
+        public bool CanShow()
+        {
+            return CanShow(_defaultAdvertiseId);
+        }
+
+        /// <summary>
         /// 광고 표시 가능 여부. 동기 fast-gate (provider readiness는 미포함).
         /// </summary>
         public bool CanShow(string advertiseId)
@@ -150,9 +158,9 @@ namespace Devian
             if (row == null || !row.IsActive)
                 return false;
 
-            // NoAds gating — REWARDED는 예외
+            // NoAds 활성 → REWARDED 제외, 광고 없이 즉시 성공 (ShowAsync에서 Skipped 반환)
             if (row.Format != ADVERTISE_FORMAT.REWARDED && IsNoAdsActive())
-                return false;
+                return true;
 
             if (IsCooldownActive(advertiseId, row.CooldownSec))
                 return false;
@@ -175,12 +183,13 @@ namespace Devian
                     $"ADVERTISE not found or inactive: {advertiseId}");
             }
 
-            // ── NoAds gating (REWARDED 제외) ──
+            // ── NoAds 활성 → REWARDED 제외, 광고 없이 즉시 성공 ──
             if (row.Format != ADVERTISE_FORMAT.REWARDED && IsNoAdsActive())
             {
-                return CommonResult<AdShowResult>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    "NoAds active — ad blocked");
+                return CommonResult<AdShowResult>.Success(new AdShowResult(
+                    advertiseId,
+                    row.Format,
+                    AdProviderShowResult.Skipped));
             }
 
             // ── Cooldown ──

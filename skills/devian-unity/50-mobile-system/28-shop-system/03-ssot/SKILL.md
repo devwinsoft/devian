@@ -9,8 +9,8 @@ AppliesTo: v10
 
 - catalog initialize 규칙
 - catalog refresh 조건 탐색/실행 순서
-- `Initialize`, `RefreshProducts`, `ResetAds`, `GetAdsResetRemainingMs`의 계약
-- storage 반영 순서(`autoRefreshUtcMs`, `adsRefreshUtcMs`, remain/daily 상태)
+- `Initialize`, `RefreshProducts`, `GetCatalog<T>()`, catalog public API의 계약
+- storage 반영 순서(`autoRefreshUtcMs`, `adsRefreshUtcMs`, `manualRefreshUtcMs`, remain/daily 상태)
 
 개별 클래스 구현 설명은 `10/11/12/13/14` 문서에서 다루며,
 동작 순서/의미 충돌 시 이 문서가 우선한다.
@@ -24,7 +24,8 @@ AppliesTo: v10
 - `catalog refresh`: `ShopCatalogBase.RefreshProducts()` 재실행
 - `auto refresh`: 다음 refresh 시각(`autoRefreshUtcMs`)에 도달했을 때 카탈로그를 갱신하는 것
 - `ads refill`: `adsRefreshUtcMs` 만료 시 ADS/FREE 제한 상품 `remainCount` 리필
-- `force catalog refresh`: `ResetAds(catalogType)` 경로에서 강제 갱신
+- `daily manual refresh`: `SHOP_DAILY`가 광고 시청 성공으로 동적 5개 상품을 다시 뽑는 것
+- `force catalog refresh`: `ShopCatalogBase.ResetAds()` 경로에서 강제 갱신
 
 ---
 
@@ -49,6 +50,9 @@ AppliesTo: v10
 - `ShopCatalogBase.onRefresh()` 기본 경로는 `CHEST/PURCHASE/GOLD`의 테이블 전체 row를 product로 생성한다.
 - `ShopCatalogDaily.onRefresh()`는 valid storage가 있으면 storage 기준으로 5개 동적 상품을 복원하고, invalid/empty storage면 5개를 새로 선택 생성한다.
 - `ShopCatalogEvent.onRefresh()`는 `SHOP_EVENT.startTime/endTime`을 서버 UTC 기준으로 평가해 현재 판매 중인 row만 product로 생성한다.
+- `ShopCatalogBase`는 `Storage`를 소유하며, catalog runtime state helper는 catalog 계층에 둔다.
+- `ShopCatalogDaily`는 daily manual refresh 정책/state machine을 직접 가진다.
+- `ShopManager`는 catalog-specific 정책을 직접 계산하지 않고, global refresh/index/save만 담당한다.
 - daily storage의 만료 여부는 `onRefresh()`가 아니라 refresh 시간 판정에서 결정한다.
 - row -> `ShopProductBase` 변환 helper도 catalog 계층(`ShopCatalogBase`)에 둔다. 별도 factory 계층을 두지 않는다.
 
@@ -65,7 +69,8 @@ AppliesTo: v10
 - `ShouldInitializeAutoRefreshUtcMs`
 - `ShouldClearAutoRefreshUtcMs`
 - `ShouldClearAdsRefreshUtcMs`
-- `RemainRefreshTimeMs`
+- `RemainAutoRefreshTimeMs`
+- `RemainAdsRefreshTimeMs`
 
 판정 규칙:
 - 일반 카탈로그는 `autoRefreshDays <= 0`이면 auto refresh 미사용 (`autoRefreshUtcMs` 제거 대상).
@@ -87,7 +92,7 @@ AppliesTo: v10
 1. `evaluateCatalogRefreshState(...)` 결과를 받는다.
 2. `ShouldClearAutoRefreshUtcMs`면 clear한다.
 3. `ShouldRefreshCatalogProducts`면:
-   - `clearCatalogRuntimeStateForRefresh(...)` 수행
+   - `catalog.ClearRuntimeStateForRefresh(...)` 수행
    - `catalog.RefreshProducts()` 수행
    - 일반 auto refresh catalog는 다음 `autoRefreshUtcMs`를 기록
    - `EVENT`는 다음 `startTime/endTime` 경계 시각을 `autoRefreshUtcMs`로 기록
@@ -113,13 +118,30 @@ AppliesTo: v10
 - 초기화 이후에만 조건부 refresh 전체 실행.
 - catalog/product 초기화를 수행하지 않는다.
 
-`ResetAds(catalogType)`
-- 대상 카탈로그에 대해 `forceCatalogRefresh=true` 경로를 호출한다.
-- 강제 refresh 후 index 동기화/저장을 수행한다.
+`GetCatalog<T>()`
+- `ShopManager`는 typed catalog access를 위해 `GetCatalog<T>() where T : ShopCatalogBase`를 제공한다.
+- `GetCatalog<T>()`는 typed catalog instance 획득용이다.
+- catalog-specific operation은 획득한 catalog instance의 public method를 사용한다.
 
-`GetAdsResetRemainingMs(catalogType)`
-- 동일 조건 탐색 함수를 사용한다.
-- refresh가 필요한 상태면 `0`을 반환한다.
+`ShopCatalogBase.ResetAds()`
+- catalog instance public API다.
+- 내부적으로 해당 catalogType에 대해 `forceCatalogRefresh=true` 경로를 호출한다.
+- catalog는 공통 강제 refresh를 요청하고, ShopManager는 global post-commit(index/save)만 수행한다.
+
+`ShopCatalogDaily.RefreshByAdsAsync()`
+- `SHOP_DAILY` 전용 수동 refresh instance API다.
+- `Initialize()` 이후에만 호출할 수 있다.
+- `DefaultAdsAdvertiseId` 광고 시청 성공 시에만 성공한다.
+- rolling 24시간 기준 최대 5회를 사용한다.
+- 사용량 상태는 `manualRefreshUtcMs`(다음 만료 시각), `manualRefreshCount`(사용 횟수)로 저장한다.
+- 만료 후 첫 성공 시 `manualRefreshUtcMs = serverNow + 1day`, `manualRefreshCount = 1`로 시작한다.
+- 만료 전 재사용 시 `manualRefreshCount++` 한다.
+- 남은 횟수가 0이면 `SHOP_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED`로 실패한다.
+- server time 검증과 manual refresh 상태 평가는 광고 시청 전에 완료해야 한다.
+- manual refresh는 global refresh를 호출하지 않고 DAILY catalog만 1회 refresh한다.
+- 광고 가용성 검증은 `AdsManager.ShowAsync(...)` 단일 경로를 사용한다.
+- 성공 시 `manualRefreshUtcMs/manualRefreshCount`뿐 아니라 `autoRefreshUtcMs`도 다음 주기로 갱신한다.
+- 카탈로그별 남은 시간 조회는 별도 getter가 아니라 catalog runtime 프로퍼티를 직접 사용한다.
 
 ---
 
@@ -129,6 +151,7 @@ AppliesTo: v10
 - 이후 `LoginManager -> ShopManager.Initialize()`가 storage 기반 runtime catalog/product 구성을 수행한다.
 - `DAILY`를 제외한 카탈로그는 table로 생성한 product에 storage 상태를 덮어쓴다.
 - `DAILY`는 `onRefresh()`에서 storage 기준 product 구성을 직접 복원할 수 있다.
+- `DAILY` manual refresh 상태는 `ShopCatalogDaily.SyncRuntimeState(...)`가 storage 만료 여부를 정리하고 catalog runtime 프로퍼티에 동기화한다.
 - `EVENT`는 별도 동적 payload를 저장하지 않고, `SHOP_EVENT` + 서버 시간 기준으로 매번 활성 상품을 재구성한다.
 - Shop runtime mutation은 로컬 save queue를 통해 저장한다.
 
@@ -140,17 +163,17 @@ AppliesTo: v10
 
 - UPM (정본)
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopManager.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopCatalog.cs`
+  - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/Catalog/` (7개 파일)
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopStorage.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecShop.cs`
 - Packages (sync)
   - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopManager.cs`
-  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopCatalog.cs`
+  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/Catalog/` (7개 파일)
   - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopStorage.cs`
   - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecShop.cs`
 - Assets/Samples (import)
   - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Shop/ShopManager.cs`
-  - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Shop/ShopCatalog.cs`
+  - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Shop/Catalog/` (7개 파일)
   - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Shop/ShopStorage.cs`
   - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecShop.cs`
 

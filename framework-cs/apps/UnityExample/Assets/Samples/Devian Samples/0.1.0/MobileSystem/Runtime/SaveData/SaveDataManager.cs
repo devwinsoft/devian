@@ -819,6 +819,7 @@ namespace Devian
             var inventory = getInventoryStorageOrNull();
             var purchase = getPurchaseStorageOrNull();
             var shop = getShopStorageOrNull();
+            var shopManager = getShopManagerOrNull();
             var account = getAccountStorageOrNull();
             var messageManager = getGameMessageManagerOrNull();
             var missionManager = getMissionManagerOrNull();
@@ -833,6 +834,7 @@ namespace Devian
             if (inventory == null || purchase == null || shop == null || account == null || message == null || mission == null || achieve == null || leaderboardReward == null || attend == null)
                 return;
 
+            shopManager?.InvalidateRuntimeState();
             messageManager.ClearStorage();
             missionManager.ClearStorage();
             achieveManager.ClearStorage();
@@ -844,6 +846,7 @@ namespace Devian
 
         public void ClearGameState()
         {
+            getShopManagerOrNull()?.InvalidateRuntimeState();
             getInventoryStorageOrNull()?.Clear();
             getPurchaseStorageOrNull()?.ClearAll();
             getShopStorageOrNull()?.Clear();
@@ -1443,6 +1446,18 @@ namespace Devian
             {
                 var shopManager = ShopManager.Instance;
                 return shopManager != null ? shopManager.Storage : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static ShopManager getShopManagerOrNull()
+        {
+            try
+            {
+                return ShopManager.Instance;
             }
             catch
             {

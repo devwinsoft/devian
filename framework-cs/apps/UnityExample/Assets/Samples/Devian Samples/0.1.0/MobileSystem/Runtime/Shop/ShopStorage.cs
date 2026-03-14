@@ -17,6 +17,8 @@ namespace Devian
     {
         public long autoRefreshUtcMs;
         public long adsRefreshUtcMs;
+        public long manualRefreshUtcMs;
+        public int manualRefreshCount;
         public Dictionary<string, int> productRemainCounts = new();
         public List<ShopDailyProductState> dailyCatalogProducts = new();
     }
@@ -24,7 +26,7 @@ namespace Devian
     [Serializable]
     public sealed class ShopStorage
     {
-        public int schemaVersion = 9;
+        public int schemaVersion = 10;
         public Dictionary<string, ShopCatalogStorageState> catalogs = new();
 
         [NonSerialized]
@@ -245,6 +247,60 @@ namespace Devian
             state.adsRefreshUtcMs = 0L;
         }
 
+        public long GetManualRefreshUtcMs(SHOP_CATALOG_TYPE catalogType)
+        {
+            var state = getCatalogState(catalogType, createIfMissing: false);
+            if (state == null)
+                return 0L;
+
+            return state.manualRefreshUtcMs > 0L ? state.manualRefreshUtcMs : 0L;
+        }
+
+        public void SetManualRefreshUtcMs(SHOP_CATALOG_TYPE catalogType, long utcMs)
+        {
+            var state = getCatalogState(catalogType, createIfMissing: true);
+            if (state == null)
+                return;
+
+            state.manualRefreshUtcMs = utcMs > 0L ? utcMs : 0L;
+        }
+
+        public void ClearManualRefreshUtcMs(SHOP_CATALOG_TYPE catalogType)
+        {
+            var state = getCatalogState(catalogType, createIfMissing: false);
+            if (state == null)
+                return;
+
+            state.manualRefreshUtcMs = 0L;
+        }
+
+        public int GetManualRefreshCount(SHOP_CATALOG_TYPE catalogType)
+        {
+            var state = getCatalogState(catalogType, createIfMissing: false);
+            if (state == null)
+                return 0;
+
+            return normalizeManualRefreshCount(state.manualRefreshCount);
+        }
+
+        public void SetManualRefreshCount(SHOP_CATALOG_TYPE catalogType, int manualRefreshCount)
+        {
+            var state = getCatalogState(catalogType, createIfMissing: true);
+            if (state == null)
+                return;
+
+            state.manualRefreshCount = normalizeManualRefreshCount(manualRefreshCount);
+        }
+
+        public void ClearManualRefreshCount(SHOP_CATALOG_TYPE catalogType)
+        {
+            var state = getCatalogState(catalogType, createIfMissing: false);
+            if (state == null)
+                return;
+
+            state.manualRefreshCount = 0;
+        }
+
         public IReadOnlyList<ShopDailyProductState> GetDailyCatalogProducts()
         {
             var daily = getCatalogState(SHOP_CATALOG_TYPE.DAILY, createIfMissing: false);
@@ -374,7 +430,7 @@ namespace Devian
 
         public void Clear()
         {
-            schemaVersion = 9;
+            schemaVersion = 10;
             catalogs.Clear();
             _legacyPurchaseCounts.Clear();
         }
@@ -439,6 +495,11 @@ namespace Devian
                 return -1;
 
             return remainCount;
+        }
+
+        static int normalizeManualRefreshCount(int manualRefreshCount)
+        {
+            return manualRefreshCount > 0 ? manualRefreshCount : 0;
         }
 
         static SHOP_DISCOUNT_TYPE normalizeDiscountType(SHOP_DISCOUNT_TYPE discountType)

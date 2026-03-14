@@ -58,9 +58,11 @@ CompoSingleton<AdsManager>.Instance
 - `PreloadAsync(advertiseId, ct)` → `Task<CommonResult>`
   - `TB_ADVERTISE` row 기준 preload 수행
 - `CanShow(advertiseId)` → `bool`
-  - 활성 여부, cooldown, no-ads, readiness를 종합 판정
+  - 활성 여부, cooldown, readiness를 종합 판정
+  - NoAds 활성 시 REWARDED 제외 → `true` (ShowAsync에서 Skipped로 즉시 성공)
 - `ShowAsync(advertiseId, skip, ct)` → `Task<CommonResult<AdShowResult>>`
   - 단일 광고 진입점
+  - NoAds 활성 시 REWARDED 제외 → 광고 노출 없이 즉시 성공 (`ProviderStatus=Skipped`)
   - `skip=true`이면 광고 노출 없이 Reward만 즉시 지급 (`ProviderStatus=Skipped`)
   - format에 따라 show/hide 또는 one-shot show 수행
   - Rewarded는 성공 콜백 시 RewardManager 호출

@@ -27,12 +27,14 @@ public sealed class ShopStorage
 
 ## 2. State
 
-- `schemaVersion` (현재 `9`)
+- `schemaVersion` (현재 `10`)
 - `catalogs: Dictionary<string, ShopCatalogStorageState>`
 - key: `SHOP_CATALOG_TYPE` 문자열 (`DAILY/CHEST/PURCHASE/GOLD/EVENT`)
 - `ShopCatalogStorageState`
 - `autoRefreshUtcMs: long` (카탈로그 다음 자동 갱신 시각 UTC ms)
 - `adsRefreshUtcMs: long` (카탈로그 ADS/FREE 다음 리필 시각 UTC ms)
+- `manualRefreshUtcMs: long` (`DAILY` 수동 refresh rolling 24시간 만료 시각 UTC ms)
+- `manualRefreshCount: int` (`DAILY` 수동 refresh rolling 24시간 사용 횟수)
 - `productRemainCounts: Dictionary<string, int>` (`shopId -> remainCount`)
 - `dailyCatalogProducts: List<ShopDailyProductState>` (DAILY에서만 사용)
 - `ShopDailyProductState = { shopId, discountType, remainCount }`
@@ -54,6 +56,9 @@ public sealed class ShopStorage
 - `EVENT`는 `dailyCatalogProducts` 같은 별도 동적 payload를 저장하지 않는다.
 - `adsRefreshUtcMs`는 ADS/FREE 구매 성공 시 `serverNow + 1day`로 기록한다.
 - 카탈로그 초기화/refresh 시 `adsRefreshUtcMs`가 없거나 만료면 ADS/FREE 제한 상품을 `remainCount=maxCount`로 리필한다.
+- `manualRefreshUtcMs`는 `ShopCatalogDaily.RefreshByAdsAsync()` 성공 시 `serverNow + 1day`로 기록한다. 만료 전 재사용은 시각을 밀지 않는다.
+- `manualRefreshCount`는 `ShopCatalogDaily.RefreshByAdsAsync()` 성공 횟수이며, 만료 시 0으로 초기화한다.
+- `manualRefreshUtcMs/manualRefreshCount`의 만료 판정과 runtime 반영은 `ShopCatalogDaily.SyncRuntimeState(...)`가 담당한다.
 - `purchaseCounts` 기반 저장은 사용하지 않는다.
 
 ---
@@ -66,7 +71,7 @@ ShopStorage는 SaveData JSON의 `shop` 섹션으로 직렬화한다.
 - deserialize: `SaveDataJsonCodecShop.DeserializeInto(JObject, ShopStorage)`
 - legacy `purchaseCounts`/`purchaseLimits`는 `_legacyPurchaseCounts`로 마이그레이션한다.
 - 런타임 카탈로그 동기화 시 legacy count를 `remainCount`로 1회 변환한다.
-- 최신 스키마는 `schemaVersion=9`이다.
+- 최신 스키마는 `schemaVersion=10`이다.
 - 저장 JSON은 flat key 대신 `catalogs` 하위에 catalog 단위로 묶어 저장한다.
 
 ---

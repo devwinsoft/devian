@@ -148,3 +148,4 @@
 {"Id":"SHOP_REWARD_APPLY_FAILED","Msg_key":"","Msg":"Shop reward apply failed."}
 {"Id":"SHOP_CAN_BUY_FAILED","Msg_key":"","Msg":"Shop CanBuy failed."}
 {"Id":"SHOP_BUY_FAILED","Msg_key":"","Msg":"Shop BuyAsync failed."}
+{"Id":"SHOP_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED","Msg_key":"","Msg":"Daily manual refresh count exhausted."}
