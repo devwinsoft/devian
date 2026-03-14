@@ -6,13 +6,20 @@ namespace Devian
 {
     public sealed class ShopCatalogEvent : ShopCatalogBase
     {
-        public ShopCatalogEvent(ShopStorage storage = null, SHOP_CATALOG catalogConfig = null)
-            : this(storage, products: null, catalogConfig)
+        public ShopCatalogEvent(
+            ShopStorage storage = null,
+            ShopCatalogEventStorageData storageData = null,
+            SHOP_CATALOG catalogConfig = null)
+            : this(storage, storageData, products: null, catalogConfig)
         {
         }
 
-        internal ShopCatalogEvent(ShopStorage storage, IReadOnlyList<ShopProductBase> products, SHOP_CATALOG catalogConfig = null)
-            : base(SHOP_CATALOG_TYPE.EVENT, storage, catalogConfig, products)
+        internal ShopCatalogEvent(
+            ShopStorage storage,
+            ShopCatalogEventStorageData storageData,
+            IReadOnlyList<ShopProductBase> products,
+            SHOP_CATALOG catalogConfig = null)
+            : base(SHOP_CATALOG_TYPE.EVENT, storage, storageData, catalogConfig, products)
         {
         }
 

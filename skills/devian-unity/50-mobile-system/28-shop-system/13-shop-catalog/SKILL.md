@@ -65,9 +65,11 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 - `ShopCatalogBase.onRefresh()` 기본 구현은 `CHEST/PURCHASE/GOLD`의 테이블 전체 row를 상품으로 생성하고, 해당 catalog bucket의 remain state를 즉시 적용한다.
 - `ShopCatalogDaily.onRefresh()`는 5개 선택 생성/저장 상태 복원을 처리한다.
 - `ShopCatalogEvent.onRefresh()`는 `SHOP_EVENT.startTime/endTime` 서버 UTC 구간 안에 있는 row만 상품으로 생성한다.
+- 각 catalog 생성자는 자기 전용 `ShopCatalog*StorageData`를 받는다.
 - 카탈로그 인스턴스 생성은 `ShopCatalogFactory`(14)에서, row -> `ShopProductBase` 변환은 `ShopProductFactory`(15)에서 처리한다.
 - `CHEST/PURCHASE/GOLD`는 테이블의 모든 row를 상품으로 생성한다.
-- `ShopCatalogBase`는 `Storage`, `virtual int autoRefreshDays`, `RemainAutoRefreshTimeMs`, `RemainAdsRefreshTimeMs`, `IsLocked`를 가진다.
+- `ShopCatalogBase`는 `Storage`, `StorageData`, `virtual int autoRefreshDays`, `RemainAutoRefreshTimeMs`, `IsLocked`를 가진다.
+- `ShopCatalogDaily`만 `RemainAdsRefreshTimeMs`, `ManualRefreshRemainTimeMs`, `ManualRefreshRemainCount`를 가진다.
 - catalog-specific public operation은 catalog instance method로 둔다.
 - `ShopCatalogBase.ResetAds()`가 공통 강제 refresh 진입점이다.
 - `ShopCatalogDaily.RefreshByAdsAsync()`가 DAILY 수동 refresh 진입점이다.
@@ -87,7 +89,7 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 - ADS/FREE 구매 성공 시 `adsRefreshUtcMs = serverNow + 1day`를 기록한다.
 - `SHOP_DAILY` 카탈로그 refresh 시에는 저장된 daily 동적 상태를 비우고 5개 선택 생성을 다시 수행한다.
 - refresh 조건 탐색은 `ShopManager.evaluateCatalogRefreshState(...)` 한 곳에서 처리한다.
-- 카탈로그별 refresh 남은 시간은 catalog runtime 프로퍼티(`RemainAutoRefreshTimeMs`, `RemainAdsRefreshTimeMs`, `RemainManualRefreshTimeMs`)로 조회한다.
+- 카탈로그별 refresh 남은 시간은 catalog runtime 프로퍼티로 조회한다. 공통 값은 `RemainAutoRefreshTimeMs`, DAILY 전용 값은 `RemainAdsRefreshTimeMs`, `ManualRefreshRemainTimeMs`, `ManualRefreshRemainCount`를 사용한다.
 
 ## 4. Unlock Rule
 
@@ -114,10 +116,11 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 - `SHOP_DAILY`의 ADS/FREE row는 고정 상품으로 카탈로그에 항상 포함하고, `dailyCatalogProducts`에는 저장하지 않는다.
 - 저장된 daily 상태가 있으면 ADS/FREE 제외 5개를 저장 상태로 복원하고, ADS/FREE 고정 상품은 테이블에서 다시 합쳐 카탈로그를 구성한다.
 - 저장된 daily 상태의 만료 여부는 `ShopManager`의 시간 기반 refresh 판정에서 결정한다.
+- `DAILY.productRemainCounts`는 ADS/FREE 고정 상품의 `remainCount`만 저장한다.
 - non-daily catalog의 remain state 복원은 `ShopCatalogBase` 계층이 직접 수행한다. `ShopManager`는 product index rebuild만 한다.
-- `ShopCatalogDaily`는 `RemainManualRefreshTimeMs`, `RemainManualRefreshCount`를 가진다.
 - daily manual refresh는 광고 시청 성공으로만 가능하며, rolling 24시간 기준 최대 5회다.
-- daily manual refresh의 상태 판단, 광고 호출, 성공 시 `manualRefreshUtcMs/manualRefreshCount/autoRefreshUtcMs` 갱신은 `ShopCatalogDaily`가 직접 처리한다.
+- daily manual refresh의 상태 판단, 광고 호출, 성공 시 `manualRefreshUtcMs/manualRefreshRemainCount/autoRefreshUtcMs` 갱신은 `ShopCatalogDaily`가 직접 처리한다.
+- `manualRefreshRemainCount`는 남은 횟수이며, 초기값과 만료 후 reset 값은 5다.
 
 ## 6. Event Catalog Rule
 

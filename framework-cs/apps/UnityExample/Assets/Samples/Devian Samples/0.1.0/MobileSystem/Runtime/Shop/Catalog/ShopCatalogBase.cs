@@ -20,17 +20,19 @@ namespace Devian
         bool _initialized;
         bool _isLocked;
         protected long remainAutoRefreshTimeMs;
-        protected long remainAdsRefreshTimeMs;
         protected readonly ShopStorage Storage;
+        protected readonly ShopCatalogStorageDataBase StorageData;
 
         protected ShopCatalogBase(
             SHOP_CATALOG_TYPE catalogType,
             ShopStorage storage = null,
+            ShopCatalogStorageDataBase storageData = null,
             SHOP_CATALOG catalogConfig = null,
             IReadOnlyList<ShopProductBase> prebuiltProducts = null)
         {
             CatalogType = catalogType;
             Storage = storage;
+            StorageData = storageData;
             _catalogConfig = normalizeCatalogConfig(catalogType, catalogConfig);
             _prebuiltProducts = prebuiltProducts;
             _isLocked = hasUnlockCondition(_catalogConfig);
@@ -45,8 +47,6 @@ namespace Devian
         public bool IsLocked => _isLocked;
         public bool HasUnlockCondition => !string.IsNullOrWhiteSpace(UnlockMsgId);
         public long RemainAutoRefreshTimeMs => remainAutoRefreshTimeMs > 0L ? remainAutoRefreshTimeMs : 0L;
-        public long RemainAdsRefreshTimeMs => remainAdsRefreshTimeMs > 0L ? remainAdsRefreshTimeMs : 0L;
-        public long RemainRefreshTimeMs => RemainAutoRefreshTimeMs;
         internal SHOP_CATALOG CatalogConfig => _catalogConfig;
         protected IReadOnlyList<ShopProductBase> PrebuiltProducts => _prebuiltProducts;
         protected bool IsInitialized => _initialized;
@@ -136,16 +136,6 @@ namespace Devian
         internal void SetRemainAutoRefreshTimeMs(long remainTimeMs)
         {
             remainAutoRefreshTimeMs = remainTimeMs > 0L ? remainTimeMs : 0L;
-        }
-
-        internal void SetRemainAdsRefreshTimeMs(long remainTimeMs)
-        {
-            remainAdsRefreshTimeMs = remainTimeMs > 0L ? remainTimeMs : 0L;
-        }
-
-        internal void SetRemainRefreshTimeMs(long remainTimeMs)
-        {
-            SetRemainAutoRefreshTimeMs(remainTimeMs);
         }
 
         internal void SetLocked(bool isLocked)

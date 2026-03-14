@@ -17,9 +17,9 @@ Shop System은 `SHOP_CATALOG_TYPE` 기반 카탈로그(`DAILY/CHEST/PURCHASE/GOL
 `EVENT`는 `autoRefreshDays` 대신 다음 `startTime/endTime` 경계 시각을 `autoRefreshUtcMs`로 저장해 refresh를 예약한다.
 ADS/FREE 상품 리필은 카탈로그별 저장 버킷의 `adsRefreshUtcMs`(다음 ADS/FREE refill 시각)으로 별도 관리한다.
 ADS/FREE 구매 성공 시 `adsRefreshUtcMs`는 `serverNow + 1day`로 기록된다.
-`SHOP_DAILY`는 광고 시청 성공 시 `ShopCatalogDaily.RefreshByAdsAsync()`로 수동 refresh할 수 있으며, rolling 24시간 기준 최대 5회(`manualRefreshUtcMs`, `manualRefreshCount`)를 사용한다.
+`SHOP_DAILY`는 광고 시청 성공 시 `ShopCatalogDaily.RefreshByAdsAsync()`로 수동 refresh할 수 있으며, rolling 24시간 기준 최대 5회(`manualRefreshUtcMs`, `manualRefreshRemainCount`)를 사용한다. `manualRefreshRemainCount`는 남은 횟수이며 초기값은 5다.
 `SHOP_DAILY` 카탈로그 refresh 시에는 저장된 daily 동적 상태를 비우고 5개 선택 생성을 다시 수행한다.
-카탈로그별 남은 시간 조회는 catalog runtime 프로퍼티(`RemainAutoRefreshTimeMs`, `RemainAdsRefreshTimeMs`, `RemainManualRefreshTimeMs`)를 사용한다.
+카탈로그별 남은 시간 조회는 catalog runtime 프로퍼티(`RemainAutoRefreshTimeMs`, `RemainAdsRefreshTimeMs`, `ManualRefreshRemainTimeMs`)를 사용한다.
 `ShopCatalogBase`는 storage-backed catalog runtime helper와 공통 refresh helper를 소유하고,
 `ShopCatalogDaily`는 manual refresh 상태 판단/광고 시청/성공 기록을 직접 처리한다.
 `ShopManager`는 global initialize/global refresh/product index/local save queue만 담당한다.

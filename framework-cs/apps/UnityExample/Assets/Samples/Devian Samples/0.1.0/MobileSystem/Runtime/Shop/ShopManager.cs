@@ -681,7 +681,7 @@ namespace Devian
             }
             else
             {
-                remainAdsRefreshTimeMs = catalog.RemainAdsRefreshTimeMs;
+                remainAdsRefreshTimeMs = getDailyRemainAdsRefreshTimeMs(catalog);
             }
 
             return CommonResult<CatalogRefreshState>.Success(
@@ -849,7 +849,8 @@ namespace Devian
             }
 
             catalog.SetRemainAutoRefreshTimeMs(finalRemainAutoRefreshTimeMs);
-            catalog.SetRemainAdsRefreshTimeMs(finalRemainAdsRefreshTimeMs);
+            if (catalog is ShopCatalogDaily dailyCatalog)
+                dailyCatalog.SetRemainAdsRefreshTimeMs(finalRemainAdsRefreshTimeMs);
 
             return CommonResult<CatalogRefreshCycleOutcome>.Success(
                 new CatalogRefreshCycleOutcome(didRefreshCatalogProducts, didMutateStorage));
@@ -1266,6 +1267,13 @@ namespace Devian
             }
 
             return false;
+        }
+
+        static long getDailyRemainAdsRefreshTimeMs(ShopCatalogBase catalog)
+        {
+            return catalog is ShopCatalogDaily dailyCatalog
+                ? dailyCatalog.RemainAdsRefreshTimeMs
+                : 0L;
         }
 
         static bool hasCatalogUnlockCondition(ShopCatalogBase catalog)

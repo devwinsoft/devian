@@ -27,13 +27,9 @@ namespace Devian
             shop.schemaVersion = shopObj.Value<int?>("schemaVersion") ?? 1;
 
             if (shopObj["catalogs"] is JObject catalogsObj)
-            {
                 deserializeGroupedCatalogs(catalogsObj, shop);
-            }
             else
-            {
                 deserializeLegacyFlat(shopObj, shop);
-            }
 
             if (shop.schemaVersion < 8)
                 migrateLegacyAutoRefreshStartedAtToNextRefreshTime(shop);
@@ -56,39 +52,123 @@ namespace Devian
                 shop.schemaVersion = 9;
             if (shop.schemaVersion < 10)
                 shop.schemaVersion = 10;
+            if (shop.schemaVersion < 11)
+                shop.schemaVersion = 11;
         }
 
         static JObject serializeCatalogs(ShopStorage shop)
         {
             var catalogsObj = new JObject();
-            if (shop?.catalogs == null || shop.catalogs.Count <= 0)
+            if (shop == null)
                 return catalogsObj;
 
-            foreach (var kv in shop.catalogs)
+            addCatalog(catalogsObj, shop.daily);
+            addCatalog(catalogsObj, shop.chest);
+            addCatalog(catalogsObj, shop.purchase);
+            addCatalog(catalogsObj, shop.gold);
+            addCatalog(catalogsObj, shop.eventCatalog);
+            return catalogsObj;
+        }
+
+        static void addCatalog(JObject catalogsObj, ShopCatalogStorageDataBase catalogData)
+        {
+            var stateObj = serializeCatalogData(catalogData);
+            if (stateObj == null)
+                return;
+
+            catalogsObj[catalogData.CatalogType.ToString()] = stateObj;
+        }
+
+        static JObject serializeCatalogData(ShopCatalogStorageDataBase catalogData)
+        {
+            switch (catalogData)
             {
-                var catalogType = parseCatalogType(kv.Key);
-                if (catalogType == SHOP_CATALOG_TYPE.NONE)
-                    continue;
+                case ShopCatalogDailyStorageData daily:
+                    return serializeDailyCatalog(daily);
+                case ShopCatalogChestStorageData chest:
+                    return serializeChestCatalog(chest);
+                case ShopCatalogGoldStorageData gold:
+                    return serializeGoldCatalog(gold);
+                case ShopCatalogEventStorageData eventCatalog:
+                    return serializeEventCatalog(eventCatalog);
+                case ShopCatalogPurchaseStorageData:
+                default:
+                    return null;
+            }
+        }
 
-                var state = kv.Value ?? new ShopCatalogStorageState();
-                var stateObj = new JObject
-                {
-                    ["adsRefreshUtcMs"] = state.adsRefreshUtcMs > 0L ? state.adsRefreshUtcMs : 0L,
-                    ["productRemainCounts"] = serializeRemainCounts(state.productRemainCounts),
-                };
+        static JObject serializeDailyCatalog(ShopCatalogDailyStorageData daily)
+        {
+            daily ??= new ShopCatalogDailyStorageData();
+            var stateObj = new JObject
+            {
+                ["adsRefreshUtcMs"] = daily.adsRefreshUtcMs > 0L ? daily.adsRefreshUtcMs : 0L,
+                ["autoRefreshUtcMs"] = daily.autoRefreshUtcMs > 0L ? daily.autoRefreshUtcMs : 0L,
+                ["manualRefreshUtcMs"] = daily.manualRefreshUtcMs > 0L ? daily.manualRefreshUtcMs : 0L,
+                ["manualRefreshRemainCount"] = daily.manualRefreshRemainCount > 0 ? daily.manualRefreshRemainCount : 0,
+                ["productRemainCounts"] = serializeRemainCounts(daily.productRemainCounts),
+                ["dailyCatalogProducts"] = serializeDailyProducts(daily.dailyCatalogProducts),
+            };
 
-                if (catalogType == SHOP_CATALOG_TYPE.DAILY)
+            return hasMeaningfulState(stateObj) ? stateObj : null;
+        }
+
+        static JObject serializeChestCatalog(ShopCatalogChestStorageData chest)
+        {
+            chest ??= new ShopCatalogChestStorageData();
+            var stateObj = new JObject
+            {
+                ["adsRefreshUtcMs"] = chest.adsRefreshUtcMs > 0L ? chest.adsRefreshUtcMs : 0L,
+                ["productRemainCounts"] = serializeRemainCounts(chest.productRemainCounts),
+            };
+
+            return hasMeaningfulState(stateObj) ? stateObj : null;
+        }
+
+        static JObject serializeGoldCatalog(ShopCatalogGoldStorageData gold)
+        {
+            gold ??= new ShopCatalogGoldStorageData();
+            var stateObj = new JObject
+            {
+                ["adsRefreshUtcMs"] = gold.adsRefreshUtcMs > 0L ? gold.adsRefreshUtcMs : 0L,
+                ["productRemainCounts"] = serializeRemainCounts(gold.productRemainCounts),
+            };
+
+            return hasMeaningfulState(stateObj) ? stateObj : null;
+        }
+
+        static JObject serializeEventCatalog(ShopCatalogEventStorageData eventCatalog)
+        {
+            eventCatalog ??= new ShopCatalogEventStorageData();
+            var stateObj = new JObject
+            {
+                ["autoRefreshUtcMs"] = eventCatalog.autoRefreshUtcMs > 0L ? eventCatalog.autoRefreshUtcMs : 0L,
+            };
+
+            return hasMeaningfulState(stateObj) ? stateObj : null;
+        }
+
+        static bool hasMeaningfulState(JObject stateObj)
+        {
+            if (stateObj == null || stateObj.Count <= 0)
+                return false;
+
+            foreach (var property in stateObj.Properties())
+            {
+                switch (property.Value)
                 {
-                    stateObj["autoRefreshUtcMs"] = state.autoRefreshUtcMs > 0L ? state.autoRefreshUtcMs : 0L;
-                    stateObj["manualRefreshUtcMs"] = state.manualRefreshUtcMs > 0L ? state.manualRefreshUtcMs : 0L;
-                    stateObj["manualRefreshCount"] = state.manualRefreshCount > 0 ? state.manualRefreshCount : 0;
-                    stateObj["dailyCatalogProducts"] = serializeDailyProducts(state.dailyCatalogProducts);
+                    case JValue value:
+                        if (value.Type == JTokenType.Integer && (value.Value<long?>() ?? 0L) > 0L)
+                            return true;
+                        break;
+                    case JObject obj when obj.Count > 0:
+                        return true;
+                    case JArray arr when arr.Count > 0:
+                        return true;
                 }
-
-                catalogsObj[catalogType.ToString()] = stateObj;
             }
 
-            return catalogsObj;
+            return false;
         }
 
         static JObject serializeRemainCounts(Dictionary<string, int> remainCounts)
@@ -145,38 +225,72 @@ namespace Devian
                 if (catalogProp.Value is not JObject stateObj)
                     continue;
 
-                var adsRefreshUtcMs = stateObj.Value<long?>("adsRefreshUtcMs") ?? 0L;
-                shop.SetAdsRefreshUtcMs(catalogType, adsRefreshUtcMs);
-
-                if (catalogType == SHOP_CATALOG_TYPE.DAILY)
+                switch (catalogType)
                 {
-                    var autoRefreshUtcMs = stateObj.Value<long?>("autoRefreshUtcMs") ?? 0L;
-                    shop.SetAutoRefreshUtcMs(catalogType, autoRefreshUtcMs);
-                    var manualRefreshUtcMs = stateObj.Value<long?>("manualRefreshUtcMs") ?? 0L;
-                    var manualRefreshCount = stateObj.Value<int?>("manualRefreshCount") ?? 0;
-                    shop.SetManualRefreshUtcMs(catalogType, manualRefreshUtcMs);
-                    shop.SetManualRefreshCount(catalogType, manualRefreshCount);
+                    case SHOP_CATALOG_TYPE.DAILY:
+                        deserializeDailyCatalog(stateObj, shop);
+                        break;
+                    case SHOP_CATALOG_TYPE.CHEST:
+                        deserializeChestCatalog(stateObj, shop);
+                        break;
+                    case SHOP_CATALOG_TYPE.GOLD:
+                        deserializeGoldCatalog(stateObj, shop);
+                        break;
+                    case SHOP_CATALOG_TYPE.EVENT:
+                        deserializeEventCatalog(stateObj, shop);
+                        break;
+                    case SHOP_CATALOG_TYPE.PURCHASE:
+                    default:
+                        break;
                 }
+            }
+        }
 
-                if (stateObj["productRemainCounts"] is JObject remainObj)
-                {
-                    foreach (var remainProp in remainObj.Properties())
-                    {
-                        var normalizedShopId = remainProp.Name != null ? remainProp.Name.Trim() : string.Empty;
-                        if (string.IsNullOrEmpty(normalizedShopId))
-                            continue;
+        static void deserializeDailyCatalog(JObject stateObj, ShopStorage shop)
+        {
+            shop.SetAdsRefreshUtcMs(SHOP_CATALOG_TYPE.DAILY, stateObj.Value<long?>("adsRefreshUtcMs") ?? 0L);
+            shop.SetAutoRefreshUtcMs(SHOP_CATALOG_TYPE.DAILY, stateObj.Value<long?>("autoRefreshUtcMs") ?? 0L);
+            shop.SetManualRefreshUtcMs(SHOP_CATALOG_TYPE.DAILY, stateObj.Value<long?>("manualRefreshUtcMs") ?? 0L);
+            var manualRefreshRemainCount =
+                stateObj.Value<int?>("manualRefreshRemainCount")
+                ?? stateObj.Value<int?>("manualRefreshCount")
+                ?? 0;
+            shop.SetManualRefreshRemainCount(SHOP_CATALOG_TYPE.DAILY, manualRefreshRemainCount);
+            deserializeRemainCounts(stateObj["productRemainCounts"] as JObject, SHOP_CATALOG_TYPE.DAILY, shop);
+            if (stateObj["dailyCatalogProducts"] is JArray dailyProductsArr)
+                shop.SetDailyCatalogProducts(parseDailyProductStates(dailyProductsArr));
+        }
 
-                        var remainCount = remainProp.Value.Value<int?>() ?? -1;
-                        shop.SetProductRemainCount(catalogType, normalizedShopId, remainCount);
-                    }
-                }
+        static void deserializeChestCatalog(JObject stateObj, ShopStorage shop)
+        {
+            shop.SetAdsRefreshUtcMs(SHOP_CATALOG_TYPE.CHEST, stateObj.Value<long?>("adsRefreshUtcMs") ?? 0L);
+            deserializeRemainCounts(stateObj["productRemainCounts"] as JObject, SHOP_CATALOG_TYPE.CHEST, shop);
+        }
 
-                if (catalogType == SHOP_CATALOG_TYPE.DAILY
-                    && stateObj["dailyCatalogProducts"] is JArray dailyProductsArr)
-                {
-                    var parsed = parseDailyProductStates(dailyProductsArr);
-                    shop.SetDailyCatalogProducts(parsed);
-                }
+        static void deserializeGoldCatalog(JObject stateObj, ShopStorage shop)
+        {
+            shop.SetAdsRefreshUtcMs(SHOP_CATALOG_TYPE.GOLD, stateObj.Value<long?>("adsRefreshUtcMs") ?? 0L);
+            deserializeRemainCounts(stateObj["productRemainCounts"] as JObject, SHOP_CATALOG_TYPE.GOLD, shop);
+        }
+
+        static void deserializeEventCatalog(JObject stateObj, ShopStorage shop)
+        {
+            shop.SetAutoRefreshUtcMs(SHOP_CATALOG_TYPE.EVENT, stateObj.Value<long?>("autoRefreshUtcMs") ?? 0L);
+        }
+
+        static void deserializeRemainCounts(JObject remainObj, SHOP_CATALOG_TYPE catalogType, ShopStorage shop)
+        {
+            if (remainObj == null)
+                return;
+
+            foreach (var remainProp in remainObj.Properties())
+            {
+                var normalizedShopId = remainProp.Name != null ? remainProp.Name.Trim() : string.Empty;
+                if (string.IsNullOrEmpty(normalizedShopId))
+                    continue;
+
+                var remainCount = remainProp.Value.Value<int?>() ?? -1;
+                shop.SetProductRemainCount(catalogType, normalizedShopId, remainCount);
             }
         }
 
@@ -259,9 +373,7 @@ namespace Devian
             }
 
             if (shopObj["dailyCatalogProducts"] is JArray dailyProductsArr)
-            {
                 shop.SetDailyCatalogProducts(parseDailyProductStates(dailyProductsArr));
-            }
         }
 
         static ShopDailyProductState[] parseDailyProductStates(JArray dailyProductsArr)
@@ -387,56 +499,48 @@ namespace Devian
 
         static void migrateLegacyAutoRefreshStartedAtToNextRefreshTime(ShopStorage shop)
         {
-            if (shop?.catalogs == null || shop.catalogs.Count <= 0)
+            if (shop == null)
                 return;
 
-            var keys = new List<string>(shop.catalogs.Keys);
-            for (var i = 0; i < keys.Count; i++)
-            {
-                var key = keys[i];
-                if (string.IsNullOrWhiteSpace(key))
-                    continue;
-
-                if (!shop.catalogs.TryGetValue(key, out var state) || state == null)
-                    continue;
-
-                var startedAtUtcMs = state.autoRefreshUtcMs;
-                if (startedAtUtcMs <= 0L)
-                    continue;
-
-                if (!tryGetLegacyCatalogAutoRefreshIntervalMs(key, out var intervalMs) || intervalMs <= 0L)
-                    continue;
-
-                state.autoRefreshUtcMs = safeAddUtcMs(startedAtUtcMs, intervalMs);
-            }
+            migrateLegacyAutoRefreshStartedAtToNextRefreshTime(shop, SHOP_CATALOG_TYPE.DAILY);
+            migrateLegacyAutoRefreshStartedAtToNextRefreshTime(shop, SHOP_CATALOG_TYPE.EVENT);
         }
 
-        static bool tryGetLegacyCatalogAutoRefreshIntervalMs(string catalogKey, out long intervalMs)
+        static void migrateLegacyAutoRefreshStartedAtToNextRefreshTime(ShopStorage shop, SHOP_CATALOG_TYPE catalogType)
+        {
+            var startedAtUtcMs = shop.GetAutoRefreshUtcMs(catalogType);
+            if (startedAtUtcMs <= 0L)
+                return;
+
+            if (!tryGetLegacyCatalogAutoRefreshIntervalMs(catalogType, out var intervalMs) || intervalMs <= 0L)
+                return;
+
+            shop.SetAutoRefreshUtcMs(catalogType, safeAddUtcMs(startedAtUtcMs, intervalMs));
+        }
+
+        static bool tryGetLegacyCatalogAutoRefreshIntervalMs(SHOP_CATALOG_TYPE catalogType, out long intervalMs)
         {
             intervalMs = 0L;
-            var catalogType = parseCatalogType(catalogKey);
             if (catalogType == SHOP_CATALOG_TYPE.NONE)
                 return false;
 
-            switch (catalogType)
-            {
-                case SHOP_CATALOG_TYPE.DAILY:
-                    intervalMs = 24L * 60L * 60L * 1000L;
-                    return true;
-                default:
-                    return false;
-            }
+            var row = TB_SHOP_CATALOG.Get(catalogType);
+            if (row == null || row.AutoRefreshDays <= 0)
+                return false;
+
+            intervalMs = row.AutoRefreshDays * 24L * 60L * 60L * 1000L;
+            return intervalMs > 0L;
         }
 
-        static long safeAddUtcMs(long utcMs, long addMs)
+        static long safeAddUtcMs(long left, long right)
         {
-            if (utcMs <= 0L || addMs <= 0L)
-                return utcMs;
+            if (left <= 0L || right <= 0L)
+                return 0L;
 
-            if (long.MaxValue - utcMs < addMs)
+            if (long.MaxValue - left < right)
                 return long.MaxValue;
 
-            return utcMs + addMs;
+            return left + right;
         }
     }
 }

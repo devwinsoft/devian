@@ -13,62 +13,77 @@ namespace Devian
         const int DailySelectableProductCount = 5;
         const int DailyDiscountProductCount = 3;
         internal const int MaxManualRefreshCountPerDay = 5;
-        long _remainManualRefreshTimeMs;
-        int _remainManualRefreshCount = MaxManualRefreshCountPerDay;
+        long _remainAdsRefreshTimeMs;
+        long _manualRefreshRemainTimeMs;
+        int _manualRefreshRemainCount = MaxManualRefreshCountPerDay;
 
         readonly struct ManualRefreshState
         {
             public ManualRefreshState(
                 long serverNowUtcMs,
                 long nextManualRefreshUtcMs,
-                int usedManualRefreshCount,
+                int storedManualRefreshRemainCount,
                 long remainManualRefreshTimeMs,
                 int remainManualRefreshCount,
-                bool shouldClearStoredState)
+                bool shouldNormalizeStoredState)
             {
                 ServerNowUtcMs = serverNowUtcMs > 0L ? serverNowUtcMs : 0L;
                 NextManualRefreshUtcMs = nextManualRefreshUtcMs > 0L ? nextManualRefreshUtcMs : 0L;
-                UsedManualRefreshCount = usedManualRefreshCount > 0 ? usedManualRefreshCount : 0;
-                RemainManualRefreshTimeMs = remainManualRefreshTimeMs > 0L ? remainManualRefreshTimeMs : 0L;
-                RemainManualRefreshCount = remainManualRefreshCount > 0 ? remainManualRefreshCount : 0;
-                ShouldClearStoredState = shouldClearStoredState;
+                StoredManualRefreshRemainCount = normalizeManualRefreshRemainCount(storedManualRefreshRemainCount);
+                ManualRefreshRemainTimeMs = remainManualRefreshTimeMs > 0L ? remainManualRefreshTimeMs : 0L;
+                ManualRefreshRemainCount = normalizeManualRefreshRemainCount(remainManualRefreshCount);
+                ShouldNormalizeStoredState = shouldNormalizeStoredState;
             }
 
             public long ServerNowUtcMs { get; }
             public long NextManualRefreshUtcMs { get; }
-            public int UsedManualRefreshCount { get; }
-            public long RemainManualRefreshTimeMs { get; }
-            public int RemainManualRefreshCount { get; }
-            public bool ShouldClearStoredState { get; }
+            public int StoredManualRefreshRemainCount { get; }
+            public long ManualRefreshRemainTimeMs { get; }
+            public int ManualRefreshRemainCount { get; }
+            public bool ShouldNormalizeStoredState { get; }
         }
 
         public ShopCatalogDaily()
-            : this(storage: null, products: null, catalogConfig: null)
+            : this(storage: null, storageData: null, products: null, catalogConfig: null)
         {
         }
 
-        public ShopCatalogDaily(ShopStorage storage, SHOP_CATALOG catalogConfig = null)
-            : this(storage, products: null, catalogConfig)
+        public ShopCatalogDaily(
+            ShopStorage storage,
+            ShopCatalogDailyStorageData storageData,
+            SHOP_CATALOG catalogConfig = null)
+            : this(storage, storageData, products: null, catalogConfig)
         {
         }
 
         internal ShopCatalogDaily(IReadOnlyList<ShopProductBase> products, SHOP_CATALOG catalogConfig = null)
-            : this(storage: null, products: products, catalogConfig)
+            : this(storage: null, storageData: null, products: products, catalogConfig)
         {
         }
 
-        internal ShopCatalogDaily(ShopStorage storage, IReadOnlyList<ShopProductBase> products, SHOP_CATALOG catalogConfig)
-            : base(SHOP_CATALOG_TYPE.DAILY, storage, catalogConfig, products)
+        internal ShopCatalogDaily(
+            ShopStorage storage,
+            ShopCatalogDailyStorageData storageData,
+            IReadOnlyList<ShopProductBase> products,
+            SHOP_CATALOG catalogConfig)
+            : base(SHOP_CATALOG_TYPE.DAILY, storage, storageData, catalogConfig, products)
         {
         }
 
-        public long RemainManualRefreshTimeMs => _remainManualRefreshTimeMs > 0L ? _remainManualRefreshTimeMs : 0L;
-        public int RemainManualRefreshCount => normalizeManualRefreshCount(_remainManualRefreshCount);
+        ShopCatalogDailyStorageData DailyStorage => StorageData as ShopCatalogDailyStorageData;
+        public long RemainAdsRefreshTimeMs => _remainAdsRefreshTimeMs > 0L ? _remainAdsRefreshTimeMs : 0L;
+        public long ManualRefreshRemainTimeMs => _manualRefreshRemainTimeMs > 0L ? _manualRefreshRemainTimeMs : 0L;
+        public int ManualRefreshRemainCount => normalizeManualRefreshRemainCount(_manualRefreshRemainCount);
+
+        internal void SetRemainAdsRefreshTimeMs(long remainTimeMs)
+        {
+            _remainAdsRefreshTimeMs = remainTimeMs > 0L ? remainTimeMs : 0L;
+        }
 
         internal void SetManualRefreshState(long remainTimeMs, int remainCount)
         {
-            _remainManualRefreshTimeMs = remainTimeMs > 0L ? remainTimeMs : 0L;
-            _remainManualRefreshCount = normalizeManualRefreshCount(remainCount);
+            _manualRefreshRemainTimeMs = remainTimeMs > 0L ? remainTimeMs : 0L;
+            _manualRefreshRemainCount = normalizeManualRefreshRemainCount(remainCount);
         }
 
         public override async Task<CommonResult> RefreshByAdsAsync(CancellationToken ct = default)
@@ -93,14 +108,14 @@ namespace Devian
 
             var manualState = evaluated.Value;
             SetManualRefreshState(
-                manualState.RemainManualRefreshTimeMs,
-                manualState.RemainManualRefreshCount);
+                manualState.ManualRefreshRemainTimeMs,
+                manualState.ManualRefreshRemainCount);
 
-            if (manualState.RemainManualRefreshCount <= 0)
+            if (manualState.ManualRefreshRemainCount <= 0)
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.SHOP_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED,
-                    $"Daily manual refresh count exhausted: remainCount={manualState.RemainManualRefreshCount}, nextRefreshUtcMs={manualState.NextManualRefreshUtcMs}");
+                    $"Daily manual refresh count exhausted: remainCount={manualState.ManualRefreshRemainCount}, nextRefreshUtcMs={manualState.NextManualRefreshUtcMs}");
             }
 
             var adsManager = AdsManager.Instance;
@@ -151,17 +166,17 @@ namespace Devian
                 return CommonResult<bool>.Failure(evaluated.Error!);
 
             var state = evaluated.Value;
-            if (state.ShouldClearStoredState && Storage != null)
+            if (state.ShouldNormalizeStoredState && DailyStorage != null)
             {
-                Storage.ClearManualRefreshUtcMs(CatalogType);
-                Storage.ClearManualRefreshCount(CatalogType);
+                DailyStorage.manualRefreshUtcMs = state.NextManualRefreshUtcMs;
+                DailyStorage.manualRefreshRemainCount = state.ManualRefreshRemainCount;
             }
 
             SetManualRefreshState(
-                state.RemainManualRefreshTimeMs,
-                state.RemainManualRefreshCount);
+                state.ManualRefreshRemainTimeMs,
+                state.ManualRefreshRemainCount);
 
-            return CommonResult<bool>.Success(state.ShouldClearStoredState);
+            return CommonResult<bool>.Success(state.ShouldNormalizeStoredState);
         }
 
         CommonResult<ManualRefreshState> evaluateManualRefreshState(bool requireServerTime)
@@ -181,66 +196,63 @@ namespace Devian
                         0L,
                         0L,
                         0,
-                        RemainManualRefreshTimeMs,
-                        RemainManualRefreshCount,
+                        ManualRefreshRemainTimeMs,
+                        ManualRefreshRemainCount,
                         false));
             }
 
-            var nextManualRefreshUtcMs = Storage?.GetManualRefreshUtcMs(CatalogType) ?? 0L;
-            var usedManualRefreshCount = Storage?.GetManualRefreshCount(CatalogType) ?? 0;
-            var shouldClearStoredState = false;
+            var nextManualRefreshUtcMs = DailyStorage?.manualRefreshUtcMs ?? 0L;
+            var storedManualRefreshRemainCount = DailyStorage?.manualRefreshRemainCount ?? MaxManualRefreshCountPerDay;
+            var remainManualRefreshCount = normalizeManualRefreshRemainCount(storedManualRefreshRemainCount);
+            var shouldNormalizeStoredState = false;
             if (nextManualRefreshUtcMs <= serverNowUtcMs)
             {
-                shouldClearStoredState =
+                shouldNormalizeStoredState =
                     nextManualRefreshUtcMs > 0L
-                    || usedManualRefreshCount > 0;
+                    || remainManualRefreshCount != MaxManualRefreshCountPerDay;
                 nextManualRefreshUtcMs = 0L;
-                usedManualRefreshCount = 0;
+                remainManualRefreshCount = MaxManualRefreshCountPerDay;
+            }
+            else if (remainManualRefreshCount != storedManualRefreshRemainCount)
+            {
+                shouldNormalizeStoredState = true;
             }
 
             var remainManualRefreshTimeMs = GetRemainingToNextRefreshMs(
                 serverNowUtcMs,
                 nextManualRefreshUtcMs);
-            var remainManualRefreshCount = nextManualRefreshUtcMs > 0L
-                ? MaxManualRefreshCountPerDay - usedManualRefreshCount
-                : MaxManualRefreshCountPerDay;
-
-            if (remainManualRefreshCount < 0)
-                remainManualRefreshCount = 0;
-            else if (remainManualRefreshCount > MaxManualRefreshCountPerDay)
-                remainManualRefreshCount = MaxManualRefreshCountPerDay;
 
             return CommonResult<ManualRefreshState>.Success(
                 new ManualRefreshState(
                     serverNowUtcMs,
                     nextManualRefreshUtcMs,
-                    usedManualRefreshCount,
+                    remainManualRefreshCount,
                     remainManualRefreshTimeMs,
                     remainManualRefreshCount,
-                    shouldClearStoredState));
+                    shouldNormalizeStoredState));
         }
 
         void applyManualRefreshSuccess(long serverNowUtcMs, ManualRefreshState state)
         {
-            if (Storage == null || serverNowUtcMs <= 0L)
+            if (DailyStorage == null || serverNowUtcMs <= 0L)
                 return;
 
             var nextManualRefreshUtcMs = state.NextManualRefreshUtcMs;
-            var usedManualRefreshCount = state.UsedManualRefreshCount;
+            var remainManualRefreshCount = state.ManualRefreshRemainCount;
             if (nextManualRefreshUtcMs <= serverNowUtcMs)
             {
                 nextManualRefreshUtcMs = GetNextRefreshUtcMs(serverNowUtcMs, MillisecondsPerDay);
-                usedManualRefreshCount = 0;
+                remainManualRefreshCount = MaxManualRefreshCountPerDay;
             }
 
-            if (usedManualRefreshCount < MaxManualRefreshCountPerDay)
-                usedManualRefreshCount++;
+            if (remainManualRefreshCount > 0)
+                remainManualRefreshCount--;
 
-            Storage.SetManualRefreshUtcMs(CatalogType, nextManualRefreshUtcMs);
-            Storage.SetManualRefreshCount(CatalogType, usedManualRefreshCount);
+            DailyStorage.manualRefreshUtcMs = nextManualRefreshUtcMs;
+            DailyStorage.manualRefreshRemainCount = remainManualRefreshCount;
             SetManualRefreshState(
                 GetRemainingToNextRefreshMs(serverNowUtcMs, nextManualRefreshUtcMs),
-                MaxManualRefreshCountPerDay - usedManualRefreshCount);
+                remainManualRefreshCount);
         }
 
         IReadOnlyList<ShopProductBase> loadOrCreateDailyProducts()
@@ -259,10 +271,10 @@ namespace Devian
             out IReadOnlyList<ShopProductBase> products)
         {
             products = null;
-            if (Storage == null)
+            if (DailyStorage == null)
                 return false;
 
-            var states = Storage.GetDailyCatalogProducts();
+            var states = DailyStorage.dailyCatalogProducts;
             if (states == null || states.Count <= 0)
                 return false;
 
@@ -305,10 +317,10 @@ namespace Devian
 
         void normalizeDailyDynamicStorage(IReadOnlyList<ShopProductBase> dynamicProducts)
         {
-            if (Storage == null)
+            if (DailyStorage == null)
                 return;
 
-            Storage.SetDailyCatalogProducts(createDailyProductStates(dynamicProducts));
+            DailyStorage.dailyCatalogProducts = createDailyProductStates(dynamicProducts);
 
             if (dynamicProducts == null || dynamicProducts.Count <= 0)
                 return;
@@ -675,7 +687,7 @@ namespace Devian
                 || currencyType == CURRENCY_TYPE.FREE;
         }
 
-        static int normalizeManualRefreshCount(int remainCount)
+        static int normalizeManualRefreshRemainCount(int remainCount)
         {
             if (remainCount <= 0)
                 return 0;

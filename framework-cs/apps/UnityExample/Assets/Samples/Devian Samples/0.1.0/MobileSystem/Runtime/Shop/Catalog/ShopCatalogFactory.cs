@@ -89,27 +89,28 @@ namespace Devian
             SHOP_CATALOG catalogConfig,
             IReadOnlyList<ShopProductBase> products)
         {
+            var storageData = storage?.GetCatalogData(catalogType);
             if (products == null)
             {
                 return catalogType switch
                 {
-                    SHOP_CATALOG_TYPE.DAILY => new ShopCatalogDaily(storage, catalogConfig),
-                    SHOP_CATALOG_TYPE.EVENT => new ShopCatalogEvent(storage, catalogConfig),
-                    SHOP_CATALOG_TYPE.CHEST => new ShopCatalogChest(storage, catalogConfig),
-                    SHOP_CATALOG_TYPE.PURCHASE => new ShopCatalogPurchase(storage, catalogConfig),
-                    SHOP_CATALOG_TYPE.GOLD => new ShopCatalogGold(storage, catalogConfig),
-                    _ => new ShopCatalogEmpty(catalogType, storage, catalogConfig),
+                    SHOP_CATALOG_TYPE.DAILY => new ShopCatalogDaily(storage, storageData as ShopCatalogDailyStorageData, catalogConfig),
+                    SHOP_CATALOG_TYPE.EVENT => new ShopCatalogEvent(storage, storageData as ShopCatalogEventStorageData, catalogConfig),
+                    SHOP_CATALOG_TYPE.CHEST => new ShopCatalogChest(storage, storageData as ShopCatalogChestStorageData, catalogConfig),
+                    SHOP_CATALOG_TYPE.PURCHASE => new ShopCatalogPurchase(storage, storageData as ShopCatalogPurchaseStorageData, catalogConfig),
+                    SHOP_CATALOG_TYPE.GOLD => new ShopCatalogGold(storage, storageData as ShopCatalogGoldStorageData, catalogConfig),
+                    _ => new ShopCatalogEmpty(catalogType, storage, storageData, catalogConfig),
                 };
             }
 
             return catalogType switch
             {
-                SHOP_CATALOG_TYPE.DAILY => new ShopCatalogDaily(storage, products, catalogConfig),
-                SHOP_CATALOG_TYPE.EVENT => new ShopCatalogEvent(storage, products, catalogConfig),
-                SHOP_CATALOG_TYPE.CHEST => new ShopCatalogChest(storage, products, catalogConfig),
-                SHOP_CATALOG_TYPE.PURCHASE => new ShopCatalogPurchase(storage, products, catalogConfig),
-                SHOP_CATALOG_TYPE.GOLD => new ShopCatalogGold(storage, products, catalogConfig),
-                _ => new ShopCatalogEmpty(catalogType, storage, catalogConfig),
+                SHOP_CATALOG_TYPE.DAILY => new ShopCatalogDaily(storage, storageData as ShopCatalogDailyStorageData, products, catalogConfig),
+                SHOP_CATALOG_TYPE.EVENT => new ShopCatalogEvent(storage, storageData as ShopCatalogEventStorageData, products, catalogConfig),
+                SHOP_CATALOG_TYPE.CHEST => new ShopCatalogChest(storage, storageData as ShopCatalogChestStorageData, products, catalogConfig),
+                SHOP_CATALOG_TYPE.PURCHASE => new ShopCatalogPurchase(storage, storageData as ShopCatalogPurchaseStorageData, products, catalogConfig),
+                SHOP_CATALOG_TYPE.GOLD => new ShopCatalogGold(storage, storageData as ShopCatalogGoldStorageData, products, catalogConfig),
+                _ => new ShopCatalogEmpty(catalogType, storage, storageData, catalogConfig),
             };
         }
 
