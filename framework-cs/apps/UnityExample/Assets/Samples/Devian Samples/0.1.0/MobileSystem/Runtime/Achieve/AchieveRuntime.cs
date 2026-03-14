@@ -11,8 +11,7 @@ namespace Devian
         public int level = 1;
         public int index;
         public CBigInt progressValue = CBigInt.Zero;
-        public bool isWaiting;
-        public bool isCompleted;
+        public MissionRuntimeState state = MissionRuntimeState.ACTIVE;
 
         [NonSerialized] private GAME_MESSAGE_TYPE _statType;
         [NonSerialized] private GAME_MESSAGE_SAVE_TYPE _opType;
@@ -29,8 +28,7 @@ namespace Devian
         public GAME_MESSAGE_SAVE_TYPE OpType => _opType;
         public GAME_MESSAGE_OP_TYPE ConditionOpType => _conditionOpType;
         public CBigInt ConditionValue => _conditionValue;
-        public bool IsClaimable => !isCompleted
-                                   && !isWaiting
+        public bool IsClaimable => state == MissionRuntimeState.ACTIVE
                                    && GameMessageRule.IsConditionSatisfied(
                                        progressValue,
                                        _conditionOpType,
@@ -46,7 +44,6 @@ namespace Devian
             Action<AchieveRuntimeBase> onProgress,
             Action<AchieveRuntimeBase> onClaimable)
         {
-            isWaiting = false;
             _statType = statType;
             _opType = opType;
             _conditionOpType = conditionOpType;
@@ -67,7 +64,6 @@ namespace Devian
             Action<AchieveRuntimeBase> onProgress,
             Action<AchieveRuntimeBase> onClaimable)
         {
-            isWaiting = !isCompleted;
             _statType = GAME_MESSAGE_TYPE.NONE;
             _opType = GAME_MESSAGE_SAVE_TYPE.NONE;
             _conditionOpType = GAME_MESSAGE_OP_TYPE.GTE;
@@ -88,21 +84,15 @@ namespace Devian
 
         public MissionRuntimeState GetState()
         {
-            if (isCompleted)
-                return MissionRuntimeState.COMPLETED;
+            if (state == MissionRuntimeState.ACTIVE && IsClaimable)
+                return MissionRuntimeState.CLAIMABLE;
 
-            if (isWaiting)
-                return MissionRuntimeState.WAIT;
-
-            return IsClaimable
-                ? MissionRuntimeState.CLAIMABLE
-                : MissionRuntimeState.ACTIVE;
+            return state;
         }
 
         public void MarkCompleted()
         {
-            isWaiting = false;
-            isCompleted = true;
+            state = MissionRuntimeState.COMPLETED;
         }
 
         public void LevelUp(
@@ -116,8 +106,7 @@ namespace Devian
         {
             level = nextLevel;
             index = nextIndex;
-            isWaiting = false;
-            isCompleted = false;
+            state = MissionRuntimeState.ACTIVE;
             _statType = nextStatType;
             _opType = nextOpType;
             _conditionOpType = nextConditionOpType;
@@ -145,8 +134,7 @@ namespace Devian
         {
             level = nextLevel;
             index = nextIndex;
-            isCompleted = false;
-            isWaiting = true;
+            state = MissionRuntimeState.WAIT;
             _statType = GAME_MESSAGE_TYPE.NONE;
             _opType = GAME_MESSAGE_SAVE_TYPE.NONE;
             _conditionOpType = GAME_MESSAGE_OP_TYPE.GTE;
@@ -189,7 +177,7 @@ namespace Devian
 
         internal void OnMessageStatUpdated(GAME_MESSAGE_TYPE messageType, CBigInt delta)
         {
-            if (isCompleted || isWaiting || _opType == GAME_MESSAGE_SAVE_TYPE.NONE || _statType != messageType)
+            if (state != MissionRuntimeState.ACTIVE || _opType == GAME_MESSAGE_SAVE_TYPE.NONE || _statType != messageType)
                 return;
 
             if (isTotalSaveType(_opType))

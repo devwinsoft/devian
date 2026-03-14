@@ -10,7 +10,7 @@ namespace Devian
         public int Level { get; set; }
         public int AchieveUid { get; set; }
         public int Index { get; set; }
-        public bool IsWaiting { get; set; }
+        public MissionRuntimeState State { get; set; }
         public GAME_MESSAGE_TYPE StatType { get; set; }
         public GAME_MESSAGE_SAVE_TYPE OpType { get; set; }
         public GAME_MESSAGE_OP_TYPE ConditionOpType { get; set; }
@@ -27,9 +27,8 @@ namespace Devian
         public int Level { get; set; }
         public int AchieveUid { get; set; }
         public int Index { get; set; }
-        public bool IsWaiting { get; set; }
+        public MissionRuntimeState State { get; set; }
         public CBigInt ProgressValue { get; set; }
-        public bool IsCompleted { get; set; }
         public GAME_MESSAGE_TYPE StatType { get; set; }
         public GAME_MESSAGE_SAVE_TYPE OpType { get; set; }
         public GAME_MESSAGE_OP_TYPE ConditionOpType { get; set; }
@@ -52,10 +51,9 @@ namespace Devian
             runtime.level = args.Level;
             runtime.index = args.Index;
             runtime.progressValue = CBigInt.Zero;
-            runtime.isWaiting = args.IsWaiting;
-            runtime.isCompleted = false;
+            runtime.state = args.State;
 
-            if (args.IsWaiting)
+            if (args.State == MissionRuntimeState.WAIT)
             {
                 runtime.BindWaiting(
                     args.OnChanged,
@@ -87,10 +85,9 @@ namespace Devian
             runtime.level = args.Level;
             runtime.index = args.Index;
             runtime.progressValue = args.ProgressValue;
-            runtime.isWaiting = args.IsWaiting && !args.IsCompleted;
-            runtime.isCompleted = args.IsCompleted;
+            runtime.state = args.State;
 
-            if (args.IsWaiting && !args.IsCompleted)
+            if (args.State == MissionRuntimeState.WAIT)
             {
                 runtime.BindWaiting(
                     args.OnChanged,

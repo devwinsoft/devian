@@ -29,8 +29,7 @@ namespace Devian
                     ["level"] = runtime.level,
                     ["index"] = runtime.index,
                     ["progressValue"] = SerializeBigInt(runtime.progressValue),
-                    ["isWaiting"] = runtime.isWaiting,
-                    ["isCompleted"] = runtime.isCompleted,
+                    ["state"] = (int)runtime.state,
                 };
 
                 runtimes.Add(runtimeObj);
@@ -74,8 +73,7 @@ namespace Devian
                         Level = runtimeObj.Value<int?>("level") ?? 1,
                         Index = runtimeObj.Value<int?>("index") ?? 0,
                         ProgressValue = DeserializeBigInt(runtimeObj["progressValue"]),
-                        IsWaiting = runtimeObj.Value<bool?>("isWaiting") ?? false,
-                        IsCompleted = runtimeObj.Value<bool?>("isCompleted") ?? false,
+                        State = deserializeAchieveState(runtimeObj),
                         StatType = GAME_MESSAGE_TYPE.NONE,
                         OpType = GAME_MESSAGE_SAVE_TYPE.NONE,
                         ConditionValue = CBigInt.Zero,
@@ -92,6 +90,27 @@ namespace Devian
 
             if (storage.nextAchieveUid <= 0)
                 storage.nextAchieveUid = 1;
+        }
+
+        static MissionRuntimeState deserializeAchieveState(JObject runtimeObj)
+        {
+            // New format: "state" int field
+            var rawState = runtimeObj.Value<int?>("state");
+            if (rawState.HasValue)
+            {
+                var s = (MissionRuntimeState)rawState.Value;
+                return s == MissionRuntimeState.NONE || s == MissionRuntimeState.CLAIMABLE
+                    ? MissionRuntimeState.ACTIVE
+                    : s;
+            }
+
+            // Legacy format: isWaiting/isCompleted booleans → state conversion
+            var isCompleted = runtimeObj.Value<bool?>("isCompleted") ?? false;
+            if (isCompleted)
+                return MissionRuntimeState.COMPLETED;
+
+            var isWaiting = runtimeObj.Value<bool?>("isWaiting") ?? false;
+            return isWaiting ? MissionRuntimeState.WAIT : MissionRuntimeState.ACTIVE;
         }
 
         static ACHIEVE_TYPE parseAchieveType(int? rawType, string achieveId)

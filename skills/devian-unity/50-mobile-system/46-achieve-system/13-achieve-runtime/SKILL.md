@@ -22,8 +22,7 @@ Achieve runtime(`AchieveRuntimeBase`, `AchieveRuntimeOnce`, `AchieveRuntimePass`
 - `level`: 현재 단계
 - `index`: UI 정렬 인덱스(`orderNum - 1`)
 - `progressValue`: projection value
-- `isWaiting`: req 조건 대기 상태
-- `isCompleted`: 완료 여부
+- `state`: `MissionRuntimeState` (`WAIT` / `ACTIVE` / `COMPLETED`)
 
 정본:
 - `TOTAL_*` saveType은 `GameMessageStorage` 값으로 projection
@@ -49,10 +48,10 @@ Achieve runtime(`AchieveRuntimeBase`, `AchieveRuntimeOnce`, `AchieveRuntimePass`
 
 ## State
 
-- `WAIT`: `!isCompleted && isWaiting`
-- `ACTIVE`: `!isCompleted && progressValue < conditionValue`
-- `CLAIMABLE`: `!isCompleted && progressValue >= conditionValue`
-- `COMPLETED`: `isCompleted`
+- `WAIT`: `state == MissionRuntimeState.WAIT`
+- `ACTIVE`: `state == MissionRuntimeState.ACTIVE && !IsClaimable`
+- `CLAIMABLE`: `state == MissionRuntimeState.ACTIVE && IsClaimable`
+- `COMPLETED`: `state == MissionRuntimeState.COMPLETED`
 
 ---
 

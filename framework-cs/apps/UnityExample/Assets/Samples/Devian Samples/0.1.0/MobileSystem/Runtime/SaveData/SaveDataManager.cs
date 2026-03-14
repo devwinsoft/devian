@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Devian.Domain.Common;
+using Devian.Domain.Game;
 using Newtonsoft.Json.Linq;
 
 namespace Devian
@@ -971,8 +972,8 @@ namespace Devian
                 var achieveObj = root["achieve"] as JObject;
                 var achieveRuntimes = achieveObj?["runtimes"] as JArray;
                 var achieveRuntimeCount = achieveRuntimes?.Count ?? 0;
-                var achieveWaitingCount = countRuntimeByBoolFlag(achieveRuntimes, "isWaiting");
-                var achieveCompletedCount = countRuntimeByBoolFlag(achieveRuntimes, "isCompleted");
+                var achieveWaitingCount = countRuntimeByStateValue(achieveRuntimes, (int)MissionRuntimeState.WAIT);
+                var achieveCompletedCount = countRuntimeByStateValue(achieveRuntimes, (int)MissionRuntimeState.COMPLETED);
 
                 var messageObj = root["message"] as JObject;
                 var messageStatCount = countObjectProperties(messageObj?["stats"] as JObject);
@@ -1015,6 +1016,24 @@ namespace Devian
                     continue;
 
                 if (runtimeObj.Value<bool?>(flagName) == true)
+                    count++;
+            }
+
+            return count;
+        }
+
+        static int countRuntimeByStateValue(JArray runtimes, int stateValue)
+        {
+            if (runtimes == null)
+                return 0;
+
+            var count = 0;
+            foreach (var token in runtimes)
+            {
+                if (token is not JObject runtimeObj)
+                    continue;
+
+                if (runtimeObj.Value<int?>("state") == stateValue)
                     count++;
             }
 

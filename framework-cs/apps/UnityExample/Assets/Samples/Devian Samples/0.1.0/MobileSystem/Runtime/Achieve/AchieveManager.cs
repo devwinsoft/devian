@@ -189,7 +189,7 @@ namespace Devian
                 if (runtime.RuntimeType != runtimeRow!.achieveType)
                     return true;
 
-                if (runtime.isCompleted && runtime.isWaiting)
+                if (runtime.state == MissionRuntimeState.NONE)
                     return true;
             }
 
@@ -947,7 +947,7 @@ namespace Devian
             if (existing == null || row == null)
                 return null;
 
-            if (existing.isWaiting && !existing.isCompleted)
+            if (existing.state == MissionRuntimeState.WAIT)
             {
                 return AchieveRuntimeFactory.Restore(new AchieveRuntimeRestoreArgs
                 {
@@ -956,9 +956,8 @@ namespace Devian
                     AchieveUid = existing.achieveUid,
                     Level = existing.level,
                     Index = toRuntimeIndex(row),
-                    IsWaiting = true,
+                    State = MissionRuntimeState.WAIT,
                     ProgressValue = CBigInt.Zero,
-                    IsCompleted = false,
                     StatType = GAME_MESSAGE_TYPE.NONE,
                     OpType = GAME_MESSAGE_SAVE_TYPE.NONE,
                     ConditionOpType = GAME_MESSAGE_OP_TYPE.GTE,
@@ -979,9 +978,8 @@ namespace Devian
                 AchieveUid = existing.achieveUid,
                 Level = existing.level,
                 Index = toRuntimeIndex(row),
-                IsWaiting = false,
+                State = existing.state,
                 ProgressValue = existing.progressValue,
-                IsCompleted = existing.isCompleted,
                 StatType = statType,
                 OpType = opType,
                 ConditionOpType = conditionOpType,
@@ -1007,7 +1005,7 @@ namespace Devian
                     Level = row.Level,
                     Index = toRuntimeIndex(row),
                     AchieveUid = achieveUid,
-                    IsWaiting = true,
+                    State = MissionRuntimeState.WAIT,
                     StatType = GAME_MESSAGE_TYPE.NONE,
                     OpType = GAME_MESSAGE_SAVE_TYPE.NONE,
                     ConditionOpType = GAME_MESSAGE_OP_TYPE.GTE,
@@ -1028,7 +1026,7 @@ namespace Devian
                 Level = row.Level,
                 Index = toRuntimeIndex(row),
                 AchieveUid = achieveUid,
-                IsWaiting = false,
+                State = MissionRuntimeState.ACTIVE,
                 StatType = statType,
                 OpType = opType,
                 ConditionOpType = conditionOpType,
@@ -1053,7 +1051,7 @@ namespace Devian
 
             foreach (var runtime in runtimes)
             {
-                if (runtime == null || !runtime.isWaiting || runtime.isCompleted)
+                if (runtime == null || runtime.state != MissionRuntimeState.WAIT)
                     continue;
 
                 var row = findRow(runtime.achieveId, runtime.level);
@@ -1066,7 +1064,7 @@ namespace Devian
 
         bool tryActivateRuntime(AchieveRuntimeBase runtime, AchieveTableRow row, GAME_MESSAGE_TYPE triggeredType, CBigInt triggeredValue)
         {
-            if (runtime == null || row == null || runtime.isCompleted || !runtime.isWaiting)
+            if (runtime == null || row == null || runtime.state != MissionRuntimeState.WAIT)
                 return false;
 
             if (hasActivationRequirement(row, out var reqMessage, out var reqValue, out var reqPassId, out var reqSeasonId, out var hasReqMessage)
@@ -1078,6 +1076,7 @@ namespace Devian
             if (!tryResolveRuntimeBinding(row, true, out var statType, out var opType, out var conditionOpType, out var conditionValue, out var readProgress))
                 return false;
 
+            runtime.state = MissionRuntimeState.ACTIVE;
             runtime.Bind(
                 statType,
                 opType,

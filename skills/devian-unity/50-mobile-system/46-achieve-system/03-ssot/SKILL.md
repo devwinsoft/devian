@@ -68,7 +68,7 @@ AppliesTo: v10
 - `runtimes: Dictionary<int, AchieveRuntimeBase>`
 
 `AchieveRuntimeBase` 저장 필드:
-- `achieveType`, `achieveId`, `achieveUid`, `level`, `index`, `progressValue`, `isWaiting`, `isCompleted`
+- `achieveType`, `achieveId`, `achieveUid`, `level`, `index`, `progressValue`, `state`
 
 규칙:
 - period 개념 없음 (`periodKey` 없음)

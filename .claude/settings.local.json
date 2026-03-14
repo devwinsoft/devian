@@ -316,7 +316,8 @@
       "Bash(cp \"$UPM/Catalog/ShopCatalogEvent.cs\" \"$ASS/Catalog/ShopCatalogEvent.cs\")",
       "Bash(cp \"$UPM/ShopManager.cs\" \"$ASS/ShopManager.cs\")",
       "Read(//Users/maoshy/Documents/Projects/devian/$UPM/Catalog/**)",
-      "Read(//Users/maoshy/Documents/Projects/devian/**)"
+      "Read(//Users/maoshy/Documents/Projects/devian/**)",
+      "Bash(__NEW_LINE_aedd32384174fcaa__ for f in Achieve/AchieveRuntime.cs Achieve/AchieveRuntimeFactory.cs Achieve/AchieveManager.cs SaveData/JsonCodec/SaveDataJsonCodecAchieve.cs SaveData/SaveDataManager.cs)"
     ]
   },
   "project": {
