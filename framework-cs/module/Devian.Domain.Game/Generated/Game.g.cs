@@ -214,6 +214,15 @@ namespace Devian.Domain.Game
         PURCHASE = 4,
     }
 
+    /// <summary>SHOP_PRODUCT_CHEST_TYPE enum</summary>
+    public enum SHOP_PRODUCT_CHEST_TYPE
+    {
+        NONE = 0,
+        ADS = 1,
+        ONE = 2,
+        TEN = 3,
+    }
+
     /// <summary>UserType enum</summary>
     public enum UserType
     {
@@ -451,6 +460,21 @@ namespace Devian.Domain.Game
         public SHOP_CATALOG_TYPE GetKey() => CatalogType;
     }
 
+    /// <summary>SHOP_CATALOG_CHEST row</summary>
+    public sealed class SHOP_CATALOG_CHEST : IEntityKey<int>
+    {
+        public int Level { get; set; }
+        public int MaxExp { get; set; }
+        public int AdsExp { get; set; }
+        public int GainExp01 { get; set; }
+        public int GainExp10 { get; set; }
+        public string RewardAds { get; set; } = string.Empty;
+        public string RewardPaid01 { get; set; } = string.Empty;
+        public string RewardPaid10 { get; set; } = string.Empty;
+
+        public int GetKey() => Level;
+    }
+
     /// <summary>SHOP_DAILY row</summary>
     public sealed class SHOP_DAILY : IEntityKey<string>
     {
@@ -488,10 +512,10 @@ namespace Devian.Domain.Game
     public sealed class SHOP_CHEST : IEntityKey<string>
     {
         public string ShopId { get; set; } = string.Empty;
+        public SHOP_PRODUCT_CHEST_TYPE ChestType { get; set; }
         public string NameId { get; set; } = string.Empty;
         public CURRENCY_TYPE CurrencyType { get; set; }
         public int Price { get; set; }
-        public string RewardGroupId { get; set; } = string.Empty;
         public int Amount { get; set; }
         public int MaxCount { get; set; }
 
@@ -2236,6 +2260,89 @@ namespace Devian.Domain.Game
         static partial void _OnAfterLoad();
     }
 
+    /// <summary>TB_SHOP_CATALOG_CHEST container</summary>
+    public static partial class TB_SHOP_CATALOG_CHEST
+    {
+        private static readonly Dictionary<int, SHOP_CATALOG_CHEST> _dict = new();
+        private static readonly List<SHOP_CATALOG_CHEST> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<SHOP_CATALOG_CHEST> GetAll() => _list;
+
+        public static SHOP_CATALOG_CHEST? Get(int key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(int key, out SHOP_CATALOG_CHEST? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(SHOP_CATALOG_CHEST row)
+        {
+            _list.Add(row);
+            _dict[row.Level] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<SHOP_CATALOG_CHEST>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<SHOP_CATALOG_CHEST>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<SHOP_CATALOG_CHEST>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
     /// <summary>TB_SHOP_DAILY container</summary>
     public static partial class TB_SHOP_DAILY
     {
@@ -3074,6 +3181,16 @@ namespace Devian.Domain.Game
         public static implicit operator SHOP_CATALOG_ID(SHOP_CATALOG_TYPE value) => new SHOP_CATALOG_ID { Value = value };
     }
 
+    /// <summary>Inspector-bindable ID for SHOP_CATALOG_CHEST</summary>
+    [Serializable]
+    public sealed class SHOP_CATALOG_CHEST_ID
+    {
+        public int Value;
+
+        public static implicit operator int(SHOP_CATALOG_CHEST_ID id) => id.Value;
+        public static implicit operator SHOP_CATALOG_CHEST_ID(int value) => new SHOP_CATALOG_CHEST_ID { Value = value };
+    }
+
     /// <summary>Inspector-bindable ID for SHOP_DAILY</summary>
     [Serializable]
     public sealed class SHOP_DAILY_ID
@@ -3174,6 +3291,7 @@ namespace Devian.Domain.Game
         public static bool IsValid(this REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this SEASON_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this SHOP_CATALOG_ID? obj) => obj != null && !EqualityComparer<SHOP_CATALOG_TYPE>.Default.Equals(obj.Value, default);
+        public static bool IsValid(this SHOP_CATALOG_CHEST_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this SHOP_DAILY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this SHOP_EVENT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this SHOP_CHEST_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);

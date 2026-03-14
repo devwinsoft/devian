@@ -30,13 +30,13 @@ namespace Devian
             if (row == null)
                 return null;
 
-            return createRewardProduct(
+            return new ShopProductChest(
                 row.ShopId,
                 row.NameId,
                 SHOP_CATALOG_TYPE.CHEST,
+                row.ChestType,
                 row.CurrencyType,
                 row.Price,
-                row.RewardGroupId,
                 row.Amount,
                 row.MaxCount,
                 SHOP_DISCOUNT_TYPE.NONE);

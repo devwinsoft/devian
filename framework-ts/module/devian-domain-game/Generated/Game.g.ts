@@ -188,6 +188,14 @@ export enum SHOP_PRODUCT_TYPE {
     PURCHASE = 4,
 }
 
+/** SHOP_PRODUCT_CHEST_TYPE enum */
+export enum SHOP_PRODUCT_CHEST_TYPE {
+    NONE = 0,
+    ADS = 1,
+    ONE = 2,
+    TEN = 3,
+}
+
 /** UserType enum */
 export enum UserType {
     Guest = 0,
@@ -372,6 +380,18 @@ export interface SHOP_CATALOG extends IEntityKey<SHOP_CATALOG_TYPE> {
     getKey(): SHOP_CATALOG_TYPE;
 }
 
+export interface SHOP_CATALOG_CHEST extends IEntityKey<number> {
+    Level: number;
+    MaxExp: number;
+    AdsExp: number;
+    GainExp01: number;
+    GainExp10: number;
+    RewardAds: string;
+    RewardPaid01: string;
+    RewardPaid10: string;
+    getKey(): number;
+}
+
 export interface SHOP_DAILY extends IEntityKey<string> {
     ShopId: string;
     NameId: string;
@@ -401,10 +421,10 @@ export interface SHOP_EVENT extends IEntityKey<string> {
 
 export interface SHOP_CHEST extends IEntityKey<string> {
     ShopId: string;
+    ChestType: SHOP_PRODUCT_CHEST_TYPE;
     NameId: string;
     CurrencyType: CURRENCY_TYPE;
     Price: number;
-    RewardGroupId: string;
     Amount: number;
     MaxCount: number;
     getKey(): string;
@@ -1062,6 +1082,42 @@ export class TB_SHOP_CATALOG {
             const row = JSON.parse(line) as SHOP_CATALOG;
             this._list.push(row);
             this._dict.set(row.CatalogType, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_SHOP_CATALOG_CHEST {
+    private static _dict: Map<number, SHOP_CATALOG_CHEST> = new Map();
+    private static _list: SHOP_CATALOG_CHEST[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly SHOP_CATALOG_CHEST[] { return this._list; }
+
+    static get(key: number): SHOP_CATALOG_CHEST | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: number): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as SHOP_CATALOG_CHEST;
+            this._list.push(row);
+            this._dict.set(row.Level, row);
         }
     }
 

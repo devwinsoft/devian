@@ -1,6 +1,6 @@
 ---
 name: 11-shop-product
-description: ShopTable row를 `ShopProductBase` 계층(`Free/Ads/Currency/Purchase`)으로 변환하고 `maxCount/remainCount`, 할인 반영 `Price`를 모델링할 때 사용한다.
+description: ShopTable row를 `ShopProductBase` 계층(`Free/Ads/Currency/Purchase/Chest`)으로 변환하고 `maxCount/remainCount`, 할인 반영 `Price`를 모델링할 때 사용한다.
 ---
 
 # 11-shop-product
@@ -50,6 +50,12 @@ public abstract class ShopRewardProductBase : ShopProductBase
 public sealed class ShopProductFree : ShopRewardProductBase {}
 public sealed class ShopProductAds : ShopRewardProductBase {}
 public sealed class ShopProductCurrency : ShopRewardProductBase {}
+public sealed class ShopProductChest : ShopProductBase
+{
+    public SHOP_PRODUCT_CHEST_TYPE ChestType { get; }
+    public CURRENCY_TYPE CurrencyType { get; }
+    public int Amount { get; }
+}
 public sealed class ShopProductPurchase : ShopProductBase
 {
     public string InternalProductId { get; }
@@ -61,8 +67,10 @@ public sealed class ShopProductPurchase : ShopProductBase
 - `FREE` -> `ShopProductFree`
 - `ADS` -> `ShopProductAds`
 - `CURRENCY` -> `ShopProductCurrency`
+- `CHEST` -> `ShopProductChest`
 - `PURCHASE` -> `ShopProductPurchase`
 - `SHOP_GOLD`는 `amount`가 없으므로 `Amount=1` 고정이다.
+- `SHOP_CHEST.amount`는 reward 반복 지급 횟수다.
 
 ---
 
@@ -77,6 +85,8 @@ public sealed class ShopProductPurchase : ShopProductBase
 - `ShopProductBase` 생성 시 기본 `RemainCount = MaxCount`로 초기화한다.
 - `ShopProductBase.Price`는 `SHOP_DISCOUNT_TYPE`을 적용한 최종 가격이다.
 - 원가(테이블 가격)는 `ShopProductBase.PriceWithoutDiscount`로 보존한다.
+- `SHOP_CHEST`는 `rewardGroupId`를 직접 가지지 않는다. chest 구매 reward는 현재 `ShopCatalogChest.Level`의 `SHOP_CATALOG_CHEST.rewardAds/rewardPaid01/rewardPaid10`에서 동적으로 결정한다.
+- `ShopProductChest.ProductType`은 `ChestType=ADS`면 `SHOP_PRODUCT_TYPE.ADS`, `ChestType=ONE/TEN`이면 `SHOP_PRODUCT_TYPE.CURRENCY`로 해석한다.
 - 카탈로그 클래스(`ShopCatalogBase`, `ShopCatalogDaily/Chest/Purchase/Gold`)는 `ShopCatalog.cs`에 분리되어 관리한다.
 - row -> `ShopProductBase` 변환은 `ShopProductFactory`(15)에서 처리한다.
 

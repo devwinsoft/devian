@@ -42,6 +42,8 @@ namespace Devian
         public override SHOP_CATALOG_TYPE CatalogType => SHOP_CATALOG_TYPE.CHEST;
 
         public long adsRefreshUtcMs;
+        public int level = 1;
+        public int currentExp;
     }
 
     [Serializable]
@@ -69,7 +71,7 @@ namespace Devian
     [Serializable]
     public sealed class ShopStorage
     {
-        public int schemaVersion = 11;
+        public int schemaVersion = 12;
         public ShopCatalogDailyStorageData daily = new();
         public ShopCatalogChestStorageData chest = new();
         public ShopCatalogPurchaseStorageData purchase = new();
@@ -315,6 +317,30 @@ namespace Devian
             SetAdsRefreshUtcMs(catalogType, 0L);
         }
 
+        public int GetChestLevel()
+        {
+            ensureCatalogData();
+            return normalizeChestLevel(chest.level);
+        }
+
+        public void SetChestLevel(int level)
+        {
+            ensureCatalogData();
+            chest.level = normalizeChestLevel(level);
+        }
+
+        public int GetChestCurrentExp()
+        {
+            ensureCatalogData();
+            return normalizeChestCurrentExp(chest.currentExp);
+        }
+
+        public void SetChestCurrentExp(int currentExp)
+        {
+            ensureCatalogData();
+            chest.currentExp = normalizeChestCurrentExp(currentExp);
+        }
+
         public long GetManualRefreshUtcMs(SHOP_CATALOG_TYPE catalogType)
         {
             if (catalogType != SHOP_CATALOG_TYPE.DAILY)
@@ -486,7 +512,7 @@ namespace Devian
 
         public void Clear()
         {
-            schemaVersion = 11;
+            schemaVersion = 12;
             daily = new ShopCatalogDailyStorageData();
             chest = new ShopCatalogChestStorageData();
             purchase = new ShopCatalogPurchaseStorageData();
@@ -573,6 +599,16 @@ namespace Devian
         static int normalizeManualRefreshRemainCount(int manualRefreshRemainCount)
         {
             return manualRefreshRemainCount > 0 ? manualRefreshRemainCount : 0;
+        }
+
+        static int normalizeChestLevel(int level)
+        {
+            return level > 0 ? level : 1;
+        }
+
+        static int normalizeChestCurrentExp(int currentExp)
+        {
+            return currentExp > 0 ? currentExp : 0;
         }
 
         static SHOP_DISCOUNT_TYPE normalizeDiscountType(SHOP_DISCOUNT_TYPE discountType)

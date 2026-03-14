@@ -54,6 +54,7 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 - `SHOP_CATALOG_TYPE.PURCHASE` -> `SHOP_PURCHASE`
 - `SHOP_CATALOG_TYPE.GOLD` -> `SHOP_GOLD`
 - `SHOP_CATALOG_TYPE.EVENT` -> `SHOP_EVENT`
+- `CHEST` progression source -> `SHOP_CATALOG_CHEST`
 
 카탈로그 초기화 라이프사이클:
 - `ShopCatalogBase`는 생성자에서 product를 만들지 않는다.
@@ -70,6 +71,7 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 - `CHEST/PURCHASE/GOLD`는 테이블의 모든 row를 상품으로 생성한다.
 - `ShopCatalogBase`는 `Storage`, `StorageData`, `virtual int autoRefreshDays`, `RemainAutoRefreshTimeMs`, `IsLocked`를 가진다.
 - `ShopCatalogDaily`만 `RemainAdsRefreshTimeMs`, `ManualRefreshRemainTimeMs`, `ManualRefreshRemainCount`를 가진다.
+- `ShopCatalogChest`는 `Level`, `CurrentExp`, `MaxExp` runtime 프로퍼티와 `LevelUp()`을 가진다.
 - catalog-specific public operation은 catalog instance method로 둔다.
 - `ShopCatalogBase.ResetAds()`가 공통 강제 refresh 진입점이다.
 - `ShopCatalogDaily.RefreshByAdsAsync()`가 DAILY 수동 refresh 진입점이다.
@@ -133,6 +135,14 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 
 - `catalog=PURCHASE` 상품은 `internalProductId`를 통해 `PurchaseManager`로 구매한다.
 - 시즌 종료 임박 차단(`seasonId`) 검사는 ShopManager에서 수행한다.
+
+## 7.1 Chest Catalog Rule
+
+- `catalog=CHEST` 상품 소스는 `SHOP_CHEST`다.
+- chest progression source는 `SHOP_CATALOG_CHEST`다.
+- chest 구매 reward는 `SHOP_CHEST.rewardGroupId`가 아니라 현재 chest level row의 `rewardAds/rewardPaid01/rewardPaid10`에서 결정한다.
+- chest exp는 현재 chest level row의 `adsExp/gainExp01/gainExp10`을 사용한다.
+- 최대 레벨은 `SHOP_CATALOG_CHEST`의 최대 `Level` 값이며, 최대 레벨에서는 `CurrentExp=0`이고 추가 exp를 획득하지 않는다.
 
 ## 8. Related
 

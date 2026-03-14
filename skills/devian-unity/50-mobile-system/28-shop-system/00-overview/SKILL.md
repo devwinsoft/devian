@@ -36,6 +36,7 @@ ADS/FREE 구매 성공 시 `adsRefreshUtcMs`는 `serverNow + 1day`로 기록된�
 | [13-shop-catalog](../13-shop-catalog/SKILL.md) | 카탈로그 구성/선택 생성 규약 |
 | [14-shop-catalog-factory](../14-shop-catalog-factory/SKILL.md) | ShopCatalogFactory 카탈로그 인스턴스 생성 |
 | [15-shop-product-factory](../15-shop-product-factory/SKILL.md) | ShopProductFactory row→product 변환 |
+| [16-shop-catalog-chest](../16-shop-catalog-chest/SKILL.md) | Chest catalog level/exp/reward routing 규약 |
 
 ---
 
@@ -48,3 +49,4 @@ ADS/FREE 구매 성공 시 `adsRefreshUtcMs`는 `serverNow + 1day`로 기록된�
 - [13-shop-catalog](../13-shop-catalog/SKILL.md)
 - [14-shop-catalog-factory](../14-shop-catalog-factory/SKILL.md)
 - [15-shop-product-factory](../15-shop-product-factory/SKILL.md)
+- [16-shop-catalog-chest](../16-shop-catalog-chest/SKILL.md)

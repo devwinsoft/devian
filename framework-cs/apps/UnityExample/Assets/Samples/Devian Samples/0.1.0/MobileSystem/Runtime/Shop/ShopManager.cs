@@ -123,6 +123,8 @@ namespace Devian
             CommonResult<RewardData[]> buyResult;
             if (product is ShopProductPurchase purchaseProduct)
                 buyResult = await buyPurchaseCatalogAsync(purchaseProduct, ct);
+            else if (product is ShopProductChest chestProduct)
+                buyResult = await buyChestCatalogAsync(chestProduct, ct);
             else if (product is ShopRewardProductBase rewardProduct)
                 buyResult = await buyRewardCatalogAsync(rewardProduct, ct);
             else
@@ -190,6 +192,20 @@ namespace Devian
             public bool DidMutateStorage { get; }
         }
 
+        readonly struct ChestPurchaseState
+        {
+            public ChestPurchaseState(
+                ShopCatalogChest catalog,
+                ShopCatalogChest.ChestPurchaseRuntime runtime)
+            {
+                Catalog = catalog;
+                Runtime = runtime;
+            }
+
+            public ShopCatalogChest Catalog { get; }
+            public ShopCatalogChest.ChestPurchaseRuntime Runtime { get; }
+        }
+
         CommonResult<ShopProductBase> checkCanBuy(string shopId)
         {
             var validateProduct = validateShopProductConfig(shopId);
@@ -207,6 +223,15 @@ namespace Devian
                 return CommonResult<ShopProductBase>.Success(product);
             }
 
+            if (product is ShopProductChest chestProduct)
+            {
+                var resolveChest = resolveChestPurchaseRuntime(chestProduct);
+                if (resolveChest.IsFailure)
+                    return CommonResult<ShopProductBase>.Failure(resolveChest.Error!);
+
+                return checkStandardShopPurchaseCanBuy(chestProduct, chestProduct.CurrencyType);
+            }
+
             if (product is not ShopRewardProductBase rewardProduct)
             {
                 return CommonResult<ShopProductBase>.Failure(
@@ -214,53 +239,7 @@ namespace Devian
                     $"Shop product type is not supported: shopId={product.ShopId}, productType={product.ProductType}");
             }
 
-            if (rewardProduct.ProductType == SHOP_PRODUCT_TYPE.FREE)
-                return CommonResult<ShopProductBase>.Success(product);
-
-            if (rewardProduct.ProductType == SHOP_PRODUCT_TYPE.ADS)
-            {
-                if (tryGetNoAdsRentalRemainingMs(out var noAdsRentalRemainingMs)
-                    && noAdsRentalRemainingMs > 0L)
-                {
-                    // NO_ADS 대여 상태면 AdsManager.CanShow 체크 없이 구매 가능으로 처리한다.
-                    return CommonResult<ShopProductBase>.Success(product);
-                }
-
-                try
-                {
-                    if (!AdsManager.Instance.CanShow())
-                    {
-                        return CommonResult<ShopProductBase>.Failure(
-                            COMMON_ERROR_TYPE.SHOP_ADS_NOT_AVAILABLE,
-                            $"Shop rewarded ad is not available: shopId={product.ShopId}");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    return CommonResult<ShopProductBase>.Failure(
-                        COMMON_ERROR_TYPE.SHOP_ADS_NOT_AVAILABLE,
-                        $"Shop rewarded ad check failed: shopId={product.ShopId}, reason={ex.Message}");
-                }
-
-                return CommonResult<ShopProductBase>.Success(product);
-            }
-
-            if (!tryGetWallet(out var wallet) || wallet == null)
-            {
-                return CommonResult<ShopProductBase>.Failure(
-                    COMMON_ERROR_TYPE.SHOP_WALLET_UNAVAILABLE,
-                    $"Inventory wallet is unavailable: shopId={product.ShopId}");
-            }
-
-            var price = rewardProduct.Price;
-            if (!hasSufficientCurrency(wallet, rewardProduct.CurrencyType, price))
-            {
-                return CommonResult<ShopProductBase>.Failure(
-                    COMMON_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT,
-                    $"Insufficient currency for shop purchase: shopId={product.ShopId}, currency={rewardProduct.CurrencyType}, price={price}, basePrice={rewardProduct.PriceWithoutDiscount}, discountType={rewardProduct.DiscountType}");
-            }
-
-            return CommonResult<ShopProductBase>.Success(product);
+            return checkStandardShopPurchaseCanBuy(rewardProduct, rewardProduct.CurrencyType);
         }
 
         internal CommonResult ResetAdsInternal(SHOP_CATALOG_TYPE catalogType)
@@ -341,6 +320,13 @@ namespace Devian
                     $"Shop product price is invalid: shopId={product.ShopId}, price={rewardProduct.PriceWithoutDiscount}, discountType={rewardProduct.DiscountType}");
             }
 
+            if (product is ShopProductChest chestProduct && chestProduct.PriceWithoutDiscount < 0)
+            {
+                return CommonResult<ShopProductBase>.Failure(
+                    COMMON_ERROR_TYPE.SHOP_PRODUCT_PRICE_INVALID,
+                    $"Shop product price is invalid: shopId={product.ShopId}, price={chestProduct.PriceWithoutDiscount}, discountType={chestProduct.DiscountType}");
+            }
+
             if (product.HasPurchaseLimit)
             {
                 if (product.MaxCount == 0)
@@ -381,6 +367,30 @@ namespace Devian
                         COMMON_ERROR_TYPE.PURCHASE_NOT_FOUND,
                         $"Purchase product is inactive: shopId={purchaseProduct.ShopId}, internalProductId={purchaseProduct.InternalProductId}");
                 }
+
+                return CommonResult<ShopProductBase>.Success(product);
+            }
+
+            if (product is ShopProductChest validateChestProduct)
+            {
+                if (validateChestProduct.ProductType == SHOP_PRODUCT_TYPE.ADS
+                    && validateChestProduct.PriceWithoutDiscount != 0)
+                {
+                    return CommonResult<ShopProductBase>.Failure(
+                        COMMON_ERROR_TYPE.SHOP_PRODUCT_PRICE_INVALID,
+                        $"Shop pseudo product price must be zero: shopId={validateChestProduct.ShopId}, productType={validateChestProduct.ProductType}, price={validateChestProduct.PriceWithoutDiscount}");
+                }
+
+                if (validateChestProduct.ChestType == SHOP_PRODUCT_CHEST_TYPE.NONE)
+                {
+                    return CommonResult<ShopProductBase>.Failure(
+                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                        $"Shop chestType is invalid: shopId={validateChestProduct.ShopId}");
+                }
+
+                var resolveChest = resolveChestPurchaseRuntime(validateChestProduct);
+                if (resolveChest.IsFailure)
+                    return CommonResult<ShopProductBase>.Failure(resolveChest.Error!);
 
                 return CommonResult<ShopProductBase>.Success(product);
             }
@@ -431,6 +441,96 @@ namespace Devian
                 Debug.LogWarning($"[{Tag}] Post-shop purchase save failed (non-fatal): {save.Error}");
 
             var applied = purchaseResult.Value.AppliedRewards ?? Array.Empty<RewardData>();
+            return CommonResult<RewardData[]>.Success(applied);
+        }
+
+        async Task<CommonResult<RewardData[]>> buyChestCatalogAsync(ShopProductChest product, CancellationToken ct)
+        {
+            var resolveChest = resolveChestPurchaseRuntime(product);
+            if (resolveChest.IsFailure)
+                return CommonResult<RewardData[]>.Failure(resolveChest.Error!);
+
+            var chestState = resolveChest.Value;
+            var wallet = default(InventoryWallet);
+            var deduction = default(CurrencyDeduction);
+
+            if (product.ProductType == SHOP_PRODUCT_TYPE.ADS)
+            {
+                var hasNoAdsRental = tryGetNoAdsRentalRemainingMs(out var noAdsRentalRemainingMs)
+                    && noAdsRentalRemainingMs > 0L;
+
+                if (!hasNoAdsRental)
+                {
+                    var show = await AdsManager.Instance.ShowAsync(ct);
+                    if (show.IsFailure)
+                    {
+                        var details = show.Error != null
+                            ? $"inner={show.Error.Code}:{show.Error.Message}"
+                            : "inner=unknown";
+                        return CommonResult<RewardData[]>.Failure(
+                            COMMON_ERROR_TYPE.SHOP_ADS_SHOW_FAILED,
+                            $"Shop rewarded ad show failed: shopId={product.ShopId}, {details}");
+                    }
+                }
+            }
+            else if (product.ProductType == SHOP_PRODUCT_TYPE.CURRENCY)
+            {
+                if (!tryGetWallet(out wallet) || wallet == null)
+                {
+                    return CommonResult<RewardData[]>.Failure(
+                        COMMON_ERROR_TYPE.SHOP_WALLET_UNAVAILABLE,
+                        $"Inventory wallet is unavailable: shopId={product.ShopId}");
+                }
+
+                var price = product.Price;
+                if (price < 0)
+                {
+                    return CommonResult<RewardData[]>.Failure(
+                        COMMON_ERROR_TYPE.SHOP_PRODUCT_PRICE_INVALID,
+                        $"Shop product price is invalid: shopId={product.ShopId}, price={price}, basePrice={product.PriceWithoutDiscount}, discountType={product.DiscountType}");
+                }
+
+                if (!tryDeductCurrency(wallet, product.CurrencyType, price, out deduction))
+                {
+                    return CommonResult<RewardData[]>.Failure(
+                        COMMON_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT,
+                        $"Insufficient currency for shop purchase: shopId={product.ShopId}, currency={product.CurrencyType}, price={price}, basePrice={product.PriceWithoutDiscount}, discountType={product.DiscountType}");
+                }
+            }
+            else
+            {
+                return CommonResult<RewardData[]>.Failure(
+                    COMMON_ERROR_TYPE.SHOP_PRODUCT_NOT_FOUND,
+                    $"Shop chest product type is not supported: shopId={product.ShopId}, productType={product.ProductType}, chestType={product.ChestType}");
+            }
+
+            var runtime = chestState.Runtime;
+            var applyRewards = applyShopProductRewards(runtime.RewardGroupId, runtime.RewardAmount);
+            if (applyRewards.IsFailure)
+            {
+                if (deduction.HasDeduction)
+                    rollbackCurrency(wallet, deduction);
+
+                var details = applyRewards.Error != null
+                    ? $"inner={applyRewards.Error.Code}:{applyRewards.Error.Message}"
+                    : "inner=unknown";
+                return CommonResult<RewardData[]>.Failure(
+                    COMMON_ERROR_TYPE.SHOP_REWARD_APPLY_FAILED,
+                    $"Shop chest reward apply failed: shopId={product.ShopId}, rewardGroupId={runtime.RewardGroupId}, {details}");
+            }
+
+            chestState.Catalog.AddExp(runtime.GainExp);
+
+            if (product.HasPurchaseLimit)
+                markProductPurchased(product);
+
+            markAdsRefreshOnPurchaseIfNeeded(product);
+
+            var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
+            if (save.IsFailure)
+                Debug.LogWarning($"[{Tag}] Post-shop chest purchase save failed (non-fatal): {save.Error}");
+
+            var applied = applyRewards.Value ?? Array.Empty<RewardData>();
             return CommonResult<RewardData[]>.Success(applied);
         }
 
@@ -1184,7 +1284,7 @@ namespace Devian
             persistProductRemainState(product, normalizedShopId);
         }
 
-        void markAdsRefreshOnPurchaseIfNeeded(ShopRewardProductBase product)
+        void markAdsRefreshOnPurchaseIfNeeded(ShopProductBase product)
         {
             if (product == null)
                 return;
@@ -1245,14 +1345,10 @@ namespace Devian
 
         static bool isLimitedAdsOrFreeProduct(ShopProductBase product)
         {
-            if (product is not ShopRewardProductBase rewardProduct)
-                return false;
-
-            if (!product.HasPurchaseLimit)
-                return false;
-
-            return rewardProduct.ProductType == SHOP_PRODUCT_TYPE.ADS
-                || rewardProduct.ProductType == SHOP_PRODUCT_TYPE.FREE;
+            return product != null
+                && product.HasPurchaseLimit
+                && (product.ProductType == SHOP_PRODUCT_TYPE.ADS
+                    || product.ProductType == SHOP_PRODUCT_TYPE.FREE);
         }
 
         static bool hasLimitedAdsOrFreeProducts(IReadOnlyList<ShopProductBase> products)
@@ -1289,11 +1385,92 @@ namespace Devian
             if (product == null || product.CatalogType != SHOP_CATALOG_TYPE.DAILY)
                 return false;
 
-            if (product is not ShopRewardProductBase rewardProduct)
-                return true;
+            return product.ProductType != SHOP_PRODUCT_TYPE.ADS
+                && product.ProductType != SHOP_PRODUCT_TYPE.FREE;
+        }
 
-            return rewardProduct.ProductType != SHOP_PRODUCT_TYPE.ADS
-                && rewardProduct.ProductType != SHOP_PRODUCT_TYPE.FREE;
+        CommonResult<ChestPurchaseState> resolveChestPurchaseRuntime(ShopProductChest product)
+        {
+            if (product == null)
+            {
+                return CommonResult<ChestPurchaseState>.Failure(
+                    COMMON_ERROR_TYPE.SHOP_PRODUCT_NOT_FOUND,
+                    "Chest product is null.");
+            }
+
+            var chestCatalog = GetCatalog<ShopCatalogChest>();
+            if (chestCatalog == null)
+            {
+                return CommonResult<ChestPurchaseState>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    $"Chest catalog is unavailable: shopId={product.ShopId}");
+            }
+
+            var resolveRuntime = chestCatalog.ResolvePurchaseRuntime(product);
+            if (resolveRuntime.IsFailure)
+                return CommonResult<ChestPurchaseState>.Failure(resolveRuntime.Error!);
+
+            return CommonResult<ChestPurchaseState>.Success(
+                new ChestPurchaseState(chestCatalog, resolveRuntime.Value));
+        }
+
+        CommonResult<ShopProductBase> checkStandardShopPurchaseCanBuy(
+            ShopProductBase product,
+            CURRENCY_TYPE currencyType)
+        {
+            if (product == null)
+            {
+                return CommonResult<ShopProductBase>.Failure(
+                    COMMON_ERROR_TYPE.SHOP_PRODUCT_NOT_FOUND,
+                    "Shop product is null.");
+            }
+
+            if (product.ProductType == SHOP_PRODUCT_TYPE.FREE)
+                return CommonResult<ShopProductBase>.Success(product);
+
+            if (product.ProductType == SHOP_PRODUCT_TYPE.ADS)
+            {
+                if (tryGetNoAdsRentalRemainingMs(out var noAdsRentalRemainingMs)
+                    && noAdsRentalRemainingMs > 0L)
+                {
+                    return CommonResult<ShopProductBase>.Success(product);
+                }
+
+                try
+                {
+                    if (!AdsManager.Instance.CanShow())
+                    {
+                        return CommonResult<ShopProductBase>.Failure(
+                            COMMON_ERROR_TYPE.SHOP_ADS_NOT_AVAILABLE,
+                            $"Shop rewarded ad is not available: shopId={product.ShopId}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return CommonResult<ShopProductBase>.Failure(
+                        COMMON_ERROR_TYPE.SHOP_ADS_NOT_AVAILABLE,
+                        $"Shop rewarded ad check failed: shopId={product.ShopId}, reason={ex.Message}");
+                }
+
+                return CommonResult<ShopProductBase>.Success(product);
+            }
+
+            if (!tryGetWallet(out var wallet) || wallet == null)
+            {
+                return CommonResult<ShopProductBase>.Failure(
+                    COMMON_ERROR_TYPE.SHOP_WALLET_UNAVAILABLE,
+                    $"Inventory wallet is unavailable: shopId={product.ShopId}");
+            }
+
+            var price = product.Price;
+            if (!hasSufficientCurrency(wallet, currencyType, price))
+            {
+                return CommonResult<ShopProductBase>.Failure(
+                    COMMON_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT,
+                    $"Insufficient currency for shop purchase: shopId={product.ShopId}, currency={currencyType}, price={price}, basePrice={product.PriceWithoutDiscount}, discountType={product.DiscountType}");
+            }
+
+            return CommonResult<ShopProductBase>.Success(product);
         }
 
         static bool isValidCatalogType(SHOP_CATALOG_TYPE catalogType)

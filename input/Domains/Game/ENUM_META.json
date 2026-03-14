@@ -345,6 +345,27 @@
           "value": 4
         }
       ]
+    },
+    {
+      "name": "SHOP_PRODUCT_CHEST_TYPE",
+      "values": [
+        {
+          "name": "NONE",
+          "value": 0
+        },
+        {
+          "name": "ADS",
+          "value": 1
+        },
+        {
+          "name": "ONE",
+          "value": 2
+        },
+        {
+          "name": "TEN",
+          "value": 3
+        }
+      ]
     }
   ]
 }

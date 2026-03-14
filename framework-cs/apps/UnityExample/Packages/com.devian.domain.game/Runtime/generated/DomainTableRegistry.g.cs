@@ -257,6 +257,20 @@ namespace Devian.Domain.Game
                 }
             });
 
+            global::Devian.TableManager.Instance.RegisterTbLoader("SHOP_CATALOG_CHEST", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_SHOP_CATALOG_CHEST.LoadFromNdjson(text);
+                    TB_SHOP_CATALOG_CHEST._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_SHOP_CATALOG_CHEST.LoadFromPb64Binary(bin);
+                    TB_SHOP_CATALOG_CHEST._AfterLoad();
+                }
+            });
+
             global::Devian.TableManager.Instance.RegisterTbLoader("SHOP_DAILY", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)

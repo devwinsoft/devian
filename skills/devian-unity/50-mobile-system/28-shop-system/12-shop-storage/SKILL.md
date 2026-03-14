@@ -56,6 +56,8 @@ public sealed class ShopCatalogDailyStorageData : ShopCatalogProductRemainStorag
 public sealed class ShopCatalogChestStorageData : ShopCatalogProductRemainStorageDataBase
 {
     public long adsRefreshUtcMs;
+    public int level;
+    public int currentExp;
 }
 
 public sealed class ShopCatalogPurchaseStorageData : ShopCatalogStorageDataBase
@@ -75,7 +77,7 @@ public sealed class ShopCatalogEventStorageData : ShopCatalogStorageDataBase
 
 `ShopStorage` 필드:
 
-- `schemaVersion` (현재 `11`)
+- `schemaVersion` (현재 `12`)
 - `daily: ShopCatalogDailyStorageData`
 - `chest: ShopCatalogChestStorageData`
 - `purchase: ShopCatalogPurchaseStorageData`
@@ -102,6 +104,8 @@ public sealed class ShopCatalogEventStorageData : ShopCatalogStorageDataBase
 - `CHEST`
   - `adsRefreshUtcMs`
   - `productRemainCounts`
+  - `level`
+  - `currentExp`
 - `GOLD`
   - `adsRefreshUtcMs`
   - `productRemainCounts`
@@ -116,6 +120,7 @@ public sealed class ShopCatalogEventStorageData : ShopCatalogStorageDataBase
 - `DAILY`의 ADS/FREE 상품은 `dailyCatalogProducts`에 저장하지 않는다. 해당 상품의 `remainCount`는 `daily.productRemainCounts`를 사용한다.
 - 무제한 상품(`maxCount=-1`)은 `productRemainCounts`에 저장하지 않는다.
 - `PURCHASE`와 `EVENT`에 필요 없는 상태를 미리 넣지 않는다.
+- 최고 레벨 상태는 `currentExp=0`으로 저장/복원한다.
 
 ---
 
@@ -129,6 +134,9 @@ public sealed class ShopCatalogEventStorageData : ShopCatalogStorageDataBase
 - `autoRefreshUtcMs`는 시작 시각이 아니라 다음 refresh 시각이다.
 - `EVENT.autoRefreshUtcMs`는 주기값이 아니라 다음 `startTime/endTime` 경계 시각이다.
 - `adsRefreshUtcMs`는 ADS/FREE 구매 성공 시 `serverNow + 1day`로 기록한다.
+- `CHEST.level` 기본값은 `1`이다.
+- `CHEST.currentExp` 기본값은 `0`이다.
+- `CHEST`가 최대 레벨이면 `currentExp=0`으로 정규화한다.
 - `manualRefreshUtcMs`는 `ShopCatalogDaily.RefreshByAdsAsync()` 성공 시 `serverNow + 1day`로 기록한다.
 - `manualRefreshRemainCount`는 rolling 24시간 남은 횟수다.
 - 초기 상태와 만료 후 reset 상태의 `manualRefreshRemainCount`는 `5`다.
@@ -143,11 +151,12 @@ ShopStorage는 SaveData JSON의 `shop` 섹션으로 직렬화한다.
 
 - serialize: `SaveDataJsonCodecShop.Serialize(ShopStorage)`
 - deserialize: `SaveDataJsonCodecShop.DeserializeInto(JObject, ShopStorage)`
-- 최신 스키마는 `schemaVersion=11`
+- 최신 스키마는 `schemaVersion=12`
 - 저장 JSON은 `catalogs` 하위에 catalog 단위로 묶어 저장한다.
 - JSON shape는 grouped catalog 구조를 유지하지만, 런타임 메모리 구조는 typed storage field를 사용한다.
 - `DAILY`는 `adsRefreshUtcMs`, `autoRefreshUtcMs`, `manualRefreshUtcMs`, `manualRefreshRemainCount`, `productRemainCounts`, `dailyCatalogProducts`를 저장한다.
-- `CHEST`, `GOLD`는 `adsRefreshUtcMs`, `productRemainCounts`를 저장한다.
+- `CHEST`는 `adsRefreshUtcMs`, `productRemainCounts`, `level`, `currentExp`를 저장한다.
+- `GOLD`는 `adsRefreshUtcMs`, `productRemainCounts`를 저장한다.
 - `EVENT`는 `autoRefreshUtcMs`를 저장한다.
 - `PURCHASE`는 현재 직렬화할 catalog 전용 상태가 없다.
 

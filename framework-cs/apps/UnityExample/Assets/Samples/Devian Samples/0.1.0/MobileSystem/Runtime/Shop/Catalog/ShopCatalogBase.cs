@@ -234,10 +234,10 @@ namespace Devian
 
         protected static bool IsLimitedAdsOrFreeProduct(ShopProductBase product)
         {
-            return product is ShopRewardProductBase rewardProduct
-                && rewardProduct.HasPurchaseLimit
-                && (rewardProduct.ProductType == SHOP_PRODUCT_TYPE.ADS
-                    || rewardProduct.ProductType == SHOP_PRODUCT_TYPE.FREE);
+            return product != null
+                && product.HasPurchaseLimit
+                && (product.ProductType == SHOP_PRODUCT_TYPE.ADS
+                    || product.ProductType == SHOP_PRODUCT_TYPE.FREE);
         }
 
         protected IReadOnlyList<ShopProductBase> buildProductsFromRowsWithStorage<TRow>(

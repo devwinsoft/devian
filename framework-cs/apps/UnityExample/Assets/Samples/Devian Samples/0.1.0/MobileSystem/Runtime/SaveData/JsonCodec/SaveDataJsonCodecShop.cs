@@ -54,6 +54,8 @@ namespace Devian
                 shop.schemaVersion = 10;
             if (shop.schemaVersion < 11)
                 shop.schemaVersion = 11;
+            if (shop.schemaVersion < 12)
+                shop.schemaVersion = 12;
         }
 
         static JObject serializeCatalogs(ShopStorage shop)
@@ -119,6 +121,8 @@ namespace Devian
             var stateObj = new JObject
             {
                 ["adsRefreshUtcMs"] = chest.adsRefreshUtcMs > 0L ? chest.adsRefreshUtcMs : 0L,
+                ["level"] = chest.level > 0 ? chest.level : 1,
+                ["currentExp"] = chest.currentExp > 0 ? chest.currentExp : 0,
                 ["productRemainCounts"] = serializeRemainCounts(chest.productRemainCounts),
             };
 
@@ -264,6 +268,8 @@ namespace Devian
         static void deserializeChestCatalog(JObject stateObj, ShopStorage shop)
         {
             shop.SetAdsRefreshUtcMs(SHOP_CATALOG_TYPE.CHEST, stateObj.Value<long?>("adsRefreshUtcMs") ?? 0L);
+            shop.SetChestLevel(stateObj.Value<int?>("level") ?? 1);
+            shop.SetChestCurrentExp(stateObj.Value<int?>("currentExp") ?? 0);
             deserializeRemainCounts(stateObj["productRemainCounts"] as JObject, SHOP_CATALOG_TYPE.CHEST, shop);
         }
 
