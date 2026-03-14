@@ -78,7 +78,7 @@ namespace Devian
                     "ShopManager is unavailable.");
             }
 
-            return manager.ResetAdsInternal(this);
+            return manager.ResetAdsInternal(CatalogType);
         }
 
         public virtual Task<CommonResult> RefreshByAdsAsync(CancellationToken ct = default)
@@ -100,9 +100,9 @@ namespace Devian
 
             return CatalogType switch
             {
-                SHOP_CATALOG_TYPE.CHEST => ShopProductFactory.BuildProductsFromRows(TB_SHOP_CHEST.GetAll(), ShopProductFactory.CreateChestProduct),
-                SHOP_CATALOG_TYPE.PURCHASE => ShopProductFactory.BuildProductsFromRows(TB_SHOP_PURCHASE.GetAll(), ShopProductFactory.CreatePurchaseProduct),
-                SHOP_CATALOG_TYPE.GOLD => ShopProductFactory.BuildProductsFromRows(TB_SHOP_GOLD.GetAll(), ShopProductFactory.CreateGoldProduct),
+                SHOP_CATALOG_TYPE.CHEST => buildProductsFromRowsWithStorage(TB_SHOP_CHEST.GetAll(), ShopProductFactory.CreateChestProduct),
+                SHOP_CATALOG_TYPE.PURCHASE => buildProductsFromRowsWithStorage(TB_SHOP_PURCHASE.GetAll(), ShopProductFactory.CreatePurchaseProduct),
+                SHOP_CATALOG_TYPE.GOLD => buildProductsFromRowsWithStorage(TB_SHOP_GOLD.GetAll(), ShopProductFactory.CreateGoldProduct),
                 _ => EmptyProducts,
             };
         }
@@ -248,6 +248,58 @@ namespace Devian
                 && rewardProduct.HasPurchaseLimit
                 && (rewardProduct.ProductType == SHOP_PRODUCT_TYPE.ADS
                     || rewardProduct.ProductType == SHOP_PRODUCT_TYPE.FREE);
+        }
+
+        protected IReadOnlyList<ShopProductBase> buildProductsFromRowsWithStorage<TRow>(
+            IReadOnlyList<TRow> rows,
+            Func<TRow, ShopProductBase> createProduct)
+        {
+            var products = ShopProductFactory.BuildProductsFromRows(rows, createProduct);
+            ApplyStoredProductState(products);
+            return products;
+        }
+
+        protected void ApplyStoredProductState(IReadOnlyList<ShopProductBase> products)
+        {
+            if (Storage == null || products == null || products.Count <= 0)
+                return;
+
+            for (var i = 0; i < products.Count; i++)
+            {
+                ApplyStoredProductState(products[i]);
+            }
+        }
+
+        protected void ApplyStoredProductState(ShopProductBase product)
+        {
+            if (Storage == null || product == null)
+                return;
+
+            var normalizedShopId = NormalizeShopId(product.ShopId);
+            if (string.IsNullOrEmpty(normalizedShopId))
+                return;
+
+            if (!product.HasPurchaseLimit)
+            {
+                product.SetRemainCount(-1);
+                Storage.RemoveProductRemainCount(CatalogType, normalizedShopId);
+                return;
+            }
+
+            if (Storage.TryGetProductRemainCount(CatalogType, normalizedShopId, out var storedRemainCount))
+            {
+                product.SetRemainCount(storedRemainCount);
+            }
+            else if (Storage.TryTakeLegacyPurchaseCount(normalizedShopId, out var legacyPurchaseCount))
+            {
+                product.SetRemainCount(product.MaxCount - legacyPurchaseCount);
+            }
+            else
+            {
+                product.ResetRemainCount();
+            }
+
+            Storage.SetProductRemainCount(CatalogType, normalizedShopId, product.RemainCount);
         }
 
         void setProducts(IReadOnlyList<ShopProductBase> products)

@@ -70,7 +70,8 @@ ShopStorage는 SaveData JSON의 `shop` 섹션으로 직렬화한다.
 - serialize: `SaveDataJsonCodecShop.Serialize(ShopStorage)`
 - deserialize: `SaveDataJsonCodecShop.DeserializeInto(JObject, ShopStorage)`
 - legacy `purchaseCounts`/`purchaseLimits`는 `_legacyPurchaseCounts`로 마이그레이션한다.
-- 런타임 카탈로그 동기화 시 legacy count를 `remainCount`로 1회 변환한다.
+- 런타임 카탈로그 초기화 시 각 catalog가 자기 bucket의 remain 상태를 직접 복원한다. non-daily는 table product 생성 후 적용하고, DAILY는 `dailyCatalogProducts`로 직접 복원한다.
+- legacy count는 catalog 초기화 시 `remainCount`로 1회 변환한다.
 - 최신 스키마는 `schemaVersion=10`이다.
 - 저장 JSON은 flat key 대신 `catalogs` 하위에 catalog 단위로 묶어 저장한다.
 

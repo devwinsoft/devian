@@ -58,11 +58,11 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 카탈로그 초기화 라이프사이클:
 - `ShopCatalogBase`는 생성자에서 product를 만들지 않는다.
 - `Initialize()`가 1회 실행되며, `onInitialize()`로 1회 setup 후 `RefreshProducts()`를 호출한다.
-- `CreateDefaultCatalogs(...)`는 `TB_SHOP_CATALOG.GetAll()`을 읽어 카탈로그를 생성한다. (하드코딩 생성 금지)
-- `CreateDefaultCatalogs(...)`는 catalog 인스턴스만 만들고, `ShopManager.Initialize()` 경로에서 각 catalog `Initialize()`를 호출한다.
+- `CreateRuntimeCatalogs(storage)`는 `TB_SHOP_CATALOG.GetAll()`을 읽어 storage-backed runtime catalog를 생성한다. (하드코딩 생성 금지)
+- `CreateRuntimeCatalogs(storage)`는 catalog 인스턴스만 만들고, `ShopManager.Initialize()` 경로에서 registry 등록 후 각 catalog `Initialize()`를 호출한다.
 - `Create(...)`는 standalone catalog 생성을 위해 반환 전에 `Initialize()`를 호출해 product 인덱스를 확정한다.
 - `ShopCatalogBase.onInitialize()`는 1회 setup hook이다. product 생성 책임을 가지지 않는다.
-- `ShopCatalogBase.onRefresh()` 기본 구현은 `CHEST/PURCHASE/GOLD`의 테이블 전체 row를 상품으로 생성한다.
+- `ShopCatalogBase.onRefresh()` 기본 구현은 `CHEST/PURCHASE/GOLD`의 테이블 전체 row를 상품으로 생성하고, 해당 catalog bucket의 remain state를 즉시 적용한다.
 - `ShopCatalogDaily.onRefresh()`는 5개 선택 생성/저장 상태 복원을 처리한다.
 - `ShopCatalogEvent.onRefresh()`는 `SHOP_EVENT.startTime/endTime` 서버 UTC 구간 안에 있는 row만 상품으로 생성한다.
 - 카탈로그 인스턴스 생성은 `ShopCatalogFactory`(14)에서, row -> `ShopProductBase` 변환은 `ShopProductFactory`(15)에서 처리한다.
@@ -114,6 +114,7 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 - `SHOP_DAILY`의 ADS/FREE row는 고정 상품으로 카탈로그에 항상 포함하고, `dailyCatalogProducts`에는 저장하지 않는다.
 - 저장된 daily 상태가 있으면 ADS/FREE 제외 5개를 저장 상태로 복원하고, ADS/FREE 고정 상품은 테이블에서 다시 합쳐 카탈로그를 구성한다.
 - 저장된 daily 상태의 만료 여부는 `ShopManager`의 시간 기반 refresh 판정에서 결정한다.
+- non-daily catalog의 remain state 복원은 `ShopCatalogBase` 계층이 직접 수행한다. `ShopManager`는 product index rebuild만 한다.
 - `ShopCatalogDaily`는 `RemainManualRefreshTimeMs`, `RemainManualRefreshCount`를 가진다.
 - daily manual refresh는 광고 시청 성공으로만 가능하며, rolling 24시간 기준 최대 5회다.
 - daily manual refresh의 상태 판단, 광고 호출, 성공 시 `manualRefreshUtcMs/manualRefreshCount/autoRefreshUtcMs` 갱신은 `ShopCatalogDaily`가 직접 처리한다.

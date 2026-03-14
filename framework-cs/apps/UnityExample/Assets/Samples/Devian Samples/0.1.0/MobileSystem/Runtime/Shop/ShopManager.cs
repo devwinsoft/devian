@@ -47,9 +47,12 @@ namespace Devian
 
         public CommonResult RefreshProducts(bool requireServerTime = true)
         {
-            var ensureInitialized = ensureManagerInitialized("RefreshProducts");
-            if (ensureInitialized.IsFailure)
-                return ensureInitialized;
+            if (!_initialized || !_catalogInitialized || _catalogList.Count <= 0)
+            {
+                return CommonResult.Failure(
+                    COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED,
+                    "ShopManager.Initialize must be called before RefreshProducts.");
+            }
 
             return refreshProductsCore(requireServerTime, refreshLockState: true);
         }
@@ -260,15 +263,24 @@ namespace Devian
             return CommonResult<ShopProductBase>.Success(product);
         }
 
-        internal CommonResult ResetAdsInternal(ShopCatalogBase catalog)
+        internal CommonResult ResetAdsInternal(SHOP_CATALOG_TYPE catalogType)
         {
-            var validateCatalog = ValidateManagedCatalog(catalog, "ResetAds");
-            if (validateCatalog.IsFailure)
-                return CommonResult.Failure(validateCatalog.Error!);
+            if (!_initialized || !_catalogInitialized || _catalogList.Count <= 0)
+            {
+                return CommonResult.Failure(
+                    COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED,
+                    "ShopManager.Initialize must be called before ResetAds.");
+            }
 
-            var managedCatalog = validateCatalog.Value!;
+            if (!isValidCatalogType(catalogType))
+            {
+                return CommonResult.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    $"Invalid shop catalogType for ResetAds: {catalogType}");
+            }
+
             var refresh = tryRefreshCatalog(
-                managedCatalog.CatalogType,
+                catalogType,
                 requireServerTime: true,
                 forceCatalogRefresh: true);
             if (refresh.IsFailure)
@@ -285,9 +297,12 @@ namespace Devian
 
         CommonResult<ShopProductBase> validateShopProductConfig(string shopId)
         {
-            var ensureInitialized = ensureManagerInitialized("CanBuy/BuyAsync");
-            if (ensureInitialized.IsFailure)
-                return CommonResult<ShopProductBase>.Failure(ensureInitialized.Error!);
+            if (!_initialized || !_catalogInitialized || _catalogList.Count <= 0)
+            {
+                return CommonResult<ShopProductBase>.Failure(
+                    COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED,
+                    "ShopManager.Initialize must be called before CanBuy/BuyAsync.");
+            }
 
             var refresh = refreshProductsCore(requireServerTime: true, refreshLockState: false);
             if (refresh.IsFailure)
@@ -300,6 +315,8 @@ namespace Devian
                     COMMON_ERROR_TYPE.SHOP_PRODUCT_ID_EMPTY,
                     "Shop shopId is empty.");
             }
+
+            synchronizeProductIndexFromCatalogs();
 
             if (!_productsByShopId.TryGetValue(normalizedShopId, out var product) || product == null)
             {
@@ -957,9 +974,12 @@ namespace Devian
             _productsByShopId.Clear();
             _limitedShopIdsByCatalog.Clear();
 
-            var sourceCatalogs = ShopCatalogFactory.CreateDefaultCatalogs(_storage);
+            var sourceCatalogs = ShopCatalogFactory.CreateRuntimeCatalogs(_storage);
             for (var i = 0; i < sourceCatalogs.Count; i++)
                 addCatalog(sourceCatalogs[i]);
+
+            for (var i = 0; i < _catalogList.Count; i++)
+                _catalogList[i]?.Initialize();
 
             _catalogInitialized = _catalogList.Count > 0;
             if (!_catalogInitialized)
@@ -971,70 +991,11 @@ namespace Devian
             return _catalogInitialized;
         }
 
-        internal CommonResult<T> ValidateManagedCatalog<T>(T catalog, string apiName) where T : ShopCatalogBase
-        {
-            var ensureInitialized = ensureManagerInitialized(apiName);
-            if (ensureInitialized.IsFailure)
-                return CommonResult<T>.Failure(ensureInitialized.Error!);
-
-            if (catalog == null || !isValidCatalogType(catalog.CatalogType))
-            {
-                return CommonResult<T>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    $"Shop catalog is invalid for {apiName}.");
-            }
-
-            if (!_catalogs.TryGetValue(catalog.CatalogType, out var managedCatalog)
-                || managedCatalog is not T typedCatalog
-                || !ReferenceEquals(catalog, typedCatalog))
-            {
-                return CommonResult<T>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    $"Shop catalog is not managed by ShopManager: catalogType={catalog.CatalogType}, api={apiName}");
-            }
-
-            return CommonResult<T>.Success(typedCatalog);
-        }
-
-        internal void RefreshCatalogLocksInternal()
-        {
-            refreshCatalogLockState();
-        }
-
-        internal void CommitCatalogMutation(
-            bool didRefreshCatalogProducts,
-            bool didMutateStorage,
-            bool refreshLockState)
-        {
-            if (didRefreshCatalogProducts)
-            {
-                synchronizeProductIndexFromCatalogs();
-                didMutateStorage = true;
-            }
-
-            if (didMutateStorage)
-                queueRuntimeLocalSave();
-
-            if (refreshLockState)
-                refreshCatalogLockState();
-        }
-
-        CommonResult ensureManagerInitialized(string apiName)
-        {
-            if (_initialized && _catalogInitialized && _catalogList.Count > 0)
-                return CommonResult.Ok();
-
-            return CommonResult.Failure(
-                COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED,
-                $"ShopManager.Initialize must be called before {apiName}.");
-        }
-
         void addCatalog(ShopCatalogBase sourceCatalog)
         {
             if (sourceCatalog == null)
                 return;
 
-            sourceCatalog.Initialize();
             var catalogType = sourceCatalog.CatalogType;
             if (!isValidCatalogType(catalogType))
                 return;
@@ -1078,7 +1039,6 @@ namespace Devian
                         continue;
                     }
 
-                    syncProductRemainState(product, normalizedShopId);
                     _productsByShopId.Add(normalizedShopId, product);
                     registerLimitedProduct(product, normalizedShopId);
                 }
@@ -1276,81 +1236,6 @@ namespace Devian
             if (!product.HasPurchaseLimit)
             {
                 _storage.RemoveProductRemainCount(product.CatalogType, normalizedShopId);
-                return;
-            }
-
-            _storage.SetProductRemainCount(product.CatalogType, normalizedShopId, product.RemainCount);
-        }
-
-        void syncProductRemainState(ShopProductBase product, string normalizedShopId)
-        {
-            if (product == null || string.IsNullOrWhiteSpace(normalizedShopId))
-                return;
-
-            if (!product.HasPurchaseLimit)
-            {
-                product.SetRemainCount(-1);
-                _storage.RemoveProductRemainCount(product.CatalogType, normalizedShopId);
-                if (product.CatalogType == SHOP_CATALOG_TYPE.DAILY)
-                {
-                    if (isDailyStoredProduct(product))
-                    {
-                        _storage.UpsertDailyCatalogProduct(
-                            normalizedShopId,
-                            product.DiscountType,
-                            product.RemainCount);
-                    }
-                    else
-                    {
-                        _storage.RemoveDailyCatalogProduct(normalizedShopId);
-                    }
-                }
-
-                return;
-            }
-
-            if (isDailyStoredProduct(product)
-                && _storage.TryGetDailyCatalogProduct(normalizedShopId, out var dailyState)
-                && dailyState != null)
-            {
-                product.SetRemainCount(dailyState.remainCount);
-                _storage.RemoveProductRemainCount(product.CatalogType, normalizedShopId);
-                _storage.UpsertDailyCatalogProduct(
-                    normalizedShopId,
-                    product.DiscountType,
-                    product.RemainCount);
-                return;
-            }
-
-            if (_storage.TryGetProductRemainCount(product.CatalogType, normalizedShopId, out var storedRemainCount))
-            {
-                product.SetRemainCount(storedRemainCount);
-            }
-            else if (_storage.TryTakeLegacyPurchaseCount(normalizedShopId, out var legacyPurchaseCount))
-            {
-                product.SetRemainCount(product.MaxCount - legacyPurchaseCount);
-            }
-            else
-            {
-                product.ResetRemainCount();
-            }
-
-            if (product.CatalogType == SHOP_CATALOG_TYPE.DAILY)
-            {
-                if (isDailyStoredProduct(product))
-                {
-                    _storage.RemoveProductRemainCount(product.CatalogType, normalizedShopId);
-                    _storage.UpsertDailyCatalogProduct(
-                        normalizedShopId,
-                        product.DiscountType,
-                        product.RemainCount);
-                }
-                else
-                {
-                    _storage.RemoveDailyCatalogProduct(normalizedShopId);
-                    _storage.SetProductRemainCount(product.CatalogType, normalizedShopId, product.RemainCount);
-                }
-
                 return;
             }
 

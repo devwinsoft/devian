@@ -53,7 +53,7 @@ public T GetCatalog<T>() where T : ShopCatalogBase
 10. 잠긴 카탈로그의 상품은 `CanBuy/BuyAsync`에서 차단된다.
 11. 구매 제한(`maxCount/remainCount`) 체크
 12. `ShopProductBase.Price`(할인 반영 최종가)로 구매 가능 여부/통화 차감을 처리한다. 원가는 `ShopProductBase.PriceWithoutDiscount`를 사용한다.
-13. 카탈로그 분기와 row -> product 변환 helper는 `ShopCatalogBase` 계층이 담당하며, ShopManager는 카탈로그 인덱싱/구매 검증/결제를 담당한다.
+13. 카탈로그 분기와 storage 기반 초기 product 구성은 `ShopCatalogFactory` + `ShopCatalogBase` 계층이 담당하며, ShopManager는 registry/orchestration/구매 검증/결제를 담당한다.
 14. `ShopManager.onInitAwake()`는 catalog를 초기화하지 않으며, `Initialize()`가 유일한 manager 초기화 진입점이다.
 15. `ShopCatalogBase`는 `Initialize() -> onInitialize() -> RefreshProducts() -> onRefresh()` 라이프사이클을 따른다. product 생성 책임은 `onRefresh()`에 있다.
 16. 기본 `onRefresh()`는 `CHEST/PURCHASE/GOLD`의 테이블 전체 상품을 생성한다. `ShopCatalogDaily.onRefresh()`와 `ShopCatalogEvent.onRefresh()`가 고유 생성 로직을 override 한다.
@@ -62,7 +62,7 @@ public T GetCatalog<T>() where T : ShopCatalogBase
 19. ADS/FREE 상품 리필은 카탈로그 저장 버킷의 `adsRefreshUtcMs`로 별도 관리하며, ADS/FREE 구매 성공 시 `serverNow + 1day`로 기록한다.
 20. 카탈로그 초기화/refresh 시 `adsRefreshUtcMs`가 없거나 만료면 ADS/FREE 제한 상품을 `remainCount=maxCount`로 리필한다.
 21. refresh 조건 탐색은 `ShopManager.evaluateCatalogRefreshState(...)` 한 곳에서 처리한다.
-22. 카탈로그 refresh 실행은 `ShopManager.tryRefreshCatalog(...)` 한 경로에서 처리한다. catalog-specific public API는 catalog instance가 호출하고, ShopManager에는 global executor와 post-commit만 둔다.
+22. 카탈로그 refresh 실행은 `ShopManager.tryRefreshCatalog(...)` 한 경로에서 처리한다.
 23. SaveData 로드는 `ShopStorage`에만 반영되고, 런타임 카탈로그 반영은 이후 `LoginManager`가 호출하는 `ShopManager.Initialize()`에서 수행한다.
 24. `SHOP_DAILY`의 ADS/FREE 상품은 테이블에서 고정 로드하며 `dailyCatalogProducts`에는 저장하지 않는다. ADS/FREE의 `remainCount` 저장은 DAILY catalog bucket의 `productRemainCounts`를 사용한다.
 25. 카탈로그별 남은 시간 조회는 `ShopCatalogBase.RemainAutoRefreshTimeMs`, `RemainAdsRefreshTimeMs`, `ShopCatalogDaily.RemainManualRefreshTimeMs`, `RemainManualRefreshCount`를 사용한다.
@@ -73,7 +73,8 @@ public T GetCatalog<T>() where T : ShopCatalogBase
 30. `ShopCatalogDaily.RefreshByAdsAsync()`는 rolling 24시간 기준 최대 5회만 허용한다. 상태는 `manualRefreshUtcMs`, `manualRefreshCount`로 관리한다.
 31. `ShopCatalogDaily.RefreshByAdsAsync()` 제한 초과 시 `COMMON_ERROR_TYPE.SHOP_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED`를 반환한다.
 32. `ShopManager`는 `syncCatalogRuntimeStates()`로 catalog별 runtime state 동기화를 공통 처리하고, catalog-specific manual refresh helper를 두지 않는다.
-33. `ShopManager`의 catalog mutation 후처리는 product index 동기화와 local save queue로 제한한다.
+33. `ShopManager.ensureCatalogInitialized()`는 `CreateRuntimeCatalogs(storage)`로 catalog를 먼저 등록하고, 두 번째 pass에서 `Initialize()`를 호출한다.
+34. `ShopManager.synchronizeProductIndexFromCatalogs()`는 product index와 limited shop id 인덱스만 재구성한다. remain/storage 복원 책임은 가지지 않는다.
 
 ---
 

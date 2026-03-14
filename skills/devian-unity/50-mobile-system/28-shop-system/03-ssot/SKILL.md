@@ -34,11 +34,12 @@ AppliesTo: v10
 `ShopManager.Initialize()` 호출 시:
 
 1. `ensureCatalogInitialized()`를 먼저 수행한다.
-2. 카탈로그 목록은 `TB_SHOP_CATALOG.GetAll()`로 생성한다. (하드코딩 금지)
-3. 각 카탈로그는 `ShopCatalogBase.Initialize()`를 호출해 1회 product 구성을 완료한다.
-4. 초기화만으로 refresh를 강제하지 않는다.
-5. 초기화 이후 refresh 조건 탐색/실행은 `tryRefreshAllCatalogs(...)`가 담당한다.
-6. `TB_SHOP_CATALOG`가 비어 있거나 아직 로드되지 않은 경우, `_catalogInitialized`를 확정하지 않고 다음 호출에서 재시도한다.
+2. 카탈로그 목록은 `ShopCatalogFactory.CreateRuntimeCatalogs(storage)`가 `TB_SHOP_CATALOG.GetAll()`을 읽어 생성한다. (하드코딩 금지)
+3. `ShopManager`는 catalog를 먼저 registry에 등록한 뒤, 두 번째 pass에서 각 catalog `Initialize()`를 호출한다.
+4. 각 카탈로그는 `ShopCatalogBase.Initialize()`를 호출해 storage/default 기반 1회 product 구성을 완료한다.
+5. 초기화만으로 refresh를 강제하지 않는다.
+6. 초기화 이후 refresh 조건 탐색/실행은 `tryRefreshAllCatalogs(...)`가 담당한다.
+7. `TB_SHOP_CATALOG`가 비어 있거나 아직 로드되지 않은 경우, `_catalogInitialized`를 확정하지 않고 다음 호출에서 재시도한다.
 
 규칙:
 - `ShopManager.onInitAwake()`는 catalog를 초기화하지 않는다.
@@ -47,7 +48,7 @@ AppliesTo: v10
 - runtime 조건(시간 만료/ads refill/강제 refresh)은 initialize에서 직접 판단하지 않는다.
 - `ShopCatalogBase.Initialize()`는 `onInitialize()` 후 `RefreshProducts()`를 호출한다.
 - 실제 product 생성 책임은 `ShopCatalogBase.onRefresh()`가 가진다.
-- `ShopCatalogBase.onRefresh()` 기본 경로는 `CHEST/PURCHASE/GOLD`의 테이블 전체 row를 product로 생성한다.
+- `ShopCatalogBase.onRefresh()` 기본 경로는 `CHEST/PURCHASE/GOLD`의 테이블 전체 row를 product로 생성하고, 같은 catalog bucket의 storage remain 상태를 즉시 적용한다.
 - `ShopCatalogDaily.onRefresh()`는 valid storage가 있으면 storage 기준으로 5개 동적 상품을 복원하고, invalid/empty storage면 5개를 새로 선택 생성한다.
 - `ShopCatalogEvent.onRefresh()`는 `SHOP_EVENT.startTime/endTime`을 서버 UTC 기준으로 평가해 현재 판매 중인 row만 product로 생성한다.
 - `ShopCatalogBase`는 `Storage`를 소유하며, catalog runtime state helper는 catalog 계층에 둔다.
@@ -149,11 +150,12 @@ AppliesTo: v10
 
 - SaveData load는 `ShopStorage`에 저장 상태만 로드한다.
 - 이후 `LoginManager -> ShopManager.Initialize()`가 storage 기반 runtime catalog/product 구성을 수행한다.
-- `DAILY`를 제외한 카탈로그는 table로 생성한 product에 storage 상태를 덮어쓴다.
+- `DAILY`를 제외한 카탈로그는 각 catalog의 `onRefresh()`가 table product 생성 + storage remain 적용을 직접 수행한다.
 - `DAILY`는 `onRefresh()`에서 storage 기준 product 구성을 직접 복원할 수 있다.
 - `DAILY` manual refresh 상태는 `ShopCatalogDaily.SyncRuntimeState(...)`가 storage 만료 여부를 정리하고 catalog runtime 프로퍼티에 동기화한다.
 - `EVENT`는 별도 동적 payload를 저장하지 않고, `SHOP_EVENT` + 서버 시간 기준으로 매번 활성 상품을 재구성한다.
 - Shop runtime mutation은 로컬 save queue를 통해 저장한다.
+- `ShopManager.synchronizeProductIndexFromCatalogs()`는 product index rebuild만 담당하며 storage restore를 수행하지 않는다.
 
 ---
 

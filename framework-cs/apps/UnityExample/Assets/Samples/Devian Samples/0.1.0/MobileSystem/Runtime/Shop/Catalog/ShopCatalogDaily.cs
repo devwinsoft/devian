@@ -73,18 +73,13 @@ namespace Devian
 
         public override async Task<CommonResult> RefreshByAdsAsync(CancellationToken ct = default)
         {
-            if (!ShopManager.TryGet(out var manager) || manager == null)
+            if (!IsInitialized)
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED,
-                    "ShopManager is unavailable.");
+                    "ShopCatalogDaily is not initialized.");
             }
 
-            var validateCatalog = manager.ValidateManagedCatalog(this, "RefreshByAdsAsync");
-            if (validateCatalog.IsFailure)
-                return CommonResult.Failure(validateCatalog.Error!);
-
-            manager.RefreshCatalogLocksInternal();
             if (IsLocked)
             {
                 return CommonResult.Failure(
@@ -124,10 +119,19 @@ namespace Devian
             RefreshProducts();
             applyManualRefreshSuccess(manualState.ServerNowUtcMs, manualState);
             ApplyNextAutoRefreshUtcMs(manualState.ServerNowUtcMs);
-            manager.CommitCatalogMutation(
-                didRefreshCatalogProducts: true,
-                didMutateStorage: true,
-                refreshLockState: false);
+
+            try
+            {
+                var save = await SaveDataManager.Instance.SaveGameStorageAsync(
+                    saveCloud: false,
+                    ct);
+                if (save.IsFailure)
+                    Debug.LogWarning($"[ShopCatalogDaily] Local save failed after manual refresh: {save.Error}");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[ShopCatalogDaily] Local save threw after manual refresh: {ex.Message}");
+            }
 
             return CommonResult.Ok();
         }
@@ -137,7 +141,7 @@ namespace Devian
             if (PrebuiltProducts != null)
                 return PrebuiltProducts;
 
-            return loadOrCreateDailyProducts(Storage);
+            return loadOrCreateDailyProducts();
         }
 
         internal override CommonResult<bool> SyncRuntimeState(bool requireServerTime)
@@ -239,38 +243,30 @@ namespace Devian
                 MaxManualRefreshCountPerDay - usedManualRefreshCount);
         }
 
-        static IReadOnlyList<ShopProductBase> loadOrCreateDailyProducts(ShopStorage storage)
+        IReadOnlyList<ShopProductBase> loadOrCreateDailyProducts()
         {
             var rows = TB_SHOP_DAILY.GetAll();
+            var dynamicProducts = tryBuildDailyProductsFromStorage(rows, out var storedProducts)
+                ? storedProducts
+                : createDailyProductsFromRows(rows, DailySelectableProductCount, DailyDiscountProductCount);
 
-            if (tryBuildDailyProductsFromStorage(storage, rows, out var storedProducts))
-                return storedProducts;
-
-            var products = createDailyProductsFromRows(rows, DailySelectableProductCount, DailyDiscountProductCount);
-
-            if (storage != null)
-            {
-                var states = createDailyProductStates(products);
-                storage.SetDailyCatalogProducts(states);
-            }
-
-            return products;
+            normalizeDailyDynamicStorage(dynamicProducts);
+            return composeDailyProducts(dynamicProducts, rows);
         }
 
-        static bool tryBuildDailyProductsFromStorage(
-            ShopStorage storage,
+        bool tryBuildDailyProductsFromStorage(
             IReadOnlyList<SHOP_DAILY> rows,
             out IReadOnlyList<ShopProductBase> products)
         {
             products = null;
-            if (storage == null)
+            if (Storage == null)
                 return false;
 
-            var states = storage.GetDailyCatalogProducts();
+            var states = Storage.GetDailyCatalogProducts();
             if (states == null || states.Count <= 0)
                 return false;
 
-            var list = new List<ShopProductBase>(states.Count + 4);
+            var list = new List<ShopProductBase>(states.Count);
             var seenShopIds = new HashSet<string>(StringComparer.Ordinal);
             for (var i = 0; i < states.Count; i++)
             {
@@ -303,9 +299,55 @@ namespace Devian
             if (list.Count != DailySelectableProductCount)
                 return false;
 
-            appendDailyFixedAdsFreeProducts(list, rows, seenShopIds);
             products = list;
             return true;
+        }
+
+        void normalizeDailyDynamicStorage(IReadOnlyList<ShopProductBase> dynamicProducts)
+        {
+            if (Storage == null)
+                return;
+
+            Storage.SetDailyCatalogProducts(createDailyProductStates(dynamicProducts));
+
+            if (dynamicProducts == null || dynamicProducts.Count <= 0)
+                return;
+
+            for (var i = 0; i < dynamicProducts.Count; i++)
+            {
+                var normalizedShopId = NormalizeShopId(dynamicProducts[i]?.ShopId);
+                if (string.IsNullOrEmpty(normalizedShopId))
+                    continue;
+
+                Storage.RemoveProductRemainCount(CatalogType, normalizedShopId);
+            }
+        }
+
+        IReadOnlyList<ShopProductBase> composeDailyProducts(
+            IReadOnlyList<ShopProductBase> dynamicProducts,
+            IReadOnlyList<SHOP_DAILY> rows)
+        {
+            var list = new List<ShopProductBase>((dynamicProducts?.Count ?? 0) + 4);
+            var seenShopIds = new HashSet<string>(StringComparer.Ordinal);
+
+            if (dynamicProducts != null && dynamicProducts.Count > 0)
+            {
+                for (var i = 0; i < dynamicProducts.Count; i++)
+                {
+                    var product = dynamicProducts[i];
+                    if (product == null)
+                        continue;
+
+                    var normalizedShopId = NormalizeShopId(product.ShopId);
+                    if (string.IsNullOrEmpty(normalizedShopId) || !seenShopIds.Add(normalizedShopId))
+                        continue;
+
+                    list.Add(product);
+                }
+            }
+
+            appendDailyFixedAdsFreeProducts(list, rows, seenShopIds);
+            return list;
         }
 
         static List<ShopDailyProductState> createDailyProductStates(IReadOnlyList<ShopProductBase> products)
@@ -346,7 +388,7 @@ namespace Devian
         {
             var selectedRows = selectDailyRows(rows, targetCount);
             var discountTypesByShopId = selectDailyDiscountTypes(selectedRows, targetDiscountCount);
-            var products = new List<ShopProductBase>(selectedRows.Count + 4);
+            var products = new List<ShopProductBase>(selectedRows.Count);
             var seenShopIds = new HashSet<string>(StringComparer.Ordinal);
             for (var i = 0; i < selectedRows.Count; i++)
             {
@@ -369,7 +411,6 @@ namespace Devian
                     products.Add(product);
             }
 
-            appendDailyFixedAdsFreeProducts(products, rows, seenShopIds);
             return products;
         }
 
@@ -477,7 +518,7 @@ namespace Devian
             return sanitizeDailySelectRate(row.SelectRate) > 0f;
         }
 
-        static void appendDailyFixedAdsFreeProducts(
+        void appendDailyFixedAdsFreeProducts(
             List<ShopProductBase> products,
             IReadOnlyList<SHOP_DAILY> rows,
             HashSet<string> seenShopIds)
@@ -511,7 +552,10 @@ namespace Devian
 
                 var product = ShopProductFactory.CreateDailyProduct(row, SHOP_DISCOUNT_TYPE.NONE);
                 if (product != null)
+                {
+                    ApplyStoredProductState(product);
                     products.Add(product);
+                }
             }
         }
 

@@ -7,7 +7,7 @@ namespace Devian
 {
     internal static class ShopCatalogFactory
     {
-        public static IReadOnlyList<ShopCatalogBase> CreateDefaultCatalogs(ShopStorage storage)
+        public static IReadOnlyList<ShopCatalogBase> CreateRuntimeCatalogs(ShopStorage storage)
         {
             var rows = TB_SHOP_CATALOG.GetAll();
             if (rows == null || rows.Count <= 0)
