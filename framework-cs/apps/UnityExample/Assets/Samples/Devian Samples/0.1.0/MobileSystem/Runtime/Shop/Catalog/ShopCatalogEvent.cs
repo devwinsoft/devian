@@ -43,7 +43,7 @@ namespace Devian
                 if (!isEventRowActive(row, serverNowUtcMs))
                     continue;
 
-                var product = CreateEventProduct(row);
+                var product = ShopProductFactory.CreateEventProduct(row);
                 if (product != null)
                     products.Add(product);
             }

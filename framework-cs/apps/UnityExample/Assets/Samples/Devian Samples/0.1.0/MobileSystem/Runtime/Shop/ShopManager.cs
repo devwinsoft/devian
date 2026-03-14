@@ -64,7 +64,7 @@ namespace Devian
             if (_catalogs.TryGetValue(catalogType, out var catalog))
                 return catalog;
 
-            return ShopCatalogBase.Empty(catalogType);
+            return ShopCatalogFactory.Empty(catalogType);
         }
 
         public T GetCatalog<T>() where T : ShopCatalogBase
@@ -957,7 +957,7 @@ namespace Devian
             _productsByShopId.Clear();
             _limitedShopIdsByCatalog.Clear();
 
-            var sourceCatalogs = ShopCatalogBase.CreateDefaultCatalogs(_storage);
+            var sourceCatalogs = ShopCatalogFactory.CreateDefaultCatalogs(_storage);
             for (var i = 0; i < sourceCatalogs.Count; i++)
                 addCatalog(sourceCatalogs[i]);
 

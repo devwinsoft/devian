@@ -12,7 +12,7 @@ AppliesTo: v10
 - `Initialize`, `RefreshProducts`, `GetCatalog<T>()`, catalog public API의 계약
 - storage 반영 순서(`autoRefreshUtcMs`, `adsRefreshUtcMs`, `manualRefreshUtcMs`, remain/daily 상태)
 
-개별 클래스 구현 설명은 `10/11/12/13/14` 문서에서 다루며,
+개별 클래스 구현 설명은 `10/11/12/13/14/15` 문서에서 다루며,
 동작 순서/의미 충돌 시 이 문서가 우선한다.
 
 ---
@@ -54,7 +54,7 @@ AppliesTo: v10
 - `ShopCatalogDaily`는 daily manual refresh 정책/state machine을 직접 가진다.
 - `ShopManager`는 catalog-specific 정책을 직접 계산하지 않고, global refresh/index/save만 담당한다.
 - daily storage의 만료 여부는 `onRefresh()`가 아니라 refresh 시간 판정에서 결정한다.
-- row -> `ShopProductBase` 변환 helper도 catalog 계층(`ShopCatalogBase`)에 둔다. 별도 factory 계층을 두지 않는다.
+- 카탈로그 인스턴스 생성은 `ShopCatalogFactory`(14)에서, row -> `ShopProductBase` 변환은 `ShopProductFactory`(15)에서 처리한다.
 
 ---
 
@@ -163,17 +163,20 @@ AppliesTo: v10
 
 - UPM (정본)
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopManager.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/Catalog/` (7개 파일)
+  - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/Catalog/` (8개 파일)
+  - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopProductFactory.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopStorage.cs`
   - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecShop.cs`
 - Packages (sync)
   - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopManager.cs`
-  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/Catalog/` (7개 파일)
+  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/Catalog/` (8개 파일)
+  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopProductFactory.cs`
   - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopStorage.cs`
   - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecShop.cs`
 - Assets/Samples (import)
   - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Shop/ShopManager.cs`
-  - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Shop/Catalog/` (7개 파일)
+  - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Shop/Catalog/` (8개 파일)
+  - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Shop/ShopProductFactory.cs`
   - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Shop/ShopStorage.cs`
   - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecShop.cs`
 

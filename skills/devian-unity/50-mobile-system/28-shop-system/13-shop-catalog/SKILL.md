@@ -65,7 +65,7 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 - `ShopCatalogBase.onRefresh()` 기본 구현은 `CHEST/PURCHASE/GOLD`의 테이블 전체 row를 상품으로 생성한다.
 - `ShopCatalogDaily.onRefresh()`는 5개 선택 생성/저장 상태 복원을 처리한다.
 - `ShopCatalogEvent.onRefresh()`는 `SHOP_EVENT.startTime/endTime` 서버 UTC 구간 안에 있는 row만 상품으로 생성한다.
-- row -> `ShopProductBase` 변환 helper도 `ShopCatalogBase` 내부에 둔다. 별도 factory 계층을 두지 않는다.
+- 카탈로그 인스턴스 생성은 `ShopCatalogFactory`(14)에서, row -> `ShopProductBase` 변환은 `ShopProductFactory`(15)에서 처리한다.
 - `CHEST/PURCHASE/GOLD`는 테이블의 모든 row를 상품으로 생성한다.
 - `ShopCatalogBase`는 `Storage`, `virtual int autoRefreshDays`, `RemainAutoRefreshTimeMs`, `RemainAdsRefreshTimeMs`, `IsLocked`를 가진다.
 - catalog-specific public operation은 catalog instance method로 둔다.
@@ -135,6 +135,8 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 - [10-shop-manager](../10-shop-manager/SKILL.md)
 - [11-shop-product](../11-shop-product/SKILL.md)
 - [12-shop-storage](../12-shop-storage/SKILL.md)
+- [14-shop-catalog-factory](../14-shop-catalog-factory/SKILL.md)
+- [15-shop-product-factory](../15-shop-product-factory/SKILL.md)
 
 ## 9. Implementation Location (3-path mirror)
 
@@ -143,7 +145,8 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Shop/Catalog/`
 
 파일 구성:
-- `ShopCatalogBase.cs` — abstract base, factory methods, product helpers
+- `ShopCatalogBase.cs` — abstract base, runtime helpers
+- `ShopCatalogFactory.cs` — catalog instance 생성 factory
 - `ShopCatalogEmpty.cs` — empty placeholder (internal)
 - `ShopCatalogDaily.cs` — 5개 선택 생성/할인/저장 복원
 - `ShopCatalogEvent.cs` — 시간 구간 필터링

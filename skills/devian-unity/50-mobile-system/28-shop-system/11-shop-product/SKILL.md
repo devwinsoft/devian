@@ -78,7 +78,7 @@ public sealed class ShopProductPurchase : ShopProductBase
 - `ShopProductBase.Price`는 `SHOP_DISCOUNT_TYPE`을 적용한 최종 가격이다.
 - 원가(테이블 가격)는 `ShopProductBase.PriceWithoutDiscount`로 보존한다.
 - 카탈로그 클래스(`ShopCatalogBase`, `ShopCatalogDaily/Chest/Purchase/Gold`)는 `ShopCatalog.cs`에 분리되어 관리한다.
-- row -> `ShopProductBase` 변환 helper도 `ShopCatalog.cs`의 catalog 계층에 둔다. 별도 `ShopProductFactory`는 두지 않는다.
+- row -> `ShopProductBase` 변환은 `ShopProductFactory`(15)에서 처리한다.
 
 ---
 
@@ -94,3 +94,4 @@ public sealed class ShopProductPurchase : ShopProductBase
 
 - [10-shop-manager](../10-shop-manager/SKILL.md)
 - [13-shop-catalog](../13-shop-catalog/SKILL.md)
+- [15-shop-product-factory](../15-shop-product-factory/SKILL.md)

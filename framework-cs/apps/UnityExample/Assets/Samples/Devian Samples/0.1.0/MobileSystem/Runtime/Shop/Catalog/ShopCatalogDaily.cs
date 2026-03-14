@@ -292,7 +292,7 @@ namespace Devian
                 if (isAdsOrFreeCurrencyType(row.CurrencyType))
                     return false;
 
-                var product = CreateDailyProduct(row, normalizeDiscountType(state.discountType));
+                var product = ShopProductFactory.CreateDailyProduct(row, normalizeDiscountType(state.discountType));
                 if (product == null)
                     return false;
 
@@ -364,7 +364,7 @@ namespace Devian
                 var discountType = SHOP_DISCOUNT_TYPE.NONE;
                 discountTypesByShopId.TryGetValue(normalizedShopId, out discountType);
 
-                var product = CreateDailyProduct(row, discountType);
+                var product = ShopProductFactory.CreateDailyProduct(row, discountType);
                 if (product != null)
                     products.Add(product);
             }
@@ -509,7 +509,7 @@ namespace Devian
                 if (!seenShopIds.Add(normalizedShopId))
                     continue;
 
-                var product = CreateDailyProduct(row, SHOP_DISCOUNT_TYPE.NONE);
+                var product = ShopProductFactory.CreateDailyProduct(row, SHOP_DISCOUNT_TYPE.NONE);
                 if (product != null)
                     products.Add(product);
             }
