@@ -12,6 +12,7 @@ namespace Devian
     {
         const string Tag = nameof(ShopManager);
         const string DefaultAdsAdvertiseId = "advertise_001";
+        const int CatalogUnlockOwnerKey = 0x53484F50; // "SHOP"
         const long MillisecondsPerDay = 24L * 60L * 60L * 1000L;
 
         public const string DefaultRentalNoAdsId = "NO_ADS";
@@ -21,8 +22,13 @@ namespace Devian
         readonly List<ShopCatalogBase> _catalogList = new();
         readonly Dictionary<string, ShopProductBase> _productsByShopId = new(StringComparer.Ordinal);
         readonly Dictionary<SHOP_CATALOG_TYPE, List<string>> _limitedShopIdsByCatalog = new();
+        readonly object _runtimeSaveLock = new();
 
         bool _catalogInitialized;
+        bool _initialized;
+        bool _isCatalogUnlockSubscribed;
+        bool _runtimeSavePending;
+        bool _runtimeSaveInFlight;
 
         public ShopStorage Storage => _storage;
         public COMMON_ERROR_TYPE LastCanBuyErrorCode { get; private set; } = COMMON_ERROR_TYPE.SUCCESS;
@@ -30,11 +36,9 @@ namespace Devian
         public COMMON_ERROR_TYPE LastCanBuyInnerErrorCode { get; private set; } = COMMON_ERROR_TYPE.SUCCESS;
         public string LastCanBuyInnerErrorMessage { get; private set; } = "Success";
 
-        protected override void onInitAwake()
+        protected override void onDestroy()
         {
-            var init = initializeCore(requireServerTime: false);
-            if (init.IsFailure)
-                Debug.LogWarning($"[{Tag}] ShopManager init on awake failed (non-fatal): {init.Error}");
+            unSubscribeCatalogUnlockMessages();
         }
 
         public CommonResult Initialize()
@@ -42,20 +46,22 @@ namespace Devian
             return initializeCore(requireServerTime: true);
         }
 
-        public void RebuildCatalogProductsFromStorage()
+        public CommonResult RefreshProducts(bool requireServerTime = true)
         {
-            rebuildCatalogProducts();
+            var ensureInitialized = ensureManagerInitialized("RefreshProducts");
+            if (ensureInitialized.IsFailure)
+                return ensureInitialized;
+
+            return refreshProductsCore(requireServerTime, refreshLockState: true);
         }
 
         public IReadOnlyList<ShopCatalogBase> GetCatalogs()
         {
-            ensureCatalogInitialized();
             return _catalogList;
         }
 
         public ShopCatalogBase GetCatalog(SHOP_CATALOG_TYPE catalogType)
         {
-            ensureCatalogInitialized();
             if (_catalogs.TryGetValue(catalogType, out var catalog))
                 return catalog;
 
@@ -64,7 +70,9 @@ namespace Devian
 
         public CommonResult ResetAds(SHOP_CATALOG_TYPE catalogType)
         {
-            ensureCatalogInitialized();
+            var ensureInitialized = ensureManagerInitialized("ResetAds");
+            if (ensureInitialized.IsFailure)
+                return ensureInitialized;
 
             if (!isValidCatalogType(catalogType))
             {
@@ -73,44 +81,26 @@ namespace Devian
                     $"Invalid shop catalogType for ads reset: {catalogType}");
             }
 
-            resetCatalogByType(catalogType);
-            if (_catalogs.TryGetValue(catalogType, out var catalog) && catalog != null)
-            {
-                var intervalMs = getAutoRefreshIntervalMs(catalog.autoRefreshDay);
-                if (intervalMs > 0L)
-                {
-                    var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
-                    if (serverNowUtcMs > 0L)
-                    {
-                        _storage.SetAutoRefreshUtcMs(
-                            catalogType,
-                            getNextRefreshUtcMs(serverNowUtcMs, intervalMs));
-                        _storage.SetAdsRefreshUtcMs(
-                            catalogType,
-                            getNextRefreshUtcMs(serverNowUtcMs, MillisecondsPerDay));
-                        catalog.SetRemainRefreshTimeMs(intervalMs);
-                    }
-                    else
-                    {
-                        _storage.ClearAutoRefreshUtcMs(catalogType);
-                        _storage.ClearAdsRefreshUtcMs(catalogType);
-                        catalog.SetRemainRefreshTimeMs(0L);
-                    }
-                }
-                else
-                {
-                    _storage.ClearAutoRefreshUtcMs(catalogType);
-                    _storage.ClearAdsRefreshUtcMs(catalogType);
-                    catalog.SetRemainRefreshTimeMs(0L);
-                }
-            }
+            var refresh = tryRefreshCatalog(
+                catalogType,
+                requireServerTime: true,
+                forceCatalogRefresh: true);
+            if (refresh.IsFailure)
+                return CommonResult.Failure(refresh.Error!);
 
+            if (refresh.Value.DidRefreshCatalogProducts)
+                synchronizeProductIndexFromCatalogs();
+
+            if (refresh.Value.DidMutateStorage || refresh.Value.DidRefreshCatalogProducts)
+                queueRuntimeLocalSave();
             return CommonResult.Ok();
         }
 
         public CommonResult<long> GetAdsResetRemainingMs(SHOP_CATALOG_TYPE catalogType)
         {
-            ensureCatalogInitialized();
+            var ensureInitialized = ensureManagerInitialized("GetAdsResetRemainingMs");
+            if (ensureInitialized.IsFailure)
+                return CommonResult<long>.Failure(ensureInitialized.Error!);
 
             if (!isValidCatalogType(catalogType))
             {
@@ -122,30 +112,26 @@ namespace Devian
             if (!_catalogs.TryGetValue(catalogType, out var catalog) || catalog == null)
                 return CommonResult<long>.Success(0L);
 
-            var intervalMs = getAutoRefreshIntervalMs(catalog.autoRefreshDay);
-            if (intervalMs <= 0L)
+            var refreshState = evaluateCatalogRefreshState(
+                catalog,
+                requireServerTime: false,
+                forceCatalogRefresh: false);
+            if (refreshState.IsFailure)
+                return CommonResult<long>.Failure(refreshState.Error!);
+
+            if (refreshState.Value.AutoRefreshIntervalMs <= 0L)
             {
                 catalog.SetRemainRefreshTimeMs(0L);
                 return CommonResult<long>.Success(0L);
             }
 
-            var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
-            if (serverNowUtcMs <= 0L)
-                return CommonResult<long>.Success(catalog.RemainRefreshTimeMs);
+            if (!refreshState.Value.HasServerTime)
+                return CommonResult<long>.Success(refreshState.Value.RemainRefreshTimeMs);
 
-            var nextRefreshUtcMs = _storage.GetAutoRefreshUtcMs(catalogType);
-            if (nextRefreshUtcMs <= 0L)
-            {
-                nextRefreshUtcMs = getNextRefreshUtcMs(serverNowUtcMs, intervalMs);
-                _storage.SetAutoRefreshUtcMs(catalogType, nextRefreshUtcMs);
-                catalog.SetRemainRefreshTimeMs(intervalMs);
-                return CommonResult<long>.Success(intervalMs);
-            }
+            if (refreshState.Value.ShouldRefreshCatalogProducts)
+                return CommonResult<long>.Success(0L);
 
-            var remainTimeMs = getRemainingToNextRefreshMs(serverNowUtcMs, nextRefreshUtcMs);
-            catalog.SetRemainRefreshTimeMs(remainTimeMs);
-
-            return CommonResult<long>.Success(remainTimeMs);
+            return CommonResult<long>.Success(refreshState.Value.RemainRefreshTimeMs);
         }
 
         public bool CanBuy(string shopId)
@@ -190,6 +176,57 @@ namespace Devian
                 return wrapBuyFailure(shopId, buyResult.Error!);
 
             return buyResult;
+        }
+
+        readonly struct CatalogRefreshState
+        {
+            public CatalogRefreshState(
+                long serverNowUtcMs,
+                long autoRefreshIntervalMs,
+                long nextCatalogRefreshUtcMs,
+                long remainRefreshTimeMs,
+                bool hasLimitedAdsOrFreeProducts,
+                bool shouldRefreshCatalogProducts,
+                bool shouldRefillAdsFreeProducts,
+                bool shouldInitializeAutoRefreshUtcMs,
+                bool shouldClearAutoRefreshUtcMs,
+                bool shouldClearAdsRefreshUtcMs)
+            {
+                ServerNowUtcMs = serverNowUtcMs;
+                AutoRefreshIntervalMs = autoRefreshIntervalMs;
+                NextCatalogRefreshUtcMs = nextCatalogRefreshUtcMs > 0L ? nextCatalogRefreshUtcMs : 0L;
+                RemainRefreshTimeMs = remainRefreshTimeMs > 0L ? remainRefreshTimeMs : 0L;
+                HasLimitedAdsOrFreeProducts = hasLimitedAdsOrFreeProducts;
+                ShouldRefreshCatalogProducts = shouldRefreshCatalogProducts;
+                ShouldRefillAdsFreeProducts = shouldRefillAdsFreeProducts;
+                ShouldInitializeAutoRefreshUtcMs = shouldInitializeAutoRefreshUtcMs;
+                ShouldClearAutoRefreshUtcMs = shouldClearAutoRefreshUtcMs;
+                ShouldClearAdsRefreshUtcMs = shouldClearAdsRefreshUtcMs;
+            }
+
+            public long ServerNowUtcMs { get; }
+            public long AutoRefreshIntervalMs { get; }
+            public long NextCatalogRefreshUtcMs { get; }
+            public long RemainRefreshTimeMs { get; }
+            public bool HasLimitedAdsOrFreeProducts { get; }
+            public bool ShouldRefreshCatalogProducts { get; }
+            public bool ShouldRefillAdsFreeProducts { get; }
+            public bool ShouldInitializeAutoRefreshUtcMs { get; }
+            public bool ShouldClearAutoRefreshUtcMs { get; }
+            public bool ShouldClearAdsRefreshUtcMs { get; }
+            public bool HasServerTime => ServerNowUtcMs > 0L;
+        }
+
+        readonly struct CatalogRefreshCycleOutcome
+        {
+            public CatalogRefreshCycleOutcome(bool didRefreshCatalogProducts, bool didMutateStorage)
+            {
+                DidRefreshCatalogProducts = didRefreshCatalogProducts;
+                DidMutateStorage = didMutateStorage;
+            }
+
+            public bool DidRefreshCatalogProducts { get; }
+            public bool DidMutateStorage { get; }
         }
 
         CommonResult<ShopProductBase> checkCanBuy(string shopId)
@@ -267,13 +304,13 @@ namespace Devian
 
         CommonResult<ShopProductBase> validateShopProductConfig(string shopId)
         {
-            ensureCatalogInitialized();
+            var ensureInitialized = ensureManagerInitialized("CanBuy/BuyAsync");
+            if (ensureInitialized.IsFailure)
+                return CommonResult<ShopProductBase>.Failure(ensureInitialized.Error!);
 
-            var resetCatalogRolling = tryResetAllCatalogsByElapsedTime(requireServerTime: true);
-            if (resetCatalogRolling.IsFailure)
-                return CommonResult<ShopProductBase>.Failure(resetCatalogRolling.Error!);
-            if (resetCatalogRolling.Value)
-                rebuildCatalogProducts();
+            var refresh = refreshProductsCore(requireServerTime: true, refreshLockState: false);
+            if (refresh.IsFailure)
+                return CommonResult<ShopProductBase>.Failure(refresh.Error!);
 
             var normalizedShopId = normalizeShopId(shopId);
             if (string.IsNullOrEmpty(normalizedShopId))
@@ -288,6 +325,15 @@ namespace Devian
                 return CommonResult<ShopProductBase>.Failure(
                     COMMON_ERROR_TYPE.SHOP_PRODUCT_NOT_FOUND,
                     $"Shop product not found: shopId={normalizedShopId}");
+            }
+
+            if (_catalogs.TryGetValue(product.CatalogType, out var productCatalog)
+                && productCatalog != null
+                && productCatalog.IsLocked)
+            {
+                return CommonResult<ShopProductBase>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    $"Shop catalog is locked: catalogType={product.CatalogType}, shopId={normalizedShopId}");
             }
 
             if (product is ShopRewardProductBase rewardProduct && rewardProduct.PriceWithoutDiscount < 0)
@@ -530,209 +576,378 @@ namespace Devian
             return CommonResult.Ok();
         }
 
-        CommonResult<bool> tryCatalogResetByElapsedTime(SHOP_CATALOG_TYPE catalogType, bool requireServerTime)
+        CommonResult<CatalogRefreshState> evaluateCatalogRefreshState(
+            ShopCatalogBase catalog,
+            bool requireServerTime,
+            bool forceCatalogRefresh)
         {
-            if (!isValidCatalogType(catalogType))
+            if (catalog == null || !isValidCatalogType(catalog.CatalogType))
             {
-                return CommonResult<bool>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    $"Invalid shop catalogType for ads reset: {catalogType}");
+                return CommonResult<CatalogRefreshState>.Success(
+                    new CatalogRefreshState(0L, 0L, 0L, 0L, false, false, false, false, false, false));
             }
 
-            if (!_catalogs.TryGetValue(catalogType, out var catalog) || catalog == null)
-                return CommonResult<bool>.Success(false);
+            var intervalMs = getAutoRefreshIntervalMs(catalog.autoRefreshDays);
+            var hasLimitedAdsOrFreeProductsInCatalog = hasLimitedAdsOrFreeProducts(catalog.GetProducts());
 
-            var didResetCatalog = false;
-            var intervalMs = getAutoRefreshIntervalMs(catalog.autoRefreshDay);
-            if (intervalMs <= 0L)
+            var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
+            var requiresTimedServerRefresh = intervalMs > 0L || catalog is ShopCatalogEvent;
+            if (serverNowUtcMs <= 0L
+                && requireServerTime
+                && (requiresTimedServerRefresh || hasLimitedAdsOrFreeProductsInCatalog))
             {
-                catalog.SetRemainRefreshTimeMs(0L);
-                _storage.ClearAutoRefreshUtcMs(catalogType);
+                return CommonResult<CatalogRefreshState>.Failure(
+                    COMMON_ERROR_TYPE.SHOP_SERVER_TIME_UNAVAILABLE,
+                    "Server time is invalid.");
             }
-            else
+
+            var catalogType = catalog.CatalogType;
+            var remainRefreshTimeMs = 0L;
+            var shouldRefreshCatalogProducts = forceCatalogRefresh;
+            var shouldInitializeAutoRefreshUtcMs = false;
+            var shouldClearAutoRefreshUtcMs = false;
+            var nextCatalogRefreshUtcMs = 0L;
+            var storedAutoRefreshUtcMs = _storage.GetAutoRefreshUtcMs(catalogType);
+
+            if (catalog is ShopCatalogEvent)
             {
-                var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
-                if (serverNowUtcMs <= 0L)
+                if (serverNowUtcMs > 0L)
                 {
-                    if (requireServerTime)
+                    nextCatalogRefreshUtcMs = catalog.GetNextProductRefreshUtcMs(serverNowUtcMs);
+                    intervalMs = getRemainingToNextRefreshMs(serverNowUtcMs, nextCatalogRefreshUtcMs);
+                    remainRefreshTimeMs = intervalMs;
+
+                    if (!shouldRefreshCatalogProducts
+                        && storedAutoRefreshUtcMs > 0L
+                        && storedAutoRefreshUtcMs <= serverNowUtcMs)
                     {
-                        return CommonResult<bool>.Failure(
-                            COMMON_ERROR_TYPE.SHOP_SERVER_TIME_UNAVAILABLE,
-                            "Server time is invalid.");
+                        shouldRefreshCatalogProducts = true;
+                    }
+
+                    if (!shouldRefreshCatalogProducts)
+                    {
+                        if (nextCatalogRefreshUtcMs > 0L)
+                        {
+                            shouldInitializeAutoRefreshUtcMs = storedAutoRefreshUtcMs != nextCatalogRefreshUtcMs;
+                        }
+                        else
+                        {
+                            shouldClearAutoRefreshUtcMs = storedAutoRefreshUtcMs > 0L;
+                        }
                     }
                 }
                 else
                 {
-                    var nextRefreshUtcMs = _storage.GetAutoRefreshUtcMs(catalogType);
-                    if (nextRefreshUtcMs <= 0L)
-                    {
-                        _storage.SetAutoRefreshUtcMs(
-                            catalogType,
-                            getNextRefreshUtcMs(serverNowUtcMs, intervalMs));
-                        catalog.SetRemainRefreshTimeMs(intervalMs);
-                    }
-                    else
-                    {
-                        var remainTimeMs = getRemainingToNextRefreshMs(serverNowUtcMs, nextRefreshUtcMs);
-                        if (remainTimeMs <= 0L)
-                        {
-                            resetCatalogByType(catalogType);
-                            _storage.SetAutoRefreshUtcMs(
-                                catalogType,
-                                getNextRefreshUtcMs(serverNowUtcMs, intervalMs));
-                            _storage.SetAdsRefreshUtcMs(
-                                catalogType,
-                                getNextRefreshUtcMs(serverNowUtcMs, MillisecondsPerDay));
-                            catalog.SetRemainRefreshTimeMs(intervalMs);
-                            didResetCatalog = true;
-                        }
-                        else
-                        {
-                            catalog.SetRemainRefreshTimeMs(remainTimeMs);
-                        }
-                    }
+                    remainRefreshTimeMs = catalog.RemainRefreshTimeMs;
                 }
             }
+            else if (intervalMs <= 0L)
+            {
+                shouldClearAutoRefreshUtcMs = storedAutoRefreshUtcMs > 0L;
+            }
+            else if (serverNowUtcMs > 0L)
+            {
+                var nextAutoRefreshUtcMs = storedAutoRefreshUtcMs;
+                if (nextAutoRefreshUtcMs <= 0L)
+                {
+                    nextCatalogRefreshUtcMs = getNextRefreshUtcMs(serverNowUtcMs, intervalMs);
+                    shouldInitializeAutoRefreshUtcMs = true;
+                    remainRefreshTimeMs = intervalMs;
+                }
+                else
+                {
+                    nextCatalogRefreshUtcMs = nextAutoRefreshUtcMs;
+                    remainRefreshTimeMs = getRemainingToNextRefreshMs(serverNowUtcMs, nextAutoRefreshUtcMs);
+                    shouldRefreshCatalogProducts = remainRefreshTimeMs <= 0L;
+                }
+            }
+            else
+            {
+                remainRefreshTimeMs = catalog.RemainRefreshTimeMs;
+            }
 
-            if (didResetCatalog)
-                return CommonResult<bool>.Success(true);
+            var shouldRefillAdsFreeProducts = false;
+            var shouldClearAdsRefreshUtcMs = false;
+            if (!hasLimitedAdsOrFreeProductsInCatalog)
+            {
+                shouldClearAdsRefreshUtcMs = _storage.GetAdsRefreshUtcMs(catalogType) > 0L;
+            }
+            else if (serverNowUtcMs > 0L)
+            {
+                var nextAdsRefreshUtcMs = _storage.GetAdsRefreshUtcMs(catalogType);
+                shouldRefillAdsFreeProducts =
+                    forceCatalogRefresh
+                    || nextAdsRefreshUtcMs <= 0L
+                    || nextAdsRefreshUtcMs <= serverNowUtcMs;
+            }
 
-            var adsRefill = tryRefillAdsFreeProductsByCatalog(catalogType, requireServerTime);
-            if (adsRefill.IsFailure)
-                return CommonResult<bool>.Failure(adsRefill.Error!);
-
-            return CommonResult<bool>.Success(didResetCatalog);
+            return CommonResult<CatalogRefreshState>.Success(
+                new CatalogRefreshState(
+                    serverNowUtcMs,
+                    intervalMs,
+                    nextCatalogRefreshUtcMs,
+                    remainRefreshTimeMs,
+                    hasLimitedAdsOrFreeProductsInCatalog,
+                    shouldRefreshCatalogProducts,
+                    shouldRefillAdsFreeProducts,
+                    shouldInitializeAutoRefreshUtcMs,
+                    shouldClearAutoRefreshUtcMs,
+                    shouldClearAdsRefreshUtcMs));
         }
 
-        CommonResult<bool> tryRefillAdsFreeProductsByCatalog(SHOP_CATALOG_TYPE catalogType, bool requireServerTime)
+        CommonResult<CatalogRefreshCycleOutcome> tryRefreshCatalog(
+            SHOP_CATALOG_TYPE catalogType,
+            bool requireServerTime,
+            bool forceCatalogRefresh)
         {
-            if (!_catalogs.TryGetValue(catalogType, out var catalog) || catalog == null)
-                return CommonResult<bool>.Success(false);
-
-            var products = catalog.GetProducts();
-            var hasLimitedAdsOrFreeProduct = false;
-            for (var i = 0; i < products.Count; i++)
+            if (!isValidCatalogType(catalogType))
             {
-                if (isLimitedAdsOrFreeProduct(products[i]))
+                return CommonResult<CatalogRefreshCycleOutcome>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    $"Invalid shop catalogType for refresh: {catalogType}");
+            }
+
+            if (!_catalogs.TryGetValue(catalogType, out var catalog) || catalog == null)
+            {
+                return CommonResult<CatalogRefreshCycleOutcome>.Success(
+                    new CatalogRefreshCycleOutcome(false, false));
+            }
+
+            var evaluated = evaluateCatalogRefreshState(
+                catalog,
+                requireServerTime,
+                forceCatalogRefresh);
+            if (evaluated.IsFailure)
+                return CommonResult<CatalogRefreshCycleOutcome>.Failure(evaluated.Error!);
+
+            var refreshState = evaluated.Value;
+            var didRefreshCatalogProducts = false;
+            var didMutateStorage = false;
+
+            if (refreshState.ShouldClearAutoRefreshUtcMs)
+            {
+                _storage.ClearAutoRefreshUtcMs(catalogType);
+                didMutateStorage = true;
+            }
+
+            if (refreshState.ShouldRefreshCatalogProducts)
+            {
+                clearCatalogRuntimeStateForRefresh(
+                    catalogType,
+                    catalog,
+                    clearAdsFreeRemainState: refreshState.ShouldRefillAdsFreeProducts);
+                catalog.RefreshProducts();
+                didRefreshCatalogProducts = true;
+                didMutateStorage = true;
+
+                if (refreshState.HasServerTime && refreshState.NextCatalogRefreshUtcMs > 0L)
                 {
-                    hasLimitedAdsOrFreeProduct = true;
-                    break;
+                    _storage.SetAutoRefreshUtcMs(
+                        catalogType,
+                        refreshState.NextCatalogRefreshUtcMs);
+                    catalog.SetRemainRefreshTimeMs(refreshState.RemainRefreshTimeMs);
+                }
+                else
+                {
+                    _storage.ClearAutoRefreshUtcMs(catalogType);
+                    catalog.SetRemainRefreshTimeMs(0L);
+                }
+            }
+            else
+            {
+                catalog.SetRemainRefreshTimeMs(refreshState.RemainRefreshTimeMs);
+                if (refreshState.ShouldInitializeAutoRefreshUtcMs
+                    && refreshState.HasServerTime
+                    && refreshState.NextCatalogRefreshUtcMs > 0L)
+                {
+                    _storage.SetAutoRefreshUtcMs(
+                        catalogType,
+                        refreshState.NextCatalogRefreshUtcMs);
+                    didMutateStorage = true;
                 }
             }
 
-            if (!hasLimitedAdsOrFreeProduct)
+            if (refreshState.ShouldClearAdsRefreshUtcMs)
             {
                 _storage.ClearAdsRefreshUtcMs(catalogType);
-                return CommonResult<bool>.Success(false);
+                didMutateStorage = true;
             }
 
-            var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
-            if (serverNowUtcMs <= 0L)
+            if (refreshState.ShouldRefillAdsFreeProducts)
             {
-                if (requireServerTime)
+                var products = catalog.GetProducts();
+                var didRefill = false;
+                for (var i = 0; i < products.Count; i++)
                 {
-                    return CommonResult<bool>.Failure(
-                        COMMON_ERROR_TYPE.SHOP_SERVER_TIME_UNAVAILABLE,
-                        "Server time is invalid.");
+                    var product = products[i];
+                    if (!isLimitedAdsOrFreeProduct(product))
+                        continue;
+
+                    product.ResetRemainCount();
+                    var normalizedShopId = normalizeShopId(product.ShopId);
+                    if (string.IsNullOrEmpty(normalizedShopId))
+                        continue;
+
+                    persistProductRemainState(product, normalizedShopId);
+                    didRefill = true;
                 }
 
-                return CommonResult<bool>.Success(false);
+                var previousAdsRefreshUtcMs = _storage.GetAdsRefreshUtcMs(catalogType);
+                var nextAdsRefreshUtcMs = getNextRefreshUtcMs(
+                    refreshState.ServerNowUtcMs,
+                    MillisecondsPerDay);
+                _storage.SetAdsRefreshUtcMs(catalogType, nextAdsRefreshUtcMs);
+                if (didRefill || previousAdsRefreshUtcMs != nextAdsRefreshUtcMs)
+                    didMutateStorage = true;
             }
 
-            var nextAdsRefreshUtcMs = _storage.GetAdsRefreshUtcMs(catalogType);
-            if (nextAdsRefreshUtcMs > serverNowUtcMs)
-                return CommonResult<bool>.Success(false);
-
-            var didRefill = false;
-            for (var i = 0; i < products.Count; i++)
-            {
-                var product = products[i];
-                if (!isLimitedAdsOrFreeProduct(product))
-                    continue;
-
-                product.ResetRemainCount();
-                var normalizedShopId = normalizeShopId(product.ShopId);
-                if (string.IsNullOrEmpty(normalizedShopId))
-                    continue;
-
-                persistProductRemainState(product, normalizedShopId);
-                didRefill = true;
-            }
-
-            _storage.SetAdsRefreshUtcMs(
-                catalogType,
-                getNextRefreshUtcMs(serverNowUtcMs, MillisecondsPerDay));
-            return CommonResult<bool>.Success(didRefill);
+            return CommonResult<CatalogRefreshCycleOutcome>.Success(
+                new CatalogRefreshCycleOutcome(didRefreshCatalogProducts, didMutateStorage));
         }
 
-        CommonResult<bool> tryResetAllCatalogsByElapsedTime(bool requireServerTime)
+        CommonResult<CatalogRefreshCycleOutcome> tryRefreshAllCatalogs(bool requireServerTime)
         {
-            ensureCatalogInitialized();
-
             var catalogCount = _catalogList.Count;
             if (catalogCount <= 0)
-                return CommonResult<bool>.Success(false);
+            {
+                return CommonResult<CatalogRefreshCycleOutcome>.Success(
+                    new CatalogRefreshCycleOutcome(false, false));
+            }
 
             var catalogTypes = new SHOP_CATALOG_TYPE[catalogCount];
             for (var i = 0; i < catalogCount; i++)
                 catalogTypes[i] = _catalogList[i].CatalogType;
 
-            var didResetAnyCatalog = false;
+            var didRefreshAnyCatalogProducts = false;
+            var didMutateAnyStorage = false;
             for (var i = 0; i < catalogTypes.Length; i++)
             {
                 var catalogType = catalogTypes[i];
                 if (!isValidCatalogType(catalogType))
                     continue;
 
-                var reset = tryCatalogResetByElapsedTime(catalogType, requireServerTime);
-                if (reset.IsFailure)
-                    return reset;
-                if (reset.Value)
-                    didResetAnyCatalog = true;
+                var refresh = tryRefreshCatalog(
+                    catalogType,
+                    requireServerTime,
+                    forceCatalogRefresh: false);
+                if (refresh.IsFailure)
+                    return CommonResult<CatalogRefreshCycleOutcome>.Failure(refresh.Error!);
+
+                if (refresh.Value.DidRefreshCatalogProducts)
+                    didRefreshAnyCatalogProducts = true;
+                if (refresh.Value.DidMutateStorage)
+                    didMutateAnyStorage = true;
             }
 
-            return CommonResult<bool>.Success(didResetAnyCatalog);
+            return CommonResult<CatalogRefreshCycleOutcome>.Success(
+                new CatalogRefreshCycleOutcome(didRefreshAnyCatalogProducts, didMutateAnyStorage));
         }
 
         CommonResult initializeCore(bool requireServerTime)
         {
-            ensureCatalogInitialized();
+            var didInitializeCatalogs = ensureCatalogInitialized();
+            if (!_catalogInitialized || _catalogList.Count <= 0)
+            {
+                _initialized = false;
+                return CommonResult.Failure(
+                    COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED,
+                    $"TB_SHOP_CATALOG is not ready. catalogCount={_catalogList.Count}");
+            }
 
-            var shouldRebuildOnInitialize = shouldRebuildCatalogProductsOnInitialize();
+            var wasInitialized = _initialized;
+            var refresh = refreshProductsCore(requireServerTime, refreshLockState: true);
+            if (refresh.IsFailure)
+            {
+                _initialized = wasInitialized;
+                return refresh;
+            }
 
-            var resetCatalogRolling = tryResetAllCatalogsByElapsedTime(requireServerTime);
-            if (resetCatalogRolling.IsFailure)
-                return CommonResult.Failure(resetCatalogRolling.Error!);
+            if (didInitializeCatalogs)
+            {
+                synchronizeProductIndexFromCatalogs();
+                queueRuntimeLocalSave();
+            }
 
-            if (shouldRebuildOnInitialize || resetCatalogRolling.Value)
-                rebuildCatalogProducts();
+            _initialized = true;
+            return CommonResult.Ok();
+        }
+
+        CommonResult refreshProductsCore(bool requireServerTime, bool refreshLockState)
+        {
+            if (!_catalogInitialized || _catalogList.Count <= 0)
+            {
+                return CommonResult.Failure(
+                    COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED,
+                    "ShopManager.Initialize must be called before refresh.");
+            }
+
+            var refresh = tryRefreshAllCatalogs(requireServerTime);
+            if (refresh.IsFailure)
+                return CommonResult.Failure(refresh.Error!);
+
+            var didRefreshCatalogProducts = refresh.Value.DidRefreshCatalogProducts;
+            var didMutateStorage = refresh.Value.DidMutateStorage;
+
+            if (didRefreshCatalogProducts)
+            {
+                synchronizeProductIndexFromCatalogs();
+                didMutateStorage = true;
+            }
+
+            if (didMutateStorage)
+                queueRuntimeLocalSave();
+
+            if (refreshLockState)
+                refreshCatalogLockState();
 
             return CommonResult.Ok();
         }
 
-        void resetCatalogByType(SHOP_CATALOG_TYPE catalogType)
+        void clearCatalogRuntimeStateForRefresh(
+            SHOP_CATALOG_TYPE catalogType,
+            ShopCatalogBase catalog,
+            bool clearAdsFreeRemainState)
         {
-            if (_limitedShopIdsByCatalog.TryGetValue(catalogType, out var shopIds))
+            if (catalog == null)
+                return;
+
+            var products = catalog.GetProducts();
+            if (products != null && products.Count > 0)
             {
-                _storage.ClearProductRemainCounts(catalogType, shopIds);
-                if (catalogType != SHOP_CATALOG_TYPE.DAILY)
-                    resetProductRemainCounts(catalogType, shopIds);
+                var limitedShopIds = new List<string>(products.Count);
+                for (var i = 0; i < products.Count; i++)
+                {
+                    var product = products[i];
+                    if (product == null || !product.HasPurchaseLimit)
+                        continue;
+
+                    if (!clearAdsFreeRemainState && isLimitedAdsOrFreeProduct(product))
+                        continue;
+
+                    var normalizedShopId = normalizeShopId(product.ShopId);
+                    if (string.IsNullOrEmpty(normalizedShopId))
+                        continue;
+
+                    limitedShopIds.Add(normalizedShopId);
+                }
+
+                if (limitedShopIds.Count > 0)
+                    _storage.ClearProductRemainCounts(catalogType, limitedShopIds);
             }
 
             if (catalogType == SHOP_CATALOG_TYPE.DAILY)
                 _storage.ClearDailyCatalogProducts();
         }
 
-        void ensureCatalogInitialized()
+        bool ensureCatalogInitialized()
         {
-            if (_catalogInitialized && _productsByShopId.Count > 0)
-                return;
+            if (_catalogInitialized && _catalogList.Count > 0)
+                return false;
 
-            rebuildCatalogProducts();
-        }
+            if (_catalogInitialized && _catalogList.Count <= 0)
+                _catalogInitialized = false;
 
-        void rebuildCatalogProducts()
-        {
+            unSubscribeCatalogUnlockMessages();
             _catalogs.Clear();
             _catalogList.Clear();
             _productsByShopId.Clear();
@@ -742,7 +957,24 @@ namespace Devian
             for (var i = 0; i < sourceCatalogs.Count; i++)
                 addCatalog(sourceCatalogs[i]);
 
-            _catalogInitialized = true;
+            _catalogInitialized = _catalogList.Count > 0;
+            if (!_catalogInitialized)
+            {
+                Debug.LogWarning(
+                    $"[{Tag}] TB_SHOP_CATALOG is empty or not loaded yet. Catalog initialization will retry on next call.");
+            }
+
+            return _catalogInitialized;
+        }
+
+        CommonResult ensureManagerInitialized(string apiName)
+        {
+            if (_initialized && _catalogInitialized && _catalogList.Count > 0)
+                return CommonResult.Ok();
+
+            return CommonResult.Failure(
+                COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED,
+                $"ShopManager.Initialize must be called before {apiName}.");
         }
 
         void addCatalog(ShopCatalogBase sourceCatalog)
@@ -752,31 +984,163 @@ namespace Devian
 
             sourceCatalog.Initialize();
             var catalogType = sourceCatalog.CatalogType;
-            var sourceProducts = sourceCatalog.GetProducts();
-            var products = new List<ShopProductBase>(sourceProducts.Count);
-            for (var i = 0; i < sourceProducts.Count; i++)
+            if (!isValidCatalogType(catalogType))
+                return;
+
+            if (_catalogs.ContainsKey(catalogType))
             {
-                var product = sourceProducts[i];
-                if (product == null || string.IsNullOrWhiteSpace(product.ShopId))
+                Debug.LogWarning($"[{Tag}] Duplicate catalog type. Keeping first catalog: {catalogType}");
+                return;
+            }
+
+            _catalogs[catalogType] = sourceCatalog;
+            _catalogList.Add(sourceCatalog);
+        }
+
+        void synchronizeProductIndexFromCatalogs()
+        {
+            _productsByShopId.Clear();
+            _limitedShopIdsByCatalog.Clear();
+
+            for (var i = 0; i < _catalogList.Count; i++)
+            {
+                var catalog = _catalogList[i];
+                if (catalog == null)
                     continue;
 
-                var normalizedShopId = product.ShopId.Trim();
-                if (_productsByShopId.ContainsKey(normalizedShopId))
+                var products = catalog.GetProducts();
+                for (var j = 0; j < products.Count; j++)
                 {
-                    Debug.LogWarning(
-                        $"[{Tag}] Duplicate shopId across catalogs. Keeping first row: shopId={normalizedShopId}, catalog={catalogType}");
+                    var product = products[j];
+                    if (product == null || string.IsNullOrWhiteSpace(product.ShopId))
+                        continue;
+
+                    var normalizedShopId = normalizeShopId(product.ShopId);
+                    if (string.IsNullOrEmpty(normalizedShopId))
+                        continue;
+
+                    if (_productsByShopId.ContainsKey(normalizedShopId))
+                    {
+                        Debug.LogWarning(
+                            $"[{Tag}] Duplicate shopId across catalogs. Keeping first row: shopId={normalizedShopId}, catalog={catalog.CatalogType}");
+                        continue;
+                    }
+
+                    syncProductRemainState(product, normalizedShopId);
+                    _productsByShopId.Add(normalizedShopId, product);
+                    registerLimitedProduct(product, normalizedShopId);
+                }
+            }
+        }
+
+        void refreshCatalogLockState()
+        {
+            unSubscribeCatalogUnlockMessages();
+
+            if (_catalogList.Count <= 0)
+                return;
+
+            if (!tryGetInitializedGameMessageManager(out var messageManager))
+            {
+                for (var i = 0; i < _catalogList.Count; i++)
+                {
+                    var catalog = _catalogList[i];
+                    if (catalog == null)
+                        continue;
+
+                    catalog.SetLocked(hasCatalogUnlockCondition(catalog));
+                }
+
+                return;
+            }
+
+            var subscribedMessageTypes = new HashSet<GAME_MESSAGE_TYPE>();
+            for (var i = 0; i < _catalogList.Count; i++)
+            {
+                var catalog = _catalogList[i];
+                if (catalog == null)
+                    continue;
+
+                if (!hasCatalogUnlockCondition(catalog))
+                {
+                    catalog.SetLocked(false);
                     continue;
                 }
 
-                syncProductRemainState(product, normalizedShopId);
-                _productsByShopId.Add(normalizedShopId, product);
-                products.Add(product);
-                registerLimitedProduct(product, normalizedShopId);
+                var shouldLock = true;
+                if (tryResolveUnlockMessageRow(catalog, out var messageRow))
+                {
+                    var progress = messageManager.GetStat(catalog.UnlockMsgId);
+                    var unlocked = GameMessageRule.IsConditionSatisfied(
+                        progress,
+                        catalog.UnlockOpType,
+                        catalog.UnlockValue);
+                    shouldLock = !unlocked;
+
+                    if (shouldLock
+                        && messageRow != null
+                        && messageRow.MessageType != GAME_MESSAGE_TYPE.NONE
+                        && subscribedMessageTypes.Add(messageRow.MessageType))
+                    {
+                        messageManager.SubcribeGameMessageTrigger(
+                            CatalogUnlockOwnerKey,
+                            messageRow.MessageType,
+                            onCatalogUnlockMessageTriggered);
+                    }
+                }
+
+                catalog.SetLocked(shouldLock);
             }
 
-            var normalizedCatalog = ShopCatalogBase.Create(catalogType, products);
-            _catalogs[catalogType] = normalizedCatalog;
-            _catalogList.Add(normalizedCatalog);
+            _isCatalogUnlockSubscribed = subscribedMessageTypes.Count > 0;
+        }
+
+        bool tryResolveUnlockMessageRow(ShopCatalogBase catalog, out GAME_MESSAGE messageRow)
+        {
+            messageRow = null;
+            if (!hasCatalogUnlockCondition(catalog))
+                return false;
+
+            var unlockMsgId = catalog.UnlockMsgId;
+            if (string.IsNullOrWhiteSpace(unlockMsgId))
+                return false;
+
+            messageRow = TB_GAME_MESSAGE.Get(unlockMsgId);
+            if (messageRow != null)
+                return true;
+
+            Debug.LogWarning(
+                $"[{Tag}] SHOP_CATALOG unlock message is not found: catalog={catalog.CatalogType}, unlockMsgId={unlockMsgId}");
+            return false;
+        }
+
+        bool onCatalogUnlockMessageTriggered(object[] args)
+        {
+            refreshCatalogLockState();
+            return false;
+        }
+
+        void unSubscribeCatalogUnlockMessages()
+        {
+            if (!_isCatalogUnlockSubscribed)
+                return;
+
+            if (!GameMessageManager.TryGet(out var messageManager) || messageManager == null)
+            {
+                _isCatalogUnlockSubscribed = false;
+                return;
+            }
+
+            messageManager.UnSubcribeGameMessageTrigger(CatalogUnlockOwnerKey);
+            _isCatalogUnlockSubscribed = false;
+        }
+
+        static bool tryGetInitializedGameMessageManager(out GameMessageManager messageManager)
+        {
+            if (!GameMessageManager.TryGet(out messageManager) || messageManager == null)
+                return false;
+
+            return messageManager.IsInitialized;
         }
 
         void registerLimitedProduct(ShopProductBase product, string normalizedShopId)
@@ -941,51 +1305,6 @@ namespace Devian
             _storage.SetProductRemainCount(product.CatalogType, normalizedShopId, product.RemainCount);
         }
 
-        void resetProductRemainCounts(SHOP_CATALOG_TYPE catalogType, IReadOnlyList<string> shopIds)
-        {
-            if (shopIds == null || shopIds.Count <= 0)
-                return;
-
-            for (var i = 0; i < shopIds.Count; i++)
-            {
-                var normalizedShopId = normalizeShopId(shopIds[i]);
-                if (string.IsNullOrEmpty(normalizedShopId))
-                    continue;
-
-                if (!_productsByShopId.TryGetValue(normalizedShopId, out var product)
-                    || product == null
-                    || !product.HasPurchaseLimit)
-                {
-                    continue;
-                }
-
-                product.ResetRemainCount();
-                if (product.CatalogType == SHOP_CATALOG_TYPE.DAILY)
-                {
-                    if (isDailyStoredProduct(product))
-                    {
-                        _storage.RemoveProductRemainCount(product.CatalogType, normalizedShopId);
-                        _storage.UpsertDailyCatalogProduct(
-                            normalizedShopId,
-                            product.DiscountType,
-                            product.RemainCount);
-                    }
-                    else
-                    {
-                        _storage.RemoveDailyCatalogProduct(normalizedShopId);
-                        _storage.SetProductRemainCount(product.CatalogType, normalizedShopId, product.RemainCount);
-                    }
-
-                    continue;
-                }
-
-                _storage.SetProductRemainCount(
-                    catalogType != SHOP_CATALOG_TYPE.NONE ? catalogType : product.CatalogType,
-                    normalizedShopId,
-                    product.RemainCount);
-            }
-        }
-
         static bool isLimitedAdsOrFreeProduct(ShopProductBase product)
         {
             if (product is not ShopRewardProductBase rewardProduct)
@@ -996,6 +1315,28 @@ namespace Devian
 
             return rewardProduct.ProductType == SHOP_PRODUCT_TYPE.ADS
                 || rewardProduct.ProductType == SHOP_PRODUCT_TYPE.FREE;
+        }
+
+        static bool hasLimitedAdsOrFreeProducts(IReadOnlyList<ShopProductBase> products)
+        {
+            if (products == null || products.Count <= 0)
+                return false;
+
+            for (var i = 0; i < products.Count; i++)
+            {
+                if (isLimitedAdsOrFreeProduct(products[i]))
+                    return true;
+            }
+
+            return false;
+        }
+
+        static bool hasCatalogUnlockCondition(ShopCatalogBase catalog)
+        {
+            if (catalog == null)
+                return false;
+
+            return !string.IsNullOrWhiteSpace(catalog.UnlockMsgId);
         }
 
         static bool isDailyStoredProduct(ShopProductBase product)
@@ -1015,62 +1356,12 @@ namespace Devian
             return catalogType != SHOP_CATALOG_TYPE.NONE;
         }
 
-        bool shouldRebuildCatalogProductsOnInitialize()
+        static long getAutoRefreshIntervalMs(int autoRefreshDays)
         {
-            if (!_catalogInitialized)
-                return true;
-
-            if (_catalogList.Count <= 0 || _productsByShopId.Count <= 0)
-                return true;
-
-            if (!_catalogs.ContainsKey(SHOP_CATALOG_TYPE.DAILY)
-                || !_catalogs.ContainsKey(SHOP_CATALOG_TYPE.CHEST)
-                || !_catalogs.ContainsKey(SHOP_CATALOG_TYPE.PURCHASE)
-                || !_catalogs.ContainsKey(SHOP_CATALOG_TYPE.GOLD))
-            {
-                return true;
-            }
-
-            var dailyStorage = _storage.GetDailyCatalogProducts();
-            if ((dailyStorage == null || dailyStorage.Count != 5)
-                && hasDailyStoredProductRows())
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        static bool hasDailyStoredProductRows()
-        {
-            var rows = TB_SHOP_DAILY.GetAll();
-            if (rows == null || rows.Count <= 0)
-                return false;
-
-            for (var i = 0; i < rows.Count; i++)
-            {
-                var row = rows[i];
-                if (row == null)
-                    continue;
-
-                if (row.CurrencyType == CURRENCY_TYPE.ADS
-                    || row.CurrencyType == CURRENCY_TYPE.FREE)
-                {
-                    continue;
-                }
-
-                return true;
-            }
-
-            return false;
-        }
-
-        static long getAutoRefreshIntervalMs(int autoRefreshDay)
-        {
-            if (autoRefreshDay <= 0)
+            if (autoRefreshDays <= 0)
                 return 0L;
 
-            return MillisecondsPerDay * autoRefreshDay;
+            return MillisecondsPerDay * autoRefreshDays;
         }
 
         static long getRemainingToNextRefreshMs(long serverNowUtcMs, long nextRefreshUtcMs)
@@ -1339,6 +1630,71 @@ namespace Devian
         static string normalizeShopId(string shopId)
         {
             return shopId != null ? shopId.Trim() : string.Empty;
+        }
+
+        void queueRuntimeLocalSave()
+        {
+            lock (_runtimeSaveLock)
+            {
+                _runtimeSavePending = true;
+                if (_runtimeSaveInFlight)
+                    return;
+
+                _runtimeSaveInFlight = true;
+            }
+
+            _ = flushRuntimeLocalSaveQueueAsync();
+        }
+
+        async Task flushRuntimeLocalSaveQueueAsync()
+        {
+            while (true)
+            {
+                lock (_runtimeSaveLock)
+                {
+                    if (!_runtimeSavePending)
+                    {
+                        _runtimeSaveInFlight = false;
+                        return;
+                    }
+
+                    _runtimeSavePending = false;
+                }
+
+                CommonResult<bool> save;
+                try
+                {
+                    save = await SaveDataManager.Instance.SaveGameStorageAsync(
+                        saveCloud: false,
+                        CancellationToken.None);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[{Tag}] Runtime local save threw exception (non-fatal): {ex.Message}");
+                    lock (_runtimeSaveLock)
+                    {
+                        _runtimeSaveInFlight = false;
+                        _runtimeSavePending = false;
+                    }
+                    return;
+                }
+
+                if (save.IsSuccess)
+                    continue;
+
+                if (save.Error == null
+                    || save.Error.Code != COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED)
+                {
+                    Debug.LogWarning($"[{Tag}] Runtime local save failed (non-fatal): {save.Error}");
+                }
+
+                lock (_runtimeSaveLock)
+                {
+                    _runtimeSaveInFlight = false;
+                    _runtimeSavePending = false;
+                }
+                return;
+            }
         }
 
         readonly struct CurrencyDeduction

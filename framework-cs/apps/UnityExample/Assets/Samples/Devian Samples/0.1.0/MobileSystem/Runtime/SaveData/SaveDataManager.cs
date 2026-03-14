@@ -839,14 +839,6 @@ namespace Devian
             leaderboardManager.ClearStorage();
             attendManager.ClearStorage();
             SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, shop, account, message, mission, achieve, leaderboardReward, attend);
-            try
-            {
-                ShopManager.Instance?.RebuildCatalogProductsFromStorage();
-            }
-            catch
-            {
-                // no-op: shop manager may not be initialized yet.
-            }
             applyLoadedAccountStorageToRuntime();
         }
 

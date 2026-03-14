@@ -191,6 +191,7 @@ namespace Devian.Domain.Game
         CHEST = 2,
         PURCHASE = 3,
         GOLD = 4,
+        EVENT = 5,
     }
 
     /// <summary>SHOP_DISCOUNT_TYPE enum</summary>
@@ -437,17 +438,17 @@ namespace Devian.Domain.Game
         public string GetKey() => SeasonId;
     }
 
-    /// <summary>PURCHASE row</summary>
-    public sealed class PURCHASE : IEntityKey<string>
+    /// <summary>SHOP_CATALOG row</summary>
+    public sealed class SHOP_CATALOG : IEntityKey<SHOP_CATALOG_TYPE>
     {
-        public string InternalProductId { get; set; } = string.Empty;
-        public string RewardGroupId { get; set; } = string.Empty;
-        public PURCHASE_KIND Kind { get; set; }
-        public bool IsActive { get; set; }
-        public string StoreSkuApple { get; set; } = string.Empty;
-        public string StoreSkuGoogle { get; set; } = string.Empty;
+        public SHOP_CATALOG_TYPE CatalogType { get; set; }
+        public string NameId { get; set; } = string.Empty;
+        public int AutoRefreshDays { get; set; }
+        public string UnlockMsgId { get; set; } = string.Empty;
+        public GAME_MESSAGE_OP_TYPE UnlockOpType { get; set; }
+        public CBigInt? UnlockValue { get; set; }
 
-        public string GetKey() => InternalProductId;
+        public SHOP_CATALOG_TYPE GetKey() => CatalogType;
     }
 
     /// <summary>SHOP_DAILY row</summary>
@@ -465,6 +466,20 @@ namespace Devian.Domain.Game
         public float DiscountRate20Per { get; set; }
         public float DiscountRate30Per { get; set; }
         public float DiscountRate50Per { get; set; }
+
+        public string GetKey() => ShopId;
+    }
+
+    /// <summary>SHOP_EVENT row</summary>
+    public sealed class SHOP_EVENT : IEntityKey<string>
+    {
+        public string ShopId { get; set; } = string.Empty;
+        public string NameId { get; set; } = string.Empty;
+        public CURRENCY_TYPE CurrencyType { get; set; }
+        public int Price { get; set; }
+        public string RewardGroupId { get; set; } = string.Empty;
+        public CDateTime StartTime { get; set; }
+        public CDateTime EndTime { get; set; }
 
         public string GetKey() => ShopId;
     }
@@ -505,6 +520,19 @@ namespace Devian.Domain.Game
         public int MaxCount { get; set; }
 
         public string GetKey() => ShopId;
+    }
+
+    /// <summary>PURCHASE row</summary>
+    public sealed class PURCHASE : IEntityKey<string>
+    {
+        public string InternalProductId { get; set; } = string.Empty;
+        public string RewardGroupId { get; set; } = string.Empty;
+        public PURCHASE_KIND Kind { get; set; }
+        public bool IsActive { get; set; }
+        public string StoreSkuApple { get; set; } = string.Empty;
+        public string StoreSkuGoogle { get; set; } = string.Empty;
+
+        public string GetKey() => InternalProductId;
     }
 
     /// <summary>UNIT_HERO row</summary>
@@ -2125,11 +2153,11 @@ namespace Devian.Domain.Game
         static partial void _OnAfterLoad();
     }
 
-    /// <summary>TB_PURCHASE container</summary>
-    public static partial class TB_PURCHASE
+    /// <summary>TB_SHOP_CATALOG container</summary>
+    public static partial class TB_SHOP_CATALOG
     {
-        private static readonly Dictionary<string, PURCHASE> _dict = new();
-        private static readonly List<PURCHASE> _list = new();
+        private static readonly Dictionary<SHOP_CATALOG_TYPE, SHOP_CATALOG> _dict = new();
+        private static readonly List<SHOP_CATALOG> _list = new();
 
         public static int Count => _list.Count;
 
@@ -2139,28 +2167,28 @@ namespace Devian.Domain.Game
             _list.Clear();
         }
 
-        public static IReadOnlyList<PURCHASE> GetAll() => _list;
+        public static IReadOnlyList<SHOP_CATALOG> GetAll() => _list;
 
-        public static PURCHASE? Get(string key)
+        public static SHOP_CATALOG? Get(SHOP_CATALOG_TYPE key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(string key, out PURCHASE? row)
+        public static bool TryGet(SHOP_CATALOG_TYPE key, out SHOP_CATALOG? row)
         {
             return _dict.TryGetValue(key, out row);
         }
 
-        private static void AddRow(PURCHASE row)
+        private static void AddRow(SHOP_CATALOG row)
         {
             _list.Add(row);
-            _dict[row.InternalProductId] = row;
+            _dict[row.CatalogType] = row;
         }
 
         public static void LoadFromJson(string json)
         {
             Clear();
-            var rows = JsonConvert.DeserializeObject<List<PURCHASE>>(json);
+            var rows = JsonConvert.DeserializeObject<List<SHOP_CATALOG>>(json);
             if (rows == null) return;
             foreach (var row in rows)
             {
@@ -2177,7 +2205,7 @@ namespace Devian.Domain.Game
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<PURCHASE>(line);
+                var row = JsonConvert.DeserializeObject<SHOP_CATALOG>(line);
                 if (row == null) continue;
                 AddRow(row);
             }
@@ -2189,7 +2217,7 @@ namespace Devian.Domain.Game
             Pb64Loader.ParseRows(rawBinary, jsonRow =>
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<PURCHASE>(jsonRow);
+                var row = JsonConvert.DeserializeObject<SHOP_CATALOG>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -2273,6 +2301,89 @@ namespace Devian.Domain.Game
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
                 var row = JsonConvert.DeserializeObject<SHOP_DAILY>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_SHOP_EVENT container</summary>
+    public static partial class TB_SHOP_EVENT
+    {
+        private static readonly Dictionary<string, SHOP_EVENT> _dict = new();
+        private static readonly List<SHOP_EVENT> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<SHOP_EVENT> GetAll() => _list;
+
+        public static SHOP_EVENT? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out SHOP_EVENT? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(SHOP_EVENT row)
+        {
+            _list.Add(row);
+            _dict[row.ShopId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<SHOP_EVENT>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<SHOP_EVENT>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<SHOP_EVENT>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -2522,6 +2633,89 @@ namespace Devian.Domain.Game
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
                 var row = JsonConvert.DeserializeObject<SHOP_GOLD>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_PURCHASE container</summary>
+    public static partial class TB_PURCHASE
+    {
+        private static readonly Dictionary<string, PURCHASE> _dict = new();
+        private static readonly List<PURCHASE> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<PURCHASE> GetAll() => _list;
+
+        public static PURCHASE? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out PURCHASE? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(PURCHASE row)
+        {
+            _list.Add(row);
+            _dict[row.InternalProductId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<PURCHASE>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<PURCHASE>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<PURCHASE>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -2870,14 +3064,14 @@ namespace Devian.Domain.Game
         public static implicit operator SEASON_ID(string value) => new SEASON_ID { Value = value };
     }
 
-    /// <summary>Inspector-bindable ID for PURCHASE</summary>
+    /// <summary>Inspector-bindable ID for SHOP_CATALOG</summary>
     [Serializable]
-    public sealed class PURCHASE_ID
+    public sealed class SHOP_CATALOG_ID
     {
-        public string Value;
+        public SHOP_CATALOG_TYPE Value;
 
-        public static implicit operator string(PURCHASE_ID id) => id.Value;
-        public static implicit operator PURCHASE_ID(string value) => new PURCHASE_ID { Value = value };
+        public static implicit operator SHOP_CATALOG_TYPE(SHOP_CATALOG_ID id) => id.Value;
+        public static implicit operator SHOP_CATALOG_ID(SHOP_CATALOG_TYPE value) => new SHOP_CATALOG_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for SHOP_DAILY</summary>
@@ -2888,6 +3082,16 @@ namespace Devian.Domain.Game
 
         public static implicit operator string(SHOP_DAILY_ID id) => id.Value;
         public static implicit operator SHOP_DAILY_ID(string value) => new SHOP_DAILY_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for SHOP_EVENT</summary>
+    [Serializable]
+    public sealed class SHOP_EVENT_ID
+    {
+        public string Value;
+
+        public static implicit operator string(SHOP_EVENT_ID id) => id.Value;
+        public static implicit operator SHOP_EVENT_ID(string value) => new SHOP_EVENT_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for SHOP_CHEST</summary>
@@ -2918,6 +3122,16 @@ namespace Devian.Domain.Game
 
         public static implicit operator string(SHOP_GOLD_ID id) => id.Value;
         public static implicit operator SHOP_GOLD_ID(string value) => new SHOP_GOLD_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for PURCHASE</summary>
+    [Serializable]
+    public sealed class PURCHASE_ID
+    {
+        public string Value;
+
+        public static implicit operator string(PURCHASE_ID id) => id.Value;
+        public static implicit operator PURCHASE_ID(string value) => new PURCHASE_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for UNIT_HERO</summary>
@@ -2959,11 +3173,13 @@ namespace Devian.Domain.Game
         public static bool IsValid(this ADVERTISE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this SEASON_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
-        public static bool IsValid(this PURCHASE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this SHOP_CATALOG_ID? obj) => obj != null && !EqualityComparer<SHOP_CATALOG_TYPE>.Default.Equals(obj.Value, default);
         public static bool IsValid(this SHOP_DAILY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this SHOP_EVENT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this SHOP_CHEST_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this SHOP_PURCHASE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this SHOP_GOLD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this PURCHASE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this UNIT_HERO_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this UNIT_MONSTER_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
     }

@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using Devian;
+using Devian.Domain.Game;
 
 public class SceneLogin : SceneBootstrap
 {

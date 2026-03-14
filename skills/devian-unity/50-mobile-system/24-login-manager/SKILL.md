@@ -71,7 +71,7 @@ fatal (실패 반환):
 - 저장 동기화 실패
 - Resolve 후 재충돌(명시적 resolve 경로)
 - 초기 지급/저장 실패 (호출자 책임)
-- Mission/Achieve 초기화 실패
+- Mission/Achieve/Shop 초기화 실패
 - 최종 저장 실패
 
 non-fatal (로그만 남기고 진행):

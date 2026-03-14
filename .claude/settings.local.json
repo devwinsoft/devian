@@ -278,7 +278,10 @@
       "Bash(PKG=\"framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Achieve/AchieveManager.cs\")",
       "Bash(AST=\"framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/0.1.0/MobileSystem/Runtime/Achieve/AchieveManager.cs\")",
       "Bash(__NEW_LINE_00b0d49950ad5cbb__ cp \"$UPM\" \"$PKG\")",
-      "Bash(cp \"$UPM\" \"$AST\")"
+      "Bash(cp \"$UPM\" \"$AST\")",
+      "Bash(grep -c '\"\"ConditionOp\"\":null' /Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Bundles/Tables/ndjson/ACHIEVE_ONCE.json)",
+      "Bash(grep -c '\"\"ConditionOp\"\":null' /Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Bundles/Tables/ndjson/MISSION_ONCE.json)",
+      "Bash(grep -c '\"\"ConditionOp\"\":null' /Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Bundles/Tables/ndjson/MISSION_DAILY.json)"
     ]
   },
   "project": {

@@ -483,9 +483,7 @@ namespace Devian
             RefundResult? refund = null;
             CommonError refundError = null;
 
-            var refundResult = initSnapshot.HasValue
-                ? await refundWithPreloadedPageAsync(initSnapshot.Value.PurchaseAdjustments, ct)
-                : await RefundAsync(ct);
+            var refundResult = await RefundAsync(ct);
             if (refundResult.IsSuccess)
             {
                 refund = refundResult.Value;

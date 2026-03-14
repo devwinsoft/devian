@@ -167,6 +167,7 @@ export enum SHOP_CATALOG_TYPE {
     CHEST = 2,
     PURCHASE = 3,
     GOLD = 4,
+    EVENT = 5,
 }
 
 /** SHOP_DISCOUNT_TYPE enum */
@@ -361,14 +362,14 @@ export interface SEASON extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface PURCHASE extends IEntityKey<string> {
-    InternalProductId: string;
-    RewardGroupId: string;
-    Kind: PURCHASE_KIND;
-    IsActive: boolean;
-    StoreSkuApple: string;
-    StoreSkuGoogle: string;
-    getKey(): string;
+export interface SHOP_CATALOG extends IEntityKey<SHOP_CATALOG_TYPE> {
+    CatalogType: SHOP_CATALOG_TYPE;
+    NameId: string;
+    AutoRefreshDays: number;
+    UnlockMsgId: string;
+    UnlockOpType: GAME_MESSAGE_OP_TYPE;
+    UnlockValue: CBigInt | null;
+    getKey(): SHOP_CATALOG_TYPE;
 }
 
 export interface SHOP_DAILY extends IEntityKey<string> {
@@ -384,6 +385,17 @@ export interface SHOP_DAILY extends IEntityKey<string> {
     DiscountRate20Per: number;
     DiscountRate30Per: number;
     DiscountRate50Per: number;
+    getKey(): string;
+}
+
+export interface SHOP_EVENT extends IEntityKey<string> {
+    ShopId: string;
+    NameId: string;
+    CurrencyType: CURRENCY_TYPE;
+    Price: number;
+    RewardGroupId: string;
+    StartTime: CDateTime;
+    EndTime: CDateTime;
     getKey(): string;
 }
 
@@ -413,6 +425,16 @@ export interface SHOP_GOLD extends IEntityKey<string> {
     Price: number;
     RewardGroupId: string;
     MaxCount: number;
+    getKey(): string;
+}
+
+export interface PURCHASE extends IEntityKey<string> {
+    InternalProductId: string;
+    RewardGroupId: string;
+    Kind: PURCHASE_KIND;
+    IsActive: boolean;
+    StoreSkuApple: string;
+    StoreSkuGoogle: string;
     getKey(): string;
 }
 
@@ -1012,9 +1034,9 @@ export class TB_SEASON {
     }
 }
 
-export class TB_PURCHASE {
-    private static _dict: Map<string, PURCHASE> = new Map();
-    private static _list: PURCHASE[] = [];
+export class TB_SHOP_CATALOG {
+    private static _dict: Map<SHOP_CATALOG_TYPE, SHOP_CATALOG> = new Map();
+    private static _list: SHOP_CATALOG[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -1023,13 +1045,13 @@ export class TB_PURCHASE {
         this._list = [];
     }
 
-    static getAll(): readonly PURCHASE[] { return this._list; }
+    static getAll(): readonly SHOP_CATALOG[] { return this._list; }
 
-    static get(key: string): PURCHASE | undefined {
+    static get(key: SHOP_CATALOG_TYPE): SHOP_CATALOG | undefined {
         return this._dict.get(key);
     }
 
-    static has(key: string): boolean {
+    static has(key: SHOP_CATALOG_TYPE): boolean {
         return this._dict.has(key);
     }
 
@@ -1037,9 +1059,9 @@ export class TB_PURCHASE {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as PURCHASE;
+            const row = JSON.parse(line) as SHOP_CATALOG;
             this._list.push(row);
-            this._dict.set(row.InternalProductId, row);
+            this._dict.set(row.CatalogType, row);
         }
     }
 
@@ -1074,6 +1096,42 @@ export class TB_SHOP_DAILY {
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
             const row = JSON.parse(line) as SHOP_DAILY;
+            this._list.push(row);
+            this._dict.set(row.ShopId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_SHOP_EVENT {
+    private static _dict: Map<string, SHOP_EVENT> = new Map();
+    private static _list: SHOP_EVENT[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly SHOP_EVENT[] { return this._list; }
+
+    static get(key: string): SHOP_EVENT | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as SHOP_EVENT;
             this._list.push(row);
             this._dict.set(row.ShopId, row);
         }
@@ -1184,6 +1242,42 @@ export class TB_SHOP_GOLD {
             const row = JSON.parse(line) as SHOP_GOLD;
             this._list.push(row);
             this._dict.set(row.ShopId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_PURCHASE {
+    private static _dict: Map<string, PURCHASE> = new Map();
+    private static _list: PURCHASE[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly PURCHASE[] { return this._list; }
+
+    static get(key: string): PURCHASE | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as PURCHASE;
+            this._list.push(row);
+            this._dict.set(row.InternalProductId, row);
         }
     }
 

@@ -243,17 +243,17 @@ namespace Devian.Domain.Game
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("PURCHASE", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("SHOP_CATALOG", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_PURCHASE.LoadFromNdjson(text);
-                    TB_PURCHASE._AfterLoad();
+                    TB_SHOP_CATALOG.LoadFromNdjson(text);
+                    TB_SHOP_CATALOG._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_PURCHASE.LoadFromPb64Binary(bin);
-                    TB_PURCHASE._AfterLoad();
+                    TB_SHOP_CATALOG.LoadFromPb64Binary(bin);
+                    TB_SHOP_CATALOG._AfterLoad();
                 }
             });
 
@@ -268,6 +268,20 @@ namespace Devian.Domain.Game
                 {
                     TB_SHOP_DAILY.LoadFromPb64Binary(bin);
                     TB_SHOP_DAILY._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("SHOP_EVENT", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_SHOP_EVENT.LoadFromNdjson(text);
+                    TB_SHOP_EVENT._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_SHOP_EVENT.LoadFromPb64Binary(bin);
+                    TB_SHOP_EVENT._AfterLoad();
                 }
             });
 
@@ -310,6 +324,20 @@ namespace Devian.Domain.Game
                 {
                     TB_SHOP_GOLD.LoadFromPb64Binary(bin);
                     TB_SHOP_GOLD._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("PURCHASE", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_PURCHASE.LoadFromNdjson(text);
+                    TB_PURCHASE._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_PURCHASE.LoadFromPb64Binary(bin);
+                    TB_PURCHASE._AfterLoad();
                 }
             });
 

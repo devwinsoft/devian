@@ -71,13 +71,14 @@ public sealed class ShopProductPurchase : ShopProductBase
 - `shopId`가 유일 키다.
 - `SHOP_PRODUCT_TYPE.NONE`은 placeholder 용도이며 실제 판매 상품에는 사용하지 않는다.
 - `PURCHASE` 타입은 `InternalProductId`가 필수다.
-- `DiscountType`은 `SHOP_DAILY` 초기화/리셋 시에만 랜덤 배정되며, 나머지 카탈로그는 `SHOP_DISCOUNT_TYPE.NONE`을 사용한다.
+- `DiscountType`은 `SHOP_DAILY` 초기화/refresh 시에만 랜덤 배정되며, 나머지 카탈로그는 `SHOP_DISCOUNT_TYPE.NONE`을 사용한다.
 - `ShopManager.GetProducts(...)` API는 사용하지 않고, `GetCatalog(catalogType).GetProducts()`/`GetCatalog(catalogType).GetProduct(shopId)`를 사용한다.
 - `MaxCount` 기본값은 `-1`(무제한)이며, 제한 상품은 `RemainCount`를 통해 현재 남은 구매 가능 횟수를 관리한다.
 - `ShopProductBase` 생성 시 기본 `RemainCount = MaxCount`로 초기화한다.
 - `ShopProductBase.Price`는 `SHOP_DISCOUNT_TYPE`을 적용한 최종 가격이다.
 - 원가(테이블 가격)는 `ShopProductBase.PriceWithoutDiscount`로 보존한다.
 - 카탈로그 클래스(`ShopCatalogBase`, `ShopCatalogDaily/Chest/Purchase/Gold`)는 `ShopCatalog.cs`에 분리되어 관리한다.
+- row -> `ShopProductBase` 변환 helper도 `ShopCatalog.cs`의 catalog 계층에 둔다. 별도 `ShopProductFactory`는 두지 않는다.
 
 ---
 
@@ -93,4 +94,3 @@ public sealed class ShopProductPurchase : ShopProductBase
 
 - [10-shop-manager](../10-shop-manager/SKILL.md)
 - [13-shop-catalog](../13-shop-catalog/SKILL.md)
-- [14-shop-factory](../14-shop-factory/SKILL.md)

@@ -1580,10 +1580,25 @@ function capitalize(str) {
  * @param {Array} fields - Field definitions from table
  * @returns {Object} Ordered row object ready for JSON.stringify
  */
+const _primitiveTypeSet = new Set([
+    'byte', 'ubyte', 'short', 'ushort', 'int', 'uint',
+    'long', 'ulong', 'float', 'double', 'string', 'bool',
+]);
+
+function _isEnumFieldType(type) {
+    const base = type.endsWith('[]') ? type.slice(0, -2) : type;
+    if (_primitiveTypeSet.has(base)) return false;
+    if (base.startsWith('class:')) return false;
+    if (base.toLowerCase() === 'variant') return false;
+    return true; // enum (with or without 'enum:' prefix)
+}
+
 function rowToOrderedJson(row, fields) {
     const orderedRow = {};
     for (const field of fields) {
         const value = row[field.name];
+        // SSOT: null enum → omit property (C# keeps default(T))
+        if (value === null && _isEnumFieldType(field.type)) continue;
         // SSOT: 64-bit integers → string, enum → name string
         if (['long', 'ulong'].includes(field.type)) {
             orderedRow[capitalize(field.name)] = String(value);

@@ -476,6 +476,9 @@ namespace Devian
             if (TB_SHOP_DAILY.Get(key) != null)
                 return SHOP_CATALOG_TYPE.DAILY;
 
+            if (TB_SHOP_EVENT.Get(key) != null)
+                return SHOP_CATALOG_TYPE.EVENT;
+
             if (TB_SHOP_CHEST.Get(key) != null)
                 return SHOP_CATALOG_TYPE.CHEST;
 

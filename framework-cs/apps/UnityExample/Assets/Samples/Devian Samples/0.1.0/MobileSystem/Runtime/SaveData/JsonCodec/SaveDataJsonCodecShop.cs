@@ -361,6 +361,9 @@ namespace Devian
             if (TB_SHOP_DAILY.Get(normalizedShopId) != null)
                 return SHOP_CATALOG_TYPE.DAILY;
 
+            if (TB_SHOP_EVENT.Get(normalizedShopId) != null)
+                return SHOP_CATALOG_TYPE.EVENT;
+
             if (TB_SHOP_CHEST.Get(normalizedShopId) != null)
                 return SHOP_CATALOG_TYPE.CHEST;
 

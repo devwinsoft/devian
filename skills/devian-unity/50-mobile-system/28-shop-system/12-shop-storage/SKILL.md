@@ -1,6 +1,6 @@
 ---
 name: 12-shop-storage
-description: ShopStorage에서 `remainCount` 중심 상태(카탈로그별 `autoRefreshDay` 자동 갱신, DAILY 동적 상품 상태)를 저장/복원할 때 사용한다.
+description: ShopStorage에서 `remainCount` 중심 상태(카탈로그별 refresh 시각, DAILY 동적 상품 상태)를 저장/복원할 때 사용한다.
 ---
 
 # 12-shop-storage
@@ -29,9 +29,9 @@ public sealed class ShopStorage
 
 - `schemaVersion` (현재 `9`)
 - `catalogs: Dictionary<string, ShopCatalogStorageState>`
-- key: `SHOP_CATALOG_TYPE` 문자열 (`DAILY/CHEST/PURCHASE/GOLD`)
+- key: `SHOP_CATALOG_TYPE` 문자열 (`DAILY/CHEST/PURCHASE/GOLD/EVENT`)
 - `ShopCatalogStorageState`
-- `autoRefreshUtcMs: long` (`DAILY` 카탈로그 다음 자동 갱신 시각 UTC ms)
+- `autoRefreshUtcMs: long` (카탈로그 다음 자동 갱신 시각 UTC ms)
 - `adsRefreshUtcMs: long` (카탈로그 ADS/FREE 다음 리필 시각 UTC ms)
 - `productRemainCounts: Dictionary<string, int>` (`shopId -> remainCount`)
 - `dailyCatalogProducts: List<ShopDailyProductState>` (DAILY에서만 사용)
@@ -44,12 +44,14 @@ public sealed class ShopStorage
 
 ## 3. Hard Rules
 
-- 구매 제한 자동 리셋은 `DAILY` 카탈로그의 `autoRefreshDay` 주기만 사용한다. (`CHEST/GOLD/PURCHASE`는 `autoRefreshDay=0`)
+- 일반 카탈로그의 구매 제한 자동 refresh는 카탈로그별 `autoRefreshDays` 주기를 사용한다. (`autoRefreshDays <= 0`이면 자동 refresh 미사용)
+- `EVENT`의 `autoRefreshUtcMs`는 주기값이 아니라 다음 `startTime/endTime` 경계 시각을 저장한다.
 - 구매 성공 시 `remainCount`를 갱신한다.
 - 무제한 상품(`maxCount=-1`)은 해당 catalog bucket의 `productRemainCounts`에 저장하지 않는다.
 - DAILY 카탈로그 동적 결과(`shopId`, `discountType`, `remainCount`)는 ADS/FREE 제외 5개 상품만 `dailyCatalogProducts`로 저장/복원한다.
 - DAILY 카탈로그 ADS/FREE 상품은 `dailyCatalogProducts`에 저장하지 않는다. 구매 제한 수량 저장이 필요하면 DAILY bucket의 `productRemainCounts`를 사용한다.
-- `autoRefreshUtcMs`는 `DAILY`에서만 시작 시각이 아니라 다음 refresh 시각으로 저장한다.
+- `autoRefreshUtcMs`는 시작 시각이 아니라 다음 refresh 시각으로 저장한다.
+- `EVENT`는 `dailyCatalogProducts` 같은 별도 동적 payload를 저장하지 않는다.
 - `adsRefreshUtcMs`는 ADS/FREE 구매 성공 시 `serverNow + 1day`로 기록한다.
 - 카탈로그 초기화/refresh 시 `adsRefreshUtcMs`가 없거나 만료면 ADS/FREE 제한 상품을 `remainCount=maxCount`로 리필한다.
 - `purchaseCounts` 기반 저장은 사용하지 않는다.

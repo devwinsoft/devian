@@ -1,0 +1,4 @@
+{"CatalogType":"DAILY","NameId":"","AutoRefreshDays":1,"UnlockMsgId":"","UnlockValue":null}
+{"CatalogType":"CHEST","NameId":"","AutoRefreshDays":0,"UnlockMsgId":"","UnlockValue":null}
+{"CatalogType":"PURCHASE","NameId":"","AutoRefreshDays":0,"UnlockMsgId":"msg_mission_clear_sum","UnlockOpType":"GTE","UnlockValue":10000003000001}
+{"CatalogType":"GOLD","NameId":"","AutoRefreshDays":0,"UnlockMsgId":"","UnlockValue":null}

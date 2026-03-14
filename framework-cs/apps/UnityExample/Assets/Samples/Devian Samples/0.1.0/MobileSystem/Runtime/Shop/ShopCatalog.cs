@@ -11,38 +11,83 @@ namespace Devian
 
         IReadOnlyList<ShopProductBase> _products = EmptyProducts;
         readonly Dictionary<string, ShopProductBase> _productsByShopId = new(StringComparer.Ordinal);
+        readonly SHOP_CATALOG _catalogConfig;
+        readonly IReadOnlyList<ShopProductBase> _prebuiltProducts;
         bool _initialized;
+        bool _isLocked;
         protected long remainRefreshTimeMs;
 
-        protected ShopCatalogBase(SHOP_CATALOG_TYPE catalogType)
+        protected ShopCatalogBase(
+            SHOP_CATALOG_TYPE catalogType,
+            SHOP_CATALOG catalogConfig = null,
+            IReadOnlyList<ShopProductBase> prebuiltProducts = null)
         {
             CatalogType = catalogType;
+            _catalogConfig = normalizeCatalogConfig(catalogType, catalogConfig);
+            _prebuiltProducts = prebuiltProducts;
+            _isLocked = hasUnlockCondition(_catalogConfig);
         }
 
         public SHOP_CATALOG_TYPE CatalogType { get; }
-        public virtual int autoRefreshDay => 0;
+        public string NameId => _catalogConfig.NameId ?? string.Empty;
+        public virtual int autoRefreshDays => _catalogConfig.AutoRefreshDays;
+        public string UnlockMsgId => normalizeUnlockMsgId(_catalogConfig.UnlockMsgId);
+        public GAME_MESSAGE_OP_TYPE UnlockOpType => normalizeUnlockOpType(_catalogConfig.UnlockOpType);
+        public CBigInt UnlockValue => normalizeUnlockValue(_catalogConfig.UnlockValue);
+        public bool IsLocked => _isLocked;
+        public bool HasUnlockCondition => !string.IsNullOrWhiteSpace(UnlockMsgId);
         public long RemainRefreshTimeMs => remainRefreshTimeMs > 0L ? remainRefreshTimeMs : 0L;
+        internal SHOP_CATALOG CatalogConfig => _catalogConfig;
+        protected IReadOnlyList<ShopProductBase> PrebuiltProducts => _prebuiltProducts;
 
         public void Initialize()
         {
             if (_initialized)
                 return;
 
-            setProducts(onInitialize());
+            onInitialize();
             _initialized = true;
+            RefreshProducts();
         }
 
-        protected abstract IReadOnlyList<ShopProductBase> onInitialize();
+        public void RefreshProducts()
+        {
+            if (!_initialized)
+                return;
+
+            setProducts(onRefresh());
+        }
+
+        protected virtual void onInitialize()
+        {
+        }
+
+        protected virtual IReadOnlyList<ShopProductBase> onRefresh()
+        {
+            if (_prebuiltProducts != null)
+                return _prebuiltProducts;
+
+            return CatalogType switch
+            {
+                SHOP_CATALOG_TYPE.CHEST => BuildProductsFromRows(TB_SHOP_CHEST.GetAll(), CreateChestProduct),
+                SHOP_CATALOG_TYPE.PURCHASE => BuildProductsFromRows(TB_SHOP_PURCHASE.GetAll(), CreatePurchaseProduct),
+                SHOP_CATALOG_TYPE.GOLD => BuildProductsFromRows(TB_SHOP_GOLD.GetAll(), CreateGoldProduct),
+                _ => EmptyProducts,
+            };
+        }
+
+        internal virtual long GetNextProductRefreshUtcMs(long serverNowUtcMs)
+        {
+            return 0L;
+        }
 
         public IReadOnlyList<ShopProductBase> GetProducts()
         {
-            Initialize();
             return _products;
         }
 
         public ShopProductBase GetProduct(string shopId)
         {
-            Initialize();
             var normalizedShopId = NormalizeShopId(shopId);
             if (string.IsNullOrEmpty(normalizedShopId))
                 return null;
@@ -55,6 +100,11 @@ namespace Devian
         internal void SetRemainRefreshTimeMs(long remainTimeMs)
         {
             remainRefreshTimeMs = remainTimeMs > 0L ? remainTimeMs : 0L;
+        }
+
+        internal void SetLocked(bool isLocked)
+        {
+            _isLocked = HasUnlockCondition && isLocked;
         }
 
         protected static string NormalizeShopId(string shopId)
@@ -80,29 +130,126 @@ namespace Devian
             return products;
         }
 
+        protected static ShopProductBase CreateDailyProduct(
+            SHOP_DAILY row,
+            SHOP_DISCOUNT_TYPE discountType)
+        {
+            if (row == null)
+                return null;
+
+            return createRewardProduct(
+                row.ShopId,
+                row.NameId,
+                SHOP_CATALOG_TYPE.DAILY,
+                row.CurrencyType,
+                row.Price,
+                row.RewardGroupId,
+                row.Amount,
+                row.MaxCount,
+                discountType);
+        }
+
+        protected static ShopProductBase CreateChestProduct(SHOP_CHEST row)
+        {
+            if (row == null)
+                return null;
+
+            return createRewardProduct(
+                row.ShopId,
+                row.NameId,
+                SHOP_CATALOG_TYPE.CHEST,
+                row.CurrencyType,
+                row.Price,
+                row.RewardGroupId,
+                row.Amount,
+                row.MaxCount,
+                SHOP_DISCOUNT_TYPE.NONE);
+        }
+
+        protected static ShopProductBase CreateEventProduct(SHOP_EVENT row)
+        {
+            if (row == null)
+                return null;
+
+            return createRewardProduct(
+                row.ShopId,
+                row.NameId,
+                SHOP_CATALOG_TYPE.EVENT,
+                row.CurrencyType,
+                row.Price,
+                row.RewardGroupId,
+                1,
+                -1,
+                SHOP_DISCOUNT_TYPE.NONE);
+        }
+
+        protected static ShopProductBase CreatePurchaseProduct(SHOP_PURCHASE row)
+        {
+            if (row == null)
+                return null;
+
+            return new ShopProductPurchase(
+                row.ShopId,
+                row.NameId,
+                SHOP_CATALOG_TYPE.PURCHASE,
+                row.InternalProductId,
+                row.SeasonId,
+                -1);
+        }
+
+        protected static ShopProductBase CreateGoldProduct(SHOP_GOLD row)
+        {
+            if (row == null)
+                return null;
+
+            return createRewardProduct(
+                row.ShopId,
+                row.NameId,
+                SHOP_CATALOG_TYPE.GOLD,
+                row.CurrencyType,
+                row.Price,
+                row.RewardGroupId,
+                1,
+                row.MaxCount,
+                SHOP_DISCOUNT_TYPE.NONE);
+        }
+
         public static IReadOnlyList<ShopCatalogBase> CreateDefaultCatalogs(ShopStorage storage)
         {
-            var catalogs = new ShopCatalogBase[]
-            {
-                new ShopCatalogDaily(storage),
-                new ShopCatalogChest(),
-                new ShopCatalogPurchase(),
-                new ShopCatalogGold(),
-            };
+            var rows = TB_SHOP_CATALOG.GetAll();
+            if (rows == null || rows.Count <= 0)
+                return Array.Empty<ShopCatalogBase>();
 
-            return initializeCatalogs(catalogs);
+            var catalogs = new List<ShopCatalogBase>(rows.Count);
+            var seenCatalogTypes = new HashSet<SHOP_CATALOG_TYPE>();
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (row == null || row.CatalogType == SHOP_CATALOG_TYPE.NONE)
+                    continue;
+
+                if (!seenCatalogTypes.Add(row.CatalogType))
+                {
+                    Debug.LogWarning(
+                        $"[ShopCatalogBase] Duplicate SHOP_CATALOG row. Keeping first row: catalog={row.CatalogType}");
+                    continue;
+                }
+
+                var catalog = createCatalog(row.CatalogType, storage, row, products: null);
+                if (catalog != null)
+                    catalogs.Add(catalog);
+            }
+
+            return catalogs;
         }
 
         public static ShopCatalogBase Create(SHOP_CATALOG_TYPE catalogType)
         {
-            var catalog = catalogType switch
-            {
-                SHOP_CATALOG_TYPE.DAILY => new ShopCatalogDaily(),
-                SHOP_CATALOG_TYPE.CHEST => new ShopCatalogChest(),
-                SHOP_CATALOG_TYPE.PURCHASE => new ShopCatalogPurchase(),
-                SHOP_CATALOG_TYPE.GOLD => new ShopCatalogGold(),
-                _ => Empty(catalogType),
-            };
+            var catalog = createCatalog(
+                catalogType,
+                storage: null,
+                TB_SHOP_CATALOG.Get(catalogType),
+                products: null);
 
             initializeCatalog(catalog);
             return catalog;
@@ -110,14 +257,27 @@ namespace Devian
 
         public static ShopCatalogBase Create(SHOP_CATALOG_TYPE catalogType, IReadOnlyList<ShopProductBase> products)
         {
-            var catalog = catalogType switch
-            {
-                SHOP_CATALOG_TYPE.DAILY => new ShopCatalogDaily(products),
-                SHOP_CATALOG_TYPE.CHEST => new ShopCatalogChest(products),
-                SHOP_CATALOG_TYPE.PURCHASE => new ShopCatalogPurchase(products),
-                SHOP_CATALOG_TYPE.GOLD => new ShopCatalogGold(products),
-                _ => Empty(catalogType),
-            };
+            var catalog = createCatalog(
+                catalogType,
+                storage: null,
+                TB_SHOP_CATALOG.Get(catalogType),
+                products);
+
+            initializeCatalog(catalog);
+            return catalog;
+        }
+
+        public static ShopCatalogBase Create(ShopCatalogBase sourceCatalog, IReadOnlyList<ShopProductBase> products)
+        {
+            if (sourceCatalog == null)
+                return Empty(SHOP_CATALOG_TYPE.NONE);
+
+            var catalog = createCatalog(
+                sourceCatalog.CatalogType,
+                storage: null,
+                sourceCatalog.CatalogConfig,
+                products);
+            catalog.SetLocked(sourceCatalog.IsLocked);
 
             initializeCatalog(catalog);
             return catalog;
@@ -125,20 +285,39 @@ namespace Devian
 
         public static ShopCatalogBase Empty(SHOP_CATALOG_TYPE catalogType)
         {
-            var catalog = new ShopCatalogEmpty(catalogType);
+            var catalog = new ShopCatalogEmpty(catalogType, TB_SHOP_CATALOG.Get(catalogType));
             initializeCatalog(catalog);
             return catalog;
         }
 
-        static IReadOnlyList<ShopCatalogBase> initializeCatalogs(IReadOnlyList<ShopCatalogBase> catalogs)
+        static ShopCatalogBase createCatalog(
+            SHOP_CATALOG_TYPE catalogType,
+            ShopStorage storage,
+            SHOP_CATALOG catalogConfig,
+            IReadOnlyList<ShopProductBase> products)
         {
-            if (catalogs == null || catalogs.Count <= 0)
-                return Array.Empty<ShopCatalogBase>();
+            if (products == null)
+            {
+                return catalogType switch
+                {
+                    SHOP_CATALOG_TYPE.DAILY => new ShopCatalogDaily(storage, catalogConfig),
+                    SHOP_CATALOG_TYPE.EVENT => new ShopCatalogEvent(catalogConfig),
+                    SHOP_CATALOG_TYPE.CHEST => new ShopCatalogChest(catalogConfig),
+                    SHOP_CATALOG_TYPE.PURCHASE => new ShopCatalogPurchase(catalogConfig),
+                    SHOP_CATALOG_TYPE.GOLD => new ShopCatalogGold(catalogConfig),
+                    _ => new ShopCatalogEmpty(catalogType, catalogConfig),
+                };
+            }
 
-            for (var i = 0; i < catalogs.Count; i++)
-                initializeCatalog(catalogs[i]);
-
-            return catalogs;
+            return catalogType switch
+            {
+                SHOP_CATALOG_TYPE.DAILY => new ShopCatalogDaily(products, catalogConfig),
+                SHOP_CATALOG_TYPE.EVENT => new ShopCatalogEvent(products, catalogConfig),
+                SHOP_CATALOG_TYPE.CHEST => new ShopCatalogChest(products, catalogConfig),
+                SHOP_CATALOG_TYPE.PURCHASE => new ShopCatalogPurchase(products, catalogConfig),
+                SHOP_CATALOG_TYPE.GOLD => new ShopCatalogGold(products, catalogConfig),
+                _ => new ShopCatalogEmpty(catalogType, catalogConfig),
+            };
         }
 
         static void initializeCatalog(ShopCatalogBase catalog)
@@ -171,18 +350,96 @@ namespace Devian
                 _productsByShopId.Add(normalizedShopId, product);
             }
         }
+
+        static int normalizeAutoRefreshDays(int autoRefreshDays)
+        {
+            return autoRefreshDays > 0 ? autoRefreshDays : 0;
+        }
+
+        static string normalizeUnlockMsgId(string unlockMsgId)
+        {
+            return unlockMsgId != null ? unlockMsgId.Trim() : string.Empty;
+        }
+
+        static GAME_MESSAGE_OP_TYPE normalizeUnlockOpType(GAME_MESSAGE_OP_TYPE unlockOpType)
+        {
+            return unlockOpType switch
+            {
+                GAME_MESSAGE_OP_TYPE.EQ => GAME_MESSAGE_OP_TYPE.EQ,
+                GAME_MESSAGE_OP_TYPE.LTE => GAME_MESSAGE_OP_TYPE.LTE,
+                GAME_MESSAGE_OP_TYPE.GTE => GAME_MESSAGE_OP_TYPE.GTE,
+                _ => GAME_MESSAGE_OP_TYPE.GTE,
+            };
+        }
+
+        static CBigInt normalizeUnlockValue(CBigInt? unlockValue)
+        {
+            return unlockValue ?? CBigInt.Zero;
+        }
+
+        static bool hasUnlockCondition(SHOP_CATALOG catalogConfig)
+        {
+            if (catalogConfig == null)
+                return false;
+
+            return !string.IsNullOrWhiteSpace(normalizeUnlockMsgId(catalogConfig.UnlockMsgId));
+        }
+
+        static SHOP_CATALOG normalizeCatalogConfig(SHOP_CATALOG_TYPE catalogType, SHOP_CATALOG catalogConfig)
+        {
+            var sourceConfig = catalogConfig ?? TB_SHOP_CATALOG.Get(catalogType);
+            var normalizedCatalogType = catalogType != SHOP_CATALOG_TYPE.NONE
+                ? catalogType
+                : sourceConfig != null ? sourceConfig.CatalogType : SHOP_CATALOG_TYPE.NONE;
+
+            return new SHOP_CATALOG
+            {
+                CatalogType = normalizedCatalogType,
+                NameId = sourceConfig != null ? sourceConfig.NameId ?? string.Empty : string.Empty,
+                AutoRefreshDays = normalizeAutoRefreshDays(sourceConfig != null ? sourceConfig.AutoRefreshDays : 0),
+                UnlockMsgId = normalizeUnlockMsgId(sourceConfig != null ? sourceConfig.UnlockMsgId : string.Empty),
+                UnlockOpType = normalizeUnlockOpType(sourceConfig != null ? sourceConfig.UnlockOpType : GAME_MESSAGE_OP_TYPE.GTE),
+                UnlockValue = normalizeUnlockValue(sourceConfig != null ? sourceConfig.UnlockValue : CBigInt.Zero),
+            };
+        }
+
+        static ShopProductBase createRewardProduct(
+            string shopId,
+            string nameId,
+            SHOP_CATALOG_TYPE catalogType,
+            CURRENCY_TYPE currencyType,
+            int price,
+            string rewardGroupId,
+            int amount,
+            int maxCount,
+            SHOP_DISCOUNT_TYPE discountType)
+        {
+            switch (currencyType)
+            {
+                case CURRENCY_TYPE.FREE:
+                    return new ShopProductFree(shopId, nameId, catalogType, price, rewardGroupId, amount, maxCount, discountType);
+                case CURRENCY_TYPE.ADS:
+                    return new ShopProductAds(shopId, nameId, catalogType, price, rewardGroupId, amount, maxCount, discountType);
+                default:
+                    return new ShopProductCurrency(
+                        shopId,
+                        nameId,
+                        catalogType,
+                        currencyType,
+                        price,
+                        rewardGroupId,
+                        amount,
+                        maxCount,
+                        discountType);
+            }
+        }
     }
 
     sealed class ShopCatalogEmpty : ShopCatalogBase
     {
-        public ShopCatalogEmpty(SHOP_CATALOG_TYPE catalogType)
-            : base(catalogType)
+        public ShopCatalogEmpty(SHOP_CATALOG_TYPE catalogType, SHOP_CATALOG catalogConfig = null)
+            : base(catalogType, catalogConfig)
         {
-        }
-
-        protected override IReadOnlyList<ShopProductBase> onInitialize()
-        {
-            return Array.Empty<ShopProductBase>();
         }
     }
 
@@ -191,35 +448,32 @@ namespace Devian
         const int DailySelectableProductCount = 5;
         const int DailyDiscountProductCount = 3;
         readonly ShopStorage _storage;
-        readonly IReadOnlyList<ShopProductBase> _prebuiltProducts;
-        public override int autoRefreshDay => 1;
 
         public ShopCatalogDaily()
-            : this(storage: null, products: null)
+            : this(storage: null, products: null, catalogConfig: null)
         {
         }
 
-        public ShopCatalogDaily(ShopStorage storage)
-            : this(storage, products: null)
+        public ShopCatalogDaily(ShopStorage storage, SHOP_CATALOG catalogConfig = null)
+            : this(storage, products: null, catalogConfig)
         {
         }
 
-        internal ShopCatalogDaily(IReadOnlyList<ShopProductBase> products)
-            : this(storage: null, products: products)
+        internal ShopCatalogDaily(IReadOnlyList<ShopProductBase> products, SHOP_CATALOG catalogConfig = null)
+            : this(storage: null, products: products, catalogConfig)
         {
         }
 
-        ShopCatalogDaily(ShopStorage storage, IReadOnlyList<ShopProductBase> products)
-            : base(SHOP_CATALOG_TYPE.DAILY)
+        ShopCatalogDaily(ShopStorage storage, IReadOnlyList<ShopProductBase> products, SHOP_CATALOG catalogConfig)
+            : base(SHOP_CATALOG_TYPE.DAILY, catalogConfig, products)
         {
             _storage = storage;
-            _prebuiltProducts = products;
         }
 
-        protected override IReadOnlyList<ShopProductBase> onInitialize()
+        protected override IReadOnlyList<ShopProductBase> onRefresh()
         {
-            if (_prebuiltProducts != null)
-                return _prebuiltProducts;
+            if (PrebuiltProducts != null)
+                return PrebuiltProducts;
 
             return loadOrCreateDailyProducts(_storage);
         }
@@ -276,7 +530,7 @@ namespace Devian
                 if (isAdsOrFreeCurrencyType(row.CurrencyType))
                     return false;
 
-                var product = ShopProductFactory.CreateDailyProduct(row, normalizeDiscountType(state.discountType));
+                var product = CreateDailyProduct(row, normalizeDiscountType(state.discountType));
                 if (product == null)
                     return false;
 
@@ -348,7 +602,7 @@ namespace Devian
                 var discountType = SHOP_DISCOUNT_TYPE.NONE;
                 discountTypesByShopId.TryGetValue(normalizedShopId, out discountType);
 
-                var product = ShopProductFactory.CreateDailyProduct(row, discountType);
+                var product = CreateDailyProduct(row, discountType);
                 if (product != null)
                     products.Add(product);
             }
@@ -493,7 +747,7 @@ namespace Devian
                 if (!seenShopIds.Add(normalizedShopId))
                     continue;
 
-                var product = ShopProductFactory.CreateDailyProduct(row, SHOP_DISCOUNT_TYPE.NONE);
+                var product = CreateDailyProduct(row, SHOP_DISCOUNT_TYPE.NONE);
                 if (product != null)
                     products.Add(product);
             }
@@ -630,75 +884,162 @@ namespace Devian
         }
     }
 
+    public sealed class ShopCatalogEvent : ShopCatalogBase
+    {
+        public ShopCatalogEvent(SHOP_CATALOG catalogConfig = null)
+            : this(products: null, catalogConfig)
+        {
+        }
+
+        internal ShopCatalogEvent(IReadOnlyList<ShopProductBase> products, SHOP_CATALOG catalogConfig = null)
+            : base(SHOP_CATALOG_TYPE.EVENT, catalogConfig, products)
+        {
+        }
+
+        protected override IReadOnlyList<ShopProductBase> onRefresh()
+        {
+            if (PrebuiltProducts != null)
+                return PrebuiltProducts;
+
+            return buildActiveEventProducts(TB_SHOP_EVENT.GetAll(), RemoteDataManager.ServerNowUtcMs);
+        }
+
+        internal override long GetNextProductRefreshUtcMs(long serverNowUtcMs)
+        {
+            return getNextEventRefreshUtcMs(TB_SHOP_EVENT.GetAll(), serverNowUtcMs);
+        }
+
+        static IReadOnlyList<ShopProductBase> buildActiveEventProducts(
+            IReadOnlyList<SHOP_EVENT> rows,
+            long serverNowUtcMs)
+        {
+            if (rows == null || rows.Count <= 0 || serverNowUtcMs <= 0L)
+                return Array.Empty<ShopProductBase>();
+
+            var products = new List<ShopProductBase>(rows.Count);
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (!isEventRowActive(row, serverNowUtcMs))
+                    continue;
+
+                var product = CreateEventProduct(row);
+                if (product != null)
+                    products.Add(product);
+            }
+
+            return products;
+        }
+
+        static long getNextEventRefreshUtcMs(
+            IReadOnlyList<SHOP_EVENT> rows,
+            long serverNowUtcMs)
+        {
+            if (rows == null || rows.Count <= 0 || serverNowUtcMs <= 0L)
+                return 0L;
+
+            var nextRefreshUtcMs = 0L;
+            for (var i = 0; i < rows.Count; i++)
+            {
+                if (!tryGetEventWindow(rows[i], out var startUtcMs, out var endUtcMs))
+                    continue;
+
+                if (startUtcMs > serverNowUtcMs
+                    && (nextRefreshUtcMs <= 0L || startUtcMs < nextRefreshUtcMs))
+                {
+                    nextRefreshUtcMs = startUtcMs;
+                }
+
+                if (endUtcMs > serverNowUtcMs
+                    && (nextRefreshUtcMs <= 0L || endUtcMs < nextRefreshUtcMs))
+                {
+                    nextRefreshUtcMs = endUtcMs;
+                }
+            }
+
+            return nextRefreshUtcMs;
+        }
+
+        static bool isEventRowActive(SHOP_EVENT row, long serverNowUtcMs)
+        {
+            if (!tryGetEventWindow(row, out var startUtcMs, out var endUtcMs))
+                return false;
+
+            return startUtcMs <= serverNowUtcMs && serverNowUtcMs < endUtcMs;
+        }
+
+        static bool tryGetEventWindow(
+            SHOP_EVENT row,
+            out long startUtcMs,
+            out long endUtcMs)
+        {
+            startUtcMs = normalizeEventUtcMs(row?.StartTime.utcTimeMs ?? 0L);
+            endUtcMs = normalizeEventUtcMs(row?.EndTime.utcTimeMs ?? 0L);
+            return row != null
+                && !string.IsNullOrWhiteSpace(row.ShopId)
+                && endUtcMs > 0L
+                && endUtcMs > startUtcMs;
+        }
+
+        static long normalizeEventUtcMs(long rawUtcMs)
+        {
+            if (rawUtcMs <= 0L)
+                return 0L;
+
+            // SHOP_EVENT source data may still be exported as Excel/OA serial days.
+            if (rawUtcMs < 100000000000L)
+            {
+                try
+                {
+                    var oaUtc = DateTime.FromOADate(rawUtcMs);
+                    return new DateTimeOffset(DateTime.SpecifyKind(oaUtc, DateTimeKind.Utc)).ToUnixTimeMilliseconds();
+                }
+                catch
+                {
+                    return 0L;
+                }
+            }
+
+            return rawUtcMs;
+        }
+    }
+
     public sealed class ShopCatalogChest : ShopCatalogBase
     {
-        readonly IReadOnlyList<ShopProductBase> _prebuiltProducts;
-
-        public ShopCatalogChest()
-            : this(products: null)
+        public ShopCatalogChest(SHOP_CATALOG catalogConfig = null)
+            : this(products: null, catalogConfig)
         {
         }
 
-        internal ShopCatalogChest(IReadOnlyList<ShopProductBase> products)
-            : base(SHOP_CATALOG_TYPE.CHEST)
+        internal ShopCatalogChest(IReadOnlyList<ShopProductBase> products, SHOP_CATALOG catalogConfig = null)
+            : base(SHOP_CATALOG_TYPE.CHEST, catalogConfig, products)
         {
-            _prebuiltProducts = products;
-        }
-
-        protected override IReadOnlyList<ShopProductBase> onInitialize()
-        {
-            if (_prebuiltProducts != null)
-                return _prebuiltProducts;
-
-            return BuildProductsFromRows(TB_SHOP_CHEST.GetAll(), ShopProductFactory.CreateChestProduct);
         }
     }
 
     public sealed class ShopCatalogPurchase : ShopCatalogBase
     {
-        readonly IReadOnlyList<ShopProductBase> _prebuiltProducts;
-
-        public ShopCatalogPurchase()
-            : this(products: null)
+        public ShopCatalogPurchase(SHOP_CATALOG catalogConfig = null)
+            : this(products: null, catalogConfig)
         {
         }
 
-        internal ShopCatalogPurchase(IReadOnlyList<ShopProductBase> products)
-            : base(SHOP_CATALOG_TYPE.PURCHASE)
+        internal ShopCatalogPurchase(IReadOnlyList<ShopProductBase> products, SHOP_CATALOG catalogConfig = null)
+            : base(SHOP_CATALOG_TYPE.PURCHASE, catalogConfig, products)
         {
-            _prebuiltProducts = products;
-        }
-
-        protected override IReadOnlyList<ShopProductBase> onInitialize()
-        {
-            if (_prebuiltProducts != null)
-                return _prebuiltProducts;
-
-            return BuildProductsFromRows(TB_SHOP_PURCHASE.GetAll(), ShopProductFactory.CreatePurchaseProduct);
         }
     }
 
     public sealed class ShopCatalogGold : ShopCatalogBase
     {
-        readonly IReadOnlyList<ShopProductBase> _prebuiltProducts;
-
-        public ShopCatalogGold()
-            : this(products: null)
+        public ShopCatalogGold(SHOP_CATALOG catalogConfig = null)
+            : this(products: null, catalogConfig)
         {
         }
 
-        internal ShopCatalogGold(IReadOnlyList<ShopProductBase> products)
-            : base(SHOP_CATALOG_TYPE.GOLD)
+        internal ShopCatalogGold(IReadOnlyList<ShopProductBase> products, SHOP_CATALOG catalogConfig = null)
+            : base(SHOP_CATALOG_TYPE.GOLD, catalogConfig, products)
         {
-            _prebuiltProducts = products;
-        }
-
-        protected override IReadOnlyList<ShopProductBase> onInitialize()
-        {
-            if (_prebuiltProducts != null)
-                return _prebuiltProducts;
-
-            return BuildProductsFromRows(TB_SHOP_GOLD.GetAll(), ShopProductFactory.CreateGoldProduct);
         }
     }
 

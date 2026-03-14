@@ -289,6 +289,10 @@
         {
           "name": "GOLD",
           "value": 4
+        },
+        {
+          "name": "EVENT",
+          "value": 5
         }
       ]
     },

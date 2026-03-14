@@ -29,6 +29,15 @@ XLSX 테이블에서 추출된 데이터를 JSON object로 내보낼 때의 규�
 
 이유: JavaScript의 Number 타입은 53비트 정밀도까지만 안전하므로, 64비트 정수는 문자열로 변환하여 정밀도 손실을 방지한다.
 
+### Null Enum 처리
+
+**`enum:*` 필드의 값이 null이면 JSON에서 해당 프로퍼티를 생략한다.**
+
+- XLSX 셀이 빈 문자열("")이면 파서가 null을 반환한다
+- null enum 프로퍼티를 JSON에 포함시키면 C#(Newtonsoft.Json)에서 non-nullable enum에 null을 할당하려 해 `JsonSerializationException`이 발생한다
+- 프로퍼티를 생략하면 C#이 `default(T)` (보통 `NONE = 0`)를 유지한다
+- nullable enum(`T?`)에서도 동일하게 정확하다 (생략 시 `null` 유지)
+
 ### JSON Serialization
 
 - 컴팩트 포맷 (들여쓰기 없음)

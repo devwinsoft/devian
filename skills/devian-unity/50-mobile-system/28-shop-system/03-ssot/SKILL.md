@@ -1,0 +1,164 @@
+# 03-ssot — 28-shop-system
+
+Status: ACTIVE
+AppliesTo: v10
+
+## SSOT Scope
+
+이 문서는 Shop catalog의 런타임 라이프사이클 정본이다.
+
+- catalog initialize 규칙
+- catalog refresh 조건 탐색/실행 순서
+- `Initialize`, `RefreshProducts`, `ResetAds`, `GetAdsResetRemainingMs`의 계약
+- storage 반영 순서(`autoRefreshUtcMs`, `adsRefreshUtcMs`, remain/daily 상태)
+
+개별 클래스 구현 설명은 `10/11/12/13/14` 문서에서 다루며,
+동작 순서/의미 충돌 시 이 문서가 우선한다.
+
+---
+
+## A) Terms
+
+- `catalog instance`: `ShopCatalogBase` 파생 인스턴스 (`DAILY/CHEST/PURCHASE/GOLD/EVENT`)
+- `catalog initialize`: `ShopCatalogBase.Initialize()` 1회 보장 초기화
+- `catalog refresh`: `ShopCatalogBase.RefreshProducts()` 재실행
+- `auto refresh`: 다음 refresh 시각(`autoRefreshUtcMs`)에 도달했을 때 카탈로그를 갱신하는 것
+- `ads refill`: `adsRefreshUtcMs` 만료 시 ADS/FREE 제한 상품 `remainCount` 리필
+- `force catalog refresh`: `ResetAds(catalogType)` 경로에서 강제 갱신
+
+---
+
+## B) Catalog Initialize Operation (정본)
+
+`ShopManager.Initialize()` 호출 시:
+
+1. `ensureCatalogInitialized()`를 먼저 수행한다.
+2. 카탈로그 목록은 `TB_SHOP_CATALOG.GetAll()`로 생성한다. (하드코딩 금지)
+3. 각 카탈로그는 `ShopCatalogBase.Initialize()`를 호출해 1회 product 구성을 완료한다.
+4. 초기화만으로 refresh를 강제하지 않는다.
+5. 초기화 이후 refresh 조건 탐색/실행은 `tryRefreshAllCatalogs(...)`가 담당한다.
+6. `TB_SHOP_CATALOG`가 비어 있거나 아직 로드되지 않은 경우, `_catalogInitialized`를 확정하지 않고 다음 호출에서 재시도한다.
+
+규칙:
+- `ShopManager.onInitAwake()`는 catalog를 초기화하지 않는다.
+- `ShopManager.Initialize()`가 manager catalog 초기화의 유일한 진입점이다.
+- initialize는 인스턴스 생성과 1회 setup의 책임만 가진다.
+- runtime 조건(시간 만료/ads refill/강제 refresh)은 initialize에서 직접 판단하지 않는다.
+- `ShopCatalogBase.Initialize()`는 `onInitialize()` 후 `RefreshProducts()`를 호출한다.
+- 실제 product 생성 책임은 `ShopCatalogBase.onRefresh()`가 가진다.
+- `ShopCatalogBase.onRefresh()` 기본 경로는 `CHEST/PURCHASE/GOLD`의 테이블 전체 row를 product로 생성한다.
+- `ShopCatalogDaily.onRefresh()`는 valid storage가 있으면 storage 기준으로 5개 동적 상품을 복원하고, invalid/empty storage면 5개를 새로 선택 생성한다.
+- `ShopCatalogEvent.onRefresh()`는 `SHOP_EVENT.startTime/endTime`을 서버 UTC 기준으로 평가해 현재 판매 중인 row만 product로 생성한다.
+- daily storage의 만료 여부는 `onRefresh()`가 아니라 refresh 시간 판정에서 결정한다.
+- row -> `ShopProductBase` 변환 helper도 catalog 계층(`ShopCatalogBase`)에 둔다. 별도 factory 계층을 두지 않는다.
+
+---
+
+## C) Catalog Refresh Condition Operation (정본)
+
+카탈로그별 조건 탐색은 반드시
+`evaluateCatalogRefreshState(catalog, requireServerTime, forceCatalogRefresh)` 1곳에서 수행한다.
+
+산출 상태:
+- `ShouldRefreshCatalogProducts`
+- `ShouldRefillAdsFreeProducts`
+- `ShouldInitializeAutoRefreshUtcMs`
+- `ShouldClearAutoRefreshUtcMs`
+- `ShouldClearAdsRefreshUtcMs`
+- `RemainRefreshTimeMs`
+
+판정 규칙:
+- 일반 카탈로그는 `autoRefreshDays <= 0`이면 auto refresh 미사용 (`autoRefreshUtcMs` 제거 대상).
+- `EVENT`는 `autoRefreshDays`를 사용하지 않고, 가장 가까운 미래 `startTime/endTime` 경계 시각을 다음 refresh 시각으로 사용한다.
+- `requireServerTime=true`인데 서버 시간이 필요한 조건에서 시간이 없으면 실패.
+- `forceCatalogRefresh=true`면 카탈로그 refresh를 강제한다.
+- ADS/FREE 제한 상품이 없으면 `adsRefreshUtcMs`는 제거 대상이다.
+- ADS/FREE 제한 상품이 있고 `adsRefreshUtcMs`가 없거나 만료면 refill 대상이다.
+
+---
+
+## D) Catalog Refresh Execute Operation (정본)
+
+카탈로그별 refresh 실행은 반드시
+`tryRefreshCatalog(catalogType, requireServerTime, forceCatalogRefresh)` 1경로를 사용한다.
+
+실행 순서:
+
+1. `evaluateCatalogRefreshState(...)` 결과를 받는다.
+2. `ShouldClearAutoRefreshUtcMs`면 clear한다.
+3. `ShouldRefreshCatalogProducts`면:
+   - `clearCatalogRuntimeStateForRefresh(...)` 수행
+   - `catalog.RefreshProducts()` 수행
+   - 일반 auto refresh catalog는 다음 `autoRefreshUtcMs`를 기록
+   - `EVENT`는 다음 `startTime/endTime` 경계 시각을 `autoRefreshUtcMs`로 기록
+4. `ShouldRefreshCatalogProducts`가 false이고 `ShouldInitializeAutoRefreshUtcMs`면 초기 next refresh를 기록한다.
+5. `ShouldClearAdsRefreshUtcMs`면 clear한다.
+6. `ShouldRefillAdsFreeProducts`면 ADS/FREE 제한 상품만 `remainCount=maxCount`로 리필하고 `adsRefreshUtcMs = serverNow + 1day`를 기록한다.
+7. `DidRefreshCatalogProducts` / `DidMutateStorage` 결과를 반환한다.
+
+규칙:
+- `DAILY` refresh 시에는 `dailyCatalogProducts`를 비우고 5개 동적 상품을 재생성한다.
+- ADS/FREE 리필 조건이 false이면 ADS/FREE remain 상태는 유지한다.
+- `unlockMsgId`가 `IsNullOrWhiteSpace`면 unlock 조건이 없는 카탈로그이며 `IsLocked=false`로 처리한다.
+
+---
+
+## E) Public API Contracts (정본)
+
+`Initialize()`
+- 초기화 + 조건부 refresh 전체 실행.
+- 성공 시 catalog/product index 정합성 보장.
+
+`RefreshProducts(requireServerTime=true)`
+- 초기화 이후에만 조건부 refresh 전체 실행.
+- catalog/product 초기화를 수행하지 않는다.
+
+`ResetAds(catalogType)`
+- 대상 카탈로그에 대해 `forceCatalogRefresh=true` 경로를 호출한다.
+- 강제 refresh 후 index 동기화/저장을 수행한다.
+
+`GetAdsResetRemainingMs(catalogType)`
+- 동일 조건 탐색 함수를 사용한다.
+- refresh가 필요한 상태면 `0`을 반환한다.
+
+---
+
+## F) SaveData Integration (정본)
+
+- SaveData load는 `ShopStorage`에 저장 상태만 로드한다.
+- 이후 `LoginManager -> ShopManager.Initialize()`가 storage 기반 runtime catalog/product 구성을 수행한다.
+- `DAILY`를 제외한 카탈로그는 table로 생성한 product에 storage 상태를 덮어쓴다.
+- `DAILY`는 `onRefresh()`에서 storage 기준 product 구성을 직접 복원할 수 있다.
+- `EVENT`는 별도 동적 payload를 저장하지 않고, `SHOP_EVENT` + 서버 시간 기준으로 매번 활성 상품을 재구성한다.
+- Shop runtime mutation은 로컬 save queue를 통해 저장한다.
+
+---
+
+## G) 3-path Mirroring (정본)
+
+아래 파일은 동일 구현을 유지해야 한다.
+
+- UPM (정본)
+  - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopManager.cs`
+  - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopCatalog.cs`
+  - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopStorage.cs`
+  - `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecShop.cs`
+- Packages (sync)
+  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopManager.cs`
+  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopCatalog.cs`
+  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopStorage.cs`
+  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecShop.cs`
+- Assets/Samples (import)
+  - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Shop/ShopManager.cs`
+  - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Shop/ShopCatalog.cs`
+  - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Shop/ShopStorage.cs`
+  - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/SaveData/JsonCodec/SaveDataJsonCodecShop.cs`
+
+---
+
+## Related
+
+- [00-overview](../00-overview/SKILL.md)
+- [10-shop-manager](../10-shop-manager/SKILL.md)
+- [12-shop-storage](../12-shop-storage/SKILL.md)
+- [13-shop-catalog](../13-shop-catalog/SKILL.md)
