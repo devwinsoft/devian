@@ -4,9 +4,10 @@ namespace Devian
 {
     internal static class SaveDataJsonCodec
     {
-        const int CurrentVersion = 19;
+        const int CurrentVersion = 20;
         const int AttendVersion = 17;
         const int ShopVersion = 18;
+        const int TreasureVersion = 20;
 
         public static string Serialize(
             InventoryStorage inventory,
@@ -17,7 +18,8 @@ namespace Devian
             MissionStorage mission,
             AchieveStorage achieve,
             LeaderboardSeasonRewardStorage leaderboardReward,
-            AttendStorage attend)
+            AttendStorage attend,
+            TreasureStorage treasure)
         {
             var root = new JObject
             {
@@ -31,6 +33,7 @@ namespace Devian
                 ["achieve"] = SaveDataJsonCodecAchieve.Serialize(achieve),
                 ["leaderboardReward"] = SaveDataJsonCodecLeaderboardReward.Serialize(leaderboardReward),
                 ["attend"] = SaveDataJsonCodecAttend.Serialize(attend),
+                ["treasure"] = SaveDataJsonCodecTreasure.Serialize(treasure),
             };
             return root.ToString();
         }
@@ -45,7 +48,8 @@ namespace Devian
             MissionStorage mission,
             AchieveStorage achieve,
             LeaderboardSeasonRewardStorage leaderboardReward,
-            AttendStorage attend)
+            AttendStorage attend,
+            TreasureStorage treasure)
         {
             var root = JObject.Parse(json);
             var version = root.Value<int?>("version") ?? 0;
@@ -96,9 +100,14 @@ namespace Devian
                 SaveDataJsonCodecAttend.DeserializeInto(attendObj, attend);
             else
                 attend?.Clear();
+
+            if (version >= TreasureVersion && root["treasure"] is JObject treasureObj)
+                SaveDataJsonCodecTreasure.DeserializeInto(treasureObj, treasure);
+            else
+                treasure?.Clear();
         }
 
         static bool isSupportedVersion(int version)
-            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 8 || version == 9 || version == 10 || version == 11 || version == 12 || version == 13 || version == 14 || version == 15 || version == 16 || version == 17 || version == 18 || version == CurrentVersion;
+            => version == 1 || version == 2 || version == 3 || version == 4 || version == 5 || version == 6 || version == 7 || version == 8 || version == 9 || version == 10 || version == 11 || version == 12 || version == 13 || version == 14 || version == 15 || version == 16 || version == 17 || version == 18 || version == 19 || version == CurrentVersion;
     }
 }

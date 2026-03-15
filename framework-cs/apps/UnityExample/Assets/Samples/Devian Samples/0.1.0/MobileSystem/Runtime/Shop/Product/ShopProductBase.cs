@@ -1,0 +1,134 @@
+using Devian.Domain.Game;
+
+namespace Devian
+{
+    public abstract class ShopProductBase
+    {
+        protected ShopProductBase(
+            string shopId,
+            string nameId,
+            SHOP_CATALOG_TYPE catalogType,
+            SHOP_PRODUCT_TYPE productType,
+            int maxCount = -1,
+            SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
+        {
+            ShopId = normalize(shopId);
+            NameId = normalize(nameId);
+            CatalogType = catalogType;
+            ProductType = productType;
+            MaxCount = normalizeMaxCount(maxCount);
+            RemainCount = MaxCount;
+            DiscountType = normalizeDiscountType(discountType);
+        }
+
+        public string ShopId { get; }
+        public string ProductId => ShopId; // Legacy alias for old callers.
+        public string NameId { get; }
+        public SHOP_CATALOG_TYPE CatalogType { get; }
+        public SHOP_PRODUCT_TYPE ProductType { get; }
+        public SHOP_DISCOUNT_TYPE DiscountType { get; }
+        public virtual int PriceWithoutDiscount => 0;
+        public int Price => applyDiscount(PriceWithoutDiscount, DiscountType);
+        public int MaxCount { get; }
+        public int RemainCount { get; private set; }
+
+        public bool HasPurchaseLimit => MaxCount >= 0;
+
+        public void SetRemainCount(int remainCount)
+        {
+            RemainCount = sanitizeRemainCount(remainCount, MaxCount);
+        }
+
+        public bool TryConsumeOne()
+        {
+            if (!HasPurchaseLimit)
+                return true;
+
+            if (RemainCount <= 0)
+                return false;
+
+            RemainCount -= 1;
+            return true;
+        }
+
+        public void ResetRemainCount()
+        {
+            RemainCount = MaxCount;
+        }
+
+        static string normalize(string value)
+        {
+            return value ?? string.Empty;
+        }
+
+        static int normalizeMaxCount(int maxCount)
+        {
+            return maxCount < -1 ? -1 : maxCount;
+        }
+
+        static int sanitizeRemainCount(int remainCount, int maxCount)
+        {
+            if (maxCount < 0)
+                return -1;
+
+            if (remainCount < 0)
+                return 0;
+
+            return remainCount > maxCount ? maxCount : remainCount;
+        }
+
+        static int applyDiscount(int price, SHOP_DISCOUNT_TYPE discountType)
+        {
+            if (price <= 0)
+                return price;
+
+            var discountPercent = getDiscountPercent(discountType);
+            if (discountPercent <= 0)
+                return price;
+
+            var discounted = (long)price * (100 - discountPercent);
+            if (discounted <= 0L)
+                return 0;
+
+            var discountedPrice = discounted / 100L;
+            if (discountedPrice <= 0L)
+                return 0;
+
+            if (discountedPrice > int.MaxValue)
+                return int.MaxValue;
+
+            return (int)discountedPrice;
+        }
+
+        static int getDiscountPercent(SHOP_DISCOUNT_TYPE discountType)
+        {
+            switch (discountType)
+            {
+                case SHOP_DISCOUNT_TYPE.PER10:
+                    return 10;
+                case SHOP_DISCOUNT_TYPE.PER20:
+                    return 20;
+                case SHOP_DISCOUNT_TYPE.PER30:
+                    return 30;
+                case SHOP_DISCOUNT_TYPE.PER50:
+                    return 50;
+                default:
+                    return 0;
+            }
+        }
+
+        static SHOP_DISCOUNT_TYPE normalizeDiscountType(SHOP_DISCOUNT_TYPE discountType)
+        {
+            switch (discountType)
+            {
+                case SHOP_DISCOUNT_TYPE.PER10:
+                case SHOP_DISCOUNT_TYPE.PER20:
+                case SHOP_DISCOUNT_TYPE.PER30:
+                case SHOP_DISCOUNT_TYPE.PER50:
+                    return discountType;
+                default:
+                    return SHOP_DISCOUNT_TYPE.NONE;
+            }
+        }
+    }
+}

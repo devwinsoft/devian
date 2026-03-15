@@ -13,4 +13,16 @@ MonoBehaviour:
   m_Name: InventorySettings
   m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.InventorySetting
   InitialInventory:
-    data: AJY8IOMHI1vxKfGaj3/jAsfHoBLR4/mDnS/LhBJaWu84hcsABENAQFGjj/yWFfsvEgSq7fXWhYTWRaOgB1vvnzOfOO3xIOMCBMuSLE317fEVL7YVB+0gWgQsOIQ8w02WBRJbUDOaqsugWhKqAgI4qAAsIEDLw7YHmlDH+S9u8ag=
+    data: OSGTkrZRTZOAkxr8AABuLxrLk3GT+UOTgJOghCkbk3GT7zyonZ+Sk4DHBAQE/3Ehk5K2UU2TgJMgAG6D7fwAbpNxk/lDk4CTGoTj44Qvk3GT7zyonZ+Sk4CW/0w=
+  _editorCardId:
+    Value: 
+  _editorEquipId:
+    Value: 
+  _editorHeroId:
+    Value: 
+  _editorRentalId:
+    Value: 
+  _editorPassId:
+    Value: 
+  _editorChestId:
+    Value: 0

@@ -36,6 +36,8 @@ namespace Devian
         public int AchieveWaitingCount { get; }
         public int AchieveCompletedCount { get; }
         public int MessageStatCount { get; }
+        public int TreasureChestTotal { get; }
+        public int TreasureLevel { get; }
 
         SavePayloadSummary(
             bool hasPayload,
@@ -53,7 +55,9 @@ namespace Devian
             int achieveRuntimeCount,
             int achieveWaitingCount,
             int achieveCompletedCount,
-            int messageStatCount)
+            int messageStatCount,
+            int treasureChestTotal,
+            int treasureLevel)
         {
             HasPayload = hasPayload;
             ParseSuccess = parseSuccess;
@@ -71,6 +75,8 @@ namespace Devian
             AchieveWaitingCount = achieveWaitingCount;
             AchieveCompletedCount = achieveCompletedCount;
             MessageStatCount = messageStatCount;
+            TreasureChestTotal = treasureChestTotal;
+            TreasureLevel = treasureLevel;
         }
 
         public static SavePayloadSummary MissingPayload()
@@ -79,6 +85,8 @@ namespace Devian
                 false,
                 false,
                 string.Empty,
+                0,
+                0,
                 0,
                 0,
                 0,
@@ -112,6 +120,8 @@ namespace Devian
                 0,
                 0,
                 0,
+                0,
+                0,
                 0);
         }
 
@@ -128,7 +138,9 @@ namespace Devian
             int achieveRuntimeCount,
             int achieveWaitingCount,
             int achieveCompletedCount,
-            int messageStatCount)
+            int messageStatCount,
+            int treasureChestTotal,
+            int treasureLevel)
         {
             return new SavePayloadSummary(
                 true,
@@ -146,7 +158,9 @@ namespace Devian
                 achieveRuntimeCount,
                 achieveWaitingCount,
                 achieveCompletedCount,
-                messageStatCount);
+                messageStatCount,
+                treasureChestTotal,
+                treasureLevel);
         }
     }
 
@@ -786,6 +800,7 @@ namespace Devian
             var achieve = getAchieveStorageOrNull();
             var leaderboardReward = getLeaderboardStorageOrNull();
             var attend = getAttendStorageOrNull();
+            var treasure = getTreasureStorageOrNull();
             return SaveDataJsonCodec.Serialize(
                 inventory ?? new InventoryStorage(),
                 purchase ?? new PurchaseStorage(),
@@ -795,7 +810,8 @@ namespace Devian
                 mission ?? new MissionStorage(),
                 achieve ?? new AchieveStorage(),
                 leaderboardReward ?? new LeaderboardSeasonRewardStorage(),
-                attend ?? new AttendStorage());
+                attend ?? new AttendStorage(),
+                treasure ?? new TreasureStorage());
         }
 
         /// <summary>
@@ -827,12 +843,13 @@ namespace Devian
             var achieveManager = getAchieveManagerOrNull();
             var leaderboardManager = getLeaderboardManagerOrNull();
             var attendManager = getAttendManagerOrNull();
+            var treasure = getTreasureStorageOrNull();
             var message = messageManager != null ? messageManager.Storage : null;
             var mission = missionManager != null ? missionManager.Storage : null;
             var achieve = achieveManager != null ? achieveManager.Storage : null;
             var leaderboardReward = leaderboardManager != null ? leaderboardManager.Storage : null;
             var attend = attendManager != null ? attendManager.Storage : null;
-            if (inventory == null || purchase == null || shop == null || account == null || message == null || mission == null || achieve == null || leaderboardReward == null || attend == null)
+            if (inventory == null || purchase == null || shop == null || account == null || message == null || mission == null || achieve == null || leaderboardReward == null || attend == null || treasure == null)
                 return;
 
             shopManager?.InvalidateRuntimeState();
@@ -841,7 +858,8 @@ namespace Devian
             achieveManager.ClearStorage();
             leaderboardManager.ClearStorage();
             attendManager.ClearStorage();
-            SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, shop, account, message, mission, achieve, leaderboardReward, attend);
+            treasure.Clear();
+            SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, shop, account, message, mission, achieve, leaderboardReward, attend, treasure);
             applyLoadedAccountStorageToRuntime();
         }
 
@@ -857,6 +875,7 @@ namespace Devian
             getAchieveManagerOrNull()?.ClearStorage();
             getLeaderboardManagerOrNull()?.ClearStorage();
             getAttendManagerOrNull()?.ClearStorage();
+            getTreasureStorageOrNull()?.Clear();
             applyLoadedAccountStorageToRuntime();
         }
 
@@ -978,6 +997,12 @@ namespace Devian
                 var messageObj = root["message"] as JObject;
                 var messageStatCount = countObjectProperties(messageObj?["stats"] as JObject);
 
+                var treasureObj = root["treasure"] as JObject;
+                var treasureChestTotal = sumObjectIntValues(treasureObj?["chestCounts"] as JObject);
+                var progressObj = treasureObj?["progress"] as JObject;
+                var treasureLevel = progressObj?.Value<int?>("currentLevel")
+                    ?? treasureObj?.Value<int?>("currentLevel") ?? 0;
+
                 return SavePayloadSummary.Parsed(
                     jsonVersion,
                     walletCount,
@@ -991,7 +1016,9 @@ namespace Devian
                     achieveRuntimeCount,
                     achieveWaitingCount,
                     achieveCompletedCount,
-                    messageStatCount);
+                    messageStatCount,
+                    treasureChestTotal,
+                    treasureLevel);
             }
             catch (Exception ex)
             {
@@ -1038,6 +1065,22 @@ namespace Devian
             }
 
             return count;
+        }
+
+        static int sumObjectIntValues(JObject obj)
+        {
+            if (obj == null)
+                return 0;
+
+            var sum = 0;
+            foreach (var prop in obj.Properties())
+            {
+                var val = prop.Value.Value<int?>() ?? 0;
+                if (val > 0)
+                    sum += val;
+            }
+
+            return sum;
         }
 
         // ──────────────────────────────────────────────
@@ -1619,6 +1662,19 @@ namespace Devian
             try
             {
                 var manager = LeaderboardManager.Instance;
+                return manager != null ? manager.Storage : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static TreasureStorage getTreasureStorageOrNull()
+        {
+            try
+            {
+                var manager = TreasureManager.Instance;
                 return manager != null ? manager.Storage : null;
             }
             catch

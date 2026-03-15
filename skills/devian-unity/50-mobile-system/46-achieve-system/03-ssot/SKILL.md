@@ -18,7 +18,7 @@ AppliesTo: v10
 
 ## A. Runtime Source
 
-- 파일: `input/Domains/Game/MetaTable.xlsx`
+- 파일: `input/Domains/Game/AchieveTable.xlsx`
 - 시트: `ACHIEVE_ONCE`
 - 컨테이너: `TB_ACHIEVE_ONCE`
 
@@ -41,7 +41,7 @@ AppliesTo: v10
 
 ### `ACHIEVE_PASS` schema
 
-- 파일: `input/Domains/Game/MetaTable.xlsx`
+- 파일: `input/Domains/Game/AchieveTable.xlsx`
 - 시트: `ACHIEVE_PASS`
 - 컨테이너: `TB_ACHIEVE_PASS`
 

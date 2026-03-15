@@ -176,6 +176,12 @@ namespace Devian.Domain.Common
         SHOP_REWARD_GROUP_EMPTY = 148,
         SHOP_SERVER_TIME_UNAVAILABLE = 149,
         SHOP_WALLET_UNAVAILABLE = 150,
+        TREASURE_CHEST_NOT_FOUND = 151,
+        TREASURE_GRADE_INVALID = 152,
+        TREASURE_GROUP_EMPTY = 153,
+        TREASURE_PROGRESS_NOT_FOUND = 154,
+        TREASURE_REWARD_APPLY_FAILED = 155,
+        TREASURE_REWARD_GROUP_EMPTY = 156,
     }
 
     /// <summary>Auto-generated enum from TB_SERVER_ERROR.id</summary>

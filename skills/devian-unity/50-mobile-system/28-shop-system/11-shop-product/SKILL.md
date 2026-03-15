@@ -94,9 +94,14 @@ public sealed class ShopProductPurchase : ShopProductBase
 
 ## 4. Implementation Location (3-path mirror)
 
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopProduct.cs`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/ShopProduct.cs`
-- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Shop/ShopProduct.cs`
+클래스별 파일 분리 — `Product/` 폴더 (8개 파일):
+- `ShopProductBase.cs`, `ShopRewardProductBase.cs`, `ShopProductNone.cs`
+- `ShopProductFree.cs`, `ShopProductAds.cs`, `ShopProductCurrency.cs`
+- `ShopProductChest.cs`, `ShopProductPurchase.cs`
+
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/Product/` (8개 파일)
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Shop/Product/` (8개 파일)
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Shop/Product/` (8개 파일)
 
 ---
 

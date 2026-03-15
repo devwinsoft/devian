@@ -200,6 +200,35 @@
       ]
     },
     {
+      "name": "TREASURE_GRADE_TYPE",
+      "values": [
+        {
+          "name": "NONE",
+          "value": 0
+        },
+        {
+          "name": "COMMON",
+          "value": 1
+        },
+        {
+          "name": "RARE",
+          "value": 2
+        },
+        {
+          "name": "EPIC",
+          "value": 3
+        },
+        {
+          "name": "LEGENDARY",
+          "value": 4
+        },
+        {
+          "name": "MYTHIC",
+          "value": 5
+        }
+      ]
+    },
+    {
       "name": "ADVERTISE_FORMAT",
       "values": [
         {
