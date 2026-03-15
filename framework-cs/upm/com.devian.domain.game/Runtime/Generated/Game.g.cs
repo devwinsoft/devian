@@ -571,30 +571,24 @@ namespace Devian.Domain.Game
     }
 
     /// <summary>TREASURE_CHEST row</summary>
-    public sealed class TREASURE_CHEST : IEntityKey<TREASURE_GRADE_TYPE>
-    {
-        public TREASURE_GRADE_TYPE TreasureGradeType { get; set; }
-        public string TreasureGroupId { get; set; } = string.Empty;
-
-        public TREASURE_GRADE_TYPE GetKey() => TreasureGradeType;
-    }
-
-    /// <summary>TREASURE_PROGRESS row</summary>
-    public sealed class TREASURE_PROGRESS : IEntityKey<int>
+    public sealed class TREASURE_CHEST : IEntityKey<int>
     {
         public int Level { get; set; }
         public TREASURE_GRADE_TYPE TreasureGradeType { get; set; }
         public int MaxExp { get; set; }
-        public string TreasureGroupId { get; set; } = string.Empty;
 
         public int GetKey() => Level;
     }
 
-    /// <summary>TREASURE_GROUP row</summary>
-    public sealed class TREASURE_GROUP : IEntityKey<int>
+    /// <summary>TREASURE_REWARD row</summary>
+    public sealed class TREASURE_REWARD : IEntityKey<int>
     {
         public int Index { get; set; }
-        public string TreasureGroupId { get; set; } = string.Empty;
+        public TREASURE_GRADE_TYPE TreasureGradeType { get; set; }
+        public int Level { get; set; }
+        public string ConditionMsgId { get; set; } = string.Empty;
+        public GAME_MESSAGE_OP_TYPE ConditionOp { get; set; }
+        public CBigInt? ConditionValue { get; set; }
         public string RewardGroupId { get; set; } = string.Empty;
 
         public int GetKey() => Index;
@@ -2885,7 +2879,7 @@ namespace Devian.Domain.Game
     /// <summary>TB_TREASURE_CHEST container</summary>
     public static partial class TB_TREASURE_CHEST
     {
-        private static readonly Dictionary<TREASURE_GRADE_TYPE, TREASURE_CHEST> _dict = new();
+        private static readonly Dictionary<int, TREASURE_CHEST> _dict = new();
         private static readonly List<TREASURE_CHEST> _list = new();
 
         public static int Count => _list.Count;
@@ -2898,12 +2892,12 @@ namespace Devian.Domain.Game
 
         public static IReadOnlyList<TREASURE_CHEST> GetAll() => _list;
 
-        public static TREASURE_CHEST? Get(TREASURE_GRADE_TYPE key)
+        public static TREASURE_CHEST? Get(int key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(TREASURE_GRADE_TYPE key, out TREASURE_CHEST? row)
+        public static bool TryGet(int key, out TREASURE_CHEST? row)
         {
             return _dict.TryGetValue(key, out row);
         }
@@ -2911,7 +2905,7 @@ namespace Devian.Domain.Game
         private static void AddRow(TREASURE_CHEST row)
         {
             _list.Add(row);
-            _dict[row.TreasureGradeType] = row;
+            _dict[row.Level] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -2965,99 +2959,16 @@ namespace Devian.Domain.Game
         static partial void _OnAfterLoad();
     }
 
-    /// <summary>TB_TREASURE_PROGRESS container</summary>
-    public static partial class TB_TREASURE_PROGRESS
+    /// <summary>TB_TREASURE_REWARD container</summary>
+    public static partial class TB_TREASURE_REWARD
     {
-        private static readonly Dictionary<int, TREASURE_PROGRESS> _dict = new();
-        private static readonly List<TREASURE_PROGRESS> _list = new();
+        private static readonly Dictionary<int, TREASURE_REWARD> _dict = new();
+        private static readonly List<TREASURE_REWARD> _list = new();
 
-        public static int Count => _list.Count;
-
-        public static void Clear()
-        {
-            _dict.Clear();
-            _list.Clear();
-        }
-
-        public static IReadOnlyList<TREASURE_PROGRESS> GetAll() => _list;
-
-        public static TREASURE_PROGRESS? Get(int key)
-        {
-            return _dict.TryGetValue(key, out var row) ? row : null;
-        }
-
-        public static bool TryGet(int key, out TREASURE_PROGRESS? row)
-        {
-            return _dict.TryGetValue(key, out row);
-        }
-
-        private static void AddRow(TREASURE_PROGRESS row)
-        {
-            _list.Add(row);
-            _dict[row.Level] = row;
-        }
-
-        public static void LoadFromJson(string json)
-        {
-            Clear();
-            var rows = JsonConvert.DeserializeObject<List<TREASURE_PROGRESS>>(json);
-            if (rows == null) return;
-            foreach (var row in rows)
-            {
-                if (row == null) continue;
-                AddRow(row);
-            }
-        }
-
-        public static void LoadFromNdjson(string ndjson)
-        {
-            Clear();
-            using var reader = new StringReader(ndjson);
-            string? line;
-            while ((line = reader.ReadLine()) != null)
-            {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<TREASURE_PROGRESS>(line);
-                if (row == null) continue;
-                AddRow(row);
-            }
-        }
-
-        public static void LoadFromPb64Binary(byte[] rawBinary)
-        {
-            Clear();
-            Pb64Loader.ParseRows(rawBinary, jsonRow =>
-            {
-                if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<TREASURE_PROGRESS>(jsonRow);
-                if (row == null) return;
-                AddRow(row);
-            });
-        }
-
-        // ====================================================================
-        // AfterLoad Hook (optional)
-        // Called by DomainTableRegistry after TableManager inserts data.
-        // ====================================================================
-
-        internal static void _AfterLoad()
-        {
-            _OnAfterLoad();
-        }
-
-        static partial void _OnAfterLoad();
-    }
-
-    /// <summary>TB_TREASURE_GROUP container</summary>
-    public static partial class TB_TREASURE_GROUP
-    {
-        private static readonly Dictionary<int, TREASURE_GROUP> _dict = new();
-        private static readonly List<TREASURE_GROUP> _list = new();
-
-        private static readonly Dictionary<string, List<TREASURE_GROUP>> _groupDict = new();
-        private static readonly List<string> _groupList = new();
-        private static readonly Dictionary<string, int> _groupPrimaryKey = new();
-        private static readonly Dictionary<int, string> _keyToGroup = new();
+        private static readonly Dictionary<TREASURE_GRADE_TYPE, List<TREASURE_REWARD>> _groupDict = new();
+        private static readonly List<TREASURE_GRADE_TYPE> _groupList = new();
+        private static readonly Dictionary<TREASURE_GRADE_TYPE, int> _groupPrimaryKey = new();
+        private static readonly Dictionary<int, TREASURE_GRADE_TYPE> _keyToGroup = new();
 
         public static int Count => _list.Count;
 
@@ -3071,44 +2982,44 @@ namespace Devian.Domain.Game
             _keyToGroup.Clear();
         }
 
-        public static IReadOnlyList<TREASURE_GROUP> GetAll() => _list;
+        public static IReadOnlyList<TREASURE_REWARD> GetAll() => _list;
 
-        public static IReadOnlyList<string> GetGroupKeys() => _groupList;
+        public static IReadOnlyList<TREASURE_GRADE_TYPE> GetGroupKeys() => _groupList;
 
-        public static IReadOnlyList<TREASURE_GROUP> GetByGroup(string groupKey)
+        public static IReadOnlyList<TREASURE_REWARD> GetByGroup(TREASURE_GRADE_TYPE groupKey)
         {
-            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<TREASURE_GROUP>();
+            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<TREASURE_REWARD>();
         }
 
-        public static bool TryGetGroupPrimaryKey(string groupKey, out int key)
+        public static bool TryGetGroupPrimaryKey(TREASURE_GRADE_TYPE groupKey, out int key)
         {
             return _groupPrimaryKey.TryGetValue(groupKey, out key);
         }
 
-        public static bool TryGetGroupKeyByKey(int key, out string groupKey)
+        public static bool TryGetGroupKeyByKey(int key, out TREASURE_GRADE_TYPE groupKey)
         {
             return _keyToGroup.TryGetValue(key, out groupKey);
         }
 
-        public static TREASURE_GROUP? Get(int key)
+        public static TREASURE_REWARD? Get(int key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(int key, out TREASURE_GROUP? row)
+        public static bool TryGet(int key, out TREASURE_REWARD? row)
         {
             return _dict.TryGetValue(key, out row);
         }
 
-        private static void AddRow(TREASURE_GROUP row)
+        private static void AddRow(TREASURE_REWARD row)
         {
             _list.Add(row);
             _dict[row.Index] = row;
-            var groupKey = row.TreasureGroupId;
+            var groupKey = row.TreasureGradeType;
             _keyToGroup[row.Index] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
-                groupList = new List<TREASURE_GROUP>();
+                groupList = new List<TREASURE_REWARD>();
                 _groupDict[groupKey] = groupList;
                 _groupList.Add(groupKey);
             }
@@ -3127,7 +3038,7 @@ namespace Devian.Domain.Game
         public static void LoadFromJson(string json)
         {
             Clear();
-            var rows = JsonConvert.DeserializeObject<List<TREASURE_GROUP>>(json);
+            var rows = JsonConvert.DeserializeObject<List<TREASURE_REWARD>>(json);
             if (rows == null) return;
             foreach (var row in rows)
             {
@@ -3144,7 +3055,7 @@ namespace Devian.Domain.Game
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<TREASURE_GROUP>(line);
+                var row = JsonConvert.DeserializeObject<TREASURE_REWARD>(line);
                 if (row == null) continue;
                 AddRow(row);
             }
@@ -3156,7 +3067,7 @@ namespace Devian.Domain.Game
             Pb64Loader.ParseRows(rawBinary, jsonRow =>
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<TREASURE_GROUP>(jsonRow);
+                var row = JsonConvert.DeserializeObject<TREASURE_REWARD>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -3589,30 +3500,20 @@ namespace Devian.Domain.Game
     [Serializable]
     public sealed class TREASURE_CHEST_ID
     {
-        public TREASURE_GRADE_TYPE Value;
+        public int Value;
 
-        public static implicit operator TREASURE_GRADE_TYPE(TREASURE_CHEST_ID id) => id.Value;
-        public static implicit operator TREASURE_CHEST_ID(TREASURE_GRADE_TYPE value) => new TREASURE_CHEST_ID { Value = value };
+        public static implicit operator int(TREASURE_CHEST_ID id) => id.Value;
+        public static implicit operator TREASURE_CHEST_ID(int value) => new TREASURE_CHEST_ID { Value = value };
     }
 
-    /// <summary>Inspector-bindable ID for TREASURE_PROGRESS</summary>
+    /// <summary>Inspector-bindable ID for TREASURE_REWARD</summary>
     [Serializable]
-    public sealed class TREASURE_PROGRESS_ID
+    public sealed class TREASURE_REWARD_ID
     {
         public int Value;
 
-        public static implicit operator int(TREASURE_PROGRESS_ID id) => id.Value;
-        public static implicit operator TREASURE_PROGRESS_ID(int value) => new TREASURE_PROGRESS_ID { Value = value };
-    }
-
-    /// <summary>Inspector-bindable ID for TREASURE_GROUP</summary>
-    [Serializable]
-    public sealed class TREASURE_GROUP_ID
-    {
-        public int Value;
-
-        public static implicit operator int(TREASURE_GROUP_ID id) => id.Value;
-        public static implicit operator TREASURE_GROUP_ID(int value) => new TREASURE_GROUP_ID { Value = value };
+        public static implicit operator int(TREASURE_REWARD_ID id) => id.Value;
+        public static implicit operator TREASURE_REWARD_ID(int value) => new TREASURE_REWARD_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for UNIT_HERO</summary>
@@ -3662,9 +3563,8 @@ namespace Devian.Domain.Game
         public static bool IsValid(this SHOP_PURCHASE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this SHOP_GOLD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this PURCHASE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
-        public static bool IsValid(this TREASURE_CHEST_ID? obj) => obj != null && !EqualityComparer<TREASURE_GRADE_TYPE>.Default.Equals(obj.Value, default);
-        public static bool IsValid(this TREASURE_PROGRESS_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
-        public static bool IsValid(this TREASURE_GROUP_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
+        public static bool IsValid(this TREASURE_CHEST_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
+        public static bool IsValid(this TREASURE_REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this UNIT_HERO_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this UNIT_MONSTER_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
     }

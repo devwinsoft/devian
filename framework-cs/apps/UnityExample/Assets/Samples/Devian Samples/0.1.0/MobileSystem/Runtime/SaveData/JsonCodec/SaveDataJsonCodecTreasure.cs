@@ -10,16 +10,16 @@ namespace Devian
         {
             storage ??= new TreasureStorage();
 
-            var progressObj = new JObject
+            var currentObj = new JObject
             {
-                ["currentExp"] = storage.Progress.CurrentExp,
-                ["currentLevel"] = storage.Progress.CurrentLevel,
+                ["exp"] = storage.Current.Exp,
+                ["level"] = storage.Current.Level,
             };
 
             var treasureObj = new JObject
             {
                 ["schemaVersion"] = storage.SchemaVersion,
-                ["progress"] = progressObj,
+                ["current"] = currentObj,
             };
 
             var chestCountsObj = new JObject();
@@ -50,22 +50,13 @@ namespace Devian
 
             storage.SchemaVersion = treasureObj.Value<int?>("schemaVersion") ?? 1;
 
-            if (treasureObj["progress"] is JObject progressObj)
+            if (treasureObj["current"] is JObject currentObj)
             {
-                var currentExp = progressObj.Value<int?>("currentExp") ?? 0;
-                storage.Progress.CurrentExp = currentExp < 0 ? 0 : currentExp;
+                var exp = currentObj.Value<int?>("exp") ?? 0;
+                storage.Current.Exp = exp < 0 ? 0 : exp;
 
-                var currentLevel = progressObj.Value<int?>("currentLevel") ?? 1;
-                storage.Progress.CurrentLevel = currentLevel < 1 ? 1 : currentLevel;
-            }
-            else
-            {
-                // backward compat: flat currentExp/currentLevel
-                var currentExp = treasureObj.Value<int?>("currentExp") ?? 0;
-                storage.Progress.CurrentExp = currentExp < 0 ? 0 : currentExp;
-
-                var currentLevel = treasureObj.Value<int?>("currentLevel") ?? 1;
-                storage.Progress.CurrentLevel = currentLevel < 1 ? 1 : currentLevel;
+                var level = currentObj.Value<int?>("level") ?? 1;
+                storage.Current.Level = level < 1 ? 1 : level;
             }
 
             if (treasureObj["chestCounts"] is JObject chestCountsObj)

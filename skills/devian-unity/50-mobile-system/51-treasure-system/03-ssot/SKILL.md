@@ -8,9 +8,9 @@ AppliesTo: v10
 이 문서는 Treasure 시스템의 정본이다.
 
 - `TREASURE_GRADE_TYPE` enum
-- `TREASURE_CHEST`, `TREASURE_PROGRESS`, `TREASURE_GROUP` 테이블 스키마
+- `TREASURE_CHEST`, `TREASURE_REWARD` 테이블 스키마
 - `TreasureStorage` 상태 모델
-- `CollectChest` / `CollectProgress` 동작 규칙
+- `OpenCollectedChests` / `OpenCurrentChest` 동작 규칙
 - TreasureManager / RewardManager 경계
 
 `RewardData`와 `rewardGroupId` 해석 정본은 [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md)다.
@@ -20,13 +20,12 @@ AppliesTo: v10
 
 ## A) Core Terms
 
-- `gradeType`: chest grade key (`TREASURE_GRADE_TYPE`)
-- `treasureGroupId`: Treasure 시스템 내부 fan-out group key
+- `gradeType`: chest/reward grade key (`TREASURE_GRADE_TYPE`)
 - `rewardGroupId`: Reward 시스템 지급 group key
-- `Progress`: `TreasureStorageProgress` 하위 객체 (exp/level 묶음)
-- `currentExp`: 현재 progress exp (`Progress.CurrentExp`)
-- `currentLevel`: 현재 progress reward level (`Progress.CurrentLevel`)
-- `maxLevel`: `TREASURE_PROGRESS.level`의 최대값
+- `Current`: `TreasureStorageCurrent` 하위 객체 (exp/level 묶음)
+- `exp`: 현재 treasure exp (`Current.Exp`)
+- `level`: 현재 treasure reward level (`Current.Level`)
+- `maxLevel`: `TREASURE_CHEST.level`의 최대값
 
 ---
 
@@ -62,50 +61,39 @@ AppliesTo: v10
 
 | field | type | note |
 |------|------|------|
-| `treasureGradeType` | `TREASURE_GRADE_TYPE` (pk) | chest grade key |
-| `treasureGroupId` | string | `TREASURE_GROUP.treasureGroupId` FK |
-
-규칙:
-
-- grade별 collect entry는 1행만 존재한다.
-- `treasureGroupId`는 비어 있지 않아야 한다.
-
-### C-2) `TREASURE_PROGRESS`
-
-| field | type | note |
-|------|------|------|
-| `level` | int (pk) | progress reward level |
+| `level` | int (pk) | chest reward level |
 | `treasureGradeType` | `TREASURE_GRADE_TYPE` | level reward grade metadata |
 | `maxExp` | int | collect 필요 exp |
-| `treasureGroupId` | string | `TREASURE_GROUP.treasureGroupId` FK |
 
 규칙:
 
 - `level`은 1-base 연속 값 사용을 권장한다.
 - `maxExp > 0`
-- `treasureGroupId`는 비어 있지 않아야 한다.
 
-### C-3) `TREASURE_GROUP`
+### C-2) `TREASURE_REWARD`
 
 | field | type | note |
 |------|------|------|
 | `index` | int (pk) | row key |
-| `treasureGroupId` | string (`group:true`) | treasure reward fan-out group |
+| `treasureGradeType` | `TREASURE_GRADE_TYPE` (`group:true`) | grade별 reward fan-out group key |
+| `level` | int | group 내 level |
+| `conditionMsgId` | string | 조건 메시지 ID |
+| `conditionOp` | `GAME_MESSAGE_OP_TYPE` | 조건 연산자 |
+| `conditionValue` | `CBigInt` | 조건 목표값 |
 | `rewardGroupId` | string | RewardManager apply key |
 
 규칙:
 
-- 같은 `treasureGroupId` 아래 여러 row는 모두 적용 대상이다.
+- 같은 `treasureGradeType` 아래 여러 row는 모두 적용 대상이다.
 - `rewardGroupId`는 비어 있지 않아야 한다.
 
-### C-4) Container expectation
+### C-3) Container expectation
 
 코드젠 target:
 
-- `TB_TREASURE_CHEST.Get(gradeType)`
-- `TB_TREASURE_PROGRESS.Get(level)`
-- `TB_TREASURE_PROGRESS.GetAll()`
-- `TB_TREASURE_GROUP.GetByGroup(treasureGroupId)`
+- `TB_TREASURE_CHEST.Get(level)`
+- `TB_TREASURE_CHEST.GetAll()`
+- `TB_TREASURE_REWARD.GetByGroup(TREASURE_GRADE_TYPE)`
 
 codegen 완료 상태. generated field name: `TreasureGradeType` (PascalCase).
 
@@ -116,30 +104,42 @@ codegen 완료 상태. generated field name: `TreasureGradeType` (PascalCase).
 정본 모델:
 
 ```csharp
-public sealed class TreasureStorageProgress
+public sealed class TreasureStorageCurrent
 {
-    public int CurrentExp { get; set; }
-    public int CurrentLevel { get; set; } = 1;
+    public int Exp { get; set; }
+    public int Level { get; set; } = 1;
 }
 
 public sealed class TreasureStorage
 {
     public int SchemaVersion { get; set; }
     public Dictionary<TREASURE_GRADE_TYPE, int> ChestCounts { get; }
-    public TreasureStorageProgress Progress { get; }
+    public TreasureStorageCurrent Current { get; }
 }
 ```
 
 기본값:
 
 - `SchemaVersion = 1`
-- `Progress.CurrentExp = 0`
-- `Progress.CurrentLevel = 1`
+- `Current.Exp = 0`
+- `Current.Level = 1`
 - 모든 chest count 기본값은 0
 
 ---
 
-## E) `CollectChest` Rules
+## E) Condition Selection Rules (`selectBestRewardRow`)
+
+`TREASURE_REWARD.GetByGroup(gradeType)` 결과 중 조건에 부합하는 row 1개를 선택한다.
+
+1. `conditionMsgId`가 비어있으면 → 조건 통과 (조건 자체가 없음)
+2. `conditionMsgId`가 있고 `ConditionValue`가 null이면 → **무조건 실패** (null 통과 절대 불가)
+3. `conditionMsgId`가 있고 `ConditionValue`가 있으면 → `GameMessageManager.Instance.GetStat(conditionMsgId)` 값을 `GameMessageRule.IsConditionSatisfied(stat, conditionOp, conditionValue)` 로 비교
+4. 조건 통과한 row 중 `Level`이 가장 높은 row **1개**를 선택한다
+5. 조건 통과 row가 없으면 → 실패 (`TREASURE_REWARD_EMPTY`)
+
+---
+
+## F) `OpenCollectedChests` Rules
 
 입력:
 
@@ -149,74 +149,75 @@ public sealed class TreasureStorage
 
 1. `TreasureStorage.ChestCounts[gradeType]`를 읽는다.
 2. count가 0 이하이면 valid no-op으로 종료한다.
-3. `TB_TREASURE_CHEST.Get(gradeType)`로 row를 찾는다.
-4. row의 `treasureGroupId`로 `TB_TREASURE_GROUP.GetByGroup(...)`를 조회한다.
-5. `count`회 반복하면서 각 group row의 `rewardGroupId`를 순서대로 `RewardManager.ApplyRewardGroup(...)`에 전달한다.
+3. `TB_TREASURE_REWARD.GetByGroup(gradeType)`로 reward rows를 조회한다.
+4. `selectBestRewardRow`로 조건 충족 최고 레벨 row 1개를 선택한다.
+5. `count`회 반복하면서 best row의 `rewardGroupId`를 `RewardManager.ApplyRewardGroup(...)`에 전달한다.
 6. 모든 지급이 성공하면 해당 grade count를 0으로 갱신한다.
 
 실패:
 
-- row 누락 / group row 없음 / 빈 `rewardGroupId` / `RewardManager` 실패 시 `CommonResult.Failure`
+- reward row 없음 / 조건 충족 row 없음 / 빈 `rewardGroupId` / `RewardManager` 실패 시 `CommonResult.Failure`
 - 실패 시 chest count는 변경되지 않는다.
 
 ---
 
-## F) `CollectProgress` Rules
+## G) `OpenCurrentChest` Rules
 
 처리:
 
-1. `currentLevel`로 `TB_TREASURE_PROGRESS.Get(currentLevel)`을 조회한다.
+1. `Current.Level`로 `TB_TREASURE_CHEST.Get(level)`을 조회한다.
 2. row가 없으면 실패한다.
-3. `currentExp < row.maxExp`이면 valid no-op으로 종료한다.
-4. row의 `treasureGroupId`로 `TB_TREASURE_GROUP.GetByGroup(...)`를 조회한다.
-5. 각 group row의 `rewardGroupId`를 순서대로 `RewardManager.ApplyRewardGroup(...)`에 전달한다.
-6. 모든 지급이 성공하면 `currentExp -= row.maxExp`를 적용한다.
-7. `currentLevel++` 후 `currentLevel > maxLevel`이면 `1`로 wrap한다.
+3. `Current.Exp < row.maxExp`이면 valid no-op으로 종료한다.
+4. row의 `treasureGradeType`로 `TB_TREASURE_REWARD.GetByGroup(...)`를 조회한다.
+5. `selectBestRewardRow`로 조건 충족 최고 레벨 row 1개를 선택한다.
+6. best row의 `rewardGroupId`를 `RewardManager.ApplyRewardGroup(...)`에 전달한다.
+7. 성공하면 `Current.Exp -= row.maxExp`를 적용한다.
+8. `Current.Level++` 후 `Current.Level > maxLevel`이면 `1`로 wrap한다.
 
 규칙:
 
-- 한 번의 `CollectProgress()` 호출은 현재 level 보상 1회만 처리한다.
+- 한 번의 `OpenCurrentChest()` 호출은 현재 level 보상 1회만 처리한다.
 - 남은 exp가 다음 level `maxExp` 이상이어도 추가 collect는 다음 호출에서 수행한다.
 
 실패:
 
-- row 누락 / group row 없음 / 빈 `rewardGroupId` / `RewardManager` 실패 시 `CommonResult.Failure`
-- 실패 시 `currentExp`, `currentLevel`은 변경되지 않는다.
+- row 누락 / 조건 충족 row 없음 / 빈 `rewardGroupId` / `RewardManager` 실패 시 `CommonResult.Failure`
+- 실패 시 `Current.Exp`, `Current.Level`은 변경되지 않는다.
 
 ---
 
-## G) TreasureGroup Apply Semantics
+## H) TreasureReward Apply Semantics
 
-- `TREASURE_GROUP`은 `treasureGroupId -> rewardGroupId[]` fan-out 테이블이다.
-- 하나의 collect는 group 아래의 모든 `rewardGroupId`를 적용한다.
+- `TREASURE_REWARD`는 `treasureGradeType -> row[]` 테이블이다.
+- 각 row는 `conditionMsgId/conditionOp/conditionValue` 조건을 가진다.
+- 하나의 collect는 조건을 통과한 row 중 가장 높은 `Level` row 1개의 `rewardGroupId`만 적용한다.
 - 개별 `rewardGroupId` 내부의 랜덤 선택/`REWARD` 해석은 RewardManager 정본을 따른다.
 
 ---
 
-## H) Runtime Ownership
+## I) Runtime Ownership
 
 - TreasureManager: table lookup + collect orchestration + storage mutation
-- TreasureStorage: chest/progress 상태 저장
+- TreasureStorage: chest 상태 저장
 - RewardManager: `rewardGroupId` 지급 실행
 - InventoryManager: concrete inventory mutation
 
 ---
 
-## I) Known Current-State Gaps
+## J) Known Current-State Gaps
 
 현재 알려진 gap 없음.
 
 ---
 
-## J) SaveData Integration
+## K) SaveData Integration
 
 - root JSON key: `"treasure"`
 - section codec: `SaveDataJsonCodecTreasure`
 - version gate: `TreasureVersion` (= 20, `CurrentVersion`과 동일)
 - serialize: `TreasureStorage` → `JObject`
 - deserialize: `JObject` → `TreasureStorage`
-- progress 상태는 `"progress"` 하위 객체로 직렬화한다 (`currentExp`, `currentLevel`)
-- deserialize 시 `"progress"` 키가 없으면 root flat `currentExp`/`currentLevel`로 backward compat fallback
+- current 상태는 `"current"` 하위 객체로 직렬화한다 (`exp`, `level`)
 - `ChestCounts` dictionary key: enum name string (예: `"COMMON"`, `"EPIC"`), [11-treasure-storage](../11-treasure-storage/SKILL.md) §Target Save Shape 준수
 - `SavePayloadSummary`에 `TreasureChestTotal`, `TreasureLevel` 추가
 

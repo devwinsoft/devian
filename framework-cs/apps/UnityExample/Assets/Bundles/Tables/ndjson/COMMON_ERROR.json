@@ -151,7 +151,6 @@
 {"Id":"SHOP_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED","Msg_key":"","Msg":"Shop daily manual refresh count exhausted."}
 {"Id":"TREASURE_CHEST_NOT_FOUND","Msg_key":"","Msg":"Treasure chest not found."}
 {"Id":"TREASURE_GRADE_INVALID","Msg_key":"","Msg":"Treasure grade is invalid."}
-{"Id":"TREASURE_GROUP_EMPTY","Msg_key":"","Msg":"Treasure group is empty."}
-{"Id":"TREASURE_PROGRESS_NOT_FOUND","Msg_key":"","Msg":"Treasure progress not found."}
+{"Id":"TREASURE_REWARD_EMPTY","Msg_key":"","Msg":"Treasure reward is empty."}
 {"Id":"TREASURE_REWARD_APPLY_FAILED","Msg_key":"","Msg":"Treasure reward apply failed."}
 {"Id":"TREASURE_REWARD_GROUP_EMPTY","Msg_key":"","Msg":"Treasure reward group is empty."}

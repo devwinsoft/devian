@@ -3,21 +3,21 @@ using Devian.Domain.Game;
 
 namespace Devian
 {
-    public sealed class TreasureStorageProgress
+    public sealed class TreasureStorageCurrent
     {
-        public int CurrentExp { get; set; }
-        public int CurrentLevel { get; set; } = 1;
+        public int Exp { get; set; }
+        public int Level { get; set; } = 1;
 
         public void Reset(int level = 1, int exp = 0)
         {
-            CurrentLevel = level < 1 ? 1 : level;
-            CurrentExp = exp < 0 ? 0 : exp;
+            Level = level < 1 ? 1 : level;
+            Exp = exp < 0 ? 0 : exp;
         }
 
         public void Clear()
         {
-            CurrentExp = 0;
-            CurrentLevel = 1;
+            Exp = 0;
+            Level = 1;
         }
     }
 
@@ -25,7 +25,7 @@ namespace Devian
     {
         public int SchemaVersion { get; set; } = 1;
         public Dictionary<TREASURE_GRADE_TYPE, int> ChestCounts { get; } = new();
-        public TreasureStorageProgress Progress { get; } = new();
+        public TreasureStorageCurrent Current { get; } = new();
 
         public int GetChestCount(TREASURE_GRADE_TYPE gradeType)
         {
@@ -49,24 +49,24 @@ namespace Devian
             ChestCounts[gradeType] = count;
         }
 
-        public void AddProgressExp(int amount)
+        public void AddCurrentExp(int amount)
         {
             if (amount <= 0)
                 return;
 
-            Progress.CurrentExp += amount;
+            Current.Exp += amount;
         }
 
-        public void ResetProgress(int level = 1, int exp = 0)
+        public void ResetCurrent(int level = 1, int exp = 0)
         {
-            Progress.Reset(level, exp);
+            Current.Reset(level, exp);
         }
 
         public void Clear()
         {
             SchemaVersion = 1;
             ChestCounts.Clear();
-            Progress.Clear();
+            Current.Clear();
         }
     }
 }

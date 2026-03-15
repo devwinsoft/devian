@@ -32,6 +32,7 @@ GameObject:
   - component: {fileID: 1823837048962960396}
   - component: {fileID: 7411150666049573210}
   - component: {fileID: 6268470757991738750}
+  - component: {fileID: 5779935076764809514}
   m_Layer: 0
   m_Name: Application
   m_TagString: Untagged
@@ -204,8 +205,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a3ce8d15ffc004448814b1df004fc1c9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.GameContents::Devian.InventoryManager
-  _initialInventoryCryptoKey: 6R3P0w/vz7u/qrcURNysSHl33bBEsM5fZb37vDo7/bA=
-  _initialInventoryCryptoIv: PcEs7Q7BGxQjYVrSwczD5A==
 --- !u!114 &1291505014731965610
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -362,6 +361,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6570de5a82704482acf6c3ebc73eb2c5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.ShopManager
+--- !u!114 &5779935076764809514
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2454387350981742136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0aafb715c6074a17b970c8a5a18506d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.TreasureManager
 --- !u!1 &6261706322476616027
 GameObject:
   m_ObjectHideFlags: 0

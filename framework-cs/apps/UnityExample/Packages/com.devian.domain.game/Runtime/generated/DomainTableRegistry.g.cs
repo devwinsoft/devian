@@ -369,31 +369,17 @@ namespace Devian.Domain.Game
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("TREASURE_PROGRESS", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("TREASURE_REWARD", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_TREASURE_PROGRESS.LoadFromNdjson(text);
-                    TB_TREASURE_PROGRESS._AfterLoad();
+                    TB_TREASURE_REWARD.LoadFromNdjson(text);
+                    TB_TREASURE_REWARD._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_TREASURE_PROGRESS.LoadFromPb64Binary(bin);
-                    TB_TREASURE_PROGRESS._AfterLoad();
-                }
-            });
-
-            global::Devian.TableManager.Instance.RegisterTbLoader("TREASURE_GROUP", (format, text, bin) =>
-            {
-                if (format == global::Devian.TableFormat.Json && text != null)
-                {
-                    TB_TREASURE_GROUP.LoadFromNdjson(text);
-                    TB_TREASURE_GROUP._AfterLoad();
-                }
-                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
-                {
-                    TB_TREASURE_GROUP.LoadFromPb64Binary(bin);
-                    TB_TREASURE_GROUP._AfterLoad();
+                    TB_TREASURE_REWARD.LoadFromPb64Binary(bin);
+                    TB_TREASURE_REWARD._AfterLoad();
                 }
             });
 

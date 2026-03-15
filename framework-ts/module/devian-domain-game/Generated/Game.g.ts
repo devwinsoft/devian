@@ -468,23 +468,20 @@ export interface PURCHASE extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface TREASURE_CHEST extends IEntityKey<TREASURE_GRADE_TYPE> {
-    TreasureGradeType: TREASURE_GRADE_TYPE;
-    TreasureGroupId: string;
-    getKey(): TREASURE_GRADE_TYPE;
-}
-
-export interface TREASURE_PROGRESS extends IEntityKey<number> {
+export interface TREASURE_CHEST extends IEntityKey<number> {
     Level: number;
     TreasureGradeType: TREASURE_GRADE_TYPE;
     MaxExp: number;
-    TreasureGroupId: string;
     getKey(): number;
 }
 
-export interface TREASURE_GROUP extends IEntityKey<number> {
+export interface TREASURE_REWARD extends IEntityKey<number> {
     Index: number;
-    TreasureGroupId: string;
+    TreasureGradeType: TREASURE_GRADE_TYPE;
+    Level: number;
+    ConditionMsgId: string;
+    ConditionOp: GAME_MESSAGE_OP_TYPE;
+    ConditionValue: CBigInt | null;
     RewardGroupId: string;
     getKey(): number;
 }
@@ -1374,7 +1371,7 @@ export class TB_PURCHASE {
 }
 
 export class TB_TREASURE_CHEST {
-    private static _dict: Map<TREASURE_GRADE_TYPE, TREASURE_CHEST> = new Map();
+    private static _dict: Map<number, TREASURE_CHEST> = new Map();
     private static _list: TREASURE_CHEST[] = [];
 
     static get count(): number { return this._list.length; }
@@ -1386,43 +1383,7 @@ export class TB_TREASURE_CHEST {
 
     static getAll(): readonly TREASURE_CHEST[] { return this._list; }
 
-    static get(key: TREASURE_GRADE_TYPE): TREASURE_CHEST | undefined {
-        return this._dict.get(key);
-    }
-
-    static has(key: TREASURE_GRADE_TYPE): boolean {
-        return this._dict.has(key);
-    }
-
-    static loadFromJson(json: string): void {
-        this.clear();
-        const lines = json.split('\n').filter(l => l.trim());
-        for (const line of lines) {
-            const row = JSON.parse(line) as TREASURE_CHEST;
-            this._list.push(row);
-            this._dict.set(row.TreasureGradeType, row);
-        }
-    }
-
-    static saveToJson(): string {
-        return this._list.map(r => JSON.stringify(r)).join('\n');
-    }
-}
-
-export class TB_TREASURE_PROGRESS {
-    private static _dict: Map<number, TREASURE_PROGRESS> = new Map();
-    private static _list: TREASURE_PROGRESS[] = [];
-
-    static get count(): number { return this._list.length; }
-
-    static clear(): void {
-        this._dict.clear();
-        this._list = [];
-    }
-
-    static getAll(): readonly TREASURE_PROGRESS[] { return this._list; }
-
-    static get(key: number): TREASURE_PROGRESS | undefined {
+    static get(key: number): TREASURE_CHEST | undefined {
         return this._dict.get(key);
     }
 
@@ -1434,7 +1395,7 @@ export class TB_TREASURE_PROGRESS {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as TREASURE_PROGRESS;
+            const row = JSON.parse(line) as TREASURE_CHEST;
             this._list.push(row);
             this._dict.set(row.Level, row);
         }
@@ -1445,9 +1406,9 @@ export class TB_TREASURE_PROGRESS {
     }
 }
 
-export class TB_TREASURE_GROUP {
-    private static _dict: Map<number, TREASURE_GROUP> = new Map();
-    private static _list: TREASURE_GROUP[] = [];
+export class TB_TREASURE_REWARD {
+    private static _dict: Map<number, TREASURE_REWARD> = new Map();
+    private static _list: TREASURE_REWARD[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -1456,9 +1417,9 @@ export class TB_TREASURE_GROUP {
         this._list = [];
     }
 
-    static getAll(): readonly TREASURE_GROUP[] { return this._list; }
+    static getAll(): readonly TREASURE_REWARD[] { return this._list; }
 
-    static get(key: number): TREASURE_GROUP | undefined {
+    static get(key: number): TREASURE_REWARD | undefined {
         return this._dict.get(key);
     }
 
@@ -1470,7 +1431,7 @@ export class TB_TREASURE_GROUP {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as TREASURE_GROUP;
+            const row = JSON.parse(line) as TREASURE_REWARD;
             this._list.push(row);
             this._dict.set(row.Index, row);
         }

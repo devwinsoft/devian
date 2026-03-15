@@ -31,10 +31,10 @@ namespace Devian
         SerializedProperty _propHeroId;
         SerializedProperty _propRentalId;
         SerializedProperty _propPassId;
-        SerializedProperty _propChestId;
 
-        // CURRENCY has no *_ID type, tracked as plain field
+        // CURRENCY / TREASURE have no *_ID type, tracked as plain fields
         CURRENCY_TYPE _currencyType = CURRENCY_TYPE.GOLD;
+        TREASURE_GRADE_TYPE _treasureGradeType = TREASURE_GRADE_TYPE.COMMON;
 
         void OnEnable()
         {
@@ -49,7 +49,6 @@ namespace Devian
             _propHeroId   = serializedObject.FindProperty("_editorHeroId");
             _propRentalId = serializedObject.FindProperty("_editorRentalId");
             _propPassId   = serializedObject.FindProperty("_editorPassId");
-            _propChestId  = serializedObject.FindProperty("_editorChestId");
         }
 
         public override void OnInspectorGUI()
@@ -177,8 +176,13 @@ namespace Devian
                     EditorGUILayout.PropertyField(_propPassId, new GUIContent("Id"));
                     break;
                 case REWARD_TYPE.TREASURE:
-                    EditorGUILayout.PropertyField(_propChestId, new GUIContent("Id"));
+                {
+                    var newGt = (TREASURE_GRADE_TYPE)EditorGUILayout.EnumPopup("Id", _treasureGradeType);
+                    if (newGt == TREASURE_GRADE_TYPE.NONE) newGt = TREASURE_GRADE_TYPE.COMMON;
+                    if (newGt != _treasureGradeType)
+                        _treasureGradeType = newGt;
                     break;
+                }
                 default:
                     EditorGUILayout.LabelField("Id", "(unsupported type)");
                     break;
@@ -205,14 +209,7 @@ namespace Devian
                 case REWARD_TYPE.PASS:
                     return _propPassId?.FindPropertyRelative("Value")?.stringValue ?? string.Empty;
                 case REWARD_TYPE.TREASURE:
-                {
-                    var valueProp = _propChestId?.FindPropertyRelative("Value");
-                    if (valueProp == null) return TREASURE_GRADE_TYPE.COMMON.ToString();
-                    var enumIndex = valueProp.enumValueIndex;
-                    return enumIndex >= 0 && enumIndex < valueProp.enumNames.Length
-                        ? valueProp.enumNames[enumIndex]
-                        : TREASURE_GRADE_TYPE.COMMON.ToString();
-                }
+                    return _treasureGradeType.ToString();
                 default:
                     return string.Empty;
             }
@@ -229,16 +226,8 @@ namespace Devian
                     _currencyType = CURRENCY_TYPE.GOLD;
                     break;
                 case REWARD_TYPE.TREASURE:
-                {
-                    var valueProp = _propChestId?.FindPropertyRelative("Value");
-                    if (valueProp != null)
-                    {
-                        var idx = Array.FindIndex(valueProp.enumNames,
-                            n => string.Equals(n, TREASURE_GRADE_TYPE.COMMON.ToString(), StringComparison.OrdinalIgnoreCase));
-                        if (idx >= 0) valueProp.enumValueIndex = idx;
-                    }
+                    _treasureGradeType = TREASURE_GRADE_TYPE.COMMON;
                     break;
-                }
                 // For string-based *_ID types, clear so the user can select via Selector
                 case REWARD_TYPE.CARD:
                     setStringIdValue(_propCardId, string.Empty);
@@ -261,15 +250,12 @@ namespace Devian
         void clearEditorIdFields()
         {
             _currencyType = CURRENCY_TYPE.GOLD;
+            _treasureGradeType = TREASURE_GRADE_TYPE.COMMON;
             setStringIdValue(_propCardId, string.Empty);
             setStringIdValue(_propEquipId, string.Empty);
             setStringIdValue(_propHeroId, string.Empty);
             setStringIdValue(_propRentalId, string.Empty);
             setStringIdValue(_propPassId, string.Empty);
-
-            var chestValue = _propChestId?.FindPropertyRelative("Value");
-            if (chestValue != null)
-                chestValue.enumValueIndex = 0;
         }
 
         static void setStringIdValue(SerializedProperty idProp, string value)
@@ -296,6 +282,7 @@ namespace Devian
             _rows.Clear();
             _addType = REWARD_TYPE.CURRENCY;
             _currencyType = CURRENCY_TYPE.GOLD;
+            _treasureGradeType = TREASURE_GRADE_TYPE.COMMON;
             _addAmount = 1000;
             _statusMessage = string.Empty;
             _statusType = MessageType.Info;

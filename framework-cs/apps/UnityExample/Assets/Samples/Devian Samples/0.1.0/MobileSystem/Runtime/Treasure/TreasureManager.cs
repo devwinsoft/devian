@@ -14,10 +14,10 @@ namespace Devian
         public TreasureStorage Storage => _storage;
 
         // ──────────────────────────────────────────────
-        //  CollectChest
+        //  OpenCollectedChests
         // ──────────────────────────────────────────────
 
-        public CommonResult CollectChest(TREASURE_GRADE_TYPE gradeType)
+        public CommonResult OpenCollectedChests(TREASURE_GRADE_TYPE gradeType)
         {
             if (gradeType == TREASURE_GRADE_TYPE.NONE)
                 return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_GRADE_INVALID, "gradeType NONE is not allowed.");
@@ -26,36 +26,25 @@ namespace Devian
             if (count <= 0)
                 return CommonResult.Ok();
 
-            var chestRow = TB_TREASURE_CHEST.Get(gradeType);
-            if (chestRow == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_CHEST_NOT_FOUND, $"TREASURE_CHEST row not found: {gradeType}");
+            var rewardRows = TB_TREASURE_REWARD.GetByGroup(gradeType);
+            if (rewardRows == null || rewardRows.Count == 0)
+                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_EMPTY, $"TREASURE_REWARD rows not found: {gradeType}");
 
-            var treasureGroupId = chestRow.TreasureGroupId;
-            if (string.IsNullOrEmpty(treasureGroupId))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_GROUP_EMPTY, $"TREASURE_CHEST.TreasureGroupId is empty: {gradeType}");
+            var bestRow = selectBestRewardRow(rewardRows);
+            if (bestRow == null)
+                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_EMPTY, $"No TREASURE_REWARD row satisfied condition: {gradeType}");
 
-            var groupRows = TB_TREASURE_GROUP.GetByGroup(treasureGroupId);
-            if (groupRows == null || groupRows.Count == 0)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_GROUP_EMPTY, $"TREASURE_GROUP rows not found: {treasureGroupId}");
+            if (string.IsNullOrEmpty(bestRow.RewardGroupId))
+                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_GROUP_EMPTY, $"TREASURE_REWARD.RewardGroupId is empty: {gradeType}, level={bestRow.Level}");
 
-            // validate all rewardGroupIds before applying
-            for (var i = 0; i < groupRows.Count; i++)
-            {
-                if (string.IsNullOrEmpty(groupRows[i].RewardGroupId))
-                    return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_GROUP_EMPTY, $"TREASURE_GROUP[{i}].RewardGroupId is empty: {treasureGroupId}");
-            }
-
-            // apply rewards: count times × group rows
+            // apply rewards: count times × best row
             for (var c = 0; c < count; c++)
             {
-                for (var g = 0; g < groupRows.Count; g++)
+                var applyResult = RewardManager.Instance.ApplyRewardGroup(bestRow.RewardGroupId);
+                if (applyResult.IsFailure)
                 {
-                    var applyResult = RewardManager.Instance.ApplyRewardGroup(groupRows[g].RewardGroupId);
-                    if (applyResult.IsFailure)
-                    {
-                        Debug.LogError($"[{Tag}] CollectChest RewardManager.ApplyRewardGroup failed: {gradeType}, round={c}, group={g}, rewardGroupId={groupRows[g].RewardGroupId}");
-                        return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_APPLY_FAILED, $"RewardManager.ApplyRewardGroup failed: {groupRows[g].RewardGroupId}");
-                    }
+                    Debug.LogError($"[{Tag}] OpenCollectedChests RewardManager.ApplyRewardGroup failed: {gradeType}, round={c}, rewardGroupId={bestRow.RewardGroupId}");
+                    return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_APPLY_FAILED, $"RewardManager.ApplyRewardGroup failed: {bestRow.RewardGroupId}");
                 }
             }
 
@@ -65,56 +54,94 @@ namespace Devian
         }
 
         // ──────────────────────────────────────────────
-        //  CollectProgress
+        //  OpenCurrentChest
         // ──────────────────────────────────────────────
 
-        public CommonResult CollectProgress()
+        public CommonResult OpenCurrentChest()
         {
-            var currentLevel = _storage.Progress.CurrentLevel;
+            var currentLevel = _storage.Current.Level;
 
-            var progressRow = TB_TREASURE_PROGRESS.Get(currentLevel);
-            if (progressRow == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_PROGRESS_NOT_FOUND, $"TREASURE_PROGRESS row not found: level={currentLevel}");
+            var chestRow = TB_TREASURE_CHEST.Get(currentLevel);
+            if (chestRow == null)
+                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_CHEST_NOT_FOUND, $"TREASURE_CHEST row not found: level={currentLevel}");
 
-            if (_storage.Progress.CurrentExp < progressRow.MaxExp)
+            if (_storage.Current.Exp < chestRow.MaxExp)
                 return CommonResult.Ok();
 
-            var treasureGroupId = progressRow.TreasureGroupId;
-            if (string.IsNullOrEmpty(treasureGroupId))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_GROUP_EMPTY, $"TREASURE_PROGRESS.TreasureGroupId is empty: level={currentLevel}");
+            var gradeType = chestRow.TreasureGradeType;
+            var rewardRows = TB_TREASURE_REWARD.GetByGroup(gradeType);
+            if (rewardRows == null || rewardRows.Count == 0)
+                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_EMPTY, $"TREASURE_REWARD rows not found: {gradeType}");
 
-            var groupRows = TB_TREASURE_GROUP.GetByGroup(treasureGroupId);
-            if (groupRows == null || groupRows.Count == 0)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_GROUP_EMPTY, $"TREASURE_GROUP rows not found: {treasureGroupId}");
+            var bestRow = selectBestRewardRow(rewardRows);
+            if (bestRow == null)
+                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_EMPTY, $"No TREASURE_REWARD row satisfied condition: {gradeType}");
 
-            // validate all rewardGroupIds before applying
-            for (var i = 0; i < groupRows.Count; i++)
+            if (string.IsNullOrEmpty(bestRow.RewardGroupId))
+                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_GROUP_EMPTY, $"TREASURE_REWARD.RewardGroupId is empty: {gradeType}, level={bestRow.Level}");
+
+            // apply reward: best row only
+            var applyResult = RewardManager.Instance.ApplyRewardGroup(bestRow.RewardGroupId);
+            if (applyResult.IsFailure)
             {
-                if (string.IsNullOrEmpty(groupRows[i].RewardGroupId))
-                    return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_GROUP_EMPTY, $"TREASURE_GROUP[{i}].RewardGroupId is empty: {treasureGroupId}");
+                Debug.LogError($"[{Tag}] OpenCurrentChest RewardManager.ApplyRewardGroup failed: level={currentLevel}, rewardGroupId={bestRow.RewardGroupId}");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_APPLY_FAILED, $"RewardManager.ApplyRewardGroup failed: {bestRow.RewardGroupId}");
             }
 
-            // apply rewards
-            for (var g = 0; g < groupRows.Count; g++)
-            {
-                var applyResult = RewardManager.Instance.ApplyRewardGroup(groupRows[g].RewardGroupId);
-                if (applyResult.IsFailure)
-                {
-                    Debug.LogError($"[{Tag}] CollectProgress RewardManager.ApplyRewardGroup failed: level={currentLevel}, group={g}, rewardGroupId={groupRows[g].RewardGroupId}");
-                    return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_APPLY_FAILED, $"RewardManager.ApplyRewardGroup failed: {groupRows[g].RewardGroupId}");
-                }
-            }
+            // all-or-nothing: commit only after reward succeeds
+            _storage.Current.Exp -= chestRow.MaxExp;
+            _storage.Current.Level++;
 
-            // all-or-nothing: commit only after all rewards succeed
-            _storage.Progress.CurrentExp -= progressRow.MaxExp;
-            _storage.Progress.CurrentLevel++;
-
-            var allProgressRows = TB_TREASURE_PROGRESS.GetAll();
-            var maxLevel = allProgressRows.Count > 0 ? allProgressRows.Max(r => r.Level) : 1;
-            if (_storage.Progress.CurrentLevel > maxLevel)
-                _storage.Progress.CurrentLevel = 1;
+            var allChestRows = TB_TREASURE_CHEST.GetAll();
+            var maxLevel = allChestRows.Count > 0 ? allChestRows.Max(r => r.Level) : 1;
+            if (_storage.Current.Level > maxLevel)
+                _storage.Current.Level = 1;
 
             return CommonResult.Ok();
+        }
+
+        // ──────────────────────────────────────────────
+        //  Condition Selection
+        // ──────────────────────────────────────────────
+
+        /// <summary>
+        /// 조건에 부합하는 row 중 가장 높은 Level을 선택한다.
+        /// - conditionMsgId가 비어있으면 조건 통과 (조건 자체가 없음).
+        /// - conditionMsgId가 있고 ConditionValue가 null이면 무조건 실패.
+        /// - conditionMsgId가 있고 ConditionValue가 있으면 GameMessageManager.GetStat() 비교.
+        /// </summary>
+        static TREASURE_REWARD selectBestRewardRow(IReadOnlyList<TREASURE_REWARD> rows)
+        {
+            TREASURE_REWARD best = null;
+
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+
+                if (!isConditionMet(row))
+                    continue;
+
+                if (best == null || row.Level > best.Level)
+                    best = row;
+            }
+
+            return best;
+        }
+
+        static bool isConditionMet(TREASURE_REWARD row)
+        {
+            var msgId = row.ConditionMsgId;
+
+            // conditionMsgId가 비어있으면 조건 자체가 없다 → 통과
+            if (string.IsNullOrEmpty(msgId))
+                return true;
+
+            // conditionMsgId가 있는데 ConditionValue가 null이면 무조건 실패
+            if (!row.ConditionValue.HasValue)
+                return false;
+
+            var stat = GameMessageManager.Instance.GetStat(msgId);
+            return GameMessageRule.IsConditionSatisfied(stat, row.ConditionOp, row.ConditionValue.Value);
         }
     }
 }

@@ -39,9 +39,8 @@ AppliesTo: v10
 | `AchieveTable.xlsx` | ACHIEVE_PASS | TB_ACHIEVE_PASS | `Index` (int) | 패스 업적 단계/활성 조건 테이블 |
 | `MetaTable.xlsx` | LEADERBOARD | TB_LEADERBOARD | `LeaderboardId` (string) | 리더보드 정의 |
 | `MetaTable.xlsx` | LEADERBOARD_REWARD | TB_LEADERBOARD_REWARD | `Index` (int) | 리더보드 구간 보상 정의 |
-| `TreasureTable.xlsx` | TREASURE_CHEST | TB_TREASURE_CHEST | `treasuerGradeType` (`TREASURE_GRADE_TYPE`) | treasure chest 등급별 보상 그룹 엔트리 |
-| `TreasureTable.xlsx` | TREASURE_PROGRESS | TB_TREASURE_PROGRESS | `Level` (int) | progress level별 maxExp/보상 그룹 엔트리 |
-| `TreasureTable.xlsx` | TREASURE_GROUP | TB_TREASURE_GROUP | `Index` (int) | `treasureGroupId -> rewardGroupId` fan-out 테이블 |
+| `TreasureTable.xlsx` | TREASURE_CHEST | TB_TREASURE_CHEST | `Level` (int) | chest level별 maxExp/보상 그룹 엔트리 |
+| `TreasureTable.xlsx` | TREASURE_REWARD | TB_TREASURE_REWARD | `Index` (int) | `treasureGradeType -> rewardGroupId` fan-out 테이블 |
 | `ItemTable.xlsx` | ITEM_EQUIP | TB_ITEM_EQUIP | `EquipId` (string) | 장비 테이블 (EquipId, NameId, DescId) |
 | `ItemTable.xlsx` | ITEM_CARD | TB_ITEM_CARD | `CardId` (string) | 카드 테이블 (CardId, NameId, DescId) |
 | `ItemTable.xlsx` | ITEM_RENTAL | TB_ITEM_RENTAL | `RentalId` (string) | 렌탈 아이템 테이블 (RentalId, NameId, DescId) |

@@ -12,13 +12,13 @@ using UnityEngine;
 
 namespace Devian.Domain.Game
 {
-    public static partial class TB_TREASURE_PROGRESS
+    public static partial class TB_TREASURE_REWARD
     {
         private static global::Devian.TableFormat _loadedFormat;
         private static bool _isLoaded;
 
         /// <summary>
-        /// Preload TREASURE_PROGRESS table via TableManager.
+        /// Preload TREASURE_REWARD table via TableManager.
         /// TableManager handles: TextAsset load + TB insert + cache.
         /// </summary>
         /// <param name="key">Addressables key to load TextAsset</param>
@@ -39,7 +39,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Unload TREASURE_PROGRESS table and clear data.
+        /// Unload TREASURE_REWARD table and clear data.
         /// </summary>
         public static void Unload()
         {
@@ -48,7 +48,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Check if TREASURE_PROGRESS table is loaded.
+        /// Check if TREASURE_REWARD table is loaded.
         /// </summary>
         public static bool IsLoaded => _isLoaded;
 

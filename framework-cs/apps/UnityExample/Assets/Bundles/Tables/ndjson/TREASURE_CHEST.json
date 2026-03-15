@@ -1,5 +1,5 @@
-{"TreasureGradeType":"COMMON","TreasureGroupId":"reward_treasure_group_001"}
-{"TreasureGradeType":"RARE","TreasureGroupId":"reward_treasure_group_001"}
-{"TreasureGradeType":"EPIC","TreasureGroupId":"reward_treasure_group_001"}
-{"TreasureGradeType":"LEGENDARY","TreasureGroupId":"reward_treasure_group_001"}
-{"TreasureGradeType":"MYTHIC","TreasureGroupId":"reward_treasure_group_001"}
+{"Level":1,"TreasureGradeType":"COMMON","MaxExp":20}
+{"Level":2,"TreasureGradeType":"RARE","MaxExp":30}
+{"Level":3,"TreasureGradeType":"EPIC","MaxExp":50}
+{"Level":4,"TreasureGradeType":"LEGENDARY","MaxExp":75}
+{"Level":5,"TreasureGradeType":"MYTHIC","MaxExp":100}

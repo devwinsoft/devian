@@ -31,10 +31,10 @@ Type: Design / Storage SSOT
 ## Storage Model
 
 ```csharp
-public sealed class TreasureStorageProgress
+public sealed class TreasureStorageCurrent
 {
-    public int CurrentExp { get; set; }
-    public int CurrentLevel { get; set; } = 1;
+    public int Exp { get; set; }
+    public int Level { get; set; } = 1;
 
     public void Reset(int level = 1, int exp = 0);
     public void Clear();
@@ -44,23 +44,23 @@ public sealed class TreasureStorage
 {
     public int SchemaVersion { get; set; } = 1;
     public Dictionary<TREASURE_GRADE_TYPE, int> ChestCounts { get; } = new();
-    public TreasureStorageProgress Progress { get; } = new();
+    public TreasureStorageCurrent Current { get; } = new();
 }
 ```
 
 의미:
 
 - `ChestCounts`: grade별 보유 chest count
-- `Progress`: progress 상태 (exp/level)를 묶는 하위 객체
-- `Progress.CurrentExp`: progress exp
-- `Progress.CurrentLevel`: 현재 progress reward level
+- `Current`: current 상태 (exp/level)를 묶는 하위 객체
+- `Current.Exp`: treasure exp
+- `Current.Level`: 현재 treasure reward level
 
 ---
 
 ## Default Rules
 
-- `Progress.CurrentLevel` 기본값은 `1`
-- `Progress.CurrentExp` 기본값은 `0`
+- `Current.Level` 기본값은 `1`
+- `Current.Exp` 기본값은 `0`
 - 미존재 grade key는 `0개`로 간주한다
 - `NONE` grade는 저장 대상이 아니다
 
@@ -71,18 +71,18 @@ public sealed class TreasureStorage
 - `GetChestCount(TREASURE_GRADE_TYPE gradeType) -> int`
 - `AddChest(TREASURE_GRADE_TYPE gradeType, int amount)`
 - `SetChestCount(TREASURE_GRADE_TYPE gradeType, int count)`
-- `AddProgressExp(int amount)` — delegates to `Progress.CurrentExp`
-- `ResetProgress(level = 1, exp = 0)` — delegates to `Progress.Reset(...)`
-- `Clear()` — clears all including `Progress.Clear()`
+- `AddCurrentExp(int amount)` — delegates to `Current.Exp`
+- `ResetCurrent(level = 1, exp = 0)` — delegates to `Current.Reset(...)`
+- `Clear()` — clears all including `Current.Clear()`
 
 ---
 
 ## Hard Rules
 
-- `TreasureStorage`와 `TreasureStorageProgress`는 sealed POCO 클래스다.
+- `TreasureStorage`와 `TreasureStorageCurrent`는 sealed POCO 클래스다.
 - chest count와 exp는 음수가 될 수 없다.
-- progress 상태는 `TreasureStorageProgress`로 묶는다. grade별로 분리하지 않는다. 단일 `Progress.CurrentExp` / `Progress.CurrentLevel`만 사용한다.
-- max level 판단은 storage가 아니라 `TREASURE_PROGRESS` 테이블을 기준으로 한다.
+- current 상태는 `TreasureStorageCurrent`로 묶는다. grade별로 분리하지 않는다. 단일 `Current.Exp` / `Current.Level`만 사용한다.
+- max level 판단은 storage가 아니라 `TREASURE_CHEST` 테이블을 기준으로 한다.
 - level wrap 규칙 적용 주체는 `TreasureManager`다.
 
 ---
@@ -92,9 +92,9 @@ public sealed class TreasureStorage
 ```json
 {
   "schemaVersion": 1,
-  "progress": {
-    "currentExp": 42,
-    "currentLevel": 2
+  "current": {
+    "exp": 42,
+    "level": 2
   },
   "chestCounts": {
     "COMMON": 3,
@@ -102,8 +102,6 @@ public sealed class TreasureStorage
   }
 }
 ```
-
-하위호환: deserialize 시 `progress` 키가 없으면 root의 flat `currentExp`/`currentLevel`로 fallback한다.
 
 이 문서는 저장 모델만 정의한다.
 실제 SaveData codec 통합은 후속 단계다.

@@ -1,0 +1,10 @@
+{"Index":1,"TreasureGradeType":"COMMON","Level":1,"ConditionMsgId":"","ConditionValue":null,"RewardGroupId":"reward_treasure_001_common"}
+{"Index":2,"TreasureGradeType":"RARE","Level":1,"ConditionMsgId":"","ConditionValue":null,"RewardGroupId":"reward_treasure_001_rare"}
+{"Index":3,"TreasureGradeType":"EPIC","Level":1,"ConditionMsgId":"","ConditionValue":null,"RewardGroupId":"reward_treasure_001_epic"}
+{"Index":4,"TreasureGradeType":"LEGENDARY","Level":1,"ConditionMsgId":"","ConditionValue":null,"RewardGroupId":"reward_treasure_001_legendary"}
+{"Index":5,"TreasureGradeType":"MYTHIC","Level":1,"ConditionMsgId":"","ConditionValue":null,"RewardGroupId":"reward_treasure_001_mythic"}
+{"Index":6,"TreasureGradeType":"COMMON","Level":2,"ConditionMsgId":"msg_stage_max","ConditionOp":"GTE","ConditionValue":10000010000001,"RewardGroupId":"reward_treasure_002_common"}
+{"Index":7,"TreasureGradeType":"RARE","Level":2,"ConditionMsgId":"msg_stage_max","ConditionOp":"GTE","ConditionValue":10000010000001,"RewardGroupId":"reward_treasure_002_rare"}
+{"Index":8,"TreasureGradeType":"EPIC","Level":2,"ConditionMsgId":"msg_stage_max","ConditionOp":"GTE","ConditionValue":10000010000001,"RewardGroupId":"reward_treasure_002_epic"}
+{"Index":9,"TreasureGradeType":"LEGENDARY","Level":2,"ConditionMsgId":"msg_stage_max","ConditionOp":"GTE","ConditionValue":10000010000001,"RewardGroupId":"reward_treasure_002_legendary"}
+{"Index":10,"TreasureGradeType":"MYTHIC","Level":2,"ConditionMsgId":"msg_stage_max","ConditionOp":"GTE","ConditionValue":10000010000001,"RewardGroupId":"reward_treasure_002_mythic"}

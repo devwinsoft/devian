@@ -999,9 +999,8 @@ namespace Devian
 
                 var treasureObj = root["treasure"] as JObject;
                 var treasureChestTotal = sumObjectIntValues(treasureObj?["chestCounts"] as JObject);
-                var progressObj = treasureObj?["progress"] as JObject;
-                var treasureLevel = progressObj?.Value<int?>("currentLevel")
-                    ?? treasureObj?.Value<int?>("currentLevel") ?? 0;
+                var currentObj = treasureObj?["current"] as JObject;
+                var treasureLevel = currentObj?.Value<int?>("level") ?? 0;
 
                 return SavePayloadSummary.Parsed(
                     jsonVersion,

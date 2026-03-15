@@ -10,30 +10,30 @@ using Devian.Domain.Game;
 
 namespace Devian
 {
-    /// <summary>Selector for TREASURE_GROUP_ID</summary>
-    public class Game_TREASURE_GROUP_ID_Selector : BaseEditorID_Selector
+    /// <summary>Selector for TREASURE_REWARD_ID</summary>
+    public class Game_TREASURE_REWARD_ID_Selector : BaseEditorID_Selector
     {
-        protected override string GetDisplayTypeName() => "TREASURE_GROUP";
+        protected override string GetDisplayTypeName() => "TREASURE_REWARD";
 
         public override void Reload()
         {
             ClearItems();
-            TB_TREASURE_GROUP.Clear();
+            TB_TREASURE_REWARD.Clear();
 
-            var textAssets = AssetManager.FindAssets<TextAsset>("TREASURE_GROUP");
+            var textAssets = AssetManager.FindAssets<TextAsset>("TREASURE_REWARD");
             foreach (var ta in textAssets)
             {
                 var assetPath = AssetDatabase.GetAssetPath(ta);
                 if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                TB_TREASURE_GROUP.LoadFromNdjson(ta.text);
+                TB_TREASURE_REWARD.LoadFromNdjson(ta.text);
                 break;
             }
 
-            foreach (var groupKey in TB_TREASURE_GROUP.GetGroupKeys())
+            foreach (var groupKey in TB_TREASURE_REWARD.GetGroupKeys())
             {
-                if (TB_TREASURE_GROUP.TryGetGroupPrimaryKey(groupKey, out var pk))
+                if (TB_TREASURE_REWARD.TryGetGroupPrimaryKey(groupKey, out var pk))
                 {
                     // key = PK string (applied to Value), display = groupKey
                     AddItem(pk.ToString(), groupKey.ToString());
@@ -42,14 +42,14 @@ namespace Devian
         }
     }
 
-    /// <summary>PropertyDrawer for TREASURE_GROUP_ID</summary>
-    [CustomPropertyDrawer(typeof(TREASURE_GROUP_ID))]
-    public class Game_TREASURE_GROUP_ID_Drawer : BaseEditorID_Drawer<Game_TREASURE_GROUP_ID_Selector>
+    /// <summary>PropertyDrawer for TREASURE_REWARD_ID</summary>
+    [CustomPropertyDrawer(typeof(TREASURE_REWARD_ID))]
+    public class Game_TREASURE_REWARD_ID_Drawer : BaseEditorID_Drawer<Game_TREASURE_REWARD_ID_Selector>
     {
-        protected override Game_TREASURE_GROUP_ID_Selector GetSelector()
+        protected override Game_TREASURE_REWARD_ID_Selector GetSelector()
         {
-            var w = ScriptableObject.CreateInstance<Game_TREASURE_GROUP_ID_Selector>();
-            w.titleContent = new GUIContent("Select TREASURE_GROUP");
+            var w = ScriptableObject.CreateInstance<Game_TREASURE_REWARD_ID_Selector>();
+            w.titleContent = new GUIContent("Select TREASURE_REWARD");
             w.ShowUtility();
             return w;
         }
@@ -60,17 +60,17 @@ namespace Devian
             if (valueProp.propertyType == SerializedPropertyType.Integer)
             {
                 var pk = (int)valueProp.intValue;
-                TB_TREASURE_GROUP.Clear();
-                var textAssets = AssetManager.FindAssets<TextAsset>("TREASURE_GROUP");
+                TB_TREASURE_REWARD.Clear();
+                var textAssets = AssetManager.FindAssets<TextAsset>("TREASURE_REWARD");
                 foreach (var ta in textAssets)
                 {
                     var assetPath = AssetDatabase.GetAssetPath(ta);
                     if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))
                         continue;
-                    TB_TREASURE_GROUP.LoadFromNdjson(ta.text);
+                    TB_TREASURE_REWARD.LoadFromNdjson(ta.text);
                     break;
                 }
-                if (TB_TREASURE_GROUP.TryGetGroupKeyByKey(pk, out var groupKey))
+                if (TB_TREASURE_REWARD.TryGetGroupKeyByKey(pk, out var groupKey))
                     return groupKey.ToString();
                 return pk.ToString();
             }

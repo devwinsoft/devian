@@ -22,6 +22,5 @@ namespace Devian
         [HideInInspector, SerializeField] internal UNIT_HERO_ID     _editorHeroId     = new();
         [HideInInspector, SerializeField] internal ITEM_RENTAL_ID   _editorRentalId   = new();
         [HideInInspector, SerializeField] internal ITEM_PASS_ID     _editorPassId     = new();
-        [HideInInspector, SerializeField] internal TREASURE_CHEST_ID _editorChestId   = new();
     }
 }

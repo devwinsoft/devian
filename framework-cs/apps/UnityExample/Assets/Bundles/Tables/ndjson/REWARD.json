@@ -21,8 +21,8 @@
 {"RewardNum":7,"RewardGroupId":"reward_chest_001_02","Type":"CARD","Id":"card_003","Amount":1,"Rate":20}
 {"RewardNum":8,"RewardGroupId":"reward_shop_001","Type":"CARD","Id":"card_001","Amount":1,"Rate":70}
 {"RewardNum":9,"RewardGroupId":"reward_shop_001","Type":"CARD","Id":"card_002","Amount":1,"Rate":30}
-{"RewardNum":1,"RewardGroupId":"reward_treasure_group_001","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
-{"RewardNum":2,"RewardGroupId":"reward_treasure_group_002","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
-{"RewardNum":3,"RewardGroupId":"reward_treasure_group_003","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
-{"RewardNum":4,"RewardGroupId":"reward_treasure_group_004","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
-{"RewardNum":5,"RewardGroupId":"reward_treasure_group_005","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
+{"RewardNum":1,"RewardGroupId":"reward_treasure_001_common","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
+{"RewardNum":2,"RewardGroupId":"reward_treasure_001_rare","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
+{"RewardNum":3,"RewardGroupId":"reward_treasure_001_epic","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
+{"RewardNum":4,"RewardGroupId":"reward_treasure_001_legendary","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
+{"RewardNum":5,"RewardGroupId":"reward_treasure_001_mythic","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
