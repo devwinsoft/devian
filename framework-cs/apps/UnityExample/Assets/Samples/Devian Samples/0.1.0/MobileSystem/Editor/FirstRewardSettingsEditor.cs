@@ -7,9 +7,11 @@ using UnityEngine;
 
 namespace Devian
 {
-    [CustomEditor(typeof(InventorySetting))]
-    public sealed class InventorySettingEditor : Editor
+    [CustomEditor(typeof(FirstRewardSettings))]
+    public sealed class FirstRewardSettingsEditor : Editor
     {
+        const string ApplicationPrefabPath = "Assets/Resources/Devian/Application.prefab";
+
         sealed class RewardRow
         {
             public REWARD_TYPE Type;
@@ -56,13 +58,13 @@ namespace Devian
             if (!_loaded)
                 loadFromAsset();
 
-            var setting = target as InventorySetting;
+            var setting = target as FirstRewardSettings;
             if (setting == null)
                 return;
 
             serializedObject.Update();
 
-            EditorGUILayout.LabelField("Initial Inventory (RewardData[])", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Initial Rewards (RewardData[])", EditorStyles.boldLabel);
             EditorGUILayout.Space(2f);
 
             var removeIndex = -1;
@@ -86,7 +88,7 @@ namespace Devian
             if (removeIndex >= 0)
             {
                 _rows.RemoveAt(removeIndex);
-                persistRows(setting, "Delete Initial Inventory Row");
+                persistRows(setting, "Delete Initial Reward Row");
                 GUIUtility.ExitGUI();
                 return;
             }
@@ -101,14 +103,14 @@ namespace Devian
             {
                 clearEditorIdFields();
                 serializedObject.ApplyModifiedPropertiesWithoutUndo();
-                persistRows(setting, "Save Initial Inventory");
+                persistRows(setting, "Save Initial Rewards");
                 AssetDatabase.SaveAssets();
             }
 
             serializedObject.ApplyModifiedProperties();
         }
 
-        void drawAddRow(InventorySetting setting)
+        void drawAddRow(FirstRewardSettings setting)
         {
             var prevType = _addType;
             _addType = (REWARD_TYPE)EditorGUILayout.EnumPopup("Type", _addType);
@@ -145,10 +147,6 @@ namespace Devian
                 EditorGUILayout.HelpBox(addError, MessageType.Info);
         }
 
-        /// <summary>
-        /// Draw the Id field using generated PropertyDrawer for the given type.
-        /// CURRENCY uses EnumPopup directly (no *_ID type exists).
-        /// </summary>
         void drawIdPropertyField(REWARD_TYPE type)
         {
             switch (type)
@@ -189,9 +187,6 @@ namespace Devian
             }
         }
 
-        /// <summary>
-        /// Read the current Id string from the appropriate *_ID property.
-        /// </summary>
         string readIdFromProperty(REWARD_TYPE type)
         {
             switch (type)
@@ -215,9 +210,6 @@ namespace Devian
             }
         }
 
-        /// <summary>
-        /// Set the editor *_ID field to a sensible default when the user switches type.
-        /// </summary>
         void initEditorIdForType(REWARD_TYPE type)
         {
             switch (type)
@@ -228,7 +220,6 @@ namespace Devian
                 case REWARD_TYPE.TREASURE:
                     _treasureGradeType = TREASURE_GRADE_TYPE.COMMON;
                     break;
-                // For string-based *_ID types, clear so the user can select via Selector
                 case REWARD_TYPE.CARD:
                     setStringIdValue(_propCardId, string.Empty);
                     break;
@@ -274,7 +265,7 @@ namespace Devian
             EditorGUILayout.HelpBox(_statusMessage, _statusType);
         }
 
-        // ── Load / Persist (mirrors InventoryManager.parseInitialInventoryRewards) ──
+        // ── Load / Persist ──
 
         void loadFromAsset()
         {
@@ -287,11 +278,35 @@ namespace Devian
             _statusMessage = string.Empty;
             _statusType = MessageType.Info;
 
-            var setting = target as InventorySetting;
+            var setting = target as FirstRewardSettings;
             if (setting == null)
                 return;
 
-            var json = ((string)setting.InitialInventory)?.Trim() ?? string.Empty;
+            var payload = ((string)setting.InitialRewards)?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(payload))
+                return;
+
+            // AES 복호화
+            string json;
+            var (keyBase64, ivBase64) = loadCryptoKeyIv();
+            if (!string.IsNullOrEmpty(keyBase64) && !string.IsNullOrEmpty(ivBase64))
+            {
+                try
+                {
+                    json = RewardManager.DecryptInitialRewardsJson(payload, keyBase64, ivBase64);
+                }
+                catch (Exception ex)
+                {
+                    _statusMessage = $"AES decrypt failed: {ex.Message}";
+                    _statusType = MessageType.Error;
+                    return;
+                }
+            }
+            else
+            {
+                json = payload;
+            }
+
             if (string.IsNullOrWhiteSpace(json))
                 return;
 
@@ -315,7 +330,7 @@ namespace Devian
 
             if (rewardsArray == null)
             {
-                _statusMessage = "InitialInventory must be RewardData[] JSON or {\"rewards\": RewardData[]}.";
+                _statusMessage = "InitialRewards must be RewardData[] JSON or {\"rewards\": RewardData[]}.";
                 _statusType = MessageType.Error;
                 return;
             }
@@ -339,7 +354,7 @@ namespace Devian
             }
         }
 
-        void persistRows(InventorySetting setting, string undoName)
+        void persistRows(FirstRewardSettings setting, string undoName)
         {
             var rewards = new RewardData[_rows.Count];
             for (var i = 0; i < _rows.Count; i++)
@@ -369,12 +384,53 @@ namespace Devian
                 });
             }
 
+            var json = array.ToString(Newtonsoft.Json.Formatting.None);
+
+            // AES 암호화
+            string payload;
+            var (keyBase64, ivBase64) = loadCryptoKeyIv();
+            if (!string.IsNullOrEmpty(keyBase64) && !string.IsNullOrEmpty(ivBase64))
+            {
+                try
+                {
+                    payload = RewardManager.EncryptInitialRewardsJson(json, keyBase64, ivBase64);
+                }
+                catch (Exception ex)
+                {
+                    _statusMessage = $"AES encrypt failed: {ex.Message}";
+                    _statusType = MessageType.Error;
+                    return;
+                }
+            }
+            else
+            {
+                payload = json;
+                _statusMessage = "WARNING: Crypto key/iv not found on RewardManager. Saved without encryption.";
+                _statusType = MessageType.Warning;
+            }
+
             Undo.RecordObject(setting, undoName);
-            setting.InitialInventory = array.ToString(Newtonsoft.Json.Formatting.None);
+            setting.InitialRewards = payload;
             EditorUtility.SetDirty(setting);
 
-            _statusMessage = string.Empty;
-            _statusType = MessageType.Info;
+            if (_statusType != MessageType.Warning)
+            {
+                _statusMessage = string.Empty;
+                _statusType = MessageType.Info;
+            }
+        }
+
+        static (string keyBase64, string ivBase64) loadCryptoKeyIv()
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(ApplicationPrefabPath);
+            if (prefab == null)
+                return (string.Empty, string.Empty);
+
+            var mgr = prefab.GetComponent<RewardManager>();
+            if (mgr == null)
+                return (string.Empty, string.Empty);
+
+            return (mgr.InitialRewardsCryptoKey ?? string.Empty, mgr.InitialRewardsCryptoIv ?? string.Empty);
         }
 
         static bool validateRow(RewardRow row, out string error)

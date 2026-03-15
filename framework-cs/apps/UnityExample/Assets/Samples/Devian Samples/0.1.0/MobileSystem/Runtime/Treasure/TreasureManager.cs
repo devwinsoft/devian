@@ -10,8 +10,7 @@ namespace Devian
     {
         const string Tag = "TreasureManager";
 
-        readonly TreasureStorage _storage = new();
-        public TreasureStorage Storage => _storage;
+        InventoryStorage storage => InventoryManager.Instance.Storage;
 
         // ──────────────────────────────────────────────
         //  OpenCollectedChests
@@ -22,7 +21,7 @@ namespace Devian
             if (gradeType == TREASURE_GRADE_TYPE.NONE)
                 return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_GRADE_INVALID, "gradeType NONE is not allowed.");
 
-            var count = _storage.GetChestCount(gradeType);
+            var count = storage.GetTreasureCount(gradeType);
             if (count <= 0)
                 return CommonResult.Ok();
 
@@ -49,7 +48,7 @@ namespace Devian
             }
 
             // all-or-nothing: commit only after all rewards succeed
-            _storage.SetChestCount(gradeType, 0);
+            storage.SetTreasureCount(gradeType, 0);
             return CommonResult.Ok();
         }
 
@@ -59,13 +58,13 @@ namespace Devian
 
         public CommonResult OpenCurrentChest()
         {
-            var currentLevel = _storage.Current.Level;
+            var currentLevel = storage.TreasureCurrent.Level;
 
             var chestRow = TB_TREASURE_CHEST.Get(currentLevel);
             if (chestRow == null)
                 return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_CHEST_NOT_FOUND, $"TREASURE_CHEST row not found: level={currentLevel}");
 
-            if (_storage.Current.Exp < chestRow.MaxExp)
+            if (storage.TreasureCurrent.Exp < chestRow.MaxExp)
                 return CommonResult.Ok();
 
             var gradeType = chestRow.TreasureGradeType;
@@ -89,13 +88,13 @@ namespace Devian
             }
 
             // all-or-nothing: commit only after reward succeeds
-            _storage.Current.Exp -= chestRow.MaxExp;
-            _storage.Current.Level++;
+            storage.TreasureCurrent.Exp -= chestRow.MaxExp;
+            storage.TreasureCurrent.Level++;
 
             var allChestRows = TB_TREASURE_CHEST.GetAll();
             var maxLevel = allChestRows.Count > 0 ? allChestRows.Max(r => r.Level) : 1;
-            if (_storage.Current.Level > maxLevel)
-                _storage.Current.Level = 1;
+            if (storage.TreasureCurrent.Level > maxLevel)
+                storage.TreasureCurrent.Level = 1;
 
             return CommonResult.Ok();
         }

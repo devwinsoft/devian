@@ -37,7 +37,7 @@ AppliesTo: v10
 [Client App] ─RefundAsync()─→ [getPurchaseAdjustments] ─→ items[]
                     │
                     ├─→ ParseRefundSyncResult (REWARD 테이블 해석)
-                    ├─→ RevokeRewardsPartial (로컬 인벤토리 회수)
+                    ├─→ RewardManager.RevokeRewardDatasPartial (로컬 인벤토리 회수)
                     └─→ [ackRefundApplied] ─→ clientRefundApplied=true
 ```
 
@@ -131,7 +131,7 @@ AppliesTo: v10
 - 흐름:
   1. `getPurchaseAdjustments` 호출 → 환불 항목 조회
   2. 각 항목의 `internalProductId` → `ResolveRewardGroupId` → `ResolveRewardDatas`
-  3. `RevokeRewardsPartial` 로컬 인벤토리 회수
+  3. `RewardManager.RevokeRewardDatasPartial` 로컬 인벤토리 회수
   4. `ackRefundApplied` 호출 → 처리 완료 마킹
 - 소스: `PurchaseManager.cs` (`RefundAsync` 메서드)
 
@@ -317,7 +317,7 @@ Hard (must be 0)
 - [x] 멱등성: 이미 REFUNDED/REVOKED인 문서 재처리 방지.
 - [x] Firestore collection group 인덱스(`storeKey` + `storePurchaseId`)가 배포되어 있다.
 - [x] IAM 설정(Publisher + Invoker)이 완료되어 있다.
-- [x] 클라이언트 `RefundAsync` → `getPurchaseAdjustments` → `RevokeRewardsPartial` → `ackRefundApplied` 흐름이 동작한다.
+- [x] 클라이언트 `RefundAsync` → `getPurchaseAdjustments` → `RewardManager.RevokeRewardDatasPartial` → `ackRefundApplied` 흐름이 동작한다.
 
 Soft
 - [ ] Apple App Store Server Notifications v2 구현

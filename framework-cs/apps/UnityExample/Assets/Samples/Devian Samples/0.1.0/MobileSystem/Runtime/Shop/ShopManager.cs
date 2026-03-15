@@ -1622,7 +1622,7 @@ namespace Devian
 
             try
             {
-                var rollback = InventoryManager.Instance.RevokeRewards(grantedRewards.ToArray());
+                var rollback = RewardManager.Instance.RevokeRewardDatas(grantedRewards.ToArray());
                 if (rollback.IsFailure)
                 {
                     Debug.LogError(

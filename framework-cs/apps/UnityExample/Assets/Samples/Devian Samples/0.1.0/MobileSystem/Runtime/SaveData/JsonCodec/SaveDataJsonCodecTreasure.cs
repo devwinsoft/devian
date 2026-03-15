@@ -6,24 +6,26 @@ namespace Devian
 {
     internal static class SaveDataJsonCodecTreasure
     {
-        public static JObject Serialize(TreasureStorage storage)
+        const int SchemaVersion = 1;
+
+        public static JObject Serialize(InventoryStorage storage)
         {
-            storage ??= new TreasureStorage();
+            storage ??= new InventoryStorage();
 
             var currentObj = new JObject
             {
-                ["exp"] = storage.Current.Exp,
-                ["level"] = storage.Current.Level,
+                ["exp"] = storage.TreasureCurrent.Exp,
+                ["level"] = storage.TreasureCurrent.Level,
             };
 
             var treasureObj = new JObject
             {
-                ["schemaVersion"] = storage.SchemaVersion,
+                ["schemaVersion"] = SchemaVersion,
                 ["current"] = currentObj,
             };
 
             var chestCountsObj = new JObject();
-            foreach (var kv in storage.ChestCounts)
+            foreach (var kv in storage.TreasureCounts)
             {
                 if (kv.Key == TREASURE_GRADE_TYPE.NONE)
                     continue;
@@ -38,25 +40,24 @@ namespace Devian
             return treasureObj;
         }
 
-        public static void DeserializeInto(JObject treasureObj, TreasureStorage storage)
+        public static void DeserializeInto(JObject treasureObj, InventoryStorage storage)
         {
             if (storage == null)
                 return;
 
-            storage.Clear();
+            storage.TreasureCounts.Clear();
+            storage.TreasureCurrent.Clear();
 
             if (treasureObj == null)
                 return;
 
-            storage.SchemaVersion = treasureObj.Value<int?>("schemaVersion") ?? 1;
-
             if (treasureObj["current"] is JObject currentObj)
             {
                 var exp = currentObj.Value<int?>("exp") ?? 0;
-                storage.Current.Exp = exp < 0 ? 0 : exp;
+                storage.TreasureCurrent.Exp = exp < 0 ? 0 : exp;
 
                 var level = currentObj.Value<int?>("level") ?? 1;
-                storage.Current.Level = level < 1 ? 1 : level;
+                storage.TreasureCurrent.Level = level < 1 ? 1 : level;
             }
 
             if (treasureObj["chestCounts"] is JObject chestCountsObj)
@@ -76,7 +77,7 @@ namespace Devian
                     if (count <= 0)
                         continue;
 
-                    storage.ChestCounts[gradeType] = count;
+                    storage.TreasureCounts[gradeType] = count;
                 }
             }
         }

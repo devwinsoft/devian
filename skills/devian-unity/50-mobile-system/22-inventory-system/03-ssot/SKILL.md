@@ -28,7 +28,7 @@ AppliesTo: v10
 
 ## B) Inventory State (개념)
 
-Inventory 상태는 "통화", "아이템", "영웅"으로 분리된다.
+Inventory 상태는 "통화", "아이템", "영웅", "Treasure"로 분리된다.
 
 ### B-1) Wallet
 
@@ -78,6 +78,24 @@ NOTE:
 - 능력치: `AbilityUnitHero : AbilityUnitBase : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)
 
 
+### B-5) Treasure
+
+- `TreasureCurrent` — `InventoryTreasureCurrent` (exp/level 묶음, 단일 인스턴스)
+  - `Exp: int` (현재 treasure exp, 기본값 0)
+  - `Level: int` (현재 treasure reward level, 기본값 1)
+- `TreasureCounts` — `Dictionary<TREASURE_GRADE_TYPE, int>` (grade별 보유 chest count)
+  - key: `TREASURE_GRADE_TYPE` (NONE 제외)
+  - value: `int` (보유량, 기본값 0)
+
+NOTE:
+- `TREASURE_GRADE_TYPE.NONE`은 저장 대상이 아니다.
+- chest count와 exp는 음수가 될 수 없다 (0 이하로 clamp).
+- current 상태는 grade별로 분리하지 않는다. 단일 `TreasureCurrent.Exp` / `TreasureCurrent.Level`만 사용한다.
+- max level 판단은 storage가 아니라 `TREASURE_CHEST` 테이블을 기준으로 한다 (TreasureManager 담당).
+- `RewardData.Id`는 `TREASURE_GRADE_TYPE` enum name 문자열이다 (예: `"COMMON"`, `"EPIC"`).
+- Treasure 상태의 세부 규칙(max level 판단 등)은 Treasure를 소비하는 상위 시스템이 담당한다.
+
+
 ---
 
 
@@ -85,11 +103,10 @@ NOTE:
 
 ### C-1) 공통
 
-- `AddRewards`의 반환 타입은 `CommonResult`다.
-- 입력 검증은 `RewardData` 정본([49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md))을 따른다.
-- `rewards.Length == 0`은 valid no-op이다 (`CommonResult.Ok()`).
-- invalid가 하나라도 있으면 `CommonResult.Failure`를 반환하고 전체 미적용(원자성)한다.
-- 차감/소비/회수(환불/철회 포함)는 RewardData로 처리하지 않는다(별도 시스템/경로).
+- InventoryManager는 타입별 Apply/Revoke/Query API를 제공한다 (예: `ApplyCurrency`, `RevokeCurrency`, `GetCurrencyAmount`).
+- 각 API의 반환 타입은 `CommonResult`다.
+- RewardData 해석·검증·원자성 보장은 `RewardManager`가 담당한다 ([49-reward-system/10-reward-manager](../../49-reward-system/10-reward-manager/SKILL.md)).
+- InventoryManager는 RewardData를 직접 참조하지 않는다.
 
 ### C-2) `type == REWARD_TYPE.CURRENCY`
 
@@ -118,6 +135,21 @@ NOTE:
 - Apply는 `STAT_TYPE.UNIT_AMOUNT`만 변경한다 (다른 stat은 보존).
 
 
+### C-5) `type == REWARD_TYPE.TREASURE`
+
+- `_storage.AddTreasure(gradeType, amount)`
+- `gradeType`는 `TREASURE_GRADE_TYPE`으로 파싱한다 (`RewardData.Id` = enum name 문자열).
+- `gradeType == TREASURE_GRADE_TYPE.NONE`이면 invalid.
+- 없는 grade key는 0에서 시작하여 amount를 누적한다.
+
+### C-5a) `RevokeTreasure`
+
+- 검증: `_storage.GetTreasureCount(gradeType) >= amount` (부족하면 `INVENTORY_REFUND_INSUFFICIENT`).
+- 적용: `_storage.SetTreasureCount(gradeType, current - amount)`.
+
+NOTE: `RewardManager.RevokeRewardDatas` / `RevokeRewardDatasPartial`가 RewardData 단위의 회수 원자성을 담당한다. InventoryManager의 Revoke API는 단일 타입/단일 건의 storage 변경만 수행한다.
+
+
 ---
 
 
@@ -132,25 +164,6 @@ InventoryStorage가 hero/equip 조회 + AbilityUnitHero에 위임하는 편의 �
 - `Unequip(string heroId, int equipSlot)`:
   1. `mHeroes[heroId]` 조회 → 없으면 false
   2. `hero.Unequip(equipSlot)` 위임
-
-
----
-
-
-## C-7) Initial Inventory Source (정본)
-
-- 초기 지급 데이터 소스는 `InventorySetting` ScriptableObject다.
-  - Resources 경로: `Devian/InventorySettings`
-  - 프로젝트 에셋 경로: `Assets/Resources/Devian/InventorySettings.asset`
-- `InventoryManager.FirstInitAsync()`는 위 에셋의 `InitialInventory(CString)` payload를 읽는다.
-- payload는 `InventoryManager`가 소유한 key/iv로 AES 복호화한다.
-  - `InitialInventoryCryptoKey` (public property, serialized backing field)
-  - `InitialInventoryCryptoIv` (public property, serialized backing field)
-- 복호화된 원문 JSON을 `RewardData[]` 계약으로 파싱한다.
-- 허용 JSON:
-  - `RewardData[]`
-  - `{ "rewards": RewardData[] }`
-- 파싱/검증 실패 시 `CommonResult.Failure`를 반환하고 적용하지 않는다.
 
 
 ---
@@ -196,6 +209,8 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 - Hero equips: slotNumber(string key) → equipUid(string value). 중복 데이터 없음.
 - 역직렬화 시 테이블 참조: `TB_ITEM_EQUIP.Get`/`TB_ITEM_CARD.Get`/`TB_UNIT_HERO.Get`으로 `mTable` 복원.
 - 역직렬화 순서: wallet → equipments → cards → heroes (heroes 마지막: equip 슬롯 참조 필요).
+- Treasure 상태는 별도 root key `"treasure"`로 직렬화된다 (`SaveDataJsonCodecTreasure` 담당).
+  - `"treasure"` 스키마: `{ "schemaVersion": 1, "current": { "exp": int, "level": int }, "chestCounts": { "<GRADE_TYPE>": int } }`
 
 
 ---
@@ -203,7 +218,7 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 
 ## E) Error Code Source (정본)
 
-- `AddRewards` 실패 에러 코드는 `COMMON_ERROR_TYPE`을 사용한다.
+- InventoryManager 타입별 API 실패 에러 코드는 `COMMON_ERROR_TYPE`을 사용한다.
 - inventory 전용 에러 코드는 `COMMON_ERROR`을 SSOT로 추가/관리한다.
   - 파일: `input/Domains/Common/CommonTable.xlsx`
   - 시트: `COMMON_ERROR`

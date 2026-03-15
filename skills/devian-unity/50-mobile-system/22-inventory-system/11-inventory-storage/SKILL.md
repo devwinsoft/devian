@@ -28,8 +28,13 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobileSyste
 - `GetHero/AddHero` — 영웅 CRUD
 - `SetRental(id, expiresAtClientUtcMs)` / `GetRentalExpiry(id)` / `HasActiveRental(id)` / `GetRentalRemainingMs(id)` / `RemoveRental(id)` — 렌탈 CRUD
 - `SetPass(id, owned)` / `HasPass(id)` / `RemovePass(id)` — 시즌패스 CRUD
+- `TreasureCurrent` — `InventoryTreasureCurrent` (Exp/Level, sealed POCO)
+- `TreasureCounts` — `Dictionary<TREASURE_GRADE_TYPE, int>` (grade별 보유 chest count)
+- `GetTreasureCount(gradeType)` / `AddTreasure(gradeType, amount)` / `SetTreasureCount(gradeType, count)` — treasure count CRUD
+- `AddTreasureExp(amount)` — delegates to `TreasureCurrent.Exp`
+- `ResetTreasure(level, exp)` — delegates to `TreasureCurrent.Reset(...)`
 - Pass 변경 알림 publish는 `InventoryManager`가 담당한다 (trigger 직접 노출 금지).
-- 초기 인벤토리 지급 트리거는 `InventoryStorage`가 아니라 `InventoryManager.FirstInitAsync()`에서 처리한다 (`InventorySetting` source).
+- 초기 보상 지급 트리거는 `InventoryStorage`가 아니라 `RewardManager.FirstInitAsync()`에서 처리한다 (`FirstRewardSettings` source).
 - ~~`ToJson()`~~ — **삭제됨**. [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)의 `SaveDataJsonCodec`으로 이전.
 - ~~`FromJson(string json)`~~ — **삭제됨**. [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)의 `SaveDataJsonCodec`으로 이전.
 
@@ -48,19 +53,20 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
 
 | 타입 | 책임 |
 |---|---|
-| `InventoryManager` | `GetAmount`, InventoryStorage 소유, AddRewards 검증/연동 |
-| `InventoryStorage` | Wallet (`InventoryWallet`), Equipments (itemUid → AbilityEquip), Cards (cardId → AbilityCard), Heroes (heroId → AbilityUnitHero), Rentals (rentalTypeId → expiresAtClientUtcMs), Passes (passId → owned) |
+| `InventoryManager` | InventoryStorage 소유, 타입별 Apply/Revoke/Query API 제공 |
+| `InventoryStorage` | Wallet (`InventoryWallet`), Equipments (itemUid → AbilityEquip), Cards (cardId → AbilityCard), Heroes (heroId → AbilityUnitHero), Rentals (rentalTypeId → expiresAtClientUtcMs), Passes (passId → owned), TreasureCurrent (`InventoryTreasureCurrent`), TreasureCounts (TREASURE_GRADE_TYPE → int) |
 | `AbilityEquip` | OwnerUnitId/OwnerSlotNumber(별도 필드) + 능력치(STAT_TYPE 기반) 관리 |
 | `AbilityCard` | 수량(`STAT_TYPE.CARD_AMOUNT`) + 능력치(STAT_TYPE 기반) 관리 |
 | `AbilityUnitHero` | 수량(`STAT_TYPE.UNIT_AMOUNT`) + 영웅 능력치(STAT_TYPE 기반) + 장비 슬롯(`Dict<int, AbilityEquip>`) 관리 |
 
 - `InventoryManager`가 `InventoryStorage`를 소유한다 (싱글톤 등록 안 함).
 - 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `equipId`에 여러 인스턴스가 존재할 수 있다.
-- `AddRewards` 시 `REWARD_TYPE.CARD`이면 `_storage.Cards`에 AbilityCard를 추가하고 `AddAmount(delta)`로 수량 누적한다.
-- `AddRewards` 시 `REWARD_TYPE.EQUIP`이면 새 `itemUid`(GUID)로 AbilityEquip을 생성하여 `_storage.Equipments`에 추가한다.
-- `AddRewards` 시 `REWARD_TYPE.HERO`이면 `_storage.Heroes`에 AbilityUnitHero를 추가하고 `AddStat(STAT_TYPE.UNIT_AMOUNT, delta)`로 수량 누적한다.
-- `AddRewards` 시 `REWARD_TYPE.RENTAL`이면 `_storage.SetRental(id, max(currentExpiry, now)+30days)`로 로컬 만료 시각을 설정/연장한다.
-- `AddRewards` 시 `REWARD_TYPE.PASS`이면 `_storage.SetPass(id, true)`로 소유권을 설정한다.
+- `ApplyCard(cardId, amount)` — `_storage.Cards`에 AbilityCard를 추가하고 `AddAmount(delta)`로 수량 누적한다.
+- `ApplyEquip(equipId)` — 새 `itemUid`(GUID)로 AbilityEquip을 생성하여 `_storage.Equipments`에 추가한다.
+- `ApplyHero(heroId, amount)` — `_storage.Heroes`에 AbilityUnitHero를 추가하고 `AddStat(STAT_TYPE.UNIT_AMOUNT, delta)`로 수량 누적한다.
+- `ApplyRental(rentalId, durationMs)` — `_storage.SetRental(id, max(currentExpiry, now)+duration)`로 로컬 만료 시각을 설정/연장한다.
+- `SetPassOwnership(passId)` — `_storage.SetPass(id, true)`로 소유권을 설정한다.
+- `ApplyTreasure(gradeType, amount)` — `_storage.AddTreasure(gradeType, amount)`로 chest count를 누적한다.
 - 시즌패스 상태 변경 시 `MESSAGE_INVENTORY_TYPE.PASS_CHANGED`를 publish할 수 있어야 한다(실행 위치: `InventoryManager`).
 
 ```csharp
@@ -121,6 +127,10 @@ namespace Devian
 - `Heroes` key = `heroId` (string). value = `AbilityUnitHero`.
 - `Rentals` key = `rentalTypeId` (string key). value = `long` expiresAtClientUtcMs.
 - `Passes` key = `passId` (string key). value = `bool` owned.
+- `TreasureCurrent` = `InventoryTreasureCurrent` (sealed POCO, Exp/Level).
+- `TreasureCounts` key = `TREASURE_GRADE_TYPE` (NONE 제외). value = `int` (보유 chest count).
+- treasure count와 exp는 음수 불가 (0 이하 clamp).
+- treasure current 상태는 grade별 분리 없이 단일 Exp/Level만 사용한다.
 - 장비 장착/해제의 핵심 로직은 `AbilityUnitHero`가 담당한다. InventoryStorage는 편의 메서드(`Equip`/`Unequip`)로 위임한다.
 - InventoryStorage는 InventoryManager가 소유한다 (싱글톤 등록 안 함).
 - "Sample" 접두사 금지 (정책).
@@ -132,7 +142,7 @@ namespace Devian
 > **변경**: `ToJson()` / `FromJson()` 메서드는 **삭제**되었다.
 > 직렬화 책임은 [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)의 **`SaveDataJsonCodec`**가 담당한다.
 
-InventoryStorage는 **ReadOnly 프로퍼티**(`Wallet`, `Equipments`, `Cards`, `Heroes`, `Rentals`, `Passes`)와 **CRUD 메서드**만 제공한다.
+InventoryStorage는 **ReadOnly 프로퍼티**(`Wallet`, `Equipments`, `Cards`, `Heroes`, `Rentals`, `Passes`, `TreasureCurrent`, `TreasureCounts`)와 **CRUD 메서드**만 제공한다.
 `SaveDataJsonCodec`이 이 프로퍼티/메서드를 사용하여 직렬화/역직렬화를 수행한다.
 
 JSON 스키마: [03-ssot](../03-ssot/SKILL.md) 참조.

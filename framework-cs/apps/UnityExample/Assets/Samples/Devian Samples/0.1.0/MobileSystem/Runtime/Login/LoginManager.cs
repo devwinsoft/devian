@@ -90,7 +90,7 @@ namespace Devian
 
             if (initialize.Value.IsInitial)
             {
-                var firstInit = await InventoryManager.Instance.FirstInitAsync(ct);
+                var firstInit = await RewardManager.Instance.FirstInitAsync(ct);
                 await yieldMainThreadAsync(ct);
                 if (firstInit.IsFailure)
                 {

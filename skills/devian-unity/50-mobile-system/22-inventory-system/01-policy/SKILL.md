@@ -45,10 +45,10 @@ RewardData 스키마는 Reward 시스템 문서가 단일 정본이다.
 
 ### 4) invalid 입력은 실패(CommonResult) + 전체 미적용(원자성)
 
-- `AddRewards`는 `CommonResult`를 반환한다.
-- invalid가 하나라도 있으면 `CommonResult.Failure(...)`를 반환한다.
+- InventoryManager의 타입별 API(ApplyCurrency, RevokeCurrency 등)는 `CommonResult`를 반환한다.
+- invalid 입력이면 `CommonResult.Failure(...)`를 반환한다.
 - 실패 시 상태 변경은 0이어야 한다(호출 전/후 동일).
-- `rewards.Length == 0`은 valid no-op이며 `CommonResult.Ok()`를 반환한다.
+- RewardData[] 단위의 원자성(pre-validate → apply 루프)은 `RewardManager`가 담당한다.
 
 
 ### 5) 차감/소비/회수는 RewardData로 처리하지 않는다

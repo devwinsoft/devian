@@ -12,10 +12,11 @@ Treasure 시스템의 모듈 경계와 하드룰을 정의한다.
 
 ## Hard Rules
 
-### 1) TreasureManager가 TreasureStorage를 단독 소유한다
+### 1) Treasure 상태는 InventoryStorage에 저장되며 TreasureManager가 mutation을 담당한다
 
-- `TreasureStorage`는 `TreasureManager` 내부 상태다.
-- 외부 시스템은 storage를 직접 mutate하지 않고 `TreasureManager` 경유로만 접근한다.
+- Treasure 필드(`TreasureCurrent`, `TreasureCounts`)는 `InventoryStorage` 내부에 있다.
+- `TreasureManager`는 `InventoryManager.Instance.Storage` 경유로 treasure 상태를 mutate한다.
+- 외부 시스템은 treasure 상태를 직접 mutate하지 않고 `TreasureManager` 경유로만 접근한다.
 
 ### 2) chest reward 실행은 RewardManager 단일 경로를 사용한다
 
@@ -37,17 +38,17 @@ Treasure 시스템의 모듈 경계와 하드룰을 정의한다.
 
 ### 5) `OpenCollectedChests(gradeType)`는 소비형 수집이다
 
-- `TreasureStorage`의 해당 grade chest count를 기준으로 반복 지급한다.
+- `InventoryStorage`의 해당 grade treasure count를 기준으로 반복 지급한다.
 - `TREASURE_REWARD` 조건 필터 후 best level row 1개의 `rewardGroupId`를 사용한다.
 - 성공 시 해당 grade count는 0이 된다.
 - count가 0이면 valid no-op으로 처리한다.
 
 ### 6) `OpenCurrentChest()`는 현재 level 1회 수집만 담당한다
 
-- `Current.Level` row의 `maxExp`를 기준으로 claim 가능 여부를 판단한다.
+- `TreasureCurrent.Level` row의 `maxExp`를 기준으로 claim 가능 여부를 판단한다.
 - `TREASURE_REWARD` 조건 필터 후 best level row 1개의 `rewardGroupId`를 사용한다.
-- 성공 시 `Current.Exp -= maxExp`, `Current.Level++`를 적용한다.
-- 증가 후 `Current.Level > maxLevel`이면 `1`로 wrap한다.
+- 성공 시 `TreasureCurrent.Exp -= maxExp`, `TreasureCurrent.Level++`를 적용한다.
+- 증가 후 `TreasureCurrent.Level > maxLevel`이면 `1`로 wrap한다.
 - 한 번의 호출은 현재 level 보상 1회만 지급한다. 남은 exp가 충분해도 다음 level 보상은 다음 호출에서 처리한다.
 
 ### 7) collect는 all-or-nothing 상태 변경을 유지한다
@@ -73,6 +74,5 @@ Treasure 시스템의 모듈 경계와 하드룰을 정의한다.
 ## Client API (target)
 
 `TreasureManager`
-- `TreasureStorage Storage { get; }`
 - `OpenCollectedChests(TREASURE_GRADE_TYPE gradeType)` -> `CommonResult`
 - `OpenCurrentChest()` -> `CommonResult`

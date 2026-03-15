@@ -4,6 +4,24 @@ using Devian.Domain.Game;
 
 namespace Devian
 {
+    public sealed class InventoryTreasureCurrent
+    {
+        public int Exp { get; set; }
+        public int Level { get; set; } = 1;
+
+        public void Reset(int level = 1, int exp = 0)
+        {
+            Level = level < 1 ? 1 : level;
+            Exp = exp < 0 ? 0 : exp;
+        }
+
+        public void Clear()
+        {
+            Exp = 0;
+            Level = 1;
+        }
+    }
+
     public sealed class InventoryStorage
     {
         // ── Currency ──
@@ -29,6 +47,12 @@ namespace Devian
         // ── Passes ──
         readonly Dictionary<string, bool> mPasses = new();
         public IReadOnlyDictionary<string, bool> Passes => mPasses;
+
+        // ── Treasure ──
+        readonly InventoryTreasureCurrent mTreasureCurrent = new();
+        readonly Dictionary<TREASURE_GRADE_TYPE, int> mTreasureCounts = new();
+        public InventoryTreasureCurrent TreasureCurrent => mTreasureCurrent;
+        public Dictionary<TREASURE_GRADE_TYPE, int> TreasureCounts => mTreasureCounts;
 
         // ── Equip Operations ──
 
@@ -158,6 +182,43 @@ namespace Devian
             return mPasses.Remove(id);
         }
 
+        // ── Treasure Operations ──
+
+        public int GetTreasureCount(TREASURE_GRADE_TYPE gradeType)
+        {
+            return mTreasureCounts.TryGetValue(gradeType, out var count) ? count : 0;
+        }
+
+        public void AddTreasure(TREASURE_GRADE_TYPE gradeType, int amount)
+        {
+            if (amount <= 0)
+                return;
+
+            mTreasureCounts.TryGetValue(gradeType, out var current);
+            mTreasureCounts[gradeType] = current + amount;
+        }
+
+        public void SetTreasureCount(TREASURE_GRADE_TYPE gradeType, int count)
+        {
+            if (count < 0)
+                count = 0;
+
+            mTreasureCounts[gradeType] = count;
+        }
+
+        public void AddTreasureExp(int amount)
+        {
+            if (amount <= 0)
+                return;
+
+            mTreasureCurrent.Exp += amount;
+        }
+
+        public void ResetTreasure(int level = 1, int exp = 0)
+        {
+            mTreasureCurrent.Reset(level, exp);
+        }
+
         // ── Clear ──
 
         public void Clear()
@@ -170,6 +231,8 @@ namespace Devian
             mEquipments.Clear();
             mRentals.Clear();
             mPasses.Clear();
+            mTreasureCounts.Clear();
+            mTreasureCurrent.Clear();
         }
     }
 }

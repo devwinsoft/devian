@@ -18,8 +18,7 @@ namespace Devian
             MissionStorage mission,
             AchieveStorage achieve,
             LeaderboardSeasonRewardStorage leaderboardReward,
-            AttendStorage attend,
-            TreasureStorage treasure)
+            AttendStorage attend)
         {
             var root = new JObject
             {
@@ -33,7 +32,7 @@ namespace Devian
                 ["achieve"] = SaveDataJsonCodecAchieve.Serialize(achieve),
                 ["leaderboardReward"] = SaveDataJsonCodecLeaderboardReward.Serialize(leaderboardReward),
                 ["attend"] = SaveDataJsonCodecAttend.Serialize(attend),
-                ["treasure"] = SaveDataJsonCodecTreasure.Serialize(treasure),
+                ["treasure"] = SaveDataJsonCodecTreasure.Serialize(inventory),
             };
             return root.ToString();
         }
@@ -48,8 +47,7 @@ namespace Devian
             MissionStorage mission,
             AchieveStorage achieve,
             LeaderboardSeasonRewardStorage leaderboardReward,
-            AttendStorage attend,
-            TreasureStorage treasure)
+            AttendStorage attend)
         {
             var root = JObject.Parse(json);
             var version = root.Value<int?>("version") ?? 0;
@@ -102,9 +100,12 @@ namespace Devian
                 attend?.Clear();
 
             if (version >= TreasureVersion && root["treasure"] is JObject treasureObj)
-                SaveDataJsonCodecTreasure.DeserializeInto(treasureObj, treasure);
+                SaveDataJsonCodecTreasure.DeserializeInto(treasureObj, inventory);
             else
-                treasure?.Clear();
+            {
+                inventory?.TreasureCounts.Clear();
+                inventory?.TreasureCurrent.Clear();
+            }
         }
 
         static bool isSupportedVersion(int version)

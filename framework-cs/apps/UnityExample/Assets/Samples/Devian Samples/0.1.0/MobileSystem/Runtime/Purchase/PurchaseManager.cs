@@ -192,7 +192,7 @@ namespace Devian
                     CommonResult apply;
                     try
                     {
-                        apply = InventoryManager.Instance.RevokeRewardsPartial(item.Rewards);
+                        apply = RewardManager.Instance.RevokeRewardDatasPartial(item.Rewards);
                     }
                     catch (Exception ex)
                     {
@@ -322,7 +322,7 @@ namespace Devian
                     CommonResult apply;
                     try
                     {
-                        apply = InventoryManager.Instance.RevokeRewardsPartial(item.Rewards);
+                        apply = RewardManager.Instance.RevokeRewardDatasPartial(item.Rewards);
                     }
                     catch (Exception ex)
                     {

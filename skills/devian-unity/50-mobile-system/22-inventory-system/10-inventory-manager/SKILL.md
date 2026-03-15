@@ -5,17 +5,13 @@ Status: ACTIVE
 AppliesTo: v10
 
 
-InventoryManager(구현 규약)는 `RewardData[]` 입력을 받아 인벤토리 상태에 적용(Apply)한다.
+InventoryManager(구현 규약)는 인벤토리 상태를 관리하는 시스템이다. 타입별 구체 API를 제공한다.
 
-- `type=REWARD_TYPE.CURRENCY`: `currencyType -> amount(long)` 잔고 누적
-- `type=REWARD_TYPE.EQUIP`: 매 Apply마다 새 인스턴스(`itemUid=GUID` pk) 생성, amount 무시
-- `type=REWARD_TYPE.CARD`: `cardId(pk)` → `AbilityCard.Amount` (`STAT_TYPE.CARD_AMOUNT`) 누적
-- `type=REWARD_TYPE.HERO`: `heroId(pk)` → `AbilityUnitHero` (`STAT_TYPE.UNIT_AMOUNT`) 누적
-- `type=REWARD_TYPE.RENTAL`: rental key(string) id → `InventoryStorage.SetRental(id, max(currentExpiry, now)+30days)` (로컬 만료 시각 누적)
-- `type=REWARD_TYPE.PASS`: season pass key(string) id → `InventoryStorage.SetPass(id, true)` (소유권 설정)
+- `RewardData` 해석(type switch)은 InventoryManager의 책임이 아니다 → [49-reward-system/10-reward-manager](../../49-reward-system/10-reward-manager/SKILL.md)가 담당.
+- InventoryManager는 `RewardData`를 직접 참조하지 않는다.
 
 InventoryManager는 **단일 concrete 클래스**이다.
-InventoryStorage를 소유하며, AddRewards 시 Equipments/Cards/Heroes에 AbilityEquip/AbilityCard/AbilityUnitHero를 추가/갱신한다.
+InventoryStorage를 소유하며, 타입별 구체 API로 상태를 변경한다.
 
 
 ---
@@ -26,37 +22,49 @@ InventoryStorage를 소유하며, AddRewards 시 Equipments/Cards/Heroes에 Abil
 ```csharp
 using Devian.Domain.Common;
 
-public sealed class InventoryManager : MonoBehaviour
+public sealed class InventoryManager : CompoSingleton<InventoryManager>
 {
     readonly InventoryStorage _storage = new();
     readonly InventoryMessageTrigger _messageTrigger = new();
     public InventoryStorage Storage => _storage;
-    [SerializeField] string _initialInventoryCryptoKey;
-    [SerializeField] string _initialInventoryCryptoIv;
-    public string InitialInventoryCryptoKey { get; set; }
-    public string InitialInventoryCryptoIv { get; set; }
 
     public static InventoryManager Instance
         => CompoSingleton<InventoryManager>.Instance;
 
-    protected void Awake()
-    {
-        CompoSingleton<InventoryManager>.Register(this);
-    }
+    // ── Apply API ──
+    public void ApplyCurrency(CURRENCY_TYPE currencyType, long amount) { ... }
+    public void ApplyEquip(string equipId, int amount) { ... }
+    public void ApplyCard(string cardId, int amount) { ... }
+    public void ApplyHero(string heroId, int amount) { ... }
+    public void ApplyRental(string rentalId) { ... }
+    public void ApplyTreasure(TREASURE_GRADE_TYPE gradeType, int amount) { ... }
+    public void SetPassOwnership(string passId, bool owned) { ... }
+    public void RemovePassOwnership(string passId) { ... }
 
-    // ── Public API ──
+    // ── Revoke API ──
+    public void RevokeCurrency(CURRENCY_TYPE currencyType, long amount) { ... }
+    public void RevokeEquip(string equipId, int amount) { ... }
+    public void RevokeCard(string cardId, int amount) { ... }
+    public void RevokeHero(string heroId, int amount) { ... }
+    public void RevokeRental(string rentalId) { ... }
+    public void RevokeTreasure(TREASURE_GRADE_TYPE gradeType, int amount) { ... }
 
-    public CommonResult AddRewards(RewardData[] rewards) { ... }
+    // ── Query API ──
+    public long GetCurrencyAmount(CURRENCY_TYPE currencyType) { ... }
+    public int GetEquipCount(string equipId) { ... }
+    public long GetCardAmount(string cardId) { ... }
+    public long GetHeroAmount(string heroId) { ... }
+    public bool HasActiveRental(string rentalId) { ... }
+    public bool HasPass(string passId) { ... }
+    public int GetTreasureCount(TREASURE_GRADE_TYPE gradeType) { ... }
 
-    public long GetAmount(string type, string id) { ... }
-
-    public void Subcribe(EntityId ownerKey, MESSAGE_INVENTORY_TYPE msgType, BaseTrigger<EntityId, MESSAGE_INVENTORY_TYPE>.Handler handler) { ... }
+    // ── Message ──
+    public void Subcribe(EntityId ownerKey, MESSAGE_INVENTORY_TYPE msgType, Handler handler) { ... }
     public void UnSubcribe(EntityId ownerKey) { ... }
 }
 ```
 
-- `InventoryManager : MonoBehaviour` (sealed, concrete)
-- `CompoSingleton<InventoryManager>` (1-param)으로 등록
+- `InventoryManager : CompoSingleton<InventoryManager>` (sealed, concrete)
 - Registry key: `InventoryManager`
 - 다른 매니저에서 접근: `Singleton.Get<InventoryManager>()`
 
@@ -76,44 +84,22 @@ CompoSingleton<InventoryManager>.Instance
 
 ## Responsibilities (정본)
 
-- `RewardData[]`를 AddRewards로 적용한다.
-  - `type=REWARD_TYPE.CURRENCY`와 `type=REWARD_TYPE.EQUIP`과 `type=REWARD_TYPE.CARD`와 `type=REWARD_TYPE.HERO`와 `type=REWARD_TYPE.RENTAL`과 `type=REWARD_TYPE.PASS`의 처리 로직은 분기된다(정본).
-  - `type=REWARD_TYPE.EQUIP`일 때 새 itemUid(GUID)로 AbilityEquip 인스턴스를 생성하여 InventoryStorage.Equipments에 추가한다.
-  - `type=REWARD_TYPE.CARD`일 때 InventoryStorage.Cards에 AbilityCard를 추가/갱신한다.
-  - `type=REWARD_TYPE.HERO`일 때 InventoryStorage.Heroes에 AbilityUnitHero를 추가/갱신한다.
-  - `type=REWARD_TYPE.RENTAL`일 때 `InventoryStorage.SetRental(id, max(currentExpiry, now)+30days)`로 로컬 만료 시각을 설정/연장한다.
-  - `type=REWARD_TYPE.PASS`일 때 `InventoryStorage.SetPass(id, true)`로 소유권을 설정한다.
-  - 입력 검증 실패 시 `CommonResult.Failure`를 반환하고 상태를 변경하지 않는다.
-  - 성공 시 `CommonResult.Ok()`를 반환한다.
-- `FirstInitAsync()`로 초기 지급을 처리한다.
-  - `InventorySetting` (`Assets/Resources/Devian/InventorySettings.asset`)을 `Resources.Load`로 읽는다.
-  - `InitialInventory(CString)` payload를 읽는다.
-  - `InventoryManager.InitialInventoryCryptoKey` / `InventoryManager.InitialInventoryCryptoIv`로 AES 복호화한다.
-  - 복호화된 `RewardData[]` JSON을 파싱/검증한다.
-  - 파싱 성공 시 `AddRewards`로 적용한다.
-  - `LoginManager`는 `FirstInitAsync`를 내부 호출하지 않는다. 호출자가 `LoginInitializeResult.IsInitial`을 확인한 뒤 외부에서 실행한다.
-- InitialInventory 암복호화 key/iv를 소유한다.
-  - key/iv는 `InventoryManager`의 serializable field + public property 정본이다.
-  - 인스펙터(CustomEditor)에서 `Generate key iv` 버튼으로 key/iv를 새로 생성할 수 있다.
-- 수량 조회를 제공한다.
-  - `type=REWARD_TYPE.CURRENCY`: 잔고 조회
-  - `type=REWARD_TYPE.EQUIP`: 해당 `equipId`를 가진 인스턴스 수 반환
-  - `type=REWARD_TYPE.CARD`: 해당 `cardId(pk)` 수량 조회
-  - `type=REWARD_TYPE.HERO`: 해당 `heroId(pk)` 수량 조회
-  - `type=REWARD_TYPE.RENTAL`: `HasActiveRental(id) ? 1 : 0`
-  - `type=REWARD_TYPE.PASS`: `HasPass(id) ? 1 : 0`
+- 타입별 구체 API로 인벤토리 상태를 변경한다.
+  - `ApplyCurrency`: 잔고 누적
+  - `ApplyEquip`: 새 `itemUid`(GUID)로 AbilityEquip 인스턴스 생성, amount 횟수만큼
+  - `ApplyCard`: AbilityCard 추가/갱신 (`STAT_TYPE.CARD_AMOUNT` 누적)
+  - `ApplyHero`: AbilityUnitHero 추가/갱신 (`STAT_TYPE.UNIT_AMOUNT` 누적)
+  - `ApplyRental`: 로컬 만료 시각 설정/연장 (`max(currentExpiry, now) + 30days`)
+  - `SetPassOwnership`: 소유권 설정 + 메시지 트리거
+  - `ApplyTreasure`: chest count 누적
+- 타입별 Revoke API로 회수한다.
+- 타입별 Query API로 수량/상태를 조회한다.
 - InventoryStorage를 소유한다.
 - 변경 이벤트를 제공한다(개념).
 
-NOTE:
-- 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `equipId`에 여러 인스턴스가 존재할 수 있다.
-- `GetAmount(Equip, equipId)`는 해당 equipId를 가진 인스턴스 수를 반환한다.
-- 카드 수량 SSOT = `AbilityCard.Amount` (= `this[STAT_TYPE.CARD_AMOUNT]`).
-- 영웅 수량 = `AbilityUnitHero[STAT_TYPE.UNIT_AMOUNT]`.
-- `AbilityEquip`이 능력치를 관리한다 (`ItemData`는 `AbilityEquip`에 통합됨). 장비 장착은 `AbilityUnitHero`가 담당한다.
-- Apply는 카드/영웅의 Amount stat만 변경한다 (다른 stat은 보존). 장비는 매번 새 인스턴스를 생성한다.
-
 비책임:
+- `RewardData` 해석 (RewardManager 담당)
+- 초기 보상 지급 (`FirstInitAsync`는 RewardManager 담당)
 - 멱등/기록/복구는 호출자(Mission/Purchase)가 책임진다.
 
 
@@ -125,7 +111,6 @@ NOTE:
 - InventoryManager는 저장 시스템을 직접 참조하지 않는다.
 - 저장/로드 결합은 상위 조립(bootstrap/composition root)에서만 수행한다.
 - JSON 직렬화 규약은 [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)를 따른다.
-- 초기 지급 설정 소스는 `InventorySetting` (`Assets/Resources/Devian/InventorySettings.asset`)이다.
 
 
 ---
@@ -133,74 +118,40 @@ NOTE:
 
 ## Public API (설계)
 
-- `AddRewards(RewardData[] rewards) -> CommonResult`
-  - 입력 전체를 선검증한다.
-  - 하나라도 invalid면 `CommonResult.Failure(error)`를 반환하고 상태를 변경하지 않는다.
-  - 전체 valid이면 Apply 한다(멱등 아님):
-    - `type=REWARD_TYPE.CURRENCY`: `_storage.AddCurrency(currencyType, amount)`
-    - `type=REWARD_TYPE.EQUIP`: 새 `itemUid`(GUID)로 AbilityEquip 생성 + `_storage.AddEquip(itemUid, ability)`. amount 무시(항상 1개)
-    - `type=REWARD_TYPE.CARD`: `_storage.Cards`에 AbilityCard 추가(없으면 생성) + `AbilityCard.AddAmount(amount)`
-    - `type=REWARD_TYPE.HERO`: `_storage.Heroes`에 AbilityUnitHero 추가(없으면 생성) + `AddStat(STAT_TYPE.UNIT_AMOUNT, amount)`
-    - `type=REWARD_TYPE.RENTAL`: `_storage.SetRental(id, max(currentExpiry, now)+30days)` (로컬 만료 시각 누적)
-    - `type=REWARD_TYPE.PASS`: `_storage.SetPass(id, true)` (소유권 설정)
-  - 성공 시 `CommonResult.Ok()`를 반환한다.
-- `GetAmount(string type, string id) -> long`
-  - `(type,id)`에 대한 현재 수량을 반환한다.
+### Apply
+
+- `ApplyCurrency(CURRENCY_TYPE currencyType, long amount)` — `_storage.Wallet.TryAdd(currencyType, amount)`
+- `ApplyEquip(string equipId, int amount)` — amount 횟수만큼 새 `itemUid`(GUID)로 AbilityEquip 생성 + `_storage.AddEquip(itemUid, ability)`
+- `ApplyCard(string cardId, int amount)` — `_storage.Cards`에 AbilityCard 추가(없으면 생성) + `AbilityCard.AddAmount(amount)`
+- `ApplyHero(string heroId, int amount)` — `_storage.Heroes`에 AbilityUnitHero 추가(없으면 생성) + `AddStat(STAT_TYPE.UNIT_AMOUNT, amount)`
+- `ApplyRental(string rentalId)` — `_storage.SetRental(id, max(currentExpiry, now)+30days)`
+- `SetPassOwnership(string passId, bool owned)` — `_storage.SetPass(passId, owned)` + 메시지 트리거
+- `RemovePassOwnership(string passId)` — `_storage.RemovePass(passId)` + 메시지 트리거
+- `ApplyTreasure(TREASURE_GRADE_TYPE gradeType, int amount)` — `_storage.AddTreasure(gradeType, amount)`
+
+### Revoke
+
+- `RevokeCurrency(CURRENCY_TYPE currencyType, long amount)` — `_storage.Wallet.TryAdd(currencyType, -amount)`
+- `RevokeEquip(string equipId, int amount)` — equipId별 인스턴스를 amount만큼 제거
+- `RevokeCard(string cardId, int amount)` — `card.AddAmount(-amount)`
+- `RevokeHero(string heroId, int amount)` — `hero.AddStat(STAT_TYPE.UNIT_AMOUNT, -amount)`
+- `RevokeRental(string rentalId)` — `_storage.RemoveRental(rentalId)`
+- `RevokeTreasure(TREASURE_GRADE_TYPE gradeType, int amount)` — `_storage.SetTreasureCount(gradeType, current - amount)`
+
+### Query
+
+- `GetCurrencyAmount(CURRENCY_TYPE currencyType) -> long`
+- `GetEquipCount(string equipId) -> int` — 해당 equipId를 가진 인스턴스 수
+- `GetCardAmount(string cardId) -> long` — `AbilityCard.Amount`
+- `GetHeroAmount(string heroId) -> long` — `hero[STAT_TYPE.UNIT_AMOUNT]`
+- `HasActiveRental(string rentalId) -> bool`
+- `HasPass(string passId) -> bool`
+- `GetTreasureCount(TREASURE_GRADE_TYPE gradeType) -> int`
+
+### Message
+
 - `Subcribe(EntityId ownerKey, MESSAGE_INVENTORY_TYPE msgType, Handler handler)`
-  - Inventory 변경 메시지를 구독한다.
 - `UnSubcribe(EntityId ownerKey)`
-  - ownerKey 기준 Inventory 메시지 구독을 해제한다.
-
-
----
-
-
-## Validation Rules (정본)
-
-- `rewards == null`이면 invalid다.
-- 각 reward에 대해 아래 조건을 모두 만족해야 valid다.
-  - `type`은 `REWARD_TYPE.CURRENCY`, `REWARD_TYPE.EQUIP`, `REWARD_TYPE.CARD`, `REWARD_TYPE.HERO`, `REWARD_TYPE.RENTAL`, `REWARD_TYPE.PASS` 중 하나여야 한다.
-  - `id`는 null/empty/whitespace가 아니어야 한다.
-  - `amount >= 0` 이어야 한다.
-- `rewards.Length == 0`은 valid no-op으로 처리한다(`CommonResult.Ok()` 반환).
-- `amount == 0`은 valid no-op delta로 처리한다(에러 아님).
-
-
-## Apply Atomicity (정본)
-
-- `AddRewards`는 원자적으로 동작한다.
-- 입력 중 invalid가 하나라도 있으면 전체 실패한다.
-- 전체 실패 시 내부 상태(`_storage.Wallet`, `_storage.Equipments`, `_storage.Cards`, `_storage.Heroes`, `_storage.Rentals`, `_storage.Passes`)는 호출 전과 동일해야 한다.
-
-
-## Error Mapping (정본)
-
-- `AddRewards` 실패는 `CommonError(COMMON_ERROR_TYPE, message, details)`를 사용한다.
-- 권장 `COMMON_ERROR_TYPE`:
-  - `INVENTORY_DELTAS_NULL`
-  - `INVENTORY_DELTA_TYPE_INVALID`
-  - `INVENTORY_DELTA_ID_EMPTY`
-  - `INVENTORY_DELTA_AMOUNT_NEGATIVE`
-- 위 코드가 아직 없으면 `COMMON_ERROR`(SSOT)에 먼저 추가하고 생성 파이프라인으로 `COMMON_ERROR_TYPE`을 갱신한다.
-  - 파일: `input/Domains/Common/CommonTable.xlsx`
-  - 시트: `COMMON_ERROR`
-
-
----
-
-
-## Prerequisites (구현 전 사전 작업)
-
-### 1) COMMON_ERROR에 Inventory 에러 코드 추가 — ✅ 완료
-
-`COMMON_ERROR_TYPE`에 아래 4개 코드가 추가/생성 완료되었다.
-
-| 코드 | 용도 |
-|---|---|
-| `INVENTORY_DELTAS_NULL` | `rewards == null` |
-| `INVENTORY_DELTA_TYPE_INVALID` | `type`이 `REWARD_TYPE.CURRENCY`/`REWARD_TYPE.EQUIP`/`REWARD_TYPE.CARD`/`REWARD_TYPE.HERO`/`REWARD_TYPE.RENTAL`/`REWARD_TYPE.PASS`가 아님 |
-| `INVENTORY_DELTA_ID_EMPTY` | `id`가 null/empty/whitespace |
-| `INVENTORY_DELTA_AMOUNT_NEGATIVE` | `amount < 0` |
 
 
 ---
@@ -213,22 +164,20 @@ NOTE:
 readonly InventoryStorage _storage = new();
 ```
 
-- `InventoryItem` 클래스는 사용하지 않는다.
 - 통화 상태는 `_storage.Wallet[currencyId]` → `long`으로 관리한다.
 - 장비 상태는 `_storage.Equipments[itemUid]` → `AbilityEquip`이 전담한다.
 - 카드 상태는 `_storage.Cards[cardId]` → `AbilityCard`가 전담한다.
 - 영웅 상태는 `_storage.Heroes[heroId]` → `AbilityUnitHero`가 전담한다.
 - 렌탈 상태는 `_storage.Rentals[rentalTypeId]` → `long`(expiresAtClientUtcMs)으로 관리한다.
 - 시즌패스 상태는 `_storage.Passes[passId]` → `bool`(owned)으로 관리한다.
-- 초기 지급 암복호화 key/iv는 `_initialInventoryCryptoKey`, `_initialInventoryCryptoIv`(serialized)로 관리한다.
-- 외부 참조용 public property:
-  - `InitialInventoryCryptoKey`
-  - `InitialInventoryCryptoIv`
-- 장비 보유 = itemUid(들) 존재. `GetEquipsByEquipId(equipId)`로 equipId별 인스턴스 조회
-- 카드 수량 = `this[STAT_TYPE.CARD_AMOUNT]` (AbilityCard)
-- 영웅 수량 = `this[STAT_TYPE.UNIT_AMOUNT]` (AbilityUnitHero)
-- 능력치 = `AbilityEquip` (STAT_TYPE 기반 정규화)
-- 장비 장착 = `AbilityUnitHero.Equip/Unequip` (AbilityEquip.OwnerUnitId/OwnerSlotNumber)
+- treasure count 상태는 `_storage.TreasureCounts[gradeType]` → `int`(보유량)로 관리한다.
+- treasure current 상태는 `_storage.TreasureCurrent` → `InventoryTreasureCurrent`(Exp/Level)로 관리한다.
+
+NOTE:
+- 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `equipId`에 여러 인스턴스가 존재할 수 있다.
+- 카드 수량 SSOT = `AbilityCard.Amount` (= `this[STAT_TYPE.CARD_AMOUNT]`).
+- 영웅 수량 = `AbilityUnitHero[STAT_TYPE.UNIT_AMOUNT]`.
+- `AbilityEquip`이 능력치를 관리한다. 장비 장착은 `AbilityUnitHero`가 담당한다.
 
 
 ---
@@ -239,7 +188,6 @@ readonly InventoryStorage _storage = new();
 `Devian.Samples.MobileSystem.asmdef`에 포함된 참조:
 - `Devian.Domain.Common` — `CommonResult`, `CommonError`, `COMMON_ERROR_TYPE`
 - `Devian.Domain.Game` — `STAT_TYPE` (AbilityEquip → AbilityBase 경유, InventoryStorage 의존)
-- `RewardData` 타입은 Reward 시스템 정본 규약(49-reward-system) 기반으로 사용한다.
 
 
 ---
@@ -260,9 +208,6 @@ readonly InventoryStorage _storage = new();
 ## Notes
 
 - 내부 구현 메서드는 Devian 정책에 따라 `_MethodName` 네이밍을 사용한다(구현 단계).
-- `RewardData` 스키마 정본은 [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md)다.
-- Inventory 시스템은 위 정본을 입력 계약으로 참조한다.
-- `RewardData` 런타임 타입 파일은 `Reward/RewardData.cs`(49-reward-system 미러 경로)에 위치한다.
 - `InventoryMessageTrigger`는 `InventoryManager` 내부 소유 객체이며 외부 직접 노출 금지다.
 
 
@@ -273,10 +218,10 @@ readonly InventoryStorage _storage = new();
 
 - [11-inventory-storage](../11-inventory-storage/SKILL.md) — InventoryStorage (소유 대상)
 - [12-inventory-wallet](../12-inventory-wallet/SKILL.md) — InventoryWallet (Wallet 클래스)
-- [13-inventory-settings](../13-inventory-settings/SKILL.md) — 초기 지급 설정 ScriptableObject
+- [49-reward-system/10-reward-manager](../../49-reward-system/10-reward-manager/SKILL.md) — RewardManager (RewardData 해석, ApplyRewardDatas)
+- [49-reward-system/12-first-reward-settings](../../49-reward-system/12-first-reward-settings/SKILL.md) — FirstRewardSettings (초기 보상 지급 설정)
 - [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md) — RewardData 스키마 정본
 - [03-ssot](../03-ssot/SKILL.md) — Inventory 상태/Apply 규칙 SSOT
 - [01-policy](../01-policy/SKILL.md) — Inventory 하드룰
-- [10-reward-manager](../../49-reward-system/10-reward-manager/SKILL.md) — RewardManager (AddRewards 위임 호출자)
 - [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 정본
 - [15-singleton](../../../20-domain-common-system/29-singleton/SKILL.md) — CompoSingleton 규약

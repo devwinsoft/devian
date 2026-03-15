@@ -4,17 +4,17 @@ using UnityEngine;
 namespace Devian
 {
     [CreateAssetMenu(
-        fileName = "InventorySettings",
-        menuName = "Devian/MobileSystem/Inventory Settings")]
-    public sealed class InventorySetting : ScriptableObject
+        fileName = "FirstRewardSettings",
+        menuName = "Devian/MobileSystem/First Reward Settings")]
+    public sealed class FirstRewardSettings : ScriptableObject
     {
         // Resources.Load 경로 (정본 SSOT)
-        public const string ResourcesPath = "Devian/InventorySettings";
+        public const string ResourcesPath = "Devian/FirstRewardSettings";
 
         // 프로젝트 에셋 경로 (정본 SSOT)
-        public const string DefaultResourcesAssetPath = "Assets/Resources/Devian/InventorySettings.asset";
+        public const string DefaultResourcesAssetPath = "Assets/Resources/Devian/FirstRewardSettings.asset";
 
-        [SerializeField] public CString InitialInventory = "[{\"type\":\"CURRENCY\",\"id\":\"GOLD\",\"amount\":1000}]";
+        [SerializeField] public CString InitialRewards = "[{\"type\":\"CURRENCY\",\"id\":\"GOLD\",\"amount\":1000}]";
 
         // Editor-only: temporary ID selectors for Add row (cleared on save)
         [HideInInspector, SerializeField] internal ITEM_CARD_ID     _editorCardId     = new();

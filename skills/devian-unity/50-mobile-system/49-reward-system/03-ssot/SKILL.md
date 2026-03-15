@@ -13,6 +13,7 @@ Reward 관련 규칙의 단일 SSOT는 이 문서다.
 - rewardGroupId 해석 책임(컨텐츠 레이어)
 - RewardManager의 "지급 실행기" 규약
 - REWARD 테이블 스키마(정규화)
+- 초기 보상 지급(FirstInit) 규약
 
 비정본(이 문서에서 다루지 않음):
 - 멱등/기록/복구(ledger/pending/서버 확정) — 호출자 시스템의 정본을 참조한다.
@@ -100,11 +101,32 @@ NOTE:
 
 ## D) RewardManager 적용 규약 (정본)
 
-- RewardManager는 입력 `RewardData[]`를 받아 로컬 인벤토리에 적용한다.
+- RewardManager는 입력 `RewardData[]`를 받아 `REWARD_TYPE`별로 해석하고, InventoryManager의 타입별 구체 API를 호출하여 로컬 인벤토리에 적용한다.
+- RewardManager는 `RewardData` 선검증(type/id/amount) + 원자성(all-or-nothing)을 보장한다.
 - RewardManager는 다음을 하지 않는다:
   - 멱등 처리(`grantId` 사용 금지)
   - 지급 기록(ledger) 저장
   - 서버 확정/조회
+
+
+---
+
+
+## D-2) 초기 보상 지급 (FirstInit) 규약 (정본)
+
+- 초기 지급 데이터 소스는 `FirstRewardSettings` ScriptableObject다.
+  - Resources 경로: `Devian/FirstRewardSettings`
+  - 프로젝트 에셋 경로: `Assets/Resources/Devian/FirstRewardSettings.asset`
+- `RewardManager.FirstInitAsync()`는 위 에셋의 `InitialRewards(CString)` payload를 읽는다.
+- JSON을 `RewardData[]` 규약으로 파싱/검증한다.
+- 허용 JSON:
+  - `RewardData[]`
+  - `{ "rewards": RewardData[] }`
+- 파싱/검증 실패 시 `CommonResult.Failure`를 반환하고 적용하지 않는다.
+- 파싱 성공 시 `RewardManager.ApplyRewardDatas`로 적용한다.
+- `LoginManager`는 `FirstInitAsync`를 직접 호출한다. `LoginInitializeResult.IsInitial`을 확인한 뒤 실행한다.
+
+정본: [12-first-reward-settings](../12-first-reward-settings/SKILL.md)
 
 
 ---
@@ -130,3 +152,4 @@ NOTE:
 
 - [11-rewarddata-interpretation](../11-rewarddata-interpretation/SKILL.md) — RewardData 해석 절차/타입별 의미/소스별 파싱 가이드
 - [10-reward-manager](../10-reward-manager/SKILL.md) — rewardGroupId 변환과 적용 실행기
+- [12-first-reward-settings](../12-first-reward-settings/SKILL.md) — FirstRewardSettings ScriptableObject (초기 보상 지급 설정)

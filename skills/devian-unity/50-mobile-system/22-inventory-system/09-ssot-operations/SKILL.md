@@ -23,8 +23,8 @@ SSOT 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
 
 ### 2) 보상 적용(Delta Apply)
 
-- `AddRewards(RewardData[]) -> CommonResult`를 호출한다.
-- 실패(`IsFailure`)면 상태는 변경되지 않는다(원자성).
+- `RewardManager.ApplyRewardDatas(RewardData[])` → RewardData 해석 → InventoryManager 타입별 API 호출.
+- 실패(`IsFailure`)면 상태는 변경되지 않는다(원자성은 RewardManager가 보장).
 - 성공(`IsSuccess`)이면 Apply 후 변경 이벤트를 발생시키고, 필요 시 상위 조립에서 저장을 트리거한다.
 
 
@@ -61,7 +61,7 @@ SSOT 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
 Hard (반드시 0)
 - RewardData 정본이 [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md)에 명시되고, 52 문서는 이를 참조함
 - 컨텐츠 미의존(테이블/enum 직접 참조 금지)이 Policy에 명시됨
-- `AddRewards` 반환 타입이 `CommonResult`로 문서에 명시됨
+- InventoryManager 타입별 API 반환 타입이 `CommonResult`로 문서에 명시됨
 - invalid 입력 시 실패 + 전체 미적용(원자성) 규약이 문서에 명시됨
 - `COMMON_ERROR` 기반 `COMMON_ERROR_TYPE` 사용 규약이 문서에 명시됨
 - 10-inventory-manager 문서가 존재하고 링크됨

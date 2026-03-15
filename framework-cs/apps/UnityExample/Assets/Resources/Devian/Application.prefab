@@ -229,6 +229,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 482f20bfcd70c4f8eab5f6778b01ae3c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.RewardManager
+  _initialRewardsCryptoKey:
+    data: lvnDQ6o7Gmq8f6P8yzhAthLDvgBbttr1oCBu/BLjEry+qjidTarR0ZZ/Byc=
+  _initialRewardsCryptoIv:
+    data: kvv5738bAH9An/saPIP1BbzWqoWogycn
 --- !u!114 &4270489610711966219
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -9,7 +9,7 @@ AppliesTo: v10
 
 - `TREASURE_GRADE_TYPE` enum
 - `TREASURE_CHEST`, `TREASURE_REWARD` 테이블 스키마
-- `TreasureStorage` 상태 모델
+- `InventoryStorage` 내 Treasure 상태 모델 (`TreasureCurrent`, `TreasureCounts`)
 - `OpenCollectedChests` / `OpenCurrentChest` 동작 규칙
 - TreasureManager / RewardManager 경계
 
@@ -22,9 +22,9 @@ AppliesTo: v10
 
 - `gradeType`: chest/reward grade key (`TREASURE_GRADE_TYPE`)
 - `rewardGroupId`: Reward 시스템 지급 group key
-- `Current`: `TreasureStorageCurrent` 하위 객체 (exp/level 묶음)
-- `exp`: 현재 treasure exp (`Current.Exp`)
-- `level`: 현재 treasure reward level (`Current.Level`)
+- `TreasureCurrent`: `InventoryTreasureCurrent` 하위 객체 (exp/level 묶음, `InventoryStorage` 소속)
+- `exp`: 현재 treasure exp (`TreasureTreasureCurrent.Exp`)
+- `level`: 현재 treasure reward level (`TreasureTreasureCurrent.Level`)
 - `maxLevel`: `TREASURE_CHEST.level`의 최대값
 
 ---
@@ -99,31 +99,30 @@ codegen 완료 상태. generated field name: `TreasureGradeType` (PascalCase).
 
 ---
 
-## D) TreasureStorage State
+## D) Treasure State (in InventoryStorage)
+
+Treasure 상태는 `InventoryStorage` 내부에 포함된다. 별도 `TreasureStorage` 클래스는 없다.
 
 정본 모델:
 
 ```csharp
-public sealed class TreasureStorageCurrent
+public sealed class InventoryTreasureCurrent
 {
     public int Exp { get; set; }
     public int Level { get; set; } = 1;
 }
 
-public sealed class TreasureStorage
-{
-    public int SchemaVersion { get; set; }
-    public Dictionary<TREASURE_GRADE_TYPE, int> ChestCounts { get; }
-    public TreasureStorageCurrent Current { get; }
-}
+// InventoryStorage 내부:
+//   InventoryTreasureCurrent TreasureCurrent { get; }
+//   Dictionary<TREASURE_GRADE_TYPE, int> TreasureCounts { get; }
+//   GetTreasureCount / AddTreasure / SetTreasureCount / AddTreasureExp / ResetTreasure
 ```
 
 기본값:
 
-- `SchemaVersion = 1`
-- `Current.Exp = 0`
-- `Current.Level = 1`
-- 모든 chest count 기본값은 0
+- `TreasureTreasureCurrent.Exp = 0`
+- `TreasureTreasureCurrent.Level = 1`
+- 모든 treasure count 기본값은 0
 
 ---
 
@@ -147,7 +146,7 @@ public sealed class TreasureStorage
 
 처리:
 
-1. `TreasureStorage.ChestCounts[gradeType]`를 읽는다.
+1. `InventoryStorage.TreasureCounts[gradeType]`를 읽는다.
 2. count가 0 이하이면 valid no-op으로 종료한다.
 3. `TB_TREASURE_REWARD.GetByGroup(gradeType)`로 reward rows를 조회한다.
 4. `selectBestRewardRow`로 조건 충족 최고 레벨 row 1개를 선택한다.
@@ -165,14 +164,14 @@ public sealed class TreasureStorage
 
 처리:
 
-1. `Current.Level`로 `TB_TREASURE_CHEST.Get(level)`을 조회한다.
+1. `TreasureCurrent.Level`로 `TB_TREASURE_CHEST.Get(level)`을 조회한다.
 2. row가 없으면 실패한다.
-3. `Current.Exp < row.maxExp`이면 valid no-op으로 종료한다.
+3. `TreasureCurrent.Exp < row.maxExp`이면 valid no-op으로 종료한다.
 4. row의 `treasureGradeType`로 `TB_TREASURE_REWARD.GetByGroup(...)`를 조회한다.
 5. `selectBestRewardRow`로 조건 충족 최고 레벨 row 1개를 선택한다.
 6. best row의 `rewardGroupId`를 `RewardManager.ApplyRewardGroup(...)`에 전달한다.
-7. 성공하면 `Current.Exp -= row.maxExp`를 적용한다.
-8. `Current.Level++` 후 `Current.Level > maxLevel`이면 `1`로 wrap한다.
+7. 성공하면 `TreasureCurrent.Exp -= row.maxExp`를 적용한다.
+8. `TreasureCurrent.Level++` 후 `TreasureCurrent.Level > maxLevel`이면 `1`로 wrap한다.
 
 규칙:
 
@@ -182,7 +181,7 @@ public sealed class TreasureStorage
 실패:
 
 - row 누락 / 조건 충족 row 없음 / 빈 `rewardGroupId` / `RewardManager` 실패 시 `CommonResult.Failure`
-- 실패 시 `Current.Exp`, `Current.Level`은 변경되지 않는다.
+- 실패 시 `TreasureCurrent.Exp`, `TreasureCurrent.Level`은 변경되지 않는다.
 
 ---
 
@@ -197,10 +196,10 @@ public sealed class TreasureStorage
 
 ## I) Runtime Ownership
 
-- TreasureManager: table lookup + collect orchestration + storage mutation
-- TreasureStorage: chest 상태 저장
+- TreasureManager: table lookup + collect orchestration + InventoryStorage treasure mutation
+- InventoryStorage: treasure 상태 저장 (`TreasureCurrent`, `TreasureCounts`)
 - RewardManager: `rewardGroupId` 지급 실행
-- InventoryManager: concrete inventory mutation
+- InventoryManager: concrete inventory mutation (treasure 포함)
 
 ---
 
@@ -215,10 +214,10 @@ public sealed class TreasureStorage
 - root JSON key: `"treasure"`
 - section codec: `SaveDataJsonCodecTreasure`
 - version gate: `TreasureVersion` (= 20, `CurrentVersion`과 동일)
-- serialize: `TreasureStorage` → `JObject`
-- deserialize: `JObject` → `TreasureStorage`
+- serialize: `InventoryStorage` → treasure `JObject`
+- deserialize: treasure `JObject` → `InventoryStorage` treasure fields
 - current 상태는 `"current"` 하위 객체로 직렬화한다 (`exp`, `level`)
-- `ChestCounts` dictionary key: enum name string (예: `"COMMON"`, `"EPIC"`), [11-treasure-storage](../11-treasure-storage/SKILL.md) §Target Save Shape 준수
+- `TreasureCounts` dictionary key: enum name string (예: `"COMMON"`, `"EPIC"`)
 - `SavePayloadSummary`에 `TreasureChestTotal`, `TreasureLevel` 추가
 
 ---
@@ -226,5 +225,4 @@ public sealed class TreasureStorage
 ## Related
 
 - [10-treasure-manager](../10-treasure-manager/SKILL.md)
-- [11-treasure-storage](../11-treasure-storage/SKILL.md)
 - [49-reward-system/03-ssot](../../49-reward-system/03-ssot/SKILL.md)

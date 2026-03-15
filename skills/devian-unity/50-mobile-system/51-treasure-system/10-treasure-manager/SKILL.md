@@ -4,7 +4,7 @@ Status: ACTIVE
 AppliesTo: v10
 
 MobileSystem 샘플의 `TreasureManager` 설계 문서다.
-이 매니저는 `TreasureStorage`를 소유하고 chest collect를 orchestration 한다.
+이 매니저는 `InventoryManager.Instance.Storage`의 treasure 필드를 사용하여 chest collect를 orchestration 한다.
 
 ---
 
@@ -29,8 +29,7 @@ namespace Devian
 {
     public sealed class TreasureManager : CompoSingleton<TreasureManager>
     {
-        readonly TreasureStorage _storage = new();
-        public TreasureStorage Storage => _storage;
+        InventoryStorage storage => InventoryManager.Instance.Storage;
 
         public CommonResult OpenCollectedChests(TREASURE_GRADE_TYPE gradeType) { ... }
         public CommonResult OpenCurrentChest() { ... }
@@ -42,7 +41,7 @@ namespace Devian
 
 ## Responsibilities
 
-- `TreasureStorage` 소유
+- `InventoryStorage` treasure 필드 접근 (`InventoryManager.Instance.Storage`)
 - `OpenCollectedChests(TREASURE_GRADE_TYPE)` 구현
 - `OpenCurrentChest()` 구현
 - `TREASURE_CHEST`, `TREASURE_REWARD` lookup
@@ -61,7 +60,7 @@ namespace Devian
 
 ## Dependencies
 
-- `TreasureStorage`
+- `InventoryManager` / `InventoryStorage`
 - `TB_TREASURE_CHEST`
 - `TB_TREASURE_REWARD`
 - `GameMessageManager` (`GetStat()`)
@@ -74,7 +73,6 @@ namespace Devian
 
 ## Public API
 
-- `Storage`
 - `OpenCollectedChests(TREASURE_GRADE_TYPE gradeType) -> CommonResult`
 - `OpenCurrentChest() -> CommonResult`
 
@@ -95,36 +93,36 @@ namespace Devian
 ## `OpenCollectedChests` Flow
 
 1. `gradeType` 검증 (`NONE` 금지)
-2. storage에서 chest count 조회
+2. `InventoryStorage`에서 treasure count 조회
 3. count가 0이면 `CommonResult.Ok()` 반환
 4. `TB_TREASURE_REWARD.GetByGroup(gradeType)` 조회
 5. `selectBestRewardRow`로 조건 충족 최고 레벨 row 1개 선택
 6. `count`회 반복하며 best row의 `rewardGroupId`를 `RewardManager.ApplyRewardGroup(...)`에 전달
-7. 모두 성공하면 chest count를 0으로 커밋
+7. 모두 성공하면 treasure count를 0으로 커밋
 
 ---
 
 ## `OpenCurrentChest` Flow
 
-1. storage의 `Current.Level` 조회
+1. `InventoryStorage`의 `TreasureCurrent.Level` 조회
 2. `TB_TREASURE_CHEST.Get(level)` 조회
 3. row가 없으면 실패
-4. `Current.Exp < maxExp`이면 `CommonResult.Ok()` 반환
+4. `TreasureCurrent.Exp < maxExp`이면 `CommonResult.Ok()` 반환
 5. `chestRow.TreasureGradeType`로 `TB_TREASURE_REWARD.GetByGroup(...)` 조회
 6. `selectBestRewardRow`로 조건 충족 최고 레벨 row 1개 선택
 7. best row의 `rewardGroupId`를 `RewardManager.ApplyRewardGroup(...)`에 전달
-8. 성공하면 `Current.Exp -= maxExp`
-9. `Current.Level++`
-10. `Current.Level > maxLevel`이면 `1`로 wrap
+8. 성공하면 `TreasureCurrent.Exp -= maxExp`
+9. `TreasureCurrent.Level++`
+10. `TreasureCurrent.Level > maxLevel`이면 `1`로 wrap
 
 ---
 
 ## Hard Rules
 
 - collect는 all-or-nothing storage mutation을 유지한다.
-- `OpenCollectedChests`는 해당 grade의 전체 count를 한 번에 수집한다.
+- `OpenCollectedChests`는 해당 grade의 전체 treasure count를 한 번에 수집한다.
 - `OpenCurrentChest`는 현재 level 보상 1회만 처리한다.
-- collect 중 `RewardManager` 실패가 발생하면 storage 상태는 롤백된다.
+- collect 중 `RewardManager` 실패가 발생하면 InventoryStorage treasure 상태는 롤백된다.
 - `TREASURE_REWARD` row 선택은 조건 필터 후 가장 높은 Level row 1개만 사용한다.
 - `ConditionValue`가 null이면 무조건 조건 실패다. null 통과는 절대 허용하지 않는다.
 
@@ -141,8 +139,8 @@ namespace Devian
 ### 2) Runtime 모델 추가
 
 - `Runtime/Treasure/` 폴더를 추가한다.
-- `TreasureStorage.cs`와 `TreasureManager.cs`를 추가한다.
-- `TreasureManager`에 `_storage`와 `Storage` property를 추가한다.
+- `TreasureManager.cs`를 추가한다.
+- `TreasureManager`는 `InventoryManager.Instance.Storage` 경유로 treasure 상태에 접근한다.
 
 ### 3) Chest collect 구현
 
@@ -187,5 +185,4 @@ namespace Devian
 ## Related
 
 - [03-ssot](../03-ssot/SKILL.md)
-- [11-treasure-storage](../11-treasure-storage/SKILL.md)
 - [49-reward-system/10-reward-manager](../../49-reward-system/10-reward-manager/SKILL.md)

@@ -28,7 +28,7 @@ SaveDataManager가 local/cloud payload에 저장할 게임 상태 JSON의 직렬
 - `AchieveManager` 소유: `AchieveStorage`
 - `LeaderboardManager` 소유: `LeaderboardSeasonRewardStorage`
 - `AttendManager` 소유: `AttendStorage`
-- `TreasureManager` 소유: `TreasureStorage`
+- `InventoryStorage` 내부: `TreasureCurrent`, `TreasureCounts` (treasure 상태)
 - `SaveDataManager` 책임:
   - 위 storage를 수집
   - primary save binding(local filename + cloud slot) 관리
@@ -122,7 +122,7 @@ section codec은 manager를 직접 알지 않고, `Storage` 타입만 다룬다.
 - `achieve`: `AchieveStorage` 섹션
 - `leaderboardReward`: `LeaderboardSeasonRewardStorage` 섹션
 - `attend`: `AttendStorage` 섹션
-- `treasure`: `TreasureStorage` 섹션
+- `treasure`: `InventoryStorage` treasure 섹션
 
 payload wrapper(`SaveLocalPayload`, `SaveCloudPayload`)의 `account` 메타는 유지한다.
 이 메타는 sync 초기 판정과 account mirror 용도이며, root JSON의 `account` 섹션과 별개로 존재할 수 있다.
@@ -180,7 +180,7 @@ deserialize 시 target:
 ## Hard Rules
 
 - manager가 자신의 storage를 소유하더라도, **payload JSON 직렬화 진입점은 SaveDataManager 하나만 유지**한다.
-- `InventoryStorage`, `PurchaseStorage`, `AccountStorage`, `GameMessageStorage`, `MissionStorage`, `AchieveStorage`, `LeaderboardSeasonRewardStorage`, `AttendStorage`, `TreasureStorage`에 `ToJson()` / `FromJson()`을 다시 추가하지 않는다.
+- `InventoryStorage`, `PurchaseStorage`, `AccountStorage`, `GameMessageStorage`, `MissionStorage`, `AchieveStorage`, `LeaderboardSeasonRewardStorage`, `AttendStorage`에 `ToJson()` / `FromJson()`을 다시 추가하지 않는다.
 - codec은 domain rule을 가지지 않는다. domain mutation은 각 manager가 담당한다.
 - 새 저장 섹션 추가 시:
   - root codec 수정
@@ -227,4 +227,4 @@ deserialize 시 target:
 - [46-achieve-system/14-achieve-storage](../../46-achieve-system/14-achieve-storage/SKILL.md) — AchieveStorage 규약
 - [50-leaderboard/14-leaderboard-season-reward-storage](../../50-leaderboard/14-leaderboard-season-reward-storage/SKILL.md) — 시즌 보상 저장 규약
 - [27-attend-system/11-attend-storage](../../27-attend-system/11-attend-storage/SKILL.md) — AttendStorage 규약
-- [51-treasure-system/11-treasure-storage](../../51-treasure-system/11-treasure-storage/SKILL.md) — TreasureStorage 규약
+- [51-treasure-system/03-ssot](../../51-treasure-system/03-ssot/SKILL.md) — Treasure 시스템 SSOT
