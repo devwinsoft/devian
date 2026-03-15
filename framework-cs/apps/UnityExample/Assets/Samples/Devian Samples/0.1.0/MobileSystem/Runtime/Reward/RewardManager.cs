@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Security.Cryptography;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -13,48 +11,6 @@ namespace Devian
 {
     public sealed class RewardManager : CompoSingleton<RewardManager>
     {
-        // ── Crypto (AES-256-CBC) for FirstRewardSettings ──
-
-        [SerializeField] CString _initialRewardsCryptoKey;
-        [SerializeField] CString _initialRewardsCryptoIv;
-
-        public string InitialRewardsCryptoKey => _initialRewardsCryptoKey;
-        public string InitialRewardsCryptoIv => _initialRewardsCryptoIv;
-
-        public static string EncryptInitialRewardsJson(string plainJson, string keyBase64, string ivBase64)
-        {
-            if (string.IsNullOrEmpty(plainJson))
-                return string.Empty;
-
-            using var aes = Aes.Create();
-            aes.Mode = CipherMode.CBC;
-            aes.Padding = PaddingMode.PKCS7;
-            aes.Key = Convert.FromBase64String(keyBase64);
-            aes.IV = Convert.FromBase64String(ivBase64);
-
-            using var encryptor = aes.CreateEncryptor();
-            var plainBytes = Encoding.UTF8.GetBytes(plainJson);
-            var encrypted = encryptor.TransformFinalBlock(plainBytes, 0, plainBytes.Length);
-            return Convert.ToBase64String(encrypted);
-        }
-
-        public static string DecryptInitialRewardsJson(string encryptedBase64, string keyBase64, string ivBase64)
-        {
-            if (string.IsNullOrEmpty(encryptedBase64))
-                return string.Empty;
-
-            using var aes = Aes.Create();
-            aes.Mode = CipherMode.CBC;
-            aes.Padding = PaddingMode.PKCS7;
-            aes.Key = Convert.FromBase64String(keyBase64);
-            aes.IV = Convert.FromBase64String(ivBase64);
-
-            using var decryptor = aes.CreateDecryptor();
-            var encryptedBytes = Convert.FromBase64String(encryptedBase64);
-            var decrypted = decryptor.TransformFinalBlock(encryptedBytes, 0, encryptedBytes.Length);
-            return Encoding.UTF8.GetString(decrypted);
-        }
-
         // ── Apply RewardGroup ──
 
         public CommonResult<RewardApplyResult> ApplyRewardGroup(string rewardGroupId, int rewardAmountMultiplier = 1)
@@ -403,12 +359,20 @@ namespace Devian
                 return CommonResult.Failure(parse.Error!);
 
             var rewards = parse.Value ?? Array.Empty<RewardData>();
-            if (rewards.Length == 0)
-                return CommonResult.Ok();
+            if (rewards.Length > 0)
+            {
+                var apply = ApplyRewardDatas(rewards);
+                if (apply.IsFailure)
+                    return CommonResult.Failure(apply.Error!);
+            }
 
-            var apply = ApplyRewardDatas(rewards);
-            if (apply.IsFailure)
-                return CommonResult.Failure(apply.Error!);
+            // Stamina 초기화: InventorySettings 로드 + LastStaminaUpdateUtcMs 초기화 → MaxStamina 지급
+            var inv = InventoryManager.Instance;
+            inv.Initialize();
+
+            int maxStamina = inv.MaxStamina;
+            if (maxStamina > 0)
+                inv.ApplyCurrency(CURRENCY_TYPE.STAMINA, maxStamina);
 
             await Task.Yield();
             ct.ThrowIfCancellationRequested();
@@ -612,11 +576,14 @@ namespace Devian
 
             // AES 복호화
             string json;
-            if (!string.IsNullOrEmpty(_initialRewardsCryptoKey) && !string.IsNullOrEmpty(_initialRewardsCryptoIv))
+            var app = MobileApplication.Instance;
+            var cryptoKey = app != null ? app.CryptoKey : string.Empty;
+            var cryptoIv = app != null ? app.CryptoIv : string.Empty;
+            if (!string.IsNullOrEmpty(cryptoKey) && !string.IsNullOrEmpty(cryptoIv))
             {
                 try
                 {
-                    json = DecryptInitialRewardsJson(payload, _initialRewardsCryptoKey, _initialRewardsCryptoIv);
+                    json = MobileApplication.DecryptJson(payload, cryptoKey, cryptoIv);
                 }
                 catch (Exception ex)
                 {

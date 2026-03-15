@@ -1,5 +1,7 @@
 using System;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -29,6 +31,48 @@ namespace Devian
         [SerializeField] public string FirebaseFunctionsRegion = "asia-northeast3";
         [SerializeField] public string VersionCheckAOS = string.Empty;
         [SerializeField] public string VersionCheckIOS = string.Empty;
+
+        // ── Crypto (AES-256-CBC) ──
+
+        [SerializeField] CString _cryptoKey;
+        [SerializeField] CString _cryptoIv;
+
+        public string CryptoKey => _cryptoKey;
+        public string CryptoIv => _cryptoIv;
+
+        public static string EncryptJson(string plainJson, string keyBase64, string ivBase64)
+        {
+            if (string.IsNullOrEmpty(plainJson))
+                return string.Empty;
+
+            using var aes = Aes.Create();
+            aes.Mode = CipherMode.CBC;
+            aes.Padding = PaddingMode.PKCS7;
+            aes.Key = Convert.FromBase64String(keyBase64);
+            aes.IV = Convert.FromBase64String(ivBase64);
+
+            using var encryptor = aes.CreateEncryptor();
+            var plainBytes = Encoding.UTF8.GetBytes(plainJson);
+            var encrypted = encryptor.TransformFinalBlock(plainBytes, 0, plainBytes.Length);
+            return Convert.ToBase64String(encrypted);
+        }
+
+        public static string DecryptJson(string encryptedBase64, string keyBase64, string ivBase64)
+        {
+            if (string.IsNullOrEmpty(encryptedBase64))
+                return string.Empty;
+
+            using var aes = Aes.Create();
+            aes.Mode = CipherMode.CBC;
+            aes.Padding = PaddingMode.PKCS7;
+            aes.Key = Convert.FromBase64String(keyBase64);
+            aes.IV = Convert.FromBase64String(ivBase64);
+
+            using var decryptor = aes.CreateDecryptor();
+            var encryptedBytes = Convert.FromBase64String(encryptedBase64);
+            var decrypted = decryptor.TransformFinalBlock(encryptedBytes, 0, encryptedBytes.Length);
+            return Encoding.UTF8.GetString(decrypted);
+        }
 
         protected override Task onBootAsync()
         {

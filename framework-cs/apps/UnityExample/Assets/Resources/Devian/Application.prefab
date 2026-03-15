@@ -75,6 +75,10 @@ MonoBehaviour:
   FirebaseFunctionsRegion: asia-northeast3
   VersionCheckAOS: https://github.com/devwinsoft/devian/blob/main/release/version_aos.json
   VersionCheckIOS: https://github.com/devwinsoft/devian/blob/main/release/version_ios.json
+  _cryptoKey:
+    data: Wy9bWgeqW0Ugn26FLI+j/FOP1jgzW5ojhcejGMcVbiCzn+NaQEBFQCmfOyc=
+  _cryptoIv:
+    data: hTOP2qjDL7yEn7GqQ39R75pumpbahScn
 --- !u!114 &-8232071580534022601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -229,10 +233,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 482f20bfcd70c4f8eab5f6778b01ae3c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.RewardManager
-  _initialRewardsCryptoKey:
-    data: lvnDQ6o7Gmq8f6P8yzhAthLDvgBbttr1oCBu/BLjEry+qjidTarR0ZZ/Byc=
-  _initialRewardsCryptoIv:
-    data: kvv5738bAH9An/saPIP1BbzWqoWogycn
 --- !u!114 &4270489610711966219
 MonoBehaviour:
   m_ObjectHideFlags: 0

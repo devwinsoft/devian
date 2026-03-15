@@ -54,6 +54,9 @@ namespace Devian
         public InventoryTreasureCurrent TreasureCurrent => mTreasureCurrent;
         public Dictionary<TREASURE_GRADE_TYPE, int> TreasureCounts => mTreasureCounts;
 
+        // ── Stamina ──
+        public long LastStaminaUpdateUtcMs { get; set; }
+
         // ── Equip Operations ──
 
         public AbilityEquip GetEquip(string itemUid)
@@ -233,6 +236,7 @@ namespace Devian
             mPasses.Clear();
             mTreasureCounts.Clear();
             mTreasureCurrent.Clear();
+            LastStaminaUpdateUtcMs = 0L;
         }
     }
 }

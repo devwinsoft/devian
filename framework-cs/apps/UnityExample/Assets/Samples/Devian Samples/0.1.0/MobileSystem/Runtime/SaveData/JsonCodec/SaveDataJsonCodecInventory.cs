@@ -87,6 +87,10 @@ namespace Devian
                 passesObj[kv.Key] = kv.Value;
             inv["passes"] = passesObj;
 
+            // stamina
+            if (inventory.LastStaminaUpdateUtcMs > 0L)
+                inv["lastStaminaUpdateUtcMs"] = inventory.LastStaminaUpdateUtcMs;
+
             return inv;
         }
 
@@ -220,6 +224,9 @@ namespace Devian
                 foreach (var prop in passesObj.Properties())
                     inventory.SetPass(prop.Name, prop.Value.Value<bool>());
             }
+
+            // stamina
+            inventory.LastStaminaUpdateUtcMs = inv.Value<long?>("lastStaminaUpdateUtcMs") ?? 0L;
         }
     }
 }

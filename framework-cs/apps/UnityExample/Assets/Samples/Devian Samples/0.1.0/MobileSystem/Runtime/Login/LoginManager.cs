@@ -310,6 +310,10 @@ namespace Devian
                     Debug.LogWarning($"[{Tag}] SaveGameStorageAsync failed: {result.SaveError.Code}: {result.SaveError.Message}");
             }
 
+            // Stamina: 설정 로드 + 오프라인 회복 계산
+            InventoryManager.Instance.Initialize();
+            InventoryManager.Instance.UpdateStamina();
+
             var initAttend = await AttendManager.Instance.InitializeAsync(ct);
             await yieldMainThreadAsync(ct);
             if (initAttend.IsFailure)

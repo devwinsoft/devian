@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace Devian
 {
-    [CustomEditor(typeof(RewardManager))]
-    public sealed class RewardManagerEditor : Editor
+    [CustomEditor(typeof(MobileApplication), true)]
+    public sealed class MobileApplicationEditor : Editor
     {
         const int AesKeySizeBytes = 32;
         const int AesIvSizeBytes = 16;
@@ -18,29 +18,29 @@ namespace Devian
 
             EditorGUILayout.Space(8f);
             EditorGUILayout.HelpBox(
-                "Generate key/iv changes encryption config for InitialRewards payloads.",
+                "Generate key/iv changes encryption config for ScriptableObject payloads (FirstRewardSettings, InventorySettings, etc.).",
                 MessageType.Info);
 
             if (GUILayout.Button("Generate key iv"))
             {
-                var mgr = (RewardManager)target;
-                Undo.RecordObject(mgr, "Generate Rewards Crypto Key/Iv");
+                var app = (MobileApplication)target;
+                Undo.RecordObject(app, "Generate Crypto Key/Iv");
 
-                var keyProp = serializedObject.FindProperty("_initialRewardsCryptoKey");
-                var ivProp = serializedObject.FindProperty("_initialRewardsCryptoIv");
+                var keyProp = serializedObject.FindProperty("_cryptoKey");
+                var ivProp = serializedObject.FindProperty("_cryptoIv");
 
-                setCStringValue(keyProp, generateBase64(AesKeySizeBytes));
-                setCStringValue(ivProp, generateBase64(AesIvSizeBytes));
+                _setCStringValue(keyProp, _generateBase64(AesKeySizeBytes));
+                _setCStringValue(ivProp, _generateBase64(AesIvSizeBytes));
 
                 serializedObject.ApplyModifiedProperties();
-                EditorUtility.SetDirty(mgr);
+                EditorUtility.SetDirty(app);
                 return;
             }
 
             serializedObject.ApplyModifiedProperties();
         }
 
-        static void setCStringValue(SerializedProperty cstringProp, string plainValue)
+        static void _setCStringValue(SerializedProperty cstringProp, string plainValue)
         {
             var dataProp = cstringProp?.FindPropertyRelative("data");
             if (dataProp == null) return;
@@ -49,7 +49,7 @@ namespace Devian
             dataProp.stringValue = cstring.data;
         }
 
-        static string generateBase64(int sizeBytes)
+        static string _generateBase64(int sizeBytes)
         {
             var bytes = new byte[sizeBytes];
             RandomNumberGenerator.Fill(bytes);

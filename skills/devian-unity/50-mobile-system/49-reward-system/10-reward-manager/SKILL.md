@@ -58,18 +58,15 @@ CompoSingleton<RewardManager>.Instance
 
 ## Crypto (AES)
 
-RewardManager는 FirstRewardSettings.InitialRewards 데이터의 AES 암복호화 키를 소유한다.
+AES 암복호화 key/iv는 **MobileApplication**이 소유한다.
+RewardManager는 `MobileApplication.Instance`에서 key/iv를 읽어 사용한다.
 
-- 필드 (`[SerializeField] CString`, Inspector에 노출):
-  - `_initialRewardsCryptoKey: CString` (AES-256 key, 32 bytes, base64 인코딩, CString 난독화)
-  - `_initialRewardsCryptoIv: CString` (AES IV, 16 bytes, base64 인코딩, CString 난독화)
-- Public property:
-  - `InitialRewardsCryptoKey: string` (get only)
-  - `InitialRewardsCryptoIv: string` (get only)
-- Static helper:
+- key/iv 소유: `MobileApplication` (`[SerializeField] CString`, Inspector에 노출)
+- key/iv 생성: `MobileApplicationEditor` — "Generate key iv" 버튼
+- Static helper (RewardManager에 유지):
   - `EncryptInitialRewardsJson(string plainJson, string keyBase64, string ivBase64) -> string` (AES-CBC + base64)
   - `DecryptInitialRewardsJson(string encryptedBase64, string keyBase64, string ivBase64) -> string`
-- Editor에서 key/iv 생성: `RewardManagerEditor` — "Generate key iv" 버튼
+- `_parseFirstRewardSettings()`에서 `MobileApplication.Instance.CryptoKey/CryptoIv`를 참조한다.
 
 
 ---
@@ -93,6 +90,8 @@ RewardManager는 FirstRewardSettings.InitialRewards 데이터의 AES 암복호�
   - `(type,id)`에 대한 현재 수량을 반환한다.
 - `FirstInitAsync(CancellationToken ct) -> Task<CommonResult>`
   - `FirstRewardSettings` 로드 → AES 복호화 → JSON 파싱 → `ApplyRewardDatas`로 적용.
+  - 보상 적용 후 `InventoryManager.Initialize()` 호출 → InventorySettings 로드 + `LastStaminaUpdateUtcMs` 초기화.
+  - `InventoryManager.ApplyCurrency(STAMINA, MaxStamina)`로 초기 스태미나 지급.
 
 ---
 

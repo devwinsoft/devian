@@ -36,18 +36,20 @@ AppliesTo: v10
 2. `RewardManager`의 Crypto key/iv로 AES 암호화
 3. 암호화 payload(string, base64)를 `CString`에 저장
 
-런타임 로딩 시:
+런타임 로딩 시 (`RewardManager.FirstInitAsync`):
 
 1. `CString`에서 payload 문자열을 읽는다
-2. `RewardManager`에서 AES 복호화한다
+2. `MobileApplication`에서 AES 복호화한다
 3. 복호화된 JSON을 `RewardData[]` 규약으로 파싱/검증한다
 4. `RewardManager.ApplyRewardDatas`로 적용한다
+5. `InventoryManager.Initialize()`로 InventorySettings를 로드 + `LastStaminaUpdateUtcMs` 초기화
+6. `InventoryManager.ApplyCurrency(CURRENCY_TYPE.STAMINA, MaxStamina)`로 초기 스태미나 지급
 
 암복호화 key/iv 소유 위치:
-- `RewardManager` (정본, serializable field + public property)
+- `MobileApplication` (정본, `[SerializeField] CString` + public property)
 - 속성:
-  - `InitialRewardsCryptoKey`
-  - `InitialRewardsCryptoIv`
+  - `CryptoKey: string` (get only)
+  - `CryptoIv: string` (get only)
 
 ---
 
@@ -71,7 +73,7 @@ AppliesTo: v10
 - 각 줄의 오른쪽 `삭제` 버튼으로 해당 행 제거
 - 맨 아래 입력 1줄(`type`, `id`, `amount`) + 오른쪽 `추가` 버튼으로 행 추가
 - 변경 사항 저장 시 `RewardData[]` JSON으로 직렬화 후 AES 암호화하여 `InitialRewards`에 기록
-- 암호화 key/iv는 `Assets/Resources/Devian/Application.prefab`의 `RewardManager` 컴포넌트에서 읽는다
+- 암호화 key/iv는 `Assets/Resources/Devian/Application.prefab`의 `MobileApplication` 컴포넌트에서 읽는다
 - 하단 `저장` 버튼으로 에셋 디스크 저장 (`AssetDatabase.SaveAssets()`)
 
 제약:
@@ -80,13 +82,13 @@ AppliesTo: v10
 
 ---
 
-## RewardManager Inspector
+## MobileApplication Inspector
 
-`RewardManagerEditor`는 key/iv 편의 기능을 제공한다.
+`MobileApplicationEditor`는 key/iv 편의 기능을 제공한다.
 
 - `Generate key iv` 버튼 제공
 - 클릭 시 AES key(32 bytes) + iv(16 bytes)를 생성하고 base64 문자열로 저장
-- 저장 위치: `RewardManager._initialRewardsCryptoKey`, `RewardManager._initialRewardsCryptoIv`
+- 저장 위치: `MobileApplication._cryptoKey`, `MobileApplication._cryptoIv`
 
 ---
 
@@ -113,10 +115,10 @@ JSON 원문은 아래 형식을 허용한다.
   - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Editor/FirstRewardSettingsEditor.cs`
   - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Editor/FirstRewardSettingsEditor.cs`
   - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Editor/FirstRewardSettingsEditor.cs`
-- RewardManagerEditor:
-  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Editor/RewardManagerEditor.cs`
-  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Editor/RewardManagerEditor.cs`
-  - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Editor/RewardManagerEditor.cs`
+- MobileApplicationEditor:
+  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Editor/MobileApplicationEditor.cs`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Editor/MobileApplicationEditor.cs`
+  - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Editor/MobileApplicationEditor.cs`
 
 ---
 

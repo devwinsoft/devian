@@ -293,7 +293,7 @@ namespace Devian
             {
                 try
                 {
-                    json = RewardManager.DecryptInitialRewardsJson(payload, keyBase64, ivBase64);
+                    json = MobileApplication.DecryptJson(payload, keyBase64, ivBase64);
                 }
                 catch (Exception ex)
                 {
@@ -393,7 +393,7 @@ namespace Devian
             {
                 try
                 {
-                    payload = RewardManager.EncryptInitialRewardsJson(json, keyBase64, ivBase64);
+                    payload = MobileApplication.EncryptJson(json, keyBase64, ivBase64);
                 }
                 catch (Exception ex)
                 {
@@ -405,7 +405,7 @@ namespace Devian
             else
             {
                 payload = json;
-                _statusMessage = "WARNING: Crypto key/iv not found on RewardManager. Saved without encryption.";
+                _statusMessage = "WARNING: Crypto key/iv not found on MobileApplication. Saved without encryption.";
                 _statusType = MessageType.Warning;
             }
 
@@ -426,11 +426,11 @@ namespace Devian
             if (prefab == null)
                 return (string.Empty, string.Empty);
 
-            var mgr = prefab.GetComponent<RewardManager>();
-            if (mgr == null)
+            var app = prefab.GetComponent<MobileApplication>();
+            if (app == null)
                 return (string.Empty, string.Empty);
 
-            return (mgr.InitialRewardsCryptoKey ?? string.Empty, mgr.InitialRewardsCryptoIv ?? string.Empty);
+            return (app.CryptoKey ?? string.Empty, app.CryptoIv ?? string.Empty);
         }
 
         static bool validateRow(RewardRow row, out string error)
