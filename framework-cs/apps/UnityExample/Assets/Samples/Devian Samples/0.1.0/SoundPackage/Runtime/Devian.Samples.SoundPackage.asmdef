@@ -1,0 +1,17 @@
+{
+  "name": "Devian.Samples.SoundPackage",
+  "rootNamespace": "Devian.Domain.Sound",
+  "references": [
+    "Devian.Core",
+    "Devian.Samples.CommonPackage"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

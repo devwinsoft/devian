@@ -47,8 +47,7 @@ ParentSSOT: skills/devian/10-module/03-ssot/SKILL.md
 Sync 후 아래 패키지는 반드시 upm ↔ Packages 일치를 검증한다:
 
 - `com.devian.foundation` — Core + 모듈 타입 Editor 패키지
-- `com.devian.domain.common` — Unity 런타임 + 도메인 공통 패키지
-- `com.devian.samples` — 샘플 패키지
+- `com.devian.samples` — 도메인/프로토콜/수동 샘플 패키지 (CommonPackage, SoundPackage, GamePackage, MobilePackage, GameProtocol, UIPackage)
 
 > Sync 규칙 자체는 [Unity Policy](../01-policy/SKILL.md) §SSOT 원칙이 정본이다.
 
@@ -90,7 +89,7 @@ com.devian.foundation/
 
 > **asmdef 분리 정책:**
 > - `Devian.Core`는 `noEngineReferences: true`로 UnityEngine 참조를 금지한다.
-> - Unity 런타임 컴포넌트는 `com.devian.domain.common` 패키지(`Devian.Domain.Common` asmdef)에 위치한다.
+> - Unity 런타임 컴포넌트는 `com.devian.samples/Samples~/CommonPackage/`(`Devian.Samples.CommonPackage` asmdef)에 위치한다.
 
 ---
 
@@ -111,8 +110,9 @@ com.devian.foundation/
 
 **금지 패키지 목록 (samplePackages에 넣으면 Hard FAIL):**
 - `com.devian.foundation`
-- `com.devian.domain.*`
-- `com.devian.protocol.*`
+- `com.devian.domain.*` (레거시, 삭제 완료)
+- `com.devian.protocol.*` (레거시, 삭제 완료)
+- `com.devian.ui` (레거시, UIPackage 샘플로 이관 완료)
 
 ---
 

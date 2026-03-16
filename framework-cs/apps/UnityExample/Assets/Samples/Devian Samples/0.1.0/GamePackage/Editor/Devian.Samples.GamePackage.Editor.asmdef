@@ -1,0 +1,22 @@
+{
+  "name": "Devian.Samples.GamePackage.Editor",
+  "rootNamespace": "Devian",
+  "references": [
+    "Devian.Samples.GamePackage",
+    "Devian.Samples.CommonPackage",
+    "Devian.Samples.CommonPackage.Editor",
+    "Devian.Unity",
+    "Devian.Unity.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

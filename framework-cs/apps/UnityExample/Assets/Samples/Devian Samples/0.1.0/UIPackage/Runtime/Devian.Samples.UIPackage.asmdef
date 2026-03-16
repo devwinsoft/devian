@@ -1,0 +1,19 @@
+{
+  "name": "Devian.Samples.UIPackage",
+  "rootNamespace": "Devian",
+  "references": [
+    "Devian.Core",
+    "Devian.Samples.CommonPackage",
+    "Devian.Samples.SoundPackage",
+    "Unity.TextMeshPro"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

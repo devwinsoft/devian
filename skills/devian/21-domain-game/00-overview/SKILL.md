@@ -5,6 +5,9 @@ AppliesTo: v10
 
 **Game 도메인 정의.** DomainKey = `Game`의 테이블, 기능 클래스, enum을 정의한다.
 
+**UPM 위치:** `com.devian.samples/Samples~/GamePackage/` (Sample-target — 독립 UPM 패키지 없음)
+**Assembly:** `Devian.Samples.GamePackage` (Generated namespace: `Devian.Domain.Game`)
+
 ---
 
 ## Sub-skills

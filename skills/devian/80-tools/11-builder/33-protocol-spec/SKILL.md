@@ -37,9 +37,9 @@ PROTOCOL(DomainType=PROTOCOL) 입력으로부터 C#/TS 프로토콜 코드를 �
 **금지 필드 (존재 시 빌드 실패):**
 - `csTargetDir` — `csConfig.generateDir` 사용
 - `tsTargetDir` — `tsConfig.generateDir` 사용
-- `upmName` — 자동 계산 (`com.devian.protocol.{normalize(group)}`)
+- `upmName` — 금지 (Protocol은 `com.devian.samples/Samples~/{ProtocolGroup}Protocol/`에 샘플로 생성)
 
-> **normalize 규칙 (요약):** trim → 공백을 `_`로 치환 → 허용 문자 외 제거(영문/숫자/`_`/`-`만 남김) → 소문자화. 정확한 규칙은 빌더의 `normalizeUpmSuffixFromGroup()` 참조.
+> **normalize 규칙 (요약):** trim → 공백을 `_`로 치환 → 허용 문자 외 제거(영문/숫자/`_`/`-`만 남김) → 소문자화. 정확한 규칙은 빌더 코드를 정답으로 본다.
 
 ### Protocol Spec JSON (필수 필드)
 
@@ -261,21 +261,21 @@ networker.Disconnect();
 
 ## UPM 산출물 정책 (Hard Rule)
 
-**Protocol UPM(`com.devian.protocol.*`)은 Runtime-only이며, 빌더가 touch 가능한 범위는 Generated/** 뿐이다.**
+**Protocol Sample(`Samples~/{ProtocolGroup}Protocol/`)은 Runtime-only이며, 빌더가 touch 가능한 범위는 `Runtime/Generated/`뿐이다.**
 
 | 대상 | 빌더 동작 |
 |-----------|----------|
-| `Runtime/Devian.Protocol.{Group}.asmdef` | 수기 파일 (빌더 수정 금지) |
+| `Runtime/Devian.Samples.{ProtocolGroup}Protocol.asmdef` | 수기 파일 (빌더 수정 금지) |
 | `Runtime/Generated/{ProtocolName}.g.cs` | ✅ 생성/갱신 |
 | `Runtime/Generated/{Protocol}SessionHost.g.cs` | ✅ 생성/갱신 |
 | `Runtime/Generated/{Protocol}Networker.g.cs` | ✅ 생성/갱신 |
 | ~~`Runtime/Generated/ClientSessionHost.g.cs`~~ | ❌ 삭제 (프로토콜별 SessionHost로 대체) |
-| `package.json` | 수기 파일 (빌더 수정 금지) |
+| `README.md` | 수기 파일 (빌더 수정 금지) |
 | `Editor/` 폴더 | ❌ 생성 금지, 존재 시 레거시 청소로 삭제 |
 
 **Runtime asmdef references 정책:**
-- `Devian.Core`
-- `Devian.Domain.Common`
+- `Devian.Core` (com.devian.foundation)
+- `Devian.Samples.{CommonDomainKey}Package` (com.devian.samples — `getSampleName('Common', 'Package')`)
 
 > SSOT: `skills/devian/80-tools/11-builder/03-ssot/SKILL.md` — Protocol UPM 산출물 정책
 
@@ -315,8 +315,8 @@ Unity 환경에서의 호환성을 위해 다음 규칙을 강제한다.
 - `@devian/protocol-{protocolgroup}`는 `@devian/core` + `@devian/module-common`을 의존한다.
 
 **Unity UPM:**
-- Protocol용 `.asmdef` 파일의 `references`에 `Devian.Domain.Common` 포함 필수
-- 예: `Devian.Protocol.Game.asmdef" → "references": [..., "Devian.Domain.Common"]`
+- Protocol Sample의 `.asmdef` 파일의 `references`에 `Devian.Samples.{CommonDomainKey}Package` 포함 필수
+- 예: `Devian.Samples.{ProtocolGroup}Protocol.asmdef` → `"references": [..., "Devian.Samples.CommonPackage"]`
 
 ---
 
@@ -449,7 +449,7 @@ Protocol 그룹에 inbound와 outbound가 **정확히 1개씩** 존재하면 Run
 
 **Unity UPM:**
 
-6. Protocol용 `.asmdef` 파일의 `references`에 `Devian.Domain.Common` 존재
+6. Protocol Sample의 `Devian.Samples.{ProtocolGroup}Protocol.asmdef`의 `references`에 `Devian.Samples.CommonPackage` 존재
 
 ---
 

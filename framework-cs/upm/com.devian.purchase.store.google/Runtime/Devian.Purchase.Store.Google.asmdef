@@ -3,7 +3,7 @@
   "rootNamespace": "Devian",
   "references": [
     "Devian.Samples.MobilePackage",
-    "Devian.Domain.Common"
+    "Devian.Samples.CommonPackage"
   ],
   "includePlatforms": [ "Android" ],
   "excludePlatforms": [],

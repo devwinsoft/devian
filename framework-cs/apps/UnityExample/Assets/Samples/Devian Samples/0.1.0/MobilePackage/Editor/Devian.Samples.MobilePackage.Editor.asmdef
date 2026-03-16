@@ -4,8 +4,8 @@
     "references": [
         "Devian.Samples.MobilePackage",
         "Devian.Core",
-        "Devian.Domain.Common",
-        "Devian.Domain.Game",
+        "Devian.Samples.CommonPackage",
+        "Devian.Samples.GamePackage",
         "Devian.Unity.Editor"
     ],
     "includePlatforms": [

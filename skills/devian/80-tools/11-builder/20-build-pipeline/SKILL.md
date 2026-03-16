@@ -150,7 +150,7 @@ node framework-ts/tools/builder/build.js -[target] <buildInputJson>
 ### Hard Rule: samplePackages cannot contain libraries/domains
 
 - `samplePackages`에는 `com.devian.samples`만 포함할 수 있다.
-- `com.devian.foundation` 또는 `com.devian.domain.*` 가 들어가면 FAIL (Generated 덮어쓰기/삭제 위험).
+- `com.devian.foundation`, `com.devian.domain.*` (레거시, 삭제 완료), `com.devian.protocol.*` (레거시, 삭제 완료), `com.devian.ui` (레거시, UIPackage 샘플로 이관 완료) 가 들어가면 FAIL.
 - `staticUpmPackages` 키는 금지이며 존재 시 FAIL.
 
 ---
@@ -168,7 +168,7 @@ node framework-ts/tools/builder/build.js -[target] <buildInputJson>
 | Target | 산출물 |
 |--------|--------|
 | `-domain-code` | C# Domain 모듈, TS Domain 모듈, UPM Domain 패키지 |
-| `-protocol` | C# Protocol 모듈, TS Protocol 모듈, UPM Protocol 패키지 |
+| `-protocol` | C# Protocol 모듈, TS Protocol 모듈, Protocol Sample (`Samples~/{ProtocolGroup}Protocol/`) |
 | `-domain-data` | NDJSON 파일, pb64 파일 (tableConfig dirs) |
 | `-all` | 위 모두 |
 
@@ -184,19 +184,39 @@ node framework-ts/tools/builder/build.js -[target] <buildInputJson>
 {tsConfig.generateDir}/devian-domain-{domainKeyLower}/
 ```
 
-### UPM Domain 템플릿
+### UPM Domain 템플릿 (Sample-target)
+
+**모든** 도메인은 `com.devian.samples/Samples~/`에 샘플로 생성된다. 독립 UPM 패키지(`com.devian.domain.{key}`)는 생성하지 않는다 (레거시, 삭제 완료).
 
 ```
-{upmConfig.sourceDir}/com.devian.domain.{domainKeyLower}/
+{upmConfig.sourceDir}/com.devian.samples/Samples~/{SampleName}/
 ```
+
+**SampleName 컨벤션:** `{DomainKey}Package` (동적 파생, 하드코딩 금지)
+- 빌더 구현: `DevianToolBuilder.getSampleName(domainName, 'Package')` → `${domainName}Package`
+- 예: `Common` → `CommonPackage`, `Sound` → `SoundPackage`, `Game` → `GamePackage`
+
+> 상세 규칙: [03-ssot/SKILL.md § Sample-target Domain](../03-ssot/SKILL.md)
 
 ### Protocol 템플릿 (동일 원칙)
 
 ```
 C#:  {csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/
 TS:  {tsConfig.generateDir}/devian-protocol-{protocolGroupLower}/
-UPM: {upmConfig.sourceDir}/com.devian.protocol.{protocolGroupLower}/
 ```
+
+**Protocol Sample-target:** Protocol은 독립 UPM 패키지가 아니라 `com.devian.samples/Samples~/`에 샘플로 생성된다:
+
+```
+{upmConfig.sourceDir}/com.devian.samples/Samples~/{ProtocolGroup}Protocol/
+```
+
+**SampleName 컨벤션:** `{ProtocolGroup}Protocol` (동적 파생, 하드코딩 금지)
+- 빌더 구현: `DevianToolBuilder.getSampleName(groupName, 'Protocol')` → `${groupName}Protocol`
+- 예: `Game` → `GameProtocol`
+
+> 기존 `com.devian.protocol.{suffix}` 독립 UPM은 레거시 (삭제 대상).
+> 상세 규칙: [03-ssot/SKILL.md § Sample-target Protocol](../03-ssot/SKILL.md)
 
 ### 데이터 산출물
 
@@ -275,10 +295,11 @@ Game 도메인/프로토콜 예제의 상세 설명은 별도 스킬 문서를 �
 
 1) `{configJson}` (예: `input/build_config.json`)에 `samplePackages: ["com.devian.samples"]`만 존재한다.
 2) `{configJson}` (예: `input/build_config.json`)에 `staticUpmPackages` 키가 존재하지 않는다 (금지 필드).
-3) 빌드 후 `framework-cs/upm/com.devian.domain.sound/Runtime/Generated/Sound.g.cs` 가 존재한다.
-4) 빌드 후 `framework-cs/apps/UnityExample/Packages/com.devian.domain.sound/Runtime/Generated/Sound.g.cs` 가 존재한다.
-5) samplePackages 처리 이후에도 (3), (4)가 삭제되지 않는다.
-6) Unity 컴파일 에러 `CS0246 (SOUND/VOICE not found)` 가 발생하지 않는다.
+3) 빌드 후 각 도메인에 대해 `Samples~/{DomainKey}Package/Runtime/Generated/{DomainKey}.g.cs` 가 존재한다.
+4) 빌드 후 각 프로토콜에 대해 `Samples~/{ProtocolGroup}Protocol/Runtime/Generated/*.g.cs` 가 존재한다.
+5) 빌드 후 위 3, 4의 Packages 미러 경로에도 동일 파일이 존재한다.
+6) `framework-cs/upm/com.devian.domain.{key}/` 디렉토리가 존재하지 않는다 (레거시 삭제 완료).
+7) `framework-cs/upm/com.devian.protocol.{suffix}/` 디렉토리가 존재하지 않는다 (레거시 삭제 완료).
 
 ## Verification Checklist (Dependencies)
 

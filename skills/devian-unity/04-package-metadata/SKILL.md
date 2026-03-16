@@ -81,11 +81,14 @@ runtime 패키지는 필요한 최소 의존만 선언한다:
 
 | 패키지 | dependencies |
 |--------|--------------|
-| `com.devian.foundation` | `com.unity.addressables` |
-| `com.devian.domain.common` | `com.devian.foundation`, `com.unity.addressables`, `com.unity.nuget.newtonsoft-json` |
-| `com.devian.domain.game` | `com.devian.foundation`, `com.devian.domain.common`, `com.devian.domain.sound` |
-| `com.devian.domain.sound` | `com.devian.foundation`, `com.devian.domain.common` |
-| `com.devian.samples` | (없음) |
+| `com.devian.foundation` | `com.unity.addressables`, `com.unity.nuget.newtonsoft-json` |
+| `com.devian.ui` | `com.devian.foundation`, `com.devian.samples` |
+| `com.devian.samples` | `com.unity.inputsystem` |
+
+> **Note:** 모든 도메인(Common, Sound, Game)은 `com.devian.samples/Samples~/` 하위에 Sample로 제공되며, 독립 `com.devian.domain.*` UPM 패키지는 없다.
+> CommonPackage 샘플의 asmdef 의존: `Devian.Core`, `Unity.Addressables`, `Unity.ResourceManager`, `Unity.InputSystem`, `Newtonsoft.Json`
+> SoundPackage 샘플의 asmdef 의존: `Devian.Core`, `Devian.Samples.CommonPackage`
+> GamePackage 샘플의 asmdef 의존: `Devian.Core`, `Devian.Samples.CommonPackage`, `Devian.Samples.SoundPackage`
 
 > 의존 방향 정책은 [02-unity-bundles](../02-unity-bundles/SKILL.md) §의존 방향 정책을 참조한다.
 > Newtonsoft.Json이 필요한 패키지만 `com.unity.nuget.newtonsoft-json`을 추가한다.

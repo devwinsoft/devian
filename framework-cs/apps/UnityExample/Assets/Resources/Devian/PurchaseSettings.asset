@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 46069ce7b8981469fa232aef4c9d1694, type: 3}
+  m_Script: {fileID: 11500000, guid: 991d469ae28774aac9d9d363896e101c, type: 3}
   m_Name: PurchaseSettings
   m_EditorClassIdentifier: Devian.Samples.MobilePackage::Devian.PurchaseSettings
   _seasonPurchaseBlockedBeforeEndDays: 3

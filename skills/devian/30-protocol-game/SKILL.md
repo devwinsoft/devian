@@ -44,7 +44,7 @@ AppliesTo: v10
 | 플랫폼 | 생성물 | 경로 |
 |--------|--------|------|
 | C# Module | `Devian.Protocol.Game` | `framework-cs/module/Devian.Protocol.Game/` |
-| UPM Package | `com.devian.protocol.game` | `framework-cs/upm/com.devian.protocol.game/` |
+| UPM Sample | `Devian.Samples.GameProtocol` | `framework-cs/upm/com.devian.samples/Samples~/GameProtocol/` |
 | TS Module | `devian-protocol-game` | `framework-ts/module/devian-protocol-game/` |
 
 ---

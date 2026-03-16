@@ -42,7 +42,7 @@ node framework-ts/tools/builder/build.js -[target] <buildInputJson>
 | Phase 2: Materialize (data → tableConfig dirs) | ✅ | — | — | ✅ |
 | Phase 3: Validate | ✅ | ✅ | ✅ | — |
 | Phase 4: Sync (upm → packageDir) | ✅ | ✅ | ✅ | — |
-| Phase 5: Sample metadata sync | ✅ | ✅ | — | — |
+| Phase 5: Sample metadata sync | ✅ | ✅ | ✅ | — |
 
 ### Target ↔ 스킬 문서 매핑
 
@@ -129,50 +129,30 @@ PROTOCOL 입력은 `{buildInputJson}`의 `protocols` 섹션(배열)이 정의한
 
 ### Protocol UPM 산출물 정책 (Hard Rule)
 
-**Protocol UPM은 Runtime-only이며, 빌더가 touch 가능한 범위는 Generated/** 뿐이다.**
+**Protocol은 `com.devian.samples/Samples~/{ProtocolGroup}Protocol/`에 샘플로 생성된다.**
 
-**UPM 산출물 경로:**
-- staging 생성/수정 허용 대상: `{tempDir}/Devian.Protocol.{ProtocolGroup}/cs/Generated/**`
-- final 반영 대상 (빌더가 touch 가능한 범위): `{upmConfig.sourceDir}/com.devian.protocol.{suffix}/Runtime/Generated/**`
-- final 포함 파일: `{Protocol}.g.cs`, `{Protocol}SessionHost.g.cs`, `{Protocol}Networker.g.cs`
-- ~~`ClientSessionHost.g.cs`~~ — 삭제 대상
+> 상세 규칙: § Sample-target Protocol 참조.
 
-> UPM은 별도 `-upm` staging을 만들지 않으며, C# staging(`…/cs/Generated`)을 그대로 UPM `Runtime/Generated`로 copy한다.
+**Protocol UPM은 Runtime-only이며, 빌더가 touch 가능한 범위는 `Runtime/Generated/`뿐이다.**
+
+**final 반영 대상:**
+- `{upmConfig.sourceDir}/com.devian.samples/Samples~/{ProtocolGroup}Protocol/Runtime/Generated/**`
+- 포함 파일: `{Protocol}.g.cs`, `{Protocol}SessionHost.g.cs`, `{Protocol}Networker.g.cs`
 
 **수기/고정 파일 (빌더 생성/수정 금지):**
-- `package.json`
-- `Runtime/*.asmdef`
+- `Runtime/Devian.Samples.{ProtocolGroup}Protocol.asmdef`
+- `README.md`
 - `*.meta`
 
 **레거시 청소:**
+- 기존 독립 UPM `com.devian.protocol.{suffix}/` 삭제
 - `Editor/` 폴더 존재 시 삭제 (Runtime-only 정책)
-
-**UPM 패키지명 자동 계산:**
-```
-computedUpmName = "com.devian.protocol." + normalize(group)
-```
-
-**normalize(group) 규칙:**
-1. 소문자화
-2. 공백은 `_`(underscore)로 치환
-3. `_`(underscore)는 유지
-4. 허용 문자: `[a-z0-9._-]`만 유지, 그 외 제거
-5. 앞/뒤의 `.`, `-`, `_` 정리
-
-**예시:**
-| group | computedUpmName |
-|-------|-----------------|
-| `Game` | `com.devian.protocol.game` |
-| `Game_Server` | `com.devian.protocol.game_server` |
-| `Auth Service` | `com.devian.protocol.auth_service` |
 
 ### Protocol 충돌 정책 (Hard Fail)
 
-1. `upm`에 동일한 `computedUpmName`이 존재하면 빌드 **FAIL**
-2. `upm`에 동일한 `computedUpmName`이 이미 존재하면 빌드 **FAIL** (중복 생성)
-3. `protocols` 배열 내에서 동일한 `computedUpmName`이 계산되면 빌드 **FAIL**
-
-> 덮어쓰기/우선순위 없음. 모든 충돌은 명시적 오류.
+- `protocols` 배열 내에서 동일한 SampleName (`{ProtocolGroup}Protocol`)이 계산되면 빌드 **FAIL**.
+- Domain SampleName과의 충돌도 **FAIL** (§ Sample-target 충돌 정책 참조).
+- 덮어쓰기/우선순위 없음. 모든 충돌은 명시적 오류.
 
 ### Protocol 모듈 의존성 (Hard Rule)
 
@@ -180,6 +160,11 @@ computedUpmName = "com.devian.protocol." + normalize(group)
 - `Devian.Protocol.{ProtocolGroup}.csproj`는 다음을 ProjectReference 한다:
   - `..\Devian\Devian.csproj`
   - `..\Devian.Domain.Common\Devian.Domain.Common.csproj`
+
+**Unity asmdef 의존성 (Sample):**
+- `Devian.Samples.{ProtocolGroup}Protocol` asmdef는 다음을 references 한다:
+  - `Devian.Core` (com.devian.foundation)
+  - `Devian.Samples.{CommonDomainKey}Package` (com.devian.samples — `getSampleName('Common', 'Package')`)
 
 **TS PROTOCOL 패키지 의존성:**
 - `@devian/protocol-{protocolgroup}`는 `@devian/core` + `@devian/module-common`을 의존한다.
@@ -307,6 +292,132 @@ DATA 입력은 `{buildInputJson}`의 `domains` 섹션이 정의한다.
 - `domains[*].csTargetDir` — 금지, `csConfig.generateDir` 사용
 - `domains[*].tsTargetDir` — 금지, `tsConfig.generateDir` 사용
 - `domains[*].dataTargetDirs` — 금지, `tableConfig.*Dirs` 사용
+
+---
+
+## Sample 폴더 네이밍 컨벤션 (Hard Rule)
+
+Domain과 Protocol은 독립 UPM 패키지가 아니라, **모두** `com.devian.samples/Samples~/`에 샘플로 생성된다.
+
+### 네이밍 규칙 (동적 파생, 하드코딩 금지)
+
+| 카테고리 | 입력 키 | Suffix | Sample 이름 | Assembly 이름 |
+|----------|---------|--------|-------------|---------------|
+| Domain | `{DomainKey}` | `Package` | `{DomainKey}Package` | `Devian.Samples.{DomainKey}Package` |
+| Protocol | `{ProtocolGroup}` | `Protocol` | `{ProtocolGroup}Protocol` | `Devian.Samples.{ProtocolGroup}Protocol` |
+| Manual | 패키지 고유 키 | `Package` | `{Key}Package` | `Devian.Samples.{Key}Package` |
+
+- **빌더 구현:** `DevianToolBuilder.getSampleName(key, suffix)` → `${key}${suffix}`
+- **위치:** `com.devian.samples/Samples~/{Key}{Suffix}/`
+- **rootNamespace 보존 (Hard Rule):**
+  - Domain: `Devian.Domain.{DomainKey}` (원래 도메인 namespace 유지)
+  - Protocol: `Devian.Protocol.{ProtocolGroup}` (원래 프로토콜 namespace 유지)
+
+> 새로운 카테고리 추가 시 Suffix를 SSOT에 먼저 정의하고, 빌더에 반영한다 (§5 준수).
+
+**Manual 카테고리:**
+- 빌더가 Generated 코드를 주입하지 않는 완전 수동 패키지.
+- 현재 대상: `UI` → `UIPackage` (기존 독립 UPM `com.devian.ui` → Sample 이관).
+- 레거시 asmdef 참조(`Devian.UI`, `Devian.UI.Editor`)는 `asmdefRefToUpmPackage()`에서 `com.devian.samples`로 매핑.
+
+### 공통 규칙
+
+- 각 Sample의 `asmdef`, `README.md`는 수동 관리 (빌더가 생성/수정 금지).
+- `*.meta` 파일은 수동 관리 (Unity GUID 보존).
+- 빌더가 touch 가능한 범위는 `Runtime/Generated/`와 `Editor/Generated/`뿐이다.
+- Hybrid 감지: target에 Runtime asmdef (`Devian.Samples.{SampleName}.asmdef`)가 존재하면 hybrid mode → `Generated/` 디렉토리만 clean+copy, 수동 addon 보존.
+- Hybrid가 아니면 (새 도메인/프로토콜 첫 빌드 등): `copyUpmToTarget()`으로 전체 staging 복사.
+
+### Sample-target 충돌 정책 (Hard Fail)
+
+- `Samples~/` 내에서 동일한 SampleName이 계산되면 빌드 **FAIL**.
+- Domain과 Protocol 간에도 SampleName 충돌 시 **FAIL** (예: DomainKey `GameProtocol` + ProtocolGroup `Game` → 둘 다 `GameProtocol` 충돌).
+- 덮어쓰기/우선순위 없음. 모든 충돌은 명시적 오류.
+
+---
+
+## Sample-target Domain (Hard Rule)
+
+**모든** 도메인은 `com.devian.samples/Samples~/{DomainKey}Package/`에 샘플로 생성된다.
+
+### 생성 규칙
+
+- Builder는 Domain의 Generated 코드를 `{upmConfig.sourceDir}/com.devian.samples/Samples~/{SampleName}/Runtime/Generated/`와 `Editor/Generated/`에 출력한다.
+- `com.devian.domain.{key}` 독립 UPM 패키지는 생성하지 않는다.
+- C# staging 경로는 기존과 동일: `{tempDir}/{DomainKey}/cs/Generated/`
+- Materialize(Phase 2)에서 staging → target 복사 경로만 변경된다.
+
+### 산출물 경로 (Domain Sample-target)
+
+**staging (변경 없음):**
+- `{tempDir}/{DomainKey}/cs/Generated/{DomainKey}.g.cs`
+- `{tempDir}/{DomainKey}/upm/` (staging UPM scaffold)
+
+**final:**
+- `{upmConfig.sourceDir}/com.devian.samples/Samples~/{DomainKey}Package/Runtime/Generated/{DomainKey}.g.cs`
+- `{upmConfig.sourceDir}/com.devian.samples/Samples~/{DomainKey}Package/Editor/Generated/*.Editor.cs`
+
+---
+
+## Sample-target Protocol (Hard Rule)
+
+**모든** 프로토콜은 `com.devian.samples/Samples~/{ProtocolGroup}Protocol/`에 샘플로 생성된다. 독립 UPM 패키지(`com.devian.protocol.{suffix}`)는 생성하지 않는다.
+
+### Protocol Sample 특성
+
+- **Runtime-only**: Editor 폴더/asmdef 없음.
+- **Generated-only**: 빌더가 touch하는 범위는 `Runtime/Generated/`뿐.
+- **noEngineReferences: true** — Protocol은 순수 C# 코드이며 UnityEngine 의존 없음.
+
+### 수기/고정 파일 (빌더 생성/수정 금지)
+
+- `Runtime/Devian.Samples.{ProtocolGroup}Protocol.asmdef`
+- `README.md`
+- `*.meta`
+
+### asmdef 구성
+
+```json
+{
+    "name": "Devian.Samples.{ProtocolGroup}Protocol",
+    "rootNamespace": "Devian.Protocol.{ProtocolGroup}",
+    "references": [
+        "Devian.Core",
+        "Devian.Samples.{CommonDomainKey}Package"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
+```
+
+> `{CommonDomainKey}Package`는 Sample 네이밍 컨벤션에 따라 `getSampleName('Common', 'Package')`로 파생.
+
+### 산출물 경로 (Protocol Sample-target)
+
+**staging (변경 없음):**
+- `{tempDir}/Devian.Protocol.{ProtocolGroup}/cs/Generated/{ProtocolName}.g.cs`
+- `{tempDir}/Devian.Protocol.{ProtocolGroup}/cs/Generated/{Protocol}SessionHost.g.cs`
+- `{tempDir}/Devian.Protocol.{ProtocolGroup}/cs/Generated/{Protocol}Networker.g.cs`
+
+**final (변경됨):**
+- `{upmConfig.sourceDir}/com.devian.samples/Samples~/{ProtocolGroup}Protocol/Runtime/Generated/{ProtocolName}.g.cs`
+- `{upmConfig.sourceDir}/com.devian.samples/Samples~/{ProtocolGroup}Protocol/Runtime/Generated/{Protocol}SessionHost.g.cs`
+- `{upmConfig.sourceDir}/com.devian.samples/Samples~/{ProtocolGroup}Protocol/Runtime/Generated/{Protocol}Networker.g.cs`
+
+> C# staging(`…/cs/Generated`)을 그대로 Sample `Runtime/Generated/`로 copy한다. 별도 `-upm` staging 없음.
+
+### 레거시 청소
+
+- 기존 독립 UPM 패키지 `{upmConfig.sourceDir}/com.devian.protocol.{suffix}/`는 삭제한다.
+- `Packages/com.devian.protocol.{suffix}/`도 삭제한다.
+- `manifest.json`에서 `com.devian.protocol.*` 참조를 제거한다.
 
 ---
 

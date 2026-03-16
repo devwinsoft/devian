@@ -3,12 +3,11 @@
   "rootNamespace": "Devian",
   "references": [
     "Devian.Core",
-    "Devian.Domain.Common",
-    "Devian.Domain.Game",
+    "Devian.Samples.CommonPackage",
+    "Devian.Samples.GamePackage",
     "Unity.InputSystem",
-    "Devian.UI",
-    "Unity.Purchasing",
-    "Devian.Samples.GameContents"
+    "Devian.Samples.UIPackage",
+    "Unity.Purchasing"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

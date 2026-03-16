@@ -1,35 +1,5 @@
 {
   "dependencies": {
-    "com.devian.domain.common": {
-      "version": "file:com.devian.domain.common",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.devian.foundation": "0.1.0",
-        "com.unity.addressables": "2.7.6",
-        "com.unity.inputsystem": "1.18.0",
-        "com.unity.nuget.newtonsoft-json": "3.2.1"
-      }
-    },
-    "com.devian.domain.game": {
-      "version": "file:com.devian.domain.game",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.devian.foundation": "0.1.0",
-        "com.devian.domain.common": "0.1.0",
-        "com.devian.domain.sound": "0.1.0"
-      }
-    },
-    "com.devian.domain.sound": {
-      "version": "file:com.devian.domain.sound",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.devian.foundation": "0.1.0",
-        "com.devian.domain.common": "0.1.0"
-      }
-    },
     "com.devian.foundation": {
       "version": "file:com.devian.foundation",
       "depth": 0,
@@ -37,15 +7,6 @@
       "dependencies": {
         "com.unity.addressables": "2.7.6",
         "com.unity.nuget.newtonsoft-json": "3.2.1"
-      }
-    },
-    "com.devian.protocol.game": {
-      "version": "file:com.devian.protocol.game",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.devian.foundation": "0.1.0",
-        "com.devian.domain.common": "0.1.0"
       }
     },
     "com.devian.purchase.store.apple": {
@@ -64,16 +25,9 @@
       "version": "file:com.devian.samples",
       "depth": 0,
       "source": "embedded",
-      "dependencies": {}
-    },
-    "com.devian.ui": {
-      "version": "file:com.devian.ui",
-      "depth": 0,
-      "source": "embedded",
       "dependencies": {
         "com.devian.foundation": "0.1.0",
-        "com.devian.domain.common": "0.1.0",
-        "com.devian.domain.sound": "0.1.0"
+        "com.unity.inputsystem": "1.18.0"
       }
     },
     "com.github-glitchenzo.nugetforunity": {

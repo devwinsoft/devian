@@ -3,7 +3,7 @@
   "rootNamespace": "Devian.Unity",
   "references": [
     "Devian.Core",
-    "Devian.Domain.Common"
+    "Devian.Samples.CommonPackage"
   ],
   "includePlatforms": [
     "Editor"

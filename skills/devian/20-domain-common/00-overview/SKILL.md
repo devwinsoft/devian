@@ -2,6 +2,8 @@
 
 Devian Common Domain의 C#/TS 공통 정책과 결과 표현 규약을 담당한다.
 
+- **UPM 위치**: `com.devian.samples/Samples~/CommonPackage/`
+- **Assembly**: `Devian.Samples.CommonPackage`
 - **Domain Policy**: `Common` DomainKey의 역할/제약
 - **Module Policy**: Common 모듈의 생성물/수동 코드 경계, 의존성, namespace 규칙
 - **Error/Result**: `CommonError`, `CommonResult<T>`, `COMMON_ERROR` 규약

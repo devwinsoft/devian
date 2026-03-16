@@ -32,16 +32,15 @@ Type: Policy / Requirements / Checklist
 
 **Single Source of Truth:**
 - **수동 관리 패키지**: `framework-cs/upm/<packageName>/...` — 수동으로 관리하는 "완벽한 UPM 패키지"
-- **생성 패키지**: `framework-cs/upm/<packageName>/...` — 빌드가 생성하는 "완벽한 UPM 패키지" (GitHub URL 배포용)
+- **샘플 패키지**: `framework-cs/upm/com.devian.samples/Samples~/...` — 도메인/프로토콜/수동 샘플을 포함하는 UPM 패키지
 - **최종 출력**: `framework-cs/apps/UnityExample/Packages/<packageName>` — 빌드 출력물(복사본), 직접 수정 금지
 
 **동기화 흐름:**
 ```
-upm + upm → packageDir (패키지 단위 clean+copy)
+upm → packageDir (패키지 단위 clean+copy)
 ```
 
-> 수동 패키지(예: com.devian.foundation)는 upm에서 관리하고,
-> 생성 패키지(예: com.devian.domain.common)는 upm에서 관리한다.
+> 수동 패키지(예: com.devian.foundation)와 샘플 패키지(com.devian.samples)는 모두 upm에서 관리한다.
 
 ---
 
@@ -205,6 +204,114 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 - Source에 `Samples~`가 존재하면 Target에도 **반드시** 존재해야 함
 - `copyUpmToTarget()` 함수에서 `Samples~` 복사가 `syncSamplesMetadata()` 호출 **전에** 실행되어야 함
 
+### Hybrid Sample (Builder-generated + Manual addon)
+
+일부 샘플은 수동 addon 코드와 빌더가 생성하는 Generated 코드를 함께 포함한다. 이를 **Hybrid Sample**이라 한다.
+
+**Sample 네이밍 컨벤션 (동적 파생, 하드코딩 금지):**
+
+| 카테고리 | Suffix | SampleName 규칙 | Assembly 규칙 |
+|----------|--------|----------------|---------------|
+| Domain | `Package` | `{DomainKey}Package` | `Devian.Samples.{DomainKey}Package` |
+| Protocol | `Protocol` | `{ProtocolGroup}Protocol` | `Devian.Samples.{ProtocolGroup}Protocol` |
+| Manual | `Package` | `{Key}Package` | `Devian.Samples.{Key}Package` |
+
+- 빌더 구현: `DevianToolBuilder.getSampleName(key, suffix)` → `${key}${suffix}`
+- 위치: `Samples~/{Key}{Suffix}/`
+
+> 상세 네이밍 규칙: [Builder SSOT § Sample 폴더 네이밍 컨벤션](../../devian/80-tools/11-builder/03-ssot/SKILL.md)
+
+**Hybrid Sample 규칙 (Hard Rule):**
+
+- 빌더는 Hybrid Sample의 `Runtime/Generated/`와 `Editor/Generated/` 디렉토리만 clean+copy한다.
+- 수동 addon 코드 (`Runtime/Ability/`, `Runtime/CommonEffect/`, `Runtime/Sound/` 등)는 빌더가 touch하지 않는다 (보존).
+- asmdef, package.json(상위 com.devian.samples의), README.md는 수동 관리이며, 빌더가 생성/수정 금지.
+- Generated 코드의 C# namespace는 원래 namespace를 유지한다:
+  - Domain: `Devian.Domain.{DomainKey}`
+  - Protocol: `Devian.Protocol.{ProtocolGroup}`
+- assembly 이름은 `Devian.Samples.{SampleName}` 규약을 따른다.
+
+**CommonPackage 구조:**
+
+```
+Samples~/CommonPackage/
+├── README.md
+├── Runtime/
+│   ├── Devian.Samples.CommonPackage.asmdef
+│   ├── CommonEffect/     ← 수동 addon
+│   ├── MaterialEffect/   ← 수동 addon
+│   ├── Module/            ← 수동 addon (CommonError, CommonResult)
+│   ├── Unity/             ← 수동 addon (Actors, AnimSequence, AssetManager, Bootstrap, Fsm, Input, Pool, Prefs, Scene, Settings, Singletons, Table, UnityLogSink 등)
+│   └── Generated/         ← 빌더가 clean+copy (Common.g.cs, TB_*.Unity.g.cs, ...)
+└── Editor/
+    ├── Devian.Samples.CommonPackage.Editor.asmdef
+    ├── MaterialEffectControllerEditor.cs  ← 수동 addon
+    ├── MaterialEffectEditorHooks.cs       ← 수동 addon
+    ├── Unity/             ← 수동 addon
+    └── Generated/         ← 빌더가 clean+copy (TableID Editor bindings)
+```
+
+**SoundPackage 구조:**
+
+```
+Samples~/SoundPackage/
+├── README.md
+├── Runtime/
+│   ├── Devian.Samples.SoundPackage.asmdef
+│   ├── Sound/             ← 수동 addon (SoundManager, VoiceManager, etc.)
+│   ├── Tables/            ← 수동 addon (SoundVoiceTableRegistry, TB_SOUND, TB_VOICE)
+│   └── Generated/         ← 빌더가 clean+copy (Sound.g.cs, TB_*.Unity.g.cs, ...)
+└── Editor/
+    ├── Devian.Samples.SoundPackage.Editor.asmdef
+    └── Generated/         ← 빌더가 clean+copy (TableID Editor bindings)
+```
+
+**GamePackage 구조:**
+
+```
+Samples~/GamePackage/
+├── README.md
+├── Runtime/
+│   ├── Devian.Samples.GamePackage.asmdef
+│   ├── Ability/           ← 수동 addon (AbilityBase, AbilityEquip, ...)
+│   └── Generated/         ← 빌더가 clean+copy (Game.g.cs, TB_*.Unity.g.cs, ...)
+└── Editor/
+    ├── Devian.Samples.GamePackage.Editor.asmdef
+    └── Generated/         ← 빌더가 clean+copy (TableID Editor bindings)
+```
+
+**GameProtocol 구조 (Protocol Sample):**
+
+```
+Samples~/GameProtocol/
+├── README.md
+└── Runtime/
+    ├── Devian.Samples.GameProtocol.asmdef   ← rootNamespace: Devian.Protocol.Game
+    └── Generated/         ← 빌더가 clean+copy (C2Game.g.cs, Game2C.g.cs, *SessionHost.g.cs, *Networker.g.cs)
+```
+
+> Protocol Sample은 Runtime-only (Editor 없음), Generated-only (수동 addon 없음), noEngineReferences: true.
+
+> 상세 생성 규칙: [Builder SSOT § Sample-target Protocol](../../devian/80-tools/11-builder/03-ssot/SKILL.md)
+
+**UIPackage 구조 (Manual Sample):**
+
+```
+Samples~/UIPackage/
+├── README.md
+├── Runtime/
+│   ├── Devian.Samples.UIPackage.asmdef   ← rootNamespace: Devian
+│   ├── UIManager.cs        ← 수동 (AutoSingleton Canvas 수명주기)
+│   ├── UICanvas.cs          ← 수동
+│   ├── BaseUIFrame.cs       ← 수동
+│   ├── UIMessageSystem.cs   ← 수동
+│   └── Plugins/             ← 수동 (UIPlugInButton, UIPlugInText, etc.)
+└── Editor/
+    └── Devian.Samples.UIPackage.Editor.asmdef   ← includePlatforms: ["Editor"]
+```
+
+> Manual Sample은 빌더가 Generated 코드를 주입하지 않는 완전 수동 패키지. 기존 독립 UPM `com.devian.ui`에서 이관.
+
 ### samplePackages 설정
 
 `{projectConfigJson}` (예: `input/build_config.json`)에 샘플 패키지를 등록:
@@ -264,7 +371,7 @@ Builder는 **반드시** `Samples~` 폴더를 upm에서 UnityExample/Packages로
 - Runtime 코드에 `using UnityEditor` 사용 금지
 - Editor asmdef에 `includePlatforms: []` 사용 금지
 - **Close 처리에서 이벤트 unhook을 Close 이전에 수행 금지** (Disconnect 상태 갱신 불가 원인)
-- **GameNetwork 샘플 삭제됨** — Networker/SessionHost는 `com.devian.protocol.game`에서 generated code로 제공
+- **GameNetwork 샘플 삭제됨** — Networker/SessionHost는 `Samples~/GameProtocol/` 샘플에서 generated code로 제공
 
 ---
 

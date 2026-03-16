@@ -29,15 +29,15 @@ AppliesTo: v10
 | Tables | `devian/input/Domains/Game/*.xlsx` |
 | Protocols | `devian/input/Protocols/Game/**` |
 
-> **Note:** 위 경로의 파일들은 빌드 시 `com.devian.domain.game`, `com.devian.protocol.game` 등으로 생성된다.
+> **Note:** 위 경로의 파일들은 빌드 시 `com.devian.samples/Samples~/GamePackage/` (Game 도메인), `com.devian.samples/Samples~/GameProtocol/` (Game 프로토콜) 등으로 생성된다.
 
 ---
 
 ## 관련 스킬 링크 (따라가면 되는 길)
 
-### Domain/UPM 공통 템플릿
+### Domain 공통 규약
 
-도메인 패키지(`com.devian.domain.*`)의 공통 규약:
+도메인 샘플(`com.devian.samples/Samples~/{DomainKey}Package/`)의 공통 규약:
 
 - `skills/devian/20-domain-common/02-module-policy/SKILL.md`
 

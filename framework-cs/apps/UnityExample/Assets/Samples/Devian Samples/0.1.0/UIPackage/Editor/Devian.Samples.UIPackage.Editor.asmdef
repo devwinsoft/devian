@@ -1,0 +1,20 @@
+{
+  "name": "Devian.Samples.UIPackage.Editor",
+  "rootNamespace": "Devian.UI.Editor",
+  "references": [
+    "Devian.Samples.UIPackage",
+    "Devian.Samples.CommonPackage",
+    "Devian.Unity.Editor"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

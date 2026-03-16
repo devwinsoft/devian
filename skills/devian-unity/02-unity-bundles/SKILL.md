@@ -22,9 +22,7 @@ AppliesTo: v11
 - UnityExample에 embedded UPM 패키지로 다음을 제공한다:
   - `com.devian.foundation` (모듈 래핑: Core + 모듈 타입 Editor)
   - `com.devian.ui` (UI 컴포넌트: UIManager, UICanvas, UIFrame, Plugins)
-  - `com.devian.domain.common` (Unity 런타임 + 도메인 공통)
-  - `com.devian.domain.sound` (Sound/Voice 도메인)
-  - `com.devian.samples` (UPM Samples~ 기반 샘플 코드)
+  - `com.devian.samples` (UPM Samples~ 기반 도메인/샘플 코드 — CommonPackage, SoundPackage, GamePackage, MobilePackage 등)
 
 ## 비목표
 
@@ -47,10 +45,9 @@ framework-cs/apps/UnityExample/Packages/
 |--------|------|
 | `com.devian.foundation` | 모듈 래핑 (Core + 모듈 타입 Editor) |
 | `com.devian.ui` | UI 컴포넌트 (UIManager, UICanvas, UIFrame, Plugins) |
-| `com.devian.domain.common` | Unity 런타임 + 도메인 공통 (Devian.Domain.Common) |
-| `com.devian.domain.game` | Devian.Domain.Game 소스 (테이블 생성 예제) |
-| `com.devian.domain.sound` | Sound/Voice 도메인 |
-| `com.devian.samples` | UPM Samples~ 기반 샘플 코드 |
+| `com.devian.samples` | UPM Samples~ 기반 도메인/샘플 코드 (CommonPackage, SoundPackage, GamePackage, MobilePackage 등) |
+
+> **Note:** 모든 도메인 패키지(Common, Sound, Game)는 `com.devian.samples/Samples~/` 하위에 Sample로 제공된다 (독립 `com.devian.domain.*` UPM 패키지 없음).
 
 > 패키지 통합 정책(com.devian.core/unity 금지)은 [03-ssot](../03-ssot/SKILL.md) §Base UPM package를 참조한다.
 
@@ -65,12 +62,12 @@ framework-cs/apps/UnityExample/Packages/
 ```
 com.devian.foundation (base - Core + 모듈 타입 Editor)
        ↑
-com.devian.domain.* (module packages - foundation 의존)
+com.devian.samples (도메인 + 샘플 패키지 — CommonPackage, SoundPackage, GamePackage, MobilePackage)
        ↑
-com.devian.ui (UI 컴포넌트 - foundation + domain.common + domain.sound 의존)
+com.devian.ui (UI 컴포넌트 - foundation + samples 의존)
 ```
 
-> **Hard Rule:** `com.devian.foundation` → `com.devian.domain.*` 의존 **금지** (순환 방지)
+> **Hard Rule:** `com.devian.foundation` → `com.devian.samples` 의존 **금지** (순환 방지)
 > **Hard Rule:** `com.devian.foundation` → `com.devian.ui` 의존 **금지** (순환 방지)
 
 dependencies 상세 테이블은 [04-package-metadata](../04-package-metadata/SKILL.md) §dependencies 정책을 참조한다.
@@ -84,19 +81,32 @@ dependencies 상세 테이블은 [04-package-metadata](../04-package-metadata/SK
 | asmdef | name | references | 패키지 |
 |--------|------|------------|--------|
 | `Devian.Core.asmdef` | `Devian.Core` | `[]` | com.devian.foundation/Runtime/Module |
-| `Devian.UI.asmdef` | `Devian.UI` | `["Devian.Core", "Devian.Domain.Common", "Devian.Domain.Sound"]` | com.devian.ui/Runtime |
-| `Devian.Domain.Common.asmdef` | `Devian.Domain.Common` | `["Devian.Core", "Unity.Addressables", "Unity.ResourceManager", "Unity.InputSystem", "Newtonsoft.Json"]` | com.devian.domain.common |
-| `Devian.Domain.Sound.asmdef` | `Devian.Domain.Sound` | `["Devian.Core", "Devian.Domain.Common"]` | com.devian.domain.sound |
+| `Devian.UI.asmdef` | `Devian.UI` | `["Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.SoundPackage"]` | com.devian.ui/Runtime |
+
+### Samples~ Runtime asmdef
+
+| asmdef | name | references | 패키지/위치 |
+|--------|------|------------|-------------|
+| `Devian.Samples.CommonPackage.asmdef` | `Devian.Samples.CommonPackage` | `["Devian.Core", "Unity.Addressables", "Unity.ResourceManager", "Unity.InputSystem", "Newtonsoft.Json"]` | com.devian.samples/Samples~/CommonPackage |
+| `Devian.Samples.SoundPackage.asmdef` | `Devian.Samples.SoundPackage` | `["Devian.Core", "Devian.Samples.CommonPackage"]` | com.devian.samples/Samples~/SoundPackage |
+| `Devian.Samples.GamePackage.asmdef` | `Devian.Samples.GamePackage` | `["Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.SoundPackage"]` | com.devian.samples/Samples~/GamePackage |
+| `Devian.Samples.MobilePackage.asmdef` | `Devian.Samples.MobilePackage` | `["Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.GamePackage", "Unity.InputSystem", "Devian.UI", "Unity.Purchasing"]` | com.devian.samples/Samples~/MobilePackage |
 
 ### Editor asmdef
 
 | asmdef | name | references | 패키지 |
 |--------|------|------------|--------|
-| `Devian.Unity.Editor.asmdef` | `Devian.Unity.Editor` | `["Devian.Core", "Devian.Domain.Common"]` | com.devian.foundation/Editor |
-| `Devian.UI.Editor.asmdef` | `Devian.UI.Editor` | `["Devian.UI", "Devian.Domain.Common", "Devian.Unity.Editor"]` | com.devian.ui/Editor |
-| `Devian.Domain.Common.Editor.asmdef` | `Devian.Domain.Common.Editor` | `["Devian.Domain.Common", "Devian.Unity.Editor"]` | com.devian.domain.common |
-| `Devian.Domain.Game.Editor.asmdef` | `Devian.Domain.Game.Editor` | `["Devian.Domain.Game", "Devian.Domain.Common", "Devian.Domain.Common.Editor", "Devian.Unity.Editor"]` | com.devian.domain.game |
-| `Devian.Domain.Sound.Editor.asmdef` | `Devian.Domain.Sound.Editor` | `["Devian.Domain.Sound", "Devian.Domain.Common", "Devian.Domain.Common.Editor", "Devian.Unity.Editor"]` | com.devian.domain.sound |
+| `Devian.Unity.Editor.asmdef` | `Devian.Unity.Editor` | `["Devian.Core", "Devian.Samples.CommonPackage"]` | com.devian.foundation/Editor |
+| `Devian.UI.Editor.asmdef` | `Devian.UI.Editor` | `["Devian.UI", "Devian.Samples.CommonPackage", "Devian.Unity.Editor"]` | com.devian.ui/Editor |
+
+### Samples~ Editor asmdef
+
+| asmdef | name | references | 패키지/위치 |
+|--------|------|------------|-------------|
+| `Devian.Samples.CommonPackage.Editor.asmdef` | `Devian.Samples.CommonPackage.Editor` | `["Devian.Samples.CommonPackage", "Devian.Unity.Editor", "Devian.Unity", "Unity.InputSystem"]` | com.devian.samples/Samples~/CommonPackage |
+| `Devian.Samples.SoundPackage.Editor.asmdef` | `Devian.Samples.SoundPackage.Editor` | `["Devian.Samples.SoundPackage", "Devian.Samples.CommonPackage", "Devian.Samples.CommonPackage.Editor", "Devian.Unity.Editor", "Devian.Unity"]` | com.devian.samples/Samples~/SoundPackage |
+| `Devian.Samples.GamePackage.Editor.asmdef` | `Devian.Samples.GamePackage.Editor` | `["Devian.Samples.GamePackage", "Devian.Unity", "Devian.Unity.Editor"]` | com.devian.samples/Samples~/GamePackage |
+| `Devian.Samples.MobilePackage.Editor.asmdef` | `Devian.Samples.MobilePackage.Editor` | `["Devian.Samples.MobilePackage", "Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.GamePackage", "Devian.Unity.Editor"]` | com.devian.samples/Samples~/MobilePackage |
 
 ---
 
