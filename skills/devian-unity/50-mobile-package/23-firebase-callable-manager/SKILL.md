@@ -34,7 +34,7 @@ game 도메인 테이블(TB_PURCHASE 등)은 참조하지 않는다 - 서버 응
 
 ## Implementation Location (3-path mirror)
 
-> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../07-samples-creation-guide/SKILL.md)
+> 3-path mirror 정책: [devian-unity/04-package-policy](../../04-package-policy/SKILL.md)
 
 - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/FirebaseCallable/FirebaseCallableManager.cs`
 - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/FirebaseCallable/FirebaseCallableManager.cs`
@@ -137,5 +137,3 @@ PurchaseManager는 같은 어셈블리이므로 `internal` FirebaseCallableManag
 ## Related
 
 - [11-mobile-application](../11-mobile-application/SKILL.md) — Bootstrap, RequireComponent, region 설정
-- [30-purchase-system](../30-purchase-system/00-overview/SKILL.md) — PurchaseManager Firebase callable
-- [20-account-system/35-account-login-firebase](../20-account-system/35-account-login-firebase/SKILL.md) — Firebase Auth (별도 소관)

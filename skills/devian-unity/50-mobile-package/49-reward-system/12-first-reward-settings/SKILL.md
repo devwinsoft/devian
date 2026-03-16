@@ -105,7 +105,7 @@ JSON 원문은 아래 형식을 허용한다.
 
 ## Implementation Location (3-path mirror)
 
-> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../07-samples-creation-guide/SKILL.md)
+> 3-path mirror 정책: [devian-unity/04-package-policy](../../../04-package-policy/SKILL.md)
 
 - FirstRewardSettings:
   - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Reward/FirstRewardSettings.cs`

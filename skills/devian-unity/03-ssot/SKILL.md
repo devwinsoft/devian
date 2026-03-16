@@ -144,4 +144,4 @@ com.devian.foundation/
 - [Unity Policy](../01-policy/SKILL.md) — UPM Sync/미러/경로 규칙
 - [Unity Bundles](../02-unity-bundles/SKILL.md) — 패키지 묶음/asmdef/의존 방향
 - [Unity C# Compat](../05-unity-csharp-compat/SKILL.md) — C# 문법 제한
-- [Package Metadata](../04-package-metadata/SKILL.md) — package.json 메타데이터/dependencies
+- [Package Policy](../04-package-policy/SKILL.md) — package.json 메타데이터/Samples~ 정책

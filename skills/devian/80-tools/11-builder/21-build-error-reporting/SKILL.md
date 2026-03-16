@@ -247,5 +247,5 @@ build-{yyyyMMdd-HHmmss}-{pid}.ndjson
 ### 입력 규약 (연결 후보)
 
 - `skills/devian/20-domain-common/02-module-policy/SKILL.md` — 도메인 모듈 정책
-- `skills/devian-unity/07-samples-creation-guide/SKILL.md`
+- `skills/devian-unity/04-package-policy/SKILL.md`
 - `skills/devian-examples/01-policy/SKILL.md`

@@ -142,7 +142,7 @@ NOTE:
   `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Reward/RewardData.cs`
 - Assets/Samples (import):
   `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Reward/RewardData.cs`
-- 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../07-samples-creation-guide/SKILL.md)
+- 3-path mirror 정책: [devian-unity/04-package-policy](../../../04-package-policy/SKILL.md)
 
 
 ---

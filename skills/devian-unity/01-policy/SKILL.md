@@ -135,8 +135,8 @@ rm -f UnityExample/Packages/{pkg}/.../OldName.cs.meta
 
 ## 세부 문서
 
-### Package Metadata
-- `skills/devian-unity/04-package-metadata/SKILL.md`
+### Package Policy
+- `skills/devian-unity/04-package-policy/SKILL.md`
 
 ### 패키지별 문서
 - `skills/devian-unity/02-unity-bundles/SKILL.md`
@@ -151,4 +151,4 @@ rm -f UnityExample/Packages/{pkg}/.../OldName.cs.meta
 ## Related
 
 - SSOT 정본: `skills/devian/10-module/03-ssot/SKILL.md`
-- UPM Samples 정책: `skills/devian-unity/07-samples-creation-guide/SKILL.md`
+- UPM Samples 정책: `skills/devian-unity/04-package-policy/SKILL.md`

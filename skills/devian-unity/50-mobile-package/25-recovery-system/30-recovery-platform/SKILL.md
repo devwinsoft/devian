@@ -352,7 +352,7 @@ iOS와 Android 네이티브 설정은 Unity 빌드 프로세스에 통합해야 
 
 ## Implementation Location (3-path mirror)
 
-> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../07-samples-creation-guide/SKILL.md), [devian-unity/01-policy](../../../01-policy/SKILL.md) §SSOT 원칙
+> 3-path mirror 정책: [devian-unity/04-package-policy](../../../04-package-policy/SKILL.md), [devian-unity/01-policy](../../../01-policy/SKILL.md) §SSOT 원칙
 
 - iOS Native Plugin:
   - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Plugins/iOS/Recovery/`

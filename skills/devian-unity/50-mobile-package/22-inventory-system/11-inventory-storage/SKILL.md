@@ -91,7 +91,7 @@ MobilePackage/Runtime/Inventory/
 └── InventoryStorage.cs
 ```
 
-3-path mirror ([정책](../../../07-samples-creation-guide/SKILL.md)):
+3-path mirror ([정책](../../../04-package-policy/SKILL.md)):
 - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Inventory/`
 - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Inventory/`
 - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Inventory/`

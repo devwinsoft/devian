@@ -120,5 +120,4 @@ export function encodeNdjsonFromLines(lines);
 
 ## Reference
 
-- Consumer: `skills/devian/80-tools/11-builder/31-table-row-format/SKILL.md` (일반 Table)
-- Consumer: `skills/devian-unity/20-common-package/30-string-table/SKILL.md` (String Table)
+(upstream dependencies only — consumers reference this skill from their own Related sections)

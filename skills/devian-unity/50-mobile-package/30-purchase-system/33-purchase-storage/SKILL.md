@@ -39,7 +39,7 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 
 ## Implementation Location (3-path mirror)
 
-> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../../devian-unity/07-samples-creation-guide/SKILL.md), [devian-unity/01-policy](../../../../devian-unity/01-policy/SKILL.md) §SSOT 원칙
+> 3-path mirror 정책: [devian-unity/04-package-policy](../../../../devian-unity/04-package-policy/SKILL.md), [devian-unity/01-policy](../../../../devian-unity/01-policy/SKILL.md) §SSOT 원칙
 
 - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Purchase/PurchaseStorage.cs`
 - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Purchase/PurchaseStorage.cs`
@@ -194,6 +194,5 @@ NOTE:
 
 - [00-overview](../00-overview/SKILL.md) — Purchase System 개요
 - [03-ssot](../03-ssot/SKILL.md) — Purchase 통합 SSOT
-- [10-purchase-manager](../10-purchase-manager/SKILL.md) — PurchaseManager 샘플
 - [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 정본
 - [21-savedata-system/00-overview](../../21-savedata-system/00-overview/SKILL.md) — local/cloud 저장 시스템 개요

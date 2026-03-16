@@ -195,7 +195,7 @@ NOTE:
 
 ## Implementation Location (3-path mirror)
 
-> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../07-samples-creation-guide/SKILL.md)
+> 3-path mirror 정책: [devian-unity/04-package-policy](../../../04-package-policy/SKILL.md)
 
 - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Inventory/InventoryManager.cs`
 - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Inventory/InventoryManager.cs`

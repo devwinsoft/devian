@@ -114,5 +114,4 @@ non-fatal (로그만 남기고 진행):
 
 - [20-account-system/33-account-manager](../20-account-system/33-account-manager/SKILL.md)
 - [21-savedata-system/10-savedata-manager](../21-savedata-system/10-savedata-manager/SKILL.md)
-- [11-mobile-application](../11-mobile-application/SKILL.md)
 - [29-remote-data-system/10-remote-data-manager](../29-remote-data-system/10-remote-data-manager/SKILL.md)

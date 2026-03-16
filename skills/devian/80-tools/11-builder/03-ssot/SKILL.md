@@ -480,4 +480,4 @@ DATA Domain 생성물의 C# 네임스페이스:
 - [PB64 Storage](../54-data-pb64/SKILL.md)
 - [Codegen Protocol](../33-protocol-spec/SKILL.md)
 - [Codegen Protocol C#/TS](../34-protocol-gen-policy/SKILL.md)
-- [Package Metadata](../../../../devian-unity/04-package-metadata/SKILL.md) — UPM package.json 정책
+- [Package Policy](../../../../devian-unity/04-package-policy/SKILL.md) — UPM package.json/Samples~ 정책

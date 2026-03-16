@@ -141,6 +141,6 @@ Assets/Samples/Devian Templates/{version}/{TemplateName}/
 
 ## Related
 
-- [07-samples-creation-guide](../../07-samples-creation-guide/SKILL.md)
+- [04-package-policy](../../04-package-policy/SKILL.md)
 - [Root SSOT](../../../devian/10-module/03-ssot/SKILL.md)
 - [devian-unity/01-policy](../../01-policy/SKILL.md)

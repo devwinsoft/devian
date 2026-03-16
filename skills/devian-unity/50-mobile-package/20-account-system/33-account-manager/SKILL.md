@@ -56,8 +56,7 @@ AppliesTo: v10
 - Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Account/AccountManager.cs`
 
 ## Related
-- [24-login-manager](../../24-login-manager/SKILL.md)
-- [21-savedata-system/10-savedata-manager](../../21-savedata-system/10-savedata-manager/SKILL.md)
+(upstream dependencies only — consumers reference this skill from their own Related sections)
 
 ## Out of Scope
 - Apple Sign-in UI/네이티브 토큰 획득

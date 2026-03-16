@@ -23,7 +23,7 @@ PurchaseManager에서 분리한 **인스펙터 설정 전용 ScriptableObject**.
 
 ### Implementation Location (3-path mirror)
 
-> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../../devian-unity/07-samples-creation-guide/SKILL.md), [devian-unity/01-policy](../../../../devian-unity/01-policy/SKILL.md) §SSOT 원칙
+> 3-path mirror 정책: [devian-unity/04-package-policy](../../../../devian-unity/04-package-policy/SKILL.md), [devian-unity/01-policy](../../../../devian-unity/01-policy/SKILL.md) §SSOT 원칙
 
 | 위치 | 경로 |
 |------|------|
@@ -105,5 +105,4 @@ ensureSettings()?.AlreadyOwnedRecoveryPollCount ?? 50
 
 ## Related
 
-- [10-purchase-manager](../10-purchase-manager/SKILL.md) — PurchaseManager 샘플
 - [03-ssot](../03-ssot/SKILL.md) — Purchase 통합 SSOT

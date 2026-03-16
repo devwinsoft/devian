@@ -65,7 +65,7 @@ com.devian.samples (도메인/프로토콜/수동 샘플 — CommonPackage, Soun
 
 > **Hard Rule:** `com.devian.foundation` → `com.devian.samples` 의존 **금지** (순환 방지)
 
-dependencies 상세 테이블은 [04-package-metadata](../04-package-metadata/SKILL.md) §dependencies 정책을 참조한다.
+dependencies 상세 테이블은 [04-package-policy](../04-package-policy/SKILL.md) §dependencies 정책을 참조한다.
 
 ---
 
@@ -109,6 +109,6 @@ dependencies 상세 테이블은 [04-package-metadata](../04-package-metadata/SK
 ## Reference
 
 - [Unity Policy](../01-policy/SKILL.md) — UPM Sync/동기화 규칙
-- [Package Metadata](../04-package-metadata/SKILL.md) — package.json 메타데이터/dependencies
+- [Package Policy](../04-package-policy/SKILL.md) — package.json 메타데이터/dependencies
 - [Root SSOT](../../devian/10-module/03-ssot/SKILL.md) — Foundation Package SSOT
 - [Module Policy](../../devian/20-domain-common/02-module-policy/SKILL.md) — 도메인 모듈 정책

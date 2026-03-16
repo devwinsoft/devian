@@ -69,7 +69,7 @@ AppliesTo: v10
 
 ## Implementation Location (3-path mirror)
 
-> 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../07-samples-creation-guide/SKILL.md)
+> 3-path mirror 정책: [devian-unity/04-package-policy](../../../04-package-policy/SKILL.md)
 
 - InventorySettings:
   - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Inventory/InventorySettings.cs`
