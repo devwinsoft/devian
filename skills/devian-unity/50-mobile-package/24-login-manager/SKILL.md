@@ -18,7 +18,7 @@ AppliesTo: v10
 - 저장 동기화 (`SaveDataManager.SyncGameStorageAsync`)
 - 충돌 해소 + 재초기화 (`ResolveConflictAndInitializeAsync`)
 - 초기 상태 판별 (`LoginInitializeResult.IsInitial`) — 호출자가 `InventoryManager.FirstInitAsync`를 외부에서 실행
-- 게임 시스템 초기화 (Mission/Achieve/Ad/Shop)
+- 게임 시스템 초기화 (Mission/Achieve/Ad/Push/Shop)
 - 시즌 전환 보상 sync (`LeaderboardManager.SyncSeasonTransitionRewardsAsync`)
 - 최종 local 저장 (`SaveDataManager.SaveGameStorageAsync(false, ...)`)
 - 구매 진입 인증 보정 (`EnsurePurchaseLoginReadyAsync`, Android silent Google restore)
@@ -79,6 +79,7 @@ non-fatal (로그만 남기고 진행):
 - 서버 UTC 동기화 실패 (클라이언트 UTC fallback)
 - `PurchaseManager.SyncAsync` 실패
 - `AdsManager.InitializeAsync` 실패
+- `PushManager.InitializeAsync` 실패
 - `LeaderboardManager.SyncSeasonTransitionRewardsAsync` 실패
 
 

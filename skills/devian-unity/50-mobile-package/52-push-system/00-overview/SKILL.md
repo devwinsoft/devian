@@ -20,6 +20,7 @@ MobilePackage 샘플의 Push 시스템 개요다.
 - PushManager 설계/API는 `10-push-manager`
 - Apple(APNs) 플랫폼 구현은 `11-push-provider-apple`
 - Google(FCM) 플랫폼 구현은 `12-push-provider-google`
+- PushStorage 저장 모델/SaveData 규약은 `13-push-storage`
 - Apple(APNs + FCM iOS) 인프라 셋업은 `20-push-setup-apple`
 - Google(FCM Android) 인프라 셋업은 `21-push-setup-google`
 
@@ -34,6 +35,7 @@ MobilePackage 샘플의 Push 시스템 개요다.
 | [10-push-manager](../10-push-manager/SKILL.md) | PushManager 설계 |
 | [11-push-provider-apple](../11-push-provider-apple/SKILL.md) | Apple(APNs) 연동 |
 | [12-push-provider-google](../12-push-provider-google/SKILL.md) | Google(FCM) 연동 |
+| [13-push-storage](../13-push-storage/SKILL.md) | PushStorage 저장 모델/SaveData 규약 |
 | [20-push-setup-apple](../20-push-setup-apple/SKILL.md) | Apple(APNs + FCM iOS) 인프라 셋업 |
 | [21-push-setup-google](../21-push-setup-google/SKILL.md) | Google(FCM Android) 인프라 셋업 |
 

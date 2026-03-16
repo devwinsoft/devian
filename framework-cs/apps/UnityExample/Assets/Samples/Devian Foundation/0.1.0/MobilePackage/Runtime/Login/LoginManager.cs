@@ -343,6 +343,11 @@ namespace Devian
             if (initAd.IsFailure)
                 Debug.LogWarning($"[{Tag}] AdsManager.InitializeAsync failed (non-fatal): {initAd.Error.Code}: {initAd.Error.Message}");
 
+            var initPush = await PushManager.Instance.InitializeAsync(ct);
+            await yieldMainThreadAsync(ct);
+            if (initPush.IsFailure)
+                Debug.LogWarning($"[{Tag}] PushManager.InitializeAsync failed (non-fatal): {initPush.Error.Code}: {initPush.Error.Message}");
+
             var syncSeasonReward = await LeaderboardManager.Instance.SyncSeasonTransitionRewardsAsync(ct);
             await yieldMainThreadAsync(ct);
             if (syncSeasonReward.IsFailure)

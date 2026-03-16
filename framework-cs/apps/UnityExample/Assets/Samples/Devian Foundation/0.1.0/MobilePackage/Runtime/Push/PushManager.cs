@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
+using Devian.Domain.Game;
 using UnityEngine;
 
 namespace Devian
@@ -47,7 +48,7 @@ namespace Devian
         // ── Public API ───────────────────────────────────────
 
         /// <summary>
-        /// 권한 요청 → 토큰 획득 → 저장 토픽 재구독.
+        /// 권한 요청 → 토큰 획득 → 테이블 기반 토픽 구독 → 저장 토픽 재구독.
         /// Idempotent. Editor에서는 즉시 PUSH_UNSUPPORTED_PLATFORM 반환.
         /// </summary>
         public async Task<CommonResult> InitializeAsync(CancellationToken ct = default)
@@ -93,7 +94,10 @@ namespace Devian
                     Debug.LogWarning($"[{Tag}] Token acquisition failed: {tokenResult.Error}");
                 }
 
-                // 3. 저장 토픽 재구독
+                // 3. 테이블 기반 토픽 구독
+                await subscribeTableTopicsAsync(ct);
+
+                // 4. 저장 토픽 재구독
                 await resubscribeStoredTopicsAsync(ct);
 
                 _initialized = true;
@@ -263,6 +267,39 @@ namespace Devian
             return result.IsFailure
                    && result.Error != null
                    && result.Error.Code == COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM;
+        }
+
+        async Task subscribeTableTopicsAsync(CancellationToken ct)
+        {
+            if (!TB_PUSH.IsLoaded)
+            {
+                Debug.LogWarning($"[{Tag}] TB_PUSH not loaded, skipping table-driven topic subscription.");
+                return;
+            }
+
+            var lang = MobileApplication.Instance.DefaultLanguage.ToString();
+            var rows = TB_PUSH.GetByGroup(lang);
+
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var topic = rows[i].Topic;
+                if (string.IsNullOrEmpty(topic))
+                    continue;
+
+                if (_storage.subscribedTopics.Contains(topic))
+                    continue;
+
+                var result = await _provider.SubscribeTopicAsync(topic, ct);
+                if (result.IsSuccess)
+                {
+                    _storage.subscribedTopics.Add(topic);
+                    Debug.Log($"[{Tag}] Table topic subscribed: {topic} (lang={lang})");
+                }
+                else
+                {
+                    Debug.LogWarning($"[{Tag}] Failed to subscribe table topic: {topic} - {result.Error}");
+                }
+            }
         }
 
         async Task resubscribeStoredTopicsAsync(CancellationToken ct)

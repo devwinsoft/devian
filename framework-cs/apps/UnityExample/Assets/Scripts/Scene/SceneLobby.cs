@@ -32,7 +32,7 @@ public class SceneLobby : SceneBootstrap
         Debug.Log("SceneLobby.onStart()...");
         await base.onStart();
 
-        await TestApplication.Instance.LoadAsync(SystemLanguage.Korean);
+        await TestApplication.Instance.LoadAsync();
 
         UICanvasLobby.Instance.Init();
         

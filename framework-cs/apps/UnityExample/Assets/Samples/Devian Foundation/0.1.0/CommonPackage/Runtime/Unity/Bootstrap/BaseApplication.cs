@@ -99,7 +99,7 @@ namespace Devian
         /// 앱 리소스 로딩을 실행한다. 1회만 실행된다.
         /// 실패해도 재시도하지 않으며, 예외는 상위로 전파된다.
         /// </summary>
-        public async Task LoadAsync(SystemLanguage language, Action<float>? onProgress = null)
+        public async Task LoadAsync(Action<float>? onProgress = null)
         {
             if (_loaded)
             {
@@ -108,14 +108,15 @@ namespace Devian
             }
             _loaded = true;
 
-            await onLoadAsync(language, onProgress);
+            await onLoadAsync(onProgress);
             await onLoadCompletedAsync();
         }
 
         /// <summary>
         /// 앱 리소스 로딩 로직. 파생 클래스가 override하여 번들 다운로드, 테이블 로드 등을 구현한다.
+        /// 언어 설정은 MobileApplication.DefaultLanguage를 참조한다.
         /// </summary>
-        protected virtual Task onLoadAsync(SystemLanguage language, Action<float>? onProgress = null)
+        protected virtual Task onLoadAsync(Action<float>? onProgress = null)
         {
             return Task.CompletedTask;
         }

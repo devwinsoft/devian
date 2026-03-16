@@ -41,7 +41,6 @@ public class SceneLogin : SceneBootstrap
 
         // Load assets...
         await TestApplication.Instance.LoadAsync(
-            SystemLanguage.Korean,
             progress =>
             {
                 UICanvasLoading.Instance.message.text = $"LOADING {Mathf.RoundToInt(Mathf.Clamp01(progress) * 100f)}%";

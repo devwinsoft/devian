@@ -50,7 +50,7 @@ CompoSingleton<PushManager>.Instance
 ## Public API (Sample)
 
 - `InitializeAsync(ct)` → `Task<CommonResult>`
-  - 권한 요청 → 토큰 획득 → 저장 토픽 재구독
+  - 권한 요청 → 토큰 획득 → 테이블 기반 토픽 구독 → 저장 토픽 재구독
   - Idempotent: 여러 번 호출해도 동일 Task 반환
   - Editor에서는 즉시 `PUSH_UNSUPPORTED_PLATFORM` 반환
 - `SubscribeTopicAsync(topicId, ct)` → `Task<CommonResult>`
@@ -75,6 +75,7 @@ Events:
 
 - 플랫폼 분기: `#if UNITY_IOS` / `#elif UNITY_ANDROID` / `else` → Provider 인스턴스 선택
 - 토큰 획득: 초기화 시 `GetTokenAsync`로 FCM 토큰 획득, `PushStorage.token`에 저장 (로컬 캐시 용도)
+- 테이블 기반 구독: `TB_PUSH.GetByGroup(DefaultLanguage)` → 매칭 토픽 자동 구독 (03-ssot §F)
 - 토픽 복원: 초기화 시 `PushStorage.subscribedTopics` 기반 재구독
 - 로컬 알림 Storage 동기화: 등록/취소마다 `PushStorage` 갱신
 

@@ -73,7 +73,7 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
             if (result.IsRecommendUpdate)
                 Debug.LogWarning($"Recommend update on guest login: {result.VersionResult}");
 
-            await TestApplication.Instance.LoadAsync(SystemLanguage.Korean, onLoadProgress);
+            await TestApplication.Instance.LoadAsync(onLoadProgress);
             await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
         }
         else
@@ -108,7 +108,7 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
             if (result.IsRecommendUpdate)
                 Debug.LogWarning($"Recommend update on google login: {result.VersionResult}");
 
-            await TestApplication.Instance.LoadAsync(SystemLanguage.Korean, onLoadProgress);
+            await TestApplication.Instance.LoadAsync(onLoadProgress);
             await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
         }
         else
@@ -140,7 +140,7 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
                 return;
             }
 
-            await TestApplication.Instance.LoadAsync(SystemLanguage.Korean, onLoadProgress);
+            await TestApplication.Instance.LoadAsync(onLoadProgress);
             await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
         }
     }

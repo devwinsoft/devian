@@ -28,6 +28,8 @@ namespace Devian
         public new static MobileApplication Instance => BaseApplication.Instance as MobileApplication;
         public new static MobileApplication Create() => BaseApplication.Create<MobileApplication>();
 
+        [SerializeField] public SystemLanguage DefaultLanguage = SystemLanguage.Korean;
+
         [SerializeField] public string FirebaseFunctionsRegion = "asia-northeast3";
         [SerializeField] public string VersionCheckAOS = string.Empty;
         [SerializeField] public string VersionCheckIOS = string.Empty;

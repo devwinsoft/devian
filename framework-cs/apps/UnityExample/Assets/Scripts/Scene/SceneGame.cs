@@ -21,7 +21,7 @@ public class SceneGame : SceneBootstrap
         Debug.Log("SceneGame.onStart()...");
         await base.onStart();
         
-        await TestApplication.Instance.LoadAsync(SystemLanguage.Korean);
+        await TestApplication.Instance.LoadAsync();
         
         GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.ACHIEVE_001, 1);
     }

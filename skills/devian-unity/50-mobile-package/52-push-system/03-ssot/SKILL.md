@@ -95,6 +95,16 @@ public class LocalNotificationData
 
 ---
 
+## F. Table-driven Topic Subscription
+
+- `InitializeAsync` 성공 시, `TB_PUSH` 테이블에서 `MobileApplication.Instance.DefaultLanguage`에 해당하는 토픽을 자동 구독한다.
+- `TB_PUSH`의 GroupKey = `Language` (MetaTable.xlsx PUSH 시트, `group:true`).
+- `TB_PUSH.GetByGroup(DefaultLanguage.ToString())` → 반환된 행의 `Topic`을 각각 구독한다.
+- 이미 `PushStorage.subscribedTopics`에 존재하는 토픽은 중복 구독하지 않는다.
+- `TB_PUSH`가 로드되지 않았으면 (`TB_PUSH.IsLoaded == false`) skip한다.
+
+---
+
 ## Related
 
 - [10-push-manager](../10-push-manager/SKILL.md)

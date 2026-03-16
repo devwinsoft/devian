@@ -14,7 +14,7 @@ public class TestApplication : MobileApplication
         await base.onBootAsync();
     }
 
-    protected override async Task onLoadAsync(SystemLanguage language, Action<float>? onProgress = null)
+    protected override async Task onLoadAsync(Action<float>? onProgress = null)
     {
         reportProgress(onProgress, 0f);
 
@@ -43,7 +43,7 @@ public class TestApplication : MobileApplication
         }
 
         await TestBundleManager.Instance.LoadBundlesAsync(
-            language,
+            this.DefaultLanguage,
             progress => reportProgress(onProgress, remapProgress(progress, 0.55f, 1f)));
         await Task.Yield();
         reportProgress(onProgress, 1f);

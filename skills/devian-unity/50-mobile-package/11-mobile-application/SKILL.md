@@ -66,6 +66,13 @@ onLoadCompletedAsync:
 - prefab은 수동으로 생성한다 (자동 생성 코드 없음).
 
 
+## Default Language Ownership
+
+- `MobileApplication`은 `DefaultLanguage` (`SystemLanguage`) 설정값 owner다.
+- Inspector에서 `AppVersion`(BaseApplication) 직후에 노출된다.
+- 파생 클래스가 `onLoadAsync()`에서 `DefaultLanguage`를 직접 참조하여 리소스 로딩 언어를 결정한다.
+- Push 토픽 등 언어별 분기가 필요한 매니저가 이 값을 참조한다.
+
 ## Version Check Ownership
 
 - `MobileApplication`은 버전 체크 URL 설정(`VersionCheckAOS`, `VersionCheckIOS`)을 소유한다.
