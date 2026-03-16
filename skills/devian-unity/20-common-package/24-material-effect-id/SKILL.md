@@ -8,9 +8,9 @@ Type: Component Specification
 MaterialEffectAsset을 참조하기 위한 string wrapper ID 타입
 
 ## 파일 위치 (SSOT)
-- Runtime: `com.devian.domain.common/Runtime/MaterialEffect/MATERIAL_EFFECT_ID.cs`
+- Runtime: `com.devian.samples/Samples~/CommonPackage/Runtime/MaterialEffect/MATERIAL_EFFECT_ID.cs`
 - Editor Base: `com.devian.foundation/Editor/AssetId/BaseEditorScriptableAssetIdSelector.cs`
-- Editor Selector: `com.devian.domain.common/Editor/Generated/MATERIAL_EFFECT_ID.Editor.cs`
+- Editor Selector: `com.devian.samples/Samples~/CommonPackage/Editor/Generated/MATERIAL_EFFECT_ID.Editor.cs`
 
 ## String Wrapper 패턴
 

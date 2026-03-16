@@ -196,7 +196,7 @@ Hierarchy 예시:
 | 패키지 | 필수 | 용도 |
 |--------|------|------|
 | Unity UGUI | ✅ | `UnityEngine.UI`, `UnityEngine.EventSystems` |
-| `com.devian.ui` | ✅ | `UIPlugInNonDrawing` (RequireComponent) |
+| `com.devian.samples` (UIPackage) | ✅ | `UIPlugInNonDrawing` (RequireComponent, asmdef: `Devian.Samples.UIPackage`) |
 
 ---
 

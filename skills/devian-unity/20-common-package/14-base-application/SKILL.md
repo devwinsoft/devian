@@ -20,7 +20,7 @@ Bootstrap 생성과 `BootProc()` 호출은 app/contents layer 책임이다.
 
 ## 2. Files (SSOT)
 
-- `framework-cs/upm/com.devian.domain.common/Runtime/Unity/Bootstrap/BaseApplication.cs`
+- `framework-cs/upm/com.devian.samples/Samples~/CommonPackage/Runtime/Unity/Bootstrap/BaseApplication.cs`
 
 ---
 

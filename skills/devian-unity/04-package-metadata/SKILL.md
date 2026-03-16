@@ -21,7 +21,7 @@ AppliesTo: v11
 ### name
 
 - 접두어: `com.devian.`
-- 예: `com.devian.foundation`, `com.devian.domain.common`, `com.devian.samples`
+- 예: `com.devian.foundation`, `com.devian.samples`
 
 > 패키지 통합 정책(com.devian.core/unity 금지)은 [03-ssot](../03-ssot/SKILL.md) §Base UPM package를 참조한다.
 
@@ -40,15 +40,13 @@ AppliesTo: v11
 - 사람이 읽기 쉬운 이름으로 고정한다.
 - 패턴 예:
   - `Devian Foundation` (모듈 래핑 + 모듈 타입 Editor)
-  - `Devian Domain Common`
-  - `Devian Samples`
+  - `Devian Samples` (도메인/프로토콜/수동 샘플)
 
 ### description
 
 - 1줄로 역할을 명확히 적는다.
 - 예:
   - `"Devian Foundation - Core module wrapper + Editor drawers"`
-  - `"Devian.Domain.Common runtime for Unity"`
   - `"Templates for Devian framework"`
 
 ### author
@@ -82,8 +80,7 @@ runtime 패키지는 필요한 최소 의존만 선언한다:
 | 패키지 | dependencies |
 |--------|--------------|
 | `com.devian.foundation` | `com.unity.addressables`, `com.unity.nuget.newtonsoft-json` |
-| `com.devian.ui` | `com.devian.foundation`, `com.devian.samples` |
-| `com.devian.samples` | `com.unity.inputsystem` |
+| `com.devian.samples` | `com.devian.foundation`, `com.unity.inputsystem` |
 
 > **Note:** 모든 도메인(Common, Sound, Game)은 `com.devian.samples/Samples~/` 하위에 Sample로 제공되며, 독립 `com.devian.domain.*` UPM 패키지는 없다.
 > CommonPackage 샘플의 asmdef 의존: `Devian.Core`, `Unity.Addressables`, `Unity.ResourceManager`, `Unity.InputSystem`, `Newtonsoft.Json`

@@ -134,7 +134,7 @@ public delegate void TbLoaderDelegate(TableFormat format, string? ndjsonText, by
 도메인 UPM 패키지에 자동 생성되는 파일:
 
 ```
-Packages/com.devian.domain.{domain}/Runtime/Generated/DomainTableRegistry.g.cs
+Packages/com.devian.samples/Samples~/{DomainKey}Package/Runtime/Generated/DomainTableRegistry.g.cs
 ```
 
 ```csharp

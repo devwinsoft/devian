@@ -60,7 +60,7 @@ Common Domain 정책이 적용되는 디렉토리 정본은 다음과 같다.
 - C# 모듈 수동 코드: `framework-cs/module/Devian.Domain.Common/src/CommonError.cs`, `framework-cs/module/Devian.Domain.Common/src/CommonResult.cs`
 - TS 모듈 생성물: `framework-ts/module/devian-domain-common/Generated/Common.g.ts`
 - TS 모듈 엔트리/feature export: `framework-ts/module/devian-domain-common/features/index.ts`, `framework-ts/module/devian-domain-common/index.ts`
-- Unity UPM 생성 미러: `framework-cs/upm/com.devian.domain.common/Runtime/Generated/**`
+- Unity UPM 생성 미러: `framework-cs/upm/com.devian.samples/Samples~/CommonPackage/Runtime/Generated/**`
 
 ### Final Data Outputs
 

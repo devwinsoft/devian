@@ -24,10 +24,10 @@ AppliesTo: v13
 
 | 위치 | 경로 |
 |------|------|
-| UPM 소스 | `framework-cs/upm/com.devian.domain.common/Runtime/Unity/AssetManager/BundleManager.cs` |
-| UPM 소스 | `framework-cs/upm/com.devian.domain.common/Runtime/Unity/Settings/BundleSettings.cs` |
-| UnityExample | `framework-cs/apps/UnityExample/Packages/com.devian.domain.common/Runtime/Unity/AssetManager/BundleManager.cs` (derived output) |
-| UnityExample | `framework-cs/apps/UnityExample/Packages/com.devian.domain.common/Runtime/Unity/Settings/BundleSettings.cs` (derived output) |
+| UPM 소스 | `framework-cs/upm/com.devian.samples/Samples~/CommonPackage/Runtime/Unity/AssetManager/BundleManager.cs` |
+| UPM 소스 | `framework-cs/upm/com.devian.samples/Samples~/CommonPackage/Runtime/Unity/Settings/BundleSettings.cs` |
+| UnityExample | `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/CommonPackage/Runtime/Unity/AssetManager/BundleManager.cs` (derived output) |
+| UnityExample | `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/CommonPackage/Runtime/Unity/Settings/BundleSettings.cs` (derived output) |
 
 ---
 

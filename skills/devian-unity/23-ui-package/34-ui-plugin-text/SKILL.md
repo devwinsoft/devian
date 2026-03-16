@@ -20,7 +20,7 @@ ST_TEXT 값을 TMP_Text 컴포넌트에 바인딩하는 UI 플러그인.
 ### Code Path
 
 ```
-framework-cs/upm/com.devian.ui/Runtime/Plugins/UIPlugInText.cs
+framework-cs/upm/com.devian.samples/Samples~/UIPackage/Runtime/Plugins/UIPlugInText.cs
 ```
 
 ### Serialized Fields
@@ -58,11 +58,11 @@ framework-cs/upm/com.devian.ui/Runtime/Plugins/UIPlugInText.cs
 
 | Dependency | Location |
 |------------|----------|
-| `UIManager.messageSystem` | `com.devian.ui/Runtime/UIManager.cs` |
-| `UI_MESSAGE` | `com.devian.ui/Runtime/UIMessageSystem.cs` |
+| `UIManager.messageSystem` | `com.devian.samples/Samples~/UIPackage/Runtime/UIManager.cs` |
+| `UI_MESSAGE` | `com.devian.samples/Samples~/UIPackage/Runtime/UIMessageSystem.cs` |
 | `UnityEngine.EntityId` (ownerKey via `GetEntityId()`) | Unity 내장 |
-| `ST_TEXT` | `com.devian.domain.common/Runtime/Generated/ST_TEXT.g.cs` |
-| `TEXT_ID` | `com.devian.domain.common/Runtime/Generated/Common.g.cs` |
+| `ST_TEXT` | `com.devian.samples/Samples~/CommonPackage/Runtime/Generated/ST_TEXT.g.cs` |
+| `TEXT_ID` | `com.devian.samples/Samples~/CommonPackage/Runtime/Generated/Common.g.cs` |
 | `TMP_Text` | `Unity.TextMeshPro` |
 
 ---

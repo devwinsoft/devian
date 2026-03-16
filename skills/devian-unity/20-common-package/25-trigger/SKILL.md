@@ -211,7 +211,7 @@ IEnumerator DelayedNotify()
 
 | 타입 | 경로 |
 |------|------|
-| Runtime | `com.devian.domain.common/Runtime/Unity/BaseTrigger/BaseTrigger.cs` |
+| Runtime | `com.devian.samples/Samples~/CommonPackage/Runtime/Unity/BaseTrigger/BaseTrigger.cs` |
 
 ---
 

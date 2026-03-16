@@ -158,8 +158,8 @@ public abstract class ActorController<TOwner> : MonoBehaviour
 
 | 타입 | 경로 |
 |------|------|
-| ActorObject | `com.devian.domain.common/Runtime/Unity/Actors/ActorObject.cs` |
-| ActorController\<TOwner\> | `com.devian.domain.common/Runtime/Unity/Actors/ActorController.cs` |
+| ActorObject | `com.devian.samples/Samples~/CommonPackage/Runtime/Unity/Actors/ActorObject.cs` |
+| ActorController\<TOwner\> | `com.devian.samples/Samples~/CommonPackage/Runtime/Unity/Actors/ActorController.cs` |
 
 ---
 
