@@ -279,12 +279,7 @@ namespace Devian
         private const string DeviceIdPrefsKey = "Devian.DeviceId";
         private const string SaveSeqPrefsKey = "Devian.SaveSeq";
 
-        [Header("Local Storage")]
-        [SerializeField] private SaveLocalRoot _localRoot = SaveLocalRoot.PersistentData;
-
-        [Header("Primary Save")]
-        [SerializeField] private string _primaryLocalFilename = "save/main.json";
-        [SerializeField] private string _primaryCloudSlot = "main";
+        private SaveDataSettings _settings;
 
         private ISaveCloudClient _cloudClient;
 
@@ -1157,9 +1152,23 @@ namespace Devian
         //  Private: Local save operations
         // ──────────────────────────────────────────────
 
+        private SaveDataSettings ensureSettings()
+        {
+            if (_settings == null)
+            {
+                _settings = Resources.Load<SaveDataSettings>(SaveDataSettings.ResourcesPath);
+                if (_settings == null)
+                    Debug.LogWarning($"[SaveDataManager] SaveDataSettings not found. Using defaults. expected={SaveDataSettings.DefaultResourcesAssetPath}");
+            }
+
+            return _settings;
+        }
+
         private CommonResult<string> getPrimaryLocalFilename()
         {
-            var filename = _primaryLocalFilename?.Replace('\\', '/').Trim();
+            var s = ensureSettings();
+            var raw = s != null ? s.PrimaryLocalFilename : "save/main.json";
+            var filename = raw?.Replace('\\', '/').Trim();
             if (string.IsNullOrWhiteSpace(filename))
             {
                 return CommonResult<string>.Failure(
@@ -1177,7 +1186,9 @@ namespace Devian
 
         private CommonResult<string> getPrimaryCloudSlot()
         {
-            var cloudSlot = _primaryCloudSlot?.Trim();
+            var s = ensureSettings();
+            var raw = s != null ? s.PrimaryCloudSlot : "main";
+            var cloudSlot = raw?.Trim();
             if (string.IsNullOrWhiteSpace(cloudSlot))
             {
                 return CommonResult<string>.Failure(
@@ -1721,7 +1732,9 @@ namespace Devian
 
         private string getRootPath()
         {
-            return _localRoot == SaveLocalRoot.PersistentData
+            var s = ensureSettings();
+            var root = s != null ? s.LocalRoot : SaveLocalRoot.PersistentData;
+            return root == SaveLocalRoot.PersistentData
                 ? Application.persistentDataPath
                 : Application.temporaryCachePath;
         }

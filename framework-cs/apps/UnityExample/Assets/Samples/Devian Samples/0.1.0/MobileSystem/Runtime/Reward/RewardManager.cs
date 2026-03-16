@@ -366,9 +366,9 @@ namespace Devian
                     return CommonResult.Failure(apply.Error!);
             }
 
-            // Stamina 초기화: InventorySettings 로드 + LastStaminaUpdateUtcMs 초기화 → MaxStamina 지급
+            // Stamina: 설정 로드 → MaxStamina 지급
             var inv = InventoryManager.Instance;
-            inv.Initialize();
+            inv.LoadSettings();
 
             int maxStamina = inv.MaxStamina;
             if (maxStamina > 0)

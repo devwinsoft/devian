@@ -311,8 +311,8 @@ namespace Devian
             }
 
             // Stamina: 설정 로드 + 오프라인 회복 계산
-            InventoryManager.Instance.Initialize();
-            InventoryManager.Instance.UpdateStamina();
+            InventoryManager.Instance.LoadSettings();
+            InventoryManager.Instance.RecoverStamina();
 
             var initAttend = await AttendManager.Instance.InitializeAsync(ct);
             await yieldMainThreadAsync(ct);

@@ -1,22 +1,22 @@
-# 14-inventory-stamina
+# 14-inventory-stamina-controller
 
 Status: ACTIVE
 AppliesTo: v10
 
-`CURRENCY_TYPE.STAMINA`에 대한 추가 로직을 정의한다.
-InventoryManager가 `InventorySettings`에서 설정을 로드하여 스태미나 회복 주기에 따라 자동 회복을 수행한다.
+`CURRENCY_TYPE.STAMINA`에 대한 설정 로드 및 자동 회복 로직을 `InventoryStaminaController`로 캡슐화한다.
+InventoryManager는 컨트롤러에 위임만 하며, 외부 API를 유지한다.
 
 ---
 
 ## Design
 
-- InventoryManager에 스태미나 관련 필드/프로퍼티를 추가한다.
-- `Initialize()`로 InventorySettings에서 MaxStamina, StaminaIntervalSeconds를 로드한다.
-- `UpdateStamina()`로 경과 시간에 따라 스태미나를 회복한다.
+- `InventoryStaminaController` (`internal sealed class`) — 스태미나 전용 컨트롤러
+- InventoryManager가 `_staminaController` 필드로 소유, 공개 API를 위임한다
+- 컨트롤러는 `InventoryStorage`를 소유하지 않음 — 메서드 파라미터로 전달받음
 
 ---
 
-## InventoryManager 추가 멤버
+## InventoryStaminaController (internal)
 
 ### Fields (private)
 
@@ -26,25 +26,40 @@ InventoryManager가 `InventorySettings`에서 설정을 로드하여 스태미�
 ### Properties (public)
 
 - `MaxStamina: int` (get) — `_maxStamina` 반환
-- `StaminaIntervalSeconds: int` (get) — `_staminaIntervalSeconds` 반환
 
 ### Methods
 
-- `Initialize()`:
+- `LoadSettings()`:
   1. `Resources.Load<InventorySettings>(InventorySettings.ResourcesPath)` 로드
   2. `MobileApplication.Instance`에서 key/iv로 AES 복호화
   3. JSON 파싱 → `_maxStamina`, `_staminaIntervalSeconds` 설정
   - **설정 로드만 수행** — `LastStaminaUpdateUtcMs`를 조작하지 않는다
   - STAMINA 지급은 하지 않는다 (호출자 책임)
-  - 호출 시점: `RewardManager.FirstInitAsync()` (최초), `LoginManager.syncGameStateAsync()` (복귀)
 
-- `UpdateStamina()`:
+- `RecoverStamina(InventoryStorage storage)`:
   1. stamina >= MaxStamina → return (추적 불필요, 타임스탬프 무의미)
   2. `LastStaminaUpdateUtcMs <= 0` → `LastStaminaUpdateUtcMs = now`, return (추적 시작)
   3. 경과 시간 / `_staminaIntervalSeconds` = 회복량 계산
   4. 회복 적용 (clamp to max)
   5. 회복 후 stamina >= max → `LastStaminaUpdateUtcMs = 0` (추적 종료)
   6. 아직 max 미만 → `LastStaminaUpdateUtcMs = now - remainderMs` (잔여 시간 보존)
+
+---
+
+## InventoryManager 위임 API
+
+```
+readonly InventoryStaminaController _staminaController = new();
+
+public int MaxStamina => _staminaController.MaxStamina;
+public void LoadSettings() => _staminaController.LoadSettings();
+public void RecoverStamina() => _staminaController.RecoverStamina(_storage);
+```
+
+외부 호출 시그니처:
+- `InventoryManager.Instance.LoadSettings()` — 설정 로드
+- `InventoryManager.Instance.RecoverStamina()` — 오프라인 회복 계산
+- `InventoryManager.Instance.MaxStamina` — 최대 스태미나 조회
 
 ---
 
@@ -101,7 +116,7 @@ else:
 
 ### 최초 로그인 (SyncState.Initial)
 
-1. `RewardManager.FirstInitAsync()` → `InventoryManager.Initialize()` (설정 로드)
+1. `RewardManager.FirstInitAsync()` → `InventoryManager.LoadSettings()` (설정 로드)
 2. `ApplyCurrency(STAMINA, maxStamina)` → stamina = max
 3. `LastStaminaUpdateUtcMs = 0` (기본값 유지, 추적 불필요)
 4. `SaveGameStorageAsync()` → codec에 lastStaminaUpdateUtcMs 생략 (0이므로)
@@ -109,16 +124,20 @@ else:
 ### 복귀 로그인 (SyncState.Success)
 
 1. `SyncGameStorageAsync()` → codec 복원 (stamina + LastStaminaUpdateUtcMs)
-2. `LoginManager.syncGameStateAsync()` → `InventoryManager.Initialize()` (설정 로드)
-3. `InventoryManager.UpdateStamina()` → 오프라인 회복 계산
+2. `LoginManager.syncGameStateAsync()` → `InventoryManager.LoadSettings()` (설정 로드)
+3. `InventoryManager.RecoverStamina()` → 오프라인 회복 계산
 
 ---
 
 ## Implementation Location (3-path mirror)
 
-> 스태미나 로직은 InventoryManager.cs, InventoryStorage.cs에 추가된다.
-> 별도 파일 생성 없음. 3-path mirror 대상은 기존 파일과 동일.
+> 스태미나 로직은 `InventoryStaminaController.cs` (신규) 에 캡슐화된다.
+> InventoryManager.cs는 위임만 한다.
 
+- InventoryStaminaController.cs:
+  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Inventory/InventoryStaminaController.cs`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Inventory/InventoryStaminaController.cs`
+  - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Inventory/InventoryStaminaController.cs`
 - InventoryManager.cs — [10-inventory-manager](../10-inventory-manager/SKILL.md) 참조
 - InventoryStorage.cs — [11-inventory-storage](../11-inventory-storage/SKILL.md) 참조
 
@@ -127,6 +146,6 @@ else:
 ## Related
 
 - [13-inventory-settings](../13-inventory-settings/SKILL.md) — InventorySettings (설정 소스)
-- [10-inventory-manager](../10-inventory-manager/SKILL.md) — InventoryManager (구현 대상)
-- [11-inventory-storage](../11-inventory-storage/SKILL.md) — InventoryStorage (LastStaminaUpdateUtcMs 추가)
+- [10-inventory-manager](../10-inventory-manager/SKILL.md) — InventoryManager (위임 호스트)
+- [11-inventory-storage](../11-inventory-storage/SKILL.md) — InventoryStorage (LastStaminaUpdateUtcMs)
 - [12-inventory-wallet](../12-inventory-wallet/SKILL.md) — InventoryWallet (STAMINA 통화)

@@ -85,5 +85,5 @@ AppliesTo: v10
 ## Related
 
 - [10-inventory-manager](../10-inventory-manager/SKILL.md) — InventoryManager (설정 소비자)
-- [14-inventory-stamina](../14-inventory-stamina/SKILL.md) — Stamina 로직 (MaxStamina, StaminaInterval 사용)
+- [14-inventory-stamina-controller](../14-inventory-stamina-controller/SKILL.md) — InventoryStaminaController (MaxStamina, StaminaInterval 사용)
 - [49-reward-system/12-first-reward-settings](../../49-reward-system/12-first-reward-settings/SKILL.md) — 동일 패턴 (AES + CString)

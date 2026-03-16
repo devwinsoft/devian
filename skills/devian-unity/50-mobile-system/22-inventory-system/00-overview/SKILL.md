@@ -41,7 +41,7 @@ Inventory System은 "인벤토리 상태(아이템/통화)"를 시스템 레이�
 | [11-inventory-storage](../11-inventory-storage/SKILL.md) | InventoryStorage (데이터 컨테이너) |
 | [12-inventory-wallet](../12-inventory-wallet/SKILL.md) | InventoryWallet (통화 컨테이너/JEWEL 예외) |
 | [13-inventory-settings](../13-inventory-settings/SKILL.md) | InventorySettings (설정 ScriptableObject, AES+CInt) |
-| [14-inventory-stamina](../14-inventory-stamina/SKILL.md) | Stamina 회복 로직 (MaxStamina, StaminaInterval) |
+| [14-inventory-stamina-controller](../14-inventory-stamina-controller/SKILL.md) | InventoryStaminaController (설정 로드 + 스태미나 회복) |
 | [16-inventory-message-trigger](../16-inventory-message-trigger/SKILL.md) | Inventory 변경 메시지 트리거 |
 
 

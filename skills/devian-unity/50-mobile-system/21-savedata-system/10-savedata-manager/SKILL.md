@@ -20,12 +20,10 @@
 
 ## Primary Save Binding
 - public API는 단일 게임 상태 save만 다룬다.
-- Inspector 설정:
-  - `_primaryLocalFilename`
-  - `_primaryCloudSlot`
-- 기본값:
-  - local: `save/main.json`
-  - cloud: `main`
+- 설정은 `SaveDataSettings` ScriptableObject에서 로드한다 → [11-savedata-settings](../11-savedata-settings/SKILL.md)
+  - `PrimaryLocalFilename` (기본: `save/main.json`)
+  - `PrimaryCloudSlot` (기본: `main`)
+  - `LocalRoot` (기본: `PersistentData`)
 
 중요:
 - 이 binding은 파일/클라우드 키 매핑일 뿐이다.
