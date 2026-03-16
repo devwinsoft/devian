@@ -11,6 +11,6 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1ea45ac176b69423c8be16e95bed1a66, type: 3}
   m_Name: InventorySettings
-  m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.InventorySettings
+  m_EditorClassIdentifier: Devian.Samples.MobilePackage::Devian.InventorySettings
   SettingsPayload:
     data: QBuFAlMCn26qx38sB50CMyMjam4As5aDw+NqgxtTIzPxAAUpW7Oq2hvR+daavDx/FUMvtn8FU6OF7zuaFZ9S1g==

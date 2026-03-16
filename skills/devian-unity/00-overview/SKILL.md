@@ -19,14 +19,14 @@ Devian Unity 런타임, UPM 패키지, 컴포넌트를 담당한다.
 | [03-ssot](../03-ssot/SKILL.md) | Unity SSOT (upmConfig, UPM Sync, Foundation) |
 |[02-unity-bundles](../02-unity-bundles/SKILL.md) | Unity 번들 정책 |
 | [10-foundation](../10-foundation/SKILL.md) | Unity 컴포넌트 인덱스 |
-| [20-domain-common-system](../20-domain-common-system/00-overview/SKILL.md) | 공용 Unity 런타임 기능 |
+| [20-common-package](../20-common-package/00-overview/SKILL.md) | 공용 Unity 런타임 기능 |
 | [devian/20-domain-common](../../devian/20-domain-common/00-overview/SKILL.md) | Common Domain C#/TS 공통 정책 |
-| [22-domain-sound-system](../22-domain-sound-system/00-overview/SKILL.md) | Sound System (Tables/Manager/Voice Resolve/Domain/BaseAudio) |
-| [30-purchase-system](../50-mobile-system/30-purchase-system/00-overview/SKILL.md) | Purchase System (Unity IAP + verification + entitlements) |
-| [47-advertise-system](../50-mobile-system/47-advertise-system/00-overview/SKILL.md) | Advertise System (In-App Ads + Rewarded + Mock Testing) |
+| [22-sound-package](../22-sound-package/00-overview/SKILL.md) | Sound System (Tables/Manager/Voice Resolve/Domain/BaseAudio) |
+| [30-purchase-system](../50-mobile-package/30-purchase-system/00-overview/SKILL.md) | Purchase System (Unity IAP + verification + entitlements) |
+| [47-advertise-system](../50-mobile-package/47-advertise-system/00-overview/SKILL.md) | Advertise System (In-App Ads + Rewarded + Mock Testing) |
 | [21-domain-game](../../devian/21-domain-game/00-overview/SKILL.md) | Game 도메인 정의 |
-| [30-ui-system](../30-ui-system/SKILL.md) | UI 컴포넌트 인덱스 |
-| [50-mobile-system](../50-mobile-system/00-overview/SKILL.md) | MobileSystem (Devian Samples) |
+| [23-ui-package](../23-ui-package/SKILL.md) | UI 컴포넌트 인덱스 |
+| [50-mobile-package](../50-mobile-package/00-overview/SKILL.md) | MobilePackage (Devian Samples) |
 
 ---
 

@@ -35,7 +35,7 @@ AppliesTo: v10
 | **Builder** | [devian/80-tools/11-builder/03-ssot](./80-tools/11-builder/03-ssot/SKILL.md) | tableConfig, Tables, NDJSON, pb64, Protocol Spec, Opcode/Tag, Protocol UPM |
 | **Unity** | [devian-unity/03-ssot](../devian-unity/03-ssot/SKILL.md) | upmConfig, UPM Sync, Foundation |
 | **Examples** | [devian-examples/03-ssot](../devian-examples/03-ssot/SKILL.md) | config/input JSON, TS apps, Unity Example |
-| **Purchase System** | [devian-unity/50-mobile-system/30-purchase-system/03-ssot](../devian-unity/50-mobile-system/30-purchase-system/03-ssot/SKILL.md) | Unity IAP + 결제 검증(Functions) + 멱등/구독 상태(Firestore) |
+| **Purchase System** | [devian-unity/50-mobile-package/30-purchase-system/03-ssot](../devian-unity/50-mobile-package/30-purchase-system/03-ssot/SKILL.md) | Unity IAP + 결제 검증(Functions) + 멱등/구독 상태(Firestore) |
 
 ---
 
@@ -65,11 +65,11 @@ AppliesTo: v10
 | **devian/20-domain-common** | [00-overview](./20-domain-common/00-overview/SKILL.md) | [01-policy](./20-domain-common/01-policy/SKILL.md) | — | Common Domain C#/TS 공통 정책 |
 | **devian/80-tools** | [00-overview](./80-tools/00-overview/SKILL.md) | [01-policy](./80-tools/01-policy/SKILL.md) | [03-ssot](./80-tools/03-ssot/SKILL.md) | 아카이브, CLI 도구 |
 | **devian/80-tools/11-builder** | [00-overview](./80-tools/11-builder/00-overview/SKILL.md) | [01-policy](./80-tools/11-builder/01-policy/SKILL.md) | [03-ssot](./80-tools/11-builder/03-ssot/SKILL.md) | 빌드, 테이블, 계약, NDJSON, PB64, 프로토콜 코드젠, 에러 리포팅 |
-| **devian-unity/20-domain-common-system** | [00-overview](../devian-unity/20-domain-common-system/00-overview/SKILL.md) | — | — | Unity 공용 런타임 컴포넌트 |
+| **devian-unity/20-common-package** | [00-overview](../devian-unity/20-common-package/00-overview/SKILL.md) | — | — | Unity 공용 런타임 컴포넌트 |
 | **devian-unity** | [00-overview](../devian-unity/00-overview/SKILL.md) | [01-policy](../devian-unity/01-policy/SKILL.md) | [03-ssot](../devian-unity/03-ssot/SKILL.md) | Unity UPM, 컴포넌트 |
 | **devian-examples** | [00-overview](../devian-examples/00-overview/SKILL.md) | [01-policy](../devian-examples/01-policy/SKILL.md) | [03-ssot](../devian-examples/03-ssot/SKILL.md) | 예제 도메인/프로토콜 |
 | **devian/21-domain-game** | [00-overview](./21-domain-game/00-overview/SKILL.md) | — | — | Game 도메인 정의 |
-| **devian-unity/50-mobile-system** | [00-overview](../devian-unity/50-mobile-system/00-overview/SKILL.md) | [01-policy](../devian-unity/50-mobile-system/01-policy/SKILL.md) | — | MobileSystem 샘플 |
+| **devian-unity/50-mobile-package** | [00-overview](../devian-unity/50-mobile-package/00-overview/SKILL.md) | [01-policy](../devian-unity/50-mobile-package/01-policy/SKILL.md) | — | MobilePackage 샘플 |
 
 ---
 

@@ -17,7 +17,7 @@ The Single Source of Truth (SSOT) is at `skills/devian/10-module/03-ssot/SKILL.m
 - `skills/devian/80-tools/11-builder/32-table-authoring/SKILL.md` — Table authoring rules
 - `skills/devian/80-tools/11-builder/30-table-cell-format/SKILL.md` — Class cell format (DFF)
 - `skills/devian/80-tools/11-builder/31-table-row-format/SKILL.md` — JSON row I/O
-- `skills/devian-unity/20-domain-common-system/30-string-table/SKILL.md` — String table conventions
+- `skills/devian-unity/20-common-package/30-string-table/SKILL.md` — String table conventions
 - `skills/devian/80-tools/11-builder/53-data-ndjson/SKILL.md` — NDJSON storage format
 - `skills/devian/80-tools/11-builder/54-data-pb64/SKILL.md` — pb64 storage format
 - `skills/devian/80-tools/11-builder/51-table-codegen/SKILL.md` — TableGen implementation

@@ -69,5 +69,5 @@ framework-ts/apps/Operation/
 
 ## Related
 
-- [25-recovery-system/03-ssot](../../../../devian-unity/50-mobile-system/25-recovery-system/03-ssot/SKILL.md) — DVN 포맷/AES 정본
+- [25-recovery-system/03-ssot](../../../../devian-unity/50-mobile-package/25-recovery-system/03-ssot/SKILL.md) — DVN 포맷/AES 정본
 - [80-tools Overview](../../00-overview/SKILL.md) — Tools 그룹 상위 개요

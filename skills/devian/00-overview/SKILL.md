@@ -33,11 +33,11 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | **devian/20-domain-common** | Common Domain C#/TS 공통 정책 | [00-overview](../20-domain-common/00-overview/SKILL.md) | [01-policy](../20-domain-common/01-policy/SKILL.md) | — |
 | **devian/80-tools** | CLI, 아카이브 | [00-overview](../80-tools/00-overview/SKILL.md) | [01-policy](../80-tools/01-policy/SKILL.md) | [03-ssot](../80-tools/03-ssot/SKILL.md) |
 | **devian/80-tools/11-builder** | Build, Table, Contract, NDJSON, PB64, Protocol Codegen, Error Reporting | [00-overview](../80-tools/11-builder/00-overview/SKILL.md) | [01-policy](../80-tools/11-builder/01-policy/SKILL.md) | [03-ssot](../80-tools/11-builder/03-ssot/SKILL.md) |
-| **devian-unity/20-domain-common-system** | Unity 공용 런타임 컴포넌트 | [00-overview](../../devian-unity/20-domain-common-system/00-overview/SKILL.md) | — | — |
+| **devian-unity/20-common-package** | Unity 공용 런타임 컴포넌트 | [00-overview](../../devian-unity/20-common-package/00-overview/SKILL.md) | — | — |
 | **devian-unity** | UPM 패키지, Unity 런타임, 컴포넌트 | [00-overview](../../devian-unity/00-overview/SKILL.md) | [01-policy](../../devian-unity/01-policy/SKILL.md) | [03-ssot](../../devian-unity/03-ssot/SKILL.md) |
 | **devian-examples** | 예제 도메인, 예제 프로토콜 | [00-overview](../../devian-examples/00-overview/SKILL.md) | [01-policy](../../devian-examples/01-policy/SKILL.md) | [03-ssot](../../devian-examples/03-ssot/SKILL.md) |
 | **devian/21-domain-game** | Game 도메인 정의 | [00-overview](../21-domain-game/00-overview/SKILL.md) | — | — |
-| **devian-unity/50-mobile-system** | MobileSystem (Devian Samples) | [00-overview](../../devian-unity/50-mobile-system/00-overview/SKILL.md) | [01-policy](../../devian-unity/50-mobile-system/01-policy/SKILL.md) | — |
+| **devian-unity/50-mobile-package** | MobilePackage (Devian Samples) | [00-overview](../../devian-unity/50-mobile-package/00-overview/SKILL.md) | [01-policy](../../devian-unity/50-mobile-package/01-policy/SKILL.md) | — |
 
 ---
 
@@ -49,28 +49,28 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 ### Group Routing
 
 - Unity 일반 컴포넌트(Non-UI) → `skills/devian-unity/10-foundation/00-overview/SKILL.md`
-- Unity UI 컴포넌트(UI/Canvas/Frame/UIManager) → `skills/devian-unity/30-ui-system/00-overview/skill.md`
+- Unity UI 컴포넌트(UI/Canvas/Frame/UIManager) → `skills/devian-unity/23-ui-package/00-overview/skill.md`
 
 ### Routing Keywords
 
 | keyword | route-to |
 |---|---|
-| StringTable, StringTable.xlsx, string-table, ST_, 다국어, localization, localizing, TEXT table, 번역 | `skills/devian-unity/20-domain-common-system/30-string-table/SKILL.md` |
-| ActorObject, ActorController, actor-system, actor controller | `skills/devian-unity/20-domain-common-system/10-actor-system/SKILL.md` |
-| InputManager, input manager, InputActionAsset, input action asset | `skills/devian-unity/20-domain-common-system/22-input-manager/SKILL.md` |
-| BaseInputController, input-controller, input controller, InputSpace | `skills/devian-unity/20-domain-common-system/21-input-controller/SKILL.md` |
+| StringTable, StringTable.xlsx, string-table, ST_, 다국어, localization, localizing, TEXT table, 번역 | `skills/devian-unity/20-common-package/30-string-table/SKILL.md` |
+| ActorObject, ActorController, actor-system, actor controller | `skills/devian-unity/20-common-package/10-actor-system/SKILL.md` |
+| InputManager, input manager, InputActionAsset, input action asset | `skills/devian-unity/20-common-package/22-input-manager/SKILL.md` |
+| BaseInputController, input-controller, input controller, InputSpace | `skills/devian-unity/20-common-package/21-input-controller/SKILL.md` |
 | NDJSON, ndjson, .json 스토리지 | `skills/devian/80-tools/11-builder/53-data-ndjson/SKILL.md` |
 | PB64, pb64, .asset 바이너리 | `skills/devian/80-tools/11-builder/54-data-pb64/SKILL.md` |
 | TableGen, 테이블 생성 | `skills/devian/80-tools/11-builder/51-table-codegen/SKILL.md` |
-| TableManager, LoadStringsAsync | `skills/devian-unity/20-domain-common-system/31-table-manager/SKILL.md` |
-| BundleManager, Addressables | `skills/devian-unity/20-domain-common-system/19-bundle-manager/SKILL.md` |
-| UIManager, UICanvas, UIFrame | `skills/devian-unity/30-ui-system/10-ui-manager/skill.md` |
-| UI Canvas Frames, UICanvasFrames | `skills/devian-unity/30-ui-system/20-ui-canvas-frames/skill.md` |
-| PurchaseManager, purchase, IAP, in-app purchase, 결제, 인앱 | `skills/devian-unity/50-mobile-system/30-purchase-system/00-overview/SKILL.md` |
-| LoginManager, login manager, login flow, runtime session restore, 로그인 매니저 | `skills/devian-unity/50-mobile-system/24-login-manager/SKILL.md` |
-| purchase audit, refund audit, Google Sheets, spreadsheet log, audit sheet, 결제 로그, 환불 로그, 감사 로그 | `skills/devian-unity/50-mobile-system/30-purchase-system/48-purchase-audit-google-sheets/SKILL.md` |
-| purchase audit setup, Google Sheets audit setup, audit sheet setup, spreadsheet permission, spreadsheet share, PURCHASE_AUDIT_SHEET_ID, GOOGLE_DRIVE_AUDIT_CREDENTIALS_JSON | `skills/devian-unity/50-mobile-system/30-purchase-system/13-purchase-audit-google-sheets-setup/SKILL.md` |
-| AdsManager, advertise, ads, AdMob, GoogleMobileAds, rewarded ad, rewarded, interstitial, banner, app open, 광고, 리워드 광고, 전면 광고, 배너 광고 | `skills/devian-unity/50-mobile-system/47-advertise-system/00-overview/SKILL.md` |
+| TableManager, LoadStringsAsync | `skills/devian-unity/20-common-package/31-table-manager/SKILL.md` |
+| BundleManager, Addressables | `skills/devian-unity/20-common-package/19-bundle-manager/SKILL.md` |
+| UIManager, UICanvas, UIFrame | `skills/devian-unity/23-ui-package/10-ui-manager/skill.md` |
+| UI Canvas Frames, UICanvasFrames | `skills/devian-unity/23-ui-package/20-ui-canvas-frames/skill.md` |
+| PurchaseManager, purchase, IAP, in-app purchase, 결제, 인앱 | `skills/devian-unity/50-mobile-package/30-purchase-system/00-overview/SKILL.md` |
+| LoginManager, login manager, login flow, runtime session restore, 로그인 매니저 | `skills/devian-unity/50-mobile-package/24-login-manager/SKILL.md` |
+| purchase audit, refund audit, Google Sheets, spreadsheet log, audit sheet, 결제 로그, 환불 로그, 감사 로그 | `skills/devian-unity/50-mobile-package/30-purchase-system/48-purchase-audit-google-sheets/SKILL.md` |
+| purchase audit setup, Google Sheets audit setup, audit sheet setup, spreadsheet permission, spreadsheet share, PURCHASE_AUDIT_SHEET_ID, GOOGLE_DRIVE_AUDIT_CREDENTIALS_JSON | `skills/devian-unity/50-mobile-package/30-purchase-system/13-purchase-audit-google-sheets-setup/SKILL.md` |
+| AdsManager, advertise, ads, AdMob, GoogleMobileAds, rewarded ad, rewarded, interstitial, banner, app open, 광고, 리워드 광고, 전면 광고, 배너 광고 | `skills/devian-unity/50-mobile-package/47-advertise-system/00-overview/SKILL.md` |
 
 ---
 

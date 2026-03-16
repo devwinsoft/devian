@@ -102,7 +102,7 @@ Import (.dvn): .dvn -> version parse (0x01) -> ComplexUtil.Decrypt_Base64 -> JSO
 - Import는 v1/v2 모두 허용한다 (v1은 HMAC 검증 없이 통과).
 - Operation 웹앱은 APP_SECRET을 코드 내 상수로 보유한다 (dvn-codec.ts).
 
-정본: [25-recovery-system/03-ssot](../../../../devian-unity/50-mobile-system/25-recovery-system/03-ssot/SKILL.md)
+정본: [25-recovery-system/03-ssot](../../../../devian-unity/50-mobile-package/25-recovery-system/03-ssot/SKILL.md)
 - DVN 포맷: §A
 - 인코딩 파이프라인: §B
 - HMAC Integrity: §E

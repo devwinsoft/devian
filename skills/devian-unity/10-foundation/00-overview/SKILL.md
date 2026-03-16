@@ -2,7 +2,7 @@
 
 ## Purpose
 Unity 런타임 컴포넌트(비-UI)의 스킬 인덱스와 진입점이다.
-이 폴더는 "Unity 컴포넌트" 범위만 다루며, UI는 30-ui-system로 분리되어 있다.
+이 폴더는 "Unity 컴포넌트" 범위만 다루며, UI는 23-ui-package로 분리되어 있다.
 
 ## Scope
 

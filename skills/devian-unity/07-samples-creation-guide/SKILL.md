@@ -13,8 +13,8 @@
 >
 > **세부 문서:**
 > - Templates 원본: `framework-cs/upm/com.devian.samples/Samples~/`
-> - LocalSave Manager Sample: `skills/devian-unity/50-mobile-system/21-savedata-system/41-savedata-savelocal/SKILL.md`
-> - CloudSave Manager Sample: `skills/devian-unity/50-mobile-system/21-savedata-system/42-savedata-savecloud/SKILL.md`
+> - LocalSave Manager Sample: `skills/devian-unity/50-mobile-package/21-savedata-system/41-savedata-savelocal/SKILL.md`
+> - CloudSave Manager Sample: `skills/devian-unity/50-mobile-package/21-savedata-system/42-savedata-savecloud/SKILL.md`
 
 ---
 

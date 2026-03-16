@@ -11,7 +11,7 @@ Type: Index / Directory
 - `devian/10-module`을 Unity(UPM)로 감싸는 계층 (`Devian.Core` asmdef)
 - 모듈 타입 Editor (`Devian.Unity.Editor` asmdef — Complex/VersionNumber Drawer)
 
-Unity 런타임 컴포넌트(Pool, Singleton, FSM 등)는 `20-domain-common-system`으로 이동하였다.
+Unity 런타임 컴포넌트(Pool, Singleton, FSM 등)는 `20-common-package`으로 이동하였다.
 
 ---
 
@@ -29,5 +29,5 @@ Unity 런타임 컴포넌트(Pool, Singleton, FSM 등)는 `20-domain-common-syst
 ## Reference
 
 - Parent: `skills/devian/10-module/03-ssot/SKILL.md` (Foundation Package SSOT)
-- Unity 런타임 컴포넌트: `skills/devian-unity/20-domain-common-system/00-overview/SKILL.md`
-- UI 관련 컴포넌트: `skills/devian-unity/30-ui-system/SKILL.md`
+- Unity 런타임 컴포넌트: `skills/devian-unity/20-common-package/00-overview/SKILL.md`
+- UI 관련 컴포넌트: `skills/devian-unity/23-ui-package/SKILL.md`

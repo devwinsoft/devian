@@ -22,7 +22,7 @@ AppliesTo: v10
 ## 3) 암호키 보안
 
 - AES 공유키는 Unity 클라이언트와 **동일**해야 한다.
-- 공유키 정본: [25-recovery-system/03-ssot](../../../../devian-unity/50-mobile-system/25-recovery-system/03-ssot/SKILL.md) §C
+- 공유키 정본: [25-recovery-system/03-ssot](../../../../devian-unity/50-mobile-package/25-recovery-system/03-ssot/SKILL.md) §C
 - 소스 코드에 키를 직접 포함한다 (localhost 전용이므로 허용).
 - Git에 push하는 경우 `.gitignore` 또는 환경변수 분리를 검토한다.
 
@@ -30,7 +30,7 @@ AppliesTo: v10
 ## 4) 인코딩 파이프라인 동기화
 
 - 각 encode/decode 기능의 파이프라인은 Unity 클라이언트와 **완전히 동일**해야 한다.
-- DVN 파이프라인 정본: [25-recovery-system/03-ssot](../../../../devian-unity/50-mobile-system/25-recovery-system/03-ssot/SKILL.md)
+- DVN 파이프라인 정본: [25-recovery-system/03-ssot](../../../../devian-unity/50-mobile-package/25-recovery-system/03-ssot/SKILL.md)
 - 파이프라인 변경 시 양쪽을 동시에 업데이트한다.
 
 
@@ -46,5 +46,5 @@ AppliesTo: v10
 ## Related
 
 - [00-overview](../00-overview/SKILL.md) — Operation 개요
-- [25-recovery-system/03-ssot](../../../../devian-unity/50-mobile-system/25-recovery-system/03-ssot/SKILL.md) — DVN 파이프라인/AES 정본
+- [25-recovery-system/03-ssot](../../../../devian-unity/50-mobile-package/25-recovery-system/03-ssot/SKILL.md) — DVN 파이프라인/AES 정본
 - [Tools SSOT](../../03-ssot/SKILL.md) — Tools SSOT

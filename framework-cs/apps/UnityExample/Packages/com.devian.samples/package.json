@@ -9,9 +9,14 @@
   },
   "samples": [
     {
-      "displayName": "MobileSystem",
+      "displayName": "GameContents",
+      "description": "Bundle sample: installs Ability system examples.",
+      "path": "Samples~/GameContents"
+    },
+    {
+      "displayName": "MobilePackage",
       "description": "Bundle sample: installs FirebaseManager + SaveSystem + AccountManager + PurchaseManager together.",
-      "path": "Samples~/MobileSystem"
+      "path": "Samples~/MobilePackage"
     }
   ]
 }

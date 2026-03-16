@@ -11,7 +11,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e8b9d68a1539845c1b8a9d73cb99d514, type: 3}
   m_Name: FirstRewardSettings
-  m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.FirstRewardSettings
+  m_EditorClassIdentifier: Devian.Samples.MobilePackage::Devian.FirstRewardSettings
   InitialRewards:
     data: 9WoAKZpR/Dy2OKr8hY+oQyD8qjwAAtGfEkDxBJ9bEqpuOATtqO0Y0Rgbo1OjltYEvoSS46AjnU35swQs+ccz7Q==
   _editorCardId:
