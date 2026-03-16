@@ -3,13 +3,13 @@
 Status: ACTIVE
 AppliesTo: v10
 
-MobilePackage은 **Devian Samples**(`com.devian.samples`)에 포함된 Unity Sample이다.
+MobilePackage은 **Devian Foundation**(`com.devian.foundation`)에 포함된 Unity Sample이다.
 이 그룹은 MobilePackage 샘플(및 그 하위 샘플들)의 스킬을 담당한다.
 
 ---
 
 ## Sample SSOT
-- `com.devian.samples/Samples~/MobilePackage`
+- `com.devian.foundation/Samples~/MobilePackage`
 
 ---
 

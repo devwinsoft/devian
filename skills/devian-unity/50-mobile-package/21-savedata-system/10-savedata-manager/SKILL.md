@@ -168,8 +168,8 @@ RecoveryManager(25-recovery-system)에서 Import 시 사용한다.
 
 
 ## Location
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/SaveDataManager.cs`
-- UnityExample mirror: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/SaveDataManager.cs`
+- UPM: `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/SaveDataManager.cs`
+- UnityExample mirror: `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/SaveDataManager.cs`
 - Assets/Samples import: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/SaveData/SaveDataManager.cs`
 
 

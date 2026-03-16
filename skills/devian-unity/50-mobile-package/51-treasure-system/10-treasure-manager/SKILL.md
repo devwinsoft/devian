@@ -11,9 +11,9 @@ MobilePackage 샘플의 `TreasureManager` 설계 문서다.
 ## Implementation Location (target 3-path mirror)
 
 - UPM (정본):
-  `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Treasure/TreasureManager.cs`
+  `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Treasure/TreasureManager.cs`
 - Packages (sync):
-  `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Treasure/TreasureManager.cs`
+  `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Treasure/TreasureManager.cs`
 - Assets/Samples (import):
   `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Treasure/TreasureManager.cs`
 

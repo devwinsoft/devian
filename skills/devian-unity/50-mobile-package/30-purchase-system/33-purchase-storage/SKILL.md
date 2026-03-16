@@ -41,8 +41,8 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 
 > 3-path mirror 정책: [devian-unity/04-package-policy](../../../../devian-unity/04-package-policy/SKILL.md), [devian-unity/01-policy](../../../../devian-unity/01-policy/SKILL.md) §SSOT 원칙
 
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Purchase/PurchaseStorage.cs`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Purchase/PurchaseStorage.cs`
+- UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Purchase/PurchaseStorage.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Purchase/PurchaseStorage.cs`
 - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Purchase/PurchaseStorage.cs`
 
 - asmdef: `Devian.Samples.MobilePackage` (`Samples~/MobilePackage/Runtime/Devian.Samples.MobilePackage.asmdef`)

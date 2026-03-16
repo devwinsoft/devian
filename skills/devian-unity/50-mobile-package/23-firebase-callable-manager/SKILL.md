@@ -29,15 +29,15 @@ game 도메인 테이블(TB_PURCHASE 등)은 참조하지 않는다 - 서버 응
 
 
 ## Sample SSOT
-- `com.devian.samples/Samples~/MobilePackage`
+- `com.devian.foundation/Samples~/MobilePackage`
 
 
 ## Implementation Location (3-path mirror)
 
 > 3-path mirror 정책: [devian-unity/04-package-policy](../../04-package-policy/SKILL.md)
 
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/FirebaseCallable/FirebaseCallableManager.cs`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/FirebaseCallable/FirebaseCallableManager.cs`
+- UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/FirebaseCallable/FirebaseCallableManager.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/FirebaseCallable/FirebaseCallableManager.cs`
 - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/FirebaseCallable/FirebaseCallableManager.cs`
 
 

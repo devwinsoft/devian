@@ -159,17 +159,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 7471036124395997891}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5fa93bb79c3572e4d86adac2bb4a6796, type: 3}
+  m_Script: {fileID: 11500000, guid: a1c743a8798794e25ba0fe62bbf0a9b2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Unity::Devian.AnimSequencePlayer
   _animator: {fileID: -4003625305978749251}
   _defaultSequence:
-    Steps:
-    - Clip: {fileID: 7400000, guid: 2cd9182ccea229549b61fa29dfce0751, type: 2}
-      Speed: 1
-      Repeat: 0
-      FadeTime: 0
-    - Clip: {fileID: 7400000, guid: 2cd9182ccea229549b61fa29dfce0751, type: 2}
-      Speed: 1
-      Repeat: 1
-      FadeTime: 0
+    Steps: []

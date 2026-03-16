@@ -22,6 +22,40 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ============================================================================
+// Global Constants (SSOT: hardcoded strings extracted for maintainability)
+// ============================================================================
+
+/** @type {string} Base UPM package — all samples, domains, protocols live here */
+const UPM_FOUNDATION = 'com.devian.foundation';
+
+/** @type {string} Assembly name prefix for sample assemblies */
+const ASM_PREFIX_SAMPLES = 'Devian.Samples.';
+
+/** @type {Object<string, string>} Direct asmdef name → UPM package mapping */
+const ASMDEF_TO_UPM_DIRECT = {
+    'Devian.Core': UPM_FOUNDATION,
+    'Devian.Unity': UPM_FOUNDATION,
+    'Devian.Network': UPM_FOUNDATION,
+    'Devian.Protobuf': UPM_FOUNDATION,
+};
+
+/** @type {RegExp[]} Prefix/pattern-based asmdef → UPM_FOUNDATION mappings */
+const ASMDEF_TO_UPM_PATTERNS = [
+    /^Devian\.Samples\./,     // Devian.Samples.* → UPM_FOUNDATION
+    /^Devian\.UI(\.Editor)?$/, // Devian.UI / Devian.UI.Editor → UPM_FOUNDATION (legacy)
+    /^Devian\.Domain\.\w+$/,  // Devian.Domain.{Domain} → UPM_FOUNDATION (legacy)
+    /^Devian\.Protocol\.\w+$/, // Devian.Protocol.{Group} → UPM_FOUNDATION (legacy)
+];
+
+/** @type {Object<string, string>} Default version strings for UPM packages */
+const DEFAULT_VERSIONS = {
+    [UPM_FOUNDATION]: '0.1.0',
+};
+
+/** @type {string[]} Allowed values for samplePackages config (Hard Rule) */
+const ALLOWED_SAMPLE_PACKAGES = [UPM_FOUNDATION];
+
+// ============================================================================
 // Build Runner
 // ============================================================================
 
@@ -122,24 +156,22 @@ class DevianToolBuilder {
                 `  Key: staticUpmPackages\n` +
                 `  File: ${configPath}\n` +
                 `  staticUpmPackages is forbidden. Use samplePackages instead.\n` +
-                `  samplePackages can ONLY contain "com.devian.samples".\n` +
+                `  samplePackages can ONLY contain "com.devian.foundation".\n` +
                 `  Library packages (com.devian.foundation) and domain packages are NOT allowed.`
             );
         }
         
-        // Validate samplePackages - ONLY com.devian.samples is allowed
+        // Validate samplePackages - ONLY com.devian.foundation is allowed
         // SSOT: skills/devian-core/03-ssot/SKILL.md - Hard Rule
         if (configJson.samplePackages && Array.isArray(configJson.samplePackages)) {
-            const allowedSamplePackages = ['com.devian.samples'];
             for (const pkg of configJson.samplePackages) {
-                if (!allowedSamplePackages.includes(pkg)) {
+                if (!ALLOWED_SAMPLE_PACKAGES.includes(pkg)) {
                     throw new Error(
                         `[FAIL] Invalid package in samplePackages!\n` +
                         `  Package: ${pkg}\n` +
                         `  File: ${configPath}\n` +
-                        `  samplePackages can ONLY contain: ${allowedSamplePackages.join(', ')}\n` +
-                        `  Library packages (com.devian.foundation) are NOT allowed.\n` +
-                        `  Domain and Protocol are Sample-targets in com.devian.samples.`
+                        `  samplePackages can ONLY contain: ${ALLOWED_SAMPLE_PACKAGES.join(', ')}\n` +
+                        `  Domain and Protocol are Sample-targets in ${UPM_FOUNDATION}.`
                     );
                 }
             }
@@ -265,8 +297,8 @@ class DevianToolBuilder {
             }
         }
 
-        // Process sample packages (e.g., com.devian.samples)
-        // samplePackages is string[] of package names, ONLY com.devian.samples allowed
+        // Process sample packages (e.g., com.devian.foundation)
+        // samplePackages is string[] of package names, ONLY com.devian.foundation allowed
         if (this.config.samplePackages && Array.isArray(this.config.samplePackages)) {
             for (const upmName of this.config.samplePackages) {
                 await this.processSamplePackage(upmName);
@@ -289,7 +321,7 @@ class DevianToolBuilder {
         }
 
         // Sample packages: copy to packageDir (clean + copy entire package)
-        // SSOT: upm is the single source, samplePackages ONLY for com.devian.samples
+        // SSOT: upm is the single source, samplePackages ONLY for com.devian.foundation
         if (this.config.samplePackages && Array.isArray(this.config.samplePackages)) {
             console.log('  [Info] Sample packages: upm/<pkg> → packageDir/<pkg> (clean copy)');
             for (const upmName of this.config.samplePackages) {
@@ -1123,7 +1155,7 @@ class DevianToolBuilder {
 
         // Copy Domain UPM to upm
         // Rule:
-        // - Sample-target domain => target is com.devian.samples/Samples~/{SampleName}/ (hybrid mode)
+        // - Sample-target domain => target is com.devian.foundation/Samples~/{SampleName}/ (hybrid mode)
         //   SSOT: skills/devian/80-tools/11-builder/03-ssot/SKILL.md § Sample-target Domain
         // - If upm/<package>/package.json already exists => manual/hybrid package
         //   => only update Runtime/Generated and Editor/Generated (clean+copy), remove legacy folders
@@ -1131,9 +1163,9 @@ class DevianToolBuilder {
         //   => copy whole staging package (package-level clean+copy)
         const stagingUpm = path.join(this.tempDir, domainName, 'upm');
         if (fs.existsSync(stagingUpm)) {
-            // All domains are sample-targets: com.devian.samples/Samples~/{DomainName}Package/
+            // All domains are sample-targets: com.devian.foundation/Samples~/{DomainName}Package/
             const sampleName = DevianToolBuilder.getSampleName(domainName, 'Package');
-            const targetPkgDir = path.join(this.upmSourceDir, 'com.devian.samples', 'Samples~', sampleName);
+            const targetPkgDir = path.join(this.upmSourceDir, UPM_FOUNDATION, 'Samples~', sampleName);
             // Hybrid detection: check for Runtime asmdef (samples don't have package.json)
             const sampleAsmdefName = `Devian.Samples.${sampleName}`;
             const targetRuntimeAsmdef = path.join(targetPkgDir, 'Runtime', `${sampleAsmdefName}.asmdef`);
@@ -1336,7 +1368,7 @@ class DevianToolBuilder {
         // NOTE: index.ts 생성 제거 (수기/고정 파일, 빌더가 생성/수정 금지)
         // SSOT: skills/devian-builder/03-ssot/SKILL.md
 
-        // Protocol UPM은 Sample-target: com.devian.samples/Samples~/{ProtocolGroup}Protocol/
+        // Protocol UPM은 Sample-target: com.devian.foundation/Samples~/{ProtocolGroup}Protocol/
         // Generated-only 반영은 copyProtocolGroupToTargets에서 처리
     }
 
@@ -1561,9 +1593,9 @@ class DevianToolBuilder {
 
         // ========== Protocol UPM 반영 (Sample-target, Generated-only) ==========
         // SSOT: skills/devian/80-tools/11-builder/03-ssot/SKILL.md § Sample-target Protocol
-        // Protocol generates into com.devian.samples/Samples~/{ProtocolGroup}Protocol/
+        // Protocol generates into com.devian.foundation/Samples~/{ProtocolGroup}Protocol/
         const protocolSampleName = DevianToolBuilder.getSampleName(groupName, 'Protocol');
-        const upmTargetDir = path.join(this.upmSourceDir, 'com.devian.samples', 'Samples~', protocolSampleName);
+        const upmTargetDir = path.join(this.upmSourceDir, UPM_FOUNDATION, 'Samples~', protocolSampleName);
 
         // Guard: asmdef 존재 확인 (수기 파일)
         const sampleAsmdefName = `Devian.Samples.${protocolSampleName}`;
@@ -3019,7 +3051,7 @@ export * from './features';
      */
     syncDevianCoreToUpmFoundation() {
         const src = path.join(this.rootDir, 'framework-cs/module/Devian/src/Core');
-        const dest = path.join(this.rootDir, 'framework-cs/upm/com.devian.foundation/Runtime/Module/Core');
+        const dest = path.join(this.rootDir, 'framework-cs/upm', UPM_FOUNDATION, 'Runtime/Module/Core');
 
         if (!fs.existsSync(src)) {
             console.log('  [Skip] Devian Core source not found:', src);
@@ -3038,7 +3070,7 @@ export * from './features';
     /**
      * Sync Domain.Common Core sources to Common sample package.
      * Source: framework-cs/module/Devian.Domain.Common/src
-     * Target: framework-cs/upm/com.devian.samples/Samples~/{getSampleName('Common', 'Package')}/Runtime/Module
+     * Target: framework-cs/upm/com.devian.foundation/Samples~/{getSampleName('Common', 'Package')}/Runtime/Module
      * - Copies CoreError.cs and CoreResult.cs only.
      * - Never touches .meta files (Unity GUID preservation).
      * SSOT: skills/devian/80-tools/11-builder/03-ssot/SKILL.md § Sample-target Domain
@@ -3046,7 +3078,7 @@ export * from './features';
     syncDomainCommonCoreToUpmDomainCommon() {
         const commonSampleName = DevianToolBuilder.getSampleName('Common', 'Package');
         const src = path.join(this.rootDir, 'framework-cs/module/Devian.Domain.Common/src');
-        const dest = path.join(this.rootDir, 'framework-cs/upm/com.devian.samples/Samples~', commonSampleName, 'Runtime/Module');
+        const dest = path.join(this.rootDir, 'framework-cs/upm', UPM_FOUNDATION, 'Samples~', commonSampleName, 'Runtime/Module');
         const files = ['CoreError.cs', 'CoreResult.cs'];
 
         if (!fs.existsSync(src)) {
@@ -3113,10 +3145,10 @@ export * from './features';
     // ========================================================================
 
     /**
-     * Process a sample package (e.g., com.devian.samples).
-     * samplePackages ONLY allows com.devian.samples.
+     * Process a sample package (e.g., com.devian.foundation).
+     * samplePackages ONLY allows com.devian.foundation.
      * SSOT: skills/devian-core/03-ssot/SKILL.md - Hard Rule
-     * @param {string} upmName - UPM package name (e.g., "com.devian.samples")
+     * @param {string} upmName - UPM package name (e.g., "com.devian.foundation")
      */
     async processSamplePackage(upmName) {
         console.log(`  [SamplePkg] ${upmName}`);
@@ -3341,7 +3373,7 @@ export * from './features';
      * Copy entire sample package from upm to packageDir (clean copy).
      * Sample packages are not generated - they are manually authored.
      * SSOT: skills/devian-unity/07-samples-creation-guide/SKILL.md
-     * @param {string} upmName - Sample package name (e.g., "com.devian.samples")
+     * @param {string} upmName - Sample package name (e.g., "com.devian.foundation")
      */
     async copySamplePackageToTarget(upmName) {
         const sourcePath = path.join(this.upmSourceDir, upmName);
@@ -3390,10 +3422,10 @@ export * from './features';
             return;
         }
 
-        // Common domain is a sample in com.devian.samples/Samples~/{getSampleName('Common', 'Package')}/
+        // Common domain is a sample in com.devian.foundation/Samples~/{getSampleName('Common', 'Package')}/
         // SSOT: skills/devian/80-tools/11-builder/03-ssot/SKILL.md § Sample-target Domain
         const commonSampleName = DevianToolBuilder.getSampleName('Common', 'Package');
-        const commonPackagePath = path.join(this.upmSourceDir, 'com.devian.samples', 'Samples~', commonSampleName);
+        const commonPackagePath = path.join(this.upmSourceDir, UPM_FOUNDATION, 'Samples~', commonSampleName);
         const requiredFiles = [
             'Editor/Unity/TableId/BaseEditorID_Selector.cs',
             'Editor/Unity/TableId/BaseEditorID_Drawer.cs'
@@ -3415,7 +3447,7 @@ export * from './features';
             }
             console.error();
             console.error(`Fix: Ensure ${commonSampleName} sample contains Editor/Unity/TableId base files.`);
-            console.error(`     These files should be in: upm/com.devian.samples/Samples~/${commonSampleName}/Editor/Unity/TableId/`);
+            console.error(`     These files should be in: upm/com.devian.foundation/Samples~/${commonSampleName}/Editor/Unity/TableId/`);
             console.error();
             throw new Error(`[FAIL] ${commonSampleName} sample is missing Editor/Unity/TableId base files.`);
         }
@@ -3564,38 +3596,19 @@ export * from './features';
      * @returns {string|null} - UPM package name or null if not mappable
      */
     asmdefRefToUpmPackage(asmdefRef) {
-        // SSOT: skills/devian-core/03-ssot/SKILL.md — Hard Rule: Base UPM package is com.devian.foundation only
-        const mapping = {
-            'Devian.Core': 'com.devian.foundation',
-            'Devian.Unity': 'com.devian.foundation',
-            'Devian.Network': 'com.devian.foundation',
-            'Devian.Protobuf': 'com.devian.foundation',
-        };
+        // SSOT: skills/devian-unity/03-ssot/SKILL.md — Hard Rule: Base UPM package is com.devian.foundation only
+        // Uses global constants: ASMDEF_TO_UPM_DIRECT, ASMDEF_TO_UPM_PATTERNS, UPM_FOUNDATION
 
-        // Direct mapping
-        if (mapping[asmdefRef]) {
-            return mapping[asmdefRef];
+        // Direct mapping (table-based lookup)
+        if (ASMDEF_TO_UPM_DIRECT[asmdefRef]) {
+            return ASMDEF_TO_UPM_DIRECT[asmdefRef];
         }
 
-        // Pattern: Devian.Samples.* (assembly) -> com.devian.samples (UPM)
-        // All domain/protocol/manual samples are in com.devian.samples
-        if (asmdefRef.startsWith('Devian.Samples.')) {
-            return 'com.devian.samples';
-        }
-
-        // Legacy pattern: Devian.UI / Devian.UI.Editor -> com.devian.samples (UI migrated to UIPackage sample)
-        if (asmdefRef === 'Devian.UI' || asmdefRef === 'Devian.UI.Editor') {
-            return 'com.devian.samples';
-        }
-
-        // Legacy pattern: Devian.Domain.{Domain} -> com.devian.samples (domains migrated to samples)
-        if (/^Devian\.Domain\.\w+$/.test(asmdefRef)) {
-            return 'com.devian.samples';
-        }
-
-        // Legacy pattern: Devian.Protocol.{Group} -> com.devian.samples (protocols migrated to samples)
-        if (/^Devian\.Protocol\.\w+$/.test(asmdefRef)) {
-            return 'com.devian.samples';
+        // Pattern-based mapping (all resolve to UPM_FOUNDATION)
+        for (const pattern of ASMDEF_TO_UPM_PATTERNS) {
+            if (pattern.test(asmdefRef)) {
+                return UPM_FOUNDATION;
+            }
         }
 
         // Skip self-references or unknown packages
@@ -3663,19 +3676,14 @@ export * from './features';
         const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
         const existingDeps = packageJson.dependencies || {};
 
-        // Default versions for packages (can be improved by scanning actual packages)
-        // SSOT: skills/devian-core/03-ssot/SKILL.md — Hard Rule: Base UPM package is com.devian.foundation only
-        const defaultVersions = {
-            'com.devian.foundation': '0.1.0',
-            'com.devian.samples': '0.1.0',
-        };
+        // Uses global constant: DEFAULT_VERSIONS
 
         // Convert refs to UPM packages and add to dependencies
         let addedCount = 0;
         for (const ref of allRefs) {
             const upmPackage = this.asmdefRefToUpmPackage(ref);
             if (upmPackage && !existingDeps[upmPackage]) {
-                const version = defaultVersions[upmPackage] || '1.0.0';
+                const version = DEFAULT_VERSIONS[upmPackage] || '1.0.0';
                 existingDeps[upmPackage] = version;
                 addedCount++;
             }
@@ -4097,7 +4105,7 @@ export * from './features';
                         `samplePackages[${i}] must be a string, not an object.\n` +
                         `  samplePackages is string[] of UPM package names.\n` +
                         `  Was: ${JSON.stringify(item)}\n` +
-                        `  Fix: Use plain string like "com.devian.samples"`
+                        `  Fix: Use plain string like "com.devian.foundation"`
                     );
                 }
             }
@@ -4120,7 +4128,7 @@ export * from './features';
                 if (proto.upmName !== undefined) {
                     errors.push(
                         `protocols[${i}].upmName is forbidden and no longer supported.\n` +
-                        `  Protocol is now a Sample-target in com.devian.samples/Samples~/${proto.group || 'unknown'}Protocol/.\n` +
+                        `  Protocol is now a Sample-target in com.devian.foundation/Samples~/${proto.group || 'unknown'}Protocol/.\n` +
                         `  Was: { "upmName": "${proto.upmName}", ... }\n` +
                         `  Fix: Remove "upmName" field.`
                     );
@@ -4547,8 +4555,8 @@ export * from './features';
      */
     checkFoundationEditorGenerated() {
         const forbiddenPaths = [
-            path.join(this.rootDir, 'framework-cs/upm/com.devian.foundation/Editor/Generated'),
-            path.join(this.rootDir, 'framework-cs/apps/UnityExample/Packages/com.devian.foundation/Editor/Generated'),
+            path.join(this.rootDir, 'framework-cs/upm', UPM_FOUNDATION, 'Editor/Generated'),
+            path.join(this.rootDir, 'framework-cs/apps/UnityExample/Packages', UPM_FOUNDATION, 'Editor/Generated'),
         ];
 
         const violations = [];

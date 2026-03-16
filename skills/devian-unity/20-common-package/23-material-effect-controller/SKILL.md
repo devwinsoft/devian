@@ -17,18 +17,18 @@ Type: Component Specification
 
 ## 생성 대상 패키지
 
-- `com.devian.samples` (CommonPackage sample)
+- `com.devian.foundation` (CommonPackage sample)
 
 ## UPM 종속성
 
-- `com.devian.samples`는 `com.devian.foundation`를 의존한다.
+- `com.devian.foundation`의 CommonPackage 샘플은 foundation Runtime에 의존한다.
 - 이유: `AssetManager`와 공용 Unity 런타임 유틸리티를 foundation에서 제공한다.
 
 ## 파일 위치 (SSOT)
 
-- Runtime: `com.devian.samples/Samples~/CommonPackage/Runtime/MaterialEffect/`
-- Editor: `com.devian.samples/Samples~/CommonPackage/Editor/`
-- Editor Selector: `com.devian.samples/Samples~/CommonPackage/Editor/Generated/MATERIAL_EFFECT_ID.Editor.cs`
+- Runtime: `com.devian.foundation/Samples~/CommonPackage/Runtime/MaterialEffect/`
+- Editor: `com.devian.foundation/Samples~/CommonPackage/Editor/`
+- Editor Selector: `com.devian.foundation/Samples~/CommonPackage/Editor/Generated/MATERIAL_EFFECT_ID.Editor.cs`
 
 ## 클래스 선언
 
@@ -214,7 +214,7 @@ MaterialEffectAsset을 AssetManager 캐시에 적재하는 **CompoSingleton 기�
 
 ### 파일 위치
 
-- `com.devian.samples/Samples~/CommonPackage/Runtime/MaterialEffect/MaterialEffectManager.cs`
+- `com.devian.foundation/Samples~/CommonPackage/Runtime/MaterialEffect/MaterialEffectManager.cs`
 
 ### 선언
 

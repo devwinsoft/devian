@@ -156,11 +156,11 @@ public class ViewFlattenedSpace : IInputSpace
 
 | 타입 | 경로 |
 |------|------|
-| IBaseInputController | `com.devian.samples/Samples~/CommonPackage/Runtime/Unity/Input/IBaseInputController.cs` |
-| BaseInputController | `com.devian.samples/Samples~/CommonPackage/Runtime/Unity/Input/BaseInputController.cs` |
-| IInputSpace | `com.devian.samples/Samples~/CommonPackage/Runtime/Unity/Input/IInputSpace.cs` |
-| WorldXZSpace | `com.devian.samples/Samples~/CommonPackage/Runtime/Unity/Input/InputSpaces/WorldXZSpace.cs` |
-| ViewFlattenedSpace | `com.devian.samples/Samples~/CommonPackage/Runtime/Unity/Input/InputSpaces/ViewFlattenedSpace.cs` |
+| IBaseInputController | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/IBaseInputController.cs` |
+| BaseInputController | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/BaseInputController.cs` |
+| IInputSpace | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/IInputSpace.cs` |
+| WorldXZSpace | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/InputSpaces/WorldXZSpace.cs` |
+| ViewFlattenedSpace | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/InputSpaces/ViewFlattenedSpace.cs` |
 
 ---
 

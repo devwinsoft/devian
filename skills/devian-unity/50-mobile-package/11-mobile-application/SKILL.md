@@ -11,13 +11,13 @@ MobileApplication 기반 부트스트랩 샘플.
 
 
 ## Sample SSOT
-- `com.devian.samples/Samples~/MobilePackage`
+- `com.devian.foundation/Samples~/MobilePackage`
 
 
 ## Implementation Location (3-path mirror)
 
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Bootstrap/MobileApplication.cs`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Bootstrap/MobileApplication.cs`
+- UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Bootstrap/MobileApplication.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Bootstrap/MobileApplication.cs`
 - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Bootstrap/MobileApplication.cs`
 
 

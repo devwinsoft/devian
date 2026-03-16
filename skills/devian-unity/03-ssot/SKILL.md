@@ -46,8 +46,7 @@ ParentSSOT: skills/devian/10-module/03-ssot/SKILL.md
 
 Sync 후 아래 패키지는 반드시 upm ↔ Packages 일치를 검증한다:
 
-- `com.devian.foundation` — Core + 모듈 타입 Editor 패키지
-- `com.devian.samples` — 도메인/프로토콜/수동 샘플 패키지 (CommonPackage, SoundPackage, GamePackage, MobilePackage, GameProtocol, UIPackage)
+- `com.devian.foundation` — Core + 모듈 타입 Editor + 도메인/프로토콜/수동 샘플 (Samples~: CommonPackage, SoundPackage, GamePackage, MobilePackage, GameProtocol, UIPackage)
 
 > Sync 규칙 자체는 [Unity Policy](../01-policy/SKILL.md) §SSOT 원칙이 정본이다.
 
@@ -63,11 +62,11 @@ upm에 **동일 `package.json.name`이 있으면 무조건 빌드 FAIL**.
 
 ## Foundation 패키지 구조 (Hard Rule)
 
-**`com.devian.foundation`은 모듈 래핑 + 모듈 타입 Editor만 제공한다.**
+**`com.devian.foundation`은 모듈 래핑 + 모듈 타입 Editor + Samples~(도메인/프로토콜/수동 샘플)를 제공한다.**
 
 | 구분 | 경로 | 설명 |
 |------|------|------|
-| Foundation 패키지 | `framework-cs/upm/com.devian.foundation` | Core(모듈) + 모듈 타입 Editor |
+| Foundation 패키지 | `framework-cs/upm/com.devian.foundation` | Core(모듈) + 모듈 타입 Editor + Samples~ |
 
 **패키지 내부 폴더 구조:**
 
@@ -78,6 +77,13 @@ com.devian.foundation/
       Devian.Core.asmdef        # noEngineReferences: true
   Editor/
     Devian.Unity.Editor.asmdef  # Complex/VersionNumber Drawer
+  Samples~/                     # 도메인/프로토콜/수동 샘플
+    CommonPackage/
+    SoundPackage/
+    GamePackage/
+    MobilePackage/
+    GameProtocol/
+    UIPackage/
 ```
 
 **패키지 내부 asmdef:**
@@ -89,7 +95,7 @@ com.devian.foundation/
 
 > **asmdef 분리 정책:**
 > - `Devian.Core`는 `noEngineReferences: true`로 UnityEngine 참조를 금지한다.
-> - Unity 런타임 컴포넌트는 `com.devian.samples/Samples~/CommonPackage/`(`Devian.Samples.CommonPackage` asmdef)에 위치한다.
+> - Unity 런타임 컴포넌트는 `com.devian.foundation/Samples~/CommonPackage/`(`Devian.Samples.CommonPackage` asmdef)에 위치한다.
 
 ---
 
@@ -104,12 +110,12 @@ com.devian.foundation/
 ## samplePackages (Hard Rule)
 
 - `samplePackages`는 샘플 패키지 목록이다.
-- `samplePackages`에는 `com.devian.samples`만 허용한다.
+- `samplePackages`에는 `com.devian.foundation`만 허용한다.
 - 라이브러리, 도메인, 프로토콜은 절대 포함하지 않는다.
 - 위반 시 빌드는 즉시 FAIL이어야 한다.
 
 **금지 패키지 목록 (samplePackages에 넣으면 Hard FAIL):**
-- `com.devian.foundation`
+- `com.devian.samples` (삭제 완료, foundation으로 통합됨)
 - `com.devian.domain.*` (레거시, 삭제 완료)
 - `com.devian.protocol.*` (레거시, 삭제 완료)
 - `com.devian.ui` (레거시, UIPackage 샘플로 이관 완료)

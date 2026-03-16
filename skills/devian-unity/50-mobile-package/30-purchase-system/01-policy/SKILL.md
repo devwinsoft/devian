@@ -122,7 +122,7 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 ## PurchaseManager (Client Entry Point)
 
 
-- 샘플 구현: `com.devian.samples` — `Samples~/MobilePackage/Runtime/Purchase/PurchaseManager.cs`
+- 샘플 구현: `com.devian.foundation` — `Samples~/MobilePackage/Runtime/Purchase/PurchaseManager.cs`
 - 구현: `PurchaseManager : CompoSingleton<PurchaseManager>`
 - 구매 상태 스냅샷 저장: `PurchaseManager.Instance.Storage` (`PurchaseStorage`)
 

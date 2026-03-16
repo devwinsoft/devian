@@ -21,10 +21,10 @@ MobilePackage 샘플의 `GameMessageManager` 설계 문서다.
 
 ## Implementation Location (3-path mirror)
 
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/GameMessage/GameMessageManager.cs`
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/GameMessage/GameMessageStorage.cs`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/GameMessage/GameMessageManager.cs`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/GameMessage/GameMessageStorage.cs`
+- UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/GameMessage/GameMessageManager.cs`
+- UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/GameMessage/GameMessageStorage.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/GameMessage/GameMessageManager.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/GameMessage/GameMessageStorage.cs`
 - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/GameMessage/GameMessageManager.cs`
 - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/GameMessage/GameMessageStorage.cs`
 

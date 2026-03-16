@@ -51,8 +51,8 @@ AppliesTo: v10
 - JSON 직렬화 규약은 `21-savedata-system/43-savedata-json-codec`를 따른다.
 
 ## Location (3-path mirror)
-- UPM: `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Account/AccountManager.cs`
-- Packages: `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Account/AccountManager.cs`
+- UPM: `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Account/AccountManager.cs`
+- Packages: `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Account/AccountManager.cs`
 - Assets/Samples: `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Account/AccountManager.cs`
 
 ## Related

@@ -119,8 +119,8 @@ offset  size  description
 > 3-path mirror 정책: [devian-unity/04-package-policy](../../../04-package-policy/SKILL.md), [devian-unity/01-policy](../../../01-policy/SKILL.md) §SSOT 원칙
 
 - RecoveryCodec:
-  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Recovery/RecoveryCodec.cs`
-  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Recovery/RecoveryCodec.cs`
+  - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Recovery/RecoveryCodec.cs`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Recovery/RecoveryCodec.cs`
   - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Recovery/RecoveryCodec.cs`
 
 asmdef:

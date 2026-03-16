@@ -6,7 +6,8 @@
       "source": "embedded",
       "dependencies": {
         "com.unity.addressables": "2.7.6",
-        "com.unity.nuget.newtonsoft-json": "3.2.1"
+        "com.unity.nuget.newtonsoft-json": "3.2.1",
+        "com.unity.inputsystem": "1.18.0"
       }
     },
     "com.devian.purchase.store.apple": {
@@ -20,15 +21,6 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {}
-    },
-    "com.devian.samples": {
-      "version": "file:com.devian.samples",
-      "depth": 0,
-      "source": "embedded",
-      "dependencies": {
-        "com.devian.foundation": "0.1.0",
-        "com.unity.inputsystem": "1.18.0"
-      }
     },
     "com.github-glitchenzo.nugetforunity": {
       "version": "4.5.0",

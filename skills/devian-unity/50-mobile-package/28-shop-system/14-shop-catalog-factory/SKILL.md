@@ -61,8 +61,8 @@ internal static class ShopCatalogFactory
 
 ## Implementation Location (3-path mirror)
 
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Shop/Catalog/ShopCatalogFactory.cs`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Shop/Catalog/ShopCatalogFactory.cs`
+- UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/Catalog/ShopCatalogFactory.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/Catalog/ShopCatalogFactory.cs`
 - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Shop/Catalog/ShopCatalogFactory.cs`
 
 ---

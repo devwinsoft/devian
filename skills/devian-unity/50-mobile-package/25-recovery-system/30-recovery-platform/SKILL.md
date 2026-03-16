@@ -355,28 +355,28 @@ iOS와 Android 네이티브 설정은 Unity 빌드 프로세스에 통합해야 
 > 3-path mirror 정책: [devian-unity/04-package-policy](../../../04-package-policy/SKILL.md), [devian-unity/01-policy](../../../01-policy/SKILL.md) §SSOT 원칙
 
 - iOS Native Plugin:
-  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Plugins/iOS/Recovery/`
-  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Plugins/iOS/Recovery/`
+  - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Plugins/iOS/Recovery/`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Plugins/iOS/Recovery/`
   - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Plugins/iOS/Recovery/`
 
 - Android Native Plugin:
-  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Plugins/Android/Recovery/`
-  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Plugins/Android/Recovery/`
+  - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Plugins/Android/Recovery/`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Plugins/Android/Recovery/`
   - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Plugins/Android/Recovery/`
 
 - DevianShare (iOS):
-  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Plugins/iOS/Recovery/DevianShare.mm`
-  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Plugins/iOS/Recovery/DevianShare.mm`
+  - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Plugins/iOS/Recovery/DevianShare.mm`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Plugins/iOS/Recovery/DevianShare.mm`
   - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Plugins/iOS/Recovery/DevianShare.mm`
 
 - DevianShare (Android):
-  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Plugins/Android/Recovery/com/devian/share/DevianShare.java`
-  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Plugins/Android/Recovery/com/devian/share/DevianShare.java`
+  - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Plugins/Android/Recovery/com/devian/share/DevianShare.java`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Plugins/Android/Recovery/com/devian/share/DevianShare.java`
   - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Plugins/Android/Recovery/com/devian/share/DevianShare.java`
 
 - DevianFilePickerFragment (Android, 신규):
-  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Plugins/Android/Recovery/com/devian/share/DevianFilePickerFragment.java`
-  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Plugins/Android/Recovery/com/devian/share/DevianFilePickerFragment.java`
+  - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Plugins/Android/Recovery/com/devian/share/DevianFilePickerFragment.java`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Plugins/Android/Recovery/com/devian/share/DevianFilePickerFragment.java`
   - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Plugins/Android/Recovery/com/devian/share/DevianFilePickerFragment.java`
 
 - DevianShare.androidlib (프로젝트 레벨, 3-path mirror 아님):

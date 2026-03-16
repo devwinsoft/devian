@@ -11,16 +11,16 @@
 
 ## Implementation Location (3-path mirror)
 - UPM (정본):
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/AppleSaveCloudClient.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/SaveCloudTypes.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/ISaveCloudClient.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/SaveCloudClientGoogle.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/SaveCloudClient.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/SaveCloudCrypto.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/SaveCloudPayload.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/SaveCloudResult.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/AppleSaveCloudClient.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/SaveCloudTypes.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/ISaveCloudClient.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/SaveCloudClientGoogle.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/SaveCloudClient.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/SaveCloudCrypto.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/SaveCloudPayload.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/SaveCloud/SaveCloudResult.cs`
 - Packages (sync, 직접 수정 금지):
-  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/...`
+  - `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/...`
 
 
 ## Assembly Definition (asmdef)

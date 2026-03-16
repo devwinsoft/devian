@@ -9,8 +9,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 3ea45124e8c5e4660a3ceb71eab2a145, type: 3}
+  m_Script: {fileID: 11500000, guid: 188a57e1d341146a48295f003ce37b08, type: 3}
   m_Name: BundleSettings
   m_EditorClassIdentifier: Devian.Domain.Common::Devian.BundleSettings
   _forceClearDependencyCache: 0
-  _entries: []
+  _entries:
+  - Key: COMMON_EFFECT_ID
+    Value: Assets/Bundles/CommonEffects
+  - Key: MATERIAL_EFFECT_ID
+    Value: Assets/Bundles/MaterialEffects

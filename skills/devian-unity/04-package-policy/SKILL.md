@@ -16,7 +16,7 @@ Devian UPM 패키지(`com.devian.*`)의 **package.json 메타데이터 정책**�
 
 **적용 대상:**
 - `framework-cs/apps/UnityExample/Packages/com.devian.*/package.json`
-- `framework-cs/upm/com.devian.samples/Samples~/`
+- `framework-cs/upm/com.devian.foundation/Samples~/`
 
 **Prerequisites:**
 - Unity C# 문법 제한: `skills/devian-unity/05-unity-csharp-compat/SKILL.md`를 준수한다 (위반 시 FAIL).
@@ -55,8 +55,7 @@ runtime 패키지는 필요한 최소 의존만 선언한다:
 
 | 패키지 | dependencies |
 |--------|--------------|
-| `com.devian.foundation` | `com.unity.addressables`, `com.unity.nuget.newtonsoft-json` |
-| `com.devian.samples` | `com.devian.foundation`, `com.unity.inputsystem` |
+| `com.devian.foundation` | `com.unity.addressables`, `com.unity.nuget.newtonsoft-json`, `com.unity.inputsystem` |
 
 > 의존 방향 정책은 [02-unity-bundles](../02-unity-bundles/SKILL.md) §의존 방향 정책을 참조한다.
 > Newtonsoft.Json이 필요한 패키지만 `com.unity.nuget.newtonsoft-json`을 추가한다.
@@ -128,7 +127,7 @@ Editor-only asmdef 필수 필드:
 **Hybrid Sample 규칙 (Hard Rule):**
 - 빌더는 `Runtime/Generated/`와 `Editor/Generated/` 디렉토리만 clean+copy한다.
 - 수동 addon 코드는 빌더가 touch하지 않는다 (보존).
-- asmdef, package.json(상위 com.devian.samples의), README.md는 수동 관리 (빌더 생성/수정 금지).
+- asmdef, package.json(상위 com.devian.foundation의), README.md는 수동 관리 (빌더 생성/수정 금지).
 - Generated 코드의 C# namespace는 원래 namespace를 유지:
   - Domain: `Devian.Domain.{DomainKey}`
   - Protocol: `Devian.Protocol.{ProtocolGroup}`
@@ -164,7 +163,7 @@ Builder는 `Samples~`가 존재하고 하위 폴더가 있으면 `samples` 필�
 
 **samplePackages 규칙 (Hard Rule):**
 - **반드시 문자열 배열**로 정의
-- `com.devian.samples`만 허용 — 라이브러리/도메인 패키지는 포함 금지
+- `com.devian.foundation`만 허용 — 라이브러리/도메인 패키지는 포함 금지
 - `staticUpmPackages` 키는 금지이며 사용 시 빌드 FAIL
 
 ---

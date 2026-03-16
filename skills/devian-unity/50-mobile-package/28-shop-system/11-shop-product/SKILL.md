@@ -99,8 +99,8 @@ public sealed class ShopProductPurchase : ShopProductBase
 - `ShopProductFree.cs`, `ShopProductAds.cs`, `ShopProductCurrency.cs`
 - `ShopProductChest.cs`, `ShopProductPurchase.cs`
 
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Shop/Product/` (8개 파일)
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Shop/Product/` (8개 파일)
+- UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/Product/` (8개 파일)
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/Product/` (8개 파일)
 - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Shop/Product/` (8개 파일)
 
 ---

@@ -11,13 +11,13 @@ Type: Design / Runtime Orchestration
 ## Implementation Location (3-path mirror)
 
 - UPM (정본):
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Leaderboard/LeaderboardManager.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Leaderboard/LeaderboardManager.cs`
 - Packages (sync):
-  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Leaderboard/LeaderboardManager.cs`
+  - `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Leaderboard/LeaderboardManager.cs`
 - Assets/Samples (import):
   - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Leaderboard/LeaderboardManager.cs`
 - Login 연동:
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Login/LoginManager.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Login/LoginManager.cs`
   - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Login/LoginManager.cs`
 
 ---

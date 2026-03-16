@@ -22,11 +22,11 @@ Unity에서 사용할 Common Effect 시스템을 정의한다.
 
 ## 3. 생성 대상 패키지
 
-- `com.devian.samples` (CommonPackage sample)
+- `com.devian.foundation` (CommonPackage sample)
 
 ## 3.1 UPM 종속성
 
-- `com.devian.samples`는 `com.devian.foundation`를 의존한다.
+- `com.devian.foundation`의 CommonPackage 샘플은 foundation Runtime에 의존한다.
 - 이유: `BundlePool`, `AssetManager`, `AutoSingleton` 등 foundation Unity runtime에 의존한다.
 
 ---
@@ -34,7 +34,7 @@ Unity에서 사용할 Common Effect 시스템을 정의한다.
 ## 4. 파일 위치 (정본)
 
 ```
-com.devian.samples/Samples~/CommonPackage/Runtime/CommonEffect/
+com.devian.foundation/Samples~/CommonPackage/Runtime/CommonEffect/
 ├── COMMON_EFFECT_ID.cs
 ├── CommonEffectManager.cs
 ├── CommonEffectObject.cs
@@ -47,7 +47,7 @@ com.devian.samples/Samples~/CommonPackage/Runtime/CommonEffect/
 Editor:
 
 ```
-com.devian.samples/Samples~/CommonPackage/Editor/Generated/
+com.devian.foundation/Samples~/CommonPackage/Editor/Generated/
 └── COMMON_EFFECT_ID.Editor.cs
 ```
 

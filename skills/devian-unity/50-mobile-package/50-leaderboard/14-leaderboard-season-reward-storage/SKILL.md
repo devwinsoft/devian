@@ -11,11 +11,11 @@ Type: Design / Storage SSOT
 ## Implementation Location (3-path mirror)
 
 - UPM (정본):
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Leaderboard/LeaderboardSeasonRewardStorage.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/JsonCodec/SaveDataJsonCodecLeaderboardReward.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Leaderboard/LeaderboardSeasonRewardStorage.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/JsonCodec/SaveDataJsonCodecLeaderboardReward.cs`
 - Packages (sync):
-  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Leaderboard/LeaderboardSeasonRewardStorage.cs`
-  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/JsonCodec/SaveDataJsonCodecLeaderboardReward.cs`
+  - `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Leaderboard/LeaderboardSeasonRewardStorage.cs`
+  - `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/JsonCodec/SaveDataJsonCodecLeaderboardReward.cs`
 - Assets/Samples (import):
   - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Leaderboard/LeaderboardSeasonRewardStorage.cs`
   - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/SaveData/JsonCodec/SaveDataJsonCodecLeaderboardReward.cs`

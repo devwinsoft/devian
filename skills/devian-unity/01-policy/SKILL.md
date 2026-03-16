@@ -124,12 +124,13 @@ rm -f UnityExample/Packages/{pkg}/.../OldName.cs.meta
 
 ### com.devian.foundation Editor/Generated 금지
 
-**`com.devian.foundation`에는 `Editor/Generated` 폴더가 생성되면 안 된다.**
+**`com.devian.foundation`의 직계 `Editor/Generated` 폴더가 생성되면 안 된다.**
 
-- Editor/Generated for TableID inspection은 `com.devian.samples/Samples~/` 도메인 패키지에 속함
-- foundation에 이 폴더가 존재하면 빌드 **즉시 FAIL**
+- Editor/Generated for TableID inspection은 `com.devian.foundation/Samples~/` 도메인 패키지에 속함
+- `Samples~/*/Editor/Generated/`는 허용 (샘플의 빌더 생성물)
+- foundation 직계 `Editor/Generated`가 존재하면 빌드 **즉시 FAIL**
 
-빌더 가드 위치: `framework-ts/tools/builder/build.js` - `checkUnityCommonEditorGenerated()`
+빌더 가드 위치: `framework-ts/tools/builder/build.js` - `checkFoundationEditorGenerated()`
 
 ---
 

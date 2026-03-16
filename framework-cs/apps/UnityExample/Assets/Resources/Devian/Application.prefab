@@ -91,7 +91,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cae28d3362ab649c597613570b2aebe4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TestBundleManager
-  forceClearDependencyCache: 0
 --- !u!114 &4706526706863056144
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -101,7 +100,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2454387350981742136}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 71f0f7e76459f4b958901c06af063737, type: 3}
+  m_Script: {fileID: 11500000, guid: 3c15fc69592fb46bfb0336322a4a3100, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Domain.Common::Devian.InputManager
   _asset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
@@ -142,7 +141,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 2454387350981742136}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 105dc48e1c625c44db4b6fa48ae1bd97, type: 3}
+  m_Script: {fileID: 11500000, guid: 853299459fa6943e8b43c1d2d7179353, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Unity::Devian.SceneTransManager
 --- !u!114 &8648204434353560985
@@ -193,7 +192,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7cd7dc1e1db4e465998c6015c0426ffa, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.PurchaseManager
-  _seasonPurchaseBlockedBeforeEndDays: 3
 --- !u!114 &2537868090205220357
 MonoBehaviour:
   m_ObjectHideFlags: 0

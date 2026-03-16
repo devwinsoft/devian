@@ -137,9 +137,9 @@ NOTE:
 - `REWARD_TYPE` enum은 Generated이다 (입력: `input/Domains/Game/ENUM_META.json`, 네임스페이스: `Devian.Domain.Game`).
 - `RewardData` struct만 아래 파일에 수동 정의한다 (`using Devian.Domain.Game;` 필요).
 - UPM (정본):
-  `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Reward/RewardData.cs`
+  `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Reward/RewardData.cs`
 - Packages (sync):
-  `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Reward/RewardData.cs`
+  `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Reward/RewardData.cs`
 - Assets/Samples (import):
   `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Reward/RewardData.cs`
 - 3-path mirror 정책: [devian-unity/04-package-policy](../../../04-package-policy/SKILL.md)

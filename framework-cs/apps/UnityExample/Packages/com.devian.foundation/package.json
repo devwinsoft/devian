@@ -2,13 +2,46 @@
   "name": "com.devian.foundation",
   "version": "0.1.0",
   "displayName": "Devian Foundation",
-  "description": "Devian Foundation - Core + Unity adapter package. Domain-specific shared systems live in separate domain packages.",
+  "description": "Devian Foundation - Core + Unity adapter + Samples (Domain/Protocol/Manual).",
   "unity": "2021.3",
   "author": {
     "name": "Devian"
   },
   "dependencies": {
     "com.unity.addressables": "2.7.6",
-    "com.unity.nuget.newtonsoft-json": "3.2.1"
-  }
+    "com.unity.nuget.newtonsoft-json": "3.2.1",
+    "com.unity.inputsystem": "1.18.0"
+  },
+  "samples": [
+    {
+      "displayName": "CommonPackage",
+      "description": "Common domain: Unity runtime (CommonEffect, MaterialEffect, Module, Unity) + Generated tables/enums.",
+      "path": "Samples~/CommonPackage"
+    },
+    {
+      "displayName": "GamePackage",
+      "description": "Game domain sample: Ability system + Generated tables/enums.",
+      "path": "Samples~/GamePackage"
+    },
+    {
+      "displayName": "GameProtocol",
+      "description": "Game protocol definitions: C2Game/Game2C network protocol + SessionHost + Networker.",
+      "path": "Samples~/GameProtocol"
+    },
+    {
+      "displayName": "MobilePackage",
+      "description": "Bundle sample: installs FirebaseManager + SaveSystem + AccountManager + PurchaseManager together.",
+      "path": "Samples~/MobilePackage"
+    },
+    {
+      "displayName": "SoundPackage",
+      "description": "Sound domain: Sound/Voice managers + Generated tables/enums.",
+      "path": "Samples~/SoundPackage"
+    },
+    {
+      "displayName": "UIPackage",
+      "description": "UI components: UIManager, UICanvas, UIFrame, UIPlugIn (Button, Text, CircleFilter, NonDrawing).",
+      "path": "Samples~/UIPackage"
+    }
+  ]
 }

@@ -168,19 +168,19 @@ AppliesTo: v10
 아래 파일은 동일 구현을 유지해야 한다.
 
 - UPM (정본)
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Shop/ShopManager.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Shop/Catalog/` (8개 파일)
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Shop/Product/` (8개 파일)
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Shop/ShopProductFactory.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Shop/ShopStorage.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/JsonCodec/SaveDataJsonCodecShop.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/ShopManager.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/Catalog/` (8개 파일)
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/Product/` (8개 파일)
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/ShopProductFactory.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/ShopStorage.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/JsonCodec/SaveDataJsonCodecShop.cs`
 - Packages (sync)
-  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Shop/ShopManager.cs`
-  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Shop/Catalog/` (8개 파일)
-  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Shop/Product/` (8개 파일)
-  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Shop/ShopProductFactory.cs`
-  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Shop/ShopStorage.cs`
-  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/JsonCodec/SaveDataJsonCodecShop.cs`
+  - `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/ShopManager.cs`
+  - `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/Catalog/` (8개 파일)
+  - `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/Product/` (8개 파일)
+  - `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/ShopProductFactory.cs`
+  - `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/ShopStorage.cs`
+  - `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/JsonCodec/SaveDataJsonCodecShop.cs`
 - Assets/Samples (import)
   - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Shop/ShopManager.cs`
   - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Shop/Catalog/` (8개 파일)

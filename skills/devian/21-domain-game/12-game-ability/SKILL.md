@@ -252,12 +252,12 @@ namespace Devian
 
 ## 6. Implementation Location (Sample-target)
 
-### C# (`com.devian.samples/Samples~/GamePackage`)
+### C# (`com.devian.foundation/Samples~/GamePackage`)
 
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/GamePackage/Runtime/Ability/`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/GamePackage/Runtime/Ability/`
+- UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/GamePackage/Runtime/Ability/`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/GamePackage/Runtime/Ability/`
 
-> Game 도메인의 Ability addon 코드와 Generated 코드는 `com.devian.samples/Samples~/GamePackage/`에 통합된다.
+> Game 도메인의 Ability addon 코드와 Generated 코드는 `com.devian.foundation/Samples~/GamePackage/`에 통합된다.
 > assembly: `Devian.Samples.GamePackage` (Generated 타입 namespace는 `Devian.Domain.Game` 유지)
 
 ```

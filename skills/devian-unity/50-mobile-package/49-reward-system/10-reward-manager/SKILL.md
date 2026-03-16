@@ -152,12 +152,12 @@ RewardManager는 `MobileApplication.Instance`에서 key/iv를 읽어 사용한�
 > 3-path mirror 정책: [devian-unity/04-package-policy](../../../04-package-policy/SKILL.md), [devian-unity/01-policy](../../../01-policy/SKILL.md) §SSOT 원칙
 
 - RewardManager:
-  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Reward/RewardManager.cs`
-  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Reward/RewardManager.cs`
+  - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Reward/RewardManager.cs`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Reward/RewardManager.cs`
   - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Reward/RewardManager.cs`
 - RewardData:
-  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Reward/RewardData.cs`
-  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Reward/RewardData.cs`
+  - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Reward/RewardData.cs`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Reward/RewardData.cs`
   - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Reward/RewardData.cs`
 
 asmdef:

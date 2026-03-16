@@ -129,14 +129,14 @@ PROTOCOL 입력은 `{buildInputJson}`의 `protocols` 섹션(배열)이 정의한
 
 ### Protocol UPM 산출물 정책 (Hard Rule)
 
-**Protocol은 `com.devian.samples/Samples~/{ProtocolGroup}Protocol/`에 샘플로 생성된다.**
+**Protocol은 `com.devian.foundation/Samples~/{ProtocolGroup}Protocol/`에 샘플로 생성된다.**
 
 > 상세 규칙: § Sample-target Protocol 참조.
 
 **Protocol UPM은 Runtime-only이며, 빌더가 touch 가능한 범위는 `Runtime/Generated/`뿐이다.**
 
 **final 반영 대상:**
-- `{upmConfig.sourceDir}/com.devian.samples/Samples~/{ProtocolGroup}Protocol/Runtime/Generated/**`
+- `{upmConfig.sourceDir}/com.devian.foundation/Samples~/{ProtocolGroup}Protocol/Runtime/Generated/**`
 - 포함 파일: `{Protocol}.g.cs`, `{Protocol}SessionHost.g.cs`, `{Protocol}Networker.g.cs`
 
 **수기/고정 파일 (빌더 생성/수정 금지):**
@@ -164,7 +164,7 @@ PROTOCOL 입력은 `{buildInputJson}`의 `protocols` 섹션(배열)이 정의한
 **Unity asmdef 의존성 (Sample):**
 - `Devian.Samples.{ProtocolGroup}Protocol` asmdef는 다음을 references 한다:
   - `Devian.Core` (com.devian.foundation)
-  - `Devian.Samples.{CommonDomainKey}Package` (com.devian.samples — `getSampleName('Common', 'Package')`)
+  - `Devian.Samples.{CommonDomainKey}Package` (com.devian.foundation — `getSampleName('Common', 'Package')`)
 
 **TS PROTOCOL 패키지 의존성:**
 - `@devian/protocol-{protocolgroup}`는 `@devian/core` + `@devian/module-common`을 의존한다.
@@ -297,7 +297,7 @@ DATA 입력은 `{buildInputJson}`의 `domains` 섹션이 정의한다.
 
 ## Sample 폴더 네이밍 컨벤션 (Hard Rule)
 
-Domain과 Protocol은 독립 UPM 패키지가 아니라, **모두** `com.devian.samples/Samples~/`에 샘플로 생성된다.
+Domain과 Protocol은 독립 UPM 패키지가 아니라, **모두** `com.devian.foundation/Samples~/`에 샘플로 생성된다.
 
 ### 네이밍 규칙 (동적 파생, 하드코딩 금지)
 
@@ -308,7 +308,7 @@ Domain과 Protocol은 독립 UPM 패키지가 아니라, **모두** `com.devian.
 | Manual | 패키지 고유 키 | `Package` | `{Key}Package` | `Devian.Samples.{Key}Package` |
 
 - **빌더 구현:** `DevianToolBuilder.getSampleName(key, suffix)` → `${key}${suffix}`
-- **위치:** `com.devian.samples/Samples~/{Key}{Suffix}/`
+- **위치:** `com.devian.foundation/Samples~/{Key}{Suffix}/`
 - **rootNamespace 보존 (Hard Rule):**
   - Domain: `Devian.Domain.{DomainKey}` (원래 도메인 namespace 유지)
   - Protocol: `Devian.Protocol.{ProtocolGroup}` (원래 프로토콜 namespace 유지)
@@ -318,7 +318,7 @@ Domain과 Protocol은 독립 UPM 패키지가 아니라, **모두** `com.devian.
 **Manual 카테고리:**
 - 빌더가 Generated 코드를 주입하지 않는 완전 수동 패키지.
 - 현재 대상: `UI` → `UIPackage` (기존 독립 UPM `com.devian.ui` → Sample 이관).
-- 레거시 asmdef 참조(`Devian.UI`, `Devian.UI.Editor`)는 `asmdefRefToUpmPackage()`에서 `com.devian.samples`로 매핑.
+- 레거시 asmdef 참조(`Devian.UI`, `Devian.UI.Editor`)는 `asmdefRefToUpmPackage()`에서 `com.devian.foundation`으로 매핑.
 
 ### 공통 규칙
 
@@ -338,11 +338,11 @@ Domain과 Protocol은 독립 UPM 패키지가 아니라, **모두** `com.devian.
 
 ## Sample-target Domain (Hard Rule)
 
-**모든** 도메인은 `com.devian.samples/Samples~/{DomainKey}Package/`에 샘플로 생성된다.
+**모든** 도메인은 `com.devian.foundation/Samples~/{DomainKey}Package/`에 샘플로 생성된다.
 
 ### 생성 규칙
 
-- Builder는 Domain의 Generated 코드를 `{upmConfig.sourceDir}/com.devian.samples/Samples~/{SampleName}/Runtime/Generated/`와 `Editor/Generated/`에 출력한다.
+- Builder는 Domain의 Generated 코드를 `{upmConfig.sourceDir}/com.devian.foundation/Samples~/{SampleName}/Runtime/Generated/`와 `Editor/Generated/`에 출력한다.
 - `com.devian.domain.{key}` 독립 UPM 패키지는 생성하지 않는다.
 - C# staging 경로는 기존과 동일: `{tempDir}/{DomainKey}/cs/Generated/`
 - Materialize(Phase 2)에서 staging → target 복사 경로만 변경된다.
@@ -354,14 +354,14 @@ Domain과 Protocol은 독립 UPM 패키지가 아니라, **모두** `com.devian.
 - `{tempDir}/{DomainKey}/upm/` (staging UPM scaffold)
 
 **final:**
-- `{upmConfig.sourceDir}/com.devian.samples/Samples~/{DomainKey}Package/Runtime/Generated/{DomainKey}.g.cs`
-- `{upmConfig.sourceDir}/com.devian.samples/Samples~/{DomainKey}Package/Editor/Generated/*.Editor.cs`
+- `{upmConfig.sourceDir}/com.devian.foundation/Samples~/{DomainKey}Package/Runtime/Generated/{DomainKey}.g.cs`
+- `{upmConfig.sourceDir}/com.devian.foundation/Samples~/{DomainKey}Package/Editor/Generated/*.Editor.cs`
 
 ---
 
 ## Sample-target Protocol (Hard Rule)
 
-**모든** 프로토콜은 `com.devian.samples/Samples~/{ProtocolGroup}Protocol/`에 샘플로 생성된다. 독립 UPM 패키지(`com.devian.protocol.{suffix}`)는 생성하지 않는다.
+**모든** 프로토콜은 `com.devian.foundation/Samples~/{ProtocolGroup}Protocol/`에 샘플로 생성된다. 독립 UPM 패키지(`com.devian.protocol.{suffix}`)는 생성하지 않는다.
 
 ### Protocol Sample 특성
 
@@ -407,9 +407,9 @@ Domain과 Protocol은 독립 UPM 패키지가 아니라, **모두** `com.devian.
 - `{tempDir}/Devian.Protocol.{ProtocolGroup}/cs/Generated/{Protocol}Networker.g.cs`
 
 **final (변경됨):**
-- `{upmConfig.sourceDir}/com.devian.samples/Samples~/{ProtocolGroup}Protocol/Runtime/Generated/{ProtocolName}.g.cs`
-- `{upmConfig.sourceDir}/com.devian.samples/Samples~/{ProtocolGroup}Protocol/Runtime/Generated/{Protocol}SessionHost.g.cs`
-- `{upmConfig.sourceDir}/com.devian.samples/Samples~/{ProtocolGroup}Protocol/Runtime/Generated/{Protocol}Networker.g.cs`
+- `{upmConfig.sourceDir}/com.devian.foundation/Samples~/{ProtocolGroup}Protocol/Runtime/Generated/{ProtocolName}.g.cs`
+- `{upmConfig.sourceDir}/com.devian.foundation/Samples~/{ProtocolGroup}Protocol/Runtime/Generated/{Protocol}SessionHost.g.cs`
+- `{upmConfig.sourceDir}/com.devian.foundation/Samples~/{ProtocolGroup}Protocol/Runtime/Generated/{Protocol}Networker.g.cs`
 
 > C# staging(`…/cs/Generated`)을 그대로 Sample `Runtime/Generated/`로 copy한다. 별도 `-upm` staging 없음.
 

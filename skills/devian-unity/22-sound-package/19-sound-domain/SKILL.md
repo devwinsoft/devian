@@ -123,7 +123,7 @@ private static void _register()
 ### Phase 2 - 도메인 이관 (빌드 검증 PASS 후 완료)
 
 - [x] 빌더에 AfterLoad 훅 추가 (`TB_*.{_AfterLoad, _OnAfterLoad}`)
-- [x] `com.devian.samples/Samples~/SoundPackage/` 샘플로 이관
+- [x] `com.devian.foundation/Samples~/SoundPackage/` 샘플로 이관
 - [x] `SoundTable.xlsx` → `input/Domains/Sound/` 이동
 - [x] `{buildInputJson}`에 Sound 도메인 추가
 - [x] SoundManager/VoiceManager 소스 이동
@@ -146,7 +146,7 @@ private static void _register()
 ## 목표 DLL/asmdef 구조
 
 ```
-com.devian.samples/Samples~/SoundPackage/
+com.devian.foundation/Samples~/SoundPackage/
 ├── Runtime/
 │   ├── Devian.Samples.SoundPackage.asmdef
 │   ├── Generated/
@@ -169,12 +169,12 @@ com.devian.samples/Samples~/SoundPackage/
 ### asmdef 의존성
 
 ```
-com.devian.samples (SoundPackage)
+com.devian.foundation (SoundPackage)
 └── com.devian.foundation
 
-com.devian.samples (GamePackage)
+com.devian.foundation (GamePackage)
 ├── com.devian.foundation
-└── com.devian.samples (SoundPackage)  ← Game은 Sound에 의존 가능
+└── com.devian.foundation (SoundPackage)  ← Game은 Sound에 의존 가능
 ```
 
 ---
@@ -232,8 +232,8 @@ VoiceManager.Instance.ResolveForLanguage(SystemLanguage.English);
 
 Phase 2는 아래가 **모두 참**이어야 DONE이다:
 
-1. `framework-cs/upm/com.devian.samples/Samples~/SoundPackage/Runtime/Generated/`가 존재하고, `DomainTableRegistry.g.cs`가 존재한다.
-2. `framework-cs/upm/com.devian.samples/Samples~/GamePackage/Runtime/Generated/`에 `TB_SOUND*`, `TB_VOICE*` 생성물이 더 이상 존재하지 않는다.
+1. `framework-cs/upm/com.devian.foundation/Samples~/SoundPackage/Runtime/Generated/`가 존재하고, `DomainTableRegistry.g.cs`가 존재한다.
+2. `framework-cs/upm/com.devian.foundation/Samples~/GamePackage/Runtime/Generated/`에 `TB_SOUND*`, `TB_VOICE*` 생성물이 더 이상 존재하지 않는다.
 3. repo 전체에서 `RegisterTbLoader("SOUND")`, `RegisterTbLoader("VOICE")` 호출은 **Generated DomainTableRegistry**에만 존재한다.
 4. `input/build.sh {buildInputJson}` (예: `input/build.sh input/build_input.json`)가 성공한다. (npm ci 포함)
 

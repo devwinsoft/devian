@@ -9,12 +9,12 @@
 
 ## Implementation Location (3-path mirror)
 - UPM (정본):
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/SaveLocal/SaveLocalTypes.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/SaveLocal/SaveLocalPayload.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/SaveLocal/SaveLocalCrypto.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/SaveLocal/SaveLocalFileStore.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/SaveLocal/SaveLocalTypes.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/SaveLocal/SaveLocalPayload.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/SaveLocal/SaveLocalCrypto.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/SaveLocal/SaveLocalFileStore.cs`
 - Packages (sync, 직접 수정 금지):
-  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/...`
+  - `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/...`
 
 
 ## Assembly Definition (asmdef)

@@ -145,12 +145,12 @@ node framework-ts/tools/builder/build.js -[target] <buildInputJson>
 
 | 필드 | 타입 | 설명 |
 |------|------|------|
-| `samplePackages` | string[] | 샘플 패키지 목록 (com.devian.samples만 허용) |
+| `samplePackages` | string[] | 샘플 패키지 목록 (com.devian.foundation만 허용) |
 
 ### Hard Rule: samplePackages cannot contain libraries/domains
 
-- `samplePackages`에는 `com.devian.samples`만 포함할 수 있다.
-- `com.devian.foundation`, `com.devian.domain.*` (레거시, 삭제 완료), `com.devian.protocol.*` (레거시, 삭제 완료), `com.devian.ui` (레거시, UIPackage 샘플로 이관 완료) 가 들어가면 FAIL.
+- `samplePackages`에는 `com.devian.foundation`만 포함할 수 있다.
+- `com.devian.samples` (삭제 완료, foundation으로 통합됨), `com.devian.domain.*` (레거시, 삭제 완료), `com.devian.protocol.*` (레거시, 삭제 완료), `com.devian.ui` (레거시, UIPackage 샘플로 이관 완료) 가 들어가면 FAIL.
 - `staticUpmPackages` 키는 금지이며 존재 시 FAIL.
 
 ---
@@ -186,10 +186,10 @@ node framework-ts/tools/builder/build.js -[target] <buildInputJson>
 
 ### UPM Domain 템플릿 (Sample-target)
 
-**모든** 도메인은 `com.devian.samples/Samples~/`에 샘플로 생성된다. 독립 UPM 패키지(`com.devian.domain.{key}`)는 생성하지 않는다 (레거시, 삭제 완료).
+**모든** 도메인은 `com.devian.foundation/Samples~/`에 샘플로 생성된다. 독립 UPM 패키지(`com.devian.domain.{key}`)는 생성하지 않는다 (레거시, 삭제 완료).
 
 ```
-{upmConfig.sourceDir}/com.devian.samples/Samples~/{SampleName}/
+{upmConfig.sourceDir}/com.devian.foundation/Samples~/{SampleName}/
 ```
 
 **SampleName 컨벤션:** `{DomainKey}Package` (동적 파생, 하드코딩 금지)
@@ -205,10 +205,10 @@ C#:  {csConfig.generateDir}/Devian.Protocol.{ProtocolGroup}/
 TS:  {tsConfig.generateDir}/devian-protocol-{protocolGroupLower}/
 ```
 
-**Protocol Sample-target:** Protocol은 독립 UPM 패키지가 아니라 `com.devian.samples/Samples~/`에 샘플로 생성된다:
+**Protocol Sample-target:** Protocol은 독립 UPM 패키지가 아니라 `com.devian.foundation/Samples~/`에 샘플로 생성된다:
 
 ```
-{upmConfig.sourceDir}/com.devian.samples/Samples~/{ProtocolGroup}Protocol/
+{upmConfig.sourceDir}/com.devian.foundation/Samples~/{ProtocolGroup}Protocol/
 ```
 
 **SampleName 컨벤션:** `{ProtocolGroup}Protocol` (동적 파생, 하드코딩 금지)
@@ -293,7 +293,7 @@ Game 도메인/프로토콜 예제의 상세 설명은 별도 스킬 문서를 �
 
 ## Verification Checklist
 
-1) `{configJson}` (예: `input/build_config.json`)에 `samplePackages: ["com.devian.samples"]`만 존재한다.
+1) `{configJson}` (예: `input/build_config.json`)에 `samplePackages: ["com.devian.foundation"]`만 존재한다.
 2) `{configJson}` (예: `input/build_config.json`)에 `staticUpmPackages` 키가 존재하지 않는다 (금지 필드).
 3) 빌드 후 각 도메인에 대해 `Samples~/{DomainKey}Package/Runtime/Generated/{DomainKey}.g.cs` 가 존재한다.
 4) 빌드 후 각 프로토콜에 대해 `Samples~/{ProtocolGroup}Protocol/Runtime/Generated/*.g.cs` 가 존재한다.

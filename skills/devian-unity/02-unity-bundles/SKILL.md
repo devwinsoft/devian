@@ -20,8 +20,7 @@ AppliesTo: v11
 
 - UnityEngine.dll을 외부 .NET 빌드에서 직접 참조하지 않는다.
 - UnityExample에 embedded UPM 패키지로 다음을 제공한다:
-  - `com.devian.foundation` (모듈 래핑: Core + 모듈 타입 Editor)
-  - `com.devian.samples` (UPM Samples~ 기반 도메인/프로토콜/수동 샘플 코드 — CommonPackage, SoundPackage, GamePackage, MobilePackage, GameProtocol, UIPackage)
+  - `com.devian.foundation` (모듈 래핑: Core + 모듈 타입 Editor + UPM Samples~ 도메인/프로토콜/수동 샘플)
 
 ## 비목표
 
@@ -42,10 +41,9 @@ framework-cs/apps/UnityExample/Packages/
 
 | 패키지 | 역할 |
 |--------|------|
-| `com.devian.foundation` | 모듈 래핑 (Core + 모듈 타입 Editor) |
-| `com.devian.samples` | UPM Samples~ 기반 도메인/프로토콜/수동 샘플 코드 (CommonPackage, SoundPackage, GamePackage, MobilePackage, GameProtocol, UIPackage) |
+| `com.devian.foundation` | 모듈 래핑 (Core + 모듈 타입 Editor) + UPM Samples~ 기반 도메인/프로토콜/수동 샘플 코드 (CommonPackage, SoundPackage, GamePackage, MobilePackage, GameProtocol, UIPackage) |
 
-> **Note:** 모든 도메인 패키지(Common, Sound, Game)는 `com.devian.samples/Samples~/` 하위에 Sample로 제공된다 (독립 `com.devian.domain.*` UPM 패키지 없음).
+> **Note:** 모든 도메인 패키지(Common, Sound, Game)는 `com.devian.foundation/Samples~/` 하위에 Sample로 제공된다 (독립 `com.devian.domain.*` UPM 패키지 없음).
 
 > 패키지 통합 정책(com.devian.core/unity 금지)은 [03-ssot](../03-ssot/SKILL.md) §Base UPM package를 참조한다.
 
@@ -58,12 +56,12 @@ framework-cs/apps/UnityExample/Packages/
 ## 의존 방향 정책 (핵심)
 
 ```
-com.devian.foundation (base - Core + 모듈 타입 Editor)
+com.devian.foundation (base - Core + Editor + Samples~)
        ↑
-com.devian.samples (도메인/프로토콜/수동 샘플 — CommonPackage, SoundPackage, GamePackage, MobilePackage, GameProtocol, UIPackage)
+com.devian.purchase.store.* (platform IAP 구현)
 ```
 
-> **Hard Rule:** `com.devian.foundation` → `com.devian.samples` 의존 **금지** (순환 방지)
+> **Hard Rule:** foundation 내부 Samples~ 코드는 foundation Runtime(Devian.Core)에 의존할 수 있지만, 역방향 금지
 
 dependencies 상세 테이블은 [04-package-policy](../04-package-policy/SKILL.md) §dependencies 정책을 참조한다.
 
@@ -81,12 +79,12 @@ dependencies 상세 테이블은 [04-package-policy](../04-package-policy/SKILL.
 
 | asmdef | name | references | 패키지/위치 |
 |--------|------|------------|-------------|
-| `Devian.Samples.CommonPackage.asmdef` | `Devian.Samples.CommonPackage` | `["Devian.Core", "Unity.Addressables", "Unity.ResourceManager", "Unity.InputSystem", "Newtonsoft.Json"]` | com.devian.samples/Samples~/CommonPackage |
-| `Devian.Samples.SoundPackage.asmdef` | `Devian.Samples.SoundPackage` | `["Devian.Core", "Devian.Samples.CommonPackage"]` | com.devian.samples/Samples~/SoundPackage |
-| `Devian.Samples.GamePackage.asmdef` | `Devian.Samples.GamePackage` | `["Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.SoundPackage"]` | com.devian.samples/Samples~/GamePackage |
-| `Devian.Samples.MobilePackage.asmdef` | `Devian.Samples.MobilePackage` | `["Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.GamePackage", "Unity.InputSystem", "Devian.Samples.UIPackage", "Unity.Purchasing"]` | com.devian.samples/Samples~/MobilePackage |
-| `Devian.Samples.GameProtocol.asmdef` | `Devian.Samples.GameProtocol` | `["Devian.Core", "Devian.Samples.CommonPackage"]` | com.devian.samples/Samples~/GameProtocol |
-| `Devian.Samples.UIPackage.asmdef` | `Devian.Samples.UIPackage` | `["Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.SoundPackage", "Unity.TextMeshPro"]` | com.devian.samples/Samples~/UIPackage |
+| `Devian.Samples.CommonPackage.asmdef` | `Devian.Samples.CommonPackage` | `["Devian.Core", "Unity.Addressables", "Unity.ResourceManager", "Unity.InputSystem", "Newtonsoft.Json"]` | com.devian.foundation/Samples~/CommonPackage |
+| `Devian.Samples.SoundPackage.asmdef` | `Devian.Samples.SoundPackage` | `["Devian.Core", "Devian.Samples.CommonPackage"]` | com.devian.foundation/Samples~/SoundPackage |
+| `Devian.Samples.GamePackage.asmdef` | `Devian.Samples.GamePackage` | `["Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.SoundPackage"]` | com.devian.foundation/Samples~/GamePackage |
+| `Devian.Samples.MobilePackage.asmdef` | `Devian.Samples.MobilePackage` | `["Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.GamePackage", "Unity.InputSystem", "Devian.Samples.UIPackage", "Unity.Purchasing"]` | com.devian.foundation/Samples~/MobilePackage |
+| `Devian.Samples.GameProtocol.asmdef` | `Devian.Samples.GameProtocol` | `["Devian.Core", "Devian.Samples.CommonPackage"]` | com.devian.foundation/Samples~/GameProtocol |
+| `Devian.Samples.UIPackage.asmdef` | `Devian.Samples.UIPackage` | `["Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.SoundPackage", "Unity.TextMeshPro"]` | com.devian.foundation/Samples~/UIPackage |
 
 ### Editor asmdef
 
@@ -98,11 +96,11 @@ dependencies 상세 테이블은 [04-package-policy](../04-package-policy/SKILL.
 
 | asmdef | name | references | 패키지/위치 |
 |--------|------|------------|-------------|
-| `Devian.Samples.CommonPackage.Editor.asmdef` | `Devian.Samples.CommonPackage.Editor` | `["Devian.Samples.CommonPackage", "Devian.Unity.Editor", "Devian.Unity", "Unity.InputSystem"]` | com.devian.samples/Samples~/CommonPackage |
-| `Devian.Samples.SoundPackage.Editor.asmdef` | `Devian.Samples.SoundPackage.Editor` | `["Devian.Samples.SoundPackage", "Devian.Samples.CommonPackage", "Devian.Samples.CommonPackage.Editor", "Devian.Unity.Editor", "Devian.Unity"]` | com.devian.samples/Samples~/SoundPackage |
-| `Devian.Samples.GamePackage.Editor.asmdef` | `Devian.Samples.GamePackage.Editor` | `["Devian.Samples.GamePackage", "Devian.Unity", "Devian.Unity.Editor"]` | com.devian.samples/Samples~/GamePackage |
-| `Devian.Samples.MobilePackage.Editor.asmdef` | `Devian.Samples.MobilePackage.Editor` | `["Devian.Samples.MobilePackage", "Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.GamePackage", "Devian.Unity.Editor"]` | com.devian.samples/Samples~/MobilePackage |
-| `Devian.Samples.UIPackage.Editor.asmdef` | `Devian.Samples.UIPackage.Editor` | `["Devian.Samples.UIPackage", "Devian.Samples.CommonPackage", "Devian.Unity.Editor"]` | com.devian.samples/Samples~/UIPackage |
+| `Devian.Samples.CommonPackage.Editor.asmdef` | `Devian.Samples.CommonPackage.Editor` | `["Devian.Samples.CommonPackage", "Devian.Unity.Editor", "Devian.Unity", "Unity.InputSystem"]` | com.devian.foundation/Samples~/CommonPackage |
+| `Devian.Samples.SoundPackage.Editor.asmdef` | `Devian.Samples.SoundPackage.Editor` | `["Devian.Samples.SoundPackage", "Devian.Samples.CommonPackage", "Devian.Samples.CommonPackage.Editor", "Devian.Unity.Editor", "Devian.Unity"]` | com.devian.foundation/Samples~/SoundPackage |
+| `Devian.Samples.GamePackage.Editor.asmdef` | `Devian.Samples.GamePackage.Editor` | `["Devian.Samples.GamePackage", "Devian.Unity", "Devian.Unity.Editor"]` | com.devian.foundation/Samples~/GamePackage |
+| `Devian.Samples.MobilePackage.Editor.asmdef` | `Devian.Samples.MobilePackage.Editor` | `["Devian.Samples.MobilePackage", "Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.GamePackage", "Devian.Unity.Editor"]` | com.devian.foundation/Samples~/MobilePackage |
+| `Devian.Samples.UIPackage.Editor.asmdef` | `Devian.Samples.UIPackage.Editor` | `["Devian.Samples.UIPackage", "Devian.Samples.CommonPackage", "Devian.Unity.Editor"]` | com.devian.foundation/Samples~/UIPackage |
 
 ---
 

@@ -6,7 +6,7 @@ Type: Component Specification
 
 ## SSOT
 
-- `com.devian.samples/Samples~/MobilePackage/Runtime/VirtualGamepad`
+- `com.devian.foundation/Samples~/MobilePackage/Runtime/VirtualGamepad`
 
 ## Components
 
@@ -142,12 +142,12 @@ public sealed class VirtualGamepadDriver : CompoSingleton<VirtualGamepadDriver>
 
 | 타입 | 경로 |
 |------|------|
-| VirtualGamepadState | `com.devian.samples/Samples~/MobilePackage/Runtime/VirtualGamepad/VirtualGamepadState.cs` |
-| VirtualGamepad | `com.devian.samples/Samples~/MobilePackage/Runtime/VirtualGamepad/VirtualGamepad.cs` |
-| VirtualGamepadUtility | `com.devian.samples/Samples~/MobilePackage/Runtime/VirtualGamepad/VirtualGamepadUtility.cs` |
-| VirtualGamepadDriver | `com.devian.samples/Samples~/MobilePackage/Runtime/VirtualGamepad/VirtualGamepadDriver.cs` |
-| UIVirtualMovePad | `com.devian.samples/Samples~/MobilePackage/Runtime/VirtualGamepad/UIVirtualMovePad.cs` |
-| UIVirtualLookPad | `com.devian.samples/Samples~/MobilePackage/Runtime/VirtualGamepad/UIVirtualLookPad.cs` |
+| VirtualGamepadState | `com.devian.foundation/Samples~/MobilePackage/Runtime/VirtualGamepad/VirtualGamepadState.cs` |
+| VirtualGamepad | `com.devian.foundation/Samples~/MobilePackage/Runtime/VirtualGamepad/VirtualGamepad.cs` |
+| VirtualGamepadUtility | `com.devian.foundation/Samples~/MobilePackage/Runtime/VirtualGamepad/VirtualGamepadUtility.cs` |
+| VirtualGamepadDriver | `com.devian.foundation/Samples~/MobilePackage/Runtime/VirtualGamepad/VirtualGamepadDriver.cs` |
+| UIVirtualMovePad | `com.devian.foundation/Samples~/MobilePackage/Runtime/VirtualGamepad/UIVirtualMovePad.cs` |
+| UIVirtualLookPad | `com.devian.foundation/Samples~/MobilePackage/Runtime/VirtualGamepad/UIVirtualLookPad.cs` |
 
 ---
 
@@ -196,7 +196,7 @@ Hierarchy 예시:
 | 패키지 | 필수 | 용도 |
 |--------|------|------|
 | Unity UGUI | ✅ | `UnityEngine.UI`, `UnityEngine.EventSystems` |
-| `com.devian.samples` (UIPackage) | ✅ | `UIPlugInNonDrawing` (RequireComponent, asmdef: `Devian.Samples.UIPackage`) |
+| `com.devian.foundation` (UIPackage) | ✅ | `UIPlugInNonDrawing` (RequireComponent, asmdef: `Devian.Samples.UIPackage`) |
 
 ---
 

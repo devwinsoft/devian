@@ -80,10 +80,10 @@ public sealed class AttendStorage
 ## Implementation Location (3-path mirror)
 
 - UPM (정본):
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Attend/AttendStorage.cs`
-  - `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/SaveData/JsonCodec/SaveDataJsonCodecAttend.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Attend/AttendStorage.cs`
+  - `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/SaveData/JsonCodec/SaveDataJsonCodecAttend.cs`
 - Packages (sync):
-  - `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/...`
+  - `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/...`
 - Assets/Samples (import):
   - `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/...`
 

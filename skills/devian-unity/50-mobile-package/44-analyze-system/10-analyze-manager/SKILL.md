@@ -11,7 +11,7 @@ MobilePackage 샘플의 `AnalyzeManager` 설계 문서다.
 
 | 파일 | UPM (정본) | Packages (sync) | Assets/Samples (import) |
 |---|---|---|---|
-| `AnalyzeManager.cs` | `upm/com.devian.samples/Samples~/MobilePackage/Runtime/Analyze/` | `Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Analyze/` | `Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Analyze/` |
+| `AnalyzeManager.cs` | `upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Analyze/` | `Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Analyze/` | `Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Analyze/` |
 
 ---
 

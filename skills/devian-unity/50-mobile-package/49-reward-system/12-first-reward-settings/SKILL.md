@@ -108,16 +108,16 @@ JSON 원문은 아래 형식을 허용한다.
 > 3-path mirror 정책: [devian-unity/04-package-policy](../../../04-package-policy/SKILL.md)
 
 - FirstRewardSettings:
-  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Reward/FirstRewardSettings.cs`
-  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Reward/FirstRewardSettings.cs`
+  - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Reward/FirstRewardSettings.cs`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Reward/FirstRewardSettings.cs`
   - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Reward/FirstRewardSettings.cs`
 - FirstRewardSettingsEditor:
-  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Editor/FirstRewardSettingsEditor.cs`
-  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Editor/FirstRewardSettingsEditor.cs`
+  - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Editor/FirstRewardSettingsEditor.cs`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Editor/FirstRewardSettingsEditor.cs`
   - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Editor/FirstRewardSettingsEditor.cs`
 - MobileApplicationEditor:
-  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Editor/MobileApplicationEditor.cs`
-  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Editor/MobileApplicationEditor.cs`
+  - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Editor/MobileApplicationEditor.cs`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Editor/MobileApplicationEditor.cs`
   - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Editor/MobileApplicationEditor.cs`
 
 ---

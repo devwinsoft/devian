@@ -135,8 +135,8 @@ else:
 > InventoryManager.cs는 위임만 한다.
 
 - InventoryStaminaController.cs:
-  - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Inventory/InventoryStaminaController.cs`
-  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Inventory/InventoryStaminaController.cs`
+  - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Inventory/InventoryStaminaController.cs`
+  - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Inventory/InventoryStaminaController.cs`
   - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Inventory/InventoryStaminaController.cs`
 - InventoryManager.cs — [10-inventory-manager](../10-inventory-manager/SKILL.md) 참조
 - InventoryStorage.cs — [11-inventory-storage](../11-inventory-storage/SKILL.md) 참조

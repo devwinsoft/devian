@@ -173,7 +173,7 @@ public static class InputButtonMapBuilder
 
 **Play Mode:** Play Mode에서 비활성화된다.
 
-**Editor 파일:** `com.devian.samples/Samples~/CommonPackage/Editor/Unity/Input/InputManagerInspector.cs`
+**Editor 파일:** `com.devian.foundation/Samples~/CommonPackage/Editor/Unity/Input/InputManagerInspector.cs`
 
 ---
 
@@ -181,12 +181,12 @@ public static class InputButtonMapBuilder
 
 | 타입 | 경로 |
 |------|------|
-| InputContext | `com.devian.samples/Samples~/CommonPackage/Runtime/Unity/Input/InputContext.cs` |
-| InputFrame | `com.devian.samples/Samples~/CommonPackage/Runtime/Unity/Input/InputFrame.cs` |
-| IInputManager | `com.devian.samples/Samples~/CommonPackage/Runtime/Unity/Input/IInputManager.cs` |
-| InputButtonMapBuilder | `com.devian.samples/Samples~/CommonPackage/Runtime/Unity/Input/InputButtonMapBuilder.cs` |
-| InputManager | `com.devian.samples/Samples~/CommonPackage/Runtime/Unity/Input/InputManager.cs` |
-| InputManagerInspector | `com.devian.samples/Samples~/CommonPackage/Editor/Unity/Input/InputManagerInspector.cs` |
+| InputContext | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/InputContext.cs` |
+| InputFrame | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/InputFrame.cs` |
+| IInputManager | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/IInputManager.cs` |
+| InputButtonMapBuilder | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/InputButtonMapBuilder.cs` |
+| InputManager | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/InputManager.cs` |
+| InputManagerInspector | `com.devian.foundation/Samples~/CommonPackage/Editor/Unity/Input/InputManagerInspector.cs` |
 
 ---
 

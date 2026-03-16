@@ -6,35 +6,35 @@ Type: Index / Directory
 
 ## Purpose
 
-`com.devian.samples/Samples~/UIPackage` 샘플의 UI 관련 컴포넌트/규약 인덱스 문서이다.
+`com.devian.foundation/Samples~/UIPackage` 샘플의 UI 관련 컴포넌트/규약 인덱스 문서이다.
 
 ---
 
 ## Code Location
 
-UI 컴포넌트 코드는 `com.devian.samples` 내 샘플 패키지로 제공된다:
+UI 컴포넌트 코드는 `com.devian.foundation` 내 샘플 패키지로 제공된다:
 
 ```
-framework-cs/upm/com.devian.samples/Samples~/UIPackage/
+framework-cs/upm/com.devian.foundation/Samples~/UIPackage/
 ```
 
 ### Implementation Location (3-path mirror)
 
 | 경로 | 역할 |
 |------|------|
-| `framework-cs/upm/com.devian.samples/Samples~/UIPackage/` | UPM (정본) |
-| `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/UIPackage/` | Packages (sync) |
+| `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/` | UPM (정본) |
+| `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/UIPackage/` | Packages (sync) |
 | `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/UIPackage/` | Assets/Samples (import) |
 
 주요 파일: `UIManager.cs`, `UICanvas.cs`, `BaseUIFrame.cs`, `Plugins/*` 등.
 
-> **이전 위치:** `com.devian.foundation/Runtime/Unity/UI/` → `com.devian.ui/Runtime/` → `com.devian.samples/Samples~/UIPackage/` 로 이관 완료
+> **이전 위치:** `com.devian.foundation/Runtime/Unity/UI/` → `com.devian.ui/Runtime/` → `com.devian.foundation/Samples~/UIPackage/` 로 이관 완료
 
 ---
 
 ## Sample Dependencies (UIPackage)
 
-UIPackage는 `com.devian.samples` 내 샘플이므로 자체 `package.json`이 없다. 의존성은 asmdef references로 관리된다.
+UIPackage는 `com.devian.foundation` 내 샘플이므로 자체 `package.json`이 없다. 의존성은 asmdef references로 관리된다.
 
 > **Devian Domain Sound**는 `UIPlugInButton`의 UI 사운드 재생에서 사용한다 (`SOUND_ID`, `TB_SOUND`, `SoundManager`, `SoundChannelType.Ui`).
 > **Devian Domain Common**은 `UIPlugInText`의 `ST_TEXT`/`TEXT_ID` 조회에 사용한다.

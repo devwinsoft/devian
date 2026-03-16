@@ -57,7 +57,7 @@ Purchase(유료) 경로의 실제 지급 실행은 `rewardGroupId`를 RewardMana
 ## Related
 
 
-- [PurchaseManager Sample](../10-purchase-manager/SKILL.md) — `com.devian.samples` / `Samples~/MobilePackage/Runtime/Purchase/PurchaseManager.cs`
+- [PurchaseManager Sample](../10-purchase-manager/SKILL.md) — `com.devian.foundation` / `Samples~/MobilePackage/Runtime/Purchase/PurchaseManager.cs`
 - [PurchaseStorage](../33-purchase-storage/SKILL.md) — `PurchaseManager` 소유, `purchase` JSON 섹션(로컬/클라우드 저장)
 - [Purchase Audit Sheet Setup](../13-purchase-audit-google-sheets-setup/SKILL.md) — Spreadsheet/API/서비스 계정/시크릿 셋업
 - [Purchase Audit Sheet](../48-purchase-audit-google-sheets/SKILL.md) — Firebase Functions 서버에서 Google Sheets 감사 로그 기록

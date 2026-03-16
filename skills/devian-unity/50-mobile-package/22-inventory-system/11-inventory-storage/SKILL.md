@@ -92,8 +92,8 @@ MobilePackage/Runtime/Inventory/
 ```
 
 3-path mirror ([정책](../../../04-package-policy/SKILL.md)):
-- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobilePackage/Runtime/Inventory/`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Inventory/`
+- UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Inventory/`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Inventory/`
 - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Inventory/`
 
 NOTE: `ItemData` 클래스는 `AbilityEquip`에 통합되어 삭제되었다. `BagItems`는 `Equipments`로 리네임되었다.

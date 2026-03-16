@@ -196,11 +196,11 @@ Unity 환경에서의 호환성을 위해 다음 규칙을 강제한다.
 
 **UPM package.json 종속성:**
 
-생성 코드가 Newtonsoft.Json을 사용하므로, 상위 패키지(`com.devian.samples`)의 dependencies에 종속성이 포함되어야 한다.
+생성 코드가 Newtonsoft.Json을 사용하므로, 상위 패키지(`com.devian.foundation`)의 dependencies에 종속성이 포함되어야 한다.
 
-> **Note**: 모든 Domain 샘플(CommonPackage, SoundPackage, GamePackage 등)은 `com.devian.samples` 패키지의 Samples~/ 하위에 제공되며, 개별 package.json을 가지지 않는다.
+> **Note**: 모든 Domain 샘플(CommonPackage, SoundPackage, GamePackage 등)은 `com.devian.foundation` 패키지의 Samples~/ 하위에 제공되며, 개별 package.json을 가지지 않는다.
 
-- `com.devian.samples/package.json`의 dependencies에 `com.unity.nuget.newtonsoft-json` 포함
+- `com.devian.foundation/package.json`의 dependencies에 `com.unity.nuget.newtonsoft-json` 포함
 - 코드와 종속성 일치 보장
 
 ### 파일 구조 (C#)

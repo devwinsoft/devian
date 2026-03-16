@@ -11,7 +11,7 @@ MobilePackage 샘플의 `AchieveManager` 설계 문서다.
 
 | 파일 | UPM (정본) | Packages (sync) | Assets/Samples (import) |
 |---|---|---|---|
-| `AchieveManager.cs` | `upm/com.devian.samples/Samples~/MobilePackage/Runtime/Achieve/` | `Packages/com.devian.samples/Samples~/MobilePackage/Runtime/Achieve/` | `Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Achieve/` |
+| `AchieveManager.cs` | `upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Achieve/` | `Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Achieve/` | `Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Achieve/` |
 | `IAchievePlatformAdapter.cs` | 동일 경로 | 동일 경로 | 동일 경로 |
 
 ---

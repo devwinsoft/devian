@@ -37,7 +37,7 @@ PROTOCOL(DomainType=PROTOCOL) 입력으로부터 C#/TS 프로토콜 코드를 �
 **금지 필드 (존재 시 빌드 실패):**
 - `csTargetDir` — `csConfig.generateDir` 사용
 - `tsTargetDir` — `tsConfig.generateDir` 사용
-- `upmName` — 금지 (Protocol은 `com.devian.samples/Samples~/{ProtocolGroup}Protocol/`에 샘플로 생성)
+- `upmName` — 금지 (Protocol은 `com.devian.foundation/Samples~/{ProtocolGroup}Protocol/`에 샘플로 생성)
 
 > **normalize 규칙 (요약):** trim → 공백을 `_`로 치환 → 허용 문자 외 제거(영문/숫자/`_`/`-`만 남김) → 소문자화. 정확한 규칙은 빌더 코드를 정답으로 본다.
 
@@ -275,7 +275,7 @@ networker.Disconnect();
 
 **Runtime asmdef references 정책:**
 - `Devian.Core` (com.devian.foundation)
-- `Devian.Samples.{CommonDomainKey}Package` (com.devian.samples — `getSampleName('Common', 'Package')`)
+- `Devian.Samples.{CommonDomainKey}Package` (com.devian.foundation — `getSampleName('Common', 'Package')`)
 
 > SSOT: `skills/devian/80-tools/11-builder/03-ssot/SKILL.md` — Protocol UPM 산출물 정책
 
