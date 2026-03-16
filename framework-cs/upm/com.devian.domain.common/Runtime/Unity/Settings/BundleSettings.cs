@@ -18,7 +18,15 @@ namespace Devian
             public string Value;
         }
 
+        [Header("Bundle")]
+        [SerializeField]
+        [Tooltip("Clear dependency cache before calculating size (DANGER: use only for testing)")]
+        private bool _forceClearDependencyCache;
+
+        [Header("Entries")]
         [SerializeField] private SettingsEntry[] _entries = Array.Empty<SettingsEntry>();
+
+        public bool ForceClearDependencyCache => _forceClearDependencyCache;
 
         /// <summary>
         /// Returns the value for the given key, or empty string if not found.

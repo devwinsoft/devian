@@ -7,7 +7,7 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 
 - 이 문서는 `PurchaseStorage`의 **역할/필드 범위/소유자(PurchaseManager)** 를 정의한다.
 - 전체 구매 이력(ledger) 설계, 서버 검증/멱등, 환불/복구 정책은 이 문서의 범위가 아니다.
-- 서버 정본은 `40/41/42/46`, 클라이언트 구매 흐름은 `30-samples-purchase-manager`를 참조한다.
+- 서버 정본은 `40/41/42/46`, 클라이언트 구매 흐름은 `10-samples-purchase-manager`를 참조한다.
 
 
 ---
@@ -194,6 +194,6 @@ NOTE:
 
 - [00-overview](../00-overview/SKILL.md) — Purchase System 개요
 - [03-ssot](../03-ssot/SKILL.md) — Purchase 통합 SSOT
-- [30-samples-purchase-manager](../30-samples-purchase-manager/SKILL.md) — PurchaseManager 샘플
+- [10-samples-purchase-manager](../10-samples-purchase-manager/SKILL.md) — PurchaseManager 샘플
 - [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 정본
 - [21-savedata-system/00-overview](../../21-savedata-system/00-overview/SKILL.md) — local/cloud 저장 시스템 개요

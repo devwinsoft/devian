@@ -14,26 +14,30 @@ namespace Devian
     public sealed class PurchaseManager : CompoSingleton<PurchaseManager>
     {
         const string Tag = "PurchaseManager";
-        const int MaxVerifyRecoveryRetries = 3;
-        const int DefaultSeasonPurchaseBlockedBeforeEndDays = 3;
 
-        [SerializeField] int _seasonPurchaseBlockedBeforeEndDays = DefaultSeasonPurchaseBlockedBeforeEndDays;
+        PurchaseSettings _settings;
+        bool _settingsLoaded;
 
         readonly PurchaseStorage _storage = new();
 
         public PurchaseStorage Storage => _storage;
-        public int SeasonPurchaseBlockedBeforeEndDays => _seasonPurchaseBlockedBeforeEndDays;
+        public int SeasonPurchaseBlockedBeforeEndDays => ensureSettings()?.SeasonPurchaseBlockedBeforeEndDays ?? 3;
+
+        PurchaseSettings ensureSettings()
+        {
+            if (!_settingsLoaded)
+            {
+                _settings = Resources.Load<PurchaseSettings>(PurchaseSettings.ResourcesPath);
+                _settingsLoaded = true;
+            }
+            return _settings;
+        }
 
         protected override void onInitAwake()
         {
-            _seasonPurchaseBlockedBeforeEndDays = Math.Max(0, _seasonPurchaseBlockedBeforeEndDays);
+            ensureSettings();
             SetProductCatalog(new GameProductCatalog());
             SetPurchaseStore(CreateDefaultStore());
-        }
-
-        public void SetSeasonPurchaseBlockedBeforeEndDays(int days)
-        {
-            _seasonPurchaseBlockedBeforeEndDays = Math.Max(0, days);
         }
 
         static IPurchaseStore CreateDefaultStore()
@@ -1023,8 +1027,8 @@ namespace Devian
                         {
                             // Some stores may raise "already owned" before replaying a pending/owned transaction callback.
                             // Poll the deferred queue briefly so Consumable/Rental purchases can recover in the same call.
-                            const int alreadyOwnedRecoveryPollCount = 50; // ~5s
-                            for (var i = 0; i < alreadyOwnedRecoveryPollCount; i++)
+                            var pollCount = ensureSettings()?.AlreadyOwnedRecoveryPollCount ?? 50;
+                            for (var i = 0; i < pollCount; i++)
                             {
                                 if (TryTakeDeferredPendingOrder(storeProductId, out pendingOrder))
                                 {
@@ -1248,14 +1252,15 @@ namespace Devian
                     (status == "REJECTED" && rejectReason == "STORE_VERIFY_ERROR");
 
                 var retryCount = purchaseStorage?.Current.VerifyRetryCount ?? 0;
-                var keepCurrentForRecovery = isRecoverableRejection && retryCount < MaxVerifyRecoveryRetries;
+                var maxRetries = ensureSettings()?.MaxVerifyRecoveryRetries ?? 3;
+                var keepCurrentForRecovery = isRecoverableRejection && retryCount < maxRetries;
 
                 if (isRecoverableRejection)
                     purchaseStorage?.IncrementVerifyRetryCount();
 
                 if (isRecoverableRejection && !keepCurrentForRecovery)
                 {
-                    Debug.LogWarning($"[{Tag}] Verify recovery retry limit exceeded ({MaxVerifyRecoveryRetries}). " +
+                    Debug.LogWarning($"[{Tag}] Verify recovery retry limit exceeded ({maxRetries}). " +
                         $"Consuming pending order and clearing current. rejectReason={rejectReason}");
                 }
 

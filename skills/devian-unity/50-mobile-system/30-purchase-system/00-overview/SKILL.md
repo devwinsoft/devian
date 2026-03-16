@@ -36,7 +36,8 @@ Purchase(유료) 경로의 실제 지급 실행은 `rewardGroupId`를 RewardMana
 | [01-policy](../01-policy/SKILL.md) | Devian 결제 모듈 경계/클라 API 규약(Policy) |
 | [03-ssot](../03-ssot/SKILL.md) | 통합 SSOT (Unity IAP, Product Catalog, Verify/Idempotency, NoAds, Season Pass) |
 | [09-ssot-operations](../09-ssot-operations/SKILL.md) | 운영/보안/테스트/DoD |
-| [30-samples-purchase-manager](../30-samples-purchase-manager/SKILL.md) | PurchaseManager(구매) 샘플 |
+| [10-samples-purchase-manager](../10-samples-purchase-manager/SKILL.md) | PurchaseManager(구매) 샘플 |
+| [14-purchase-settings](../14-purchase-settings/SKILL.md) | PurchaseSettings(구매 설정 ScriptableObject) |
 | [33-purchase-storage](../33-purchase-storage/SKILL.md) | PurchaseStorage(구매 상태 스냅샷, PurchaseManager 소유) |
 | [40-purchase-backend-firebase](../40-purchase-backend-firebase/SKILL.md) | Firebase Backend(Functions+Firestore) 구현 정본 |
 | [41-purchase-store-verification](../41-purchase-store-verification/SKILL.md) | Apple/Google 스토어 검증 및 storePurchaseId 정본 |
@@ -56,7 +57,7 @@ Purchase(유료) 경로의 실제 지급 실행은 `rewardGroupId`를 RewardMana
 ## Related
 
 
-- [PurchaseManager Sample](../30-samples-purchase-manager/SKILL.md) — `com.devian.samples` / `Samples~/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
+- [PurchaseManager Sample](../10-samples-purchase-manager/SKILL.md) — `com.devian.samples` / `Samples~/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
 - [PurchaseStorage](../33-purchase-storage/SKILL.md) — `PurchaseManager` 소유, `purchase` JSON 섹션(로컬/클라우드 저장)
 - [Purchase Audit Sheet Setup](../13-purchase-audit-google-sheets-setup/SKILL.md) — Spreadsheet/API/서비스 계정/시크릿 셋업
 - [Purchase Audit Sheet](../48-purchase-audit-google-sheets/SKILL.md) — Firebase Functions 서버에서 Google Sheets 감사 로그 기록

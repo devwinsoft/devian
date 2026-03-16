@@ -25,7 +25,9 @@ AppliesTo: v13
 | 위치 | 경로 |
 |------|------|
 | UPM 소스 | `framework-cs/upm/com.devian.domain.common/Runtime/Unity/AssetManager/BundleManager.cs` |
+| UPM 소스 | `framework-cs/upm/com.devian.domain.common/Runtime/Unity/Settings/BundleSettings.cs` |
 | UnityExample | `framework-cs/apps/UnityExample/Packages/com.devian.domain.common/Runtime/Unity/AssetManager/BundleManager.cs` (derived output) |
+| UnityExample | `framework-cs/apps/UnityExample/Packages/com.devian.domain.common/Runtime/Unity/Settings/BundleSettings.cs` (derived output) |
 
 ---
 
@@ -60,13 +62,22 @@ AppliesTo: v13
 
 ---
 
-## 인스펙터 필드
+## BundleSettings 연동
+
+설정은 `BundleSettings` ScriptableObject에서 로드한다.
+
+- 클래스: `BundleSettings : ScriptableObject` (`Runtime/Unity/Settings/BundleSettings.cs`)
+- Resources 경로: `Devian/BundleSettings`
+- 프로젝트 에셋 경로: `Assets/Resources/Devian/BundleSettings.asset`
+- 접근 방식: `ensureSettings()?.ForceClearDependencyCache`
 
 | 필드 | 타입 | 기본값 | 설명 |
 |------|------|--------|------|
-| `forceClearDependencyCache` | `bool` | `false` | Size 계산 전 캐시 삭제 (운영 위험, 테스트용) |
+| `ForceClearDependencyCache` | `bool` | `false` | Size 계산 전 캐시 삭제 (운영 위험, 테스트용) |
 
-> **주의**: `forceClearDependencyCache`를 `true`로 설정하면 매번 캐시를 삭제하므로 운영 환경에서 사용 금지.
+> **주의**: `ForceClearDependencyCache`를 `true`로 설정하면 매번 캐시를 삭제하므로 운영 환경에서 사용 금지.
+
+BundleManager는 `ensureSettings()`로 최초 접근 시 `BundleSettings`를 로드하며, `_settingsLoaded` 플래그로 중복 로드를 방지한다. 설정 에셋이 없으면 해당 기능이 비활성(기본값) 상태로 동작한다.
 
 ---
 
@@ -100,10 +111,13 @@ namespace Devian
     public abstract class BundleManager<T> : CompoSingleton<T> where T : BundleManager<T>
     {
         // ====================================================================
-        // Inspector Fields (Serialized)
+        // Settings
         // ====================================================================
 
-        [SerializeField] private bool forceClearDependencyCache;
+        private BundleSettings? _settings;
+        private bool _settingsLoaded;
+
+        private BundleSettings? ensureSettings();
 
         // ====================================================================
         // Events
@@ -200,14 +214,15 @@ if (sizeOp.Status == AsyncOperationStatus.Failed)
 
 **운영 환경에서 캐시 삭제는 위험**
 
-- 기본값: `false`
-- `true`일 때만 `Addressables.ClearDependencyCacheAsync(label)` 호출
+- 기본값: `false` (BundleSettings ScriptableObject)
+- `ensureSettings()?.ForceClearDependencyCache == true` 일 때만 `Addressables.ClearDependencyCacheAsync(label)` 호출
 - 테스트/개발 목적으로만 사용
 
-### 5. Resources 직접 호출 금지
+### 5. Resources 직접 호출 제한
 
-**BundleManager 내부에서 `Resources.` 직접 호출 금지**
+**BundleManager 내부에서 `Resources.` 직접 호출은 BundleSettings 로드에만 허용한다.**
 
+- `Resources.Load<BundleSettings>(BundleSettings.ResourcesPath)` — 허용 (ensureSettings() 내부)
 - BundleManager는 Resources 기반 singleton 로딩을 담당하지 않는다
 - prefab/scene 배치와 bootstrap wiring은 소비자 레이어가 담당한다
 
@@ -277,17 +292,17 @@ await AssetManager.LoadBundleAssets<TextAsset>("table-ndjson");
 - [ ] `BundleManager.cs` (UPM + UnityExample) 최상단 SSOT가 이 문서를 가리킴
 - [ ] `BundleManager<T>`가 `abstract class BundleManager<T> : CompoSingleton<T> where T : BundleManager<T>`
 - [ ] Bootstrap prefab에 concrete 서브클래스가 부착되어 있음
-- [ ] `forceClearDependencyCache: bool` 기본값 `false`
+- [ ] `BundleSettings.ForceClearDependencyCache` 기본값 `false`
 - [ ] 실패 시 `CommonResult.Failure` 반환 + `OnError` 이벤트 (조용히 종료 0건)
-- [ ] `Resources.` 직접 호출 0건
+- [ ] `Resources.` 직접 호출은 `ensureSettings()` 내부 BundleSettings 로드만 허용
 
 ### FAIL 조건
 
 - `BundleManager<T>`가 `abstract class : CompoSingleton<T> where T : BundleManager<T>`가 아님
 - Bootstrap prefab에 concrete 서브클래스가 없음
 - 실패 시 `CommonResult.Failure` 반환 없이 `CommonResult.Ok()` 반환
-- `forceClearDependencyCache` 기본값이 `true`
-- `Resources.` 직접 호출 존재
+- `BundleSettings.ForceClearDependencyCache` 기본값이 `true`
+- `Resources.` 직접 호출이 `ensureSettings()` 외에 존재
 - SSOT 주석이 다른 문서를 가리킴
 
 ---

@@ -1,5 +1,7 @@
-# samples-purchase-manager
+# 10-samples-purchase-manager
 
+Status: ACTIVE
+AppliesTo: v13
 
 PurchaseManager(구매 샘플)의 위치/역할/규약을 설명한다.
 
@@ -21,10 +23,13 @@ PurchaseManager는 **단일 concrete 클래스**이다.
 > 3-path mirror 정책: [devian-unity/07-samples-creation-guide](../../../../devian-unity/07-samples-creation-guide/SKILL.md), [devian-unity/01-policy](../../../../devian-unity/01-policy/SKILL.md) §SSOT 원칙
 
 - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
+- UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseSettings.cs`
 - UPM (정본): `framework-cs/upm/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseStorage.cs` (상태 스냅샷)
 - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
+- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseSettings.cs`
 - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.samples/Samples~/MobileSystem/Runtime/Purchase/PurchaseStorage.cs`
 - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Purchase/PurchaseManager.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Purchase/PurchaseSettings.cs`
 - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobileSystem/Runtime/Purchase/PurchaseStorage.cs`
 
 
@@ -167,47 +172,10 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 ---
 
 
-## Known Issues
-
-
-### ~~BUG-1. ConfirmPurchase 무조건 호출~~ — ✅ 수정됨
-
-- `resultStatus` 확인 후 `GRANTED`/`ALREADY_GRANTED`만 Confirm, 나머지는 Confirm 하지 않음.
-
-
-### ~~BUG-2. PENDING/REJECTED를 Success로 반환~~ — ✅ 수정됨
-
-- `GRANTED`/`ALREADY_GRANTED`만 `CommonResult.Success`, 나머지는 `CommonResult.Failure` 반환.
-
-
-### ~~ISSUE-3. ProductCatalog.LoadDefaultCatalog() 사용 (SSOT 불일치)~~ — ✅ 수정됨
-
-- `TB_PURCHASE` 기반으로 교체 완료.
-- `isActive` 필터링: 비활성 상품은 Unity IAP에 등록하지 않음.
-- 플랫폼별 StoreSku 매핑: `#if UNITY_IOS` → `StoreSkuApple`, `#elif UNITY_ANDROID` → `StoreSkuGoogle`.
-- `Kind` → `ProductType` 매핑.
-
-
-### ~~ISSUE-4. 동시 구매 요청 경쟁 조건~~ — ✅ 수정됨
-
-- `_purchaseInProgress` 플래그로 동시 호출 방어. 메서드 전체를 try/finally로 감싸서 항상 리셋.
-
-
-### ~~ISSUE-5. initializeIap()의 async void 예외 미전파~~ — ✅ 수정됨
-
-- Awake 자동 초기화 제거, `InitializeAsync()` 명시적 호출 방식으로 전환.
-- `initializeIapAsync(ct)` → `Task<CommonResult>` 반환 (async void 제거).
-- FetchProducts 콜백을 TCS로 await하여 초기화 완료를 보장.
-- 초기화 미완료 상태에서 API 호출 시 `PURCHASE_INIT_REQUIRED` 반환.
-- 에러 분류: `PURCHASE_INIT_FAILED` (Connect 실패), `PURCHASE_FETCH_FAILED` (FetchProducts 실패).
-
-
----
-
-
 ## Related SSOT
 
 
+- `skills/devian-unity/50-mobile-system/30-purchase-system/14-purchase-settings/SKILL.md`
 - `skills/devian-unity/50-mobile-system/30-purchase-system/03-ssot/SKILL.md`
 - `skills/devian-unity/50-mobile-system/30-purchase-system/33-purchase-storage/SKILL.md`
 - `skills/devian-unity/50-mobile-system/30-purchase-system/09-ssot-operations/SKILL.md`

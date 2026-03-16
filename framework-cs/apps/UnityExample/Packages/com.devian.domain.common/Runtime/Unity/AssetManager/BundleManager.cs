@@ -45,13 +45,22 @@ namespace Devian
     public abstract class BundleManager<T> : CompoSingleton<T> where T : BundleManager<T>
     {
         // ====================================================================
-        // Inspector Fields
+        // Settings
         // ====================================================================
 
-        [SerializeField]
-        [Tooltip("Clear dependency cache before calculating size (DANGER: use only for testing)")]
-        private bool forceClearDependencyCache = false;
-        
+        private BundleSettings? _settings;
+        private bool _settingsLoaded;
+
+        private BundleSettings? ensureSettings()
+        {
+            if (!_settingsLoaded)
+            {
+                _settings = Resources.Load<BundleSettings>(BundleSettings.ResourcesPath);
+                _settingsLoaded = true;
+            }
+            return _settings;
+        }
+
         // ====================================================================
         // Events
         // ====================================================================
@@ -95,7 +104,7 @@ namespace Devian
             foreach (var label in labels)
             {
                 // Optional: Clear dependency cache (DANGEROUS - only for testing)
-                if (forceClearDependencyCache)
+                if (ensureSettings()?.ForceClearDependencyCache == true)
                 {
                     var clearOp = Addressables.ClearDependencyCacheAsync(label, false);
                     await clearOp.Task;

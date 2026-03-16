@@ -133,9 +133,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 581dcce1cc97b43d1a6f1e4675722532, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.MobileSystem::Devian.SaveDataManager
-  _localRoot: 0
-  _primaryLocalFilename: save/main.json
-  _primaryCloudSlot: main
 --- !u!114 &8802484957537992892
 MonoBehaviour:
   m_ObjectHideFlags: 0
