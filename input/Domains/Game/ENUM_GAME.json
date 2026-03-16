@@ -18,6 +18,7 @@
         {"name": "TEST_003", "value": 8003},
         {"name": "TEST_004", "value": 8004},
         {"name": "TEST_005", "value": 8005},
+        {"name": "TEST_006", "value": 8006},
         {"name": "ACHIEVE_UNLOCKED", "value": 9000},
         {"name": "ACHIEVE_001", "value": 9001},
         {"name": "ACHIEVE_002", "value": 9002},

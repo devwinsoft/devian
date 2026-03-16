@@ -1,5 +1,6 @@
 {
   "configVersion": 1,
+  "foundationVersion": "0.1.0",
   "csConfig": {
     "moduleDir": "../framework-cs/module"
   },
@@ -21,7 +22,5 @@
       "../framework-cs/apps/UnityExample/Assets/Bundles/Tables"
     ]
   },
-  "samplePackages": [
-    "com.devian.foundation"
-  ]
+  "sampleFolder": "../framework-cs/apps/UnityExample/Assets/Samples"
 }

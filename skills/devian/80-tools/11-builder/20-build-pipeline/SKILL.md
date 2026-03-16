@@ -141,17 +141,43 @@ node framework-ts/tools/builder/build.js -[target] <buildInputJson>
 > **CRITICAL:** `{configJson}`에 `dataConfig` 키가 존재하면 빌드가 **즉시 FAIL**한다 (deprecated).
 > tableConfig의 각 Dir 배열에 대해 해당 데이터 유형이 출력된다.
 
-### samplePackages
+### Sample Package (내부 상수)
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `samplePackages` | string[] | 샘플 패키지 목록 (com.devian.foundation만 허용) |
+샘플 패키지 대상은 `com.devian.foundation` 하나뿐이며, 빌더 내부 상수(`UPM_FOUNDATION`)로 고정한다.
+`{projectConfigJson}`에 `samplePackages` 키는 불필요하며 존재하지 않는다.
+`staticUpmPackages` 키는 금지이며 존재 시 FAIL.
 
-### Hard Rule: samplePackages cannot contain libraries/domains
+### foundationVersion (필수)
 
-- `samplePackages`에는 `com.devian.foundation`만 포함할 수 있다.
-- `com.devian.samples` (삭제 완료, foundation으로 통합됨), `com.devian.domain.*` (레거시, 삭제 완료), `com.devian.protocol.*` (레거시, 삭제 완료), `com.devian.ui` (레거시, UIPackage 샘플로 이관 완료) 가 들어가면 FAIL.
-- `staticUpmPackages` 키는 금지이며 존재 시 FAIL.
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `foundationVersion` | string | ✓ | Foundation 패키지 버전. 빌더가 package.json 동기화 및 SampleSync 경로에 사용. |
+
+> 상세 정책: [devian-unity/03-ssot § foundationVersion](../../../../devian-unity/03-ssot/SKILL.md)
+
+### sampleFolder (선택)
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `sampleFolder` | string | ❌ | Assets/Samples 루트 경로. 생략 시 SampleSync 단계를 건너뜀. |
+
+```json
+"sampleFolder": "../framework-cs/apps/UnityExample/Assets/Samples"
+```
+
+**동기화 경로:**
+```
+{sampleFolder}/{displayName}/{version}/{sampleName}/Runtime/Generated/*.cs
+{sampleFolder}/{displayName}/{version}/{sampleName}/Editor/Generated/*.cs
+```
+
+- `{displayName}`: `com.devian.foundation/package.json`에서 읽음
+- `{version}`: `{projectConfigJson}`의 `foundationVersion`에서 읽음
+- `{sampleName}`: `Samples~/` 하위 폴더명
+- **Generated 코드(`.cs`)만 복사**, `.meta` 보존, 수동 코드 미접촉
+- 대상 Sample 폴더가 없으면 skip
+
+> 상세 정책: [devian-unity/03-ssot § sampleFolder](../../../../devian-unity/03-ssot/SKILL.md)
 
 ---
 
@@ -293,7 +319,7 @@ Game 도메인/프로토콜 예제의 상세 설명은 별도 스킬 문서를 �
 
 ## Verification Checklist
 
-1) `{configJson}` (예: `input/build_config.json`)에 `samplePackages: ["com.devian.foundation"]`만 존재한다.
+1) `{configJson}` (예: `input/build_config.json`)에 `samplePackages` 키가 존재하지 않는다 (빌더 내부 상수로 이관됨).
 2) `{configJson}` (예: `input/build_config.json`)에 `staticUpmPackages` 키가 존재하지 않는다 (금지 필드).
 3) 빌드 후 각 도메인에 대해 `Samples~/{DomainKey}Package/Runtime/Generated/{DomainKey}.g.cs` 가 존재한다.
 4) 빌드 후 각 프로토콜에 대해 `Samples~/{ProtocolGroup}Protocol/Runtime/Generated/*.g.cs` 가 존재한다.

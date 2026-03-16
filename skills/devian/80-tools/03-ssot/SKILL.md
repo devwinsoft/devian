@@ -16,14 +16,15 @@ ParentSSOT: skills/devian/10-module/03-ssot/SKILL.md
 
 ## Phase 모델
 
-빌드는 **4단계**로 해석한다.
+빌드는 **5단계**로 해석한다.
 
 1. **Generate**: 모든 산출물은 **staging({tempDir})에만 생성**
 2. **Materialize**: staging → module/upm/ts-modules로 **clean + copy** (모듈/패키지 단위)
 3. **Validate**: module/module과 upm의 **완결성 검증**
 4. **Sync**: upm → packageDir로 **패키지 단위 동기화**
+5. **SampleSync**: upm Samples~ Generated → sampleFolder로 **Generated 코드만 동기화** (선택적, `sampleFolder` 설정 시)
 
-> staging({tempDir}) 외의 위치에 직접 생성하는 동작은 금지한다.
+> staging({tempDir}) 외의 위치에 직접 생성하는 동작은 금지한다(SampleSync 제외 — UPM 정본의 Generated를 Assets/Samples로 복사).
 
 ---
 

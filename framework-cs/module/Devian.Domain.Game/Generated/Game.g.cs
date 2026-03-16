@@ -34,6 +34,7 @@ namespace Devian.Domain.Game
         TEST_003 = 8003,
         TEST_004 = 8004,
         TEST_005 = 8005,
+        TEST_006 = 8006,
         ACHIEVE_UNLOCKED = 9000,
         ACHIEVE_001 = 9001,
         ACHIEVE_002 = 9002,

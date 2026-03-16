@@ -47,13 +47,16 @@ const ASMDEF_TO_UPM_PATTERNS = [
     /^Devian\.Protocol\.\w+$/, // Devian.Protocol.{Group} → UPM_FOUNDATION (legacy)
 ];
 
-/** @type {Object<string, string>} Default version strings for UPM packages */
-const DEFAULT_VERSIONS = {
-    [UPM_FOUNDATION]: '0.1.0',
-};
+/**
+ * Default version strings for UPM packages.
+ * foundationVersion is set from {projectConfigJson} at runtime.
+ * SSOT: skills/devian-unity/03-ssot/SKILL.md § foundationVersion
+ * @type {Object<string, string>}
+ */
+let DEFAULT_VERSIONS = {};
 
-/** @type {string[]} Allowed values for samplePackages config (Hard Rule) */
-const ALLOWED_SAMPLE_PACKAGES = [UPM_FOUNDATION];
+/** Sample package is always UPM_FOUNDATION — no config needed (Hard Rule) */
+const SAMPLE_PACKAGES = [UPM_FOUNDATION];
 
 // ============================================================================
 // Build Runner
@@ -85,10 +88,10 @@ class DevianToolBuilder {
      * SSOT: skills/devian-core/03-ssot/SKILL.md
      * 
      * Rules:
-     * - project config json: csConfig/tsConfig/dataConfig/upmConfig/samplePackages only
-     *   Forbidden in project config: tempDir, domains, protocols, staticUpmPackages (forbidden)
+     * - project config json: csConfig/tsConfig/dataConfig/upmConfig only
+     *   Forbidden in project config: tempDir, domains, protocols, staticUpmPackages, samplePackages (forbidden)
      * - input.json: version/configPath/tempDir/domains/protocols only
-     *   Forbidden in input: csConfig/tsConfig/dataConfig/upmConfig/samplePackages
+     *   Forbidden in input: csConfig/tsConfig/dataConfig/upmConfig
      * - All relative paths resolved from buildJsonDir (input json directory)
      * - Merge: deepMerge(config, input), tempDir from input wins
      */
@@ -97,7 +100,7 @@ class DevianToolBuilder {
         const inputJson = JSON.parse(fs.readFileSync(this.buildJsonPath, 'utf-8'));
         
         // Forbidden keys in input json
-        const forbiddenInInput = ['csConfig', 'tsConfig', 'tableConfig', 'upmConfig', 'samplePackages'];
+        const forbiddenInInput = ['csConfig', 'tsConfig', 'tableConfig', 'upmConfig', 'sampleFolder', 'foundationVersion'];
         for (const key of forbiddenInInput) {
             if (inputJson[key] !== undefined) {
                 throw new Error(
@@ -116,7 +119,7 @@ class DevianToolBuilder {
                 `[FAIL] Missing configPath in input json!\n` +
                 `  File: ${this.buildJsonPath}\n` +
                 `  Add "configPath" to input json (e.g. "./build_config.json").\n` +
-                `  Then move csConfig/tsConfig/dataConfig/upmConfig/samplePackages to the project config json.`
+                `  Then move csConfig/tsConfig/dataConfig/upmConfig to the project config json.`
             );
         }
         
@@ -127,7 +130,7 @@ class DevianToolBuilder {
                 `[FAIL] Config file not found!\n` +
                 `  configPath: ${inputJson.configPath}\n` +
                 `  Resolved: ${configPath}\n` +
-                `  Create the project config json (e.g. build_config.json) with csConfig/tsConfig/dataConfig/upmConfig/samplePackages.`
+                `  Create the project config json (e.g. build_config.json) with csConfig/tsConfig/dataConfig/upmConfig.`
             );
         }
         
@@ -148,32 +151,16 @@ class DevianToolBuilder {
             }
         }
 
-        // FORBIDDEN: staticUpmPackages (replaced by samplePackages)
-        // SSOT: skills/devian-core/03-ssot/SKILL.md
-        if (configJson.staticUpmPackages !== undefined) {
-            throw new Error(
-                `[FAIL] Forbidden key in config json!\n` +
-                `  Key: staticUpmPackages\n` +
-                `  File: ${configPath}\n` +
-                `  staticUpmPackages is forbidden. Use samplePackages instead.\n` +
-                `  samplePackages can ONLY contain "com.devian.foundation".\n` +
-                `  Library packages (com.devian.foundation) and domain packages are NOT allowed.`
-            );
-        }
-        
-        // Validate samplePackages - ONLY com.devian.foundation is allowed
-        // SSOT: skills/devian-core/03-ssot/SKILL.md - Hard Rule
-        if (configJson.samplePackages && Array.isArray(configJson.samplePackages)) {
-            for (const pkg of configJson.samplePackages) {
-                if (!ALLOWED_SAMPLE_PACKAGES.includes(pkg)) {
-                    throw new Error(
-                        `[FAIL] Invalid package in samplePackages!\n` +
-                        `  Package: ${pkg}\n` +
-                        `  File: ${configPath}\n` +
-                        `  samplePackages can ONLY contain: ${ALLOWED_SAMPLE_PACKAGES.join(', ')}\n` +
-                        `  Domain and Protocol are Sample-targets in ${UPM_FOUNDATION}.`
-                    );
-                }
+        // FORBIDDEN: legacy keys
+        // SSOT: skills/devian-unity/03-ssot/SKILL.md
+        for (const legacyKey of ['staticUpmPackages', 'samplePackages']) {
+            if (configJson[legacyKey] !== undefined) {
+                throw new Error(
+                    `[FAIL] Forbidden key in config json!\n` +
+                    `  Key: ${legacyKey}\n` +
+                    `  File: ${configPath}\n` +
+                    `  ${legacyKey} is forbidden. Sample package is now a builder constant (UPM_FOUNDATION = "${UPM_FOUNDATION}").`
+                );
             }
         }
 
@@ -297,12 +284,9 @@ class DevianToolBuilder {
             }
         }
 
-        // Process sample packages (e.g., com.devian.foundation)
-        // samplePackages is string[] of package names, ONLY com.devian.foundation allowed
-        if (this.config.samplePackages && Array.isArray(this.config.samplePackages)) {
-            for (const upmName of this.config.samplePackages) {
-                await this.processSamplePackage(upmName);
-            }
+        // Process sample packages — always UPM_FOUNDATION (builder constant)
+        for (const upmName of SAMPLE_PACKAGES) {
+            await this.processSamplePackage(upmName);
         }
 
         // 4. Clean & Copy to targets (module, upm)
@@ -321,10 +305,10 @@ class DevianToolBuilder {
         }
 
         // Sample packages: copy to packageDir (clean + copy entire package)
-        // SSOT: upm is the single source, samplePackages ONLY for com.devian.foundation
-        if (this.config.samplePackages && Array.isArray(this.config.samplePackages)) {
+        // SSOT: Sample package is always UPM_FOUNDATION (builder constant)
+        {
             console.log('  [Info] Sample packages: upm/<pkg> → packageDir/<pkg> (clean copy)');
-            for (const upmName of this.config.samplePackages) {
+            for (const upmName of SAMPLE_PACKAGES) {
                 // Validate sample package exists in upm
                 const pkgPath = path.join(this.upmSourceDir, upmName);
                 if (!fs.existsSync(pkgPath)) {
@@ -369,6 +353,13 @@ class DevianToolBuilder {
         // 7. Sync UPM samples metadata
         console.log('[Phase 5] Sync UPM samples metadata...');
         await this.syncAllUpmSamples();
+
+        // Phase 5.5: SampleSync — Generated code → Assets/Samples (optional)
+        // SSOT: skills/devian-unity/03-ssot/SKILL.md § sampleFolder
+        if (this.sampleFolder) {
+            console.log('[Phase 5.5] SampleSync: Generated → Assets/Samples...');
+            await this.syncGeneratedToSampleFolder();
+        }
 
         console.log();
         console.log('='.repeat(60));
@@ -3146,8 +3137,8 @@ export * from './features';
 
     /**
      * Process a sample package (e.g., com.devian.foundation).
-     * samplePackages ONLY allows com.devian.foundation.
-     * SSOT: skills/devian-core/03-ssot/SKILL.md - Hard Rule
+     * Sample package is always UPM_FOUNDATION (builder constant).
+     * SSOT: skills/devian-unity/03-ssot/SKILL.md - Hard Rule
      * @param {string} upmName - UPM package name (e.g., "com.devian.foundation")
      */
     async processSamplePackage(upmName) {
@@ -3920,6 +3911,140 @@ export * from './features';
     }
 
     // ========================================================================
+    // SampleSync: Generated code → Assets/Samples (Phase 5.5)
+    // SSOT: skills/devian-unity/03-ssot/SKILL.md § sampleFolder
+    // ========================================================================
+
+    /**
+     * Sync Generated .cs files from UPM Samples~ to Assets/Samples.
+     *
+     * Scope: Only .cs files in Runtime/Generated/ and Editor/Generated/ folders.
+     * .meta files in target are preserved (not touched).
+     * Target sample folder must already exist (skip if not imported yet).
+     *
+     * Path template: {sampleFolder}/{displayName}/{foundationVersion}/{sampleName}/
+     * displayName from com.devian.foundation/package.json, version from config.
+     *
+     * SSOT: skills/devian-unity/03-ssot/SKILL.md § sampleFolder, § foundationVersion
+     */
+    async syncGeneratedToSampleFolder() {
+        if (!this.sampleFolder) {
+            console.log('  [SKIP] sampleFolder not configured');
+            return;
+        }
+
+        // Read com.devian.foundation/package.json for displayName
+        const foundationPkgPath = path.join(this.upmSourceDir, UPM_FOUNDATION, 'package.json');
+        if (!fs.existsSync(foundationPkgPath)) {
+            console.log(`  [SKIP] ${UPM_FOUNDATION}/package.json not found`);
+            return;
+        }
+
+        const foundationPkg = JSON.parse(fs.readFileSync(foundationPkgPath, 'utf-8'));
+        const displayName = foundationPkg.displayName;
+        // Version from config (single source of truth), not package.json
+        const version = this.foundationVersion;
+
+        if (!displayName) {
+            throw new Error(`[FAIL] ${UPM_FOUNDATION}/package.json missing displayName`);
+        }
+
+        // Base target: {sampleFolder}/{displayName}/{version}/
+        const sampleTargetBase = path.join(this.sampleFolder, displayName, version);
+        if (!fs.existsSync(sampleTargetBase)) {
+            console.log(`  [SKIP] Target base does not exist: ${sampleTargetBase}`);
+            return;
+        }
+
+        // Scan UPM Samples~ subdirectories
+        const samplesSourceDir = path.join(this.upmSourceDir, UPM_FOUNDATION, 'Samples~');
+        if (!fs.existsSync(samplesSourceDir)) {
+            console.log(`  [SKIP] ${UPM_FOUNDATION}/Samples~ not found`);
+            return;
+        }
+
+        const sampleEntries = fs.readdirSync(samplesSourceDir, { withFileTypes: true })
+            .filter(e => e.isDirectory());
+
+        if (sampleEntries.length === 0) {
+            console.log('  [SKIP] No samples found in Samples~');
+            return;
+        }
+
+        console.log(`  [SampleSync] ${displayName} v${version} — ${sampleEntries.length} samples`);
+
+        let totalCopied = 0;
+
+        for (const sampleEntry of sampleEntries) {
+            const sampleName = sampleEntry.name;
+            const sampleSourcePath = path.join(samplesSourceDir, sampleName);
+            const sampleTargetPath = path.join(sampleTargetBase, sampleName);
+
+            // Skip if target sample folder doesn't exist (not imported yet)
+            if (!fs.existsSync(sampleTargetPath)) {
+                console.log(`    [SKIP] ${sampleName} — target not imported`);
+                continue;
+            }
+
+            // Collect Generated folders: Runtime/Generated, Editor/Generated
+            const generatedDirs = ['Runtime/Generated', 'Editor/Generated'];
+            let sampleCopied = 0;
+
+            for (const genRelDir of generatedDirs) {
+                const sourceGenDir = path.join(sampleSourcePath, genRelDir);
+                const targetGenDir = path.join(sampleTargetPath, genRelDir);
+
+                if (!fs.existsSync(sourceGenDir)) continue;
+
+                // Ensure target Generated folder exists
+                if (!fs.existsSync(targetGenDir)) {
+                    fs.mkdirSync(targetGenDir, { recursive: true });
+                }
+
+                // Copy .cs files only (not .meta — preserve existing .meta in target)
+                const copied = this.copyCsFilesRecursive(sourceGenDir, targetGenDir);
+                sampleCopied += copied;
+            }
+
+            if (sampleCopied > 0) {
+                console.log(`    [OK] ${sampleName} — ${sampleCopied} .cs files synced`);
+                totalCopied += sampleCopied;
+            }
+        }
+
+        console.log(`  [SampleSync] Done — ${totalCopied} .cs files synced total`);
+    }
+
+    /**
+     * Recursively copy .cs files from source to target directory.
+     * Does NOT copy .meta files (preserves existing .meta in target).
+     * @param {string} sourceDir - Source Generated directory
+     * @param {string} targetDir - Target Generated directory
+     * @returns {number} Number of .cs files copied
+     */
+    copyCsFilesRecursive(sourceDir, targetDir) {
+        let count = 0;
+        const entries = fs.readdirSync(sourceDir, { withFileTypes: true });
+
+        for (const entry of entries) {
+            const sourcePath = path.join(sourceDir, entry.name);
+            const targetPath = path.join(targetDir, entry.name);
+
+            if (entry.isDirectory()) {
+                if (!fs.existsSync(targetPath)) {
+                    fs.mkdirSync(targetPath, { recursive: true });
+                }
+                count += this.copyCsFilesRecursive(sourcePath, targetPath);
+            } else if (entry.isFile() && entry.name.endsWith('.cs')) {
+                fs.copyFileSync(sourcePath, targetPath);
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    // ========================================================================
     // Forbidden Namespace Guard (재발 방지)
     // SSOT: skills/devian-common/02-module-policy/SKILL.md
     // ========================================================================
@@ -3962,6 +4087,35 @@ export * from './features';
 
         console.log(`  [OK] upmConfig.sourceDir: ${this.upmSourceDir}`);
         console.log(`  [OK] upmConfig.packageDir: ${this.upmPackageDir}`);
+
+        // Validate foundationVersion (required)
+        // SSOT: skills/devian-unity/03-ssot/SKILL.md § foundationVersion
+        if (!this.config.foundationVersion || typeof this.config.foundationVersion !== 'string') {
+            throw new Error(
+                '[FAIL] Missing required "foundationVersion" in project config json.\n' +
+                '  Expected: version string (e.g., "0.1.0")\n' +
+                '  SSOT: skills/devian-unity/03-ssot/SKILL.md § foundationVersion'
+            );
+        }
+        this.foundationVersion = this.config.foundationVersion;
+
+        // Set DEFAULT_VERSIONS from config (no hardcoded versions)
+        DEFAULT_VERSIONS = {
+            [UPM_FOUNDATION]: this.foundationVersion,
+        };
+
+        // Sync foundationVersion → com.devian.foundation/package.json
+        const foundationPkgPath = path.join(this.upmSourceDir, UPM_FOUNDATION, 'package.json');
+        if (fs.existsSync(foundationPkgPath)) {
+            const foundationPkg = JSON.parse(fs.readFileSync(foundationPkgPath, 'utf-8'));
+            if (foundationPkg.version !== this.foundationVersion) {
+                foundationPkg.version = this.foundationVersion;
+                fs.writeFileSync(foundationPkgPath, JSON.stringify(foundationPkg, null, 2) + '\n');
+                console.log(`  [Sync] ${UPM_FOUNDATION}/package.json version → ${this.foundationVersion}`);
+            } else {
+                console.log(`  [OK] foundationVersion: ${this.foundationVersion}`);
+            }
+        }
 
         // Validate csConfig (required)
         // generateDir is optional - falls back to moduleDir (unified structure)
@@ -4063,6 +4217,15 @@ export * from './features';
         console.log(`  [OK] tableConfig.stringDirs: ${this.stringDirs.length} targets`);
         console.log(`  [OK] tableConfig.tableDirs: ${this.tableDirs.length} targets`);
 
+        // Resolve sampleFolder (optional — Assets/Samples Generated sync)
+        // SSOT: skills/devian-unity/03-ssot/SKILL.md § sampleFolder
+        if (this.config.sampleFolder && typeof this.config.sampleFolder === 'string') {
+            this.sampleFolder = this.resolvePath(this.config.sampleFolder);
+            console.log(`  [OK] sampleFolder: ${this.sampleFolder}`);
+        } else {
+            this.sampleFolder = null;
+        }
+
         // Path Guards (CRITICAL)
         this.validatePathGuards();
     }
@@ -4095,21 +4258,8 @@ export * from './features';
     checkForbiddenFields() {
         const errors = [];
 
-        // Check samplePackages - must be string[] now
-        if (this.config.samplePackages && Array.isArray(this.config.samplePackages)) {
-            for (let i = 0; i < this.config.samplePackages.length; i++) {
-                const item = this.config.samplePackages[i];
-
-                if (typeof item !== 'string') {
-                    errors.push(
-                        `samplePackages[${i}] must be a string, not an object.\n` +
-                        `  samplePackages is string[] of UPM package names.\n` +
-                        `  Was: ${JSON.stringify(item)}\n` +
-                        `  Fix: Use plain string like "com.devian.foundation"`
-                    );
-                }
-            }
-        }
+        // samplePackages is now forbidden in config (builder constant)
+        // Validation already done in loadAndMergeConfig()
 
         // Check protocols for forbidden fields
         if (this.config.protocols && Array.isArray(this.config.protocols)) {
@@ -4575,7 +4725,7 @@ export * from './features';
                 console.error(`  - ${v}`);
             }
             console.error('\nFix: Remove generation target mapping or sheet output route that produces it.');
-            console.error('     Check samplePackages config and domain/table routing in input json.');
+            console.error('     Check domain/table routing in input json.');
             throw new Error(
                 '[FAIL] com.devian.foundation must not contain Editor/Generated. ' +
                 'Remove generation target mapping or sheet output route that produces it.'

@@ -154,3 +154,11 @@
 {"Id":"TREASURE_REWARD_EMPTY","Msg_key":"","Msg":"Treasure reward is empty."}
 {"Id":"TREASURE_REWARD_APPLY_FAILED","Msg_key":"","Msg":"Treasure reward apply failed."}
 {"Id":"TREASURE_REWARD_GROUP_EMPTY","Msg_key":"","Msg":"Treasure reward group is empty."}
+{"Id":"PUSH_UNSUPPORTED_PLATFORM","Msg_key":"","Msg":"Push is not supported on this platform."}
+{"Id":"PUSH_NOT_INITIALIZED","Msg_key":"","Msg":"PushManager not initialized. Call InitializeAsync() first."}
+{"Id":"PUSH_PERMISSION_DENIED","Msg_key":"","Msg":"Push notification permission denied."}
+{"Id":"PUSH_TOKEN_FAILED","Msg_key":"","Msg":"Failed to acquire FCM token."}
+{"Id":"PUSH_TOPIC_SUBSCRIBE_FAILED","Msg_key":"","Msg":"Failed to subscribe to topic."}
+{"Id":"PUSH_TOPIC_UNSUBSCRIBE_FAILED","Msg_key":"","Msg":"Failed to unsubscribe from topic."}
+{"Id":"PUSH_NOTIFICATION_SCHEDULE_FAILED","Msg_key":"","Msg":"Failed to schedule local notification."}
+{"Id":"PUSH_NOTIFICATION_CANCEL_FAILED","Msg_key":"","Msg":"Failed to cancel local notification."}

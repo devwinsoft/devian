@@ -22,6 +22,7 @@ Devian Example 앱의 **설정 파일, 입력 파일, 런타임 앱 경로**를 
 ```json
 {
   "configVersion": 1,
+  "foundationVersion": "0.1.0",
   "csConfig": { "moduleDir": "../framework-cs/module" },
   "tsConfig": { "moduleDir": "../framework-ts/module" },
   "upmConfig": {
@@ -33,7 +34,7 @@ Devian Example 앱의 **설정 파일, 입력 파일, 런타임 앱 경로**를 
     "stringDirs": ["../framework-cs/apps/UnityExample/Assets/Bundles/Strings"],
     "tableDirs": ["../framework-cs/apps/UnityExample/Assets/Bundles/Tables"]
   },
-  "samplePackages": ["com.devian.foundation"]
+  "sampleFolder": "../framework-cs/apps/UnityExample/Assets/Samples"
 }
 ```
 

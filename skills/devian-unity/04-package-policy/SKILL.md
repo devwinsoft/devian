@@ -30,7 +30,7 @@ Devian UPM 패키지(`com.devian.*`)의 **package.json 메타데이터 정책**�
 | 필드 | 정책 |
 |------|------|
 | `name` | 접두어 `com.devian.` 필수 |
-| `version` | 모든 `com.devian.*` 패키지 동일 버전 |
+| `version` | `{projectConfigJson}`의 `foundationVersion`으로 빌더가 동기화 ([03-ssot § foundationVersion](../03-ssot/SKILL.md)) |
 | `unity` | 최소 Unity 버전 동일 고정 |
 | `displayName` | 사람이 읽기 쉬운 이름 |
 | `description` | 1줄 역할 설명 |
@@ -157,14 +157,11 @@ Builder는 `Samples~`가 존재하고 하위 폴더가 있으면 `samples` 필�
 | `description` | 권장 | 샘플 설명 |
 | `path` | **필수** | `Samples~/...` 상대경로 (폴더명과 대소문자 정확히 일치) |
 
-### samplePackages 설정
+### Sample Package 상수
 
-`{projectConfigJson}`에 샘플 패키지를 등록한다.
-
-**samplePackages 규칙 (Hard Rule):**
-- **반드시 문자열 배열**로 정의
-- `com.devian.foundation`만 허용 — 라이브러리/도메인 패키지는 포함 금지
-- `staticUpmPackages` 키는 금지이며 사용 시 빌드 FAIL
+샘플 패키지 대상은 `com.devian.foundation` 하나뿐이며, 빌더 내부 상수(`UPM_FOUNDATION`)로 고정한다.
+`{projectConfigJson}`에 `samplePackages` 키는 불필요하며 존재하지 않는다.
+`staticUpmPackages` 키는 금지이며 존재 시 빌드 FAIL.
 
 ---
 

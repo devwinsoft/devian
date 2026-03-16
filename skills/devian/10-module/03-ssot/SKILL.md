@@ -21,7 +21,7 @@ SSOT: this file
 |----------|------|------|
 | **Tools** | [devian/80-tools/03-ssot](../../80-tools/03-ssot/SKILL.md) | 빌드 파이프라인, Phase, Validate, tempDir, Clean+Copy, TS Workspace |
 | **Builder** | [devian/80-tools/11-builder/03-ssot](../../80-tools/11-builder/03-ssot/SKILL.md) | tableConfig, Tables, NDJSON, pb64, DATA 산출물, Protocol Spec, Opcode/Tag, Protocol UPM |
-| **Unity** | [devian-unity/03-ssot](../../../devian-unity/03-ssot/SKILL.md) | upmConfig, UPM Sync, Foundation, samplePackages, Unity Gate |
+| **Unity** | [devian-unity/03-ssot](../../../devian-unity/03-ssot/SKILL.md) | upmConfig, UPM Sync, Foundation, Sample Package 상수, foundationVersion, sampleFolder, Unity Gate |
 
 ---
 
@@ -89,13 +89,14 @@ Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 
 
 | 파일 | 역할 | 허용 키 |
 |------|------|---------|
-| `{projectConfigJson}` (예: `input/build_config.json`) | 공통 설정 (경로/타겟) | csConfig, tsConfig, tableConfig, upmConfig, samplePackages |
+| `{projectConfigJson}` (예: `input/build_config.json`) | 공통 설정 (경로/타겟) | csConfig, tsConfig, tableConfig, upmConfig, sampleFolder, foundationVersion |
 | `input/input_*.json` | 빌드 스펙 (도메인/프로토콜) | version, configPath, tempDir, domains, protocols |
 
 **금지 키 (Hard FAIL):**
 - `{projectConfigJson}`에 `tempDir`, `domains`, `protocols` 존재 → FAIL
-- `{projectConfigJson}`에 `staticUpmPackages` 존재 → FAIL (forbidden, `samplePackages` 사용)
-- input.json에 `csConfig`, `tsConfig`, `tableConfig`, `upmConfig`, `samplePackages` 존재 → FAIL
+- `{projectConfigJson}`에 `staticUpmPackages` 존재 → FAIL (forbidden)
+- `{projectConfigJson}`에 `samplePackages` 존재 → FAIL (빌더 내부 상수로 이관됨)
+- input.json에 `csConfig`, `tsConfig`, `tableConfig`, `upmConfig` 존재 → FAIL
 - `{projectConfigJson}`에 `dataConfig` 존재 → FAIL (deprecated, `tableConfig` 사용)
 
 **Deprecated 금지 (Hard FAIL):**

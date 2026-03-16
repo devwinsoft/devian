@@ -107,18 +107,102 @@ com.devian.foundation/
 
 ---
 
-## samplePackages (Hard Rule)
+## Sample Package 상수 (Hard Rule)
 
-- `samplePackages`는 샘플 패키지 목록이다.
-- `samplePackages`에는 `com.devian.foundation`만 허용한다.
-- 라이브러리, 도메인, 프로토콜은 절대 포함하지 않는다.
-- 위반 시 빌드는 즉시 FAIL이어야 한다.
+- 샘플 패키지 대상은 `com.devian.foundation` 하나뿐이며, 빌더 내부 상수(`UPM_FOUNDATION`)로 고정한다.
+- 설정 파일(`{projectConfigJson}`)에 `samplePackages` 키는 **불필요하며 존재하지 않는다.**
+- `staticUpmPackages` 키도 금지이며 존재 시 빌드 FAIL.
 
-**금지 패키지 목록 (samplePackages에 넣으면 Hard FAIL):**
-- `com.devian.samples` (삭제 완료, foundation으로 통합됨)
-- `com.devian.domain.*` (레거시, 삭제 완료)
-- `com.devian.protocol.*` (레거시, 삭제 완료)
-- `com.devian.ui` (레거시, UIPackage 샘플로 이관 완료)
+---
+
+## foundationVersion — Foundation 패키지 버전 (Hard Rule)
+
+### 목적
+
+`com.devian.foundation`의 버전을 `{projectConfigJson}`에서 단일 관리한다.
+빌더가 이 값으로 `package.json`의 `version` 필드를 덮어쓰고, SampleSync 경로 해석에도 사용한다.
+
+### 설정
+
+```json
+"foundationVersion": "0.1.0"
+```
+
+- `{projectConfigJson}`에 **필수**로 지정한다.
+- 생략 시 빌드 **FAIL**.
+
+### 빌더 동작
+
+1. **package.json 동기화**: `com.devian.foundation/package.json`의 `version` 필드를 `foundationVersion` 값으로 덮어쓴다.
+2. **DEFAULT_VERSIONS 대체**: 빌더 내부 `DEFAULT_VERSIONS` 상수를 이 값으로 대체한다.
+3. **sampleFolder 경로**: `{sampleFolder}/{displayName}/{foundationVersion}/{sampleName}/`으로 해석한다.
+
+### SSOT 원칙
+
+- `foundationVersion`이 버전의 **단일 정본**이다.
+- `package.json`의 `version` 필드는 빌더가 매 빌드 시 동기화하는 **파생 값**이다.
+- 빌더 코드에 버전을 하드코딩하지 않는다.
+
+---
+
+## sampleFolder — Assets/Samples Generated 동기화 (Hard Rule)
+
+### 목적
+
+빌드 시 테이블/프로토콜/contract(JSON)에서 생성되는 코드(`Generated/` 폴더)를 `Assets/Samples` 경로에도 동기화한다.
+수동 코드(non-generated)의 전체 패치는 이 동기화의 범위가 아니다.
+
+### 설정
+
+```json
+"sampleFolder": "../framework-cs/apps/UnityExample/Assets/Samples"
+```
+
+- `{projectConfigJson}`에 선택적으로 지정한다.
+- 생략 시 이 동기화 단계를 건너뛴다 (기존 호환성 유지).
+
+### 경로 해석
+
+```
+{sampleFolder}/{displayName}/{version}/{sampleName}/
+```
+
+| 플레이스홀더 | 출처 | 예시 |
+|-------------|------|------|
+| `{sampleFolder}` | `{projectConfigJson}` 설정 값 | `../framework-cs/apps/UnityExample/Assets/Samples` |
+| `{displayName}` | `com.devian.foundation/package.json` → `displayName` | `Devian Foundation` |
+| `{version}` | `{projectConfigJson}` → `foundationVersion` | `0.1.0` |
+| `{sampleName}` | `Samples~/` 하위 폴더명 (= `package.json` samples[].path 기준) | `CommonPackage`, `GameProtocol` 등 |
+
+### 동기화 범위 (Generated Only)
+
+**빌드가 생성하는 `Generated/` 폴더만 동기화한다.** 수동 코드는 건드리지 않는다.
+
+복사 대상:
+- `Runtime/Generated/**` — `.cs` 파일만 복사 (`.meta` 보존)
+- `Editor/Generated/**` — `.cs` 파일만 복사 (`.meta` 보존)
+
+### 동기화 조건
+
+- **대상 Sample 폴더가 존재할 때만** 동기화한다.
+- `{sampleFolder}/{displayName}/{version}/{sampleName}/`이 존재하지 않으면 skip (아직 Unity에서 Import하지 않은 상태).
+- Generated 폴더 자체가 없는 Sample (예: `MobilePackage`, `UIPackage` — 수동 코드만 있음)은 자연히 skip.
+
+### .meta 보존 정책
+
+- `.cs` 파일만 덮어쓴다. 기존 `.meta` 파일은 건드리지 않는다.
+- 새 `.cs` 파일이 추가되어 `.meta`가 없으면 Unity가 다음 실행 시 자동 생성한다.
+- 빌더가 `.meta`를 생성/삭제/수정하지 않는다.
+
+### 실행 시점
+
+Phase 4 (Sync: upm → packageDir) 이후에 실행한다.
+
+### 전체 패치 (수동 코드 포함)
+
+수동 코드를 포함한 전체 패치는 다음 두 경우에만 수행한다:
+- Unity Package Manager에서 수동 Import
+- 사용자가 3-path-mirror 전체 복사를 명시적으로 요청
 
 ---
 
