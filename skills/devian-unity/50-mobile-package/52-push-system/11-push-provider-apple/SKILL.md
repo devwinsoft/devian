@@ -8,7 +8,7 @@ AppliesTo: v10
 - iOS(APNs) 푸시 토큰 획득
 - iOS 푸시 알림 권한 요청
 - iOS 토픽 구독/해제 (Firebase Messaging iOS SDK 경유)
-- iOS 로컬 알림 스케줄/취소 (`UNUserNotificationCenter`)
+- iOS 로컬 알림 스케줄/취소 (Unity Mobile Notifications 패키지)
 
 ---
 
@@ -40,9 +40,16 @@ AppliesTo: v10
 
 ### Local Notification
 
-- `UNUserNotificationCenter`로 로컬 알림 스케줄
-- `UNCalendarNotificationTrigger` (특정 시각) / `UNTimeIntervalNotificationTrigger` (반복)
-- `RemovePendingNotificationRequests(notificationId)`로 취소
+- **Unity Mobile Notifications** 패키지(`com.unity.mobile.notifications`) 사용
+- `iOSNotificationCenter.ScheduleNotification(notification)`로 스케줄
+- `iOSNotificationCenter.RemoveScheduledNotification(notificationId)`로 개별 취소
+- `iOSNotificationCenter.RemoveAllScheduledNotifications()`로 전체 취소
+- `iOSNotificationTimeIntervalTrigger`로 발화 시각 지정
+
+### Icon 정책
+
+- iOS는 시스템이 앱 아이콘을 강제 사용한다. 커스텀 아이콘 설정 불가.
+- 코드에서 별도 아이콘 설정을 하지 않는다.
 
 ---
 

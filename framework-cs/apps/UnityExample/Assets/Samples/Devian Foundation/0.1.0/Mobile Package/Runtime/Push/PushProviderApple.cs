@@ -3,6 +3,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
 using UnityEngine;
+#if UNITY_IOS && !UNITY_EDITOR
+using Unity.Notifications.iOS;
+#endif
 
 namespace Devian
 {
@@ -105,8 +108,26 @@ namespace Devian
 #if UNITY_IOS && !UNITY_EDITOR
             try
             {
-                // TODO: Unity.Notifications.iOS 패키지 사용
-                // iOSNotificationCenter.ScheduleNotification(...)
+                // iOS: 아이콘은 시스템이 앱 아이콘을 강제 사용한다. 별도 설정 불가.
+                var timeTrigger = new iOSNotificationTimeIntervalTrigger
+                {
+                    TimeInterval = data.FireAt - DateTime.Now,
+                    Repeats = false,
+                };
+
+                var notification = new iOSNotification
+                {
+                    Identifier = data.NotificationId,
+                    Title = data.Title,
+                    Body = data.Body,
+                    Data = data.Payload,
+                    ShowInForeground = true,
+                    ForegroundPresentationOption =
+                        PresentationOption.Alert | PresentationOption.Sound,
+                    Trigger = timeTrigger,
+                };
+
+                iOSNotificationCenter.ScheduleNotification(notification);
                 Debug.Log($"[{Tag}] ScheduleLocalNotification: {data.NotificationId}");
                 return CommonResult.Ok();
             }
@@ -127,7 +148,7 @@ namespace Devian
 #if UNITY_IOS && !UNITY_EDITOR
             try
             {
-                // TODO: iOSNotificationCenter.RemoveScheduledNotification(notificationId)
+                iOSNotificationCenter.RemoveScheduledNotification(notificationId);
                 Debug.Log($"[{Tag}] CancelLocalNotification: {notificationId}");
                 return CommonResult.Ok();
             }
@@ -147,7 +168,7 @@ namespace Devian
 #if UNITY_IOS && !UNITY_EDITOR
             try
             {
-                // TODO: iOSNotificationCenter.RemoveAllScheduledNotifications()
+                iOSNotificationCenter.RemoveAllScheduledNotifications();
                 Debug.Log($"[{Tag}] CancelAllLocalNotifications");
                 return CommonResult.Ok();
             }

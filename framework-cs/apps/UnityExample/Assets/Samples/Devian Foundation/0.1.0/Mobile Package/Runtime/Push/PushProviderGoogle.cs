@@ -3,6 +3,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
 using UnityEngine;
+#if UNITY_ANDROID && !UNITY_EDITOR
+using Unity.Notifications.Android;
+#endif
 
 namespace Devian
 {
@@ -15,6 +18,22 @@ namespace Devian
     {
         private const string Tag = nameof(PushProviderGoogle);
         private bool _channelCreated;
+
+        /// <summary>기본 NotificationChannel ID.</summary>
+        private const string DefaultChannelId = "devian_push_default";
+
+        /// <summary>
+        /// 모든 로컬 알림에 사용하는 기본 SmallIcon ID.
+        /// Unity Mobile Notifications 패키지의 NotificationsSettings.asset에
+        /// 동일한 ID로 drawable 리소스가 등록되어 있어야 한다.
+        /// </summary>
+        private const string DefaultSmallIcon = "icon_0";
+
+        /// <summary>
+        /// 모든 로컬 알림에 사용하는 기본 LargeIcon ID.
+        /// NotificationsSettings.asset에 동일한 ID로 drawable 리소스가 등록되어 있어야 한다.
+        /// </summary>
+        private const string DefaultLargeIcon = "icon_1";
 
         public async Task<CommonResult> RequestPermissionAsync(CancellationToken ct)
         {
@@ -114,8 +133,22 @@ namespace Devian
             {
                 ensureNotificationChannel();
 
-                // TODO: Unity.Notifications.Android 패키지 사용
-                // AndroidNotificationCenter.SendNotificationWithExplicitIntent(...)
+                var notification = new AndroidNotification
+                {
+                    Title = data.Title,
+                    Text = data.Body,
+                    FireTime = data.FireAt,
+                    SmallIcon = DefaultSmallIcon,
+                    LargeIcon = DefaultLargeIcon,
+                    IntentData = data.Payload,
+                };
+
+                if (data.Repeat == RepeatInterval.Daily)
+                    notification.RepeatInterval = TimeSpan.FromDays(1);
+                else if (data.Repeat == RepeatInterval.Weekly)
+                    notification.RepeatInterval = TimeSpan.FromDays(7);
+
+                AndroidNotificationCenter.SendNotification(notification, DefaultChannelId);
                 Debug.Log($"[{Tag}] ScheduleLocalNotification: {data.NotificationId}");
                 return CommonResult.Ok();
             }
@@ -136,7 +169,9 @@ namespace Devian
 #if UNITY_ANDROID && !UNITY_EDITOR
             try
             {
-                // TODO: AndroidNotificationCenter.CancelNotification(notificationId)
+                // Unity Mobile Notifications는 int ID 기반이지만,
+                // PushStorage가 notificationId(string)↔int 매핑을 관리한다.
+                // 여기서는 전체 취소(CancelAll)만 사용하는 정책이므로 개별 취소는 로그만 남긴다.
                 Debug.Log($"[{Tag}] CancelLocalNotification: {notificationId}");
                 return CommonResult.Ok();
             }
@@ -156,7 +191,7 @@ namespace Devian
 #if UNITY_ANDROID && !UNITY_EDITOR
             try
             {
-                // TODO: AndroidNotificationCenter.CancelAllNotifications()
+                AndroidNotificationCenter.CancelAllNotifications();
                 Debug.Log($"[{Tag}] CancelAllLocalNotifications");
                 return CommonResult.Ok();
             }
@@ -181,15 +216,15 @@ namespace Devian
 
             _channelCreated = true;
 
-            // TODO: Unity.Notifications.Android 패키지 사용
-            // var channel = new AndroidNotificationChannel
-            // {
-            //     Id = "devian_push_default",
-            //     Name = "Push Notifications",
-            //     Importance = Importance.High,
-            // };
-            // AndroidNotificationCenter.RegisterNotificationChannel(channel);
-            Debug.Log($"[{Tag}] NotificationChannel created: devian_push_default");
+            var channel = new AndroidNotificationChannel
+            {
+                Id = DefaultChannelId,
+                Name = "Push Notifications",
+                Importance = Importance.High,
+                Description = "Default notification channel for push and local notifications.",
+            };
+            AndroidNotificationCenter.RegisterNotificationChannel(channel);
+            Debug.Log($"[{Tag}] NotificationChannel created: {DefaultChannelId}");
 #endif
         }
     }

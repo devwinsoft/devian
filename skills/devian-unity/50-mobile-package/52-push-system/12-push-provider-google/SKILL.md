@@ -8,7 +8,7 @@ AppliesTo: v10
 - Android(FCM) 푸시 토큰 획득
 - Android 푸시 알림 권한 요청 (Android 13+ POST_NOTIFICATIONS)
 - Android 토픽 구독/해제 (Firebase Messaging Android SDK)
-- Android 로컬 알림 스케줄/취소 (`AlarmManager` + `NotificationChannel`)
+- Android 로컬 알림 스케줄/취소 (Unity Mobile Notifications 패키지)
 
 ---
 
@@ -27,6 +27,7 @@ AppliesTo: v10
 
 - Android 13+: `Permission.RequestUserPermission("android.permission.POST_NOTIFICATIONS")`
 - Android 12 이하: 권한 요청 불필요 (즉시 granted)
+- 권한 획득 후 `ensureNotificationChannel()` 호출
 
 ### Token
 
@@ -39,10 +40,21 @@ AppliesTo: v10
 
 ### Local Notification
 
-- `NotificationChannel` 생성 (Android 8+, 앱 시작 시 1회)
-- `AlarmManager.SetExactAndAllowWhileIdle` / `SetRepeating`으로 스케줄
-- `AlarmManager.Cancel`로 취소
-- `NotificationCompat.Builder`로 알림 빌드
+- **Unity Mobile Notifications** 패키지(`com.unity.mobile.notifications`) 사용
+- `AndroidNotificationChannel` 생성 (Id: `"devian_push_default"`, Importance: High, 앱 시작 시 1회)
+- `AndroidNotificationCenter.SendNotification(notification, channelId)`로 스케줄
+- `AndroidNotificationCenter.CancelAllNotifications()`로 전체 취소
+
+### Icon 정책
+
+- 모든 로컬 알림에 **단일 기본 아이콘**을 사용한다.
+- `DefaultSmallIcon = "icon_0"` — 상태바/알림 헤더 표시용 (모노크롬 drawable).
+- `DefaultLargeIcon = "icon_1"` — 알림 확장 시 우측 큰 이미지 (풀컬러 drawable).
+- `AndroidNotification.SmallIcon = DefaultSmallIcon`, `AndroidNotification.LargeIcon = DefaultLargeIcon` 설정.
+- 두 아이콘 모두 Unity Mobile Notifications 패키지의 **NotificationsSettings.asset**에 등록 필요.
+- 설정 경로: Unity Editor → Project Settings → Mobile Notifications → Android → Icons → Add
+  - Identifier: `icon_0`, Type: Small
+  - Identifier: `icon_1`, Type: Large
 
 ---
 

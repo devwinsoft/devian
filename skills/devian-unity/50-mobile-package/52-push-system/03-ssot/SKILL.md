@@ -131,7 +131,17 @@ public class LocalNotificationData
 
 ---
 
-## H. 초기화 시 Local Push Clear
+## H. Notification Icon 정책
+
+- **Android**: 단일 기본 아이콘 사용. Provider 내부 상수로 처리 (`LocalNotificationData`에 아이콘 필드 없음).
+  - `DefaultSmallIcon = "icon_0"` — 상태바/알림 헤더 (모노크롬 drawable)
+  - `DefaultLargeIcon = "icon_1"` — 알림 확장 시 우측 큰 이미지 (풀컬러 drawable)
+  - Unity Mobile Notifications 패키지의 NotificationsSettings.asset에 각각 등록 필요.
+- **iOS**: 시스템이 앱 아이콘을 강제 사용. 커스텀 아이콘 설정 불가. 코드 변경 없음.
+
+---
+
+## I. 초기화 시 Local Push Clear
 
 - `InitializeAsync` 시작 시(권한 요청 전) 기존 로컬 알림을 모두 취소한다.
 - `_provider.CancelAllLocalNotificationsAsync(ct)` 호출 + `_storage.scheduledNotifications.Clear()`.
