@@ -18,6 +18,7 @@ AppliesTo: v10
 
 | 탭 | 상태 | 버튼 | 설명 |
 |----|------|------|------|
+| Push Send | 구현됨 | [Load Data] / [Send] | FCM 토픽 기반 푸시 알림 발송 |
 | Obfuscate | 구현됨 | [Obfuscate] | 평문 -> 난독화 (byte-substitution) |
 | Deobfuscate | 구현됨 | [Deobfuscate] | 난독화 -> 평문 |
 | Save Data | 구현됨 | [Import] / [Export & Download] | .dvn <-> JSON 통합 워크플로우 |
@@ -62,6 +63,7 @@ framework-ts/apps/Operation/
 | [16-page-obfuscate](../16-page-obfuscate/SKILL.md) | Obfuscate 탭 UI |
 | [17-page-deobfuscate](../17-page-deobfuscate/SKILL.md) | Deobfuscate 탭 UI |
 | [18-page-savedata](../18-page-savedata/SKILL.md) | Save Data 탭 UI |
+| [19-page-push-send](../19-page-push-send/SKILL.md) | Push Send 탭 UI |
 
 
 ---

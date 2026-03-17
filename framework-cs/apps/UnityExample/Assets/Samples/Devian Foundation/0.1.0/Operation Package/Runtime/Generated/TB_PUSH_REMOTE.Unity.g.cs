@@ -10,15 +10,15 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-namespace Devian.Domain.Game
+namespace Devian.Domain.Operation
 {
-    public static partial class TB_PUSH
+    public static partial class TB_PUSH_REMOTE
     {
         private static global::Devian.TableFormat _loadedFormat;
         private static bool _isLoaded;
 
         /// <summary>
-        /// Preload PUSH table via TableManager.
+        /// Preload PUSH_REMOTE table via TableManager.
         /// TableManager handles: TextAsset load + TB insert + cache.
         /// </summary>
         /// <param name="key">Addressables key to load TextAsset</param>
@@ -39,7 +39,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Unload PUSH table and clear data.
+        /// Unload PUSH_REMOTE table and clear data.
         /// </summary>
         public static void Unload()
         {
@@ -48,7 +48,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Check if PUSH table is loaded.
+        /// Check if PUSH_REMOTE table is loaded.
         /// </summary>
         public static bool IsLoaded => _isLoaded;
 

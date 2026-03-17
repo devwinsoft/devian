@@ -64,7 +64,7 @@ Common Domain 정책이 적용되는 디렉토리 정본은 다음과 같다.
 
 ### Final Data Outputs
 
-- SSOT의 `tableConfig.tableDirs/stringDirs/soundDirs`가 정본이다.
+- SSOT의 `tableConfig.tableDirs/stringDirs`가 정본이다.
 - `domains.Common.*TargetDirs` 같은 per-domain target 키는 금지한다.
 
 ---

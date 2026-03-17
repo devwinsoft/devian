@@ -12,9 +12,6 @@
     "packageDir": "../framework-cs/apps/UnityExample/Packages"
   },
   "tableConfig": {
-    "soundDirs": [
-      "../framework-cs/apps/UnityExample/Assets/Bundles/Sounds"
-    ],
     "stringDirs": [
       "../framework-cs/apps/UnityExample/Assets/Bundles/Strings"
     ],
@@ -22,5 +19,6 @@
       "../framework-cs/apps/UnityExample/Assets/Bundles/Tables"
     ]
   },
+  "serverTableFolder": "../framework-ts/tables",
   "sampleFolder": "../framework-cs/apps/UnityExample/Assets/Samples"
 }

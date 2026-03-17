@@ -1,0 +1,22 @@
+{
+  "name": "Devian.Samples.OperationPackage.Editor",
+  "rootNamespace": "Devian.Domain.Operation.Editor",
+  "references": [
+    "Devian.Samples.OperationPackage",
+    "Devian.Samples.CommonPackage",
+    "Devian.Samples.CommonPackage.Editor",
+    "Devian.Unity.Editor",
+    "Devian.Unity"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

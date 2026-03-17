@@ -39,7 +39,9 @@ framework-ts/apps/Operation/
 └── src/
     ├── main.ts                  ← 엔트리: 탭 초기화, 라우팅
     ├── style.css                ← 전역 스타일
+    ├── firebase.ts              ← Firebase 초기화 + httpsCallable
     ├── tabs/
+    │   ├── push-send.ts         ← Push Send 탭 (첫 번째)
     │   ├── obfuscate.ts         ← Obfuscate 탭
     │   ├── deobfuscate.ts       ← Deobfuscate 탭
     │   └── savedata.ts          ← Save Data 탭
@@ -56,6 +58,7 @@ framework-ts/apps/Operation/
 
 - **단일 페이지** + **탭 전환**으로 기능을 구분한다.
 - 탭 목록(순서):
+  - Push Send
   - Obfuscate
   - Deobfuscate
   - Save Data

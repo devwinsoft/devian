@@ -1,0 +1,17 @@
+{
+  "name": "Devian.Samples.OperationPackage",
+  "rootNamespace": "Devian.Domain.Operation",
+  "references": [
+    "Devian.Core",
+    "Devian.Samples.CommonPackage"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

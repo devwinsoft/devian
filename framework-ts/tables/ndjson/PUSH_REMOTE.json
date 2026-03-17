@@ -1,0 +1,4 @@
+{"PushId":"event_korean","Topic":"event","Language":"Korean","DefaultMsg":"","IsTest":false}
+{"PushId":"event_english","Topic":"event","Language":"English","DefaultMsg":"","IsTest":false}
+{"PushId":"test_korean","Topic":"test","Language":"Korean","DefaultMsg":"","IsTest":true}
+{"PushId":"test_english","Topic":"test","Language":"English","DefaultMsg":"","IsTest":true}

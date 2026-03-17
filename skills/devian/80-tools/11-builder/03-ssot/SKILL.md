@@ -139,9 +139,11 @@ PROTOCOL 입력은 `{buildInputJson}`의 `protocols` 섹션(배열)이 정의한
 - `{upmConfig.sourceDir}/com.devian.foundation/Samples~/{ProtocolGroup}Protocol/Runtime/Generated/**`
 - 포함 파일: `{Protocol}.g.cs`, `{Protocol}SessionHost.g.cs`, `{Protocol}Networker.g.cs`
 
-**수기/고정 파일 (빌더 생성/수정 금지):**
+**scaffold 파일 (초회 빌더 자동 생성, 이후 수동 관리 — 덮어쓰기 금지):**
 - `Runtime/Devian.Samples.{ProtocolGroup}Protocol.asmdef`
 - `README.md`
+
+**수기/고정 파일 (빌더 생성/수정 금지):**
 - `*.meta`
 
 **레거시 청소:**
@@ -197,8 +199,7 @@ DATA 도메인의 데이터 출력 타겟은 전역 `tableConfig`로 설정한�
 ```json
 "tableConfig": {
   "tableDirs": ["../framework-cs/apps/UnityExample/Assets/Bundles/Tables"],
-  "stringDirs": ["../framework-cs/apps/UnityExample/Assets/Bundles/Strings"],
-  "soundDirs": ["../framework-cs/apps/UnityExample/Assets/Bundles/Sounds"]
+  "stringDirs": ["../framework-cs/apps/UnityExample/Assets/Bundles/Strings"]
 }
 ```
 
@@ -206,13 +207,61 @@ DATA 도메인의 데이터 출력 타겟은 전역 `tableConfig`로 설정한�
 |------|------|------|
 | `tableDirs` | 테이블 출력 디렉토리 목록 | `["...Assets/Bundles/Tables"]` |
 | `stringDirs` | String 테이블 출력 디렉토리 목록 | `["...Assets/Bundles/Strings"]` |
-| `soundDirs` | Sound 데이터 출력 디렉토리 목록 | `["...Assets/Bundles/Sounds"]` |
 
 **필수 규칙:**
 - `tableConfig`의 각 Dir 배열은 필수 (빈 배열 허용)
 - 빌더가 각 Dir에 대해 `ndjson/` 및 `pb64/` 하위 디렉토리를 생성
 - `dataConfig`는 금지 (deprecated, 존재 시 빌드 FAIL)
 - `domains[*].dataTargetDirs`는 금지 (존재 시 빌드 실패)
+
+---
+
+## serverTableFolder 설정
+
+서버(TS) 전용 테이블 데이터 출력 폴더를 설정한다.
+
+```json
+"serverTableFolder": "../framework-ts/tables"
+```
+
+| 필드 | 역할 | 필수 | 예시 |
+|------|------|------|------|
+| `serverTableFolder` | 서버 전용 테이블 출력 폴더 | 조건부 | `"../framework-ts/tables"` |
+
+**규칙:**
+- config 최상위에 위치한다 (tableConfig 밖).
+- `domains`에 `type`이 `"server"` 또는 `"all"`인 도메인이 하나라도 있으면 필수. 없으면 빌드 FAIL.
+- 빌더가 `{serverTableFolder}/ndjson/` 및 `{serverTableFolder}/pb64/` 하위 디렉토리를 생성한다.
+- `tableConfig`와 동일한 clean+mergeCopy 정책을 적용한다.
+
+---
+
+## Domain type 설정
+
+각 도메인의 데이터/코드 출력 대상을 `type` 필드로 지정한다.
+
+```json
+"domains": {
+  "Common": {
+    "type": "all",
+    "tableDir": "Domains/Common",
+    "tableFiles": ["CommonTable.xlsx"]
+  }
+}
+```
+
+| 값 | 데이터 출력 (ndjson/pb64) | 코드 생성 (CS/TS) |
+|-----|---------------------------|-------------------|
+| `"all"` (기본) | `tableConfig` dirs + `serverTableFolder` | 정해진 폴더 (csConfig/tsConfig) |
+| `"client"` | `tableConfig` dirs만 | 정해진 폴더 (csConfig/tsConfig) |
+| `"server"` | `serverTableFolder`만 | 정해진 폴더 (csConfig/tsConfig) |
+
+**규칙:**
+- `type`은 선택 필드이며, 생략 시 `"all"`로 처리한다.
+- 허용 값: `"all"`, `"client"`, `"server"`. 그 외 값은 빌드 FAIL.
+- `type`이 `"server"` 또는 `"all"`인 도메인이 있으면 `serverTableFolder`는 필수.
+- 코드 생성(CS/TS)은 `type`에 무관하게 항상 수행한다.
+- String 데이터는 `type`에 무관하게 기존 `stringDirs`로 출력 (클라이언트 전용 에셋).
 
 ---
 
@@ -322,11 +371,12 @@ Domain과 Protocol은 독립 UPM 패키지가 아니라, **모두** `com.devian.
 
 ### 공통 규칙
 
-- 각 Sample의 `asmdef`, `README.md`는 수동 관리 (빌더가 생성/수정 금지).
+- 각 Sample의 `asmdef`, `README.md`는 **초회 빌더 자동 생성, 이후 수동 관리** (빌더가 기존 파일 덮어쓰기 금지).
 - `*.meta` 파일은 수동 관리 (Unity GUID 보존).
-- 빌더가 touch 가능한 범위는 `Runtime/Generated/`와 `Editor/Generated/`뿐이다.
+- 빌더가 touch 가능한 범위는 `Runtime/Generated/`와 `Editor/Generated/`뿐이다 (초회 scaffold 제외).
 - Hybrid 감지: target에 Runtime asmdef (`Devian.Samples.{SampleName}.asmdef`)가 존재하면 hybrid mode → `Generated/` 디렉토리만 clean+copy, 수동 addon 보존.
-- Hybrid가 아니면 (새 도메인/프로토콜 첫 빌드 등): `copyUpmToTarget()`으로 전체 staging 복사.
+- 신규 Sample (asmdef 미존재): 빌더가 asmdef + README.md scaffold를 자동 생성한 뒤 hybrid mode로 진입. 이후 빌드부터는 기존 hybrid 동작.
+- scaffold 생성은 **create-if-absent** 전략: 파일이 이미 존재하면 절대 덮어쓰지 않는다.
 
 ### Sample-target 충돌 정책 (Hard Fail)
 
@@ -369,10 +419,13 @@ Domain과 Protocol은 독립 UPM 패키지가 아니라, **모두** `com.devian.
 - **Generated-only**: 빌더가 touch하는 범위는 `Runtime/Generated/`뿐.
 - **noEngineReferences: true** — Protocol은 순수 C# 코드이며 UnityEngine 의존 없음.
 
-### 수기/고정 파일 (빌더 생성/수정 금지)
+### scaffold 파일 (초회 빌더 자동 생성, 이후 수동 관리 — 덮어쓰기 금지)
 
 - `Runtime/Devian.Samples.{ProtocolGroup}Protocol.asmdef`
 - `README.md`
+
+### 수기/고정 파일 (빌더 생성/수정 금지)
+
 - `*.meta`
 
 ### asmdef 구성

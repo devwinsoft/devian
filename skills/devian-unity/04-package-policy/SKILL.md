@@ -127,7 +127,8 @@ Editor-only asmdef 필수 필드:
 **Hybrid Sample 규칙 (Hard Rule):**
 - 빌더는 `Runtime/Generated/`와 `Editor/Generated/` 디렉토리만 clean+copy한다.
 - 수동 addon 코드는 빌더가 touch하지 않는다 (보존).
-- asmdef, package.json(상위 com.devian.foundation의), README.md는 수동 관리 (빌더 생성/수정 금지).
+- asmdef, README.md는 **초회 빌더 자동 생성, 이후 수동 관리** (빌더가 기존 파일 덮어쓰기 금지).
+- package.json(상위 com.devian.foundation의)은 수동 관리 (빌더 생성/수정 금지).
 - Generated 코드의 C# namespace는 원래 namespace를 유지:
   - Domain: `Devian.Domain.{DomainKey}`
   - Protocol: `Devian.Protocol.{ProtocolGroup}`

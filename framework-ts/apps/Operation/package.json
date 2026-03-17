@@ -12,7 +12,8 @@
     "@devian/module-game": "10.0.0",
     "codemirror": "^6.0.1",
     "@codemirror/lang-json": "^6.0.1",
-    "@codemirror/theme-one-dark": "^6.1.2"
+    "@codemirror/theme-one-dark": "^6.1.2",
+    "firebase": "^11.0.0"
   },
   "devDependencies": {
     "vite": "^6.0.0"

@@ -23,9 +23,27 @@ Devian TypeScript 프로젝트의 단일 workspace 구조와 npm 정책을 정�
 하위 폴더(module/*, apps/*, tools/*)에서 직접 `npm install` 금지.
 반드시 `framework-ts/`에서 실행한다.
 
-주의:
-- 빌드 도구 캐시도 가능한 root `node_modules` 하위로 통일한다.
-- 예: Vite 앱은 `vite.config.ts`에서 `cacheDir`를 `framework-ts/node_modules/.vite/<app>`로 지정한다.
+### 3. 하위 node_modules 금지
+
+하위 폴더에 `node_modules/`가 존재하면 정책 위반이다.
+
+- Vite 등 빌드 도구가 기본값으로 로컬 `node_modules/.vite/`에 캐시를 생성할 수 있다.
+- 반드시 `cacheDir`를 `framework-ts/node_modules/.vite/<app>`으로 지정하여 방지한다.
+- 예: `apps/Operation/vite.config.ts` → `cacheDir: path.resolve(__dirname, '../../node_modules/.vite/operation')`
+
+Recovery (하위 node_modules 발견 시):
+
+```bash
+# 1. 하위 node_modules 삭제
+rm -rf framework-ts/apps/<app>/node_modules
+
+# 2. 해당 앱의 vite.config.ts에서 cacheDir가 올바른지 확인
+# cacheDir → framework-ts/node_modules/.vite/<app>
+
+# 3. root에서 재설치
+cd framework-ts
+npm ci
+```
 
 ---
 

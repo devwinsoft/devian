@@ -1,4 +1,5 @@
 import './style.css';
+import { createPushSendTab } from './tabs/push-send';
 import { createObfuscateTab } from './tabs/obfuscate';
 import { createDeobfuscateTab } from './tabs/deobfuscate';
 import { createSaveDataTab } from './tabs/savedata';
@@ -11,6 +12,12 @@ interface TabDef {
 }
 
 const tabs: TabDef[] = [
+  {
+    id: 'push-send',
+    label: 'Push Send',
+    pipeline: 'Pipeline: PUSH_REMOTE.json \u2192 Firebase Function \u2192 FCM topic send',
+    create: createPushSendTab,
+  },
   {
     id: 'obfuscate',
     label: 'Obfuscate',

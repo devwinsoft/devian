@@ -75,7 +75,8 @@ Events:
 
 - 플랫폼 분기: `#if UNITY_IOS` / `#elif UNITY_ANDROID` / `else` → Provider 인스턴스 선택
 - 토큰 획득: 초기화 시 `GetTokenAsync`로 FCM 토큰 획득, `PushStorage.token`에 저장 (로컬 캐시 용도)
-- 테이블 기반 구독: `TB_PUSH.GetByGroup(DefaultLanguage)` → 매칭 토픽 자동 구독 (03-ssot §F)
+- 테이블 기반 구독: `TB_PUSH_REMOTE.GetByGroup(DefaultLanguage)` → 행의 `PushId`를 FCM 토픽으로 구독 (03-ssot §F)
+  - Development Build (`Debug.isDebugBuild`): 모든 행 구독 / Release Build: `IsTest == false`만 구독
 - 토픽 복원: 초기화 시 `PushStorage.subscribedTopics` 기반 재구독
 - 로컬 알림 Storage 동기화: 등록/취소마다 `PushStorage` 갱신
 

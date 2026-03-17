@@ -6,34 +6,34 @@
 
 using UnityEditor;
 using UnityEngine;
-using Devian.Domain.Game;
+using Devian.Domain.Operation;
 
 namespace Devian
 {
-    /// <summary>Selector for PUSH_ID</summary>
-    public class Game_PUSH_ID_Selector : BaseEditorID_Selector
+    /// <summary>Selector for PUSH_REMOTE_ID</summary>
+    public class Operation_PUSH_REMOTE_ID_Selector : BaseEditorID_Selector
     {
-        protected override string GetDisplayTypeName() => "PUSH";
+        protected override string GetDisplayTypeName() => "PUSH_REMOTE";
 
         public override void Reload()
         {
             ClearItems();
-            TB_PUSH.Clear();
+            TB_PUSH_REMOTE.Clear();
 
-            var textAssets = AssetManager.FindAssets<TextAsset>("PUSH");
+            var textAssets = AssetManager.FindAssets<TextAsset>("PUSH_REMOTE");
             foreach (var ta in textAssets)
             {
                 var assetPath = AssetDatabase.GetAssetPath(ta);
                 if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                TB_PUSH.LoadFromNdjson(ta.text);
+                TB_PUSH_REMOTE.LoadFromNdjson(ta.text);
                 break;
             }
 
-            foreach (var groupKey in TB_PUSH.GetGroupKeys())
+            foreach (var groupKey in TB_PUSH_REMOTE.GetGroupKeys())
             {
-                if (TB_PUSH.TryGetGroupPrimaryKey(groupKey, out var pk))
+                if (TB_PUSH_REMOTE.TryGetGroupPrimaryKey(groupKey, out var pk))
                 {
                     // key = PK string (applied to Value), display = groupKey
                     AddItem(pk.ToString(), groupKey.ToString());
@@ -42,14 +42,14 @@ namespace Devian
         }
     }
 
-    /// <summary>PropertyDrawer for PUSH_ID</summary>
-    [CustomPropertyDrawer(typeof(PUSH_ID))]
-    public class Game_PUSH_ID_Drawer : BaseEditorID_Drawer<Game_PUSH_ID_Selector>
+    /// <summary>PropertyDrawer for PUSH_REMOTE_ID</summary>
+    [CustomPropertyDrawer(typeof(PUSH_REMOTE_ID))]
+    public class Operation_PUSH_REMOTE_ID_Drawer : BaseEditorID_Drawer<Operation_PUSH_REMOTE_ID_Selector>
     {
-        protected override Game_PUSH_ID_Selector GetSelector()
+        protected override Operation_PUSH_REMOTE_ID_Selector GetSelector()
         {
-            var w = ScriptableObject.CreateInstance<Game_PUSH_ID_Selector>();
-            w.titleContent = new GUIContent("Select PUSH");
+            var w = ScriptableObject.CreateInstance<Operation_PUSH_REMOTE_ID_Selector>();
+            w.titleContent = new GUIContent("Select PUSH_REMOTE");
             w.ShowUtility();
             return w;
         }
@@ -60,17 +60,17 @@ namespace Devian
             if (valueProp.propertyType == SerializedPropertyType.String)
             {
                 var pk = valueProp.stringValue ?? string.Empty;
-                TB_PUSH.Clear();
-                var textAssets = AssetManager.FindAssets<TextAsset>("PUSH");
+                TB_PUSH_REMOTE.Clear();
+                var textAssets = AssetManager.FindAssets<TextAsset>("PUSH_REMOTE");
                 foreach (var ta in textAssets)
                 {
                     var assetPath = AssetDatabase.GetAssetPath(ta);
                     if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))
                         continue;
-                    TB_PUSH.LoadFromNdjson(ta.text);
+                    TB_PUSH_REMOTE.LoadFromNdjson(ta.text);
                     break;
                 }
-                if (TB_PUSH.TryGetGroupKeyByKey(pk, out var groupKey))
+                if (TB_PUSH_REMOTE.TryGetGroupKeyByKey(pk, out var groupKey))
                     return groupKey.ToString();
                 return pk;
             }

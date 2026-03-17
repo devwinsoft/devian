@@ -430,17 +430,6 @@ namespace Devian.Domain.Game
         public string GetKey() => SeasonId;
     }
 
-    /// <summary>PUSH row</summary>
-    public sealed class PUSH : IEntityKey<string>
-    {
-        public string PushId { get; set; } = string.Empty;
-        public string Topic { get; set; } = string.Empty;
-        public string Language { get; set; } = string.Empty;
-        public string DefaultMsg { get; set; } = string.Empty;
-
-        public string GetKey() => PushId;
-    }
-
     /// <summary>MISSION_DAILY row</summary>
     public sealed class MISSION_DAILY : IEntityKey<string>
     {
@@ -2014,133 +2003,6 @@ namespace Devian.Domain.Game
         static partial void _OnAfterLoad();
     }
 
-    /// <summary>TB_PUSH container</summary>
-    public static partial class TB_PUSH
-    {
-        private static readonly Dictionary<string, PUSH> _dict = new();
-        private static readonly List<PUSH> _list = new();
-
-        private static readonly Dictionary<string, List<PUSH>> _groupDict = new();
-        private static readonly List<string> _groupList = new();
-        private static readonly Dictionary<string, string> _groupPrimaryKey = new();
-        private static readonly Dictionary<string, string> _keyToGroup = new();
-
-        public static int Count => _list.Count;
-
-        public static void Clear()
-        {
-            _dict.Clear();
-            _list.Clear();
-            _groupDict.Clear();
-            _groupList.Clear();
-            _groupPrimaryKey.Clear();
-            _keyToGroup.Clear();
-        }
-
-        public static IReadOnlyList<PUSH> GetAll() => _list;
-
-        public static IReadOnlyList<string> GetGroupKeys() => _groupList;
-
-        public static IReadOnlyList<PUSH> GetByGroup(string groupKey)
-        {
-            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<PUSH>();
-        }
-
-        public static bool TryGetGroupPrimaryKey(string groupKey, out string key)
-        {
-            return _groupPrimaryKey.TryGetValue(groupKey, out key);
-        }
-
-        public static bool TryGetGroupKeyByKey(string key, out string groupKey)
-        {
-            return _keyToGroup.TryGetValue(key, out groupKey);
-        }
-
-        public static PUSH? Get(string key)
-        {
-            return _dict.TryGetValue(key, out var row) ? row : null;
-        }
-
-        public static bool TryGet(string key, out PUSH? row)
-        {
-            return _dict.TryGetValue(key, out row);
-        }
-
-        private static void AddRow(PUSH row)
-        {
-            _list.Add(row);
-            _dict[row.PushId] = row;
-            var groupKey = row.Language;
-            _keyToGroup[row.PushId] = groupKey;
-            if (!_groupDict.TryGetValue(groupKey, out var groupList))
-            {
-                groupList = new List<PUSH>();
-                _groupDict[groupKey] = groupList;
-                _groupList.Add(groupKey);
-            }
-            groupList.Add(row);
-            if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
-            {
-                if (Comparer<string>.Default.Compare(row.PushId, existing) < 0)
-                    _groupPrimaryKey[groupKey] = row.PushId;
-            }
-            else
-            {
-                _groupPrimaryKey[groupKey] = row.PushId;
-            }
-        }
-
-        public static void LoadFromJson(string json)
-        {
-            Clear();
-            var rows = JsonConvert.DeserializeObject<List<PUSH>>(json);
-            if (rows == null) return;
-            foreach (var row in rows)
-            {
-                if (row == null) continue;
-                AddRow(row);
-            }
-        }
-
-        public static void LoadFromNdjson(string ndjson)
-        {
-            Clear();
-            using var reader = new StringReader(ndjson);
-            string? line;
-            while ((line = reader.ReadLine()) != null)
-            {
-                if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<PUSH>(line);
-                if (row == null) continue;
-                AddRow(row);
-            }
-        }
-
-        public static void LoadFromPb64Binary(byte[] rawBinary)
-        {
-            Clear();
-            Pb64Loader.ParseRows(rawBinary, jsonRow =>
-            {
-                if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<PUSH>(jsonRow);
-                if (row == null) return;
-                AddRow(row);
-            });
-        }
-
-        // ====================================================================
-        // AfterLoad Hook (optional)
-        // Called by DomainTableRegistry after TableManager inserts data.
-        // ====================================================================
-
-        internal static void _AfterLoad()
-        {
-            _OnAfterLoad();
-        }
-
-        static partial void _OnAfterLoad();
-    }
-
     /// <summary>TB_MISSION_DAILY container</summary>
     public static partial class TB_MISSION_DAILY
     {
@@ -3535,16 +3397,6 @@ namespace Devian.Domain.Game
         public static implicit operator SEASON_ID(string value) => new SEASON_ID { Value = value };
     }
 
-    /// <summary>Inspector-bindable ID for PUSH</summary>
-    [Serializable]
-    public sealed class PUSH_ID
-    {
-        public string Value;
-
-        public static implicit operator string(PUSH_ID id) => id.Value;
-        public static implicit operator PUSH_ID(string value) => new PUSH_ID { Value = value };
-    }
-
     /// <summary>Inspector-bindable ID for MISSION_DAILY</summary>
     [Serializable]
     public sealed class MISSION_DAILY_ID
@@ -3702,7 +3554,6 @@ namespace Devian.Domain.Game
         public static bool IsValid(this LEADERBOARD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this LEADERBOARD_REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this SEASON_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
-        public static bool IsValid(this PUSH_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MISSION_DAILY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MISSION_PERIOD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this SHOP_CATALOG_ID? obj) => obj != null && !EqualityComparer<SHOP_CATALOG_TYPE>.Default.Equals(obj.Value, default);

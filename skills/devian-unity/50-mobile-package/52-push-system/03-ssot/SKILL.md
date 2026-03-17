@@ -80,7 +80,7 @@ public class LocalNotificationData
 
 ## D. Topic Rules
 
-- 토픽 ID는 내부 문자열이다 (예: `"news"`, `"event"`, `"maintenance"`).
+- FCM 토픽 ID = `PUSH_REMOTE.PushId` (테이블 pk). 예: `"event_korean"`, `"test_english"`.
 - 구독/해제 성공 시 `PushStorage.subscribedTopics`를 즉시 동기화한다.
 - 초기화 시 `PushStorage.subscribedTopics`를 기반으로 재구독을 시도한다.
 
@@ -97,11 +97,14 @@ public class LocalNotificationData
 
 ## F. Table-driven Topic Subscription
 
-- `InitializeAsync` 성공 시, `TB_PUSH` 테이블에서 `MobileApplication.Instance.DefaultLanguage`에 해당하는 토픽을 자동 구독한다.
-- `TB_PUSH`의 GroupKey = `Language` (MetaTable.xlsx PUSH 시트, `group:true`).
-- `TB_PUSH.GetByGroup(DefaultLanguage.ToString())` → 반환된 행의 `Topic`을 각각 구독한다.
+- `InitializeAsync` 성공 시, `TB_PUSH_REMOTE` 테이블에서 `MobileApplication.Instance.DefaultLanguage`에 해당하는 토픽을 자동 구독한다.
+- `TB_PUSH_REMOTE`의 GroupKey = `Language` (OperationTable.xlsx PUSH_REMOTE 시트, Operation 도메인, `group:true`).
+- `TB_PUSH_REMOTE.GetByGroup(DefaultLanguage.ToString())` → 반환된 행의 `PushId`를 FCM 토픽으로 구독한다.
+- **IsTest 필터링:**
+  - `Debug.isDebugBuild == true` (Development Build): 모든 행 구독 (IsTest 무관)
+  - `Debug.isDebugBuild == false` (Release Build): `IsTest == false` 인 행만 구독
 - 이미 `PushStorage.subscribedTopics`에 존재하는 토픽은 중복 구독하지 않는다.
-- `TB_PUSH`가 로드되지 않았으면 (`TB_PUSH.IsLoaded == false`) skip한다.
+- `TB_PUSH_REMOTE`가 로드되지 않았으면 (`TB_PUSH_REMOTE.IsLoaded == false`) skip한다.
 
 ---
 

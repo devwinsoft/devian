@@ -34,6 +34,11 @@
       "path": "Samples~/MobilePackage"
     },
     {
+      "displayName": "Operation Package",
+      "description": "Sample: OperationPackage",
+      "path": "Samples~/OperationPackage"
+    },
+    {
       "displayName": "SoundPackage",
       "description": "Sound domain: Sound/Voice managers + Generated tables/enums.",
       "path": "Samples~/SoundPackage"

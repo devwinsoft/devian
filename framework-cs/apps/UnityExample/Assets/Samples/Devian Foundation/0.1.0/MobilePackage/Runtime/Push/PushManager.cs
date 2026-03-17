@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
-using Devian.Domain.Game;
+using Devian.Domain.Operation;
 using UnityEngine;
 
 namespace Devian
@@ -271,33 +271,38 @@ namespace Devian
 
         async Task subscribeTableTopicsAsync(CancellationToken ct)
         {
-            if (!TB_PUSH.IsLoaded)
+            if (!TB_PUSH_REMOTE.IsLoaded)
             {
-                Debug.LogWarning($"[{Tag}] TB_PUSH not loaded, skipping table-driven topic subscription.");
+                Debug.LogWarning($"[{Tag}] TB_PUSH_REMOTE not loaded, skipping table-driven topic subscription.");
                 return;
             }
 
             var lang = MobileApplication.Instance.DefaultLanguage.ToString();
-            var rows = TB_PUSH.GetByGroup(lang);
+            var rows = TB_PUSH_REMOTE.GetByGroup(lang);
+            var isDev = Debug.isDebugBuild;
 
             for (var i = 0; i < rows.Count; i++)
             {
-                var topic = rows[i].Topic;
-                if (string.IsNullOrEmpty(topic))
+                // Release build: skip test topics
+                if (!isDev && rows[i].IsTest)
                     continue;
 
-                if (_storage.subscribedTopics.Contains(topic))
+                var pushId = rows[i].PushId;
+                if (string.IsNullOrEmpty(pushId))
                     continue;
 
-                var result = await _provider.SubscribeTopicAsync(topic, ct);
+                if (_storage.subscribedTopics.Contains(pushId))
+                    continue;
+
+                var result = await _provider.SubscribeTopicAsync(pushId, ct);
                 if (result.IsSuccess)
                 {
-                    _storage.subscribedTopics.Add(topic);
-                    Debug.Log($"[{Tag}] Table topic subscribed: {topic} (lang={lang})");
+                    _storage.subscribedTopics.Add(pushId);
+                    Debug.Log($"[{Tag}] Table topic subscribed: {pushId} (lang={lang})");
                 }
                 else
                 {
-                    Debug.LogWarning($"[{Tag}] Failed to subscribe table topic: {topic} - {result.Error}");
+                    Debug.LogWarning($"[{Tag}] Failed to subscribe table topic: {pushId} - {result.Error}");
                 }
             }
         }

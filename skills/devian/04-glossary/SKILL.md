@@ -42,7 +42,7 @@ Devian 스킬 문서 전반에서 사용되는 핵심 용어와 플레이스홀�
 프로젝트 설정 JSON 파일 경로.
 
 - 예: `input/build_config.json`
-- 포함 키: `tableConfig` (tableDirs, stringDirs, soundDirs)
+- 포함 키: `tableConfig` (tableDirs, stringDirs)
 
 ---
 
@@ -60,10 +60,8 @@ Devian 스킬 문서 전반에서 사용되는 핵심 용어와 플레이스홀�
 | `{tsConfig.generateDir}` | TS 생성 모듈 루트 |
 | `{tableConfig.tableDirs}` | 테이블 출력 경로 배열 |
 | `{tableConfig.stringDirs}` | 스트링 테이블 출력 경로 배열 |
-| `{tableConfig.soundDirs}` | 사운드 출력 경로 배열 |
 | `{tableDir}` | tableDirs 배열의 개별 요소 |
 | `{stringDir}` | stringDirs 배열의 개별 요소 |
-| `{soundDir}` | soundDirs 배열의 개별 요소 |
 | `{upmConfig.sourceDir}` | UPM 소스 루트 |
 | `{upmConfig.packageDir}` | UPM 패키지 출력 루트 |
 | `{buildInputJson}` | 빌드 입력 JSON 경로 |

@@ -5,6 +5,7 @@
     "Devian.Core",
     "Devian.Samples.CommonPackage",
     "Devian.Samples.GamePackage",
+    "Devian.Samples.OperationPackage",
     "Unity.InputSystem",
     "Devian.Samples.UIPackage",
     "Unity.Purchasing"

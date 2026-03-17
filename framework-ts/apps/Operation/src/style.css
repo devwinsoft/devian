@@ -337,3 +337,15 @@ body {
 .status-msg.success {
   color: var(--success);
 }
+
+/* --- Push Send --- */
+
+.push-load-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.io-section textarea[rows="2"] {
+  min-height: 56px;
+}

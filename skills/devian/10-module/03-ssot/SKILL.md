@@ -77,7 +77,6 @@ Devian 문서/대화에서 말하는 "충돌"은 기능 자체의 찬반/의견 
 - `{csConfig.generateDir}`, `{tsConfig.generateDir}` — 전역 C#/TS 반영 루트
 - `{tableConfig.tableDirs}` — 테이블 출력 타겟 (배열)
 - `{tableConfig.stringDirs}` — String 테이블 출력 타겟 (배열)
-- `{tableConfig.soundDirs}` — Sound 데이터 출력 타겟 (배열)
 
 > `{tempDir}`는 절대 경로가 아닌 경우 **`{buildInputJson}`이 있는 디렉토리** 기준으로 해석한다.
 

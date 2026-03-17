@@ -111,8 +111,48 @@ Import (.dvn): .dvn -> version parse (0x01) -> ComplexUtil.Decrypt_Base64 -> JSO
 ---
 
 
+## D) Push Send
+
+FCM 토픽 기반 푸시 알림 발송. PUSH_REMOTE 테이블 데이터를 로드하여 토픽별/언어별로 발송한다.
+
+| 항목 | 값 |
+|------|-----|
+| 데이터 소스 | `PUSH_REMOTE.json` (NDJSON, 파일 로드) |
+| 입력 | Topic (드롭다운), Body × 3언어 (Korean / English / Japanese) |
+| 출력 | FCM 발송 결과 (성공/실패) |
+| 버튼 | [Load Data], [Send] |
+| 백엔드 | Firebase Cloud Function `sendPushNotification` (Callable v2) |
+
+### 발송 흐름
+
+```
+1. [Load Data] → PUSH_REMOTE.json 파일 선택 → NDJSON 파싱
+2. Topic 드롭다운에 고유 Topic 목록 표시 (예: event, test)
+3. 사용자가 Topic 선택 + 언어별 Body 작성
+4. [Send] → 선택 Topic에 해당하는 PUSH_REMOTE 행 필터링
+5. 각 행의 PushId를 FCM 토픽으로, 해당 Language의 Body를 매칭하여 발송
+   예: Topic="event" 선택 시
+     → event_korean (PushId) + Korean body
+     → event_english (PushId) + English body
+6. Body가 비어있거나 매칭 행이 없는 언어는 skip
+```
+
+### Firebase Function: `sendPushNotification`
+
+- Callable v2 (`onCall`), region: asia-northeast3
+- 입력: `{ entries: [{ pushId: string, body: string }] }`
+- 동작: 각 entry에 대해 `admin.messaging().send({ topic: pushId, notification: { body } })`
+- 응답: `{ results: [{ pushId: string, success: boolean, error?: string }] }`
+
+> PUSH_REMOTE 테이블 정본: 52-push-system/03-ssot §D, §F
+
+
+---
+
+
 ## Related
 
 - [00-overview](../00-overview/SKILL.md) — Operation 개요
 - [01-policy](../01-policy/SKILL.md) — 정책
 - [Tools SSOT](../../03-ssot/SKILL.md) — 상위 SSOT
+- [52-push-system/03-ssot](../../../../devian-unity/50-mobile-package/52-push-system/03-ssot/SKILL.md) — Push 시스템 SSOT

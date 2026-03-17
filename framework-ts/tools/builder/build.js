@@ -267,6 +267,29 @@ class DevianToolBuilder {
         }
         fs.mkdirSync(this.tempDir, { recursive: true });
 
+        // 2.5. Scaffold: auto-create asmdef/README for new sample packages (create-if-absent)
+        // SSOT: skills/devian/80-tools/11-builder/03-ssot/SKILL.md § 공통 규칙
+        // Must run BEFORE Phase 1 processSamplePackage validation
+        if (this.config.domains) {
+            for (const [domainName] of Object.entries(this.config.domains)) {
+                const sampleName = DevianToolBuilder.getSampleName(domainName, 'Package');
+                const targetPkgDir = path.join(this.upmSourceDir, UPM_FOUNDATION, 'Samples~', sampleName);
+                if (this.scaffoldDomainSampleIfAbsent(targetPkgDir, domainName, sampleName)) {
+                    console.log(`  [Scaffold] Domain ${domainName} → ${sampleName}`);
+                }
+            }
+        }
+        if (this.config.protocols && Array.isArray(this.config.protocols)) {
+            for (const protocolGroup of this.config.protocols) {
+                const groupName = protocolGroup.group;
+                const sampleName = DevianToolBuilder.getSampleName(groupName, 'Protocol');
+                const targetPkgDir = path.join(this.upmSourceDir, UPM_FOUNDATION, 'Samples~', sampleName);
+                if (this.scaffoldProtocolSampleIfAbsent(targetPkgDir, groupName, sampleName)) {
+                    console.log(`  [Scaffold] Protocol ${groupName} → ${sampleName}`);
+                }
+            }
+        }
+
         // 3. Generate to staging
         console.log('[Phase 1] Generating to staging...');
         
@@ -1084,16 +1107,19 @@ class DevianToolBuilder {
         }
 
         // Copy to data export targets:
-        // - Tables  : each {tableDir}/ndjson|pb64/
+        // - Tables  : each {tableDir}/ndjson|pb64/ (client) and/or serverTableFolder (server)
         // - Strings : each {stringDir}/ndjson|pb64/{Language}/ (language subdirs live under staging)
-        // - Sounds  : ensure dirs exist only (do NOT clean user sound bundles)
         //
-        // SSOT: skills/devian-core/03-ssot/SKILL.md
+        // SSOT: skills/devian/80-tools/11-builder/03-ssot/SKILL.md § Domain type 설정
         // NOTE:
         // - Domain folder is NOT created. Files are merged directly.
         // - Filename collision will FAIL the build (no silent overwrite).
         // - Clean is performed ONCE per target subdir (ndjson/pb64 roots), not per domain.
-        if (this.tableDirs && this.tableDirs.length > 0) {
+        const domainType = config.type || 'all';
+        const exportToClient = (domainType === 'all' || domainType === 'client');
+        const exportToServer = (domainType === 'all' || domainType === 'server');
+
+        if (exportToClient && this.tableDirs && this.tableDirs.length > 0) {
             for (const tableDir of this.tableDirs) {
                 const ndjsonTarget = path.join(tableDir, 'ndjson');
                 const pb64Target = path.join(tableDir, 'pb64');
@@ -1105,11 +1131,28 @@ class DevianToolBuilder {
                 fs.mkdirSync(pb64Target, { recursive: true });
 
                 this.mergeCopyDirNoOverwrite(stagingNdjson, ndjsonTarget);
-                console.log(`    [MergeCopy] ${stagingNdjson} -> ${ndjsonTarget}`);
+                console.log(`    [MergeCopy] ${stagingNdjson} -> ${ndjsonTarget} (client)`);
 
                 this.mergeCopyDirNoOverwrite(stagingPb64, pb64Target);
-                console.log(`    [MergeCopy] ${stagingPb64} -> ${pb64Target}`);
+                console.log(`    [MergeCopy] ${stagingPb64} -> ${pb64Target} (client)`);
             }
+        }
+
+        if (exportToServer && this.serverTableFolder) {
+            const serverNdjsonTarget = path.join(this.serverTableFolder, 'ndjson');
+            const serverPb64Target = path.join(this.serverTableFolder, 'pb64');
+
+            this.ensureCleanDirOnce(serverNdjsonTarget, `serverTable:ndjson`);
+            this.ensureCleanDirOnce(serverPb64Target, `serverTable:pb64`);
+
+            fs.mkdirSync(serverNdjsonTarget, { recursive: true });
+            fs.mkdirSync(serverPb64Target, { recursive: true });
+
+            this.mergeCopyDirNoOverwrite(stagingNdjson, serverNdjsonTarget);
+            console.log(`    [MergeCopy] ${stagingNdjson} -> ${serverNdjsonTarget} (server)`);
+
+            this.mergeCopyDirNoOverwrite(stagingPb64, serverPb64Target);
+            console.log(`    [MergeCopy] ${stagingPb64} -> ${serverPb64Target} (server)`);
         }
 
         if (this.stringDirs && this.stringDirs.length > 0) {
@@ -1131,19 +1174,6 @@ class DevianToolBuilder {
             }
         }
 
-        if (this.soundDirs && this.soundDirs.length > 0) {
-            for (const soundDir of this.soundDirs) {
-                // IMPORTANT: do not clean soundDir (user-managed bundles).
-                // Only ensure directory exists.
-                if (!fs.existsSync(soundDir)) {
-                    fs.mkdirSync(soundDir, { recursive: true });
-                    console.log(`    [EnsureDir] Created soundDir: ${soundDir}`);
-                } else {
-                    console.log(`    [EnsureDir] soundDir exists: ${soundDir}`);
-                }
-            }
-        }
-
         // Copy Domain UPM to upm
         // Rule:
         // - Sample-target domain => target is com.devian.foundation/Samples~/{SampleName}/ (hybrid mode)
@@ -1158,6 +1188,7 @@ class DevianToolBuilder {
             const sampleName = DevianToolBuilder.getSampleName(domainName, 'Package');
             const targetPkgDir = path.join(this.upmSourceDir, UPM_FOUNDATION, 'Samples~', sampleName);
             // Hybrid detection: check for Runtime asmdef (samples don't have package.json)
+            // Note: scaffold (create-if-absent) already ran in Phase 0.5 before Phase 1 validation
             const sampleAsmdefName = `Devian.Samples.${sampleName}`;
             const targetRuntimeAsmdef = path.join(targetPkgDir, 'Runtime', `${sampleAsmdefName}.asmdef`);
             const isHybrid = fs.existsSync(targetRuntimeAsmdef);
@@ -1588,17 +1619,17 @@ class DevianToolBuilder {
         const protocolSampleName = DevianToolBuilder.getSampleName(groupName, 'Protocol');
         const upmTargetDir = path.join(this.upmSourceDir, UPM_FOUNDATION, 'Samples~', protocolSampleName);
 
-        // Guard: asmdef 존재 확인 (수기 파일)
+        // Guard: asmdef 존재 확인 (Phase 0.5 scaffold 이후이므로 반드시 존재해야 함)
         const sampleAsmdefName = `Devian.Samples.${protocolSampleName}`;
         const upmAsmdefPath = path.join(upmTargetDir, 'Runtime', `${sampleAsmdefName}.asmdef`);
 
         if (!fs.existsSync(upmAsmdefPath)) {
             throw new Error(
-                `[FAIL] Protocol sample scaffold missing!\n` +
+                `[FAIL] Protocol sample scaffold failed!\n` +
                 `  Target: ${upmTargetDir}\n` +
                 `  Expected: Runtime/${sampleAsmdefName}.asmdef\n` +
-                `  Create the sample directory with asmdef manually before running build.\n` +
-                `  SSOT: skills/devian-unity/07-samples-creation-guide/SKILL.md`
+                `  Scaffold should have created this file automatically.\n` +
+                `  SSOT: skills/devian/80-tools/11-builder/03-ssot/SKILL.md`
             );
         }
 
@@ -2218,9 +2249,9 @@ export * from './features';
         fs.mkdirSync(stagingGenerated, { recursive: true });
         fs.mkdirSync(stagingEditor, { recursive: true });
 
-        // All domains are sample-targets: skip package.json/asmdef generation (manually managed)
+        // All domains are sample-targets: asmdef/README scaffold is handled by scaffoldDomainSampleIfAbsent() in copyDomainToTargets
         // SSOT: skills/devian/80-tools/11-builder/03-ssot/SKILL.md § Sample-target Domain
-        console.log(`    [Sample-target] ${domainName} → Samples~/${DevianToolBuilder.getSampleName(domainName, 'Package')}/ (skip package.json/asmdef)`);
+        console.log(`    [Sample-target] ${domainName} → Samples~/${DevianToolBuilder.getSampleName(domainName, 'Package')}/ (asmdef scaffold: copyDomainToTargets)`);
 
         // Copy C# generated files to Runtime/Generated
         if (fs.existsSync(stagingCs)) {
@@ -3259,6 +3290,163 @@ export * from './features';
         return asmdef ? path.join(dir, asmdef) : null;
     }
 
+    // ========================================================================
+    // Scaffold Generation (create-if-absent)
+    // SSOT: skills/devian/80-tools/11-builder/03-ssot/SKILL.md § 공통 규칙
+    // ========================================================================
+
+    /**
+     * Generate Domain sample scaffold (asmdef + README) if not already present.
+     * create-if-absent strategy: never overwrites existing files.
+     * @param {string} targetPkgDir - UPM target directory (e.g., .../Samples~/OperationPackage/)
+     * @param {string} domainName - Domain key (e.g., "Operation")
+     * @param {string} sampleName - Sample name (e.g., "OperationPackage")
+     */
+    scaffoldDomainSampleIfAbsent(targetPkgDir, domainName, sampleName) {
+        const sampleAsmdefName = `Devian.Samples.${sampleName}`;
+        const runtimeDir = path.join(targetPkgDir, 'Runtime');
+        const editorDir = path.join(targetPkgDir, 'Editor');
+        const runtimeAsmdefPath = path.join(runtimeDir, `${sampleAsmdefName}.asmdef`);
+        const editorAsmdefPath = path.join(editorDir, `${sampleAsmdefName}.Editor.asmdef`);
+        const readmePath = path.join(targetPkgDir, 'README.md');
+
+        let scaffolded = false;
+
+        // Runtime asmdef
+        if (!fs.existsSync(runtimeAsmdefPath)) {
+            fs.mkdirSync(runtimeDir, { recursive: true });
+            const runtimeAsmdef = {
+                name: sampleAsmdefName,
+                rootNamespace: `Devian.Domain.${domainName}`,
+                references: [
+                    'Devian.Core',
+                    `Devian.Samples.${DevianToolBuilder.getSampleName('Common', 'Package')}`
+                ],
+                includePlatforms: [],
+                excludePlatforms: [],
+                allowUnsafeCode: false,
+                overrideReferences: false,
+                precompiledReferences: [],
+                autoReferenced: true,
+                defineConstraints: [],
+                versionDefines: [],
+                noEngineReferences: false
+            };
+            fs.writeFileSync(runtimeAsmdefPath, JSON.stringify(runtimeAsmdef, null, 2) + '\n');
+            console.log(`    [Scaffold] Created Runtime asmdef: ${runtimeAsmdefPath}`);
+            scaffolded = true;
+        }
+
+        // Editor asmdef
+        if (!fs.existsSync(editorAsmdefPath)) {
+            fs.mkdirSync(editorDir, { recursive: true });
+            const commonPkgName = `Devian.Samples.${DevianToolBuilder.getSampleName('Common', 'Package')}`;
+            const editorAsmdef = {
+                name: `${sampleAsmdefName}.Editor`,
+                rootNamespace: `Devian.Domain.${domainName}.Editor`,
+                references: [
+                    sampleAsmdefName,
+                    commonPkgName,
+                    `${commonPkgName}.Editor`,
+                    'Devian.Unity.Editor',
+                    'Devian.Unity'
+                ],
+                includePlatforms: ['Editor'],
+                excludePlatforms: [],
+                allowUnsafeCode: false,
+                overrideReferences: false,
+                precompiledReferences: [],
+                autoReferenced: true,
+                defineConstraints: [],
+                versionDefines: [],
+                noEngineReferences: false
+            };
+            fs.writeFileSync(editorAsmdefPath, JSON.stringify(editorAsmdef, null, 2) + '\n');
+            console.log(`    [Scaffold] Created Editor asmdef: ${editorAsmdefPath}`);
+            scaffolded = true;
+        }
+
+        // README.md
+        if (!fs.existsSync(readmePath)) {
+            const readmeContent = [
+                `# ${sampleName}`,
+                '',
+                `${domainName} 도메인 샘플 — ${domainName} tables + Generated enums.`,
+                '',
+                '## Assembly',
+                '',
+                `- Runtime: \`${sampleAsmdefName}\``,
+                `- Editor: \`${sampleAsmdefName}.Editor\``,
+                ''
+            ].join('\n');
+            fs.writeFileSync(readmePath, readmeContent);
+            console.log(`    [Scaffold] Created README: ${readmePath}`);
+            scaffolded = true;
+        }
+
+        return scaffolded;
+    }
+
+    /**
+     * Generate Protocol sample scaffold (asmdef + README) if not already present.
+     * create-if-absent strategy: never overwrites existing files.
+     * @param {string} targetPkgDir - UPM target directory (e.g., .../Samples~/GameProtocol/)
+     * @param {string} groupName - Protocol group name (e.g., "Game")
+     * @param {string} sampleName - Sample name (e.g., "GameProtocol")
+     */
+    scaffoldProtocolSampleIfAbsent(targetPkgDir, groupName, sampleName) {
+        const sampleAsmdefName = `Devian.Samples.${sampleName}`;
+        const runtimeDir = path.join(targetPkgDir, 'Runtime');
+        const runtimeAsmdefPath = path.join(runtimeDir, `${sampleAsmdefName}.asmdef`);
+        const readmePath = path.join(targetPkgDir, 'README.md');
+
+        let scaffolded = false;
+
+        // Runtime asmdef (Protocol is Runtime-only, noEngineReferences: true)
+        if (!fs.existsSync(runtimeAsmdefPath)) {
+            fs.mkdirSync(runtimeDir, { recursive: true });
+            const runtimeAsmdef = {
+                name: sampleAsmdefName,
+                rootNamespace: `Devian.Protocol.${groupName}`,
+                references: [
+                    'Devian.Core',
+                    `Devian.Samples.${DevianToolBuilder.getSampleName('Common', 'Package')}`
+                ],
+                includePlatforms: [],
+                excludePlatforms: [],
+                allowUnsafeCode: false,
+                overrideReferences: false,
+                precompiledReferences: [],
+                autoReferenced: true,
+                defineConstraints: [],
+                versionDefines: [],
+                noEngineReferences: true
+            };
+            fs.writeFileSync(runtimeAsmdefPath, JSON.stringify(runtimeAsmdef, null, 2) + '\n');
+            console.log(`    [Scaffold] Created Protocol Runtime asmdef: ${runtimeAsmdefPath}`);
+            scaffolded = true;
+        }
+
+        // README.md (Protocol has no Editor)
+        if (!fs.existsSync(readmePath)) {
+            const readmeContent = [
+                `# ${sampleName}`,
+                '',
+                `${groupName} 프로토콜 샘플 — Generated proxy/handler/networker.`,
+                '',
+                '## Assembly',
+                '',
+                `- Runtime: \`${sampleAsmdefName}\``,
+                ''
+            ].join('\n');
+            fs.writeFileSync(readmePath, readmeContent);
+            console.log(`    [Scaffold] Created README: ${readmePath}`);
+            scaffolded = true;
+        }
+
+        return scaffolded;
+    }
+
     /**
      * Validate that no *.cs files in a directory contain "using UnityEditor".
      */
@@ -4001,7 +4189,12 @@ export * from './features';
                     fs.mkdirSync(targetGenDir, { recursive: true });
                 }
 
-                // Copy .cs files only (not .meta — preserve existing .meta in target)
+                // Sync .cs files: copy from source, remove stale .cs in target
+                // (.meta files are preserved — not touched)
+                const removed = this.removeStaleCs(sourceGenDir, targetGenDir);
+                if (removed > 0) {
+                    console.log(`      [Cleanup] ${genRelDir}: removed ${removed} stale .cs file(s)`);
+                }
                 const copied = this.copyCsFilesRecursive(sourceGenDir, targetGenDir);
                 sampleCopied += copied;
             }
@@ -4041,6 +4234,62 @@ export * from './features';
             }
         }
 
+        return count;
+    }
+
+    /**
+     * Remove stale .cs files in target Generated directory that don't exist in source.
+     * Does NOT remove .meta files (Unity GUID preservation).
+     * @param {string} sourceDir - Source Generated directory (UPM)
+     * @param {string} targetDir - Target Generated directory (Assets/Samples)
+     * @returns {number} Number of stale .cs files removed
+     */
+    removeStaleCs(sourceDir, targetDir) {
+        if (!fs.existsSync(targetDir)) return 0;
+        let count = 0;
+        const targetEntries = fs.readdirSync(targetDir, { withFileTypes: true });
+
+        for (const entry of targetEntries) {
+            const targetPath = path.join(targetDir, entry.name);
+            const sourcePath = path.join(sourceDir, entry.name);
+
+            if (entry.isDirectory()) {
+                // Recurse into subdirectories
+                if (fs.existsSync(sourcePath)) {
+                    count += this.removeStaleCs(sourcePath, targetPath);
+                } else {
+                    // Entire subdirectory removed from source — remove all .cs files in target
+                    count += this.removeAllCsInDir(targetPath);
+                }
+            } else if (entry.isFile() && entry.name.endsWith('.cs')) {
+                if (!fs.existsSync(sourcePath)) {
+                    fs.unlinkSync(targetPath);
+                    count++;
+                }
+            }
+        }
+
+        return count;
+    }
+
+    /**
+     * Remove all .cs files in a directory recursively (for stale cleanup).
+     * @param {string} dir - Directory to clean
+     * @returns {number} Number of .cs files removed
+     */
+    removeAllCsInDir(dir) {
+        if (!fs.existsSync(dir)) return 0;
+        let count = 0;
+        const entries = fs.readdirSync(dir, { withFileTypes: true });
+        for (const entry of entries) {
+            const fullPath = path.join(dir, entry.name);
+            if (entry.isDirectory()) {
+                count += this.removeAllCsInDir(fullPath);
+            } else if (entry.isFile() && entry.name.endsWith('.cs')) {
+                fs.unlinkSync(fullPath);
+                count++;
+            }
+        }
         return count;
     }
 
@@ -4164,14 +4413,14 @@ export * from './features';
         // Hard Rules:
         // - dataConfig is forbidden (deprecated layer is not allowed)
         // - tableConfig must exist
-        // - soundDirs/stringDirs/tableDirs must exist and must be string[]
+        // - stringDirs/tableDirs must exist and must be string[]
         // - arrays can be empty, but keys must exist for visibility/consistency
         if (this.config.dataConfig !== undefined) {
             throw new Error(
                 `[FAIL] dataConfig is forbidden.\n` +
                 `  File: {projectConfigJson} (e.g. input/build_config.json)\n` +
                 `  Fix: Remove "dataConfig" entirely and use "tableConfig".\n` +
-                `  tableConfig keys: soundDirs, stringDirs, tableDirs`
+                `  tableConfig keys: stringDirs, tableDirs`
             );
         }
 
@@ -4179,10 +4428,9 @@ export * from './features';
         if (!tableConfig || typeof tableConfig !== 'object') {
             throw new Error(
                 `[FAIL] Missing required "tableConfig" section in project config json.\n` +
-                `  Required keys: soundDirs, stringDirs, tableDirs (each is string[]).\n` +
+                `  Required keys: stringDirs, tableDirs (each is string[]).\n` +
                 `  Example:\n` +
                 `    "tableConfig": {\n` +
-                `      "soundDirs": ["../.../Assets/Bundles/sounds"],\n` +
                 `      "stringDirs": ["../.../Assets/Bundles/Strings"],\n` +
                 `      "tableDirs": ["../.../Assets/Bundles/Tables"]\n` +
                 `    }`
@@ -4209,13 +4457,21 @@ export * from './features';
             return v;
         };
 
-        this.soundDirs = requireStringArray('soundDirs').map(dir => this.resolvePath(dir));
         this.stringDirs = requireStringArray('stringDirs').map(dir => this.resolvePath(dir));
         this.tableDirs  = requireStringArray('tableDirs').map(dir => this.resolvePath(dir));
 
-        console.log(`  [OK] tableConfig.soundDirs: ${this.soundDirs.length} targets`);
         console.log(`  [OK] tableConfig.stringDirs: ${this.stringDirs.length} targets`);
         console.log(`  [OK] tableConfig.tableDirs: ${this.tableDirs.length} targets`);
+
+        // Resolve serverTableFolder (optional — server-side table data output)
+        // SSOT: skills/devian/80-tools/11-builder/03-ssot/SKILL.md § serverTableFolder 설정
+        if (this.config.serverTableFolder && typeof this.config.serverTableFolder === 'string') {
+            this.serverTableFolder = this.resolvePath(this.config.serverTableFolder);
+            console.log(`  [OK] serverTableFolder: ${this.serverTableFolder}`);
+        } else {
+            this.serverTableFolder = null;
+            console.log(`  [Info] serverTableFolder: not configured`);
+        }
 
         // Resolve sampleFolder (optional — Assets/Samples Generated sync)
         // SSOT: skills/devian-unity/03-ssot/SKILL.md § sampleFolder
@@ -4329,7 +4585,7 @@ export * from './features';
                 if (domainConfig.dataTargetDirs !== undefined) {
                     errors.push(
                         `domains.${domainKey}.dataTargetDirs is forbidden and no longer supported.\n` +
-                        `  Data export output is now configured globally via tableConfig.soundDirs/stringDirs/tableDirs.\n` +
+                        `  Data export output is now configured globally via tableConfig.stringDirs/tableDirs.\n` +
                         `  Was: { "dataTargetDirs": ${JSON.stringify(domainConfig.dataTargetDirs)}, ... }\n` +
                         `  Fix: Remove "dataTargetDirs" from domains.${domainKey}. Use tableConfig instead.`
                     );
@@ -4354,6 +4610,25 @@ export * from './features';
                         `  Fix: Rename "tablesDir" to "tableDir" in domains.${domainKey}.`
                     );
                 }
+
+                // Validate domain type field
+                // SSOT: skills/devian/80-tools/11-builder/03-ssot/SKILL.md § Domain type 설정
+                const VALID_DOMAIN_TYPES = ['all', 'client', 'server'];
+                const domainType = domainConfig.type || 'all';
+                if (!VALID_DOMAIN_TYPES.includes(domainType)) {
+                    errors.push(
+                        `domains.${domainKey}.type has invalid value: "${domainType}".\n` +
+                        `  Allowed values: "all", "client", "server".\n` +
+                        `  Fix: Set "type" to one of the allowed values, or remove it for default "all".`
+                    );
+                }
+                if ((domainType === 'server' || domainType === 'all') && !this.serverTableFolder) {
+                    errors.push(
+                        `domains.${domainKey}.type is "${domainType}" but serverTableFolder is not configured.\n` +
+                        `  When any domain has type "server" or "all", serverTableFolder is required in the config.\n` +
+                        `  Fix: Add "serverTableFolder": "../framework-ts/tables" to the project config json.`
+                    );
+                }
             }
         }
 
@@ -4361,7 +4636,7 @@ export * from './features';
         if (this.config.dataConfig !== undefined) {
             errors.push(
                 `dataConfig is forbidden (deprecated layer not allowed).\n` +
-                `  Fix: Remove "dataConfig" and use "tableConfig" with soundDirs/stringDirs/tableDirs.`
+                `  Fix: Remove "dataConfig" and use "tableConfig" with stringDirs/tableDirs.`
             );
         }
 
@@ -4370,10 +4645,10 @@ export * from './features';
             errors.push(
                 `tableConfig is required.\n` +
                 `  Add tableConfig to the project config json.\n` +
-                `  Required keys: soundDirs, stringDirs, tableDirs (each is string[]).`
+                `  Required keys: stringDirs, tableDirs (each is string[]).`
             );
         } else {
-            const keys = ['soundDirs', 'stringDirs', 'tableDirs'];
+            const keys = ['stringDirs', 'tableDirs'];
             for (const k of keys) {
                 if (!Array.isArray(tc[k])) {
                     errors.push(

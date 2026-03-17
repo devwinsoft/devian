@@ -358,14 +358,6 @@ export interface SEASON extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface PUSH extends IEntityKey<string> {
-    PushId: string;
-    Topic: string;
-    Language: string;
-    DefaultMsg: string;
-    getKey(): string;
-}
-
 export interface MISSION_DAILY extends IEntityKey<string> {
     MissionId: string;
     IsActive: boolean;
@@ -1011,42 +1003,6 @@ export class TB_SEASON {
             const row = JSON.parse(line) as SEASON;
             this._list.push(row);
             this._dict.set(row.SeasonId, row);
-        }
-    }
-
-    static saveToJson(): string {
-        return this._list.map(r => JSON.stringify(r)).join('\n');
-    }
-}
-
-export class TB_PUSH {
-    private static _dict: Map<string, PUSH> = new Map();
-    private static _list: PUSH[] = [];
-
-    static get count(): number { return this._list.length; }
-
-    static clear(): void {
-        this._dict.clear();
-        this._list = [];
-    }
-
-    static getAll(): readonly PUSH[] { return this._list; }
-
-    static get(key: string): PUSH | undefined {
-        return this._dict.get(key);
-    }
-
-    static has(key: string): boolean {
-        return this._dict.has(key);
-    }
-
-    static loadFromJson(json: string): void {
-        this.clear();
-        const lines = json.split('\n').filter(l => l.trim());
-        for (const line of lines) {
-            const row = JSON.parse(line) as PUSH;
-            this._list.push(row);
-            this._dict.set(row.PushId, row);
         }
     }
 

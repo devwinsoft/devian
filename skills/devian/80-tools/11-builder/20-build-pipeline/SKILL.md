@@ -136,7 +136,6 @@ node framework-ts/tools/builder/build.js -[target] <buildInputJson>
 |------|------|------|
 | `tableDirs` | ✓ | 테이블 출력 디렉토리 배열 |
 | `stringDirs` | ✓ | String 테이블 출력 디렉토리 배열 |
-| `soundDirs` | ✓ | 사운드 데이터 출력 디렉토리 배열 |
 
 > **CRITICAL:** `{configJson}`에 `dataConfig` 키가 존재하면 빌드가 **즉시 FAIL**한다 (deprecated).
 > tableConfig의 각 Dir 배열에 대해 해당 데이터 유형이 출력된다.
@@ -258,12 +257,6 @@ TS:  {tsConfig.generateDir}/devian-protocol-{protocolGroupLower}/
 {stringDir}/pb64/{Language}/{TableName}.asset
 ```
 
-**Sound 데이터 (tableConfig.soundDirs):**
-```
-{soundDir}/ndjson/{TableName}.json
-{soundDir}/pb64/{TableName}.asset
-```
-
 - 복수 타겟 가능 (각 Dir 배열의 모든 경로에 복사)
 - **도메인 폴더 미사용**: 최종 경로에 `{DomainKey}` 폴더 없음
 - **동일 파일명 충돌 시 빌드 FAIL** (조용한 덮어쓰기 금지)
@@ -283,7 +276,6 @@ TS:  {tsConfig.generateDir}/devian-protocol-{protocolGroupLower}/
 |------|------|
 | `tableConfig.tableDirs` 누락 | **즉시 FAIL** |
 | `tableConfig.stringDirs` 누락 | **즉시 FAIL** |
-| `tableConfig.soundDirs` 누락 | **즉시 FAIL** |
 
 ### Forbidden 필드 FAIL
 

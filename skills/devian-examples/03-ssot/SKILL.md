@@ -30,7 +30,6 @@ Devian Example 앱의 **설정 파일, 입력 파일, 런타임 앱 경로**를 
     "packageDir": "../framework-cs/apps/UnityExample/Packages"
   },
   "tableConfig": {
-    "soundDirs": ["../framework-cs/apps/UnityExample/Assets/Bundles/Sounds"],
     "stringDirs": ["../framework-cs/apps/UnityExample/Assets/Bundles/Strings"],
     "tableDirs": ["../framework-cs/apps/UnityExample/Assets/Bundles/Tables"]
   },

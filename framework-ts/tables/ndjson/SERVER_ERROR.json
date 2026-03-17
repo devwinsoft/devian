@@ -1,0 +1,7 @@
+{"Id":"UNKNOWN","Code":0,"Status":500}
+{"Id":"BAD_REQUEST","Code":1,"Status":400}
+{"Id":"UNAUTHORIZED","Code":2,"Status":401}
+{"Id":"FORBIDDEN","Code":3,"Status":403}
+{"Id":"NOT_FOUND","Code":4,"Status":404}
+{"Id":"INTERNAL","Code":100,"Status":500}
+{"Id":"SERVICE_UNAVAILABLE","Code":101,"Status":503}
