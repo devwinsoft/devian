@@ -71,8 +71,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::TestBootstrap
   _appVersion:
     Major: 0
-    Minor: 1
+    Minor: 2
     Patch: 0
+  DefaultLanguage: 23
   FirebaseFunctionsRegion: asia-northeast3
   VersionCheckAOS: https://github.com/devwinsoft/devian/blob/main/release/version_aos.json
   VersionCheckIOS: https://github.com/devwinsoft/devian/blob/main/release/version_ios.json

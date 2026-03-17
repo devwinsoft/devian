@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7fe04487e1caf425fa361681abd2ae35, type: 3}
+  m_Name: BuildAutomationSettings
+  m_EditorClassIdentifier: Devian.Samples.MobilePackage.Editor::Devian.BuildAutomationSettings
+  buildOutputDir: Builds
+  androidEnabled: 1
+  buildAppBundle: 1
+  includeARMv7: 0
+  keystorePath: /Users/maoshy/Documents/Projects/devian/framework-cs/apps/secret/example_release.keystore
+  firebaseAndroidAppId: 1:119226054667:android:b98cb9bc4c529c6bab6f0e
+  iosEnabled: 0
+  autoArchive: 0
+  firebaseIOSAppId: 
+  firebaseCLIPath: 
+  fastlaneCLIPath: 
+  autoSymbolUpload: 0
+  autoDeploy: 0
