@@ -14,23 +14,23 @@
   },
   "samples": [
     {
-      "displayName": "CommonPackage",
-      "description": "Common domain: Unity runtime (CommonEffect, MaterialEffect, Module, Unity) + Generated tables/enums.",
+      "displayName": "Common Package",
+      "description": "Sample: CommonPackage",
       "path": "Samples~/CommonPackage"
     },
     {
-      "displayName": "GamePackage",
-      "description": "Game domain sample: Ability system + Generated tables/enums.",
+      "displayName": "Game Package",
+      "description": "Sample: GamePackage",
       "path": "Samples~/GamePackage"
     },
     {
-      "displayName": "GameProtocol",
-      "description": "Game protocol definitions: C2Game/Game2C network protocol + SessionHost + Networker.",
+      "displayName": "Game Protocol",
+      "description": "Sample: GameProtocol",
       "path": "Samples~/GameProtocol"
     },
     {
-      "displayName": "MobilePackage",
-      "description": "Bundle sample: installs FirebaseManager + SaveSystem + AccountManager + PurchaseManager together.",
+      "displayName": "Mobile Package",
+      "description": "Sample: MobilePackage",
       "path": "Samples~/MobilePackage"
     },
     {
@@ -39,13 +39,13 @@
       "path": "Samples~/OperationPackage"
     },
     {
-      "displayName": "SoundPackage",
-      "description": "Sound domain: Sound/Voice managers + Generated tables/enums.",
+      "displayName": "Sound Package",
+      "description": "Sample: SoundPackage",
       "path": "Samples~/SoundPackage"
     },
     {
-      "displayName": "UIPackage",
-      "description": "UI components: UIManager, UICanvas, UIFrame, UIPlugIn (Button, Text, CircleFilter, NonDrawing).",
+      "displayName": "UI Package",
+      "description": "Sample: UIPackage",
       "path": "Samples~/UIPackage"
     }
   ]

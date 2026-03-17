@@ -17,6 +17,14 @@ export interface PUSH_REMOTE extends IEntityKey<string> {
     getKey(): string;
 }
 
+export interface PUSH_LOCAL extends IEntityKey<string> {
+    PushId: string;
+    TitleTextId: string;
+    BodyTextId: string;
+    IsTest: boolean;
+    getKey(): string;
+}
+
 // ================================================================
 // Table Containers
 // ================================================================
@@ -47,6 +55,42 @@ export class TB_PUSH_REMOTE {
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
             const row = JSON.parse(line) as PUSH_REMOTE;
+            this._list.push(row);
+            this._dict.set(row.PushId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_PUSH_LOCAL {
+    private static _dict: Map<string, PUSH_LOCAL> = new Map();
+    private static _list: PUSH_LOCAL[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly PUSH_LOCAL[] { return this._list; }
+
+    static get(key: string): PUSH_LOCAL | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as PUSH_LOCAL;
             this._list.push(row);
             this._dict.set(row.PushId, row);
         }

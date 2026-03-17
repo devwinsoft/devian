@@ -50,15 +50,19 @@ CompoSingleton<PushManager>.Instance
 ## Public API (Sample)
 
 - `InitializeAsync(ct)` → `Task<CommonResult>`
-  - 권한 요청 → 토큰 획득 → 테이블 기반 토픽 구독 → 저장 토픽 재구독
+  - **로컬 알림 전체 취소** → 권한 요청 → 토큰 획득 → 테이블 기반 토픽 구독 → 저장 토픽 재구독
+  - 초기화 시작 시 기존 로컬 알림을 모두 clear (03-ssot §H)
   - Idempotent: 여러 번 호출해도 동일 Task 반환
   - Editor에서는 즉시 `PUSH_UNSUPPORTED_PLATFORM` 반환
 - `SubscribeTopicAsync(topicId, ct)` → `Task<CommonResult>`
   - 토픽 구독 + `PushStorage.subscribedTopics` 동기화
 - `UnsubscribeTopicAsync(topicId, ct)` → `Task<CommonResult>`
   - 토픽 해제 + `PushStorage.subscribedTopics` 동기화
-- `ScheduleLocalNotificationAsync(data, ct)` → `Task<CommonResult>`
-  - 로컬 알림 등록 + `PushStorage.scheduledNotifications` 동기화
+- `ScheduleLocalNotificationAsync(pushId, fireAt, ct)` → `Task<CommonResult>`
+  - pushId로 `TB_PUSH_LOCAL` 조회 → `ST_TEXT`로 로컬라이즈 Title/Body → 로컬 알림 등록
+  - `fireAt`: `CDateTime` (서버 시간 기준). `RemoteDataManager.ServerNowUtcMs` 활용
+  - `Repeat`: `RepeatInterval.None` 고정
+  - IsTest 필터링: §F와 동일 (Release에서 IsTest=true 차단)
 - `CancelLocalNotificationAsync(notificationId, ct)` → `Task<CommonResult>`
   - 로컬 알림 취소 + `PushStorage.scheduledNotifications`에서 제거
 - `CancelAllLocalNotificationsAsync(ct)` → `Task<CommonResult>`
@@ -78,6 +82,8 @@ Events:
 - 테이블 기반 구독: `TB_PUSH_REMOTE.GetByGroup(DefaultLanguage)` → 행의 `PushId`를 FCM 토픽으로 구독 (03-ssot §F)
   - Development Build (`Debug.isDebugBuild`): 모든 행 구독 / Release Build: `IsTest == false`만 구독
 - 토픽 복원: 초기화 시 `PushStorage.subscribedTopics` 기반 재구독
+- 초기화 시 Local Push Clear: `CancelAllLocalNotificationsAsync` + `scheduledNotifications.Clear()` (03-ssot §H)
+- 로컬 알림 테이블 기반 등록: `TB_PUSH_LOCAL.Get(pushId)` → `ST_TEXT.Get(TitleTextId/BodyTextId)` → `LocalNotificationData` 조립 (03-ssot §G)
 - 로컬 알림 Storage 동기화: 등록/취소마다 `PushStorage` 갱신
 
 > **서버 의존 없음**: 토큰 서버 등록/타겟 발송은 사용하지 않는다. 모든 원격 푸시는 토픽 기반 발송만 사용한다. FCM 클라이언트 SDK가 토픽 구독/해제를 직접 처리한다.

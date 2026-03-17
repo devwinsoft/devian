@@ -231,7 +231,7 @@ DATA 도메인의 데이터 출력 타겟은 전역 `tableConfig`로 설정한�
 **규칙:**
 - config 최상위에 위치한다 (tableConfig 밖).
 - `domains`에 `type`이 `"server"` 또는 `"all"`인 도메인이 하나라도 있으면 필수. 없으면 빌드 FAIL.
-- 빌더가 `{serverTableFolder}/ndjson/` 및 `{serverTableFolder}/pb64/` 하위 디렉토리를 생성한다.
+- 빌더가 `{serverTableFolder}/ndjson/` 하위 디렉토리를 생성한다. pb64는 Unity 전용이므로 서버 폴더에 출력하지 않는다.
 - `tableConfig`와 동일한 clean+mergeCopy 정책을 적용한다.
 
 ---
@@ -250,11 +250,11 @@ DATA 도메인의 데이터 출력 타겟은 전역 `tableConfig`로 설정한�
 }
 ```
 
-| 값 | 데이터 출력 (ndjson/pb64) | 코드 생성 (CS/TS) |
-|-----|---------------------------|-------------------|
-| `"all"` (기본) | `tableConfig` dirs + `serverTableFolder` | 정해진 폴더 (csConfig/tsConfig) |
-| `"client"` | `tableConfig` dirs만 | 정해진 폴더 (csConfig/tsConfig) |
-| `"server"` | `serverTableFolder`만 | 정해진 폴더 (csConfig/tsConfig) |
+| 값 | 데이터 출력 (ndjson) | 데이터 출력 (pb64) | 코드 생성 (CS/TS) |
+|-----|----------------------|---------------------|-------------------|
+| `"all"` (기본) | `tableConfig` dirs + `serverTableFolder` | `tableConfig` dirs만 | 정해진 폴더 (csConfig/tsConfig) |
+| `"client"` | `tableConfig` dirs만 | `tableConfig` dirs만 | 정해진 폴더 (csConfig/tsConfig) |
+| `"server"` | `serverTableFolder`만 | 생성하지 않음 | 정해진 폴더 (csConfig/tsConfig) |
 
 **규칙:**
 - `type`은 선택 필드이며, 생략 시 `"all"`로 처리한다.
@@ -262,6 +262,7 @@ DATA 도메인의 데이터 출력 타겟은 전역 `tableConfig`로 설정한�
 - `type`이 `"server"` 또는 `"all"`인 도메인이 있으면 `serverTableFolder`는 필수.
 - 코드 생성(CS/TS)은 `type`에 무관하게 항상 수행한다.
 - String 데이터는 `type`에 무관하게 기존 `stringDirs`로 출력 (클라이언트 전용 에셋).
+- **pb64는 Unity TextAsset 형식이므로 `serverTableFolder`에는 출력하지 않는다. `type: "server"` 도메인은 pb64를 생성하지 않는다.**
 
 ---
 

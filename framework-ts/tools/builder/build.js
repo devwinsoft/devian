@@ -360,11 +360,15 @@ class DevianToolBuilder {
         await this.validateTsModules();
         await this.validateUpmPackages();
 
-        // 6. Sync UPM packages (upm → packageDir)
+        // 6. Sync UPM samples metadata (정본 package.json 갱신 — Phase 4 clean copy 이전에 실행)
+        console.log('[Phase 5] Sync UPM samples metadata (sourceDir)...');
+        await this.syncAllUpmSamples();
+
+        // 7. Sync UPM packages (upm → packageDir) — clean copy propagates updated package.json
         console.log('[Phase 4] Sync UPM packages (upm → packageDir)...');
         await this.syncUpmToPackageDir();
 
-        // 6-1. Verify UPM ↔ Packages sync (SSOT guard)
+        // 7-1. Verify UPM ↔ Packages sync (SSOT guard)
         console.log('[Guard] Verifying UPM ↔ Packages sync...');
         this.checkUpmPackagesSynced();
 
@@ -372,10 +376,6 @@ class DevianToolBuilder {
         await this.verifyUnityCommonTableIdFiles();
         console.log('[Guard] Post-sync: Checking unity.common Editor/Generated...');
         this.checkFoundationEditorGenerated();
-
-        // 7. Sync UPM samples metadata
-        console.log('[Phase 5] Sync UPM samples metadata...');
-        await this.syncAllUpmSamples();
 
         // Phase 5.5: SampleSync — Generated code → Assets/Samples (optional)
         // SSOT: skills/devian-unity/03-ssot/SKILL.md § sampleFolder
@@ -581,10 +581,14 @@ class DevianToolBuilder {
             }
 
             // Unity TextAsset .asset file (pk 옵션 있는 테이블만)
-            // SSOT: skills/devian-builder/32-json-row-io/SKILL.md - pb64 export 규칙
-            const assetResult = generateTableAsset(table);
-            if (assetResult) {
-                fs.writeFileSync(path.join(stagingPb64, `${assetResult.tableName}.asset`), assetResult.yaml);
+            // SSOT: skills/devian/80-tools/11-builder/03-ssot/SKILL.md § Domain type 설정
+            // pb64는 Unity 전용 — type:"server" 도메인은 생성하지 않음
+            const domainType = config.type || 'all';
+            if (domainType !== 'server') {
+                const assetResult = generateTableAsset(table);
+                if (assetResult) {
+                    fs.writeFileSync(path.join(stagingPb64, `${assetResult.tableName}.asset`), assetResult.yaml);
+                }
             }
         }
 
@@ -1138,21 +1142,17 @@ class DevianToolBuilder {
             }
         }
 
+        // SSOT: skills/devian/80-tools/11-builder/03-ssot/SKILL.md § Domain type 설정
+        // pb64는 Unity 전용 — serverTableFolder에는 ndjson만 출력
         if (exportToServer && this.serverTableFolder) {
             const serverNdjsonTarget = path.join(this.serverTableFolder, 'ndjson');
-            const serverPb64Target = path.join(this.serverTableFolder, 'pb64');
 
             this.ensureCleanDirOnce(serverNdjsonTarget, `serverTable:ndjson`);
-            this.ensureCleanDirOnce(serverPb64Target, `serverTable:pb64`);
 
             fs.mkdirSync(serverNdjsonTarget, { recursive: true });
-            fs.mkdirSync(serverPb64Target, { recursive: true });
 
             this.mergeCopyDirNoOverwrite(stagingNdjson, serverNdjsonTarget);
             console.log(`    [MergeCopy] ${stagingNdjson} -> ${serverNdjsonTarget} (server)`);
-
-            this.mergeCopyDirNoOverwrite(stagingPb64, serverPb64Target);
-            console.log(`    [MergeCopy] ${stagingPb64} -> ${serverPb64Target} (server)`);
         }
 
         if (this.stringDirs && this.stringDirs.length > 0) {
@@ -3729,18 +3729,10 @@ export * from './features';
         const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'));
 
         // Build samples array from folder structure
+        // displayName is always regenerated from folder name (PascalCase → space-separated)
         const samples = sampleFolders.map(folderName => {
             const samplePath = `Samples~/${folderName}`;
-            
-            // Check for existing sample entry to preserve displayName/description
-            const existingSample = (packageJson.samples || [])
-                .find(s => s.path === samplePath);
 
-            if (existingSample) {
-                return existingSample;
-            }
-
-            // Generate default metadata for new samples
             return {
                 displayName: this.folderNameToDisplayName(folderName),
                 description: `Sample: ${folderName}`,
@@ -3762,10 +3754,11 @@ export * from './features';
      * @returns {string} - Human-readable display name
      */
     folderNameToDisplayName(folderName) {
-        // Insert space before uppercase letters and trim
+        // Unity uses sample displayName as Assets/Samples folder name.
+        // Acronym-aware: "UIPackage" → "UI Package", "GameProtocol" → "Game Protocol"
         return folderName
-            .replace(/([A-Z])/g, ' $1')
-            .replace(/^[\s]/, '')
+            .replace(/([a-z])([A-Z])/g, '$1 $2')
+            .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
             .trim();
     }
 
@@ -4046,55 +4039,39 @@ export * from './features';
      * Scans for packages with Samples~ folders and updates their package.json.
      */
     async syncAllUpmSamples() {
-        // Collect all unique package directories
-        const upmPackageDirs = new Set();
-
-        // Primary: use upmConfig.packageDir (required, validated earlier)
-        if (this.upmPackageDir) {
-            upmPackageDirs.add(this.upmPackageDir);
-        }
-
-        // Also check domains.upmTargetDir for backward compatibility
-        if (this.config.domains) {
-            for (const domainConfig of Object.values(this.config.domains)) {
-                if (domainConfig.upmTargetDir) {
-                    upmPackageDirs.add(this.resolvePath(domainConfig.upmTargetDir));
-                }
-            }
-        }
-
-        if (upmPackageDirs.size === 0) {
-            console.log('  No UPM target directories configured, skipping samples sync.');
+        // Scan UPM sourceDir (정본) — Phase 4 clean copy will propagate to packageDir
+        if (!this.upmSourceDir) {
+            console.log('  No upmConfig.sourceDir configured, skipping samples sync.');
             return;
         }
 
-        // Scan each package directory for UPM packages with Samples~ folders
-        for (const packagesDir of upmPackageDirs) {
-            if (!fs.existsSync(packagesDir)) continue;
+        if (!fs.existsSync(this.upmSourceDir)) {
+            console.log(`  [WARN] UPM sourceDir not found: ${this.upmSourceDir}`);
+            return;
+        }
 
-            console.log(`  [Scan] ${packagesDir}`);
+        console.log(`  [Scan] ${this.upmSourceDir}`);
 
-            // List subdirectories (each should be a UPM package)
-            const entries = fs.readdirSync(packagesDir, { withFileTypes: true });
-            for (const entry of entries) {
-                if (!entry.isDirectory()) continue;
+        // List subdirectories (each should be a UPM package)
+        const entries = fs.readdirSync(this.upmSourceDir, { withFileTypes: true });
+        for (const entry of entries) {
+            if (!entry.isDirectory()) continue;
 
-                const packageDir = path.join(packagesDir, entry.name);
-                const packageJsonPath = path.join(packageDir, 'package.json');
-                const samplesDir = path.join(packageDir, 'Samples~');
+            const packageDir = path.join(this.upmSourceDir, entry.name);
+            const packageJsonPath = path.join(packageDir, 'package.json');
+            const samplesDir = path.join(packageDir, 'Samples~');
 
-                // Skip if not a UPM package (no package.json)
-                if (!fs.existsSync(packageJsonPath)) continue;
+            // Skip if not a UPM package (no package.json)
+            if (!fs.existsSync(packageJsonPath)) continue;
 
-                // Skip if no Samples~ folder
-                if (!fs.existsSync(samplesDir)) continue;
+            // Skip if no Samples~ folder
+            if (!fs.existsSync(samplesDir)) continue;
 
-                // Sync samples metadata
-                this.syncSamplesMetadata(packageDir);
+            // Sync samples metadata
+            this.syncSamplesMetadata(packageDir);
 
-                // Sync generated dependencies from Runtime/Generated.* asmdef files
-                this.syncGeneratedDependencies(packageDir);
-            }
+            // Sync generated dependencies from Runtime/Generated.* asmdef files
+            this.syncGeneratedDependencies(packageDir);
         }
     }
 
@@ -4144,6 +4121,15 @@ export * from './features';
             return;
         }
 
+        // Build folderName → displayName mapping from package.json samples array
+        // Unity uses sample displayName as Assets/Samples folder name
+        const sampleDisplayNameMap = new Map();
+        for (const sample of (foundationPkg.samples || [])) {
+            // sample.path = "Samples~/CommonPackage" → folderName = "CommonPackage"
+            const folderName = sample.path.replace(/^Samples~\//, '');
+            sampleDisplayNameMap.set(folderName, sample.displayName);
+        }
+
         // Scan UPM Samples~ subdirectories
         const samplesSourceDir = path.join(this.upmSourceDir, UPM_FOUNDATION, 'Samples~');
         if (!fs.existsSync(samplesSourceDir)) {
@@ -4166,7 +4152,9 @@ export * from './features';
         for (const sampleEntry of sampleEntries) {
             const sampleName = sampleEntry.name;
             const sampleSourcePath = path.join(samplesSourceDir, sampleName);
-            const sampleTargetPath = path.join(sampleTargetBase, sampleName);
+            // Use displayName from package.json as target folder name (Unity convention)
+            const targetFolderName = sampleDisplayNameMap.get(sampleName) || sampleName;
+            const sampleTargetPath = path.join(sampleTargetBase, targetFolderName);
 
             // Skip if target sample folder doesn't exist (not imported yet)
             if (!fs.existsSync(sampleTargetPath)) {

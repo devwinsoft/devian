@@ -1,0 +1,2 @@
+{"PushId":"push_local_refilled","TitleTextId":"welcome","BodyTextId":"greeting","IsTest":false}
+{"PushId":"push_local_test","TitleTextId":"welcome","BodyTextId":"greeting","IsTest":true}

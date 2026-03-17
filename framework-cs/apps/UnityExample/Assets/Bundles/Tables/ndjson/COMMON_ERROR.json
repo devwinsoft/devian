@@ -162,3 +162,7 @@
 {"Id":"PUSH_TOPIC_UNSUBSCRIBE_FAILED","Msg_key":"","Msg":"Failed to unsubscribe from topic."}
 {"Id":"PUSH_NOTIFICATION_SCHEDULE_FAILED","Msg_key":"","Msg":"Failed to schedule local notification."}
 {"Id":"PUSH_NOTIFICATION_CANCEL_FAILED","Msg_key":"","Msg":"Failed to cancel local notification."}
+{"Id":"PUSH_DUPLICATE_NOTIFICATION","Msg_key":"","Msg":"Duplicate local notification ID."}
+{"Id":"PUSH_LOCAL_NOT_FOUND","Msg_key":"","Msg":"PUSH_LOCAL row not found for the given pushId."}
+{"Id":"PUSH_TABLE_NOT_LOADED","Msg_key":"","Msg":"TB_PUSH_LOCAL table is not loaded."}
+{"Id":"PUSH_TEST_BLOCKED","Msg_key":"","Msg":"Test push notification blocked in release build."}

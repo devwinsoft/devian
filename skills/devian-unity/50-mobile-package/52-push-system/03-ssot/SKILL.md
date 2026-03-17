@@ -108,6 +108,37 @@ public class LocalNotificationData
 
 ---
 
+## G. Table-driven Local Notification
+
+- `ScheduleLocalNotificationAsync(string pushId, CDateTime fireAt, ct)` — pushId로 `TB_PUSH_LOCAL` 조회 후 로컬 알림 등록.
+- `TB_PUSH_LOCAL`은 OperationTable.xlsx PUSH_LOCAL 시트, Operation 도메인. group 없음.
+- 테이블 스키마:
+
+| 컬럼 | 타입 | 옵션 | 설명 |
+|------|------|------|------|
+| `PushId` | string | pk | 알림 고유 ID (= `LocalNotificationData.NotificationId`) |
+| `TitleTextId` | string | | `ST_TEXT.Get(TitleTextId)` → 로컬라이즈 제목 |
+| `BodyTextId` | string | | `ST_TEXT.Get(BodyTextId)` → 로컬라이즈 본문 |
+| `IsTest` | bool | | dev/release 필터 |
+
+- **외부에서 `LocalNotificationData`를 직접 전달하지 않는다.** pushId를 받아 테이블에서 조회한다.
+- `FireAt`은 호출자가 `CDateTime`(서버 시간 기준)으로 전달한다. 테이블 컬럼이 아니다.
+- `Repeat`은 `RepeatInterval.None` 고정. 테이블 컬럼이 아니다.
+- **IsTest 필터링:** §F와 동일 규칙. `!Debug.isDebugBuild && row.IsTest` → `PUSH_TEST_BLOCKED` 반환.
+- `TB_PUSH_LOCAL`이 로드되지 않았으면 `PUSH_TABLE_NOT_LOADED` 반환.
+- pushId 조회 실패 시 `PUSH_LOCAL_NOT_FOUND` 반환.
+- 중복 notificationId 시 `PUSH_DUPLICATE_NOTIFICATION` 반환.
+
+---
+
+## H. 초기화 시 Local Push Clear
+
+- `InitializeAsync` 시작 시(권한 요청 전) 기존 로컬 알림을 모두 취소한다.
+- `_provider.CancelAllLocalNotificationsAsync(ct)` 호출 + `_storage.scheduledNotifications.Clear()`.
+- 앱 재시작마다 깨끗한 상태에서 시작하기 위한 정책이다.
+
+---
+
 ## Related
 
 - [10-push-manager](../10-push-manager/SKILL.md)

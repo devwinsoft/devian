@@ -33,6 +33,20 @@ namespace Devian.Domain.Operation
                 }
             });
 
+            global::Devian.TableManager.Instance.RegisterTbLoader("PUSH_LOCAL", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_PUSH_LOCAL.LoadFromNdjson(text);
+                    TB_PUSH_LOCAL._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_PUSH_LOCAL.LoadFromPb64Binary(bin);
+                    TB_PUSH_LOCAL._AfterLoad();
+                }
+            });
+
         }
     }
 }

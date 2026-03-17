@@ -28,6 +28,17 @@ namespace Devian.Domain.Operation
         public string GetKey() => PushId;
     }
 
+    /// <summary>PUSH_LOCAL row</summary>
+    public sealed class PUSH_LOCAL : IEntityKey<string>
+    {
+        public string PushId { get; set; } = string.Empty;
+        public string TitleTextId { get; set; } = string.Empty;
+        public string BodyTextId { get; set; } = string.Empty;
+        public bool IsTest { get; set; }
+
+        public string GetKey() => PushId;
+    }
+
     // ================================================================
     // Table Containers
     // ================================================================
@@ -159,6 +170,89 @@ namespace Devian.Domain.Operation
         static partial void _OnAfterLoad();
     }
 
+    /// <summary>TB_PUSH_LOCAL container</summary>
+    public static partial class TB_PUSH_LOCAL
+    {
+        private static readonly Dictionary<string, PUSH_LOCAL> _dict = new();
+        private static readonly List<PUSH_LOCAL> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<PUSH_LOCAL> GetAll() => _list;
+
+        public static PUSH_LOCAL? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out PUSH_LOCAL? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(PUSH_LOCAL row)
+        {
+            _list.Add(row);
+            _dict[row.PushId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<PUSH_LOCAL>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<PUSH_LOCAL>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<PUSH_LOCAL>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
     // ================================================================
     // Table ID Types (for Inspector binding)
     // ================================================================
@@ -173,10 +267,21 @@ namespace Devian.Domain.Operation
         public static implicit operator PUSH_REMOTE_ID(string value) => new PUSH_REMOTE_ID { Value = value };
     }
 
+    /// <summary>Inspector-bindable ID for PUSH_LOCAL</summary>
+    [Serializable]
+    public sealed class PUSH_LOCAL_ID
+    {
+        public string Value;
+
+        public static implicit operator string(PUSH_LOCAL_ID id) => id.Value;
+        public static implicit operator PUSH_LOCAL_ID(string value) => new PUSH_LOCAL_ID { Value = value };
+    }
+
     /// <summary>Table ID validation extensions</summary>
     public static class TableIdExtensions
     {
         public static bool IsValid(this PUSH_REMOTE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this PUSH_LOCAL_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
     }
 
 }
