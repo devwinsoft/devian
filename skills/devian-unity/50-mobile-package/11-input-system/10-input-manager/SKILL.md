@@ -1,4 +1,4 @@
-# 22-input-manager
+# 10-input-manager
 
 Status: ACTIVE
 AppliesTo: v11
@@ -27,8 +27,8 @@ Type: Component Specification
 
 ### 제외
 
-- 오브젝트 부착형 입력 소비 (→ `25-input-controller`)
-- InputSpace 전략 (→ `25-input-controller`)
+- 오브젝트 부착형 입력 소비 (→ `11-input-controller`)
+- InputSpace 전략 (→ `11-input-controller`)
 - InputAction 바인딩/리매핑 UI
 
 ---
@@ -173,7 +173,7 @@ public static class InputButtonMapBuilder
 
 **Play Mode:** Play Mode에서 비활성화된다.
 
-**Editor 파일:** `com.devian.foundation/Samples~/CommonPackage/Editor/Unity/Input/InputManagerInspector.cs`
+**Editor 파일:** `com.devian.foundation/Samples~/MobilePackage/Editor/Input/InputManagerInspector.cs`
 
 ---
 
@@ -181,12 +181,12 @@ public static class InputButtonMapBuilder
 
 | 타입 | 경로 |
 |------|------|
-| InputContext | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/InputContext.cs` |
-| InputFrame | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/InputFrame.cs` |
-| IInputManager | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/IInputManager.cs` |
-| InputButtonMapBuilder | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/InputButtonMapBuilder.cs` |
-| InputManager | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/InputManager.cs` |
-| InputManagerInspector | `com.devian.foundation/Samples~/CommonPackage/Editor/Unity/Input/InputManagerInspector.cs` |
+| InputContext | `com.devian.foundation/Samples~/MobilePackage/Runtime/Input/InputContext.cs` |
+| InputFrame | `com.devian.foundation/Samples~/MobilePackage/Runtime/Input/InputFrame.cs` |
+| IInputManager | `com.devian.foundation/Samples~/MobilePackage/Runtime/Input/IInputManager.cs` |
+| InputButtonMapBuilder | `com.devian.foundation/Samples~/MobilePackage/Runtime/Input/InputButtonMapBuilder.cs` |
+| InputManager | `com.devian.foundation/Samples~/MobilePackage/Runtime/Input/InputManager.cs` |
+| InputManagerInspector | `com.devian.foundation/Samples~/MobilePackage/Editor/Input/InputManagerInspector.cs` |
 
 ---
 
@@ -210,4 +210,4 @@ public static class InputButtonMapBuilder
 ## Reference
 
 - Parent: `../00-overview/SKILL.md`
-- 입력 소비: `../25-input-controller/SKILL.md`
+- 입력 소비: `../11-input-controller/SKILL.md`

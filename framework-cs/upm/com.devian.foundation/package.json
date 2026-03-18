@@ -14,37 +14,37 @@
   },
   "samples": [
     {
-      "displayName": "Common Package",
+      "displayName": "CommonPackage",
       "description": "Sample: CommonPackage",
       "path": "Samples~/CommonPackage"
     },
     {
-      "displayName": "Game Package",
+      "displayName": "GamePackage",
       "description": "Sample: GamePackage",
       "path": "Samples~/GamePackage"
     },
     {
-      "displayName": "Game Protocol",
+      "displayName": "GameProtocol",
       "description": "Sample: GameProtocol",
       "path": "Samples~/GameProtocol"
     },
     {
-      "displayName": "Mobile Package",
+      "displayName": "MobilePackage",
       "description": "Sample: MobilePackage",
       "path": "Samples~/MobilePackage"
     },
     {
-      "displayName": "Operation Package",
+      "displayName": "OperationPackage",
       "description": "Sample: OperationPackage",
       "path": "Samples~/OperationPackage"
     },
     {
-      "displayName": "Sound Package",
+      "displayName": "SoundPackage",
       "description": "Sample: SoundPackage",
       "path": "Samples~/SoundPackage"
     },
     {
-      "displayName": "UI Package",
+      "displayName": "UIPackage",
       "description": "Sample: UIPackage",
       "path": "Samples~/UIPackage"
     }

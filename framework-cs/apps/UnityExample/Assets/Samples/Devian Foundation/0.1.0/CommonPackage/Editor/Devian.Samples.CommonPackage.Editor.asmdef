@@ -1,14 +1,14 @@
 {
-  "name": "Devian.Samples.CommonPackage",
-  "rootNamespace": "Devian.Domain.Common",
+  "name": "Devian.Samples.CommonPackage.Editor",
+  "rootNamespace": "Devian.Domain.Common.Editor",
   "references": [
-    "Devian.Core",
-    "Unity.Addressables",
-    "Unity.ResourceManager",
-    "Unity.InputSystem",
-    "Newtonsoft.Json"
+    "Devian.Samples.CommonPackage",
+    "Devian.Unity.Editor",
+    "Devian.Unity"
   ],
-  "includePlatforms": [],
+  "includePlatforms": [
+    "Editor"
+  ],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
   "overrideReferences": false,

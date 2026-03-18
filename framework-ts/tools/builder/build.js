@@ -3754,12 +3754,8 @@ export * from './features';
      * @returns {string} - Human-readable display name
      */
     folderNameToDisplayName(folderName) {
-        // Unity uses sample displayName as Assets/Samples folder name.
-        // Acronym-aware: "UIPackage" → "UI Package", "GameProtocol" → "Game Protocol"
-        return folderName
-            .replace(/([a-z])([A-Z])/g, '$1 $2')
-            .replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2')
-            .trim();
+        // PascalCase 통일: UPM Samples~ / package.json displayName / Assets/Samples 모두 동일
+        return folderName;
     }
 
     /**

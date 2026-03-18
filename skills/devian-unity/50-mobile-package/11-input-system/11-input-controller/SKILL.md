@@ -1,4 +1,4 @@
-# 21-input-controller
+# 11-input-controller
 
 Status: ACTIVE
 AppliesTo: v11
@@ -31,7 +31,7 @@ Type: Component Specification
 
 ### 제외
 
-- 입력 수집/정규화/발행 (→ `24-input-manager`)
+- 입력 수집/정규화/발행 (→ `10-input-manager`)
 - 구체적 게임 입력 로직 (서브클래스 구현)
 
 ---
@@ -156,11 +156,11 @@ public class ViewFlattenedSpace : IInputSpace
 
 | 타입 | 경로 |
 |------|------|
-| IBaseInputController | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/IBaseInputController.cs` |
-| BaseInputController | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/BaseInputController.cs` |
-| IInputSpace | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/IInputSpace.cs` |
-| WorldXZSpace | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/InputSpaces/WorldXZSpace.cs` |
-| ViewFlattenedSpace | `com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Input/InputSpaces/ViewFlattenedSpace.cs` |
+| IBaseInputController | `com.devian.foundation/Samples~/MobilePackage/Runtime/Input/IBaseInputController.cs` |
+| BaseInputController | `com.devian.foundation/Samples~/MobilePackage/Runtime/Input/BaseInputController.cs` |
+| IInputSpace | `com.devian.foundation/Samples~/MobilePackage/Runtime/Input/IInputSpace.cs` |
+| WorldXZSpace | `com.devian.foundation/Samples~/MobilePackage/Runtime/Input/InputSpaces/WorldXZSpace.cs` |
+| ViewFlattenedSpace | `com.devian.foundation/Samples~/MobilePackage/Runtime/Input/InputSpaces/ViewFlattenedSpace.cs` |
 
 ---
 
@@ -187,4 +187,4 @@ public class ViewFlattenedSpace : IInputSpace
 ## Reference
 
 - Parent: `../00-overview/SKILL.md`
-- 입력 수집: `../24-input-manager/SKILL.md`
+- 입력 수집: `../10-input-manager/SKILL.md`

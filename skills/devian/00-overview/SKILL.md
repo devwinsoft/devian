@@ -57,8 +57,8 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 |---|---|
 | StringTable, StringTable.xlsx, string-table, ST_, 다국어, localization, localizing, TEXT table, 번역 | `skills/devian-unity/20-common-package/30-string-table/SKILL.md` |
 | ActorObject, ActorController, actor-system, actor controller | `skills/devian-unity/20-common-package/10-actor-system/SKILL.md` |
-| InputManager, input manager, InputActionAsset, input action asset | `skills/devian-unity/20-common-package/22-input-manager/SKILL.md` |
-| BaseInputController, input-controller, input controller, InputSpace | `skills/devian-unity/20-common-package/21-input-controller/SKILL.md` |
+| InputManager, input manager, InputActionAsset, input action asset | `skills/devian-unity/50-mobile-package/11-input-system/10-input-manager/SKILL.md` |
+| BaseInputController, input-controller, input controller, InputSpace | `skills/devian-unity/50-mobile-package/11-input-system/11-input-controller/SKILL.md` |
 | NDJSON, ndjson, .json 스토리지 | `skills/devian/80-tools/11-builder/53-data-ndjson/SKILL.md` |
 | PB64, pb64, .asset 바이너리 | `skills/devian/80-tools/11-builder/54-data-pb64/SKILL.md` |
 | TableGen, 테이블 생성 | `skills/devian/80-tools/11-builder/51-table-codegen/SKILL.md` |

@@ -25,6 +25,7 @@ MobilePackage은 **Devian Foundation**(`com.devian.foundation`)에 포함된 Uni
 
 - [30-purchase-system](../30-purchase-system/00-overview/SKILL.md)
 - [11-mobile-application](../11-mobile-application/SKILL.md)
+- [11-input-system](../11-input-system/00-overview/SKILL.md)
 - [23-firebase-callable-manager](../23-firebase-callable-manager/SKILL.md)
 - [24-login-manager](../24-login-manager/SKILL.md)
 - [27-attend-system](../27-attend-system/00-overview/SKILL.md)
