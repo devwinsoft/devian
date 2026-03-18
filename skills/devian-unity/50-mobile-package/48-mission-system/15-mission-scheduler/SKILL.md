@@ -37,16 +37,16 @@ Type: Design / Scheduler SSOT
 - `conditionMsgId -> GAME_MESSAGE` resolve 후 bind 인자 전달
 - daily cycle 전환 시 기존 daily set 정리 후 재생성
 
-### Period (`MISSION_PERIOD`)
+### Weekly (`MISSION_WEEKLY`)
 
 - 초기화/리셋 시 active row 전부 create/restore
 - 기본 상태는 WAIT
-- `MISSION_PERIOD.day`를 activation group key로 사용한다.
+- `MISSION_WEEKLY.day`를 activation group key로 사용한다.
 - 활성화 규칙:
   - `day == 1`: 즉시 ACTIVE
   - `day == n`: `(n - 1)`일 경과 후 ACTIVE
-- period cycle은 10일 단위
-- cycle 전환 시 기존 period runtime 전량 정리 후 WAIT 재생성
+- weekly cycle은 10일 단위
+- cycle 전환 시 기존 weekly runtime 전량 정리 후 WAIT 재생성
 
 ---
 

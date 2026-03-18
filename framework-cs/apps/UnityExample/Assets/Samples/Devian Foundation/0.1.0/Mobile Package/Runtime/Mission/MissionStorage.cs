@@ -8,7 +8,7 @@ namespace Devian
     {
         public int schemaVersion = 3;
         public long dailyMissionStartUtcMs;
-        public long periodMissionStartUtcMs;
+        public long weeklyMissionStartUtcMs;
         public int nextMissionUid = 1;
         public Dictionary<int, MissionRuntimeBase> runtimes = new();
 
@@ -16,7 +16,7 @@ namespace Devian
         {
             schemaVersion = 3;
             dailyMissionStartUtcMs = 0L;
-            periodMissionStartUtcMs = 0L;
+            weeklyMissionStartUtcMs = 0L;
             nextMissionUid = 1;
             runtimes.Clear();
         }

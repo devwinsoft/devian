@@ -14,7 +14,7 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
 - storage 초기화 및 복구
 - daily/period anchor 보정
 - scheduler rebuild/prune 호출
-- `DAILY`/`PERIOD` claim 처리 및 보상 적용 위임
+- `DAILY`/`WEEKLY` claim 처리 및 보상 적용 위임
 - 저장 호출
 
 ---
@@ -26,9 +26,9 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
 - `GetMissionRuntimeState(missionType, missionId)`
 - `GetRemainTime(missionType)`
 - `ClaimAsync(missionType, missionId, ...)`
-- `Notify(MESSAGE_MISSION_TYPE, ...)`
-- `Subcribe(EntityId, MESSAGE_MISSION_TYPE, Handler)`
-- `SubcribeOnce(EntityId, MESSAGE_MISSION_TYPE, Action<object[]>)`
+- `Notify(MISSION_MESSAGE_TYPE, ...)`
+- `Subcribe(EntityId, MISSION_MESSAGE_TYPE, Handler)`
+- `SubcribeOnce(EntityId, MISSION_MESSAGE_TYPE, Action<object[]>)`
 - `UnSubcribe(EntityId)`
 
 ---
@@ -44,10 +44,10 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
 
 - `DAILY`:
   - cycle마다 active row를 선택해 runtime 생성/복구
-- `PERIOD`:
+- `WEEKLY` (weekly cycle):
   - 초기화/리셋 시 모든 row runtime 생성
   - 기본 WAIT 상태
-  - `MISSION_PERIOD.day`를 group key로 사용해 `day(1~7)` 규칙으로 ACTIVE 전환
+  - `MISSION_WEEKLY.day`를 group key로 사용해 `day(1~7)` 규칙으로 ACTIVE 전환
   - 10일 주기로 cycle reset
 
 ---

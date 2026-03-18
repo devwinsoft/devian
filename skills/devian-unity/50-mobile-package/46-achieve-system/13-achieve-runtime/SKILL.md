@@ -3,7 +3,7 @@
 Status: ACTIVE
 AppliesTo: v10
 
-Achieve runtime(`AchieveRuntimeBase`, `AchieveRuntimeOnce`, `AchieveRuntimePass`, `AchieveRuntimeFactory`) 규약 문서다.
+Achieve runtime(`AchieveRuntimeBase`, `AchieveRuntimeSocial`, `AchieveRuntimePass`, `AchieveRuntimeFactory`) 규약 문서다.
 
 ---
 
@@ -60,7 +60,7 @@ Achieve runtime(`AchieveRuntimeBase`, `AchieveRuntimeOnce`, `AchieveRuntimePass`
 - `Create`: 신규 runtime 생성 + (WAIT 또는 ACTIVE) bind
 - `Restore`: 저장값 복원 + (WAIT 또는 ACTIVE) bind
 - `AchieveType`에 맞는 runtime 클래스를 생성한다.
-  - `ONCE` -> `AchieveRuntimeOnce`
+  - `ONCE` -> `AchieveRuntimeSocial`
   - `PASS` -> `AchieveRuntimePass`
 - restore 후 progress는 stat reader 값으로 동기화된다.
 

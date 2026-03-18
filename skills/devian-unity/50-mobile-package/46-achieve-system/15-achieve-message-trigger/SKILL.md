@@ -18,7 +18,7 @@ Type: Design / Message SSOT
 ## Type
 
 ```csharp
-public sealed class AchieveMessageTrigger : BaseTrigger<EntityId, MESSAGE_ACHIEVE_TYPE>
+public sealed class AchieveMessageTrigger : BaseTrigger<EntityId, ACHIEVE_MESSAGE_TYPE>
 {
 }
 ```

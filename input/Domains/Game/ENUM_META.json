@@ -1,399 +1,74 @@
 {
   "enums": [
     {
-      "name": "LEADERBOARD_MODE",
-      "values": [
-        {
-          "name": "NONE",
-          "value": 0
-        },
-        {
-          "name": "NORMAL",
-          "value": 1
-        },
-        {
-          "name": "HARDCORE",
-          "value": 2
-        }
-      ]
-    },
-    {
-      "name": "MISSION_TYPE",
-      "values": [
-        {
-          "name": "NONE",
-          "value": 0
-        },
-        {
-          "name": "DAILY",
-          "value": 1
-        },
-        {
-          "name": "PERIOD",
-          "value": 2
-        }
-      ]
-    },
-    {
-      "name": "MESSAGE_MISSION_TYPE",
-      "values": [
-        {
-          "name": "NONE",
-          "value": 0
-        },
-        {
-          "name": "RUNTIME_INIT",
-          "value": 1
-        },
-        {
-          "name": "RUNTIME_PROGRESS",
-          "value": 2
-        },
-        {
-          "name": "RUNTIME_CLAIMABLE",
-          "value": 3
-        },
-        {
-          "name": "RUNTIME_REWARDED",
-          "value": 4
-        },
-        {
-          "name": "DAY_RESET",
-          "value": 5
-        },
-        {
-          "name": "ACHIEVE_LEVEL_UP",
-          "value": 6
-        }
-      ]
-    },
-    {
-      "name": "MESSAGE_ACHIEVE_TYPE",
-      "values": [
-        {
-          "name": "NONE",
-          "value": 0
-        },
-        {
-          "name": "RUNTIME_INIT",
-          "value": 1
-        },
-        {
-          "name": "RUNTIME_PROGRESS",
-          "value": 2
-        },
-        {
-          "name": "RUNTIME_CLAIMABLE",
-          "value": 3
-        },
-        {
-          "name": "RUNTIME_LEVEL_UP",
-          "value": 4
-        },
-        {
-          "name": "RUNTIME_REWARDED",
-          "value": 5
-        },
-        {
-          "name": "RUNTIME_UNLOCKED",
-          "value": 6
-        },
-        {
-          "name": "RUNTIME_ACTIVE",
-          "value": 7
-        }
-      ]
-    },
-    {
-      "name": "ACHIEVE_TYPE",
-      "values": [
-        {
-          "name": "NONE",
-          "value": 0
-        },
-        {
-          "name": "ONCE",
-          "value": 1
-        },
-        {
-          "name": "PASS",
-          "value": 2
-        }
-      ]
-    },
-    {
-      "name": "CURRENCY_TYPE",
-      "values": [
-        {
-          "name": "ADS",
-          "value": 0
-        },
-        {
-          "name": "ARENA_COIN",
-          "value": 1
-        },
-        {
-          "name": "FREE",
-          "value": 2
-        },
-        {
-          "name": "FRIENDSHIP",
-          "value": 3
-        },
-        {
-          "name": "GOLD",
-          "value": 4
-        },
-        {
-          "name": "GUILD_COIN",
-          "value": 5
-        },
-        {
-          "name": "JEWEL",
-          "value": 6
-        },
-        {
-          "name": "JEWEL_FREE",
-          "value": 7
-        },
-        {
-          "name": "JEWEL_PAID",
-          "value": 8
-        },
-        {
-          "name": "STAMINA",
-          "value": 9
-        }
-      ]
-    },
-    {
-      "name": "REWARD_TYPE",
-      "values": [
-        {
-          "name": "CARD",
-          "value": 0
-        },
-        {
-          "name": "CURRENCY",
-          "value": 1
-        },
-        {
-          "name": "EQUIP",
-          "value": 2
-        },
-        {
-          "name": "HERO",
-          "value": 3
-        },
-        {
-          "name": "RENTAL",
-          "value": 4
-        },
-        {
-          "name": "PASS",
-          "value": 5
-        },
-        {
-          "name": "TREASURE",
-          "value": 6
-        }
-      ]
-    },
-    {
-      "name": "TREASURE_GRADE_TYPE",
-      "values": [
-        {
-          "name": "NONE",
-          "value": 0
-        },
-        {
-          "name": "COMMON",
-          "value": 1
-        },
-        {
-          "name": "RARE",
-          "value": 2
-        },
-        {
-          "name": "EPIC",
-          "value": 3
-        },
-        {
-          "name": "LEGENDARY",
-          "value": 4
-        },
-        {
-          "name": "MYTHIC",
-          "value": 5
-        }
-      ]
-    },
-    {
       "name": "ADVERTISE_FORMAT",
       "values": [
-        {
-          "name": "BANNER",
-          "value": 0
-        },
-        {
-          "name": "INTERSTITIAL",
-          "value": 1
-        },
-        {
-          "name": "REWARDED",
-          "value": 2
-        },
-        {
-          "name": "APP_OPEN",
-          "value": 3
-        }
+        {"name": "BANNER", "value": 0},
+        {"name": "INTERSTITIAL", "value": 1},
+        {"name": "REWARDED", "value": 2},
+        {"name": "APP_OPEN", "value": 3}
       ]
     },
     {
       "name": "ADVERTISE_PROVIDER",
       "values": [
-        {
-          "name": "GOOGLE_MOBILE_ADS",
-          "value": 0
-        },
-        {
-          "name": "MOCK",
-          "value": 1
-        }
+        {"name": "GOOGLE_MOBILE_ADS", "value": 0},
+        {"name": "MOCK", "value": 1}
+      ]
+    },
+    {
+      "name": "LEADERBOARD_MODE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "NORMAL", "value": 1},
+        {"name": "HARDCORE", "value": 2}
+      ]
+    },
+    {
+      "name": "CURRENCY_TYPE",
+      "values": [
+        {"name": "ADS", "value": 0},
+        {"name": "ARENA_COIN", "value": 1},
+        {"name": "FREE", "value": 2},
+        {"name": "FRIENDSHIP", "value": 3},
+        {"name": "GOLD", "value": 4},
+        {"name": "GUILD_COIN", "value": 5},
+        {"name": "JEWEL", "value": 6},
+        {"name": "JEWEL_FREE", "value": 7},
+        {"name": "JEWEL_PAID", "value": 8},
+        {"name": "STAMINA", "value": 9}
+      ]
+    },
+    {
+      "name": "REWARD_TYPE",
+      "values": [
+        {"name": "CARD", "value": 0},
+        {"name": "CURRENCY", "value": 1},
+        {"name": "EQUIP", "value": 2},
+        {"name": "HERO", "value": 3},
+        {"name": "RENTAL", "value": 4},
+        {"name": "PASS", "value": 5},
+        {"name": "TREASURE", "value": 6}
+      ]
+    },
+    {
+      "name": "TREASURE_GRADE_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "COMMON", "value": 1},
+        {"name": "RARE", "value": 2},
+        {"name": "EPIC", "value": 3},
+        {"name": "LEGENDARY", "value": 4},
+        {"name": "MYTHIC", "value": 5}
       ]
     },
     {
       "name": "PURCHASE_KIND",
       "values": [
-        {
-          "name": "CONSUMABLE",
-          "value": 0
-        },
-        {
-          "name": "SUBSCRIPTION",
-          "value": 1
-        },
-        {
-          "name": "PASS",
-          "value": 2
-        },
-        {
-          "name": "RENTAL",
-          "value": 3
-        }
-      ]
-    },
-    {
-      "name": "MESSAGE_INVENTORY_TYPE",
-      "values": [
-        {
-          "name": "NONE",
-          "value": 0
-        },
-        {
-          "name": "PASS_CHANGED",
-          "value": 1
-        }
-      ]
-    },
-    {
-      "name": "SHOP_CATALOG_TYPE",
-      "values": [
-        {
-          "name": "NONE",
-          "value": 0
-        },
-        {
-          "name": "DAILY",
-          "value": 1
-        },
-        {
-          "name": "CHEST",
-          "value": 2
-        },
-        {
-          "name": "PURCHASE",
-          "value": 3
-        },
-        {
-          "name": "GOLD",
-          "value": 4
-        },
-        {
-          "name": "EVENT",
-          "value": 5
-        }
-      ]
-    },
-    {
-      "name": "SHOP_DISCOUNT_TYPE",
-      "values": [
-        {
-          "name": "NONE",
-          "value": 0
-        },
-        {
-          "name": "PER10",
-          "value": 1
-        },
-        {
-          "name": "PER20",
-          "value": 2
-        },
-        {
-          "name": "PER30",
-          "value": 3
-        },
-        {
-          "name": "PER50",
-          "value": 4
-        }
-      ]
-    },
-    {
-      "name": "SHOP_PRODUCT_TYPE",
-      "values": [
-        {
-          "name": "NONE",
-          "value": 0
-        },
-        {
-          "name": "FREE",
-          "value": 1
-        },
-        {
-          "name": "ADS",
-          "value": 2
-        },
-        {
-          "name": "CURRENCY",
-          "value": 3
-        },
-        {
-          "name": "PURCHASE",
-          "value": 4
-        }
-      ]
-    },
-    {
-      "name": "SHOP_PRODUCT_CHEST_TYPE",
-      "values": [
-        {
-          "name": "NONE",
-          "value": 0
-        },
-        {
-          "name": "ADS",
-          "value": 1
-        },
-        {
-          "name": "ONE",
-          "value": 2
-        },
-        {
-          "name": "TEN",
-          "value": 3
-        }
+        {"name": "CONSUMABLE", "value": 0},
+        {"name": "SUBSCRIPTION", "value": 1},
+        {"name": "PASS", "value": 2},
+        {"name": "RENTAL", "value": 3}
       ]
     }
   ]

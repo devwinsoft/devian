@@ -13,7 +13,7 @@ namespace Devian
             {
                 ["schemaVersion"] = storage.schemaVersion,
                 ["dailyMissionStartUtcMs"] = storage.dailyMissionStartUtcMs,
-                ["periodMissionStartUtcMs"] = storage.periodMissionStartUtcMs,
+                ["weeklyMissionStartUtcMs"] = storage.weeklyMissionStartUtcMs,
                 ["nextMissionUid"] = storage.nextMissionUid,
             };
 
@@ -36,10 +36,10 @@ namespace Devian
                         };
                         break;
 
-                    case MissionRuntimePeriod periodRuntime:
+                    case MissionRuntimeWeekly periodRuntime:
                         runtimeObj = new JObject
                         {
-                            ["missionType"] = (int)MISSION_TYPE.PERIOD,
+                            ["missionType"] = (int)MISSION_TYPE.WEEKLY,
                             ["missionId"] = periodRuntime.missionId,
                             ["missionUid"] = periodRuntime.missionUid,
                             ["periodKey"] = periodRuntime.periodKey,
@@ -70,11 +70,11 @@ namespace Devian
 
             storage.schemaVersion = missionObj.Value<int?>("schemaVersion") ?? 3;
             storage.dailyMissionStartUtcMs = missionObj.Value<long?>("dailyMissionStartUtcMs") ?? 0L;
-            storage.periodMissionStartUtcMs = missionObj.Value<long?>("periodMissionStartUtcMs") ?? 0L;
+            storage.weeklyMissionStartUtcMs = missionObj.Value<long?>("weeklyMissionStartUtcMs") ?? 0L;
             storage.nextMissionUid = missionObj.Value<int?>("nextMissionUid") ?? 1;
 
-            if (storage.periodMissionStartUtcMs <= 0L)
-                storage.periodMissionStartUtcMs = storage.dailyMissionStartUtcMs;
+            if (storage.weeklyMissionStartUtcMs <= 0L)
+                storage.weeklyMissionStartUtcMs = storage.dailyMissionStartUtcMs;
 
             // v12 migration: move mission.stats -> message.stats
             if (missionObj["stats"] is JObject statsObj && messageStorage != null)
@@ -117,8 +117,8 @@ namespace Devian
                     MissionRuntimeBase runtime;
                     switch (missionType)
                     {
-                        case MISSION_TYPE.PERIOD:
-                            runtime = new MissionRuntimePeriod
+                        case MISSION_TYPE.WEEKLY:
+                            runtime = new MissionRuntimeWeekly
                             {
                                 missionId = missionId,
                                 periodKey = periodKey,

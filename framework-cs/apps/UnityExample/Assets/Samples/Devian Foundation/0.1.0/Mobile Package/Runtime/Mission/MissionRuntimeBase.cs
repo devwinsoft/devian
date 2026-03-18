@@ -277,7 +277,7 @@ namespace Devian
     }
 
     [Serializable]
-    public sealed class MissionRuntimePeriod : MissionRuntimeBase
+    public sealed class MissionRuntimeWeekly : MissionRuntimeBase
     {
         public int day = 1;
 

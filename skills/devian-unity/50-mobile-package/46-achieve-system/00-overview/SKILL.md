@@ -7,12 +7,12 @@ MobilePackage 샘플의 Achieve 시스템 개요다.
 `AchieveManager`가 업적 runtime + 플랫폼 업적 연동을 함께 담당한다.
 
 이 스킬 그룹 책임:
-- 업적 runtime 생성/복구/level-up (`ACHIEVE_ONCE`, `ACHIEVE_PASS` table)
+- 업적 runtime 생성/복구/level-up (`ACHIEVE_SOCIAL`, `ACHIEVE_PASS` table)
 - 업적 claim/reward/save orchestration
 - 내부 업적 ID -> 플랫폼 업적 ID 매핑
 - 플랫폼 업적 Unlock/Sync
 - 신규 달성 이벤트(`OnAchievementUnlocked`) 발행
-- runtime 타입 분기(`ACHIEVE_TYPE`: `ONCE`, `PASS`)
+- runtime 타입 분기(`ACHIEVE_TYPE`: `SOCIAL`, `PASS`)
 
 ---
 

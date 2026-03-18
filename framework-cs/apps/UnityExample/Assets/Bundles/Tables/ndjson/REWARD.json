@@ -7,11 +7,11 @@
 {"RewardNum":3,"RewardGroupId":"reward_mission_day_003","Type":"CURRENCY","Id":"GOLD","Amount":1000,"Rate":100}
 {"RewardNum":4,"RewardGroupId":"reward_mission_day_004","Type":"CURRENCY","Id":"GOLD","Amount":1000,"Rate":100}
 {"RewardNum":5,"RewardGroupId":"reward_mission_day_005","Type":"CURRENCY","Id":"GOLD","Amount":1000,"Rate":100}
-{"RewardNum":6,"RewardGroupId":"reward_mission_achieve_001","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
-{"RewardNum":7,"RewardGroupId":"reward_mission_achieve_002","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
-{"RewardNum":8,"RewardGroupId":"reward_mission_achieve_003","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
-{"RewardNum":9,"RewardGroupId":"reward_mission_achieve_004","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
-{"RewardNum":10,"RewardGroupId":"reward_mission_achieve_005","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
+{"RewardNum":6,"RewardGroupId":"reward_mission_period_001","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
+{"RewardNum":7,"RewardGroupId":"reward_mission_period_002","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
+{"RewardNum":8,"RewardGroupId":"reward_mission_period_003","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
+{"RewardNum":9,"RewardGroupId":"reward_mission_period_004","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
+{"RewardNum":10,"RewardGroupId":"reward_mission_period_005","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
 {"RewardNum":1,"RewardGroupId":"reward_purchase_pass_001","Type":"CURRENCY","Id":"JEWEL_PAID","Amount":1000,"Rate":100}
 {"RewardNum":2,"RewardGroupId":"reward_purchase_noads_month","Type":"RENTAL","Id":"NO_ADS","Amount":1,"Rate":100}
 {"RewardNum":3,"RewardGroupId":"reward_purchase_pass_001","Type":"PASS","Id":"P2026_01","Amount":1,"Rate":100}

@@ -18,7 +18,7 @@ Mission 변화 알림 전용 메시지 시스템 정본이다.
 ## Type
 
 ```csharp
-public sealed class MissionMessageTrigger : BaseTrigger<EntityId, MESSAGE_MISSION_TYPE>
+public sealed class MissionMessageTrigger : BaseTrigger<EntityId, MISSION_MESSAGE_TYPE>
 {
 }
 ```
@@ -50,13 +50,13 @@ public sealed class MissionMessageTrigger : BaseTrigger<EntityId, MESSAGE_MISSIO
 
 ---
 
-## Notify Timing (DAILY/PERIOD)
+## Notify Timing (DAILY/WEEKLY)
 
 - runtime create/restore 직후: `RUNTIME_INIT`
 - WAIT -> ACTIVE 전이 후 progress 변경 시: `RUNTIME_PROGRESS`
 - claimable 전이 시: `RUNTIME_CLAIMABLE`
 - claim 성공 보상 적용 후: `RUNTIME_REWARDED`
-- cycle reset(DAILY/PERIOD) 시: `DAY_RESET`
+- cycle reset(DAILY/WEEKLY) 시: `DAY_RESET`
 
 ---
 

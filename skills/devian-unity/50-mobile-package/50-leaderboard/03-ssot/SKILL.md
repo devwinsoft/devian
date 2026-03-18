@@ -109,7 +109,7 @@ AppliesTo: v10
 |------|----|---------------|------|
 | `MESSAGE` | `messageId` | - | 메시지 타입/저장 방식(`saveType`) 정의 |
 | `MISSION` | `missionId` | `messageId -> MESSAGE.messageId` | 일일 미션 정의 및 조건 |
-| `ACHIEVE_ONCE` | `index` | `conditionMsgId/reqMsgId -> MESSAGE.messageId` | 일반 업적 단계 정의 및 조건 |
+| `ACHIEVE_SOCIAL` | `index` | `conditionMsgId/reqMsgId -> MESSAGE.messageId` | 소셜 업적 단계 정의 및 조건 |
 | `ACHIEVE_PASS` | `index` | `conditionMsgId -> MESSAGE.messageId` | 패스 업적 단계 정의 및 pass 조건 |
 | `SEASON` | `seasonId` | - | 시즌 기간 정의 (`StartUtcTime`/`EndUtcTime`) |
 | `LEADERBOARD` | `leaderboardId` | `messageId -> MESSAGE.messageId`, `seasonId -> SEASON.seasonId` | 점수 소스 + 시즌 참조 + 플랫폼 ID 매핑 |
@@ -120,8 +120,8 @@ AppliesTo: v10
 ```text
 GAME_MESSAGE -> MESSAGE(messageId)
                     ├─ MISSION.messageId
-                    ├─ ACHIEVE_ONCE.conditionMsgId
-                    ├─ ACHIEVE_ONCE.reqMsgId
+                    ├─ ACHIEVE_SOCIAL.conditionMsgId
+                    ├─ ACHIEVE_SOCIAL.reqMsgId
                     ├─ ACHIEVE_PASS.conditionMsgId
                     └─ LEADERBOARD.messageId
 

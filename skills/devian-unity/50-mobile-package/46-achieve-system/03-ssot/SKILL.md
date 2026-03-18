@@ -7,11 +7,11 @@ AppliesTo: v10
 
 이 문서는 Achieve 시스템의 정본이다.
 
-- 업적 runtime 테이블: `ACHIEVE_ONCE`, `ACHIEVE_PASS`
+- 업적 runtime 테이블: `ACHIEVE_SOCIAL`, `ACHIEVE_PASS`
 - 진행 stat 정본: `MESSAGE`
-- 업적 알림 enum: `MESSAGE_ACHIEVE_TYPE`
-- 업적 타입 enum: `ACHIEVE_TYPE` (`NONE`, `ONCE`, `PASS`)
-- 플랫폼 업적 매핑: `ACHIEVE_ONCE.achieveId -> (appleAchievementId, googleAchievementId)`
+- 업적 알림 enum: `ACHIEVE_MESSAGE_TYPE`
+- 업적 타입 enum: `ACHIEVE_TYPE` (`NONE`, `SOCIAL`, `PASS`)
+- 플랫폼 업적 매핑: `ACHIEVE_SOCIAL.achieveId -> (appleAchievementId, googleAchievementId)`
 - 저장 구조: `AchieveStorage` + `AchieveRuntimeBase`
 
 ---
@@ -19,10 +19,10 @@ AppliesTo: v10
 ## A. Runtime Source
 
 - 파일: `input/Domains/Game/AchieveTable.xlsx`
-- 시트: `ACHIEVE_ONCE`
-- 컨테이너: `TB_ACHIEVE_ONCE`
+- 시트: `ACHIEVE_SOCIAL`
+- 컨테이너: `TB_ACHIEVE_SOCIAL`
 
-### `ACHIEVE_ONCE` schema
+### `ACHIEVE_SOCIAL` schema
 
 | field | type | note |
 |------|------|------|
@@ -76,7 +76,7 @@ AppliesTo: v10
 - level-up 시 `achieveUid` 유지
 - 초기화 시 `achieveId` group 기준 runtime을 항상 생성한다.
 - 타입별 req 규칙으로 `WAIT/ACTIVE` 시작 상태를 결정한다.
-  - `ACHIEVE_ONCE`: `reqMsgId/reqValue`
+  - `ACHIEVE_SOCIAL`: `reqMsgId/reqValue`
   - `ACHIEVE_PASS`: `reqPassId` / `reqSeasonId`
 - `WAIT` 상태는 `conditionMsgId` 진행도 반영을 하지 않는다.
 - req 조건을 만족하면 `WAIT -> ACTIVE`로 전이한다.
@@ -96,7 +96,7 @@ claim 성공 시:
    - next row의 타입별 req 조건을 다시 평가해 `WAIT` 또는 `ACTIVE`로 전환
 3. next가 없으면 completed
 4. 저장 수행
-5. 플랫폼 unlock best-effort (`ACHIEVE_TYPE.ONCE`만 수행)
+5. 플랫폼 unlock best-effort (`ACHIEVE_TYPE.SOCIAL`만 수행)
 
 ---
 
@@ -111,7 +111,7 @@ claim 성공 시:
 - `OnAchievementUnlocked(string achievementId)`
 
 `AchieveMessageTrigger` payload 규약:
-- key: `MESSAGE_ACHIEVE_TYPE`
+- key: `ACHIEVE_MESSAGE_TYPE`
 - `RUNTIME_*`: `args[0] = AchieveRuntimeBase`
 - `RUNTIME_REWARDED`: `args[1] = RewardData[]`
 - `RUNTIME_UNLOCKED`: `args[0] = string achievementId`

@@ -7,8 +7,8 @@ AppliesTo: v10
 
 이 문서는 아래 항목의 정본이다.
 
-- `MISSION_DAILY`, `MISSION_PERIOD`, `GAME_MESSAGE` 스키마
-- `MISSION_TYPE`, `GAME_MESSAGE_*`, `MESSAGE_MISSION_TYPE` 사용 규약
+- `MISSION_DAILY`, `MISSION_WEEKLY`, `GAME_MESSAGE` 스키마
+- `MISSION_TYPE`, `GAME_MESSAGE_*`, `MISSION_MESSAGE_TYPE` 사용 규약
 - Mission trigger/update/runtime binding 규칙
 - Mission 저장 구조(`MissionStorage`, daily/period runtime) 규칙
 
@@ -20,14 +20,14 @@ AppliesTo: v10
 ## A) Core Terms
 
 - `missionId`: 미션 ID
-- `missionType`: `MISSION_TYPE.DAILY` / `MISSION_TYPE.PERIOD`
+- `missionType`: `MISSION_TYPE.DAILY` / `MISSION_TYPE.WEEKLY`
 - `conditionMsgId`: mission row가 참조하는 `GAME_MESSAGE.messageId`
 - `messageType`: trigger key (`GAME_MESSAGE_TYPE`)
 - `saveType`: stat 누적 연산 (`GAME_MESSAGE_SAVE_TYPE`)
 - `conditionOp`: 비교 연산 (`GAME_MESSAGE_OP_TYPE`)
 - `conditionValue`: 목표값(`CBigInt`)
-- `periodKey`: runtime 주기 식별자 (`daily:{index}`, `period:{index}`)
-- `periodDayGroupKey`: `MISSION_PERIOD.day` (period runtime 활성화 그룹 키)
+- `periodKey`: runtime 주기 식별자 (`daily:{index}`, `weekly:{index}`)
+- `weeklyDayGroupKey`: `MISSION_WEEKLY.day` (weekly runtime 활성화 그룹 키)
 - `missionUid`: runtime 식별 `int`
 - `message stats`: `GameMessageStorage.stats[string messageId]`
 
@@ -51,7 +51,7 @@ AppliesTo: v10
 규칙:
 - `missionType` 필드는 없다(`MISSION_DAILY` 자체가 DAILY 타입).
 
-### `MISSION_PERIOD`
+### `MISSION_WEEKLY`
 
 | field | type | note |
 |---|---|---|
@@ -66,7 +66,7 @@ AppliesTo: v10
 규칙:
 - `missionType`, `fixed`, `orderNum` 필드는 없다.
 - `day`는 `1~7` 범위를 사용한다.
-- `day`는 period runtime의 group key다. 동일 `day` row는 같은 activation bucket으로 처리한다.
+- `day`는 weekly runtime의 group key다. 동일 `day` row는 같은 activation bucket으로 처리한다.
 
 ### `GAME_MESSAGE`
 
@@ -89,7 +89,7 @@ AppliesTo: v10
 | 값 | int | 설명 |
 |---|---|---|
 | `NONE` | 0 | runtime 미존재 (필드에 저장 안 됨) |
-| `WAIT` | 1 | 대기 (Period day 미도달) |
+| `WAIT` | 1 | 대기 (period day 미도달) |
 | `ACTIVE` | 2 | 진행 중 |
 | `CLAIMABLE` | 3 | 보상 수령 가능 (파생 상태, 필드에 저장 안 됨) |
 | `COMPLETED` | 4 | 완료 |
@@ -99,7 +99,7 @@ AppliesTo: v10
 
 규칙:
 - `saveType == NONE` row는 runtime을 생성하지 않는다.
-- `PERIOD` runtime은 초기화/리셋 직후 기본 상태가 WAIT다.
+- weekly runtime은 초기화/리셋 직후 기본 상태가 WAIT다.
 
 ---
 
@@ -139,7 +139,7 @@ runtime 반영:
 
 - `schemaVersion` (기본 2)
 - `dailyMissionStartUtcMs`
-- `periodMissionStartUtcMs`
+- `weeklyMissionStartUtcMs`
 - `nextMissionUid`
 - `runtimes: Dictionary<int, MissionRuntimeBase>`
 
@@ -161,17 +161,17 @@ runtime 저장 규칙:
 
 ---
 
-## G) Period Clock Rules
+## G) Weekly Clock Rules
 
 - cycle days: `10`
-- anchor: `MissionStorage.periodMissionStartUtcMs`
+- anchor: `MissionStorage.weeklyMissionStartUtcMs`
 - cycle index:
-  - `floor(max(0, serverNowUtcMs - periodMissionStartUtcMs) / (10 * 86400000))`
-- cycle key: `period:{index}`
+  - `floor(max(0, serverNowUtcMs - weeklyMissionStartUtcMs) / (10 * 86400000))`
+- cycle key: `weekly:{index}`
 - 활성화 규칙:
   - `day == 1` -> 초기화 직후 ACTIVE
   - `day == n` -> `(n - 1)`일 경과 후 ACTIVE
-- cycle 전환 시 모든 period runtime을 WAIT로 재생성하고 day 규칙으로 재활성화한다.
+- cycle 전환 시 모든 weekly runtime을 WAIT로 재생성하고 day 규칙으로 재활성화한다.
 
 ---
 

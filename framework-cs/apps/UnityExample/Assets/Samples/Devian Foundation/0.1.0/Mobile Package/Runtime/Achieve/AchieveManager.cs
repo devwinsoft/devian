@@ -269,7 +269,7 @@ namespace Devian
 
             emitRuntimeRewarded(runtime, apply.Value.AppliedRewards);
 
-            if (runtime.RuntimeType == ACHIEVE_TYPE.ONCE)
+            if (runtime.RuntimeType == ACHIEVE_TYPE.SOCIAL)
             {
                 var unlock = await UnlockAchievementAsync(runtime.achieveId, ct);
                 if (unlock.IsFailure)
@@ -286,22 +286,22 @@ namespace Devian
             return CommonResult.Ok();
         }
 
-        public void Notify(MESSAGE_ACHIEVE_TYPE msgType)
+        public void Notify(ACHIEVE_MESSAGE_TYPE msgType)
         {
             _messageSystem.Notify(msgType);
         }
 
-        public void Notify(MESSAGE_ACHIEVE_TYPE msgType, params object[] args)
+        public void Notify(ACHIEVE_MESSAGE_TYPE msgType, params object[] args)
         {
             _messageSystem.Notify(msgType, args);
         }
 
-        public void Subcribe(EntityId ownerKey, MESSAGE_ACHIEVE_TYPE msgType, BaseTrigger<EntityId, MESSAGE_ACHIEVE_TYPE>.Handler handler)
+        public void Subcribe(EntityId ownerKey, ACHIEVE_MESSAGE_TYPE msgType, BaseTrigger<EntityId, ACHIEVE_MESSAGE_TYPE>.Handler handler)
         {
             _messageSystem.Subcribe(ownerKey, msgType, handler);
         }
 
-        public void SubcribeOnce(EntityId ownerKey, MESSAGE_ACHIEVE_TYPE msgType, Action<object[]> handler)
+        public void SubcribeOnce(EntityId ownerKey, ACHIEVE_MESSAGE_TYPE msgType, Action<object[]> handler)
         {
             _messageSystem.SubcribeOnce(ownerKey, msgType, handler);
         }
@@ -357,7 +357,7 @@ namespace Devian
 
             inventoryManager.Subcribe(
                 InventoryMessageOwnerKey,
-                MESSAGE_INVENTORY_TYPE.PASS_CHANGED,
+                INVENTORY_MESSAGE_TYPE.PASS_CHANGED,
                 args =>
                 {
                     onInventoryPassChanged(args);
@@ -589,7 +589,7 @@ namespace Devian
 
         void emitAchievementUnlocked(string achievementId)
         {
-            _messageSystem.Notify(MESSAGE_ACHIEVE_TYPE.RUNTIME_UNLOCKED, achievementId);
+            _messageSystem.Notify(ACHIEVE_MESSAGE_TYPE.RUNTIME_UNLOCKED, achievementId);
 
             var handler = OnAchievementUnlocked;
             if (handler == null)
@@ -607,7 +607,7 @@ namespace Devian
 
         void emitRuntimeInitialized(AchieveRuntimeBase runtime)
         {
-            _messageSystem.Notify(MESSAGE_ACHIEVE_TYPE.RUNTIME_INIT, runtime);
+            _messageSystem.Notify(ACHIEVE_MESSAGE_TYPE.RUNTIME_INIT, runtime);
 
             var handler = OnRuntimeInitialized;
             if (handler == null)
@@ -625,7 +625,7 @@ namespace Devian
 
         void emitRuntimeProgress(AchieveRuntimeBase runtime)
         {
-            _messageSystem.Notify(MESSAGE_ACHIEVE_TYPE.RUNTIME_PROGRESS, runtime);
+            _messageSystem.Notify(ACHIEVE_MESSAGE_TYPE.RUNTIME_PROGRESS, runtime);
 
             var handler = OnRuntimeProgress;
             if (handler == null)
@@ -643,7 +643,7 @@ namespace Devian
 
         void emitRuntimeActive(AchieveRuntimeBase runtime)
         {
-            _messageSystem.Notify(MESSAGE_ACHIEVE_TYPE.RUNTIME_ACTIVE, runtime);
+            _messageSystem.Notify(ACHIEVE_MESSAGE_TYPE.RUNTIME_ACTIVE, runtime);
 
             var handler = OnRuntimeActive;
             if (handler == null)
@@ -661,7 +661,7 @@ namespace Devian
 
         void emitRuntimeClaimable(AchieveRuntimeBase runtime)
         {
-            _messageSystem.Notify(MESSAGE_ACHIEVE_TYPE.RUNTIME_CLAIMABLE, runtime);
+            _messageSystem.Notify(ACHIEVE_MESSAGE_TYPE.RUNTIME_CLAIMABLE, runtime);
 
             var handler = OnRuntimeClaimable;
             if (handler == null)
@@ -679,7 +679,7 @@ namespace Devian
 
         void emitRuntimeLevelUp(AchieveRuntimeBase runtime)
         {
-            _messageSystem.Notify(MESSAGE_ACHIEVE_TYPE.RUNTIME_LEVEL_UP, runtime);
+            _messageSystem.Notify(ACHIEVE_MESSAGE_TYPE.RUNTIME_LEVEL_UP, runtime);
 
             var handler = OnRuntimeLevelUp;
             if (handler == null)
@@ -698,7 +698,7 @@ namespace Devian
         void emitRuntimeRewarded(AchieveRuntimeBase runtime, RewardData[] rewards)
         {
             var safeRewards = rewards ?? Array.Empty<RewardData>();
-            _messageSystem.Notify(MESSAGE_ACHIEVE_TYPE.RUNTIME_REWARDED, runtime, safeRewards);
+            _messageSystem.Notify(ACHIEVE_MESSAGE_TYPE.RUNTIME_REWARDED, runtime, safeRewards);
 
             var handler = OnRuntimeRewarded;
             if (handler == null)
@@ -722,7 +722,7 @@ namespace Devian
             foreach (var achieveId in _rowsByAchieveId.Keys)
             {
                 var mappingRow = findAchievementMappingRow(achieveId);
-                if (mappingRow == null || mappingRow.achieveType != ACHIEVE_TYPE.ONCE)
+                if (mappingRow == null || mappingRow.achieveType != ACHIEVE_TYPE.SOCIAL)
                     continue;
 
                 var entry = createAchievementMapEntry(mappingRow);
@@ -741,11 +741,11 @@ namespace Devian
         {
             _rowsByAchieveId.Clear();
 
-            foreach (var row in TB_ACHIEVE_ONCE.GetAll())
+            foreach (var row in TB_ACHIEVE_SOCIAL.GetAll())
             {
                 addAchieveRow(new AchieveTableRow
                 {
-                    achieveType = ACHIEVE_TYPE.ONCE,
+                    achieveType = ACHIEVE_TYPE.SOCIAL,
                     AchieveId = row.AchieveId ?? string.Empty,
                     IsActive = row.IsActive,
                     Level = row.Level,
@@ -1340,7 +1340,7 @@ namespace Devian
             var conditionMsgId = (row.ConditionMsgId ?? string.Empty).Trim();
             if (string.IsNullOrEmpty(conditionMsgId))
             {
-                if (row.achieveType == ACHIEVE_TYPE.ONCE)
+                if (row.achieveType == ACHIEVE_TYPE.SOCIAL)
                 {
                     if (logError)
                     {

@@ -33,7 +33,7 @@ Type: Design / Factory SSOT
 public static class MissionRuntimeFactory
 {
     public static MissionRuntimeDaily CreateDaily(DailyMissionRuntimeCreateArgs args);
-    public static MissionRuntimePeriod CreatePeriod(PeriodMissionRuntimeCreateArgs args);
+    public static MissionRuntimeWeekly CreateWeekly(WeeklyMissionRuntimeCreateArgs args);
     public static MissionRuntimeBase Restore(MissionRuntimeRestoreArgs args);
 }
 ```
@@ -48,7 +48,7 @@ public static class MissionRuntimeFactory
 - `StatType`, `OpType`, `ConditionOpType`, `ConditionValue`
 - `SubscribeTrigger`, `UnsubscribeTrigger`, `ReadExternalProgress`, callbacks
 
-`PeriodMissionRuntimeCreateArgs`
+`WeeklyMissionRuntimeCreateArgs`
 
 - daily args + `Day`, `IsWaiting`
 
@@ -67,7 +67,7 @@ public static class MissionRuntimeFactory
 - Daily create:
   - `progressValue = 0`
   - 기본 ACTIVE
-- Period create:
+- Weekly create:
   - `progressValue = 0`
   - 기본 WAIT (`day == 1` row만 scheduler에서 즉시 ACTIVE 전환 가능)
 - Restore:

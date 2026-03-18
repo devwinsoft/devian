@@ -13,14 +13,14 @@ namespace Devian
     /// - RUNTIME_REWARDED: args[0] = AchieveRuntimeBase, args[1] = RewardData[]
     /// - RUNTIME_UNLOCKED: args[0] = string achievementId
     /// </summary>
-    public sealed class AchieveMessageTrigger : BaseTrigger<EntityId, MESSAGE_ACHIEVE_TYPE>
+    public sealed class AchieveMessageTrigger : BaseTrigger<EntityId, ACHIEVE_MESSAGE_TYPE>
     {
-        public void Notify(MESSAGE_ACHIEVE_TYPE msgType, AchieveRuntimeBase runtime)
+        public void Notify(ACHIEVE_MESSAGE_TYPE msgType, AchieveRuntimeBase runtime)
         {
             base.Notify(msgType, runtime);
         }
 
-        public void Notify(MESSAGE_ACHIEVE_TYPE msgType, AchieveRuntimeBase runtime, params object[] extras)
+        public void Notify(ACHIEVE_MESSAGE_TYPE msgType, AchieveRuntimeBase runtime, params object[] extras)
         {
             if (extras == null || extras.Length == 0)
             {
@@ -36,7 +36,7 @@ namespace Devian
             base.Notify(msgType, args);
         }
 
-        public void Notify(MESSAGE_ACHIEVE_TYPE msgType, string achievementId)
+        public void Notify(ACHIEVE_MESSAGE_TYPE msgType, string achievementId)
         {
             base.Notify(msgType, achievementId);
         }

@@ -6,7 +6,7 @@ Type: Policy / Entry Point
 
 ## Purpose
 
-Mission(`DAILY`/`PERIOD`) 시스템의 모듈 경계와 하드룰을 정의한다.
+Mission(`DAILY`/`WEEKLY`) 시스템의 모듈 경계와 하드룰을 정의한다.
 
 ---
 
@@ -15,9 +15,9 @@ Mission(`DAILY`/`PERIOD`) 시스템의 모듈 경계와 하드룰을 정의한�
 ### 1) 미션 테이블 분리는 고정이다
 
 - `MISSION_DAILY`는 `missionType`을 가지지 않는다.
-- `MISSION_PERIOD`는 `missionType/fixed/orderNum`을 가지지 않는다.
-- `MISSION_PERIOD.day`는 `1~7` 정수 범위를 사용한다.
-- `MISSION_PERIOD.day`는 period runtime activation group key다(동일 day 동시 활성화).
+- `MISSION_WEEKLY`는 `missionType/fixed/orderNum`을 가지지 않는다.
+- `MISSION_WEEKLY.day`는 `1~7` 정수 범위를 사용한다.
+- `MISSION_WEEKLY.day`는 weekly runtime activation group key다(동일 day 동시 활성화).
 - 조건 타입/저장 연산/비교 연산 정본은 `GAME_MESSAGE`다.
 
 ### 2) 진행도 입력은 `GameMessageTrigger`를 통해 받는다
@@ -39,20 +39,20 @@ Mission(`DAILY`/`PERIOD`) 시스템의 모듈 경계와 하드룰을 정의한�
 ### 4) 진행도 저장 정본은 `runtime.progressValue`다
 
 - `DAILY` runtime이 `progressValue`를 자체 보유/저장한다.
-- `PERIOD` runtime이 `progressValue`를 자체 보유/저장한다.
+- `WEEKLY` runtime(period cycle)이 `progressValue`를 자체 보유/저장한다.
 - `MissionStorage.stats`는 `missionStatId` 단위 누적 캐시이며 runtime 상태 정본은 아니다.
 
-### 5) `PERIOD` 활성화/리셋 규칙은 고정이다
+### 5) `WEEKLY` 활성화/리셋 규칙은 고정이다
 
-- 초기화/리셋 시 `MISSION_PERIOD`의 모든 row runtime을 생성한다.
+- 초기화/리셋 시 `MISSION_WEEKLY`의 모든 row runtime을 생성한다.
 - 생성 직후 기본 상태는 WAIT다.
 - `day == 1`이면 즉시 ACTIVE 전환한다.
 - `day == n`이면 `(n - 1)`일 경과 후 ACTIVE 전환한다.
-- `PERIOD` cycle은 10일 주기로 리셋한다.
+- period cycle은 10일 주기로 리셋한다.
 
 ### 6) 저장/복구 및 보상 처리 경계
 
-- MissionManager는 `DAILY`/`PERIOD` claim orchestration만 담당한다.
+- MissionManager는 `DAILY`/`WEEKLY` claim orchestration만 담당한다.
 - Reward 적용은 RewardManager에 위임한다.
 - claim 성공 후 저장은 즉시 수행한다.
 - 업적(`ACHIEVE`) claim/runtime 책임은 AchieveManager에 있다.

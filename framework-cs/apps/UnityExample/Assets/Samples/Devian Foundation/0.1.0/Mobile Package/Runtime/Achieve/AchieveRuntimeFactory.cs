@@ -112,8 +112,8 @@ namespace Devian
         {
             switch (achieveType)
             {
-                case ACHIEVE_TYPE.ONCE:
-                    return new AchieveRuntimeOnce();
+                case ACHIEVE_TYPE.SOCIAL:
+                    return new AchieveRuntimeSocial();
 
                 case ACHIEVE_TYPE.PASS:
                     return new AchieveRuntimePass();

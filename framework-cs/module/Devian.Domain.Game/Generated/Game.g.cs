@@ -16,6 +16,27 @@ namespace Devian.Domain.Game
     // Contracts
     // ================================================================
 
+    /// <summary>ACHIEVE_TYPE enum</summary>
+    public enum ACHIEVE_TYPE
+    {
+        NONE = 0,
+        SOCIAL = 1,
+        PASS = 2,
+    }
+
+    /// <summary>ACHIEVE_MESSAGE_TYPE enum</summary>
+    public enum ACHIEVE_MESSAGE_TYPE
+    {
+        NONE = 0,
+        RUNTIME_INIT = 1,
+        RUNTIME_PROGRESS = 2,
+        RUNTIME_CLAIMABLE = 3,
+        RUNTIME_LEVEL_UP = 4,
+        RUNTIME_REWARDED = 5,
+        RUNTIME_UNLOCKED = 6,
+        RUNTIME_ACTIVE = 7,
+    }
+
     /// <summary>GAME_MESSAGE_TYPE enum</summary>
     public enum GAME_MESSAGE_TYPE
     {
@@ -76,53 +97,35 @@ namespace Devian.Domain.Game
         UNIT_HP_MAX = 100,
     }
 
+    /// <summary>INVENTORY_MESSAGE_TYPE enum</summary>
+    public enum INVENTORY_MESSAGE_TYPE
+    {
+        NONE = 0,
+        PASS_CHANGED = 1,
+    }
+
+    /// <summary>ADVERTISE_FORMAT enum</summary>
+    public enum ADVERTISE_FORMAT
+    {
+        BANNER = 0,
+        INTERSTITIAL = 1,
+        REWARDED = 2,
+        APP_OPEN = 3,
+    }
+
+    /// <summary>ADVERTISE_PROVIDER enum</summary>
+    public enum ADVERTISE_PROVIDER
+    {
+        GOOGLE_MOBILE_ADS = 0,
+        MOCK = 1,
+    }
+
     /// <summary>LEADERBOARD_MODE enum</summary>
     public enum LEADERBOARD_MODE
     {
         NONE = 0,
         NORMAL = 1,
         HARDCORE = 2,
-    }
-
-    /// <summary>MISSION_TYPE enum</summary>
-    public enum MISSION_TYPE
-    {
-        NONE = 0,
-        DAILY = 1,
-        PERIOD = 2,
-    }
-
-    /// <summary>MESSAGE_MISSION_TYPE enum</summary>
-    public enum MESSAGE_MISSION_TYPE
-    {
-        NONE = 0,
-        RUNTIME_INIT = 1,
-        RUNTIME_PROGRESS = 2,
-        RUNTIME_CLAIMABLE = 3,
-        RUNTIME_REWARDED = 4,
-        DAY_RESET = 5,
-        ACHIEVE_LEVEL_UP = 6,
-    }
-
-    /// <summary>MESSAGE_ACHIEVE_TYPE enum</summary>
-    public enum MESSAGE_ACHIEVE_TYPE
-    {
-        NONE = 0,
-        RUNTIME_INIT = 1,
-        RUNTIME_PROGRESS = 2,
-        RUNTIME_CLAIMABLE = 3,
-        RUNTIME_LEVEL_UP = 4,
-        RUNTIME_REWARDED = 5,
-        RUNTIME_UNLOCKED = 6,
-        RUNTIME_ACTIVE = 7,
-    }
-
-    /// <summary>ACHIEVE_TYPE enum</summary>
-    public enum ACHIEVE_TYPE
-    {
-        NONE = 0,
-        ONCE = 1,
-        PASS = 2,
     }
 
     /// <summary>CURRENCY_TYPE enum</summary>
@@ -163,22 +166,6 @@ namespace Devian.Domain.Game
         MYTHIC = 5,
     }
 
-    /// <summary>ADVERTISE_FORMAT enum</summary>
-    public enum ADVERTISE_FORMAT
-    {
-        BANNER = 0,
-        INTERSTITIAL = 1,
-        REWARDED = 2,
-        APP_OPEN = 3,
-    }
-
-    /// <summary>ADVERTISE_PROVIDER enum</summary>
-    public enum ADVERTISE_PROVIDER
-    {
-        GOOGLE_MOBILE_ADS = 0,
-        MOCK = 1,
-    }
-
     /// <summary>PURCHASE_KIND enum</summary>
     public enum PURCHASE_KIND
     {
@@ -188,11 +175,24 @@ namespace Devian.Domain.Game
         RENTAL = 3,
     }
 
-    /// <summary>MESSAGE_INVENTORY_TYPE enum</summary>
-    public enum MESSAGE_INVENTORY_TYPE
+    /// <summary>MISSION_TYPE enum</summary>
+    public enum MISSION_TYPE
     {
         NONE = 0,
-        PASS_CHANGED = 1,
+        DAILY = 1,
+        WEEKLY = 2,
+    }
+
+    /// <summary>MISSION_MESSAGE_TYPE enum</summary>
+    public enum MISSION_MESSAGE_TYPE
+    {
+        NONE = 0,
+        RUNTIME_INIT = 1,
+        RUNTIME_PROGRESS = 2,
+        RUNTIME_CLAIMABLE = 3,
+        RUNTIME_REWARDED = 4,
+        DAY_RESET = 5,
+        ACHIEVE_LEVEL_UP = 6,
     }
 
     /// <summary>SHOP_CATALOG_TYPE enum</summary>
@@ -255,8 +255,8 @@ namespace Devian.Domain.Game
     // Table Entities
     // ================================================================
 
-    /// <summary>ACHIEVE_ONCE row</summary>
-    public sealed class ACHIEVE_ONCE : IEntityKey<int>
+    /// <summary>ACHIEVE_SOCIAL row</summary>
+    public sealed class ACHIEVE_SOCIAL : IEntityKey<int>
     {
         public int Index { get; set; }
         public string AchieveId { get; set; } = string.Empty;
@@ -445,8 +445,8 @@ namespace Devian.Domain.Game
         public string GetKey() => MissionId;
     }
 
-    /// <summary>MISSION_PERIOD row</summary>
-    public sealed class MISSION_PERIOD : IEntityKey<string>
+    /// <summary>MISSION_WEEKLY row</summary>
+    public sealed class MISSION_WEEKLY : IEntityKey<string>
     {
         public string MissionId { get; set; } = string.Empty;
         public int Day { get; set; }
@@ -621,13 +621,13 @@ namespace Devian.Domain.Game
     // Table Containers
     // ================================================================
 
-    /// <summary>TB_ACHIEVE_ONCE container</summary>
-    public static partial class TB_ACHIEVE_ONCE
+    /// <summary>TB_ACHIEVE_SOCIAL container</summary>
+    public static partial class TB_ACHIEVE_SOCIAL
     {
-        private static readonly Dictionary<int, ACHIEVE_ONCE> _dict = new();
-        private static readonly List<ACHIEVE_ONCE> _list = new();
+        private static readonly Dictionary<int, ACHIEVE_SOCIAL> _dict = new();
+        private static readonly List<ACHIEVE_SOCIAL> _list = new();
 
-        private static readonly Dictionary<string, List<ACHIEVE_ONCE>> _groupDict = new();
+        private static readonly Dictionary<string, List<ACHIEVE_SOCIAL>> _groupDict = new();
         private static readonly List<string> _groupList = new();
         private static readonly Dictionary<string, int> _groupPrimaryKey = new();
         private static readonly Dictionary<int, string> _keyToGroup = new();
@@ -644,13 +644,13 @@ namespace Devian.Domain.Game
             _keyToGroup.Clear();
         }
 
-        public static IReadOnlyList<ACHIEVE_ONCE> GetAll() => _list;
+        public static IReadOnlyList<ACHIEVE_SOCIAL> GetAll() => _list;
 
         public static IReadOnlyList<string> GetGroupKeys() => _groupList;
 
-        public static IReadOnlyList<ACHIEVE_ONCE> GetByGroup(string groupKey)
+        public static IReadOnlyList<ACHIEVE_SOCIAL> GetByGroup(string groupKey)
         {
-            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<ACHIEVE_ONCE>();
+            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<ACHIEVE_SOCIAL>();
         }
 
         public static bool TryGetGroupPrimaryKey(string groupKey, out int key)
@@ -663,17 +663,17 @@ namespace Devian.Domain.Game
             return _keyToGroup.TryGetValue(key, out groupKey);
         }
 
-        public static ACHIEVE_ONCE? Get(int key)
+        public static ACHIEVE_SOCIAL? Get(int key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(int key, out ACHIEVE_ONCE? row)
+        public static bool TryGet(int key, out ACHIEVE_SOCIAL? row)
         {
             return _dict.TryGetValue(key, out row);
         }
 
-        private static void AddRow(ACHIEVE_ONCE row)
+        private static void AddRow(ACHIEVE_SOCIAL row)
         {
             _list.Add(row);
             _dict[row.Index] = row;
@@ -681,7 +681,7 @@ namespace Devian.Domain.Game
             _keyToGroup[row.Index] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
-                groupList = new List<ACHIEVE_ONCE>();
+                groupList = new List<ACHIEVE_SOCIAL>();
                 _groupDict[groupKey] = groupList;
                 _groupList.Add(groupKey);
             }
@@ -700,7 +700,7 @@ namespace Devian.Domain.Game
         public static void LoadFromJson(string json)
         {
             Clear();
-            var rows = JsonConvert.DeserializeObject<List<ACHIEVE_ONCE>>(json);
+            var rows = JsonConvert.DeserializeObject<List<ACHIEVE_SOCIAL>>(json);
             if (rows == null) return;
             foreach (var row in rows)
             {
@@ -717,7 +717,7 @@ namespace Devian.Domain.Game
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<ACHIEVE_ONCE>(line);
+                var row = JsonConvert.DeserializeObject<ACHIEVE_SOCIAL>(line);
                 if (row == null) continue;
                 AddRow(row);
             }
@@ -729,7 +729,7 @@ namespace Devian.Domain.Game
             Pb64Loader.ParseRows(rawBinary, jsonRow =>
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<ACHIEVE_ONCE>(jsonRow);
+                var row = JsonConvert.DeserializeObject<ACHIEVE_SOCIAL>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -2086,13 +2086,13 @@ namespace Devian.Domain.Game
         static partial void _OnAfterLoad();
     }
 
-    /// <summary>TB_MISSION_PERIOD container</summary>
-    public static partial class TB_MISSION_PERIOD
+    /// <summary>TB_MISSION_WEEKLY container</summary>
+    public static partial class TB_MISSION_WEEKLY
     {
-        private static readonly Dictionary<string, MISSION_PERIOD> _dict = new();
-        private static readonly List<MISSION_PERIOD> _list = new();
+        private static readonly Dictionary<string, MISSION_WEEKLY> _dict = new();
+        private static readonly List<MISSION_WEEKLY> _list = new();
 
-        private static readonly Dictionary<int, List<MISSION_PERIOD>> _groupDict = new();
+        private static readonly Dictionary<int, List<MISSION_WEEKLY>> _groupDict = new();
         private static readonly List<int> _groupList = new();
         private static readonly Dictionary<int, string> _groupPrimaryKey = new();
         private static readonly Dictionary<string, int> _keyToGroup = new();
@@ -2109,13 +2109,13 @@ namespace Devian.Domain.Game
             _keyToGroup.Clear();
         }
 
-        public static IReadOnlyList<MISSION_PERIOD> GetAll() => _list;
+        public static IReadOnlyList<MISSION_WEEKLY> GetAll() => _list;
 
         public static IReadOnlyList<int> GetGroupKeys() => _groupList;
 
-        public static IReadOnlyList<MISSION_PERIOD> GetByGroup(int groupKey)
+        public static IReadOnlyList<MISSION_WEEKLY> GetByGroup(int groupKey)
         {
-            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<MISSION_PERIOD>();
+            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<MISSION_WEEKLY>();
         }
 
         public static bool TryGetGroupPrimaryKey(int groupKey, out string key)
@@ -2128,17 +2128,17 @@ namespace Devian.Domain.Game
             return _keyToGroup.TryGetValue(key, out groupKey);
         }
 
-        public static MISSION_PERIOD? Get(string key)
+        public static MISSION_WEEKLY? Get(string key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(string key, out MISSION_PERIOD? row)
+        public static bool TryGet(string key, out MISSION_WEEKLY? row)
         {
             return _dict.TryGetValue(key, out row);
         }
 
-        private static void AddRow(MISSION_PERIOD row)
+        private static void AddRow(MISSION_WEEKLY row)
         {
             _list.Add(row);
             _dict[row.MissionId] = row;
@@ -2146,7 +2146,7 @@ namespace Devian.Domain.Game
             _keyToGroup[row.MissionId] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
-                groupList = new List<MISSION_PERIOD>();
+                groupList = new List<MISSION_WEEKLY>();
                 _groupDict[groupKey] = groupList;
                 _groupList.Add(groupKey);
             }
@@ -2165,7 +2165,7 @@ namespace Devian.Domain.Game
         public static void LoadFromJson(string json)
         {
             Clear();
-            var rows = JsonConvert.DeserializeObject<List<MISSION_PERIOD>>(json);
+            var rows = JsonConvert.DeserializeObject<List<MISSION_WEEKLY>>(json);
             if (rows == null) return;
             foreach (var row in rows)
             {
@@ -2182,7 +2182,7 @@ namespace Devian.Domain.Game
             while ((line = reader.ReadLine()) != null)
             {
                 if (string.IsNullOrWhiteSpace(line)) continue;
-                var row = JsonConvert.DeserializeObject<MISSION_PERIOD>(line);
+                var row = JsonConvert.DeserializeObject<MISSION_WEEKLY>(line);
                 if (row == null) continue;
                 AddRow(row);
             }
@@ -2194,7 +2194,7 @@ namespace Devian.Domain.Game
             Pb64Loader.ParseRows(rawBinary, jsonRow =>
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
-                var row = JsonConvert.DeserializeObject<MISSION_PERIOD>(jsonRow);
+                var row = JsonConvert.DeserializeObject<MISSION_WEEKLY>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -3257,14 +3257,14 @@ namespace Devian.Domain.Game
     // Table ID Types (for Inspector binding)
     // ================================================================
 
-    /// <summary>Inspector-bindable ID for ACHIEVE_ONCE</summary>
+    /// <summary>Inspector-bindable ID for ACHIEVE_SOCIAL</summary>
     [Serializable]
-    public sealed class ACHIEVE_ONCE_ID
+    public sealed class ACHIEVE_SOCIAL_ID
     {
         public int Value;
 
-        public static implicit operator int(ACHIEVE_ONCE_ID id) => id.Value;
-        public static implicit operator ACHIEVE_ONCE_ID(int value) => new ACHIEVE_ONCE_ID { Value = value };
+        public static implicit operator int(ACHIEVE_SOCIAL_ID id) => id.Value;
+        public static implicit operator ACHIEVE_SOCIAL_ID(int value) => new ACHIEVE_SOCIAL_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for ACHIEVE_PASS</summary>
@@ -3407,14 +3407,14 @@ namespace Devian.Domain.Game
         public static implicit operator MISSION_DAILY_ID(string value) => new MISSION_DAILY_ID { Value = value };
     }
 
-    /// <summary>Inspector-bindable ID for MISSION_PERIOD</summary>
+    /// <summary>Inspector-bindable ID for MISSION_WEEKLY</summary>
     [Serializable]
-    public sealed class MISSION_PERIOD_ID
+    public sealed class MISSION_WEEKLY_ID
     {
         public string Value;
 
-        public static implicit operator string(MISSION_PERIOD_ID id) => id.Value;
-        public static implicit operator MISSION_PERIOD_ID(string value) => new MISSION_PERIOD_ID { Value = value };
+        public static implicit operator string(MISSION_WEEKLY_ID id) => id.Value;
+        public static implicit operator MISSION_WEEKLY_ID(string value) => new MISSION_WEEKLY_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for SHOP_CATALOG</summary>
@@ -3540,7 +3540,7 @@ namespace Devian.Domain.Game
     /// <summary>Table ID validation extensions</summary>
     public static class TableIdExtensions
     {
-        public static bool IsValid(this ACHIEVE_ONCE_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
+        public static bool IsValid(this ACHIEVE_SOCIAL_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this ACHIEVE_PASS_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this GAME_MESSAGE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
@@ -3555,7 +3555,7 @@ namespace Devian.Domain.Game
         public static bool IsValid(this LEADERBOARD_REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this SEASON_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this MISSION_DAILY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
-        public static bool IsValid(this MISSION_PERIOD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this MISSION_WEEKLY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this SHOP_CATALOG_ID? obj) => obj != null && !EqualityComparer<SHOP_CATALOG_TYPE>.Default.Equals(obj.Value, default);
         public static bool IsValid(this SHOP_CATALOG_CHEST_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this SHOP_DAILY_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);

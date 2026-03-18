@@ -65,8 +65,8 @@ namespace Devian
                 clearDailyScopeData();
             }
 
-            if (_storage.periodMissionStartUtcMs <= 0L)
-                _storage.periodMissionStartUtcMs = nowUtcMs;
+            if (_storage.weeklyMissionStartUtcMs <= 0L)
+                _storage.weeklyMissionStartUtcMs = nowUtcMs;
 
             rebuildRuntimeBindings();
             pruneExpiredMissionState();
@@ -83,7 +83,7 @@ namespace Devian
 
             var dailyExpired = GetRemainTime(MISSION_TYPE.DAILY) == TimeSpan.Zero
                                || _scheduler.HasDailyRuntimeOutsideCurrentPeriod();
-            var periodExpired = GetRemainTime(MISSION_TYPE.PERIOD) == TimeSpan.Zero
+            var periodExpired = GetRemainTime(MISSION_TYPE.WEEKLY) == TimeSpan.Zero
                                 || _scheduler.HasPeriodRuntimeOutsideCurrentPeriod();
             if (dailyExpired || periodExpired)
             {
@@ -126,7 +126,7 @@ namespace Devian
                 case MISSION_TYPE.DAILY:
                     return getDailyRuntimeState(missionId);
 
-                case MISSION_TYPE.PERIOD:
+                case MISSION_TYPE.WEEKLY:
                     return getPeriodRuntimeState(missionId);
 
                 default:
@@ -141,8 +141,8 @@ namespace Devian
                 case MISSION_TYPE.DAILY:
                     return getRemainTimeCore(_storage.dailyMissionStartUtcMs, DayMs);
 
-                case MISSION_TYPE.PERIOD:
-                    return getRemainTimeCore(_storage.periodMissionStartUtcMs, PeriodMs);
+                case MISSION_TYPE.WEEKLY:
+                    return getRemainTimeCore(_storage.weeklyMissionStartUtcMs, PeriodMs);
 
                 default:
                     return default;
@@ -164,7 +164,7 @@ namespace Devian
                 case MISSION_TYPE.DAILY:
                     return await claimDailyAsync(missionId, ct);
 
-                case MISSION_TYPE.PERIOD:
+                case MISSION_TYPE.WEEKLY:
                     return await claimPeriodAsync(missionId, ct);
 
                 default:
@@ -172,22 +172,22 @@ namespace Devian
             }
         }
 
-        public void Notify(MESSAGE_MISSION_TYPE msgType)
+        public void Notify(MISSION_MESSAGE_TYPE msgType)
         {
             _missionMessageSystem.Notify(msgType);
         }
 
-        public void Notify(MESSAGE_MISSION_TYPE msgType, params object[] args)
+        public void Notify(MISSION_MESSAGE_TYPE msgType, params object[] args)
         {
             _missionMessageSystem.Notify(msgType, args);
         }
 
-        public void Subcribe(EntityId ownerKey, MESSAGE_MISSION_TYPE msgType, BaseTrigger<EntityId, MESSAGE_MISSION_TYPE>.Handler handler)
+        public void Subcribe(EntityId ownerKey, MISSION_MESSAGE_TYPE msgType, BaseTrigger<EntityId, MISSION_MESSAGE_TYPE>.Handler handler)
         {
             _missionMessageSystem.Subcribe(ownerKey, msgType, handler);
         }
 
-        public void SubcribeOnce(EntityId ownerKey, MESSAGE_MISSION_TYPE msgType, Action<object[]> handler)
+        public void SubcribeOnce(EntityId ownerKey, MISSION_MESSAGE_TYPE msgType, Action<object[]> handler)
         {
             _missionMessageSystem.SubcribeOnce(ownerKey, msgType, handler);
         }
@@ -225,7 +225,7 @@ namespace Devian
 
         MissionRuntimeState getPeriodRuntimeState(string missionId)
         {
-            var row = TB_MISSION_PERIOD.Get(missionId);
+            var row = TB_MISSION_WEEKLY.Get(missionId);
             if (row == null || !row.IsActive || row.Day < 1 || row.Day > 7 || !row.ConditionValue.HasValue)
                 return MissionRuntimeState.NONE;
 
@@ -267,7 +267,7 @@ namespace Devian
                 return CommonResult.Failure(apply.Error!);
 
             runtime.MarkCompleted();
-            _missionMessageSystem.Notify(MESSAGE_MISSION_TYPE.RUNTIME_REWARDED, runtime, apply.Value.AppliedRewards);
+            _missionMessageSystem.Notify(MISSION_MESSAGE_TYPE.RUNTIME_REWARDED, runtime, apply.Value.AppliedRewards);
 
             var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
             if (save.IsFailure)
@@ -281,7 +281,7 @@ namespace Devian
 
         async Task<CommonResult> claimPeriodAsync(string missionId, CancellationToken ct)
         {
-            var row = TB_MISSION_PERIOD.Get(missionId);
+            var row = TB_MISSION_WEEKLY.Get(missionId);
             if (row == null || !row.IsActive || row.Day < 1 || row.Day > 7 || !row.ConditionValue.HasValue)
                 return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_FOUND, $"Period mission not found: {missionId}");
 
@@ -304,7 +304,7 @@ namespace Devian
                 return CommonResult.Failure(apply.Error!);
 
             runtime.MarkCompleted();
-            _missionMessageSystem.Notify(MESSAGE_MISSION_TYPE.RUNTIME_REWARDED, runtime, apply.Value.AppliedRewards);
+            _missionMessageSystem.Notify(MISSION_MESSAGE_TYPE.RUNTIME_REWARDED, runtime, apply.Value.AppliedRewards);
 
             var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
             if (save.IsFailure)
@@ -318,7 +318,7 @@ namespace Devian
 
         void onRuntimeInitialized(MissionRuntimeBase runtime)
         {
-            _missionMessageSystem.Notify(MESSAGE_MISSION_TYPE.RUNTIME_INIT, runtime);
+            _missionMessageSystem.Notify(MISSION_MESSAGE_TYPE.RUNTIME_INIT, runtime);
         }
 
         void subscribeRuntimeTrigger(int ownerKey, GAME_MESSAGE_TYPE messageType, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler handler)
@@ -333,12 +333,12 @@ namespace Devian
 
         void onRuntimeChanged(MissionRuntimeBase runtime)
         {
-            _missionMessageSystem.Notify(MESSAGE_MISSION_TYPE.RUNTIME_PROGRESS, runtime);
+            _missionMessageSystem.Notify(MISSION_MESSAGE_TYPE.RUNTIME_PROGRESS, runtime);
         }
 
         void onRuntimeClaimable(MissionRuntimeBase runtime)
         {
-            _missionMessageSystem.Notify(MESSAGE_MISSION_TYPE.RUNTIME_CLAIMABLE, runtime);
+            _missionMessageSystem.Notify(MISSION_MESSAGE_TYPE.RUNTIME_CLAIMABLE, runtime);
         }
 
         void detachAllRuntimes()
@@ -349,7 +349,7 @@ namespace Devian
         void clearDailyScopeData()
         {
             _scheduler.ClearDailyScope();
-            _missionMessageSystem.Notify(MESSAGE_MISSION_TYPE.DAY_RESET);
+            _missionMessageSystem.Notify(MISSION_MESSAGE_TYPE.DAY_RESET);
         }
 
         void rebuildRuntimeBindings()
@@ -358,7 +358,7 @@ namespace Devian
             _scheduler.RebuildBindings();
 
             if (didResetDay)
-                _missionMessageSystem.Notify(MESSAGE_MISSION_TYPE.DAY_RESET);
+                _missionMessageSystem.Notify(MISSION_MESSAGE_TYPE.DAY_RESET);
         }
 
         void pruneExpiredMissionState()
@@ -371,7 +371,7 @@ namespace Devian
             return _scheduler.FindDaily(missionId);
         }
 
-        MissionRuntimePeriod findPeriodRuntime(string missionId)
+        MissionRuntimeWeekly findPeriodRuntime(string missionId)
         {
             return _scheduler.FindPeriod(missionId);
         }
@@ -390,7 +390,7 @@ namespace Devian
         {
             var dailyExpired = GetRemainTime(MISSION_TYPE.DAILY) == TimeSpan.Zero
                                || _scheduler.HasDailyRuntimeOutsideCurrentPeriod();
-            var periodExpired = GetRemainTime(MISSION_TYPE.PERIOD) == TimeSpan.Zero
+            var periodExpired = GetRemainTime(MISSION_TYPE.WEEKLY) == TimeSpan.Zero
                                 || _scheduler.HasPeriodRuntimeOutsideCurrentPeriod();
 
             if (dailyExpired || periodExpired || _storage.runtimes.Count <= 0)
@@ -454,10 +454,10 @@ namespace Devian
             if (estimatedServerNowUtcMs <= 0L)
                 return 0;
 
-            if (_storage.periodMissionStartUtcMs <= 0L)
+            if (_storage.weeklyMissionStartUtcMs <= 0L)
                 return 0;
 
-            var diff = Math.Max(0L, estimatedServerNowUtcMs - _storage.periodMissionStartUtcMs);
+            var diff = Math.Max(0L, estimatedServerNowUtcMs - _storage.weeklyMissionStartUtcMs);
             return (int)(diff / PeriodMs);
         }
 
@@ -467,10 +467,10 @@ namespace Devian
             if (estimatedServerNowUtcMs <= 0L)
                 return 0;
 
-            if (_storage.periodMissionStartUtcMs <= 0L)
+            if (_storage.weeklyMissionStartUtcMs <= 0L)
                 return 0;
 
-            var diff = Math.Max(0L, estimatedServerNowUtcMs - _storage.periodMissionStartUtcMs);
+            var diff = Math.Max(0L, estimatedServerNowUtcMs - _storage.weeklyMissionStartUtcMs);
             var remainder = diff % PeriodMs;
             return (int)(remainder / DayMs);
         }

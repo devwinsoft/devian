@@ -18,12 +18,12 @@ namespace Devian
 
         // ── Message API ──
 
-        public void Subcribe(EntityId ownerKey, MESSAGE_INVENTORY_TYPE msgType, BaseTrigger<EntityId, MESSAGE_INVENTORY_TYPE>.Handler handler)
+        public void Subcribe(EntityId ownerKey, INVENTORY_MESSAGE_TYPE msgType, BaseTrigger<EntityId, INVENTORY_MESSAGE_TYPE>.Handler handler)
         {
             _messageTrigger.Subcribe(ownerKey, msgType, handler);
         }
 
-        public void SubcribeOnce(EntityId ownerKey, MESSAGE_INVENTORY_TYPE msgType, Action<object[]> handler)
+        public void SubcribeOnce(EntityId ownerKey, INVENTORY_MESSAGE_TYPE msgType, Action<object[]> handler)
         {
             _messageTrigger.SubcribeOnce(ownerKey, msgType, handler);
         }
@@ -111,13 +111,13 @@ namespace Devian
         public void SetPassOwnership(string passId, bool owned)
         {
             if (_storage.SetPass(passId, owned))
-                _messageTrigger.Notify(MESSAGE_INVENTORY_TYPE.PASS_CHANGED, passId, owned);
+                _messageTrigger.Notify(INVENTORY_MESSAGE_TYPE.PASS_CHANGED, passId, owned);
         }
 
         public void RemovePassOwnership(string passId)
         {
             if (_storage.RemovePass(passId))
-                _messageTrigger.Notify(MESSAGE_INVENTORY_TYPE.PASS_CHANGED, passId, false);
+                _messageTrigger.Notify(INVENTORY_MESSAGE_TYPE.PASS_CHANGED, passId, false);
         }
 
         // ── Revoke API ──

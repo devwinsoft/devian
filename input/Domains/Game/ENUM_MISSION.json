@@ -1,0 +1,24 @@
+{
+  "enums": [
+    {
+      "name": "MISSION_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "DAILY", "value": 1},
+        {"name": "WEEKLY", "value": 2}
+      ]
+    },
+    {
+      "name": "MISSION_MESSAGE_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "RUNTIME_INIT", "value": 1},
+        {"name": "RUNTIME_PROGRESS", "value": 2},
+        {"name": "RUNTIME_CLAIMABLE", "value": 3},
+        {"name": "RUNTIME_REWARDED", "value": 4},
+        {"name": "DAY_RESET", "value": 5},
+        {"name": "ACHIEVE_LEVEL_UP", "value": 6}
+      ]
+    }
+  ]
+}

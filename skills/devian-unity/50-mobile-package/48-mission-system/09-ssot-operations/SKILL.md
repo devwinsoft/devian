@@ -14,10 +14,10 @@ AppliesTo: v10
 
 - MissionStorage 로드
 - 서버 시각 동기화
-- daily/period anchor(`dailyMissionStartUtcMs`, `periodMissionStartUtcMs`) 초기화/보정
+- daily/weekly anchor(`dailyMissionStartUtcMs`, `weeklyMissionStartUtcMs`) 초기화/보정
 - scheduler가 runtime 재구성
   - daily: active row 중 최대 5개 선택
-  - period: active row 전부 생성(WAIT), `day` 규칙으로 즉시/지연 활성화
+  - weekly: active row 전부 생성(WAIT), `day` 규칙으로 즉시/지연 활성화
 
 ### 2) 플레이 중 trigger 입력
 
@@ -25,7 +25,7 @@ AppliesTo: v10
 - 처리 순서:
   1. `message.stats[messageId]` 갱신
   2. `GameMessageTrigger` publish
-  3. runtime 반영 (`DAILY`/`PERIOD`)
+  3. runtime 반영 (`DAILY`/`WEEKLY`)
 - WAIT runtime은 progress 이벤트를 소비하지 않는다.
 
 ### 3) claim
@@ -37,7 +37,7 @@ AppliesTo: v10
 ### 4) 주기 전환
 
 - daily cycle 전환 시 기존 daily runtime set 정리 후 재선택
-- period cycle(10일) 전환 시 period runtime 전량 WAIT 재생성 후 day 규칙 재활성화
+- weekly cycle(10일) 전환 시 weekly runtime 전량 WAIT 재생성 후 day 규칙 재활성화
 
 ---
 
@@ -46,9 +46,9 @@ AppliesTo: v10
 - trigger 1회당 `message.stats` 갱신이 1회만 일어나는지
 - `GAME_MESSAGE_TYPE` 변경 시 정상 라우팅되는지
 - daily/period `SUM` 누적이 음수로 내려가지 않는지
-- period `day=1` 즉시 활성화가 보장되는지
-- period `day=n`이 `(n-1)`일 후에만 활성화되는지
-- period 10일 리셋 타이밍에서 중복 runtime 생성이 없는지
+- weekly `day=1` 즉시 활성화가 보장되는지
+- weekly `day=n`이 `(n-1)`일 후에만 활성화되는지
+- weekly 10일 리셋 타이밍에서 중복 runtime 생성이 없는지
 
 ---
 
@@ -58,7 +58,7 @@ Hard:
 - `conditionMsgId` 미해결 row에서 runtime 생성 0건
 - level-up 후 구독 누락/중복 0건
 - WAIT runtime에서 progress 콜백 전송 0건
-- period cycle reset 후 stale runtime 잔존 0건
+- weekly cycle reset 후 stale runtime 잔존 0건
 
 Soft:
 - UI 재바인딩 시 메시지 순서 일관성 유지

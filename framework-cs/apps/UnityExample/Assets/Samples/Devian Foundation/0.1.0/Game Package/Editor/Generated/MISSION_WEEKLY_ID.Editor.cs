@@ -10,30 +10,30 @@ using Devian.Domain.Game;
 
 namespace Devian
 {
-    /// <summary>Selector for MISSION_PERIOD_ID</summary>
-    public class Game_MISSION_PERIOD_ID_Selector : BaseEditorID_Selector
+    /// <summary>Selector for MISSION_WEEKLY_ID</summary>
+    public class Game_MISSION_WEEKLY_ID_Selector : BaseEditorID_Selector
     {
-        protected override string GetDisplayTypeName() => "MISSION_PERIOD";
+        protected override string GetDisplayTypeName() => "MISSION_WEEKLY";
 
         public override void Reload()
         {
             ClearItems();
-            TB_MISSION_PERIOD.Clear();
+            TB_MISSION_WEEKLY.Clear();
 
-            var textAssets = AssetManager.FindAssets<TextAsset>("MISSION_PERIOD");
+            var textAssets = AssetManager.FindAssets<TextAsset>("MISSION_WEEKLY");
             foreach (var ta in textAssets)
             {
                 var assetPath = AssetDatabase.GetAssetPath(ta);
                 if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                TB_MISSION_PERIOD.LoadFromNdjson(ta.text);
+                TB_MISSION_WEEKLY.LoadFromNdjson(ta.text);
                 break;
             }
 
-            foreach (var groupKey in TB_MISSION_PERIOD.GetGroupKeys())
+            foreach (var groupKey in TB_MISSION_WEEKLY.GetGroupKeys())
             {
-                if (TB_MISSION_PERIOD.TryGetGroupPrimaryKey(groupKey, out var pk))
+                if (TB_MISSION_WEEKLY.TryGetGroupPrimaryKey(groupKey, out var pk))
                 {
                     // key = PK string (applied to Value), display = groupKey
                     AddItem(pk.ToString(), groupKey.ToString());
@@ -42,14 +42,14 @@ namespace Devian
         }
     }
 
-    /// <summary>PropertyDrawer for MISSION_PERIOD_ID</summary>
-    [CustomPropertyDrawer(typeof(MISSION_PERIOD_ID))]
-    public class Game_MISSION_PERIOD_ID_Drawer : BaseEditorID_Drawer<Game_MISSION_PERIOD_ID_Selector>
+    /// <summary>PropertyDrawer for MISSION_WEEKLY_ID</summary>
+    [CustomPropertyDrawer(typeof(MISSION_WEEKLY_ID))]
+    public class Game_MISSION_WEEKLY_ID_Drawer : BaseEditorID_Drawer<Game_MISSION_WEEKLY_ID_Selector>
     {
-        protected override Game_MISSION_PERIOD_ID_Selector GetSelector()
+        protected override Game_MISSION_WEEKLY_ID_Selector GetSelector()
         {
-            var w = ScriptableObject.CreateInstance<Game_MISSION_PERIOD_ID_Selector>();
-            w.titleContent = new GUIContent("Select MISSION_PERIOD");
+            var w = ScriptableObject.CreateInstance<Game_MISSION_WEEKLY_ID_Selector>();
+            w.titleContent = new GUIContent("Select MISSION_WEEKLY");
             w.ShowUtility();
             return w;
         }
@@ -60,17 +60,17 @@ namespace Devian
             if (valueProp.propertyType == SerializedPropertyType.String)
             {
                 var pk = valueProp.stringValue ?? string.Empty;
-                TB_MISSION_PERIOD.Clear();
-                var textAssets = AssetManager.FindAssets<TextAsset>("MISSION_PERIOD");
+                TB_MISSION_WEEKLY.Clear();
+                var textAssets = AssetManager.FindAssets<TextAsset>("MISSION_WEEKLY");
                 foreach (var ta in textAssets)
                 {
                     var assetPath = AssetDatabase.GetAssetPath(ta);
                     if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))
                         continue;
-                    TB_MISSION_PERIOD.LoadFromNdjson(ta.text);
+                    TB_MISSION_WEEKLY.LoadFromNdjson(ta.text);
                     break;
                 }
-                if (TB_MISSION_PERIOD.TryGetGroupKeyByKey(pk, out var groupKey))
+                if (TB_MISSION_WEEKLY.TryGetGroupKeyByKey(pk, out var groupKey))
                     return groupKey.ToString();
                 return pk;
             }

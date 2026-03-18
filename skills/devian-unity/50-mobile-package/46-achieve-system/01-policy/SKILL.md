@@ -12,36 +12,36 @@ Type: Policy / Entry Point
 
 ## Hard Rules
 
-### 1) runtime 정본은 `ACHIEVE_ONCE`/`ACHIEVE_PASS` + `AchieveStorage`다
+### 1) runtime 정본은 `ACHIEVE_SOCIAL`/`ACHIEVE_PASS` + `AchieveStorage`다
 
-- 업적 row는 `ACHIEVE_ONCE`, `ACHIEVE_PASS`를 사용한다.
+- 업적 row는 `ACHIEVE_SOCIAL`, `ACHIEVE_PASS`를 사용한다.
 - 런타임 저장 정본은 `AchieveStorage.runtimes`다.
 - progress는 `MESSAGE.saveType`에 따라 결정된다.
   - `TOTAL_*`: `GameMessageStorage` 값을 projection한다.
   - `SESSION_*`: `AchieveRuntimeBase.progressValue`를 직접 유지한다.
 - 초기화 시 `achieveId` group 기준 runtime을 항상 생성한다(1 group = 1 runtime).
 - runtime 타입은 row 소스에 따라 결정된다.
-  - `ACHIEVE_ONCE` -> `ACHIEVE_TYPE.ONCE` -> `AchieveRuntimeOnce`
+  - `ACHIEVE_SOCIAL` -> `ACHIEVE_TYPE.SOCIAL` -> `AchieveRuntimeSocial`
   - `ACHIEVE_PASS` -> `ACHIEVE_TYPE.PASS` -> `AchieveRuntimePass`
-- `ONCE` row는 `reqMsgId/reqValue`가 있으면 `WAIT` 상태로 시작한다.
+- `SOCIAL` row는 `reqMsgId/reqValue`가 있으면 `WAIT` 상태로 시작한다.
 - `PASS` row는 `reqPassId` 또는 `reqSeasonId`가 있으면 `WAIT` 상태로 시작한다.
 - `WAIT` 상태에서는 `conditionMsgId` 진행도 반영을 하지 않고, req 조건 충족 시 `ACTIVE`로 전이한다.
 
 ### 2) 외부에는 내부 업적 ID만 노출한다
 
 - 공개 API는 `achievementId`만 받는다.
-- 플랫폼 ID(`appleAchievementId`, `googleAchievementId`)는 `ACHIEVE_ONCE` 매핑 레이어 내부에만 존재한다.
+- 플랫폼 ID(`appleAchievementId`, `googleAchievementId`)는 `ACHIEVE_SOCIAL` 매핑 레이어 내부에만 존재한다.
 
 ### 3) trigger 입력은 `GameMessageManager`를 통해 받는다
 
 - `GameMessageManager.Notify(GAME_MESSAGE_TYPE, delta)`가 유일한 외부 입력이다.
 - `AchieveManager`는 `GameMessageManager` 트리거를 구독해 해당 runtime projection을 동기화한다.
 
-### 4) 업적 알림은 `MESSAGE_ACHIEVE_TYPE`를 사용한다
+### 4) 업적 알림은 `ACHIEVE_MESSAGE_TYPE`를 사용한다
 
-- `AchieveMessageTrigger`의 키 타입은 `MESSAGE_ACHIEVE_TYPE`다.
+- `AchieveMessageTrigger`의 키 타입은 `ACHIEVE_MESSAGE_TYPE`다.
 - 외부 구독은 `AchieveManager.Subcribe/SubcribeOnce/UnSubcribe` 헬퍼만 사용한다.
-- runtime 입력(`GAME_MESSAGE_TYPE`)과 알림(`MESSAGE_ACHIEVE_TYPE`)은 서로 다른 책임으로 혼용하지 않는다.
+- runtime 입력(`GAME_MESSAGE_TYPE`)과 알림(`ACHIEVE_MESSAGE_TYPE`)은 서로 다른 책임으로 혼용하지 않는다.
 
 ### 5) claim은 AchieveManager가 orchestration 한다
 
@@ -56,7 +56,7 @@ Type: Policy / Entry Point
 
 - 다음 level row 기준으로 `conditionMsgId/messageType/saveType/conditionValue`를 교체한다.
 - level-up 시에도 타입별 req 조건을 다시 평가하여 `WAIT` 또는 `ACTIVE`로 시작한다.
-  - `ONCE`: `reqMsgId/reqValue`
+  - `SOCIAL`: `reqMsgId/reqValue`
   - `PASS`: `reqPassId` / `reqSeasonId`
 
 ### 7) period 개념은 없다

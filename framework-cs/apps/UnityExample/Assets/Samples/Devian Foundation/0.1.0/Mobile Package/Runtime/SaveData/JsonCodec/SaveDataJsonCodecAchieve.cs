@@ -118,7 +118,7 @@ namespace Devian
             if (rawType.HasValue && System.Enum.IsDefined(typeof(ACHIEVE_TYPE), rawType.Value))
             {
                 var typed = (ACHIEVE_TYPE)rawType.Value;
-                if (typed == ACHIEVE_TYPE.ONCE || typed == ACHIEVE_TYPE.PASS)
+                if (typed == ACHIEVE_TYPE.SOCIAL || typed == ACHIEVE_TYPE.PASS)
                     return typed;
             }
 
@@ -127,11 +127,11 @@ namespace Devian
                 if (TB_ACHIEVE_PASS.GetByGroup(achieveId).Count > 0)
                     return ACHIEVE_TYPE.PASS;
 
-                if (TB_ACHIEVE_ONCE.GetByGroup(achieveId).Count > 0)
-                    return ACHIEVE_TYPE.ONCE;
+                if (TB_ACHIEVE_SOCIAL.GetByGroup(achieveId).Count > 0)
+                    return ACHIEVE_TYPE.SOCIAL;
             }
 
-            return ACHIEVE_TYPE.ONCE;
+            return ACHIEVE_TYPE.SOCIAL;
         }
 
         static JObject SerializeBigInt(CBigInt value)

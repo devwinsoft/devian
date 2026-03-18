@@ -71,7 +71,7 @@ namespace Devian
         public bool HasPeriodRuntimeOutsideCurrentPeriod()
         {
             var currentPeriodKey = _getCurrentPeriodKey();
-            foreach (var runtime in _storage.runtimes.Values.OfType<MissionRuntimePeriod>())
+            foreach (var runtime in _storage.runtimes.Values.OfType<MissionRuntimeWeekly>())
             {
                 if (!string.Equals(runtime.periodKey, currentPeriodKey, StringComparison.Ordinal))
                     return true;
@@ -85,7 +85,7 @@ namespace Devian
             var currentPeriodKey = _getCurrentPeriodKey();
             var elapsedDay = _getCurrentPeriodElapsedDay();
 
-            foreach (var runtime in _storage.runtimes.Values.OfType<MissionRuntimePeriod>())
+            foreach (var runtime in _storage.runtimes.Values.OfType<MissionRuntimeWeekly>())
             {
                 if (!string.Equals(runtime.periodKey, currentPeriodKey, StringComparison.Ordinal))
                     continue;
@@ -108,7 +108,7 @@ namespace Devian
             var elapsedDay = _getCurrentPeriodElapsedDay();
             var activated = false;
 
-            foreach (var runtime in _storage.runtimes.Values.OfType<MissionRuntimePeriod>())
+            foreach (var runtime in _storage.runtimes.Values.OfType<MissionRuntimeWeekly>())
             {
                 if (!string.Equals(runtime.periodKey, currentPeriodKey, StringComparison.Ordinal))
                     continue;
@@ -156,7 +156,7 @@ namespace Devian
             var removeRuntimeKeys = new List<int>();
             foreach (var kv in _storage.runtimes)
             {
-                if (kv.Value is not MissionRuntimePeriod runtime)
+                if (kv.Value is not MissionRuntimeWeekly runtime)
                     continue;
 
                 runtime.Detach();
@@ -188,7 +188,7 @@ namespace Devian
                         removeRuntimeKeys.Add(kv.Key);
                         break;
 
-                    case MissionRuntimePeriod periodRuntime:
+                    case MissionRuntimeWeekly periodRuntime:
                         if (!TryParsePeriodIndex(periodRuntime.periodKey, out var runtimePeriodIndex))
                             continue;
 
@@ -228,12 +228,12 @@ namespace Devian
             return found;
         }
 
-        public MissionRuntimePeriod FindPeriod(string missionId)
+        public MissionRuntimeWeekly FindPeriod(string missionId)
         {
-            MissionRuntimePeriod found = null;
+            MissionRuntimeWeekly found = null;
             foreach (var runtime in _storage.runtimes.Values)
             {
-                if (runtime is not MissionRuntimePeriod periodRuntime)
+                if (runtime is not MissionRuntimeWeekly periodRuntime)
                     continue;
 
                 if (!string.Equals(periodRuntime.missionId, missionId, StringComparison.Ordinal))
@@ -364,7 +364,7 @@ namespace Devian
             var initializedRuntimes = new List<MissionRuntimeBase>();
 
             var removeKeys = new List<int>();
-            foreach (var runtime in _storage.runtimes.Values.OfType<MissionRuntimePeriod>())
+            foreach (var runtime in _storage.runtimes.Values.OfType<MissionRuntimeWeekly>())
             {
                 if (!string.Equals(runtime.periodKey, periodKey, StringComparison.Ordinal))
                     continue;
@@ -397,7 +397,7 @@ namespace Devian
 
                     var restored = MissionRuntimeFactory.Restore(new MissionRuntimeRestoreArgs
                     {
-                        MissionType = MISSION_TYPE.PERIOD,
+                        MissionType = MISSION_TYPE.WEEKLY,
                         MissionId = existing.missionId,
                         PeriodKey = existing.periodKey,
                         MissionUid = existing.missionUid,
@@ -466,7 +466,7 @@ namespace Devian
         void removePeriodRuntimesOutsidePeriod(string periodKey)
         {
             var removeKeys = new List<int>();
-            foreach (var runtime in _storage.runtimes.Values.OfType<MissionRuntimePeriod>())
+            foreach (var runtime in _storage.runtimes.Values.OfType<MissionRuntimeWeekly>())
             {
                 if (string.Equals(runtime.periodKey, periodKey, StringComparison.Ordinal))
                     continue;
@@ -515,9 +515,9 @@ namespace Devian
             return selected;
         }
 
-        List<MISSION_PERIOD> selectPeriodRows()
+        List<MISSION_WEEKLY> selectPeriodRows()
         {
-            return TB_MISSION_PERIOD.GetAll()
+            return TB_MISSION_WEEKLY.GetAll()
                 .Where(isEligiblePeriodRow)
                 .OrderBy(row => row.Day)
                 .ThenBy(row => row.MissionId, StringComparer.Ordinal)
@@ -551,7 +551,7 @@ namespace Devian
                    && message.SaveType != GAME_MESSAGE_SAVE_TYPE.NONE;
         }
 
-        static bool isEligiblePeriodRow(MISSION_PERIOD row)
+        static bool isEligiblePeriodRow(MISSION_WEEKLY row)
         {
             return row != null
                    && row.IsActive

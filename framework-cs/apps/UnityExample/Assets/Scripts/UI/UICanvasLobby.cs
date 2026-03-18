@@ -21,25 +21,25 @@ public class UICanvasLobby : UICanvas<UICanvasLobby>
     protected override void onInit()
     {
         AchieveManager.Instance.Subcribe(GetEntityId(),
-            MESSAGE_ACHIEVE_TYPE.RUNTIME_INIT,
+            ACHIEVE_MESSAGE_TYPE.RUNTIME_INIT,
             (args) =>
             {
                 AchieveRuntimeBase achieve = args[0] as AchieveRuntimeBase;
                 Debug.Log($"Init: achieveId={achieve.achieveId}, progressValue={achieve.progressValue}");
                 return false;
             });
-        
+
         AchieveManager.Instance.Subcribe(GetEntityId(),
-            MESSAGE_ACHIEVE_TYPE.RUNTIME_PROGRESS,
+            ACHIEVE_MESSAGE_TYPE.RUNTIME_PROGRESS,
             (args) =>
             {
                 AchieveRuntimeBase achieve = args[0] as AchieveRuntimeBase;
                 Debug.Log($"Progress: achieveId={achieve.achieveId}, progressValue={achieve.progressValue}");
                 return false;
             });
-        
+
         AchieveManager.Instance.Subcribe(GetEntityId(),
-            MESSAGE_ACHIEVE_TYPE.RUNTIME_REWARDED,
+            ACHIEVE_MESSAGE_TYPE.RUNTIME_REWARDED,
             (args) =>
             {
                 AchieveRuntimeBase achieve = args[0] as AchieveRuntimeBase;
@@ -52,7 +52,7 @@ public class UICanvasLobby : UICanvas<UICanvasLobby>
             });
         
         MissionManager.Instance.Subcribe(GetEntityId(),
-            MESSAGE_MISSION_TYPE.RUNTIME_INIT,
+            MISSION_MESSAGE_TYPE.RUNTIME_INIT,
             (args) =>
             {
                 MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
@@ -61,25 +61,25 @@ public class UICanvasLobby : UICanvas<UICanvasLobby>
             });
 
         MissionManager.Instance.Subcribe(GetEntityId(),
-            MESSAGE_MISSION_TYPE.RUNTIME_PROGRESS,
+            MISSION_MESSAGE_TYPE.RUNTIME_PROGRESS,
             (args) =>
             {
                 MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
                 Debug.Log($"Progress: missionId={mission.missionId}, progressValue={mission.progressValue}");
                 return false;
             });
-        
+
         MissionManager.Instance.Subcribe(GetEntityId(),
-            MESSAGE_MISSION_TYPE.RUNTIME_CLAIMABLE,
+            MISSION_MESSAGE_TYPE.RUNTIME_CLAIMABLE,
             (args) =>
             {
                 MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
                 Debug.Log($"missionId={mission.missionId}, RUNTIME_CLAIMABLE");
                 return false;
             });
-        
+
         MissionManager.Instance.Subcribe(GetEntityId(),
-            MESSAGE_MISSION_TYPE.RUNTIME_REWARDED,
+            MISSION_MESSAGE_TYPE.RUNTIME_REWARDED,
             (args) =>
             {
                 MissionRuntimeBase mission = args[0] as MissionRuntimeBase;

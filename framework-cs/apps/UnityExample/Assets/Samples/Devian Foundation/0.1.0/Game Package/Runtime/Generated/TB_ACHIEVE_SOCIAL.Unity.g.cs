@@ -12,13 +12,13 @@ using UnityEngine;
 
 namespace Devian.Domain.Game
 {
-    public static partial class TB_ACHIEVE_ONCE
+    public static partial class TB_ACHIEVE_SOCIAL
     {
         private static global::Devian.TableFormat _loadedFormat;
         private static bool _isLoaded;
 
         /// <summary>
-        /// Preload ACHIEVE_ONCE table via TableManager.
+        /// Preload ACHIEVE_SOCIAL table via TableManager.
         /// TableManager handles: TextAsset load + TB insert + cache.
         /// </summary>
         /// <param name="key">Addressables key to load TextAsset</param>
@@ -39,7 +39,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Unload ACHIEVE_ONCE table and clear data.
+        /// Unload ACHIEVE_SOCIAL table and clear data.
         /// </summary>
         public static void Unload()
         {
@@ -48,7 +48,7 @@ namespace Devian.Domain.Game
         }
 
         /// <summary>
-        /// Check if ACHIEVE_ONCE table is loaded.
+        /// Check if ACHIEVE_SOCIAL table is loaded.
         /// </summary>
         public static bool IsLoaded => _isLoaded;
 

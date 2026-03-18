@@ -17,7 +17,7 @@ public sealed class MissionStorage
 {
     public int schemaVersion; // default: 2
     public long dailyMissionStartUtcMs;
-    public long periodMissionStartUtcMs;
+    public long weeklyMissionStartUtcMs;
     public int nextMissionUid;
     public Dictionary<int, MissionRuntimeBase> runtimes;
 }
@@ -47,20 +47,20 @@ public abstract class MissionRuntimeBase
 
 규칙:
 - `state`는 `WAIT`, `ACTIVE`, `COMPLETED`만 저장한다. `CLAIMABLE`은 파생 상태이므로 저장하지 않는다.
-- `conditionMsgId`는 저장하지 않는다. `missionId`로 테이블(`MISSION_DAILY`/`MISSION_PERIOD`)에서 조회한다.
+- `conditionMsgId`는 저장하지 않는다. `missionId`로 테이블(`MISSION_DAILY`/`MISSION_WEEKLY`)에서 조회한다.
 
 타입별 저장 규칙:
 
 - `MissionRuntimeDaily`:
   - `periodKey`, `index`, `state`, `progressValue` 저장
-- `MissionRuntimePeriod`:
+- `MissionRuntimeWeekly`:
   - `periodKey`, `day`, `state`, `progressValue` 저장
 
 ---
 
 ## Persistence Rules
 
-- `DAILY/PERIOD progress`는 runtime 로컬 값으로 저장/복원한다.
+- `DAILY`/period `progress`는 runtime 로컬 값으로 저장/복원한다.
 - stat 누적 값은 mission payload에 저장하지 않는다.
 - `conditionMsgId`는 runtime에 저장하지 않는다. restore 시 테이블에서 조회한다.
 - `rewardGroupId` 등 definition 데이터는 runtime에 저장하지 않는다.

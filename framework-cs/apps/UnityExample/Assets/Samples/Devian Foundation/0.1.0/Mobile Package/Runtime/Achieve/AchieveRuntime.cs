@@ -238,9 +238,9 @@ namespace Devian
     }
 
     [Serializable]
-    public sealed class AchieveRuntimeOnce : AchieveRuntimeBase
+    public sealed class AchieveRuntimeSocial : AchieveRuntimeBase
     {
-        public override ACHIEVE_TYPE RuntimeType => ACHIEVE_TYPE.ONCE;
+        public override ACHIEVE_TYPE RuntimeType => ACHIEVE_TYPE.SOCIAL;
     }
 
     [Serializable]

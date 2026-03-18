@@ -1,0 +1,25 @@
+{
+  "enums": [
+    {
+      "name": "ACHIEVE_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "SOCIAL", "value": 1},
+        {"name": "PASS", "value": 2}
+      ]
+    },
+    {
+      "name": "ACHIEVE_MESSAGE_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "RUNTIME_INIT", "value": 1},
+        {"name": "RUNTIME_PROGRESS", "value": 2},
+        {"name": "RUNTIME_CLAIMABLE", "value": 3},
+        {"name": "RUNTIME_LEVEL_UP", "value": 4},
+        {"name": "RUNTIME_REWARDED", "value": 5},
+        {"name": "RUNTIME_UNLOCKED", "value": 6},
+        {"name": "RUNTIME_ACTIVE", "value": 7}
+      ]
+    }
+  ]
+}

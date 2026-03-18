@@ -87,9 +87,9 @@ namespace Devian
             return runtime;
         }
 
-        public static MissionRuntimePeriod CreatePeriod(PeriodMissionRuntimeCreateArgs args)
+        public static MissionRuntimeWeekly CreatePeriod(PeriodMissionRuntimeCreateArgs args)
         {
-            var runtime = new MissionRuntimePeriod
+            var runtime = new MissionRuntimeWeekly
             {
                 missionId = args.MissionId ?? string.Empty,
                 periodKey = args.PeriodKey ?? string.Empty,
@@ -118,8 +118,8 @@ namespace Devian
             MissionRuntimeBase runtime;
             switch (args.MissionType)
             {
-                case MISSION_TYPE.PERIOD:
-                    runtime = new MissionRuntimePeriod
+                case MISSION_TYPE.WEEKLY:
+                    runtime = new MissionRuntimeWeekly
                     {
                         missionId = args.MissionId ?? string.Empty,
                         periodKey = args.PeriodKey ?? string.Empty,

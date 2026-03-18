@@ -15,7 +15,7 @@ Type: Design / Runtime SSOT
 ```csharp
 MissionRuntimeBase
 ├─ MissionRuntimeDaily
-└─ MissionRuntimePeriod
+└─ MissionRuntimeWeekly
 ```
 
 공통 필드:
@@ -34,7 +34,7 @@ MissionRuntimeBase
 - `DAILY`:
   - source of truth = runtime `progressValue`
   - trigger delta로 직접 누적
-- `PERIOD`:
+- `WEEKLY`:
   - source of truth = runtime `progressValue`
   - WAIT 상태에서는 누적하지 않음
 
@@ -44,7 +44,7 @@ MissionRuntimeBase
 
 - 구독 키: `missionUid`
 - 메시지 키: `GAME_MESSAGE_TYPE`
-- `DAILY/PERIOD`:
+- `DAILY/WEEKLY`:
   - `SESSION_MAX`: `max(progressValue, delta)`
   - `SESSION_SUM`: `progressValue + delta`
   - `SESSION_MIN`: `min(progressValue, delta)`
@@ -60,7 +60,7 @@ MissionRuntimeBase
 - `MarkCompleted()`: `state = COMPLETED` + 구독 해지.
 - `TryActivate()`: `state == WAIT` 일 때만 `state = ACTIVE`로 전환.
 
-`PERIOD` 전용:
+`WEEKLY` 전용:
 - 초기 생성 상태는 WAIT
 - day 조건 충족 시 ACTIVE 전환 후 trigger 처리 시작
 

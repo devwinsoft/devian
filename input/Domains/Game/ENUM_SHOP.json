@@ -1,0 +1,44 @@
+{
+  "enums": [
+    {
+      "name": "SHOP_CATALOG_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "DAILY", "value": 1},
+        {"name": "CHEST", "value": 2},
+        {"name": "PURCHASE", "value": 3},
+        {"name": "GOLD", "value": 4},
+        {"name": "EVENT", "value": 5}
+      ]
+    },
+    {
+      "name": "SHOP_DISCOUNT_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "PER10", "value": 1},
+        {"name": "PER20", "value": 2},
+        {"name": "PER30", "value": 3},
+        {"name": "PER50", "value": 4}
+      ]
+    },
+    {
+      "name": "SHOP_PRODUCT_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "FREE", "value": 1},
+        {"name": "ADS", "value": 2},
+        {"name": "CURRENCY", "value": 3},
+        {"name": "PURCHASE", "value": 4}
+      ]
+    },
+    {
+      "name": "SHOP_PRODUCT_CHEST_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "ADS", "value": 1},
+        {"name": "ONE", "value": 2},
+        {"name": "TEN", "value": 3}
+      ]
+    }
+  ]
+}

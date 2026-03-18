@@ -8,6 +8,25 @@ import { IEntity, IEntityKey, CBigInt } from '@devian/core';
 // Contracts
 // ================================================================
 
+/** ACHIEVE_TYPE enum */
+export enum ACHIEVE_TYPE {
+    NONE = 0,
+    SOCIAL = 1,
+    PASS = 2,
+}
+
+/** ACHIEVE_MESSAGE_TYPE enum */
+export enum ACHIEVE_MESSAGE_TYPE {
+    NONE = 0,
+    RUNTIME_INIT = 1,
+    RUNTIME_PROGRESS = 2,
+    RUNTIME_CLAIMABLE = 3,
+    RUNTIME_LEVEL_UP = 4,
+    RUNTIME_REWARDED = 5,
+    RUNTIME_UNLOCKED = 6,
+    RUNTIME_ACTIVE = 7,
+}
+
 /** GAME_MESSAGE_TYPE enum */
 export enum GAME_MESSAGE_TYPE {
     NONE = 0,
@@ -64,48 +83,31 @@ export enum STAT_TYPE {
     UNIT_HP_MAX = 100,
 }
 
+/** INVENTORY_MESSAGE_TYPE enum */
+export enum INVENTORY_MESSAGE_TYPE {
+    NONE = 0,
+    PASS_CHANGED = 1,
+}
+
+/** ADVERTISE_FORMAT enum */
+export enum ADVERTISE_FORMAT {
+    BANNER = 0,
+    INTERSTITIAL = 1,
+    REWARDED = 2,
+    APP_OPEN = 3,
+}
+
+/** ADVERTISE_PROVIDER enum */
+export enum ADVERTISE_PROVIDER {
+    GOOGLE_MOBILE_ADS = 0,
+    MOCK = 1,
+}
+
 /** LEADERBOARD_MODE enum */
 export enum LEADERBOARD_MODE {
     NONE = 0,
     NORMAL = 1,
     HARDCORE = 2,
-}
-
-/** MISSION_TYPE enum */
-export enum MISSION_TYPE {
-    NONE = 0,
-    DAILY = 1,
-    PERIOD = 2,
-}
-
-/** MESSAGE_MISSION_TYPE enum */
-export enum MESSAGE_MISSION_TYPE {
-    NONE = 0,
-    RUNTIME_INIT = 1,
-    RUNTIME_PROGRESS = 2,
-    RUNTIME_CLAIMABLE = 3,
-    RUNTIME_REWARDED = 4,
-    DAY_RESET = 5,
-    ACHIEVE_LEVEL_UP = 6,
-}
-
-/** MESSAGE_ACHIEVE_TYPE enum */
-export enum MESSAGE_ACHIEVE_TYPE {
-    NONE = 0,
-    RUNTIME_INIT = 1,
-    RUNTIME_PROGRESS = 2,
-    RUNTIME_CLAIMABLE = 3,
-    RUNTIME_LEVEL_UP = 4,
-    RUNTIME_REWARDED = 5,
-    RUNTIME_UNLOCKED = 6,
-    RUNTIME_ACTIVE = 7,
-}
-
-/** ACHIEVE_TYPE enum */
-export enum ACHIEVE_TYPE {
-    NONE = 0,
-    ONCE = 1,
-    PASS = 2,
 }
 
 /** CURRENCY_TYPE enum */
@@ -143,20 +145,6 @@ export enum TREASURE_GRADE_TYPE {
     MYTHIC = 5,
 }
 
-/** ADVERTISE_FORMAT enum */
-export enum ADVERTISE_FORMAT {
-    BANNER = 0,
-    INTERSTITIAL = 1,
-    REWARDED = 2,
-    APP_OPEN = 3,
-}
-
-/** ADVERTISE_PROVIDER enum */
-export enum ADVERTISE_PROVIDER {
-    GOOGLE_MOBILE_ADS = 0,
-    MOCK = 1,
-}
-
 /** PURCHASE_KIND enum */
 export enum PURCHASE_KIND {
     CONSUMABLE = 0,
@@ -165,10 +153,22 @@ export enum PURCHASE_KIND {
     RENTAL = 3,
 }
 
-/** MESSAGE_INVENTORY_TYPE enum */
-export enum MESSAGE_INVENTORY_TYPE {
+/** MISSION_TYPE enum */
+export enum MISSION_TYPE {
     NONE = 0,
-    PASS_CHANGED = 1,
+    DAILY = 1,
+    WEEKLY = 2,
+}
+
+/** MISSION_MESSAGE_TYPE enum */
+export enum MISSION_MESSAGE_TYPE {
+    NONE = 0,
+    RUNTIME_INIT = 1,
+    RUNTIME_PROGRESS = 2,
+    RUNTIME_CLAIMABLE = 3,
+    RUNTIME_REWARDED = 4,
+    DAY_RESET = 5,
+    ACHIEVE_LEVEL_UP = 6,
 }
 
 /** SHOP_CATALOG_TYPE enum */
@@ -225,7 +225,7 @@ export interface UserProfile extends IEntity {
 // Tables
 // ================================================================
 
-export interface ACHIEVE_ONCE extends IEntityKey<number> {
+export interface ACHIEVE_SOCIAL extends IEntityKey<number> {
     Index: number;
     AchieveId: string;
     IsActive: boolean;
@@ -370,7 +370,7 @@ export interface MISSION_DAILY extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface MISSION_PERIOD extends IEntityKey<string> {
+export interface MISSION_WEEKLY extends IEntityKey<string> {
     MissionId: string;
     Day: number;
     IsActive: boolean;
@@ -507,9 +507,9 @@ export interface UNIT_MONSTER extends IEntityKey<string> {
 // Table Containers
 // ================================================================
 
-export class TB_ACHIEVE_ONCE {
-    private static _dict: Map<number, ACHIEVE_ONCE> = new Map();
-    private static _list: ACHIEVE_ONCE[] = [];
+export class TB_ACHIEVE_SOCIAL {
+    private static _dict: Map<number, ACHIEVE_SOCIAL> = new Map();
+    private static _list: ACHIEVE_SOCIAL[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -518,9 +518,9 @@ export class TB_ACHIEVE_ONCE {
         this._list = [];
     }
 
-    static getAll(): readonly ACHIEVE_ONCE[] { return this._list; }
+    static getAll(): readonly ACHIEVE_SOCIAL[] { return this._list; }
 
-    static get(key: number): ACHIEVE_ONCE | undefined {
+    static get(key: number): ACHIEVE_SOCIAL | undefined {
         return this._dict.get(key);
     }
 
@@ -532,7 +532,7 @@ export class TB_ACHIEVE_ONCE {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as ACHIEVE_ONCE;
+            const row = JSON.parse(line) as ACHIEVE_SOCIAL;
             this._list.push(row);
             this._dict.set(row.Index, row);
         }
@@ -1047,9 +1047,9 @@ export class TB_MISSION_DAILY {
     }
 }
 
-export class TB_MISSION_PERIOD {
-    private static _dict: Map<string, MISSION_PERIOD> = new Map();
-    private static _list: MISSION_PERIOD[] = [];
+export class TB_MISSION_WEEKLY {
+    private static _dict: Map<string, MISSION_WEEKLY> = new Map();
+    private static _list: MISSION_WEEKLY[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -1058,9 +1058,9 @@ export class TB_MISSION_PERIOD {
         this._list = [];
     }
 
-    static getAll(): readonly MISSION_PERIOD[] { return this._list; }
+    static getAll(): readonly MISSION_WEEKLY[] { return this._list; }
 
-    static get(key: string): MISSION_PERIOD | undefined {
+    static get(key: string): MISSION_WEEKLY | undefined {
         return this._dict.get(key);
     }
 
@@ -1072,7 +1072,7 @@ export class TB_MISSION_PERIOD {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as MISSION_PERIOD;
+            const row = JSON.parse(line) as MISSION_WEEKLY;
             this._list.push(row);
             this._dict.set(row.MissionId, row);
         }

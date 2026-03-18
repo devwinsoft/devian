@@ -67,7 +67,7 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
 - `ApplyRental(rentalId, durationMs)` — `_storage.SetRental(id, max(currentExpiry, now)+duration)`로 로컬 만료 시각을 설정/연장한다.
 - `SetPassOwnership(passId)` — `_storage.SetPass(id, true)`로 소유권을 설정한다.
 - `ApplyTreasure(gradeType, amount)` — `_storage.AddTreasure(gradeType, amount)`로 chest count를 누적한다.
-- 시즌패스 상태 변경 시 `MESSAGE_INVENTORY_TYPE.PASS_CHANGED`를 publish할 수 있어야 한다(실행 위치: `InventoryManager`).
+- 시즌패스 상태 변경 시 `INVENTORY_MESSAGE_TYPE.PASS_CHANGED`를 publish할 수 있어야 한다(실행 위치: `InventoryManager`).
 
 ```csharp
 public sealed class InventoryManager : MonoBehaviour

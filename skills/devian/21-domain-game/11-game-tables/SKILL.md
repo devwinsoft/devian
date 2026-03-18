@@ -34,8 +34,8 @@ AppliesTo: v10
 | `MetaTable.xlsx` | REWARD | TB_REWARD | `RewardNum` (int) | 보상 테이블 |
 | `GameMessageTable.xlsx` | GAME_MESSAGE | TB_GAME_MESSAGE | `MessageId` (string) | 메시지 stat 정의 테이블 |
 | `MissionTable.xlsx` | MISSION_DAILY | TB_MISSION_DAILY | `MissionId` (string) | 일일 미션 정의 테이블 |
-| `MissionTable.xlsx` | MISSION_PERIOD | TB_MISSION_PERIOD | `MissionId` (string) | 기간 미션 정의 테이블 (`day:1~7`, 10일 주기) |
-| `AchieveTable.xlsx` | ACHIEVE_ONCE | TB_ACHIEVE_ONCE | `Index` (int) | 일반 업적 단계/플랫폼 매핑 테이블 |
+| `MissionTable.xlsx` | MISSION_WEEKLY | TB_MISSION_WEEKLY | `MissionId` (string) | 기간 미션 정의 테이블 (`day:1~7`, 10일 주기) |
+| `AchieveTable.xlsx` | ACHIEVE_SOCIAL | TB_ACHIEVE_SOCIAL | `Index` (int) | 소셜 업적 단계/플랫폼 매핑 테이블 |
 | `AchieveTable.xlsx` | ACHIEVE_PASS | TB_ACHIEVE_PASS | `Index` (int) | 패스 업적 단계/활성 조건 테이블 |
 | `MetaTable.xlsx` | LEADERBOARD | TB_LEADERBOARD | `LeaderboardId` (string) | 리더보드 정의 |
 | `MetaTable.xlsx` | LEADERBOARD_REWARD | TB_LEADERBOARD_REWARD | `Index` (int) | 리더보드 구간 보상 정의 |

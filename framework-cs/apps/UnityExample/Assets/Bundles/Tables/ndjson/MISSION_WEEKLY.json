@@ -1,0 +1,10 @@
+{"MissionId":"mission_period_01_001","Day":1,"IsActive":true,"ConditionMsgId":"msg_score_max","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_period_001"}
+{"MissionId":"mission_period_01_002","Day":1,"IsActive":true,"ConditionMsgId":"msg_score_max","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_period_002"}
+{"MissionId":"mission_period_01_003","Day":1,"IsActive":true,"ConditionMsgId":"msg_score_max","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_period_003"}
+{"MissionId":"mission_period_01_004","Day":1,"IsActive":true,"ConditionMsgId":"msg_score_max","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_period_004"}
+{"MissionId":"mission_period_01_005","Day":1,"IsActive":true,"ConditionMsgId":"msg_score_max","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_period_005"}
+{"MissionId":"mission_period_02_001","Day":2,"IsActive":true,"ConditionMsgId":"msg_score_max","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_period_001"}
+{"MissionId":"mission_period_02_002","Day":2,"IsActive":true,"ConditionMsgId":"msg_score_max","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_period_002"}
+{"MissionId":"mission_period_02_003","Day":2,"IsActive":true,"ConditionMsgId":"msg_score_max","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_period_003"}
+{"MissionId":"mission_period_02_004","Day":2,"IsActive":true,"ConditionMsgId":"msg_score_max","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_period_004"}
+{"MissionId":"mission_period_02_005","Day":2,"IsActive":true,"ConditionMsgId":"msg_score_max","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_period_005"}

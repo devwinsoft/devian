@@ -10,30 +10,30 @@ using Devian.Domain.Game;
 
 namespace Devian
 {
-    /// <summary>Selector for ACHIEVE_ONCE_ID</summary>
-    public class Game_ACHIEVE_ONCE_ID_Selector : BaseEditorID_Selector
+    /// <summary>Selector for ACHIEVE_SOCIAL_ID</summary>
+    public class Game_ACHIEVE_SOCIAL_ID_Selector : BaseEditorID_Selector
     {
-        protected override string GetDisplayTypeName() => "ACHIEVE_ONCE";
+        protected override string GetDisplayTypeName() => "ACHIEVE_SOCIAL";
 
         public override void Reload()
         {
             ClearItems();
-            TB_ACHIEVE_ONCE.Clear();
+            TB_ACHIEVE_SOCIAL.Clear();
 
-            var textAssets = AssetManager.FindAssets<TextAsset>("ACHIEVE_ONCE");
+            var textAssets = AssetManager.FindAssets<TextAsset>("ACHIEVE_SOCIAL");
             foreach (var ta in textAssets)
             {
                 var assetPath = AssetDatabase.GetAssetPath(ta);
                 if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                TB_ACHIEVE_ONCE.LoadFromNdjson(ta.text);
+                TB_ACHIEVE_SOCIAL.LoadFromNdjson(ta.text);
                 break;
             }
 
-            foreach (var groupKey in TB_ACHIEVE_ONCE.GetGroupKeys())
+            foreach (var groupKey in TB_ACHIEVE_SOCIAL.GetGroupKeys())
             {
-                if (TB_ACHIEVE_ONCE.TryGetGroupPrimaryKey(groupKey, out var pk))
+                if (TB_ACHIEVE_SOCIAL.TryGetGroupPrimaryKey(groupKey, out var pk))
                 {
                     // key = PK string (applied to Value), display = groupKey
                     AddItem(pk.ToString(), groupKey.ToString());
@@ -42,14 +42,14 @@ namespace Devian
         }
     }
 
-    /// <summary>PropertyDrawer for ACHIEVE_ONCE_ID</summary>
-    [CustomPropertyDrawer(typeof(ACHIEVE_ONCE_ID))]
-    public class Game_ACHIEVE_ONCE_ID_Drawer : BaseEditorID_Drawer<Game_ACHIEVE_ONCE_ID_Selector>
+    /// <summary>PropertyDrawer for ACHIEVE_SOCIAL_ID</summary>
+    [CustomPropertyDrawer(typeof(ACHIEVE_SOCIAL_ID))]
+    public class Game_ACHIEVE_SOCIAL_ID_Drawer : BaseEditorID_Drawer<Game_ACHIEVE_SOCIAL_ID_Selector>
     {
-        protected override Game_ACHIEVE_ONCE_ID_Selector GetSelector()
+        protected override Game_ACHIEVE_SOCIAL_ID_Selector GetSelector()
         {
-            var w = ScriptableObject.CreateInstance<Game_ACHIEVE_ONCE_ID_Selector>();
-            w.titleContent = new GUIContent("Select ACHIEVE_ONCE");
+            var w = ScriptableObject.CreateInstance<Game_ACHIEVE_SOCIAL_ID_Selector>();
+            w.titleContent = new GUIContent("Select ACHIEVE_SOCIAL");
             w.ShowUtility();
             return w;
         }
@@ -60,17 +60,17 @@ namespace Devian
             if (valueProp.propertyType == SerializedPropertyType.Integer)
             {
                 var pk = (int)valueProp.intValue;
-                TB_ACHIEVE_ONCE.Clear();
-                var textAssets = AssetManager.FindAssets<TextAsset>("ACHIEVE_ONCE");
+                TB_ACHIEVE_SOCIAL.Clear();
+                var textAssets = AssetManager.FindAssets<TextAsset>("ACHIEVE_SOCIAL");
                 foreach (var ta in textAssets)
                 {
                     var assetPath = AssetDatabase.GetAssetPath(ta);
                     if (!assetPath.EndsWith(".json", System.StringComparison.OrdinalIgnoreCase))
                         continue;
-                    TB_ACHIEVE_ONCE.LoadFromNdjson(ta.text);
+                    TB_ACHIEVE_SOCIAL.LoadFromNdjson(ta.text);
                     break;
                 }
-                if (TB_ACHIEVE_ONCE.TryGetGroupKeyByKey(pk, out var groupKey))
+                if (TB_ACHIEVE_SOCIAL.TryGetGroupKeyByKey(pk, out var groupKey))
                     return groupKey.ToString();
                 return pk.ToString();
             }

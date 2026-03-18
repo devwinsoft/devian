@@ -1,0 +1,11 @@
+{
+  "enums": [
+    {
+      "name": "INVENTORY_MESSAGE_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "PASS_CHANGED", "value": 1}
+      ]
+    }
+  ]
+}

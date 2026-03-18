@@ -7,7 +7,7 @@ AppliesTo: v10
 
 Inventory 변동 알림 라우터다.
 
-- 타입: `BaseTrigger<EntityId, MESSAGE_INVENTORY_TYPE>`
+- 타입: `BaseTrigger<EntityId, INVENTORY_MESSAGE_TYPE>`
 - ownerKey: subscriber-defined `EntityId`
 - 실소유자는 `InventoryManager`다.
 
@@ -16,7 +16,7 @@ Inventory 변동 알림 라우터다.
 ## Contract
 
 ```csharp
-public sealed class InventoryMessageTrigger : BaseTrigger<EntityId, MESSAGE_INVENTORY_TYPE>
+public sealed class InventoryMessageTrigger : BaseTrigger<EntityId, INVENTORY_MESSAGE_TYPE>
 {
 }
 ```
@@ -33,7 +33,7 @@ public sealed class InventoryMessageTrigger : BaseTrigger<EntityId, MESSAGE_INVE
 
 ## Message Keys
 
-`MESSAGE_INVENTORY_TYPE` enum(입력: `input/Domains/Game/ENUM_META.json`)을 사용한다.
+`INVENTORY_MESSAGE_TYPE` enum(입력: `input/Domains/Game/ENUM_META.json`)을 사용한다.
 
 최소 키:
 

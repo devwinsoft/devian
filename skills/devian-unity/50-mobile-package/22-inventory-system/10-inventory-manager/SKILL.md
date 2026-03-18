@@ -59,7 +59,7 @@ public sealed class InventoryManager : CompoSingleton<InventoryManager>
     public int GetTreasureCount(TREASURE_GRADE_TYPE gradeType) { ... }
 
     // ── Message ──
-    public void Subcribe(EntityId ownerKey, MESSAGE_INVENTORY_TYPE msgType, Handler handler) { ... }
+    public void Subcribe(EntityId ownerKey, INVENTORY_MESSAGE_TYPE msgType, Handler handler) { ... }
     public void UnSubcribe(EntityId ownerKey) { ... }
 }
 ```
@@ -150,7 +150,7 @@ CompoSingleton<InventoryManager>.Instance
 
 ### Message
 
-- `Subcribe(EntityId ownerKey, MESSAGE_INVENTORY_TYPE msgType, Handler handler)`
+- `Subcribe(EntityId ownerKey, INVENTORY_MESSAGE_TYPE msgType, Handler handler)`
 - `UnSubcribe(EntityId ownerKey)`
 
 

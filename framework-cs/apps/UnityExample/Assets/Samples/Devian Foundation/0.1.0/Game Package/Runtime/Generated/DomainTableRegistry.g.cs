@@ -19,17 +19,17 @@ namespace Devian.Domain.Game
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         private static void Register()
         {
-            global::Devian.TableManager.Instance.RegisterTbLoader("ACHIEVE_ONCE", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("ACHIEVE_SOCIAL", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_ACHIEVE_ONCE.LoadFromNdjson(text);
-                    TB_ACHIEVE_ONCE._AfterLoad();
+                    TB_ACHIEVE_SOCIAL.LoadFromNdjson(text);
+                    TB_ACHIEVE_SOCIAL._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_ACHIEVE_ONCE.LoadFromPb64Binary(bin);
-                    TB_ACHIEVE_ONCE._AfterLoad();
+                    TB_ACHIEVE_SOCIAL.LoadFromPb64Binary(bin);
+                    TB_ACHIEVE_SOCIAL._AfterLoad();
                 }
             });
 
@@ -229,17 +229,17 @@ namespace Devian.Domain.Game
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("MISSION_PERIOD", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("MISSION_WEEKLY", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_MISSION_PERIOD.LoadFromNdjson(text);
-                    TB_MISSION_PERIOD._AfterLoad();
+                    TB_MISSION_WEEKLY.LoadFromNdjson(text);
+                    TB_MISSION_WEEKLY._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_MISSION_PERIOD.LoadFromPb64Binary(bin);
-                    TB_MISSION_PERIOD._AfterLoad();
+                    TB_MISSION_WEEKLY.LoadFromPb64Binary(bin);
+                    TB_MISSION_WEEKLY._AfterLoad();
                 }
             });
 

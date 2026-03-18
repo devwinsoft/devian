@@ -76,4 +76,4 @@ AppliesTo: v10
 - uid <= 0 항목은 무시
 - `nextAchieveUid <= 0`이면 1로 보정
 - 누락 키는 안전 기본값 사용
-- 구버전 payload에 `achieveType`이 없으면 table(`TB_ACHIEVE_ONCE`, `TB_ACHIEVE_PASS`) 기반으로 타입을 추론한다.
+- 구버전 payload에 `achieveType`이 없으면 table(`TB_ACHIEVE_SOCIAL`, `TB_ACHIEVE_PASS`) 기반으로 타입을 추론한다.
