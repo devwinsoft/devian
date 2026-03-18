@@ -22,6 +22,5 @@ MonoBehaviour:
   autoArchive: 0
   firebaseIOSAppId: 
   firebaseCLIPath: 
-  fastlaneCLIPath: 
+  developmentBuild: 0
   autoSymbolUpload: 0
-  autoDeploy: 0

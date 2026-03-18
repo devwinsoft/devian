@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
 using UnityEngine;
-#if UNITY_IOS && !UNITY_EDITOR
+#if UNITY_IOS && !UNITY_EDITOR && UNITY_MOBILE_NOTIFICATIONS
 using Unity.Notifications.iOS;
 #endif
 
@@ -105,7 +105,7 @@ namespace Devian
         public async Task<CommonResult> ScheduleLocalNotificationAsync(
             LocalNotificationData data, CancellationToken ct)
         {
-#if UNITY_IOS && !UNITY_EDITOR
+#if UNITY_IOS && !UNITY_EDITOR && UNITY_MOBILE_NOTIFICATIONS
             try
             {
                 // iOS: 아이콘은 시스템이 앱 아이콘을 강제 사용한다. 별도 설정 불가.
@@ -145,7 +145,7 @@ namespace Devian
         public async Task<CommonResult> CancelLocalNotificationAsync(
             string notificationId, CancellationToken ct)
         {
-#if UNITY_IOS && !UNITY_EDITOR
+#if UNITY_IOS && !UNITY_EDITOR && UNITY_MOBILE_NOTIFICATIONS
             try
             {
                 iOSNotificationCenter.RemoveScheduledNotification(notificationId);
@@ -165,7 +165,7 @@ namespace Devian
 
         public async Task<CommonResult> CancelAllLocalNotificationsAsync(CancellationToken ct)
         {
-#if UNITY_IOS && !UNITY_EDITOR
+#if UNITY_IOS && !UNITY_EDITOR && UNITY_MOBILE_NOTIFICATIONS
             try
             {
                 iOSNotificationCenter.RemoveAllScheduledNotifications();

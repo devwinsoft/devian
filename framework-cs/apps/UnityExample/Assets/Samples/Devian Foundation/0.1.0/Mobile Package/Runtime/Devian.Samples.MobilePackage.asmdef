@@ -8,7 +8,10 @@
     "Devian.Samples.OperationPackage",
     "Unity.InputSystem",
     "Devian.Samples.UIPackage",
-    "Unity.Purchasing"
+    "Unity.Purchasing",
+    "Unity.Notifications",
+    "Unity.Notifications.Android",
+    "Unity.Notifications.iOS"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -22,6 +25,11 @@
       "name": "com.unity.purchasing",
       "expression": "",
       "define": "UNITY_PURCHASING"
+    },
+    {
+      "name": "com.unity.mobile.notifications",
+      "expression": "",
+      "define": "UNITY_MOBILE_NOTIFICATIONS"
     }
   ],
   "noEngineReferences": false

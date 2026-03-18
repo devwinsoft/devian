@@ -4,7 +4,7 @@ Status: ACTIVE
 AppliesTo: v11
 
 Unity 모바일 빌드를 실행한다. Android/iOS 플랫폼별 분기를 포함.
-`BuildAutomationSettings`에서 활성화된 플랫폼만 빌드한다.
+사용자가 Pipeline 탭에서 선택한 플랫폼(`_buildAndroid`/`_buildIos`)만 빌드한다.
 
 ---
 
@@ -15,10 +15,10 @@ EditorWindow Pipeline 탭의 Build 섹션에서 `▶ Build` 버튼으로 실행�
 
 ```csharp
 // RunPhase1() 내부
-if (settings.androidEnabled)
+if (_buildAndroid)
     AndroidBuildRunner.Run(settings);
 
-if (settings.iosEnabled)
+if (_buildIos)
     IOSBuildRunner.Run(settings);
 ```
 
@@ -35,7 +35,7 @@ namespace Devian
     {
         public static BuildReport Run(BuildAutomationSettings settings)
         {
-            EditorUserBuildSettings.buildAppBundle = settings.buildAppBundle;
+            // AAB/APK — EditorUserBuildSettings.buildAppBundle을 그대로 사용
             EditorUserBuildSettings.androidCreateSymbols = AndroidCreateSymbols.Debugging;
             PlayerSettings.SetScriptingBackend(
                 BuildTargetGroup.Android, ScriptingBackend.IL2CPP);
@@ -48,15 +48,20 @@ namespace Devian
             if (!string.IsNullOrEmpty(settings.keystorePath))
                 PlayerSettings.Android.keystoreName = settings.keystorePath;
 
-            var ext = settings.buildAppBundle ? "aab" : "apk";
+            var isAppBundle = EditorUserBuildSettings.buildAppBundle;
+            var ext = isAppBundle ? "aab" : "apk";
             var outputPath = $"{settings.buildOutputDir}/Android/{Application.productName}.{ext}";
+
+            var buildOptions = BuildOptions.None;
+            if (settings.developmentBuild)
+                buildOptions |= BuildOptions.Development | BuildOptions.AllowDebugging;
 
             var options = new BuildPlayerOptions
             {
                 scenes = GetEnabledScenes(),
                 locationPathName = outputPath,
                 target = BuildTarget.Android,
-                options = BuildOptions.None
+                options = buildOptions
             };
 
             return BuildPipeline.BuildPlayer(options);
@@ -87,12 +92,16 @@ namespace Devian
         {
             var outputPath = $"{settings.buildOutputDir}/iOS";
 
+            var buildOptions = BuildOptions.None;
+            if (settings.developmentBuild)
+                buildOptions |= BuildOptions.Development | BuildOptions.AllowDebugging;
+
             var options = new BuildPlayerOptions
             {
                 scenes = GetEnabledScenes(),
                 locationPathName = outputPath,
                 target = BuildTarget.iOS,
-                options = BuildOptions.None
+                options = buildOptions
             };
 
             return BuildPipeline.BuildPlayer(options);
@@ -101,17 +110,11 @@ namespace Devian
 }
 ```
 
-### Xcode Archive (autoArchive 설정 시)
-
-Unity 빌드 완료 후 `autoArchive == true`이면 xcodebuild를 호출하여 `.xcarchive`와 dSYM을 생성한다.
-
 ### 산출물
 
 | 파일 | 경로 |
 |------|------|
 | Xcode project | `{buildOutputDir}/iOS/` |
-| Archive (autoArchive 시) | `{buildOutputDir}/iOS/app.xcarchive` |
-| dSYM (autoArchive 시) | `{buildOutputDir}/iOS/app.xcarchive/dSYMs/*.dSYM` |
 
 ---
 
@@ -126,8 +129,7 @@ Unity 빌드 완료 후 `autoArchive == true`이면 xcodebuild를 호출하여 `
 ```
 Build 완료
   → AutoFillSymbolPaths() (심볼 경로 자동 입력)
-  ├─ autoSymbolUpload == true → Symbol Upload 자동 시작
-  └─ autoSymbolUpload == false → 종료 (수동으로 Upload Symbols 클릭)
+  → 종료 (Release 탭에서 수동으로 Symbol Upload / Version Publish 실행)
 ```
 
 ---
@@ -135,5 +137,5 @@ Build 완료
 ## Related
 
 - [10-settings](../10-settings/SKILL.md) — 빌드 설정
-- [30-symbol-upload](../30-symbol-upload/SKILL.md) — Symbol Upload (다음 단계)
+- [30-symbol-upload](../30-symbol-upload/SKILL.md) — Symbol Upload (Release 탭)
 - [50-editor-window](../50-editor-window/SKILL.md) — GUI

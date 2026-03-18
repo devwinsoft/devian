@@ -75,8 +75,8 @@ MonoBehaviour:
     Patch: 0
   DefaultLanguage: 23
   FirebaseFunctionsRegion: asia-northeast3
-  VersionCheckAOS: https://github.com/devwinsoft/devian/blob/main/release/version_aos.json
-  VersionCheckIOS: https://github.com/devwinsoft/devian/blob/main/release/version_ios.json
+  VersionCheckAOS: https://raw.githubusercontent.com/devwinsoft/devian/main/release/version_aos.json
+  VersionCheckIOS: https://raw.githubusercontent.com/devwinsoft/devian/main/release/version_ios.json
   _cryptoKey:
     data: Wy9bWgeqW0Ugn26FLI+j/FOP1jgzW5ojhcejGMcVbiCzn+NaQEBFQCmfOyc=
   _cryptoIv:

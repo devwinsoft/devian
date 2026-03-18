@@ -193,6 +193,10 @@ namespace Devian.Domain.Common
         TREASURE_REWARD_APPLY_FAILED = 165,
         TREASURE_REWARD_EMPTY = 166,
         TREASURE_REWARD_GROUP_EMPTY = 167,
+        VERSION_CHECK_NETWORK_FAILED = 168,
+        VERSION_CHECK_PARSE_FAILED = 169,
+        VERSION_CHECK_RESPONSE_EMPTY = 170,
+        VERSION_CHECK_URL_NOT_CONFIGURED = 171,
     }
 
     /// <summary>Auto-generated enum from TB_SERVER_ERROR.id</summary>

@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
 using UnityEngine;
-#if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR && UNITY_MOBILE_NOTIFICATIONS
 using Unity.Notifications.Android;
 #endif
 
@@ -128,7 +128,7 @@ namespace Devian
         public async Task<CommonResult> ScheduleLocalNotificationAsync(
             LocalNotificationData data, CancellationToken ct)
         {
-#if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR && UNITY_MOBILE_NOTIFICATIONS
             try
             {
                 ensureNotificationChannel();
@@ -188,7 +188,7 @@ namespace Devian
 
         public async Task<CommonResult> CancelAllLocalNotificationsAsync(CancellationToken ct)
         {
-#if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR && UNITY_MOBILE_NOTIFICATIONS
             try
             {
                 AndroidNotificationCenter.CancelAllNotifications();
@@ -210,7 +210,7 @@ namespace Devian
 
         void ensureNotificationChannel()
         {
-#if UNITY_ANDROID && !UNITY_EDITOR
+#if UNITY_ANDROID && !UNITY_EDITOR && UNITY_MOBILE_NOTIFICATIONS
             if (_channelCreated)
                 return;
 

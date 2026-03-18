@@ -13,14 +13,6 @@ namespace Devian
         const string Tag = nameof(RemoteDataManager);
         const string ServerTimeHeadUrl = "https://worldtimeapi.org";
 
-        [Serializable]
-        sealed class VersionCheckConfig
-        {
-            public string currentVersion = string.Empty;
-            public string minVersion = string.Empty;
-            public string update_url = string.Empty;
-        }
-
         long _serverNowUtcMsAtSync;
         long _clientNowUtcMsAtServerSync;
 
@@ -133,7 +125,7 @@ namespace Devian
             if (!tryResolveVersionCheckUrl(out var url))
             {
                 return CommonResult<VersionCheckConfig>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                    COMMON_ERROR_TYPE.VERSION_CHECK_URL_NOT_CONFIGURED,
                     "Version check URL is not configured for this platform.");
             }
 
@@ -158,7 +150,7 @@ namespace Devian
             if (request.result != UnityWebRequest.Result.Success)
             {
                 return CommonResult<VersionCheckConfig>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_NETWORK,
+                    COMMON_ERROR_TYPE.VERSION_CHECK_NETWORK_FAILED,
                     $"Version config request failed: {request.error}");
             }
 
@@ -166,7 +158,7 @@ namespace Devian
             if (string.IsNullOrWhiteSpace(json))
             {
                 return CommonResult<VersionCheckConfig>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                    COMMON_ERROR_TYPE.VERSION_CHECK_RESPONSE_EMPTY,
                     "Version config response is empty.");
             }
 
@@ -176,7 +168,7 @@ namespace Devian
                 if (config == null)
                 {
                     return CommonResult<VersionCheckConfig>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_SERVER,
+                        COMMON_ERROR_TYPE.VERSION_CHECK_PARSE_FAILED,
                         "Version config JSON parse failed.");
                 }
 
@@ -185,7 +177,7 @@ namespace Devian
             catch (Exception ex)
             {
                 return CommonResult<VersionCheckConfig>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                    COMMON_ERROR_TYPE.VERSION_CHECK_PARSE_FAILED,
                     $"Version config JSON parse failed: {ex.Message}");
             }
         }

@@ -76,8 +76,19 @@ onLoadCompletedAsync:
 ## Version Check Ownership
 
 - `MobileApplication`은 버전 체크 URL 설정(`VersionCheckAOS`, `VersionCheckIOS`)을 소유한다.
+- URL은 `raw.githubusercontent.com` 등 순수 JSON을 반환하는 endpoint여야 한다.
+- GitHub blob URL(`github.com/.../blob/...`)은 HTML을 반환하므로 사용 금지.
 - 실제 버전 판정/서버 UTC 동기화와 상태(property) 보유는 `RemoteDataManager`가 수행한다.
 - 로그인 진입 시 `LoginManager`는 `RemoteDataManager.InitializeAsync`를 가장 먼저 호출한다.
+
+## Custom Editor (MobileApplicationEditor)
+
+- `MobileApplicationEditor.cs` — `MobileApplication`의 Custom Editor.
+- **Fix URL 섹션**: 항상 표시된다.
+  - URL이 GitHub blob URL이면: 경고 HelpBox + [Fix URL] 버튼을 표시한다.
+    - `github.com/{user}/{repo}/blob/{branch}/...` → `raw.githubusercontent.com/{user}/{repo}/{branch}/...` 로 자동 변환.
+  - URL이 정상이면: 정보 HelpBox로 "VersionCheck URL 상태: 정상"을 표시한다.
+- **Generate key iv 버튼**: AES-256-CBC 키/IV를 랜덤 생성하여 `_cryptoKey`/`_cryptoIv`에 설정.
 
 ## Firebase Functions Region Ownership
 

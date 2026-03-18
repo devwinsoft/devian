@@ -10,7 +10,7 @@ Firebase Crashlytics에 심볼 파일을 업로드한다.
 
 ## 심볼 파일 경로
 
-심볼 파일 경로는 **EditorWindow(Pipeline 탭)에서 절대 경로로 관리**한다:
+심볼 파일 경로는 **EditorWindow(Release 탭)에서 절대 경로로 관리**한다:
 
 | 플랫폼 | 파일 | 기본 탐색 경로 |
 |--------|------|----------------|
@@ -20,7 +20,7 @@ Firebase Crashlytics에 심볼 파일을 업로드한다.
 ### 경로 입력 방식
 
 1. **자동 입력**: Build 성공 시 `AutoFillSymbolPaths()`가 빌드 산출물 디렉토리를 탐색하여 자동 채움
-2. **수동 선택**: Pipeline 탭 Symbol Upload 섹션에서 `[...]` 브라우저 버튼으로 직접 선택
+2. **수동 선택**: Release 탭 Symbol Upload 섹션에서 `[...]` 브라우저 버튼으로 직접 선택
 3. **직접 입력**: 텍스트 필드에 절대 경로를 직접 타이핑
 
 경로 필드는 EditorWindow의 런타임 상태(Settings에 저장하지 않음). 빌드별로 달라지는 값이므로.
