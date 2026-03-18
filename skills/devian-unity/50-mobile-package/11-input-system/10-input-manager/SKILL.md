@@ -43,7 +43,18 @@ namespace Devian
 
 ## 핵심 규약 (Hard Rule)
 
-### 1. Serialized 기본값
+### 1. InputSettings 분리
+
+설정 데이터는 `InputSettings` ScriptableObject로 분리되었다 (→ `12-input-settings`).
+InputManager는 `Resources.Load<InputSettings>(InputSettings.ResourcesPath)`로 고정 경로에서 로드한다.
+
+**InputManager에 남은 SerializedField:**
+
+| 필드 | 기본값 | 용도 |
+|------|--------|------|
+| `_outputEnabled` | `true` | 인스턴스별 런타임 dispatch on/off |
+
+**InputSettings에 이전된 필드 (기본값):**
 
 | 필드 | 기본값 |
 |------|--------|
@@ -123,7 +134,6 @@ public interface IInputManager
     int GetButtonIndex(string key);
     IReadOnlyList<string> ButtonKeys { get; }
     void SetContext(InputContext context);
-    void RebuildButtonMap();
 }
 
 // --- InputManager ---
@@ -145,33 +155,12 @@ public static class InputButtonMapBuilder
 
 ## Editor 기능
 
-### Refresh Expected Button Keys
+`InputManagerInspector`는 `DrawDefaultInspector()`만 제공한다 (`_settings`, `_outputEnabled` 표시).
 
-`InputManagerInspector` 커스텀 인스펙터에 **"Refresh Expected Button Keys"** 버튼을 제공한다.
+내부 버튼 맵 재빌드는 `OnEnable()` 초기화 시 자동 수행된다.
 
-**동작:**
-1. `InputActionAsset`의 모든 ActionMap을 스캔
-2. `action.expectedControlType == "Button"` 인 액션만 수집
-3. key 포맷: `"Map/Action"` (예: `"Player/Attack"`)
-4. 중복 제거 (`StringComparer.Ordinal`)
-5. Ordinal 정렬
-6. 64개 초과 시 64개까지만 적용 + 경고 로그
-7. `_expectedButtonKeys` 배열을 완전 덮어쓰기
-8. `RebuildButtonMap()` 자동 호출 → 내부 버튼 맵 즉시 동기화
-
-**Play Mode:** Inspector Refresh는 Play Mode에서 비활성화된다.
-
-### Install/Ensure VirtualGamepad Bindings
-
-`InputManagerInspector`에 **"Install/Ensure VirtualGamepad Bindings"** 버튼을 제공한다.
-
-**동작:**
-1. InputManager의 `_moveKey`, `_lookKey` 값을 읽어 해당 Action을 해석
-2. Action에 `<VirtualGamepad>/move`, `<VirtualGamepad>/look` 바인딩이 없으면 추가
-3. 이미 존재하면 아무 것도 안 함
-4. Undo 지원 + `AssetDatabase.SaveAssets()`
-
-**Play Mode:** Play Mode에서 비활성화된다.
+Refresh Expected Button Keys, Install/Ensure VirtualGamepad Bindings 버튼은
+`InputSettingsInspector`에서 제공한다 (→ `12-input-settings`).
 
 **Editor 파일:** `com.devian.foundation/Samples~/MobilePackage/Editor/Input/InputManagerInspector.cs`
 
@@ -185,8 +174,10 @@ public static class InputButtonMapBuilder
 | InputFrame | `com.devian.foundation/Samples~/MobilePackage/Runtime/Input/InputFrame.cs` |
 | IInputManager | `com.devian.foundation/Samples~/MobilePackage/Runtime/Input/IInputManager.cs` |
 | InputButtonMapBuilder | `com.devian.foundation/Samples~/MobilePackage/Runtime/Input/InputButtonMapBuilder.cs` |
+| InputSettings | `com.devian.foundation/Samples~/MobilePackage/Runtime/Input/InputSettings.cs` |
 | InputManager | `com.devian.foundation/Samples~/MobilePackage/Runtime/Input/InputManager.cs` |
 | InputManagerInspector | `com.devian.foundation/Samples~/MobilePackage/Editor/Input/InputManagerInspector.cs` |
+| InputSettingsInspector | `com.devian.foundation/Samples~/MobilePackage/Editor/Input/InputSettingsInspector.cs` |
 
 ---
 
@@ -196,9 +187,10 @@ public static class InputButtonMapBuilder
 - [ ] `Devian.Unity.asmdef`에 `Unity.InputSystem` 참조 포함
 - [ ] UPM ↔ UnityExample 동일
 - [ ] ButtonMap key 64개 이하 검증
-- [ ] InputManager 기본값: `"Player"`, `"Player/Move"`, `"Player/Look"`
-- [ ] Inspector "Refresh Expected Button Keys" 버튼 동작
-- [ ] Inspector "Install/Ensure VirtualGamepad Bindings" 버튼 동작
+- [ ] InputSettings ScriptableObject 분리 (→ `12-input-settings`)
+- [ ] InputManager는 `Resources.Load<InputSettings>(InputSettings.ResourcesPath)`로 설정 접근
+- [ ] InputSettings 기본값: `"Player"`, `"Player/Move"`, `"Player/Look"`
+- [ ] InputSettingsInspector: Refresh / VirtualGamepad 버튼 동작 (→ `12-input-settings`)
 - [ ] `Devian.Unity.Editor.asmdef`에 `Unity.InputSystem` 참조 포함
 - [ ] InputManager: CompoSingleton + onInitAwake() 훅 사용
 - [ ] 입력을 사용하는 consumer bootstrap/prefab이 InputManager를 미리 부착
@@ -210,4 +202,5 @@ public static class InputButtonMapBuilder
 ## Reference
 
 - Parent: `../00-overview/SKILL.md`
+- 입력 설정: `../12-input-settings/SKILL.md`
 - 입력 소비: `../11-input-controller/SKILL.md`

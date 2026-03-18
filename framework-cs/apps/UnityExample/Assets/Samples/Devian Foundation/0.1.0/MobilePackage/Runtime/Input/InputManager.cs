@@ -13,22 +13,11 @@ namespace Devian
     /// </summary>
     public sealed class InputManager : CompoSingleton<InputManager>, IInputManager
     {
-        [Header("InputActionAsset")]
-        [SerializeField] private InputActionAsset _asset;
-
-        [Header("Action Map Names")]
-        [SerializeField] private string _gameplayMapName = "Player";
-        [SerializeField] private string _uiMapName = "UI";
-
-        [Header("Move / Look Action Keys (Map/Action)")]
-        [SerializeField] private string _moveKey = "Player/Move";
-        [SerializeField] private string _lookKey = "Player/Look";
-
-        [Header("Button Action Keys (Map/Action)")]
-        [SerializeField] private string[] _expectedButtonKeys;
-
         [Header("Options")]
         [SerializeField] private bool _outputEnabled = true;
+
+        InputSettings _settings;
+        bool _settingsLoaded;
 
         // Runtime
         private InputActionMap _gameplayMap;
@@ -48,7 +37,7 @@ namespace Devian
 
         // ---- IInputManager ----
 
-        public InputActionAsset Asset => _asset;
+        public InputActionAsset Asset => ensureSettings() != null ? _settings.Asset : null;
         public InputContext Context => _context;
         public System.Collections.Generic.IReadOnlyList<string> ButtonKeys => _buttonKeys ?? System.Array.Empty<string>();
 
@@ -95,26 +84,47 @@ namespace Devian
                 _controllersDirty = true;
         }
 
+        // ---- Settings ----
+
+        InputSettings ensureSettings()
+        {
+            if (!_settingsLoaded)
+            {
+                _settings = Resources.Load<InputSettings>(InputSettings.ResourcesPath);
+                _settingsLoaded = true;
+            }
+            return _settings;
+        }
+
         // ---- Lifecycle ----
 
         protected override void onInitAwake()
         {
+            ensureSettings();
         }
 
         private void OnEnable()
         {
-            if (_asset == null)
+            var settings = ensureSettings();
+            if (settings == null)
             {
-                Debug.LogError("[InputManager] InputActionAsset is not assigned.");
+                Debug.LogError($"[InputManager] InputSettings not found at Resources/{InputSettings.ResourcesPath}");
                 return;
             }
 
-            _gameplayMap = _asset.FindActionMap(_gameplayMapName);
-            _uiMap = _asset.FindActionMap(_uiMapName);
+            var asset = settings.Asset;
+            if (asset == null)
+            {
+                Debug.LogError("[InputManager] InputSettings.Asset (InputActionAsset) is not assigned.");
+                return;
+            }
+
+            _gameplayMap = asset.FindActionMap(settings.GameplayMapName);
+            _uiMap = asset.FindActionMap(settings.UIMapName);
 
             // Resolve move / look actions
-            _moveAction = InputButtonMapBuilder.TryFindActionByKey(_asset, _moveKey);
-            _lookAction = InputButtonMapBuilder.TryFindActionByKey(_asset, _lookKey);
+            _moveAction = InputButtonMapBuilder.TryFindActionByKey(asset, settings.MoveKey);
+            _lookAction = InputButtonMapBuilder.TryFindActionByKey(asset, settings.LookKey);
 
             // Build button map
             _rebuildButtonMapInternal();
@@ -174,39 +184,14 @@ namespace Devian
             }
         }
 
-        // ---- Public (Editor-safe) ----
-
-        /// <summary>
-        /// _expectedButtonKeys 기준으로 내부 버튼 맵을 재빌드한다.
-        /// move/look 액션도 재-resolve 한다.
-        /// Edit 모드에서도 NRE 없이 안전하게 호출 가능.
-        /// ActionMap enable/disable 등 플레이 모드 전용 동작은 건드리지 않는다.
-        /// </summary>
-        public void RebuildButtonMap()
-        {
-            if (_asset == null)
-            {
-                _buttonMap = new Dictionary<string, int>();
-                _buttonActions = null;
-                _buttonKeys = null;
-                _moveAction = null;
-                _lookAction = null;
-                return;
-            }
-
-            // Re-resolve move / look actions
-            _moveAction = InputButtonMapBuilder.TryFindActionByKey(_asset, _moveKey);
-            _lookAction = InputButtonMapBuilder.TryFindActionByKey(_asset, _lookKey);
-
-            // Rebuild button map
-            _rebuildButtonMapInternal();
-        }
-
         // ---- Private ----
 
         private void _rebuildButtonMapInternal()
         {
-            if (_expectedButtonKeys == null || _expectedButtonKeys.Length == 0)
+            var expectedKeys = _settings != null ? _settings.ExpectedButtonKeys : null;
+            var asset = _settings != null ? _settings.Asset : null;
+
+            if (expectedKeys == null || expectedKeys.Length == 0 || asset == null)
             {
                 _buttonMap = new Dictionary<string, int>();
                 _buttonActions = null;
@@ -214,7 +199,7 @@ namespace Devian
                 return;
             }
 
-            _buttonMap = InputButtonMapBuilder.Build(_asset, _expectedButtonKeys);
+            _buttonMap = InputButtonMapBuilder.Build(asset, expectedKeys);
 
             // Build ordered action array + key array matching indices
             int maxIndex = -1;
@@ -230,7 +215,7 @@ namespace Devian
 
                 foreach (var kvp in _buttonMap)
                 {
-                    _buttonActions[kvp.Value] = InputButtonMapBuilder.TryFindActionByKey(_asset, kvp.Key);
+                    _buttonActions[kvp.Value] = InputButtonMapBuilder.TryFindActionByKey(asset, kvp.Key);
                     _buttonKeys[kvp.Value] = kvp.Key;
                 }
             }

@@ -104,23 +104,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3c15fc69592fb46bfb0336322a4a3100, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Domain.Common::Devian.InputManager
-  _asset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
-  _gameplayMapName: Player
-  _uiMapName: UI
-  _moveKey: Player/Move
-  _lookKey: Player/Look
-  _expectedButtonKeys:
-  - Player/Attack
-  - Player/Interact
-  - Player/Next
-  - Player/Previous
-  - Player/Sprint
-  - UI/Cancel
-  - UI/Click
-  - UI/MiddleClick
-  - UI/RightClick
-  - UI/Submit
+  m_EditorClassIdentifier: Devian.Samples.MobilePackage::Devian.InputManager
   _outputEnabled: 1
 --- !u!114 &3514971825711784064
 MonoBehaviour:

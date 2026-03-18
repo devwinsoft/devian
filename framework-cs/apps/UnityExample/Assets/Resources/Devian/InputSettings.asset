@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e68b92794298c4926bac7e23b34df041, type: 3}
+  m_Name: InputSettings
+  m_EditorClassIdentifier:
+  _asset: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b,
+    type: 3}
+  _gameplayMapName: Player
+  _uiMapName: UI
+  _moveKey: Player/Move
+  _lookKey: Player/Look
+  _expectedButtonKeys:
+  - Player/Attack
+  - Player/Interact
+  - Player/Next
+  - Player/Previous
+  - Player/Sprint
+  - UI/Cancel
+  - UI/Click
+  - UI/MiddleClick
+  - UI/RightClick
+  - UI/Submit

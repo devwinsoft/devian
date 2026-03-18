@@ -34,11 +34,5 @@ namespace Devian
         /// 입력 컨텍스트를 전환한다.
         /// </summary>
         void SetContext(InputContext context);
-
-        /// <summary>
-        /// _expectedButtonKeys 기준으로 내부 버튼 맵을 재빌드한다.
-        /// Edit 모드에서도 안전하게 호출 가능.
-        /// </summary>
-        void RebuildButtonMap();
     }
 }
