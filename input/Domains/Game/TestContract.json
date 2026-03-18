@@ -1,24 +1,4 @@
 {
-  "enums": [
-    {
-      "name": "UserType",
-      "values": [
-        {
-          "name": "Guest",
-          "value": 0
-        },
-        {
-          "name": "Member",
-          "value": 1
-        },
-        {
-          "name": "Admin",
-          "value": 2
-        }
-      ]
-    }
-  ],
-
   "classes": [
     {
       "name": "UserProfile",
@@ -30,10 +10,6 @@
         {
           "name": "name",
           "type": "string"
-        },
-        {
-          "name": "userType",
-          "type": "enum:UserType"
         }
       ]
     }

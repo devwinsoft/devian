@@ -6,7 +6,7 @@ using Devian;
 using Devian.Domain.Game;
 using Devian.Protocol.Game;
 
-public class UICanvasLobby : UICanvas<UICanvasLobby>
+public class UILobbyCanvas : UICanvas<UILobbyCanvas>
 {
     protected override void onAwake()
     {
@@ -130,32 +130,32 @@ public class UICanvasLobby : UICanvas<UICanvasLobby>
 
     public void OnClick_SignIn_Google()
     {
-        UnityTaskRunner.Run(OnClickSignInGoogleAsync, $"{nameof(UICanvasLobby)}.{nameof(OnClick_SignIn_Google)}");
+        UnityTaskRunner.Run(OnClickSignInGoogleAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_SignIn_Google)}");
     }
 
     public void OnClick_Logout()
     {
-        UnityTaskRunner.Run(OnClickLogoutAsync, $"{nameof(UICanvasLobby)}.{nameof(OnClick_Logout)}");
+        UnityTaskRunner.Run(OnClickLogoutAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_Logout)}");
     }
 
     public void OnClick_Purchase_NoAds()
     {
-        UnityTaskRunner.Run(OnClickPurchaseNoAdsAsync, $"{nameof(UICanvasLobby)}.{nameof(OnClick_Purchase_NoAds)}");
+        UnityTaskRunner.Run(OnClickPurchaseNoAdsAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_Purchase_NoAds)}");
     }
 
     public void OnClick_Purchase_Pass()
     {
-        UnityTaskRunner.Run(OnClickPurchasePassAsync, $"{nameof(UICanvasLobby)}.{nameof(OnClick_Purchase_Pass)}");
+        UnityTaskRunner.Run(OnClickPurchasePassAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_Purchase_Pass)}");
     }
 
     public void OnClick_Purchase_Chest()
     {
-        UnityTaskRunner.Run(OnClickPurchaseChestAsync, $"{nameof(UICanvasLobby)}.{nameof(OnClick_Purchase_Chest)}");
+        UnityTaskRunner.Run(OnClickPurchaseChestAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_Purchase_Chest)}");
     }
 
     public void OnClick_InAppAd()
     {
-        UnityTaskRunner.Run(OnClickInAppAdAsync, $"{nameof(UICanvasLobby)}.{nameof(OnClick_InAppAd)}");
+        UnityTaskRunner.Run(OnClickInAppAdAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_InAppAd)}");
     }
 
     private async Task OnClickSignInGoogleAsync()

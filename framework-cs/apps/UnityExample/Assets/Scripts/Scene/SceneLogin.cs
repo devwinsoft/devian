@@ -37,13 +37,13 @@ public class SceneLogin : SceneBootstrap
         Debug.Log(Application.persistentDataPath);
         await base.onStart();
 
-        UICanvasLoading.Instance.Init();
+        UILoginCanvas.Instance.Init();
 
         // Load assets...
         await TestApplication.Instance.LoadAsync(
             progress =>
             {
-                UICanvasLoading.Instance.message.text = $"LOADING {Mathf.RoundToInt(Mathf.Clamp01(progress) * 100f)}%";
+                UILoginCanvas.Instance.message.text = $"LOADING {Mathf.RoundToInt(Mathf.Clamp01(progress) * 100f)}%";
             });
         
         // Auto login...
@@ -54,8 +54,8 @@ public class SceneLogin : SceneBootstrap
         if (initialize.IsFailure)
         {
             Debug.LogError($"Login bootstrap failed: code={initialize.Error.Code}, message={initialize.Error.Message}");
-            UICanvasLoading.Instance.message.text = $"{initialize.Error.Code}";
-            UICanvasLoading.Instance.ShowLoginButtons();
+            UILoginCanvas.Instance.message.text = $"{initialize.Error.Code}";
+            UILoginCanvas.Instance.ShowLoginButtons();
             return;
         }
 
@@ -63,7 +63,7 @@ public class SceneLogin : SceneBootstrap
         if (result.IsForceUpdate)
         {
             Debug.LogWarning($"Login bootstrap blocked by force update: {result.VersionResult}");
-            UICanvasLoading.Instance.message.text = $"{result.VersionResult}";
+            UILoginCanvas.Instance.message.text = $"{result.VersionResult}";
             return;
         }
 
@@ -71,9 +71,9 @@ public class SceneLogin : SceneBootstrap
         {
             Debug.Log($"Login bootstrap pending explicit login by auth state. version={result.VersionResult}");
             if (result.IsRecommendUpdate)
-                UICanvasLoading.Instance.message.text = $"{result.VersionResult}";
+                UILoginCanvas.Instance.message.text = $"{result.VersionResult}";
 
-            UICanvasLoading.Instance.ShowLoginButtons();
+            UILoginCanvas.Instance.ShowLoginButtons();
             return;
         }
         
@@ -81,8 +81,8 @@ public class SceneLogin : SceneBootstrap
         {
             Debug.LogWarning(
                 $"Login bootstrap conflict: local={result.LocalDeviceId}, cloud={result.CloudDeviceId}");
-            UICanvasLoading.Instance.message.text = "SAVEDATA_SYNC_CONFLICT";
-            UICanvasLoading.Instance.ShowResolveFrame(result.LocalSummary, result.CloudSummary);
+            UILoginCanvas.Instance.message.text = "SAVEDATA_SYNC_CONFLICT";
+            UILoginCanvas.Instance.ShowResolveFrame(result.LocalSummary, result.CloudSummary);
             return;
         }
 
@@ -91,7 +91,7 @@ public class SceneLogin : SceneBootstrap
 
         if (result.IsInitial)
         {
-            UICanvasLoading.Instance.ShowLoginButtons();
+            UILoginCanvas.Instance.ShowLoginButtons();
             return;
         }
 

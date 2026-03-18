@@ -207,18 +207,10 @@ export enum SHOP_PRODUCT_CHEST_TYPE {
     TEN = 3,
 }
 
-/** UserType enum */
-export enum UserType {
-    Guest = 0,
-    Member = 1,
-    Admin = 2,
-}
-
 /** UserProfile interface */
 export interface UserProfile extends IEntity {
     id: number;
     name: string;
-    userType: UserType;
 }
 
 // ================================================================

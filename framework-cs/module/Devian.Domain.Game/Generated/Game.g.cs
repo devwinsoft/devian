@@ -235,20 +235,11 @@ namespace Devian.Domain.Game
         TEN = 3,
     }
 
-    /// <summary>UserType enum</summary>
-    public enum UserType
-    {
-        Guest = 0,
-        Member = 1,
-        Admin = 2,
-    }
-
     /// <summary>UserProfile class</summary>
     public sealed class UserProfile : IEntity
     {
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
-        public UserType UserType { get; set; }
     }
 
     // ================================================================

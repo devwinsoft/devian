@@ -17,7 +17,7 @@ namespace Devian
     /// <summary>
     /// Base class for UI Canvas owners.
     /// 씬 종속 MonoBehaviour 싱글톤. DontDestroyOnLoad 미적용 — 씬 전환 시 자동 파괴.
-    /// Frames are initialized when Init() is called.
+    /// Init() 호출 시 Component → Frame → Canvas 순서로 초기화한다.
     /// </summary>
     /// <typeparam name="TCanvas">The derived canvas type.</typeparam>
     public abstract class UICanvas<TCanvas> : MonoBehaviour
@@ -34,7 +34,8 @@ namespace Devian
         public Canvas canvas { get; private set; }
 
         bool mInitialized = false;
-        List<BaseUIFrame> mFrames = new List<BaseUIFrame>();
+        List<UIFrameBase> mFrames = new List<UIFrameBase>();
+        List<UIComponentBase> mComponents = new List<UIComponentBase>();
 
         /// <summary>
         /// Unity Awake callback. Instance 설정 + canvas 캐시 + onAwake().
@@ -72,20 +73,64 @@ namespace Devian
         /// </summary>
         protected virtual void onDestroy() { }
 
+        /// <summary>
+        /// Canvas 초기화. Component → Frame → Canvas 이후 호출.
+        /// </summary>
         protected virtual void onInit() { }
+
+        /// <summary>
+        /// 모든 초기화 완료 후 호출. Component.onInitComplete → Frame.onInitComplete 이후 호출.
+        /// </summary>
         protected virtual void onInitComplete() { }
 
+        /// <summary>
+        /// 초기화 순서:
+        /// 1. Component 수집 + Component._Init()   (Component.onInit)
+        /// 2. Frame 수집 + Frame._InitFromCanvas()  (Frame.onInit)
+        /// 3. Canvas.onInit()
+        /// 4. Component._InitComplete()  (Component.onInitComplete)
+        /// 5. Frame._InitComplete()   (Frame.onInitComplete)
+        /// 6. Canvas.onInitComplete()
+        /// 7. Notify(InitOnce)
+        /// </summary>
         public void Init()
         {
             if (mInitialized) return;
             mInitialized = true;
-            mFrames.AddRange(GetComponentsInChildren<BaseUIFrame>(true));
-            onInit();
+
+            // 수집
+            mComponents.AddRange(GetComponentsInChildren<UIComponentBase>(true));
+            mFrames.AddRange(GetComponentsInChildren<UIFrameBase>(true));
+
+            // Phase 1: Component Init (최하위)
+            foreach (var comp in mComponents)
+            {
+                comp._Init();
+            }
+
+            // Phase 2: Frame Init
             foreach (var frame in mFrames)
             {
                 frame._InitFromCanvas(this);
             }
+
+            // Phase 3: Canvas Init
+            onInit();
+
+            // Phase 4: InitComplete (Component → Frame → Canvas)
+            foreach (var comp in mComponents)
+            {
+                comp._InitComplete();
+            }
+
+            foreach (var frame in mFrames)
+            {
+                frame._InitComplete();
+            }
+
             onInitComplete();
+
+            // Phase 5: Notify
             UIManager.messageSystem.Notify(UI_MESSAGE.InitOnce);
         }
 
@@ -135,7 +180,7 @@ namespace Devian
                 prefabName,
                 parent: parent ?? transform);
 
-            var frameBase = instance.GetComponent<BaseUIFrame>();
+            var frameBase = instance.GetComponent<UIFrameBase>();
             if (frameBase != null && mInitialized)
             {
                 mFrames.Add(frameBase);

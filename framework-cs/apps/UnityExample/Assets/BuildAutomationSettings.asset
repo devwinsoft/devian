@@ -13,14 +13,11 @@ MonoBehaviour:
   m_Name: BuildAutomationSettings
   m_EditorClassIdentifier: Devian.Samples.MobilePackage.Editor::Devian.BuildAutomationSettings
   buildOutputDir: Builds
-  androidEnabled: 1
-  buildAppBundle: 1
   includeARMv7: 0
   keystorePath: /Users/maoshy/Documents/Projects/devian/framework-cs/apps/secret/example_release.keystore
   firebaseAndroidAppId: 1:119226054667:android:b98cb9bc4c529c6bab6f0e
-  iosEnabled: 0
-  autoArchive: 0
   firebaseIOSAppId: 
+  versionJsonPathAOS: /Users/maoshy/Documents/Projects/devian/release/version_aos.json
+  versionJsonPathIOS: /Users/maoshy/Documents/Projects/devian/release/version_ios.json
   firebaseCLIPath: 
   developmentBuild: 0
-  autoSymbolUpload: 0

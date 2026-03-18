@@ -26,7 +26,7 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/
 | `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/UIPackage/` | Packages (sync) |
 | `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/UIPackage/` | Assets/Samples (import) |
 
-주요 파일: `UIManager.cs`, `UICanvas.cs`, `BaseUIFrame.cs`, `Plugins/*` 등.
+주요 파일: `UIManager.cs`, `UICanvas.cs`, `UIFrameBase.cs`, `UIComponentBase.cs`, `Plugins/*` 등.
 
 > **이전 위치:** `com.devian.foundation/Runtime/Unity/UI/` → `com.devian.ui/Runtime/` → `com.devian.foundation/Samples~/UIPackage/` 로 이관 완료
 
@@ -61,12 +61,13 @@ UIPackage는 `com.devian.foundation` 내 샘플이므로 자체 `package.json`�
 | 00 | Overview | 진입점/범위 | `00-overview/SKILL.md` |
 | 01 | Policy | 문서 작성 정책 (Usage 섹션 금지 등) | `01-policy/SKILL.md` |
 | 10 | UIManager | Canvas 수명주기 (AutoSingleton) | `10-ui-manager/SKILL.md` |
-| 20 | UICanvasFrames | UICanvas/UIFrame 규약 (overview+policy+ssot 통합) | `20-ui-canvas-frames/SKILL.md` |
+| 20 | UICanvasSystem | UICanvas/UIFrame/UIComponentBase 규약 | `20-ui-canvas-system/SKILL.md` |
 | 30 | UIPlugInButton | Button press feedback + UI sound + events + scroll bridge | `30-ui-plugin-button/SKILL.md` |
 | 31 | UIPlugInCircleFilter | Collider2D 기반 Raycast filter | `31-ui-plugin-circle-filter/SKILL.md` |
 | 32 | UIPlugInNonDrawing | Non-drawing Graphic | `32-ui-plugin-non-drawing/SKILL.md` |
 | 33 | UIMessageSystem | UI 전용 메시지 시스템 (UnityEngine.EntityId + UI_MESSAGE) | `33-ui-message-system/SKILL.md` |
 | 34 | UIPlugInText | ST_TEXT 바인딩 텍스트 플러그인 (InitOnce + ReloadText) | `34-ui-plugin-text/SKILL.md` |
+| 35 | UIPlugInScrollSystem | 세로/가로 스크롤 혼합 레이아웃 (Container + Grid + Frame 가상화) | `35-ui-plugin-scroll-system/SKILL.md` |
 
 ---
 

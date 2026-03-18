@@ -65,7 +65,7 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | TableManager, LoadStringsAsync | `skills/devian-unity/20-common-package/31-table-manager/SKILL.md` |
 | BundleManager, Addressables | `skills/devian-unity/20-common-package/19-bundle-manager/SKILL.md` |
 | UIManager, UICanvas, UIFrame | `skills/devian-unity/23-ui-package/10-ui-manager/skill.md` |
-| UI Canvas Frames, UICanvasFrames | `skills/devian-unity/23-ui-package/20-ui-canvas-frames/skill.md` |
+| UI Canvas System, UICanvasSystem, UIComponentBase | `skills/devian-unity/23-ui-package/20-ui-canvas-system/SKILL.md` |
 | PurchaseManager, purchase, IAP, in-app purchase, 결제, 인앱 | `skills/devian-unity/50-mobile-package/30-purchase-system/00-overview/SKILL.md` |
 | LoginManager, login manager, login flow, runtime session restore, 로그인 매니저 | `skills/devian-unity/50-mobile-package/24-login-manager/SKILL.md` |
 | purchase audit, refund audit, Google Sheets, spreadsheet log, audit sheet, 결제 로그, 환불 로그, 감사 로그 | `skills/devian-unity/50-mobile-package/30-purchase-system/48-purchase-audit-google-sheets/SKILL.md` |

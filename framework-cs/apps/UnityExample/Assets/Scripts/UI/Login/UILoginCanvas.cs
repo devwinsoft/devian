@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using TMPro;
 using Devian;
 
-public class UICanvasLoading : UICanvas<UICanvasLoading>
+public class UILoginCanvas : UICanvas<UILoginCanvas>
 {
     public TextMeshProUGUI message;
     public GameObject buttonGuest;
@@ -27,22 +27,22 @@ public class UICanvasLoading : UICanvas<UICanvasLoading>
 
     public void OnClick_GuestLogin()
     {
-        UnityTaskRunner.Run(OnClickGuestLoginAsync, $"{nameof(UICanvasLoading)}.{nameof(OnClick_GuestLogin)}");
+        UnityTaskRunner.Run(OnClickGuestLoginAsync, $"{nameof(UILoginCanvas)}.{nameof(OnClick_GuestLogin)}");
     }
 
     public void OnClick_GoogleLogin()
     {
-        UnityTaskRunner.Run(OnClickGoogleLoginAsync, $"{nameof(UICanvasLoading)}.{nameof(OnClick_GoogleLogin)}");
+        UnityTaskRunner.Run(OnClickGoogleLoginAsync, $"{nameof(UILoginCanvas)}.{nameof(OnClick_GoogleLogin)}");
     }
 
     public void OnClick_SelectLocalSummary()
     {
-        UnityTaskRunner.Run(ResolveConflictAsync, SyncResolution.UseLocal, $"{nameof(UICanvasLoading)}.{nameof(ResolveConflictAsync)}");
+        UnityTaskRunner.Run(ResolveConflictAsync, SyncResolution.UseLocal, $"{nameof(UILoginCanvas)}.{nameof(ResolveConflictAsync)}");
     }
     
     public void OnClick_SelectCloudSummary()
     {
-        UnityTaskRunner.Run(ResolveConflictAsync, SyncResolution.UseCloud, $"{nameof(UICanvasLoading)}.{nameof(ResolveConflictAsync)}");
+        UnityTaskRunner.Run(ResolveConflictAsync, SyncResolution.UseCloud, $"{nameof(UILoginCanvas)}.{nameof(ResolveConflictAsync)}");
     }
 
 
