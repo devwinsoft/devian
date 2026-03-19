@@ -1,32 +1,33 @@
 # UIManager
 
+Status: ACTIVE
+AppliesTo: v11
+
+---
+
 ## Overview
 
-UI Canvas의 수명주기를 관리하는 중앙 매니저.
-Canvas 조회, 생성, 보장 및 유틸리티 기능을 제공한다.
-
-**AutoSingleton** 기반. `Instance` 접근 시 script code가 생성한다. scene/prefab에 미리 부착하지 않는다.
+UI Canvas 수명주기 진입점과 UI 메시지 시스템을 제공하는 중앙 매니저.
+`AutoSingleton<UIManager>` 기반이며 `Instance` 접근 시 script-created 된다.
 
 ---
 
 ## Scope
 
 ### Includes
-- UI 메시지 시스템 (`messageSystem`)
+- UI 메시지 시스템 소유 (`messageSystem`)
 - Canvas 조회 (`TryGetCanvas`)
 - Canvas 생성 (`CreateCanvas`)
 - Canvas 보장 (`EnsureCanvas`)
 - Canvas 제거 (`DespawnCanvas`)
 - Canvas 검증 (`ValidateCanvas`)
-- 커서 설정 (`SetCursor`)
 
 ### Excludes
-- EventSystem 보장/생성 (UIManager는 EventSystem 보장 로직을 갖지 않는다)
+- 커서 설정 (`UIUtils.SetCursor` 사용)
+- EventSystem 보장/생성
 - 게임플레이 입력 (ActionMap, 리바인딩, 컨텍스트 전환)
-- InputActions 자산/바인딩 정책
-- 언어/로컬라이제이션
-- CreateComponent (컴포넌트 생성)
 - 화면 스택/라우팅/네비게이션
+- 로컬라이제이션 정책
 
 ---
 
@@ -34,7 +35,7 @@ Canvas 조회, 생성, 보장 및 유틸리티 기능을 제공한다.
 
 ### Code Path
 ```
-framework-cs/upm/com.devian.ui/Runtime/UIManager.cs
+framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/UIManager.cs
 ```
 
 ### Class
@@ -60,14 +61,9 @@ public static UIMessageSystem messageSystem => Instance?.mMessageSystem;
 ```
 
 - 정적 접근: `UIManager.messageSystem`
-- UI 레벨 메시징 인스턴스 (`BaseTrigger<UnityEngine.EntityId, UI_MESSAGE>` 특화)
-- UIManager 생성 시 내부에서 `new UIMessageSystem()` 초기화
-- UI 메시지(InitOnce, ReloadText, Resize 등)의 발행/구독에 사용
-- Shutdown 시 `Instance`가 `null`을 반환하면 `messageSystem`도 `null` (NRE 방지)
-
-```csharp
-UIManager.messageSystem.Subcribe(ownerEntityId, UI_MESSAGE.ReloadText, args => { /* ... */ return false; });
-```
+- `UIManager` 내부 필드 `mMessageSystem`을 노출한다
+- `Instance` 접근이 `AutoSingleton` 생성을 트리거하므로 첫 접근 시 메시지 시스템도 준비된다
+- shutdown 중 `Instance`가 `null`을 반환할 수 있으므로 프로퍼티도 nullable 동작을 가진다
 
 ### TryGetCanvas
 
@@ -76,32 +72,31 @@ public bool TryGetCanvas<TCanvas>(out TCanvas canvas)
     where TCanvas : MonoBehaviour
 ```
 
-- Singleton 레지스트리 우선 조회
-- 없으면 `FindObjectOfType<TCanvas>(true)`로 씬 탐색
-- 찾으면 `true`, 없으면 `false`
+- `Singleton.TryGet<TCanvas>`를 먼저 조회한다
+- 없으면 `FindObjectOfType<TCanvas>(true)`로 씬 전체를 탐색한다
+- inactive object도 탐색 대상이다
 
 ### CreateCanvas
 
 ```csharp
 public TCanvas CreateCanvas<TCanvas>(string prefabName, Transform parent = null)
-    where TCanvas : MonoBehaviour, IPoolable<TCanvas>
+    where TCanvas : MonoBehaviour, IPoolable
 ```
 
-- `BundlePool.Spawn<TCanvas>(prefabName, parent: parent)` 사용
-- **중복 처리 정책**: 스폰 후 기존 싱글톤이 존재하고 새 인스턴스와 다르면:
-  - 새 인스턴스를 `BundlePool.Despawn()`
-  - 기존 인스턴스 반환
-- 이유: Singleton Canvas는 "타입당 1개" 원칙
+- `BundlePool.Spawn<TCanvas>(prefabName, parent: parent)`로 생성한다
+- 생성 직후 같은 타입의 기존 singleton canvas가 이미 있으면:
+  새 인스턴스를 `BundlePool.Despawn()`하고 기존 인스턴스를 반환한다
+- 타입당 1개 singleton canvas 정책을 강제하기 위한 duplicate collapse 동작이다
 
 ### EnsureCanvas
 
 ```csharp
 public TCanvas EnsureCanvas<TCanvas>(string prefabName, Transform parent = null)
-    where TCanvas : MonoBehaviour, IPoolable<TCanvas>
+    where TCanvas : MonoBehaviour, IPoolable
 ```
 
-- `TryGetCanvas` 성공 시 기존 반환
-- 실패 시 `CreateCanvas` 호출
+- 기존 canvas가 있으면 반환
+- 없으면 `CreateCanvas` 호출
 
 ### DespawnCanvas
 
@@ -110,8 +105,8 @@ public void DespawnCanvas<TCanvas>()
     where TCanvas : MonoBehaviour
 ```
 
-- `TryGetCanvas`로 조회 후 `BundlePool.Despawn()` 호출
-- 주의: 풀링 대상이 아닌 Canvas는 직접 `Destroy()` 사용 권장
+- `TryGetCanvas` 성공 시 `BundlePool.Despawn(canvas)` 호출
+- poolable canvas를 대상으로 사용하는 API다
 
 ### ValidateCanvas
 
@@ -120,27 +115,19 @@ public bool ValidateCanvas<TCanvas>(out string reason)
     where TCanvas : UICanvas<TCanvas>
 ```
 
-- `TryGetCanvas` 실패 시 `reason = "Canvas not found"`, `false` 반환
-- 성공 시 `canvas.Validate(out reason)` 결과 반환
-
-### SetCursor
-
-```csharp
-public void SetCursor(bool visible, CursorLockMode lockMode)
-```
-
-- `Cursor.visible = visible`
-- `Cursor.lockState = lockMode`
+- canvas를 찾지 못하면 `"Canvas of type {TCanvas} not found"` 형식 reason을 반환한다
+- 찾으면 `canvas.Validate(out reason)`를 그대로 위임한다
 
 ---
 
 ## Policies
 
-### Naming
-C# 메서드 네이밍(internal `_` 접두어, protected lowerCamelCase)은 상위 Devian 네이밍 정책을 준수한다.
+### Duplicate Handling
+`CreateCanvas`는 중복 생성 시 새 인스턴스를 버리고 기존 singleton 인스턴스를 반환한다.
 
-### Duplicate Handling (Canvas)
-`CreateCanvas`가 중복 생성되면 새 인스턴스를 despawn하고 기존 인스턴스를 반환한다.
+### Responsibility Boundary
+UIManager는 canvas lifecycle/service entry만 담당한다.
+UI utility (`SetCursor`, billboard, 좌표 변환)는 `UIUtils`로 분리되어 있다.
 
 ---
 
@@ -148,17 +135,19 @@ C# 메서드 네이밍(internal `_` 접두어, protected lowerCamelCase)은 상�
 
 | Dependency | Location |
 |------------|----------|
-| `AutoSingleton<T>` | `Runtime/Unity/Singletons/AutoSingleton.cs` |
-| `BundlePool` | `Runtime/Unity/Pool/Factory/BundlePool.cs` |
-| `UICanvas<T>` | `com.devian.ui/Runtime/UICanvas.cs` |
-| `UIMessageSystem` | `com.devian.ui/Runtime/UIMessageSystem.cs` |
-| `Singleton` | `Runtime/Unity/Singletons/Singleton.cs` |
+| `AutoSingleton<T>` | `framework-cs/upm/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Singletons/AutoSingleton.cs` |
+| `Singleton` | `framework-cs/upm/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Singletons/Singleton.cs` |
+| `BundlePool` | `framework-cs/upm/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Pool/Factory/BundlePool.cs` |
+| `IPoolable` | `framework-cs/upm/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Pool/IPoolable.cs` |
+| `UICanvas<TCanvas>` | `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/UICanvas.cs` |
+| `UIMessageSystem` | `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/UIMessageSystem.cs` |
 
 ---
 
 ## Related Documents
 
-- [UICanvas/UIFrame/UIComponentBase](../20-ui-canvas-system/SKILL.md)
+- [UICanvas/UICanvasFrame/UIContainerBase](../11-ui-canvas-system/SKILL.md)
 - [UIMessageSystem](../33-ui-message-system/SKILL.md)
+- [UIUtils](../50-ui-utils/SKILL.md)
 - [Singleton](../../20-common-package/29-singleton/SKILL.md)
 - [Pool System](../../20-common-package/27-pool-system/SKILL.md)

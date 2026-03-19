@@ -17,7 +17,7 @@ namespace Devian
     /// <summary>
     /// Base class for UI Canvas owners.
     /// 씬 종속 MonoBehaviour 싱글톤. DontDestroyOnLoad 미적용 — 씬 전환 시 자동 파괴.
-    /// Init() 호출 시 Component → Frame → Canvas 순서로 초기화한다.
+    /// Init() 호출 시 Container → Frame → Canvas 순서로 초기화한다.
     /// </summary>
     /// <typeparam name="TCanvas">The derived canvas type.</typeparam>
     public abstract class UICanvas<TCanvas> : MonoBehaviour
@@ -34,8 +34,8 @@ namespace Devian
         public Canvas canvas { get; private set; }
 
         bool mInitialized = false;
-        List<UIFrameBase> mFrames = new List<UIFrameBase>();
-        List<UIComponentBase> mComponents = new List<UIComponentBase>();
+        List<UICanvasFrame> mFrames = new List<UICanvasFrame>();
+        List<UIContainerBase> mContainers = new List<UIContainerBase>();
 
         /// <summary>
         /// Unity Awake callback. Instance 설정 + canvas 캐시 + onAwake().
@@ -74,21 +74,21 @@ namespace Devian
         protected virtual void onDestroy() { }
 
         /// <summary>
-        /// Canvas 초기화. Component → Frame → Canvas 이후 호출.
+        /// Canvas 초기화. Container → Frame → Canvas 이후 호출.
         /// </summary>
         protected virtual void onInit() { }
 
         /// <summary>
-        /// 모든 초기화 완료 후 호출. Component.onInitComplete → Frame.onInitComplete 이후 호출.
+        /// 모든 초기화 완료 후 호출. Container.onInitComplete → Frame.onInitComplete 이후 호출.
         /// </summary>
         protected virtual void onInitComplete() { }
 
         /// <summary>
         /// 초기화 순서:
-        /// 1. Component 수집 + Component._Init()   (Component.onInit)
+        /// 1. Container 수집 + Container._Init()   (Container.onInit)
         /// 2. Frame 수집 + Frame._InitFromCanvas()  (Frame.onInit)
         /// 3. Canvas.onInit()
-        /// 4. Component._InitComplete()  (Component.onInitComplete)
+        /// 4. Container._InitComplete()  (Container.onInitComplete)
         /// 5. Frame._InitComplete()   (Frame.onInitComplete)
         /// 6. Canvas.onInitComplete()
         /// 7. Notify(InitOnce)
@@ -99,13 +99,13 @@ namespace Devian
             mInitialized = true;
 
             // 수집
-            mComponents.AddRange(GetComponentsInChildren<UIComponentBase>(true));
-            mFrames.AddRange(GetComponentsInChildren<UIFrameBase>(true));
+            mContainers.AddRange(GetComponentsInChildren<UIContainerBase>(true));
+            mFrames.AddRange(GetComponentsInChildren<UICanvasFrame>(true));
 
-            // Phase 1: Component Init (최하위)
-            foreach (var comp in mComponents)
+            // Phase 1: Container Init (최하위)
+            foreach (var comp in mContainers)
             {
-                comp._Init();
+                comp._Init(canvas);
             }
 
             // Phase 2: Frame Init
@@ -117,8 +117,8 @@ namespace Devian
             // Phase 3: Canvas Init
             onInit();
 
-            // Phase 4: InitComplete (Component → Frame → Canvas)
-            foreach (var comp in mComponents)
+            // Phase 4: InitComplete (Container → Frame → Canvas)
+            foreach (var comp in mContainers)
             {
                 comp._InitComplete();
             }
@@ -180,7 +180,7 @@ namespace Devian
                 prefabName,
                 parent: parent ?? transform);
 
-            var frameBase = instance.GetComponent<UIFrameBase>();
+            var frameBase = instance.GetComponent<UICanvasFrame>();
             if (frameBase != null && mInitialized)
             {
                 mFrames.Add(frameBase);
@@ -190,88 +190,5 @@ namespace Devian
             return instance;
         }
 
-        /// <summary>
-        /// Converts a world position to local position in overlay space.
-        /// </summary>
-        /// <param name="overlaySpace">The RectTransform in overlay space.</param>
-        /// <param name="worldPos">World position to convert.</param>
-        /// <param name="overlayLocal">Output local position in overlay space.</param>
-        /// <returns>True if conversion succeeded, false otherwise.</returns>
-        public bool TryWorldToOverlayLocal(RectTransform overlaySpace, Vector3 worldPos, out Vector2 overlayLocal)
-        {
-            overlayLocal = Vector2.zero;
-
-            if (canvas.worldCamera == null)
-            {
-                return false;
-            }
-
-            // Project world position to screen
-            Vector3 screenPos = canvas.worldCamera.WorldToScreenPoint(worldPos);
-
-            // Check if position is behind camera
-            if (screenPos.z < 0)
-            {
-                return false;
-            }
-
-            // Determine event camera based on overlay space's root canvas render mode
-            Camera eventCam = null;
-            Canvas rootCanvas = overlaySpace.GetComponentInParent<Canvas>()?.rootCanvas;
-            if (rootCanvas != null && rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay)
-            {
-                eventCam = rootCanvas.worldCamera;
-            }
-
-            // Convert screen position to local position in overlay space
-            return RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                overlaySpace,
-                screenPos,
-                eventCam,
-                out overlayLocal);
-        }
-
-        /// <summary>
-        /// Computes billboard rotation to face the camera.
-        /// </summary>
-        /// <param name="targetWorldPos">World position of the object to billboard.</param>
-        /// <param name="mode">Billboard rotation mode.</param>
-        /// <returns>Quaternion rotation facing the camera.</returns>
-        public Quaternion ComputeBillboardRotation(Vector3 targetWorldPos, BillboardMode mode = BillboardMode.Full)
-        {
-            if (canvas.worldCamera == null)
-            {
-                return Quaternion.identity;
-            }
-
-            Vector3 camPos = canvas.worldCamera.transform.position;
-            Vector3 dirToCamera = camPos - targetWorldPos;
-
-            if (dirToCamera.sqrMagnitude < 0.0001f)
-            {
-                return Quaternion.identity;
-            }
-
-            if (mode == BillboardMode.YOnly)
-            {
-                dirToCamera.y = 0f;
-                if (dirToCamera.sqrMagnitude < 0.0001f)
-                {
-                    return Quaternion.identity;
-                }
-            }
-
-            return Quaternion.LookRotation(dirToCamera);
-        }
-
-        /// <summary>
-        /// Applies billboard rotation to a target transform.
-        /// </summary>
-        /// <param name="target">Transform to apply billboard rotation to.</param>
-        /// <param name="mode">Billboard rotation mode.</param>
-        public void ApplyBillboard(Transform target, BillboardMode mode = BillboardMode.Full)
-        {
-            target.rotation = ComputeBillboardRotation(target.position, mode);
-        }
     }
 }

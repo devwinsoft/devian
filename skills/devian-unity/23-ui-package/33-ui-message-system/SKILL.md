@@ -9,9 +9,9 @@ AppliesTo: v11
 
 ### Purpose
 
-UI 전용 메시지 시스템. `BaseTrigger<EntityId, UI_MESSAGE>`를 특화한 인스턴스 클래스이다.
-`UIManager.messageSystem` 정적 프로퍼티로 단일 인스턴스에 접근하며,
-UI 레벨 이벤트(초기화 완료, 텍스트 리로드, 리사이즈 등)를 ownerKey 기반으로 발행/구독할 수 있다.
+UI 전용 메시지 시스템.
+`BaseTrigger<EntityId, UI_MESSAGE>`를 특화한 인스턴스 클래스이며,
+`UIManager.messageSystem` 정적 프로퍼티를 통해 단일 인스턴스에 접근한다.
 
 ### Terms
 
@@ -28,7 +28,7 @@ UI 레벨 이벤트(초기화 완료, 텍스트 리로드, 리사이즈 등)를 
 ### Code Path
 
 ```
-framework-cs/upm/com.devian.ui/Runtime/UIMessageSystem.cs
+framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/UIMessageSystem.cs
 ```
 
 ### Source
@@ -52,12 +52,11 @@ namespace Devian
 
 ### Owner
 
-`UIManager.messageSystem` 정적 프로퍼티가 유일한 인스턴스를 소유한다.
+`UIManager`가 메시지 시스템 인스턴스를 내부 필드로 소유한다.
 
 ```csharp
-// UIManager.cs
 private UIMessageSystem mMessageSystem = new UIMessageSystem();
-public static UIMessageSystem messageSystem => Instance.mMessageSystem;
+public static UIMessageSystem messageSystem => Instance?.mMessageSystem;
 ```
 
 ---
@@ -74,34 +73,24 @@ public static UIMessageSystem messageSystem => Instance.mMessageSystem;
 | `Notify(UI_MESSAGE key, params object[] args)` | 메시지 발행 |
 | `ClearAll()` | 전체 핸들러 초기화 |
 
-### 사용 예시
-
-```csharp
-// register
-UIManager.messageSystem.Subcribe(ownerEntityId, UI_MESSAGE.ReloadText, args => { /* ... */ return false; });
-
-// subscribe once
-UIManager.messageSystem.SubcribeOnce(ownerEntityId, UI_MESSAGE.InitOnce, args => { /* ... */ });
-
-// notify (no owner)
-UIManager.messageSystem.Notify(UI_MESSAGE.ReloadText);
-
-// unsubscribe
-UIManager.messageSystem.UnSubcribe(ownerEntityId);
-```
-
 ### UI_MESSAGE Values
 
 | Value | Purpose |
 |-------|---------|
-| `None` | 기본값 (사용하지 않음) |
-| `InitOnce` | UICanvas.Init() 완료 시 1회 발행 |
-| `ReloadText` | 텍스트 리로드 요청 (언어 변경 등) |
+| `None` | 기본값 |
+| `InitOnce` | `UICanvas.Init()` 완료 후 1회 발행 |
+| `ReloadText` | 텍스트 리로드 요청 |
 | `Resize` | UI 리사이즈 통지 |
 
-### Notify 시점
+### Notify Timing
 
-`UICanvas.Init()`이 완료될 때 `UIManager.messageSystem.Notify(UI_MESSAGE.InitOnce)`가 호출된다.
+`UICanvas.Init()` 마지막 단계에서 `UIManager.messageSystem.Notify(UI_MESSAGE.InitOnce)`가 호출된다.
+
+### Behavior Notes
+
+- ownerKey 기반 메시지 시스템이다
+- `BaseTrigger` 구현은 notify 중 `Subcribe / UnSubcribe / ClearAll` 재진입을 허용한다
+- `UIPlugInText`는 `InitOnce`와 `ReloadText`를 직접 사용하는 대표 사례다
 
 ---
 
@@ -109,9 +98,9 @@ UIManager.messageSystem.UnSubcribe(ownerEntityId);
 
 | Dependency | Location |
 |------------|----------|
-| `BaseTrigger<TOwnerKey, TMsgKey>` | `com.devian.foundation/Runtime/Unity/BaseTrigger/BaseTrigger.cs` |
-| `UnityEngine.EntityId` | Unity 내장 (`UnityEngine.Object.GetEntityId()` 반환 타입) |
-| `UIManager` | `com.devian.ui/Runtime/UIManager.cs` |
+| `BaseTrigger<TOwnerKey, TMsgKey>` | `framework-cs/upm/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/BaseTrigger/BaseTrigger.cs` |
+| `UIManager` | `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/UIManager.cs` |
+| `UnityEngine.EntityId` | Unity 내장 |
 
 ---
 
@@ -119,4 +108,3 @@ UIManager.messageSystem.UnSubcribe(ownerEntityId);
 
 - **BaseTrigger**: [25-trigger/SKILL.md](../../20-common-package/25-trigger/SKILL.md)
 - **UIManager**: [10-ui-manager/SKILL.md](../10-ui-manager/SKILL.md)
-- **EntityId**: `UnityEngine.EntityId` (Unity 내장)

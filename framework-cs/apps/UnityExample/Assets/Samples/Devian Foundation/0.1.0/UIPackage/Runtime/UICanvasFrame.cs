@@ -4,10 +4,10 @@ using UnityEngine;
 namespace Devian
 {
     /// <summary>
-    /// Base class for UI frames.
+    /// Base class for UI canvas frames.
     /// Provides initialization lifecycle with canvas owner reference.
     /// </summary>
-    public abstract class UIFrameBase : MonoBehaviour
+    public abstract class UICanvasFrame : MonoBehaviour
     {
         /// <summary>
         /// Whether this frame has been initialized.
@@ -53,7 +53,7 @@ namespace Devian
         }
 
         /// <summary>
-        /// Called after all frames and plugins are initialized.
+        /// Called after all frames and components are initialized.
         /// UICanvas.Init() 마지막 단계에서 호출된다.
         /// </summary>
         internal void _InitComplete()
@@ -69,17 +69,17 @@ namespace Devian
         protected abstract void onInitFromCanvas(MonoBehaviour owner);
 
         /// <summary>
-        /// Called after all initialization is complete (plugins, frames, canvas).
+        /// Called after all initialization is complete (components, frames, canvas).
         /// Override for post-initialization logic.
         /// </summary>
         protected virtual void onInitComplete() { }
     }
 
     /// <summary>
-    /// Type-safe UIFrame with strongly-typed canvas reference.
+    /// Type-safe UICanvasFrame with strongly-typed canvas reference.
     /// </summary>
     /// <typeparam name="TCanvas">The canvas type.</typeparam>
-    public abstract class UIFrame<TCanvas> : UIFrameBase
+    public abstract class UICanvasFrame<TCanvas> : UICanvasFrame
         where TCanvas : MonoBehaviour
     {
         /// <summary>
@@ -98,7 +98,7 @@ namespace Devian
             if (owner == null)
             {
                 Debug.LogError(
-                    $"UIFrame<{typeof(TCanvas).Name}>.onInitFromCanvas: " +
+                    $"UICanvasFrame<{typeof(TCanvas).Name}>.onInitFromCanvas: " +
                     $"Canvas owner is not of type {typeof(TCanvas).Name}. " +
                     $"Actual type: {canvasOwner?.GetType().Name ?? "null"}");
                 return;

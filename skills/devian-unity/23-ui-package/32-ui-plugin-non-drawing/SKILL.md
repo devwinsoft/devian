@@ -1,28 +1,28 @@
 # 32-ui-plugin-non-drawing
 
 Status: ACTIVE
-AppliesTo: v10
+AppliesTo: v11
 
 ## Purpose
 
-A Graphic that does not draw anything.
-Useful for raycast targets or layout purposes without visual rendering.
+A `Graphic` that does not draw anything.
+Useful for raycast targets or layout participation without visual rendering.
 
 ## Scope
 
 ### Includes
-- Graphic 상속 (raycastTarget, layout 참여 가능)
-- SetMaterialDirty/SetVerticesDirty no-op
-- OnPopulateMesh clear (렌더링 없음)
+- `Graphic` 상속
+- `SetMaterialDirty()` / `SetVerticesDirty()` no-op
+- `OnPopulateMesh()`에서 `VertexHelper.Clear()`
 
 ### Excludes
-- 실제 시각적 렌더링
+- 실제 시각 렌더링
 
 ## SSOT
 
 ### Code Path
 ```
-framework-cs/upm/com.devian.ui/Runtime/Plugins/UIPlugInNonDrawing.cs
+framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Plugins/UIPlugInNonDrawing.cs
 ```
 
 ### Class
@@ -33,8 +33,6 @@ namespace Devian
     public class UIPlugInNonDrawing : Graphic
 }
 ```
-
-> Requires `CanvasRenderer` via `RequireComponent`.
 
 ## Reference
 

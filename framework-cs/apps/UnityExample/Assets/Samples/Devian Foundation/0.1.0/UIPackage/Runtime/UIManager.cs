@@ -112,15 +112,5 @@ namespace Devian
             return canvas.Validate(out reason);
         }
 
-        /// <summary>
-        /// Sets cursor visibility and lock mode.
-        /// </summary>
-        /// <param name="visible">Whether cursor is visible.</param>
-        /// <param name="lockMode">Cursor lock mode.</param>
-        public void SetCursor(bool visible, CursorLockMode lockMode)
-        {
-            Cursor.visible = visible;
-            Cursor.lockState = lockMode;
-        }
     }
 }
