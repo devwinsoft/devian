@@ -44,8 +44,6 @@ namespace Devian
             Transform parent = null,
             PoolOptions options = default) where T : Component, IPoolable
         {
-            UnityMainThread.EnsureOrThrow("IPoolFactory.Spawn");
-            
             // Get or create pool for this (factory, type, poolName) combination
             var pool = PoolManager.Instance._GetOrCreatePool<T>(factory, name, options);
             
@@ -62,8 +60,6 @@ namespace Devian
         /// <param name="instance">The instance to despawn</param>
         public static void Despawn(this IPoolFactory factory, Component instance)
         {
-            UnityMainThread.EnsureOrThrow("IPoolFactory.Despawn");
-            
             // Delegate to PoolManager (PoolTag-based routing)
             PoolManager.Instance.Despawn(instance);
         }

@@ -146,7 +146,7 @@ UI utility (`SetCursor`, billboard, 좌표 변환)는 `UIUtils`로 분리되어 
 
 ## Related Documents
 
-- [UICanvas/UICanvasFrame/UIContainerBase](../11-ui-canvas-system/SKILL.md)
+- [UICanvas/UIPanel/UIBaseContainer](../11-ui-canvas-system/SKILL.md)
 - [UIMessageSystem](../33-ui-message-system/SKILL.md)
 - [UIUtils](../50-ui-utils/SKILL.md)
 - [Singleton](../../20-common-package/29-singleton/SKILL.md)

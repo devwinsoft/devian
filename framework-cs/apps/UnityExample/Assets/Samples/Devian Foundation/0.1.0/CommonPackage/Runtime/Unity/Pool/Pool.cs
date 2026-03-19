@@ -19,6 +19,7 @@ namespace Devian
     public sealed class Pool<T> : IPool where T : Component, IPoolable
     {
         private readonly Queue<T> _inactiveQueue = new Queue<T>();
+        private readonly PoolManager _poolManager;
         private readonly IPoolFactory _factory;
         private readonly int _maxSize;
         private readonly Transform _root;
@@ -35,7 +36,13 @@ namespace Devian
         public string PoolName => _poolName;
 
         public Pool(IPoolFactory factory, string poolName, PoolOptions options)
+            : this(PoolManager.Instance, factory, poolName, options)
         {
+        }
+
+        internal Pool(PoolManager poolManager, IPoolFactory factory, string poolName, PoolOptions options)
+        {
+            _poolManager = poolManager ?? throw new ArgumentNullException(nameof(poolManager));
             _factory = factory ?? throw new ArgumentNullException(nameof(factory));
             _poolName = PoolManager.NormalizePoolName(poolName);
             _maxSize = options.MaxSize > 0 ? options.MaxSize : 512;
@@ -49,8 +56,6 @@ namespace Devian
         /// </summary>
         public T Spawn(string name, Vector3 position = default, Quaternion rotation = default, Transform parent = null)
         {
-            UnityMainThread.EnsureOrThrow("Pool.Spawn");
-            
             if (string.IsNullOrEmpty(name))
             {
                 throw new ArgumentException("Prefab name cannot be null or empty.", nameof(name));
@@ -118,7 +123,7 @@ namespace Devian
             t.rotation = rotation;
 
             // Track with PoolManager (attaches/updates PoolTag, marks IsSpawned)
-            PoolManager.Instance._TrackSpawned(this, instance, _poolName);
+            _poolManager._TrackSpawned(this, instance, _poolName);
             
             // Notify
             instance.OnPoolSpawned();
@@ -138,8 +143,6 @@ namespace Devian
         /// </summary>
         public void Despawn(T instance)
         {
-            UnityMainThread.EnsureOrThrow("Pool.Despawn");
-
             if (instance == null)
             {
                 throw new ArgumentNullException(nameof(instance));
@@ -208,8 +211,6 @@ namespace Devian
         /// </summary>
         public void Clear()
         {
-            UnityMainThread.EnsureOrThrow("Pool.Clear");
-            
             while (_inactiveQueue.Count > 0)
             {
                 var instance = _inactiveQueue.Dequeue();

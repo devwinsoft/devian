@@ -31,7 +31,6 @@ namespace Devian
             PoolOptions options = default)
             where T : Component, IPoolable
         {
-            UnityMainThread.EnsureOrThrow("BundlePool.Spawn");
             return BundlePoolFactory.Instance.Spawn<T>(name, position, rotation, parent, options);
         }
 
@@ -41,7 +40,6 @@ namespace Devian
         /// <param name="instance">The instance to despawn</param>
         public static void Despawn(Component instance)
         {
-            UnityMainThread.EnsureOrThrow("BundlePool.Despawn");
             BundlePoolFactory.Instance.Despawn(instance);
         }
 
@@ -50,7 +48,6 @@ namespace Devian
         /// </summary>
         public static void ClearAll()
         {
-            UnityMainThread.EnsureOrThrow("BundlePool.ClearAll");
             PoolManager.Instance.ClearAll();
         }
     }

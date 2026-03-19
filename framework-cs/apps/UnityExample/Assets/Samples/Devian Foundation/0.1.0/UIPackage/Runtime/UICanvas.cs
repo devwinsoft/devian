@@ -8,137 +8,167 @@ namespace Devian
     /// </summary>
     public enum BillboardMode
     {
-        /// <summary>Full rotation to face camera on all axes.</summary>
         Full,
-        /// <summary>Rotation only around Y axis (vertical billboard).</summary>
         YOnly
     }
 
     /// <summary>
-    /// Base class for UI Canvas owners.
-    /// 씬 종속 MonoBehaviour 싱글톤. DontDestroyOnLoad 미적용 — 씬 전환 시 자동 파괴.
-    /// Init() 호출 시 Container → Frame → Canvas 순서로 초기화한다.
+    /// Init phase tracking for UICanvas.
     /// </summary>
-    /// <typeparam name="TCanvas">The derived canvas type.</typeparam>
-    public abstract class UICanvas<TCanvas> : MonoBehaviour
-        where TCanvas : MonoBehaviour
+    internal enum UICanvasInitPhase
     {
-        /// <summary>
-        /// 씬 종속 싱글톤 인스턴스. Awake에서 설정, OnDestroy에서 클린업.
-        /// </summary>
-        public static TCanvas Instance { get; private set; }
+        None,
+        ContainerInit,
+        PanelInit,
+        CanvasInit,
+        ContainerInitComplete,
+        PanelInitComplete,
+        CanvasInitComplete,
+        Completed
+    }
 
-        /// <summary>
-        /// The Unity Canvas component cached on Awake.
-        /// </summary>
+    /// <summary>
+    /// 비제네릭 UICanvas 베이스.
+    /// Canvas 캐시, Init 전체 흐름, Validate, 동적 container 등록을 담당한다.
+    /// UIPanel은 ownerBase as UICanvas로 공통 정보에 접근한다.
+    /// </summary>
+    public abstract class UICanvas : MonoBehaviour
+    {
+        /// <summary>The Unity Canvas component cached on Awake.</summary>
         public Canvas canvas { get; private set; }
 
-        bool mInitialized = false;
-        List<UICanvasFrame> mFrames = new List<UICanvasFrame>();
-        List<UIContainerBase> mContainers = new List<UIContainerBase>();
+        /// <summary>Init()이 호출되었는지.</summary>
+        public bool isInitialized { get; private set; }
 
-        /// <summary>
-        /// Unity Awake callback. Instance 설정 + canvas 캐시 + onAwake().
-        /// non-virtual — 파생 클래스는 onAwake()를 override하여 사용한다.
-        /// </summary>
-        protected void Awake()
+        /// <summary>Init() 전체가 완료되었는지 (Phase 7 이후).</summary>
+        public bool isInitComplete { get; private set; }
+
+        internal UICanvasInitPhase _currentPhase = UICanvasInitPhase.None;
+
+        List<UIPanel> mPanels = new List<UIPanel>();
+        List<UIBaseContainer> mContainers = new List<UIBaseContainer>();
+        List<UIBaseContainer> mPendingDynamicContainers = new List<UIBaseContainer>();
+
+        // ─── Awake / OnDestroy (subclass에서 sealed) ───
+
+        protected void _CacheCanvas()
         {
-            Instance = this as TCanvas;
             canvas = GetComponent<Canvas>();
-            onAwake();
         }
 
-        /// <summary>
-        /// Unity OnDestroy callback. onDestroy() 호출 + Instance 클린업.
-        /// non-virtual — 파생 클래스는 onDestroy()를 override하여 사용한다.
-        /// IsApplicationQuitting == true이면 onDestroy()를 호출하지 않는다.
-        /// </summary>
-        protected void OnDestroy()
-        {
-            if (!BaseApplication.IsApplicationQuitting)
-                onDestroy();
-            if (Instance == (this as TCanvas))
-                Instance = null;
-        }
+        // ─── Virtual hooks ───
 
-        /// <summary>
-        /// Override this for custom initialization logic.
-        /// Called after canvas is cached. Frame initialization happens in Init().
-        /// </summary>
         protected virtual void onAwake() { }
-
-        /// <summary>
-        /// Override this for custom cleanup logic.
-        /// Called before Instance cleanup in OnDestroy.
-        /// </summary>
         protected virtual void onDestroy() { }
-
-        /// <summary>
-        /// Canvas 초기화. Container → Frame → Canvas 이후 호출.
-        /// </summary>
         protected virtual void onInit() { }
-
-        /// <summary>
-        /// 모든 초기화 완료 후 호출. Container.onInitComplete → Frame.onInitComplete 이후 호출.
-        /// </summary>
         protected virtual void onInitComplete() { }
+
+        // ─── Init ───
 
         /// <summary>
         /// 초기화 순서:
-        /// 1. Container 수집 + Container._Init()   (Container.onInit)
-        /// 2. Frame 수집 + Frame._InitFromCanvas()  (Frame.onInit)
-        /// 3. Canvas.onInit()
-        /// 4. Container._InitComplete()  (Container.onInitComplete)
-        /// 5. Frame._InitComplete()   (Frame.onInitComplete)
-        /// 6. Canvas.onInitComplete()
-        /// 7. Notify(InitOnce)
+        /// Phase 1: Container._Init(canvas)
+        /// Phase 2: Panel._InitFromCanvas(owner)
+        /// Phase 3: Canvas.onInit()
+        /// Phase 4: Container._InitComplete() + pending dynamic flush
+        /// Phase 5: Panel._InitComplete()
+        /// Phase 6: Canvas.onInitComplete()
+        /// Phase 7: Notify(InitOnce)
         /// </summary>
         public void Init()
         {
-            if (mInitialized) return;
-            mInitialized = true;
+            if (isInitialized) return;
+            isInitialized = true;
 
             // 수집
-            mContainers.AddRange(GetComponentsInChildren<UIContainerBase>(true));
-            mFrames.AddRange(GetComponentsInChildren<UICanvasFrame>(true));
+            mContainers.AddRange(GetComponentsInChildren<UIBaseContainer>(true));
+            mPanels.AddRange(GetComponentsInChildren<UIPanel>(true));
 
-            // Phase 1: Container Init (최하위)
-            foreach (var comp in mContainers)
-            {
-                comp._Init(canvas);
-            }
+            // Phase 1: Container Init
+            _currentPhase = UICanvasInitPhase.ContainerInit;
+            for (int i = 0; i < mContainers.Count; i++)
+                mContainers[i]._Init(canvas);
 
-            // Phase 2: Frame Init
-            foreach (var frame in mFrames)
-            {
-                frame._InitFromCanvas(this);
-            }
+            // Phase 2: Panel Init
+            _currentPhase = UICanvasInitPhase.PanelInit;
+            for (int i = 0; i < mPanels.Count; i++)
+                mPanels[i]._InitFromCanvas(this);
 
             // Phase 3: Canvas Init
+            _currentPhase = UICanvasInitPhase.CanvasInit;
             onInit();
 
-            // Phase 4: InitComplete (Container → Frame → Canvas)
-            foreach (var comp in mContainers)
-            {
-                comp._InitComplete();
-            }
+            // Phase 4: Container InitComplete + pending dynamic flush
+            _currentPhase = UICanvasInitPhase.ContainerInitComplete;
+            for (int i = 0; i < mContainers.Count; i++)
+                mContainers[i]._InitComplete();
 
-            foreach (var frame in mFrames)
-            {
-                frame._InitComplete();
-            }
+            FlushPendingDynamicContainers();
 
+            // Phase 5: Panel InitComplete
+            _currentPhase = UICanvasInitPhase.PanelInitComplete;
+            for (int i = 0; i < mPanels.Count; i++)
+                mPanels[i]._InitComplete();
+
+            // Phase 6: Canvas InitComplete
+            _currentPhase = UICanvasInitPhase.CanvasInitComplete;
             onInitComplete();
 
-            // Phase 5: Notify
+            // Phase 7: Notify
+            _currentPhase = UICanvasInitPhase.Completed;
+            isInitComplete = true;
             UIManager.messageSystem.Notify(UI_MESSAGE.InitOnce);
         }
 
+        // ─── Dynamic Container Registration ───
+
         /// <summary>
-        /// Validates the canvas configuration.
+        /// 동적으로 생성된 container subtree를 현재 canvas lifecycle에 편입한다.
+        /// Init 진행 중이면 pending queue에 등록, Init 완료 후면 즉시 초기화.
         /// </summary>
-        /// <param name="reason">Output reason if validation fails.</param>
-        /// <returns>True if valid, false otherwise.</returns>
+        internal void RegisterDynamicContainerTree(UIBaseContainer root)
+        {
+            // root 이하 모든 UIBaseContainer 수집
+            var containers = root.GetComponentsInChildren<UIBaseContainer>(true);
+
+            foreach (var c in containers)
+            {
+                if (c.isContainerInitialized) continue;
+                c._Init(canvas);
+                mContainers.Add(c);
+
+                if (isInitComplete)
+                {
+                    // Init 완료 후: 즉시 InitComplete
+                    c._InitComplete();
+                }
+                else if (_currentPhase < UICanvasInitPhase.ContainerInitComplete)
+                {
+                    // Init 진행 중, Phase 4 이전: pending queue에 등록
+                    mPendingDynamicContainers.Add(c);
+                }
+                else
+                {
+                    // Init 진행 중, Phase 4 이후: 즉시 InitComplete
+                    c._InitComplete();
+                }
+            }
+        }
+
+        private void FlushPendingDynamicContainers()
+        {
+            if (mPendingDynamicContainers.Count == 0) return;
+
+            foreach (var c in mPendingDynamicContainers)
+            {
+                if (!c.isContainerInitialized) continue;
+                c._InitComplete();
+            }
+            mPendingDynamicContainers.Clear();
+        }
+
+        // ─── Validate ───
+
         public virtual bool Validate(out string reason)
         {
             if (canvas == null)
@@ -147,14 +177,12 @@ namespace Devian
                 return false;
             }
 
-            // ScreenSpaceOverlay should not have worldCamera
             if (canvas.renderMode == RenderMode.ScreenSpaceOverlay && canvas.worldCamera != null)
             {
                 reason = "ScreenSpaceOverlay should not have worldCamera assigned";
                 return false;
             }
 
-            // ScreenSpaceCamera must have worldCamera
             if (canvas.renderMode == RenderMode.ScreenSpaceCamera && canvas.worldCamera == null)
             {
                 reason = "ScreenSpaceCamera requires worldCamera to be assigned";
@@ -164,31 +192,30 @@ namespace Devian
             reason = null;
             return true;
         }
+    }
 
-        /// <summary>
-        /// Creates a new frame instance using BundlePool.
-        /// When initialized, the created frame is added to the frame list and _InitFromCanvas(this) is called.
-        /// </summary>
-        /// <typeparam name="FRAME">The frame component type. Must implement IPoolable.</typeparam>
-        /// <param name="prefabName">Name of the prefab in the bundle.</param>
-        /// <param name="parent">Parent transform. Defaults to this frame's transform if null.</param>
-        /// <returns>The created and initialized frame instance.</returns>
-        public FRAME CreateFrame<FRAME>(string prefabName, Transform parent = null)
-            where FRAME : Component, IPoolable
+    /// <summary>
+    /// 타입 안전 UICanvas. 씬 종속 싱글톤.
+    /// </summary>
+    public abstract class UICanvas<TCanvas> : UICanvas
+        where TCanvas : UICanvas
+    {
+        /// <summary>씬 종속 싱글톤 인스턴스.</summary>
+        public static TCanvas Instance { get; private set; }
+
+        protected void Awake()
         {
-            var instance = BundlePool.Spawn<FRAME>(
-                prefabName,
-                parent: parent ?? transform);
-
-            var frameBase = instance.GetComponent<UICanvasFrame>();
-            if (frameBase != null && mInitialized)
-            {
-                mFrames.Add(frameBase);
-                frameBase._InitFromCanvas(this);
-            }
-
-            return instance;
+            Instance = this as TCanvas;
+            _CacheCanvas();
+            onAwake();
         }
 
+        protected void OnDestroy()
+        {
+            if (!BaseApplication.IsApplicationQuitting)
+                onDestroy();
+            if (Instance == (this as TCanvas))
+                Instance = null;
+        }
     }
 }

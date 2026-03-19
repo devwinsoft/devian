@@ -239,20 +239,26 @@ UnityEngine.Object.Destroy(instance.gameObject);
 
 ### 10.2 BundlePoolFactory 규약
 
-형태: `public sealed class BundlePoolFactory : SimpleSingleton<BundlePoolFactory>, IPoolFactory`
+형태: `public sealed class BundlePoolFactory : IPoolFactory`
 
-#### 생성자
+#### 싱글톤
 
 ```csharp
-public BundlePoolFactory() { }  // SimpleSingleton의 new() 제약 충족
+private static readonly Lazy<BundlePoolFactory> _instance =
+    new Lazy<BundlePoolFactory>(() => new BundlePoolFactory(), isThreadSafe: true);
+
+public static BundlePoolFactory Instance => _instance.Value;
+private BundlePoolFactory() { }
 ```
+
+- `Lazy<BundlePoolFactory>` 기반 순수 C# singleton
+- Unity `GameObject`를 만들지 않으므로 main-thread ownership은 여기서 갖지 않는다
 
 #### Generic GetPrefab (권장)
 
 ```csharp
 public TAsset GetPrefab<TAsset>(string name) where TAsset : UnityEngine.Object
 {
-    UnityMainThread.EnsureOrThrow("BundlePoolFactory.GetPrefab<TAsset>");
     return AssetManager.GetAsset<TAsset>(name);
 }
 ```
@@ -275,7 +281,7 @@ GameObject IPoolFactory.GetPrefab(string name)
 #### GetPoolType/CreateInstance/DestroyInstance
 
 `InspectorPoolFactory`와 동일 규약.
-모든 public API에 `UnityMainThread.EnsureOrThrow(...)` 적용.
+메인 스레드 guard는 두지 않고, pool 진입점인 `PoolManager.Instance`가 전담한다.
 
 ### 10.3 BundlePool 규약 (권장 사용법)
 
@@ -294,7 +300,6 @@ public static T Spawn<T>(
     PoolOptions options = default)
     where T : Component, IPoolable
 {
-    UnityMainThread.EnsureOrThrow("BundlePool.Spawn");
     return BundlePoolFactory.Instance.Spawn<T>(name, position, rotation, parent, options);
 }
 ```
@@ -304,7 +309,6 @@ public static T Spawn<T>(
 ```csharp
 public static void Despawn(Component instance)
 {
-    UnityMainThread.EnsureOrThrow("BundlePool.Despawn");
     BundlePoolFactory.Instance.Despawn(instance);
 }
 ```
@@ -314,7 +318,6 @@ public static void Despawn(Component instance)
 ```csharp
 public static void ClearAll()
 {
-    UnityMainThread.EnsureOrThrow("BundlePool.ClearAll");
     PoolManager.Instance.ClearAll();
 }
 ```
@@ -405,14 +408,14 @@ public static class PoolFactoryExtensions
 
 ### Spawn<T>
 
-- 메인스레드 체크
+- `PoolManager.Instance` 접근 시 메인 스레드 검사
 - `name`을 poolName으로 사용
 - `PoolManager.Instance._GetOrCreatePool<T>(factory, name, options)` 호출
 - `pool.Spawn(name, position, rotation, parent)` 반환
 
 ### Despawn
 
-- 메인스레드 체크
+- `PoolManager.Instance` 접근 시 메인 스레드 검사
 - `PoolManager.Instance.Despawn(instance)` 위임
 - factory 인자는 API 일관성용 (라우팅은 PoolTag 기반)
 
@@ -436,9 +439,11 @@ public struct PoolOptions
 
 ## 14. 스레드 규약
 
-- 모든 API는 **메인 스레드에서만 허용**
+- pool 공개 진입점은 **메인 스레드에서만 허용**
 - 비메인 호출 시 `InvalidOperationException` throw
-- `UnityMainThread.EnsureOrThrow(string context)` 형태로 통일
+- 단일 guard owner는 `PoolManager.Instance`
+- guard는 `AutoSingleton`이 `[PoolManager]` GameObject를 자동 생성하기 전에 실행되어야 한다
+- `BundlePool`, `PoolFactoryExtensions`, `Pool<T>`, `BundlePoolFactory`는 별도 guard를 중복 호출하지 않는다
 
 ---
 
@@ -583,15 +588,15 @@ com.devian.foundation/Runtime/Unity/
 - [x] PoolManager가 AutoSingleton 상속
 - [x] PoolTag 불변 규칙 및 이중 Despawn 방지
 - [x] 디버깅 하이어라키 Type/PoolName/Inactive 구조
-- [x] 모든 public API에 메인 스레드 강제
+- [x] `PoolManager.Instance`가 단일 메인 스레드 guard owner
 
 ### Pool Factories
 - [x] `Runtime/Unity/Pool/Factory/`에 5개 파일 존재 (IPoolFactory, PoolFactoryExtensions, InspectorPoolFactory, BundlePoolFactory, BundlePool)
-- [x] `BundlePoolFactory`가 `SimpleSingleton<BundlePoolFactory>` 상속
+- [x] `BundlePoolFactory`가 `Lazy<BundlePoolFactory>` singleton 사용
 - [x] `BundlePoolFactory.GetPrefab<TAsset>(name)` Generic API 제공
 - [x] `BundlePool`이 static facade로 존재하며 사용자 권장 API로 명시
 - [x] `DestroyInstance`는 Unity Object Destroy 규약 준수 (Editor: DestroyImmediate, Runtime: Destroy, gameObject 대상)
-- [x] 모든 public API에 메인 스레드 강제
+- [x] factory/facade 계층은 `PoolManager.Instance` guard를 재사용
 
 ---
 

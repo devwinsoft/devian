@@ -24,6 +24,19 @@ namespace Devian
     /// </summary>
     public sealed class PoolManager : AutoSingleton<PoolManager>
     {
+        /// <summary>
+        /// Pool 진입점의 단일 메인 스레드 가드.
+        /// AutoSingleton이 GameObject를 자동 생성하기 전에 검사해야 한다.
+        /// </summary>
+        public new static PoolManager Instance
+        {
+            get
+            {
+                UnityMainThread.EnsureOrThrow("PoolManager.Instance");
+                return AutoSingleton<PoolManager>.Instance;
+            }
+        }
+
         // === Pool Registry (by PoolId) ===
         private readonly Dictionary<int, IPool> _poolsById = new Dictionary<int, IPool>();
         private readonly Dictionary<IPool, int> _idByPool = new Dictionary<IPool, int>();
@@ -169,7 +182,7 @@ namespace Devian
             optionsWithRoots.InactiveRoot = nameRoots.Inactive;
             
             // Create new pool
-            var pool = new Pool<T>(factory, normalizedName, optionsWithRoots);
+            var pool = new Pool<T>(this, factory, normalizedName, optionsWithRoots);
             
             // Register with PoolId
             var poolId = _nextPoolId++;
@@ -249,8 +262,6 @@ namespace Devian
         /// </summary>
         internal void _TrackSpawned(IPool pool, Component instance, string poolName)
         {
-            UnityMainThread.EnsureOrThrow("PoolManager.TrackSpawned");
-            
             if (!_idByPool.TryGetValue(pool, out var poolId))
             {
                 throw new InvalidOperationException(
@@ -275,8 +286,6 @@ namespace Devian
         /// </summary>
         public void Despawn(Component instance)
         {
-            UnityMainThread.EnsureOrThrow("PoolManager.Despawn");
-            
             if (instance == null)
             {
                 throw new ArgumentNullException(nameof(instance));
@@ -305,8 +314,6 @@ namespace Devian
         /// </summary>
         public void Clear(int poolId)
         {
-            UnityMainThread.EnsureOrThrow("PoolManager.Clear");
-            
             if (_poolsById.TryGetValue(poolId, out var pool))
             {
                 pool.Clear();
@@ -318,8 +325,6 @@ namespace Devian
         /// </summary>
         public void ClearAll()
         {
-            UnityMainThread.EnsureOrThrow("PoolManager.ClearAll");
-            
             foreach (var pool in _poolsById.Values)
             {
                 pool.Clear();

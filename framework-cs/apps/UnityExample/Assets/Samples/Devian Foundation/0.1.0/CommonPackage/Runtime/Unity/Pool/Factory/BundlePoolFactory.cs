@@ -31,7 +31,6 @@ namespace Devian
         /// </summary>
         public TAsset GetPrefab<TAsset>(string name) where TAsset : UnityEngine.Object
         {
-            UnityMainThread.EnsureOrThrow("BundlePoolFactory.GetPrefab<TAsset>");
             return AssetManager.GetAsset<TAsset>(name);
         }
 
@@ -45,8 +44,6 @@ namespace Devian
         /// <inheritdoc/>
         public Type GetPoolType(GameObject prefab)
         {
-            UnityMainThread.EnsureOrThrow("BundlePoolFactory.GetPoolType");
-
             if (prefab == null)
                 throw new ArgumentNullException(nameof(prefab));
 
@@ -71,8 +68,6 @@ namespace Devian
         /// <inheritdoc/>
         public Component CreateInstance(GameObject prefab)
         {
-            UnityMainThread.EnsureOrThrow("BundlePoolFactory.CreateInstance");
-
             if (prefab == null)
                 throw new ArgumentNullException(nameof(prefab));
 
@@ -84,8 +79,6 @@ namespace Devian
         /// <inheritdoc/>
         public void DestroyInstance(Component instance)
         {
-            UnityMainThread.EnsureOrThrow("BundlePoolFactory.DestroyInstance");
-
             if (instance == null) return;
 
 #if UNITY_EDITOR
