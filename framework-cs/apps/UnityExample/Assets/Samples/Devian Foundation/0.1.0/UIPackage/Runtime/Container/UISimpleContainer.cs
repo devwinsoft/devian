@@ -43,7 +43,7 @@ namespace Devian
             _initialized = false;
         }
 
-        private void OnDestroy()
+        protected override void onDestroy()
         {
             if (_initialized)
                 Clear();

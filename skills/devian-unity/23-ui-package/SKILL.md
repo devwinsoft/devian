@@ -71,6 +71,7 @@ UIPackage는 `com.devian.foundation` 내 샘플이므로 자체 `package.json`�
 | 32 | UIPlugInNonDrawing | Non-drawing Graphic | `32-ui-plugin-non-drawing/SKILL.md` |
 | 33 | UIMessageSystem | UI 전용 메시지 시스템 (UnityEngine.EntityId + UI_MESSAGE) | `33-ui-message-system/SKILL.md` |
 | 34 | UIPlugInText | ST_TEXT 바인딩 텍스트 플러그인 (InitOnce + ReloadText) | `34-ui-plugin-text/SKILL.md` |
+| 41 | UI_CELL_ID | UIGridCell 프리팹 참조 ID (AssetId 패턴) | `41-ui-cell-id/SKILL.md` |
 | 50 | UIUtils | 공용 static 유틸리티 (좌표 변환, Billboard, Cursor) | `50-ui-utils/SKILL.md` |
 
 ---

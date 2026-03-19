@@ -30,6 +30,14 @@ namespace Devian
 
         protected virtual void onAwake() { }
 
+        protected void OnDestroy()
+        {
+            if (Application.isPlaying
+                && !BaseApplication.IsShuttingDown
+                && !BaseApplication.IsApplicationQuitting)
+                onDestroy();
+        }
+
         internal void _InitFromCanvas(MonoBehaviour owner)
         {
             if (isInitialized) return;
@@ -45,6 +53,7 @@ namespace Devian
 
         protected abstract void onInitFromCanvas(MonoBehaviour owner);
         protected virtual void onInitComplete() { }
+        protected virtual void onDestroy() { }
 
         // ─── CreateContainer ───
 

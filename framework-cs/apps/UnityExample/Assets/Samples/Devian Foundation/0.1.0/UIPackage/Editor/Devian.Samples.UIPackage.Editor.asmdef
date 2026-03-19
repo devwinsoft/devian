@@ -4,6 +4,7 @@
   "references": [
     "Devian.Samples.UIPackage",
     "Devian.Samples.CommonPackage",
+    "Devian.Samples.CommonPackage.Editor",
     "Devian.Unity.Editor"
   ],
   "includePlatforms": [

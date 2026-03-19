@@ -35,7 +35,7 @@ AppliesTo: v3
 ### Code Path
 
 ```
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Container/
+framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Container/
 ├── UIGridFrame.cs
 └── UIGridCell.cs
 ```
@@ -49,20 +49,26 @@ namespace Devian
 {
     public class UIGridFrame : UIBaseFrame, IUIScrollSection
     {
-        [SerializeField] private string _cellPrefabName;
+        [SerializeField] private UI_CELL_ID _cellPrefabId;
         [SerializeField] private int _columnCount = 4;
+        [SerializeField] private int _minimumLineCount = 0;
         [SerializeField] private Vector2 _cellSize = new Vector2(200, 200);
         [SerializeField] private Vector2 _spacing = new Vector2(10, 10);
 
-        public string CellPrefabName { get; set; }
+        public string CellPrefabName { get; set; }  // UI_CELL_ID.Value 기반
         public int ColumnCount { get; set; }
+        public int MinimumLineCount { get; set; }
         public Vector2 CellSize { get; set; }
         public Vector2 Spacing { get; set; }
 
-        public int CellCount { get; }
+        public int CellCount { get; }        // actual data count
+        public int DataRowCount { get; }
         public int RowCount { get; }
+        public int RenderCellCount { get; }
 
         public void SetCellCount(int count);
+        public void SetMinimumLineCount(int lineCount);
+        public bool HasDataAt(int cellIndex);
         public override float GetWidth();
         public override float GetHeight();
 
@@ -109,15 +115,20 @@ namespace Devian
 
 - `GetWidth()` = `columnCount * cellSize.x + (columnCount - 1) * spacing.x`
 - `GetHeight()` = `rowCount * cellSize.y + (rowCount - 1) * spacing.y`
-- `RowCount` = `CeilToInt(CellCount / (float)ColumnCount)`
+- `CellCount` = actual data cell count
+- `DataRowCount` = `CeilToInt(CellCount / (float)ColumnCount)` (`ColumnCount > 0`인 경우)
+- `RowCount` = `max(MinimumLineCount, DataRowCount)` (`ColumnCount <= 0`이면 `0`)
+- `RenderCellCount` = `RowCount * ColumnCount`
+- `RectTransform.sizeDelta`는 init 및 count/size setter 변경 시 `GetWidth()/GetHeight()` 기준으로 동기화된다
+- init 완료 후 `CellCount`, `MinimumLineCount`, `ColumnCount`, `CellSize`, `Spacing`이 바뀌면 parent `UIScrollContainer.Rebuild()`를 자동 요청한다
 
 ### IUIScrollSection Model
 
 - `GetLogicalRowCount()` = `RowCount`
 - `GetLogicalRowMainAxisSize(localRowIndex)` = `_cellSize.y`
 - `GetLogicalRowSpacing()` = `_spacing.y`
-- `ApplySectionLayout(...)`는 초기 숨김 상태를 적용한다
-- `BindRow(...)`는 해당 row의 cell들을 spawn/bind 한다
+- `ApplySectionLayout(...)`는 grid holder의 section 위치를 적용하고 active 상태를 유지한다
+- `BindRow(...)`는 해당 row의 full-row cell들을 spawn/bind 한다
 - `UnbindRow(localRowIndex)`는 해당 row의 cell들을 unbind/despawn 한다
 - `RefreshRow(localRowIndex)`는 active row의 cell만 재바인딩한다
 - `ClearSection()`는 active row 전체를 정리한다
@@ -137,12 +148,19 @@ container가 "이 row를 보여라/숨겨라/새로고침하라"를 결정하고
 
 `BindRow(in UIScrollRowLayout rowLayout)` 동작:
 
-1. `localRowIndex`에서 row 시작 cell index 계산
-2. row에 필요한 cell 수 계산
-3. `BundlePool.Spawn<UIGridCell>(..., parent: rowLayout.Content)`로 cell 생성
-4. anchor/pivot/size 적용
-5. `rowLayout.Direction`과 `rowLayout.RowMainAxisPosition` 기준으로 위치 계산
-6. `cell.Show(index)` 후 `onBindCell(cell, index)` 호출
+1. `localRowIndex`가 `0 <= index < RowCount`인지 검사한다
+2. `localRowIndex`에서 row 시작 cell index 계산
+3. 항상 `ColumnCount`개 cell을 생성한다
+4. `BundlePool.Spawn<UIGridCell>(..., parent: rowLayout.Content)`로 cell 생성
+5. anchor/pivot/size 적용
+6. `rowLayout.Direction`과 `rowLayout.RowMainAxisPosition` 기준으로 위치 계산
+7. `cell.Show(index)` 후 `onBindCell(cell, index)` 호출
+
+주의:
+
+- 마지막 row도 partial row가 아니라 full-row로 렌더된다
+- `cellIndex >= CellCount`인 cell은 placeholder slot이다
+- placeholder 판정 helper로 `HasDataAt(cellIndex)`를 제공한다
 
 ### UnbindRow
 
@@ -156,14 +174,21 @@ container가 "이 row를 보여라/숨겨라/새로고침하라"를 결정하고
 
 ### RefreshRow
 
+- invalid row면 `UnbindRow(localRowIndex)` 후 return
 - active row만 처리
 - 각 cell에 대해 `Hide -> onUnbindCell -> Show -> onBindCell` 순으로 재바인딩
+
+### Runtime Layout Changes
+
+- `SetCellCount(...)`, `SetMinimumLineCount(...)`, `ColumnCount`, `CellSize`, `Spacing` 변경은 먼저 frame `RectTransform` size를 동기화한다
+- play mode에서 parent `UIScrollContainer`가 이미 초기화된 상태라면 `Rebuild()`를 자동 요청한다
+- 그래서 init 이후 data count가 늘어나 row 수가 바뀌는 경우에도 scroll content size와 visible row 계산이 같이 갱신된다
 
 ### ClearSection
 
 - 모든 active row의 cell을 unbind/despawn
 - `_activeRows.Clear()`
-- config holder인 grid `gameObject`를 다시 활성화한다
+- grid holder는 active 상태를 유지한다
 
 ---
 
@@ -176,6 +201,7 @@ container가 "이 row를 보여라/숨겨라/새로고침하라"를 결정하고
 | row bind/unbind 요청 | `UIScrollContainer` |
 | row 내부 cell spawn/despawn | `UIGridFrame` |
 | cell 데이터 bind/unbind | `UIGridFrame` + `onBindCell` / `onUnbindCell` |
+| placeholder 판단 | consumer (`HasDataAt(cellIndex)` 또는 `cellIndex >= CellCount`) |
 
 ---
 
@@ -183,12 +209,12 @@ container가 "이 row를 보여라/숨겨라/새로고침하라"를 결정하고
 
 | Dependency | Location |
 |------------|----------|
-| `UIBaseFrame` | `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Container/UIBaseFrame.cs` |
-| `IUIScrollSection` | `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Container/IUIScrollSection.cs` |
-| `UIScrollRowLayout` | `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Container/UIScrollRowLayout.cs` |
-| `UIUIScrollSectionLayout` | `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Container/UIScrollSectionLayout.cs` |
-| `BundlePool` | `framework-cs/upm/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Pool/Factory/BundlePool.cs` |
-| `IPoolable` | `framework-cs/upm/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Pool/IPoolable.cs` |
+| `UIBaseFrame` | `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Container/UIBaseFrame.cs` |
+| `IUIScrollSection` | `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Container/IUIScrollSection.cs` |
+| `UIScrollRowLayout` | `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Container/UIScrollRowLayout.cs` |
+| `UIUIScrollSectionLayout` | `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Container/UIScrollSectionLayout.cs` |
+| `BundlePool` | `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/CommonPackage/Runtime/Unity/Pool/Factory/BundlePool.cs` |
+| `IPoolable` | `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/CommonPackage/Runtime/Unity/Pool/IPoolable.cs` |
 
 ---
 

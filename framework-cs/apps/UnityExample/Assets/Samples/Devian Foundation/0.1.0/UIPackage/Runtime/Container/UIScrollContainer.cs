@@ -60,9 +60,8 @@ namespace Devian
             _content = _scrollRect.content;
             _viewport = _scrollRect.viewport;
 
-            _content.anchorMin = new Vector2(0f, 1f);
-            _content.anchorMax = new Vector2(0f, 1f);
-            _content.pivot = new Vector2(0f, 1f);
+            NormalizeViewportRect();
+            NormalizeContentRect();
         }
 
         protected override void onInit()
@@ -96,7 +95,7 @@ namespace Devian
                 frame._InitComplete();
         }
 
-        private void OnDestroy()
+        protected override void onDestroy()
         {
             if (_initialized) Clear();
         }
@@ -406,6 +405,28 @@ namespace Devian
             var sd = _content.sizeDelta;
             if (_direction == ScrollDirection.Vertical) sd.y = size; else sd.x = size;
             _content.sizeDelta = sd;
+        }
+
+        private void NormalizeViewportRect()
+        {
+            if (_viewport == null) return;
+
+            _viewport.anchorMin = Vector2.zero;
+            _viewport.anchorMax = Vector2.one;
+            _viewport.offsetMin = Vector2.zero;
+            _viewport.offsetMax = Vector2.zero;
+            _viewport.pivot = new Vector2(0f, 1f);
+            _viewport.anchoredPosition = Vector2.zero;
+        }
+
+        private void NormalizeContentRect()
+        {
+            if (_content == null) return;
+
+            _content.anchorMin = new Vector2(0f, 1f);
+            _content.anchorMax = new Vector2(1f, 1f);
+            _content.pivot = new Vector2(0f, 1f);
+            _content.anchoredPosition = Vector2.zero;
         }
     }
 }

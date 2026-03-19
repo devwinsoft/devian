@@ -39,7 +39,9 @@ Canvas owner, UI 기능 단위(Frame), Container의 초기화 수명주기를 �
 |------|-------------|
 | **MUST** | `Awake()` → `onAwake()` 패턴 사용 |
 | **MUST** | UICanvas.Awake()는 non-virtual. Instance 설정 + canvas 캐시 + onAwake() |
-| **MUST** | UICanvas.OnDestroy()는 non-virtual. `!IsApplicationQuitting` 가드 |
+| **MUST** | UICanvas / UIPanel / UIBaseContainer / UIBaseFrame의 `OnDestroy()`는 non-virtual |
+| **MUST** | destroy 정리 로직은 `onDestroy()`로만 override |
+| **MUST** | `onDestroy()`는 `Application.isPlaying && !BaseApplication.IsShuttingDown && !BaseApplication.IsApplicationQuitting`일 때만 호출 |
 | **MUST** | UIPanel.Awake()는 non-virtual |
 | **MUST** | `_InitFromCanvas()` / `_Init()` 중복 호출 방지 (initialized 가드) |
 | **MUST** | `UIBaseContainer._InitComplete()`는 idempotent 해야 한다 |
@@ -53,6 +55,7 @@ Canvas owner, UI 기능 단위(Frame), Container의 초기화 수명주기를 �
 |--------|--------|
 | UIPanel.`Awake()`를 `virtual`로 선언 | 수명주기 순서 보장 불가 |
 | UICanvas.Awake()/OnDestroy() override | non-virtual — onAwake()/onDestroy() 사용 |
+| UIPanel / UIBaseContainer / UIBaseFrame의 `OnDestroy()` 직접 override | non-virtual hook 규약 위반. `onDestroy()` 사용 |
 | `BaseUIFrame` 이름 사용 | `UIPanel`로 변경됨 |
 | `InspectorPoolFactory` 사용 | `BundlePool` 전용 |
 
@@ -104,6 +107,7 @@ namespace Devian
         protected virtual void onAwake();
         protected virtual void onInit();
         protected virtual void onInitComplete();
+        protected virtual void onDestroy();
 
         // IPoolable
         public virtual void OnPoolSpawned();
@@ -140,6 +144,7 @@ namespace Devian
         protected virtual void onAwake();
         protected virtual void onInit();
         protected virtual void onInitComplete();
+        protected virtual void onDestroy();
     }
 }
 ```
@@ -195,6 +200,7 @@ namespace Devian
 
         protected void Awake();
         protected virtual void onAwake();
+        protected virtual void onDestroy();
 
         internal void _InitFromCanvas(MonoBehaviour owner);
         internal void _InitComplete();

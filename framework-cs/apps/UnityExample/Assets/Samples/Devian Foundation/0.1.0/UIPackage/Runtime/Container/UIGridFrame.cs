@@ -17,20 +17,68 @@ namespace Devian
     public class UIGridFrame : UIBaseFrame, IUIScrollSection
     {
         [Header("Grid")]
-        [SerializeField] private string _cellPrefabName;
+        [SerializeField] private UI_CELL_ID _cellPrefabId;
         [SerializeField] private int _columnCount = 4;
+        [SerializeField] private int _minimumLineCount = 0;
         [SerializeField] private Vector2 _cellSize = new Vector2(200, 200);
         [SerializeField] private Vector2 _spacing = new Vector2(10, 10);
 
-        public string CellPrefabName { get => _cellPrefabName; set => _cellPrefabName = value; }
-        public int ColumnCount { get => _columnCount; set => _columnCount = value; }
-        public Vector2 CellSize { get => _cellSize; set => _cellSize = value; }
-        public Vector2 Spacing { get => _spacing; set => _spacing = value; }
+        public string CellPrefabName { get => _cellPrefabId.Value; set => _cellPrefabId = value; }
+        public int ColumnCount
+        {
+            get => _columnCount;
+            set
+            {
+                _columnCount = Mathf.Max(0, value);
+                OnGridLayoutChanged();
+            }
+        }
+        public int MinimumLineCount
+        {
+            get => Mathf.Max(0, _minimumLineCount);
+            set
+            {
+                _minimumLineCount = Mathf.Max(0, value);
+                OnGridLayoutChanged();
+            }
+        }
+        public Vector2 CellSize
+        {
+            get => _cellSize;
+            set
+            {
+                _cellSize = value;
+                OnGridLayoutChanged();
+            }
+        }
+        public Vector2 Spacing
+        {
+            get => _spacing;
+            set
+            {
+                _spacing = value;
+                OnGridLayoutChanged();
+            }
+        }
 
         public int CellCount { get; private set; }
-        public void SetCellCount(int count) { CellCount = count; }
+        public void SetCellCount(int count)
+        {
+            CellCount = Mathf.Max(0, count);
+            OnGridLayoutChanged();
+        }
+        public void SetMinimumLineCount(int lineCount)
+        {
+            MinimumLineCount = lineCount;
+        }
 
-        public int RowCount => CellCount > 0 ? Mathf.CeilToInt(CellCount / (float)_columnCount) : 0;
+        public int DataRowCount => _columnCount > 0 && CellCount > 0
+            ? Mathf.CeilToInt(CellCount / (float)_columnCount)
+            : 0;
+        public int RowCount => _columnCount > 0
+            ? Mathf.Max(MinimumLineCount, DataRowCount)
+            : 0;
+        public int RenderCellCount => _columnCount > 0 ? RowCount * _columnCount : 0;
 
         /// <summary>콜백 방식: cell.onShow(index) 후 호출.</summary>
         public Action<UIGridCell, int> onBindCell;
@@ -52,6 +100,13 @@ namespace Devian
             return rc * _cellSize.y + (rc - 1) * _spacing.y;
         }
 
+        protected override void onInitComplete()
+        {
+            SyncRectTransformSize();
+        }
+
+        public bool HasDataAt(int cellIndex) => cellIndex >= 0 && cellIndex < CellCount;
+
         // ─── IUIScrollSection ───
 
         public int GetLogicalRowCount() => RowCount;
@@ -61,15 +116,21 @@ namespace Devian
         public void ApplySectionLayout(in UIUIScrollSectionLayout layout)
         {
             _sectionLayout = layout;
-            gameObject.SetActive(false);
+            ApplySectionTransform();
+            gameObject.SetActive(true);
         }
 
         public void BindRow(in UIScrollRowLayout rowLayout)
         {
             int localRow = rowLayout.LocalRowIndex;
+            if (_columnCount <= 0) return;
+            if (localRow < 0 || localRow >= RowCount) return;
+
+            if (_activeRows.ContainsKey(localRow))
+                UnbindRow(localRow);
+
             int startIndex = localRow * _columnCount;
-            int cellsInRow = Mathf.Min(_columnCount, CellCount - startIndex);
-            if (cellsInRow <= 0) return;
+            int cellsInRow = _columnCount;
 
             var rowCells = new List<UIGridCell>(cellsInRow);
 
@@ -77,7 +138,7 @@ namespace Devian
             {
                 int cellIndex = startIndex + c;
                 var cell = BundlePool.Spawn<UIGridCell>(
-                    _cellPrefabName, Vector3.zero, Quaternion.identity, rowLayout.Content);
+                    _cellPrefabId.Value, Vector3.zero, Quaternion.identity, rowLayout.Content);
 
                 var rt = cell.rectTransform;
                 rt.anchorMin = TopLeft;
@@ -114,6 +175,12 @@ namespace Devian
 
         public void RefreshRow(int localRowIndex)
         {
+            if (localRowIndex < 0 || localRowIndex >= RowCount)
+            {
+                UnbindRow(localRowIndex);
+                return;
+            }
+
             if (!_activeRows.TryGetValue(localRowIndex, out var rowCells)) return;
 
             int startIndex = localRowIndex * _columnCount;
@@ -144,10 +211,61 @@ namespace Devian
 
         internal override void _Clear() => ClearSection();
 
+        private void OnValidate()
+        {
+            _columnCount = Mathf.Max(0, _columnCount);
+            _minimumLineCount = Mathf.Max(0, _minimumLineCount);
+            OnGridLayoutChanged();
+        }
+
         // ─── Internal ───
+
+        private void SyncRectTransformSize()
+        {
+            var rt = rectTransform != null ? rectTransform : transform as RectTransform;
+            if (rt == null) return;
+            rt.sizeDelta = new Vector2(GetWidth(), GetHeight());
+        }
+
+        private void OnGridLayoutChanged()
+        {
+            SyncRectTransformSize();
+            RequestParentRebuildIfInitialized();
+        }
+
+        private void RequestParentRebuildIfInitialized()
+        {
+            if (!Application.isPlaying) return;
+
+            var container = _ownerScrollContainer != null
+                ? _ownerScrollContainer
+                : GetComponentInParent<UIScrollContainer>();
+            _ownerScrollContainer = container;
+
+            if (container == null || !container.IsInitialized)
+                return;
+
+            container.Rebuild();
+        }
+
+        private void ApplySectionTransform()
+        {
+            var rt = rectTransform != null ? rectTransform : transform as RectTransform;
+            if (rt == null) return;
+
+            rt.anchorMin = TopLeft;
+            rt.anchorMax = TopLeft;
+            rt.pivot = TopLeft;
+            rt.anchoredPosition = _sectionLayout.Direction == ScrollDirection.Vertical
+                ? new Vector2(0f, -_sectionLayout.SectionMainAxisPosition)
+                : new Vector2(_sectionLayout.SectionMainAxisPosition, 0f);
+
+            SyncRectTransformSize();
+        }
 
         private readonly Dictionary<int, List<UIGridCell>> _activeRows = new();
         private static readonly Vector2 TopLeft = new Vector2(0f, 1f);
+        private UIScrollContainer _ownerScrollContainer;
         private UIUIScrollSectionLayout _sectionLayout;
     }
 }

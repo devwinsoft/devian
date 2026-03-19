@@ -57,7 +57,13 @@ namespace Devian
   3. 각 frame._InitComplete()
   4. _initialized = true
 - `Clear()`: frame._Clear() → _frames.Clear() → _initialized = false
-- `OnDestroy()`: _initialized이면 Clear()
+- `onDestroy()`: `_initialized`이면 `Clear()`
+
+Destroy 규약:
+
+- base `OnDestroy()`는 non-virtual
+- 실제 정리 로직은 `onDestroy()` override에 둔다
+- shutdown / play 종료 상태에서는 `onDestroy()`가 호출되지 않는다
 
 ### Constraints
 

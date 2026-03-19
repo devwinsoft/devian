@@ -27,6 +27,14 @@ namespace Devian
         /// <summary>Override this for custom Awake logic.</summary>
         protected virtual void onAwake() { }
 
+        protected void OnDestroy()
+        {
+            if (Application.isPlaying
+                && !BaseApplication.IsShuttingDown
+                && !BaseApplication.IsApplicationQuitting)
+                onDestroy();
+        }
+
         internal void _Init(Canvas canvas)
         {
             if (isFrameInitialized) return;
@@ -39,6 +47,7 @@ namespace Devian
 
         protected virtual void onInit() { }
         protected virtual void onInitComplete() { }
+        protected virtual void onDestroy() { }
 
         // ─── Size ───
 

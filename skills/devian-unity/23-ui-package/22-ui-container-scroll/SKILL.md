@@ -182,7 +182,8 @@ UICanvas.Init()
   Phase 1: Container._Init(canvas)
     -> UIScrollContainer.onInit()
        - ScrollRect/content/viewport 캐시
-       - Content anchor/pivot 강제
+       - Viewport를 parent stretch rect로 정규화
+       - Content anchor/pivot/anchoredPosition 정규화
        - ScrollRect.onValueChanged 구독
 
   Phase 2: UIPanel._InitFromCanvas(owner)
@@ -209,9 +210,12 @@ UICanvas.Init()
 owner `UICanvas.RegisterDynamicContainerTree()`에 편입되면 동일한 `_Init/_InitComplete`
 계약을 따른다.
 
-### OnDestroy
+### Destroy
 
-- `_initialized` 상태일 때 `Clear()` 호출
+- `UIScrollContainer`는 `OnDestroy()`를 직접 override하지 않고 `onDestroy()`를 override한다
+- base `OnDestroy()`는 non-virtual이며 `Application.isPlaying && !BaseApplication.IsShuttingDown && !BaseApplication.IsApplicationQuitting`일 때만 `onDestroy()`를 호출한다
+- 따라서 shutdown / play 종료 상태에서는 `Clear()`가 자동 호출되지 않는다
+- 정상 destroy 경로의 `onDestroy()`에서는 `_initialized` 상태일 때 `Clear()`를 호출한다
 - `Clear()`는 visible row unbind, section clear, scroll listener 해제, 캐시 초기화를 수행한다
 
 ---

@@ -33,6 +33,14 @@ namespace Devian
         /// <summary>Override this for custom Awake logic.</summary>
         protected virtual void onAwake() { }
 
+        protected void OnDestroy()
+        {
+            if (Application.isPlaying
+                && !BaseApplication.IsShuttingDown
+                && !BaseApplication.IsApplicationQuitting)
+                onDestroy();
+        }
+
         /// <summary>
         /// 컨테이너 초기화. UICanvas.Init()에서 호출된다.
         /// Canvas 참조를 저장하고 onInit()을 호출한다.
@@ -68,6 +76,7 @@ namespace Devian
         /// 호출 시점: Canvas.onInitComplete() 이전.
         /// </summary>
         protected virtual void onInitComplete() { }
+        protected virtual void onDestroy() { }
 
         // ─── IPoolable ───
 

@@ -12,12 +12,13 @@ public class TestBundleManager : BundleManager<TestBundleManager>
         , "prefabs"
         , "scenes"
         , "sounds"
+        , "ui"
 #if UNITY_EDITOR
         , "string-ndjson"
         , "table-ndjson"
 #else
-    , "string-pb64"
-    , "table-pb64"
+        , "string-pb64"
+        , "table-pb64"
 #endif
     };
     bool _initialized = false;
@@ -63,8 +64,11 @@ public class TestBundleManager : BundleManager<TestBundleManager>
         reportProgress(onProgress, 0.6f);
         await AssetManager.LoadBundleAssets<GameObject>("prefabs");
         await Task.Yield();
-        reportProgress(onProgress, 0.8f);
+        reportProgress(onProgress, 0.7f);
         await SoundManager.Instance.LoadByBundleKeyAsync("sounds");
+        await Task.Yield();
+        reportProgress(onProgress, 0.8f);
+        await AssetManager.LoadBundleAssets<GameObject>("ui");
         await Task.Yield();
         reportProgress(onProgress, 1f);
 

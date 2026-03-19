@@ -212,7 +212,9 @@ namespace Devian
 
         protected void OnDestroy()
         {
-            if (!BaseApplication.IsApplicationQuitting)
+            if (Application.isPlaying
+                && !BaseApplication.IsShuttingDown
+                && !BaseApplication.IsApplicationQuitting)
                 onDestroy();
             if (Instance == (this as TCanvas))
                 Instance = null;

@@ -1,123 +1,104 @@
 # Devian
 
-## Overview
+> **Structured game development framework with code generation and unified systems**
 
-Devian is a framework designed to maximize development productivity by enforcing structure.
+Devian is a framework that provides a complete development environment for building games with consistency, speed, and scalability.
 
-It is not a tool that helps you "build better code".
-It is a system that ensures you **cannot build it wrong**.
+It combines:
 
-> Think less. Build faster. Stay consistent.
+* structured architecture
+* code generation
+* runtime systems
+* tooling pipeline
 
----
-
-## Philosophy
-
-> **"Do not think about structure. Just build the game."**
-
-Devian removes unnecessary decisions from development.
-Instead of flexibility, it provides:
-
-* consistency
-* predictability
-* scalability
+into a single unified workflow.
 
 ---
 
-## Core Principles
+## What Devian Provides
 
-### 1. Structure over Freedom
+Devian is not just a library.
+It is a **full development stack**.
 
-All code must exist within a predefined structure.
+### Core Components
 
-* Domain / Protocol / System separation is mandatory
-* Naming conventions are enforced
-* Folder structure is fixed
+* **Domain & Protocol System**
 
-Freedom is reduced to eliminate inconsistency and errors.
+  * Structured data and communication definitions
+  * Shared across runtime and tools
 
----
+* **Builder & Code Generation**
 
-### 2. Single Source of Truth (SSOT)
+  * Table → code
+  * Protocol → API
+  * Data → runtime assets
 
-Each piece of data must be defined in only one place.
+* **Runtime Systems**
 
-* Tables define data
-* Protocols define communication
-* Code is generated from definitions
+  * Account
+  * Save (Local / Cloud)
+  * Purchase
+  * Reward
+  * Mission
+  * Push / Message
+  * Localization
 
-Duplicated definitions are not allowed.
+* **Unity Runtime (UPM)**
 
----
+  * UI system (Panel / Frame / Plugin)
+  * Managers and core components
+  * Mobile integration (Firebase, GPGS, etc.)
 
-### 3. Generate, Don't Write
+* **Tooling**
 
-Repetitive code should never be written manually.
-
-* Tables → code generation
-* Protocols → API generation
-* Data → Actor/UI connection
-
-The developer focuses only on essential logic.
-
----
-
-### 4. Connect, Don't Contain
-
-Each layer connects systems instead of owning logic.
-
-* UI → display and connection only
-* Panel → flow control
-* System → business logic
-* Data → definitions only
-
-Responsibilities must not overlap.
+  * CLI / Builder
+  * Data pipeline
+  * Error reporting
 
 ---
 
-### 5. Reduce Thinking
+## Architecture Overview
 
-Developers should not make unnecessary decisions.
+Devian enforces a layered structure across all systems.
 
-* One correct pattern
-* One consistent structure
-* No ambiguity
+### High-Level Layers
 
-The framework guides development automatically.
+* **Data Layer**
+
+  * Tables
+  * Protocol definitions
+  * SSOT (Single Source of Truth)
+
+* **Build Layer**
+
+  * Code generation
+  * Asset generation
+  * Validation
+
+* **Runtime Layer**
+
+  * Systems (Account, Reward, Purchase, etc.)
+  * Platform integrations
+
+* **UI Layer**
+
+  * Panel (flow control)
+  * Frame (UI references)
+  * Plugin (connection layer)
 
 ---
 
-## Identity
+## UI Structure
 
-> Devian reduces developer freedom to maximize productivity and stability.
+Devian UI is modular and composable.
 
-It enforces rules so that:
+* **UIManager** manages the entire UI system
+* **Canvas** is separated by role (Main / Popup / Overlay)
+* **Panel** controls screen logic
+* **Container / Frame** define layout and references
+* **Plugin** connects UI to systems (no business logic)
 
-* structure is always correct
-* code is always consistent
-* systems are always aligned
-
----
-
-## UI Architecture (Simplified)
-
-```
-UIManager
- └─ Canvas<>
-     ├─ MainCanvas
-     ├─ PopupCanvas
-     └─ OverlayCanvas
-
-Panel
- └─ Container
-     └─ Frame + Plugin
-```
-
-### Key Concepts
-
-* **Panel**: controls flow and state
-* **Frame**: holds UI references
-* **Plugin**: connects UI with systems (no logic)
+This allows UI to stay lightweight and reusable.
 
 ---
 
@@ -126,67 +107,120 @@ Panel
 ### Popup
 
 * Blocking UI
-* Requires user interaction
 * Managed by stack
-
-```
-PopupCanvas
- ├─ Dim
- └─ PopupRoot
-```
+* Requires user interaction
 
 ### Toast
 
 * Non-blocking notification
 * Auto-dismiss
-* Does not interrupt user flow
-
-```
-OverlayCanvas
- └─ ToastRoot
-```
+* Does not interrupt gameplay
 
 ---
 
 ## Development Flow
 
-```
+Devian development follows a fixed pipeline:
+
 1. Define data (Table / Protocol)
-2. Generate code
-3. Connect UI (Plugin)
-4. Control flow (Panel)
-5. Build & Release
-```
+2. Run builder (code & asset generation)
+3. Implement systems (if needed)
+4. Connect UI via Plugin
+5. Control flow via Panel
+6. Build & release
 
 ---
 
-## Target Users
+## Key Characteristics
 
-* Solo developers
-* Small teams
+### 1. Structured by Default
+
+All components follow predefined conventions:
+
+* Domain / Protocol separation
+* Naming rules
+* Folder structure
+
+---
+
+### 2. Code Generation Driven
+
+Repetitive work is handled by the builder:
+
+* No manual boilerplate
+* Consistent API generation
+* Reduced human error
+
+---
+
+### 3. System-Oriented Design
+
+Features are implemented as independent systems:
+
+* loosely coupled
+* reusable
+* platform-aware
+
+---
+
+### 4. Clear Responsibility Separation
+
+* Data → definition only
+* System → logic only
+* UI → display and connection only
+
+---
+
+### 5. Scalable Workflow
+
+Designed for:
+
+* multiple projects
+* long-term operation
+* cross-platform expansion
+
+---
+
+## Who It's For
+
+* Solo developers building full-stack games
+* Small teams needing consistency
 * Developers using AI-assisted workflows
-* Teams prioritizing speed and consistency
+* Projects requiring structured data pipelines
 
 ---
 
-## Not for
+## Not For
 
-* Developers who prefer full architectural freedom
-* Experimental or constantly changing structures
-* Highly customized UI frameworks
+* Projects requiring full architectural freedom
+* Highly experimental or constantly changing structures
+* Minimal prototypes without system needs
+
+---
+
+## Identity
+
+Devian is a framework that prioritizes:
+
+* consistency over flexibility
+* automation over repetition
+* structure over improvisation
 
 ---
 
 ## Summary
 
-Devian is not about writing better code.
+Devian provides a unified way to build games by combining:
 
-It is about:
+* structured architecture
+* code generation
+* runtime systems
+* UI composition
 
-> **eliminating mistakes by removing unnecessary decisions.**
+into a single workflow.
 
 ---
 
 ## One Line
 
-> **"If you follow Devian, your structure is always correct."**
+> **Build games with structure, not guesswork.**
