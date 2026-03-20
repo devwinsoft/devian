@@ -43,6 +43,7 @@ Canvas owner, UI 기능 단위(Frame), Container의 초기화 수명주기를 �
 | **MUST** | destroy 정리 로직은 `onDestroy()`로만 override |
 | **MUST** | `onDestroy()`는 `Application.isPlaying && !BaseApplication.IsShuttingDown && !BaseApplication.IsApplicationQuitting`일 때만 호출 |
 | **MUST** | UIPanel.Awake()는 non-virtual |
+| **MUST** | panel 표시 전이는 `Show()` / `Hide()`로 수행하고 `onShow()` / `onHide()`를 override한다 |
 | **MUST** | `_InitFromCanvas()` / `_Init()` 중복 호출 방지 (initialized 가드) |
 | **MUST** | `UIBaseContainer._InitComplete()`는 idempotent 해야 한다 |
 | **MUST** | Init 순서: Container.onInit → Frame.onInit → Canvas.onInit |
@@ -56,6 +57,7 @@ Canvas owner, UI 기능 단위(Frame), Container의 초기화 수명주기를 �
 | UIPanel.`Awake()`를 `virtual`로 선언 | 수명주기 순서 보장 불가 |
 | UICanvas.Awake()/OnDestroy() override | non-virtual — onAwake()/onDestroy() 사용 |
 | UIPanel / UIBaseContainer / UIBaseFrame의 `OnDestroy()` 직접 override | non-virtual hook 규약 위반. `onDestroy()` 사용 |
+| UIPanel 가시성을 `SetActive()`만으로 제어 | `Show()` / `Hide()` 상태 훅 우회 |
 | `BaseUIFrame` 이름 사용 | `UIPanel`로 변경됨 |
 | `InspectorPoolFactory` 사용 | `BundlePool` 전용 |
 
@@ -194,12 +196,15 @@ namespace Devian
     public abstract class UIPanel : MonoBehaviour
     {
         public bool isInitialized { get; }
+        public bool isShown { get; }
         public RectTransform rectTransform { get; }
         protected MonoBehaviour ownerBase { get; }
         protected UICanvas ownerCanvas { get; }
 
         protected void Awake();
         protected virtual void onAwake();
+        public void Show();
+        public void Hide();
         protected virtual void onDestroy();
 
         internal void _InitFromCanvas(MonoBehaviour owner);
@@ -207,12 +212,28 @@ namespace Devian
 
         protected abstract void onInitFromCanvas(MonoBehaviour owner);
         protected virtual void onInitComplete();
+        protected virtual void onShow();
+        protected virtual void onHide();
 
         public T CreateContainer<T>(string prefabName, Transform parent = null)
             where T : UIBaseContainer;
     }
 }
 ```
+
+### Panel Visibility Sequence
+
+```text
+panel.Show()
+  -> gameObject.SetActive(true) if needed
+  -> onShow()
+
+panel.Hide()
+  -> onHide()
+  -> default onHide(): gameObject.SetActive(false)
+```
+
+기본 `onHide()`는 즉시 비활성화다. 지연 hide나 transition이 필요하면 override에서 deactivate 시점을 직접 제어한다.
 
 #### UIPanel\<TCanvas\>
 

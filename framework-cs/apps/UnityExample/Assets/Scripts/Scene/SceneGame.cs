@@ -25,5 +25,9 @@ public class SceneGame : SceneBootstrap
         
         UIGameCanvas.Instance.Init();
         GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.ACHIEVE_001, 1);
+        
+        ToastRequest request = new ToastRequest("Default", "This is a default toast message.");
+        UIToastService.Instance.Show(request);
+        UIToastService.Instance.Show(request);
     }
 }

@@ -18,7 +18,6 @@ UI Canvas 수명주기 진입점과 UI 메시지 시스템을 제공하는 중�
 - UI 메시지 시스템 소유 (`messageSystem`)
 - Canvas 조회 (`TryGetCanvas`)
 - Canvas 생성 (`CreateCanvas`)
-- Canvas 보장 (`EnsureCanvas`)
 - Canvas 제거 (`DespawnCanvas`)
 - Canvas 검증 (`ValidateCanvas`)
 
@@ -73,7 +72,7 @@ public bool TryGetCanvas<TCanvas>(out TCanvas canvas)
 ```
 
 - `Singleton.TryGet<TCanvas>`를 먼저 조회한다
-- 없으면 `FindObjectOfType<TCanvas>(true)`로 씬 전체를 탐색한다
+- 없으면 `FindAnyObjectByType<TCanvas>(FindObjectsInactive.Include)`로 씬 전체를 탐색한다
 - inactive object도 탐색 대상이다
 
 ### CreateCanvas
@@ -87,16 +86,6 @@ public TCanvas CreateCanvas<TCanvas>(string prefabName, Transform parent = null)
 - 생성 직후 같은 타입의 기존 singleton canvas가 이미 있으면:
   새 인스턴스를 `BundlePool.Despawn()`하고 기존 인스턴스를 반환한다
 - 타입당 1개 singleton canvas 정책을 강제하기 위한 duplicate collapse 동작이다
-
-### EnsureCanvas
-
-```csharp
-public TCanvas EnsureCanvas<TCanvas>(string prefabName, Transform parent = null)
-    where TCanvas : MonoBehaviour, IPoolable
-```
-
-- 기존 canvas가 있으면 반환
-- 없으면 `CreateCanvas` 호출
 
 ### DespawnCanvas
 

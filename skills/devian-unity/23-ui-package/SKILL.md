@@ -62,6 +62,7 @@ UIPackage는 `com.devian.foundation` 내 샘플이므로 자체 `package.json`�
 | 01 | Policy | 문서 작성 정책 (Usage 섹션 금지 등) | `01-policy/SKILL.md` |
 | 10 | UIManager | Canvas 수명주기 (AutoSingleton) | `10-ui-manager/SKILL.md` |
 | 11 | UICanvasSystem | UICanvas/UIPanel/UIBaseContainer 규약 | `11-ui-canvas-system/SKILL.md` |
+| 12 | UI_CANVAS_ID | UICanvas prefab 참조 ID (AssetId 패턴) | `12-ui-canvas-id/SKILL.md` |
 | 21 | UISimpleContainer | 최소 container 구현체 (frame subtree bootstrap) | `21-container-simple/SKILL.md` |
 | 22 | UIScrollContainer | 유일한 scroll owner (UIScrollContainer + IUIScrollSection) | `22-ui-container-scroll/SKILL.md` |
 | 23 | UIGridFrame | N열 grid section renderer (UIGridFrame + UIGridCell) | `23-ui-frame-grid/SKILL.md` |
@@ -71,8 +72,11 @@ UIPackage는 `com.devian.foundation` 내 샘플이므로 자체 `package.json`�
 | 32 | UIPlugInNonDrawing | Non-drawing Graphic | `32-ui-plugin-non-drawing/SKILL.md` |
 | 33 | UIMessageSystem | UI 전용 메시지 시스템 (UnityEngine.EntityId + UI_MESSAGE) | `33-ui-message-system/SKILL.md` |
 | 34 | UIPlugInText | ST_TEXT 바인딩 텍스트 플러그인 (InitOnce + ReloadText) | `34-ui-plugin-text/SKILL.md` |
+| 40 | UI_CONTAINER_ID | UIBaseContainer 프리팹 참조 ID (AssetId 패턴) | `40-ui-container-id/SKILL.md` |
 | 41 | UI_CELL_ID | UIGridCell 프리팹 참조 ID (AssetId 패턴) | `41-ui-cell-id/SKILL.md` |
 | 50 | UIUtils | 공용 static 유틸리티 (좌표 변환, Billboard, Cursor) | `50-ui-utils/SKILL.md` |
+| 51 | UITweenSystem | UI 전용 최소 tween / transition 그룹 | `51-ui-tween-system/00-overview/SKILL.md` |
+| 52 | UIToastSystem | overlay toast service / canvas / panel / group / frame | `52-ui-toast-system/00-overview/SKILL.md` |
 
 ---
 

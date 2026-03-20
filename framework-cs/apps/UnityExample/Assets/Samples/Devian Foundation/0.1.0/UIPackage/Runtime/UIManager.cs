@@ -4,7 +4,7 @@ namespace Devian
 {
     /// <summary>
     /// Central manager for UI Canvas lifecycle.
-    /// Provides Canvas lookup, creation, utility methods.
+    /// Provides Canvas lookup, creation, despawn, validation.
     /// AutoSingleton: script-created on first Instance access.
     /// </summary>
     public sealed class UIManager : AutoSingleton<UIManager>
@@ -33,7 +33,7 @@ namespace Devian
             }
 
             // 2. Search scene (including inactive)
-            canvas = FindObjectOfType<TCanvas>(true);
+            canvas = FindAnyObjectByType<TCanvas>(FindObjectsInactive.Include);
             return canvas != null;
         }
 
@@ -60,24 +60,6 @@ namespace Devian
             }
 
             return spawned;
-        }
-
-        /// <summary>
-        /// Ensures a canvas exists, creating it if necessary.
-        /// </summary>
-        /// <typeparam name="TCanvas">The canvas type.</typeparam>
-        /// <param name="prefabName">The prefab asset name (used only if creation needed).</param>
-        /// <param name="parent">Optional parent transform (used only if creation needed).</param>
-        /// <returns>The canvas instance.</returns>
-        public TCanvas EnsureCanvas<TCanvas>(string prefabName, Transform parent = null)
-            where TCanvas : MonoBehaviour, IPoolable
-        {
-            if (TryGetCanvas<TCanvas>(out var canvas))
-            {
-                return canvas;
-            }
-
-            return CreateCanvas<TCanvas>(prefabName, parent);
         }
 
         /// <summary>

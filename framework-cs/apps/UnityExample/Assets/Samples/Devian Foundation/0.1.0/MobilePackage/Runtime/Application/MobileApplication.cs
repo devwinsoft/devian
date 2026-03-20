@@ -33,6 +33,7 @@ namespace Devian
         [SerializeField] public string FirebaseFunctionsRegion = "asia-northeast3";
         [SerializeField] public string VersionCheckAOS = string.Empty;
         [SerializeField] public string VersionCheckIOS = string.Empty;
+        [SerializeField] private UI_CANVAS_ID _toastCanvasId;
 
         // ── Crypto (AES-256-CBC) ──
 
@@ -98,7 +99,71 @@ namespace Devian
                 Debug.LogError($"[MobileApplication] GameMessageManager.Initialize failed: {initMessage.Error.Code}: {initMessage.Error.Message}");
             }
 
-            return Task.CompletedTask;
+            return onLoadCompletedInternalAsync();
+        }
+
+        private async Task onLoadCompletedInternalAsync()
+        {
+            await PreloadUITransitionPresetsAsync();
+            BootstrapToastCanvas();
+        }
+
+        private static async Task PreloadUITransitionPresetsAsync()
+        {
+            var settings = Resources.Load<BundleSettings>(BundleSettings.ResourcesPath);
+            var presetCacheKey = settings != null
+                ? settings.GetEntry("UI_TRANSITION_PRESET_ID")
+                : string.Empty;
+            if (string.IsNullOrWhiteSpace(presetCacheKey))
+            {
+                presetCacheKey = "UI_TRANSITION_PRESET_ID";
+            }
+
+            const string presetLoadLabel = "ui";
+            var loadResult = await AssetManager.LoadBundleAssets<UITransitionPresetAsset>(presetCacheKey, presetLoadLabel);
+            if (loadResult.IsFailure)
+            {
+                Debug.LogWarning($"[MobileApplication] Failed to preload UI transition presets from '{presetLoadLabel}': {loadResult.Error?.Message}");
+            }
+        }
+
+        private void BootstrapToastCanvas()
+        {
+            var toastCanvas = UIToastCanvas.Instance;
+            if (toastCanvas == null)
+            {
+                toastCanvas = FindAnyObjectByType<UIToastCanvas>(FindObjectsInactive.Include);
+            }
+
+            if (toastCanvas == null)
+            {
+                if (_toastCanvasId == null || !_toastCanvasId.IsValid)
+                {
+                    return;
+                }
+
+                try
+                {
+                    toastCanvas = BundlePool.Spawn<UIToastCanvas>(_toastCanvasId);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogWarning($"[MobileApplication] Failed to spawn UIToastCanvas '{_toastCanvasId.Value}': {e.Message}");
+                    return;
+                }
+            }
+
+            if (toastCanvas == null)
+            {
+                return;
+            }
+
+            DontDestroyOnLoad(toastCanvas.gameObject);
+
+            if (!toastCanvas.isInitialized)
+            {
+                toastCanvas.Init();
+            }
         }
 
         /// <summary>

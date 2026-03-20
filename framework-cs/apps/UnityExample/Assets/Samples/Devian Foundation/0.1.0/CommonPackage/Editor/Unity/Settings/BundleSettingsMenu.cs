@@ -80,6 +80,9 @@ namespace Devian
         {
             settings.EnsureEntry("COMMON_EFFECT_ID", "Assets/Bundles/CommonEffects");
             settings.EnsureEntry("MATERIAL_EFFECT_ID", "Assets/Bundles/MaterialEffects");
+            settings.EnsureEntry("UI_CANVAS_ID", "Assets/Bundles/UICanvases");
+            settings.EnsureEntry("UI_TOAST_FRAME_ID", "Assets/Bundles/UIToastFrames");
+            settings.EnsureEntry("UI_TRANSITION_PRESET_ID", "Assets/Bundles/UI/Preset");
 
             EditorUtility.SetDirty(settings);
             AssetDatabase.SaveAssets();

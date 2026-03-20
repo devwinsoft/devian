@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Devian;
 using Devian.Domain.Game;
+using TMPro;
 
 public class SceneLogin : SceneBootstrap
 {

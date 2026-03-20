@@ -156,20 +156,42 @@ namespace Devian
         /// <param name="key">Addressables label or key</param>
         public static async Task<CommonResult> LoadBundleAssets<T>(string key) where T : UnityEngine.Object
         {
-            if (string.IsNullOrEmpty(key))
+            return await LoadBundleAssetsInternal<T>(key, key);
+        }
+
+        /// <summary>
+        /// Load all assets of type T by Addressables label/key, while storing the loaded handle under a separate cache key.
+        /// </summary>
+        /// <typeparam name="T">Asset type</typeparam>
+        /// <param name="cacheKey">Internal cache key used by AssetManager</param>
+        /// <param name="addressablesKey">Addressables label or key used for actual loading</param>
+        public static async Task<CommonResult> LoadBundleAssets<T>(string cacheKey, string addressablesKey) where T : UnityEngine.Object
+        {
+            return await LoadBundleAssetsInternal<T>(cacheKey, addressablesKey);
+        }
+
+        private static async Task<CommonResult> LoadBundleAssetsInternal<T>(string cacheKey, string addressablesKey) where T : UnityEngine.Object
+        {
+            if (string.IsNullOrEmpty(cacheKey))
             {
-                Debug.LogError("[AssetManager] LoadBundleAssets: key is null or empty.");
-                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, "[AssetManager] LoadBundleAssets: key is null or empty.");
+                Debug.LogError("[AssetManager] LoadBundleAssets: cacheKey is null or empty.");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, "[AssetManager] LoadBundleAssets: cacheKey is null or empty.");
+            }
+
+            if (string.IsNullOrEmpty(addressablesKey))
+            {
+                Debug.LogError("[AssetManager] LoadBundleAssets: addressablesKey is null or empty.");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, "[AssetManager] LoadBundleAssets: addressablesKey is null or empty.");
             }
 
             // Already loaded?
-            if (mBundles.ContainsKey(key))
+            if (mBundles.ContainsKey(cacheKey))
             {
-                Debug.LogWarning($"[AssetManager] Bundle '{key}' already loaded.");
+                Debug.LogWarning($"[AssetManager] Bundle '{cacheKey}' already loaded.");
                 return CommonResult.Ok();
             }
 
-            var bundleData = new BundleData(key);
+            var bundleData = new BundleData(cacheKey);
             var type = typeof(T);
 
             if (!mBundleAssets.TryGetValue(type, out var typeDict))
@@ -179,7 +201,7 @@ namespace Devian
             }
 
             var handle = Addressables.LoadAssetsAsync<T>(
-                key,
+                addressablesKey,
                 asset =>
                 {
                     if (asset == null) return;
@@ -204,14 +226,14 @@ namespace Devian
 
             if (handle.Status != AsyncOperationStatus.Succeeded)
             {
-                var msg = $"[AssetManager] LoadBundleAssets failed for key '{key}': {handle.OperationException?.Message}";
+                var msg = $"[AssetManager] LoadBundleAssets failed for cacheKey '{cacheKey}' (loadKey '{addressablesKey}'): {handle.OperationException?.Message}";
                 Debug.LogError(msg);
                 Addressables.Release(handle);
                 return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, msg);
             }
 
             bundleData.Handle = handle;
-            mBundles[key] = bundleData;
+            mBundles[cacheKey] = bundleData;
 
             return CommonResult.Ok();
         }

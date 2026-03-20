@@ -21,6 +21,12 @@ MonoBehaviour:
     m_SerializedLabels:
     - ui
     FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: c76178e6a361148288d49d054389f5eb
+    m_Address: Assets/Bundles/UI/Preset
+    m_ReadOnly: 0
+    m_SerializedLabels:
+    - ui
+    FlaggedDuringContentUpdateRestriction: 0
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: daa0599a24d6ad242b59de8ab32c5cb5, type: 2}
   m_SchemaSet:

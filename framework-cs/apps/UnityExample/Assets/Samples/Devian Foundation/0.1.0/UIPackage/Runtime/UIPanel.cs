@@ -11,6 +11,7 @@ namespace Devian
     {
         /// <summary>Whether this panel has been initialized.</summary>
         public bool isInitialized { get; private set; }
+        public bool isShown { get; private set; }
 
         /// <summary>캐시된 RectTransform.</summary>
         public RectTransform rectTransform { get; private set; }
@@ -25,6 +26,7 @@ namespace Devian
         protected void Awake()
         {
             rectTransform = (RectTransform)transform;
+            isShown = gameObject.activeSelf;
             onAwake();
         }
 
@@ -51,8 +53,29 @@ namespace Devian
             onInitComplete();
         }
 
+        public void Show()
+        {
+            if (isShown && gameObject.activeSelf) return;
+
+            isShown = true;
+            if (!gameObject.activeSelf)
+                gameObject.SetActive(true);
+
+            onShow();
+        }
+
+        public void Hide()
+        {
+            if (!isShown && !gameObject.activeSelf) return;
+
+            isShown = false;
+            onHide();
+        }
+
         protected abstract void onInitFromCanvas(MonoBehaviour owner);
         protected virtual void onInitComplete() { }
+        protected virtual void onShow() { }
+        protected virtual void onHide() { gameObject.SetActive(false); }
         protected virtual void onDestroy() { }
 
         // ─── CreateContainer ───

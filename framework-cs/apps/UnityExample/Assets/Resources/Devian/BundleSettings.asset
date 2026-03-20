@@ -18,5 +18,13 @@ MonoBehaviour:
     Value: Assets/Bundles/CommonEffects
   - Key: MATERIAL_EFFECT_ID
     Value: Assets/Bundles/MaterialEffects
+  - Key: UI_CANVAS_ID
+    Value: Assets/Bundles/UI/Prefabs
   - Key: UI_CELL_ID
+    Value: Assets/Bundles/UI/Prefabs
+  - Key: UI_CONTAINER_ID
+    Value: Assets/Bundles/UI/Prefabs
+  - Key: UI_TRANSITION_PRESET_ID
+    Value: Assets/Bundles/UI/Preset
+  - Key: UI_TOAST_FRAME_ID
     Value: Assets/Bundles/UI/Prefabs
