@@ -237,33 +237,7 @@ namespace Devian
                 return UITweenHandle.CreateCanceled();
             }
 
-            var asset = AssetManager.GetAsset<UITransitionPresetAsset>(presetId.Value);
-            if (asset == null || asset.Preset == null || !asset.Preset.UseAnchoredPosition)
-            {
-                return transitionPlayer.Play(presetId, onComplete);
-            }
-
-            var preset = ClonePreset(asset.Preset);
-            return transitionPlayer.Play(preset, onComplete);
-        }
-
-        private static UITransitionPreset ClonePreset(UITransitionPreset source)
-        {
-            return new UITransitionPreset
-            {
-                Duration = source.Duration,
-                Delay = source.Delay,
-                Ease = source.Ease,
-                UseAlpha = source.UseAlpha,
-                FromAlpha = source.FromAlpha,
-                ToAlpha = source.ToAlpha,
-                UseAnchoredPosition = source.UseAnchoredPosition,
-                FromAnchoredPosition = source.FromAnchoredPosition,
-                ToAnchoredPosition = source.ToAnchoredPosition,
-                UseScale = source.UseScale,
-                FromScale = source.FromScale,
-                ToScale = source.ToScale
-            };
+            return transitionPlayer.Play(presetId, onComplete);
         }
 
         private void ResolveDefaults()

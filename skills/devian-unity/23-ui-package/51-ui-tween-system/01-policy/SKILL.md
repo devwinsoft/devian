@@ -1,7 +1,7 @@
 # 51-ui-tween-system — Policy
 
 Status: ACTIVE
-AppliesTo: v1
+AppliesTo: v2
 Type: Policy / Entry Point
 
 ## Purpose
@@ -19,12 +19,15 @@ UITweenSystem의 모듈 경계와 구현 규칙을 정의한다.
 - panel visibility 전이는 `UIPanel.Show()` / `UIPanel.Hide()`와 `onShow()` / `onHide()` 규약을 따른다.
 - `UIPanel.Show()` / `UIPanel.Hide()`는 선택적 자동 훅이다. frame / panel / container / game event handler의 manual `Play(...)`도 1급으로 지원한다.
 - tween 데이터는 preset 기반으로 정의한다. transition policy를 코드 분기로 하드코딩하지 않는다.
+- preset은 channel clip 배열만 사용한다. 단일 `Delay / Use* / From* / To*` 구조는 두지 않는다.
+- runtime은 compile -> snapshot -> frame result -> apply 흐름으로 고정한다.
 - preset authoring은 `UITransitionPresetAsset`으로 하고, inspector 선택은 `UI_TRANSITION_PRESET_ID` 경로를 우선한다.
-- `Append` / `Join`만 지원한다. loop, nested DSL, 복잡한 builder는 v1 범위에서 제외한다.
+- `Append` / `Join`만 지원한다. loop, nested DSL, 복잡한 builder는 범위에서 제외한다.
 - 범용 property tween, reflection setter, gameplay object tween은 금지한다.
 - `AnimSequencePlayer`와 `SceneTransManager`는 재사용하지 않는다.
+- 구형 transition 대체 경로는 만들지 않는다.
 - pooled UI는 `OnDestroy()` cleanup에 의존하지 않는다. 정상 hide / close / despawn 경로에서 명시적으로 cancel한다.
-- `UIScrollContainer` virtualized row/item의 hide tween은 v1에서 지원하지 않는다.
+- `UIScrollContainer` virtualized row/item의 hide tween은 현재 범위에서 지원하지 않는다.
 - 이 영역 문서에도 `Usage` 섹션은 만들지 않는다.
 
 ---
@@ -44,4 +47,5 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Tween/
 - `UITweenSequence`
 - `UITweenEase`
 - `UITransitionPreset`
+- `UITransitionRuntimeData`
 - `UITransitionPlayer`

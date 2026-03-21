@@ -7,7 +7,6 @@ namespace Devian
     public sealed class UITransitionPlayer : MonoBehaviour
     {
         private UITweenHandle _mainHandle;
-        private Vector2 _groupAnchoredPositionBase;
         private RectTransform _targetRectTransform;
         private CanvasGroup _targetCanvasGroup;
 
@@ -41,7 +40,14 @@ namespace Devian
 
             Cancel();
             CacheTargets();
-            WarnMissingTargets(preset);
+            var compiled = UITransitionCompiler.Compile(preset);
+            if (compiled == null || compiled.IsEmpty)
+            {
+                Debug.LogWarning("[UITransitionPlayer] Play: compiled transition is null or empty.", this);
+                return UITweenHandle.CreateCanceled();
+            }
+
+            WarnMissingTargets(compiled);
 
             var runner = UITweenRunner.Instance;
             if (runner == null)
@@ -50,7 +56,7 @@ namespace Devian
                 return UITweenHandle.CreateCanceled();
             }
 
-            _mainHandle = runner.Play(this, preset, onComplete);
+            _mainHandle = runner.Play(this, compiled, onComplete);
             return _mainHandle;
         }
 
@@ -86,7 +92,14 @@ namespace Devian
 
             Cancel();
             CacheTargets();
-            WarnMissingTargets(sequence);
+            var compiled = UITransitionCompiler.Compile(sequence);
+            if (compiled == null || compiled.IsEmpty)
+            {
+                Debug.LogWarning("[UITransitionPlayer] Play: compiled sequence is null or empty.", this);
+                return UITweenHandle.CreateCanceled();
+            }
+
+            WarnMissingTargets(compiled);
 
             var runner = UITweenRunner.Instance;
             if (runner == null)
@@ -95,7 +108,7 @@ namespace Devian
                 return UITweenHandle.CreateCanceled();
             }
 
-            _mainHandle = runner.Play(this, sequence, onComplete);
+            _mainHandle = runner.Play(this, compiled, onComplete);
             return _mainHandle;
         }
 
@@ -110,101 +123,33 @@ namespace Devian
             _mainHandle = null;
         }
 
-        internal void BeginGroup()
+        internal UITransitionSnapshot CaptureSnapshot()
         {
             CacheTargets();
 
-            _groupAnchoredPositionBase = _targetRectTransform.anchoredPosition;
+            return new UITransitionSnapshot
+            {
+                BaseAlpha = _targetCanvasGroup != null ? _targetCanvasGroup.alpha : 1f,
+                BaseAnchoredPosition = _targetRectTransform.anchoredPosition,
+                BaseScale = transform.localScale
+            };
         }
 
-        internal void ApplyFrom(UITransitionPreset preset)
+        internal void Apply(UITransitionFrameResult result)
         {
-            if (preset == null)
+            if (result.HasAlpha && _targetCanvasGroup != null)
             {
-                return;
+                _targetCanvasGroup.alpha = result.Alpha;
             }
 
-            if (preset.UseAlpha && _targetCanvasGroup != null)
+            if (result.HasAnchoredPosition)
             {
-                _targetCanvasGroup.alpha = preset.FromAlpha;
+                _targetRectTransform.anchoredPosition = result.AnchoredPosition;
             }
 
-            if (preset.UseAnchoredPosition)
+            if (result.HasScale)
             {
-                _targetRectTransform.anchoredPosition = ResolveAnchoredPosition(preset.FromAnchoredPosition);
-            }
-
-            if (preset.UseScale)
-            {
-                transform.localScale = preset.FromScale;
-            }
-        }
-
-        internal void ApplyAt(UITransitionPreset preset, float elapsed)
-        {
-            if (preset == null)
-            {
-                return;
-            }
-
-            var delay = Mathf.Max(0f, preset.Delay);
-            if (elapsed < delay)
-            {
-                return;
-            }
-
-            var duration = Mathf.Max(0f, preset.Duration);
-            if (duration <= 0f)
-            {
-                ApplyTo(preset);
-                return;
-            }
-
-            var time = Mathf.Clamp01((elapsed - delay) / duration);
-            var eased = UITweenEaseUtil.Evaluate(preset.Ease, time);
-
-            if (preset.UseAlpha && _targetCanvasGroup != null)
-            {
-                _targetCanvasGroup.alpha = Mathf.LerpUnclamped(preset.FromAlpha, preset.ToAlpha, eased);
-            }
-
-            if (preset.UseAnchoredPosition)
-            {
-                _targetRectTransform.anchoredPosition = Vector2.LerpUnclamped(
-                    ResolveAnchoredPosition(preset.FromAnchoredPosition),
-                    ResolveAnchoredPosition(preset.ToAnchoredPosition),
-                    eased);
-            }
-
-            if (preset.UseScale)
-            {
-                transform.localScale = Vector3.LerpUnclamped(
-                    preset.FromScale,
-                    preset.ToScale,
-                    eased);
-            }
-        }
-
-        internal void ApplyTo(UITransitionPreset preset)
-        {
-            if (preset == null)
-            {
-                return;
-            }
-
-            if (preset.UseAlpha && _targetCanvasGroup != null)
-            {
-                _targetCanvasGroup.alpha = preset.ToAlpha;
-            }
-
-            if (preset.UseAnchoredPosition)
-            {
-                _targetRectTransform.anchoredPosition = ResolveAnchoredPosition(preset.ToAnchoredPosition);
-            }
-
-            if (preset.UseScale)
-            {
-                transform.localScale = preset.ToScale;
+                transform.localScale = result.Scale;
             }
         }
 
@@ -214,31 +159,12 @@ namespace Devian
             _targetCanvasGroup = GetComponent<CanvasGroup>();
         }
 
-        private void WarnMissingTargets(UITweenSequence sequence)
+        private void WarnMissingTargets(UICompiledTransitionData compiled)
         {
-            for (var i = 0; i < sequence.GroupCount; i++)
-            {
-                var group = sequence.GetGroup(i);
-                for (var j = 0; j < group.Count; j++)
-                {
-                    WarnMissingTargets(group[j]);
-                }
-            }
-        }
-
-        private void WarnMissingTargets(UITransitionPreset preset)
-        {
-            if (preset.UseAlpha && _targetCanvasGroup == null)
+            if (compiled != null && compiled.UsesAlpha && _targetCanvasGroup == null)
             {
                 Debug.LogWarning("[UITransitionPlayer] CanvasGroup is missing on the same GameObject for alpha transition.", this);
             }
-
-            // RectTransform is required on the same GameObject.
-        }
-
-        private Vector2 ResolveAnchoredPosition(Vector2 offset)
-        {
-            return _groupAnchoredPositionBase + offset;
         }
 
         private UITransitionPresetAsset ResolvePresetAsset(UI_TRANSITION_PRESET_ID id)

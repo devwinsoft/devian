@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace Devian
@@ -12,28 +11,15 @@ namespace Devian
             gameObject.hideFlags = HideFlags.HideInHierarchy;
         }
 
-        internal UITweenHandle Play(UITransitionPlayer player, UITransitionPreset preset, Action onComplete)
+        internal UITweenHandle Play(UITransitionPlayer player, UICompiledTransitionData data, Action onComplete)
         {
-            if (player == null || preset == null)
+            if (player == null || data == null || data.IsEmpty)
             {
                 return UITweenHandle.CreateCanceled();
             }
 
             var handle = new UITweenHandle();
-            var coroutine = StartCoroutine(RunSingle(player, preset, handle, onComplete));
-            handle.Bind(this, coroutine);
-            return handle;
-        }
-
-        internal UITweenHandle Play(UITransitionPlayer player, UITweenSequence sequence, Action onComplete)
-        {
-            if (player == null || sequence == null || sequence.IsEmpty)
-            {
-                return UITweenHandle.CreateCanceled();
-            }
-
-            var handle = new UITweenHandle();
-            var coroutine = StartCoroutine(RunSequence(player, sequence, handle, onComplete));
+            var coroutine = StartCoroutine(RunCompiled(player, data, handle, onComplete));
             handle.Bind(this, coroutine);
             return handle;
         }
@@ -48,114 +34,45 @@ namespace Devian
             StopCoroutine(coroutine);
         }
 
-        private IEnumerator RunSingle(
+        private IEnumerator RunCompiled(
             UITransitionPlayer player,
-            UITransitionPreset preset,
+            UICompiledTransitionData data,
             UITweenHandle handle,
             Action onComplete)
         {
-            yield return RunGroup(player, new[] { preset }, handle);
-
-            if (handle.IsCanceled)
+            if (player == null || data == null || data.IsEmpty)
             {
                 yield break;
             }
 
-            handle.Complete();
-            onComplete?.Invoke();
-        }
+            var snapshot = player.CaptureSnapshot();
 
-        private IEnumerator RunSequence(
-            UITransitionPlayer player,
-            UITweenSequence sequence,
-            UITweenHandle handle,
-            Action onComplete)
-        {
-            for (var i = 0; i < sequence.GroupCount; i++)
+            if (data.Duration <= 0f)
             {
-                yield return RunGroup(player, sequence.GetGroup(i), handle);
-
-                if (handle.IsCanceled)
-                {
-                    yield break;
-                }
-            }
-
-            handle.Complete();
-            onComplete?.Invoke();
-        }
-
-        private IEnumerator RunGroup(
-            UITransitionPlayer player,
-            IReadOnlyList<UITransitionPreset> presets,
-            UITweenHandle handle)
-        {
-            if (presets == null || presets.Count == 0)
-            {
-                yield break;
-            }
-
-            player.BeginGroup();
-
-            for (var i = 0; i < presets.Count; i++)
-            {
-                player.ApplyFrom(presets[i]);
-            }
-
-            var groupDuration = GetGroupDuration(presets);
-
-            if (groupDuration <= 0f)
-            {
-                for (var i = 0; i < presets.Count; i++)
-                {
-                    player.ApplyTo(presets[i]);
-                }
+                player.Apply(data.Evaluate(0f, snapshot));
+                handle.Complete();
+                onComplete?.Invoke();
 
                 yield break;
             }
 
             var elapsed = 0f;
-            while (elapsed < groupDuration)
+            while (elapsed < data.Duration)
             {
                 if (handle.IsCanceled)
                 {
                     yield break;
                 }
 
-                for (var i = 0; i < presets.Count; i++)
-                {
-                    player.ApplyAt(presets[i], elapsed);
-                }
+                player.Apply(data.Evaluate(elapsed, snapshot));
 
                 yield return null;
                 elapsed += Time.unscaledDeltaTime;
             }
 
-            for (var i = 0; i < presets.Count; i++)
-            {
-                player.ApplyTo(presets[i]);
-            }
-        }
-
-        private static float GetGroupDuration(IReadOnlyList<UITransitionPreset> presets)
-        {
-            var duration = 0f;
-            for (var i = 0; i < presets.Count; i++)
-            {
-                var preset = presets[i];
-                if (preset == null)
-                {
-                    continue;
-                }
-
-                var candidate = Mathf.Max(0f, preset.Delay) + Mathf.Max(0f, preset.Duration);
-                if (candidate > duration)
-                {
-                    duration = candidate;
-                }
-            }
-
-            return duration;
+            player.Apply(data.Evaluate(data.Duration, snapshot));
+            handle.Complete();
+            onComplete?.Invoke();
         }
     }
 }

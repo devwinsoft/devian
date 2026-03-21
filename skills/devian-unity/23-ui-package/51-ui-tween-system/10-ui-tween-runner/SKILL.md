@@ -1,13 +1,13 @@
 # 10-ui-tween-runner
 
 Status: ACTIVE
-AppliesTo: v1
+AppliesTo: v2
 Type: Runtime Specification
 
 ## Purpose
 
-`UITweenRunner`는 UI tween 실행 엔진이다.
-시간 기반 보간, delay 대기, easing 계산, completion / cancel 처리의 실제 실행을 담당한다.
+`UITweenRunner`는 compiled UI transition 실행 엔진이다.
+시간 기반 평가, frame result 적용, completion / cancel 처리의 실제 실행을 담당한다.
 
 ## Target Code Path
 
@@ -20,8 +20,9 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Tween/UITweenR
 - tween job 실행
 - coroutine 기반 update loop
 - `Time.unscaledDeltaTime` 기준 진행
-- 진행률 계산 (`0 -> 1`)
-- easing 적용
+- `UITransitionSnapshot` 캡처 시점 관리
+- `UICompiledTransitionData` 평가 루프 실행
+- `UITransitionFrameResult` 적용 타이밍 관리
 - 완료 / cancel 상태 반영
 
 ## Non-Responsibilities
@@ -42,7 +43,9 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Tween/UITweenR
 
 ## Runtime Notes
 
-- single preset은 내부적으로 1-group sequence처럼 실행한다
-- join group은 runner가 한 coroutine에서 같이 구동한다
-- 각 group 시작 시 `UITransitionPlayer`가 현재 target 상태를 snapshot하고, anchoredPosition 채널은 그 snapshot을 기준 offset으로 적용한다
+- runner는 preset을 직접 해석하지 않는다. 실행 입력은 `UICompiledTransitionData`다
+- play 시작 시 `UITransitionPlayer.CaptureSnapshot()`을 1회 호출한다
+- 매 프레임 `compiled.Evaluate(elapsed, snapshot)`으로 result를 계산한다
+- 매 프레임 `UITransitionPlayer.Apply(result)`를 1회 호출한다
+- duration이 `0 이하`면 즉시 final result를 적용하고 완료한다
 - runner는 target 참조를 소유하지 않는다. 실제 property 적용은 `UITransitionPlayer`가 한다

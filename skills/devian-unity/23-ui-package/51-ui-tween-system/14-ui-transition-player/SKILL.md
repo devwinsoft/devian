@@ -1,12 +1,12 @@
 # 14-ui-transition-player
 
 Status: ACTIVE
-AppliesTo: v1
+AppliesTo: v2
 Type: Runtime Specification
 
 ## Purpose
 
-`UITransitionPlayer`는 `UITransitionPreset`을 실제 UI 대상에 적용하는 플레이어다.
+`UITransitionPlayer`는 compiled transition result를 실제 UI 대상에 적용하는 executor다.
 
 ## Target Code Path
 
@@ -40,19 +40,23 @@ public sealed class UITransitionPlayer : MonoBehaviour
 - alpha는 같은 GameObject의 `CanvasGroup`에 적용한다
 - anchoredPosition은 같은 GameObject의 `RectTransform`에 적용한다
 - scale은 같은 GameObject의 `transform.localScale`에 적용한다
-- anchoredPosition preset 값은 현재 `RectTransform.anchoredPosition` 기준 offset으로 적용한다
+- `Play(...)`는 preset 또는 sequence를 `UICompiledTransitionData`로 compile한 뒤 runner에 위임한다
+- play 시작 시 `CaptureSnapshot()`으로 현재 alpha / anchoredPosition / scale을 캡처한다
+- 매 프레임 `UITransitionFrameResult`만 적용한다
+- move 결과는 snapshot의 `BaseAnchoredPosition` 기준 offset으로 계산된다
 - `CanvasGroup`가 없고 preset이 alpha를 요구하면 alpha 채널만 경고 후 skip 한다
 - `Play(UI_TRANSITION_PRESET_ID id)`는 `AssetManager.GetAsset<UITransitionPresetAsset>(id.Value)` 경로를 사용한다
 - `Play(UI_TRANSITION_PRESET_ID id)`를 쓰기 전에 preset asset bundle이 선로드되어 있어야 한다
 - 현재 기본 bootstrap은 `MobileApplication.onLoadCompletedAsync()`에서 `ui` label의 `UITransitionPresetAsset`을 preload한다
-- `Reset/Awake/OnValidate`에서 기본 target 참조를 보정한다
+- `Reset/Awake/OnValidate`에서 same-GameObject target 참조를 보정한다
 - `OnDestroy()`에서는 현재 main handle을 cancel한다
+- player는 preset 의미를 소유하지 않는다. 어떤 preset을 재생할지는 owner가 결정한다
 
 ## Attachment Guidance
 
 - `UITransitionPlayer`는 `LayoutRoot`보다 내부 `VisualRoot`에 붙이는 것을 우선한다
 - `UITransitionPlayer`는 tween 대상과 같은 GameObject에 붙인다
-- `UIPanel`은 base `Show()` / `Hide()`에서 player를 호출할 수 있다
+- `UIPanel`은 base `Show()` / `Hide()` 또는 concrete panel API에서 player를 호출할 수 있다
 - `UIBaseContainer`는 non-layout visual root에만 tween을 적용한다
 - `UIBaseFrame`가 기본 적용 지점이다
 - item add / reward gain / badge update 같은 game event에서는 owner component가 manual `Play(...)`를 직접 호출한다

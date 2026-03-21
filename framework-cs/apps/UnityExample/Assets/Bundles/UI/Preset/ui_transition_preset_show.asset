@@ -13,15 +13,18 @@ MonoBehaviour:
   m_Name: ui_transition_preset_show
   m_EditorClassIdentifier: Devian.Samples.UIPackage::Devian.UITransitionPresetAsset
   _preset:
-    Duration: 1
-    Delay: 0
-    Ease: 2
-    UseAlpha: 1
-    FromAlpha: 0
-    ToAlpha: 1
-    UseAnchoredPosition: 1
-    FromAnchoredPosition: {x: 0, y: 100}
-    ToAnchoredPosition: {x: 0, y: 0}
-    UseScale: 0
-    FromScale: {x: 1, y: 1, z: 1}
-    ToScale: {x: 1, y: 1, z: 1}
+    AlphaClips:
+    - Enabled: 1
+      StartTime: 0
+      Duration: 1
+      Ease: 1
+      From: 0
+      To: 1
+    MoveClips:
+    - Enabled: 1
+      StartTime: 0
+      Duration: 1
+      Ease: 0
+      FromOffset: {x: 0, y: 100}
+      ToOffset: {x: 0, y: 0}
+    ScaleClips: []
