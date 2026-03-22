@@ -6,7 +6,7 @@ AppliesTo: v1
 ## Purpose
 
 Toast/Popup 공용 전역 settings asset.
-canvas ID, dim 기본값, group/popup config 목록을 단일 `ScriptableObject`에 보관한다.
+canvas ID, dim 기본값, toast group 목록, popup frame 매핑을 단일 `ScriptableObject`에 보관한다.
 
 ## Code Path
 
@@ -48,9 +48,9 @@ public sealed class UISettings : ScriptableObject
 
     // ── Popup ──
     public UI_POPUP_CANVAS_ID PopupCanvasId { get; }
+    public UIPopupFrameMapEntry[] PopupFrameMappings { get; }
     public Color DimColor { get; }
     public float DimAlpha { get; }
-    public PopupConfig[] PopupConfigs { get; }
 }
 ```
 
@@ -64,7 +64,8 @@ public sealed class UISettings : ScriptableObject
 - `ToastCanvasId`는 toast canvas bootstrap에 사용한다.
 - `PopupCanvasId`는 popup canvas bootstrap에 사용한다.
 - `GroupConfigs`는 toast group 설정의 source다.
-- `PopupConfigs`는 `PopupId` 기준 lookup source다.
+- `PopupFrameMappings`는 popup frame type과 prefab id 매핑 source다.
+- popup mapping editor는 popup skill의 `15-ui-popup-frame-editor`가 담당한다.
 
 ## Reference
 

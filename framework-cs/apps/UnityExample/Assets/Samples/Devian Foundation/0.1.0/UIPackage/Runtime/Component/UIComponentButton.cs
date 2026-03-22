@@ -11,7 +11,7 @@ namespace Devian
     /// and ScrollRect drag bridge.
     /// </summary>
     [RequireComponent(typeof(EventTrigger))]
-    public class UIPlugInButton : MonoBehaviour
+    public class UIComponentButton : MonoBehaviour
     {
         public enum EffectType
         {

@@ -36,7 +36,7 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Editor/UIPopupPanelEdi
 
 - `UIPanel<UIPopupCanvas>`
 - `UIPopupDim`과 `PopupRoot`를 소유한다
-- manager가 spawn한 `UIPopupFrame`를 `PopupRoot`에 attach / detach 한다
+- manager가 spawn한 `UIPopupFrameBase`를 `PopupRoot`에 attach / detach 한다
 - panel 아래 시각 계층은 다음을 기준으로 정리한다
 
 ```text
@@ -63,12 +63,12 @@ PopupRoot
 - dim color / alpha
 
 panel은 `UIPopupDim.ApplyState(...)`로 위 상태를 위임한다.
-dim과 blocker는 항상 top popup config 기준으로 계산한다.
+dim과 blocker는 항상 top popup frame policy 기준으로 계산한다.
 
 ## Input Gate Boundary
 
 - shared dim/blocker는 `UIPopupDim`이 담당한다
-- popup 간 top-only input gate는 `UIPopupFrame`의 root `CanvasGroup`가 담당한다
+- popup 간 top-only input gate는 `UIPopupFrameBase`의 root `CanvasGroup`가 담당한다
 - `UIPopupPanel`은 popup별 input gate를 직접 관리하지 않는다
 
 ## Editor Install

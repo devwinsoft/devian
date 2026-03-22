@@ -24,7 +24,7 @@ namespace Devian
             ApplyModalState(false, false, false, UIPopupDefaults.DefaultDimColor, 0f);
         }
 
-        public void AttachFrame(UIPopupFrame frame)
+        public void AttachFrame(UIPopupFrameBase frame)
         {
             if (frame == null)
             {
@@ -45,7 +45,7 @@ namespace Devian
             EnsureLayerOrder();
         }
 
-        public void DetachFrame(UIPopupFrame frame)
+        public void DetachFrame(UIPopupFrameBase frame)
         {
             if (frame == null)
             {

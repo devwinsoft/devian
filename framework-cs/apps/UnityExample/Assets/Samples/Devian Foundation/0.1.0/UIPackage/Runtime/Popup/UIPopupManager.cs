@@ -1,23 +1,28 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 namespace Devian
 {
     public sealed class UIPopupManager : AutoSingleton<UIPopupManager>
     {
+        private static readonly MethodInfo s_spawnPopupFrameGenericMethod =
+            typeof(UIPopupManager).GetMethod(nameof(SpawnPopupFrameGeneric), BindingFlags.NonPublic | BindingFlags.Static);
+
         private sealed class PopupStackEntry
         {
-            public PopupConfig Config;
-            public UIPopupFrame Frame;
-            public Action<PopupResult> OnClosed;
+            public Type FrameType;
+            public UIPopupFrameBase Frame;
+            public Action<PopupCloseReason> OnClosed;
             public PopupFrameState State;
-            public object PendingResultPayload;
             public PopupCloseReason PendingCloseReason;
         }
 
         private readonly List<PopupStackEntry> _stack = new List<PopupStackEntry>();
-        private readonly Dictionary<UIPopupFrame, PopupStackEntry> _entryByFrame = new Dictionary<UIPopupFrame, PopupStackEntry>();
+        private readonly Dictionary<UIPopupFrameBase, PopupStackEntry> _entryByFrame = new Dictionary<UIPopupFrameBase, PopupStackEntry>();
+        private readonly Dictionary<Type, MethodInfo> _spawnPopupFrameMethodByType = new Dictionary<Type, MethodInfo>();
+        private readonly Dictionary<Type, UI_POPUP_FRAME_ID> _popupFrameIdByType = new Dictionary<Type, UI_POPUP_FRAME_ID>();
 
         private UISettings _settings;
         private bool _settingsLoaded;
@@ -72,72 +77,22 @@ namespace Devian
             }
         }
 
-        public bool Open(string popupId, object payload = null, Action<PopupResult> onClosed = null)
+        public bool Open<TFrame>(Action<PopupCloseReason> onClosed = null)
+            where TFrame : UIPopupFrameBase
         {
-            return Open(new PopupRequest(popupId, payload, onClosed));
+            return Open<TFrame>(null, onClosed);
         }
 
-        public bool Open(PopupRequest request)
+        public bool Open<TFrame>(object payload = null, Action<PopupCloseReason> onClosed = null)
+            where TFrame : UIPopupFrameBase
         {
-            var panel = ResolvePanel();
-            if (panel == null)
-            {
-                Debug.LogWarning("[UIPopupManager] UIPopupPanel is unavailable. Popup request skipped.");
-                return false;
-            }
+            return OpenInternal(typeof(TFrame), payload, onClosed);
+        }
 
-            var config = ResolveConfig(request.PopupId);
-            if (config == null)
-            {
-                Debug.LogWarning($"[UIPopupManager] PopupConfig not found for popup id '{request.PopupId}'.");
-                return false;
-            }
-
-            if (config.PopupFrameId == null || !config.PopupFrameId.IsValid)
-            {
-                Debug.LogWarning($"[UIPopupManager] PopupFrameId is invalid for popup id '{request.PopupId}'.");
-                return false;
-            }
-
-            var duplicateEntry = FindOpenedEntry(request.PopupId);
-            if (!HandleDuplicate(config, request, duplicateEntry))
-            {
-                return false;
-            }
-
-            UIPopupFrame frame;
-            try
-            {
-                frame = BundlePool.Spawn<UIPopupFrame>(config.PopupFrameId, parent: panel.popupRoot);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"[UIPopupManager] Failed to spawn popup frame '{config.PopupFrameId}': {e.Message}");
-                return false;
-            }
-
-            if (frame == null)
-            {
-                Debug.LogError($"[UIPopupManager] Spawn returned null for popup frame '{config.PopupFrameId}'.");
-                return false;
-            }
-
-            panel.AttachFrame(frame);
-
-            var entry = new PopupStackEntry
-            {
-                Config = config,
-                Frame = frame,
-                OnClosed = request.OnClosed,
-                State = PopupFrameState.Opening
-            };
-
-            _stack.Add(entry);
-            _entryByFrame[frame] = entry;
-            RefreshStackState();
-
-            frame.Open(config, request, HandleFrameOpened, HandleFrameCloseStarted, HandleFrameClosed);
-            return true;
+        public bool Open<TFrame, TReq>(TReq request, Action<PopupCloseReason> onClosed = null)
+            where TFrame : UIPopupFrameBase<TReq>
+        {
+            return OpenInternal(typeof(TFrame), request, onClosed);
         }
 
         public bool CloseTop(PopupCloseReason reason = PopupCloseReason.Canceled)
@@ -148,7 +103,7 @@ namespace Devian
                 return false;
             }
 
-            RequestClose(topEntry, reason, null);
+            RequestClose(topEntry, reason);
             return true;
         }
 
@@ -162,7 +117,7 @@ namespace Devian
             for (var i = _stack.Count - 1; i >= 0; i--)
             {
                 var entry = _stack[i];
-                ForceCloseEntry(entry, PopupCloseReason.ForceClosed, null);
+                ForceCloseEntry(entry, PopupCloseReason.ForceClosed);
             }
 
             _stack.Clear();
@@ -173,18 +128,18 @@ namespace Devian
         internal void HandleDimClicked()
         {
             var topEntry = GetTopEntry();
-            if (topEntry == null || topEntry.Config == null || !topEntry.Config.CloseOnDimClick)
+            if (topEntry?.Frame == null || !topEntry.Frame.closeOnDimClick)
             {
                 return;
             }
 
-            RequestClose(topEntry, PopupCloseReason.DimClick, null);
+            RequestClose(topEntry, PopupCloseReason.DimClick);
         }
 
         private void Update()
         {
             var topEntry = GetTopEntry();
-            if (topEntry == null || topEntry.Config == null)
+            if (topEntry?.Frame == null)
             {
                 return;
             }
@@ -195,30 +150,30 @@ namespace Devian
             }
 
             #if UNITY_ANDROID && !UNITY_EDITOR
-            if (!topEntry.Config.CloseOnBack)
+            if (!topEntry.Frame.closeOnBack)
             {
                 return;
             }
 
-            RequestClose(topEntry, PopupCloseReason.Back, null);
+            RequestClose(topEntry, PopupCloseReason.Back);
             #else
-            if (!topEntry.Config.CloseOnEscape)
+            if (!topEntry.Frame.closeOnEscape)
             {
                 return;
             }
 
-            RequestClose(topEntry, PopupCloseReason.Escape, null);
+            RequestClose(topEntry, PopupCloseReason.Escape);
             #endif
         }
 
-        private bool HandleDuplicate(PopupConfig config, PopupRequest request, PopupStackEntry duplicateEntry)
+        private bool HandleDuplicate(PopupStackEntry duplicateEntry)
         {
-            if (duplicateEntry == null || config == null)
+            if (duplicateEntry?.Frame == null)
             {
                 return true;
             }
 
-            switch (config.DuplicatePolicy)
+            switch (duplicateEntry.Frame.duplicatePolicy)
             {
                 case PopupDuplicatePolicy.IgnoreIfOpened:
                     return false;
@@ -228,7 +183,7 @@ namespace Devian
                     return false;
 
                 case PopupDuplicatePolicy.ReplaceIfOpened:
-                    RequestClose(duplicateEntry, PopupCloseReason.Replaced, null);
+                    RequestClose(duplicateEntry, PopupCloseReason.Replaced);
                     return true;
 
                 default:
@@ -254,7 +209,7 @@ namespace Devian
             RefreshStackState();
         }
 
-        private void RequestClose(PopupStackEntry entry, PopupCloseReason reason, object payload)
+        private void RequestClose(PopupStackEntry entry, PopupCloseReason reason)
         {
             if (entry == null || entry.Frame == null || entry.State == PopupFrameState.Closing)
             {
@@ -262,13 +217,12 @@ namespace Devian
             }
 
             entry.PendingCloseReason = reason;
-            entry.PendingResultPayload = payload;
             entry.State = PopupFrameState.Closing;
             RefreshStackState();
-            entry.Frame.CloseFromManager(reason, payload);
+            entry.Frame.CloseFromManager(reason);
         }
 
-        private void ForceCloseEntry(PopupStackEntry entry, PopupCloseReason reason, object payload)
+        private void ForceCloseEntry(PopupStackEntry entry, PopupCloseReason reason)
         {
             if (entry == null)
             {
@@ -286,10 +240,10 @@ namespace Devian
                 BundlePool.Despawn(entry.Frame);
             }
 
-            entry.OnClosed?.Invoke(new PopupResult(entry.Config?.PopupId, reason, payload));
+            entry.OnClosed?.Invoke(reason);
         }
 
-        private void HandleFrameOpened(UIPopupFrame frame)
+        private void HandleFrameOpened(UIPopupFrameBase frame)
         {
             if (frame == null || !_entryByFrame.TryGetValue(frame, out var entry))
             {
@@ -300,7 +254,7 @@ namespace Devian
             RefreshStackState();
         }
 
-        private void HandleFrameCloseStarted(UIPopupFrame frame, PopupCloseReason reason, object payload)
+        private void HandleFrameCloseStarted(UIPopupFrameBase frame, PopupCloseReason reason)
         {
             if (frame == null || !_entryByFrame.TryGetValue(frame, out var entry))
             {
@@ -308,12 +262,11 @@ namespace Devian
             }
 
             entry.PendingCloseReason = reason;
-            entry.PendingResultPayload = payload;
             entry.State = PopupFrameState.Closing;
             RefreshStackState();
         }
 
-        private void HandleFrameClosed(UIPopupFrame frame, PopupCloseReason reason, object payload)
+        private void HandleFrameClosed(UIPopupFrameBase frame, PopupCloseReason reason)
         {
             if (frame == null || !_entryByFrame.TryGetValue(frame, out var entry))
             {
@@ -330,7 +283,7 @@ namespace Devian
             }
 
             BundlePool.Despawn(frame);
-            entry.OnClosed?.Invoke(new PopupResult(entry.Config?.PopupId, reason, payload));
+            entry.OnClosed?.Invoke(reason);
             RefreshStackState();
         }
 
@@ -361,7 +314,7 @@ namespace Devian
             }
 
             var topEntry = GetTopEntry();
-            if (topEntry == null || topEntry.Config == null)
+            if (topEntry?.Frame == null)
             {
                 panel.ApplyModalState(false, false, false, UIPopupDefaults.DefaultDimColor, 0f);
                 return;
@@ -370,22 +323,22 @@ namespace Devian
             var settings = Settings;
             var dimColor = settings != null ? settings.DimColor : UIPopupDefaults.DefaultDimColor;
             var dimAlpha = settings != null ? settings.DimAlpha : UIPopupDefaults.DefaultDimAlpha;
-            var blockBehind = topEntry.Config.BlockInputBehind || topEntry.Config.CloseOnDimClick;
+            var blockBehind = topEntry.Frame.blockInputBehind || topEntry.Frame.closeOnDimClick;
 
             panel.ApplyModalState(
-                topEntry.Config.UseDim,
+                topEntry.Frame.useDim,
                 blockBehind,
-                topEntry.Config.CloseOnDimClick,
+                topEntry.Frame.closeOnDimClick,
                 dimColor,
                 dimAlpha);
         }
 
-        private PopupStackEntry FindOpenedEntry(string popupId)
+        private PopupStackEntry FindOpenedEntry(Type frameType)
         {
             for (var i = _stack.Count - 1; i >= 0; i--)
             {
                 var entry = _stack[i];
-                if (entry == null || entry.Config == null)
+                if (entry == null || entry.FrameType == null)
                 {
                     continue;
                 }
@@ -395,7 +348,7 @@ namespace Devian
                     continue;
                 }
 
-                if (string.Equals(entry.Config.PopupId, popupId, StringComparison.Ordinal))
+                if (entry.FrameType == frameType)
                 {
                     return entry;
                 }
@@ -442,29 +395,143 @@ namespace Devian
             return canvas.panel;
         }
 
-        private PopupConfig ResolveConfig(string popupId)
+        private bool OpenInternal(Type frameType, object payload, Action<PopupCloseReason> onClosed)
         {
-            var settings = Settings;
-            if (settings == null || settings.PopupConfigs == null)
+            if (frameType == null || frameType.IsAbstract || !typeof(UIPopupFrameBase).IsAssignableFrom(frameType))
             {
-                return null;
+                Debug.LogWarning($"[UIPopupManager] Invalid popup frame type '{frameType?.Name ?? "null"}'.");
+                return false;
             }
 
-            for (var i = 0; i < settings.PopupConfigs.Length; i++)
+            var panel = ResolvePanel();
+            if (panel == null)
             {
-                var config = settings.PopupConfigs[i];
-                if (config == null)
+                Debug.LogWarning("[UIPopupManager] UIPopupPanel is unavailable. Popup request skipped.");
+                return false;
+            }
+
+            if (!TryGetPopupFrameId(frameType, out var frameId))
+            {
+                Debug.LogWarning($"[UIPopupManager] Popup frame mapping not found for popup frame type '{frameType.Name}'.");
+                return false;
+            }
+
+            var duplicateEntry = FindOpenedEntry(frameType);
+            if (!HandleDuplicate(duplicateEntry))
+            {
+                return false;
+            }
+
+            UIPopupFrameBase frame;
+            try
+            {
+                frame = SpawnPopupFrame(frameType, frameId, panel.popupRoot);
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"[UIPopupManager] Failed to spawn popup frame '{frameId}': {e.Message}");
+                return false;
+            }
+
+            if (frame == null)
+            {
+                Debug.LogError($"[UIPopupManager] Spawn returned null for popup frame '{frameId}'.");
+                return false;
+            }
+
+            if (!frameType.IsAssignableFrom(frame.GetType()))
+            {
+                panel.DetachFrame(frame);
+                BundlePool.Despawn(frame);
+                Debug.LogError(
+                    $"[UIPopupManager] Spawned popup frame type mismatch. " +
+                    $"Expected '{frameType.Name}', got '{frame.GetType().Name}'.");
+                return false;
+            }
+
+            panel.AttachFrame(frame);
+
+            var entry = new PopupStackEntry
+            {
+                FrameType = frameType,
+                Frame = frame,
+                OnClosed = onClosed,
+                State = PopupFrameState.Opening
+            };
+
+            _stack.Add(entry);
+            _entryByFrame[frame] = entry;
+            RefreshStackState();
+
+            frame.OpenUntyped(payload, HandleFrameOpened, HandleFrameCloseStarted, HandleFrameClosed);
+            return true;
+        }
+
+        private UIPopupFrameBase SpawnPopupFrame(Type frameType, string frameId, Transform parent)
+        {
+            if (!_spawnPopupFrameMethodByType.TryGetValue(frameType, out var method))
+            {
+                method = s_spawnPopupFrameGenericMethod.MakeGenericMethod(frameType);
+                _spawnPopupFrameMethodByType.Add(frameType, method);
+            }
+
+            try
+            {
+                return method.Invoke(null, new object[] { frameId, parent }) as UIPopupFrameBase;
+            }
+            catch (TargetInvocationException e) when (e.InnerException != null)
+            {
+                throw e.InnerException;
+            }
+        }
+
+        private static UIPopupFrameBase SpawnPopupFrameGeneric<TFrame>(string frameId, Transform parent)
+            where TFrame : UIPopupFrameBase, IPoolable
+        {
+            return BundlePool.Spawn<TFrame>(frameId, parent: parent);
+        }
+
+        private bool TryGetPopupFrameId(Type frameType, out UI_POPUP_FRAME_ID frameId)
+        {
+            frameId = null;
+
+            if (frameType == null || frameType.IsAbstract || !typeof(UIPopupFrameBase).IsAssignableFrom(frameType))
+            {
+                return false;
+            }
+
+            if (_popupFrameIdByType.TryGetValue(frameType, out frameId))
+            {
+                return frameId != null && frameId.IsValid;
+            }
+
+            var settings = ResolveSettings();
+            var mappings = settings != null ? settings.PopupFrameMappings : null;
+            if (mappings == null)
+            {
+                _popupFrameIdByType[frameType] = null;
+                return false;
+            }
+
+            for (var i = 0; i < mappings.Length; i++)
+            {
+                var entry = mappings[i];
+                if (entry == null || string.IsNullOrWhiteSpace(entry.FrameTypeName) || entry.FrameId == null || !entry.FrameId.IsValid)
                 {
                     continue;
                 }
 
-                if (string.Equals(config.PopupId, popupId, StringComparison.Ordinal))
+                var mappedType = Type.GetType(entry.FrameTypeName);
+                if (mappedType == frameType)
                 {
-                    return config;
+                    frameId = entry.FrameId;
+                    _popupFrameIdByType[frameType] = frameId;
+                    return true;
                 }
             }
 
-            return null;
+            _popupFrameIdByType[frameType] = null;
+            return false;
         }
 
         private UISettings ResolveSettings()

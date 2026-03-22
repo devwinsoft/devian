@@ -22,7 +22,7 @@ Useful for raycast targets or layout participation without visual rendering.
 
 ### Code Path
 ```
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Plugins/UIPlugInNonDrawing.cs
+framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Component/UIComponentNonDrawing.cs
 ```
 
 ### Class
@@ -30,7 +30,7 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Plugins/UIPlug
 namespace Devian
 {
     [RequireComponent(typeof(CanvasRenderer))]
-    public class UIPlugInNonDrawing : Graphic
+    public class UIComponentNonDrawing : Graphic
 }
 ```
 

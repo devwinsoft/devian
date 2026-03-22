@@ -4175,6 +4175,7 @@ GameObject:
   - component: {fileID: 1547388102}
   - component: {fileID: 1547388101}
   - component: {fileID: 1547388103}
+  - component: {fileID: 1547388104}
   m_Layer: 5
   m_Name: Text (TMP)
   m_TagString: Untagged
@@ -4310,12 +4311,33 @@ MonoBehaviour:
   m_GameObject: {fileID: 1547388099}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0898be8fe653146e9a9574b29949f9f9, type: 3}
+  m_Script: {fileID: 11500000, guid: 1a83cf5c7635544bfbf6e63d59c1e9e4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.UI::Devian.UIPlugInText
-  _text: {fileID: 1547388101}
-  _textId:
-    Value: greeting
+  _effectType: 0
+  SoundDown:
+    Value: 0
+  SoundUp:
+    Value: 0
+  onDown:
+    m_PersistentCalls:
+      m_Calls: []
+  onUp:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1547388104
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1547388099}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d0b148fe25e99eb48b9724523833bab1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.EventSystems.EventTrigger
+  m_Delegates: []
 --- !u!1 &1629782837
 GameObject:
   m_ObjectHideFlags: 0

@@ -43,7 +43,7 @@ SOUND_ID -> TB_SOUND.Get(id.Value) -> row.Sound_id -> SoundManager.Instance.Play
 
 ### Code Path
 ```
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Plugins/UIPlugInButton.cs
+framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Component/UIComponentButton.cs
 ```
 
 ### Class
@@ -51,7 +51,7 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Plugins/UIPlug
 namespace Devian
 {
     [RequireComponent(typeof(EventTrigger))]
-    public class UIPlugInButton : MonoBehaviour
+    public class UIComponentButton : MonoBehaviour
 }
 ```
 

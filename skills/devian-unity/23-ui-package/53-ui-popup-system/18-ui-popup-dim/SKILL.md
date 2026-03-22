@@ -26,8 +26,8 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/UIPopupD
 - `UIPopupDim`은 `PopupRoot`와 분리된 sibling이어야 한다
 - `RequireComponent(typeof(Image))`, `RequireComponent(typeof(CanvasGroup))`를 사용한다
 - `Button`나 `EventTrigger`를 쓰지 않는다
-- dim click 허용 여부는 top popup config 기준이다
-- dim 표시 여부와 blocker 여부도 top popup config 기준이다
+- dim click 허용 여부는 top popup frame policy 기준이다
+- dim 표시 여부와 blocker 여부도 top popup frame policy 기준이다
 
 ## Notes
 

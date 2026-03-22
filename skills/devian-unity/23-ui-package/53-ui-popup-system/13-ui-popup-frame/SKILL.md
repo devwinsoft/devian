@@ -1,4 +1,4 @@
-# 13-ui-popup-frame — UIPopupFrame
+# 13-ui-popup-frame — UIPopupFrameBase
 
 Status: ACTIVE
 AppliesTo: v1
@@ -6,33 +6,46 @@ AppliesTo: v1
 ## Purpose
 
 popup 1건의 실제 표시 단위.
-request bind, open/close transition, close result, top-state input 제어를 담당한다.
+frame policy, request bind, open/close transition, close reason, top-state input 제어를 담당한다.
 
 ## Code Path
 
 ```text
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/UIPopupFrame.cs
+framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/UIPopupFrameBase.cs
+```
+
+```text
+framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/UIPopupFrameBase.Generic.cs
 ```
 
 ## Shape
 
 ```csharp
-[RequireComponent(typeof(UITransitionPlayer))]
-[RequireComponent(typeof(CanvasGroup))]
-public class UIPopupFrame : UIBaseFrame, IPoolable
+public abstract class UIPopupFrameBase : UIBaseFrame, IPoolable
 {
-    public PopupFrameState state { get; }
-    public bool isTop { get; }
+    public PopupFrameState State { get; }
+    public bool IsTop { get; }
 
-    internal void Open(...);
-    internal void CloseFromManager(PopupCloseReason reason, object payload = null);
+    internal void OpenUntyped(...);
+    internal void CloseFromManager(PopupCloseReason reason);
     internal void SetTopState(bool isTop, bool allowInput);
 
     public void CloseCompleted();
     public void CloseCanceled();
-    protected void CloseWithResult(PopupCloseReason reason, object payload = null);
+    protected virtual void ClosePopup(PopupCloseReason reason = PopupCloseReason.Completed);
 }
 ```
+
+```csharp
+public abstract class UIPopupFrameBase<TReq> : UIPopupFrameBase
+{
+    protected TReq CurrentRequest { get; }
+    protected abstract void onBind(TReq request);
+}
+```
+
+기본 concrete frame은 두지 않는다.
+실제 popup은 `UIPopupFrameBase` 또는 `UIPopupFrameBase<TReq>`를 상속한 concrete class로 직접 만든다.
 
 ## State Machine
 
@@ -50,7 +63,7 @@ public class UIPopupFrame : UIBaseFrame, IPoolable
 
 - same-GO `UITransitionPlayer` 사용
 - `_openTransitionId`, `_closeTransitionId`를 frame이 직접 소유
-- `PopupConfig.PlayOpenTransition`, `PopupConfig.PlayCloseTransition`으로 실제 재생 여부 결정
+- 실제 재생 여부는 frame의 `PlayOpenTransition`, `PlayCloseTransition` override와 preset id 유효성으로 결정
 
 ## Top-State
 
@@ -58,3 +71,14 @@ public class UIPopupFrame : UIBaseFrame, IPoolable
 - input gating은 frame root same-`GameObject` `CanvasGroup`로 처리한다
 - input gate용 serialized ref를 두지 않는다
 - top이 아니거나 `Opened`가 아니면 input 비활성
+
+## Policy Ownership
+
+popup modal 정책은 frame 코드 override로 정의한다.
+
+- `UseDim`
+- `BlockInputBehind`
+- `CloseOnBack`
+- `CloseOnEscape`
+- `CloseOnDimClick`
+- `DuplicatePolicy`

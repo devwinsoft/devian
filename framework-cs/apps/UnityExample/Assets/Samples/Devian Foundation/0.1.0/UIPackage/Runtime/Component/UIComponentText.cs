@@ -8,7 +8,7 @@ namespace Devian
     /// Binds ST_TEXT value to a TMP_Text component.
     /// Subscribes to UI_MESSAGE.InitOnce and UI_MESSAGE.ReloadText via UIManager.messageSystem.
     /// </summary>
-    public class UIPlugInText : MonoBehaviour
+    public class UIComponentText : MonoBehaviour
     {
         [SerializeField] private TMP_Text _text;
         [SerializeField] private TEXT_ID _textId;

@@ -90,7 +90,7 @@ public static UIMessageSystem messageSystem => Instance?.mMessageSystem;
 
 - ownerKey 기반 메시지 시스템이다
 - `BaseTrigger` 구현은 notify 중 `Subcribe / UnSubcribe / ClearAll` 재진입을 허용한다
-- `UIPlugInText`는 `InitOnce`와 `ReloadText`를 직접 사용하는 대표 사례다
+- `UIComponentText`는 `InitOnce`와 `ReloadText`를 직접 사용하는 대표 사례다
 
 ---
 

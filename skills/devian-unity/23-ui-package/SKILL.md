@@ -26,7 +26,7 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/
 | `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/UIPackage/` | Packages (sync) |
 | `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/{version}/UIPackage/` | Assets/Samples (import) |
 
-주요 파일: `UIManager.cs`, `UICanvas.cs`, `UIPanel.cs`, `UIBaseContainer.cs`, `UIBaseFrame.cs`, `UIUtils.cs`, `Plugins/*` 등.
+주요 파일: `UIManager.cs`, `UICanvas.cs`, `UIPanel.cs`, `UIBaseContainer.cs`, `UIBaseFrame.cs`, `UIUtils.cs`, `Component/*` 등.
 
 > **이전 위치:** `com.devian.foundation/Runtime/Unity/UI/` → `com.devian.ui/Runtime/` → `com.devian.foundation/Samples~/UIPackage/` 로 이관 완료
 
@@ -36,8 +36,8 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/
 
 UIPackage는 `com.devian.foundation` 내 샘플이므로 자체 `package.json`이 없다. 의존성은 asmdef references로 관리된다.
 
-> **Devian Domain Sound**는 `UIPlugInButton`의 UI 사운드 재생에서 사용한다 (`SOUND_ID`, `TB_SOUND`, `SoundManager`, `SoundChannelType.Ui`).
-> **Devian Domain Common**은 `UIPlugInText`의 `ST_TEXT`/`TEXT_ID` 조회에 사용한다.
+> **Devian Domain Sound**는 `UIComponentButton`의 UI 사운드 재생에서 사용한다 (`SOUND_ID`, `TB_SOUND`, `SoundManager`, `SoundChannelType.Ui`).
+> **Devian Domain Common**은 `UIComponentText`의 `ST_TEXT`/`TEXT_ID` 조회에 사용한다.
 
 ### Circular Dependency Prevention
 
@@ -68,11 +68,11 @@ UIPackage는 `com.devian.foundation` 내 샘플이므로 자체 `package.json`�
 | 22 | UIScrollContainer | 유일한 scroll owner (UIScrollContainer + IUIScrollSection) | `22-ui-container-scroll/SKILL.md` |
 | 23 | UIGridFrame | N열 grid section renderer (UIGridFrame + UIGridCell) | `23-ui-frame-grid/SKILL.md` |
 | 24 | UISimpleFrame | 고정 프리팹 section (배너, 헤더, 구분선) | `24-ui-frame-simple/SKILL.md` |
-| 30 | UIPlugInButton | Button press feedback + UI sound + events + scroll bridge | `30-ui-plugin-button/SKILL.md` |
-| 31 | UIPlugInCircleFilter | Collider2D 기반 Raycast filter | `31-ui-plugin-circle-filter/SKILL.md` |
-| 32 | UIPlugInNonDrawing | Non-drawing Graphic | `32-ui-plugin-non-drawing/SKILL.md` |
+| 30 | UIComponentButton | Button press feedback + UI sound + events + scroll bridge | `30-ui-plugin-button/SKILL.md` |
+| 31 | UIComponentCircleFilter | Collider2D 기반 Raycast filter | `31-ui-plugin-circle-filter/SKILL.md` |
+| 32 | UIComponentNonDrawing | Non-drawing Graphic | `32-ui-plugin-non-drawing/SKILL.md` |
 | 33 | UIMessageSystem | UI 전용 메시지 시스템 (UnityEngine.EntityId + UI_MESSAGE) | `33-ui-message-system/SKILL.md` |
-| 34 | UIPlugInText | ST_TEXT 바인딩 텍스트 플러그인 (InitOnce + ReloadText) | `34-ui-plugin-text/SKILL.md` |
+| 34 | UIComponentText | ST_TEXT 바인딩 텍스트 플러그인 (InitOnce + ReloadText) | `34-ui-plugin-text/SKILL.md` |
 | 40 | UI_CONTAINER_ID | UIBaseContainer 프리팹 참조 ID (AssetId 패턴) | `40-ui-container-id/SKILL.md` |
 | 41 | UI_CELL_ID | UIGridCell 프리팹 참조 ID (AssetId 패턴) | `41-ui-cell-id/SKILL.md` |
 | 50 | UIUtils | 공용 static 유틸리티 (좌표 변환, Billboard, Cursor) | `50-ui-utils/SKILL.md` |

@@ -60,7 +60,7 @@ namespace Devian
 public async Task LoadBundlesAsync()
 ```
 
-- UI 번들 에셋 로드. `MobileBundleManager.onLoadBundlesAsync()`에서 호출한다.
+- UI 번들 에셋 로드. `MobileBundleManager.LoadBundlesAsync()`에서 호출한다.
 - `UISettings.UIAddressablesKey`로 Addressables label을 결정한다.
 - transition preset preload (`AssetManager.LoadBundleAssets<UITransitionPresetAsset>`) + UI GameObject 로드 (`AssetManager.LoadBundleAssets<GameObject>`)를 수행한다.
 

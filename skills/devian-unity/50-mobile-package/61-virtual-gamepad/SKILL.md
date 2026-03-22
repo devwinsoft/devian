@@ -164,7 +164,7 @@ Hierarchy 예시:
 - `mOuter` = Outer RectTransform
 - `mInner` = Inner RectTransform
 
-> UIVirtualMovePad / UIVirtualLookPad requires `CanvasRenderer` and `UIPlugInNonDrawing` via `RequireComponent`.
+> UIVirtualMovePad / UIVirtualLookPad requires `CanvasRenderer` and `UIComponentNonDrawing` via `RequireComponent`.
 
 ### Parameters
 
@@ -196,7 +196,7 @@ Hierarchy 예시:
 | 패키지 | 필수 | 용도 |
 |--------|------|------|
 | Unity UGUI | ✅ | `UnityEngine.UI`, `UnityEngine.EventSystems` |
-| `com.devian.foundation` (UIPackage) | ✅ | `UIPlugInNonDrawing` (RequireComponent, asmdef: `Devian.Samples.UIPackage`) |
+| `com.devian.foundation` (UIPackage) | ✅ | `UIComponentNonDrawing` (RequireComponent, asmdef: `Devian.Samples.UIPackage`) |
 
 ---
 

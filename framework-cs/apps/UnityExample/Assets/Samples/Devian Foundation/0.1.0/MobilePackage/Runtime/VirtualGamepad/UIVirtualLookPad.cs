@@ -15,7 +15,7 @@ namespace Devian
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CanvasRenderer))]
-    [RequireComponent(typeof(UIPlugInNonDrawing))]
+    [RequireComponent(typeof(UIComponentNonDrawing))]
     public sealed class UIVirtualLookPad : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
     {
         [Serializable]

@@ -22,11 +22,11 @@ public class TestBundleManager : MobileBundleManager<TestBundleManager>
 #endif
     };
 
-    protected override async Task onLoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null)
+    public override async Task LoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null)
     {
         reportProgress(onProgress, 0f);
 
-        await base.onLoadBundlesAsync(language, onProgress);
+        await base.LoadBundlesAsync(language, onProgress);
 
 #if UNITY_EDITOR
         await TableManager.Instance.LoadTablesAsync("table-ndjson", TableFormat.Json);

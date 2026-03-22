@@ -8,7 +8,7 @@ namespace Devian
     /// Useful for raycast targets or layout purposes without visual rendering.
     /// </summary>
     [RequireComponent(typeof(CanvasRenderer))]
-    public class UIPlugInNonDrawing : Graphic
+    public class UIComponentNonDrawing : Graphic
     {
         public override void SetMaterialDirty()
         {

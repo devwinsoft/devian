@@ -28,7 +28,7 @@ Filters UI raycasts based on whether the point is inside the attached `Collider2
 
 ### Code Path
 ```
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Plugins/UIPlugInCircleFilter.cs
+framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Component/UIComponentCircleFilter.cs
 ```
 
 ### Class
@@ -37,7 +37,7 @@ namespace Devian
 {
     [RequireComponent(typeof(Collider2D))]
     [RequireComponent(typeof(RectTransform))]
-    public class UIPlugInCircleFilter : MonoBehaviour, ICanvasRaycastFilter
+    public class UIComponentCircleFilter : MonoBehaviour, ICanvasRaycastFilter
 }
 ```
 

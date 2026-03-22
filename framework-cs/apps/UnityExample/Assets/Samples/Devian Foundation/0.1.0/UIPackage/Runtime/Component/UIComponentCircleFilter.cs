@@ -9,7 +9,7 @@ namespace Devian
     /// </summary>
     [RequireComponent(typeof(Collider2D))]
     [RequireComponent(typeof(RectTransform))]
-    public class UIPlugInCircleFilter : MonoBehaviour, ICanvasRaycastFilter
+    public class UIComponentCircleFilter : MonoBehaviour, ICanvasRaycastFilter
     {
         private Collider2D _collider;
         private RectTransform _rectTransform;

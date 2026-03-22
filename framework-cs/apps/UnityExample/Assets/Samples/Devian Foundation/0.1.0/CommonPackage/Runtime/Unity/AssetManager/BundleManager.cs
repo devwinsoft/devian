@@ -1,4 +1,4 @@
-// SSOT: skills/devian-unity/20-domain-common-system/19-bundle-manager/SKILL.md
+// SSOT: skills/devian-unity/20-common-package/19-bundle-manager/SKILL.md
 // Devian Unity Bundle Manager - Addressables Label based Patch/Download
 // CompoSingleton: Bootstrap prefab에 배치하여 사용
 
@@ -38,7 +38,7 @@ namespace Devian
 
     /// <summary>
     /// Addressables Label-based Patch/Download manager.
-    /// InitializeAsync/DownloadAsync에 labels를 전달하여 다운로드 수행.
+    /// PatchLabels를 서브클래스가 정의하고, InitializeAsync/DownloadAsync/LoadBundlesAsync를 사용한다.
     ///
     /// CompoSingleton: Bootstrap prefab에 배치하여 사용.
     /// </summary>
@@ -64,13 +64,13 @@ namespace Devian
         // ====================================================================
         // Events
         // ====================================================================
-        
+
         /// <summary>
         /// Fired when an error occurs during patch/download.
         /// Additional notification channel (errors are also returned via CommonResult).
         /// </summary>
         public event Action<string>? OnError;
-        
+
         // ====================================================================
         // Public Properties
         // ====================================================================
@@ -81,17 +81,27 @@ namespace Devian
         public PatchInfo? LastPatchInfo { get; private set; }
 
         // ====================================================================
+        // PatchLabels
+        // ====================================================================
+
+        /// <summary>
+        /// 패치/다운로드 대상 라벨 목록. concrete 서브클래스가 정의한다.
+        /// </summary>
+        protected abstract IReadOnlyList<string> PatchLabels { get; }
+
+        // ====================================================================
         // InitializeAsync - Calculate download sizes
         // ====================================================================
 
         /// <summary>
-        /// Calculates download size for each label.
+        /// PatchLabels 기준으로 다운로드 필요 용량을 계산한다.
         /// </summary>
-        /// <param name="labels">Labels to check download size</param>
-        public async Task<CommonResult<PatchInfo>> InitializeAsync(IReadOnlyList<string> labels)
+        public async Task<CommonResult<PatchInfo>> InitializeAsync()
         {
+            var labels = PatchLabels;
+
             // Empty labels = 0 bytes, immediate success
-            if (labels.Count == 0)
+            if (labels == null || labels.Count == 0)
             {
                 var emptyInfo = new PatchInfo(0, new Dictionary<string, long>());
                 LastPatchInfo = emptyInfo;
@@ -143,22 +153,21 @@ namespace Devian
             LastPatchInfo = patchInfo;
             return CommonResult<PatchInfo>.Success(patchInfo);
         }
-        
+
         // ====================================================================
         // DownloadAsync - Download dependencies
         // ====================================================================
-        
+
         /// <summary>
-        /// Downloads dependencies for each label.
+        /// PatchLabels 기준으로 의존 번들을 다운로드한다.
         /// </summary>
-        /// <param name="labels">Labels to download</param>
         /// <param name="onProgress">Called with progress 0~1</param>
-        public async Task<CommonResult> DownloadAsync(
-            IReadOnlyList<string> labels,
-            Action<float>? onProgress = null)
+        public async Task<CommonResult> DownloadAsync(Action<float>? onProgress = null)
         {
+            var labels = PatchLabels;
+
             // Empty labels = immediate success
-            if (labels.Count == 0)
+            if (labels == null || labels.Count == 0)
             {
                 onProgress?.Invoke(1f);
                 return CommonResult.Ok();
@@ -170,7 +179,7 @@ namespace Devian
             // If no cached PatchInfo or labels differ, run InitializeAsync first
             if (patchInfo == null || !LabelsMatch(labels, patchInfo.LabelSizes.Keys))
             {
-                var patchResult = await InitializeAsync(labels);
+                var patchResult = await InitializeAsync();
                 if (patchResult.IsFailure)
                     return CommonResult.Failure(patchResult.Error!);
 
@@ -223,25 +232,17 @@ namespace Devian
             onProgress?.Invoke(1f);
             return CommonResult.Ok();
         }
-        
+
         // ====================================================================
         // LoadBundlesAsync - Load bundle assets
         // ====================================================================
 
         /// <summary>
-        /// 번들 에셋을 로드한다. onLoadBundlesAsync()를 호출하는 템플릿 메서드.
+        /// 번들 에셋을 로드한다. 서브클래스가 override하여 구현한다.
         /// </summary>
         /// <param name="language">로드할 언어</param>
         /// <param name="onProgress">진행률 0~1</param>
-        public Task LoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null)
-        {
-            return onLoadBundlesAsync(language, onProgress);
-        }
-
-        /// <summary>
-        /// 번들 에셋 로드 로직. 서브클래스가 override하여 구현한다.
-        /// </summary>
-        protected virtual Task onLoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null)
+        public virtual Task LoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null)
         {
             return Task.CompletedTask;
         }
@@ -249,12 +250,12 @@ namespace Devian
         // ====================================================================
         // Helper Methods
         // ====================================================================
-        
+
         private void RaiseError(string message)
         {
             OnError?.Invoke(message);
         }
-        
+
         private static bool LabelsMatch(IReadOnlyList<string> a, IEnumerable<string> b)
         {
             var setA = new HashSet<string>(a);

@@ -20,7 +20,7 @@ popup stack의 push / pop / duplicate / top-state 규칙을 정리한다.
 - 항상 새 popup을 push
 
 ### IgnoreIfOpened
-- 같은 `PopupId`가 열려 있으면 새 요청 무시
+- 같은 frame type이 열려 있으면 새 요청 무시
 
 ### FocusIfOpened
 - 기존 entry를 stack에서 제거한 뒤 다시 top으로 push
@@ -30,6 +30,11 @@ popup stack의 push / pop / duplicate / top-state 규칙을 정리한다.
 ### ReplaceIfOpened
 - 기존 popup을 `Replaced` reason으로 close 시작
 - 새 popup은 별도로 open
+
+## Matching Rule
+
+- duplicate matching 기준은 popup frame `Type`이다
+- 정책 source는 새 요청이 아니라 이미 열린 frame instance의 override 값이다
 
 ## Close Rules
 

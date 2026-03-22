@@ -1,4 +1,4 @@
-# UIPlugInText
+# UIComponentText
 
 Status: ACTIVE
 AppliesTo: v11
@@ -20,7 +20,7 @@ ST_TEXT 값을 TMP_Text 컴포넌트에 바인딩하는 UI 플러그인.
 ### Code Path
 
 ```
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Plugins/UIPlugInText.cs
+framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Component/UIComponentText.cs
 ```
 
 ### Serialized Fields

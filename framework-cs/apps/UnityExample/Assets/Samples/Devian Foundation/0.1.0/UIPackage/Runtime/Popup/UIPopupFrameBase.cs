@@ -5,27 +5,42 @@ namespace Devian
 {
     [RequireComponent(typeof(UITransitionPlayer))]
     [RequireComponent(typeof(CanvasGroup))]
-    public class UIPopupFrame : UIBaseFrame, IPoolable
+    public abstract class UIPopupFrameBase : UIBaseFrame, IPoolable
     {
         [SerializeField] private UI_TRANSITION_PRESET_ID _openTransitionId;
         [SerializeField] private UI_TRANSITION_PRESET_ID _closeTransitionId;
 
         private UITransitionPlayer _transitionPlayer;
         private CanvasGroup _rootCanvasGroup;
-        private Action<UIPopupFrame> _onOpened;
-        private Action<UIPopupFrame, PopupCloseReason, object> _onCloseStarted;
-        private Action<UIPopupFrame, PopupCloseReason, object> _onClosed;
-        private PopupConfig _currentConfig;
-        private PopupRequest _currentRequest;
-        private object _pendingClosePayload;
+        private Action<UIPopupFrameBase> _onOpened;
+        private Action<UIPopupFrameBase, PopupCloseReason> _onCloseStarted;
+        private Action<UIPopupFrameBase, PopupCloseReason> _onClosed;
+        private object _currentPayload;
         private PopupCloseReason _pendingCloseReason;
         private bool _isTop;
 
-        public PopupFrameState state { get; private set; }
+        public PopupFrameState State { get; private set; }
+        public PopupFrameState state => State;
+        public bool IsTop => _isTop;
         public bool isTop => _isTop;
 
-        protected PopupConfig currentConfig => _currentConfig;
-        protected PopupRequest currentRequest => _currentRequest;
+        protected object currentPayload => _currentPayload;
+
+        protected virtual bool UseDim => UIPopupDefaults.DefaultUseDim;
+        protected virtual bool BlockInputBehind => UIPopupDefaults.DefaultBlockInputBehind;
+        protected virtual bool CloseOnBack => UIPopupDefaults.DefaultCloseOnBack;
+        protected virtual bool CloseOnEscape => UIPopupDefaults.DefaultCloseOnEscape;
+        protected virtual bool CloseOnDimClick => UIPopupDefaults.DefaultCloseOnDimClick;
+        protected virtual PopupDuplicatePolicy DuplicatePolicy => UIPopupDefaults.DefaultDuplicatePolicy;
+        protected virtual bool PlayOpenTransition => UIPopupDefaults.DefaultPlayOpenTransition;
+        protected virtual bool PlayCloseTransition => UIPopupDefaults.DefaultPlayCloseTransition;
+
+        internal bool useDim => UseDim;
+        internal bool blockInputBehind => BlockInputBehind;
+        internal bool closeOnBack => CloseOnBack;
+        internal bool closeOnEscape => CloseOnEscape;
+        internal bool closeOnDimClick => CloseOnDimClick;
+        internal PopupDuplicatePolicy duplicatePolicy => DuplicatePolicy;
 
         protected override void onAwake()
         {
@@ -41,39 +56,36 @@ namespace Devian
         {
             ResolveDefaults();
             CancelInternal();
+            _currentPayload = null;
+            _pendingCloseReason = PopupCloseReason.Canceled;
             _isTop = false;
         }
 
         public void OnPoolDespawned()
         {
             CancelInternal();
-            _currentConfig = null;
-            _currentRequest = default;
-            _pendingClosePayload = null;
+            _currentPayload = null;
             _pendingCloseReason = PopupCloseReason.Canceled;
             _isTop = false;
         }
 
-        internal void Open(
-            PopupConfig config,
-            PopupRequest request,
-            Action<UIPopupFrame> onOpened,
-            Action<UIPopupFrame, PopupCloseReason, object> onCloseStarted,
-            Action<UIPopupFrame, PopupCloseReason, object> onClosed)
+        internal void OpenUntyped(
+            object payload,
+            Action<UIPopupFrameBase> onOpened,
+            Action<UIPopupFrameBase, PopupCloseReason> onCloseStarted,
+            Action<UIPopupFrameBase, PopupCloseReason> onClosed)
         {
             ResolveDefaults();
             CancelInternal();
 
-            _currentConfig = config;
-            _currentRequest = request;
+            _currentPayload = payload;
             _onOpened = onOpened;
             _onCloseStarted = onCloseStarted;
             _onClosed = onClosed;
-            _pendingClosePayload = null;
             _pendingCloseReason = PopupCloseReason.Canceled;
-            state = PopupFrameState.Opening;
+            State = PopupFrameState.Opening;
 
-            onBind(request);
+            onBind(payload);
             ApplyTopState(_isTop);
 
             if (ShouldPlayOpenTransition())
@@ -90,9 +102,9 @@ namespace Devian
             HandleOpenCompleted();
         }
 
-        internal void CloseFromManager(PopupCloseReason reason, object payload = null)
+        internal void CloseFromManager(PopupCloseReason reason)
         {
-            BeginClose(reason, payload);
+            BeginClose(reason);
         }
 
         internal void SetTopState(bool isTop, bool allowInput)
@@ -104,25 +116,25 @@ namespace Devian
 
         public void CloseCompleted()
         {
-            BeginClose(PopupCloseReason.Completed, null);
+            ClosePopup(PopupCloseReason.Completed);
         }
 
         public void CloseCanceled()
         {
-            BeginClose(PopupCloseReason.Canceled, null);
+            ClosePopup(PopupCloseReason.Canceled);
         }
 
-        protected void CloseWithResult(PopupCloseReason reason, object payload = null)
+        protected virtual void ClosePopup(PopupCloseReason reason = PopupCloseReason.Completed)
         {
-            BeginClose(reason, payload);
+            BeginClose(reason);
         }
 
-        protected virtual void onBind(PopupRequest request) { }
+        protected virtual void onBind(object payload) { }
         protected virtual void onTopStateChanged(bool isTop, bool allowInput) { }
 
-        private void BeginClose(PopupCloseReason reason, object payload)
+        private void BeginClose(PopupCloseReason reason)
         {
-            if (state == PopupFrameState.Closing)
+            if (State == PopupFrameState.Closing)
             {
                 return;
             }
@@ -130,10 +142,9 @@ namespace Devian
             ResolveDefaults();
             _transitionPlayer.Cancel();
             _pendingCloseReason = reason;
-            _pendingClosePayload = payload;
-            state = PopupFrameState.Closing;
+            State = PopupFrameState.Closing;
             ApplyTopState(false);
-            _onCloseStarted?.Invoke(this, reason, payload);
+            _onCloseStarted?.Invoke(this, reason);
 
             if (ShouldPlayCloseTransition())
             {
@@ -151,30 +162,29 @@ namespace Devian
 
         private void HandleOpenCompleted()
         {
-            if (state != PopupFrameState.Opening)
+            if (State != PopupFrameState.Opening)
             {
                 return;
             }
 
-            state = PopupFrameState.Opened;
+            State = PopupFrameState.Opened;
             _onOpened?.Invoke(this);
         }
 
         private void CompleteClose()
         {
-            if (state != PopupFrameState.Closing)
+            if (State != PopupFrameState.Closing)
             {
                 return;
             }
 
             var callback = _onClosed;
-            callback?.Invoke(this, _pendingCloseReason, _pendingClosePayload);
+            callback?.Invoke(this, _pendingCloseReason);
         }
 
         private bool ShouldPlayOpenTransition()
         {
-            return _currentConfig != null
-                && _currentConfig.PlayOpenTransition
+            return PlayOpenTransition
                 && _openTransitionId != null
                 && _openTransitionId.IsValid
                 && _transitionPlayer != null;
@@ -182,8 +192,7 @@ namespace Devian
 
         private bool ShouldPlayCloseTransition()
         {
-            return _currentConfig != null
-                && _currentConfig.PlayCloseTransition
+            return PlayCloseTransition
                 && _closeTransitionId != null
                 && _closeTransitionId.IsValid
                 && _transitionPlayer != null;

@@ -29,5 +29,14 @@ public class SceneGame : SceneBootstrap
         ToastRequest request = new ToastRequest("Default", "This is a default toast message.");
         UIToastService.Instance.Show(request);
         UIToastService.Instance.Show(request);
+
+        UIPopupManager.Instance.Open<UIPopupFrameConfirm>(
+            new ConfirmPopupRequest(
+                title: "Popup Sample",
+                message: "This popup exercises the typed popup flow."),
+            reason =>
+            {
+                Debug.Log($"[SceneGame] Popup closed: reason={reason}");
+            });
     }
 }

@@ -21,8 +21,12 @@ public sealed class UIPopupManager : AutoSingleton<UIPopupManager>
 {
     public UISettings Settings { get; }
     public void Initialize();
-    public bool Open(string popupId, object payload = null, Action<PopupResult> onClosed = null);
-    public bool Open(PopupRequest request);
+    public bool Open<TFrame>(Action<PopupCloseReason> onClosed = null)
+        where TFrame : UIPopupFrameBase;
+    public bool Open<TFrame>(object payload = null, Action<PopupCloseReason> onClosed = null)
+        where TFrame : UIPopupFrameBase;
+    public bool Open<TFrame, TReq>(TReq request, Action<PopupCloseReason> onClosed = null)
+        where TFrame : UIPopupFrameBase<TReq>;
     public bool CloseTop(PopupCloseReason reason = PopupCloseReason.Canceled);
     public void CloseAll();
     internal void HandleDimClicked();
@@ -59,8 +63,13 @@ settings는 `Resources.Load<UISettings>(UISettings.ResourcesPath)`로 load/cache
 
 ## Runtime Notes
 
-- duplicate policy는 `Open(...)` 진입점에서 먼저 처리한다.
+- duplicate policy는 `Open<TFrame>(...)` 진입점에서 먼저 처리한다.
+- typed request popup은 `Open<TFrame, TReq>(...)`를 사용한다.
+- prefab id는 `UISettings.PopupFrameMappings`에서 resolve한다.
+- duplicate matching 기준은 `PopupId`가 아니라 popup frame `Type`이다.
 - `FocusIfOpened`는 기존 entry를 `remove -> push`로 재배치한다.
 - `ReplaceIfOpened`는 기존 popup을 `Replaced` reason으로 close 시작 후 새 popup을 연다.
+- close callback은 `PopupCloseReason`만 받는다.
+- top modal state는 top frame instance의 policy property에서 읽는다.
 - `CloseAll()`은 frame transition을 기다리지 않고 즉시 despawn + callback 호출로 정리한다.
 - back / escape 입력은 `Update()`에서 top popup 기준으로 처리한다.

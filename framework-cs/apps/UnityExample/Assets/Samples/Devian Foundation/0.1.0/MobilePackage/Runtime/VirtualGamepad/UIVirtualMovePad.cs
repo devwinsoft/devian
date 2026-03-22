@@ -15,7 +15,7 @@ namespace Devian
 {
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CanvasRenderer))]
-    [RequireComponent(typeof(UIPlugInNonDrawing))]
+    [RequireComponent(typeof(UIComponentNonDrawing))]
     public sealed class UIVirtualMovePad : MonoBehaviour, IPointerDownHandler, IDragHandler, IPointerUpHandler
     {
         [Serializable]

@@ -15,7 +15,7 @@ namespace Devian
         /// <summary>
         /// UI 번들 에셋 로드.
         /// UISettings.UIAddressablesKey를 사용하여 transition preset preload + UI GameObject 로드를 수행한다.
-        /// MobileBundleManager.onLoadBundlesAsync()에서 호출한다.
+        /// MobileBundleManager.LoadBundlesAsync()에서 호출한다.
         /// </summary>
         public async Task LoadBundlesAsync()
         {
@@ -25,9 +25,8 @@ namespace Devian
                 : "ui";
 
             // 1. transition preset preload
-            var bundleSettings = Resources.Load<BundleSettings>(BundleSettings.ResourcesPath);
-            var presetCacheKey = bundleSettings != null
-                ? bundleSettings.GetEntry("UI_TRANSITION_PRESET_ID")
+            var presetCacheKey = uiSettings != null
+                ? uiSettings.GetSearchDir("UI_TRANSITION_PRESET_ID")
                 : string.Empty;
             if (string.IsNullOrWhiteSpace(presetCacheKey))
             {

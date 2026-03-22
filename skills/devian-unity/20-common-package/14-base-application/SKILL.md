@@ -136,7 +136,7 @@ public async Task LoadAsync(Action<float>? onProgress = null)
 - `BootProc()`와 같은 idempotent 패턴 (1회 실행, 재시도 없음)
 - 앱 리소스 로딩을 위한 템플릿
 - 언어 설정은 `MobileApplication.DefaultLanguage`가 owner이며, 파생 클래스가 직접 참조한다
-- 번들 에셋 로드는 `BundleManager<T>.LoadBundlesAsync()` → `onLoadBundlesAsync()` 체인이 담당한다
+- 번들 에셋 로드는 `BundleManager<T>.LoadBundlesAsync()`가 담당한다
 
 ```csharp
 protected virtual Task onLoadAsync(Action<float>? onProgress = null)

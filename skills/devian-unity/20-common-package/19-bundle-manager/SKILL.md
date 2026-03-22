@@ -138,34 +138,33 @@ namespace Devian
         public PatchInfo LastPatchInfo { get; }
 
         // ====================================================================
+        // PatchLabels
+        // ====================================================================
+
+        /// <summary>
+        /// 패치/다운로드 대상 라벨 목록. concrete 서브클래스가 정의한다.
+        /// </summary>
+        protected abstract IReadOnlyList<string> PatchLabels { get; }
+
+        // ====================================================================
         // Methods
         // ====================================================================
 
         /// <summary>
-        /// 라벨별 다운로드 크기 계산
+        /// PatchLabels 기준으로 다운로드 필요 용량을 계산한다.
         /// </summary>
-        /// <param name="labels">다운로드 대상 라벨</param>
-        public async Task<CommonResult<PatchInfo>> InitializeAsync(
-            IReadOnlyList<string> labels);
+        public async Task<CommonResult<PatchInfo>> InitializeAsync();
 
         /// <summary>
-        /// 라벨별 의존 번들 다운로드
+        /// PatchLabels 기준으로 의존 번들을 다운로드한다.
         /// </summary>
-        /// <param name="labels">다운로드 대상 라벨</param>
         /// <param name="onProgress">진행률 0~1</param>
-        public async Task<CommonResult> DownloadAsync(
-            IReadOnlyList<string> labels,
-            Action<float> onProgress = null);
+        public async Task<CommonResult> DownloadAsync(Action<float> onProgress = null);
 
         /// <summary>
-        /// 번들 에셋 로드 (템플릿 메서드). onLoadBundlesAsync()를 호출한다.
+        /// 번들 에셋을 로드한다. 서브클래스가 override하여 구현한다.
         /// </summary>
-        public Task LoadBundlesAsync(SystemLanguage language, Action<float> onProgress = null);
-
-        /// <summary>
-        /// 번들 에셋 로드 로직. 서브클래스가 override하여 구현한다.
-        /// </summary>
-        protected virtual Task onLoadBundlesAsync(SystemLanguage language, Action<float> onProgress = null);
+        public virtual Task LoadBundlesAsync(SystemLanguage language, Action<float> onProgress = null);
     }
 }
 ```

@@ -8,9 +8,7 @@ AppliesTo: v1
 ## 목적
 
 MobilePackage 레이어의 BundleManager 중간 추상 클래스.
-`BundleManager<T>`의 labels 파라미터를 `PatchLabels` abstract property로 캡슐화하고,
-파라미터 없는 `InitializeAsync()` / `DownloadAsync()`를 제공한다.
-`onLoadBundlesAsync()`에서 UI transition preset을 직접 사전 로드한다.
+`LoadBundlesAsync()`에서 `UIManager.Instance.LoadBundlesAsync()`를 호출하여 UI 번들 에셋을 로드한다.
 
 ---
 
@@ -39,40 +37,23 @@ namespace Devian
 {
     public abstract class MobileBundleManager<T> : BundleManager<T> where T : MobileBundleManager<T>
     {
-        protected abstract IReadOnlyList<string> PatchLabels { get; }
-
-        public Task<CommonResult<PatchInfo>> InitializeAsync();
-        public Task<CommonResult> DownloadAsync(Action<float>? onProgress = null);
-
-        // BundleManager<T>.onLoadBundlesAsync override
-        // UI transition preset preload 직접 수행
-        protected override Task onLoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null);
+        // BundleManager<T>.LoadBundlesAsync override
+        // UIManager.Instance.LoadBundlesAsync() 호출
+        public override Task LoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null);
     }
 }
 ```
+
+PatchLabels, InitializeAsync, DownloadAsync는 `BundleManager<T>`가 담당한다.
 
 ---
 
 ## API
 
-### PatchLabels
-
-concrete 서브클래스가 정의하는 패치/다운로드 대상 라벨 목록.
-`InitializeAsync()` / `DownloadAsync()`는 이 목록을 `base.InitializeAsync(labels)` / `base.DownloadAsync(labels, ...)` 에 전달한다.
-
-### InitializeAsync()
-
-`PatchLabels` 기준으로 `base.InitializeAsync(PatchLabels)` 호출.
-파라미터 없는 편의 메서드.
-
-### DownloadAsync(onProgress)
-
-`PatchLabels` 기준으로 `base.DownloadAsync(PatchLabels, onProgress)` 호출.
-
-### onLoadBundlesAsync(language, onProgress)
+### LoadBundlesAsync(language, onProgress)
 
 `UIManager.Instance.LoadBundlesAsync()`를 호출하여 UI 번들 에셋(transition preset + UI GameObject)을 로드한다.
-concrete 서브클래스는 `base.onLoadBundlesAsync()` 호출 후 테이블/에셋 로드를 수행한다.
+concrete 서브클래스는 `base.LoadBundlesAsync()` 호출 후 테이블/에셋 로드를 수행한다.
 
 ---
 
@@ -86,6 +67,12 @@ public class TestBundleManager : MobileBundleManager<TestBundleManager>
         "common-effects", "prefabs", "scenes", "sounds", "ui",
         // editor/build 분기
     };
+
+    public override async Task LoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null)
+    {
+        await base.LoadBundlesAsync(language, onProgress);
+        // 테이블/에셋 로드 ...
+    }
 }
 ```
 
