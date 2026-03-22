@@ -9,10 +9,10 @@ namespace Devian
 {
     /// <summary>
     /// UIToastFrame 프리팹 기반 ID selector.
-    /// BaseEditorAssetIdSelector&lt;UIToastFrame&gt; 재활용.
-    /// BundleSettings key: "UI_TOAST_FRAME_ID"
+    /// BaseEditorUIAssetIdSelector&lt;UIToastFrame&gt; 재활용.
+    /// UISettings key: "UI_TOAST_FRAME_ID"
     /// </summary>
-    public sealed class UIToastFrameIdSelector : BaseEditorAssetIdSelector<UIToastFrame>
+    public sealed class UIToastFrameIdSelector : BaseEditorUIAssetIdSelector<UIToastFrame>
     {
         protected override string GroupKey => "UI_TOAST_FRAME_ID";
         protected override string DisplayTypeName => "UI_TOAST_FRAME_ID";

@@ -8,8 +8,9 @@ namespace Devian
 {
     /// <summary>
     /// Base selector for ScriptableObject-based AssetId (Editor-only).
-    /// SearchDir source: Assets/Resources/Devian/BundleSettings.asset
-    /// SSOT: skills/devian-unity/11-common-system/12-asset-id/SKILL.md
+    /// Default SearchDir source: Assets/Resources/Devian/BundleSettings.asset
+    /// 서브클래스가 ResolveSearchDir()를 override하여 다른 settings source를 사용할 수 있다.
+    /// SSOT: skills/devian-unity/20-common-package/12-asset-id/SKILL.md
     /// </summary>
     public abstract class BaseEditorScriptableAssetIdSelector<TAsset> : BaseEditorID_Selector
         where TAsset : ScriptableObject
@@ -26,7 +27,7 @@ namespace Devian
         {
             ClearItems();
 
-            var searchDir = ResolveSearchDirOrFallback(GroupKey);
+            var searchDir = ResolveSearchDir(GroupKey);
 
             // ScriptableObject 스캔
             var guids = AssetDatabase.FindAssets($"t:{typeof(TAsset).Name}", new[] { searchDir });
@@ -63,7 +64,12 @@ namespace Devian
             }
         }
 
-        private static string ResolveSearchDirOrFallback(string groupKey)
+        /// <summary>
+        /// GroupKey로 SearchDir을 해석한다.
+        /// 기본 구현은 BundleSettings에서 조회한다.
+        /// 서브클래스가 override하여 다른 settings source를 사용할 수 있다.
+        /// </summary>
+        protected virtual string ResolveSearchDir(string groupKey)
         {
             var settings = AssetDatabase.LoadAssetAtPath<BundleSettings>(BundleSettings.DefaultResourcesAssetPath);
             if (settings == null)

@@ -1,0 +1,59 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f922e8b8e728d4efeb37ed536092cd13, type: 3}
+  m_Name: UISettings
+  m_EditorClassIdentifier: Devian.Samples.UIPackage::Devian.UISettings
+  _uiAddressablesKey: ui
+  _assetSearchEntries:
+  - Key: UI_CANVAS_ID
+    SearchDir: Assets/Bundles/UI/Prefabs
+  - Key: UI_CELL_ID
+    SearchDir: Assets/Bundles/UI/Prefabs
+  - Key: UI_CONTAINER_ID
+    SearchDir: Assets/Bundles/UI/Prefabs
+  - Key: UI_TOAST_FRAME_ID
+    SearchDir: Assets/Bundles/UI/Prefabs
+  - Key: UI_POPUP_FRAME_ID
+    SearchDir: Assets/Bundles/UI/Prefabs
+  - Key: UI_POPUP_CANVAS_ID
+    SearchDir: Assets/Bundles/UI/Prefabs
+  - Key: UI_TOAST_CANVAS_ID
+    SearchDir: Assets/Bundles/UI/Prefabs
+  - Key: UI_TRANSITION_PRESET_ID
+    SearchDir: Assets/Bundles/UI/Preset
+  _toastCanvasId:
+    Value: ui_toast_canvas
+  _groupConfigs:
+  - GroupId: System
+    ToastFrameId:
+      Value: ui_toast_frame
+    AnchorPreset: 4
+    AnchoredOffset: {x: 0, y: 300}
+    MaxVisibleCount: 4
+    DefaultDuration: 4
+    DuplicatePolicy: 0
+  _popupCanvasId:
+    Value: ui_popup_canvas
+  _dimColor: {r: 0, g: 0, b: 0, a: 1}
+  _dimAlpha: 0.75
+  _popupConfigs:
+  - PopupId: System
+    PopupFrameId:
+      Value:
+    UseDim: 1
+    BlockInputBehind: 1
+    CloseOnBack: 0
+    CloseOnEscape: 0
+    CloseOnDimClick: 0
+    DuplicatePolicy: 2
+    PlayOpenTransition: 0
+    PlayCloseTransition: 0

@@ -156,6 +156,16 @@ namespace Devian
         public async Task<CommonResult> DownloadAsync(
             IReadOnlyList<string> labels,
             Action<float> onProgress = null);
+
+        /// <summary>
+        /// 번들 에셋 로드 (템플릿 메서드). onLoadBundlesAsync()를 호출한다.
+        /// </summary>
+        public Task LoadBundlesAsync(SystemLanguage language, Action<float> onProgress = null);
+
+        /// <summary>
+        /// 번들 에셋 로드 로직. 서브클래스가 override하여 구현한다.
+        /// </summary>
+        protected virtual Task onLoadBundlesAsync(SystemLanguage language, Action<float> onProgress = null);
     }
 }
 ```

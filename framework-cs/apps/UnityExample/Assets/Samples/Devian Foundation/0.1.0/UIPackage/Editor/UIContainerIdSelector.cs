@@ -9,10 +9,10 @@ namespace Devian
 {
     /// <summary>
     /// UIBaseContainer 프리팹 기반 ID selector.
-    /// BaseEditorAssetIdSelector&lt;UIBaseContainer&gt; 재활용.
-    /// BundleSettings key: "UI_CONTAINER_ID"
+    /// BaseEditorUIAssetIdSelector&lt;UIBaseContainer&gt; 재활용.
+    /// UISettings key: "UI_CONTAINER_ID"
     /// </summary>
-    public sealed class UIContainerIdSelector : BaseEditorAssetIdSelector<UIBaseContainer>
+    public sealed class UIContainerIdSelector : BaseEditorUIAssetIdSelector<UIBaseContainer>
     {
         protected override string GroupKey => "UI_CONTAINER_ID";
         protected override string DisplayTypeName => "UI_CONTAINER_ID";

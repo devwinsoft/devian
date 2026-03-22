@@ -340,7 +340,9 @@
       "Bash(cp \"$UPM/SaveData/SaveDataManager.cs\" \"$PKG/SaveData/SaveDataManager.cs\")",
       "Bash(cp \"$UPM/SaveData/SaveDataManager.cs\" \"$ASS/SaveData/SaveDataManager.cs\")",
       "Read(//Users/maoshy/Documents/Projects/devian/$UPM/SaveData/JsonCodec/**)",
-      "Read(//Users/maoshy/Documents/Projects/devian/$UPM/SaveData/**)"
+      "Read(//Users/maoshy/Documents/Projects/devian/$UPM/SaveData/**)",
+      "Read(//Users/maoshy/.claude/**)",
+      "Bash(claude mcp:*)"
     ]
   },
   "project": {

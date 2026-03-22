@@ -43,7 +43,7 @@ public class TestApplication : MobileApplication
         }
 
         await TestBundleManager.Instance.LoadBundlesAsync(
-            this.DefaultLanguage,
+            DefaultLanguage,
             progress => reportProgress(onProgress, remapProgress(progress, 0.55f, 1f)));
         await Task.Yield();
         reportProgress(onProgress, 1f);

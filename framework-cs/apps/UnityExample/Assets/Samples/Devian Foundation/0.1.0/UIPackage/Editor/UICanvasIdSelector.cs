@@ -9,10 +9,10 @@ namespace Devian
 {
     /// <summary>
     /// UICanvas 프리팹 기반 ID selector.
-    /// BaseEditorAssetIdSelector&lt;UICanvas&gt; 재활용.
-    /// BundleSettings key: "UI_CANVAS_ID"
+    /// BaseEditorUIAssetIdSelector&lt;UICanvas&gt; 재활용.
+    /// UISettings key: "UI_CANVAS_ID"
     /// </summary>
-    public sealed class UICanvasIdSelector : BaseEditorAssetIdSelector<UICanvas>
+    public sealed class UICanvasIdSelector : BaseEditorUIAssetIdSelector<UICanvas>
     {
         protected override string GroupKey => "UI_CANVAS_ID";
         protected override string DisplayTypeName => "UI_CANVAS_ID";

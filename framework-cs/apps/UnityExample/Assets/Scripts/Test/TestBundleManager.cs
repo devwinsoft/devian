@@ -2,54 +2,39 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using UnityEngine;
-using Devian.Domain.Common;
 using Devian;
 
-public class TestBundleManager : BundleManager<TestBundleManager>
+public class TestBundleManager : MobileBundleManager<TestBundleManager>
 {
-    string[] _patchList = new string[]
-    { "common-effects"
-        , "prefabs"
-        , "scenes"
-        , "sounds"
-        , "ui"
+    protected override IReadOnlyList<string> PatchLabels => new string[]
+    {
+        "common-effects",
+        "prefabs",
+        "scenes",
+        "sounds",
+        "ui",
 #if UNITY_EDITOR
-        , "string-ndjson"
-        , "table-ndjson"
+        "string-ndjson",
+        "table-ndjson"
 #else
-        , "string-pb64"
-        , "table-pb64"
+        "string-pb64",
+        "table-pb64"
 #endif
     };
-    bool _initialized = false;
-    
-    public async Task<CommonResult<PatchInfo>> InitializeAsync()
-    {
-        return await base.InitializeAsync(_patchList);
-    }
 
-
-    public async Task<CommonResult> DownloadAsync(Action<float>? onProgress = null)
-    {
-        var downloadResult = await DownloadAsync(
-            _patchList,
-            onProgress: onProgress
-        );
-        return downloadResult;
-    }
-
-
-    public async Task LoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null)
+    protected override async Task onLoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null)
     {
         reportProgress(onProgress, 0f);
+
+        await base.onLoadBundlesAsync(language, onProgress);
 
 #if UNITY_EDITOR
         await TableManager.Instance.LoadTablesAsync("table-ndjson", TableFormat.Json);
         await Task.Yield();
-        reportProgress(onProgress, 0.2f);
+        reportProgress(onProgress, 0.1f);
         await TableManager.Instance.LoadStringsAsync("string-ndjson", TableFormat.Json, language);
         await Task.Yield();
-        reportProgress(onProgress, 0.4f);
+        reportProgress(onProgress, 0.2f);
 #else
         await TableManager.Instance.LoadTablesAsync("table-pb64", TableFormat.Pb64);
         await Task.Yield();
@@ -61,18 +46,13 @@ public class TestBundleManager : BundleManager<TestBundleManager>
 
         await AssetManager.LoadBundleAssets<GameObject>("common-effects");
         await Task.Yield();
-        reportProgress(onProgress, 0.6f);
+        reportProgress(onProgress, 0.4f);
         await AssetManager.LoadBundleAssets<GameObject>("prefabs");
         await Task.Yield();
-        reportProgress(onProgress, 0.7f);
+        reportProgress(onProgress, 0.6f);
         await SoundManager.Instance.LoadByBundleKeyAsync("sounds");
         await Task.Yield();
-        reportProgress(onProgress, 0.8f);
-        await AssetManager.LoadBundleAssets<GameObject>("ui");
-        await Task.Yield();
         reportProgress(onProgress, 1f);
-
-        //await VoiceManager.Instance.LoadByBundleKeyAsync("", language, SystemLanguage.English);
     }
 
     static void reportProgress(Action<float>? onProgress, float progress)

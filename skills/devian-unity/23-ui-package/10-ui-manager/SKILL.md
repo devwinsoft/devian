@@ -15,6 +15,7 @@ UI Canvas 수명주기 진입점과 UI 메시지 시스템을 제공하는 중�
 ## Scope
 
 ### Includes
+- UI 번들 에셋 로드 (`LoadBundlesAsync`)
 - UI 메시지 시스템 소유 (`messageSystem`)
 - Canvas 조회 (`TryGetCanvas`)
 - Canvas 생성 (`CreateCanvas`)
@@ -52,6 +53,16 @@ namespace Devian
 ---
 
 ## API
+
+### LoadBundlesAsync
+
+```csharp
+public async Task LoadBundlesAsync()
+```
+
+- UI 번들 에셋 로드. `MobileBundleManager.onLoadBundlesAsync()`에서 호출한다.
+- `UISettings.UIAddressablesKey`로 Addressables label을 결정한다.
+- transition preset preload (`AssetManager.LoadBundleAssets<UITransitionPresetAsset>`) + UI GameObject 로드 (`AssetManager.LoadBundleAssets<GameObject>`)를 수행한다.
 
 ### messageSystem
 

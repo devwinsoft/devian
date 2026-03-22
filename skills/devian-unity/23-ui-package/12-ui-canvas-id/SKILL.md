@@ -40,7 +40,7 @@ public sealed class UI_CANVAS_ID
 
 ### SearchDir 공급
 
-- `BundleSettings.GetEntry("UI_CANVAS_ID")`로 조회
+- `UISettings.GetSearchDir("UI_CANVAS_ID")`로 조회
 - 실패/폴더 없음이면 `"Assets"` fallback
 
 ### 스캔 대상
@@ -51,7 +51,7 @@ public sealed class UI_CANVAS_ID
 - `@` prefix 이름 제외
 - case-insensitive 중복 name은 에러 로그 후 스킵
 
-## BundleSettings 등록
+## UISettings 등록
 
 ```text
 entries[UI_CANVAS_ID] = "Assets/Bundles/UICanvases"

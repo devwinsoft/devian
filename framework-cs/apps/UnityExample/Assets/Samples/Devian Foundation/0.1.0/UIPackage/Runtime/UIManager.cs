@@ -1,3 +1,4 @@
+using System.Threading.Tasks;
 using UnityEngine;
 
 namespace Devian
@@ -10,6 +11,42 @@ namespace Devian
     public sealed class UIManager : AutoSingleton<UIManager>
     {
         private UIMessageSystem mMessageSystem = new UIMessageSystem();
+
+        /// <summary>
+        /// UI 번들 에셋 로드.
+        /// UISettings.UIAddressablesKey를 사용하여 transition preset preload + UI GameObject 로드를 수행한다.
+        /// MobileBundleManager.onLoadBundlesAsync()에서 호출한다.
+        /// </summary>
+        public async Task LoadBundlesAsync()
+        {
+            var uiSettings = Resources.Load<UISettings>(UISettings.ResourcesPath);
+            var loadLabel = uiSettings != null && !string.IsNullOrEmpty(uiSettings.UIAddressablesKey)
+                ? uiSettings.UIAddressablesKey
+                : "ui";
+
+            // 1. transition preset preload
+            var bundleSettings = Resources.Load<BundleSettings>(BundleSettings.ResourcesPath);
+            var presetCacheKey = bundleSettings != null
+                ? bundleSettings.GetEntry("UI_TRANSITION_PRESET_ID")
+                : string.Empty;
+            if (string.IsNullOrWhiteSpace(presetCacheKey))
+            {
+                presetCacheKey = "UI_TRANSITION_PRESET_ID";
+            }
+
+            var presetResult = await AssetManager.LoadBundleAssets<UITransitionPresetAsset>(presetCacheKey, loadLabel);
+            if (presetResult.IsFailure)
+            {
+                Debug.LogWarning($"[UIManager] Failed to preload UI transition presets from '{loadLabel}': {presetResult.Error?.Message}");
+            }
+
+            // 2. UI GameObject 로드
+            var uiResult = await AssetManager.LoadBundleAssets<GameObject>(loadLabel);
+            if (uiResult.IsFailure)
+            {
+                Debug.LogWarning($"[UIManager] Failed to load UI bundle assets from '{loadLabel}': {uiResult.Error?.Message}");
+            }
+        }
 
         /// <summary>
         /// UI message system for UI-level messaging (ReloadText, Resize, etc.).

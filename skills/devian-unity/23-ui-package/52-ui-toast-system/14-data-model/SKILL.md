@@ -20,7 +20,6 @@ toast system 전체가 공유하는 **데이터 타입 정의**.
 framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Toast/
 ├── ToastRequest.cs
 ├── ToastGroupConfig.cs
-├── UIToastSettings.cs
 ├── ToastEnums.cs
 └── UIToastDefaults.cs
 ```
@@ -63,21 +62,12 @@ public sealed class ToastGroupConfig
 }
 ```
 
-## UIToastSettings
+## UISettings (Toast 부분)
 
-```csharp
-[CreateAssetMenu(...)]
-public sealed class UIToastSettings : ScriptableObject
-{
-    public const string ResourcesPath = "Devian/UIToastSettings";
-    public const string DefaultResourcesAssetPath = "Assets/Resources/Devian/UIToastSettings.asset";
-
-    public ToastGroupConfig[] GroupConfigs { get; }
-}
-```
+Toast group 설정은 통합 `UISettings` asset에 포함된다. 상세: `../../13-ui-settings/SKILL.md`
 
 - `ToastGroupConfig[]`의 전역 저장 위치다.
-- `UIToastService`가 `Resources.Load`로 로드하고 cache한다.
+- `UIToastService`가 `Resources.Load<UISettings>(UISettings.ResourcesPath)`로 로드하고 cache한다.
 - `UIToastPanel`은 local serialize field 대신 이 asset의 group 설정을 사용한다.
 
 ---

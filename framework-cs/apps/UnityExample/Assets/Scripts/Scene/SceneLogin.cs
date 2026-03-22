@@ -95,7 +95,7 @@ public class SceneLogin : SceneBootstrap
             UILoginCanvas.Instance.ShowLoginButtons();
             return;
         }
-
+        
         await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
     }
 }

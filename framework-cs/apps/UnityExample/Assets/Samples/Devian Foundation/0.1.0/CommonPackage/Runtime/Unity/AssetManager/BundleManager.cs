@@ -225,6 +225,28 @@ namespace Devian
         }
         
         // ====================================================================
+        // LoadBundlesAsync - Load bundle assets
+        // ====================================================================
+
+        /// <summary>
+        /// 번들 에셋을 로드한다. onLoadBundlesAsync()를 호출하는 템플릿 메서드.
+        /// </summary>
+        /// <param name="language">로드할 언어</param>
+        /// <param name="onProgress">진행률 0~1</param>
+        public Task LoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null)
+        {
+            return onLoadBundlesAsync(language, onProgress);
+        }
+
+        /// <summary>
+        /// 번들 에셋 로드 로직. 서브클래스가 override하여 구현한다.
+        /// </summary>
+        protected virtual Task onLoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null)
+        {
+            return Task.CompletedTask;
+        }
+
+        // ====================================================================
         // Helper Methods
         // ====================================================================
         

@@ -4,10 +4,9 @@ Status: ACTIVE
 AppliesTo: v11
 
 Overlay 기반 non-blocking toast system.
-toast canvas bootstrap은 `MobileApplication`이 담당하고,
-전역 settings source는 `UIToastService`가 담당하며,
+canvas bootstrap과 전역 settings는 `UIToastService`가 담당하고,
 런타임 표시/queue/duplicate 처리는 `UIToastService` → `UIToastPanel` → `UIToastGroup` → `UIToastFrame` 계층이 담당한다.
-toast frame prefab 참조와 group 설정은 `UIToastSettings.asset`에서 공급한다.
+canvas ID, frame prefab 참조, group 설정은 모두 `UISettings.asset`에서 공급한다.
 
 ---
 
@@ -22,7 +21,8 @@ toast frame prefab 참조와 group 설정은 `UIToastSettings.asset`에서 공�
 | [13-frame](../13-frame/SKILL.md) | UIToastFrame — pool / tween / lifetime |
 | [14-data-model](../14-data-model/SKILL.md) | ToastRequest / ToastGroupConfig / Enums / UIToastDefaults |
 | [15-ui-toast-frame-id](../15-ui-toast-frame-id/SKILL.md) | UI_TOAST_FRAME_ID — UIToastFrame 프리팹 참조 ID (AssetId 패턴) |
-| [16-ui-toast-settings](../16-ui-toast-settings/SKILL.md) | UIToastSettings — Resources 기반 전역 toast group 설정 asset |
+| [16-ui-toast-canvas-id](../16-ui-toast-canvas-id/SKILL.md) | UI_TOAST_CANVAS_ID — UIToastCanvas 프리팹 참조 ID (AssetId 패턴) |
+| [13-ui-settings](../../13-ui-settings/SKILL.md) | UISettings — Resources 기반 전역 Toast/Popup 통합 설정 asset |
 
 ---
 
@@ -35,8 +35,8 @@ toast frame prefab 참조와 group 설정은 `UIToastSettings.asset`에서 공�
 - `UIToastGroup`
 - `UIToastFrame`
 - group별 queue / duplicate / max-visible 정책
-- `MobileApplication` 기반 toast canvas bootstrap
-- `UIToastSettings.asset` 기반 전역 group 설정
+- `UIToastService.Initialize()` 기반 toast canvas bootstrap
+- `UISettings.asset` 기반 전역 group 설정
 
 ### Excludes
 - popup / blocker / dim
@@ -57,7 +57,6 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Toast/
 ├── UIToastFrame.cs
 ├── ToastRequest.cs
 ├── ToastGroupConfig.cs
-├── UIToastSettings.cs
 ├── ToastEnums.cs
 ├── UIToastDefaults.cs
 └── UI_TOAST_FRAME_ID.cs
@@ -76,11 +75,12 @@ framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Applicatio
 
 ```
 MobileApplication.onLoadCompletedAsync()
-  → find existing UIToastCanvas
-  → if missing and UI_CANVAS_ID valid:
-        BundlePool.Spawn<UIToastCanvas>(id)
-  → DontDestroyOnLoad(canvas)
-  → canvas.Init()
+  → UIToastService.Instance.Initialize()
+      → UIToastCanvas.Instance 또는 FindAnyObjectByType 조회
+      → null이면: UISettings.ToastCanvasId 읽기
+      → BundlePool.Spawn<UIToastCanvas>(canvasId)
+      → DontDestroyOnLoad(canvas)
+      → canvas.Init()
 ```
 
 ### Show

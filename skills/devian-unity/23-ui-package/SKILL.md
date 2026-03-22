@@ -63,7 +63,8 @@ UIPackage는 `com.devian.foundation` 내 샘플이므로 자체 `package.json`�
 | 10 | UIManager | Canvas 수명주기 (AutoSingleton) | `10-ui-manager/SKILL.md` |
 | 11 | UICanvasSystem | UICanvas/UIPanel/UIBaseContainer 규약 | `11-ui-canvas-system/SKILL.md` |
 | 12 | UI_CANVAS_ID | UICanvas prefab 참조 ID (AssetId 패턴) | `12-ui-canvas-id/SKILL.md` |
-| 21 | UISimpleContainer | 최소 container 구현체 (frame subtree bootstrap) | `21-container-simple/SKILL.md` |
+| 13 | UISettings | Toast/Popup 통합 전역 설정 asset | `13-ui-settings/SKILL.md` |
+| 21 | UISimpleContainer | 최소 container 구현체 (frame subtree bootstrap) | `21-ui-container-simple/SKILL.md` |
 | 22 | UIScrollContainer | 유일한 scroll owner (UIScrollContainer + IUIScrollSection) | `22-ui-container-scroll/SKILL.md` |
 | 23 | UIGridFrame | N열 grid section renderer (UIGridFrame + UIGridCell) | `23-ui-frame-grid/SKILL.md` |
 | 24 | UISimpleFrame | 고정 프리팹 section (배너, 헤더, 구분선) | `24-ui-frame-simple/SKILL.md` |
@@ -77,6 +78,7 @@ UIPackage는 `com.devian.foundation` 내 샘플이므로 자체 `package.json`�
 | 50 | UIUtils | 공용 static 유틸리티 (좌표 변환, Billboard, Cursor) | `50-ui-utils/SKILL.md` |
 | 51 | UITweenSystem | UI 전용 최소 tween / transition 그룹 | `51-ui-tween-system/00-overview/SKILL.md` |
 | 52 | UIToastSystem | overlay toast service / canvas / panel / group / frame | `52-ui-toast-system/00-overview/SKILL.md` |
+| 53 | UIPopupSystem | stack 기반 modal popup manager / canvas / panel / frame | `53-ui-popup-system/00-overview/SKILL.md` |
 
 ---
 

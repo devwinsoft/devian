@@ -37,7 +37,7 @@ public sealed class UI_CELL_ID
 - **클릭 즉시 적용 + 창 자동 닫기**
 
 ### SearchDir 공급
-- BundleSettings.GetEntry(`"UI_CELL_ID"`)로 조회
+- UISettings.GetSearchDir(`"UI_CELL_ID"`)로 조회
 - 실패/폴더 없음이면 `"Assets"` fallback
 
 ### 스캔 대상
@@ -47,7 +47,7 @@ public sealed class UI_CELL_ID
 - `@` prefix 이름 제외
 - case-insensitive 중복 name은 에러 로그 후 스킵
 
-## BundleSettings 등록
+## UISettings 등록
 
 ```
 entries[UI_CELL_ID] = "Assets/Bundles/UICells"

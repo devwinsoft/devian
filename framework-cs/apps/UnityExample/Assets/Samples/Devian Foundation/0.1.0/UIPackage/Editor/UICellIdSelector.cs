@@ -9,10 +9,10 @@ namespace Devian
 {
     /// <summary>
     /// UIGridCell 프리팹 기반 ID selector.
-    /// BaseEditorAssetIdSelector&lt;UIGridCell&gt; 재활용.
-    /// BundleSettings key: "UI_CELL_ID"
+    /// BaseEditorUIAssetIdSelector&lt;UIGridCell&gt; 재활용.
+    /// UISettings key: "UI_CELL_ID"
     /// </summary>
-    public sealed class UICellIdSelector : BaseEditorAssetIdSelector<UIGridCell>
+    public sealed class UICellIdSelector : BaseEditorUIAssetIdSelector<UIGridCell>
     {
         protected override string GroupKey => "UI_CELL_ID";
         protected override string DisplayTypeName => "UI_CELL_ID";
