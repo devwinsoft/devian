@@ -15,6 +15,12 @@ namespace Devian
         RefreshDurationIfVisible
     }
 
+    public enum ToastLayoutDirection
+    {
+        Down,
+        Up
+    }
+
     public enum ToastAnchorPreset
     {
         TopLeft,

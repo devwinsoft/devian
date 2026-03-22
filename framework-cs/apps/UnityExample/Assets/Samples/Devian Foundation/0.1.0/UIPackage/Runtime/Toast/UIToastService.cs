@@ -62,13 +62,7 @@ namespace Devian
         public void Show(
             string message,
             string groupId = UIToastDefaults.DefaultGroupId,
-            float? durationOverride = null,
             ToastType toastType = ToastType.Info)
-        {
-            Show(new ToastRequest(groupId, message, durationOverride, toastType));
-        }
-
-        public void Show(ToastRequest request)
         {
             var panel = ResolvePanel();
             if (panel == null)
@@ -77,7 +71,7 @@ namespace Devian
                 return;
             }
 
-            panel.Enqueue(request);
+            panel.Enqueue(message, groupId, toastType);
         }
 
         public ToastGroupConfig[] GetGroupConfigs()

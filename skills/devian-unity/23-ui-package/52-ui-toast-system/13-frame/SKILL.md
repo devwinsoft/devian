@@ -47,7 +47,7 @@ namespace Devian
         public void OnPoolDespawned();  // CancelInternal, messageText/_currentMessage 초기화
 
         // ─── Control ───
-        public void Bind(ToastRequest request);
+        public void Bind(string message, ToastType toastType);
         public bool HasMessage(string message);                     // Ordinal 비교
         public void Show(float duration, Action<UIToastFrame> onHidden);
         public void RefreshDuration(float duration);                // isHiding이면 무시

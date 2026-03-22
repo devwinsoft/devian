@@ -33,7 +33,7 @@ namespace Devian
             UI_TOAST_FRAME_ID toastFrameId,
             ToastGroupConfig config);
 
-        public void Enqueue(ToastRequest request);
+        public void Enqueue(string message, ToastType toastType);
         public void Clear();
     }
 }

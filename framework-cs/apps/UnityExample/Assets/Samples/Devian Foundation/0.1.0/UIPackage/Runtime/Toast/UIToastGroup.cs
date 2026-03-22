@@ -7,11 +7,17 @@ namespace Devian
 {
     public sealed class UIToastGroup
     {
+        private sealed class PendingToast
+        {
+            public string Message;
+            public ToastType ToastType;
+        }
+
         private readonly UIToastCanvas _canvas;
         private readonly RectTransform _root;
         private readonly UI_TOAST_FRAME_ID _toastFrameId;
         private readonly ToastGroupConfig _config;
-        private readonly Queue<ToastRequest> _pending = new Queue<ToastRequest>();
+        private readonly Queue<PendingToast> _pending = new Queue<PendingToast>();
         private readonly List<UIToastFrame> _active = new List<UIToastFrame>();
 
         public UIToastGroup(
@@ -28,20 +34,20 @@ namespace Devian
             ApplyRootLayout();
         }
 
-        public void Enqueue(ToastRequest request)
+        public void Enqueue(string message, ToastType toastType)
         {
-            if (TryHandleDuplicate(request))
+            if (TryHandleDuplicate(message))
             {
                 return;
             }
 
             if (_active.Count < ResolveMaxVisibleCount())
             {
-                ShowImmediate(request);
+                ShowImmediate(message, toastType);
                 return;
             }
 
-            _pending.Enqueue(request);
+            _pending.Enqueue(new PendingToast { Message = message, ToastType = toastType });
         }
 
         public void Clear()
@@ -60,21 +66,21 @@ namespace Devian
             _active.Clear();
         }
 
-        private bool TryHandleDuplicate(ToastRequest request)
+        private bool TryHandleDuplicate(string message)
         {
             switch (_config.DuplicatePolicy)
             {
                 case ToastDuplicatePolicy.IgnoreIfVisible:
-                    return FindVisibleFrame(request.Message) != null;
+                    return FindVisibleFrame(message) != null;
 
                 case ToastDuplicatePolicy.RefreshDurationIfVisible:
-                    var frame = FindVisibleFrame(request.Message);
+                    var frame = FindVisibleFrame(message);
                     if (frame == null)
                     {
                         return false;
                     }
 
-                    frame.RefreshDuration(ResolveDuration(request));
+                    frame.RefreshDuration(ResolveDuration());
                     return true;
 
                 default:
@@ -101,7 +107,7 @@ namespace Devian
             return null;
         }
 
-        private void ShowImmediate(ToastRequest request)
+        private void ShowImmediate(string message, ToastType toastType)
         {
             if (_toastFrameId == null || !_toastFrameId.IsValid)
             {
@@ -126,13 +132,13 @@ namespace Devian
                 frame._InitComplete();
             }
 
-            frame.Bind(request);
+            frame.Bind(message, toastType);
             frame.transform.SetAsLastSibling();
             ApplyFrameOffset(frame, ResolveNextFrameOffset());
 
             _active.Add(frame);
 
-            frame.Show(ResolveDuration(request), OnFrameHidden);
+            frame.Show(ResolveDuration(), OnFrameHidden);
         }
 
         private void OnFrameHidden(UIToastFrame frame)
@@ -152,12 +158,12 @@ namespace Devian
             while (_active.Count < ResolveMaxVisibleCount() && _pending.Count > 0)
             {
                 var next = _pending.Dequeue();
-                if (TryHandleDuplicate(next))
+                if (TryHandleDuplicate(next.Message))
                 {
                     continue;
                 }
 
-                ShowImmediate(next);
+                ShowImmediate(next.Message, next.ToastType);
             }
         }
 
@@ -236,7 +242,10 @@ namespace Devian
         private Vector2 ResolveStep(Vector2 size)
         {
             var spacing = UIToastDefaults.DefaultSpacing;
-            return new Vector2(0f, -(size.y + spacing));
+            var step = size.y + spacing;
+            return _config.LayoutDirection == ToastLayoutDirection.Up
+                ? new Vector2(0f, step)
+                : new Vector2(0f, -step);
         }
 
         private static Vector2 ResolveSize(RectTransform rect)
@@ -261,13 +270,8 @@ namespace Devian
             return Mathf.Max(1, _config.MaxVisibleCount);
         }
 
-        private float ResolveDuration(ToastRequest request)
+        private float ResolveDuration()
         {
-            if (request.DurationOverride.HasValue)
-            {
-                return Mathf.Max(0f, request.DurationOverride.Value);
-            }
-
             if (_config.DefaultDuration > 0f)
             {
                 return _config.DefaultDuration;

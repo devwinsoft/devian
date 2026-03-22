@@ -1,4 +1,4 @@
-# 14-data-model — ToastRequest / ToastGroupConfig / Enums / Defaults
+# 14-data-model — ToastGroupConfig / Enums / Defaults
 
 Status: ACTIVE
 AppliesTo: v11
@@ -18,30 +18,9 @@ toast system 전체가 공유하는 **데이터 타입 정의**.
 
 ```
 framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Toast/
-├── ToastRequest.cs
 ├── ToastGroupConfig.cs
 ├── ToastEnums.cs
 └── UIToastDefaults.cs
-```
-
----
-
-## ToastRequest
-
-```csharp
-public readonly struct ToastRequest
-{
-    public readonly string GroupId;           // null/empty → DefaultGroupId
-    public readonly string Message;           // null → ""
-    public readonly float? DurationOverride;  // null → config.DefaultDuration 사용
-    public readonly ToastType ToastType;
-
-    public ToastRequest(
-        string groupId,
-        string message,
-        float? durationOverride = null,
-        ToastType toastType = ToastType.Info);
-}
 ```
 
 ---
@@ -58,6 +37,7 @@ public sealed class ToastGroupConfig
     public Vector2 AnchoredOffset         = UIToastDefaults.DefaultAnchoredOffset; // (0, -80)
     public int MaxVisibleCount            = UIToastDefaults.DefaultMaxVisibleCount; // 1
     public float DefaultDuration          = UIToastDefaults.DefaultDuration;        // 2f
+    public ToastLayoutDirection LayoutDirection = ToastLayoutDirection.Down;
     public ToastDuplicatePolicy DuplicatePolicy = ToastDuplicatePolicy.Allow;
 }
 ```
@@ -81,6 +61,12 @@ Toast group 설정은 통합 `UISettings` asset에 포함된다. 상세: `../../
 | `Success` | 성공 |
 | `Warning` | 경고 |
 | `Error` | 오류 |
+
+### ToastLayoutDirection
+| 값 | 설명 |
+|----|------|
+| `Down` | 아래 방향 적층 (default) |
+| `Up` | 위 방향 적층 |
 
 ### ToastDuplicatePolicy
 | 값 | 동작 |

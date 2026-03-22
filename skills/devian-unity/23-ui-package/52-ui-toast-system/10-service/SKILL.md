@@ -37,10 +37,7 @@ namespace Devian
         public void Show(
             string message,
             string groupId = UIToastDefaults.DefaultGroupId,
-            float? durationOverride = null,
             ToastType toastType = ToastType.Info);
-
-        public void Show(ToastRequest request);
     }
 }
 ```

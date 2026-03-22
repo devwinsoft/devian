@@ -79,16 +79,16 @@ namespace Devian
             _currentMessage = string.Empty;
         }
 
-        public void Bind(ToastRequest request)
+        public void Bind(string message, ToastType toastType)
         {
             ResolveDefaults();
             ApplyNonBlocking();
-            _currentMessage = request.Message ?? string.Empty;
+            _currentMessage = message ?? string.Empty;
 
             if (_messageText != null)
             {
                 _messageText.text = _currentMessage;
-                _messageText.color = ResolveTextColor(request.ToastType);
+                _messageText.color = ResolveTextColor(toastType);
                 _messageText.ForceMeshUpdate();
             }
             else
@@ -98,7 +98,7 @@ namespace Devian
 
             if (_backgroundGraphic != null)
             {
-                _backgroundGraphic.color = ResolveBackgroundColor(request.ToastType);
+                _backgroundGraphic.color = ResolveBackgroundColor(toastType);
             }
         }
 

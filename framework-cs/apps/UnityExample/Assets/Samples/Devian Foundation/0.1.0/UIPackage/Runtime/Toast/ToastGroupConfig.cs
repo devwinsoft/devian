@@ -12,6 +12,7 @@ namespace Devian
         public Vector2 AnchoredOffset = UIToastDefaults.DefaultAnchoredOffset;
         public int MaxVisibleCount = UIToastDefaults.DefaultMaxVisibleCount;
         public float DefaultDuration = UIToastDefaults.DefaultDuration;
+        public ToastLayoutDirection LayoutDirection = ToastLayoutDirection.Down;
         public ToastDuplicatePolicy DuplicatePolicy = ToastDuplicatePolicy.Allow;
     }
 }

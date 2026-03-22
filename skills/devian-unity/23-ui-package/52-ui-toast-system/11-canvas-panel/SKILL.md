@@ -50,7 +50,7 @@ namespace Devian
 {
     public sealed class UIToastPanel : UIPanel<UIToastCanvas>
     {
-        public void Enqueue(ToastRequest request);
+        public void Enqueue(string message, string groupId, ToastType toastType);
     }
 }
 ```

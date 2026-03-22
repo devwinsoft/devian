@@ -19,7 +19,7 @@ canvas ID, frame prefab 참조, group 설정은 모두 `UISettings.asset`에서 
 | [11-canvas-panel](../11-canvas-panel/SKILL.md) | UIToastCanvas + UIToastPanel — canvas 계층 및 group 초기화 |
 | [12-group](../12-group/SKILL.md) | UIToastGroup — queue / duplicate / max-visible / layout |
 | [13-frame](../13-frame/SKILL.md) | UIToastFrame — pool / tween / lifetime |
-| [14-data-model](../14-data-model/SKILL.md) | ToastRequest / ToastGroupConfig / Enums / UIToastDefaults |
+| [14-data-model](../14-data-model/SKILL.md) | ToastGroupConfig / Enums / UIToastDefaults |
 | [15-ui-toast-frame-id](../15-ui-toast-frame-id/SKILL.md) | UI_TOAST_FRAME_ID — UIToastFrame 프리팹 참조 ID (AssetId 패턴) |
 | [16-ui-toast-canvas-id](../16-ui-toast-canvas-id/SKILL.md) | UI_TOAST_CANVAS_ID — UIToastCanvas 프리팹 참조 ID (AssetId 패턴) |
 | [13-ui-settings](../../13-ui-settings/SKILL.md) | UISettings — Resources 기반 전역 Toast/Popup 통합 설정 asset |
@@ -55,7 +55,6 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Toast/
 ├── UIToastPanel.cs
 ├── UIToastGroup.cs
 ├── UIToastFrame.cs
-├── ToastRequest.cs
 ├── ToastGroupConfig.cs
 ├── ToastEnums.cs
 ├── UIToastDefaults.cs
