@@ -82,6 +82,6 @@ public sealed class UI_TOAST_FRAME_ID_Drawer : BaseEditorID_Drawer<UIToastFrameI
 
 ## Reference
 
-- Parent: `skills/devian-unity/23-ui-package/52-ui-toast-system/00-overview/SKILL.md`
+- Parent: `skills/devian-unity/23-ui-package/13-ui-toast-system/00-overview/SKILL.md`
 - AssetId Base: `skills/devian-unity/20-common-package/12-asset-id/SKILL.md`
-- UIToastFrame: `skills/devian-unity/23-ui-package/52-ui-toast-system/13-frame/SKILL.md`
+- UIToastFrame: `skills/devian-unity/23-ui-package/13-ui-toast-system/13-frame/SKILL.md`

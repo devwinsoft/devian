@@ -140,4 +140,4 @@ Inspector에서 색상 override 가능.
 - Overview: `../00-overview/SKILL.md`
 - Group: `../12-group/SKILL.md`
 - Frame ID: `../15-ui-toast-frame-id/SKILL.md`
-- UITransitionPlayer: `../../51-ui-tween-system/14-ui-transition-player/SKILL.md`
+- UITransitionPlayer: `../../22-ui-tween-system/14-ui-transition-player/SKILL.md`

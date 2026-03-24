@@ -70,5 +70,5 @@ public sealed class UISettings : ScriptableObject
 ## Reference
 
 - Parent: `../../SKILL.md`
-- Toast System: `../../52-ui-toast-system/00-overview/SKILL.md`
-- Popup System: `../../53-ui-popup-system/00-overview/SKILL.md`
+- Toast System: `../../13-ui-toast-system/00-overview/SKILL.md`
+- Popup System: `../../12-ui-popup-system/00-overview/SKILL.md`

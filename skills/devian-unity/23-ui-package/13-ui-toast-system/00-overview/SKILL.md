@@ -1,4 +1,4 @@
-# 52-ui-toast-system — Overview
+# 13-ui-toast-system — Overview
 
 Status: ACTIVE
 AppliesTo: v11
@@ -111,4 +111,4 @@ Caller
 
 - Parent: `../SKILL.md`
 - Canvas System: `../10-base-system/11-ui-canvas-system/SKILL.md`
-- UITweenSystem: `../51-ui-tween-system/00-overview/SKILL.md`
+- UITweenSystem: `../22-ui-tween-system/00-overview/SKILL.md`
