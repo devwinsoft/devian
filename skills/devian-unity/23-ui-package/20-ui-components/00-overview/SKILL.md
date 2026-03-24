@@ -15,6 +15,7 @@ Button feedback, text binding, raycast filter, non-drawing graphic 등 개별 Mo
 | [10-ui-component-base](../10-ui-component-base/SKILL.md) | `UIComponentBase` — canvas lifecycle 연동 공통 base |
 | [11-ui-component-button](../11-ui-component-button/SKILL.md) | `UIComponentButton` — press feedback + UI sound + scroll bridge |
 | [12-ui-component-text](../12-ui-component-text/SKILL.md) | `UIComponentText` — ST_TEXT 바인딩 텍스트 플러그인 |
+| [13-ui-component-safe-area](../13-ui-component-safe-area/SKILL.md) | `UIComponentSafeArea` — mobile safe area anchor/offset 보정 |
 | [20-ui-component-circle-filter](../20-ui-component-circle-filter/SKILL.md) | `UIComponentCircleFilter` — Collider2D 기반 raycast filter |
 | [21-ui-component-non-drawing](../21-ui-component-non-drawing/SKILL.md) | `UIComponentNonDrawing` — non-drawing Graphic |
 

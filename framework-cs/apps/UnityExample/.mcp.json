@@ -2,7 +2,10 @@
   "mcpServers": {
     "ai-game-developer": {
       "type": "http",
-      "url": "https://ai-game.dev/mcp"
+      "url": "http://localhost:50187",
+      "headers": {
+        "Authorization": "Bearer ODb8PvP4FW1WViwBv2NZ7oqWPZvzv4iZD-nfyE58o-I"
+      }
     }
   }
 }

@@ -854,7 +854,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 0, y: 0.00063253543}
   m_SizeDelta: {x: 0, y: 300}
   m_Pivot: {x: 0, y: 1}
 --- !u!1 &1015687728
@@ -1302,7 +1302,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 859546164}
   m_HandleRect: {fileID: 859546163}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -2002,6 +2002,7 @@ GameObject:
   - component: {fileID: 1715031554}
   - component: {fileID: 1715031553}
   - component: {fileID: 1715031552}
+  - component: {fileID: 1715031555}
   m_Layer: 5
   m_Name: Scroll View
   m_TagString: Untagged
@@ -2025,8 +2026,8 @@ RectTransform:
   - {fileID: 1965421980}
   m_Father: {fileID: 737063472}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0, y: 0.017708333}
+  m_AnchorMax: {x: 1, y: 0.9692708}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -2098,6 +2099,36 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1715031550}
   m_CullTransparentMesh: 1
+--- !u!114 &1715031555
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1715031550}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca3ec72d9db54466be218b9cbc95c7e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Samples.UIPackage::Devian.UIComponentSafeArea
+  _target: {fileID: 0}
+  _applyTop: 1
+  _applyBottom: 1
+  _applyLeft: 1
+  _applyRight: 1
+  _extraPadding: {x: 0, y: 0, z: 0, w: 0}
+  _applyMode: 0
+  _refreshOnEnable: 1
+  _refreshOnResolutionChange: 1
+  _refreshOnOrientationChange: 1
+  _useEditorSimulation: 1
+  _editorSimulationProfile: 1
+  _baselineTarget: {fileID: 1715031551}
+  _baselineAnchorMin: {x: 0, y: 0.017708333}
+  _baselineAnchorMax: {x: 1, y: 0.9692708}
+  _baselineOffsetMin: {x: 0, y: 0}
+  _baselineOffsetMax: {x: 0, y: 0}
+  _hasBaseline: 1
 --- !u!1 &1720222498
 GameObject:
   m_ObjectHideFlags: 0
@@ -2188,6 +2219,7 @@ GameObject:
   - component: {fileID: 1913704346}
   - component: {fileID: 1913704345}
   - component: {fileID: 1913704349}
+  - component: {fileID: 1913704350}
   m_Layer: 5
   m_Name: BagPanel
   m_TagString: Untagged
@@ -2211,10 +2243,10 @@ RectTransform:
   - {fileID: 1334582860}
   m_Father: {fileID: 745689052}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.5}
-  m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 100}
-  m_SizeDelta: {x: -20, y: 400}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: 0, y: -40}
+  m_SizeDelta: {x: -20, y: -118.25}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1913704345
 MonoBehaviour:
@@ -2316,6 +2348,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 86361beeb316047098bec3cb7f4d679b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UIGameFrameBag
+--- !u!114 &1913704350
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1913704343}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca3ec72d9db54466be218b9cbc95c7e3, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Samples.UIPackage::Devian.UIComponentSafeArea
+  _target: {fileID: 0}
+  _applyTop: 1
+  _applyBottom: 1
+  _applyLeft: 0
+  _applyRight: 0
+  _extraPadding: {x: 0, y: 0, z: 0, w: 0}
+  _applyMode: 1
+  _refreshOnEnable: 1
+  _refreshOnResolutionChange: 1
+  _refreshOnOrientationChange: 1
+  _useEditorSimulation: 1
+  _editorSimulationProfile: 1
+  _baselineTarget: {fileID: 1913704344}
+  _baselineAnchorMin: {x: 0, y: 0}
+  _baselineAnchorMax: {x: 1, y: 1}
+  _baselineOffsetMin: {x: 10, y: 0}
+  _baselineOffsetMax: {x: -10, y: -65.9375}
+  _hasBaseline: 1
 --- !u!1 &1953151529
 GameObject:
   m_ObjectHideFlags: 0
