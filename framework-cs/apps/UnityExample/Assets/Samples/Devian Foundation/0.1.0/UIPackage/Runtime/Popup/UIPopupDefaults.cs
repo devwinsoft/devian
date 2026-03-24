@@ -12,7 +12,7 @@ namespace Devian
         public const bool DefaultCloseOnEscape = true;
         public const bool DefaultCloseOnDimClick = false;
         public const PopupDuplicatePolicy DefaultDuplicatePolicy = PopupDuplicatePolicy.Allow;
-        public const bool DefaultPlayOpenTransition = true;
+        public const bool DefaultPlayShowTransition = true;
         public const bool DefaultPlayCloseTransition = true;
     }
 }

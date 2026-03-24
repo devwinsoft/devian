@@ -22,7 +22,7 @@ canvas ID, frame prefab 참조, group 설정은 모두 `UISettings.asset`에서 
 | [14-data-model](../14-data-model/SKILL.md) | ToastGroupConfig / Enums / UIToastDefaults |
 | [15-ui-toast-frame-id](../15-ui-toast-frame-id/SKILL.md) | UI_TOAST_FRAME_ID — UIToastFrame 프리팹 참조 ID (AssetId 패턴) |
 | [16-ui-toast-canvas-id](../16-ui-toast-canvas-id/SKILL.md) | UI_TOAST_CANVAS_ID — UIToastCanvas 프리팹 참조 ID (AssetId 패턴) |
-| [13-ui-settings](../../13-ui-settings/SKILL.md) | UISettings — Resources 기반 전역 Toast/Popup 통합 설정 asset |
+| [13-ui-settings](../../10-base-system/13-ui-settings/SKILL.md) | UISettings — Resources 기반 전역 Toast/Popup 통합 설정 asset |
 
 ---
 
@@ -110,5 +110,5 @@ Caller
 ## Related
 
 - Parent: `../SKILL.md`
-- Canvas System: `../11-ui-canvas-system/SKILL.md`
+- Canvas System: `../10-base-system/11-ui-canvas-system/SKILL.md`
 - UITweenSystem: `../51-ui-tween-system/00-overview/SKILL.md`

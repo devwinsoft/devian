@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Devian
 {
-    public sealed class UIToastPanel : UIPanel<UIToastCanvas>
+    public sealed class UIToastPanel : UIBasePanel<UIToastCanvas>
     {
         private readonly Dictionary<string, UIToastGroup> _groups = new Dictionary<string, UIToastGroup>();
 

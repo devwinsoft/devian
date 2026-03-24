@@ -20,7 +20,7 @@ public sealed class UIPopupFrameConfirm : UIPopupFrameBase<ConfirmPopupRequest>
     private TextMeshProUGUI _confirmButtonText;
     private TextMeshProUGUI _cancelButtonText;
 
-    protected override PopupDuplicatePolicy DuplicatePolicy => PopupDuplicatePolicy.FocusIfOpened;
+    protected override PopupDuplicatePolicy DuplicatePolicy => PopupDuplicatePolicy.FocusIfShow;
 
     protected override void onAwake()
     {

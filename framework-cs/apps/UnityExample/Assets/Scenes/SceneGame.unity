@@ -1632,7 +1632,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 1786c59f4cafd4865a9d987b54117b65, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Samples.UIPackage::Devian.UIGridFrame
+  m_EditorClassIdentifier: Devian.Samples.UIPackage::Devian.UIScrollGridFrame
   _cellPrefabId:
     Value: ui_cell_test
   _columnCount: 4

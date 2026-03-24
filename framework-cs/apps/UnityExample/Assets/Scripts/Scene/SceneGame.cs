@@ -30,7 +30,7 @@ public class SceneGame : SceneBootstrap
         UIToastService.Instance.Show("This is a default toast message.",  toastType: ToastType.Warning);
         UIToastService.Instance.Show("This is a default toast message.");
 
-        UIPopupManager.Instance.Open<UIPopupFrameConfirm>(
+        UIPopupManager.Instance.Show<UIPopupFrameConfirm>(
             new ConfirmPopupRequest(
                 title: "Popup Sample",
                 message: "This popup exercises the typed popup flow."),

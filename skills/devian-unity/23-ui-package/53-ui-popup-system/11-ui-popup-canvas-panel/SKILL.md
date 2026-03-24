@@ -27,14 +27,14 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Editor/UIPopupPanelEdi
 
 ## UIPopupCanvas
 
-- `UICanvas<UIPopupCanvas>, IPoolable`
+- `UIBaseCanvas<UIPopupCanvas>, IPoolable`
 - `UIPopupPanel _panel`을 소유한다
 - `NormalizeCanvasRect()`로 full-stretch rect를 강제한다
 - bootstrap 후 `Init()`되어 `panel`을 expose한다
 
 ## UIPopupPanel
 
-- `UIPanel<UIPopupCanvas>`
+- `UIBasePanel<UIPopupCanvas>`
 - `UIPopupDim`과 `PopupRoot`를 소유한다
 - manager가 spawn한 `UIPopupFrameBase`를 `PopupRoot`에 attach / detach 한다
 - panel 아래 시각 계층은 다음을 기준으로 정리한다

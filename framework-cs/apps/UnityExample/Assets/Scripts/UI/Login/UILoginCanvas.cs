@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using TMPro;
 using Devian;
 
-public class UILoginCanvas : UICanvas<UILoginCanvas>
+public class UILoginCanvas : UIBaseCanvas<UILoginCanvas>
 {
     public TextMeshProUGUI message;
     public GameObject buttonGuest;

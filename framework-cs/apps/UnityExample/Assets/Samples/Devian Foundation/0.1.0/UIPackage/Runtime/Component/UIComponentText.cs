@@ -6,27 +6,22 @@ namespace Devian
 {
     /// <summary>
     /// Binds ST_TEXT value to a TMP_Text component.
-    /// Subscribes to UI_MESSAGE.InitOnce and UI_MESSAGE.ReloadText via UIManager.messageSystem.
+    /// Applies initial text on UI init and subscribes to ReloadText updates.
     /// </summary>
-    public class UIComponentText : MonoBehaviour
+    public class UIComponentText : UIComponentBase
     {
         [SerializeField] private TMP_Text _text;
         [SerializeField] private TEXT_ID _textId;
 
-        private void OnEnable()
+        protected override void onInit(Canvas canvas)
         {
-            UIManager.messageSystem.SubcribeOnce(GetEntityId(), UI_MESSAGE.InitOnce, onInitOnce);
+            applyText();
             UIManager.messageSystem.Subcribe(GetEntityId(), UI_MESSAGE.ReloadText, onReloadText);
         }
 
-        private void OnDisable()
+        protected override void onDestroy()
         {
             UIManager.messageSystem?.UnSubcribe(GetEntityId());
-        }
-
-        private void onInitOnce(object[] args)
-        {
-            applyText();
         }
 
         private bool onReloadText(object[] args)

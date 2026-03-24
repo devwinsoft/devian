@@ -11,7 +11,7 @@ namespace Devian
     /// and ScrollRect drag bridge.
     /// </summary>
     [RequireComponent(typeof(EventTrigger))]
-    public class UIComponentButton : MonoBehaviour
+    public class UIComponentButton : UIComponentBase
     {
         public enum EffectType
         {
@@ -38,7 +38,7 @@ namespace Devian
         private Vector3 _originalScale;
         private Vector2 _originalAnchoredPosition;
 
-        private void Awake()
+        protected override void onAwake()
         {
             _trigger = GetComponent<EventTrigger>();
             _rectTransform = GetComponent<RectTransform>();

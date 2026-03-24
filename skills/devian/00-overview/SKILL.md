@@ -64,8 +64,8 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | TableGen, 테이블 생성 | `skills/devian/80-tools/11-builder/51-table-codegen/SKILL.md` |
 | TableManager, LoadStringsAsync | `skills/devian-unity/20-common-package/31-table-manager/SKILL.md` |
 | BundleManager, Addressables | `skills/devian-unity/20-common-package/19-bundle-manager/SKILL.md` |
-| UIManager, UICanvas, UIPanel | `skills/devian-unity/23-ui-package/10-ui-manager/SKILL.md` |
-| UI Canvas System, UICanvasSystem, UIBaseContainer | `skills/devian-unity/23-ui-package/11-ui-canvas-system/SKILL.md` |
+| UIManager, UIBaseCanvas, UIBasePanel | `skills/devian-unity/23-ui-package/10-base-system/10-ui-manager/SKILL.md` |
+| UI Canvas System, UICanvasSystem, UIBaseContainer | `skills/devian-unity/23-ui-package/10-base-system/11-ui-canvas-system/SKILL.md` |
 | PurchaseManager, purchase, IAP, in-app purchase, 결제, 인앱 | `skills/devian-unity/50-mobile-package/30-purchase-system/00-overview/SKILL.md` |
 | LoginManager, login manager, login flow, runtime session restore, 로그인 매니저 | `skills/devian-unity/50-mobile-package/24-login-manager/SKILL.md` |
 | purchase audit, refund audit, Google Sheets, spreadsheet log, audit sheet, 결제 로그, 환불 로그, 감사 로그 | `skills/devian-unity/50-mobile-package/30-purchase-system/48-purchase-audit-google-sheets/SKILL.md` |

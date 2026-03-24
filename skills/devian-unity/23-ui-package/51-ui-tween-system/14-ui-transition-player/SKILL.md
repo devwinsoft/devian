@@ -56,7 +56,7 @@ public sealed class UITransitionPlayer : MonoBehaviour
 
 - `UITransitionPlayer`는 `LayoutRoot`보다 내부 `VisualRoot`에 붙이는 것을 우선한다
 - `UITransitionPlayer`는 tween 대상과 같은 GameObject에 붙인다
-- `UIPanel`은 base `Show()` / `Hide()` 또는 concrete panel API에서 player를 호출할 수 있다
+- `UIBasePanel`은 base `Show()` / `Hide()` 또는 concrete panel API에서 player를 호출할 수 있다
 - `UIBaseContainer`는 non-layout visual root에만 tween을 적용한다
 - `UIBaseFrame`가 기본 적용 지점이다
 - item add / reward gain / badge update 같은 game event에서는 owner component가 manual `Play(...)`를 직접 호출한다
@@ -65,7 +65,7 @@ public sealed class UITransitionPlayer : MonoBehaviour
 
 ## Responsibility Boundary
 
-- `UIPanel.Show()` / `UIPanel.Hide()`, `Container` / `Frame`의 명시적 API, 또는 game event handler가 transition 타이밍을 결정한다
+- `UIBasePanel.Show()` / `UIBasePanel.Hide()`, `Container` / `Frame`의 명시적 API, 또는 game event handler가 transition 타이밍을 결정한다
 - 어떤 preset을 쓸지는 `UITransitionPlayer`가 아니라 owner(`UIToastFrame`, concrete panel 등)가 결정한다
 - `UITransitionPlayer`는 실행만 담당한다
 - queue, state, duplicate 판단은 player 책임이 아니다

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Devian
 {
-    public sealed class UIToastCanvas : UICanvas<UIToastCanvas>, IPoolable
+    public sealed class UIToastCanvas : UIBaseCanvas<UIToastCanvas>, IPoolable
     {
         [SerializeField] private UIToastPanel _panel;
 

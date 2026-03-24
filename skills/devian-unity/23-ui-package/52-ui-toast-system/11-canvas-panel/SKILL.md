@@ -30,7 +30,7 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Toast/
 ```csharp
 namespace Devian
 {
-    public sealed class UIToastCanvas : UICanvas<UIToastCanvas>, IPoolable
+    public sealed class UIToastCanvas : UIBaseCanvas<UIToastCanvas>, IPoolable
     {
         [SerializeField] private UIToastPanel _panel;
 
@@ -48,7 +48,7 @@ namespace Devian
 ```csharp
 namespace Devian
 {
-    public sealed class UIToastPanel : UIPanel<UIToastCanvas>
+    public sealed class UIToastPanel : UIBasePanel<UIToastCanvas>
     {
         public void Enqueue(string message, string groupId, ToastType toastType);
     }
@@ -103,4 +103,4 @@ namespace Devian
 - Overview: `../00-overview/SKILL.md`
 - Service: `../10-service/SKILL.md`
 - Group: `../12-group/SKILL.md`
-- Canvas System: `../../11-ui-canvas-system/SKILL.md`
+- Canvas System: `../../10-base-system/11-ui-canvas-system/SKILL.md`

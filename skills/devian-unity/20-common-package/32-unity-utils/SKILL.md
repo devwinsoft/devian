@@ -147,7 +147,7 @@ private async Task OnClickLoginAsync(string provider)
 // 2-arg
 public void OnClick_Send()
 {
-    UnityTaskRunner.Run(OnClickSendAsync, userId, message, "UICanvas.OnClick_Send");
+    UnityTaskRunner.Run(OnClickSendAsync, userId, message, "UIBaseCanvas.OnClick_Send");
 }
 
 private async Task OnClickSendAsync(string userId, string message)
@@ -168,7 +168,7 @@ private async Task OnClickSendAsync(string userId, string message)
 UnityMainThread           ← Singleton, Pool, PoolManager (EnsureOrThrow 사용)
 UnityMainThreadDispatcher ← UnityLogSink (백그라운드 로그 디스패치)
 UnityCoroutineRunner      ← SceneTransManager 등 Coroutine→Task 브릿지
-UnityTaskRunner           ← UICanvas, SceneBase, SceneTransManager 의 void entry point
+UnityTaskRunner           ← UIBaseCanvas, SceneBase, SceneTransManager 의 void entry point
 ```
 
 ---

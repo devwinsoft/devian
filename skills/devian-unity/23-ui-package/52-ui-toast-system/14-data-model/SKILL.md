@@ -44,7 +44,7 @@ public sealed class ToastGroupConfig
 
 ## UISettings (Toast 부분)
 
-Toast group 설정은 통합 `UISettings` asset에 포함된다. 상세: `../../13-ui-settings/SKILL.md`
+Toast group 설정은 통합 `UISettings` asset에 포함된다. 상세: `../../10-base-system/13-ui-settings/SKILL.md`
 
 - `ToastGroupConfig[]`의 전역 저장 위치다.
 - `UIToastService`가 `Resources.Load<UISettings>(UISettings.ResourcesPath)`로 로드하고 cache한다.

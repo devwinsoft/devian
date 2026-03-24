@@ -17,7 +17,7 @@ UIToastFrame 프리팹을 참조하기 위한 string wrapper ID 타입.
 
 ## String Wrapper 패턴
 
-UI_CELL_ID / UI_CONTAINER_ID와 동일한 구조:
+UI_SCROLL_CELL_ID / UI_CONTAINER_ID와 동일한 구조:
 ```csharp
 [Serializable]
 public sealed class UI_TOAST_FRAME_ID

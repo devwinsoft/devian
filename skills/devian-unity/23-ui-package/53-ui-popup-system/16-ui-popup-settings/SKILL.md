@@ -10,7 +10,7 @@ popup 전역 설정의 범위를 `UISettings`에 한정한다.
 ## Code Path
 
 ```text
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/UISettings.cs
+framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Base/UISettings.cs
 ```
 
 ## Popup Fields

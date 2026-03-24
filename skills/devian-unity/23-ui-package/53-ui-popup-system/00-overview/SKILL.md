@@ -14,14 +14,14 @@ dim / blocker / back / duplicate / result callback / transition을 포함한다.
 | Document | Description |
 |----------|-------------|
 | [01-policy](../01-policy/SKILL.md) | popup 모듈 경계와 hard rule |
-| [10-manager](../10-manager/SKILL.md) | `UIPopupManager` — stack owner / open-close 진입점 |
+| [10-manager](../10-manager/SKILL.md) | `UIPopupManager` — stack owner / show-close 진입점 |
 | [11-ui-popup-canvas-panel](../11-ui-popup-canvas-panel/SKILL.md) | `UIPopupCanvas` + `UIPopupPanel` |
 | [12-ui-popup-stack](../12-ui-popup-stack/SKILL.md) | stack / duplicate / dim / close 규칙 |
 | [13-ui-popup-frame](../13-ui-popup-frame/SKILL.md) | `UIPopupFrameBase` / `UIPopupFrameBase<TReq>` / concrete popup frames |
 | [14-ui-popup-data-model](../14-ui-popup-data-model/SKILL.md) | enum / frame-map entry / frame policy boundary |
 | [15-ui-popup-frame-editor](../15-ui-popup-frame-editor/SKILL.md) | popup frame mapping editor UX |
 | [16-ui-popup-settings](../16-ui-popup-settings/SKILL.md) | `UISettings` popup settings 범위 |
-| [13-ui-settings](../../13-ui-settings/SKILL.md) | `UISettings` — Toast/Popup 통합 설정 asset |
+| [13-ui-settings](../../10-base-system/13-ui-settings/SKILL.md) | `UISettings` — Toast/Popup 통합 설정 asset |
 | [17-ui-popup-canvas-id](../17-ui-popup-canvas-id/SKILL.md) | `UI_POPUP_CANVAS_ID` |
 | [18-ui-popup-dim](../18-ui-popup-dim/SKILL.md) | `UIPopupDim` shared dim / blocker / click layer |
 
@@ -32,12 +32,12 @@ dim / blocker / back / duplicate / result callback / transition을 포함한다.
 ### Includes
 - `UIPopupManager.Initialize()` 기반 popup canvas bootstrap
 - popup stack
-- type-based open / close top / close all
+- type-based show / close top / close all
 - dim + input blocking
 - back / escape 처리
 - duplicate policy
 - callback 기반 close reason 반환
-- `UITransitionPlayer` 기반 open / close transition
+- `UITransitionPlayer` 기반 show / close transition
 
 ### Excludes
 - public `CloseById`

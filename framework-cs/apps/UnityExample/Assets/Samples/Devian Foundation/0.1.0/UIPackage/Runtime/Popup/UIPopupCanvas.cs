@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Devian
 {
-    public sealed class UIPopupCanvas : UICanvas<UIPopupCanvas>, IPoolable
+    public sealed class UIPopupCanvas : UIBaseCanvas<UIPopupCanvas>, IPoolable
     {
         [SerializeField] private UIPopupPanel _panel;
 

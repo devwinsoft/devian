@@ -1,7 +1,7 @@
 using UnityEngine;
 namespace Devian
 {
-    public sealed class UIPopupPanel : UIPanel<UIPopupCanvas>
+    public sealed class UIPopupPanel : UIBasePanel<UIPopupCanvas>
     {
         [SerializeField] private UIPopupDim _dim;
         [SerializeField] private RectTransform _popupRoot;

@@ -77,22 +77,22 @@ namespace Devian
             }
         }
 
-        public bool Open<TFrame>(Action<PopupCloseReason> onClosed = null)
+        public bool Show<TFrame>(Action<PopupCloseReason> onClosed = null)
             where TFrame : UIPopupFrameBase
         {
-            return Open<TFrame>(null, onClosed);
+            return Show<TFrame>(null, onClosed);
         }
 
-        public bool Open<TFrame>(object payload = null, Action<PopupCloseReason> onClosed = null)
+        public bool Show<TFrame>(object payload = null, Action<PopupCloseReason> onClosed = null)
             where TFrame : UIPopupFrameBase
         {
-            return OpenInternal(typeof(TFrame), payload, onClosed);
+            return ShowInternal(typeof(TFrame), payload, onClosed);
         }
 
-        public bool Open<TFrame, TReq>(TReq request, Action<PopupCloseReason> onClosed = null)
+        public bool Show<TFrame, TReq>(TReq request, Action<PopupCloseReason> onClosed = null)
             where TFrame : UIPopupFrameBase<TReq>
         {
-            return OpenInternal(typeof(TFrame), request, onClosed);
+            return ShowInternal(typeof(TFrame), request, onClosed);
         }
 
         public bool CloseTop(PopupCloseReason reason = PopupCloseReason.Canceled)
@@ -175,14 +175,14 @@ namespace Devian
 
             switch (duplicateEntry.Frame.duplicatePolicy)
             {
-                case PopupDuplicatePolicy.IgnoreIfOpened:
+                case PopupDuplicatePolicy.IgnoreIfShow:
                     return false;
 
-                case PopupDuplicatePolicy.FocusIfOpened:
+                case PopupDuplicatePolicy.FocusIfShow:
                     FocusEntry(duplicateEntry);
                     return false;
 
-                case PopupDuplicatePolicy.ReplaceIfOpened:
+                case PopupDuplicatePolicy.ReplaceIfShow:
                     RequestClose(duplicateEntry, PopupCloseReason.Replaced);
                     return true;
 
@@ -243,14 +243,14 @@ namespace Devian
             entry.OnClosed?.Invoke(reason);
         }
 
-        private void HandleFrameOpened(UIPopupFrameBase frame)
+        private void HandleFrameShow(UIPopupFrameBase frame)
         {
             if (frame == null || !_entryByFrame.TryGetValue(frame, out var entry))
             {
                 return;
             }
 
-            entry.State = PopupFrameState.Opened;
+            entry.State = PopupFrameState.Show;
             RefreshStackState();
         }
 
@@ -299,7 +299,7 @@ namespace Devian
                     continue;
                 }
 
-                var allowInput = i == topIndex && entry.State == PopupFrameState.Opened;
+                var allowInput = i == topIndex && entry.State == PopupFrameState.Show;
                 entry.Frame.SetTopState(i == topIndex, allowInput);
                 if (entry.Frame.transform.parent != null && i == topIndex)
                 {
@@ -333,7 +333,7 @@ namespace Devian
                 dimAlpha);
         }
 
-        private PopupStackEntry FindOpenedEntry(Type frameType)
+        private PopupStackEntry FindShowEntry(Type frameType)
         {
             for (var i = _stack.Count - 1; i >= 0; i--)
             {
@@ -395,7 +395,7 @@ namespace Devian
             return canvas.panel;
         }
 
-        private bool OpenInternal(Type frameType, object payload, Action<PopupCloseReason> onClosed)
+        private bool ShowInternal(Type frameType, object payload, Action<PopupCloseReason> onClosed)
         {
             if (frameType == null || frameType.IsAbstract || !typeof(UIPopupFrameBase).IsAssignableFrom(frameType))
             {
@@ -416,7 +416,7 @@ namespace Devian
                 return false;
             }
 
-            var duplicateEntry = FindOpenedEntry(frameType);
+            var duplicateEntry = FindShowEntry(frameType);
             if (!HandleDuplicate(duplicateEntry))
             {
                 return false;
@@ -456,14 +456,14 @@ namespace Devian
                 FrameType = frameType,
                 Frame = frame,
                 OnClosed = onClosed,
-                State = PopupFrameState.Opening
+                State = PopupFrameState.Showing
             };
 
             _stack.Add(entry);
             _entryByFrame[frame] = entry;
             RefreshStackState();
 
-            frame.OpenUntyped(payload, HandleFrameOpened, HandleFrameCloseStarted, HandleFrameClosed);
+            frame.ShowUntyped(payload, HandleFrameShow, HandleFrameCloseStarted, HandleFrameClosed);
             return true;
         }
 

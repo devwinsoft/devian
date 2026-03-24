@@ -87,4 +87,4 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2194e67a4d09d40b38194be3ac2ab96d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Devian.Samples.UIPackage::Devian.UIGridCell
+  m_EditorClassIdentifier: Devian.Samples.UIPackage::Devian.UIScrollGridCell

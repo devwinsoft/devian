@@ -16,9 +16,9 @@ MonoBehaviour:
   _assetSearchEntries:
   - Key: UI_CANVAS_ID
     SearchDir: Assets/Bundles/UI/Prefabs
-  - Key: UI_CELL_ID
-    SearchDir: Assets/Bundles/UI/Prefabs
   - Key: UI_CONTAINER_ID
+    SearchDir: Assets/Bundles/UI/Prefabs
+  - Key: UI_SCROLL_CELL_ID
     SearchDir: Assets/Bundles/UI/Prefabs
   - Key: UI_TOAST_FRAME_ID
     SearchDir: Assets/Bundles/UI/Prefabs

@@ -6,9 +6,9 @@ namespace Devian
     public enum PopupDuplicatePolicy
     {
         Allow,
-        IgnoreIfOpened,
-        FocusIfOpened,
-        ReplaceIfOpened
+        IgnoreIfShow,
+        FocusIfShow,
+        ReplaceIfShow
     }
 
     [Serializable]
@@ -26,8 +26,8 @@ namespace Devian
     [Serializable]
     public enum PopupFrameState
     {
-        Opening,
-        Opened,
+        Showing,
+        Show,
         Closing
     }
 }

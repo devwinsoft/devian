@@ -7,12 +7,12 @@ namespace Devian
     [RequireComponent(typeof(CanvasGroup))]
     public abstract class UIPopupFrameBase : UIBaseFrame, IPoolable
     {
-        [SerializeField] private UI_TRANSITION_PRESET_ID _openTransitionId;
+        [SerializeField] private UI_TRANSITION_PRESET_ID _showTransitionId;
         [SerializeField] private UI_TRANSITION_PRESET_ID _closeTransitionId;
 
         private UITransitionPlayer _transitionPlayer;
         private CanvasGroup _rootCanvasGroup;
-        private Action<UIPopupFrameBase> _onOpened;
+        private Action<UIPopupFrameBase> _onShow;
         private Action<UIPopupFrameBase, PopupCloseReason> _onCloseStarted;
         private Action<UIPopupFrameBase, PopupCloseReason> _onClosed;
         private object _currentPayload;
@@ -32,7 +32,7 @@ namespace Devian
         protected virtual bool CloseOnEscape => UIPopupDefaults.DefaultCloseOnEscape;
         protected virtual bool CloseOnDimClick => UIPopupDefaults.DefaultCloseOnDimClick;
         protected virtual PopupDuplicatePolicy DuplicatePolicy => UIPopupDefaults.DefaultDuplicatePolicy;
-        protected virtual bool PlayOpenTransition => UIPopupDefaults.DefaultPlayOpenTransition;
+        protected virtual bool PlayShowTransition => UIPopupDefaults.DefaultPlayShowTransition;
         protected virtual bool PlayCloseTransition => UIPopupDefaults.DefaultPlayCloseTransition;
 
         internal bool useDim => UseDim;
@@ -69,9 +69,9 @@ namespace Devian
             _isTop = false;
         }
 
-        internal void OpenUntyped(
+        internal void ShowUntyped(
             object payload,
-            Action<UIPopupFrameBase> onOpened,
+            Action<UIPopupFrameBase> onShow,
             Action<UIPopupFrameBase, PopupCloseReason> onCloseStarted,
             Action<UIPopupFrameBase, PopupCloseReason> onClosed)
         {
@@ -79,27 +79,27 @@ namespace Devian
             CancelInternal();
 
             _currentPayload = payload;
-            _onOpened = onOpened;
+            _onShow = onShow;
             _onCloseStarted = onCloseStarted;
             _onClosed = onClosed;
             _pendingCloseReason = PopupCloseReason.Canceled;
-            State = PopupFrameState.Opening;
+            State = PopupFrameState.Showing;
 
             onBind(payload);
             ApplyTopState(_isTop);
 
-            if (ShouldPlayOpenTransition())
+            if (ShouldPlayShowTransition())
             {
-                var handle = _transitionPlayer.Play(_openTransitionId, HandleOpenCompleted);
+                var handle = _transitionPlayer.Play(_showTransitionId, HandleShowComplete);
                 if (handle == null || handle.IsCanceled)
                 {
-                    HandleOpenCompleted();
+                    HandleShowComplete();
                 }
 
                 return;
             }
 
-            HandleOpenCompleted();
+            HandleShowComplete();
         }
 
         internal void CloseFromManager(PopupCloseReason reason)
@@ -160,15 +160,15 @@ namespace Devian
             CompleteClose();
         }
 
-        private void HandleOpenCompleted()
+        private void HandleShowComplete()
         {
-            if (State != PopupFrameState.Opening)
+            if (State != PopupFrameState.Showing)
             {
                 return;
             }
 
-            State = PopupFrameState.Opened;
-            _onOpened?.Invoke(this);
+            State = PopupFrameState.Show;
+            _onShow?.Invoke(this);
         }
 
         private void CompleteClose()
@@ -182,11 +182,11 @@ namespace Devian
             callback?.Invoke(this, _pendingCloseReason);
         }
 
-        private bool ShouldPlayOpenTransition()
+        private bool ShouldPlayShowTransition()
         {
-            return PlayOpenTransition
-                && _openTransitionId != null
-                && _openTransitionId.IsValid
+            return PlayShowTransition
+                && _showTransitionId != null
+                && _showTransitionId.IsValid
                 && _transitionPlayer != null;
         }
 
@@ -216,7 +216,7 @@ namespace Devian
                 _transitionPlayer.Cancel();
             }
 
-            _onOpened = null;
+            _onShow = null;
             _onCloseStarted = null;
             _onClosed = null;
         }

@@ -1,7 +1,7 @@
 using UnityEngine;
 using Devian;
 
-public class UIGameBagPanel : UIPanel<UIGameCanvas>
+public class UIGameBagPanel : UIBasePanel<UIGameCanvas>
 {
     protected override void onInit(UIGameCanvas canvas)
     {

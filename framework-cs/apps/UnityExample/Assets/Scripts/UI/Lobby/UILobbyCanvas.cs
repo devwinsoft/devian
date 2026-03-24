@@ -6,7 +6,7 @@ using Devian;
 using Devian.Domain.Game;
 using Devian.Protocol.Game;
 
-public class UILobbyCanvas : UICanvas<UILobbyCanvas>
+public class UILobbyCanvas : UIBaseCanvas<UILobbyCanvas>
 {
     protected override void onAwake()
     {

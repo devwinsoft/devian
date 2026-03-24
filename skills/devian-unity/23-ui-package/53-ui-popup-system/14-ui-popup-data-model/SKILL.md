@@ -17,9 +17,9 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/UIPopupE
 framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/UIPopupFrameMapEntry.cs
 ```
 
-## Open / Close Payload
+## Show / Close Payload
 
-- `UIPopupManager.Open<TFrame>(...)`는 frame type과 payload를 직접 받는다.
+- `UIPopupManager.Show<TFrame>(...)`는 frame type과 payload를 직접 받는다.
 - close callback은 `PopupCloseReason`만 caller로 전달한다.
 
 ## Popup Frame Mapping

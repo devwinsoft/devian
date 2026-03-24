@@ -122,10 +122,10 @@ MonoBehaviour:
     Value: ui_transition_preset_hide
   _backgroundGraphic: {fileID: 3692792763661392451}
   _canvasGroup: {fileID: 460665209873529145}
-  _infoBackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.95}
-  _successBackgroundColor: {r: 0.16, g: 0.45, b: 0.24, a: 0.95}
-  _warningBackgroundColor: {r: 0.75, g: 0.5, b: 0.08, a: 0.95}
-  _errorBackgroundColor: {r: 0.7, g: 0.18, b: 0.18, a: 0.95}
+  _infoBackgroundColor: {r: 0.15, g: 0.15, b: 0.15, a: 0.78431374}
+  _successBackgroundColor: {r: 0.16, g: 0.45, b: 0.24, a: 0.78431374}
+  _warningBackgroundColor: {r: 0.75, g: 0.5, b: 0.08, a: 0.78431374}
+  _errorBackgroundColor: {r: 0.7, g: 0.18, b: 0.18, a: 0.78431374}
   _infoTextColor: {r: 1, g: 1, b: 1, a: 1}
   _successTextColor: {r: 1, g: 1, b: 1, a: 1}
   _warningTextColor: {r: 1, g: 1, b: 1, a: 1}
