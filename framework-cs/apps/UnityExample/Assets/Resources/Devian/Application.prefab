@@ -75,10 +75,8 @@ MonoBehaviour:
     Patch: 0
   DefaultLanguage: 23
   FirebaseFunctionsRegion: asia-northeast3
-  VersionCheckAOS: https://raw.githubusercontent.com/devwinsoft/devian/main/release/version_aos.json
-  VersionCheckIOS: https://raw.githubusercontent.com/devwinsoft/devian/main/release/version_ios.json
-  _toastCanvasId:
-    Value: ui_toast_canvas
+  VersionCheckAOS: https://devwinsoft.github.io/devian-data/framework/version_aos.json
+  VersionCheckIOS: https://devwinsoft.github.io/devian-data/framework/version_ios.json
   _cryptoKey:
     data: Wy9bWgeqW0Ugn26FLI+j/FOP1jgzW5ojhcejGMcVbiCzn+NaQEBFQCmfOyc=
   _cryptoIv:

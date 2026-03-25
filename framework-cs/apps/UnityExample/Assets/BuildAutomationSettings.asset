@@ -17,7 +17,8 @@ MonoBehaviour:
   keystorePath: /Users/maoshy/Documents/Projects/devian/framework-cs/apps/secret/example_release.keystore
   firebaseAndroidAppId: 1:119226054667:android:b98cb9bc4c529c6bab6f0e
   firebaseIOSAppId: 
-  versionJsonPathAOS: /Users/maoshy/Documents/Projects/devian/release/version_aos.json
-  versionJsonPathIOS: /Users/maoshy/Documents/Projects/devian/release/version_ios.json
+  releaseRepoRoot: 
+  versionJsonPathAOS: /Users/maoshy/Documents/Projects/devian-data/framework/version_aos.json
+  versionJsonPathIOS: /Users/maoshy/Documents/Projects/devian-data/framework/version_ios.json
   firebaseCLIPath: 
   developmentBuild: 0
