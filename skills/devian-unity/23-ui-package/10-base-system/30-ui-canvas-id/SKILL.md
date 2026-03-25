@@ -1,4 +1,4 @@
-# 31-ui-canvas-id
+# 30-ui-canvas-id
 
 Status: ACTIVE
 AppliesTo: v1
@@ -47,15 +47,13 @@ public sealed class UI_CANVAS_ID
 
 - `UIBaseCanvas` 또는 concrete subclass가 있는 Prefab 목록을 SearchDir에서 스캔
 - `BaseEditorAssetIdSelector<UIBaseCanvas>` 재활용 (`AssetManager.FindPrefabs`)
-- `prefab.name`을 ID 값으로 사용
 - `@` prefix 이름 제외
 - case-insensitive 중복 name은 에러 로그 후 스킵
 
-## UISettings 등록
+## UISettings 연계
 
-```text
-entries[UI_CANVAS_ID] = "Assets/Bundles/UICanvases"
-```
+- `UI_CANVAS_ID`는 일반 `UIBaseCanvas` 참조용 공용 타입이다.
+- loading canvas bootstrap에는 사용하지 않는다.
 
 ## Editor 구현
 
@@ -83,10 +81,10 @@ public sealed class UI_CANVAS_ID_Drawer : BaseEditorID_Drawer<UICanvasIdSelector
 
 - `UIBaseCanvas`는 abstract base지만, selector는 prefab root의 `GetComponent<UIBaseCanvas>()`로 concrete subclass를 잡는다
 - selector 캐싱 금지 (항상 `CreateInstance`)
-- 런타임에서 `AssetDatabase`/`Resources.Load` 금지 (`AssetManager` 캐시만)
 
 ## Reference
 
 - Parent: `skills/devian-unity/23-ui-package/SKILL.md`
 - AssetId Base: `skills/devian-unity/20-common-package/12-asset-id/SKILL.md`
 - UICanvas System: `skills/devian-unity/23-ui-package/10-base-system/11-ui-canvas-system/SKILL.md`
+- UISettings: `skills/devian-unity/23-ui-package/10-base-system/13-ui-settings/SKILL.md`

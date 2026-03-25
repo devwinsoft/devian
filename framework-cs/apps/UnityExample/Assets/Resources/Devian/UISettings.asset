@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Devian.Samples.UIPackage::Devian.UISettings
   _uiAddressablesKey: ui
   _assetSearchEntries:
+  - Key: UI_LOADING_CANVAS_ID
+    SearchDir: Assets/Resources/UI/Prefabs
   - Key: UI_CANVAS_ID
     SearchDir: Assets/Bundles/UI/Prefabs
   - Key: UI_CONTAINER_ID
@@ -30,6 +32,8 @@ MonoBehaviour:
     SearchDir: Assets/Bundles/UI/Prefabs
   - Key: UI_TRANSITION_PRESET_ID
     SearchDir: Assets/Bundles/UI/Preset
+  _loadingCanvasId:
+    Value: uiloading_canvas
   _toastCanvasId:
     Value: ui_toast_canvas
   _groupConfigs:

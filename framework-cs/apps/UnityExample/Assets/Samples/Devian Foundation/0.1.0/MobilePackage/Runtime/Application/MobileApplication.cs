@@ -85,6 +85,8 @@ namespace Devian
             tryActivateGooglePlayGames();
             #endif
 
+            initializeLoadingCanvas();
+
             return Task.CompletedTask;
         }
 
@@ -168,6 +170,56 @@ namespace Devian
             }
         }
         #endif
+
+        private static void initializeLoadingCanvas()
+        {
+            var loadingCanvas = UILoadingCanvas.Instance;
+            if (loadingCanvas == null)
+            {
+                loadingCanvas = UnityEngine.Object.FindAnyObjectByType<UILoadingCanvas>(FindObjectsInactive.Include);
+            }
+
+            if (loadingCanvas == null)
+            {
+                var settings = Resources.Load<UISettings>(UISettings.ResourcesPath);
+                var canvasId = settings != null ? settings.LoadingCanvasId : null;
+                if (canvasId == null || !canvasId.IsValid)
+                {
+                    return;
+                }
+
+                var searchDir = settings.GetResourcesSearchDir("UI_LOADING_CANVAS_ID");
+                if (string.IsNullOrWhiteSpace(searchDir))
+                {
+                    Debug.LogWarning("[MobileApplication] UISettings search dir for 'UI_LOADING_CANVAS_ID' is missing or not under Resources.");
+                    return;
+                }
+
+                var resourcePath = $"{searchDir}/{canvasId.Value}".Trim('/');
+                var prefab = Resources.Load<GameObject>(resourcePath);
+                if (prefab == null)
+                {
+                    Debug.LogWarning($"[MobileApplication] UILoadingCanvas prefab not found at Resources path '{resourcePath}'.");
+                    return;
+                }
+
+                var instance = UnityEngine.Object.Instantiate(prefab);
+                loadingCanvas = instance.GetComponent<UILoadingCanvas>();
+                if (loadingCanvas == null)
+                {
+                    Debug.LogWarning($"[MobileApplication] Loaded prefab '{resourcePath}' does not contain UILoadingCanvas.");
+                    UnityEngine.Object.Destroy(instance);
+                    return;
+                }
+            }
+
+            DontDestroyOnLoad(loadingCanvas.gameObject);
+
+            if (!loadingCanvas.isInitialized)
+            {
+                loadingCanvas.Init();
+            }
+        }
 
     }
 }

@@ -16,37 +16,47 @@ public class TestApplication : MobileApplication
 
     protected override async Task onLoadAsync(Action<float>? onProgress = null)
     {
-        reportProgress(onProgress, 0f);
+        var loadingCanvas = UILoadingCanvas.Instance;
+        loadingCanvas?.ShowBundleLoading();
 
-        var patchResult = await TestBundleManager.Instance.InitializeAsync();
-        await Task.Yield();
-        reportProgress(onProgress, 0.15f);
-        if (patchResult.IsSuccess)
+        try
         {
-            Debug.Log(patchResult.Value!.TotalSize);
-        }
+            reportProgress(onProgress, 0f);
 
-        if (patchResult.IsSuccess && patchResult.Value != null && patchResult.Value.TotalSize > 0)
-        {
-            var downloadResult = await TestBundleManager.Instance.DownloadAsync(
-                progress => reportProgress(onProgress, remapProgress(progress, 0.15f, 0.55f)));
+            var patchResult = await TestBundleManager.Instance.InitializeAsync();
             await Task.Yield();
-            if (downloadResult.IsFailure)
+            reportProgress(onProgress, 0.15f);
+            if (patchResult.IsSuccess)
             {
-                Debug.LogWarning($"[TestApplication] Bundle download failed (non-fatal): {downloadResult.Error}");
+                Debug.Log(patchResult.Value!.TotalSize);
             }
-        }
-        else
-        {
-            reportProgress(onProgress, 0.55f);
-            await Task.Yield();
-        }
 
-        await TestBundleManager.Instance.LoadBundlesAsync(
-            DefaultLanguage,
-            progress => reportProgress(onProgress, remapProgress(progress, 0.55f, 1f)));
-        await Task.Yield();
-        reportProgress(onProgress, 1f);
+            if (patchResult.IsSuccess && patchResult.Value != null && patchResult.Value.TotalSize > 0)
+            {
+                var downloadResult = await TestBundleManager.Instance.DownloadAsync(
+                    progress => reportProgress(onProgress, remapProgress(progress, 0.15f, 0.55f)));
+                await Task.Yield();
+                if (downloadResult.IsFailure)
+                {
+                    Debug.LogWarning($"[TestApplication] Bundle download failed (non-fatal): {downloadResult.Error}");
+                }
+            }
+            else
+            {
+                reportProgress(onProgress, 0.55f);
+                await Task.Yield();
+            }
+
+            await TestBundleManager.Instance.LoadBundlesAsync(
+                DefaultLanguage,
+                progress => reportProgress(onProgress, remapProgress(progress, 0.55f, 1f)));
+            await Task.Yield();
+            reportProgress(onProgress, 1f);
+        }
+        finally
+        {
+            loadingCanvas?.HideBundleLoading();
+        }
     }
 
     protected override async Task onLoadCompletedAsync()
@@ -56,7 +66,14 @@ public class TestApplication : MobileApplication
 
     static void reportProgress(Action<float>? onProgress, float progress)
     {
-        onProgress?.Invoke(Mathf.Clamp01(progress));
+        var clamped = Mathf.Clamp01(progress);
+        onProgress?.Invoke(clamped);
+
+        var loadingCanvas = UILoadingCanvas.Instance;
+        if (loadingCanvas != null)
+        {
+            loadingCanvas.SetBundleLoadingProgress(clamped);
+        }
     }
 
     static float remapProgress(float progress, float min, float max)

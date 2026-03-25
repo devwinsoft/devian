@@ -20,8 +20,11 @@ namespace Devian
         [Header("UI")]
         [SerializeField] private string _uiAddressablesKey = "ui";
         [SerializeField] private UIAssetSearchEntry[] _assetSearchEntries;
+        [Header("Loading")]
+        [SerializeField] private UI_LOADING_CANVAS_ID _loadingCanvasId;
 
         public string UIAddressablesKey => _uiAddressablesKey;
+        public UI_LOADING_CANVAS_ID LoadingCanvasId => _loadingCanvasId;
 
         public string GetSearchDir(string key)
         {
@@ -33,6 +36,25 @@ namespace Devian
                     return entry.SearchDir;
             }
             return null;
+        }
+
+        public string GetResourcesSearchDir(string key)
+        {
+            var dir = GetSearchDir(key);
+            if (string.IsNullOrWhiteSpace(dir))
+            {
+                return null;
+            }
+
+            const string marker = "/Resources/";
+            var normalized = dir.Replace('\\', '/');
+            var markerIndex = normalized.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
+            if (markerIndex < 0)
+            {
+                return null;
+            }
+
+            return normalized.Substring(markerIndex + marker.Length).Trim('/');
         }
 
         // ── Toast ──
