@@ -49,27 +49,9 @@ Newtonsoft 의존성 없이 동작한다.
 
 ---
 
-## GitRunner API
+## GitRunner
 
-git CLI를 `System.Diagnostics.Process`로 호출한다.
-
-```csharp
-namespace Devian
-{
-    public static class GitRunner
-    {
-        public static Task<bool> Commit(
-            string commitMessage,
-            string[] filePaths,
-            CancellationToken ct)
-    }
-}
-```
-
-내부 동작:
-1. `git add {filePaths}` — 대상 파일만 스테이징
-2. `git commit -m "{commitMessage}"` — 커밋
-3. 각 단계에서 exit code 검증, 실패 시 로그 + 중단
+→ 상세: [41-git-runner](../41-git-runner/SKILL.md)
 
 ---
 

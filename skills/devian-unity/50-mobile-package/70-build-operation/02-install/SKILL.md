@@ -16,6 +16,7 @@ Build/Symbol Upload별 필수/선택 도구를 구분하고, macOS 기준 설치
 | Firebase CLI | Symbol Upload | 필수 | 심볼 업로드 (`crashlytics:symbols:upload`) |
 | Node.js | Symbol Upload | 필수 | Firebase CLI 런타임 |
 | Xcode CLI Tools | Build (iOS) | 필수 | iOS 빌드/아카이브 |
+| Addressables | Bundle Build, Bundle Upload | 필수 | Addressable 번들 빌드/리모트 로드 |
 
 ---
 
@@ -97,15 +98,51 @@ Unity Editor는 GUI 앱이므로 쉘 PATH를 상속받지 못한다.
 
 ---
 
+## 3. Addressables (Unity)
+
+Addressables 패키지는 UPM으로 설치한다.
+
+### 설치
+
+```
+Window > Package Manager > Unity Registry > Addressables > Install
+```
+
+또는 `Packages/manifest.json`에 직접 추가:
+
+```json
+"com.unity.addressables": "1.21.x"
+```
+
+### Remote Profile 설정
+
+번들을 GitHub Pages로 서빙하려면 Remote 프로파일을 설정해야 한다.
+
+1. `Window > Asset Management > Addressables > Profiles`
+2. 기본 프로파일에서 Remote 변수 설정:
+   - **Remote.BuildPath**: `ServerData/[BuildTarget]`
+   - **Remote.LoadPath**: `https://{user}.github.io/{repo}/bundles/[BuildTarget]`
+3. Remote으로 배포할 group의 `Build & Load Paths`를 `Remote`으로 변경:
+   - group 선택 > Inspector > `Build & Load Paths` > `Remote`
+
+### 확인
+
+Settings 탭 Prerequisites에서 다음이 ✅로 표시되어야 한다:
+- Addressables
+
+---
+
 ## 설치 순서 (권장)
 
 ```
-1. Xcode CLI Tools  →  xcode-select --install
-2. Node.js           →  brew install node  (또는 nvm)
-3. Firebase CLI      →  npm install -g firebase-tools
-4. Firebase login    →  firebase login
-5. Firebase SDK      →  Unity에서 unitypackage import
-6. 플랫폼 설정 파일   →  google-services.json / GoogleService-Info.plist
+1. Xcode CLI Tools   →  xcode-select --install
+2. Node.js            →  brew install node  (또는 nvm)
+3. Firebase CLI       →  npm install -g firebase-tools
+4. Firebase login     →  firebase login
+5. Firebase SDK       →  Unity에서 unitypackage import
+6. 플랫폼 설정 파일    →  google-services.json / GoogleService-Info.plist
+7. Addressables       →  Package Manager에서 설치
+8. Remote Profile     →  Addressables Profiles에서 Remote 경로 설정
 ```
 
 ---
@@ -115,3 +152,5 @@ Unity Editor는 GUI 앱이므로 쉘 PATH를 상속받지 못한다.
 - [00-overview](../00-overview/SKILL.md) — 그룹 개요
 - [10-settings](../10-settings/SKILL.md) — Settings (Prerequisites 체크)
 - [30-symbol-upload](../30-symbol-upload/SKILL.md) — Firebase CLI 사용처
+- [21-bundle-build](../21-bundle-build/SKILL.md) — Addressables 번들 빌드
+- [22-bundle-upload](../22-bundle-upload/SKILL.md) — Addressables 번들 업로드

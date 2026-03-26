@@ -7,7 +7,9 @@
         "Devian.Samples.CommonPackage",
         "Devian.Samples.GamePackage",
         "Devian.Unity.Editor",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Unity.Addressables",
+        "Unity.Addressables.Editor"
     ],
     "includePlatforms": [
         "Editor"

@@ -48,18 +48,22 @@ EditorWindow는 4개 탭으로 구성한다:
 │  │ Firebase App ID   [1:xxx:ios:xxxxx]        │   │
 │  └───────────────────────────────────────────┘   │
 │                                                  │
-│  ┌─ Version JSON ────────────────────────────┐   │
-│  │ AOS  [release/version_aos.json]     [...] │   │
-│  │ iOS  [release/version_ios.json]     [...] │   │
+│  ┌─ Release ────────────────────────────────┐   │
+│  │ Release Repo Root [              ] [...] │   │
+│  │ AOS Version JSON  [release/v_aos ] [...] │   │
+│  │ iOS Version JSON  [release/v_ios ] [...] │   │
 │  └───────────────────────────────────────────┘   │
+│                                                  │
+│  ┌─ Addressables ──────────────────────────────┐ │
+│  │ Exclude Groups  [▼ Select Group      ] [+]  │ │
+│  │   ● Built In Data                           │ │
+│  │   ● LocalStaticAssets                       │ │
+│  │                              [Clear All]    │ │
+│  └─────────────────────────────────────────────┘ │
 │                                                  │
 │  ┌─ CLI Paths ───────────────────────────────┐   │
 │  │ 비워두면 자동 탐색. 'which firebase'로 확인  │   │
 │  │ Firebase CLI  [                ]    [...]  │   │
-│  └───────────────────────────────────────────┘   │
-│                                                  │
-│  ┌─ Pipeline Options ────────────────────────┐   │
-│  │ ☐ Development Build (Debug Mode)           │   │
 │  └───────────────────────────────────────────┘   │
 │                                                  │
 │  ── Prerequisites ──                             │
@@ -72,6 +76,7 @@ EditorWindow는 4개 탭으로 구성한다:
 │  ✅ Build Output Dir                             │
 │  ✅ Android Module                               │
 │  ✅ iOS Module                                   │
+│  ✅ Addressables                                 │
 │  [Refresh]                                       │
 │                                                  │
 └──────────────────────────────────────────────────┘
@@ -100,6 +105,7 @@ Settings/Pipeline/Release 탭은 공용 `_mainScroll` ScrollView로 감싼다.
 │  ── Build ──                                     │
 │  ☑ Android  ☑ iOS  (readiness 기반 editable)      │
 │  ☑ Build App Bundle (AAB)                        │
+│  ☑ Build Addressable Bundles                     │
 │  ☐ Development Build (Debug Mode)                │
 │  [▶  Build]                                      │
 │                                                  │
@@ -130,15 +136,21 @@ Settings/Pipeline/Release 탭은 공용 `_mainScroll` ScrollView로 감싼다.
 
 **Development Build 체크박스**: `settings.developmentBuild`를 토글한다. 스냅샷 `_guiDevBuild` 사용. 실행 중에는 비활성화.
 
+**Build Addressable Bundles 체크박스**: `_buildAddressables` 토글. 체크 시 앱 빌드 전에 `BundleBuildRunner.Run()` 호출. 실행 중에는 비활성화.
+
 **Build 버튼** (`RunBuild()`):
-1. `_buildAndroid`/`_buildIos`가 true인 플랫폼만 빌드
-2. 빌드 성공 시 `AutoFillSymbolPaths()`로 심볼 경로 자동 입력
+1. `_buildAddressables`가 true이면:
+   a. `BundleBuildRunner.Run(excludedGroups)` — 번들 빌드
+   b. 성공 시 `BundleUploadRunner.Run(settings, ct)` — 빌드 산출물을 release repo에 복사 + git commit
+   c. Bundle Copy 실패 시 경고 로그만 출력하고 앱 빌드는 계속 진행
+2. `_buildAndroid`/`_buildIos`가 true인 플랫폼만 앱 빌드
+3. 빌드 성공 시 `AutoFillSymbolPaths()`로 심볼 경로 자동 입력
 
 ---
 
 ## Tab 3: Release
 
-2개 섹션으로 구성: Version Publish / Symbol Upload.
+3개 섹션으로 구성: Version Publish / Bundle Upload / Symbol Upload.
 
 ```
 ┌─ Release ────────────────────────────────────────┐
@@ -156,6 +168,12 @@ Settings/Pipeline/Release 탭은 공용 `_mainScroll` ScrollView로 감싼다.
 │   Current Version [1.2.3      ]                  │
 │   Min Version     [1.0.0      ]                  │
 │   [▶  Publish]                                   │
+│  ─────────────────────────────────────────────   │
+│                                                  │
+│  ── Bundle Upload ──                             │
+│  Release Repo Root  ../release-repo              │
+│  Remote Groups: 3개 감지                          │
+│  [⬆  Upload Bundles to Git]                     │
 │  ─────────────────────────────────────────────   │
 │                                                  │
 │  ── Symbol Upload ──                             │
@@ -184,6 +202,15 @@ Settings/Pipeline/Release 탭은 공용 `_mainScroll` ScrollView로 감싼다.
   3. 변경 없으면 → commit 스킵, 로그만 출력
   4. 변경 있으면 → `GitRunner.Commit()` — git add → commit (push 하지 않음)
   5. commit message: title + body (변경 전후 currentVersion, minVersion 기록)
+
+### Bundle Upload 실행 로직
+
+**Remote Groups 표시**: `AddressableAssetSettingsDefaultObject.Settings.groups`에서 Remote group 수를 감지하여 읽기 전용 표시.
+
+**Upload Bundles to Git 버튼** (`RunBundleUpload()`):
+1. `BundleUploadRunner.Run(settings, ct)` 호출
+2. Remote group의 빌드 산출물을 `releaseRepoRoot/{BuildTarget}/`에 복사
+3. `GitRunner.Commit()`으로 git add → commit (push 하지 않음)
 
 ### Symbol Upload 실행 로직
 
@@ -244,6 +271,8 @@ if (Event.current.type == EventType.Layout)
     _guiIosReady = _iosReady;
     _guiBuildAndroid = _buildAndroid;
     _guiBuildIos = _buildIos;
+    _guiBuildAddressables = _buildAddressables;
+    _guiRemoteGroupCount = _remoteGroupCount;
     _guiLastVersionAOS = _lastVersionAOS;
     _guiLastVersionIOS = _lastVersionIOS;
     _guiEditVersionAOS = _editVersionAOS;
@@ -270,7 +299,7 @@ if (Event.current.type == EventType.Layout)
 ## 파일 목록
 
 ```
-Samples~/MobilePackage/Editor/Build/
+Samples~/MobilePackage/Editor/BuildAutomation/
 ├── BuildAutomationSettings.cs         # ScriptableObject (10-settings)
 ├── BuildAutomationSettingsEditor.cs   # Custom Editor (helpBox GroupBox, 경로 브라우저)
 ├── BuildAutomationUtil.cs             # 공통 유틸 (Settings 로드, CLI 해석, Prerequisites)
@@ -279,6 +308,8 @@ Samples~/MobilePackage/Editor/Build/
 ├── AndroidBuildRunner.cs              # Build - Android
 ├── IOSBuildRunner.cs                  # Build - iOS
 ├── BuildReportAnalyzer.cs             # Build - 리포트 분석
+├── BundleBuildRunner.cs               # Pipeline - Addressable 번들 빌드
+├── BundleUploadRunner.cs              # Release - 번들 git 업로드
 ├── GitRunner.cs                       # Release - git CLI wrapper
 └── SymbolUploader.cs                  # Release - Symbol Upload
 ```
@@ -291,4 +322,6 @@ Samples~/MobilePackage/Editor/Build/
 - [10-settings](../10-settings/SKILL.md) — BuildAutomationSettings 정의
 - [20-build](../20-build/SKILL.md) — Build 로직
 - [30-symbol-upload](../30-symbol-upload/SKILL.md) — Symbol Upload
+- [21-bundle-build](../21-bundle-build/SKILL.md) — Bundle Build
+- [22-bundle-upload](../22-bundle-upload/SKILL.md) — Bundle Upload
 - [40-version-publish](../40-version-publish/SKILL.md) — Version Publish

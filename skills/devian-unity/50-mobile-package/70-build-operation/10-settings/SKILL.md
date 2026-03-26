@@ -16,7 +16,7 @@ EditorWindow Settings 탭에서 이 ScriptableObject를 직접 편집한다.
 ### 파일 위치
 
 ```
-Samples~/MobilePackage/Editor/Build/BuildAutomationSettings.cs
+Samples~/MobilePackage/Editor/BuildAutomation/BuildAutomationSettings.cs
 ```
 
 ### 필드 정의
@@ -40,15 +40,26 @@ namespace Devian
         // ── iOS ──
         public string firebaseIOSAppId = "";
 
-        // ── Version ──
+        // ── Release ──
+        public string releaseRepoRoot = "";
+        public string remoteCdnUrl = "";   // CDN base URL (예: https://xxx.cloudfront.net)
         public string versionJsonPathAOS = "release/version_aos.json";
         public string versionJsonPathIOS = "release/version_ios.json";
+
+        // ── Addressables ──
+        public List<string> excludedAddressableGroups = new List<string>();
 
         // ── CLI Paths ──
         public string firebaseCLIPath = "";
 
         // ── Pipeline Options ──
         public bool developmentBuild = false;
+
+        // ── Keystore Credentials (EditorPrefs) ──
+        // static 프로퍼티. ScriptableObject 필드가 아닌 EditorPrefs에 저장.
+        public static string KeystorePass { get; set; }   // EditorPrefs
+        public static string KeyaliasName { get; set; }   // EditorPrefs
+        public static string KeyaliasPass { get; set; }   // EditorPrefs
     }
 }
 ```
@@ -66,7 +77,36 @@ namespace Devian
 파일/폴더 경로 필드에는 `DrawPathFieldInline()` (Label + TextField + `[...]` 브라우저 버튼)을 사용한다.
 CLI Paths 섹션에는 자동 탐색 안내 문구를 `wordWrappedMiniLabel`로 표시한다.
 
-섹션 구성: General, Android, iOS, Version JSON, CLI Paths, Pipeline Options
+섹션 구성: General, Android (+ Keystore Credentials), iOS, Release, Addressables, CLI Paths, Pipeline Options
+
+### Keystore Credentials (EditorPrefs)
+
+Keystore 비밀번호는 ScriptableObject 필드가 아닌 **EditorPrefs**에 저장한다.
+
+| 항목 | EditorPrefs Key | 용도 |
+|------|----------------|------|
+| Keystore Pass | `Devian.BuildAutomation.keystorePass` | keystore 비밀번호 |
+| Key Alias Name | `Devian.BuildAutomation.keyaliasName` | key alias 이름 |
+| Key Alias Pass | `Devian.BuildAutomation.keyaliasPass` | key alias 비밀번호 |
+
+**설계 근거:**
+- **git 미포함**: EditorPrefs는 macOS Preferences에 저장되어 git에 들어가지 않는다.
+- **재시작 유지**: Unity 재시작 후에도 값이 유지된다 (SessionState와 다름).
+- **환경변수 fallback**: EditorPrefs 값이 비어있으면 환경변수(`ANDROID_KEYSTORE_PASS` 등)를 사용한다.
+- **Inspector UI**: Settings Inspector의 Android 섹션에 PasswordField로 표시 (마스킹).
+
+### Remote CDN URL
+
+`remoteCdnUrl` 필드는 번들 업로드 경로와 Addressables Remote.LoadPath의 **SSOT(단일 진실 공급원)**이다.
+
+| 사용처 | 경로 생성 규칙 |
+|--------|---------------|
+| BundleUploadRunner dest | `{releaseRepoRoot}/v{bundleVersion}/{BuildTarget}/` |
+| Addressables Remote.LoadPath | `{remoteCdnUrl}/v{bundleVersion}/{BuildTarget}` |
+| git commit 대상 | `v{bundleVersion}/{BuildTarget}` |
+
+- `remoteCdnUrl`이 비어있으면 BundleUpload 시 경고 로그 후 skip.
+- BundleBuildRunner가 빌드 전에 Addressables Profile의 `Remote.LoadPath`를 `{remoteCdnUrl}/v{bundleVersion}/[BuildTarget]`로 자동 동기화한다.
 
 ### 설정 로드
 
@@ -94,6 +134,7 @@ Settings 탭 하단에서 상태를 표시한다. `BuildAutomationUtil.CheckPrer
 | Build Output Dir | 비어있지 않음 | Build |
 | Android Module | `BuildPipeline.IsBuildTargetSupported()` | Build (Android) |
 | iOS Module | `BuildPipeline.IsBuildTargetSupported()` | Build (iOS) |
+| Addressables | `com.unity.addressables` UPM 패키지 존재 | Bundle Build, Bundle Upload |
 
 ### PrerequisiteStatus
 
