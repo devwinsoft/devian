@@ -49,6 +49,7 @@ EditorWindow는 4개 탭으로 구성한다:
 │  └───────────────────────────────────────────┘   │
 │                                                  │
 │  ┌─ Release ────────────────────────────────┐   │
+│  │ Remote CDN URL    [https://d3...net]      │   │
 │  │ Release Repo Root [              ] [...] │   │
 │  │ AOS Version JSON  [release/v_aos ] [...] │   │
 │  │ iOS Version JSON  [release/v_ios ] [...] │   │
@@ -91,6 +92,10 @@ Prerequisites 상태는 `OnEditorUpdate`에서 10초 간격으로 갱신한다 (
 
 2개 섹션으로 구성: Version Info / Build.
 Settings/Pipeline/Release 탭은 공용 `_mainScroll` ScrollView로 감싼다.
+
+**Version Info SSOT**: `PlayerSettings.bundleVersion` (Application prefab의 serialized field가 아님).
+`LoadVersion()`이 `PlayerSettings.bundleVersion`을 `VersionNumber.TryParse()`로 파싱하여 편집 필드에 채운다.
+`ApplyVersion()`은 `PlayerSettings.bundleVersion`에 직접 기록한다.
 
 ```
 ┌─ Pipeline ───────────────────────────────────────┐
@@ -138,12 +143,14 @@ Settings/Pipeline/Release 탭은 공용 `_mainScroll` ScrollView로 감싼다.
 
 **Build Addressable Bundles 체크박스**: `_buildAddressables` 토글. 체크 시 앱 빌드 전에 `BundleBuildRunner.Run()` 호출. 실행 중에는 비활성화.
 
-**Build 버튼** (`RunBuild()`):
-1. `_buildAddressables`가 true이면:
+**Build 버튼**: `EditorApplication.delayCall`로 OnGUI 밖에서 `RunBuild()` 실행 (OnGUI 내 BuildPlayer 호출 시 GUI 레이아웃 에러 방지).
+
+`RunBuild()` 실행 흐름:
+1. Phase 1 (메인 스레드, 동기): `_buildAddressables`가 true이면:
    a. `BundleBuildRunner.Run(excludedGroups)` — 번들 빌드
    b. 성공 시 `BundleUploadRunner.Run(settings, ct)` — 빌드 산출물을 release repo에 복사 + git commit
    c. Bundle Copy 실패 시 경고 로그만 출력하고 앱 빌드는 계속 진행
-2. `_buildAndroid`/`_buildIos`가 true인 플랫폼만 앱 빌드
+2. Phase 2 (메인 스레드, 동기): `_buildAndroid`/`_buildIos`가 true인 플랫폼만 앱 빌드
 3. 빌드 성공 시 `AutoFillSymbolPaths()`로 심볼 경로 자동 입력
 
 ---
@@ -209,7 +216,7 @@ Settings/Pipeline/Release 탭은 공용 `_mainScroll` ScrollView로 감싼다.
 
 **Upload Bundles to Git 버튼** (`RunBundleUpload()`):
 1. `BundleUploadRunner.Run(settings, ct)` 호출
-2. Remote group의 빌드 산출물을 `releaseRepoRoot/{BuildTarget}/`에 복사
+2. Remote group의 빌드 산출물을 `releaseRepoRoot/v{bundleVersion}/{BuildTarget}/`에 복사
 3. `GitRunner.Commit()`으로 git add → commit (push 하지 않음)
 
 ### Symbol Upload 실행 로직
@@ -264,7 +271,6 @@ if (Event.current.type == EventType.Layout)
     _guiTab = _currentTab;
     _guiPrereqStatus = _prereqStatus;
     _guiVersionDirty = _versionDirty;
-    _guiHasAppComponent = _appComponent != null;
     _guiDevBuild = _settings != null && _settings.developmentBuild;
     _guiAppBundle = EditorUserBuildSettings.buildAppBundle;
     _guiAndroidReady = _androidReady;

@@ -50,7 +50,6 @@ public class UILoginCanvas : UIBaseCanvas<UILoginCanvas>
     {
         var login = await LoginManager.Instance.LoginAndInitializeAsync(
             LoginType.GUEST,
-            TestApplication.Instance.AppVersion,
             CancellationToken.None);
         Debug.Log($"LoginAsync: success={login.IsSuccess}");
         if (login.IsSuccess)
@@ -86,7 +85,6 @@ public class UILoginCanvas : UIBaseCanvas<UILoginCanvas>
     {
         var login = await LoginManager.Instance.LoginAndInitializeAsync(
             LoginType.GOOGLE,
-            TestApplication.Instance.AppVersion,
             CancellationToken.None);
         Debug.Log($"LoginAsync: success={login.IsSuccess}");
         if (login.IsSuccess)
@@ -121,7 +119,6 @@ public class UILoginCanvas : UIBaseCanvas<UILoginCanvas>
     {
         var login = await LoginManager.Instance.ResolveConflictAndInitializeAsync(
             syncResolution,
-            TestApplication.Instance.AppVersion,
             CancellationToken.None);
         Debug.Log($"ResolveConflictAsync: success={login.IsSuccess}");
         if (login.IsSuccess)

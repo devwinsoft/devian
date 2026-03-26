@@ -18,7 +18,7 @@ MonoBehaviour:
   firebaseAndroidAppId: 1:119226054667:android:b98cb9bc4c529c6bab6f0e
   firebaseIOSAppId: 
   releaseRepoRoot: /Users/maoshy/Documents/Projects/devian-data/framework
-  remoteCdnUrl: https://devwinsoft.github.io/devian-data
+  remoteCdnUrl: https://devwinsoft.github.io/devian-data/framework
   versionJsonPathAOS: /Users/maoshy/Documents/Projects/devian-data/framework/version_aos.json
   versionJsonPathIOS: /Users/maoshy/Documents/Projects/devian-data/framework/version_ios.json
   firebaseCLIPath: 

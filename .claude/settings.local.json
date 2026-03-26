@@ -356,7 +356,11 @@
       "Bash(cp \"apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/MobilePackage/Editor/BuildAutomation/BundleUploadRunner.cs\" \"apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Editor/BuildAutomation/BundleUploadRunner.cs\")",
       "Bash(cp \"apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/MobilePackage/Editor/BuildAutomation/BundleBuildRunner.cs\" \"apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Editor/BuildAutomation/BundleBuildRunner.cs\")",
       "Bash(cp \"apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/MobilePackage/Editor/BuildAutomation/BuildAutomationWindow.cs\" \"apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Editor/BuildAutomation/BuildAutomationWindow.cs\")",
-      "Bash(do cp:*)"
+      "Bash(do cp:*)",
+      "Bash(cp \"upm/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Application/BaseApplication.cs\" \"apps/UnityExample/Packages/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Application/BaseApplication.cs\")",
+      "Bash(cp \"upm/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Application/BaseApplication.cs\" \"apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/CommonPackage/Runtime/Unity/Application/BaseApplication.cs\")",
+      "Bash(cp \"upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Login/LoginManager.cs\" \"apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Login/LoginManager.cs\")",
+      "Bash(cp \"upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Login/LoginManager.cs\" \"apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/MobilePackage/Runtime/Login/LoginManager.cs\")"
     ]
   },
   "project": {

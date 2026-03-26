@@ -26,14 +26,15 @@ Bootstrap 생성과 `BootProc()` 호출은 app/contents layer 책임이다.
 
 ## 3. BaseApplication 클래스
 
-### 인스턴스 필드
+### AppVersion (read-only)
 
 ```csharp
-[SerializeField] private VersionNumber _appVersion;
-public VersionNumber AppVersion => _appVersion;
+public VersionNumber AppVersion => VersionNumber.Parse(Application.version);
 ```
 
-앱 버전을 Inspector에서 설정한다. `VersionNumber`(`Major.Minor.Patch`)는 `Devian.Core`에 정의된 struct다.
+`Application.version` (`PlayerSettings.bundleVersion`)을 `VersionNumber`로 파싱하여 반환한다.
+serialized field가 아니다 — **SSOT는 `PlayerSettings.bundleVersion`** 하나다.
+`VersionNumber`(`Major.Minor.Patch`)는 `Devian.Core`에 정의된 struct다.
 버전 체크 로직(`VersionCheck`)은 `MobileApplication`(50-mobile-package/11-mobile-application)에 위치한다.
 
 ### 정적 상태

@@ -47,24 +47,25 @@ namespace Devian
    - 기존 파일 정리 후 복사 (clean copy)
 5. GitRunner.Commit()으로 git add → commit
    - workingDirectory: releaseRepoRoot
-   - commitMessage: "chore: update addressable bundles (v{bundleVersion}/{BuildTarget})"
+   - commitMessage: "chore: update addressable bundles ({BuildTarget})"
    - filePaths: v{bundleVersion}/{BuildTarget} 하위 전체
+   - nothing to commit (exit code 1 + "nothing to commit") → 경고 로그만 출력, 성공 반환
 6. push는 사용자가 직접 수행
 ```
 
 ## Remote Group 판별
 
 ```csharp
-private static bool IsRemoteGroup(AddressableAssetGroup group)
+private static bool IsRemoteGroup(AddressableAssetGroup group,
+    AddressableAssetSettings aaSettings)
 {
     var schema = group.GetSchema<BundledAssetGroupSchema>();
     if (schema == null) return false;
 
-    // BuildPath/LoadPath가 Remote 프로파일 변수를 사용하는지 확인
-    var buildPath = schema.BuildPath.GetValue(
-        AddressableAssetSettingsDefaultObject.Settings);
-    return buildPath != null
-        && !buildPath.Contains("StreamingAssets");
+    // LoadPath가 http/https로 시작하면 Remote group
+    var loadPath = schema.LoadPath.GetValue(aaSettings);
+    return !string.IsNullOrEmpty(loadPath)
+        && loadPath.StartsWith("http");
 }
 ```
 

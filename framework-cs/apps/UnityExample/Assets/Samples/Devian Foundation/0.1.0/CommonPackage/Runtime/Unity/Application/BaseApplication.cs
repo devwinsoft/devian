@@ -26,12 +26,11 @@ namespace Devian
         private static bool _loaded;
         private bool _isForeground = true;
 
-        [SerializeField] private VersionNumber _appVersion;
-
         /// <summary>
-        /// Inspector에 설정된 앱 버전.
+        /// 앱 버전. Application.version (= PlayerSettings.bundleVersion) 기반.
+        /// SSOT는 PlayerSettings.bundleVersion 하나다.
         /// </summary>
-        public VersionNumber AppVersion => _appVersion;
+        public VersionNumber AppVersion => VersionNumber.Parse(Application.version);
 
         /// <summary>
         /// Unity Application이 종료(Quit) 중인지 여부.

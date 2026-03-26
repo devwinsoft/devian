@@ -32,18 +32,19 @@ AppliesTo: v10
 
 ## API
 
-- `EnsureRuntimeSessionAndInitializeAsync(VersionNumber clientVersion, CancellationToken ct = default) : Task<CommonResult<LoginInitializeResult>>`
+- `EnsureRuntimeSessionAndInitializeAsync(CancellationToken ct = default) : Task<CommonResult<LoginInitializeResult>>`
   - 앱 시작 시 `RemoteDataManager.InitializeAsync`를 **가장 먼저** 호출한 뒤 인증 복구 + 초기화 경로
   - 이전 로그인 정보가 없거나(`loginType=NONE`) 자동 복구가 불가능하면 로컬 모드 초기화(`syncAndInitializeAsync`) 결과를 그대로 반환한다.
-- `LoginAndInitializeAsync(LoginType loginType, VersionNumber clientVersion, CancellationToken ct = default) : Task<CommonResult<LoginInitializeResult>>`
+  - 클라이언트 버전은 내부에서 `Application.version` → `VersionNumber.Parse()`로 자동 결정한다.
+- `LoginAndInitializeAsync(LoginType loginType, CancellationToken ct = default) : Task<CommonResult<LoginInitializeResult>>`
   - 사용자 선택 로그인 시 `RemoteDataManager.InitializeAsync` 선행 + 초기화 경로
-- `ResolveConflictAndInitializeAsync(SyncResolution resolution, VersionNumber clientVersion, CancellationToken ct = default) : Task<CommonResult<LoginInitializeResult>>`
+- `ResolveConflictAndInitializeAsync(SyncResolution resolution, CancellationToken ct = default) : Task<CommonResult<LoginInitializeResult>>`
   - 충돌 해소 경로에서도 `RemoteDataManager.InitializeAsync`를 먼저 수행한다.
-  - 전달된 `clientVersion` 기준으로 버전 체크를 수행한다.
   - 재초기화 후에도 `Conflict`면 `SAVEDATA_SYNC_RESOLVE_FAILED` 실패 반환
-- `VersionCheck(VersionNumber clientVersion, CancellationToken ct = default) : Task<CommonResult<VersionCheckResult>>`
-- `VersionCheckAsync(VersionNumber clientVersion, CancellationToken ct = default) : Task<CommonResult<VersionCheckResult>>`
+- `VersionCheck(CancellationToken ct = default) : Task<CommonResult<VersionCheckResult>>`
+- `VersionCheckAsync(CancellationToken ct = default) : Task<CommonResult<VersionCheckResult>>`
   - 버전 판정 API (`RemoteDataManager.InitializeAsync` 위임 결과 사용)
+  - 클라이언트 버전 SSOT: `Application.version` (`PlayerSettings.bundleVersion`)
 - `IsPurchaseLoginReady() : bool`
   - 현재 Firebase 인증 세션 존재 여부
 - `EnsurePurchaseLoginReadyAsync(CancellationToken ct = default) : Task<CommonResult<bool>>`

@@ -48,10 +48,9 @@ namespace Devian
         }
 
         public async Task<CommonResult<LoginInitializeResult>> EnsureRuntimeSessionAndInitializeAsync(
-            VersionNumber clientVersion,
             CancellationToken ct = default)
         {
-            var versionGate = await initializeRemoteDataAsync(clientVersion, ct);
+            var versionGate = await initializeRemoteDataAsync(ct);
             await yieldMainThreadAsync(ct);
             if (versionGate.IsFailure)
                 return CommonResult<LoginInitializeResult>.Failure(versionGate.Error!);
@@ -66,10 +65,9 @@ namespace Devian
 
         public async Task<CommonResult<LoginInitializeResult>> LoginAndInitializeAsync(
             LoginType loginType,
-            VersionNumber clientVersion,
             CancellationToken ct = default)
         {
-            var versionGate = await initializeRemoteDataAsync(clientVersion, ct);
+            var versionGate = await initializeRemoteDataAsync(ct);
             await yieldMainThreadAsync(ct);
             if (versionGate.IsFailure)
                 return CommonResult<LoginInitializeResult>.Failure(versionGate.Error!);
@@ -112,10 +110,9 @@ namespace Devian
 
         public async Task<CommonResult<LoginInitializeResult>> ResolveConflictAndInitializeAsync(
             SyncResolution resolution,
-            VersionNumber clientVersion,
             CancellationToken ct = default)
         {
-            var versionGate = await initializeRemoteDataAsync(clientVersion, ct);
+            var versionGate = await initializeRemoteDataAsync(ct);
             await yieldMainThreadAsync(ct);
             if (versionGate.IsFailure)
                 return CommonResult<LoginInitializeResult>.Failure(versionGate.Error!);
@@ -147,14 +144,14 @@ namespace Devian
             return initialize;
         }
 
-        public Task<CommonResult<VersionCheckResult>> VersionCheck(VersionNumber clientVersion, CancellationToken ct = default)
+        public Task<CommonResult<VersionCheckResult>> VersionCheck(CancellationToken ct = default)
         {
-            return VersionCheckAsync(clientVersion, ct);
+            return VersionCheckAsync(ct);
         }
 
-        public async Task<CommonResult<VersionCheckResult>> VersionCheckAsync(VersionNumber clientVersion, CancellationToken ct = default)
+        public async Task<CommonResult<VersionCheckResult>> VersionCheckAsync(CancellationToken ct = default)
         {
-            var versionGate = await initializeRemoteDataAsync(clientVersion, ct);
+            var versionGate = await initializeRemoteDataAsync(ct);
             await yieldMainThreadAsync(ct);
             if (versionGate.IsFailure)
                 return CommonResult<VersionCheckResult>.Failure(versionGate.Error!);
@@ -378,7 +375,7 @@ namespace Devian
                     versionResult));
         }
 
-        async Task<CommonResult<VersionCheckResult>> initializeRemoteDataAsync(VersionNumber clientVersion, CancellationToken ct)
+        async Task<CommonResult<VersionCheckResult>> initializeRemoteDataAsync(CancellationToken ct)
         {
             if (!RemoteDataManager.TryGet(out var remoteDataManager)
                 || remoteDataManager == null)
@@ -388,6 +385,7 @@ namespace Devian
                     "RemoteDataManager is not initialized.");
             }
 
+            var clientVersion = VersionNumber.Parse(Application.version);
             return await remoteDataManager.InitializeAsync(clientVersion, ct);
         }
 

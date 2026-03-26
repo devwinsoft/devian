@@ -49,7 +49,6 @@ public class SceneLogin : SceneBootstrap
         
         // Auto login...
         var initialize = await LoginManager.Instance.EnsureRuntimeSessionAndInitializeAsync(
-            TestApplication.Instance.AppVersion,
             CancellationToken.None);
         Debug.Log($"EnsureRuntimeSessionAndInitializeAsync: success={initialize.IsSuccess}");
         if (initialize.IsFailure)

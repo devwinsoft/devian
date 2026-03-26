@@ -7,7 +7,7 @@ Type: Component Specification
 ## 목적
 
 git CLI를 `System.Diagnostics.Process`로 호출하는 static 래퍼.
-Version Publish(Release 탭)에서 사용한다.
+Version Publish(Release 탭)와 Bundle Upload에서 사용한다.
 
 ## 파일 위치 (SSOT)
 
@@ -44,22 +44,27 @@ namespace Devian
    - null 시  → Unity 프로젝트 루트 (Application.dataPath/..)
 2. git add {filePaths}  (cwd: workingDirectory)
 3. git commit -m "{commitMessage}"
-4. 각 단계에서 exit code 검증, 실패 시 로그 + 중단
+4. 각 단계에서 exit code 검증
+   - exit code 1 + output에 "nothing to commit" 포함 → 경고 로그, 성공 반환 (true)
+   - 그 외 실패 → 에러 로그 + 실패 반환 (false)
 ```
 
 ## 내부 구조
 
-### RunGit
+### RunGitInternal
 
 ```csharp
-private static async Task<bool> RunGit(
+private static async Task<GitResult> RunGitInternal(
     string arguments, string workingDirectory, CancellationToken ct)
 ```
 
+`GitResult`는 `(bool success, int exitCode, string output)`을 담는 내부 struct.
+
 - `BuildAutomationUtil.CreateStartInfo`로 `ProcessStartInfo` 생성
-- `BuildAutomationLogger.StreamProcess`로 stdout/stderr 실시간 로그
+- stdout/stderr를 StringBuilder로 수집 + `BuildAutomationLogger`로 실시간 로그
 - `CancellationToken` + 타임아웃(2분) 결합: `CancellationTokenSource.CreateLinkedTokenSource`
 - 취소/타임아웃 시 `process.Kill()` 후 로그
+- exitCode와 output을 호출자에게 반환 → 호출자가 "nothing to commit" 등 특수 케이스 판별
 
 ### ResolveGitPath
 

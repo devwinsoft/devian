@@ -35,11 +35,15 @@ namespace Devian
 
 ```
 1. AddressableAssetSettingsDefaultObject.Settings 로드
-2. excludedGroupNames에 해당하는 group의 BundledAssetGroupSchema.IncludeInBuild = false 설정
+2. EnsureActiveProfile — activeProfileId가 유효하지 않으면 첫 번째 프로필로 폴백
+3. CleanNullGroups — null group 참조 정리 (Addressables 내부 NRE 방지)
+4. SyncRemoteLoadPath — remoteCdnUrl 기반으로 Addressables Profile Remote.LoadPath 동기화
+   - 형식: {remoteCdnUrl}/v[UnityEditor.PlayerSettings.bundleVersion]/[BuildTarget]
+5. excludedGroupNames에 해당하는 group의 BundledAssetGroupSchema.IncludeInBuild = false 설정
    - 변경 전 원본 값을 Dictionary<group, bool>에 백업
-3. AddressableAssetSettings.BuildPlayerContent() 호출
-4. 백업에서 원본 IncludeInBuild 값 복원
-5. 빌드 결과 로그 출력
+6. AddressableAssetSettings.BuildPlayerContent() 호출
+7. 백업에서 원본 IncludeInBuild 값 복원 (try-finally)
+8. 빌드 결과 로그 출력
 ```
 
 ## Group 제외 메커니즘

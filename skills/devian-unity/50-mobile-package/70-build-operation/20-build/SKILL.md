@@ -45,8 +45,21 @@ namespace Devian
                 architectures |= AndroidArchitecture.ARMv7;
             PlayerSettings.Android.targetArchitectures = architectures;
 
+            // Keystore 설정 (EditorPrefs 또는 환경변수 fallback)
             if (!string.IsNullOrEmpty(settings.keystorePath))
                 PlayerSettings.Android.keystoreName = settings.keystorePath;
+
+            var keystorePass = BuildAutomationSettings.KeystorePass;
+            if (!string.IsNullOrEmpty(keystorePass))
+                PlayerSettings.Android.keystorePass = keystorePass;
+
+            var keyaliasName = BuildAutomationSettings.KeyaliasName;
+            if (!string.IsNullOrEmpty(keyaliasName))
+                PlayerSettings.Android.keyaliasName = keyaliasName;
+
+            var keyaliasPass = BuildAutomationSettings.KeyaliasPass;
+            if (!string.IsNullOrEmpty(keyaliasPass))
+                PlayerSettings.Android.keyaliasPass = keyaliasPass;
 
             var isAppBundle = EditorUserBuildSettings.buildAppBundle;
             var ext = isAppBundle ? "aab" : "apk";
@@ -68,6 +81,13 @@ namespace Devian
         }
     }
 }
+```
+
+### CLI 진입점
+
+```csharp
+/// CI/CD에서 Unity 배치 모드로 호출 가능.
+public static void RunFromCLI()
 ```
 
 ### 산출물

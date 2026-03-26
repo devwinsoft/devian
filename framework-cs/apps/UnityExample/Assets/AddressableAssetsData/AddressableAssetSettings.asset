@@ -15,7 +15,7 @@ MonoBehaviour:
   m_DefaultGroup: 0752773ab72a4f0478dd0d0209936ff4
   m_currentHash:
     serializedVersion: 2
-    Hash: 00000000000000000000000000000000
+    Hash: bce236174d01d6fec6cb9276a760cd8f
   m_OptimizeCatalogSize: 0
   m_BuildRemoteCatalog: 0
   m_CatalogRequestsTimeout: 0
@@ -89,7 +89,7 @@ MonoBehaviour:
       - m_Id: d088646625082d74cb1f339b26ee765b
         m_Value: '[UnityEditor.EditorUserBuildSettings.activeBuildTarget]'
       - m_Id: e9fe000a0d57e814caca31fc13075bdb
-        m_Value: 'https://devwinsoft.github.io/devian-data/v[UnityEditor.PlayerSettings.bundleVersion]/[BuildTarget]'
+        m_Value: 'https://devwinsoft.github.io/devian-data/framework/v[UnityEditor.PlayerSettings.bundleVersion]/[BuildTarget]'
     m_ProfileEntryNames:
     - m_Id: 1a95dda2699412f4784c66998ba76664
       m_Name: Local.LoadPath
