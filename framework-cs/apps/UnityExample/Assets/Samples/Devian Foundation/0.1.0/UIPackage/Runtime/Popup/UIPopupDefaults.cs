@@ -4,8 +4,6 @@ namespace Devian
 {
     internal static class UIPopupDefaults
     {
-        public static readonly Color DefaultDimColor = Color.black;
-        public const float DefaultDimAlpha = 0.75f;
         public const bool DefaultUseDim = true;
         public const bool DefaultBlockInputBehind = true;
         public const bool DefaultCloseOnBack = true;

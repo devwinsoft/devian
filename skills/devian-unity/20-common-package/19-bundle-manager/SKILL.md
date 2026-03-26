@@ -158,13 +158,17 @@ namespace Devian
         /// <summary>
         /// PatchLabels 기준으로 의존 번들을 다운로드한다.
         /// </summary>
-        /// <param name="onProgress">진행률 0~1</param>
-        public async Task<CommonResult> DownloadAsync(Action<float> onProgress = null);
+        /// <param name="maxProgress">진행률 상한값 (0~maxProgress 범위로 보고)</param>
+        /// <param name="onProgress">진행률 콜백 (0~maxProgress)</param>
+        public async Task<CommonResult> DownloadAsync(float maxProgress, Action<float> onProgress = null);
 
         /// <summary>
         /// 번들 에셋을 로드한다. 서브클래스가 override하여 구현한다.
         /// </summary>
-        public virtual Task LoadBundlesAsync(SystemLanguage language, Action<float> onProgress = null);
+        /// <param name="language">로드할 언어</param>
+        /// <param name="startProgress">시작 진행률 값</param>
+        /// <param name="onProgress">진행률 콜백 (startProgress~1.0)</param>
+        public virtual Task LoadBundlesAsync(SystemLanguage language, float startProgress, Action<float> onProgress = null);
     }
 }
 ```
@@ -193,7 +197,7 @@ var result = await MyBundleManager.Instance.InitializeAsync(labels);
 
 **라벨 리스트가 비어있으면:**
 - InitializeAsync: `TotalSize = 0` 인 `CommonResult<PatchInfo>.Success` 즉시 반환
-- DownloadAsync: 즉시 `onProgress(1)` + `CommonResult.Ok()` 반환
+- DownloadAsync: 즉시 `onProgress(maxProgress)` + `CommonResult.Ok()` 반환
 
 ### 3. 실패 시 CommonResult.Failure 반환 필수 (조용히 종료 금지)
 

@@ -55,14 +55,14 @@ PopupRoot
 
 ## Modal State
 
-`ApplyModalState(...)`가 담당한다.
+`ApplyModalState(bool showDim, bool blockBehind, bool closeOnDimClick)`가 담당한다.
 
 - dim 표시 여부
 - blocker 여부
 - dim click 허용 여부
-- dim color / alpha
 
 panel은 `UIPopupDim.ApplyState(...)`로 위 상태를 위임한다.
+dim color/alpha는 prefab Image의 원본 값을 사용한다 (스크립트에서 덮어쓰지 않음).
 dim과 blocker는 항상 top popup frame policy 기준으로 계산한다.
 
 ## Input Gate Boundary

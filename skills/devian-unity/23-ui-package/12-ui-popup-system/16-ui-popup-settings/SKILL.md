@@ -17,8 +17,8 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Base/UISetting
 
 - `UI_POPUP_CANVAS_ID PopupCanvasId`
 - `UIPopupFrameMapEntry[] PopupFrameMappings`
-- `Color DimColor`
-- `float DimAlpha`
+
+> `DimColor`/`DimAlpha`는 UISettings에서 제거됨. dim 색상/알파는 prefab의 Image 컴포넌트에서 직접 설정한다.
 
 ## Rules
 

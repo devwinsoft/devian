@@ -69,12 +69,8 @@ namespace Devian
         [Header("Popup")]
         [SerializeField] private UI_POPUP_CANVAS_ID _popupCanvasId;
         [SerializeField] private UIPopupFrameMapEntry[] _popupFrameMappings;
-        [SerializeField] private Color _dimColor = Color.black;
-        [SerializeField, Range(0f, 1f)] private float _dimAlpha = UIPopupDefaults.DefaultDimAlpha;
 
         public UI_POPUP_CANVAS_ID PopupCanvasId => _popupCanvasId;
         public UIPopupFrameMapEntry[] PopupFrameMappings => _popupFrameMappings;
-        public Color DimColor => _dimColor;
-        public float DimAlpha => _dimAlpha;
     }
 }

@@ -53,13 +53,13 @@ namespace Devian
         [SerializeField] private int _columnCount = 4;
         [SerializeField] private int _minimumLineCount = 0;
         [SerializeField] private Vector2 _cellSize = new Vector2(200, 200);
-        [SerializeField] private Vector2 _spacing = new Vector2(10, 10);
+        [SerializeField] private float _rowSpacing = 10f;
 
         public string CellPrefabName { get; set; }  // UI_SCROLL_CELL_ID.Value 기반
         public int ColumnCount { get; set; }
         public int MinimumLineCount { get; set; }
         public Vector2 CellSize { get; set; }
-        public Vector2 Spacing { get; set; }
+        public float RowSpacing { get; set; }  // Y축만. X축은 자동 계산.
 
         public int CellCount { get; }        // actual data count
         public int DataRowCount { get; }
@@ -113,20 +113,21 @@ namespace Devian
 
 ### Size
 
-- `GetWidth()` = `columnCount * cellSize.x + (columnCount - 1) * spacing.x`
-- `GetHeight()` = `rowCount * cellSize.y + (rowCount - 1) * spacing.y`
+- `GetWidth()` = parent RectTransform의 너비 (grid width는 항상 parent width와 동일)
+- `GetHeight()` = `rowCount * cellSize.y + (rowCount - 1) * rowSpacing`
+- X축 spacing = `(frameWidth - columnCount * cellSize.x) / max(1, columnCount - 1)` — 자동 계산, 셀을 균일 분배
 - `CellCount` = actual data cell count
 - `DataRowCount` = `CeilToInt(CellCount / (float)ColumnCount)` (`ColumnCount > 0`인 경우)
 - `RowCount` = `max(MinimumLineCount, DataRowCount)` (`ColumnCount <= 0`이면 `0`)
 - `RenderCellCount` = `RowCount * ColumnCount`
-- `RectTransform.sizeDelta`는 init 및 count/size setter 변경 시 `GetWidth()/GetHeight()` 기준으로 동기화된다
+- `RectTransform.sizeDelta`는 init 및 count/size setter 변경 시 `(parent.width, GetHeight())` 기준으로 동기화된다
 - init 완료 후 `CellCount`, `MinimumLineCount`, `ColumnCount`, `CellSize`, `Spacing`이 바뀌면 parent `UIScrollContainer.Rebuild()`를 자동 요청한다
 
 ### IUIScrollSection Model
 
 - `GetLogicalRowCount()` = `RowCount`
 - `GetLogicalRowMainAxisSize(localRowIndex)` = `_cellSize.y`
-- `GetLogicalRowSpacing()` = `_spacing.y`
+- `GetLogicalRowSpacing()` = `_rowSpacing`
 - `ApplySectionLayout(...)`는 grid holder의 section 위치를 적용하고 active 상태를 유지한다
 - `BindRow(...)`는 해당 row의 full-row cell들을 spawn/bind 한다
 - `UnbindRow(localRowIndex)`는 해당 row의 cell들을 unbind/despawn 한다
@@ -153,7 +154,7 @@ container가 "이 row를 보여라/숨겨라/새로고침하라"를 결정하고
 3. 항상 `ColumnCount`개 cell을 생성한다
 4. `BundlePool.Spawn<UIScrollGridCell>(..., parent: rowLayout.Content)`로 cell 생성
 5. anchor/pivot/size 적용
-6. `rowLayout.Direction`과 `rowLayout.RowMainAxisPosition` 기준으로 위치 계산
+6. `CalculateAutoXSpacing()`으로 X축 간격 자동 계산 후 `rowLayout.Direction`과 `rowLayout.RowMainAxisPosition` 기준으로 위치 계산
 7. `cell.Show(index)` 후 `onBindCell(cell, index)` 호출
 
 주의:
@@ -180,7 +181,7 @@ container가 "이 row를 보여라/숨겨라/새로고침하라"를 결정하고
 
 ### Runtime Layout Changes
 
-- `SetCellCount(...)`, `SetMinimumLineCount(...)`, `ColumnCount`, `CellSize`, `Spacing` 변경은 먼저 frame `RectTransform` size를 동기화한다
+- `SetCellCount(...)`, `SetMinimumLineCount(...)`, `ColumnCount`, `CellSize`, `RowSpacing` 변경은 먼저 frame `RectTransform` sizeDelta를 `(parent.width, GetHeight())` 기준으로 동기화한다
 - play mode에서 parent `UIScrollContainer`가 이미 초기화된 상태라면 `Rebuild()`를 자동 요청한다
 - 그래서 init 이후 data count가 늘어나 row 수가 바뀌는 경우에도 scroll content size와 visible row 계산이 같이 갱신된다
 

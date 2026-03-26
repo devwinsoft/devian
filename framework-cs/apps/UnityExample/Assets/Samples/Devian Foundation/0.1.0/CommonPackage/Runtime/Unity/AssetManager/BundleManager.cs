@@ -161,15 +161,16 @@ namespace Devian
         /// <summary>
         /// PatchLabels 기준으로 의존 번들을 다운로드한다.
         /// </summary>
-        /// <param name="onProgress">Called with progress 0~1</param>
-        public async Task<CommonResult> DownloadAsync(Action<float>? onProgress = null)
+        /// <param name="maxProgress">진행률 상한값 (0~maxProgress 범위로 보고)</param>
+        /// <param name="onProgress">진행률 콜백 (0~maxProgress)</param>
+        public async Task<CommonResult> DownloadAsync(float maxProgress, Action<float>? onProgress = null)
         {
             var labels = PatchLabels;
 
             // Empty labels = immediate success
             if (labels == null || labels.Count == 0)
             {
-                onProgress?.Invoke(1f);
+                onProgress?.Invoke(maxProgress);
                 return CommonResult.Ok();
             }
 
@@ -189,7 +190,7 @@ namespace Devian
             // Nothing to download
             if (patchInfo.TotalSize == 0)
             {
-                onProgress?.Invoke(1f);
+                onProgress?.Invoke(maxProgress);
                 return CommonResult.Ok();
             }
 
@@ -208,11 +209,11 @@ namespace Devian
 
                 while (!downloadOp.IsDone)
                 {
-                    // Report weighted progress
+                    // Report weighted progress: 0~maxProgress
                     var labelProgress = downloadOp.PercentComplete;
                     var currentLabelBytes = (long)(labelSize * labelProgress);
-                    var totalProgress = (downloadedBytes + currentLabelBytes) / (float)totalBytes;
-                    onProgress?.Invoke(Mathf.Clamp01(totalProgress));
+                    var ratio = (downloadedBytes + currentLabelBytes) / (float)totalBytes;
+                    onProgress?.Invoke(Mathf.Clamp(ratio * maxProgress, 0f, maxProgress));
                     await Task.Yield();
                 }
 
@@ -229,7 +230,7 @@ namespace Devian
                 Addressables.Release(downloadOp);
             }
 
-            onProgress?.Invoke(1f);
+            onProgress?.Invoke(maxProgress);
             return CommonResult.Ok();
         }
 
@@ -241,8 +242,9 @@ namespace Devian
         /// 번들 에셋을 로드한다. 서브클래스가 override하여 구현한다.
         /// </summary>
         /// <param name="language">로드할 언어</param>
-        /// <param name="onProgress">진행률 0~1</param>
-        public virtual Task LoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null)
+        /// <param name="startProgress">시작 진행률 값</param>
+        /// <param name="onProgress">진행률 콜백 (startProgress~1.0)</param>
+        public virtual Task LoadBundlesAsync(SystemLanguage language, float startProgress, Action<float>? onProgress = null)
         {
             return Task.CompletedTask;
         }

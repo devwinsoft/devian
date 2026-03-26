@@ -16,7 +16,8 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/UIPopupD
 ## Responsibilities
 
 - `Dim` child `GameObject`에 붙는다
-- 같은 `GameObject`의 `Image`로 dim color / alpha를 제어한다
+- Awake에서 prefab `Image`의 원본 color를 캐시한다 (스크립트에서 색상을 덮어쓰지 않음)
+- show 시 캐시된 원본 color를 적용, hide 시 alpha=0으로 설정한다
 - 같은 `GameObject`의 `CanvasGroup`으로 raycast blocking 상태를 제어한다
 - `IPointerClickHandler`로 dim click을 받는다
 - `UIPopupManager.HandleDimClicked()`로 dim click을 위임한다
@@ -29,7 +30,16 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/UIPopupD
 - dim click 허용 여부는 top popup frame policy 기준이다
 - dim 표시 여부와 blocker 여부도 top popup frame policy 기준이다
 
+## API
+
+```csharp
+public void ApplyState(bool showDim, bool blockBehind, bool closeOnDimClick)
+```
+
+- `dimColor`/`dimAlpha` 파라미터 없음 — prefab Image의 원본 color를 SSOT로 사용
+
 ## Notes
 
 - `UIPopupPanel`은 `UIPopupDim`과 `PopupRoot`만 관리한다
 - dim의 실제 visual / click 동작은 `UIPopupDim`이 담당한다
+- dim color/alpha 변경은 prefab의 Image 컴포넌트에서 직접 설정한다 (UISettings가 아님)

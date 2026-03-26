@@ -39,7 +39,7 @@ namespace Devian
     {
         // BundleManager<T>.LoadBundlesAsync override
         // UIManager.Instance.LoadBundlesAsync() 호출
-        public override Task LoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null);
+        public override Task LoadBundlesAsync(SystemLanguage language, float startProgress, Action<float>? onProgress = null);
     }
 }
 ```
@@ -50,10 +50,11 @@ PatchLabels, InitializeAsync, DownloadAsync는 `BundleManager<T>`가 담당한�
 
 ## API
 
-### LoadBundlesAsync(language, onProgress)
+### LoadBundlesAsync(language, startProgress, onProgress)
 
 `UIManager.Instance.LoadBundlesAsync()`를 호출하여 UI 번들 에셋(transition preset + UI GameObject)을 로드한다.
 concrete 서브클래스는 `base.LoadBundlesAsync()` 호출 후 테이블/에셋 로드를 수행한다.
+진행률은 `startProgress~1.0` 범위로 보고한다.
 
 ---
 
@@ -68,10 +69,10 @@ public class TestBundleManager : MobileBundleManager<TestBundleManager>
         // editor/build 분기
     };
 
-    public override async Task LoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null)
+    public override async Task LoadBundlesAsync(SystemLanguage language, float startProgress, Action<float>? onProgress = null)
     {
-        await base.LoadBundlesAsync(language, onProgress);
-        // 테이블/에셋 로드 ...
+        await base.LoadBundlesAsync(language, startProgress, onProgress);
+        // startProgress~1.0 범위로 테이블/에셋 로드 진행률 보고 ...
     }
 }
 ```

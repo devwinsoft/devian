@@ -21,7 +21,7 @@ namespace Devian
         protected override void onInitComplete()
         {
             ResolveDefaults();
-            ApplyModalState(false, false, false, UIPopupDefaults.DefaultDimColor, 0f);
+            ApplyModalState(false, false, false);
         }
 
         public void AttachFrame(UIPopupFrameBase frame)
@@ -58,11 +58,11 @@ namespace Devian
             }
         }
 
-        public void ApplyModalState(bool showDim, bool blockBehind, bool closeOnDimClick, Color dimColor, float dimAlpha)
+        public void ApplyModalState(bool showDim, bool blockBehind, bool closeOnDimClick)
         {
             ResolveDefaults();
             EnsureLayerOrder();
-            _dim?.ApplyState(showDim, blockBehind, closeOnDimClick, dimColor, dimAlpha);
+            _dim?.ApplyState(showDim, blockBehind, closeOnDimClick);
         }
 
         private void ResolveDefaults()

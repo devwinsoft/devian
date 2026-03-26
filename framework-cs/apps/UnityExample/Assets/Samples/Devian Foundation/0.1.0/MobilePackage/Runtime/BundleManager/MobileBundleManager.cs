@@ -18,7 +18,7 @@ namespace Devian
         /// UIManager.LoadBundlesAsync()를 호출하여 UI 번들 에셋을 로드한다.
         /// concrete 서브클래스는 base.LoadBundlesAsync()를 호출한 후 추가 로드를 수행한다.
         /// </summary>
-        public override async Task LoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null)
+        public override async Task LoadBundlesAsync(SystemLanguage language, float startProgress, Action<float>? onProgress = null)
         {
             await UIManager.Instance.LoadBundlesAsync();
         }

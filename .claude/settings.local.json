@@ -360,7 +360,13 @@
       "Bash(cp \"upm/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Application/BaseApplication.cs\" \"apps/UnityExample/Packages/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Application/BaseApplication.cs\")",
       "Bash(cp \"upm/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/Application/BaseApplication.cs\" \"apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/CommonPackage/Runtime/Unity/Application/BaseApplication.cs\")",
       "Bash(cp \"upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Login/LoginManager.cs\" \"apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Login/LoginManager.cs\")",
-      "Bash(cp \"upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Login/LoginManager.cs\" \"apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/MobilePackage/Runtime/Login/LoginManager.cs\")"
+      "Bash(cp \"upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Login/LoginManager.cs\" \"apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/MobilePackage/Runtime/Login/LoginManager.cs\")",
+      "Bash(cp \"upm/com.devian.foundation/Samples~/UIPackage/Runtime/Scroll/UIScrollGridFrame.cs\" \"apps/UnityExample/Packages/com.devian.foundation/Samples~/UIPackage/Runtime/Scroll/UIScrollGridFrame.cs\")",
+      "Bash(cp \"upm/com.devian.foundation/Samples~/UIPackage/Runtime/Scroll/UIScrollGridFrame.cs\" \"apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Scroll/UIScrollGridFrame.cs\")",
+      "Bash(cp \"upm/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/AssetManager/BundleManager.cs\" \"apps/UnityExample/Packages/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/AssetManager/BundleManager.cs\")",
+      "Bash(cp \"upm/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/AssetManager/BundleManager.cs\" \"apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/CommonPackage/Runtime/Unity/AssetManager/BundleManager.cs\")",
+      "Bash(cp \"upm/com.devian.foundation/Samples~/MobilePackage/Runtime/BundleManager/MobileBundleManager.cs\" \"apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/BundleManager/MobileBundleManager.cs\")",
+      "Bash(cp \"upm/com.devian.foundation/Samples~/MobilePackage/Runtime/BundleManager/MobileBundleManager.cs\" \"apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/MobilePackage/Runtime/BundleManager/MobileBundleManager.cs\")"
     ]
   },
   "project": {

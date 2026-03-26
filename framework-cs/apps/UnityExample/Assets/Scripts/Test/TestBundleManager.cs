@@ -22,41 +22,40 @@ public class TestBundleManager : MobileBundleManager<TestBundleManager>
 #endif
     };
 
-    public override async Task LoadBundlesAsync(SystemLanguage language, Action<float>? onProgress = null)
+    public override async Task LoadBundlesAsync(SystemLanguage language, float startProgress, Action<float>? onProgress = null)
     {
-        reportProgress(onProgress, 0f);
+        // startProgress~1.0 범위를 5단계로 균등 분배
+        float range = 1f - startProgress;
+        float step = range / 5f;
 
-        await base.LoadBundlesAsync(language, onProgress);
+        onProgress?.Invoke(startProgress);
+
+        await base.LoadBundlesAsync(language, startProgress, onProgress);
 
 #if UNITY_EDITOR
         await TableManager.Instance.LoadTablesAsync("table-ndjson", TableFormat.Json);
         await Task.Yield();
-        reportProgress(onProgress, 0.1f);
+        onProgress?.Invoke(startProgress + step * 1f);
         await TableManager.Instance.LoadStringsAsync("string-ndjson", TableFormat.Json, language);
         await Task.Yield();
-        reportProgress(onProgress, 0.2f);
+        onProgress?.Invoke(startProgress + step * 2f);
 #else
         await TableManager.Instance.LoadTablesAsync("table-pb64", TableFormat.Pb64);
         await Task.Yield();
-        reportProgress(onProgress, 0.2f);
+        onProgress?.Invoke(startProgress + step * 1f);
         await TableManager.Instance.LoadStringsAsync("string-pb64", TableFormat.Pb64, language);
         await Task.Yield();
-        reportProgress(onProgress, 0.4f);
+        onProgress?.Invoke(startProgress + step * 2f);
 #endif
 
         await AssetManager.LoadBundleAssets<GameObject>("common-effects");
         await Task.Yield();
-        reportProgress(onProgress, 0.4f);
+        onProgress?.Invoke(startProgress + step * 3f);
         await AssetManager.LoadBundleAssets<GameObject>("prefabs");
         await Task.Yield();
-        reportProgress(onProgress, 0.6f);
+        onProgress?.Invoke(startProgress + step * 4f);
         await SoundManager.Instance.LoadByBundleKeyAsync("sounds");
         await Task.Yield();
-        reportProgress(onProgress, 1f);
-    }
-
-    static void reportProgress(Action<float>? onProgress, float progress)
-    {
-        onProgress?.Invoke(Mathf.Clamp01(progress));
+        onProgress?.Invoke(1f);
     }
 }

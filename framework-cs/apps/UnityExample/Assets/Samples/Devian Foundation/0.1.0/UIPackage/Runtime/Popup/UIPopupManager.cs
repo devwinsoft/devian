@@ -316,21 +316,16 @@ namespace Devian
             var topEntry = GetTopEntry();
             if (topEntry?.Frame == null)
             {
-                panel.ApplyModalState(false, false, false, UIPopupDefaults.DefaultDimColor, 0f);
+                panel.ApplyModalState(false, false, false);
                 return;
             }
 
-            var settings = Settings;
-            var dimColor = settings != null ? settings.DimColor : UIPopupDefaults.DefaultDimColor;
-            var dimAlpha = settings != null ? settings.DimAlpha : UIPopupDefaults.DefaultDimAlpha;
             var blockBehind = topEntry.Frame.blockInputBehind || topEntry.Frame.closeOnDimClick;
 
             panel.ApplyModalState(
                 topEntry.Frame.useDim,
                 blockBehind,
-                topEntry.Frame.closeOnDimClick,
-                dimColor,
-                dimAlpha);
+                topEntry.Frame.closeOnDimClick);
         }
 
         private PopupStackEntry FindShowEntry(Type frameType)

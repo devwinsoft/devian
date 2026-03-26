@@ -13,6 +13,9 @@ namespace Devian
     /// N열 그리드 섹션. Content 자식으로 Prefab에 배치한다.
     /// IUIScrollSection 구현. Container가 row bind/unbind를 직접 호출한다.
     /// Grid는 "row renderer"이지 "scroll virtualizer"가 아니다.
+    ///
+    /// X축 spacing: frame 너비 기반 자동 계산 (cell을 균일 분배)
+    /// Y축 spacing: _rowSpacing serialized field
     /// </summary>
     public class UIScrollGridFrame : UIBaseFrame, IUIScrollSection
     {
@@ -21,7 +24,7 @@ namespace Devian
         [SerializeField] private int _columnCount = 4;
         [SerializeField] private int _minimumLineCount = 0;
         [SerializeField] private Vector2 _cellSize = new Vector2(200, 200);
-        [SerializeField] private Vector2 _spacing = new Vector2(10, 10);
+        [SerializeField] private float _rowSpacing = 10f;
 
         public string CellPrefabName { get => _cellPrefabId.Value; set => _cellPrefabId = value; }
         public int ColumnCount
@@ -51,12 +54,12 @@ namespace Devian
                 OnGridLayoutChanged();
             }
         }
-        public Vector2 Spacing
+        public float RowSpacing
         {
-            get => _spacing;
+            get => _rowSpacing;
             set
             {
-                _spacing = value;
+                _rowSpacing = value;
                 OnGridLayoutChanged();
             }
         }
@@ -87,17 +90,22 @@ namespace Devian
 
         // ─── Size ───
 
+        /// <summary>
+        /// parent RectTransform의 너비를 반환한다.
+        /// Grid width는 항상 parent width와 동일하다.
+        /// X축 spacing은 이 너비 안에서 자동 계산된다.
+        /// </summary>
         public override float GetWidth()
         {
-            if (_columnCount <= 0) return 0f;
-            return _columnCount * _cellSize.x + (_columnCount - 1) * _spacing.x;
+            var parentRt = transform.parent as RectTransform;
+            return parentRt != null ? parentRt.rect.width : 0f;
         }
 
         public override float GetHeight()
         {
             int rc = RowCount;
             if (rc <= 0) return 0f;
-            return rc * _cellSize.y + (rc - 1) * _spacing.y;
+            return rc * _cellSize.y + (rc - 1) * _rowSpacing;
         }
 
         protected override void onInitComplete()
@@ -107,11 +115,24 @@ namespace Devian
 
         public bool HasDataAt(int cellIndex) => cellIndex >= 0 && cellIndex < CellCount;
 
+        /// <summary>
+        /// frame 너비 기반으로 X축 cell 간격을 자동 계산한다.
+        /// (frameWidth - columnCount * cellSize.x) / max(1, columnCount - 1)
+        /// </summary>
+        private float CalculateAutoXSpacing()
+        {
+            if (_columnCount <= 1) return 0f;
+            float frameWidth = GetWidth();
+            float totalCellWidth = _columnCount * _cellSize.x;
+            float remaining = frameWidth - totalCellWidth;
+            return Mathf.Max(0f, remaining / (_columnCount - 1));
+        }
+
         // ─── IUIScrollSection ───
 
         public int GetLogicalRowCount() => RowCount;
         public float GetLogicalRowMainAxisSize(int localRowIndex) => _cellSize.y;
-        public float GetLogicalRowSpacing() => _spacing.y;
+        public float GetLogicalRowSpacing() => _rowSpacing;
 
         public void ApplySectionLayout(in UIUIScrollSectionLayout layout)
         {
@@ -131,6 +152,7 @@ namespace Devian
 
             int startIndex = localRow * _columnCount;
             int cellsInRow = _columnCount;
+            float xSpacing = CalculateAutoXSpacing();
 
             var rowCells = new List<UIScrollGridCell>(cellsInRow);
 
@@ -146,7 +168,7 @@ namespace Devian
                 rt.pivot = TopLeft;
                 rt.sizeDelta = _cellSize;
 
-                float cross = c * (_cellSize.x + _spacing.x);
+                float cross = c * (_cellSize.x + xSpacing);
                 rt.anchoredPosition = rowLayout.Direction == ScrollDirection.Vertical
                     ? new Vector2(cross, -rowLayout.RowMainAxisPosition)
                     : new Vector2(rowLayout.RowMainAxisPosition, -cross);
@@ -215,6 +237,7 @@ namespace Devian
         {
             _columnCount = Mathf.Max(0, _columnCount);
             _minimumLineCount = Mathf.Max(0, _minimumLineCount);
+            _rowSpacing = Mathf.Max(0f, _rowSpacing);
             OnGridLayoutChanged();
         }
 

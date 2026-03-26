@@ -50,8 +50,6 @@ public sealed class UISettings : ScriptableObject
     // ── Popup ──
     public UI_POPUP_CANVAS_ID PopupCanvasId { get; }
     public UIPopupFrameMapEntry[] PopupFrameMappings { get; }
-    public Color DimColor { get; }
-    public float DimAlpha { get; }
 
     // ── Loading ──
     public UI_LOADING_CANVAS_ID LoadingCanvasId { get; }
