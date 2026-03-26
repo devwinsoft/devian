@@ -4,4 +4,5 @@
 // </auto-generated>
 
 // <devian:feature-exports>
+export * from './commonUtil';
 // </devian:feature-exports>

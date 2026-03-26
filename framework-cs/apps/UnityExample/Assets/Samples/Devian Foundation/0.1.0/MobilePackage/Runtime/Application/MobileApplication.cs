@@ -23,6 +23,7 @@ namespace Devian
     [RequireComponent(typeof(AnalyzeManager))]
     [RequireComponent(typeof(AdsManager))]
     [RequireComponent(typeof(ShopManager))]
+    [RequireComponent(typeof(LegalConsentManager))]
     public abstract class MobileApplication : BaseApplication
     {
         public new static MobileApplication Instance => BaseApplication.Instance as MobileApplication;

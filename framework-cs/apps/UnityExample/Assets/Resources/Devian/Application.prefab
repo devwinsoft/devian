@@ -34,6 +34,7 @@ GameObject:
   - component: {fileID: 6268470757991738750}
   - component: {fileID: 5779935076764809514}
   - component: {fileID: 3199515907874976630}
+  - component: {fileID: 6118742035570184381}
   m_Layer: 0
   m_Name: Application
   m_TagString: Untagged
@@ -370,6 +371,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 95fc494e677e842509a374adefe3332e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.MobilePackage::Devian.PushManager
+--- !u!114 &6118742035570184381
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2454387350981742136}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 008522f32d9a4a599a5272e6fa82798d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Samples.MobilePackage::Devian.LegalConsentManager
 --- !u!1 &6261706322476616027
 GameObject:
   m_ObjectHideFlags: 0

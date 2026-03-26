@@ -43,6 +43,7 @@ Devian Unity 공용 런타임 컴포넌트를 담당한다.
 | [devian/20-domain-common/02-module-policy](../../../devian/20-domain-common/02-module-policy/SKILL.md) | Common 모듈 정책 (C#/TS) |
 | [devian/20-domain-common/16-common-error](../../../devian/20-domain-common/16-common-error/SKILL.md) | CommonError |
 | [devian/20-domain-common/17-common-result](../../../devian/20-domain-common/17-common-result/SKILL.md) | CommonResult |
+| [devian/20-domain-common/20-common-util](../../../devian/20-domain-common/20-common-util/SKILL.md) | CommonUtil |
 
 ---
 

@@ -43,6 +43,7 @@ MobilePackage은 **Devian Foundation**(`com.devian.foundation`)에 포함된 Uni
 - [50-leaderboard](../50-leaderboard/00-overview/SKILL.md)
 - [51-treasure-system](../51-treasure-system/00-overview/SKILL.md)
 - [52-push-system](../52-push-system/00-overview/SKILL.md)
+- [53-legal-consent-system](../53-legal-consent-system/00-overview/SKILL.md)
 - [61-virtual-gamepad](../61-virtual-gamepad/SKILL.md)
 - [70-build-operation](../70-build-operation/00-overview/SKILL.md)
 
