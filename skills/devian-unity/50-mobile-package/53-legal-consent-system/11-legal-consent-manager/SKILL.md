@@ -51,4 +51,4 @@
 - `GetDocumentUrl()`은 `{cdn base url}/{version}/{language}/{filename}` 규칙으로 URL을 조합한다
 - `DownloadDocumentAsync()`는 호출 시점마다 CDN에서 문서를 내려받아 `string`으로 반환하고, 문서 본문을 캐싱/저장하지 않는다
 - `language`는 `Application.systemLanguage`를 우선 사용하고, 미지원 언어는 `MobileApplication.DefaultLanguage`로 fallback 한다
-- 언어 코드는 `Devian.Domain.Common.CommonUtil`을 사용해 변환한다
+- 언어 코드는 `Devian.Domain.Common.CommonUtils`를 사용해 변환한다

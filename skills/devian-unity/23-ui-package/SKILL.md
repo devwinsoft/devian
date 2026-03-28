@@ -37,7 +37,7 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/
 UIPackage는 `com.devian.foundation` 내 샘플이므로 자체 `package.json`이 없다. 의존성은 asmdef references로 관리된다.
 
 > **Devian Domain Sound**는 `UIComponentButton`의 UI 사운드 재생에서 사용한다 (`SOUND_ID`, `TB_SOUND`, `SoundManager`, `SoundChannelType.Ui`).
-> **Devian Domain Common**은 `UIComponentText`의 `ST_TEXT`/`TEXT_ID` 조회에 사용한다.
+> **Devian Domain Game**은 `UIComponentText`의 `ST_GAME_TEXT`/`GAME_TEXT_ID` 조회에 사용한다.
 
 ### Circular Dependency Prevention
 
@@ -49,7 +49,7 @@ UIPackage는 `com.devian.foundation` 내 샘플이므로 자체 `package.json`�
 
 | asmdef | name | references | 위치 |
 |--------|------|------------|------|
-| `Devian.Samples.UIPackage.asmdef` | `Devian.Samples.UIPackage` | `["Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.SoundPackage", "Unity.TextMeshPro"]` | `Runtime/` |
+| `Devian.Samples.UIPackage.asmdef` | `Devian.Samples.UIPackage` | `["Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.GamePackage", "Devian.Samples.SoundPackage", "Unity.TextMeshPro"]` | `Runtime/` |
 | `Devian.Samples.UIPackage.Editor.asmdef` | `Devian.Samples.UIPackage.Editor` | `["Devian.Samples.UIPackage", "Devian.Samples.CommonPackage", "Devian.Unity.Editor"]` | `Editor/` |
 
 ---

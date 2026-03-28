@@ -25,6 +25,8 @@ public class SceneGame : SceneBootstrap
         
         UIGameCanvas.Instance.Init();
         GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.ACHIEVE_001, 1);
+
+        RedDotManager x;
         
         UIToastService.Instance.Show("This is a default toast message.",  toastType: ToastType.Error);
         UIToastService.Instance.Show("This is a default toast message.",  toastType: ToastType.Warning);

@@ -10,7 +10,7 @@ AppliesTo: v10
 ## 1. Overview
 
 `STAT_TYPE`은 Game 도메인 contract에서 빌드 파이프라인으로 생성되는 enum이다.
-모든 Ability 시스템([12-game-ability](../12-game-ability/SKILL.md))의 key로 사용된다.
+모든 Ability 시스템([12-game-ability](../12-game-ability/SKILL.md), [devian-unity/21-game-package/12-game-ability](../../../devian-unity/21-game-package/12-game-ability/SKILL.md))의 key로 사용된다.
 
 - 입력: `input/Domains/Game/ENUM_GAME.json`
 - 생성: `Devian.Domain.Game.STAT_TYPE` enum
@@ -127,4 +127,5 @@ hero.Unequip(slotNumber);
 ## 6. Related
 
 - [12-game-ability](../12-game-ability/SKILL.md) — AbilityBase, AbilityEquip (STAT_TYPE 소비자)
+- [devian-unity/21-game-package/12-game-ability](../../../devian-unity/21-game-package/12-game-ability/SKILL.md) — Unity GamePackage Ability addon
 - [11-game-tables](../11-game-tables/SKILL.md) — Game 도메인 테이블 정의

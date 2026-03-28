@@ -3,6 +3,3 @@
 {"id":"welcome","text":"Welcome"}
 {"id":"thanks","text":"Thank you"}
 {"id":"error_network","text":"Network error"}
-{"id":"btn_start","text":"Start"}
-{"id":"btn_quit","text":"Quit"}
-{"id":"loading","text":"Loading..."}

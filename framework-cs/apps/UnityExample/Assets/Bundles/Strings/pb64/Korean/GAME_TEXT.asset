@@ -1,0 +1,11 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!49 &4900000
+TextAsset:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: GAME_TEXT
+  m_Script: |
+    ChQKCmdhbWVfdGl0bGUSBuqyjOyehAodCgxnYW1lX2xvYWRpbmcSDeuhnOuUqSDspJEuLi4KGwoKZ2FtZV9zdGFydBIN6rKM7J6EIOyLnOyekQoaCgpnYW1lX3BhdXNlEgzsnbzsi5zsoJXsp4AKGwoLZ2FtZV9yZXN1bWUSDOqzhOyGje2VmOq4sAoaCglnYW1lX292ZXISDeqyjOyehCDsmKTrsoQ=

@@ -22,7 +22,7 @@ Devian Common Domain의 C#/TS 공통 정책과 결과 표현 규약을 담당한
 | [02-module-policy](../02-module-policy/SKILL.md) | Common 모듈 정책 (C#/TS 공통) |
 | [16-common-error](../16-common-error/SKILL.md) | CommonError / COMMON_ERROR_TYPE / COMMON_ERROR |
 | [17-common-result](../17-common-result/SKILL.md) | CommonResult 규약 |
-| [20-common-util](../20-common-util/SKILL.md) | CommonUtil (언어 코드 변환 등 공용 헬퍼) |
+| [20-common-utils](../20-common-utils/SKILL.md) | CommonUtils (언어 코드 변환 등 공용 헬퍼) |
 
 ---
 

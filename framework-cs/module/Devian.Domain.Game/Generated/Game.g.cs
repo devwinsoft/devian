@@ -3528,6 +3528,16 @@ namespace Devian.Domain.Game
         public static implicit operator UNIT_MONSTER_ID(string value) => new UNIT_MONSTER_ID { Value = value };
     }
 
+    /// <summary>Inspector-bindable ID for string table GAME_TEXT</summary>
+    [Serializable]
+    public sealed class GAME_TEXT_ID
+    {
+        public string Value = string.Empty;
+
+        public static implicit operator string(GAME_TEXT_ID id) => id.Value;
+        public static implicit operator GAME_TEXT_ID(string value) => new GAME_TEXT_ID { Value = value };
+    }
+
     /// <summary>Table ID validation extensions</summary>
     public static class TableIdExtensions
     {
@@ -3559,6 +3569,7 @@ namespace Devian.Domain.Game
         public static bool IsValid(this TREASURE_REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this UNIT_HERO_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this UNIT_MONSTER_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this GAME_TEXT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
     }
 
 }

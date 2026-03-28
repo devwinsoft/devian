@@ -34,6 +34,7 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | **devian/80-tools** | CLI, 아카이브 | [00-overview](../80-tools/00-overview/SKILL.md) | [01-policy](../80-tools/01-policy/SKILL.md) | [03-ssot](../80-tools/03-ssot/SKILL.md) |
 | **devian/80-tools/11-builder** | Build, Table, Contract, NDJSON, PB64, Protocol Codegen, Error Reporting | [00-overview](../80-tools/11-builder/00-overview/SKILL.md) | [01-policy](../80-tools/11-builder/01-policy/SKILL.md) | [03-ssot](../80-tools/11-builder/03-ssot/SKILL.md) |
 | **devian-unity/20-common-package** | Unity 공용 런타임 컴포넌트 | [00-overview](../../devian-unity/20-common-package/00-overview/SKILL.md) | — | — |
+| **devian-unity/21-game-package** | GamePackage Unity addon 코드 | [00-overview](../../devian-unity/21-game-package/00-overview/SKILL.md) | — | — |
 | **devian-unity** | UPM 패키지, Unity 런타임, 컴포넌트 | [00-overview](../../devian-unity/00-overview/SKILL.md) | [01-policy](../../devian-unity/01-policy/SKILL.md) | [03-ssot](../../devian-unity/03-ssot/SKILL.md) |
 | **devian-examples** | 예제 도메인, 예제 프로토콜 | [00-overview](../../devian-examples/00-overview/SKILL.md) | [01-policy](../../devian-examples/01-policy/SKILL.md) | [03-ssot](../../devian-examples/03-ssot/SKILL.md) |
 | **devian/21-domain-game** | Game 도메인 정의 | [00-overview](../21-domain-game/00-overview/SKILL.md) | — | — |
@@ -49,6 +50,7 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 ### Group Routing
 
 - Unity 일반 컴포넌트(Non-UI) → `skills/devian-unity/10-foundation/00-overview/SKILL.md`
+- Unity GamePackage addon (Ability/Game sample manual code) → `skills/devian-unity/21-game-package/00-overview/SKILL.md`
 - Unity UI 컴포넌트(UI/Canvas/Frame/UIManager) → `skills/devian-unity/23-ui-package/00-overview/SKILL.md`
 
 ### Routing Keywords
@@ -64,6 +66,9 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | TableGen, 테이블 생성 | `skills/devian/80-tools/11-builder/51-table-codegen/SKILL.md` |
 | TableManager, LoadStringsAsync | `skills/devian-unity/20-common-package/31-table-manager/SKILL.md` |
 | BundleManager, Addressables | `skills/devian-unity/20-common-package/19-bundle-manager/SKILL.md` |
+| GamePackage, AbilityBase, AbilityEquip, AbilityCard, AbilityUnitHero, AbilityUnitMonster | `skills/devian-unity/21-game-package/12-game-ability/SKILL.md` |
+| GAME_TEXT, GAME_TEXT_ID, ST_GAME_TEXT, GameStringTable.xlsx | `skills/devian-unity/21-game-package/13-game-string-table/SKILL.md` |
+| STAT_TYPE, CARD_AMOUNT, UNIT_AMOUNT, EQUIP_LEVEL | `skills/devian/21-domain-game/13-game-stat-type/SKILL.md` |
 | UIManager, UIBaseCanvas, UIBasePanel | `skills/devian-unity/23-ui-package/10-base-system/10-ui-manager/SKILL.md` |
 | UI Canvas System, UICanvasSystem, UIBaseContainer | `skills/devian-unity/23-ui-package/10-base-system/11-ui-canvas-system/SKILL.md` |
 | PurchaseManager, purchase, IAP, in-app purchase, 결제, 인앱 | `skills/devian-unity/50-mobile-package/30-purchase-system/00-overview/SKILL.md` |

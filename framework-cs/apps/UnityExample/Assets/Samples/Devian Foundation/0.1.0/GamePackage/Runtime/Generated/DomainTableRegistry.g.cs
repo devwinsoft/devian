@@ -411,6 +411,14 @@ namespace Devian.Domain.Game
                 }
             });
 
+            global::Devian.TableManager.Instance.RegisterStLoader("GAME_TEXT", (format, lang, text, pb64Text) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                    ST_GAME_TEXT._LoadFromNdjson(text, lang);
+                else if (format == global::Devian.TableFormat.Pb64 && pb64Text != null)
+                    ST_GAME_TEXT._LoadFromPb64(pb64Text, lang);
+            });
+
         }
     }
 }

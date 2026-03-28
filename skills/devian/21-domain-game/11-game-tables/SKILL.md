@@ -14,14 +14,27 @@ AppliesTo: v10
 ```json
 "Game": {
   "tableDir": "Domains/Game",
-  "tableFiles": ["*.xlsx"]
+  "tableFiles": [
+    "AchieveTable.xlsx",
+    "GameMessageTable.xlsx",
+    "ItemTable.xlsx",
+    "MetaTable.xlsx",
+    "MissionTable.xlsx",
+    "ShopTable.xlsx",
+    "TreasureTable.xlsx",
+    "UnitTable.xlsx"
+  ],
+  "stringDir": "Domains/Game",
+  "stringFiles": ["GameStringTable.xlsx"]
 }
 ```
 
 | 필드 | 값 | 설명 |
 |---|---|---|
 | `tableDir` | `Domains/Game` | 테이블 XLSX 디렉토리 |
-| `tableFiles` | `["*.xlsx"]` | 테이블 파일 패턴 |
+| `tableFiles` | 명시적 8개 테이블 파일 목록 | `GameStringTable.xlsx`와 overlap을 피하는 테이블 입력 목록 |
+| `stringDir` | `Domains/Game` | Game StringTable XLSX 디렉토리 |
+| `stringFiles` | `["GameStringTable.xlsx"]` | Game StringTable 파일 패턴 |
 
 ---
 
@@ -49,18 +62,31 @@ AppliesTo: v10
 
 ---
 
-## 3. Generated Data
+## 3. String Tables (`input/Domains/Game/`)
+
+| 파일 | 시트(StringTable) | 생성 ID 타입 | 생성 Wrapper | 설명 |
+|---|---|---|---|---|
+| `GameStringTable.xlsx` | `GAME_TEXT` | `GAME_TEXT_ID` | `ST_GAME_TEXT` | Game 전용 로컬라이즈 문자열 |
+
+`GAME_TEXT`는 Common의 canonical `TEXT`와 별도다.
+`GameStringTable.xlsx`가 `Domains/Game/` 루트에 있으므로 `tableFiles`는 wildcard가 아니라 명시적 목록이어야 한다.
+
+---
+
+## 4. Generated Data
 
 | 형식 | 생성물 | 경로 |
 |---|---|---|
 | ndjson | `*.json` | `{tableConfig.tableDirs}/ndjson/` |
 | pb64 | `*.asset` | `{tableConfig.tableDirs}/pb64/` |
+| string ndjson | `GAME_TEXT.json` | `{tableConfig.stringDirs}/ndjson/{Language}/` |
+| string pb64 | `GAME_TEXT.asset` | `{tableConfig.stringDirs}/pb64/{Language}/` |
 
 빌드 실행: `bash input/build.sh {buildInputJson}` (예: `bash input/build.sh input/build_input.json`)
 
 ---
 
-## 4. Related
+## 5. Related
 
 | 주제 | 스킬 |
 |---|---|
@@ -68,3 +94,4 @@ AppliesTo: v10
 | Examples SSOT (config/input) | [devian-examples/03-ssot](../../../devian-examples/03-ssot/SKILL.md) |
 | Root SSOT (용어/경로) | [devian/10-module/03-ssot](../../10-module/03-ssot/SKILL.md) |
 | 21-domain-game 개요 | [00-overview](../00-overview/SKILL.md) |
+| GamePackage StringTable | [devian-unity/21-game-package/13-game-string-table](../../../devian-unity/21-game-package/13-game-string-table/SKILL.md) |

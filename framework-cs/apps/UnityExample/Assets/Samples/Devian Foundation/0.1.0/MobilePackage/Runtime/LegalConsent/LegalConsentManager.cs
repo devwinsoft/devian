@@ -188,7 +188,7 @@ namespace Devian
 
         string getCurrentLanguageCode()
         {
-            var languageCode = CommonUtil.GetLanguageCodeOrEmpty(UnityEngine.Application.systemLanguage.ToString());
+            var languageCode = CommonUtils.GetLanguageCodeOrEmpty(UnityEngine.Application.systemLanguage.ToString());
             if (!string.IsNullOrWhiteSpace(languageCode))
                 return languageCode;
 
@@ -196,7 +196,7 @@ namespace Devian
                 ? MobileApplication.Instance.DefaultLanguage
                 : SystemLanguage.English;
 
-            languageCode = CommonUtil.GetLanguageCodeOrEmpty(fallbackLanguage.ToString());
+            languageCode = CommonUtils.GetLanguageCodeOrEmpty(fallbackLanguage.ToString());
             return !string.IsNullOrWhiteSpace(languageCode) ? languageCode : "en";
         }
 

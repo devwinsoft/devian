@@ -3,8 +3,9 @@
 Status: ACTIVE
 AppliesTo: v10
 
-Game 도메인의 **Ability 시스템**이다.
+Game 도메인의 **Ability feature layer**이다.
 모든 엔티티(Hero, Item, Skill 등)의 속성 값을 `(STAT_TYPE, value)` 리스트로 정규화하여 관리한다.
+TypeScript 모듈 관점 설명을 포함하며, Unity `GamePackage` C# addon 구현 정본은 [devian-unity/21-game-package/12-game-ability](../../../devian-unity/21-game-package/12-game-ability/SKILL.md)다.
 
 ---
 
@@ -31,7 +32,7 @@ AbilityBase              ← Dict<STAT_TYPE, int>, indexer, GetInt, GetFloat, Ad
        └─ AbilityUnitMonster ← UNIT_MONSTER 테이블 Init
 ```
 
-- POCO (MonoBehaviour가 아닌 순수 C# 클래스)이다.
+- Unity C# 구현은 POCO (MonoBehaviour가 아닌 순수 C# 클래스)이고, TS 구현도 동일한 stat 모델을 유지한다.
 
 ---
 
@@ -250,25 +251,11 @@ namespace Devian
 
 ---
 
-## 6. Implementation Location (Sample-target)
+## 6. Implementation Location
 
-### C# (`com.devian.foundation/Samples~/GamePackage`)
+### Unity GamePackage C# addon
 
-- UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/GamePackage/Runtime/Ability/`
-- Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/GamePackage/Runtime/Ability/`
-
-> Game 도메인의 Ability addon 코드와 Generated 코드는 `com.devian.foundation/Samples~/GamePackage/`에 통합된다.
-> assembly: `Devian.Samples.GamePackage` (Generated 타입 namespace는 `Devian.Domain.Game` 유지)
-
-```
-Ability/
-├─ AbilityBase.cs
-├─ AbilityEquip.cs
-├─ AbilityCard.cs
-├─ AbilityUnitBase.cs
-├─ AbilityUnitHero.cs
-└─ AbilityUnitMonster.cs
-```
+- [devian-unity/21-game-package/12-game-ability](../../../devian-unity/21-game-package/12-game-ability/SKILL.md) — `com.devian.foundation/Samples~/GamePackage/Runtime/Ability/` 정본
 
 ### TypeScript (`@devian/module-game`)
 
@@ -293,10 +280,12 @@ ability/
 - stat value 타입은 `int` (C#) / `number` (TS)이다.
 - POCO이다 (MonoBehaviour 상속 금지).
 - `AbilityBase`의 `mStats`는 `Dictionary<STAT_TYPE, int>` (C#) / `Map<STAT_TYPE, number>` (TS)이다 (정규화 SSOT).
+- Unity GamePackage 경로/asmdef/샘플 배치 규칙은 `devian-unity/21-game-package/12-game-ability`가 정본이다.
 
 ---
 
 ## 8. Related
 
+- [devian-unity/21-game-package/12-game-ability](../../../devian-unity/21-game-package/12-game-ability/SKILL.md) — Unity GamePackage C# addon 구현
 - [13-game-stat-type](../13-game-stat-type/SKILL.md) — STAT_TYPE enum 값 정의/관리
 - [00-overview](../00-overview/SKILL.md) — Game 도메인 개요

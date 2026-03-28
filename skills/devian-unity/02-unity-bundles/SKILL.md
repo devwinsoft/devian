@@ -84,7 +84,7 @@ dependencies 상세 테이블은 [04-package-policy](../04-package-policy/SKILL.
 | `Devian.Samples.GamePackage.asmdef` | `Devian.Samples.GamePackage` | `["Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.SoundPackage"]` | com.devian.foundation/Samples~/GamePackage |
 | `Devian.Samples.MobilePackage.asmdef` | `Devian.Samples.MobilePackage` | `["Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.GamePackage", "Unity.InputSystem", "Devian.Samples.UIPackage", "Unity.Purchasing"]` | com.devian.foundation/Samples~/MobilePackage |
 | `Devian.Samples.GameProtocol.asmdef` | `Devian.Samples.GameProtocol` | `["Devian.Core", "Devian.Samples.CommonPackage"]` | com.devian.foundation/Samples~/GameProtocol |
-| `Devian.Samples.UIPackage.asmdef` | `Devian.Samples.UIPackage` | `["Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.SoundPackage", "Unity.TextMeshPro"]` | com.devian.foundation/Samples~/UIPackage |
+| `Devian.Samples.UIPackage.asmdef` | `Devian.Samples.UIPackage` | `["Devian.Core", "Devian.Samples.CommonPackage", "Devian.Samples.GamePackage", "Devian.Samples.SoundPackage", "Unity.TextMeshPro"]` | com.devian.foundation/Samples~/UIPackage |
 
 ### Editor asmdef
 

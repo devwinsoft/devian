@@ -1,6 +1,6 @@
 namespace Devian.Domain.Common
 {
-    public static class CommonUtil
+    public static class CommonUtils
     {
         public static bool TryGetLanguageCode(string language, out string code)
         {

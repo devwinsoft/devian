@@ -1,17 +1,17 @@
-using Devian.Domain.Common;
+using Devian.Domain.Game;
 using TMPro;
 using UnityEngine;
 
 namespace Devian
 {
     /// <summary>
-    /// Binds ST_TEXT value to a TMP_Text component.
+    /// Binds ST_GAME_TEXT value to a TMP_Text component.
     /// Applies initial text on UI init and subscribes to ReloadText updates.
     /// </summary>
     public class UIComponentText : UIComponentBase
     {
         [SerializeField] private TMP_Text _text;
-        [SerializeField] private TEXT_ID _textId;
+        [SerializeField] private GAME_TEXT_ID _textId;
 
         protected override void onInit(Canvas canvas)
         {
@@ -35,7 +35,7 @@ namespace Devian
             if (_text == null) return;
             if (_textId == null || !_textId.IsValid()) return;
 
-            _text.text = ST_TEXT.Get(_textId.Value);
+            _text.text = ST_GAME_TEXT.Get(_textId.Value);
         }
     }
 }

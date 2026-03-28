@@ -22,7 +22,18 @@
       ],
       "tableDir": "Domains/Game",
       "tableFiles": [
-        "*.xlsx"
+        "AchieveTable.xlsx",
+        "GameMessageTable.xlsx",
+        "ItemTable.xlsx",
+        "MetaTable.xlsx",
+        "MissionTable.xlsx",
+        "ShopTable.xlsx",
+        "TreasureTable.xlsx",
+        "UnitTable.xlsx"
+      ],
+      "stringDir": "Domains/Game",
+      "stringFiles": [
+        "GameStringTable.xlsx"
       ]
     },
     "Sound": {

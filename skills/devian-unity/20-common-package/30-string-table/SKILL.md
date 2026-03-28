@@ -11,7 +11,7 @@ AppliesTo: v10
 
 ## 목적/범위
 
-**Common 도메인 기준 String Table(TEXT) 규약 및 런타임 소비 규약을 고정한다.**
+**Common의 canonical String Table(TEXT) 규약과 도메인별 추가 String Table 생성 규약을 고정한다.**
 
 다국어 텍스트 테이블을 ndjson/pb64로 내보내고, BundleManager(Addressables Label) + 런타임 Get까지 규약을 고정한다.
 
@@ -66,11 +66,11 @@ AppliesTo: v10
   The following files are matched by both tableFiles and stringFiles:
   SomeTable.xlsx
   This is forbidden to prevent silent processing errors.
-  Move string table XLSX files to a separate directory (stringDir).
+  Adjust stringDir/stringFiles or narrow tableFiles so they do not overlap.
 ```
 
 - 이유: table 파이프라인과 string 파이프라인이 같은 파일을 동시에 처리하면 침묵 오류(silent error) 발생
-- 해결: String Table XLSX는 반드시 별도 디렉토리(`stringDir`)에 배치
+- 해결: String Table XLSX는 별도 디렉토리에 두거나, 같은 디렉토리를 쓰는 경우 `tableFiles`를 명시적으로 좁혀 overlap을 제거
 
 ---
 
@@ -78,12 +78,20 @@ AppliesTo: v10
 
 ### Canonical Master (Hard Rule)
 
-**String Table(TEXT)은 오직 Common 도메인에만 존재한다.**
+**Common의 `TEXT`는 canonical global StringTable이다.**
 
-- `StringTable.xlsx`: `input/Domains/Common/StringTable.xlsx`
+- canonical file: `input/Domains/Common/StringTable.xlsx`
+- canonical sheet: `TEXT`
 - 이 파일은 `domains.Common.stringDir/stringFiles`로만 매칭되어야 하며, `tableDir/tableFiles`와 overlap 되면 빌드 FAIL.
 
-**금지:** Game/Sound 등 다른 도메인에 동일 역할의 `StringTable.xlsx`를 두지 않는다 (중복은 FAIL).
+**허용:** Game/Sound 등 다른 도메인도 StringTable을 가질 수 있다. 단, 아래 조건을 모두 만족해야 한다.
+
+- `stringDir/stringFiles`와 `tableDir/tableFiles`가 overlap 되지 않아야 한다
+- 시트 이름이 `TEXT`와 충돌하지 않는 고유 이름이어야 한다
+- 최종 출력 파일명(`{TableName}.json`, `{TableName}.asset`) 충돌이 없어야 한다
+
+예: Game 도메인의 `GameStringTable.xlsx` / `GAME_TEXT`
+같은 디렉토리를 쓰면 `tableFiles`는 wildcard 대신 명시적 목록으로 관리한다.
 
 ### 헤더 컬럼
 

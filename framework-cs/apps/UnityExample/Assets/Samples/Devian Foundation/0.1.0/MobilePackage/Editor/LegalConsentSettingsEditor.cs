@@ -37,7 +37,7 @@ namespace Devian
                 return;
             }
 
-            var languageCode = CommonUtil.GetLanguageCodeOrEmpty(nameof(SystemLanguage.Korean));
+            var languageCode = CommonUtils.GetLanguageCodeOrEmpty(nameof(SystemLanguage.Korean));
             if (string.IsNullOrWhiteSpace(languageCode))
                 languageCode = KoreanLanguageCode;
 
