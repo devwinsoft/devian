@@ -52,6 +52,18 @@ namespace Devian
         private ScreenOrientation _lastAppliedOrientation;
         private bool _isApplied;
 
+        // non-applied edge를 baseline restore로부터 보호하기 위한 pre-restore 스냅샷.
+        // CaptureCustomRefreshState (restore 직전)에서 캡처, ApplySizeFitter 말미에서 복원.
+        private Vector2 _preRestoreAnchorMin;
+        private Vector2 _preRestoreAnchorMax;
+        private Vector2 _preRestoreOffsetMin;
+        private Vector2 _preRestoreOffsetMax;
+
+        // onInit / OnDisable→OnEnable 시 RestoreTrackedTargetToBaseline이
+        // _preRestore를 오염시키는 것을 방지하는 플래그.
+        // true이면 CaptureCustomRefreshState가 _preRestore 갱신을 1회 건너뛴다.
+        private bool _preservePreRestore;
+
         private static readonly ISafeAreaSource s_RuntimeSafeAreaSource = new RuntimeSafeAreaSource();
         private static readonly ISafeAreaSource s_IPhone14ProSource =
             new EditorSimulationSafeAreaSource(
@@ -90,6 +102,8 @@ namespace Devian
                     break;
             }
 
+            RestoreNonAppliedEdges(target);
+
             _lastAppliedSafeArea = observation.SafeArea;
             _lastAppliedOrientation = observation.Orientation;
             _isApplied = true;
@@ -103,6 +117,28 @@ namespace Devian
         protected override void CaptureCustomRefreshState()
         {
             _lastObservedSafeArea = ReadCurrentObservation().SafeArea;
+
+            // Refresh() 흐름: CaptureRefreshState → RestoreBaseline → ApplySizeFitter
+            // RestoreBaseline이 ALL axes를 덮어쓰기 전에 현재 rect를 저장한다.
+            // ApplySizeFitter 말미에서 non-applied edges를 이 값으로 복원한다.
+            //
+            // _preservePreRestore가 true이면 갱신을 건너뛴다.
+            // onInit/OnDisable→OnEnable 경로에서 RestoreTrackedTargetToBaseline이
+            // 먼저 실행된 뒤 Refresh가 호출되면 _preRestore가 오염되기 때문이다.
+            if (_preservePreRestore)
+            {
+                _preservePreRestore = false;
+                return;
+            }
+
+            var rt = Target;
+            if (rt != null)
+            {
+                _preRestoreAnchorMin = rt.anchorMin;
+                _preRestoreAnchorMax = rt.anchorMax;
+                _preRestoreOffsetMin = rt.offsetMin;
+                _preRestoreOffsetMax = rt.offsetMax;
+            }
         }
 
         protected override void ResetAppliedState()
@@ -115,6 +151,16 @@ namespace Devian
         protected override void ResetCustomTrackingState()
         {
             _lastObservedSafeArea = default;
+            // OnDisable → ResetTrackingState 경로.
+            // 이후 OnEnable → Refresh에서 _preRestore가 오염되지 않도록 보호.
+            _preservePreRestore = true;
+        }
+
+        protected override void onSizeFitterInit(Canvas canvas)
+        {
+            // onInit: RestoreTrackedTargetToBaseline → ResetBaselineState → here → Refresh.
+            // 이후 Refresh의 CaptureCustomRefreshState에서 _preRestore를 건너뛰어야 한다.
+            _preservePreRestore = true;
         }
 
         private SafeAreaObservation ReadCurrentObservation()
@@ -137,8 +183,20 @@ namespace Devian
             var screenHeightFloat = Mathf.Max(1f, screenHeight);
             var resolvedRect = ResolveSafeAreaRect(safeArea, screenWidthFloat, screenHeightFloat);
 
-            target.anchorMin = new Vector2(resolvedRect.xMin / screenWidthFloat, resolvedRect.yMin / screenHeightFloat);
-            target.anchorMax = new Vector2(resolvedRect.xMax / screenWidthFloat, resolvedRect.yMax / screenHeightFloat);
+            var anchorMin = target.anchorMin;
+            var anchorMax = target.anchorMax;
+
+            if (_applyLeft)
+                anchorMin.x = resolvedRect.xMin / screenWidthFloat;
+            if (_applyBottom)
+                anchorMin.y = resolvedRect.yMin / screenHeightFloat;
+            if (_applyRight)
+                anchorMax.x = resolvedRect.xMax / screenWidthFloat;
+            if (_applyTop)
+                anchorMax.y = resolvedRect.yMax / screenHeightFloat;
+
+            target.anchorMin = anchorMin;
+            target.anchorMax = anchorMax;
         }
 
         private void ApplyOffsetSafeArea(
@@ -166,6 +224,31 @@ namespace Devian
 
             target.offsetMin = offsetMin;
             target.offsetMax = offsetMax;
+        }
+
+        /// <summary>
+        /// baseline restore가 덮어쓴 non-applied edges를 pre-restore 값으로 복원한다.
+        /// applied edges는 이미 safe area 계산값이 적용된 상태이므로 건드리지 않는다.
+        /// </summary>
+        private void RestoreNonAppliedEdges(RectTransform target)
+        {
+            if (_applyLeft && _applyRight && _applyBottom && _applyTop)
+                return;
+
+            var aMin = target.anchorMin;
+            var aMax = target.anchorMax;
+            var oMin = target.offsetMin;
+            var oMax = target.offsetMax;
+
+            if (!_applyLeft)   { aMin.x = _preRestoreAnchorMin.x; oMin.x = _preRestoreOffsetMin.x; }
+            if (!_applyBottom) { aMin.y = _preRestoreAnchorMin.y; oMin.y = _preRestoreOffsetMin.y; }
+            if (!_applyRight)  { aMax.x = _preRestoreAnchorMax.x; oMax.x = _preRestoreOffsetMax.x; }
+            if (!_applyTop)    { aMax.y = _preRestoreAnchorMax.y; oMax.y = _preRestoreOffsetMax.y; }
+
+            target.anchorMin = aMin;
+            target.anchorMax = aMax;
+            target.offsetMin = oMin;
+            target.offsetMax = oMax;
         }
 
         private Rect ResolveSafeAreaRect(Rect safeArea, float screenWidth, float screenHeight)

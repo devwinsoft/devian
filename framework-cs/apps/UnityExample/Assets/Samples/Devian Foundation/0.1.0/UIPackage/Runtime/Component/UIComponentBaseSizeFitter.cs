@@ -48,7 +48,11 @@ namespace Devian
             RestoreTrackedTargetToBaseline();
             ResetBaselineState();
             onSizeFitterInit(canvas);
-            Refresh();
+
+            // 비활성화 상태에서는 rect를 건드리지 않는다.
+            // OnEnable에서 Refresh가 실행된다.
+            if (isActiveAndEnabled)
+                Refresh();
         }
 
         protected virtual void onSizeFitterAwake() { }
@@ -99,7 +103,17 @@ namespace Devian
                 return;
 
             if (Application.isPlaying || ShouldRunEditorRefresh())
-                Refresh();
+            {
+                // OnValidate 중 RectTransform 변경 → SendMessage 경고 방지.
+                // 다음 프레임으로 지연한다.
+#if UNITY_EDITOR
+                UnityEditor.EditorApplication.delayCall += () =>
+                {
+                    if (this != null && isActiveAndEnabled)
+                        Refresh();
+                };
+#endif
+            }
         }
 
         private void Update()

@@ -350,7 +350,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: -1300}
-  m_SizeDelta: {x: 587.5, y: 150}
+  m_SizeDelta: {x: 607.5, y: 150}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &388052970
 MonoBehaviour:
@@ -1060,7 +1060,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: -660}
-  m_SizeDelta: {x: 587.5, y: 150}
+  m_SizeDelta: {x: 607.5, y: 150}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1100219404
 MonoBehaviour:
@@ -1148,7 +1148,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: -820}
-  m_SizeDelta: {x: 587.5, y: 150}
+  m_SizeDelta: {x: 607.5, y: 150}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1176769427
 MonoBehaviour:
@@ -1236,7 +1236,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: -1140}
-  m_SizeDelta: {x: 587.5, y: 150}
+  m_SizeDelta: {x: 607.5, y: 150}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1197739336
 MonoBehaviour:
@@ -1324,7 +1324,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: -340}
-  m_SizeDelta: {x: 587.5, y: 150}
+  m_SizeDelta: {x: 607.5, y: 150}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1415875434
 MonoBehaviour:
@@ -1743,7 +1743,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: -1460}
-  m_SizeDelta: {x: 587.5, y: 150}
+  m_SizeDelta: {x: 607.5, y: 150}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1582870336
 MonoBehaviour:
@@ -1968,7 +1968,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: -500}
-  m_SizeDelta: {x: 587.5, y: 150}
+  m_SizeDelta: {x: 607.5, y: 150}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1636162301
 MonoBehaviour:
@@ -2056,8 +2056,8 @@ RectTransform:
   - {fileID: 1965421980}
   m_Father: {fileID: 737063472}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0.07083333}
-  m_AnchorMax: {x: 1, y: 0.87708336}
+  m_AnchorMin: {x: 0, y: 0.017708333}
+  m_AnchorMax: {x: 1, y: 0.9692708}
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
@@ -2141,23 +2141,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca3ec72d9db54466be218b9cbc95c7e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.UIPackage::Devian.UIComponentSafeSizeFitter
+  _refreshOnEnable: 1
+  _refreshOnResolutionChange: 1
+  _refreshOnOrientationChange: 1
+  _baselineTarget: {fileID: 1715031551}
+  _baselineAnchorMin: {x: 0, y: 0.017708333}
+  _baselineAnchorMax: {x: 1, y: 0.9692708}
+  _baselineOffsetMin: {x: 0, y: 0}
+  _baselineOffsetMax: {x: 0, y: 0}
+  _baselineSizeDelta: {x: 0, y: 0}
+  _hasBaseline: 1
   _applyTop: 1
   _applyBottom: 1
   _applyLeft: 1
   _applyRight: 1
   _extraPadding: {x: 0, y: 0, z: 0, w: 0}
   _applyMode: 0
-  _refreshOnEnable: 1
-  _refreshOnResolutionChange: 1
-  _refreshOnOrientationChange: 1
   _useEditorSimulation: 1
   _editorSimulationProfile: 1
-  _baselineTarget: {fileID: 1715031551}
-  _baselineAnchorMin: {x: 0, y: 0.017708333}
-  _baselineAnchorMax: {x: 1, y: 0.9692708}
-  _baselineOffsetMin: {x: 0, y: 0}
-  _baselineOffsetMax: {x: 0, y: 0}
-  _hasBaseline: 1
 --- !u!1 &1720222498
 GameObject:
   m_ObjectHideFlags: 0
@@ -2255,7 +2256,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1913704344
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2273,8 +2274,8 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -40}
-  m_SizeDelta: {x: -20, y: -118.25}
+  m_AnchoredPosition: {x: 0, y: -32.96875}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1913704345
 MonoBehaviour:
@@ -2389,23 +2390,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ca3ec72d9db54466be218b9cbc95c7e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.UIPackage::Devian.UIComponentSafeSizeFitter
+  _refreshOnEnable: 1
+  _refreshOnResolutionChange: 1
+  _refreshOnOrientationChange: 1
+  _baselineTarget: {fileID: 0}
+  _baselineAnchorMin: {x: 0, y: 0}
+  _baselineAnchorMax: {x: 1, y: 1}
+  _baselineOffsetMin: {x: 0, y: -32.96875}
+  _baselineOffsetMax: {x: 0, y: -32.96875}
+  _baselineSizeDelta: {x: 0, y: 0}
+  _hasBaseline: 0
   _applyTop: 1
   _applyBottom: 1
   _applyLeft: 0
   _applyRight: 0
   _extraPadding: {x: 0, y: 0, z: 0, w: 0}
   _applyMode: 1
-  _refreshOnEnable: 1
-  _refreshOnResolutionChange: 1
-  _refreshOnOrientationChange: 1
   _useEditorSimulation: 1
   _editorSimulationProfile: 1
-  _baselineTarget: {fileID: 1913704344}
-  _baselineAnchorMin: {x: 0, y: 0}
-  _baselineAnchorMax: {x: 1, y: 1}
-  _baselineOffsetMin: {x: 10, y: 0}
-  _baselineOffsetMax: {x: -10, y: -65.9375}
-  _hasBaseline: 1
 --- !u!1 &1953151529
 GameObject:
   m_ObjectHideFlags: 0
@@ -2442,7 +2444,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
   m_AnchoredPosition: {x: 0, y: -980}
-  m_SizeDelta: {x: 587.5, y: 150}
+  m_SizeDelta: {x: 607.5, y: 150}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1953151531
 MonoBehaviour:

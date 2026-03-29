@@ -120,7 +120,7 @@ namespace Devian
 - `DataRowCount` = `CeilToInt(CellCount / (float)ColumnCount)` (`ColumnCount > 0`인 경우)
 - `RowCount` = `max(MinimumLineCount, DataRowCount)` (`ColumnCount <= 0`이면 `0`)
 - `RenderCellCount` = `RowCount * ColumnCount`
-- `RectTransform.sizeDelta`는 init 및 count/size setter 변경 시 `(parent.width, GetHeight())` 기준으로 동기화된다
+- `RectTransform.sizeDelta`는 init 및 count/size setter 변경 시 **height만** (`sizeDelta.y = GetHeight()`) 갱신된다. width는 건드리지 않는다
 - init 완료 후 `CellCount`, `MinimumLineCount`, `ColumnCount`, `CellSize`, `Spacing`이 바뀌면 parent `UIScrollContainer.Rebuild()`를 자동 요청한다
 
 ### IUIScrollSection Model
@@ -181,7 +181,7 @@ container가 "이 row를 보여라/숨겨라/새로고침하라"를 결정하고
 
 ### Runtime Layout Changes
 
-- `SetCellCount(...)`, `SetMinimumLineCount(...)`, `ColumnCount`, `CellSize`, `RowSpacing` 변경은 먼저 frame `RectTransform` sizeDelta를 `(parent.width, GetHeight())` 기준으로 동기화한다
+- `SetCellCount(...)`, `SetMinimumLineCount(...)`, `ColumnCount`, `CellSize`, `RowSpacing` 변경은 먼저 frame `RectTransform` sizeDelta의 **height만** (`sizeDelta.y = GetHeight()`) 동기화한다. width는 변경하지 않는다
 - play mode에서 parent `UIScrollContainer`가 이미 초기화된 상태라면 `Rebuild()`를 자동 요청한다
 - 그래서 init 이후 data count가 늘어나 row 수가 바뀌는 경우에도 scroll content size와 visible row 계산이 같이 갱신된다
 

@@ -371,7 +371,22 @@
       "Bash(ASSETS=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Scroll\")",
       "Bash(PACKAGES=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/UIPackage/Runtime/Scroll\")",
       "Bash(INPUT=\"/Users/maoshy/Documents/Projects/devian/input/temp/sample-com.devian.foundation/Samples~/UIPackage/Runtime/Scroll\")",
-      "Bash(__NEW_LINE_3667536d0c298d6a__ for:*)"
+      "Bash(__NEW_LINE_3667536d0c298d6a__ for:*)",
+      "Bash(UPM=\"/Users/maoshy/Documents/Projects/devian/framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Component/UIComponentSafeSizeFitter.cs\")",
+      "Bash(ASSETS=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Component/UIComponentSafeSizeFitter.cs\")",
+      "Bash(PACKAGES=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/UIPackage/Runtime/Component/UIComponentSafeSizeFitter.cs\")",
+      "Bash(__NEW_LINE_8bed7dbdfa46708c__ cp:*)",
+      "Bash(cp \"$UPM\" \"$PACKAGES\")",
+      "mcp__ai-game-developer__scene-list-opened",
+      "mcp__ai-game-developer__gameobject-find",
+      "mcp__ai-game-developer__gameobject-component-get",
+      "Bash(__NEW_LINE_b9290f224f555b4b__ cp:*)",
+      "Bash(__NEW_LINE_f2bac5d068a53d96__ cp:*)",
+      "Bash(UPM=\"/Users/maoshy/Documents/Projects/devian/framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Component/UIComponentBaseSizeFitter.cs\")",
+      "Bash(ASSETS=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Component/UIComponentBaseSizeFitter.cs\")",
+      "Bash(PACKAGES=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/UIPackage/Runtime/Component/UIComponentBaseSizeFitter.cs\")",
+      "Bash(__NEW_LINE_49bf3d736adedda2__ cp:*)",
+      "Bash(__NEW_LINE_edc01f424d7c2218__ cp:*)"
     ]
   },
   "project": {

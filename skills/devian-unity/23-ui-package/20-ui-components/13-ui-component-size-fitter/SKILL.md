@@ -87,6 +87,8 @@ namespace Devian
 - `WorldSpace` canvas early return
 - editor domain reload 전 baseline 복원
 - same-object 중복 size-fitter warning
+- `OnValidate`에서 `EditorApplication.delayCall`로 Refresh 지연 (SendMessage 경고 방지)
+- `onInit`에서 `isActiveAndEnabled` guard — 비활성화 상태면 Refresh를 건너뛰고 `OnEnable` 시 실행
 
 ### Serialized Base Fields
 
@@ -113,11 +115,15 @@ namespace Devian
   - runtime: `Screen.safeArea`
   - editor: simulation profile
 - `Anchor`:
-  - safe rect를 0..1 anchor로 변환
-  - baseline offset 유지
+  - safe rect를 0..1 anchor로 변환 (apply 체크된 edge만)
+  - non-applied edge의 anchor는 원본 유지
 - `Offset`:
-  - baseline anchor 유지
-  - safe inset을 `offsetMin/offsetMax`에 반영
+  - safe inset을 `offsetMin/offsetMax`에 반영 (apply 체크된 edge만)
+  - non-applied edge의 offset은 원본 유지
+- non-applied edge 보호:
+  - `CaptureCustomRefreshState`에서 baseline restore 전 rect 스냅샷(`_preRestore`)을 캡처
+  - `ApplySizeFitter` 말미에 `RestoreNonAppliedEdges`로 non-applied edge의 anchor+offset을 `_preRestore`로 복원
+  - `_preservePreRestore` 플래그로 `onInit` / `OnDisable→OnEnable` 경로에서 `_preRestore` 오염 방지
 - 마지막 적용 상태:
   - `LastAppliedSafeArea`
   - `LastOrientation`
