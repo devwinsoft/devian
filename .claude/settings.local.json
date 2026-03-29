@@ -366,7 +366,12 @@
       "Bash(cp \"upm/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/AssetManager/BundleManager.cs\" \"apps/UnityExample/Packages/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/AssetManager/BundleManager.cs\")",
       "Bash(cp \"upm/com.devian.foundation/Samples~/CommonPackage/Runtime/Unity/AssetManager/BundleManager.cs\" \"apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/CommonPackage/Runtime/Unity/AssetManager/BundleManager.cs\")",
       "Bash(cp \"upm/com.devian.foundation/Samples~/MobilePackage/Runtime/BundleManager/MobileBundleManager.cs\" \"apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/BundleManager/MobileBundleManager.cs\")",
-      "Bash(cp \"upm/com.devian.foundation/Samples~/MobilePackage/Runtime/BundleManager/MobileBundleManager.cs\" \"apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/MobilePackage/Runtime/BundleManager/MobileBundleManager.cs\")"
+      "Bash(cp \"upm/com.devian.foundation/Samples~/MobilePackage/Runtime/BundleManager/MobileBundleManager.cs\" \"apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/MobilePackage/Runtime/BundleManager/MobileBundleManager.cs\")",
+      "Bash(UPM=\"/Users/maoshy/Documents/Projects/devian/framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Scroll\")",
+      "Bash(ASSETS=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Scroll\")",
+      "Bash(PACKAGES=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/UIPackage/Runtime/Scroll\")",
+      "Bash(INPUT=\"/Users/maoshy/Documents/Projects/devian/input/temp/sample-com.devian.foundation/Samples~/UIPackage/Runtime/Scroll\")",
+      "Bash(__NEW_LINE_3667536d0c298d6a__ for:*)"
     ]
   },
   "project": {

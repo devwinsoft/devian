@@ -9,7 +9,7 @@ using UnityEngine.UI;
 
 namespace Devian
 {
-    public enum ScrollDirection { Vertical, Horizontal }
+    public enum UIScrollDirection { Vertical, Horizontal }
 
     /// <summary>
     /// 세로/가로 스크롤 혼합 레이아웃 컨테이너.
@@ -25,7 +25,7 @@ namespace Devian
         // ────────────────────────────────────────────
 
         [Header("Direction")]
-        [SerializeField] private ScrollDirection _direction = ScrollDirection.Vertical;
+        [SerializeField] private UIScrollDirection _direction = UIScrollDirection.Vertical;
 
         [Header("Layout")]
         [SerializeField] private RectOffset _padding = new RectOffset();
@@ -33,6 +33,10 @@ namespace Devian
 
         [Header("Virtualization")]
         [SerializeField] private int _bufferRows = 2;
+
+#if UNITY_EDITOR
+        [SerializeField, HideInInspector] private bool _editorAutoPreview = true;
+#endif
 
         // ────────────────────────────────────────────
         // Scroll Position API
@@ -50,40 +54,45 @@ namespace Devian
         public float MaxScrollPosition
             => Mathf.Max(0f, _totalContentSize - GetViewportSize());
 
+#if UNITY_EDITOR
+        public bool EditorAutoPreview
+        {
+            get => _editorAutoPreview;
+            set
+            {
+                _editorAutoPreview = value;
+                if (!value)
+                    _editorPreviewQueued = false;
+            }
+        }
+
+        public bool EditorPreviewActive => _editorPreviewActive;
+        public int EditorPreviewSectionCount => _editorPreviewSectionCount;
+        public int EditorPreviewLogicalRowCount => _editorPreviewLogicalRowCount;
+        public float EditorPreviewContentSize => _editorPreviewContentSize;
+#endif
+
         // ────────────────────────────────────────────
         // UIBaseContainer Lifecycle
         // ────────────────────────────────────────────
 
         protected override void onAwake()
         {
-            _scrollRect = GetComponent<ScrollRect>();
-            _content = _scrollRect.content;
-            _viewport = _scrollRect.viewport;
-
-            NormalizeViewportRect();
-            NormalizeContentRect();
+            CacheScrollRefsIfNeeded();
+            NormalizeRects();
         }
 
         protected override void onInit()
         {
+            CacheScrollRefsIfNeeded();
             _scrollRect.onValueChanged.AddListener(OnScrollChanged);
         }
 
         protected override void onInitComplete()
         {
-            // Frame 수집
-            _frames.Clear();
-            _frames.AddRange(_content.GetComponentsInChildren<UIBaseFrame>(true));
-
-            // IUIScrollSection 수집
+            CollectFrames();
             CollectSections();
-
-            // Logical row 전개 + 레이아웃
-            BuildLogicalRows();
-            SetContentMainAxisSize(_totalContentSize);
-
-            // Section layout 적용
-            ApplySectionLayouts();
+            RebuildLayoutCore();
 
             _initialized = true;
             UpdateVisibleRows();
@@ -116,27 +125,14 @@ namespace Devian
         {
             if (!_initialized) return;
 
-            // 모든 visible row unbind
-            for (int i = 0; i < _logicalRows.Count; i++)
-            {
-                var row = _logicalRows[i];
-                if (row.IsVisible)
-                    row.Section.UnbindRow(row.LocalRowIndex);
-            }
-
-            // Section clear
-            foreach (var section in _sections)
-                section.ClearSection();
-
+            ClearVisibleRowsAndSections();
+            CollectFrames();
             _logicalRows.Clear();
             _prevFirst = -1;
             _prevLast = -1;
 
-            // 재빌드
             CollectSections();
-            BuildLogicalRows();
-            SetContentMainAxisSize(_totalContentSize);
-            ApplySectionLayouts();
+            RebuildLayoutCore();
             UpdateVisibleRows();
         }
 
@@ -156,15 +152,7 @@ namespace Devian
 
         public void Clear()
         {
-            for (int i = 0; i < _logicalRows.Count; i++)
-            {
-                var row = _logicalRows[i];
-                if (row.IsVisible)
-                    row.Section.UnbindRow(row.LocalRowIndex);
-            }
-
-            foreach (var section in _sections)
-                section.ClearSection();
+            ClearVisibleRowsAndSections();
 
             if (_scrollRect != null)
                 _scrollRect.onValueChanged.RemoveListener(OnScrollChanged);
@@ -209,9 +197,72 @@ namespace Devian
         private int _prevFirst = -1;
         private int _prevLast = -1;
 
+#if UNITY_EDITOR
+        [System.Serializable]
+        private struct EditorRectTransformState
+        {
+            public RectTransform Target;
+            public Vector2 AnchorMin;
+            public Vector2 AnchorMax;
+            public Vector2 Pivot;
+            public Vector2 AnchoredPosition;
+            public Vector2 SizeDelta;
+            public bool ActiveSelf;
+
+            public static EditorRectTransformState Capture(RectTransform target)
+            {
+                if (target == null)
+                    return default;
+
+                return new EditorRectTransformState
+                {
+                    Target = target,
+                    AnchorMin = target.anchorMin,
+                    AnchorMax = target.anchorMax,
+                    Pivot = target.pivot,
+                    AnchoredPosition = target.anchoredPosition,
+                    SizeDelta = target.sizeDelta,
+                    ActiveSelf = target.gameObject.activeSelf,
+                };
+            }
+
+            public void Restore()
+            {
+                if (Target == null)
+                    return;
+
+                Target.anchorMin = AnchorMin;
+                Target.anchorMax = AnchorMax;
+                Target.pivot = Pivot;
+                Target.anchoredPosition = AnchoredPosition;
+                Target.sizeDelta = SizeDelta;
+                Target.gameObject.SetActive(ActiveSelf);
+            }
+        }
+
+        private bool _editorPreviewActive;
+        private bool _editorPreviewQueued;
+        private bool _editorPreviewBaselineCaptured;
+        private float _editorPreviewContentSize;
+        private int _editorPreviewSectionCount;
+        private int _editorPreviewLogicalRowCount;
+        private EditorRectTransformState _editorViewportState;
+        private EditorRectTransformState _editorContentState;
+        private readonly List<EditorRectTransformState> _editorFrameStates = new();
+#endif
+
         // ────────────────────────────────────────────
         // Section Collection
         // ────────────────────────────────────────────
+
+        private void CollectFrames()
+        {
+            _frames.Clear();
+            if (_content == null)
+                return;
+
+            _frames.AddRange(_content.GetComponentsInChildren<UIBaseFrame>(true));
+        }
 
         private void CollectSections()
         {
@@ -260,6 +311,13 @@ namespace Devian
             }
 
             _totalContentSize = pos + _padding.bottom;
+        }
+
+        private void RebuildLayoutCore()
+        {
+            BuildLogicalRows();
+            SetContentMainAxisSize(_totalContentSize);
+            ApplySectionLayouts();
         }
 
         private void ApplySectionLayouts()
@@ -377,14 +435,14 @@ namespace Devian
         // ────────────────────────────────────────────
 
         private float GetViewportSize()
-            => _direction == ScrollDirection.Vertical ? _viewport.rect.height : _viewport.rect.width;
+            => _direction == UIScrollDirection.Vertical ? _viewport.rect.height : _viewport.rect.width;
 
         private float GetCrossAxisSize()
-            => _direction == ScrollDirection.Vertical ? _viewport.rect.width : _viewport.rect.height;
+            => _direction == UIScrollDirection.Vertical ? _viewport.rect.width : _viewport.rect.height;
 
         private float GetScrollPosition()
             => _content == null ? 0f
-                : (_direction == ScrollDirection.Vertical
+                : (_direction == UIScrollDirection.Vertical
                     ? _content.anchoredPosition.y
                     : -_content.anchoredPosition.x);
 
@@ -392,7 +450,7 @@ namespace Devian
         {
             pos = Mathf.Clamp(pos, 0f, MaxScrollPosition);
             var ap = _content.anchoredPosition;
-            if (_direction == ScrollDirection.Vertical) ap.y = pos; else ap.x = -pos;
+            if (_direction == UIScrollDirection.Vertical) ap.y = pos; else ap.x = -pos;
             _content.anchoredPosition = ap;
             UpdateVisibleRows();
         }
@@ -401,8 +459,24 @@ namespace Devian
         {
             if (_content == null) return;
             var sd = _content.sizeDelta;
-            if (_direction == ScrollDirection.Vertical) sd.y = size; else sd.x = size;
+            if (_direction == UIScrollDirection.Vertical) sd.y = size; else sd.x = size;
             _content.sizeDelta = sd;
+        }
+
+        private void CacheScrollRefsIfNeeded()
+        {
+            if (_scrollRect == null)
+                _scrollRect = GetComponent<ScrollRect>();
+
+            if (_scrollRect == null)
+            {
+                _content = null;
+                _viewport = null;
+                return;
+            }
+
+            _content = _scrollRect.content;
+            _viewport = _scrollRect.viewport;
         }
 
         private void NormalizeViewportRect()
@@ -426,5 +500,216 @@ namespace Devian
             _content.pivot = new Vector2(0f, 1f);
             _content.anchoredPosition = Vector2.zero;
         }
+
+        private void NormalizeRects()
+        {
+            NormalizeViewportRect();
+            NormalizeContentRect();
+        }
+
+        private void ClearVisibleRowsAndSections()
+        {
+            for (int i = 0; i < _logicalRows.Count; i++)
+            {
+                var row = _logicalRows[i];
+                if (row.IsVisible)
+                    row.Section.UnbindRow(row.LocalRowIndex);
+            }
+
+            foreach (var section in _sections)
+                section.ClearSection();
+        }
+
+#if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+        private static void RegisterEditorPreviewHooks()
+        {
+            UnityEditor.AssemblyReloadEvents.beforeAssemblyReload -= CleanupAllEditorPreviews;
+            UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += CleanupAllEditorPreviews;
+            UnityEditor.EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+            UnityEditor.EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+
+        private static void OnPlayModeStateChanged(UnityEditor.PlayModeStateChange state)
+        {
+            if (state == UnityEditor.PlayModeStateChange.ExitingEditMode
+                || state == UnityEditor.PlayModeStateChange.ExitingPlayMode)
+            {
+                CleanupAllEditorPreviews();
+            }
+        }
+
+        private static void CleanupAllEditorPreviews()
+        {
+            foreach (var container in Resources.FindObjectsOfTypeAll<UIScrollContainer>())
+                container.EditorClearPreview();
+        }
+
+        private void OnDisable()
+        {
+            if (!Application.isPlaying)
+                EditorClearPreview();
+        }
+
+        private void OnValidate()
+        {
+            _padding ??= new RectOffset();
+            _sectionSpacing = Mathf.Max(0f, _sectionSpacing);
+            _bufferRows = Mathf.Max(0, _bufferRows);
+
+            if (Application.isPlaying)
+            {
+                if (_initialized)
+                    Rebuild();
+                return;
+            }
+
+            if (_editorAutoPreview)
+                EditorRequestPreviewRebuild();
+        }
+
+        public void EditorRequestPreviewRebuild()
+        {
+            if (!_editorAutoPreview)
+                return;
+
+            if (!CanRunEditorPreview())
+                return;
+
+            if (_editorPreviewQueued)
+                return;
+
+            _editorPreviewQueued = true;
+            UnityEditor.EditorApplication.delayCall += ExecuteQueuedEditorPreviewRebuild;
+        }
+
+        public void EditorPreviewRebuildLayout()
+        {
+            if (!CanRunEditorPreview())
+                return;
+
+            _editorPreviewQueued = false;
+            RestoreEditorPreviewBaseline();
+            CacheScrollRefsIfNeeded();
+            if (_scrollRect == null || _content == null || _viewport == null)
+            {
+                _editorPreviewActive = false;
+                _editorPreviewSectionCount = 0;
+                _editorPreviewLogicalRowCount = 0;
+                _editorPreviewContentSize = 0f;
+                return;
+            }
+
+            CaptureEditorPreviewBaseline();
+            Canvas.ForceUpdateCanvases();
+            NormalizeRects();
+            CollectFrames();
+            CollectSections();
+            RebuildLayoutCore();
+            ApplyEditorSectionPreview();
+
+            _editorPreviewActive = true;
+            _editorPreviewSectionCount = _sections.Count;
+            _editorPreviewLogicalRowCount = _logicalRows.Count;
+            _editorPreviewContentSize = _totalContentSize;
+        }
+
+        public void EditorClearPreview()
+        {
+            _editorPreviewQueued = false;
+            RestoreEditorPreviewBaseline();
+            _editorPreviewActive = false;
+            _editorPreviewSectionCount = 0;
+            _editorPreviewLogicalRowCount = 0;
+            _editorPreviewContentSize = 0f;
+        }
+
+        private void ExecuteQueuedEditorPreviewRebuild()
+        {
+            if (!_editorPreviewQueued)
+                return;
+
+            _editorPreviewQueued = false;
+            if (this == null)
+                return;
+
+            EditorPreviewRebuildLayout();
+        }
+
+        private bool CanRunEditorPreview()
+        {
+            if (Application.isPlaying)
+                return false;
+
+            if (this == null || gameObject == null)
+                return false;
+
+            if (!gameObject.scene.IsValid())
+                return false;
+
+            if (UnityEditor.PrefabUtility.IsPartOfPrefabAsset(gameObject))
+                return false;
+
+            return true;
+        }
+
+        private void CaptureEditorPreviewBaseline()
+        {
+            if (_editorPreviewBaselineCaptured)
+                return;
+
+            _editorViewportState = EditorRectTransformState.Capture(_viewport);
+            _editorContentState = EditorRectTransformState.Capture(_content);
+            _editorFrameStates.Clear();
+
+            if (_content != null)
+            {
+                var frames = _content.GetComponentsInChildren<UIBaseFrame>(true);
+                for (int i = 0; i < frames.Length; i++)
+                {
+                    var rt = frames[i].transform as RectTransform;
+                    if (rt != null)
+                        _editorFrameStates.Add(EditorRectTransformState.Capture(rt));
+                }
+            }
+
+            _editorPreviewBaselineCaptured = true;
+        }
+
+        private void RestoreEditorPreviewBaseline()
+        {
+            if (!_editorPreviewBaselineCaptured)
+                return;
+
+            _editorViewportState.Restore();
+            _editorContentState.Restore();
+
+            for (int i = 0; i < _editorFrameStates.Count; i++)
+                _editorFrameStates[i].Restore();
+
+            _editorFrameStates.Clear();
+            _editorPreviewBaselineCaptured = false;
+        }
+
+        private void ApplyEditorSectionPreview()
+        {
+            float crossSize = GetCrossAxisSize();
+
+            for (int i = 0; i < _logicalRows.Count; i++)
+            {
+                var row = _logicalRows[i];
+                if (row.Frame is not UIScrollSimpleFrame simpleFrame)
+                    continue;
+
+                simpleFrame.EditorPreviewApplyRowLayout(new UIScrollRowLayout(
+                    _content,
+                    _direction,
+                    row.LocalRowIndex,
+                    row.MainAxisPosition,
+                    row.MainAxisSize,
+                    crossSize));
+            }
+        }
+#endif
     }
 }

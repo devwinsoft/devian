@@ -13,6 +13,7 @@ namespace Devian.UI.Editor
     {
         public override void OnInspectorGUI()
         {
+            serializedObject.Update();
             DrawDefaultInspector();
 
             var container = (UIScrollContainer)target;
@@ -22,12 +23,12 @@ namespace Devian.UI.Editor
 
             if (!Application.isPlaying)
             {
-                EditorGUILayout.HelpBox(
-                    "UICanvas.Init()에 의해 자동 초기화됩니다.\n" +
-                    "Play 모드에서 상태를 확인할 수 있습니다.",
-                    MessageType.Info);
+                DrawEditModePreview(container);
+                serializedObject.ApplyModifiedProperties();
                 return;
             }
+
+            serializedObject.ApplyModifiedProperties();
 
             bool isInit = container.IsInitialized;
             EditorGUILayout.LabelField("Initialized", isInit ? "Yes" : "No");
@@ -51,6 +52,54 @@ namespace Devian.UI.Editor
             }
 
             if (isInit) Repaint();
+        }
+
+        private void DrawEditModePreview(UIScrollContainer container)
+        {
+            EditorGUILayout.LabelField("Edit Mode Preview", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "Layout-only preview입니다.\n" +
+                "Content size와 section 배치만 확인하며 pooled cell spawn은 수행하지 않습니다.",
+                MessageType.Info);
+
+            var autoPreviewProp = serializedObject.FindProperty("_editorAutoPreview");
+            if (autoPreviewProp != null)
+            {
+                EditorGUI.BeginChangeCheck();
+                EditorGUILayout.PropertyField(autoPreviewProp, new GUIContent("Auto Preview"));
+                if (EditorGUI.EndChangeCheck())
+                {
+                    serializedObject.ApplyModifiedProperties();
+                    if (container.EditorAutoPreview)
+                        container.EditorRequestPreviewRebuild();
+                }
+            }
+
+            EditorGUILayout.LabelField("Preview Active", container.EditorPreviewActive ? "Yes" : "No");
+            if (container.EditorPreviewActive)
+            {
+                EditorGUILayout.LabelField("Section Count", container.EditorPreviewSectionCount.ToString());
+                EditorGUILayout.LabelField("Logical Row Count", container.EditorPreviewLogicalRowCount.ToString());
+                EditorGUILayout.LabelField("Content Size", container.EditorPreviewContentSize.ToString("F1"));
+            }
+
+            EditorGUILayout.Space(5);
+            EditorGUILayout.BeginHorizontal();
+            if (GUILayout.Button("Preview Layout", GUILayout.Height(30)))
+            {
+                Undo.RegisterFullObjectHierarchyUndo(container.gameObject, "UIScrollContainer Preview Layout");
+                container.EditorPreviewRebuildLayout();
+            }
+
+            if (GUILayout.Button("Clear Preview", GUILayout.Height(30)))
+            {
+                Undo.RegisterFullObjectHierarchyUndo(container.gameObject, "UIScrollContainer Clear Preview");
+                container.EditorClearPreview();
+            }
+            EditorGUILayout.EndHorizontal();
+
+            if (container.EditorPreviewActive)
+                Repaint();
         }
     }
 }

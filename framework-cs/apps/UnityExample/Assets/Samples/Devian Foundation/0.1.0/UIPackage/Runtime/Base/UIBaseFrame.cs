@@ -16,12 +16,12 @@ namespace Devian
         public bool isFrameInitComplete { get; private set; }
         public Canvas canvas { get; private set; }
 
-        /// <summary>캐시된 RectTransform.</summary>
-        public RectTransform rectTransform { get; private set; }
+        /// <summary>캐시된 RectTransform. edit mode에서는 Awake 전에 접근될 수 있어 lazy resolve한다.</summary>
+        public RectTransform rectTransform => _rectTransform != null ? _rectTransform : _rectTransform = transform as RectTransform;
 
         protected void Awake()
         {
-            rectTransform = (RectTransform)transform;
+            _rectTransform = transform as RectTransform;
             onAwake();
         }
 
@@ -64,5 +64,7 @@ namespace Devian
         // ─── Clear ───
 
         internal virtual void _Clear() { }
+
+        private RectTransform _rectTransform;
     }
 }

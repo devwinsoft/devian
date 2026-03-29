@@ -18,8 +18,8 @@ namespace Devian
         public bool isInitialized { get; private set; }
         public bool isShown { get; private set; }
 
-        /// <summary>캐시된 RectTransform.</summary>
-        public RectTransform rectTransform { get; private set; }
+        /// <summary>캐시된 RectTransform. edit mode에서는 Awake 전에 접근될 수 있어 lazy resolve한다.</summary>
+        public RectTransform rectTransform => _rectTransform != null ? _rectTransform : _rectTransform = transform as RectTransform;
 
         /// <summary>The owner (canvas) that initialized this panel.</summary>
         protected MonoBehaviour ownerBase { get; private set; }
@@ -30,7 +30,7 @@ namespace Devian
         /// <summary>Unity Awake callback. Not virtual - use onAwake.</summary>
         protected void Awake()
         {
-            rectTransform = (RectTransform)transform;
+            _rectTransform = transform as RectTransform;
             isShown = gameObject.activeSelf;
             onAwake();
         }
@@ -84,6 +84,8 @@ namespace Devian
         protected virtual void onShow() { }
         protected virtual void onHide() { gameObject.SetActive(false); }
         protected virtual void onDestroy() { }
+
+        private RectTransform _rectTransform;
 
         // ─── CreateContainer ───
 

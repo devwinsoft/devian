@@ -14,13 +14,13 @@ namespace Devian
     public readonly struct UIScrollRowLayout
     {
         public readonly RectTransform Content;
-        public readonly ScrollDirection Direction;
+        public readonly UIScrollDirection Direction;
         public readonly int LocalRowIndex;
         public readonly float RowMainAxisPosition;
         public readonly float RowMainAxisSize;
         public readonly float CrossAxisSize;
 
-        public UIScrollRowLayout(RectTransform content, ScrollDirection direction,
+        public UIScrollRowLayout(RectTransform content, UIScrollDirection direction,
             int localRowIndex, float rowMainAxisPosition, float rowMainAxisSize, float crossAxisSize)
         {
             Content = content;

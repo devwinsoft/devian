@@ -22,12 +22,14 @@ container가 계산한 render assignment만 받아 렌더링한다.
 - `IUIScrollSection` — section과 container 사이의 scroll 전용 계약
 - `UIUIScrollSectionLayout` — section 배치 정보 (readonly struct)
 - `UIScrollRowLayout` — row 배치 정보 (readonly struct)
-- `ScrollDirection` enum
-- Editor custom inspector (`Clear / Refresh / Rebuild`)
+- `UIScrollDirection` enum
+- Editor custom inspector (`Auto Preview / Preview Layout / Clear Preview / Clear / Refresh / Rebuild`)
+- edit mode layout-only preview
 
 **Excludes:**
 - runtime section 추가/삭제 자동 감지
 - variable-height cell virtualization
+- edit mode pooled cell spawn preview
 - drag & drop / reorder
 - pagination / infinite scroll
 
@@ -72,12 +74,12 @@ SomeCanvas (UIBaseCanvas<SomeCanvas>)
 
 ## Public API
 
-### ScrollDirection
+### UIScrollDirection
 
 ```csharp
 namespace Devian
 {
-    public enum ScrollDirection { Vertical, Horizontal }
+    public enum UIScrollDirection { Vertical, Horizontal }
 }
 ```
 
@@ -110,7 +112,7 @@ namespace Devian
 public readonly struct UIUIScrollSectionLayout
 {
     public readonly RectTransform Content;
-    public readonly ScrollDirection Direction;
+    public readonly UIScrollDirection Direction;
     public readonly float SectionMainAxisPosition;
     public readonly float CrossAxisSize;
 }
@@ -122,7 +124,7 @@ public readonly struct UIUIScrollSectionLayout
 public readonly struct UIScrollRowLayout
 {
     public readonly RectTransform Content;
-    public readonly ScrollDirection Direction;
+    public readonly UIScrollDirection Direction;
     public readonly int LocalRowIndex;
     public readonly float RowMainAxisPosition;
     public readonly float RowMainAxisSize;
@@ -138,7 +140,7 @@ namespace Devian
     [RequireComponent(typeof(ScrollRect))]
     public class UIScrollContainer : UIBaseContainer
     {
-        [SerializeField] private ScrollDirection _direction = ScrollDirection.Vertical;
+        [SerializeField] private UIScrollDirection _direction = UIScrollDirection.Vertical;
         [SerializeField] private RectOffset _padding = new RectOffset();
         [SerializeField] private float _sectionSpacing = 10f;
         [SerializeField] private int _bufferRows = 2;
@@ -166,6 +168,14 @@ namespace Devian.UI.Editor
     {
     }
 }
+```
+
+edit mode preview API:
+
+```csharp
+public void EditorRequestPreviewRebuild();
+public void EditorPreviewRebuildLayout();
+public void EditorClearPreview();
 ```
 
 ---
@@ -217,6 +227,16 @@ owner `UIBaseCanvas.RegisterDynamicContainerTree()`에 편입되면 동일한 `_
 - 따라서 shutdown / play 종료 상태에서는 `Clear()`가 자동 호출되지 않는다
 - 정상 destroy 경로의 `onDestroy()`에서는 `_initialized` 상태일 때 `Clear()`를 호출한다
 - `Clear()`는 visible row unbind, section clear, scroll listener 해제, 캐시 초기화를 수행한다
+
+### Edit Mode Preview
+
+- edit mode preview는 runtime `Init()`를 재사용하지 않는다
+- preview는 `ScrollRect/content/viewport` 캐시, frame/section 수집, logical row 계산, content size 반영, section layout 적용까지만 수행한다
+- `UpdateVisibleRows()`, `BindRow()`, `BundlePool.Spawn()`은 호출하지 않는다
+- `UIScrollSimpleFrame`만 editor helper로 위치/크기를 직접 반영한다
+- `UIScrollGridFrame`은 section transform + height만 확인한다
+- `Auto Preview`가 켜져 있으면 `OnValidate()` 변경을 debounce 후 재계산한다
+- `Clear Preview`는 preview 적용 전 baseline rect 상태를 복원한다
 
 ---
 
@@ -272,11 +292,11 @@ container가 계산한 `UIUIScrollSectionLayout` / `UIScrollRowLayout`만 전달
 | 목적 | 현재 visible logical row 재바인딩 | section/row layout 재계산 |
 | row 재전개 | 없음 | 있음 |
 | visible row 처리 | `section.RefreshRow(localRowIndex)` | `UnbindRow()` 후 `ClearSection()` |
-| section 재수집 | 있음 | 있음 |
+| frame/section 재수집 | 없음 | 있음 |
 | content size 재설정 | 없음 | 있음 |
 
-> 현재 구현의 `CollectSections()`는 `_frames`를 재사용하며, `Content` 하위 frame 자체를 다시 수집하지는 않는다.
-> runtime section 추가/삭제 자동 감지는 v3 범위에 포함되지 않는다.
+> `Rebuild()`는 `Content` 하위 frame을 다시 수집한 뒤 section/row layout을 재계산한다.
+> runtime section 추가/삭제 자동 감지는 여전히 v3 범위 밖이다.
 
 ---
 

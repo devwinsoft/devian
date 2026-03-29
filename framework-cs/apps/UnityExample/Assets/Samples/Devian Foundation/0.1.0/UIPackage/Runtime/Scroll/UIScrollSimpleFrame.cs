@@ -32,13 +32,40 @@ namespace Devian
             _isBound = false;
         }
 
+#if UNITY_EDITOR
+        internal void EditorPreviewApplyRowLayout(in UIScrollRowLayout rowLayout)
+        {
+            var rt = rectTransform != null ? rectTransform : transform as RectTransform;
+            if (rt == null)
+                return;
+
+            rt.anchorMin = TopLeft;
+            rt.anchorMax = TopLeft;
+            rt.pivot = TopLeft;
+
+            if (rowLayout.Direction == UIScrollDirection.Vertical)
+            {
+                rt.anchoredPosition = new Vector2(0f, -rowLayout.RowMainAxisPosition);
+                rt.sizeDelta = new Vector2(rowLayout.CrossAxisSize, rowLayout.RowMainAxisSize);
+            }
+            else
+            {
+                rt.anchoredPosition = new Vector2(rowLayout.RowMainAxisPosition, 0f);
+                rt.sizeDelta = new Vector2(rowLayout.RowMainAxisSize, rowLayout.CrossAxisSize);
+            }
+
+            gameObject.SetActive(true);
+            _isBound = false;
+        }
+#endif
+
         public void BindRow(in UIScrollRowLayout rowLayout)
         {
             rectTransform.anchorMin = TopLeft;
             rectTransform.anchorMax = TopLeft;
             rectTransform.pivot = TopLeft;
 
-            if (rowLayout.Direction == ScrollDirection.Vertical)
+            if (rowLayout.Direction == UIScrollDirection.Vertical)
             {
                 rectTransform.anchoredPosition = new Vector2(0, -rowLayout.RowMainAxisPosition);
                 rectTransform.sizeDelta = new Vector2(rowLayout.CrossAxisSize, rowLayout.RowMainAxisSize);
@@ -78,5 +105,30 @@ namespace Devian
         }
 
         internal override void _Clear() => ClearSection();
+
+        private void OnValidate()
+        {
+            RequestParentRefreshIfPossible();
+        }
+
+        private void RequestParentRefreshIfPossible()
+        {
+            var container = GetComponentInParent<UIScrollContainer>();
+            if (container == null)
+                return;
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                container.EditorRequestPreviewRebuild();
+                return;
+            }
+#endif
+
+            if (!container.IsInitialized)
+                return;
+
+            container.Rebuild();
+        }
     }
 }

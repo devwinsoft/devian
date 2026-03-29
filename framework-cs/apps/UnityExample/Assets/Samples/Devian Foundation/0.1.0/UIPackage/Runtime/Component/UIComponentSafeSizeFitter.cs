@@ -3,11 +3,12 @@ using UnityEngine;
 namespace Devian
 {
     /// <summary>
-    /// Applies the current mobile safe area to a target RectTransform.
+    /// Applies the current mobile safe area to its own RectTransform.
     /// </summary>
     [DisallowMultipleComponent]
     [ExecuteAlways]
-    public sealed class UIComponentSafeArea : UIComponentBase
+    [RequireComponent(typeof(RectTransform))]
+    public sealed class UIComponentSafeSizeFitter : UIComponentBaseSizeFitter
     {
         private struct SafeAreaObservation
         {
@@ -31,7 +32,6 @@ namespace Devian
             AndroidTall,
         }
 
-        [SerializeField] private RectTransform _target;
         [SerializeField] private bool _applyTop = true;
         [SerializeField] private bool _applyBottom = true;
         [SerializeField] private bool _applyLeft = true;
@@ -40,56 +40,17 @@ namespace Devian
         [SerializeField] private Vector4 _extraPadding;
         [Tooltip("Anchor changes anchors. Offset keeps anchors and adjusts offsets from the cached baseline layout.")]
         [SerializeField] private SafeAreaApplyMode _applyMode = SafeAreaApplyMode.Anchor;
-        [SerializeField] private bool _refreshOnEnable = true;
-        [SerializeField] private bool _refreshOnResolutionChange = true;
-        [SerializeField] private bool _refreshOnOrientationChange = true;
         [SerializeField] private bool _useEditorSimulation = true;
         [SerializeField] private SafeAreaEditorSimulationProfile _editorSimulationProfile = SafeAreaEditorSimulationProfile.IPhone14Pro;
 
-        public RectTransform Target => ResolveTarget();
         public Rect LastAppliedSafeArea => _lastAppliedSafeArea;
         public ScreenOrientation LastOrientation => _lastAppliedOrientation;
         public bool IsApplied => _isApplied;
 
-        private RectTransform _resolvedTarget;
-        [SerializeField, HideInInspector] private RectTransform _baselineTarget;
-        [SerializeField, HideInInspector] private Vector2 _baselineAnchorMin;
-        [SerializeField, HideInInspector] private Vector2 _baselineAnchorMax;
-        [SerializeField, HideInInspector] private Vector2 _baselineOffsetMin;
-        [SerializeField, HideInInspector] private Vector2 _baselineOffsetMax;
-        [SerializeField, HideInInspector] private bool _hasBaseline;
         private Rect _lastObservedSafeArea;
-        private ScreenOrientation _lastObservedOrientation;
-        private int _lastObservedScreenWidth;
-        private int _lastObservedScreenHeight;
-        private bool _hasObservedState;
         private Rect _lastAppliedSafeArea;
         private ScreenOrientation _lastAppliedOrientation;
         private bool _isApplied;
-
-#if UNITY_EDITOR
-        [UnityEditor.InitializeOnLoadMethod]
-        private static void RegisterDomainReloadHandler()
-        {
-            UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
-        }
-
-        private static void OnBeforeAssemblyReload()
-        {
-            foreach (var instance in Resources.FindObjectsOfTypeAll<UIComponentSafeArea>())
-            {
-                if (!instance._hasBaseline || instance._baselineTarget == null)
-                {
-                    continue;
-                }
-
-                instance._baselineTarget.anchorMin = instance._baselineAnchorMin;
-                instance._baselineTarget.anchorMax = instance._baselineAnchorMax;
-                instance._baselineTarget.offsetMin = instance._baselineOffsetMin;
-                instance._baselineTarget.offsetMax = instance._baselineOffsetMax;
-            }
-        }
-#endif
 
         private static readonly ISafeAreaSource s_RuntimeSafeAreaSource = new RuntimeSafeAreaSource();
         private static readonly ISafeAreaSource s_IPhone14ProSource =
@@ -105,137 +66,24 @@ namespace Devian
                 new SafeAreaInsets(0f, 16f, 0f, 32f),
                 new SafeAreaInsets(24f, 0f, 24f, 0f));
 
-        protected override void onAwake()
+        protected override bool ShouldRunEditorRefresh()
         {
-            ResolveTarget();
-            CaptureObservedState(ReadCurrentObservation());
+            return ShouldUseEditorSimulation();
         }
 
-        protected override void onInit(Canvas canvas)
+        protected override bool ShouldForceRefreshOnEnable()
         {
-            RestoreTrackedTargetToBaseline();
-            ResetBaselineState();
-            Refresh();
+            return ShouldUseEditorSimulation();
         }
 
-        private void OnEnable()
+        protected override void ApplySizeFitter(Canvas currentCanvas, RectTransform target)
         {
-            if (Application.isPlaying && !isInitialized)
-            {
-                return;
-            }
-
-            if (!ShouldRunRefreshLoop())
-            {
-                return;
-            }
-
-            if (_refreshOnEnable || ShouldUseEditorSimulation())
-            {
-                Refresh();
-            }
-            else
-            {
-                CaptureObservedState(ReadCurrentObservation());
-            }
-        }
-
-        private void OnDisable()
-        {
-            RestoreTrackedTargetToBaseline();
-            ResetTrackingState();
-        }
-
-        private void OnTransformParentChanged()
-        {
-            if (!isActiveAndEnabled)
-            {
-                return;
-            }
-
-            if (Application.isPlaying && !isInitialized)
-            {
-                return;
-            }
-
-            if (!ShouldRunRefreshLoop())
-            {
-                return;
-            }
-
-            RestoreTrackedTargetToBaseline();
-            ResetBaselineState();
-            Refresh();
-        }
-
-        private void OnValidate()
-        {
-            if (!isActiveAndEnabled)
-            {
-                return;
-            }
-
-            if (Application.isPlaying || ShouldUseEditorSimulation())
-            {
-                Refresh();
-            }
-        }
-
-        private void Update()
-        {
-            if (!ShouldRunRefreshLoop())
-            {
-                return;
-            }
-
             var observation = ReadCurrentObservation();
-            if (!HasRefreshTriggerChanged(observation))
-            {
-                return;
-            }
-
-            RefreshInternal(observation);
-        }
-
-        [ContextMenu("Force Reset Baseline")]
-        private void ForceResetBaseline()
-        {
-            _hasBaseline = false;
-            _baselineTarget = null;
-        }
-
-        [ContextMenu("Refresh Safe Area")]
-        public void Refresh()
-        {
-            RefreshInternal(ReadCurrentObservation());
-        }
-
-        private void RefreshInternal(SafeAreaObservation observation)
-        {
-            var target = ResolveTarget();
-            CaptureObservedState(observation);
-
-            if (target == null)
-            {
-                RestoreTrackedTargetToBaseline();
-                ResetAppliedState();
-                return;
-            }
-
-            var currentCanvas = canvas != null ? canvas : GetComponentInParent<Canvas>();
-            if (currentCanvas != null && currentCanvas.renderMode == RenderMode.WorldSpace)
-            {
-                RestoreTrackedTargetToBaseline();
-                ResetAppliedState();
-                return;
-            }
-
-            EnsureBaseline(target);
 
             switch (_applyMode)
             {
                 case SafeAreaApplyMode.Offset:
-                    ApplyOffsetSafeArea(target, observation.SafeArea, observation.ScreenWidth, observation.ScreenHeight);
+                    ApplyOffsetSafeArea(target, observation.SafeArea, observation.ScreenWidth, observation.ScreenHeight, currentCanvas);
                     break;
                 default:
                     ApplyAnchorSafeArea(target, observation.SafeArea, observation.ScreenWidth, observation.ScreenHeight);
@@ -247,17 +95,26 @@ namespace Devian
             _isApplied = true;
         }
 
-        private RectTransform ResolveTarget()
+        protected override bool HasCustomRefreshTriggerChanged()
         {
-            var resolvedTarget = _target != null ? _target : transform as RectTransform;
-            if (_resolvedTarget != resolvedTarget)
-            {
-                RestoreTrackedTargetToBaseline();
-                _resolvedTarget = resolvedTarget;
-                ResetBaselineState();
-            }
+            return !AreSameRect(_lastObservedSafeArea, ReadCurrentObservation().SafeArea);
+        }
 
-            return _resolvedTarget;
+        protected override void CaptureCustomRefreshState()
+        {
+            _lastObservedSafeArea = ReadCurrentObservation().SafeArea;
+        }
+
+        protected override void ResetAppliedState()
+        {
+            _lastAppliedSafeArea = default;
+            _lastAppliedOrientation = default;
+            _isApplied = false;
+        }
+
+        protected override void ResetCustomTrackingState()
+        {
+            _lastObservedSafeArea = default;
         }
 
         private SafeAreaObservation ReadCurrentObservation()
@@ -274,21 +131,6 @@ namespace Devian
             };
         }
 
-        private void EnsureBaseline(RectTransform target)
-        {
-            if (_hasBaseline && _baselineTarget == target)
-            {
-                return;
-            }
-
-            _baselineTarget = target;
-            _baselineAnchorMin = target.anchorMin;
-            _baselineAnchorMax = target.anchorMax;
-            _baselineOffsetMin = target.offsetMin;
-            _baselineOffsetMax = target.offsetMax;
-            _hasBaseline = true;
-        }
-
         private void ApplyAnchorSafeArea(RectTransform target, Rect safeArea, int screenWidth, int screenHeight)
         {
             var screenWidthFloat = Mathf.Max(1f, screenWidth);
@@ -297,46 +139,33 @@ namespace Devian
 
             target.anchorMin = new Vector2(resolvedRect.xMin / screenWidthFloat, resolvedRect.yMin / screenHeightFloat);
             target.anchorMax = new Vector2(resolvedRect.xMax / screenWidthFloat, resolvedRect.yMax / screenHeightFloat);
-            target.offsetMin = _baselineOffsetMin;
-            target.offsetMax = _baselineOffsetMax;
         }
 
-        private void ApplyOffsetSafeArea(RectTransform target, Rect safeArea, int screenWidth, int screenHeight)
+        private void ApplyOffsetSafeArea(
+            RectTransform target,
+            Rect safeArea,
+            int screenWidth,
+            int screenHeight,
+            Canvas currentCanvas)
         {
             var screenWidthFloat = Mathf.Max(1f, screenWidth);
             var screenHeightFloat = Mathf.Max(1f, screenHeight);
             var resolvedRect = ResolveSafeAreaRect(safeArea, screenWidthFloat, screenHeightFloat);
-            var offsetMin = _baselineOffsetMin;
-            var offsetMax = _baselineOffsetMax;
-
-            var currentCanvas = canvas != null ? canvas : GetComponentInParent<Canvas>();
+            var offsetMin = target.offsetMin;
+            var offsetMax = target.offsetMax;
             var scaleFactor = currentCanvas != null ? Mathf.Max(currentCanvas.scaleFactor, 0.001f) : 1f;
             var leftInset = resolvedRect.xMin / scaleFactor;
             var bottomInset = resolvedRect.yMin / scaleFactor;
             var rightInset = (screenWidthFloat - resolvedRect.xMax) / scaleFactor;
             var topInset = (screenHeightFloat - resolvedRect.yMax) / scaleFactor;
+            var isFixedH = Mathf.Approximately(target.anchorMin.x, target.anchorMax.x);
+            var isFixedV = Mathf.Approximately(target.anchorMin.y, target.anchorMax.y);
 
-            var isFixedH = Mathf.Approximately(_baselineAnchorMin.x, _baselineAnchorMax.x);
-            var isFixedV = Mathf.Approximately(_baselineAnchorMin.y, _baselineAnchorMax.y);
+            ApplyHorizontalOffset(ref offsetMin.x, ref offsetMax.x, leftInset, rightInset, isFixedH);
+            ApplyVerticalOffset(ref offsetMin.y, ref offsetMax.y, bottomInset, topInset, isFixedV);
 
-            ApplyHorizontalOffset(
-                ref offsetMin.x,
-                ref offsetMax.x,
-                leftInset,
-                rightInset,
-                isFixedH);
-            ApplyVerticalOffset(
-                ref offsetMin.y,
-                ref offsetMax.y,
-                bottomInset,
-                topInset,
-                isFixedV);
-
-            target.anchorMin = _baselineAnchorMin;
-            target.anchorMax = _baselineAnchorMax;
             target.offsetMin = offsetMin;
             target.offsetMax = offsetMax;
-
         }
 
         private Rect ResolveSafeAreaRect(Rect safeArea, float screenWidth, float screenHeight)
@@ -350,7 +179,6 @@ namespace Devian
             bottom = Mathf.Clamp(bottom, 0f, screenHeight);
             right = Mathf.Clamp(right, left, screenWidth);
             top = Mathf.Clamp(top, bottom, screenHeight);
-
             return Rect.MinMaxRect(left, bottom, right, top);
         }
 
@@ -364,14 +192,10 @@ namespace Devian
             if (!isFixedAxis)
             {
                 if (_applyLeft)
-                {
                     offsetMin += leftInset;
-                }
 
                 if (_applyRight)
-                {
                     offsetMax -= rightInset;
-                }
 
                 return;
             }
@@ -407,14 +231,10 @@ namespace Devian
             if (!isFixedAxis)
             {
                 if (_applyBottom)
-                {
                     offsetMin += bottomInset;
-                }
 
                 if (_applyTop)
-                {
                     offsetMax -= topInset;
-                }
 
                 return;
             }
@@ -440,80 +260,6 @@ namespace Devian
             }
         }
 
-        private bool HasRefreshTriggerChanged(SafeAreaObservation observation)
-        {
-            if (!_hasObservedState)
-            {
-                return true;
-            }
-
-            if (!AreSameRect(_lastObservedSafeArea, observation.SafeArea))
-            {
-                return true;
-            }
-
-            if (_refreshOnResolutionChange
-                && (_lastObservedScreenWidth != observation.ScreenWidth || _lastObservedScreenHeight != observation.ScreenHeight))
-            {
-                return true;
-            }
-
-            if (_refreshOnOrientationChange && _lastObservedOrientation != observation.Orientation)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private void CaptureObservedState(SafeAreaObservation observation)
-        {
-            _lastObservedSafeArea = observation.SafeArea;
-            _lastObservedOrientation = observation.Orientation;
-            _lastObservedScreenWidth = observation.ScreenWidth;
-            _lastObservedScreenHeight = observation.ScreenHeight;
-            _hasObservedState = true;
-        }
-
-        private void RestoreTrackedTargetToBaseline()
-        {
-            if (!_hasBaseline || _baselineTarget == null)
-            {
-                return;
-            }
-
-            _baselineTarget.anchorMin = _baselineAnchorMin;
-            _baselineTarget.anchorMax = _baselineAnchorMax;
-            _baselineTarget.offsetMin = _baselineOffsetMin;
-            _baselineTarget.offsetMax = _baselineOffsetMax;
-        }
-
-        private void ResetBaselineState()
-        {
-            _baselineTarget = null;
-            _hasBaseline = false;
-        }
-
-        private void ResetAppliedState()
-        {
-            _lastAppliedSafeArea = default;
-            _lastAppliedOrientation = default;
-            _isApplied = false;
-        }
-
-        private void ResetTrackingState()
-        {
-            _resolvedTarget = null;
-            ResetBaselineState();
-            ResetAppliedState();
-            _hasObservedState = false;
-        }
-
-        private bool ShouldRunRefreshLoop()
-        {
-            return Application.isPlaying || ShouldUseEditorSimulation();
-        }
-
         private bool ShouldUseEditorSimulation()
         {
             return Application.isEditor
@@ -521,28 +267,10 @@ namespace Devian
                 && _editorSimulationProfile != SafeAreaEditorSimulationProfile.None;
         }
 
-        private ScreenOrientation GetEffectiveOrientation()
-        {
-            switch (Screen.orientation)
-            {
-                case ScreenOrientation.Portrait:
-                case ScreenOrientation.PortraitUpsideDown:
-                case ScreenOrientation.LandscapeLeft:
-                case ScreenOrientation.LandscapeRight:
-                    return Screen.orientation;
-                default:
-                    return Screen.width >= Screen.height
-                        ? ScreenOrientation.LandscapeLeft
-                        : ScreenOrientation.Portrait;
-            }
-        }
-
         private ISafeAreaSource ResolveSafeAreaSource()
         {
             if (!ShouldUseEditorSimulation())
-            {
                 return s_RuntimeSafeAreaSource;
-            }
 
             switch (_editorSimulationProfile)
             {
@@ -555,14 +283,6 @@ namespace Devian
                 default:
                     return s_RuntimeSafeAreaSource;
             }
-        }
-
-        private static bool AreSameRect(Rect lhs, Rect rhs)
-        {
-            return Mathf.Approximately(lhs.x, rhs.x)
-                && Mathf.Approximately(lhs.y, rhs.y)
-                && Mathf.Approximately(lhs.width, rhs.width)
-                && Mathf.Approximately(lhs.height, rhs.height);
         }
 
         private interface ISafeAreaSource

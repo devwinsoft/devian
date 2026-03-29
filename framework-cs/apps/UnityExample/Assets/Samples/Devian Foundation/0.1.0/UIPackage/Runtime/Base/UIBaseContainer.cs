@@ -16,8 +16,8 @@ namespace Devian
         /// </summary>
         public bool isContainerInitialized { get; private set; }
 
-        /// <summary>캐시된 RectTransform.</summary>
-        public RectTransform rectTransform { get; private set; }
+        /// <summary>캐시된 RectTransform. edit mode에서는 Awake 전에 접근될 수 있어 lazy resolve한다.</summary>
+        public RectTransform rectTransform => _rectTransform != null ? _rectTransform : _rectTransform = transform as RectTransform;
 
         /// <summary>
         /// 소유 Canvas. _Init(canvas) 호출 시 설정된다.
@@ -26,7 +26,7 @@ namespace Devian
 
         protected void Awake()
         {
-            rectTransform = (RectTransform)transform;
+            _rectTransform = transform as RectTransform;
             onAwake();
         }
 
@@ -83,5 +83,7 @@ namespace Devian
 
         public virtual void OnPoolSpawned() { }
         public virtual void OnPoolDespawned() { }
+
+        private RectTransform _rectTransform;
     }
 }

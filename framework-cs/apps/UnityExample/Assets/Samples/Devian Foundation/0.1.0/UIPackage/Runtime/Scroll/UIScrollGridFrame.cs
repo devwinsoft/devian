@@ -169,7 +169,7 @@ namespace Devian
                 rt.sizeDelta = _cellSize;
 
                 float cross = c * (_cellSize.x + xSpacing);
-                rt.anchoredPosition = rowLayout.Direction == ScrollDirection.Vertical
+                rt.anchoredPosition = rowLayout.Direction == UIScrollDirection.Vertical
                     ? new Vector2(cross, -rowLayout.RowMainAxisPosition)
                     : new Vector2(rowLayout.RowMainAxisPosition, -cross);
 
@@ -247,25 +247,36 @@ namespace Devian
         {
             var rt = rectTransform != null ? rectTransform : transform as RectTransform;
             if (rt == null) return;
-            rt.sizeDelta = new Vector2(GetWidth(), GetHeight());
+            var sd = rt.sizeDelta;
+            sd.y = GetHeight();
+            rt.sizeDelta = sd;
         }
 
         private void OnGridLayoutChanged()
         {
             SyncRectTransformSize();
-            RequestParentRebuildIfInitialized();
+            RequestParentRefreshIfPossible();
         }
 
-        private void RequestParentRebuildIfInitialized()
+        private void RequestParentRefreshIfPossible()
         {
-            if (!Application.isPlaying) return;
-
             var container = _ownerScrollContainer != null
                 ? _ownerScrollContainer
                 : GetComponentInParent<UIScrollContainer>();
             _ownerScrollContainer = container;
 
-            if (container == null || !container.IsInitialized)
+            if (container == null)
+                return;
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                container.EditorRequestPreviewRebuild();
+                return;
+            }
+#endif
+
+            if (!container.IsInitialized)
                 return;
 
             container.Rebuild();
@@ -279,7 +290,7 @@ namespace Devian
             rt.anchorMin = TopLeft;
             rt.anchorMax = TopLeft;
             rt.pivot = TopLeft;
-            rt.anchoredPosition = _sectionLayout.Direction == ScrollDirection.Vertical
+            rt.anchoredPosition = _sectionLayout.Direction == UIScrollDirection.Vertical
                 ? new Vector2(0f, -_sectionLayout.SectionMainAxisPosition)
                 : new Vector2(_sectionLayout.SectionMainAxisPosition, 0f);
 
