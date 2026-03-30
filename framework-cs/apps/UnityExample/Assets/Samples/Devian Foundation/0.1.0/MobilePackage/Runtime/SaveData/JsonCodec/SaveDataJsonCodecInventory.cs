@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
+using Devian.Domain.Common;
 using Devian.Domain.Game;
 
 namespace Devian
@@ -22,7 +24,7 @@ namespace Devian
                 var e = kv.Value;
                 var obj = new JObject
                 {
-                    ["equipId"] = e.EquipId,
+                    ["itemId"] = e.ItemId,
                     ["itemUid"] = e.ItemUid,
                     ["ownerUnitId"] = e.OwnerUnitId,
                     ["ownerSlotNumber"] = e.OwnerSlotNumber,
@@ -42,7 +44,7 @@ namespace Devian
                 var c = kv.Value;
                 var obj = new JObject
                 {
-                    ["cardId"] = c.CardId,
+                    ["itemId"] = c.ItemId,
                 };
                 var stats = new JObject();
                 foreach (var s in c.GetStats())
@@ -52,6 +54,23 @@ namespace Devian
             }
             inv["cards"] = cardsObj;
 
+            // materials
+            var materialsObj = new JObject();
+            foreach (var kv in inventory.Materials)
+            {
+                var m = kv.Value;
+                var obj = new JObject
+                {
+                    ["itemId"] = m.ItemId,
+                };
+                var stats = new JObject();
+                foreach (var s in m.GetStats())
+                    stats[s.Key.ToString()] = s.Value;
+                obj["stats"] = stats;
+                materialsObj[kv.Key] = obj;
+            }
+            inv["materials"] = materialsObj;
+
             // heroes
             var heroesObj = new JObject();
             foreach (var kv in inventory.Heroes)
@@ -59,7 +78,7 @@ namespace Devian
                 var h = kv.Value;
                 var obj = new JObject
                 {
-                    ["unitId"] = h.UnitId,
+                    ["heroId"] = h.HeroId,
                 };
                 var stats = new JObject();
                 foreach (var s in h.GetStats())
@@ -94,8 +113,22 @@ namespace Devian
             return inv;
         }
 
-        public static void DeserializeInto(JObject inv, InventoryStorage inventory)
+        public static CommonResult DeserializeInto(JObject inv, InventoryStorage inventory)
         {
+            if (inv == null)
+            {
+                return CommonResult.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    "SaveDataJsonCodecInventory.DeserializeInto: inventory json is null.");
+            }
+
+            if (inventory == null)
+            {
+                return CommonResult.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    "SaveDataJsonCodecInventory.DeserializeInto: inventory storage is null.");
+            }
+
             inventory.Clear();
 
             // wallet
@@ -120,29 +153,21 @@ namespace Devian
                 foreach (var prop in equipsObj.Properties())
                 {
                     var obj = (JObject)prop.Value;
-                    var equipId = obj.Value<string>("equipId");
+                    var itemId = obj.Value<string>("itemId");
                     var itemUid = obj.Value<string>("itemUid");
-
-                    var ability = new AbilityEquip();
-                    var table = TB_ITEM_EQUIP.Get(equipId);
-                    if (table != null)
-                        ability.Init(table, itemUid);
-
-                    if (obj["stats"] is JObject statsObj)
-                    {
-                        foreach (var sp in statsObj.Properties())
-                        {
-                            if (System.Enum.TryParse<STAT_TYPE>(sp.Name, out var statType))
-                                ability.SetStat(statType, sp.Value.Value<int>());
-                        }
-                    }
 
                     var ownerUnitId = obj.Value<string>("ownerUnitId") ?? string.Empty;
                     var ownerSlot = obj.Value<int>("ownerSlotNumber");
-                    if (ownerSlot > 0 && !string.IsNullOrEmpty(ownerUnitId))
-                        ability.SetOwner(ownerUnitId, ownerSlot);
+                    var ability = AbilityItemFactory.CreateEquip(
+                        itemId,
+                        itemUid,
+                        parseStats(obj["stats"] as JObject),
+                        ownerUnitId,
+                        ownerSlot);
+                    if (ability.IsFailure)
+                        return CommonResult.Failure(ability.Error!);
 
-                    inventory.AddEquip(itemUid, ability);
+                    inventory.AddEquip(itemUid, ability.Value);
                 }
             }
 
@@ -152,23 +177,27 @@ namespace Devian
                 foreach (var prop in cardsObj.Properties())
                 {
                     var obj = (JObject)prop.Value;
-                    var cardId = obj.Value<string>("cardId");
+                    var itemId = obj.Value<string>("itemId");
+                    var ability = AbilityItemFactory.CreateCard(itemId, parseStats(obj["stats"] as JObject));
+                    if (ability.IsFailure)
+                        return CommonResult.Failure(ability.Error!);
 
-                    var ability = new AbilityCard();
-                    var table = TB_ITEM_CARD.Get(cardId);
-                    if (table != null)
-                        ability.Init(table);
+                    inventory.AddCard(itemId, ability.Value);
+                }
+            }
 
-                    if (obj["stats"] is JObject statsObj)
-                    {
-                        foreach (var sp in statsObj.Properties())
-                        {
-                            if (System.Enum.TryParse<STAT_TYPE>(sp.Name, out var statType))
-                                ability.SetStat(statType, sp.Value.Value<int>());
-                        }
-                    }
+            // materials
+            if (inv["materials"] is JObject materialsObj)
+            {
+                foreach (var prop in materialsObj.Properties())
+                {
+                    var obj = (JObject)prop.Value;
+                    var itemId = obj.Value<string>("itemId");
+                    var ability = AbilityItemFactory.CreateMaterial(itemId, parseStats(obj["stats"] as JObject));
+                    if (ability.IsFailure)
+                        return CommonResult.Failure(ability.Error!);
 
-                    inventory.AddCard(cardId, ability);
+                    inventory.AddMaterial(itemId, ability.Value);
                 }
             }
 
@@ -178,33 +207,30 @@ namespace Devian
                 foreach (var prop in heroesObj.Properties())
                 {
                     var obj = (JObject)prop.Value;
-                    var unitId = obj.Value<string>("unitId");
+                    var heroId = obj.Value<string>("heroId");
+                    var ability = AbilityItemFactory.CreateHero(heroId, parseStats(obj["stats"] as JObject));
+                    if (ability.IsFailure)
+                        return CommonResult.Failure(ability.Error!);
 
-                    var ability = new AbilityUnitHero();
-                    var table = TB_UNIT_HERO.Get(unitId);
-                    if (table != null)
-                        ability.Init(table);
-
-                    ability.ClearStats();
-                    if (obj["stats"] is JObject statsObj)
-                    {
-                        foreach (var sp in statsObj.Properties())
-                        {
-                            if (System.Enum.TryParse<STAT_TYPE>(sp.Name, out var statType))
-                                ability.SetStat(statType, sp.Value.Value<int>());
-                        }
-                    }
-
-                    inventory.AddHero(unitId, ability);
+                    inventory.AddHero(heroId, ability.Value);
 
                     if (obj["equips"] is JObject equipsMap)
                     {
                         foreach (var ep in equipsMap.Properties())
                         {
-                            if (int.TryParse(ep.Name, out var slotNumber))
+                            if (!int.TryParse(ep.Name, out var slotNumber))
                             {
-                                var equipUid = ep.Value.Value<string>();
-                                inventory.Equip(unitId, slotNumber, equipUid);
+                                return CommonResult.Failure(
+                                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                                    $"SaveDataJsonCodecInventory.DeserializeInto: invalid hero equip slot key: {ep.Name}");
+                            }
+
+                            var equipUid = ep.Value.Value<string>();
+                            if (!inventory.Equip(heroId, slotNumber, equipUid))
+                            {
+                                return CommonResult.Failure(
+                                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                                    $"SaveDataJsonCodecInventory.DeserializeInto: failed to restore hero equip. heroId={heroId}, slot={slotNumber}, equipUid={equipUid}");
                             }
                         }
                     }
@@ -227,6 +253,39 @@ namespace Devian
 
             // stamina
             inventory.LastStaminaUpdateUtcMs = inv.Value<long?>("lastStaminaUpdateUtcMs") ?? 0L;
+            return CommonResult.Ok();
+        }
+
+        static Dictionary<STAT_TYPE, int> parseStats(JObject statsObj)
+        {
+            if (statsObj == null)
+                return null;
+
+            var stats = new Dictionary<STAT_TYPE, int>();
+            foreach (var sp in statsObj.Properties())
+            {
+                if (tryParseStatTypeCompat(sp.Name, out var statType))
+                    stats[statType] = sp.Value.Value<int>();
+            }
+
+            return stats;
+        }
+
+        static bool tryParseStatTypeCompat(string name, out STAT_TYPE statType)
+        {
+            switch (name)
+            {
+                case "CARD_AMOUNT":
+                case "UNIT_AMOUNT":
+                    statType = STAT_TYPE.ITEM_AMOUNT;
+                    return true;
+                case "CARD_LEVEL":
+                case "UNIT_LEVEL":
+                    statType = STAT_TYPE.ITEM_LEVEL;
+                    return true;
+                default:
+                    return System.Enum.TryParse(name, out statType);
+            }
         }
     }
 }

@@ -2,7 +2,7 @@ using Devian.Domain.Game;
 
 namespace Devian
 {
-    public sealed class AbilityEquip : AbilityBase
+    public sealed class AbilityItemEquip : AbilityItemBase
     {
         ITEM_EQUIP mTable = null;
         string mItemUid = string.Empty;
@@ -10,7 +10,7 @@ namespace Devian
         int mOwnerSlotNumber = 0;
 
         public string ItemUid => mItemUid;
-        public string EquipId => mTable?.EquipId ?? string.Empty;
+        public override string ItemId => mTable?.ItemId ?? string.Empty;
         public string OwnerUnitId => mOwnerUnitId;
         public int OwnerSlotNumber => mOwnerSlotNumber;
         public bool IsEquipped => mOwnerSlotNumber > 0;
@@ -23,7 +23,7 @@ namespace Devian
 
         public override AbilityBase Clone()
         {
-            var c = new AbilityEquip();
+            var c = new AbilityItemEquip();
             c.mTable = mTable;
             c.mItemUid = mItemUid;
             c.mOwnerUnitId = mOwnerUnitId;

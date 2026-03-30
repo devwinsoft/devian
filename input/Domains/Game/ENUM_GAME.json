@@ -52,11 +52,8 @@
       "name": "STAT_TYPE",
       "values": [
         {"name": "NONE", "value": 0},
-        {"name": "CARD_AMOUNT", "value": 1},
-        {"name": "CARD_LEVEL", "value": 2},
-        {"name": "EQUIP_LEVEL", "value": 11},
-        {"name": "UNIT_AMOUNT", "value": 20},
-        {"name": "UNIT_LEVEL", "value": 21},
+        {"name": "ITEM_AMOUNT", "value": 1},
+        {"name": "ITEM_LEVEL", "value": 2},
         {"name": "UNIT_HP_MAX", "value": 100}
       ]
     }

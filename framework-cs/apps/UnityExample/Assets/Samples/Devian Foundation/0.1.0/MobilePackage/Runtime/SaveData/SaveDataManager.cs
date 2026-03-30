@@ -331,7 +331,12 @@ namespace Devian
             if (syncResult.State == SyncState.Success
                 && syncResult.LocalPayload?.payload != null)
             {
-                LoadFromPayload(syncResult.LocalPayload.payload);
+                var load = LoadFromPayload(syncResult.LocalPayload.payload);
+                if (load.IsFailure)
+                {
+                    _hasPrimarySaveContext = false;
+                    return CommonResult<SyncResult>.Failure(load.Error!);
+                }
             }
 
             return CommonResult<SyncResult>.Success(syncResult);
@@ -581,8 +586,10 @@ namespace Devian
                             return CommonResult<bool>.Failure(saveCloud.Error!);
 
                         _needsCloudSave = false;
+                        var load = LoadFromPayload(localR.Value.payload);
+                        if (load.IsFailure)
+                            return CommonResult<bool>.Failure(load.Error!);
                         _hasPrimarySaveContext = true;
-                        LoadFromPayload(localR.Value.payload);
 
                         return CommonResult<bool>.Success(true);
                     }
@@ -604,7 +611,9 @@ namespace Devian
                         if (saveLocalR.IsFailure)
                             return CommonResult<bool>.Failure(saveLocalR.Error!);
 
-                        LoadFromJson(jsonR.Value);
+                        var load = LoadFromJson(jsonR.Value);
+                        if (load.IsFailure)
+                            return CommonResult<bool>.Failure(load.Error!);
                         _hasPrimarySaveContext = true;
 
                         return CommonResult<bool>.Success(true);
@@ -688,8 +697,11 @@ namespace Devian
             if (payload?.payload == null)
                 return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_NOT_FOUND, "No local data found.");
 
+            var load = LoadFromPayload(payload.payload);
+            if (load.IsFailure)
+                return CommonResult<bool>.Failure(load.Error!);
+
             _hasPrimarySaveContext = true;
-            LoadFromPayload(payload.payload);
             return CommonResult<bool>.Success(true);
         }
 
@@ -813,18 +825,32 @@ namespace Devian
         /// </summary>
         public async Task<CommonResult<bool>> RestoreFromPlainJsonAsync(string json, bool saveCloud, CancellationToken ct)
         {
-            LoadFromJson(json);
+            var load = LoadFromJson(json);
+            if (load.IsFailure)
+                return CommonResult<bool>.Failure(load.Error!);
+
             _hasPrimarySaveContext = true;
             return await SaveGameStorageAsync(saveCloud, ct);
         }
 
-        public void LoadFromPayload(string payload)
+        public CommonResult LoadFromPayload(string payload)
         {
-            var json = ComplexUtil.Decrypt_Base64(payload);
-            LoadFromJson(json);
+            try
+            {
+                var json = string.IsNullOrEmpty(payload)
+                    ? string.Empty
+                    : ComplexUtil.Decrypt_Base64(payload);
+                return LoadFromJson(json);
+            }
+            catch (Exception ex)
+            {
+                return CommonResult.Failure(
+                    COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
+                    $"SaveDataManager.LoadFromPayload failed: {ex.Message}");
+            }
         }
 
-        public void LoadFromJson(string json)
+        public CommonResult LoadFromJson(string json)
         {
             var inventory = getInventoryStorageOrNull();
             var purchase = getPurchaseStorageOrNull();
@@ -842,7 +868,11 @@ namespace Devian
             var leaderboardReward = leaderboardManager != null ? leaderboardManager.Storage : null;
             var attend = attendManager != null ? attendManager.Storage : null;
             if (inventory == null || purchase == null || shop == null || account == null || message == null || mission == null || achieve == null || leaderboardReward == null || attend == null)
-                return;
+            {
+                return CommonResult.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    "SaveDataManager.LoadFromJson: storages are not ready.");
+            }
 
             shopManager?.InvalidateRuntimeState();
             messageManager.ClearStorage();
@@ -850,8 +880,15 @@ namespace Devian
             achieveManager.ClearStorage();
             leaderboardManager.ClearStorage();
             attendManager.ClearStorage();
-            SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, shop, account, message, mission, achieve, leaderboardReward, attend);
+            var deserialize = SaveDataJsonCodec.DeserializeInto(json, inventory, purchase, shop, account, message, mission, achieve, leaderboardReward, attend);
+            if (deserialize.IsFailure)
+            {
+                ClearGameState();
+                return deserialize;
+            }
+
             applyLoadedAccountStorageToRuntime();
+            return CommonResult.Ok();
         }
 
         public void ClearGameState()

@@ -33,6 +33,7 @@ Hard Rule:
 - `COMMON_ERROR`는 **append(맨 아래 행 추가)만 허용**한다.
 - 중간 삽입/정렬/행 재배치 금지 (기존 enum 값이 변동될 수 있음)
 - 새 코드가 필요하면 `COMMON_ERROR`에 추가한 뒤 **생성 파이프라인을 실행**해 `COMMON_ERROR_TYPE`을 갱신한다.
+- 예: ability factory lookup 실패는 `ABILITY_ITEM_TABLE_NOT_FOUND`, `ABILITY_UNIT_TABLE_NOT_FOUND`처럼 전용 코드를 추가해 구분한다.
 
 ### Numeric Value Rule (Hard)
 

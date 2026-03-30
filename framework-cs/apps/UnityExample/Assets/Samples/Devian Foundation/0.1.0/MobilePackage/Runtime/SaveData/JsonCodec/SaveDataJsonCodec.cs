@@ -1,4 +1,5 @@
 using Newtonsoft.Json.Linq;
+using Devian.Domain.Common;
 
 namespace Devian
 {
@@ -37,7 +38,7 @@ namespace Devian
             return root.ToString();
         }
 
-        public static void DeserializeInto(
+        public static CommonResult DeserializeInto(
             string json,
             InventoryStorage inventory,
             PurchaseStorage purchase,
@@ -49,13 +50,32 @@ namespace Devian
             LeaderboardSeasonRewardStorage leaderboardReward,
             AttendStorage attend)
         {
-            var root = JObject.Parse(json);
+            JObject root;
+            try
+            {
+                root = JObject.Parse(json);
+            }
+            catch (System.Exception ex)
+            {
+                return CommonResult.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    $"SaveDataJsonCodec.DeserializeInto: invalid json. {ex.Message}");
+            }
+
             var version = root.Value<int?>("version") ?? 0;
             if (!isSupportedVersion(version))
-                return;
+            {
+                return CommonResult.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    $"SaveDataJsonCodec.DeserializeInto: unsupported version {version}.");
+            }
 
             if (root["inventory"] is JObject inventoryObj)
-                SaveDataJsonCodecInventory.DeserializeInto(inventoryObj, inventory);
+            {
+                var deserializeInventory = SaveDataJsonCodecInventory.DeserializeInto(inventoryObj, inventory);
+                if (deserializeInventory.IsFailure)
+                    return deserializeInventory;
+            }
 
             if (version >= 2 && root["purchase"] is JObject purchaseObj)
                 SaveDataJsonCodecPurchase.DeserializeInto(purchaseObj, purchase);
@@ -106,6 +126,8 @@ namespace Devian
                 inventory?.TreasureCounts.Clear();
                 inventory?.TreasureCurrent.Clear();
             }
+
+            return CommonResult.Ok();
         }
 
         static bool isSupportedVersion(int version)

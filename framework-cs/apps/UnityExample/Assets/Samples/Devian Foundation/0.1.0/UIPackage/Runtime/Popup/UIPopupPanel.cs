@@ -36,6 +36,14 @@ namespace Devian
             frame.transform.SetParent(popupRoot, false);
             frame.transform.SetAsLastSibling();
 
+            var rect = frame.transform as RectTransform;
+            if (rect != null)
+            {
+                rect.anchoredPosition = Vector2.zero;
+                rect.localRotation = Quaternion.identity;
+                rect.localScale = Vector3.one;
+            }
+
             if (!frame.isFrameInitialized && owner != null && owner.canvas != null)
             {
                 frame._Init(owner.canvas);

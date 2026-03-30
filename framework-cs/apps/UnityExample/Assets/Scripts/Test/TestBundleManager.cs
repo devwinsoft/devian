@@ -10,7 +10,6 @@ public class TestBundleManager : MobileBundleManager<TestBundleManager>
     {
         "common-effects",
         "prefabs",
-        "scenes",
         "sounds",
         "ui",
 #if UNITY_EDITOR

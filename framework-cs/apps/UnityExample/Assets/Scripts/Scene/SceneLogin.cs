@@ -95,6 +95,6 @@ public class SceneLogin : SceneBootstrap
             return;
         }
         
-        await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
+        await SceneTransManager.Instance.LoadSceneAsync("SceneLobby");
     }
 }

@@ -75,6 +75,20 @@ namespace Devian.Domain.Game
                 }
             });
 
+            global::Devian.TableManager.Instance.RegisterTbLoader("ITEM_HERO", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_ITEM_HERO.LoadFromNdjson(text);
+                    TB_ITEM_HERO._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_ITEM_HERO.LoadFromPb64Binary(bin);
+                    TB_ITEM_HERO._AfterLoad();
+                }
+            });
+
             global::Devian.TableManager.Instance.RegisterTbLoader("ITEM_EQUIP", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
@@ -100,6 +114,20 @@ namespace Devian.Domain.Game
                 {
                     TB_ITEM_CARD.LoadFromPb64Binary(bin);
                     TB_ITEM_CARD._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("ITEM_MATERIAL", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_ITEM_MATERIAL.LoadFromNdjson(text);
+                    TB_ITEM_MATERIAL._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_ITEM_MATERIAL.LoadFromPb64Binary(bin);
+                    TB_ITEM_MATERIAL._AfterLoad();
                 }
             });
 

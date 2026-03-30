@@ -18,8 +18,9 @@ namespace Devian
 
         // Editor-only: temporary ID selectors for Add row (cleared on save)
         [HideInInspector, SerializeField] internal ITEM_CARD_ID     _editorCardId     = new();
+        [HideInInspector, SerializeField] internal ITEM_MATERIAL_ID _editorMaterialId = new();
         [HideInInspector, SerializeField] internal ITEM_EQUIP_ID    _editorEquipId    = new();
-        [HideInInspector, SerializeField] internal UNIT_HERO_ID     _editorHeroId     = new();
+        [HideInInspector, SerializeField] internal ITEM_HERO_ID     _editorHeroId     = new();
         [HideInInspector, SerializeField] internal ITEM_RENTAL_ID   _editorRentalId   = new();
         [HideInInspector, SerializeField] internal ITEM_PASS_ID     _editorPassId     = new();
     }

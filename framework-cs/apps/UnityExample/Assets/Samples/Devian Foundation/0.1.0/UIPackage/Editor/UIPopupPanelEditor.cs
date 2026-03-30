@@ -2,7 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Devian.UI.Editor
+namespace Devian
 {
     [CustomEditor(typeof(UIPopupPanel))]
     public sealed class UIPopupPanelEditor : UnityEditor.Editor

@@ -30,15 +30,15 @@ export enum ACHIEVE_MESSAGE_TYPE {
 /** GAME_MESSAGE_TYPE enum */
 export enum GAME_MESSAGE_TYPE {
     NONE = 0,
-    LOGIN = 1,
-    STAGE_CLEAR = 3,
-    STAGE_SCORE = 4,
-    MISSION_CLEAR = 5,
-    BATTLE_PASS_001 = 1001,
-    BATTLE_PASS_002 = 1002,
-    BATTLE_PASS_003 = 1003,
-    BATTLE_PASS_004 = 1004,
-    BATTLE_PASS_005 = 1005,
+    LOGIN = 1001,
+    STAGE_CLEAR = 1002,
+    STAGE_SCORE = 1003,
+    MISSION_CLEAR = 1004,
+    BATTLE_PASS_001 = 2001,
+    BATTLE_PASS_002 = 2002,
+    BATTLE_PASS_003 = 2003,
+    BATTLE_PASS_004 = 2004,
+    BATTLE_PASS_005 = 2005,
     TEST_001 = 8001,
     TEST_002 = 8002,
     TEST_003 = 8003,
@@ -75,11 +75,8 @@ export enum GAME_MESSAGE_OP_TYPE {
 /** STAT_TYPE enum */
 export enum STAT_TYPE {
     NONE = 0,
-    CARD_AMOUNT = 1,
-    CARD_LEVEL = 2,
-    EQUIP_LEVEL = 11,
-    UNIT_AMOUNT = 20,
-    UNIT_LEVEL = 21,
+    ITEM_AMOUNT = 1,
+    ITEM_LEVEL = 2,
     UNIT_HP_MAX = 100,
 }
 
@@ -130,6 +127,7 @@ export enum REWARD_TYPE {
     CURRENCY = 1,
     EQUIP = 2,
     HERO = 3,
+    MATERIAL = 7,
     RENTAL = 4,
     PASS = 5,
     TREASURE = 6,
@@ -266,15 +264,29 @@ export interface GAME_MESSAGE extends IEntityKey<string> {
     getKey(): string;
 }
 
+export interface ITEM_HERO extends IEntityKey<string> {
+    ItemId: string;
+    NameId: string;
+    DescId: string;
+    getKey(): string;
+}
+
 export interface ITEM_EQUIP extends IEntityKey<string> {
-    EquipId: string;
+    ItemId: string;
     NameId: string;
     DescId: string;
     getKey(): string;
 }
 
 export interface ITEM_CARD extends IEntityKey<string> {
-    CardId: string;
+    ItemId: string;
+    NameId: string;
+    DescId: string;
+    getKey(): string;
+}
+
+export interface ITEM_MATERIAL extends IEntityKey<string> {
+    ItemId: string;
     NameId: string;
     DescId: string;
     getKey(): string;
@@ -282,20 +294,20 @@ export interface ITEM_CARD extends IEntityKey<string> {
 
 export interface ITEM_TREASURE extends IEntityKey<string> {
     ChestNum: string;
-    ChestId: string;
+    ItemId: string;
     NameId: string;
     RewardGroupId: string;
     getKey(): string;
 }
 
 export interface ITEM_RENTAL extends IEntityKey<string> {
-    RentalId: string;
+    ItemId: string;
     NameId: string;
     getKey(): string;
 }
 
 export interface ITEM_PASS extends IEntityKey<string> {
-    PassId: string;
+    ItemId: string;
     NameId: string;
     DescId: string;
     getKey(): string;
@@ -643,6 +655,42 @@ export class TB_GAME_MESSAGE {
     }
 }
 
+export class TB_ITEM_HERO {
+    private static _dict: Map<string, ITEM_HERO> = new Map();
+    private static _list: ITEM_HERO[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly ITEM_HERO[] { return this._list; }
+
+    static get(key: string): ITEM_HERO | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as ITEM_HERO;
+            this._list.push(row);
+            this._dict.set(row.ItemId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
 export class TB_ITEM_EQUIP {
     private static _dict: Map<string, ITEM_EQUIP> = new Map();
     private static _list: ITEM_EQUIP[] = [];
@@ -670,7 +718,7 @@ export class TB_ITEM_EQUIP {
         for (const line of lines) {
             const row = JSON.parse(line) as ITEM_EQUIP;
             this._list.push(row);
-            this._dict.set(row.EquipId, row);
+            this._dict.set(row.ItemId, row);
         }
     }
 
@@ -706,7 +754,43 @@ export class TB_ITEM_CARD {
         for (const line of lines) {
             const row = JSON.parse(line) as ITEM_CARD;
             this._list.push(row);
-            this._dict.set(row.CardId, row);
+            this._dict.set(row.ItemId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_ITEM_MATERIAL {
+    private static _dict: Map<string, ITEM_MATERIAL> = new Map();
+    private static _list: ITEM_MATERIAL[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly ITEM_MATERIAL[] { return this._list; }
+
+    static get(key: string): ITEM_MATERIAL | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as ITEM_MATERIAL;
+            this._list.push(row);
+            this._dict.set(row.ItemId, row);
         }
     }
 
@@ -778,7 +862,7 @@ export class TB_ITEM_RENTAL {
         for (const line of lines) {
             const row = JSON.parse(line) as ITEM_RENTAL;
             this._list.push(row);
-            this._dict.set(row.RentalId, row);
+            this._dict.set(row.ItemId, row);
         }
     }
 
@@ -814,7 +898,7 @@ export class TB_ITEM_PASS {
         for (const line of lines) {
             const row = JSON.parse(line) as ITEM_PASS;
             this._list.push(row);
-            this._dict.set(row.PassId, row);
+            this._dict.set(row.ItemId, row);
         }
     }
 

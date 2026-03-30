@@ -1,17 +1,17 @@
 import { ITEM_CARD } from '../../Generated/Game.g';
-import { AbilityBase } from './AbilityBase';
+import { AbilityItemBase } from './AbilityItemBase';
 
-export class AbilityCard extends AbilityBase {
+export class AbilityItemCard extends AbilityItemBase {
     private mTable: ITEM_CARD | null = null;
 
-    get cardId(): string { return this.mTable?.CardId ?? ''; }
+    get itemId(): string { return this.mTable?.ItemId ?? ''; }
 
     init(table: ITEM_CARD): void {
         this.mTable = table;
     }
 
-    clone(): AbilityCard {
-        const c = new AbilityCard();
+    clone(): AbilityItemCard {
+        const c = new AbilityItemCard();
         c.mTable = this.mTable;
         c.copyStatsFrom(this);
         return c;

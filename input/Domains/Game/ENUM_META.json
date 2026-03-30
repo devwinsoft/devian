@@ -46,6 +46,7 @@
         {"name": "CURRENCY", "value": 1},
         {"name": "EQUIP", "value": 2},
         {"name": "HERO", "value": 3},
+        {"name": "MATERIAL", "value": 7},
         {"name": "RENTAL", "value": 4},
         {"name": "PASS", "value": 5},
         {"name": "TREASURE", "value": 6}

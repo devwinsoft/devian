@@ -4,94 +4,22 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Devian;
 using Devian.Domain.Game;
-using Devian.Protocol.Game;
 
 public class UILobbyCanvas : UIBaseCanvas<UILobbyCanvas>
 {
+    public UILobbyMenuBottom menuBottom;
+    public UILobbyMenuTopPanel menuTopPanel;
+    
     protected override void onAwake()
     {
     }
 
     protected override void onDestroy()
     {
-        AchieveManager.Instance?.UnSubcribe(GetEntityId());
-        MissionManager.Instance?.UnSubcribe(GetEntityId());
     }
 
     protected override void onInit()
     {
-        AchieveManager.Instance.Subcribe(GetEntityId(),
-            ACHIEVE_MESSAGE_TYPE.RUNTIME_INIT,
-            (args) =>
-            {
-                AchieveRuntimeBase achieve = args[0] as AchieveRuntimeBase;
-                Debug.Log($"Init: achieveId={achieve.achieveId}, progressValue={achieve.progressValue}");
-                return false;
-            });
-
-        AchieveManager.Instance.Subcribe(GetEntityId(),
-            ACHIEVE_MESSAGE_TYPE.RUNTIME_PROGRESS,
-            (args) =>
-            {
-                AchieveRuntimeBase achieve = args[0] as AchieveRuntimeBase;
-                Debug.Log($"Progress: achieveId={achieve.achieveId}, progressValue={achieve.progressValue}");
-                return false;
-            });
-
-        AchieveManager.Instance.Subcribe(GetEntityId(),
-            ACHIEVE_MESSAGE_TYPE.RUNTIME_REWARDED,
-            (args) =>
-            {
-                AchieveRuntimeBase achieve = args[0] as AchieveRuntimeBase;
-                RewardData[] rewards = args[1] as RewardData[];
-                foreach (var rewward in rewards)
-                {
-                    Debug.Log($"type={rewward.Type}, id={rewward.Id}, amount={rewward.Amount}");
-                }
-                return false;
-            });
-        
-        MissionManager.Instance.Subcribe(GetEntityId(),
-            MISSION_MESSAGE_TYPE.RUNTIME_INIT,
-            (args) =>
-            {
-                MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
-                Debug.Log($"Init: missionId={mission.missionId}, progressValue={mission.progressValue}");
-                return false;
-            });
-
-        MissionManager.Instance.Subcribe(GetEntityId(),
-            MISSION_MESSAGE_TYPE.RUNTIME_PROGRESS,
-            (args) =>
-            {
-                MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
-                Debug.Log($"Progress: missionId={mission.missionId}, progressValue={mission.progressValue}");
-                return false;
-            });
-
-        MissionManager.Instance.Subcribe(GetEntityId(),
-            MISSION_MESSAGE_TYPE.RUNTIME_CLAIMABLE,
-            (args) =>
-            {
-                MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
-                Debug.Log($"missionId={mission.missionId}, RUNTIME_CLAIMABLE");
-                return false;
-            });
-
-        MissionManager.Instance.Subcribe(GetEntityId(),
-            MISSION_MESSAGE_TYPE.RUNTIME_REWARDED,
-            (args) =>
-            {
-                MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
-                RewardData[] rewards = args[1] as RewardData[];
-                foreach (var rewward in rewards)
-                {
-                    Debug.Log($"type={rewward.Type}, id={rewward.Id}, amount={rewward.Amount}");
-                }
-
-                GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.MISSION_CLEAR, 1);
-                return false;
-            });
     }
 
     protected override void onInitComplete()
@@ -100,32 +28,10 @@ public class UILobbyCanvas : UIBaseCanvas<UILobbyCanvas>
         MissionManager.Instance.RefreshRuntimes();
         Debug.Log($"[UICanvasSample] remainSec={MissionManager.Instance.GetRemainTime(MISSION_TYPE.DAILY).TotalSeconds}");
     }
-
-    public void OnClick_Connect()
-    {
-        GameNetManager.Instance.Connect("ws://127.0.0.1:8080");
-    }
-
-    public void OnClick_Echo()
-    {
-        var msg = new C2Game.Echo();
-        msg.Message = "Echo Message";
-        GameNetManager.Proxy.SendEcho(msg);
-    }
-
-    public void OnClick_Disconnect()
-    {
-        GameNetManager.Instance.Disconnect();
-    }
-
-    public void OnClick_Mission()
-    {
-        GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.ACHIEVE_001, 1);
-    }
-
+    
     public void OnClick_Mission_Claim()
     {
-        UnityTaskRunner.Run(AchieveManager.Instance.ClaimAsync("achieve_001"), "AchieveManager.ClaimAsync");
+        UnityTaskRunner.Run(AchieveManager.Instance.ClaimAsync("achieve_001"), "OnClick_Mission_Claim");
     }
 
     public void OnClick_SignIn_Google()
@@ -136,21 +42,6 @@ public class UILobbyCanvas : UIBaseCanvas<UILobbyCanvas>
     public void OnClick_Logout()
     {
         UnityTaskRunner.Run(OnClickLogoutAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_Logout)}");
-    }
-
-    public void OnClick_Purchase_NoAds()
-    {
-        UnityTaskRunner.Run(OnClickPurchaseNoAdsAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_Purchase_NoAds)}");
-    }
-
-    public void OnClick_Purchase_Pass()
-    {
-        UnityTaskRunner.Run(OnClickPurchasePassAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_Purchase_Pass)}");
-    }
-
-    public void OnClick_Purchase_Chest()
-    {
-        UnityTaskRunner.Run(OnClickPurchaseChestAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_Purchase_Chest)}");
     }
 
     public void OnClick_InAppAd()
@@ -199,62 +90,6 @@ public class UILobbyCanvas : UIBaseCanvas<UILobbyCanvas>
         await SceneTransManager.Instance.LoadSceneAsync("SceneLoading");
     }
     
-    private async Task OnClickPurchaseNoAdsAsync()
-    {
-        Debug.Log(TestApplication.GetVersionCode());
-
-        var purchase = await PurchaseManager.Instance.PurchaseAsync(
-            "purchase_noads_month",
-            CancellationToken.None);
-        if (purchase.IsSuccess)
-        {
-            Debug.Log(purchase.Value.ResultStatus);
-        }
-        else
-        {
-            Debug.Log($"{purchase.Error.Code}: {purchase.Error.Message}");
-        }
-        foreach (var key in InventoryManager.Instance.Storage.Rentals.Keys)
-        {
-            Debug.LogWarning($"Rentals: {key}");
-        }
-    }
-    
-    private async Task OnClickPurchasePassAsync()
-    {
-        var result = await PurchaseManager.Instance.PurchaseAsync(
-            "purchase_pass_001",
-            CancellationToken.None);
-        if (result.IsSuccess)
-        {
-            Debug.Log(result.Value.ResultStatus);
-            foreach (var reward in result.Value.AppliedRewards)
-            {
-                Debug.Log($"{reward.Type}, {reward.Id}, {reward.Amount}");
-            }
-        }
-        else
-        {
-            Debug.Log($"{result.Error.Code}: {result.Error.Message}");
-        }
-    }
-
-
-    private async Task OnClickPurchaseChestAsync()
-    {
-        var result = await ShopManager.Instance.BuyAsync("shop_jewel_1000");
-        if (result.IsSuccess)
-        {
-            foreach (var reward in result.Value)
-            {
-                Debug.Log($"{reward.Type}, {reward.Id}, {reward.Amount}");
-            }
-        }
-        else
-        {
-            Debug.Log($"{result.Error.Code}: {result.Error.Message}");
-        }
-    }
 
     private async Task OnClickInAppAdAsync()
     {
@@ -278,23 +113,5 @@ public class UILobbyCanvas : UIBaseCanvas<UILobbyCanvas>
         {
             Debug.LogWarning($"{result.Error.Code}: {result.Error.Message}");
         }
-        
-        /*
-        var msg = new C2Game.Echo();
-        msg.Message = "Echo Message";
-        GameNetManager.Proxy.SendEcho(msg);
-        */
-        
-        GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.TEST_001, 1);
-    }
-
-    public void OnClick_DVN_Import()
-    {
-        UnityTaskRunner.Run(RecoveryManager.Instance.PickAndImportDvnAsync(CancellationToken.None), "OnClick_DVN_Import");
-    }
-
-    public void OnClick_DVN_Export()
-    {
-        UnityTaskRunner.Run(RecoveryManager.Instance.ExportDvnViaEmailAsync("maoshy@gmail.com", CancellationToken.None), "OnClick_DVN_Export");
     }
 }

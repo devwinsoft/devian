@@ -44,7 +44,7 @@ AppliesTo: v10
 ## Common Validation
 
 - `type`은 허용 enum 값이어야 한다:
-  - `CARD`, `CURRENCY`, `EQUIP`, `HERO`, `RENTAL`, `PASS`, `TREASURE`
+  - `CARD`, `CURRENCY`, `EQUIP`, `HERO`, `MATERIAL`, `RENTAL`, `PASS`, `TREASURE`
 - `id`는 공백이 아니어야 한다.
 - `amount`는 정수여야 한다.
 - 적용 경로 기준으로 `amount <= 0`은 지급 대상에서 제외(no-op 또는 skip)한다.
@@ -58,11 +58,12 @@ AppliesTo: v10
 | `type` | `id` 의미 | `amount` 의미 | 적용 결과 |
 |---|---|---|---|
 | `CURRENCY` | `CURRENCY_TYPE` enum name | 증가 수량 | 잔고 누적 |
-| `EQUIP` | `equipId` | 생성 개수 | 개수만큼 `itemUid` 인스턴스 생성 |
-| `CARD` | `cardId` | 증가 수량 | 카드 보유량 누적 |
-| `HERO` | `heroId` | 증가 수량 | 영웅 수량(`UNIT_AMOUNT`) 누적 |
-| `RENTAL` | rental key(string) | 활성화 플래그(양수) | 활성 상태 설정 (`SetRental`) |
-| `PASS` | season pass key(string) | 소유 플래그(양수) | 소유 상태 설정 (`SetPassOwnership`) |
+| `EQUIP` | `itemId` | 생성 개수 | 개수만큼 `itemUid` 인스턴스 생성 |
+| `CARD` | `itemId` | 증가 수량 | 카드 보유량 누적 |
+| `MATERIAL` | `itemId` | 증가 수량 | 재료 보유량(`ITEM_AMOUNT`) 누적 |
+| `HERO` | `itemId` | 증가 수량 | 영웅 수량(`ITEM_AMOUNT`) 누적 |
+| `RENTAL` | `itemId` | 활성화 플래그(양수) | 활성 상태 설정 (`SetRental`) |
+| `PASS` | `itemId` | 소유 플래그(양수) | 소유 상태 설정 (`SetPassOwnership`) |
 | `TREASURE` | `TREASURE_GRADE_TYPE` enum name | chest 수량 | treasure chest count 누적 |
 
 주의:
@@ -121,6 +122,7 @@ AppliesTo: v10
 [
   { "type": "CURRENCY", "id": "GOLD", "amount": 1000 },
   { "type": "EQUIP", "id": "equip_sword_001", "amount": 2 },
+  { "type": "MATERIAL", "id": "material_stone_001", "amount": 10 },
   { "type": "RENTAL", "id": "NO_ADS", "amount": 1 }
 ]
 ```
@@ -128,6 +130,7 @@ AppliesTo: v10
 해석 결과:
 - GOLD +1000
 - `equip_sword_001` 인스턴스 2개 생성
+- `material_stone_001` 수량 +10
 - NO_ADS rental 활성화
 
 

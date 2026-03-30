@@ -1,14 +1,14 @@
 import { ITEM_EQUIP } from '../../Generated/Game.g';
-import { AbilityBase } from './AbilityBase';
+import { AbilityItemBase } from './AbilityItemBase';
 
-export class AbilityEquip extends AbilityBase {
+export class AbilityItemEquip extends AbilityItemBase {
     private mTable: ITEM_EQUIP | null = null;
     private mItemUid: string = '';
     private mOwnerUnitId: string = '';
     private mOwnerSlotNumber: number = 0;
 
     get itemUid(): string { return this.mItemUid; }
-    get equipId(): string { return this.mTable?.EquipId ?? ''; }
+    get itemId(): string { return this.mTable?.ItemId ?? ''; }
     get ownerUnitId(): string { return this.mOwnerUnitId; }
     get ownerSlotNumber(): number { return this.mOwnerSlotNumber; }
     get isEquipped(): boolean { return this.mOwnerSlotNumber > 0; }
@@ -28,8 +28,8 @@ export class AbilityEquip extends AbilityBase {
         this.mOwnerSlotNumber = 0;
     }
 
-    clone(): AbilityEquip {
-        const c = new AbilityEquip();
+    clone(): AbilityItemEquip {
+        const c = new AbilityItemEquip();
         c.mTable = this.mTable;
         c.mItemUid = this.mItemUid;
         c.mOwnerUnitId = this.mOwnerUnitId;

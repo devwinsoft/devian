@@ -25,10 +25,13 @@ TypeScript 모듈 관점 설명을 포함하며, Unity `GamePackage` C# addon �
 
 ```
 AbilityBase              ← Dict<STAT_TYPE, int>, indexer, GetInt, GetFloat, AddStat, SetStat, ClearStat, GetStats, Clone
-  ├─ AbilityEquip        ← 장비 Inventory 연동용 (OwnerUnitId, OwnerSlotNumber, IsEquipped)
-  ├─ AbilityCard         ← 카드 Inventory 연동용
+  ├─ AbilityItemBase (abstract) ← Amount, Level, AddAmount
+  │   ├─ AbilityItemEquip   ← 장비 Inventory 연동용 (OwnerUnitId, OwnerSlotNumber, IsEquipped)
+  │   ├─ AbilityItemCard    ← 카드 Inventory 연동용
+  │   ├─ AbilityItemMaterial ← 재료 Inventory 연동용
+  │   └─ AbilityItemHero    ← 영웅 Inventory 연동용, Dict<int, AbilityItemEquip> mEquips, Equip/Unequip
   └─ AbilityUnitBase (abstract) ← Unit 공통 (UnitId)
-       ├─ AbilityUnitHero    ← UNIT_HERO 테이블 Init, Dict<int, AbilityEquip> mEquips, Equip/Unequip
+       ├─ AbilityUnitHero    ← UNIT_HERO 테이블 Init, ingame/unit stat + projected equip snapshot
        └─ AbilityUnitMonster ← UNIT_MONSTER 테이블 Init
 ```
 
@@ -103,14 +106,29 @@ namespace Devian
 
 ---
 
-## 4. AbilityEquip / AbilityCard
+## 4. AbilityItemBase / AbilityItemEquip / AbilityItemCard / AbilityItemMaterial / AbilityItemHero
 
 ```csharp
 using Devian.Domain.Game;
 
 namespace Devian
 {
-    public sealed class AbilityEquip : AbilityBase
+    public abstract class AbilityItemBase : AbilityBase
+    {
+        public abstract string ItemId { get; }
+        public int Amount => this[STAT_TYPE.ITEM_AMOUNT];
+        public int Level => this[STAT_TYPE.ITEM_LEVEL];
+        public void AddAmount(int delta) => AddStat(STAT_TYPE.ITEM_AMOUNT, delta);
+    }
+}
+```
+
+```csharp
+using Devian.Domain.Game;
+
+namespace Devian
+{
+    public sealed class AbilityItemEquip : AbilityItemBase
     {
         ITEM_EQUIP mTable = null;
         string mItemUid = string.Empty;
@@ -118,7 +136,7 @@ namespace Devian
         int mOwnerSlotNumber = 0;
 
         public string ItemUid => mItemUid;
-        public string EquipId => mTable?.EquipId ?? string.Empty;
+        public override string ItemId => mTable?.ItemId ?? string.Empty;
         public string OwnerUnitId => mOwnerUnitId;
         public int OwnerSlotNumber => mOwnerSlotNumber;
         public bool IsEquipped => mOwnerSlotNumber > 0;
@@ -127,6 +145,17 @@ namespace Devian
         {
             mTable = table;
             mItemUid = itemUid;
+        }
+
+        public override AbilityBase Clone()
+        {
+            var c = new AbilityItemEquip();
+            c.mTable = mTable;
+            c.mItemUid = mItemUid;
+            c.mOwnerUnitId = mOwnerUnitId;
+            c.mOwnerSlotNumber = mOwnerSlotNumber;
+            c.CopyStatsFrom(this);
+            return c;
         }
 
         public void SetOwner(string unitId, int slotNumber)
@@ -149,24 +178,64 @@ using Devian.Domain.Game;
 
 namespace Devian
 {
-    public sealed class AbilityCard : AbilityBase
+    public sealed class AbilityItemCard : AbilityItemBase
     {
         ITEM_CARD mTable = null;
 
-        public string CardId => mTable?.CardId ?? string.Empty;
+        public override string ItemId => mTable?.ItemId ?? string.Empty;
 
         public void Init(ITEM_CARD table)
         {
             mTable = table;
         }
+
+        public override AbilityBase Clone()
+        {
+            var c = new AbilityItemCard();
+            c.mTable = mTable;
+            c.CopyStatsFrom(this);
+            return c;
+        }
     }
 }
 ```
 
-- `AbilityEquip` — ITEM_EQUIP 테이블 entity를 직접 참조하여 초기화한다. `ItemUid`(인스턴스 고유 GUID)와 `EquipId`(템플릿 ID) 프로퍼티 노출. 같은 `equipId`에 여러 인스턴스가 존재할 수 있다.
-- `AbilityEquip`: `mTable` 참조 + `Init(table, itemUid)` + `ItemUid` + `OwnerUnitId` + `OwnerSlotNumber` + `IsEquipped` + `SetOwner(unitId, slot)` + `ClearOwner()` + `Clone()`. pk는 `itemUid`(GUID).
-- `AbilityCard` — ITEM_CARD 테이블 entity를 직접 참조하여 초기화한다. `CardId` 프로퍼티 노출. `ITEM_CARD`는 Generated entity (TB_ITEM_CARD 컨테이너).
-- `AbilityCard`: `mTable` 참조 + `Init(table)` + `Amount` + `AddAmount(delta)` + `Clone()`.
+```csharp
+using Devian.Domain.Game;
+
+namespace Devian
+{
+    public sealed class AbilityItemMaterial : AbilityItemBase
+    {
+        ITEM_MATERIAL mTable = null;
+
+        public override string ItemId => mTable?.ItemId ?? string.Empty;
+
+        public void Init(ITEM_MATERIAL table)
+        {
+            mTable = table;
+        }
+
+        public override AbilityBase Clone()
+        {
+            var c = new AbilityItemMaterial();
+            c.mTable = mTable;
+            c.CopyStatsFrom(this);
+            return c;
+        }
+    }
+}
+```
+
+- `AbilityItemBase` — item 공통 abstract 베이스. `abstract ItemId`, `Amount`(`STAT_TYPE.ITEM_AMOUNT`), `Level`(`STAT_TYPE.ITEM_LEVEL`), `AddAmount(delta)` 공통 프로퍼티/메서드를 제공한다.
+- `AbilityItemEquip` — ITEM_EQUIP 테이블 entity를 직접 참조하여 초기화한다. `ItemUid`(인스턴스 고유 GUID)와 `ItemId`(템플릿 ID) 프로퍼티 노출. 같은 `ItemId`에 여러 인스턴스가 존재할 수 있다.
+- `AbilityItemEquip`: `mTable` 참조 + `Init(table, itemUid)` + `ItemUid` + `OwnerUnitId` + `OwnerSlotNumber` + `IsEquipped` + `SetOwner(unitId, slot)` + `ClearOwner()` + `Clone()`. pk는 `itemUid`(GUID).
+- `AbilityItemCard` — ITEM_CARD 테이블 entity를 직접 참조하여 초기화한다. `ITEM_CARD`는 Generated entity (TB_ITEM_CARD 컨테이너).
+- `AbilityItemCard`: `mTable` 참조 + `Init(table)` + `Clone()`. `ItemId`/`Amount`/`Level`/`AddAmount`는 `AbilityItemBase` 상속.
+- `AbilityItemMaterial` — `ITEM_MATERIAL` 테이블 entity를 직접 참조하여 초기화한다.
+- `AbilityItemMaterial`: `mTable` 참조 + `Init(table)` + `Clone()`. `ItemId`/`Amount`/`Level`/`AddAmount`는 `AbilityItemBase` 상속.
+- `AbilityItemHero` — `ITEM_HERO` 테이블 entity를 직접 참조하여 초기화한다. outgame inventory의 hero 수량/레벨/equip slot SSOT다.
+- `AbilityItemHero`: `mTable` 참조 + `Init(table)` + `Equips` + `Equip(equip, slot)` + `Unequip(slot)` + `Clone()`. `ItemId`/`Amount`/`Level`/`AddAmount`는 `AbilityItemBase` 상속.
 
 ---
 
@@ -191,10 +260,10 @@ namespace Devian
     public sealed class AbilityUnitHero : AbilityUnitBase
     {
         UNIT_HERO mTable = null;
-        readonly Dictionary<int, AbilityEquip> mEquips = new();
+        readonly Dictionary<int, AbilityItemEquip> mEquips = new();
 
         public override string UnitId => mTable?.UnitId ?? string.Empty;
-        public IReadOnlyDictionary<int, AbilityEquip> Equips => mEquips;
+        public IReadOnlyDictionary<int, AbilityItemEquip> Equips => mEquips;
 
         public void Init(UNIT_HERO table)
         {
@@ -202,22 +271,29 @@ namespace Devian
             AddStat(STAT_TYPE.UNIT_HP_MAX, table.MaxHp);
         }
 
-        public bool Equip(AbilityEquip equip, int slotNumber)
+        public override AbilityBase Clone()
         {
-            if (equip == null || slotNumber <= 0) return false;
-            if (equip.IsEquipped) equip.ClearOwner();
-            if (mEquips.TryGetValue(slotNumber, out var prev))
-                prev.ClearOwner();
-            mEquips[slotNumber] = equip;
-            equip.SetOwner(UnitId, slotNumber);
-            return true;
+            var c = new AbilityUnitHero();
+            c.mTable = mTable;
+            c.CopyStatsFrom(this);
+            foreach (var kv in mEquips)
+                c.mEquips[kv.Key] = kv.Value;
+            return c;
         }
 
-        public bool Unequip(int slotNumber)
+        internal bool SetProjectedEquip(AbilityItemEquip equip, int slotNumber)
         {
-            if (!mEquips.TryGetValue(slotNumber, out var equip)) return false;
-            equip.ClearOwner();
-            mEquips.Remove(slotNumber);
+            if (equip == null || slotNumber <= 0)
+                return false;
+
+            if (equip.IsEquipped)
+                equip.ClearOwner();
+
+            if (mEquips.TryGetValue(slotNumber, out var prev))
+                prev.ClearOwner();
+
+            mEquips[slotNumber] = equip;
+            equip.SetOwner(UnitId, slotNumber);
             return true;
         }
     }
@@ -240,12 +316,20 @@ namespace Devian
             mTable = table;
             AddStat(STAT_TYPE.UNIT_HP_MAX, table.MaxHp);
         }
+
+        public override AbilityBase Clone()
+        {
+            var c = new AbilityUnitMonster();
+            c.mTable = mTable;
+            c.CopyStatsFrom(this);
+            return c;
+        }
     }
 }
 ```
 
 - `AbilityUnitBase`는 abstract — Unit 공통 계층. `UnitId` 추상 프로퍼티를 정의한다.
-- `AbilityUnitHero`는 `UNIT_HERO` 테이블 entity를 참조하여 초기화한다. `Init()`에서 `UNIT_HP_MAX` stat을 설정한다. `Dict<int, AbilityEquip> mEquips`로 슬롯별 장비를 직접 소유한다. `Equip(equip, slot)` / `Unequip(slot)` 메서드를 제공한다.
+- `AbilityUnitHero`는 `UNIT_HERO` 테이블 entity를 참조하여 초기화한다. `Init()`에서 `UNIT_HP_MAX` stat을 설정한다. `Dict<int, AbilityItemEquip> mEquips`는 preview/ingame projection snapshot이며, outgame ownership 정본은 `AbilityItemHero`다.
 - `AbilityUnitMonster`는 `UNIT_MONSTER` 테이블 entity를 참조하여 초기화한다. `Init()`에서 `UNIT_HP_MAX` stat을 설정한다.
 - `UNIT_HERO`, `UNIT_MONSTER`는 `Devian.Domain.Game` 네임스페이스의 Generated entity (UnitTable.xlsx).
 
@@ -264,8 +348,11 @@ namespace Devian
 ```
 ability/
 ├─ AbilityBase.ts
-├─ AbilityEquip.ts
-├─ AbilityCard.ts
+├─ AbilityItemBase.ts
+├─ AbilityItemEquip.ts
+├─ AbilityItemCard.ts
+├─ AbilityItemMaterial.ts
+├─ AbilityItemHero.ts
 ├─ AbilityUnitBase.ts
 ├─ AbilityUnitHero.ts
 ├─ AbilityUnitMonster.ts

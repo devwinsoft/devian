@@ -29,16 +29,20 @@ namespace Devian
         public InventoryWallet Wallet => mWallet;
 
         // ── Equips ──
-        readonly Dictionary<string, AbilityEquip> mEquipments = new();
-        public IReadOnlyDictionary<string, AbilityEquip> Equipments => mEquipments;
+        readonly Dictionary<string, AbilityItemEquip> mEquipments = new();
+        public IReadOnlyDictionary<string, AbilityItemEquip> Equipments => mEquipments;
 
         // ── Cards ──
-        readonly Dictionary<string, AbilityCard> mCards = new();
-        public IReadOnlyDictionary<string, AbilityCard> Cards => mCards;
+        readonly Dictionary<string, AbilityItemCard> mCards = new();
+        public IReadOnlyDictionary<string, AbilityItemCard> Cards => mCards;
+
+        // ── Materials ──
+        readonly Dictionary<string, AbilityItemMaterial> mMaterials = new();
+        public IReadOnlyDictionary<string, AbilityItemMaterial> Materials => mMaterials;
 
         // ── Heroes ──
-        readonly Dictionary<string, AbilityUnitHero> mHeroes = new();
-        public IReadOnlyDictionary<string, AbilityUnitHero> Heroes => mHeroes;
+        readonly Dictionary<string, AbilityItemHero> mHeroes = new();
+        public IReadOnlyDictionary<string, AbilityItemHero> Heroes => mHeroes;
 
         // ── Rentals ──
         readonly Dictionary<string, long> mRentals = new();
@@ -59,17 +63,17 @@ namespace Devian
 
         // ── Equip Operations ──
 
-        public AbilityEquip GetEquip(string itemUid)
+        public AbilityItemEquip GetEquip(string itemUid)
         {
             return mEquipments.TryGetValue(itemUid, out var equip) ? equip : null;
         }
 
-        public List<AbilityEquip> GetEquipsByEquipId(string equipId)
+        public List<AbilityItemEquip> GetEquipsByItemId(string itemId)
         {
-            return mEquipments.Values.Where(e => e.EquipId == equipId).ToList();
+            return mEquipments.Values.Where(e => e.ItemId == itemId).ToList();
         }
 
-        public AbilityEquip AddEquip(string itemUid, AbilityEquip ability)
+        public AbilityItemEquip AddEquip(string itemUid, AbilityItemEquip ability)
         {
             if (mEquipments.ContainsKey(itemUid)) return mEquipments[itemUid];
             mEquipments[itemUid] = ability;
@@ -79,45 +83,74 @@ namespace Devian
         public bool RemoveEquip(string itemUid)
         {
             if (!mEquipments.TryGetValue(itemUid, out var equip)) return false;
-            if (equip.IsEquipped) equip.ClearOwner();
+            if (equip.IsEquipped)
+            {
+                if (mHeroes.TryGetValue(equip.OwnerUnitId, out var hero))
+                    hero.Unequip(equip.OwnerSlotNumber);
+                else
+                    equip.ClearOwner();
+            }
             mEquipments.Remove(itemUid);
             return true;
         }
 
         // ── Card Operations ──
 
-        public AbilityCard GetCard(string cardId)
+        public AbilityItemCard GetCard(string itemId)
         {
-            return mCards.TryGetValue(cardId, out var card) ? card : null;
+            return mCards.TryGetValue(itemId, out var card) ? card : null;
         }
 
-        public AbilityCard AddCard(string cardId, AbilityCard ability)
+        public AbilityItemCard AddCard(string itemId, AbilityItemCard ability)
         {
-            if (mCards.ContainsKey(cardId)) return mCards[cardId];
-            mCards[cardId] = ability;
+            if (mCards.ContainsKey(itemId)) return mCards[itemId];
+            mCards[itemId] = ability;
+            return ability;
+        }
+
+        // ── Material Operations ──
+
+        public AbilityItemMaterial GetMaterial(string itemId)
+        {
+            return mMaterials.TryGetValue(itemId, out var material) ? material : null;
+        }
+
+        public AbilityItemMaterial AddMaterial(string itemId, AbilityItemMaterial ability)
+        {
+            if (mMaterials.ContainsKey(itemId)) return mMaterials[itemId];
+            mMaterials[itemId] = ability;
             return ability;
         }
 
         // ── Hero Operations ──
 
-        public AbilityUnitHero GetHero(string heroId)
+        public AbilityItemHero GetHero(string heroId)
         {
             return mHeroes.TryGetValue(heroId, out var hero) ? hero : null;
         }
 
-        public AbilityUnitHero AddHero(string heroId, AbilityUnitHero ability)
+        public AbilityItemHero AddHero(string heroId, AbilityItemHero ability)
         {
             if (mHeroes.ContainsKey(heroId)) return mHeroes[heroId];
             mHeroes[heroId] = ability;
             return ability;
         }
 
-        // ── Equip Operations (장착/해제) ──
+        // ── Hero Equip Operations ──
 
         public bool Equip(string heroId, int equipSlot, string equipUid)
         {
             if (!mHeroes.TryGetValue(heroId, out var hero)) return false;
             if (!mEquipments.TryGetValue(equipUid, out var equip)) return false;
+
+            if (equip.IsEquipped)
+            {
+                if (mHeroes.TryGetValue(equip.OwnerUnitId, out var prevHero))
+                    prevHero.Unequip(equip.OwnerSlotNumber);
+                else
+                    equip.ClearOwner();
+            }
+
             return hero.Equip(equip, equipSlot);
         }
 
@@ -228,6 +261,7 @@ namespace Devian
         {
             mWallet.Clear();
             mCards.Clear();
+            mMaterials.Clear();
             mHeroes.Clear();
             foreach (var kv in mEquipments)
                 kv.Value.ClearOwner();

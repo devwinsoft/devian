@@ -386,7 +386,21 @@
       "Bash(ASSETS=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Component/UIComponentBaseSizeFitter.cs\")",
       "Bash(PACKAGES=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/UIPackage/Runtime/Component/UIComponentBaseSizeFitter.cs\")",
       "Bash(__NEW_LINE_49bf3d736adedda2__ cp:*)",
-      "Bash(__NEW_LINE_edc01f424d7c2218__ cp:*)"
+      "Bash(__NEW_LINE_edc01f424d7c2218__ cp:*)",
+      "Bash(UPM_DIR=\"/Users/maoshy/Documents/Projects/devian/framework-cs/upm/com.devian.foundation/Samples~/GamePackage/Runtime/Ability\")",
+      "Bash(mv \"$UPM_DIR/AbilityCard.cs\" \"$UPM_DIR/AbilityItemCard.cs\")",
+      "Bash(mv \"$UPM_DIR/AbilityCard.cs.meta\" \"$UPM_DIR/AbilityItemCard.cs.meta\")",
+      "Bash(mv \"$UPM_DIR/AbilityEquip.cs\" \"$UPM_DIR/AbilityItemEquip.cs\")",
+      "Bash(mv \"$UPM_DIR/AbilityEquip.cs.meta\" \"$UPM_DIR/AbilityItemEquip.cs.meta\")",
+      "Bash(mv AbilityCard.cs AbilityItemCard.cs)",
+      "Bash(mv AbilityCard.cs.meta AbilityItemCard.cs.meta)",
+      "Bash(mv AbilityEquip.cs AbilityItemEquip.cs)",
+      "Bash(mv AbilityEquip.cs.meta AbilityItemEquip.cs.meta)",
+      "Bash(mv AbilityMaterial.cs AbilityItemMaterial.cs)",
+      "Bash(mv AbilityCard.ts AbilityItemCard.ts)",
+      "Bash(mv AbilityEquip.ts AbilityItemEquip.ts)",
+      "Bash(mv AbilityMaterial.ts AbilityItemMaterial.ts)",
+      "Bash(mv AbilityMaterial.cs.meta AbilityItemMaterial.cs.meta)"
     ]
   },
   "project": {

@@ -35,6 +35,11 @@ namespace Devian
         {
             _progress = Mathf.Clamp01(progress);
 
+            if (_progressFill != null)
+            {
+                _progressFill.fillAmount = _progress;
+            }
+
             if (_progressText != null)
             {
                 _progressText.text = $"{Mathf.RoundToInt(_progress * 100f)}%";

@@ -15,7 +15,7 @@ AppliesTo: v10
 
 - [11-game-tables](../11-game-tables/SKILL.md) — Game 도메인 테이블 정의
 - [12-game-ability](../12-game-ability/SKILL.md) — Ability feature 모델 (TS/module 관점, generated 타입 소비)
-- [13-game-stat-type](../13-game-stat-type/SKILL.md) — STAT_TYPE enum 정의 (CARD_AMOUNT, UNIT_AMOUNT, EQUIP_LEVEL 등)
+- [13-game-stat-type](../13-game-stat-type/SKILL.md) — STAT_TYPE enum 정의 (ITEM_AMOUNT, ITEM_LEVEL 등)
 
 ---
 

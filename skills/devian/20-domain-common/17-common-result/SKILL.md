@@ -40,6 +40,7 @@ Hard Rule:
 - 실패 생성 시 `CommonError.Code`는 반드시 `COMMON_ERROR_TYPE` 기반이어야 한다.
 - string 기반 error code는 정식 경로로 사용하지 않는다.
 - `COMMON_ERROR_TYPE.SUCCESS`(reserved, `0`)를 실패 코드로 사용하지 않는다.
+- 예상 가능한 validation / lookup / restore 실패는 `throw`보다 `CommonResult.Failure(...)`를 우선한다.
 
 레거시(string code) Failure 오버로드가 남아있다면:
 - `COMMON_ERROR_TYPE.COMMON_UNKNOWN`으로 매핑하고

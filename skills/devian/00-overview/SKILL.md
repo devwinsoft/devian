@@ -66,9 +66,9 @@ Devian은 **DATA**와 **PROTOCOL** 두 축으로 구성된 코드 생성 프레�
 | TableGen, 테이블 생성 | `skills/devian/80-tools/11-builder/51-table-codegen/SKILL.md` |
 | TableManager, LoadStringsAsync | `skills/devian-unity/20-common-package/31-table-manager/SKILL.md` |
 | BundleManager, Addressables | `skills/devian-unity/20-common-package/19-bundle-manager/SKILL.md` |
-| GamePackage, AbilityBase, AbilityEquip, AbilityCard, AbilityUnitHero, AbilityUnitMonster | `skills/devian-unity/21-game-package/12-game-ability/SKILL.md` |
+| GamePackage, AbilityBase, AbilityItemBase, AbilityItemEquip, AbilityItemCard, AbilityItemMaterial, AbilityItemHero, AbilityUnitHero, AbilityUnitMonster | `skills/devian-unity/21-game-package/12-game-ability/SKILL.md` |
 | GAME_TEXT, GAME_TEXT_ID, ST_GAME_TEXT, GameStringTable.xlsx | `skills/devian-unity/21-game-package/13-game-string-table/SKILL.md` |
-| STAT_TYPE, CARD_AMOUNT, UNIT_AMOUNT, EQUIP_LEVEL | `skills/devian/21-domain-game/13-game-stat-type/SKILL.md` |
+| STAT_TYPE, ITEM_AMOUNT, ITEM_LEVEL | `skills/devian/21-domain-game/13-game-stat-type/SKILL.md` |
 | UIManager, UIBaseCanvas, UIBasePanel | `skills/devian-unity/23-ui-package/10-base-system/10-ui-manager/SKILL.md` |
 | UI Canvas System, UICanvasSystem, UIBaseContainer | `skills/devian-unity/23-ui-package/10-base-system/11-ui-canvas-system/SKILL.md` |
 | PurchaseManager, purchase, IAP, in-app purchase, 결제, 인앱 | `skills/devian-unity/50-mobile-package/30-purchase-system/00-overview/SKILL.md` |

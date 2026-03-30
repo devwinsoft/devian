@@ -11,7 +11,7 @@ AppliesTo: v10
 ## 1. Scope
 
 - `AbilityBase` — `Dictionary<STAT_TYPE, int>` 기반 정규화 stat 저장소
-- `AbilityEquip` / `AbilityCard` — 장비/카드 runtime 모델
+- `AbilityItemBase` / `AbilityItemEquip` / `AbilityItemCard` / `AbilityItemMaterial` / `AbilityItemHero` — outgame item runtime 모델
 - `AbilityUnitBase` / `AbilityUnitHero` / `AbilityUnitMonster` — unit runtime 모델
 - Generated enum/table 정의 자체는 [devian/21-domain-game](../../../devian/21-domain-game/00-overview/SKILL.md)가 정본이다
 
@@ -38,10 +38,13 @@ AppliesTo: v10
 | 파일 | 역할 |
 |---|---|
 | `AbilityBase.cs` | stat dictionary, indexer, `AddStat`, `SetStat`, `ClearStat`, `Clone` 공통 베이스 |
-| `AbilityEquip.cs` | `ITEM_EQUIP` 참조 + `ItemUid` + owner/unit slot 상태 |
-| `AbilityCard.cs` | `ITEM_CARD` 참조 + `CARD_AMOUNT` 기반 수량 관리 |
+| `AbilityItemBase.cs` | item 공통 abstract 베이스 (`Amount`, `Level`, `AddAmount`) |
+| `AbilityItemEquip.cs` | `ITEM_EQUIP` 참조 + `ItemUid` + owner/unit slot 상태 |
+| `AbilityItemCard.cs` | `ITEM_CARD` 참조 + `ITEM_AMOUNT`/`ITEM_LEVEL` 기반 상태 관리 |
+| `AbilityItemMaterial.cs` | `ITEM_MATERIAL` 참조 + `ITEM_AMOUNT`/`ITEM_LEVEL` 기반 상태 관리 |
+| `AbilityItemHero.cs` | `ITEM_HERO` 참조 + `ITEM_AMOUNT`/`ITEM_LEVEL` 기반 상태 관리 + outgame equip slot 소유 |
 | `AbilityUnitBase.cs` | unit 공통 abstract 베이스 (`UnitId`) |
-| `AbilityUnitHero.cs` | `UNIT_HERO` 초기화 + 슬롯별 `AbilityEquip` 장착/해제 |
+| `AbilityUnitHero.cs` | `UNIT_HERO` 초기화 + preview용 projected equip snapshot |
 | `AbilityUnitMonster.cs` | `UNIT_MONSTER` 초기화 + 기본 stat 세팅 |
 
 ---
@@ -53,6 +56,8 @@ AppliesTo: v10
 - `Devian.Domain.Game.STAT_TYPE`
 - `Devian.Domain.Game.ITEM_EQUIP`
 - `Devian.Domain.Game.ITEM_CARD`
+- `Devian.Domain.Game.ITEM_MATERIAL`
+- `Devian.Domain.Game.ITEM_HERO`
 - `Devian.Domain.Game.UNIT_HERO`
 - `Devian.Domain.Game.UNIT_MONSTER`
 
@@ -71,9 +76,10 @@ AppliesTo: v10
 ## 5. Behavioral Rules
 
 - `AbilityBase`는 `(STAT_TYPE, int)` 정규화 저장소를 단일 SSOT로 사용한다.
-- `AbilityEquip`은 `itemUid`를 인스턴스 pk로 사용하고, 장착 상태는 `OwnerUnitId` + `OwnerSlotNumber`로 관리한다.
-- `AbilityCard.Amount`는 `STAT_TYPE.CARD_AMOUNT`의 얇은 래퍼다.
-- `AbilityUnitHero`는 슬롯별 `AbilityEquip` ownership의 실제 변경 지점을 가진다.
+- `AbilityItemEquip`은 `itemUid`를 인스턴스 pk로 사용하고, 장착 상태는 `OwnerUnitId` + `OwnerSlotNumber`로 관리한다.
+- `AbilityItemCard.Amount`, `AbilityItemMaterial.Amount`, `AbilityItemHero.Amount`는 `AbilityItemBase.Amount`를 상속하며, `STAT_TYPE.ITEM_AMOUNT`의 얇은 래퍼다.
+- `AbilityItemHero`가 outgame hero equip ownership의 실제 변경 지점을 가진다. `Equips` / `Equip(equip, slot)` / `Unequip(slot)` 메서드를 제공한다.
+- `AbilityUnitHero`는 `UNIT_HERO` 기반 unit stat 모델이며, preview/ingame projection용 `Equips` snapshot만 유지한다. 직접 소유/장착 규칙 정본은 [15-game-ability-factory](../15-game-ability-factory/SKILL.md)다.
 - `AbilityUnitHero.Init()` / `AbilityUnitMonster.Init()`는 `STAT_TYPE.UNIT_HP_MAX`를 `table.MaxHp`로 세팅한다.
 - clone 동작은 generated table 참조는 유지하고 stat 값만 복사한다.
 
@@ -93,5 +99,6 @@ AppliesTo: v10
 
 - [devian/21-domain-game/12-game-ability](../../../devian/21-domain-game/12-game-ability/SKILL.md) — Ability feature 모델/TS 관점
 - [devian/21-domain-game/13-game-stat-type](../../../devian/21-domain-game/13-game-stat-type/SKILL.md) — `STAT_TYPE` 정의
+- [15-game-ability-factory](../15-game-ability-factory/SKILL.md) — ability 생성 / projection / preview 규약
 - [devian-unity/50-mobile-package/22-inventory-system/03-ssot](../../50-mobile-package/22-inventory-system/03-ssot/SKILL.md) — Inventory 상태/Apply 규약
 - [devian-unity/50-mobile-package/22-inventory-system/11-inventory-storage](../../50-mobile-package/22-inventory-system/11-inventory-storage/SKILL.md) — Ability 저장/장착 위임

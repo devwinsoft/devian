@@ -54,10 +54,11 @@ AppliesTo: v10
 | `MetaTable.xlsx` | LEADERBOARD_REWARD | TB_LEADERBOARD_REWARD | `Index` (int) | 리더보드 구간 보상 정의 |
 | `TreasureTable.xlsx` | TREASURE_CHEST | TB_TREASURE_CHEST | `Level` (int) | chest level별 maxExp/보상 그룹 엔트리 |
 | `TreasureTable.xlsx` | TREASURE_REWARD | TB_TREASURE_REWARD | `Index` (int) | `treasureGradeType -> rewardGroupId` fan-out 테이블 |
-| `ItemTable.xlsx` | ITEM_EQUIP | TB_ITEM_EQUIP | `EquipId` (string) | 장비 테이블 (EquipId, NameId, DescId) |
-| `ItemTable.xlsx` | ITEM_CARD | TB_ITEM_CARD | `CardId` (string) | 카드 테이블 (CardId, NameId, DescId) |
-| `ItemTable.xlsx` | ITEM_RENTAL | TB_ITEM_RENTAL | `RentalId` (string) | 렌탈 아이템 테이블 (RentalId, NameId, DescId) |
-| `ItemTable.xlsx` | ITEM_PASS | TB_ITEM_PASS | `PassId` (string) | 패스 아이템 테이블 (PassId, NameId, DescId) |
+| `ItemTable.xlsx` | ITEM_EQUIP | TB_ITEM_EQUIP | `ItemId` (string) | 장비 테이블 (ItemId, NameId, DescId) |
+| `ItemTable.xlsx` | ITEM_CARD | TB_ITEM_CARD | `ItemId` (string) | 카드 테이블 (ItemId, NameId, DescId) |
+| `ItemTable.xlsx` | ITEM_MATERIAL | TB_ITEM_MATERIAL | `ItemId` (string) | 재료 테이블 (ItemId, NameId, DescId) |
+| `ItemTable.xlsx` | ITEM_RENTAL | TB_ITEM_RENTAL | `ItemId` (string) | 렌탈 아이템 테이블 (ItemId, NameId, DescId) |
+| `ItemTable.xlsx` | ITEM_PASS | TB_ITEM_PASS | `ItemId` (string) | 패스 아이템 테이블 (ItemId, NameId, DescId) |
 | `MetaTable.xlsx` | SEASON | TB_SEASON | `SeasonId` (string) | 시즌 메타 테이블 (start/end UTC) |
 
 ---

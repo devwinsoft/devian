@@ -29,6 +29,7 @@ namespace Devian
 
         // Cached SerializedProperty for editor-only *_ID fields
         SerializedProperty _propCardId;
+        SerializedProperty _propMaterialId;
         SerializedProperty _propEquipId;
         SerializedProperty _propHeroId;
         SerializedProperty _propRentalId;
@@ -47,6 +48,7 @@ namespace Devian
         void cacheIdProperties()
         {
             _propCardId   = serializedObject.FindProperty("_editorCardId");
+            _propMaterialId = serializedObject.FindProperty("_editorMaterialId");
             _propEquipId  = serializedObject.FindProperty("_editorEquipId");
             _propHeroId   = serializedObject.FindProperty("_editorHeroId");
             _propRentalId = serializedObject.FindProperty("_editorRentalId");
@@ -161,6 +163,9 @@ namespace Devian
                 case REWARD_TYPE.CARD:
                     EditorGUILayout.PropertyField(_propCardId, new GUIContent("Id"));
                     break;
+                case REWARD_TYPE.MATERIAL:
+                    EditorGUILayout.PropertyField(_propMaterialId, new GUIContent("Id"));
+                    break;
                 case REWARD_TYPE.EQUIP:
                     EditorGUILayout.PropertyField(_propEquipId, new GUIContent("Id"));
                     break;
@@ -195,6 +200,8 @@ namespace Devian
                     return _currencyType.ToString();
                 case REWARD_TYPE.CARD:
                     return _propCardId?.FindPropertyRelative("Value")?.stringValue ?? string.Empty;
+                case REWARD_TYPE.MATERIAL:
+                    return _propMaterialId?.FindPropertyRelative("Value")?.stringValue ?? string.Empty;
                 case REWARD_TYPE.EQUIP:
                     return _propEquipId?.FindPropertyRelative("Value")?.stringValue ?? string.Empty;
                 case REWARD_TYPE.HERO:
@@ -223,6 +230,9 @@ namespace Devian
                 case REWARD_TYPE.CARD:
                     setStringIdValue(_propCardId, string.Empty);
                     break;
+                case REWARD_TYPE.MATERIAL:
+                    setStringIdValue(_propMaterialId, string.Empty);
+                    break;
                 case REWARD_TYPE.EQUIP:
                     setStringIdValue(_propEquipId, string.Empty);
                     break;
@@ -243,6 +253,7 @@ namespace Devian
             _currencyType = CURRENCY_TYPE.GOLD;
             _treasureGradeType = TREASURE_GRADE_TYPE.COMMON;
             setStringIdValue(_propCardId, string.Empty);
+            setStringIdValue(_propMaterialId, string.Empty);
             setStringIdValue(_propEquipId, string.Empty);
             setStringIdValue(_propHeroId, string.Empty);
             setStringIdValue(_propRentalId, string.Empty);

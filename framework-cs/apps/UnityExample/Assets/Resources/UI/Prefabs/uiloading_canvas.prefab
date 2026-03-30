@@ -279,7 +279,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Devian.Samples.UIPackage::Devian.UISceneLoadingPanel
   _progressText: {fileID: 3133311594434105741}
-  _progressFill: {fileID: 5629927179141505986}
+  _progressFill: {fileID: 5864081072602448872}
 --- !u!1 &1257621227269673549
 GameObject:
   m_ObjectHideFlags: 0

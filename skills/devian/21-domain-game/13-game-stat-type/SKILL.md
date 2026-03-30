@@ -22,25 +22,17 @@ AppliesTo: v10
 
 ## 2. STAT_TYPE Values
 
-### Card (1~)
+### Item (1~)
 
 | name | value | 설명 |
 |---|---|---|
-| `CARD_AMOUNT` | 1 | 카드 수량(Amount) |
-| `CARD_LEVEL` | 2 | 카드 레벨 |
+| `ITEM_AMOUNT` | 1 | item-like 엔티티(카드/영웅/재료) 수량(Amount) |
+| `ITEM_LEVEL` | 2 | item-like 엔티티(카드/영웅/재료) 레벨 |
 
-### Equip (10~)
-
-| name | value | 설명 |
-|---|---|---|
-| `EQUIP_LEVEL` | 11 | 장비 레벨 |
-
-### Unit (20~)
+### Unit
 
 | name | value | 설명 |
 |---|---|---|
-| `UNIT_AMOUNT` | 20 | 유닛 수량(Amount) |
-| `UNIT_LEVEL` | 21 | 유닛 레벨 |
 | `UNIT_HP_MAX` | 100 | 유닛 최대 HP |
 
 ---
@@ -54,12 +46,8 @@ AppliesTo: v10
       "name": "STAT_TYPE",
       "values": [
         { "name": "NONE", "value": 0 },
-        { "name": "CARD_AMOUNT", "value": 1 },
-        { "name": "CARD_LEVEL", "value": 2 },
-        { "name": "EQUIP_LEVEL", "value": 11 },
-
-        { "name": "UNIT_AMOUNT", "value": 20 },
-        { "name": "UNIT_LEVEL", "value": 21 },
+        { "name": "ITEM_AMOUNT", "value": 1 },
+        { "name": "ITEM_LEVEL", "value": 2 },
         { "name": "UNIT_HP_MAX", "value": 100 }
       ]
     }
@@ -71,45 +59,47 @@ AppliesTo: v10
 
 ## 4. 사용 예
 
-### AbilityCard 수량 (CARD_AMOUNT)
+### AbilityItemCard / AbilityItemMaterial 수량 (ITEM_AMOUNT)
 
-`AbilityCard[STAT_TYPE.CARD_AMOUNT]`를 사용한다.
-
-```csharp
-// 수량 읽기
-int amount = abilityCard.Amount;  // = this[STAT_TYPE.CARD_AMOUNT]
-
-// 수량 누적
-abilityCard.AddAmount(delta);     // = AddStat(STAT_TYPE.CARD_AMOUNT, delta)
-```
-
-- `AbilityBase.mStats`의 `STAT_TYPE.CARD_AMOUNT` 값이 카드 수량 SSOT이다.
-
-### AbilityUnitHero 수량 (UNIT_AMOUNT)
-
-`AbilityUnitHero[STAT_TYPE.UNIT_AMOUNT]`를 사용한다.
+`AbilityItemCard[STAT_TYPE.ITEM_AMOUNT]`, `AbilityItemMaterial[STAT_TYPE.ITEM_AMOUNT]`를 사용한다.
 
 ```csharp
 // 수량 읽기
-int amount = hero[STAT_TYPE.UNIT_AMOUNT];
+int amount = abilityCard.Amount;      // = this[STAT_TYPE.ITEM_AMOUNT]
+int matAmount = abilityMaterial.Amount;
 
 // 수량 누적
-hero.AddStat(STAT_TYPE.UNIT_AMOUNT, delta);
+abilityCard.AddAmount(delta);         // = AddStat(STAT_TYPE.ITEM_AMOUNT, delta)
+abilityMaterial.AddAmount(delta);
 ```
 
-### AbilityEquip 장착 정보 (Owner)
+- `AbilityBase.mStats`의 `STAT_TYPE.ITEM_AMOUNT` 값이 카드/재료 수량 SSOT이다.
 
-장착 정보는 STAT_TYPE이 아닌 **AbilityEquip의 별도 필드**로 관리한다.
+### AbilityItemHero 수량 (ITEM_AMOUNT)
+
+`AbilityItemHero[STAT_TYPE.ITEM_AMOUNT]`를 사용한다.
+
+```csharp
+// 수량 읽기
+int amount = hero.Amount;
+
+// 수량 누적
+hero.AddAmount(delta);
+```
+
+### AbilityItemEquip 장착 정보 (Owner)
+
+장착 정보는 STAT_TYPE이 아닌 **AbilityItemEquip의 별도 필드**로 관리한다.
 
 ```csharp
 // 장착 여부
 bool equipped = abilityEquip.IsEquipped;           // mOwnerSlotNumber > 0
 
 // 소유자 정보
-string unitId = abilityEquip.OwnerUnitId;          // 장착된 영웅 UnitId
+string ownerItemId = abilityEquip.OwnerUnitId;     // 장착된 영웅 inventory id
 int slot = abilityEquip.OwnerSlotNumber;           // 장착 슬롯 번호 (0 = 미장착)
 
-// 장착/해제는 AbilityUnitHero.Equip/Unequip을 통해 수행
+// 장착/해제는 AbilityItemHero.Equip/Unequip을 통해 수행
 hero.Equip(equip, slotNumber);
 hero.Unequip(slotNumber);
 ```
@@ -126,6 +116,6 @@ hero.Unequip(slotNumber);
 
 ## 6. Related
 
-- [12-game-ability](../12-game-ability/SKILL.md) — AbilityBase, AbilityEquip (STAT_TYPE 소비자)
+- [12-game-ability](../12-game-ability/SKILL.md) — AbilityBase, AbilityItemEquip (STAT_TYPE 소비자)
 - [devian-unity/21-game-package/12-game-ability](../../../devian-unity/21-game-package/12-game-ability/SKILL.md) — Unity GamePackage Ability addon
 - [11-game-tables](../11-game-tables/SKILL.md) — Game 도메인 테이블 정의

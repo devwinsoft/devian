@@ -1,6 +1,9 @@
 export { AbilityBase } from './AbilityBase';
-export { AbilityEquip } from './AbilityEquip';
-export { AbilityCard } from './AbilityCard';
+export { AbilityItemBase } from './AbilityItemBase';
+export { AbilityItemEquip } from './AbilityItemEquip';
+export { AbilityItemCard } from './AbilityItemCard';
+export { AbilityItemMaterial } from './AbilityItemMaterial';
+export { AbilityItemHero } from './AbilityItemHero';
 export { AbilityUnitBase } from './AbilityUnitBase';
 export { AbilityUnitHero } from './AbilityUnitHero';
 export { AbilityUnitMonster } from './AbilityUnitMonster';

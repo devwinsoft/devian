@@ -30,6 +30,7 @@ GamePackage는 **Devian Foundation**(`com.devian.foundation`)에 포함된 Unity
 |----------|-------------|
 | [14-red-dot-system](../14-red-dot-system/00-overview/SKILL.md) | `Runtime/RedDot/*` red dot 상태/전파/이벤트 시스템 |
 | [12-game-ability](../12-game-ability/SKILL.md) | AbilityBase/Equip/Card/UnitHero/UnitMonster 수동 addon |
+| [15-game-ability-factory](../15-game-ability-factory/SKILL.md) | `AbilityItem*`, `AbilityUnit*`, preview projection 생성 규약 |
 | [13-game-string-table](../13-game-string-table/SKILL.md) | `GameStringTable.xlsx` → `GAME_TEXT` → `GAME_TEXT_ID`/`ST_GAME_TEXT` |
 
 ---

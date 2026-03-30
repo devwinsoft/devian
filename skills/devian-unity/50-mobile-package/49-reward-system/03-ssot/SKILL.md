@@ -46,11 +46,11 @@ Reward 관련 규칙의 단일 SSOT는 이 문서다.
 `22-inventory-system`에서는 스키마를 재정의하지 않고 본 문서를 참조한다.
 
 NOTE:
-- `type=REWARD_TYPE.EQUIP`의 `id`는 `equipId(pk)`를 의미한다.
-- `type=REWARD_TYPE.CARD`의 `id`는 `cardId(pk)`를 의미한다.
-- `type=REWARD_TYPE.HERO`의 `id`는 `heroId(pk)`를 의미한다(TB_UNIT_HERO 테이블 키).
-- `type=REWARD_TYPE.RENTAL`의 `id`는 rental key(string)다 (예: `"NO_ADS"`). Amount=1은 "활성화" 의미.
-- `type=REWARD_TYPE.PASS`의 `id`는 season pass key(string)다 (예: `"S2026_01"`). Amount=1은 "소유" 의미.
+- `type=REWARD_TYPE.EQUIP`의 `id`는 `itemId(pk)`를 의미한다.
+- `type=REWARD_TYPE.CARD`의 `id`는 `itemId(pk)`를 의미한다.
+- `type=REWARD_TYPE.HERO`의 `id`는 `itemId(pk)`를 의미한다(TB_ITEM_HERO 테이블 키).
+- `type=REWARD_TYPE.RENTAL`의 `id`는 `itemId(pk)`를 의미한다 (예: `"NO_ADS"`). Amount=1은 "활성화" 의미.
+- `type=REWARD_TYPE.PASS`의 `id`는 `itemId(pk)`를 의미한다 (예: `"S2026_01"`). Amount=1은 "소유" 의미.
 - Reward/Purchase grants에는 `options`가 없다. `options`는 Inventory 내부 속성으로만 관리된다.
 
 정합:
@@ -73,7 +73,7 @@ REWARD 테이블은 정규화된 1행=1보상 구조다.
 | `RewardNum` | int | pk | 행별 고유 PK |
 | `RewardGroupId` | string | group:true | 보상 그룹 키 (여러 행을 묶음) |
 | `Type` | enum:REWARD_TYPE | | CARD / CURRENCY / EQUIP / HERO / RENTAL / PASS |
-| `Id` | string | | 대상 ID (cardId, equipId, heroId, 또는 CurrencyType enum name) |
+| `Id` | string | | 대상 ID (itemId 또는 CurrencyType enum name) |
 | `Amount` | int | | 수량 |
 
 - `TB_REWARD.GetByGroup(rewardGroupId)` → `IReadOnlyList<REWARD>` (자동 생성)

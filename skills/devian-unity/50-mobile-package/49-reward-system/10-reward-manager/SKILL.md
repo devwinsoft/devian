@@ -29,11 +29,11 @@ CompoSingleton<RewardManager>.Instance
 
 - `RewardData[]` 입력을 받아 `REWARD_TYPE`별로 해석하고, InventoryManager의 타입별 구체 API를 호출하여 로컬 인벤토리에 적용
   - `type=REWARD_TYPE.CURRENCY`: `inv.ApplyCurrency(currencyType, amount)`
-  - `type=REWARD_TYPE.EQUIP`: `inv.ApplyEquip(equipId, amount)`
-  - `type=REWARD_TYPE.CARD`: `inv.ApplyCard(cardId, amount)`
-  - `type=REWARD_TYPE.HERO`: `inv.ApplyHero(heroId, amount)`
-  - `type=REWARD_TYPE.RENTAL`: `inv.ApplyRental(rentalId)`
-  - `type=REWARD_TYPE.PASS`: `inv.SetPassOwnership(passId, true)`
+  - `type=REWARD_TYPE.EQUIP`: `inv.ApplyEquip(itemId, amount)`
+  - `type=REWARD_TYPE.CARD`: `inv.ApplyCard(itemId, amount)`
+  - `type=REWARD_TYPE.HERO`: `inv.ApplyHero(itemId, amount)`
+  - `type=REWARD_TYPE.RENTAL`: `inv.ApplyRental(itemId)`
+  - `type=REWARD_TYPE.PASS`: `inv.SetPassOwnership(itemId, true)`
   - `type=REWARD_TYPE.TREASURE`: `inv.ApplyTreasure(gradeType, amount)`
 - `rewardGroupId`를 입력받아 `ResolveRewardDatas(rewardGroupId)`로 `TB_REWARD.GetByGroup()` 에서 `RewardData[]`를 만든 뒤 적용
 - `RevokeRewardDatas` / `RevokeRewardDatasPartial`로 RewardData[] 기반 회수 처리
@@ -76,8 +76,9 @@ RewardManager는 `MobileApplication.Instance`에서 key/iv를 읽어 사용한�
 
 - `ApplyRewardDatas(RewardData[] rewards) -> CommonResult`
   - 입력 전체를 선검증한다 (type/id/amount).
+  - item reward(`CARD`/`MATERIAL`/`EQUIP`/`HERO`)는 선검증 단계에서 대응 table row 존재 여부까지 확인한다.
   - 하나라도 invalid면 `CommonResult.Failure(error)`를 반환하고 상태를 변경하지 않는다.
-  - 전체 valid이면 `REWARD_TYPE`별 switch로 InventoryManager 구체 API를 호출한다.
+  - 전체 valid이면 `REWARD_TYPE`별 switch로 InventoryManager 구체 API를 호출하고, 하위 `CommonResult` 실패를 그대로 propagate한다.
 - `ApplyRewardGroup(rewardGroupId, rewardAmountMultiplier) -> CommonResult<RewardApplyResult>`
   - `RewardApplyResult.AppliedRewards`로 이번 호출에서 실제 적용한 `RewardData[]`를 조회할 수 있다.
   - `rewardGroupId`가 비어 있으면 성공 + 빈 배열(`AppliedRewards=[]`) 반환
@@ -116,6 +117,7 @@ RewardManager는 `MobileApplication.Instance`에서 key/iv를 읽어 사용한�
 
 - `ApplyRewardDatas`는 원자적으로 동작한다.
 - 입력 중 invalid가 하나라도 있으면 전체 실패한다.
+- factory/table lookup 실패 가능성도 apply 이전 선검증에서 걸러져야 한다.
 - 전체 실패 시 InventoryManager 상태는 호출 전과 동일해야 한다.
 
 
@@ -130,6 +132,7 @@ RewardManager는 `MobileApplication.Instance`에서 key/iv를 읽어 사용한�
   - `INVENTORY_DELTA_TYPE_INVALID`
   - `INVENTORY_DELTA_ID_EMPTY`
   - `INVENTORY_DELTA_AMOUNT_NEGATIVE`
+  - `ABILITY_ITEM_TABLE_NOT_FOUND`
   - `INVENTORY_REFUND_INSUFFICIENT` (RevokeRewardDatas)
 
 

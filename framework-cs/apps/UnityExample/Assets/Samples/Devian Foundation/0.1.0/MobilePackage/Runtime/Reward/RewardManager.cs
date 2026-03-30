@@ -65,32 +65,52 @@ namespace Devian
                 if (r.Type == REWARD_TYPE.CURRENCY)
                 {
                     var currencyType = (CURRENCY_TYPE)Enum.Parse(typeof(CURRENCY_TYPE), r.Id);
-                    inv.ApplyCurrency(currencyType, r.Amount);
+                    var apply = inv.ApplyCurrency(currencyType, r.Amount);
+                    if (apply.IsFailure)
+                        return apply;
                 }
                 else if (r.Type == REWARD_TYPE.CARD)
                 {
-                    inv.ApplyCard(r.Id, (int)r.Amount);
+                    var apply = inv.ApplyCard(r.Id, (int)r.Amount);
+                    if (apply.IsFailure)
+                        return apply;
+                }
+                else if (r.Type == REWARD_TYPE.MATERIAL)
+                {
+                    var apply = inv.ApplyMaterial(r.Id, (int)r.Amount);
+                    if (apply.IsFailure)
+                        return apply;
                 }
                 else if (r.Type == REWARD_TYPE.EQUIP)
                 {
-                    inv.ApplyEquip(r.Id, (int)r.Amount);
+                    var apply = inv.ApplyEquip(r.Id, (int)r.Amount);
+                    if (apply.IsFailure)
+                        return apply;
                 }
                 else if (r.Type == REWARD_TYPE.HERO)
                 {
-                    inv.ApplyHero(r.Id, (int)r.Amount);
+                    var apply = inv.ApplyHero(r.Id, (int)r.Amount);
+                    if (apply.IsFailure)
+                        return apply;
                 }
                 else if (r.Type == REWARD_TYPE.RENTAL)
                 {
-                    inv.ApplyRental(r.Id);
+                    var apply = inv.ApplyRental(r.Id);
+                    if (apply.IsFailure)
+                        return apply;
                 }
                 else if (r.Type == REWARD_TYPE.PASS)
                 {
-                    inv.SetPassOwnership(r.Id, true);
+                    var apply = inv.SetPassOwnership(r.Id, true);
+                    if (apply.IsFailure)
+                        return apply;
                 }
                 else if (r.Type == REWARD_TYPE.TREASURE)
                 {
                     var gradeType = (TREASURE_GRADE_TYPE)Enum.Parse(typeof(TREASURE_GRADE_TYPE), r.Id);
-                    inv.ApplyTreasure(gradeType, (int)r.Amount);
+                    var apply = inv.ApplyTreasure(gradeType, (int)r.Amount);
+                    if (apply.IsFailure)
+                        return apply;
                 }
             }
 
@@ -139,6 +159,16 @@ namespace Devian
                         return CommonResult.Failure(
                             COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
                             $"rewards[{i}] insufficient card amount. id={r.Id} need={r.Amount} have={amount}");
+                    }
+                }
+                else if (r.Type == REWARD_TYPE.MATERIAL)
+                {
+                    var amount = inv.GetMaterialAmount(r.Id);
+                    if (amount < r.Amount)
+                    {
+                        return CommonResult.Failure(
+                            COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                            $"rewards[{i}] insufficient material amount. id={r.Id} need={r.Amount} have={amount}");
                     }
                 }
                 else if (r.Type == REWARD_TYPE.EQUIP)
@@ -208,6 +238,10 @@ namespace Devian
                 {
                     inv.RevokeCard(r.Id, (int)r.Amount);
                 }
+                else if (r.Type == REWARD_TYPE.MATERIAL)
+                {
+                    inv.RevokeMaterial(r.Id, (int)r.Amount);
+                }
                 else if (r.Type == REWARD_TYPE.EQUIP)
                 {
                     inv.RevokeEquip(r.Id, (int)r.Amount);
@@ -275,6 +309,13 @@ namespace Devian
                     if (clampedAmount > 0)
                         inv.RevokeCard(r.Id, clampedAmount);
                 }
+                else if (r.Type == REWARD_TYPE.MATERIAL)
+                {
+                    var have = inv.GetMaterialAmount(r.Id);
+                    var clampedAmount = (int)Math.Min(r.Amount, have);
+                    if (clampedAmount > 0)
+                        inv.RevokeMaterial(r.Id, clampedAmount);
+                }
                 else if (r.Type == REWARD_TYPE.EQUIP)
                 {
                     var count = inv.GetEquipCount(r.Id);
@@ -327,6 +368,9 @@ namespace Devian
             if (type == nameof(REWARD_TYPE.CARD))
                 return inv.GetCardAmount(id);
 
+            if (type == nameof(REWARD_TYPE.MATERIAL))
+                return inv.GetMaterialAmount(id);
+
             if (type == nameof(REWARD_TYPE.EQUIP))
                 return inv.GetEquipCount(id);
 
@@ -372,7 +416,11 @@ namespace Devian
 
             int maxStamina = inv.MaxStamina;
             if (maxStamina > 0)
-                inv.ApplyCurrency(CURRENCY_TYPE.STAMINA, maxStamina);
+            {
+                var apply = inv.ApplyCurrency(CURRENCY_TYPE.STAMINA, maxStamina);
+                if (apply.IsFailure)
+                    return CommonResult.Failure(apply.Error!);
+            }
 
             await Task.Yield();
             ct.ThrowIfCancellationRequested();
@@ -519,6 +567,7 @@ namespace Devian
         static CommonResult _validateRewardData(RewardData r, int index)
         {
             if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY &&
+                r.Type != REWARD_TYPE.MATERIAL &&
                 r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO &&
                 r.Type != REWARD_TYPE.RENTAL && r.Type != REWARD_TYPE.PASS &&
                 r.Type != REWARD_TYPE.TREASURE)
@@ -555,6 +604,34 @@ namespace Devian
                         COMMON_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
                         $"rewards[{index}] invalid treasure grade id: {r.Id}");
                 }
+            }
+
+            if (r.Type == REWARD_TYPE.CARD && TB_ITEM_CARD.Get(r.Id) == null)
+            {
+                return CommonResult.Failure(
+                    COMMON_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
+                    $"rewards[{index}] ITEM_CARD not found: {r.Id}");
+            }
+
+            if (r.Type == REWARD_TYPE.MATERIAL && TB_ITEM_MATERIAL.Get(r.Id) == null)
+            {
+                return CommonResult.Failure(
+                    COMMON_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
+                    $"rewards[{index}] ITEM_MATERIAL not found: {r.Id}");
+            }
+
+            if (r.Type == REWARD_TYPE.EQUIP && TB_ITEM_EQUIP.Get(r.Id) == null)
+            {
+                return CommonResult.Failure(
+                    COMMON_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
+                    $"rewards[{index}] ITEM_EQUIP not found: {r.Id}");
+            }
+
+            if (r.Type == REWARD_TYPE.HERO && TB_ITEM_HERO.Get(r.Id) == null)
+            {
+                return CommonResult.Failure(
+                    COMMON_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
+                    $"rewards[{index}] ITEM_HERO not found: {r.Id}");
             }
 
             return CommonResult.Ok();

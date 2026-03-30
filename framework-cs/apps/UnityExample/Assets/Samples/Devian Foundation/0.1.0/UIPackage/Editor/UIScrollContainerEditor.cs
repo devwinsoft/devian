@@ -6,7 +6,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Devian.UI.Editor
+namespace Devian
 {
     [CustomEditor(typeof(UIScrollContainer))]
     public class UIScrollContainerEditor : UnityEditor.Editor

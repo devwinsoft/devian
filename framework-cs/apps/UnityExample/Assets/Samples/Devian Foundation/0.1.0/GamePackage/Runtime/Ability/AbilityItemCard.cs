@@ -2,12 +2,11 @@ using Devian.Domain.Game;
 
 namespace Devian
 {
-    public sealed class AbilityCard : AbilityBase
+    public sealed class AbilityItemCard : AbilityItemBase
     {
         ITEM_CARD mTable = null;
 
-        public string CardId => mTable?.CardId ?? string.Empty;
-        public int Amount => this[STAT_TYPE.CARD_AMOUNT];
+        public override string ItemId => mTable?.ItemId ?? string.Empty;
 
         public void Init(ITEM_CARD table)
         {
@@ -16,15 +15,10 @@ namespace Devian
 
         public override AbilityBase Clone()
         {
-            var c = new AbilityCard();
+            var c = new AbilityItemCard();
             c.mTable = mTable;
             c.CopyStatsFrom(this);
             return c;
-        }
-
-        public void AddAmount(int delta)
-        {
-            AddStat(STAT_TYPE.CARD_AMOUNT, delta);
         }
     }
 }

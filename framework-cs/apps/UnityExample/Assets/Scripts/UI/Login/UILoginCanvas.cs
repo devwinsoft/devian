@@ -73,7 +73,7 @@ public class UILoginCanvas : UIBaseCanvas<UILoginCanvas>
                 Debug.LogWarning($"Recommend update on guest login: {result.VersionResult}");
 
             await TestApplication.Instance.LoadAsync(onLoadProgress);
-            await SceneTransManager.Instance.LoadSceneAsync("SceneSample");
+            await SceneTransManager.Instance.LoadSceneAsync("SceneLobby");
         }
         else
         {

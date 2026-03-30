@@ -82,6 +82,7 @@ SaveDataManager : CompoSingleton<SaveDataManager>
 - treasure section: `SaveDataJsonCodecTreasure`
 
 section codec은 manager를 직접 알지 않고, `Storage` 타입만 다룬다.
+역직렬화 실패는 `throw` 대신 `CommonResult.Failure(...)`로 root caller에 전달한다.
 
 
 ## Primary Save Rule
@@ -172,6 +173,7 @@ deserialize 시 target:
 - 하위호환이 필요하면 root codec에서 version 분기 처리한다.
 - section codec은 자신이 담당하는 섹션의 레거시 필드만 복구한다.
 - 지원하지 않는 version이면 조용히 부분 로드하지 말고, 명시적인 fallback 정책을 문서에 기록한다.
+- malformed JSON / section restore failure는 `CommonResult.Failure(...)`로 반환하고 상위 caller가 전체 상태를 정리한다.
 
 
 ---
