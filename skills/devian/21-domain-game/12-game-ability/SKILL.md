@@ -24,7 +24,12 @@ TypeScript 모듈 관점 설명을 포함하며, Unity `GamePackage` C# addon �
 ## 2. 클래스 계층
 
 ```
-AbilityBase              ← Dict<STAT_TYPE, int>, indexer, GetInt, GetFloat, AddStat, SetStat, ClearStat, GetStats, Clone
+AbilityBase              ← Dict<STAT_TYPE, int>, indexer, GetInt, GetFloat, AddStat, SetStat, ClearStat, GetStats, Clone, aggregate property(AtkPhysical/AtkMagical/DefPhysical/DefMagical/MaxHP)
+  ├─ AbilityBattleBase (abstract) ← battle wrapper 공통 베이스
+  │   ├─ AbilityBattleSkill      ← SKILL row wrapper
+  │   ├─ AbilityBattleStatus     ← STATUS row wrapper
+  │   └─ AbilityBattleProjectile ← PROJECTILE row wrapper
+  ├─ AbilityAffect               ← AFFECT row wrapper
   ├─ AbilityItemBase (abstract) ← Amount, ItemLevel, AddAmount
   │   ├─ AbilityItemEquip   ← 장비 Inventory 연동용 (OwnerUnitId, OwnerSlotNumber, IsEquipped)
   │   ├─ AbilityItemCard    ← 카드 Inventory 연동용
@@ -50,6 +55,21 @@ namespace Devian
     public abstract class AbilityBase
     {
         Dictionary<STAT_TYPE, int> mStats = new();
+        public int AtkPhysical => (int)((this[STAT_TYPE.AFFECT_ATK_PHY_ADD] + this[STAT_TYPE.ITEM_ATK_PHY])
+            * (100 + this[STAT_TYPE.AFFECT_ATK_PHY_PER]) * 0.01f)
+            + this[STAT_TYPE.UNIT_ATK_PHY];
+        public int AtkMagical => (int)((this[STAT_TYPE.AFFECT_ATK_MAG_ADD] + this[STAT_TYPE.ITEM_ATK_MAG])
+            * (100 + this[STAT_TYPE.AFFECT_ATK_MAG_PER]) * 0.01f)
+            + this[STAT_TYPE.UNIT_ATK_MAG];
+        public int DefPhysical => (int)((this[STAT_TYPE.AFFECT_DEF_PHY_ADD] + this[STAT_TYPE.ITEM_DEF_PHY])
+            * (100 + this[STAT_TYPE.AFFECT_DEF_PHY_PER]) * 0.01f)
+            + this[STAT_TYPE.UNIT_DEF_PHY];
+        public int DefMagical => (int)((this[STAT_TYPE.AFFECT_DEF_MAG_ADD] + this[STAT_TYPE.ITEM_DEF_MAG])
+            * (100 + this[STAT_TYPE.AFFECT_DEF_MAG_PER]) * 0.01f)
+            + this[STAT_TYPE.UNIT_DEF_MAG];
+        public int MaxHP => (int)((this[STAT_TYPE.AFFECT_HP_ADD] + this[STAT_TYPE.ITEM_HP])
+            * (100 + this[STAT_TYPE.AFFECT_HP_PER]) * 0.01f)
+            + this[STAT_TYPE.UNIT_HP];
 
         public int this[STAT_TYPE type]
         {
@@ -92,6 +112,8 @@ namespace Devian
 ```
 
 - `Dictionary<STAT_TYPE, int>` — 스탯 정규화 저장소
+- `AtkPhysical`, `AtkMagical`, `DefPhysical`, `DefMagical` — `(AFFECT_*_ADD + ITEM_*) * (100 + AFFECT_*_PER) / 100 + UNIT_*` aggregate property
+- `MaxHP` — `(AFFECT_HP_ADD + ITEM_HP) * (100 + AFFECT_HP_PER) / 100 + UNIT_HP` aggregate property
 - indexer `this[STAT_TYPE]` — 없는 키는 `0` 반환
 - `GetInt(type)` — indexer와 동일 (명시적 int 반환)
 - `GetFloat(type)` — 1만분율 변환 (stat value 1 → 0.0001f)
@@ -106,7 +128,51 @@ namespace Devian
 
 ---
 
-## 4. AbilityItemBase / AbilityItemEquip / AbilityItemCard / AbilityItemMaterial / AbilityItemHero
+## 4. AbilityBattleBase / AbilityBattleSkill / AbilityBattleStatus / AbilityBattleProjectile / AbilityAffect
+
+```csharp
+using System;
+using System.Collections.Generic;
+using Devian.Domain.Game;
+
+namespace Devian
+{
+    public abstract class AbilityBattleBase : AbilityBase
+    {
+    }
+
+    public sealed class AbilityBattleSkill : AbilityBattleBase
+    {
+        SKILL mTable = null;
+
+        public string SkillId => mTable?.SkillId ?? string.Empty;
+        public string NameId => mTable?.NameId ?? string.Empty;
+        public IReadOnlyList<string> AffectList => mTable?.AffectList ?? Array.Empty<string>();
+
+        public void Init(SKILL table)
+        {
+            mTable = table;
+        }
+
+        public override AbilityBase Clone()
+        {
+            var c = new AbilityBattleSkill();
+            c.mTable = mTable;
+            c.CopyStatsFrom(this);
+            return c;
+        }
+    }
+}
+```
+
+- `AbilityBattleBase` — `AbilityBase` 위에 얹히는 battle wrapper 공통 abstract 베이스
+- `AbilityBattleSkill` — `SKILL` generated row wrapper
+- `AbilityBattleStatus` — `STATUS` generated row wrapper
+- `AbilityBattleProjectile` — `PROJECTILE` generated row wrapper
+- `AbilityAffect` — `AFFECT` generated row wrapper
+- battle/affect 계층은 현재 level table/factory 없이 generated row 참조와 stat clone만 담당한다.
+
+## 5. AbilityItemBase / AbilityItemEquip / AbilityItemCard / AbilityItemMaterial / AbilityItemHero
 
 ```csharp
 using Devian.Domain.Game;
@@ -238,21 +304,26 @@ namespace Devian
 - `AbilityItemCard`: `mTable` 참조 + `Init(table, levelTable)` + `Clone()`. `ItemId`/`Amount`/`ItemLevel`/`AddAmount`는 `AbilityItemBase` 상속.
 - `AbilityItemMaterial` — `ITEM_MATERIAL` 테이블 entity를 직접 참조하여 초기화한다.
 - `AbilityItemMaterial`: `mTable` 참조 + `Init(table)` + `Clone()`. `ItemId`/`Amount`/`ItemLevel`/`AddAmount`는 `AbilityItemBase` 상속.
-- `AbilityItemHero` — `ITEM_HERO` 테이블 entity와 ITEM_HERO_LEVEL row를 함께 받아 초기화한다. outgame inventory의 hero 수량/레벨/equip slot SSOT다.
-- `AbilityItemHero`: `mTable` 참조 + `Init(table, levelTable)` + `Equips` + `Equip(equip, slot)` + `Unequip(slot)` + `Clone()`. `ItemId`/`Amount`/`ItemLevel`/`AddAmount`는 `AbilityItemBase` 상속.
-- `AbilityItemHero.Equip()`는 장착 장비의 stat을 hero에 합산하고, `Unequip()`는 동일 stat을 제거한다. 단 `ITEM_LEVEL`, `ITEM_AMOUNT` 같은 item 메타 stat은 hero aggregate에서 제외한다.
-- 다른 hero 소유 상태가 남아 있는 equip을 `AbilityItemHero.Equip()`으로 직접 이동시키지 않는다. owner를 먼저 해제한 뒤 장착한다.
+- `AbilityItemHero` — `ITEM_HERO` 테이블 entity와 ITEM_HERO_LEVEL row를 함께 받아 초기화한다. outgame inventory의 hero 수량/레벨/equip slot 저장 SSOT다.
+- `AbilityItemHero`: `mTable` 참조 + `Init(table, levelTable)` + `UnitId` + `Equips` + `SetEquip(equip, slot)` + `RemoveEquip(slot)` + `Clone()`. `ItemId`/`Amount`/`ItemLevel`/`AddAmount`는 `AbilityItemBase` 상속.
+- `AbilityItemHero`는 equip stat을 직접 계산하지 않는다. loadout metadata와 equip owner metadata만 유지한다.
 
 ---
 
-## 5. AbilityUnitBase / AbilityUnitHero / AbilityUnitMonster
+## 6. AbilityUnitBase / AbilityUnitHero / AbilityUnitMonster
 
 ```csharp
+using Devian.Domain.Game;
+
 namespace Devian
 {
     public abstract class AbilityUnitBase : AbilityBase
     {
         public abstract string UnitId { get; }
+        int mCurHP = 0;
+
+        public int UnitLevel => this[STAT_TYPE.UNIT_LEVEL];
+        public int CurHP => mCurHP;
     }
 }
 ```
@@ -266,22 +337,26 @@ namespace Devian
     public sealed class AbilityUnitHero : AbilityUnitBase
     {
         UNIT_HERO mTable = null;
+        UNIT_HERO_LEVEL mLevelTable = null;
         readonly Dictionary<int, AbilityItemEquip> mEquips = new();
 
         public override string UnitId => mTable?.UnitId ?? string.Empty;
         public IReadOnlyDictionary<int, AbilityItemEquip> Equips => mEquips;
 
-        public void Init(UNIT_HERO table)
+        public void Init(UNIT_HERO table, UNIT_HERO_LEVEL levelTable)
         {
             mTable = table;
-            AddStat(STAT_TYPE.UNIT_HP_MAX, table.MaxHp);
+            mLevelTable = levelTable;
+            InitUnitState(levelTable.UnitLevel, levelTable.MaxHp);
         }
 
         public override AbilityBase Clone()
         {
             var c = new AbilityUnitHero();
             c.mTable = mTable;
+            c.mLevelTable = mLevelTable;
             c.CopyStatsFrom(this);
+            c.CopyUnitStateFrom(this);
             foreach (var kv in mEquips)
                 c.mEquips[kv.Key] = kv.Value;
             return c;
@@ -314,34 +389,38 @@ namespace Devian
     public sealed class AbilityUnitMonster : AbilityUnitBase
     {
         UNIT_MONSTER mTable = null;
+        UNIT_MONSTER_LEVEL mLevelTable = null;
 
         public override string UnitId => mTable?.UnitId ?? string.Empty;
 
-        public void Init(UNIT_MONSTER table)
+        public void Init(UNIT_MONSTER table, UNIT_MONSTER_LEVEL levelTable)
         {
             mTable = table;
-            AddStat(STAT_TYPE.UNIT_HP_MAX, table.MaxHp);
+            mLevelTable = levelTable;
+            InitUnitState(levelTable.UnitLevel, levelTable.MaxHp);
         }
 
         public override AbilityBase Clone()
         {
             var c = new AbilityUnitMonster();
             c.mTable = mTable;
+            c.mLevelTable = mLevelTable;
             c.CopyStatsFrom(this);
+            c.CopyUnitStateFrom(this);
             return c;
         }
     }
 }
 ```
 
-- `AbilityUnitBase`는 abstract — Unit 공통 계층. `UnitId` 추상 프로퍼티를 정의한다.
-- `AbilityUnitHero`는 `UNIT_HERO` 테이블 entity를 참조하여 초기화한다. `Init()`에서 `UNIT_HP_MAX` stat을 설정한다. `Dict<int, AbilityItemEquip> mEquips`는 preview/ingame projection snapshot이며, outgame ownership 정본은 `AbilityItemHero`다.
-- `AbilityUnitMonster`는 `UNIT_MONSTER` 테이블 entity를 참조하여 초기화한다. `Init()`에서 `UNIT_HP_MAX` stat을 설정한다.
+- `AbilityUnitBase`는 abstract — Unit 공통 계층. `UnitId`, `UnitLevel`, `CurHP` 프로퍼티를 정의한다. `CurHP`는 runtime field(`mCurHP`)이고, 초기화 시 `MaxHP`와 동일하게 시작한다. `MaxHP`는 `AbilityBase` aggregate property를 사용한다.
+- `AbilityUnitHero`는 `UNIT_HERO` base row와 `UNIT_HERO_LEVEL` row를 함께 받아 초기화한다. `Init()`에서 `UNIT_LEVEL`, `UNIT_HP` stat을 설정하고 `CurHP = MaxHP`로 맞춘다. `Dict<int, AbilityItemEquip> mEquips`는 preview/ingame projection snapshot이며, outgame ownership 정본은 `AbilityItemHero`다.
+- `AbilityUnitMonster`는 `UNIT_MONSTER` base row와 `UNIT_MONSTER_LEVEL` row를 함께 받아 초기화한다. `Init()`에서 `UNIT_LEVEL`, `UNIT_HP` stat을 설정하고 `CurHP = MaxHP`로 맞춘다.
 - `UNIT_HERO`, `UNIT_MONSTER`는 `Devian.Domain.Game` 네임스페이스의 Generated entity (UnitTable.xlsx).
 
 ---
 
-## 6. Implementation Location
+## 7. Implementation Location
 
 ### Unity GamePackage C# addon
 
@@ -367,7 +446,7 @@ ability/
 
 ---
 
-## 7. Hard Rules
+## 8. Hard Rules
 
 - `STAT_TYPE`은 Generated enum이다. 수동 정의 금지.
 - stat value 타입은 `int` (C#) / `number` (TS)이다.
@@ -377,7 +456,7 @@ ability/
 
 ---
 
-## 8. Related
+## 9. Related
 
 - [devian-unity/21-game-package/12-game-ability](../../../devian-unity/21-game-package/12-game-ability/SKILL.md) — Unity GamePackage C# addon 구현
 - [13-game-stat-type](../13-game-stat-type/SKILL.md) — STAT_TYPE enum 값 정의/관리

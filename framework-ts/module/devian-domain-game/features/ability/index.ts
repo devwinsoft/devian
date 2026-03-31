@@ -1,4 +1,9 @@
 export { AbilityBase } from './AbilityBase';
+export { AbilityBattleBase } from './AbilityBattleBase';
+export { AbilityBattleSkill } from './AbilityBattleSkill';
+export { AbilityBattleStatus } from './AbilityBattleStatus';
+export { AbilityBattleProjectile } from './AbilityBattleProjectile';
+export { AbilityAffect } from './AbilityAffect';
 export { AbilityItemBase } from './AbilityItemBase';
 export { AbilityItemEquip } from './AbilityItemEquip';
 export { AbilityItemCard } from './AbilityItemCard';

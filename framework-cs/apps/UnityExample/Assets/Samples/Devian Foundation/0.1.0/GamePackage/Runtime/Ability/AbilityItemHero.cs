@@ -10,6 +10,7 @@ namespace Devian
         readonly Dictionary<int, AbilityItemEquip> mEquips = new();
 
         public string HeroId => mTable?.ItemId ?? string.Empty;
+        public string UnitId => mTable?.UnitId ?? string.Empty;
         public override string ItemId => mTable?.ItemId ?? string.Empty;
         public IReadOnlyDictionary<int, AbilityItemEquip> Equips => mEquips;
 
@@ -40,31 +41,10 @@ namespace Devian
             return c;
         }
 
-        public bool Equip(AbilityItemEquip equip, int slotNumber)
+        public bool SetEquip(AbilityItemEquip equip, int slotNumber)
         {
             if (equip == null || slotNumber <= 0)
                 return false;
-
-            if (equip.IsEquipped)
-            {
-                if (equip.OwnerUnitId != HeroId)
-                    return false;
-
-                if (mEquips.TryGetValue(equip.OwnerSlotNumber, out var current)
-                    && isSameEquip(current, equip))
-                {
-                    if (equip.OwnerSlotNumber == slotNumber)
-                        return true;
-
-                    if (!Unequip(equip.OwnerSlotNumber))
-                        return false;
-                }
-                else
-                {
-                    // Recover local owner metadata that is not backed by this hero slot map.
-                    equip.ClearOwner();
-                }
-            }
 
             if (mEquips.TryGetValue(slotNumber, out var prev))
             {
@@ -74,8 +54,8 @@ namespace Devian
                     return true;
                 }
 
-                if (!Unequip(slotNumber))
-                    return false;
+                if (prev.OwnerUnitId == HeroId && prev.OwnerSlotNumber == slotNumber)
+                    prev.ClearOwner();
             }
 
             var existingSlot = findEquipSlot(equip);
@@ -84,42 +64,24 @@ namespace Devian
                 if (existingSlot == slotNumber)
                     return true;
 
-                if (!Unequip(existingSlot))
-                    return false;
+                mEquips.Remove(existingSlot);
             }
 
             mEquips[slotNumber] = equip;
             equip.SetOwner(HeroId, slotNumber);
-            applyEquipStats(equip, +1);
             return true;
         }
 
-        public bool Unequip(int slotNumber)
+        public bool RemoveEquip(int slotNumber)
         {
             if (!mEquips.TryGetValue(slotNumber, out var equip))
                 return false;
-
-            applyEquipStats(equip, -1);
 
             if (equip.OwnerUnitId == HeroId && equip.OwnerSlotNumber == slotNumber)
                 equip.ClearOwner();
 
             mEquips.Remove(slotNumber);
             return true;
-        }
-
-        void applyEquipStats(AbilityItemEquip equip, int sign)
-        {
-            if (equip == null || sign == 0)
-                return;
-
-            foreach (var kv in equip.GetStats())
-            {
-                if (!shouldApplyEquipStat(kv.Key))
-                    continue;
-
-                AddStat(kv.Key, kv.Value * sign);
-            }
         }
 
         int findEquipSlot(AbilityItemEquip equip)
@@ -145,11 +107,5 @@ namespace Devian
                 && left.ItemUid == right.ItemUid;
         }
 
-        static bool shouldApplyEquipStat(STAT_TYPE statType)
-        {
-            return statType != STAT_TYPE.NONE
-                && statType != STAT_TYPE.ITEM_LEVEL
-                && statType != STAT_TYPE.ITEM_AMOUNT;
-        }
     }
 }

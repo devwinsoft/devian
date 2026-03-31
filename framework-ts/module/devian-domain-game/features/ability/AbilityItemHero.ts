@@ -1,4 +1,4 @@
-import { ITEM_HERO, ITEM_HERO_LEVEL, STAT_TYPE } from '../../Generated/Game.g';
+import { ITEM_HERO, ITEM_HERO_LEVEL } from '../../Generated/Game.g';
 import { AbilityItemBase } from './AbilityItemBase';
 import { AbilityItemEquip } from './AbilityItemEquip';
 
@@ -8,6 +8,7 @@ export class AbilityItemHero extends AbilityItemBase {
     private readonly mEquips: Map<number, AbilityItemEquip> = new Map();
 
     get heroId(): string { return this.mTable?.ItemId ?? ''; }
+    get unitId(): string { return this.mTable?.UnitId ?? ''; }
     get itemId(): string { return this.mTable?.ItemId ?? ''; }
     get equips(): ReadonlyMap<number, AbilityItemEquip> { return this.mEquips; }
 
@@ -23,25 +24,8 @@ export class AbilityItemHero extends AbilityItemBase {
         );
     }
 
-    equip(equip: AbilityItemEquip, slotNumber: number): boolean {
+    setEquip(equip: AbilityItemEquip, slotNumber: number): boolean {
         if (!equip || slotNumber <= 0) return false;
-
-        if (equip.isEquipped) {
-            if (equip.ownerUnitId !== this.heroId)
-                return false;
-
-            const current = this.mEquips.get(equip.ownerSlotNumber);
-            if (current && this.isSameEquip(current, equip)) {
-                if (equip.ownerSlotNumber === slotNumber)
-                    return true;
-
-                if (!this.unequip(equip.ownerSlotNumber))
-                    return false;
-            }
-            else {
-                equip.clearOwner();
-            }
-        }
 
         const prev = this.mEquips.get(slotNumber);
         if (prev) {
@@ -50,8 +34,8 @@ export class AbilityItemHero extends AbilityItemBase {
                 return true;
             }
 
-            if (!this.unequip(slotNumber))
-                return false;
+            if (prev.ownerUnitId === this.heroId && prev.ownerSlotNumber === slotNumber)
+                prev.clearOwner();
         }
 
         const existingSlot = this.findEquipSlot(equip);
@@ -59,21 +43,17 @@ export class AbilityItemHero extends AbilityItemBase {
             if (existingSlot === slotNumber)
                 return true;
 
-            if (!this.unequip(existingSlot))
-                return false;
+            this.mEquips.delete(existingSlot);
         }
 
         this.mEquips.set(slotNumber, equip);
         equip.setOwner(this.heroId, slotNumber);
-        this.applyEquipStats(equip, +1);
         return true;
     }
 
-    unequip(slotNumber: number): boolean {
+    removeEquip(slotNumber: number): boolean {
         const equip = this.mEquips.get(slotNumber);
         if (!equip) return false;
-
-        this.applyEquipStats(equip, -1);
 
         if (equip.ownerUnitId === this.heroId && equip.ownerSlotNumber === slotNumber)
             equip.clearOwner();
@@ -90,18 +70,6 @@ export class AbilityItemHero extends AbilityItemBase {
         for (const [slot, equip] of this.mEquips)
             c.mEquips.set(slot, equip);
         return c;
-    }
-
-    private applyEquipStats(equip: AbilityItemEquip, sign: number): void {
-        if (!equip || sign === 0)
-            return;
-
-        for (const [statType, statValue] of equip.getStats()) {
-            if (!this.shouldApplyEquipStat(statType))
-                continue;
-
-            this.addStat(statType, statValue * sign);
-        }
     }
 
     private findEquipSlot(equip: AbilityItemEquip): number {
@@ -121,11 +89,5 @@ export class AbilityItemHero extends AbilityItemBase {
             return false;
 
         return left.itemUid.length > 0 && left.itemUid === right.itemUid;
-    }
-
-    private shouldApplyEquipStat(statType: STAT_TYPE): boolean {
-        return statType !== STAT_TYPE.NONE
-            && statType !== STAT_TYPE.ITEM_LEVEL
-            && statType !== STAT_TYPE.ITEM_AMOUNT;
     }
 }

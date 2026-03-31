@@ -6,6 +6,32 @@ namespace Devian
     public abstract class AbilityBase
     {
         Dictionary<STAT_TYPE, int> mStats = new();
+        public IReadOnlyDictionary<STAT_TYPE, int> Stats => mStats;
+        public int AtkPhysical => getScaledStat(
+            STAT_TYPE.AFFECT_ATK_PHY_ADD,
+            STAT_TYPE.AFFECT_ATK_PHY_PER,
+            STAT_TYPE.ITEM_ATK_PHY,
+            STAT_TYPE.UNIT_ATK_PHY);
+        public int AtkMagical => getScaledStat(
+            STAT_TYPE.AFFECT_ATK_MAG_ADD,
+            STAT_TYPE.AFFECT_ATK_MAG_PER,
+            STAT_TYPE.ITEM_ATK_MAG,
+            STAT_TYPE.UNIT_ATK_MAG);
+        public int DefPhysical => getScaledStat(
+            STAT_TYPE.AFFECT_DEF_PHY_ADD,
+            STAT_TYPE.AFFECT_DEF_PHY_PER,
+            STAT_TYPE.ITEM_DEF_PHY,
+            STAT_TYPE.UNIT_DEF_PHY);
+        public int DefMagical => getScaledStat(
+            STAT_TYPE.AFFECT_DEF_MAG_ADD,
+            STAT_TYPE.AFFECT_DEF_MAG_PER,
+            STAT_TYPE.ITEM_DEF_MAG,
+            STAT_TYPE.UNIT_DEF_MAG);
+        public int MaxHP => getScaledStat(
+            STAT_TYPE.AFFECT_HP_ADD,
+            STAT_TYPE.AFFECT_HP_PER,
+            STAT_TYPE.ITEM_HP,
+            STAT_TYPE.UNIT_HP);
 
         public int this[STAT_TYPE type]
         {
@@ -34,7 +60,7 @@ namespace Devian
 
         public void ClearStats() => mStats.Clear();
 
-        public IReadOnlyDictionary<STAT_TYPE, int> GetStats() => mStats;
+        public IReadOnlyDictionary<STAT_TYPE, int> GetStats() => Stats;
 
         public abstract AbilityBase Clone();
 
@@ -42,6 +68,17 @@ namespace Devian
         {
             foreach (var kv in source.mStats)
                 mStats[kv.Key] = kv.Value;
+        }
+
+        int getScaledStat(
+            STAT_TYPE affectAddType,
+            STAT_TYPE affectPerType,
+            STAT_TYPE itemAddType,
+            STAT_TYPE unitAddType)
+        {
+            var affectItemAdd = this[affectAddType] + this[itemAddType];
+            var scaled = (int)(affectItemAdd * (100 + this[affectPerType]) * 0.01f);
+            return scaled + this[unitAddType];
         }
     }
 }

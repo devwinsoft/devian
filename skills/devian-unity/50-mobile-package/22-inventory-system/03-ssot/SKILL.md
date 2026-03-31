@@ -180,10 +180,10 @@ NOTE: `RewardManager.RevokeRewardDatas` / `RevokeRewardDatasPartial`가 RewardDa
 
 ## C-6) 장비 장착/해제
 
-장비 장착/해제는 `AbilityItemHero.Equip()` / `AbilityItemHero.Unequip()`이 담당한다.
-이때 hero aggregate stat은 장착된 `AbilityItemEquip`의 stat을 합산한 값이며, 해제 시 동일 stat을 제거한다.
-단 `STAT_TYPE.ITEM_LEVEL`, `STAT_TYPE.ITEM_AMOUNT`는 장비 메타 stat이므로 hero aggregate에 포함하지 않는다.
-InventoryStorage는 `Equip(heroId, equipSlot, equipUid)` / `Unequip(heroId, equipSlot)` 편의 메서드로 위임한다.
+장비 장착/해제의 저장 모델은 `AbilityItemHero.SetEquip()` / `AbilityItemHero.RemoveEquip()`이다.
+이 메서드는 hero loadout metadata와 equip owner metadata만 관리한다.
+실제 장비 stat 계산은 `AbilityUnitHero.Equip()` / `AbilityUnitHero.Unequip()`이 담당한다.
+InventoryStorage는 `Equip(heroId, equipSlot, equipUid)` / `Unequip(heroId, equipSlot)` 편의 메서드로 item hero 저장 모델에 위임한다.
 
 ---
 

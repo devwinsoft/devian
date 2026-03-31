@@ -33,7 +33,9 @@ AppliesTo: v10
 
 | name | value | 설명 |
 |---|---|---|
-| `UNIT_HP_MAX` | 100 | 유닛 최대 HP |
+| `UNIT_HP_CUR` | 101 | 유닛 현재 HP(runtime current state) |
+| `UNIT_HP` | 102 | 유닛 HP |
+| `UNIT_LEVEL` | 103 | 유닛 레벨 |
 
 ---
 
@@ -48,7 +50,9 @@ AppliesTo: v10
         { "name": "NONE", "value": 0 },
         { "name": "ITEM_AMOUNT", "value": 1 },
         { "name": "ITEM_LEVEL", "value": 2 },
-        { "name": "UNIT_HP_MAX", "value": 100 }
+        { "name": "UNIT_HP_CUR", "value": 101 },
+        { "name": "UNIT_HP", "value": 102 },
+        { "name": "UNIT_LEVEL", "value": 103 }
       ]
     }
   ]
@@ -99,9 +103,9 @@ bool equipped = abilityEquip.IsEquipped;           // mOwnerSlotNumber > 0
 string ownerItemId = abilityEquip.OwnerUnitId;     // 장착된 영웅 inventory id
 int slot = abilityEquip.OwnerSlotNumber;           // 장착 슬롯 번호 (0 = 미장착)
 
-// 장착/해제는 AbilityItemHero.Equip/Unequip을 통해 수행
-hero.Equip(equip, slotNumber);
-hero.Unequip(slotNumber);
+// 저장 모델 장착/해제는 AbilityItemHero.SetEquip/RemoveEquip을 통해 수행
+hero.SetEquip(equip, slotNumber);
+hero.RemoveEquip(slotNumber);
 ```
 
 ---

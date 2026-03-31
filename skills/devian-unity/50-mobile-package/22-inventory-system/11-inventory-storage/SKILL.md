@@ -40,10 +40,10 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobilePacka
 
 ### 장비 장착
 
-장비 장착/해제의 실제 로직은 `AbilityItemHero.Equip/Unequip`이 담당한다.
-- 장착 시 hero stat에 equip stat을 합산하고, 해제 시 제거한다.
-- `ITEM_LEVEL`, `ITEM_AMOUNT`는 equip 메타 stat이라 hero aggregate stat에 반영하지 않는다.
+장비 장착/해제의 저장 로직은 `AbilityItemHero.SetEquip/RemoveEquip`이 담당한다.
+- 이 경로는 hero loadout metadata와 equip owner metadata만 갱신한다.
 - 이미 다른 hero에 장착된 equip 이동은 `InventoryStorage.Equip()`가 기존 owner를 먼저 정리한 뒤 위임하는 경로만 사용한다.
+- equip stat 계산은 `AbilityUnitHero.Equip/Unequip`에서 수행한다.
 InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제공한다.
 
 - `RemoveEquip`은 장착 상태면 hero 슬롯 맵까지 함께 정리한 뒤 제거한다.

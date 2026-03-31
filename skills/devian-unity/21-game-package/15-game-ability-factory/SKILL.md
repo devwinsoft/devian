@@ -4,7 +4,7 @@ Status: ACTIVE
 AppliesTo: v10
 
 **GamePackage Ability factory layer.**
-`AbilityItem*`, `AbilityUnit*` 생성 로직을 한 곳에 모아 `table lookup -> new -> Init -> stat/equip projection` 흐름을 표준화한다.
+`AbilityItem*`, `AbilityUnit*` 생성 로직을 한 곳에 모아 `table lookup -> new -> Init` 흐름을 표준화한다.
 
 ---
 
@@ -13,7 +13,6 @@ AppliesTo: v10
 - `AbilityItemFactory` — `ITEM_*` 기반 outgame ability 생성
 - `AbilityUnitFactory` — `UNIT_*` 기반 ingame ability 생성
 - `AbilityUnitHeroContext` — outgame preview / simulate 용 hero projection context
-- `AbilityEquipProjection` 또는 동등 개념 — equip clone/slot projection 규약
 
 ---
 
@@ -23,14 +22,12 @@ AppliesTo: v10
 
 - `TB_ITEM_*` / `TB_UNIT_*` 조회
 - `new Ability...()`
-- `Init(table)`
-- stat 복사
-- equip owner/slot 정리
+- `Init(table, levelTable)`
+- stat 추가 적용
 
 이 패턴이 Inventory, SaveData 복원, preview, battle spawn에 반복되면 다음 문제가 생긴다.
 
 - 생성 규칙이 분산됨
-- preview가 inventory 인스턴스를 직접 오염시킬 위험이 생김
 - `AbilityItem* -> AbilityUnit*` 변환 규칙이 호출부마다 달라짐
 - `ITEM_*`와 `UNIT_*`를 암묵적으로 연결하려는 잘못된 설계가 섞이기 쉬움
 
@@ -54,7 +51,7 @@ Factory layer의 목적은 **생성 책임을 중앙화**하고, 특히 **outgam
 | `AbilityItemFactory.cs` | `AbilityItemCard`, `AbilityItemMaterial`, `AbilityItemHero`, `AbilityItemEquip` 생성 |
 | `AbilityUnitFactory.cs` | `AbilityUnitHero`, `AbilityUnitMonster` 생성 |
 | `AbilityUnitHeroContext.cs` | hero preview/init 입력 컨텍스트 |
-| `AbilityFactoryStatUtil.cs` | stat copy / override / whitelist 적용 헬퍼 |
+| `AbilityFactoryStatUtil.cs` | item factory stat 적용 헬퍼 |
 
 ---
 
@@ -84,7 +81,7 @@ level table 규칙:
 - item factory는 level row stat을 직접 apply 하지 않는다
 - `AbilityItem*.Init(table, levelTable, ...)`가 level row stat을 초기 적용한다
 - stack amount 같은 mutable 상태 복원은 factory 바깥 호출부가 담당한다
-- hero equip 장착/해제는 `AbilityItemHero.Equip()` 또는 inventory facade가 담당한다
+- hero equip loadout 저장은 `AbilityItemHero.SetEquip()/RemoveEquip()` 또는 inventory facade가 담당한다
 - 즉 순서는 `find level row -> Init(table, levelTable, ...) -> restore mutable state` 다
 - level row가 없으면 `CommonResult.Failure(ABILITY_ITEM_TABLE_NOT_FOUND, ...)`
 - 빈 stat slot(`STAT_TYPE.NONE`)은 skip한다
@@ -114,10 +111,8 @@ level table 규칙:
 var ctx = new AbilityUnitHeroContext
 {
     UnitId = unitId,
-    SourceItemHero = itemHero,
-    SourceEquips = itemHero.Equips,
-    CopyItemLevel = true,
-    CloneEquips = true,
+    UnitLevel = itemHero.ItemLevel,
+    Equips = itemHero.Equips,
 };
 
 var previewResult = AbilityUnitFactory.CreateHero(ctx);
@@ -130,7 +125,7 @@ var preview = previewResult.Value;
 그리고 convenience API는 내부적으로 context로 변환한다.
 
 ```csharp
-var previewResult = AbilityUnitFactory.CreateHero(itemHero, unitId);
+var previewResult = AbilityUnitFactory.CreateHero(itemHero);
 ```
 
 ---
@@ -146,18 +141,14 @@ var previewResult = AbilityUnitFactory.CreateHero(itemHero, unitId);
 
 ### Optional
 
-- `AbilityItemHero SourceItemHero`
-- `IReadOnlyDictionary<int, AbilityItemEquip> SourceEquips`
-- `IReadOnlyDictionary<STAT_TYPE, int> OverrideStats`
-- `bool CopyItemLevel`
-- `bool CloneEquips`
+- `int UnitLevel`
+- `IReadOnlyDictionary<int, AbilityItemEquip> Equips`
 
 ### Notes
 
 - `UnitId`는 필수다.
-- `SourceItemHero`는 선택이다.
-- `SourceItemHero`가 있어도 `UNIT_HERO`를 자동 추론하지 않는다.
-- `OverrideStats`는 preview/buff/test 전용 덮어쓰기 입력이다.
+- `UnitLevel` 기본값은 `1`이다.
+- `Equips`는 preview/unit 계산에 사용할 장비 입력이다. factory는 clone 후 `AbilityUnitHero.Equip()`으로 projection한다.
 - invalid input / lookup failure는 `CommonResult.Failure(...)`로 반환한다.
 
 ---
@@ -184,27 +175,12 @@ var previewResult = AbilityUnitFactory.CreateHero(itemHero, unitId);
 
 ---
 
-## 7. Equip Projection Rule
+## 7. Current Preview Rule
 
-Preview/simulate에서 가장 위험한 부분은 equip 참조 공유다.
+현재 지원 범위에서 preview 입력은 `UnitId`, `UnitLevel`, `Equips`를 사용한다.
 
-잘못된 예:
-
-- inventory의 `AbilityItemEquip`를 그대로 `AbilityUnitHero`에 장착
-- preview에서 `SetOwner/ClearOwner`가 원본 inventory 상태를 오염
-
-권장 규칙:
-
-- 기본값은 `CloneEquips = true`
-- preview unit에는 **equip clone**을 장착한다
-- clone 후 owner를 preview unit 기준으로 다시 세팅한다
-
-예시 흐름:
-
-1. source equip clone
-2. clone owner clear
-3. preview unit에 장착
-4. slot owner 재설정
+- `Equips`는 clone 후 `AbilityUnitHero.Equip()`으로 투영된다.
+- item hero는 저장 모델이고, unit hero가 계산 모델이다.
 
 ---
 
@@ -245,26 +221,24 @@ public sealed class AbilityItemEquip
 public sealed class AbilityUnitHeroContext
 {
     public string UnitId { get; init; }
-    public AbilityItemHero SourceItemHero { get; init; }
-    public IReadOnlyDictionary<int, AbilityItemEquip> SourceEquips { get; init; }
-    public IReadOnlyDictionary<STAT_TYPE, int> OverrideStats { get; init; }
-    public bool CopyItemLevel { get; init; }
-    public bool CloneEquips { get; init; } = true;
+    public int UnitLevel { get; init; } = 1;
+    public IReadOnlyDictionary<int, AbilityItemEquip> Equips { get; init; }
 }
 
 public static class AbilityUnitFactory
 {
     public static CommonResult<AbilityUnitHero> CreateHero(string unitId,
-        IReadOnlyDictionary<STAT_TYPE, int> overrideStats = null);
+        int unitLevel = 1);
+
+    public static CommonResult<AbilityUnitHero> CreateHero(UNIT_HERO table,
+        int unitLevel = 1);
 
     public static CommonResult<AbilityUnitHero> CreateHero(AbilityUnitHeroContext context);
 
-    public static CommonResult<AbilityUnitHero> CreateHero(AbilityItemHero itemHero, string unitId,
-        IReadOnlyDictionary<STAT_TYPE, int> overrideStats = null,
-        bool cloneEquips = true);
+    public static CommonResult<AbilityUnitHero> CreateHero(AbilityItemHero itemHero);
 
     public static CommonResult<AbilityUnitMonster> CreateMonster(UNIT_MONSTER table,
-        IReadOnlyDictionary<STAT_TYPE, int> overrideStats = null);
+        int unitLevel = 1);
 }
 ```
 
@@ -274,16 +248,13 @@ public static class AbilityUnitFactory
 
 ## 9. Projection Rule for Stats
 
-`AbilityItem*`의 stat을 `AbilityUnit*`에 무조건 복사하면 안 된다.
+`AbilityUnitFactory.CreateHero(context)`는 `UNIT_*_LEVEL`로 초기화한 뒤 `context.Equips`를 `AbilityUnitHero.Equip()`으로 계산한다.
 
 권장 규칙:
 
-- `ITEM_AMOUNT`는 unit stat으로 복사 금지
-- `ITEM_LEVEL`은 preview 계산 입력으로만 사용하고, 필요할 때만 unit stat에 반영
-- `UNIT_HP_MAX` 같은 unit 고유 stat은 `UNIT_*` table 또는 명시적 계산식이 정본
-- item-derived bonus는 `OverrideStats` 또는 별도 projection 단계에서 더한다
-
-즉 item stat은 **source input**이고, unit stat은 **projection result**다.
+- unit 생성 시 선택된 level row는 `UNIT_LEVEL`과 `UNIT_HP`를 정본으로 공급한다
+- `UNIT_HP` 같은 unit 고유 stat은 `UNIT_*_LEVEL` table이 정본이다
+- 현재 공식 SSOT에 없는 stat 합성 규칙은 factory에 임의로 하드코딩하지 않는다
 
 ---
 
@@ -298,8 +269,8 @@ public static class AbilityUnitFactory
 
 - 생성 절차 조립
 - table lookup overload 제공 가능
-- stat/equip projection
-- preview-safe clone 처리
+- context 검증
+- 추가 stat 적용
 
 ### Caller
 
@@ -314,7 +285,6 @@ public static class AbilityUnitFactory
 - 새 코드에서는 `new Ability...()` + `Init(...)`를 호출부에 흩뿌리지 말고 factory 경유를 우선한다.
 - 새 factory API는 expected failure에서 `throw`하지 않고 `CommonResult`를 반환한다.
 - `AbilityUnitHero`가 `ITEM_HERO`를 직접 조회해서 `UNIT_HERO`를 추론하면 안 된다.
-- preview factory는 inventory 원본 `AbilityItemEquip` owner 상태를 오염시키면 안 된다.
 - direct-reference overload를 만들더라도 내부 정본 경로는 context 기반이어야 한다.
 - `AbilityItem*` 생성과 `AbilityUnit*` 생성 규칙은 분리하되, 필요하면 façade `AbilityFactory`로 묶을 수 있다.
 
@@ -324,7 +294,7 @@ public static class AbilityUnitFactory
 
 ### Outgame inventory load
 
-`ITEM_HERO` row + saved stats + saved equips
+`ITEM_HERO` row + saved level/amount/equips
 → `AbilityItemFactory.CreateHero(...)`
 → `CommonResult<AbilityItemHero>`
 → `IsSuccess` 확인 후 `AbilityItemHero`

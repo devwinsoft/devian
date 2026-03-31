@@ -425,6 +425,62 @@ namespace Devian.Domain.Game
                 }
             });
 
+            global::Devian.TableManager.Instance.RegisterTbLoader("SKILL", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_SKILL.LoadFromNdjson(text);
+                    TB_SKILL._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_SKILL.LoadFromPb64Binary(bin);
+                    TB_SKILL._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("PROJECTILE", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_PROJECTILE.LoadFromNdjson(text);
+                    TB_PROJECTILE._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_PROJECTILE.LoadFromPb64Binary(bin);
+                    TB_PROJECTILE._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("STATUS", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_STATUS.LoadFromNdjson(text);
+                    TB_STATUS._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_STATUS.LoadFromPb64Binary(bin);
+                    TB_STATUS._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("AFFECT", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_AFFECT.LoadFromNdjson(text);
+                    TB_AFFECT._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_AFFECT.LoadFromPb64Binary(bin);
+                    TB_AFFECT._AfterLoad();
+                }
+            });
+
             global::Devian.TableManager.Instance.RegisterTbLoader("TREASURE_CHEST", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)

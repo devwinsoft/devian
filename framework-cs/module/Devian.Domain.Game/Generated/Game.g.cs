@@ -89,9 +89,29 @@ namespace Devian.Domain.Game
     public enum STAT_TYPE
     {
         NONE = 0,
-        ITEM_AMOUNT = 1,
-        ITEM_LEVEL = 2,
-        UNIT_HP_MAX = 100,
+        AFFECT_ATK_PHY_ADD = 1001,
+        AFFECT_ATK_PHY_PER = 1002,
+        AFFECT_ATK_MAG_ADD = 1003,
+        AFFECT_ATK_MAG_PER = 1004,
+        AFFECT_DEF_PHY_ADD = 1005,
+        AFFECT_DEF_PHY_PER = 1006,
+        AFFECT_DEF_MAG_ADD = 1007,
+        AFFECT_DEF_MAG_PER = 1008,
+        AFFECT_HP_ADD = 1009,
+        AFFECT_HP_PER = 1010,
+        ITEM_ATK_PHY = 2001,
+        ITEM_ATK_MAG = 2002,
+        ITEM_DEF_PHY = 2003,
+        ITEM_DEF_MAG = 2004,
+        ITEM_AMOUNT = 2005,
+        ITEM_HP = 2006,
+        ITEM_LEVEL = 2007,
+        UNIT_ATK_PHY = 3001,
+        UNIT_ATK_MAG = 3002,
+        UNIT_DEF_PHY = 3003,
+        UNIT_DEF_MAG = 3004,
+        UNIT_HP = 3005,
+        UNIT_LEVEL = 3006,
     }
 
     /// <summary>UNIT_TYPE enum</summary>
@@ -654,6 +674,45 @@ namespace Devian.Domain.Game
         public string GetKey() => InternalProductId;
     }
 
+    /// <summary>SKILL row</summary>
+    public sealed class SKILL : IEntityKey<string>
+    {
+        public string SkillId { get; set; } = string.Empty;
+        public string NameId { get; set; } = string.Empty;
+        public List<string> AffectList { get; set; } = new();
+
+        public string GetKey() => SkillId;
+    }
+
+    /// <summary>PROJECTILE row</summary>
+    public sealed class PROJECTILE : IEntityKey<string>
+    {
+        public string ProjectileId { get; set; } = string.Empty;
+        public string NameId { get; set; } = string.Empty;
+        public List<string> AffectList { get; set; } = new();
+
+        public string GetKey() => ProjectileId;
+    }
+
+    /// <summary>STATUS row</summary>
+    public sealed class STATUS : IEntityKey<string>
+    {
+        public string StatusId { get; set; } = string.Empty;
+        public string NameId { get; set; } = string.Empty;
+        public List<string> AffectList { get; set; } = new();
+
+        public string GetKey() => StatusId;
+    }
+
+    /// <summary>AFFECT row</summary>
+    public sealed class AFFECT : IEntityKey<string>
+    {
+        public string AffectId { get; set; } = string.Empty;
+        public string NameId { get; set; } = string.Empty;
+
+        public string GetKey() => AffectId;
+    }
+
     /// <summary>TREASURE_CHEST row</summary>
     public sealed class TREASURE_CHEST : IEntityKey<int>
     {
@@ -685,18 +744,19 @@ namespace Devian.Domain.Game
         public UNIT_HERO_TYPE HeroType { get; set; }
         public string NameId { get; set; } = string.Empty;
         public string DescId { get; set; } = string.Empty;
-        public int MaxHp { get; set; }
 
         public string GetKey() => UnitId;
     }
 
     /// <summary>UNIT_HERO_LEVEL row</summary>
-    public sealed class UNIT_HERO_LEVEL : IEntityKey<string>
+    public sealed class UNIT_HERO_LEVEL : IEntityKey<int>
     {
+        public int Index { get; set; }
         public string UnitId { get; set; } = string.Empty;
         public int UnitLevel { get; set; }
+        public int MaxHp { get; set; }
 
-        public string GetKey() => UnitId;
+        public int GetKey() => Index;
     }
 
     /// <summary>UNIT_MONSTER row</summary>
@@ -705,18 +765,19 @@ namespace Devian.Domain.Game
         public string UnitId { get; set; } = string.Empty;
         public string NameId { get; set; } = string.Empty;
         public string DescId { get; set; } = string.Empty;
-        public int MaxHp { get; set; }
 
         public string GetKey() => UnitId;
     }
 
     /// <summary>UNIT_MONSTER_LEVEL row</summary>
-    public sealed class UNIT_MONSTER_LEVEL : IEntityKey<string>
+    public sealed class UNIT_MONSTER_LEVEL : IEntityKey<int>
     {
+        public int Index { get; set; }
         public string UnitId { get; set; } = string.Empty;
         public int UnitLevel { get; set; }
+        public int MaxHp { get; set; }
 
-        public string GetKey() => UnitId;
+        public int GetKey() => Index;
     }
 
     // ================================================================
@@ -3526,6 +3587,338 @@ namespace Devian.Domain.Game
         static partial void _OnAfterLoad();
     }
 
+    /// <summary>TB_SKILL container</summary>
+    public static partial class TB_SKILL
+    {
+        private static readonly Dictionary<string, SKILL> _dict = new();
+        private static readonly List<SKILL> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<SKILL> GetAll() => _list;
+
+        public static SKILL? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out SKILL? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(SKILL row)
+        {
+            _list.Add(row);
+            _dict[row.SkillId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<SKILL>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<SKILL>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<SKILL>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_PROJECTILE container</summary>
+    public static partial class TB_PROJECTILE
+    {
+        private static readonly Dictionary<string, PROJECTILE> _dict = new();
+        private static readonly List<PROJECTILE> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<PROJECTILE> GetAll() => _list;
+
+        public static PROJECTILE? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out PROJECTILE? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(PROJECTILE row)
+        {
+            _list.Add(row);
+            _dict[row.ProjectileId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<PROJECTILE>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<PROJECTILE>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<PROJECTILE>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_STATUS container</summary>
+    public static partial class TB_STATUS
+    {
+        private static readonly Dictionary<string, STATUS> _dict = new();
+        private static readonly List<STATUS> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<STATUS> GetAll() => _list;
+
+        public static STATUS? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out STATUS? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(STATUS row)
+        {
+            _list.Add(row);
+            _dict[row.StatusId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<STATUS>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<STATUS>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<STATUS>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_AFFECT container</summary>
+    public static partial class TB_AFFECT
+    {
+        private static readonly Dictionary<string, AFFECT> _dict = new();
+        private static readonly List<AFFECT> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<AFFECT> GetAll() => _list;
+
+        public static AFFECT? Get(string key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(string key, out AFFECT? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(AFFECT row)
+        {
+            _list.Add(row);
+            _dict[row.AffectId] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<AFFECT>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<AFFECT>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<AFFECT>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
     /// <summary>TB_TREASURE_CHEST container</summary>
     public static partial class TB_TREASURE_CHEST
     {
@@ -3822,8 +4215,13 @@ namespace Devian.Domain.Game
     /// <summary>TB_UNIT_HERO_LEVEL container</summary>
     public static partial class TB_UNIT_HERO_LEVEL
     {
-        private static readonly Dictionary<string, UNIT_HERO_LEVEL> _dict = new();
+        private static readonly Dictionary<int, UNIT_HERO_LEVEL> _dict = new();
         private static readonly List<UNIT_HERO_LEVEL> _list = new();
+
+        private static readonly Dictionary<string, List<UNIT_HERO_LEVEL>> _groupDict = new();
+        private static readonly List<string> _groupList = new();
+        private static readonly Dictionary<string, int> _groupPrimaryKey = new();
+        private static readonly Dictionary<int, string> _keyToGroup = new();
 
         public static int Count => _list.Count;
 
@@ -3831,16 +4229,37 @@ namespace Devian.Domain.Game
         {
             _dict.Clear();
             _list.Clear();
+            _groupDict.Clear();
+            _groupList.Clear();
+            _groupPrimaryKey.Clear();
+            _keyToGroup.Clear();
         }
 
         public static IReadOnlyList<UNIT_HERO_LEVEL> GetAll() => _list;
 
-        public static UNIT_HERO_LEVEL? Get(string key)
+        public static IReadOnlyList<string> GetGroupKeys() => _groupList;
+
+        public static IReadOnlyList<UNIT_HERO_LEVEL> GetByGroup(string groupKey)
+        {
+            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<UNIT_HERO_LEVEL>();
+        }
+
+        public static bool TryGetGroupPrimaryKey(string groupKey, out int key)
+        {
+            return _groupPrimaryKey.TryGetValue(groupKey, out key);
+        }
+
+        public static bool TryGetGroupKeyByKey(int key, out string groupKey)
+        {
+            return _keyToGroup.TryGetValue(key, out groupKey);
+        }
+
+        public static UNIT_HERO_LEVEL? Get(int key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(string key, out UNIT_HERO_LEVEL? row)
+        public static bool TryGet(int key, out UNIT_HERO_LEVEL? row)
         {
             return _dict.TryGetValue(key, out row);
         }
@@ -3848,7 +4267,25 @@ namespace Devian.Domain.Game
         private static void AddRow(UNIT_HERO_LEVEL row)
         {
             _list.Add(row);
-            _dict[row.UnitId] = row;
+            _dict[row.Index] = row;
+            var groupKey = row.UnitId;
+            _keyToGroup[row.Index] = groupKey;
+            if (!_groupDict.TryGetValue(groupKey, out var groupList))
+            {
+                groupList = new List<UNIT_HERO_LEVEL>();
+                _groupDict[groupKey] = groupList;
+                _groupList.Add(groupKey);
+            }
+            groupList.Add(row);
+            if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
+            {
+                if (Comparer<int>.Default.Compare(row.Index, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.Index;
+            }
+            else
+            {
+                _groupPrimaryKey[groupKey] = row.Index;
+            }
         }
 
         public static void LoadFromJson(string json)
@@ -3988,8 +4425,13 @@ namespace Devian.Domain.Game
     /// <summary>TB_UNIT_MONSTER_LEVEL container</summary>
     public static partial class TB_UNIT_MONSTER_LEVEL
     {
-        private static readonly Dictionary<string, UNIT_MONSTER_LEVEL> _dict = new();
+        private static readonly Dictionary<int, UNIT_MONSTER_LEVEL> _dict = new();
         private static readonly List<UNIT_MONSTER_LEVEL> _list = new();
+
+        private static readonly Dictionary<string, List<UNIT_MONSTER_LEVEL>> _groupDict = new();
+        private static readonly List<string> _groupList = new();
+        private static readonly Dictionary<string, int> _groupPrimaryKey = new();
+        private static readonly Dictionary<int, string> _keyToGroup = new();
 
         public static int Count => _list.Count;
 
@@ -3997,16 +4439,37 @@ namespace Devian.Domain.Game
         {
             _dict.Clear();
             _list.Clear();
+            _groupDict.Clear();
+            _groupList.Clear();
+            _groupPrimaryKey.Clear();
+            _keyToGroup.Clear();
         }
 
         public static IReadOnlyList<UNIT_MONSTER_LEVEL> GetAll() => _list;
 
-        public static UNIT_MONSTER_LEVEL? Get(string key)
+        public static IReadOnlyList<string> GetGroupKeys() => _groupList;
+
+        public static IReadOnlyList<UNIT_MONSTER_LEVEL> GetByGroup(string groupKey)
+        {
+            return _groupDict.TryGetValue(groupKey, out var list) ? list : Array.Empty<UNIT_MONSTER_LEVEL>();
+        }
+
+        public static bool TryGetGroupPrimaryKey(string groupKey, out int key)
+        {
+            return _groupPrimaryKey.TryGetValue(groupKey, out key);
+        }
+
+        public static bool TryGetGroupKeyByKey(int key, out string groupKey)
+        {
+            return _keyToGroup.TryGetValue(key, out groupKey);
+        }
+
+        public static UNIT_MONSTER_LEVEL? Get(int key)
         {
             return _dict.TryGetValue(key, out var row) ? row : null;
         }
 
-        public static bool TryGet(string key, out UNIT_MONSTER_LEVEL? row)
+        public static bool TryGet(int key, out UNIT_MONSTER_LEVEL? row)
         {
             return _dict.TryGetValue(key, out row);
         }
@@ -4014,7 +4477,25 @@ namespace Devian.Domain.Game
         private static void AddRow(UNIT_MONSTER_LEVEL row)
         {
             _list.Add(row);
-            _dict[row.UnitId] = row;
+            _dict[row.Index] = row;
+            var groupKey = row.UnitId;
+            _keyToGroup[row.Index] = groupKey;
+            if (!_groupDict.TryGetValue(groupKey, out var groupList))
+            {
+                groupList = new List<UNIT_MONSTER_LEVEL>();
+                _groupDict[groupKey] = groupList;
+                _groupList.Add(groupKey);
+            }
+            groupList.Add(row);
+            if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
+            {
+                if (Comparer<int>.Default.Compare(row.Index, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.Index;
+            }
+            else
+            {
+                _groupPrimaryKey[groupKey] = row.Index;
+            }
         }
 
         public static void LoadFromJson(string json)
@@ -4362,6 +4843,46 @@ namespace Devian.Domain.Game
         public static implicit operator PURCHASE_ID(string value) => new PURCHASE_ID { Value = value };
     }
 
+    /// <summary>Inspector-bindable ID for SKILL</summary>
+    [Serializable]
+    public sealed class SKILL_ID
+    {
+        public string Value;
+
+        public static implicit operator string(SKILL_ID id) => id.Value;
+        public static implicit operator SKILL_ID(string value) => new SKILL_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for PROJECTILE</summary>
+    [Serializable]
+    public sealed class PROJECTILE_ID
+    {
+        public string Value;
+
+        public static implicit operator string(PROJECTILE_ID id) => id.Value;
+        public static implicit operator PROJECTILE_ID(string value) => new PROJECTILE_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for STATUS</summary>
+    [Serializable]
+    public sealed class STATUS_ID
+    {
+        public string Value;
+
+        public static implicit operator string(STATUS_ID id) => id.Value;
+        public static implicit operator STATUS_ID(string value) => new STATUS_ID { Value = value };
+    }
+
+    /// <summary>Inspector-bindable ID for AFFECT</summary>
+    [Serializable]
+    public sealed class AFFECT_ID
+    {
+        public string Value;
+
+        public static implicit operator string(AFFECT_ID id) => id.Value;
+        public static implicit operator AFFECT_ID(string value) => new AFFECT_ID { Value = value };
+    }
+
     /// <summary>Inspector-bindable ID for TREASURE_CHEST</summary>
     [Serializable]
     public sealed class TREASURE_CHEST_ID
@@ -4396,10 +4917,10 @@ namespace Devian.Domain.Game
     [Serializable]
     public sealed class UNIT_HERO_LEVEL_ID
     {
-        public string Value;
+        public int Value;
 
-        public static implicit operator string(UNIT_HERO_LEVEL_ID id) => id.Value;
-        public static implicit operator UNIT_HERO_LEVEL_ID(string value) => new UNIT_HERO_LEVEL_ID { Value = value };
+        public static implicit operator int(UNIT_HERO_LEVEL_ID id) => id.Value;
+        public static implicit operator UNIT_HERO_LEVEL_ID(int value) => new UNIT_HERO_LEVEL_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for UNIT_MONSTER</summary>
@@ -4416,10 +4937,10 @@ namespace Devian.Domain.Game
     [Serializable]
     public sealed class UNIT_MONSTER_LEVEL_ID
     {
-        public string Value;
+        public int Value;
 
-        public static implicit operator string(UNIT_MONSTER_LEVEL_ID id) => id.Value;
-        public static implicit operator UNIT_MONSTER_LEVEL_ID(string value) => new UNIT_MONSTER_LEVEL_ID { Value = value };
+        public static implicit operator int(UNIT_MONSTER_LEVEL_ID id) => id.Value;
+        public static implicit operator UNIT_MONSTER_LEVEL_ID(int value) => new UNIT_MONSTER_LEVEL_ID { Value = value };
     }
 
     /// <summary>Inspector-bindable ID for string table GAME_TEXT</summary>
@@ -4464,12 +4985,16 @@ namespace Devian.Domain.Game
         public static bool IsValid(this SHOP_PURCHASE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this SHOP_GOLD_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this PURCHASE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this SKILL_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this PROJECTILE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this STATUS_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this AFFECT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this TREASURE_CHEST_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this TREASURE_REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this UNIT_HERO_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
-        public static bool IsValid(this UNIT_HERO_LEVEL_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this UNIT_HERO_LEVEL_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this UNIT_MONSTER_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
-        public static bool IsValid(this UNIT_MONSTER_LEVEL_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
+        public static bool IsValid(this UNIT_MONSTER_LEVEL_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this GAME_TEXT_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
     }
 

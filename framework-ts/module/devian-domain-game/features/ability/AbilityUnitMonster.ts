@@ -1,20 +1,24 @@
-import { STAT_TYPE, UNIT_MONSTER } from '../../Generated/Game.g';
+import { UNIT_MONSTER, UNIT_MONSTER_LEVEL } from '../../Generated/Game.g';
 import { AbilityUnitBase } from './AbilityUnitBase';
 
 export class AbilityUnitMonster extends AbilityUnitBase {
     private mTable: UNIT_MONSTER | null = null;
+    private mLevelTable: UNIT_MONSTER_LEVEL | null = null;
 
     get unitId(): string { return this.mTable?.UnitId ?? ''; }
 
-    init(table: UNIT_MONSTER): void {
+    init(table: UNIT_MONSTER, levelTable: UNIT_MONSTER_LEVEL): void {
         this.mTable = table;
-        this.addStat(STAT_TYPE.UNIT_HP_MAX, table.MaxHp);
+        this.mLevelTable = levelTable;
+        this.initUnitState(levelTable.UnitLevel, levelTable.MaxHp);
     }
 
     clone(): AbilityUnitMonster {
         const c = new AbilityUnitMonster();
         c.mTable = this.mTable;
+        c.mLevelTable = this.mLevelTable;
         c.copyStatsFrom(this);
+        c.copyUnitStateFrom(this);
         return c;
     }
 }

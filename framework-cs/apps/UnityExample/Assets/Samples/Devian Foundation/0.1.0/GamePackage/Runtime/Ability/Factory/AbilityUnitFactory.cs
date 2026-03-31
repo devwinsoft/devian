@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
 
@@ -6,7 +5,7 @@ namespace Devian
 {
     public static class AbilityUnitFactory
     {
-        public static CommonResult<AbilityUnitHero> CreateHero(string unitId, IReadOnlyDictionary<STAT_TYPE, int> overrideStats = null)
+        public static CommonResult<AbilityUnitHero> CreateHero(string unitId, int unitLevel = 1)
         {
             if (string.IsNullOrWhiteSpace(unitId))
             {
@@ -23,7 +22,25 @@ namespace Devian
                     $"UNIT_HERO not found: {unitId}");
             }
 
-            return createHero(table, overrideStats);
+            return CreateHero(table, unitLevel);
+        }
+
+        public static CommonResult<AbilityUnitHero> CreateHero(UNIT_HERO table, int unitLevel = 1)
+        {
+            if (table == null)
+            {
+                return CommonResult<AbilityUnitHero>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    "AbilityUnitFactory.CreateHero: table is null.");
+            }
+
+            var levelTable = resolveHeroLevelTable(table.UnitId, unitLevel);
+            if (levelTable.IsFailure)
+                return CommonResult<AbilityUnitHero>.Failure(levelTable.Error!);
+
+            var ability = new AbilityUnitHero();
+            ability.Init(table, levelTable.Value);
+            return CommonResult<AbilityUnitHero>.Success(ability);
         }
 
         public static CommonResult<AbilityUnitHero> CreateHero(AbilityUnitHeroContext context)
@@ -50,31 +67,25 @@ namespace Devian
                     $"UNIT_HERO not found: {context.UnitId}");
             }
 
-            var create = createHero(table, null);
+            var resolvedUnitLevel = resolveHeroContextUnitLevel(context);
+            if (resolvedUnitLevel.IsFailure)
+                return CommonResult<AbilityUnitHero>.Failure(resolvedUnitLevel.Error!);
+
+            var create = CreateHero(table, resolvedUnitLevel.Value);
             if (create.IsFailure)
                 return create;
 
             var ability = create.Value;
 
-            if (context.CopyItemLevel && context.SourceItemHero != null)
-                ability.SetStat(STAT_TYPE.ITEM_LEVEL, context.SourceItemHero.ItemLevel);
+            var projectEquips = addEquips(ability, context.Equips);
+            if (projectEquips.IsFailure)
+                return CommonResult<AbilityUnitHero>.Failure(projectEquips.Error!);
+            resetCurrentHp(ability);
 
-            var project = projectHeroEquips(
-                ability,
-                context.SourceEquips ?? context.SourceItemHero?.Equips,
-                context.CloneEquips);
-            if (project.IsFailure)
-                return CommonResult<AbilityUnitHero>.Failure(project.Error!);
-
-            AbilityFactoryStatUtil.ApplyStats(ability, context.OverrideStats);
             return CommonResult<AbilityUnitHero>.Success(ability);
         }
 
-        public static CommonResult<AbilityUnitHero> CreateHero(
-            AbilityItemHero itemHero,
-            string unitId,
-            IReadOnlyDictionary<STAT_TYPE, int> overrideStats = null,
-            bool cloneEquips = true)
+        public static CommonResult<AbilityUnitHero> CreateHero(AbilityItemHero itemHero)
         {
             if (itemHero == null)
             {
@@ -83,17 +94,22 @@ namespace Devian
                     "AbilityUnitFactory.CreateHero: itemHero is null.");
             }
 
+            if (string.IsNullOrWhiteSpace(itemHero.UnitId))
+            {
+                return CommonResult<AbilityUnitHero>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    "AbilityUnitFactory.CreateHero: itemHero.UnitId is null or empty.");
+            }
+
             return CreateHero(new AbilityUnitHeroContext
             {
-                UnitId = unitId,
-                SourceItemHero = itemHero,
-                OverrideStats = overrideStats,
-                CopyItemLevel = true,
-                CloneEquips = cloneEquips,
+                UnitId = itemHero.UnitId,
+                UnitLevel = itemHero.ItemLevel,
+                Equips = itemHero.Equips,
             });
         }
 
-        public static CommonResult<AbilityUnitMonster> CreateMonster(string unitId, IReadOnlyDictionary<STAT_TYPE, int> overrideStats = null)
+        public static CommonResult<AbilityUnitMonster> CreateMonster(string unitId, int unitLevel = 1)
         {
             if (string.IsNullOrWhiteSpace(unitId))
             {
@@ -110,10 +126,10 @@ namespace Devian
                     $"UNIT_MONSTER not found: {unitId}");
             }
 
-            return CreateMonster(table, overrideStats);
+            return CreateMonster(table, unitLevel);
         }
 
-        public static CommonResult<AbilityUnitMonster> CreateMonster(UNIT_MONSTER table, IReadOnlyDictionary<STAT_TYPE, int> overrideStats = null)
+        public static CommonResult<AbilityUnitMonster> CreateMonster(UNIT_MONSTER table, int unitLevel = 1)
         {
             if (table == null)
             {
@@ -122,62 +138,135 @@ namespace Devian
                     "AbilityUnitFactory.CreateMonster: table is null.");
             }
 
+            var levelTable = resolveMonsterLevelTable(table.UnitId, unitLevel);
+            if (levelTable.IsFailure)
+                return CommonResult<AbilityUnitMonster>.Failure(levelTable.Error!);
+
             var ability = new AbilityUnitMonster();
-            ability.Init(table);
-            AbilityFactoryStatUtil.ApplyStats(ability, overrideStats);
+            ability.Init(table, levelTable.Value);
             return CommonResult<AbilityUnitMonster>.Success(ability);
         }
 
-        static CommonResult projectHeroEquips(
+        static CommonResult<UNIT_HERO_LEVEL> resolveHeroLevelTable(string unitId, int unitLevel)
+        {
+            var resolveLevel = resolveUnitLevel(unitLevel, "AbilityUnitFactory.CreateHero");
+            if (resolveLevel.IsFailure)
+                return CommonResult<UNIT_HERO_LEVEL>.Failure(resolveLevel.Error!);
+
+            var levelTable = findHeroLevelRow(unitId, resolveLevel.Value);
+            if (levelTable == null)
+            {
+                return CommonResult<UNIT_HERO_LEVEL>.Failure(
+                    COMMON_ERROR_TYPE.ABILITY_UNIT_TABLE_NOT_FOUND,
+                    $"UNIT_HERO_LEVEL not found: unitId={unitId}, level={resolveLevel.Value}");
+            }
+
+            return CommonResult<UNIT_HERO_LEVEL>.Success(levelTable);
+        }
+
+        static CommonResult<UNIT_MONSTER_LEVEL> resolveMonsterLevelTable(string unitId, int unitLevel)
+        {
+            var resolveLevel = resolveUnitLevel(unitLevel, "AbilityUnitFactory.CreateMonster");
+            if (resolveLevel.IsFailure)
+                return CommonResult<UNIT_MONSTER_LEVEL>.Failure(resolveLevel.Error!);
+
+            var levelTable = findMonsterLevelRow(unitId, resolveLevel.Value);
+            if (levelTable == null)
+            {
+                return CommonResult<UNIT_MONSTER_LEVEL>.Failure(
+                    COMMON_ERROR_TYPE.ABILITY_UNIT_TABLE_NOT_FOUND,
+                    $"UNIT_MONSTER_LEVEL not found: unitId={unitId}, level={resolveLevel.Value}");
+            }
+
+            return CommonResult<UNIT_MONSTER_LEVEL>.Success(levelTable);
+        }
+
+        static CommonResult<int> resolveHeroContextUnitLevel(AbilityUnitHeroContext context)
+        {
+            return resolveUnitLevel(context.UnitLevel, "AbilityUnitFactory.CreateHero");
+        }
+
+        static CommonResult<int> resolveUnitLevel(int unitLevel, string context)
+        {
+            if (unitLevel < 1)
+            {
+                return CommonResult<int>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    $"{context}: unitLevel must be >= 1. actual={unitLevel}");
+            }
+
+            return CommonResult<int>.Success(unitLevel);
+        }
+
+        static UNIT_HERO_LEVEL findHeroLevelRow(string unitId, int unitLevel)
+        {
+            foreach (var row in TB_UNIT_HERO_LEVEL.GetByGroup(unitId))
+            {
+                if (row.UnitLevel == unitLevel)
+                    return row;
+            }
+
+            return null;
+        }
+
+        static UNIT_MONSTER_LEVEL findMonsterLevelRow(string unitId, int unitLevel)
+        {
+            foreach (var row in TB_UNIT_MONSTER_LEVEL.GetByGroup(unitId))
+            {
+                if (row.UnitLevel == unitLevel)
+                    return row;
+            }
+
+            return null;
+        }
+
+        static CommonResult addEquips(
             AbilityUnitHero ability,
-            IReadOnlyDictionary<int, AbilityItemEquip> equips,
-            bool cloneEquips)
+            System.Collections.Generic.IReadOnlyDictionary<int, AbilityItemEquip> equips)
         {
             if (ability == null || equips == null)
                 return CommonResult.Ok();
 
-            ability.ClearProjectedEquips();
-
             foreach (var kv in equips)
             {
+                if (kv.Key <= 0)
+                {
+                    return CommonResult.Failure(
+                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                        $"AbilityUnitFactory.CreateHero: equip slot must be >= 1. actual={kv.Key}");
+                }
+
                 if (kv.Value == null)
                 {
                     return CommonResult.Failure(
                         COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                        $"AbilityUnitFactory.CreateHero: equips[{kv.Key}] is null.");
+                        $"AbilityUnitFactory.CreateHero: equip is null. slot={kv.Key}");
                 }
 
-                var equip = cloneEquips
-                    ? (AbilityItemEquip)kv.Value.Clone()
-                    : kv.Value;
-
-                if (cloneEquips)
-                    equip.ClearOwner();
-
-                if (!ability.SetProjectedEquip(equip, kv.Key))
+                if (kv.Value.Clone() is not AbilityItemEquip equipClone)
                 {
                     return CommonResult.Failure(
                         COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                        $"AbilityUnitFactory.CreateHero: invalid equip slot {kv.Key}.");
+                        $"AbilityUnitFactory.CreateHero: failed to clone equip. slot={kv.Key}");
+                }
+
+                if (!ability.Equip(equipClone, kv.Key))
+                {
+                    return CommonResult.Failure(
+                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                        $"AbilityUnitFactory.CreateHero: failed to project equip. slot={kv.Key}, itemUid={kv.Value.ItemUid}");
                 }
             }
 
             return CommonResult.Ok();
         }
 
-        static CommonResult<AbilityUnitHero> createHero(UNIT_HERO table, IReadOnlyDictionary<STAT_TYPE, int> overrideStats)
+        static void resetCurrentHp(AbilityUnitBase ability)
         {
-            if (table == null)
-            {
-                return CommonResult<AbilityUnitHero>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    "AbilityUnitFactory.CreateHero: table is null.");
-            }
+            if (ability == null)
+                return;
 
-            var ability = new AbilityUnitHero();
-            ability.Init(table);
-            AbilityFactoryStatUtil.ApplyStats(ability, overrideStats);
-            return CommonResult<AbilityUnitHero>.Success(ability);
+            ability.ResetCurrentHpToMax();
         }
     }
 }

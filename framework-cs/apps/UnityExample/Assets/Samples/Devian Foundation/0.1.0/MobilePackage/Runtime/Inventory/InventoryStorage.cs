@@ -86,7 +86,7 @@ namespace Devian
             if (equip.IsEquipped)
             {
                 if (mHeroes.TryGetValue(equip.OwnerUnitId, out var hero))
-                    hero.Unequip(equip.OwnerSlotNumber);
+                    hero.RemoveEquip(equip.OwnerSlotNumber);
                 else
                     equip.ClearOwner();
             }
@@ -146,18 +146,18 @@ namespace Devian
             if (equip.IsEquipped)
             {
                 if (mHeroes.TryGetValue(equip.OwnerUnitId, out var prevHero))
-                    prevHero.Unequip(equip.OwnerSlotNumber);
+                    prevHero.RemoveEquip(equip.OwnerSlotNumber);
                 else
                     equip.ClearOwner();
             }
 
-            return hero.Equip(equip, equipSlot);
+            return hero.SetEquip(equip, equipSlot);
         }
 
         public bool Unequip(string heroId, int equipSlot)
         {
             if (!mHeroes.TryGetValue(heroId, out var hero)) return false;
-            return hero.Unequip(equipSlot);
+            return hero.RemoveEquip(equipSlot);
         }
 
         // ── Rental Operations ──

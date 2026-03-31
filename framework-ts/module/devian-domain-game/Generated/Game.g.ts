@@ -75,9 +75,29 @@ export enum GAME_MESSAGE_OP_TYPE {
 /** STAT_TYPE enum */
 export enum STAT_TYPE {
     NONE = 0,
-    ITEM_AMOUNT = 1,
-    ITEM_LEVEL = 2,
-    UNIT_HP_MAX = 100,
+    AFFECT_ATK_PHY_ADD = 1001,
+    AFFECT_ATK_PHY_PER = 1002,
+    AFFECT_ATK_MAG_ADD = 1003,
+    AFFECT_ATK_MAG_PER = 1004,
+    AFFECT_DEF_PHY_ADD = 1005,
+    AFFECT_DEF_PHY_PER = 1006,
+    AFFECT_DEF_MAG_ADD = 1007,
+    AFFECT_DEF_MAG_PER = 1008,
+    AFFECT_HP_ADD = 1009,
+    AFFECT_HP_PER = 1010,
+    ITEM_ATK_PHY = 2001,
+    ITEM_ATK_MAG = 2002,
+    ITEM_DEF_PHY = 2003,
+    ITEM_DEF_MAG = 2004,
+    ITEM_AMOUNT = 2005,
+    ITEM_HP = 2006,
+    ITEM_LEVEL = 2007,
+    UNIT_ATK_PHY = 3001,
+    UNIT_ATK_MAG = 3002,
+    UNIT_DEF_PHY = 3003,
+    UNIT_DEF_MAG = 3004,
+    UNIT_HP = 3005,
+    UNIT_LEVEL = 3006,
 }
 
 /** UNIT_TYPE enum */
@@ -536,6 +556,33 @@ export interface PURCHASE extends IEntityKey<string> {
     getKey(): string;
 }
 
+export interface SKILL extends IEntityKey<string> {
+    SkillId: string;
+    NameId: string;
+    AffectList: string[];
+    getKey(): string;
+}
+
+export interface PROJECTILE extends IEntityKey<string> {
+    ProjectileId: string;
+    NameId: string;
+    AffectList: string[];
+    getKey(): string;
+}
+
+export interface STATUS extends IEntityKey<string> {
+    StatusId: string;
+    NameId: string;
+    AffectList: string[];
+    getKey(): string;
+}
+
+export interface AFFECT extends IEntityKey<string> {
+    AffectId: string;
+    NameId: string;
+    getKey(): string;
+}
+
 export interface TREASURE_CHEST extends IEntityKey<number> {
     Level: number;
     TreasureGradeType: TREASURE_GRADE_TYPE;
@@ -559,28 +606,30 @@ export interface UNIT_HERO extends IEntityKey<string> {
     HeroType: UNIT_HERO_TYPE;
     NameId: string;
     DescId: string;
-    MaxHp: number;
     getKey(): string;
 }
 
-export interface UNIT_HERO_LEVEL extends IEntityKey<string> {
+export interface UNIT_HERO_LEVEL extends IEntityKey<number> {
+    Index: number;
     UnitId: string;
     UnitLevel: number;
-    getKey(): string;
+    MaxHp: number;
+    getKey(): number;
 }
 
 export interface UNIT_MONSTER extends IEntityKey<string> {
     UnitId: string;
     NameId: string;
     DescId: string;
-    MaxHp: number;
     getKey(): string;
 }
 
-export interface UNIT_MONSTER_LEVEL extends IEntityKey<string> {
+export interface UNIT_MONSTER_LEVEL extends IEntityKey<number> {
+    Index: number;
     UnitId: string;
     UnitLevel: number;
-    getKey(): string;
+    MaxHp: number;
+    getKey(): number;
 }
 
 // ================================================================
@@ -1631,6 +1680,150 @@ export class TB_PURCHASE {
     }
 }
 
+export class TB_SKILL {
+    private static _dict: Map<string, SKILL> = new Map();
+    private static _list: SKILL[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly SKILL[] { return this._list; }
+
+    static get(key: string): SKILL | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as SKILL;
+            this._list.push(row);
+            this._dict.set(row.SkillId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_PROJECTILE {
+    private static _dict: Map<string, PROJECTILE> = new Map();
+    private static _list: PROJECTILE[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly PROJECTILE[] { return this._list; }
+
+    static get(key: string): PROJECTILE | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as PROJECTILE;
+            this._list.push(row);
+            this._dict.set(row.ProjectileId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_STATUS {
+    private static _dict: Map<string, STATUS> = new Map();
+    private static _list: STATUS[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly STATUS[] { return this._list; }
+
+    static get(key: string): STATUS | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as STATUS;
+            this._list.push(row);
+            this._dict.set(row.StatusId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_AFFECT {
+    private static _dict: Map<string, AFFECT> = new Map();
+    private static _list: AFFECT[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly AFFECT[] { return this._list; }
+
+    static get(key: string): AFFECT | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as AFFECT;
+            this._list.push(row);
+            this._dict.set(row.AffectId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
 export class TB_TREASURE_CHEST {
     private static _dict: Map<number, TREASURE_CHEST> = new Map();
     private static _list: TREASURE_CHEST[] = [];
@@ -1740,7 +1933,7 @@ export class TB_UNIT_HERO {
 }
 
 export class TB_UNIT_HERO_LEVEL {
-    private static _dict: Map<string, UNIT_HERO_LEVEL> = new Map();
+    private static _dict: Map<number, UNIT_HERO_LEVEL> = new Map();
     private static _list: UNIT_HERO_LEVEL[] = [];
 
     static get count(): number { return this._list.length; }
@@ -1752,11 +1945,11 @@ export class TB_UNIT_HERO_LEVEL {
 
     static getAll(): readonly UNIT_HERO_LEVEL[] { return this._list; }
 
-    static get(key: string): UNIT_HERO_LEVEL | undefined {
+    static get(key: number): UNIT_HERO_LEVEL | undefined {
         return this._dict.get(key);
     }
 
-    static has(key: string): boolean {
+    static has(key: number): boolean {
         return this._dict.has(key);
     }
 
@@ -1766,7 +1959,7 @@ export class TB_UNIT_HERO_LEVEL {
         for (const line of lines) {
             const row = JSON.parse(line) as UNIT_HERO_LEVEL;
             this._list.push(row);
-            this._dict.set(row.UnitId, row);
+            this._dict.set(row.Index, row);
         }
     }
 
@@ -1812,7 +2005,7 @@ export class TB_UNIT_MONSTER {
 }
 
 export class TB_UNIT_MONSTER_LEVEL {
-    private static _dict: Map<string, UNIT_MONSTER_LEVEL> = new Map();
+    private static _dict: Map<number, UNIT_MONSTER_LEVEL> = new Map();
     private static _list: UNIT_MONSTER_LEVEL[] = [];
 
     static get count(): number { return this._list.length; }
@@ -1824,11 +2017,11 @@ export class TB_UNIT_MONSTER_LEVEL {
 
     static getAll(): readonly UNIT_MONSTER_LEVEL[] { return this._list; }
 
-    static get(key: string): UNIT_MONSTER_LEVEL | undefined {
+    static get(key: number): UNIT_MONSTER_LEVEL | undefined {
         return this._dict.get(key);
     }
 
-    static has(key: string): boolean {
+    static has(key: number): boolean {
         return this._dict.has(key);
     }
 
@@ -1838,7 +2031,7 @@ export class TB_UNIT_MONSTER_LEVEL {
         for (const line of lines) {
             const row = JSON.parse(line) as UNIT_MONSTER_LEVEL;
             this._list.push(row);
-            this._dict.set(row.UnitId, row);
+            this._dict.set(row.Index, row);
         }
     }
 

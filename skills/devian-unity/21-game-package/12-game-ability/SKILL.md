@@ -11,6 +11,8 @@ AppliesTo: v10
 ## 1. Scope
 
 - `AbilityBase` — `Dictionary<STAT_TYPE, int>` 기반 정규화 stat 저장소
+- `AbilityBattleBase` / `AbilityBattleSkill` / `AbilityBattleStatus` / `AbilityBattleProjectile` — `SkillTable.xlsx` generated row wrapper
+- `AbilityAffect` — `SkillTable.xlsx -> AFFECT` generated row wrapper
 - `AbilityItemBase` / `AbilityItemEquip` / `AbilityItemCard` / `AbilityItemMaterial` / `AbilityItemHero` — outgame item runtime 모델
 - `AbilityUnitBase` / `AbilityUnitHero` / `AbilityUnitMonster` — unit runtime 모델
 - Generated enum/table 정의 자체는 [devian/21-domain-game](../../../devian/21-domain-game/00-overview/SKILL.md)가 정본이다
@@ -37,7 +39,12 @@ AppliesTo: v10
 
 | 파일 | 역할 |
 |---|---|
-| `AbilityBase.cs` | stat dictionary, indexer, `AddStat`, `SetStat`, `ClearStat`, `Clone` 공통 베이스 |
+| `AbilityBase.cs` | stat dictionary, indexer, `AddStat`, `SetStat`, `ClearStat`, `Clone` 공통 베이스 + aggregate property (`AtkPhysical`, `AtkMagical`, `DefPhysical`, `DefMagical`, `MaxHP`) |
+| `AbilityBattleBase.cs` | battle wrapper 공통 abstract 베이스 |
+| `AbilityBattleSkill.cs` | `SKILL` 참조 wrapper (`SkillId`, `NameId`, `AffectList`) |
+| `AbilityBattleStatus.cs` | `STATUS` 참조 wrapper (`StatusId`, `NameId`, `AffectList`) |
+| `AbilityBattleProjectile.cs` | `PROJECTILE` 참조 wrapper (`ProjectileId`, `NameId`, `AffectList`) |
+| `AbilityAffect.cs` | `AFFECT` 참조 wrapper (`AffectId`, `NameId`) |
 | `AbilityItemBase.cs` | item 공통 abstract 베이스 (`Amount`, `ItemLevel`, `AddAmount`) |
 | `AbilityItemEquip.cs` | `ITEM_EQUIP` 참조 + `ItemUid` + owner/unit slot 상태 |
 | `AbilityItemCard.cs` | `ITEM_CARD` 참조 + `ITEM_AMOUNT`/`ITEM_LEVEL` 기반 상태 관리 |
@@ -54,6 +61,10 @@ AppliesTo: v10
 ### Consumed Generated Types
 
 - `Devian.Domain.Game.STAT_TYPE`
+- `Devian.Domain.Game.SKILL`
+- `Devian.Domain.Game.STATUS`
+- `Devian.Domain.Game.PROJECTILE`
+- `Devian.Domain.Game.AFFECT`
 - `Devian.Domain.Game.ITEM_EQUIP`
 - `Devian.Domain.Game.ITEM_CARD`
 - `Devian.Domain.Game.ITEM_MATERIAL`
@@ -76,14 +87,18 @@ AppliesTo: v10
 ## 5. Behavioral Rules
 
 - `AbilityBase`는 `(STAT_TYPE, int)` 정규화 저장소를 단일 SSOT로 사용한다.
+- `AbilityBase.AtkPhysical`, `AtkMagical`, `DefPhysical`, `DefMagical`는 `(AFFECT_*_ADD + ITEM_*) * (100 + AFFECT_*_PER) / 100 + UNIT_*` 규칙을 따른다. 구현은 정수 결과를 유지한다.
+- `AbilityBase.MaxHP`는 `(AFFECT_HP_ADD + ITEM_HP) * (100 + AFFECT_HP_PER) / 100 + UNIT_HP` 규칙을 따른다. 구현은 정수 결과를 유지한다.
+- `AbilityBattleSkill`, `AbilityBattleStatus`, `AbilityBattleProjectile`, `AbilityAffect`는 `SkillTable.xlsx` generated row를 참조하는 얇은 wrapper다. 별도 factory나 level table 규약은 두지 않는다.
 - `AbilityItemEquip`은 `itemUid`를 인스턴스 pk로 사용하고, 장착 상태는 `OwnerUnitId` + `OwnerSlotNumber`로 관리한다.
 - `AbilityItemCard.Amount`, `AbilityItemMaterial.Amount`, `AbilityItemHero.Amount`는 `AbilityItemBase.Amount`를 상속하며, `STAT_TYPE.ITEM_AMOUNT`의 얇은 래퍼다.
 - `AbilityItemCard.Init()`, `AbilityItemHero.Init()`, `AbilityItemEquip.Init()`는 base `ITEM_*` row와 대응 `ITEM_*_LEVEL` row를 함께 받아서 초기 stat을 세팅한다.
-- `AbilityItemHero`가 outgame hero equip ownership의 실제 변경 지점을 가진다. `Equips` / `Equip(equip, slot)` / `Unequip(slot)` 메서드를 제공한다.
-- `AbilityItemHero.Equip()`는 장착된 `AbilityItemEquip`의 stat을 hero stat에 합산하고, `Unequip()`는 같은 stat을 제거한다. `STAT_TYPE.ITEM_LEVEL`, `STAT_TYPE.ITEM_AMOUNT` 같은 item 메타 stat은 hero aggregate에 섞지 않는다.
-- 다른 hero에 이미 장착된 equip을 직접 `AbilityItemHero.Equip()`으로 옮기지 않는다. 이동은 기존 owner를 먼저 `Unequip()`하거나 inventory facade가 선정리한 뒤 수행한다.
-- `AbilityUnitHero`는 `UNIT_HERO` 기반 unit stat 모델이며, preview/ingame projection용 `Equips` snapshot만 유지한다. 직접 소유/장착 규칙 정본은 [15-game-ability-factory](../15-game-ability-factory/SKILL.md)다.
-- `AbilityUnitHero.Init()` / `AbilityUnitMonster.Init()`는 `STAT_TYPE.UNIT_HP_MAX`를 `table.MaxHp`로 세팅한다.
+- `AbilityItemHero`는 outgame hero 저장 모델이다. `Equips`와 `SetEquip(equip, slot)` / `RemoveEquip(slot)`로 loadout metadata만 보유한다.
+- `AbilityItemHero`는 `ITEM_HERO.UnitId`를 참조할 수 있으며, item hero와 unit hero를 명시 필드로 연결한다.
+- `AbilityUnitHero`는 `UNIT_HERO` 기반 계산 모델이다. `Equip(equip, slot)` / `Unequip(slot)`에서 장착된 `AbilityItemEquip` stat을 unit stat에 합산/제거한다. `STAT_TYPE.ITEM_LEVEL`, `STAT_TYPE.ITEM_AMOUNT` 같은 item 메타 stat은 unit aggregate에 섞지 않는다.
+- preview/ingame projection의 equip 계산 규칙 정본은 [15-game-ability-factory](../15-game-ability-factory/SKILL.md)다.
+- `AbilityUnitBase`는 `UnitLevel`, `CurHP` 프로퍼티를 제공한다. `CurHP`는 stat dictionary가 아니라 runtime field(`mCurHP`)이며 clone 시 같이 복사된다. `MaxHP`는 `AbilityBase` aggregate property를 사용한다.
+- `AbilityUnitHero.Init()` / `AbilityUnitMonster.Init()`는 base `UNIT_*` row와 대응 `UNIT_*_LEVEL` row를 함께 받아서 `STAT_TYPE.UNIT_LEVEL`, `STAT_TYPE.UNIT_HP`를 초기화하고 `CurHP = MaxHP`로 시작한다.
 - clone 동작은 generated table 참조는 유지하고 stat 값만 복사한다.
 
 ---
