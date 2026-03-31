@@ -15,6 +15,7 @@ Common 레이어에서 "성공/실패 + 에러"를 표현하는 표준 Result �
 
 - 결과 타입: `CommonResult<T>`
 - 에러 타입: `CommonError`
+- 주 용도: public/boundary API의 recoverable failure 전달
 
 ---
 
@@ -42,6 +43,18 @@ Hard Rule:
 - `COMMON_ERROR_TYPE.SUCCESS`(reserved, `0`)를 실패 코드로 사용하지 않는다.
 - 예상 가능한 validation / lookup / restore 실패는 `throw`보다 `CommonResult.Failure(...)`를 우선한다.
 
+Boundary-First Rule:
+- public API, data boundary, config parse, save/load, table lookup은 `CommonResult`를 우선한다.
+- private/internal helper는 이미 검증된 내부 invariant가 깨질 때만 예외를 허용할 수 있다.
+- helper 예외를 이유 없이 public API의 기본 실패 모델로 승격시키지 않는다.
+
+대표 경계:
+- factory create/lookup
+- inventory apply
+- reward validation/apply
+- save payload deserialize
+- first-init config parse
+
 레거시(string code) Failure 오버로드가 남아있다면:
 - `COMMON_ERROR_TYPE.COMMON_UNKNOWN`으로 매핑하고
 - `Details`에 `legacyCode=...`를 보존한다.
@@ -55,6 +68,7 @@ Hard Rule:
 - 성공 시 `Error`는 null이어야 하며, 성공을 `COMMON_ERROR_TYPE.SUCCESS`로 대체 표현하지 않는다.
 - 외부 응답/프로토콜에서 numeric code `0`(success)를 받는 경우:
   - `CommonError`를 만들지 말고 `CommonResult` 성공으로 매핑한다.
+- recover 가능한 경계 실패를 `catch` 없이 예외 전파에 의존하지 않는다.
 
 ---
 
@@ -63,6 +77,7 @@ Hard Rule:
 Hard
 - `CommonResult<T>` 실패는 `CommonError(COMMON_ERROR_TYPE, ...)` 기반으로 표현됨
 - 성공은 `Error == null`로 표현되며 `COMMON_ERROR_TYPE.SUCCESS`를 `Failure(...)`에 사용하지 않음
+- public/boundary failure 모델이 `throw` 대신 `CommonResult`로 유지됨
 
 Soft
 - 없음

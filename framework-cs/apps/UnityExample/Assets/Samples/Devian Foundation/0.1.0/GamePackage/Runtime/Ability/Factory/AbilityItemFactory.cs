@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
 
@@ -6,7 +5,7 @@ namespace Devian
 {
     public static class AbilityItemFactory
     {
-        public static CommonResult<AbilityItemCard> CreateCard(string itemId, IReadOnlyDictionary<STAT_TYPE, int> stats = null)
+        public static CommonResult<AbilityItemCard> CreateCard(string itemId, int itemLevel = 1)
         {
             if (string.IsNullOrWhiteSpace(itemId))
             {
@@ -23,10 +22,10 @@ namespace Devian
                     $"ITEM_CARD not found: {itemId}");
             }
 
-            return CreateCard(table, stats);
+            return CreateCard(table, itemLevel);
         }
 
-        public static CommonResult<AbilityItemCard> CreateCard(ITEM_CARD table, IReadOnlyDictionary<STAT_TYPE, int> stats = null)
+        public static CommonResult<AbilityItemCard> CreateCard(ITEM_CARD table, int itemLevel = 1)
         {
             if (table == null)
             {
@@ -35,13 +34,16 @@ namespace Devian
                     "AbilityItemFactory.CreateCard: table is null.");
             }
 
+            var levelTable = resolveCardLevelTable(table.ItemId, itemLevel);
+            if (levelTable.IsFailure)
+                return CommonResult<AbilityItemCard>.Failure(levelTable.Error!);
+
             var ability = new AbilityItemCard();
-            ability.Init(table);
-            AbilityFactoryStatUtil.ApplyStats(ability, stats);
+            ability.Init(table, levelTable.Value);
             return CommonResult<AbilityItemCard>.Success(ability);
         }
 
-        public static CommonResult<AbilityItemMaterial> CreateMaterial(string itemId, IReadOnlyDictionary<STAT_TYPE, int> stats = null)
+        public static CommonResult<AbilityItemMaterial> CreateMaterial(string itemId)
         {
             if (string.IsNullOrWhiteSpace(itemId))
             {
@@ -58,10 +60,10 @@ namespace Devian
                     $"ITEM_MATERIAL not found: {itemId}");
             }
 
-            return CreateMaterial(table, stats);
+            return CreateMaterial(table);
         }
 
-        public static CommonResult<AbilityItemMaterial> CreateMaterial(ITEM_MATERIAL table, IReadOnlyDictionary<STAT_TYPE, int> stats = null)
+        public static CommonResult<AbilityItemMaterial> CreateMaterial(ITEM_MATERIAL table)
         {
             if (table == null)
             {
@@ -72,15 +74,12 @@ namespace Devian
 
             var ability = new AbilityItemMaterial();
             ability.Init(table);
-            AbilityFactoryStatUtil.ApplyStats(ability, stats);
             return CommonResult<AbilityItemMaterial>.Success(ability);
         }
 
         public static CommonResult<AbilityItemHero> CreateHero(
             string heroId,
-            IReadOnlyDictionary<STAT_TYPE, int> stats = null,
-            IReadOnlyDictionary<int, AbilityItemEquip> equips = null,
-            bool cloneEquips = false)
+            int itemLevel = 1)
         {
             if (string.IsNullOrWhiteSpace(heroId))
             {
@@ -97,14 +96,12 @@ namespace Devian
                     $"ITEM_HERO not found: {heroId}");
             }
 
-            return CreateHero(table, stats, equips, cloneEquips);
+            return CreateHero(table, itemLevel);
         }
 
         public static CommonResult<AbilityItemHero> CreateHero(
             ITEM_HERO table,
-            IReadOnlyDictionary<STAT_TYPE, int> stats = null,
-            IReadOnlyDictionary<int, AbilityItemEquip> equips = null,
-            bool cloneEquips = false)
+            int itemLevel = 1)
         {
             if (table == null)
             {
@@ -113,20 +110,19 @@ namespace Devian
                     "AbilityItemFactory.CreateHero: table is null.");
             }
 
-            var ability = new AbilityItemHero();
-            ability.Init(table);
-            AbilityFactoryStatUtil.ApplyStats(ability, stats);
-            var attach = attachHeroEquips(ability, equips, cloneEquips);
-            if (attach.IsFailure)
-                return CommonResult<AbilityItemHero>.Failure(attach.Error!);
+            var levelTable = resolveHeroLevelTable(table.ItemId, itemLevel);
+            if (levelTable.IsFailure)
+                return CommonResult<AbilityItemHero>.Failure(levelTable.Error!);
 
+            var ability = new AbilityItemHero();
+            ability.Init(table, levelTable.Value);
             return CommonResult<AbilityItemHero>.Success(ability);
         }
 
         public static CommonResult<AbilityItemEquip> CreateEquip(
             string itemId,
             string itemUid,
-            IReadOnlyDictionary<STAT_TYPE, int> stats = null,
+            int itemLevel = 1,
             string ownerUnitId = null,
             int ownerSlotNumber = 0)
         {
@@ -145,13 +141,13 @@ namespace Devian
                     $"ITEM_EQUIP not found: {itemId}");
             }
 
-            return CreateEquip(table, itemUid, stats, ownerUnitId, ownerSlotNumber);
+            return CreateEquip(table, itemUid, itemLevel, ownerUnitId, ownerSlotNumber);
         }
 
         public static CommonResult<AbilityItemEquip> CreateEquip(
             ITEM_EQUIP table,
             string itemUid,
-            IReadOnlyDictionary<STAT_TYPE, int> stats = null,
+            int itemLevel = 1,
             string ownerUnitId = null,
             int ownerSlotNumber = 0)
         {
@@ -184,9 +180,12 @@ namespace Devian
                     "AbilityItemFactory.CreateEquip: ownerUnitId/ownerSlotNumber must both be set or both be empty.");
             }
 
+            var levelTable = resolveEquipLevelTable(table.ItemId, itemLevel);
+            if (levelTable.IsFailure)
+                return CommonResult<AbilityItemEquip>.Failure(levelTable.Error!);
+
             var ability = new AbilityItemEquip();
-            ability.Init(table, itemUid);
-            AbilityFactoryStatUtil.ApplyStats(ability, stats);
+            ability.Init(table, levelTable.Value, itemUid);
 
             if (ownerSlotNumber > 0)
                 ability.SetOwner(ownerUnitId, ownerSlotNumber);
@@ -194,39 +193,112 @@ namespace Devian
             return CommonResult<AbilityItemEquip>.Success(ability);
         }
 
-        static CommonResult attachHeroEquips(
-            AbilityItemHero ability,
-            IReadOnlyDictionary<int, AbilityItemEquip> equips,
-            bool cloneEquips)
+        static CommonResult<ITEM_CARD_LEVEL> resolveCardLevelTable(
+            string itemId,
+            int itemLevel)
         {
-            if (ability == null || equips == null)
-                return CommonResult.Ok();
+            var resolveLevel = resolveItemLevel(itemLevel, "AbilityItemFactory.CreateCard");
+            if (resolveLevel.IsFailure)
+                return CommonResult<ITEM_CARD_LEVEL>.Failure(resolveLevel.Error!);
 
-            foreach (var kv in equips)
+            var levelTable = findCardLevelRow(itemId, resolveLevel.Value);
+            if (levelTable == null)
             {
-                if (kv.Value == null)
-                {
-                    return CommonResult.Failure(
-                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                        $"AbilityItemFactory.CreateHero: equips[{kv.Key}] is null.");
-                }
-
-                var equip = cloneEquips
-                    ? (AbilityItemEquip)kv.Value.Clone()
-                    : kv.Value;
-
-                if (cloneEquips)
-                    equip.ClearOwner();
-
-                if (!ability.Equip(equip, kv.Key))
-                {
-                    return CommonResult.Failure(
-                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                        $"AbilityItemFactory.CreateHero: invalid equip slot {kv.Key}.");
-                }
+                return CommonResult<ITEM_CARD_LEVEL>.Failure(
+                    COMMON_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
+                    $"ITEM_CARD_LEVEL not found: itemId={itemId}, level={resolveLevel.Value}");
             }
 
-            return CommonResult.Ok();
+            return CommonResult<ITEM_CARD_LEVEL>.Success(levelTable);
+        }
+
+        static CommonResult<ITEM_HERO_LEVEL> resolveHeroLevelTable(
+            string itemId,
+            int itemLevel)
+        {
+            var resolveLevel = resolveItemLevel(itemLevel, "AbilityItemFactory.CreateHero");
+            if (resolveLevel.IsFailure)
+                return CommonResult<ITEM_HERO_LEVEL>.Failure(resolveLevel.Error!);
+
+            var levelTable = findHeroLevelRow(itemId, resolveLevel.Value);
+            if (levelTable == null)
+            {
+                return CommonResult<ITEM_HERO_LEVEL>.Failure(
+                    COMMON_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
+                    $"ITEM_HERO_LEVEL not found: itemId={itemId}, level={resolveLevel.Value}");
+            }
+
+            return CommonResult<ITEM_HERO_LEVEL>.Success(levelTable);
+        }
+
+        static CommonResult<ITEM_EQUIP_LEVEL> resolveEquipLevelTable(
+            string itemId,
+            int itemLevel)
+        {
+            var resolveLevel = resolveItemLevel(itemLevel, "AbilityItemFactory.CreateEquip");
+            if (resolveLevel.IsFailure)
+                return CommonResult<ITEM_EQUIP_LEVEL>.Failure(resolveLevel.Error!);
+
+            var levelTable = findEquipLevelRow(itemId, resolveLevel.Value);
+            if (levelTable == null)
+            {
+                return CommonResult<ITEM_EQUIP_LEVEL>.Failure(
+                    COMMON_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
+                    $"ITEM_EQUIP_LEVEL not found: itemId={itemId}, level={resolveLevel.Value}");
+            }
+
+            return CommonResult<ITEM_EQUIP_LEVEL>.Success(levelTable);
+        }
+
+        static CommonResult<int> resolveItemLevel(int itemLevel, string context)
+        {
+            if (itemLevel < 1)
+            {
+                return CommonResult<int>.Failure(
+                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    $"{context}: itemLevel must be >= 1. actual={itemLevel}");
+            }
+
+            return CommonResult<int>.Success(itemLevel);
+        }
+
+        static ITEM_CARD_LEVEL findCardLevelRow(string itemId, int level)
+        {
+            var rows = TB_ITEM_CARD_LEVEL.GetByGroup(itemId);
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (row != null && row.ItemLevel == level)
+                    return row;
+            }
+
+            return null;
+        }
+
+        static ITEM_HERO_LEVEL findHeroLevelRow(string itemId, int level)
+        {
+            var rows = TB_ITEM_HERO_LEVEL.GetByGroup(itemId);
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (row != null && row.ItemLevel == level)
+                    return row;
+            }
+
+            return null;
+        }
+
+        static ITEM_EQUIP_LEVEL findEquipLevelRow(string itemId, int level)
+        {
+            var rows = TB_ITEM_EQUIP_LEVEL.GetByGroup(itemId);
+            for (var i = 0; i < rows.Count; i++)
+            {
+                var row = rows[i];
+                if (row != null && row.ItemLevel == level)
+                    return row;
+            }
+
+            return null;
         }
     }
 }

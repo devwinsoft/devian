@@ -85,6 +85,15 @@ section codec은 manager를 직접 알지 않고, `Storage` 타입만 다룬다.
 역직렬화 실패는 `throw` 대신 `CommonResult.Failure(...)`로 root caller에 전달한다.
 
 
+## Error Model
+
+- save/load는 대표적인 boundary다. parse/version/restore 실패는 `CommonResult`로 반환한다.
+- root caller(`SaveDataManager`)가 clear/retry/fallback 정책을 선택한다.
+- section codec은 malformed JSON, lookup miss, restore failure를 조용히 무시하지 않는다.
+- private helper에서만 이미 정규화된 내부 invariant 위반 예외를 제한적으로 허용할 수 있다.
+- 단, helper 예외가 codec boundary를 넘어 public API 기본 모델이 되지 않게 한다.
+
+
 ## Primary Save Rule
 
 - public save API는 멀티 슬롯을 노출하지 않는다.
@@ -174,6 +183,7 @@ deserialize 시 target:
 - section codec은 자신이 담당하는 섹션의 레거시 필드만 복구한다.
 - 지원하지 않는 version이면 조용히 부분 로드하지 말고, 명시적인 fallback 정책을 문서에 기록한다.
 - malformed JSON / section restore failure는 `CommonResult.Failure(...)`로 반환하고 상위 caller가 전체 상태를 정리한다.
+- save payload/section 오류를 public API에서 `throw` 기본 모델로 바꾸지 않는다.
 
 
 ---
@@ -184,11 +194,14 @@ deserialize 시 target:
 - manager가 자신의 storage를 소유하더라도, **payload JSON 직렬화 진입점은 SaveDataManager 하나만 유지**한다.
 - `InventoryStorage`, `PurchaseStorage`, `AccountStorage`, `GameMessageStorage`, `MissionStorage`, `AchieveStorage`, `LeaderboardSeasonRewardStorage`, `AttendStorage`에 `ToJson()` / `FromJson()`을 다시 추가하지 않는다.
 - codec은 domain rule을 가지지 않는다. domain mutation은 각 manager가 담당한다.
+- inventory item save는 generic `stats` blob를 생성 정본으로 쓰지 않는다. item 생성은 `itemId/itemUid/itemLevel`과 table lookup으로 복원하고, mutable 상태는 `amount/equips` 같은 explicit field로 저장/복원한다.
+- equip owner는 별도 field로 저장하지 않는다. hero equip ownership의 저장/복원 SSOT는 `heroes[*].equips`다.
 - 새 저장 섹션 추가 시:
   - root codec 수정
   - section codec 추가
   - SaveDataManager sourcing 연결
   - 관련 manager skill 문서 갱신
+- save/load 전용 신규 에러 코드는 `COMMON_ERROR` append-only 규칙 안에서만 추가한다.
 
 
 ---

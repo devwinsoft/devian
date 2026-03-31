@@ -57,7 +57,7 @@ namespace Devian
             var ability = create.Value;
 
             if (context.CopyItemLevel && context.SourceItemHero != null)
-                ability.SetStat(STAT_TYPE.ITEM_LEVEL, context.SourceItemHero.Level);
+                ability.SetStat(STAT_TYPE.ITEM_LEVEL, context.SourceItemHero.ItemLevel);
 
             var project = projectHeroEquips(
                 ability,

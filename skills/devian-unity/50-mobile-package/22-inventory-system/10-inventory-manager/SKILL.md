@@ -95,8 +95,9 @@ CompoSingleton<InventoryManager>.Instance
   - `ApplyHero`: AbilityItemHero 추가/갱신 (`STAT_TYPE.ITEM_AMOUNT` 누적)
   - `ApplyRental`: 로컬 만료 시각 설정/연장 (`max(currentExpiry, now) + 30days`)
   - `SetPassOwnership`: 소유권 설정 + 메시지 트리거
-  - `ApplyTreasure`: chest count 누적
-- item ability 생성 실패/invalid input은 `CommonResult.Failure(...)`로 반환한다.
+- `ApplyTreasure`: chest count 누적
+- public Apply API는 boundary다. item ability 생성 실패/invalid input은 `CommonResult.Failure(...)`로 반환한다.
+- internal helper는 이미 검증된 내부 invariant 위반에 한해 제한적으로 예외를 사용할 수 있다.
 - 타입별 Revoke API로 회수한다.
 - 타입별 Query API로 수량/상태를 조회한다.
 - InventoryStorage를 소유한다.
@@ -134,6 +135,11 @@ CompoSingleton<InventoryManager>.Instance
 - `SetPassOwnership(string itemId, bool owned) -> CommonResult` — `_storage.SetPass(itemId, owned)` + 메시지 트리거
 - `RemovePassOwnership(string itemId) -> CommonResult` — `_storage.RemovePass(itemId)` + 메시지 트리거
 - `ApplyTreasure(TREASURE_GRADE_TYPE gradeType, int amount) -> CommonResult` — `_storage.AddTreasure(gradeType, amount)`
+
+에러 모델:
+- null/empty 입력, 음수 amount, factory lookup 실패는 `CommonResult.Failure(...)`로 반환한다.
+- Reward/SaveData 같은 상위 boundary가 이 결과를 받아 원자성/복구 정책을 결정한다.
+- public Apply API를 `throw` 중심으로 바꾸지 않는다.
 
 ### Revoke
 
@@ -189,6 +195,7 @@ NOTE:
 - 영웅 수량 SSOT = `AbilityItemHero.Amount` (= `this[STAT_TYPE.ITEM_AMOUNT]`).
 - `AbilityItemEquip`이 능력치를 관리한다. outgame 장비 장착은 `AbilityItemHero`가 담당한다.
 - ability 인스턴스 생성은 [15-game-ability-factory](../../../21-game-package/15-game-ability-factory/SKILL.md)의 `AbilityItemFactory`를 우선 사용한다.
+- `COMMON_ERROR`는 append-only SSOT다. inventory 에러 코드는 새 row append로만 추가한다.
 
 
 ---

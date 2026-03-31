@@ -181,6 +181,8 @@ NOTE: `RewardManager.RevokeRewardDatas` / `RevokeRewardDatasPartial`가 RewardDa
 ## C-6) 장비 장착/해제
 
 장비 장착/해제는 `AbilityItemHero.Equip()` / `AbilityItemHero.Unequip()`이 담당한다.
+이때 hero aggregate stat은 장착된 `AbilityItemEquip`의 stat을 합산한 값이며, 해제 시 동일 stat을 제거한다.
+단 `STAT_TYPE.ITEM_LEVEL`, `STAT_TYPE.ITEM_AMOUNT`는 장비 메타 stat이므로 hero aggregate에 포함하지 않는다.
 InventoryStorage는 `Equip(heroId, equipSlot, equipUid)` / `Unequip(heroId, equipSlot)` 편의 메서드로 위임한다.
 
 ---
@@ -201,37 +203,39 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
     "<itemUid>": {
       "itemId": "<string>",
       "itemUid": "<string>",
-      "ownerUnitId": "<string>",
-      "ownerSlotNumber": <int>,
-      "stats": { "<STAT_TYPE.ToString()>": <int> }
+      "itemLevel": <int>
     }
   },
   "cards": {
     "<itemId>": {
       "itemId": "<string>",
-      "stats": { "<STAT_TYPE.ToString()>": <int> }
+      "itemLevel": <int>,
+      "amount": <int>
     }
   },
   "materials": {
     "<itemId>": {
       "itemId": "<string>",
-      "stats": { "<STAT_TYPE.ToString()>": <int> }
+      "amount": <int>
     }
   },
   "heroes": {
     "<itemId>": {
       "heroId": "<string>",
-      "stats": { "<STAT_TYPE.ToString()>": <int> },
+      "itemLevel": <int>,
+      "amount": <int>,
       "equips": { "<slotNumber>": "<equipUid>" }
     }
   }
 }
 ```
 
-- STAT_TYPE key: enum name 문자열 (예: `"ITEM_LEVEL"`, `"ITEM_AMOUNT"`)
 - Hero equips: slotNumber(string key) → equipUid(string value).
+- hero equip ownership의 저장 SSOT는 `heroes[*].equips`다.
+- `equipments[*]`는 owner 정보를 저장하지 않는다. equip owner는 deserialize 시 hero equip 맵으로만 복원한다.
 - 역직렬화 시 테이블 참조: `TB_ITEM_EQUIP.Get`/`TB_ITEM_CARD.Get`/`TB_ITEM_MATERIAL.Get`/`TB_ITEM_HERO.Get`으로 `mTable` 복원.
-- 역직렬화 순서: wallet → equipments → cards → materials → heroes (heroes 마지막: equip 슬롯 참조 필요).
+- 역직렬화 순서: wallet → equipments(항상 unequipped 생성) → cards → materials → heroes (heroes 마지막: equip 슬롯 참조 필요).
+- hero equip 맵에 중복 `equipUid`가 나오면 load 실패로 처리한다.
 - legacy save의 `CARD_AMOUNT`/`UNIT_AMOUNT`/`CARD_LEVEL`/`UNIT_LEVEL` key는 load 시 `ITEM_AMOUNT`/`ITEM_LEVEL`로 매핑한다.
 - 역직렬화 실패는 `CommonResult.Failure(...)`로 즉시 반환하며, 부분 복원 상태를 성공으로 취급하지 않는다.
 - Treasure 상태는 별도 root key `"treasure"`로 직렬화된다 (`SaveDataJsonCodecTreasure` 담당).

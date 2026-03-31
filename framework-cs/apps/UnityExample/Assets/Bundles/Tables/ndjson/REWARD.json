@@ -1,5 +1,7 @@
 {"RewardNum":1,"RewardGroupId":"reward_achieve_001","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
 {"RewardNum":2,"RewardGroupId":"reward_achieve_002","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":100,"Rate":100}
+{"RewardNum":1,"RewardGroupId":"reward_treasure_001_01","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
+{"RewardNum":2,"RewardGroupId":"reward_treasure_001_02","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":100,"Rate":100}
 {"RewardNum":1,"RewardGroupId":"reward_leaderboard_001","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":1000,"Rate":100}
 {"RewardNum":2,"RewardGroupId":"reward_leaderboard_002","Type":"CURRENCY","Id":"JEWEL_FREE","Amount":100,"Rate":100}
 {"RewardNum":1,"RewardGroupId":"reward_mission_day_001","Type":"CURRENCY","Id":"GOLD","Amount":1000,"Rate":100}

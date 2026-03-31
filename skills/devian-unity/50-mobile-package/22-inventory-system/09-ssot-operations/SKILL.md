@@ -26,6 +26,7 @@ SSOT 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
 - `RewardManager.ApplyRewardDatas(RewardData[])` → RewardData 해석 → InventoryManager 타입별 API 호출.
 - 실패(`IsFailure`)면 상태는 변경되지 않는다(원자성은 RewardManager가 보장).
 - 성공(`IsSuccess`)이면 Apply 후 변경 이벤트를 발생시키고, 필요 시 상위 조립에서 저장을 트리거한다.
+- invalid 입력/lookup 실패는 boundary failure로 `CommonResult`를 유지한다.
 
 
 ### 3) 조회/UI 갱신

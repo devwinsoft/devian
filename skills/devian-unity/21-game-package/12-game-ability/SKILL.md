@@ -38,7 +38,7 @@ AppliesTo: v10
 | 파일 | 역할 |
 |---|---|
 | `AbilityBase.cs` | stat dictionary, indexer, `AddStat`, `SetStat`, `ClearStat`, `Clone` 공통 베이스 |
-| `AbilityItemBase.cs` | item 공통 abstract 베이스 (`Amount`, `Level`, `AddAmount`) |
+| `AbilityItemBase.cs` | item 공통 abstract 베이스 (`Amount`, `ItemLevel`, `AddAmount`) |
 | `AbilityItemEquip.cs` | `ITEM_EQUIP` 참조 + `ItemUid` + owner/unit slot 상태 |
 | `AbilityItemCard.cs` | `ITEM_CARD` 참조 + `ITEM_AMOUNT`/`ITEM_LEVEL` 기반 상태 관리 |
 | `AbilityItemMaterial.cs` | `ITEM_MATERIAL` 참조 + `ITEM_AMOUNT`/`ITEM_LEVEL` 기반 상태 관리 |
@@ -78,7 +78,10 @@ AppliesTo: v10
 - `AbilityBase`는 `(STAT_TYPE, int)` 정규화 저장소를 단일 SSOT로 사용한다.
 - `AbilityItemEquip`은 `itemUid`를 인스턴스 pk로 사용하고, 장착 상태는 `OwnerUnitId` + `OwnerSlotNumber`로 관리한다.
 - `AbilityItemCard.Amount`, `AbilityItemMaterial.Amount`, `AbilityItemHero.Amount`는 `AbilityItemBase.Amount`를 상속하며, `STAT_TYPE.ITEM_AMOUNT`의 얇은 래퍼다.
+- `AbilityItemCard.Init()`, `AbilityItemHero.Init()`, `AbilityItemEquip.Init()`는 base `ITEM_*` row와 대응 `ITEM_*_LEVEL` row를 함께 받아서 초기 stat을 세팅한다.
 - `AbilityItemHero`가 outgame hero equip ownership의 실제 변경 지점을 가진다. `Equips` / `Equip(equip, slot)` / `Unequip(slot)` 메서드를 제공한다.
+- `AbilityItemHero.Equip()`는 장착된 `AbilityItemEquip`의 stat을 hero stat에 합산하고, `Unequip()`는 같은 stat을 제거한다. `STAT_TYPE.ITEM_LEVEL`, `STAT_TYPE.ITEM_AMOUNT` 같은 item 메타 stat은 hero aggregate에 섞지 않는다.
+- 다른 hero에 이미 장착된 equip을 직접 `AbilityItemHero.Equip()`으로 옮기지 않는다. 이동은 기존 owner를 먼저 `Unequip()`하거나 inventory facade가 선정리한 뒤 수행한다.
 - `AbilityUnitHero`는 `UNIT_HERO` 기반 unit stat 모델이며, preview/ingame projection용 `Equips` snapshot만 유지한다. 직접 소유/장착 규칙 정본은 [15-game-ability-factory](../15-game-ability-factory/SKILL.md)다.
 - `AbilityUnitHero.Init()` / `AbilityUnitMonster.Init()`는 `STAT_TYPE.UNIT_HP_MAX`를 `table.MaxHp`로 세팅한다.
 - clone 동작은 generated table 참조는 유지하고 stat 값만 복사한다.

@@ -1,0 +1,10 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!49 &4900000
+TextAsset:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ITEM_EQUIP_LEVEL
+  m_Script: RFZHQgEAABAAAQAAAEQCAAB8AAAAH4sIAAAAAAACEyuuVvLMS0mtULIy1FHyLEnN9UxRslLKLEnNjU8tLM0siDcwMFSCyPiklqXmgNUFlySWhCXmlKYaGChZGSDzDdH4Rmh8YyUrg9piuJ1GRNppREU7jYm005iKdpoQaacJFe00JdJOU4rtBAAWcTuSRAIAAA==

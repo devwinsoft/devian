@@ -25,7 +25,7 @@ TypeScript 모듈 관점 설명을 포함하며, Unity `GamePackage` C# addon �
 
 ```
 AbilityBase              ← Dict<STAT_TYPE, int>, indexer, GetInt, GetFloat, AddStat, SetStat, ClearStat, GetStats, Clone
-  ├─ AbilityItemBase (abstract) ← Amount, Level, AddAmount
+  ├─ AbilityItemBase (abstract) ← Amount, ItemLevel, AddAmount
   │   ├─ AbilityItemEquip   ← 장비 Inventory 연동용 (OwnerUnitId, OwnerSlotNumber, IsEquipped)
   │   ├─ AbilityItemCard    ← 카드 Inventory 연동용
   │   ├─ AbilityItemMaterial ← 재료 Inventory 연동용
@@ -117,7 +117,7 @@ namespace Devian
     {
         public abstract string ItemId { get; }
         public int Amount => this[STAT_TYPE.ITEM_AMOUNT];
-        public int Level => this[STAT_TYPE.ITEM_LEVEL];
+        public int ItemLevel => this[STAT_TYPE.ITEM_LEVEL];
         public void AddAmount(int delta) => AddStat(STAT_TYPE.ITEM_AMOUNT, delta);
     }
 }
@@ -131,6 +131,7 @@ namespace Devian
     public sealed class AbilityItemEquip : AbilityItemBase
     {
         ITEM_EQUIP mTable = null;
+        ITEM_EQUIP_LEVEL mLevelTable = null;
         string mItemUid = string.Empty;
         string mOwnerUnitId = string.Empty;
         int mOwnerSlotNumber = 0;
@@ -141,9 +142,10 @@ namespace Devian
         public int OwnerSlotNumber => mOwnerSlotNumber;
         public bool IsEquipped => mOwnerSlotNumber > 0;
 
-        public void Init(ITEM_EQUIP table, string itemUid)
+        public void Init(ITEM_EQUIP table, ITEM_EQUIP_LEVEL levelTable, string itemUid)
         {
             mTable = table;
+            mLevelTable = levelTable;
             mItemUid = itemUid;
         }
 
@@ -181,12 +183,14 @@ namespace Devian
     public sealed class AbilityItemCard : AbilityItemBase
     {
         ITEM_CARD mTable = null;
+        ITEM_CARD_LEVEL mLevelTable = null;
 
         public override string ItemId => mTable?.ItemId ?? string.Empty;
 
-        public void Init(ITEM_CARD table)
+        public void Init(ITEM_CARD table, ITEM_CARD_LEVEL levelTable)
         {
             mTable = table;
+            mLevelTable = levelTable;
         }
 
         public override AbilityBase Clone()
@@ -227,15 +231,17 @@ namespace Devian
 }
 ```
 
-- `AbilityItemBase` — item 공통 abstract 베이스. `abstract ItemId`, `Amount`(`STAT_TYPE.ITEM_AMOUNT`), `Level`(`STAT_TYPE.ITEM_LEVEL`), `AddAmount(delta)` 공통 프로퍼티/메서드를 제공한다.
-- `AbilityItemEquip` — ITEM_EQUIP 테이블 entity를 직접 참조하여 초기화한다. `ItemUid`(인스턴스 고유 GUID)와 `ItemId`(템플릿 ID) 프로퍼티 노출. 같은 `ItemId`에 여러 인스턴스가 존재할 수 있다.
-- `AbilityItemEquip`: `mTable` 참조 + `Init(table, itemUid)` + `ItemUid` + `OwnerUnitId` + `OwnerSlotNumber` + `IsEquipped` + `SetOwner(unitId, slot)` + `ClearOwner()` + `Clone()`. pk는 `itemUid`(GUID).
+- `AbilityItemBase` — item 공통 abstract 베이스. `abstract ItemId`, `Amount`(`STAT_TYPE.ITEM_AMOUNT`), `ItemLevel`(`STAT_TYPE.ITEM_LEVEL`), `AddAmount(delta)` 공통 프로퍼티/메서드를 제공한다.
+- `AbilityItemEquip` — ITEM_EQUIP 테이블 entity와 ITEM_EQUIP_LEVEL row를 함께 받아 초기화한다. `ItemUid`(인스턴스 고유 GUID)와 `ItemId`(템플릿 ID) 프로퍼티 노출. 같은 `ItemId`에 여러 인스턴스가 존재할 수 있다.
+- `AbilityItemEquip`: `mTable` 참조 + `Init(table, levelTable, itemUid)` + `ItemUid` + `OwnerUnitId` + `OwnerSlotNumber` + `IsEquipped` + `SetOwner(unitId, slot)` + `ClearOwner()` + `Clone()`. pk는 `itemUid`(GUID).
 - `AbilityItemCard` — ITEM_CARD 테이블 entity를 직접 참조하여 초기화한다. `ITEM_CARD`는 Generated entity (TB_ITEM_CARD 컨테이너).
-- `AbilityItemCard`: `mTable` 참조 + `Init(table)` + `Clone()`. `ItemId`/`Amount`/`Level`/`AddAmount`는 `AbilityItemBase` 상속.
+- `AbilityItemCard`: `mTable` 참조 + `Init(table, levelTable)` + `Clone()`. `ItemId`/`Amount`/`ItemLevel`/`AddAmount`는 `AbilityItemBase` 상속.
 - `AbilityItemMaterial` — `ITEM_MATERIAL` 테이블 entity를 직접 참조하여 초기화한다.
-- `AbilityItemMaterial`: `mTable` 참조 + `Init(table)` + `Clone()`. `ItemId`/`Amount`/`Level`/`AddAmount`는 `AbilityItemBase` 상속.
-- `AbilityItemHero` — `ITEM_HERO` 테이블 entity를 직접 참조하여 초기화한다. outgame inventory의 hero 수량/레벨/equip slot SSOT다.
-- `AbilityItemHero`: `mTable` 참조 + `Init(table)` + `Equips` + `Equip(equip, slot)` + `Unequip(slot)` + `Clone()`. `ItemId`/`Amount`/`Level`/`AddAmount`는 `AbilityItemBase` 상속.
+- `AbilityItemMaterial`: `mTable` 참조 + `Init(table)` + `Clone()`. `ItemId`/`Amount`/`ItemLevel`/`AddAmount`는 `AbilityItemBase` 상속.
+- `AbilityItemHero` — `ITEM_HERO` 테이블 entity와 ITEM_HERO_LEVEL row를 함께 받아 초기화한다. outgame inventory의 hero 수량/레벨/equip slot SSOT다.
+- `AbilityItemHero`: `mTable` 참조 + `Init(table, levelTable)` + `Equips` + `Equip(equip, slot)` + `Unequip(slot)` + `Clone()`. `ItemId`/`Amount`/`ItemLevel`/`AddAmount`는 `AbilityItemBase` 상속.
+- `AbilityItemHero.Equip()`는 장착 장비의 stat을 hero에 합산하고, `Unequip()`는 동일 stat을 제거한다. 단 `ITEM_LEVEL`, `ITEM_AMOUNT` 같은 item 메타 stat은 hero aggregate에서 제외한다.
+- 다른 hero 소유 상태가 남아 있는 equip을 `AbilityItemHero.Equip()`으로 직접 이동시키지 않는다. owner를 먼저 해제한 뒤 장착한다.
 
 ---
 

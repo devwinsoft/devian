@@ -39,6 +39,8 @@ CompoSingleton<RewardManager>.Instance
 - `RevokeRewardDatas` / `RevokeRewardDatasPartial`로 RewardData[] 기반 회수 처리
 - `GetAmount(type, id)`로 RewardData 타입 기반 수량 조회
 - `FirstInitAsync()`로 초기 보상 지급 처리 (FirstRewardSettings 로드 + ApplyRewardDatas)
+- public reward API의 실패는 `CommonResult`로 반환한다.
+- `_validateRewardData` 같은 선검증 단계는 all-or-nothing 보장의 일부이며 삭제하지 않는다.
 
 비책임(금지):
 - `grantId` 멱등 처리
@@ -79,6 +81,7 @@ RewardManager는 `MobileApplication.Instance`에서 key/iv를 읽어 사용한�
   - item reward(`CARD`/`MATERIAL`/`EQUIP`/`HERO`)는 선검증 단계에서 대응 table row 존재 여부까지 확인한다.
   - 하나라도 invalid면 `CommonResult.Failure(error)`를 반환하고 상태를 변경하지 않는다.
   - 전체 valid이면 `REWARD_TYPE`별 switch로 InventoryManager 구체 API를 호출하고, 하위 `CommonResult` 실패를 그대로 propagate한다.
+  - 이 선검증 단계는 원자성 보장을 위해 유지한다. apply 루프의 예외 전파 모델로 대체하지 않는다.
 - `ApplyRewardGroup(rewardGroupId, rewardAmountMultiplier) -> CommonResult<RewardApplyResult>`
   - `RewardApplyResult.AppliedRewards`로 이번 호출에서 실제 적용한 `RewardData[]`를 조회할 수 있다.
   - `rewardGroupId`가 비어 있으면 성공 + 빈 배열(`AppliedRewards=[]`) 반환
@@ -93,6 +96,19 @@ RewardManager는 `MobileApplication.Instance`에서 key/iv를 읽어 사용한�
   - `FirstRewardSettings` 로드 → AES 복호화 → JSON 파싱 → `ApplyRewardDatas`로 적용.
   - 보상 적용 후 `InventoryManager.Initialize()` 호출 → InventorySettings 로드 + `LastStaminaUpdateUtcMs` 초기화.
   - `InventoryManager.ApplyCurrency(STAMINA, MaxStamina)`로 초기 스태미나 지급.
+  - 리소스/암호화/JSON 실패는 운영 데이터 경계 실패로 보고 `CommonResult`를 유지한다.
+
+
+---
+
+
+## Error Model (정본)
+
+- RewardManager의 public API는 `CommonResult`를 유지한다.
+- invalid reward, empty id, amount 음수, item table miss, first-init parse 실패는 모두 boundary failure다.
+- recoverable failure를 `throw` 기본 모델로 바꾸지 않는다.
+- private helper에서만 내부 invariant 예외를 제한적으로 허용할 수 있다.
+- helper 예외가 public 경계를 넘어가야 한다면 boundary에서 다시 `CommonResult`로 감싸는 쪽을 우선한다.
 
 ---
 
@@ -119,6 +135,7 @@ RewardManager는 `MobileApplication.Instance`에서 key/iv를 읽어 사용한�
 - 입력 중 invalid가 하나라도 있으면 전체 실패한다.
 - factory/table lookup 실패 가능성도 apply 이전 선검증에서 걸러져야 한다.
 - 전체 실패 시 InventoryManager 상태는 호출 전과 동일해야 한다.
+- 따라서 `_validateRewardData`는 optional 최적화가 아니라 계약의 일부다.
 
 
 ---
@@ -134,6 +151,8 @@ RewardManager는 `MobileApplication.Instance`에서 key/iv를 읽어 사용한�
   - `INVENTORY_DELTA_AMOUNT_NEGATIVE`
   - `ABILITY_ITEM_TABLE_NOT_FOUND`
   - `INVENTORY_REFUND_INSUFFICIENT` (RevokeRewardDatas)
+- 새 코드는 `COMMON_ERROR` append-only 규칙과 prefix taxonomy를 따른다.
+- private helper 예외를 대체하기 위해 `COMMON_ERROR_TYPE`을 추가하지 않는다.
 
 
 ---

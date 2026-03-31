@@ -43,12 +43,14 @@ RewardData 스키마는 Reward 시스템 문서가 단일 정본이다.
 - 중복 방지/지급 기록/복구는 호출자가 책임진다.
 
 
-### 4) invalid 입력은 실패(CommonResult) + 전체 미적용(원자성)
+### 4) public Apply 경계의 invalid 입력은 실패(CommonResult) + 전체 미적용(원자성)
 
 - InventoryManager의 타입별 API(ApplyCurrency, RevokeCurrency 등)는 `CommonResult`를 반환한다.
 - invalid 입력이면 `CommonResult.Failure(...)`를 반환한다.
 - 실패 시 상태 변경은 0이어야 한다(호출 전/후 동일).
 - RewardData[] 단위의 원자성(pre-validate → apply 루프)은 `RewardManager`가 담당한다.
+- private helper 내부 invariant 위반만 제한적으로 예외를 허용할 수 있다.
+- 단, 외부 입력 검증/table lookup 실패를 public API에서 throw 기본 모델로 바꾸지 않는다.
 
 
 ### 5) 차감/소비/회수는 RewardData로 처리하지 않는다
@@ -63,6 +65,9 @@ RewardData 스키마는 Reward 시스템 문서가 단일 정본이다.
 - inventory 전용 코드는 `COMMON_ERROR`에 추가 후 생성 파이프라인으로 반영한다.
   - 파일: `input/Domains/Common/CommonTable.xlsx`
   - 시트: `COMMON_ERROR`
+- `COMMON_ERROR`는 append-only로 유지한다. 기존 row 재정렬/rename 금지.
+- 새 코드는 prefix taxonomy(`COMMON_*`, `ABILITY_*`, `INVENTORY_*`, ...)를 따른다.
+- private helper 예외를 대체하기 위한 코드 남발은 금지한다.
 
 
 ### 7) InventoryManager는 저장 시스템을 직접 참조하지 않는다

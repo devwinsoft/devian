@@ -103,6 +103,7 @@ NOTE:
 
 - RewardManager는 입력 `RewardData[]`를 받아 `REWARD_TYPE`별로 해석하고, InventoryManager의 타입별 구체 API를 호출하여 로컬 인벤토리에 적용한다.
 - RewardManager는 `RewardData` 선검증(type/id/amount) + 원자성(all-or-nothing)을 보장한다.
+- public reward 적용 API의 실패 모델은 `CommonResult`다. invalid reward / table lookup / parse 실패를 `throw` 기본값으로 바꾸지 않는다.
 - RewardManager는 다음을 하지 않는다:
   - 멱등 처리(`grantId` 사용 금지)
   - 지급 기록(ledger) 저장
@@ -125,6 +126,7 @@ NOTE:
 - 파싱/검증 실패 시 `CommonResult.Failure`를 반환하고 적용하지 않는다.
 - 파싱 성공 시 `RewardManager.ApplyRewardDatas`로 적용한다.
 - `LoginManager`는 `FirstInitAsync`를 직접 호출한다. `LoginInitializeResult.IsInitial`을 확인한 뒤 실행한다.
+- first-init payload는 운영 데이터 경계다. AES/JSON 실패도 결과 코드로 올리고 상위 호출자가 처리한다.
 
 정본: [12-first-reward-settings](../12-first-reward-settings/SKILL.md)
 

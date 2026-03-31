@@ -56,6 +56,25 @@
         {"name": "ITEM_LEVEL", "value": 2},
         {"name": "UNIT_HP_MAX", "value": 100}
       ]
+    },
+    {
+      "name": "UNIT_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "HERO", "value": 1},
+        {"name": "MONSTER", "value": 2}
+      ]
+    },
+    {
+      "name": "UNIT_HERO_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "HERO_001", "value": 1},
+        {"name": "HERO_002", "value": 2},
+        {"name": "HERO_003", "value": 3},
+        {"name": "HERO_004", "value": 4},
+        {"name": "HERO_005", "value": 5}
+      ]
     }
   ]
 }

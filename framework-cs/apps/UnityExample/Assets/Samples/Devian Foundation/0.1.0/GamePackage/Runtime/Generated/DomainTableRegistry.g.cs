@@ -89,6 +89,20 @@ namespace Devian.Domain.Game
                 }
             });
 
+            global::Devian.TableManager.Instance.RegisterTbLoader("ITEM_HERO_LEVEL", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_ITEM_HERO_LEVEL.LoadFromNdjson(text);
+                    TB_ITEM_HERO_LEVEL._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_ITEM_HERO_LEVEL.LoadFromPb64Binary(bin);
+                    TB_ITEM_HERO_LEVEL._AfterLoad();
+                }
+            });
+
             global::Devian.TableManager.Instance.RegisterTbLoader("ITEM_EQUIP", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
@@ -100,6 +114,20 @@ namespace Devian.Domain.Game
                 {
                     TB_ITEM_EQUIP.LoadFromPb64Binary(bin);
                     TB_ITEM_EQUIP._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("ITEM_EQUIP_LEVEL", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_ITEM_EQUIP_LEVEL.LoadFromNdjson(text);
+                    TB_ITEM_EQUIP_LEVEL._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_ITEM_EQUIP_LEVEL.LoadFromPb64Binary(bin);
+                    TB_ITEM_EQUIP_LEVEL._AfterLoad();
                 }
             });
 
@@ -117,6 +145,20 @@ namespace Devian.Domain.Game
                 }
             });
 
+            global::Devian.TableManager.Instance.RegisterTbLoader("ITEM_CARD_LEVEL", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_ITEM_CARD_LEVEL.LoadFromNdjson(text);
+                    TB_ITEM_CARD_LEVEL._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_ITEM_CARD_LEVEL.LoadFromPb64Binary(bin);
+                    TB_ITEM_CARD_LEVEL._AfterLoad();
+                }
+            });
+
             global::Devian.TableManager.Instance.RegisterTbLoader("ITEM_MATERIAL", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
@@ -128,20 +170,6 @@ namespace Devian.Domain.Game
                 {
                     TB_ITEM_MATERIAL.LoadFromPb64Binary(bin);
                     TB_ITEM_MATERIAL._AfterLoad();
-                }
-            });
-
-            global::Devian.TableManager.Instance.RegisterTbLoader("ITEM_TREASURE", (format, text, bin) =>
-            {
-                if (format == global::Devian.TableFormat.Json && text != null)
-                {
-                    TB_ITEM_TREASURE.LoadFromNdjson(text);
-                    TB_ITEM_TREASURE._AfterLoad();
-                }
-                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
-                {
-                    TB_ITEM_TREASURE.LoadFromPb64Binary(bin);
-                    TB_ITEM_TREASURE._AfterLoad();
                 }
             });
 
@@ -170,6 +198,20 @@ namespace Devian.Domain.Game
                 {
                     TB_ITEM_PASS.LoadFromPb64Binary(bin);
                     TB_ITEM_PASS._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("ITEM_TREASURE", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_ITEM_TREASURE.LoadFromNdjson(text);
+                    TB_ITEM_TREASURE._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_ITEM_TREASURE.LoadFromPb64Binary(bin);
+                    TB_ITEM_TREASURE._AfterLoad();
                 }
             });
 
@@ -425,6 +467,20 @@ namespace Devian.Domain.Game
                 }
             });
 
+            global::Devian.TableManager.Instance.RegisterTbLoader("UNIT_HERO_LEVEL", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_UNIT_HERO_LEVEL.LoadFromNdjson(text);
+                    TB_UNIT_HERO_LEVEL._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_UNIT_HERO_LEVEL.LoadFromPb64Binary(bin);
+                    TB_UNIT_HERO_LEVEL._AfterLoad();
+                }
+            });
+
             global::Devian.TableManager.Instance.RegisterTbLoader("UNIT_MONSTER", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
@@ -436,6 +492,20 @@ namespace Devian.Domain.Game
                 {
                     TB_UNIT_MONSTER.LoadFromPb64Binary(bin);
                     TB_UNIT_MONSTER._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("UNIT_MONSTER_LEVEL", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_UNIT_MONSTER_LEVEL.LoadFromNdjson(text);
+                    TB_UNIT_MONSTER_LEVEL._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_UNIT_MONSTER_LEVEL.LoadFromPb64Binary(bin);
+                    TB_UNIT_MONSTER_LEVEL._AfterLoad();
                 }
             });
 

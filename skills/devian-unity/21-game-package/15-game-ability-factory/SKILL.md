@@ -72,10 +72,22 @@ Factory layer의 목적은 **생성 책임을 중앙화**하고, 특히 **outgam
 Item factory는 다음 책임만 가진다.
 
 - row 검증
+- target `itemLevel` 검증
+- 대응 `ITEM_*_LEVEL` row 조회
 - ability 인스턴스 생성
-- `Init(...)`
-- 저장된 stat 적용
-- 필요 시 equip/owner 상태 복원
+- `Init(table, levelTable, ...)`
+- equip item 생성 시 owner 상태 복원
+
+level table 규칙:
+
+- 대상 level은 factory 인자 `itemLevel`이고, 기본값은 `1`
+- item factory는 level row stat을 직접 apply 하지 않는다
+- `AbilityItem*.Init(table, levelTable, ...)`가 level row stat을 초기 적용한다
+- stack amount 같은 mutable 상태 복원은 factory 바깥 호출부가 담당한다
+- hero equip 장착/해제는 `AbilityItemHero.Equip()` 또는 inventory facade가 담당한다
+- 즉 순서는 `find level row -> Init(table, levelTable, ...) -> restore mutable state` 다
+- level row가 없으면 `CommonResult.Failure(ABILITY_ITEM_TABLE_NOT_FOUND, ...)`
+- 빈 stat slot(`STAT_TYPE.NONE`)은 skip한다
 
 ### 4.2 Unit 생성은 unit-table-first
 
@@ -204,18 +216,30 @@ using Devian.Domain.Common;
 public static class AbilityItemFactory
 {
     public static CommonResult<AbilityItemCard> CreateCard(ITEM_CARD table,
-        IReadOnlyDictionary<STAT_TYPE, int> stats = null);
+        int itemLevel = 1);
 
-    public static CommonResult<AbilityItemMaterial> CreateMaterial(ITEM_MATERIAL table,
-        IReadOnlyDictionary<STAT_TYPE, int> stats = null);
+    public static CommonResult<AbilityItemMaterial> CreateMaterial(ITEM_MATERIAL table);
 
     public static CommonResult<AbilityItemHero> CreateHero(ITEM_HERO table,
-        IReadOnlyDictionary<STAT_TYPE, int> stats = null,
-        IReadOnlyDictionary<int, AbilityItemEquip> equips = null,
-        bool cloneEquips = false);
+        int itemLevel = 1);
 
     public static CommonResult<AbilityItemEquip> CreateEquip(ITEM_EQUIP table, string itemUid,
-        IReadOnlyDictionary<STAT_TYPE, int> stats = null);
+        int itemLevel = 1);
+}
+
+public sealed class AbilityItemCard
+{
+    public void Init(ITEM_CARD table, ITEM_CARD_LEVEL levelTable);
+}
+
+public sealed class AbilityItemHero
+{
+    public void Init(ITEM_HERO table, ITEM_HERO_LEVEL levelTable);
+}
+
+public sealed class AbilityItemEquip
+{
+    public void Init(ITEM_EQUIP table, ITEM_EQUIP_LEVEL levelTable, string itemUid);
 }
 
 public sealed class AbilityUnitHeroContext

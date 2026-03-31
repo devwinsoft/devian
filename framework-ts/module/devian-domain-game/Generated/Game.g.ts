@@ -80,6 +80,23 @@ export enum STAT_TYPE {
     UNIT_HP_MAX = 100,
 }
 
+/** UNIT_TYPE enum */
+export enum UNIT_TYPE {
+    NONE = 0,
+    HERO = 1,
+    MONSTER = 2,
+}
+
+/** UNIT_HERO_TYPE enum */
+export enum UNIT_HERO_TYPE {
+    NONE = 0,
+    HERO_001 = 1,
+    HERO_002 = 2,
+    HERO_003 = 3,
+    HERO_004 = 4,
+    HERO_005 = 5,
+}
+
 /** INVENTORY_MESSAGE_TYPE enum */
 export enum INVENTORY_MESSAGE_TYPE {
     NONE = 0,
@@ -266,9 +283,25 @@ export interface GAME_MESSAGE extends IEntityKey<string> {
 
 export interface ITEM_HERO extends IEntityKey<string> {
     ItemId: string;
+    UnitId: string;
     NameId: string;
     DescId: string;
     getKey(): string;
+}
+
+export interface ITEM_HERO_LEVEL extends IEntityKey<number> {
+    Index: number;
+    ItemId: string;
+    ItemLevel: number;
+    StatType00: STAT_TYPE;
+    StatValue00: number;
+    StatType01: STAT_TYPE;
+    StatValue01: number;
+    StatType02: STAT_TYPE;
+    StatValue02: number;
+    StatType03: STAT_TYPE;
+    StatValue03: number;
+    getKey(): number;
 }
 
 export interface ITEM_EQUIP extends IEntityKey<string> {
@@ -278,6 +311,21 @@ export interface ITEM_EQUIP extends IEntityKey<string> {
     getKey(): string;
 }
 
+export interface ITEM_EQUIP_LEVEL extends IEntityKey<number> {
+    Index: number;
+    ItemId: string;
+    ItemLevel: number;
+    StatType00: STAT_TYPE;
+    StatValue00: number;
+    StatType01: STAT_TYPE;
+    StatValue01: number;
+    StatType02: STAT_TYPE;
+    StatValue02: number;
+    StatType03: STAT_TYPE;
+    StatValue03: number;
+    getKey(): number;
+}
+
 export interface ITEM_CARD extends IEntityKey<string> {
     ItemId: string;
     NameId: string;
@@ -285,18 +333,25 @@ export interface ITEM_CARD extends IEntityKey<string> {
     getKey(): string;
 }
 
+export interface ITEM_CARD_LEVEL extends IEntityKey<number> {
+    Index: number;
+    ItemId: string;
+    ItemLevel: number;
+    StatType00: STAT_TYPE;
+    StatValue00: number;
+    StatType01: STAT_TYPE;
+    StatValue01: number;
+    StatType02: STAT_TYPE;
+    StatValue02: number;
+    StatType03: STAT_TYPE;
+    StatValue03: number;
+    getKey(): number;
+}
+
 export interface ITEM_MATERIAL extends IEntityKey<string> {
     ItemId: string;
     NameId: string;
     DescId: string;
-    getKey(): string;
-}
-
-export interface ITEM_TREASURE extends IEntityKey<string> {
-    ChestNum: string;
-    ItemId: string;
-    NameId: string;
-    RewardGroupId: string;
     getKey(): string;
 }
 
@@ -310,6 +365,14 @@ export interface ITEM_PASS extends IEntityKey<string> {
     ItemId: string;
     NameId: string;
     DescId: string;
+    getKey(): string;
+}
+
+export interface ITEM_TREASURE extends IEntityKey<string> {
+    ChestNum: string;
+    ItemId: string;
+    NameId: string;
+    RewardGroupId: string;
     getKey(): string;
 }
 
@@ -493,9 +556,16 @@ export interface TREASURE_REWARD extends IEntityKey<number> {
 
 export interface UNIT_HERO extends IEntityKey<string> {
     UnitId: string;
+    HeroType: UNIT_HERO_TYPE;
     NameId: string;
     DescId: string;
     MaxHp: number;
+    getKey(): string;
+}
+
+export interface UNIT_HERO_LEVEL extends IEntityKey<string> {
+    UnitId: string;
+    UnitLevel: number;
     getKey(): string;
 }
 
@@ -504,6 +574,12 @@ export interface UNIT_MONSTER extends IEntityKey<string> {
     NameId: string;
     DescId: string;
     MaxHp: number;
+    getKey(): string;
+}
+
+export interface UNIT_MONSTER_LEVEL extends IEntityKey<string> {
+    UnitId: string;
+    UnitLevel: number;
     getKey(): string;
 }
 
@@ -691,6 +767,42 @@ export class TB_ITEM_HERO {
     }
 }
 
+export class TB_ITEM_HERO_LEVEL {
+    private static _dict: Map<number, ITEM_HERO_LEVEL> = new Map();
+    private static _list: ITEM_HERO_LEVEL[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly ITEM_HERO_LEVEL[] { return this._list; }
+
+    static get(key: number): ITEM_HERO_LEVEL | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: number): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as ITEM_HERO_LEVEL;
+            this._list.push(row);
+            this._dict.set(row.Index, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
 export class TB_ITEM_EQUIP {
     private static _dict: Map<string, ITEM_EQUIP> = new Map();
     private static _list: ITEM_EQUIP[] = [];
@@ -719,6 +831,42 @@ export class TB_ITEM_EQUIP {
             const row = JSON.parse(line) as ITEM_EQUIP;
             this._list.push(row);
             this._dict.set(row.ItemId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_ITEM_EQUIP_LEVEL {
+    private static _dict: Map<number, ITEM_EQUIP_LEVEL> = new Map();
+    private static _list: ITEM_EQUIP_LEVEL[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly ITEM_EQUIP_LEVEL[] { return this._list; }
+
+    static get(key: number): ITEM_EQUIP_LEVEL | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: number): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as ITEM_EQUIP_LEVEL;
+            this._list.push(row);
+            this._dict.set(row.Index, row);
         }
     }
 
@@ -763,6 +911,42 @@ export class TB_ITEM_CARD {
     }
 }
 
+export class TB_ITEM_CARD_LEVEL {
+    private static _dict: Map<number, ITEM_CARD_LEVEL> = new Map();
+    private static _list: ITEM_CARD_LEVEL[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly ITEM_CARD_LEVEL[] { return this._list; }
+
+    static get(key: number): ITEM_CARD_LEVEL | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: number): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as ITEM_CARD_LEVEL;
+            this._list.push(row);
+            this._dict.set(row.Index, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
 export class TB_ITEM_MATERIAL {
     private static _dict: Map<string, ITEM_MATERIAL> = new Map();
     private static _list: ITEM_MATERIAL[] = [];
@@ -791,42 +975,6 @@ export class TB_ITEM_MATERIAL {
             const row = JSON.parse(line) as ITEM_MATERIAL;
             this._list.push(row);
             this._dict.set(row.ItemId, row);
-        }
-    }
-
-    static saveToJson(): string {
-        return this._list.map(r => JSON.stringify(r)).join('\n');
-    }
-}
-
-export class TB_ITEM_TREASURE {
-    private static _dict: Map<string, ITEM_TREASURE> = new Map();
-    private static _list: ITEM_TREASURE[] = [];
-
-    static get count(): number { return this._list.length; }
-
-    static clear(): void {
-        this._dict.clear();
-        this._list = [];
-    }
-
-    static getAll(): readonly ITEM_TREASURE[] { return this._list; }
-
-    static get(key: string): ITEM_TREASURE | undefined {
-        return this._dict.get(key);
-    }
-
-    static has(key: string): boolean {
-        return this._dict.has(key);
-    }
-
-    static loadFromJson(json: string): void {
-        this.clear();
-        const lines = json.split('\n').filter(l => l.trim());
-        for (const line of lines) {
-            const row = JSON.parse(line) as ITEM_TREASURE;
-            this._list.push(row);
-            this._dict.set(row.ChestNum, row);
         }
     }
 
@@ -899,6 +1047,42 @@ export class TB_ITEM_PASS {
             const row = JSON.parse(line) as ITEM_PASS;
             this._list.push(row);
             this._dict.set(row.ItemId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_ITEM_TREASURE {
+    private static _dict: Map<string, ITEM_TREASURE> = new Map();
+    private static _list: ITEM_TREASURE[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly ITEM_TREASURE[] { return this._list; }
+
+    static get(key: string): ITEM_TREASURE | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as ITEM_TREASURE;
+            this._list.push(row);
+            this._dict.set(row.ChestNum, row);
         }
     }
 
@@ -1555,6 +1739,42 @@ export class TB_UNIT_HERO {
     }
 }
 
+export class TB_UNIT_HERO_LEVEL {
+    private static _dict: Map<string, UNIT_HERO_LEVEL> = new Map();
+    private static _list: UNIT_HERO_LEVEL[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly UNIT_HERO_LEVEL[] { return this._list; }
+
+    static get(key: string): UNIT_HERO_LEVEL | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as UNIT_HERO_LEVEL;
+            this._list.push(row);
+            this._dict.set(row.UnitId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
 export class TB_UNIT_MONSTER {
     private static _dict: Map<string, UNIT_MONSTER> = new Map();
     private static _list: UNIT_MONSTER[] = [];
@@ -1581,6 +1801,42 @@ export class TB_UNIT_MONSTER {
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
             const row = JSON.parse(line) as UNIT_MONSTER;
+            this._list.push(row);
+            this._dict.set(row.UnitId, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_UNIT_MONSTER_LEVEL {
+    private static _dict: Map<string, UNIT_MONSTER_LEVEL> = new Map();
+    private static _list: UNIT_MONSTER_LEVEL[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly UNIT_MONSTER_LEVEL[] { return this._list; }
+
+    static get(key: string): UNIT_MONSTER_LEVEL | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: string): boolean {
+        return this._dict.has(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as UNIT_MONSTER_LEVEL;
             this._list.push(row);
             this._dict.set(row.UnitId, row);
         }
