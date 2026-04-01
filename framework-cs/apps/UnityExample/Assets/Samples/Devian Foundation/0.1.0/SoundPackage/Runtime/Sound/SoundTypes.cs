@@ -81,13 +81,13 @@ namespace Devian
     /// <summary>
     /// 오디오 row 공통 인터페이스.
     /// SOUND와 VOICE가 공통으로 구현하며, BaseAudioManager에서 재생 시 사용한다.
-    /// VOICE는 isBundle/channel/loop/volume_scale/pitch_*를 상수로 반환한다.
-    /// key_group은 제거됨 - 로드/언로드는 key_bundle 단위로만 수행.
+    /// VOICE는 isBundle/channel/loop/volumeScale/pitch_*를 상수로 반환한다.
+    /// key_group은 제거됨 - 로드/언로드는 keyBundle 단위로만 수행.
     /// </summary>
     public interface IAudioRowBase
     {
         /// <summary>로드/언로드 단위 키 (Bundle label 또는 Resource 그룹 키)</summary>
-        string key_bundle { get; }
+        string keyBundle { get; }
 
         /// <summary>번들 로드 여부 (true=Bundle, false=Resource). VOICE는 항상 true.</summary>
         bool isBundle { get; }
@@ -105,19 +105,19 @@ namespace Devian
         bool is3d { get; }
 
         /// <summary>3D near 거리 (minDistance)</summary>
-        float distance_near { get; }
+        float distanceNear { get; }
 
         /// <summary>3D far 거리 (maxDistance)</summary>
-        float distance_far { get; }
+        float distanceFar { get; }
 
         /// <summary>볼륨 스케일. VOICE는 1f.</summary>
-        float volume_scale { get; }
+        float volumeScale { get; }
 
         /// <summary>피치 최소값. VOICE는 1f.</summary>
-        float pitch_min { get; }
+        float pitchMin { get; }
 
         /// <summary>피치 최대값. VOICE는 1f.</summary>
-        float pitch_max { get; }
+        float pitchMax { get; }
     }
 
     /// <summary>
@@ -126,10 +126,10 @@ namespace Devian
     public interface ISoundRow : IAudioRowBase
     {
         /// <summary>논리 사운드 ID (그룹 키, 중복 허용)</summary>
-        string sound_id { get; }
+        string soundId { get; }
 
         /// <summary>PK (고유)</summary>
-        int row_id { get; }
+        int rowId { get; }
 
         /// <summary>에셋 경로</summary>
         string path { get; }
@@ -141,12 +141,12 @@ namespace Devian
     /// <summary>
     /// TB_VOICE row 인터페이스. IAudioRowBase를 확장한다.
     /// 언어별 clip_ 컬럼은 TryGetClipColumn으로 접근한다 (Resolve 단계에서만 호출).
-    /// VOICE defaults: isBundle=true, channel=Voice, loop=false, volume_scale=1, pitch_min=1, pitch_max=1
+    /// VOICE defaults: isBundle=true, channel=Voice, loop=false, volumeScale=1, pitchMin=1, pitchMax=1
     /// </summary>
     public interface IVoiceRow : IAudioRowBase
     {
         /// <summary>PK (고유)</summary>
-        string voice_id { get; }
+        string voiceId { get; }
 
         /// <summary>
         /// 컬럼명으로 clip 경로를 조회한다 (Resolve 단계에서만 호출).

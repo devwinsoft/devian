@@ -253,382 +253,382 @@ export interface UserProfile extends IEntity {
 // ================================================================
 
 export interface ACHIEVE_SOCIAL extends IEntityKey<number> {
-    Index: number;
-    AchieveId: string;
-    IsActive: boolean;
-    Level: number;
-    OrderNum: number;
-    ReqMsgId: string;
-    ReqValue: CBigInt | null;
-    ConditionMsgId: string;
-    ConditionOp: GAME_MESSAGE_OP_TYPE;
-    ConditionValue: CBigInt | null;
-    RewardGroupId: string;
-    AppleAchievementId: string;
-    GoogleAchievementId: string;
+    index: number;
+    achieve_id: string;
+    is_active: boolean;
+    level: number;
+    order_num: number;
+    req_msg_id: string;
+    req_value: CBigInt | null;
+    condition_msg_id: string;
+    condition_op: GAME_MESSAGE_OP_TYPE;
+    condition_value: CBigInt | null;
+    reward_group_id: string;
+    apple_achievement_id: string;
+    google_achievement_id: string;
     getKey(): number;
 }
 
 export interface ACHIEVE_PASS extends IEntityKey<number> {
-    Index: number;
-    AchieveId: string;
-    IsActive: boolean;
-    Level: number;
-    OrderNum: number;
-    ReqSeasonId: string;
-    ReqPassId: string;
-    ConditionMsgId: string;
-    ConditionOp: GAME_MESSAGE_OP_TYPE;
-    ConditionValue: CBigInt | null;
-    RewardGroupId: string;
+    index: number;
+    achieve_id: string;
+    is_active: boolean;
+    level: number;
+    order_num: number;
+    req_season_id: string;
+    req_pass_id: string;
+    condition_msg_id: string;
+    condition_op: GAME_MESSAGE_OP_TYPE;
+    condition_value: CBigInt | null;
+    reward_group_id: string;
     getKey(): number;
 }
 
 export interface REWARD extends IEntityKey<number> {
-    RewardNum: number;
-    RewardGroupId: string;
-    Type: REWARD_TYPE;
-    Id: string;
-    Amount: number;
-    Rate: number;
+    reward_num: number;
+    reward_group_id: string;
+    type: REWARD_TYPE;
+    id: string;
+    amount: number;
+    rate: number;
     getKey(): number;
 }
 
 export interface GAME_MESSAGE extends IEntityKey<string> {
-    MessageId: string;
-    MessageType: GAME_MESSAGE_TYPE;
-    SaveType: GAME_MESSAGE_SAVE_TYPE;
+    message_id: string;
+    message_type: GAME_MESSAGE_TYPE;
+    save_type: GAME_MESSAGE_SAVE_TYPE;
     getKey(): string;
 }
 
 export interface ITEM_HERO extends IEntityKey<string> {
-    ItemId: string;
-    UnitId: string;
-    NameId: string;
-    DescId: string;
+    item_id: string;
+    unit_id: string;
+    name_id: string;
+    desc_id: string;
     getKey(): string;
 }
 
 export interface ITEM_HERO_LEVEL extends IEntityKey<number> {
-    Index: number;
-    ItemId: string;
-    ItemLevel: number;
-    StatType00: STAT_TYPE;
-    StatValue00: number;
-    StatType01: STAT_TYPE;
-    StatValue01: number;
-    StatType02: STAT_TYPE;
-    StatValue02: number;
-    StatType03: STAT_TYPE;
-    StatValue03: number;
+    index: number;
+    item_id: string;
+    item_level: number;
+    stat_type00: STAT_TYPE;
+    stat_value00: number;
+    stat_type01: STAT_TYPE;
+    stat_value01: number;
+    stat_type02: STAT_TYPE;
+    stat_value02: number;
+    stat_type03: STAT_TYPE;
+    stat_value03: number;
     getKey(): number;
 }
 
 export interface ITEM_EQUIP extends IEntityKey<string> {
-    ItemId: string;
-    NameId: string;
-    DescId: string;
+    item_id: string;
+    name_id: string;
+    desc_id: string;
     getKey(): string;
 }
 
 export interface ITEM_EQUIP_LEVEL extends IEntityKey<number> {
-    Index: number;
-    ItemId: string;
-    ItemLevel: number;
-    StatType00: STAT_TYPE;
-    StatValue00: number;
-    StatType01: STAT_TYPE;
-    StatValue01: number;
-    StatType02: STAT_TYPE;
-    StatValue02: number;
-    StatType03: STAT_TYPE;
-    StatValue03: number;
+    index: number;
+    item_id: string;
+    item_level: number;
+    stat_type00: STAT_TYPE;
+    stat_value00: number;
+    stat_type01: STAT_TYPE;
+    stat_value01: number;
+    stat_type02: STAT_TYPE;
+    stat_value02: number;
+    stat_type03: STAT_TYPE;
+    stat_value03: number;
     getKey(): number;
 }
 
 export interface ITEM_CARD extends IEntityKey<string> {
-    ItemId: string;
-    NameId: string;
-    DescId: string;
+    item_id: string;
+    name_id: string;
+    desc_id: string;
     getKey(): string;
 }
 
 export interface ITEM_CARD_LEVEL extends IEntityKey<number> {
-    Index: number;
-    ItemId: string;
-    ItemLevel: number;
-    StatType00: STAT_TYPE;
-    StatValue00: number;
-    StatType01: STAT_TYPE;
-    StatValue01: number;
-    StatType02: STAT_TYPE;
-    StatValue02: number;
-    StatType03: STAT_TYPE;
-    StatValue03: number;
+    index: number;
+    item_id: string;
+    item_level: number;
+    stat_type00: STAT_TYPE;
+    stat_value00: number;
+    stat_type01: STAT_TYPE;
+    stat_value01: number;
+    stat_type02: STAT_TYPE;
+    stat_value02: number;
+    stat_type03: STAT_TYPE;
+    stat_value03: number;
     getKey(): number;
 }
 
 export interface ITEM_MATERIAL extends IEntityKey<string> {
-    ItemId: string;
-    NameId: string;
-    DescId: string;
+    item_id: string;
+    name_id: string;
+    desc_id: string;
     getKey(): string;
 }
 
 export interface ITEM_RENTAL extends IEntityKey<string> {
-    ItemId: string;
-    NameId: string;
+    item_id: string;
+    name_id: string;
     getKey(): string;
 }
 
 export interface ITEM_PASS extends IEntityKey<string> {
-    ItemId: string;
-    NameId: string;
-    DescId: string;
+    item_id: string;
+    name_id: string;
+    desc_id: string;
     getKey(): string;
 }
 
 export interface ITEM_TREASURE extends IEntityKey<string> {
-    ChestNum: string;
-    ItemId: string;
-    NameId: string;
-    RewardGroupId: string;
+    chest_num: string;
+    item_id: string;
+    name_id: string;
+    reward_group_id: string;
     getKey(): string;
 }
 
 export interface ADVERTISE extends IEntityKey<string> {
-    AdvertiseId: string;
-    IsActive: boolean;
-    Format: ADVERTISE_FORMAT;
-    Provider: ADVERTISE_PROVIDER;
-    AutoLoad: boolean;
-    CooldownSec: number;
-    AndroidAdUnitId: string;
-    IosAdUnitId: string;
+    advertise_id: string;
+    is_active: boolean;
+    format: ADVERTISE_FORMAT;
+    provider: ADVERTISE_PROVIDER;
+    auto_load: boolean;
+    cooldown_sec: number;
+    android_ad_unit_id: string;
+    ios_ad_unit_id: string;
     getKey(): string;
 }
 
 export interface ATTEND extends IEntityKey<string> {
-    AttendId: string;
-    IsActive: boolean;
-    Day: number;
-    RewardGroupId: string;
+    attend_id: string;
+    is_active: boolean;
+    day: number;
+    reward_group_id: string;
     getKey(): string;
 }
 
 export interface LEADERBOARD extends IEntityKey<string> {
-    LeaderboardId: string;
-    IsActive: boolean;
-    MessageId: string;
-    Mode: LEADERBOARD_MODE;
-    SeasonId: string;
-    AppleLeaderboardId: string;
-    GoogleLeaderboardId: string;
+    leaderboard_id: string;
+    is_active: boolean;
+    message_id: string;
+    mode: LEADERBOARD_MODE;
+    season_id: string;
+    apple_leaderboard_id: string;
+    google_leaderboard_id: string;
     getKey(): string;
 }
 
 export interface LEADERBOARD_REWARD extends IEntityKey<number> {
-    Index: number;
-    LeaderboardId: string;
-    RankFrom: number;
-    RankTo: number;
-    RewardGroupId: string;
+    index: number;
+    leaderboard_id: string;
+    rank_from: number;
+    rank_to: number;
+    reward_group_id: string;
     getKey(): number;
 }
 
 export interface SEASON extends IEntityKey<string> {
-    SeasonId: string;
-    NameId: string;
-    DescId: string;
-    StartUtcTime: number;
-    EndUtcTime: number;
+    season_id: string;
+    name_id: string;
+    desc_id: string;
+    start_utc_time: number;
+    end_utc_time: number;
     getKey(): string;
 }
 
 export interface MISSION_DAILY extends IEntityKey<string> {
-    MissionId: string;
-    IsActive: boolean;
-    Fixed: boolean;
-    OrderNum: number;
-    ConditionMsgId: string;
-    ConditionOp: GAME_MESSAGE_OP_TYPE;
-    ConditionValue: CBigInt | null;
-    RewardGroupId: string;
+    mission_id: string;
+    is_active: boolean;
+    is_fixed: boolean;
+    order_num: number;
+    condition_msg_id: string;
+    condition_op: GAME_MESSAGE_OP_TYPE;
+    condition_value: CBigInt | null;
+    reward_group_id: string;
     getKey(): string;
 }
 
 export interface MISSION_WEEKLY extends IEntityKey<string> {
-    MissionId: string;
-    Day: number;
-    IsActive: boolean;
-    ConditionMsgId: string;
-    ConditionOp: GAME_MESSAGE_OP_TYPE;
-    ConditionValue: CBigInt | null;
-    RewardGroupId: string;
+    mission_id: string;
+    day: number;
+    is_active: boolean;
+    condition_msg_id: string;
+    condition_op: GAME_MESSAGE_OP_TYPE;
+    condition_value: CBigInt | null;
+    reward_group_id: string;
     getKey(): string;
 }
 
 export interface SHOP_CATALOG extends IEntityKey<SHOP_CATALOG_TYPE> {
-    CatalogType: SHOP_CATALOG_TYPE;
-    NameId: string;
-    AutoRefreshDays: number;
-    UnlockMsgId: string;
-    UnlockOpType: GAME_MESSAGE_OP_TYPE;
-    UnlockValue: CBigInt | null;
+    catalog_type: SHOP_CATALOG_TYPE;
+    name_id: string;
+    auto_refresh_days: number;
+    unlock_msg_id: string;
+    unlock_op_type: GAME_MESSAGE_OP_TYPE;
+    unlock_value: CBigInt | null;
     getKey(): SHOP_CATALOG_TYPE;
 }
 
 export interface SHOP_CATALOG_CHEST extends IEntityKey<number> {
-    Level: number;
-    MaxExp: number;
-    AdsExp: number;
-    GainExp01: number;
-    GainExp10: number;
-    RewardAds: string;
-    RewardPaid01: string;
-    RewardPaid10: string;
+    level: number;
+    max_exp: number;
+    ads_exp: number;
+    gain_exp01: number;
+    gain_exp10: number;
+    reward_ads: string;
+    reward_paid01: string;
+    reward_paid10: string;
     getKey(): number;
 }
 
 export interface SHOP_DAILY extends IEntityKey<string> {
-    ShopId: string;
-    NameId: string;
-    CurrencyType: CURRENCY_TYPE;
-    Price: number;
-    RewardGroupId: string;
-    Amount: number;
-    MaxCount: number;
-    SelectRate: number;
-    DiscountRate10Per: number;
-    DiscountRate20Per: number;
-    DiscountRate30Per: number;
-    DiscountRate50Per: number;
+    shop_id: string;
+    name_id: string;
+    currency_type: CURRENCY_TYPE;
+    price: number;
+    reward_group_id: string;
+    amount: number;
+    max_count: number;
+    select_rate: number;
+    discount_rate10_per: number;
+    discount_rate20_per: number;
+    discount_rate30_per: number;
+    discount_rate50_per: number;
     getKey(): string;
 }
 
 export interface SHOP_EVENT extends IEntityKey<string> {
-    ShopId: string;
-    NameId: string;
-    CurrencyType: CURRENCY_TYPE;
-    Price: number;
-    RewardGroupId: string;
-    StartTime: CDateTime;
-    EndTime: CDateTime;
+    shop_id: string;
+    name_id: string;
+    currency_type: CURRENCY_TYPE;
+    price: number;
+    reward_group_id: string;
+    start_time: CDateTime;
+    end_time: CDateTime;
     getKey(): string;
 }
 
 export interface SHOP_CHEST extends IEntityKey<string> {
-    ShopId: string;
-    ChestType: SHOP_PRODUCT_CHEST_TYPE;
-    NameId: string;
-    CurrencyType: CURRENCY_TYPE;
-    Price: number;
-    Amount: number;
-    MaxCount: number;
+    shop_id: string;
+    chest_type: SHOP_PRODUCT_CHEST_TYPE;
+    name_id: string;
+    currency_type: CURRENCY_TYPE;
+    price: number;
+    amount: number;
+    max_count: number;
     getKey(): string;
 }
 
 export interface SHOP_PURCHASE extends IEntityKey<string> {
-    ShopId: string;
-    NameId: string;
-    InternalProductId: string;
-    SeasonId: string;
+    shop_id: string;
+    name_id: string;
+    internal_product_id: string;
+    season_id: string;
     getKey(): string;
 }
 
 export interface SHOP_GOLD extends IEntityKey<string> {
-    ShopId: string;
-    NameId: string;
-    CurrencyType: CURRENCY_TYPE;
-    Price: number;
-    RewardGroupId: string;
-    MaxCount: number;
+    shop_id: string;
+    name_id: string;
+    currency_type: CURRENCY_TYPE;
+    price: number;
+    reward_group_id: string;
+    max_count: number;
     getKey(): string;
 }
 
 export interface PURCHASE extends IEntityKey<string> {
-    InternalProductId: string;
-    RewardGroupId: string;
-    Kind: PURCHASE_KIND;
-    IsActive: boolean;
-    StoreSkuApple: string;
-    StoreSkuGoogle: string;
+    internal_product_id: string;
+    reward_group_id: string;
+    kind: PURCHASE_KIND;
+    is_active: boolean;
+    store_sku_apple: string;
+    store_sku_google: string;
     getKey(): string;
 }
 
 export interface SKILL extends IEntityKey<string> {
-    SkillId: string;
-    NameId: string;
-    AffectList: string[];
+    skill_id: string;
+    name_id: string;
+    affect_list: string[];
     getKey(): string;
 }
 
 export interface PROJECTILE extends IEntityKey<string> {
-    ProjectileId: string;
-    NameId: string;
-    AffectList: string[];
+    projectile_id: string;
+    name_id: string;
+    affect_list: string[];
     getKey(): string;
 }
 
 export interface STATUS extends IEntityKey<string> {
-    StatusId: string;
-    NameId: string;
-    AffectList: string[];
+    status_id: string;
+    name_id: string;
+    affect_list: string[];
     getKey(): string;
 }
 
 export interface AFFECT extends IEntityKey<string> {
-    AffectId: string;
-    NameId: string;
+    affect_id: string;
+    name_id: string;
     getKey(): string;
 }
 
 export interface TREASURE_CHEST extends IEntityKey<number> {
-    Level: number;
-    TreasureGradeType: TREASURE_GRADE_TYPE;
-    MaxExp: number;
+    level: number;
+    treasure_grade_type: TREASURE_GRADE_TYPE;
+    max_exp: number;
     getKey(): number;
 }
 
 export interface TREASURE_REWARD extends IEntityKey<number> {
-    Index: number;
-    TreasureGradeType: TREASURE_GRADE_TYPE;
-    Level: number;
-    ConditionMsgId: string;
-    ConditionOp: GAME_MESSAGE_OP_TYPE;
-    ConditionValue: CBigInt | null;
-    RewardGroupId: string;
+    index: number;
+    treasure_grade_type: TREASURE_GRADE_TYPE;
+    level: number;
+    condition_msg_id: string;
+    condition_op: GAME_MESSAGE_OP_TYPE;
+    condition_value: CBigInt | null;
+    reward_group_id: string;
     getKey(): number;
 }
 
 export interface UNIT_HERO extends IEntityKey<string> {
-    UnitId: string;
-    HeroType: UNIT_HERO_TYPE;
-    NameId: string;
-    DescId: string;
+    unit_id: string;
+    hero_type: UNIT_HERO_TYPE;
+    name_id: string;
+    desc_id: string;
     getKey(): string;
 }
 
 export interface UNIT_HERO_LEVEL extends IEntityKey<number> {
-    Index: number;
-    UnitId: string;
-    UnitLevel: number;
-    MaxHp: number;
+    index: number;
+    unit_id: string;
+    unit_level: number;
+    max_hp: number;
     getKey(): number;
 }
 
 export interface UNIT_MONSTER extends IEntityKey<string> {
-    UnitId: string;
-    NameId: string;
-    DescId: string;
+    unit_id: string;
+    name_id: string;
+    desc_id: string;
     getKey(): string;
 }
 
 export interface UNIT_MONSTER_LEVEL extends IEntityKey<number> {
-    Index: number;
-    UnitId: string;
-    UnitLevel: number;
-    MaxHp: number;
+    index: number;
+    unit_id: string;
+    unit_level: number;
+    max_hp: number;
     getKey(): number;
 }
 
@@ -663,7 +663,7 @@ export class TB_ACHIEVE_SOCIAL {
         for (const line of lines) {
             const row = JSON.parse(line) as ACHIEVE_SOCIAL;
             this._list.push(row);
-            this._dict.set(row.Index, row);
+            this._dict.set(row.index, row);
         }
     }
 
@@ -699,7 +699,7 @@ export class TB_ACHIEVE_PASS {
         for (const line of lines) {
             const row = JSON.parse(line) as ACHIEVE_PASS;
             this._list.push(row);
-            this._dict.set(row.Index, row);
+            this._dict.set(row.index, row);
         }
     }
 
@@ -735,7 +735,7 @@ export class TB_REWARD {
         for (const line of lines) {
             const row = JSON.parse(line) as REWARD;
             this._list.push(row);
-            this._dict.set(row.RewardNum, row);
+            this._dict.set(row.reward_num, row);
         }
     }
 
@@ -771,7 +771,7 @@ export class TB_GAME_MESSAGE {
         for (const line of lines) {
             const row = JSON.parse(line) as GAME_MESSAGE;
             this._list.push(row);
-            this._dict.set(row.MessageId, row);
+            this._dict.set(row.message_id, row);
         }
     }
 
@@ -807,7 +807,7 @@ export class TB_ITEM_HERO {
         for (const line of lines) {
             const row = JSON.parse(line) as ITEM_HERO;
             this._list.push(row);
-            this._dict.set(row.ItemId, row);
+            this._dict.set(row.item_id, row);
         }
     }
 
@@ -843,7 +843,7 @@ export class TB_ITEM_HERO_LEVEL {
         for (const line of lines) {
             const row = JSON.parse(line) as ITEM_HERO_LEVEL;
             this._list.push(row);
-            this._dict.set(row.Index, row);
+            this._dict.set(row.index, row);
         }
     }
 
@@ -879,7 +879,7 @@ export class TB_ITEM_EQUIP {
         for (const line of lines) {
             const row = JSON.parse(line) as ITEM_EQUIP;
             this._list.push(row);
-            this._dict.set(row.ItemId, row);
+            this._dict.set(row.item_id, row);
         }
     }
 
@@ -915,7 +915,7 @@ export class TB_ITEM_EQUIP_LEVEL {
         for (const line of lines) {
             const row = JSON.parse(line) as ITEM_EQUIP_LEVEL;
             this._list.push(row);
-            this._dict.set(row.Index, row);
+            this._dict.set(row.index, row);
         }
     }
 
@@ -951,7 +951,7 @@ export class TB_ITEM_CARD {
         for (const line of lines) {
             const row = JSON.parse(line) as ITEM_CARD;
             this._list.push(row);
-            this._dict.set(row.ItemId, row);
+            this._dict.set(row.item_id, row);
         }
     }
 
@@ -987,7 +987,7 @@ export class TB_ITEM_CARD_LEVEL {
         for (const line of lines) {
             const row = JSON.parse(line) as ITEM_CARD_LEVEL;
             this._list.push(row);
-            this._dict.set(row.Index, row);
+            this._dict.set(row.index, row);
         }
     }
 
@@ -1023,7 +1023,7 @@ export class TB_ITEM_MATERIAL {
         for (const line of lines) {
             const row = JSON.parse(line) as ITEM_MATERIAL;
             this._list.push(row);
-            this._dict.set(row.ItemId, row);
+            this._dict.set(row.item_id, row);
         }
     }
 
@@ -1059,7 +1059,7 @@ export class TB_ITEM_RENTAL {
         for (const line of lines) {
             const row = JSON.parse(line) as ITEM_RENTAL;
             this._list.push(row);
-            this._dict.set(row.ItemId, row);
+            this._dict.set(row.item_id, row);
         }
     }
 
@@ -1095,7 +1095,7 @@ export class TB_ITEM_PASS {
         for (const line of lines) {
             const row = JSON.parse(line) as ITEM_PASS;
             this._list.push(row);
-            this._dict.set(row.ItemId, row);
+            this._dict.set(row.item_id, row);
         }
     }
 
@@ -1131,7 +1131,7 @@ export class TB_ITEM_TREASURE {
         for (const line of lines) {
             const row = JSON.parse(line) as ITEM_TREASURE;
             this._list.push(row);
-            this._dict.set(row.ChestNum, row);
+            this._dict.set(row.chest_num, row);
         }
     }
 
@@ -1167,7 +1167,7 @@ export class TB_ADVERTISE {
         for (const line of lines) {
             const row = JSON.parse(line) as ADVERTISE;
             this._list.push(row);
-            this._dict.set(row.AdvertiseId, row);
+            this._dict.set(row.advertise_id, row);
         }
     }
 
@@ -1203,7 +1203,7 @@ export class TB_ATTEND {
         for (const line of lines) {
             const row = JSON.parse(line) as ATTEND;
             this._list.push(row);
-            this._dict.set(row.AttendId, row);
+            this._dict.set(row.attend_id, row);
         }
     }
 
@@ -1239,7 +1239,7 @@ export class TB_LEADERBOARD {
         for (const line of lines) {
             const row = JSON.parse(line) as LEADERBOARD;
             this._list.push(row);
-            this._dict.set(row.LeaderboardId, row);
+            this._dict.set(row.leaderboard_id, row);
         }
     }
 
@@ -1275,7 +1275,7 @@ export class TB_LEADERBOARD_REWARD {
         for (const line of lines) {
             const row = JSON.parse(line) as LEADERBOARD_REWARD;
             this._list.push(row);
-            this._dict.set(row.Index, row);
+            this._dict.set(row.index, row);
         }
     }
 
@@ -1311,7 +1311,7 @@ export class TB_SEASON {
         for (const line of lines) {
             const row = JSON.parse(line) as SEASON;
             this._list.push(row);
-            this._dict.set(row.SeasonId, row);
+            this._dict.set(row.season_id, row);
         }
     }
 
@@ -1347,7 +1347,7 @@ export class TB_MISSION_DAILY {
         for (const line of lines) {
             const row = JSON.parse(line) as MISSION_DAILY;
             this._list.push(row);
-            this._dict.set(row.MissionId, row);
+            this._dict.set(row.mission_id, row);
         }
     }
 
@@ -1383,7 +1383,7 @@ export class TB_MISSION_WEEKLY {
         for (const line of lines) {
             const row = JSON.parse(line) as MISSION_WEEKLY;
             this._list.push(row);
-            this._dict.set(row.MissionId, row);
+            this._dict.set(row.mission_id, row);
         }
     }
 
@@ -1419,7 +1419,7 @@ export class TB_SHOP_CATALOG {
         for (const line of lines) {
             const row = JSON.parse(line) as SHOP_CATALOG;
             this._list.push(row);
-            this._dict.set(row.CatalogType, row);
+            this._dict.set(row.catalog_type, row);
         }
     }
 
@@ -1455,7 +1455,7 @@ export class TB_SHOP_CATALOG_CHEST {
         for (const line of lines) {
             const row = JSON.parse(line) as SHOP_CATALOG_CHEST;
             this._list.push(row);
-            this._dict.set(row.Level, row);
+            this._dict.set(row.level, row);
         }
     }
 
@@ -1491,7 +1491,7 @@ export class TB_SHOP_DAILY {
         for (const line of lines) {
             const row = JSON.parse(line) as SHOP_DAILY;
             this._list.push(row);
-            this._dict.set(row.ShopId, row);
+            this._dict.set(row.shop_id, row);
         }
     }
 
@@ -1527,7 +1527,7 @@ export class TB_SHOP_EVENT {
         for (const line of lines) {
             const row = JSON.parse(line) as SHOP_EVENT;
             this._list.push(row);
-            this._dict.set(row.ShopId, row);
+            this._dict.set(row.shop_id, row);
         }
     }
 
@@ -1563,7 +1563,7 @@ export class TB_SHOP_CHEST {
         for (const line of lines) {
             const row = JSON.parse(line) as SHOP_CHEST;
             this._list.push(row);
-            this._dict.set(row.ShopId, row);
+            this._dict.set(row.shop_id, row);
         }
     }
 
@@ -1599,7 +1599,7 @@ export class TB_SHOP_PURCHASE {
         for (const line of lines) {
             const row = JSON.parse(line) as SHOP_PURCHASE;
             this._list.push(row);
-            this._dict.set(row.ShopId, row);
+            this._dict.set(row.shop_id, row);
         }
     }
 
@@ -1635,7 +1635,7 @@ export class TB_SHOP_GOLD {
         for (const line of lines) {
             const row = JSON.parse(line) as SHOP_GOLD;
             this._list.push(row);
-            this._dict.set(row.ShopId, row);
+            this._dict.set(row.shop_id, row);
         }
     }
 
@@ -1671,7 +1671,7 @@ export class TB_PURCHASE {
         for (const line of lines) {
             const row = JSON.parse(line) as PURCHASE;
             this._list.push(row);
-            this._dict.set(row.InternalProductId, row);
+            this._dict.set(row.internal_product_id, row);
         }
     }
 
@@ -1707,7 +1707,7 @@ export class TB_SKILL {
         for (const line of lines) {
             const row = JSON.parse(line) as SKILL;
             this._list.push(row);
-            this._dict.set(row.SkillId, row);
+            this._dict.set(row.skill_id, row);
         }
     }
 
@@ -1743,7 +1743,7 @@ export class TB_PROJECTILE {
         for (const line of lines) {
             const row = JSON.parse(line) as PROJECTILE;
             this._list.push(row);
-            this._dict.set(row.ProjectileId, row);
+            this._dict.set(row.projectile_id, row);
         }
     }
 
@@ -1779,7 +1779,7 @@ export class TB_STATUS {
         for (const line of lines) {
             const row = JSON.parse(line) as STATUS;
             this._list.push(row);
-            this._dict.set(row.StatusId, row);
+            this._dict.set(row.status_id, row);
         }
     }
 
@@ -1815,7 +1815,7 @@ export class TB_AFFECT {
         for (const line of lines) {
             const row = JSON.parse(line) as AFFECT;
             this._list.push(row);
-            this._dict.set(row.AffectId, row);
+            this._dict.set(row.affect_id, row);
         }
     }
 
@@ -1851,7 +1851,7 @@ export class TB_TREASURE_CHEST {
         for (const line of lines) {
             const row = JSON.parse(line) as TREASURE_CHEST;
             this._list.push(row);
-            this._dict.set(row.Level, row);
+            this._dict.set(row.level, row);
         }
     }
 
@@ -1887,7 +1887,7 @@ export class TB_TREASURE_REWARD {
         for (const line of lines) {
             const row = JSON.parse(line) as TREASURE_REWARD;
             this._list.push(row);
-            this._dict.set(row.Index, row);
+            this._dict.set(row.index, row);
         }
     }
 
@@ -1923,7 +1923,7 @@ export class TB_UNIT_HERO {
         for (const line of lines) {
             const row = JSON.parse(line) as UNIT_HERO;
             this._list.push(row);
-            this._dict.set(row.UnitId, row);
+            this._dict.set(row.unit_id, row);
         }
     }
 
@@ -1959,7 +1959,7 @@ export class TB_UNIT_HERO_LEVEL {
         for (const line of lines) {
             const row = JSON.parse(line) as UNIT_HERO_LEVEL;
             this._list.push(row);
-            this._dict.set(row.Index, row);
+            this._dict.set(row.index, row);
         }
     }
 
@@ -1995,7 +1995,7 @@ export class TB_UNIT_MONSTER {
         for (const line of lines) {
             const row = JSON.parse(line) as UNIT_MONSTER;
             this._list.push(row);
-            this._dict.set(row.UnitId, row);
+            this._dict.set(row.unit_id, row);
         }
     }
 
@@ -2031,7 +2031,7 @@ export class TB_UNIT_MONSTER_LEVEL {
         for (const line of lines) {
             const row = JSON.parse(line) as UNIT_MONSTER_LEVEL;
             this._list.push(row);
-            this._dict.set(row.Index, row);
+            this._dict.set(row.index, row);
         }
     }
 

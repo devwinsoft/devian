@@ -32,7 +32,7 @@ Inventory 상태는 "통화", "아이템(장비/카드/재료)", "영웅", "Trea
 
 ### B-1) Wallet
 
-- key: `currencyType` (=`RewardData.id` when `type=REWARD_TYPE.CURRENCY`)
+- key: `currency_type` (=`RewardData.id` when `type=REWARD_TYPE.CURRENCY`)
 - value: `amount (long)`
 
 ### B-2) Equips
@@ -42,27 +42,27 @@ Inventory 상태는 "통화", "아이템(장비/카드/재료)", "영웅", "Trea
 
 `AbilityItemEquip` 필드 (구현: [12-game-ability](../../../21-game-package/12-game-ability/SKILL.md)):
 - `ItemUid: string` (== key, 인스턴스 고유 ID, GUID)
-- `ItemId: string` (템플릿 ID, `mTable.ItemId`)
-- `OwnerUnitId: string` (장착된 영웅 UnitId, 미장착 시 empty)
+- `ItemId: string` (템플릿 ID, `mTable.item_id`)
+- `OwnerUnitId: string` (장착된 영웅 ItemId, 미장착 시 empty)
 - `OwnerSlotNumber: int` (장착 슬롯 번호, 0 = 미장착)
 - `IsEquipped: bool` (= `OwnerSlotNumber > 0`)
 - 능력치: `AbilityItemEquip : AbilityItemBase : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)
   - 레벨 = `STAT_TYPE.ITEM_LEVEL`
 
 NOTE:
-- 같은 `itemId`에 여러 인스턴스(각각 고유 `itemUid`)가 존재할 수 있다.
-- `RewardData.Id`는 `itemId`(템플릿 ID)이다. `itemUid`는 InventoryManager가 Apply 시 생성한다.
+- 같은 `item_id`에 여러 인스턴스(각각 고유 `itemUid`)가 존재할 수 있다.
+- `RewardData.Id`는 `item_id`(템플릿 ID)이다. `itemUid`는 InventoryManager가 Apply 시 생성한다.
 - `ItemData` 클래스는 `AbilityItemEquip`에 통합되어 삭제되었다.
 
 ### B-3) Cards
 
-- key: `itemId` (=`RewardData.id` when `type=REWARD_TYPE.CARD`, pk)
+- key: `item_id` (=`RewardData.id` when `type=REWARD_TYPE.CARD`, pk)
 - value: `AbilityItemCard`
 
 `AbilityItemCard` 필드 (구현: [12-game-ability](../../../21-game-package/12-game-ability/SKILL.md)):
-- `ItemId: string` (== key, `mTable.ItemId`)
+- `ItemId: string` (== key, `mTable.item_id`)
 - `Amount: int` (= `this[STAT_TYPE.ITEM_AMOUNT]`)
-- `Level: int` (= `this[STAT_TYPE.ITEM_LEVEL]`)
+- `ItemLevel: int` (= `this[STAT_TYPE.ITEM_LEVEL]`)
 - 능력치: `AbilityItemCard : AbilityItemBase : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)
   - 수량 = `STAT_TYPE.ITEM_AMOUNT`
   - 레벨 = `STAT_TYPE.ITEM_LEVEL`
@@ -70,25 +70,25 @@ NOTE:
 
 ### B-4) Heroes
 
-- key: `itemId` (=`RewardData.id` when `type=REWARD_TYPE.HERO`, pk)
+- key: `item_id` (=`RewardData.id` when `type=REWARD_TYPE.HERO`, pk)
 - value: `AbilityItemHero`
 
 `AbilityItemHero` 필드 (구현: [12-game-ability](../../../21-game-package/12-game-ability/SKILL.md)):
-- `ItemId: string` (== key, `mTable.ItemId`)
+- `ItemId: string` (== key, `mTable.item_id`)
 - `Amount: int` (= `this[STAT_TYPE.ITEM_AMOUNT]`)
-- `Level: int` (= `this[STAT_TYPE.ITEM_LEVEL]`)
+- `ItemLevel: int` (= `this[STAT_TYPE.ITEM_LEVEL]`)
 - `Equips: Dict<int, AbilityItemEquip>` (outgame 슬롯별 장착 상태)
 - 능력치: `AbilityItemHero : AbilityItemBase : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)
 
 ### B-5) Materials
 
-- key: `itemId` (=`RewardData.id` when `type=REWARD_TYPE.MATERIAL`, pk)
+- key: `item_id` (=`RewardData.id` when `type=REWARD_TYPE.MATERIAL`, pk)
 - value: `AbilityItemMaterial`
 
 `AbilityItemMaterial` 필드 (구현: [12-game-ability](../../../21-game-package/12-game-ability/SKILL.md)):
-- `ItemId: string` (== key, `mTable.ItemId`)
+- `ItemId: string` (== key, `mTable.item_id`)
 - `Amount: int` (= `this[STAT_TYPE.ITEM_AMOUNT]`)
-- `Level: int` (= `this[STAT_TYPE.ITEM_LEVEL]`)
+- `ItemLevel: int` (= `this[STAT_TYPE.ITEM_LEVEL]`)
 - 능력치: `AbilityItemMaterial : AbilityItemBase : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)
   - 수량 = `STAT_TYPE.ITEM_AMOUNT`
   - 레벨 = `STAT_TYPE.ITEM_LEVEL`
@@ -128,7 +128,7 @@ NOTE:
 
 ### C-2) `type == REWARD_TYPE.CURRENCY`
 
-- `_storage.AddCurrency(currencyType, amount)`
+- `_storage.AddCurrency(currency_type, amount)`
 - 없는 키는 생성된다.
 
 ### C-3) `type == REWARD_TYPE.EQUIP`
@@ -140,23 +140,23 @@ NOTE:
 
 ### C-5) `type == REWARD_TYPE.CARD`
 
-- `_storage.Cards[itemId].AddAmount(amount)` (= `AddStat(STAT_TYPE.ITEM_AMOUNT, amount)`)
-- 없는 키는 `_storage.AddCard(itemId, ability)`로 생성된다.
+- `_storage.Cards[item_id].AddAmount(amount)` (= `AddStat(STAT_TYPE.ITEM_AMOUNT, amount)`)
+- 없는 키는 `_storage.AddCard(item_id, ability)`로 생성된다.
   - 새 AbilityItemCard의 모든 stat은 0(기본값)으로 시작한다.
 - Apply는 `STAT_TYPE.ITEM_AMOUNT`만 변경한다 (다른 stat은 보존).
 
 ### C-4) `type == REWARD_TYPE.HERO`
 
-- `_storage.Heroes[itemId].AddStat(STAT_TYPE.ITEM_AMOUNT, amount)`
-- 없는 키는 `_storage.AddHero(itemId, ability)`로 생성된다.
-  - 새 AbilityItemHero는 `TB_ITEM_HERO.Get(itemId)`로 Init한다.
+- `_storage.Heroes[item_id].AddStat(STAT_TYPE.ITEM_AMOUNT, amount)`
+- 없는 키는 `_storage.AddHero(item_id, ability)`로 생성된다.
+  - 새 AbilityItemHero는 `TB_ITEM_HERO.Get(item_id)`로 Init한다.
 - Apply는 `STAT_TYPE.ITEM_AMOUNT`만 변경한다 (다른 stat은 보존).
 
 ### C-4a) `type == REWARD_TYPE.MATERIAL`
 
-- `_storage.Materials[itemId].AddAmount(amount)` (= `AddStat(STAT_TYPE.ITEM_AMOUNT, amount)`)
-- 없는 키는 `_storage.AddMaterial(itemId, ability)`로 생성된다.
-  - 새 AbilityItemMaterial은 `TB_ITEM_MATERIAL.Get(itemId)`로 Init한다.
+- `_storage.Materials[item_id].AddAmount(amount)` (= `AddStat(STAT_TYPE.ITEM_AMOUNT, amount)`)
+- 없는 키는 `_storage.AddMaterial(item_id, ability)`로 생성된다.
+  - 새 AbilityItemMaterial은 `TB_ITEM_MATERIAL.Get(item_id)`로 Init한다.
 - Apply는 `STAT_TYPE.ITEM_AMOUNT`만 변경한다 (다른 stat은 보존).
 
 
@@ -201,28 +201,28 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
   "wallet": { "<currencyId>": <long> },
   "equipments": {
     "<itemUid>": {
-      "itemId": "<string>",
+      "item_id": "<string>",
       "itemUid": "<string>",
-      "itemLevel": <int>
+      "item_level": <int>
     }
   },
   "cards": {
-    "<itemId>": {
-      "itemId": "<string>",
-      "itemLevel": <int>,
+    "<item_id>": {
+      "item_id": "<string>",
+      "item_level": <int>,
       "amount": <int>
     }
   },
   "materials": {
-    "<itemId>": {
-      "itemId": "<string>",
+    "<item_id>": {
+      "item_id": "<string>",
       "amount": <int>
     }
   },
   "heroes": {
-    "<itemId>": {
-      "heroId": "<string>",
-      "itemLevel": <int>,
+    "<item_id>": {
+      "item_id": "<string>",
+      "item_level": <int>,
       "amount": <int>,
       "equips": { "<slotNumber>": "<equipUid>" }
     }
@@ -271,4 +271,4 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 
 사용 목적:
 
-- `ACHIEVE_PASS.reqPassId` 조건이 있는 runtime의 `WAIT -> ACTIVE` 전이를 위해 Pass 변동을 구독한다.
+- `ACHIEVE_PASS.req_pass_id` 조건이 있는 runtime의 `WAIT -> ACTIVE` 전이를 위해 Pass 변동을 구독한다.

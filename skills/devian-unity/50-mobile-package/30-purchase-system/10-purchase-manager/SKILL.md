@@ -12,7 +12,7 @@ PurchaseManager(구매 샘플)의 위치/역할/규약을 설명한다.
 - 서버 관련 정본은 `40`(구현), `44`(셋업), `46`(결정), `43`(클라-서버 연동 규약)를 참조한다.
 
 PurchaseManager는 **단일 concrete 클래스**이다.
-`TB_PURCHASE` 테이블을 직접 참조하여 `internalProductId -> rewardGroupId` 변환과 ProductDefinition 빌드를 수행한다.
+`TB_PURCHASE` 테이블을 직접 참조하여 `internal_product_id -> reward_group_id` 변환과 ProductDefinition 빌드를 수행한다.
 
 
 ---
@@ -61,7 +61,7 @@ CompoSingleton<PurchaseManager>.Instance
   - IAP 초기화 (Connect + FetchProducts). 선택적 prewarm 호출이며, Purchase/RetryInterruptedPurchase/Restore 경로에서 lazy-init로 자동 호출될 수 있음.
   - Idempotent: 여러 번 호출해도 동일 Task 반환.
   - Editor에서는 즉시 `PURCHASE_UNSUPPORTED_PLATFORM` 반환.
-- `PurchaseAsync(internalProductId, ct)` → `Task<CommonResult<PurchaseFinalResult>>`
+- `PurchaseAsync(internal_product_id, ct)` → `Task<CommonResult<PurchaseFinalResult>>`
   - 단일 구매 진입점. `TB_PURCHASE`에서 `Kind`를 조회하여 구매 유형(Consumable/Rental/Subscription/SeasonPass)을 자동 결정
   - 최종 지급은 서버 `verifyPurchase` 결과만 신뢰
   - 구매 보상(`AppliedRewards`)에 `amount < 0` 값이 있으면 즉시 실패(`COMMON_INVALID_ARGUMENT`) 처리한다.
@@ -69,7 +69,7 @@ CompoSingleton<PurchaseManager>.Instance
 - `RetryInterruptedPurchaseAsync(ct)` → `Task<CommonResult<RetryInterruptedPurchaseResult>>`
   - `PurchaseStorage.current`에 중단된 결제가 있으면 새 구매를 시작하지 않고 상태 전이를 재개/마무리
   - 중단 내역이 없으면 `Success(Status=SkippedNoCurrent)` (skip, 정상)
-  - UI/Debug 표시는 반환 payload(`Status`, `InternalProductId`, `ResultStatus`, `AppliedRewards`)를 사용
+  - UI/Debug 표시는 반환 payload(`Status`, `Internal_product_id`, `ResultStatus`, `AppliedRewards`)를 사용
 - `AckPurchaseClientGrantAppliedAsync(purchaseId, ct)` — 로컬 지급 성공 보고
 - `ReportPurchaseClientGrantFailureAsync(purchaseId, ct)` — 로컬 지급 실패 보고
 - `RestoreAsync(ct)` (iOS 스토어 복원, manual/fallback)
@@ -92,12 +92,12 @@ CompoSingleton<PurchaseManager>.Instance
 
 PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 
-- `ResolveRewardGroupId(internalProductId)`: `TB_PURCHASE`에서 `RewardGroupId` 조회 (없으면 빈 값)
+- `ResolveRewardGroupId(internal_product_id)`: `TB_PURCHASE`에서 `Reward_group_id` 조회 (없으면 빈 값)
 - `PurchaseFinalResult`, `RetryInterruptedPurchaseResult`
-  - `RewardGroupId`와 `AppliedRewards: RewardData[]`를 포함한다.
-  - `skip`/`rewardGroupId 없음`/이번 호출에서 지급 없음(`ALREADY_GRANTED + APPLIED_ACKED`)은 `AppliedRewards=[]`가 정상이다.
-- `BuildProductDefinitions()`: `TB_PURCHASE.GetAll()`에서 `isActive` 필터링 후 ProductDefinition 목록 생성
-  - 플랫폼별 StoreSku 매핑: `#if UNITY_IOS` → `StoreSkuApple`, `#elif UNITY_ANDROID` → `StoreSkuGoogle`
+  - `Reward_group_id`와 `AppliedRewards: RewardData[]`를 포함한다.
+  - `skip`/`reward_group_id 없음`/이번 호출에서 지급 없음(`ALREADY_GRANTED + APPLIED_ACKED`)은 `AppliedRewards=[]`가 정상이다.
+- `BuildProductDefinitions()`: `TB_PURCHASE.GetAll()`에서 `is_active` 필터링 후 ProductDefinition 목록 생성
+  - 플랫폼별 StoreSku 매핑: `#if UNITY_IOS` → `Store_sku_apple`, `#elif UNITY_ANDROID` → `Store_sku_google`
   - `Kind` → `ProductType` 매핑: Consumable→Consumable, Subscription→Subscription, SeasonPass→NonConsumable
 
 
@@ -110,7 +110,7 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 
 
 - **VerifyPurchaseAsync**: `FirebaseCallableManager.Instance.VerifyPurchaseAsync(data, ct)` — ✅ 구현됨
-  - 요청 키: `storeKey`, `internalProductId`, `kind`, `payload`
+  - 요청 키: `storeKey`, `internal_product_id`, `kind`, `payload`
   - 응답: `CommonResult<VerifyPurchaseResponse>`
 - **reportPurchaseClientGrantResultAsync**: `FirebaseCallableManager.Instance.AckPurchaseClientGrantAsync(data, ct)` — ✅ 구현됨
   - 요청 키: `purchaseId`, `clientGrantStatus`
@@ -160,7 +160,7 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 - 구매 보상(`RewardData[]`)의 `amount < 0`은 허용하지 않는다. 음수 보상이 감지되면 구매/복구 경로를 실패 처리한다.
 - 로컬 지급 실패 시 `FAILED_REPORTED`를 서버에 기록할 수 있으나, confirm 미완 상태에서는 `current`를 유지해 복구 경로를 보존한다.
 - `resultStatus == ALREADY_GRANTED`라도 `clientGrantStatus == PENDING` 또는 `FAILED_REPORTED`이면 로컬 지급 복구 경로를 사용할 수 있다.
-- `rewardGroupId`가 비어 있으면 로컬 보상 지급은 스킵하고, 클라이언트 지급 완료 처리만 진행한다. (결제/재구매 동일 규칙)
+- `reward_group_id`가 비어 있으면 로컬 보상 지급은 스킵하고, 클라이언트 지급 완료 처리만 진행한다. (결제/재구매 동일 규칙)
 - 구매 전 인증 게이트는 `LoginManager` API(`IsPurchaseLoginReady`, `EnsurePurchaseLoginReadyAsync`)를 사용한다. (`FirebaseAuth.CurrentUser` 직접 판정 금지)
 - 로컬/클라우드 저장용 구매 상태는 `PurchaseManager.Instance.Storage`(`PurchaseStorage`)에 기록한다.
 - `PurchaseStorage`는 진행 중 결제(`current`), 환불/지원 대응용 최소 로그(`refundSupportLogs`), 환불 동기화 상태(`refundSync`)를 저장한다.

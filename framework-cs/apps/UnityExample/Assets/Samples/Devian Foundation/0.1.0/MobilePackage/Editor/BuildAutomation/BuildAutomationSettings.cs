@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 
 namespace Devian
@@ -38,9 +37,6 @@ namespace Devian
         [Tooltip("릴리즈 데이터 저장소 루트 경로 (절대경로 또는 프로젝트 루트 기준 상대경로). 비워두면 프로젝트 루트 사용")]
         public string releaseRepoRoot = "";
 
-        [Tooltip("Remote CDN base URL (예: https://xxx.cloudfront.net). Bundle Upload 경로와 Addressables Remote.LoadPath의 SSOT")]
-        public string remoteCdnUrl = "";
-
         [Tooltip("AOS 버전 JSON 경로 (releaseRepoRoot 기준 상대경로)")]
         public string versionJsonPathAOS = "release/version_aos.json";
 
@@ -58,29 +54,5 @@ namespace Devian
         // ── Pipeline Options ──
         [Tooltip("Development Build (디버그 모드). 프로파일러 연결, 스크립트 디버깅 허용")]
         public bool developmentBuild = false;
-
-        // ── Keystore Credentials (EditorPrefs) ──
-        // git에 포함되지 않도록 ScriptableObject 필드가 아닌 EditorPrefs에 저장.
-        // Unity 재시작 후에도 유지된다.
-
-        private const string PrefPrefix = "Devian.BuildAutomation.";
-
-        public static string KeystorePass
-        {
-            get => EditorPrefs.GetString(PrefPrefix + "keystorePass", "");
-            set => EditorPrefs.SetString(PrefPrefix + "keystorePass", value);
-        }
-
-        public static string KeyaliasName
-        {
-            get => EditorPrefs.GetString(PrefPrefix + "keyaliasName", "");
-            set => EditorPrefs.SetString(PrefPrefix + "keyaliasName", value);
-        }
-
-        public static string KeyaliasPass
-        {
-            get => EditorPrefs.GetString(PrefPrefix + "keyaliasPass", "");
-            set => EditorPrefs.SetString(PrefPrefix + "keyaliasPass", value);
-        }
     }
 }

@@ -7,7 +7,7 @@ MobilePackage 샘플의 출석 보상 시스템 개요다.
 이 시스템은 `ATTEND` 테이블 기반으로 "일자별 출석 보상 claim"을 처리한다.
 
 핵심 책임:
-- `ATTEND` row(`attendId`, `isActive`, `day`, `rewardGroupId`)를 런타임 규칙으로 해석한다.
+- `ATTEND` row(`attend_id`, `is_active`, `day`, `reward_group_id`)를 런타임 규칙으로 해석한다.
 - day `1..7` 고정 `attend runtime`을 생성하고 상태(`claimable/claimed/wait`)를 계산한다.
 - claim 성공 시 `RewardManager`로 보상을 적용한다.
 - claim 성공 결과로 `RewardData[]`를 반환한다.

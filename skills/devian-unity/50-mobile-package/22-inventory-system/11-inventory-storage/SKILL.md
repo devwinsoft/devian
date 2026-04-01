@@ -16,11 +16,11 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobilePacka
 
 - `Wallet` — `InventoryWallet` (내부 `Dictionary<CURRENCY_TYPE, long>` 기반 잔고 컨테이너)
 - `Equipments` — `Dictionary<string, AbilityItemEquip>` (itemUid → 장비)
-- `Cards` — `Dictionary<string, AbilityItemCard>` (itemId → 카드)
-- `Materials` — `Dictionary<string, AbilityItemMaterial>` (itemId → 재료)
-- `Heroes` — `Dictionary<string, AbilityItemHero>` (itemId → 영웅)
-- `Rentals` — `Dictionary<string, long>` (itemId → expiresAtClientUtcMs)
-- `Passes` — `Dictionary<string, bool>` (itemId → owned)
+- `Cards` — `Dictionary<string, AbilityItemCard>` (item_id → 카드)
+- `Materials` — `Dictionary<string, AbilityItemMaterial>` (item_id → 재료)
+- `Heroes` — `Dictionary<string, AbilityItemHero>` (item_id → 영웅)
+- `Rentals` — `Dictionary<string, long>` (item_id → expiresAtClientUtcMs)
+- `Passes` — `Dictionary<string, bool>` (item_id → owned)
 - `GetEquip/AddEquip/RemoveEquip` — 장비 CRUD (key=itemUid)
 - `GetEquipsByItemId` — itemId로 인스턴스 목록 조회
 - `GetCard/AddCard` — 카드 CRUD
@@ -56,20 +56,20 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
 | 타입 | 책임 |
 |---|---|
 | `InventoryManager` | InventoryStorage 소유, 타입별 Apply/Revoke/Query API 제공 |
-| `InventoryStorage` | Wallet (`InventoryWallet`), Equipments (itemUid → AbilityItemEquip), Cards (itemId → AbilityItemCard), Materials (itemId → AbilityItemMaterial), Heroes (itemId → AbilityItemHero), Rentals (itemId → expiresAtClientUtcMs), Passes (itemId → owned), TreasureCurrent (`InventoryTreasureCurrent`), TreasureCounts (TREASURE_GRADE_TYPE → int) |
+| `InventoryStorage` | Wallet (`InventoryWallet`), Equipments (itemUid → AbilityItemEquip), Cards (item_id → AbilityItemCard), Materials (item_id → AbilityItemMaterial), Heroes (item_id → AbilityItemHero), Rentals (item_id → expiresAtClientUtcMs), Passes (item_id → owned), TreasureCurrent (`InventoryTreasureCurrent`), TreasureCounts (TREASURE_GRADE_TYPE → int) |
 | `AbilityItemEquip` | OwnerUnitId/OwnerSlotNumber(별도 필드) + 능력치(STAT_TYPE 기반) 관리 |
 | `AbilityItemCard` | 수량(`STAT_TYPE.ITEM_AMOUNT`) + 능력치(STAT_TYPE 기반) 관리 |
 | `AbilityItemMaterial` | 수량(`STAT_TYPE.ITEM_AMOUNT`) + 능력치(STAT_TYPE 기반) 관리 |
 | `AbilityItemHero` | 수량(`STAT_TYPE.ITEM_AMOUNT`) + 영웅 장비 슬롯(`Dict<int, AbilityItemEquip>`) 관리 |
 
 - `InventoryManager`가 `InventoryStorage`를 소유한다 (싱글톤 등록 안 함).
-- 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `itemId`에 여러 인스턴스가 존재할 수 있다.
-- `ApplyCard(itemId, amount)` — `_storage.Cards`에 AbilityItemCard를 추가하고 `AddAmount(delta)`로 수량 누적한다.
-- `ApplyMaterial(itemId, amount)` — `_storage.Materials`에 AbilityItemMaterial을 추가하고 `AddAmount(delta)`로 수량 누적한다.
-- `ApplyEquip(itemId)` — 새 `itemUid`(GUID)로 AbilityItemEquip을 생성하여 `_storage.Equipments`에 추가한다.
-- `ApplyHero(itemId, amount)` — `_storage.Heroes`에 AbilityItemHero를 추가하고 `AddAmount(delta)`로 수량 누적한다.
-- `ApplyRental(itemId, durationMs)` — `_storage.SetRental(id, max(currentExpiry, now)+duration)`로 로컬 만료 시각을 설정/연장한다.
-- `SetPassOwnership(itemId)` — `_storage.SetPass(id, true)`로 소유권을 설정한다.
+- 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `item_id`에 여러 인스턴스가 존재할 수 있다.
+- `ApplyCard(item_id, amount)` — `_storage.Cards`에 AbilityItemCard를 추가하고 `AddAmount(delta)`로 수량 누적한다.
+- `ApplyMaterial(item_id, amount)` — `_storage.Materials`에 AbilityItemMaterial을 추가하고 `AddAmount(delta)`로 수량 누적한다.
+- `ApplyEquip(item_id)` — 새 `itemUid`(GUID)로 AbilityItemEquip을 생성하여 `_storage.Equipments`에 추가한다.
+- `ApplyHero(item_id, amount)` — `_storage.Heroes`에 AbilityItemHero를 추가하고 `AddAmount(delta)`로 수량 누적한다.
+- `ApplyRental(item_id, durationMs)` — `_storage.SetRental(id, max(currentExpiry, now)+duration)`로 로컬 만료 시각을 설정/연장한다.
+- `SetPassOwnership(item_id)` — `_storage.SetPass(id, true)`로 소유권을 설정한다.
 - `ApplyTreasure(gradeType, amount)` — `_storage.AddTreasure(gradeType, amount)`로 chest count를 누적한다.
 - 시즌패스 상태 변경 시 `INVENTORY_MESSAGE_TYPE.PASS_CHANGED`를 publish할 수 있어야 한다(실행 위치: `InventoryManager`).
 
@@ -124,14 +124,14 @@ namespace Devian
 ## 6. Hard Rules
 
 - InventoryStorage는 **sealed POCO 클래스**이다 (MonoBehaviour 금지).
-- 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `itemId`에 여러 인스턴스가 존재할 수 있다.
+- 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `item_id`에 여러 인스턴스가 존재할 수 있다.
 - `Wallet`은 `InventoryWallet` API(`Get/TryAdd`)를 통해 `CURRENCY_TYPE`별 잔고를 관리한다.
 - `Equipments` key = `itemUid` (string). value = `AbilityItemEquip`.
-- `Cards` key = `itemId` (string). value = `AbilityItemCard`.
-- `Materials` key = `itemId` (string). value = `AbilityItemMaterial`.
-- `Heroes` key = `itemId` (string). value = `AbilityItemHero`.
-- `Rentals` key = `itemId` (string key). value = `long` expiresAtClientUtcMs.
-- `Passes` key = `itemId` (string key). value = `bool` owned.
+- `Cards` key = `item_id` (string). value = `AbilityItemCard`.
+- `Materials` key = `item_id` (string). value = `AbilityItemMaterial`.
+- `Heroes` key = `item_id` (string). value = `AbilityItemHero`.
+- `Rentals` key = `item_id` (string key). value = `long` expiresAtClientUtcMs.
+- `Passes` key = `item_id` (string key). value = `bool` owned.
 - `TreasureCurrent` = `InventoryTreasureCurrent` (sealed POCO, Exp/Level).
 - `TreasureCounts` key = `TREASURE_GRADE_TYPE` (NONE 제외). value = `int` (보유 chest count).
 - treasure count와 exp는 음수 불가 (0 이하 clamp).

@@ -8,9 +8,9 @@ namespace Devian
     {
         STATUS mTable = null;
 
-        public string StatusId => mTable?.StatusId ?? string.Empty;
-        public string NameId => mTable?.NameId ?? string.Empty;
-        public IReadOnlyList<string> AffectList => mTable != null ? mTable.AffectList : Array.Empty<string>();
+        public string StatusId => mTable?.status_id ?? string.Empty;
+        public string NameId => mTable?.name_id ?? string.Empty;
+        public IReadOnlyList<string> AffectList => mTable != null ? mTable.affect_list : Array.Empty<string>();
 
         public void Init(STATUS table)
         {

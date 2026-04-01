@@ -11,7 +11,7 @@ namespace Devian
             {
                 return CommonResult<AbilityItemCard>.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    "AbilityItemFactory.CreateCard: itemId is null or empty.");
+                    "AbilityItemFactory.CreateCard: item_id is null or empty.");
             }
 
             var table = TB_ITEM_CARD.Get(itemId);
@@ -34,7 +34,7 @@ namespace Devian
                     "AbilityItemFactory.CreateCard: table is null.");
             }
 
-            var levelTable = resolveCardLevelTable(table.ItemId, itemLevel);
+            var levelTable = resolveCardLevelTable(table.item_id, itemLevel);
             if (levelTable.IsFailure)
                 return CommonResult<AbilityItemCard>.Failure(levelTable.Error!);
 
@@ -49,7 +49,7 @@ namespace Devian
             {
                 return CommonResult<AbilityItemMaterial>.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    "AbilityItemFactory.CreateMaterial: itemId is null or empty.");
+                    "AbilityItemFactory.CreateMaterial: item_id is null or empty.");
             }
 
             var table = TB_ITEM_MATERIAL.Get(itemId);
@@ -110,7 +110,7 @@ namespace Devian
                     "AbilityItemFactory.CreateHero: table is null.");
             }
 
-            var levelTable = resolveHeroLevelTable(table.ItemId, itemLevel);
+            var levelTable = resolveHeroLevelTable(table.item_id, itemLevel);
             if (levelTable.IsFailure)
                 return CommonResult<AbilityItemHero>.Failure(levelTable.Error!);
 
@@ -130,7 +130,7 @@ namespace Devian
             {
                 return CommonResult<AbilityItemEquip>.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    "AbilityItemFactory.CreateEquip: itemId is null or empty.");
+                    "AbilityItemFactory.CreateEquip: item_id is null or empty.");
             }
 
             var table = TB_ITEM_EQUIP.Get(itemId);
@@ -180,7 +180,7 @@ namespace Devian
                     "AbilityItemFactory.CreateEquip: ownerUnitId/ownerSlotNumber must both be set or both be empty.");
             }
 
-            var levelTable = resolveEquipLevelTable(table.ItemId, itemLevel);
+            var levelTable = resolveEquipLevelTable(table.item_id, itemLevel);
             if (levelTable.IsFailure)
                 return CommonResult<AbilityItemEquip>.Failure(levelTable.Error!);
 
@@ -206,7 +206,7 @@ namespace Devian
             {
                 return CommonResult<ITEM_CARD_LEVEL>.Failure(
                     COMMON_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
-                    $"ITEM_CARD_LEVEL not found: itemId={itemId}, level={resolveLevel.Value}");
+                    $"ITEM_CARD_LEVEL not found: item_id={itemId}, level={resolveLevel.Value}");
             }
 
             return CommonResult<ITEM_CARD_LEVEL>.Success(levelTable);
@@ -225,7 +225,7 @@ namespace Devian
             {
                 return CommonResult<ITEM_HERO_LEVEL>.Failure(
                     COMMON_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
-                    $"ITEM_HERO_LEVEL not found: itemId={itemId}, level={resolveLevel.Value}");
+                    $"ITEM_HERO_LEVEL not found: item_id={itemId}, level={resolveLevel.Value}");
             }
 
             return CommonResult<ITEM_HERO_LEVEL>.Success(levelTable);
@@ -244,7 +244,7 @@ namespace Devian
             {
                 return CommonResult<ITEM_EQUIP_LEVEL>.Failure(
                     COMMON_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
-                    $"ITEM_EQUIP_LEVEL not found: itemId={itemId}, level={resolveLevel.Value}");
+                    $"ITEM_EQUIP_LEVEL not found: item_id={itemId}, level={resolveLevel.Value}");
             }
 
             return CommonResult<ITEM_EQUIP_LEVEL>.Success(levelTable);
@@ -256,7 +256,7 @@ namespace Devian
             {
                 return CommonResult<int>.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    $"{context}: itemLevel must be >= 1. actual={itemLevel}");
+                    $"{context}: item_level must be >= 1. actual={itemLevel}");
             }
 
             return CommonResult<int>.Success(itemLevel);
@@ -268,7 +268,7 @@ namespace Devian
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
-                if (row != null && row.ItemLevel == level)
+                if (row != null && row.item_level == level)
                     return row;
             }
 
@@ -281,7 +281,7 @@ namespace Devian
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
-                if (row != null && row.ItemLevel == level)
+                if (row != null && row.item_level == level)
                     return row;
             }
 
@@ -294,7 +294,7 @@ namespace Devian
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
-                if (row != null && row.ItemLevel == level)
+                if (row != null && row.item_level == level)
                     return row;
             }
 

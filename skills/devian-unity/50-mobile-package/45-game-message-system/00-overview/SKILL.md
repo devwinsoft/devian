@@ -7,7 +7,7 @@ MobilePackage 샘플의 메시지/트리거/메시지 저장 계층 개요다.
 
 핵심:
 - `GameMessageManager`가 game message trigger와 `GameMessageStorage`를 소유한다.
-- Mission 입력(`Notify`)의 stat 누적 정본은 `message.stats[messageId]`다.
+- Mission 입력(`Notify`)의 stat 누적 정본은 `message.stats[message_id]`다.
 - SaveData payload에서 message stat 저장 위치는 root `message` 섹션이다.
 
 ---

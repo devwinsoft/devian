@@ -10,7 +10,7 @@ Rewarded 광고 포맷 규약을 정의한다.
 ## Rules
 
 - `Format=REWARDED`
-- `RewardGroupId`는 필수다
+- `Reward_group_id`는 필수다
 - 사용자의 명시적 opt-in으로만 표시한다
 - 보상 지급은 `reward earned` 콜백 이후에만 수행한다
 - 동일 show cycle에서 보상은 최대 1회만 지급한다
@@ -22,8 +22,8 @@ Rewarded 광고 포맷 규약을 정의한다.
 ## 지급 경계
 
 - Rewarded 광고는 보상 적용을 직접 수행하지 않는다
-- AdsManager가 `RewardManager.ApplyRewardGroup(rewardGroupId)`를 호출해 지급을 위임한다
-- RewardManager가 `TB_REWARD`를 기준으로 `rewardGroupId`를 해석한다
+- AdsManager가 `RewardManager.ApplyRewardGroup(reward_group_id)`를 호출해 지급을 위임한다
+- RewardManager가 `TB_REWARD`를 기준으로 `reward_group_id`를 해석한다
 - `close without reward`, `show fail`, `load fail` 경로에서는 지급이 없다
 
 

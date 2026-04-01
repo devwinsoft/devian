@@ -14,14 +14,14 @@ namespace Devian
                 return null;
 
             return createRewardProduct(
-                row.ShopId,
-                row.NameId,
+                row.shop_id,
+                row.name_id,
                 SHOP_CATALOG_TYPE.DAILY,
-                row.CurrencyType,
-                row.Price,
-                row.RewardGroupId,
-                row.Amount,
-                row.MaxCount,
+                row.currency_type,
+                row.price,
+                row.reward_group_id,
+                row.amount,
+                row.max_count,
                 discountType);
         }
 
@@ -31,14 +31,14 @@ namespace Devian
                 return null;
 
             return new ShopProductChest(
-                row.ShopId,
-                row.NameId,
+                row.shop_id,
+                row.name_id,
                 SHOP_CATALOG_TYPE.CHEST,
-                row.ChestType,
-                row.CurrencyType,
-                row.Price,
-                row.Amount,
-                row.MaxCount,
+                row.chest_type,
+                row.currency_type,
+                row.price,
+                row.amount,
+                row.max_count,
                 SHOP_DISCOUNT_TYPE.NONE);
         }
 
@@ -48,12 +48,12 @@ namespace Devian
                 return null;
 
             return createRewardProduct(
-                row.ShopId,
-                row.NameId,
+                row.shop_id,
+                row.name_id,
                 SHOP_CATALOG_TYPE.EVENT,
-                row.CurrencyType,
-                row.Price,
-                row.RewardGroupId,
+                row.currency_type,
+                row.price,
+                row.reward_group_id,
                 1,
                 -1,
                 SHOP_DISCOUNT_TYPE.NONE);
@@ -65,11 +65,11 @@ namespace Devian
                 return null;
 
             return new ShopProductPurchase(
-                row.ShopId,
-                row.NameId,
+                row.shop_id,
+                row.name_id,
                 SHOP_CATALOG_TYPE.PURCHASE,
-                row.InternalProductId,
-                row.SeasonId,
+                row.internal_product_id,
+                row.season_id,
                 -1);
         }
 
@@ -79,14 +79,14 @@ namespace Devian
                 return null;
 
             return createRewardProduct(
-                row.ShopId,
-                row.NameId,
+                row.shop_id,
+                row.name_id,
                 SHOP_CATALOG_TYPE.GOLD,
-                row.CurrencyType,
-                row.Price,
-                row.RewardGroupId,
+                row.currency_type,
+                row.price,
+                row.reward_group_id,
                 1,
-                row.MaxCount,
+                row.max_count,
                 SHOP_DISCOUNT_TYPE.NONE);
         }
 

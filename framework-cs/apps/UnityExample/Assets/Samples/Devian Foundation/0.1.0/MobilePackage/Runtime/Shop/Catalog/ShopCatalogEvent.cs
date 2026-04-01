@@ -100,10 +100,10 @@ namespace Devian
             out long startUtcMs,
             out long endUtcMs)
         {
-            startUtcMs = normalizeEventUtcMs(row?.StartTime.utcTimeMs ?? 0L);
-            endUtcMs = normalizeEventUtcMs(row?.EndTime.utcTimeMs ?? 0L);
+            startUtcMs = normalizeEventUtcMs(row?.start_time.utcTimeMs ?? 0L);
+            endUtcMs = normalizeEventUtcMs(row?.end_time.utcTimeMs ?? 0L);
             return row != null
-                && !string.IsNullOrWhiteSpace(row.ShopId)
+                && !string.IsNullOrWhiteSpace(row.shop_id)
                 && endUtcMs > 0L
                 && endUtcMs > startUtcMs;
         }

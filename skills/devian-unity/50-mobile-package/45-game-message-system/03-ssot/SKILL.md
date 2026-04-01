@@ -32,7 +32,7 @@ AppliesTo: v10
 
 처리 순서:
 1. `GameMessageManager.Notify(messageType, delta)` 진입
-2. `GameMessageManager`가 `TB_GAME_MESSAGE` 기준 `TOTAL_*` 바인딩만 `message.stats[messageId]` 갱신
+2. `GameMessageManager`가 `TB_GAME_MESSAGE` 기준 `TOTAL_*` 바인딩만 `message.stats[message_id]` 갱신
 3. `GameMessageManager` game trigger publish
 4. mission/achieve runtime 구독자 수신 (각 manager가 trigger를 직접 구독)
 
@@ -43,7 +43,7 @@ AppliesTo: v10
 - 저장 위치: root payload `message`
 - schema:
   - `schemaVersion: int`
-  - `stats: Dictionary<string, CBigInt>` (key = `messageId`)
+  - `stats: Dictionary<string, CBigInt>` (key = `message_id`)
 - migration:
   - 구버전(`v12`)의 `mission.stats`는 load 시 `message.stats`로 이동한다.
   - write는 `message.stats`만 사용한다.

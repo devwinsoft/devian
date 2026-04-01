@@ -32,33 +32,33 @@ public sealed class InventoryManager : CompoSingleton<InventoryManager>
         => CompoSingleton<InventoryManager>.Instance;
 
     // ── Apply API ──
-    public CommonResult ApplyCurrency(CURRENCY_TYPE currencyType, long amount) { ... }
-    public CommonResult ApplyEquip(string itemId, int amount) { ... }
-    public CommonResult ApplyCard(string itemId, int amount) { ... }
-    public CommonResult ApplyMaterial(string itemId, int amount) { ... }
-    public CommonResult ApplyHero(string itemId, int amount) { ... }
-    public CommonResult ApplyRental(string itemId) { ... }
+    public CommonResult ApplyCurrency(CURRENCY_TYPE currency_type, long amount) { ... }
+    public CommonResult ApplyEquip(string item_id, int amount) { ... }
+    public CommonResult ApplyCard(string item_id, int amount) { ... }
+    public CommonResult ApplyMaterial(string item_id, int amount) { ... }
+    public CommonResult ApplyHero(string item_id, int amount) { ... }
+    public CommonResult ApplyRental(string item_id) { ... }
     public CommonResult ApplyTreasure(TREASURE_GRADE_TYPE gradeType, int amount) { ... }
-    public CommonResult SetPassOwnership(string itemId, bool owned) { ... }
-    public CommonResult RemovePassOwnership(string itemId) { ... }
+    public CommonResult SetPassOwnership(string item_id, bool owned) { ... }
+    public CommonResult RemovePassOwnership(string item_id) { ... }
 
     // ── Revoke API ──
-    public void RevokeCurrency(CURRENCY_TYPE currencyType, long amount) { ... }
-    public void RevokeEquip(string itemId, int amount) { ... }
-    public void RevokeCard(string itemId, int amount) { ... }
-    public void RevokeMaterial(string itemId, int amount) { ... }
-    public void RevokeHero(string itemId, int amount) { ... }
-    public void RevokeRental(string itemId) { ... }
+    public void RevokeCurrency(CURRENCY_TYPE currency_type, long amount) { ... }
+    public void RevokeEquip(string item_id, int amount) { ... }
+    public void RevokeCard(string item_id, int amount) { ... }
+    public void RevokeMaterial(string item_id, int amount) { ... }
+    public void RevokeHero(string item_id, int amount) { ... }
+    public void RevokeRental(string item_id) { ... }
     public void RevokeTreasure(TREASURE_GRADE_TYPE gradeType, int amount) { ... }
 
     // ── Query API ──
-    public long GetCurrencyAmount(CURRENCY_TYPE currencyType) { ... }
-    public int GetEquipCount(string itemId) { ... }
-    public long GetCardAmount(string itemId) { ... }
-    public long GetMaterialAmount(string itemId) { ... }
-    public long GetHeroAmount(string itemId) { ... }
-    public bool HasActiveRental(string itemId) { ... }
-    public bool HasPass(string itemId) { ... }
+    public long GetCurrencyAmount(CURRENCY_TYPE currency_type) { ... }
+    public int GetEquipCount(string item_id) { ... }
+    public long GetCardAmount(string item_id) { ... }
+    public long GetMaterialAmount(string item_id) { ... }
+    public long GetHeroAmount(string item_id) { ... }
+    public bool HasActiveRental(string item_id) { ... }
+    public bool HasPass(string item_id) { ... }
     public int GetTreasureCount(TREASURE_GRADE_TYPE gradeType) { ... }
 
     // ── Message ──
@@ -126,14 +126,14 @@ CompoSingleton<InventoryManager>.Instance
 
 ### Apply
 
-- `ApplyCurrency(CURRENCY_TYPE currencyType, long amount) -> CommonResult` — `_storage.Wallet.TryAdd(currencyType, amount)`
-- `ApplyEquip(string itemId, int amount) -> CommonResult` — amount 횟수만큼 새 `itemUid`(GUID)로 AbilityItemEquip 생성 + `_storage.AddEquip(itemUid, ability)`
-- `ApplyCard(string itemId, int amount) -> CommonResult` — `_storage.Cards`에 AbilityItemCard 추가(없으면 생성) + `AbilityItemCard.AddAmount(amount)`
-- `ApplyMaterial(string itemId, int amount) -> CommonResult` — `_storage.Materials`에 AbilityItemMaterial 추가(없으면 생성) + `AbilityItemMaterial.AddAmount(amount)`
-- `ApplyHero(string itemId, int amount) -> CommonResult` — `_storage.Heroes`에 AbilityItemHero 추가(없으면 생성) + `AbilityItemHero.AddAmount(amount)`
-- `ApplyRental(string itemId) -> CommonResult` — `_storage.SetRental(id, max(currentExpiry, now)+30days)`
-- `SetPassOwnership(string itemId, bool owned) -> CommonResult` — `_storage.SetPass(itemId, owned)` + 메시지 트리거
-- `RemovePassOwnership(string itemId) -> CommonResult` — `_storage.RemovePass(itemId)` + 메시지 트리거
+- `ApplyCurrency(CURRENCY_TYPE currency_type, long amount) -> CommonResult` — `_storage.Wallet.TryAdd(currency_type, amount)`
+- `ApplyEquip(string item_id, int amount) -> CommonResult` — amount 횟수만큼 새 `itemUid`(GUID)로 AbilityItemEquip 생성 + `_storage.AddEquip(itemUid, ability)`
+- `ApplyCard(string item_id, int amount) -> CommonResult` — `_storage.Cards`에 AbilityItemCard 추가(없으면 생성) + `AbilityItemCard.AddAmount(amount)`
+- `ApplyMaterial(string item_id, int amount) -> CommonResult` — `_storage.Materials`에 AbilityItemMaterial 추가(없으면 생성) + `AbilityItemMaterial.AddAmount(amount)`
+- `ApplyHero(string item_id, int amount) -> CommonResult` — `_storage.Heroes`에 AbilityItemHero 추가(없으면 생성) + `AbilityItemHero.AddAmount(amount)`
+- `ApplyRental(string item_id) -> CommonResult` — `_storage.SetRental(id, max(currentExpiry, now)+30days)`
+- `SetPassOwnership(string item_id, bool owned) -> CommonResult` — `_storage.SetPass(item_id, owned)` + 메시지 트리거
+- `RemovePassOwnership(string item_id) -> CommonResult` — `_storage.RemovePass(item_id)` + 메시지 트리거
 - `ApplyTreasure(TREASURE_GRADE_TYPE gradeType, int amount) -> CommonResult` — `_storage.AddTreasure(gradeType, amount)`
 
 에러 모델:
@@ -143,23 +143,23 @@ CompoSingleton<InventoryManager>.Instance
 
 ### Revoke
 
-- `RevokeCurrency(CURRENCY_TYPE currencyType, long amount)` — `_storage.Wallet.TryAdd(currencyType, -amount)`
-- `RevokeEquip(string itemId, int amount)` — itemId별 인스턴스를 amount만큼 제거
-- `RevokeCard(string itemId, int amount)` — `card.AddAmount(-amount)`
-- `RevokeMaterial(string itemId, int amount)` — `material.AddAmount(-amount)`
-- `RevokeHero(string itemId, int amount)` — `hero.AddAmount(-amount)`
-- `RevokeRental(string itemId)` — `_storage.RemoveRental(itemId)`
+- `RevokeCurrency(CURRENCY_TYPE currency_type, long amount)` — `_storage.Wallet.TryAdd(currency_type, -amount)`
+- `RevokeEquip(string item_id, int amount)` — itemId별 인스턴스를 amount만큼 제거
+- `RevokeCard(string item_id, int amount)` — `card.AddAmount(-amount)`
+- `RevokeMaterial(string item_id, int amount)` — `material.AddAmount(-amount)`
+- `RevokeHero(string item_id, int amount)` — `hero.AddAmount(-amount)`
+- `RevokeRental(string item_id)` — `_storage.RemoveRental(item_id)`
 - `RevokeTreasure(TREASURE_GRADE_TYPE gradeType, int amount)` — `_storage.SetTreasureCount(gradeType, current - amount)`
 
 ### Query
 
-- `GetCurrencyAmount(CURRENCY_TYPE currencyType) -> long`
-- `GetEquipCount(string itemId) -> int` — 해당 itemId를 가진 인스턴스 수
-- `GetCardAmount(string itemId) -> long` — `AbilityItemCard.Amount`
-- `GetMaterialAmount(string itemId) -> long` — `AbilityItemMaterial.Amount`
-- `GetHeroAmount(string itemId) -> long` — `hero[STAT_TYPE.ITEM_AMOUNT]`
-- `HasActiveRental(string itemId) -> bool`
-- `HasPass(string itemId) -> bool`
+- `GetCurrencyAmount(CURRENCY_TYPE currency_type) -> long`
+- `GetEquipCount(string item_id) -> int` — 해당 itemId를 가진 인스턴스 수
+- `GetCardAmount(string item_id) -> long` — `AbilityItemCard.Amount`
+- `GetMaterialAmount(string item_id) -> long` — `AbilityItemMaterial.Amount`
+- `GetHeroAmount(string item_id) -> long` — `hero[STAT_TYPE.ITEM_AMOUNT]`
+- `HasActiveRental(string item_id) -> bool`
+- `HasPass(string item_id) -> bool`
 - `GetTreasureCount(TREASURE_GRADE_TYPE gradeType) -> int`
 
 ### Message
@@ -180,16 +180,16 @@ readonly InventoryStorage _storage = new();
 
 - 통화 상태는 `_storage.Wallet[currencyId]` → `long`으로 관리한다.
 - 장비 상태는 `_storage.Equipments[itemUid]` → `AbilityItemEquip`이 전담한다.
-- 카드 상태는 `_storage.Cards[itemId]` → `AbilityItemCard`가 전담한다.
-- 재료 상태는 `_storage.Materials[itemId]` → `AbilityItemMaterial`이 전담한다.
-- 영웅 상태는 `_storage.Heroes[itemId]` → `AbilityItemHero`가 전담한다.
-- 렌탈 상태는 `_storage.Rentals[itemId]` → `long`(expiresAtClientUtcMs)으로 관리한다.
-- 시즌패스 상태는 `_storage.Passes[itemId]` → `bool`(owned)으로 관리한다.
+- 카드 상태는 `_storage.Cards[item_id]` → `AbilityItemCard`가 전담한다.
+- 재료 상태는 `_storage.Materials[item_id]` → `AbilityItemMaterial`이 전담한다.
+- 영웅 상태는 `_storage.Heroes[item_id]` → `AbilityItemHero`가 전담한다.
+- 렌탈 상태는 `_storage.Rentals[item_id]` → `long`(expiresAtClientUtcMs)으로 관리한다.
+- 시즌패스 상태는 `_storage.Passes[item_id]` → `bool`(owned)으로 관리한다.
 - treasure count 상태는 `_storage.TreasureCounts[gradeType]` → `int`(보유량)로 관리한다.
 - treasure current 상태는 `_storage.TreasureCurrent` → `InventoryTreasureCurrent`(Exp/Level)로 관리한다.
 
 NOTE:
-- 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `itemId`에 여러 인스턴스가 존재할 수 있다.
+- 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `item_id`에 여러 인스턴스가 존재할 수 있다.
 - 카드 수량 SSOT = `AbilityItemCard.Amount` (= `this[STAT_TYPE.ITEM_AMOUNT]`).
 - 재료 수량 SSOT = `AbilityItemMaterial.Amount` (= `this[STAT_TYPE.ITEM_AMOUNT]`).
 - 영웅 수량 SSOT = `AbilityItemHero.Amount` (= `this[STAT_TYPE.ITEM_AMOUNT]`).

@@ -47,7 +47,7 @@ internal static class ShopProductFactory
 
 ## Product Type Routing
 
-| CurrencyType | Product Class | ProductType |
+| Currency_type | Product Class | ProductType |
 |-------------|---------------|------------|
 | `FREE` | `ShopProductFree` | `FREE` |
 | `ADS` | `ShopProductAds` | `ADS` |
@@ -62,8 +62,8 @@ internal static class ShopProductFactory
 |--------|------------|----------|
 | `CreateDailyProduct` | `SHOP_DAILY` | `discountType` 파라미터 |
 | `CreateChestProduct` | `SHOP_CHEST` | `NONE` discount |
-| `CreateEventProduct` | `SHOP_EVENT` | `amount=1`, `maxCount=-1` 고정 |
-| `CreatePurchaseProduct` | `SHOP_PURCHASE` | reward 경로 아님, `maxCount=-1` 고정 |
+| `CreateEventProduct` | `SHOP_EVENT` | `amount=1`, `max_count=-1` 고정 |
+| `CreatePurchaseProduct` | `SHOP_PURCHASE` | reward 경로 아님, `max_count=-1` 고정 |
 | `CreateGoldProduct` | `SHOP_GOLD` | `amount=1`, `NONE` discount |
 
 ---

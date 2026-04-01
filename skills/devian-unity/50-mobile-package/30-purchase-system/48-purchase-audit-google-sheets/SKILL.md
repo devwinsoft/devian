@@ -45,7 +45,7 @@ AppliesTo: v10
   - `loggedAtUtcIso`
   - `purchaseId`
   - `storeKey`
-  - `internalProductId`
+  - `internal_product_id`
   - `kind`
   - `storeProductId`
   - `storePurchaseId`
@@ -95,7 +95,7 @@ AppliesTo: v10
 헤더 순서(고정):
 
 ```text
-loggedAtUtcIso,purchaseId,storeKey,internalProductId,kind,storeProductId,storePurchaseId,verifyStatus,region,storePurchasedAtUtcIso,eventOccurredAtUtcIso
+loggedAtUtcIso,purchaseId,storeKey,internal_product_id,kind,storeProductId,storePurchaseId,verifyStatus,region,storePurchasedAtUtcIso,eventOccurredAtUtcIso
 ```
 
 필드 의미:
@@ -105,7 +105,7 @@ loggedAtUtcIso,purchaseId,storeKey,internalProductId,kind,storeProductId,storePu
 | `loggedAtUtcIso` | Sheet row를 기록한 서버 시각 (`new Date().toISOString()`) |
 | `purchaseId` | 정본 멱등키 (`{storeKey}_{storePurchaseId}`) |
 | `storeKey` | `apple` / `google` |
-| `internalProductId` | Devian 내부 상품 ID |
+| `internal_product_id` | Devian 내부 상품 ID |
 | `kind` | `Consumable` / `Rental` / `Subscription` / `SeasonPass` |
 | `storeProductId` | 스토어 SKU |
 | `storePurchaseId` | Google `purchaseToken`, Apple `transaction_id` |

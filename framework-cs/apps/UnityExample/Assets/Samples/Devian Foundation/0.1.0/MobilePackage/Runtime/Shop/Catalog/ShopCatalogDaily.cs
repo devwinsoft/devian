@@ -297,7 +297,7 @@ namespace Devian
                 if (row == null)
                     return false;
 
-                if (isAdsOrFreeCurrencyType(row.CurrencyType))
+                if (isAdsOrFreeCurrencyType(row.currency_type))
                     return false;
 
                 var product = ShopProductFactory.CreateDailyProduct(row, normalizeDiscountType(state.discountType));
@@ -327,7 +327,7 @@ namespace Devian
 
             for (var i = 0; i < dynamicProducts.Count; i++)
             {
-                var normalizedShopId = NormalizeShopId(dynamicProducts[i]?.ShopId);
+                var normalizedShopId = NormalizeShopId(dynamicProducts[i]?.shop_id);
                 if (string.IsNullOrEmpty(normalizedShopId))
                     continue;
 
@@ -350,7 +350,7 @@ namespace Devian
                     if (product == null)
                         continue;
 
-                    var normalizedShopId = NormalizeShopId(product.ShopId);
+                    var normalizedShopId = NormalizeShopId(product.shop_id);
                     if (string.IsNullOrEmpty(normalizedShopId) || !seenShopIds.Add(normalizedShopId))
                         continue;
 
@@ -375,7 +375,7 @@ namespace Devian
                 if (!isDailyStoredProduct(product))
                     continue;
 
-                var normalizedShopId = NormalizeShopId(product.ShopId);
+                var normalizedShopId = NormalizeShopId(product.shop_id);
                 if (string.IsNullOrEmpty(normalizedShopId))
                     continue;
 
@@ -408,7 +408,7 @@ namespace Devian
                 if (row == null)
                     continue;
 
-                var normalizedShopId = NormalizeShopId(row.ShopId);
+                var normalizedShopId = NormalizeShopId(row.shop_id);
                 if (string.IsNullOrEmpty(normalizedShopId))
                     continue;
 
@@ -438,17 +438,17 @@ namespace Devian
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
-                if (row == null || string.IsNullOrWhiteSpace(row.ShopId))
+                if (row == null || string.IsNullOrWhiteSpace(row.shop_id))
                     continue;
 
-                if (isAdsOrFreeCurrencyType(row.CurrencyType))
+                if (isAdsOrFreeCurrencyType(row.currency_type))
                     continue;
 
-                var normalizedShopId = row.ShopId.Trim();
+                var normalizedShopId = row.shop_id.Trim();
                 if (!seenShopIds.Add(normalizedShopId))
                     continue;
 
-                var selectRate = sanitizeDailySelectRate(row.SelectRate);
+                var selectRate = sanitizeDailySelectRate(row.select_rate);
                 if (selectRate < 0f)
                 {
                     mandatoryRows.Add(row);
@@ -488,7 +488,7 @@ namespace Devian
                 if (!isSelectableDailyRow(row))
                     continue;
 
-                totalRate += row.SelectRate;
+                totalRate += row.select_rate;
             }
 
             if (!(totalRate > 0f))
@@ -503,7 +503,7 @@ namespace Devian
                 if (!isSelectableDailyRow(row))
                     continue;
 
-                cumulative += row.SelectRate;
+                cumulative += row.select_rate;
                 lastRow = row;
                 if (roll < cumulative)
                 {
@@ -521,13 +521,13 @@ namespace Devian
 
         static bool isSelectableDailyRow(SHOP_DAILY row)
         {
-            if (row == null || string.IsNullOrWhiteSpace(row.ShopId))
+            if (row == null || string.IsNullOrWhiteSpace(row.shop_id))
                 return false;
 
-            if (isAdsOrFreeCurrencyType(row.CurrencyType))
+            if (isAdsOrFreeCurrencyType(row.currency_type))
                 return false;
 
-            return sanitizeDailySelectRate(row.SelectRate) > 0f;
+            return sanitizeDailySelectRate(row.select_rate) > 0f;
         }
 
         void appendDailyFixedAdsFreeProducts(
@@ -543,7 +543,7 @@ namespace Devian
             {
                 for (var i = 0; i < products.Count; i++)
                 {
-                    var existingId = NormalizeShopId(products[i]?.ShopId);
+                    var existingId = NormalizeShopId(products[i]?.shop_id);
                     if (!string.IsNullOrEmpty(existingId))
                         seenShopIds.Add(existingId);
                 }
@@ -552,10 +552,10 @@ namespace Devian
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
-                if (row == null || !isAdsOrFreeCurrencyType(row.CurrencyType))
+                if (row == null || !isAdsOrFreeCurrencyType(row.currency_type))
                     continue;
 
-                var normalizedShopId = NormalizeShopId(row.ShopId);
+                var normalizedShopId = NormalizeShopId(row.shop_id);
                 if (string.IsNullOrEmpty(normalizedShopId))
                     continue;
 
@@ -592,7 +592,7 @@ namespace Devian
             for (var i = 0; i < selectedRows.Count; i++)
             {
                 var row = selectedRows[i];
-                var normalizedShopId = NormalizeShopId(row?.ShopId);
+                var normalizedShopId = NormalizeShopId(row?.shop_id);
                 if (string.IsNullOrEmpty(normalizedShopId))
                     continue;
 
@@ -612,7 +612,7 @@ namespace Devian
                 var row = candidates[index];
                 candidates.RemoveAt(index);
 
-                var normalizedShopId = NormalizeShopId(row?.ShopId);
+                var normalizedShopId = NormalizeShopId(row?.shop_id);
                 if (string.IsNullOrEmpty(normalizedShopId))
                     continue;
 
@@ -627,10 +627,10 @@ namespace Devian
             if (row == null)
                 return SHOP_DISCOUNT_TYPE.NONE;
 
-            var rate10 = sanitizeDiscountRate(row.DiscountRate10Per);
-            var rate20 = sanitizeDiscountRate(row.DiscountRate20Per);
-            var rate30 = sanitizeDiscountRate(row.DiscountRate30Per);
-            var rate50 = sanitizeDiscountRate(row.DiscountRate50Per);
+            var rate10 = sanitizeDiscountRate(row.discount_rate10_per);
+            var rate20 = sanitizeDiscountRate(row.discount_rate20_per);
+            var rate30 = sanitizeDiscountRate(row.discount_rate30_per);
+            var rate50 = sanitizeDiscountRate(row.discount_rate50_per);
             var totalRate = rate10 + rate20 + rate30 + rate50;
             if (!(totalRate > 0f))
                 return SHOP_DISCOUNT_TYPE.NONE;
@@ -657,10 +657,10 @@ namespace Devian
                 return false;
 
             var totalRate =
-                sanitizeDiscountRate(row.DiscountRate10Per) +
-                sanitizeDiscountRate(row.DiscountRate20Per) +
-                sanitizeDiscountRate(row.DiscountRate30Per) +
-                sanitizeDiscountRate(row.DiscountRate50Per);
+                sanitizeDiscountRate(row.discount_rate10_per) +
+                sanitizeDiscountRate(row.discount_rate20_per) +
+                sanitizeDiscountRate(row.discount_rate30_per) +
+                sanitizeDiscountRate(row.discount_rate50_per);
             return totalRate > 0f;
         }
 
@@ -674,7 +674,7 @@ namespace Devian
 
         static bool isDailyStoredProduct(ShopProductBase product)
         {
-            if (product == null || product.CatalogType != SHOP_CATALOG_TYPE.DAILY)
+            if (product == null || product.catalog_type != SHOP_CATALOG_TYPE.DAILY)
                 return false;
 
             return product.ProductType != SHOP_PRODUCT_TYPE.ADS

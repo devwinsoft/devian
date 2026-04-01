@@ -22,11 +22,11 @@ public sealed class AttendManager : CompoSingleton<AttendManager>
     public Task<CommonResult> InitializeAsync(CancellationToken ct = default);
     public void RefreshCycle();
     public int GetCurrentCycleDay();
-    public AttendRuntimeState GetRuntimeState(string attendId);
+    public AttendRuntimeState GetRuntimeState(string attend_id);
     public AttendRuntime GetRuntime(int day);
-    public bool IsClaimed(string attendId);
-    public bool IsClaimable(string attendId);
-    public Task<CommonResult<RewardData[]>> ClaimAsync(string attendId, CancellationToken ct = default);
+    public bool IsClaimed(string attend_id);
+    public bool IsClaimable(string attend_id);
+    public Task<CommonResult<RewardData[]>> ClaimAsync(string attend_id, CancellationToken ct = default);
     public void ClearStorage();
 }
 ```

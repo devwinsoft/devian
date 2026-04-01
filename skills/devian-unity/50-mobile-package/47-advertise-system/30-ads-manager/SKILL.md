@@ -29,7 +29,7 @@ CompoSingleton<AdsManager>.Instance
 - preload/show 상태 관리
 - placement별 cooldown 검사
 - NoAds/consent/unsupported platform gating
-- Rewarded 성공 시 `RewardManager.ApplyRewardGroup(rewardGroupId)` 호출
+- Rewarded 성공 시 `RewardManager.ApplyRewardGroup(reward_group_id)` 호출
 
 비책임(금지):
 - `TB_REWARD` 직접 조회
@@ -55,26 +55,26 @@ CompoSingleton<AdsManager>.Instance
 
 - `InitializeAsync(ct)` → `Task<CommonResult>`
   - provider 초기화. Idempotent.
-- `PreloadAsync(advertiseId, ct)` → `Task<CommonResult>`
+- `PreloadAsync(advertise_id, ct)` → `Task<CommonResult>`
   - `TB_ADVERTISE` row 기준 preload 수행
-- `CanShow(advertiseId)` → `bool`
+- `CanShow(advertise_id)` → `bool`
   - 활성 여부, cooldown, readiness를 종합 판정
   - NoAds 활성 시 REWARDED 제외 → `true` (ShowAsync에서 Skipped로 즉시 성공)
-- `ShowAsync(advertiseId, skip, ct)` → `Task<CommonResult<AdShowResult>>`
+- `ShowAsync(advertise_id, skip, ct)` → `Task<CommonResult<AdShowResult>>`
   - 단일 광고 진입점
   - NoAds 활성 시 REWARDED 제외 → 광고 노출 없이 즉시 성공 (`ProviderStatus=Skipped`)
   - `skip=true`이면 광고 노출 없이 Reward만 즉시 지급 (`ProviderStatus=Skipped`)
   - format에 따라 show/hide 또는 one-shot show 수행
   - Rewarded는 성공 콜백 시 RewardManager 호출
-- `HideBanner(advertiseId)` → `void`
+- `HideBanner(advertise_id)` → `void`
   - banner placement hide. 동기 — provider의 `Hide()`를 호출한다.
 
 
 ### `AdShowResult` (설계)
 
-- `AdvertiseId`
+- `Advertise_id`
 - `Format`
-- `RewardGroupId`
+- `Reward_group_id`
 - `RewardApplied` (`bool`)
 - `ProviderStatus`
 
@@ -86,12 +86,12 @@ CompoSingleton<AdsManager>.Instance
 
 AdsManager가 Game 도메인 테이블을 직접 참조한다.
 
-- `ResolveAdvertise(advertiseId)` → `TB_ADVERTISE.Get(advertiseId)`
-- `AutoLoadAll()` → `TB_ADVERTISE.GetAll()`에서 `IsActive && AutoLoad` 필터링
+- `ResolveAdvertise(advertise_id)` → `TB_ADVERTISE.Get(advertise_id)`
+- `AutoLoadAll()` → `TB_ADVERTISE.GetAll()`에서 `Is_active && Auto_load` 필터링
 - provider 선택: `row.Provider`
 - provider용 ad unit id 선택:
-  - `#if UNITY_IOS` → `IosAdUnitId`
-  - `#elif UNITY_ANDROID` → `AndroidAdUnitId`
+  - `#if UNITY_IOS` → `Ios_ad_unit_id`
+  - `#elif UNITY_ANDROID` → `Android_ad_unit_id`
 
 
 ---
@@ -99,13 +99,13 @@ AdsManager가 Game 도메인 테이블을 직접 참조한다.
 
 ## Rewarded Sequence (정본)
 
-1. `ShowAsync(advertiseId, skip, ct)`
-2. row 조회: `TB_ADVERTISE.Get(advertiseId)`
+1. `ShowAsync(advertise_id, skip, ct)`
+2. row 조회: `TB_ADVERTISE.Get(advertise_id)`
 3. `skip=true`이면 → 광고 없이 `SkipAndReward` → 즉시 반환
 4. `Format == REWARDED` 확인
 5. provider show
 6. `reward earned` 콜백 수신
-7. 현재 show cycle에서 아직 미지급이면 `RewardManager.ApplyRewardGroup(row.RewardGroupId)` 호출
+7. 현재 show cycle에서 아직 미지급이면 `RewardManager.ApplyRewardGroup(row.Reward_group_id)` 호출
 8. close/final result 반환
 
 

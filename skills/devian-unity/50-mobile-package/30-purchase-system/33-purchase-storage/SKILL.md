@@ -64,7 +64,7 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
 - 코드 구조는 `PurchaseStorage.Current` (중첩 클래스 `CurrentPurchaseState`)로 묶어 관리한다.
 
 - `isPurchaseInProgress`
-- `internalProductId`
+- `internal_product_id`
 - `kind`
 - `storeKey`
 - `startedAtUtcMs`
@@ -91,7 +91,7 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
   - `SaveDataManager.ToJson()` 경로의 `PurchaseStorage.PruneRefundSupportLogs()` 호출 시
 - 항목 예시:
   - `purchaseId`
-  - `internalProductId`
+  - `internal_product_id`
   - `kind`
   - `storeKey`
   - `verifyStatus`
@@ -110,7 +110,7 @@ PurchaseStorage(구매 상태 스냅샷)의 위치/역할/저장 규칙을 설�
   - `RemoveRefundSupportLog(purchaseId)` (개별 삭제)
   - `ClearRefundSupportLogs()` (전체 삭제)
 - 식별/표시:
-  - 환불 로그 항목에는 `internalProductId`가 포함되어 있어 상품 식별에 사용할 수 있다.
+  - 환불 로그 항목에는 `internal_product_id`가 포함되어 있어 상품 식별에 사용할 수 있다.
 
 ### 3) refundSync (환불 동기화 상태, 구현됨)
 

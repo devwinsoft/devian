@@ -9,38 +9,38 @@ import { IEntity, IEntityKey } from '@devian/core';
 // ================================================================
 
 export interface SOUND extends IEntityKey<number> {
-    Row_id: number;
-    Sound_id: string;
-    IsBundle: boolean;
-    Key_bundle: string;
-    Path: string;
-    Channel: string;
-    Volume_scale: number;
-    Loop: boolean;
-    Cooltime: number;
-    Is3d: boolean;
-    Distance_near: number;
-    Distance_far: number;
-    Weight: number;
-    Pitch_min: number;
-    Pitch_max: number;
+    row_id: number;
+    sound_id: string;
+    is_bundle: boolean;
+    key_bundle: string;
+    path: string;
+    channel: string;
+    volume_scale: number;
+    loop: boolean;
+    cooltime: number;
+    is3d: boolean;
+    distance_near: number;
+    distance_far: number;
+    weight: number;
+    pitch_min: number;
+    pitch_max: number;
     getKey(): number;
 }
 
 export interface VOICE extends IEntityKey<string> {
-    Voice_id: string;
-    Key_bundle: string;
-    Volume_scale: number;
-    Cooltime: number;
-    Is3d: boolean;
-    Distance_near: number;
-    Distance_far: number;
-    Pitch_min: number;
-    Pitch_max: number;
-    Clip_Korean: string;
-    Clip_English: string;
-    Clip_Japanese: string;
-    Clip_Chinese: string;
+    voice_id: string;
+    key_bundle: string;
+    volume_scale: number;
+    cooltime: number;
+    is3d: boolean;
+    distance_near: number;
+    distance_far: number;
+    pitch_min: number;
+    pitch_max: number;
+    clip_korean: string;
+    clip_english: string;
+    clip_japanese: string;
+    clip_chinese: string;
     getKey(): string;
 }
 
@@ -75,7 +75,7 @@ export class TB_SOUND {
         for (const line of lines) {
             const row = JSON.parse(line) as SOUND;
             this._list.push(row);
-            this._dict.set(row.Row_id, row);
+            this._dict.set(row.row_id, row);
         }
     }
 
@@ -111,7 +111,7 @@ export class TB_VOICE {
         for (const line of lines) {
             const row = JSON.parse(line) as VOICE;
             this._list.push(row);
-            this._dict.set(row.Voice_id, row);
+            this._dict.set(row.voice_id, row);
         }
     }
 

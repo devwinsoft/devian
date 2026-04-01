@@ -48,7 +48,7 @@ payload 규약:
 
 ## Usage Rules
 
-- `AchieveManager`는 `ACHIEVE_PASS.reqPassId` 조건 runtime의 WAIT 활성 전이를 위해 Inventory 메시지를 구독한다.
+- `AchieveManager`는 `ACHIEVE_PASS.req_pass_id` 조건 runtime의 WAIT 활성 전이를 위해 Inventory 메시지를 구독한다.
 - `InventoryManager.Instance.Storage.Passes` 변동 시 `PASS_CHANGED`를 발행한다.
 - 직접 `InventoryMessageTrigger` 인스턴스를 참조/주입하지 않는다.
 

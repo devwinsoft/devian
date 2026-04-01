@@ -39,7 +39,7 @@ AppliesTo: v10
 ### 4) Rewarded 지급 검증
 
 - rewarded 완료 전에는 보상이 지급되지 않아야 한다
-- reward callback 발생 시 `RewardManager.ApplyRewardGroup(rewardGroupId)`가 1회만 호출되어야 한다
+- reward callback 발생 시 `RewardManager.ApplyRewardGroup(reward_group_id)`가 1회만 호출되어야 한다
 - close-only / fail / no fill 경로에서는 보상 지급이 없어야 한다
 
 
@@ -48,7 +48,7 @@ AppliesTo: v10
 - Firebase Functions 에뮬레이터에서 SSV 콜백 엔드포인트가 정상 응답(HTTP 200)하는지 확인
 - ECDSA 서명 검증 실패 시에도 HTTP 200 반환 + 에러 로깅 확인
 - 동일 transaction_id 재요청 시 Firestore 중복 기록이 발생하지 않는지 확인
-- custom_data 파싱(`{uid}:{advertiseId}:{rewardGroupId}`)이 정상 동작하는지 확인
+- custom_data 파싱(`{uid}:{advertise_id}:{reward_group_id}`)이 정상 동작하는지 확인
 
 
 ---
@@ -57,8 +57,8 @@ AppliesTo: v10
 ## 테스트 체크리스트(정본)
 
 - Editor에서 mock provider로 initialize/load/show/reward/fail이 모두 재현된다
-- `REWARDED` placement는 `rewardGroupId` 누락 시 안전 실패한다
-- `BANNER` / `INTERSTITIAL` / `APP_OPEN`은 `rewardGroupId` 없이 동작한다
+- `REWARDED` placement는 `reward_group_id` 누락 시 안전 실패한다
+- `BANNER` / `INTERSTITIAL` / `APP_OPEN`은 `reward_group_id` 없이 동작한다
 - 동일 rewarded show cycle에서 reward callback이 2번 와도 보상 지급은 1회다
 - NoAds 활성 시 banner/interstitial/app-open이 차단된다
 - unsupported platform / SDK 미초기화 / no fill에서 예외 폭발 없이 실패 결과를 반환한다

@@ -173,9 +173,9 @@ namespace Devian
             foreach (var message in messageRows)
             {
                 if (message == null
-                    || string.IsNullOrWhiteSpace(message.MessageId)
-                    || message.MessageType != messageType
-                    || !GameMessageRule.IsTotalSaveType(message.SaveType))
+                    || string.IsNullOrWhiteSpace(message.message_id)
+                    || message.message_type != messageType
+                    || !GameMessageRule.IsTotalSaveType(message.save_type))
                 {
                     continue;
                 }
@@ -193,19 +193,19 @@ namespace Devian
             foreach (var message in messageRows)
             {
                 if (message == null
-                    || string.IsNullOrWhiteSpace(message.MessageId)
-                    || !GameMessageRule.IsTotalSaveType(message.SaveType))
+                    || string.IsNullOrWhiteSpace(message.message_id)
+                    || !GameMessageRule.IsTotalSaveType(message.save_type))
                 {
                     continue;
                 }
 
-                if (!_saveBindingsByMessageType.TryGetValue(message.MessageType, out var bindings))
+                if (!_saveBindingsByMessageType.TryGetValue(message.message_type, out var bindings))
                 {
                     bindings = new List<MessageSaveBinding>();
-                    _saveBindingsByMessageType[message.MessageType] = bindings;
+                    _saveBindingsByMessageType[message.message_type] = bindings;
                 }
 
-                bindings.Add(new MessageSaveBinding(message.MessageId, message.SaveType));
+                bindings.Add(new MessageSaveBinding(message.message_id, message.save_type));
             }
         }
     }

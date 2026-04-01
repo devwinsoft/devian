@@ -34,7 +34,7 @@ public sealed class AttendStorage
 - `lastClaimUtcMs`: 마지막 claim 서버 시각(UTC ms)
 - `lastLoginUtcMs`: 마지막 접속 서버 시각(UTC ms)
 - `nextAttendDay`: 다음 claim day (`1..8`)
-- `claimedAttendUtcMs`: `attendId -> claimUtcMs`
+- `claimedAttendUtcMs`: `attend_id -> claimUtcMs`
 
 규칙:
 - `nextAttendDay == 8`은 7일차 완료 상태(reset 대기)다.

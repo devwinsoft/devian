@@ -1025,16 +1025,15 @@ function generateRowClass(lines, table, rowClassName) {
 
     for (const field of table.fields) {
         const csType = mapTableTypeToCSharp(field.type, field.optional);
-        const propName = capitalize(field.name);
         const defaultValue = getTableDefaultValue(field.type);
-        lines.push(`        public ${csType} ${propName} { get; set; }${defaultValue}`);
+        lines.push(`        public ${csType} ${field.name} { get; set; }${defaultValue}`);
     }
 
     // GetKey method (IEntityKey<T> implementation) - only if key exists
     if (keyField) {
         const keyType = mapTableTypeToCSharp(keyField.type, false);
         lines.push('');
-        lines.push(`        public ${keyType} GetKey() => ${capitalize(keyField.name)};`);
+        lines.push(`        public ${keyType} GetKey() => ${keyField.name};`);
     }
 
     lines.push('    }');
@@ -1042,7 +1041,7 @@ function generateRowClass(lines, table, rowClassName) {
 
 function generateTableContainer(lines, table, tableName, rowClassName, enumSpecs = []) {
     const keyType = table.keyField ? mapTableTypeToCSharp(table.keyField.type, false) : 'int';
-    const keyProp = table.keyField ? capitalize(table.keyField.name) : 'Id';
+    const keyProp = table.keyField ? table.keyField.name : 'id';
 
     // Get enum specs for this table
     const tableEnumSpecs = enumSpecs.filter(spec => spec.tableName === tableName);
@@ -1166,7 +1165,7 @@ function generateTableContainer(lines, table, tableName, rowClassName, enumSpecs
     }
     if (table.groupField) {
         const groupType = mapTableTypeToCSharp(table.groupField.type, false);
-        const groupProp = capitalize(table.groupField.name);
+        const groupProp = table.groupField.name;
 
         lines.push(`            var groupKey = row.${groupProp};`);
         lines.push(`            _keyToGroup[row.${keyProp}] = groupKey;`);
@@ -1430,9 +1429,7 @@ export function generateTypeScriptTableBody(table) {
     for (const field of table.fields) {
         const tsType = mapTableTypeToTypeScript(field.type);
         const optional = field.optional && !field.isKey ? '?' : '';
-        // Use PascalCase to match NDJSON field names (C# compatibility)
-        const propName = capitalize(field.name);
-        lines.push(`    ${propName}${optional}: ${tsType};`);
+        lines.push(`    ${field.name}${optional}: ${tsType};`);
     }
 
     // getKey method signature (IEntityKey<T> implementation) - only if key exists
@@ -1446,10 +1443,6 @@ export function generateTypeScriptTableBody(table) {
     return lines.join('\n');
 }
 
-function lowerFirst(str) {
-    return str.charAt(0).toLowerCase() + str.slice(1);
-}
-
 /**
  * Generate TypeScript table container body
  * @param {Object} table - Table definition from parseXlsx
@@ -1461,8 +1454,7 @@ export function generateTypeScriptTableContainerBody(table, enumSpecs = []) {
     const tableName = table.name;
     const keyField = table.keyField;
     const keyType = keyField ? mapTableTypeToTypeScript(keyField.type) : null;
-    // Use PascalCase to match NDJSON field names (C# compatibility)
-    const keyProp = keyField ? capitalize(keyField.name) : null;
+    const keyProp = keyField ? keyField.name : null;
 
     // Get enum specs for this table
     const tableEnumSpecs = enumSpecs.filter(spec => spec.tableName === tableName);
@@ -1568,6 +1560,15 @@ function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
 }
 
+/**
+ * Convert snake_case to PascalCase.
+ * SSOT: skills/devian/80-tools/11-builder/51-table-codegen/SKILL.md § Column Naming Convention
+ * Examples: voice_id → VoiceId, stat_type00 → StatType00, reward_group_id → RewardGroupId
+ */
+function snakeToPascal(str) {
+    return str.split('_').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('');
+}
+
 // ============================================================================
 // NDJSON Data Generator
 // ============================================================================
@@ -1599,11 +1600,11 @@ function rowToOrderedJson(row, fields) {
         const value = row[field.name];
         // SSOT: null enum → omit property (C# keeps default(T))
         if (value === null && _isEnumFieldType(field.type)) continue;
-        // SSOT: 64-bit integers → string, enum → name string
+        // SSOT: JSON key = XLSX field name as-is (snake_case)
         if (['long', 'ulong'].includes(field.type)) {
-            orderedRow[capitalize(field.name)] = String(value);
+            orderedRow[field.name] = String(value);
         } else {
-            orderedRow[capitalize(field.name)] = value;
+            orderedRow[field.name] = value;
         }
     }
     return orderedRow;

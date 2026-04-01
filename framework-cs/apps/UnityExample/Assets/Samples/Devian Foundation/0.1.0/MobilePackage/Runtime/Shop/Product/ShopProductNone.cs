@@ -5,12 +5,12 @@ namespace Devian
     public sealed class ShopProductNone : ShopProductBase
     {
         public ShopProductNone(
-            string shopId,
-            string nameId,
-            SHOP_CATALOG_TYPE catalogType,
-            int maxCount = -1,
+            string shop_id,
+            string name_id,
+            SHOP_CATALOG_TYPE catalog_type,
+            int max_count = -1,
             SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
-            : base(shopId, nameId, catalogType, SHOP_PRODUCT_TYPE.NONE, maxCount, discountType)
+            : base(shop_id, name_id, catalog_type, SHOP_PRODUCT_TYPE.NONE, max_count, discountType)
         {
         }
     }

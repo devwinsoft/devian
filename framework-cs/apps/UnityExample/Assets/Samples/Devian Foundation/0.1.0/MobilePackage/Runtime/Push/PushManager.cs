@@ -59,6 +59,9 @@ namespace Devian
                 if (_initialized)
                     return CommonResult.Ok();
 
+                // 0. 기존 로컬 알림 전체 취소 (§H: 앱 재시작마다 clean state)
+                await clearAllLocalNotificationsInternalAsync(ct);
+
                 // 1. 권한 요청
                 var permResult = await _provider.RequestPermissionAsync(ct);
                 _permissionGranted = permResult.IsSuccess;
@@ -156,36 +159,59 @@ namespace Devian
         }
 
         /// <summary>
-        /// 로컬 알림 등록 + PushStorage.scheduledNotifications 동기화.
+        /// pushId로 TB_PUSH_LOCAL 테이블 조회 → ST_TEXT 로컬라이즈 → 로컬 알림 등록.
+        /// fireAt은 서버 시간(CDateTime) 기준. Repeat은 None 고정.
+        /// SSOT: 03-ssot §G
         /// </summary>
         public async Task<CommonResult> ScheduleLocalNotificationAsync(
-            LocalNotificationData data, CancellationToken ct = default)
+            string pushId, CDateTime fireAt, CancellationToken ct = default)
         {
             var guard = ensureInitialized();
             if (guard.IsFailure)
                 return guard;
 
-            if (data == null || string.IsNullOrEmpty(data.NotificationId))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "notification data or id is empty.");
+            if (string.IsNullOrEmpty(pushId))
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "pushId is empty.");
 
-            if (_storage.HasScheduledNotification(data.NotificationId))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    $"Duplicate notificationId: {data.NotificationId}");
+            if (!TB_PUSH_LOCAL.IsLoaded)
+                return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_TABLE_NOT_LOADED, "TB_PUSH_LOCAL not loaded.");
+
+            var row = TB_PUSH_LOCAL.Get(pushId);
+            if (row == null)
+                return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_LOCAL_NOT_FOUND, $"PUSH_LOCAL not found: {pushId}");
+
+            // IsTest 필터링 (§F 동일 규칙)
+            if (!Debug.isDebugBuild && row.is_test)
+                return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_TEST_BLOCKED, $"Test push blocked in release: {pushId}");
+
+            if (_storage.HasScheduledNotification(pushId))
+                return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_DUPLICATE_NOTIFICATION, $"Duplicate notificationId: {pushId}");
+
+            var title = ST_TEXT.Get(row.title_text_id);
+            var body = ST_TEXT.Get(row.body_text_id);
+
+            var data = new LocalNotificationData
+            {
+                NotificationId = pushId,
+                Title = title,
+                Body = body,
+                FireAt = fireAt.dateTime,
+                Repeat = RepeatInterval.None,
+            };
 
             var result = await _provider.ScheduleLocalNotificationAsync(data, ct);
             if (result.IsSuccess)
             {
                 _storage.scheduledNotifications.Add(new ScheduledNotificationEntry
                 {
-                    notificationId = data.NotificationId,
-                    title = data.Title ?? string.Empty,
-                    body = data.Body ?? string.Empty,
-                    fireAt = data.FireAt.ToString("O"),
-                    repeatInterval = data.Repeat.ToString().ToLowerInvariant(),
-                    payload = data.Payload ?? string.Empty,
+                    notificationId = pushId,
+                    title = title,
+                    body = body,
+                    fireAt = fireAt.dateTime.ToString("O"),
+                    repeatInterval = "none",
                 });
 
-                Debug.Log($"[{Tag}] Scheduled local notification: {data.NotificationId}");
+                Debug.Log($"[{Tag}] Scheduled local notification: {pushId} (fireAt={fireAt})");
             }
 
             return result;
@@ -269,6 +295,20 @@ namespace Devian
                    && result.Error.Code == COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM;
         }
 
+        async Task clearAllLocalNotificationsInternalAsync(CancellationToken ct)
+        {
+            try
+            {
+                await _provider.CancelAllLocalNotificationsAsync(ct);
+                _storage.scheduledNotifications.Clear();
+                Debug.Log($"[{Tag}] Cleared all local notifications on init.");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[{Tag}] Failed to clear local notifications on init: {ex.Message}");
+            }
+        }
+
         async Task subscribeTableTopicsAsync(CancellationToken ct)
         {
             if (!TB_PUSH_REMOTE.IsLoaded)
@@ -284,10 +324,10 @@ namespace Devian
             for (var i = 0; i < rows.Count; i++)
             {
                 // Release build: skip test topics
-                if (!isDev && rows[i].IsTest)
+                if (!isDev && rows[i].is_test)
                     continue;
 
-                var pushId = rows[i].PushId;
+                var pushId = rows[i].push_id;
                 if (string.IsNullOrEmpty(pushId))
                     continue;
 

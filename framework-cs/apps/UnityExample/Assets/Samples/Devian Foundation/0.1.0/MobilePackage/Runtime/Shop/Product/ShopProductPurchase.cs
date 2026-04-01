@@ -5,19 +5,22 @@ namespace Devian
     public sealed class ShopProductPurchase : ShopProductBase
     {
         public ShopProductPurchase(
-            string shopId,
-            string nameId,
-            SHOP_CATALOG_TYPE catalogType,
-            string internalProductId,
-            string seasonId,
-            int maxCount = -1)
-            : base(shopId, nameId, catalogType, SHOP_PRODUCT_TYPE.PURCHASE, maxCount, SHOP_DISCOUNT_TYPE.NONE)
+            string shop_id,
+            string name_id,
+            SHOP_CATALOG_TYPE catalog_type,
+            string internal_product_id,
+            string season_id,
+            int max_count = -1)
+            : base(shop_id, name_id, catalog_type, SHOP_PRODUCT_TYPE.PURCHASE, max_count, SHOP_DISCOUNT_TYPE.NONE)
         {
-            InternalProductId = internalProductId ?? string.Empty;
-            SeasonId = seasonId ?? string.Empty;
+            internal_product_id_internal = internal_product_id ?? string.Empty;
+            season_id_internal = season_id ?? string.Empty;
         }
 
-        public string InternalProductId { get; }
-        public string SeasonId { get; }
+        string internal_product_id_internal;
+        string season_id_internal;
+
+        public string internal_product_id => internal_product_id_internal;
+        public string season_id => season_id_internal;
     }
 }

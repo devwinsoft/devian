@@ -92,9 +92,9 @@ namespace Devian
             if (SoundDown != null && SoundDown.IsValid())
             {
                 var row = TB_SOUND.Get(SoundDown.Value);
-                if (row != null && !string.IsNullOrEmpty(row.Sound_id))
+                if (row != null && !string.IsNullOrEmpty(row.sound_id))
                 {
-                    SoundManager.Instance.PlaySound(row.Sound_id, channelOverride: SoundChannelType.Ui);
+                    SoundManager.Instance.PlaySound(row.sound_id, channelOverride: SoundChannelType.Ui);
                 }
             }
 
@@ -119,9 +119,9 @@ namespace Devian
             if (SoundUp != null && SoundUp.IsValid())
             {
                 var row = TB_SOUND.Get(SoundUp.Value);
-                if (row != null && !string.IsNullOrEmpty(row.Sound_id))
+                if (row != null && !string.IsNullOrEmpty(row.sound_id))
                 {
-                    SoundManager.Instance.PlaySound(row.Sound_id, channelOverride: SoundChannelType.Ui);
+                    SoundManager.Instance.PlaySound(row.sound_id, channelOverride: SoundChannelType.Ui);
                 }
             }
 

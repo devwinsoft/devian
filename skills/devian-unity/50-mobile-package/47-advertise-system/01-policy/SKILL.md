@@ -24,8 +24,8 @@ Devian의 인앱 광고 모듈(클라이언트) 설계/코딩 규약을 정의�
 
 ### 1) 광고 설정 정본은 `ADVERTISE` 테이블이다
 
-- placement, format, rewardGroupId, ad unit id를 코드에 하드코딩하지 않는다.
-- AdsManager가 `TB_ADVERTISE`를 직접 참조하여 `advertiseId` 기준으로 설정을 해석한다.
+- placement, format, reward_group_id, ad unit id를 코드에 하드코딩하지 않는다.
+- AdsManager가 `TB_ADVERTISE`를 직접 참조하여 `advertise_id` 기준으로 설정을 해석한다.
 - 포맷별 분기(`BANNER`, `INTERSTITIAL`, `REWARDED`, `APP_OPEN`)와 provider 선택은 테이블 값 기준으로만 수행한다.
 
 
@@ -34,7 +34,7 @@ Devian의 인앱 광고 모듈(클라이언트) 설계/코딩 규약을 정의�
 
 ### 2) Rewarded 보상 지급은 RewardManager 단일 경로를 따른다
 
-- Rewarded에서 실제 보상 적용은 `RewardManager.ApplyRewardGroup(rewardGroupId)`만 사용한다.
+- Rewarded에서 실제 보상 적용은 `RewardManager.ApplyRewardGroup(reward_group_id)`만 사용한다.
 - RewardManager가 `TB_REWARD`를 통해 보상 그룹을 해석하며, 광고 시스템은 보상 내용(`RewardData[]`)을 직접 계산하지 않는다.
 - `reward earned` 콜백이 없는 종료/실패 경로에서는 지급하지 않는다.
 - 동일 show cycle에서 보상은 최대 1회만 지급한다.
@@ -43,10 +43,10 @@ Devian의 인앱 광고 모듈(클라이언트) 설계/코딩 규약을 정의�
 연관: [49-reward-system](../../49-reward-system/00-overview/SKILL.md)
 
 
-### 3) RewardGroupId 규칙은 포맷에 따라 고정한다
+### 3) Reward_group_id 규칙은 포맷에 따라 고정한다
 
-- `REWARDED` 포맷은 `rewardGroupId`가 필수다.
-- `BANNER`, `INTERSTITIAL`, `APP_OPEN`은 `rewardGroupId`를 비워둔다.
+- `REWARDED` 포맷은 `reward_group_id`가 필수다.
+- `BANNER`, `INTERSTITIAL`, `APP_OPEN`은 `reward_group_id`를 비워둔다.
 - 리워드 지급 여부를 런타임 분기/문자열 비교로 임의 추론하지 않는다. 포맷 + 테이블 설정으로만 판정한다.
 
 
@@ -85,7 +85,7 @@ Devian의 인앱 광고 모듈(클라이언트) 설계/코딩 규약을 정의�
 
 - AdMob SSV 콜백을 수신하는 Firebase HTTP endpoint는 반드시 ECDSA 서명을 검증해야 한다.
 - 서명 검증 없이 보상을 기록하지 않는다.
-- custom_data는 서버에서 파싱하여 uid/advertiseId/rewardGroupId를 추출한다.
+- custom_data는 서버에서 파싱하여 uid/advertise_id/rewardGroupId를 추출한다.
 - SSV는 감사/사후 검증 용도이며, 클라이언트 보상 지급 흐름을 차단하지 않는다.
 
 

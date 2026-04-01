@@ -52,7 +52,7 @@ namespace Devian
 비책임:
 
 - inventory 직접 수정
-- `rewardGroupId` 내부 해석
+- `reward_group_id` 내부 해석
 - ledger/멱등/복구
 - UI 연출
 
@@ -82,9 +82,9 @@ namespace Devian
 
 `TREASURE_REWARD.GetByGroup(gradeType)` 결과 중 조건에 부합하는 row를 선택한다.
 
-1. `conditionMsgId`가 비어있으면 → 조건 통과 (조건 자체가 없음)
-2. `conditionMsgId`가 있고 `ConditionValue`가 null이면 → **무조건 실패**
-3. `conditionMsgId`가 있고 `ConditionValue`가 있으면 → `GameMessageManager.Instance.GetStat(conditionMsgId)` 값을 `GameMessageRule.IsConditionSatisfied(stat, conditionOp, conditionValue)` 로 비교
+1. `condition_msg_id`가 비어있으면 → 조건 통과 (조건 자체가 없음)
+2. `condition_msg_id`가 있고 `Condition_value`가 null이면 → **무조건 실패**
+3. `condition_msg_id`가 있고 `Condition_value`가 있으면 → `GameMessageManager.Instance.GetStat(condition_msg_id)` 값을 `GameMessageRule.IsConditionSatisfied(stat, condition_op, condition_value)` 로 비교
 4. 조건 통과한 row 중 `Level`이 가장 높은 row **1개**를 선택한다
 5. 조건 통과 row가 없으면 → 실패 (`TREASURE_REWARD_EMPTY`)
 
@@ -97,7 +97,7 @@ namespace Devian
 3. count가 0이면 `CommonResult.Ok()` 반환
 4. `TB_TREASURE_REWARD.GetByGroup(gradeType)` 조회
 5. `selectBestRewardRow`로 조건 충족 최고 레벨 row 1개 선택
-6. `count`회 반복하며 best row의 `rewardGroupId`를 `RewardManager.ApplyRewardGroup(...)`에 전달
+6. `count`회 반복하며 best row의 `reward_group_id`를 `RewardManager.ApplyRewardGroup(...)`에 전달
 7. 모두 성공하면 treasure count를 0으로 커밋
 
 ---
@@ -107,11 +107,11 @@ namespace Devian
 1. `InventoryStorage`의 `TreasureCurrent.Level` 조회
 2. `TB_TREASURE_CHEST.Get(level)` 조회
 3. row가 없으면 실패
-4. `TreasureCurrent.Exp < maxExp`이면 `CommonResult.Ok()` 반환
-5. `chestRow.TreasureGradeType`로 `TB_TREASURE_REWARD.GetByGroup(...)` 조회
+4. `TreasureCurrent.Exp < max_exp`이면 `CommonResult.Ok()` 반환
+5. `chestRow.Treasure_grade_type`로 `TB_TREASURE_REWARD.GetByGroup(...)` 조회
 6. `selectBestRewardRow`로 조건 충족 최고 레벨 row 1개 선택
-7. best row의 `rewardGroupId`를 `RewardManager.ApplyRewardGroup(...)`에 전달
-8. 성공하면 `TreasureCurrent.Exp -= maxExp`
+7. best row의 `reward_group_id`를 `RewardManager.ApplyRewardGroup(...)`에 전달
+8. 성공하면 `TreasureCurrent.Exp -= max_exp`
 9. `TreasureCurrent.Level++`
 10. `TreasureCurrent.Level > maxLevel`이면 `1`로 wrap
 
@@ -124,7 +124,7 @@ namespace Devian
 - `OpenCurrentChest`는 현재 level 보상 1회만 처리한다.
 - collect 중 `RewardManager` 실패가 발생하면 InventoryStorage treasure 상태는 롤백된다.
 - `TREASURE_REWARD` row 선택은 조건 필터 후 가장 높은 Level row 1개만 사용한다.
-- `ConditionValue`가 null이면 무조건 조건 실패다. null 통과는 절대 허용하지 않는다.
+- `Condition_value`가 null이면 무조건 조건 실패다. null 통과는 절대 허용하지 않는다.
 
 ---
 
@@ -167,7 +167,7 @@ namespace Devian
 - enum 생성 확인 (`TREASURE_GRADE_TYPE`)
 - chest collect: 0개 / 1개 / 다수 count (조건 필터 후 best row 선택)
 - current chest collect: exp 부족 / 정확히 같음 / 초과 exp / max level wrap
-- 조건 필터: conditionMsgId 비어있음 / ConditionValue null / 조건 미충족 / 조건 충족 best level
+- 조건 필터: condition_msg_id 비어있음 / Condition_value null / 조건 미충족 / 조건 충족 best level
 - 누락 row / 빈 reward / RewardManager 실패 시 상태 롤백
 
 ---
@@ -176,7 +176,7 @@ namespace Devian
 
 해결 완료:
 
-- ~~`treasuerGradeType` 오탈자~~ → 시트에서 `treasureGradeType`으로 수정 완료.
+- ~~`treasuerGradeType` 오탈자~~ → 시트에서 `treasure_grade_type`으로 수정 완료.
 - ~~에러 코드~~ → `COMMON_ERROR_TYPE`에 `TREASURE_*` 에러 코드 추가. (`CommonTable.xlsx` `COMMON_ERROR` 시트)
 - ~~save payload key~~ → root JSON `"treasure"` 키로 기존 save 구조에 병합. version 20.
 

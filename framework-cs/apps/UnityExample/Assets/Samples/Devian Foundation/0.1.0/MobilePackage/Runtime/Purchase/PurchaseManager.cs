@@ -99,7 +99,7 @@ namespace Devian
         static string ResolveRewardGroupId(string internalProductId)
         {
             var product = TB_PURCHASE.Get(internalProductId);
-            return product != null ? product.RewardGroupId ?? string.Empty : string.Empty;
+            return product != null ? product.reward_group_id ?? string.Empty : string.Empty;
         }
 
         string ResolveStoreProductId(string internalProductId)
@@ -109,9 +109,9 @@ namespace Devian
                 return internalProductId;
 
 #if UNITY_IOS || UNITY_TVOS
-            return string.IsNullOrEmpty(product.StoreSkuApple) ? internalProductId : product.StoreSkuApple;
+            return string.IsNullOrEmpty(product.store_sku_apple) ? internalProductId : product.store_sku_apple;
 #elif UNITY_ANDROID
-            return string.IsNullOrEmpty(product.StoreSkuGoogle) ? internalProductId : product.StoreSkuGoogle;
+            return string.IsNullOrEmpty(product.store_sku_google) ? internalProductId : product.store_sku_google;
 #else
             return internalProductId;
 #endif
@@ -530,14 +530,14 @@ namespace Devian
                     COMMON_ERROR_TYPE.PURCHASE_NOT_FOUND,
                     $"Product not found: {internalProductId}");
 
-            var kind = ProductKindToPurchaseKind(product.Kind);
+            var kind = ProductKindToPurchaseKind(product.kind);
             var result = await purchaseAndVerifyAsync(internalProductId, kind, ct);
             if (result.IsSuccess)
             {
                 var final_ = result.Value!;
                 var validateRewards = validatePurchaseRewards(
                     final_.AppliedRewards,
-                    $"purchaseId={final_.PurchaseId}, internalProductId={final_.InternalProductId}");
+                    $"purchaseId={final_.PurchaseId}, internal_product_id={final_.InternalProductId}");
                 if (validateRewards.IsFailure)
                     return CommonResult<PurchaseFinalResult>.Failure(validateRewards.Error!);
 
@@ -582,7 +582,7 @@ namespace Devian
             if (string.IsNullOrEmpty(current.InternalProductId))
                 return CommonResult<RetryInterruptedPurchaseResult>.Failure(
                     COMMON_ERROR_TYPE.PURCHASE_INTERRUPTED_SNAPSHOT_PRODUCT_ID_MISSING,
-                    "Interrupted purchase snapshot is missing internalProductId.");
+                    "Interrupted purchase snapshot is missing internal_product_id.");
 
             if (!TryResolveInterruptedPurchaseKind(current.InternalProductId, current.Kind, out var currentKind))
             {
@@ -610,7 +610,7 @@ namespace Devian
                     var finalAfterConfirm = resumed.Value!;
                     var validateRewards = validatePurchaseRewards(
                         finalAfterConfirm.AppliedRewards,
-                        $"purchaseId={finalAfterConfirm.PurchaseId}, internalProductId={finalAfterConfirm.InternalProductId}");
+                        $"purchaseId={finalAfterConfirm.PurchaseId}, internal_product_id={finalAfterConfirm.InternalProductId}");
                     if (validateRewards.IsFailure)
                         return CommonResult<RetryInterruptedPurchaseResult>.Failure(validateRewards.Error!);
 
@@ -642,7 +642,7 @@ namespace Devian
             var finalResult = resume.Value!;
             var validateRecoveredRewards = validatePurchaseRewards(
                 finalResult.AppliedRewards,
-                $"purchaseId={finalResult.PurchaseId}, internalProductId={finalResult.InternalProductId}");
+                $"purchaseId={finalResult.PurchaseId}, internal_product_id={finalResult.InternalProductId}");
             if (validateRecoveredRewards.IsFailure)
                 return CommonResult<RetryInterruptedPurchaseResult>.Failure(validateRecoveredRewards.Error!);
 
@@ -746,7 +746,7 @@ namespace Devian
             {
                 return Task.FromResult(CommonResult<long>.Failure(
                     COMMON_ERROR_TYPE.PURCHASE_INTERNAL_PRODUCT_ID_EMPTY,
-                    "internalProductId is required."));
+                    "internal_product_id is required."));
             }
 
             try
@@ -1400,7 +1400,7 @@ namespace Devian
             var data = new Dictionary<string, object>
             {
                 ["storeKey"] = store,
-                ["internalProductId"] = internalProductId,
+                ["internal_product_id"] = internalProductId,
                 ["storeProductId"] = storeProductId,
 #if UNITY_ANDROID
                 ["packageName"] = Application.identifier,
@@ -1851,7 +1851,7 @@ namespace Devian
                 return false;
             }
 
-            kind = ProductKindToPurchaseKind(product.Kind);
+            kind = ProductKindToPurchaseKind(product.kind);
             return true;
         }
 

@@ -10,7 +10,7 @@ AppliesTo: v10
 광고 관련 규칙의 단일 SSOT는 이 문서다.
 
 - `ADVERTISE` 테이블 스키마
-- `advertiseId` / `rewardGroupId` / 포맷 규칙
+- `advertise_id` / `reward_group_id` / 포맷 규칙
 - AdsManager의 책임과 provider 분리 규칙
 - Rewarded 광고의 지급 위임 규칙
 
@@ -26,10 +26,10 @@ AppliesTo: v10
 
 ## A) Core Terms (정본)
 
-- `advertiseId`: 광고 placement의 논리 키. `ADVERTISE` 테이블 PK.
+- `advertise_id`: 광고 placement의 논리 키. `ADVERTISE` 테이블 PK.
 - `format`: 광고 포맷. `ADVERTISE_FORMAT`
 - `provider`: 광고 SDK 구현체 키. `ADVERTISE_PROVIDER`
-- `rewardGroupId`: Rewarded 광고가 성공적으로 완료됐을 때 RewardManager에 전달하는 보상 그룹 키
+- `reward_group_id`: Rewarded 광고가 성공적으로 완료됐을 때 RewardManager에 전달하는 보상 그룹 키
 - `show cycle`: 한 번의 show 시도 단위. Rewarded는 show cycle당 최대 1회만 지급한다.
 - `MockAdProvider`: 네트워크 없이 scripted callback으로 동작하는 테스트용 provider
 
@@ -60,30 +60,30 @@ AdsManager는 `TB_ADVERTISE`를 직접 참조하여 placement 설정을 읽는�
 
 | 필드 | 타입 | Row 3 옵션 | 설명 |
 |------|------|-----------|------|
-| `AdvertiseId` | string | pk | 광고 placement 논리 키 |
+| `Advertise_id` | string | pk | 광고 placement 논리 키 |
 | `Format` | enum:ADVERTISE_FORMAT | | `BANNER` / `INTERSTITIAL` / `REWARDED` / `APP_OPEN` |
 | `Provider` | enum:ADVERTISE_PROVIDER | | `GOOGLE_MOBILE_ADS` / `MOCK` |
-| `RewardGroupId` | string | | Rewarded 성공 시 지급할 보상 그룹 키 |
-| `IsActive` | bool | | 활성 여부 |
-| `AutoLoad` | bool | | 초기화 후 자동 preload 여부 |
-| `CooldownSec` | int | | 동일 placement 재표시 최소 간격(초) |
-| `AndroidAdUnitId` | string | | Android ad unit id |
-| `IosAdUnitId` | string | | iOS ad unit id |
+| `Reward_group_id` | string | | Rewarded 성공 시 지급할 보상 그룹 키 |
+| `Is_active` | bool | | 활성 여부 |
+| `Auto_load` | bool | | 초기화 후 자동 preload 여부 |
+| `Cooldown_sec` | int | | 동일 placement 재표시 최소 간격(초) |
+| `Android_ad_unit_id` | string | | Android ad unit id |
+| `Ios_ad_unit_id` | string | | iOS ad unit id |
 
 
 ### C-1) Format 규칙
 
-- `Format=REWARDED`이면 `RewardGroupId`는 필수다.
-- `Format=BANNER|INTERSTITIAL|APP_OPEN`이면 `RewardGroupId`는 비워둔다.
+- `Format=REWARDED`이면 `Reward_group_id`는 필수다.
+- `Format=BANNER|INTERSTITIAL|APP_OPEN`이면 `Reward_group_id`는 비워둔다.
 - `Provider`는 현재 `GOOGLE_MOBILE_ADS` 또는 `MOCK`만 허용한다.
-- `IsActive=false`면 로드/표시 대상에서 제외한다.
-- `CooldownSec <= 0`이면 쿨다운 없음으로 해석할 수 있다.
+- `Is_active=false`면 로드/표시 대상에서 제외한다.
+- `Cooldown_sec <= 0`이면 쿨다운 없음으로 해석할 수 있다.
 
 
 ### C-2) 광고 ID 해석 규칙
 
-- 상위 로직은 `advertiseId`만 사용한다.
-- 플랫폼별 ad unit id(`AndroidAdUnitId`, `IosAdUnitId`)는 provider/AdsManager 레이어 내부에서만 해석한다.
+- 상위 로직은 `advertise_id`만 사용한다.
+- 플랫폼별 ad unit id(`Android_ad_unit_id`, `Ios_ad_unit_id`)는 provider/AdsManager 레이어 내부에서만 해석한다.
 - 상위 로직이 ad unit id를 직접 알거나 분기하지 않는다.
 
 
@@ -94,12 +94,12 @@ AdsManager는 `TB_ADVERTISE`를 직접 참조하여 placement 설정을 읽는�
 
 Rewarded 광고는 아래 순서를 따른다.
 
-1. 상위 로직이 `ShowAsync(advertiseId, skip, ct)`를 호출한다.
-2. AdsManager가 `TB_ADVERTISE.Get(advertiseId)`로 row를 읽는다.
+1. 상위 로직이 `ShowAsync(advertise_id, skip, ct)`를 호출한다.
+2. AdsManager가 `TB_ADVERTISE.Get(advertise_id)`로 row를 읽는다.
 3. `skip=true`이면 광고 없이 `SkipAndReward`로 Reward만 즉시 지급하고 반환한다.
 4. provider가 rewarded 광고를 표시한다.
 5. provider에서 `reward earned` 콜백이 오면, AdsManager가 해당 show cycle의 중복 여부를 확인한다.
-6. `RewardGroupId`가 유효하면 `RewardManager.ApplyRewardGroup(rewardGroupId)`를 호출한다.
+6. `Reward_group_id`가 유효하면 `RewardManager.ApplyRewardGroup(reward_group_id)`를 호출한다.
 7. show cycle 종료 결과를 반환한다.
 
 정본 규칙:

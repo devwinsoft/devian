@@ -7,27 +7,31 @@ namespace Devian
         readonly int _priceWithoutDiscount;
 
         protected ShopRewardProductBase(
-            string shopId,
-            string nameId,
-            SHOP_CATALOG_TYPE catalogType,
+            string shop_id,
+            string name_id,
+            SHOP_CATALOG_TYPE catalog_type,
             SHOP_PRODUCT_TYPE productType,
-            CURRENCY_TYPE currencyType,
+            CURRENCY_TYPE currency_type,
             int price,
-            string rewardGroupId,
+            string reward_group_id,
             int amount,
-            int maxCount = -1,
+            int max_count = -1,
             SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
-            : base(shopId, nameId, catalogType, productType, maxCount, discountType)
+            : base(shop_id, name_id, catalog_type, productType, max_count, discountType)
         {
-            CurrencyType = currencyType;
+            currency_type_internal = currency_type;
             _priceWithoutDiscount = price;
-            RewardGroupId = rewardGroupId ?? string.Empty;
-            Amount = amount < 1 ? 1 : amount;
+            reward_group_id_internal = reward_group_id ?? string.Empty;
+            amount_internal = amount < 1 ? 1 : amount;
         }
 
-        public CURRENCY_TYPE CurrencyType { get; }
+        CURRENCY_TYPE currency_type_internal;
+        string reward_group_id_internal;
+        int amount_internal;
+
+        public CURRENCY_TYPE currency_type => currency_type_internal;
         public override int PriceWithoutDiscount => _priceWithoutDiscount;
-        public string RewardGroupId { get; }
-        public int Amount { get; }
+        public string reward_group_id => reward_group_id_internal;
+        public int amount => amount_internal;
     }
 }

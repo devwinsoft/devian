@@ -6,7 +6,7 @@ namespace Devian
     {
         ITEM_MATERIAL mTable = null;
 
-        public override string ItemId => mTable?.ItemId ?? string.Empty;
+        public override string ItemId => mTable?.item_id ?? string.Empty;
 
         public void Init(ITEM_MATERIAL table)
         {

@@ -27,7 +27,7 @@ namespace Devian
                         runtimeObj = new JObject
                         {
                             ["missionType"] = (int)MISSION_TYPE.DAILY,
-                            ["missionId"] = dailyRuntime.missionId,
+                            ["mission_id"] = dailyRuntime.missionId,
                             ["missionUid"] = dailyRuntime.missionUid,
                             ["periodKey"] = dailyRuntime.periodKey,
                             ["index"] = dailyRuntime.index,
@@ -40,7 +40,7 @@ namespace Devian
                         runtimeObj = new JObject
                         {
                             ["missionType"] = (int)MISSION_TYPE.WEEKLY,
-                            ["missionId"] = periodRuntime.missionId,
+                            ["mission_id"] = periodRuntime.missionId,
                             ["missionUid"] = periodRuntime.missionUid,
                             ["periodKey"] = periodRuntime.periodKey,
                             ["day"] = periodRuntime.day,
@@ -109,7 +109,7 @@ namespace Devian
                         missionType = (MISSION_TYPE)missionTypeRaw.Value;
                     }
 
-                    var missionId = runtimeObj.Value<string>("missionId") ?? string.Empty;
+                    var missionId = runtimeObj.Value<string>("mission_id") ?? string.Empty;
                     var periodKey = runtimeObj.Value<string>("periodKey") ?? string.Empty;
                     var progressValue = DeserializeBigInt(runtimeObj["progressValue"]);
                     var state = DeserializeState(runtimeObj.Value<int?>("state"));

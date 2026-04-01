@@ -7,7 +7,7 @@ namespace Devian
         ITEM_CARD mTable = null;
         ITEM_CARD_LEVEL mLevelTable = null;
 
-        public override string ItemId => mTable?.ItemId ?? string.Empty;
+        public override string ItemId => mTable?.item_id ?? string.Empty;
 
         public void Init(ITEM_CARD table, ITEM_CARD_LEVEL levelTable)
         {
@@ -18,11 +18,11 @@ namespace Devian
                 return;
 
             InitLevelStats(
-                levelTable.ItemLevel,
-                levelTable.StatType00, levelTable.StatValue00,
-                levelTable.StatType01, levelTable.StatValue01,
-                levelTable.StatType02, levelTable.StatValue02,
-                levelTable.StatType03, levelTable.StatValue03);
+                levelTable.item_level,
+                levelTable.stat_type00, levelTable.stat_value00,
+                levelTable.stat_type01, levelTable.stat_value01,
+                levelTable.stat_type02, levelTable.stat_value02,
+                levelTable.stat_type03, levelTable.stat_value03);
         }
 
         public override AbilityBase Clone()

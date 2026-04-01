@@ -24,7 +24,7 @@ Type: Policy / Entry Point
 
 ### 3) 보상 적용은 RewardManager 단일 경로로 위임한다
 
-- claim 성공 시 `RewardManager.ApplyRewardGroup(rewardGroupId)`를 사용한다.
+- claim 성공 시 `RewardManager.ApplyRewardGroup(reward_group_id)`를 사용한다.
 - AttendManager가 Inventory를 직접 수정하지 않는다.
 - Attend claim 결과를 Firebase Firestore(Functions 포함)로 직접 저장하지 않는다.
 
@@ -36,9 +36,9 @@ Type: Policy / Entry Point
 
 ### 5) ATTEND active row만 운영 대상이다
 
-- `IsActive == true` row만 claim 후보가 된다.
+- `Is_active == true` row만 claim 후보가 된다.
 - `day < 1` 또는 `day > 7` row는 운영 대상에서 제외한다.
-- `rewardGroupId` empty row는 invalid row로 간주하고 제외한다.
+- `reward_group_id` empty row는 invalid row로 간주하고 제외한다.
 
 ### 6) reset 조건은 3개로 고정한다
 

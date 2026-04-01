@@ -42,24 +42,24 @@ AppliesTo: v10
 
 | 파일 | 시트(테이블) | 컨테이너 | PK | 설명 |
 |---|---|---|---|---|
-| `MetaTable.xlsx` | PURCHASE | TB_PURCHASE | `InternalProductId` (string) | 상품 테이블 (`seasonId` 포함) |
-| `MetaTable.xlsx` | ADVERTISE | TB_ADVERTISE | `AdvertiseId` (string) | 광고 placement 테이블 |
-| `MetaTable.xlsx` | REWARD | TB_REWARD | `RewardNum` (int) | 보상 테이블 |
-| `GameMessageTable.xlsx` | GAME_MESSAGE | TB_GAME_MESSAGE | `MessageId` (string) | 메시지 stat 정의 테이블 |
-| `MissionTable.xlsx` | MISSION_DAILY | TB_MISSION_DAILY | `MissionId` (string) | 일일 미션 정의 테이블 |
-| `MissionTable.xlsx` | MISSION_WEEKLY | TB_MISSION_WEEKLY | `MissionId` (string) | 기간 미션 정의 테이블 (`day:1~7`, 10일 주기) |
+| `MetaTable.xlsx` | PURCHASE | TB_PURCHASE | `Internal_product_id` (string) | 상품 테이블 (`season_id` 포함) |
+| `MetaTable.xlsx` | ADVERTISE | TB_ADVERTISE | `Advertise_id` (string) | 광고 placement 테이블 |
+| `MetaTable.xlsx` | REWARD | TB_REWARD | `Reward_num` (int) | 보상 테이블 |
+| `GameMessageTable.xlsx` | GAME_MESSAGE | TB_GAME_MESSAGE | `Message_id` (string) | 메시지 stat 정의 테이블 |
+| `MissionTable.xlsx` | MISSION_DAILY | TB_MISSION_DAILY | `Mission_id` (string) | 일일 미션 정의 테이블 |
+| `MissionTable.xlsx` | MISSION_WEEKLY | TB_MISSION_WEEKLY | `Mission_id` (string) | 기간 미션 정의 테이블 (`day:1~7`, 10일 주기) |
 | `AchieveTable.xlsx` | ACHIEVE_SOCIAL | TB_ACHIEVE_SOCIAL | `Index` (int) | 소셜 업적 단계/플랫폼 매핑 테이블 |
 | `AchieveTable.xlsx` | ACHIEVE_PASS | TB_ACHIEVE_PASS | `Index` (int) | 패스 업적 단계/활성 조건 테이블 |
-| `MetaTable.xlsx` | LEADERBOARD | TB_LEADERBOARD | `LeaderboardId` (string) | 리더보드 정의 |
+| `MetaTable.xlsx` | LEADERBOARD | TB_LEADERBOARD | `Leaderboard_id` (string) | 리더보드 정의 |
 | `MetaTable.xlsx` | LEADERBOARD_REWARD | TB_LEADERBOARD_REWARD | `Index` (int) | 리더보드 구간 보상 정의 |
-| `TreasureTable.xlsx` | TREASURE_CHEST | TB_TREASURE_CHEST | `Level` (int) | chest level별 maxExp/보상 그룹 엔트리 |
-| `TreasureTable.xlsx` | TREASURE_REWARD | TB_TREASURE_REWARD | `Index` (int) | `treasureGradeType -> rewardGroupId` fan-out 테이블 |
-| `ItemTable.xlsx` | ITEM_EQUIP | TB_ITEM_EQUIP | `ItemId` (string) | 장비 테이블 (ItemId, NameId, DescId) |
-| `ItemTable.xlsx` | ITEM_CARD | TB_ITEM_CARD | `ItemId` (string) | 카드 테이블 (ItemId, NameId, DescId) |
-| `ItemTable.xlsx` | ITEM_MATERIAL | TB_ITEM_MATERIAL | `ItemId` (string) | 재료 테이블 (ItemId, NameId, DescId) |
-| `ItemTable.xlsx` | ITEM_RENTAL | TB_ITEM_RENTAL | `ItemId` (string) | 렌탈 아이템 테이블 (ItemId, NameId, DescId) |
-| `ItemTable.xlsx` | ITEM_PASS | TB_ITEM_PASS | `ItemId` (string) | 패스 아이템 테이블 (ItemId, NameId, DescId) |
-| `MetaTable.xlsx` | SEASON | TB_SEASON | `SeasonId` (string) | 시즌 메타 테이블 (start/end UTC) |
+| `TreasureTable.xlsx` | TREASURE_CHEST | TB_TREASURE_CHEST | `Level` (int) | chest level별 max_exp/보상 그룹 엔트리 |
+| `TreasureTable.xlsx` | TREASURE_REWARD | TB_TREASURE_REWARD | `Index` (int) | `treasure_grade_type -> reward_group_id` fan-out 테이블 |
+| `ItemTable.xlsx` | ITEM_EQUIP | TB_ITEM_EQUIP | `item_id` (string) | 장비 테이블 (`item_id`, `name_id`, `desc_id`) |
+| `ItemTable.xlsx` | ITEM_CARD | TB_ITEM_CARD | `item_id` (string) | 카드 테이블 (`item_id`, `name_id`, `desc_id`) |
+| `ItemTable.xlsx` | ITEM_MATERIAL | TB_ITEM_MATERIAL | `item_id` (string) | 재료 테이블 (`item_id`, `name_id`, `desc_id`) |
+| `ItemTable.xlsx` | ITEM_RENTAL | TB_ITEM_RENTAL | `item_id` (string) | 렌탈 아이템 테이블 (`item_id`, `name_id`, `desc_id`) |
+| `ItemTable.xlsx` | ITEM_PASS | TB_ITEM_PASS | `item_id` (string) | 패스 아이템 테이블 (`item_id`, `name_id`, `desc_id`) |
+| `MetaTable.xlsx` | SEASON | TB_SEASON | `Season_id` (string) | 시즌 메타 테이블 (start/end UTC) |
 
 ---
 

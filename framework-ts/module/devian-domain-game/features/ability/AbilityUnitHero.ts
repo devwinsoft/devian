@@ -7,13 +7,13 @@ export class AbilityUnitHero extends AbilityUnitBase {
     private mLevelTable: UNIT_HERO_LEVEL | null = null;
     private readonly mEquips: Map<number, AbilityItemEquip> = new Map();
 
-    get unitId(): string { return this.mTable?.UnitId ?? ''; }
+    get unitId(): string { return this.mTable?.unit_id ?? ''; }
     get equips(): ReadonlyMap<number, AbilityItemEquip> { return this.mEquips; }
 
     init(table: UNIT_HERO, levelTable: UNIT_HERO_LEVEL): void {
         this.mTable = table;
         this.mLevelTable = levelTable;
-        this.initUnitState(levelTable.UnitLevel, levelTable.MaxHp);
+        this.initUnitState(levelTable.unit_level, levelTable.max_hp);
     }
 
     equip(equip: AbilityItemEquip, slotNumber: number): boolean {
@@ -59,15 +59,6 @@ export class AbilityUnitHero extends AbilityUnitBase {
 
         this.mEquips.delete(slotNumber);
         return true;
-    }
-
-    clearProjectedEquips(): void {
-        for (const slot of Array.from(this.mEquips.keys()))
-            this.unequip(slot);
-    }
-
-    setProjectedEquip(equip: AbilityItemEquip, slotNumber: number): boolean {
-        return this.equip(equip, slotNumber);
     }
 
     clone(): AbilityUnitHero {

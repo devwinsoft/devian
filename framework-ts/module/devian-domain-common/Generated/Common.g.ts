@@ -208,24 +208,24 @@ export enum SERVER_ERROR_TYPE {
 // ================================================================
 
 export interface COMPLEX_POLICY extends IEntityKey<ComplexPolicyType> {
-    Key: ComplexPolicyType;
-    FallbackValue: Variant;
-    MinValue: Variant;
-    MaxValue: Variant;
+    key: ComplexPolicyType;
+    fallback_value: Variant;
+    min_value: Variant;
+    max_value: Variant;
     getKey(): ComplexPolicyType;
 }
 
 export interface COMMON_ERROR extends IEntityKey<COMMON_ERROR_TYPE> {
-    Id: COMMON_ERROR_TYPE;
-    Msg_key: string;
-    Msg: string;
+    id: COMMON_ERROR_TYPE;
+    msg_key: string;
+    msg: string;
     getKey(): COMMON_ERROR_TYPE;
 }
 
 export interface SERVER_ERROR extends IEntityKey<SERVER_ERROR_TYPE> {
-    Id: SERVER_ERROR_TYPE;
-    Code: number;
-    Status: number;
+    id: SERVER_ERROR_TYPE;
+    code: number;
+    status: number;
     getKey(): SERVER_ERROR_TYPE;
 }
 
@@ -270,7 +270,7 @@ export class TB_COMPLEX_POLICY {
         for (const line of lines) {
             const row = JSON.parse(line) as COMPLEX_POLICY;
             this._list.push(row);
-            this._dict.set(row.Key, row);
+            this._dict.set(row.key, row);
         }
     }
 
@@ -316,7 +316,7 @@ export class TB_COMMON_ERROR {
         for (const line of lines) {
             const row = JSON.parse(line) as COMMON_ERROR;
             this._list.push(row);
-            this._dict.set(row.Id, row);
+            this._dict.set(row.id, row);
         }
     }
 
@@ -362,7 +362,7 @@ export class TB_SERVER_ERROR {
         for (const line of lines) {
             const row = JSON.parse(line) as SERVER_ERROR;
             this._list.push(row);
-            this._dict.set(row.Id, row);
+            this._dict.set(row.id, row);
         }
     }
 

@@ -5,7 +5,7 @@
 //
 // NOTE: TbLoader 등록은 DomainTableRegistry (Generated)가 담당.
 //       이 클래스는 Manager 델리게이트 연결 + 어댑터 캐시만 관리한다.
-// v10 변경: key_group 제거, key_bundle 중심 로드/언로드
+// v10 변경: keyGroup 제거, keyBundle 중심 로드/언로드
 
 #nullable enable
 
@@ -19,7 +19,7 @@ namespace Devian.Domain.Sound
     /// - TB_SOUND → SoundManager.GetSoundRowsBySoundId / GetSoundRowsByBundleKey
     /// - TB_VOICE → VoiceManager.GetVoiceRow / GetAllVoiceRows / GetVoiceRowsByBundleKey
     /// - Generated 클래스를 Adapter로 ISoundRow/IVoiceRow 인터페이스에 맞춘다.
-    /// key_group은 제거됨 - 로드/언로드는 key_bundle 단위로만 수행.
+    /// key_group은 제거됨 - 로드/언로드는 keyBundle 단위로만 수행.
     /// </summary>
     internal static class SoundVoiceTableRegistry
     {
@@ -113,10 +113,10 @@ namespace Devian.Domain.Sound
         /// </summary>
         private static SoundRowAdapter GetOrCreateSoundAdapter(SOUND row)
         {
-            if (!_soundAdapterCache.TryGetValue(row.Row_id, out var adapter))
+            if (!_soundAdapterCache.TryGetValue(row.row_id, out var adapter))
             {
                 adapter = new SoundRowAdapter(row);
-                _soundAdapterCache[row.Row_id] = adapter;
+                _soundAdapterCache[row.row_id] = adapter;
             }
             return adapter;
         }
@@ -126,10 +126,10 @@ namespace Devian.Domain.Sound
         /// </summary>
         private static VoiceRowAdapter GetOrCreateVoiceAdapter(VOICE row)
         {
-            if (!_voiceAdapterCache.TryGetValue(row.Voice_id, out var adapter))
+            if (!_voiceAdapterCache.TryGetValue(row.voice_id, out var adapter))
             {
                 adapter = new VoiceRowAdapter(row);
-                _voiceAdapterCache[row.Voice_id] = adapter;
+                _voiceAdapterCache[row.voice_id] = adapter;
             }
             return adapter;
         }

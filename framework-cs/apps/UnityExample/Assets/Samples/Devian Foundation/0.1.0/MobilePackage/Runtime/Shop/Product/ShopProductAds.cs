@@ -5,24 +5,24 @@ namespace Devian
     public sealed class ShopProductAds : ShopRewardProductBase
     {
         public ShopProductAds(
-            string shopId,
-            string nameId,
-            SHOP_CATALOG_TYPE catalogType,
+            string shop_id,
+            string name_id,
+            SHOP_CATALOG_TYPE catalog_type,
             int price,
-            string rewardGroupId,
+            string reward_group_id,
             int amount,
-            int maxCount = -1,
+            int max_count = -1,
             SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
             : base(
-                shopId,
-                nameId,
-                catalogType,
+                shop_id,
+                name_id,
+                catalog_type,
                 SHOP_PRODUCT_TYPE.ADS,
                 CURRENCY_TYPE.ADS,
                 price,
-                rewardGroupId,
+                reward_group_id,
                 amount,
-                maxCount,
+                max_count,
                 discountType)
         {
         }

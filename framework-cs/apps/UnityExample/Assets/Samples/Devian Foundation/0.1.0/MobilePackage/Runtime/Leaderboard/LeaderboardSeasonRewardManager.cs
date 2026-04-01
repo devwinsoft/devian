@@ -76,14 +76,14 @@ namespace Devian
                 if (!IsSeasonRewardEvaluationReady(getSeasonEndUtcMs(prevRow), serverNowUtcMs))
                     continue;
 
-                var claimKey = buildClaimKey(prevRow.LeaderboardId);
+                var claimKey = buildClaimKey(prevRow.leaderboard_id);
                 if (_storage.TryGetClaim(claimKey, out _))
                     continue;
 
-                var snapshotResult = await leaderboardManager.GetPlayerSnapshotAsync(prevRow.LeaderboardId, ct);
+                var snapshotResult = await leaderboardManager.GetPlayerSnapshotAsync(prevRow.leaderboard_id, ct);
                 if (snapshotResult.IsFailure)
                 {
-                    Debug.LogWarning($"[{Tag}] Snapshot load failed: leaderboardId={prevRow.LeaderboardId}, error={snapshotResult.Error}");
+                    Debug.LogWarning($"[{Tag}] Snapshot load failed: leaderboard_id={prevRow.leaderboard_id}, error={snapshotResult.Error}");
                     continue;
                 }
 
@@ -109,7 +109,7 @@ namespace Devian
                     continue;
                 }
 
-                if (!tryResolveRewardGroupId(prevRow.LeaderboardId, snapshot.Rank, out var rewardGroupId))
+                if (!tryResolveRewardGroupId(prevRow.leaderboard_id, snapshot.Rank, out var rewardGroupId))
                 {
                     _storage.SetClaim(claimKey, new LeaderboardSeasonRewardClaimRecord
                     {
@@ -126,7 +126,7 @@ namespace Devian
                 var apply = RewardManager.Instance.ApplyRewardGroup(rewardGroupId);
                 if (apply.IsFailure)
                 {
-                    Debug.LogWarning($"[{Tag}] Reward apply failed: leaderboardId={prevRow.LeaderboardId}, rewardGroupId={rewardGroupId}, error={apply.Error}");
+                    Debug.LogWarning($"[{Tag}] Reward apply failed: leaderboard_id={prevRow.leaderboard_id}, reward_group_id={rewardGroupId}, error={apply.Error}");
                     continue;
                 }
 
@@ -170,10 +170,10 @@ namespace Devian
 
         private static bool isActiveSeasonRow(LEADERBOARD row)
         {
-            if (row == null || !row.IsActive)
+            if (row == null || !row.is_active)
                 return false;
 
-            if (string.IsNullOrWhiteSpace(row.LeaderboardId))
+            if (string.IsNullOrWhiteSpace(row.leaderboard_id))
             {
                 return false;
             }
@@ -183,7 +183,7 @@ namespace Devian
             if (seasonStartUtcMs <= 0L || seasonEndUtcMs <= seasonStartUtcMs)
                 return false;
 
-            return row.Mode != LEADERBOARD_MODE.NONE;
+            return row.mode != LEADERBOARD_MODE.NONE;
         }
 
         private static bool tryFindCurrentSeasonStart(
@@ -196,7 +196,7 @@ namespace Devian
             var found = false;
             foreach (var row in rows)
             {
-                if (row == null || row.Mode != mode)
+                if (row == null || row.mode != mode)
                     continue;
 
                 var seasonStartUtcMsValue = getSeasonStartUtcMs(row);
@@ -225,7 +225,7 @@ namespace Devian
 
             foreach (var row in rows)
             {
-                if (row == null || row.Mode != mode)
+                if (row == null || row.mode != mode)
                     continue;
 
                 var seasonEndUtcMs = getSeasonEndUtcMs(row);
@@ -241,7 +241,7 @@ namespace Devian
 
                 if (seasonEndUtcMs == latestEndUtcMs
                     && seasonRow != null
-                    && string.CompareOrdinal(row.LeaderboardId, seasonRow.LeaderboardId) < 0)
+                    && string.CompareOrdinal(row.leaderboard_id, seasonRow.leaderboard_id) < 0)
                 {
                     seasonRow = row;
                 }
@@ -271,16 +271,16 @@ namespace Devian
                 if (row == null)
                     continue;
 
-                if (row.RankFrom <= 0L || row.RankTo < row.RankFrom)
+                if (row.rank_from <= 0L || row.rank_to < row.rank_from)
                     continue;
 
-                if (rank < row.RankFrom || rank > row.RankTo)
+                if (rank < row.rank_from || rank > row.rank_to)
                     continue;
 
-                if (string.IsNullOrWhiteSpace(row.RewardGroupId))
+                if (string.IsNullOrWhiteSpace(row.reward_group_id))
                     return false;
 
-                rewardGroupId = row.RewardGroupId.Trim();
+                rewardGroupId = row.reward_group_id.Trim();
                 return rewardGroupId.Length > 0;
             }
 
@@ -289,18 +289,18 @@ namespace Devian
 
         private static long getSeasonStartUtcMs(LEADERBOARD row)
         {
-            if (row == null || string.IsNullOrEmpty(row.SeasonId))
+            if (row == null || string.IsNullOrEmpty(row.season_id))
                 return 0L;
-            var season = TB_SEASON.Get(row.SeasonId);
-            return season?.StartUtcTime?.utcTimeMs ?? 0L;
+            var season = TB_SEASON.Get(row.season_id);
+            return season?.start_utc_time?.utcTimeMs ?? 0L;
         }
 
         private static long getSeasonEndUtcMs(LEADERBOARD row)
         {
-            if (row == null || string.IsNullOrEmpty(row.SeasonId))
+            if (row == null || string.IsNullOrEmpty(row.season_id))
                 return 0L;
-            var season = TB_SEASON.Get(row.SeasonId);
-            return season?.EndUtcTime?.utcTimeMs ?? 0L;
+            var season = TB_SEASON.Get(row.season_id);
+            return season?.end_utc_time?.utcTimeMs ?? 0L;
         }
 
         internal static bool IsSeasonRewardEvaluationReady(long prevSeasonEndUtcMs, long serverNowUtcMs)

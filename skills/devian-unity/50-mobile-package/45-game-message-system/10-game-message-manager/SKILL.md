@@ -39,8 +39,8 @@ MobilePackage 샘플의 `GameMessageManager` 설계 문서다.
 
 - `GameMessageStorage Storage { get; }`
 - `Initialize()`
-- `TryGetStat(string messageId, out CBigInt)`
-- `GetStat(string messageId) / SetStat(string messageId, CBigInt)`
+- `TryGetStat(string message_id, out CBigInt)`
+- `GetStat(string message_id) / SetStat(string message_id, CBigInt)`
 - `ClearStorage()`
 - `Notify(GAME_MESSAGE_TYPE, CBigInt/long/int)` (stats update + publish)
 - `SubcribeGameMessageTrigger(...) / UnSubcribeGameMessageTrigger(...)` (internal helper)

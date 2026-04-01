@@ -24,7 +24,7 @@ namespace Devian
                 var runtimeObj = new JObject
                 {
                     ["achieveType"] = (int)runtime.RuntimeType,
-                    ["achieveId"] = runtime.achieveId,
+                    ["achieve_id"] = runtime.achieveId,
                     ["achieveUid"] = runtime.achieveUid,
                     ["level"] = runtime.level,
                     ["index"] = runtime.index,
@@ -63,7 +63,7 @@ namespace Devian
                     if (achieveUid <= 0)
                         continue;
 
-                    var achieveId = runtimeObj.Value<string>("achieveId") ?? string.Empty;
+                    var achieveId = runtimeObj.Value<string>("achieve_id") ?? string.Empty;
                     var achieveType = parseAchieveType(runtimeObj.Value<int?>("achieveType"), achieveId);
                     var runtime = AchieveRuntimeFactory.Restore(new AchieveRuntimeRestoreArgs
                     {

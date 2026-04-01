@@ -168,7 +168,7 @@ namespace Devian
                 return CommonResult<RewardData[]>.Failure(COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED, "AttendManager is not initialized.");
 
             if (string.IsNullOrWhiteSpace(attendId))
-                return CommonResult<RewardData[]>.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "attendId is empty.");
+                return CommonResult<RewardData[]>.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "attend_id is empty.");
 
             ct.ThrowIfCancellationRequested();
 
@@ -205,26 +205,26 @@ namespace Devian
 
             if (!isRowClaimable(row, key, serverNowUtcMs))
             {
-                if (row.Day != _storage.nextAttendDay)
+                if (row.day != _storage.nextAttendDay)
                 {
                     return CommonResult<RewardData[]>.Failure(
                         COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                        $"Attend day mismatch: requested={row.Day}, expected={_storage.nextAttendDay}");
+                        $"Attend day mismatch: requested={row.day}, expected={_storage.nextAttendDay}");
                 }
 
                 return CommonResult<RewardData[]>.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    $"Attend is not claimable: {row.AttendId}");
+                    $"Attend is not claimable: {row.attend_id}");
             }
 
-            var apply = RewardManager.Instance.ApplyRewardGroup(row.RewardGroupId);
+            var apply = RewardManager.Instance.ApplyRewardGroup(row.reward_group_id);
             if (apply.IsFailure)
                 return CommonResult<RewardData[]>.Failure(apply.Error!);
 
-            _storage.SetClaimed(row.AttendId, serverNowUtcMs);
-            _storage.nextAttendDay = row.Day >= MaxAttendDay
+            _storage.SetClaimed(row.attend_id, serverNowUtcMs);
+            _storage.nextAttendDay = row.day >= MaxAttendDay
                 ? CompletedAttendDay
-                : row.Day + 1;
+                : row.day + 1;
             _storage.MarkLogin(serverNowUtcMs);
             rebuildRuntimeCache(serverNowUtcMs);
 
@@ -265,11 +265,11 @@ namespace Devian
             for (var i = 0; i < _activeRows.Count; i++)
             {
                 var row = _activeRows[i];
-                if (!_rowByDay.ContainsKey(row.Day))
-                    _rowByDay.Add(row.Day, row);
+                if (!_rowByDay.ContainsKey(row.day))
+                    _rowByDay.Add(row.day, row);
 
-                if (!_rowById.ContainsKey(row.AttendId))
-                    _rowById.Add(row.AttendId, row);
+                if (!_rowById.ContainsKey(row.attend_id))
+                    _rowById.Add(row.attend_id, row);
             }
         }
 
@@ -317,8 +317,8 @@ namespace Devian
             if (row == null)
                 return new AttendRuntime(day, string.Empty, string.Empty, false, AttendRuntimeState.WAIT, 0L);
 
-            var attendId = (row.AttendId ?? string.Empty).Trim();
-            var rewardGroupId = (row.RewardGroupId ?? string.Empty).Trim();
+            var attendId = (row.attend_id ?? string.Empty).Trim();
+            var rewardGroupId = (row.reward_group_id ?? string.Empty).Trim();
             var isConfigured = !string.IsNullOrEmpty(attendId) && !string.IsNullOrEmpty(rewardGroupId);
             var claimedAtUtcMs = 0L;
             var state = AttendRuntimeState.WAIT;
@@ -379,7 +379,7 @@ namespace Devian
             if (_storage.nextAttendDay <= 0 || _storage.nextAttendDay > MaxAttendDay)
                 return false;
 
-            if (row.Day != _storage.nextAttendDay)
+            if (row.day != _storage.nextAttendDay)
                 return false;
 
             if (isClaimedToday(serverNowUtcMs))
@@ -391,13 +391,13 @@ namespace Devian
                 return false;
             }
 
-            if (!string.Equals(targetRow.AttendId, row.AttendId, StringComparison.Ordinal))
+            if (!string.Equals(targetRow.attend_id, row.attend_id, StringComparison.Ordinal))
                 return false;
 
-            if (!string.Equals(row.AttendId, rowKey, StringComparison.Ordinal))
+            if (!string.Equals(row.attend_id, rowKey, StringComparison.Ordinal))
                 return false;
 
-            if (_storage.IsClaimed(row.AttendId))
+            if (_storage.IsClaimed(row.attend_id))
                 return false;
 
             return true;
@@ -432,16 +432,16 @@ namespace Devian
 
         static bool isValidActiveRow(ATTEND row)
         {
-            if (row == null || !row.IsActive)
+            if (row == null || !row.is_active)
                 return false;
 
-            if (string.IsNullOrWhiteSpace(row.AttendId))
+            if (string.IsNullOrWhiteSpace(row.attend_id))
                 return false;
 
-            if (row.Day <= 0 || row.Day > MaxAttendDay)
+            if (row.day <= 0 || row.day > MaxAttendDay)
                 return false;
 
-            if (string.IsNullOrWhiteSpace(row.RewardGroupId))
+            if (string.IsNullOrWhiteSpace(row.reward_group_id))
                 return false;
 
             return true;
@@ -458,11 +458,11 @@ namespace Devian
             if (y == null)
                 return -1;
 
-            var dayCompare = x.Day.CompareTo(y.Day);
+            var dayCompare = x.day.CompareTo(y.day);
             if (dayCompare != 0)
                 return dayCompare;
 
-            return string.Compare(x.AttendId, y.AttendId, StringComparison.Ordinal);
+            return string.Compare(x.attend_id, y.attend_id, StringComparison.Ordinal);
         }
 
         static long toUtcDayStart(long utcMs)

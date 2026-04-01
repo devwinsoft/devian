@@ -14,7 +14,7 @@ namespace Devian
     /// Voice 재생 관리자.
     /// - TB_VOICE를 로딩 시점에 "현재 언어용 맵"으로 Resolve 캐시
     /// - 재생 시점에는 캐시 조회만 수행 (SystemLanguage 분기 금지)
-    /// - Voice clip 로딩은 key_bundle + language 기반으로 수행 (key_group 제거됨)
+    /// - Voice clip 로딩은 keyBundle + language 기반으로 수행 (keyGroup 제거됨)
     /// - VOICE는 SOUND 테이블을 참조하지 않고 독립적으로 로드/재생한다
     /// - clip 경로는 IVoiceRow.TryGetClipColumn()으로 직접 조회
     ///
@@ -42,7 +42,7 @@ namespace Devian
         /// <summary>
         /// key_bundle로 voice rows를 조회하는 델리게이트.
         /// LoadByBundleKeyAsync에서 사용한다.
-        /// key_group은 제거됨 - 로드/언로드는 key_bundle 단위로만 수행.
+        /// key_group은 제거됨 - 로드/언로드는 keyBundle 단위로만 수행.
         /// </summary>
         public Func<string, IEnumerable<IVoiceRow>>? GetVoiceRowsByBundleKey { get; set; }
 
@@ -50,7 +50,7 @@ namespace Devian
         // Resolve Cache
         // ====================================================================
 
-        // voice_id → IVoiceRow 캐시 (Resolve 결과)
+        // voiceId → IVoiceRow 캐시 (Resolve 결과)
         private readonly Dictionary<string, IVoiceRow> _resolvedVoiceRows = new Dictionary<string, IVoiceRow>();
         private SystemLanguage _currentLanguage = SystemLanguage.Unknown;
         private SystemLanguage _fallbackLanguage = SystemLanguage.English;
@@ -70,7 +70,7 @@ namespace Devian
         }
 
         // ====================================================================
-        // Loaded Voice Bundles (key_bundle 기반)
+        // Loaded Voice Bundles (keyBundle 기반)
         // ====================================================================
 
         private readonly HashSet<string> _loadedVoiceBundleKeys = new HashSet<string>();
@@ -113,13 +113,13 @@ namespace Devian
                     if (!row.TryGetClipColumn(fallbackCol, out clipPath))
                     {
                         // 3. 여전히 비어있으면 경고 후 스킵
-                        Log.Warn($"[VoiceManager] Voice '{row.voice_id}' has no clip for {col} or fallback {fallbackCol}.");
+                        Log.Warn($"[VoiceManager] Voice '{row.voiceId}' has no clip for {col} or fallback {fallbackCol}.");
                         continue;
                     }
                 }
 
-                // 4. 캐시 등록 (voice_id → IVoiceRow)
-                _resolvedVoiceRows[row.voice_id] = row;
+                // 4. 캐시 등록 (voiceId → IVoiceRow)
+                _resolvedVoiceRows[row.voiceId] = row;
             }
 
             Log.Info($"[VoiceManager] Resolved {_resolvedVoiceRows.Count} voices for {language}.");
@@ -135,16 +135,16 @@ namespace Devian
         }
 
         // ====================================================================
-        // Voice Loading API (key_bundle + language 기반, SOUND 미참조)
-        // key_group은 제거됨 - 로드/언로드는 key_bundle 단위로만 수행.
+        // Voice Loading API (keyBundle + language 기반, SOUND 미참조)
+        // key_group은 제거됨 - 로드/언로드는 keyBundle 단위로만 수행.
         // ====================================================================
 
         /// <summary>
-        /// key_bundle 기반으로 Voice clip을 로드한다.
+        /// keyBundle 기반으로 Voice clip을 로드한다.
         /// 반드시 ResolveForLanguage() 호출 후에 사용한다.
-        /// VOICE 테이블의 key_bundle/clip 경로를 직접 사용한다 (SOUND 테이블 미참조).
+        /// VOICE 테이블의 keyBundle/clip 경로를 직접 사용한다 (SOUND 테이블 미참조).
         /// </summary>
-        /// <param name="bundleKey">TB_VOICE.key_bundle</param>
+        /// <param name="bundleKey">TB_VOICE.keyBundle</param>
         /// <param name="language">Voice 언어</param>
         /// <param name="fallbackLanguage">Fallback 언어</param>
         /// <param name="onError">에러 콜백</param>
@@ -174,11 +174,11 @@ namespace Devian
             }
             else if (GetAllVoiceRows != null)
             {
-                // Fallback: 전체 순회하면서 key_bundle 필터링
+                // Fallback: 전체 순회하면서 keyBundle 필터링
                 var filteredRows = new List<IVoiceRow>();
                 foreach (var row in GetAllVoiceRows())
                 {
-                    if (row != null && row.key_bundle == bundleKey)
+                    if (row != null && row.keyBundle == bundleKey)
                     {
                         filteredRows.Add(row);
                     }
@@ -201,7 +201,7 @@ namespace Devian
                 if (row == null) continue;
 
                 // Resolve 캐시에 존재하는지 확인
-                if (_resolvedVoiceRows.ContainsKey(row.voice_id))
+                if (_resolvedVoiceRows.ContainsKey(row.voiceId))
                 {
                     resolvedRows.Add(row);
                 }
@@ -246,7 +246,7 @@ namespace Devian
         }
 
         /// <summary>
-        /// key_bundle 기반으로 Voice clip을 언로드한다.
+        /// keyBundle 기반으로 Voice clip을 언로드한다.
         /// </summary>
         public void UnloadByBundleKey(string bundleKey)
         {
@@ -288,11 +288,11 @@ namespace Devian
         /// voice_id로 2D 보이스를 재생한다.
         /// 재생 시점에는 캐시 조회만 수행한다 (SystemLanguage 파라미터 없음).
         /// </summary>
-        /// <param name="voiceId">voice_id (TB_VOICE)</param>
+        /// <param name="voiceId">voiceId (TB_VOICE)</param>
         /// <param name="volume">볼륨 (0~1)</param>
         /// <param name="pitch">피치 (0이면 row 기반)</param>
         /// <param name="groupId">그룹 ID</param>
-        /// <returns>runtime_id (재생 실패 시 Invalid)</returns>
+        /// <returns>runtimeId (재생 실패 시 Invalid)</returns>
         public SoundRuntimeId PlayVoice(string voiceId, float volume = 1f, float pitch = 0f, int groupId = 0)
         {
             // 1. 캐시에서 IVoiceRow 조회
@@ -309,14 +309,14 @@ namespace Devian
         /// <summary>
         /// voice_id로 3D 보이스를 재생한다.
         /// 재생 시점에는 캐시 조회만 수행한다 (SystemLanguage 파라미터 없음).
-        /// 3D 파라미터(distance_near, distance_far)는 IVoiceRow에서 가져온다.
+        /// 3D 파라미터(distanceNear, distanceFar)는 IVoiceRow에서 가져온다.
         /// </summary>
-        /// <param name="voiceId">voice_id (TB_VOICE)</param>
+        /// <param name="voiceId">voiceId (TB_VOICE)</param>
         /// <param name="position">3D 위치</param>
         /// <param name="volume">볼륨 (0~1)</param>
         /// <param name="pitch">피치 (0이면 row 기반)</param>
         /// <param name="groupId">그룹 ID</param>
-        /// <returns>runtime_id (재생 실패 시 Invalid)</returns>
+        /// <returns>runtimeId (재생 실패 시 Invalid)</returns>
         public SoundRuntimeId PlayVoice3D(string voiceId, Vector3 position, float volume = 1f, float pitch = 0f, int groupId = 0)
         {
             // 1. 캐시에서 IVoiceRow 조회
@@ -364,11 +364,11 @@ namespace Devian
 
         /// <summary>
         /// voice_id에 해당하는 자막 키를 반환한다.
-        /// voice_id 자체를 자막 키로 사용.
+        /// voiceId 자체를 자막 키로 사용.
         /// </summary>
         public string? GetCaptionKey(string voiceId)
         {
-            // voice_id 자체가 자막 키
+            // voiceId 자체가 자막 키
             if (_resolvedVoiceRows.ContainsKey(voiceId))
             {
                 return voiceId;

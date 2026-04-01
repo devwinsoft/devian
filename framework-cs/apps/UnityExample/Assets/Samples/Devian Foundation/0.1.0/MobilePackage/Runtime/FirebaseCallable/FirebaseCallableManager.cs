@@ -623,7 +623,7 @@ namespace Devian
             return new RecentPurchaseItem
             {
                 purchaseId = ReadString(first, "purchaseId"),
-                internalProductId = ReadString(first, "internalProductId"),
+                internalProductId = ReadString(first, "internal_product_id"),
                 storePurchasedAtMs = ReadLong(first, "storePurchasedAt"),
                 status = ReadString(first, "status"),
             };
@@ -641,7 +641,7 @@ namespace Devian
                         continue;
 
                     var purchaseId = ReadString(item, "purchaseId");
-                    var internalProductId = ReadString(item, "internalProductId");
+                    var internalProductId = ReadString(item, "internal_product_id");
                     var resultStatus = ReadString(item, "resultStatus");
                     var reason = ReadString(item, "reason");
                     var kindString = ReadString(item, "kind");

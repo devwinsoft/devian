@@ -59,12 +59,12 @@ AppliesTo: v10
 | `type` | `id` 의미 | `amount` 의미 | 적용 결과 |
 |---|---|---|---|
 | `CURRENCY` | `CURRENCY_TYPE` enum name | 증가 수량 | 잔고 누적 |
-| `EQUIP` | `itemId` | 생성 개수 | 개수만큼 `itemUid` 인스턴스 생성 |
-| `CARD` | `itemId` | 증가 수량 | 카드 보유량 누적 |
-| `MATERIAL` | `itemId` | 증가 수량 | 재료 보유량(`ITEM_AMOUNT`) 누적 |
-| `HERO` | `itemId` | 증가 수량 | 영웅 수량(`ITEM_AMOUNT`) 누적 |
-| `RENTAL` | `itemId` | 활성화 플래그(양수) | 활성 상태 설정 (`SetRental`) |
-| `PASS` | `itemId` | 소유 플래그(양수) | 소유 상태 설정 (`SetPassOwnership`) |
+| `EQUIP` | `item_id` | 생성 개수 | 개수만큼 `itemUid` 인스턴스 생성 |
+| `CARD` | `item_id` | 증가 수량 | 카드 보유량 누적 |
+| `MATERIAL` | `item_id` | 증가 수량 | 재료 보유량(`ITEM_AMOUNT`) 누적 |
+| `HERO` | `item_id` | 증가 수량 | 영웅 수량(`ITEM_AMOUNT`) 누적 |
+| `RENTAL` | `item_id` | 활성화 플래그(양수) | 활성 상태 설정 (`SetRental`) |
+| `PASS` | `item_id` | 소유 플래그(양수) | 소유 상태 설정 (`SetPassOwnership`) |
 | `TREASURE` | `TREASURE_GRADE_TYPE` enum name | chest 수량 | treasure chest count 누적 |
 
 주의:
@@ -154,6 +154,6 @@ AppliesTo: v10
 ## Related
 
 - [03-ssot](../03-ssot/SKILL.md) — RewardData 스키마/용어 정본
-- [10-reward-manager](../10-reward-manager/SKILL.md) — rewardGroupId -> RewardData[] 변환/적용
+- [10-reward-manager](../10-reward-manager/SKILL.md) — reward_group_id -> RewardData[] 변환/적용
 - [12-first-reward-settings](../12-first-reward-settings/SKILL.md) — FirstRewardSettings ScriptableObject
 - [22-inventory-system/10-inventory-manager](../../22-inventory-system/10-inventory-manager/SKILL.md) — InventoryManager (타입별 구체 API)

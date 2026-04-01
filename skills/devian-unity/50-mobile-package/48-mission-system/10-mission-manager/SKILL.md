@@ -4,7 +4,7 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
 
 - `MissionMessageTrigger`, `MissionScheduler`를 소유한다.
 - runtime 구독은 `GameMessageTrigger`를 helper 경유로 연결한다.
-- row 조건은 `conditionMsgId -> GAME_MESSAGE(messageType, saveType)`로 해석한다.
+- row 조건은 `condition_msg_id -> GAME_MESSAGE(messageType, saveType)`로 해석한다.
 - trigger 입력은 `GameMessageManager.Notify(...)`를 통해 전달된다.
 
 ---
@@ -23,9 +23,9 @@ MissionManager는 Mission 시스템의 오케스트레이터다.
 
 - `InitializeAsync(...)`
 - `RefreshRuntimes()`
-- `GetMissionRuntimeState(missionType, missionId)`
+- `GetMissionRuntimeState(missionType, mission_id)`
 - `GetRemainTime(missionType)`
-- `ClaimAsync(missionType, missionId, ...)`
+- `ClaimAsync(missionType, mission_id, ...)`
 - `Notify(MISSION_MESSAGE_TYPE, ...)`
 - `Subcribe(EntityId, MISSION_MESSAGE_TYPE, Handler)`
 - `SubcribeOnce(EntityId, MISSION_MESSAGE_TYPE, Action<object[]>)`

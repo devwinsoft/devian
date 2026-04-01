@@ -1,10 +1,10 @@
 # 10-reward-manager
 
 
-RewardManager는 입력된 `rewardGroupId` 또는 **RewardData[]**를 해석하여 InventoryManager의 **타입별 구체 API**를 호출하여 로컬 인벤토리에 **적용(지급 실행)** 한다.
+RewardManager는 입력된 `reward_group_id` 또는 **RewardData[]**를 해석하여 InventoryManager의 **타입별 구체 API**를 호출하여 로컬 인벤토리에 **적용(지급 실행)** 한다.
 
 RewardManager는 **단일 concrete 클래스**이다.
-- `rewardGroupId -> RewardData[]` 변환은 `TB_REWARD.GetByGroup()` 을 직접 참조하여 구현한다.
+- `reward_group_id -> RewardData[]` 변환은 `TB_REWARD.GetByGroup()` 을 직접 참조하여 구현한다.
 - `RewardData[]` 선검증(type/id/amount) + 원자성(all-or-nothing)을 보장한다.
 - 멱등/기록/복구는 RewardManager의 책임이 아니다.
 
@@ -28,14 +28,14 @@ CompoSingleton<RewardManager>.Instance
 ## Responsibilities (정본)
 
 - `RewardData[]` 입력을 받아 `REWARD_TYPE`별로 해석하고, InventoryManager의 타입별 구체 API를 호출하여 로컬 인벤토리에 적용
-  - `type=REWARD_TYPE.CURRENCY`: `inv.ApplyCurrency(currencyType, amount)`
-  - `type=REWARD_TYPE.EQUIP`: `inv.ApplyEquip(itemId, amount)`
-  - `type=REWARD_TYPE.CARD`: `inv.ApplyCard(itemId, amount)`
-  - `type=REWARD_TYPE.HERO`: `inv.ApplyHero(itemId, amount)`
-  - `type=REWARD_TYPE.RENTAL`: `inv.ApplyRental(itemId)`
-  - `type=REWARD_TYPE.PASS`: `inv.SetPassOwnership(itemId, true)`
+  - `type=REWARD_TYPE.CURRENCY`: `inv.ApplyCurrency(currency_type, amount)`
+  - `type=REWARD_TYPE.EQUIP`: `inv.ApplyEquip(item_id, amount)`
+  - `type=REWARD_TYPE.CARD`: `inv.ApplyCard(item_id, amount)`
+  - `type=REWARD_TYPE.HERO`: `inv.ApplyHero(item_id, amount)`
+  - `type=REWARD_TYPE.RENTAL`: `inv.ApplyRental(item_id)`
+  - `type=REWARD_TYPE.PASS`: `inv.SetPassOwnership(item_id, true)`
   - `type=REWARD_TYPE.TREASURE`: `inv.ApplyTreasure(gradeType, amount)`
-- `rewardGroupId`를 입력받아 `ResolveRewardDatas(rewardGroupId)`로 `TB_REWARD.GetByGroup()` 에서 `RewardData[]`를 만든 뒤 적용
+- `reward_group_id`를 입력받아 `ResolveRewardDatas(reward_group_id)`로 `TB_REWARD.GetByGroup()` 에서 `RewardData[]`를 만든 뒤 적용
 - `RevokeRewardDatas` / `RevokeRewardDatasPartial`로 RewardData[] 기반 회수 처리
 - `GetAmount(type, id)`로 RewardData 타입 기반 수량 조회
 - `FirstInitAsync()`로 초기 보상 지급 처리 (FirstRewardSettings 로드 + ApplyRewardDatas)
@@ -82,9 +82,9 @@ RewardManager는 `MobileApplication.Instance`에서 key/iv를 읽어 사용한�
   - 하나라도 invalid면 `CommonResult.Failure(error)`를 반환하고 상태를 변경하지 않는다.
   - 전체 valid이면 `REWARD_TYPE`별 switch로 InventoryManager 구체 API를 호출하고, 하위 `CommonResult` 실패를 그대로 propagate한다.
   - 이 선검증 단계는 원자성 보장을 위해 유지한다. apply 루프의 예외 전파 모델로 대체하지 않는다.
-- `ApplyRewardGroup(rewardGroupId, rewardAmountMultiplier) -> CommonResult<RewardApplyResult>`
+- `ApplyRewardGroup(reward_group_id, rewardAmountMultiplier) -> CommonResult<RewardApplyResult>`
   - `RewardApplyResult.AppliedRewards`로 이번 호출에서 실제 적용한 `RewardData[]`를 조회할 수 있다.
-  - `rewardGroupId`가 비어 있으면 성공 + 빈 배열(`AppliedRewards=[]`) 반환
+  - `reward_group_id`가 비어 있으면 성공 + 빈 배열(`AppliedRewards=[]`) 반환
 - `RevokeRewardDatas(RewardData[] rewards) -> CommonResult`
   - 선검증: 잔고 확인 (부족하면 `INVENTORY_REFUND_INSUFFICIENT`).
   - 전체 valid이면 Revoke 적용.
@@ -160,8 +160,8 @@ RewardManager는 `MobileApplication.Instance`에서 key/iv를 읽어 사용한�
 
 ## 컨텐츠 테이블 통합 (TB_REWARD 직접 참조)
 
-- `ResolveRewardDatas(rewardGroupId) -> RewardData[]`
-  - `TB_REWARD.GetByGroup(rewardGroupId)` 로 보상 그룹의 행 리스트를 조회하여 `RewardData[]`를 생성한다.
+- `ResolveRewardDatas(reward_group_id) -> RewardData[]`
+  - `TB_REWARD.GetByGroup(reward_group_id)` 로 보상 그룹의 행 리스트를 조회하여 `RewardData[]`를 생성한다.
   - 각 행의 `{ Type, Id, Amount }` → `RewardData` 변환. empty Id / amount <= 0 행은 skip.
   - 원격 호출/네트워크 금지. 테이블 조회만 허용.
 
@@ -192,9 +192,9 @@ asmdef:
 
 ## Sequence Example
 
-1) 호출자가 `rewardGroupId`를 결정한다.
-2) 호출자 → `Singleton.Get<RewardManager>().ApplyRewardGroup(rewardGroupId)`
-3) RewardManager: `ResolveRewardDatas(rewardGroupId)` → `RewardData[]` → `ApplyRewardDatas(deltas)`
+1) 호출자가 `reward_group_id`를 결정한다.
+2) 호출자 → `Singleton.Get<RewardManager>().ApplyRewardGroup(reward_group_id)`
+3) RewardManager: `ResolveRewardDatas(reward_group_id)` → `RewardData[]` → `ApplyRewardDatas(deltas)`
 4) RewardManager.ApplyRewardDatas: 선검증 → type switch → `InventoryManager.ApplyCurrency/ApplyEquip/...` 호출
 
 

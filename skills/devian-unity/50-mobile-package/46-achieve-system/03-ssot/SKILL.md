@@ -11,7 +11,7 @@ AppliesTo: v10
 - 진행 stat 정본: `MESSAGE`
 - 업적 알림 enum: `ACHIEVE_MESSAGE_TYPE`
 - 업적 타입 enum: `ACHIEVE_TYPE` (`NONE`, `SOCIAL`, `PASS`)
-- 플랫폼 업적 매핑: `ACHIEVE_SOCIAL.achieveId -> (appleAchievementId, googleAchievementId)`
+- 플랫폼 업적 매핑: `ACHIEVE_SOCIAL.achieve_id -> (apple_achievement_id, google_achievement_id)`
 - 저장 구조: `AchieveStorage` + `AchieveRuntimeBase`
 
 ---
@@ -27,17 +27,17 @@ AppliesTo: v10
 | field | type | note |
 |------|------|------|
 | `index` | int (pk) | row pk |
-| `achieveId` | string | 업적 그룹/내부 업적 ID |
-| `isActive` | bool | 운영 토글 |
+| `achieve_id` | string | 업적 그룹/내부 업적 ID |
+| `is_active` | bool | 운영 토글 |
 | `level` | int | 단계 |
-| `orderNum` | int | 정렬 기준(1-base) |
-| `reqMsgId` | string | runtime 활성화 조건 메시지 (`MESSAGE.messageId` FK) |
-| `reqValue` | `class:CBigInt` | runtime 활성화 조건값 |
-| `conditionMsgId` | string | 진행도 계산 메시지 (`MESSAGE.messageId` FK) |
-| `conditionValue` | `class:CBigInt` | 목표값 |
-| `rewardGroupId` | string | claim 보상 키 |
-| `appleAchievementId` | string | Game Center ID (`achieveId` group 공통) |
-| `googleAchievementId` | string | GPGS ID (`achieveId` group 공통) |
+| `order_num` | int | 정렬 기준(1-base) |
+| `req_msg_id` | string | runtime 활성화 조건 메시지 (`MESSAGE.message_id` FK) |
+| `req_value` | `class:CBigInt` | runtime 활성화 조건값 |
+| `condition_msg_id` | string | 진행도 계산 메시지 (`MESSAGE.message_id` FK) |
+| `condition_value` | `class:CBigInt` | 목표값 |
+| `reward_group_id` | string | claim 보상 키 |
+| `apple_achievement_id` | string | Game Center ID (`achieve_id` group 공통) |
+| `google_achievement_id` | string | GPGS ID (`achieve_id` group 공통) |
 
 ### `ACHIEVE_PASS` schema
 
@@ -48,15 +48,15 @@ AppliesTo: v10
 | field | type | note |
 |------|------|------|
 | `index` | int (pk) | row pk |
-| `achieveId` | string | 업적 그룹/내부 업적 ID |
-| `isActive` | bool | 운영 토글 |
+| `achieve_id` | string | 업적 그룹/내부 업적 ID |
+| `is_active` | bool | 운영 토글 |
 | `level` | int | 단계 |
-| `orderNum` | int | 정렬 기준(1-base) |
-| `reqPassId` | string | runtime 활성화 조건 pass ID (`InventoryStorage.Passes` key) |
-| `reqSeasonId` | string | runtime 활성화 조건 season ID (`SEASON.seasonId` FK, 시즌 기간 조건) |
-| `conditionMsgId` | string | 선택 조건 메시지 (`MESSAGE.messageId` FK), 비어있으면 즉시 claim 경로 |
-| `conditionValue` | `class:CBigInt` | 선택 목표값 (`conditionMsgId`가 있을 때 사용) |
-| `rewardGroupId` | string | claim 보상 키 |
+| `order_num` | int | 정렬 기준(1-base) |
+| `req_pass_id` | string | runtime 활성화 조건 pass ID (`InventoryStorage.Passes` key) |
+| `req_season_id` | string | runtime 활성화 조건 season ID (`SEASON.season_id` FK, 시즌 기간 조건) |
+| `condition_msg_id` | string | 선택 조건 메시지 (`MESSAGE.message_id` FK), 비어있으면 즉시 claim 경로 |
+| `condition_value` | `class:CBigInt` | 선택 목표값 (`condition_msg_id`가 있을 때 사용) |
+| `reward_group_id` | string | claim 보상 키 |
 
 ---
 
@@ -68,17 +68,17 @@ AppliesTo: v10
 - `runtimes: Dictionary<int, AchieveRuntimeBase>`
 
 `AchieveRuntimeBase` 저장 필드:
-- `achieveType`, `achieveId`, `achieveUid`, `level`, `index`, `progressValue`, `state`
+- `achieveType`, `achieve_id`, `achieveUid`, `level`, `index`, `progressValue`, `state`
 
 규칙:
 - period 개념 없음 (`periodKey` 없음)
-- group(`achieveId`)당 runtime 1개 유지
+- group(`achieve_id`)당 runtime 1개 유지
 - level-up 시 `achieveUid` 유지
-- 초기화 시 `achieveId` group 기준 runtime을 항상 생성한다.
+- 초기화 시 `achieve_id` group 기준 runtime을 항상 생성한다.
 - 타입별 req 규칙으로 `WAIT/ACTIVE` 시작 상태를 결정한다.
-  - `ACHIEVE_SOCIAL`: `reqMsgId/reqValue`
-  - `ACHIEVE_PASS`: `reqPassId` / `reqSeasonId`
-- `WAIT` 상태는 `conditionMsgId` 진행도 반영을 하지 않는다.
+  - `ACHIEVE_SOCIAL`: `req_msg_id/req_value`
+  - `ACHIEVE_PASS`: `req_pass_id` / `req_season_id`
+- `WAIT` 상태는 `condition_msg_id` 진행도 반영을 하지 않는다.
 - req 조건을 만족하면 `WAIT -> ACTIVE`로 전이한다.
   - req message 조건: `GameMessageManager` stat/trigger 기반
   - req pass 조건: `InventoryManager.Instance.Storage.Passes` 보유 체크

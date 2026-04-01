@@ -1,6 +1,6 @@
 ---
 name: 13-shop-catalog
-description: `SHOP_CATALOG` 테이블 기반 카탈로그 생성/초기화/잠금 해금(`unlockMsgId`) 정책을 정의할 때 사용한다.
+description: `SHOP_CATALOG` 테이블 기반 카탈로그 생성/초기화/잠금 해금(`unlock_msg_id`) 정책을 정의할 때 사용한다.
 ---
 
 # 13-shop-catalog
@@ -34,12 +34,12 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 - table file: `input/Domains/Game/ShopTable.xlsx`
 - 카탈로그 생성 소스: `SHOP_CATALOG`
 - `SHOP_CATALOG` 필드:
-- `catalogType` (`SHOP_CATALOG_TYPE`)
-- `nameId`
-- `autoRefreshDays`
-- `unlockMsgId`
-- `unlockOpType` (`GAME_MESSAGE_OP_TYPE`)
-- `unlockValue` (`CBigInt`)
+- `catalog_type` (`SHOP_CATALOG_TYPE`)
+- `name_id`
+- `auto_refresh_days`
+- `unlock_msg_id`
+- `unlock_op_type` (`GAME_MESSAGE_OP_TYPE`)
+- `unlock_value` (`CBigInt`)
 
 카탈로그 클래스 매핑:
 - `SHOP_CATALOG_TYPE.DAILY` -> `ShopCatalogDaily`
@@ -65,29 +65,29 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 - `ShopCatalogBase.onInitialize()`는 1회 setup hook이다. product 생성 책임을 가지지 않는다.
 - `ShopCatalogBase.onRefresh()` 기본 구현은 `CHEST/PURCHASE/GOLD`의 테이블 전체 row를 상품으로 생성하고, 해당 catalog bucket의 remain state를 즉시 적용한다.
 - `ShopCatalogDaily.onRefresh()`는 5개 선택 생성/저장 상태 복원을 처리한다.
-- `ShopCatalogEvent.onRefresh()`는 `SHOP_EVENT.startTime/endTime` 서버 UTC 구간 안에 있는 row만 상품으로 생성한다.
+- `ShopCatalogEvent.onRefresh()`는 `SHOP_EVENT.start_time/end_time` 서버 UTC 구간 안에 있는 row만 상품으로 생성한다.
 - 각 catalog 생성자는 자기 전용 `ShopCatalog*StorageData`를 받는다.
 - 카탈로그 인스턴스 생성은 `ShopCatalogFactory`(14)에서, row -> `ShopProductBase` 변환은 `ShopProductFactory`(15)에서 처리한다.
 - `CHEST/PURCHASE/GOLD`는 테이블의 모든 row를 상품으로 생성한다.
-- `ShopCatalogBase`는 `Storage`, `StorageData`, `virtual int autoRefreshDays`, `RemainAutoRefreshTimeMs`, `IsLocked`를 가진다.
+- `ShopCatalogBase`는 `Storage`, `StorageData`, `virtual int auto_refresh_days`, `RemainAutoRefreshTimeMs`, `IsLocked`를 가진다.
 - `ShopCatalogDaily`만 `RemainAdsRefreshTimeMs`, `ManualRefreshRemainTimeMs`, `ManualRefreshRemainCount`를 가진다.
-- `ShopCatalogChest`는 `Level`, `CurrentExp`, `MaxExp` runtime 프로퍼티와 `LevelUp()`을 가진다.
+- `ShopCatalogChest`는 `Level`, `CurrentExp`, `Max_exp` runtime 프로퍼티와 `LevelUp()`을 가진다.
 - catalog-specific public operation은 catalog instance method로 둔다.
 - `ShopCatalogBase.ResetAds()`가 공통 강제 refresh 진입점이다.
 - `ShopCatalogDaily.RefreshByAdsAsync()`가 DAILY 수동 refresh 진입점이다.
-- `autoRefreshDays`는 `SHOP_CATALOG.autoRefreshDays` 값을 사용한다.
-- `unlockMsgId`가 비어있지 않으면 초기 `IsLocked=true`다.
+- `auto_refresh_days`는 `SHOP_CATALOG.auto_refresh_days` 값을 사용한다.
+- `unlock_msg_id`가 비어있지 않으면 초기 `IsLocked=true`다.
 
 ---
 
 ## 3. Refresh Rule
 
-- 일반 카탈로그의 구매 제한 자동 refresh는 각 카탈로그의 `autoRefreshUtcMs`(다음 refresh 시각) + `autoRefreshDays` 기준으로 처리한다.
-- 일반 카탈로그는 `autoRefreshDays <= 0`이면 자동 refresh를 사용하지 않는다.
-- 일반 카탈로그 refresh 완료 시 다음 refresh 시각은 `serverNow + autoRefreshDays`로 갱신한다.
-- `EVENT`는 `autoRefreshDays`를 사용하지 않고, 가장 가까운 미래 `startTime/endTime` 경계 시각을 다음 refresh 시각으로 사용한다.
+- 일반 카탈로그의 구매 제한 자동 refresh는 각 카탈로그의 `autoRefreshUtcMs`(다음 refresh 시각) + `auto_refresh_days` 기준으로 처리한다.
+- 일반 카탈로그는 `auto_refresh_days <= 0`이면 자동 refresh를 사용하지 않는다.
+- 일반 카탈로그 refresh 완료 시 다음 refresh 시각은 `serverNow + auto_refresh_days`로 갱신한다.
+- `EVENT`는 `auto_refresh_days`를 사용하지 않고, 가장 가까운 미래 `start_time/end_time` 경계 시각을 다음 refresh 시각으로 사용한다.
 - ADS/FREE 상품 리필은 catalog 저장 버킷의 `adsRefreshUtcMs`(다음 ADS/FREE refill 시각) 기준으로 별도 처리한다.
-- 카탈로그 초기화/refresh 시 `adsRefreshUtcMs`가 없거나 만료면 ADS/FREE 제한 상품을 `remainCount=maxCount`로 리필한다.
+- 카탈로그 초기화/refresh 시 `adsRefreshUtcMs`가 없거나 만료면 ADS/FREE 제한 상품을 `remainCount=max_count`로 리필한다.
 - ADS/FREE 구매 성공 시 `adsRefreshUtcMs = serverNow + 1day`를 기록한다.
 - `SHOP_DAILY` 카탈로그 refresh 시에는 저장된 daily 동적 상태를 비우고 5개 선택 생성을 다시 수행한다.
 - refresh 조건 탐색은 `ShopManager.evaluateCatalogRefreshState(...)` 한 곳에서 처리한다.
@@ -95,26 +95,26 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 
 ## 4. Unlock Rule
 
-- `SHOP_CATALOG.unlockMsgId`가 비어있으면 잠금 없이 사용한다.
-- `SHOP_CATALOG.unlockMsgId`가 `IsNullOrWhiteSpace`면 unlock 조건 없음으로 간주하며 `IsLocked=false`다.
-- `unlockMsgId`가 있으면 `IsLocked=true`로 시작한다.
-- `ShopManager`는 `GameMessageManager`를 구독하고 `unlockOpType/unlockValue` 조건을 평가해 해금한다.
-- 해금 조건 평가는 누적 stat(`GameMessageManager.GetStat(unlockMsgId)`)으로 수행한다.
+- `SHOP_CATALOG.unlock_msg_id`가 비어있으면 잠금 없이 사용한다.
+- `SHOP_CATALOG.unlock_msg_id`가 `IsNullOrWhiteSpace`면 unlock 조건 없음으로 간주하며 `IsLocked=false`다.
+- `unlock_msg_id`가 있으면 `IsLocked=true`로 시작한다.
+- `ShopManager`는 `GameMessageManager`를 구독하고 `unlock_op_type/unlock_value` 조건을 평가해 해금한다.
+- 해금 조건 평가는 누적 stat(`GameMessageManager.GetStat(unlock_msg_id)`)으로 수행한다.
 - 조건 만족 시 `IsLocked=false`로 전환된다.
 - 잠긴 카탈로그의 상품은 `CanBuy/BuyAsync`에서 차단된다.
 
 ## 5. SHOP_DAILY 선택 생성 규칙
 
 - `SHOP_DAILY`는 초기화/refresh 시 전체 row를 그대로 쓰지 않고 ADS/FREE 제외 대상에서 `5개`를 선택 생성한다. (`const int`)
-- 이 규칙은 `autoRefreshDays` 값과 무관하며, `DAILY`의 고유 생성 규칙이다.
-- `selectRate < 0` row는 무조건 포함한다.
-- `selectRate > 0` row만 합산해 가중치 선택한다.
-- `selectRate == 0` row는 선택 후보에서 제외한다.
-- 동일 `shopId`(pk)는 중복 선택하지 않는다.
+- 이 규칙은 `auto_refresh_days` 값과 무관하며, `DAILY`의 고유 생성 규칙이다.
+- `select_rate < 0` row는 무조건 포함한다.
+- `select_rate > 0` row만 합산해 가중치 선택한다.
+- `select_rate == 0` row는 선택 후보에서 제외한다.
+- 동일 `shop_id`(pk)는 중복 선택하지 않는다.
 - 선택된 5개 중 무작위 3개를 할인 상품으로 선정한다. (중복 선정 금지)
-- 할인 선정된 row는 `discountRate10Per/20Per/30Per/50Per` 합산 가중치로 `SHOP_DISCOUNT_TYPE(PER10/PER20/PER30/PER50)`를 결정한다.
+- 할인 선정된 row는 `discount_rate10_per/20Per/30Per/50Per` 합산 가중치로 `SHOP_DISCOUNT_TYPE(PER10/PER20/PER30/PER50)`를 결정한다.
 - 할인 가중치 합이 0 이하면 `SHOP_DISCOUNT_TYPE.NONE`을 사용한다.
-- 생성 결과는 storage에 `dailyCatalogProducts(shopId, discountType, remainCount)`로 저장한다. 저장 대상은 ADS/FREE 제외 5개 상품만이다.
+- 생성 결과는 storage에 `dailyCatalogProducts(shop_id, discountType, remainCount)`로 저장한다. 저장 대상은 ADS/FREE 제외 5개 상품만이다.
 - `SHOP_DAILY`의 ADS/FREE row는 고정 상품으로 카탈로그에 항상 포함하고, `dailyCatalogProducts`에는 저장하지 않는다.
 - 저장된 daily 상태가 있으면 ADS/FREE 제외 5개를 저장 상태로 복원하고, ADS/FREE 고정 상품은 테이블에서 다시 합쳐 카탈로그를 구성한다.
 - 저장된 daily 상태의 만료 여부는 `ShopManager`의 시간 기반 refresh 판정에서 결정한다.
@@ -127,21 +127,21 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 ## 6. Event Catalog Rule
 
 - `catalog=EVENT` 상품 소스는 `SHOP_EVENT`다.
-- `ShopCatalogEvent.onRefresh()`는 서버 UTC 현재 시각이 `startTime <= now < endTime`인 row만 생성한다.
-- 다음 refresh 시각은 가장 가까운 미래 `startTime/endTime` 경계 시각이다.
+- `ShopCatalogEvent.onRefresh()`는 서버 UTC 현재 시각이 `start_time <= now < end_time`인 row만 생성한다.
+- 다음 refresh 시각은 가장 가까운 미래 `start_time/end_time` 경계 시각이다.
 - `EVENT`는 DAILY처럼 별도 동적 상품 payload를 저장하지 않는다.
 
 ## 7. Purchase Catalog Rule
 
-- `catalog=PURCHASE` 상품은 `internalProductId`를 통해 `PurchaseManager`로 구매한다.
-- 시즌 종료 임박 차단(`seasonId`) 검사는 ShopManager에서 수행한다.
+- `catalog=PURCHASE` 상품은 `internal_product_id`를 통해 `PurchaseManager`로 구매한다.
+- 시즌 종료 임박 차단(`season_id`) 검사는 ShopManager에서 수행한다.
 
 ## 7.1 Chest Catalog Rule
 
 - `catalog=CHEST` 상품 소스는 `SHOP_CHEST`다.
 - chest progression source는 `SHOP_CATALOG_CHEST`다.
-- chest 구매 reward는 `SHOP_CHEST.rewardGroupId`가 아니라 현재 chest level row의 `rewardAds/rewardPaid01/rewardPaid10`에서 결정한다.
-- chest exp는 현재 chest level row의 `adsExp/gainExp01/gainExp10`을 사용한다.
+- chest 구매 reward는 `SHOP_CHEST.reward_group_id`가 아니라 현재 chest level row의 `reward_ads/reward_paid01/reward_paid10`에서 결정한다.
+- chest exp는 현재 chest level row의 `ads_exp/gain_exp01/gain_exp10`을 사용한다.
 - 최대 레벨은 `SHOP_CATALOG_CHEST`의 최대 `Level` 값이며, 최대 레벨에서는 `CurrentExp=0`이고 추가 exp를 획득하지 않는다.
 
 ## 8. Related

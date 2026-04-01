@@ -23,7 +23,7 @@ AppliesTo: v10
 
 ### Unlock
 
-- 내부 `achievementId`를 SSOT 매핑으로 `googleAchievementId`로 변환
+- 내부 `achievementId`를 SSOT 매핑으로 `google_achievement_id`로 변환
 - `ReportProgress(..., 100%)` 완료 보고
 
 ### Sync

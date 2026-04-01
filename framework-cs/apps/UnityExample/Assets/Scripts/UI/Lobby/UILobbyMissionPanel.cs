@@ -22,7 +22,7 @@ public class UILobbyMissionPanel : UIBasePanel<UILobbyCanvas>
             (args) =>
             {
                 AchieveRuntimeBase achieve = args[0] as AchieveRuntimeBase;
-                Debug.Log($"Init: achieveId={achieve.achieveId}, progressValue={achieve.progressValue}");
+                Debug.Log($"Init: achieve_id={achieve.achieveId}, progressValue={achieve.progressValue}");
                 return false;
             });
 
@@ -31,7 +31,7 @@ public class UILobbyMissionPanel : UIBasePanel<UILobbyCanvas>
             (args) =>
             {
                 AchieveRuntimeBase achieve = args[0] as AchieveRuntimeBase;
-                Debug.Log($"Progress: achieveId={achieve.achieveId}, progressValue={achieve.progressValue}");
+                Debug.Log($"Progress: achieve_id={achieve.achieveId}, progressValue={achieve.progressValue}");
                 return false;
             });
 
@@ -53,7 +53,7 @@ public class UILobbyMissionPanel : UIBasePanel<UILobbyCanvas>
             (args) =>
             {
                 MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
-                Debug.Log($"Init: missionId={mission.missionId}, progressValue={mission.progressValue}");
+                Debug.Log($"Init: mission_id={mission.missionId}, progressValue={mission.progressValue}");
                 return false;
             });
 
@@ -62,7 +62,7 @@ public class UILobbyMissionPanel : UIBasePanel<UILobbyCanvas>
             (args) =>
             {
                 MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
-                Debug.Log($"Progress: missionId={mission.missionId}, progressValue={mission.progressValue}");
+                Debug.Log($"Progress: mission_id={mission.missionId}, progressValue={mission.progressValue}");
                 return false;
             });
 
@@ -71,7 +71,7 @@ public class UILobbyMissionPanel : UIBasePanel<UILobbyCanvas>
             (args) =>
             {
                 MissionRuntimeBase mission = args[0] as MissionRuntimeBase;
-                Debug.Log($"missionId={mission.missionId}, RUNTIME_CLAIMABLE");
+                Debug.Log($"mission_id={mission.missionId}, RUNTIME_CLAIMABLE");
                 return false;
             });
 

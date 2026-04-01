@@ -23,10 +23,10 @@ AppliesTo: v10
 
 | 필드 | 타입 | 옵션 | 설명 |
 |---|---|---|---|
-| `attendId` | string | pk | 출석 항목 ID |
-| `isActive` | bool | | 운영 활성 토글 |
+| `attend_id` | string | pk | 출석 항목 ID |
+| `is_active` | bool | | 운영 활성 토글 |
 | `day` | int | | UI/운영 day (1부터 시작) |
-| `rewardGroupId` | string | | 지급할 보상 그룹 ID (`TB_REWARD` group key) |
+| `reward_group_id` | string | | 지급할 보상 그룹 ID (`TB_REWARD` group key) |
 
 런타임에서는 `Devian.Domain.Game.ATTEND` row와 `TB_ATTEND` container를 사용한다.
 
@@ -36,10 +36,10 @@ AppliesTo: v10
 
 `activeRows` 계산:
 1. `TB_ATTEND.GetAll()` 조회
-2. `IsActive == true`만 포함
+2. `Is_active == true`만 포함
 3. `day >= 1 && day <= 7`만 포함
-4. `rewardGroupId`가 null/empty/whitespace가 아닌 row만 포함
-5. `day ASC`, tie-break `attendId ASC`로 정렬
+4. `reward_group_id`가 null/empty/whitespace가 아닌 row만 포함
+5. `day ASC`, tie-break `attend_id ASC`로 정렬
 
 `day -> row` 매핑:
 - 같은 day가 여러 개인 경우 정렬 후 첫 row를 운영 row로 사용한다.
@@ -88,7 +88,7 @@ reset 동작:
 ## D) Claim Rules (정본)
 
 입력:
-- `attendId` (string)
+- `attend_id` (string)
 
 출력:
 - `CommonResult<RewardData[]>`
@@ -99,12 +99,12 @@ claim 가능 조건:
 2. row가 운영 대상(activeRows + `day 1..7`)에 포함
 3. `row.day == nextAttendDay`
 4. 같은 UTC day에 이미 claim하지 않았음 (`toUtcDayStart(lastClaimUtcMs) != toUtcDayStart(serverNowUtcMs)`)
-5. `claimedAttendUtcMs`에 해당 `attendId`가 없음
+5. `claimedAttendUtcMs`에 해당 `attend_id`가 없음
 
 claim 처리:
-1. `RewardManager.ApplyRewardGroup(row.rewardGroupId)` 호출
+1. `RewardManager.ApplyRewardGroup(row.reward_group_id)` 호출
 2. 실패면 storage mutation 없음
-3. 성공이면 `AttendStorage.SetClaimed(row.attendId, serverNowUtcMs)` 반영
+3. 성공이면 `AttendStorage.SetClaimed(row.attend_id, serverNowUtcMs)` 반영
 4. day 진행:
    - `row.day < 7`이면 `nextAttendDay = row.day + 1`
    - `row.day == 7`이면 `nextAttendDay = 8` (완료 상태)
@@ -135,7 +135,7 @@ public sealed class AttendStorage
 ```
 
 규칙:
-- key: `attendId`
+- key: `attend_id`
 - value: 해당 attendId를 claim한 서버 UTC ms
 - `nextAttendDay` 범위는 `1..8`
 - `8`은 "7일차까지 완료, reset 대기" 상태다.
@@ -195,8 +195,8 @@ public enum AttendRuntimeState
 public sealed class AttendRuntime
 {
     public int Day { get; }
-    public string AttendId { get; }
-    public string RewardGroupId { get; }
+    public string Attend_id { get; }
+    public string Reward_group_id { get; }
     public bool IsConfigured { get; }
     public AttendRuntimeState State { get; }
     public long ClaimedAtUtcMs { get; }
@@ -204,7 +204,7 @@ public sealed class AttendRuntime
 ```
 
 상태 규칙:
-- `CLAIMED`: 해당 `attendId`가 `claimedAttendUtcMs`에 존재
+- `CLAIMED`: 해당 `attend_id`가 `claimedAttendUtcMs`에 존재
 - `CLAIMABLE`: `day == nextAttendDay`이고, today 중복 claim이 아니며, row가 존재
 - `WAIT`: 그 외 대기 상태(미래 day, 오늘 이미 claim, row 누락 포함)
 - `NONE`: 런타임 미초기화/무효 입력 조회 등 예외적 조회 결과

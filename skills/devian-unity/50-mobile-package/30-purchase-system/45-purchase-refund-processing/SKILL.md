@@ -88,7 +88,7 @@ AppliesTo: v10
 7. **Firestore 트랜잭션**:
    - purchase 문서: `verifyStatus → REFUNDED/REVOKED`, `updatedAt`, `refundedAt`, `refundSource: "RTDN"`
    - entitlements 정리:
-     - Rental: `rentals` 맵에서 `rentalId` (fallback: `internalProductId`) 키 삭제
+     - Rental: `rentals` 맵에서 `rentalId` (fallback: `internal_product_id`) 키 삭제
      - SeasonPass: `ownedSeasonPasses[]` 에서 `seasonPassId` 제거
      - Consumable: entitlements 변경 없음
 
@@ -130,7 +130,7 @@ AppliesTo: v10
 - 호출 시점: `initPurchase()` — IAP 초기화 후 앱 시작 시
 - 흐름:
   1. `getPurchaseAdjustments` 호출 → 환불 항목 조회
-  2. 각 항목의 `internalProductId` → `ResolveRewardGroupId` → `ResolveRewardDatas`
+  2. 각 항목의 `internal_product_id` → `ResolveRewardGroupId` → `ResolveRewardDatas`
   3. `RewardManager.RevokeRewardDatasPartial` 로컬 인벤토리 회수
   4. `ackRefundApplied` 호출 → 처리 완료 마킹
 - 소스: `PurchaseManager.cs` (`RefundAsync` 메서드)

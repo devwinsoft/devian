@@ -6,7 +6,7 @@
  *   - reward payload 해석은 클라이언트(PurchaseManager)가 internalProductId로 수행
  *
  * 응답 키:
- *   - items[]: { purchaseId, internalProductId, kind, resultStatus, updatedAtUtcMs, reason? }
+ *   - items[]: { purchaseId, internal_product_id, kind, resultStatus, updatedAtUtcMs, reason? }
  *   - nextCursor: "updatedAtMs|docId" | null
  *   - hasMore: boolean
  *

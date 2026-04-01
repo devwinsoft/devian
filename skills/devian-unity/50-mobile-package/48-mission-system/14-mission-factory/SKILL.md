@@ -14,7 +14,7 @@ Type: Design / Factory SSOT
 `MissionRuntimeFactory`는 runtime create/restore 경로를 표준화한다.
 
 - `missionUid` 발급/저장소 조회는 담당하지 않는다.
-- `conditionMsgId + GAME_MESSAGE(messageType/saveType/conditionOp)` 바인딩을 생성한다.
+- `condition_msg_id + GAME_MESSAGE(messageType/saveType/condition_op)` 바인딩을 생성한다.
 
 ---
 
@@ -44,8 +44,8 @@ public static class MissionRuntimeFactory
 
 `DailyMissionRuntimeCreateArgs`
 
-- `MissionId`, `PeriodKey`, `MissionUid`, `Index`
-- `StatType`, `OpType`, `ConditionOpType`, `ConditionValue`
+- `Mission_id`, `PeriodKey`, `MissionUid`, `Index`
+- `StatType`, `OpType`, `ConditionOpType`, `Condition_value`
 - `SubscribeTrigger`, `UnsubscribeTrigger`, `ReadExternalProgress`, callbacks
 
 `WeeklyMissionRuntimeCreateArgs`
@@ -57,7 +57,7 @@ public static class MissionRuntimeFactory
 - `MissionType` + create args + `ProgressValue`, `State`
 
 참고:
-- `ConditionMsgId`/`MessageId`는 Args에 포함하지 않는다. scheduler가 테이블에서 조회하여 `Bind()` 파라미터(`StatType`, `OpType` 등)로 전달한다.
+- `Condition_msg_id`/`Message_id`는 Args에 포함하지 않는다. scheduler가 테이블에서 조회하여 `Bind()` 파라미터(`StatType`, `OpType` 등)로 전달한다.
 - RestoreArgs의 `State`는 `MissionRuntimeState` enum이다(WAIT/ACTIVE/COMPLETED).
 
 ---

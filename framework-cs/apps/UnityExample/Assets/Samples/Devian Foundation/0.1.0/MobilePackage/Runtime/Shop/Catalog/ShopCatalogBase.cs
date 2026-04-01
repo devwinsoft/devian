@@ -39,13 +39,13 @@ namespace Devian
         }
 
         public SHOP_CATALOG_TYPE CatalogType { get; }
-        public string NameId => _catalogConfig.NameId ?? string.Empty;
-        public virtual int autoRefreshDays => _catalogConfig.AutoRefreshDays;
-        public string UnlockMsgId => normalizeUnlockMsgId(_catalogConfig.UnlockMsgId);
-        public GAME_MESSAGE_OP_TYPE UnlockOpType => normalizeUnlockOpType(_catalogConfig.UnlockOpType);
-        public CBigInt UnlockValue => normalizeUnlockValue(_catalogConfig.UnlockValue);
+        public string name_id => _catalogConfig.name_id ?? string.Empty;
+        public virtual int autoRefreshDays => _catalogConfig.auto_refresh_days;
+        public string unlock_msg_id => normalizeUnlockMsgId(_catalogConfig.unlock_msg_id);
+        public GAME_MESSAGE_OP_TYPE unlock_op_type => normalizeUnlockOpType(_catalogConfig.unlock_op_type);
+        public CBigInt unlock_value => normalizeUnlockValue(_catalogConfig.unlock_value);
         public bool IsLocked => _isLocked;
-        public bool HasUnlockCondition => !string.IsNullOrWhiteSpace(UnlockMsgId);
+        public bool HasUnlockCondition => !string.IsNullOrWhiteSpace(unlock_msg_id);
         public long RemainAutoRefreshTimeMs => remainAutoRefreshTimeMs > 0L ? remainAutoRefreshTimeMs : 0L;
         internal SHOP_CATALOG CatalogConfig => _catalogConfig;
         protected IReadOnlyList<ShopProductBase> PrebuiltProducts => _prebuiltProducts;
@@ -86,7 +86,7 @@ namespace Devian
             return Task.FromResult(
                 CommonResult.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    $"RefreshByAdsAsync is not supported: catalogType={CatalogType}"));
+                    $"RefreshByAdsAsync is not supported: catalog_type={CatalogType}"));
         }
 
         protected virtual void onInitialize()
@@ -161,7 +161,7 @@ namespace Devian
                     if (!clearAdsFreeRemainState && IsLimitedAdsOrFreeProduct(product))
                         continue;
 
-                    var normalizedShopId = NormalizeShopId(product.ShopId);
+                    var normalizedShopId = NormalizeShopId(product.shop_id);
                     if (string.IsNullOrEmpty(normalizedShopId))
                         continue;
 
@@ -265,7 +265,7 @@ namespace Devian
             if (Storage == null || product == null)
                 return;
 
-            var normalizedShopId = NormalizeShopId(product.ShopId);
+            var normalizedShopId = NormalizeShopId(product.shop_id);
             if (string.IsNullOrEmpty(normalizedShopId))
                 return;
 
@@ -282,7 +282,7 @@ namespace Devian
             }
             else if (Storage.TryTakeLegacyPurchaseCount(normalizedShopId, out var legacyPurchaseCount))
             {
-                product.SetRemainCount(product.MaxCount - legacyPurchaseCount);
+                product.SetRemainCount(product.max_count - legacyPurchaseCount);
             }
             else
             {
@@ -303,14 +303,14 @@ namespace Devian
                 if (product == null)
                     continue;
 
-                var normalizedShopId = NormalizeShopId(product.ShopId);
+                var normalizedShopId = NormalizeShopId(product.shop_id);
                 if (string.IsNullOrEmpty(normalizedShopId))
                     continue;
 
                 if (_productsByShopId.ContainsKey(normalizedShopId))
                 {
                     Debug.LogWarning(
-                        $"[ShopCatalogBase] Duplicate shopId in catalog. Keeping first row: catalog={CatalogType}, shopId={normalizedShopId}");
+                        $"[ShopCatalogBase] Duplicate shop_id in catalog. Keeping first row: catalog={CatalogType}, shop_id={normalizedShopId}");
                     continue;
                 }
 
@@ -349,7 +349,7 @@ namespace Devian
             if (catalogConfig == null)
                 return false;
 
-            return !string.IsNullOrWhiteSpace(normalizeUnlockMsgId(catalogConfig.UnlockMsgId));
+            return !string.IsNullOrWhiteSpace(normalizeUnlockMsgId(catalogConfig.unlock_msg_id));
         }
 
         static SHOP_CATALOG normalizeCatalogConfig(SHOP_CATALOG_TYPE catalogType, SHOP_CATALOG catalogConfig)
@@ -357,16 +357,16 @@ namespace Devian
             var sourceConfig = catalogConfig ?? TB_SHOP_CATALOG.Get(catalogType);
             var normalizedCatalogType = catalogType != SHOP_CATALOG_TYPE.NONE
                 ? catalogType
-                : sourceConfig != null ? sourceConfig.CatalogType : SHOP_CATALOG_TYPE.NONE;
+                : sourceConfig != null ? sourceConfig.catalog_type : SHOP_CATALOG_TYPE.NONE;
 
             return new SHOP_CATALOG
             {
-                CatalogType = normalizedCatalogType,
-                NameId = sourceConfig != null ? sourceConfig.NameId ?? string.Empty : string.Empty,
-                AutoRefreshDays = normalizeAutoRefreshDays(sourceConfig != null ? sourceConfig.AutoRefreshDays : 0),
-                UnlockMsgId = normalizeUnlockMsgId(sourceConfig != null ? sourceConfig.UnlockMsgId : string.Empty),
-                UnlockOpType = normalizeUnlockOpType(sourceConfig != null ? sourceConfig.UnlockOpType : GAME_MESSAGE_OP_TYPE.GTE),
-                UnlockValue = normalizeUnlockValue(sourceConfig != null ? sourceConfig.UnlockValue : CBigInt.Zero),
+                catalog_type = normalizedCatalogType,
+                name_id = sourceConfig != null ? sourceConfig.name_id ?? string.Empty : string.Empty,
+                auto_refresh_days = normalizeAutoRefreshDays(sourceConfig != null ? sourceConfig.auto_refresh_days : 0),
+                unlock_msg_id = normalizeUnlockMsgId(sourceConfig != null ? sourceConfig.unlock_msg_id : string.Empty),
+                unlock_op_type = normalizeUnlockOpType(sourceConfig != null ? sourceConfig.unlock_op_type : GAME_MESSAGE_OP_TYPE.GTE),
+                unlock_value = normalizeUnlockValue(sourceConfig != null ? sourceConfig.unlock_value : CBigInt.Zero),
             };
         }
 

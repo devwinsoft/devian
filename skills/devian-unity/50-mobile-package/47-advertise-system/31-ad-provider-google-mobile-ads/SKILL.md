@@ -39,9 +39,9 @@
 ## Provider Interface (개념)
 
 - `InitializeAsync(ct)`
-- `LoadAsync(advertiseId, format, adUnitId, ct)`
-- `ShowAsync(advertiseId, format, ct)`
-- `Hide(advertiseId, format)` — 동기. Banner hide는 즉시 완료되므로 비동기 불필요.
+- `LoadAsync(advertise_id, format, adUnitId, ct)`
+- `ShowAsync(advertise_id, format, ct)`
+- `Hide(advertise_id, format)` — 동기. Banner hide는 즉시 완료되므로 비동기 불필요.
 - callbacks:
   - `OnLoaded`
   - `OnFailedToLoad`

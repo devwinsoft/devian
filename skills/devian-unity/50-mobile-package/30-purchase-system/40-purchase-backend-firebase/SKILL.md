@@ -66,7 +66,7 @@ NEEDS CHECK: Firebase CLI 사용 여부/버전이 레포에서 고정돼 있어�
 필드 (최소):
 - `purchaseId: string` (doc id와 동일)
 - `storeKey: string` (`"apple" | "google"`)
-- `internalProductId: string`
+- `internal_product_id: string`
 - `kind: string` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`) (=`PurchaseKind` string)
 - `verifyStatus: string` (SSOT의 resultStatus에 대응하는 대문자 저장: `"GRANTED" | "REJECTED" | "PENDING" | "REVOKED" | "REFUNDED"`)
 - `clientGrantStatus: string` (`"PENDING" | "APPLIED_ACKED" | "FAILED_REPORTED"`) — 클라이언트 로컬 지급 결과 보고 상태
@@ -134,7 +134,7 @@ NEEDS CHECK:
 - `verifyPurchase`의 신규 `GRANTED` 처리 트랜잭션에서 서버 UTC 기준으로 계산한다.
 - 정책: 연장 방식
   - `newExpiry = max(existingExpiry, serverNow) + 30일`
-- 저장 위치(정본): `/users/{uid}/entitlements/current.rentals[internalProductId] = expiresAtServerUtcMs`
+- 저장 위치(정본): `/users/{uid}/entitlements/current.rentals[internal_product_id] = expiresAtServerUtcMs`
 
 
 ---

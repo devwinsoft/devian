@@ -9,7 +9,7 @@ const AUDIT_HEADER = [
   "loggedAtUtcIso",
   "purchaseId",
   "storeKey",
-  "internalProductId",
+  "internal_product_id",
   "kind",
   "storeProductId",
   "storePurchaseId",
@@ -24,7 +24,7 @@ const AUDIT_APPEND_RANGE = "A:K";
 export interface PurchaseAuditAppendInput {
   purchaseId: string;
   storeKey?: string;
-  internalProductId?: string;
+  internal_product_id?: string;
   kind?: string;
   storeProductId?: string;
   storePurchaseId?: string;
@@ -191,7 +191,7 @@ export async function appendPurchaseAuditRow(input: PurchaseAuditAppendInput): P
     loggedAtUtcIso,
     input.purchaseId,
     normalizeCell(input.storeKey),
-    normalizeCell(input.internalProductId),
+    normalizeCell(input.internal_product_id),
     normalizeCell(input.kind),
     normalizeCell(input.storeProductId),
     normalizeCell(input.storePurchaseId),

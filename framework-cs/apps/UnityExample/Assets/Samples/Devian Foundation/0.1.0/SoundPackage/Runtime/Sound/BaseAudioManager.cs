@@ -32,23 +32,23 @@ namespace Devian
             out float finalPitch,
             out bool effective3d)
         {
-            // 볼륨: externalVolume * row.volume_scale
-            finalVolume = externalVolume * row.volume_scale;
+            // 볼륨: externalVolume * row.volumeScale
+            finalVolume = externalVolume * row.volumeScale;
 
             // 피치: pitchOverride가 0이 아니면 사용, 아니면 row 기반
             if (pitchOverride != 0f)
             {
                 finalPitch = pitchOverride;
             }
-            else if (row.pitch_min > 0f && row.pitch_max > 0f && row.pitch_min < row.pitch_max)
+            else if (row.pitchMin > 0f && row.pitchMax > 0f && row.pitchMin < row.pitchMax)
             {
                 // 랜덤 피치
-                finalPitch = Random.Range(row.pitch_min, row.pitch_max);
+                finalPitch = Random.Range(row.pitchMin, row.pitchMax);
             }
-            else if (row.pitch_min > 0f)
+            else if (row.pitchMin > 0f)
             {
                 // min == max 또는 max가 0인 경우 고정
-                finalPitch = row.pitch_min;
+                finalPitch = row.pitchMin;
             }
             else
             {
@@ -63,9 +63,9 @@ namespace Devian
         /// SoundChannel에 재생 요청을 위임한다.
         /// </summary>
         /// <param name="channel">재생할 채널</param>
-        /// <param name="runtimeId">runtime_id</param>
+        /// <param name="runtimeId">runtimeId</param>
         /// <param name="logicalId">논리 ID (Sound: soundId, Voice: voiceId)</param>
-        /// <param name="rowId">row_id (Voice는 0 또는 voice_id 해시)</param>
+        /// <param name="rowId">rowId (Voice는 0 또는 voiceId 해시)</param>
         /// <param name="row">IAudioRowBase</param>
         /// <param name="clip">AudioClip</param>
         /// <param name="externalVolume">외부 볼륨</param>
@@ -102,8 +102,8 @@ namespace Devian
                 finalPitch,
                 effective3d,
                 position,
-                row.distance_near,
-                row.distance_far
+                row.distanceNear,
+                row.distanceFar
             );
         }
     }

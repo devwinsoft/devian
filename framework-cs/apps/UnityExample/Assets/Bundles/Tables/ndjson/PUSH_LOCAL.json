@@ -1,2 +1,2 @@
-{"PushId":"push_local_refilled","TitleTextId":"welcome","BodyTextId":"greeting","IsTest":false}
-{"PushId":"push_local_test","TitleTextId":"welcome","BodyTextId":"greeting","IsTest":true}
+{"push_id":"push_local_refilled","title_text_id":"welcome","body_text_id":"greeting","is_test":false}
+{"push_id":"push_local_test","title_text_id":"welcome","body_text_id":"greeting","is_test":true}

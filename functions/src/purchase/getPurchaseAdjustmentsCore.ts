@@ -16,7 +16,7 @@ const MAX_FILL_ROUNDS = 5;
 
 export interface PurchaseAdjustmentItem {
   purchaseId: string;
-  internalProductId: string;
+  internal_product_id: string;
   kind: string;
   resultStatus: string;
   updatedAtUtcMs: number;
@@ -58,7 +58,7 @@ function docToItem(doc: FirebaseFirestore.QueryDocumentSnapshot): PurchaseAdjust
 
   return {
     purchaseId: String(d.purchaseId ?? doc.id),
-    internalProductId: String(d.internalProductId ?? ""),
+    internal_product_id: String(d.internal_product_id ?? ""),
     kind: String(d.kind ?? ""),
     resultStatus: verifyStatus,
     updatedAtUtcMs: updatedAtMs,

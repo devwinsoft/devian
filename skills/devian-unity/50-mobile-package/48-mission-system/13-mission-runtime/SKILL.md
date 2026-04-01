@@ -20,12 +20,12 @@ MissionRuntimeBase
 
 공통 필드:
 
-- `missionId`, `missionUid`
+- `mission_id`, `missionUid`
 - `periodKey`, `index`
 - `progressValue`
 - `state` (`MissionRuntimeState`: WAIT / ACTIVE / COMPLETED)
 
-참고: `conditionMsgId`는 runtime 필드가 아니다. `Bind()` 시 테이블에서 조회하여 바인딩한다.
+참고: `condition_msg_id`는 runtime 필드가 아니다. `Bind()` 시 테이블에서 조회하여 바인딩한다.
 
 ---
 

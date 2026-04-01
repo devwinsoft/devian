@@ -84,8 +84,8 @@ AdMob Rewarded SSV 콜백을 수신하여 **서명 검증 + 감사 로그 기록
 - `rewardAmount: number` (AdMob `reward_amount` 파라미터)
 - `rewardItem: string` (AdMob `reward_item` 파라미터)
 - `customData: string` (AdMob `custom_data` 파라미터, 원본 보존)
-- `advertiseId: string` (custom_data에서 파싱)
-- `rewardGroupId: string` (custom_data에서 파싱)
+- `advertise_id: string` (custom_data에서 파싱)
+- `reward_group_id: string` (custom_data에서 파싱)
 - `verified: boolean` (서명 검증 성공 여부)
 - `timestamp: number` (AdMob `timestamp` 파라미터, epoch ms)
 - `verifiedAt: Timestamp` (Firestore serverTimestamp, 기록 시각)
@@ -98,13 +98,13 @@ AdMob Rewarded SSV 콜백을 수신하여 **서명 검증 + 감사 로그 기록
 
 클라이언트가 `ServerSideVerificationOptions`에 설정하는 `customData` 문자열:
 
-- 포맷: `{uid}:{advertiseId}:{rewardGroupId}`
+- 포맷: `{uid}:{advertise_id}:{reward_group_id}`
 - 구분자: `:` (콜론)
 - 예시: `abc123:ad_rewarded_001:reward_chest_001`
 
 서버는 이 문자열을 파싱하여:
 - `uid`로 Firestore 문서 경로의 `{uid}` 결정
-- `advertiseId` / `rewardGroupId`로 감사 로그 필드 기록
+- `advertise_id` / `reward_group_id`로 감사 로그 필드 기록
 
 파싱 실패 시: 에러 로깅 + HTTP 200 응답 (재시도 방지)
 
@@ -146,7 +146,7 @@ AdMob은 HTTP 200이 아닌 응답을 받으면 최대 5회 1초 간격으로 �
 ```
 var options = new ServerSideVerificationOptions.Builder()
     .SetUserId(uid)
-    .SetCustomData($"{uid}:{advertiseId}:{rewardGroupId}")
+    .SetCustomData($"{uid}:{advertise_id}:{reward_group_id}")
     .Build();
 rewardedAd.SetServerSideVerificationOptions(options);
 ```

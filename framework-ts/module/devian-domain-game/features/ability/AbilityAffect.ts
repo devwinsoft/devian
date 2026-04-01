@@ -4,8 +4,8 @@ import { AbilityBase } from './AbilityBase';
 export class AbilityAffect extends AbilityBase {
     private mTable: AFFECT | null = null;
 
-    get affectId(): string { return this.mTable?.AffectId ?? ''; }
-    get nameId(): string { return this.mTable?.NameId ?? ''; }
+    get affectId(): string { return this.mTable?.affect_id ?? ''; }
+    get nameId(): string { return this.mTable?.name_id ?? ''; }
 
     init(table: AFFECT): void {
         this.mTable = table;

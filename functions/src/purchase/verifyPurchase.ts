@@ -3,7 +3,7 @@
  *
  * 46 스킬 결정사항 전수 준수:
  *   B. Callable 이름 = "verifyPurchase", context.auth.uid 필수
- *   B. 요청 키: storeKey, internalProductId, kind, payload (+ optional storeProductId)
+ *   B. 요청 키: storeKey, internal_product_id, kind, payload (+ optional storeProductId)
  *   B. 응답 키: resultStatus, grants, entitlementsSnapshot (+ purchaseId, verifyStatus, clientGrantStatus, storeConfirmStatus)
  *   C. 멱등키: purchaseId = "{storeKey}_{storePurchaseId}"
  *   F. grants 빈 배열 허용, GRANTED/ALREADY_GRANTED 시 entitlementsSnapshot 반환
@@ -35,8 +35,8 @@ type StoreConfirmStatus = "PENDING" | "CONFIRMED";
 const RENTAL_DURATION_MS = 30 * 24 * 60 * 60 * 1000;
 
 // Restore projection policy (implemented in verifyPurchase transaction for new GRANTED purchases):
-// - SeasonPass: keep simple list [seasonPassId || internalProductId] on server.
-// - Rental: keep simple map { [rentalId || internalProductId]: expiresAtServerUtcMs } on server.
+// - SeasonPass: keep simple list [seasonPassId || internal_product_id] on server.
+// - Rental: keep simple map { [rentalId || internal_product_id]: expiresAtServerUtcMs } on server.
 // - Rental expiry policy on new GRANTED purchase:
 //     newExpiry = max(existingExpiry, serverNowUtcMs) + 30 days
 // - DO NOT extend rental expiry on ALREADY_GRANTED (idempotent retry).
@@ -92,23 +92,23 @@ type Kind = "Consumable" | "Rental" | "Subscription" | "SeasonPass";
 
 interface VerifyRequest {
   storeKey: StoreKey;
-  internalProductId: string;
+  internal_product_id: string;
   storeProductId?: string;
   packageName?: string;
   kind: Kind;
   payload: string;
-  rentalId?: string; // Rental: REWARD table Id (entitlements key). Falls back to internalProductId.
-  seasonPassId?: string; // SeasonPass: REWARD table Id (entitlements key). Falls back to internalProductId.
+  rentalId?: string; // Rental: REWARD table Id (entitlements key). Falls back to internal_product_id.
+  seasonPassId?: string; // SeasonPass: REWARD table Id (entitlements key). Falls back to internal_product_id.
 }
 
 function validateRequest(data: any): VerifyRequest {
-  const {storeKey, internalProductId, storeProductId, packageName, kind, payload, rentalId, seasonPassId} = data;
+  const {storeKey, internal_product_id, storeProductId, packageName, kind, payload, rentalId, seasonPassId} = data;
 
   if (!storeKey || !["apple", "google"].includes(storeKey)) {
     throw new HttpsError("invalid-argument", "storeKey must be 'apple' or 'google'");
   }
-  if (!internalProductId || typeof internalProductId !== "string") {
-    throw new HttpsError("invalid-argument", "internalProductId is required");
+  if (!internal_product_id || typeof internal_product_id !== "string") {
+    throw new HttpsError("invalid-argument", "internal_product_id is required");
   }
   if (storeProductId !== undefined && typeof storeProductId !== "string") {
     throw new HttpsError("invalid-argument", "storeProductId must be string when provided");
@@ -129,7 +129,7 @@ function validateRequest(data: any): VerifyRequest {
     throw new HttpsError("invalid-argument", "seasonPassId must be string when provided");
   }
 
-  return {storeKey, internalProductId, storeProductId, packageName, kind, payload, rentalId, seasonPassId};
+  return {storeKey, internal_product_id, storeProductId, packageName, kind, payload, rentalId, seasonPassId};
 }
 
 interface GoogleReceiptInfo {
@@ -255,7 +255,7 @@ export const verifyPurchase = onCall(
     // 입력 검증 (46 스킬 B: 요청 스키마 고정 키)
     const req = validateRequest(request.data);
 
-    logger.info(`[verifyPurchase] uid=${uid} store=${req.storeKey} product=${req.internalProductId} kind=${req.kind}`);
+    logger.info(`[verifyPurchase] uid=${uid} store=${req.storeKey} product=${req.internal_product_id} kind=${req.kind}`);
 
     // ── 1) 스토어 서버 검증 ──
     let storeResult;
@@ -265,7 +265,7 @@ export const verifyPurchase = onCall(
         try {
           googleReceipt = parseGoogleReceipt(
             req.payload,
-            req.storeProductId ?? req.internalProductId,
+            req.storeProductId ?? req.internal_product_id,
             req.packageName ?? "",
           );
         } catch (err: any) {
@@ -281,7 +281,7 @@ export const verifyPurchase = onCall(
         const googleVerifyProductId = req.storeProductId ?? googleReceipt.productId;
         if (googleReceipt.productId && req.storeProductId && googleReceipt.productId !== req.storeProductId) {
           logger.warn(
-            `[verifyPurchase] Google receipt productId mismatch. uid=${uid} internal=${req.internalProductId} ` +
+            `[verifyPurchase] Google receipt productId mismatch. uid=${uid} internal=${req.internal_product_id} ` +
             `receiptProductId=${googleReceipt.productId} requestStoreProductId=${req.storeProductId} (using requestStoreProductId)`,
           );
         }
@@ -311,7 +311,7 @@ export const verifyPurchase = onCall(
       // purchaseState를 rejectReason에 포함: 클라이언트가 취소된 구매(state=1)를 ConfirmPurchase로 제거 가능
       const purchaseState = storeResult.rawResponse?.purchaseState;
       const rejectDetail = purchaseState !== undefined ? `STORE_VERIFY_INVALID:purchaseState=${purchaseState}` : "STORE_VERIFY_INVALID";
-      logger.warn(`[verifyPurchase] Store verification failed for uid=${uid} product=${req.internalProductId} store=${req.storeKey} kind=${req.kind} ${rejectDetail}`);
+      logger.warn(`[verifyPurchase] Store verification failed for uid=${uid} product=${req.internal_product_id} store=${req.storeKey} kind=${req.kind} ${rejectDetail}`);
       return {
         resultStatus: "REJECTED",
         verifyStatus: "REJECTED",
@@ -324,7 +324,7 @@ export const verifyPurchase = onCall(
     // 영수증 시각을 확보하지 못하면 요구사항(영수증 날짜 기준)을 만족할 수 없으므로 REJECTED 처리한다.
     if (!storeResult.purchasedAtMs || storeResult.purchasedAtMs <= 0) {
       logger.error(
-        `[verifyPurchase] Missing purchasedAtMs (receipt timestamp). uid=${uid} store=${req.storeKey} product=${req.internalProductId} kind=${req.kind}`,
+        `[verifyPurchase] Missing purchasedAtMs (receipt timestamp). uid=${uid} store=${req.storeKey} product=${req.internal_product_id} kind=${req.kind}`,
       );
       return {
         resultStatus: "REJECTED",
@@ -341,7 +341,7 @@ export const verifyPurchase = onCall(
       const existingSnap = await admin.firestore()
         .collection("users").doc(uid)
         .collection("purchases")
-        .where("internalProductId", "==", req.internalProductId)
+        .where("internal_product_id", "==", req.internal_product_id)
         .where("kind", "==", "SeasonPass")
         .where("verifyStatus", "==", "GRANTED")
         .limit(1)
@@ -351,7 +351,7 @@ export const verifyPurchase = onCall(
         ? await admin.firestore()
           .collection("users").doc(uid)
           .collection("purchases")
-          .where("internalProductId", "==", req.internalProductId)
+          .where("internal_product_id", "==", req.internal_product_id)
           .where("kind", "==", "SeasonPass")
           .where("status", "==", "GRANTED")
           .limit(1)
@@ -359,7 +359,7 @@ export const verifyPurchase = onCall(
         : existingSnap;
 
       if (!existingLegacySnap.empty) {
-        logger.warn(`[verifyPurchase] SeasonPass purchase blocked: uid=${uid} product=${req.internalProductId} (already purchased)`);
+        logger.warn(`[verifyPurchase] SeasonPass purchase blocked: uid=${uid} product=${req.internal_product_id} (already purchased)`);
         return {
           resultStatus: "REJECTED",
           verifyStatus: "REJECTED",
@@ -419,7 +419,7 @@ export const verifyPurchase = onCall(
         uid,
         storeKey: req.storeKey,
         storeProductId: req.storeProductId, // Google Play SKU (RTDN 재검증용)
-        internalProductId: req.internalProductId,
+        internal_product_id: req.internal_product_id,
         kind: req.kind,
         storePurchaseId: storeResult.storePurchaseId,
         storePurchasedAt,
@@ -430,9 +430,9 @@ export const verifyPurchase = onCall(
         grantedAt: admin.firestore.FieldValue.serverTimestamp(),
         storeResponse: JSON.stringify(storeResult.rawResponse),
         // Rental: rentalId 저장 (RTDN 환불 시 entitlements 정리용)
-        ...(req.kind === "Rental" ? {rentalId: req.rentalId || req.internalProductId} : {}),
+        ...(req.kind === "Rental" ? {rentalId: req.rentalId || req.internal_product_id} : {}),
         // SeasonPass: seasonPassId 저장 (entitlements 복원/RTDN 환불 정리용)
-        ...(req.kind === "SeasonPass" ? {seasonPassId: req.seasonPassId || req.internalProductId} : {}),
+        ...(req.kind === "SeasonPass" ? {seasonPassId: req.seasonPassId || req.internal_product_id} : {}),
       });
 
       // entitlements projection 갱신 (SeasonPass ownership / Rental expiry)
@@ -445,7 +445,7 @@ export const verifyPurchase = onCall(
         const ownedSeasonPasses = Array.isArray(entitlementData.ownedSeasonPasses)
           ? [...entitlementData.ownedSeasonPasses]
           : [];
-        const seasonPassKey = req.seasonPassId || req.internalProductId;
+        const seasonPassKey = req.seasonPassId || req.internal_product_id;
         if (!ownedSeasonPasses.includes(seasonPassKey)) {
           ownedSeasonPasses.push(seasonPassKey);
         }
@@ -454,8 +454,8 @@ export const verifyPurchase = onCall(
         const serverNowUtcMs = Date.now();
         const rentalsRaw = (entitlementData.rentals && typeof entitlementData.rentals === "object") ? entitlementData.rentals : {};
         const rentals: Record<string, number> = {...rentalsRaw as Record<string, number>};
-        // rentalId: REWARD table Id (canonical key). Falls back to internalProductId for backward compatibility.
-        const rentalKey = req.rentalId || req.internalProductId;
+        // rentalId: REWARD table Id (canonical key). Falls back to internal_product_id for backward compatibility.
+        const rentalKey = req.rentalId || req.internal_product_id;
         const existingExpiryRaw = rentals[rentalKey];
         const existingExpiry = Number.isFinite(existingExpiryRaw) ? Number(existingExpiryRaw) : 0;
         rentals[rentalKey] = Math.max(existingExpiry, serverNowUtcMs) + RENTAL_DURATION_MS;
@@ -482,7 +482,7 @@ export const verifyPurchase = onCall(
         await appendPurchaseAuditRow({
           purchaseId,
           storeKey: req.storeKey,
-          internalProductId: req.internalProductId,
+          internal_product_id: req.internal_product_id,
           kind: req.kind,
           storeProductId: req.storeProductId ?? "",
           storePurchaseId: storeResult.storePurchaseId,

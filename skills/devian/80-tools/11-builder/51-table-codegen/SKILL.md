@@ -78,6 +78,25 @@ Sheet 이름이 `{TableName}@{Description}` 형식일 때:
 
 ---
 
+## Column Naming Convention (Hard Rule)
+
+**XLSX 컬럼명을 모든 곳에서 그대로 사용한다. 변환하지 않는다.**
+
+| 위치 | 이름 | 예시 |
+|------|------|------|
+| XLSX 컬럼명 | 그대로 | `item_id` |
+| C# 프로퍼티 | 그대로 | `item_id` |
+| TS 프로퍼티 | 그대로 | `item_id` |
+| JSON 키 (NDJSON/pb64) | 그대로 | `"item_id"` |
+
+```
+XLSX column: item_id      → C#: item_id,      TS: item_id,      JSON: "item_id"
+XLSX column: stat_type00  → C#: stat_type00,   TS: stat_type00,  JSON: "stat_type00"
+XLSX column: name_id      → C#: name_id,       TS: name_id,      JSON: "name_id"
+```
+
+---
+
 ## IEntity Interface (정책)
 
 ### 인터페이스 정의
@@ -104,45 +123,47 @@ export interface IEntityKey<T> extends IEntity { getKey(): T; }
 
 ### 생성 예시
 
+> **주의:** 프로퍼티 이름은 § Column Naming Convention 에 따라 XLSX 컬럼명 / Contract JSON field name을 **그대로** 사용한다. 변환 없음.
+
 **C#:**
 ```csharp
-// Contract - IEntity만 상속
+// Contract - IEntity만 상속 (contract JSON field name 그대로)
 public sealed class UserProfile : IEntity
 {
-    public int Id { get; set; }
+    public int id { get; set; }
     // GetKey 없음
 }
 
-// Table with Key - IEntityKey<T> 상속
+// Table with Key - IEntityKey<T> 상속 (XLSX 컬럼명 그대로)
 public sealed class TestSheet : IEntityKey<int>
 {
-    public int Number { get; set; }
-    public int GetKey() => Number;
+    public int number { get; set; }
+    public int GetKey() => number;
 }
 
-// Table without Key - IEntity만 상속
+// Table without Key - IEntity만 상속 (XLSX 컬럼명 그대로)
 public sealed class VECTOR3 : IEntity
 {
-    public float X { get; set; }
+    public float x { get; set; }
     // GetKey 없음
 }
 ```
 
 **TypeScript:**
 ```typescript
-// Contract - IEntity만 extends
+// Contract - IEntity만 extends (contract JSON field name 그대로)
 export interface UserProfile extends IEntity {
     id: number;
     // getKey 없음
 }
 
-// Table with Key - IEntityKey<T> extends
+// Table with Key - IEntityKey<T> extends (XLSX 컬럼명 그대로)
 export interface TestSheet extends IEntityKey<number> {
     number: number;
     getKey(): number;
 }
 
-// Table without Key - IEntity만 extends
+// Table without Key - IEntity만 extends (XLSX 컬럼명 그대로)
 export interface VECTOR3 extends IEntity {
     x: number;
     // getKey 없음

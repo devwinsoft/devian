@@ -54,8 +54,8 @@ namespace Devian
                 var all = TB_ADVERTISE.GetAll();
                 for (int i = 0; i < all.Count; i++)
                 {
-                    if (all[i].IsActive)
-                        providerTypes.Add(all[i].Provider);
+                    if (all[i].is_active)
+                        providerTypes.Add(all[i].provider);
                 }
 
                 foreach (var pt in providerTypes)
@@ -72,10 +72,10 @@ namespace Devian
                 for (int i = 0; i < all.Count; i++)
                 {
                     var row = all[i];
-                    if (row.IsActive && row.AutoLoad)
+                    if (row.is_active && row.auto_load)
                     {
                         // fire-and-forget preload — 실패해도 non-fatal
-                        _ = PreloadAsync(row.AdvertiseId, ct);
+                        _ = PreloadAsync(row.advertise_id, ct);
                     }
                 }
             }
@@ -93,7 +93,7 @@ namespace Devian
         public async Task<CommonResult> PreloadAsync(string advertiseId, CancellationToken ct = default)
         {
             var row = TB_ADVERTISE.Get(advertiseId);
-            if (row == null || !row.IsActive)
+            if (row == null || !row.is_active)
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
@@ -102,9 +102,9 @@ namespace Devian
 
             try
             {
-                var provider = GetOrCreateProvider(row.Provider);
+                var provider = GetOrCreateProvider(row.provider);
                 var adUnitId = ResolveAdUnitId(row);
-                var ok = await provider.LoadAsync(advertiseId, row.Format, adUnitId, ct);
+                var ok = await provider.LoadAsync(advertiseId, row.format, adUnitId, ct);
                 if (!ok)
                 {
                     return CommonResult.Failure(
@@ -155,14 +155,14 @@ namespace Devian
         public bool CanShow(string advertiseId)
         {
             var row = TB_ADVERTISE.Get(advertiseId);
-            if (row == null || !row.IsActive)
+            if (row == null || !row.is_active)
                 return false;
 
             // NoAds 활성 → REWARDED 제외, 광고 없이 즉시 성공 (ShowAsync에서 Skipped 반환)
-            if (row.Format != ADVERTISE_FORMAT.REWARDED && IsNoAdsActive())
+            if (row.format != ADVERTISE_FORMAT.REWARDED && IsNoAdsActive())
                 return true;
 
-            if (IsCooldownActive(advertiseId, row.CooldownSec))
+            if (IsCooldownActive(advertiseId, row.cooldown_sec))
                 return false;
 
             return true;
@@ -176,7 +176,7 @@ namespace Devian
         {
             // ── row 조회 ──
             var row = TB_ADVERTISE.Get(advertiseId);
-            if (row == null || !row.IsActive)
+            if (row == null || !row.is_active)
             {
                 return CommonResult<AdShowResult>.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
@@ -184,27 +184,27 @@ namespace Devian
             }
 
             // ── NoAds 활성 → REWARDED 제외, 광고 없이 즉시 성공 ──
-            if (row.Format != ADVERTISE_FORMAT.REWARDED && IsNoAdsActive())
+            if (row.format != ADVERTISE_FORMAT.REWARDED && IsNoAdsActive())
             {
                 return CommonResult<AdShowResult>.Success(new AdShowResult(
                     advertiseId,
-                    row.Format,
+                    row.format,
                     AdProviderShowResult.Skipped));
             }
 
             // ── Cooldown ──
-            if (IsCooldownActive(advertiseId, row.CooldownSec))
+            if (IsCooldownActive(advertiseId, row.cooldown_sec))
             {
                 return CommonResult<AdShowResult>.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
                     $"Cooldown active: {advertiseId}");
             }
 
-            var provider = GetOrCreateProvider(row.Provider);
+            var provider = GetOrCreateProvider(row.provider);
 
             try
             {
-                if (row.Format == ADVERTISE_FORMAT.BANNER)
+                if (row.format == ADVERTISE_FORMAT.BANNER)
                 {
                     return await ShowBannerFlow(advertiseId, row, provider, ct);
                 }
@@ -227,10 +227,10 @@ namespace Devian
         public void HideBanner(string advertiseId)
         {
             var row = TB_ADVERTISE.Get(advertiseId);
-            if (row == null || row.Format != ADVERTISE_FORMAT.BANNER)
+            if (row == null || row.format != ADVERTISE_FORMAT.BANNER)
                 return;
 
-            if (_providers.TryGetValue(row.Provider, out var provider))
+            if (_providers.TryGetValue(row.provider, out var provider))
             {
                 provider.Hide(advertiseId, ADVERTISE_FORMAT.BANNER);
             }
@@ -246,7 +246,7 @@ namespace Devian
             IAdProvider provider,
             CancellationToken ct)
         {
-            var showResult = await provider.ShowAsync(advertiseId, row.Format, ct);
+            var showResult = await provider.ShowAsync(advertiseId, row.format, ct);
             if (showResult != AdProviderShowResult.Shown)
             {
                 return CommonResult<AdShowResult>.Failure(
@@ -258,7 +258,7 @@ namespace Devian
 
             return CommonResult<AdShowResult>.Success(new AdShowResult(
                 advertiseId,
-                row.Format,
+                row.format,
                 showResult));
         }
 
@@ -283,13 +283,13 @@ namespace Devian
             try
             {
                 // SSV 설정 (REWARDED only)
-                if (row.Format == ADVERTISE_FORMAT.REWARDED && !string.IsNullOrEmpty(UserId))
+                if (row.format == ADVERTISE_FORMAT.REWARDED && !string.IsNullOrEmpty(UserId))
                 {
                     var customData = $"{UserId}:{advertiseId}";
                     provider.SetRewardedSsvData(advertiseId, UserId, customData);
                 }
 
-                var showResult = await provider.ShowAsync(advertiseId, row.Format, ct);
+                var showResult = await provider.ShowAsync(advertiseId, row.format, ct);
                 if (showResult != AdProviderShowResult.Shown)
                 {
                     return CommonResult<AdShowResult>.Failure(
@@ -307,7 +307,7 @@ namespace Devian
 
                 return CommonResult<AdShowResult>.Success(new AdShowResult(
                     advertiseId,
-                    row.Format,
+                    row.format,
                     AdProviderShowResult.Shown));
             }
             finally
@@ -340,11 +340,11 @@ namespace Devian
         static string ResolveAdUnitId(ADVERTISE row)
         {
 #if UNITY_IOS
-            return row.IosAdUnitId;
+            return row.ios_ad_unit_id;
 #elif UNITY_ANDROID
-            return row.AndroidAdUnitId;
+            return row.android_ad_unit_id;
 #else
-            return row.AndroidAdUnitId; // Editor fallback
+            return row.android_ad_unit_id; // Editor fallback
 #endif
         }
 

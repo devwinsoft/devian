@@ -11,7 +11,7 @@ namespace Devian
     /// <summary>
     /// 사운드 채널. 풀/재생 리스트/쿨타임/SEQ를 관리한다.
     /// SoundManager는 AudioSource를 직접 들지 않고 SoundChannel에 위임한다.
-    /// runtime_id 기반 제어를 지원한다.
+    /// runtimeId 기반 제어를 지원한다.
     /// </summary>
     public sealed class SoundChannel : MonoBehaviour
     {
@@ -20,10 +20,10 @@ namespace Devian
         private readonly List<SoundPlay> _activePlays = new();
         private readonly Dictionary<string, float> _cooldowns = new();
 
-        // runtime_id → (SoundPlay, generation) 매핑
+        // runtimeId → (SoundPlay, generation) 매핑
         private readonly Dictionary<int, (SoundPlay play, int generation)> _playingByRuntimeId = new();
 
-        // soundId → runtime_id 집합 (StopAllBySoundId용)
+        // soundId → runtimeId 집합 (StopAllBySoundId용)
         private readonly Dictionary<string, HashSet<int>> _runtimeIdsBySoundId = new();
 
         private float _volume = 1f;
@@ -81,9 +81,9 @@ namespace Devian
         /// <summary>
         /// 사운드를 재생하고 runtime_id를 등록한다.
         /// </summary>
-        /// <param name="runtimeId">SoundManager가 발급한 runtime_id</param>
+        /// <param name="runtimeId">SoundManager가 발급한 runtimeId</param>
         /// <param name="soundId">논리 사운드 ID</param>
-        /// <param name="rowId">TB_SOUND row_id</param>
+        /// <param name="rowId">TB_SOUND rowId</param>
         /// <param name="clip">재생할 AudioClip</param>
         /// <returns>재생 시작 성공 여부</returns>
         public bool PlayWithRuntimeId(
@@ -121,10 +121,10 @@ namespace Devian
 
             _activePlays.Add(play);
 
-            // runtime_id → (play, generation) 매핑
+            // runtimeId → (play, generation) 매핑
             _playingByRuntimeId[runtimeId.Value] = (play, play.Generation);
 
-            // soundId → runtime_id 집합
+            // soundId → runtimeId 집합
             if (!_runtimeIdsBySoundId.TryGetValue(soundId, out var idSet))
             {
                 idSet = new HashSet<int>();

@@ -21,8 +21,8 @@ MobilePackage 샘플의 `LeaderboardManager` 설계 문서다.
 ## Public API
 
 - `InitializeAsync(ct)` -> `Task<CommonResult>`
-- `ReportScoreAsync(leaderboardId, ct)` -> `Task<CommonResult>`
-- `GetPlayerSnapshotAsync(leaderboardId, ct)` -> `Task<CommonResult<LeaderboardPlayerSnapshot>>`
+- `ReportScoreAsync(leaderboard_id, ct)` -> `Task<CommonResult>`
+- `GetPlayerSnapshotAsync(leaderboard_id, ct)` -> `Task<CommonResult<LeaderboardPlayerSnapshot>>`
 - `SyncSeasonTransitionRewardsAsync(ct)` -> `Task<CommonResult>`
 - `ClearStorage()`
 
@@ -32,7 +32,7 @@ MobilePackage 샘플의 `LeaderboardManager` 설계 문서다.
 - 외부에서 `InitializeAsync`를 명시 호출해도 무방하지만 필수는 아니다.
 
 obsolete:
-- `ReportScoreAsync(leaderboardId, score, ct)` (deprecated shim)
+- `ReportScoreAsync(leaderboard_id, score, ct)` (deprecated shim)
 
 ---
 
@@ -49,9 +49,9 @@ Adapter 계약은 `internal/private` 범위로만 사용한다.
 ## Score Resolution Rules
 
 - 상위에서 점수를 직접 전달하지 않는다.
-- `LEADERBOARD.messageId`를 기준으로 score를 내부 계산한다.
+- `LEADERBOARD.message_id`를 기준으로 score를 내부 계산한다.
 - score 소스:
-  - `GameMessageManager.Storage.stats[messageId]`
+  - `GameMessageManager.Storage.stats[message_id]`
 - 허용 saveType:
   - `TB_GAME_MESSAGE.saveType == TOTAL_SUM || TOTAL_MAX`
 - 허용되지 않는 saveType이면:
@@ -62,10 +62,10 @@ Adapter 계약은 `internal/private` 범위로만 사용한다.
 ## Season Time Gate
 
 - `ReportScoreAsync`는 점수 제출 전 시즌 활성 기간을 확인한다.
-- 시즌 시간 조회: `LEADERBOARD.seasonId → TB_SEASON.Get(seasonId) → StartUtcTime/EndUtcTime`
-- 조건: `SEASON.StartUtcTime <= serverNowUtcMs < SEASON.EndUtcTime`
+- 시즌 시간 조회: `LEADERBOARD.season_id → TB_SEASON.Get(season_id) → Start_utc_time/End_utc_time`
+- 조건: `SEASON.Start_utc_time <= serverNowUtcMs < SEASON.End_utc_time`
 - 시즌 외 기간이면 `CommonResult.Failure` 반환.
-- `seasonId`가 비어 있으면 시간 제한을 적용하지 않는다.
+- `season_id`가 비어 있으면 시간 제한을 적용하지 않는다.
 
 ---
 
@@ -84,7 +84,7 @@ season reward 평가는 위 status를 그대로 사용한다.
 
 ## Hard Rules
 
-- 외부 API는 내부 `leaderboardId`만 사용
+- 외부 API는 내부 `leaderboard_id`만 사용
 - 업적 Unlock/Sync 로직 포함 금지 (`AchieveManager` 책임)
 - 시즌 보상 claim 상태 저장/관리 책임은 `LeaderboardManager.Storage(LeaderboardSeasonRewardStorage)`가 가진다.
 - 미지원 플랫폼 안전 실패

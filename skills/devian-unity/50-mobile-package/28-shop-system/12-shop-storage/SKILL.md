@@ -31,7 +31,7 @@ public sealed class ShopStorage
 [Serializable]
 public abstract class ShopCatalogStorageDataBase
 {
-    public abstract SHOP_CATALOG_TYPE CatalogType { get; }
+    public abstract SHOP_CATALOG_TYPE Catalog_type { get; }
 }
 ```
 
@@ -88,7 +88,7 @@ public sealed class ShopCatalogEventStorageData : ShopCatalogStorageDataBase
 
 보조 타입:
 
-- `ShopDailyProductState = { shopId, discountType, remainCount }`
+- `ShopDailyProductState = { shop_id, discountType, remainCount }`
 
 ---
 
@@ -118,7 +118,7 @@ public sealed class ShopCatalogEventStorageData : ShopCatalogStorageDataBase
 
 - `dailyCatalogProducts`는 `SHOP_DAILY`의 ADS/FREE 제외 동적 5개 상품만 저장한다.
 - `DAILY`의 ADS/FREE 상품은 `dailyCatalogProducts`에 저장하지 않는다. 해당 상품의 `remainCount`는 `daily.productRemainCounts`를 사용한다.
-- 무제한 상품(`maxCount=-1`)은 `productRemainCounts`에 저장하지 않는다.
+- 무제한 상품(`max_count=-1`)은 `productRemainCounts`에 저장하지 않는다.
 - `PURCHASE`와 `EVENT`에 필요 없는 상태를 미리 넣지 않는다.
 - 최고 레벨 상태는 `currentExp=0`으로 저장/복원한다.
 
@@ -132,7 +132,7 @@ public sealed class ShopCatalogEventStorageData : ShopCatalogStorageDataBase
 - non-daily catalog는 table product 생성 후 자기 storage data의 `productRemainCounts`를 직접 적용한다.
 - `DAILY`는 storage의 `dailyCatalogProducts`가 valid하면 그 상태로 동적 5개를 복원하고, invalid/empty면 table에서 새로 선택 생성한다.
 - `autoRefreshUtcMs`는 시작 시각이 아니라 다음 refresh 시각이다.
-- `EVENT.autoRefreshUtcMs`는 주기값이 아니라 다음 `startTime/endTime` 경계 시각이다.
+- `EVENT.autoRefreshUtcMs`는 주기값이 아니라 다음 `start_time/end_time` 경계 시각이다.
 - `adsRefreshUtcMs`는 ADS/FREE 구매 성공 시 `serverNow + 1day`로 기록한다.
 - `CHEST.level` 기본값은 `1`이다.
 - `CHEST.currentExp` 기본값은 `0`이다.

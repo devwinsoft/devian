@@ -1,5 +1,5 @@
-{"MissionId":"mission_day_001","IsActive":true,"Fixed":true,"OrderNum":1,"ConditionMsgId":"msg_mission_clear_sum","ConditionOp":"GTE","ConditionValue":10000003000001,"RewardGroupId":"reward_mission_day_001"}
-{"MissionId":"mission_day_002","IsActive":true,"Fixed":false,"OrderNum":2,"ConditionMsgId":"msg_mission_001_sum","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_day_002"}
-{"MissionId":"mission_day_003","IsActive":true,"Fixed":false,"OrderNum":3,"ConditionMsgId":"msg_mission_002_sum","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_day_003"}
-{"MissionId":"mission_day_004","IsActive":true,"Fixed":false,"OrderNum":4,"ConditionMsgId":"msg_mission_003_sum","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_day_004"}
-{"MissionId":"mission_day_005","IsActive":true,"Fixed":false,"OrderNum":5,"ConditionMsgId":"msg_mission_004_sum","ConditionOp":"GTE","ConditionValue":10000004000001,"RewardGroupId":"reward_mission_day_005"}
+{"mission_id":"mission_day_001","is_active":true,"is_fixed":true,"order_num":1,"condition_msg_id":"msg_mission_clear_sum","condition_op":"GTE","condition_value":10000003000001,"reward_group_id":"reward_mission_day_001"}
+{"mission_id":"mission_day_002","is_active":true,"is_fixed":false,"order_num":2,"condition_msg_id":"msg_mission_001_sum","condition_op":"GTE","condition_value":10000004000001,"reward_group_id":"reward_mission_day_002"}
+{"mission_id":"mission_day_003","is_active":true,"is_fixed":false,"order_num":3,"condition_msg_id":"msg_mission_002_sum","condition_op":"GTE","condition_value":10000004000001,"reward_group_id":"reward_mission_day_003"}
+{"mission_id":"mission_day_004","is_active":true,"is_fixed":false,"order_num":4,"condition_msg_id":"msg_mission_003_sum","condition_op":"GTE","condition_value":10000004000001,"reward_group_id":"reward_mission_day_004"}
+{"mission_id":"mission_day_005","is_active":true,"is_fixed":false,"order_num":5,"condition_msg_id":"msg_mission_004_sum","condition_op":"GTE","condition_value":10000004000001,"reward_group_id":"reward_mission_day_005"}

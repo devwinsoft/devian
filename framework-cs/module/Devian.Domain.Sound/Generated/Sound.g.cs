@@ -19,43 +19,43 @@ namespace Devian.Domain.Sound
     /// <summary>SOUND row</summary>
     public sealed class SOUND : IEntityKey<int>
     {
-        public int Row_id { get; set; }
-        public string Sound_id { get; set; } = string.Empty;
-        public bool IsBundle { get; set; }
-        public string Key_bundle { get; set; } = string.Empty;
-        public string Path { get; set; } = string.Empty;
-        public string Channel { get; set; } = string.Empty;
-        public float Volume_scale { get; set; }
-        public bool Loop { get; set; }
-        public float Cooltime { get; set; }
-        public bool Is3d { get; set; }
-        public float Distance_near { get; set; }
-        public float Distance_far { get; set; }
-        public int Weight { get; set; }
-        public float Pitch_min { get; set; }
-        public float Pitch_max { get; set; }
+        public int row_id { get; set; }
+        public string sound_id { get; set; } = string.Empty;
+        public bool is_bundle { get; set; }
+        public string key_bundle { get; set; } = string.Empty;
+        public string path { get; set; } = string.Empty;
+        public string channel { get; set; } = string.Empty;
+        public float volume_scale { get; set; }
+        public bool loop { get; set; }
+        public float cooltime { get; set; }
+        public bool is3d { get; set; }
+        public float distance_near { get; set; }
+        public float distance_far { get; set; }
+        public int weight { get; set; }
+        public float pitch_min { get; set; }
+        public float pitch_max { get; set; }
 
-        public int GetKey() => Row_id;
+        public int GetKey() => row_id;
     }
 
     /// <summary>VOICE row</summary>
     public sealed class VOICE : IEntityKey<string>
     {
-        public string Voice_id { get; set; } = string.Empty;
-        public string Key_bundle { get; set; } = string.Empty;
-        public float Volume_scale { get; set; }
-        public float Cooltime { get; set; }
-        public bool Is3d { get; set; }
-        public float Distance_near { get; set; }
-        public float Distance_far { get; set; }
-        public float Pitch_min { get; set; }
-        public float Pitch_max { get; set; }
-        public string Clip_Korean { get; set; } = string.Empty;
-        public string Clip_English { get; set; } = string.Empty;
-        public string Clip_Japanese { get; set; } = string.Empty;
-        public string Clip_Chinese { get; set; } = string.Empty;
+        public string voice_id { get; set; } = string.Empty;
+        public string key_bundle { get; set; } = string.Empty;
+        public float volume_scale { get; set; }
+        public float cooltime { get; set; }
+        public bool is3d { get; set; }
+        public float distance_near { get; set; }
+        public float distance_far { get; set; }
+        public float pitch_min { get; set; }
+        public float pitch_max { get; set; }
+        public string clip_korean { get; set; } = string.Empty;
+        public string clip_english { get; set; } = string.Empty;
+        public string clip_japanese { get; set; } = string.Empty;
+        public string clip_chinese { get; set; } = string.Empty;
 
-        public string GetKey() => Voice_id;
+        public string GetKey() => voice_id;
     }
 
     // ================================================================
@@ -117,9 +117,9 @@ namespace Devian.Domain.Sound
         private static void AddRow(SOUND row)
         {
             _list.Add(row);
-            _dict[row.Row_id] = row;
-            var groupKey = row.Sound_id;
-            _keyToGroup[row.Row_id] = groupKey;
+            _dict[row.row_id] = row;
+            var groupKey = row.sound_id;
+            _keyToGroup[row.row_id] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
                 groupList = new List<SOUND>();
@@ -129,12 +129,12 @@ namespace Devian.Domain.Sound
             groupList.Add(row);
             if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
             {
-                if (Comparer<int>.Default.Compare(row.Row_id, existing) < 0)
-                    _groupPrimaryKey[groupKey] = row.Row_id;
+                if (Comparer<int>.Default.Compare(row.row_id, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.row_id;
             }
             else
             {
-                _groupPrimaryKey[groupKey] = row.Row_id;
+                _groupPrimaryKey[groupKey] = row.row_id;
             }
         }
 
@@ -218,7 +218,7 @@ namespace Devian.Domain.Sound
         private static void AddRow(VOICE row)
         {
             _list.Add(row);
-            _dict[row.Voice_id] = row;
+            _dict[row.voice_id] = row;
         }
 
         public static void LoadFromJson(string json)

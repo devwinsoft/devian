@@ -54,8 +54,8 @@ namespace Devian
                     return 0;
 
                 var row = GetCurrentLevelRow();
-                return row != null && row.MaxExp > 0
-                    ? row.MaxExp
+                return row != null && row.max_exp > 0
+                    ? row.max_exp
                     : 0;
             }
         }
@@ -74,7 +74,7 @@ namespace Devian
         public void LevelUp()
         {
             if (tryGetNextRow(_level, out var nextRow) && nextRow != null)
-                _level = nextRow.Level;
+                _level = nextRow.level;
 
             normalizeProgressionState(persistState: Storage != null);
         }
@@ -116,35 +116,35 @@ namespace Devian
 
             string rewardGroupId;
             int gainExp;
-            switch (product.ChestType)
+            switch (product.chest_type)
             {
                 case SHOP_PRODUCT_CHEST_TYPE.ADS:
-                    rewardGroupId = row.RewardAds;
-                    gainExp = IsMaxLevel ? 0 : row.AdsExp;
+                    rewardGroupId = row.reward_ads;
+                    gainExp = IsMaxLevel ? 0 : row.ads_exp;
                     break;
                 case SHOP_PRODUCT_CHEST_TYPE.ONE:
-                    rewardGroupId = row.RewardPaid01;
-                    gainExp = IsMaxLevel ? 0 : row.GainExp01;
+                    rewardGroupId = row.reward_paid01;
+                    gainExp = IsMaxLevel ? 0 : row.gain_exp01;
                     break;
                 case SHOP_PRODUCT_CHEST_TYPE.TEN:
-                    rewardGroupId = row.RewardPaid10;
-                    gainExp = IsMaxLevel ? 0 : row.GainExp10;
+                    rewardGroupId = row.reward_paid10;
+                    gainExp = IsMaxLevel ? 0 : row.gain_exp10;
                     break;
                 default:
                     return CommonResult<ChestPurchaseRuntime>.Failure(
                         COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                        $"Unsupported chest type: shopId={product.ShopId}, chestType={product.ChestType}");
+                        $"Unsupported chest type: shop_id={product.shop_id}, chest_type={product.chest_type}");
             }
 
             if (string.IsNullOrWhiteSpace(rewardGroupId))
             {
                 return CommonResult<ChestPurchaseRuntime>.Failure(
                     COMMON_ERROR_TYPE.SHOP_REWARD_GROUP_EMPTY,
-                    $"Chest reward group is empty: shopId={product.ShopId}, level={row.Level}, chestType={product.ChestType}");
+                    $"Chest reward group is empty: shop_id={product.shop_id}, level={row.level}, chest_type={product.chest_type}");
             }
 
             return CommonResult<ChestPurchaseRuntime>.Success(
-                new ChestPurchaseRuntime(rewardGroupId.Trim(), product.Amount, gainExp));
+                new ChestPurchaseRuntime(rewardGroupId.Trim(), product.amount, gainExp));
         }
 
         internal bool AddExp(int exp)
@@ -181,7 +181,7 @@ namespace Devian
                 }
                 else
                 {
-                    normalizedLevel = currentRow.Level;
+                    normalizedLevel = currentRow.level;
                     if (normalizedLevel < 1)
                         normalizedLevel = 1;
                     if (normalizedLevel < minLevel)
@@ -222,7 +222,7 @@ namespace Devian
                                 break;
                             }
 
-                            var requiredExp = currentRow.MaxExp;
+                            var requiredExp = currentRow.max_exp;
                             if (requiredExp <= 0)
                             {
                                 normalizedCurrentExp = 0;
@@ -240,7 +240,7 @@ namespace Devian
                                 break;
                             }
 
-                            normalizedLevel = nextRow.Level;
+                            normalizedLevel = nextRow.level;
                             if (normalizedLevel >= maxLevel)
                             {
                                 normalizedLevel = maxLevel;
@@ -291,17 +291,17 @@ namespace Devian
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
-                if (row == null || row.Level < 1)
+                if (row == null || row.level < 1)
                     continue;
 
-                if (row.Level >= level)
+                if (row.level >= level)
                 {
-                    if (closestHigher == null || row.Level < closestHigher.Level)
+                    if (closestHigher == null || row.level < closestHigher.level)
                         closestHigher = row;
                     continue;
                 }
 
-                if (closestLower == null || row.Level > closestLower.Level)
+                if (closestLower == null || row.level > closestLower.level)
                     closestLower = row;
             }
 
@@ -316,10 +316,10 @@ namespace Devian
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
-                if (row == null || row.Level < 1 || row.Level <= currentLevel)
+                if (row == null || row.level < 1 || row.level <= currentLevel)
                     continue;
 
-                if (nextRow == null || row.Level < nextRow.Level)
+                if (nextRow == null || row.level < nextRow.level)
                     nextRow = row;
             }
 
@@ -339,21 +339,21 @@ namespace Devian
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
-                if (row == null || row.Level < 1)
+                if (row == null || row.level < 1)
                     continue;
 
                 if (!hasAny)
                 {
-                    minLevel = row.Level > 0 ? row.Level : 1;
-                    maxLevel = row.Level;
+                    minLevel = row.level > 0 ? row.level : 1;
+                    maxLevel = row.level;
                     hasAny = true;
                     continue;
                 }
 
-                if (row.Level < minLevel)
-                    minLevel = row.Level;
-                if (row.Level > maxLevel)
-                    maxLevel = row.Level;
+                if (row.level < minLevel)
+                    minLevel = row.level;
+                if (row.level > maxLevel)
+                    maxLevel = row.level;
             }
 
             return hasAny;

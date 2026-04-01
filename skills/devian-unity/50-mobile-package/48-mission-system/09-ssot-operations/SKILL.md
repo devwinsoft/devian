@@ -23,7 +23,7 @@ AppliesTo: v10
 
 - 이벤트 발행: `GameMessageManager.Notify(messageType, delta)`
 - 처리 순서:
-  1. `message.stats[messageId]` 갱신
+  1. `message.stats[message_id]` 갱신
   2. `GameMessageTrigger` publish
   3. runtime 반영 (`DAILY`/`WEEKLY`)
 - WAIT runtime은 progress 이벤트를 소비하지 않는다.
@@ -55,7 +55,7 @@ AppliesTo: v10
 ## DoD
 
 Hard:
-- `conditionMsgId` 미해결 row에서 runtime 생성 0건
+- `condition_msg_id` 미해결 row에서 runtime 생성 0건
 - level-up 후 구독 누락/중복 0건
 - WAIT runtime에서 progress 콜백 전송 0건
 - weekly cycle reset 후 stale runtime 잔존 0건

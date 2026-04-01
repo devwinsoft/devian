@@ -15,7 +15,7 @@ Mission(`DAILY`/`WEEKLY`) 시스템의 모듈 경계와 하드룰을 정의한�
 ### 1) 미션 테이블 분리는 고정이다
 
 - `MISSION_DAILY`는 `missionType`을 가지지 않는다.
-- `MISSION_WEEKLY`는 `missionType/fixed/orderNum`을 가지지 않는다.
+- `MISSION_WEEKLY`는 `missionType/fixed/order_num`을 가지지 않는다.
 - `MISSION_WEEKLY.day`는 `1~7` 정수 범위를 사용한다.
 - `MISSION_WEEKLY.day`는 weekly runtime activation group key다(동일 day 동시 활성화).
 - 조건 타입/저장 연산/비교 연산 정본은 `GAME_MESSAGE`다.
@@ -29,7 +29,7 @@ Mission(`DAILY`/`WEEKLY`) 시스템의 모듈 경계와 하드룰을 정의한�
 ### 3) trigger 처리 순서는 `stats 갱신 -> game trigger publish -> achieve notify`다
 
 - MissionManager.Notify는 `GameMessageManager.Notify`로 위임한다.
-- `GameMessageManager`가 같은 `messageType`을 참조하는 `TB_GAME_MESSAGE` row를 순회하며 `message.stats[messageId]`를 먼저 갱신한다.
+- `GameMessageManager`가 같은 `messageType`을 참조하는 `TB_GAME_MESSAGE` row를 순회하며 `message.stats[message_id]`를 먼저 갱신한다.
   - `SUM`: `current + delta`
   - `MAX`: `max(current, delta)`
   - `MIN`: `min(current, delta)` (음수 입력 무시)

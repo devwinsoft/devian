@@ -17,9 +17,9 @@ AppliesTo: v10
 ### 2) 점수 갱신 시점
 
 - 상위 로직은 점수를 직접 넘기지 않는다.
-- `LeaderboardManager.ReportScoreAsync(leaderboardId, ct)` 호출
-- score는 `LEADERBOARD.messageId` 기준으로 내부 조회한다.
-- 시즌 활성 기간 외에는 점수 기록 실패 반환 (`LEADERBOARD.seasonId → TB_SEASON` 시간 확인)
+- `LeaderboardManager.ReportScoreAsync(leaderboard_id, ct)` 호출
+- score는 `LEADERBOARD.message_id` 기준으로 내부 조회한다.
+- 시즌 활성 기간 외에는 점수 기록 실패 반환 (`LEADERBOARD.season_id → TB_SEASON` 시간 확인)
 
 ### 3) 시즌 전환 보상 평가 시점
 
@@ -33,7 +33,7 @@ AppliesTo: v10
 
 - `Success + HasScore=true`:
   - rank로 `LEADERBOARD_REWARD` 구간 매칭
-  - 매칭 성공: `RewardManager.ApplyRewardGroup(rewardGroupId)` + `CLAIMED` 기록
+  - 매칭 성공: `RewardManager.ApplyRewardGroup(reward_group_id)` + `CLAIMED` 기록
   - 매칭 실패: `RANK_OUT_OF_REWARD` 기록
 - `NoScore`: `NO_PARTICIPATION` 기록
 - `PlatformUnavailable` / `NotLoggedIn` / `Failed`: 기록하지 않고 재시도
@@ -49,7 +49,7 @@ AppliesTo: v10
 - grace period 경계:
   - 시즌 종료 + 9분: 미평가
   - 시즌 종료 + 10분: 평가 시작
-- `processedClaims` 중복 지급 방지(같은 `leaderboardId` 1회)
+- `processedClaims` 중복 지급 방지(같은 `leaderboard_id` 1회)
 - `LEADERBOARD_REWARD` 구간 매칭/미매칭 분기
 - 시즌 외 기간 점수 기록 → 실패 반환
 - 공개 API에서 플랫폼 의존 타입/필드 비노출
@@ -62,6 +62,6 @@ AppliesTo: v10
 - 미지원 플랫폼 크래시 0건
 - grace period 하드코딩 0건 (상수만 사용)
 - 시즌 보상 dedupe 누락 0건 (`processedClaims` 단일 기준)
-- 하드코딩 보상 지급 0건 (`rewardGroupId` 경유만 허용)
+- 하드코딩 보상 지급 0건 (`reward_group_id` 경유만 허용)
 - 시즌 외 점수 기록 차단 정상 동작
 - 공개 경계 플랫폼 의존성 노출 0건

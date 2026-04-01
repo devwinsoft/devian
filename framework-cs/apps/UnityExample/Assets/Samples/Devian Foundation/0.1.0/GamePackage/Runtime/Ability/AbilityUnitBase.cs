@@ -5,10 +5,10 @@ namespace Devian
     public abstract class AbilityUnitBase : AbilityBase
     {
         public abstract string UnitId { get; }
+        int mCurHP = 0;
 
         public int UnitLevel => this[STAT_TYPE.UNIT_LEVEL];
         public int CurHP => mCurHP;
-        protected int mCurHP = 0;
 
         protected void InitUnitState(int unitLevel, int maxHp)
         {

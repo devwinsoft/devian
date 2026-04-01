@@ -32,9 +32,9 @@ SSOT 규칙은 [03-ssot](../03-ssot/SKILL.md)가 정본이다.
 ### 3) 조회/UI 갱신
 
 - UI는 조회 API(개념)를 통해 현재 값을 반영한다.
-  - 통화: `type=REWARD_TYPE.CURRENCY` + `currencyType` 잔고
-  - 장비: `type=REWARD_TYPE.EQUIP` + `itemId(pk)` 스택 수량
-  - 카드: `type=REWARD_TYPE.CARD` + `itemId(pk)` 수량
+  - 통화: `type=REWARD_TYPE.CURRENCY` + `currency_type` 잔고
+  - 장비: `type=REWARD_TYPE.EQUIP` + `item_id(pk)` 스택 수량
+  - 카드: `type=REWARD_TYPE.CARD` + `item_id(pk)` 수량
 - 아이템 `options`(업그레이드/레벨 등) 표시는 별도 조회/수정 경로가 필요하다(NEEDS CHECK).
 - 변경 이벤트 기반 최적화는 구현 단계에서 확정한다(NEEDS CHECK).
 

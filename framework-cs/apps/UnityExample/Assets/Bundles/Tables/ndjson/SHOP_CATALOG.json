@@ -1,4 +1,4 @@
-{"CatalogType":"DAILY","NameId":"","AutoRefreshDays":1,"UnlockMsgId":"","UnlockValue":null}
-{"CatalogType":"CHEST","NameId":"","AutoRefreshDays":0,"UnlockMsgId":"","UnlockValue":null}
-{"CatalogType":"PURCHASE","NameId":"","AutoRefreshDays":0,"UnlockMsgId":"msg_mission_clear_sum","UnlockOpType":"GTE","UnlockValue":10000003000001}
-{"CatalogType":"GOLD","NameId":"","AutoRefreshDays":0,"UnlockMsgId":"","UnlockValue":null}
+{"catalog_type":"DAILY","name_id":"","auto_refresh_days":1,"unlock_msg_id":"","unlock_value":null}
+{"catalog_type":"CHEST","name_id":"","auto_refresh_days":0,"unlock_msg_id":"","unlock_value":null}
+{"catalog_type":"PURCHASE","name_id":"","auto_refresh_days":0,"unlock_msg_id":"msg_mission_clear_sum","unlock_op_type":"GTE","unlock_value":10000003000001}
+{"catalog_type":"GOLD","name_id":"","auto_refresh_days":0,"unlock_msg_id":"","unlock_value":null}

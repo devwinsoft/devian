@@ -1,7 +1,7 @@
-{"Id":"UNKNOWN","Code":0,"Status":500}
-{"Id":"BAD_REQUEST","Code":1,"Status":400}
-{"Id":"UNAUTHORIZED","Code":2,"Status":401}
-{"Id":"FORBIDDEN","Code":3,"Status":403}
-{"Id":"NOT_FOUND","Code":4,"Status":404}
-{"Id":"INTERNAL","Code":100,"Status":500}
-{"Id":"SERVICE_UNAVAILABLE","Code":101,"Status":503}
+{"id":"UNKNOWN","code":0,"status":500}
+{"id":"BAD_REQUEST","code":1,"status":400}
+{"id":"UNAUTHORIZED","code":2,"status":401}
+{"id":"FORBIDDEN","code":3,"status":403}
+{"id":"NOT_FOUND","code":4,"status":404}
+{"id":"INTERNAL","code":100,"status":500}
+{"id":"SERVICE_UNAVAILABLE","code":101,"status":503}

@@ -54,17 +54,8 @@ namespace Devian
             var escapedMessage = commitMessage.Replace("\"", "\\\"");
             BuildAutomationLogger.Log($"[Git] $ git commit -m \"{commitMessage}\"");
 
-            var commitResult = await RunGitWithOutput($"commit -m \"{escapedMessage}\"", root, ct);
-            if (!commitResult.success)
+            if (!await RunGit($"commit -m \"{escapedMessage}\"", root, ct))
             {
-                // "nothing to commit" 은 정상 — warning 처리
-                if (commitResult.output != null
-                    && commitResult.output.Contains("nothing to commit"))
-                {
-                    BuildAutomationLogger.LogWarning("[Git] Nothing to commit (no changes)");
-                    return true;
-                }
-
                 BuildAutomationLogger.LogError("[Git] git commit failed");
                 return false;
             }
@@ -94,27 +85,7 @@ namespace Devian
             }
         }
 
-        private struct GitResult
-        {
-            public bool success;
-            public string output;
-        }
-
-        private static async Task<GitResult> RunGitWithOutput(
-            string arguments, string workingDirectory, CancellationToken ct)
-        {
-            var result = await RunGitInternal(arguments, workingDirectory, ct);
-            return result;
-        }
-
         private static async Task<bool> RunGit(
-            string arguments, string workingDirectory, CancellationToken ct)
-        {
-            var result = await RunGitInternal(arguments, workingDirectory, ct);
-            return result.success;
-        }
-
-        private static Task<GitResult> RunGitInternal(
             string arguments, string workingDirectory, CancellationToken ct)
         {
             var gitPath = ResolveGitPath();
@@ -122,7 +93,7 @@ namespace Devian
             {
                 BuildAutomationLogger.LogError(
                     "[Git] git not found. PATH에 git이 포함되어 있는지 확인하세요.");
-                return Task.FromResult(new GitResult { success = false });
+                return false;
             }
 
             try
@@ -133,53 +104,60 @@ namespace Devian
 
                 _currentProcess = process;
                 process.Start();
+                BuildAutomationLogger.StreamProcess(process);
 
-                var stdout = process.StandardOutput.ReadToEnd();
-                var stderr = process.StandardError.ReadToEnd();
-                var allOutput = (stdout + "\n" + stderr).Trim();
-
-                // 동기 대기 — await 금지 (player loop context switch 방지)
-                process.WaitForExit(DefaultTimeoutMs);
-
-                // 로그 출력
-                foreach (var line in allOutput.Split('\n'))
+                // CancellationToken과 타임아웃을 결합
+                using (var timeoutCts = new CancellationTokenSource(DefaultTimeoutMs))
+                using (var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                    ct, timeoutCts.Token))
                 {
-                    var trimmed = line.Trim();
-                    if (!string.IsNullOrEmpty(trimmed))
-                        BuildAutomationLogger.Log($"[Git] {trimmed}");
+                    try
+                    {
+                        await Task.Run(() =>
+                        {
+                            while (!process.HasExited)
+                            {
+                                if (linkedCts.Token.IsCancellationRequested)
+                                {
+                                    process.Kill();
+                                    return;
+                                }
+                                Thread.Sleep(500);
+                            }
+                        }, linkedCts.Token);
+                    }
+                    catch (System.OperationCanceledException)
+                    {
+                        if (!process.HasExited)
+                            process.Kill();
+
+                        var reason = ct.IsCancellationRequested
+                            ? "사용자 취소"
+                            : $"타임아웃 ({DefaultTimeoutMs / 1000}초)";
+                        BuildAutomationLogger.LogError($"[Git] Cancelled: {reason}");
+                        return false;
+                    }
                 }
 
                 _currentProcess = null;
 
-                if (!process.HasExited)
-                {
-                    process.Kill();
-                    BuildAutomationLogger.LogError(
-                        $"[Git] Timeout ({DefaultTimeoutMs / 1000}s)");
-                    return Task.FromResult(
-                        new GitResult { success = false, output = allOutput });
-                }
-
                 if (ct.IsCancellationRequested)
                 {
                     BuildAutomationLogger.LogWarning("[Git] Cancelled by user");
-                    return Task.FromResult(
-                        new GitResult { success = false, output = allOutput });
+                    return false;
                 }
 
                 if (process.ExitCode == 0)
-                    return Task.FromResult(
-                        new GitResult { success = true, output = allOutput });
+                    return true;
 
                 BuildAutomationLogger.LogError(
                     $"[Git] Command failed (exit code {process.ExitCode})");
-                return Task.FromResult(
-                    new GitResult { success = false, output = allOutput });
+                return false;
             }
             catch (System.Exception ex)
             {
                 BuildAutomationLogger.LogError($"[Git] Failed to run git: {ex.Message}");
-                return Task.FromResult(new GitResult { success = false });
+                return false;
             }
             finally
             {

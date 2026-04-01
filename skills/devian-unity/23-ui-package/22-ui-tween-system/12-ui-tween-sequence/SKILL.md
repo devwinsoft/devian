@@ -24,8 +24,8 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Tween/UITweenS
 
 - 같은 append 그룹 안의 join preset은 같은 sequence offset을 공유한다
 - append 그룹이 끝나면 sequence cursor가 다음 그룹으로 이동한다
-- group duration은 각 preset 내부 clip들의 `StartTime + Duration` 최댓값이다
-- compile 단계에서 각 preset clip의 `StartTime`에 group offset을 더해 단일 timeline으로 flatten한다
+- group duration은 각 preset 내부 clip들의 `Start_time + Duration` 최댓값이다
+- compile 단계에서 각 preset clip의 `Start_time`에 group offset을 더해 단일 timeline으로 flatten한다
 - sequence 전체는 runner에서 group loop를 돌지 않고, compiled timeline 1개로 평가된다
 - sequence 전체 cancel 시 남은 transition은 실행되지 않는다
 

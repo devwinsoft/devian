@@ -5,38 +5,43 @@ namespace Devian
     public abstract class ShopProductBase
     {
         protected ShopProductBase(
-            string shopId,
-            string nameId,
-            SHOP_CATALOG_TYPE catalogType,
+            string shop_id,
+            string name_id,
+            SHOP_CATALOG_TYPE catalog_type,
             SHOP_PRODUCT_TYPE productType,
-            int maxCount = -1,
+            int max_count = -1,
             SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
         {
-            ShopId = normalize(shopId);
-            NameId = normalize(nameId);
-            CatalogType = catalogType;
+            shop_id_internal = normalize(shop_id);
+            name_id_internal = normalize(name_id);
+            catalog_type_internal = catalog_type;
             ProductType = productType;
-            MaxCount = normalizeMaxCount(maxCount);
-            RemainCount = MaxCount;
+            max_count_internal = normalizeMaxCount(max_count);
+            RemainCount = max_count_internal;
             DiscountType = normalizeDiscountType(discountType);
         }
 
-        public string ShopId { get; }
-        public string ProductId => ShopId; // Legacy alias for old callers.
-        public string NameId { get; }
-        public SHOP_CATALOG_TYPE CatalogType { get; }
+        string shop_id_internal;
+        string name_id_internal;
+        SHOP_CATALOG_TYPE catalog_type_internal;
+        int max_count_internal;
+
+        public string shop_id => shop_id_internal;
+        public string ProductId => shop_id_internal; // Legacy alias for old callers.
+        public string name_id => name_id_internal;
+        public SHOP_CATALOG_TYPE catalog_type => catalog_type_internal;
         public SHOP_PRODUCT_TYPE ProductType { get; }
         public SHOP_DISCOUNT_TYPE DiscountType { get; }
         public virtual int PriceWithoutDiscount => 0;
         public int Price => applyDiscount(PriceWithoutDiscount, DiscountType);
-        public int MaxCount { get; }
+        public int max_count => max_count_internal;
         public int RemainCount { get; private set; }
 
-        public bool HasPurchaseLimit => MaxCount >= 0;
+        public bool HasPurchaseLimit => max_count_internal >= 0;
 
         public void SetRemainCount(int remainCount)
         {
-            RemainCount = sanitizeRemainCount(remainCount, MaxCount);
+            RemainCount = sanitizeRemainCount(remainCount, max_count_internal);
         }
 
         public bool TryConsumeOne()
@@ -53,7 +58,7 @@ namespace Devian
 
         public void ResetRemainCount()
         {
-            RemainCount = MaxCount;
+            RemainCount = max_count_internal;
         }
 
         static string normalize(string value)

@@ -5,12 +5,12 @@ export class AbilityUnitMonster extends AbilityUnitBase {
     private mTable: UNIT_MONSTER | null = null;
     private mLevelTable: UNIT_MONSTER_LEVEL | null = null;
 
-    get unitId(): string { return this.mTable?.UnitId ?? ''; }
+    get unitId(): string { return this.mTable?.unit_id ?? ''; }
 
     init(table: UNIT_MONSTER, levelTable: UNIT_MONSTER_LEVEL): void {
         this.mTable = table;
         this.mLevelTable = levelTable;
-        this.initUnitState(levelTable.UnitLevel, levelTable.MaxHp);
+        this.initUnitState(levelTable.unit_level, levelTable.max_hp);
     }
 
     clone(): AbilityUnitMonster {

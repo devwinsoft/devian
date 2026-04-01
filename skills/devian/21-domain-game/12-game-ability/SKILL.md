@@ -145,9 +145,9 @@ namespace Devian
     {
         SKILL mTable = null;
 
-        public string SkillId => mTable?.SkillId ?? string.Empty;
-        public string NameId => mTable?.NameId ?? string.Empty;
-        public IReadOnlyList<string> AffectList => mTable?.AffectList ?? Array.Empty<string>();
+        public string SkillId => mTable?.skill_id ?? string.Empty;
+        public string NameId => mTable?.name_id ?? string.Empty;
+        public IReadOnlyList<string> AffectList => mTable?.affect_list ?? Array.Empty<string>();
 
         public void Init(SKILL table)
         {
@@ -203,7 +203,7 @@ namespace Devian
         int mOwnerSlotNumber = 0;
 
         public string ItemUid => mItemUid;
-        public override string ItemId => mTable?.ItemId ?? string.Empty;
+        public override string ItemId => mTable?.item_id ?? string.Empty;
         public string OwnerUnitId => mOwnerUnitId;
         public int OwnerSlotNumber => mOwnerSlotNumber;
         public bool IsEquipped => mOwnerSlotNumber > 0;
@@ -251,7 +251,7 @@ namespace Devian
         ITEM_CARD mTable = null;
         ITEM_CARD_LEVEL mLevelTable = null;
 
-        public override string ItemId => mTable?.ItemId ?? string.Empty;
+        public override string ItemId => mTable?.item_id ?? string.Empty;
 
         public void Init(ITEM_CARD table, ITEM_CARD_LEVEL levelTable)
         {
@@ -279,7 +279,7 @@ namespace Devian
     {
         ITEM_MATERIAL mTable = null;
 
-        public override string ItemId => mTable?.ItemId ?? string.Empty;
+        public override string ItemId => mTable?.item_id ?? string.Empty;
 
         public void Init(ITEM_MATERIAL table)
         {
@@ -299,7 +299,7 @@ namespace Devian
 
 - `AbilityItemBase` — item 공통 abstract 베이스. `abstract ItemId`, `Amount`(`STAT_TYPE.ITEM_AMOUNT`), `ItemLevel`(`STAT_TYPE.ITEM_LEVEL`), `AddAmount(delta)` 공통 프로퍼티/메서드를 제공한다.
 - `AbilityItemEquip` — ITEM_EQUIP 테이블 entity와 ITEM_EQUIP_LEVEL row를 함께 받아 초기화한다. `ItemUid`(인스턴스 고유 GUID)와 `ItemId`(템플릿 ID) 프로퍼티 노출. 같은 `ItemId`에 여러 인스턴스가 존재할 수 있다.
-- `AbilityItemEquip`: `mTable` 참조 + `Init(table, levelTable, itemUid)` + `ItemUid` + `OwnerUnitId` + `OwnerSlotNumber` + `IsEquipped` + `SetOwner(unitId, slot)` + `ClearOwner()` + `Clone()`. pk는 `itemUid`(GUID).
+- `AbilityItemEquip`: `mTable` 참조 + `Init(table, levelTable, itemUid)` + `ItemUid` + `OwnerUnitId` + `OwnerSlotNumber` + `IsEquipped` + `SetOwner(unit_id, slot)` + `ClearOwner()` + `Clone()`. pk는 `itemUid`(GUID).
 - `AbilityItemCard` — ITEM_CARD 테이블 entity를 직접 참조하여 초기화한다. `ITEM_CARD`는 Generated entity (TB_ITEM_CARD 컨테이너).
 - `AbilityItemCard`: `mTable` 참조 + `Init(table, levelTable)` + `Clone()`. `ItemId`/`Amount`/`ItemLevel`/`AddAmount`는 `AbilityItemBase` 상속.
 - `AbilityItemMaterial` — `ITEM_MATERIAL` 테이블 entity를 직접 참조하여 초기화한다.
@@ -340,14 +340,14 @@ namespace Devian
         UNIT_HERO_LEVEL mLevelTable = null;
         readonly Dictionary<int, AbilityItemEquip> mEquips = new();
 
-        public override string UnitId => mTable?.UnitId ?? string.Empty;
+        public override string UnitId => mTable?.unit_id ?? string.Empty;
         public IReadOnlyDictionary<int, AbilityItemEquip> Equips => mEquips;
 
         public void Init(UNIT_HERO table, UNIT_HERO_LEVEL levelTable)
         {
             mTable = table;
             mLevelTable = levelTable;
-            InitUnitState(levelTable.UnitLevel, levelTable.MaxHp);
+            InitUnitState(levelTable.unit_level, levelTable.max_hp);
         }
 
         public override AbilityBase Clone()
@@ -362,7 +362,7 @@ namespace Devian
             return c;
         }
 
-        internal bool SetProjectedEquip(AbilityItemEquip equip, int slotNumber)
+        public bool Equip(AbilityItemEquip equip, int slotNumber)
         {
             if (equip == null || slotNumber <= 0)
                 return false;
@@ -391,13 +391,13 @@ namespace Devian
         UNIT_MONSTER mTable = null;
         UNIT_MONSTER_LEVEL mLevelTable = null;
 
-        public override string UnitId => mTable?.UnitId ?? string.Empty;
+        public override string UnitId => mTable?.unit_id ?? string.Empty;
 
         public void Init(UNIT_MONSTER table, UNIT_MONSTER_LEVEL levelTable)
         {
             mTable = table;
             mLevelTable = levelTable;
-            InitUnitState(levelTable.UnitLevel, levelTable.MaxHp);
+            InitUnitState(levelTable.unit_level, levelTable.max_hp);
         }
 
         public override AbilityBase Clone()

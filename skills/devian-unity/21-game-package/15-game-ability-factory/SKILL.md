@@ -69,7 +69,7 @@ Factory layer의 목적은 **생성 책임을 중앙화**하고, 특히 **outgam
 Item factory는 다음 책임만 가진다.
 
 - row 검증
-- target `itemLevel` 검증
+- target `item_level` 검증
 - 대응 `ITEM_*_LEVEL` row 조회
 - ability 인스턴스 생성
 - `Init(table, levelTable, ...)`
@@ -77,7 +77,7 @@ Item factory는 다음 책임만 가진다.
 
 level table 규칙:
 
-- 대상 level은 factory 인자 `itemLevel`이고, 기본값은 `1`
+- 대상 level은 factory 인자 `item_level`이고, 기본값은 `1`
 - item factory는 level row stat을 직접 apply 하지 않는다
 - `AbilityItem*.Init(table, levelTable, ...)`가 level row stat을 초기 적용한다
 - stack amount 같은 mutable 상태 복원은 factory 바깥 호출부가 담당한다
@@ -301,14 +301,14 @@ public static class AbilityUnitFactory
 
 ### Ingame spawn
 
-`unitId`
-→ `AbilityUnitFactory.CreateHero(unitId)`
+`unit_id`
+→ `AbilityUnitFactory.CreateHero(unit_id)`
 → `CommonResult<AbilityUnitHero>`
 → `IsSuccess` 확인 후 `AbilityUnitHero`
 
 ### Outgame preview
 
-`AbilityItemHero` + explicit `unitId` + optional override stats
+`AbilityItemHero` + explicit `unit_id` + optional override stats
 → `AbilityUnitHeroContext`
 → `AbilityUnitFactory.CreateHero(context)`
 → `CommonResult<AbilityUnitHero>`

@@ -209,7 +209,7 @@ namespace Devian
 
                 dailyProductsArr.Add(new JObject
                 {
-                    ["shopId"] = state.shopId.Trim(),
+                    ["shop_id"] = state.shopId.Trim(),
                     ["discountType"] = (int)state.discountType,
                     ["remainCount"] = state.remainCount,
                 });
@@ -394,7 +394,7 @@ namespace Devian
                 if (dailyProductsArr[i] is not JObject stateObj)
                     continue;
 
-                var shopId = stateObj.Value<string>("shopId") ?? string.Empty;
+                var shopId = stateObj.Value<string>("shop_id") ?? string.Empty;
                 if (string.IsNullOrWhiteSpace(shopId))
                     continue;
 
@@ -531,10 +531,10 @@ namespace Devian
                 return false;
 
             var row = TB_SHOP_CATALOG.Get(catalogType);
-            if (row == null || row.AutoRefreshDays <= 0)
+            if (row == null || row.auto_refresh_days <= 0)
                 return false;
 
-            intervalMs = row.AutoRefreshDays * 24L * 60L * 60L * 1000L;
+            intervalMs = row.auto_refresh_days * 24L * 60L * 60L * 1000L;
             return intervalMs > 0L;
         }
 

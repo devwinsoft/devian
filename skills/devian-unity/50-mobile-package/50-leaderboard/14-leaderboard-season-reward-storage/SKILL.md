@@ -42,7 +42,7 @@ Type: Design / Storage SSOT
 - `resultType: LeaderboardSeasonRewardResultType`
 - `rank: long`
 - `score: long`
-- `rewardGroupId: string`
+- `reward_group_id: string`
 - `evaluatedAtServerUtcMs: long`
 
 `LeaderboardSeasonRewardResultType`:
@@ -55,7 +55,7 @@ Type: Design / Storage SSOT
 
 ## Key Format
 
-- claim key: `{leaderboardId}`
+- claim key: `{leaderboard_id}`
 - 예: `leaderboard_001`
 
 ---
@@ -75,7 +75,7 @@ Type: Design / Storage SSOT
         "resultType": 1,
         "rank": 77,
         "score": 123456,
-        "rewardGroupId": "lb_s2026_q1_normal_51_100",
+        "reward_group_id": "lb_s2026_q1_normal_51_100",
         "evaluatedAtServerUtcMs": 1760000000000
       }
     }
@@ -97,7 +97,7 @@ Type: Design / Storage SSOT
 
 - 지급 여부 dedupe는 `processedClaims` 존재 여부로만 판정
 - claim payload에 보상 상세(`RewardData[]`)를 저장하지 않는다
-- 보상 실행 입력은 `rewardGroupId`만 보존한다
+- 보상 실행 입력은 `reward_group_id`만 보존한다
 
 ---
 

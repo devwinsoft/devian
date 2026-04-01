@@ -45,7 +45,7 @@ NEEDS CHECK:
 - `kind == Consumable` / `SeasonPass` → `purchases.products.get` (one-time 검증 경로)
 
 서버가 최소로 저장해야 할 필드(원장):
-- `internalProductId`
+- `internal_product_id`
 - `storePurchaseId`
 - `purchaseTime`
 - `acknowledged` 또는 동등 상태(가능한 경우)
@@ -68,7 +68,7 @@ NEEDS CHECK:
 - Apple `verifyReceipt`는 kind에 관계없이 동일 엔드포인트를 사용한다.
 
 서버가 최소로 저장해야 할 필드(원장):
-- `internalProductId`
+- `internal_product_id`
 - `storePurchaseId`
 - `purchaseTime`
 - `revocation/refund` 관련 상태(가능한 경우)

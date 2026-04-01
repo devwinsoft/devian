@@ -107,7 +107,7 @@ AppliesTo: v10
 
 #### 1) 내부 표준 ID가 정본
 
-- 상위 로직은 `internalProductId`를 정본으로 사용한다.
+- 상위 로직은 `internal_product_id`를 정본으로 사용한다.
 - Store SKU는 매핑 데이터로만 취급한다.
 
 #### 2) 타입 규칙
@@ -125,15 +125,15 @@ AppliesTo: v10
 PurchaseManager는 `TB_PURCHASE` 테이블을 **직접 참조**하여 카탈로그를 구성한다.
 `Devian.Samples.MobilePackage.asmdef`에 `Devian.Domain.Game` 참조가 포함되어 있다.
 
-Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요하다.
-- `PurchaseManager`가 `ResolveRewardGroupId(internalProductId)` → `TB_PURCHASE.Get(internalProductId).RewardGroupId`로 직접 변환한다.
-- `BuildProductDefinitions()` → `TB_PURCHASE.GetAll()`에서 `isActive` 필터링 후 ProductDefinition 목록을 생성한다.
+Purchase 지급을 위해 `internal_product_id -> reward_group_id` 변환이 필요하다.
+- `PurchaseManager`가 `ResolveRewardGroupId(internal_product_id)` → `TB_PURCHASE.Get(internal_product_id).Reward_group_id`로 직접 변환한다.
+- `BuildProductDefinitions()` → `TB_PURCHASE.GetAll()`에서 `is_active` 필터링 후 ProductDefinition 목록을 생성한다.
 
 ### Unity IAP 5.x (v5) Catalog Notes
 
-- 본 SSOT에서 "카탈로그"는 **내부 ID(`internalProductId`) ↔ 스토어 SKU(Apple/Google) 매핑 데이터**를 의미한다.
+- 본 SSOT에서 "카탈로그"는 **내부 ID(`internal_product_id`) ↔ 스토어 SKU(Apple/Google) 매핑 데이터**를 의미한다.
 - Unity IAP 5.x(v5)에서는 과거 방식의 `ProductCatalog.LoadDefaultCatalog()` 같은 런타임 로딩 API에 의존하지 않는다. (obsolete 전제 제거)
-- 런타임에서는 "등록된 제품 정의"를 사용해 구매를 시작하며, 상위 로직은 반드시 `internalProductId`만 사용한다.
+- 런타임에서는 "등록된 제품 정의"를 사용해 구매를 시작하며, 상위 로직은 반드시 `internal_product_id`만 사용한다.
 - 스토어 SKU는 플랫폼별 매핑 데이터일 뿐이며, 운영/코드에서 직접 참조하지 않는다.
 
 ### NEEDS CHECK (형준 결정 필요)
@@ -147,14 +147,14 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 - [x] ShopTable.xlsx 경로: — 결정됨
   - 경로는 컨텐츠 레이어 SSOT에서 관리
 - [x] PURCHASE 테이블 스키마/필드: — 결정됨
-  - `internalProductId` (string, pk) — 내부 상품 ID (정본)
-  - `rewardGroupId` (string) — 지급 Reward Key, `internalProductId -> rewardGroupId` 변환의 SSOT
+  - `internal_product_id` (string, pk) — 내부 상품 ID (정본)
+  - `reward_group_id` (string) — 지급 Reward Key, `internal_product_id -> reward_group_id` 변환의 SSOT
   - `kind` (PurchaseKind) — 상품 타입 (`Consumable` / `Rental` / `Subscription` / `SeasonPass`)
-  - `isActive` (bool) — 운영 활성 토글
-  - `storeSkuApple` (string) — Apple Store SKU
-  - `storeSkuGoogle` (string) — Google Play SKU
+  - `is_active` (bool) — 운영 활성 토글
+  - `store_sku_apple` (string) — Apple Store SKU
+  - `store_sku_google` (string) — Google Play SKU
 - [x] 시즌 매핑 필드 위치: — 결정됨
-  - 시즌 구매 제한용 `seasonId`는 `SHOP_PURCHASE.seasonId`에서 관리한다. (`PURCHASE` 스키마에는 포함하지 않는다.)
+  - 시즌 구매 제한용 `season_id`는 `SHOP_PURCHASE.season_id`에서 관리한다. (`PURCHASE` 스키마에는 포함하지 않는다.)
 
 
 ---
@@ -199,7 +199,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 - 입력
   - `uid` — Auth context에서 확보 (클라가 보내지 않음)
   - `storeKey: string` — "apple" | "google"
-  - `internalProductId: string`
+  - `internal_product_id: string`
   - `kind: string` — "Consumable" | "Rental" | "Subscription" | "SeasonPass" (=`PurchaseKind` string)
   - `payload: string` — 스토어 영수증/검증 데이터 (클라에서 `BuildVerifyPayload(receipt)` 결과)
 - 처리
@@ -212,14 +212,14 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
   - `verifyStatus: string` — 서버 purchase 상태 필드(`verifyStatus`)와 정합
   - `clientGrantStatus: string` — `"PENDING" | "APPLIED_ACKED" | "FAILED_REPORTED"`
   - `storeConfirmStatus: string` — `"PENDING" | "CONFIRMED"`
-  - `grants: array` — (server informational, 클라 지급 입력으로 미사용) 지급 내역 참고용. 보상은 `rewardGroupId` 경로로 지급
+  - `grants: array` — (server informational, 클라 지급 입력으로 미사용) 지급 내역 참고용. 보상은 `reward_group_id` 경로로 지급
   - `entitlementsSnapshot: object?` — (optional) 갱신된 entitlements 스냅샷. GRANTED/ALREADY_GRANTED 시 포함. 클라는 `ParseEntitlementsSnapshot`으로 파싱 + `cacheEntitlementsSnapshot`으로 InventoryStorage에 동기화
 
 ##### C# ↔ Callable 필드 매핑
 
 | C# (`VerifyPurchaseRequest`) | Callable JSON key | 비고 |
 |------------------------------|-------------------|------|
-| `InternalProductId` | `internalProductId` | |
+| `Internal_product_id` | `internal_product_id` | |
 | `Kind` (enum → string) | `kind` | `"Consumable"` / `"Rental"` / `"Subscription"` / `"SeasonPass"` |
 | `Store` | `storeKey` | |
 | `Payload` | `payload` | |
@@ -231,7 +231,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 | `verifyStatus` | `VerifyStatus` | Firestore purchase 상태 필드와 정합 |
 | `clientGrantStatus` | `ClientGrantStatus` | 로컬 지급 결과 보고 상태 |
 | `storeConfirmStatus` | `StoreConfirmStatus` | 스토어 Confirm 처리 상태 |
-| `grants[]` | (클라이언트 미사용 — 무시) | 서버 informational. 보상은 `rewardGroupId` 경로로 지급 |
+| `grants[]` | (클라이언트 미사용 — 무시) | 서버 informational. 보상은 `reward_group_id` 경로로 지급 |
 | `entitlementsSnapshot` | `Snapshot` (`EntitlementsSnapshot?`) | optional |
 
 #### 1-1) ackPurchaseClientGrant (Callable)
@@ -270,7 +270,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 | Callable JSON response | C# (`EntitlementsSnapshot`) | 비고 |
 |------------------------|------------------------------|------|
 | `ownedSeasonPasses` | `OwnedSeasonPasses: IReadOnlyList<string>` | |
-| `rentals` | `Rentals: IReadOnlyDictionary<string, long>` | key=`internalProductId`, value=`expiresAtServerUtcMs` |
+| `rentals` | `Rentals: IReadOnlyDictionary<string, long>` | key=`internal_product_id`, value=`expiresAtServerUtcMs` |
 | `currencyBalances` | `CurrencyBalances: IReadOnlyDictionary<string, long>` | key=재화ID, value=잔고 |
 | `serverNowUtcMs` | `ServerNowUtcMs: long` | Rental 남은시간 계산 기준 |
 
@@ -283,7 +283,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 - 인증: `context.auth.uid` 필수
 - 입력: `kind` (string, 필수 — PurchaseKind 값. `Consumable`/`Rental` 등), `pageSize` (optional, 기본 20)
 - 출력:
-  - `items: array` — 각 원소: `{ purchaseId, internalProductId, storePurchasedAt, verifyStatus, status }`
+  - `items: array` — 각 원소: `{ purchaseId, internal_product_id, storePurchasedAt, verifyStatus, status }`
     - `status`는 legacy response compatibility alias (temporary)
   - `nextCursor: string | null` — 형식: `"storePurchasedAtMs|docId"` (페이지네이션 토큰)
 
@@ -328,9 +328,9 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 
 #### Reward 적용(클라) 규칙
 
-- `GRANTED`이면 컨텐츠 레이어 매핑(`internalProductId -> rewardGroupId`) 후 RewardManager의 `ApplyRewardGroup(rewardGroupId)`를 호출한다. (`AppliedRewards` 수집 가능)
+- `GRANTED`이면 컨텐츠 레이어 매핑(`internal_product_id -> reward_group_id`) 후 RewardManager의 `ApplyRewardGroup(reward_group_id)`를 호출한다. (`AppliedRewards` 수집 가능)
 - `ALREADY_GRANTED`는 기본적으로 재지급 금지이나, `clientGrantStatus == PENDING` 또는 `FAILED_REPORTED`인 경우에는 로컬 지급 복구 경로를 허용한다.
-- `grants[]`는 응답 스키마에 존재할 수 있으나, **클라 지급 입력으로 사용하지 않는다**(지급 호출은 rewardGroupId 기반).
+- `grants[]`는 응답 스키마에 존재할 수 있으나, **클라 지급 입력으로 사용하지 않는다**(지급 호출은 reward_group_id 기반).
 - RewardManager는 지급 실행만 담당하며, 멱등/기록/복구는 PurchaseManager(+서버)가 책임진다.
 
 연관:
@@ -359,7 +359,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 - 최소 필드
   - `storeKey: string`
   - `storePurchaseId: string`
-  - `internalProductId: string`
+  - `internal_product_id: string`
   - `kind: string`
   - `verifyStatus: string`  // "GRANTED" | "REJECTED" | "PENDING" | "REVOKED" | "REFUNDED"
   - `clientGrantStatus: string` // "PENDING" | "APPLIED_ACKED" | "FAILED_REPORTED"
@@ -379,7 +379,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 - 최소 필드(프로젝트 확장 가능)
   - `updatedAt: timestamp` (server timestamp)
   - (예시) `ownedSeasonPasses: array<string>`
-  - (예시) `rentals: map<string, number>` // `internalProductId -> expiresAtServerUtcMs`
+  - (예시) `rentals: map<string, number>` // `internal_product_id -> expiresAtServerUtcMs`
   - (예시) `currencyBalances: map<string, number>`
 
 ### SeasonPass / Rental Restore Projection (design fixed, server-side)
@@ -490,7 +490,7 @@ Purchase 지급을 위해 `internalProductId -> rewardGroupId` 변환이 필요�
 - 시즌별 Store SKU를 분리한다(시즌별 SKU 1개 원칙).
   - 예: `season_pass_s2026_01`, `season_pass_s2026_02`
 - 소유 여부는 Firestore Entitlement 상태로 저장/복구한다.
-- 시즌 패스 구매 결과는 Entitlement(`SeasonPass(seasonId) owned`)로 저장한다.
+- 시즌 패스 구매 결과는 Entitlement(`SeasonPass(season_id) owned`)로 저장한다.
 
 
 ### 구매/지급 규칙

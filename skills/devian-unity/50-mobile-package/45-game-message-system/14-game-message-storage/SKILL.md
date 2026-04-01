@@ -40,7 +40,7 @@ Type: Design / SSOT
 - `stats: Dictionary<string, CBigInt>`
 
 규칙:
-- key는 반드시 `messageId` string
+- key는 반드시 `message_id` string
 - value는 `MESSAGE.saveType` 규약에 따라 누적된 값
 - `Clear()`는 schema 기본값 복원 + 컬렉션 초기화
 
@@ -55,14 +55,14 @@ Type: Design / SSOT
   "version": 13,
   "message": {
     "schemaVersion": 1,
-    "stats": { "<messageId>": { "base": 0, "pow": 0 } }
+    "stats": { "<message_id>": { "base": 0, "pow": 0 } }
   }
 }
 ```
 
 핵심 규칙:
 - `mission.stats`는 더 이상 write하지 않는다.
-- mission/achieve runtime은 `messageId` 필드를 사용한다.
+- mission/achieve runtime은 `message_id` 필드를 사용한다.
 
 ---
 
@@ -70,7 +70,7 @@ Type: Design / SSOT
 
 - v12 이하 payload load 시:
   - legacy `mission.stats`를 `message.stats`로 이동한다.
-  - runtime의 legacy 필드 `missionStatId`는 `messageId` fallback으로 읽는다.
+  - runtime의 legacy 필드 `missionStatId`는 `message_id` fallback으로 읽는다.
 - v13 write 시:
   - `message.stats`만 기록한다.
 

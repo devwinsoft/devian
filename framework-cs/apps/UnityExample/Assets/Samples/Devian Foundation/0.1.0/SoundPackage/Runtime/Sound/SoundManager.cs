@@ -16,7 +16,7 @@ namespace Devian
     /// - row_id가 PK, sound_id는 논리 그룹 키 (weight 기반 랜덤 선택)
     /// - 채널/풀 책임은 SoundChannel에 위임
     /// - SerializeField 의존 없이 런타임 생성
-    /// - PlaySound는 SoundRuntimeId를 반환하고, 모든 제어는 runtime_id 기반
+    /// - PlaySound는 SoundRuntimeId를 반환하고, 모든 제어는 runtimeId 기반
     /// - isBundle=false일 경우 Resources.Load를 사용한다
     /// - channel은 SoundChannelType enum으로 직접 비교한다
     /// - Voice 채널 로딩 지원 (VoiceManager가 호출)
@@ -36,8 +36,8 @@ namespace Devian
         public Func<string, IReadOnlyList<ISoundRow>>? GetSoundRowsBySoundId { get; set; }
 
         /// <summary>
-        /// key_bundle(로드/언로드 단위 키)로 rows를 조회하는 델리게이트 (Load/Unload용).
-        /// key_group은 제거됨 - 로드/언로드는 key_bundle 단위로만 수행.
+        /// keyBundle(로드/언로드 단위 키)로 rows를 조회하는 델리게이트 (Load/Unload용).
+        /// key_group은 제거됨 - 로드/언로드는 keyBundle 단위로만 수행.
         /// </summary>
         public Func<string, IEnumerable<ISoundRow>>? GetSoundRowsByBundleKey { get; set; }
 
@@ -72,7 +72,7 @@ namespace Devian
 
         private int _nextRuntimeId = 1;
 
-        // runtime_id → channel 매핑 (제어 시 채널 탐색용)
+        // runtimeId → channel 매핑 (제어 시 채널 탐색용)
         private readonly Dictionary<int, SoundChannelType> _channelByRuntimeId = new Dictionary<int, SoundChannelType>();
 
         /// <summary>
@@ -101,28 +101,28 @@ namespace Devian
         }
 
         // ====================================================================
-        // Loaded Clips Cache (row_id 기준)
+        // Loaded Clips Cache (rowId 기준)
         // ====================================================================
 
-        // row_id → AudioClip
+        // rowId → AudioClip
         private readonly Dictionary<int, AudioClip> _clipCacheByRowId = new Dictionary<int, AudioClip>();
 
-        // bundleKey → 로드된 row_id 목록 (언로드용)
+        // bundleKey → 로드된 rowId 목록 (언로드용)
         private readonly Dictionary<string, List<int>> _loadedRowIdsByBundleKey = new Dictionary<string, List<int>>();
 
-        // 로드된 bundle_key 세트
+        // 로드된 bundleKey 세트
         private readonly HashSet<string> _loadedBundleKeys = new HashSet<string>();
 
         // bundleKey → isBundle (언로드 시 분기용)
         private readonly Dictionary<string, bool> _bundleKeyIsBundle = new Dictionary<string, bool>();
 
         // ====================================================================
-        // Loading Policy (key_bundle 단위, isBundle=true→Bundle, isBundle=false→Resource API)
-        // key_group은 제거됨 - 로드/언로드는 key_bundle 단위로만 수행.
+        // Loading Policy (keyBundle 단위, isBundle=true→Bundle, isBundle=false→Resource API)
+        // key_group은 제거됨 - 로드/언로드는 keyBundle 단위로만 수행.
         // ====================================================================
 
         /// <summary>
-        /// key_bundle 기준으로 사운드를 로드한다.
+        /// keyBundle 기준으로 사운드를 로드한다.
         /// Voice 채널은 로드하지 않는다 (VoiceManager.LoadByBundleKeyAsync 사용).
         /// </summary>
         public async Task<CommonResult> LoadByBundleKeyAsync(string bundleKey)
@@ -189,12 +189,12 @@ namespace Devian
                     var clip = AssetManager.GetAsset<AudioClip>(assetName);
                     if (clip != null)
                     {
-                        _clipCacheByRowId[row.row_id] = clip;
-                        loadedRowIds.Add(row.row_id);
+                        _clipCacheByRowId[row.rowId] = clip;
+                        loadedRowIds.Add(row.rowId);
                     }
                     else
                     {
-                        Log.Warn($"[SoundManager] AudioClip not found for row_id '{row.row_id}', path '{row.path}'.");
+                        Log.Warn($"[SoundManager] AudioClip not found for row_id '{row.rowId}', path '{row.path}'.");
                     }
                 }
             }
@@ -209,17 +209,17 @@ namespace Devian
                     var clip = AssetManager.GetAsset<AudioClip>(assetName);
                     if (clip != null)
                     {
-                        _clipCacheByRowId[row.row_id] = clip;
-                        loadedRowIds.Add(row.row_id);
+                        _clipCacheByRowId[row.rowId] = clip;
+                        loadedRowIds.Add(row.rowId);
                     }
                     else
                     {
-                        Log.Warn($"[SoundManager] Resource AudioClip not found for row_id '{row.row_id}', path '{row.path}'.");
+                        Log.Warn($"[SoundManager] Resource AudioClip not found for row_id '{row.rowId}', path '{row.path}'.");
                     }
                 }
             }
 
-            // 언로드용 row_id 목록 저장
+            // 언로드용 rowId 목록 저장
             _loadedRowIdsByBundleKey[bundleKey] = loadedRowIds;
             _bundleKeyIsBundle[bundleKey] = actualIsBundle;
             _loadedBundleKeys.Add(bundleKey);
@@ -241,7 +241,7 @@ namespace Devian
         }
 
         /// <summary>
-        /// key_bundle 기준으로 사운드를 언로드한다.
+        /// keyBundle 기준으로 사운드를 언로드한다.
         /// row 캐시 제거 + AssetManager 언로드를 동기화한다.
         /// </summary>
         public void UnloadByBundleKey(string bundleKey)
@@ -331,8 +331,8 @@ namespace Devian
 
                 if (string.IsNullOrEmpty(clipPath)) continue;
 
-                // voice_id를 row_id 해시로 사용 (VOICE는 PK가 string)
-                var rowIdHash = row.voice_id.GetHashCode();
+                // voice_id를 rowId 해시로 사용 (VOICE는 PK가 string)
+                var rowIdHash = row.voiceId.GetHashCode();
 
                 // 중복 체크
                 bool exists = false;
@@ -368,7 +368,7 @@ namespace Devian
             // clip 캐시 등록
             _populateVoiceClipCache(voiceClipInfos);
 
-            // 언로드용 row_id 목록 저장
+            // 언로드용 rowId 목록 저장
             _loadedRowIdsByBundleKey[bundleKey] = loadedRowIds;
             _bundleKeyIsBundle[bundleKey] = true; // VOICE는 항상 Bundle
             _loadedBundleKeys.Add(bundleKey);
@@ -407,7 +407,7 @@ namespace Devian
                 }
                 else
                 {
-                    Log.Warn($"[SoundManager] Voice AudioClip not found for voice_id '{info.Row.voice_id}', path '{info.ClipPath}'.");
+                    Log.Warn($"[SoundManager] Voice AudioClip not found for voice_id '{info.Row.voiceId}', path '{info.ClipPath}'.");
                 }
             }
 
@@ -418,13 +418,13 @@ namespace Devian
         }
 
         // ====================================================================
-        // Play API (runtime_id 기반)
+        // Play API (runtimeId 기반)
         // ====================================================================
 
         /// <summary>
         /// sound_id로 2D 사운드를 재생한다.
         /// 동일 sound_id의 후보 rows 중 weight 기반 랜덤으로 1개를 선택하여 재생한다.
-        /// 쿨타임은 논리키(sound_id) 단위로 적용된다.
+        /// 쿨타임은 논리키(soundId) 단위로 적용된다.
         /// </summary>
         /// <returns>재생 성공 시 유효한 SoundRuntimeId, 실패 시 SoundRuntimeId.Invalid</returns>
         public SoundRuntimeId PlaySound(
@@ -439,7 +439,7 @@ namespace Devian
 
         /// <summary>
         /// sound_id로 3D 사운드를 재생한다.
-        /// 위치 정보가 필수이며, 3D 파라미터(distance_near, distance_far)는 row에서 가져온다.
+        /// 위치 정보가 필수이며, 3D 파라미터(distanceNear, distanceFar)는 row에서 가져온다.
         /// </summary>
         /// <returns>재생 성공 시 유효한 SoundRuntimeId, 실패 시 SoundRuntimeId.Invalid</returns>
         public SoundRuntimeId PlaySound3D(
@@ -483,7 +483,7 @@ namespace Devian
             var loadedCandidates = new List<ISoundRow>();
             foreach (var row in candidates)
             {
-                if (_clipCacheByRowId.ContainsKey(row.row_id))
+                if (_clipCacheByRowId.ContainsKey(row.rowId))
                 {
                     loadedCandidates.Add(row);
                 }
@@ -504,9 +504,9 @@ namespace Devian
             }
 
             // 4. 클립 조회
-            if (!_clipCacheByRowId.TryGetValue(selectedRow.row_id, out var clip))
+            if (!_clipCacheByRowId.TryGetValue(selectedRow.rowId, out var clip))
             {
-                Log.Warn($"[SoundManager] AudioClip cache miss for row_id: {selectedRow.row_id}");
+                Log.Warn($"[SoundManager] AudioClip cache miss for row_id: {selectedRow.rowId}");
                 return SoundRuntimeId.Invalid;
             }
 
@@ -519,15 +519,15 @@ namespace Devian
                 return SoundRuntimeId.Invalid;
             }
 
-            // 6. runtime_id 발급
+            // 6. runtimeId 발급
             var runtimeId = _allocateRuntimeId();
 
             // 7. BaseAudioManager.TryPlay()로 위임
             var success = BaseAudioManager.TryPlay(
                 channel,
                 runtimeId,
-                soundId,  // 쿨타임 공유를 위해 sound_id 전달
-                selectedRow.row_id,
+                soundId,  // 쿨타임 공유를 위해 soundId 전달
+                selectedRow.rowId,
                 selectedRow,
                 clip,
                 volume,
@@ -594,12 +594,12 @@ namespace Devian
             int groupId,
             Vector3? position)
         {
-            // voice_id 해시로 clip 조회
-            var rowIdHash = voiceRow.voice_id.GetHashCode();
+            // voiceId 해시로 clip 조회
+            var rowIdHash = voiceRow.voiceId.GetHashCode();
 
             if (!_clipCacheByRowId.TryGetValue(rowIdHash, out var clip))
             {
-                Log.Warn($"[SoundManager] Voice AudioClip not loaded: {voiceRow.voice_id}");
+                Log.Warn($"[SoundManager] Voice AudioClip not loaded: {voiceRow.voiceId}");
                 return SoundRuntimeId.Invalid;
             }
 
@@ -610,14 +610,14 @@ namespace Devian
                 return SoundRuntimeId.Invalid;
             }
 
-            // runtime_id 발급
+            // runtimeId 발급
             var runtimeId = _allocateRuntimeId();
 
             // BaseAudioManager.TryPlay()로 위임
             var success = BaseAudioManager.TryPlay(
                 channel,
                 runtimeId,
-                voiceRow.voice_id,  // logicalId
+                voiceRow.voiceId,  // logicalId
                 rowIdHash,          // rowId
                 voiceRow,
                 clip,
@@ -638,7 +638,7 @@ namespace Devian
         }
 
         // ====================================================================
-        // Control API (runtime_id 기반)
+        // Control API (runtimeId 기반)
         // ====================================================================
 
         /// <summary>

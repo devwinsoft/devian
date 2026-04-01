@@ -5,25 +5,25 @@ namespace Devian
     public sealed class ShopProductCurrency : ShopRewardProductBase
     {
         public ShopProductCurrency(
-            string shopId,
-            string nameId,
-            SHOP_CATALOG_TYPE catalogType,
-            CURRENCY_TYPE currencyType,
+            string shop_id,
+            string name_id,
+            SHOP_CATALOG_TYPE catalog_type,
+            CURRENCY_TYPE currency_type,
             int price,
-            string rewardGroupId,
+            string reward_group_id,
             int amount,
-            int maxCount = -1,
+            int max_count = -1,
             SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
             : base(
-                shopId,
-                nameId,
-                catalogType,
+                shop_id,
+                name_id,
+                catalog_type,
                 SHOP_PRODUCT_TYPE.CURRENCY,
-                currencyType,
+                currency_type,
                 price,
-                rewardGroupId,
+                reward_group_id,
                 amount,
-                maxCount,
+                max_count,
                 discountType)
         {
         }

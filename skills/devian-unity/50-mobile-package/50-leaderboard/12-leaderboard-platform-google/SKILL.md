@@ -27,7 +27,7 @@ AppliesTo: v10
 
 - 입력: `platformLeaderboardId`, `score`
 - 처리:
-  - (`LeaderboardManager`가 내부 `leaderboardId -> googleLeaderboardId` 매핑 후 호출)
+  - (`LeaderboardManager`가 내부 `leaderboard_id -> google_leaderboard_id` 매핑 후 호출)
   - GPGS에 점수 보고
 
 ### Load Player Snapshot

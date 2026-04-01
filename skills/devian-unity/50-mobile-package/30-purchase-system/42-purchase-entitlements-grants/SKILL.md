@@ -22,7 +22,7 @@ AppliesTo: v10
 
 ## A. 입력 정본
 
-- `internalProductId`가 정본이다.
+- `internal_product_id`가 정본이다.
 - 상품 메타는 SSOT에서 합의된 PURCHASE 테이블을 따른다:
   - PURCHASE 테이블 경로/정본은 컨텐츠 레이어 SSOT를 따른다.
 
@@ -40,11 +40,11 @@ AppliesTo: v10
 
 Hard Rule:
 - `grants[]`는 inventory 지급 전용이며, 클라이언트 지급 입력으로 사용하지 않는다 (서버 informational).
-- 클라 지급은 `rewardGroupId` 경로로 수행한다.
+- 클라 지급은 `reward_group_id` 경로로 수행한다.
 - 권한/플래그 변화는 `grants[]`로 표현하지 않고, `entitlements/current` 스냅샷으로 처리한다.
 
 NOTE:
-- `type=item`의 `id`는 `itemId(pk)`를 의미한다(`itemUid` 없음).
+- `type=item`의 `id`는 `item_id(pk)`를 의미한다(`itemUid` 없음).
 - `grants[]`에는 `options`가 포함되지 않는다. 아이템 `options`는 Inventory 내부 속성으로만 관리된다.
 
 NEEDS CHECK:
@@ -95,7 +95,7 @@ NEEDS CHECK:
 ## DoD
 
 Hard (must be 0)
-- [ ] `internalProductId` → grants/entitlements 매핑이 "정본 데이터(테이블)" 기준임이 명시됐다.
+- [ ] `internal_product_id` → grants/entitlements 매핑이 "정본 데이터(테이블)" 기준임이 명시됐다.
 - [ ] `PENDING/REJECTED`에서 지급 금지가 하드룰로 명시됐다.
 - [ ] entitlements/current upsert 규칙이 명시됐다.
 

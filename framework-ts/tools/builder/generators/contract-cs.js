@@ -89,9 +89,8 @@ function generateClass(lines, classDef, domainName) {
 
     for (const field of classDef.fields || []) {
         const csType = mapToCSharpType(field.type, field.optional, domainName);
-        const propName = capitalize(field.name);
         const defaultValue = getDefaultValue(field.type, field.optional);
-        lines.push(`        public ${csType} ${propName} { get; set; }${defaultValue}`);
+        lines.push(`        public ${csType} ${field.name} { get; set; }${defaultValue}`);
     }
 
     lines.push('    }');
@@ -172,4 +171,12 @@ function getDefaultValue(type, optional) {
 
 function capitalize(str) {
     return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+/**
+ * Convert snake_case to PascalCase.
+ * SSOT: skills/devian/80-tools/11-builder/51-table-codegen/SKILL.md § Column Naming Convention
+ */
+function snakeToPascal(str) {
+    return str.split('_').map(part => part.charAt(0).toUpperCase() + part.slice(1)).join('');
 }

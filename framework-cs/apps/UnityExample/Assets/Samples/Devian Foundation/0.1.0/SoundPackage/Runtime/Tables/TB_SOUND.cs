@@ -1,7 +1,7 @@
 // SSOT: skills/devian-unity/22-sound-system/16-sound-tables/SKILL.md
-// partial 확장 파일 - Generated TB_SOUND에 sound_id/key_bundle 그룹 인덱스 추가
+// partial 확장 파일 - Generated TB_SOUND에 soundId/keyBundle 그룹 인덱스 추가
 // row_id가 PK, sound_id는 논리 그룹 키 (중복 허용)
-// v10 변경: key_group 제거, key_bundle 중심 로드/언로드, isBundle(bool), channel(enum)
+// v10 변경: keyGroup 제거, keyBundle 중심 로드/언로드, isBundle(bool), channel(enum)
 
 #nullable enable
 
@@ -12,17 +12,17 @@ namespace Devian.Domain.Sound
 {
     /// <summary>
     /// TB_SOUND partial 확장.
-    /// - sound_id → rows 그룹 인덱스
-    /// - key_bundle → rows 그룹 인덱스 (로드/언로드 단위)
+    /// - soundId → rows 그룹 인덱스
+    /// - keyBundle → rows 그룹 인덱스 (로드/언로드 단위)
     /// - ISoundRow 어댑터 제공
-    /// key_group은 제거됨 - 로드/언로드는 key_bundle 단위로만 수행.
+    /// key_group은 제거됨 - 로드/언로드는 keyBundle 단위로만 수행.
     /// </summary>
     public static partial class TB_SOUND
     {
-        // sound_id → rows (그룹 인덱스)
+        // soundId → rows (그룹 인덱스)
         private static readonly Dictionary<string, List<SOUND>> _rowsBySoundId = new();
 
-        // key_bundle → rows (로드/언로드 단위 인덱스)
+        // keyBundle → rows (로드/언로드 단위 인덱스)
         private static readonly Dictionary<string, List<SOUND>> _rowsByBundleKey = new();
 
         // 빈 리스트 (반환용)
@@ -69,24 +69,24 @@ namespace Devian.Domain.Sound
             {
                 if (row == null) continue;
 
-                // sound_id 그룹 인덱스
-                if (!string.IsNullOrEmpty(row.Sound_id))
+                // soundId 그룹 인덱스
+                if (!string.IsNullOrEmpty(row.sound_id))
                 {
-                    if (!_rowsBySoundId.TryGetValue(row.Sound_id, out var soundIdList))
+                    if (!_rowsBySoundId.TryGetValue(row.sound_id, out var soundIdList))
                     {
                         soundIdList = new List<SOUND>();
-                        _rowsBySoundId[row.Sound_id] = soundIdList;
+                        _rowsBySoundId[row.sound_id] = soundIdList;
                     }
                     soundIdList.Add(row);
                 }
 
-                // key_bundle 인덱스
-                if (!string.IsNullOrEmpty(row.Key_bundle))
+                // keyBundle 인덱스
+                if (!string.IsNullOrEmpty(row.key_bundle))
                 {
-                    if (!_rowsByBundleKey.TryGetValue(row.Key_bundle, out var bundleList))
+                    if (!_rowsByBundleKey.TryGetValue(row.key_bundle, out var bundleList))
                     {
                         bundleList = new List<SOUND>();
-                        _rowsByBundleKey[row.Key_bundle] = bundleList;
+                        _rowsByBundleKey[row.key_bundle] = bundleList;
                     }
                     bundleList.Add(row);
                 }
@@ -130,23 +130,23 @@ namespace Devian.Domain.Sound
         }
 
         // ISoundRow 고유
-        public int row_id => _row.Row_id;
-        public string sound_id => _row.Sound_id;
-        public bool isBundle => _row.IsBundle;
-        public string key_bundle => _row.Key_bundle;
-        public string path => _row.Path;
-        public SoundChannelType channel => ParseChannel(_row.Channel);
-        public int weight => _row.Weight;
+        public int rowId => _row.row_id;
+        public string soundId => _row.sound_id;
+        public bool isBundle => _row.is_bundle;
+        public string keyBundle => _row.key_bundle;
+        public string path => _row.path;
+        public SoundChannelType channel => ParseChannel(_row.channel);
+        public int weight => _row.weight;
 
         // IAudioRowBase 공통
-        public bool loop => _row.Loop;
-        public float cooltime => _row.Cooltime;
-        public bool is3d => _row.Is3d;
-        public float distance_near => _row.Distance_near;
-        public float distance_far => _row.Distance_far;
-        public float volume_scale => _row.Volume_scale;
-        public float pitch_min => _row.Pitch_min;
-        public float pitch_max => _row.Pitch_max;
+        public bool loop => _row.loop;
+        public float cooltime => _row.cooltime;
+        public bool is3d => _row.is3d;
+        public float distanceNear => _row.distance_near;
+        public float distanceFar => _row.distance_far;
+        public float volumeScale => _row.volume_scale;
+        public float pitchMin => _row.pitch_min;
+        public float pitchMax => _row.pitch_max;
 
         private static SoundChannelType ParseChannel(string channel)
         {

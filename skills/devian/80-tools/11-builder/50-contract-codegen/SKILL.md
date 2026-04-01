@@ -95,11 +95,21 @@ Contract는 Domain 단위로 Table과 함께 **단일 파일에 통합** 생성�
 
 ## Naming Rules (Hard Rule)
 
+### Enum Naming
 - enum 타입명은 **대문자 SNAKE_CASE**를 사용한다.
 - enum 멤버명도 **대문자 SNAKE_CASE**를 사용한다.
 - 예:
   - Good: `MISSION_TYPE`, `USER_TYPE`, `APP_OPEN`
   - Bad: `MissionType`, `UserType`, `AppOpen`
+
+### Field Naming (Hard Rule)
+**Contract JSON의 field name을 C#/TS 프로퍼티 이름으로 그대로 사용한다. 변환하지 않는다.**
+
+| 위치 | 이름 | 예시 |
+|------|------|------|
+| Contract JSON field name | 그대로 | `id`, `userType` |
+| C# 프로퍼티 | 그대로 | `id`, `userType` |
+| TS 프로퍼티 | 그대로 | `id`, `userType` |
 
 ---
 

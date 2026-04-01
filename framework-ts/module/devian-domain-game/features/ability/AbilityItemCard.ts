@@ -5,17 +5,17 @@ export class AbilityItemCard extends AbilityItemBase {
     private mTable: ITEM_CARD | null = null;
     private mLevelTable: ITEM_CARD_LEVEL | null = null;
 
-    get itemId(): string { return this.mTable?.ItemId ?? ''; }
+    get itemId(): string { return this.mTable?.item_id ?? ''; }
 
     init(table: ITEM_CARD, levelTable: ITEM_CARD_LEVEL): void {
         this.mTable = table;
         this.mLevelTable = levelTable;
         this.initLevelStats(
-            levelTable.ItemLevel,
-            levelTable.StatType00, levelTable.StatValue00,
-            levelTable.StatType01, levelTable.StatValue01,
-            levelTable.StatType02, levelTable.StatValue02,
-            levelTable.StatType03, levelTable.StatValue03,
+            levelTable.item_level,
+            levelTable.stat_type00, levelTable.stat_value00,
+            levelTable.stat_type01, levelTable.stat_value01,
+            levelTable.stat_type02, levelTable.stat_value02,
+            levelTable.stat_type03, levelTable.stat_value03,
         );
     }
 

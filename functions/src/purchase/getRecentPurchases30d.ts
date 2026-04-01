@@ -74,7 +74,7 @@ export const getRecentPurchases30d = onCall(
 
     const snapshot = await query.get();
 
-    // 최소 필드만 반환 (purchaseId, internalProductId, storePurchasedAt, verifyStatus)
+    // 최소 필드만 반환 (purchaseId, internal_product_id, storePurchasedAt, verifyStatus)
     const docs = snapshot.docs;
     const hasMore = docs.length > pageSize;
     const items = docs.slice(0, pageSize).map((doc) => {
@@ -82,7 +82,7 @@ export const getRecentPurchases30d = onCall(
       const verifyStatus = d.verifyStatus ?? d.status ?? "";
       return {
         purchaseId: d.purchaseId ?? doc.id,
-        internalProductId: d.internalProductId ?? "",
+        internal_product_id: d.internal_product_id ?? "",
         storePurchasedAt: d.storePurchasedAt?.toMillis() ?? 0,
         verifyStatus,
         status: verifyStatus, // legacy response compatibility

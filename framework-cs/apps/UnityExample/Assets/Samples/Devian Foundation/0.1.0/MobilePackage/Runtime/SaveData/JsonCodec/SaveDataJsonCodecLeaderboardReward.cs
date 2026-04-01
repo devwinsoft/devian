@@ -24,7 +24,7 @@ namespace Devian
                     ["resultType"] = (int)claim.Value.resultType,
                     ["rank"] = claim.Value.rank,
                     ["score"] = claim.Value.score,
-                    ["rewardGroupId"] = claim.Value.rewardGroupId ?? string.Empty,
+                    ["reward_group_id"] = claim.Value.rewardGroupId ?? string.Empty,
                     ["evaluatedAtServerUtcMs"] = claim.Value.evaluatedAtServerUtcMs,
                 };
             }
@@ -62,7 +62,7 @@ namespace Devian
                     resultType = resultType,
                     rank = claimObj.Value<long?>("rank") ?? 0L,
                     score = claimObj.Value<long?>("score") ?? 0L,
-                    rewardGroupId = claimObj.Value<string>("rewardGroupId") ?? string.Empty,
+                    rewardGroupId = claimObj.Value<string>("reward_group_id") ?? string.Empty,
                     evaluatedAtServerUtcMs = claimObj.Value<long?>("evaluatedAtServerUtcMs") ?? 0L,
                 });
             }

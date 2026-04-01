@@ -18,7 +18,7 @@ MobilePackage 샘플에서 Reward(보상 지급 **적용/실행**) 설계를 정
 
 ## Scope
 
-- 입력으로 들어온 **RewardData[]** 또는 rewardGroupId(컨텐츠 레이어에서 RewardData로 해석된 결과)를 **로컬 인벤토리에 적용**한다.
+- 입력으로 들어온 **RewardData[]** 또는 reward_group_id(컨텐츠 레이어에서 RewardData로 해석된 결과)를 **로컬 인벤토리에 적용**한다.
 - Reward는 "지급 실행기"이며, 서버 호출/ledger 확정/중복 방지는 하지 않는다.
 
 
@@ -39,7 +39,7 @@ MobilePackage 샘플에서 Reward(보상 지급 **적용/실행**) 설계를 정
 | Document | Description |
 |----------|-------------|
 | [01-policy](../01-policy/SKILL.md) | 모듈 경계/하드룰(Reward=지급 실행기, 멱등/기록/복구=호출자) |
-| [03-ssot](../03-ssot/SKILL.md) | RewardData 규약 + rewardGroupId 해석(컨텐츠 책임) |
+| [03-ssot](../03-ssot/SKILL.md) | RewardData 규약 + reward_group_id 해석(컨텐츠 책임) |
 | [10-reward-manager](../10-reward-manager/SKILL.md) | RewardManager 설계(지급 실행기) |
 | [11-rewarddata-interpretation](../11-rewarddata-interpretation/SKILL.md) | RewardData 해석 가이드(type/id/amount 의미, 소스별 파싱 규칙) |
 | [12-first-reward-settings](../12-first-reward-settings/SKILL.md) | FirstRewardSettings ScriptableObject (초기 보상 지급 설정) |

@@ -14,7 +14,7 @@ Leaderboard 점수 제출 + 시즌 전환 보상 시스템의 모듈 경계와 �
 
 ### 1) 상위 로직에는 내부 ID만 노출한다
 
-- 외부 API는 `leaderboardId`(내부 ID)만 사용한다.
+- 외부 API는 `leaderboard_id`(내부 ID)만 사용한다.
 - 플랫폼 문자열 ID는 SSOT 매핑 레이어에만 존재한다.
 
 ### 2) LeaderboardManager는 점수/스냅샷 + 시즌 보상을 책임진다
@@ -27,7 +27,7 @@ Leaderboard 점수 제출 + 시즌 전환 보상 시스템의 모듈 경계와 �
 
 ### 3) Season reward 지급 여부는 processedClaims 단일 기준이다
 
-- claim dedupe 기준은 `processedClaims[leaderboardId]` 단일 키다.
+- claim dedupe 기준은 `processedClaims[leaderboard_id]` 단일 키다.
 - `lastProcessedSeasonId` 같은 이중 상태를 두지 않는다.
 
 ### 4) grace period는 하드코딩 금지, 상수만 사용한다
@@ -37,7 +37,7 @@ Leaderboard 점수 제출 + 시즌 전환 보상 시스템의 모듈 경계와 �
 
 ### 5) 보상 소스는 LEADERBOARD_REWARD만 사용한다
 
-- 시즌 보상 지급은 `LEADERBOARD_REWARD.rewardGroupId`를 통해서만 수행한다.
+- 시즌 보상 지급은 `LEADERBOARD_REWARD.reward_group_id`를 통해서만 수행한다.
 - 하드코딩 보상/직접 RewardData 조립 금지.
 
 ### 6) NoReward 기록 조건을 엄격히 유지한다
@@ -61,10 +61,10 @@ Leaderboard 점수 제출 + 시즌 전환 보상 시스템의 모듈 경계와 �
 
 ### 10) 점수 기록은 시즌 활성 기간으로 제한한다
 
-- `ReportScoreAsync`는 `LEADERBOARD.seasonId` → `TB_SEASON` 조회 후 시간 범위를 확인한다.
-- 조건: `SEASON.StartUtcTime <= serverNowUtcMs < SEASON.EndUtcTime`
+- `ReportScoreAsync`는 `LEADERBOARD.season_id` → `TB_SEASON` 조회 후 시간 범위를 확인한다.
+- 조건: `SEASON.Start_utc_time <= serverNowUtcMs < SEASON.End_utc_time`
 - 범위 밖이면 `CommonResult.Failure` 반환.
-- `seasonId`가 비어 있으면 시간 제한을 적용하지 않는다.
+- `season_id`가 비어 있으면 시간 제한을 적용하지 않는다.
 
 ---
 
@@ -72,6 +72,6 @@ Leaderboard 점수 제출 + 시즌 전환 보상 시스템의 모듈 경계와 �
 
 `LeaderboardManager`
 - `InitializeAsync(ct)` -> `Task<CommonResult>`
-- `ReportScoreAsync(leaderboardId, ct)` -> `Task<CommonResult>`
-- `GetPlayerSnapshotAsync(leaderboardId, ct)` -> `Task<CommonResult<LeaderboardPlayerSnapshot>>`
+- `ReportScoreAsync(leaderboard_id, ct)` -> `Task<CommonResult>`
+- `GetPlayerSnapshotAsync(leaderboard_id, ct)` -> `Task<CommonResult<LeaderboardPlayerSnapshot>>`
 - `SyncSeasonTransitionRewardsAsync(ct)` -> `Task<CommonResult>`

@@ -9,7 +9,7 @@ namespace Devian
         UNIT_HERO_LEVEL mLevelTable = null;
         readonly Dictionary<int, AbilityItemEquip> mEquips = new();
 
-        public override string UnitId => mTable?.UnitId ?? string.Empty;
+        public override string UnitId => mTable?.unit_id ?? string.Empty;
         public IReadOnlyDictionary<int, AbilityItemEquip> Equips => mEquips;
 
         public void Init(UNIT_HERO table, UNIT_HERO_LEVEL levelTable)
@@ -20,7 +20,7 @@ namespace Devian
             if (levelTable == null)
                 return;
 
-            InitUnitState(levelTable.UnitLevel, levelTable.MaxHp);
+            InitUnitState(levelTable.unit_level, levelTable.max_hp);
         }
 
         public override AbilityBase Clone()
@@ -81,17 +81,6 @@ namespace Devian
 
             mEquips.Remove(slotNumber);
             return true;
-        }
-
-        internal void ClearProjectedEquips()
-        {
-            foreach (var slotNumber in new List<int>(mEquips.Keys))
-                Unequip(slotNumber);
-        }
-
-        internal bool SetProjectedEquip(AbilityItemEquip equip, int slotNumber)
-        {
-            return Equip(equip, slotNumber);
         }
 
         void applyEquipStats(AbilityItemEquip equip, int sign)

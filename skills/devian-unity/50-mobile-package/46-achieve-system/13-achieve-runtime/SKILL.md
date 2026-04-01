@@ -17,10 +17,10 @@ Achieve runtime(`AchieveRuntimeBase`, `AchieveRuntimeSocial`, `AchieveRuntimePas
 ## Runtime Model
 
 - `runtimeType`: `ACHIEVE_TYPE` (`ONCE`, `PASS`)
-- `achieveId`: 업적 그룹 ID
+- `achieve_id`: 업적 그룹 ID
 - `achieveUid`: runtime uid
 - `level`: 현재 단계
-- `index`: UI 정렬 인덱스(`orderNum - 1`)
+- `index`: UI 정렬 인덱스(`order_num - 1`)
 - `progressValue`: projection value
 - `state`: `MissionRuntimeState` (`WAIT` / `ACTIVE` / `COMPLETED`)
 
@@ -40,9 +40,9 @@ Achieve runtime(`AchieveRuntimeBase`, `AchieveRuntimeSocial`, `AchieveRuntimePas
 - `Detach`는 콜백/reader 참조를 해제한다.
 - period 개념은 없다.
 - WAIT 진입 사유는 runtime 타입별 req 조건이다.
-  - `ONCE`: `reqMsgId/reqValue`
-  - `PASS`: `reqPassId` / `reqSeasonId`
-- `reqPassId`가 있는 `PASS` runtime은 Pass 소유 조건 충족 시 `ACTIVE`로 전이한다.
+  - `ONCE`: `req_msg_id/req_value`
+  - `PASS`: `req_pass_id` / `req_season_id`
+- `req_pass_id`가 있는 `PASS` runtime은 Pass 소유 조건 충족 시 `ACTIVE`로 전이한다.
 
 ---
 

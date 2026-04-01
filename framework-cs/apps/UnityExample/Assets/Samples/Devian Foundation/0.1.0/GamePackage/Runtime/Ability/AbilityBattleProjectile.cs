@@ -8,9 +8,9 @@ namespace Devian
     {
         PROJECTILE mTable = null;
 
-        public string ProjectileId => mTable?.ProjectileId ?? string.Empty;
-        public string NameId => mTable?.NameId ?? string.Empty;
-        public IReadOnlyList<string> AffectList => mTable != null ? mTable.AffectList : Array.Empty<string>();
+        public string ProjectileId => mTable?.projectile_id ?? string.Empty;
+        public string NameId => mTable?.name_id ?? string.Empty;
+        public IReadOnlyList<string> AffectList => mTable != null ? mTable.affect_list : Array.Empty<string>();
 
         public void Init(PROJECTILE table)
         {

@@ -9,19 +9,19 @@ import { IEntity, IEntityKey } from '@devian/core';
 // ================================================================
 
 export interface PUSH_REMOTE extends IEntityKey<string> {
-    PushId: string;
-    Topic: string;
-    Language: string;
-    DefaultMsg: string;
-    IsTest: boolean;
+    push_id: string;
+    topic: string;
+    language: string;
+    default_msg: string;
+    is_test: boolean;
     getKey(): string;
 }
 
 export interface PUSH_LOCAL extends IEntityKey<string> {
-    PushId: string;
-    TitleTextId: string;
-    BodyTextId: string;
-    IsTest: boolean;
+    push_id: string;
+    title_text_id: string;
+    body_text_id: string;
+    is_test: boolean;
     getKey(): string;
 }
 
@@ -56,7 +56,7 @@ export class TB_PUSH_REMOTE {
         for (const line of lines) {
             const row = JSON.parse(line) as PUSH_REMOTE;
             this._list.push(row);
-            this._dict.set(row.PushId, row);
+            this._dict.set(row.push_id, row);
         }
     }
 
@@ -92,7 +92,7 @@ export class TB_PUSH_LOCAL {
         for (const line of lines) {
             const row = JSON.parse(line) as PUSH_LOCAL;
             this._list.push(row);
-            this._dict.set(row.PushId, row);
+            this._dict.set(row.push_id, row);
         }
     }
 

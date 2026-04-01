@@ -19,17 +19,17 @@ AppliesTo: v10
 
 ## A) Core Terms
 
-- `missionId`: 미션 ID
+- `mission_id`: 미션 ID
 - `missionType`: `MISSION_TYPE.DAILY` / `MISSION_TYPE.WEEKLY`
-- `conditionMsgId`: mission row가 참조하는 `GAME_MESSAGE.messageId`
+- `condition_msg_id`: mission row가 참조하는 `GAME_MESSAGE.message_id`
 - `messageType`: trigger key (`GAME_MESSAGE_TYPE`)
 - `saveType`: stat 누적 연산 (`GAME_MESSAGE_SAVE_TYPE`)
-- `conditionOp`: 비교 연산 (`GAME_MESSAGE_OP_TYPE`)
-- `conditionValue`: 목표값(`CBigInt`)
+- `condition_op`: 비교 연산 (`GAME_MESSAGE_OP_TYPE`)
+- `condition_value`: 목표값(`CBigInt`)
 - `periodKey`: runtime 주기 식별자 (`daily:{index}`, `weekly:{index}`)
 - `weeklyDayGroupKey`: `MISSION_WEEKLY.day` (weekly runtime 활성화 그룹 키)
 - `missionUid`: runtime 식별 `int`
-- `message stats`: `GameMessageStorage.stats[string messageId]`
+- `message stats`: `GameMessageStorage.stats[string message_id]`
 
 ---
 
@@ -39,14 +39,14 @@ AppliesTo: v10
 
 | field | type | note |
 |---|---|---|
-| `missionId` | string (pk) | 미션 ID |
-| `isActive` | bool | 운영 토글 |
+| `mission_id` | string (pk) | 미션 ID |
+| `is_active` | bool | 운영 토글 |
 | `fixed` | bool | daily 선택 우선 포함 |
-| `orderNum` | int | 정렬 기준(1-base) |
-| `conditionMsgId` | string | `GAME_MESSAGE.messageId` FK |
-| `conditionOp` | `GAME_MESSAGE_OP_TYPE` | 조건 비교 타입 |
-| `conditionValue` | `class:CBigInt` | 목표값 |
-| `rewardGroupId` | string | 보상 키 |
+| `order_num` | int | 정렬 기준(1-base) |
+| `condition_msg_id` | string | `GAME_MESSAGE.message_id` FK |
+| `condition_op` | `GAME_MESSAGE_OP_TYPE` | 조건 비교 타입 |
+| `condition_value` | `class:CBigInt` | 목표값 |
+| `reward_group_id` | string | 보상 키 |
 
 규칙:
 - `missionType` 필드는 없다(`MISSION_DAILY` 자체가 DAILY 타입).
@@ -55,16 +55,16 @@ AppliesTo: v10
 
 | field | type | note |
 |---|---|---|
-| `missionId` | string (pk) | 미션 ID |
-| `isActive` | bool | 운영 토글 |
+| `mission_id` | string (pk) | 미션 ID |
+| `is_active` | bool | 운영 토글 |
 | `day` | int | 활성화 day (1~7) |
-| `conditionMsgId` | string | `GAME_MESSAGE.messageId` FK |
-| `conditionOp` | `GAME_MESSAGE_OP_TYPE` | 조건 비교 타입 |
-| `conditionValue` | `class:CBigInt` | 목표값 |
-| `rewardGroupId` | string | 보상 키 |
+| `condition_msg_id` | string | `GAME_MESSAGE.message_id` FK |
+| `condition_op` | `GAME_MESSAGE_OP_TYPE` | 조건 비교 타입 |
+| `condition_value` | `class:CBigInt` | 목표값 |
+| `reward_group_id` | string | 보상 키 |
 
 규칙:
-- `missionType`, `fixed`, `orderNum` 필드는 없다.
+- `missionType`, `fixed`, `order_num` 필드는 없다.
 - `day`는 `1~7` 범위를 사용한다.
 - `day`는 weekly runtime의 group key다. 동일 `day` row는 같은 activation bucket으로 처리한다.
 
@@ -72,7 +72,7 @@ AppliesTo: v10
 
 | field | type | note |
 |---|---|---|
-| `messageId` | string (pk) | message 식별자 |
+| `message_id` | string (pk) | message 식별자 |
 | `messageType` | `GAME_MESSAGE_TYPE` | trigger 타입 |
 | `saveType` | `GAME_MESSAGE_SAVE_TYPE` | 누적 방식 |
 
@@ -117,7 +117,7 @@ trigger 처리 순서:
 
 1. `GameMessageManager.Notify` 호출
 2. `TB_GAME_MESSAGE`에서 `messageType` 일치 row를 순회
-3. `message.stats[messageId]` 갱신
+3. `message.stats[message_id]` 갱신
    - `TOTAL_SUM`: `current + delta`
    - `TOTAL_MAX`: `max(current, delta)`
    - `TOTAL_MIN`: `min(current, delta)`
@@ -129,7 +129,7 @@ runtime 반영:
 - `SESSION_SUM`: `progress + delta`
 - `SESSION_MAX`: `max(progress, delta)`
 - `SESSION_MIN`: `min(progress, delta)`
-- `TOTAL_*`: external reader(`message.stats[conditionMsgId]`)로 refresh
+- `TOTAL_*`: external reader(`message.stats[condition_msg_id]`)로 refresh
 
 ---
 
@@ -145,9 +145,9 @@ runtime 반영:
 
 runtime 저장 규칙:
 
-- `missionId`, `missionUid`, `state`
+- `mission_id`, `missionUid`, `state`
 - `periodKey`, `index`, `progressValue`
-- `conditionMsgId`는 저장하지 않는다(`missionId`로 테이블에서 조회)
+- `condition_msg_id`는 저장하지 않는다(`mission_id`로 테이블에서 조회)
 
 ---
 

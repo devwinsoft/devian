@@ -7,7 +7,7 @@ MobilePackage 샘플의 Leaderboard 시스템 범위를 정의한다.
 
 - Apple(Game Center) / Google Play Games Services(GPGS v2) 점수 제출
 - player snapshot 조회(내 점수/랭크 유무)
-- 시즌 전환 보상 평가/지급(LEADERBOARD_REWARD + rewardGroupId)
+- 시즌 전환 보상 평가/지급(LEADERBOARD_REWARD + reward_group_id)
 
 업적 Unlock/Sync는 `46-achieve-system`으로 분리되었다.
 

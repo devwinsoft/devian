@@ -7,20 +7,19 @@ export class AbilityItemHero extends AbilityItemBase {
     private mLevelTable: ITEM_HERO_LEVEL | null = null;
     private readonly mEquips: Map<number, AbilityItemEquip> = new Map();
 
-    get heroId(): string { return this.mTable?.ItemId ?? ''; }
-    get unitId(): string { return this.mTable?.UnitId ?? ''; }
-    get itemId(): string { return this.mTable?.ItemId ?? ''; }
+    get unitId(): string { return this.mTable?.unit_id ?? ''; }
+    get itemId(): string { return this.mTable?.item_id ?? ''; }
     get equips(): ReadonlyMap<number, AbilityItemEquip> { return this.mEquips; }
 
     init(table: ITEM_HERO, levelTable: ITEM_HERO_LEVEL): void {
         this.mTable = table;
         this.mLevelTable = levelTable;
         this.initLevelStats(
-            levelTable.ItemLevel,
-            levelTable.StatType00, levelTable.StatValue00,
-            levelTable.StatType01, levelTable.StatValue01,
-            levelTable.StatType02, levelTable.StatValue02,
-            levelTable.StatType03, levelTable.StatValue03,
+            levelTable.item_level,
+            levelTable.stat_type00, levelTable.stat_value00,
+            levelTable.stat_type01, levelTable.stat_value01,
+            levelTable.stat_type02, levelTable.stat_value02,
+            levelTable.stat_type03, levelTable.stat_value03,
         );
     }
 
@@ -30,11 +29,11 @@ export class AbilityItemHero extends AbilityItemBase {
         const prev = this.mEquips.get(slotNumber);
         if (prev) {
             if (this.isSameEquip(prev, equip)) {
-                prev.setOwner(this.heroId, slotNumber);
+                prev.setOwner(this.itemId, slotNumber);
                 return true;
             }
 
-            if (prev.ownerUnitId === this.heroId && prev.ownerSlotNumber === slotNumber)
+            if (prev.ownerUnitId === this.itemId && prev.ownerSlotNumber === slotNumber)
                 prev.clearOwner();
         }
 
@@ -47,7 +46,7 @@ export class AbilityItemHero extends AbilityItemBase {
         }
 
         this.mEquips.set(slotNumber, equip);
-        equip.setOwner(this.heroId, slotNumber);
+        equip.setOwner(this.itemId, slotNumber);
         return true;
     }
 
@@ -55,7 +54,7 @@ export class AbilityItemHero extends AbilityItemBase {
         const equip = this.mEquips.get(slotNumber);
         if (!equip) return false;
 
-        if (equip.ownerUnitId === this.heroId && equip.ownerSlotNumber === slotNumber)
+        if (equip.ownerUnitId === this.itemId && equip.ownerSlotNumber === slotNumber)
             equip.clearOwner();
 
         this.mEquips.delete(slotNumber);

@@ -41,6 +41,8 @@ namespace Devian
         private int _editAndroidBundleCode;
         private string _editIOSBuildNumber = "";
         private bool _versionDirty;
+        private GameObject _appPrefab;
+        private BaseApplication _appComponent;
 
         // 플랫폼 자동감지 (빌드 모듈 설치 여부)
         private bool _androidSupported;
@@ -102,6 +104,7 @@ namespace Devian
 
         // Version 스냅샷 (_versionDirty → 조건부 HelpBox)
         private bool _guiVersionDirty;
+        private bool _guiHasAppComponent;
 
         // Build 옵션 스냅샷
         private bool _guiDevBuild;
@@ -153,7 +156,7 @@ namespace Devian
             RefreshLastVersions();
 
             EditorApplication.update += OnEditorUpdate;
-            LoadVersion();
+            LoadVersionFromPrefab();
         }
 
         private void OnDisable()
@@ -207,6 +210,7 @@ namespace Devian
                 _guiTab = _currentTab;
                 _guiPrereqStatus = _prereqStatus;
                 _guiVersionDirty = _versionDirty;
+                _guiHasAppComponent = _appComponent != null;
                 _guiDevBuild = _settings != null && _settings.developmentBuild;
                 _guiAppBundle = EditorUserBuildSettings.buildAppBundle;
                 _guiAndroidReady = _androidReady;
@@ -630,9 +634,7 @@ namespace Devian
             {
                 if (GUILayout.Button("▶  Build", GUILayout.Height(30)))
                 {
-                    // OnGUI 밖에서 실행 — BuildPipeline.BuildPlayer는
-                    // OnGUI/player loop 내에서 호출하면 GUI 레이아웃 에러 발생
-                    EditorApplication.delayCall += () => RunBuild();
+                    RunBuild();
                 }
             }
         }
@@ -661,7 +663,7 @@ namespace Devian
             {
                 if (GUILayout.Button("⬆  Upload Bundles to Git", GUILayout.Height(30)))
                 {
-                    EditorApplication.delayCall += () => RunBundleUpload();
+                    RunBundleUpload();
                 }
             }
         }
@@ -897,19 +899,18 @@ namespace Devian
 
         // ─── Version Section ─────────────────────────────────
 
-        private void LoadVersion()
+        private void LoadVersionFromPrefab()
         {
-            if (VersionNumber.TryParse(PlayerSettings.bundleVersion, out var ver))
+            _appPrefab = Resources.Load<GameObject>("Devian/Application");
+            if (_appPrefab != null)
+                _appComponent = _appPrefab.GetComponent<BaseApplication>();
+
+            if (_appComponent != null)
             {
+                var ver = _appComponent.AppVersion;
                 _editMajor = ver.Major;
                 _editMinor = ver.Minor;
                 _editPatch = ver.Patch;
-            }
-            else
-            {
-                _editMajor = 0;
-                _editMinor = 0;
-                _editPatch = 0;
             }
 
             _editAndroidBundleCode = PlayerSettings.Android.bundleVersionCode;
@@ -921,7 +922,17 @@ namespace Devian
         {
             EditorGUILayout.LabelField("Version / Build Number", EditorStyles.boldLabel);
 
-            // AppVersion (Major.Minor.Patch) — SSOT: PlayerSettings.bundleVersion
+            // 스냅샷 사용 — _appComponent가 async 도중 null이 되어도 안전
+            if (!_guiHasAppComponent)
+            {
+                EditorGUILayout.HelpBox(
+                    "Application prefab not found (Resources/Devian/Application).\n" +
+                    "AppVersion을 표시할 수 없습니다.",
+                    MessageType.Warning);
+                return;
+            }
+
+            // AppVersion (Major.Minor.Patch)
             EditorGUI.BeginChangeCheck();
 
             using (new EditorGUILayout.HorizontalScope())
@@ -976,13 +987,15 @@ namespace Devian
                     }
                     if (GUILayout.Button("Revert", GUILayout.Width(80)))
                     {
-                        LoadVersion();
+                        LoadVersionFromPrefab();
                     }
                 }
 
                 // 현재 적용된 값 표시 — 항상 그린다
                 GUILayout.FlexibleSpace();
-                var curLabel = $"Current: {PlayerSettings.bundleVersion}";
+                var curLabel = _guiHasAppComponent && _appComponent != null
+                    ? $"Current: {_appComponent.AppVersion.Major}.{_appComponent.AppVersion.Minor}.{_appComponent.AppVersion.Patch}"
+                    : " ";
                 EditorGUILayout.LabelField(curLabel,
                     EditorStyles.miniLabel, GUILayout.Width(120));
             }
@@ -1003,7 +1016,22 @@ namespace Devian
 
         private void ApplyVersion()
         {
-            // PlayerSettings 적용 (bundleVersion + 플랫폼별 빌드 번호) — SSOT
+            // 1. Application prefab의 VersionNumber 업데이트
+            if (_appComponent != null)
+            {
+                var so = new SerializedObject(_appComponent);
+                var versionProp = so.FindProperty("_appVersion");
+                if (versionProp != null)
+                {
+                    versionProp.FindPropertyRelative("Major").intValue = _editMajor;
+                    versionProp.FindPropertyRelative("Minor").intValue = _editMinor;
+                    versionProp.FindPropertyRelative("Patch").intValue = _editPatch;
+                    so.ApplyModifiedProperties();
+                    EditorUtility.SetDirty(_appPrefab);
+                }
+            }
+
+            // 2. PlayerSettings 동기화 (bundleVersion + 플랫폼별 빌드 번호)
             PlayerSettings.bundleVersion = $"{_editMajor}.{_editMinor}.{_editPatch}";
 
             if (_androidSupported)
@@ -1336,7 +1364,7 @@ namespace Devian
                         ? _settings.excludedAddressableGroups
                         : new List<string>();
 
-                    var bundlePath = BundleBuildRunner.Run(excludeList, _settings);
+                    var bundlePath = BundleBuildRunner.Run(excludeList);
                     if (bundlePath == null)
                     {
                         BuildAutomationLogger.LogError(
@@ -1469,6 +1497,9 @@ namespace Devian
 
             _progress = 0.7f;
             Repaint();
+
+            // await는 Unity EditorCoroutine 패턴 사용 시 제거 가능
+            await Task.Yield();
 
             return allOk;
         }

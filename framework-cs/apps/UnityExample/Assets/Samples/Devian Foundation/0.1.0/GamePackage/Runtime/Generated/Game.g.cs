@@ -275,8 +275,8 @@ namespace Devian.Domain.Game
     /// <summary>UserProfile class</summary>
     public sealed class UserProfile : IEntity
     {
-        public int Id { get; set; }
-        public string Name { get; set; } = string.Empty;
+        public int id { get; set; }
+        public string name { get; set; } = string.Empty;
     }
 
     // ================================================================
@@ -286,498 +286,498 @@ namespace Devian.Domain.Game
     /// <summary>ACHIEVE_SOCIAL row</summary>
     public sealed class ACHIEVE_SOCIAL : IEntityKey<int>
     {
-        public int Index { get; set; }
-        public string AchieveId { get; set; } = string.Empty;
-        public bool IsActive { get; set; }
-        public int Level { get; set; }
-        public int OrderNum { get; set; }
-        public string ReqMsgId { get; set; } = string.Empty;
-        public CBigInt? ReqValue { get; set; }
-        public string ConditionMsgId { get; set; } = string.Empty;
-        public GAME_MESSAGE_OP_TYPE ConditionOp { get; set; }
-        public CBigInt? ConditionValue { get; set; }
-        public string RewardGroupId { get; set; } = string.Empty;
-        public string AppleAchievementId { get; set; } = string.Empty;
-        public string GoogleAchievementId { get; set; } = string.Empty;
+        public int index { get; set; }
+        public string achieve_id { get; set; } = string.Empty;
+        public bool is_active { get; set; }
+        public int level { get; set; }
+        public int order_num { get; set; }
+        public string req_msg_id { get; set; } = string.Empty;
+        public CBigInt? req_value { get; set; }
+        public string condition_msg_id { get; set; } = string.Empty;
+        public GAME_MESSAGE_OP_TYPE condition_op { get; set; }
+        public CBigInt? condition_value { get; set; }
+        public string reward_group_id { get; set; } = string.Empty;
+        public string apple_achievement_id { get; set; } = string.Empty;
+        public string google_achievement_id { get; set; } = string.Empty;
 
-        public int GetKey() => Index;
+        public int GetKey() => index;
     }
 
     /// <summary>ACHIEVE_PASS row</summary>
     public sealed class ACHIEVE_PASS : IEntityKey<int>
     {
-        public int Index { get; set; }
-        public string AchieveId { get; set; } = string.Empty;
-        public bool IsActive { get; set; }
-        public int Level { get; set; }
-        public int OrderNum { get; set; }
-        public string ReqSeasonId { get; set; } = string.Empty;
-        public string ReqPassId { get; set; } = string.Empty;
-        public string ConditionMsgId { get; set; } = string.Empty;
-        public GAME_MESSAGE_OP_TYPE ConditionOp { get; set; }
-        public CBigInt? ConditionValue { get; set; }
-        public string RewardGroupId { get; set; } = string.Empty;
+        public int index { get; set; }
+        public string achieve_id { get; set; } = string.Empty;
+        public bool is_active { get; set; }
+        public int level { get; set; }
+        public int order_num { get; set; }
+        public string req_season_id { get; set; } = string.Empty;
+        public string req_pass_id { get; set; } = string.Empty;
+        public string condition_msg_id { get; set; } = string.Empty;
+        public GAME_MESSAGE_OP_TYPE condition_op { get; set; }
+        public CBigInt? condition_value { get; set; }
+        public string reward_group_id { get; set; } = string.Empty;
 
-        public int GetKey() => Index;
+        public int GetKey() => index;
     }
 
     /// <summary>REWARD row</summary>
     public sealed class REWARD : IEntityKey<int>
     {
-        public int RewardNum { get; set; }
-        public string RewardGroupId { get; set; } = string.Empty;
-        public REWARD_TYPE Type { get; set; }
-        public string Id { get; set; } = string.Empty;
-        public int Amount { get; set; }
-        public float Rate { get; set; }
+        public int reward_num { get; set; }
+        public string reward_group_id { get; set; } = string.Empty;
+        public REWARD_TYPE type { get; set; }
+        public string id { get; set; } = string.Empty;
+        public int amount { get; set; }
+        public float rate { get; set; }
 
-        public int GetKey() => RewardNum;
+        public int GetKey() => reward_num;
     }
 
     /// <summary>GAME_MESSAGE row</summary>
     public sealed class GAME_MESSAGE : IEntityKey<string>
     {
-        public string MessageId { get; set; } = string.Empty;
-        public GAME_MESSAGE_TYPE MessageType { get; set; }
-        public GAME_MESSAGE_SAVE_TYPE SaveType { get; set; }
+        public string message_id { get; set; } = string.Empty;
+        public GAME_MESSAGE_TYPE message_type { get; set; }
+        public GAME_MESSAGE_SAVE_TYPE save_type { get; set; }
 
-        public string GetKey() => MessageId;
+        public string GetKey() => message_id;
     }
 
     /// <summary>ITEM_HERO row</summary>
     public sealed class ITEM_HERO : IEntityKey<string>
     {
-        public string ItemId { get; set; } = string.Empty;
-        public string UnitId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
-        public string DescId { get; set; } = string.Empty;
+        public string item_id { get; set; } = string.Empty;
+        public string unit_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
+        public string desc_id { get; set; } = string.Empty;
 
-        public string GetKey() => ItemId;
+        public string GetKey() => item_id;
     }
 
     /// <summary>ITEM_HERO_LEVEL row</summary>
     public sealed class ITEM_HERO_LEVEL : IEntityKey<int>
     {
-        public int Index { get; set; }
-        public string ItemId { get; set; } = string.Empty;
-        public int ItemLevel { get; set; }
-        public STAT_TYPE StatType00 { get; set; }
-        public int StatValue00 { get; set; }
-        public STAT_TYPE StatType01 { get; set; }
-        public int StatValue01 { get; set; }
-        public STAT_TYPE StatType02 { get; set; }
-        public int StatValue02 { get; set; }
-        public STAT_TYPE StatType03 { get; set; }
-        public int StatValue03 { get; set; }
+        public int index { get; set; }
+        public string item_id { get; set; } = string.Empty;
+        public int item_level { get; set; }
+        public STAT_TYPE stat_type00 { get; set; }
+        public int stat_value00 { get; set; }
+        public STAT_TYPE stat_type01 { get; set; }
+        public int stat_value01 { get; set; }
+        public STAT_TYPE stat_type02 { get; set; }
+        public int stat_value02 { get; set; }
+        public STAT_TYPE stat_type03 { get; set; }
+        public int stat_value03 { get; set; }
 
-        public int GetKey() => Index;
+        public int GetKey() => index;
     }
 
     /// <summary>ITEM_EQUIP row</summary>
     public sealed class ITEM_EQUIP : IEntityKey<string>
     {
-        public string ItemId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
-        public string DescId { get; set; } = string.Empty;
+        public string item_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
+        public string desc_id { get; set; } = string.Empty;
 
-        public string GetKey() => ItemId;
+        public string GetKey() => item_id;
     }
 
     /// <summary>ITEM_EQUIP_LEVEL row</summary>
     public sealed class ITEM_EQUIP_LEVEL : IEntityKey<int>
     {
-        public int Index { get; set; }
-        public string ItemId { get; set; } = string.Empty;
-        public int ItemLevel { get; set; }
-        public STAT_TYPE StatType00 { get; set; }
-        public int StatValue00 { get; set; }
-        public STAT_TYPE StatType01 { get; set; }
-        public int StatValue01 { get; set; }
-        public STAT_TYPE StatType02 { get; set; }
-        public int StatValue02 { get; set; }
-        public STAT_TYPE StatType03 { get; set; }
-        public int StatValue03 { get; set; }
+        public int index { get; set; }
+        public string item_id { get; set; } = string.Empty;
+        public int item_level { get; set; }
+        public STAT_TYPE stat_type00 { get; set; }
+        public int stat_value00 { get; set; }
+        public STAT_TYPE stat_type01 { get; set; }
+        public int stat_value01 { get; set; }
+        public STAT_TYPE stat_type02 { get; set; }
+        public int stat_value02 { get; set; }
+        public STAT_TYPE stat_type03 { get; set; }
+        public int stat_value03 { get; set; }
 
-        public int GetKey() => Index;
+        public int GetKey() => index;
     }
 
     /// <summary>ITEM_CARD row</summary>
     public sealed class ITEM_CARD : IEntityKey<string>
     {
-        public string ItemId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
-        public string DescId { get; set; } = string.Empty;
+        public string item_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
+        public string desc_id { get; set; } = string.Empty;
 
-        public string GetKey() => ItemId;
+        public string GetKey() => item_id;
     }
 
     /// <summary>ITEM_CARD_LEVEL row</summary>
     public sealed class ITEM_CARD_LEVEL : IEntityKey<int>
     {
-        public int Index { get; set; }
-        public string ItemId { get; set; } = string.Empty;
-        public int ItemLevel { get; set; }
-        public STAT_TYPE StatType00 { get; set; }
-        public int StatValue00 { get; set; }
-        public STAT_TYPE StatType01 { get; set; }
-        public int StatValue01 { get; set; }
-        public STAT_TYPE StatType02 { get; set; }
-        public int StatValue02 { get; set; }
-        public STAT_TYPE StatType03 { get; set; }
-        public int StatValue03 { get; set; }
+        public int index { get; set; }
+        public string item_id { get; set; } = string.Empty;
+        public int item_level { get; set; }
+        public STAT_TYPE stat_type00 { get; set; }
+        public int stat_value00 { get; set; }
+        public STAT_TYPE stat_type01 { get; set; }
+        public int stat_value01 { get; set; }
+        public STAT_TYPE stat_type02 { get; set; }
+        public int stat_value02 { get; set; }
+        public STAT_TYPE stat_type03 { get; set; }
+        public int stat_value03 { get; set; }
 
-        public int GetKey() => Index;
+        public int GetKey() => index;
     }
 
     /// <summary>ITEM_MATERIAL row</summary>
     public sealed class ITEM_MATERIAL : IEntityKey<string>
     {
-        public string ItemId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
-        public string DescId { get; set; } = string.Empty;
+        public string item_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
+        public string desc_id { get; set; } = string.Empty;
 
-        public string GetKey() => ItemId;
+        public string GetKey() => item_id;
     }
 
     /// <summary>ITEM_RENTAL row</summary>
     public sealed class ITEM_RENTAL : IEntityKey<string>
     {
-        public string ItemId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
+        public string item_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
 
-        public string GetKey() => ItemId;
+        public string GetKey() => item_id;
     }
 
     /// <summary>ITEM_PASS row</summary>
     public sealed class ITEM_PASS : IEntityKey<string>
     {
-        public string ItemId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
-        public string DescId { get; set; } = string.Empty;
+        public string item_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
+        public string desc_id { get; set; } = string.Empty;
 
-        public string GetKey() => ItemId;
+        public string GetKey() => item_id;
     }
 
     /// <summary>ITEM_TREASURE row</summary>
     public sealed class ITEM_TREASURE : IEntityKey<string>
     {
-        public string ChestNum { get; set; } = string.Empty;
-        public string ItemId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
-        public string RewardGroupId { get; set; } = string.Empty;
+        public string chest_num { get; set; } = string.Empty;
+        public string item_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
+        public string reward_group_id { get; set; } = string.Empty;
 
-        public string GetKey() => ChestNum;
+        public string GetKey() => chest_num;
     }
 
     /// <summary>ADVERTISE row</summary>
     public sealed class ADVERTISE : IEntityKey<string>
     {
-        public string AdvertiseId { get; set; } = string.Empty;
-        public bool IsActive { get; set; }
-        public ADVERTISE_FORMAT Format { get; set; }
-        public ADVERTISE_PROVIDER Provider { get; set; }
-        public bool AutoLoad { get; set; }
-        public int CooldownSec { get; set; }
-        public string AndroidAdUnitId { get; set; } = string.Empty;
-        public string IosAdUnitId { get; set; } = string.Empty;
+        public string advertise_id { get; set; } = string.Empty;
+        public bool is_active { get; set; }
+        public ADVERTISE_FORMAT format { get; set; }
+        public ADVERTISE_PROVIDER provider { get; set; }
+        public bool auto_load { get; set; }
+        public int cooldown_sec { get; set; }
+        public string android_ad_unit_id { get; set; } = string.Empty;
+        public string ios_ad_unit_id { get; set; } = string.Empty;
 
-        public string GetKey() => AdvertiseId;
+        public string GetKey() => advertise_id;
     }
 
     /// <summary>ATTEND row</summary>
     public sealed class ATTEND : IEntityKey<string>
     {
-        public string AttendId { get; set; } = string.Empty;
-        public bool IsActive { get; set; }
-        public int Day { get; set; }
-        public string RewardGroupId { get; set; } = string.Empty;
+        public string attend_id { get; set; } = string.Empty;
+        public bool is_active { get; set; }
+        public int day { get; set; }
+        public string reward_group_id { get; set; } = string.Empty;
 
-        public string GetKey() => AttendId;
+        public string GetKey() => attend_id;
     }
 
     /// <summary>LEADERBOARD row</summary>
     public sealed class LEADERBOARD : IEntityKey<string>
     {
-        public string LeaderboardId { get; set; } = string.Empty;
-        public bool IsActive { get; set; }
-        public string MessageId { get; set; } = string.Empty;
-        public LEADERBOARD_MODE Mode { get; set; }
-        public string SeasonId { get; set; } = string.Empty;
-        public string AppleLeaderboardId { get; set; } = string.Empty;
-        public string GoogleLeaderboardId { get; set; } = string.Empty;
+        public string leaderboard_id { get; set; } = string.Empty;
+        public bool is_active { get; set; }
+        public string message_id { get; set; } = string.Empty;
+        public LEADERBOARD_MODE mode { get; set; }
+        public string season_id { get; set; } = string.Empty;
+        public string apple_leaderboard_id { get; set; } = string.Empty;
+        public string google_leaderboard_id { get; set; } = string.Empty;
 
-        public string GetKey() => LeaderboardId;
+        public string GetKey() => leaderboard_id;
     }
 
     /// <summary>LEADERBOARD_REWARD row</summary>
     public sealed class LEADERBOARD_REWARD : IEntityKey<int>
     {
-        public int Index { get; set; }
-        public string LeaderboardId { get; set; } = string.Empty;
-        public long RankFrom { get; set; }
-        public long RankTo { get; set; }
-        public string RewardGroupId { get; set; } = string.Empty;
+        public int index { get; set; }
+        public string leaderboard_id { get; set; } = string.Empty;
+        public long rank_from { get; set; }
+        public long rank_to { get; set; }
+        public string reward_group_id { get; set; } = string.Empty;
 
-        public int GetKey() => Index;
+        public int GetKey() => index;
     }
 
     /// <summary>SEASON row</summary>
     public sealed class SEASON : IEntityKey<string>
     {
-        public string SeasonId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
-        public string DescId { get; set; } = string.Empty;
-        public CDateTime? StartUtcTime { get; set; }
-        public CDateTime? EndUtcTime { get; set; }
+        public string season_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
+        public string desc_id { get; set; } = string.Empty;
+        public CDateTime? start_utc_time { get; set; }
+        public CDateTime? end_utc_time { get; set; }
 
-        public string GetKey() => SeasonId;
+        public string GetKey() => season_id;
     }
 
     /// <summary>MISSION_DAILY row</summary>
     public sealed class MISSION_DAILY : IEntityKey<string>
     {
-        public string MissionId { get; set; } = string.Empty;
-        public bool IsActive { get; set; }
-        public bool Fixed { get; set; }
-        public int OrderNum { get; set; }
-        public string ConditionMsgId { get; set; } = string.Empty;
-        public GAME_MESSAGE_OP_TYPE ConditionOp { get; set; }
-        public CBigInt? ConditionValue { get; set; }
-        public string RewardGroupId { get; set; } = string.Empty;
+        public string mission_id { get; set; } = string.Empty;
+        public bool is_active { get; set; }
+        public bool is_fixed { get; set; }
+        public int order_num { get; set; }
+        public string condition_msg_id { get; set; } = string.Empty;
+        public GAME_MESSAGE_OP_TYPE condition_op { get; set; }
+        public CBigInt? condition_value { get; set; }
+        public string reward_group_id { get; set; } = string.Empty;
 
-        public string GetKey() => MissionId;
+        public string GetKey() => mission_id;
     }
 
     /// <summary>MISSION_WEEKLY row</summary>
     public sealed class MISSION_WEEKLY : IEntityKey<string>
     {
-        public string MissionId { get; set; } = string.Empty;
-        public int Day { get; set; }
-        public bool IsActive { get; set; }
-        public string ConditionMsgId { get; set; } = string.Empty;
-        public GAME_MESSAGE_OP_TYPE ConditionOp { get; set; }
-        public CBigInt? ConditionValue { get; set; }
-        public string RewardGroupId { get; set; } = string.Empty;
+        public string mission_id { get; set; } = string.Empty;
+        public int day { get; set; }
+        public bool is_active { get; set; }
+        public string condition_msg_id { get; set; } = string.Empty;
+        public GAME_MESSAGE_OP_TYPE condition_op { get; set; }
+        public CBigInt? condition_value { get; set; }
+        public string reward_group_id { get; set; } = string.Empty;
 
-        public string GetKey() => MissionId;
+        public string GetKey() => mission_id;
     }
 
     /// <summary>SHOP_CATALOG row</summary>
     public sealed class SHOP_CATALOG : IEntityKey<SHOP_CATALOG_TYPE>
     {
-        public SHOP_CATALOG_TYPE CatalogType { get; set; }
-        public string NameId { get; set; } = string.Empty;
-        public int AutoRefreshDays { get; set; }
-        public string UnlockMsgId { get; set; } = string.Empty;
-        public GAME_MESSAGE_OP_TYPE UnlockOpType { get; set; }
-        public CBigInt? UnlockValue { get; set; }
+        public SHOP_CATALOG_TYPE catalog_type { get; set; }
+        public string name_id { get; set; } = string.Empty;
+        public int auto_refresh_days { get; set; }
+        public string unlock_msg_id { get; set; } = string.Empty;
+        public GAME_MESSAGE_OP_TYPE unlock_op_type { get; set; }
+        public CBigInt? unlock_value { get; set; }
 
-        public SHOP_CATALOG_TYPE GetKey() => CatalogType;
+        public SHOP_CATALOG_TYPE GetKey() => catalog_type;
     }
 
     /// <summary>SHOP_CATALOG_CHEST row</summary>
     public sealed class SHOP_CATALOG_CHEST : IEntityKey<int>
     {
-        public int Level { get; set; }
-        public int MaxExp { get; set; }
-        public int AdsExp { get; set; }
-        public int GainExp01 { get; set; }
-        public int GainExp10 { get; set; }
-        public string RewardAds { get; set; } = string.Empty;
-        public string RewardPaid01 { get; set; } = string.Empty;
-        public string RewardPaid10 { get; set; } = string.Empty;
+        public int level { get; set; }
+        public int max_exp { get; set; }
+        public int ads_exp { get; set; }
+        public int gain_exp01 { get; set; }
+        public int gain_exp10 { get; set; }
+        public string reward_ads { get; set; } = string.Empty;
+        public string reward_paid01 { get; set; } = string.Empty;
+        public string reward_paid10 { get; set; } = string.Empty;
 
-        public int GetKey() => Level;
+        public int GetKey() => level;
     }
 
     /// <summary>SHOP_DAILY row</summary>
     public sealed class SHOP_DAILY : IEntityKey<string>
     {
-        public string ShopId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
-        public CURRENCY_TYPE CurrencyType { get; set; }
-        public int Price { get; set; }
-        public string RewardGroupId { get; set; } = string.Empty;
-        public int Amount { get; set; }
-        public int MaxCount { get; set; }
-        public float SelectRate { get; set; }
-        public float DiscountRate10Per { get; set; }
-        public float DiscountRate20Per { get; set; }
-        public float DiscountRate30Per { get; set; }
-        public float DiscountRate50Per { get; set; }
+        public string shop_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
+        public CURRENCY_TYPE currency_type { get; set; }
+        public int price { get; set; }
+        public string reward_group_id { get; set; } = string.Empty;
+        public int amount { get; set; }
+        public int max_count { get; set; }
+        public float select_rate { get; set; }
+        public float discount_rate10_per { get; set; }
+        public float discount_rate20_per { get; set; }
+        public float discount_rate30_per { get; set; }
+        public float discount_rate50_per { get; set; }
 
-        public string GetKey() => ShopId;
+        public string GetKey() => shop_id;
     }
 
     /// <summary>SHOP_EVENT row</summary>
     public sealed class SHOP_EVENT : IEntityKey<string>
     {
-        public string ShopId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
-        public CURRENCY_TYPE CurrencyType { get; set; }
-        public int Price { get; set; }
-        public string RewardGroupId { get; set; } = string.Empty;
-        public CDateTime StartTime { get; set; }
-        public CDateTime EndTime { get; set; }
+        public string shop_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
+        public CURRENCY_TYPE currency_type { get; set; }
+        public int price { get; set; }
+        public string reward_group_id { get; set; } = string.Empty;
+        public CDateTime start_time { get; set; }
+        public CDateTime end_time { get; set; }
 
-        public string GetKey() => ShopId;
+        public string GetKey() => shop_id;
     }
 
     /// <summary>SHOP_CHEST row</summary>
     public sealed class SHOP_CHEST : IEntityKey<string>
     {
-        public string ShopId { get; set; } = string.Empty;
-        public SHOP_PRODUCT_CHEST_TYPE ChestType { get; set; }
-        public string NameId { get; set; } = string.Empty;
-        public CURRENCY_TYPE CurrencyType { get; set; }
-        public int Price { get; set; }
-        public int Amount { get; set; }
-        public int MaxCount { get; set; }
+        public string shop_id { get; set; } = string.Empty;
+        public SHOP_PRODUCT_CHEST_TYPE chest_type { get; set; }
+        public string name_id { get; set; } = string.Empty;
+        public CURRENCY_TYPE currency_type { get; set; }
+        public int price { get; set; }
+        public int amount { get; set; }
+        public int max_count { get; set; }
 
-        public string GetKey() => ShopId;
+        public string GetKey() => shop_id;
     }
 
     /// <summary>SHOP_PURCHASE row</summary>
     public sealed class SHOP_PURCHASE : IEntityKey<string>
     {
-        public string ShopId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
-        public string InternalProductId { get; set; } = string.Empty;
-        public string SeasonId { get; set; } = string.Empty;
+        public string shop_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
+        public string internal_product_id { get; set; } = string.Empty;
+        public string season_id { get; set; } = string.Empty;
 
-        public string GetKey() => ShopId;
+        public string GetKey() => shop_id;
     }
 
     /// <summary>SHOP_GOLD row</summary>
     public sealed class SHOP_GOLD : IEntityKey<string>
     {
-        public string ShopId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
-        public CURRENCY_TYPE CurrencyType { get; set; }
-        public int Price { get; set; }
-        public string RewardGroupId { get; set; } = string.Empty;
-        public int MaxCount { get; set; }
+        public string shop_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
+        public CURRENCY_TYPE currency_type { get; set; }
+        public int price { get; set; }
+        public string reward_group_id { get; set; } = string.Empty;
+        public int max_count { get; set; }
 
-        public string GetKey() => ShopId;
+        public string GetKey() => shop_id;
     }
 
     /// <summary>PURCHASE row</summary>
     public sealed class PURCHASE : IEntityKey<string>
     {
-        public string InternalProductId { get; set; } = string.Empty;
-        public string RewardGroupId { get; set; } = string.Empty;
-        public PURCHASE_KIND Kind { get; set; }
-        public bool IsActive { get; set; }
-        public string StoreSkuApple { get; set; } = string.Empty;
-        public string StoreSkuGoogle { get; set; } = string.Empty;
+        public string internal_product_id { get; set; } = string.Empty;
+        public string reward_group_id { get; set; } = string.Empty;
+        public PURCHASE_KIND kind { get; set; }
+        public bool is_active { get; set; }
+        public string store_sku_apple { get; set; } = string.Empty;
+        public string store_sku_google { get; set; } = string.Empty;
 
-        public string GetKey() => InternalProductId;
+        public string GetKey() => internal_product_id;
     }
 
     /// <summary>SKILL row</summary>
     public sealed class SKILL : IEntityKey<string>
     {
-        public string SkillId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
-        public List<string> AffectList { get; set; } = new();
+        public string skill_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
+        public List<string> affect_list { get; set; } = new();
 
-        public string GetKey() => SkillId;
+        public string GetKey() => skill_id;
     }
 
     /// <summary>PROJECTILE row</summary>
     public sealed class PROJECTILE : IEntityKey<string>
     {
-        public string ProjectileId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
-        public List<string> AffectList { get; set; } = new();
+        public string projectile_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
+        public List<string> affect_list { get; set; } = new();
 
-        public string GetKey() => ProjectileId;
+        public string GetKey() => projectile_id;
     }
 
     /// <summary>STATUS row</summary>
     public sealed class STATUS : IEntityKey<string>
     {
-        public string StatusId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
-        public List<string> AffectList { get; set; } = new();
+        public string status_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
+        public List<string> affect_list { get; set; } = new();
 
-        public string GetKey() => StatusId;
+        public string GetKey() => status_id;
     }
 
     /// <summary>AFFECT row</summary>
     public sealed class AFFECT : IEntityKey<string>
     {
-        public string AffectId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
+        public string affect_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
 
-        public string GetKey() => AffectId;
+        public string GetKey() => affect_id;
     }
 
     /// <summary>TREASURE_CHEST row</summary>
     public sealed class TREASURE_CHEST : IEntityKey<int>
     {
-        public int Level { get; set; }
-        public TREASURE_GRADE_TYPE TreasureGradeType { get; set; }
-        public int MaxExp { get; set; }
+        public int level { get; set; }
+        public TREASURE_GRADE_TYPE treasure_grade_type { get; set; }
+        public int max_exp { get; set; }
 
-        public int GetKey() => Level;
+        public int GetKey() => level;
     }
 
     /// <summary>TREASURE_REWARD row</summary>
     public sealed class TREASURE_REWARD : IEntityKey<int>
     {
-        public int Index { get; set; }
-        public TREASURE_GRADE_TYPE TreasureGradeType { get; set; }
-        public int Level { get; set; }
-        public string ConditionMsgId { get; set; } = string.Empty;
-        public GAME_MESSAGE_OP_TYPE ConditionOp { get; set; }
-        public CBigInt? ConditionValue { get; set; }
-        public string RewardGroupId { get; set; } = string.Empty;
+        public int index { get; set; }
+        public TREASURE_GRADE_TYPE treasure_grade_type { get; set; }
+        public int level { get; set; }
+        public string condition_msg_id { get; set; } = string.Empty;
+        public GAME_MESSAGE_OP_TYPE condition_op { get; set; }
+        public CBigInt? condition_value { get; set; }
+        public string reward_group_id { get; set; } = string.Empty;
 
-        public int GetKey() => Index;
+        public int GetKey() => index;
     }
 
     /// <summary>UNIT_HERO row</summary>
     public sealed class UNIT_HERO : IEntityKey<string>
     {
-        public string UnitId { get; set; } = string.Empty;
-        public UNIT_HERO_TYPE HeroType { get; set; }
-        public string NameId { get; set; } = string.Empty;
-        public string DescId { get; set; } = string.Empty;
+        public string unit_id { get; set; } = string.Empty;
+        public UNIT_HERO_TYPE hero_type { get; set; }
+        public string name_id { get; set; } = string.Empty;
+        public string desc_id { get; set; } = string.Empty;
 
-        public string GetKey() => UnitId;
+        public string GetKey() => unit_id;
     }
 
     /// <summary>UNIT_HERO_LEVEL row</summary>
     public sealed class UNIT_HERO_LEVEL : IEntityKey<int>
     {
-        public int Index { get; set; }
-        public string UnitId { get; set; } = string.Empty;
-        public int UnitLevel { get; set; }
-        public int MaxHp { get; set; }
+        public int index { get; set; }
+        public string unit_id { get; set; } = string.Empty;
+        public int unit_level { get; set; }
+        public int max_hp { get; set; }
 
-        public int GetKey() => Index;
+        public int GetKey() => index;
     }
 
     /// <summary>UNIT_MONSTER row</summary>
     public sealed class UNIT_MONSTER : IEntityKey<string>
     {
-        public string UnitId { get; set; } = string.Empty;
-        public string NameId { get; set; } = string.Empty;
-        public string DescId { get; set; } = string.Empty;
+        public string unit_id { get; set; } = string.Empty;
+        public string name_id { get; set; } = string.Empty;
+        public string desc_id { get; set; } = string.Empty;
 
-        public string GetKey() => UnitId;
+        public string GetKey() => unit_id;
     }
 
     /// <summary>UNIT_MONSTER_LEVEL row</summary>
     public sealed class UNIT_MONSTER_LEVEL : IEntityKey<int>
     {
-        public int Index { get; set; }
-        public string UnitId { get; set; } = string.Empty;
-        public int UnitLevel { get; set; }
-        public int MaxHp { get; set; }
+        public int index { get; set; }
+        public string unit_id { get; set; } = string.Empty;
+        public int unit_level { get; set; }
+        public int max_hp { get; set; }
 
-        public int GetKey() => Index;
+        public int GetKey() => index;
     }
 
     // ================================================================
@@ -839,9 +839,9 @@ namespace Devian.Domain.Game
         private static void AddRow(ACHIEVE_SOCIAL row)
         {
             _list.Add(row);
-            _dict[row.Index] = row;
-            var groupKey = row.AchieveId;
-            _keyToGroup[row.Index] = groupKey;
+            _dict[row.index] = row;
+            var groupKey = row.achieve_id;
+            _keyToGroup[row.index] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
                 groupList = new List<ACHIEVE_SOCIAL>();
@@ -851,12 +851,12 @@ namespace Devian.Domain.Game
             groupList.Add(row);
             if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
             {
-                if (Comparer<int>.Default.Compare(row.Index, existing) < 0)
-                    _groupPrimaryKey[groupKey] = row.Index;
+                if (Comparer<int>.Default.Compare(row.index, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.index;
             }
             else
             {
-                _groupPrimaryKey[groupKey] = row.Index;
+                _groupPrimaryKey[groupKey] = row.index;
             }
         }
 
@@ -966,9 +966,9 @@ namespace Devian.Domain.Game
         private static void AddRow(ACHIEVE_PASS row)
         {
             _list.Add(row);
-            _dict[row.Index] = row;
-            var groupKey = row.AchieveId;
-            _keyToGroup[row.Index] = groupKey;
+            _dict[row.index] = row;
+            var groupKey = row.achieve_id;
+            _keyToGroup[row.index] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
                 groupList = new List<ACHIEVE_PASS>();
@@ -978,12 +978,12 @@ namespace Devian.Domain.Game
             groupList.Add(row);
             if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
             {
-                if (Comparer<int>.Default.Compare(row.Index, existing) < 0)
-                    _groupPrimaryKey[groupKey] = row.Index;
+                if (Comparer<int>.Default.Compare(row.index, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.index;
             }
             else
             {
-                _groupPrimaryKey[groupKey] = row.Index;
+                _groupPrimaryKey[groupKey] = row.index;
             }
         }
 
@@ -1093,9 +1093,9 @@ namespace Devian.Domain.Game
         private static void AddRow(REWARD row)
         {
             _list.Add(row);
-            _dict[row.RewardNum] = row;
-            var groupKey = row.RewardGroupId;
-            _keyToGroup[row.RewardNum] = groupKey;
+            _dict[row.reward_num] = row;
+            var groupKey = row.reward_group_id;
+            _keyToGroup[row.reward_num] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
                 groupList = new List<REWARD>();
@@ -1105,12 +1105,12 @@ namespace Devian.Domain.Game
             groupList.Add(row);
             if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
             {
-                if (Comparer<int>.Default.Compare(row.RewardNum, existing) < 0)
-                    _groupPrimaryKey[groupKey] = row.RewardNum;
+                if (Comparer<int>.Default.Compare(row.reward_num, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.reward_num;
             }
             else
             {
-                _groupPrimaryKey[groupKey] = row.RewardNum;
+                _groupPrimaryKey[groupKey] = row.reward_num;
             }
         }
 
@@ -1194,7 +1194,7 @@ namespace Devian.Domain.Game
         private static void AddRow(GAME_MESSAGE row)
         {
             _list.Add(row);
-            _dict[row.MessageId] = row;
+            _dict[row.message_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -1277,7 +1277,7 @@ namespace Devian.Domain.Game
         private static void AddRow(ITEM_HERO row)
         {
             _list.Add(row);
-            _dict[row.ItemId] = row;
+            _dict[row.item_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -1386,9 +1386,9 @@ namespace Devian.Domain.Game
         private static void AddRow(ITEM_HERO_LEVEL row)
         {
             _list.Add(row);
-            _dict[row.Index] = row;
-            var groupKey = row.ItemId;
-            _keyToGroup[row.Index] = groupKey;
+            _dict[row.index] = row;
+            var groupKey = row.item_id;
+            _keyToGroup[row.index] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
                 groupList = new List<ITEM_HERO_LEVEL>();
@@ -1398,12 +1398,12 @@ namespace Devian.Domain.Game
             groupList.Add(row);
             if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
             {
-                if (Comparer<int>.Default.Compare(row.Index, existing) < 0)
-                    _groupPrimaryKey[groupKey] = row.Index;
+                if (Comparer<int>.Default.Compare(row.index, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.index;
             }
             else
             {
-                _groupPrimaryKey[groupKey] = row.Index;
+                _groupPrimaryKey[groupKey] = row.index;
             }
         }
 
@@ -1487,7 +1487,7 @@ namespace Devian.Domain.Game
         private static void AddRow(ITEM_EQUIP row)
         {
             _list.Add(row);
-            _dict[row.ItemId] = row;
+            _dict[row.item_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -1596,9 +1596,9 @@ namespace Devian.Domain.Game
         private static void AddRow(ITEM_EQUIP_LEVEL row)
         {
             _list.Add(row);
-            _dict[row.Index] = row;
-            var groupKey = row.ItemId;
-            _keyToGroup[row.Index] = groupKey;
+            _dict[row.index] = row;
+            var groupKey = row.item_id;
+            _keyToGroup[row.index] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
                 groupList = new List<ITEM_EQUIP_LEVEL>();
@@ -1608,12 +1608,12 @@ namespace Devian.Domain.Game
             groupList.Add(row);
             if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
             {
-                if (Comparer<int>.Default.Compare(row.Index, existing) < 0)
-                    _groupPrimaryKey[groupKey] = row.Index;
+                if (Comparer<int>.Default.Compare(row.index, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.index;
             }
             else
             {
-                _groupPrimaryKey[groupKey] = row.Index;
+                _groupPrimaryKey[groupKey] = row.index;
             }
         }
 
@@ -1697,7 +1697,7 @@ namespace Devian.Domain.Game
         private static void AddRow(ITEM_CARD row)
         {
             _list.Add(row);
-            _dict[row.ItemId] = row;
+            _dict[row.item_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -1806,9 +1806,9 @@ namespace Devian.Domain.Game
         private static void AddRow(ITEM_CARD_LEVEL row)
         {
             _list.Add(row);
-            _dict[row.Index] = row;
-            var groupKey = row.ItemId;
-            _keyToGroup[row.Index] = groupKey;
+            _dict[row.index] = row;
+            var groupKey = row.item_id;
+            _keyToGroup[row.index] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
                 groupList = new List<ITEM_CARD_LEVEL>();
@@ -1818,12 +1818,12 @@ namespace Devian.Domain.Game
             groupList.Add(row);
             if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
             {
-                if (Comparer<int>.Default.Compare(row.Index, existing) < 0)
-                    _groupPrimaryKey[groupKey] = row.Index;
+                if (Comparer<int>.Default.Compare(row.index, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.index;
             }
             else
             {
-                _groupPrimaryKey[groupKey] = row.Index;
+                _groupPrimaryKey[groupKey] = row.index;
             }
         }
 
@@ -1907,7 +1907,7 @@ namespace Devian.Domain.Game
         private static void AddRow(ITEM_MATERIAL row)
         {
             _list.Add(row);
-            _dict[row.ItemId] = row;
+            _dict[row.item_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -1990,7 +1990,7 @@ namespace Devian.Domain.Game
         private static void AddRow(ITEM_RENTAL row)
         {
             _list.Add(row);
-            _dict[row.ItemId] = row;
+            _dict[row.item_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -2073,7 +2073,7 @@ namespace Devian.Domain.Game
         private static void AddRow(ITEM_PASS row)
         {
             _list.Add(row);
-            _dict[row.ItemId] = row;
+            _dict[row.item_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -2182,9 +2182,9 @@ namespace Devian.Domain.Game
         private static void AddRow(ITEM_TREASURE row)
         {
             _list.Add(row);
-            _dict[row.ChestNum] = row;
-            var groupKey = row.ItemId;
-            _keyToGroup[row.ChestNum] = groupKey;
+            _dict[row.chest_num] = row;
+            var groupKey = row.item_id;
+            _keyToGroup[row.chest_num] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
                 groupList = new List<ITEM_TREASURE>();
@@ -2194,12 +2194,12 @@ namespace Devian.Domain.Game
             groupList.Add(row);
             if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
             {
-                if (Comparer<string>.Default.Compare(row.ChestNum, existing) < 0)
-                    _groupPrimaryKey[groupKey] = row.ChestNum;
+                if (Comparer<string>.Default.Compare(row.chest_num, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.chest_num;
             }
             else
             {
-                _groupPrimaryKey[groupKey] = row.ChestNum;
+                _groupPrimaryKey[groupKey] = row.chest_num;
             }
         }
 
@@ -2283,7 +2283,7 @@ namespace Devian.Domain.Game
         private static void AddRow(ADVERTISE row)
         {
             _list.Add(row);
-            _dict[row.AdvertiseId] = row;
+            _dict[row.advertise_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -2366,7 +2366,7 @@ namespace Devian.Domain.Game
         private static void AddRow(ATTEND row)
         {
             _list.Add(row);
-            _dict[row.AttendId] = row;
+            _dict[row.attend_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -2449,7 +2449,7 @@ namespace Devian.Domain.Game
         private static void AddRow(LEADERBOARD row)
         {
             _list.Add(row);
-            _dict[row.LeaderboardId] = row;
+            _dict[row.leaderboard_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -2558,9 +2558,9 @@ namespace Devian.Domain.Game
         private static void AddRow(LEADERBOARD_REWARD row)
         {
             _list.Add(row);
-            _dict[row.Index] = row;
-            var groupKey = row.LeaderboardId;
-            _keyToGroup[row.Index] = groupKey;
+            _dict[row.index] = row;
+            var groupKey = row.leaderboard_id;
+            _keyToGroup[row.index] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
                 groupList = new List<LEADERBOARD_REWARD>();
@@ -2570,12 +2570,12 @@ namespace Devian.Domain.Game
             groupList.Add(row);
             if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
             {
-                if (Comparer<int>.Default.Compare(row.Index, existing) < 0)
-                    _groupPrimaryKey[groupKey] = row.Index;
+                if (Comparer<int>.Default.Compare(row.index, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.index;
             }
             else
             {
-                _groupPrimaryKey[groupKey] = row.Index;
+                _groupPrimaryKey[groupKey] = row.index;
             }
         }
 
@@ -2659,7 +2659,7 @@ namespace Devian.Domain.Game
         private static void AddRow(SEASON row)
         {
             _list.Add(row);
-            _dict[row.SeasonId] = row;
+            _dict[row.season_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -2742,7 +2742,7 @@ namespace Devian.Domain.Game
         private static void AddRow(MISSION_DAILY row)
         {
             _list.Add(row);
-            _dict[row.MissionId] = row;
+            _dict[row.mission_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -2851,9 +2851,9 @@ namespace Devian.Domain.Game
         private static void AddRow(MISSION_WEEKLY row)
         {
             _list.Add(row);
-            _dict[row.MissionId] = row;
-            var groupKey = row.Day;
-            _keyToGroup[row.MissionId] = groupKey;
+            _dict[row.mission_id] = row;
+            var groupKey = row.day;
+            _keyToGroup[row.mission_id] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
                 groupList = new List<MISSION_WEEKLY>();
@@ -2863,12 +2863,12 @@ namespace Devian.Domain.Game
             groupList.Add(row);
             if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
             {
-                if (Comparer<string>.Default.Compare(row.MissionId, existing) < 0)
-                    _groupPrimaryKey[groupKey] = row.MissionId;
+                if (Comparer<string>.Default.Compare(row.mission_id, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.mission_id;
             }
             else
             {
-                _groupPrimaryKey[groupKey] = row.MissionId;
+                _groupPrimaryKey[groupKey] = row.mission_id;
             }
         }
 
@@ -2952,7 +2952,7 @@ namespace Devian.Domain.Game
         private static void AddRow(SHOP_CATALOG row)
         {
             _list.Add(row);
-            _dict[row.CatalogType] = row;
+            _dict[row.catalog_type] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -3035,7 +3035,7 @@ namespace Devian.Domain.Game
         private static void AddRow(SHOP_CATALOG_CHEST row)
         {
             _list.Add(row);
-            _dict[row.Level] = row;
+            _dict[row.level] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -3118,7 +3118,7 @@ namespace Devian.Domain.Game
         private static void AddRow(SHOP_DAILY row)
         {
             _list.Add(row);
-            _dict[row.ShopId] = row;
+            _dict[row.shop_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -3201,7 +3201,7 @@ namespace Devian.Domain.Game
         private static void AddRow(SHOP_EVENT row)
         {
             _list.Add(row);
-            _dict[row.ShopId] = row;
+            _dict[row.shop_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -3284,7 +3284,7 @@ namespace Devian.Domain.Game
         private static void AddRow(SHOP_CHEST row)
         {
             _list.Add(row);
-            _dict[row.ShopId] = row;
+            _dict[row.shop_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -3367,7 +3367,7 @@ namespace Devian.Domain.Game
         private static void AddRow(SHOP_PURCHASE row)
         {
             _list.Add(row);
-            _dict[row.ShopId] = row;
+            _dict[row.shop_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -3450,7 +3450,7 @@ namespace Devian.Domain.Game
         private static void AddRow(SHOP_GOLD row)
         {
             _list.Add(row);
-            _dict[row.ShopId] = row;
+            _dict[row.shop_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -3533,7 +3533,7 @@ namespace Devian.Domain.Game
         private static void AddRow(PURCHASE row)
         {
             _list.Add(row);
-            _dict[row.InternalProductId] = row;
+            _dict[row.internal_product_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -3616,7 +3616,7 @@ namespace Devian.Domain.Game
         private static void AddRow(SKILL row)
         {
             _list.Add(row);
-            _dict[row.SkillId] = row;
+            _dict[row.skill_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -3699,7 +3699,7 @@ namespace Devian.Domain.Game
         private static void AddRow(PROJECTILE row)
         {
             _list.Add(row);
-            _dict[row.ProjectileId] = row;
+            _dict[row.projectile_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -3782,7 +3782,7 @@ namespace Devian.Domain.Game
         private static void AddRow(STATUS row)
         {
             _list.Add(row);
-            _dict[row.StatusId] = row;
+            _dict[row.status_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -3865,7 +3865,7 @@ namespace Devian.Domain.Game
         private static void AddRow(AFFECT row)
         {
             _list.Add(row);
-            _dict[row.AffectId] = row;
+            _dict[row.affect_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -3948,7 +3948,7 @@ namespace Devian.Domain.Game
         private static void AddRow(TREASURE_CHEST row)
         {
             _list.Add(row);
-            _dict[row.Level] = row;
+            _dict[row.level] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -4057,9 +4057,9 @@ namespace Devian.Domain.Game
         private static void AddRow(TREASURE_REWARD row)
         {
             _list.Add(row);
-            _dict[row.Index] = row;
-            var groupKey = row.TreasureGradeType;
-            _keyToGroup[row.Index] = groupKey;
+            _dict[row.index] = row;
+            var groupKey = row.treasure_grade_type;
+            _keyToGroup[row.index] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
                 groupList = new List<TREASURE_REWARD>();
@@ -4069,12 +4069,12 @@ namespace Devian.Domain.Game
             groupList.Add(row);
             if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
             {
-                if (Comparer<int>.Default.Compare(row.Index, existing) < 0)
-                    _groupPrimaryKey[groupKey] = row.Index;
+                if (Comparer<int>.Default.Compare(row.index, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.index;
             }
             else
             {
-                _groupPrimaryKey[groupKey] = row.Index;
+                _groupPrimaryKey[groupKey] = row.index;
             }
         }
 
@@ -4158,7 +4158,7 @@ namespace Devian.Domain.Game
         private static void AddRow(UNIT_HERO row)
         {
             _list.Add(row);
-            _dict[row.UnitId] = row;
+            _dict[row.unit_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -4267,9 +4267,9 @@ namespace Devian.Domain.Game
         private static void AddRow(UNIT_HERO_LEVEL row)
         {
             _list.Add(row);
-            _dict[row.Index] = row;
-            var groupKey = row.UnitId;
-            _keyToGroup[row.Index] = groupKey;
+            _dict[row.index] = row;
+            var groupKey = row.unit_id;
+            _keyToGroup[row.index] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
                 groupList = new List<UNIT_HERO_LEVEL>();
@@ -4279,12 +4279,12 @@ namespace Devian.Domain.Game
             groupList.Add(row);
             if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
             {
-                if (Comparer<int>.Default.Compare(row.Index, existing) < 0)
-                    _groupPrimaryKey[groupKey] = row.Index;
+                if (Comparer<int>.Default.Compare(row.index, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.index;
             }
             else
             {
-                _groupPrimaryKey[groupKey] = row.Index;
+                _groupPrimaryKey[groupKey] = row.index;
             }
         }
 
@@ -4368,7 +4368,7 @@ namespace Devian.Domain.Game
         private static void AddRow(UNIT_MONSTER row)
         {
             _list.Add(row);
-            _dict[row.UnitId] = row;
+            _dict[row.unit_id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -4477,9 +4477,9 @@ namespace Devian.Domain.Game
         private static void AddRow(UNIT_MONSTER_LEVEL row)
         {
             _list.Add(row);
-            _dict[row.Index] = row;
-            var groupKey = row.UnitId;
-            _keyToGroup[row.Index] = groupKey;
+            _dict[row.index] = row;
+            var groupKey = row.unit_id;
+            _keyToGroup[row.index] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
                 groupList = new List<UNIT_MONSTER_LEVEL>();
@@ -4489,12 +4489,12 @@ namespace Devian.Domain.Game
             groupList.Add(row);
             if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
             {
-                if (Comparer<int>.Default.Compare(row.Index, existing) < 0)
-                    _groupPrimaryKey[groupKey] = row.Index;
+                if (Comparer<int>.Default.Compare(row.index, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.index;
             }
             else
             {
-                _groupPrimaryKey[groupKey] = row.Index;
+                _groupPrimaryKey[groupKey] = row.index;
             }
         }
 

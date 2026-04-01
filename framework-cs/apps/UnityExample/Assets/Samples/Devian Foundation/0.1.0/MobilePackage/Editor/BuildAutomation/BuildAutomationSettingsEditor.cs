@@ -1,11 +1,9 @@
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
-using Debug = UnityEngine.Debug;
 
 namespace Devian
 {
@@ -41,47 +39,6 @@ namespace Devian
                 DrawPathFieldInline(
                     serializedObject.FindProperty("keystorePath"),
                     "Keystore Path", isFolder: false, extensions: "keystore,jks");
-
-                // Keystore Credentials (EditorPrefs — git에 포함되지 않음)
-                EditorGUILayout.Space(2);
-                EditorGUILayout.LabelField(
-                    "Keystore Credentials (EditorPrefs — 로컬 전용, git 미포함)",
-                    EditorStyles.wordWrappedMiniLabel);
-                DrawEditorPrefsPassword("Keystore Pass",
-                    () => BuildAutomationSettings.KeystorePass,
-                    v => BuildAutomationSettings.KeystorePass = v);
-
-                // Key Alias Name — 자동 조회 버튼 포함
-                using (new EditorGUILayout.HorizontalScope())
-                {
-                    EditorGUILayout.LabelField("Key Alias Name", GUILayout.Width(100));
-                    var kaName = BuildAutomationSettings.KeyaliasName;
-                    var newKaName = EditorGUILayout.TextField(kaName);
-                    if (newKaName != kaName) BuildAutomationSettings.KeyaliasName = newKaName;
-
-                    var keystorePath = serializedObject.FindProperty("keystorePath").stringValue;
-                    var canDetect = !string.IsNullOrEmpty(keystorePath)
-                        && !string.IsNullOrEmpty(BuildAutomationSettings.KeystorePass);
-                    using (new EditorGUI.DisabledScope(!canDetect))
-                    {
-                        if (GUILayout.Button("Detect", GUILayout.Width(52)))
-                        {
-                            var alias = DetectKeyAlias(keystorePath,
-                                BuildAutomationSettings.KeystorePass);
-                            if (alias != null)
-                            {
-                                BuildAutomationSettings.KeyaliasName = alias;
-                                Debug.Log($"[BuildAutomation] Detected key alias: {alias}");
-                            }
-                        }
-                    }
-                }
-
-                DrawEditorPrefsPassword("Key Alias Pass",
-                    () => BuildAutomationSettings.KeyaliasPass,
-                    v => BuildAutomationSettings.KeyaliasPass = v);
-
-                EditorGUILayout.Space(2);
                 DrawPropertyInline(
                     serializedObject.FindProperty("firebaseAndroidAppId"),
                     "Firebase App ID");
@@ -104,30 +61,6 @@ namespace Devian
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.LabelField("Release", EditorStyles.miniBoldLabel);
-
-                var cdnProp = serializedObject.FindProperty("remoteCdnUrl");
-
-                // remoteCdnUrl이 비어있으면 Addressables Profile에서 자동 추출
-                if (string.IsNullOrEmpty(cdnProp.stringValue))
-                {
-                    var extracted = ExtractCdnUrlFromProfile();
-                    if (!string.IsNullOrEmpty(extracted))
-                    {
-                        cdnProp.stringValue = extracted;
-                        Debug.Log($"[BuildAutomation] Remote CDN URL auto-filled from Addressables Profile: {extracted}");
-                    }
-                }
-
-                var prevCdn = cdnProp.stringValue;
-                DrawPropertyInline(cdnProp, "Remote CDN URL");
-
-                // 값 변경 시 Addressables Profile 즉시 동기화
-                if (cdnProp.stringValue != prevCdn)
-                {
-                    // ApplyModifiedProperties 전에 동기화 예약
-                    EditorApplication.delayCall += () => SyncRemoteLoadPathToProfile(cdnProp.stringValue);
-                }
-
                 DrawPathFieldInline(
                     serializedObject.FindProperty("releaseRepoRoot"),
                     "Release Repo Root", isFolder: true);
@@ -263,36 +196,6 @@ namespace Devian
         }
 
         /// <summary>
-        /// EditorPrefs 기반 텍스트 필드 (평문).
-        /// </summary>
-        private static void DrawEditorPrefsField(
-            string label, System.Func<string> getter, System.Action<string> setter)
-        {
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                EditorGUILayout.LabelField(label, GUILayout.Width(100));
-                var current = getter();
-                var next = EditorGUILayout.TextField(current);
-                if (next != current) setter(next);
-            }
-        }
-
-        /// <summary>
-        /// EditorPrefs 기반 패스워드 필드 (마스킹).
-        /// </summary>
-        private static void DrawEditorPrefsPassword(
-            string label, System.Func<string> getter, System.Action<string> setter)
-        {
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                EditorGUILayout.LabelField(label, GUILayout.Width(100));
-                var current = getter();
-                var next = EditorGUILayout.PasswordField(current);
-                if (next != current) setter(next);
-            }
-        }
-
-        /// <summary>
         /// 파일/폴더 브라우저를 열어 선택 결과를 prop에 적용한다.
         /// </summary>
         private void BrowseAndApply(
@@ -325,182 +228,6 @@ namespace Devian
 
                 prop.stringValue = selected;
             }
-        }
-
-        /// <summary>
-        /// Addressables Profile의 Remote.LoadPath에서 CDN base URL을 추출한다.
-        /// raw 형식: "https://xxx.cloudfront.net/v[...]/[BuildTarget]"
-        /// → "https://xxx.cloudfront.net" 부분만 반환.
-        /// </summary>
-        private static string ExtractCdnUrlFromProfile()
-        {
-            var aaSettings = AddressableAssetSettingsDefaultObject.Settings;
-            if (aaSettings == null) return null;
-
-            var profileId = aaSettings.activeProfileId;
-            var raw = aaSettings.profileSettings.GetValueByName(profileId, "Remote.LoadPath");
-            if (string.IsNullOrEmpty(raw) || !raw.StartsWith("http")) return null;
-
-            // "/v[" 또는 "/v0" 등 버전 prefix 시작점을 찾아 그 앞까지가 CDN URL
-            var vIdx = raw.IndexOf("/v[");
-            if (vIdx < 0) vIdx = raw.IndexOf("/v0");
-            if (vIdx < 0) vIdx = raw.IndexOf("/v1");
-            if (vIdx < 0) vIdx = raw.IndexOf("/v2");
-            if (vIdx < 0)
-            {
-                // /v prefix 없으면 마지막 /[BuildTarget] 앞까지
-                var lastSlash = raw.LastIndexOf('/');
-                if (lastSlash > 8) // "https://" 이후
-                    return raw.Substring(0, lastSlash);
-                return null;
-            }
-
-            return raw.Substring(0, vIdx);
-        }
-
-        /// <summary>
-        /// Addressables Profile의 Remote.LoadPath를
-        /// {remoteCdnUrl}/v[bundleVersion]/[BuildTarget] 형태로 동기화한다.
-        /// </summary>
-        private static void SyncRemoteLoadPathToProfile(string remoteCdnUrl)
-        {
-            if (string.IsNullOrEmpty(remoteCdnUrl)) return;
-
-            var aaSettings = AddressableAssetSettingsDefaultObject.Settings;
-            if (aaSettings == null) return;
-
-            var cdnBase = remoteCdnUrl.TrimEnd('/');
-            var expected = $"{cdnBase}/v[UnityEditor.PlayerSettings.bundleVersion]/[BuildTarget]";
-
-            var profileId = aaSettings.activeProfileId;
-            var current = aaSettings.profileSettings.GetValueByName(profileId, "Remote.LoadPath");
-
-            if (current == expected) return;
-
-            aaSettings.profileSettings.SetValue(profileId, "Remote.LoadPath", expected);
-            EditorUtility.SetDirty(aaSettings);
-            Debug.Log($"[BuildAutomation] Remote.LoadPath synced → {expected}");
-        }
-
-        /// <summary>
-        /// keytool -list로 keystore의 첫 번째 PrivateKeyEntry alias를 반환한다.
-        /// </summary>
-        private static string DetectKeyAlias(string keystorePath, string keystorePass)
-        {
-            // keystorePath가 상대경로면 프로젝트 루트 기준으로 절대경로 변환
-            if (!System.IO.Path.IsPathRooted(keystorePath))
-            {
-                var projectRoot = System.IO.Path.GetFullPath(
-                    System.IO.Path.Combine(Application.dataPath, ".."));
-                keystorePath = System.IO.Path.Combine(projectRoot, keystorePath);
-            }
-
-            if (!System.IO.File.Exists(keystorePath))
-            {
-                Debug.LogError($"[BuildAutomation] Keystore not found: {keystorePath}");
-                return null;
-            }
-
-            // keytool 경로 탐색
-            var keytoolPath = ResolveKeytool();
-            if (keytoolPath == null)
-            {
-                Debug.LogError("[BuildAutomation] keytool not found. JDK가 설치되어 있는지 확인하세요.");
-                return null;
-            }
-
-            try
-            {
-                var startInfo = new ProcessStartInfo
-                {
-                    FileName = keytoolPath,
-                    Arguments = $"-list -keystore \"{keystorePath}\" -storepass \"{keystorePass}\"",
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-
-                var process = new Process { StartInfo = startInfo };
-                process.Start();
-                var output = process.StandardOutput.ReadToEnd();
-                var error = process.StandardError.ReadToEnd();
-                process.WaitForExit(10000);
-
-                if (process.ExitCode != 0)
-                {
-                    Debug.LogError($"[BuildAutomation] keytool failed: {error.Trim()}");
-                    return null;
-                }
-
-                // "aliasName, date, PrivateKeyEntry," 형태에서 alias 추출
-                foreach (var line in output.Split('\n'))
-                {
-                    var trimmed = line.Trim();
-                    if (trimmed.Contains("PrivateKeyEntry"))
-                    {
-                        var commaIdx = trimmed.IndexOf(',');
-                        if (commaIdx > 0)
-                        {
-                            return trimmed.Substring(0, commaIdx).Trim();
-                        }
-                    }
-                }
-
-                Debug.LogWarning("[BuildAutomation] No PrivateKeyEntry found in keystore.");
-                return null;
-            }
-            catch (System.Exception ex)
-            {
-                Debug.LogError($"[BuildAutomation] keytool error: {ex.Message}");
-                return null;
-            }
-        }
-
-        /// <summary>keytool 실행 파일 경로를 찾는다.</summary>
-        private static string ResolveKeytool()
-        {
-            // Unity가 사용하는 JDK 경로에서 먼저 탐색
-            var jdkPath = EditorPrefs.GetString("JdkPath", "");
-            if (!string.IsNullOrEmpty(jdkPath))
-            {
-                var candidate = System.IO.Path.Combine(jdkPath, "bin", "keytool");
-                if (System.IO.File.Exists(candidate)) return candidate;
-            }
-
-            // 시스템 경로 탐색
-            var searchPaths = new[]
-            {
-                "/usr/bin/keytool",
-                "/usr/local/bin/keytool",
-                "/opt/homebrew/bin/keytool",
-            };
-            foreach (var p in searchPaths)
-            {
-                if (System.IO.File.Exists(p)) return p;
-            }
-
-            // which로 탐색
-            try
-            {
-                var si = new ProcessStartInfo
-                {
-                    FileName = "/usr/bin/which",
-                    Arguments = "keytool",
-                    RedirectStandardOutput = true,
-                    UseShellExecute = false,
-                    CreateNoWindow = true
-                };
-                var proc = new Process { StartInfo = si };
-                proc.Start();
-                var result = proc.StandardOutput.ReadToEnd().Trim();
-                proc.WaitForExit(5000);
-                if (proc.ExitCode == 0 && System.IO.File.Exists(result))
-                    return result;
-            }
-            catch { /* ignore */ }
-
-            return null;
         }
     }
 }

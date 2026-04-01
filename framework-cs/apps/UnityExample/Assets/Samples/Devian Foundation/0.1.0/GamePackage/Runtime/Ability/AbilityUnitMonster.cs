@@ -7,7 +7,7 @@ namespace Devian
         UNIT_MONSTER mTable = null;
         UNIT_MONSTER_LEVEL mLevelTable = null;
 
-        public override string UnitId => mTable?.UnitId ?? string.Empty;
+        public override string UnitId => mTable?.unit_id ?? string.Empty;
 
         public void Init(UNIT_MONSTER table, UNIT_MONSTER_LEVEL levelTable)
         {
@@ -17,7 +17,7 @@ namespace Devian
             if (levelTable == null)
                 return;
 
-            InitUnitState(levelTable.UnitLevel, levelTable.MaxHp);
+            InitUnitState(levelTable.unit_level, levelTable.max_hp);
         }
 
         public override AbilityBase Clone()

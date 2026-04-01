@@ -36,7 +36,7 @@ public sealed class MissionStorage
 ```csharp
 public abstract class MissionRuntimeBase
 {
-    public string missionId;
+    public string mission_id;
     public string periodKey;
     public int missionUid;
     public int index;
@@ -47,7 +47,7 @@ public abstract class MissionRuntimeBase
 
 규칙:
 - `state`는 `WAIT`, `ACTIVE`, `COMPLETED`만 저장한다. `CLAIMABLE`은 파생 상태이므로 저장하지 않는다.
-- `conditionMsgId`는 저장하지 않는다. `missionId`로 테이블(`MISSION_DAILY`/`MISSION_WEEKLY`)에서 조회한다.
+- `condition_msg_id`는 저장하지 않는다. `mission_id`로 테이블(`MISSION_DAILY`/`MISSION_WEEKLY`)에서 조회한다.
 
 타입별 저장 규칙:
 
@@ -62,8 +62,8 @@ public abstract class MissionRuntimeBase
 
 - `DAILY`/period `progress`는 runtime 로컬 값으로 저장/복원한다.
 - stat 누적 값은 mission payload에 저장하지 않는다.
-- `conditionMsgId`는 runtime에 저장하지 않는다. restore 시 테이블에서 조회한다.
-- `rewardGroupId` 등 definition 데이터는 runtime에 저장하지 않는다.
+- `condition_msg_id`는 runtime에 저장하지 않는다. restore 시 테이블에서 조회한다.
+- `reward_group_id` 등 definition 데이터는 runtime에 저장하지 않는다.
 
 ---
 

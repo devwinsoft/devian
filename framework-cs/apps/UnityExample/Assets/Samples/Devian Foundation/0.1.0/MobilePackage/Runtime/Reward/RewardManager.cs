@@ -456,10 +456,10 @@ namespace Devian
                 if (!TrySelectRewardRow(rows, out var selectedReward))
                     return Array.Empty<RewardData>();
 
-                if (selectedReward.Type == REWARD_TYPE.TREASURE)
+                if (selectedReward.type == REWARD_TYPE.TREASURE)
                     return ResolveTreasureRewardDeltas(selectedReward, resolveGuard);
 
-                return new[] { new RewardData(selectedReward.Type, selectedReward.Id, selectedReward.Amount) };
+                return new[] { new RewardData(selectedReward.type, selectedReward.id, selectedReward.amount) };
             }
             finally
             {
@@ -469,8 +469,8 @@ namespace Devian
 
         RewardData[] ResolveTreasureRewardDeltas(REWARD chestReward, HashSet<string> resolveGuard)
         {
-            var chestId = chestReward.Id != null ? chestReward.Id.Trim() : string.Empty;
-            if (string.IsNullOrEmpty(chestId) || chestReward.Amount <= 0)
+            var chestId = chestReward.id != null ? chestReward.id.Trim() : string.Empty;
+            if (string.IsNullOrEmpty(chestId) || chestReward.amount <= 0)
                 return Array.Empty<RewardData>();
 
             var chestRows = TB_ITEM_TREASURE.GetByGroup(chestId);
@@ -481,7 +481,7 @@ namespace Devian
             }
 
             var list = new List<RewardData>();
-            for (var openCount = 0; openCount < chestReward.Amount; openCount++)
+            for (var openCount = 0; openCount < chestReward.amount; openCount++)
             {
                 for (var i = 0; i < chestRows.Count; i++)
                 {
@@ -489,7 +489,7 @@ namespace Devian
                     if (row == null)
                         continue;
 
-                    var nestedRewardGroupId = row.RewardGroupId != null ? row.RewardGroupId.Trim() : string.Empty;
+                    var nestedRewardGroupId = row.reward_group_id != null ? row.reward_group_id.Trim() : string.Empty;
                     if (string.IsNullOrEmpty(nestedRewardGroupId))
                         continue;
 
@@ -515,7 +515,7 @@ namespace Devian
                 if (!IsSelectableRewardRow(row))
                     continue;
 
-                totalRate += row.Rate;
+                totalRate += row.rate;
             }
 
             if (!(totalRate > 0f))
@@ -531,7 +531,7 @@ namespace Devian
                 if (!IsSelectableRewardRow(row))
                     continue;
 
-                cumulative += row.Rate;
+                cumulative += row.rate;
                 lastReward = row;
                 if (roll < cumulative)
                 {
@@ -552,10 +552,10 @@ namespace Devian
             if (row == null)
                 return false;
 
-            if (string.IsNullOrWhiteSpace(row.Id) || row.Amount <= 0)
+            if (string.IsNullOrWhiteSpace(row.id) || row.amount <= 0)
                 return false;
 
-            var rate = row.Rate;
+            var rate = row.rate;
             if (float.IsNaN(rate) || float.IsInfinity(rate))
                 return false;
 

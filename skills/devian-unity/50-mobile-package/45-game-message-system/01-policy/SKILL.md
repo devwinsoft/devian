@@ -30,7 +30,7 @@ MobilePackage의 메시지/트리거 계층 하드룰을 정의한다.
 
 ### 4) Mission notify 순서는 유지한다
 
-- `message.stats[messageId]` 갱신
+- `message.stats[message_id]` 갱신
 - mission runtime trigger notify
 - achieve notify
 

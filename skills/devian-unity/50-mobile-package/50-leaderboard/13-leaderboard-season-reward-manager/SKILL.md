@@ -39,14 +39,14 @@ Type: Design / Runtime Orchestration
 
 1. 초기화 상태 확인
 2. 서버 시간 확보 (`RemoteDataManager.ServerNowUtcMs`)
-3. `TB_LEADERBOARD`에서 active season row 수집 (`LEADERBOARD.seasonId → TB_SEASON`으로 시간 조회)
+3. `TB_LEADERBOARD`에서 active season row 수집 (`LEADERBOARD.season_id → TB_SEASON`으로 시간 조회)
 4. 모드별(`LEADERBOARD_MODE`) current season / previous season 계산 (TB_SEASON 시간 기준)
 5. grace period 통과 여부 확인
-6. `processedClaims` 중복 체크 (`{leaderboardId}`)
+6. `processedClaims` 중복 체크 (`{leaderboard_id}`)
 7. `LeaderboardManager.GetPlayerSnapshotAsync(...)` 조회
 8. snapshot status별 분기
-9. rank 기준 `TB_LEADERBOARD_REWARD.GetByGroup(leaderboardId)` 매칭
-10. `RewardManager.ApplyRewardGroup(rewardGroupId)` 수행
+9. rank 기준 `TB_LEADERBOARD_REWARD.GetByGroup(leaderboard_id)` 매칭
+10. `RewardManager.ApplyRewardGroup(reward_group_id)` 수행
 11. claim 기록 후 `SaveDataManager.SaveGameStorageAsync(true, ct)` 저장
 
 ---
@@ -61,7 +61,7 @@ Type: Design / Runtime Orchestration
 
 ### 2) processedClaims 단일 기준
 
-- claim key: `{leaderboardId}`
+- claim key: `{leaderboard_id}`
 - 중복 지급 방지 기준은 해당 키 존재 여부 단일 체크
 - 별도 `lastProcessedSeasonId` 상태를 두지 않는다
 
@@ -74,7 +74,7 @@ Type: Design / Runtime Orchestration
 
 ### 4) 보상 소스는 LEADERBOARD_REWARD
 
-- `rewardGroupId`는 `LEADERBOARD_REWARD` 구간 매칭 결과로만 결정
+- `reward_group_id`는 `LEADERBOARD_REWARD` 구간 매칭 결과로만 결정
 - 하드코딩 보상/직접 RewardData 생성 금지
 
 ### 5) 스케줄러 없음

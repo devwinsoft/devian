@@ -88,14 +88,6 @@ namespace Devian
 
             if (initialize.Value.IsInitial)
             {
-                var firstInit = await RewardManager.Instance.FirstInitAsync(ct);
-                await yieldMainThreadAsync(ct);
-                if (firstInit.IsFailure)
-                {
-                    Debug.LogError($"[{Tag}] FirstInitAsync failed: code={firstInit.Error.Code}, message={firstInit.Error.Message}");
-                    return CommonResult<LoginInitializeResult>.Failure(firstInit.Error!);
-                }
-
                 var saveInit = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
                 await yieldMainThreadAsync(ct);
                 if (saveInit.IsFailure)
@@ -262,7 +254,31 @@ namespace Devian
                         versionResult));
             }
 
+            var bootstrap = await applyFirstInitIfNeededAsync(sync.Value, ct);
+            await yieldMainThreadAsync(ct);
+            if (bootstrap.IsFailure)
+                return CommonResult<LoginInitializeResult>.Failure(bootstrap.Error!);
+
             return await syncGameStateAsync(versionResult, sync.Value, ct);
+        }
+
+        async Task<CommonResult> applyFirstInitIfNeededAsync(SyncResult sync, CancellationToken ct)
+        {
+            if (sync == null
+                || sync.State != SyncState.Initial
+                || sync.LocalPayload != null
+                || sync.CloudPayload != null)
+                return CommonResult.Ok();
+
+            var firstInit = await RewardManager.Instance.FirstInitAsync(ct);
+            await yieldMainThreadAsync(ct);
+            if (firstInit.IsFailure)
+            {
+                Debug.LogError($"[{Tag}] FirstInitAsync failed: code={firstInit.Error.Code}, message={firstInit.Error.Message}");
+                return CommonResult.Failure(firstInit.Error!);
+            }
+
+            return CommonResult.Ok();
         }
 
         async Task<CommonResult<LoginInitializeResult>> syncGameStateAsync(

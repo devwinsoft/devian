@@ -273,7 +273,7 @@ namespace Devian
             {
                 var unlock = await UnlockAchievementAsync(runtime.achieveId, ct);
                 if (unlock.IsFailure)
-                    Debug.LogWarning($"[{Tag}] Platform unlock failed: achieveId={runtime.achieveId}, error={unlock.Error}");
+                    Debug.LogWarning($"[{Tag}] Platform unlock failed: achieve_id={runtime.achieveId}, error={unlock.Error}");
             }
 
             var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
@@ -746,20 +746,20 @@ namespace Devian
                 addAchieveRow(new AchieveTableRow
                 {
                     achieveType = ACHIEVE_TYPE.SOCIAL,
-                    AchieveId = row.AchieveId ?? string.Empty,
-                    IsActive = row.IsActive,
-                    Level = row.Level,
-                    OrderNum = row.OrderNum,
-                    ReqMsgId = row.ReqMsgId ?? string.Empty,
-                    ReqValue = row.ReqValue,
+                    AchieveId = row.achieve_id ?? string.Empty,
+                    IsActive = row.is_active,
+                    Level = row.level,
+                    OrderNum = row.order_num,
+                    ReqMsgId = row.req_msg_id ?? string.Empty,
+                    ReqValue = row.req_value,
                     ReqPassId = string.Empty,
                     ReqSeasonId = string.Empty,
-                    ConditionMsgId = row.ConditionMsgId ?? string.Empty,
-                    ConditionOp = row.ConditionOp,
-                    ConditionValue = row.ConditionValue,
-                    RewardGroupId = row.RewardGroupId ?? string.Empty,
-                    AppleAchievementId = row.AppleAchievementId ?? string.Empty,
-                    GoogleAchievementId = row.GoogleAchievementId ?? string.Empty,
+                    ConditionMsgId = row.condition_msg_id ?? string.Empty,
+                    ConditionOp = row.condition_op,
+                    ConditionValue = row.condition_value,
+                    RewardGroupId = row.reward_group_id ?? string.Empty,
+                    AppleAchievementId = row.apple_achievement_id ?? string.Empty,
+                    GoogleAchievementId = row.google_achievement_id ?? string.Empty,
                 });
             }
 
@@ -768,18 +768,18 @@ namespace Devian
                 addAchieveRow(new AchieveTableRow
                 {
                     achieveType = ACHIEVE_TYPE.PASS,
-                    AchieveId = row.AchieveId ?? string.Empty,
-                    IsActive = row.IsActive,
-                    Level = row.Level,
-                    OrderNum = row.OrderNum,
+                    AchieveId = row.achieve_id ?? string.Empty,
+                    IsActive = row.is_active,
+                    Level = row.level,
+                    OrderNum = row.order_num,
                     ReqMsgId = string.Empty,
                     ReqValue = null,
-                    ReqPassId = row.ReqPassId ?? string.Empty,
-                    ReqSeasonId = row.ReqSeasonId ?? string.Empty,
-                    ConditionMsgId = row.ConditionMsgId ?? string.Empty,
-                    ConditionOp = row.ConditionOp,
-                    ConditionValue = row.ConditionValue,
-                    RewardGroupId = row.RewardGroupId ?? string.Empty,
+                    ReqPassId = row.req_pass_id ?? string.Empty,
+                    ReqSeasonId = row.req_season_id ?? string.Empty,
+                    ConditionMsgId = row.condition_msg_id ?? string.Empty,
+                    ConditionOp = row.condition_op,
+                    ConditionValue = row.condition_value,
+                    RewardGroupId = row.reward_group_id ?? string.Empty,
                     AppleAchievementId = string.Empty,
                     GoogleAchievementId = string.Empty,
                 });
@@ -821,7 +821,7 @@ namespace Devian
 
             if (rows.Count > 0 && rows[0].achieveType != row.achieveType)
             {
-                Debug.LogError($"[{Tag}] Mixed achieve types in same group: achieveId='{achieveId}'.");
+                Debug.LogError($"[{Tag}] Mixed achieve types in same group: achieve_id='{achieveId}'.");
                 return;
             }
 
@@ -914,7 +914,7 @@ namespace Devian
                 if (startRow == null)
                 {
                     if (_rowsByAchieveId.TryGetValue(groupKey, out var rows) && rows.Count > 0)
-                        Debug.LogError($"[{Tag}] Missing level=1 achieve row for achieveId='{groupKey}'.");
+                        Debug.LogError($"[{Tag}] Missing level=1 achieve row for achieve_id='{groupKey}'.");
                     continue;
                 }
 
@@ -1118,7 +1118,7 @@ namespace Devian
 
                 if (found != null)
                 {
-                    Debug.LogError($"[{Tag}] Duplicate achieve runtime detected for achieveId='{achieveId}'.");
+                    Debug.LogError($"[{Tag}] Duplicate achieve runtime detected for achieve_id='{achieveId}'.");
                     return found;
                 }
 
@@ -1160,7 +1160,7 @@ namespace Devian
 
             if (hasReqSeason && TB_SEASON.Get(reqSeasonId) == null)
             {
-                Debug.LogError($"[{Tag}] Invalid req season for achieve: achieveId='{row.AchieveId}', reqSeasonId='{row.ReqSeasonId}'.");
+                Debug.LogError($"[{Tag}] Invalid req season for achieve: achieve_id='{row.AchieveId}', req_season_id='{row.ReqSeasonId}'.");
                 return true;
             }
 
@@ -1173,13 +1173,13 @@ namespace Devian
 
             if (!row.ReqValue.HasValue)
             {
-                Debug.LogError($"[{Tag}] Invalid req condition for achieve: achieveId='{row.AchieveId}', reqMsgId='{row.ReqMsgId}', reqValue='{row.ReqValue}'.");
+                Debug.LogError($"[{Tag}] Invalid req condition for achieve: achieve_id='{row.AchieveId}', req_msg_id='{row.ReqMsgId}', req_value='{row.ReqValue}'.");
                 return true;
             }
 
-            if (!TryResolveMessage(row.ReqMsgId, out reqMessage) || reqMessage.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            if (!TryResolveMessage(row.ReqMsgId, out reqMessage) || reqMessage.save_type == GAME_MESSAGE_SAVE_TYPE.NONE)
             {
-                Debug.LogError($"[{Tag}] Invalid req message for achieve: achieveId='{row.AchieveId}', reqMsgId='{row.ReqMsgId}'.");
+                Debug.LogError($"[{Tag}] Invalid req message for achieve: achieve_id='{row.AchieveId}', req_msg_id='{row.ReqMsgId}'.");
                 reqMessage = null;
                 return true;
             }
@@ -1226,7 +1226,7 @@ namespace Devian
             if (reqMessage == null)
                 return false;
 
-            if (isTotalSaveType(reqMessage.SaveType))
+            if (isTotalSaveType(reqMessage.save_type))
             {
                 if (!GameMessageManager.TryGet(out var messageManager) || messageManager == null)
                     return false;
@@ -1234,7 +1234,7 @@ namespace Devian
                 return messageManager.GetStat(row.ReqMsgId) >= reqValue;
             }
 
-            if (triggeredType == GAME_MESSAGE_TYPE.NONE || reqMessage.MessageType != triggeredType)
+            if (triggeredType == GAME_MESSAGE_TYPE.NONE || reqMessage.message_type != triggeredType)
                 return false;
 
             return triggeredValue >= reqValue;
@@ -1249,8 +1249,8 @@ namespace Devian
             if (season == null)
                 return false;
 
-            var seasonStartUtcMs = season.StartUtcTime?.utcTimeMs ?? 0L;
-            var seasonEndUtcMs = season.EndUtcTime?.utcTimeMs ?? 0L;
+            var seasonStartUtcMs = season.start_utc_time?.utcTimeMs ?? 0L;
+            var seasonEndUtcMs = season.end_utc_time?.utcTimeMs ?? 0L;
             if (seasonStartUtcMs <= 0L || seasonEndUtcMs <= seasonStartUtcMs)
                 return false;
 
@@ -1345,7 +1345,7 @@ namespace Devian
                     if (logError)
                     {
                         Debug.LogError(
-                            $"[{Tag}] Invalid once achieve condition: achieveId='{row.AchieveId}', conditionMsgId='{row.ConditionMsgId}', conditionValue='{row.ConditionValue}'.");
+                            $"[{Tag}] Invalid once achieve condition: achieve_id='{row.AchieveId}', condition_msg_id='{row.ConditionMsgId}', condition_value='{row.ConditionValue}'.");
                     }
 
                     return false;
@@ -1361,24 +1361,24 @@ namespace Devian
                 if (logError)
                 {
                     Debug.LogError(
-                        $"[{Tag}] Invalid achieve condition value: achieveId='{row.AchieveId}', conditionMsgId='{conditionMsgId}', conditionValue='{row.ConditionValue}'.");
+                        $"[{Tag}] Invalid achieve condition value: achieve_id='{row.AchieveId}', condition_msg_id='{conditionMsgId}', condition_value='{row.ConditionValue}'.");
                 }
 
                 return false;
             }
 
-            if (!TryResolveMessage(conditionMsgId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            if (!TryResolveMessage(conditionMsgId, out var message) || message.save_type == GAME_MESSAGE_SAVE_TYPE.NONE)
             {
                 if (logError)
-                    Debug.LogError($"[{Tag}] GAME_MESSAGE not found for achieve: achieveId='{row.AchieveId}', conditionMsgId='{conditionMsgId}'.");
+                    Debug.LogError($"[{Tag}] GAME_MESSAGE not found for achieve: achieve_id='{row.AchieveId}', condition_msg_id='{conditionMsgId}'.");
                 return false;
             }
 
-            statType = message.MessageType;
-            opType = message.SaveType;
+            statType = message.message_type;
+            opType = message.save_type;
             conditionOpType = row.ConditionOp;
             conditionValue = row.ConditionValue.Value;
-            readProgress = createExternalProgressReader(conditionMsgId, message.SaveType);
+            readProgress = createExternalProgressReader(conditionMsgId, message.save_type);
             return true;
         }
 

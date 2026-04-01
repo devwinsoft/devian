@@ -9,7 +9,7 @@ export class AbilityItemEquip extends AbilityItemBase {
     private mOwnerSlotNumber: number = 0;
 
     get itemUid(): string { return this.mItemUid; }
-    get itemId(): string { return this.mTable?.ItemId ?? ''; }
+    get itemId(): string { return this.mTable?.item_id ?? ''; }
     get ownerUnitId(): string { return this.mOwnerUnitId; }
     get ownerSlotNumber(): number { return this.mOwnerSlotNumber; }
     get isEquipped(): boolean { return this.mOwnerSlotNumber > 0; }
@@ -19,11 +19,11 @@ export class AbilityItemEquip extends AbilityItemBase {
         this.mLevelTable = levelTable;
         this.mItemUid = itemUid;
         this.initLevelStats(
-            levelTable.ItemLevel,
-            levelTable.StatType00, levelTable.StatValue00,
-            levelTable.StatType01, levelTable.StatValue01,
-            levelTable.StatType02, levelTable.StatValue02,
-            levelTable.StatType03, levelTable.StatValue03,
+            levelTable.item_level,
+            levelTable.stat_type00, levelTable.stat_value00,
+            levelTable.stat_type01, levelTable.stat_value01,
+            levelTable.stat_type02, levelTable.stat_value02,
+            levelTable.stat_type03, levelTable.stat_value03,
         );
     }
 

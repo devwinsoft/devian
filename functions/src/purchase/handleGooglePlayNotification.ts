@@ -61,7 +61,7 @@ type RefundTransactionResult =
     purchaseId: string;
     uid: string;
     storeKey: string;
-    internalProductId: string;
+    internal_product_id: string;
     kind: string;
     storeProductId: string;
     storePurchaseId: string;
@@ -306,7 +306,7 @@ export const handleGooglePlayNotification = onMessagePublished(
           purchaseId: String(txPurchaseData.purchaseId ?? purchaseRef.id),
           uid: String(txPurchaseData.uid ?? uid),
           storeKey: String(txPurchaseData.storeKey ?? "google"),
-          internalProductId: String(txPurchaseData.internalProductId ?? ""),
+          internal_product_id: String(txPurchaseData.internal_product_id ?? ""),
           kind: txPurchaseKind,
           storeProductId: String(txPurchaseData.storeProductId ?? resolvedStoreProductId ?? ""),
           storePurchaseId: String(txPurchaseData.storePurchaseId ?? purchaseToken),
@@ -324,8 +324,8 @@ export const handleGooglePlayNotification = onMessagePublished(
       };
 
       if (txPurchaseKind === "Rental") {
-        // rentalId가 저장되어 있으면 사용, 없으면 internalProductId fallback
-        const rentalKey = String(txPurchaseData.rentalId ?? txPurchaseData.internalProductId ?? "");
+        // rentalId가 저장되어 있으면 사용, 없으면 internal_product_id fallback
+        const rentalKey = String(txPurchaseData.rentalId ?? txPurchaseData.internal_product_id ?? "");
         const rentals = {...(entitlementData.rentals ?? {})} as Record<string, number>;
         if (rentalKey && rentals[rentalKey] !== undefined) {
           delete rentals[rentalKey];
@@ -335,7 +335,7 @@ export const handleGooglePlayNotification = onMessagePublished(
         const ownedSeasonPasses = Array.isArray(entitlementData.ownedSeasonPasses)
           ? [...entitlementData.ownedSeasonPasses]
           : [];
-        const seasonPassKey = String(txPurchaseData.seasonPassId ?? txPurchaseData.internalProductId ?? "");
+        const seasonPassKey = String(txPurchaseData.seasonPassId ?? txPurchaseData.internal_product_id ?? "");
         const idx = ownedSeasonPasses.indexOf(seasonPassKey);
         if (idx >= 0) {
           ownedSeasonPasses.splice(idx, 1);
@@ -352,7 +352,7 @@ export const handleGooglePlayNotification = onMessagePublished(
         purchaseId: String(txPurchaseData.purchaseId ?? purchaseRef.id),
         uid: String(txPurchaseData.uid ?? uid),
         storeKey: String(txPurchaseData.storeKey ?? "google"),
-        internalProductId: String(txPurchaseData.internalProductId ?? ""),
+        internal_product_id: String(txPurchaseData.internal_product_id ?? ""),
         kind: txPurchaseKind,
         storeProductId: String(txPurchaseData.storeProductId ?? resolvedStoreProductId ?? ""),
         storePurchaseId: String(txPurchaseData.storePurchaseId ?? purchaseToken),
@@ -369,7 +369,7 @@ export const handleGooglePlayNotification = onMessagePublished(
         await appendPurchaseAuditRow({
           purchaseId: transactionResult.purchaseId,
           storeKey: transactionResult.storeKey,
-          internalProductId: transactionResult.internalProductId,
+          internal_product_id: transactionResult.internal_product_id,
           kind: transactionResult.kind,
           storeProductId: transactionResult.storeProductId,
           storePurchaseId: transactionResult.storePurchaseId,

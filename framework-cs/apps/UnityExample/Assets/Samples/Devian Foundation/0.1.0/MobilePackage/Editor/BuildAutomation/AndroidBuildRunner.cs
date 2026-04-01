@@ -103,19 +103,11 @@ namespace Devian
             if (!string.IsNullOrEmpty(settings.keystorePath))
             {
                 PlayerSettings.Android.keystoreName = settings.keystorePath;
-
-                // EditorPrefs → 환경변수 순으로 fallback
-                var keystorePass = BuildAutomationSettings.KeystorePass;
-                if (string.IsNullOrEmpty(keystorePass))
-                    keystorePass = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_PASS");
-
-                var keyaliasName = BuildAutomationSettings.KeyaliasName;
-                if (string.IsNullOrEmpty(keyaliasName))
-                    keyaliasName = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_NAME");
-
-                var keyaliasPass = BuildAutomationSettings.KeyaliasPass;
-                if (string.IsNullOrEmpty(keyaliasPass))
-                    keyaliasPass = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_PASS");
+                // keystorePass, keyaliasName, keyaliasPass는
+                // 환경변수에서 로드하거나 별도 보안 저장소 사용
+                var keystorePass = Environment.GetEnvironmentVariable("ANDROID_KEYSTORE_PASS");
+                var keyaliasName = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_NAME");
+                var keyaliasPass = Environment.GetEnvironmentVariable("ANDROID_KEYALIAS_PASS");
 
                 if (!string.IsNullOrEmpty(keystorePass))
                     PlayerSettings.Android.keystorePass = keystorePass;

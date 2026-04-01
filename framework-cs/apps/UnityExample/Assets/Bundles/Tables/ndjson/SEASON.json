@@ -1,4 +1,4 @@
-{"SeasonId":"S2026_01","NameId":"","DescId":"","StartUtcTime":1767225600000,"EndUtcTime":1775001600000}
-{"SeasonId":"S2026_02","NameId":"","DescId":"","StartUtcTime":1775001600000,"EndUtcTime":1782864000000}
-{"SeasonId":"S2026_03","NameId":"","DescId":"","StartUtcTime":1782864000000,"EndUtcTime":1790812800000}
-{"SeasonId":"S2026_04","NameId":"","DescId":"","StartUtcTime":1790812800000,"EndUtcTime":1798761600000}
+{"season_id":"S2026_01","name_id":"","desc_id":"","start_utc_time":1767225600000,"end_utc_time":1775001600000}
+{"season_id":"S2026_02","name_id":"","desc_id":"","start_utc_time":1775001600000,"end_utc_time":1782864000000}
+{"season_id":"S2026_03","name_id":"","desc_id":"","start_utc_time":1782864000000,"end_utc_time":1790812800000}
+{"season_id":"S2026_04","name_id":"","desc_id":"","start_utc_time":1790812800000,"end_utc_time":1798761600000}

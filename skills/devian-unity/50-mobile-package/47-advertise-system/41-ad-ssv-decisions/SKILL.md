@@ -47,7 +47,7 @@ AdMob Rewarded SSV 구현이 안정적으로 개발/관리되도록,
 
 ## C. custom_data 포맷 (결정)
 
-- 포맷: `{uid}:{advertiseId}:{rewardGroupId}`
+- 포맷: `{uid}:{advertise_id}:{reward_group_id}`
 - 구분자: `:` (콜론)
 - 예시: `abc123:ad_rewarded_001:reward_chest_001`
 

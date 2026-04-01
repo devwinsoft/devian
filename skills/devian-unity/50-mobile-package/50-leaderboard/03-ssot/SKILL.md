@@ -28,13 +28,13 @@ AppliesTo: v10
 
 | field | type | note |
 |------|------|------|
-| `leaderboardId` | string (pk) | 내부 표준 ID |
-| `isActive` | bool | 운영 토글 |
-| `messageId` | string | 점수 소스 MESSAGE key |
-| `appleLeaderboardId` | string | Game Center ID |
-| `googleLeaderboardId` | string | GPGS ID |
+| `leaderboard_id` | string (pk) | 내부 표준 ID |
+| `is_active` | bool | 운영 토글 |
+| `message_id` | string | 점수 소스 MESSAGE key |
+| `apple_leaderboard_id` | string | Game Center ID |
+| `google_leaderboard_id` | string | GPGS ID |
 | `mode` | `LEADERBOARD_MODE` | `NORMAL`/`HARDCORE` |
-| `seasonId` | string | `SEASON.seasonId` FK — 시즌 기간은 TB_SEASON에서 참조 |
+| `season_id` | string | `SEASON.season_id` FK — 시즌 기간은 TB_SEASON에서 참조 |
 
 ---
 
@@ -43,16 +43,16 @@ AppliesTo: v10
 | field | type | note |
 |------|------|------|
 | `index` | int (pk) | row key |
-| `leaderboardId` | string (group) | `LEADERBOARD.leaderboardId` 참조 |
-| `rankFrom` | long | 포함 시작 순위 |
-| `rankTo` | long | 포함 끝 순위 |
-| `rewardGroupId` | string | RewardManager 지급 키 |
+| `leaderboard_id` | string (group) | `LEADERBOARD.leaderboard_id` 참조 |
+| `rank_from` | long | 포함 시작 순위 |
+| `rank_to` | long | 포함 끝 순위 |
+| `reward_group_id` | string | RewardManager 지급 키 |
 
 제약:
-- `rankFrom >= 1`
-- `rankTo >= rankFrom`
-- 동일 `leaderboardId`에서 rank 구간 중복 금지
-- `rewardGroupId`는 비어 있지 않아야 한다.
+- `rank_from >= 1`
+- `rank_to >= rank_from`
+- 동일 `leaderboard_id`에서 rank 구간 중복 금지
+- `reward_group_id`는 비어 있지 않아야 한다.
 
 ---
 
@@ -69,19 +69,19 @@ AppliesTo: v10
 
 ## E. Runtime / Storage SSOT
 
-- 점수 제출 소스: `LEADERBOARD.messageId -> TB_GAME_MESSAGE -> GameMessageStorage.stats[messageId]`
-- 시즌 시간 조회: `LEADERBOARD.seasonId → TB_SEASON.Get(seasonId) → StartUtcTime/EndUtcTime`
+- 점수 제출 소스: `LEADERBOARD.message_id -> TB_GAME_MESSAGE -> GameMessageStorage.stats[message_id]`
+- 시즌 시간 조회: `LEADERBOARD.season_id → TB_SEASON.Get(season_id) → Start_utc_time/End_utc_time`
 - score 허용 saveType: `TOTAL_SUM`, `TOTAL_MAX` (그 외는 0 + error log)
 - 시즌 보상 저장:
   - payload key: `leaderboardReward`
   - core map: `processedClaims: Dictionary<string, LeaderboardSeasonRewardClaimRecord>`
-  - key format: `{leaderboardId}`
+  - key format: `{leaderboard_id}`
 
 `LeaderboardSeasonRewardClaimRecord` 필드:
 - `resultType`
 - `rank`
 - `score`
-- `rewardGroupId`
+- `reward_group_id`
 - `evaluatedAtServerUtcMs`
 
 ---
@@ -107,41 +107,41 @@ AppliesTo: v10
 
 | Sheet | PK | 주요 FK/Group | 역할 |
 |------|----|---------------|------|
-| `MESSAGE` | `messageId` | - | 메시지 타입/저장 방식(`saveType`) 정의 |
-| `MISSION` | `missionId` | `messageId -> MESSAGE.messageId` | 일일 미션 정의 및 조건 |
-| `ACHIEVE_SOCIAL` | `index` | `conditionMsgId/reqMsgId -> MESSAGE.messageId` | 소셜 업적 단계 정의 및 조건 |
-| `ACHIEVE_PASS` | `index` | `conditionMsgId -> MESSAGE.messageId` | 패스 업적 단계 정의 및 pass 조건 |
-| `SEASON` | `seasonId` | - | 시즌 기간 정의 (`StartUtcTime`/`EndUtcTime`) |
-| `LEADERBOARD` | `leaderboardId` | `messageId -> MESSAGE.messageId`, `seasonId -> SEASON.seasonId` | 점수 소스 + 시즌 참조 + 플랫폼 ID 매핑 |
-| `LEADERBOARD_REWARD` | `index` | `leaderboardId (group)` | 랭크 구간별 `rewardGroupId` 매핑 |
+| `MESSAGE` | `message_id` | - | 메시지 타입/저장 방식(`saveType`) 정의 |
+| `MISSION` | `mission_id` | `message_id -> MESSAGE.message_id` | 일일 미션 정의 및 조건 |
+| `ACHIEVE_SOCIAL` | `index` | `condition_msg_id/req_msg_id -> MESSAGE.message_id` | 소셜 업적 단계 정의 및 조건 |
+| `ACHIEVE_PASS` | `index` | `condition_msg_id -> MESSAGE.message_id` | 패스 업적 단계 정의 및 pass 조건 |
+| `SEASON` | `season_id` | - | 시즌 기간 정의 (`Start_utc_time`/`End_utc_time`) |
+| `LEADERBOARD` | `leaderboard_id` | `message_id -> MESSAGE.message_id`, `season_id -> SEASON.season_id` | 점수 소스 + 시즌 참조 + 플랫폼 ID 매핑 |
+| `LEADERBOARD_REWARD` | `index` | `leaderboard_id (group)` | 랭크 구간별 `reward_group_id` 매핑 |
 
 관계 흐름:
 
 ```text
-GAME_MESSAGE -> MESSAGE(messageId)
-                    ├─ MISSION.messageId
-                    ├─ ACHIEVE_SOCIAL.conditionMsgId
-                    ├─ ACHIEVE_SOCIAL.reqMsgId
-                    ├─ ACHIEVE_PASS.conditionMsgId
-                    └─ LEADERBOARD.messageId
+GAME_MESSAGE -> MESSAGE(message_id)
+                    ├─ MISSION.message_id
+                    ├─ ACHIEVE_SOCIAL.condition_msg_id
+                    ├─ ACHIEVE_SOCIAL.req_msg_id
+                    ├─ ACHIEVE_PASS.condition_msg_id
+                    └─ LEADERBOARD.message_id
 
-SEASON(seasonId, StartUtcTime, EndUtcTime)
-        └─ LEADERBOARD(leaderboardId, mode, seasonId -> SEASON)
-                └─ LEADERBOARD_REWARD(leaderboardId group, rankFrom~rankTo, rewardGroupId)
+SEASON(season_id, Start_utc_time, End_utc_time)
+        └─ LEADERBOARD(leaderboard_id, mode, season_id -> SEASON)
+                └─ LEADERBOARD_REWARD(leaderboard_id group, rank_from~rank_to, reward_group_id)
 ```
 
 시즌 보상 평가 시 사용 경로:
 
 1. `LEADERBOARD`에서 current/previous season row 결정
-2. previous row의 `leaderboardId`로 `LEADERBOARD_REWARD` 구간 조회
-3. player rank를 구간 매칭해 `rewardGroupId` 결정
-4. `RewardManager.ApplyRewardGroup(rewardGroupId)` 실행
+2. previous row의 `leaderboard_id`로 `LEADERBOARD_REWARD` 구간 조회
+3. player rank를 구간 매칭해 `reward_group_id` 결정
+4. `RewardManager.ApplyRewardGroup(reward_group_id)` 실행
 
 ---
 
 ## I. Record Time Limit
 
 - 점수 기록(`ReportScoreAsync`)은 시즌 활성 기간에만 허용한다.
-- 조건: `SEASON.StartUtcTime <= serverNowUtcMs < SEASON.EndUtcTime`
+- 조건: `SEASON.Start_utc_time <= serverNowUtcMs < SEASON.End_utc_time`
 - 시즌 외 기간 → `CommonResult.Failure` 반환
-- `seasonId`가 비어 있으면 시간 제한 없음
+- `season_id`가 비어 있으면 시간 제한 없음

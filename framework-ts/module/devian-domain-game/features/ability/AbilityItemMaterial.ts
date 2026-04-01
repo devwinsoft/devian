@@ -4,7 +4,7 @@ import { AbilityItemBase } from './AbilityItemBase';
 export class AbilityItemMaterial extends AbilityItemBase {
     private mTable: ITEM_MATERIAL | null = null;
 
-    get itemId(): string { return this.mTable?.ItemId ?? ''; }
+    get itemId(): string { return this.mTable?.item_id ?? ''; }
 
     init(table: ITEM_MATERIAL): void {
         this.mTable = table;

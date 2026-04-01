@@ -7,7 +7,7 @@ MobilePackage 샘플의 Mission 시스템 개요다.
 현재 Mission 시스템은 `DAILY`/`WEEKLY` 미션을 담당한다.
 
 - Mission row는 `MISSION_DAILY`, `MISSION_WEEKLY` 테이블을 사용한다.
-- 조건 타입/연산자 정본은 `GAME_MESSAGE(messageId, messageType, saveType, conditionOp)`다.
+- 조건 타입/연산자 정본은 `GAME_MESSAGE(message_id, messageType, saveType, condition_op)`다.
 - MissionManager는 `MissionMessageTrigger`과 `MissionScheduler`를 소유한다.
 - runtime 구독은 `GameMessageTrigger`를 직접 사용한다.
 - MissionManager는 `MissionScheduler`를 통해 runtime 생성/복구/정리를 수행한다.

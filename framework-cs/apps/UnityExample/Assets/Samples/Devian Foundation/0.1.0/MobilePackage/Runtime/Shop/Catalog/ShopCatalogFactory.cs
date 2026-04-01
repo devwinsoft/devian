@@ -18,17 +18,17 @@ namespace Devian
             for (var i = 0; i < rows.Count; i++)
             {
                 var row = rows[i];
-                if (row == null || row.CatalogType == SHOP_CATALOG_TYPE.NONE)
+                if (row == null || row.catalog_type == SHOP_CATALOG_TYPE.NONE)
                     continue;
 
-                if (!seenCatalogTypes.Add(row.CatalogType))
+                if (!seenCatalogTypes.Add(row.catalog_type))
                 {
                     Debug.LogWarning(
-                        $"[ShopCatalogFactory] Duplicate SHOP_CATALOG row. Keeping first row: catalog={row.CatalogType}");
+                        $"[ShopCatalogFactory] Duplicate SHOP_CATALOG row. Keeping first row: catalog={row.catalog_type}");
                     continue;
                 }
 
-                var catalog = createCatalog(row.CatalogType, storage, row, products: null);
+                var catalog = createCatalog(row.catalog_type, storage, row, products: null);
                 if (catalog != null)
                     catalogs.Add(catalog);
             }

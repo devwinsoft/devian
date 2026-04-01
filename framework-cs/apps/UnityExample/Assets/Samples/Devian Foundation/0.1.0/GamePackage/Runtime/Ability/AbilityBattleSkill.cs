@@ -8,9 +8,9 @@ namespace Devian
     {
         SKILL mTable = null;
 
-        public string SkillId => mTable?.SkillId ?? string.Empty;
-        public string NameId => mTable?.NameId ?? string.Empty;
-        public IReadOnlyList<string> AffectList => mTable != null ? mTable.AffectList : Array.Empty<string>();
+        public string SkillId => mTable?.skill_id ?? string.Empty;
+        public string NameId => mTable?.name_id ?? string.Empty;
+        public IReadOnlyList<string> AffectList => mTable != null ? mTable.affect_list : Array.Empty<string>();
 
         public void Init(SKILL table)
         {

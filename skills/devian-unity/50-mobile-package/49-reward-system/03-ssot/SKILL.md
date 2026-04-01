@@ -10,7 +10,7 @@ AppliesTo: v10
 Reward 관련 규칙의 단일 SSOT는 이 문서다.
 
 - RewardData(보상 적용 입력) 규약
-- rewardGroupId 해석 책임(컨텐츠 레이어)
+- reward_group_id 해석 책임(컨텐츠 레이어)
 - RewardManager의 "지급 실행기" 규약
 - REWARD 테이블 스키마(정규화)
 - 초기 보상 지급(FirstInit) 규약
@@ -26,8 +26,8 @@ Reward 관련 규칙의 단일 SSOT는 이 문서다.
 
 - `RewardData`: 보상 적용 입력 단위 (`{ type, id, amount }`)
 - `RewardData[]`: 보상 적용 입력 payload (array)
-- `rewardGroupId`: 보상 그룹 키. TB_REWARD 테이블의 `group:true` 컬럼. 여러 행을 하나의 보상 묶음으로 그룹화한다.
-- `rewardNum`: 개별 보상 행의 PK (TB_REWARD 테이블 키, int). 직접 사용하지 않고, `rewardGroupId`로 그룹 조회하여 사용한다.
+- `reward_group_id`: 보상 그룹 키. TB_REWARD 테이블의 `group:true` 컬럼. 여러 행을 하나의 보상 묶음으로 그룹화한다.
+- `reward_num`: 개별 보상 행의 PK (TB_REWARD 테이블 키, int). 직접 사용하지 않고, `reward_group_id`로 그룹 조회하여 사용한다.
 
 
 ---
@@ -46,11 +46,11 @@ Reward 관련 규칙의 단일 SSOT는 이 문서다.
 `22-inventory-system`에서는 스키마를 재정의하지 않고 본 문서를 참조한다.
 
 NOTE:
-- `type=REWARD_TYPE.EQUIP`의 `id`는 `itemId(pk)`를 의미한다.
-- `type=REWARD_TYPE.CARD`의 `id`는 `itemId(pk)`를 의미한다.
-- `type=REWARD_TYPE.HERO`의 `id`는 `itemId(pk)`를 의미한다(TB_ITEM_HERO 테이블 키).
-- `type=REWARD_TYPE.RENTAL`의 `id`는 `itemId(pk)`를 의미한다 (예: `"NO_ADS"`). Amount=1은 "활성화" 의미.
-- `type=REWARD_TYPE.PASS`의 `id`는 `itemId(pk)`를 의미한다 (예: `"S2026_01"`). Amount=1은 "소유" 의미.
+- `type=REWARD_TYPE.EQUIP`의 `id`는 `item_id(pk)`를 의미한다.
+- `type=REWARD_TYPE.CARD`의 `id`는 `item_id(pk)`를 의미한다.
+- `type=REWARD_TYPE.HERO`의 `id`는 `item_id(pk)`를 의미한다(TB_ITEM_HERO 테이블 키).
+- `type=REWARD_TYPE.RENTAL`의 `id`는 `item_id(pk)`를 의미한다 (예: `"NO_ADS"`). Amount=1은 "활성화" 의미.
+- `type=REWARD_TYPE.PASS`의 `id`는 `item_id(pk)`를 의미한다 (예: `"S2026_01"`). Amount=1은 "소유" 의미.
 - Reward/Purchase grants에는 `options`가 없다. `options`는 Inventory 내부 속성으로만 관리된다.
 
 정합:
@@ -70,26 +70,26 @@ REWARD 테이블은 정규화된 1행=1보상 구조다.
 
 | 필드 | 타입 | Row 3 옵션 | 설명 |
 |------|------|-----------|------|
-| `RewardNum` | int | pk | 행별 고유 PK |
-| `RewardGroupId` | string | group:true | 보상 그룹 키 (여러 행을 묶음) |
+| `Reward_num` | int | pk | 행별 고유 PK |
+| `Reward_group_id` | string | group:true | 보상 그룹 키 (여러 행을 묶음) |
 | `Type` | enum:REWARD_TYPE | | CARD / CURRENCY / EQUIP / HERO / RENTAL / PASS |
-| `Id` | string | | 대상 ID (itemId 또는 CurrencyType enum name) |
+| `Id` | string | | 대상 ID (item_id 또는 Currency_type enum name) |
 | `Amount` | int | | 수량 |
 
-- `TB_REWARD.GetByGroup(rewardGroupId)` → `IReadOnlyList<REWARD>` (자동 생성)
+- `TB_REWARD.GetByGroup(reward_group_id)` → `IReadOnlyList<REWARD>` (자동 생성)
 - Currency의 `Id`는 `CURRENCY_TYPE` enum name 문자열 (예: `"GOLD"`, `"JEWEL_FREE"`)
 
 
 ---
 
 
-## C-2) RewardGroupId 해석 (정본)
+## C-2) Reward_group_id 해석 (정본)
 
-RewardManager가 `TB_REWARD` 테이블을 직접 참조하여 `rewardGroupId`를 `RewardData[]`로 변환한다.
+RewardManager가 `TB_REWARD` 테이블을 직접 참조하여 `reward_group_id`를 `RewardData[]`로 변환한다.
 `Devian.Samples.MobilePackage.asmdef`에 `Devian.Domain.Game` 참조가 포함되어 있다.
 
-- lookup key: `rewardGroupId` (TB_REWARD group key)
-- API: `TB_REWARD.GetByGroup(rewardGroupId)` → 행 리스트
+- lookup key: `reward_group_id` (TB_REWARD group key)
+- API: `TB_REWARD.GetByGroup(reward_group_id)` → 행 리스트
 - 결과: `RewardData[]` (각 행의 `{ Type, Id, Amount }` → `RewardData` 변환)
 
 NOTE:
@@ -153,5 +153,5 @@ NOTE:
 ## Related
 
 - [11-rewarddata-interpretation](../11-rewarddata-interpretation/SKILL.md) — RewardData 해석 절차/타입별 의미/소스별 파싱 가이드
-- [10-reward-manager](../10-reward-manager/SKILL.md) — rewardGroupId 변환과 적용 실행기
+- [10-reward-manager](../10-reward-manager/SKILL.md) — reward_group_id 변환과 적용 실행기
 - [12-first-reward-settings](../12-first-reward-settings/SKILL.md) — FirstRewardSettings ScriptableObject (초기 보상 지급 설정)

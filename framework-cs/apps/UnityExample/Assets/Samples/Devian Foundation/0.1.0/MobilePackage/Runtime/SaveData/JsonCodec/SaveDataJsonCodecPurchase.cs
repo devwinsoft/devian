@@ -13,7 +13,7 @@ namespace Devian
             var current = new JObject
             {
                 ["isPurchaseInProgress"] = currentState.IsPurchaseInProgress,
-                ["internalProductId"] = currentState.InternalProductId,
+                ["internal_product_id"] = currentState.InternalProductId,
                 ["kind"] = currentState.Kind,
                 ["storeKey"] = currentState.StoreKey,
                 ["startedAtUtcMs"] = currentState.StartedAtUtcMs,
@@ -33,7 +33,7 @@ namespace Devian
                 refundSupportLogs.Add(new JObject
                 {
                     ["purchaseId"] = log.PurchaseId,
-                    ["internalProductId"] = log.InternalProductId,
+                    ["internal_product_id"] = log.InternalProductId,
                     ["kind"] = log.Kind,
                     ["storeKey"] = log.StoreKey,
                     ["verifyStatus"] = log.VerifyStatus,
@@ -59,7 +59,7 @@ namespace Devian
             {
                 purchase.RestoreCurrent(
                     currentObj.Value<bool?>("isPurchaseInProgress") ?? false,
-                    currentObj.Value<string>("internalProductId") ?? string.Empty,
+                    currentObj.Value<string>("internal_product_id") ?? string.Empty,
                     currentObj.Value<string>("kind") ?? string.Empty,
                     currentObj.Value<string>("storeKey") ?? string.Empty,
                     currentObj.Value<long?>("startedAtUtcMs") ?? 0L,
@@ -85,7 +85,7 @@ namespace Devian
 
                     restoreItems.Add(new PurchaseStorage.RefundSupportLogRestoreItem(
                         logObj.Value<string>("purchaseId") ?? string.Empty,
-                        logObj.Value<string>("internalProductId") ?? string.Empty,
+                        logObj.Value<string>("internal_product_id") ?? string.Empty,
                         logObj.Value<string>("kind") ?? string.Empty,
                         logObj.Value<string>("storeKey") ?? string.Empty,
                         logObj.Value<string>("verifyStatus") ?? string.Empty,

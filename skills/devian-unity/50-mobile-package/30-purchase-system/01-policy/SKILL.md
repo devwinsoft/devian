@@ -36,7 +36,7 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 ### 2) 내부 표준 ID만 상위 로직에 노출한다
 
 
-- 상위 로직은 `internalProductId`만 사용한다.
+- 상위 로직은 `internal_product_id`만 사용한다.
 - Store SKU(googlePlayProductId / appStoreProductId)는 카탈로그/매핑 레이어로만 취급한다.
 
 
@@ -56,8 +56,8 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 
 ### 4) Purchase의 실제 지급 실행은 RewardManager에 위임한다
 
-- 서버 `verifyPurchase` 결과가 `GRANTED`일 때만 `rewardGroupId`를 RewardManager에 전달해 적용한다.
-- `rewardGroupId`는 `internalProductId -> rewardGroupId` 매핑으로 얻는다(PurchaseManager가 `TB_PURCHASE` 테이블을 직접 조회하여 변환).
+- 서버 `verifyPurchase` 결과가 `GRANTED`일 때만 `reward_group_id`를 RewardManager에 전달해 적용한다.
+- `reward_group_id`는 `internal_product_id -> reward_group_id` 매핑으로 얻는다(PurchaseManager가 `TB_PURCHASE` 테이블을 직접 조회하여 변환).
 - `ALREADY_GRANTED`는 서버 멱등 결과이며, 클라에서 중복 적용을 시도하지 않는다.
 - 멱등/기록/복구 정본은 Purchase 시스템이다. Reward는 지급 실행만 담당한다.
 
@@ -76,7 +76,7 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 - `Consumable`: 반복 구매 허용 (제한 없음)
 - `Rental`: 반복 구매 허용 (30일 재구매 제한 없음)
 - `Subscription`: 스토어/서버 상태 기준으로 검증 (클라에서 임의 제한 금지)
-- `SeasonPass`: 동일 `internalProductId` 중복 구매 금지 (서버에서 거부)
+- `SeasonPass`: 동일 `internal_product_id` 중복 구매 금지 (서버에서 거부)
 
 ### 7) 구매 로컬 상태 저장은 PurchaseManager 소유 PurchaseStorage에 한정한다
 
@@ -132,7 +132,7 @@ Devian의 인앱 결제 모듈(클라이언트) 설계/코딩 규약을 정의�
 
 - `InitializeAsync(ct)` → `Task<CommonResult>`
   - IAP 초기화 (Connect + FetchProducts). Idempotent.
-- `PurchaseAsync(internalProductId, ct)` → `Task<CommonResult<PurchaseFinalResult>>`
+- `PurchaseAsync(internal_product_id, ct)` → `Task<CommonResult<PurchaseFinalResult>>`
   - 단일 구매 진입점. `TB_PURCHASE`에서 `Kind`를 조회하여 구매 유형(Consumable/Rental/Subscription/SeasonPass)을 자동 결정
   - 최종 지급은 서버 `verifyPurchase` 결과만 신뢰
   - **Caller-managed client grant**: `NeedsClientGrantDelivery=true`이면 호출자가 보상을 적용한 뒤 `AckPurchaseClientGrantAppliedAsync`로 ACK

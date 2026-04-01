@@ -1,2 +1,2 @@
-{"Index":1,"LeaderboardId":"leaderboard_001","RankFrom":"1","RankTo":"10","RewardGroupId":"reward_leaderboard_001"}
-{"Index":2,"LeaderboardId":"leaderboard_001","RankFrom":"11","RankTo":"100","RewardGroupId":"reward_leaderboard_002"}
+{"index":1,"leaderboard_id":"leaderboard_001","rank_from":"1","rank_to":"10","reward_group_id":"reward_leaderboard_001"}
+{"index":2,"leaderboard_id":"leaderboard_001","rank_from":"11","rank_to":"100","reward_group_id":"reward_leaderboard_002"}

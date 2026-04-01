@@ -43,9 +43,7 @@ namespace Devian
             // Release repo root 결정
             var releaseRoot = ResolveReleaseRoot(settings);
             var buildTarget = EditorUserBuildSettings.activeBuildTarget.ToString();
-            var version = $"v{UnityEngine.Application.version}";
-            var versionTarget = Path.Combine(version, buildTarget);  // v0.2.0/Android
-            var destDir = Path.Combine(releaseRoot, versionTarget);
+            var destDir = Path.Combine(releaseRoot, buildTarget);
 
             // Remote group들의 빌드 경로를 수집 (중복 제거)
             var remoteBuildPaths = new HashSet<string>();
@@ -78,7 +76,7 @@ namespace Devian
                 Directory.Delete(destDir, true);
             Directory.CreateDirectory(destDir);
 
-            // Remote group 빌드 경로의 파일을 전부 복사
+            // Remote group 빌드 경로에서만 파일 복사
             var copiedCount = 0;
             foreach (var srcDir in remoteBuildPaths)
             {
@@ -89,7 +87,8 @@ namespace Devian
                     continue;
                 }
 
-                foreach (var file in Directory.GetFiles(srcDir))
+                var sourceFiles = Directory.GetFiles(srcDir);
+                foreach (var file in sourceFiles)
                 {
                     var fileName = Path.GetFileName(file);
                     var destFile = Path.Combine(destDir, fileName);
@@ -111,8 +110,8 @@ namespace Devian
             if (ct.IsCancellationRequested) return false;
 
             // git commit
-            var commitMsg = $"chore: update addressable bundles ({versionTarget})";
-            var files = new[] { version };
+            var commitMsg = $"chore: update addressable bundles ({buildTarget})";
+            var files = new[] { buildTarget };
 
             BuildAutomationLogger.Log("[BundleUpload] Git commit...");
             var gitOk = await GitRunner.Commit(commitMsg, files, ct, releaseRoot);
@@ -149,17 +148,17 @@ namespace Devian
 
         /// <summary>
         /// group이 Remote인지 판별한다.
-        /// LoadPath가 http URL이면 Remote로 간주.
+        /// BuildPath가 StreamingAssets를 포함하지 않으면 Remote로 간주.
         /// </summary>
         private static bool IsRemoteGroup(AddressableAssetGroup group)
         {
             var schema = group.GetSchema<BundledAssetGroupSchema>();
             if (schema == null) return false;
 
-            var settings = AddressableAssetSettingsDefaultObject.Settings;
-            var loadPath = schema.LoadPath.GetValue(settings);
-            return loadPath != null
-                && (loadPath.StartsWith("http://") || loadPath.StartsWith("https://"));
+            var buildPath = schema.BuildPath.GetValue(
+                AddressableAssetSettingsDefaultObject.Settings);
+            return buildPath != null
+                && !buildPath.Contains("StreamingAssets");
         }
     }
 }

@@ -220,32 +220,32 @@ namespace Devian.Domain.Common
     /// <summary>COMPLEX_POLICY row</summary>
     public sealed class COMPLEX_POLICY : IEntityKey<ComplexPolicyType>
     {
-        public ComplexPolicyType Key { get; set; }
-        public Variant FallbackValue { get; set; }
-        public Variant MinValue { get; set; }
-        public Variant MaxValue { get; set; }
+        public ComplexPolicyType key { get; set; }
+        public Variant fallback_value { get; set; }
+        public Variant min_value { get; set; }
+        public Variant max_value { get; set; }
 
-        public ComplexPolicyType GetKey() => Key;
+        public ComplexPolicyType GetKey() => key;
     }
 
     /// <summary>COMMON_ERROR row</summary>
     public sealed class COMMON_ERROR : IEntityKey<COMMON_ERROR_TYPE>
     {
-        public COMMON_ERROR_TYPE Id { get; set; }
-        public string Msg_key { get; set; } = string.Empty;
-        public string Msg { get; set; } = string.Empty;
+        public COMMON_ERROR_TYPE id { get; set; }
+        public string msg_key { get; set; } = string.Empty;
+        public string msg { get; set; } = string.Empty;
 
-        public COMMON_ERROR_TYPE GetKey() => Id;
+        public COMMON_ERROR_TYPE GetKey() => id;
     }
 
     /// <summary>SERVER_ERROR row</summary>
     public sealed class SERVER_ERROR : IEntityKey<SERVER_ERROR_TYPE>
     {
-        public SERVER_ERROR_TYPE Id { get; set; }
-        public int Code { get; set; }
-        public int Status { get; set; }
+        public SERVER_ERROR_TYPE id { get; set; }
+        public int code { get; set; }
+        public int status { get; set; }
 
-        public SERVER_ERROR_TYPE GetKey() => Id;
+        public SERVER_ERROR_TYPE GetKey() => id;
     }
 
     // ================================================================
@@ -292,7 +292,7 @@ namespace Devian.Domain.Common
         private static void AddRow(COMPLEX_POLICY row)
         {
             _list.Add(row);
-            _dict[row.Key] = row;
+            _dict[row.key] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -386,7 +386,7 @@ namespace Devian.Domain.Common
         private static void AddRow(COMMON_ERROR row)
         {
             _list.Add(row);
-            _dict[row.Id] = row;
+            _dict[row.id] = row;
         }
 
         public static void LoadFromJson(string json)
@@ -480,7 +480,7 @@ namespace Devian.Domain.Common
         private static void AddRow(SERVER_ERROR row)
         {
             _list.Add(row);
-            _dict[row.Id] = row;
+            _dict[row.id] = row;
         }
 
         public static void LoadFromJson(string json)

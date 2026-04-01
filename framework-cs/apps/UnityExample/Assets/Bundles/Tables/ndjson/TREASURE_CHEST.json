@@ -1,5 +1,5 @@
-{"Level":1,"TreasureGradeType":"COMMON","MaxExp":20}
-{"Level":2,"TreasureGradeType":"RARE","MaxExp":30}
-{"Level":3,"TreasureGradeType":"EPIC","MaxExp":50}
-{"Level":4,"TreasureGradeType":"LEGENDARY","MaxExp":75}
-{"Level":5,"TreasureGradeType":"MYTHIC","MaxExp":100}
+{"level":1,"treasure_grade_type":"COMMON","max_exp":20}
+{"level":2,"treasure_grade_type":"RARE","max_exp":30}
+{"level":3,"treasure_grade_type":"EPIC","max_exp":50}
+{"level":4,"treasure_grade_type":"LEGENDARY","max_exp":75}
+{"level":5,"treasure_grade_type":"MYTHIC","max_exp":100}

@@ -155,7 +155,7 @@ namespace Devian
                 return CommonResult.Failure(COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED, "MissionManager is not initialized.");
 
             if (string.IsNullOrWhiteSpace(missionId))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "missionId is empty.");
+                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "mission_id is empty.");
 
             syncRuntimeSchedule();
 
@@ -207,10 +207,10 @@ namespace Devian
         MissionRuntimeState getDailyRuntimeState(string missionId)
         {
             var row = TB_MISSION_DAILY.Get(missionId);
-            if (row == null || !row.IsActive || !row.ConditionValue.HasValue)
+            if (row == null || !row.is_active || !row.condition_value.HasValue)
                 return MissionRuntimeState.NONE;
 
-            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            if (!TryResolveMessage(row.condition_msg_id, out var message) || message.save_type == GAME_MESSAGE_SAVE_TYPE.NONE)
                 return MissionRuntimeState.NONE;
 
             var runtime = findDailyRuntime(missionId);
@@ -226,10 +226,10 @@ namespace Devian
         MissionRuntimeState getPeriodRuntimeState(string missionId)
         {
             var row = TB_MISSION_WEEKLY.Get(missionId);
-            if (row == null || !row.IsActive || row.Day < 1 || row.Day > 7 || !row.ConditionValue.HasValue)
+            if (row == null || !row.is_active || row.day < 1 || row.day > 7 || !row.condition_value.HasValue)
                 return MissionRuntimeState.NONE;
 
-            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            if (!TryResolveMessage(row.condition_msg_id, out var message) || message.save_type == GAME_MESSAGE_SAVE_TYPE.NONE)
                 return MissionRuntimeState.NONE;
 
             var runtime = findPeriodRuntime(missionId);
@@ -245,10 +245,10 @@ namespace Devian
         async Task<CommonResult> claimDailyAsync(string missionId, CancellationToken ct)
         {
             var row = TB_MISSION_DAILY.Get(missionId);
-            if (row == null || !row.IsActive || !row.ConditionValue.HasValue)
+            if (row == null || !row.is_active || !row.condition_value.HasValue)
                 return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
 
-            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            if (!TryResolveMessage(row.condition_msg_id, out var message) || message.save_type == GAME_MESSAGE_SAVE_TYPE.NONE)
                 return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
 
             var periodKey = getCurrentDailyKey();
@@ -262,7 +262,7 @@ namespace Devian
             if (!runtime.IsClaimable)
                 return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_CLAIMABLE, $"Daily mission is not claimable: {missionId}");
 
-            var apply = RewardManager.Instance.ApplyRewardGroup(row.RewardGroupId);
+            var apply = RewardManager.Instance.ApplyRewardGroup(row.reward_group_id);
             if (apply.IsFailure)
                 return CommonResult.Failure(apply.Error!);
 
@@ -282,10 +282,10 @@ namespace Devian
         async Task<CommonResult> claimPeriodAsync(string missionId, CancellationToken ct)
         {
             var row = TB_MISSION_WEEKLY.Get(missionId);
-            if (row == null || !row.IsActive || row.Day < 1 || row.Day > 7 || !row.ConditionValue.HasValue)
+            if (row == null || !row.is_active || row.day < 1 || row.day > 7 || !row.condition_value.HasValue)
                 return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_FOUND, $"Period mission not found: {missionId}");
 
-            if (!TryResolveMessage(row.ConditionMsgId, out var message) || message.SaveType == GAME_MESSAGE_SAVE_TYPE.NONE)
+            if (!TryResolveMessage(row.condition_msg_id, out var message) || message.save_type == GAME_MESSAGE_SAVE_TYPE.NONE)
                 return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_FOUND, $"Period mission not found: {missionId}");
 
             var periodKey = getCurrentPeriodKey();
@@ -299,7 +299,7 @@ namespace Devian
             if (!runtime.IsClaimable)
                 return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_CLAIMABLE, $"Period mission is not claimable: {missionId}");
 
-            var apply = RewardManager.Instance.ApplyRewardGroup(row.RewardGroupId);
+            var apply = RewardManager.Instance.ApplyRewardGroup(row.reward_group_id);
             if (apply.IsFailure)
                 return CommonResult.Failure(apply.Error!);
 

@@ -47,7 +47,7 @@ Events:
 - `TB_ACHIEVE_SOCIAL` + `TB_ACHIEVE_PASS` 기반 runtime 생성/복구
 - `ACHIEVE_TYPE` 기반 runtime 타입 분기(`AchieveRuntimeSocial`, `AchieveRuntimePass`)
 - `GameMessageManager` 구독 기반 runtime projection 동기화
-- `InventoryManager` 구독 기반 PASS runtime(`reqPassId`) WAIT 전이 동기화
+- `InventoryManager` 구독 기반 PASS runtime(`req_pass_id`) WAIT 전이 동기화
 - `ACHIEVE_MESSAGE_TYPE` 기반 외부 알림 트리거 publish
 - claim 보상 적용 및 level-up 처리
 - 플랫폼 adapter 연동 (`IAchievePlatformAdapter.cs`: Apple/Google/Unsupported)
@@ -57,11 +57,11 @@ Events:
 ## Hard Rules
 
 - 공개 API는 내부 `achievementId`만 사용
-- 초기화 시 `achieveId` group 기준 runtime 항상 생성
-- `ACHIEVE_SOCIAL`의 `reqMsgId/reqValue`, `ACHIEVE_PASS`의 `reqPassId`/`reqSeasonId` 설정 row는 `WAIT` 시작 후 req 충족 시 `ACTIVE` 전이
+- 초기화 시 `achieve_id` group 기준 runtime 항상 생성
+- `ACHIEVE_SOCIAL`의 `req_msg_id/req_value`, `ACHIEVE_PASS`의 `req_pass_id`/`req_season_id` 설정 row는 `WAIT` 시작 후 req 충족 시 `ACTIVE` 전이
 - level-up 시 기존 stat 바인딩을 다음 level row로 교체
 - level-up 시에도 타입별 req 조건을 재평가해 `WAIT/ACTIVE` 시작 상태를 결정
-- `reqPassId`가 있는 PASS runtime은 `InventoryManager` helper 구독으로 Pass 변경 콜백을 받아 재평가한다.
+- `req_pass_id`가 있는 PASS runtime은 `InventoryManager` helper 구독으로 Pass 변경 콜백을 받아 재평가한다.
 - 플랫폼 unlock 실패는 claim 전체를 롤백하지 않는다(best-effort)
 - 플랫폼 unlock은 `ACHIEVE_TYPE.ONCE` runtime에만 수행한다.
 - 저장 실패는 claim 실패로 반환한다

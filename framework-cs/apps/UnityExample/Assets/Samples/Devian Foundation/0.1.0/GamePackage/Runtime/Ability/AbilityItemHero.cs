@@ -9,9 +9,8 @@ namespace Devian
         ITEM_HERO_LEVEL mLevelTable = null;
         readonly Dictionary<int, AbilityItemEquip> mEquips = new();
 
-        public string HeroId => mTable?.ItemId ?? string.Empty;
-        public string UnitId => mTable?.UnitId ?? string.Empty;
-        public override string ItemId => mTable?.ItemId ?? string.Empty;
+        public string UnitId => mTable?.unit_id ?? string.Empty;
+        public override string ItemId => mTable?.item_id ?? string.Empty;
         public IReadOnlyDictionary<int, AbilityItemEquip> Equips => mEquips;
 
         public void Init(ITEM_HERO table, ITEM_HERO_LEVEL levelTable)
@@ -23,11 +22,11 @@ namespace Devian
                 return;
 
             InitLevelStats(
-                levelTable.ItemLevel,
-                levelTable.StatType00, levelTable.StatValue00,
-                levelTable.StatType01, levelTable.StatValue01,
-                levelTable.StatType02, levelTable.StatValue02,
-                levelTable.StatType03, levelTable.StatValue03);
+                levelTable.item_level,
+                levelTable.stat_type00, levelTable.stat_value00,
+                levelTable.stat_type01, levelTable.stat_value01,
+                levelTable.stat_type02, levelTable.stat_value02,
+                levelTable.stat_type03, levelTable.stat_value03);
         }
 
         public override AbilityBase Clone()
@@ -50,11 +49,11 @@ namespace Devian
             {
                 if (isSameEquip(prev, equip))
                 {
-                    prev.SetOwner(HeroId, slotNumber);
+                    prev.SetOwner(ItemId, slotNumber);
                     return true;
                 }
 
-                if (prev.OwnerUnitId == HeroId && prev.OwnerSlotNumber == slotNumber)
+                if (prev.OwnerUnitId == ItemId && prev.OwnerSlotNumber == slotNumber)
                     prev.ClearOwner();
             }
 
@@ -68,7 +67,7 @@ namespace Devian
             }
 
             mEquips[slotNumber] = equip;
-            equip.SetOwner(HeroId, slotNumber);
+            equip.SetOwner(ItemId, slotNumber);
             return true;
         }
 
@@ -77,7 +76,7 @@ namespace Devian
             if (!mEquips.TryGetValue(slotNumber, out var equip))
                 return false;
 
-            if (equip.OwnerUnitId == HeroId && equip.OwnerSlotNumber == slotNumber)
+            if (equip.OwnerUnitId == ItemId && equip.OwnerSlotNumber == slotNumber)
                 equip.ClearOwner();
 
             mEquips.Remove(slotNumber);

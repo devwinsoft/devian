@@ -48,7 +48,7 @@ AppliesTo: v10
 
 ### 5) Reward 지급 연동
 
-- `resultStatus == GRANTED`일 때만 컨텐츠 레이어 매핑(`internalProductId -> rewardGroupId`) 후 `RewardManager.ApplyRewardGroup(rewardGroupId)`로 적용한다.
+- `resultStatus == GRANTED`일 때만 컨텐츠 레이어 매핑(`internal_product_id -> reward_group_id`) 후 `RewardManager.ApplyRewardGroup(reward_group_id)`로 적용한다.
 - 멱등/복구/원장 정본은 Purchase 쪽이다. Reward는 지급 실행만 담당한다.
 
 연관:

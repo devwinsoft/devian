@@ -7,33 +7,37 @@ namespace Devian
         readonly int _priceWithoutDiscount;
 
         public ShopProductChest(
-            string shopId,
-            string nameId,
-            SHOP_CATALOG_TYPE catalogType,
-            SHOP_PRODUCT_CHEST_TYPE chestType,
-            CURRENCY_TYPE currencyType,
+            string shop_id,
+            string name_id,
+            SHOP_CATALOG_TYPE catalog_type,
+            SHOP_PRODUCT_CHEST_TYPE chest_type,
+            CURRENCY_TYPE currency_type,
             int price,
             int amount,
-            int maxCount = -1,
+            int max_count = -1,
             SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
             : base(
-                shopId,
-                nameId,
-                catalogType,
-                toProductType(chestType, currencyType),
-                maxCount,
+                shop_id,
+                name_id,
+                catalog_type,
+                toProductType(chest_type, currency_type),
+                max_count,
                 discountType)
         {
-            ChestType = normalizeChestType(chestType);
-            CurrencyType = currencyType;
+            chest_type_internal = normalizeChestType(chest_type);
+            currency_type_internal = currency_type;
             _priceWithoutDiscount = price;
-            Amount = amount < 1 ? 1 : amount;
+            amount_internal = amount < 1 ? 1 : amount;
         }
 
-        public SHOP_PRODUCT_CHEST_TYPE ChestType { get; }
-        public CURRENCY_TYPE CurrencyType { get; }
+        SHOP_PRODUCT_CHEST_TYPE chest_type_internal;
+        CURRENCY_TYPE currency_type_internal;
+        int amount_internal;
+
+        public SHOP_PRODUCT_CHEST_TYPE chest_type => chest_type_internal;
+        public CURRENCY_TYPE currency_type => currency_type_internal;
         public override int PriceWithoutDiscount => _priceWithoutDiscount;
-        public int Amount { get; }
+        public int amount => amount_internal;
 
         static SHOP_PRODUCT_TYPE toProductType(
             SHOP_PRODUCT_CHEST_TYPE chestType,

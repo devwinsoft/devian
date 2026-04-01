@@ -11,7 +11,7 @@ namespace Devian
             {
                 return CommonResult<AbilityUnitHero>.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    "AbilityUnitFactory.CreateHero: unitId is null or empty.");
+                    "AbilityUnitFactory.CreateHero: unit_id is null or empty.");
             }
 
             var table = TB_UNIT_HERO.Get(unitId);
@@ -34,7 +34,7 @@ namespace Devian
                     "AbilityUnitFactory.CreateHero: table is null.");
             }
 
-            var levelTable = resolveHeroLevelTable(table.UnitId, unitLevel);
+            var levelTable = resolveHeroLevelTable(table.unit_id, unitLevel);
             if (levelTable.IsFailure)
                 return CommonResult<AbilityUnitHero>.Failure(levelTable.Error!);
 
@@ -115,7 +115,7 @@ namespace Devian
             {
                 return CommonResult<AbilityUnitMonster>.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    "AbilityUnitFactory.CreateMonster: unitId is null or empty.");
+                    "AbilityUnitFactory.CreateMonster: unit_id is null or empty.");
             }
 
             var table = TB_UNIT_MONSTER.Get(unitId);
@@ -138,7 +138,7 @@ namespace Devian
                     "AbilityUnitFactory.CreateMonster: table is null.");
             }
 
-            var levelTable = resolveMonsterLevelTable(table.UnitId, unitLevel);
+            var levelTable = resolveMonsterLevelTable(table.unit_id, unitLevel);
             if (levelTable.IsFailure)
                 return CommonResult<AbilityUnitMonster>.Failure(levelTable.Error!);
 
@@ -158,7 +158,7 @@ namespace Devian
             {
                 return CommonResult<UNIT_HERO_LEVEL>.Failure(
                     COMMON_ERROR_TYPE.ABILITY_UNIT_TABLE_NOT_FOUND,
-                    $"UNIT_HERO_LEVEL not found: unitId={unitId}, level={resolveLevel.Value}");
+                    $"UNIT_HERO_LEVEL not found: unit_id={unitId}, level={resolveLevel.Value}");
             }
 
             return CommonResult<UNIT_HERO_LEVEL>.Success(levelTable);
@@ -175,7 +175,7 @@ namespace Devian
             {
                 return CommonResult<UNIT_MONSTER_LEVEL>.Failure(
                     COMMON_ERROR_TYPE.ABILITY_UNIT_TABLE_NOT_FOUND,
-                    $"UNIT_MONSTER_LEVEL not found: unitId={unitId}, level={resolveLevel.Value}");
+                    $"UNIT_MONSTER_LEVEL not found: unit_id={unitId}, level={resolveLevel.Value}");
             }
 
             return CommonResult<UNIT_MONSTER_LEVEL>.Success(levelTable);
@@ -202,7 +202,7 @@ namespace Devian
         {
             foreach (var row in TB_UNIT_HERO_LEVEL.GetByGroup(unitId))
             {
-                if (row.UnitLevel == unitLevel)
+                if (row.unit_level == unitLevel)
                     return row;
             }
 
@@ -213,7 +213,7 @@ namespace Devian
         {
             foreach (var row in TB_UNIT_MONSTER_LEVEL.GetByGroup(unitId))
             {
-                if (row.UnitLevel == unitLevel)
+                if (row.unit_level == unitLevel)
                     return row;
             }
 

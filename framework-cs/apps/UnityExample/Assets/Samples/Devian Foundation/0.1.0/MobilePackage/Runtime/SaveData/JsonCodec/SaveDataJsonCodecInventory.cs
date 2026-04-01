@@ -24,9 +24,9 @@ namespace Devian
                 var e = kv.Value;
                 var obj = new JObject
                 {
-                    ["itemId"] = e.ItemId,
+                    ["item_id"] = e.ItemId,
                     ["itemUid"] = e.ItemUid,
-                    ["itemLevel"] = e.ItemLevel,
+                    ["item_level"] = e.ItemLevel,
                 };
                 equipsObj[kv.Key] = obj;
             }
@@ -39,8 +39,8 @@ namespace Devian
                 var c = kv.Value;
                 var obj = new JObject
                 {
-                    ["itemId"] = c.ItemId,
-                    ["itemLevel"] = c.ItemLevel,
+                    ["item_id"] = c.ItemId,
+                    ["item_level"] = c.ItemLevel,
                     ["amount"] = c.Amount,
                 };
                 cardsObj[kv.Key] = obj;
@@ -54,7 +54,7 @@ namespace Devian
                 var m = kv.Value;
                 var obj = new JObject
                 {
-                    ["itemId"] = m.ItemId,
+                    ["item_id"] = m.ItemId,
                     ["amount"] = m.Amount,
                 };
                 materialsObj[kv.Key] = obj;
@@ -68,8 +68,8 @@ namespace Devian
                 var h = kv.Value;
                 var obj = new JObject
                 {
-                    ["heroId"] = h.HeroId,
-                    ["itemLevel"] = h.ItemLevel,
+                    ["item_id"] = h.ItemId,
+                    ["item_level"] = h.ItemLevel,
                     ["amount"] = h.Amount,
                 };
 
@@ -141,7 +141,7 @@ namespace Devian
                 foreach (var prop in equipsObj.Properties())
                 {
                     var obj = (JObject)prop.Value;
-                    var itemId = obj.Value<string>("itemId");
+                    var itemId = obj.Value<string>("item_id");
                     var itemUid = obj.Value<string>("itemUid");
                     var savedStats = parseStats(obj["stats"] as JObject);
                     var itemLevel = readSavedItemLevel(obj, savedStats);
@@ -162,7 +162,7 @@ namespace Devian
                 foreach (var prop in cardsObj.Properties())
                 {
                     var obj = (JObject)prop.Value;
-                    var itemId = obj.Value<string>("itemId");
+                    var itemId = obj.Value<string>("item_id");
                     var savedStats = parseStats(obj["stats"] as JObject);
                     var itemLevel = readSavedItemLevel(obj, savedStats);
                     var amount = readSavedItemAmount(obj, savedStats);
@@ -170,7 +170,7 @@ namespace Devian
                     {
                         return CommonResult.Failure(
                             COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                            $"SaveDataJsonCodecInventory.DeserializeInto: card amount is negative. itemId={itemId}, amount={amount}");
+                            $"SaveDataJsonCodecInventory.DeserializeInto: card amount is negative. item_id={itemId}, amount={amount}");
                     }
 
                     var ability = AbilityItemFactory.CreateCard(itemId, itemLevel);
@@ -188,14 +188,14 @@ namespace Devian
                 foreach (var prop in materialsObj.Properties())
                 {
                     var obj = (JObject)prop.Value;
-                    var itemId = obj.Value<string>("itemId");
+                    var itemId = obj.Value<string>("item_id");
                     var savedStats = parseStats(obj["stats"] as JObject);
                     var amount = readSavedItemAmount(obj, savedStats);
                     if (amount < 0)
                     {
                         return CommonResult.Failure(
                             COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                            $"SaveDataJsonCodecInventory.DeserializeInto: material amount is negative. itemId={itemId}, amount={amount}");
+                            $"SaveDataJsonCodecInventory.DeserializeInto: material amount is negative. item_id={itemId}, amount={amount}");
                     }
 
                     var ability = AbilityItemFactory.CreateMaterial(itemId);
@@ -214,7 +214,7 @@ namespace Devian
                 foreach (var prop in heroesObj.Properties())
                 {
                     var obj = (JObject)prop.Value;
-                    var heroId = obj.Value<string>("heroId");
+                    var itemId = obj.Value<string>("item_id");
                     var savedStats = parseStats(obj["stats"] as JObject);
                     var itemLevel = readSavedItemLevel(obj, savedStats);
                     var amount = readSavedItemAmount(obj, savedStats);
@@ -222,15 +222,15 @@ namespace Devian
                     {
                         return CommonResult.Failure(
                             COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                            $"SaveDataJsonCodecInventory.DeserializeInto: hero amount is negative. heroId={heroId}, amount={amount}");
+                            $"SaveDataJsonCodecInventory.DeserializeInto: hero amount is negative. item_id={itemId}, amount={amount}");
                     }
 
-                    var ability = AbilityItemFactory.CreateHero(heroId, itemLevel);
+                    var ability = AbilityItemFactory.CreateHero(itemId, itemLevel);
                     if (ability.IsFailure)
                         return CommonResult.Failure(ability.Error!);
 
                     ability.Value.SetStat(STAT_TYPE.ITEM_AMOUNT, amount);
-                    inventory.AddHero(heroId, ability.Value);
+                    inventory.AddHero(itemId, ability.Value);
 
                     if (obj["equips"] is JObject equipsMap)
                     {
@@ -248,7 +248,7 @@ namespace Devian
                             {
                                 return CommonResult.Failure(
                                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                                    $"SaveDataJsonCodecInventory.DeserializeInto: empty hero equip uid. heroId={heroId}, slot={slotNumber}");
+                                    $"SaveDataJsonCodecInventory.DeserializeInto: empty hero equip uid. item_id={itemId}, slot={slotNumber}");
                             }
 
                             if (!restoredEquipUids.Add(equipUid))
@@ -258,11 +258,11 @@ namespace Devian
                                     $"SaveDataJsonCodecInventory.DeserializeInto: duplicate hero equip reference. equipUid={equipUid}");
                             }
 
-                            if (!inventory.Equip(heroId, slotNumber, equipUid))
+                            if (!inventory.Equip(itemId, slotNumber, equipUid))
                             {
                                 return CommonResult.Failure(
                                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                                    $"SaveDataJsonCodecInventory.DeserializeInto: failed to restore hero equip. heroId={heroId}, slot={slotNumber}, equipUid={equipUid}");
+                                    $"SaveDataJsonCodecInventory.DeserializeInto: failed to restore hero equip. item_id={itemId}, slot={slotNumber}, equipUid={equipUid}");
                             }
                         }
                     }
@@ -290,7 +290,7 @@ namespace Devian
 
         static int readSavedItemLevel(JObject obj, IReadOnlyDictionary<STAT_TYPE, int> stats)
         {
-            var itemLevel = obj?.Value<int?>("itemLevel");
+            var itemLevel = obj?.Value<int?>("item_level");
             if (itemLevel.HasValue)
                 return itemLevel.Value;
 

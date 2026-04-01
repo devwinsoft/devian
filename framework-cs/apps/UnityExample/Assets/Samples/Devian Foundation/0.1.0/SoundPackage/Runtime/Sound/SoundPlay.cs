@@ -14,8 +14,8 @@ namespace Devian
     /// 3D 설정:
     /// - rolloffMode = Linear
     /// - dopplerLevel = 0
-    /// - distance_near = minDistance
-    /// - distance_far = maxDistance
+    /// - distanceNear = minDistance
+    /// - distanceFar = maxDistance
     /// </summary>
     public sealed class SoundPlay : MonoBehaviour
     {
@@ -107,7 +107,7 @@ namespace Devian
 
         /// <summary>
         /// 사운드 재생을 시작한다.
-        /// 3D 설정: Linear rolloff, doppler=0, distance_near=minDistance, distance_far=maxDistance.
+        /// 3D 설정: Linear rolloff, doppler=0, distanceNear=minDistance, distanceFar=maxDistance.
         /// </summary>
         public void Play(
             AudioClip clip,

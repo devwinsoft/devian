@@ -3,7 +3,7 @@
  *
  * 41 스킬 결정사항 준수:
  *   B. 엔드포인트 이름 = "verifyAdReward", HTTP GET (onRequest)
- *   C. custom_data 포맷: "{uid}:{advertiseId}:{rewardGroupId}"
+ *   C. custom_data 포맷: "{uid}:{advertise_id}:{reward_group_id}"
  *   D. Firestore path: /users/{uid}/adRewards/{transactionId}
  *   E. 공개키: https://gstatic.com/admob/reward/verifier-keys.json (캐시 24h)
  *   F. Node.js crypto 직접 ECDSA 검증 (외부 npm 없음)
@@ -94,17 +94,17 @@ function buildMessageToVerify(query: Record<string, string>): string {
 
 interface CustomData {
   uid: string;
-  advertiseId: string;
-  rewardGroupId: string;
+  advertise_id: string;
+  reward_group_id: string;
 }
 
 function parseCustomData(raw: string | undefined): CustomData | null {
   if (!raw) return null;
   const parts = raw.split(":");
   if (parts.length < 3) return null;
-  const [uid, advertiseId, ...rest] = parts;
-  if (!uid || !advertiseId) return null;
-  return {uid, advertiseId, rewardGroupId: rest.join(":")};
+  const [uid, advertise_id, ...rest] = parts;
+  if (!uid || !advertise_id) return null;
+  return {uid, advertise_id, reward_group_id: rest.join(":")};
 }
 
 // ────────────────────────────────────────────
@@ -202,8 +202,8 @@ export const verifyAdReward = onRequest(
         rewardAmount: Number(query.reward_amount) || 0,
         rewardItem: query.reward_item || "",
         customData: customDataRaw || "",
-        advertiseId: customData.advertiseId,
-        rewardGroupId: customData.rewardGroupId,
+        advertise_id: customData.advertise_id,
+        reward_group_id: customData.reward_group_id,
         verified,
         timestamp: Number(query.timestamp) || 0,
         verifiedAt: admin.firestore.FieldValue.serverTimestamp(),
@@ -212,8 +212,8 @@ export const verifyAdReward = onRequest(
       logger.info("[verifyAdReward] Reward logged", {
         transactionId,
         uid: customData.uid,
-        advertiseId: customData.advertiseId,
-        rewardGroupId: customData.rewardGroupId,
+        advertise_id: customData.advertise_id,
+        reward_group_id: customData.reward_group_id,
       });
 
       res.status(200).send("OK");

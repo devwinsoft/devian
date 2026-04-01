@@ -1,6 +1,6 @@
 ---
 name: 11-shop-product
-description: ShopTable row를 `ShopProductBase` 계층(`Free/Ads/Currency/Purchase/Chest`)으로 변환하고 `maxCount/remainCount`, 할인 반영 `Price`를 모델링할 때 사용한다.
+description: ShopTable row를 `ShopProductBase` 계층(`Free/Ads/Currency/Purchase/Chest`)으로 변환하고 `max_count/remainCount`, 할인 반영 `Price`를 모델링할 때 사용한다.
 ---
 
 # 11-shop-product
@@ -20,7 +20,7 @@ ShopProduct 모델은 카탈로그 row를 `ShopProductBase` 계층으로 분류�
 - `SHOP_PURCHASE`
 - `SHOP_GOLD`
 
-기존 `SHOP_PRODUCT`/`productId` 개념은 제거하고 `shopId`를 사용한다.
+기존 `SHOP_PRODUCT`/`productId` 개념은 제거하고 `shop_id`를 사용한다.
 
 ---
 
@@ -29,21 +29,21 @@ ShopProduct 모델은 카탈로그 row를 `ShopProductBase` 계층으로 분류�
 ```csharp
 public abstract class ShopProductBase
 {
-    public string ShopId { get; }
-    public SHOP_CATALOG_TYPE CatalogType { get; }
+    public string Shop_id { get; }
+    public SHOP_CATALOG_TYPE Catalog_type { get; }
     public SHOP_PRODUCT_TYPE ProductType { get; }
     public SHOP_DISCOUNT_TYPE DiscountType { get; }
     public int PriceWithoutDiscount { get; }
     public int Price { get; } // DiscountType 반영 최종 가격
-    public string NameId { get; }
-    public int MaxCount { get; }
+    public string Name_id { get; }
+    public int Max_count { get; }
     public int RemainCount { get; }
 }
 
 public abstract class ShopRewardProductBase : ShopProductBase
 {
-    public CURRENCY_TYPE CurrencyType { get; }
-    public string RewardGroupId { get; }
+    public CURRENCY_TYPE Currency_type { get; }
+    public string Reward_group_id { get; }
     public int Amount { get; }
 }
 
@@ -52,14 +52,14 @@ public sealed class ShopProductAds : ShopRewardProductBase {}
 public sealed class ShopProductCurrency : ShopRewardProductBase {}
 public sealed class ShopProductChest : ShopProductBase
 {
-    public SHOP_PRODUCT_CHEST_TYPE ChestType { get; }
-    public CURRENCY_TYPE CurrencyType { get; }
+    public SHOP_PRODUCT_CHEST_TYPE Chest_type { get; }
+    public CURRENCY_TYPE Currency_type { get; }
     public int Amount { get; }
 }
 public sealed class ShopProductPurchase : ShopProductBase
 {
-    public string InternalProductId { get; }
-    public string SeasonId { get; }
+    public string Internal_product_id { get; }
+    public string Season_id { get; }
 }
 ```
 
@@ -76,17 +76,17 @@ public sealed class ShopProductPurchase : ShopProductBase
 
 ## 3. Hard Rules
 
-- `shopId`가 유일 키다.
+- `shop_id`가 유일 키다.
 - `SHOP_PRODUCT_TYPE.NONE`은 placeholder 용도이며 실제 판매 상품에는 사용하지 않는다.
-- `PURCHASE` 타입은 `InternalProductId`가 필수다.
+- `PURCHASE` 타입은 `Internal_product_id`가 필수다.
 - `DiscountType`은 `SHOP_DAILY` 초기화/refresh 시에만 랜덤 배정되며, 나머지 카탈로그는 `SHOP_DISCOUNT_TYPE.NONE`을 사용한다.
-- `ShopManager.GetProducts(...)` API는 사용하지 않고, `GetCatalog(catalogType).GetProducts()`/`GetCatalog(catalogType).GetProduct(shopId)`를 사용한다.
-- `MaxCount` 기본값은 `-1`(무제한)이며, 제한 상품은 `RemainCount`를 통해 현재 남은 구매 가능 횟수를 관리한다.
-- `ShopProductBase` 생성 시 기본 `RemainCount = MaxCount`로 초기화한다.
+- `ShopManager.GetProducts(...)` API는 사용하지 않고, `GetCatalog(catalog_type).GetProducts()`/`GetCatalog(catalog_type).GetProduct(shop_id)`를 사용한다.
+- `Max_count` 기본값은 `-1`(무제한)이며, 제한 상품은 `RemainCount`를 통해 현재 남은 구매 가능 횟수를 관리한다.
+- `ShopProductBase` 생성 시 기본 `RemainCount = Max_count`로 초기화한다.
 - `ShopProductBase.Price`는 `SHOP_DISCOUNT_TYPE`을 적용한 최종 가격이다.
 - 원가(테이블 가격)는 `ShopProductBase.PriceWithoutDiscount`로 보존한다.
-- `SHOP_CHEST`는 `rewardGroupId`를 직접 가지지 않는다. chest 구매 reward는 현재 `ShopCatalogChest.Level`의 `SHOP_CATALOG_CHEST.rewardAds/rewardPaid01/rewardPaid10`에서 동적으로 결정한다.
-- `ShopProductChest.ProductType`은 `ChestType=ADS`면 `SHOP_PRODUCT_TYPE.ADS`, `ChestType=ONE/TEN`이면 `SHOP_PRODUCT_TYPE.CURRENCY`로 해석한다.
+- `SHOP_CHEST`는 `reward_group_id`를 직접 가지지 않는다. chest 구매 reward는 현재 `ShopCatalogChest.Level`의 `SHOP_CATALOG_CHEST.reward_ads/reward_paid01/reward_paid10`에서 동적으로 결정한다.
+- `ShopProductChest.ProductType`은 `Chest_type=ADS`면 `SHOP_PRODUCT_TYPE.ADS`, `Chest_type=ONE/TEN`이면 `SHOP_PRODUCT_TYPE.CURRENCY`로 해석한다.
 - 카탈로그 클래스(`ShopCatalogBase`, `ShopCatalogDaily/Chest/Purchase/Gold`)는 `ShopCatalog.cs`에 분리되어 관리한다.
 - row -> `ShopProductBase` 변환은 `ShopProductFactory`(15)에서 처리한다.
 

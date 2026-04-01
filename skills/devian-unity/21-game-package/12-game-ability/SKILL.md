@@ -94,7 +94,7 @@ AppliesTo: v10
 - `AbilityItemCard.Amount`, `AbilityItemMaterial.Amount`, `AbilityItemHero.Amount`는 `AbilityItemBase.Amount`를 상속하며, `STAT_TYPE.ITEM_AMOUNT`의 얇은 래퍼다.
 - `AbilityItemCard.Init()`, `AbilityItemHero.Init()`, `AbilityItemEquip.Init()`는 base `ITEM_*` row와 대응 `ITEM_*_LEVEL` row를 함께 받아서 초기 stat을 세팅한다.
 - `AbilityItemHero`는 outgame hero 저장 모델이다. `Equips`와 `SetEquip(equip, slot)` / `RemoveEquip(slot)`로 loadout metadata만 보유한다.
-- `AbilityItemHero`는 `ITEM_HERO.UnitId`를 참조할 수 있으며, item hero와 unit hero를 명시 필드로 연결한다.
+- `AbilityItemHero`는 `ITEM_HERO.unit_id`를 참조할 수 있으며, item hero와 unit hero를 명시 필드로 연결한다.
 - `AbilityUnitHero`는 `UNIT_HERO` 기반 계산 모델이다. `Equip(equip, slot)` / `Unequip(slot)`에서 장착된 `AbilityItemEquip` stat을 unit stat에 합산/제거한다. `STAT_TYPE.ITEM_LEVEL`, `STAT_TYPE.ITEM_AMOUNT` 같은 item 메타 stat은 unit aggregate에 섞지 않는다.
 - preview/ingame projection의 equip 계산 규칙 정본은 [15-game-ability-factory](../15-game-ability-factory/SKILL.md)다.
 - `AbilityUnitBase`는 `UnitLevel`, `CurHP` 프로퍼티를 제공한다. `CurHP`는 stat dictionary가 아니라 runtime field(`mCurHP`)이며 clone 시 같이 복사된다. `MaxHP`는 `AbilityBase` aggregate property를 사용한다.

@@ -4,9 +4,9 @@ import { AbilityBattleBase } from './AbilityBattleBase';
 export class AbilityBattleSkill extends AbilityBattleBase {
     private mTable: SKILL | null = null;
 
-    get skillId(): string { return this.mTable?.SkillId ?? ''; }
-    get nameId(): string { return this.mTable?.NameId ?? ''; }
-    get affectList(): readonly string[] { return this.mTable?.AffectList ?? []; }
+    get skillId(): string { return this.mTable?.skill_id ?? ''; }
+    get nameId(): string { return this.mTable?.name_id ?? ''; }
+    get affectList(): readonly string[] { return this.mTable?.affect_list ?? []; }
 
     init(table: SKILL): void {
         this.mTable = table;

@@ -6,8 +6,8 @@ namespace Devian
     {
         AFFECT mTable = null;
 
-        public string AffectId => mTable?.AffectId ?? string.Empty;
-        public string NameId => mTable?.NameId ?? string.Empty;
+        public string AffectId => mTable?.affect_id ?? string.Empty;
+        public string NameId => mTable?.name_id ?? string.Empty;
 
         public void Init(AFFECT table)
         {

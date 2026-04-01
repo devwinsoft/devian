@@ -218,7 +218,7 @@ namespace Devian
 
                 if (found != null)
                 {
-                    Debug.LogError($"[{Tag}] Duplicate daily runtime detected for missionId='{missionId}'.");
+                    Debug.LogError($"[{Tag}] Duplicate daily runtime detected for mission_id='{missionId}'.");
                     return found;
                 }
 
@@ -241,7 +241,7 @@ namespace Devian
 
                 if (found != null)
                 {
-                    Debug.LogError($"[{Tag}] Duplicate period runtime detected for missionId='{missionId}'.");
+                    Debug.LogError($"[{Tag}] Duplicate period runtime detected for mission_id='{missionId}'.");
                     return found;
                 }
 
@@ -270,7 +270,7 @@ namespace Devian
             removeDailyRuntimesOutsidePeriod(periodKey);
 
             var selectedRows = selectDailyRows(periodKey);
-            var selectedIds = new HashSet<string>(selectedRows.Select(row => row.MissionId), StringComparer.Ordinal);
+            var selectedIds = new HashSet<string>(selectedRows.Select(row => row.mission_id), StringComparer.Ordinal);
             var initializedRuntimes = new List<MissionRuntimeBase>();
 
             var removeKeys = new List<int>();
@@ -291,13 +291,13 @@ namespace Devian
 
             foreach (var row in selectedRows)
             {
-                if (!TryResolveMessage(row.ConditionMsgId, out var message))
+                if (!TryResolveMessage(row.condition_msg_id, out var message))
                 {
-                    Debug.LogError($"[{Tag}] GAME_MESSAGE not found for daily mission: missionId='{row.MissionId}', messageId='{row.ConditionMsgId}'.");
+                    Debug.LogError($"[{Tag}] GAME_MESSAGE not found for daily mission: mission_id='{row.mission_id}', message_id='{row.condition_msg_id}'.");
                     continue;
                 }
 
-                var existing = FindDaily(row.MissionId);
+                var existing = FindDaily(row.mission_id);
                 if (existing != null)
                 {
                     var restored = MissionRuntimeFactory.Restore(new MissionRuntimeRestoreArgs
@@ -310,13 +310,13 @@ namespace Devian
                         State = existing.state,
                         Index = existing.index,
                         Day = 1,
-                        StatType = message.MessageType,
-                        OpType = message.SaveType,
-                        ConditionOpType = row.ConditionOp,
-                        ConditionValue = row.ConditionValue!.Value,
+                        StatType = message.message_type,
+                        OpType = message.save_type,
+                        ConditionOpType = row.condition_op,
+                        ConditionValue = row.condition_value!.Value,
                         SubscribeTrigger = _subscribeTrigger,
                         UnsubscribeTrigger = _unsubscribeTrigger,
-                        ReadExternalProgress = createExternalProgressReader(row.ConditionMsgId, message.SaveType),
+                        ReadExternalProgress = createExternalProgressReader(row.condition_msg_id, message.save_type),
                         OnChanged = _onChanged,
                         OnClaimable = _onClaimable,
                     });
@@ -328,17 +328,17 @@ namespace Devian
 
                 var created = MissionRuntimeFactory.CreateDaily(new DailyMissionRuntimeCreateArgs
                 {
-                    MissionId = row.MissionId,
+                    MissionId = row.mission_id,
                     PeriodKey = periodKey,
                     MissionUid = AllocateMissionUid(),
                     Index = 0,
-                    StatType = message.MessageType,
-                    OpType = message.SaveType,
-                    ConditionOpType = row.ConditionOp,
-                    ConditionValue = row.ConditionValue!.Value,
+                    StatType = message.message_type,
+                    OpType = message.save_type,
+                    ConditionOpType = row.condition_op,
+                    ConditionValue = row.condition_value!.Value,
                     SubscribeTrigger = _subscribeTrigger,
                     UnsubscribeTrigger = _unsubscribeTrigger,
-                    ReadExternalProgress = createExternalProgressReader(row.ConditionMsgId, message.SaveType),
+                    ReadExternalProgress = createExternalProgressReader(row.condition_msg_id, message.save_type),
                     OnChanged = _onChanged,
                     OnClaimable = _onClaimable,
                 });
@@ -360,7 +360,7 @@ namespace Devian
             removePeriodRuntimesOutsidePeriod(periodKey);
 
             var selectedRows = selectPeriodRows();
-            var selectedIds = new HashSet<string>(selectedRows.Select(row => row.MissionId), StringComparer.Ordinal);
+            var selectedIds = new HashSet<string>(selectedRows.Select(row => row.mission_id), StringComparer.Ordinal);
             var initializedRuntimes = new List<MissionRuntimeBase>();
 
             var removeKeys = new List<int>();
@@ -381,14 +381,14 @@ namespace Devian
 
             foreach (var row in selectedRows)
             {
-                if (!TryResolveMessage(row.ConditionMsgId, out var message))
+                if (!TryResolveMessage(row.condition_msg_id, out var message))
                 {
-                    Debug.LogError($"[{Tag}] GAME_MESSAGE not found for period mission: missionId='{row.MissionId}', messageId='{row.ConditionMsgId}'.");
+                    Debug.LogError($"[{Tag}] GAME_MESSAGE not found for period mission: mission_id='{row.mission_id}', message_id='{row.condition_msg_id}'.");
                     continue;
                 }
 
-                var shouldWait = !isPeriodDayActive(row.Day, elapsedDay);
-                var existing = FindPeriod(row.MissionId);
+                var shouldWait = !isPeriodDayActive(row.day, elapsedDay);
+                var existing = FindPeriod(row.mission_id);
                 if (existing != null)
                 {
                     var restoreState = existing.state;
@@ -404,14 +404,14 @@ namespace Devian
                         ProgressValue = existing.progressValue,
                         State = restoreState,
                         Index = 0,
-                        Day = row.Day,
-                        StatType = message.MessageType,
-                        OpType = message.SaveType,
-                        ConditionOpType = row.ConditionOp,
-                        ConditionValue = row.ConditionValue!.Value,
+                        Day = row.day,
+                        StatType = message.message_type,
+                        OpType = message.save_type,
+                        ConditionOpType = row.condition_op,
+                        ConditionValue = row.condition_value!.Value,
                         SubscribeTrigger = _subscribeTrigger,
                         UnsubscribeTrigger = _unsubscribeTrigger,
-                        ReadExternalProgress = createExternalProgressReader(row.ConditionMsgId, message.SaveType),
+                        ReadExternalProgress = createExternalProgressReader(row.condition_msg_id, message.save_type),
                         OnChanged = _onChanged,
                         OnClaimable = _onClaimable,
                     });
@@ -423,18 +423,18 @@ namespace Devian
 
                 var created = MissionRuntimeFactory.CreatePeriod(new PeriodMissionRuntimeCreateArgs
                 {
-                    MissionId = row.MissionId,
+                    MissionId = row.mission_id,
                     PeriodKey = periodKey,
                     MissionUid = AllocateMissionUid(),
-                    Day = row.Day,
+                    Day = row.day,
                     IsWaiting = shouldWait,
-                    StatType = message.MessageType,
-                    OpType = message.SaveType,
-                    ConditionOpType = row.ConditionOp,
-                    ConditionValue = row.ConditionValue!.Value,
+                    StatType = message.message_type,
+                    OpType = message.save_type,
+                    ConditionOpType = row.condition_op,
+                    ConditionValue = row.condition_value!.Value,
                     SubscribeTrigger = _subscribeTrigger,
                     UnsubscribeTrigger = _unsubscribeTrigger,
-                    ReadExternalProgress = createExternalProgressReader(row.ConditionMsgId, message.SaveType),
+                    ReadExternalProgress = createExternalProgressReader(row.condition_msg_id, message.save_type),
                     OnChanged = _onChanged,
                     OnClaimable = _onClaimable,
                 });
@@ -486,7 +486,7 @@ namespace Devian
                 .ToList();
 
             var selected = new List<MISSION_DAILY>(MaxDailyRuntimeCount);
-            foreach (var row in candidates.Where(row => row.Fixed))
+            foreach (var row in candidates.Where(row => row.is_fixed))
             {
                 if (selected.Count >= MaxDailyRuntimeCount)
                 {
@@ -500,7 +500,7 @@ namespace Devian
             if (selected.Count >= MaxDailyRuntimeCount)
                 return selected;
 
-            var remaining = candidates.Where(row => !row.Fixed).ToList();
+            var remaining = candidates.Where(row => !row.is_fixed).ToList();
             var random = createDailySelectionRandom(periodKey);
             shuffleInPlace(remaining, random);
 
@@ -519,8 +519,8 @@ namespace Devian
         {
             return TB_MISSION_WEEKLY.GetAll()
                 .Where(isEligiblePeriodRow)
-                .OrderBy(row => row.Day)
-                .ThenBy(row => row.MissionId, StringComparer.Ordinal)
+                .OrderBy(row => row.day)
+                .ThenBy(row => row.mission_id, StringComparer.Ordinal)
                 .ToList();
         }
 
@@ -528,13 +528,13 @@ namespace Devian
         {
             var rowByMissionId = new Dictionary<string, MISSION_DAILY>(StringComparer.Ordinal);
             foreach (var row in selectedRows)
-                rowByMissionId[row.MissionId] = row;
+                rowByMissionId[row.mission_id] = row;
 
             var orderedRuntimes = _storage.runtimes.Values
                 .OfType<MissionRuntimeDaily>()
                 .Where(runtime => string.Equals(runtime.periodKey, periodKey, StringComparison.Ordinal))
                 .Where(runtime => rowByMissionId.ContainsKey(runtime.missionId))
-                .OrderBy(runtime => rowByMissionId[runtime.missionId].OrderNum)
+                .OrderBy(runtime => rowByMissionId[runtime.missionId].order_num)
                 .ThenBy(runtime => runtime.missionId, StringComparer.Ordinal)
                 .ToList();
 
@@ -545,21 +545,21 @@ namespace Devian
         static bool isEligibleDailyRow(MISSION_DAILY row)
         {
             return row != null
-                   && row.IsActive
-                   && row.ConditionValue.HasValue
-                   && TryResolveMessage(row.ConditionMsgId, out var message)
-                   && message.SaveType != GAME_MESSAGE_SAVE_TYPE.NONE;
+                   && row.is_active
+                   && row.condition_value.HasValue
+                   && TryResolveMessage(row.condition_msg_id, out var message)
+                   && message.save_type != GAME_MESSAGE_SAVE_TYPE.NONE;
         }
 
         static bool isEligiblePeriodRow(MISSION_WEEKLY row)
         {
             return row != null
-                   && row.IsActive
-                   && row.Day >= 1
-                   && row.Day <= 7
-                   && row.ConditionValue.HasValue
-                   && TryResolveMessage(row.ConditionMsgId, out var message)
-                   && message.SaveType != GAME_MESSAGE_SAVE_TYPE.NONE;
+                   && row.is_active
+                   && row.day >= 1
+                   && row.day <= 7
+                   && row.condition_value.HasValue
+                   && TryResolveMessage(row.condition_msg_id, out var message)
+                   && message.save_type != GAME_MESSAGE_SAVE_TYPE.NONE;
         }
 
         static bool TryResolveMessage(string messageId, out GAME_MESSAGE message)

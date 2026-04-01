@@ -19,24 +19,24 @@ namespace Devian.Domain.Operation
     /// <summary>PUSH_REMOTE row</summary>
     public sealed class PUSH_REMOTE : IEntityKey<string>
     {
-        public string PushId { get; set; } = string.Empty;
-        public string Topic { get; set; } = string.Empty;
-        public string Language { get; set; } = string.Empty;
-        public string DefaultMsg { get; set; } = string.Empty;
-        public bool IsTest { get; set; }
+        public string push_id { get; set; } = string.Empty;
+        public string topic { get; set; } = string.Empty;
+        public string language { get; set; } = string.Empty;
+        public string default_msg { get; set; } = string.Empty;
+        public bool is_test { get; set; }
 
-        public string GetKey() => PushId;
+        public string GetKey() => push_id;
     }
 
     /// <summary>PUSH_LOCAL row</summary>
     public sealed class PUSH_LOCAL : IEntityKey<string>
     {
-        public string PushId { get; set; } = string.Empty;
-        public string TitleTextId { get; set; } = string.Empty;
-        public string BodyTextId { get; set; } = string.Empty;
-        public bool IsTest { get; set; }
+        public string push_id { get; set; } = string.Empty;
+        public string title_text_id { get; set; } = string.Empty;
+        public string body_text_id { get; set; } = string.Empty;
+        public bool is_test { get; set; }
 
-        public string GetKey() => PushId;
+        public string GetKey() => push_id;
     }
 
     // ================================================================
@@ -98,9 +98,9 @@ namespace Devian.Domain.Operation
         private static void AddRow(PUSH_REMOTE row)
         {
             _list.Add(row);
-            _dict[row.PushId] = row;
-            var groupKey = row.Language;
-            _keyToGroup[row.PushId] = groupKey;
+            _dict[row.push_id] = row;
+            var groupKey = row.language;
+            _keyToGroup[row.push_id] = groupKey;
             if (!_groupDict.TryGetValue(groupKey, out var groupList))
             {
                 groupList = new List<PUSH_REMOTE>();
@@ -110,12 +110,12 @@ namespace Devian.Domain.Operation
             groupList.Add(row);
             if (_groupPrimaryKey.TryGetValue(groupKey, out var existing))
             {
-                if (Comparer<string>.Default.Compare(row.PushId, existing) < 0)
-                    _groupPrimaryKey[groupKey] = row.PushId;
+                if (Comparer<string>.Default.Compare(row.push_id, existing) < 0)
+                    _groupPrimaryKey[groupKey] = row.push_id;
             }
             else
             {
-                _groupPrimaryKey[groupKey] = row.PushId;
+                _groupPrimaryKey[groupKey] = row.push_id;
             }
         }
 
@@ -199,7 +199,7 @@ namespace Devian.Domain.Operation
         private static void AddRow(PUSH_LOCAL row)
         {
             _list.Add(row);
-            _dict[row.PushId] = row;
+            _dict[row.push_id] = row;
         }
 
         public static void LoadFromJson(string json)

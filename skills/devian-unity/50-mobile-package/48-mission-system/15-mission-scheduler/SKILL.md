@@ -24,7 +24,7 @@ Type: Design / Scheduler SSOT
 - MissionManager 내부 객체로만 사용한다.
 - reward/claim/save orchestration은 하지 않는다.
 - runtime 생성/복구는 `MissionRuntimeFactory`를 통해서만 수행한다.
-- `conditionMsgId` resolve 실패 row는 runtime 생성 금지.
+- `condition_msg_id` resolve 실패 row는 runtime 생성 금지.
 
 ---
 
@@ -34,7 +34,7 @@ Type: Design / Scheduler SSOT
 
 - active row에서 최대 5개 선택(fixed 우선 + random)
 - 선택 row만 create/restore
-- `conditionMsgId -> GAME_MESSAGE` resolve 후 bind 인자 전달
+- `condition_msg_id -> GAME_MESSAGE` resolve 후 bind 인자 전달
 - daily cycle 전환 시 기존 daily set 정리 후 재생성
 
 ### Weekly (`MISSION_WEEKLY`)

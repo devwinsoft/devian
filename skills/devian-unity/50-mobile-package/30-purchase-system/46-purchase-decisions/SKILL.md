@@ -56,7 +56,7 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
 
 - 요청 스키마(고정 키):
   - `storeKey` (`"apple" | "google"`)
-  - `internalProductId` (string)
+  - `internal_product_id` (string)
   - `kind` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`) (=`PurchaseKind` string)
   - `payload` (string, Unity IAP receipt raw)
 
@@ -83,7 +83,7 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
 
 - getEntitlements 응답 스냅샷 키(고정):
   - `ownedSeasonPasses` (string[])
-  - `rentals` (object map; `internalProductId -> expiresAtServerUtcMs`)
+  - `rentals` (object map; `internal_product_id -> expiresAtServerUtcMs`)
   - `currencyBalances` (object map)
   - `serverNowUtcMs` (number)
 
@@ -157,7 +157,7 @@ Firebase Callable 기반 결제 검증 구현이 "안정적으로 개발 관리"
 - `Consumable`: 반복 구매 허용
 - `Rental`: 반복 구매 허용 (30일 재구매 제한 없음)
 - `Subscription`: 스토어 검증/상태 기준 (별도 서버 상태 계산)
-- `SeasonPass`: 동일 `internalProductId` 1회만 허용 (기존 구매 기록 있으면 `REJECTED`)
+- `SeasonPass`: 동일 `internal_product_id` 1회만 허용 (기존 구매 기록 있으면 `REJECTED`)
 
 ### F1-1. SeasonPass / Rental 복원용 서버 projection (결정)
 

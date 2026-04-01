@@ -37,7 +37,7 @@ AppliesTo: v10
 SSOT의 "C# ↔ Callable 필드 매핑"을 그대로 따른다.
 
 - 요청 키:
-  - `storeKey`, `internalProductId`, `kind` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`), `payload`
+  - `storeKey`, `internal_product_id`, `kind` (`"Consumable" | "Rental" | "Subscription" | "SeasonPass"`), `payload`
 - 응답 키:
   - `resultStatus`, `purchaseId`, `verifyStatus`, `clientGrantStatus`, `storeConfirmStatus`, `grants`, `entitlementsSnapshot`
 
@@ -116,7 +116,7 @@ Reward는 지급 실행만 담당하며, 멱등/복구 판단은 PurchaseManager
 - `SeasonPass`는 현재 시즌 유효 구간(`TB_SEASON`)일 때만 반영한다.
 - `Rental`은 `expiresAtServerUtcMs > serverNowUtcMs`인 항목만 반영한다.
 - Rental 만료 상한을 두지 않으며, 누적 연장을 허용한다.
-- `GetRentalRemainingMsAsync(internalProductId)`는 서버 조회 없이 `InventoryStorage.GetRentalRemainingMs(id)`를 반환한다.
+- `GetRentalRemainingMsAsync(internal_product_id)`는 서버 조회 없이 `InventoryStorage.GetRentalRemainingMs(id)`를 반환한다.
 - `verifyPurchaseAsync` 응답의 `entitlementsSnapshot`은 클라이언트 인벤토리를 갱신하는 용도로 사용하지 않는다.
 
 

@@ -27,7 +27,7 @@ AppliesTo: v10
 
 ### 3) 출석 claim
 
-- UI가 `AttendManager.ClaimAsync(attendId, ct)`를 호출한다.
+- UI가 `AttendManager.ClaimAsync(attend_id, ct)`를 호출한다.
 - 성공 시:
   - 반환값 `RewardData[]`로 지급 결과를 받는다.
   - `RewardManager`로 보상 적용
@@ -46,9 +46,9 @@ AppliesTo: v10
 
 ## 테스트 체크리스트
 
-- `isActive=false` row는 항상 claim 대상에서 제외된다.
-- `day<=0`, `day>7`, `rewardGroupId` empty row는 제외된다.
-- 동일 `attendId` 재claim은 실패한다.
+- `is_active=false` row는 항상 claim 대상에서 제외된다.
+- `day<=0`, `day>7`, `reward_group_id` empty row는 제외된다.
+- 동일 `attend_id` 재claim은 실패한다.
 - 같은 UTC day 중복 claim은 실패한다.
 - `row.day != nextAttendDay` claim은 실패한다.
 - `nextAttendDay` row가 테이블에 없으면 보정 없이 claim 실패/skip된다.

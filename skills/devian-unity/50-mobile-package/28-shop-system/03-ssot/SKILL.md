@@ -51,7 +51,7 @@ AppliesTo: v10
 - 실제 product 생성 책임은 `ShopCatalogBase.onRefresh()`가 가진다.
 - `ShopCatalogBase.onRefresh()` 기본 경로는 `CHEST/PURCHASE/GOLD`의 테이블 전체 row를 product로 생성하고, 같은 catalog bucket의 storage remain 상태를 즉시 적용한다.
 - `ShopCatalogDaily.onRefresh()`는 valid storage가 있으면 storage 기준으로 5개 동적 상품을 복원하고, invalid/empty storage면 5개를 새로 선택 생성한다.
-- `ShopCatalogEvent.onRefresh()`는 `SHOP_EVENT.startTime/endTime`을 서버 UTC 기준으로 평가해 현재 판매 중인 row만 product로 생성한다.
+- `ShopCatalogEvent.onRefresh()`는 `SHOP_EVENT.start_time/end_time`을 서버 UTC 기준으로 평가해 현재 판매 중인 row만 product로 생성한다.
 - `ShopCatalogBase`는 `Storage`를 소유하며, catalog runtime state helper는 catalog 계층에 둔다.
 - `ShopCatalogBase`는 generic `StorageData`를 소유하며, 각 subclass는 자기 typed storage data를 해석한다.
 - `ShopCatalogDaily`는 daily manual refresh 정책/state machine을 직접 가진다.
@@ -76,8 +76,8 @@ AppliesTo: v10
 - `RemainAdsRefreshTimeMs`
 
 판정 규칙:
-- 일반 카탈로그는 `autoRefreshDays <= 0`이면 auto refresh 미사용 (`autoRefreshUtcMs` 제거 대상).
-- `EVENT`는 `autoRefreshDays`를 사용하지 않고, 가장 가까운 미래 `startTime/endTime` 경계 시각을 다음 refresh 시각으로 사용한다.
+- 일반 카탈로그는 `auto_refresh_days <= 0`이면 auto refresh 미사용 (`autoRefreshUtcMs` 제거 대상).
+- `EVENT`는 `auto_refresh_days`를 사용하지 않고, 가장 가까운 미래 `start_time/end_time` 경계 시각을 다음 refresh 시각으로 사용한다.
 - `requireServerTime=true`인데 서버 시간이 필요한 조건에서 시간이 없으면 실패.
 - `forceCatalogRefresh=true`면 카탈로그 refresh를 강제한다.
 - ADS/FREE 제한 상품이 없으면 `adsRefreshUtcMs`는 제거 대상이다.
@@ -88,7 +88,7 @@ AppliesTo: v10
 ## D) Catalog Refresh Execute Operation (정본)
 
 카탈로그별 refresh 실행은 반드시
-`tryRefreshCatalog(catalogType, requireServerTime, forceCatalogRefresh)` 1경로를 사용한다.
+`tryRefreshCatalog(catalog_type, requireServerTime, forceCatalogRefresh)` 1경로를 사용한다.
 
 실행 순서:
 
@@ -98,16 +98,16 @@ AppliesTo: v10
    - `catalog.ClearRuntimeStateForRefresh(...)` 수행
    - `catalog.RefreshProducts()` 수행
    - 일반 auto refresh catalog는 다음 `autoRefreshUtcMs`를 기록
-   - `EVENT`는 다음 `startTime/endTime` 경계 시각을 `autoRefreshUtcMs`로 기록
+   - `EVENT`는 다음 `start_time/end_time` 경계 시각을 `autoRefreshUtcMs`로 기록
 4. `ShouldRefreshCatalogProducts`가 false이고 `ShouldInitializeAutoRefreshUtcMs`면 초기 next refresh를 기록한다.
 5. `ShouldClearAdsRefreshUtcMs`면 clear한다.
-6. `ShouldRefillAdsFreeProducts`면 ADS/FREE 제한 상품만 `remainCount=maxCount`로 리필하고 `adsRefreshUtcMs = serverNow + 1day`를 기록한다.
+6. `ShouldRefillAdsFreeProducts`면 ADS/FREE 제한 상품만 `remainCount=max_count`로 리필하고 `adsRefreshUtcMs = serverNow + 1day`를 기록한다.
 7. `DidRefreshCatalogProducts` / `DidMutateStorage` 결과를 반환한다.
 
 규칙:
 - `DAILY` refresh 시에는 `dailyCatalogProducts`를 비우고 5개 동적 상품을 재생성한다.
 - ADS/FREE 리필 조건이 false이면 ADS/FREE remain 상태는 유지한다.
-- `unlockMsgId`가 `IsNullOrWhiteSpace`면 unlock 조건이 없는 카탈로그이며 `IsLocked=false`로 처리한다.
+- `unlock_msg_id`가 `IsNullOrWhiteSpace`면 unlock 조건이 없는 카탈로그이며 `IsLocked=false`로 처리한다.
 
 ---
 

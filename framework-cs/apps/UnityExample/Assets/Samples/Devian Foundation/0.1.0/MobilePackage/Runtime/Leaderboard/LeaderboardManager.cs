@@ -217,14 +217,14 @@ namespace Devian
                 if (!IsSeasonRewardEvaluationReady(getSeasonEndUtcMs(prevRow), serverNowUtcMs))
                     continue;
 
-                var claimKey = buildClaimKey(prevRow.LeaderboardId);
+                var claimKey = buildClaimKey(prevRow.leaderboard_id);
                 if (_storage.TryGetClaim(claimKey, out _))
                     continue;
 
-                var snapshotResult = await GetPlayerSnapshotAsync(prevRow.LeaderboardId, ct);
+                var snapshotResult = await GetPlayerSnapshotAsync(prevRow.leaderboard_id, ct);
                 if (snapshotResult.IsFailure)
                 {
-                    Debug.LogWarning($"[{Tag}] Snapshot load failed: leaderboardId={prevRow.LeaderboardId}, error={snapshotResult.Error}");
+                    Debug.LogWarning($"[{Tag}] Snapshot load failed: leaderboard_id={prevRow.leaderboard_id}, error={snapshotResult.Error}");
                     continue;
                 }
 
@@ -250,7 +250,7 @@ namespace Devian
                     continue;
                 }
 
-                if (!tryResolveRewardGroupId(prevRow.LeaderboardId, snapshot.Rank, out var rewardGroupId))
+                if (!tryResolveRewardGroupId(prevRow.leaderboard_id, snapshot.Rank, out var rewardGroupId))
                 {
                     _storage.SetClaim(claimKey, new LeaderboardSeasonRewardClaimRecord
                     {
@@ -267,7 +267,7 @@ namespace Devian
                 var apply = RewardManager.Instance.ApplyRewardGroup(rewardGroupId);
                 if (apply.IsFailure)
                 {
-                    Debug.LogWarning($"[{Tag}] Reward apply failed: leaderboardId={prevRow.LeaderboardId}, rewardGroupId={rewardGroupId}, error={apply.Error}");
+                    Debug.LogWarning($"[{Tag}] Reward apply failed: leaderboard_id={prevRow.leaderboard_id}, reward_group_id={rewardGroupId}, error={apply.Error}");
                     continue;
                 }
 
@@ -292,7 +292,7 @@ namespace Devian
             return CommonResult.Ok();
         }
 
-        [Obsolete("Use ReportScoreAsync(string leaderboardId, CancellationToken ct = default). Score is resolved from LEADERBOARD.messageId.")]
+        [Obsolete("Use ReportScoreAsync(string leaderboard_id, CancellationToken ct = default). Score is resolved from LEADERBOARD.message_id.")]
         public Task<CommonResult> ReportScoreAsync(string leaderboardId, long score, CancellationToken ct = default)
         {
             return ReportScoreAsync(leaderboardId, ct);
@@ -307,7 +307,7 @@ namespace Devian
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    "leaderboardId is empty.");
+                    "leaderboard_id is empty.");
             }
 
             if (!_leaderboardById.TryGetValue(leaderboardId.Trim(), out entry) || entry == null || !entry.isActive)
@@ -343,7 +343,7 @@ namespace Devian
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    $"LEADERBOARD.messageId is empty: {entry.InternalId}");
+                    $"LEADERBOARD.message_id is empty: {entry.InternalId}");
             }
 
             var message = TB_GAME_MESSAGE.Get(messageId);
@@ -351,15 +351,15 @@ namespace Devian
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.LEADERBOARD_MESSAGE_NOT_FOUND,
-                    $"GAME_MESSAGE not found for leaderboard score: leaderboardId={entry.InternalId}, messageId={messageId}");
+                    $"GAME_MESSAGE not found for leaderboard score: leaderboard_id={entry.InternalId}, message_id={messageId}");
             }
 
-            if (!isLeaderboardSupportedSaveType(message.SaveType))
+            if (!isLeaderboardSupportedSaveType(message.save_type))
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.LEADERBOARD_MESSAGE_SAVE_TYPE_INVALID,
                     $"Invalid GAME_MESSAGE.saveType for leaderboard score: " +
-                    $"leaderboardId={entry.InternalId}, messageId={messageId}, saveType={message.SaveType}. " +
+                    $"leaderboard_id={entry.InternalId}, message_id={messageId}, saveType={message.save_type}. " +
                     $"Expected TOTAL_SUM or TOTAL_MAX.");
             }
 
@@ -375,11 +375,11 @@ namespace Devian
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    $"Leaderboard score must be non-negative: leaderboardId={entry.InternalId}, messageId={messageId}, value={stat}");
+                    $"Leaderboard score must be non-negative: leaderboard_id={entry.InternalId}, message_id={messageId}, value={stat}");
             }
 
             if (stat > LongMaxScore)
-                Debug.LogWarning($"[{Tag}] Leaderboard score clamped to long.MaxValue. leaderboardId={entry.InternalId}, messageId={messageId}, value={stat}");
+                Debug.LogWarning($"[{Tag}] Leaderboard score clamped to long.MaxValue. leaderboard_id={entry.InternalId}, message_id={messageId}, value={stat}");
 
             score = convertScoreToLong(stat);
             return CommonResult.Ok();
@@ -434,10 +434,10 @@ namespace Devian
 
         private static bool isActiveSeasonRow(LEADERBOARD row)
         {
-            if (row == null || !row.IsActive)
+            if (row == null || !row.is_active)
                 return false;
 
-            if (string.IsNullOrWhiteSpace(row.LeaderboardId))
+            if (string.IsNullOrWhiteSpace(row.leaderboard_id))
                 return false;
 
             var seasonStartUtcMs = getSeasonStartUtcMs(row);
@@ -445,7 +445,7 @@ namespace Devian
             if (seasonStartUtcMs <= 0L || seasonEndUtcMs <= seasonStartUtcMs)
                 return false;
 
-            return row.Mode != LEADERBOARD_MODE.NONE;
+            return row.mode != LEADERBOARD_MODE.NONE;
         }
 
         private static bool tryFindCurrentSeasonStart(
@@ -458,7 +458,7 @@ namespace Devian
             var found = false;
             foreach (var row in rows)
             {
-                if (row == null || row.Mode != mode)
+                if (row == null || row.mode != mode)
                     continue;
 
                 var seasonStartUtcMsValue = getSeasonStartUtcMs(row);
@@ -487,7 +487,7 @@ namespace Devian
 
             foreach (var row in rows)
             {
-                if (row == null || row.Mode != mode)
+                if (row == null || row.mode != mode)
                     continue;
 
                 var seasonEndUtcMs = getSeasonEndUtcMs(row);
@@ -503,7 +503,7 @@ namespace Devian
 
                 if (seasonEndUtcMs == latestEndUtcMs
                     && seasonRow != null
-                    && string.CompareOrdinal(row.LeaderboardId, seasonRow.LeaderboardId) < 0)
+                    && string.CompareOrdinal(row.leaderboard_id, seasonRow.leaderboard_id) < 0)
                 {
                     seasonRow = row;
                 }
@@ -523,21 +523,21 @@ namespace Devian
             if (row == null)
                 return CommonResult.Ok();
 
-            if (string.IsNullOrWhiteSpace(row.SeasonId))
+            if (string.IsNullOrWhiteSpace(row.season_id))
                 return CommonResult.Ok();
 
-            var season = TB_SEASON.Get(row.SeasonId);
+            var season = TB_SEASON.Get(row.season_id);
             if (season == null)
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.LEADERBOARD_SEASON_NOT_FOUND,
-                    $"SEASON not found: leaderboardId={leaderboardId}, seasonId={row.SeasonId}");
+                    $"SEASON not found: leaderboard_id={leaderboardId}, season_id={row.season_id}");
 
-            var startUtcMs = season.StartUtcTime?.utcTimeMs ?? 0L;
-            var endUtcMs = season.EndUtcTime?.utcTimeMs ?? 0L;
+            var startUtcMs = season.start_utc_time?.utcTimeMs ?? 0L;
+            var endUtcMs = season.end_utc_time?.utcTimeMs ?? 0L;
             if (startUtcMs <= 0L || endUtcMs <= startUtcMs)
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.LEADERBOARD_SEASON_TIME_INVALID,
-                    $"SEASON time range invalid: seasonId={row.SeasonId}");
+                    $"SEASON time range invalid: season_id={row.season_id}");
 
             if (!RemoteDataManager.TryGetServerNowUtcMs(out var serverNowUtcMs)
                 || serverNowUtcMs <= 0L)
@@ -548,7 +548,7 @@ namespace Devian
             if (serverNowUtcMs < startUtcMs || serverNowUtcMs >= endUtcMs)
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.LEADERBOARD_SEASON_NOT_ACTIVE,
-                    $"Score recording is only allowed during the active season: leaderboardId={leaderboardId}, seasonId={row.SeasonId}");
+                    $"Score recording is only allowed during the active season: leaderboard_id={leaderboardId}, season_id={row.season_id}");
 
             return CommonResult.Ok();
         }
@@ -569,16 +569,16 @@ namespace Devian
                 if (row == null)
                     continue;
 
-                if (row.RankFrom <= 0L || row.RankTo < row.RankFrom)
+                if (row.rank_from <= 0L || row.rank_to < row.rank_from)
                     continue;
 
-                if (rank < row.RankFrom || rank > row.RankTo)
+                if (rank < row.rank_from || rank > row.rank_to)
                     continue;
 
-                if (string.IsNullOrWhiteSpace(row.RewardGroupId))
+                if (string.IsNullOrWhiteSpace(row.reward_group_id))
                     return false;
 
-                rewardGroupId = row.RewardGroupId.Trim();
+                rewardGroupId = row.reward_group_id.Trim();
                 return rewardGroupId.Length > 0;
             }
 
@@ -587,18 +587,18 @@ namespace Devian
 
         private static long getSeasonStartUtcMs(LEADERBOARD row)
         {
-            if (row == null || string.IsNullOrWhiteSpace(row.SeasonId))
+            if (row == null || string.IsNullOrWhiteSpace(row.season_id))
                 return 0L;
-            var season = TB_SEASON.Get(row.SeasonId);
-            return season?.StartUtcTime?.utcTimeMs ?? 0L;
+            var season = TB_SEASON.Get(row.season_id);
+            return season?.start_utc_time?.utcTimeMs ?? 0L;
         }
 
         private static long getSeasonEndUtcMs(LEADERBOARD row)
         {
-            if (row == null || string.IsNullOrWhiteSpace(row.SeasonId))
+            if (row == null || string.IsNullOrWhiteSpace(row.season_id))
                 return 0L;
-            var season = TB_SEASON.Get(row.SeasonId);
-            return season?.EndUtcTime?.utcTimeMs ?? 0L;
+            var season = TB_SEASON.Get(row.season_id);
+            return season?.end_utc_time?.utcTimeMs ?? 0L;
         }
 
         internal static bool IsSeasonRewardEvaluationReady(long prevSeasonEndUtcMs, long serverNowUtcMs)
@@ -630,21 +630,21 @@ namespace Devian
                 if (row == null)
                     continue;
 
-                var id = (row.LeaderboardId ?? string.Empty).Trim();
+                var id = (row.leaderboard_id ?? string.Empty).Trim();
                 if (string.IsNullOrEmpty(id))
                     continue;
 
                 var entry = new LeaderboardMapEntry
                 {
                     leaderboardId = id,
-                    isActive = row.IsActive,
-                    appleLeaderboardId = row.AppleLeaderboardId ?? string.Empty,
-                    googleLeaderboardId = row.GoogleLeaderboardId ?? string.Empty,
-                    messageId = row.MessageId ?? string.Empty,
+                    isActive = row.is_active,
+                    appleLeaderboardId = row.apple_leaderboard_id ?? string.Empty,
+                    googleLeaderboardId = row.google_leaderboard_id ?? string.Empty,
+                    messageId = row.message_id ?? string.Empty,
                 };
 
                 if (_leaderboardById.ContainsKey(id))
-                    Debug.LogWarning($"[{Tag}] Duplicate leaderboardId mapping. override id={id}");
+                    Debug.LogWarning($"[{Tag}] Duplicate leaderboard_id mapping. override id={id}");
 
                 _leaderboardById[id] = entry;
             }

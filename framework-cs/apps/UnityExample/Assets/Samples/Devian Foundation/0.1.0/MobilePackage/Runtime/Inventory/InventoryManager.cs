@@ -172,7 +172,7 @@ namespace Devian
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    "InventoryManager.ApplyRental: itemId is null or empty.");
+                    "InventoryManager.ApplyRental: item_id is null or empty.");
             }
 
             var nowUtcMs = RemoteDataManager.ServerNowUtcMs;
@@ -208,7 +208,7 @@ namespace Devian
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    "InventoryManager.SetPassOwnership: itemId is null or empty.");
+                    "InventoryManager.SetPassOwnership: item_id is null or empty.");
             }
 
             if (_storage.SetPass(itemId, owned))
@@ -223,7 +223,7 @@ namespace Devian
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    "InventoryManager.RemovePassOwnership: itemId is null or empty.");
+                    "InventoryManager.RemovePassOwnership: item_id is null or empty.");
             }
 
             if (_storage.RemovePass(itemId))

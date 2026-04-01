@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: FirstRewardSettings
   m_EditorClassIdentifier: Devian.Samples.MobilePackage::Devian.FirstRewardSettings
   InitialRewards:
-    data: 9WoAKZpR/Dy2OKr8hY+oQyD8qjwAAtGfEkDxBJ9bEqpuOATtqO0Y0Rgbo1OjltYEvoSS46AjnU35swQs+ccz7Q==
+    data: 9WoAKZpR/Dy2OKr8hY+oQyD8qjwAAtGfEkDxBJ9bEqpuOATtqO0Y0Rgbo7ODnYOP1p88gzha1mrRj4/79fUSRb5Q/IMSOCwYwwKxxy+fw8cpFZ+Pnbb7LCwSQCDDbiwHtgVaWtb8UhvvBY/DM/sshO+gf4V/W1LaPKqEj5oSBSwSOE1b0UWSQBVQEvUvtjw4G4S+mlCFJyc=
   _editorCardId:
+    Value: 
+  _editorMaterialId:
     Value: 
   _editorEquipId:
     Value: 

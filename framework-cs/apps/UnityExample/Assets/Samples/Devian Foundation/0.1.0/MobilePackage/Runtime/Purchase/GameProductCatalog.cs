@@ -25,11 +25,11 @@ namespace Devian
         static string getStoreSku(PURCHASE p)
         {
 #if UNITY_IOS || UNITY_TVOS
-            return string.IsNullOrEmpty(p.StoreSkuApple) ? p.InternalProductId : p.StoreSkuApple;
+            return string.IsNullOrEmpty(p.store_sku_apple) ? p.internal_product_id : p.store_sku_apple;
 #elif UNITY_ANDROID
-            return string.IsNullOrEmpty(p.StoreSkuGoogle) ? p.InternalProductId : p.StoreSkuGoogle;
+            return string.IsNullOrEmpty(p.store_sku_google) ? p.internal_product_id : p.store_sku_google;
 #else
-            return p.InternalProductId;
+            return p.internal_product_id;
 #endif
         }
 
@@ -40,8 +40,8 @@ namespace Devian
 
             foreach (var p in products)
             {
-                if (!p.IsActive) continue;
-                list.Add(new PurchaseCatalogItem(p.InternalProductId, getStoreSku(p), mapProductType(p.Kind)));
+                if (!p.is_active) continue;
+                list.Add(new PurchaseCatalogItem(p.internal_product_id, getStoreSku(p), mapProductType(p.kind)));
             }
 
             return list;

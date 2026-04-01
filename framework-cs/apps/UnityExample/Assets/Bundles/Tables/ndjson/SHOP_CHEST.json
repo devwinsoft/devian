@@ -1,3 +1,3 @@
-{"ShopId":"shop_treasure_ads","ChestType":"ADS","NameId":"","CurrencyType":"ADS","Price":0,"Amount":1,"MaxCount":1}
-{"ShopId":"shop_treasure_001","ChestType":"ONE","NameId":"","CurrencyType":"JEWEL","Price":100,"Amount":1,"MaxCount":-1}
-{"ShopId":"shop_treasure_010","ChestType":"TEN","NameId":"","CurrencyType":"JEWEL","Price":1000,"Amount":11,"MaxCount":-1}
+{"shop_id":"shop_treasure_ads","chest_type":"ADS","name_id":"","currency_type":"ADS","price":0,"amount":1,"max_count":1}
+{"shop_id":"shop_treasure_001","chest_type":"ONE","name_id":"","currency_type":"JEWEL","price":100,"amount":1,"max_count":-1}
+{"shop_id":"shop_treasure_010","chest_type":"TEN","name_id":"","currency_type":"JEWEL","price":1000,"amount":11,"max_count":-1}
