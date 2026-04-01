@@ -32,7 +32,8 @@ AppliesTo: v11
 
 ## Pool Cleanup
 
-- `UIToastFrame` cleanup은 `OnPoolSpawned()` / `OnPoolDespawned()`에서 수행한다.
+- `UIToastFrame` cleanup은 public `OnPoolSpawned()` / `OnPoolDespawned()` bridge와 protected `onPoolSpawned()` / `onPoolDespawned()` hook에서 수행한다.
+- base `UIBaseFrame`는 despawn 시 init state를 reset하므로 toast frame은 respawn 뒤 `_Init()` / `_InitComplete()`를 다시 받는다.
 - slot release(`BundlePool.Despawn`)는 lifetime 종료가 아니라 **hide tween 완료** 시점에 수행한다.
 - `UIToastGroup.OnFrameHidden()` 콜백이 Despawn을 호출한다.
 

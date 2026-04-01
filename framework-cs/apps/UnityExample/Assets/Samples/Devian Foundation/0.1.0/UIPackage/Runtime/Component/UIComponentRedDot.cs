@@ -29,6 +29,11 @@ namespace Devian
             manager.Subcribe(GetEntityId(), key, onRedDotChanged);
         }
 
+        protected override void onPoolDespawned()
+        {
+            RedDotManager.Instance.UnSubcribe(GetEntityId());
+        }
+
         protected override void onDestroy()
         {
             RedDotManager.Instance.UnSubcribe(GetEntityId());

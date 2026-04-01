@@ -19,6 +19,11 @@ namespace Devian
             UIManager.messageSystem.Subcribe(GetEntityId(), UI_MESSAGE.ReloadText, onReloadText);
         }
 
+        protected override void onPoolDespawned()
+        {
+            UIManager.messageSystem?.UnSubcribe(GetEntityId());
+        }
+
         protected override void onDestroy()
         {
             UIManager.messageSystem?.UnSubcribe(GetEntityId());

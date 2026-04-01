@@ -64,6 +64,7 @@ UIPackage는 `com.devian.foundation` 내 샘플이므로 자체 `package.json`�
 | 11 | UILoadingSystem | 전역 blocking loading canvas / spinner / bundle loading / scene loading | `11-ui-loading-system/00-overview/SKILL.md` |
 | 12 | UIPopupSystem | stack 기반 modal popup manager / canvas / panel / frame | `12-ui-popup-system/00-overview/SKILL.md` |
 | 13 | UIToastSystem | overlay toast service / canvas / panel / group / frame | `13-ui-toast-system/00-overview/SKILL.md` |
+| 14 | UIPageSystem | page 전환 전용 canvas/panel specialization | `14-ui-page-system/00-overview/SKILL.md` |
 | 20 | UIComponents | 재사용 UI 컴포넌트 그룹 (Button, Text, CircleFilter, NonDrawing) | `20-ui-components/00-overview/SKILL.md` |
 | 21 | UIScrollSystem | scroll owner / section frame / scroll cell ID 그룹 | `21-ui-scroll-system/00-overview/SKILL.md` |
 | 22 | UITweenSystem | UI 전용 최소 tween / transition 그룹 | `22-ui-tween-system/00-overview/SKILL.md` |

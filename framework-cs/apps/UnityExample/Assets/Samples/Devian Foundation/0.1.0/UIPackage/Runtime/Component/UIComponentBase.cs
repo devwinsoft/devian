@@ -44,8 +44,19 @@ namespace Devian
             onInit(canvas);
         }
 
+        internal void _ResetForPool()
+        {
+            if (!isInitialized && canvas == null)
+                return;
+
+            onPoolDespawned();
+            isInitialized = false;
+            canvas = null;
+        }
+
         protected virtual void onAwake() { }
         protected virtual void onInit(Canvas canvas) { }
+        protected virtual void onPoolDespawned() { }
         protected virtual void onDestroy() { }
     }
 }

@@ -58,7 +58,7 @@ namespace Devian
             ResolveDefaults();
         }
 
-        public void OnPoolSpawned()
+        protected override void onPoolSpawned()
         {
             ResolveDefaults();
             CancelInternal();
@@ -66,7 +66,7 @@ namespace Devian
             ApplyNonBlocking();
         }
 
-        public void OnPoolDespawned()
+        protected override void onPoolDespawned()
         {
             CancelInternal();
             isHiding = false;
@@ -77,6 +77,16 @@ namespace Devian
             }
 
             _currentMessage = string.Empty;
+        }
+
+        public void OnPoolSpawned()
+        {
+            _HandlePoolSpawned();
+        }
+
+        public void OnPoolDespawned()
+        {
+            _HandlePoolDespawned();
         }
 
         public void Bind(string message, ToastType toastType)

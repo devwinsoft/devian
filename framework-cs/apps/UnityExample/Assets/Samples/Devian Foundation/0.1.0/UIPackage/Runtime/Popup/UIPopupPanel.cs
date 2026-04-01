@@ -44,9 +44,9 @@ namespace Devian
                 rect.localScale = Vector3.one;
             }
 
-            if (!frame.isFrameInitialized && owner != null && owner.canvas != null)
+            if (!frame.isFrameInitialized && ownerCanvas != null && ownerCanvas.canvas != null)
             {
-                frame._Init(owner.canvas);
+                frame._Init(ownerCanvas.canvas);
                 frame._InitComplete();
             }
 

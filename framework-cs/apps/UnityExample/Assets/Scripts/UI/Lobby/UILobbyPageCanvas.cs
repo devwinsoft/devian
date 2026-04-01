@@ -4,11 +4,15 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Devian;
 using Devian.Domain.Game;
+using UnityEngine.Serialization;
 
-public class UILobbyCanvas : UIBaseCanvas<UILobbyCanvas>
+public class UILobbyPageCanvas : UIBasePageCanvas<UILobbyPageCanvas>
 {
     public UILobbyMenuBottom menuBottom;
     public UILobbyMenuTopPanel menuTopPanel;
+    
+    public UILobbyMissionPanel missionPanel;
+    public UILobbyCardPanel cardPanel;
     
     protected override void onAwake()
     {
@@ -20,10 +24,12 @@ public class UILobbyCanvas : UIBaseCanvas<UILobbyCanvas>
 
     protected override void onInit()
     {
+        base.onInit();
     }
 
     protected override void onInitComplete()
     {
+        base.onInitComplete();
         AchieveManager.Instance.RefreshRuntimes();
         MissionManager.Instance.RefreshRuntimes();
         Debug.Log($"[UICanvasSample] remainSec={MissionManager.Instance.GetRemainTime(MISSION_TYPE.DAILY).TotalSeconds}");
@@ -36,17 +42,17 @@ public class UILobbyCanvas : UIBaseCanvas<UILobbyCanvas>
 
     public void OnClick_SignIn_Google()
     {
-        UnityTaskRunner.Run(OnClickSignInGoogleAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_SignIn_Google)}");
+        UnityTaskRunner.Run(OnClickSignInGoogleAsync, $"{nameof(UILobbyPageCanvas)}.{nameof(OnClick_SignIn_Google)}");
     }
 
     public void OnClick_Logout()
     {
-        UnityTaskRunner.Run(OnClickLogoutAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_Logout)}");
+        UnityTaskRunner.Run(OnClickLogoutAsync, $"{nameof(UILobbyPageCanvas)}.{nameof(OnClick_Logout)}");
     }
 
     public void OnClick_InAppAd()
     {
-        UnityTaskRunner.Run(OnClickInAppAdAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_InAppAd)}");
+        UnityTaskRunner.Run(OnClickInAppAdAsync, $"{nameof(UILobbyPageCanvas)}.{nameof(OnClick_InAppAd)}");
     }
 
     private async Task OnClickSignInGoogleAsync()

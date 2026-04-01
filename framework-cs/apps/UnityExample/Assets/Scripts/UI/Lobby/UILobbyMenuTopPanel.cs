@@ -3,12 +3,12 @@ using Devian;
 using Devian.Domain.Game;
 using TMPro;
 
-public class UILobbyMenuTopPanel : UIBasePanel<UILobbyCanvas>
+public class UILobbyMenuTopPanel : UIBasePanel<UILobbyPageCanvas>
 {
     public TextMeshProUGUI stamina;
     public TextMeshProUGUI jewel;
     
-    protected override void onInit(UILobbyCanvas canvas)
+    protected override void onInit(UILobbyPageCanvas pageCanvas)
     {
         stamina.text = string.Format("Stamina: {0}/{1}",
             InventoryManager.Instance.Storage.Wallet.Get(CURRENCY_TYPE.STAMINA),

@@ -15,13 +15,13 @@ Toast 전용 canvas/panel 계층.
 
 ## SSOT
 
-### Code Path
+### Implementation Location (3-path mirror)
 
-```
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Toast/
-├── UIToastCanvas.cs
-└── UIToastPanel.cs
-```
+| 경로 | 역할 |
+|------|------|
+| `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Toast/` | UPM mirror |
+| `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/UIPackage/Runtime/Toast/` | Packages mirror |
+| `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Toast/` | 현재 workspace 구현 기준 |
 
 ### Class Signatures
 
@@ -62,7 +62,11 @@ namespace Devian
 - `MobileApplication.onLoadCompletedAsync()`: `ui` label의 `UITransitionPresetAsset`을 preload한 뒤 toast canvas bootstrap을 진행한다.
 - `onAwake()`: root `RectTransform`을 full-stretch + `localScale = 1`로 정규화.
 - `onAwake()`: `_panel`이 null이면 `GetComponentInChildren<UIToastPanel>(true)` fallback.
-- `OnPoolSpawned()`: root `RectTransform` 정규화 + `_panel` 동일 fallback 재실행.
+- `OnPoolSpawned()`: public bridge이며 base `_HandlePoolSpawned()`를 호출한다.
+- `onPoolSpawned()`: root `RectTransform` 정규화 + `_panel` 동일 fallback 재실행.
+- respawn 시 base canvas/panel helper가 canvas-owned component와 panel-owned subtree를 다시 init/complete 한다.
+- `OnPoolDespawned()`: public bridge이며 base `_HandlePoolDespawned()`를 호출한다.
+- despawn 시 base helper가 panel-owned subtree와 canvas-owned component를 reset한다. canvas/panel 자체는 init once 상태를 유지한다.
 - `Validate()`:
   - `RenderMode.WorldSpace` 금지.
   - `_panel == null` 금지.

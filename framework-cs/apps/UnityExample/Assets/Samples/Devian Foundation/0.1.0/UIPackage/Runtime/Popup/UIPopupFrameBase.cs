@@ -52,7 +52,7 @@ namespace Devian
             ResolveDefaults();
         }
 
-        public void OnPoolSpawned()
+        protected override void onPoolSpawned()
         {
             ResolveDefaults();
             CancelInternal();
@@ -61,12 +61,22 @@ namespace Devian
             _isTop = false;
         }
 
-        public void OnPoolDespawned()
+        protected override void onPoolDespawned()
         {
             CancelInternal();
             _currentPayload = null;
             _pendingCloseReason = PopupCloseReason.Canceled;
             _isTop = false;
+        }
+
+        public void OnPoolSpawned()
+        {
+            _HandlePoolSpawned();
+        }
+
+        public void OnPoolDespawned()
+        {
+            _HandlePoolDespawned();
         }
 
         internal void ShowUntyped(

@@ -1,15 +1,17 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Devian
 {
     /// <summary>
-    /// UIBaseCanvas/UIBasePanel 수명주기에 통합되는 컨테이너의 기반 클래스.
-    /// UIBaseCanvas.Init() 시 자동으로 수집되어 초기화된다.
+    /// UIBasePanel 수명주기에 통합되는 컨테이너의 기반 클래스.
+    /// owner panel이 소유 subtree를 수집해 초기화한다.
     /// 초기화 순서: owned component.onInit() → owned frame.onInit() → container.onInit() → canvas.onInit()
     /// </summary>
     public abstract class UIBaseContainer : MonoBehaviour, IPoolable
     {
         private bool _isContainerInitComplete;
+        private readonly List<UIBaseFrame> _ownedFrames = new List<UIBaseFrame>();
 
         /// <summary>
         /// 컨테이너가 초기화되었는지 여부.
@@ -42,7 +44,7 @@ namespace Devian
         }
 
         /// <summary>
-        /// 컨테이너 초기화. UIBaseCanvas.Init()에서 호출된다.
+        /// 컨테이너 초기화. owner panel이 호출한다.
         /// Canvas 참조를 저장하고 owned subtree를 먼저 초기화한 뒤 onInit()을 호출한다.
         /// 중복 호출 방지 (isContainerInitialized 가드).
         /// </summary>
@@ -50,7 +52,8 @@ namespace Devian
         {
             if (isContainerInitialized) return;
             this.canvas = canvas;
-            UIBaseInitHelper.InitOwnedSubtree(transform, canvas);
+            _ownedFrames.Clear();
+            UIBaseInitHelper.InitOwnedSubtree(transform, canvas, _ownedFrames);
             isContainerInitialized = true;
             onInit();
         }
@@ -63,7 +66,20 @@ namespace Devian
         {
             if (_isContainerInitComplete) return;
             _isContainerInitComplete = true;
+
+            for (var i = 0; i < _ownedFrames.Count; i++)
+                _ownedFrames[i]._InitComplete();
+
             onInitComplete();
+        }
+
+        internal void _ResetForPool()
+        {
+            UIBaseInitHelper.ResetOwnedSubtree(transform);
+            _ownedFrames.Clear();
+            isContainerInitialized = false;
+            _isContainerInitComplete = false;
+            canvas = null;
         }
 
         /// <summary>
@@ -77,12 +93,27 @@ namespace Devian
         /// 호출 시점: Canvas.onInitComplete() 이전.
         /// </summary>
         protected virtual void onInitComplete() { }
+        protected virtual void onPoolSpawned() { }
+        protected virtual void onPoolDespawned() { }
         protected virtual void onDestroy() { }
 
         // ─── IPoolable ───
 
-        public virtual void OnPoolSpawned() { }
-        public virtual void OnPoolDespawned() { }
+        public void OnPoolSpawned()
+        {
+            onPoolSpawned();
+        }
+
+        public void OnPoolDespawned()
+        {
+            _HandlePoolDespawnedRecursive();
+        }
+
+        internal void _HandlePoolDespawnedRecursive()
+        {
+            onPoolDespawned();
+            _ResetForPool();
+        }
 
         private RectTransform _rectTransform;
     }

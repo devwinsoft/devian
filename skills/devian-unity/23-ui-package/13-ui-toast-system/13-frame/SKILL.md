@@ -14,11 +14,13 @@ message/color bind, show/hide tween, lifetime coroutine, non-blocking 강제를 
 
 ## SSOT
 
-### Code Path
+### Implementation Location (3-path mirror)
 
-```
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Toast/UIToastFrame.cs
-```
+| 경로 | 역할 |
+|------|------|
+| `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Toast/UIToastFrame.cs` | UPM mirror |
+| `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/UIPackage/Runtime/Toast/UIToastFrame.cs` | Packages mirror |
+| `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Toast/UIToastFrame.cs` | 현재 workspace 구현 기준 |
 
 ### Class Signature
 
@@ -43,8 +45,8 @@ namespace Devian
         private LayoutSnapshot _initialLayout;
 
         // ─── Pool ───
-        public void OnPoolSpawned();    // ResolveDefaults + CancelInternal + ApplyNonBlocking
-        public void OnPoolDespawned();  // CancelInternal, messageText/_currentMessage 초기화
+        public void OnPoolSpawned();    // base _HandlePoolSpawned bridge
+        public void OnPoolDespawned();  // base _HandlePoolDespawned bridge
 
         // ─── Control ───
         public void Bind(string message, ToastType toastType);
@@ -79,6 +81,13 @@ namespace Devian
 - `GetComponentsInChildren<Graphic>(true)` 전체에 `raycastTarget = false`
 
 spawn 시(`OnPoolSpawned`) 및 bind 시(`Bind`) 두 번 호출된다.
+
+## Pool Contract
+
+- public `OnPoolSpawned()` / `OnPoolDespawned()`는 각각 base `_HandlePoolSpawned()` / `_HandlePoolDespawned()` bridge다.
+- `onPoolSpawned()`는 `ResolveDefaults()` + `CancelInternal()` + `ApplyNonBlocking()`를 수행한다.
+- `onPoolDespawned()`는 `CancelInternal()` 후 `_messageText.text`와 `_currentMessage`를 비운다.
+- base `UIBaseFrame`가 despawn 시 init state를 reset하므로, 다음 respawn 뒤 group이 `_Init()` / `_InitComplete()`를 다시 호출하면 `onInit()`이 재실행된다.
 
 ## Bind 규약
 

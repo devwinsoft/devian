@@ -9,20 +9,25 @@ AppliesTo: v11
 
 ### Purpose
 
-Unity UI를 위한 UIBaseCanvas / UIBasePanel / UIBaseContainer 기본 구조를 제공한다.
-Canvas owner, UI 기능 단위(Frame), Container, UIComponentBase의 초기화 수명주기를 표준화한다.
+Unity UI를 위한 `UIBaseCanvas` / `UIBasePanel` / `UIBaseContainer` / `UIBaseFrame` /
+`UIComponentBase` 기본 수명주기 계약을 정의한다.
+
+현재 구현 기준 핵심은 다음 두 가지다.
+
+- `UIBaseCanvas`는 panel만 직접 관리한다.
+- `UIBasePanel`이 자기 subtree의 `UIBaseContainer` / panel-owned `UIBaseFrame`를 관리한다.
 
 ### Terms
 
 | Term | Definition |
 |------|------------|
-| **UIBaseCanvas** | 비제네릭 canvas owner base. Canvas 캐시, Init 흐름, Validate, dynamic container registration을 담당한다 |
-| **UIBaseCanvas\<TCanvas\>** | 타입 안전 singleton layer. `static Instance`를 제공하며 `where TCanvas : UIBaseCanvas` 제약을 가진다 |
-| **UIBasePanel** | Canvas 하위 UI 기능 단위의 비제네릭 기반 클래스. _InitFromCanvas(MonoBehaviour) 진입점 제공 |
-| **UIBasePanel\<TCanvas\>** | 타입 안전 버전. 강타입 owner 참조 + onInit(TCanvas) 확장점 제공 |
-| **UIComponentBase** | Canvas lifecycle-aware UI component base. `Init(Canvas)`와 `onInit(Canvas)` 확장점을 제공한다 |
-| **UIBaseContainer** | Container 기반 클래스. UIBaseCanvas.Init()에서 자동 수집되며 component → frame → container 순서 규약을 따른다 |
-| **UIBaseFrame** | Container 내부 하위 요소의 공통 기반 클래스. scroll 상태는 소유하지 않으며, scroll 전용 계약은 별도 인터페이스로 분리 |
+| **UIBaseCanvas** | 비제네릭 canvas owner base. Canvas 캐시, init once 흐름, validate, pool spawn/despawn bridge를 담당한다 |
+| **UIBaseCanvas\<TCanvas\>** | 타입 안전 singleton layer. `static Instance`를 제공한다 |
+| **UIBasePanel** | canvas 하위 UI 기능 단위의 비제네릭 base. panel-owned subtree init과 dynamic container/frame registration을 담당한다 |
+| **UIBasePanel\<TCanvas\>** | 강타입 owner canvas 참조를 제공하는 typed panel layer |
+| **UIComponentBase** | canvas lifecycle-aware component base. `Init(Canvas)`로 초기화되며 pooled respawn 시 재초기화될 수 있다 |
+| **UIBaseContainer** | panel이 소유하는 subtree owner. 자기 하위 component / frame subtree를 먼저 초기화한 뒤 `onInit()`를 받는다 |
+| **UIBaseFrame** | panel 또는 container가 소유하는 frame base. 자기 하위 component / frame subtree를 먼저 초기화한 뒤 `onInit()`를 받는다 |
 
 ---
 
@@ -39,28 +44,33 @@ Canvas owner, UI 기능 단위(Frame), Container, UIComponentBase의 초기화 �
 | Rule | Description |
 |------|-------------|
 | **MUST** | `Awake()` → `onAwake()` 패턴 사용 |
-| **MUST** | UIBaseCanvas.Awake()는 non-virtual. Instance 설정 + canvas 캐시 + onAwake() |
-| **MUST** | UIBaseCanvas / UIBasePanel / UIBaseContainer / UIBaseFrame의 `OnDestroy()`는 non-virtual |
-| **MUST** | destroy 정리 로직은 `onDestroy()`로만 override |
+| **MUST** | `UIBaseCanvas.Awake()`는 non-virtual. `Instance` 설정 + canvas 캐시 + `onAwake()` 호출 |
+| **MUST** | `UIBasePanel.Awake()`는 non-virtual. cached `RectTransform` 설정 + `onAwake()` 호출 |
+| **MUST** | `UIBaseCanvas` / `UIBasePanel` / `UIBaseContainer` / `UIBaseFrame`의 `OnDestroy()`는 non-virtual |
+| **MUST** | destroy 정리 로직은 `onDestroy()`만 override |
 | **MUST** | `onDestroy()`는 `Application.isPlaying && !BaseApplication.IsShuttingDown && !BaseApplication.IsApplicationQuitting`일 때만 호출 |
-| **MUST** | UIBasePanel.Awake()는 non-virtual |
 | **MUST** | panel 표시 전이는 `Show()` / `Hide()`로 수행하고 `onShow()` / `onHide()`를 override한다 |
-| **MUST** | `UIComponentBase`는 `Awake()`에서 owner `UIBaseCanvas`가 이미 초기화된 경우 즉시 `Init(canvas)` 된다 |
-| **MUST** | `_InitFromCanvas()` / `_Init()` 중복 호출 방지 (initialized 가드) |
-| **MUST** | `UIBaseContainer._InitComplete()`는 idempotent 해야 한다 |
-| **MUST** | Init 우선순위: UIComponentBase.onInit → UIBaseFrame.onInit → UIBaseContainer.onInit → UIBaseCanvas.onInit |
+| **MUST** | `UIBaseCanvas` / `UIBasePanel`은 인스턴스 lifetime 기준 `Init()` 1회 정책이다 |
+| **MUST** | pooled `UIBaseCanvas` / `UIBasePanel`은 respawn 때 `Init()`를 다시 돌리지 않고 `onPoolSpawned()` / `onPoolDespawned()`로 runtime state만 복구한다 |
+| **MUST** | `UIBaseContainer` / `UIBaseFrame` / `UIComponentBase`는 pool despawn 시 init state를 reset하고, respawn 후 다음 init 경로에서 `onInit()`이 다시 호출될 수 있어야 한다 |
+| **MUST** | `UIComponentBase`는 `Awake()`에서 owner `UIBaseCanvas`가 이미 initialized 상태면 즉시 `Init(canvas)` 된다 |
+| **MUST** | `UIBaseCanvas`는 canvas-owned component와 panel만 직접 초기화한다. container / frame를 직접 수집하거나 관리하지 않는다 |
+| **MUST** | `UIBasePanel`이 자기 subtree의 container / panel-owned frame lifecycle을 관리한다 |
+| **MUST** | 동적 container subtree는 owner panel `CreateContainer<T>()` 경로로 lifecycle에 편입된다 |
+| **MUST** | 동적 frame subtree는 owner panel `CreateFrame<T>()` 경로로 lifecycle에 편입된다 |
+| **MUST** | Init 우선순위는 `UIComponentBase.onInit` → `UIBaseFrame.onInit` → `UIBaseContainer.onInit` → `UIBaseCanvas.onInit` 이다 |
+| **MUST** | `UIBaseContainer._InitComplete()` / `UIBaseFrame._InitComplete()`는 idempotent 해야 한다 |
 | **MUST** | `UIComponentCircleFilter` / `UIComponentNonDrawing`는 기존 부모 타입을 유지한다 |
-| **MUST** | 동적 container subtree는 owner canvas가 `RegisterDynamicContainerTree()`로 편입한다 |
-| **MUST** | 동적 frame subtree는 owner canvas가 `RegisterDynamicFrameTree()`로 편입한다 |
 
 ### Prohibited Actions
 
 | Action | Reason |
 |--------|--------|
-| UIBasePanel.`Awake()`를 `virtual`로 선언 | 수명주기 순서 보장 불가 |
-| UIBaseCanvas.Awake()/OnDestroy() override | non-virtual — onAwake()/onDestroy() 사용 |
-| UIBasePanel / UIBaseContainer / UIBaseFrame의 `OnDestroy()` 직접 override | non-virtual hook 규약 위반. `onDestroy()` 사용 |
-| UIBasePanel 가시성을 `SetActive()`만으로 제어 | `Show()` / `Hide()` 상태 훅 우회 |
+| `UIBasePanel.Awake()`를 `virtual`로 선언 | 수명주기 순서 보장 불가 |
+| `UIBaseCanvas.Awake()` / `OnDestroy()` override | non-virtual hook 규약 위반. `onAwake()` / `onDestroy()` 사용 |
+| `UIBasePanel` / `UIBaseContainer` / `UIBaseFrame`의 `OnDestroy()` 직접 override | non-virtual hook 규약 위반. `onDestroy()` 사용 |
+| `UIBaseCanvas`가 container / frame subtree를 직접 수집·등록하도록 설계 | 현재 구현과 불일치. 해당 책임은 panel에 있음 |
+| panel 가시성을 `SetActive()`만으로 제어 | `Show()` / `Hide()` 상태 훅 우회 |
 | `BaseUIFrame` 이름 사용 | `UIBasePanel`로 변경됨 |
 | `InspectorPoolFactory` 사용 | `BundlePool` 전용 |
 
@@ -68,32 +78,42 @@ Canvas owner, UI 기능 단위(Frame), Container, UIComponentBase의 초기화 �
 
 ## SSOT
 
-### Canonical Code Path
+### Implementation Location (3-path mirror)
 
-```
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Base/
+| 경로 | 역할 |
+|------|------|
+| `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/` | UPM mirror |
+| `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/UIPackage/` | Packages mirror |
+| `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/{version}/UIPackage/` | 현재 workspace 구현 기준 |
+
+### Canonical Files
+
+```text
+framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Base/
 ├── UIBaseCanvas.cs
 ├── UIBasePanel.cs
-├── UIManager.cs
-├── UIMessageSystem.cs
 ├── UIBaseContainer.cs
-└── UIBaseFrame.cs
+├── UIBaseFrame.cs
+├── UIBaseInitHelper.cs
+├── UIManager.cs
+└── UIMessageSystem.cs
 ```
 
 ### File List
 
 | File | Purpose |
 |------|---------|
-| `UIBaseCanvas.cs` | UIBaseCanvas (비제네릭 base) + UIBaseCanvas\<T\> + BillboardMode + UICanvasInitPhase |
-| `UIBasePanel.cs` | UIBasePanel + UIBasePanel\<TCanvas\> 클래스 |
-| `UIBaseContainer.cs` | UIBaseContainer 추상 클래스 |
-| `UIBaseFrame.cs` | UIBaseFrame 추상 클래스 (Container 내부 하위 요소) |
-| `UIBaseInitHelper.cs` | canvas/container/frame owned subtree 초기화 helper |
-| `UIUtils.cs` | 공용 static 유틸리티 (좌표 변환, Billboard, Cursor) — `50-ui-utils` 참조 |
+| `UIBaseCanvas.cs` | `UIBaseCanvas` + `UIBaseCanvas<TCanvas>` + `BillboardMode` + `UICanvasInitPhase` |
+| `UIBasePanel.cs` | `UIBasePanel` + `UIBasePanel<TCanvas>` |
+| `UIBaseContainer.cs` | panel-owned container base + pool reset contract |
+| `UIBaseFrame.cs` | panel/container-owned frame base + pool reset contract |
+| `UIBaseInitHelper.cs` | canvas / panel / container / frame owned subtree init + reset helper |
 
-### Public API Signatures
+---
 
-#### UIBaseContainer (신규)
+## Public API
+
+### UIBaseContainer
 
 ```csharp
 namespace Devian
@@ -104,24 +124,24 @@ namespace Devian
         public RectTransform rectTransform { get; }
         public Canvas canvas { get; }
 
-        // Internal (UIBaseCanvas가 호출)
         internal void _Init(Canvas canvas);
         internal void _InitComplete();
+        internal void _ResetForPool();
 
-        // Override points
         protected virtual void onAwake();
         protected virtual void onInit();
         protected virtual void onInitComplete();
+        protected virtual void onPoolSpawned();
+        protected virtual void onPoolDespawned();
         protected virtual void onDestroy();
 
-        // IPoolable
-        public virtual void OnPoolSpawned();
-        public virtual void OnPoolDespawned();
+        public void OnPoolSpawned();
+        public void OnPoolDespawned();
     }
 }
 ```
 
-#### UIBaseFrame
+### UIBaseFrame
 
 ```csharp
 namespace Devian
@@ -133,29 +153,33 @@ namespace Devian
         public RectTransform rectTransform { get; }
         public Canvas canvas { get; }
 
-        // Internal (UIBaseContainer가 호출)
         internal void _Init(Canvas canvas);
         internal void _InitComplete();
+        internal void _ResetForPool();
 
-        // Size (virtual — Grid 등 동적 크기 하위 클래스에서 override)
+        protected void _HandlePoolSpawned();
+        protected void _HandlePoolDespawned();
+
         public virtual float GetWidth();
         public virtual float GetHeight();
 
-        // Scroll 전용 계약은 IUIScrollSection 인터페이스로 분리됨
-        // (Show/Hide/Refresh 없음 — scroll 정보를 소유하지 않음)
-
         internal virtual void _Clear();
 
-        // Override points
         protected virtual void onAwake();
         protected virtual void onInit();
         protected virtual void onInitComplete();
+        protected virtual void onPoolSpawned();
+        protected virtual void onPoolDespawned();
         protected virtual void onDestroy();
     }
 }
 ```
 
-#### UIBaseCanvas (비제네릭 base)
+`UIBaseFrame` 자체는 `IPoolable`을 구현하지 않는다.
+poolable frame subclass가 public `OnPoolSpawned()` / `OnPoolDespawned()`를 노출할 때
+반드시 base `_HandlePoolSpawned()` / `_HandlePoolDespawned()`로 연결한다.
+
+### UIBaseCanvas
 
 ```csharp
 namespace Devian
@@ -169,18 +193,21 @@ namespace Devian
         public void Init();
         public virtual bool Validate(out string reason);
 
-        internal void RegisterDynamicContainerTree(UIBaseContainer root);
-        internal void RegisterDynamicFrameTree(UIBaseFrame root);
+        protected void _CacheCanvas();
+        protected void _HandlePoolSpawned();
+        protected void _HandlePoolDespawned();
 
         protected virtual void onAwake();
         protected virtual void onDestroy();
         protected virtual void onInit();
         protected virtual void onInitComplete();
+        protected virtual void onPoolSpawned();
+        protected virtual void onPoolDespawned();
     }
 }
 ```
 
-#### UIBaseCanvas\<TCanvas\>
+### UIBaseCanvas\<TCanvas\>
 
 ```csharp
 namespace Devian
@@ -193,7 +220,7 @@ namespace Devian
 }
 ```
 
-#### UIBasePanel (비제네릭)
+### UIBasePanel
 
 ```csharp
 namespace Devian
@@ -204,21 +231,23 @@ namespace Devian
         public bool isShown { get; }
         public RectTransform rectTransform { get; }
         protected MonoBehaviour ownerBase { get; }
-        protected UIBaseCanvas ownerCanvas { get; }
 
-        protected void Awake();
-        protected virtual void onAwake();
         public void Show();
         public void Hide();
-        protected virtual void onDestroy();
 
         internal void _InitFromCanvas(MonoBehaviour owner);
         internal void _InitComplete();
+        internal void _HandleOwnerPoolSpawned();
+        internal void _HandleOwnerPoolDespawned();
 
+        protected virtual void onAwake();
         protected abstract void onInitFromCanvas(MonoBehaviour owner);
         protected virtual void onInitComplete();
+        protected virtual void onPoolSpawned();
+        protected virtual void onPoolDespawned();
         protected virtual void onShow();
         protected virtual void onHide();
+        protected virtual void onDestroy();
 
         public T CreateContainer<T>(string prefabName, Transform parent = null)
             where T : UIBaseContainer;
@@ -229,7 +258,111 @@ namespace Devian
 }
 ```
 
-### Panel Visibility Sequence
+### UIBasePanel\<TCanvas\>
+
+```csharp
+namespace Devian
+{
+    public abstract class UIBasePanel<TCanvas> : UIBasePanel
+        where TCanvas : UIBaseCanvas
+    {
+        protected TCanvas ownerCanvas { get; }
+
+        protected sealed override void onInitFromCanvas(MonoBehaviour owner);
+        protected virtual void onInit(TCanvas canvas);
+    }
+}
+```
+
+---
+
+## Initialization Sequence
+
+### Canvas Init (Canonical)
+
+```text
+UIBaseCanvas.Init()
+├── 1. if (isInitialized) return
+├── 2. isInitialized = true
+├── 3. mPanels = GetComponentsInChildren<UIBasePanel>(true)
+│
+├── Phase 1: Canvas-owned Component Init
+│   └── UIBaseInitHelper.InitCanvasOwnedSubtree(canvas.transform, canvas)
+│       └── canvas 직속 영역의 UIComponentBase.Init(canvas)
+│
+├── Phase 2: Panel Init
+│   └── foreach panel: panel._InitFromCanvas(this)
+│       ├── UIBaseInitHelper.InitPanelOwnedSubtree(panelRoot, canvas, ownedFrames)
+│       │   ├── panel-owned UIComponentBase.Init(canvas)
+│       │   └── panel-owned root UIBaseFrame._Init(canvas)
+│       ├── UIBaseInitHelper.CollectOwnedContainers(panelRoot, containers)
+│       └── foreach container: container._Init(canvas)
+│           └── subtree rule: owned component → owned frame → container
+│
+├── Phase 3: Canvas Init
+│   └── onInit()
+│
+├── Phase 4: Panel InitComplete
+│   └── foreach panel: panel._InitComplete()
+│       ├── foreach owned container: container._InitComplete()
+│       └── foreach panel-owned root frame: frame._InitComplete()
+│
+├── Phase 5: Canvas InitComplete
+│   └── onInitComplete()
+│
+└── Phase 6: Notify
+    └── UIManager.messageSystem.Notify(UI_MESSAGE.InitOnce)
+```
+
+### Dynamic Container Registration
+
+`UIBasePanel.CreateContainer<T>()`는 `BundlePool.Spawn<T>()` 후
+owner panel 내부 `RegisterDynamicContainerTree(root)`로 편입한다.
+
+동작:
+
+- root 이하 `UIBaseContainer`를 panel 기준 subtree 규칙으로 수집
+- 각 container가 아직 init 전이면 resolved owner canvas로 `container._Init(canvas)` 실행
+- panel init complete 이전이면 `_containers`에 임시 보관
+- panel init complete 이후면 `container._InitComplete()` 즉시 실행
+
+즉, dynamic container lifecycle owner는 canvas가 아니라 panel이다.
+
+### Dynamic Frame Registration
+
+`UIBasePanel.CreateFrame<T>()`는 frame instance 생성 후
+owner panel 내부 `RegisterDynamicFrameTree(root)`로 편입한다.
+
+동작:
+
+- root frame가 아직 init 전이면 `root._Init(ownerCanvas.canvas)` 실행
+- root frame가 아직 init 전이면 resolved owner canvas로 `root._Init(canvas)` 실행
+- panel init complete 이전이면 `_ownedFrames`에 임시 보관
+- panel init complete 이후면 `root._InitComplete()` 즉시 실행
+
+이 경로도 canvas registry가 아니라 panel registry다.
+
+---
+
+## Pool Contract
+
+### Canvas / Panel
+
+- `UIBaseCanvas` / `UIBasePanel`은 init once 정책이다
+- pooled canvas subclass는 public `OnPoolSpawned()` / `OnPoolDespawned()`에서
+  base `_HandlePoolSpawned()` / `_HandlePoolDespawned()`를 호출해야 한다
+- spawn 시 canvas-owned component 재초기화와 panel-owned subtree 재초기화는 base helper가 수행한다
+- despawn 시 panel-owned subtree와 canvas-owned component reset은 base helper가 수행한다
+
+### Container / Frame / Component
+
+- pooled `UIBaseContainer` / `UIBaseFrame` / `UIComponentBase`는 despawn 시 init state를 reset한다
+- 따라서 respawn 뒤 다음 `_Init()` / `Init(canvas)` 경로에서 `onInit()`이 다시 호출된다
+- `UIBaseFrame`는 base class 자체가 `IPoolable`이 아니므로 subclass가 bridge를 제공해야 한다
+
+---
+
+## Panel Visibility Sequence
 
 ```text
 panel.Show()
@@ -241,100 +374,12 @@ panel.Hide()
   -> default onHide(): gameObject.SetActive(false)
 ```
 
-기본 `onHide()`는 즉시 비활성화다. 지연 hide나 transition이 필요하면 override에서 deactivate 시점을 직접 제어한다.
+기본 `onHide()`는 즉시 비활성화다.
+지연 hide나 transition이 필요하면 override에서 deactivate 시점을 직접 제어한다.
 
-#### UIBasePanel\<TCanvas\>
+---
 
-```csharp
-namespace Devian
-{
-    public abstract class UIBasePanel<TCanvas> : UIBasePanel
-        where TCanvas : UIBaseCanvas
-    {
-        public TCanvas owner { get; }
-
-        protected sealed override void onInitFromCanvas(MonoBehaviour owner);
-        protected virtual void onInit(TCanvas owner);
-    }
-}
-```
-
-### Initialization Sequence (Canonical)
-
-```
-UIBaseCanvas.Init()
-├── 1. if (isInitialized) return
-├── 2. isInitialized = true
-├── 3. mContainers = GetComponentsInChildren<UIBaseContainer>(true)
-├── 4. mPanels = GetComponentsInChildren<UIBasePanel>(true)
-│
-├── Phase 1: Canvas-owned Component / Frame Init
-│   └── UIBaseInitHelper.InitOwnedSubtree(canvas.transform, canvas)
-│       ├── canvas/panel 영역의 UIComponentBase.Init(canvas)
-│       └── container 밖 root frame가 있으면 frame._Init(canvas)
-│
-├── Phase 2: Container Init
-│   └── foreach container: container._Init(canvas)
-│       └── subtree rule: owned component → owned frame → container
-│
-├── Phase 3: Panel Init
-│   └── foreach panel: panel._InitFromCanvas(this)  → onInit(TCanvas)
-│
-├── Phase 4: Canvas Init
-│   └── onInit()
-│
-├── Phase 5: Container InitComplete
-│   ├── foreach container: container._InitComplete()
-│   └── FlushPendingDynamicContainers()
-│
-├── Phase 6: Panel InitComplete
-│   └── foreach panel: panel._InitComplete()
-│
-├── Phase 7: Canvas InitComplete
-│   └── onInitComplete()
-│
-└── Phase 8: Notify
-    └── UIManager.messageSystem.Notify(UI_MESSAGE.InitOnce)
-```
-
-### Dynamic Container Registration
-
-`UIBasePanel.CreateContainer<T>()`는 `BundlePool.Spawn<T>()` 후
-`ownerCanvas.RegisterDynamicContainerTree(root)`에 위임한다.
-
-`RegisterDynamicContainerTree()`의 책임:
-
-- root 이하 `UIBaseContainer` subtree 수집
-- 각 container는 `_Init(canvas)` 내부에서 자신의 subtree `UIComponentBase`와 `UIBaseFrame`를 먼저 초기화
-- `canvas.Init()` 완료 전이면 pending queue 등록
-- `canvas.Init()` 완료 후면 `_InitComplete()` 즉시 호출
-
-이 구조로 `panel.onInit()` 내부와 일반 런타임 시점 모두 지원한다.
-
-### Dynamic Frame Registration
-
-`UIBasePanel.CreateFrame<T>()`는 `BundlePool.Spawn<T>()` 후
-`ownerCanvas.RegisterDynamicFrameTree(root)`에 위임한다.
-
-`RegisterDynamicFrameTree()`의 책임:
-
-- root 이하 `UIBaseFrame` subtree 수집
-- root frame는 `_Init(canvas)` 내부에서 자신의 owned subtree `UIComponentBase`를 먼저 초기화
-- `PanelInitComplete` 이전이면 pending queue 등록
-- `PanelInitComplete` 이후 또는 `canvas.Init()` 완료 후면 `_InitComplete()` 즉시 호출
-
-이 구조로 `panel.onInit()` 내부에서 동적으로 생성된 frame도
-`panel._InitComplete()` 이전에 안정적으로 init complete 상태에 도달한다.
-
-### Singleton Behavior
-
-| 항목 | 설명 |
-|------|------|
-| **상속** | `MonoBehaviour` 직접 상속 |
-| **Instance** | `static TCanvas Instance` — Awake에서 설정, OnDestroy에서 클린업 |
-| **DontDestroyOnLoad** | 미적용 — 씬 전환 시 자동 파괴 |
-
-### Type Constraints
+## Type Constraints
 
 | Generic | Constraint |
 |---------|------------|
@@ -343,28 +388,13 @@ UIBaseCanvas.Init()
 
 ---
 
-## DoD (Definition of Done) Checklist
+## DoD
 
-### Files Exist
-- [ ] `Base/UIBaseCanvas.cs`
-- [ ] `Base/UIBasePanel.cs`
-- [ ] `UIBaseContainer.cs` (신규)
-- [ ] `UIBaseCanvas` 비제네릭 base + `UIBaseCanvas<TCanvas>` 제네릭 layer가 같은 파일에 존재
-
-### Naming
-- [ ] `BaseUIFrame` 문자열이 코드에 0건
-- [ ] 모든 타입이 `namespace Devian { }` 내에 선언됨
-- [ ] internal 메서드가 `_` 접두어 (`_Init`, `_InitFromCanvas`, `_InitComplete`)
-- [ ] protected 메서드가 lowerCamelCase (`onInit`, `onInitComplete`)
-
-### Init Order
-- [ ] UIComponentBase.onInit() → UIBaseFrame.onInit() → UIBaseContainer.onInit() → UIBaseCanvas.onInit()
-- [ ] 중복 _Init() 방지 (isContainerInitialized 가드)
-- [ ] 중복 _InitComplete() 방지 (idempotent guard)
-- [ ] 중복 _InitFromCanvas() 방지 (isInitialized 가드)
-- [ ] 동적 container subtree가 owner canvas lifecycle에 편입됨
-
-### Build
+- [ ] `UIBaseCanvas`가 panel만 직접 관리하고 container / frame 직접 registry를 갖지 않는다
+- [ ] `UIBasePanel`이 dynamic `CreateContainer()` / `CreateFrame()` lifecycle을 관리한다
+- [ ] init order가 `UIComponentBase` → `UIBaseFrame` → `UIBaseContainer` → `UIBaseCanvas`를 유지한다
+- [ ] `UIBaseCanvas` / `UIBasePanel`은 init once, `UIBaseContainer` / `UIBaseFrame` / `UIComponentBase`는 respawn re-init 계약을 유지한다
+- [ ] poolable frame subclass가 base `_HandlePoolSpawned()` / `_HandlePoolDespawned()` bridge를 제공한다
 - [ ] 컴파일 오류 0개
 
 ---

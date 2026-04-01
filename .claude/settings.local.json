@@ -400,7 +400,14 @@
       "Bash(mv AbilityCard.ts AbilityItemCard.ts)",
       "Bash(mv AbilityEquip.ts AbilityItemEquip.ts)",
       "Bash(mv AbilityMaterial.ts AbilityItemMaterial.ts)",
-      "Bash(mv AbilityMaterial.cs.meta AbilityItemMaterial.cs.meta)"
+      "Bash(mv AbilityMaterial.cs.meta AbilityItemMaterial.cs.meta)",
+      "Bash(IMPORT=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Page\")",
+      "Bash(UPM=\"/Users/maoshy/Documents/Projects/devian/framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Page\")",
+      "Bash(SYNC=\"/Users/maoshy/Documents/Projects/devian/input/temp/sample-com.devian.foundation/Samples~/UIPackage/Runtime/Page\")",
+      "Bash(cp \"$IMPORT/UIBasePageCanvas.cs\" \"$UPM/UIBasePageCanvas.cs\")",
+      "Bash(cp \"$IMPORT/UIBasePagePanel.cs\" \"$UPM/UIBasePagePanel.cs\")",
+      "Bash(BASE=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Base\")",
+      "Bash(rm \"$BASE/UIPageCanvasBase.cs\" \"$BASE/UIPageCanvasBase.cs.meta\" \"$BASE/UIPagePanelBase.cs\" \"$BASE/UIPagePanelBase.cs.meta\")"
     ]
   },
   "project": {

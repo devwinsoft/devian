@@ -7,23 +7,13 @@ AppliesTo: v1
 
 popup overlay canvas와 panel layer root를 정의한다.
 
-## Code Paths
+## Implementation Location (3-path mirror)
 
-```text
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/UIPopupCanvas.cs
-```
-
-```text
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/UIPopupPanel.cs
-```
-
-```text
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/UIPopupDim.cs
-```
-
-```text
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Editor/UIPopupPanelEditor.cs
-```
+| 경로 | 역할 |
+|------|------|
+| `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/` | UPM mirror |
+| `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/` | Packages mirror |
+| `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Popup/` | 현재 workspace 구현 기준 |
 
 ## UIPopupCanvas
 
@@ -31,12 +21,15 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Editor/UIPopupPanelEdi
 - `UIPopupPanel _panel`을 소유한다
 - `NormalizeCanvasRect()`로 full-stretch rect를 강제한다
 - bootstrap 후 `Init()`되어 `panel`을 expose한다
+- public `OnPoolSpawned()` / `OnPoolDespawned()`는 base `_HandlePoolSpawned()` / `_HandlePoolDespawned()` bridge다
+- canvas/panel은 init once를 유지하고, respawn 시 base helper가 canvas-owned component와 panel-owned subtree를 재초기화한다
 
 ## UIPopupPanel
 
 - `UIBasePanel<UIPopupCanvas>`
 - `UIPopupDim`과 `PopupRoot`를 소유한다
 - manager가 spawn한 `UIPopupFrameBase`를 `PopupRoot`에 attach / detach 한다
+- `AttachFrame(frame)`는 frame을 `PopupRoot`에 붙인 뒤 아직 init 전이면 `frame._Init(owner.canvas)` + `frame._InitComplete()`를 호출한다
 - panel 아래 시각 계층은 다음을 기준으로 정리한다
 
 ```text

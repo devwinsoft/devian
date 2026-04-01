@@ -36,6 +36,7 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Component/UICo
 |-------|--------|
 | `onAwake()` | self `Image` 캐시 |
 | `onInit(Canvas)` | key가 비어 있으면 `enabled=false` 후 종료. 아니면 `RedDotManager.Instance.IsOn(key)`로 초기 동기화 후 `Subcribe(GetEntityId(), key, ...)` |
+| `onPoolDespawned()` | `RedDotManager.Instance.UnSubcribe(GetEntityId())` — respawn 전 중복 구독 방지 |
 | `onDestroy()` | `RedDotManager.Instance.UnSubcribe(GetEntityId())` |
 
 ### Handler

@@ -34,7 +34,7 @@ public class SceneLobby : SceneBootstrap
 
         await TestApplication.Instance.LoadAsync();
 
-        UILobbyCanvas.Instance.Init();
+        UILobbyPageCanvas.Instance.Init();
         
         //
         SoundManager.Instance.PlaySound("bgm_title");

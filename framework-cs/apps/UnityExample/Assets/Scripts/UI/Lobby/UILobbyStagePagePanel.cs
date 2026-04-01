@@ -3,9 +3,9 @@ using Devian;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
 
-public class UILobbyStagePanel : UIBasePanel<UILobbyCanvas>
+public class UILobbyStagePagePanel : UIBasePagePanel<UILobbyPageCanvas>
 {
-    protected override void onInit(UILobbyCanvas canvas)
+    protected override void onInit(UILobbyPageCanvas pageCanvas)
     {
     }
 

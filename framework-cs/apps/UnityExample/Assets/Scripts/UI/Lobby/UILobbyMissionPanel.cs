@@ -3,7 +3,7 @@ using Devian;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
 
-public class UILobbyMissionPanel : UIBasePanel<UILobbyCanvas>
+public class UILobbyMissionPanel : UIBasePanel<UILobbyPageCanvas>
 {
     protected override void onAwake()
     {
@@ -15,7 +15,7 @@ public class UILobbyMissionPanel : UIBasePanel<UILobbyCanvas>
         MissionManager.Instance?.UnSubcribe(GetEntityId());
     }
     
-    protected override void onInit(UILobbyCanvas canvas)
+    protected override void onInit(UILobbyPageCanvas pageCanvas)
     {
         AchieveManager.Instance.Subcribe(GetEntityId(),
             ACHIEVE_MESSAGE_TYPE.RUNTIME_INIT,

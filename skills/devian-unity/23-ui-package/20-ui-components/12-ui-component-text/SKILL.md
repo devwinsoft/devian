@@ -39,6 +39,7 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Component/UICo
 | Event | Action |
 |-------|--------|
 | `onInit(Canvas)` | `applyText()` 호출 + `Subcribe(GetEntityId(), UI_MESSAGE.ReloadText, ...)` |
+| `onPoolDespawned()` | `messageSystem?.UnSubcribe(GetEntityId())` — respawn 전 중복 구독 방지 |
 | `onDestroy()` | `messageSystem?.UnSubcribe(GetEntityId())` — ownerKey의 모든 핸들러 해제 |
 
 ### 내부 메서드

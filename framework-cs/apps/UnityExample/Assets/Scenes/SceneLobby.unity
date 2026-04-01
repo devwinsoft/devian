@@ -347,7 +347,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Relic
+  m_text: Passive
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b38cfe6c1181eb246bb01f3c8b44dde1, type: 2}
   m_sharedMaterial: {fileID: -5570639167181203853, guid: b38cfe6c1181eb246bb01f3c8b44dde1, type: 2}
@@ -3288,8 +3288,9 @@ GameObject:
   - component: {fileID: 750891149}
   - component: {fileID: 750891148}
   - component: {fileID: 750891152}
+  - component: {fileID: 750891153}
   m_Layer: 5
-  m_Name: LobbyShopPanel
+  m_Name: LobbyShopPagePanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3416,6 +3417,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06303afb48cde4797a961e04c807e156, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UILobbyShop
+  _pageIndex: 0
+  _enterFromLeftTransitionId:
+    Value: 
+  _enterFromRightTransitionId:
+    Value: 
+  _exitToLeftTransitionId:
+    Value: 
+  _exitToRightTransitionId:
+    Value: 
+--- !u!114 &750891153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 750891145}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8332c18fb04c4415d9f63387d89ff085, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Samples.UIPackage::Devian.UITransitionPlayer
 --- !u!1 &765408994
 GameObject:
   m_ObjectHideFlags: 0
@@ -5409,7 +5431,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Card
+  m_text: Dungeon
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: b38cfe6c1181eb246bb01f3c8b44dde1, type: 2}
   m_sharedMaterial: {fileID: -5570639167181203853, guid: b38cfe6c1181eb246bb01f3c8b44dde1, type: 2}
@@ -5501,13 +5523,14 @@ GameObject:
   - component: {fileID: 1653773145}
   - component: {fileID: 1653773144}
   - component: {fileID: 1653773146}
+  - component: {fileID: 1653773147}
   m_Layer: 5
-  m_Name: LobbyStagePanel
+  m_Name: LobbyStagePagePanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1653773141
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5578,6 +5601,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 389112559ad84462395580cace48a710, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UILobbyStagePanel
+  _pageIndex: 2
+  _enterFromLeftTransitionId:
+    Value: 
+  _enterFromRightTransitionId:
+    Value: 
+  _exitToLeftTransitionId:
+    Value: 
+  _exitToRightTransitionId:
+    Value: 
+--- !u!114 &1653773147
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1653773140}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8332c18fb04c4415d9f63387d89ff085, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Devian.Samples.UIPackage::Devian.UITransitionPlayer
 --- !u!1 &1660687314
 GameObject:
   m_ObjectHideFlags: 0
@@ -5925,7 +5969,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1948504543}
   m_HandleRect: {fileID: 1948504542}
   m_Direction: 2
-  m_Value: 1
+  m_Value: 0
   m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
@@ -6764,7 +6808,7 @@ GameObject:
   - component: {fileID: 2041656296}
   - component: {fileID: 2041656300}
   m_Layer: 5
-  m_Name: LobbyHeroPanel
+  m_Name: LobbyHeroPagePanel
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -6891,6 +6935,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 161bac0c864334841abd19fc2a550c40, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UILobbyHeroPanel
+  _pageIndex: 1
+  _enterFromLeftTransitionId:
+    Value: 
+  _enterFromRightTransitionId:
+    Value: 
+  _exitToLeftTransitionId:
+    Value: 
+  _exitToRightTransitionId:
+    Value: 
 --- !u!1 &2053878955
 GameObject:
   m_ObjectHideFlags: 0
@@ -7013,7 +7066,7 @@ GameObject:
   - component: {fileID: 2085270389}
   - component: {fileID: 2085270393}
   m_Layer: 5
-  m_Name: LobbyCanvas
+  m_Name: LobbyPageCanvas
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7117,7 +7170,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::TestUICanvas
   menuBottom: {fileID: 359211493}
-  menuTopPanel: {fileID: 0}
+  menuTopPanel: {fileID: 1227684949}
+  shopPagePanel: {fileID: 750891152}
+  heroPagePanel: {fileID: 2041656300}
+  missionPanel: {fileID: 627686835}
+  stagePagePanel: {fileID: 1653773146}
+  cardPanel: {fileID: 639522842}
 --- !u!1 &2097631768
 GameObject:
   m_ObjectHideFlags: 0

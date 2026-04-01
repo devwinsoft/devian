@@ -91,7 +91,7 @@ namespace Devian
         {
             var key = NormalizeGroupId(config.GroupId);
             var root = CreateGroupRoot(key, parent);
-            var group = new UIToastGroup(owner, root, config.ToastFrameId, config);
+            var group = new UIToastGroup(ownerCanvas, root, config.ToastFrameId, config);
             _groups[key] = group;
             return group;
         }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 using UnityEngine;
 
@@ -13,6 +14,8 @@ namespace Devian
         private static readonly MethodInfo s_spawnPoolableFrameMethod =
             typeof(UIBasePanel).GetMethod(nameof(SpawnPoolableFrame), BindingFlags.Static | BindingFlags.NonPublic);
         private bool _isInitComplete;
+        private readonly List<UIBaseContainer> _containers = new List<UIBaseContainer>();
+        private readonly List<UIBaseFrame> _ownedFrames = new List<UIBaseFrame>();
 
         /// <summary>Whether this panel has been initialized.</summary>
         public bool isInitialized { get; private set; }
@@ -23,9 +26,6 @@ namespace Devian
 
         /// <summary>The owner (canvas) that initialized this panel.</summary>
         protected MonoBehaviour ownerBase { get; private set; }
-
-        /// <summary>Owner canvas (비제네릭). ownerBase as UIBaseCanvas.</summary>
-        protected UIBaseCanvas ownerCanvas => ownerBase as UIBaseCanvas;
 
         /// <summary>Unity Awake callback. Not virtual - use onAwake.</summary>
         protected void Awake()
@@ -49,6 +49,21 @@ namespace Devian
         {
             if (isInitialized) return;
             ownerBase = owner;
+
+            var canvasOwner = resolveOwnerCanvas();
+
+            if (canvasOwner != null && canvasOwner.canvas != null)
+            {
+                _ownedFrames.Clear();
+                _containers.Clear();
+
+                UIBaseInitHelper.InitPanelOwnedSubtree(transform, canvasOwner.canvas, _ownedFrames);
+                UIBaseInitHelper.CollectOwnedContainers(transform, _containers);
+
+                for (var i = 0; i < _containers.Count; i++)
+                    _containers[i]._Init(canvasOwner.canvas);
+            }
+
             isInitialized = true;
             onInitFromCanvas(owner);
         }
@@ -57,7 +72,52 @@ namespace Devian
         {
             if (_isInitComplete) return;
             _isInitComplete = true;
+
+            for (var i = 0; i < _containers.Count; i++)
+                _containers[i]._InitComplete();
+
+            for (var i = 0; i < _ownedFrames.Count; i++)
+                _ownedFrames[i]._InitComplete();
+
             onInitComplete();
+            _containers.Clear();
+            _ownedFrames.Clear();
+        }
+
+        internal void _HandleOwnerPoolSpawned()
+        {
+            isShown = gameObject.activeSelf;
+            onPoolSpawned();
+
+            var canvasOwner = resolveOwnerCanvas();
+            if (isInitialized && canvasOwner != null && canvasOwner.canvas != null)
+            {
+                var ownedFrames = new List<UIBaseFrame>();
+                UIBaseInitHelper.InitPanelOwnedSubtree(transform, canvasOwner.canvas, ownedFrames);
+
+                var containers = new List<UIBaseContainer>();
+                UIBaseInitHelper.CollectOwnedContainers(transform, containers);
+                for (var i = 0; i < containers.Count; i++)
+                    containers[i]._Init(canvasOwner.canvas);
+
+                for (var i = 0; i < containers.Count; i++)
+                    containers[i]._InitComplete();
+
+                for (var i = 0; i < ownedFrames.Count; i++)
+                    ownedFrames[i]._InitComplete();
+            }
+        }
+
+        internal void _HandleOwnerPoolDespawned()
+        {
+            onPoolDespawned();
+
+            if (isInitialized)
+                UIBaseInitHelper.ResetPanelOwnedSubtree(transform);
+
+            _containers.Clear();
+            _ownedFrames.Clear();
+            isShown = gameObject.activeSelf;
         }
 
         public void Show()
@@ -81,6 +141,8 @@ namespace Devian
 
         protected abstract void onInitFromCanvas(MonoBehaviour owner);
         protected virtual void onInitComplete() { }
+        protected virtual void onPoolSpawned() { }
+        protected virtual void onPoolDespawned() { }
         protected virtual void onShow() { }
         protected virtual void onHide() { gameObject.SetActive(false); }
         protected virtual void onDestroy() { }
@@ -100,7 +162,8 @@ namespace Devian
         public T CreateContainer<T>(string prefabName, Transform parent = null)
             where T : UIBaseContainer
         {
-            if (ownerCanvas == null)
+            var canvasOwner = resolveOwnerCanvas();
+            if (canvasOwner == null)
             {
                 throw new InvalidOperationException(
                     "UIBasePanel.CreateContainer: ownerCanvas is null. " +
@@ -111,7 +174,7 @@ namespace Devian
                 prefabName,
                 parent: parent ?? transform);
 
-            ownerCanvas.RegisterDynamicContainerTree(instance);
+            RegisterDynamicContainerTree(instance);
             return instance;
         }
 
@@ -128,7 +191,8 @@ namespace Devian
         public T CreateFrame<T>(string prefabName, Transform parent = null)
             where T : UIBaseFrame
         {
-            if (ownerCanvas == null)
+            var canvasOwner = resolveOwnerCanvas();
+            if (canvasOwner == null)
             {
                 throw new InvalidOperationException(
                     "UIBasePanel.CreateFrame: ownerCanvas is null. " +
@@ -139,8 +203,47 @@ namespace Devian
                 prefabName,
                 parent ?? transform);
 
-            ownerCanvas.RegisterDynamicFrameTree(instance);
+            RegisterDynamicFrameTree(instance);
             return instance;
+        }
+
+        private void RegisterDynamicContainerTree(UIBaseContainer root)
+        {
+            var canvasOwner = resolveOwnerCanvas();
+            if (root == null || canvasOwner == null || canvasOwner.canvas == null)
+                return;
+
+            var containers = new List<UIBaseContainer>();
+            UIBaseInitHelper.CollectOwnedContainers(root.transform, containers);
+
+            for (var i = 0; i < containers.Count; i++)
+            {
+                var container = containers[i];
+                if (!container.isContainerInitialized)
+                    container._Init(canvasOwner.canvas);
+
+                if (!_isInitComplete && !_containers.Contains(container))
+                    _containers.Add(container);
+
+                if (_isInitComplete)
+                    container._InitComplete();
+            }
+        }
+
+        private void RegisterDynamicFrameTree(UIBaseFrame root)
+        {
+            var canvasOwner = resolveOwnerCanvas();
+            if (root == null || canvasOwner == null || canvasOwner.canvas == null)
+                return;
+
+            if (!root.isFrameInitialized)
+                root._Init(canvasOwner.canvas);
+
+            if (!_isInitComplete && !_ownedFrames.Contains(root))
+                _ownedFrames.Add(root);
+
+            if (_isInitComplete)
+                root._InitComplete();
         }
 
         private static T SpawnFrameInstance<T>(string prefabName, Transform parent)
@@ -186,6 +289,11 @@ namespace Devian
         {
             return BundlePool.Spawn<TFrame>(prefabName, parent: parent);
         }
+
+        private UIBaseCanvas resolveOwnerCanvas()
+        {
+            return ownerBase as UIBaseCanvas;
+        }
     }
 
     /// <summary>
@@ -195,12 +303,12 @@ namespace Devian
         where TCanvas : UIBaseCanvas
     {
         /// <summary>Strongly-typed canvas owner reference.</summary>
-        public TCanvas owner { get; private set; }
+        protected TCanvas ownerCanvas { get; private set; }
 
         protected sealed override void onInitFromCanvas(MonoBehaviour canvasOwner)
         {
-            owner = canvasOwner as TCanvas;
-            if (owner == null)
+            ownerCanvas = canvasOwner as TCanvas;
+            if (ownerCanvas == null)
             {
                 Debug.LogError(
                     $"UIBasePanel<{typeof(TCanvas).Name}>.onInitFromCanvas: " +
@@ -209,7 +317,7 @@ namespace Devian
                 return;
             }
 
-            onInit(owner);
+            onInit(ownerCanvas);
         }
 
         protected virtual void onInit(TCanvas canvas) { }

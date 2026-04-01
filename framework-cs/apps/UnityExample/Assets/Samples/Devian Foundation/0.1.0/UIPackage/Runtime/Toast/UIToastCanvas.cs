@@ -41,7 +41,7 @@ namespace Devian
             return true;
         }
 
-        public void OnPoolSpawned()
+        protected override void onPoolSpawned()
         {
             NormalizeCanvasRect();
 
@@ -51,8 +51,14 @@ namespace Devian
             }
         }
 
+        public void OnPoolSpawned()
+        {
+            _HandlePoolSpawned();
+        }
+
         public void OnPoolDespawned()
         {
+            _HandlePoolDespawned();
         }
 
         private void NormalizeCanvasRect()

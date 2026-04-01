@@ -5,25 +5,25 @@ using System.Threading.Tasks;
 using Devian;
 using Devian.Domain.Game;
 
-public class UILobbyShopPanel : UIBasePanel<UILobbyCanvas>
+public class UILobbyShopPagePanel : UIBasePagePanel<UILobbyPageCanvas>
 {
-    protected override void onInit(UILobbyCanvas canvas)
+    protected override void onInit(UILobbyPageCanvas pageCanvas)
     {
     }
     
     public void OnClick_Purchase_NoAds()
     {
-        UnityTaskRunner.Run(OnClickPurchaseNoAdsAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_Purchase_NoAds)}");
+        UnityTaskRunner.Run(OnClickPurchaseNoAdsAsync, $"{nameof(UILobbyPageCanvas)}.{nameof(OnClick_Purchase_NoAds)}");
     }
 
     public void OnClick_Purchase_Pass()
     {
-        UnityTaskRunner.Run(OnClickPurchasePassAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_Purchase_Pass)}");
+        UnityTaskRunner.Run(OnClickPurchasePassAsync, $"{nameof(UILobbyPageCanvas)}.{nameof(OnClick_Purchase_Pass)}");
     }
 
     public void OnClick_Purchase_Chest()
     {
-        UnityTaskRunner.Run(OnClickPurchaseChestAsync, $"{nameof(UILobbyCanvas)}.{nameof(OnClick_Purchase_Chest)}");
+        UnityTaskRunner.Run(OnClickPurchaseChestAsync, $"{nameof(UILobbyPageCanvas)}.{nameof(OnClick_Purchase_Chest)}");
     }
     
     private async Task OnClickPurchaseNoAdsAsync()

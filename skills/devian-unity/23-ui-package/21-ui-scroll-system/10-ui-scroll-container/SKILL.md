@@ -185,40 +185,43 @@ public void EditorClearPreview();
 ### UIBaseCanvas 통합 순서
 
 `UIScrollContainer`는 직접 `Init()`를 노출하지 않는다.
-소유 `UIBaseCanvas.Init()` 안에서 초기화된다.
+소유 panel의 lifecycle을 통해 `UIBaseCanvas.Init()` 안에서 초기화된다.
 
 ```
 UIBaseCanvas.Init()
-  Phase 1: Container._Init(canvas)
-    -> UIScrollContainer.onInit()
-       - ScrollRect/content/viewport 캐시
-       - Viewport를 parent stretch rect로 정규화
-       - Content anchor/pivot/anchoredPosition 정규화
-       - ScrollRect.onValueChanged 구독
+  Phase 1: Canvas-owned component init
 
   Phase 2: UIBasePanel._InitFromCanvas(owner)
+    -> panel이 subtree를 스캔
+    -> UIScrollContainer._Init(canvas)
+       -> UIScrollContainer.onInit()
+          - ScrollRect/content/viewport 캐시
+          - Viewport를 parent stretch rect로 정규화
+          - Content anchor/pivot/anchoredPosition 정규화
+          - ScrollRect.onValueChanged 구독
 
   Phase 3: Canvas.onInit()
 
-  Phase 4: Container._InitComplete() + pending dynamic flush
-    -> UIScrollContainer.onInitComplete()
-       - Content 하위 UIBaseFrame 수집
-       - 각 frame._Init(canvas)
-       - IUIScrollSection 수집
-       - BuildLogicalRows()
-       - content main-axis size 적용
-       - ApplySectionLayouts()
-       - UpdateVisibleRows()
-       - 각 frame._InitComplete()
+  Phase 4: UIBasePanel._InitComplete()
+    -> panel 소유 container foreach: container._InitComplete()
+       -> UIScrollContainer.onInitComplete()
+          - Content 하위 UIBaseFrame 수집
+          - 각 frame._Init(canvas)
+          - IUIScrollSection 수집
+          - BuildLogicalRows()
+          - content main-axis size 적용
+          - ApplySectionLayouts()
+          - _initialized = true
+          - UpdateVisibleRows()
+          - 각 frame._InitComplete()
 
-  Phase 5: UIBasePanel._InitComplete()
-  Phase 6: Canvas.onInitComplete()
-  Phase 7: UI_MESSAGE.InitOnce notify
+  Phase 5: Canvas.onInitComplete()
+  Phase 6: UI_MESSAGE.InitOnce notify
 ```
 
 동적으로 생성된 `UIScrollContainer`도 `UIBasePanel.CreateContainer<T>()`를 통해
-owner `UIBaseCanvas.RegisterDynamicContainerTree()`에 편입되면 동일한 `_Init/_InitComplete`
-계약을 따른다.
+owner panel lifecycle에 편입되면 동일한 `_Init/_InitComplete`
+계약을 따른다. panel init complete 이후 생성되면 `_InitComplete()`가 즉시 호출된다.
 
 ### Destroy
 

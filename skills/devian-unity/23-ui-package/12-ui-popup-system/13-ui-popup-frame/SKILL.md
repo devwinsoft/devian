@@ -8,15 +8,13 @@ AppliesTo: v1
 popup 1건의 실제 표시 단위.
 frame policy, request bind, show/close transition, close reason, top-state input 제어를 담당한다.
 
-## Code Path
+## Implementation Location (3-path mirror)
 
-```text
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/UIPopupFrameBase.cs
-```
-
-```text
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/UIPopupFrameBase.Generic.cs
-```
+| 경로 | 역할 |
+|------|------|
+| `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/UIPopupFrameBase.cs` | UPM mirror |
+| `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/UIPackage/Runtime/Popup/UIPopupFrameBase.cs` | Packages mirror |
+| `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Popup/UIPopupFrameBase.cs` | 현재 workspace 구현 기준 |
 
 ## Shape
 
@@ -25,6 +23,9 @@ public abstract class UIPopupFrameBase : UIBaseFrame, IPoolable
 {
     public PopupFrameState State { get; }
     public bool IsTop { get; }
+
+    public void OnPoolSpawned();
+    public void OnPoolDespawned();
 
     internal void ShowUntyped(...);
     internal void CloseFromManager(PopupCloseReason reason);
@@ -64,6 +65,12 @@ public abstract class UIPopupFrameBase<TReq> : UIPopupFrameBase
 - same-GO `UITransitionPlayer` 사용
 - `_showTransitionId`, `_closeTransitionId`를 frame이 직접 소유
 - 실제 재생 여부는 frame의 `PlayShowTransition`, `PlayCloseTransition` override와 preset id 유효성으로 결정
+
+## Pool Contract
+
+- public `OnPoolSpawned()` / `OnPoolDespawned()`는 base frame pool handler bridge다.
+- `onPoolSpawned()`와 `onPoolDespawned()`는 transition cancel, payload/top-state reset을 담당한다.
+- base `UIBaseFrame`가 despawn 시 init state를 reset하므로, respawn 뒤 panel attach 경로에서 `_Init()` / `_InitComplete()`가 다시 호출될 수 있다.
 
 ## Top-State
 
