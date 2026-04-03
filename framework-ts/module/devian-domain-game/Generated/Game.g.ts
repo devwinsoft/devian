@@ -490,8 +490,8 @@ export interface SHOP_CATALOG_CHEST extends IEntityKey<number> {
     getKey(): number;
 }
 
-export interface SHOP_DAILY extends IEntityKey<string> {
-    shop_id: string;
+export interface SHOP_ITEM_DAILY extends IEntityKey<string> {
+    shop_item_id: string;
     name_id: string;
     currency_type: CURRENCY_TYPE;
     price: number;
@@ -506,8 +506,8 @@ export interface SHOP_DAILY extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface SHOP_EVENT extends IEntityKey<string> {
-    shop_id: string;
+export interface SHOP_ITEM_EVENT extends IEntityKey<string> {
+    shop_item_id: string;
     name_id: string;
     currency_type: CURRENCY_TYPE;
     price: number;
@@ -517,8 +517,8 @@ export interface SHOP_EVENT extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface SHOP_CHEST extends IEntityKey<string> {
-    shop_id: string;
+export interface SHOP_ITEM_CHEST extends IEntityKey<string> {
+    shop_item_id: string;
     chest_type: SHOP_PRODUCT_CHEST_TYPE;
     name_id: string;
     currency_type: CURRENCY_TYPE;
@@ -528,16 +528,16 @@ export interface SHOP_CHEST extends IEntityKey<string> {
     getKey(): string;
 }
 
-export interface SHOP_PURCHASE extends IEntityKey<string> {
-    shop_id: string;
+export interface SHOP_ITEM_PURCHASE extends IEntityKey<string> {
+    shop_item_id: string;
     name_id: string;
     internal_product_id: string;
     season_id: string;
     getKey(): string;
 }
 
-export interface SHOP_GOLD extends IEntityKey<string> {
-    shop_id: string;
+export interface SHOP_ITEM_GOLD extends IEntityKey<string> {
+    shop_item_id: string;
     name_id: string;
     currency_type: CURRENCY_TYPE;
     price: number;
@@ -1464,9 +1464,9 @@ export class TB_SHOP_CATALOG_CHEST {
     }
 }
 
-export class TB_SHOP_DAILY {
-    private static _dict: Map<string, SHOP_DAILY> = new Map();
-    private static _list: SHOP_DAILY[] = [];
+export class TB_SHOP_ITEM_DAILY {
+    private static _dict: Map<string, SHOP_ITEM_DAILY> = new Map();
+    private static _list: SHOP_ITEM_DAILY[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -1475,9 +1475,9 @@ export class TB_SHOP_DAILY {
         this._list = [];
     }
 
-    static getAll(): readonly SHOP_DAILY[] { return this._list; }
+    static getAll(): readonly SHOP_ITEM_DAILY[] { return this._list; }
 
-    static get(key: string): SHOP_DAILY | undefined {
+    static get(key: string): SHOP_ITEM_DAILY | undefined {
         return this._dict.get(key);
     }
 
@@ -1489,9 +1489,9 @@ export class TB_SHOP_DAILY {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as SHOP_DAILY;
+            const row = JSON.parse(line) as SHOP_ITEM_DAILY;
             this._list.push(row);
-            this._dict.set(row.shop_id, row);
+            this._dict.set(row.shop_item_id, row);
         }
     }
 
@@ -1500,9 +1500,9 @@ export class TB_SHOP_DAILY {
     }
 }
 
-export class TB_SHOP_EVENT {
-    private static _dict: Map<string, SHOP_EVENT> = new Map();
-    private static _list: SHOP_EVENT[] = [];
+export class TB_SHOP_ITEM_EVENT {
+    private static _dict: Map<string, SHOP_ITEM_EVENT> = new Map();
+    private static _list: SHOP_ITEM_EVENT[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -1511,9 +1511,9 @@ export class TB_SHOP_EVENT {
         this._list = [];
     }
 
-    static getAll(): readonly SHOP_EVENT[] { return this._list; }
+    static getAll(): readonly SHOP_ITEM_EVENT[] { return this._list; }
 
-    static get(key: string): SHOP_EVENT | undefined {
+    static get(key: string): SHOP_ITEM_EVENT | undefined {
         return this._dict.get(key);
     }
 
@@ -1525,9 +1525,9 @@ export class TB_SHOP_EVENT {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as SHOP_EVENT;
+            const row = JSON.parse(line) as SHOP_ITEM_EVENT;
             this._list.push(row);
-            this._dict.set(row.shop_id, row);
+            this._dict.set(row.shop_item_id, row);
         }
     }
 
@@ -1536,9 +1536,9 @@ export class TB_SHOP_EVENT {
     }
 }
 
-export class TB_SHOP_CHEST {
-    private static _dict: Map<string, SHOP_CHEST> = new Map();
-    private static _list: SHOP_CHEST[] = [];
+export class TB_SHOP_ITEM_CHEST {
+    private static _dict: Map<string, SHOP_ITEM_CHEST> = new Map();
+    private static _list: SHOP_ITEM_CHEST[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -1547,9 +1547,9 @@ export class TB_SHOP_CHEST {
         this._list = [];
     }
 
-    static getAll(): readonly SHOP_CHEST[] { return this._list; }
+    static getAll(): readonly SHOP_ITEM_CHEST[] { return this._list; }
 
-    static get(key: string): SHOP_CHEST | undefined {
+    static get(key: string): SHOP_ITEM_CHEST | undefined {
         return this._dict.get(key);
     }
 
@@ -1561,9 +1561,9 @@ export class TB_SHOP_CHEST {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as SHOP_CHEST;
+            const row = JSON.parse(line) as SHOP_ITEM_CHEST;
             this._list.push(row);
-            this._dict.set(row.shop_id, row);
+            this._dict.set(row.shop_item_id, row);
         }
     }
 
@@ -1572,9 +1572,9 @@ export class TB_SHOP_CHEST {
     }
 }
 
-export class TB_SHOP_PURCHASE {
-    private static _dict: Map<string, SHOP_PURCHASE> = new Map();
-    private static _list: SHOP_PURCHASE[] = [];
+export class TB_SHOP_ITEM_PURCHASE {
+    private static _dict: Map<string, SHOP_ITEM_PURCHASE> = new Map();
+    private static _list: SHOP_ITEM_PURCHASE[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -1583,9 +1583,9 @@ export class TB_SHOP_PURCHASE {
         this._list = [];
     }
 
-    static getAll(): readonly SHOP_PURCHASE[] { return this._list; }
+    static getAll(): readonly SHOP_ITEM_PURCHASE[] { return this._list; }
 
-    static get(key: string): SHOP_PURCHASE | undefined {
+    static get(key: string): SHOP_ITEM_PURCHASE | undefined {
         return this._dict.get(key);
     }
 
@@ -1597,9 +1597,9 @@ export class TB_SHOP_PURCHASE {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as SHOP_PURCHASE;
+            const row = JSON.parse(line) as SHOP_ITEM_PURCHASE;
             this._list.push(row);
-            this._dict.set(row.shop_id, row);
+            this._dict.set(row.shop_item_id, row);
         }
     }
 
@@ -1608,9 +1608,9 @@ export class TB_SHOP_PURCHASE {
     }
 }
 
-export class TB_SHOP_GOLD {
-    private static _dict: Map<string, SHOP_GOLD> = new Map();
-    private static _list: SHOP_GOLD[] = [];
+export class TB_SHOP_ITEM_GOLD {
+    private static _dict: Map<string, SHOP_ITEM_GOLD> = new Map();
+    private static _list: SHOP_ITEM_GOLD[] = [];
 
     static get count(): number { return this._list.length; }
 
@@ -1619,9 +1619,9 @@ export class TB_SHOP_GOLD {
         this._list = [];
     }
 
-    static getAll(): readonly SHOP_GOLD[] { return this._list; }
+    static getAll(): readonly SHOP_ITEM_GOLD[] { return this._list; }
 
-    static get(key: string): SHOP_GOLD | undefined {
+    static get(key: string): SHOP_ITEM_GOLD | undefined {
         return this._dict.get(key);
     }
 
@@ -1633,9 +1633,9 @@ export class TB_SHOP_GOLD {
         this.clear();
         const lines = json.split('\n').filter(l => l.trim());
         for (const line of lines) {
-            const row = JSON.parse(line) as SHOP_GOLD;
+            const row = JSON.parse(line) as SHOP_ITEM_GOLD;
             this._list.push(row);
-            this._dict.set(row.shop_id, row);
+            this._dict.set(row.shop_item_id, row);
         }
     }
 

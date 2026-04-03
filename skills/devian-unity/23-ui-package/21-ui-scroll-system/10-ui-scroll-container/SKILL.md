@@ -239,6 +239,7 @@ owner panel lifecycle에 편입되면 동일한 `_Init/_InitComplete`
 - `UIScrollSimpleFrame`만 editor helper로 위치/크기를 직접 반영한다
 - `UIScrollGridFrame`은 section transform + height만 확인한다
 - `Auto Preview`가 켜져 있으면 `OnValidate()` 변경을 debounce 후 재계산한다
+- preview가 이미 활성화된 상태에서 child frame의 main-axis size를 수정하면, 다음 rebuild 전에 그 최신 size를 baseline에 반영한 뒤 preview를 다시 계산한다
 - `Clear Preview`는 preview 적용 전 baseline rect 상태를 복원한다
 
 ---

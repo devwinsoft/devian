@@ -133,14 +133,14 @@ namespace Devian
                 default:
                     return CommonResult<ChestPurchaseRuntime>.Failure(
                         COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                        $"Unsupported chest type: shop_id={product.shop_id}, chest_type={product.chest_type}");
+                        $"Unsupported chest type: shop_item_id={product.shop_item_id}, chest_type={product.chest_type}");
             }
 
             if (string.IsNullOrWhiteSpace(rewardGroupId))
             {
                 return CommonResult<ChestPurchaseRuntime>.Failure(
                     COMMON_ERROR_TYPE.SHOP_REWARD_GROUP_EMPTY,
-                    $"Chest reward group is empty: shop_id={product.shop_id}, level={row.level}, chest_type={product.chest_type}");
+                    $"Chest reward group is empty: shop_item_id={product.shop_item_id}, level={row.level}, chest_type={product.chest_type}");
             }
 
             return CommonResult<ChestPurchaseRuntime>.Success(

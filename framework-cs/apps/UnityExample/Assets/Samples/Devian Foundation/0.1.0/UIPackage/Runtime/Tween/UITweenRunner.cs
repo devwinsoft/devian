@@ -49,25 +49,30 @@ namespace Devian
 
             if (data.Duration <= 0f)
             {
-                player.Apply(data.Evaluate(0f, snapshot));
+                player.Apply(data.Evaluate(data.Duration, snapshot));
                 handle.Complete();
                 onComplete?.Invoke();
 
                 yield break;
             }
 
-            var elapsed = 0f;
-            while (elapsed < data.Duration)
+            var startedAt = Time.realtimeSinceStartup;
+            while (true)
             {
                 if (handle.IsCanceled)
                 {
                     yield break;
                 }
 
+                var elapsed = Time.realtimeSinceStartup - startedAt;
+                if (elapsed >= data.Duration)
+                {
+                    break;
+                }
+
                 player.Apply(data.Evaluate(elapsed, snapshot));
 
                 yield return null;
-                elapsed += Time.unscaledDeltaTime;
             }
 
             player.Apply(data.Evaluate(data.Duration, snapshot));

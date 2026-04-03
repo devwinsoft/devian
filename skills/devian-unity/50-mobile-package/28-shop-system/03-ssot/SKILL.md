@@ -25,7 +25,7 @@ AppliesTo: v10
 - `catalog refresh`: `ShopCatalogBase.RefreshProducts()` 재실행
 - `auto refresh`: 다음 refresh 시각(`autoRefreshUtcMs`)에 도달했을 때 카탈로그를 갱신하는 것
 - `ads refill`: `adsRefreshUtcMs` 만료 시 ADS/FREE 제한 상품 `remainCount` 리필
-- `daily manual refresh`: `SHOP_DAILY`가 광고 시청 성공으로 동적 5개 상품을 다시 뽑는 것
+- `daily manual refresh`: `SHOP_ITEM_DAILY`가 광고 시청 성공으로 동적 5개 상품을 다시 뽑는 것
 - `force catalog refresh`: `ShopCatalogBase.ResetAds()` 경로에서 강제 갱신
 
 ---
@@ -51,7 +51,7 @@ AppliesTo: v10
 - 실제 product 생성 책임은 `ShopCatalogBase.onRefresh()`가 가진다.
 - `ShopCatalogBase.onRefresh()` 기본 경로는 `CHEST/PURCHASE/GOLD`의 테이블 전체 row를 product로 생성하고, 같은 catalog bucket의 storage remain 상태를 즉시 적용한다.
 - `ShopCatalogDaily.onRefresh()`는 valid storage가 있으면 storage 기준으로 5개 동적 상품을 복원하고, invalid/empty storage면 5개를 새로 선택 생성한다.
-- `ShopCatalogEvent.onRefresh()`는 `SHOP_EVENT.start_time/end_time`을 서버 UTC 기준으로 평가해 현재 판매 중인 row만 product로 생성한다.
+- `ShopCatalogEvent.onRefresh()`는 `SHOP_ITEM_EVENT.start_time/end_time`을 서버 UTC 기준으로 평가해 현재 판매 중인 row만 product로 생성한다.
 - `ShopCatalogBase`는 `Storage`를 소유하며, catalog runtime state helper는 catalog 계층에 둔다.
 - `ShopCatalogBase`는 generic `StorageData`를 소유하며, 각 subclass는 자기 typed storage data를 해석한다.
 - `ShopCatalogDaily`는 daily manual refresh 정책/state machine을 직접 가진다.
@@ -132,7 +132,7 @@ AppliesTo: v10
 - catalog는 공통 강제 refresh를 요청하고, ShopManager는 global post-commit(index/save)만 수행한다.
 
 `ShopCatalogDaily.RefreshByAdsAsync()`
-- `SHOP_DAILY` 전용 수동 refresh instance API다.
+- `SHOP_ITEM_DAILY` 전용 수동 refresh instance API다.
 - `Initialize()` 이후에만 호출할 수 있다.
 - `DefaultAdsAdvertiseId` 광고 시청 성공 시에만 성공한다.
 - rolling 24시간 기준 최대 5회를 사용한다.
@@ -140,7 +140,7 @@ AppliesTo: v10
 - 초기 상태와 만료 후 reset 상태의 `manualRefreshRemainCount`는 `5`다.
 - 만료 후 첫 성공 시 `manualRefreshUtcMs = serverNow + 1day`, `manualRefreshRemainCount = 4`가 된다.
 - 만료 전 재사용 시 `manualRefreshRemainCount--` 한다.
-- 남은 횟수가 0이면 `SHOP_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED`로 실패한다.
+- 남은 횟수가 0이면 `SHOP_ITEM_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED`로 실패한다.
 - server time 검증과 manual refresh 상태 평가는 광고 시청 전에 완료해야 한다.
 - manual refresh는 global refresh를 호출하지 않고 DAILY catalog만 1회 refresh한다.
 - 광고 가용성 검증은 `AdsManager.ShowAsync(...)` 단일 경로를 사용한다.
@@ -157,7 +157,7 @@ AppliesTo: v10
 - `DAILY`를 제외한 카탈로그는 각 catalog의 `onRefresh()`가 table product 생성 + storage remain 적용을 직접 수행한다.
 - `DAILY`는 `onRefresh()`에서 storage 기준 product 구성을 직접 복원할 수 있다.
 - `DAILY` manual refresh 상태는 `ShopCatalogDaily.SyncRuntimeState(...)`가 storage 만료 여부를 정리하고 catalog runtime 프로퍼티에 동기화한다.
-- `EVENT`는 별도 동적 payload를 저장하지 않고, `SHOP_EVENT` + 서버 시간 기준으로 매번 활성 상품을 재구성한다.
+- `EVENT`는 별도 동적 payload를 저장하지 않고, `SHOP_ITEM_EVENT` + 서버 시간 기준으로 매번 활성 상품을 재구성한다.
 - 일반 shop runtime mutation은 로컬 save queue를 통해 저장한다. DAILY manual refresh는 `ShopCatalogDaily.RefreshByAdsAsync()`가 로컬 저장을 직접 수행한다.
 - `ShopManager.synchronizeProductIndexFromCatalogs()`는 product index rebuild만 담당하며 storage restore를 수행하지 않는다.
 

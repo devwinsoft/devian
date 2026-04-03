@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Devian;
 using Devian.Domain.Game;
 
-public class UILobbyShopPagePanel : UIBasePagePanel<UILobbyPageCanvas>
+public class UILobbyShopPagePanel : UIBasePageMain<UILobbyPageCanvas>
 {
     protected override void onInit(UILobbyPageCanvas pageCanvas)
     {

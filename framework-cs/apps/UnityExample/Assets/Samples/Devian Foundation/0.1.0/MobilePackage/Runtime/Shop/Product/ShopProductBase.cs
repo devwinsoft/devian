@@ -5,14 +5,14 @@ namespace Devian
     public abstract class ShopProductBase
     {
         protected ShopProductBase(
-            string shop_id,
+            string shop_item_id,
             string name_id,
             SHOP_CATALOG_TYPE catalog_type,
             SHOP_PRODUCT_TYPE productType,
             int max_count = -1,
             SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
         {
-            shop_id_internal = normalize(shop_id);
+            shop_item_id_internal = normalize(shop_item_id);
             name_id_internal = normalize(name_id);
             catalog_type_internal = catalog_type;
             ProductType = productType;
@@ -21,13 +21,12 @@ namespace Devian
             DiscountType = normalizeDiscountType(discountType);
         }
 
-        string shop_id_internal;
+        string shop_item_id_internal;
         string name_id_internal;
         SHOP_CATALOG_TYPE catalog_type_internal;
         int max_count_internal;
 
-        public string shop_id => shop_id_internal;
-        public string ProductId => shop_id_internal; // Legacy alias for old callers.
+        public string shop_item_id => shop_item_id_internal;
         public string name_id => name_id_internal;
         public SHOP_CATALOG_TYPE catalog_type => catalog_type_internal;
         public SHOP_PRODUCT_TYPE ProductType { get; }

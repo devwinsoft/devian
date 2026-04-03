@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Devian
 {
@@ -9,20 +10,26 @@ namespace Devian
         private UITweenHandle _mainHandle;
         private RectTransform _targetRectTransform;
         private CanvasGroup _targetCanvasGroup;
+        private LayoutElement _targetLayoutElement;
+        private Vector2 _baselineAnchoredPosition;
+        private bool _hasBaselineAnchoredPosition;
 
         private void Reset()
         {
             CacheTargets();
+            RefreshBaseline();
         }
 
         private void Awake()
         {
             CacheTargets();
+            RefreshBaseline();
         }
 
         private void OnValidate()
         {
             CacheTargets();
+            RefreshBaseline();
         }
 
         private void OnDestroy()
@@ -123,6 +130,20 @@ namespace Devian
             _mainHandle = null;
         }
 
+        public void RefreshBaseline()
+        {
+            CacheTargets();
+            if (_targetRectTransform == null)
+            {
+                _hasBaselineAnchoredPosition = false;
+                _baselineAnchoredPosition = Vector2.zero;
+                return;
+            }
+
+            _baselineAnchoredPosition = _targetRectTransform.anchoredPosition;
+            _hasBaselineAnchoredPosition = true;
+        }
+
         internal UITransitionSnapshot CaptureSnapshot()
         {
             CacheTargets();
@@ -130,7 +151,9 @@ namespace Devian
             return new UITransitionSnapshot
             {
                 BaseAlpha = _targetCanvasGroup != null ? _targetCanvasGroup.alpha : 1f,
-                BaseAnchoredPosition = _targetRectTransform.anchoredPosition,
+                BaseAnchoredPosition = _hasBaselineAnchoredPosition
+                    ? _baselineAnchoredPosition
+                    : _targetRectTransform.anchoredPosition,
                 BaseScale = transform.localScale
             };
         }
@@ -151,12 +174,25 @@ namespace Devian
             {
                 transform.localScale = result.Scale;
             }
+
+            if (result.HasPreferredSize && _targetLayoutElement != null)
+            {
+                _targetLayoutElement.preferredWidth = result.PreferredSize.x;
+                _targetLayoutElement.preferredHeight = result.PreferredSize.y;
+                LayoutRebuilder.MarkLayoutForRebuild(_targetRectTransform);
+
+                if (_targetRectTransform.parent is RectTransform parentRectTransform)
+                {
+                    LayoutRebuilder.MarkLayoutForRebuild(parentRectTransform);
+                }
+            }
         }
 
         private void CacheTargets()
         {
             _targetRectTransform = transform as RectTransform;
             _targetCanvasGroup = GetComponent<CanvasGroup>();
+            _targetLayoutElement = GetComponent<LayoutElement>();
         }
 
         private void WarnMissingTargets(UICompiledTransitionData compiled)
@@ -164,6 +200,11 @@ namespace Devian
             if (compiled != null && compiled.UsesAlpha && _targetCanvasGroup == null)
             {
                 Debug.LogWarning("[UITransitionPlayer] CanvasGroup is missing on the same GameObject for alpha transition.", this);
+            }
+
+            if (compiled != null && compiled.UsesPreferredSize && _targetLayoutElement == null)
+            {
+                Debug.LogWarning("[UITransitionPlayer] LayoutElement is missing on the same GameObject for preferred size transition.", this);
             }
         }
 
@@ -175,6 +216,14 @@ namespace Devian
                 return null;
             }
 
+#if UNITY_EDITOR
+            var editorAsset = ResolveEditorPresetAsset(id.Value);
+            if (editorAsset != null)
+            {
+                return editorAsset;
+            }
+#endif
+
             var asset = AssetManager.GetAsset<UITransitionPresetAsset>(id.Value);
             if (asset == null)
             {
@@ -184,5 +233,33 @@ namespace Devian
 
             return asset;
         }
+
+#if UNITY_EDITOR
+        private UITransitionPresetAsset ResolveEditorPresetAsset(string assetId)
+        {
+            if (string.IsNullOrWhiteSpace(assetId))
+            {
+                return null;
+            }
+
+            var settings = Resources.Load<UISettings>(UISettings.ResourcesPath);
+            var searchDir = settings != null ? settings.GetSearchDir("UI_TRANSITION_PRESET_ID") : null;
+            var assets = string.IsNullOrWhiteSpace(searchDir)
+                ? AssetManager.FindAssets<UITransitionPresetAsset>(assetId)
+                : AssetManager.FindAssets<UITransitionPresetAsset>(assetId, searchDir);
+
+            if (assets == null || assets.Length == 0)
+            {
+                return null;
+            }
+
+            if (assets.Length > 1)
+            {
+                Debug.LogWarning($"[UITransitionPlayer] Multiple preset assets matched id '{assetId}'. Using the first match.", this);
+            }
+
+            return assets[0];
+        }
+#endif
     }
 }

@@ -3,10 +3,8 @@
 Status: ACTIVE
 AppliesTo: v11
 
-Page 전환 전용 canvas/panel specialization.
-`UIBasePageCanvas`가 page host/coordinator 역할을 하고,
-`UIBasePagePanel`이 개별 page의 transition/state를 담당한다.
-좌우 방향 transition과 `latest wins` 동시 요청 정책을 포함한다.
+`UIBasePageCanvas` 기반 page 시스템 개요.
+현재 구조는 page를 `main / sub / popup`으로 분리한다.
 
 ---
 
@@ -14,51 +12,54 @@ Page 전환 전용 canvas/panel specialization.
 
 | Document | Description |
 |----------|-------------|
-| [10-canvas-panel](../10-canvas-panel/SKILL.md) | `UIBasePageCanvas` + `UIBasePagePanel` 계약, Public API, Navigation Sequence |
+| [10-canvas-panel](../10-canvas-panel/SKILL.md) | `UIBasePageCanvas`, `UIBasePageMain`, `UIBasePageSub`, `UIBasePagePopup` 계약 |
 
 ---
 
 ## Scope
 
 ### Includes
-- `UIBasePageCanvas` — page 수집, current page 추적, ShowPage, transition orchestration
-- `UIBasePagePanel` — page identity, enter/exit transition, page state, page hook
-- `UIBasePageCanvas<TCanvas>` — singleton bridge
-- `UIBasePagePanel<TCanvas>` — typed `ownerCanvas` bridge
-- `UIPageState` / `UIPageTransitionDirection` enum
-- `UITransitionPlayer` 기반 directional transition
-- `latest wins` 동시 요청 정책
-- 초기 상태 정규화 (중복 active page 정리)
+- `UIBasePageCanvas` — `currentMain/currentSub/currentPopup`, `ShowPage(main)` orchestration
+- `UIBasePageMain` — main-to-main left/right transition
+- `UIBasePageSub` — main 종속 show/hide transition
+- `UIBasePagePopup` — top layer show/hide transition, canvas당 1개
+- `UIBasePagePanel` — main/sub 공통 `pageIndex` + owner canvas bridge
+- `UIPageState`, `UIPageTransitionDirection`
+- `UIPageSubCloseReason`, `UIPagePopupCloseReason`
 
 ### Excludes
-- page 내부 business logic
-- page manager 서비스 (canvas가 직접 host)
-- page pooling 정책 확장
-- page navigation history / back stack
+- navigation history / back stack
+- popup stacking
+- page business logic
+
+---
+
+## Current Model
+
+- `ShowPage()`는 `UIBasePageMain`만 대상으로 동작한다.
+- `UIBasePageSub.Show()`는 현재 main을 즉시 숨기고 자기 show transition을 재생한다.
+- `UIBasePageSub.Hide()`는 자기 hide transition 완료 후 main을 즉시 복구한다.
+- `UIBasePagePopup.Show()`는 기존 popup을 닫고 top layer로 표시된다.
+- main 전환 시 기존 sub/popup은 애니메이션 없이 즉시 닫힌다.
 
 ---
 
 ## Code Path
 
-```
-framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Page/
+```text
+framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Page/
 ├── UIBasePageCanvas.cs
-└── UIBasePagePanel.cs
+├── UIBasePagePanel.cs
+├── UIBasePageMain.cs
+├── UIBasePageSub.cs
+└── UIBasePagePopup.cs
 ```
-
----
-
-## Design Reference
-
-설계 원본: `docs/ui-base-page-design.md`
-
-> 설계 문서는 초기 설계 시점의 기록이며 구 클래스명(`UIPageCanvasBase` / `UIPagePanelBase`)을 사용한다.
-> 최종 클래스명은 이 스킬 문서(SSOT)를 따른다.
 
 ---
 
 ## Related
 
 - Parent: `../SKILL.md`
-- Canvas System: `../10-base-system/11-ui-canvas-system/SKILL.md`
-- UITweenSystem: `../22-ui-tween-system/00-overview/SKILL.md`
+- Base Canvas System: `../../10-base-system/11-ui-canvas-system/SKILL.md`
+- UITween System: `../../22-ui-tween-system/00-overview/SKILL.md`
+- Design Note: `/Users/maoshy/Documents/Projects/devian/docs/ui-base-page-design.md`

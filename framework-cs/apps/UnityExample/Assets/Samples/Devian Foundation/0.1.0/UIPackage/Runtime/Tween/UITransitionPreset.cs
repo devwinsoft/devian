@@ -6,7 +6,6 @@ namespace Devian
     [Serializable]
     public struct UITransitionAlphaClip
     {
-        public bool Enabled;
         [Min(0f)] public float StartTime;
         [Min(0f)] public float Duration;
         public UITweenEase Ease;
@@ -17,7 +16,6 @@ namespace Devian
     [Serializable]
     public struct UITransitionMoveClip
     {
-        public bool Enabled;
         [Min(0f)] public float StartTime;
         [Min(0f)] public float Duration;
         public UITweenEase Ease;
@@ -28,7 +26,6 @@ namespace Devian
     [Serializable]
     public struct UITransitionScaleClip
     {
-        public bool Enabled;
         [Min(0f)] public float StartTime;
         [Min(0f)] public float Duration;
         public UITweenEase Ease;
@@ -37,10 +34,21 @@ namespace Devian
     }
 
     [Serializable]
+    public struct UITransitionPreferredSizeClip
+    {
+        [Min(0f)] public float StartTime;
+        [Min(0f)] public float Duration;
+        public UITweenEase Ease;
+        public Vector2 From;
+        public Vector2 To;
+    }
+
+    [Serializable]
     public sealed class UITransitionPreset
     {
         public UITransitionAlphaClip[] AlphaClips = Array.Empty<UITransitionAlphaClip>();
         public UITransitionMoveClip[] MoveClips = Array.Empty<UITransitionMoveClip>();
         public UITransitionScaleClip[] ScaleClips = Array.Empty<UITransitionScaleClip>();
+        public UITransitionPreferredSizeClip[] PreferredSizeClips = Array.Empty<UITransitionPreferredSizeClip>();
     }
 }

@@ -21,6 +21,9 @@ namespace Devian
 
         public bool HasScale;
         public Vector3 Scale;
+
+        public bool HasPreferredSize;
+        public Vector2 PreferredSize;
     }
 
     public sealed class UICompiledTransitionData
@@ -29,15 +32,18 @@ namespace Devian
         public UITransitionAlphaClip[] AlphaClips = Array.Empty<UITransitionAlphaClip>();
         public UITransitionMoveClip[] MoveClips = Array.Empty<UITransitionMoveClip>();
         public UITransitionScaleClip[] ScaleClips = Array.Empty<UITransitionScaleClip>();
+        public UITransitionPreferredSizeClip[] PreferredSizeClips = Array.Empty<UITransitionPreferredSizeClip>();
 
         public bool IsEmpty =>
             AlphaClips.Length == 0
             && MoveClips.Length == 0
-            && ScaleClips.Length == 0;
+            && ScaleClips.Length == 0
+            && PreferredSizeClips.Length == 0;
 
         public bool UsesAlpha => AlphaClips.Length > 0;
         public bool UsesAnchoredPosition => MoveClips.Length > 0;
         public bool UsesScale => ScaleClips.Length > 0;
+        public bool UsesPreferredSize => PreferredSizeClips.Length > 0;
 
         public UITransitionFrameResult Evaluate(float elapsed, UITransitionSnapshot snapshot)
         {
@@ -61,39 +67,63 @@ namespace Devian
                 result.Scale = scale;
             }
 
+            if (TryEvaluatePreferredSize(elapsed, out var preferredSize))
+            {
+                result.HasPreferredSize = true;
+                result.PreferredSize = preferredSize;
+            }
+
             return result;
         }
 
         private bool TryEvaluateAlpha(float elapsed, out float value)
         {
-            var hasValue = false;
+            var hasActiveValue = false;
+            var hasUpcomingValue = false;
+            var upcomingStartTime = float.MaxValue;
             value = 0f;
 
             for (var i = 0; i < AlphaClips.Length; i++)
             {
                 var clip = AlphaClips[i];
-                if (!clip.Enabled || elapsed < clip.StartTime)
+                if (elapsed < clip.StartTime)
                 {
+                    if (clip.StartTime <= upcomingStartTime)
+                    {
+                        upcomingStartTime = clip.StartTime;
+                        value = clip.From;
+                        hasUpcomingValue = true;
+                    }
+
                     continue;
                 }
 
                 value = EvaluateFloat(clip.StartTime, clip.Duration, clip.Ease, clip.From, clip.To, elapsed);
-                hasValue = true;
+                hasActiveValue = true;
             }
 
-            return hasValue;
+            return hasActiveValue || hasUpcomingValue;
         }
 
         private bool TryEvaluateMove(float elapsed, out Vector2 value)
         {
-            var hasValue = false;
+            var hasActiveValue = false;
+            var hasUpcomingValue = false;
+            var upcomingStartTime = float.MaxValue;
             value = Vector2.zero;
 
             for (var i = 0; i < MoveClips.Length; i++)
             {
                 var clip = MoveClips[i];
-                if (!clip.Enabled || elapsed < clip.StartTime)
+                if (elapsed < clip.StartTime)
                 {
+                    if (clip.StartTime <= upcomingStartTime)
+                    {
+                        upcomingStartTime = clip.StartTime;
+                        value = clip.FromOffset;
+                        hasUpcomingValue = true;
+                    }
+
                     continue;
                 }
 
@@ -101,22 +131,31 @@ namespace Devian
                     clip.FromOffset,
                     clip.ToOffset,
                     EvaluateNormalizedTime(clip.StartTime, clip.Duration, clip.Ease, elapsed));
-                hasValue = true;
+                hasActiveValue = true;
             }
 
-            return hasValue;
+            return hasActiveValue || hasUpcomingValue;
         }
 
         private bool TryEvaluateScale(float elapsed, out Vector3 value)
         {
-            var hasValue = false;
+            var hasActiveValue = false;
+            var hasUpcomingValue = false;
+            var upcomingStartTime = float.MaxValue;
             value = Vector3.one;
 
             for (var i = 0; i < ScaleClips.Length; i++)
             {
                 var clip = ScaleClips[i];
-                if (!clip.Enabled || elapsed < clip.StartTime)
+                if (elapsed < clip.StartTime)
                 {
+                    if (clip.StartTime <= upcomingStartTime)
+                    {
+                        upcomingStartTime = clip.StartTime;
+                        value = clip.From;
+                        hasUpcomingValue = true;
+                    }
+
                     continue;
                 }
 
@@ -124,10 +163,42 @@ namespace Devian
                     clip.From,
                     clip.To,
                     EvaluateNormalizedTime(clip.StartTime, clip.Duration, clip.Ease, elapsed));
-                hasValue = true;
+                hasActiveValue = true;
             }
 
-            return hasValue;
+            return hasActiveValue || hasUpcomingValue;
+        }
+
+        private bool TryEvaluatePreferredSize(float elapsed, out Vector2 value)
+        {
+            var hasActiveValue = false;
+            var hasUpcomingValue = false;
+            var upcomingStartTime = float.MaxValue;
+            value = Vector2.zero;
+
+            for (var i = 0; i < PreferredSizeClips.Length; i++)
+            {
+                var clip = PreferredSizeClips[i];
+                if (elapsed < clip.StartTime)
+                {
+                    if (clip.StartTime <= upcomingStartTime)
+                    {
+                        upcomingStartTime = clip.StartTime;
+                        value = clip.From;
+                        hasUpcomingValue = true;
+                    }
+
+                    continue;
+                }
+
+                value = Vector2.LerpUnclamped(
+                    clip.From,
+                    clip.To,
+                    EvaluateNormalizedTime(clip.StartTime, clip.Duration, clip.Ease, elapsed));
+                hasActiveValue = true;
+            }
+
+            return hasActiveValue || hasUpcomingValue;
         }
 
         private static float EvaluateFloat(
@@ -169,10 +240,11 @@ namespace Devian
             var alphaClips = new List<UITransitionAlphaClip>();
             var moveClips = new List<UITransitionMoveClip>();
             var scaleClips = new List<UITransitionScaleClip>();
+            var preferredSizeClips = new List<UITransitionPreferredSizeClip>();
 
-            AddPreset(alphaClips, moveClips, scaleClips, preset, 0f);
+            AddPreset(alphaClips, moveClips, scaleClips, preferredSizeClips, preset, 0f);
 
-            return CreateCompiledData(alphaClips, moveClips, scaleClips);
+            return CreateCompiledData(alphaClips, moveClips, scaleClips, preferredSizeClips);
         }
 
         public static UICompiledTransitionData Compile(UITweenSequence sequence)
@@ -185,6 +257,7 @@ namespace Devian
             var alphaClips = new List<UITransitionAlphaClip>();
             var moveClips = new List<UITransitionMoveClip>();
             var scaleClips = new List<UITransitionScaleClip>();
+            var preferredSizeClips = new List<UITransitionPreferredSizeClip>();
             var cursor = 0f;
 
             for (var i = 0; i < sequence.GroupCount; i++)
@@ -200,7 +273,7 @@ namespace Devian
                         continue;
                     }
 
-                    AddPreset(alphaClips, moveClips, scaleClips, preset, cursor);
+                    AddPreset(alphaClips, moveClips, scaleClips, preferredSizeClips, preset, cursor);
                     var presetDuration = GetPresetDuration(preset);
                     if (presetDuration > groupDuration)
                     {
@@ -211,13 +284,14 @@ namespace Devian
                 cursor += groupDuration;
             }
 
-            return CreateCompiledData(alphaClips, moveClips, scaleClips);
+            return CreateCompiledData(alphaClips, moveClips, scaleClips, preferredSizeClips);
         }
 
         private static void AddPreset(
             List<UITransitionAlphaClip> alphaClips,
             List<UITransitionMoveClip> moveClips,
             List<UITransitionScaleClip> scaleClips,
+            List<UITransitionPreferredSizeClip> preferredSizeClips,
             UITransitionPreset preset,
             float timeOffset)
         {
@@ -229,6 +303,7 @@ namespace Devian
             AddAlphaClips(alphaClips, preset.AlphaClips, timeOffset);
             AddMoveClips(moveClips, preset.MoveClips, timeOffset);
             AddScaleClips(scaleClips, preset.ScaleClips, timeOffset);
+            AddPreferredSizeClips(preferredSizeClips, preset.PreferredSizeClips, timeOffset);
         }
 
         private static void AddAlphaClips(
@@ -244,11 +319,6 @@ namespace Devian
             for (var i = 0; i < source.Length; i++)
             {
                 var clip = source[i];
-                if (!clip.Enabled)
-                {
-                    continue;
-                }
-
                 clip.StartTime += timeOffset;
                 destination.Add(clip);
             }
@@ -267,11 +337,6 @@ namespace Devian
             for (var i = 0; i < source.Length; i++)
             {
                 var clip = source[i];
-                if (!clip.Enabled)
-                {
-                    continue;
-                }
-
                 clip.StartTime += timeOffset;
                 destination.Add(clip);
             }
@@ -290,11 +355,24 @@ namespace Devian
             for (var i = 0; i < source.Length; i++)
             {
                 var clip = source[i];
-                if (!clip.Enabled)
-                {
-                    continue;
-                }
+                clip.StartTime += timeOffset;
+                destination.Add(clip);
+            }
+        }
 
+        private static void AddPreferredSizeClips(
+            List<UITransitionPreferredSizeClip> destination,
+            UITransitionPreferredSizeClip[] source,
+            float timeOffset)
+        {
+            if (source == null)
+            {
+                return;
+            }
+
+            for (var i = 0; i < source.Length; i++)
+            {
+                var clip = source[i];
                 clip.StartTime += timeOffset;
                 destination.Add(clip);
             }
@@ -303,19 +381,22 @@ namespace Devian
         private static UICompiledTransitionData CreateCompiledData(
             List<UITransitionAlphaClip> alphaClips,
             List<UITransitionMoveClip> moveClips,
-            List<UITransitionScaleClip> scaleClips)
+            List<UITransitionScaleClip> scaleClips,
+            List<UITransitionPreferredSizeClip> preferredSizeClips)
         {
             var data = new UICompiledTransitionData
             {
                 AlphaClips = alphaClips.ToArray(),
                 MoveClips = moveClips.ToArray(),
-                ScaleClips = scaleClips.ToArray()
+                ScaleClips = scaleClips.ToArray(),
+                PreferredSizeClips = preferredSizeClips.ToArray()
             };
 
             data.Duration = Mathf.Max(
                 GetAlphaDuration(data.AlphaClips),
                 GetMoveDuration(data.MoveClips),
-                GetScaleDuration(data.ScaleClips));
+                GetScaleDuration(data.ScaleClips),
+                GetPreferredSizeDuration(data.PreferredSizeClips));
 
             return data;
         }
@@ -325,7 +406,8 @@ namespace Devian
             return Mathf.Max(
                 GetAlphaDuration(preset.AlphaClips),
                 GetMoveDuration(preset.MoveClips),
-                GetScaleDuration(preset.ScaleClips));
+                GetScaleDuration(preset.ScaleClips),
+                GetPreferredSizeDuration(preset.PreferredSizeClips));
         }
 
         private static float GetAlphaDuration(UITransitionAlphaClip[] clips)
@@ -339,11 +421,6 @@ namespace Devian
             for (var i = 0; i < clips.Length; i++)
             {
                 var clip = clips[i];
-                if (!clip.Enabled)
-                {
-                    continue;
-                }
-
                 duration = Mathf.Max(duration, clip.StartTime + Mathf.Max(0f, clip.Duration));
             }
 
@@ -361,11 +438,6 @@ namespace Devian
             for (var i = 0; i < clips.Length; i++)
             {
                 var clip = clips[i];
-                if (!clip.Enabled)
-                {
-                    continue;
-                }
-
                 duration = Mathf.Max(duration, clip.StartTime + Mathf.Max(0f, clip.Duration));
             }
 
@@ -383,11 +455,23 @@ namespace Devian
             for (var i = 0; i < clips.Length; i++)
             {
                 var clip = clips[i];
-                if (!clip.Enabled)
-                {
-                    continue;
-                }
+                duration = Mathf.Max(duration, clip.StartTime + Mathf.Max(0f, clip.Duration));
+            }
 
+            return duration;
+        }
+
+        private static float GetPreferredSizeDuration(UITransitionPreferredSizeClip[] clips)
+        {
+            var duration = 0f;
+            if (clips == null)
+            {
+                return duration;
+            }
+
+            for (var i = 0; i < clips.Length; i++)
+            {
+                var clip = clips[i];
                 duration = Mathf.Max(duration, clip.StartTime + Mathf.Max(0f, clip.Duration));
             }
 

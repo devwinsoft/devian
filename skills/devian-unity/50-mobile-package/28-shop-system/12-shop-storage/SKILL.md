@@ -88,7 +88,7 @@ public sealed class ShopCatalogEventStorageData : ShopCatalogStorageDataBase
 
 보조 타입:
 
-- `ShopDailyProductState = { shop_id, discountType, remainCount }`
+- `ShopDailyProductState = { shop_item_id, discountType, remainCount }`
 
 ---
 
@@ -116,7 +116,7 @@ public sealed class ShopCatalogEventStorageData : ShopCatalogStorageDataBase
 
 규칙:
 
-- `dailyCatalogProducts`는 `SHOP_DAILY`의 ADS/FREE 제외 동적 5개 상품만 저장한다.
+- `dailyCatalogProducts`는 `SHOP_ITEM_DAILY`의 ADS/FREE 제외 동적 5개 상품만 저장한다.
 - `DAILY`의 ADS/FREE 상품은 `dailyCatalogProducts`에 저장하지 않는다. 해당 상품의 `remainCount`는 `daily.productRemainCounts`를 사용한다.
 - 무제한 상품(`max_count=-1`)은 `productRemainCounts`에 저장하지 않는다.
 - `PURCHASE`와 `EVENT`에 필요 없는 상태를 미리 넣지 않는다.

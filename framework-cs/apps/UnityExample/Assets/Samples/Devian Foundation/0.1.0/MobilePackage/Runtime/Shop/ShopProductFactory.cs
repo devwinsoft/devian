@@ -7,14 +7,14 @@ namespace Devian
     internal static class ShopProductFactory
     {
         public static ShopProductBase CreateDailyProduct(
-            SHOP_DAILY row,
+            SHOP_ITEM_DAILY row,
             SHOP_DISCOUNT_TYPE discountType)
         {
             if (row == null)
                 return null;
 
             return createRewardProduct(
-                row.shop_id,
+                row.shop_item_id,
                 row.name_id,
                 SHOP_CATALOG_TYPE.DAILY,
                 row.currency_type,
@@ -25,13 +25,13 @@ namespace Devian
                 discountType);
         }
 
-        public static ShopProductBase CreateChestProduct(SHOP_CHEST row)
+        public static ShopProductBase CreateChestProduct(SHOP_ITEM_CHEST row)
         {
             if (row == null)
                 return null;
 
             return new ShopProductChest(
-                row.shop_id,
+                row.shop_item_id,
                 row.name_id,
                 SHOP_CATALOG_TYPE.CHEST,
                 row.chest_type,
@@ -42,13 +42,13 @@ namespace Devian
                 SHOP_DISCOUNT_TYPE.NONE);
         }
 
-        public static ShopProductBase CreateEventProduct(SHOP_EVENT row)
+        public static ShopProductBase CreateEventProduct(SHOP_ITEM_EVENT row)
         {
             if (row == null)
                 return null;
 
             return createRewardProduct(
-                row.shop_id,
+                row.shop_item_id,
                 row.name_id,
                 SHOP_CATALOG_TYPE.EVENT,
                 row.currency_type,
@@ -59,13 +59,13 @@ namespace Devian
                 SHOP_DISCOUNT_TYPE.NONE);
         }
 
-        public static ShopProductBase CreatePurchaseProduct(SHOP_PURCHASE row)
+        public static ShopProductBase CreatePurchaseProduct(SHOP_ITEM_PURCHASE row)
         {
             if (row == null)
                 return null;
 
             return new ShopProductPurchase(
-                row.shop_id,
+                row.shop_item_id,
                 row.name_id,
                 SHOP_CATALOG_TYPE.PURCHASE,
                 row.internal_product_id,
@@ -73,13 +73,13 @@ namespace Devian
                 -1);
         }
 
-        public static ShopProductBase CreateGoldProduct(SHOP_GOLD row)
+        public static ShopProductBase CreateGoldProduct(SHOP_ITEM_GOLD row)
         {
             if (row == null)
                 return null;
 
             return createRewardProduct(
-                row.shop_id,
+                row.shop_item_id,
                 row.name_id,
                 SHOP_CATALOG_TYPE.GOLD,
                 row.currency_type,
@@ -109,7 +109,7 @@ namespace Devian
         }
 
         static ShopProductBase createRewardProduct(
-            string shopId,
+            string shopItemId,
             string nameId,
             SHOP_CATALOG_TYPE catalogType,
             CURRENCY_TYPE currencyType,
@@ -122,12 +122,12 @@ namespace Devian
             switch (currencyType)
             {
                 case CURRENCY_TYPE.FREE:
-                    return new ShopProductFree(shopId, nameId, catalogType, price, rewardGroupId, amount, maxCount, discountType);
+                    return new ShopProductFree(shopItemId, nameId, catalogType, price, rewardGroupId, amount, maxCount, discountType);
                 case CURRENCY_TYPE.ADS:
-                    return new ShopProductAds(shopId, nameId, catalogType, price, rewardGroupId, amount, maxCount, discountType);
+                    return new ShopProductAds(shopItemId, nameId, catalogType, price, rewardGroupId, amount, maxCount, discountType);
                 default:
                     return new ShopProductCurrency(
-                        shopId,
+                        shopItemId,
                         nameId,
                         catalogType,
                         currencyType,

@@ -35,13 +35,16 @@ namespace Devian
 
         private EventTrigger _trigger;
         private RectTransform _rectTransform;
+        private ScrollRect _scrollRect;
         private Vector3 _originalScale;
         private Vector2 _originalAnchoredPosition;
+        private bool _isDragging;
 
         protected override void onAwake()
         {
             _trigger = GetComponent<EventTrigger>();
             _rectTransform = GetComponent<RectTransform>();
+            resolveScrollRectIfNeeded();
 
             if (_rectTransform != null)
             {
@@ -50,6 +53,24 @@ namespace Devian
             }
 
             setupTriggers();
+        }
+
+        protected override void onPoolDespawned()
+        {
+            _isDragging = false;
+            restoreVisualState();
+        }
+
+        protected override void onDestroy()
+        {
+            _isDragging = false;
+            restoreVisualState();
+        }
+
+        private void OnDisable()
+        {
+            _isDragging = false;
+            restoreVisualState();
         }
 
         private void setupTriggers()
@@ -72,21 +93,42 @@ namespace Devian
             pointerUp.eventID = EventTriggerType.PointerUp;
             pointerUp.callback.AddListener(onPointerUp);
             _trigger.triggers.Add(pointerUp);
+
+            // InitializePotentialDrag
+            var initializePotentialDrag = new EventTrigger.Entry();
+            initializePotentialDrag.eventID = EventTriggerType.InitializePotentialDrag;
+            initializePotentialDrag.callback.AddListener(onInitializePotentialDrag);
+            _trigger.triggers.Add(initializePotentialDrag);
+
+            // BeginDrag
+            var beginDrag = new EventTrigger.Entry();
+            beginDrag.eventID = EventTriggerType.BeginDrag;
+            beginDrag.callback.AddListener(onBeginDrag);
+            _trigger.triggers.Add(beginDrag);
+
+            // Drag
+            var drag = new EventTrigger.Entry();
+            drag.eventID = EventTriggerType.Drag;
+            drag.callback.AddListener(onDrag);
+            _trigger.triggers.Add(drag);
+
+            // EndDrag
+            var endDrag = new EventTrigger.Entry();
+            endDrag.eventID = EventTriggerType.EndDrag;
+            endDrag.callback.AddListener(onEndDrag);
+            _trigger.triggers.Add(endDrag);
+
+            // Scroll
+            var scroll = new EventTrigger.Entry();
+            scroll.eventID = EventTriggerType.Scroll;
+            scroll.callback.AddListener(onScroll);
+            _trigger.triggers.Add(scroll);
         }
 
         private void onPointerDown(BaseEventData eventData)
         {
-            if (_rectTransform == null) return;
-
-            switch (_effectType)
-            {
-                case EffectType.Scale:
-                    _rectTransform.localScale = _originalScale * 1.1f;
-                    break;
-                case EffectType.AnchoredPosition:
-                    _rectTransform.anchoredPosition = _originalAnchoredPosition + new Vector2(0, -10f);
-                    break;
-            }
+            _isDragging = false;
+            applyPressedVisualState();
 
             // UI Sound (down)
             if (SoundDown != null && SoundDown.IsValid())
@@ -103,16 +145,11 @@ namespace Devian
 
         private void onPointerUp(BaseEventData eventData)
         {
-            if (_rectTransform == null) return;
-
-            switch (_effectType)
+            restoreVisualState();
+            if (_isDragging)
             {
-                case EffectType.Scale:
-                    _rectTransform.localScale = _originalScale;
-                    break;
-                case EffectType.AnchoredPosition:
-                    _rectTransform.anchoredPosition = _originalAnchoredPosition;
-                    break;
+                _isDragging = false;
+                return;
             }
 
             // UI Sound (up)
@@ -134,59 +171,110 @@ namespace Devian
         /// <param name="scroll">The ScrollRect to receive drag events.</param>
         public void SetScroll(ScrollRect scroll)
         {
-            if (scroll == null) return;
+            _scrollRect = scroll;
+        }
 
-            // BeginDrag
-            var beginDrag = new EventTrigger.Entry();
-            beginDrag.eventID = EventTriggerType.BeginDrag;
-            beginDrag.callback.AddListener(evt =>
-            {
-                var pointerData = evt as PointerEventData;
-                if (pointerData != null)
-                {
-                    scroll.OnBeginDrag(pointerData);
-                }
-            });
-            _trigger.triggers.Add(beginDrag);
+        private void onInitializePotentialDrag(BaseEventData eventData)
+        {
+            if (!tryGetScrollPointerEventData(eventData, out var pointerData, out var scrollRect))
+                return;
 
-            // Drag
-            var drag = new EventTrigger.Entry();
-            drag.eventID = EventTriggerType.Drag;
-            drag.callback.AddListener(evt =>
-            {
-                var pointerData = evt as PointerEventData;
-                if (pointerData != null)
-                {
-                    scroll.OnDrag(pointerData);
-                }
-            });
-            _trigger.triggers.Add(drag);
+            scrollRect.OnInitializePotentialDrag(pointerData);
+        }
 
-            // EndDrag
-            var endDrag = new EventTrigger.Entry();
-            endDrag.eventID = EventTriggerType.EndDrag;
-            endDrag.callback.AddListener(evt =>
-            {
-                var pointerData = evt as PointerEventData;
-                if (pointerData != null)
-                {
-                    scroll.OnEndDrag(pointerData);
-                }
-            });
-            _trigger.triggers.Add(endDrag);
+        private void onBeginDrag(BaseEventData eventData)
+        {
+            if (!(eventData is PointerEventData))
+                return;
 
-            // PointerDown triggers BeginDrag for immediate scroll response
-            var pointerDownDrag = new EventTrigger.Entry();
-            pointerDownDrag.eventID = EventTriggerType.PointerDown;
-            pointerDownDrag.callback.AddListener(evt =>
+            _isDragging = true;
+            restoreVisualState();
+
+            if (!tryGetScrollPointerEventData(eventData, out var pointerData, out var scrollRect))
+                return;
+
+            scrollRect.OnBeginDrag(pointerData);
+        }
+
+        private void onDrag(BaseEventData eventData)
+        {
+            if (!tryGetScrollPointerEventData(eventData, out var pointerData, out var scrollRect))
+                return;
+
+            scrollRect.OnDrag(pointerData);
+        }
+
+        private void onEndDrag(BaseEventData eventData)
+        {
+            if (!tryGetScrollPointerEventData(eventData, out var pointerData, out var scrollRect))
+                return;
+
+            scrollRect.OnEndDrag(pointerData);
+        }
+
+        private void onScroll(BaseEventData eventData)
+        {
+            if (!tryGetScrollPointerEventData(eventData, out var pointerData, out var scrollRect))
+                return;
+
+            scrollRect.OnScroll(pointerData);
+        }
+
+        private bool tryGetScrollPointerEventData(
+            BaseEventData eventData,
+            out PointerEventData pointerData,
+            out ScrollRect scrollRect)
+        {
+            pointerData = eventData as PointerEventData;
+            scrollRect = resolveScrollRectIfNeeded();
+            return pointerData != null && scrollRect != null && scrollRect.isActiveAndEnabled;
+        }
+
+        private ScrollRect resolveScrollRectIfNeeded()
+        {
+            if (_scrollRect != null && !transform.IsChildOf(_scrollRect.transform))
+                _scrollRect = null;
+
+            if (_scrollRect == null)
             {
-                var pointerData = evt as PointerEventData;
-                if (pointerData != null)
-                {
-                    scroll.OnBeginDrag(pointerData);
-                }
-            });
-            _trigger.triggers.Add(pointerDownDrag);
+                var parent = transform.parent;
+                _scrollRect = parent != null
+                    ? parent.GetComponentInParent<ScrollRect>()
+                    : null;
+            }
+
+            return _scrollRect;
+        }
+
+        private void applyPressedVisualState()
+        {
+            if (_rectTransform == null) return;
+
+            switch (_effectType)
+            {
+                case EffectType.Scale:
+                    _rectTransform.localScale = _originalScale * 0.9f;
+                    break;
+                case EffectType.AnchoredPosition:
+                    _rectTransform.anchoredPosition =
+                        _originalAnchoredPosition + new Vector2(0, -10f);
+                    break;
+            }
+        }
+
+        private void restoreVisualState()
+        {
+            if (_rectTransform == null) return;
+
+            switch (_effectType)
+            {
+                case EffectType.Scale:
+                    _rectTransform.localScale = _originalScale;
+                    break;
+                case EffectType.AnchoredPosition:
+                    _rectTransform.anchoredPosition = _originalAnchoredPosition;
+                    break;
+            }
         }
     }
 }

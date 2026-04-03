@@ -5,21 +5,48 @@ namespace Devian
 {
     public abstract class UIBasePageCanvas : UIBaseCanvas
     {
-        private readonly List<UIBasePagePanel> _pages = new List<UIBasePagePanel>();
-        private UIBasePagePanel _currentPage;
+        [SerializeField] private int _initialPageIndex = -1;
+
+        private readonly List<UIBasePageMain> _mainPages = new List<UIBasePageMain>();
+        private readonly List<UIBasePageSub> _subPages = new List<UIBasePageSub>();
+        private readonly List<UIBasePagePopup> _popupPages = new List<UIBasePagePopup>();
+
+        private UIBasePageMain _currentMain;
+        private UIBasePageSub _currentSub;
+        private UIBasePagePopup _currentPopup;
         private int _navigationVersion;
         private bool _pagesInitialized;
 
-        public UIBasePagePanel currentPage
+        public int initialPageIndex => _initialPageIndex;
+
+        public UIBasePageMain currentMain
         {
             get
             {
                 EnsurePagesInitialized();
-                return _currentPage;
+                return _currentMain;
             }
         }
 
-        public bool isTransitioning { get; private set; }
+        public UIBasePageSub currentSub
+        {
+            get
+            {
+                EnsurePagesInitialized();
+                return _currentSub;
+            }
+        }
+
+        public UIBasePagePopup currentPopup
+        {
+            get
+            {
+                EnsurePagesInitialized();
+                return _currentPopup;
+            }
+        }
+
+        public bool isTransitioningMain { get; private set; }
 
         protected override void onInitComplete()
         {
@@ -31,7 +58,7 @@ namespace Devian
         protected sealed override void onPoolSpawned()
         {
             _navigationVersion++;
-            isTransitioning = false;
+            isTransitioningMain = false;
 
             MarkPagesDirty();
             EnsurePagesInitialized();
@@ -40,10 +67,12 @@ namespace Devian
 
         protected sealed override void onPoolDespawned()
         {
-            CancelAllPageTransitions();
+            CancelAllTransitions();
             _navigationVersion++;
-            _currentPage = null;
-            isTransitioning = false;
+            _currentMain = null;
+            _currentSub = null;
+            _currentPopup = null;
+            isTransitioningMain = false;
 
             MarkPagesDirty();
             onPageCanvasPoolDespawned();
@@ -55,68 +84,65 @@ namespace Devian
 
         public void ShowPage(int pageIndex, bool animated = true)
         {
-            if (!TryGetPage(pageIndex, out var page))
+            if (!TryGetMainPage(pageIndex, out var page))
             {
-                Debug.LogWarning($"[{GetType().Name}] Page with index '{pageIndex}' was not found.", this);
+                Debug.LogWarning($"[{GetType().Name}] Main page with index '{pageIndex}' was not found.", this);
                 return;
             }
 
             ShowPage(page, animated);
         }
 
-        public void ShowPage(UIBasePagePanel page, bool animated = true)
+        public void ShowPage(UIBasePageMain page, bool animated = true)
         {
             if (page == null)
             {
-                Debug.LogWarning($"[{GetType().Name}] ShowPage: target page is null.", this);
+                Debug.LogWarning($"[{GetType().Name}] ShowPage: target main page is null.", this);
                 return;
             }
 
             EnsurePagesInitialized();
 
-            if (!IsOwnedPage(page))
+            if (!IsOwnedMain(page))
             {
                 Debug.LogWarning(
-                    $"[{GetType().Name}] ShowPage: page '{page.name}' does not belong to this canvas.",
+                    $"[{GetType().Name}] ShowPage: main page '{page.name}' does not belong to this canvas.",
                     this);
                 return;
             }
 
-            if (isTransitioning)
+            if (isTransitioningMain)
             {
-                if (_currentPage == page)
+                if (_currentMain == page && _currentSub == null && _currentPopup == null)
                     return;
 
-                NormalizeToCurrentPage();
+                NormalizeToCurrentMain();
             }
 
-            if (_currentPage == page)
-                return;
-
-            if (_currentPage == null)
+            if (_currentMain == page)
             {
-                NormalizeToPage(page);
+                CloseCurrentPopupImmediate();
+                CloseCurrentSubImmediate(restoreMain: true);
+                NormalizeToMain(page);
+                return;
+            }
+
+            CloseCurrentPopupImmediate();
+            CloseCurrentSubImmediate(restoreMain: true);
+
+            if (_currentMain == null || !animated)
+            {
+                NormalizeToMain(page);
                 return;
             }
 
             StartTransition(page, animated);
         }
 
-        public bool TryGetPage(int pageIndex, out UIBasePagePanel page)
+        public bool TryGetMainPage(int pageIndex, out UIBasePageMain page)
         {
             EnsurePagesInitialized();
-
-            for (var i = 0; i < _pages.Count; i++)
-            {
-                if (_pages[i].pageIndex == pageIndex)
-                {
-                    page = _pages[i];
-                    return true;
-                }
-            }
-
-            page = null;
-            return false;
+            return TryGetCollectedMainPage(pageIndex, out page);
         }
 
         public override bool Validate(out string reason)
@@ -124,15 +150,17 @@ namespace Devian
             if (!base.Validate(out reason))
                 return false;
 
-            CollectPages(_pages);
+            CollectMainPages(_mainPages);
+            CollectSubPages(_subPages);
+            CollectPopupPages(_popupPages);
 
-            var pageIndexes = new HashSet<int>();
-            for (var i = 0; i < _pages.Count; i++)
+            var mainPageIndexes = new HashSet<int>();
+            for (var i = 0; i < _mainPages.Count; i++)
             {
-                var page = _pages[i];
-                if (!pageIndexes.Add(page.pageIndex))
+                var page = _mainPages[i];
+                if (!mainPageIndexes.Add(page.pageIndex))
                 {
-                    reason = $"Duplicate pageIndex detected: {page.pageIndex}";
+                    reason = $"Duplicate main pageIndex detected: {page.pageIndex}";
                     return false;
                 }
 
@@ -140,31 +168,249 @@ namespace Devian
                     return false;
             }
 
+            for (var i = 0; i < _subPages.Count; i++)
+            {
+                var sub = _subPages[i];
+                if (!mainPageIndexes.Contains(sub.pageIndex))
+                {
+                    reason = $"Sub page '{sub.name}' references missing main pageIndex '{sub.pageIndex}'.";
+                    return false;
+                }
+
+                if (!sub._ValidateTransitionSetup(out reason))
+                    return false;
+            }
+
+            for (var i = 0; i < _popupPages.Count; i++)
+            {
+                var popup = _popupPages[i];
+                if (!mainPageIndexes.Contains(popup.pageIndex))
+                {
+                    reason = $"Popup page '{popup.name}' references missing main pageIndex '{popup.pageIndex}'.";
+                    return false;
+                }
+
+                if (!popup._ValidateTransitionSetup(out reason))
+                    return false;
+            }
+
+            if (_initialPageIndex >= 0 && !mainPageIndexes.Contains(_initialPageIndex))
+            {
+                reason = $"Initial main pageIndex '{_initialPageIndex}' was not found.";
+                return false;
+            }
+
             reason = null;
             return true;
         }
 
-        private void StartTransition(UIBasePagePanel targetPage, bool animated)
+        internal bool TryShowSub(UIBasePageSub sub, bool animated = true)
         {
-            var fromPage = _currentPage;
-            var direction = fromPage.pageIndex < targetPage.pageIndex
+            if (sub == null)
+            {
+                Debug.LogWarning($"[{GetType().Name}] TryShowSub: target sub page is null.", this);
+                return false;
+            }
+
+            EnsurePagesInitialized();
+
+            if (!IsOwnedSub(sub))
+            {
+                Debug.LogWarning(
+                    $"[{GetType().Name}] TryShowSub: sub page '{sub.name}' does not belong to this canvas.",
+                    this);
+                return false;
+            }
+
+            if (isTransitioningMain)
+                NormalizeToCurrentMain();
+
+            if (_currentMain == null)
+            {
+                Debug.LogWarning(
+                    $"[{GetType().Name}] TryShowSub: current main page is null.",
+                    this);
+                return false;
+            }
+
+            if (_currentMain.pageIndex != sub.pageIndex)
+            {
+                Debug.LogWarning(
+                    $"[{GetType().Name}] TryShowSub: sub '{sub.name}' pageIndex '{sub.pageIndex}' " +
+                    $"does not match current main pageIndex '{_currentMain.pageIndex}'.",
+                    this);
+                return false;
+            }
+
+            CloseCurrentPopupImmediate();
+
+            if (_currentSub != null && _currentSub != sub)
+                CloseCurrentSubImmediate(restoreMain: false);
+
+            _currentMain._SetShownImmediate(false);
+            _currentSub = sub;
+            sub._ShowInternal(animated, null);
+            return true;
+        }
+
+        internal bool TryHideSub(
+            UIBasePageSub sub,
+            UIPageSubCloseReason reason,
+            bool animated = true)
+        {
+            if (sub == null)
+            {
+                Debug.LogWarning($"[{GetType().Name}] TryHideSub: target sub page is null.", this);
+                return false;
+            }
+
+            EnsurePagesInitialized();
+
+            if (!IsOwnedSub(sub))
+            {
+                Debug.LogWarning(
+                    $"[{GetType().Name}] TryHideSub: sub page '{sub.name}' does not belong to this canvas.",
+                    this);
+                return false;
+            }
+
+            var shouldRestoreMain = reason == UIPageSubCloseReason.Normal;
+            if (_currentSub != sub)
+            {
+                sub._HideInternal(animated: false, null);
+                return false;
+            }
+
+            sub._HideInternal(animated, () =>
+            {
+                if (_currentSub == sub)
+                    _currentSub = null;
+
+                if (shouldRestoreMain
+                    && _currentMain != null
+                    && _currentMain.pageIndex == sub.pageIndex)
+                {
+                    _currentMain._SetShownImmediate(true);
+                }
+            });
+
+            return true;
+        }
+
+        internal bool TryShowPopup(UIBasePagePopup popup, bool animated = true)
+        {
+            if (popup == null)
+            {
+                Debug.LogWarning($"[{GetType().Name}] TryShowPopup: target popup page is null.", this);
+                return false;
+            }
+
+            EnsurePagesInitialized();
+
+            if (!IsOwnedPopup(popup))
+            {
+                Debug.LogWarning(
+                    $"[{GetType().Name}] TryShowPopup: popup page '{popup.name}' does not belong to this canvas.",
+                    this);
+                return false;
+            }
+
+            if (isTransitioningMain)
+                NormalizeToCurrentMain();
+
+            if (_currentMain == null)
+            {
+                Debug.LogWarning(
+                    $"[{GetType().Name}] TryShowPopup: current main page is null.",
+                    this);
+                return false;
+            }
+
+            if (_currentMain.pageIndex != popup.pageIndex)
+            {
+                Debug.LogWarning(
+                    $"[{GetType().Name}] TryShowPopup: popup '{popup.name}' pageIndex '{popup.pageIndex}' " +
+                    $"does not match current main pageIndex '{_currentMain.pageIndex}'.",
+                    this);
+                return false;
+            }
+
+            if (_currentPopup != null && _currentPopup != popup)
+                CloseCurrentPopupImmediate();
+
+            _currentPopup = popup;
+            popup._ShowInternal(animated, null);
+            return true;
+        }
+
+        internal bool TryHidePopup(
+            UIBasePagePopup popup,
+            UIPagePopupCloseReason reason,
+            bool animated = true)
+        {
+            if (popup == null)
+            {
+                Debug.LogWarning($"[{GetType().Name}] TryHidePopup: target popup page is null.", this);
+                return false;
+            }
+
+            EnsurePagesInitialized();
+
+            if (!IsOwnedPopup(popup))
+            {
+                Debug.LogWarning(
+                    $"[{GetType().Name}] TryHidePopup: popup page '{popup.name}' does not belong to this canvas.",
+                    this);
+                return false;
+            }
+
+            if (_currentPopup != popup)
+            {
+                popup._HideInternal(animated: false, null);
+                return false;
+            }
+
+            popup._HideInternal(animated, () =>
+            {
+                if (_currentPopup == popup)
+                    _currentPopup = null;
+            });
+
+            return true;
+        }
+
+        private void StartTransition(UIBasePageMain targetPage, bool animated)
+        {
+            var fromPage = _currentMain;
+            var exitDirection = fromPage.pageIndex < targetPage.pageIndex
                 ? UIPageTransitionDirection.Left
                 : UIPageTransitionDirection.Right;
+            var enterDirection = exitDirection == UIPageTransitionDirection.Left
+                ? UIPageTransitionDirection.Right
+                : UIPageTransitionDirection.Left;
 
             _navigationVersion++;
             var version = _navigationVersion;
 
-            isTransitioning = true;
-            _currentPage = targetPage;
+            isTransitioningMain = true;
+            _currentMain = targetPage;
+            _currentSub = null;
+            _currentPopup = null;
 
-            for (var i = 0; i < _pages.Count; i++)
+            for (var i = 0; i < _mainPages.Count; i++)
             {
-                var page = _pages[i];
-                if (page == fromPage || page == targetPage)
+                var mainPage = _mainPages[i];
+                if (mainPage == fromPage || mainPage == targetPage)
                     continue;
 
-                page._NormalizeHidden();
+                mainPage._NormalizeHidden();
             }
+
+            for (var i = 0; i < _subPages.Count; i++)
+                _subPages[i]._NormalizeHidden();
+
+            for (var i = 0; i < _popupPages.Count; i++)
+                _popupPages[i]._NormalizeHidden();
 
             var pendingCompletions = 2;
 
@@ -177,12 +423,12 @@ namespace Devian
                 if (pendingCompletions > 0)
                     return;
 
-                isTransitioning = false;
-                NormalizeToPage(targetPage);
+                isTransitioningMain = false;
+                NormalizeToMain(targetPage);
             }
 
-            targetPage._Enter(direction, animated, fromPage, CompleteStep);
-            fromPage._Exit(direction, animated, targetPage, CompleteStep);
+            targetPage._Enter(enterDirection, animated, fromPage, CompleteStep);
+            fromPage._Exit(exitDirection, animated, targetPage, CompleteStep);
         }
 
         private void EnsurePagesInitialized()
@@ -191,61 +437,98 @@ namespace Devian
                 return;
 
             _pagesInitialized = true;
-            CollectPages(_pages);
-
-            UIBasePagePanel selectedPage = null;
-            for (var i = 0; i < _pages.Count; i++)
-            {
-                var page = _pages[i];
-                if (!page.gameObject.activeSelf)
-                    continue;
-
-                if (selectedPage == null || page.pageIndex < selectedPage.pageIndex)
-                    selectedPage = page;
-            }
-
-            NormalizeToPage(selectedPage);
+            CollectMainPages(_mainPages);
+            CollectSubPages(_subPages);
+            CollectPopupPages(_popupPages);
+            NormalizeToMain(ResolveInitialMainPage());
         }
 
-        private void NormalizeToCurrentPage()
+        private void NormalizeToCurrentMain()
         {
-            if (_currentPage != null && !IsOwnedPage(_currentPage))
-                _currentPage = null;
+            if (_currentMain != null && !IsOwnedMain(_currentMain))
+                _currentMain = null;
 
-            NormalizeToPage(_currentPage);
+            if (_currentSub != null && !IsOwnedSub(_currentSub))
+                _currentSub = null;
+
+            if (_currentPopup != null && !IsOwnedPopup(_currentPopup))
+                _currentPopup = null;
+
+            NormalizeToMain(_currentMain);
         }
 
-        private void NormalizeToPage(UIBasePagePanel targetPage)
+        private void NormalizeToMain(UIBasePageMain targetMain)
         {
-            CancelAllPageTransitions();
+            CancelAllTransitions();
 
-            for (var i = 0; i < _pages.Count; i++)
+            for (var i = 0; i < _mainPages.Count; i++)
             {
-                var page = _pages[i];
-                if (page == targetPage)
+                var mainPage = _mainPages[i];
+                if (mainPage == targetMain)
                 {
-                    page._NormalizeVisible(makeCurrent: true);
+                    mainPage._NormalizeVisible(makeCurrent: true);
                     continue;
                 }
 
-                page._NormalizeHidden();
+                mainPage._NormalizeHidden();
             }
 
-            _currentPage = targetPage;
-            isTransitioning = false;
+            for (var i = 0; i < _subPages.Count; i++)
+                _subPages[i]._NormalizeHidden();
+
+            for (var i = 0; i < _popupPages.Count; i++)
+                _popupPages[i]._NormalizeHidden();
+
+            _currentMain = targetMain;
+            _currentSub = null;
+            _currentPopup = null;
+            isTransitioningMain = false;
         }
 
-        private void CancelAllPageTransitions()
+        private void CloseCurrentSubImmediate(bool restoreMain)
         {
-            for (var i = 0; i < _pages.Count; i++)
-                _pages[i]._CancelPageTransition();
+            if (_currentSub == null)
+                return;
+
+            var sub = _currentSub;
+            _currentSub = null;
+            sub._HideInternal(animated: false, null);
+
+            if (restoreMain
+                && _currentMain != null
+                && _currentMain.pageIndex == sub.pageIndex)
+            {
+                _currentMain._SetShownImmediate(true);
+            }
         }
 
-        private void CollectPages(List<UIBasePagePanel> pages)
+        private void CloseCurrentPopupImmediate()
+        {
+            if (_currentPopup == null)
+                return;
+
+            var popup = _currentPopup;
+            _currentPopup = null;
+            popup._HideInternal(animated: false, null);
+        }
+
+        private void CancelAllTransitions()
+        {
+            for (var i = 0; i < _mainPages.Count; i++)
+                _mainPages[i]._CancelPageTransition();
+
+            for (var i = 0; i < _subPages.Count; i++)
+                _subPages[i]._CancelTransition();
+
+            for (var i = 0; i < _popupPages.Count; i++)
+                _popupPages[i]._CancelTransition();
+        }
+
+        private void CollectMainPages(List<UIBasePageMain> pages)
         {
             pages.Clear();
 
-            var candidates = GetComponentsInChildren<UIBasePagePanel>(true);
+            var candidates = GetComponentsInChildren<UIBasePageMain>(true);
             for (var i = 0; i < candidates.Length; i++)
             {
                 var candidate = candidates[i];
@@ -259,21 +542,125 @@ namespace Devian
                 pages.Add(candidate);
             }
 
-            pages.Sort(ComparePages);
+            pages.Sort(ComparePagePanels);
         }
 
-        private bool IsOwnedPage(UIBasePagePanel page)
+        private void CollectSubPages(List<UIBasePageSub> pages)
         {
-            return page != null && _pages.Contains(page);
+            pages.Clear();
+
+            var candidates = GetComponentsInChildren<UIBasePageSub>(true);
+            for (var i = 0; i < candidates.Length; i++)
+            {
+                var candidate = candidates[i];
+                if (candidate == null)
+                    continue;
+
+                var nearestCanvas = candidate.GetComponentInParent<UIBasePageCanvas>(true);
+                if (nearestCanvas != this)
+                    continue;
+
+                pages.Add(candidate);
+            }
+
+            pages.Sort(ComparePagePanels);
+        }
+
+        private void CollectPopupPages(List<UIBasePagePopup> pages)
+        {
+            pages.Clear();
+
+            var candidates = GetComponentsInChildren<UIBasePagePopup>(true);
+            for (var i = 0; i < candidates.Length; i++)
+            {
+                var candidate = candidates[i];
+                if (candidate == null)
+                    continue;
+
+                var nearestCanvas = candidate.GetComponentInParent<UIBasePageCanvas>(true);
+                if (nearestCanvas != this)
+                    continue;
+
+                pages.Add(candidate);
+            }
+
+            pages.Sort(ComparePopups);
+        }
+
+        private UIBasePageMain ResolveInitialMainPage()
+        {
+            if (TryGetCollectedMainPage(_initialPageIndex, out var configuredPage))
+                return configuredPage;
+
+            UIBasePageMain selectedPage = null;
+            for (var i = 0; i < _mainPages.Count; i++)
+            {
+                var page = _mainPages[i];
+                if (!page.gameObject.activeSelf)
+                    continue;
+
+                if (selectedPage == null || page.pageIndex < selectedPage.pageIndex)
+                    selectedPage = page;
+            }
+
+            return selectedPage;
+        }
+
+        private bool TryGetCollectedMainPage(int pageIndex, out UIBasePageMain page)
+        {
+            for (var i = 0; i < _mainPages.Count; i++)
+            {
+                if (_mainPages[i].pageIndex == pageIndex)
+                {
+                    page = _mainPages[i];
+                    return true;
+                }
+            }
+
+            page = null;
+            return false;
+        }
+
+        private bool IsOwnedMain(UIBasePageMain page)
+        {
+            return page != null && _mainPages.Contains(page);
+        }
+
+        private bool IsOwnedSub(UIBasePageSub page)
+        {
+            return page != null && _subPages.Contains(page);
+        }
+
+        private bool IsOwnedPopup(UIBasePagePopup page)
+        {
+            return page != null && _popupPages.Contains(page);
         }
 
         private void MarkPagesDirty()
         {
             _pagesInitialized = false;
-            _pages.Clear();
+            _mainPages.Clear();
+            _subPages.Clear();
+            _popupPages.Clear();
         }
 
-        private static int ComparePages(UIBasePagePanel x, UIBasePagePanel y)
+        private static int ComparePagePanels(UIBasePagePanel x, UIBasePagePanel y)
+        {
+            if (ReferenceEquals(x, y))
+                return 0;
+            if (x == null)
+                return -1;
+            if (y == null)
+                return 1;
+
+            var compare = x.pageIndex.CompareTo(y.pageIndex);
+            if (compare != 0)
+                return compare;
+
+            return x.transform.GetSiblingIndex().CompareTo(y.transform.GetSiblingIndex());
+        }
+
+        private static int ComparePopups(UIBasePagePopup x, UIBasePagePopup y)
         {
             if (ReferenceEquals(x, y))
                 return 0;

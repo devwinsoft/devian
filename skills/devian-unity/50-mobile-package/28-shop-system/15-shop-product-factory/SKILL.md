@@ -23,11 +23,11 @@ Type: Design / Factory SSOT
 ```csharp
 internal static class ShopProductFactory
 {
-    public static ShopProductBase CreateDailyProduct(SHOP_DAILY row, SHOP_DISCOUNT_TYPE discountType);
-    public static ShopProductBase CreateChestProduct(SHOP_CHEST row);
-    public static ShopProductBase CreateEventProduct(SHOP_EVENT row);
-    public static ShopProductBase CreatePurchaseProduct(SHOP_PURCHASE row);
-    public static ShopProductBase CreateGoldProduct(SHOP_GOLD row);
+    public static ShopProductBase CreateDailyProduct(SHOP_ITEM_DAILY row, SHOP_DISCOUNT_TYPE discountType);
+    public static ShopProductBase CreateChestProduct(SHOP_ITEM_CHEST row);
+    public static ShopProductBase CreateEventProduct(SHOP_ITEM_EVENT row);
+    public static ShopProductBase CreatePurchaseProduct(SHOP_ITEM_PURCHASE row);
+    public static ShopProductBase CreateGoldProduct(SHOP_ITEM_GOLD row);
     public static IReadOnlyList<ShopProductBase> BuildProductsFromRows<TRow>(
         IReadOnlyList<TRow> rows, Func<TRow, ShopProductBase> createProduct);
 }
@@ -60,11 +60,11 @@ internal static class ShopProductFactory
 
 | Method | Source Table | 특이사항 |
 |--------|------------|----------|
-| `CreateDailyProduct` | `SHOP_DAILY` | `discountType` 파라미터 |
-| `CreateChestProduct` | `SHOP_CHEST` | `NONE` discount |
-| `CreateEventProduct` | `SHOP_EVENT` | `amount=1`, `max_count=-1` 고정 |
-| `CreatePurchaseProduct` | `SHOP_PURCHASE` | reward 경로 아님, `max_count=-1` 고정 |
-| `CreateGoldProduct` | `SHOP_GOLD` | `amount=1`, `NONE` discount |
+| `CreateDailyProduct` | `SHOP_ITEM_DAILY` | `discountType` 파라미터 |
+| `CreateChestProduct` | `SHOP_ITEM_CHEST` | `NONE` discount |
+| `CreateEventProduct` | `SHOP_ITEM_EVENT` | `amount=1`, `max_count=-1` 고정 |
+| `CreatePurchaseProduct` | `SHOP_ITEM_PURCHASE` | reward 경로 아님, `max_count=-1` 고정 |
+| `CreateGoldProduct` | `SHOP_ITEM_GOLD` | `amount=1`, `NONE` discount |
 
 ---
 

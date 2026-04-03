@@ -12,10 +12,11 @@ UITweenSystem의 모듈 경계와 구현 규칙을 정의한다.
 
 ## Hard Rules
 
-- UITween은 UI 전용이다. 지원 대상은 `CanvasGroup`, `RectTransform`, `Transform`만 허용한다.
+- UITween은 UI 전용이다. 지원 대상은 `CanvasGroup.alpha`, `RectTransform.anchoredPosition`, `LayoutElement.preferredWidth/preferredHeight`, `Transform.localScale`만 허용한다.
 - UITween은 실행 계층이다. show/hide 타이밍, queue, priority, business rule을 가지면 안 된다.
 - 동일 대상의 main transition은 새 실행 시 기존 tween을 cancel 후 교체한다.
 - layout / scroll이 소유하는 root `RectTransform`에는 tween을 직접 적용하지 않는다. `LayoutRoot`와 `VisualRoot`를 분리한다.
+- layout과 공존해야 하는 폭/높이 변화는 `LayoutElement.preferredWidth/preferredHeight` 채널을 사용한다.
 - panel visibility 전이는 `UIBasePanel.Show()` / `UIBasePanel.Hide()`와 `onShow()` / `onHide()` 규약을 따른다.
 - `UIBasePanel.Show()` / `UIBasePanel.Hide()`는 선택적 자동 훅이다. frame / panel / container / game event handler의 manual `Play(...)`도 1급으로 지원한다.
 - tween 데이터는 preset 기반으로 정의한다. transition policy를 코드 분기로 하드코딩하지 않는다.

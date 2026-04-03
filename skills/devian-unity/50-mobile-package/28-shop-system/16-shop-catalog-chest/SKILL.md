@@ -9,7 +9,7 @@ Status: ACTIVE
 AppliesTo: v10
 Type: Design / Runtime SSOT
 
-`ShopCatalogChest`는 더 이상 `SHOP_CHEST.reward_group_id`를 직접 소비하는 단순 보상 카탈로그가 아니다.
+`ShopCatalogChest`는 더 이상 `SHOP_ITEM_CHEST.reward_group_id`를 직접 소비하는 단순 보상 카탈로그가 아니다.
 이 문서는 chest catalog progression(level/exp)과 purchase reward routing을 정의한다.
 
 ---
@@ -17,7 +17,7 @@ Type: Design / Runtime SSOT
 ## 1. Current Gap
 
 - `ShopCatalogChest`는 현재 `ShopCatalogBase` thin wrapper다.
-- `SHOP_CHEST`는 현재 `Reward_group_id`, `Amount`를 직접 가진다.
+- `SHOP_ITEM_CHEST`는 현재 `Reward_group_id`, `Amount`를 직접 가진다.
 - `ShopProductFactory.CreateChestProduct()`는 chest row를 일반 `ShopRewardProductBase`로 만든다.
 - `ShopManager.validateShopProductConfig()` / `buyRewardCatalogAsync()`는 `reward_group_id` non-empty를 전제로 한다.
 - `ShopCatalogChestStorageData`는 `adsRefreshUtcMs`, `productRemainCounts`만 저장한다.
@@ -38,12 +38,12 @@ SHOP_PRODUCT_CHEST_TYPE: [NONE, ADS, ONE, TEN]
 
 - 요청 문구의 `TES` 표기는 오타로 보고 `TEN`만 사용한다.
 
-### SHOP_CHEST
+### SHOP_ITEM_CHEST
 
 입력: `input/Domains/Game/ShopTable.xlsx`
 
 - 유지:
-  - `shop_id`
+  - `shop_item_id`
   - `name_id`
   - `currency_type`
   - `price`
@@ -111,7 +111,7 @@ Rules:
 
 ## 4. Purchase Flow Rules
 
-Chest purchase reward source는 `SHOP_CHEST` row가 아니라 현재 chest level row다.
+Chest purchase reward source는 `SHOP_ITEM_CHEST` row가 아니라 현재 chest level row다.
 
 구매 성공 흐름:
 
@@ -120,7 +120,7 @@ Chest purchase reward source는 `SHOP_CHEST` row가 아니라 현재 chest level
 3. `SHOP_PRODUCT_CHEST_TYPE`으로 reward / exp를 결정한다.
 4. 광고 시청 또는 재화 차감을 수행한다.
 5. 결정된 reward group을 적용한다.
-6. 선택된 reward group을 `SHOP_CHEST.amount` 횟수만큼 적용한다.
+6. 선택된 reward group을 `SHOP_ITEM_CHEST.amount` 횟수만큼 적용한다.
 7. 결정된 exp를 chest catalog에 적립한다.
 8. 현재 row의 `Max_exp`를 넘기면 자동 레벨업 한다.
 9. `remainCount`, `adsRefreshUtcMs`, save state를 반영한다.
@@ -134,7 +134,7 @@ Chest purchase reward source는 `SHOP_CHEST` row가 아니라 현재 chest level
 Hard rules:
 
 - reward row 선택은 exp 적립/레벨업 이전에 해야 한다. 같은 구매가 중간에 다음 레벨 reward로 바뀌면 안 된다.
-- reward 지급 multiplier는 항상 `SHOP_CHEST.amount`를 사용한다.
+- reward 지급 multiplier는 항상 `SHOP_ITEM_CHEST.amount`를 사용한다.
 - reward multiplier는 현재처럼 reward group apply 반복 또는 동등한 multiplier API로 처리한다.
 - auto level-up threshold는 현재 level row의 `Max_exp`다.
 - 최고 레벨에서는 exp를 적립하지 않는다.
@@ -186,7 +186,7 @@ Data / codegen:
 
 - `input/Domains/Game/ENUM_META.json`
 - `input/Domains/Game/ShopTable.xlsx`
-- generated domain outputs for `SHOP_CHEST`, `SHOP_CATALOG_CHEST`, `SHOP_PRODUCT_CHEST_TYPE`
+- generated domain outputs for `SHOP_ITEM_CHEST`, `SHOP_CATALOG_CHEST`, `SHOP_PRODUCT_CHEST_TYPE`
 
 Runtime (3-path mirror):
 
@@ -200,14 +200,14 @@ Runtime (3-path mirror):
 
 Sample table data:
 
-- `framework-cs/apps/UnityExample/Assets/Bundles/Tables/ndjson/SHOP_CHEST.json`
+- `framework-cs/apps/UnityExample/Assets/Bundles/Tables/ndjson/SHOP_ITEM_CHEST.json`
 - `framework-cs/apps/UnityExample/Assets/Bundles/Tables/ndjson/SHOP_CATALOG_CHEST.json`
 
 ---
 
 ## 8. Recommended Implementation Order
 
-1. `ShopTable.xlsx`에서 `SHOP_PRODUCT_CHEST_TYPE`, `SHOP_CATALOG_CHEST`, 변경된 `SHOP_CHEST` 스키마를 authoring한다.
+1. `ShopTable.xlsx`에서 `SHOP_PRODUCT_CHEST_TYPE`, `SHOP_CATALOG_CHEST`, 변경된 `SHOP_ITEM_CHEST` 스키마를 authoring한다.
 2. domain enum/table codegen을 다시 돌린다.
 3. chest storage + save codec에 `level/currentExp`를 추가한다.
 4. chest product model이 `Chest_type`, `Amount`를 알 수 있도록 `ShopProduct` / `ShopProductFactory`를 정리한다.

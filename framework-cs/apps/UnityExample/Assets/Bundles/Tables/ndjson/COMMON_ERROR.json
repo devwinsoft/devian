@@ -138,9 +138,9 @@
 {"id":"SHOP_PRODUCT_NOT_FOUND","msg_key":"","msg":"Shop product not found."}
 {"id":"SHOP_PRODUCT_PRICE_INVALID","msg_key":"","msg":"Shop product price is invalid."}
 {"id":"SHOP_REWARD_GROUP_EMPTY","msg_key":"","msg":"Shop product rewardGroupId is empty."}
-{"id":"SHOP_PURCHASE_LIMIT_DISABLED","msg_key":"","msg":"Shop purchase is disabled by maxCount=0."}
+{"id":"SHOP_ITEM_PURCHASE_LIMIT_DISABLED","msg_key":"","msg":"Shop purchase is disabled by maxCount=0."}
 {"id":"SHOP_SERVER_TIME_UNAVAILABLE","msg_key":"","msg":"Server time is unavailable for shop purchase validation."}
-{"id":"SHOP_PURCHASE_LIMIT_EXCEEDED","msg_key":"","msg":"Shop purchase limit exceeded."}
+{"id":"SHOP_ITEM_PURCHASE_LIMIT_EXCEEDED","msg_key":"","msg":"Shop purchase limit exceeded."}
 {"id":"SHOP_WALLET_UNAVAILABLE","msg_key":"","msg":"Inventory wallet is unavailable."}
 {"id":"SHOP_CURRENCY_INSUFFICIENT","msg_key":"","msg":"Insufficient currency for shop purchase."}
 {"id":"SHOP_ADS_NOT_AVAILABLE","msg_key":"","msg":"Shop rewarded ad is not available."}
@@ -148,7 +148,7 @@
 {"id":"SHOP_REWARD_APPLY_FAILED","msg_key":"","msg":"Shop reward apply failed."}
 {"id":"SHOP_CAN_BUY_FAILED","msg_key":"","msg":"Shop CanBuy failed."}
 {"id":"SHOP_BUY_FAILED","msg_key":"","msg":"Shop BuyAsync failed."}
-{"id":"SHOP_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED","msg_key":"","msg":"Shop daily manual refresh count exhausted."}
+{"id":"SHOP_ITEM_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED","msg_key":"","msg":"Shop daily manual refresh count exhausted."}
 {"id":"TREASURE_CHEST_NOT_FOUND","msg_key":"","msg":"Treasure chest not found."}
 {"id":"TREASURE_GRADE_INVALID","msg_key":"","msg":"Treasure grade is invalid."}
 {"id":"TREASURE_REWARD_EMPTY","msg_key":"","msg":"Treasure reward is empty."}

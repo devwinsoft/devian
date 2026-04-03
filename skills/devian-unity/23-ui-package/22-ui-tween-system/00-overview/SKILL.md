@@ -26,8 +26,9 @@ UITweenSystem은 UIPackage의 UI 전용 최소 tween / transition 계층이다.
 ### Includes
 - `CanvasGroup.alpha`
 - `RectTransform.anchoredPosition`
+- `LayoutElement.preferredWidth/preferredHeight`
 - `Transform.localScale`
-- channel별 `Start_time`, `Duration`, `Ease`
+- channel별 `StartTime`, `Duration`, `Ease`
 - `cancel`
 - `onComplete`
 - `sequence (Append / Join)`

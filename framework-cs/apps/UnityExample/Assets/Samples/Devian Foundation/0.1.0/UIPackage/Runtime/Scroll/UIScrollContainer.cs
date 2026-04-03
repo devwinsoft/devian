@@ -286,7 +286,7 @@ namespace Devian
             for (int s = 0; s < _sections.Count; s++)
             {
                 var section = _sections[s];
-                var frame = _frames[s]; // IUIScrollSection과 Frame은 1:1 대응
+                var frame = (UIBaseFrame)_sections[s];
                 int rowCount = section.GetLogicalRowCount();
                 float rowSpacing = section.GetLogicalRowSpacing();
 
@@ -589,6 +589,7 @@ namespace Devian
                 return;
 
             _editorPreviewQueued = false;
+            SyncEditorPreviewBaselineFrameSizes();
             RestoreEditorPreviewBaseline();
             CacheScrollRefsIfNeeded();
             if (_scrollRect == null || _content == null || _viewport == null)
@@ -689,6 +690,30 @@ namespace Devian
 
             _editorFrameStates.Clear();
             _editorPreviewBaselineCaptured = false;
+        }
+
+        private void SyncEditorPreviewBaselineFrameSizes()
+        {
+            if (!_editorPreviewBaselineCaptured)
+                return;
+
+            for (int i = 0; i < _editorFrameStates.Count; i++)
+            {
+                var state = _editorFrameStates[i];
+                if (state.Target == null)
+                    continue;
+
+                var sizeDelta = state.SizeDelta;
+                var currentSizeDelta = state.Target.sizeDelta;
+
+                if (_direction == UIScrollDirection.Vertical)
+                    sizeDelta.y = currentSizeDelta.y;
+                else
+                    sizeDelta.x = currentSizeDelta.x;
+
+                state.SizeDelta = sizeDelta;
+                _editorFrameStates[i] = state;
+            }
         }
 
         private void ApplyEditorSectionPreview()

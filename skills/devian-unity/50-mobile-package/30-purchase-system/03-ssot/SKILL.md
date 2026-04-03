@@ -154,7 +154,7 @@ Purchase 지급을 위해 `internal_product_id -> reward_group_id` 변환이 필
   - `store_sku_apple` (string) — Apple Store SKU
   - `store_sku_google` (string) — Google Play SKU
 - [x] 시즌 매핑 필드 위치: — 결정됨
-  - 시즌 구매 제한용 `season_id`는 `SHOP_PURCHASE.season_id`에서 관리한다. (`PURCHASE` 스키마에는 포함하지 않는다.)
+  - 시즌 구매 제한용 `season_id`는 `SHOP_ITEM_PURCHASE.season_id`에서 관리한다. (`PURCHASE` 스키마에는 포함하지 않는다.)
 
 
 ---

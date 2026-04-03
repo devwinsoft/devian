@@ -152,9 +152,9 @@ container가 "이 row를 보여라/숨겨라/새로고침하라"를 결정하고
 1. `localRowIndex`가 `0 <= index < RowCount`인지 검사한다
 2. `localRowIndex`에서 row 시작 cell index 계산
 3. 항상 `ColumnCount`개 cell을 생성한다
-4. `BundlePool.Spawn<UIScrollGridCell>(..., parent: rowLayout.Content)`로 cell 생성
+4. `BundlePool.Spawn<UIScrollGridCell>(..., parent: frame.transform)`로 cell 생성
 5. anchor/pivot/size 적용
-6. `CalculateAutoXSpacing()`으로 X축 간격 자동 계산 후 `rowLayout.Direction`과 `rowLayout.RowMainAxisPosition` 기준으로 위치 계산
+6. `CalculateAutoXSpacing()`으로 X축 간격 자동 계산 후 `rowLayout.RowMainAxisPosition - section.SectionMainAxisPosition` 기반 frame local 위치 계산
 7. `cell.Show(index)` 후 `onBindCell(cell, index)` 호출
 
 주의:

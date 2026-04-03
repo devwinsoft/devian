@@ -17,6 +17,7 @@ Button feedback, text binding, raycast filter, non-drawing graphic 등 개별 Mo
 | [12-ui-component-text](../12-ui-component-text/SKILL.md) | `UIComponentText` — ST_TEXT 바인딩 텍스트 플러그인 |
 | [13-ui-component-size-fitter](../13-ui-component-size-fitter/SKILL.md) | `UIComponentBaseSizeFitter` 계열 — safe area / canvas image size fitting |
 | [14-ui-component-red-dot](../14-ui-component-red-dot/SKILL.md) | `UIComponentRedDot` — `RedDotManager` 기반 `Image.enabled` 바인딩 |
+| [15-ui-component-menu](../15-ui-component-menu/SKILL.md) | `UIComponentMenuBar` / `UIComponentMenuButton` — 수평 단일 선택 메뉴 component |
 | [20-ui-component-circle-filter](../20-ui-component-circle-filter/SKILL.md) | `UIComponentCircleFilter` — Collider2D 기반 raycast filter |
 | [21-ui-component-non-drawing](../21-ui-component-non-drawing/SKILL.md) | `UIComponentNonDrawing` — non-drawing Graphic |
 

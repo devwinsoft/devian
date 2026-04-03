@@ -139,6 +139,22 @@ namespace Devian
             onHide();
         }
 
+        internal void _SetShownImmediate(bool shown)
+        {
+            isShown = shown;
+
+            if (shown)
+            {
+                if (!gameObject.activeSelf)
+                    gameObject.SetActive(true);
+
+                return;
+            }
+
+            if (gameObject.activeSelf)
+                gameObject.SetActive(false);
+        }
+
         protected abstract void onInitFromCanvas(MonoBehaviour owner);
         protected virtual void onInitComplete() { }
         protected virtual void onPoolSpawned() { }

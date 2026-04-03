@@ -19,8 +19,8 @@ namespace Devian
         readonly ShopStorage _storage = new();
         readonly Dictionary<SHOP_CATALOG_TYPE, ShopCatalogBase> _catalogs = new();
         readonly List<ShopCatalogBase> _catalogList = new();
-        readonly Dictionary<string, ShopProductBase> _productsByShopId = new(StringComparer.Ordinal);
-        readonly Dictionary<SHOP_CATALOG_TYPE, List<string>> _limitedShopIdsByCatalog = new();
+        readonly Dictionary<string, ShopProductBase> _productsByShopItemId = new(StringComparer.Ordinal);
+        readonly Dictionary<SHOP_CATALOG_TYPE, List<string>> _limitedShopItemIdsByCatalog = new();
         readonly object _runtimeSaveLock = new();
 
         bool _catalogInitialized;
@@ -88,19 +88,19 @@ namespace Devian
             _catalogInitialized = false;
             _catalogs.Clear();
             _catalogList.Clear();
-            _productsByShopId.Clear();
-            _limitedShopIdsByCatalog.Clear();
+            _productsByShopItemId.Clear();
+            _limitedShopItemIdsByCatalog.Clear();
         }
 
-        public bool CanBuy(string shopId)
+        public bool CanBuy(string shopItemId)
         {
-            var check = checkCanBuy(shopId);
+            var check = checkCanBuy(shopItemId);
             if (check.IsFailure)
             {
                 var inner = check.Error!;
                 LastCanBuyErrorCode = COMMON_ERROR_TYPE.SHOP_CAN_BUY_FAILED;
                 LastCanBuyErrorMessage =
-                    $"Shop CanBuy failed: shop_id={normalizeShopId(shopId)}, inner={inner.Code}:{inner.Message}";
+                    $"Shop CanBuy failed: shop_item_id={normalizeShopItemId(shopItemId)}, inner={inner.Code}:{inner.Message}";
                 LastCanBuyInnerErrorCode = inner.Code;
                 LastCanBuyInnerErrorMessage = inner.Message;
                 return false;
@@ -113,11 +113,11 @@ namespace Devian
             return true;
         }
 
-        public async Task<CommonResult<RewardData[]>> BuyAsync(string shopId, CancellationToken ct = default)
+        public async Task<CommonResult<RewardData[]>> BuyAsync(string shopItemId, CancellationToken ct = default)
         {
-            var check = checkCanBuy(shopId);
+            var check = checkCanBuy(shopItemId);
             if (check.IsFailure)
-                return wrapBuyFailure(shopId, check.Error!);
+                return wrapBuyFailure(shopItemId, check.Error!);
 
             var product = check.Value!;
             CommonResult<RewardData[]> buyResult;
@@ -130,10 +130,10 @@ namespace Devian
             else
                 buyResult = CommonResult<RewardData[]>.Failure(
                     COMMON_ERROR_TYPE.SHOP_PRODUCT_NOT_FOUND,
-                    $"Shop product type is not supported: shop_id={product.shop_id}, productType={product.ProductType}");
+                    $"Shop product type is not supported: shop_item_id={product.shop_item_id}, productType={product.ProductType}");
 
             if (buyResult.IsFailure)
-                return wrapBuyFailure(shopId, buyResult.Error!);
+                return wrapBuyFailure(shopItemId, buyResult.Error!);
 
             return buyResult;
         }
@@ -206,9 +206,9 @@ namespace Devian
             public ShopCatalogChest.ChestPurchaseRuntime Runtime { get; }
         }
 
-        CommonResult<ShopProductBase> checkCanBuy(string shopId)
+        CommonResult<ShopProductBase> checkCanBuy(string shopItemId)
         {
-            var validateProduct = validateShopProductConfig(shopId);
+            var validateProduct = validateShopProductConfig(shopItemId);
             if (validateProduct.IsFailure)
                 return CommonResult<ShopProductBase>.Failure(validateProduct.Error!);
 
@@ -236,7 +236,7 @@ namespace Devian
             {
                 return CommonResult<ShopProductBase>.Failure(
                     COMMON_ERROR_TYPE.SHOP_PRODUCT_NOT_FOUND,
-                    $"Shop product type is not supported: shop_id={product.shop_id}, productType={product.ProductType}");
+                    $"Shop product type is not supported: shop_item_id={product.shop_item_id}, productType={product.ProductType}");
             }
 
             return checkStandardShopPurchaseCanBuy(rewardProduct, rewardProduct.currency_type);
@@ -274,7 +274,7 @@ namespace Devian
             return CommonResult.Ok();
         }
 
-        CommonResult<ShopProductBase> validateShopProductConfig(string shopId)
+        CommonResult<ShopProductBase> validateShopProductConfig(string shopItemId)
         {
             if (!_initialized || !_catalogInitialized || _catalogList.Count <= 0)
             {
@@ -287,21 +287,21 @@ namespace Devian
             if (refresh.IsFailure)
                 return CommonResult<ShopProductBase>.Failure(refresh.Error!);
 
-            var normalizedShopId = normalizeShopId(shopId);
-            if (string.IsNullOrEmpty(normalizedShopId))
+            var normalizedShopItemId = normalizeShopItemId(shopItemId);
+            if (string.IsNullOrEmpty(normalizedShopItemId))
             {
                 return CommonResult<ShopProductBase>.Failure(
                     COMMON_ERROR_TYPE.SHOP_PRODUCT_ID_EMPTY,
-                    "Shop shop_id is empty.");
+                    "Shop shop_item_id is empty.");
             }
 
             synchronizeProductIndexFromCatalogs();
 
-            if (!_productsByShopId.TryGetValue(normalizedShopId, out var product) || product == null)
+            if (!_productsByShopItemId.TryGetValue(normalizedShopItemId, out var product) || product == null)
             {
                 return CommonResult<ShopProductBase>.Failure(
                     COMMON_ERROR_TYPE.SHOP_PRODUCT_NOT_FOUND,
-                    $"Shop product not found: shop_id={normalizedShopId}");
+                    $"Shop product not found: shop_item_id={normalizedShopItemId}");
             }
 
             if (_catalogs.TryGetValue(product.catalog_type, out var productCatalog)
@@ -310,21 +310,21 @@ namespace Devian
             {
                 return CommonResult<ShopProductBase>.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    $"Shop catalog is locked: catalog_type={product.catalog_type}, shop_id={normalizedShopId}");
+                    $"Shop catalog is locked: catalog_type={product.catalog_type}, shop_item_id={normalizedShopItemId}");
             }
 
             if (product is ShopRewardProductBase rewardProduct && rewardProduct.PriceWithoutDiscount < 0)
             {
                 return CommonResult<ShopProductBase>.Failure(
                     COMMON_ERROR_TYPE.SHOP_PRODUCT_PRICE_INVALID,
-                    $"Shop product price is invalid: shop_id={product.shop_id}, price={rewardProduct.PriceWithoutDiscount}, discountType={rewardProduct.DiscountType}");
+                    $"Shop product price is invalid: shop_item_id={product.shop_item_id}, price={rewardProduct.PriceWithoutDiscount}, discountType={rewardProduct.DiscountType}");
             }
 
             if (product is ShopProductChest chestProduct && chestProduct.PriceWithoutDiscount < 0)
             {
                 return CommonResult<ShopProductBase>.Failure(
                     COMMON_ERROR_TYPE.SHOP_PRODUCT_PRICE_INVALID,
-                    $"Shop product price is invalid: shop_id={product.shop_id}, price={chestProduct.PriceWithoutDiscount}, discountType={chestProduct.DiscountType}");
+                    $"Shop product price is invalid: shop_item_id={product.shop_item_id}, price={chestProduct.PriceWithoutDiscount}, discountType={chestProduct.DiscountType}");
             }
 
             if (product.HasPurchaseLimit)
@@ -332,16 +332,16 @@ namespace Devian
                 if (product.max_count == 0)
                 {
                     return CommonResult<ShopProductBase>.Failure(
-                        COMMON_ERROR_TYPE.SHOP_PURCHASE_LIMIT_DISABLED,
-                        $"Shop purchase is disabled by max_count=0: shop_id={product.shop_id}");
+                        COMMON_ERROR_TYPE.SHOP_ITEM_PURCHASE_LIMIT_DISABLED,
+                        $"Shop purchase is disabled by max_count=0: shop_item_id={product.shop_item_id}");
                 }
 
                 if (product.RemainCount <= 0)
                 {
                     var usedCount = product.max_count - product.RemainCount;
                     return CommonResult<ShopProductBase>.Failure(
-                        COMMON_ERROR_TYPE.SHOP_PURCHASE_LIMIT_EXCEEDED,
-                        $"Shop purchase limit exceeded: shop_id={product.shop_id}, max_count={product.max_count}, remainCount={product.RemainCount}, usedCount={usedCount}");
+                        COMMON_ERROR_TYPE.SHOP_ITEM_PURCHASE_LIMIT_EXCEEDED,
+                        $"Shop purchase limit exceeded: shop_item_id={product.shop_item_id}, max_count={product.max_count}, remainCount={product.RemainCount}, usedCount={usedCount}");
                 }
             }
 
@@ -351,21 +351,21 @@ namespace Devian
                 {
                     return CommonResult<ShopProductBase>.Failure(
                         COMMON_ERROR_TYPE.PURCHASE_NOT_FOUND,
-                        $"Shop purchase internal_product_id is empty: shop_id={purchaseProduct.shop_id}");
+                        $"Shop purchase internal_product_id is empty: shop_item_id={purchaseProduct.shop_item_id}");
                 }
 
                 if (!tryResolvePurchaseProduct(purchaseProduct.internal_product_id, out var purchaseRow) || purchaseRow == null)
                 {
                     return CommonResult<ShopProductBase>.Failure(
                         COMMON_ERROR_TYPE.PURCHASE_NOT_FOUND,
-                        $"Purchase product not found: shop_id={purchaseProduct.shop_id}, internal_product_id={purchaseProduct.internal_product_id}");
+                        $"Purchase product not found: shop_item_id={purchaseProduct.shop_item_id}, internal_product_id={purchaseProduct.internal_product_id}");
                 }
 
                 if (!purchaseRow.is_active)
                 {
                     return CommonResult<ShopProductBase>.Failure(
                         COMMON_ERROR_TYPE.PURCHASE_NOT_FOUND,
-                        $"Purchase product is inactive: shop_id={purchaseProduct.shop_id}, internal_product_id={purchaseProduct.internal_product_id}");
+                        $"Purchase product is inactive: shop_item_id={purchaseProduct.shop_item_id}, internal_product_id={purchaseProduct.internal_product_id}");
                 }
 
                 return CommonResult<ShopProductBase>.Success(product);
@@ -378,14 +378,14 @@ namespace Devian
                 {
                     return CommonResult<ShopProductBase>.Failure(
                         COMMON_ERROR_TYPE.SHOP_PRODUCT_PRICE_INVALID,
-                        $"Shop pseudo product price must be zero: shop_id={validateChestProduct.shop_id}, productType={validateChestProduct.ProductType}, price={validateChestProduct.PriceWithoutDiscount}");
+                        $"Shop pseudo product price must be zero: shop_item_id={validateChestProduct.shop_item_id}, productType={validateChestProduct.ProductType}, price={validateChestProduct.PriceWithoutDiscount}");
                 }
 
                 if (validateChestProduct.chest_type == SHOP_PRODUCT_CHEST_TYPE.NONE)
                 {
                     return CommonResult<ShopProductBase>.Failure(
                         COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                        $"Shop chest_type is invalid: shop_id={validateChestProduct.shop_id}");
+                        $"Shop chest_type is invalid: shop_item_id={validateChestProduct.shop_item_id}");
                 }
 
                 var resolveChest = resolveChestPurchaseRuntime(validateChestProduct);
@@ -399,7 +399,7 @@ namespace Devian
             {
                 return CommonResult<ShopProductBase>.Failure(
                     COMMON_ERROR_TYPE.SHOP_PRODUCT_NOT_FOUND,
-                    $"Shop product type is not supported: shop_id={product.shop_id}, productType={product.ProductType}");
+                    $"Shop product type is not supported: shop_item_id={product.shop_item_id}, productType={product.ProductType}");
             }
 
             if (validateRewardProduct.ProductType == SHOP_PRODUCT_TYPE.FREE
@@ -409,7 +409,7 @@ namespace Devian
                 {
                     return CommonResult<ShopProductBase>.Failure(
                         COMMON_ERROR_TYPE.SHOP_PRODUCT_PRICE_INVALID,
-                        $"Shop pseudo product price must be zero: shop_id={validateRewardProduct.shop_id}, productType={validateRewardProduct.ProductType}, price={validateRewardProduct.PriceWithoutDiscount}");
+                        $"Shop pseudo product price must be zero: shop_item_id={validateRewardProduct.shop_item_id}, productType={validateRewardProduct.ProductType}, price={validateRewardProduct.PriceWithoutDiscount}");
                 }
             }
 
@@ -417,7 +417,7 @@ namespace Devian
             {
                 return CommonResult<ShopProductBase>.Failure(
                     COMMON_ERROR_TYPE.SHOP_REWARD_GROUP_EMPTY,
-                    $"Shop product reward_group_id is empty: shop_id={product.shop_id}");
+                    $"Shop product reward_group_id is empty: shop_item_id={product.shop_item_id}");
             }
 
             return CommonResult<ShopProductBase>.Success(product);
@@ -469,7 +469,7 @@ namespace Devian
                             : "inner=unknown";
                         return CommonResult<RewardData[]>.Failure(
                             COMMON_ERROR_TYPE.SHOP_ADS_SHOW_FAILED,
-                            $"Shop rewarded ad show failed: shop_id={product.shop_id}, {details}");
+                            $"Shop rewarded ad show failed: shop_item_id={product.shop_item_id}, {details}");
                     }
                 }
             }
@@ -479,7 +479,7 @@ namespace Devian
                 {
                     return CommonResult<RewardData[]>.Failure(
                         COMMON_ERROR_TYPE.SHOP_WALLET_UNAVAILABLE,
-                        $"Inventory wallet is unavailable: shop_id={product.shop_id}");
+                        $"Inventory wallet is unavailable: shop_item_id={product.shop_item_id}");
                 }
 
                 var price = product.Price;
@@ -487,21 +487,21 @@ namespace Devian
                 {
                     return CommonResult<RewardData[]>.Failure(
                         COMMON_ERROR_TYPE.SHOP_PRODUCT_PRICE_INVALID,
-                        $"Shop product price is invalid: shop_id={product.shop_id}, price={price}, basePrice={product.PriceWithoutDiscount}, discountType={product.DiscountType}");
+                        $"Shop product price is invalid: shop_item_id={product.shop_item_id}, price={price}, basePrice={product.PriceWithoutDiscount}, discountType={product.DiscountType}");
                 }
 
                 if (!tryDeductCurrency(wallet, product.currency_type, price, out deduction))
                 {
                     return CommonResult<RewardData[]>.Failure(
                         COMMON_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT,
-                        $"Insufficient currency for shop purchase: shop_id={product.shop_id}, currency={product.currency_type}, price={price}, basePrice={product.PriceWithoutDiscount}, discountType={product.DiscountType}");
+                        $"Insufficient currency for shop purchase: shop_item_id={product.shop_item_id}, currency={product.currency_type}, price={price}, basePrice={product.PriceWithoutDiscount}, discountType={product.DiscountType}");
                 }
             }
             else
             {
                 return CommonResult<RewardData[]>.Failure(
                     COMMON_ERROR_TYPE.SHOP_PRODUCT_NOT_FOUND,
-                    $"Shop chest product type is not supported: shop_id={product.shop_id}, productType={product.ProductType}, chest_type={product.chest_type}");
+                    $"Shop chest product type is not supported: shop_item_id={product.shop_item_id}, productType={product.ProductType}, chest_type={product.chest_type}");
             }
 
             var runtime = chestState.Runtime;
@@ -516,7 +516,7 @@ namespace Devian
                     : "inner=unknown";
                 return CommonResult<RewardData[]>.Failure(
                     COMMON_ERROR_TYPE.SHOP_REWARD_APPLY_FAILED,
-                    $"Shop chest reward apply failed: shop_id={product.shop_id}, reward_group_id={runtime.RewardGroupId}, {details}");
+                    $"Shop chest reward apply failed: shop_item_id={product.shop_item_id}, reward_group_id={runtime.RewardGroupId}, {details}");
             }
 
             chestState.Catalog.AddExp(runtime.GainExp);
@@ -554,7 +554,7 @@ namespace Devian
                             : "inner=unknown";
                         return CommonResult<RewardData[]>.Failure(
                             COMMON_ERROR_TYPE.SHOP_ADS_SHOW_FAILED,
-                            $"Shop rewarded ad show failed: shop_id={product.shop_id}, {details}");
+                            $"Shop rewarded ad show failed: shop_item_id={product.shop_item_id}, {details}");
                     }
                 }
             }
@@ -564,7 +564,7 @@ namespace Devian
                 {
                     return CommonResult<RewardData[]>.Failure(
                         COMMON_ERROR_TYPE.SHOP_WALLET_UNAVAILABLE,
-                        $"Inventory wallet is unavailable: shop_id={product.shop_id}");
+                        $"Inventory wallet is unavailable: shop_item_id={product.shop_item_id}");
                 }
 
                 var price = product.Price;
@@ -572,21 +572,21 @@ namespace Devian
                 {
                     return CommonResult<RewardData[]>.Failure(
                         COMMON_ERROR_TYPE.SHOP_PRODUCT_PRICE_INVALID,
-                        $"Shop product price is invalid: shop_id={product.shop_id}, price={price}, basePrice={product.PriceWithoutDiscount}, discountType={product.DiscountType}");
+                        $"Shop product price is invalid: shop_item_id={product.shop_item_id}, price={price}, basePrice={product.PriceWithoutDiscount}, discountType={product.DiscountType}");
                 }
 
                 if (!tryDeductCurrency(wallet, product.currency_type, price, out deduction))
                 {
                     return CommonResult<RewardData[]>.Failure(
                         COMMON_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT,
-                        $"Insufficient currency for shop purchase: shop_id={product.shop_id}, currency={product.currency_type}, price={price}, basePrice={product.PriceWithoutDiscount}, discountType={product.DiscountType}");
+                        $"Insufficient currency for shop purchase: shop_item_id={product.shop_item_id}, currency={product.currency_type}, price={price}, basePrice={product.PriceWithoutDiscount}, discountType={product.DiscountType}");
                 }
             }
             else if (product.ProductType != SHOP_PRODUCT_TYPE.FREE)
             {
                 return CommonResult<RewardData[]>.Failure(
                     COMMON_ERROR_TYPE.SHOP_PRODUCT_NOT_FOUND,
-                    $"Shop product type is not supported: shop_id={product.shop_id}, productType={product.ProductType}");
+                    $"Shop product type is not supported: shop_item_id={product.shop_item_id}, productType={product.ProductType}");
             }
 
             var applyRewards = applyShopProductRewards(product.reward_group_id, product.amount);
@@ -600,7 +600,7 @@ namespace Devian
                     : "inner=unknown";
                 return CommonResult<RewardData[]>.Failure(
                     COMMON_ERROR_TYPE.SHOP_REWARD_APPLY_FAILED,
-                    $"Shop reward apply failed: shop_id={product.shop_id}, reward_group_id={product.reward_group_id}, {details}");
+                    $"Shop reward apply failed: shop_item_id={product.shop_item_id}, reward_group_id={product.reward_group_id}, {details}");
             }
 
             if (product.HasPurchaseLimit)
@@ -622,7 +622,7 @@ namespace Devian
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.PURCHASE_NOT_FOUND,
-                    $"Purchase product not found: shop_id={product.shop_id}, internal_product_id={product.internal_product_id}");
+                    $"Purchase product not found: shop_item_id={product.shop_item_id}, internal_product_id={product.internal_product_id}");
             }
 
             var seasonId = (product.season_id ?? string.Empty).Trim();
@@ -635,7 +635,7 @@ namespace Devian
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    $"Season not found for shop purchase: shop_id={product.shop_id}, internal_product_id={product.internal_product_id}, season_id={seasonId}");
+                    $"Season not found for shop purchase: shop_item_id={product.shop_item_id}, internal_product_id={product.internal_product_id}, season_id={seasonId}");
             }
 
             var seasonEndUtcMs = season.end_utc_time?.utcTimeMs ?? 0L;
@@ -643,7 +643,7 @@ namespace Devian
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    $"Season end time is invalid: shop_id={product.shop_id}, internal_product_id={product.internal_product_id}, season_id={seasonId}");
+                    $"Season end time is invalid: shop_item_id={product.shop_item_id}, internal_product_id={product.internal_product_id}, season_id={seasonId}");
             }
 
             var serverNowUtcMs = RemoteDataManager.ServerNowUtcMs;
@@ -667,7 +667,7 @@ namespace Devian
             {
                 return CommonResult.Failure(
                     COMMON_ERROR_TYPE.PURCHASE_SEASON_END_SOON_BLOCKED,
-                    $"Product purchase is blocked near season end: blockDays={blockedBeforeEndDays}, shop_id={product.shop_id}, internal_product_id={product.internal_product_id}, season_id={seasonId}");
+                    $"Product purchase is blocked near season end: blockDays={blockedBeforeEndDays}, shop_item_id={product.shop_item_id}, internal_product_id={product.internal_product_id}, season_id={seasonId}");
             }
 
             return CommonResult.Ok();
@@ -928,11 +928,11 @@ namespace Devian
                         continue;
 
                     product.ResetRemainCount();
-                    var normalizedShopId = normalizeShopId(product.shop_id);
-                    if (string.IsNullOrEmpty(normalizedShopId))
+                    var normalizedShopItemId = normalizeShopItemId(product.shop_item_id);
+                    if (string.IsNullOrEmpty(normalizedShopItemId))
                         continue;
 
-                    persistProductRemainState(product, normalizedShopId);
+                    persistProductRemainState(product, normalizedShopItemId);
                     didRefill = true;
                 }
 
@@ -1072,8 +1072,8 @@ namespace Devian
             unSubscribeCatalogUnlockMessages();
             _catalogs.Clear();
             _catalogList.Clear();
-            _productsByShopId.Clear();
-            _limitedShopIdsByCatalog.Clear();
+            _productsByShopItemId.Clear();
+            _limitedShopItemIdsByCatalog.Clear();
 
             var sourceCatalogs = ShopCatalogFactory.CreateRuntimeCatalogs(_storage);
             for (var i = 0; i < sourceCatalogs.Count; i++)
@@ -1113,8 +1113,8 @@ namespace Devian
 
         void synchronizeProductIndexFromCatalogs()
         {
-            _productsByShopId.Clear();
-            _limitedShopIdsByCatalog.Clear();
+            _productsByShopItemId.Clear();
+            _limitedShopItemIdsByCatalog.Clear();
 
             for (var i = 0; i < _catalogList.Count; i++)
             {
@@ -1126,22 +1126,22 @@ namespace Devian
                 for (var j = 0; j < products.Count; j++)
                 {
                     var product = products[j];
-                    if (product == null || string.IsNullOrWhiteSpace(product.shop_id))
+                    if (product == null || string.IsNullOrWhiteSpace(product.shop_item_id))
                         continue;
 
-                    var normalizedShopId = normalizeShopId(product.shop_id);
-                    if (string.IsNullOrEmpty(normalizedShopId))
+                    var normalizedShopItemId = normalizeShopItemId(product.shop_item_id);
+                    if (string.IsNullOrEmpty(normalizedShopItemId))
                         continue;
 
-                    if (_productsByShopId.ContainsKey(normalizedShopId))
+                    if (_productsByShopItemId.ContainsKey(normalizedShopItemId))
                     {
                         Debug.LogWarning(
-                            $"[{Tag}] Duplicate shop_id across catalogs. Keeping first row: shop_id={normalizedShopId}, catalog={catalog.CatalogType}");
+                            $"[{Tag}] Duplicate shop_item_id across catalogs. Keeping first row: shop_item_id={normalizedShopItemId}, catalog={catalog.CatalogType}");
                         continue;
                     }
 
-                    _productsByShopId.Add(normalizedShopId, product);
-                    registerLimitedProduct(product, normalizedShopId);
+                    _productsByShopItemId.Add(normalizedShopItemId, product);
+                    registerLimitedProduct(product, normalizedShopItemId);
                 }
             }
         }
@@ -1256,18 +1256,18 @@ namespace Devian
             return messageManager.IsInitialized;
         }
 
-        void registerLimitedProduct(ShopProductBase product, string normalizedShopId)
+        void registerLimitedProduct(ShopProductBase product, string normalizedShopItemId)
         {
-            if (product == null || !product.HasPurchaseLimit || string.IsNullOrWhiteSpace(normalizedShopId))
+            if (product == null || !product.HasPurchaseLimit || string.IsNullOrWhiteSpace(normalizedShopItemId))
                 return;
 
-            if (!_limitedShopIdsByCatalog.TryGetValue(product.catalog_type, out var shopIds))
+            if (!_limitedShopItemIdsByCatalog.TryGetValue(product.catalog_type, out var shopItemIds))
             {
-                shopIds = new List<string>();
-                _limitedShopIdsByCatalog[product.catalog_type] = shopIds;
+                shopItemIds = new List<string>();
+                _limitedShopItemIdsByCatalog[product.catalog_type] = shopItemIds;
             }
 
-            shopIds.Add(normalizedShopId);
+            shopItemIds.Add(normalizedShopItemId);
         }
 
         void markProductPurchased(ShopProductBase product)
@@ -1277,11 +1277,11 @@ namespace Devian
 
             product.TryConsumeOne();
 
-            var normalizedShopId = normalizeShopId(product.shop_id);
-            if (string.IsNullOrEmpty(normalizedShopId))
+            var normalizedShopItemId = normalizeShopItemId(product.shop_item_id);
+            if (string.IsNullOrEmpty(normalizedShopItemId))
                 return;
 
-            persistProductRemainState(product, normalizedShopId);
+            persistProductRemainState(product, normalizedShopItemId);
         }
 
         void markAdsRefreshOnPurchaseIfNeeded(ShopProductBase product)
@@ -1307,28 +1307,28 @@ namespace Devian
                 getNextRefreshUtcMs(serverNowUtcMs, MillisecondsPerDay));
         }
 
-        void persistProductRemainState(ShopProductBase product, string normalizedShopId)
+        void persistProductRemainState(ShopProductBase product, string normalizedShopItemId)
         {
-            if (product == null || string.IsNullOrWhiteSpace(normalizedShopId))
+            if (product == null || string.IsNullOrWhiteSpace(normalizedShopItemId))
                 return;
 
             if (product.catalog_type == SHOP_CATALOG_TYPE.DAILY)
             {
                 if (isDailyStoredProduct(product))
                 {
-                    _storage.RemoveProductRemainCount(product.catalog_type, normalizedShopId);
+                    _storage.RemoveProductRemainCount(product.catalog_type, normalizedShopItemId);
                     _storage.UpsertDailyCatalogProduct(
-                        normalizedShopId,
+                        normalizedShopItemId,
                         product.DiscountType,
                         product.RemainCount);
                 }
                 else
                 {
-                    _storage.RemoveDailyCatalogProduct(normalizedShopId);
+                    _storage.RemoveDailyCatalogProduct(normalizedShopItemId);
                     if (product.HasPurchaseLimit)
-                        _storage.SetProductRemainCount(product.catalog_type, normalizedShopId, product.RemainCount);
+                        _storage.SetProductRemainCount(product.catalog_type, normalizedShopItemId, product.RemainCount);
                     else
-                        _storage.RemoveProductRemainCount(product.catalog_type, normalizedShopId);
+                        _storage.RemoveProductRemainCount(product.catalog_type, normalizedShopItemId);
                 }
 
                 return;
@@ -1336,11 +1336,11 @@ namespace Devian
 
             if (!product.HasPurchaseLimit)
             {
-                _storage.RemoveProductRemainCount(product.catalog_type, normalizedShopId);
+                _storage.RemoveProductRemainCount(product.catalog_type, normalizedShopItemId);
                 return;
             }
 
-            _storage.SetProductRemainCount(product.catalog_type, normalizedShopId, product.RemainCount);
+            _storage.SetProductRemainCount(product.catalog_type, normalizedShopItemId, product.RemainCount);
         }
 
         static bool isLimitedAdsOrFreeProduct(ShopProductBase product)
@@ -1403,7 +1403,7 @@ namespace Devian
             {
                 return CommonResult<ChestPurchaseState>.Failure(
                     COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                    $"Chest catalog is unavailable: shop_id={product.shop_id}");
+                    $"Chest catalog is unavailable: shop_item_id={product.shop_item_id}");
             }
 
             var resolveRuntime = chestCatalog.ResolvePurchaseRuntime(product);
@@ -1442,14 +1442,14 @@ namespace Devian
                     {
                         return CommonResult<ShopProductBase>.Failure(
                             COMMON_ERROR_TYPE.SHOP_ADS_NOT_AVAILABLE,
-                            $"Shop rewarded ad is not available: shop_id={product.shop_id}");
+                            $"Shop rewarded ad is not available: shop_item_id={product.shop_item_id}");
                     }
                 }
                 catch (Exception ex)
                 {
                     return CommonResult<ShopProductBase>.Failure(
                         COMMON_ERROR_TYPE.SHOP_ADS_NOT_AVAILABLE,
-                        $"Shop rewarded ad check failed: shop_id={product.shop_id}, reason={ex.Message}");
+                        $"Shop rewarded ad check failed: shop_item_id={product.shop_item_id}, reason={ex.Message}");
                 }
 
                 return CommonResult<ShopProductBase>.Success(product);
@@ -1459,7 +1459,7 @@ namespace Devian
             {
                 return CommonResult<ShopProductBase>.Failure(
                     COMMON_ERROR_TYPE.SHOP_WALLET_UNAVAILABLE,
-                    $"Inventory wallet is unavailable: shop_id={product.shop_id}");
+                    $"Inventory wallet is unavailable: shop_item_id={product.shop_item_id}");
             }
 
             var price = product.Price;
@@ -1467,7 +1467,7 @@ namespace Devian
             {
                 return CommonResult<ShopProductBase>.Failure(
                     COMMON_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT,
-                    $"Insufficient currency for shop purchase: shop_id={product.shop_id}, currency={currencyType}, price={price}, basePrice={product.PriceWithoutDiscount}, discountType={product.DiscountType}");
+                    $"Insufficient currency for shop purchase: shop_item_id={product.shop_item_id}, currency={currencyType}, price={price}, basePrice={product.PriceWithoutDiscount}, discountType={product.DiscountType}");
             }
 
             return CommonResult<ShopProductBase>.Success(product);
@@ -1528,19 +1528,19 @@ namespace Devian
             return CommonResult<bool>.Success(didMutateStorage);
         }
 
-        static CommonResult<RewardData[]> wrapBuyFailure(string shopId, CommonError innerError)
+        static CommonResult<RewardData[]> wrapBuyFailure(string shopItemId, CommonError innerError)
         {
-            var normalizedShopId = normalizeShopId(shopId);
+            var normalizedShopItemId = normalizeShopItemId(shopItemId);
             if (innerError.Code == COMMON_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT)
             {
                 return CommonResult<RewardData[]>.Failure(
                     COMMON_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT,
-                    $"Insufficient currency for shop purchase: shop_id={normalizedShopId}, inner={innerError.Code}:{innerError.Message}");
+                    $"Insufficient currency for shop purchase: shop_item_id={normalizedShopItemId}, inner={innerError.Code}:{innerError.Message}");
             }
 
             return CommonResult<RewardData[]>.Failure(
                 COMMON_ERROR_TYPE.SHOP_BUY_FAILED,
-                $"Shop BuyAsync failed: shop_id={normalizedShopId}, inner={innerError.Code}:{innerError.Message}");
+                $"Shop BuyAsync failed: shop_item_id={normalizedShopItemId}, inner={innerError.Code}:{innerError.Message}");
         }
 
         static bool tryResolvePurchaseProduct(string internalProductId, out PURCHASE purchaseProduct)
@@ -1769,9 +1769,9 @@ namespace Devian
             }
         }
 
-        static string normalizeShopId(string shopId)
+        static string normalizeShopItemId(string shopItemId)
         {
-            return shopId != null ? shopId.Trim() : string.Empty;
+            return shopItemId != null ? shopItemId.Trim() : string.Empty;
         }
 
         void queueRuntimeLocalSave()

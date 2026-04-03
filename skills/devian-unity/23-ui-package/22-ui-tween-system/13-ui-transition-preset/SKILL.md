@@ -29,8 +29,7 @@ framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Tween/UI_TRANS
 [Serializable]
 public struct UITransitionAlphaClip
 {
-    public bool Enabled;
-    public float Start_time;
+    public float StartTime;
     public float Duration;
     public UITweenEase Ease;
     public float From;
@@ -40,8 +39,7 @@ public struct UITransitionAlphaClip
 [Serializable]
 public struct UITransitionMoveClip
 {
-    public bool Enabled;
-    public float Start_time;
+    public float StartTime;
     public float Duration;
     public UITweenEase Ease;
     public Vector2 FromOffset;
@@ -51,12 +49,21 @@ public struct UITransitionMoveClip
 [Serializable]
 public struct UITransitionScaleClip
 {
-    public bool Enabled;
-    public float Start_time;
+    public float StartTime;
     public float Duration;
     public UITweenEase Ease;
     public Vector3 From;
     public Vector3 To;
+}
+
+[Serializable]
+public struct UITransitionPreferredSizeClip
+{
+    public float StartTime;
+    public float Duration;
+    public UITweenEase Ease;
+    public Vector2 From;
+    public Vector2 To;
 }
 
 [Serializable]
@@ -65,6 +72,7 @@ public sealed class UITransitionPreset
     public UITransitionAlphaClip[] AlphaClips;
     public UITransitionMoveClip[] MoveClips;
     public UITransitionScaleClip[] ScaleClips;
+    public UITransitionPreferredSizeClip[] PreferredSizeClips;
 }
 ```
 
@@ -75,9 +83,13 @@ public sealed class UITransitionPreset
 - asset이 `AssetId`를 상속하지는 않는다. 기존 패턴대로 asset과 `UI_TRANSITION_PRESET_ID` wrapper를 분리한다.
 - runtime field는 `UI_TRANSITION_PRESET_ID`를 우선 사용하고, 필요시 direct asset ref를 보조적으로 허용한다.
 - show preset과 hide preset은 별도 preset으로 가진다.
-- alpha / move / scale은 independent channel이다.
-- 시간 오프셋은 `Delay`가 아니라 각 clip의 `Start_time`으로 표현한다.
-- move clip은 절대 좌표가 아니라 play 시작 시 snapshot의 `BaseAnchoredPosition` 기준 offset으로 해석한다.
+- alpha / move / scale / preferred-size는 independent channel이다.
+- 시간 오프셋은 `Delay`가 아니라 각 clip의 `StartTime`으로 표현한다.
+- 첫 clip이 시작되기 전 구간에는 그 clip의 `From*` 값이 channel 초기값으로 유지된다.
+- move clip은 절대 좌표가 아니라 `UITransitionPlayer`가 보관하는 anchoredPosition baseline 기준 offset으로 해석한다.
+- 반복 재생 시 이전 move tween의 종료 위치가 다음 play 기준점으로 누적되면 안 된다.
+- preferred-size clip은 same-GO `LayoutElement.preferredWidth/preferredHeight` 절대값으로 해석한다.
+- clip이 배열에 존재하면 runtime 대상에 포함된다. 별도 `Enabled` 게이트는 두지 않는다.
 - 같은 channel에서 clip이 겹치면 배열상 뒤에 선언된 clip이 우선한다.
 - 구형 preset 대체 구조는 두지 않는다.
 
@@ -102,7 +114,8 @@ public sealed class UI_TRANSITION_PRESET_ID
 ```
 
 - `UITransitionPresetAsset`은 `CreateAssetMenu`로 authoring asset을 만든다
-- runtime lookup은 `AssetManager.GetAsset<UITransitionPresetAsset>(id.Value)` 경로를 사용한다
+- runtime lookup은 기본적으로 `Play(UI_TRANSITION_PRESET_ID id)` 경로를 사용한다
+- editor play mode에서는 raw asset을 우선 찾고, runtime bundle cache는 fallback으로 사용한다
 
 ## Easing
 

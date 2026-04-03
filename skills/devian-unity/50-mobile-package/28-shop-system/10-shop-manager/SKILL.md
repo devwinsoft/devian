@@ -30,8 +30,8 @@ public sealed class ShopManager : CompoSingleton<ShopManager>
 ## 2. Public API
 
 ```csharp
-public bool CanBuy(string shop_id)
-public Task<CommonResult<RewardData[]>> BuyAsync(string shop_id, CancellationToken ct = default)
+public bool CanBuy(string shop_item_id)
+public Task<CommonResult<RewardData[]>> BuyAsync(string shop_item_id, CancellationToken ct = default)
 public CommonResult Initialize()
 public CommonResult RefreshProducts(bool requireServerTime = true)
 public IReadOnlyList<ShopCatalogBase> GetCatalogs()
@@ -41,12 +41,12 @@ public T GetCatalog<T>() where T : ShopCatalogBase
 
 핵심 플로우:
 
-1. `shop_id`로 `ShopProductBase` 조회
+1. `shop_item_id`로 `ShopProductBase` 조회
 2. 카탈로그 목록은 하드코딩이 아니라 `TB_SHOP_CATALOG.GetAll()` row로 생성된다.
-3. `SHOP_DAILY` 카탈로그는 초기화/refresh 시 `select_rate` 규칙으로 ADS/FREE 제외 대상에서 5개 선택 생성된다.
+3. `SHOP_ITEM_DAILY` 카탈로그는 초기화/refresh 시 `select_rate` 규칙으로 ADS/FREE 제외 대상에서 5개 선택 생성된다.
 4. `CHEST/PURCHASE/GOLD`는 각 `SHOP_*` 테이블의 모든 상품을 생성한다.
-5. `EVENT`는 `SHOP_EVENT.start_time/end_time` 서버 UTC 구간 안에 있는 상품만 생성한다.
-6. `SHOP_DAILY` 선택 생성에서 동일 `shop_id`(pk)는 중복 선택하지 않는다.
+5. `EVENT`는 `SHOP_ITEM_EVENT.start_time/end_time` 서버 UTC 구간 안에 있는 상품만 생성한다.
+6. `SHOP_ITEM_DAILY` 선택 생성에서 동일 `shop_item_id`(pk)는 중복 선택하지 않는다.
 7. 구매 제한 자동 refresh 체크(서버 시간 기준): 일반 카탈로그는 `autoRefreshUtcMs` + `auto_refresh_days` 규칙을 사용한다. `auto_refresh_days <= 0`이면 자동 refresh를 사용하지 않는다.
 8. `EVENT`는 `auto_refresh_days`가 아니라 가장 가까운 미래 `start_time/end_time` 경계 시각을 `autoRefreshUtcMs`로 저장해 refresh를 예약한다.
 9. `unlock_msg_id`가 있는 카탈로그는 초기 `IsLocked=true`이며 `GameMessageManager` 구독으로 `unlock_op_type/unlock_value` 조건 만족 시 해금된다.
@@ -64,14 +64,14 @@ public T GetCatalog<T>() where T : ShopCatalogBase
 21. refresh 조건 탐색은 `ShopManager.evaluateCatalogRefreshState(...)` 한 곳에서 처리한다.
 22. 카탈로그 refresh 실행은 `ShopManager.tryRefreshCatalog(...)` 한 경로에서 처리한다.
 23. SaveData 로드는 `ShopStorage`에만 반영되고, 런타임 카탈로그 반영은 이후 `LoginManager`가 호출하는 `ShopManager.Initialize()`에서 수행한다.
-24. `SHOP_DAILY`의 ADS/FREE 상품은 테이블에서 고정 로드하며 `dailyCatalogProducts`에는 저장하지 않는다. ADS/FREE의 `remainCount` 저장은 DAILY catalog bucket의 `productRemainCounts`를 사용한다.
+24. `SHOP_ITEM_DAILY`의 ADS/FREE 상품은 테이블에서 고정 로드하며 `dailyCatalogProducts`에는 저장하지 않는다. ADS/FREE의 `remainCount` 저장은 DAILY catalog bucket의 `productRemainCounts`를 사용한다.
 25. 카탈로그별 남은 시간 조회는 `ShopCatalogBase.RemainAutoRefreshTimeMs`를 공통으로 사용하고, DAILY만 `ShopCatalogDaily.RemainAdsRefreshTimeMs`, `ManualRefreshRemainTimeMs`, `ManualRefreshRemainCount`를 사용한다.
 26. 로그인 초기화 마지막 단계에서 `LoginManager`가 `Initialize()`를 호출해 Shop 카탈로그 상태를 최종 정합화한다.
 27. `GetCatalog<T>()`는 typed catalog 획득용이다. 사용 예: `ShopManager.Instance.GetCatalog<ShopCatalogDaily>()`.
 28. `ShopCatalogBase.ResetAds()`와 `ShopCatalogDaily.RefreshByAdsAsync()`는 catalog instance public API다.
 29. `ShopCatalogDaily.RefreshByAdsAsync()`는 daily catalog 내부에서 manual refresh 상태 판단, 광고 시청, 성공 기록을 직접 처리한다.
 30. `ShopCatalogDaily.RefreshByAdsAsync()`는 rolling 24시간 기준 최대 5회만 허용한다. 상태는 `manualRefreshUtcMs`, `manualRefreshRemainCount`로 관리하며, `manualRefreshRemainCount`는 남은 횟수다.
-31. `ShopCatalogDaily.RefreshByAdsAsync()` 제한 초과 시 `COMMON_ERROR_TYPE.SHOP_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED`를 반환한다.
+31. `ShopCatalogDaily.RefreshByAdsAsync()` 제한 초과 시 `COMMON_ERROR_TYPE.SHOP_ITEM_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED`를 반환한다.
 32. `ShopManager`는 `syncCatalogRuntimeStates()`로 catalog별 runtime state 동기화를 공통 처리한다.
 33. `ShopManager.ensureCatalogInitialized()`는 `CreateRuntimeCatalogs(storage)`로 catalog를 먼저 등록하고, 두 번째 pass에서 `Initialize()`를 호출한다.
 34. `CreateRuntimeCatalogs(storage)`는 catalog 생성 시 typed storage data를 같이 주입한다.
@@ -91,7 +91,7 @@ public T GetCatalog<T>() where T : ShopCatalogBase
 - 통화 부족 시 `COMMON_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT`를 반환한다.
 - `Initialize()` 이전의 `RefreshProducts/CanBuy/BuyAsync`와 catalog public API는 `COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED`로 실패한다.
 - `ShopCatalogBase.ResetAds()`: 지정 카탈로그를 강제 refresh한다. (`forceCatalogRefresh=true`)
-- `ShopCatalogDaily.RefreshByAdsAsync()`: DAILY 수동 refresh를 수행한다. 광고 실패는 `SHOP_ADS_SHOW_FAILED`, 횟수 소진은 `SHOP_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED`를 반환한다.
+- `ShopCatalogDaily.RefreshByAdsAsync()`: DAILY 수동 refresh를 수행한다. 광고 실패는 `SHOP_ADS_SHOW_FAILED`, 횟수 소진은 `SHOP_ITEM_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED`를 반환한다.
 - `ShopCatalogDaily.RefreshByAdsAsync()`는 global refresh를 호출하지 않고 DAILY만 1회 refresh한다.
 - SaveData 저장은 ShopManager 초기화 루틴이 아니라 mutation 경로에서 수행한다. 일반 refresh/buy는 ShopManager 저장 경로를 사용하고, DAILY manual refresh는 `ShopCatalogDaily.RefreshByAdsAsync()`가 로컬 저장을 직접 수행한다.
 

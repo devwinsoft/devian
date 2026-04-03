@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Devian
 {
     /// <summary>
-    /// N열 그리드 섹션. Content 자식으로 Prefab에 배치한다.
+    /// N열 그리드 섹션. Content 자식으로 배치되고, runtime cell은 frame 자식으로 생성한다.
     /// IUIScrollSection 구현. Container가 row bind/unbind를 직접 호출한다.
     /// Grid는 "row renderer"이지 "scroll virtualizer"가 아니다.
     ///
@@ -153,6 +153,7 @@ namespace Devian
             int startIndex = localRow * _columnCount;
             int cellsInRow = _columnCount;
             float xSpacing = CalculateAutoXSpacing();
+            float localRowMainAxisPosition = rowLayout.RowMainAxisPosition - _sectionLayout.SectionMainAxisPosition;
 
             var rowCells = new List<UIScrollGridCell>(cellsInRow);
 
@@ -160,7 +161,7 @@ namespace Devian
             {
                 int cellIndex = startIndex + c;
                 var cell = BundlePool.Spawn<UIScrollGridCell>(
-                    _cellPrefabId.Value, Vector3.zero, Quaternion.identity, rowLayout.Content);
+                    _cellPrefabId.Value, Vector3.zero, Quaternion.identity, transform);
 
                 var rt = cell.rectTransform;
                 rt.anchorMin = TopLeft;
@@ -170,8 +171,8 @@ namespace Devian
 
                 float cross = c * (_cellSize.x + xSpacing);
                 rt.anchoredPosition = rowLayout.Direction == UIScrollDirection.Vertical
-                    ? new Vector2(cross, -rowLayout.RowMainAxisPosition)
-                    : new Vector2(rowLayout.RowMainAxisPosition, -cross);
+                    ? new Vector2(cross, -localRowMainAxisPosition)
+                    : new Vector2(localRowMainAxisPosition, -cross);
 
                 cell.Show(cellIndex);
                 onBindCell?.Invoke(cell, cellIndex);

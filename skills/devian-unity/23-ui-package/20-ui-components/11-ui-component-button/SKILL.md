@@ -14,13 +14,16 @@ and `ScrollRect` drag bridge.
 - PointerDown/Up 시각 피드백 (`EffectType.Scale`, `EffectType.AnchoredPosition`)
 - 선택적 UI 사운드 재생 (`SoundDown`, `SoundUp`)
 - UnityEvent hook (`onDown`, `onUp`)
-- nested scroll 지원용 drag bridge (`SetScroll`)
+- nested scroll 지원용 drag bridge
+  - 부모 `ScrollRect` 자동 탐색
+  - `SetScroll(ScrollRect)`로 수동 override 가능
 - `EventTrigger` 자동 구성
 
 ### Sound Playback
 
 On PointerDown: apply visual feedback + optional UI sound
 On PointerUp: restore visual state + optional UI sound
+On BeginDrag: restore visual state and cancel pending PointerUp action/sound for the current pointer sequence
 
 사운드 재생 경로:
 ```

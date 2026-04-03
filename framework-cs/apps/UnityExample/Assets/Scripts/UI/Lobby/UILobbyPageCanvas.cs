@@ -8,7 +8,7 @@ using UnityEngine.Serialization;
 
 public class UILobbyPageCanvas : UIBasePageCanvas<UILobbyPageCanvas>
 {
-    public UILobbyMenuBottom menuBottom;
+    [FormerlySerializedAs("menuBottom")] public UILobbyMenuBottomPanel menuBottomPanel;
     public UILobbyMenuTopPanel menuTopPanel;
     
     public UILobbyMissionPanel missionPanel;

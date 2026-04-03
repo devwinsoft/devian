@@ -14,7 +14,7 @@ namespace Devian
         static readonly IReadOnlyList<ShopProductBase> EmptyProducts = Array.Empty<ShopProductBase>();
 
         IReadOnlyList<ShopProductBase> _products = EmptyProducts;
-        readonly Dictionary<string, ShopProductBase> _productsByShopId = new(StringComparer.Ordinal);
+        readonly Dictionary<string, ShopProductBase> _productsByShopItemId = new(StringComparer.Ordinal);
         readonly SHOP_CATALOG _catalogConfig;
         readonly IReadOnlyList<ShopProductBase> _prebuiltProducts;
         bool _initialized;
@@ -100,9 +100,9 @@ namespace Devian
 
             return CatalogType switch
             {
-                SHOP_CATALOG_TYPE.CHEST => buildProductsFromRowsWithStorage(TB_SHOP_CHEST.GetAll(), ShopProductFactory.CreateChestProduct),
-                SHOP_CATALOG_TYPE.PURCHASE => buildProductsFromRowsWithStorage(TB_SHOP_PURCHASE.GetAll(), ShopProductFactory.CreatePurchaseProduct),
-                SHOP_CATALOG_TYPE.GOLD => buildProductsFromRowsWithStorage(TB_SHOP_GOLD.GetAll(), ShopProductFactory.CreateGoldProduct),
+                SHOP_CATALOG_TYPE.CHEST => buildProductsFromRowsWithStorage(TB_SHOP_ITEM_CHEST.GetAll(), ShopProductFactory.CreateChestProduct),
+                SHOP_CATALOG_TYPE.PURCHASE => buildProductsFromRowsWithStorage(TB_SHOP_ITEM_PURCHASE.GetAll(), ShopProductFactory.CreatePurchaseProduct),
+                SHOP_CATALOG_TYPE.GOLD => buildProductsFromRowsWithStorage(TB_SHOP_ITEM_GOLD.GetAll(), ShopProductFactory.CreateGoldProduct),
                 _ => EmptyProducts,
             };
         }
@@ -122,13 +122,13 @@ namespace Devian
             return _products;
         }
 
-        public ShopProductBase GetProduct(string shopId)
+        public ShopProductBase GetProduct(string shopItemId)
         {
-            var normalizedShopId = NormalizeShopId(shopId);
-            if (string.IsNullOrEmpty(normalizedShopId))
+            var normalizedShopItemId = NormalizeShopItemId(shopItemId);
+            if (string.IsNullOrEmpty(normalizedShopItemId))
                 return null;
 
-            return _productsByShopId.TryGetValue(normalizedShopId, out var product)
+            return _productsByShopItemId.TryGetValue(normalizedShopItemId, out var product)
                 ? product
                 : null;
         }
@@ -151,7 +151,7 @@ namespace Devian
             var products = GetProducts();
             if (products != null && products.Count > 0)
             {
-                var limitedShopIds = new List<string>(products.Count);
+                var limitedShopItemIds = new List<string>(products.Count);
                 for (var i = 0; i < products.Count; i++)
                 {
                     var product = products[i];
@@ -161,15 +161,15 @@ namespace Devian
                     if (!clearAdsFreeRemainState && IsLimitedAdsOrFreeProduct(product))
                         continue;
 
-                    var normalizedShopId = NormalizeShopId(product.shop_id);
-                    if (string.IsNullOrEmpty(normalizedShopId))
+                    var normalizedShopItemId = NormalizeShopItemId(product.shop_item_id);
+                    if (string.IsNullOrEmpty(normalizedShopItemId))
                         continue;
 
-                    limitedShopIds.Add(normalizedShopId);
+                    limitedShopItemIds.Add(normalizedShopItemId);
                 }
 
-                if (limitedShopIds.Count > 0)
-                    Storage.ClearProductRemainCounts(CatalogType, limitedShopIds);
+                if (limitedShopItemIds.Count > 0)
+                    Storage.ClearProductRemainCounts(CatalogType, limitedShopItemIds);
             }
 
             if (CatalogType == SHOP_CATALOG_TYPE.DAILY)
@@ -198,9 +198,9 @@ namespace Devian
                 GetRemainingToNextRefreshMs(serverNowUtcMs, nextAutoRefreshUtcMs));
         }
 
-        protected static string NormalizeShopId(string shopId)
+        protected static string NormalizeShopItemId(string shopItemId)
         {
-            return shopId != null ? shopId.Trim() : string.Empty;
+            return shopItemId != null ? shopItemId.Trim() : string.Empty;
         }
 
         protected static long GetAutoRefreshIntervalMs(int autoRefreshDays)
@@ -265,22 +265,22 @@ namespace Devian
             if (Storage == null || product == null)
                 return;
 
-            var normalizedShopId = NormalizeShopId(product.shop_id);
-            if (string.IsNullOrEmpty(normalizedShopId))
+            var normalizedShopItemId = NormalizeShopItemId(product.shop_item_id);
+            if (string.IsNullOrEmpty(normalizedShopItemId))
                 return;
 
             if (!product.HasPurchaseLimit)
             {
                 product.SetRemainCount(-1);
-                Storage.RemoveProductRemainCount(CatalogType, normalizedShopId);
+                Storage.RemoveProductRemainCount(CatalogType, normalizedShopItemId);
                 return;
             }
 
-            if (Storage.TryGetProductRemainCount(CatalogType, normalizedShopId, out var storedRemainCount))
+            if (Storage.TryGetProductRemainCount(CatalogType, normalizedShopItemId, out var storedRemainCount))
             {
                 product.SetRemainCount(storedRemainCount);
             }
-            else if (Storage.TryTakeLegacyPurchaseCount(normalizedShopId, out var legacyPurchaseCount))
+            else if (Storage.TryTakeLegacyPurchaseCount(normalizedShopItemId, out var legacyPurchaseCount))
             {
                 product.SetRemainCount(product.max_count - legacyPurchaseCount);
             }
@@ -289,13 +289,13 @@ namespace Devian
                 product.ResetRemainCount();
             }
 
-            Storage.SetProductRemainCount(CatalogType, normalizedShopId, product.RemainCount);
+            Storage.SetProductRemainCount(CatalogType, normalizedShopItemId, product.RemainCount);
         }
 
         void setProducts(IReadOnlyList<ShopProductBase> products)
         {
             _products = products ?? EmptyProducts;
-            _productsByShopId.Clear();
+            _productsByShopItemId.Clear();
 
             for (var i = 0; i < _products.Count; i++)
             {
@@ -303,18 +303,18 @@ namespace Devian
                 if (product == null)
                     continue;
 
-                var normalizedShopId = NormalizeShopId(product.shop_id);
-                if (string.IsNullOrEmpty(normalizedShopId))
+                var normalizedShopItemId = NormalizeShopItemId(product.shop_item_id);
+                if (string.IsNullOrEmpty(normalizedShopItemId))
                     continue;
 
-                if (_productsByShopId.ContainsKey(normalizedShopId))
+                if (_productsByShopItemId.ContainsKey(normalizedShopItemId))
                 {
                     Debug.LogWarning(
-                        $"[ShopCatalogBase] Duplicate shop_id in catalog. Keeping first row: catalog={CatalogType}, shop_id={normalizedShopId}");
+                        $"[ShopCatalogBase] Duplicate shop_item_id in catalog. Keeping first row: catalog={CatalogType}, shop_item_id={normalizedShopItemId}");
                     continue;
                 }
 
-                _productsByShopId.Add(normalizedShopId, product);
+                _productsByShopItemId.Add(normalizedShopItemId, product);
             }
         }
 

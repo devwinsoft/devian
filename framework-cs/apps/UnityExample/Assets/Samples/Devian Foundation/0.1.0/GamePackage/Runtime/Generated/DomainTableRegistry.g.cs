@@ -341,73 +341,73 @@ namespace Devian.Domain.Game
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("SHOP_DAILY", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("SHOP_ITEM_DAILY", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_SHOP_DAILY.LoadFromNdjson(text);
-                    TB_SHOP_DAILY._AfterLoad();
+                    TB_SHOP_ITEM_DAILY.LoadFromNdjson(text);
+                    TB_SHOP_ITEM_DAILY._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_SHOP_DAILY.LoadFromPb64Binary(bin);
-                    TB_SHOP_DAILY._AfterLoad();
+                    TB_SHOP_ITEM_DAILY.LoadFromPb64Binary(bin);
+                    TB_SHOP_ITEM_DAILY._AfterLoad();
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("SHOP_EVENT", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("SHOP_ITEM_EVENT", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_SHOP_EVENT.LoadFromNdjson(text);
-                    TB_SHOP_EVENT._AfterLoad();
+                    TB_SHOP_ITEM_EVENT.LoadFromNdjson(text);
+                    TB_SHOP_ITEM_EVENT._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_SHOP_EVENT.LoadFromPb64Binary(bin);
-                    TB_SHOP_EVENT._AfterLoad();
+                    TB_SHOP_ITEM_EVENT.LoadFromPb64Binary(bin);
+                    TB_SHOP_ITEM_EVENT._AfterLoad();
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("SHOP_CHEST", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("SHOP_ITEM_CHEST", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_SHOP_CHEST.LoadFromNdjson(text);
-                    TB_SHOP_CHEST._AfterLoad();
+                    TB_SHOP_ITEM_CHEST.LoadFromNdjson(text);
+                    TB_SHOP_ITEM_CHEST._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_SHOP_CHEST.LoadFromPb64Binary(bin);
-                    TB_SHOP_CHEST._AfterLoad();
+                    TB_SHOP_ITEM_CHEST.LoadFromPb64Binary(bin);
+                    TB_SHOP_ITEM_CHEST._AfterLoad();
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("SHOP_PURCHASE", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("SHOP_ITEM_PURCHASE", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_SHOP_PURCHASE.LoadFromNdjson(text);
-                    TB_SHOP_PURCHASE._AfterLoad();
+                    TB_SHOP_ITEM_PURCHASE.LoadFromNdjson(text);
+                    TB_SHOP_ITEM_PURCHASE._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_SHOP_PURCHASE.LoadFromPb64Binary(bin);
-                    TB_SHOP_PURCHASE._AfterLoad();
+                    TB_SHOP_ITEM_PURCHASE.LoadFromPb64Binary(bin);
+                    TB_SHOP_ITEM_PURCHASE._AfterLoad();
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("SHOP_GOLD", (format, text, bin) =>
+            global::Devian.TableManager.Instance.RegisterTbLoader("SHOP_ITEM_GOLD", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
                 {
-                    TB_SHOP_GOLD.LoadFromNdjson(text);
-                    TB_SHOP_GOLD._AfterLoad();
+                    TB_SHOP_ITEM_GOLD.LoadFromNdjson(text);
+                    TB_SHOP_ITEM_GOLD._AfterLoad();
                 }
                 else if (format == global::Devian.TableFormat.Pb64 && bin != null)
                 {
-                    TB_SHOP_GOLD.LoadFromPb64Binary(bin);
-                    TB_SHOP_GOLD._AfterLoad();
+                    TB_SHOP_ITEM_GOLD.LoadFromPb64Binary(bin);
+                    TB_SHOP_ITEM_GOLD._AfterLoad();
                 }
             });
 

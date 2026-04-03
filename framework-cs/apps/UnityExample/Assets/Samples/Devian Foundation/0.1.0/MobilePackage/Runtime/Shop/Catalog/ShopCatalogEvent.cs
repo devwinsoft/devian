@@ -28,16 +28,16 @@ namespace Devian
             if (PrebuiltProducts != null)
                 return PrebuiltProducts;
 
-            return buildActiveEventProducts(TB_SHOP_EVENT.GetAll(), RemoteDataManager.ServerNowUtcMs);
+            return buildActiveEventProducts(TB_SHOP_ITEM_EVENT.GetAll(), RemoteDataManager.ServerNowUtcMs);
         }
 
         internal override long GetNextProductRefreshUtcMs(long serverNowUtcMs)
         {
-            return getNextEventRefreshUtcMs(TB_SHOP_EVENT.GetAll(), serverNowUtcMs);
+            return getNextEventRefreshUtcMs(TB_SHOP_ITEM_EVENT.GetAll(), serverNowUtcMs);
         }
 
         static IReadOnlyList<ShopProductBase> buildActiveEventProducts(
-            IReadOnlyList<SHOP_EVENT> rows,
+            IReadOnlyList<SHOP_ITEM_EVENT> rows,
             long serverNowUtcMs)
         {
             if (rows == null || rows.Count <= 0 || serverNowUtcMs <= 0L)
@@ -59,7 +59,7 @@ namespace Devian
         }
 
         static long getNextEventRefreshUtcMs(
-            IReadOnlyList<SHOP_EVENT> rows,
+            IReadOnlyList<SHOP_ITEM_EVENT> rows,
             long serverNowUtcMs)
         {
             if (rows == null || rows.Count <= 0 || serverNowUtcMs <= 0L)
@@ -87,7 +87,7 @@ namespace Devian
             return nextRefreshUtcMs;
         }
 
-        static bool isEventRowActive(SHOP_EVENT row, long serverNowUtcMs)
+        static bool isEventRowActive(SHOP_ITEM_EVENT row, long serverNowUtcMs)
         {
             if (!tryGetEventWindow(row, out var startUtcMs, out var endUtcMs))
                 return false;
@@ -96,14 +96,14 @@ namespace Devian
         }
 
         static bool tryGetEventWindow(
-            SHOP_EVENT row,
+            SHOP_ITEM_EVENT row,
             out long startUtcMs,
             out long endUtcMs)
         {
             startUtcMs = normalizeEventUtcMs(row?.start_time.utcTimeMs ?? 0L);
             endUtcMs = normalizeEventUtcMs(row?.end_time.utcTimeMs ?? 0L);
             return row != null
-                && !string.IsNullOrWhiteSpace(row.shop_id)
+                && !string.IsNullOrWhiteSpace(row.shop_item_id)
                 && endUtcMs > 0L
                 && endUtcMs > startUtcMs;
         }
@@ -113,7 +113,7 @@ namespace Devian
             if (rawUtcMs <= 0L)
                 return 0L;
 
-            // SHOP_EVENT source data may still be exported as Excel/OA serial days.
+            // SHOP_ITEM_EVENT source data may still be exported as Excel/OA serial days.
             if (rawUtcMs < 100000000000L)
             {
                 try
