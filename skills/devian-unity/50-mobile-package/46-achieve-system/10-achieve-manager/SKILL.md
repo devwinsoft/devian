@@ -21,7 +21,7 @@ MobilePackage 샘플의 `AchieveManager` 설계 문서다.
 - `InitializeAsync(ct)` -> `Task<CommonResult>`
 - `RefreshRuntimes()`
 - `GetRuntimeState(achievementId)` -> `MissionRuntimeState`
-- `ClaimAsync(achievementId, ct)` -> `Task<CommonResult>`
+- `ClaimAsync(achievementId, ct)` -> `Task<GameResult>`
 - `Notify(msgType)`
 - `Notify(msgType, params object[] args)`
 - `Subcribe(EntityId, ACHIEVE_MESSAGE_TYPE, Handler)`

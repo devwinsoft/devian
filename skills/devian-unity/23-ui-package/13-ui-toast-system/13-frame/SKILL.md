@@ -101,6 +101,7 @@ spawn 시(`OnPoolSpawned`) 및 bind 시(`Bind`) 두 번 호출된다.
 
 - `onAwake()` / `onInit()`에서 prefab 원본 `RectTransform` 값을 snapshot으로 캐시한다.
 - `ApplyGroupOffset(offset)`는 anchor/pivot/sizeDelta/localScale/anchoredPosition을 원본 값으로 복원한 뒤 offset만 더한다.
+- `ApplyGroupOffset(offset)` 직후 `UITransitionPlayer.RefreshBaseline()`을 호출해 show/hide move tween의 기준점을 현재 슬롯 좌표로 동기화한다.
 - 따라서 group은 frame 기본 크기를 덮어쓰지 않는다.
 
 ---

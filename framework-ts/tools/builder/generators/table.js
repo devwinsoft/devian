@@ -1908,6 +1908,7 @@ const IDENTIFIER_REGEX = /^[A-Za-z_][A-Za-z0-9_]*$/;
  * - gen column = PK column (same column, must have pk)
  * - gen column value = enum member NAME
  * - enum member VALUE = deterministic auto-assignment (name sorted, 0..N-1)
+ * - *_ERROR_TYPE enums reserve SUCCESS as the sentinel success code and fix it to 0
  * - Only 1 gen column per table
  * 
  * @param {Array} tables - Array of table definitions from parseXlsx
@@ -1971,8 +1972,8 @@ export function collectEnumGenSpecs(tables) {
         }
 
         // Sort member names ascending (deterministic)
-        // COMMON_ERROR_TYPE reserves SUCCESS as the sentinel success code and fixes it to 0.
-        if (enumName === 'COMMON_ERROR_TYPE') {
+        // *_ERROR_TYPE enums reserve SUCCESS as the sentinel success code and fix it to 0.
+        if (enumName.endsWith('_ERROR_TYPE') && seenNames.has('SUCCESS')) {
             memberNames.sort((a, b) => {
                 if (a === 'SUCCESS' && b !== 'SUCCESS') return -1;
                 if (a !== 'SUCCESS' && b === 'SUCCESS') return 1;

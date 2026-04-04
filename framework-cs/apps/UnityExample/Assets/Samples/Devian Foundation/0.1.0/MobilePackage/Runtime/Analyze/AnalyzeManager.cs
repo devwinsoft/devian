@@ -1,6 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Devian.Domain.Common;
+using Devian.Domain.Game;
 using UnityEngine;
 using Firebase.Analytics;
 
@@ -18,14 +18,14 @@ namespace Devian
 
         public bool IsInitialized => _initialized;
 
-        public Task<CommonResult> InitializeAsync(CancellationToken ct = default)
+        public Task<GameResult> InitializeAsync(CancellationToken ct = default)
         {
             if (_initialized)
-                return Task.FromResult(CommonResult.Ok());
+                return Task.FromResult(GameResult.Ok());
 
             _initialized = true;
             Debug.Log($"[{Tag}] Initialized.");
-            return Task.FromResult(CommonResult.Ok());
+            return Task.FromResult(GameResult.Ok());
         }
 
         public void LogEvent(string eventName)

@@ -6,7 +6,7 @@ AppliesTo: v1
 ## Purpose
 
 Toast/Popup/Loading 공용 전역 settings asset.
-canvas ID, dim 기본값, toast group 목록, popup frame 매핑, loading canvas bootstrap 정보를 단일 `ScriptableObject`에 보관한다.
+canvas ID, toast group 목록, loading canvas bootstrap 정보를 단일 `ScriptableObject`에 보관한다.
 
 ## Code Path
 
@@ -49,7 +49,6 @@ public sealed class UISettings : ScriptableObject
 
     // ── Popup ──
     public UI_POPUP_CANVAS_ID PopupCanvasId { get; }
-    public UIPopupFrameMapEntry[] PopupFrameMappings { get; }
 
     // ── Loading ──
     public UI_LOADING_CANVAS_ID LoadingCanvasId { get; }
@@ -72,8 +71,6 @@ public sealed class UISettings : ScriptableObject
 - loading runtime path는 `GetResourcesSearchDir("UI_LOADING_CANVAS_ID") + "/" + LoadingCanvasId.Value`로 만든다.
 - 현재 `UI_LOADING_CANVAS_ID` search dir는 `Assets/Resources/UI/Prefabs`이다.
 - `GroupConfigs`는 toast group 설정의 source다.
-- `PopupFrameMappings`는 popup frame type과 prefab id 매핑 source다.
-- popup mapping editor는 popup skill의 `15-ui-popup-frame-editor`가 담당한다.
 
 ## Reference
 

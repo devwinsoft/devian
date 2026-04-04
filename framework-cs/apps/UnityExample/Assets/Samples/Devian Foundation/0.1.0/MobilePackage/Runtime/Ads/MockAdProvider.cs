@@ -65,8 +65,13 @@ namespace Devian
         {
             if (!_loaded.Contains(advertiseId))
             {
-                Debug.LogWarning($"[{Tag}] Show: not loaded id={advertiseId}");
-                return AdProviderShowResult.NotReady;
+                Debug.Log($"[{Tag}] Show: not preloaded, auto-loading id={advertiseId}");
+                var loaded = await LoadAsync(advertiseId, format, string.Empty, ct);
+                if (!loaded)
+                {
+                    Debug.LogWarning($"[{Tag}] Show: auto-load failed id={advertiseId}");
+                    return AdProviderShowResult.NotReady;
+                }
             }
 
             if (Scenario == MockAdScenario.ShowFail)

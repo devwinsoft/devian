@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using System.Threading;
 using System.Threading.Tasks;
-using Devian.Domain.Common;
+using Devian.Domain.Game;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -55,13 +55,13 @@ namespace Devian
             setServerNowSnapshot(nowUtcMs);
         }
 
-        public async Task<CommonResult<VersionCheckResult>> InitializeAsync(
+        public async Task<GameResult<VersionCheckResult>> InitializeAsync(
             VersionNumber clientVersion,
             CancellationToken ct = default)
         {
             var versionCheck = await VersionCheckAsync(clientVersion, ct);
             if (versionCheck.IsFailure)
-                return CommonResult<VersionCheckResult>.Failure(versionCheck.Error!);
+                return GameResult<VersionCheckResult>.Failure(versionCheck.Error!);
 
             var syncServerUtc = await SyncServerUtcAsync(ct);
             if (syncServerUtc.IsFailure)
@@ -74,7 +74,7 @@ namespace Devian
             return versionCheck;
         }
 
-        public async Task<CommonResult<VersionCheckResult>> VersionCheckAsync(
+        public async Task<GameResult<VersionCheckResult>> VersionCheckAsync(
             VersionNumber clientVersion,
             CancellationToken ct = default)
         {
@@ -82,11 +82,11 @@ namespace Devian
             CurrentVersionNumber = clientVersion;
             MinVersionNumber = clientVersion;
             _ = ct;
-            return CommonResult<VersionCheckResult>.Success(VersionCheckResult.Success);
+            return GameResult<VersionCheckResult>.Success(VersionCheckResult.Success);
 #else
             var config = await fetchVersionCheckConfigAsync(ct);
             if (config.IsFailure)
-                return CommonResult<VersionCheckResult>.Failure(config.Error!);
+                return GameResult<VersionCheckResult>.Failure(config.Error!);
 
             var result = evaluateVersionCheck(
                 config.Value,
@@ -96,36 +96,36 @@ namespace Devian
 
             CurrentVersionNumber = currentVersion;
             MinVersionNumber = minVersion;
-            return CommonResult<VersionCheckResult>.Success(result);
+            return GameResult<VersionCheckResult>.Success(result);
 #endif
         }
 
-        public async Task<CommonResult> SyncServerUtcAsync(CancellationToken ct = default)
+        public async Task<GameResult> SyncServerUtcAsync(CancellationToken ct = default)
         {
 #if UNITY_EDITOR
             _ = ct;
             var nowUtcMs = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             setServerNowSnapshot(nowUtcMs);
-            return CommonResult.Ok();
+            return GameResult.Ok();
 #else
             var fetch = await fetchServerNowUtcAsync(ct);
             if (fetch.IsFailure)
             {
                 setServerNowSnapshot(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds());
-                return CommonResult.Failure(fetch.Error!);
+                return GameResult.Failure(fetch.Error!);
             }
 
             setServerNowSnapshot(fetch.Value);
-            return CommonResult.Ok();
+            return GameResult.Ok();
 #endif
         }
 
-        async Task<CommonResult<VersionCheckConfig>> fetchVersionCheckConfigAsync(CancellationToken ct)
+        async Task<GameResult<VersionCheckConfig>> fetchVersionCheckConfigAsync(CancellationToken ct)
         {
             if (!tryResolveVersionCheckUrl(out var url))
             {
-                return CommonResult<VersionCheckConfig>.Failure(
-                    COMMON_ERROR_TYPE.VERSION_CHECK_URL_NOT_CONFIGURED,
+                return GameResult<VersionCheckConfig>.Failure(
+                    GAME_ERROR_TYPE.VERSION_CHECK_URL_NOT_CONFIGURED,
                     "Version check URL is not configured for this platform.");
             }
 
@@ -149,16 +149,16 @@ namespace Devian
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                return CommonResult<VersionCheckConfig>.Failure(
-                    COMMON_ERROR_TYPE.VERSION_CHECK_NETWORK_FAILED,
+                return GameResult<VersionCheckConfig>.Failure(
+                    GAME_ERROR_TYPE.VERSION_CHECK_NETWORK_FAILED,
                     $"Version config request failed: {request.error}");
             }
 
             var json = request.downloadHandler?.text ?? string.Empty;
             if (string.IsNullOrWhiteSpace(json))
             {
-                return CommonResult<VersionCheckConfig>.Failure(
-                    COMMON_ERROR_TYPE.VERSION_CHECK_RESPONSE_EMPTY,
+                return GameResult<VersionCheckConfig>.Failure(
+                    GAME_ERROR_TYPE.VERSION_CHECK_RESPONSE_EMPTY,
                     "Version config response is empty.");
             }
 
@@ -167,17 +167,17 @@ namespace Devian
                 var config = JsonUtility.FromJson<VersionCheckConfig>(json);
                 if (config == null)
                 {
-                    return CommonResult<VersionCheckConfig>.Failure(
-                        COMMON_ERROR_TYPE.VERSION_CHECK_PARSE_FAILED,
+                    return GameResult<VersionCheckConfig>.Failure(
+                        GAME_ERROR_TYPE.VERSION_CHECK_PARSE_FAILED,
                         "Version config JSON parse failed.");
                 }
 
-                return CommonResult<VersionCheckConfig>.Success(config);
+                return GameResult<VersionCheckConfig>.Success(config);
             }
             catch (Exception ex)
             {
-                return CommonResult<VersionCheckConfig>.Failure(
-                    COMMON_ERROR_TYPE.VERSION_CHECK_PARSE_FAILED,
+                return GameResult<VersionCheckConfig>.Failure(
+                    GAME_ERROR_TYPE.VERSION_CHECK_PARSE_FAILED,
                     $"Version config JSON parse failed: {ex.Message}");
             }
         }
@@ -202,7 +202,7 @@ namespace Devian
             return !string.IsNullOrEmpty(url);
         }
 
-        static async Task<CommonResult<long>> fetchServerNowUtcAsync(CancellationToken ct)
+        static async Task<GameResult<long>> fetchServerNowUtcAsync(CancellationToken ct)
         {
             using var request = UnityWebRequest.Head(ServerTimeHeadUrl);
             request.timeout = 5;
@@ -223,8 +223,8 @@ namespace Devian
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                return CommonResult<long>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_NETWORK,
+                return GameResult<long>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"Server time request failed: {request.error}");
             }
 
@@ -233,8 +233,8 @@ namespace Devian
                 dateHeader = request.GetResponseHeader("date");
             if (string.IsNullOrWhiteSpace(dateHeader))
             {
-                return CommonResult<long>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                return GameResult<long>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     "Server time response does not contain Date header.");
             }
 
@@ -244,20 +244,20 @@ namespace Devian
                     DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal,
                     out var serverUtc))
             {
-                return CommonResult<long>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                return GameResult<long>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"Server time Date header parse failed: {dateHeader}");
             }
 
             var serverNowUtcMs = serverUtc.ToUnixTimeMilliseconds();
             if (serverNowUtcMs <= 0L)
             {
-                return CommonResult<long>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                return GameResult<long>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     "Server time is invalid.");
             }
 
-            return CommonResult<long>.Success(serverNowUtcMs);
+            return GameResult<long>.Success(serverNowUtcMs);
         }
 
         static VersionCheckResult evaluateVersionCheck(

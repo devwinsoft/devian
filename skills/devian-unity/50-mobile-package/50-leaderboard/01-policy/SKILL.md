@@ -52,7 +52,7 @@ Leaderboard 점수 제출 + 시즌 전환 보상 시스템의 모듈 경계와 �
 
 ### 8) 미지원 플랫폼/에디터는 안전 실패
 
-- 예외 폭발 없이 `CommonResult` 실패로 종료한다.
+- 예외 폭발 없이 `GameResult` 실패로 종료한다.
 
 ### 9) 공개 경계에서 플랫폼 의존 타입/필드 비노출
 
@@ -63,7 +63,7 @@ Leaderboard 점수 제출 + 시즌 전환 보상 시스템의 모듈 경계와 �
 
 - `ReportScoreAsync`는 `LEADERBOARD.season_id` → `TB_SEASON` 조회 후 시간 범위를 확인한다.
 - 조건: `SEASON.Start_utc_time <= serverNowUtcMs < SEASON.End_utc_time`
-- 범위 밖이면 `CommonResult.Failure` 반환.
+- 범위 밖이면 `GameResult.Failure` 반환.
 - `season_id`가 비어 있으면 시간 제한을 적용하지 않는다.
 
 ---
@@ -71,7 +71,7 @@ Leaderboard 점수 제출 + 시즌 전환 보상 시스템의 모듈 경계와 �
 ## Client API
 
 `LeaderboardManager`
-- `InitializeAsync(ct)` -> `Task<CommonResult>`
-- `ReportScoreAsync(leaderboard_id, ct)` -> `Task<CommonResult>`
-- `GetPlayerSnapshotAsync(leaderboard_id, ct)` -> `Task<CommonResult<LeaderboardPlayerSnapshot>>`
-- `SyncSeasonTransitionRewardsAsync(ct)` -> `Task<CommonResult>`
+- `InitializeAsync(ct)` -> `Task<GameResult>`
+- `ReportScoreAsync(leaderboard_id, ct)` -> `Task<GameResult>`
+- `GetPlayerSnapshotAsync(leaderboard_id, ct)` -> `Task<GameResult<LeaderboardPlayerSnapshot>>`
+- `SyncSeasonTransitionRewardsAsync(ct)` -> `Task<GameResult>`

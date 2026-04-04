@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using Devian.Domain.Common;
+using Devian.Domain.Game;
 using Firebase.Auth;
 
 namespace Devian
@@ -48,25 +48,25 @@ namespace Devian
         /// Google(Android) uses GPGS Reflection.
         /// Apple(iOS) requires Apple provider implementation; otherwise use the credential overload.
         /// </summary>
-        public async Task<CommonResult> LoginAsync(LoginType loginType, CancellationToken ct)
+        public async Task<GameResult> LoginAsync(LoginType loginType, CancellationToken ct)
         {
             var credResult = await getLoginCredentialAsync(loginType, ct);
             if (credResult.IsFailure)
             {
-                return CommonResult.Failure(credResult.Error!);
+                return GameResult.Failure(credResult.Error!);
             }
 
             return await LoginAsync(loginType, credResult.Value, ct);
         }
 
-        public async Task<CommonResult> LoginAsync(LoginType loginType, LoginCredential credential, CancellationToken ct)
+        public async Task<GameResult> LoginAsync(LoginType loginType, LoginCredential credential, CancellationToken ct)
         {
             var signInResult = await signInAsync(loginType, credential ?? LoginCredential.Empty(), ct);
             if (signInResult.IsFailure)
-                return CommonResult.Failure(signInResult.Error!);
+                return GameResult.Failure(signInResult.Error!);
 
             writeAccountState(loginType);
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         public void Logout()
@@ -91,23 +91,23 @@ namespace Devian
             writeAccountState(LoginType.NONE);
         }
 
-        public async Task<CommonResult<bool>> EnsureRuntimeAuthSessionAsync(CancellationToken ct)
+        public async Task<GameResult<bool>> EnsureRuntimeAuthSessionAsync(CancellationToken ct)
         {
             if (HasAuthenticatedSession)
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
 
             switch (CurrentLoginType)
             {
                 case LoginType.NONE:
-                    return CommonResult<bool>.Success(false);
+                    return GameResult<bool>.Success(false);
 
                 case LoginType.EDITOR:
                 case LoginType.GUEST:
                 {
                     var login = await LoginAsync(CurrentLoginType, ct);
                     if (login.IsFailure)
-                        return CommonResult<bool>.Failure(login.Error!);
-                    return CommonResult<bool>.Success(true);
+                        return GameResult<bool>.Failure(login.Error!);
+                    return GameResult<bool>.Success(true);
                 }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -117,38 +117,38 @@ namespace Devian
 
                 case LoginType.APPLE:
                 default:
-                    return CommonResult<bool>.Success(false);
+                    return GameResult<bool>.Success(false);
             }
         }
 
-        public async Task<CommonResult<bool>> TryRestoreGoogleAuthAsync(CancellationToken ct)
+        public async Task<GameResult<bool>> TryRestoreGoogleAuthAsync(CancellationToken ct)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
             var silentCredential = await _gpgs.GetServerAuthCodeCredentialSilentAsync(ct);
             if (silentCredential.IsFailure)
             {
                 Debug.Log($"[AccountManager] Google silent auth unavailable: {silentCredential.Error}");
-                return CommonResult<bool>.Success(false);
+                return GameResult<bool>.Success(false);
             }
 
             var signIn = await signInWithGoogleCredentialAsync(silentCredential.Value, ct);
             if (signIn.IsFailure)
-                return CommonResult<bool>.Failure(signIn.Error!);
+                return GameResult<bool>.Failure(signIn.Error!);
 
             writeAccountState(LoginType.GOOGLE);
-            return CommonResult<bool>.Success(true);
+            return GameResult<bool>.Success(true);
 #else
-            return CommonResult<bool>.Success(false);
+            return GameResult<bool>.Success(false);
 #endif
         }
 
-        private Task<CommonResult<LoginCredential>> getLoginCredentialAsync(LoginType loginType, CancellationToken ct)
+        private Task<GameResult<LoginCredential>> getLoginCredentialAsync(LoginType loginType, CancellationToken ct)
         {
             switch (loginType)
             {
                 case LoginType.EDITOR:
                 case LoginType.GUEST:
-                    return Task.FromResult(CommonResult<LoginCredential>.Success(LoginCredential.Empty()));
+                    return Task.FromResult(GameResult<LoginCredential>.Success(LoginCredential.Empty()));
 
 #if UNITY_ANDROID && !UNITY_EDITOR
                 case LoginType.GOOGLE:
@@ -161,14 +161,14 @@ namespace Devian
 #endif
 
                 default:
-                    return Task.FromResult(CommonResult<LoginCredential>.Failure(
-                        COMMON_ERROR_TYPE.LOGIN_CREDENTIAL_UNSUPPORTED,
+                    return Task.FromResult(GameResult<LoginCredential>.Failure(
+                        GAME_ERROR_TYPE.LOGIN_CREDENTIAL_UNSUPPORTED,
                         $"Internal credential acquisition is not supported for {loginType}. Use LoginAsync(LoginType, LoginCredential, CancellationToken) instead."));
             }
         }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
-        private async Task<CommonResult<LoginCredential>> getGoogleGpgsCredentialAsync(CancellationToken ct)
+        private async Task<GameResult<LoginCredential>> getGoogleGpgsCredentialAsync(CancellationToken ct)
         {
             return await _gpgs.GetServerAuthCodeCredentialAsync(ct);
         }
@@ -178,7 +178,7 @@ namespace Devian
 
         internal AccountLoginApple _getAccountLoginApple() => _apple;
 
-        private async Task<CommonResult> signInAsync(LoginType loginType, LoginCredential credential, CancellationToken ct)
+        private async Task<GameResult> signInAsync(LoginType loginType, LoginCredential credential, CancellationToken ct)
         {
             switch (loginType)
             {
@@ -187,8 +187,8 @@ namespace Devian
                 {
                     var r = await _firebaseLogin.SignInAnonymouslyAsync(ct);
                     return r.IsSuccess
-                        ? CommonResult.Ok()
-                        : CommonResult.Failure(r.Error!);
+                        ? GameResult.Ok()
+                        : GameResult.Failure(r.Error!);
                 }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -206,22 +206,22 @@ namespace Devian
 #endif
 
                 default:
-                    return CommonResult.Failure(COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED, $"LoginType {loginType} is not supported on this platform.");
+                    return GameResult.Failure(GAME_ERROR_TYPE.LOGIN_UNSUPPORTED, $"LoginType {loginType} is not supported on this platform.");
             }
         }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
-        async Task<CommonResult> signInWithGoogleCredentialAsync(LoginCredential credential, CancellationToken ct)
+        async Task<GameResult> signInWithGoogleCredentialAsync(LoginCredential credential, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(credential?.ServerAuthCode))
             {
-                return CommonResult.Failure(COMMON_ERROR_TYPE.LOGIN_GOOGLE_MISSING_AUTH_CODE,
+                return GameResult.Failure(GAME_ERROR_TYPE.LOGIN_GOOGLE_MISSING_AUTH_CODE,
                     "Google server auth code is missing. Configure GPGS server-side access and Web client ID.");
             }
 
             var init = await _firebaseLogin.InitializeAsync(ct);
             if (init.IsFailure)
-                return CommonResult.Failure(init.Error!);
+                return GameResult.Failure(init.Error!);
 
             Credential firebaseCredential;
             try
@@ -230,29 +230,29 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult.Failure(COMMON_ERROR_TYPE.LOGIN_GOOGLE_SIGNIN_FAILED, ex.Message);
+                return GameResult.Failure(GAME_ERROR_TYPE.LOGIN_GOOGLE_SIGNIN_FAILED, ex.Message);
             }
 
             return await signInOrLinkFirebaseCredentialAsync(
                 firebaseCredential,
-                COMMON_ERROR_TYPE.LOGIN_GOOGLE_LINK_FAILED,
-                COMMON_ERROR_TYPE.LOGIN_GOOGLE_SIGNIN_FAILED,
+                GAME_ERROR_TYPE.LOGIN_GOOGLE_LINK_FAILED,
+                GAME_ERROR_TYPE.LOGIN_GOOGLE_SIGNIN_FAILED,
                 ct);
         }
 #endif
 
 #if UNITY_IOS && !UNITY_EDITOR
-        async Task<CommonResult> signInWithAppleCredentialAsync(LoginCredential credential, CancellationToken ct)
+        async Task<GameResult> signInWithAppleCredentialAsync(LoginCredential credential, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(credential?.IdToken) || string.IsNullOrWhiteSpace(credential?.RawNonce))
             {
-                return CommonResult.Failure(COMMON_ERROR_TYPE.LOGIN_APPLE_MISSING_TOKEN,
+                return GameResult.Failure(GAME_ERROR_TYPE.LOGIN_APPLE_MISSING_TOKEN,
                     "Apple IdToken and RawNonce are required.");
             }
 
             var init = await _firebaseLogin.InitializeAsync(ct);
             if (init.IsFailure)
-                return CommonResult.Failure(init.Error!);
+                return GameResult.Failure(init.Error!);
 
             Credential firebaseCredential;
             try
@@ -265,26 +265,26 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult.Failure(COMMON_ERROR_TYPE.LOGIN_APPLE_SIGNIN_FAILED, ex.Message);
+                return GameResult.Failure(GAME_ERROR_TYPE.LOGIN_APPLE_SIGNIN_FAILED, ex.Message);
             }
 
             return await signInOrLinkFirebaseCredentialAsync(
                 firebaseCredential,
-                COMMON_ERROR_TYPE.LOGIN_APPLE_LINK_FAILED,
-                COMMON_ERROR_TYPE.LOGIN_APPLE_SIGNIN_FAILED,
+                GAME_ERROR_TYPE.LOGIN_APPLE_LINK_FAILED,
+                GAME_ERROR_TYPE.LOGIN_APPLE_SIGNIN_FAILED,
                 ct);
         }
 #endif
 
-        async Task<CommonResult> signInOrLinkFirebaseCredentialAsync(
+        async Task<GameResult> signInOrLinkFirebaseCredentialAsync(
             Credential credential,
-            COMMON_ERROR_TYPE linkErrorType,
-            COMMON_ERROR_TYPE signInErrorType,
+            GAME_ERROR_TYPE linkErrorType,
+            GAME_ERROR_TYPE signInErrorType,
             CancellationToken ct)
         {
             var init = await _firebaseLogin.InitializeAsync(ct);
             if (init.IsFailure)
-                return CommonResult.Failure(init.Error!);
+                return GameResult.Failure(init.Error!);
 
             FirebaseAuth auth;
             try
@@ -293,11 +293,11 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult.Failure(COMMON_ERROR_TYPE.FIREBASE_NOT_INITIALIZED, ex.Message);
+                return GameResult.Failure(GAME_ERROR_TYPE.FIREBASE_NOT_INITIALIZED, ex.Message);
             }
 
             if (auth == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.FIREBASE_NOT_INITIALIZED, "FirebaseAuth is null.");
+                return GameResult.Failure(GAME_ERROR_TYPE.FIREBASE_NOT_INITIALIZED, "FirebaseAuth is null.");
 
             var currentUser = auth.CurrentUser;
             if (currentUser != null && currentUser.IsAnonymous)
@@ -307,8 +307,8 @@ namespace Devian
                     var linked = await currentUser.LinkWithCredentialAsync(credential);
                     ct.ThrowIfCancellationRequested();
                     if (linked?.User == null)
-                        return CommonResult.Failure(linkErrorType, "Firebase link succeeded but user is null.");
-                    return CommonResult.Ok();
+                        return GameResult.Failure(linkErrorType, "Firebase link succeeded but user is null.");
+                    return GameResult.Ok();
                 }
                 catch (Exception linkEx)
                 {
@@ -321,12 +321,12 @@ namespace Devian
                 var user = await auth.SignInWithCredentialAsync(credential);
                 ct.ThrowIfCancellationRequested();
                 if (user == null)
-                    return CommonResult.Failure(signInErrorType, "Firebase sign-in succeeded but user is null.");
-                return CommonResult.Ok();
+                    return GameResult.Failure(signInErrorType, "Firebase sign-in succeeded but user is null.");
+                return GameResult.Ok();
             }
             catch (Exception ex)
             {
-                return CommonResult.Failure(signInErrorType, ex.Message);
+                return GameResult.Failure(signInErrorType, ex.Message);
             }
         }
 

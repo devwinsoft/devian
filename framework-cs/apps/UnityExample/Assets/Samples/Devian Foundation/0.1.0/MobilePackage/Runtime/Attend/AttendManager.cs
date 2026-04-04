@@ -65,14 +65,14 @@ namespace Devian
         public IReadOnlyList<ATTEND> ActiveRows => _activeRows;
         public IReadOnlyList<AttendRuntime> Runtimes => _runtimes;
 
-        public Task<CommonResult> InitializeAsync(CancellationToken ct = default)
+        public Task<GameResult> InitializeAsync(CancellationToken ct = default)
         {
             _ = ct;
 
             if (!RemoteDataManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
             {
-                return Task.FromResult(CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                return Task.FromResult(GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_SERVER_TIME_UNAVAILABLE,
                     "Server time is unavailable."));
             }
 
@@ -80,7 +80,7 @@ namespace Devian
             refreshState(serverNowUtcMs);
             _initialized = true;
 
-            return Task.FromResult(CommonResult.Ok());
+            return Task.FromResult(GameResult.Ok());
         }
 
         public void RefreshCycle()
@@ -162,44 +162,44 @@ namespace Devian
             return isRowClaimable(row, attendId.Trim(), serverNowUtcMs);
         }
 
-        public async Task<CommonResult<RewardData[]>> ClaimAsync(string attendId, CancellationToken ct = default)
+        public async Task<GameResult<RewardData[]>> ClaimAsync(string attendId, CancellationToken ct = default)
         {
             if (!_initialized)
-                return CommonResult<RewardData[]>.Failure(COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED, "AttendManager is not initialized.");
+                return GameResult<RewardData[]>.Failure(GAME_ERROR_TYPE.ATTEND_NOT_INITIALIZED, "AttendManager is not initialized.");
 
             if (string.IsNullOrWhiteSpace(attendId))
-                return CommonResult<RewardData[]>.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "attend_id is empty.");
+                return GameResult<RewardData[]>.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "attend_id is empty.");
 
             ct.ThrowIfCancellationRequested();
 
             if (!RemoteDataManager.TryGetServerNowUtcMs(out var serverNowUtcMs))
-                return CommonResult<RewardData[]>.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, "Server time is unavailable.");
+                return GameResult<RewardData[]>.Failure(GAME_ERROR_TYPE.GAME_SERVER_TIME_UNAVAILABLE, "Server time is unavailable.");
 
             rebuildRowCache();
             refreshState(serverNowUtcMs);
 
             if (_rowByDay.Count <= 0)
             {
-                return CommonResult<RewardData[]>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult<RewardData[]>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     "ATTEND table is empty or contains no active rows.");
             }
 
             var key = attendId.Trim();
             if (!_rowById.TryGetValue(key, out var row) || row == null)
-                return CommonResult<RewardData[]>.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, $"Attend row not found: {key}");
+                return GameResult<RewardData[]>.Failure(GAME_ERROR_TYPE.ATTEND_NOT_FOUND, $"Attend row not found: {key}");
 
             if (isClaimedToday(serverNowUtcMs))
             {
-                return CommonResult<RewardData[]>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult<RewardData[]>.Failure(
+                    GAME_ERROR_TYPE.ATTEND_NOT_CLAIMABLE,
                     "Attend reward has already been claimed today.");
             }
 
             if (_storage.nextAttendDay > MaxAttendDay)
             {
-                return CommonResult<RewardData[]>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult<RewardData[]>.Failure(
+                    GAME_ERROR_TYPE.ATTEND_CYCLE_COMPLETED,
                     "Attend cycle is completed. Wait for next day reset.");
             }
 
@@ -207,19 +207,19 @@ namespace Devian
             {
                 if (row.day != _storage.nextAttendDay)
                 {
-                    return CommonResult<RewardData[]>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    return GameResult<RewardData[]>.Failure(
+                        GAME_ERROR_TYPE.ATTEND_DAY_MISMATCH,
                         $"Attend day mismatch: requested={row.day}, expected={_storage.nextAttendDay}");
                 }
 
-                return CommonResult<RewardData[]>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult<RewardData[]>.Failure(
+                    GAME_ERROR_TYPE.ATTEND_NOT_CLAIMABLE,
                     $"Attend is not claimable: {row.attend_id}");
             }
 
             var apply = RewardManager.Instance.ApplyRewardGroup(row.reward_group_id);
             if (apply.IsFailure)
-                return CommonResult<RewardData[]>.Failure(apply.Error!);
+                return GameResult<RewardData[]>.Failure(GAME_ERROR_TYPE.ATTEND_REWARD_APPLY_FAILED, apply.Error?.Message ?? "Failed to apply reward group.");
 
             _storage.SetClaimed(row.attend_id, serverNowUtcMs);
             _storage.nextAttendDay = row.day >= MaxAttendDay
@@ -230,9 +230,9 @@ namespace Devian
 
             var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
             if (save.IsFailure)
-                return CommonResult<RewardData[]>.Failure(save.Error!);
+                return GameResult<RewardData[]>.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, save.Error?.Message ?? "Failed to save game storage.");
 
-            return CommonResult<RewardData[]>.Success(apply.Value.AppliedRewards ?? Array.Empty<RewardData>());
+            return GameResult<RewardData[]>.Success(apply.Value.AppliedRewards ?? Array.Empty<RewardData>());
         }
 
         public void ClearStorage()

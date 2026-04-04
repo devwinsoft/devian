@@ -84,10 +84,10 @@ namespace Devian
             normalizeProgressionState(persistState: Storage != null);
         }
 
-        internal override CommonResult<bool> SyncRuntimeState(bool requireServerTime)
+        internal override GameResult<bool> SyncRuntimeState(bool requireServerTime)
         {
             var didMutate = normalizeProgressionState(persistState: Storage != null);
-            return CommonResult<bool>.Success(didMutate);
+            return GameResult<bool>.Success(didMutate);
         }
 
         internal SHOP_CATALOG_CHEST GetCurrentLevelRow()
@@ -95,12 +95,12 @@ namespace Devian
             return TB_SHOP_CATALOG_CHEST.Get(_level) ?? findClosestRow(_level);
         }
 
-        internal CommonResult<ChestPurchaseRuntime> ResolvePurchaseRuntime(ShopProductChest product)
+        internal GameResult<ChestPurchaseRuntime> ResolvePurchaseRuntime(ShopProductChest product)
         {
             if (product == null)
             {
-                return CommonResult<ChestPurchaseRuntime>.Failure(
-                    COMMON_ERROR_TYPE.SHOP_PRODUCT_NOT_FOUND,
+                return GameResult<ChestPurchaseRuntime>.Failure(
+                    GAME_ERROR_TYPE.SHOP_PRODUCT_NOT_FOUND,
                     "Chest product is null.");
             }
 
@@ -109,8 +109,8 @@ namespace Devian
             var row = GetCurrentLevelRow();
             if (row == null)
             {
-                return CommonResult<ChestPurchaseRuntime>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult<ChestPurchaseRuntime>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"SHOP_CATALOG_CHEST row not found: level={_level}");
             }
 
@@ -131,19 +131,19 @@ namespace Devian
                     gainExp = IsMaxLevel ? 0 : row.gain_exp10;
                     break;
                 default:
-                    return CommonResult<ChestPurchaseRuntime>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
-                        $"Unsupported chest type: shop_item_id={product.shop_item_id}, chest_type={product.chest_type}");
+                    return GameResult<ChestPurchaseRuntime>.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                        $"Unsupported chest type: shop_id={product.shop_id}, chest_type={product.chest_type}");
             }
 
             if (string.IsNullOrWhiteSpace(rewardGroupId))
             {
-                return CommonResult<ChestPurchaseRuntime>.Failure(
-                    COMMON_ERROR_TYPE.SHOP_REWARD_GROUP_EMPTY,
-                    $"Chest reward group is empty: shop_item_id={product.shop_item_id}, level={row.level}, chest_type={product.chest_type}");
+                return GameResult<ChestPurchaseRuntime>.Failure(
+                    GAME_ERROR_TYPE.SHOP_REWARD_GROUP_EMPTY,
+                    $"Chest reward group is empty: shop_id={product.shop_id}, level={row.level}, chest_type={product.chest_type}");
             }
 
-            return CommonResult<ChestPurchaseRuntime>.Success(
+            return GameResult<ChestPurchaseRuntime>.Success(
                 new ChestPurchaseRuntime(rewardGroupId.Trim(), product.amount, gainExp));
         }
 

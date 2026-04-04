@@ -48,10 +48,5 @@ MonoBehaviour:
     DuplicatePolicy: 0
   _popupCanvasId:
     Value: ui_popup_canvas
-  _popupFrameMappings:
-  - FrameTypeName: UIPopupFrameConfirm, Assembly-CSharp, Version=0.0.0.0, Culture=neutral,
-      PublicKeyToken=null
-    FrameId:
-      Value: ui_popup_confirm
   _dimColor: {r: 0, g: 0, b: 0, a: 1}
   _dimAlpha: 0.75

@@ -101,19 +101,19 @@ namespace Devian
             return inv;
         }
 
-        public static CommonResult DeserializeInto(JObject inv, InventoryStorage inventory)
+        public static GameResult DeserializeInto(JObject inv, InventoryStorage inventory)
         {
             if (inv == null)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
                     "SaveDataJsonCodecInventory.DeserializeInto: inventory json is null.");
             }
 
             if (inventory == null)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
                     "SaveDataJsonCodecInventory.DeserializeInto: inventory storage is null.");
             }
 
@@ -150,7 +150,7 @@ namespace Devian
                         itemUid,
                         itemLevel);
                     if (ability.IsFailure)
-                        return CommonResult.Failure(ability.Error!);
+                        return ToGameResult(ability);
 
                     inventory.AddEquip(itemUid, ability.Value);
                 }
@@ -168,14 +168,14 @@ namespace Devian
                     var amount = readSavedItemAmount(obj, savedStats);
                     if (amount < 0)
                     {
-                        return CommonResult.Failure(
-                            COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                        return GameResult.Failure(
+                            GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
                             $"SaveDataJsonCodecInventory.DeserializeInto: card amount is negative. item_id={itemId}, amount={amount}");
                     }
 
                     var ability = AbilityItemFactory.CreateCard(itemId, itemLevel);
                     if (ability.IsFailure)
-                        return CommonResult.Failure(ability.Error!);
+                        return ToGameResult(ability);
 
                     ability.Value.SetStat(STAT_TYPE.ITEM_AMOUNT, amount);
                     inventory.AddCard(itemId, ability.Value);
@@ -193,14 +193,14 @@ namespace Devian
                     var amount = readSavedItemAmount(obj, savedStats);
                     if (amount < 0)
                     {
-                        return CommonResult.Failure(
-                            COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                        return GameResult.Failure(
+                            GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
                             $"SaveDataJsonCodecInventory.DeserializeInto: material amount is negative. item_id={itemId}, amount={amount}");
                     }
 
                     var ability = AbilityItemFactory.CreateMaterial(itemId);
                     if (ability.IsFailure)
-                        return CommonResult.Failure(ability.Error!);
+                        return ToGameResult(ability);
 
                     ability.Value.SetStat(STAT_TYPE.ITEM_AMOUNT, amount);
                     inventory.AddMaterial(itemId, ability.Value);
@@ -220,14 +220,14 @@ namespace Devian
                     var amount = readSavedItemAmount(obj, savedStats);
                     if (amount < 0)
                     {
-                        return CommonResult.Failure(
-                            COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                        return GameResult.Failure(
+                            GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
                             $"SaveDataJsonCodecInventory.DeserializeInto: hero amount is negative. item_id={itemId}, amount={amount}");
                     }
 
                     var ability = AbilityItemFactory.CreateHero(itemId, itemLevel);
                     if (ability.IsFailure)
-                        return CommonResult.Failure(ability.Error!);
+                        return ToGameResult(ability);
 
                     ability.Value.SetStat(STAT_TYPE.ITEM_AMOUNT, amount);
                     inventory.AddHero(itemId, ability.Value);
@@ -238,30 +238,30 @@ namespace Devian
                         {
                             if (!int.TryParse(ep.Name, out var slotNumber))
                             {
-                                return CommonResult.Failure(
-                                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                                return GameResult.Failure(
+                                    GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
                                     $"SaveDataJsonCodecInventory.DeserializeInto: invalid hero equip slot key: {ep.Name}");
                             }
 
                             var equipUid = ep.Value.Value<string>();
                             if (string.IsNullOrWhiteSpace(equipUid))
                             {
-                                return CommonResult.Failure(
-                                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                                return GameResult.Failure(
+                                    GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
                                     $"SaveDataJsonCodecInventory.DeserializeInto: empty hero equip uid. item_id={itemId}, slot={slotNumber}");
                             }
 
                             if (!restoredEquipUids.Add(equipUid))
                             {
-                                return CommonResult.Failure(
-                                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                                return GameResult.Failure(
+                                    GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
                                     $"SaveDataJsonCodecInventory.DeserializeInto: duplicate hero equip reference. equipUid={equipUid}");
                             }
 
                             if (!inventory.Equip(itemId, slotNumber, equipUid))
                             {
-                                return CommonResult.Failure(
-                                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                                return GameResult.Failure(
+                                    GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
                                     $"SaveDataJsonCodecInventory.DeserializeInto: failed to restore hero equip. item_id={itemId}, slot={slotNumber}, equipUid={equipUid}");
                             }
                         }
@@ -285,7 +285,7 @@ namespace Devian
 
             // stamina
             inventory.LastStaminaUpdateUtcMs = inv.Value<long?>("lastStaminaUpdateUtcMs") ?? 0L;
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         static int readSavedItemLevel(JObject obj, IReadOnlyDictionary<STAT_TYPE, int> stats)
@@ -342,6 +342,30 @@ namespace Devian
                 default:
                     return System.Enum.TryParse(name, out statType);
             }
+        }
+
+        static GameResult ToGameResult(GameResult result)
+        {
+            if (result.IsSuccess)
+                return GameResult.Ok();
+            var error = result.Error!;
+            return GameResult.Failure(
+                new GameError(
+                    GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
+                    error.Message,
+                    $"gameCode={error.Code}; {error.Details}"));
+        }
+
+        static GameResult ToGameResult<T>(GameResult<T> result)
+        {
+            if (result.IsSuccess)
+                return GameResult.Ok();
+            var error = result.Error!;
+            return GameResult.Failure(
+                new GameError(
+                    GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
+                    error.Message,
+                    $"gameCode={error.Code}; {error.Details}"));
         }
     }
 }

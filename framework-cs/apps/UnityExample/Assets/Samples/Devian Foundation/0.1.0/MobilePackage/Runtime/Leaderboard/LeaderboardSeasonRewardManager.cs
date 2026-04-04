@@ -21,16 +21,16 @@ namespace Devian
         public LeaderboardSeasonRewardStorage Storage => _storage;
         public bool IsInitialized => _initialized;
 
-        public async Task<CommonResult> InitializeAsync(CancellationToken ct = default)
+        public async Task<GameResult> InitializeAsync(CancellationToken ct = default)
         {
             await _initializeGate.WaitAsync(ct);
             try
             {
                 if (_initialized)
-                    return CommonResult.Ok();
+                    return GameResult.Ok();
 
                 _initialized = true;
-                return CommonResult.Ok();
+                return GameResult.Ok();
             }
             finally
             {
@@ -43,23 +43,23 @@ namespace Devian
             _storage.Clear();
         }
 
-        public async Task<CommonResult> SyncSeasonTransitionRewardsAsync(CancellationToken ct = default)
+        public async Task<GameResult> SyncSeasonTransitionRewardsAsync(CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
 
             if (!_initialized)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED, "LeaderboardSeasonRewardManager is not initialized.");
+                return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "LeaderboardSeasonRewardManager is not initialized.");
 
             if (!RemoteDataManager.TryGetServerNowUtcMs(out var serverNowUtcMs)
                 || serverNowUtcMs <= 0L)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             if (!LeaderboardManager.TryGet(out var leaderboardManager) || leaderboardManager == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "LeaderboardManager is not initialized.");
+                return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "LeaderboardManager is not initialized.");
 
             var activeRows = collectActiveSeasonRows();
             if (activeRows.Count <= 0)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             var hasAnyClaimWrite = false;
             foreach (var mode in GetAllModes())
@@ -142,13 +142,13 @@ namespace Devian
             }
 
             if (!hasAnyClaimWrite)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
             if (save.IsFailure)
-                return CommonResult.Failure(save.Error!);
+                return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, save.Error!.Message, $"commonCode={save.Error.Code}");
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         private static LEADERBOARD_MODE[] GetAllModes()

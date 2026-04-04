@@ -2,7 +2,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Devian.Domain.Common;
+using Devian.Domain.Game;
 using Firebase;
 using Firebase.Auth;
 using UnityEngine;
@@ -20,10 +20,10 @@ namespace Devian
         private bool _isInitialized;
 
 
-        public async Task<CommonResult<bool>> InitializeAsync(CancellationToken ct)
+        public async Task<GameResult<bool>> InitializeAsync(CancellationToken ct)
         {
             if (_isInitialized)
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
 
 
             try
@@ -34,7 +34,7 @@ namespace Devian
 
                 if (status != DependencyStatus.Available)
                 {
-                    return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.FIREBASE_DEPENDENCY,
+                    return GameResult<bool>.Failure(GAME_ERROR_TYPE.FIREBASE_DEPENDENCY,
                         $"Firebase dependencies not available: {status}");
                 }
 
@@ -44,25 +44,25 @@ namespace Devian
                 _isInitialized = true;
 
 
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[AccountLoginFirebase] Initialize failed: {ex}");
-                return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.FIREBASE_DEPENDENCY, ex.Message);
+                return GameResult<bool>.Failure(GAME_ERROR_TYPE.FIREBASE_DEPENDENCY, ex.Message);
             }
         }
 
 
-        public async Task<CommonResult<string>> SignInAnonymouslyAsync(CancellationToken ct)
+        public async Task<GameResult<string>> SignInAnonymouslyAsync(CancellationToken ct)
         {
             var init = await InitializeAsync(ct);
             if (init.IsFailure)
-                return CommonResult<string>.Failure(init.Error!);
+                return GameResult<string>.Failure(init.Error!);
 
 
             if (_auth == null)
-                return CommonResult<string>.Failure(COMMON_ERROR_TYPE.FIREBASE_NOT_INITIALIZED, "FirebaseAuth is null.");
+                return GameResult<string>.Failure(GAME_ERROR_TYPE.FIREBASE_NOT_INITIALIZED, "FirebaseAuth is null.");
 
 
             // 기존 anonymous user가 있으면 재사용 (새 UID 생성 방지).
@@ -71,7 +71,7 @@ namespace Devian
             // 새 계정이 생성될 수 있다.
             var current = _auth.CurrentUser;
             if (current != null && current.IsAnonymous)
-                return CommonResult<string>.Success(current.UserId);
+                return GameResult<string>.Success(current.UserId);
 
 
             try
@@ -82,34 +82,34 @@ namespace Devian
 
                 var user = result?.User;
                 if (user == null)
-                    return CommonResult<string>.Failure(COMMON_ERROR_TYPE.FIREBASE_SIGNIN, "Sign-in succeeded but user is null.");
+                    return GameResult<string>.Failure(GAME_ERROR_TYPE.FIREBASE_SIGNIN, "Sign-in succeeded but user is null.");
 
 
-                return CommonResult<string>.Success(user.UserId);
+                return GameResult<string>.Success(user.UserId);
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[AccountLoginFirebase] SignInAnonymously failed: {ex}");
-                return CommonResult<string>.Failure(COMMON_ERROR_TYPE.FIREBASE_SIGNIN, ex.Message);
+                return GameResult<string>.Failure(GAME_ERROR_TYPE.FIREBASE_SIGNIN, ex.Message);
             }
         }
 
 
-        public CommonResult<bool> SignOut()
+        public GameResult<bool> SignOut()
         {
             if (!_isInitialized || _auth == null)
-                return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.FIREBASE_NOT_INITIALIZED, "Firebase is not initialized.");
+                return GameResult<bool>.Failure(GAME_ERROR_TYPE.FIREBASE_NOT_INITIALIZED, "Firebase is not initialized.");
 
 
             try
             {
                 _auth.SignOut();
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[AccountLoginFirebase] SignOut failed: {ex}");
-                return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.FIREBASE_SIGNIN, ex.Message);
+                return GameResult<bool>.Failure(GAME_ERROR_TYPE.FIREBASE_SIGNIN, ex.Message);
             }
         }
     }

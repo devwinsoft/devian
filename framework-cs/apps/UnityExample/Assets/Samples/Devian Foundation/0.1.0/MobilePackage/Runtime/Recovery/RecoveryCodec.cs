@@ -1,7 +1,7 @@
 using System;
 using System.Security.Cryptography;
 using System.Text;
-using Devian.Domain.Common;
+using Devian.Domain.Game;
 using Newtonsoft.Json.Linq;
 
 namespace Devian
@@ -38,14 +38,14 @@ namespace Devian
         /// .dvn 파일 내용 → 평문 JSON.
         /// v2: HMAC 무결성 검증 포함.
         /// v1: 하위호환 (HMAC 없이 디코딩).
-        /// 실패 시 CommonResult 에러 반환.
+        /// 실패 시 GameResult 에러 반환.
         /// </summary>
-        internal static CommonResult<string> Decode(string dvnContent)
+        internal static GameResult<string> Decode(string dvnContent)
         {
             if (string.IsNullOrEmpty(dvnContent) || dvnContent.Length < 2)
             {
-                return CommonResult<string>.Failure(
-                    COMMON_ERROR_TYPE.RECOVERY_DECODE_FAILED,
+                return GameResult<string>.Failure(
+                    GAME_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     "Invalid .dvn file: too short");
             }
 
@@ -58,8 +58,8 @@ namespace Devian
                 case DVN_VERSION_V2:
                     return DecodeV2(dvnContent);
                 default:
-                    return CommonResult<string>.Failure(
-                        COMMON_ERROR_TYPE.RECOVERY_UNSUPPORTED_VERSION,
+                    return GameResult<string>.Failure(
+                        GAME_ERROR_TYPE.RECOVERY_UNSUPPORTED_VERSION,
                         $"Unsupported .dvn version: {version}");
             }
         }
@@ -67,18 +67,18 @@ namespace Devian
         // ──────────────────────────────────────
         // v1 하위호환: HMAC 없이 디코딩
         // ──────────────────────────────────────
-        private static CommonResult<string> DecodeV1(string dvnContent)
+        private static GameResult<string> DecodeV1(string dvnContent)
         {
             try
             {
                 var payload = dvnContent.Substring(1);
                 var json = ComplexUtil.Decrypt_Base64(payload);
-                return CommonResult<string>.Success(json);
+                return GameResult<string>.Success(json);
             }
             catch (Exception ex)
             {
-                return CommonResult<string>.Failure(
-                    COMMON_ERROR_TYPE.RECOVERY_DECODE_FAILED,
+                return GameResult<string>.Failure(
+                    GAME_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     $"DVN v1 decode failed: {ex.Message}");
             }
         }
@@ -86,7 +86,7 @@ namespace Devian
         // ──────────────────────────────────────
         // v2: HMAC 검증 포함
         // ──────────────────────────────────────
-        private static CommonResult<string> DecodeV2(string dvnContent)
+        private static GameResult<string> DecodeV2(string dvnContent)
         {
             string signedPayload;
             try
@@ -96,8 +96,8 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult<string>.Failure(
-                    COMMON_ERROR_TYPE.RECOVERY_DECODE_FAILED,
+                return GameResult<string>.Failure(
+                    GAME_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     $"DVN v2 decode failed: {ex.Message}");
             }
 
@@ -105,8 +105,8 @@ namespace Devian
             // 분리: 마지막 65번째 문자가 "\n", 이후 64자가 hmac
             if (signedPayload.Length < HMAC_HEX_LENGTH + HMAC_SEPARATOR.Length + 1)
             {
-                return CommonResult<string>.Failure(
-                    COMMON_ERROR_TYPE.RECOVERY_DECODE_FAILED,
+                return GameResult<string>.Failure(
+                    GAME_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     "DVN v2 signed payload too short");
             }
 
@@ -114,8 +114,8 @@ namespace Devian
             var separator = signedPayload.Substring(separatorIndex, HMAC_SEPARATOR.Length);
             if (separator != HMAC_SEPARATOR)
             {
-                return CommonResult<string>.Failure(
-                    COMMON_ERROR_TYPE.RECOVERY_HMAC_FAILED,
+                return GameResult<string>.Failure(
+                    GAME_ERROR_TYPE.RECOVERY_HMAC_FAILED,
                     "DVN v2 HMAC separator not found");
             }
 
@@ -127,12 +127,12 @@ namespace Devian
             var expectedHmac = ComputeHmac(json, socialUserId);
             if (!string.Equals(hmacHex, expectedHmac, StringComparison.Ordinal))
             {
-                return CommonResult<string>.Failure(
-                    COMMON_ERROR_TYPE.RECOVERY_HMAC_FAILED,
+                return GameResult<string>.Failure(
+                    GAME_ERROR_TYPE.RECOVERY_HMAC_FAILED,
                     "DVN v2 HMAC verification failed");
             }
 
-            return CommonResult<string>.Success(json);
+            return GameResult<string>.Success(json);
         }
 
         // ──────────────────────────────────────

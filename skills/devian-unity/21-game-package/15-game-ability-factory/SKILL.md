@@ -32,7 +32,7 @@ AppliesTo: v10
 - `ITEM_*`와 `UNIT_*`를 암묵적으로 연결하려는 잘못된 설계가 섞이기 쉬움
 
 Factory layer의 목적은 **생성 책임을 중앙화**하고, 특히 **outgame preview용 projection**을 명시적인 context로 다루는 것이다.
-예상 가능한 validation / lookup 실패는 `throw`가 아니라 `CommonResult.Failure(...)`로 반환한다.
+예상 가능한 validation / lookup 실패는 `throw`가 아니라 `GameResult.Failure(...)`로 반환한다.
 
 ---
 
@@ -83,7 +83,7 @@ level table 규칙:
 - stack amount 같은 mutable 상태 복원은 factory 바깥 호출부가 담당한다
 - hero equip loadout 저장은 `AbilityItemHero.SetEquip()/RemoveEquip()` 또는 inventory facade가 담당한다
 - 즉 순서는 `find level row -> Init(table, levelTable, ...) -> restore mutable state` 다
-- level row가 없으면 `CommonResult.Failure(ABILITY_ITEM_TABLE_NOT_FOUND, ...)`
+- level row가 없으면 `GameResult.Failure(GAME_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND, ...)`
 - 빈 stat slot(`STAT_TYPE.NONE`)은 skip한다
 
 ### 4.2 Unit 생성은 unit-table-first
@@ -149,7 +149,7 @@ var previewResult = AbilityUnitFactory.CreateHero(itemHero);
 - `UnitId`는 필수다.
 - `UnitLevel` 기본값은 `1`이다.
 - `Equips`는 preview/unit 계산에 사용할 장비 입력이다. factory는 clone 후 `AbilityUnitHero.Equip()`으로 projection한다.
-- invalid input / lookup failure는 `CommonResult.Failure(...)`로 반환한다.
+- invalid input / lookup failure는 `GameResult.Failure(...)`로 반환한다.
 
 ---
 
@@ -187,19 +187,19 @@ var previewResult = AbilityUnitFactory.CreateHero(itemHero);
 ## 8. Recommended API Shape
 
 ```csharp
-using Devian.Domain.Common;
+using Devian.Domain.Game;
 
 public static class AbilityItemFactory
 {
-    public static CommonResult<AbilityItemCard> CreateCard(ITEM_CARD table,
+    public static GameResult<AbilityItemCard> CreateCard(ITEM_CARD table,
         int itemLevel = 1);
 
-    public static CommonResult<AbilityItemMaterial> CreateMaterial(ITEM_MATERIAL table);
+    public static GameResult<AbilityItemMaterial> CreateMaterial(ITEM_MATERIAL table);
 
-    public static CommonResult<AbilityItemHero> CreateHero(ITEM_HERO table,
+    public static GameResult<AbilityItemHero> CreateHero(ITEM_HERO table,
         int itemLevel = 1);
 
-    public static CommonResult<AbilityItemEquip> CreateEquip(ITEM_EQUIP table, string itemUid,
+    public static GameResult<AbilityItemEquip> CreateEquip(ITEM_EQUIP table, string itemUid,
         int itemLevel = 1);
 }
 
@@ -227,17 +227,17 @@ public sealed class AbilityUnitHeroContext
 
 public static class AbilityUnitFactory
 {
-    public static CommonResult<AbilityUnitHero> CreateHero(string unitId,
+    public static GameResult<AbilityUnitHero> CreateHero(string unitId,
         int unitLevel = 1);
 
-    public static CommonResult<AbilityUnitHero> CreateHero(UNIT_HERO table,
+    public static GameResult<AbilityUnitHero> CreateHero(UNIT_HERO table,
         int unitLevel = 1);
 
-    public static CommonResult<AbilityUnitHero> CreateHero(AbilityUnitHeroContext context);
+    public static GameResult<AbilityUnitHero> CreateHero(AbilityUnitHeroContext context);
 
-    public static CommonResult<AbilityUnitHero> CreateHero(AbilityItemHero itemHero);
+    public static GameResult<AbilityUnitHero> CreateHero(AbilityItemHero itemHero);
 
-    public static CommonResult<AbilityUnitMonster> CreateMonster(UNIT_MONSTER table,
+    public static GameResult<AbilityUnitMonster> CreateMonster(UNIT_MONSTER table,
         int unitLevel = 1);
 }
 ```
@@ -283,7 +283,7 @@ public static class AbilityUnitFactory
 ## 11. Hard Rules
 
 - 새 코드에서는 `new Ability...()` + `Init(...)`를 호출부에 흩뿌리지 말고 factory 경유를 우선한다.
-- 새 factory API는 expected failure에서 `throw`하지 않고 `CommonResult`를 반환한다.
+- 새 factory API는 expected failure에서 `throw`하지 않고 `GameResult`를 반환한다.
 - `AbilityUnitHero`가 `ITEM_HERO`를 직접 조회해서 `UNIT_HERO`를 추론하면 안 된다.
 - direct-reference overload를 만들더라도 내부 정본 경로는 context 기반이어야 한다.
 - `AbilityItem*` 생성과 `AbilityUnit*` 생성 규칙은 분리하되, 필요하면 façade `AbilityFactory`로 묶을 수 있다.
@@ -296,14 +296,14 @@ public static class AbilityUnitFactory
 
 `ITEM_HERO` row + saved level/amount/equips
 → `AbilityItemFactory.CreateHero(...)`
-→ `CommonResult<AbilityItemHero>`
+→ `GameResult<AbilityItemHero>`
 → `IsSuccess` 확인 후 `AbilityItemHero`
 
 ### Ingame spawn
 
 `unit_id`
 → `AbilityUnitFactory.CreateHero(unit_id)`
-→ `CommonResult<AbilityUnitHero>`
+→ `GameResult<AbilityUnitHero>`
 → `IsSuccess` 확인 후 `AbilityUnitHero`
 
 ### Outgame preview
@@ -311,7 +311,7 @@ public static class AbilityUnitFactory
 `AbilityItemHero` + explicit `unit_id` + optional override stats
 → `AbilityUnitHeroContext`
 → `AbilityUnitFactory.CreateHero(context)`
-→ `CommonResult<AbilityUnitHero>`
+→ `GameResult<AbilityUnitHero>`
 → preview `AbilityUnitHero`
 
 ---

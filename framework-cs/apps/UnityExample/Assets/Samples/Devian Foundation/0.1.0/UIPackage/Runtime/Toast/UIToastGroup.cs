@@ -212,9 +212,12 @@ namespace Devian
             }
 
             var frameRect = frame.rectTransform;
-            frame.ApplyGroupOffset(_config.AnchoredOffset + localOffset);
             LayoutRebuilder.ForceRebuildLayoutImmediate(frameRect);
-            return ResolveSize(frameRect);
+            var frameSize = ResolveSize(frameRect);
+
+            frame.ApplyGroupOffset(ResolveAnchorOffset(frameSize) + _config.AnchoredOffset + localOffset);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(frameRect);
+            return frameSize;
         }
 
         private static Vector2 ResolveFrameSize(UIToastFrame frame)
@@ -237,6 +240,42 @@ namespace Devian
             _root.anchoredPosition = Vector2.zero;
             _root.sizeDelta = Vector2.zero;
             _root.localScale = Vector3.one;
+        }
+
+        private Vector2 ResolveAnchorOffset(Vector2 frameSize)
+        {
+            var anchor = ResolveAnchorPreset(_config.AnchorPreset);
+            var rootSize = _root.rect.size;
+            return new Vector2(
+                (rootSize.x - frameSize.x) * (anchor.x - 0.5f),
+                (rootSize.y - frameSize.y) * (anchor.y - 0.5f));
+        }
+
+        private static Vector2 ResolveAnchorPreset(ToastAnchorPreset anchorPreset)
+        {
+            switch (anchorPreset)
+            {
+                case ToastAnchorPreset.TopLeft:
+                    return new Vector2(0f, 1f);
+                case ToastAnchorPreset.TopCenter:
+                    return new Vector2(0.5f, 1f);
+                case ToastAnchorPreset.TopRight:
+                    return new Vector2(1f, 1f);
+                case ToastAnchorPreset.MiddleLeft:
+                    return new Vector2(0f, 0.5f);
+                case ToastAnchorPreset.MiddleCenter:
+                    return new Vector2(0.5f, 0.5f);
+                case ToastAnchorPreset.MiddleRight:
+                    return new Vector2(1f, 0.5f);
+                case ToastAnchorPreset.BottomLeft:
+                    return new Vector2(0f, 0f);
+                case ToastAnchorPreset.BottomCenter:
+                    return new Vector2(0.5f, 0f);
+                case ToastAnchorPreset.BottomRight:
+                    return new Vector2(1f, 0f);
+                default:
+                    return new Vector2(0.5f, 1f);
+            }
         }
 
         private Vector2 ResolveStep(Vector2 size)

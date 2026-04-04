@@ -16,25 +16,25 @@ namespace Devian
         //  OpenCollectedChests
         // ──────────────────────────────────────────────
 
-        public CommonResult OpenCollectedChests(TREASURE_GRADE_TYPE gradeType)
+        public GameResult OpenCollectedChests(TREASURE_GRADE_TYPE gradeType)
         {
             if (gradeType == TREASURE_GRADE_TYPE.NONE)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_GRADE_INVALID, "gradeType NONE is not allowed.");
+                return GameResult.Failure(GAME_ERROR_TYPE.TREASURE_GRADE_INVALID, "gradeType NONE is not allowed.");
 
             var count = storage.GetTreasureCount(gradeType);
             if (count <= 0)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             var rewardRows = TB_TREASURE_REWARD.GetByGroup(gradeType);
             if (rewardRows == null || rewardRows.Count == 0)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_EMPTY, $"TREASURE_REWARD rows not found: {gradeType}");
+                return GameResult.Failure(GAME_ERROR_TYPE.TREASURE_REWARD_EMPTY, $"TREASURE_REWARD rows not found: {gradeType}");
 
             var bestRow = selectBestRewardRow(rewardRows);
             if (bestRow == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_EMPTY, $"No TREASURE_REWARD row satisfied condition: {gradeType}");
+                return GameResult.Failure(GAME_ERROR_TYPE.TREASURE_REWARD_EMPTY, $"No TREASURE_REWARD row satisfied condition: {gradeType}");
 
             if (string.IsNullOrEmpty(bestRow.reward_group_id))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_GROUP_EMPTY, $"TREASURE_REWARD.reward_group_id is empty: {gradeType}, level={bestRow.level}");
+                return GameResult.Failure(GAME_ERROR_TYPE.TREASURE_REWARD_GROUP_EMPTY, $"TREASURE_REWARD.reward_group_id is empty: {gradeType}, level={bestRow.level}");
 
             // apply rewards: count times × best row
             for (var c = 0; c < count; c++)
@@ -43,48 +43,48 @@ namespace Devian
                 if (applyResult.IsFailure)
                 {
                     Debug.LogError($"[{Tag}] OpenCollectedChests RewardManager.ApplyRewardGroup failed: {gradeType}, round={c}, reward_group_id={bestRow.reward_group_id}");
-                    return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_APPLY_FAILED, $"RewardManager.ApplyRewardGroup failed: {bestRow.reward_group_id}");
+                    return GameResult.Failure(applyResult.Error!);
                 }
             }
 
             // all-or-nothing: commit only after all rewards succeed
             storage.SetTreasureCount(gradeType, 0);
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         // ──────────────────────────────────────────────
         //  OpenCurrentChest
         // ──────────────────────────────────────────────
 
-        public CommonResult OpenCurrentChest()
+        public GameResult OpenCurrentChest()
         {
             var currentLevel = storage.TreasureCurrent.Level;
 
             var chestRow = TB_TREASURE_CHEST.Get(currentLevel);
             if (chestRow == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_CHEST_NOT_FOUND, $"TREASURE_CHEST row not found: level={currentLevel}");
+                return GameResult.Failure(GAME_ERROR_TYPE.TREASURE_CHEST_NOT_FOUND, $"TREASURE_CHEST row not found: level={currentLevel}");
 
             if (storage.TreasureCurrent.Exp < chestRow.max_exp)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             var gradeType = chestRow.treasure_grade_type;
             var rewardRows = TB_TREASURE_REWARD.GetByGroup(gradeType);
             if (rewardRows == null || rewardRows.Count == 0)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_EMPTY, $"TREASURE_REWARD rows not found: {gradeType}");
+                return GameResult.Failure(GAME_ERROR_TYPE.TREASURE_REWARD_EMPTY, $"TREASURE_REWARD rows not found: {gradeType}");
 
             var bestRow = selectBestRewardRow(rewardRows);
             if (bestRow == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_EMPTY, $"No TREASURE_REWARD row satisfied condition: {gradeType}");
+                return GameResult.Failure(GAME_ERROR_TYPE.TREASURE_REWARD_EMPTY, $"No TREASURE_REWARD row satisfied condition: {gradeType}");
 
             if (string.IsNullOrEmpty(bestRow.reward_group_id))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_GROUP_EMPTY, $"TREASURE_REWARD.reward_group_id is empty: {gradeType}, level={bestRow.level}");
+                return GameResult.Failure(GAME_ERROR_TYPE.TREASURE_REWARD_GROUP_EMPTY, $"TREASURE_REWARD.reward_group_id is empty: {gradeType}, level={bestRow.level}");
 
             // apply reward: best row only
             var applyResult = RewardManager.Instance.ApplyRewardGroup(bestRow.reward_group_id);
             if (applyResult.IsFailure)
             {
                 Debug.LogError($"[{Tag}] OpenCurrentChest RewardManager.ApplyRewardGroup failed: level={currentLevel}, reward_group_id={bestRow.reward_group_id}");
-                return CommonResult.Failure(COMMON_ERROR_TYPE.TREASURE_REWARD_APPLY_FAILED, $"RewardManager.ApplyRewardGroup failed: {bestRow.reward_group_id}");
+                return GameResult.Failure(applyResult.Error!);
             }
 
             // all-or-nothing: commit only after reward succeeds
@@ -96,7 +96,7 @@ namespace Devian
             if (storage.TreasureCurrent.Level > maxLevel)
                 storage.TreasureCurrent.Level = 1;
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         // ──────────────────────────────────────────────

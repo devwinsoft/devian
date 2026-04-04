@@ -23,6 +23,7 @@
       "tableDir": "Domains/Game",
       "tableFiles": [
         "AchieveTable.xlsx",
+        "GameErrorTable.xlsx",
         "GameMessageTable.xlsx",
         "ItemTable.xlsx",
         "MetaTable.xlsx",

@@ -3,7 +3,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Devian.Domain.Common;
 using Devian.Domain.Game;
 using Firebase.Functions;
 using UnityEngine;
@@ -44,15 +43,15 @@ namespace Devian
         /// <summary>
         /// initSession callable — getPurchaseAdjustments 초기 페이지 호출.
         /// </summary>
-        public async Task<CommonResult<SessionInitSnapshot>> InitSessionAsync(
+        public async Task<GameResult<SessionInitSnapshot>> InitSessionAsync(
             Dictionary<string, object> data, CancellationToken ct)
         {
             try
             {
                 var response = await callFunctionAsync("initSession", data, ct);
                 if (response == null)
-                    return CommonResult<SessionInitSnapshot>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_SERVER,
+                    return GameResult<SessionInitSnapshot>.Failure(
+                        GAME_ERROR_TYPE.PURCHASE_FUNCTION_RESPONSE_INVALID,
                         "initSession returned unsupported response.");
 
                 // purchaseAdjustments
@@ -61,13 +60,13 @@ namespace Devian
                     adjDict = ad;
 
                 if (adjDict == null)
-                    return CommonResult<SessionInitSnapshot>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_SERVER,
+                    return GameResult<SessionInitSnapshot>.Failure(
+                        GAME_ERROR_TYPE.PURCHASE_FUNCTION_RESPONSE_INVALID,
                         "initSession: purchaseAdjustments missing.");
 
                 var purchaseAdjustments = parseRefundPageResult(adjDict);
 
-                return CommonResult<SessionInitSnapshot>.Success(
+                return GameResult<SessionInitSnapshot>.Success(
                     new SessionInitSnapshot(purchaseAdjustments));
             }
             catch (OperationCanceledException) { throw; }
@@ -77,39 +76,39 @@ namespace Devian
                 {
                     case FunctionsErrorCode.Unavailable:
                     case FunctionsErrorCode.DeadlineExceeded:
-                        return CommonResult<SessionInitSnapshot>.Failure(
-                            COMMON_ERROR_TYPE.COMMON_NETWORK,
+                        return GameResult<SessionInitSnapshot>.Failure(
+                            GAME_ERROR_TYPE.PURCHASE_NETWORK_UNAVAILABLE,
                             "initSession network unavailable.");
                     case FunctionsErrorCode.Unauthenticated:
                     case FunctionsErrorCode.PermissionDenied:
-                        return CommonResult<SessionInitSnapshot>.Failure(
-                            COMMON_ERROR_TYPE.COMMON_AUTH, fex.Message);
+                        return GameResult<SessionInitSnapshot>.Failure(
+                            GAME_ERROR_TYPE.PURCHASE_UNAUTHENTICATED, fex.Message);
                     default:
-                        return CommonResult<SessionInitSnapshot>.Failure(
-                            COMMON_ERROR_TYPE.COMMON_SERVER, fex.Message);
+                        return GameResult<SessionInitSnapshot>.Failure(
+                            GAME_ERROR_TYPE.PURCHASE_FUNCTION_CALL_FAILED, fex.Message);
                 }
             }
             catch (Exception ex)
             {
-                return CommonResult<SessionInitSnapshot>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message);
+                return GameResult<SessionInitSnapshot>.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_FUNCTION_CALL_FAILED, ex.Message);
             }
         }
 
         // ── Purchase Callable — Query ─────────────────────────────
 
-        public async Task<CommonResult<VerifyPurchaseResponse>> VerifyPurchaseAsync(
+        public async Task<GameResult<VerifyPurchaseResponse>> VerifyPurchaseAsync(
             Dictionary<string, object> data, CancellationToken ct)
         {
             try
             {
                 var response = await callFunctionAsync("verifyPurchase", data, ct);
                 if (response == null)
-                    return CommonResult<VerifyPurchaseResponse>.Failure(
-                        COMMON_ERROR_TYPE.PURCHASE_FUNCTION_RESPONSE_INVALID,
+                    return GameResult<VerifyPurchaseResponse>.Failure(
+                        GAME_ERROR_TYPE.PURCHASE_FUNCTION_RESPONSE_INVALID,
                         "verifyPurchase returned unsupported response type.");
 
-                return CommonResult<VerifyPurchaseResponse>.Success(
+                return GameResult<VerifyPurchaseResponse>.Success(
                     parseVerifyPurchaseResponse(response));
             }
             catch (OperationCanceledException) { throw; }
@@ -121,22 +120,22 @@ namespace Devian
             catch (Exception ex)
             {
                 Debug.LogError($"[{Tag}] verifyPurchase failed: {ex.Message}");
-                return CommonResult<VerifyPurchaseResponse>.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_VERIFY_CALL_FAILED, ex.Message);
+                return GameResult<VerifyPurchaseResponse>.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_VERIFY_CALL_FAILED, ex.Message);
             }
         }
 
-        public async Task<CommonResult<EntitlementsSnapshot>> GetEntitlementsAsync(CancellationToken ct)
+        public async Task<GameResult<EntitlementsSnapshot>> GetEntitlementsAsync(CancellationToken ct)
         {
             try
             {
                 var response = await callFunctionAsync("getEntitlements", null, ct);
                 if (response == null)
-                    return CommonResult<EntitlementsSnapshot>.Failure(
-                        COMMON_ERROR_TYPE.PURCHASE_FUNCTION_RESPONSE_INVALID,
+                    return GameResult<EntitlementsSnapshot>.Failure(
+                        GAME_ERROR_TYPE.PURCHASE_FUNCTION_RESPONSE_INVALID,
                         "getEntitlements returned unsupported response type.");
 
-                return CommonResult<EntitlementsSnapshot>.Success(
+                return GameResult<EntitlementsSnapshot>.Success(
                     parseEntitlementsSnapshot(response));
             }
             catch (OperationCanceledException) { throw; }
@@ -148,29 +147,29 @@ namespace Devian
             catch (Exception ex)
             {
                 Debug.LogError($"[{Tag}] getEntitlements failed: {ex.Message}");
-                return CommonResult<EntitlementsSnapshot>.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_ENTITLEMENTS_CALL_FAILED, ex.Message);
+                return GameResult<EntitlementsSnapshot>.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_ENTITLEMENTS_CALL_FAILED, ex.Message);
             }
         }
 
-        public async Task<CommonResult<RecentPurchaseItem>> GetRecentPurchases30dAsync(
+        public async Task<GameResult<RecentPurchaseItem>> GetRecentPurchases30dAsync(
             Dictionary<string, object> data, CancellationToken ct)
         {
             try
             {
                 var response = await callFunctionAsync("getRecentPurchases30d", data, ct);
                 if (response == null)
-                    return CommonResult<RecentPurchaseItem>.Failure(
-                        COMMON_ERROR_TYPE.PURCHASE_FUNCTION_RESPONSE_INVALID,
+                    return GameResult<RecentPurchaseItem>.Failure(
+                        GAME_ERROR_TYPE.PURCHASE_FUNCTION_RESPONSE_INVALID,
                         "getRecentPurchases30d returned unsupported response type.");
 
                 var item = parseRecentPurchaseItem(response);
                 if (item == null)
-                    return CommonResult<RecentPurchaseItem>.Failure(
-                        COMMON_ERROR_TYPE.PURCHASE_RECENT_NOT_FOUND,
+                    return GameResult<RecentPurchaseItem>.Failure(
+                        GAME_ERROR_TYPE.PURCHASE_RECENT_NOT_FOUND,
                         "No recent consumable purchase within 30 days.");
 
-                return CommonResult<RecentPurchaseItem>.Success(item);
+                return GameResult<RecentPurchaseItem>.Success(item);
             }
             catch (OperationCanceledException) { throw; }
             catch (FunctionsException fex)
@@ -181,23 +180,23 @@ namespace Devian
             catch (Exception ex)
             {
                 Debug.LogError($"[{Tag}] getRecentPurchases30d failed: {ex.Message}");
-                return CommonResult<RecentPurchaseItem>.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_RECENT_CALL_FAILED, ex.Message);
+                return GameResult<RecentPurchaseItem>.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_RECENT_CALL_FAILED, ex.Message);
             }
         }
 
-        public async Task<CommonResult<RefundPageResult>> GetPurchaseAdjustmentsAsync(
+        public async Task<GameResult<RefundPageResult>> GetPurchaseAdjustmentsAsync(
             Dictionary<string, object> data, CancellationToken ct)
         {
             try
             {
                 var response = await callFunctionAsync("getPurchaseAdjustments", data, ct);
                 if (response == null)
-                    return CommonResult<RefundPageResult>.Failure(
-                        COMMON_ERROR_TYPE.PURCHASE_FUNCTION_RESPONSE_INVALID,
+                    return GameResult<RefundPageResult>.Failure(
+                        GAME_ERROR_TYPE.PURCHASE_FUNCTION_RESPONSE_INVALID,
                         "getPurchaseAdjustments returned unsupported response type.");
 
-                return CommonResult<RefundPageResult>.Success(
+                return GameResult<RefundPageResult>.Success(
                     parseRefundPageResult(response));
             }
             catch (OperationCanceledException) { throw; }
@@ -209,20 +208,20 @@ namespace Devian
             catch (Exception ex)
             {
                 Debug.LogError($"[{Tag}] getPurchaseAdjustments failed: {ex.Message}");
-                return CommonResult<RefundPageResult>.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_ADJUSTMENTS_CALL_FAILED, ex.Message);
+                return GameResult<RefundPageResult>.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_ADJUSTMENTS_CALL_FAILED, ex.Message);
             }
         }
 
         // ── Purchase Callable — Ack ───────────────────────────────
 
-        public async Task<CommonResult> AckPurchaseClientGrantAsync(
+        public async Task<GameResult> AckPurchaseClientGrantAsync(
             Dictionary<string, object> data, CancellationToken ct)
         {
             try
             {
                 var response = await callFunctionAsync("ackPurchaseClientGrant", data, ct);
-                return CommonResult.Ok();
+                return GameResult.Ok();
             }
             catch (OperationCanceledException) { throw; }
             catch (FunctionsException fex)
@@ -232,18 +231,18 @@ namespace Devian
             catch (Exception ex)
             {
                 Debug.LogError($"[{Tag}] ackPurchaseClientGrant failed: {ex.Message}");
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_VERIFY_CALL_FAILED, ex.Message);
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_VERIFY_CALL_FAILED, ex.Message);
             }
         }
 
-        public async Task<CommonResult> AckPurchaseStoreConfirmAsync(
+        public async Task<GameResult> AckPurchaseStoreConfirmAsync(
             Dictionary<string, object> data, CancellationToken ct)
         {
             try
             {
                 var response = await callFunctionAsync("ackPurchaseStoreConfirm", data, ct);
-                return CommonResult.Ok();
+                return GameResult.Ok();
             }
             catch (OperationCanceledException) { throw; }
             catch (FunctionsException fex)
@@ -253,18 +252,18 @@ namespace Devian
             catch (Exception ex)
             {
                 Debug.LogError($"[{Tag}] ackPurchaseStoreConfirm failed: {ex.Message}");
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED, ex.Message);
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED, ex.Message);
             }
         }
 
-        public async Task<CommonResult> AckRefundAppliedAsync(
+        public async Task<GameResult> AckRefundAppliedAsync(
             Dictionary<string, object> data, CancellationToken ct)
         {
             try
             {
                 var response = await callFunctionAsync("ackRefundApplied", data, ct);
-                return CommonResult.Ok();
+                return GameResult.Ok();
             }
             catch (OperationCanceledException) { throw; }
             catch (FunctionsException fex)
@@ -274,8 +273,8 @@ namespace Devian
             catch (Exception ex)
             {
                 Debug.LogError($"[{Tag}] ackRefundApplied failed: {ex.Message}");
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED, ex.Message);
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED, ex.Message);
             }
         }
 
@@ -365,37 +364,37 @@ namespace Devian
 
         // ── Private — Error Mapping ───────────────────────────────
 
-        static CommonResult<T> mapPurchaseFunctionsException<T>(string functionName, FunctionsException fex)
+        static GameResult<T> mapPurchaseFunctionsException<T>(string functionName, FunctionsException fex)
         {
             var isVerifyPurchase = functionName == "verifyPurchase";
             var isAckPurchaseClientGrant = functionName == "ackPurchaseClientGrant";
             var isGetPurchaseAdjustments = functionName == "getPurchaseAdjustments";
             var isGetRecentPurchases = functionName == "getRecentPurchases30d";
 
-            COMMON_ERROR_TYPE errorType;
+            GAME_ERROR_TYPE errorType;
             string message;
 
             switch (fex.ErrorCode)
             {
                 case FunctionsErrorCode.Unauthenticated:
-                    errorType = COMMON_ERROR_TYPE.PURCHASE_UNAUTHENTICATED;
+                    errorType = GAME_ERROR_TYPE.PURCHASE_UNAUTHENTICATED;
                     message = "Authentication required.";
                     break;
 
                 case FunctionsErrorCode.InvalidArgument:
                     if (isVerifyPurchase || isAckPurchaseClientGrant)
                     {
-                        errorType = COMMON_ERROR_TYPE.PURCHASE_VERIFY_INVALID_ARGUMENT;
+                        errorType = GAME_ERROR_TYPE.PURCHASE_VERIFY_INVALID_ARGUMENT;
                         message = $"Invalid {functionName} arguments.";
                     }
                     else if (isGetRecentPurchases)
                     {
-                        errorType = COMMON_ERROR_TYPE.PURCHASE_RECENT_CALL_FAILED;
+                        errorType = GAME_ERROR_TYPE.PURCHASE_RECENT_CALL_FAILED;
                         message = "Invalid getRecentPurchases request arguments.";
                     }
                     else if (isGetPurchaseAdjustments)
                     {
-                        errorType = COMMON_ERROR_TYPE.PURCHASE_ADJUSTMENTS_INVALID_ARGUMENT;
+                        errorType = GAME_ERROR_TYPE.PURCHASE_ADJUSTMENTS_INVALID_ARGUMENT;
                         message = "Invalid getPurchaseAdjustments request arguments.";
                     }
                     else
@@ -408,7 +407,7 @@ namespace Devian
                 case FunctionsErrorCode.FailedPrecondition:
                     if (isVerifyPurchase || isAckPurchaseClientGrant)
                     {
-                        errorType = COMMON_ERROR_TYPE.PURCHASE_VERIFY_FAILED_PRECONDITION;
+                        errorType = GAME_ERROR_TYPE.PURCHASE_VERIFY_FAILED_PRECONDITION;
                         message = $"{functionName} failed precondition.";
                     }
                     else
@@ -419,7 +418,7 @@ namespace Devian
                     break;
 
                 case FunctionsErrorCode.PermissionDenied:
-                    errorType = COMMON_ERROR_TYPE.COMMON_AUTH;
+                    errorType = GAME_ERROR_TYPE.PURCHASE_UNAUTHENTICATED;
                     message = "Permission denied.";
                     break;
 
@@ -439,40 +438,40 @@ namespace Devian
                 $"[{Tag}] {functionName} mapped firebase error: {errorType} " +
                 $"(firebase={fex.ErrorCode}) {message}");
 
-            return CommonResult<T>.Failure(errorType, message);
+            return GameResult<T>.Failure(errorType, message);
         }
 
-        static CommonResult mapPurchaseFunctionsExceptionVoid(string functionName, FunctionsException fex)
+        static GameResult mapPurchaseFunctionsExceptionVoid(string functionName, FunctionsException fex)
         {
             var isVerifyPurchase = functionName == "verifyPurchase";
             var isAckPurchaseClientGrant = functionName == "ackPurchaseClientGrant";
             var isGetPurchaseAdjustments = functionName == "getPurchaseAdjustments";
             var isGetRecentPurchases = functionName == "getRecentPurchases30d";
 
-            COMMON_ERROR_TYPE errorType;
+            GAME_ERROR_TYPE errorType;
             string message;
 
             switch (fex.ErrorCode)
             {
                 case FunctionsErrorCode.Unauthenticated:
-                    errorType = COMMON_ERROR_TYPE.PURCHASE_UNAUTHENTICATED;
+                    errorType = GAME_ERROR_TYPE.PURCHASE_UNAUTHENTICATED;
                     message = "Authentication required.";
                     break;
 
                 case FunctionsErrorCode.InvalidArgument:
                     if (isVerifyPurchase || isAckPurchaseClientGrant)
                     {
-                        errorType = COMMON_ERROR_TYPE.PURCHASE_VERIFY_INVALID_ARGUMENT;
+                        errorType = GAME_ERROR_TYPE.PURCHASE_VERIFY_INVALID_ARGUMENT;
                         message = $"Invalid {functionName} arguments.";
                     }
                     else if (isGetRecentPurchases)
                     {
-                        errorType = COMMON_ERROR_TYPE.PURCHASE_RECENT_CALL_FAILED;
+                        errorType = GAME_ERROR_TYPE.PURCHASE_RECENT_CALL_FAILED;
                         message = "Invalid getRecentPurchases request arguments.";
                     }
                     else if (isGetPurchaseAdjustments)
                     {
-                        errorType = COMMON_ERROR_TYPE.PURCHASE_ADJUSTMENTS_INVALID_ARGUMENT;
+                        errorType = GAME_ERROR_TYPE.PURCHASE_ADJUSTMENTS_INVALID_ARGUMENT;
                         message = "Invalid getPurchaseAdjustments request arguments.";
                     }
                     else
@@ -485,7 +484,7 @@ namespace Devian
                 case FunctionsErrorCode.FailedPrecondition:
                     if (isVerifyPurchase || isAckPurchaseClientGrant)
                     {
-                        errorType = COMMON_ERROR_TYPE.PURCHASE_VERIFY_FAILED_PRECONDITION;
+                        errorType = GAME_ERROR_TYPE.PURCHASE_VERIFY_FAILED_PRECONDITION;
                         message = $"{functionName} failed precondition.";
                     }
                     else
@@ -496,7 +495,7 @@ namespace Devian
                     break;
 
                 case FunctionsErrorCode.PermissionDenied:
-                    errorType = COMMON_ERROR_TYPE.COMMON_AUTH;
+                    errorType = GAME_ERROR_TYPE.PURCHASE_UNAUTHENTICATED;
                     message = "Permission denied.";
                     break;
 
@@ -516,48 +515,48 @@ namespace Devian
                 $"[{Tag}] {functionName} mapped firebase error: {errorType} " +
                 $"(firebase={fex.ErrorCode}) {message}");
 
-            return CommonResult.Failure(errorType, message);
+            return GameResult.Failure(errorType, message);
         }
 
-        static COMMON_ERROR_TYPE mapUnhandledFunctionErrorType(string functionName)
+        static GAME_ERROR_TYPE mapUnhandledFunctionErrorType(string functionName)
         {
             switch (functionName)
             {
                 case "getRecentPurchases30d":
-                    return COMMON_ERROR_TYPE.PURCHASE_RECENT_CALL_FAILED;
+                    return GAME_ERROR_TYPE.PURCHASE_RECENT_CALL_FAILED;
                 case "getPurchaseAdjustments":
-                    return COMMON_ERROR_TYPE.PURCHASE_ADJUSTMENTS_CALL_FAILED;
+                    return GAME_ERROR_TYPE.PURCHASE_ADJUSTMENTS_CALL_FAILED;
                 case "getEntitlements":
-                    return COMMON_ERROR_TYPE.PURCHASE_ENTITLEMENTS_CALL_FAILED;
+                    return GAME_ERROR_TYPE.PURCHASE_ENTITLEMENTS_CALL_FAILED;
                 case "verifyPurchase":
                 case "ackPurchaseClientGrant":
-                    return COMMON_ERROR_TYPE.PURCHASE_VERIFY_CALL_FAILED;
+                    return GAME_ERROR_TYPE.PURCHASE_VERIFY_CALL_FAILED;
                 case "ackPurchaseStoreConfirm":
-                    return COMMON_ERROR_TYPE.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED;
+                    return GAME_ERROR_TYPE.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED;
                 case "ackRefundApplied":
-                    return COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED;
+                    return GAME_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED;
                 default:
-                    return COMMON_ERROR_TYPE.PURCHASE_FUNCTION_CALL_FAILED;
+                    return GAME_ERROR_TYPE.PURCHASE_FUNCTION_CALL_FAILED;
             }
         }
 
-        static COMMON_ERROR_TYPE mapNetworkFunctionErrorType(string functionName)
+        static GAME_ERROR_TYPE mapNetworkFunctionErrorType(string functionName)
         {
             switch (functionName)
             {
                 case "getRecentPurchases30d":
-                    return COMMON_ERROR_TYPE.PURCHASE_RECENT_CALL_FAILED;
+                    return GAME_ERROR_TYPE.PURCHASE_RECENT_CALL_FAILED;
                 case "getPurchaseAdjustments":
-                    return COMMON_ERROR_TYPE.PURCHASE_ADJUSTMENTS_CALL_FAILED;
+                    return GAME_ERROR_TYPE.PURCHASE_ADJUSTMENTS_CALL_FAILED;
                 case "getEntitlements":
-                    return COMMON_ERROR_TYPE.PURCHASE_ENTITLEMENTS_CALL_FAILED;
+                    return GAME_ERROR_TYPE.PURCHASE_ENTITLEMENTS_CALL_FAILED;
                 case "ackPurchaseStoreConfirm":
-                    return COMMON_ERROR_TYPE.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED;
+                    return GAME_ERROR_TYPE.PURCHASE_STORE_CONFIRM_ACK_CALL_FAILED;
                 case "ackRefundApplied":
-                    return COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED;
+                    return GAME_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED;
                 case "ackPurchaseClientGrant":
                 default:
-                    return COMMON_ERROR_TYPE.PURCHASE_NETWORK_UNAVAILABLE;
+                    return GAME_ERROR_TYPE.PURCHASE_NETWORK_UNAVAILABLE;
             }
         }
 

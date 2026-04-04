@@ -42,7 +42,7 @@ namespace Devian
                 getCurrentPeriodElapsedDay);
         }
 
-        public Task<CommonResult> InitializeAsync(CancellationToken ct = default)
+        public Task<GameResult> InitializeAsync(CancellationToken ct = default)
         {
             _ = ct;
 
@@ -50,8 +50,8 @@ namespace Devian
             if (nowUtcMs <= 0L)
             {
                 return Task.FromResult(
-                    CommonResult.Failure(
-                        COMMON_ERROR_TYPE.COMMON_SERVER,
+                    GameResult.Failure(
+                        GAME_ERROR_TYPE.GAME_SERVER_TIME_UNAVAILABLE,
                         "Server time is unavailable."));
             }
 
@@ -73,7 +73,7 @@ namespace Devian
             _scheduler.TryActivatePeriodRuntimes();
 
             _initialized = true;
-            return Task.FromResult(CommonResult.Ok());
+            return Task.FromResult(GameResult.Ok());
         }
 
         public void RefreshRuntimes()
@@ -149,13 +149,13 @@ namespace Devian
             }
         }
 
-        public async Task<CommonResult> ClaimAsync(MISSION_TYPE missionType, string missionId, CancellationToken ct = default)
+        public async Task<GameResult> ClaimAsync(MISSION_TYPE missionType, string missionId, CancellationToken ct = default)
         {
             if (!_initialized)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED, "MissionManager is not initialized.");
+                return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "not initialized");
 
             if (string.IsNullOrWhiteSpace(missionId))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "mission_id is empty.");
+                return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "mission_id is empty.");
 
             syncRuntimeSchedule();
 
@@ -168,7 +168,7 @@ namespace Devian
                     return await claimPeriodAsync(missionId, ct);
 
                 default:
-                    return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, $"Unsupported missionType: {missionType}");
+                    return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, $"Unsupported missionType: {missionType}");
             }
         }
 
@@ -242,29 +242,29 @@ namespace Devian
             return runtime.GetState();
         }
 
-        async Task<CommonResult> claimDailyAsync(string missionId, CancellationToken ct)
+        async Task<GameResult> claimDailyAsync(string missionId, CancellationToken ct)
         {
             var row = TB_MISSION_DAILY.Get(missionId);
             if (row == null || !row.is_active || !row.condition_value.HasValue)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
+                return GameResult.Failure(GAME_ERROR_TYPE.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
 
             if (!TryResolveMessage(row.condition_msg_id, out var message) || message.save_type == GAME_MESSAGE_SAVE_TYPE.NONE)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
+                return GameResult.Failure(GAME_ERROR_TYPE.MISSION_NOT_FOUND, $"Daily mission not found: {missionId}");
 
             var periodKey = getCurrentDailyKey();
             var runtime = findDailyRuntime(missionId);
             if (runtime == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_RUNTIME_MISSING, $"Daily runtime missing: {missionId}");
+                return GameResult.Failure(GAME_ERROR_TYPE.MISSION_RUNTIME_MISSING, $"Daily runtime missing: {missionId}");
 
             if (!string.Equals(runtime.periodKey, periodKey, StringComparison.Ordinal))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_RUNTIME_STALE, $"Daily runtime stale: {missionId}/{runtime.periodKey}->{periodKey}");
+                return GameResult.Failure(GAME_ERROR_TYPE.MISSION_RUNTIME_STALE, $"Daily runtime stale: {missionId}/{runtime.periodKey}->{periodKey}");
 
             if (!runtime.IsClaimable)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_CLAIMABLE, $"Daily mission is not claimable: {missionId}");
+                return GameResult.Failure(GAME_ERROR_TYPE.MISSION_NOT_CLAIMABLE, $"Daily mission is not claimable: {missionId}");
 
             var apply = RewardManager.Instance.ApplyRewardGroup(row.reward_group_id);
             if (apply.IsFailure)
-                return CommonResult.Failure(apply.Error!);
+                return GameResult.Failure(apply.Error!);
 
             runtime.MarkCompleted();
             _missionMessageSystem.Notify(MISSION_MESSAGE_TYPE.RUNTIME_REWARDED, runtime, apply.Value.AppliedRewards);
@@ -273,35 +273,35 @@ namespace Devian
             if (save.IsFailure)
             {
                 Debug.LogError($"[{Tag}] Mission save failed: {save.Error}");
-                return CommonResult.Failure(save.Error!);
+                return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, save.Error?.ToString() ?? "save failed");
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
-        async Task<CommonResult> claimPeriodAsync(string missionId, CancellationToken ct)
+        async Task<GameResult> claimPeriodAsync(string missionId, CancellationToken ct)
         {
             var row = TB_MISSION_WEEKLY.Get(missionId);
             if (row == null || !row.is_active || row.day < 1 || row.day > 7 || !row.condition_value.HasValue)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_FOUND, $"Period mission not found: {missionId}");
+                return GameResult.Failure(GAME_ERROR_TYPE.MISSION_NOT_FOUND, $"Period mission not found: {missionId}");
 
             if (!TryResolveMessage(row.condition_msg_id, out var message) || message.save_type == GAME_MESSAGE_SAVE_TYPE.NONE)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_FOUND, $"Period mission not found: {missionId}");
+                return GameResult.Failure(GAME_ERROR_TYPE.MISSION_NOT_FOUND, $"Period mission not found: {missionId}");
 
             var periodKey = getCurrentPeriodKey();
             var runtime = findPeriodRuntime(missionId);
             if (runtime == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_RUNTIME_MISSING, $"Period runtime missing: {missionId}");
+                return GameResult.Failure(GAME_ERROR_TYPE.MISSION_RUNTIME_MISSING, $"Period runtime missing: {missionId}");
 
             if (!string.Equals(runtime.periodKey, periodKey, StringComparison.Ordinal))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_RUNTIME_STALE, $"Period runtime stale: {missionId}/{runtime.periodKey}->{periodKey}");
+                return GameResult.Failure(GAME_ERROR_TYPE.MISSION_RUNTIME_STALE, $"Period runtime stale: {missionId}/{runtime.periodKey}->{periodKey}");
 
             if (!runtime.IsClaimable)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_CLAIMABLE, $"Period mission is not claimable: {missionId}");
+                return GameResult.Failure(GAME_ERROR_TYPE.MISSION_NOT_CLAIMABLE, $"Period mission is not claimable: {missionId}");
 
             var apply = RewardManager.Instance.ApplyRewardGroup(row.reward_group_id);
             if (apply.IsFailure)
-                return CommonResult.Failure(apply.Error!);
+                return GameResult.Failure(apply.Error!);
 
             runtime.MarkCompleted();
             _missionMessageSystem.Notify(MISSION_MESSAGE_TYPE.RUNTIME_REWARDED, runtime, apply.Value.AppliedRewards);
@@ -310,10 +310,10 @@ namespace Devian
             if (save.IsFailure)
             {
                 Debug.LogError($"[{Tag}] Mission save failed: {save.Error}");
-                return CommonResult.Failure(save.Error!);
+                return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, save.Error?.ToString() ?? "save failed");
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         void onRuntimeInitialized(MissionRuntimeBase runtime)

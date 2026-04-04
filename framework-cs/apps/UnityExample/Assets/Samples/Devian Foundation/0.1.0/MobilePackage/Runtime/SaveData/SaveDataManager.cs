@@ -312,7 +312,7 @@ namespace Devian
         //  Public: Game Storage Sync API
         // ──────────────────────────────────────────────
 
-        public async Task<CommonResult<SyncResult>> SyncGameStorageAsync(CancellationToken ct)
+        public async Task<GameResult<SyncResult>> SyncGameStorageAsync(CancellationToken ct)
         {
             var result = await syncPrimaryCoreAsync(ct);
 
@@ -335,14 +335,14 @@ namespace Devian
                 if (load.IsFailure)
                 {
                     _hasPrimarySaveContext = false;
-                    return CommonResult<SyncResult>.Failure(load.Error!);
+                    return GameResult<SyncResult>.Failure(load.Error!);
                 }
             }
 
-            return CommonResult<SyncResult>.Success(syncResult);
+            return GameResult<SyncResult>.Success(syncResult);
         }
 
-        private async Task<CommonResult<SyncResult>> syncPrimaryCoreAsync(CancellationToken ct)
+        private async Task<GameResult<SyncResult>> syncPrimaryCoreAsync(CancellationToken ct)
         {
             var accountManager = AccountManager.Instance;
 
@@ -351,21 +351,21 @@ namespace Devian
             {
                 var localR = await loadPrimaryLocalRecordAsync(ct);
                 if (localR.IsFailure)
-                    return CommonResult<SyncResult>.Failure(localR.Error!);
+                    return GameResult<SyncResult>.Failure(localR.Error!);
 
                 var local = localR.Value;
                 if (local == null)
-                    return CommonResult<SyncResult>.Success(new SyncResult(SyncState.Initial));
+                    return GameResult<SyncResult>.Success(new SyncResult(SyncState.Initial));
 
                 // 로컬 파일의 AccountMeta에서 loginType 확인.
                 // 런타임 loginType은 아직 NONE이지만, 파일에 저장된 loginType이
                 // NONE이 아니면 이전에 로그인 성공한 데이터이므로 Success로 처리한다.
                 var persistedLoginType = local.account?.loginType ?? LoginType.NONE;
                 if (persistedLoginType == LoginType.NONE)
-                    return CommonResult<SyncResult>.Success(new SyncResult(
+                    return GameResult<SyncResult>.Success(new SyncResult(
                         SyncState.Initial, local, null, local.deviceId, null));
 
-                return CommonResult<SyncResult>.Success(new SyncResult(
+                return GameResult<SyncResult>.Success(new SyncResult(
                     SyncState.Success,
                     local,
                     null,
@@ -384,13 +384,13 @@ namespace Devian
 
                     var localR = await loadPrimaryLocalRecordAsync(ct);
                     if (localR.IsFailure)
-                        return CommonResult<SyncResult>.Failure(localR.Error!);
+                        return GameResult<SyncResult>.Failure(localR.Error!);
 
                     var local = localR.Value;
                     if (local == null)
-                        return CommonResult<SyncResult>.Failure(init.Error!);
+                        return GameResult<SyncResult>.Failure(init.Error!);
 
-                    return CommonResult<SyncResult>.Success(new SyncResult(
+                    return GameResult<SyncResult>.Success(new SyncResult(
                         SyncState.Success,
                         local,
                         null,
@@ -403,8 +403,8 @@ namespace Devian
             var localR2 = await loadPrimaryLocalRecordAsync(ct);
             if (localR2.IsFailure)
             {
-                return CommonResult<SyncResult>.Failure(
-                    new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_LOAD_LOCAL_FAILED, "Sync load local failed for primary save.", localR2.Error!.ToString()));
+                return GameResult<SyncResult>.Failure(
+                    new GameError(GAME_ERROR_TYPE.SAVEDATA_SYNC_LOAD_LOCAL_FAILED, "Sync load local failed for primary save.", localR2.Error!.ToString()));
             }
 
             var cloudR2 = await loadPrimaryCloudRecordAsync(ct);
@@ -413,7 +413,7 @@ namespace Devian
                 UnityEngine.Debug.LogWarning(
                     $"[SaveDataManager] SyncGameStorageAsync load cloud failed for primary save. " +
                     $"Failing sync. error={cloudR2.Error}");
-                return CommonResult<SyncResult>.Failure(cloudR2.Error!);
+                return GameResult<SyncResult>.Failure(cloudR2.Error!);
             }
 
             var local2 = localR2.Value;
@@ -422,7 +422,7 @@ namespace Devian
             // both missing
             if (local2 == null && cloud2 == null)
             {
-                return CommonResult<SyncResult>.Success(new SyncResult(SyncState.Initial));
+                return GameResult<SyncResult>.Success(new SyncResult(SyncState.Initial));
             }
 
             // cloud -> local
@@ -431,22 +431,22 @@ namespace Devian
                 var jsonR = decryptCloudPayloadToJson(cloud2);
                 if (jsonR.IsFailure)
                 {
-                    return CommonResult<SyncResult>.Failure(
-                        new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync decrypt cloud failed for primary save.", jsonR.Error!.ToString()));
+                    return GameResult<SyncResult>.Failure(
+                        new GameError(GAME_ERROR_TYPE.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync decrypt cloud failed for primary save.", jsonR.Error!.ToString()));
                 }
 
                 _needsCloudSave = false;
                 var saveLocalR = await savePrimaryLocalAsync(jsonR.Value, ct);
                 if (saveLocalR.IsFailure)
                 {
-                    return CommonResult<SyncResult>.Failure(
-                        new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync save local failed for primary save.", saveLocalR.Error!.ToString()));
+                    return GameResult<SyncResult>.Failure(
+                        new GameError(GAME_ERROR_TYPE.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync save local failed for primary save.", saveLocalR.Error!.ToString()));
                 }
 
                 // Reload local to return the newly-written saveSeq/deviceId.
                 var reLocal = await loadPrimaryLocalRecordAsync(ct);
                 var lp = reLocal.IsSuccess ? reLocal.Value : null;
-                return CommonResult<SyncResult>.Success(new SyncResult(
+                return GameResult<SyncResult>.Success(new SyncResult(
                     SyncState.Success, lp, cloud2, lp?.deviceId, cloud2?.DeviceId));
             }
 
@@ -456,20 +456,20 @@ namespace Devian
                 var jsonR = decryptLocalPayloadToJson(local2);
                 if (jsonR.IsFailure)
                 {
-                    return CommonResult<SyncResult>.Failure(
-                        new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync decrypt local failed for primary save.", jsonR.Error!.ToString()));
+                    return GameResult<SyncResult>.Failure(
+                        new GameError(GAME_ERROR_TYPE.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync decrypt local failed for primary save.", jsonR.Error!.ToString()));
                 }
 
                 var saveCloudR = await savePrimaryCloudAsync(jsonR.Value, ct);
                 if (saveCloudR.IsFailure)
                 {
-                    return CommonResult<SyncResult>.Failure(
-                        new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync save cloud failed for primary save.", saveCloudR.Error!.ToString()));
+                    return GameResult<SyncResult>.Failure(
+                        new GameError(GAME_ERROR_TYPE.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync save cloud failed for primary save.", saveCloudR.Error!.ToString()));
                 }
 
                 var reCloud = await loadPrimaryCloudRecordAsync(ct);
                 var cp = reCloud.IsSuccess ? reCloud.Value : null;
-                return CommonResult<SyncResult>.Success(new SyncResult(
+                return GameResult<SyncResult>.Success(new SyncResult(
                     SyncState.Success, local2, cp, local2.deviceId, cp?.DeviceId));
             }
 
@@ -478,7 +478,7 @@ namespace Devian
             {
                 if (hasSameObfuscatedPayload(local2, cloud2))
                 {
-                    return CommonResult<SyncResult>.Success(new SyncResult(
+                    return GameResult<SyncResult>.Success(new SyncResult(
                         SyncState.Success, local2, cloud2, local2.deviceId, cloud2.DeviceId));
                 }
 
@@ -487,7 +487,7 @@ namespace Devian
 
                 if (!string.Equals(localDeviceId, cloudDeviceId, StringComparison.Ordinal))
                 {
-                    return CommonResult<SyncResult>.Success(new SyncResult(
+                    return GameResult<SyncResult>.Success(new SyncResult(
                             SyncState.Conflict, local2, cloud2, localDeviceId, cloudDeviceId));
                 }
 
@@ -498,20 +498,20 @@ namespace Devian
                         var jsonR = decryptLocalPayloadToJson(local2);
                         if (jsonR.IsFailure)
                         {
-                            return CommonResult<SyncResult>.Failure(
-                                new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync decrypt local failed for primary save.", jsonR.Error!.ToString()));
+                            return GameResult<SyncResult>.Failure(
+                                new GameError(GAME_ERROR_TYPE.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync decrypt local failed for primary save.", jsonR.Error!.ToString()));
                         }
 
                         var saveCloudR = await savePrimaryCloudAsync(jsonR.Value, ct);
                         if (saveCloudR.IsFailure)
                         {
-                            return CommonResult<SyncResult>.Failure(
-                                new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync save cloud failed for primary save.", saveCloudR.Error!.ToString()));
+                            return GameResult<SyncResult>.Failure(
+                                new GameError(GAME_ERROR_TYPE.SAVEDATA_SYNC_SAVE_CLOUD_FAILED, "Sync save cloud failed for primary save.", saveCloudR.Error!.ToString()));
                         }
 
                         var reCloud = await loadPrimaryCloudRecordAsync(ct);
                         var cp = reCloud.IsSuccess ? reCloud.Value : cloud2;
-                        return CommonResult<SyncResult>.Success(new SyncResult(
+                        return GameResult<SyncResult>.Success(new SyncResult(
                             SyncState.Success, local2, cp, localDeviceId, cp?.DeviceId));
                     }
 
@@ -519,50 +519,50 @@ namespace Devian
                         var jsonR = decryptCloudPayloadToJson(cloud2);
                         if (jsonR.IsFailure)
                         {
-                            return CommonResult<SyncResult>.Failure(
-                                new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync decrypt cloud failed for primary save.", jsonR.Error!.ToString()));
+                            return GameResult<SyncResult>.Failure(
+                                new GameError(GAME_ERROR_TYPE.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync decrypt cloud failed for primary save.", jsonR.Error!.ToString()));
                         }
 
                         _needsCloudSave = false;
                         var saveLocalR = await savePrimaryLocalAsync(jsonR.Value, ct);
                         if (saveLocalR.IsFailure)
                         {
-                            return CommonResult<SyncResult>.Failure(
-                                new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync save local failed for primary save.", saveLocalR.Error!.ToString()));
+                            return GameResult<SyncResult>.Failure(
+                                new GameError(GAME_ERROR_TYPE.SAVEDATA_SYNC_SAVE_LOCAL_FAILED, "Sync save local failed for primary save.", saveLocalR.Error!.ToString()));
                         }
 
                         var reLocal = await loadPrimaryLocalRecordAsync(ct);
                         var lp = reLocal.IsSuccess ? reLocal.Value : local2;
-                        return CommonResult<SyncResult>.Success(new SyncResult(
+                        return GameResult<SyncResult>.Success(new SyncResult(
                             SyncState.Success, lp, cloud2, lp?.deviceId, cloudDeviceId));
                     }
                 }
 
                 // Same device but payload differs and saveSeq is missing/invalid/tied.
                 // Fall back to explicit user conflict resolution.
-                return CommonResult<SyncResult>.Success(new SyncResult(
+                return GameResult<SyncResult>.Success(new SyncResult(
                     SyncState.Conflict, local2, cloud2, localDeviceId, cloudDeviceId));
             }
 
             // fallback (should not reach)
-            return CommonResult<SyncResult>.Success(new SyncResult(SyncState.Success));
+            return GameResult<SyncResult>.Success(new SyncResult(SyncState.Success));
         }
 
-        public async Task<CommonResult<bool>> ResolveConflictAsync(
+        public async Task<GameResult<bool>> ResolveConflictAsync(
             SyncResolution resolution, CancellationToken ct)
         {
             if (AccountManager.Instance.IsLocalOnlySaveMode)
             {
                 UnityEngine.Debug.LogWarning(
                     "[SaveDataManager] ResolveConflictAsync skipped: local-only mode (Guest/Editor).");
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
             }
 
             // Resolve requires cloud access (load/save). Ensure cloud client is initialized.
             {
                 var init = await _initializeCloudAsync(ct);
                 if (init.IsFailure)
-                    return CommonResult<bool>.Failure(init.Error!);
+                    return GameResult<bool>.Failure(init.Error!);
             }
 
             try
@@ -573,60 +573,60 @@ namespace Devian
                     {
                         var localR = await loadPrimaryLocalRecordAsync(ct);
                         if (localR.IsFailure)
-                            return CommonResult<bool>.Failure(localR.Error!);
+                            return GameResult<bool>.Failure(localR.Error!);
                         if (localR.Value == null)
-                            return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.SAVEDATA_SYNC_RESOLVE_FAILED, "Local payload is null.");
+                            return GameResult<bool>.Failure(GAME_ERROR_TYPE.SAVEDATA_SYNC_RESOLVE_FAILED, "Local payload is null.");
 
                         var jsonR = decryptLocalPayloadToJson(localR.Value);
                         if (jsonR.IsFailure)
-                            return CommonResult<bool>.Failure(jsonR.Error!);
+                            return GameResult<bool>.Failure(jsonR.Error!);
 
                         var saveCloud = await savePrimaryCloudAsync(jsonR.Value, ct);
                         if (saveCloud.IsFailure)
-                            return CommonResult<bool>.Failure(saveCloud.Error!);
+                            return GameResult<bool>.Failure(saveCloud.Error!);
 
                         _needsCloudSave = false;
                         var load = LoadFromPayload(localR.Value.payload);
                         if (load.IsFailure)
-                            return CommonResult<bool>.Failure(load.Error!);
+                            return GameResult<bool>.Failure(load.Error!);
                         _hasPrimarySaveContext = true;
 
-                        return CommonResult<bool>.Success(true);
+                        return GameResult<bool>.Success(true);
                     }
 
                     case SyncResolution.UseCloud:
                     {
                         var cloudR = await loadPrimaryCloudRecordAsync(ct);
                         if (cloudR.IsFailure)
-                            return CommonResult<bool>.Failure(cloudR.Error!);
+                            return GameResult<bool>.Failure(cloudR.Error!);
                         if (cloudR.Value == null)
-                            return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.SAVEDATA_SYNC_RESOLVE_FAILED, "Cloud payload is null.");
+                            return GameResult<bool>.Failure(GAME_ERROR_TYPE.SAVEDATA_SYNC_RESOLVE_FAILED, "Cloud payload is null.");
 
                         var jsonR = decryptCloudPayloadToJson(cloudR.Value);
                         if (jsonR.IsFailure)
-                            return CommonResult<bool>.Failure(jsonR.Error!);
+                            return GameResult<bool>.Failure(jsonR.Error!);
 
                         _needsCloudSave = false;
                         var saveLocalR = await savePrimaryLocalAsync(jsonR.Value, ct);
                         if (saveLocalR.IsFailure)
-                            return CommonResult<bool>.Failure(saveLocalR.Error!);
+                            return GameResult<bool>.Failure(saveLocalR.Error!);
 
                         var load = LoadFromJson(jsonR.Value);
                         if (load.IsFailure)
-                            return CommonResult<bool>.Failure(load.Error!);
+                            return GameResult<bool>.Failure(load.Error!);
                         _hasPrimarySaveContext = true;
 
-                        return CommonResult<bool>.Success(true);
+                        return GameResult<bool>.Success(true);
                     }
 
                     default:
-                        return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.SAVEDATA_SYNC_RESOLVE_FAILED, $"Unknown resolution: {resolution}");
+                        return GameResult<bool>.Failure(GAME_ERROR_TYPE.SAVEDATA_SYNC_RESOLVE_FAILED, $"Unknown resolution: {resolution}");
                 }
             }
             catch (OperationCanceledException ex)
             {
-                return CommonResult<bool>.Failure(
-                    new CommonError(COMMON_ERROR_TYPE.SAVEDATA_SYNC_CANCELLED, "Resolve cancelled.", ex.Message));
+                return GameResult<bool>.Failure(
+                    new GameError(GAME_ERROR_TYPE.SAVEDATA_SYNC_CANCELLED, "Resolve cancelled.", ex.Message));
             }
         }
 
@@ -638,11 +638,11 @@ namespace Devian
         /// 현재 Account/Inventory/Purchase 상태를 local + cloud에 저장한다.
         /// SyncGameStorageAsync 성공 후 사용 가능. cloud 저장 실패 시 MarkNeedsCloudSave 처리.
         /// </summary>
-        public async Task<CommonResult<bool>> SaveGameStorageAsync(bool saveCloud, CancellationToken ct)
+        public async Task<GameResult<bool>> SaveGameStorageAsync(bool saveCloud, CancellationToken ct)
         {
             if (!_hasPrimarySaveContext)
-                return CommonResult<bool>.Failure(
-                    COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED, "Primary save is not initialized. Call SyncGameStorageAsync first.");
+                return GameResult<bool>.Failure(
+                    GAME_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED, "Primary save is not initialized. Call SyncGameStorageAsync first.");
 
             var json = ToJson();
             var local = await savePrimaryLocalAsync(json, ct);
@@ -681,44 +681,44 @@ namespace Devian
                 }
             }
 
-            return CommonResult<bool>.Success(true);
+            return GameResult<bool>.Success(true);
         }
 
         // ──────────────────────────────────────────────
         //  Public: Load API
         // ──────────────────────────────────────────────
 
-        public CommonResult<bool> LoadLocalGameState()
+        public GameResult<bool> LoadLocalGameState()
         {
             var record = loadPrimaryLocalRecord();
-            if (record.IsFailure) return CommonResult<bool>.Failure(record.Error!);
+            if (record.IsFailure) return GameResult<bool>.Failure(record.Error!);
 
             var payload = record.Value;
             if (payload?.payload == null)
-                return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_NOT_FOUND, "No local data found.");
+                return GameResult<bool>.Failure(GAME_ERROR_TYPE.LOCALSAVE_NOT_FOUND, "No local data found.");
 
             var load = LoadFromPayload(payload.payload);
             if (load.IsFailure)
-                return CommonResult<bool>.Failure(load.Error!);
+                return GameResult<bool>.Failure(load.Error!);
 
             _hasPrimarySaveContext = true;
-            return CommonResult<bool>.Success(true);
+            return GameResult<bool>.Success(true);
         }
 
         // ──────────────────────────────────────────────
         //  Public: Clear Slot API
         // ──────────────────────────────────────────────
 
-        public async Task<CommonResult<bool>> ClearSaveAsync(CancellationToken ct)
+        public async Task<GameResult<bool>> ClearSaveAsync(CancellationToken ct)
         {
             if (ct.IsCancellationRequested)
-                return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_CANCELLED, "Cancelled.");
+                return GameResult<bool>.Failure(GAME_ERROR_TYPE.LOCALSAVE_CANCELLED, "Cancelled.");
 
             // 1) Local delete (idempotent)
             var filenameR = getPrimaryLocalFilename();
             if (filenameR.IsFailure)
             {
-                return CommonResult<bool>.Failure(filenameR.Error!);
+                return GameResult<bool>.Failure(filenameR.Error!);
             }
             var filename = filenameR.Value;
 
@@ -727,7 +727,7 @@ namespace Devian
                 var root = getRootPath();
                 if (string.IsNullOrWhiteSpace(root))
                 {
-                    return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_PATH_EMPTY, "Root path is empty.");
+                    return GameResult<bool>.Failure(GAME_ERROR_TYPE.LOCALSAVE_PATH_EMPTY, "Root path is empty.");
                 }
 
                 var path = System.IO.Path.Combine(root, filename);
@@ -739,7 +739,7 @@ namespace Devian
             catch (Exception ex)
             {
                 // NOTE: dedicated LOCALSAVE_DELETE 가 없으므로 LOCALSAVE_WRITE 재사용(파일 I/O 실패)
-                return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_WRITE, $"Local delete failed. {ex.Message}");
+                return GameResult<bool>.Failure(GAME_ERROR_TYPE.LOCALSAVE_WRITE, $"Local delete failed. {ex.Message}");
             }
 
             // 2) Cloud delete
@@ -748,7 +748,7 @@ namespace Devian
                 // Guest/Editor: cloud is silently ignored
                 _hasPrimarySaveContext = false;
                 ClearGameState();
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
             }
 
             // Initialize cloud; if failed, silently skip (policy: local can proceed)
@@ -759,7 +759,7 @@ namespace Devian
                     $"[SaveDataManager] ClearSaveAsync: cloud init failed, skipping cloud delete. err={init.Error}");
                 _hasPrimarySaveContext = false;
                 ClearGameState();
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
             }
 
             if (_cloudClient == null || !_cloudClient.IsAvailable)
@@ -768,7 +768,7 @@ namespace Devian
                     $"[SaveDataManager] ClearSaveAsync: cloud client not available, skipping cloud delete.");
                 _hasPrimarySaveContext = false;
                 ClearGameState();
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
             }
 
             var cloudSlotR = getPrimaryCloudSlot();
@@ -778,7 +778,7 @@ namespace Devian
                     $"[SaveDataManager] ClearSaveAsync: primary cloud slot missing, skipping cloud delete. err={cloudSlotR.Error}");
                 _hasPrimarySaveContext = false;
                 ClearGameState();
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
             }
             var cloudSlot = cloudSlotR.Value;
 
@@ -793,7 +793,7 @@ namespace Devian
             _hasPrimarySaveContext = false;
             ClearGameState();
 
-            return CommonResult<bool>.Success(true);
+            return GameResult<bool>.Success(true);
         }
 
         public string ToJson()
@@ -823,17 +823,17 @@ namespace Devian
         /// 평문 JSON을 런타임에 적용하고 local(+cloud)에 영속화한다.
         /// Recovery Import 전용. Sync 없이 직접 복원이 가능하다.
         /// </summary>
-        public async Task<CommonResult<bool>> RestoreFromPlainJsonAsync(string json, bool saveCloud, CancellationToken ct)
+        public async Task<GameResult<bool>> RestoreFromPlainJsonAsync(string json, bool saveCloud, CancellationToken ct)
         {
             var load = LoadFromJson(json);
             if (load.IsFailure)
-                return CommonResult<bool>.Failure(load.Error!);
+                return GameResult<bool>.Failure(load.Error!);
 
             _hasPrimarySaveContext = true;
             return await SaveGameStorageAsync(saveCloud, ct);
         }
 
-        public CommonResult LoadFromPayload(string payload)
+        public GameResult LoadFromPayload(string payload)
         {
             try
             {
@@ -844,13 +844,13 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
                     $"SaveDataManager.LoadFromPayload failed: {ex.Message}");
             }
         }
 
-        public CommonResult LoadFromJson(string json)
+        public GameResult LoadFromJson(string json)
         {
             var inventory = getInventoryStorageOrNull();
             var purchase = getPurchaseStorageOrNull();
@@ -869,8 +869,8 @@ namespace Devian
             var attend = attendManager != null ? attendManager.Storage : null;
             if (inventory == null || purchase == null || shop == null || account == null || message == null || mission == null || achieve == null || leaderboardReward == null || attend == null)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     "SaveDataManager.LoadFromJson: storages are not ready.");
             }
 
@@ -888,7 +888,7 @@ namespace Devian
             }
 
             applyLoadedAccountStorageToRuntime();
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         public void ClearGameState()
@@ -912,43 +912,43 @@ namespace Devian
         //  Internal: Deobfuscate payload to json (source-aware)
         // ──────────────────────────────────────────────
 
-        private CommonResult<string> decryptLocalPayloadToJson(SaveLocalPayload payload)
+        private GameResult<string> decryptLocalPayloadToJson(SaveLocalPayload payload)
         {
             if (payload == null)
-                return CommonResult<string>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveLocalPayload is null.");
+                return GameResult<string>.Failure(GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveLocalPayload is null.");
 
             var raw = payload.payload ?? string.Empty;
             if (string.IsNullOrEmpty(raw))
-                return CommonResult<string>.Success(raw);
+                return GameResult<string>.Success(raw);
 
             try
             {
                 var json = ComplexUtil.Decrypt_Base64(raw);
-                return CommonResult<string>.Success(json);
+                return GameResult<string>.Success(json);
             }
             catch (Exception ex)
             {
-                return CommonResult<string>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, $"Local deobfuscate failed: {ex.Message}");
+                return GameResult<string>.Failure(GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, $"Local deobfuscate failed: {ex.Message}");
             }
         }
 
-        private CommonResult<string> decryptCloudPayloadToJson(SaveCloudPayload payload)
+        private GameResult<string> decryptCloudPayloadToJson(SaveCloudPayload payload)
         {
             if (payload == null)
-                return CommonResult<string>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveCloudPayload is null.");
+                return GameResult<string>.Failure(GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveCloudPayload is null.");
 
             var raw = payload.Payload ?? string.Empty;
             if (string.IsNullOrEmpty(raw))
-                return CommonResult<string>.Success(raw);
+                return GameResult<string>.Success(raw);
 
             try
             {
                 var json = ComplexUtil.Decrypt_Base64(raw);
-                return CommonResult<string>.Success(json);
+                return GameResult<string>.Success(json);
             }
             catch (Exception ex)
             {
-                return CommonResult<string>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, $"Cloud deobfuscate failed: {ex.Message}");
+                return GameResult<string>.Failure(GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, $"Cloud deobfuscate failed: {ex.Message}");
             }
         }
 
@@ -986,7 +986,7 @@ namespace Devian
                 payloadSummary);
         }
 
-        static SavePayloadSummary buildPayloadSummary(CommonResult<string> parseResult)
+        static SavePayloadSummary buildPayloadSummary(GameResult<string> parseResult)
         {
             if (parseResult.IsFailure)
                 return SavePayloadSummary.ParseFailed(parseResult.Error?.Message ?? "payload parse failed");
@@ -1115,53 +1115,53 @@ namespace Devian
         //  Public: Payload parsing
         // ──────────────────────────────────────────────
 
-        public static CommonResult<T> ParsePayloadResult<T>(SaveLocalPayload payload)
+        public static GameResult<T> ParsePayloadResult<T>(SaveLocalPayload payload)
         {
             var mgr = SaveDataManager.Instance;
             if (mgr == null)
-                return CommonResult<T>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveDataManager.Instance is null.");
+                return GameResult<T>.Failure(GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveDataManager.Instance is null.");
 
             var dec = mgr.decryptLocalPayloadToJson(payload);
             if (dec.IsFailure)
-                return CommonResult<T>.Failure(dec.Error!);
+                return GameResult<T>.Failure(dec.Error!);
 
             var json = dec.Value;
             if (string.IsNullOrWhiteSpace(json))
-                return CommonResult<T>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "Decrypted json is empty.");
+                return GameResult<T>.Failure(GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "Decrypted json is empty.");
 
             try
             {
                 var value = JsonUtility.FromJson<T>(json);
-                return CommonResult<T>.Success(value);
+                return GameResult<T>.Success(value);
             }
             catch (Exception ex)
             {
-                return CommonResult<T>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, ex.Message);
+                return GameResult<T>.Failure(GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, ex.Message);
             }
         }
 
-        public static CommonResult<T> ParsePayloadResult<T>(SaveCloudPayload payload)
+        public static GameResult<T> ParsePayloadResult<T>(SaveCloudPayload payload)
         {
             var mgr = SaveDataManager.Instance;
             if (mgr == null)
-                return CommonResult<T>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveDataManager.Instance is null.");
+                return GameResult<T>.Failure(GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "SaveDataManager.Instance is null.");
 
             var dec = mgr.decryptCloudPayloadToJson(payload);
             if (dec.IsFailure)
-                return CommonResult<T>.Failure(dec.Error!);
+                return GameResult<T>.Failure(dec.Error!);
 
             var json = dec.Value;
             if (string.IsNullOrWhiteSpace(json))
-                return CommonResult<T>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "Decrypted json is empty.");
+                return GameResult<T>.Failure(GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, "Decrypted json is empty.");
 
             try
             {
                 var value = JsonUtility.FromJson<T>(json);
-                return CommonResult<T>.Success(value);
+                return GameResult<T>.Success(value);
             }
             catch (Exception ex)
             {
-                return CommonResult<T>.Failure(COMMON_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, ex.Message);
+                return GameResult<T>.Failure(GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED, ex.Message);
             }
         }
 
@@ -1169,7 +1169,7 @@ namespace Devian
         //  Internal: Cloud initialization
         // ──────────────────────────────────────────────
 
-        internal Task<CommonResult<SaveCloudResult>> _initializeCloudAsync(CancellationToken ct)
+        internal Task<GameResult<SaveCloudResult>> _initializeCloudAsync(CancellationToken ct)
         {
 #if UNITY_EDITOR
             return Task.FromResult(editorNoCloud<SaveCloudResult>());
@@ -1201,83 +1201,83 @@ namespace Devian
             return _settings;
         }
 
-        private CommonResult<string> getPrimaryLocalFilename()
+        private GameResult<string> getPrimaryLocalFilename()
         {
             var s = ensureSettings();
             var raw = s != null ? s.PrimaryLocalFilename : "save/main.json";
             var filename = raw?.Replace('\\', '/').Trim();
             if (string.IsNullOrWhiteSpace(filename))
             {
-                return CommonResult<string>.Failure(
-                    COMMON_ERROR_TYPE.LOCALSAVE_FILENAME_INVALID,
+                return GameResult<string>.Failure(
+                    GAME_ERROR_TYPE.LOCALSAVE_FILENAME_INVALID,
                     "Primary local filename is empty.");
             }
 
             if (!IsValidJsonFilename(filename, out var fnError))
             {
-                return CommonResult<string>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_FILENAME_INVALID, fnError);
+                return GameResult<string>.Failure(GAME_ERROR_TYPE.LOCALSAVE_FILENAME_INVALID, fnError);
             }
 
-            return CommonResult<string>.Success(filename);
+            return GameResult<string>.Success(filename);
         }
 
-        private CommonResult<string> getPrimaryCloudSlot()
+        private GameResult<string> getPrimaryCloudSlot()
         {
             var s = ensureSettings();
             var raw = s != null ? s.PrimaryCloudSlot : "main";
             var cloudSlot = raw?.Trim();
             if (string.IsNullOrWhiteSpace(cloudSlot))
             {
-                return CommonResult<string>.Failure(
-                    COMMON_ERROR_TYPE.CLOUDSAVE_SLOT_MISSING,
+                return GameResult<string>.Failure(
+                    GAME_ERROR_TYPE.CLOUDSAVE_SLOT_MISSING,
                     "Primary cloud slot is not configured.");
             }
 
-            return CommonResult<string>.Success(cloudSlot);
+            return GameResult<string>.Success(cloudSlot);
         }
 
-        private CommonResult<SaveLocalPayload> loadPrimaryLocalRecord()
+        private GameResult<SaveLocalPayload> loadPrimaryLocalRecord()
         {
             var filenameR = getPrimaryLocalFilename();
             if (filenameR.IsFailure)
-                return CommonResult<SaveLocalPayload>.Failure(filenameR.Error!);
+                return GameResult<SaveLocalPayload>.Failure(filenameR.Error!);
 
             var filename = filenameR.Value;
 
             var loaded = SaveLocalFileStore.Read(getRootPath(), filename);
             if (loaded.IsFailure)
             {
-                return CommonResult<SaveLocalPayload>.Failure(loaded.Error!);
+                return GameResult<SaveLocalPayload>.Failure(loaded.Error!);
             }
 
             var save = loaded.Value;
             if (save == null)
             {
-                return CommonResult<SaveLocalPayload>.Success(null);
+                return GameResult<SaveLocalPayload>.Success(null);
             }
 
             // Payload Contract (Obfuscated-only):
             // - 반환 SaveLocalPayload.payload 는 저장 포맷 그대로(난독화 시 obfuscated)여야 한다.
             // - deobfuscate/parse는 별도 경로(SaveDataManager)를 통해 수행한다.
-            return CommonResult<SaveLocalPayload>.Success(save);
+            return GameResult<SaveLocalPayload>.Success(save);
         }
 
-        private Task<CommonResult<SaveLocalPayload>> loadPrimaryLocalRecordAsync(CancellationToken ct)
+        private Task<GameResult<SaveLocalPayload>> loadPrimaryLocalRecordAsync(CancellationToken ct)
         {
             if (ct.IsCancellationRequested)
             {
                 return Task.FromResult(
-                    CommonResult<SaveLocalPayload>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_CANCELLED, "Cancelled."));
+                    GameResult<SaveLocalPayload>.Failure(GAME_ERROR_TYPE.LOCALSAVE_CANCELLED, "Cancelled."));
             }
 
             return Task.FromResult(loadPrimaryLocalRecord());
         }
 
-        private CommonResult<bool> savePrimaryLocal(string data)
+        private GameResult<bool> savePrimaryLocal(string data)
         {
             var filenameR = getPrimaryLocalFilename();
             if (filenameR.IsFailure)
-                return CommonResult<bool>.Failure(filenameR.Error!);
+                return GameResult<bool>.Failure(filenameR.Error!);
 
             var filename = filenameR.Value;
 
@@ -1295,16 +1295,16 @@ namespace Devian
 
             var write = SaveLocalFileStore.WriteAtomic(getRootPath(), filename, save);
             return write.IsSuccess
-                ? CommonResult<bool>.Success(true)
-                : CommonResult<bool>.Failure(write.Error!);
+                ? GameResult<bool>.Success(true)
+                : GameResult<bool>.Failure(write.Error!);
         }
 
-        private Task<CommonResult<bool>> savePrimaryLocalAsync(string data, CancellationToken ct)
+        private Task<GameResult<bool>> savePrimaryLocalAsync(string data, CancellationToken ct)
         {
             if (ct.IsCancellationRequested)
             {
                 return Task.FromResult(
-                    CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_CANCELLED, "Cancelled."));
+                    GameResult<bool>.Failure(GAME_ERROR_TYPE.LOCALSAVE_CANCELLED, "Cancelled."));
             }
 
             return Task.FromResult(savePrimaryLocal(data));
@@ -1314,42 +1314,42 @@ namespace Devian
         //  Private: Cloud save operations
         // ──────────────────────────────────────────────
 
-        private Task<CommonResult<SaveCloudPayload>> loadPrimaryCloudRecordAsync(CancellationToken ct)
+        private Task<GameResult<SaveCloudPayload>> loadPrimaryCloudRecordAsync(CancellationToken ct)
         {
 #if UNITY_EDITOR
             return Task.FromResult(editorNoCloud<SaveCloudPayload>());
 #else
             if (_cloudClient == null)
                 return Task.FromResult(
-                    CommonResult<SaveCloudPayload>.Failure(COMMON_ERROR_TYPE.CLOUDSAVE_NOCLIENT, "Client not configured."));
+                    GameResult<SaveCloudPayload>.Failure(GAME_ERROR_TYPE.CLOUDSAVE_NOCLIENT, "Client not configured."));
 
             var cloudSlotR = getPrimaryCloudSlot();
             if (cloudSlotR.IsFailure)
                 return Task.FromResult(
-                    CommonResult<SaveCloudPayload>.Failure(cloudSlotR.Error!));
+                    GameResult<SaveCloudPayload>.Failure(cloudSlotR.Error!));
 
             var cloudSlot = cloudSlotR.Value;
             return loadCloudRecordInternal(cloudSlot, ct);
 #endif
         }
 
-        private Task<CommonResult<bool>> savePrimaryCloudAsync(string data, CancellationToken ct)
+        private Task<GameResult<bool>> savePrimaryCloudAsync(string data, CancellationToken ct)
         {
 #if UNITY_EDITOR
             return Task.FromResult(editorNoCloud<bool>());
 #else
             if (_cloudClient == null)
                 return Task.FromResult(
-                    CommonResult<bool>.Failure(COMMON_ERROR_TYPE.CLOUDSAVE_NOCLIENT, "Client not configured."));
+                    GameResult<bool>.Failure(GAME_ERROR_TYPE.CLOUDSAVE_NOCLIENT, "Client not configured."));
 
             var cloudSlotR = getPrimaryCloudSlot();
             if (cloudSlotR.IsFailure)
                 return Task.FromResult(
-                    CommonResult<bool>.Failure(cloudSlotR.Error!));
+                    GameResult<bool>.Failure(cloudSlotR.Error!));
 
             if (!isLikelyJson(data))
                 return Task.FromResult(
-                    CommonResult<bool>.Failure(COMMON_ERROR_TYPE.CLOUDSAVE_PAYLOAD_INVALID,
+                    GameResult<bool>.Failure(GAME_ERROR_TYPE.CLOUDSAVE_PAYLOAD_INVALID,
                         "Payload must be JSON (object or array)."));
 
             var cloudSlot = cloudSlotR.Value;
@@ -1357,17 +1357,17 @@ namespace Devian
 #endif
         }
 
-        private async Task<CommonResult<SaveCloudResult>> signInCloudInternal(CancellationToken ct)
+        private async Task<GameResult<SaveCloudResult>> signInCloudInternal(CancellationToken ct)
         {
             var r = await _cloudClient.SignInIfNeededAsync(ct);
             var clientName = _cloudClient != null ? _cloudClient.GetType().Name : "null";
 
             return r == SaveCloudResult.Success
-                ? CommonResult<SaveCloudResult>.Success(r)
-                : CommonResult<SaveCloudResult>.Failure(COMMON_ERROR_TYPE.CLOUDSAVE_SIGNIN, $"Sign-in failed: {r} (client={clientName})");
+                ? GameResult<SaveCloudResult>.Success(r)
+                : GameResult<SaveCloudResult>.Failure(GAME_ERROR_TYPE.CLOUDSAVE_SIGNIN, $"Sign-in failed: {r} (client={clientName})");
         }
 
-        private async Task<CommonResult<bool>> saveCloudInternal(
+        private async Task<GameResult<bool>> saveCloudInternal(
             string cloudSlot, string data, CancellationToken ct)
         {
             var plain = data ?? string.Empty;
@@ -1384,36 +1384,36 @@ namespace Devian
 
             var r = await _cloudClient.SaveAsync(cloudSlot, csPayload, ct);
             return r.IsFailure
-                ? CommonResult<bool>.Failure(r.Error!)
-                : CommonResult<bool>.Success(true);
+                ? GameResult<bool>.Failure(r.Error!)
+                : GameResult<bool>.Success(true);
         }
 
-        private async Task<CommonResult<SaveCloudPayload>> loadCloudRecordInternal(
+        private async Task<GameResult<SaveCloudPayload>> loadCloudRecordInternal(
             string cloudSlot, CancellationToken ct)
         {
             var (result, loaded) = await _cloudClient.LoadAsync(cloudSlot, ct);
 
             if (result == SaveCloudResult.NotFound)
             {
-                return CommonResult<SaveCloudPayload>.Success(null);
+                return GameResult<SaveCloudPayload>.Success(null);
             }
 
             if (result != SaveCloudResult.Success)
             {
                 var errorType = isCloudConnectionFailureResult(result)
-                    ? COMMON_ERROR_TYPE.CLOUDSAVE_CONNECTION_FAILED
-                    : COMMON_ERROR_TYPE.CLOUDSAVE_LOAD;
-                return CommonResult<SaveCloudPayload>.Failure(errorType, $"Load failed: {result}");
+                    ? GAME_ERROR_TYPE.CLOUDSAVE_CONNECTION_FAILED
+                    : GAME_ERROR_TYPE.CLOUDSAVE_LOAD;
+                return GameResult<SaveCloudPayload>.Failure(errorType, $"Load failed: {result}");
             }
 
             if (loaded == null)
             {
-                return CommonResult<SaveCloudPayload>.Success(null);
+                return GameResult<SaveCloudPayload>.Success(null);
             }
 
             // Payload Contract (Obfuscated-only):
             // - 반환 SaveCloudPayload.Payload 는 저장 포맷 그대로(난독화 시 obfuscated)여야 한다.
-            return CommonResult<SaveCloudPayload>.Success(loaded);
+            return GameResult<SaveCloudPayload>.Success(loaded);
         }
 
         private static bool isCloudConnectionFailureResult(SaveCloudResult result)
@@ -1818,10 +1818,10 @@ namespace Devian
         // ──────────────────────────────────────────────
 
 #if UNITY_EDITOR
-        private static CommonResult<T> editorNoCloud<T>()
+        private static GameResult<T> editorNoCloud<T>()
         {
-            return CommonResult<T>.Failure(
-                COMMON_ERROR_TYPE.CLOUDSAVE_NOCLIENT,
+            return GameResult<T>.Failure(
+                GAME_ERROR_TYPE.CLOUDSAVE_NOCLIENT,
                 "SaveCloud is not supported in Unity Editor. Use SaveLocal only.");
         }
 #endif

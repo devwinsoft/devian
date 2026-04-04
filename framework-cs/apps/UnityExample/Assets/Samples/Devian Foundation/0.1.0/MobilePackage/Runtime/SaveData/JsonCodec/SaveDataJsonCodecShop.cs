@@ -56,8 +56,6 @@ namespace Devian
                 shop.schemaVersion = 11;
             if (shop.schemaVersion < 12)
                 shop.schemaVersion = 12;
-            if (shop.schemaVersion < 13)
-                shop.schemaVersion = 13;
         }
 
         static JObject serializeCatalogs(ShopStorage shop)
@@ -206,12 +204,12 @@ namespace Devian
             for (var i = 0; i < dailyProducts.Count; i++)
             {
                 var state = dailyProducts[i];
-                if (state == null || string.IsNullOrWhiteSpace(state.shopItemId))
+                if (state == null || string.IsNullOrWhiteSpace(state.shopId))
                     continue;
 
                 dailyProductsArr.Add(new JObject
                 {
-                    ["shop_item_id"] = state.shopItemId.Trim(),
+                    ["shop_id"] = state.shopId.Trim(),
                     ["discountType"] = (int)state.discountType,
                     ["remainCount"] = state.remainCount,
                 });
@@ -293,12 +291,12 @@ namespace Devian
 
             foreach (var remainProp in remainObj.Properties())
             {
-                var normalizedShopItemId = remainProp.Name != null ? remainProp.Name.Trim() : string.Empty;
-                if (string.IsNullOrEmpty(normalizedShopItemId))
+                var normalizedShopId = remainProp.Name != null ? remainProp.Name.Trim() : string.Empty;
+                if (string.IsNullOrEmpty(normalizedShopId))
                     continue;
 
                 var remainCount = remainProp.Value.Value<int?>() ?? -1;
-                shop.SetProductRemainCount(catalogType, normalizedShopItemId, remainCount);
+                shop.SetProductRemainCount(catalogType, normalizedShopId, remainCount);
             }
         }
 
@@ -308,16 +306,16 @@ namespace Devian
             {
                 foreach (var prop in remainObj.Properties())
                 {
-                    var normalizedShopItemId = prop.Name != null ? prop.Name.Trim() : string.Empty;
-                    if (string.IsNullOrEmpty(normalizedShopItemId))
+                    var normalizedShopId = prop.Name != null ? prop.Name.Trim() : string.Empty;
+                    if (string.IsNullOrEmpty(normalizedShopId))
                         continue;
 
-                    var catalogType = resolveCatalogTypeByShopItemId(normalizedShopItemId);
+                    var catalogType = resolveCatalogTypeByShopId(normalizedShopId);
                     if (catalogType == SHOP_CATALOG_TYPE.NONE)
                         continue;
 
                     var remainCount = prop.Value.Value<int?>() ?? -1;
-                    shop.SetProductRemainCount(catalogType, normalizedShopItemId, remainCount);
+                    shop.SetProductRemainCount(catalogType, normalizedShopId, remainCount);
                 }
             }
 
@@ -396,8 +394,8 @@ namespace Devian
                 if (dailyProductsArr[i] is not JObject stateObj)
                     continue;
 
-                var shopItemId = stateObj.Value<string>("shop_item_id") ?? string.Empty;
-                if (string.IsNullOrWhiteSpace(shopItemId))
+                var shopId = stateObj.Value<string>("shop_id") ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(shopId))
                     continue;
 
                 var discountTypeValue = stateObj.Value<int?>("discountType") ?? 0;
@@ -406,7 +404,7 @@ namespace Devian
 
                 states[stateCount++] = new ShopDailyProductState
                 {
-                    shopItemId = shopItemId,
+                    shopId = shopId,
                     discountType = discountType,
                     remainCount = remainCount,
                 };
@@ -428,12 +426,12 @@ namespace Devian
         {
             foreach (var prop in legacyPurchaseCountsObj.Properties())
             {
-                var normalizedShopItemId = prop.Name != null ? prop.Name.Trim() : string.Empty;
-                if (string.IsNullOrEmpty(normalizedShopItemId))
+                var normalizedShopId = prop.Name != null ? prop.Name.Trim() : string.Empty;
+                if (string.IsNullOrEmpty(normalizedShopId))
                     continue;
 
                 var purchaseCount = prop.Value.Value<int?>() ?? 0;
-                shop.SetLegacyPurchaseCount(normalizedShopItemId, purchaseCount);
+                shop.SetLegacyPurchaseCount(normalizedShopId, purchaseCount);
             }
         }
 
@@ -444,12 +442,12 @@ namespace Devian
                 if (prop.Value is not JObject stateObj)
                     continue;
 
-                var normalizedShopItemId = prop.Name != null ? prop.Name.Trim() : string.Empty;
-                if (string.IsNullOrEmpty(normalizedShopItemId))
+                var normalizedShopId = prop.Name != null ? prop.Name.Trim() : string.Empty;
+                if (string.IsNullOrEmpty(normalizedShopId))
                     continue;
 
                 var purchaseCount = stateObj.Value<int?>("purchaseCount") ?? 0;
-                shop.SetLegacyPurchaseCount(normalizedShopItemId, purchaseCount);
+                shop.SetLegacyPurchaseCount(normalizedShopId, purchaseCount);
             }
         }
 
@@ -481,25 +479,25 @@ namespace Devian
             return catalogType == SHOP_CATALOG_TYPE.NONE ? SHOP_CATALOG_TYPE.NONE : catalogType;
         }
 
-        static SHOP_CATALOG_TYPE resolveCatalogTypeByShopItemId(string shopItemId)
+        static SHOP_CATALOG_TYPE resolveCatalogTypeByShopId(string shopId)
         {
-            if (string.IsNullOrWhiteSpace(shopItemId))
+            if (string.IsNullOrWhiteSpace(shopId))
                 return SHOP_CATALOG_TYPE.NONE;
 
-            var normalizedShopItemId = shopItemId.Trim();
-            if (TB_SHOP_ITEM_DAILY.Get(normalizedShopItemId) != null)
+            var normalizedShopId = shopId.Trim();
+            if (TB_SHOP_ITEM_DAILY.Get(normalizedShopId) != null)
                 return SHOP_CATALOG_TYPE.DAILY;
 
-            if (TB_SHOP_ITEM_EVENT.Get(normalizedShopItemId) != null)
+            if (TB_SHOP_ITEM_EVENT.Get(normalizedShopId) != null)
                 return SHOP_CATALOG_TYPE.EVENT;
 
-            if (TB_SHOP_ITEM_CHEST.Get(normalizedShopItemId) != null)
+            if (TB_SHOP_ITEM_CHEST.Get(normalizedShopId) != null)
                 return SHOP_CATALOG_TYPE.CHEST;
 
-            if (TB_SHOP_ITEM_PURCHASE.Get(normalizedShopItemId) != null)
+            if (TB_SHOP_ITEM_PURCHASE.Get(normalizedShopId) != null)
                 return SHOP_CATALOG_TYPE.PURCHASE;
 
-            if (TB_SHOP_ITEM_GOLD.Get(normalizedShopItemId) != null)
+            if (TB_SHOP_ITEM_GOLD.Get(normalizedShopId) != null)
                 return SHOP_CATALOG_TYPE.GOLD;
 
             return SHOP_CATALOG_TYPE.NONE;

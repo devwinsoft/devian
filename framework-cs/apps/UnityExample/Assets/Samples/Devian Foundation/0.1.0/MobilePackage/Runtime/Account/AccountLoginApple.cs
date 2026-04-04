@@ -2,7 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
-using Devian.Domain.Common;
+using Devian.Domain.Game;
 
 
 namespace Devian
@@ -28,13 +28,13 @@ namespace Devian
 #endif
         }
 
-        public Task<CommonResult<LoginCredential>> SignInAsync(CancellationToken ct)
+        public Task<GameResult<LoginCredential>> SignInAsync(CancellationToken ct)
         {
 #if UNITY_IOS && !UNITY_EDITOR
-            return Task.FromResult(CommonResult<LoginCredential>.Failure(COMMON_ERROR_TYPE.LOGIN_APPLE_MISSING_TOKEN,
+            return Task.FromResult(GameResult<LoginCredential>.Failure(GAME_ERROR_TYPE.LOGIN_APPLE_MISSING_TOKEN,
                 "Apple Sign-in is not yet implemented in AccountLoginApple. Use LoginAsync(LoginType, LoginCredential, CancellationToken) with caller-provided credential."));
 #else
-            return Task.FromResult(CommonResult<LoginCredential>.Failure(COMMON_ERROR_TYPE.LOGIN_APPLE_MISSING_TOKEN,
+            return Task.FromResult(GameResult<LoginCredential>.Failure(GAME_ERROR_TYPE.LOGIN_APPLE_MISSING_TOKEN,
                 "Apple Sign-in is not available on this platform."));
 #endif
         }

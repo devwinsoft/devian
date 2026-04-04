@@ -13,12 +13,12 @@ namespace Devian
     {
         // ── Apply RewardGroup ──
 
-        public CommonResult<RewardApplyResult> ApplyRewardGroup(string rewardGroupId, int rewardAmountMultiplier = 1)
+        public GameResult<RewardApplyResult> ApplyRewardGroup(string rewardGroupId, int rewardAmountMultiplier = 1)
         {
             var normalizedRewardGroupId = rewardGroupId != null ? rewardGroupId.Trim() : string.Empty;
             if (string.IsNullOrEmpty(normalizedRewardGroupId))
             {
-                return CommonResult<RewardApplyResult>.Success(
+                return GameResult<RewardApplyResult>.Success(
                     new RewardApplyResult(string.Empty, Array.Empty<RewardData>()));
             }
 
@@ -29,21 +29,21 @@ namespace Devian
 
             var apply = ApplyRewardDatas(deltas);
             if (apply.IsFailure)
-                return CommonResult<RewardApplyResult>.Failure(apply.Error!);
+                return GameResult<RewardApplyResult>.Failure(apply.Error!);
 
-            return CommonResult<RewardApplyResult>.Success(
+            return GameResult<RewardApplyResult>.Success(
                 new RewardApplyResult(normalizedRewardGroupId, deltas ?? Array.Empty<RewardData>()));
         }
 
         // ── Apply RewardDatas (type switch + validation) ──
 
-        public CommonResult ApplyRewardDatas(RewardData[] rewards)
+        public GameResult ApplyRewardDatas(RewardData[] rewards)
         {
             if (rewards == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTAS_NULL, "rewards is null");
+                return GameResult.Failure(GAME_ERROR_TYPE.INVENTORY_DELTAS_NULL, "rewards is null");
 
             if (rewards.Length == 0)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             // ── 선검증 (all-or-nothing) ──
             for (int i = 0; i < rewards.Length; i++)
@@ -114,18 +114,18 @@ namespace Devian
                 }
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         // ── Revoke RewardDatas ──
 
-        public CommonResult RevokeRewardDatas(RewardData[] rewards)
+        public GameResult RevokeRewardDatas(RewardData[] rewards)
         {
             if (rewards == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTAS_NULL, "rewards is null");
+                return GameResult.Failure(GAME_ERROR_TYPE.INVENTORY_DELTAS_NULL, "rewards is null");
 
             if (rewards.Length == 0)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             var inv = InventoryManager.Instance;
 
@@ -146,8 +146,8 @@ namespace Devian
                     var balance = inv.GetCurrencyAmount(currencyType);
                     if (balance < r.Amount)
                     {
-                        return CommonResult.Failure(
-                            COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                        return GameResult.Failure(
+                            GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
                             $"rewards[{i}] insufficient currency. id={r.Id} need={r.Amount} have={balance}");
                     }
                 }
@@ -156,8 +156,8 @@ namespace Devian
                     var amount = inv.GetCardAmount(r.Id);
                     if (amount < r.Amount)
                     {
-                        return CommonResult.Failure(
-                            COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                        return GameResult.Failure(
+                            GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
                             $"rewards[{i}] insufficient card amount. id={r.Id} need={r.Amount} have={amount}");
                     }
                 }
@@ -166,8 +166,8 @@ namespace Devian
                     var amount = inv.GetMaterialAmount(r.Id);
                     if (amount < r.Amount)
                     {
-                        return CommonResult.Failure(
-                            COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                        return GameResult.Failure(
+                            GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
                             $"rewards[{i}] insufficient material amount. id={r.Id} need={r.Amount} have={amount}");
                     }
                 }
@@ -176,8 +176,8 @@ namespace Devian
                     var count = inv.GetEquipCount(r.Id);
                     if (count < r.Amount)
                     {
-                        return CommonResult.Failure(
-                            COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                        return GameResult.Failure(
+                            GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
                             $"rewards[{i}] insufficient equip count. id={r.Id} need={r.Amount} have={count}");
                     }
                 }
@@ -186,8 +186,8 @@ namespace Devian
                     var amount = inv.GetHeroAmount(r.Id);
                     if (amount < r.Amount)
                     {
-                        return CommonResult.Failure(
-                            COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                        return GameResult.Failure(
+                            GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
                             $"rewards[{i}] insufficient hero amount. id={r.Id} need={r.Amount} have={amount}");
                     }
                 }
@@ -195,8 +195,8 @@ namespace Devian
                 {
                     if (!inv.HasActiveRental(r.Id))
                     {
-                        return CommonResult.Failure(
-                            COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                        return GameResult.Failure(
+                            GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
                             $"rewards[{i}] rental not active. id={r.Id}");
                     }
                 }
@@ -204,8 +204,8 @@ namespace Devian
                 {
                     if (!inv.HasPass(r.Id))
                     {
-                        return CommonResult.Failure(
-                            COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                        return GameResult.Failure(
+                            GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
                             $"rewards[{i}] pass not owned. id={r.Id}");
                     }
                 }
@@ -215,8 +215,8 @@ namespace Devian
                     var chestCount = inv.GetTreasureCount(gradeType);
                     if (chestCount < r.Amount)
                     {
-                        return CommonResult.Failure(
-                            COMMON_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                        return GameResult.Failure(
+                            GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
                             $"rewards[{i}] insufficient treasure chest count. id={r.Id} need={r.Amount} have={chestCount}");
                     }
                 }
@@ -265,18 +265,18 @@ namespace Devian
                 }
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         // ── Revoke Partial ──
 
-        public CommonResult RevokeRewardDatasPartial(RewardData[] rewards)
+        public GameResult RevokeRewardDatasPartial(RewardData[] rewards)
         {
             if (rewards == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTAS_NULL, "rewards is null");
+                return GameResult.Failure(GAME_ERROR_TYPE.INVENTORY_DELTAS_NULL, "rewards is null");
 
             if (rewards.Length == 0)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             // 기본 유효성 검증 (type, id, amount 부호 — 데이터 오류이므로 Failure)
             for (int i = 0; i < rewards.Length; i++)
@@ -350,7 +350,7 @@ namespace Devian
                 }
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         // ── GetAmount ──
@@ -394,20 +394,20 @@ namespace Devian
 
         // ── FirstInitAsync ──
 
-        public async Task<CommonResult> FirstInitAsync(CancellationToken ct = default)
+        public async Task<GameResult> FirstInitAsync(CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
 
             var parse = _parseFirstRewardSettings();
             if (parse.IsFailure)
-                return CommonResult.Failure(parse.Error!);
+                return GameResult.Failure(parse.Error!);
 
             var rewards = parse.Value ?? Array.Empty<RewardData>();
             if (rewards.Length > 0)
             {
                 var apply = ApplyRewardDatas(rewards);
                 if (apply.IsFailure)
-                    return CommonResult.Failure(apply.Error!);
+                    return GameResult.Failure(apply.Error!);
             }
 
             // Stamina: 설정 로드 → MaxStamina 지급
@@ -419,12 +419,12 @@ namespace Devian
             {
                 var apply = inv.ApplyCurrency(CURRENCY_TYPE.STAMINA, maxStamina);
                 if (apply.IsFailure)
-                    return CommonResult.Failure(apply.Error!);
+                    return GameResult.Failure(apply.Error!);
             }
 
             await Task.Yield();
             ct.ThrowIfCancellationRequested();
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         // ── Resolve ──
@@ -564,22 +564,22 @@ namespace Devian
 
         // ── Private ──
 
-        static CommonResult _validateRewardData(RewardData r, int index)
+        static GameResult _validateRewardData(RewardData r, int index)
         {
             if (r.Type != REWARD_TYPE.CARD && r.Type != REWARD_TYPE.CURRENCY &&
                 r.Type != REWARD_TYPE.MATERIAL &&
                 r.Type != REWARD_TYPE.EQUIP && r.Type != REWARD_TYPE.HERO &&
                 r.Type != REWARD_TYPE.RENTAL && r.Type != REWARD_TYPE.PASS &&
                 r.Type != REWARD_TYPE.TREASURE)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTA_TYPE_INVALID,
+                return GameResult.Failure(GAME_ERROR_TYPE.INVENTORY_DELTA_TYPE_INVALID,
                     $"rewards[{index}] invalid type: {r.Type}");
 
             if (string.IsNullOrWhiteSpace(r.Id))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
+                return GameResult.Failure(GAME_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
                     $"rewards[{index}] id is empty");
 
             if (r.Amount < 0)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.INVENTORY_DELTA_AMOUNT_NEGATIVE,
+                return GameResult.Failure(GAME_ERROR_TYPE.INVENTORY_DELTA_AMOUNT_NEGATIVE,
                     $"rewards[{index}] amount is negative: {r.Amount}");
 
             if (r.Type == REWARD_TYPE.CURRENCY)
@@ -589,8 +589,8 @@ namespace Devian
                     currencyType == CURRENCY_TYPE.FREE ||
                     currencyType == CURRENCY_TYPE.JEWEL)
                 {
-                    return CommonResult.Failure(
-                        COMMON_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
+                    return GameResult.Failure(
+                        GAME_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
                         $"rewards[{index}] invalid currency id: {r.Id}");
                 }
             }
@@ -600,56 +600,56 @@ namespace Devian
                 if (!Enum.TryParse<TREASURE_GRADE_TYPE>(r.Id, out var gradeType) ||
                     gradeType == TREASURE_GRADE_TYPE.NONE)
                 {
-                    return CommonResult.Failure(
-                        COMMON_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
+                    return GameResult.Failure(
+                        GAME_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,
                         $"rewards[{index}] invalid treasure grade id: {r.Id}");
                 }
             }
 
             if (r.Type == REWARD_TYPE.CARD && TB_ITEM_CARD.Get(r.Id) == null)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
                     $"rewards[{index}] ITEM_CARD not found: {r.Id}");
             }
 
             if (r.Type == REWARD_TYPE.MATERIAL && TB_ITEM_MATERIAL.Get(r.Id) == null)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
                     $"rewards[{index}] ITEM_MATERIAL not found: {r.Id}");
             }
 
             if (r.Type == REWARD_TYPE.EQUIP && TB_ITEM_EQUIP.Get(r.Id) == null)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
                     $"rewards[{index}] ITEM_EQUIP not found: {r.Id}");
             }
 
             if (r.Type == REWARD_TYPE.HERO && TB_ITEM_HERO.Get(r.Id) == null)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND,
                     $"rewards[{index}] ITEM_HERO not found: {r.Id}");
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
-        CommonResult<RewardData[]> _parseFirstRewardSettings()
+        GameResult<RewardData[]> _parseFirstRewardSettings()
         {
             var setting = Resources.Load<FirstRewardSettings>(FirstRewardSettings.ResourcesPath);
             if (setting == null)
             {
-                return CommonResult<RewardData[]>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                return GameResult<RewardData[]>.Failure(
+                    GAME_ERROR_TYPE.GAME_SERVER_TIME_UNAVAILABLE,
                     $"FirstRewardSettings is not available. expected={FirstRewardSettings.DefaultResourcesAssetPath}");
             }
 
             var payload = ((string)setting.InitialRewards)?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(payload))
-                return CommonResult<RewardData[]>.Success(Array.Empty<RewardData>());
+                return GameResult<RewardData[]>.Success(Array.Empty<RewardData>());
 
             // AES 복호화
             string json;
@@ -664,8 +664,8 @@ namespace Devian
                 }
                 catch (Exception ex)
                 {
-                    return CommonResult<RewardData[]>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    return GameResult<RewardData[]>.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                         $"InitialRewards AES decrypt failed: {ex.Message}");
                 }
             }
@@ -675,7 +675,7 @@ namespace Devian
             }
 
             if (string.IsNullOrWhiteSpace(json))
-                return CommonResult<RewardData[]>.Success(Array.Empty<RewardData>());
+                return GameResult<RewardData[]>.Success(Array.Empty<RewardData>());
 
             JToken root;
             try
@@ -684,8 +684,8 @@ namespace Devian
             }
             catch (Exception ex)
             {
-                return CommonResult<RewardData[]>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult<RewardData[]>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"InitialRewards JSON parse failed: {ex.Message}");
             }
 
@@ -701,21 +701,21 @@ namespace Devian
 
             if (rewardsArray == null)
             {
-                return CommonResult<RewardData[]>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult<RewardData[]>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     "InitialRewards must be RewardData[] JSON or {\"rewards\": RewardData[]}.");
             }
 
             if (rewardsArray.Count == 0)
-                return CommonResult<RewardData[]>.Success(Array.Empty<RewardData>());
+                return GameResult<RewardData[]>.Success(Array.Empty<RewardData>());
 
             var rewards = new RewardData[rewardsArray.Count];
             for (var i = 0; i < rewardsArray.Count; i++)
             {
                 if (rewardsArray[i] is not JObject rewardObj)
                 {
-                    return CommonResult<RewardData[]>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    return GameResult<RewardData[]>.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                         $"InitialRewards[{i}] must be an object.");
                 }
 
@@ -725,39 +725,39 @@ namespace Devian
 
                 if (!Enum.TryParse(typeText, true, out REWARD_TYPE rewardType))
                 {
-                    return CommonResult<RewardData[]>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    return GameResult<RewardData[]>.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                         $"InitialRewards[{i}].type is invalid: {typeText}");
                 }
 
                 var id = (rewardObj.Value<string>("id") ?? string.Empty).Trim();
                 if (string.IsNullOrWhiteSpace(id))
                 {
-                    return CommonResult<RewardData[]>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    return GameResult<RewardData[]>.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                         $"InitialRewards[{i}].id is empty.");
                 }
 
                 var amountToken = rewardObj["amount"];
                 if (amountToken == null || amountToken.Type != JTokenType.Integer)
                 {
-                    return CommonResult<RewardData[]>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    return GameResult<RewardData[]>.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                         $"InitialRewards[{i}].amount must be an integer.");
                 }
 
                 var amountLong = amountToken.Value<long>();
                 if (amountLong <= 0 || amountLong > int.MaxValue)
                 {
-                    return CommonResult<RewardData[]>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    return GameResult<RewardData[]>.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                         $"InitialRewards[{i}].amount must be within 1..{int.MaxValue}.");
                 }
 
                 rewards[i] = new RewardData(rewardType, id, (int)amountLong);
             }
 
-            return CommonResult<RewardData[]>.Success(rewards);
+            return GameResult<RewardData[]>.Success(rewards);
         }
 
         static RewardData[] scaleRewardAmounts(RewardData[] source, int multiplier)

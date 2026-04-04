@@ -109,7 +109,7 @@ namespace Devian
         }
 
         static ShopProductBase createRewardProduct(
-            string shopItemId,
+            string shopId,
             string nameId,
             SHOP_CATALOG_TYPE catalogType,
             CURRENCY_TYPE currencyType,
@@ -122,12 +122,12 @@ namespace Devian
             switch (currencyType)
             {
                 case CURRENCY_TYPE.FREE:
-                    return new ShopProductFree(shopItemId, nameId, catalogType, price, rewardGroupId, amount, maxCount, discountType);
+                    return new ShopProductFree(shopId, nameId, catalogType, price, rewardGroupId, amount, maxCount, discountType);
                 case CURRENCY_TYPE.ADS:
-                    return new ShopProductAds(shopItemId, nameId, catalogType, price, rewardGroupId, amount, maxCount, discountType);
+                    return new ShopProductAds(shopId, nameId, catalogType, price, rewardGroupId, amount, maxCount, discountType);
                 default:
                     return new ShopProductCurrency(
-                        shopItemId,
+                        shopId,
                         nameId,
                         catalogType,
                         currencyType,

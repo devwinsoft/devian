@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-using Devian.Domain.Common;
 using Devian.Domain.Game;
 using UnityEngine;
 
@@ -84,7 +83,7 @@ namespace Devian
         private IAchievePlatformAdapter _adapter;
         private bool _platformInitAttempted;
         private bool _platformInitialized;
-        private CommonError _platformInitError;
+        private GameError _platformInitError;
         private bool _initialized;
         private bool _isGameMessageSubscribed;
         private bool _isInventoryMessageSubscribed;
@@ -113,13 +112,13 @@ namespace Devian
             }
         }
 
-        public async Task<CommonResult> InitializeAsync(CancellationToken ct = default)
+        public async Task<GameResult> InitializeAsync(CancellationToken ct = default)
         {
             await _initializeGate.WaitAsync(ct);
             try
             {
                 if (_initialized)
-                    return CommonResult.Ok();
+                    return GameResult.Ok();
 
                 subscribeGameMessageTrigger();
                 subscribeInventoryMessageTrigger();
@@ -131,7 +130,7 @@ namespace Devian
                     Debug.LogWarning($"[{Tag}] Platform init skipped: {platformInit.Error}");
 
                 _initialized = true;
-                return CommonResult.Ok();
+                return GameResult.Ok();
             }
             finally
             {
@@ -213,28 +212,28 @@ namespace Devian
                 : MissionRuntimeState.NONE;
         }
 
-        public async Task<CommonResult> ClaimAsync(string achievementId, CancellationToken ct = default)
+        public async Task<GameResult> ClaimAsync(string achievementId, CancellationToken ct = default)
         {
             if (!_initialized)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED, "AchieveManager is not initialized.");
+                return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "AchieveManager is not initialized.");
 
             if (string.IsNullOrWhiteSpace(achievementId))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "achievementId is empty.");
+                return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "achievementId is empty.");
 
             var runtime = findRuntime(achievementId);
             if (runtime == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_RUNTIME_MISSING, $"Achievement runtime missing: {achievementId}");
+                return GameResult.Failure(GAME_ERROR_TYPE.ACHIEVE_RUNTIME_MISSING, $"Achievement runtime missing: {achievementId}");
 
             if (!runtime.IsClaimable)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_CLAIMABLE, $"Achievement is not claimable: {achievementId}");
+                return GameResult.Failure(GAME_ERROR_TYPE.ACHIEVE_NOT_CLAIMABLE, $"Achievement is not claimable: {achievementId}");
 
             var currentRow = findRow(runtime.achieveId, runtime.level);
             if (currentRow == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.MISSION_NOT_FOUND, $"Achievement row not found: {achievementId}/{runtime.level}");
+                return GameResult.Failure(GAME_ERROR_TYPE.ACHIEVE_NOT_FOUND, $"Achievement row not found: {achievementId}/{runtime.level}");
 
             var apply = RewardManager.Instance.ApplyRewardGroup(currentRow.RewardGroupId);
             if (apply.IsFailure)
-                return CommonResult.Failure(apply.Error!);
+                return GameResult.Failure(apply.Error!);
 
             var nextRow = findNextRow(runtime.achieveId, runtime.level);
             if (nextRow != null && isEligibleRow(nextRow))
@@ -280,10 +279,10 @@ namespace Devian
             if (save.IsFailure)
             {
                 Debug.LogError($"[{Tag}] Save failed: {save.Error}");
-                return CommonResult.Failure(save.Error!);
+                return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, save.Error!.Message);
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         public void Notify(ACHIEVE_MESSAGE_TYPE msgType)
@@ -429,7 +428,7 @@ namespace Devian
             tryActivateWaitingRuntimes(GAME_MESSAGE_TYPE.NONE, CBigInt.Zero);
         }
 
-        public async Task<CommonResult> UnlockAchievementAsync(string achievementId, CancellationToken ct = default)
+        public async Task<GameResult> UnlockAchievementAsync(string achievementId, CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -452,10 +451,10 @@ namespace Devian
             if (markUnlockedIfNew(entry.InternalId))
                 emitAchievementUnlocked(entry.InternalId);
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
-        public async Task<CommonResult> SyncAsync(CancellationToken ct = default)
+        public async Task<GameResult> SyncAsync(CancellationToken ct = default)
         {
             ct.ThrowIfCancellationRequested();
 
@@ -469,7 +468,7 @@ namespace Devian
 
             var sync = await _adapter.FetchAchievementStatesAsync(ct);
             if (sync.IsFailure)
-                return CommonResult.Failure(sync.Error!);
+                return GameResult.Failure(sync.Error!);
 
             var states = sync.Value ?? new Dictionary<string, bool>(StringComparer.Ordinal);
             var runtimePlatform = getRuntimePlatform();
@@ -485,8 +484,8 @@ namespace Devian
                 var platformAchievementId = entry.ResolvePlatformId(runtimePlatform);
                 if (string.IsNullOrEmpty(platformAchievementId))
                 {
-                    return CommonResult.Failure(
-                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    return GameResult.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                         $"Platform achievement ID mapping missing: {internalId}");
                 }
 
@@ -497,7 +496,7 @@ namespace Devian
                     emitAchievementUnlocked(internalId);
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         public void ClearStorage()
@@ -508,20 +507,20 @@ namespace Devian
             _initialized = false;
         }
 
-        CommonResult ensureInitialized()
+        GameResult ensureInitialized()
         {
             if (_initialized)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
-            return CommonResult.Failure(
-                COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+            return GameResult.Failure(
+                GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                 "AchieveManager.InitializeAsync must be called before API use.");
         }
 
-        async Task<CommonResult> ensurePlatformInitializedAsync(CancellationToken ct)
+        async Task<GameResult> ensurePlatformInitializedAsync(CancellationToken ct)
         {
             if (_platformInitialized)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             if (_adapter == null)
                 _adapter = createAdapter(getRuntimePlatform());
@@ -529,8 +528,8 @@ namespace Devian
             if (_platformInitAttempted)
             {
                 return _platformInitError != null
-                    ? CommonResult.Failure(_platformInitError)
-                    : CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, "Achieve platform initialization failed previously.");
+                    ? GameResult.Failure(_platformInitError)
+                    : GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "Achieve platform initialization failed previously.");
             }
 
             _platformInitAttempted = true;
@@ -538,15 +537,15 @@ namespace Devian
             if (init.IsFailure)
             {
                 _platformInitError = init.Error;
-                return CommonResult.Failure(init.Error!);
+                return GameResult.Failure(init.Error!);
             }
 
             _platformInitialized = true;
             _platformInitError = null;
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
-        CommonResult tryResolveAchievement(
+        GameResult tryResolveAchievement(
             string achievementId,
             out AchievementMapEntry entry,
             out string platformAchievementId)
@@ -556,27 +555,27 @@ namespace Devian
 
             if (string.IsNullOrWhiteSpace(achievementId))
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     "achievementId is empty.");
             }
 
             if (!_achievementById.TryGetValue(achievementId.Trim(), out entry) || entry == null || !entry.isActive)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"Active achievement mapping not found: {achievementId}");
             }
 
             platformAchievementId = entry.ResolvePlatformId(getRuntimePlatform());
             if (string.IsNullOrEmpty(platformAchievementId))
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"Platform achievement ID mapping missing: {achievementId}");
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         bool markUnlockedIfNew(string achievementId)

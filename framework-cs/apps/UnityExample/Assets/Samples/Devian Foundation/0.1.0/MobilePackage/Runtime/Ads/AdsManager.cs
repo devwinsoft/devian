@@ -42,10 +42,10 @@ namespace Devian
         /// <summary>
         /// Provider 초기화 + AutoLoad placement preload. Idempotent.
         /// </summary>
-        public async Task<CommonResult> InitializeAsync(CancellationToken ct = default)
+        public async Task<GameResult> InitializeAsync(CancellationToken ct = default)
         {
             if (_initialized)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             try
             {
@@ -84,19 +84,19 @@ namespace Devian
                 Debug.LogWarning($"[{Tag}] InitializeAsync exception (non-fatal): {ex.Message}");
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         /// <summary>
         /// 단일 placement preload.
         /// </summary>
-        public async Task<CommonResult> PreloadAsync(string advertiseId, CancellationToken ct = default)
+        public async Task<GameResult> PreloadAsync(string advertiseId, CancellationToken ct = default)
         {
             var row = TB_ADVERTISE.Get(advertiseId);
             if (row == null || !row.is_active)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.ADS_PLACEMENT_NOT_FOUND,
                     $"ADVERTISE not found or inactive: {advertiseId}");
             }
 
@@ -107,18 +107,18 @@ namespace Devian
                 var ok = await provider.LoadAsync(advertiseId, row.format, adUnitId, ct);
                 if (!ok)
                 {
-                    return CommonResult.Failure(
-                        COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                    return GameResult.Failure(
+                        GAME_ERROR_TYPE.ADS_LOAD_FAILED,
                         $"Ad load failed: {advertiseId}");
                 }
             }
             catch (Exception ex)
             {
                 Debug.LogWarning($"[{Tag}] PreloadAsync exception: {ex.Message}");
-                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, ex.Message);
+                return GameResult.Failure(GAME_ERROR_TYPE.ADS_LOAD_FAILED, ex.Message);
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         public void SetDefaultId(string advertiseId)
@@ -128,13 +128,13 @@ namespace Devian
                 : advertiseId.Trim();
         }
 
-        public Task<CommonResult<AdShowResult>> ShowAsync(CancellationToken ct = default)
+        public Task<GameResult<AdShowResult>> ShowAsync(CancellationToken ct = default)
         {
             if (string.IsNullOrWhiteSpace(_defaultAdvertiseId))
             {
                 return Task.FromResult(
-                    CommonResult<AdShowResult>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    GameResult<AdShowResult>.Failure(
+                        GAME_ERROR_TYPE.ADS_PLACEMENT_NOT_FOUND,
                         "Default advertise id is empty."));
             }
 
@@ -172,21 +172,21 @@ namespace Devian
         /// 단일 광고 표시.
         /// Banner: 즉시 반환. 풀스크린: close까지 대기 후 반환.
         /// </summary>
-        public async Task<CommonResult<AdShowResult>> ShowAsync(string advertiseId, CancellationToken ct = default)
+        public async Task<GameResult<AdShowResult>> ShowAsync(string advertiseId, CancellationToken ct = default)
         {
             // ── row 조회 ──
             var row = TB_ADVERTISE.Get(advertiseId);
             if (row == null || !row.is_active)
             {
-                return CommonResult<AdShowResult>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult<AdShowResult>.Failure(
+                    GAME_ERROR_TYPE.ADS_PLACEMENT_NOT_FOUND,
                     $"ADVERTISE not found or inactive: {advertiseId}");
             }
 
             // ── NoAds 활성 → REWARDED 제외, 광고 없이 즉시 성공 ──
             if (row.format != ADVERTISE_FORMAT.REWARDED && IsNoAdsActive())
             {
-                return CommonResult<AdShowResult>.Success(new AdShowResult(
+                return GameResult<AdShowResult>.Success(new AdShowResult(
                     advertiseId,
                     row.format,
                     AdProviderShowResult.Skipped));
@@ -195,8 +195,8 @@ namespace Devian
             // ── Cooldown ──
             if (IsCooldownActive(advertiseId, row.cooldown_sec))
             {
-                return CommonResult<AdShowResult>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult<AdShowResult>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"Cooldown active: {advertiseId}");
             }
 
@@ -216,8 +216,8 @@ namespace Devian
             catch (Exception ex)
             {
                 Debug.LogWarning($"[{Tag}] ShowAsync exception: {ex.Message}");
-                return CommonResult<AdShowResult>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_UNKNOWN, ex.Message);
+                return GameResult<AdShowResult>.Failure(
+                    GAME_ERROR_TYPE.ADS_SHOW_FAILED, ex.Message);
             }
         }
 
@@ -240,7 +240,7 @@ namespace Devian
         // Show flows
         // ────────────────────────────────────────────
 
-        async Task<CommonResult<AdShowResult>> ShowBannerFlow(
+        async Task<GameResult<AdShowResult>> ShowBannerFlow(
             string advertiseId,
             ADVERTISE row,
             IAdProvider provider,
@@ -249,20 +249,20 @@ namespace Devian
             var showResult = await provider.ShowAsync(advertiseId, row.format, ct);
             if (showResult != AdProviderShowResult.Shown)
             {
-                return CommonResult<AdShowResult>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                return GameResult<AdShowResult>.Failure(
+                    GAME_ERROR_TYPE.ADS_SHOW_FAILED,
                     $"Banner show failed: {advertiseId}");
             }
 
             RecordShowTime(advertiseId);
 
-            return CommonResult<AdShowResult>.Success(new AdShowResult(
+            return GameResult<AdShowResult>.Success(new AdShowResult(
                 advertiseId,
                 row.format,
                 showResult));
         }
 
-        async Task<CommonResult<AdShowResult>> ShowFullScreenFlow(
+        async Task<GameResult<AdShowResult>> ShowFullScreenFlow(
             string advertiseId,
             ADVERTISE row,
             IAdProvider provider,
@@ -292,8 +292,8 @@ namespace Devian
                 var showResult = await provider.ShowAsync(advertiseId, row.format, ct);
                 if (showResult != AdProviderShowResult.Shown)
                 {
-                    return CommonResult<AdShowResult>.Failure(
-                        COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                    return GameResult<AdShowResult>.Failure(
+                        GAME_ERROR_TYPE.ADS_SHOW_FAILED,
                         $"Ad show failed: {advertiseId}");
                 }
 
@@ -305,7 +305,7 @@ namespace Devian
 
                 RecordShowTime(advertiseId);
 
-                return CommonResult<AdShowResult>.Success(new AdShowResult(
+                return GameResult<AdShowResult>.Success(new AdShowResult(
                     advertiseId,
                     row.format,
                     AdProviderShowResult.Shown));

@@ -1,6 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Devian.Domain.Common;
+using Devian.Domain.Game;
 
 namespace Devian
 {
@@ -10,12 +10,12 @@ namespace Devian
     /// </summary>
     internal interface IPushPlatformProvider
     {
-        Task<CommonResult> RequestPermissionAsync(CancellationToken ct);
-        Task<CommonResult<string>> GetTokenAsync(CancellationToken ct);
-        Task<CommonResult> SubscribeTopicAsync(string topicId, CancellationToken ct);
-        Task<CommonResult> UnsubscribeTopicAsync(string topicId, CancellationToken ct);
-        Task<CommonResult> ScheduleLocalNotificationAsync(LocalNotificationData data, CancellationToken ct);
-        Task<CommonResult> CancelLocalNotificationAsync(string notificationId, CancellationToken ct);
-        Task<CommonResult> CancelAllLocalNotificationsAsync(CancellationToken ct);
+        Task<GameResult> RequestPermissionAsync(CancellationToken ct);
+        Task<GameResult<string>> GetTokenAsync(CancellationToken ct);
+        Task<GameResult> SubscribeTopicAsync(string topicId, CancellationToken ct);
+        Task<GameResult> UnsubscribeTopicAsync(string topicId, CancellationToken ct);
+        Task<GameResult> ScheduleLocalNotificationAsync(LocalNotificationData data, CancellationToken ct);
+        Task<GameResult> CancelLocalNotificationAsync(string notificationId, CancellationToken ct);
+        Task<GameResult> CancelAllLocalNotificationsAsync(CancellationToken ct);
     }
 }

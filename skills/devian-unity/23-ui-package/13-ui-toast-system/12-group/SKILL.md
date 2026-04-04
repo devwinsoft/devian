@@ -99,8 +99,9 @@ FlushQueue: `_active.Count < MaxVisible && _pending.Count > 0`인 동안 dequeue
 - `_root`는 anchorMin `(0,0)` / anchorMax `(1,1)` / sizeDelta `0`의 full-stretch rect다.
 - `_root`는 frame size를 결정하지 않는다.
 - 각 frame은 prefab의 원본 `RectTransform` 값을 유지한다.
-- active frame은 생성 순서대로 y 음수 방향으로 적층한다.
-- 각 frame은 원본 `anchoredPosition`을 복원한 뒤 `config.AnchoredOffset + localOffset`을 더한다.
+- `config.AnchorPreset`은 `_root.rect.size - frameSize`를 기준으로 계산한 anchor offset으로 반영한다.
+- active frame은 생성 순서대로 `LayoutDirection.Down`이면 y 음수 방향, `LayoutDirection.Up`이면 y 양수 방향으로 적층한다.
+- 각 frame은 원본 `anchoredPosition`을 복원한 뒤 `anchorOffset + config.AnchoredOffset + localOffset`을 더한다.
 - frame size는 `LayoutUtility.GetPreferredWidth/Height`를 우선 사용하고, 값이 `0 이하`면 `rect.width/height`로 fallback.
 - 새 frame의 local offset은 `active.Count * 고정값`이 아니라, 현재 visible frame들의 실제 높이와 spacing 누적값으로 계산한다.
 - `DuplicatePolicy = Allow`일 때 새 frame은 base slot을 재사용하지 않고 stack의 끝 슬롯에 append된다.

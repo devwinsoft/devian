@@ -66,6 +66,7 @@ Type: Policy / Entry Point
 
 ---
 
-## NEEDS CHECK (구현 단계에서 확정)
+## Error Codes
 
-- claim 실패 에러코드 전용화(`COMMON_ERROR`에 ATTEND_* 추가 여부)
+- claim 실패 에러코드는 `GAME_ERROR_TYPE.ATTEND_*`를 사용한다.
+  - 예: `GAME_ERROR_TYPE.ATTEND_SYNC_REQUIRED`, `GAME_ERROR_TYPE.ATTEND_INVALID_ROW`

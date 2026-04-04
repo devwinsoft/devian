@@ -7,7 +7,7 @@ namespace Devian
         readonly int _priceWithoutDiscount;
 
         protected ShopRewardProductBase(
-            string shop_item_id,
+            string shop_id,
             string name_id,
             SHOP_CATALOG_TYPE catalog_type,
             SHOP_PRODUCT_TYPE productType,
@@ -17,7 +17,7 @@ namespace Devian
             int amount,
             int max_count = -1,
             SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
-            : base(shop_item_id, name_id, catalog_type, productType, max_count, discountType)
+            : base(shop_id, name_id, catalog_type, productType, max_count, discountType)
         {
             currency_type_internal = currency_type;
             _priceWithoutDiscount = price;

@@ -26,7 +26,7 @@ public sealed class AttendManager : CompoSingleton<AttendManager>
     public AttendRuntime GetRuntime(int day);
     public bool IsClaimed(string attend_id);
     public bool IsClaimable(string attend_id);
-    public Task<CommonResult<RewardData[]>> ClaimAsync(string attend_id, CancellationToken ct = default);
+    public Task<GameResult<RewardData[]>> ClaimAsync(string attend_id, CancellationToken ct = default);
     public void ClearStorage();
 }
 ```

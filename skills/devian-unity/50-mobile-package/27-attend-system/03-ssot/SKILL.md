@@ -91,7 +91,7 @@ reset 동작:
 - `attend_id` (string)
 
 출력:
-- `CommonResult<RewardData[]>`
+- `GameResult<RewardData[]>`
 - 성공 시 이번 claim으로 적용된 보상 목록을 반환한다.
 
 claim 가능 조건:

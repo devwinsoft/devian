@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public sealed class UIPopupFrameConfirm : UIPopupFrameBase<ConfirmPopupRequest>
+public sealed class UIPopupFrameConfirm : UIPopupFrameBase
 {
     private const string DefaultTitle = "Confirm";
     private const string DefaultMessage = "Continue?";
@@ -35,35 +35,15 @@ public sealed class UIPopupFrameConfirm : UIPopupFrameBase<ConfirmPopupRequest>
         BindButtonHandlers();
     }
 
-    protected override void onBind(ConfirmPopupRequest request)
+    protected override void onBind(object payload)
     {
         ResolveComponents();
 
-        var boundRequest = request ?? new ConfirmPopupRequest(DefaultTitle, DefaultMessage);
-
         if (_titleText != null)
-        {
-            _titleText.text = string.IsNullOrWhiteSpace(boundRequest.Title)
-                ? DefaultTitle
-                : boundRequest.Title;
-        }
+            _titleText.text = DefaultTitle;
 
         if (_messageText != null)
-        {
-            _messageText.text = string.IsNullOrWhiteSpace(boundRequest.Message)
-                ? DefaultMessage
-                : boundRequest.Message;
-        }
-
-        if (_confirmButtonText != null)
-        {
-            _confirmButtonText.text = boundRequest.ConfirmText;
-        }
-
-        if (_cancelButtonText != null)
-        {
-            _cancelButtonText.text = boundRequest.CancelText;
-        }
+            _messageText.text = DefaultMessage;
     }
 
     private void BindButtonHandlers()
@@ -116,11 +96,11 @@ public sealed class UIPopupFrameConfirm : UIPopupFrameBase<ConfirmPopupRequest>
 
     private void HandleConfirmClicked()
     {
-        ClosePopup(PopupCloseReason.Completed);
+        ClosePopup(PopupCloseReason.Yes);
     }
 
     private void HandleCancelClicked()
     {
-        ClosePopup(PopupCloseReason.Canceled);
+        ClosePopup(PopupCloseReason.No);
     }
 }

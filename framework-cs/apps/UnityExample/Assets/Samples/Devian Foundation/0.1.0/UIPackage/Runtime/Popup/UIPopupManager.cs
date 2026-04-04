@@ -12,7 +12,7 @@ namespace Devian
 
         private sealed class PopupStackEntry
         {
-            public Type FrameType;
+            public string FrameId;
             public UIPopupFrameBase Frame;
             public Action<PopupCloseReason> OnClosed;
             public PopupFrameState State;
@@ -21,8 +21,8 @@ namespace Devian
 
         private readonly List<PopupStackEntry> _stack = new List<PopupStackEntry>();
         private readonly Dictionary<UIPopupFrameBase, PopupStackEntry> _entryByFrame = new Dictionary<UIPopupFrameBase, PopupStackEntry>();
-        private readonly Dictionary<Type, MethodInfo> _spawnPopupFrameMethodByType = new Dictionary<Type, MethodInfo>();
-        private readonly Dictionary<Type, UI_POPUP_FRAME_ID> _popupFrameIdByType = new Dictionary<Type, UI_POPUP_FRAME_ID>();
+        private readonly Dictionary<string, MethodInfo> _spawnMethodByFrameId = new Dictionary<string, MethodInfo>();
+        private readonly Dictionary<string, Type> _frameTypeByFrameId = new Dictionary<string, Type>();
 
         private UISettings _settings;
         private bool _settingsLoaded;
@@ -77,25 +77,12 @@ namespace Devian
             }
         }
 
-        public bool Show<TFrame>(Action<PopupCloseReason> onClosed = null)
-            where TFrame : UIPopupFrameBase
+        public bool Show(UI_POPUP_FRAME_ID frameId, object payload = null, Action<PopupCloseReason> onClosed = null)
         {
-            return Show<TFrame>(null, onClosed);
+            return ShowInternal(frameId, payload, onClosed);
         }
 
-        public bool Show<TFrame>(object payload = null, Action<PopupCloseReason> onClosed = null)
-            where TFrame : UIPopupFrameBase
-        {
-            return ShowInternal(typeof(TFrame), payload, onClosed);
-        }
-
-        public bool Show<TFrame, TReq>(TReq request, Action<PopupCloseReason> onClosed = null)
-            where TFrame : UIPopupFrameBase<TReq>
-        {
-            return ShowInternal(typeof(TFrame), request, onClosed);
-        }
-
-        public bool CloseTop(PopupCloseReason reason = PopupCloseReason.Canceled)
+        public bool CloseTop(PopupCloseReason reason = PopupCloseReason.Cancel)
         {
             var topEntry = GetTopEntry();
             if (topEntry == null)
@@ -117,7 +104,7 @@ namespace Devian
             for (var i = _stack.Count - 1; i >= 0; i--)
             {
                 var entry = _stack[i];
-                ForceCloseEntry(entry, PopupCloseReason.ForceClosed);
+                ForceCloseEntry(entry, PopupCloseReason.Cancel);
             }
 
             _stack.Clear();
@@ -133,7 +120,7 @@ namespace Devian
                 return;
             }
 
-            RequestClose(topEntry, PopupCloseReason.DimClick);
+            RequestClose(topEntry, PopupCloseReason.Cancel);
         }
 
         private void Update()
@@ -155,14 +142,14 @@ namespace Devian
                 return;
             }
 
-            RequestClose(topEntry, PopupCloseReason.Back);
+            RequestClose(topEntry, PopupCloseReason.Cancel);
             #else
             if (!topEntry.Frame.closeOnEscape)
             {
                 return;
             }
 
-            RequestClose(topEntry, PopupCloseReason.Escape);
+            RequestClose(topEntry, PopupCloseReason.Cancel);
             #endif
         }
 
@@ -183,7 +170,7 @@ namespace Devian
                     return false;
 
                 case PopupDuplicatePolicy.ReplaceIfShow:
-                    RequestClose(duplicateEntry, PopupCloseReason.Replaced);
+                    RequestClose(duplicateEntry, PopupCloseReason.Cancel);
                     return true;
 
                 default:
@@ -328,12 +315,12 @@ namespace Devian
                 topEntry.Frame.closeOnDimClick);
         }
 
-        private PopupStackEntry FindShowEntry(Type frameType)
+        private PopupStackEntry FindShowEntry(string frameId)
         {
             for (var i = _stack.Count - 1; i >= 0; i--)
             {
                 var entry = _stack[i];
-                if (entry == null || entry.FrameType == null)
+                if (entry == null || entry.FrameId == null)
                 {
                     continue;
                 }
@@ -343,7 +330,7 @@ namespace Devian
                     continue;
                 }
 
-                if (entry.FrameType == frameType)
+                if (entry.FrameId == frameId)
                 {
                     return entry;
                 }
@@ -390,11 +377,11 @@ namespace Devian
             return canvas.panel;
         }
 
-        private bool ShowInternal(Type frameType, object payload, Action<PopupCloseReason> onClosed)
+        private bool ShowInternal(UI_POPUP_FRAME_ID frameId, object payload, Action<PopupCloseReason> onClosed)
         {
-            if (frameType == null || frameType.IsAbstract || !typeof(UIPopupFrameBase).IsAssignableFrom(frameType))
+            if (frameId == null || !frameId.IsValid)
             {
-                Debug.LogWarning($"[UIPopupManager] Invalid popup frame type '{frameType?.Name ?? "null"}'.");
+                Debug.LogWarning("[UIPopupManager] Invalid popup frame id.");
                 return false;
             }
 
@@ -405,13 +392,13 @@ namespace Devian
                 return false;
             }
 
-            if (!TryGetPopupFrameId(frameType, out var frameId))
+            if (!TryGetFrameType(frameId.Value, out var frameType))
             {
-                Debug.LogWarning($"[UIPopupManager] Popup frame mapping not found for popup frame type '{frameType.Name}'.");
+                Debug.LogWarning($"[UIPopupManager] Popup frame mapping not found for id '{frameId.Value}'.");
                 return false;
             }
 
-            var duplicateEntry = FindShowEntry(frameType);
+            var duplicateEntry = FindShowEntry(frameId.Value);
             if (!HandleDuplicate(duplicateEntry))
             {
                 return false;
@@ -424,23 +411,13 @@ namespace Devian
             }
             catch (Exception e)
             {
-                Debug.LogError($"[UIPopupManager] Failed to spawn popup frame '{frameId}': {e.Message}");
+                Debug.LogError($"[UIPopupManager] Failed to spawn popup frame '{frameId.Value}': {e.Message}");
                 return false;
             }
 
             if (frame == null)
             {
-                Debug.LogError($"[UIPopupManager] Spawn returned null for popup frame '{frameId}'.");
-                return false;
-            }
-
-            if (!frameType.IsAssignableFrom(frame.GetType()))
-            {
-                panel.DetachFrame(frame);
-                BundlePool.Despawn(frame);
-                Debug.LogError(
-                    $"[UIPopupManager] Spawned popup frame type mismatch. " +
-                    $"Expected '{frameType.Name}', got '{frame.GetType().Name}'.");
+                Debug.LogError($"[UIPopupManager] Spawn returned null for popup frame '{frameId.Value}'.");
                 return false;
             }
 
@@ -448,7 +425,7 @@ namespace Devian
 
             var entry = new PopupStackEntry
             {
-                FrameType = frameType,
+                FrameId = frameId.Value,
                 Frame = frame,
                 OnClosed = onClosed,
                 State = PopupFrameState.Showing
@@ -464,10 +441,10 @@ namespace Devian
 
         private UIPopupFrameBase SpawnPopupFrame(Type frameType, string frameId, Transform parent)
         {
-            if (!_spawnPopupFrameMethodByType.TryGetValue(frameType, out var method))
+            if (!_spawnMethodByFrameId.TryGetValue(frameId, out var method))
             {
                 method = s_spawnPopupFrameGenericMethod.MakeGenericMethod(frameType);
-                _spawnPopupFrameMethodByType.Add(frameType, method);
+                _spawnMethodByFrameId[frameId] = method;
             }
 
             try
@@ -486,46 +463,34 @@ namespace Devian
             return BundlePool.Spawn<TFrame>(frameId, parent: parent);
         }
 
-        private bool TryGetPopupFrameId(Type frameType, out UI_POPUP_FRAME_ID frameId)
+        private bool TryGetFrameType(string frameId, out Type frameType)
         {
-            frameId = null;
-
-            if (frameType == null || frameType.IsAbstract || !typeof(UIPopupFrameBase).IsAssignableFrom(frameType))
+            if (_frameTypeByFrameId.TryGetValue(frameId, out frameType))
             {
-                return false;
+                return frameType != null;
             }
 
-            if (_popupFrameIdByType.TryGetValue(frameType, out frameId))
+            try
             {
-                return frameId != null && frameId.IsValid;
-            }
-
-            var settings = ResolveSettings();
-            var mappings = settings != null ? settings.PopupFrameMappings : null;
-            if (mappings == null)
-            {
-                _popupFrameIdByType[frameType] = null;
-                return false;
-            }
-
-            for (var i = 0; i < mappings.Length; i++)
-            {
-                var entry = mappings[i];
-                if (entry == null || string.IsNullOrWhiteSpace(entry.FrameTypeName) || entry.FrameId == null || !entry.FrameId.IsValid)
+                var prefab = BundlePoolFactory.Instance.GetPrefab<GameObject>(frameId);
+                if (prefab != null)
                 {
-                    continue;
-                }
-
-                var mappedType = Type.GetType(entry.FrameTypeName);
-                if (mappedType == frameType)
-                {
-                    frameId = entry.FrameId;
-                    _popupFrameIdByType[frameType] = frameId;
-                    return true;
+                    var type = BundlePoolFactory.Instance.GetPoolType(prefab);
+                    if (type != null && typeof(UIPopupFrameBase).IsAssignableFrom(type) && !type.IsAbstract)
+                    {
+                        _frameTypeByFrameId[frameId] = type;
+                        frameType = type;
+                        return true;
+                    }
                 }
             }
+            catch (Exception e)
+            {
+                Debug.LogWarning($"[UIPopupManager] Failed to resolve frame type for '{frameId}': {e.Message}");
+            }
 
-            _popupFrameIdByType[frameType] = null;
+            _frameTypeByFrameId[frameId] = null;
+            frameType = null;
             return false;
         }
 

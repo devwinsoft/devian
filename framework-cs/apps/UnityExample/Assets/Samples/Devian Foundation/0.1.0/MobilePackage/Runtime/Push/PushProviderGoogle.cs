@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Devian.Domain.Common;
+using Devian.Domain.Game;
 using UnityEngine;
 #if UNITY_ANDROID && !UNITY_EDITOR && UNITY_MOBILE_NOTIFICATIONS
 using Unity.Notifications.Android;
@@ -35,7 +35,7 @@ namespace Devian
         /// </summary>
         private const string DefaultLargeIcon = "icon_1";
 
-        public async Task<CommonResult> RequestPermissionAsync(CancellationToken ct)
+        public async Task<GameResult> RequestPermissionAsync(CancellationToken ct)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
             try
@@ -49,20 +49,20 @@ namespace Devian
                 }
 #endif
                 ensureNotificationChannel();
-                return CommonResult.Ok();
+                return GameResult.Ok();
             }
             catch (Exception ex)
             {
                 Debug.LogException(ex);
-                return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_PERMISSION_DENIED, ex.Message);
+                return GameResult.Failure(GAME_ERROR_TYPE.PUSH_PERMISSION_DENIED, ex.Message);
             }
 #else
-            return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM,
+            return GameResult.Failure(GAME_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM,
                 "Google push provider is not available on this platform.");
 #endif
         }
 
-        public async Task<CommonResult<string>> GetTokenAsync(CancellationToken ct)
+        public async Task<GameResult<string>> GetTokenAsync(CancellationToken ct)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
             try
@@ -70,62 +70,62 @@ namespace Devian
                 var token = await Firebase.Messaging.FirebaseMessaging.GetTokenAsync();
                 if (string.IsNullOrEmpty(token))
                 {
-                    return CommonResult<string>.Failure(
-                        COMMON_ERROR_TYPE.PUSH_TOKEN_FAILED, "FCM token is empty.");
+                    return GameResult<string>.Failure(
+                        GAME_ERROR_TYPE.PUSH_TOKEN_FAILED, "FCM token is empty.");
                 }
 
-                return CommonResult<string>.Success(token);
+                return GameResult<string>.Success(token);
             }
             catch (Exception ex)
             {
                 Debug.LogException(ex);
-                return CommonResult<string>.Failure(COMMON_ERROR_TYPE.PUSH_TOKEN_FAILED, ex.Message);
+                return GameResult<string>.Failure(GAME_ERROR_TYPE.PUSH_TOKEN_FAILED, ex.Message);
             }
 #else
-            return CommonResult<string>.Failure(COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM,
+            return GameResult<string>.Failure(GAME_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM,
                 "Google push provider is not available on this platform.");
 #endif
         }
 
-        public async Task<CommonResult> SubscribeTopicAsync(string topicId, CancellationToken ct)
+        public async Task<GameResult> SubscribeTopicAsync(string topicId, CancellationToken ct)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
             try
             {
                 await Firebase.Messaging.FirebaseMessaging.SubscribeAsync(topicId);
-                return CommonResult.Ok();
+                return GameResult.Ok();
             }
             catch (Exception ex)
             {
                 Debug.LogException(ex);
-                return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_TOPIC_SUBSCRIBE_FAILED, ex.Message);
+                return GameResult.Failure(GAME_ERROR_TYPE.PUSH_TOPIC_SUBSCRIBE_FAILED, ex.Message);
             }
 #else
-            return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM,
+            return GameResult.Failure(GAME_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM,
                 "Google push provider is not available on this platform.");
 #endif
         }
 
-        public async Task<CommonResult> UnsubscribeTopicAsync(string topicId, CancellationToken ct)
+        public async Task<GameResult> UnsubscribeTopicAsync(string topicId, CancellationToken ct)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
             try
             {
                 await Firebase.Messaging.FirebaseMessaging.UnsubscribeAsync(topicId);
-                return CommonResult.Ok();
+                return GameResult.Ok();
             }
             catch (Exception ex)
             {
                 Debug.LogException(ex);
-                return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_TOPIC_UNSUBSCRIBE_FAILED, ex.Message);
+                return GameResult.Failure(GAME_ERROR_TYPE.PUSH_TOPIC_UNSUBSCRIBE_FAILED, ex.Message);
             }
 #else
-            return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM,
+            return GameResult.Failure(GAME_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM,
                 "Google push provider is not available on this platform.");
 #endif
         }
 
-        public async Task<CommonResult> ScheduleLocalNotificationAsync(
+        public async Task<GameResult> ScheduleLocalNotificationAsync(
             LocalNotificationData data, CancellationToken ct)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR && UNITY_MOBILE_NOTIFICATIONS
@@ -150,20 +150,20 @@ namespace Devian
 
                 AndroidNotificationCenter.SendNotification(notification, DefaultChannelId);
                 Debug.Log($"[{Tag}] ScheduleLocalNotification: {data.NotificationId}");
-                return CommonResult.Ok();
+                return GameResult.Ok();
             }
             catch (Exception ex)
             {
                 Debug.LogException(ex);
-                return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_NOTIFICATION_SCHEDULE_FAILED, ex.Message);
+                return GameResult.Failure(GAME_ERROR_TYPE.PUSH_NOTIFICATION_SCHEDULE_FAILED, ex.Message);
             }
 #else
-            return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM,
+            return GameResult.Failure(GAME_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM,
                 "Google push provider is not available on this platform.");
 #endif
         }
 
-        public async Task<CommonResult> CancelLocalNotificationAsync(
+        public async Task<GameResult> CancelLocalNotificationAsync(
             string notificationId, CancellationToken ct)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
@@ -173,35 +173,35 @@ namespace Devian
                 // PushStorage가 notificationId(string)↔int 매핑을 관리한다.
                 // 여기서는 전체 취소(CancelAll)만 사용하는 정책이므로 개별 취소는 로그만 남긴다.
                 Debug.Log($"[{Tag}] CancelLocalNotification: {notificationId}");
-                return CommonResult.Ok();
+                return GameResult.Ok();
             }
             catch (Exception ex)
             {
                 Debug.LogException(ex);
-                return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_NOTIFICATION_CANCEL_FAILED, ex.Message);
+                return GameResult.Failure(GAME_ERROR_TYPE.PUSH_NOTIFICATION_CANCEL_FAILED, ex.Message);
             }
 #else
-            return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM,
+            return GameResult.Failure(GAME_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM,
                 "Google push provider is not available on this platform.");
 #endif
         }
 
-        public async Task<CommonResult> CancelAllLocalNotificationsAsync(CancellationToken ct)
+        public async Task<GameResult> CancelAllLocalNotificationsAsync(CancellationToken ct)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR && UNITY_MOBILE_NOTIFICATIONS
             try
             {
                 AndroidNotificationCenter.CancelAllNotifications();
                 Debug.Log($"[{Tag}] CancelAllLocalNotifications");
-                return CommonResult.Ok();
+                return GameResult.Ok();
             }
             catch (Exception ex)
             {
                 Debug.LogException(ex);
-                return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_NOTIFICATION_CANCEL_FAILED, ex.Message);
+                return GameResult.Failure(GAME_ERROR_TYPE.PUSH_NOTIFICATION_CANCEL_FAILED, ex.Message);
             }
 #else
-            return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM,
+            return GameResult.Failure(GAME_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM,
                 "Google push provider is not available on this platform.");
 #endif
         }

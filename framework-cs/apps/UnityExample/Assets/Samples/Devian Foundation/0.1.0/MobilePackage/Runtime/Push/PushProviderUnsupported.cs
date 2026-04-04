@@ -1,6 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Devian.Domain.Common;
+using Devian.Domain.Game;
 
 namespace Devian
 {
@@ -11,25 +11,25 @@ namespace Devian
     {
         private const string Msg = "Push is not supported on this platform.";
 
-        public Task<CommonResult> RequestPermissionAsync(CancellationToken ct)
-            => Task.FromResult(CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM, Msg));
+        public Task<GameResult> RequestPermissionAsync(CancellationToken ct)
+            => Task.FromResult(GameResult.Failure(GAME_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM, Msg));
 
-        public Task<CommonResult<string>> GetTokenAsync(CancellationToken ct)
-            => Task.FromResult(CommonResult<string>.Failure(COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM, Msg));
+        public Task<GameResult<string>> GetTokenAsync(CancellationToken ct)
+            => Task.FromResult(GameResult<string>.Failure(GAME_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM, Msg));
 
-        public Task<CommonResult> SubscribeTopicAsync(string topicId, CancellationToken ct)
-            => Task.FromResult(CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM, Msg));
+        public Task<GameResult> SubscribeTopicAsync(string topicId, CancellationToken ct)
+            => Task.FromResult(GameResult.Failure(GAME_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM, Msg));
 
-        public Task<CommonResult> UnsubscribeTopicAsync(string topicId, CancellationToken ct)
-            => Task.FromResult(CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM, Msg));
+        public Task<GameResult> UnsubscribeTopicAsync(string topicId, CancellationToken ct)
+            => Task.FromResult(GameResult.Failure(GAME_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM, Msg));
 
-        public Task<CommonResult> ScheduleLocalNotificationAsync(LocalNotificationData data, CancellationToken ct)
-            => Task.FromResult(CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM, Msg));
+        public Task<GameResult> ScheduleLocalNotificationAsync(LocalNotificationData data, CancellationToken ct)
+            => Task.FromResult(GameResult.Failure(GAME_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM, Msg));
 
-        public Task<CommonResult> CancelLocalNotificationAsync(string notificationId, CancellationToken ct)
-            => Task.FromResult(CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM, Msg));
+        public Task<GameResult> CancelLocalNotificationAsync(string notificationId, CancellationToken ct)
+            => Task.FromResult(GameResult.Failure(GAME_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM, Msg));
 
-        public Task<CommonResult> CancelAllLocalNotificationsAsync(CancellationToken ct)
-            => Task.FromResult(CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM, Msg));
+        public Task<GameResult> CancelAllLocalNotificationsAsync(CancellationToken ct)
+            => Task.FromResult(GameResult.Failure(GAME_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM, Msg));
     }
 }

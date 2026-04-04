@@ -18,11 +18,11 @@
 {"reward_num":2,"reward_group_id":"reward_purchase_noads_month","type":"RENTAL","id":"NO_ADS","amount":1,"rate":100}
 {"reward_num":3,"reward_group_id":"reward_purchase_pass_001","type":"PASS","id":"P2026_01","amount":1,"rate":100}
 {"reward_num":4,"reward_group_id":"reward_chest_001_01","type":"CURRENCY","id":"JEWEL_FREE","amount":1000,"rate":100}
-{"reward_num":5,"reward_group_id":"reward_chest_001_02","type":"CARD","id":"card_001","amount":1,"rate":50}
-{"reward_num":6,"reward_group_id":"reward_chest_001_02","type":"CARD","id":"card_002","amount":1,"rate":30}
-{"reward_num":7,"reward_group_id":"reward_chest_001_02","type":"CARD","id":"card_003","amount":1,"rate":20}
-{"reward_num":8,"reward_group_id":"reward_shop_001","type":"CARD","id":"card_001","amount":1,"rate":70}
-{"reward_num":9,"reward_group_id":"reward_shop_001","type":"CARD","id":"card_002","amount":1,"rate":30}
+{"reward_num":5,"reward_group_id":"reward_chest_001_02","type":"CARD","id":"item_card_001","amount":1,"rate":50}
+{"reward_num":6,"reward_group_id":"reward_chest_001_02","type":"CARD","id":"item_card_001","amount":1,"rate":30}
+{"reward_num":7,"reward_group_id":"reward_chest_001_02","type":"CARD","id":"item_card_001","amount":1,"rate":20}
+{"reward_num":8,"reward_group_id":"reward_shop_001","type":"CARD","id":"item_card_001","amount":1,"rate":70}
+{"reward_num":9,"reward_group_id":"reward_shop_001","type":"CARD","id":"item_card_001","amount":1,"rate":30}
 {"reward_num":1,"reward_group_id":"reward_treasure_001_common","type":"CURRENCY","id":"JEWEL_FREE","amount":1000,"rate":100}
 {"reward_num":2,"reward_group_id":"reward_treasure_001_rare","type":"CURRENCY","id":"JEWEL_FREE","amount":1000,"rate":100}
 {"reward_num":3,"reward_group_id":"reward_treasure_001_epic","type":"CURRENCY","id":"JEWEL_FREE","amount":1000,"rate":100}

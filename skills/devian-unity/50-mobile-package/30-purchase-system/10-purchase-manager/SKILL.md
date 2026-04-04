@@ -35,7 +35,7 @@ PurchaseManager는 **단일 concrete 클래스**이다.
 
 - asmdef:
   - `Devian.Samples.MobilePackage` (`Samples~/MobilePackage/Runtime/Devian.Samples.MobilePackage.asmdef`)
-  - 참조: `Devian.Domain.Game` (TB_PURCHASE 테이블), `Devian.Domain.Common` (CommonResult)
+  - 참조: `Devian.Domain.Game` (TB_PURCHASE 테이블, GameResult)
 
 
 ---
@@ -57,16 +57,16 @@ CompoSingleton<PurchaseManager>.Instance
 ## Public API (Sample)
 
 
-- `InitializeAsync(ct)` → `Task<CommonResult>`
+- `InitializeAsync(ct)` → `Task<GameResult>`
   - IAP 초기화 (Connect + FetchProducts). 선택적 prewarm 호출이며, Purchase/RetryInterruptedPurchase/Restore 경로에서 lazy-init로 자동 호출될 수 있음.
   - Idempotent: 여러 번 호출해도 동일 Task 반환.
-  - Editor에서는 즉시 `PURCHASE_UNSUPPORTED_PLATFORM` 반환.
-- `PurchaseAsync(internal_product_id, ct)` → `Task<CommonResult<PurchaseFinalResult>>`
+  - Editor에서는 즉시 `GAME_ERROR_TYPE.PURCHASE_UNSUPPORTED_PLATFORM` 반환.
+- `PurchaseAsync(internal_product_id, ct)` → `Task<GameResult<PurchaseFinalResult>>`
   - 단일 구매 진입점. `TB_PURCHASE`에서 `Kind`를 조회하여 구매 유형(Consumable/Rental/Subscription/SeasonPass)을 자동 결정
   - 최종 지급은 서버 `verifyPurchase` 결과만 신뢰
-  - 구매 보상(`AppliedRewards`)에 `amount < 0` 값이 있으면 즉시 실패(`COMMON_INVALID_ARGUMENT`) 처리한다.
+  - 구매 보상(`AppliedRewards`)에 `amount < 0` 값이 있으면 즉시 실패(`GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT`) 처리한다.
   - **Caller-managed client grant**: `NeedsClientGrantDelivery=true`이면 호출자가 보상을 적용한 뒤 `AckPurchaseClientGrantAppliedAsync`로 ACK
-- `RetryInterruptedPurchaseAsync(ct)` → `Task<CommonResult<RetryInterruptedPurchaseResult>>`
+- `RetryInterruptedPurchaseAsync(ct)` → `Task<GameResult<RetryInterruptedPurchaseResult>>`
   - `PurchaseStorage.current`에 중단된 결제가 있으면 새 구매를 시작하지 않고 상태 전이를 재개/마무리
   - 중단 내역이 없으면 `Success(Status=SkippedNoCurrent)` (skip, 정상)
   - UI/Debug 표시는 반환 payload(`Status`, `Internal_product_id`, `ResultStatus`, `AppliedRewards`)를 사용
@@ -76,12 +76,12 @@ CompoSingleton<PurchaseManager>.Instance
   - 스토어 복원 직후 서버 `getEntitlements`를 조회해 `mPasses/mRentals`를 덮어써 복원한다.
   - `pass`는 시즌 유효 구간(`TB_SEASON`)일 때만 복원한다.
   - `rental`은 만료시각이 서버 현재시각보다 미래일 때만 복원하며, 누적 연장을 허용한다.
-- `GetLatestConsumablePurchase30dAsync(ct)` → `Task<CommonResult<RecentPurchaseItem>>`
+- `GetLatestConsumablePurchase30dAsync(ct)` → `Task<GameResult<RecentPurchaseItem>>`
   - 서버에서 최근 30일 내 최신 Consumable 구매 1건 조회
-- `SyncEntitlementsAsync(ct)` → `Task<CommonResult>`
+- `SyncEntitlementsAsync(ct)` → `Task<GameResult>`
   - 서버 `getEntitlements`를 조회해 `mPasses/mRentals`를 덮어써 동기화하고 결과 스냅샷을 반환한다.
   - `rental`은 만료시각 미래값만 반영하며, 누적 연장을 허용한다.
-- `RefundAsync(ct)` → `Task<CommonResult<RefundResult>>`
+- `RefundAsync(ct)` → `Task<GameResult<RefundResult>>`
   - 서버에서 환불/조정 내역을 조회하여 로컬 인벤토리 회수 적용
 
 
@@ -111,21 +111,21 @@ PurchaseManager가 Game 도메인 테이블을 직접 참조한다:
 
 - **VerifyPurchaseAsync**: `FirebaseCallableManager.Instance.VerifyPurchaseAsync(data, ct)` — ✅ 구현됨
   - 요청 키: `storeKey`, `internal_product_id`, `kind`, `payload`
-  - 응답: `CommonResult<VerifyPurchaseResponse>`
+  - 응답: `GameResult<VerifyPurchaseResponse>`
 - **reportPurchaseClientGrantResultAsync**: `FirebaseCallableManager.Instance.AckPurchaseClientGrantAsync(data, ct)` — ✅ 구현됨
   - 요청 키: `purchaseId`, `clientGrantStatus`
-  - 응답: `CommonResult`
+  - 응답: `GameResult`
 - **ackPurchaseStoreConfirmAsync**: `FirebaseCallableManager.Instance.AckPurchaseStoreConfirmAsync(data, ct)` — ✅ 구현됨
   - 요청 키: `purchaseId`
-  - 응답: `CommonResult`
+  - 응답: `GameResult`
 - **SyncEntitlementsAsync**: `FirebaseCallableManager.Instance.GetEntitlementsAsync(ct)` 기반 복원 — ✅ 구현됨
-  - 응답: `CommonResult<EntitlementsSnapshot>` (서버 entitlements를 `mPasses/mRentals`에 덮어쓴 결과)
+  - 응답: `GameResult<EntitlementsSnapshot>` (서버 entitlements를 `mPasses/mRentals`에 덮어쓴 결과)
 - **GetLatestConsumablePurchase30dAsync**: `FirebaseCallableManager.Instance.GetRecentPurchases30dAsync(data, ct)` — ✅ 구현됨
-  - 응답: `CommonResult<RecentPurchaseItem>`
+  - 응답: `GameResult<RecentPurchaseItem>`
 - **syncRefundsPageAsync**: `FirebaseCallableManager.Instance.GetPurchaseAdjustmentsAsync(data, ct)` — ✅ 구현됨
-  - 응답: `CommonResult<RefundPageResult>` (raw item → PurchaseManager가 domain 보강)
+  - 응답: `GameResult<RefundPageResult>` (raw item → PurchaseManager가 domain 보강)
 - **ackRefundAppliedAsync**: `FirebaseCallableManager.Instance.AckRefundAppliedAsync(data, ct)` — ✅ 구현됨
-  - 응답: `CommonResult`
+  - 응답: `GameResult`
 - Firebase callable 호출/에러 매핑/응답 파싱은 [23-firebase-callable-manager](../../23-firebase-callable-manager/SKILL.md)에 통합.
   PurchaseManager는 `FunctionsException`을 직접 catch하지 않는다. `using Firebase.Functions` 불필요.
   domain 변환(ResolveRewardGroupId 등)은 PurchaseManager가 typed result 수신 후 수행한다.

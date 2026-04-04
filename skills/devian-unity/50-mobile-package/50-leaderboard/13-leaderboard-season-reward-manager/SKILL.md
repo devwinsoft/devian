@@ -31,7 +31,7 @@ Type: Design / Runtime Orchestration
 
 ## Public API
 
-- `LeaderboardManager.SyncSeasonTransitionRewardsAsync(ct)` -> `Task<CommonResult>`
+- `LeaderboardManager.SyncSeasonTransitionRewardsAsync(ct)` -> `Task<GameResult>`
 
 ---
 

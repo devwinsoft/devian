@@ -1,5 +1,6 @@
 using Newtonsoft.Json.Linq;
 using Devian.Domain.Common;
+using Devian.Domain.Game;
 
 namespace Devian
 {
@@ -38,7 +39,7 @@ namespace Devian
             return root.ToString();
         }
 
-        public static CommonResult DeserializeInto(
+        public static GameResult DeserializeInto(
             string json,
             InventoryStorage inventory,
             PurchaseStorage purchase,
@@ -57,16 +58,16 @@ namespace Devian
             }
             catch (System.Exception ex)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
                     $"SaveDataJsonCodec.DeserializeInto: invalid json. {ex.Message}");
             }
 
             var version = root.Value<int?>("version") ?? 0;
             if (!isSupportedVersion(version))
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
                     $"SaveDataJsonCodec.DeserializeInto: unsupported version {version}.");
             }
 
@@ -127,7 +128,7 @@ namespace Devian
                 inventory?.TreasureCurrent.Clear();
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         static bool isSupportedVersion(int version)

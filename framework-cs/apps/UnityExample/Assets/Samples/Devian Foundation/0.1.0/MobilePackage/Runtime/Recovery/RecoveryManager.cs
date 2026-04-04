@@ -2,7 +2,7 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using Devian.Domain.Common;
+using Devian.Domain.Game;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 #if UNITY_IOS && !UNITY_EDITOR
@@ -21,19 +21,19 @@ namespace Devian
         /// <summary>
         /// 현재 save data를 .dvn 파일로 Export하고 OS 공유 시트를 연다.
         /// </summary>
-        public async Task<CommonResult<bool>> ExportDvnAsync(CancellationToken ct)
+        public async Task<GameResult<bool>> ExportDvnAsync(CancellationToken ct)
         {
             try
             {
 #if UNITY_EDITOR
                 Debug.Log("[RecoveryManager] ExportDvnAsync: Editor에서는 .dvn 파일을 생성하지 않습니다.");
                 await Task.CompletedTask;
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
 #else
                 var prepareResult = await PrepareDvnFileAsync(ct);
                 if (prepareResult.IsFailure)
                 {
-                    return CommonResult<bool>.Failure(prepareResult.Error!);
+                    return GameResult<bool>.Failure(prepareResult.Error!);
                 }
 
                 var filePath = prepareResult.Value;
@@ -41,21 +41,21 @@ namespace Devian
                 ShareFile(filePath, subject);
                 Debug.Log("[RecoveryManager] ExportDvnAsync: ShareFile called");
 
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
 #endif
             }
             catch (OperationCanceledException)
             {
                 Debug.LogWarning("[RecoveryManager] ExportDvnAsync: cancelled");
-                return CommonResult<bool>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                return GameResult<bool>.Failure(
+                    GAME_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     "Export cancelled");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[RecoveryManager] ExportDvnAsync: failed — {ex}");
-                return CommonResult<bool>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                return GameResult<bool>.Failure(
+                    GAME_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     $"Export failed: {ex.Message}");
             }
         }
@@ -63,19 +63,19 @@ namespace Devian
         /// <summary>
         /// 현재 save data를 .dvn 파일로 Export하고 이메일 앱을 연다 (수신자 프리셋).
         /// </summary>
-        public async Task<CommonResult<bool>> ExportDvnViaEmailAsync(string recipient, CancellationToken ct)
+        public async Task<GameResult<bool>> ExportDvnViaEmailAsync(string recipient, CancellationToken ct)
         {
             try
             {
 #if UNITY_EDITOR
                 Debug.Log($"[RecoveryManager] ExportDvnViaEmailAsync: Editor에서는 .dvn 파일을 생성하지 않습니다. recipient={recipient}");
                 await Task.CompletedTask;
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
 #else
                 var prepareResult = await PrepareDvnFileAsync(ct);
                 if (prepareResult.IsFailure)
                 {
-                    return CommonResult<bool>.Failure(prepareResult.Error!);
+                    return GameResult<bool>.Failure(prepareResult.Error!);
                 }
 
                 var filePath = prepareResult.Value;
@@ -83,21 +83,21 @@ namespace Devian
                 SendEmail(filePath, recipient, subject);
                 Debug.Log($"[RecoveryManager] ExportDvnViaEmailAsync: SendEmail called → {recipient}");
 
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
 #endif
             }
             catch (OperationCanceledException)
             {
                 Debug.LogWarning("[RecoveryManager] ExportDvnViaEmailAsync: cancelled");
-                return CommonResult<bool>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                return GameResult<bool>.Failure(
+                    GAME_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     "Export cancelled");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[RecoveryManager] ExportDvnViaEmailAsync: failed — {ex}");
-                return CommonResult<bool>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                return GameResult<bool>.Failure(
+                    GAME_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     $"Export failed: {ex.Message}");
             }
         }
@@ -105,15 +105,15 @@ namespace Devian
         /// <summary>
         /// .dvn 파일을 디코딩하여 save data를 복원한다.
         /// </summary>
-        public async Task<CommonResult<bool>> ImportDvnAsync(string filePath, CancellationToken ct)
+        public async Task<GameResult<bool>> ImportDvnAsync(string filePath, CancellationToken ct)
         {
             try
             {
                 // 1. .dvn 파일 읽기
                 if (!File.Exists(filePath))
                 {
-                    return CommonResult<bool>.Failure(
-                        COMMON_ERROR_TYPE.RECOVERY_DECODE_FAILED,
+                    return GameResult<bool>.Failure(
+                        GAME_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                         $"File not found: {filePath}");
                 }
 
@@ -124,7 +124,7 @@ namespace Devian
                 var decodeResult = RecoveryCodec.Decode(content);
                 if (decodeResult.IsFailure)
                 {
-                    return CommonResult<bool>.Failure(decodeResult.Error!);
+                    return GameResult<bool>.Failure(decodeResult.Error!);
                 }
 
                 var json = decodeResult.Value;
@@ -137,8 +137,8 @@ namespace Devian
                 }
                 catch (Exception ex)
                 {
-                    return CommonResult<bool>.Failure(
-                        COMMON_ERROR_TYPE.RECOVERY_DECODE_FAILED,
+                    return GameResult<bool>.Failure(
+                        GAME_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                         $"Invalid JSON: {ex.Message}");
                 }
 
@@ -149,8 +149,8 @@ namespace Devian
                     && !string.IsNullOrEmpty(currentSocialUserId)
                     && !string.Equals(fileSocialUserId, currentSocialUserId, StringComparison.Ordinal))
                 {
-                    return CommonResult<bool>.Failure(
-                        COMMON_ERROR_TYPE.RECOVERY_HMAC_FAILED,
+                    return GameResult<bool>.Failure(
+                        GAME_ERROR_TYPE.RECOVERY_HMAC_FAILED,
                         "socialUserId mismatch: recovery data belongs to a different account");
                 }
 
@@ -160,7 +160,7 @@ namespace Devian
 
                 if (restoreResult.IsFailure)
                 {
-                    return CommonResult<bool>.Failure(restoreResult.Error!);
+                    return GameResult<bool>.Failure(restoreResult.Error!);
                 }
 
                 // 6. 임시 .dvn 파일 삭제
@@ -173,18 +173,18 @@ namespace Devian
                     // 삭제 실패는 무시
                 }
 
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
             }
             catch (OperationCanceledException)
             {
-                return CommonResult<bool>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                return GameResult<bool>.Failure(
+                    GAME_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     "Import cancelled");
             }
             catch (Exception ex)
             {
-                return CommonResult<bool>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                return GameResult<bool>.Failure(
+                    GAME_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     $"Import failed: {ex.Message}");
             }
         }
@@ -200,7 +200,7 @@ namespace Devian
         /// <summary>
         /// 네이티브 파일 선택 다이얼로그를 열어 .dvn 파일을 선택하고 Import한다 (경로 B: 앱 내 File Picker).
         /// </summary>
-        public async Task<CommonResult<bool>> PickAndImportDvnAsync(CancellationToken ct)
+        public async Task<GameResult<bool>> PickAndImportDvnAsync(CancellationToken ct)
         {
             try
             {
@@ -221,8 +221,8 @@ namespace Devian
                     if (string.IsNullOrEmpty(filePath))
                     {
                         Debug.Log("[RecoveryManager] PickAndImportDvnAsync: user cancelled");
-                        return CommonResult<bool>.Failure(
-                            COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                        return GameResult<bool>.Failure(
+                            GAME_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                             "File selection cancelled");
                     }
 
@@ -234,21 +234,21 @@ namespace Devian
 #else
                 Debug.Log("[RecoveryManager] PickAndImportDvnAsync: File Picker is only supported on iOS/Android device builds. Skipping.");
                 await Task.CompletedTask;
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
 #endif
             }
             catch (OperationCanceledException)
             {
                 Debug.LogWarning("[RecoveryManager] PickAndImportDvnAsync: cancelled");
-                return CommonResult<bool>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                return GameResult<bool>.Failure(
+                    GAME_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     "Pick and import cancelled");
             }
             catch (Exception ex)
             {
                 Debug.LogError($"[RecoveryManager] PickAndImportDvnAsync: failed — {ex}");
-                return CommonResult<bool>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                return GameResult<bool>.Failure(
+                    GAME_ERROR_TYPE.RECOVERY_DECODE_FAILED,
                     $"Pick and import failed: {ex.Message}");
             }
         }
@@ -270,7 +270,7 @@ namespace Devian
         /// ToJson → Encode → 임시 파일 저장. 성공 시 filePath 반환.
         /// ExportDvnAsync / ExportDvnViaEmailAsync 공통.
         /// </summary>
-        private async Task<CommonResult<string>> PrepareDvnFileAsync(CancellationToken ct)
+        private async Task<GameResult<string>> PrepareDvnFileAsync(CancellationToken ct)
         {
             Debug.Log("[RecoveryManager] PrepareDvnFileAsync: start");
 
@@ -290,7 +290,7 @@ namespace Devian
             await Task.Run(() => File.WriteAllText(filePath, dvnContent), ct);
             Debug.Log($"[RecoveryManager] PrepareDvnFileAsync: File saved → {filePath}");
 
-            return CommonResult<string>.Success(filePath);
+            return GameResult<string>.Success(filePath);
         }
 
         private static void ShareFile(string filePath, string subject)

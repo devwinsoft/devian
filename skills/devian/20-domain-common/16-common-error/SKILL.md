@@ -21,6 +21,7 @@ Common 레이어의 에러 표현을 표준화한다.
 중요:
 - `COMMON_ERROR`는 boundary failure 식별 체계다.
 - private helper 내부 invariant 예외를 모두 `COMMON_ERROR_TYPE`로 승격시키는 용도로 쓰지 않는다.
+- Game table lookup / Ability factory 같은 Game 도메인 규칙 실패는 [21-domain-game/14-game-error](../../21-domain-game/14-game-error/SKILL.md)의 `GAME_ERROR`로 분리한다.
 
 ---
 
@@ -38,19 +39,19 @@ Hard Rule:
 - `COMMON_ERROR`는 **append(맨 아래 행 추가)만 허용**한다.
 - 중간 삽입/정렬/행 재배치 금지 (기존 enum 값이 변동될 수 있음)
 - 새 코드가 필요하면 `COMMON_ERROR`에 추가한 뒤 **생성 파이프라인을 실행**해 `COMMON_ERROR_TYPE`을 갱신한다.
-- 예: ability factory lookup 실패는 `ABILITY_ITEM_TABLE_NOT_FOUND`, `ABILITY_UNIT_TABLE_NOT_FOUND`처럼 전용 코드를 추가해 구분한다.
+- 예: config parse 실패는 `COMMON_CONFIG_PARSE_FAILED`처럼 전용 코드를 추가해 구분한다.
 
 ### Prefix Taxonomy (Hard)
 
 새 코드는 prefix 기준으로 분류한다.
 
 - `COMMON_*` — 범용 인프라/공통 입력/네트워크/서버/unknown
-- `ABILITY_*` — ability factory/projection/table lookup
-- `INVENTORY_*` — inventory delta 검증/회수/수량 부족
-- `SHOP_*` — shop 구매/제한/광고/적용 실패
-- `TREASURE_*` — treasure chest/reward 실패
+- `SAVEDATA_*` — save/load/sync 실패
+- `LOGIN_*` — 로그인/인증 실패
 - `PUSH_*` — push 알림 관련 실패
 - `VERSION_CHECK_*` — 버전 체크 관련 실패
+
+Game 도메인 prefix (`INVENTORY_*`, `SHOP_*`, `TREASURE_*`, `PURCHASE_*`, `MISSION_*`, `ACHIEVE_*`, `LEADERBOARD_*`, `ATTEND_*`, `ADS_*`, `IAP_*`)는 [21-domain-game/14-game-error](../../21-domain-game/14-game-error/SKILL.md)로 이관되었다.
 
 ### When To Add A New Code
 
@@ -97,7 +98,7 @@ Hard Rule:
   - 레거시 코드는 `Details`에 `legacyCode=...` 형태로 보존한다.
 
 Boundary Rule:
-- validation / lookup / restore / config parse 같은 public 경계 실패는 `CommonError`로 표준화한다.
+- validation / Common table lookup / restore / config parse 같은 public 경계 실패는 `CommonError`로 표준화한다.
 - internal invariant 위반은 `CommonError`를 새로 추가하기보다 예외로 남길 수 있다.
 
 ---

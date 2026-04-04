@@ -87,8 +87,8 @@ Reward는 지급 실행만 담당하며, 멱등/복구 판단은 PurchaseManager
 
 `purchaseAndVerifyAsync`는 서버 `resultStatus`에 따라 반환 타입을 구분해야 한다.
 
-- `GRANTED` / `ALREADY_GRANTED` → `CommonResult.Success(PurchaseFinalResult)` 반환
-- `REJECTED` / `PENDING` / `REVOKED` / `REFUNDED` → `CommonResult.Failure(...)` 반환
+- `GRANTED` / `ALREADY_GRANTED` → `GameResult.Success(PurchaseFinalResult)` 반환
+- `REJECTED` / `PENDING` / `REVOKED` / `REFUNDED` → `GameResult.Failure(...)` 반환
 
 호출자가 `IsSuccess`만으로 지급 여부를 판단할 수 있어야 한다.
 
@@ -103,7 +103,7 @@ Reward는 지급 실행만 담당하며, 멱등/복구 판단은 PurchaseManager
 - Client: `PurchaseManager.GetLatestConsumablePurchase30dAsync()`
 - Server: `getRecentPurchases30d` (`kind="Consumable"`, `pageSize=1`)
 - 서버가 "최근 30일"을 계산한다. 클라/기기 시간 사용 금지.
-- 최근 30일 내 해당 kind 내역이 없으면 `CommonResult.Failure(COMMON_SERVER, ...)` 반환.
+- 최근 30일 내 해당 kind 내역이 없으면 `GameResult.Failure(GAME_ERROR_TYPE.PURCHASE_*, ...)` 반환.
 
 
 ---
@@ -131,4 +131,4 @@ Hard (must be 0)
 - [x] ConfirmPurchase 하드룰이 문서에 명시돼 있다.
 
 Soft
-- [ ] 호출 실패 시 에러 매핑 규칙(예: COMMON_ERROR_TYPE) 링크 추가
+- [ ] 호출 실패 시 에러 매핑 규칙(GAME_ERROR_TYPE.PURCHASE_*) 링크 추가

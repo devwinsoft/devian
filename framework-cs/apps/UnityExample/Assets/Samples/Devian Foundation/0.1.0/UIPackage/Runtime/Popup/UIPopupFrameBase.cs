@@ -52,31 +52,21 @@ namespace Devian
             ResolveDefaults();
         }
 
-        protected override void onPoolSpawned()
+        public void OnPoolSpawned()
         {
             ResolveDefaults();
             CancelInternal();
             _currentPayload = null;
-            _pendingCloseReason = PopupCloseReason.Canceled;
+            _pendingCloseReason = PopupCloseReason.Cancel;
             _isTop = false;
-        }
-
-        protected override void onPoolDespawned()
-        {
-            CancelInternal();
-            _currentPayload = null;
-            _pendingCloseReason = PopupCloseReason.Canceled;
-            _isTop = false;
-        }
-
-        public void OnPoolSpawned()
-        {
-            _HandlePoolSpawned();
         }
 
         public void OnPoolDespawned()
         {
-            _HandlePoolDespawned();
+            CancelInternal();
+            _currentPayload = null;
+            _pendingCloseReason = PopupCloseReason.Cancel;
+            _isTop = false;
         }
 
         internal void ShowUntyped(
@@ -92,7 +82,7 @@ namespace Devian
             _onShow = onShow;
             _onCloseStarted = onCloseStarted;
             _onClosed = onClosed;
-            _pendingCloseReason = PopupCloseReason.Canceled;
+            _pendingCloseReason = PopupCloseReason.Cancel;
             State = PopupFrameState.Showing;
 
             onBind(payload);
@@ -126,15 +116,15 @@ namespace Devian
 
         public void CloseCompleted()
         {
-            ClosePopup(PopupCloseReason.Completed);
+            ClosePopup(PopupCloseReason.Yes);
         }
 
         public void CloseCanceled()
         {
-            ClosePopup(PopupCloseReason.Canceled);
+            ClosePopup(PopupCloseReason.No);
         }
 
-        protected virtual void ClosePopup(PopupCloseReason reason = PopupCloseReason.Completed)
+        protected virtual void ClosePopup(PopupCloseReason reason = PopupCloseReason.Yes)
         {
             BeginClose(reason);
         }

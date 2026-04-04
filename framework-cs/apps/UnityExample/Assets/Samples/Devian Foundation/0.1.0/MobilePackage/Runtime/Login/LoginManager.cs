@@ -1,6 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Devian.Domain.Common;
+using Devian.Domain.Game;
 using UnityEngine;
 
 namespace Devian
@@ -47,13 +47,13 @@ namespace Devian
         {
         }
 
-        public async Task<CommonResult<LoginInitializeResult>> EnsureRuntimeSessionAndInitializeAsync(
+        public async Task<GameResult<LoginInitializeResult>> EnsureRuntimeSessionAndInitializeAsync(
             CancellationToken ct = default)
         {
             var versionGate = await initializeRemoteDataAsync(ct);
             await yieldMainThreadAsync(ct);
             if (versionGate.IsFailure)
-                return CommonResult<LoginInitializeResult>.Failure(versionGate.Error!);
+                return GameResult<LoginInitializeResult>.Failure(versionGate.Error!);
 
             if (versionGate.Value == VersionCheckResult.ForceUpdate)
                 return createVersionCheckResult(versionGate.Value);
@@ -63,14 +63,14 @@ namespace Devian
                 ct);
         }
 
-        public async Task<CommonResult<LoginInitializeResult>> LoginAndInitializeAsync(
+        public async Task<GameResult<LoginInitializeResult>> LoginAndInitializeAsync(
             LoginType loginType,
             CancellationToken ct = default)
         {
             var versionGate = await initializeRemoteDataAsync(ct);
             await yieldMainThreadAsync(ct);
             if (versionGate.IsFailure)
-                return CommonResult<LoginInitializeResult>.Failure(versionGate.Error!);
+                return GameResult<LoginInitializeResult>.Failure(versionGate.Error!);
 
             if (versionGate.Value == VersionCheckResult.ForceUpdate)
                 return createVersionCheckResult(versionGate.Value);
@@ -78,7 +78,7 @@ namespace Devian
             var login = await AccountManager.Instance.LoginAsync(loginType, ct);
             await yieldMainThreadAsync(ct);
             if (login.IsFailure)
-                return CommonResult<LoginInitializeResult>.Failure(login.Error!);
+                return GameResult<LoginInitializeResult>.Failure(login.Error!);
 
             var initialize = await syncAndInitializeAsync(
                 versionGate.Value,
@@ -93,21 +93,21 @@ namespace Devian
                 if (saveInit.IsFailure)
                 {
                     Debug.LogError($"[{Tag}] Initial save failed: code={saveInit.Error.Code}, message={saveInit.Error.Message}");
-                    return CommonResult<LoginInitializeResult>.Failure(saveInit.Error!);
+                    return GameResult<LoginInitializeResult>.Failure(saveInit.Error!);
                 }
             }
 
             return initialize;
         }
 
-        public async Task<CommonResult<LoginInitializeResult>> ResolveConflictAndInitializeAsync(
+        public async Task<GameResult<LoginInitializeResult>> ResolveConflictAndInitializeAsync(
             SyncResolution resolution,
             CancellationToken ct = default)
         {
             var versionGate = await initializeRemoteDataAsync(ct);
             await yieldMainThreadAsync(ct);
             if (versionGate.IsFailure)
-                return CommonResult<LoginInitializeResult>.Failure(versionGate.Error!);
+                return GameResult<LoginInitializeResult>.Failure(versionGate.Error!);
 
             if (versionGate.Value == VersionCheckResult.ForceUpdate)
                 return createVersionCheckResult(versionGate.Value);
@@ -117,7 +117,7 @@ namespace Devian
             if (resolve.IsFailure)
             {
                 Debug.LogError($"[{Tag}] ResolveConflictAsync failed: {resolve.Error.Code}: {resolve.Error.Message}");
-                return CommonResult<LoginInitializeResult>.Failure(resolve.Error!);
+                return GameResult<LoginInitializeResult>.Failure(resolve.Error!);
             }
 
             var initialize = await ensureRuntimeSessionAndInitializeCoreAsync(
@@ -128,27 +128,27 @@ namespace Devian
 
             if (initialize.Value.IsConflict)
             {
-                return CommonResult<LoginInitializeResult>.Failure(
-                    COMMON_ERROR_TYPE.SAVEDATA_SYNC_RESOLVE_FAILED,
+                return GameResult<LoginInitializeResult>.Failure(
+                    GAME_ERROR_TYPE.SAVEDATA_SYNC_RESOLVE_FAILED,
                     $"Sync conflict persists after resolve. local={initialize.Value.LocalDeviceId}, cloud={initialize.Value.CloudDeviceId}");
             }
 
             return initialize;
         }
 
-        public Task<CommonResult<VersionCheckResult>> VersionCheck(CancellationToken ct = default)
+        public Task<GameResult<VersionCheckResult>> VersionCheck(CancellationToken ct = default)
         {
             return VersionCheckAsync(ct);
         }
 
-        public async Task<CommonResult<VersionCheckResult>> VersionCheckAsync(CancellationToken ct = default)
+        public async Task<GameResult<VersionCheckResult>> VersionCheckAsync(CancellationToken ct = default)
         {
             var versionGate = await initializeRemoteDataAsync(ct);
             await yieldMainThreadAsync(ct);
             if (versionGate.IsFailure)
-                return CommonResult<VersionCheckResult>.Failure(versionGate.Error!);
+                return GameResult<VersionCheckResult>.Failure(versionGate.Error!);
 
-            return CommonResult<VersionCheckResult>.Success(versionGate.Value);
+            return GameResult<VersionCheckResult>.Success(versionGate.Value);
         }
 
         public bool IsPurchaseLoginReady()
@@ -163,34 +163,34 @@ namespace Devian
             }
         }
 
-        public async Task<CommonResult<bool>> EnsurePurchaseLoginReadyAsync(CancellationToken ct = default)
+        public async Task<GameResult<bool>> EnsurePurchaseLoginReadyAsync(CancellationToken ct = default)
         {
             var runtimeAuth = await AccountManager.Instance.EnsureRuntimeAuthSessionAsync(ct);
             await yieldMainThreadAsync(ct);
             if (runtimeAuth.IsFailure)
-                return CommonResult<bool>.Failure(runtimeAuth.Error!);
+                return GameResult<bool>.Failure(runtimeAuth.Error!);
 
             if (runtimeAuth.Value)
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
 
             if (AccountManager.Instance.CurrentLoginType != LoginType.NONE)
-                return CommonResult<bool>.Success(false);
+                return GameResult<bool>.Success(false);
 
 #if UNITY_ANDROID && !UNITY_EDITOR
             return await AccountManager.Instance.TryRestoreGoogleAuthAsync(ct);
 #else
-            return CommonResult<bool>.Success(false);
+            return GameResult<bool>.Success(false);
 #endif
         }
 
-        async Task<CommonResult<LoginInitializeResult>> ensureRuntimeSessionAndInitializeCoreAsync(
+        async Task<GameResult<LoginInitializeResult>> ensureRuntimeSessionAndInitializeCoreAsync(
             VersionCheckResult versionResult,
             CancellationToken ct)
         {
             var restore = await AccountManager.Instance.EnsureRuntimeAuthSessionAsync(ct);
             await yieldMainThreadAsync(ct);
             if (restore.IsFailure)
-                return CommonResult<LoginInitializeResult>.Failure(restore.Error!);
+                return GameResult<LoginInitializeResult>.Failure(restore.Error!);
 
             if (!restore.Value)
             {
@@ -227,7 +227,7 @@ namespace Devian
             return await syncAndInitializeAsync(versionResult, ct);
         }
 
-        async Task<CommonResult<LoginInitializeResult>> syncAndInitializeAsync(
+        async Task<GameResult<LoginInitializeResult>> syncAndInitializeAsync(
             VersionCheckResult versionResult,
             CancellationToken ct)
         {
@@ -237,14 +237,14 @@ namespace Devian
             if (sync.IsFailure)
             {
                 Debug.LogError($"[{Tag}] SyncGameStorageAsync failed: {sync.Error.Code}: {sync.Error.Message}");
-                return CommonResult<LoginInitializeResult>.Failure(sync.Error!);
+                return GameResult<LoginInitializeResult>.Failure(sync.Error!);
             }
 
             Debug.Log($"[{Tag}] Sync completed: {sync.Value.State}");
             if (sync.Value.State == SyncState.Conflict)
             {
                 Debug.LogWarning($"[{Tag}] Sync conflict detected. ResolveConflictAsync is required. local={sync.Value.LocalDeviceId}, cloud={sync.Value.CloudDeviceId}");
-                return CommonResult<LoginInitializeResult>.Success(
+                return GameResult<LoginInitializeResult>.Success(
                     new LoginInitializeResult(
                         SyncState.Conflict,
                         sync.Value.LocalDeviceId,
@@ -257,31 +257,31 @@ namespace Devian
             var bootstrap = await applyFirstInitIfNeededAsync(sync.Value, ct);
             await yieldMainThreadAsync(ct);
             if (bootstrap.IsFailure)
-                return CommonResult<LoginInitializeResult>.Failure(bootstrap.Error!);
+                return GameResult<LoginInitializeResult>.Failure(bootstrap.Error!);
 
             return await syncGameStateAsync(versionResult, sync.Value, ct);
         }
 
-        async Task<CommonResult> applyFirstInitIfNeededAsync(SyncResult sync, CancellationToken ct)
+        async Task<GameResult> applyFirstInitIfNeededAsync(SyncResult sync, CancellationToken ct)
         {
             if (sync == null
                 || sync.State != SyncState.Initial
                 || sync.LocalPayload != null
                 || sync.CloudPayload != null)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             var firstInit = await RewardManager.Instance.FirstInitAsync(ct);
             await yieldMainThreadAsync(ct);
             if (firstInit.IsFailure)
             {
                 Debug.LogError($"[{Tag}] FirstInitAsync failed: code={firstInit.Error.Code}, message={firstInit.Error.Message}");
-                return CommonResult.Failure(firstInit.Error!);
+                return firstInit;
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
-        async Task<CommonResult<LoginInitializeResult>> syncGameStateAsync(
+        async Task<GameResult<LoginInitializeResult>> syncGameStateAsync(
             VersionCheckResult versionResult,
             SyncResult sync,
             CancellationToken ct)
@@ -332,7 +332,7 @@ namespace Devian
             if (initAttend.IsFailure)
             {
                 Debug.LogError($"[{Tag}] AttendManager.InitializeAsync failed: {initAttend.Error.Code}: {initAttend.Error.Message}");
-                return CommonResult<LoginInitializeResult>.Failure(initAttend.Error!);
+                return GameResult<LoginInitializeResult>.Failure(initAttend.Error!);
             }
 
             var initMission = await MissionManager.Instance.InitializeAsync(ct);
@@ -340,7 +340,7 @@ namespace Devian
             if (initMission.IsFailure)
             {
                 Debug.LogError($"[{Tag}] MissionManager.InitializeAsync failed: {initMission.Error.Code}: {initMission.Error.Message}");
-                return CommonResult<LoginInitializeResult>.Failure(initMission.Error!);
+                return GameResult<LoginInitializeResult>.Failure(initMission.Error!);
             }
 
             var initAchieve = await AchieveManager.Instance.InitializeAsync(ct);
@@ -348,7 +348,7 @@ namespace Devian
             if (initAchieve.IsFailure)
             {
                 Debug.LogError($"[{Tag}] AchieveManager.InitializeAsync failed: {initAchieve.Error.Code}: {initAchieve.Error.Message}");
-                return CommonResult<LoginInitializeResult>.Failure(initAchieve.Error!);
+                return GameResult<LoginInitializeResult>.Failure(initAchieve.Error!);
             }
 
             var initAd = await AdsManager.Instance.InitializeAsync(ct);
@@ -370,7 +370,7 @@ namespace Devian
             if (initShop.IsFailure)
             {
                 Debug.LogError($"[{Tag}] ShopManager.Initialize failed: {initShop.Error.Code}: {initShop.Error.Message}");
-                return CommonResult<LoginInitializeResult>.Failure(initShop.Error!);
+                return GameResult<LoginInitializeResult>.Failure(initShop.Error!);
             }
 
             var save = await SaveDataManager.Instance.SaveGameStorageAsync(false, ct);
@@ -378,10 +378,10 @@ namespace Devian
             if (save.IsFailure)
             {
                 Debug.LogError($"[{Tag}] SaveGameStorageAsync failed: {save.Error.Code}: {save.Error.Message}");
-                return CommonResult<LoginInitializeResult>.Failure(save.Error!);
+                return GameResult<LoginInitializeResult>.Failure(save.Error!);
             }
 
-            return CommonResult<LoginInitializeResult>.Success(
+            return GameResult<LoginInitializeResult>.Success(
                 new LoginInitializeResult(
                     sync.State,
                     sync.LocalDeviceId,
@@ -391,13 +391,13 @@ namespace Devian
                     versionResult));
         }
 
-        async Task<CommonResult<VersionCheckResult>> initializeRemoteDataAsync(CancellationToken ct)
+        async Task<GameResult<VersionCheckResult>> initializeRemoteDataAsync(CancellationToken ct)
         {
             if (!RemoteDataManager.TryGet(out var remoteDataManager)
                 || remoteDataManager == null)
             {
-                return CommonResult<VersionCheckResult>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult<VersionCheckResult>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     "RemoteDataManager is not initialized.");
             }
 
@@ -405,9 +405,9 @@ namespace Devian
             return await remoteDataManager.InitializeAsync(clientVersion, ct);
         }
 
-        static CommonResult<LoginInitializeResult> createVersionCheckResult(VersionCheckResult versionResult)
+        static GameResult<LoginInitializeResult> createVersionCheckResult(VersionCheckResult versionResult)
         {
-            return CommonResult<LoginInitializeResult>.Success(
+            return GameResult<LoginInitializeResult>.Success(
                 new LoginInitializeResult(SyncState.Success, versionResult: versionResult));
         }
 
@@ -417,6 +417,5 @@ namespace Devian
             await Task.Yield();
             ct.ThrowIfCancellationRequested();
         }
-
     }
 }

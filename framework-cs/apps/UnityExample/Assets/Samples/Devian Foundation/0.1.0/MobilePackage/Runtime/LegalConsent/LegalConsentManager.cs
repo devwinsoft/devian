@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
+using Devian.Domain.Game;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -66,22 +67,22 @@ namespace Devian
             return buildDocumentUrl(document);
         }
 
-        public async Task<CommonResult<string>> DownloadDocumentAsync(
+        public async Task<GameResult<string>> DownloadDocumentAsync(
             LegalDocumentType documentType,
             CancellationToken ct = default)
         {
             if (!TryGetDocument(documentType, out var document) || document == null || !document.IsConfigured)
             {
-                return CommonResult<string>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult<string>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"Legal document is not configured: {documentType}");
             }
 
             var url = buildDocumentUrl(document);
             if (string.IsNullOrWhiteSpace(url))
             {
-                return CommonResult<string>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult<string>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"Legal document URL is not configured: {documentType}");
             }
 
@@ -105,20 +106,20 @@ namespace Devian
 
             if (request.result != UnityWebRequest.Result.Success)
             {
-                return CommonResult<string>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_NETWORK,
+                return GameResult<string>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"Legal document request failed: {request.error}");
             }
 
             var content = request.downloadHandler?.text ?? string.Empty;
             if (string.IsNullOrWhiteSpace(content))
             {
-                return CommonResult<string>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                return GameResult<string>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"Legal document response is empty: {documentType}");
             }
 
-            return CommonResult<string>.Success(content);
+            return GameResult<string>.Success(content);
         }
 
         public VersionNumber GetAcceptedVersion()

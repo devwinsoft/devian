@@ -17,6 +17,9 @@ Common 레이어에서 "성공/실패 + 에러"를 표현하는 표준 Result �
 - 에러 타입: `CommonError`
 - 주 용도: public/boundary API의 recoverable failure 전달
 
+경계 분리:
+- Game table lookup / Ability factory / Game 도메인 규칙 실패는 [21-domain-game/15-game-result](../../21-domain-game/15-game-result/SKILL.md)의 `GameResult`를 사용한다.
+
 ---
 
 ## Runtime Type: CommonResult<T>
@@ -44,16 +47,16 @@ Hard Rule:
 - 예상 가능한 validation / lookup / restore 실패는 `throw`보다 `CommonResult.Failure(...)`를 우선한다.
 
 Boundary-First Rule:
-- public API, data boundary, config parse, save/load, table lookup은 `CommonResult`를 우선한다.
+- public API, data boundary, config parse, save/load, Common table lookup은 `CommonResult`를 우선한다.
 - private/internal helper는 이미 검증된 내부 invariant가 깨질 때만 예외를 허용할 수 있다.
 - helper 예외를 이유 없이 public API의 기본 실패 모델로 승격시키지 않는다.
 
 대표 경계:
-- factory create/lookup
-- inventory apply
-- reward validation/apply
+- Common config parse/lookup
 - save payload deserialize
 - first-init config parse
+- SaveData codec (GameResult → CommonResult 변환: `ToCommonResult` 헬퍼)
+- LoginManager (Game manager 호출 결과를 CommonResult로 변환하여 전달)
 
 레거시(string code) Failure 오버로드가 남아있다면:
 - `COMMON_ERROR_TYPE.COMMON_UNKNOWN`으로 매핑하고

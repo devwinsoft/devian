@@ -7,7 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SocialPlatforms;
-using Devian.Domain.Common;
+using Devian.Domain.Game;
 
 
 namespace Devian
@@ -257,7 +257,7 @@ namespace Devian
         /// Acquires Google GPGS server auth code via Reflection (for backend sign-in / account linking).
         /// GPGS v2 only (Action&lt;SignInStatus&gt; + Action&lt;AuthResponse&gt;).
         /// </summary>
-        public Task<CommonResult<LoginCredential>> GetServerAuthCodeCredentialAsync(CancellationToken ct)
+        public Task<GameResult<LoginCredential>> GetServerAuthCodeCredentialAsync(CancellationToken ct)
         {
             return getServerAuthCodeCredentialAsync(ct, allowManualAuthenticate: true);
         }
@@ -267,13 +267,13 @@ namespace Devian
         /// - Uses Authenticate(Action&lt;SignInStatus&gt;) only
         /// - Never invokes ManuallyAuthenticate(UI)
         /// </summary>
-        public Task<CommonResult<LoginCredential>> GetServerAuthCodeCredentialSilentAsync(CancellationToken ct)
+        public Task<GameResult<LoginCredential>> GetServerAuthCodeCredentialSilentAsync(CancellationToken ct)
         {
             return getServerAuthCodeCredentialAsync(ct, allowManualAuthenticate: false);
         }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
-        private async Task<CommonResult<LoginCredential>> getServerAuthCodeCredentialAsync(
+        private async Task<GameResult<LoginCredential>> getServerAuthCodeCredentialAsync(
             CancellationToken ct,
             bool allowManualAuthenticate)
         {
@@ -283,7 +283,7 @@ namespace Devian
             {
                 if (_platformType == null || _platformInstance == null)
                 {
-                    return CommonResult<LoginCredential>.Failure(COMMON_ERROR_TYPE.LOGIN_GPGS_NOT_FOUND,
+                    return GameResult<LoginCredential>.Failure(GAME_ERROR_TYPE.LOGIN_GPGS_NOT_FOUND,
                         "GooglePlayGames v2 plugin is not installed.");
                 }
 
@@ -299,7 +299,7 @@ namespace Devian
 
                 if (signInStatusType == null)
                 {
-                    return CommonResult<LoginCredential>.Failure(COMMON_ERROR_TYPE.LOGIN_GPGS_NO_AUTHENTICATE,
+                    return GameResult<LoginCredential>.Failure(GAME_ERROR_TYPE.LOGIN_GPGS_NO_AUTHENTICATE,
                         "GPGS SignInStatus type not found.");
                 }
 
@@ -333,7 +333,7 @@ namespace Devian
 
                 if (silentAuth == null && (!allowManualAuthenticate || manualAuth == null))
                 {
-                    return CommonResult<LoginCredential>.Failure(COMMON_ERROR_TYPE.LOGIN_GPGS_NO_AUTHENTICATE,
+                    return GameResult<LoginCredential>.Failure(GAME_ERROR_TYPE.LOGIN_GPGS_NO_AUTHENTICATE,
                         allowManualAuthenticate
                             ? "PlayGamesPlatform.ManuallyAuthenticate/Authenticate not found."
                             : "PlayGamesPlatform.Authenticate not found.");
@@ -371,7 +371,7 @@ namespace Devian
 
                 if (!authenticated)
                 {
-                    return CommonResult<LoginCredential>.Failure(COMMON_ERROR_TYPE.LOGIN_GPGS_AUTH_FAILED,
+                    return GameResult<LoginCredential>.Failure(GAME_ERROR_TYPE.LOGIN_GPGS_AUTH_FAILED,
                         allowManualAuthenticate
                             ? "Google Play Games authentication failed."
                             : "Google Play Games silent authentication failed.");
@@ -411,25 +411,25 @@ namespace Devian
 
                 if (string.IsNullOrEmpty(serverAuthCode))
                 {
-                    return CommonResult<LoginCredential>.Failure(
-                        COMMON_ERROR_TYPE.LOGIN_GPGS_NO_AUTH_CODE,
+                    return GameResult<LoginCredential>.Failure(
+                        GAME_ERROR_TYPE.LOGIN_GPGS_NO_AUTH_CODE,
                         "RequestServerSideAccess returned no auth code. Configure GPGS server-side access (Web client ID).");
                 }
 
-                return CommonResult<LoginCredential>.Success(new LoginCredential(null, null, null, serverAuthCode));
+                return GameResult<LoginCredential>.Success(new LoginCredential(null, null, null, serverAuthCode));
             }
             catch (Exception ex)
             {
-                return CommonResult<LoginCredential>.Failure(COMMON_ERROR_TYPE.LOGIN_GPGS_EXCEPTION, ex.ToString());
+                return GameResult<LoginCredential>.Failure(GAME_ERROR_TYPE.LOGIN_GPGS_EXCEPTION, ex.ToString());
             }
         }
 #else
-        private Task<CommonResult<LoginCredential>> getServerAuthCodeCredentialAsync(
+        private Task<GameResult<LoginCredential>> getServerAuthCodeCredentialAsync(
             CancellationToken ct,
             bool allowManualAuthenticate)
         {
-            return Task.FromResult(CommonResult<LoginCredential>.Failure(
-                COMMON_ERROR_TYPE.LOGIN_GPGS_NOT_FOUND,
+            return Task.FromResult(GameResult<LoginCredential>.Failure(
+                GAME_ERROR_TYPE.LOGIN_GPGS_NOT_FOUND,
                 "GPGS is not available on this platform."));
         }
 #endif

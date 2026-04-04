@@ -153,6 +153,12 @@ namespace Devian
             rectTransform.sizeDelta = _initialLayout.SizeDelta;
             rectTransform.localScale = _initialLayout.LocalScale;
             rectTransform.anchoredPosition = _initialLayout.AnchoredPosition + offset;
+
+            var transitionPlayer = GetTransitionPlayer();
+            if (transitionPlayer != null)
+            {
+                transitionPlayer.RefreshBaseline();
+            }
         }
 
         private void RestartLifetime(float duration)

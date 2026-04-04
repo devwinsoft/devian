@@ -20,10 +20,10 @@ MobilePackage 샘플의 `LeaderboardManager` 설계 문서다.
 
 ## Public API
 
-- `InitializeAsync(ct)` -> `Task<CommonResult>`
-- `ReportScoreAsync(leaderboard_id, ct)` -> `Task<CommonResult>`
-- `GetPlayerSnapshotAsync(leaderboard_id, ct)` -> `Task<CommonResult<LeaderboardPlayerSnapshot>>`
-- `SyncSeasonTransitionRewardsAsync(ct)` -> `Task<CommonResult>`
+- `InitializeAsync(ct)` -> `Task<GameResult>`
+- `ReportScoreAsync(leaderboard_id, ct)` -> `Task<GameResult>`
+- `GetPlayerSnapshotAsync(leaderboard_id, ct)` -> `Task<GameResult<LeaderboardPlayerSnapshot>>`
+- `SyncSeasonTransitionRewardsAsync(ct)` -> `Task<GameResult>`
 - `ClearStorage()`
 
 초기화 규약:
@@ -64,7 +64,7 @@ Adapter 계약은 `internal/private` 범위로만 사용한다.
 - `ReportScoreAsync`는 점수 제출 전 시즌 활성 기간을 확인한다.
 - 시즌 시간 조회: `LEADERBOARD.season_id → TB_SEASON.Get(season_id) → Start_utc_time/End_utc_time`
 - 조건: `SEASON.Start_utc_time <= serverNowUtcMs < SEASON.End_utc_time`
-- 시즌 외 기간이면 `CommonResult.Failure` 반환.
+- 시즌 외 기간이면 `GameResult.Failure` 반환.
 - `season_id`가 비어 있으면 시간 제한을 적용하지 않는다.
 
 ---

@@ -117,35 +117,35 @@ namespace Devian
 #endif
         }
 
-        static CommonResult validatePurchaseRewards(RewardData[] rewards, string context)
+        static GameResult validatePurchaseRewards(RewardData[] rewards, string context)
         {
             if (rewards == null || rewards.Length <= 0)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             for (var i = 0; i < rewards.Length; i++)
             {
                 var reward = rewards[i];
                 if (reward.Amount < 0)
                 {
-                    return CommonResult.Failure(
-                        COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                    return GameResult.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                         $"Negative reward amount is not allowed: context={context}, index={i}, type={reward.Type}, id={reward.Id}, amount={reward.Amount}");
                 }
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
 #if UNITY_EDITOR
-        public Task<CommonResult<RefundResult>> RefundAsync(CancellationToken ct = default)
-            => Task.FromResult(CommonResult<RefundResult>.Success(CreateNoOpRefundResult()));
+        public Task<GameResult<RefundResult>> RefundAsync(CancellationToken ct = default)
+            => Task.FromResult(GameResult<RefundResult>.Success(CreateNoOpRefundResult()));
 #elif !UNITY_PURCHASING
-        public Task<CommonResult<RefundResult>> RefundAsync(CancellationToken ct = default)
-            => Task.FromResult(CommonResult<RefundResult>.Failure(
-                COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED,
+        public Task<GameResult<RefundResult>> RefundAsync(CancellationToken ct = default)
+            => Task.FromResult(GameResult<RefundResult>.Failure(
+                GAME_ERROR_TYPE.IAP_NOT_SUPPORTED,
                 "Unity Purchasing not available."));
 #else
-        public async Task<CommonResult<RefundResult>> RefundAsync(CancellationToken ct = default)
+        public async Task<GameResult<RefundResult>> RefundAsync(CancellationToken ct = default)
         {
             int pageCount = 0;
             int handledCount = 0;
@@ -166,7 +166,7 @@ namespace Devian
                 var prevCursor = pageCursor;
                 var pageResult = await syncRefundsPageAsync(prevCursor, 50, ct);
                 if (pageResult.IsFailure)
-                    return CommonResult<RefundResult>.Failure(pageResult.Error!);
+                    return GameResult<RefundResult>.Failure(pageResult.Error!);
 
                 var page = pageResult.Value!;
                 pageCount++;
@@ -193,7 +193,7 @@ namespace Devian
                     }
 
                     // RevokeRewards 실행 — 실패해도 다음 아이템으로 계속 진행
-                    CommonResult apply;
+                    GameResult apply;
                     try
                     {
                         apply = RewardManager.Instance.RevokeRewardDatasPartial(item.Rewards);
@@ -233,15 +233,15 @@ namespace Devian
 
                 if (page.HasMore && string.IsNullOrEmpty(page.NextCursor))
                 {
-                    return CommonResult<RefundResult>.Failure(
-                        COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
+                    return GameResult<RefundResult>.Failure(
+                        GAME_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
                         "Refund sync cursor is empty while hasMore=true.");
                 }
 
                 if (page.HasMore && string.Equals(prevCursor, page.NextCursor ?? string.Empty, StringComparison.Ordinal))
                 {
-                    return CommonResult<RefundResult>.Failure(
-                        COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
+                    return GameResult<RefundResult>.Failure(
+                        GAME_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
                         "Refund sync cursor did not advance.");
                 }
 
@@ -250,7 +250,7 @@ namespace Devian
 
                 if (!page.HasMore)
                 {
-                    return CommonResult<RefundResult>.Success(
+                    return GameResult<RefundResult>.Success(
                         new RefundResult(
                             pageCount,
                             handledCount,
@@ -268,7 +268,7 @@ namespace Devian
         /// initSession에서 pre-loaded된 첫 페이지로 시작하는 RefundAsync.
         /// 첫 페이지는 서버 호출 없이 처리하고, hasMore일 때만 후속 페이지를 서버에서 가져온다.
         /// </summary>
-        async Task<CommonResult<RefundResult>> refundWithPreloadedPageAsync(
+        async Task<GameResult<RefundResult>> refundWithPreloadedPageAsync(
             RefundPageResult preloadedFirstPage, CancellationToken ct)
         {
             int pageCount = 0;
@@ -297,7 +297,7 @@ namespace Devian
                 {
                     var pageResult = await syncRefundsPageAsync(prevCursor, 50, ct);
                     if (pageResult.IsFailure)
-                        return CommonResult<RefundResult>.Failure(pageResult.Error!);
+                        return GameResult<RefundResult>.Failure(pageResult.Error!);
                     page = pageResult.Value!;
                 }
 
@@ -323,7 +323,7 @@ namespace Devian
                         continue;
                     }
 
-                    CommonResult apply;
+                    GameResult apply;
                     try
                     {
                         apply = RewardManager.Instance.RevokeRewardDatasPartial(item.Rewards);
@@ -362,15 +362,15 @@ namespace Devian
 
                 if (page.HasMore && string.IsNullOrEmpty(page.NextCursor))
                 {
-                    return CommonResult<RefundResult>.Failure(
-                        COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
+                    return GameResult<RefundResult>.Failure(
+                        GAME_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
                         "Refund sync cursor is empty while hasMore=true.");
                 }
 
                 if (page.HasMore && string.Equals(prevCursor, page.NextCursor ?? string.Empty, StringComparison.Ordinal))
                 {
-                    return CommonResult<RefundResult>.Failure(
-                        COMMON_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
+                    return GameResult<RefundResult>.Failure(
+                        GAME_ERROR_TYPE.PURCHASE_REFUND_APPLY_FAILED,
                         "Refund sync cursor did not advance.");
                 }
 
@@ -379,7 +379,7 @@ namespace Devian
 
                 if (!page.HasMore)
                 {
-                    return CommonResult<RefundResult>.Success(
+                    return GameResult<RefundResult>.Success(
                         new RefundResult(
                             pageCount,
                             handledCount,
@@ -397,7 +397,7 @@ namespace Devian
         bool _iapInitialized;
         string _initError;
 
-        Task<CommonResult> _initializeTask;
+        Task<GameResult> _initializeTask;
 
         TaskCompletionSource<PendingOrder> _purchaseTcs;
         bool _purchaseInProgress;
@@ -423,11 +423,11 @@ namespace Devian
         /// 여러 번 호출해도 동일 Task를 반환한다 (idempotent).
         /// Editor에서는 즉시 PURCHASE_UNSUPPORTED_PLATFORM 반환.
         /// </summary>
-        public Task<CommonResult> InitializeAsync(CancellationToken ct = default)
+        public Task<GameResult> InitializeAsync(CancellationToken ct = default)
         {
 #if UNITY_EDITOR
-            return Task.FromResult(CommonResult.Failure(
-                COMMON_ERROR_TYPE.PURCHASE_UNSUPPORTED_PLATFORM,
+            return Task.FromResult(GameResult.Failure(
+                GAME_ERROR_TYPE.PURCHASE_UNSUPPORTED_PLATFORM,
                 "PurchaseManager is not supported in Editor."));
 #else
             if (_initializeTask != null)
@@ -459,19 +459,19 @@ namespace Devian
         /// Initialize 실패만 fatal로 처리한다.
         /// </summary>
 #if UNITY_EDITOR
-        public Task<CommonResult<PurchaseSyncResult>> SyncAsync(
+        public Task<GameResult<PurchaseSyncResult>> SyncAsync(
             CancellationToken ct = default)
-            => Task.FromResult(CommonResult<PurchaseSyncResult>.Success(CreateNoOpPurchaseSyncResult()));
+            => Task.FromResult(GameResult<PurchaseSyncResult>.Success(CreateNoOpPurchaseSyncResult()));
 #else
-        public async Task<CommonResult<PurchaseSyncResult>> SyncAsync(
+        public async Task<GameResult<PurchaseSyncResult>> SyncAsync(
             CancellationToken ct = default)
         {
             var init = await InitializeAsync(ct);
             if (init.IsFailure)
-                return CommonResult<PurchaseSyncResult>.Failure(init.Error!);
+                return GameResult<PurchaseSyncResult>.Failure(init.Error!);
 
             RetryInterruptedPurchaseResult? retryInterruptedPurchase = null;
-            CommonError retryInterruptedError = null;
+            GameError retryInterruptedError = null;
 
             var retry = await RetryInterruptedPurchaseAsync(ct);
             if (retry.IsSuccess)
@@ -485,7 +485,7 @@ namespace Devian
             }
 
             RefundResult? refund = null;
-            CommonError refundError = null;
+            GameError refundError = null;
 
             var refundResult = await RefundAsync(ct);
             if (refundResult.IsSuccess)
@@ -498,7 +498,7 @@ namespace Devian
                 Debug.LogWarning($"[{Tag}] RefundAsync failed during sync (non-fatal): {refundError}");
             }
 
-            CommonError saveError = null;
+            GameError saveError = null;
             var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
             if (save.IsFailure)
             {
@@ -506,7 +506,7 @@ namespace Devian
                 Debug.LogWarning($"[{Tag}] Post-sync save failed (non-fatal): {saveError}");
             }
 
-            return CommonResult<PurchaseSyncResult>.Success(
+            return GameResult<PurchaseSyncResult>.Success(
                 new PurchaseSyncResult(
                     retryInterruptedPurchase,
                     retryInterruptedError,
@@ -521,13 +521,13 @@ namespace Devian
         /// <summary>
         /// 상품 구매를 수행한다. TB_PURCHASE에서 Kind를 조회하여 자동으로 구매 유형을 결정한다.
         /// </summary>
-        public async Task<CommonResult<PurchaseFinalResult>> PurchaseAsync(
+        public async Task<GameResult<PurchaseFinalResult>> PurchaseAsync(
             string internalProductId, CancellationToken ct = default)
         {
             var product = TB_PURCHASE.Get(internalProductId);
             if (product == null)
-                return CommonResult<PurchaseFinalResult>.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_NOT_FOUND,
+                return GameResult<PurchaseFinalResult>.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_NOT_FOUND,
                     $"Product not found: {internalProductId}");
 
             var kind = ProductKindToPurchaseKind(product.kind);
@@ -539,7 +539,7 @@ namespace Devian
                     final_.AppliedRewards,
                     $"purchaseId={final_.PurchaseId}, internal_product_id={final_.InternalProductId}");
                 if (validateRewards.IsFailure)
-                    return CommonResult<PurchaseFinalResult>.Failure(validateRewards.Error!);
+                    return GameResult<PurchaseFinalResult>.Failure(validateRewards.Error!);
 
                 await applyClientGrantIfNeededAsync(
                     final_.PurchaseId, final_.AppliedRewards,
@@ -554,20 +554,20 @@ namespace Devian
         }
 
 #if UNITY_EDITOR
-        public Task<CommonResult<RetryInterruptedPurchaseResult>> RetryInterruptedPurchaseAsync(CancellationToken ct = default)
-            => Task.FromResult(CommonResult<RetryInterruptedPurchaseResult>.Success(CreateNoOpRetryInterruptedPurchaseResult()));
+        public Task<GameResult<RetryInterruptedPurchaseResult>> RetryInterruptedPurchaseAsync(CancellationToken ct = default)
+            => Task.FromResult(GameResult<RetryInterruptedPurchaseResult>.Success(CreateNoOpRetryInterruptedPurchaseResult()));
 #else
-        public async Task<CommonResult<RetryInterruptedPurchaseResult>> RetryInterruptedPurchaseAsync(CancellationToken ct = default)
+        public async Task<GameResult<RetryInterruptedPurchaseResult>> RetryInterruptedPurchaseAsync(CancellationToken ct = default)
         {
             var purchaseStorage = getPurchaseStorageOrNull();
             if (purchaseStorage == null)
-                return CommonResult<RetryInterruptedPurchaseResult>.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_INTERRUPTED_STORAGE_UNAVAILABLE,
+                return GameResult<RetryInterruptedPurchaseResult>.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_INTERRUPTED_STORAGE_UNAVAILABLE,
                     "PurchaseStorage is not available.");
 
             var current = purchaseStorage.Current;
             if (!current.IsPurchaseInProgress)
-                return CommonResult<RetryInterruptedPurchaseResult>.Success(
+                return GameResult<RetryInterruptedPurchaseResult>.Success(
                     new RetryInterruptedPurchaseResult(
                         RetryInterruptedPurchaseStatus.SkippedNoCurrent,
                         string.Empty,
@@ -580,14 +580,14 @@ namespace Devian
                         false));
 
             if (string.IsNullOrEmpty(current.InternalProductId))
-                return CommonResult<RetryInterruptedPurchaseResult>.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_INTERRUPTED_SNAPSHOT_PRODUCT_ID_MISSING,
+                return GameResult<RetryInterruptedPurchaseResult>.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_INTERRUPTED_SNAPSHOT_PRODUCT_ID_MISSING,
                     "Interrupted purchase snapshot is missing internal_product_id.");
 
             if (!TryResolveInterruptedPurchaseKind(current.InternalProductId, current.Kind, out var currentKind))
             {
-                return CommonResult<RetryInterruptedPurchaseResult>.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_INTERRUPTED_SNAPSHOT_KIND_INVALID,
+                return GameResult<RetryInterruptedPurchaseResult>.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_INTERRUPTED_SNAPSHOT_KIND_INVALID,
                     $"Interrupted purchase snapshot has invalid purchase kind: {current.Kind}");
             }
 
@@ -596,8 +596,8 @@ namespace Devian
                 // resumeAfterStoreConfirmAsync는 purchaseAndVerifyAsync를 거치지 않으므로
                 // _purchaseInProgress 가드를 여기서 직접 관리한다.
                 if (_purchaseInProgress)
-                    return CommonResult<RetryInterruptedPurchaseResult>.Failure(
-                        COMMON_ERROR_TYPE.PURCHASE_PURCHASE_IN_PROGRESS,
+                    return GameResult<RetryInterruptedPurchaseResult>.Failure(
+                        GAME_ERROR_TYPE.PURCHASE_PURCHASE_IN_PROGRESS,
                         "Another purchase is already in progress.");
 
                 _purchaseInProgress = true;
@@ -605,19 +605,19 @@ namespace Devian
                 {
                     var resumed = await resumeAfterStoreConfirmAsync(current.InternalProductId, currentKind, ct);
                     if (resumed.IsFailure)
-                        return CommonResult<RetryInterruptedPurchaseResult>.Failure(resumed.Error!);
+                        return GameResult<RetryInterruptedPurchaseResult>.Failure(resumed.Error!);
 
                     var finalAfterConfirm = resumed.Value!;
                     var validateRewards = validatePurchaseRewards(
                         finalAfterConfirm.AppliedRewards,
                         $"purchaseId={finalAfterConfirm.PurchaseId}, internal_product_id={finalAfterConfirm.InternalProductId}");
                     if (validateRewards.IsFailure)
-                        return CommonResult<RetryInterruptedPurchaseResult>.Failure(validateRewards.Error!);
+                        return GameResult<RetryInterruptedPurchaseResult>.Failure(validateRewards.Error!);
 
                     await applyClientGrantIfNeededAsync(
                         finalAfterConfirm.PurchaseId, finalAfterConfirm.AppliedRewards,
                         finalAfterConfirm.NeedsClientGrantDelivery, ct);
-                    return CommonResult<RetryInterruptedPurchaseResult>.Success(
+                    return GameResult<RetryInterruptedPurchaseResult>.Success(
                         new RetryInterruptedPurchaseResult(
                             RetryInterruptedPurchaseStatus.Retried,
                             finalAfterConfirm.PurchaseId,
@@ -637,19 +637,19 @@ namespace Devian
 
             var resume = await purchaseAndVerifyAsync(current.InternalProductId, currentKind, ct, isRecoveryCall: true);
             if (resume.IsFailure)
-                return CommonResult<RetryInterruptedPurchaseResult>.Failure(resume.Error!);
+                return GameResult<RetryInterruptedPurchaseResult>.Failure(resume.Error!);
 
             var finalResult = resume.Value!;
             var validateRecoveredRewards = validatePurchaseRewards(
                 finalResult.AppliedRewards,
                 $"purchaseId={finalResult.PurchaseId}, internal_product_id={finalResult.InternalProductId}");
             if (validateRecoveredRewards.IsFailure)
-                return CommonResult<RetryInterruptedPurchaseResult>.Failure(validateRecoveredRewards.Error!);
+                return GameResult<RetryInterruptedPurchaseResult>.Failure(validateRecoveredRewards.Error!);
 
             await applyClientGrantIfNeededAsync(
                 finalResult.PurchaseId, finalResult.AppliedRewards,
                 finalResult.NeedsClientGrantDelivery, ct);
-            return CommonResult<RetryInterruptedPurchaseResult>.Success(
+            return GameResult<RetryInterruptedPurchaseResult>.Success(
                 new RetryInterruptedPurchaseResult(
                     RetryInterruptedPurchaseStatus.Retried,
                     finalResult.PurchaseId,
@@ -663,17 +663,17 @@ namespace Devian
         }
 #endif
 
-        public Task<CommonResult> AckPurchaseClientGrantAppliedAsync(string purchaseId, CancellationToken ct = default)
+        public Task<GameResult> AckPurchaseClientGrantAppliedAsync(string purchaseId, CancellationToken ct = default)
             => completePurchaseClientGrantAsync(purchaseId, "APPLIED_ACKED", ct);
 
-        public Task<CommonResult> ReportPurchaseClientGrantFailureAsync(string purchaseId, CancellationToken ct = default)
+        public Task<GameResult> ReportPurchaseClientGrantFailureAsync(string purchaseId, CancellationToken ct = default)
             => completePurchaseClientGrantAsync(purchaseId, "FAILED_REPORTED", ct);
 
-        private async Task<CommonResult> applyClientGrantIfNeededAsync(
+        private async Task<GameResult> applyClientGrantIfNeededAsync(
             string purchaseId, RewardData[] rewards, bool needsClientGrantDelivery, CancellationToken ct)
         {
             if (!needsClientGrantDelivery)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             var validateRewards = validatePurchaseRewards(rewards, $"purchaseId={purchaseId}");
             if (validateRewards.IsFailure)
@@ -695,7 +695,7 @@ namespace Devian
                 var ack = await AckPurchaseClientGrantAppliedAsync(purchaseId, ct);
                 if (ack.IsFailure)
                     UnityEngine.Debug.LogWarning($"[PurchaseManager] AckClientGrant failed (non-fatal): {ack.Error}");
-                return CommonResult.Ok();
+                return GameResult.Ok();
             }
 
             UnityEngine.Debug.LogWarning($"[PurchaseManager] ApplyRewardDatas failed: {apply.Error}");
@@ -706,23 +706,23 @@ namespace Devian
         }
 
         // Store restore only (manual/fallback). Domain grant/revoke handling is managed by caller-side sync.
-        public async Task<CommonResult<EntitlementsSnapshot>> RestoreAsync(CancellationToken ct = default)
+        public async Task<GameResult<EntitlementsSnapshot>> RestoreAsync(CancellationToken ct = default)
         {
             if (!_iapInitialized)
             {
                 var init = await InitializeAsync(ct);
                 if (init.IsFailure)
-                    return CommonResult<EntitlementsSnapshot>.Failure(init.Error!);
+                    return GameResult<EntitlementsSnapshot>.Failure(init.Error!);
             }
 
-            var tcs = new TaskCompletionSource<CommonResult<bool>>();
+            var tcs = new TaskCompletionSource<GameResult<bool>>();
 
             _controller.RestoreTransactions((success, error) =>
             {
                 if (success)
-                    tcs.TrySetResult(CommonResult<bool>.Success(true));
+                    tcs.TrySetResult(GameResult<bool>.Success(true));
                 else
-                    tcs.TrySetResult(CommonResult<bool>.Failure(COMMON_ERROR_TYPE.PURCHASE_RESTORE_FAILED, error ?? "RestoreTransactions failed."));
+                    tcs.TrySetResult(GameResult<bool>.Failure(GAME_ERROR_TYPE.PURCHASE_RESTORE_FAILED, error ?? "RestoreTransactions failed."));
             });
 
             if (ct.CanBeCanceled)
@@ -730,22 +730,22 @@ namespace Devian
 
             var restore = await tcs.Task;
             if (restore.IsFailure)
-                return CommonResult<EntitlementsSnapshot>.Failure(restore.Error!);
+                return GameResult<EntitlementsSnapshot>.Failure(restore.Error!);
 
             return await captureLocalEntitlementsSnapshotAsync(ct);
         }
 
         // mRentals/mPasses는 SaveData(local/cloud) 정본을 사용한다.
         // 서버 entitlements를 조회하지 않고, 현재 인벤토리 상태를 스냅샷으로 반환한다.
-        public Task<CommonResult<EntitlementsSnapshot>> SyncEntitlementsAsync(CancellationToken ct = default)
+        public Task<GameResult<EntitlementsSnapshot>> SyncEntitlementsAsync(CancellationToken ct = default)
             => captureLocalEntitlementsSnapshotAsync(ct);
 
-        public Task<CommonResult<long>> GetRentalRemainingMsAsync(string internalProductId, CancellationToken ct = default)
+        public Task<GameResult<long>> GetRentalRemainingMsAsync(string internalProductId, CancellationToken ct = default)
         {
             if (string.IsNullOrEmpty(internalProductId))
             {
-                return Task.FromResult(CommonResult<long>.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_INTERNAL_PRODUCT_ID_EMPTY,
+                return Task.FromResult(GameResult<long>.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_INTERNAL_PRODUCT_ID_EMPTY,
                     "internal_product_id is required."));
             }
 
@@ -753,32 +753,32 @@ namespace Devian
             {
                 var inventory = InventoryManager.Instance?.Storage;
                 if (inventory == null)
-                    return Task.FromResult(CommonResult<long>.Success(0L));
+                    return Task.FromResult(GameResult<long>.Success(0L));
 
                 ct.ThrowIfCancellationRequested();
-                return Task.FromResult(CommonResult<long>.Success(inventory.GetRentalRemainingMs(internalProductId)));
+                return Task.FromResult(GameResult<long>.Success(inventory.GetRentalRemainingMs(internalProductId)));
             }
             catch (Exception ex)
             {
-                return Task.FromResult(CommonResult<long>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                return Task.FromResult(GameResult<long>.Failure(
+                    GAME_ERROR_TYPE.GAME_SERVER_TIME_UNAVAILABLE,
                     $"Failed to read rental remaining time from inventory: {ex.Message}"));
             }
         }
 
 #if UNITY_EDITOR
-        public Task<CommonResult<RecentPurchaseItem>> GetLatestConsumablePurchase30dAsync(CancellationToken ct = default)
+        public Task<GameResult<RecentPurchaseItem>> GetLatestConsumablePurchase30dAsync(CancellationToken ct = default)
         {
-            return Task.FromResult(CommonResult<RecentPurchaseItem>.Failure(
-                COMMON_ERROR_TYPE.PURCHASE_UNSUPPORTED_PLATFORM,
+            return Task.FromResult(GameResult<RecentPurchaseItem>.Failure(
+                GAME_ERROR_TYPE.PURCHASE_UNSUPPORTED_PLATFORM,
                 "PurchaseManager is not supported in Editor."));
         }
 #else
-        public async Task<CommonResult<RecentPurchaseItem>> GetLatestConsumablePurchase30dAsync(CancellationToken ct = default)
+        public async Task<GameResult<RecentPurchaseItem>> GetLatestConsumablePurchase30dAsync(CancellationToken ct = default)
         {
             if (!_iapInitialized)
-                return CommonResult<RecentPurchaseItem>.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_INIT_REQUIRED,
+                return GameResult<RecentPurchaseItem>.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_INIT_REQUIRED,
                     "PurchaseManager not initialized. Call InitializeAsync() first.");
 
             var data = new Dictionary<string, object> { ["pageSize"] = 1, ["kind"] = "Consumable" };
@@ -786,7 +786,7 @@ namespace Devian
         }
 #endif
 
-        async Task<CommonResult<RefundSyncResult>> syncRefundsPageAsync(
+        async Task<GameResult<RefundSyncResult>> syncRefundsPageAsync(
             string cursor = null,
             int pageSize = 50,
             CancellationToken ct = default)
@@ -805,20 +805,20 @@ namespace Devian
 
             var result = await FirebaseCallableManager.Instance.GetPurchaseAdjustmentsAsync(data, ct);
             if (result.IsFailure)
-                return CommonResult<RefundSyncResult>.Failure(result.Error!);
+                return GameResult<RefundSyncResult>.Failure(result.Error!);
 
             // Server filters out already-ACKed items (clientRefundApplied===true).
             // Client-side dedup is no longer needed.
             var syncResult = enrichAdjustmentItems(result.Value!);
-            return CommonResult<RefundSyncResult>.Success(syncResult);
+            return GameResult<RefundSyncResult>.Success(syncResult);
         }
 
         // ── Core Flow ──────────────────────────────────────────────
 
-        async Task<CommonResult> initializeIapAsync(CancellationToken ct)
+        async Task<GameResult> initializeIapAsync(CancellationToken ct)
         {
             if (_productCatalog == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.PURCHASE_INIT_FAILED, "ProductCatalog not set. Call SetProductCatalog().");
+                return GameResult.Failure(GAME_ERROR_TYPE.PURCHASE_INIT_FAILED, "ProductCatalog not set. Call SetProductCatalog().");
 
             try
             {
@@ -869,7 +869,7 @@ namespace Devian
 
                 _iapInitialized = true;
                 Debug.Log($"[{Tag}] IAP initialized successfully.");
-                return CommonResult.Ok();
+                return GameResult.Ok();
             }
             catch (OperationCanceledException) { throw; }
             catch (Exception ex)
@@ -878,40 +878,40 @@ namespace Devian
                 Debug.LogError($"[{Tag}] IAP initialization failed: {ex.Message}");
 
                 if (ex.Message != null && ex.Message.Contains("Products fetch failed"))
-                    return CommonResult.Failure(COMMON_ERROR_TYPE.PURCHASE_FETCH_FAILED, ex.Message);
+                    return GameResult.Failure(GAME_ERROR_TYPE.PURCHASE_FETCH_FAILED, ex.Message);
 
-                return CommonResult.Failure(COMMON_ERROR_TYPE.PURCHASE_INIT_FAILED, ex.Message);
+                return GameResult.Failure(GAME_ERROR_TYPE.PURCHASE_INIT_FAILED, ex.Message);
             }
         }
 
-        async Task<CommonResult<PurchaseFinalResult>> purchaseAndVerifyAsync(
+        async Task<GameResult<PurchaseFinalResult>> purchaseAndVerifyAsync(
             string internalProductId, PurchaseKind kind, CancellationToken ct, bool isRecoveryCall = false)
         {
             if (!_iapInitialized)
             {
                 var init = await InitializeAsync(ct);
                 if (init.IsFailure)
-                    return CommonResult<PurchaseFinalResult>.Failure(init.Error!);
+                    return GameResult<PurchaseFinalResult>.Failure(init.Error!);
             }
 
             var purchaseLoginReady = await ensurePurchaseLoginReadyAsync(ct);
             if (purchaseLoginReady.IsFailure)
                 Debug.LogWarning($"[{Tag}] purchase login readiness failed: {purchaseLoginReady.Error}");
             if (purchaseLoginReady.IsFailure || !purchaseLoginReady.Value)
-                return CommonResult<PurchaseFinalResult>.Failure(COMMON_ERROR_TYPE.PURCHASE_UNAUTHENTICATED,
+                return GameResult<PurchaseFinalResult>.Failure(GAME_ERROR_TYPE.PURCHASE_UNAUTHENTICATED,
                     "Authentication required before purchase. Sign in with Guest, Google, or Apple first.");
 
             if (_purchaseStore == null)
-                return CommonResult<PurchaseFinalResult>.Failure(COMMON_ERROR_TYPE.PURCHASE_STORE_NOT_SET, "PurchaseStore not set. Call SetPurchaseStore().");
+                return GameResult<PurchaseFinalResult>.Failure(GAME_ERROR_TYPE.PURCHASE_STORE_NOT_SET, "PurchaseStore not set. Call SetPurchaseStore().");
 
             if (_purchaseInProgress)
-                return CommonResult<PurchaseFinalResult>.Failure(COMMON_ERROR_TYPE.PURCHASE_PURCHASE_IN_PROGRESS, "Another purchase is already in progress.");
+                return GameResult<PurchaseFinalResult>.Failure(GAME_ERROR_TYPE.PURCHASE_PURCHASE_IN_PROGRESS, "Another purchase is already in progress.");
 
             var purchaseStorage = getPurchaseStorageOrNull();
             if (!isRecoveryCall && (purchaseStorage?.Current.IsPurchaseInProgress ?? false))
             {
-                return CommonResult<PurchaseFinalResult>.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_PURCHASE_IN_PROGRESS,
+                return GameResult<PurchaseFinalResult>.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_PURCHASE_IN_PROGRESS,
                     "Interrupted purchase exists. Call RetryInterruptedPurchaseAsync() before starting a new purchase.");
             }
 
@@ -1088,7 +1088,7 @@ namespace Devian
                         if (gotPendingOrder)
                             goto PendingOrderReady;
 
-                        return CommonResult<PurchaseFinalResult>.Failure(COMMON_ERROR_TYPE.PURCHASE_PURCHASE_REQUEST_FAILED, ex.Message);
+                        return GameResult<PurchaseFinalResult>.Failure(GAME_ERROR_TYPE.PURCHASE_PURCHASE_REQUEST_FAILED, ex.Message);
                     }
                     finally
                     {
@@ -1117,7 +1117,7 @@ namespace Devian
                 if (verifyResult.IsFailure)
                 {
                     clearCurrentOnExit = false; // keep progress snapshot for recovery retry
-                    return CommonResult<PurchaseFinalResult>.Failure(verifyResult.Error!);
+                    return GameResult<PurchaseFinalResult>.Failure(verifyResult.Error!);
                 }
 
                 var response = verifyResult.Value!;
@@ -1160,8 +1160,8 @@ namespace Devian
                         catch (Exception ex)
                         {
                             clearCurrentOnExit = false;
-                            return CommonResult<PurchaseFinalResult>.Failure(
-                                COMMON_ERROR_TYPE.PURCHASE_STORE_FAILED,
+                            return GameResult<PurchaseFinalResult>.Failure(
+                                GAME_ERROR_TYPE.PURCHASE_STORE_FAILED,
                                 $"ConfirmPurchase failed: {ex.Message}");
                         }
 
@@ -1171,7 +1171,7 @@ namespace Devian
                             if (confirmAck.IsFailure)
                             {
                                 clearCurrentOnExit = false;
-                                return CommonResult<PurchaseFinalResult>.Failure(confirmAck.Error!);
+                                return GameResult<PurchaseFinalResult>.Failure(confirmAck.Error!);
                             }
 
                             storeConfirmStatus = "CONFIRMED";
@@ -1206,7 +1206,7 @@ namespace Devian
                         clearCurrentOnExit = false;
                     }
 
-                    return CommonResult<PurchaseFinalResult>.Success(
+                    return GameResult<PurchaseFinalResult>.Success(
                         new PurchaseFinalResult(
                             response.PurchaseId,
                             internalProductId,
@@ -1239,8 +1239,8 @@ namespace Devian
                     // 스토어에서 제거 완료 → current 클리어하여 재구매 가능하게 함
                     purchaseStorage?.ClearCurrent();
                     clearCurrentOnExit = false;
-                    return CommonResult<PurchaseFinalResult>.Failure(
-                        COMMON_ERROR_TYPE.PURCHASE_VERIFY_REJECTED_UNKNOWN,
+                    return GameResult<PurchaseFinalResult>.Failure(
+                        GAME_ERROR_TYPE.PURCHASE_VERIFY_REJECTED_UNKNOWN,
                         $"{status}:{rejectReason} (cancelled purchase consumed, retry possible)");
                 }
 
@@ -1282,13 +1282,13 @@ namespace Devian
                     }
                 }
 
-                COMMON_ERROR_TYPE errorType;
+                GAME_ERROR_TYPE errorType;
                 if (rejectReason == "SEASON_PASS_ALREADY_OWNED")
-                    errorType = COMMON_ERROR_TYPE.PURCHASE_SEASON_PASS_ALREADY_OWNED;
+                    errorType = GAME_ERROR_TYPE.PURCHASE_SEASON_PASS_ALREADY_OWNED;
                 else
-                    errorType = COMMON_ERROR_TYPE.PURCHASE_VERIFY_REJECTED_UNKNOWN;
+                    errorType = GAME_ERROR_TYPE.PURCHASE_VERIFY_REJECTED_UNKNOWN;
 
-                return CommonResult<PurchaseFinalResult>.Failure(
+                return GameResult<PurchaseFinalResult>.Failure(
                     errorType, $"{status}:{rejectReason}");
             }
             finally
@@ -1299,21 +1299,21 @@ namespace Devian
             }
         }
 
-        async Task<CommonResult<PurchaseFinalResult>> resumeAfterStoreConfirmAsync(
+        async Task<GameResult<PurchaseFinalResult>> resumeAfterStoreConfirmAsync(
             string internalProductId,
             PurchaseKind kind,
             CancellationToken ct)
         {
             var purchaseStorage = getPurchaseStorageOrNull();
             if (purchaseStorage == null)
-                return CommonResult<PurchaseFinalResult>.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_INTERRUPTED_STORAGE_UNAVAILABLE,
+                return GameResult<PurchaseFinalResult>.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_INTERRUPTED_STORAGE_UNAVAILABLE,
                     "PurchaseStorage is not available.");
 
             var current = purchaseStorage.Current;
             if (!current.IsPurchaseInProgress || !current.StoreConfirmedLocal || string.IsNullOrEmpty(current.PurchaseId))
-                return CommonResult<PurchaseFinalResult>.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_INTERRUPTED_SNAPSHOT_KIND_INVALID,
+                return GameResult<PurchaseFinalResult>.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_INTERRUPTED_SNAPSHOT_KIND_INVALID,
                     "Interrupted purchase is not resumable after store confirm.");
 
             var purchaseKindString = PurchaseKindToString(kind);
@@ -1334,7 +1334,7 @@ namespace Devian
             {
                 var confirmAck = await ackPurchaseStoreConfirmAsync(current.PurchaseId, ct);
                 if (confirmAck.IsFailure)
-                    return CommonResult<PurchaseFinalResult>.Failure(confirmAck.Error!);
+                    return GameResult<PurchaseFinalResult>.Failure(confirmAck.Error!);
 
                 storeConfirmStatus = "CONFIRMED";
                 purchaseStorage.UpsertRefundSupportLog(
@@ -1381,7 +1381,7 @@ namespace Devian
                 purchaseStorage.ClearCurrent();
             }
 
-            return CommonResult<PurchaseFinalResult>.Success(
+            return GameResult<PurchaseFinalResult>.Success(
                 new PurchaseFinalResult(
                     current.PurchaseId,
                     internalProductId,
@@ -1393,7 +1393,7 @@ namespace Devian
                     needsClientGrantDelivery));
         }
 
-        async Task<CommonResult<VerifyPurchaseResponse>> verifyPurchaseAsync(
+        async Task<GameResult<VerifyPurchaseResponse>> verifyPurchaseAsync(
             string internalProductId, string storeProductId, PurchaseKind kind, string store, string payload,
             CancellationToken ct)
         {
@@ -1436,12 +1436,12 @@ namespace Devian
             return result;
         }
 
-        async Task<CommonResult> completePurchaseClientGrantAsync(string purchaseId, string clientGrantStatus, CancellationToken ct)
+        async Task<GameResult> completePurchaseClientGrantAsync(string purchaseId, string clientGrantStatus, CancellationToken ct)
         {
             if (string.IsNullOrEmpty(purchaseId))
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_CLIENT_GRANT_PURCHASE_ID_EMPTY,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_CLIENT_GRANT_PURCHASE_ID_EMPTY,
                     "purchaseId is required.");
             }
 
@@ -1451,7 +1451,7 @@ namespace Devian
 
             var purchaseStorage = getPurchaseStorageOrNull();
             if (purchaseStorage == null)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             var current = purchaseStorage.Current;
             var isCurrent =
@@ -1502,10 +1502,10 @@ namespace Devian
             if (isCurrent)
                 purchaseStorage.ClearCurrent();
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
-        async Task<CommonResult> reportPurchaseClientGrantResultAsync(string purchaseId, string clientGrantStatus, CancellationToken ct)
+        async Task<GameResult> reportPurchaseClientGrantResultAsync(string purchaseId, string clientGrantStatus, CancellationToken ct)
         {
             var data = new Dictionary<string, object>
             {
@@ -1516,7 +1516,7 @@ namespace Devian
             return await FirebaseCallableManager.Instance.AckPurchaseClientGrantAsync(data, ct);
         }
 
-        async Task<CommonResult> ackPurchaseStoreConfirmAsync(string purchaseId, CancellationToken ct)
+        async Task<GameResult> ackPurchaseStoreConfirmAsync(string purchaseId, CancellationToken ct)
         {
             var data = new Dictionary<string, object>
             {
@@ -1526,7 +1526,7 @@ namespace Devian
             return await FirebaseCallableManager.Instance.AckPurchaseStoreConfirmAsync(data, ct);
         }
 
-        async Task<CommonResult> ackRefundAppliedAsync(string purchaseId, CancellationToken ct)
+        async Task<GameResult> ackRefundAppliedAsync(string purchaseId, CancellationToken ct)
         {
             var data = new Dictionary<string, object>
             {
@@ -1544,9 +1544,9 @@ namespace Devian
         /// Unity IAP의 WasPurchaseAlreadyProcessed가 동일 세션 내 재처리를 차단하기 때문에,
         /// OnPurchasePending 콜백이 발생하지 않을 수 있으므로 직접 접근이 필수.
         /// </summary>
-        async Task<CommonResult<Orders>> fetchPendingPurchasesAsync(CancellationToken ct)
+        async Task<GameResult<Orders>> fetchPendingPurchasesAsync(CancellationToken ct)
         {
-            var tcs = new TaskCompletionSource<CommonResult<Orders>>();
+            var tcs = new TaskCompletionSource<GameResult<Orders>>();
 
             void onFetched(Orders orders)
             {
@@ -1554,13 +1554,13 @@ namespace Devian
                 var c = orders?.ConfirmedOrders?.Count ?? 0;
                 var d = orders?.DeferredOrders?.Count ?? 0;
                 Debug.Log($"[{Tag}] fetchPendingPurchasesAsync.onFetched: pending={p}, confirmed={c}, deferred={d}");
-                tcs.TrySetResult(CommonResult<Orders>.Success(orders));
+                tcs.TrySetResult(GameResult<Orders>.Success(orders));
             }
             void onFailed(PurchasesFetchFailureDescription failure)
             {
                 Debug.LogWarning($"[{Tag}] fetchPendingPurchasesAsync.onFailed: {failure.Message}");
-                tcs.TrySetResult(CommonResult<Orders>.Failure(
-                    COMMON_ERROR_TYPE.PURCHASE_PURCHASE_REQUEST_FAILED,
+                tcs.TrySetResult(GameResult<Orders>.Failure(
+                    GAME_ERROR_TYPE.PURCHASE_PURCHASE_REQUEST_FAILED,
                     $"FetchPurchases failed: {failure.Message}"));
             }
 
@@ -1672,64 +1672,64 @@ namespace Devian
         public void SetPurchaseStore(IPurchaseStore store) { }
         public void SetProductCatalog(IPurchaseProductCatalog catalog) { }
 
-        static readonly Task<CommonResult> _notSupportedInit =
-            Task.FromResult(CommonResult.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+        static readonly Task<GameResult> _notSupportedInit =
+            Task.FromResult(GameResult.Failure(GAME_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
-        static readonly Task<CommonResult<PurchaseFinalResult>> _notSupported =
-            Task.FromResult(CommonResult<PurchaseFinalResult>.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+        static readonly Task<GameResult<PurchaseFinalResult>> _notSupported =
+            Task.FromResult(GameResult<PurchaseFinalResult>.Failure(GAME_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
-        static readonly Task<CommonResult<RecentPurchaseItem>> _notSupportedRecent =
-            Task.FromResult(CommonResult<RecentPurchaseItem>.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+        static readonly Task<GameResult<RecentPurchaseItem>> _notSupportedRecent =
+            Task.FromResult(GameResult<RecentPurchaseItem>.Failure(GAME_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
-        static readonly Task<CommonResult<EntitlementsSnapshot>> _notSupportedSnapshot =
-            Task.FromResult(CommonResult<EntitlementsSnapshot>.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+        static readonly Task<GameResult<EntitlementsSnapshot>> _notSupportedSnapshot =
+            Task.FromResult(GameResult<EntitlementsSnapshot>.Failure(GAME_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 #if UNITY_EDITOR
-        static readonly Task<CommonResult<PurchaseSyncResult>> _notSupportedSync =
-            Task.FromResult(CommonResult<PurchaseSyncResult>.Success(CreateNoOpPurchaseSyncResult()));
+        static readonly Task<GameResult<PurchaseSyncResult>> _notSupportedSync =
+            Task.FromResult(GameResult<PurchaseSyncResult>.Success(CreateNoOpPurchaseSyncResult()));
 #else
-        static readonly Task<CommonResult<PurchaseSyncResult>> _notSupportedSync =
-            Task.FromResult(CommonResult<PurchaseSyncResult>.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+        static readonly Task<GameResult<PurchaseSyncResult>> _notSupportedSync =
+            Task.FromResult(GameResult<PurchaseSyncResult>.Failure(GAME_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 #endif
-        static readonly Task<CommonResult<long>> _notSupportedLong =
-            Task.FromResult(CommonResult<long>.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
-        static readonly Task<CommonResult<RefundSyncResult>> _notSupportedRefundSync =
-            Task.FromResult(CommonResult<RefundSyncResult>.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+        static readonly Task<GameResult<long>> _notSupportedLong =
+            Task.FromResult(GameResult<long>.Failure(GAME_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+        static readonly Task<GameResult<RefundSyncResult>> _notSupportedRefundSync =
+            Task.FromResult(GameResult<RefundSyncResult>.Failure(GAME_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 
-        public Task<CommonResult> InitializeAsync(CancellationToken ct = default) => _notSupportedInit;
-        public Task<CommonResult<PurchaseSyncResult>> SyncAsync(
+        public Task<GameResult> InitializeAsync(CancellationToken ct = default) => _notSupportedInit;
+        public Task<GameResult<PurchaseSyncResult>> SyncAsync(
             CancellationToken ct = default) => _notSupportedSync;
-        public Task<CommonResult<PurchaseFinalResult>> PurchaseAsync(string internalProductId, CancellationToken ct = default) => _notSupported;
+        public Task<GameResult<PurchaseFinalResult>> PurchaseAsync(string internalProductId, CancellationToken ct = default) => _notSupported;
 #if UNITY_EDITOR
-        static readonly Task<CommonResult<RetryInterruptedPurchaseResult>> _notSupportedRetryInterrupted =
-            Task.FromResult(CommonResult<RetryInterruptedPurchaseResult>.Success(CreateNoOpRetryInterruptedPurchaseResult()));
+        static readonly Task<GameResult<RetryInterruptedPurchaseResult>> _notSupportedRetryInterrupted =
+            Task.FromResult(GameResult<RetryInterruptedPurchaseResult>.Success(CreateNoOpRetryInterruptedPurchaseResult()));
 #else
-        static readonly Task<CommonResult<RetryInterruptedPurchaseResult>> _notSupportedRetryInterrupted =
-            Task.FromResult(CommonResult<RetryInterruptedPurchaseResult>.Failure(COMMON_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
+        static readonly Task<GameResult<RetryInterruptedPurchaseResult>> _notSupportedRetryInterrupted =
+            Task.FromResult(GameResult<RetryInterruptedPurchaseResult>.Failure(GAME_ERROR_TYPE.IAP_NOT_SUPPORTED, "Unity Purchasing not available."));
 #endif
 
-        public Task<CommonResult<RetryInterruptedPurchaseResult>> RetryInterruptedPurchaseAsync(CancellationToken ct = default)
+        public Task<GameResult<RetryInterruptedPurchaseResult>> RetryInterruptedPurchaseAsync(CancellationToken ct = default)
             => _notSupportedRetryInterrupted;
-        public Task<CommonResult> AckPurchaseClientGrantAppliedAsync(string purchaseId, CancellationToken ct = default) => _notSupportedInit;
-        public Task<CommonResult> ReportPurchaseClientGrantFailureAsync(string purchaseId, CancellationToken ct = default) => _notSupportedInit;
-        public Task<CommonResult<EntitlementsSnapshot>> RestoreAsync(CancellationToken ct = default) => _notSupportedSnapshot;
-        public Task<CommonResult<EntitlementsSnapshot>> SyncEntitlementsAsync(CancellationToken ct = default) => _notSupportedSnapshot;
-        public Task<CommonResult<long>> GetRentalRemainingMsAsync(string internalProductId, CancellationToken ct = default) => _notSupportedLong;
-        public Task<CommonResult<RecentPurchaseItem>> GetLatestConsumablePurchase30dAsync(CancellationToken ct = default) => _notSupportedRecent;
-        async Task<CommonResult<RefundSyncResult>> syncRefundsPageAsync(string cursor = null, int pageSize = 50, CancellationToken ct = default)
+        public Task<GameResult> AckPurchaseClientGrantAppliedAsync(string purchaseId, CancellationToken ct = default) => _notSupportedInit;
+        public Task<GameResult> ReportPurchaseClientGrantFailureAsync(string purchaseId, CancellationToken ct = default) => _notSupportedInit;
+        public Task<GameResult<EntitlementsSnapshot>> RestoreAsync(CancellationToken ct = default) => _notSupportedSnapshot;
+        public Task<GameResult<EntitlementsSnapshot>> SyncEntitlementsAsync(CancellationToken ct = default) => _notSupportedSnapshot;
+        public Task<GameResult<long>> GetRentalRemainingMsAsync(string internalProductId, CancellationToken ct = default) => _notSupportedLong;
+        public Task<GameResult<RecentPurchaseItem>> GetLatestConsumablePurchase30dAsync(CancellationToken ct = default) => _notSupportedRecent;
+        async Task<GameResult<RefundSyncResult>> syncRefundsPageAsync(string cursor = null, int pageSize = 50, CancellationToken ct = default)
             => await _notSupportedRefundSync;
 #endif
 
         // ── Helpers ───────────────────────────────────────────────
 
-        Task<CommonResult<EntitlementsSnapshot>> captureLocalEntitlementsSnapshotAsync(CancellationToken ct)
+        Task<GameResult<EntitlementsSnapshot>> captureLocalEntitlementsSnapshotAsync(CancellationToken ct)
         {
             ct.ThrowIfCancellationRequested();
 
             var inventory = getInventoryStorageOrNull();
             if (inventory == null)
             {
-                return Task.FromResult(CommonResult<EntitlementsSnapshot>.Failure(
-                    COMMON_ERROR_TYPE.COMMON_SERVER,
+                return Task.FromResult(GameResult<EntitlementsSnapshot>.Failure(
+                    GAME_ERROR_TYPE.GAME_SERVER_TIME_UNAVAILABLE,
                     "InventoryStorage is not available."));
             }
 
@@ -1745,7 +1745,7 @@ namespace Devian
                 rentals[rental.Key] = rental.Value;
 
             var nowUtcMs = RemoteDataManager.ServerNowUtcMs;
-            return Task.FromResult(CommonResult<EntitlementsSnapshot>.Success(
+            return Task.FromResult(GameResult<EntitlementsSnapshot>.Success(
                 new EntitlementsSnapshot(seasonPasses, new Dictionary<string, long>(), rentals, nowUtcMs)));
         }
 
@@ -1855,19 +1855,22 @@ namespace Devian
             return true;
         }
 
-        static async Task<CommonResult<bool>> ensurePurchaseLoginReadyAsync(CancellationToken ct)
+        static async Task<GameResult<bool>> ensurePurchaseLoginReadyAsync(CancellationToken ct)
         {
             try
             {
                 var loginManager = LoginManager.Instance;
                 if (loginManager == null)
-                    return CommonResult<bool>.Success(false);
+                    return GameResult<bool>.Success(false);
 
-                return await loginManager.EnsurePurchaseLoginReadyAsync(ct);
+                var result = await loginManager.EnsurePurchaseLoginReadyAsync(ct);
+                if (result.IsFailure)
+                    return GameResult<bool>.Failure(GAME_ERROR_TYPE.PURCHASE_UNAUTHENTICATED, result.Error!.Message, $"commonCode={result.Error.Code}");
+                return GameResult<bool>.Success(result.Value);
             }
             catch
             {
-                return CommonResult<bool>.Success(false);
+                return GameResult<bool>.Success(false);
             }
         }
 
@@ -2070,12 +2073,12 @@ namespace Devian
         {
             public PurchaseSyncResult(
                 RetryInterruptedPurchaseResult? retryInterruptedPurchase,
-                CommonError retryInterruptedError,
+                GameError retryInterruptedError,
                 RefundResult? refund,
-                CommonError refundError,
+                GameError refundError,
                 EntitlementsSnapshot? entitlements,
-                CommonError entitlementsError,
-                CommonError saveError)
+                GameError entitlementsError,
+                GameError saveError)
             {
                 RetryInterruptedPurchase = retryInterruptedPurchase;
                 RetryInterruptedError = retryInterruptedError;
@@ -2087,12 +2090,12 @@ namespace Devian
             }
 
             public RetryInterruptedPurchaseResult? RetryInterruptedPurchase { get; }
-            public CommonError RetryInterruptedError { get; }
+            public GameError RetryInterruptedError { get; }
             public RefundResult? Refund { get; }
-            public CommonError RefundError { get; }
+            public GameError RefundError { get; }
             public EntitlementsSnapshot? Entitlements { get; }
-            public CommonError EntitlementsError { get; }
-            public CommonError SaveError { get; }
+            public GameError EntitlementsError { get; }
+            public GameError SaveError { get; }
             public bool HasNonFatalIssues =>
                 RetryInterruptedError != null ||
                 RefundError != null ||

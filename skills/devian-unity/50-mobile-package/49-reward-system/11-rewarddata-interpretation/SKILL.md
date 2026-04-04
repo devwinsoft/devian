@@ -48,7 +48,7 @@ AppliesTo: v10
 - `id`는 공백이 아니어야 한다.
 - `amount`는 정수여야 한다.
 - 적용 경로 기준으로 `amount <= 0`은 지급 대상에서 제외(no-op 또는 skip)한다.
-- 이 검증 실패는 public reward 경계에서 `CommonResult` 실패로 표현한다. 해석 경로를 `throw` 중심으로 바꾸지 않는다.
+- 이 검증 실패는 public reward 경계에서 `GameResult` 실패로 표현한다. 해석 경로를 `throw` 중심으로 바꾸지 않는다.
 
 
 ---
@@ -95,7 +95,7 @@ AppliesTo: v10
   - `{ "rewards": RewardData[] }`
 - `SEASON_PASS`는 legacy 호환으로 `PASS`로 변환
 - `amount`는 정수이며 `1..int.MaxValue` 범위만 허용
-- 검증 실패 시 `CommonResult` 실패로 중단한다
+- 검증 실패 시 `GameResult` 실패로 중단한다
 - first-init payload는 운영 데이터 경계다. parse 실패는 호출자에게 결과 코드로 보고한다.
 
 

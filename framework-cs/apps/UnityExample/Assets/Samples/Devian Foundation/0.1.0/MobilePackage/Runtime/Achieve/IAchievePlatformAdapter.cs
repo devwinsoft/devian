@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
-using Devian.Domain.Common;
+using Devian.Domain.Game;
 using UnityEngine;
 using UnityEngine.SocialPlatforms;
 
@@ -11,9 +11,9 @@ namespace Devian
 {
     internal interface IAchievePlatformAdapter
     {
-        Task<CommonResult> InitializeAsync(CancellationToken ct);
-        Task<CommonResult> UnlockAchievementAsync(string platformAchievementId, CancellationToken ct);
-        Task<CommonResult<Dictionary<string, bool>>> FetchAchievementStatesAsync(CancellationToken ct);
+        Task<GameResult> InitializeAsync(CancellationToken ct);
+        Task<GameResult> UnlockAchievementAsync(string platformAchievementId, CancellationToken ct);
+        Task<GameResult<Dictionary<string, bool>>> FetchAchievementStatesAsync(CancellationToken ct);
     }
 
     internal static class AchievePlatformHelper
@@ -41,36 +41,36 @@ namespace Devian
 
     internal sealed class UnsupportedAchievePlatformAdapter : IAchievePlatformAdapter
     {
-        public Task<CommonResult> InitializeAsync(CancellationToken ct)
-            => Task.FromResult(CommonResult.Failure(
-                COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED,
+        public Task<GameResult> InitializeAsync(CancellationToken ct)
+            => Task.FromResult(GameResult.Failure(
+                GAME_ERROR_TYPE.LOGIN_UNSUPPORTED,
                 "Achievement is not supported on this platform."));
 
-        public Task<CommonResult> UnlockAchievementAsync(string platformAchievementId, CancellationToken ct)
-            => Task.FromResult(CommonResult.Failure(
-                COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED,
+        public Task<GameResult> UnlockAchievementAsync(string platformAchievementId, CancellationToken ct)
+            => Task.FromResult(GameResult.Failure(
+                GAME_ERROR_TYPE.LOGIN_UNSUPPORTED,
                 "Achievement is not supported on this platform."));
 
-        public Task<CommonResult<Dictionary<string, bool>>> FetchAchievementStatesAsync(CancellationToken ct)
-            => Task.FromResult(CommonResult<Dictionary<string, bool>>.Failure(
-                COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED,
+        public Task<GameResult<Dictionary<string, bool>>> FetchAchievementStatesAsync(CancellationToken ct)
+            => Task.FromResult(GameResult<Dictionary<string, bool>>.Failure(
+                GAME_ERROR_TYPE.LOGIN_UNSUPPORTED,
                 "Achievement is not supported on this platform."));
     }
 
     internal sealed class AppleAchievePlatformAdapter : IAchievePlatformAdapter
     {
-        public Task<CommonResult> InitializeAsync(CancellationToken ct)
+        public Task<GameResult> InitializeAsync(CancellationToken ct)
         {
 #if UNITY_IOS && !UNITY_EDITOR
-                return Task.FromResult(CommonResult.Ok());
+                return Task.FromResult(GameResult.Ok());
 #else
-            return Task.FromResult(CommonResult.Failure(
-                COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED,
+            return Task.FromResult(GameResult.Failure(
+                GAME_ERROR_TYPE.LOGIN_UNSUPPORTED,
                 "Game Center adapter is not available on this platform."));
 #endif
         }
 
-        public async Task<CommonResult> UnlockAchievementAsync(string platformAchievementId, CancellationToken ct)
+        public async Task<GameResult> UnlockAchievementAsync(string platformAchievementId, CancellationToken ct)
         {
 #if UNITY_IOS && !UNITY_EDITOR
                 var auth = ensureAuthenticated();
@@ -84,24 +84,24 @@ namespace Devian
                     var success = await tcs.Task;
 
                     return success
-                        ? CommonResult.Ok()
-                        : CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, "Game Center achievement unlock failed.");
+                        ? GameResult.Ok()
+                        : GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "Game Center achievement unlock failed.");
                 }
                 catch (Exception ex)
                 {
-                    return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message);
+                    return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, ex.Message);
                 }
 #else
-            return CommonResult.Failure(COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED, "Game Center adapter is not available on this platform.");
+            return GameResult.Failure(GAME_ERROR_TYPE.LOGIN_UNSUPPORTED, "Game Center adapter is not available on this platform.");
 #endif
         }
 
-        public async Task<CommonResult<Dictionary<string, bool>>> FetchAchievementStatesAsync(CancellationToken ct)
+        public async Task<GameResult<Dictionary<string, bool>>> FetchAchievementStatesAsync(CancellationToken ct)
         {
 #if UNITY_IOS && !UNITY_EDITOR
                 var auth = ensureAuthenticated();
                 if (auth.IsFailure)
-                    return CommonResult<Dictionary<string, bool>>.Failure(auth.Error!);
+                    return GameResult<Dictionary<string, bool>>.Failure(auth.Error!);
 
                 try
                 {
@@ -111,31 +111,31 @@ namespace Devian
 
                     if (achievements == null)
                     {
-                        return CommonResult<Dictionary<string, bool>>.Failure(
-                            COMMON_ERROR_TYPE.COMMON_SERVER,
+                        return GameResult<Dictionary<string, bool>>.Failure(
+                            GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                             "Game Center achievement sync failed.");
                     }
 
-                    return CommonResult<Dictionary<string, bool>>.Success(
+                    return GameResult<Dictionary<string, bool>>.Success(
                         AchievePlatformHelper.ToAchievementStateMap(achievements));
                 }
                 catch (Exception ex)
                 {
-                    return CommonResult<Dictionary<string, bool>>.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message);
+                    return GameResult<Dictionary<string, bool>>.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, ex.Message);
                 }
 #else
-            return CommonResult<Dictionary<string, bool>>.Failure(
-                COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED,
+            return GameResult<Dictionary<string, bool>>.Failure(
+                GAME_ERROR_TYPE.LOGIN_UNSUPPORTED,
                 "Game Center adapter is not available on this platform.");
 #endif
         }
 
-        static CommonResult ensureAuthenticated()
+        static GameResult ensureAuthenticated()
         {
             if (Social.localUser != null && Social.localUser.authenticated)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
-            return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_AUTH, "Game Center authentication required.");
+            return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "Game Center authentication required.");
         }
     }
 
@@ -146,14 +146,14 @@ namespace Devian
         private MethodInfo _reportProgressMethod;
         private MethodInfo _loadAchievementsMethod;
 
-        public Task<CommonResult> InitializeAsync(CancellationToken ct)
+        public Task<GameResult> InitializeAsync(CancellationToken ct)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
                 if (_resolved)
                 {
                     return Task.FromResult(_platformInstance != null
-                        ? CommonResult.Ok()
-                        : CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_UNKNOWN, "Google Play Games plugin not found."));
+                        ? GameResult.Ok()
+                        : GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "Google Play Games plugin not found."));
                 }
 
                 _resolved = true;
@@ -163,8 +163,8 @@ namespace Devian
                     var platformType = Type.GetType("GooglePlayGames.PlayGamesPlatform, Google.Play.Games");
                     if (platformType == null)
                     {
-                        return Task.FromResult(CommonResult.Failure(
-                            COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                        return Task.FromResult(GameResult.Failure(
+                            GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                             "Google Play Games v2 plugin not found."));
                     }
 
@@ -178,8 +178,8 @@ namespace Devian
 
                     if (_platformInstance == null)
                     {
-                        return Task.FromResult(CommonResult.Failure(
-                            COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                        return Task.FromResult(GameResult.Failure(
+                            GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                             "Google Play Games platform instance not available."));
                     }
 
@@ -195,25 +195,25 @@ namespace Devian
 
                     if (_reportProgressMethod == null || _loadAchievementsMethod == null)
                     {
-                        return Task.FromResult(CommonResult.Failure(
-                            COMMON_ERROR_TYPE.COMMON_UNKNOWN,
+                        return Task.FromResult(GameResult.Failure(
+                            GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                             "Google Play Games API surface is missing required methods."));
                     }
 
-                    return Task.FromResult(CommonResult.Ok());
+                    return Task.FromResult(GameResult.Ok());
                 }
                 catch (Exception ex)
                 {
-                    return Task.FromResult(CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message));
+                    return Task.FromResult(GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, ex.Message));
                 }
 #else
-            return Task.FromResult(CommonResult.Failure(
-                COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED,
+            return Task.FromResult(GameResult.Failure(
+                GAME_ERROR_TYPE.LOGIN_UNSUPPORTED,
                 "Google adapter is not available on this platform."));
 #endif
         }
 
-        public async Task<CommonResult> UnlockAchievementAsync(string platformAchievementId, CancellationToken ct)
+        public async Task<GameResult> UnlockAchievementAsync(string platformAchievementId, CancellationToken ct)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
                 var init = await InitializeAsync(ct);
@@ -238,28 +238,28 @@ namespace Devian
 
                     var success = await tcs.Task;
                     return success
-                        ? CommonResult.Ok()
-                        : CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, "GPGS achievement unlock failed.");
+                        ? GameResult.Ok()
+                        : GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "GPGS achievement unlock failed.");
                 }
                 catch (Exception ex)
                 {
-                    return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message);
+                    return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, ex.Message);
                 }
 #else
-            return CommonResult.Failure(COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED, "Google adapter is not available on this platform.");
+            return GameResult.Failure(GAME_ERROR_TYPE.LOGIN_UNSUPPORTED, "Google adapter is not available on this platform.");
 #endif
         }
 
-        public async Task<CommonResult<Dictionary<string, bool>>> FetchAchievementStatesAsync(CancellationToken ct)
+        public async Task<GameResult<Dictionary<string, bool>>> FetchAchievementStatesAsync(CancellationToken ct)
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
                 var init = await InitializeAsync(ct);
                 if (init.IsFailure)
-                    return CommonResult<Dictionary<string, bool>>.Failure(init.Error!);
+                    return GameResult<Dictionary<string, bool>>.Failure(init.Error!);
 
                 var auth = ensureAuthenticated();
                 if (auth.IsFailure)
-                    return CommonResult<Dictionary<string, bool>>.Failure(auth.Error!);
+                    return GameResult<Dictionary<string, bool>>.Failure(auth.Error!);
 
                 try
                 {
@@ -274,21 +274,21 @@ namespace Devian
                     var achievements = await tcs.Task;
                     if (achievements == null)
                     {
-                        return CommonResult<Dictionary<string, bool>>.Failure(
-                            COMMON_ERROR_TYPE.COMMON_SERVER,
+                        return GameResult<Dictionary<string, bool>>.Failure(
+                            GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                             "GPGS achievement sync failed.");
                     }
 
-                    return CommonResult<Dictionary<string, bool>>.Success(
+                    return GameResult<Dictionary<string, bool>>.Success(
                         AchievePlatformHelper.ToAchievementStateMap(achievements));
                 }
                 catch (Exception ex)
                 {
-                    return CommonResult<Dictionary<string, bool>>.Failure(COMMON_ERROR_TYPE.COMMON_SERVER, ex.Message);
+                    return GameResult<Dictionary<string, bool>>.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, ex.Message);
                 }
 #else
-            return CommonResult<Dictionary<string, bool>>.Failure(
-                COMMON_ERROR_TYPE.LOGIN_UNSUPPORTED,
+            return GameResult<Dictionary<string, bool>>.Failure(
+                GAME_ERROR_TYPE.LOGIN_UNSUPPORTED,
                 "Google adapter is not available on this platform.");
 #endif
         }
@@ -323,12 +323,12 @@ namespace Devian
             return null;
         }
 
-        static CommonResult ensureAuthenticated()
+        static GameResult ensureAuthenticated()
         {
             if (Social.localUser != null && Social.localUser.authenticated)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
-            return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_AUTH, "Google Play Games authentication required.");
+            return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "Google Play Games authentication required.");
         }
     }
 }

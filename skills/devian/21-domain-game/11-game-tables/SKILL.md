@@ -16,11 +16,13 @@ AppliesTo: v10
   "tableDir": "Domains/Game",
   "tableFiles": [
     "AchieveTable.xlsx",
+    "GameErrorTable.xlsx",
     "GameMessageTable.xlsx",
     "ItemTable.xlsx",
     "MetaTable.xlsx",
     "MissionTable.xlsx",
     "ShopTable.xlsx",
+    "SkillTable.xlsx",
     "TreasureTable.xlsx",
     "UnitTable.xlsx"
   ],
@@ -32,7 +34,7 @@ AppliesTo: v10
 | 필드 | 값 | 설명 |
 |---|---|---|
 | `tableDir` | `Domains/Game` | 테이블 XLSX 디렉토리 |
-| `tableFiles` | 명시적 8개 테이블 파일 목록 | `GameStringTable.xlsx`와 overlap을 피하는 테이블 입력 목록 |
+| `tableFiles` | 명시적 10개 테이블 파일 목록 | `GameStringTable.xlsx`와 overlap을 피하는 테이블 입력 목록 |
 | `stringDir` | `Domains/Game` | Game StringTable XLSX 디렉토리 |
 | `stringFiles` | `["GameStringTable.xlsx"]` | Game StringTable 파일 패턴 |
 
@@ -42,6 +44,7 @@ AppliesTo: v10
 
 | 파일 | 시트(테이블) | 컨테이너 | PK | 설명 |
 |---|---|---|---|---|
+| `GameErrorTable.xlsx` | GAME_ERROR | TB_GAME_ERROR | `id` (`GAME_ERROR_TYPE`) | Game 도메인 에러 코드 마스터 |
 | `MetaTable.xlsx` | PURCHASE | TB_PURCHASE | `Internal_product_id` (string) | 상품 테이블 (`season_id` 포함) |
 | `MetaTable.xlsx` | ADVERTISE | TB_ADVERTISE | `Advertise_id` (string) | 광고 placement 테이블 |
 | `MetaTable.xlsx` | REWARD | TB_REWARD | `Reward_num` (int) | 보상 테이블 |

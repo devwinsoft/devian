@@ -61,6 +61,20 @@ namespace Devian.Domain.Game
                 }
             });
 
+            global::Devian.TableManager.Instance.RegisterTbLoader("GAME_ERROR", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_GAME_ERROR.LoadFromNdjson(text);
+                    TB_GAME_ERROR._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_GAME_ERROR.LoadFromPb64Binary(bin);
+                    TB_GAME_ERROR._AfterLoad();
+                }
+            });
+
             global::Devian.TableManager.Instance.RegisterTbLoader("GAME_MESSAGE", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)

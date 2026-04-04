@@ -14,13 +14,10 @@ namespace Devian
     [Serializable]
     public enum PopupCloseReason
     {
-        Completed,
-        Canceled,
-        Back,
-        Escape,
-        DimClick,
-        Replaced,
-        ForceClosed
+        Confirm,
+        Yes,
+        No,
+        Cancel
     }
 
     [Serializable]

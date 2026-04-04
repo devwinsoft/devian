@@ -22,7 +22,6 @@ MobilePackage 샘플의 `TreasureManager` 설계 문서다.
 ## Target Class Design
 
 ```csharp
-using Devian.Domain.Common;
 using Devian.Domain.Game;
 
 namespace Devian
@@ -31,8 +30,8 @@ namespace Devian
     {
         InventoryStorage storage => InventoryManager.Instance.Storage;
 
-        public CommonResult OpenCollectedChests(TREASURE_GRADE_TYPE gradeType) { ... }
-        public CommonResult OpenCurrentChest() { ... }
+        public GameResult OpenCollectedChests(TREASURE_GRADE_TYPE gradeType) { ... }
+        public GameResult OpenCurrentChest() { ... }
     }
 }
 ```
@@ -73,8 +72,8 @@ namespace Devian
 
 ## Public API
 
-- `OpenCollectedChests(TREASURE_GRADE_TYPE gradeType) -> CommonResult`
-- `OpenCurrentChest() -> CommonResult`
+- `OpenCollectedChests(TREASURE_GRADE_TYPE gradeType) -> GameResult`
+- `OpenCurrentChest() -> GameResult`
 
 ---
 

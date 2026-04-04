@@ -34,11 +34,11 @@ namespace Devian
         {
         }
 
-        public CommonResult Initialize()
+        public GameResult Initialize()
         {
             rebuildSaveBindings();
             _initialized = true;
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         public bool TryGetStat(string messageId, out CBigInt value)

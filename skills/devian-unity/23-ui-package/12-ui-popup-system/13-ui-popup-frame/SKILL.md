@@ -6,7 +6,7 @@ AppliesTo: v1
 ## Purpose
 
 popup 1건의 실제 표시 단위.
-frame policy, request bind, show/close transition, close reason, top-state input 제어를 담당한다.
+frame policy, show bind, show/close transition, close reason, top-state input 제어를 담당한다.
 
 ## Implementation Location (3-path mirror)
 
@@ -33,20 +33,13 @@ public abstract class UIPopupFrameBase : UIBaseFrame, IPoolable
 
     public void CloseCompleted();
     public void CloseCanceled();
-    protected virtual void ClosePopup(PopupCloseReason reason = PopupCloseReason.Completed);
-}
-```
-
-```csharp
-public abstract class UIPopupFrameBase<TReq> : UIPopupFrameBase
-{
-    protected TReq CurrentRequest { get; }
-    protected abstract void onBind(TReq request);
+    protected virtual void ClosePopup(PopupCloseReason reason = PopupCloseReason.Yes);
+    protected virtual void onBind(object payload);
 }
 ```
 
 기본 concrete frame은 두지 않는다.
-실제 popup은 `UIPopupFrameBase` 또는 `UIPopupFrameBase<TReq>`를 상속한 concrete class로 직접 만든다.
+실제 popup은 `UIPopupFrameBase`를 상속한 concrete class로 직접 만든다.
 
 ## State Machine
 
@@ -69,7 +62,7 @@ public abstract class UIPopupFrameBase<TReq> : UIPopupFrameBase
 ## Pool Contract
 
 - public `OnPoolSpawned()` / `OnPoolDespawned()`는 base frame pool handler bridge다.
-- `onPoolSpawned()`와 `onPoolDespawned()`는 transition cancel, payload/top-state reset을 담당한다.
+- `onPoolSpawned()`와 `onPoolDespawned()`는 transition cancel, top-state reset을 담당한다.
 - base `UIBaseFrame`가 despawn 시 init state를 reset하므로, respawn 뒤 panel attach 경로에서 `_Init()` / `_InitComplete()`가 다시 호출될 수 있다.
 
 ## Top-State

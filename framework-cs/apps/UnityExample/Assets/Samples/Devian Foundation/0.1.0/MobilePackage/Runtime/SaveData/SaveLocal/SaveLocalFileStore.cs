@@ -3,6 +3,7 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 using Devian.Domain.Common;
+using Devian.Domain.Game;
 
 namespace Devian
 {
@@ -10,18 +11,18 @@ namespace Devian
     {
         private static readonly Encoding Utf8NoBom = new UTF8Encoding(false);
 
-        public static CommonResult<bool> WriteAtomic(string rootPath, string filename, SaveLocalPayload payload)
+        public static GameResult<bool> WriteAtomic(string rootPath, string filename, SaveLocalPayload payload)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(rootPath))
                 {
-                    return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_PATH_EMPTY, "Root path is empty.");
+                    return GameResult<bool>.Failure(GAME_ERROR_TYPE.LOCALSAVE_PATH_EMPTY, "Root path is empty.");
                 }
 
                 if (string.IsNullOrWhiteSpace(filename))
                 {
-                    return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_FILENAME_EMPTY, "Filename is empty.");
+                    return GameResult<bool>.Failure(GAME_ERROR_TYPE.LOCALSAVE_FILENAME_EMPTY, "Filename is empty.");
                 }
 
                 var path = Path.Combine(rootPath, filename);
@@ -42,41 +43,41 @@ namespace Devian
 
                 File.Move(tmpPath, path);
 
-                return CommonResult<bool>.Success(true);
+                return GameResult<bool>.Success(true);
             }
             catch (Exception ex)
             {
-                return CommonResult<bool>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_WRITE, ex.Message);
+                return GameResult<bool>.Failure(GAME_ERROR_TYPE.LOCALSAVE_WRITE, ex.Message);
             }
         }
 
-        public static CommonResult<SaveLocalPayload> Read(string rootPath, string filename)
+        public static GameResult<SaveLocalPayload> Read(string rootPath, string filename)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(rootPath))
                 {
-                    return CommonResult<SaveLocalPayload>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_PATH_EMPTY, "Root path is empty.");
+                    return GameResult<SaveLocalPayload>.Failure(GAME_ERROR_TYPE.LOCALSAVE_PATH_EMPTY, "Root path is empty.");
                 }
 
                 if (string.IsNullOrWhiteSpace(filename))
                 {
-                    return CommonResult<SaveLocalPayload>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_FILENAME_EMPTY, "Filename is empty.");
+                    return GameResult<SaveLocalPayload>.Failure(GAME_ERROR_TYPE.LOCALSAVE_FILENAME_EMPTY, "Filename is empty.");
                 }
 
                 var path = Path.Combine(rootPath, filename);
                 if (!File.Exists(path))
                 {
-                    return CommonResult<SaveLocalPayload>.Success(null);
+                    return GameResult<SaveLocalPayload>.Success(null);
                 }
 
                 var json = File.ReadAllText(path, Utf8NoBom);
                 var payload = JsonUtility.FromJson<SaveLocalPayload>(json);
-                return CommonResult<SaveLocalPayload>.Success(payload);
+                return GameResult<SaveLocalPayload>.Success(payload);
             }
             catch (Exception ex)
             {
-                return CommonResult<SaveLocalPayload>.Failure(COMMON_ERROR_TYPE.LOCALSAVE_READ, ex.Message);
+                return GameResult<SaveLocalPayload>.Failure(GAME_ERROR_TYPE.LOCALSAVE_READ, ex.Message);
             }
         }
     }

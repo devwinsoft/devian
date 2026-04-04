@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
+using Devian.Domain.Game;
 using Devian.Domain.Operation;
 using UnityEngine;
 
@@ -51,13 +52,13 @@ namespace Devian
         /// 권한 요청 → 토큰 획득 → 테이블 기반 토픽 구독 → 저장 토픽 재구독.
         /// Idempotent. Editor에서는 즉시 PUSH_UNSUPPORTED_PLATFORM 반환.
         /// </summary>
-        public async Task<CommonResult> InitializeAsync(CancellationToken ct = default)
+        public async Task<GameResult> InitializeAsync(CancellationToken ct = default)
         {
             await _initializeGate.WaitAsync(ct);
             try
             {
                 if (_initialized)
-                    return CommonResult.Ok();
+                    return GameResult.Ok();
 
                 // 0. 기존 로컬 알림 전체 취소 (§H: 앱 재시작마다 clean state)
                 await clearAllLocalNotificationsInternalAsync(ct);
@@ -104,7 +105,7 @@ namespace Devian
                 await resubscribeStoredTopicsAsync(ct);
 
                 _initialized = true;
-                return CommonResult.Ok();
+                return GameResult.Ok();
             }
             finally
             {
@@ -115,14 +116,14 @@ namespace Devian
         /// <summary>
         /// 토픽 구독 + PushStorage.subscribedTopics 동기화.
         /// </summary>
-        public async Task<CommonResult> SubscribeTopicAsync(string topicId, CancellationToken ct = default)
+        public async Task<GameResult> SubscribeTopicAsync(string topicId, CancellationToken ct = default)
         {
             var guard = ensureInitialized();
             if (guard.IsFailure)
                 return guard;
 
             if (string.IsNullOrEmpty(topicId))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "topicId is empty.");
+                return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "topicId is empty.");
 
             var result = await _provider.SubscribeTopicAsync(topicId, ct);
             if (result.IsSuccess)
@@ -139,14 +140,14 @@ namespace Devian
         /// <summary>
         /// 토픽 해제 + PushStorage.subscribedTopics 동기화.
         /// </summary>
-        public async Task<CommonResult> UnsubscribeTopicAsync(string topicId, CancellationToken ct = default)
+        public async Task<GameResult> UnsubscribeTopicAsync(string topicId, CancellationToken ct = default)
         {
             var guard = ensureInitialized();
             if (guard.IsFailure)
                 return guard;
 
             if (string.IsNullOrEmpty(topicId))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "topicId is empty.");
+                return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "topicId is empty.");
 
             var result = await _provider.UnsubscribeTopicAsync(topicId, ct);
             if (result.IsSuccess)
@@ -163,7 +164,7 @@ namespace Devian
         /// fireAt은 서버 시간(CDateTime) 기준. Repeat은 None 고정.
         /// SSOT: 03-ssot §G
         /// </summary>
-        public async Task<CommonResult> ScheduleLocalNotificationAsync(
+        public async Task<GameResult> ScheduleLocalNotificationAsync(
             string pushId, CDateTime fireAt, CancellationToken ct = default)
         {
             var guard = ensureInitialized();
@@ -171,21 +172,21 @@ namespace Devian
                 return guard;
 
             if (string.IsNullOrEmpty(pushId))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "pushId is empty.");
+                return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "pushId is empty.");
 
             if (!TB_PUSH_LOCAL.IsLoaded)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_TABLE_NOT_LOADED, "TB_PUSH_LOCAL not loaded.");
+                return GameResult.Failure(GAME_ERROR_TYPE.PUSH_TABLE_NOT_LOADED, "TB_PUSH_LOCAL not loaded.");
 
             var row = TB_PUSH_LOCAL.Get(pushId);
             if (row == null)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_LOCAL_NOT_FOUND, $"PUSH_LOCAL not found: {pushId}");
+                return GameResult.Failure(GAME_ERROR_TYPE.PUSH_LOCAL_NOT_FOUND, $"PUSH_LOCAL not found: {pushId}");
 
             // IsTest 필터링 (§F 동일 규칙)
             if (!Debug.isDebugBuild && row.is_test)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_TEST_BLOCKED, $"Test push blocked in release: {pushId}");
+                return GameResult.Failure(GAME_ERROR_TYPE.PUSH_TEST_BLOCKED, $"Test push blocked in release: {pushId}");
 
             if (_storage.HasScheduledNotification(pushId))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_DUPLICATE_NOTIFICATION, $"Duplicate notificationId: {pushId}");
+                return GameResult.Failure(GAME_ERROR_TYPE.PUSH_DUPLICATE_NOTIFICATION, $"Duplicate notificationId: {pushId}");
 
             var title = ST_TEXT.Get(row.title_text_id);
             var body = ST_TEXT.Get(row.body_text_id);
@@ -220,7 +221,7 @@ namespace Devian
         /// <summary>
         /// 로컬 알림 취소 + PushStorage.scheduledNotifications에서 제거.
         /// </summary>
-        public async Task<CommonResult> CancelLocalNotificationAsync(
+        public async Task<GameResult> CancelLocalNotificationAsync(
             string notificationId, CancellationToken ct = default)
         {
             var guard = ensureInitialized();
@@ -228,7 +229,7 @@ namespace Devian
                 return guard;
 
             if (string.IsNullOrEmpty(notificationId))
-                return CommonResult.Failure(COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT, "notificationId is empty.");
+                return GameResult.Failure(GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT, "notificationId is empty.");
 
             var result = await _provider.CancelLocalNotificationAsync(notificationId, ct);
             if (result.IsSuccess)
@@ -243,7 +244,7 @@ namespace Devian
         /// <summary>
         /// 모든 로컬 알림 취소 + PushStorage.scheduledNotifications 초기화.
         /// </summary>
-        public async Task<CommonResult> CancelAllLocalNotificationsAsync(CancellationToken ct = default)
+        public async Task<GameResult> CancelAllLocalNotificationsAsync(CancellationToken ct = default)
         {
             var guard = ensureInitialized();
             if (guard.IsFailure)
@@ -280,19 +281,19 @@ namespace Devian
 #endif
         }
 
-        CommonResult ensureInitialized()
+        GameResult ensureInitialized()
         {
             if (!_initialized)
-                return CommonResult.Failure(COMMON_ERROR_TYPE.PUSH_NOT_INITIALIZED, "PushManager not initialized.");
+                return GameResult.Failure(GAME_ERROR_TYPE.PUSH_NOT_INITIALIZED, "PushManager not initialized.");
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
-        static bool isUnsupportedPlatformError(CommonResult result)
+        static bool isUnsupportedPlatformError(GameResult result)
         {
             return result.IsFailure
                    && result.Error != null
-                   && result.Error.Code == COMMON_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM;
+                   && result.Error.Code == GAME_ERROR_TYPE.PUSH_UNSUPPORTED_PLATFORM;
         }
 
         async Task clearAllLocalNotificationsInternalAsync(CancellationToken ct)

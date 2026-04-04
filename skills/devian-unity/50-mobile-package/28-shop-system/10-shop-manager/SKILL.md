@@ -30,10 +30,10 @@ public sealed class ShopManager : CompoSingleton<ShopManager>
 ## 2. Public API
 
 ```csharp
-public bool CanBuy(string shop_item_id)
-public Task<CommonResult<RewardData[]>> BuyAsync(string shop_item_id, CancellationToken ct = default)
-public CommonResult Initialize()
-public CommonResult RefreshProducts(bool requireServerTime = true)
+public GAME_ERROR_TYPE CanBuy(string shop_item_id)
+public Task<GameResult<RewardData[]>> BuyAsync(string shop_item_id, CancellationToken ct = default)
+public GameResult Initialize()
+public GameResult RefreshProducts(bool requireServerTime = true)
 public IReadOnlyList<ShopCatalogBase> GetCatalogs()
 public ShopCatalogBase GetCatalog(SHOP_CATALOG_TYPE catalog_type)
 public T GetCatalog<T>() where T : ShopCatalogBase
@@ -71,7 +71,7 @@ public T GetCatalog<T>() where T : ShopCatalogBase
 28. `ShopCatalogBase.ResetAds()`와 `ShopCatalogDaily.RefreshByAdsAsync()`는 catalog instance public API다.
 29. `ShopCatalogDaily.RefreshByAdsAsync()`는 daily catalog 내부에서 manual refresh 상태 판단, 광고 시청, 성공 기록을 직접 처리한다.
 30. `ShopCatalogDaily.RefreshByAdsAsync()`는 rolling 24시간 기준 최대 5회만 허용한다. 상태는 `manualRefreshUtcMs`, `manualRefreshRemainCount`로 관리하며, `manualRefreshRemainCount`는 남은 횟수다.
-31. `ShopCatalogDaily.RefreshByAdsAsync()` 제한 초과 시 `COMMON_ERROR_TYPE.SHOP_ITEM_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED`를 반환한다.
+31. `ShopCatalogDaily.RefreshByAdsAsync()` 제한 초과 시 `GAME_ERROR_TYPE.SHOP_ITEM_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED`를 반환한다.
 32. `ShopManager`는 `syncCatalogRuntimeStates()`로 catalog별 runtime state 동기화를 공통 처리한다.
 33. `ShopManager.ensureCatalogInitialized()`는 `CreateRuntimeCatalogs(storage)`로 catalog를 먼저 등록하고, 두 번째 pass에서 `Initialize()`를 호출한다.
 34. `CreateRuntimeCatalogs(storage)`는 catalog 생성 시 typed storage data를 같이 주입한다.
@@ -88,10 +88,10 @@ public T GetCatalog<T>() where T : ShopCatalogBase
 - `SHOP_DISCOUNT_TYPE`이 설정된 상품은 `ShopProductBase.Price`(할인 반영 값)로 지갑 잔액 검증/차감을 수행한다.
 - `BuyAsync`의 통화 상품 구매는 `InventoryManager.Storage.Wallet`에서 `Currency_type` 기준으로 `Price`만큼 차감한다.
 - `BuyAsync` 차감 경로에서 `Price < 0`은 즉시 차단하고 `SHOP_PRODUCT_PRICE_INVALID`를 반환한다. (음수 가격으로 재화 증감 금지)
-- 통화 부족 시 `COMMON_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT`를 반환한다.
-- `Initialize()` 이전의 `RefreshProducts/CanBuy/BuyAsync`와 catalog public API는 `COMMON_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED`로 실패한다.
+- 통화 부족 시 `GAME_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT`를 반환한다.
+- `Initialize()` 이전의 `RefreshProducts/CanBuy/BuyAsync`와 catalog public API는 `GAME_ERROR_TYPE.SAVEDATA_SYNC_REQUIRED`로 실패한다.
 - `ShopCatalogBase.ResetAds()`: 지정 카탈로그를 강제 refresh한다. (`forceCatalogRefresh=true`)
-- `ShopCatalogDaily.RefreshByAdsAsync()`: DAILY 수동 refresh를 수행한다. 광고 실패는 `SHOP_ADS_SHOW_FAILED`, 횟수 소진은 `SHOP_ITEM_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED`를 반환한다.
+- `ShopCatalogDaily.RefreshByAdsAsync()`: DAILY 수동 refresh를 수행한다. 광고 실패는 `GAME_ERROR_TYPE.SHOP_ADS_SHOW_FAILED`, 횟수 소진은 `GAME_ERROR_TYPE.SHOP_ITEM_DAILY_MANUAL_REFRESH_COUNT_EXHAUSTED`를 반환한다.
 - `ShopCatalogDaily.RefreshByAdsAsync()`는 global refresh를 호출하지 않고 DAILY만 1회 refresh한다.
 - SaveData 저장은 ShopManager 초기화 루틴이 아니라 mutation 경로에서 수행한다. 일반 refresh/buy는 ShopManager 저장 경로를 사용하고, DAILY manual refresh는 `ShopCatalogDaily.RefreshByAdsAsync()`가 로컬 저장을 직접 수행한다.
 
@@ -107,10 +107,11 @@ public T GetCatalog<T>() where T : ShopCatalogBase
 
 ## 5. Error Rules
 
-- `CanBuy` 실패: `LastCanBuyErrorCode = SHOP_CAN_BUY_FAILED`
-- `BuyAsync` 실패: 기본적으로 `COMMON_ERROR_TYPE.SHOP_BUY_FAILED`
-- 단, 카탈로그 잠금 실패는 `COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT`을 반환한다.
-- 단, 통화 부족 실패는 `COMMON_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT`를 그대로 반환한다.
+- `CanBuy` 성공: `GAME_ERROR_TYPE.SUCCESS`
+- `CanBuy` 실패: `checkCanBuy()`에서 계산된 `GAME_ERROR_TYPE`을 그대로 반환한다. `SHOP_CAN_BUY_FAILED` wrapper나 `LastCanBuy*` 상태 필드는 사용하지 않는다.
+- `BuyAsync` 실패: 기본적으로 `GAME_ERROR_TYPE.SHOP_BUY_FAILED`
+- 단, 카탈로그 잠금 실패는 `GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT`을 반환한다.
+- 단, 통화 부족 실패는 `GAME_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT`를 그대로 반환한다.
 - inner 실패 코드는 메시지에 `inner=...` 형태로 포함한다.
 
 ---

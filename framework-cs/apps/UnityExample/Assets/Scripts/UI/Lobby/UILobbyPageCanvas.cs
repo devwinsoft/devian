@@ -99,7 +99,13 @@ public class UILobbyPageCanvas : UIBasePageCanvas<UILobbyPageCanvas>
 
     private async Task OnClickInAppAdAsync()
     {
-        ShopManager.Instance.CanBuy("shop_001_ads");
+        var canBuy = ShopManager.Instance.CanBuy("shop_001_ads");
+        if (canBuy != GAME_ERROR_TYPE.SUCCESS)
+        {
+            Debug.LogWarning($"Shop CanBuy failed: {canBuy}");
+            return;
+        }
+
         var result = await ShopManager.Instance.BuyAsync("shop_001_ads");
         if (result.IsSuccess)
         {

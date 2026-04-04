@@ -1,6 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Devian.Domain.Common;
+using Devian.Domain.Game;
 
 
 namespace Devian
@@ -35,18 +36,18 @@ namespace Devian
         }
 
 #if UNITY_ANDROID && !UNITY_EDITOR
-        public async Task<CommonResult> SaveAsync(
+        public async Task<GameResult> SaveAsync(
             string slot, SaveCloudPayload payload, CancellationToken ct)
         {
             var result = await AccountManager.Instance._getAccountLoginGpgs().SaveAsync(slot, payload, ct);
             return mapSaveResult(result);
         }
 #else
-        public Task<CommonResult> SaveAsync(
+        public Task<GameResult> SaveAsync(
             string slot, SaveCloudPayload payload, CancellationToken ct)
         {
-            return Task.FromResult(CommonResult.Failure(
-                COMMON_ERROR_TYPE.CLOUDSAVE_CONNECTION_FAILED,
+            return Task.FromResult(GameResult.Failure(
+                GAME_ERROR_TYPE.CLOUDSAVE_CONNECTION_FAILED,
                 "Cloud save is not available on this platform."));
         }
 #endif
@@ -60,11 +61,11 @@ namespace Devian
 #endif
         }
 
-        private static CommonResult mapSaveResult(SaveCloudResult result)
+        private static GameResult mapSaveResult(SaveCloudResult result)
         {
             return result == SaveCloudResult.Success
-                ? CommonResult.Ok()
-                : CommonResult.Failure(COMMON_ERROR_TYPE.CLOUDSAVE_CONNECTION_FAILED, $"Cloud save failed: {result}");
+                ? GameResult.Ok()
+                : GameResult.Failure(GAME_ERROR_TYPE.CLOUDSAVE_CONNECTION_FAILED, $"Cloud save failed: {result}");
         }
     }
 }

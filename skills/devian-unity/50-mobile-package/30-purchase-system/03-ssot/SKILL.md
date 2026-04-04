@@ -291,7 +291,7 @@ Purchase 지급을 위해 `internal_product_id -> reward_group_id` 변환이 필
 
 - `GetLatestConsumablePurchase30dAsync()`
   - 서버 Callable: `getRecentPurchases30d` (`kind="Consumable"`, `pageSize=1`로 호출, `items[0]`만 사용)
-  - 최근 30일 내 해당 kind 내역이 없으면 실패(`COMMON_ERROR_TYPE.COMMON_SERVER` + 메시지)로 처리
+  - 최근 30일 내 해당 kind 내역이 없으면 실패(`GAME_ERROR_TYPE.PURCHASE_*` + 메시지)로 처리
   - 페이지네이션 없이 최신 1건만 반환하는 단일 API
 
 

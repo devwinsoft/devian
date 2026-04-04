@@ -143,5 +143,5 @@ SEASON(season_id, Start_utc_time, End_utc_time)
 
 - 점수 기록(`ReportScoreAsync`)은 시즌 활성 기간에만 허용한다.
 - 조건: `SEASON.Start_utc_time <= serverNowUtcMs < SEASON.End_utc_time`
-- 시즌 외 기간 → `CommonResult.Failure` 반환
+- 시즌 외 기간 → `GameResult.Failure` 반환
 - `season_id`가 비어 있으면 시간 제한 없음

@@ -35,55 +35,55 @@ namespace Devian
 
         // ── Apply API ──
 
-        public CommonResult ApplyCurrency(CURRENCY_TYPE currencyType, long amount)
+        public GameResult ApplyCurrency(CURRENCY_TYPE currencyType, long amount)
         {
             if (amount < 0L)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"InventoryManager.ApplyCurrency: amount is negative: {amount}");
             }
 
             _storage.Wallet.TryAdd(currencyType, amount);
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
-        public CommonResult ApplyEquip(string itemId, int amount)
+        public GameResult ApplyEquip(string itemId, int amount)
         {
             if (amount < 0)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"InventoryManager.ApplyEquip: amount is negative: {amount}");
             }
 
             if (amount == 0)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             for (var i = 0; i < amount; i++)
             {
                 var itemUid = Guid.NewGuid().ToString("N");
                 var create = AbilityItemFactory.CreateEquip(itemId, itemUid);
                 if (create.IsFailure)
-                    return CommonResult.Failure(create.Error!);
+                    return GameResult.Failure(create.Error!);
 
                 _storage.AddEquip(itemUid, create.Value);
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
-        public CommonResult ApplyCard(string itemId, int amount)
+        public GameResult ApplyCard(string itemId, int amount)
         {
             if (amount < 0)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"InventoryManager.ApplyCard: amount is negative: {amount}");
             }
 
             if (amount == 0)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             var existing = _storage.GetCard(itemId);
             if (existing != null)
@@ -94,27 +94,27 @@ namespace Devian
             {
                 var create = AbilityItemFactory.CreateCard(itemId);
                 if (create.IsFailure)
-                    return CommonResult.Failure(create.Error!);
+                    return GameResult.Failure(create.Error!);
 
                 var ability = create.Value;
                 _storage.AddCard(itemId, ability);
                 ability.AddAmount(amount);
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
-        public CommonResult ApplyMaterial(string itemId, int amount)
+        public GameResult ApplyMaterial(string itemId, int amount)
         {
             if (amount < 0)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"InventoryManager.ApplyMaterial: amount is negative: {amount}");
             }
 
             if (amount == 0)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             var existing = _storage.GetMaterial(itemId);
             if (existing != null)
@@ -125,27 +125,27 @@ namespace Devian
             {
                 var create = AbilityItemFactory.CreateMaterial(itemId);
                 if (create.IsFailure)
-                    return CommonResult.Failure(create.Error!);
+                    return GameResult.Failure(create.Error!);
 
                 var ability = create.Value;
                 _storage.AddMaterial(itemId, ability);
                 ability.AddAmount(amount);
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
-        public CommonResult ApplyHero(string heroId, int amount)
+        public GameResult ApplyHero(string heroId, int amount)
         {
             if (amount < 0)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"InventoryManager.ApplyHero: amount is negative: {amount}");
             }
 
             if (amount == 0)
-                return CommonResult.Ok();
+                return GameResult.Ok();
 
             var existing = _storage.GetHero(heroId);
             if (existing != null)
@@ -156,22 +156,22 @@ namespace Devian
             {
                 var create = AbilityItemFactory.CreateHero(heroId);
                 if (create.IsFailure)
-                    return CommonResult.Failure(create.Error!);
+                    return GameResult.Failure(create.Error!);
 
                 var ability = create.Value;
                 _storage.AddHero(heroId, ability);
                 ability.AddAmount(amount);
             }
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
-        public CommonResult ApplyRental(string itemId)
+        public GameResult ApplyRental(string itemId)
         {
             if (string.IsNullOrWhiteSpace(itemId))
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     "InventoryManager.ApplyRental: item_id is null or empty.");
             }
 
@@ -179,57 +179,57 @@ namespace Devian
             var currentExpiryUtcMs = _storage.GetRentalExpiry(itemId);
             var baseUtcMs = currentExpiryUtcMs > nowUtcMs ? currentExpiryUtcMs : nowUtcMs;
             _storage.SetRental(itemId, baseUtcMs + DefaultRentalDurationMs);
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
-        public CommonResult ApplyTreasure(TREASURE_GRADE_TYPE gradeType, int amount)
+        public GameResult ApplyTreasure(TREASURE_GRADE_TYPE gradeType, int amount)
         {
             if (gradeType == TREASURE_GRADE_TYPE.NONE)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     "InventoryManager.ApplyTreasure: gradeType is NONE.");
             }
 
             if (amount < 0)
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     $"InventoryManager.ApplyTreasure: amount is negative: {amount}");
             }
 
             _storage.AddTreasure(gradeType, amount);
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
-        public CommonResult SetPassOwnership(string itemId, bool owned)
+        public GameResult SetPassOwnership(string itemId, bool owned)
         {
             if (string.IsNullOrWhiteSpace(itemId))
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     "InventoryManager.SetPassOwnership: item_id is null or empty.");
             }
 
             if (_storage.SetPass(itemId, owned))
                 _messageTrigger.Notify(INVENTORY_MESSAGE_TYPE.PASS_CHANGED, itemId, owned);
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
-        public CommonResult RemovePassOwnership(string itemId)
+        public GameResult RemovePassOwnership(string itemId)
         {
             if (string.IsNullOrWhiteSpace(itemId))
             {
-                return CommonResult.Failure(
-                    COMMON_ERROR_TYPE.COMMON_INVALID_ARGUMENT,
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
                     "InventoryManager.RemovePassOwnership: item_id is null or empty.");
             }
 
             if (_storage.RemovePass(itemId))
                 _messageTrigger.Notify(INVENTORY_MESSAGE_TYPE.PASS_CHANGED, itemId, false);
 
-            return CommonResult.Ok();
+            return GameResult.Ok();
         }
 
         // ── Revoke API ──

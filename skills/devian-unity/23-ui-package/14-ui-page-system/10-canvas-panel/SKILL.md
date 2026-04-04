@@ -13,10 +13,9 @@ page는 아래 4개 base로 분리된다.
 - `UIBasePagePanel : UIBasePanel`
 - `UIBasePageMain : UIBasePagePanel`
 - `UIBasePageSub : UIBasePagePanel`
-- `UIBasePagePopup : UIBasePanel`
 
 `UIBasePageCanvas.ShowPage()`는 main만 전환한다.
-sub/popup은 각자 `Show()/Hide()`를 호출하지만 실제 owner 검증과 current 상태 관리는 canvas가 맡는다.
+sub는 각자 `Show()/Hide()`를 호출하지만 실제 owner 검증과 current 상태 관리는 canvas가 맡는다.
 
 ---
 
@@ -24,10 +23,9 @@ sub/popup은 각자 `Show()/Hide()`를 호출하지만 실제 owner 검증과 cu
 
 | Term | Definition |
 |------|------------|
-| **UIBasePageCanvas** | `currentMain/currentSub/currentPopup`를 관리하는 page host |
+| **UIBasePageCanvas** | `currentMain/currentSub`를 관리하는 page host |
 | **UIBasePageMain** | 좌우 transition을 갖는 navigation 대상 main page |
 | **UIBasePageSub** | 특정 main에 종속된 sub page |
-| **UIBasePagePopup** | top layer popup. canvas당 동시에 1개만 허용 |
 | **UIBasePagePanel** | main/sub 공통 `pageIndex` + `ownerCanvas` bridge |
 | **UIPageState** | `Hidden`, `Entering`, `Visible`, `Exiting` |
 | **UIPageTransitionDirection** | `None`, `Left`, `Right` |
@@ -52,17 +50,8 @@ sub/popup은 각자 `Show()/Hide()`를 호출하지만 실제 owner 검증과 cu
 - sub hide 완료 후 current main은 즉시 복구된다. 애니메이션 없음.
 - 동시에 visible한 sub는 최대 1개다.
 
-### Popup
-
-- `UIBasePagePopup.pageIndex`는 자신이 종속되는 main의 index다.
-- popup은 main/sub 위의 최상위 layer다.
-- popup show/hide는 transition이 있다.
-- 동시에 visible한 popup은 최대 1개다.
-- 새로운 popup show 시 기존 popup은 즉시 닫힌다.
-
 ### Main Switch
 
-- main 전환 전 current popup은 즉시 닫힌다.
 - main 전환 전 current sub는 즉시 닫힌다.
 - sub 때문에 숨겨져 있던 old main은 전환 직전에 즉시 복구되어 exit transition에 참여한다.
 
@@ -84,7 +73,6 @@ public abstract class UIBasePageCanvas : UIBaseCanvas
     public int initialPageIndex { get; }
     public UIBasePageMain currentMain { get; }
     public UIBasePageSub currentSub { get; }
-    public UIBasePagePopup currentPopup { get; }
     public bool isTransitioningMain { get; }
 
     public void ShowPage(int pageIndex, bool animated = true);
@@ -127,21 +115,6 @@ public abstract class UIBasePageSub : UIBasePagePanel
 }
 ```
 
-### UIBasePagePopup
-
-```csharp
-[RequireComponent(typeof(UITransitionPlayer))]
-public abstract class UIBasePagePopup : UIBasePanel
-{
-    public int pageIndex { get; }
-    public UIBasePageCanvas ownerCanvas { get; }
-    public bool isCurrentPopup { get; }
-
-    public new void Show();
-    public new void Hide();
-}
-```
-
 ---
 
 ## Sequence
@@ -150,7 +123,6 @@ public abstract class UIBasePagePopup : UIBasePanel
 
 ```text
 ShowPage(targetMain)
-├── currentPopup 즉시 close
 ├── currentSub 즉시 close
 ├── old main 복구 (sub가 열려 있었던 경우)
 ├── currentMain == null → target 즉시 표시
@@ -163,20 +135,9 @@ ShowPage(targetMain)
 sub.Show()
 ├── ownerCanvas/currentMain 검사
 ├── pageIndex 일치 검사
-├── currentPopup 즉시 close
 ├── 기존 currentSub 즉시 close
 ├── currentMain 즉시 hide
 └── sub show transition
-```
-
-### Popup Show
-
-```text
-popup.Show()
-├── ownerCanvas/currentMain 검사
-├── pageIndex 일치 검사
-├── 기존 currentPopup 즉시 close
-└── popup show transition
 ```
 
 ---
@@ -185,8 +146,7 @@ popup.Show()
 
 - main `pageIndex` 중복 금지
 - sub `pageIndex`는 대응 main이 반드시 존재해야 한다
-- popup `pageIndex`는 대응 main이 반드시 존재해야 한다
-- main/sub/popup은 same-GO `UITransitionPlayer`가 있어야 한다
+- main/sub는 same-GO `UITransitionPlayer`가 있어야 한다
 - `initialPageIndex >= 0`이면 대응 main이 존재해야 한다
 
 ---
@@ -198,8 +158,7 @@ Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Page/
 ├── UIBasePageCanvas.cs
 ├── UIBasePagePanel.cs
 ├── UIBasePageMain.cs
-├── UIBasePageSub.cs
-└── UIBasePagePopup.cs
+└── UIBasePageSub.cs
 ```
 
 ---
@@ -208,8 +167,7 @@ Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Page/
 
 - [ ] `ShowPage()`가 main만 전환한다
 - [ ] sub show/hide가 main hide/restore 규칙을 만족한다
-- [ ] popup은 canvas당 1개만 유지된다
-- [ ] main switch 시 old sub/popup이 즉시 닫힌다
+- [ ] main switch 시 old sub가 즉시 닫힌다
 - [ ] compile error가 0개다
 
 ---

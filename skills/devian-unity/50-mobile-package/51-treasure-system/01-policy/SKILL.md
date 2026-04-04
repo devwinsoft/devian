@@ -58,9 +58,9 @@ Treasure 시스템의 모듈 경계와 하드룰을 정의한다.
 
 ### 8) 빈 row / 누락 row는 안전 실패한다
 
-- `TREASURE_CHEST`, `TREASURE_REWARD` row 누락은 `CommonResult.Failure`로 정리한다.
+- `TREASURE_CHEST`, `TREASURE_REWARD` row 누락은 `GameResult.Failure`로 정리한다.
 - 빈 `reward_group_id`는 invalid다.
-- 조건 충족 row가 없으면 `TREASURE_REWARD_EMPTY`로 실패한다.
+- 조건 충족 row가 없으면 `GAME_ERROR_TYPE.TREASURE_REWARD_EMPTY`로 실패한다.
 
 ### 9) `TREASURE_REWARD` 조건 선택 규칙
 
@@ -74,5 +74,5 @@ Treasure 시스템의 모듈 경계와 하드룰을 정의한다.
 ## Client API (target)
 
 `TreasureManager`
-- `OpenCollectedChests(TREASURE_GRADE_TYPE gradeType)` -> `CommonResult`
-- `OpenCurrentChest()` -> `CommonResult`
+- `OpenCollectedChests(TREASURE_GRADE_TYPE gradeType)` -> `GameResult`
+- `OpenCurrentChest()` -> `GameResult`

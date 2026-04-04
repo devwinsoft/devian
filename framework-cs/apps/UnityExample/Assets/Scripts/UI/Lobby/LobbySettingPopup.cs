@@ -5,12 +5,9 @@ using Devian;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
 
-public class LobbySettingPopup : UIBasePagePopup<UILobbyPageCanvas>
+public class LobbySettingPopup : UIPopupFrameBase
 {
-    protected override void onInit(UILobbyPageCanvas pageCanvas)
-    {
-    }
-    
+
     public void OnClick_DVN_Import()
     {
         UnityTaskRunner.Run(RecoveryManager.Instance.PickAndImportDvnAsync(CancellationToken.None), "OnClick_DVN_Import");
