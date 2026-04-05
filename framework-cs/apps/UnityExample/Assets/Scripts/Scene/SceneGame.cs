@@ -24,7 +24,6 @@ public class SceneGame : SceneBootstrap
         await TestApplication.Instance.LoadAsync();
         
         UIGameCanvas.Instance.Init();
-        GameMessageManager.Instance.Notify(GAME_MESSAGE_TYPE.ACHIEVE_001, 1);
 
         UIToastService.Instance.Show("This is a default toast message.");
         UIToastService.Instance.Show("This is a default toast message.", "Error");

@@ -56,6 +56,10 @@ namespace Devian
                 shop.schemaVersion = 11;
             if (shop.schemaVersion < 12)
                 shop.schemaVersion = 12;
+            if (shop.schemaVersion < 13)
+                shop.schemaVersion = 13;
+            if (shop.schemaVersion < 14)
+                shop.schemaVersion = 14;
         }
 
         static JObject serializeCatalogs(ShopStorage shop)
@@ -108,7 +112,6 @@ namespace Devian
                 ["autoRefreshUtcMs"] = daily.autoRefreshUtcMs > 0L ? daily.autoRefreshUtcMs : 0L,
                 ["manualRefreshUtcMs"] = daily.manualRefreshUtcMs > 0L ? daily.manualRefreshUtcMs : 0L,
                 ["manualRefreshRemainCount"] = daily.manualRefreshRemainCount > 0 ? daily.manualRefreshRemainCount : 0,
-                ["productRemainCounts"] = serializeRemainCounts(daily.productRemainCounts),
                 ["dailyCatalogProducts"] = serializeDailyProducts(daily.dailyCatalogProducts),
             };
 
@@ -212,6 +215,7 @@ namespace Devian
                     ["shop_id"] = state.shopId.Trim(),
                     ["discountType"] = (int)state.discountType,
                     ["remainCount"] = state.remainCount,
+                    ["amount"] = state.amount > 0 ? state.amount : 1,
                 });
             }
 
@@ -260,9 +264,12 @@ namespace Devian
                 ?? stateObj.Value<int?>("manualRefreshCount")
                 ?? 0;
             shop.SetManualRefreshRemainCount(SHOP_CATALOG_TYPE.DAILY, manualRefreshRemainCount);
-            deserializeRemainCounts(stateObj["productRemainCounts"] as JObject, SHOP_CATALOG_TYPE.DAILY, shop);
-            if (stateObj["dailyCatalogProducts"] is JArray dailyProductsArr)
-                shop.SetDailyCatalogProducts(parseDailyProductStates(dailyProductsArr));
+
+            var dailyStates = stateObj["dailyCatalogProducts"] is JArray dailyProductsArr
+                ? new List<ShopDailyProductState>(parseDailyProductStates(dailyProductsArr))
+                : new List<ShopDailyProductState>();
+            mergeLegacyDailyRemainCounts(stateObj["productRemainCounts"] as JObject, dailyStates);
+            shop.SetDailyCatalogProducts(dailyStates);
         }
 
         static void deserializeChestCatalog(JObject stateObj, ShopStorage shop)
@@ -302,6 +309,10 @@ namespace Devian
 
         static void deserializeLegacyFlat(JObject shopObj, ShopStorage shop)
         {
+            var dailyStates = shopObj["dailyCatalogProducts"] is JArray dailyProductsArr
+                ? new List<ShopDailyProductState>(parseDailyProductStates(dailyProductsArr))
+                : new List<ShopDailyProductState>();
+
             if (shopObj["productRemainCounts"] is JObject remainObj)
             {
                 foreach (var prop in remainObj.Properties())
@@ -315,6 +326,12 @@ namespace Devian
                         continue;
 
                     var remainCount = prop.Value.Value<int?>() ?? -1;
+                    if (catalogType == SHOP_CATALOG_TYPE.DAILY)
+                    {
+                        mergeLegacyDailyRemainCount(dailyStates, normalizedShopId, remainCount);
+                        continue;
+                    }
+
                     shop.SetProductRemainCount(catalogType, normalizedShopId, remainCount);
                 }
             }
@@ -378,8 +395,7 @@ namespace Devian
                 }
             }
 
-            if (shopObj["dailyCatalogProducts"] is JArray dailyProductsArr)
-                shop.SetDailyCatalogProducts(parseDailyProductStates(dailyProductsArr));
+            shop.SetDailyCatalogProducts(dailyStates);
         }
 
         static ShopDailyProductState[] parseDailyProductStates(JArray dailyProductsArr)
@@ -401,12 +417,14 @@ namespace Devian
                 var discountTypeValue = stateObj.Value<int?>("discountType") ?? 0;
                 var discountType = toDiscountType(discountTypeValue);
                 var remainCount = stateObj.Value<int?>("remainCount") ?? -1;
+                var amount = stateObj.Value<int?>("amount") ?? 1;
 
                 states[stateCount++] = new ShopDailyProductState
                 {
                     shopId = shopId,
                     discountType = discountType,
                     remainCount = remainCount,
+                    amount = amount,
                 };
             }
 
@@ -420,6 +438,57 @@ namespace Devian
             for (var i = 0; i < stateCount; i++)
                 compact[i] = states[i];
             return compact;
+        }
+
+        static void mergeLegacyDailyRemainCounts(
+            JObject remainObj,
+            List<ShopDailyProductState> dailyStates)
+        {
+            if (remainObj == null || dailyStates == null)
+                return;
+
+            foreach (var remainProp in remainObj.Properties())
+            {
+                var normalizedShopId = remainProp.Name != null ? remainProp.Name.Trim() : string.Empty;
+                if (string.IsNullOrEmpty(normalizedShopId))
+                    continue;
+
+                mergeLegacyDailyRemainCount(
+                    dailyStates,
+                    normalizedShopId,
+                    remainProp.Value.Value<int?>() ?? -1);
+            }
+        }
+
+        static void mergeLegacyDailyRemainCount(
+            List<ShopDailyProductState> dailyStates,
+            string shopId,
+            int remainCount)
+        {
+            if (dailyStates == null || string.IsNullOrWhiteSpace(shopId))
+                return;
+
+            var normalizedShopId = shopId.Trim();
+            for (var i = 0; i < dailyStates.Count; i++)
+            {
+                var state = dailyStates[i];
+                if (state == null)
+                    continue;
+
+                if (!string.Equals(state.shopId?.Trim(), normalizedShopId, StringComparison.Ordinal))
+                    continue;
+
+                if (state.remainCount < 0 && remainCount >= 0)
+                    state.remainCount = remainCount;
+                return;
+            }
+
+            dailyStates.Add(new ShopDailyProductState
+            {
+                shopId = normalizedShopId,
+                discountType = SHOP_DISCOUNT_TYPE.NONE,
+                remainCount = remainCount,
+            });
         }
 
         static void migrateLegacyPurchaseCounts(JObject legacyPurchaseCountsObj, ShopStorage shop)

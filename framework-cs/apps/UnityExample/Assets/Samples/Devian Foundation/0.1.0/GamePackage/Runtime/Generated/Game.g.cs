@@ -800,7 +800,8 @@ namespace Devian.Domain.Game
         public CURRENCY_TYPE currency_type { get; set; }
         public int price { get; set; }
         public string reward_group_id { get; set; } = string.Empty;
-        public int amount { get; set; }
+        public int amount_min { get; set; }
+        public int amount_max { get; set; }
         public int max_count { get; set; }
         public float select_rate { get; set; }
         public float discount_rate10_per { get; set; }

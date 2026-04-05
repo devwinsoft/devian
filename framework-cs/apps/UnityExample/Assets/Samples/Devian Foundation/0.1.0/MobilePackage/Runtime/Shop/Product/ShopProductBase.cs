@@ -2,6 +2,16 @@ using Devian.Domain.Game;
 
 namespace Devian
 {
+    public interface IShopTableProduct
+    {
+        object TableObject { get; }
+    }
+
+    public interface IShopTableProduct<out TRow> : IShopTableProduct where TRow : class
+    {
+        TRow Table { get; }
+    }
+
     public abstract class ShopProductBase
     {
         protected ShopProductBase(
@@ -9,22 +19,18 @@ namespace Devian
             string name_id,
             SHOP_CATALOG_TYPE catalog_type,
             SHOP_PRODUCT_TYPE productType,
-            int max_count = -1,
             SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
         {
             shop_id_internal = normalize(shop_id);
             name_id_internal = normalize(name_id);
             catalog_type_internal = catalog_type;
             ProductType = productType;
-            max_count_internal = normalizeMaxCount(max_count);
-            RemainCount = max_count_internal;
             DiscountType = normalizeDiscountType(discountType);
         }
 
         string shop_id_internal;
         string name_id_internal;
         SHOP_CATALOG_TYPE catalog_type_internal;
-        int max_count_internal;
 
         public string shop_id => shop_id_internal;
         public string ProductId => shop_id_internal; // Legacy alias for old callers.
@@ -34,52 +40,10 @@ namespace Devian
         public SHOP_DISCOUNT_TYPE DiscountType { get; }
         public virtual int PriceWithoutDiscount => 0;
         public int Price => applyDiscount(PriceWithoutDiscount, DiscountType);
-        public int max_count => max_count_internal;
-        public int RemainCount { get; private set; }
-
-        public bool HasPurchaseLimit => max_count_internal >= 0;
-
-        public void SetRemainCount(int remainCount)
-        {
-            RemainCount = sanitizeRemainCount(remainCount, max_count_internal);
-        }
-
-        public bool TryConsumeOne()
-        {
-            if (!HasPurchaseLimit)
-                return true;
-
-            if (RemainCount <= 0)
-                return false;
-
-            RemainCount -= 1;
-            return true;
-        }
-
-        public void ResetRemainCount()
-        {
-            RemainCount = max_count_internal;
-        }
 
         static string normalize(string value)
         {
             return value ?? string.Empty;
-        }
-
-        static int normalizeMaxCount(int maxCount)
-        {
-            return maxCount < -1 ? -1 : maxCount;
-        }
-
-        static int sanitizeRemainCount(int remainCount, int maxCount)
-        {
-            if (maxCount < 0)
-                return -1;
-
-            if (remainCount < 0)
-                return 0;
-
-            return remainCount > maxCount ? maxCount : remainCount;
         }
 
         static int applyDiscount(int price, SHOP_DISCOUNT_TYPE discountType)
@@ -135,5 +99,23 @@ namespace Devian
                     return SHOP_DISCOUNT_TYPE.NONE;
             }
         }
+    }
+
+    public abstract class ShopProductBase<TRow> : ShopProductBase, IShopTableProduct<TRow> where TRow : class
+    {
+        protected ShopProductBase(
+            TRow table,
+            string shop_id,
+            string name_id,
+            SHOP_CATALOG_TYPE catalog_type,
+            SHOP_PRODUCT_TYPE productType,
+            SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE)
+            : base(shop_id, name_id, catalog_type, productType, discountType)
+        {
+            Table = table;
+        }
+
+        public TRow Table { get; }
+        object IShopTableProduct.TableObject => Table;
     }
 }

@@ -10,8 +10,14 @@ namespace Devian
     /// Button press visual feedback plugin with UnityEvent hooks, optional UI sound playback,
     /// and ScrollRect drag bridge.
     /// </summary>
-    [RequireComponent(typeof(EventTrigger))]
-    public class UIComponentButton : UIComponentBase
+    public class UIComponentButton : UIComponentBase,
+        IPointerDownHandler,
+        IPointerUpHandler,
+        IInitializePotentialDragHandler,
+        IBeginDragHandler,
+        IDragHandler,
+        IEndDragHandler,
+        IScrollHandler
     {
         public enum EffectType
         {
@@ -33,17 +39,24 @@ namespace Devian
         /// </summary>
         public UnityEvent onUp;
 
-        private EventTrigger _trigger;
+        /// <summary>
+        /// Invoked when pointer is released over the same target without dragging.
+        /// </summary>
+        public Button.ButtonClickedEvent onClick = new Button.ButtonClickedEvent();
+
         private RectTransform _rectTransform;
+        private Selectable _selectable;
         private ScrollRect _scrollRect;
         private Vector3 _originalScale;
         private Vector2 _originalAnchoredPosition;
         private bool _isDragging;
+        private bool _isPointerDown;
+        private int _pressedPointerId = int.MinValue;
 
         protected override void onAwake()
         {
-            _trigger = GetComponent<EventTrigger>();
             _rectTransform = GetComponent<RectTransform>();
+            _selectable = GetComponent<Selectable>();
             resolveScrollRectIfNeeded();
 
             if (_rectTransform != null)
@@ -51,83 +64,40 @@ namespace Devian
                 _originalScale = _rectTransform.localScale;
                 _originalAnchoredPosition = _rectTransform.anchoredPosition;
             }
-
-            setupTriggers();
         }
 
         protected override void onPoolDespawned()
         {
+            _isPointerDown = false;
+            _pressedPointerId = int.MinValue;
             _isDragging = false;
             restoreVisualState();
         }
 
         protected override void onDestroy()
         {
+            _isPointerDown = false;
+            _pressedPointerId = int.MinValue;
             _isDragging = false;
             restoreVisualState();
         }
 
         private void OnDisable()
         {
+            _isPointerDown = false;
+            _pressedPointerId = int.MinValue;
             _isDragging = false;
             restoreVisualState();
         }
 
-        private void setupTriggers()
+        public void OnPointerDown(PointerEventData eventData)
         {
-            if (_trigger.triggers == null)
-            {
-                _trigger.triggers = new System.Collections.Generic.List<EventTrigger.Entry>();
-            }
+            if (!canHandlePointerEvent(eventData))
+                return;
 
-            _trigger.triggers.Clear();
-
-            // PointerDown
-            var pointerDown = new EventTrigger.Entry();
-            pointerDown.eventID = EventTriggerType.PointerDown;
-            pointerDown.callback.AddListener(onPointerDown);
-            _trigger.triggers.Add(pointerDown);
-
-            // PointerUp
-            var pointerUp = new EventTrigger.Entry();
-            pointerUp.eventID = EventTriggerType.PointerUp;
-            pointerUp.callback.AddListener(onPointerUp);
-            _trigger.triggers.Add(pointerUp);
-
-            // InitializePotentialDrag
-            var initializePotentialDrag = new EventTrigger.Entry();
-            initializePotentialDrag.eventID = EventTriggerType.InitializePotentialDrag;
-            initializePotentialDrag.callback.AddListener(onInitializePotentialDrag);
-            _trigger.triggers.Add(initializePotentialDrag);
-
-            // BeginDrag
-            var beginDrag = new EventTrigger.Entry();
-            beginDrag.eventID = EventTriggerType.BeginDrag;
-            beginDrag.callback.AddListener(onBeginDrag);
-            _trigger.triggers.Add(beginDrag);
-
-            // Drag
-            var drag = new EventTrigger.Entry();
-            drag.eventID = EventTriggerType.Drag;
-            drag.callback.AddListener(onDrag);
-            _trigger.triggers.Add(drag);
-
-            // EndDrag
-            var endDrag = new EventTrigger.Entry();
-            endDrag.eventID = EventTriggerType.EndDrag;
-            endDrag.callback.AddListener(onEndDrag);
-            _trigger.triggers.Add(endDrag);
-
-            // Scroll
-            var scroll = new EventTrigger.Entry();
-            scroll.eventID = EventTriggerType.Scroll;
-            scroll.callback.AddListener(onScroll);
-            _trigger.triggers.Add(scroll);
-        }
-
-        private void onPointerDown(BaseEventData eventData)
-        {
             _isDragging = false;
+            _isPointerDown = true;
+            _pressedPointerId = eventData.pointerId;
             applyPressedVisualState();
 
             // UI Sound (down)
@@ -143,9 +113,16 @@ namespace Devian
             onDown?.Invoke();
         }
 
-        private void onPointerUp(BaseEventData eventData)
+        public void OnPointerUp(PointerEventData eventData)
         {
             restoreVisualState();
+
+            if (!_isPointerDown || _pressedPointerId != eventData.pointerId)
+                return;
+
+            _isPointerDown = false;
+            _pressedPointerId = int.MinValue;
+
             if (_isDragging)
             {
                 _isDragging = false;
@@ -163,6 +140,9 @@ namespace Devian
             }
 
             onUp?.Invoke();
+
+            if (isReleasedOverSelf(eventData))
+                onClick?.Invoke();
         }
 
         /// <summary>
@@ -174,60 +154,58 @@ namespace Devian
             _scrollRect = scroll;
         }
 
-        private void onInitializePotentialDrag(BaseEventData eventData)
+        public void OnInitializePotentialDrag(PointerEventData eventData)
         {
-            if (!tryGetScrollPointerEventData(eventData, out var pointerData, out var scrollRect))
+            if (!tryGetScrollPointerEventData(eventData, out var scrollRect))
                 return;
 
-            scrollRect.OnInitializePotentialDrag(pointerData);
+            scrollRect.OnInitializePotentialDrag(eventData);
         }
 
-        private void onBeginDrag(BaseEventData eventData)
+        public void OnBeginDrag(PointerEventData eventData)
         {
-            if (!(eventData is PointerEventData))
+            if (!canHandlePointerEvent(eventData))
                 return;
 
             _isDragging = true;
             restoreVisualState();
 
-            if (!tryGetScrollPointerEventData(eventData, out var pointerData, out var scrollRect))
+            if (!tryGetScrollPointerEventData(eventData, out var scrollRect))
                 return;
 
-            scrollRect.OnBeginDrag(pointerData);
+            scrollRect.OnBeginDrag(eventData);
         }
 
-        private void onDrag(BaseEventData eventData)
+        public void OnDrag(PointerEventData eventData)
         {
-            if (!tryGetScrollPointerEventData(eventData, out var pointerData, out var scrollRect))
+            if (!tryGetScrollPointerEventData(eventData, out var scrollRect))
                 return;
 
-            scrollRect.OnDrag(pointerData);
+            scrollRect.OnDrag(eventData);
         }
 
-        private void onEndDrag(BaseEventData eventData)
+        public void OnEndDrag(PointerEventData eventData)
         {
-            if (!tryGetScrollPointerEventData(eventData, out var pointerData, out var scrollRect))
+            if (!tryGetScrollPointerEventData(eventData, out var scrollRect))
                 return;
 
-            scrollRect.OnEndDrag(pointerData);
+            scrollRect.OnEndDrag(eventData);
         }
 
-        private void onScroll(BaseEventData eventData)
+        public void OnScroll(PointerEventData eventData)
         {
-            if (!tryGetScrollPointerEventData(eventData, out var pointerData, out var scrollRect))
+            if (!tryGetScrollPointerEventData(eventData, out var scrollRect))
                 return;
 
-            scrollRect.OnScroll(pointerData);
+            scrollRect.OnScroll(eventData);
         }
 
         private bool tryGetScrollPointerEventData(
-            BaseEventData eventData,
-            out PointerEventData pointerData,
+            PointerEventData eventData,
             out ScrollRect scrollRect)
         {
-            pointerData = eventData as PointerEventData;
             scrollRect = resolveScrollRectIfNeeded();
-            return pointerData != null && scrollRect != null && scrollRect.isActiveAndEnabled;
+            return eventData != null && scrollRect != null && scrollRect.isActiveAndEnabled;
         }
 
         private ScrollRect resolveScrollRectIfNeeded()
@@ -244,6 +222,16 @@ namespace Devian
             }
 
             return _scrollRect;
+        }
+
+        public void AddClickListener(UnityAction listener)
+        {
+            onClick.AddListener(listener);
+        }
+
+        public void RemoveClickListener(UnityAction listener)
+        {
+            onClick.RemoveListener(listener);
         }
 
         private void applyPressedVisualState()
@@ -275,6 +263,35 @@ namespace Devian
                     _rectTransform.anchoredPosition = _originalAnchoredPosition;
                     break;
             }
+        }
+
+        private bool canHandlePointerEvent(PointerEventData eventData)
+        {
+            if (eventData == null || !isActiveAndEnabled)
+                return false;
+
+            if (_selectable != null && !_selectable.IsInteractable())
+                return false;
+
+            return eventData.button == PointerEventData.InputButton.Left;
+        }
+
+        private bool isReleasedOverSelf(PointerEventData eventData)
+        {
+            if (_rectTransform == null || eventData == null)
+                return false;
+
+            var raycastTarget = eventData.pointerCurrentRaycast.gameObject;
+            if (raycastTarget != null)
+            {
+                if (raycastTarget == gameObject || raycastTarget.transform.IsChildOf(transform))
+                    return true;
+            }
+
+            return RectTransformUtility.RectangleContainsScreenPoint(
+                _rectTransform,
+                eventData.position,
+                eventData.pressEventCamera);
         }
     }
 }

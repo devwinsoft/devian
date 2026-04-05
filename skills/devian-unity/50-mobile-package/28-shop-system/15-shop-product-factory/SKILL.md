@@ -1,6 +1,6 @@
 ---
 name: 15-shop-product-factory
-description: "`ShopProductFactory`로 테이블 row -> `ShopProductBase` 변환/dispatch 경로를 표준화할 때 사용한다."
+description: "`ShopProductFactory`로 `SHOP_ITEM_*` row -> table-centric `ShopProductBase` 변환 경로를 표준화할 때 사용한다."
 ---
 
 # 15-shop-product-factory
@@ -13,7 +13,7 @@ Type: Design / Factory SSOT
 
 `ShopProductFactory`는 테이블 row -> `ShopProductBase` 변환을 표준화한다.
 
-- `CURRENCY_TYPE` -> 구현 클래스(`Free/Ads/Currency`) dispatch를 한 곳에서 수행한다.
+- source table -> concrete product class dispatch를 한 곳에서 수행한다.
 - 카탈로그 타입별 row -> product 변환 helper를 제공한다.
 
 ---
@@ -37,7 +37,8 @@ internal static class ShopProductFactory
 
 ## Hard Rules
 
-- `CURRENCY_TYPE` -> 구현 클래스(`ShopProductFree/ShopProductAds/ShopProductCurrency`) dispatch는 이 파일에서만 수행한다.
+- concrete product class 선택은 source table 기준으로만 수행한다.
+- `FREE/ADS/CURRENCY` 차이는 구현 클래스가 아니라 product 내부의 `ProductType`/`currency_type` 해석으로 처리한다.
 - `PURCHASE` 상품은 reward 경로를 거치지 않고 `ShopProductPurchase`를 직접 생성한다.
 - 비즈니스 로직(선택/할인/시간 필터)은 factory가 아닌 catalog 계층에 둔다.
 - Factory는 storage 접근/상태 저장 책임을 가지지 않는다.
@@ -45,14 +46,15 @@ internal static class ShopProductFactory
 
 ---
 
-## Product Type Routing
+## Product Routing
 
-| Currency_type | Product Class | ProductType |
-|-------------|---------------|------------|
-| `FREE` | `ShopProductFree` | `FREE` |
-| `ADS` | `ShopProductAds` | `ADS` |
-| 그 외 | `ShopProductCurrency` | `CURRENCY` |
-| (PURCHASE row) | `ShopProductPurchase` | `PURCHASE` |
+| Source Table | Product Class | ProductType 결정 |
+|-------------|---------------|-------------------|
+| `SHOP_ITEM_DAILY` | `ShopProductDaily` | `row.currency_type` |
+| `SHOP_ITEM_EVENT` | `ShopProductEvent` | `row.currency_type` |
+| `SHOP_ITEM_GOLD` | `ShopProductGold` | `row.currency_type` |
+| `SHOP_ITEM_CHEST` | `ShopProductChest` | `row.chest_type` + `row.currency_type` |
+| `SHOP_ITEM_PURCHASE` | `ShopProductPurchase` | `PURCHASE` 고정 |
 
 ---
 
@@ -60,7 +62,7 @@ internal static class ShopProductFactory
 
 | Method | Source Table | 특이사항 |
 |--------|------------|----------|
-| `CreateDailyProduct` | `SHOP_ITEM_DAILY` | `discountType` 파라미터 |
+| `CreateDailyProduct` | `SHOP_ITEM_DAILY` | `discountType` + snapshot `amount` 파라미터, `SHOP_ITEM_DAILY.price`는 단가이며 최종 기본 가격은 product에서 `price * amount`로 계산 |
 | `CreateChestProduct` | `SHOP_ITEM_CHEST` | `NONE` discount |
 | `CreateEventProduct` | `SHOP_ITEM_EVENT` | `amount=1`, `max_count=-1` 고정 |
 | `CreatePurchaseProduct` | `SHOP_ITEM_PURCHASE` | reward 경로 아님, `max_count=-1` 고정 |
@@ -72,7 +74,7 @@ internal static class ShopProductFactory
 
 - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/ShopProductFactory.cs`
 - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/ShopProductFactory.cs`
-- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Shop/ShopProductFactory.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/MobilePackage/Runtime/Shop/ShopProductFactory.cs`
 
 ---
 

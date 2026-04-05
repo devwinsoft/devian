@@ -694,7 +694,8 @@ export interface SHOP_ITEM_DAILY extends IEntityKey<string> {
     currency_type: CURRENCY_TYPE;
     price: number;
     reward_group_id: string;
-    amount: number;
+    amount_min: number;
+    amount_max: number;
     max_count: number;
     select_rate: number;
     discount_rate10_per: number;

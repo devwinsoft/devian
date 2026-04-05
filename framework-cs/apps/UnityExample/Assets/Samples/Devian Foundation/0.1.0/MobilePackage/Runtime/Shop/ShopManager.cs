@@ -77,6 +77,46 @@ namespace Devian
             return null;
         }
 
+        public GameResult<ShopProductBase> GetProduct(string shopId)
+        {
+            return validateShopProductConfig(shopId);
+        }
+
+        public GameResult<ShopRewardProductBase> GetRewardProduct(string shopId)
+        {
+            return getProductAs<ShopRewardProductBase>(shopId);
+        }
+
+        public GameResult<ShopLimitedProductBase> GetLimitedProduct(string shopId)
+        {
+            return getProductAs<ShopLimitedProductBase>(shopId);
+        }
+
+        public GameResult<ShopProductDaily> GetDailyProduct(string shopId)
+        {
+            return getProductAs<ShopProductDaily>(shopId);
+        }
+
+        public GameResult<ShopProductEvent> GetEventProduct(string shopId)
+        {
+            return getProductAs<ShopProductEvent>(shopId);
+        }
+
+        public GameResult<ShopProductGold> GetGoldProduct(string shopId)
+        {
+            return getProductAs<ShopProductGold>(shopId);
+        }
+
+        public GameResult<ShopProductChest> GetChestProduct(string shopId)
+        {
+            return getProductAs<ShopProductChest>(shopId);
+        }
+
+        public GameResult<ShopProductPurchase> GetPurchaseProduct(string shopId)
+        {
+            return getProductAs<ShopProductPurchase>(shopId);
+        }
+
         internal void InvalidateRuntimeState()
         {
             unSubscribeCatalogUnlockMessages();
@@ -311,21 +351,22 @@ namespace Devian
                     $"Shop product price is invalid: shop_id={product.shop_id}, price={chestProduct.PriceWithoutDiscount}, discountType={chestProduct.DiscountType}");
             }
 
-            if (product.HasPurchaseLimit)
+            if (product is ShopLimitedProductBase limitedProduct
+                && limitedProduct.HasPurchaseLimit)
             {
-                if (product.max_count == 0)
+                if (limitedProduct.max_count == 0)
                 {
                     return GameResult<ShopProductBase>.Failure(
                         GAME_ERROR_TYPE.SHOP_ITEM_PURCHASE_LIMIT_DISABLED,
                         $"Shop purchase is disabled by max_count=0: shop_id={product.shop_id}");
                 }
 
-                if (product.RemainCount <= 0)
+                if (limitedProduct.RemainCount <= 0)
                 {
-                    var usedCount = product.max_count - product.RemainCount;
+                    var usedCount = limitedProduct.max_count - limitedProduct.RemainCount;
                     return GameResult<ShopProductBase>.Failure(
                         GAME_ERROR_TYPE.SHOP_ITEM_PURCHASE_LIMIT_EXCEEDED,
-                        $"Shop purchase limit exceeded: shop_id={product.shop_id}, max_count={product.max_count}, remainCount={product.RemainCount}, usedCount={usedCount}");
+                        $"Shop purchase limit exceeded: shop_id={product.shop_id}, max_count={limitedProduct.max_count}, remainCount={limitedProduct.RemainCount}, usedCount={usedCount}");
                 }
             }
 
@@ -407,6 +448,20 @@ namespace Devian
             return GameResult<ShopProductBase>.Success(product);
         }
 
+        GameResult<TProduct> getProductAs<TProduct>(string shopId) where TProduct : ShopProductBase
+        {
+            var validated = validateShopProductConfig(shopId);
+            if (validated.IsFailure)
+                return GameResult<TProduct>.Failure(validated.Error!);
+
+            if (validated.Value is TProduct typedProduct)
+                return GameResult<TProduct>.Success(typedProduct);
+
+            return GameResult<TProduct>.Failure(
+                GAME_ERROR_TYPE.SHOP_PRODUCT_NOT_FOUND,
+                $"Shop product type is not supported: shop_id={shopId}, expected={typeof(TProduct).Name}, actual={validated.Value?.GetType().Name ?? nameof(ShopProductBase)}");
+        }
+
         async Task<GameResult<RewardData[]>> buyPurchaseCatalogAsync(ShopProductPurchase product, CancellationToken ct)
         {
             var validateSeason = validateSeasonPurchaseWindow(product);
@@ -416,9 +471,6 @@ namespace Devian
             var purchaseResult = await PurchaseManager.Instance.PurchaseAsync(product.internal_product_id, ct);
             if (purchaseResult.IsFailure)
                 return GameResult<RewardData[]>.Failure(purchaseResult.Error!);
-
-            if (product.HasPurchaseLimit)
-                markProductPurchased(product);
 
             var save = await SaveDataManager.Instance.SaveGameStorageAsync(true, ct);
             if (save.IsFailure)
@@ -907,16 +959,16 @@ namespace Devian
                 var didRefill = false;
                 for (var i = 0; i < products.Count; i++)
                 {
-                    var product = products[i];
-                    if (!isLimitedAdsOrFreeProduct(product))
+                    if (products[i] is not ShopLimitedProductBase limitedProduct
+                        || !isLimitedAdsOrFreeProduct(limitedProduct))
                         continue;
 
-                    product.ResetRemainCount();
-                    var normalizedShopId = normalizeShopId(product.shop_id);
+                    limitedProduct.ResetRemainCount();
+                    var normalizedShopId = normalizeShopId(limitedProduct.shop_id);
                     if (string.IsNullOrEmpty(normalizedShopId))
                         continue;
 
-                    persistProductRemainState(product, normalizedShopId);
+                    persistProductRemainState(limitedProduct, normalizedShopId);
                     didRefill = true;
                 }
 
@@ -1242,19 +1294,21 @@ namespace Devian
 
         void registerLimitedProduct(ShopProductBase product, string normalizedShopId)
         {
-            if (product == null || !product.HasPurchaseLimit || string.IsNullOrWhiteSpace(normalizedShopId))
+            if (product is not ShopLimitedProductBase limitedProduct
+                || !limitedProduct.HasPurchaseLimit
+                || string.IsNullOrWhiteSpace(normalizedShopId))
                 return;
 
-            if (!_limitedShopIdsByCatalog.TryGetValue(product.catalog_type, out var shopIds))
+            if (!_limitedShopIdsByCatalog.TryGetValue(limitedProduct.catalog_type, out var shopIds))
             {
                 shopIds = new List<string>();
-                _limitedShopIdsByCatalog[product.catalog_type] = shopIds;
+                _limitedShopIdsByCatalog[limitedProduct.catalog_type] = shopIds;
             }
 
             shopIds.Add(normalizedShopId);
         }
 
-        void markProductPurchased(ShopProductBase product)
+        void markProductPurchased(ShopLimitedProductBase product)
         {
             if (product == null || !product.HasPurchaseLimit)
                 return;
@@ -1291,30 +1345,21 @@ namespace Devian
                 getNextRefreshUtcMs(serverNowUtcMs, MillisecondsPerDay));
         }
 
-        void persistProductRemainState(ShopProductBase product, string normalizedShopId)
+        void persistProductRemainState(ShopLimitedProductBase product, string normalizedShopId)
         {
             if (product == null || string.IsNullOrWhiteSpace(normalizedShopId))
                 return;
 
             if (product.catalog_type == SHOP_CATALOG_TYPE.DAILY)
             {
-                if (isDailyStoredProduct(product))
-                {
-                    _storage.RemoveProductRemainCount(product.catalog_type, normalizedShopId);
-                    _storage.UpsertDailyCatalogProduct(
-                        normalizedShopId,
-                        product.DiscountType,
-                        product.RemainCount);
-                }
-                else
-                {
-                    _storage.RemoveDailyCatalogProduct(normalizedShopId);
-                    if (product.HasPurchaseLimit)
-                        _storage.SetProductRemainCount(product.catalog_type, normalizedShopId, product.RemainCount);
-                    else
-                        _storage.RemoveProductRemainCount(product.catalog_type, normalizedShopId);
-                }
-
+                var amount = product is ShopRewardProductBase rewardProduct
+                    ? rewardProduct.amount
+                    : 1;
+                _storage.UpsertDailyCatalogProduct(
+                    normalizedShopId,
+                    product.DiscountType,
+                    product.RemainCount,
+                    amount);
                 return;
             }
 
@@ -1329,8 +1374,8 @@ namespace Devian
 
         static bool isLimitedAdsOrFreeProduct(ShopProductBase product)
         {
-            return product != null
-                && product.HasPurchaseLimit
+            return product is ShopLimitedProductBase limitedProduct
+                && limitedProduct.HasPurchaseLimit
                 && (product.ProductType == SHOP_PRODUCT_TYPE.ADS
                     || product.ProductType == SHOP_PRODUCT_TYPE.FREE);
         }
@@ -1362,15 +1407,6 @@ namespace Devian
                 return false;
 
             return !string.IsNullOrWhiteSpace(catalog.unlock_msg_id);
-        }
-
-        static bool isDailyStoredProduct(ShopProductBase product)
-        {
-            if (product == null || product.catalog_type != SHOP_CATALOG_TYPE.DAILY)
-                return false;
-
-            return product.ProductType != SHOP_PRODUCT_TYPE.ADS
-                && product.ProductType != SHOP_PRODUCT_TYPE.FREE;
         }
 
         GameResult<ChestPurchaseState> resolveChestPurchaseRuntime(ShopProductChest product)

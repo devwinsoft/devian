@@ -10,6 +10,7 @@ namespace Devian
         public string shopId = string.Empty;
         public SHOP_DISCOUNT_TYPE discountType = SHOP_DISCOUNT_TYPE.NONE;
         public int remainCount = -1;
+        public int amount = 1;
     }
 
     [Serializable]
@@ -25,7 +26,7 @@ namespace Devian
     }
 
     [Serializable]
-    public sealed class ShopCatalogDailyStorageData : ShopCatalogProductRemainStorageDataBase
+    public sealed class ShopCatalogDailyStorageData : ShopCatalogStorageDataBase
     {
         public override SHOP_CATALOG_TYPE CatalogType => SHOP_CATALOG_TYPE.DAILY;
 
@@ -71,7 +72,7 @@ namespace Devian
     [Serializable]
     public sealed class ShopStorage
     {
-        public int schemaVersion = 12;
+        public int schemaVersion = 14;
         public ShopCatalogDailyStorageData daily = new();
         public ShopCatalogChestStorageData chest = new();
         public ShopCatalogPurchaseStorageData purchase = new();
@@ -106,6 +107,9 @@ namespace Devian
             out int remainCount)
         {
             remainCount = -1;
+            if (catalogType == SHOP_CATALOG_TYPE.DAILY)
+                return TryGetDailyCatalogProductRemainCount(shopId, out remainCount);
+
             var state = getProductRemainData(catalogType);
             if (state == null)
                 return false;
@@ -122,6 +126,12 @@ namespace Devian
             string shopId,
             int remainCount)
         {
+            if (catalogType == SHOP_CATALOG_TYPE.DAILY)
+            {
+                SetDailyCatalogProductRemainCount(shopId, remainCount);
+                return;
+            }
+
             var key = normalizeShopId(shopId);
             if (string.IsNullOrEmpty(key))
                 return;
@@ -142,6 +152,9 @@ namespace Devian
 
         public void RemoveProductRemainCount(SHOP_CATALOG_TYPE catalogType, string shopId)
         {
+            if (catalogType == SHOP_CATALOG_TYPE.DAILY)
+                return;
+
             var state = getProductRemainData(catalogType);
             if (state == null)
                 return;
@@ -178,9 +191,11 @@ namespace Devian
             if (string.IsNullOrEmpty(key))
                 return false;
 
+            if (TryGetDailyCatalogProductRemainCount(key, out remainCount))
+                return true;
+
             ensureCatalogData();
-            return tryGetProductRemainCount(daily, key, out remainCount)
-                || tryGetProductRemainCount(chest, key, out remainCount)
+            return tryGetProductRemainCount(chest, key, out remainCount)
                 || tryGetProductRemainCount(gold, key, out remainCount);
         }
 
@@ -200,7 +215,6 @@ namespace Devian
                 return;
 
             ensureCatalogData();
-            daily.productRemainCounts.Remove(key);
             chest.productRemainCounts.Remove(key);
             gold.productRemainCounts.Remove(key);
         }
@@ -217,7 +231,6 @@ namespace Devian
                 if (string.IsNullOrEmpty(key))
                     continue;
 
-                daily.productRemainCounts.Remove(key);
                 chest.productRemainCounts.Remove(key);
                 gold.productRemainCounts.Remove(key);
             }
@@ -403,6 +416,16 @@ namespace Devian
                 : Array.Empty<ShopDailyProductState>();
         }
 
+        public bool TryGetDailyCatalogProductRemainCount(string shopId, out int remainCount)
+        {
+            remainCount = -1;
+            if (!TryGetDailyCatalogProduct(shopId, out var state) || state == null)
+                return false;
+
+            remainCount = normalizeRemainCount(state.remainCount);
+            return true;
+        }
+
         public bool TryGetDailyCatalogProduct(string shopId, out ShopDailyProductState state)
         {
             state = null;
@@ -450,21 +473,22 @@ namespace Devian
                 if (!seenShopIds.Add(key))
                     continue;
 
-                daily.dailyCatalogProducts.Add(createDailyState(key, state.discountType, state.remainCount));
+                daily.dailyCatalogProducts.Add(createDailyState(key, state.discountType, state.remainCount, state.amount));
             }
         }
 
         public void UpsertDailyCatalogProduct(
             string shopId,
             SHOP_DISCOUNT_TYPE discountType,
-            int remainCount)
+            int remainCount,
+            int amount)
         {
             ensureCatalogData();
             var key = normalizeShopId(shopId);
             if (string.IsNullOrEmpty(key))
                 return;
 
-            var normalizedState = createDailyState(key, discountType, remainCount);
+            var normalizedState = createDailyState(key, discountType, remainCount, amount);
             var dailyProducts = daily.dailyCatalogProducts;
             for (var i = 0; i < dailyProducts.Count; i++)
             {
@@ -480,6 +504,31 @@ namespace Devian
             }
 
             dailyProducts.Add(normalizedState);
+        }
+
+        public void SetDailyCatalogProductRemainCount(string shopId, int remainCount)
+        {
+            ensureCatalogData();
+            var key = normalizeShopId(shopId);
+            if (string.IsNullOrEmpty(key))
+                return;
+
+            var normalizedRemainCount = normalizeRemainCount(remainCount);
+            var dailyProducts = daily.dailyCatalogProducts;
+            for (var i = 0; i < dailyProducts.Count; i++)
+            {
+                var item = dailyProducts[i];
+                if (item == null)
+                    continue;
+
+                if (!string.Equals(normalizeShopId(item.shopId), key, StringComparison.Ordinal))
+                    continue;
+
+                item.remainCount = normalizedRemainCount;
+                return;
+            }
+
+            dailyProducts.Add(createDailyState(key, SHOP_DISCOUNT_TYPE.NONE, normalizedRemainCount, 1));
         }
 
         public void RemoveDailyCatalogProduct(string shopId)
@@ -512,7 +561,7 @@ namespace Devian
 
         public void Clear()
         {
-            schemaVersion = 12;
+            schemaVersion = 14;
             daily = new ShopCatalogDailyStorageData();
             chest = new ShopCatalogChestStorageData();
             purchase = new ShopCatalogPurchaseStorageData();
@@ -528,7 +577,6 @@ namespace Devian
             purchase ??= new ShopCatalogPurchaseStorageData();
             gold ??= new ShopCatalogGoldStorageData();
             eventCatalog ??= new ShopCatalogEventStorageData();
-            daily.productRemainCounts ??= new Dictionary<string, int>();
             chest.productRemainCounts ??= new Dictionary<string, int>();
             gold.productRemainCounts ??= new Dictionary<string, int>();
             daily.dailyCatalogProducts ??= new List<ShopDailyProductState>();
@@ -539,7 +587,6 @@ namespace Devian
             ensureCatalogData();
             return catalogType switch
             {
-                SHOP_CATALOG_TYPE.DAILY => daily,
                 SHOP_CATALOG_TYPE.CHEST => chest,
                 SHOP_CATALOG_TYPE.GOLD => gold,
                 _ => null,
@@ -560,13 +607,15 @@ namespace Devian
         static ShopDailyProductState createDailyState(
             string shopId,
             SHOP_DISCOUNT_TYPE discountType,
-            int remainCount)
+            int remainCount,
+            int amount)
         {
             return new ShopDailyProductState
             {
                 shopId = normalizeShopId(shopId),
                 discountType = normalizeDiscountType(discountType),
                 remainCount = normalizeRemainCount(remainCount),
+                amount = normalizeDailyAmount(amount),
             };
         }
 
@@ -575,7 +624,7 @@ namespace Devian
             if (state == null)
                 return null;
 
-            return createDailyState(state.shopId, state.discountType, state.remainCount);
+            return createDailyState(state.shopId, state.discountType, state.remainCount, state.amount);
         }
 
         static long normalizeUtcMs(long utcMs)
@@ -586,6 +635,11 @@ namespace Devian
         static int normalizeRemainCount(int remainCount)
         {
             return remainCount < -1 ? -1 : remainCount;
+        }
+
+        static int normalizeDailyAmount(int amount)
+        {
+            return amount < 1 ? 1 : amount;
         }
 
         static int normalizeLimitedRemainCount(int remainCount)

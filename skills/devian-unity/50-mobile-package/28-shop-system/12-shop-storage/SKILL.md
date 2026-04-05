@@ -31,11 +31,9 @@ public sealed class ShopStorage
 [Serializable]
 public abstract class ShopCatalogStorageDataBase
 {
-    public abstract SHOP_CATALOG_TYPE Catalog_type { get; }
+    public abstract SHOP_CATALOG_TYPE CatalogType { get; }
 }
-```
 
-```csharp
 [Serializable]
 public abstract class ShopCatalogProductRemainStorageDataBase : ShopCatalogStorageDataBase
 {
@@ -44,8 +42,11 @@ public abstract class ShopCatalogProductRemainStorageDataBase : ShopCatalogStora
 ```
 
 ```csharp
-public sealed class ShopCatalogDailyStorageData : ShopCatalogProductRemainStorageDataBase
+[Serializable]
+public sealed class ShopCatalogDailyStorageData : ShopCatalogStorageDataBase
 {
+    public override SHOP_CATALOG_TYPE CatalogType => SHOP_CATALOG_TYPE.DAILY;
+
     public long autoRefreshUtcMs;
     public long adsRefreshUtcMs;
     public long manualRefreshUtcMs;
@@ -53,31 +54,46 @@ public sealed class ShopCatalogDailyStorageData : ShopCatalogProductRemainStorag
     public List<ShopDailyProductState> dailyCatalogProducts = new();
 }
 
+[Serializable]
 public sealed class ShopCatalogChestStorageData : ShopCatalogProductRemainStorageDataBase
 {
+    public override SHOP_CATALOG_TYPE CatalogType => SHOP_CATALOG_TYPE.CHEST;
+
     public long adsRefreshUtcMs;
     public int level;
     public int currentExp;
 }
 
+[Serializable]
 public sealed class ShopCatalogPurchaseStorageData : ShopCatalogStorageDataBase
 {
+    public override SHOP_CATALOG_TYPE CatalogType => SHOP_CATALOG_TYPE.PURCHASE;
 }
 
+[Serializable]
 public sealed class ShopCatalogGoldStorageData : ShopCatalogProductRemainStorageDataBase
 {
+    public override SHOP_CATALOG_TYPE CatalogType => SHOP_CATALOG_TYPE.GOLD;
+
     public long adsRefreshUtcMs;
 }
 
+[Serializable]
 public sealed class ShopCatalogEventStorageData : ShopCatalogStorageDataBase
 {
+    public override SHOP_CATALOG_TYPE CatalogType => SHOP_CATALOG_TYPE.EVENT;
+
     public long autoRefreshUtcMs;
 }
 ```
 
+보조 타입:
+
+- `ShopDailyProductState = { shopId, discountType, remainCount, amount }`
+
 `ShopStorage` 필드:
 
-- `schemaVersion` (현재 `12`)
+- `schemaVersion` (현재 `14`)
 - `daily: ShopCatalogDailyStorageData`
 - `chest: ShopCatalogChestStorageData`
 - `purchase: ShopCatalogPurchaseStorageData`
@@ -85,10 +101,6 @@ public sealed class ShopCatalogEventStorageData : ShopCatalogStorageDataBase
 - `eventCatalog: ShopCatalogEventStorageData`
 - legacy migration buffer:
   - `_legacyPurchaseCounts: Dictionary<string, int>` (직렬화 안 함)
-
-보조 타입:
-
-- `ShopDailyProductState = { shop_item_id, discountType, remainCount }`
 
 ---
 
@@ -99,7 +111,6 @@ public sealed class ShopCatalogEventStorageData : ShopCatalogStorageDataBase
   - `adsRefreshUtcMs`
   - `manualRefreshUtcMs`
   - `manualRefreshRemainCount`
-  - `productRemainCounts`
   - `dailyCatalogProducts`
 - `CHEST`
   - `adsRefreshUtcMs`
@@ -116,9 +127,10 @@ public sealed class ShopCatalogEventStorageData : ShopCatalogStorageDataBase
 
 규칙:
 
-- `dailyCatalogProducts`는 `SHOP_ITEM_DAILY`의 ADS/FREE 제외 동적 5개 상품만 저장한다.
-- `DAILY`의 ADS/FREE 상품은 `dailyCatalogProducts`에 저장하지 않는다. 해당 상품의 `remainCount`는 `daily.productRemainCounts`를 사용한다.
-- 무제한 상품(`max_count=-1`)은 `productRemainCounts`에 저장하지 않는다.
+- `dailyCatalogProducts`는 DAILY 최종 snapshot 전체를 저장한다.
+- DAILY snapshot에는 `FREE`, `ADS`, 비고정 5개가 모두 포함된다.
+- DAILY의 `remainCount`/`discountType`/`amount` 저장 위치는 `dailyCatalogProducts` 하나뿐이다.
+- 무제한 상품(`max_count=-1`)은 `CHEST/GOLD.productRemainCounts`에 저장하지 않는다.
 - `PURCHASE`와 `EVENT`에 필요 없는 상태를 미리 넣지 않는다.
 - 최고 레벨 상태는 `currentExp=0`으로 저장/복원한다.
 
@@ -130,7 +142,7 @@ public sealed class ShopCatalogEventStorageData : ShopCatalogStorageDataBase
 - `ShopCatalogFactory.CreateRuntimeCatalogs(storage)`는 catalog 생성 시 해당 catalog type의 storage data를 같이 전달한다.
 - 각 catalog는 자기 storage data만 해석한다.
 - non-daily catalog는 table product 생성 후 자기 storage data의 `productRemainCounts`를 직접 적용한다.
-- `DAILY`는 storage의 `dailyCatalogProducts`가 valid하면 그 상태로 동적 5개를 복원하고, invalid/empty면 table에서 새로 선택 생성한다.
+- `DAILY`는 storage의 `dailyCatalogProducts`가 valid하면 snapshot 전체를 복원하고, invalid/empty면 `FREE/ADS 고정 + 비고정 5개 선택`으로 새 snapshot을 생성한다.
 - `autoRefreshUtcMs`는 시작 시각이 아니라 다음 refresh 시각이다.
 - `EVENT.autoRefreshUtcMs`는 주기값이 아니라 다음 `start_time/end_time` 경계 시각이다.
 - `adsRefreshUtcMs`는 ADS/FREE 구매 성공 시 `serverNow + 1day`로 기록한다.
@@ -141,6 +153,7 @@ public sealed class ShopCatalogEventStorageData : ShopCatalogStorageDataBase
 - `manualRefreshRemainCount`는 rolling 24시간 남은 횟수다.
 - 초기 상태와 만료 후 reset 상태의 `manualRefreshRemainCount`는 `5`다.
 - 수동 refresh 성공 시 `manualRefreshRemainCount`를 1 감소시킨다.
+- 구 save data의 DAILY `productRemainCounts`는 deserialize 시 `dailyCatalogProducts`로 병합 복원하고, 신규 저장에서는 사용하지 않는다.
 - legacy `purchaseCounts`/`purchaseLimits`는 `_legacyPurchaseCounts`로만 1회 마이그레이션한다.
 
 ---
@@ -151,10 +164,10 @@ ShopStorage는 SaveData JSON의 `shop` 섹션으로 직렬화한다.
 
 - serialize: `SaveDataJsonCodecShop.Serialize(ShopStorage)`
 - deserialize: `SaveDataJsonCodecShop.DeserializeInto(JObject, ShopStorage)`
-- 최신 스키마는 `schemaVersion=12`
+- 최신 스키마는 `schemaVersion=13`
 - 저장 JSON은 `catalogs` 하위에 catalog 단위로 묶어 저장한다.
 - JSON shape는 grouped catalog 구조를 유지하지만, 런타임 메모리 구조는 typed storage field를 사용한다.
-- `DAILY`는 `adsRefreshUtcMs`, `autoRefreshUtcMs`, `manualRefreshUtcMs`, `manualRefreshRemainCount`, `productRemainCounts`, `dailyCatalogProducts`를 저장한다.
+- `DAILY`는 `adsRefreshUtcMs`, `autoRefreshUtcMs`, `manualRefreshUtcMs`, `manualRefreshRemainCount`, `dailyCatalogProducts(shopId, discountType, remainCount, amount)`를 저장한다.
 - `CHEST`는 `adsRefreshUtcMs`, `productRemainCounts`, `level`, `currentExp`를 저장한다.
 - `GOLD`는 `adsRefreshUtcMs`, `productRemainCounts`를 저장한다.
 - `EVENT`는 `autoRefreshUtcMs`를 저장한다.
@@ -175,7 +188,7 @@ ShopStorage는 SaveData JSON의 `shop` 섹션으로 직렬화한다.
 
 - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/ShopStorage.cs`
 - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Shop/ShopStorage.cs`
-- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Shop/ShopStorage.cs`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/MobilePackage/Runtime/Shop/ShopStorage.cs`
 
 ---
 

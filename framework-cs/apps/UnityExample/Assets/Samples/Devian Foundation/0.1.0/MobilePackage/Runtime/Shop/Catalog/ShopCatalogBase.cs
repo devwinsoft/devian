@@ -154,14 +154,14 @@ namespace Devian
                 var limitedShopIds = new List<string>(products.Count);
                 for (var i = 0; i < products.Count; i++)
                 {
-                    var product = products[i];
-                    if (product == null || !product.HasPurchaseLimit)
+                    if (products[i] is not ShopLimitedProductBase limitedProduct
+                        || !limitedProduct.HasPurchaseLimit)
                         continue;
 
-                    if (!clearAdsFreeRemainState && IsLimitedAdsOrFreeProduct(product))
+                    if (!clearAdsFreeRemainState && IsLimitedAdsOrFreeProduct(limitedProduct))
                         continue;
 
-                    var normalizedShopId = NormalizeShopId(product.shop_id);
+                    var normalizedShopId = NormalizeShopId(limitedProduct.shop_id);
                     if (string.IsNullOrEmpty(normalizedShopId))
                         continue;
 
@@ -234,8 +234,8 @@ namespace Devian
 
         protected static bool IsLimitedAdsOrFreeProduct(ShopProductBase product)
         {
-            return product != null
-                && product.HasPurchaseLimit
+            return product is ShopLimitedProductBase limitedProduct
+                && limitedProduct.HasPurchaseLimit
                 && (product.ProductType == SHOP_PRODUCT_TYPE.ADS
                     || product.ProductType == SHOP_PRODUCT_TYPE.FREE);
         }
@@ -269,27 +269,32 @@ namespace Devian
             if (string.IsNullOrEmpty(normalizedShopId))
                 return;
 
-            if (!product.HasPurchaseLimit)
+            if (product is not ShopLimitedProductBase limitedProduct)
             {
-                product.SetRemainCount(-1);
+                Storage.RemoveProductRemainCount(CatalogType, normalizedShopId);
+                return;
+            }
+
+            if (!limitedProduct.HasPurchaseLimit)
+            {
                 Storage.RemoveProductRemainCount(CatalogType, normalizedShopId);
                 return;
             }
 
             if (Storage.TryGetProductRemainCount(CatalogType, normalizedShopId, out var storedRemainCount))
             {
-                product.SetRemainCount(storedRemainCount);
+                limitedProduct.SetRemainCount(storedRemainCount);
             }
             else if (Storage.TryTakeLegacyPurchaseCount(normalizedShopId, out var legacyPurchaseCount))
             {
-                product.SetRemainCount(product.max_count - legacyPurchaseCount);
+                limitedProduct.SetRemainCount(limitedProduct.max_count - legacyPurchaseCount);
             }
             else
             {
-                product.ResetRemainCount();
+                limitedProduct.ResetRemainCount();
             }
 
-            Storage.SetProductRemainCount(CatalogType, normalizedShopId, product.RemainCount);
+            Storage.SetProductRemainCount(CatalogType, normalizedShopId, limitedProduct.RemainCount);
         }
 
         void setProducts(IReadOnlyList<ShopProductBase> products)

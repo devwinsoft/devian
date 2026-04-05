@@ -25,7 +25,7 @@ AppliesTo: v10
 - `catalog refresh`: `ShopCatalogBase.RefreshProducts()` 재실행
 - `auto refresh`: 다음 refresh 시각(`autoRefreshUtcMs`)에 도달했을 때 카탈로그를 갱신하는 것
 - `ads refill`: `adsRefreshUtcMs` 만료 시 ADS/FREE 제한 상품 `remainCount` 리필
-- `daily manual refresh`: `SHOP_ITEM_DAILY`가 광고 시청 성공으로 동적 5개 상품을 다시 뽑는 것
+- `daily manual refresh`: `SHOP_ITEM_DAILY`가 광고 시청 성공으로 DAILY snapshot을 다시 생성하는 것
 - `force catalog refresh`: `ShopCatalogBase.ResetAds()` 경로에서 강제 갱신
 
 ---
@@ -50,7 +50,8 @@ AppliesTo: v10
 - `ShopCatalogBase.Initialize()`는 `onInitialize()` 후 `RefreshProducts()`를 호출한다.
 - 실제 product 생성 책임은 `ShopCatalogBase.onRefresh()`가 가진다.
 - `ShopCatalogBase.onRefresh()` 기본 경로는 `CHEST/PURCHASE/GOLD`의 테이블 전체 row를 product로 생성하고, 같은 catalog bucket의 storage remain 상태를 즉시 적용한다.
-- `ShopCatalogDaily.onRefresh()`는 valid storage가 있으면 storage 기준으로 5개 동적 상품을 복원하고, invalid/empty storage면 5개를 새로 선택 생성한다.
+- `ShopCatalogDaily.onRefresh()`는 valid storage가 있으면 DAILY snapshot 전체를 복원하고, invalid/empty storage면 `FREE/ADS 고정 + 비고정 5개 선택`으로 새 snapshot을 생성한다.
+- `ShopProductDaily.PriceWithoutDiscount`는 `SHOP_ITEM_DAILY.price * snapshot.amount`다. `SHOP_ITEM_DAILY.price`는 단가로 해석한다.
 - `ShopCatalogEvent.onRefresh()`는 `SHOP_ITEM_EVENT.start_time/end_time`을 서버 UTC 기준으로 평가해 현재 판매 중인 row만 product로 생성한다.
 - `ShopCatalogBase`는 `Storage`를 소유하며, catalog runtime state helper는 catalog 계층에 둔다.
 - `ShopCatalogBase`는 generic `StorageData`를 소유하며, 각 subclass는 자기 typed storage data를 해석한다.
@@ -105,7 +106,7 @@ AppliesTo: v10
 7. `DidRefreshCatalogProducts` / `DidMutateStorage` 결과를 반환한다.
 
 규칙:
-- `DAILY` refresh 시에는 `dailyCatalogProducts`를 비우고 5개 동적 상품을 재생성한다.
+- `DAILY` refresh 시에는 `dailyCatalogProducts`를 새 DAILY snapshot으로 교체한다.
 - ADS/FREE 리필 조건이 false이면 ADS/FREE remain 상태는 유지한다.
 - `unlock_msg_id`가 `IsNullOrWhiteSpace`면 unlock 조건이 없는 카탈로그이며 `IsLocked=false`로 처리한다.
 
@@ -155,7 +156,8 @@ AppliesTo: v10
 - `ShopStorage`는 generic dictionary가 아니라 catalog별 typed storage data field를 사용한다.
 - 이후 `LoginManager -> ShopManager.Initialize()`가 storage 기반 runtime catalog/product 구성을 수행한다.
 - `DAILY`를 제외한 카탈로그는 각 catalog의 `onRefresh()`가 table product 생성 + storage remain 적용을 직접 수행한다.
-- `DAILY`는 `onRefresh()`에서 storage 기준 product 구성을 직접 복원할 수 있다.
+- `DAILY`는 `onRefresh()`에서 storage의 `dailyCatalogProducts`를 single-source snapshot으로 복원한다.
+- `DAILY`의 `remainCount`/`discountType`/`amount`는 `dailyCatalogProducts`에만 저장한다. `productRemainCounts`는 legacy migration 입력으로만 취급한다.
 - `DAILY` manual refresh 상태는 `ShopCatalogDaily.SyncRuntimeState(...)`가 storage 만료 여부를 정리하고 catalog runtime 프로퍼티에 동기화한다.
 - `EVENT`는 별도 동적 payload를 저장하지 않고, `SHOP_ITEM_EVENT` + 서버 시간 기준으로 매번 활성 상품을 재구성한다.
 - 일반 shop runtime mutation은 로컬 save queue를 통해 저장한다. DAILY manual refresh는 `ShopCatalogDaily.RefreshByAdsAsync()`가 로컬 저장을 직접 수행한다.

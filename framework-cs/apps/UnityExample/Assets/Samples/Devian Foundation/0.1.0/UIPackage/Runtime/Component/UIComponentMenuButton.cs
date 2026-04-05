@@ -16,6 +16,7 @@ namespace Devian
         public bool isSelected { get; private set; }
 
         private Button _button;
+        private UIComponentButton _componentButton;
         private RectTransform _rectTransform;
         private LayoutElement _layoutElement;
         private UIComponentMenuBar _ownerBar;
@@ -25,6 +26,7 @@ namespace Devian
         protected override void onAwake()
         {
             _button = GetComponent<Button>();
+            _componentButton = GetComponent<UIComponentButton>();
             _rectTransform = GetComponent<RectTransform>();
             _transitionPlayer = resolveTransitionPlayer();
             _layoutElement = resolveLayoutElement();
@@ -33,6 +35,7 @@ namespace Devian
         protected override void onInit(Canvas canvas)
         {
             _button ??= GetComponent<Button>();
+            _componentButton ??= GetComponent<UIComponentButton>();
             _rectTransform ??= GetComponent<RectTransform>();
             _transitionPlayer ??= resolveTransitionPlayer();
             _layoutElement ??= resolveLayoutElement();
@@ -42,7 +45,9 @@ namespace Devian
             if (isSelected) onSelect();
             else onDeselect();
 
-            if (_button != null)
+            if (_componentButton != null)
+                _componentButton.AddClickListener(onClickButton);
+            else if (_button != null)
                 _button.onClick.AddListener(onClickButton);
         }
 
@@ -152,7 +157,9 @@ namespace Devian
 
         private void removeClickListener()
         {
-            if (_button != null)
+            if (_componentButton != null)
+                _componentButton.RemoveClickListener(onClickButton);
+            else if (_button != null)
                 _button.onClick.RemoveListener(onClickButton);
         }
 

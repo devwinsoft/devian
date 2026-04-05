@@ -15,7 +15,10 @@ public class UILobbyShopGoldFrame : UIBaseFrame
 
     public void OnClick()
     {
-        SHOP_ITEM_GOLD table = TB_SHOP_ITEM_GOLD.Get(shopItemId);
+        var productResult = ShopManager.Instance.GetGoldProduct(shopItemId);
+        SHOP_ITEM_GOLD table = productResult.IsSuccess
+            ? productResult.Value?.Table
+            : TB_SHOP_ITEM_GOLD.Get(shopItemId);
         if (table == null)
         {
             return;
