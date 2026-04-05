@@ -68,9 +68,7 @@ namespace Devian
         // ── Popup ──
         [Header("Popup")]
         [SerializeField] private UI_POPUP_CANVAS_ID _popupCanvasId;
-        [SerializeField] private UIPopupFrameMapEntry[] _popupFrameMappings;
 
         public UI_POPUP_CANVAS_ID PopupCanvasId => _popupCanvasId;
-        public UIPopupFrameMapEntry[] PopupFrameMappings => _popupFrameMappings;
     }
 }
