@@ -39,7 +39,16 @@ MonoBehaviour:
   _groupConfigs:
   - GroupId: System
     ToastFrameId:
-      Value: ui_toast_frame
+      Value: ui_toast_frame_system
+    AnchorPreset: 4
+    AnchoredOffset: {x: 0, y: 0}
+    MaxVisibleCount: 4
+    DefaultDuration: 4
+    LayoutDirection: 1
+    DuplicatePolicy: 0
+  - GroupId: Error
+    ToastFrameId:
+      Value: ui_toast_frame_error
     AnchorPreset: 4
     AnchoredOffset: {x: 0, y: 300}
     MaxVisibleCount: 4
@@ -48,5 +57,3 @@ MonoBehaviour:
     DuplicatePolicy: 0
   _popupCanvasId:
     Value: ui_popup_canvas
-  _dimColor: {r: 0, g: 0, b: 0, a: 1}
-  _dimAlpha: 0.75

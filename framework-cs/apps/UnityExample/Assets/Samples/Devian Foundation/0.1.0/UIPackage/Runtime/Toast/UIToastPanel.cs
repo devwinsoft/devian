@@ -22,10 +22,10 @@ namespace Devian
             _groups.Clear();
         }
 
-        public void Enqueue(string message, string groupId, ToastType toastType)
+        public void Enqueue(string message, string groupId)
         {
             EnsureGroups();
-            ResolveGroup(groupId).Enqueue(message, toastType);
+            ResolveGroup(groupId).Enqueue(message);
         }
 
         private void EnsureGroups()

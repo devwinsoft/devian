@@ -7,17 +7,11 @@ namespace Devian
 {
     public sealed class UIToastGroup
     {
-        private sealed class PendingToast
-        {
-            public string Message;
-            public ToastType ToastType;
-        }
-
         private readonly UIToastCanvas _canvas;
         private readonly RectTransform _root;
         private readonly UI_TOAST_FRAME_ID _toastFrameId;
         private readonly ToastGroupConfig _config;
-        private readonly Queue<PendingToast> _pending = new Queue<PendingToast>();
+        private readonly Queue<string> _pending = new Queue<string>();
         private readonly List<UIToastFrame> _active = new List<UIToastFrame>();
 
         public UIToastGroup(
@@ -34,7 +28,7 @@ namespace Devian
             ApplyRootLayout();
         }
 
-        public void Enqueue(string message, ToastType toastType)
+        public void Enqueue(string message)
         {
             if (TryHandleDuplicate(message))
             {
@@ -43,11 +37,11 @@ namespace Devian
 
             if (_active.Count < ResolveMaxVisibleCount())
             {
-                ShowImmediate(message, toastType);
+                ShowImmediate(message);
                 return;
             }
 
-            _pending.Enqueue(new PendingToast { Message = message, ToastType = toastType });
+            _pending.Enqueue(message);
         }
 
         public void Clear()
@@ -107,7 +101,7 @@ namespace Devian
             return null;
         }
 
-        private void ShowImmediate(string message, ToastType toastType)
+        private void ShowImmediate(string message)
         {
             if (_toastFrameId == null || !_toastFrameId.IsValid)
             {
@@ -132,7 +126,7 @@ namespace Devian
                 frame._InitComplete();
             }
 
-            frame.Bind(message, toastType);
+            frame.Bind(message);
             frame.transform.SetAsLastSibling();
             ApplyFrameOffset(frame, ResolveNextFrameOffset());
 
@@ -158,12 +152,12 @@ namespace Devian
             while (_active.Count < ResolveMaxVisibleCount() && _pending.Count > 0)
             {
                 var next = _pending.Dequeue();
-                if (TryHandleDuplicate(next.Message))
+                if (TryHandleDuplicate(next))
                 {
                     continue;
                 }
 
-                ShowImmediate(next.Message, next.ToastType);
+                ShowImmediate(next);
             }
         }
 

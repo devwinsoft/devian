@@ -23,20 +23,6 @@ namespace Devian
         [SerializeField] private TextMeshProUGUI _messageText;
         [SerializeField] private UI_TRANSITION_PRESET_ID _showTransitionId;
         [SerializeField] private UI_TRANSITION_PRESET_ID _hideTransitionId;
-        [SerializeField] private Graphic _backgroundGraphic;
-        [SerializeField] private CanvasGroup _canvasGroup;
-
-        [Header("Background Colors")]
-        [SerializeField] private Color _infoBackgroundColor = new Color(0.15f, 0.15f, 0.15f, 0.95f);
-        [SerializeField] private Color _successBackgroundColor = new Color(0.16f, 0.45f, 0.24f, 0.95f);
-        [SerializeField] private Color _warningBackgroundColor = new Color(0.75f, 0.5f, 0.08f, 0.95f);
-        [SerializeField] private Color _errorBackgroundColor = new Color(0.7f, 0.18f, 0.18f, 0.95f);
-
-        [Header("Text Colors")]
-        [SerializeField] private Color _infoTextColor = Color.white;
-        [SerializeField] private Color _successTextColor = Color.white;
-        [SerializeField] private Color _warningTextColor = Color.white;
-        [SerializeField] private Color _errorTextColor = Color.white;
 
         private Coroutine _lifetimeCoroutine;
         private Action<UIToastFrame> _onHidden;
@@ -58,15 +44,14 @@ namespace Devian
             ResolveDefaults();
         }
 
-        protected override void onPoolSpawned()
+        public void OnPoolSpawned()
         {
             ResolveDefaults();
             CancelInternal();
             isHiding = false;
-            ApplyNonBlocking();
         }
 
-        protected override void onPoolDespawned()
+        public void OnPoolDespawned()
         {
             CancelInternal();
             isHiding = false;
@@ -79,36 +64,19 @@ namespace Devian
             _currentMessage = string.Empty;
         }
 
-        public void OnPoolSpawned()
-        {
-            _HandlePoolSpawned();
-        }
-
-        public void OnPoolDespawned()
-        {
-            _HandlePoolDespawned();
-        }
-
-        public void Bind(string message, ToastType toastType)
+        public void Bind(string message)
         {
             ResolveDefaults();
-            ApplyNonBlocking();
             _currentMessage = message ?? string.Empty;
 
             if (_messageText != null)
             {
                 _messageText.text = _currentMessage;
-                _messageText.color = ResolveTextColor(toastType);
                 _messageText.ForceMeshUpdate();
             }
             else
             {
                 Debug.LogWarning("[UIToastFrame] TextMeshProUGUI target is missing.", this);
-            }
-
-            if (_backgroundGraphic != null)
-            {
-                _backgroundGraphic.color = ResolveBackgroundColor(toastType);
             }
         }
 
@@ -262,20 +230,6 @@ namespace Devian
             {
                 _messageText = GetComponentInChildren<TextMeshProUGUI>(true);
             }
-
-            if (_backgroundGraphic == null)
-            {
-                _backgroundGraphic = GetComponent<Image>();
-                if (_backgroundGraphic == null)
-                {
-                    _backgroundGraphic = GetComponentInChildren<Image>(true);
-                }
-            }
-
-            if (_canvasGroup == null)
-            {
-                _canvasGroup = GetComponentInChildren<CanvasGroup>(true);
-            }
         }
 
         private UITransitionPlayer GetTransitionPlayer()
@@ -300,51 +254,6 @@ namespace Devian
                 LocalScale = rectTransform.localScale
             };
             _hasInitialLayout = true;
-        }
-
-        private void ApplyNonBlocking()
-        {
-            if (_canvasGroup != null)
-            {
-                _canvasGroup.interactable = false;
-                _canvasGroup.blocksRaycasts = false;
-            }
-
-            var graphics = GetComponentsInChildren<Graphic>(true);
-            for (var i = 0; i < graphics.Length; i++)
-            {
-                graphics[i].raycastTarget = false;
-            }
-        }
-
-        private Color ResolveBackgroundColor(ToastType type)
-        {
-            switch (type)
-            {
-                case ToastType.Success:
-                    return _successBackgroundColor;
-                case ToastType.Warning:
-                    return _warningBackgroundColor;
-                case ToastType.Error:
-                    return _errorBackgroundColor;
-                default:
-                    return _infoBackgroundColor;
-            }
-        }
-
-        private Color ResolveTextColor(ToastType type)
-        {
-            switch (type)
-            {
-                case ToastType.Success:
-                    return _successTextColor;
-                case ToastType.Warning:
-                    return _warningTextColor;
-                case ToastType.Error:
-                    return _errorTextColor;
-                default:
-                    return _infoTextColor;
-            }
         }
     }
 }
