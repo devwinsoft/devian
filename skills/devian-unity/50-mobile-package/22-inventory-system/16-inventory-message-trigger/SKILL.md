@@ -44,6 +44,10 @@ public sealed class InventoryMessageTrigger : BaseTrigger<EntityId, INVENTORY_ME
 - `ITEM_CARD_CHANGED`
 - `ITEM_MATERIAL_CHANGED`
 - `ITEM_HERO_CHANGED`
+- `ITEM_EQUIP_LIST_CHANGED`
+- `ITEM_CARD_LIST_CHANGED`
+- `ITEM_MATERIAL_LIST_CHANGED`
+- `ITEM_HERO_LIST_CHANGED`
 - `RENTAL_CHANGED`
 - `TREASURE_STATE_CHANGED`
 - `INVENTORY_SNAPSHOT_CHANGED`
@@ -52,10 +56,14 @@ payload 규약:
 
 - `PASS_OWNERSHIP_CHANGED`: `args[0] = string passId`, `args[1] = bool owned`
 - `CURRENCY_CHANGED`: `args[0] = CURRENCY_TYPE`, `args[1] = long delta`, `args[2] = long currentAmount`
-- `ITEM_EQUIP_CHANGED`: `args[0] = string itemUid`, `args[1] = string itemId`, `args[2] = AbilityItemEquip runtimeOrNull`, `args[3] = int delta`
-- `ITEM_CARD_CHANGED`: `args[0] = string itemId`, `args[1] = AbilityItemCard runtimeOrNull`, `args[2] = int delta`
-- `ITEM_MATERIAL_CHANGED`: `args[0] = string itemId`, `args[1] = AbilityItemMaterial runtimeOrNull`, `args[2] = int delta`
-- `ITEM_HERO_CHANGED`: `args[0] = string itemId`, `args[1] = AbilityItemHero runtimeOrNull`, `args[2] = int delta`
+- `ITEM_EQUIP_CHANGED`: `args[0] = string itemUid`, `args[1] = string itemId`, `args[2] = AbilityItemEquip runtime`
+- `ITEM_CARD_CHANGED`: `args[0] = string itemId`, `args[1] = AbilityItemCard runtime`
+- `ITEM_MATERIAL_CHANGED`: `args[0] = string itemId`, `args[1] = AbilityItemMaterial runtime`
+- `ITEM_HERO_CHANGED`: `args[0] = string itemId`, `args[1] = AbilityItemHero runtime`
+- `ITEM_EQUIP_LIST_CHANGED`: `args[0] = INVENTORY_LIST_CHANGE_TYPE`, `args[1] = string itemUid`, `args[2] = string itemId`, `args[3] = AbilityItemEquip runtimeOrNull`
+- `ITEM_CARD_LIST_CHANGED`: `args[0] = INVENTORY_LIST_CHANGE_TYPE`, `args[1] = string itemId`, `args[2] = AbilityItemCard runtimeOrNull`
+- `ITEM_MATERIAL_LIST_CHANGED`: `args[0] = INVENTORY_LIST_CHANGE_TYPE`, `args[1] = string itemId`, `args[2] = AbilityItemMaterial runtimeOrNull`
+- `ITEM_HERO_LIST_CHANGED`: `args[0] = INVENTORY_LIST_CHANGE_TYPE`, `args[1] = string itemId`, `args[2] = AbilityItemHero runtimeOrNull`
 - `RENTAL_CHANGED`: `args[0] = string itemId`, `args[1] = long expiresAtClientUtcMs`, `args[2] = bool active`
 - `TREASURE_STATE_CHANGED`: `args[0] = TREASURE_GRADE_TYPE`, `args[1] = int deltaCount`, `args[2] = int currentCount`, `args[3] = int currentLevel`, `args[4] = int currentExp`
 - `INVENTORY_SNAPSHOT_CHANGED`: `args[0] = INVENTORY_SNAPSHOT_CHANGE_REASON`
@@ -66,6 +74,7 @@ payload 규약:
 
 - `AchieveManager`는 `ACHIEVE_PASS.req_pass_id` 조건 runtime의 WAIT 활성 전이를 위해 Inventory 메시지를 구독한다.
 - `InventoryManager`는 item/currency 변경을 타입별 `*_CHANGED` key로 발행한다.
+- item 목록 추가/삭제는 타입별 `*_LIST_CHANGED` key로 발행한다.
 - bulk load/import/clear는 `INVENTORY_SNAPSHOT_CHANGED` 한 번으로 알린다.
 - 직접 `InventoryMessageTrigger` 인스턴스를 참조/주입하지 않는다.
 

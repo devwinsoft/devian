@@ -45,7 +45,7 @@ AppliesTo: v10
 | `AbilityBattleStatus.cs` | `STATUS` 참조 wrapper (`StatusId`, `NameId`, `AffectList`) |
 | `AbilityBattleProjectile.cs` | `PROJECTILE` 참조 wrapper (`ProjectileId`, `NameId`, `AffectList`) |
 | `AbilityAffect.cs` | `AFFECT` 참조 wrapper (`AffectId`, `NameId`) |
-| `AbilityItemBase.cs` | item 공통 abstract 베이스 (`Amount`, `ItemLevel`, `AddAmount`) |
+| `AbilityItemBase.cs` | item 공통 abstract 베이스 (`Amount`, `ItemLevel`, `AddAmount`, level stat replace helper) |
 | `AbilityItemEquip.cs` | `ITEM_EQUIP` 참조 + `ItemUid` + owner/unit slot 상태 |
 | `AbilityItemCard.cs` | `ITEM_CARD` 참조 + `ITEM_AMOUNT`/`ITEM_LEVEL` 기반 상태 관리 |
 | `AbilityItemMaterial.cs` | `ITEM_MATERIAL` 참조 + `ITEM_AMOUNT`/`ITEM_LEVEL` 기반 상태 관리 |
@@ -93,6 +93,8 @@ AppliesTo: v10
 - `AbilityItemEquip`은 `itemUid`를 인스턴스 pk로 사용하고, 장착 상태는 `OwnerUnitId` + `OwnerSlotNumber`로 관리한다.
 - `AbilityItemCard.Amount`, `AbilityItemMaterial.Amount`, `AbilityItemHero.Amount`는 `AbilityItemBase.Amount`를 상속하며, `STAT_TYPE.ITEM_AMOUNT`의 얇은 래퍼다.
 - `AbilityItemCard.Init()`, `AbilityItemHero.Init()`, `AbilityItemEquip.Init()`는 base `ITEM_*` row와 대응 `ITEM_*_LEVEL` row를 함께 받아서 초기 stat을 세팅한다.
+- `AbilityItemBase`는 level row 교체용 helper를 가진다. level up 시 현재 level row stat을 제거하고 다음 level row stat을 적용한다.
+- `AbilityItemCard`, `AbilityItemHero`, `AbilityItemEquip`는 internal `_LevelUp()`을 제공한다. 현재 row 기준으로 다음 `ITEM_*_LEVEL` row를 찾아 runtime stat을 재적용한다.
 - `AbilityItemHero`는 outgame hero 저장 모델이다. `Equips`와 `SetEquip(equip, slot)` / `RemoveEquip(slot)`로 loadout metadata만 보유한다.
 - `AbilityItemHero`는 `ITEM_HERO.unit_id`를 참조할 수 있으며, item hero와 unit hero를 명시 필드로 연결한다.
 - `AbilityUnitHero`는 `UNIT_HERO` 기반 계산 모델이다. `Equip(equip, slot)` / `Unequip(slot)`에서 장착된 `AbilityItemEquip` stat을 unit stat에 합산/제거한다. `STAT_TYPE.ITEM_LEVEL`, `STAT_TYPE.ITEM_AMOUNT` 같은 item 메타 stat은 unit aggregate에 섞지 않는다.

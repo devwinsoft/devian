@@ -329,15 +329,27 @@ namespace Devian.Domain.Game
     public enum INVENTORY_MESSAGE_TYPE
     {
         NONE = 0,
-        PASS_OWNERSHIP_CHANGED = 1,
+        INVENTORY_SNAPSHOT_CHANGED = 1,
         CURRENCY_CHANGED = 2,
-        ITEM_EQUIP_CHANGED = 3,
-        ITEM_CARD_CHANGED = 4,
-        ITEM_MATERIAL_CHANGED = 5,
-        ITEM_HERO_CHANGED = 6,
-        RENTAL_CHANGED = 7,
-        TREASURE_STATE_CHANGED = 8,
-        INVENTORY_SNAPSHOT_CHANGED = 9,
+        ITEM_CARD_CHANGED = 3,
+        ITEM_CARD_LIST_CHANGED = 4,
+        ITEM_EQUIP_CHANGED = 5,
+        ITEM_EQUIP_LIST_CHANGED = 6,
+        ITEM_MATERIAL_CHANGED = 7,
+        ITEM_HERO_CHANGED = 8,
+        ITEM_HERO_LIST_CHANGED = 9,
+        ITEM_MATERIAL_LIST_CHANGED = 10,
+        PASS_OWNERSHIP_CHANGED = 11,
+        RENTAL_CHANGED = 12,
+        TREASURE_STATE_CHANGED = 13,
+    }
+
+    /// <summary>INVENTORY_LIST_CHANGE_TYPE enum</summary>
+    public enum INVENTORY_LIST_CHANGE_TYPE
+    {
+        NONE = 0,
+        ADD = 1,
+        REMOVE = 2,
     }
 
     /// <summary>INVENTORY_SNAPSHOT_CHANGE_REASON enum</summary>

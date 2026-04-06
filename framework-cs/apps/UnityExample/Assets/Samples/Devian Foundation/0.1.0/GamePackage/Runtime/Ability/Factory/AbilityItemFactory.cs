@@ -211,6 +211,11 @@ namespace Devian
             return GameResult<ITEM_CARD_LEVEL>.Success(levelTable);
         }
 
+        internal static GameResult<ITEM_CARD_LEVEL> ResolveNextCardLevelTable(string itemId, int currentItemLevel)
+        {
+            return resolveCardLevelTable(itemId, currentItemLevel + 1);
+        }
+
         static GameResult<ITEM_HERO_LEVEL> resolveHeroLevelTable(
             string itemId,
             int itemLevel)
@@ -230,6 +235,11 @@ namespace Devian
             return GameResult<ITEM_HERO_LEVEL>.Success(levelTable);
         }
 
+        internal static GameResult<ITEM_HERO_LEVEL> ResolveNextHeroLevelTable(string itemId, int currentItemLevel)
+        {
+            return resolveHeroLevelTable(itemId, currentItemLevel + 1);
+        }
+
         static GameResult<ITEM_EQUIP_LEVEL> resolveEquipLevelTable(
             string itemId,
             int itemLevel)
@@ -247,6 +257,11 @@ namespace Devian
             }
 
             return GameResult<ITEM_EQUIP_LEVEL>.Success(levelTable);
+        }
+
+        internal static GameResult<ITEM_EQUIP_LEVEL> ResolveNextEquipLevelTable(string itemId, int currentItemLevel)
+        {
+            return resolveEquipLevelTable(itemId, currentItemLevel + 1);
         }
 
         static GameResult<int> resolveItemLevel(int itemLevel, string context)

@@ -47,7 +47,10 @@ namespace Devian
             }
 
             // all-or-nothing: commit only after all rewards succeed
-            InventoryManager.Instance.RevokeTreasure(gradeType, count);
+            var revoke = InventoryManager.Instance.RevokeTreasure(gradeType, count);
+            if (revoke.IsFailure)
+                return revoke;
+
             return GameResult.Ok();
         }
 

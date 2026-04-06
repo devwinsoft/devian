@@ -1205,7 +1205,7 @@ namespace Devian
                     return false;
 
                 if (!string.IsNullOrWhiteSpace(reqPassId)
-                    && !inventoryManager.Storage.HasPass(reqPassId))
+                    && !inventoryManager.HasPass(reqPassId))
                 {
                     return false;
                 }

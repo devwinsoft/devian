@@ -45,16 +45,45 @@ namespace Devian
             return c;
         }
 
-        public void SetOwner(string unitId, int slotNumber)
+        internal void SetOwner(string unitId, int slotNumber)
         {
             mOwnerUnitId = unitId;
             mOwnerSlotNumber = slotNumber;
         }
 
-        public void ClearOwner()
+        internal void ClearOwner()
         {
             mOwnerUnitId = string.Empty;
             mOwnerSlotNumber = 0;
+        }
+
+        internal GameResult _LevelUp()
+        {
+            if (mTable == null || mLevelTable == null)
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"AbilityItemEquip._LevelUp: equip is not initialized. item_id={ItemId}, itemUid={ItemUid}");
+            }
+
+            var nextLevelTable = AbilityItemFactory.ResolveNextEquipLevelTable(ItemId, mLevelTable.item_level);
+            if (nextLevelTable.IsFailure)
+                return GameResult.Failure(nextLevelTable.Error!);
+
+            var currentLevelTable = mLevelTable;
+            var next = nextLevelTable.Value;
+            ReplaceLevelStats(
+                next.item_level,
+                currentLevelTable.stat_type00, currentLevelTable.stat_value00,
+                currentLevelTable.stat_type01, currentLevelTable.stat_value01,
+                currentLevelTable.stat_type02, currentLevelTable.stat_value02,
+                currentLevelTable.stat_type03, currentLevelTable.stat_value03,
+                next.stat_type00, next.stat_value00,
+                next.stat_type01, next.stat_value01,
+                next.stat_type02, next.stat_value02,
+                next.stat_type03, next.stat_value03);
+            mLevelTable = next;
+            return GameResult.Ok();
         }
     }
 }

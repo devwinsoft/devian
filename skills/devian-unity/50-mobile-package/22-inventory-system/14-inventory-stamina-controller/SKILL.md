@@ -12,7 +12,8 @@ InventoryManager는 컨트롤러에 위임만 하며, 외부 API를 유지한다
 
 - `InventoryStaminaController` (`internal sealed class`) — 스태미나 전용 컨트롤러
 - InventoryManager가 `_staminaController` 필드로 소유, 공개 API를 위임한다
-- 컨트롤러는 `InventoryStorage`를 소유하지 않음 — 메서드 파라미터로 전달받음
+- 컨트롤러는 `InventoryStorage`를 소유하지 않음
+- 컨트롤러는 순수 계산기다. live mutation은 `InventoryManager`가 수행한다.
 
 ---
 
@@ -36,13 +37,12 @@ InventoryManager는 컨트롤러에 위임만 하며, 외부 API를 유지한다
   - **설정 로드만 수행** — `LastStaminaUpdateUtcMs`를 조작하지 않는다
   - STAMINA 지급은 하지 않는다 (호출자 책임)
 
-- `RecoverStamina(InventoryStorage storage)`:
-  1. stamina >= MaxStamina → return (추적 불필요, 타임스탬프 무의미)
-  2. `LastStaminaUpdateUtcMs <= 0` → `LastStaminaUpdateUtcMs = now`, return (추적 시작)
+- `CalculateRecovery(long currentStamina, long lastUpdateUtcMs, long nowUtcMs) -> StaminaRecoveryResult`:
+  1. stamina >= MaxStamina → `(0, 0)` 반환 (추적 불필요, 타임스탬프 무의미)
+  2. `lastUpdateUtcMs <= 0` → `(0, now)` 반환 (추적 시작)
   3. 경과 시간 / `_staminaIntervalSeconds` = 회복량 계산
-  4. 회복 적용 (clamp to max)
-  5. 회복 후 stamina >= max → `LastStaminaUpdateUtcMs = 0` (추적 종료)
-  6. 아직 max 미만 → `LastStaminaUpdateUtcMs = now - remainderMs` (잔여 시간 보존)
+  4. 회복량과 다음 `LastStaminaUpdateUtcMs`만 계산해서 반환
+  5. live currency 적용과 메시지 publish는 호출자(`InventoryManager`)가 수행
 
 ---
 
@@ -53,7 +53,13 @@ readonly InventoryStaminaController _staminaController = new();
 
 public int MaxStamina => _staminaController.MaxStamina;
 public void LoadSettings() => _staminaController.LoadSettings();
-public void RecoverStamina() => _staminaController.RecoverStamina(_storage);
+public void RecoverStamina()
+{
+    var result = _staminaController.CalculateRecovery(currentStamina, lastUpdateUtcMs, nowUtcMs);
+    _storage.LastStaminaUpdateUtcMs = result.NextLastUpdateUtcMs;
+    if (result.RecoveredAmount > 0)
+        ApplyCurrency(CURRENCY_TYPE.STAMINA, result.RecoveredAmount);
+}
 ```
 
 외부 호출 시그니처:
@@ -86,28 +92,25 @@ public void RecoverStamina() => _staminaController.RecoverStamina(_storage);
 ## Stamina Recovery Logic
 
 ```
-currentStamina = wallet.Get(CURRENCY_TYPE.STAMINA)
+currentStamina = storage.GetCurrencyAmount(CURRENCY_TYPE.STAMINA)
 
 if currentStamina >= maxStamina:
-    return  // 추적 불필요, 타임스탬프 건드리지 않음
+    return (0, 0)  // 추적 불필요
 
 if lastStaminaUpdateUtcMs <= 0:
-    lastStaminaUpdateUtcMs = now  // 추적 시작
-    return
+    return (0, now)  // 추적 시작
 
 elapsedMs = now - lastStaminaUpdateUtcMs
 intervalMs = staminaIntervalSeconds * 1000
 recoveryCount = elapsedMs / intervalMs (정수 나눗셈)
 
 actualRecovery = min(recoveryCount, maxStamina - currentStamina)
-if actualRecovery > 0:
-    wallet.TryAdd(CURRENCY_TYPE.STAMINA, actualRecovery)
 
 if currentStamina + actualRecovery >= maxStamina:
-    lastStaminaUpdateUtcMs = 0  // 추적 종료
+    return (actualRecovery, 0)  // 추적 종료
 else:
     remainderMs = elapsedMs % intervalMs
-    lastStaminaUpdateUtcMs = now - remainderMs
+    return (actualRecovery, now - remainderMs)
 ```
 
 ---
@@ -138,7 +141,7 @@ else:
 - InventoryStaminaController.cs:
   - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Inventory/InventoryStaminaController.cs`
   - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Inventory/InventoryStaminaController.cs`
-  - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Inventory/InventoryStaminaController.cs`
+  - Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/{version}/MobilePackage/Runtime/Inventory/InventoryStaminaController.cs`
 - InventoryManager.cs — [10-inventory-manager](../10-inventory-manager/SKILL.md) 참조
 - InventoryStorage.cs — [11-inventory-storage](../11-inventory-storage/SKILL.md) 참조
 
@@ -149,4 +152,4 @@ else:
 - [13-inventory-settings](../13-inventory-settings/SKILL.md) — InventorySettings (설정 소스)
 - [10-inventory-manager](../10-inventory-manager/SKILL.md) — InventoryManager (위임 호스트)
 - [11-inventory-storage](../11-inventory-storage/SKILL.md) — InventoryStorage (LastStaminaUpdateUtcMs)
-- [12-inventory-wallet](../12-inventory-wallet/SKILL.md) — InventoryWallet (STAMINA 통화)
+- [11-inventory-storage](../11-inventory-storage/SKILL.md) — InventoryStorage currency state (STAMINA 포함)

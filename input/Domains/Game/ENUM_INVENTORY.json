@@ -4,15 +4,27 @@
       "name": "INVENTORY_MESSAGE_TYPE",
       "values": [
         {"name": "NONE", "value": 0},
-        {"name": "PASS_OWNERSHIP_CHANGED", "value": 1},
+        {"name": "INVENTORY_SNAPSHOT_CHANGED", "value": 1},
         {"name": "CURRENCY_CHANGED", "value": 2},
-        {"name": "ITEM_EQUIP_CHANGED", "value": 3},
-        {"name": "ITEM_CARD_CHANGED", "value": 4},
-        {"name": "ITEM_MATERIAL_CHANGED", "value": 5},
-        {"name": "ITEM_HERO_CHANGED", "value": 6},
-        {"name": "RENTAL_CHANGED", "value": 7},
-        {"name": "TREASURE_STATE_CHANGED", "value": 8},
-        {"name": "INVENTORY_SNAPSHOT_CHANGED", "value": 9}
+        {"name": "ITEM_CARD_CHANGED", "value": 3},
+        {"name": "ITEM_CARD_LIST_CHANGED", "value": 4},
+        {"name": "ITEM_EQUIP_CHANGED", "value": 5},
+        {"name": "ITEM_EQUIP_LIST_CHANGED", "value": 6},
+        {"name": "ITEM_MATERIAL_CHANGED", "value": 7},
+        {"name": "ITEM_HERO_CHANGED", "value": 8},
+        {"name": "ITEM_HERO_LIST_CHANGED", "value": 9},
+        {"name": "ITEM_MATERIAL_LIST_CHANGED", "value": 10},
+        {"name": "PASS_OWNERSHIP_CHANGED", "value": 11},
+        {"name": "RENTAL_CHANGED", "value": 12},
+        {"name": "TREASURE_STATE_CHANGED", "value": 13}
+      ]
+    },
+    {
+      "name": "INVENTORY_LIST_CHANGE_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "ADD", "value": 1},
+        {"name": "REMOVE", "value": 2}
       ]
     },
     {

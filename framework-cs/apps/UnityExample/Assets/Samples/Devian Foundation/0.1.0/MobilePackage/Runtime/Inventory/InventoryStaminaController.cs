@@ -7,6 +7,18 @@ namespace Devian
 {
     internal sealed class InventoryStaminaController
     {
+        internal readonly struct StaminaRecoveryResult
+        {
+            public StaminaRecoveryResult(long recoveredAmount, long nextLastUpdateUtcMs)
+            {
+                RecoveredAmount = recoveredAmount;
+                NextLastUpdateUtcMs = nextLastUpdateUtcMs;
+            }
+
+            public long RecoveredAmount { get; }
+            public long NextLastUpdateUtcMs { get; }
+        }
+
         CInt _maxStamina;
         CInt _staminaIntervalSeconds;
 
@@ -65,54 +77,43 @@ namespace Devian
             }
         }
 
-        public long RecoverStamina(InventoryStorage storage)
+        public StaminaRecoveryResult CalculateRecovery(
+            long currentStamina,
+            long lastUpdateUtcMs,
+            long nowUtcMs)
         {
             int maxStamina = _maxStamina;
             int intervalSeconds = _staminaIntervalSeconds;
 
             if (maxStamina <= 0 || intervalSeconds <= 0)
-                return 0L;
-
-            var currentStamina = storage.Wallet.Get(CURRENCY_TYPE.STAMINA);
+                return new StaminaRecoveryResult(0L, lastUpdateUtcMs);
 
             // stamina >= max → 회복 불필요, 타임스탬프 무의미
             if (currentStamina >= maxStamina)
-                return 0L;
-
-            var nowUtcMs = RemoteDataManager.ServerNowUtcMs;
-            var lastUpdateUtcMs = storage.LastStaminaUpdateUtcMs;
+                return new StaminaRecoveryResult(0L, 0L);
 
             // 추적 시작: stamina < max인데 타임스탬프 없음 → now 기록
             if (lastUpdateUtcMs <= 0L)
-            {
-                storage.LastStaminaUpdateUtcMs = nowUtcMs;
-                return 0L;
-            }
+                return new StaminaRecoveryResult(0L, nowUtcMs);
 
             var elapsedMs = nowUtcMs - lastUpdateUtcMs;
             if (elapsedMs <= 0L)
-                return 0L;
+                return new StaminaRecoveryResult(0L, lastUpdateUtcMs);
 
             var intervalMs = (long)intervalSeconds * 1000L;
             var recoveryCount = elapsedMs / intervalMs;
             if (recoveryCount <= 0L)
-                return 0L;
+                return new StaminaRecoveryResult(0L, lastUpdateUtcMs);
 
             var actualRecovery = Math.Min(recoveryCount, maxStamina - currentStamina);
-            if (actualRecovery > 0L)
-                storage.Wallet.TryAdd(CURRENCY_TYPE.STAMINA, actualRecovery);
 
             // 회복 후 max 도달 → 타임스탬프 클리어 (추적 종료)
             if (currentStamina + actualRecovery >= maxStamina)
-            {
-                storage.LastStaminaUpdateUtcMs = 0L;
-                return actualRecovery;
-            }
+                return new StaminaRecoveryResult(actualRecovery, 0L);
 
             // 아직 max 미만 → 잔여 시간 보존
             var remainderMs = elapsedMs % intervalMs;
-            storage.LastStaminaUpdateUtcMs = nowUtcMs - remainderMs;
-            return actualRecovery;
+            return new StaminaRecoveryResult(actualRecovery, nowUtcMs - remainderMs);
         }
     }
 }

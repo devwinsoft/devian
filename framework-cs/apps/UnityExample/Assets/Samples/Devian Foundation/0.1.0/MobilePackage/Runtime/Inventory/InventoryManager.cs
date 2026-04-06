@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
 using UnityEngine;
@@ -34,7 +35,6 @@ namespace Devian
         readonly InventoryMessageTrigger _messageTrigger = new();
         readonly InventoryStaminaController _staminaController = new();
 
-        public InventoryStorage Storage => _storage;
         public int MaxStamina => _staminaController.MaxStamina;
 
         // ── Message API ──
@@ -93,10 +93,22 @@ namespace Devian
                 var usePaid = amount - useFree;
 
                 if (useFree > 0L)
-                    RevokeCurrency(CURRENCY_TYPE.JEWEL_FREE, useFree);
+                {
+                    var revokeFree = RevokeCurrency(CURRENCY_TYPE.JEWEL_FREE, useFree);
+                    if (revokeFree.IsFailure)
+                        return false;
+                }
 
                 if (usePaid > 0L)
-                    RevokeCurrency(CURRENCY_TYPE.JEWEL_PAID, usePaid);
+                {
+                    var revokePaid = RevokeCurrency(CURRENCY_TYPE.JEWEL_PAID, usePaid);
+                    if (revokePaid.IsFailure)
+                    {
+                        if (useFree > 0L)
+                            ApplyCurrency(CURRENCY_TYPE.JEWEL_FREE, useFree);
+                        return false;
+                    }
+                }
 
                 receipt = new CurrencySpendReceipt(CURRENCY_TYPE.JEWEL, useFree, usePaid, 0L);
                 return true;
@@ -105,7 +117,10 @@ namespace Devian
             if (!HasSufficientCurrency(currencyType, amount))
                 return false;
 
-            RevokeCurrency(currencyType, amount);
+            var revoke = RevokeCurrency(currencyType, amount);
+            if (revoke.IsFailure)
+                return false;
+
             receipt = new CurrencySpendReceipt(currencyType, 0L, 0L, amount);
             return true;
         }
@@ -130,16 +145,91 @@ namespace Devian
                 ApplyCurrency(receipt.CurrencyType, receipt.DeductAmount);
         }
 
+        public InventorySnapshot CreateSnapshot()
+        {
+            var snapshot = new InventorySnapshot();
+
+            foreach (var kv in _storage.EnumerateCurrencyBalancesForSave())
+                snapshot.CurrencyBalances[kv.Key] = kv.Value;
+
+            foreach (var kv in _storage.Equipments)
+            {
+                var equip = kv.Value;
+                snapshot.Equipments[kv.Key] = new InventorySnapshotEquipment
+                {
+                    ItemId = equip.ItemId,
+                    ItemUid = equip.ItemUid,
+                    ItemLevel = equip.ItemLevel,
+                };
+            }
+
+            foreach (var kv in _storage.Cards)
+            {
+                var card = kv.Value;
+                snapshot.Cards[kv.Key] = new InventorySnapshotCard
+                {
+                    ItemId = card.ItemId,
+                    ItemLevel = card.ItemLevel,
+                    Amount = card.Amount,
+                };
+            }
+
+            foreach (var kv in _storage.Materials)
+            {
+                var material = kv.Value;
+                snapshot.Materials[kv.Key] = new InventorySnapshotMaterial
+                {
+                    ItemId = material.ItemId,
+                    Amount = material.Amount,
+                };
+            }
+
+            foreach (var kv in _storage.Heroes)
+            {
+                var hero = kv.Value;
+                var heroSnapshot = new InventorySnapshotHero
+                {
+                    ItemId = hero.ItemId,
+                    ItemLevel = hero.ItemLevel,
+                    Amount = hero.Amount,
+                };
+
+                foreach (var equip in hero.Equips)
+                    heroSnapshot.Equips[equip.Key] = equip.Value.ItemUid;
+
+                snapshot.Heroes[kv.Key] = heroSnapshot;
+            }
+
+            foreach (var kv in _storage.Rentals)
+                snapshot.Rentals[kv.Key] = kv.Value;
+
+            foreach (var kv in _storage.Passes)
+                snapshot.Passes[kv.Key] = kv.Value;
+
+            foreach (var kv in _storage.TreasureCounts)
+                snapshot.TreasureCounts[kv.Key] = kv.Value;
+
+            snapshot.TreasureCurrentLevel = _storage.TreasureCurrent.Level;
+            snapshot.TreasureCurrentExp = _storage.TreasureCurrent.Exp;
+            snapshot.LastStaminaUpdateUtcMs = _storage.LastStaminaUpdateUtcMs;
+            return snapshot;
+        }
+
         public void ClearState(INVENTORY_SNAPSHOT_CHANGE_REASON reason)
         {
             _storage.Clear();
             notifySnapshotChanged(reason);
         }
 
-        public void ReplaceState(InventoryStorage snapshot, INVENTORY_SNAPSHOT_CHANGE_REASON reason)
+        public GameResult ReplaceState(InventorySnapshot snapshot, INVENTORY_SNAPSHOT_CHANGE_REASON reason)
         {
-            _storage.CopyFrom(snapshot);
+            var nextStorage = createStorageFromSnapshot(snapshot);
+            if (nextStorage.IsFailure)
+                return GameResult.Failure(nextStorage.Error!);
+
+            _storage.CopyFrom(nextStorage.Value);
             notifySnapshotChanged(reason);
+            return GameResult.Ok();
         }
 
         // ── Apply API ──
@@ -156,8 +246,14 @@ namespace Devian
             if (amount == 0L)
                 return GameResult.Ok();
 
-            if (_storage.Wallet.TryAdd(currencyType, amount))
-                notifyCurrencyChanged(currencyType, amount);
+            if (!_storage.TryAddCurrency(currencyType, amount))
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"InventoryManager.ApplyCurrency: unsupported currencyType={currencyType}");
+            }
+
+            notifyCurrencyChanged(currencyType, amount);
 
             return GameResult.Ok();
         }
@@ -183,7 +279,7 @@ namespace Devian
 
                 var equip = create.Value;
                 _storage.AddEquip(itemUid, equip);
-                notifyEquipChanged(itemUid, itemId, equip, 1);
+                notifyEquipListChanged(INVENTORY_LIST_CHANGE_TYPE.ADD, itemUid, itemId, equip);
             }
 
             return GameResult.Ok();
@@ -198,14 +294,43 @@ namespace Devian
                     $"InventoryManager.ApplyCard: amount is negative: {amount}");
             }
 
-            if (amount == 0)
+            return AddCardAmount(itemId, amount);
+        }
+
+        public GameResult AddCardAmount(string itemId, int delta)
+        {
+            if (delta == 0)
                 return GameResult.Ok();
+
+            if (delta < 0)
+            {
+                var revokeAmount = -delta;
+                var card = _storage.GetCard(itemId);
+                if (card == null || card.Amount < revokeAmount)
+                {
+                    return GameResult.Failure(
+                        GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                        $"InventoryManager.AddCardAmount: insufficient card amount. itemId={itemId}, delta={delta}, current={card?.Amount ?? 0}");
+                }
+
+                card.AddAmount(delta);
+                if (card.Amount > 0)
+                {
+                    notifyCardChanged(itemId, card);
+                }
+                else
+                {
+                    _storage.RemoveCard(itemId);
+                    notifyCardListChanged(INVENTORY_LIST_CHANGE_TYPE.REMOVE, itemId, null);
+                }
+                return GameResult.Ok();
+            }
 
             var existing = _storage.GetCard(itemId);
             if (existing != null)
             {
-                existing.AddAmount(amount);
-                notifyCardChanged(itemId, existing, amount);
+                existing.AddAmount(delta);
+                notifyCardChanged(itemId, existing);
             }
             else
             {
@@ -215,8 +340,8 @@ namespace Devian
 
                 var ability = create.Value;
                 _storage.AddCard(itemId, ability);
-                ability.AddAmount(amount);
-                notifyCardChanged(itemId, ability, amount);
+                ability.AddAmount(delta);
+                notifyCardListChanged(INVENTORY_LIST_CHANGE_TYPE.ADD, itemId, ability);
             }
 
             return GameResult.Ok();
@@ -231,14 +356,43 @@ namespace Devian
                     $"InventoryManager.ApplyMaterial: amount is negative: {amount}");
             }
 
-            if (amount == 0)
+            return AddMaterialAmount(itemId, amount);
+        }
+
+        public GameResult AddMaterialAmount(string itemId, int delta)
+        {
+            if (delta == 0)
                 return GameResult.Ok();
+
+            if (delta < 0)
+            {
+                var revokeAmount = -delta;
+                var material = _storage.GetMaterial(itemId);
+                if (material == null || material.Amount < revokeAmount)
+                {
+                    return GameResult.Failure(
+                        GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                        $"InventoryManager.AddMaterialAmount: insufficient material amount. itemId={itemId}, delta={delta}, current={material?.Amount ?? 0}");
+                }
+
+                material.AddAmount(delta);
+                if (material.Amount > 0)
+                {
+                    notifyMaterialChanged(itemId, material);
+                }
+                else
+                {
+                    _storage.RemoveMaterial(itemId);
+                    notifyMaterialListChanged(INVENTORY_LIST_CHANGE_TYPE.REMOVE, itemId, null);
+                }
+                return GameResult.Ok();
+            }
 
             var existing = _storage.GetMaterial(itemId);
             if (existing != null)
             {
-                existing.AddAmount(amount);
-                notifyMaterialChanged(itemId, existing, amount);
+                existing.AddAmount(delta);
+                notifyMaterialChanged(itemId, existing);
             }
             else
             {
@@ -248,8 +402,8 @@ namespace Devian
 
                 var ability = create.Value;
                 _storage.AddMaterial(itemId, ability);
-                ability.AddAmount(amount);
-                notifyMaterialChanged(itemId, ability, amount);
+                ability.AddAmount(delta);
+                notifyMaterialListChanged(INVENTORY_LIST_CHANGE_TYPE.ADD, itemId, ability);
             }
 
             return GameResult.Ok();
@@ -264,14 +418,43 @@ namespace Devian
                     $"InventoryManager.ApplyHero: amount is negative: {amount}");
             }
 
-            if (amount == 0)
+            return AddHeroAmount(heroId, amount);
+        }
+
+        public GameResult AddHeroAmount(string heroId, int delta)
+        {
+            if (delta == 0)
                 return GameResult.Ok();
+
+            if (delta < 0)
+            {
+                var revokeAmount = -delta;
+                var hero = _storage.GetHero(heroId);
+                if (hero == null || hero.Amount < revokeAmount)
+                {
+                    return GameResult.Failure(
+                        GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                        $"InventoryManager.AddHeroAmount: insufficient hero amount. heroId={heroId}, delta={delta}, current={hero?.Amount ?? 0}");
+                }
+
+                hero.AddAmount(delta);
+                if (hero.Amount > 0)
+                {
+                    notifyHeroChanged(heroId, hero);
+                }
+                else
+                {
+                    _storage.RemoveHero(heroId);
+                    notifyHeroListChanged(INVENTORY_LIST_CHANGE_TYPE.REMOVE, heroId, null);
+                }
+                return GameResult.Ok();
+            }
 
             var existing = _storage.GetHero(heroId);
             if (existing != null)
             {
-                existing.AddAmount(amount);
-                notifyHeroChanged(heroId, existing, amount);
+                existing.AddAmount(delta);
+                notifyHeroChanged(heroId, existing);
             }
             else
             {
@@ -281,10 +464,85 @@ namespace Devian
 
                 var ability = create.Value;
                 _storage.AddHero(heroId, ability);
-                ability.AddAmount(amount);
-                notifyHeroChanged(heroId, ability, amount);
+                ability.AddAmount(delta);
+                notifyHeroListChanged(INVENTORY_LIST_CHANGE_TYPE.ADD, heroId, ability);
             }
 
+            return GameResult.Ok();
+        }
+
+        public GameResult LevelUpCard(string itemId)
+        {
+            if (string.IsNullOrWhiteSpace(itemId))
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    "InventoryManager.LevelUpCard: itemId is null or empty.");
+            }
+
+            var card = _storage.GetCard(itemId);
+            if (card == null)
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"InventoryManager.LevelUpCard: card runtime not found. itemId={itemId}");
+            }
+
+            var levelUp = card._LevelUp();
+            if (levelUp.IsFailure)
+                return GameResult.Failure(levelUp.Error!);
+
+            notifyCardChanged(itemId, card);
+            return GameResult.Ok();
+        }
+
+        public GameResult LevelUpHero(string heroId)
+        {
+            if (string.IsNullOrWhiteSpace(heroId))
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    "InventoryManager.LevelUpHero: heroId is null or empty.");
+            }
+
+            var hero = _storage.GetHero(heroId);
+            if (hero == null)
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"InventoryManager.LevelUpHero: hero runtime not found. heroId={heroId}");
+            }
+
+            var levelUp = hero._LevelUp();
+            if (levelUp.IsFailure)
+                return GameResult.Failure(levelUp.Error!);
+
+            notifyHeroChanged(heroId, hero);
+            return GameResult.Ok();
+        }
+
+        public GameResult LevelUpEquip(string itemUid)
+        {
+            if (string.IsNullOrWhiteSpace(itemUid))
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    "InventoryManager.LevelUpEquip: itemUid is null or empty.");
+            }
+
+            var equip = _storage.GetEquip(itemUid);
+            if (equip == null)
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"InventoryManager.LevelUpEquip: equip runtime not found. itemUid={itemUid}");
+            }
+
+            var levelUp = equip._LevelUp();
+            if (levelUp.IsFailure)
+                return GameResult.Failure(levelUp.Error!);
+
+            notifyEquipChanged(itemUid, equip.ItemId, equip);
             return GameResult.Ok();
         }
 
@@ -362,97 +620,139 @@ namespace Devian
 
         // ── Revoke API ──
 
-        public void RevokeCurrency(CURRENCY_TYPE currencyType, long amount)
+        public GameResult RevokeCurrency(CURRENCY_TYPE currencyType, long amount)
         {
             if (amount <= 0L)
-                return;
+                return GameResult.Ok();
 
-            if (_storage.Wallet.TryAdd(currencyType, -amount))
+            if (currencyType == CURRENCY_TYPE.FREE || currencyType == CURRENCY_TYPE.ADS || currencyType == CURRENCY_TYPE.JEWEL)
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"InventoryManager.RevokeCurrency: unsupported currencyType={currencyType}");
+            }
+
+            var currentAmount = GetCurrencyAmount(currencyType);
+            if (currentAmount < amount)
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                    $"InventoryManager.RevokeCurrency: insufficient currency. currencyType={currencyType}, amount={amount}, current={currentAmount}");
+            }
+
+            if (_storage.TryAddCurrency(currencyType, -amount))
                 notifyCurrencyChanged(currencyType, -amount);
+
+            return GameResult.Ok();
         }
 
-        public void RevokeEquip(string itemId, int amount)
+        public GameResult RevokeEquip(string itemId, int amount)
         {
             if (amount <= 0)
-                return;
+                return GameResult.Ok();
 
             var equips = _storage.GetEquipsByItemId(itemId);
+            if (equips.Count < amount)
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                    $"InventoryManager.RevokeEquip: insufficient equip count. itemId={itemId}, amount={amount}, current={equips.Count}");
+            }
+
             for (var j = 0; j < amount && j < equips.Count; j++)
             {
                 if (equips[j] != null && !string.IsNullOrEmpty(equips[j].ItemUid))
                 {
                     var itemUid = equips[j].ItemUid;
                     _storage.RemoveEquip(itemUid);
-                    notifyEquipChanged(itemUid, itemId, null, -1);
+                    notifyEquipListChanged(INVENTORY_LIST_CHANGE_TYPE.REMOVE, itemUid, itemId, null);
                 }
             }
+
+            return GameResult.Ok();
         }
 
-        public void RevokeCard(string itemId, int amount)
+        public GameResult RevokeCard(string itemId, int amount)
         {
             if (amount <= 0)
-                return;
+                return GameResult.Ok();
 
-            var card = _storage.GetCard(itemId);
-            if (card != null)
-            {
-                card.AddAmount(-amount);
-                notifyCardChanged(itemId, card, -amount);
-            }
+            return AddCardAmount(itemId, -amount);
         }
 
-        public void RevokeMaterial(string itemId, int amount)
+        public GameResult RevokeMaterial(string itemId, int amount)
         {
             if (amount <= 0)
-                return;
+                return GameResult.Ok();
 
-            var material = _storage.GetMaterial(itemId);
-            if (material != null)
-            {
-                material.AddAmount(-amount);
-                notifyMaterialChanged(itemId, material, -amount);
-            }
+            return AddMaterialAmount(itemId, -amount);
         }
 
-        public void RevokeHero(string heroId, int amount)
+        public GameResult RevokeHero(string heroId, int amount)
         {
             if (amount <= 0)
-                return;
+                return GameResult.Ok();
 
-            var hero = _storage.GetHero(heroId);
-            if (hero != null)
-            {
-                hero.AddAmount(-amount);
-                notifyHeroChanged(heroId, hero, -amount);
-            }
+            return AddHeroAmount(heroId, -amount);
         }
 
-        public void RevokeRental(string itemId)
+        public GameResult RevokeRental(string itemId)
         {
             var currentExpiryUtcMs = _storage.GetRentalExpiry(itemId);
+            if (currentExpiryUtcMs <= 0L)
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                    $"InventoryManager.RevokeRental: rental not found. itemId={itemId}");
+            }
+
             _storage.RemoveRental(itemId);
-            if (currentExpiryUtcMs > 0L)
-                notifyRentalChanged(itemId, 0L, false);
+            notifyRentalChanged(itemId, 0L, false);
+            return GameResult.Ok();
         }
 
-        public void RevokeTreasure(TREASURE_GRADE_TYPE gradeType, int amount)
+        public GameResult RevokeTreasure(TREASURE_GRADE_TYPE gradeType, int amount)
         {
             if (amount <= 0)
-                return;
+                return GameResult.Ok();
 
             var current = _storage.GetTreasureCount(gradeType);
+            if (current < amount)
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT,
+                    $"InventoryManager.RevokeTreasure: insufficient treasure count. gradeType={gradeType}, amount={amount}, current={current}");
+            }
+
             _storage.SetTreasureCount(gradeType, current - amount);
             var next = _storage.GetTreasureCount(gradeType);
             var delta = next - current;
             if (delta != 0)
                 notifyTreasureStateChanged(gradeType, delta);
+
+            return GameResult.Ok();
         }
 
         // ── Query API ──
 
         public long GetCurrencyAmount(CURRENCY_TYPE currencyType)
         {
-            return _storage.Wallet.Get(currencyType);
+            return _storage.GetCurrencyAmount(currencyType);
+        }
+
+        public IReadOnlyDictionary<string, AbilityItemEquip> GetEquipments()
+        {
+            return _storage.Equipments;
+        }
+
+        public AbilityItemEquip GetEquip(string itemUid)
+        {
+            return _storage.GetEquip(itemUid);
+        }
+
+        public IReadOnlyList<AbilityItemEquip> GetEquipsByItemId(string itemId)
+        {
+            return _storage.GetEquipsByItemId(itemId);
         }
 
         public int GetEquipCount(string itemId)
@@ -460,27 +760,72 @@ namespace Devian
             return _storage.GetEquipsByItemId(itemId).Count;
         }
 
+        public IReadOnlyDictionary<string, AbilityItemCard> GetCards()
+        {
+            return _storage.Cards;
+        }
+
+        public AbilityItemCard GetCard(string itemId)
+        {
+            return _storage.GetCard(itemId);
+        }
+
         public long GetCardAmount(string itemId)
         {
-            var card = _storage.GetCard(itemId);
+            var card = GetCard(itemId);
             return card != null ? card.Amount : 0L;
+        }
+
+        public IReadOnlyDictionary<string, AbilityItemMaterial> GetMaterials()
+        {
+            return _storage.Materials;
+        }
+
+        public AbilityItemMaterial GetMaterial(string itemId)
+        {
+            return _storage.GetMaterial(itemId);
         }
 
         public long GetMaterialAmount(string itemId)
         {
-            var material = _storage.GetMaterial(itemId);
+            var material = GetMaterial(itemId);
             return material != null ? material.Amount : 0L;
+        }
+
+        public IReadOnlyDictionary<string, AbilityItemHero> GetHeroes()
+        {
+            return _storage.Heroes;
+        }
+
+        public AbilityItemHero GetHero(string heroId)
+        {
+            return _storage.GetHero(heroId);
         }
 
         public long GetHeroAmount(string heroId)
         {
-            var hero = _storage.GetHero(heroId);
+            var hero = GetHero(heroId);
             return hero != null ? hero.Amount : 0L;
+        }
+
+        public IReadOnlyDictionary<string, long> GetRentals()
+        {
+            return _storage.Rentals;
         }
 
         public bool HasActiveRental(string itemId)
         {
             return _storage.HasActiveRental(itemId);
+        }
+
+        public long GetRentalRemainingMs(string itemId)
+        {
+            return _storage.GetRentalRemainingMs(itemId);
+        }
+
+        public IReadOnlyDictionary<string, bool> GetPasses()
+        {
+            return _storage.Passes;
         }
 
         public bool HasPass(string itemId)
@@ -521,9 +866,189 @@ namespace Devian
 
         public void RecoverStamina()
         {
-            var recovered = _staminaController.RecoverStamina(_storage);
-            if (recovered > 0L)
-                notifyCurrencyChanged(CURRENCY_TYPE.STAMINA, recovered);
+            var recovery = _staminaController.CalculateRecovery(
+                GetCurrencyAmount(CURRENCY_TYPE.STAMINA),
+                _storage.LastStaminaUpdateUtcMs,
+                RemoteDataManager.ServerNowUtcMs);
+
+            _storage.LastStaminaUpdateUtcMs = recovery.NextLastUpdateUtcMs;
+
+            if (recovery.RecoveredAmount > 0L)
+            {
+                var apply = ApplyCurrency(CURRENCY_TYPE.STAMINA, recovery.RecoveredAmount);
+                if (apply.IsFailure)
+                    Debug.LogError($"[InventoryManager] RecoverStamina ApplyCurrency failed: {apply.Error}");
+            }
+        }
+
+        static GameResult<InventoryStorage> createStorageFromSnapshot(InventorySnapshot snapshot)
+        {
+            var nextStorage = new InventoryStorage();
+            if (snapshot == null)
+                return GameResult<InventoryStorage>.Success(nextStorage);
+
+            foreach (var kv in snapshot.CurrencyBalances)
+            {
+                if (kv.Value == 0L)
+                    continue;
+
+                if (kv.Value < 0L)
+                {
+                    return GameResult<InventoryStorage>.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                        $"InventoryManager.ReplaceState: negative currency amount. currencyType={kv.Key}, amount={kv.Value}");
+                }
+
+                if (!nextStorage.TryAddCurrency(kv.Key, kv.Value))
+                {
+                    return GameResult<InventoryStorage>.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                        $"InventoryManager.ReplaceState: unsupported currency type in snapshot. currencyType={kv.Key}");
+                }
+            }
+
+            foreach (var kv in snapshot.Equipments)
+            {
+                var equipSnapshot = kv.Value;
+                if (equipSnapshot == null)
+                    continue;
+
+                var itemUid = string.IsNullOrWhiteSpace(equipSnapshot.ItemUid) ? kv.Key : equipSnapshot.ItemUid;
+                var createEquip = AbilityItemFactory.CreateEquip(
+                    equipSnapshot.ItemId,
+                    itemUid,
+                    equipSnapshot.ItemLevel);
+                if (createEquip.IsFailure)
+                    return GameResult<InventoryStorage>.Failure(createEquip.Error!);
+
+                nextStorage.AddEquip(itemUid, createEquip.Value);
+            }
+
+            foreach (var kv in snapshot.Cards)
+            {
+                var cardSnapshot = kv.Value;
+                if (cardSnapshot == null)
+                    continue;
+
+                if (cardSnapshot.Amount < 0)
+                {
+                    return GameResult<InventoryStorage>.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                        $"InventoryManager.ReplaceState: negative card amount. itemId={cardSnapshot.ItemId}, amount={cardSnapshot.Amount}");
+                }
+
+                if (cardSnapshot.Amount == 0)
+                    continue;
+
+                var createCard = AbilityItemFactory.CreateCard(cardSnapshot.ItemId, cardSnapshot.ItemLevel);
+                if (createCard.IsFailure)
+                    return GameResult<InventoryStorage>.Failure(createCard.Error!);
+
+                createCard.Value.AddAmount(cardSnapshot.Amount);
+                nextStorage.AddCard(cardSnapshot.ItemId, createCard.Value);
+            }
+
+            foreach (var kv in snapshot.Materials)
+            {
+                var materialSnapshot = kv.Value;
+                if (materialSnapshot == null)
+                    continue;
+
+                if (materialSnapshot.Amount < 0)
+                {
+                    return GameResult<InventoryStorage>.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                        $"InventoryManager.ReplaceState: negative material amount. itemId={materialSnapshot.ItemId}, amount={materialSnapshot.Amount}");
+                }
+
+                if (materialSnapshot.Amount == 0)
+                    continue;
+
+                var createMaterial = AbilityItemFactory.CreateMaterial(materialSnapshot.ItemId);
+                if (createMaterial.IsFailure)
+                    return GameResult<InventoryStorage>.Failure(createMaterial.Error!);
+
+                createMaterial.Value.AddAmount(materialSnapshot.Amount);
+                nextStorage.AddMaterial(materialSnapshot.ItemId, createMaterial.Value);
+            }
+
+            foreach (var kv in snapshot.Heroes)
+            {
+                var heroSnapshot = kv.Value;
+                if (heroSnapshot == null)
+                    continue;
+
+                if (heroSnapshot.Amount < 0)
+                {
+                    return GameResult<InventoryStorage>.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                        $"InventoryManager.ReplaceState: negative hero amount. itemId={heroSnapshot.ItemId}, amount={heroSnapshot.Amount}");
+                }
+
+                if (heroSnapshot.Amount == 0)
+                    continue;
+
+                var createHero = AbilityItemFactory.CreateHero(heroSnapshot.ItemId, heroSnapshot.ItemLevel);
+                if (createHero.IsFailure)
+                    return GameResult<InventoryStorage>.Failure(createHero.Error!);
+
+                createHero.Value.AddAmount(heroSnapshot.Amount);
+                nextStorage.AddHero(heroSnapshot.ItemId, createHero.Value);
+            }
+
+            foreach (var kv in snapshot.Heroes)
+            {
+                var heroSnapshot = kv.Value;
+                if (heroSnapshot == null)
+                    continue;
+
+                if (heroSnapshot.Amount == 0)
+                    continue;
+
+                foreach (var equip in heroSnapshot.Equips)
+                {
+                    if (equip.Key <= 0 || string.IsNullOrWhiteSpace(equip.Value))
+                    {
+                        return GameResult<InventoryStorage>.Failure(
+                            GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                            $"InventoryManager.ReplaceState: invalid hero equip mapping. itemId={heroSnapshot.ItemId}, slot={equip.Key}, equipUid={equip.Value}");
+                    }
+
+                    if (!nextStorage.Equip(heroSnapshot.ItemId, equip.Key, equip.Value))
+                    {
+                        return GameResult<InventoryStorage>.Failure(
+                            GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                            $"InventoryManager.ReplaceState: failed to restore hero equip. itemId={heroSnapshot.ItemId}, slot={equip.Key}, equipUid={equip.Value}");
+                    }
+                }
+            }
+
+            foreach (var kv in snapshot.Rentals)
+            {
+                if (!string.IsNullOrWhiteSpace(kv.Key))
+                    nextStorage.SetRental(kv.Key, kv.Value);
+            }
+
+            foreach (var kv in snapshot.Passes)
+            {
+                if (!string.IsNullOrWhiteSpace(kv.Key))
+                    nextStorage.SetPass(kv.Key, kv.Value);
+            }
+
+            foreach (var kv in snapshot.TreasureCounts)
+            {
+                if (kv.Key == TREASURE_GRADE_TYPE.NONE)
+                    continue;
+
+                if (kv.Value <= 0)
+                    continue;
+
+                nextStorage.SetTreasureCount(kv.Key, kv.Value);
+            }
+
+            nextStorage.SetTreasureCurrentState(snapshot.TreasureCurrentLevel, snapshot.TreasureCurrentExp);
+            nextStorage.LastStaminaUpdateUtcMs = snapshot.LastStaminaUpdateUtcMs;
+            return GameResult<InventoryStorage>.Success(nextStorage);
         }
 
         void notifyCurrencyChanged(CURRENCY_TYPE currencyType, long delta)
@@ -532,44 +1057,77 @@ namespace Devian
                 INVENTORY_MESSAGE_TYPE.CURRENCY_CHANGED,
                 currencyType,
                 delta,
-                _storage.Wallet.Get(currencyType));
+                _storage.GetCurrencyAmount(currencyType));
         }
 
-        void notifyEquipChanged(string itemUid, string itemId, AbilityItemEquip runtimeOrNull, int delta)
+        void notifyEquipChanged(string itemUid, string itemId, AbilityItemEquip runtime)
         {
             _messageTrigger.Notify(
                 INVENTORY_MESSAGE_TYPE.ITEM_EQUIP_CHANGED,
                 itemUid,
                 itemId,
-                runtimeOrNull,
-                delta);
+                runtime);
         }
 
-        void notifyCardChanged(string itemId, AbilityItemCard runtimeOrNull, int delta)
+        void notifyEquipListChanged(INVENTORY_LIST_CHANGE_TYPE action, string itemUid, string itemId, AbilityItemEquip runtimeOrNull)
+        {
+            _messageTrigger.Notify(
+                INVENTORY_MESSAGE_TYPE.ITEM_EQUIP_LIST_CHANGED,
+                action,
+                itemUid,
+                itemId,
+                runtimeOrNull);
+        }
+
+        void notifyCardChanged(string itemId, AbilityItemCard runtime)
         {
             _messageTrigger.Notify(
                 INVENTORY_MESSAGE_TYPE.ITEM_CARD_CHANGED,
                 itemId,
-                runtimeOrNull,
-                delta);
+                runtime);
         }
 
-        void notifyMaterialChanged(string itemId, AbilityItemMaterial runtimeOrNull, int delta)
+        void notifyCardListChanged(INVENTORY_LIST_CHANGE_TYPE action, string itemId, AbilityItemCard runtimeOrNull)
+        {
+            _messageTrigger.Notify(
+                INVENTORY_MESSAGE_TYPE.ITEM_CARD_LIST_CHANGED,
+                action,
+                itemId,
+                runtimeOrNull);
+        }
+
+        void notifyMaterialChanged(string itemId, AbilityItemMaterial runtime)
         {
             _messageTrigger.Notify(
                 INVENTORY_MESSAGE_TYPE.ITEM_MATERIAL_CHANGED,
                 itemId,
-                runtimeOrNull,
-                delta);
+                runtime);
         }
 
-        void notifyHeroChanged(string itemId, AbilityItemHero runtimeOrNull, int delta)
+        void notifyMaterialListChanged(INVENTORY_LIST_CHANGE_TYPE action, string itemId, AbilityItemMaterial runtimeOrNull)
+        {
+            _messageTrigger.Notify(
+                INVENTORY_MESSAGE_TYPE.ITEM_MATERIAL_LIST_CHANGED,
+                action,
+                itemId,
+                runtimeOrNull);
+        }
+
+        void notifyHeroChanged(string itemId, AbilityItemHero runtime)
         {
             _messageTrigger.Notify(
                 INVENTORY_MESSAGE_TYPE.ITEM_HERO_CHANGED,
                 itemId,
-                runtimeOrNull,
-                delta);
+                runtime);
+        }
+
+        void notifyHeroListChanged(INVENTORY_LIST_CHANGE_TYPE action, string itemId, AbilityItemHero runtimeOrNull)
+        {
+            _messageTrigger.Notify(
+                INVENTORY_MESSAGE_TYPE.ITEM_HERO_LIST_CHANGED,
+                action,
+                itemId,
+                runtimeOrNull);
         }
 
         void notifyRentalChanged(string itemId, long expiresAtClientUtcMs, bool active)

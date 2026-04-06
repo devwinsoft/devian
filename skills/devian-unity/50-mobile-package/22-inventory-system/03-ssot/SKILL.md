@@ -67,6 +67,7 @@ NOTE:
   - 수량 = `STAT_TYPE.ITEM_AMOUNT`
   - 레벨 = `STAT_TYPE.ITEM_LEVEL`
   - Reward/Purchase grants에서는 `STAT_TYPE.ITEM_AMOUNT`만 변경된다
+  - level up은 현재 `ITEM_CARD_LEVEL` row stat을 제거한 뒤 다음 level row stat을 적용한다
 
 ### B-4) Heroes
 
@@ -79,6 +80,7 @@ NOTE:
 - `ItemLevel: int` (= `this[STAT_TYPE.ITEM_LEVEL]`)
 - `Equips: Dict<int, AbilityItemEquip>` (outgame 슬롯별 장착 상태)
 - 능력치: `AbilityItemHero : AbilityItemBase : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)
+  - level up은 현재 `ITEM_HERO_LEVEL` row stat을 제거한 뒤 다음 level row stat을 적용한다
 
 ### B-5) Materials
 
@@ -93,6 +95,7 @@ NOTE:
   - 수량 = `STAT_TYPE.ITEM_AMOUNT`
   - 레벨 = `STAT_TYPE.ITEM_LEVEL`
   - Reward/Purchase grants에서는 `STAT_TYPE.ITEM_AMOUNT`만 변경된다
+  - 현재 `ITEM_MATERIAL_LEVEL` 테이블이 없으므로 level up 대상이 아니다
 
 
 ### B-6) Treasure
@@ -121,10 +124,10 @@ NOTE:
 ### C-1) 공통
 
 - InventoryManager는 타입별 Apply/Revoke/Query API를 제공한다 (예: `ApplyCurrency`, `RevokeCurrency`, `GetCurrencyAmount`).
-- 각 API의 반환 타입은 `CommonResult`다.
+- 각 API의 반환 타입은 `GameResult`다.
 - RewardData 해석·검증·원자성 보장은 `RewardManager`가 담당한다 ([49-reward-system/10-reward-manager](../../49-reward-system/10-reward-manager/SKILL.md)).
 - InventoryManager는 RewardData를 직접 참조하지 않는다.
-- item ability 생성은 `AbilityItemFactory`를 통해 수행하며, lookup/input 실패는 `CommonResult.Failure(...)`로 surface 한다.
+- item ability 생성은 `AbilityItemFactory`를 통해 수행하며, lookup/input 실패는 `GameResult.Failure(...)`로 surface 한다.
 
 ### C-2) `type == REWARD_TYPE.CURRENCY`
 
@@ -140,24 +143,33 @@ NOTE:
 
 ### C-5) `type == REWARD_TYPE.CARD`
 
-- `_storage.Cards[item_id].AddAmount(amount)` (= `AddStat(STAT_TYPE.ITEM_AMOUNT, amount)`)
+- `InventoryManager.AddCardAmount(item_id, delta)`가 카드 수량 signed delta boundary다.
+- 내부 적용은 `_storage.Cards[item_id].AddAmount(delta)` (= `AddStat(STAT_TYPE.ITEM_AMOUNT, delta)`)
 - 없는 키는 `_storage.AddCard(item_id, ability)`로 생성된다.
   - 새 AbilityItemCard의 모든 stat은 0(기본값)으로 시작한다.
 - Apply는 `STAT_TYPE.ITEM_AMOUNT`만 변경한다 (다른 stat은 보존).
+- 수량이 0이 되면 카드 runtime은 storage에서 제거된다.
+- 카드 level up은 `InventoryManager.LevelUpCard(item_id)`가 담당한다. 현재 level row stat을 subtract하고 다음 level row stat을 add한다.
 
 ### C-4) `type == REWARD_TYPE.HERO`
 
-- `_storage.Heroes[item_id].AddStat(STAT_TYPE.ITEM_AMOUNT, amount)`
+- `InventoryManager.AddHeroAmount(item_id, delta)`가 영웅 수량 signed delta boundary다.
+- 내부 적용은 `_storage.Heroes[item_id].AddStat(STAT_TYPE.ITEM_AMOUNT, delta)`
 - 없는 키는 `_storage.AddHero(item_id, ability)`로 생성된다.
   - 새 AbilityItemHero는 `TB_ITEM_HERO.Get(item_id)`로 Init한다.
 - Apply는 `STAT_TYPE.ITEM_AMOUNT`만 변경한다 (다른 stat은 보존).
+- 수량이 0이 되면 영웅 runtime은 storage에서 제거되고, 장착 중인 equip owner metadata도 함께 정리된다.
+- 영웅 level up은 `InventoryManager.LevelUpHero(item_id)`가 담당한다. 현재 level row stat을 subtract하고 다음 level row stat을 add한다.
 
 ### C-4a) `type == REWARD_TYPE.MATERIAL`
 
-- `_storage.Materials[item_id].AddAmount(amount)` (= `AddStat(STAT_TYPE.ITEM_AMOUNT, amount)`)
+- `InventoryManager.AddMaterialAmount(item_id, delta)`가 재료 수량 signed delta boundary다.
+- 내부 적용은 `_storage.Materials[item_id].AddAmount(delta)` (= `AddStat(STAT_TYPE.ITEM_AMOUNT, delta)`)
 - 없는 키는 `_storage.AddMaterial(item_id, ability)`로 생성된다.
   - 새 AbilityItemMaterial은 `TB_ITEM_MATERIAL.Get(item_id)`로 Init한다.
 - Apply는 `STAT_TYPE.ITEM_AMOUNT`만 변경한다 (다른 stat은 보존).
+- 수량이 0이 되면 재료 runtime은 storage에서 제거된다.
+- 재료는 현재 level table이 없으므로 `LevelUpMaterial`을 두지 않는다.
 
 
 ### C-5) `type == REWARD_TYPE.TREASURE`
@@ -247,10 +259,9 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 
 ## E) Error Code Source (정본)
 
-- InventoryManager 타입별 API 실패 에러 코드는 `COMMON_ERROR_TYPE`을 사용한다.
-- inventory 전용 에러 코드는 `COMMON_ERROR`을 SSOT로 추가/관리한다.
-  - 파일: `input/Domains/Common/CommonTable.xlsx`
-  - 시트: `COMMON_ERROR`
+- InventoryManager 타입별 API 실패 에러 코드는 `GAME_ERROR_TYPE`을 사용한다.
+  - `GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT` — null/empty/음수 등 입력 검증 실패
+  - `GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT` — 회수 시 잔고/수량 부족
 
 
 ---
@@ -271,13 +282,21 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 - `CURRENCY_CHANGED`
   - payload: `args[0] = currencyType(CURRENCY_TYPE)`, `args[1] = delta(long)`, `args[2] = currentAmount(long)`
 - `ITEM_EQUIP_CHANGED`
-  - payload: `args[0] = itemUid(string)`, `args[1] = itemId(string)`, `args[2] = runtimeOrNull(AbilityItemEquip)`, `args[3] = delta(int)`
+  - payload: `args[0] = itemUid(string)`, `args[1] = itemId(string)`, `args[2] = runtime(AbilityItemEquip)`
 - `ITEM_CARD_CHANGED`
-  - payload: `args[0] = itemId(string)`, `args[1] = runtimeOrNull(AbilityItemCard)`, `args[2] = delta(int)`
+  - payload: `args[0] = itemId(string)`, `args[1] = runtime(AbilityItemCard)`
 - `ITEM_MATERIAL_CHANGED`
-  - payload: `args[0] = itemId(string)`, `args[1] = runtimeOrNull(AbilityItemMaterial)`, `args[2] = delta(int)`
+  - payload: `args[0] = itemId(string)`, `args[1] = runtime(AbilityItemMaterial)`
 - `ITEM_HERO_CHANGED`
-  - payload: `args[0] = itemId(string)`, `args[1] = runtimeOrNull(AbilityItemHero)`, `args[2] = delta(int)`
+  - payload: `args[0] = itemId(string)`, `args[1] = runtime(AbilityItemHero)`
+- `ITEM_EQUIP_LIST_CHANGED`
+  - payload: `args[0] = action(INVENTORY_LIST_CHANGE_TYPE)`, `args[1] = itemUid(string)`, `args[2] = itemId(string)`, `args[3] = runtimeOrNull(AbilityItemEquip)`
+- `ITEM_CARD_LIST_CHANGED`
+  - payload: `args[0] = action(INVENTORY_LIST_CHANGE_TYPE)`, `args[1] = itemId(string)`, `args[2] = runtimeOrNull(AbilityItemCard)`
+- `ITEM_MATERIAL_LIST_CHANGED`
+  - payload: `args[0] = action(INVENTORY_LIST_CHANGE_TYPE)`, `args[1] = itemId(string)`, `args[2] = runtimeOrNull(AbilityItemMaterial)`
+- `ITEM_HERO_LIST_CHANGED`
+  - payload: `args[0] = action(INVENTORY_LIST_CHANGE_TYPE)`, `args[1] = itemId(string)`, `args[2] = runtimeOrNull(AbilityItemHero)`
 - `RENTAL_CHANGED`
   - payload: `args[0] = itemId(string)`, `args[1] = expiresAtClientUtcMs(long)`, `args[2] = active(bool)`
 - `TREASURE_STATE_CHANGED`
@@ -289,4 +308,5 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 
 - `ACHIEVE_PASS.req_pass_id` 조건이 있는 runtime의 `WAIT -> ACTIVE` 전이를 위해 Pass 변동을 구독한다.
 - wallet/item UI는 타입별 `*_CHANGED`를 구독하고 payload 또는 현재 storage 재조회로 갱신한다.
+- item 추가/삭제는 `*_LIST_CHANGED`로 별도 발행한다.
 - load/import/clear 같은 bulk inventory 변경은 per-item replay 없이 `INVENTORY_SNAPSHOT_CHANGED` 한 번만 발행한다.

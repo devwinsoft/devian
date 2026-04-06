@@ -798,7 +798,7 @@ namespace Devian
 
         public string ToJson()
         {
-            var inventory = getInventoryStorageOrNull();
+            var inventory = getInventorySnapshotOrEmpty();
             var purchase = getPurchaseStorageOrNull();
             var shop = getShopStorageOrNull();
             var account = getAccountStorageOrNull();
@@ -808,7 +808,7 @@ namespace Devian
             var leaderboardReward = getLeaderboardStorageOrNull();
             var attend = getAttendStorageOrNull();
             return SaveDataJsonCodec.Serialize(
-                inventory ?? new InventoryStorage(),
+                inventory ?? new InventorySnapshot(),
                 purchase ?? new PurchaseStorage(),
                 shop ?? new ShopStorage(),
                 account ?? new AccountStorage(),
@@ -853,7 +853,7 @@ namespace Devian
         public GameResult LoadFromJson(string json)
         {
             var inventoryManager = getInventoryManagerOrNull();
-            var inventory = inventoryManager != null ? new InventoryStorage() : null;
+            var inventory = inventoryManager != null ? new InventorySnapshot() : null;
             var purchase = getPurchaseStorageOrNull();
             var shop = getShopStorageOrNull();
             var shopManager = getShopManagerOrNull();
@@ -889,7 +889,16 @@ namespace Devian
             }
 
             applyLoadedAccountStorageToRuntime();
-            inventoryManager?.ReplaceState(inventory, INVENTORY_SNAPSHOT_CHANGE_REASON.LOADED);
+            if (inventoryManager != null)
+            {
+                var replaceInventory = inventoryManager.ReplaceState(inventory, INVENTORY_SNAPSHOT_CHANGE_REASON.LOADED);
+                if (replaceInventory.IsFailure)
+                {
+                    ClearGameState();
+                    return replaceInventory;
+                }
+            }
+
             return GameResult.Ok();
         }
 
@@ -1520,16 +1529,16 @@ namespace Devian
             accountManager.ApplyStorage(accountManager.Storage);
         }
 
-        private static InventoryStorage getInventoryStorageOrNull()
+        private static InventorySnapshot getInventorySnapshotOrEmpty()
         {
             try
             {
                 var inventoryManager = InventoryManager.Instance;
-                return inventoryManager != null ? inventoryManager.Storage : null;
+                return inventoryManager != null ? inventoryManager.CreateSnapshot() : new InventorySnapshot();
             }
             catch
             {
-                return null;
+                return new InventorySnapshot();
             }
         }
 

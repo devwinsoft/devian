@@ -43,11 +43,11 @@ public class SceneLobby : SceneBootstrap
         Log.Debug(ST_TEXT.Get("loading"));
         BundlePool.Spawn<TestPoolObject>("Cube", Vector3.zero, Quaternion.identity, null);
 
-        foreach (var key in InventoryManager.Instance.Storage.Rentals.Keys)
+        foreach (var key in InventoryManager.Instance.GetRentals().Keys)
         {
             Debug.Log($"Rentals: {key}");
         }
-        foreach (var key in InventoryManager.Instance.Storage.Passes.Keys)
+        foreach (var key in InventoryManager.Instance.GetPasses().Keys)
         {
             Debug.Log($"Passes: {key}");
         }

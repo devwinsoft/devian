@@ -12,7 +12,7 @@ namespace Devian
         const int TreasureVersion = 20;
 
         public static string Serialize(
-            InventoryStorage inventory,
+            InventorySnapshot inventory,
             PurchaseStorage purchase,
             ShopStorage shop,
             AccountStorage account,
@@ -41,7 +41,7 @@ namespace Devian
 
         public static GameResult DeserializeInto(
             string json,
-            InventoryStorage inventory,
+            InventorySnapshot inventory,
             PurchaseStorage purchase,
             ShopStorage shop,
             AccountStorage account,

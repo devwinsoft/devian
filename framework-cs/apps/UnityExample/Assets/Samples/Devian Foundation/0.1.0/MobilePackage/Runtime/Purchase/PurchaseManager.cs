@@ -751,12 +751,12 @@ namespace Devian
 
             try
             {
-                var inventory = InventoryManager.Instance?.Storage;
-                if (inventory == null)
+                var inventoryManager = InventoryManager.Instance;
+                if (inventoryManager == null)
                     return Task.FromResult(GameResult<long>.Success(0L));
 
                 ct.ThrowIfCancellationRequested();
-                return Task.FromResult(GameResult<long>.Success(inventory.GetRentalRemainingMs(internalProductId)));
+                return Task.FromResult(GameResult<long>.Success(inventoryManager.GetRentalRemainingMs(internalProductId)));
             }
             catch (Exception ex)
             {
@@ -1725,23 +1725,23 @@ namespace Devian
         {
             ct.ThrowIfCancellationRequested();
 
-            var inventory = getInventoryStorageOrNull();
-            if (inventory == null)
+            var inventoryManager = getInventoryManagerOrNull();
+            if (inventoryManager == null)
             {
                 return Task.FromResult(GameResult<EntitlementsSnapshot>.Failure(
                     GAME_ERROR_TYPE.GAME_SERVER_TIME_UNAVAILABLE,
-                    "InventoryStorage is not available."));
+                    "InventoryManager is not available."));
             }
 
             var seasonPasses = new List<string>();
-            foreach (var pass in inventory.Passes)
+            foreach (var pass in inventoryManager.GetPasses())
             {
                 if (pass.Value && !string.IsNullOrWhiteSpace(pass.Key))
                     seasonPasses.Add(pass.Key);
             }
 
             var rentals = new Dictionary<string, long>(StringComparer.Ordinal);
-            foreach (var rental in inventory.Rentals)
+            foreach (var rental in inventoryManager.GetRentals())
                 rentals[rental.Key] = rental.Value;
 
             var nowUtcMs = RemoteDataManager.ServerNowUtcMs;
@@ -1780,12 +1780,11 @@ namespace Devian
             return new RefundSyncResult(items.ToArray(), page.NextCursor, page.HasMore);
         }
 
-        static InventoryStorage getInventoryStorageOrNull()
+        static InventoryManager getInventoryManagerOrNull()
         {
             try
             {
-                var inventoryManager = InventoryManager.Instance;
-                return inventoryManager != null ? inventoryManager.Storage : null;
+                return InventoryManager.Instance;
             }
             catch
             {

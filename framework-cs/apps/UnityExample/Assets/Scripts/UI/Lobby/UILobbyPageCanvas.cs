@@ -77,7 +77,7 @@ public class UILobbyPageCanvas : UIBasePageCanvas<UILobbyPageCanvas>
         }
 
         // ── Rental 상태 확인 ──
-        var noAds = InventoryManager.Instance.Storage.HasActiveRental("purchase_noads_month");
+        var noAds = InventoryManager.Instance.HasActiveRental("purchase_noads_month");
         Debug.Log($"no_ads:{noAds}");
     }
     
@@ -114,7 +114,7 @@ public class UILobbyPageCanvas : UIBasePageCanvas<UILobbyPageCanvas>
                 Debug.Log($"{reward.Type}, {reward.Id}, {reward.Amount}");
             }
 
-            var remainMs = InventoryManager.Instance.Storage.GetRentalRemainingMs("NO_ADS");
+            var remainMs = InventoryManager.Instance.GetRentalRemainingMs("NO_ADS");
             if (remainMs > 0)
             {
                 var span = TimeSpan.FromMilliseconds(remainMs);

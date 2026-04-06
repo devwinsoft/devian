@@ -3,10 +3,11 @@
 Status: ACTIVE
 AppliesTo: v10
 
-InventoryStorage는 InventoryManager의 **인벤토리 데이터 컨테이너**이다.
+InventoryStorage는 InventoryManager의 **live runtime 데이터 컨테이너**이다.
 통화 잔고 / 장비(AbilityItemEquip) / 카드(AbilityItemCard) / 재료(AbilityItemMaterial) / 영웅(AbilityItemHero)을 통합 관리한다.
 
 InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobilePackage` asmdef에 속한다.
+외부 시스템의 public boundary는 `InventoryManager`이고, persistence boundary는 `InventorySnapshot`이다.
 
 ---
 
@@ -14,7 +15,7 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobilePacka
 
 코드는 실제 `InventoryStorage.cs` 참조. `sealed class`이다.
 
-- `Wallet` — `InventoryWallet` (내부 `Dictionary<CURRENCY_TYPE, long>` 기반 잔고 컨테이너)
+- `CurrencyBalances` — 내부 `Dictionary<CURRENCY_TYPE, long>` 기반 잔고 상태
 - `Equipments` — `Dictionary<string, AbilityItemEquip>` (itemUid → 장비)
 - `Cards` — `Dictionary<string, AbilityItemCard>` (item_id → 카드)
 - `Materials` — `Dictionary<string, AbilityItemMaterial>` (item_id → 재료)
@@ -33,6 +34,7 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobilePacka
 - `GetTreasureCount(gradeType)` / `AddTreasure(gradeType, amount)` / `SetTreasureCount(gradeType, count)` — treasure count CRUD
 - `AddTreasureExp(amount)` — delegates to `TreasureCurrent.Exp`
 - `ResetTreasure(level, exp)` — delegates to `TreasureCurrent.Reset(...)`
+- `CopyFrom(source)` — validated temp state를 live storage에 복사
 - Pass 변경 알림 publish는 `InventoryManager`가 담당한다 (trigger 직접 노출 금지).
 - 초기 보상 지급 트리거는 `InventoryStorage`가 아니라 `RewardManager.FirstInitAsync()`에서 처리한다 (`FirstRewardSettings` source).
 - ~~`ToJson()`~~ — **삭제됨**. [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)의 `SaveDataJsonCodec`으로 이전.
@@ -56,7 +58,7 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
 | 타입 | 책임 |
 |---|---|
 | `InventoryManager` | InventoryStorage 소유, 타입별 Apply/Revoke/Query API 제공 |
-| `InventoryStorage` | Wallet (`InventoryWallet`), Equipments (itemUid → AbilityItemEquip), Cards (item_id → AbilityItemCard), Materials (item_id → AbilityItemMaterial), Heroes (item_id → AbilityItemHero), Rentals (item_id → expiresAtClientUtcMs), Passes (item_id → owned), TreasureCurrent (`InventoryTreasureCurrent`), TreasureCounts (TREASURE_GRADE_TYPE → int) |
+| `InventoryStorage` | CurrencyBalances (`Dictionary<CURRENCY_TYPE, long>`), Equipments (itemUid → AbilityItemEquip), Cards (item_id → AbilityItemCard), Materials (item_id → AbilityItemMaterial), Heroes (item_id → AbilityItemHero), Rentals (item_id → expiresAtClientUtcMs), Passes (item_id → owned), TreasureCurrent (`InventoryTreasureCurrent`), TreasureCounts (TREASURE_GRADE_TYPE → int) |
 | `AbilityItemEquip` | OwnerUnitId/OwnerSlotNumber(별도 필드) + 능력치(STAT_TYPE 기반) 관리 |
 | `AbilityItemCard` | 수량(`STAT_TYPE.ITEM_AMOUNT`) + 능력치(STAT_TYPE 기반) 관리 |
 | `AbilityItemMaterial` | 수량(`STAT_TYPE.ITEM_AMOUNT`) + 능력치(STAT_TYPE 기반) 관리 |
@@ -64,10 +66,10 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
 
 - `InventoryManager`가 `InventoryStorage`를 소유한다 (싱글톤 등록 안 함).
 - 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `item_id`에 여러 인스턴스가 존재할 수 있다.
-- `ApplyCard(item_id, amount)` — `_storage.Cards`에 AbilityItemCard를 추가하고 `AddAmount(delta)`로 수량 누적한다.
-- `ApplyMaterial(item_id, amount)` — `_storage.Materials`에 AbilityItemMaterial을 추가하고 `AddAmount(delta)`로 수량 누적한다.
+- `ApplyCard(item_id, amount)` / `AddCardAmount(item_id, delta)` — `_storage.Cards`에 AbilityItemCard를 추가하고 `AddAmount(delta)`로 수량을 변경한다.
+- `ApplyMaterial(item_id, amount)` / `AddMaterialAmount(item_id, delta)` — `_storage.Materials`에 AbilityItemMaterial을 추가하고 `AddAmount(delta)`로 수량을 변경한다.
 - `ApplyEquip(item_id)` — 새 `itemUid`(GUID)로 AbilityItemEquip을 생성하여 `_storage.Equipments`에 추가한다.
-- `ApplyHero(item_id, amount)` — `_storage.Heroes`에 AbilityItemHero를 추가하고 `AddAmount(delta)`로 수량 누적한다.
+- `ApplyHero(item_id, amount)` / `AddHeroAmount(item_id, delta)` — `_storage.Heroes`에 AbilityItemHero를 추가하고 `AddAmount(delta)`로 수량을 변경한다.
 - `ApplyRental(item_id, durationMs)` — `_storage.SetRental(id, max(currentExpiry, now)+duration)`로 로컬 만료 시각을 설정/연장한다.
 - `SetPassOwnership(item_id)` — `_storage.SetPass(id, true)`로 소유권을 설정한다.
 - `ApplyTreasure(gradeType, amount)` — `_storage.AddTreasure(gradeType, amount)`로 chest count를 누적한다.
@@ -78,22 +80,19 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
   - `ITEM_CARD_CHANGED`
   - `ITEM_MATERIAL_CHANGED`
   - `ITEM_HERO_CHANGED`
+  - `ITEM_EQUIP_LIST_CHANGED`
+  - `ITEM_CARD_LIST_CHANGED`
+  - `ITEM_MATERIAL_LIST_CHANGED`
+  - `ITEM_HERO_LIST_CHANGED`
   - `RENTAL_CHANGED`
   - `TREASURE_STATE_CHANGED`
   - `INVENTORY_SNAPSHOT_CHANGED`
 
-```csharp
-public sealed class InventoryManager : MonoBehaviour
-{
-    readonly InventoryStorage _storage = new();
-    public InventoryStorage Storage => _storage;
-
-    // ... CompoSingleton<InventoryManager> 패턴 ...
-}
-```
-
-- live `InventoryStorage`는 read/query 용도로 노출하되, write boundary는 `InventoryManager`가 단일 책임을 갖는다.
-- load/import/clear는 temp snapshot을 만든 뒤 `InventoryManager.ReplaceState/ClearState`로 반영한다.
+- `InventoryManager`가 public query boundary를 제공한다.
+- 외부 시스템은 `GetEquipments/GetCards/GetMaterials/GetHeroes/GetRentals/GetPasses/GetRentalRemainingMs/HasPass/HasActiveRental` 같은 manager helper를 사용한다.
+- 신규 코드에서 `InventoryStorage` 직접 조회/변경은 금지한다.
+- load/import/clear는 temp `InventorySnapshot`을 만든 뒤 `InventoryManager.ReplaceState/ClearState`로 반영한다.
+- 카드/재료/영웅은 amount가 0이 되면 storage에서 제거한다.
 
 ---
 
@@ -103,14 +102,17 @@ public sealed class InventoryManager : MonoBehaviour
 
 ```
 MobilePackage/Runtime/Inventory/
-├── InventoryManager.cs   (10-inventory-manager)
-└── InventoryStorage.cs
+├── InventoryManager.cs          (10-inventory-manager)
+├── InventoryStorage.cs
+├── InventorySnapshot.cs         (save/load DTO)
+├── InventoryStaminaController.cs (14-inventory-stamina-controller)
+└── InventoryMessageTrigger.cs   (16-inventory-message-trigger)
 ```
 
 3-path mirror ([정책](../../../04-package-policy/SKILL.md)):
 - UPM (정본): `framework-cs/upm/com.devian.foundation/Samples~/MobilePackage/Runtime/Inventory/`
 - Packages (sync): `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/MobilePackage/Runtime/Inventory/`
-- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Samples/{version}/MobilePackage/Runtime/Inventory/`
+- Assets/Samples (import): `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/{version}/MobilePackage/Runtime/Inventory/`
 
 NOTE: `ItemData` 클래스는 `AbilityItemEquip`에 통합되어 삭제되었다. `BagItems`는 `Equipments`로 리네임되었다.
 
@@ -137,7 +139,7 @@ namespace Devian
 
 - InventoryStorage는 **sealed POCO 클래스**이다 (MonoBehaviour 금지).
 - 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `item_id`에 여러 인스턴스가 존재할 수 있다.
-- `Wallet`은 `InventoryWallet` API(`Get/TryAdd`)를 통해 `CURRENCY_TYPE`별 잔고를 관리한다.
+- currency 잔고는 `InventoryStorage` 내부 딕셔너리와 helper(`GetCurrencyAmount/TryAddCurrency`)로 직접 관리한다.
 - `Equipments` key = `itemUid` (string). value = `AbilityItemEquip`.
 - `Cards` key = `item_id` (string). value = `AbilityItemCard`.
 - `Materials` key = `item_id` (string). value = `AbilityItemMaterial`.
@@ -159,8 +161,9 @@ namespace Devian
 > **변경**: `ToJson()` / `FromJson()` 메서드는 **삭제**되었다.
 > 직렬화 책임은 [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md)의 **`SaveDataJsonCodec`**가 담당한다.
 
-InventoryStorage는 **ReadOnly 프로퍼티**(`Wallet`, `Equipments`, `Cards`, `Materials`, `Heroes`, `Rentals`, `Passes`, `TreasureCurrent`, `TreasureCounts`)와 **CRUD 메서드**만 제공한다.
-`SaveDataJsonCodec`이 이 프로퍼티/메서드를 사용하여 직렬화/역직렬화를 수행한다.
+InventoryStorage는 live runtime helper를 제공한다.
+`SaveDataJsonCodec`은 live storage를 직접 직렬화하지 않고 `InventorySnapshot`을 사용한다.
+`InventoryManager.CreateSnapshot()`이 live storage를 snapshot으로 투영하고, `InventoryManager.ReplaceState()`가 snapshot을 validate/build 후 live storage로 적용한다.
 
 JSON 스키마: [03-ssot](../03-ssot/SKILL.md) 참조.
 `SaveDataJsonCodec` 설계: [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md) 참조.
@@ -172,7 +175,7 @@ JSON 스키마: [03-ssot](../03-ssot/SKILL.md) 참조.
 - [12-game-ability](../../../21-game-package/12-game-ability/SKILL.md) — AbilityBase, AbilityItemEquip, AbilityItemCard, AbilityItemMaterial, AbilityItemHero, AbilityUnitHero
 - [13-game-stat-type](../../../../devian/21-domain-game/13-game-stat-type/SKILL.md) — STAT_TYPE enum
 - [10-inventory-manager](../10-inventory-manager/SKILL.md) — InventoryManager (InventoryStorage 소유자, 수량 SSOT)
-- [12-inventory-wallet](../12-inventory-wallet/SKILL.md) — InventoryWallet (Dictionary 기반 Wallet + JEWEL 파생 조회)
+- [12-inventory-wallet](../12-inventory-wallet/SKILL.md) — Currency State Flattening (legacy wallet wrapper 제거)
 - [03-ssot](../03-ssot/SKILL.md) — Inventory State/Apply Rules
 - [00-overview](../00-overview/SKILL.md) — Inventory System 개요
 - [21-savedata-system/43-savedata-json-codec](../../21-savedata-system/43-savedata-json-codec/SKILL.md) — SaveData JSON 직렬화 담당

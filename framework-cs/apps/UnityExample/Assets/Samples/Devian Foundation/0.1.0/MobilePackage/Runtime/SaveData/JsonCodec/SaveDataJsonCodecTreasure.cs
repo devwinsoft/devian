@@ -8,14 +8,14 @@ namespace Devian
     {
         const int SchemaVersion = 1;
 
-        public static JObject Serialize(InventoryStorage storage)
+        public static JObject Serialize(InventorySnapshot storage)
         {
-            storage ??= new InventoryStorage();
+            storage ??= new InventorySnapshot();
 
             var currentObj = new JObject
             {
-                ["exp"] = storage.TreasureCurrent.Exp,
-                ["level"] = storage.TreasureCurrent.Level,
+                ["exp"] = storage.TreasureCurrentExp,
+                ["level"] = storage.TreasureCurrentLevel,
             };
 
             var treasureObj = new JObject
@@ -40,7 +40,7 @@ namespace Devian
             return treasureObj;
         }
 
-        public static void DeserializeInto(JObject treasureObj, InventoryStorage storage)
+        public static void DeserializeInto(JObject treasureObj, InventorySnapshot storage)
         {
             if (storage == null)
                 return;
@@ -54,7 +54,8 @@ namespace Devian
             {
                 var exp = currentObj.Value<int?>("exp") ?? 0;
                 var level = currentObj.Value<int?>("level") ?? 1;
-                storage.SetTreasureCurrentState(level, exp);
+                storage.TreasureCurrentLevel = level;
+                storage.TreasureCurrentExp = exp;
             }
 
             if (treasureObj["chestCounts"] is JObject chestCountsObj)
@@ -74,7 +75,7 @@ namespace Devian
                     if (count <= 0)
                         continue;
 
-                    storage.SetTreasureCount(gradeType, count);
+                    storage.TreasureCounts[gradeType] = count;
                 }
             }
         }

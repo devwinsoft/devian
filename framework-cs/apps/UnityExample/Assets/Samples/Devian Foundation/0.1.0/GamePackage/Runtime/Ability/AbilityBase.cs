@@ -38,13 +38,13 @@ namespace Devian
             get => mStats.TryGetValue(type, out var v) ? v : 0;
         }
 
-        public void AddStat(STAT_TYPE type, int value)
+        internal void AddStat(STAT_TYPE type, int value)
         {
             mStats.TryGetValue(type, out var cur);
             mStats[type] = cur + value;
         }
 
-        public void AddStat(AbilityBase other)
+        internal void AddStat(AbilityBase other)
         {
             foreach (var kv in other.mStats)
                 AddStat(kv.Key, kv.Value);
@@ -54,11 +54,11 @@ namespace Devian
 
         public float GetFloat(STAT_TYPE type) => GetInt(type) * 0.0001f;
 
-        public void SetStat(STAT_TYPE type, int value) => mStats[type] = value;
+        internal void SetStat(STAT_TYPE type, int value) => mStats[type] = value;
 
-        public void ClearStat(STAT_TYPE type) => mStats.Remove(type);
+        internal void ClearStat(STAT_TYPE type) => mStats.Remove(type);
 
-        public void ClearStats() => mStats.Clear();
+        internal void ClearStats() => mStats.Clear();
 
         public IReadOnlyDictionary<STAT_TYPE, int> GetStats() => Stats;
 

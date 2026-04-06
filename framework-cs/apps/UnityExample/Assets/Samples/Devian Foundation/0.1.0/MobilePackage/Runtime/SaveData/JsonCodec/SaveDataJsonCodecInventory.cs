@@ -7,17 +7,17 @@ namespace Devian
 {
     internal static class SaveDataJsonCodecInventory
     {
-        public static JObject Serialize(InventoryStorage inventory)
+        public static JObject Serialize(InventorySnapshot inventory)
         {
+            inventory ??= new InventorySnapshot();
+
             var inv = new JObject();
 
-            // wallet
             var walletObj = new JObject();
-            foreach (var kv in inventory.Wallet.EnumerateForSave())
+            foreach (var kv in inventory.CurrencyBalances)
                 walletObj[kv.Key.ToString()] = kv.Value;
             inv["wallet"] = walletObj;
 
-            // equipments
             var equipsObj = new JObject();
             foreach (var kv in inventory.Equipments)
             {
@@ -32,7 +32,6 @@ namespace Devian
             }
             inv["equipments"] = equipsObj;
 
-            // cards
             var cardsObj = new JObject();
             foreach (var kv in inventory.Cards)
             {
@@ -47,7 +46,6 @@ namespace Devian
             }
             inv["cards"] = cardsObj;
 
-            // materials
             var materialsObj = new JObject();
             foreach (var kv in inventory.Materials)
             {
@@ -61,7 +59,6 @@ namespace Devian
             }
             inv["materials"] = materialsObj;
 
-            // heroes
             var heroesObj = new JObject();
             foreach (var kv in inventory.Heroes)
             {
@@ -75,33 +72,30 @@ namespace Devian
 
                 var equipsMap = new JObject();
                 foreach (var eq in h.Equips)
-                    equipsMap[eq.Key.ToString()] = eq.Value.ItemUid;
+                    equipsMap[eq.Key.ToString()] = eq.Value;
                 obj["equips"] = equipsMap;
 
                 heroesObj[kv.Key] = obj;
             }
             inv["heroes"] = heroesObj;
 
-            // rentals
             var rentalsObj = new JObject();
             foreach (var kv in inventory.Rentals)
                 rentalsObj[kv.Key] = kv.Value;
             inv["rentals"] = rentalsObj;
 
-            // passes
             var passesObj = new JObject();
             foreach (var kv in inventory.Passes)
                 passesObj[kv.Key] = kv.Value;
             inv["passes"] = passesObj;
 
-            // stamina
             if (inventory.LastStaminaUpdateUtcMs > 0L)
                 inv["lastStaminaUpdateUtcMs"] = inventory.LastStaminaUpdateUtcMs;
 
             return inv;
         }
 
-        public static GameResult DeserializeInto(JObject inv, InventoryStorage inventory)
+        public static GameResult DeserializeInto(JObject inv, InventorySnapshot inventory)
         {
             if (inv == null)
             {
@@ -114,28 +108,27 @@ namespace Devian
             {
                 return GameResult.Failure(
                     GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
-                    "SaveDataJsonCodecInventory.DeserializeInto: inventory storage is null.");
+                    "SaveDataJsonCodecInventory.DeserializeInto: inventory snapshot is null.");
             }
 
-            inventory.Clear();
+            inventory.ClearInventoryState();
 
-            // wallet
             if (inv["wallet"] is JObject walletObj)
             {
                 foreach (var prop in walletObj.Properties())
                 {
-                    if (System.Enum.TryParse<CURRENCY_TYPE>(prop.Name, out var currencyType))
-                    {
-                        if (currencyType == CURRENCY_TYPE.ADS
-                            || currencyType == CURRENCY_TYPE.FREE
-                            || currencyType == CURRENCY_TYPE.JEWEL)
-                            continue;
-                        inventory.Wallet.TryAdd(currencyType, prop.Value.Value<long>());
-                    }
+                    if (!System.Enum.TryParse(prop.Name, out CURRENCY_TYPE currencyType))
+                        continue;
+
+                    if (currencyType == CURRENCY_TYPE.ADS
+                        || currencyType == CURRENCY_TYPE.FREE
+                        || currencyType == CURRENCY_TYPE.JEWEL)
+                        continue;
+
+                    inventory.CurrencyBalances[currencyType] = prop.Value.Value<long>();
                 }
             }
 
-            // equipments
             if (inv["equipments"] is JObject equipsObj)
             {
                 foreach (var prop in equipsObj.Properties())
@@ -145,18 +138,16 @@ namespace Devian
                     var itemUid = obj.Value<string>("itemUid");
                     var savedStats = parseStats(obj["stats"] as JObject);
                     var itemLevel = readSavedItemLevel(obj, savedStats);
-                    var ability = AbilityItemFactory.CreateEquip(
-                        itemId,
-                        itemUid,
-                        itemLevel);
-                    if (ability.IsFailure)
-                        return ToGameResult(ability);
 
-                    inventory.AddEquip(itemUid, ability.Value);
+                    inventory.Equipments[prop.Name] = new InventorySnapshotEquipment
+                    {
+                        ItemId = itemId ?? string.Empty,
+                        ItemUid = string.IsNullOrWhiteSpace(itemUid) ? prop.Name : itemUid,
+                        ItemLevel = itemLevel,
+                    };
                 }
             }
 
-            // cards
             if (inv["cards"] is JObject cardsObj)
             {
                 foreach (var prop in cardsObj.Properties())
@@ -173,16 +164,15 @@ namespace Devian
                             $"SaveDataJsonCodecInventory.DeserializeInto: card amount is negative. item_id={itemId}, amount={amount}");
                     }
 
-                    var ability = AbilityItemFactory.CreateCard(itemId, itemLevel);
-                    if (ability.IsFailure)
-                        return ToGameResult(ability);
-
-                    ability.Value.SetStat(STAT_TYPE.ITEM_AMOUNT, amount);
-                    inventory.AddCard(itemId, ability.Value);
+                    inventory.Cards[prop.Name] = new InventorySnapshotCard
+                    {
+                        ItemId = itemId ?? string.Empty,
+                        ItemLevel = itemLevel,
+                        Amount = amount,
+                    };
                 }
             }
 
-            // materials
             if (inv["materials"] is JObject materialsObj)
             {
                 foreach (var prop in materialsObj.Properties())
@@ -198,16 +188,14 @@ namespace Devian
                             $"SaveDataJsonCodecInventory.DeserializeInto: material amount is negative. item_id={itemId}, amount={amount}");
                     }
 
-                    var ability = AbilityItemFactory.CreateMaterial(itemId);
-                    if (ability.IsFailure)
-                        return ToGameResult(ability);
-
-                    ability.Value.SetStat(STAT_TYPE.ITEM_AMOUNT, amount);
-                    inventory.AddMaterial(itemId, ability.Value);
+                    inventory.Materials[prop.Name] = new InventorySnapshotMaterial
+                    {
+                        ItemId = itemId ?? string.Empty,
+                        Amount = amount,
+                    };
                 }
             }
 
-            // heroes (last: equip slot references need equipments)
             if (inv["heroes"] is JObject heroesObj)
             {
                 var restoredEquipUids = new HashSet<string>();
@@ -225,12 +213,12 @@ namespace Devian
                             $"SaveDataJsonCodecInventory.DeserializeInto: hero amount is negative. item_id={itemId}, amount={amount}");
                     }
 
-                    var ability = AbilityItemFactory.CreateHero(itemId, itemLevel);
-                    if (ability.IsFailure)
-                        return ToGameResult(ability);
-
-                    ability.Value.SetStat(STAT_TYPE.ITEM_AMOUNT, amount);
-                    inventory.AddHero(itemId, ability.Value);
+                    var heroSnapshot = new InventorySnapshotHero
+                    {
+                        ItemId = itemId ?? string.Empty,
+                        ItemLevel = itemLevel,
+                        Amount = amount,
+                    };
 
                     if (obj["equips"] is JObject equipsMap)
                     {
@@ -258,32 +246,26 @@ namespace Devian
                                     $"SaveDataJsonCodecInventory.DeserializeInto: duplicate hero equip reference. equipUid={equipUid}");
                             }
 
-                            if (!inventory.Equip(itemId, slotNumber, equipUid))
-                            {
-                                return GameResult.Failure(
-                                    GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
-                                    $"SaveDataJsonCodecInventory.DeserializeInto: failed to restore hero equip. item_id={itemId}, slot={slotNumber}, equipUid={equipUid}");
-                            }
+                            heroSnapshot.Equips[slotNumber] = equipUid;
                         }
                     }
+
+                    inventory.Heroes[prop.Name] = heroSnapshot;
                 }
             }
 
-            // rentals
             if (inv["rentals"] is JObject rentalsObj)
             {
                 foreach (var prop in rentalsObj.Properties())
-                    inventory.SetRental(prop.Name, prop.Value.Value<long>());
+                    inventory.Rentals[prop.Name] = prop.Value.Value<long>();
             }
 
-            // passes
             if (inv["passes"] is JObject passesObj)
             {
                 foreach (var prop in passesObj.Properties())
-                    inventory.SetPass(prop.Name, prop.Value.Value<bool>());
+                    inventory.Passes[prop.Name] = prop.Value.Value<bool>();
             }
 
-            // stamina
             inventory.LastStaminaUpdateUtcMs = inv.Value<long?>("lastStaminaUpdateUtcMs") ?? 0L;
             return GameResult.Ok();
         }
@@ -342,30 +324,6 @@ namespace Devian
                 default:
                     return System.Enum.TryParse(name, out statType);
             }
-        }
-
-        static GameResult ToGameResult(GameResult result)
-        {
-            if (result.IsSuccess)
-                return GameResult.Ok();
-            var error = result.Error!;
-            return GameResult.Failure(
-                new GameError(
-                    GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
-                    error.Message,
-                    $"gameCode={error.Code}; {error.Details}"));
-        }
-
-        static GameResult ToGameResult<T>(GameResult<T> result)
-        {
-            if (result.IsSuccess)
-                return GameResult.Ok();
-            var error = result.Error!;
-            return GameResult.Failure(
-                new GameError(
-                    GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
-                    error.Message,
-                    $"gameCode={error.Code}; {error.Details}"));
         }
     }
 }

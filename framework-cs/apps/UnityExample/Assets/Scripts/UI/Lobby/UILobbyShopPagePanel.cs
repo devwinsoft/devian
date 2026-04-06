@@ -39,7 +39,7 @@ public class UILobbyShopPagePanel : UIBasePageMain<UILobbyPageCanvas>
         {
             Debug.Log($"{purchase.Error.Code}: {purchase.Error.Message}");
         }
-        foreach (var key in InventoryManager.Instance.Storage.Rentals.Keys)
+        foreach (var key in InventoryManager.Instance.GetRentals().Keys)
         {
             Debug.LogWarning($"Rentals: {key}");
         }

@@ -56,7 +56,7 @@ public class UILobbyShopDailyItemFreeAds : UILobbyShopDailyItemBase
 
         var table = TB_SHOP_ITEM_DAILY.Get(shopItemAdsId);
         var max_count = table.max_count;
-
+        
         if (remainFreeCount > 0)
         {
             shopItemId = shopItemFreeId;

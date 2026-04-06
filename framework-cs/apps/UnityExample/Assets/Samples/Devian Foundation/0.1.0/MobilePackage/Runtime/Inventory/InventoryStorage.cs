@@ -25,8 +25,7 @@ namespace Devian
     public sealed class InventoryStorage
     {
         // ── Currency ──
-        readonly InventoryWallet mWallet = new();
-        public InventoryWallet Wallet => mWallet;
+        readonly Dictionary<CURRENCY_TYPE, long> mCurrencyBalances = new();
 
         // ── Equips ──
         readonly Dictionary<string, AbilityItemEquip> mEquipments = new();
@@ -59,7 +58,52 @@ namespace Devian
         public IReadOnlyDictionary<TREASURE_GRADE_TYPE, int> TreasureCounts => mTreasureCounts;
 
         // ── Stamina ──
-        public long LastStaminaUpdateUtcMs { get; set; }
+        public long LastStaminaUpdateUtcMs { get; internal set; }
+
+        // ── Currency Operations ──
+
+        public long GetCurrencyAmount(CURRENCY_TYPE currencyType)
+        {
+            return currencyType switch
+            {
+                CURRENCY_TYPE.ADS => 0L,
+                CURRENCY_TYPE.ARENA_COIN => getCurrencyOrZero(CURRENCY_TYPE.ARENA_COIN),
+                CURRENCY_TYPE.FREE => 0L,
+                CURRENCY_TYPE.FRIENDSHIP => getCurrencyOrZero(CURRENCY_TYPE.FRIENDSHIP),
+                CURRENCY_TYPE.GOLD => getCurrencyOrZero(CURRENCY_TYPE.GOLD),
+                CURRENCY_TYPE.GUILD_COIN => getCurrencyOrZero(CURRENCY_TYPE.GUILD_COIN),
+                CURRENCY_TYPE.JEWEL => GetCurrencyAmount(CURRENCY_TYPE.JEWEL_FREE) + GetCurrencyAmount(CURRENCY_TYPE.JEWEL_PAID),
+                CURRENCY_TYPE.JEWEL_FREE => getCurrencyOrZero(CURRENCY_TYPE.JEWEL_FREE),
+                CURRENCY_TYPE.JEWEL_PAID => getCurrencyOrZero(CURRENCY_TYPE.JEWEL_PAID),
+                CURRENCY_TYPE.STAMINA => getCurrencyOrZero(CURRENCY_TYPE.STAMINA),
+                _ => 0L,
+            };
+        }
+
+        internal bool TryAddCurrency(CURRENCY_TYPE currencyType, long amount)
+        {
+            if (currencyType == CURRENCY_TYPE.ADS
+                || currencyType == CURRENCY_TYPE.FREE
+                || currencyType == CURRENCY_TYPE.JEWEL)
+                return false;
+
+            mCurrencyBalances.TryGetValue(currencyType, out var current);
+            mCurrencyBalances[currencyType] = current + amount;
+            return true;
+        }
+
+        internal IEnumerable<KeyValuePair<CURRENCY_TYPE, long>> EnumerateCurrencyBalancesForSave()
+        {
+            foreach (var kv in mCurrencyBalances)
+            {
+                if (kv.Key == CURRENCY_TYPE.ADS
+                    || kv.Key == CURRENCY_TYPE.FREE
+                    || kv.Key == CURRENCY_TYPE.JEWEL)
+                    continue;
+
+                yield return kv;
+            }
+        }
 
         // ── Equip Operations ──
 
@@ -108,6 +152,11 @@ namespace Devian
             return ability;
         }
 
+        public bool RemoveCard(string itemId)
+        {
+            return mCards.Remove(itemId);
+        }
+
         // ── Material Operations ──
 
         public AbilityItemMaterial GetMaterial(string itemId)
@@ -122,6 +171,11 @@ namespace Devian
             return ability;
         }
 
+        public bool RemoveMaterial(string itemId)
+        {
+            return mMaterials.Remove(itemId);
+        }
+
         // ── Hero Operations ──
 
         public AbilityItemHero GetHero(string heroId)
@@ -134,6 +188,18 @@ namespace Devian
             if (mHeroes.ContainsKey(heroId)) return mHeroes[heroId];
             mHeroes[heroId] = ability;
             return ability;
+        }
+
+        public bool RemoveHero(string heroId)
+        {
+            if (!mHeroes.TryGetValue(heroId, out var hero))
+                return false;
+
+            var equippedSlots = hero.Equips.Keys.ToList();
+            for (var i = 0; i < equippedSlots.Count; i++)
+                hero.RemoveEquip(equippedSlots[i]);
+
+            return mHeroes.Remove(heroId);
         }
 
         // ── Hero Equip Operations ──
@@ -270,7 +336,7 @@ namespace Devian
 
         internal void Clear()
         {
-            mWallet.Clear();
+            mCurrencyBalances.Clear();
             mCards.Clear();
             mMaterials.Clear();
             mHeroes.Clear();
@@ -292,7 +358,8 @@ namespace Devian
             if (source == null)
                 return;
 
-            mWallet.CopyFrom(source.mWallet);
+            foreach (var kv in source.mCurrencyBalances)
+                mCurrencyBalances[kv.Key] = kv.Value;
 
             foreach (var kv in source.mEquipments)
                 mEquipments[kv.Key] = kv.Value;
@@ -317,6 +384,11 @@ namespace Devian
 
             mTreasureCurrent.Reset(source.mTreasureCurrent.Level, source.mTreasureCurrent.Exp);
             LastStaminaUpdateUtcMs = source.LastStaminaUpdateUtcMs;
+        }
+
+        long getCurrencyOrZero(CURRENCY_TYPE currencyType)
+        {
+            return mCurrencyBalances.TryGetValue(currencyType, out var value) ? value : 0L;
         }
     }
 }

@@ -85,6 +85,7 @@ level table 규칙:
 - 즉 순서는 `find level row -> Init(table, levelTable, ...) -> restore mutable state` 다
 - level row가 없으면 `GameResult.Failure(GAME_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND, ...)`
 - 빈 stat slot(`STAT_TYPE.NONE`)은 skip한다
+- level up runtime 갱신은 factory의 next-level resolve helper를 사용한다 (`ResolveNextCardLevelTable`, `ResolveNextHeroLevelTable`, `ResolveNextEquipLevelTable`).
 
 ### 4.2 Unit 생성은 unit-table-first
 

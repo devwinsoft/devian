@@ -232,27 +232,39 @@ namespace Devian
                 if (r.Type == REWARD_TYPE.CURRENCY)
                 {
                     var currencyType = (CURRENCY_TYPE)Enum.Parse(typeof(CURRENCY_TYPE), r.Id);
-                    inv.RevokeCurrency(currencyType, r.Amount);
+                    var revoke = inv.RevokeCurrency(currencyType, r.Amount);
+                    if (revoke.IsFailure)
+                        return revoke;
                 }
                 else if (r.Type == REWARD_TYPE.CARD)
                 {
-                    inv.RevokeCard(r.Id, (int)r.Amount);
+                    var revoke = inv.RevokeCard(r.Id, (int)r.Amount);
+                    if (revoke.IsFailure)
+                        return revoke;
                 }
                 else if (r.Type == REWARD_TYPE.MATERIAL)
                 {
-                    inv.RevokeMaterial(r.Id, (int)r.Amount);
+                    var revoke = inv.RevokeMaterial(r.Id, (int)r.Amount);
+                    if (revoke.IsFailure)
+                        return revoke;
                 }
                 else if (r.Type == REWARD_TYPE.EQUIP)
                 {
-                    inv.RevokeEquip(r.Id, (int)r.Amount);
+                    var revoke = inv.RevokeEquip(r.Id, (int)r.Amount);
+                    if (revoke.IsFailure)
+                        return revoke;
                 }
                 else if (r.Type == REWARD_TYPE.HERO)
                 {
-                    inv.RevokeHero(r.Id, (int)r.Amount);
+                    var revoke = inv.RevokeHero(r.Id, (int)r.Amount);
+                    if (revoke.IsFailure)
+                        return revoke;
                 }
                 else if (r.Type == REWARD_TYPE.RENTAL)
                 {
-                    inv.RevokeRental(r.Id);
+                    var revoke = inv.RevokeRental(r.Id);
+                    if (revoke.IsFailure)
+                        return revoke;
                 }
                 else if (r.Type == REWARD_TYPE.PASS)
                 {
@@ -261,7 +273,9 @@ namespace Devian
                 else if (r.Type == REWARD_TYPE.TREASURE)
                 {
                     var gradeType = (TREASURE_GRADE_TYPE)Enum.Parse(typeof(TREASURE_GRADE_TYPE), r.Id);
-                    inv.RevokeTreasure(gradeType, (int)r.Amount);
+                    var revoke = inv.RevokeTreasure(gradeType, (int)r.Amount);
+                    if (revoke.IsFailure)
+                        return revoke;
                 }
             }
 
@@ -300,40 +314,64 @@ namespace Devian
                     var balance = inv.GetCurrencyAmount(currencyType);
                     var clampedAmount = Math.Min(r.Amount, balance);
                     if (clampedAmount > 0)
-                        inv.RevokeCurrency(currencyType, clampedAmount);
+                    {
+                        var revoke = inv.RevokeCurrency(currencyType, clampedAmount);
+                        if (revoke.IsFailure)
+                            return revoke;
+                    }
                 }
                 else if (r.Type == REWARD_TYPE.CARD)
                 {
                     var have = inv.GetCardAmount(r.Id);
                     var clampedAmount = (int)Math.Min(r.Amount, have);
                     if (clampedAmount > 0)
-                        inv.RevokeCard(r.Id, clampedAmount);
+                    {
+                        var revoke = inv.RevokeCard(r.Id, clampedAmount);
+                        if (revoke.IsFailure)
+                            return revoke;
+                    }
                 }
                 else if (r.Type == REWARD_TYPE.MATERIAL)
                 {
                     var have = inv.GetMaterialAmount(r.Id);
                     var clampedAmount = (int)Math.Min(r.Amount, have);
                     if (clampedAmount > 0)
-                        inv.RevokeMaterial(r.Id, clampedAmount);
+                    {
+                        var revoke = inv.RevokeMaterial(r.Id, clampedAmount);
+                        if (revoke.IsFailure)
+                            return revoke;
+                    }
                 }
                 else if (r.Type == REWARD_TYPE.EQUIP)
                 {
                     var count = inv.GetEquipCount(r.Id);
                     var clampedAmount = (int)Math.Min(r.Amount, count);
                     if (clampedAmount > 0)
-                        inv.RevokeEquip(r.Id, clampedAmount);
+                    {
+                        var revoke = inv.RevokeEquip(r.Id, clampedAmount);
+                        if (revoke.IsFailure)
+                            return revoke;
+                    }
                 }
                 else if (r.Type == REWARD_TYPE.HERO)
                 {
                     var have = inv.GetHeroAmount(r.Id);
                     var clampedAmount = (int)Math.Min(r.Amount, have);
                     if (clampedAmount > 0)
-                        inv.RevokeHero(r.Id, clampedAmount);
+                    {
+                        var revoke = inv.RevokeHero(r.Id, clampedAmount);
+                        if (revoke.IsFailure)
+                            return revoke;
+                    }
                 }
                 else if (r.Type == REWARD_TYPE.RENTAL)
                 {
                     if (inv.HasActiveRental(r.Id))
-                        inv.RevokeRental(r.Id);
+                    {
+                        var revoke = inv.RevokeRental(r.Id);
+                        if (revoke.IsFailure)
+                            return revoke;
+                    }
                 }
                 else if (r.Type == REWARD_TYPE.PASS)
                 {
@@ -346,7 +384,11 @@ namespace Devian
                     var have = inv.GetTreasureCount(gradeType);
                     var clampedAmount = (int)Math.Min(r.Amount, have);
                     if (clampedAmount > 0)
-                        inv.RevokeTreasure(gradeType, clampedAmount);
+                    {
+                        var revoke = inv.RevokeTreasure(gradeType, clampedAmount);
+                        if (revoke.IsFailure)
+                            return revoke;
+                    }
                 }
             }
 

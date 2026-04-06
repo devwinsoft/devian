@@ -1674,7 +1674,7 @@ namespace Devian
             remainingMs = 0L;
             try
             {
-                remainingMs = InventoryManager.Instance.Storage.GetRentalRemainingMs(DefaultRentalNoAdsId);
+                remainingMs = InventoryManager.Instance.GetRentalRemainingMs(DefaultRentalNoAdsId);
                 return true;
             }
             catch

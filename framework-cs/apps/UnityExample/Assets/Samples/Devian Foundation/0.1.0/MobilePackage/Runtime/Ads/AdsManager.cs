@@ -353,7 +353,7 @@ namespace Devian
             if (!Singleton.TryGet<InventoryManager>(out var inv))
                 return false;
 
-            return inv.Storage.HasActiveRental("NO_ADS");
+            return inv.HasActiveRental("NO_ADS");
         }
 
         bool IsCooldownActive(string advertiseId, int cooldownSec)
