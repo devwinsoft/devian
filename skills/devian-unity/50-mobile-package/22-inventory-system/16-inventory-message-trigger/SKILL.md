@@ -33,23 +33,40 @@ public sealed class InventoryMessageTrigger : BaseTrigger<EntityId, INVENTORY_ME
 
 ## Message Keys
 
-`INVENTORY_MESSAGE_TYPE` enum(입력: `input/Domains/Game/ENUM_META.json`)을 사용한다.
+`INVENTORY_MESSAGE_TYPE` enum(입력: `input/Domains/Game/ENUM_INVENTORY.json`)을 사용한다.
 
-최소 키:
+키:
 
 - `NONE`
-- `PASS_CHANGED`
+- `PASS_OWNERSHIP_CHANGED`
+- `CURRENCY_CHANGED`
+- `ITEM_EQUIP_CHANGED`
+- `ITEM_CARD_CHANGED`
+- `ITEM_MATERIAL_CHANGED`
+- `ITEM_HERO_CHANGED`
+- `RENTAL_CHANGED`
+- `TREASURE_STATE_CHANGED`
+- `INVENTORY_SNAPSHOT_CHANGED`
 
 payload 규약:
 
-- `PASS_CHANGED`: `args[0] = string passId`, `args[1] = bool owned`
+- `PASS_OWNERSHIP_CHANGED`: `args[0] = string passId`, `args[1] = bool owned`
+- `CURRENCY_CHANGED`: `args[0] = CURRENCY_TYPE`, `args[1] = long delta`, `args[2] = long currentAmount`
+- `ITEM_EQUIP_CHANGED`: `args[0] = string itemUid`, `args[1] = string itemId`, `args[2] = AbilityItemEquip runtimeOrNull`, `args[3] = int delta`
+- `ITEM_CARD_CHANGED`: `args[0] = string itemId`, `args[1] = AbilityItemCard runtimeOrNull`, `args[2] = int delta`
+- `ITEM_MATERIAL_CHANGED`: `args[0] = string itemId`, `args[1] = AbilityItemMaterial runtimeOrNull`, `args[2] = int delta`
+- `ITEM_HERO_CHANGED`: `args[0] = string itemId`, `args[1] = AbilityItemHero runtimeOrNull`, `args[2] = int delta`
+- `RENTAL_CHANGED`: `args[0] = string itemId`, `args[1] = long expiresAtClientUtcMs`, `args[2] = bool active`
+- `TREASURE_STATE_CHANGED`: `args[0] = TREASURE_GRADE_TYPE`, `args[1] = int deltaCount`, `args[2] = int currentCount`, `args[3] = int currentLevel`, `args[4] = int currentExp`
+- `INVENTORY_SNAPSHOT_CHANGED`: `args[0] = INVENTORY_SNAPSHOT_CHANGE_REASON`
 
 ---
 
 ## Usage Rules
 
 - `AchieveManager`는 `ACHIEVE_PASS.req_pass_id` 조건 runtime의 WAIT 활성 전이를 위해 Inventory 메시지를 구독한다.
-- `InventoryManager.Instance.Storage.Passes` 변동 시 `PASS_CHANGED`를 발행한다.
+- `InventoryManager`는 item/currency 변경을 타입별 `*_CHANGED` key로 발행한다.
+- bulk load/import/clear는 `INVENTORY_SNAPSHOT_CHANGED` 한 번으로 알린다.
 - 직접 `InventoryMessageTrigger` 인스턴스를 참조/주입하지 않는다.
 
 ---

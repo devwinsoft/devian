@@ -43,12 +43,12 @@ MobilePackage 샘플의 `GameMessageManager` 설계 문서다.
 - `GetStat(string message_id) / SetStat(string message_id, CBigInt)`
 - `ClearStorage()`
 - `Notify(GAME_MESSAGE_TYPE, CBigInt/long/int)` (stats update + publish)
-- `SubcribeGameMessageTrigger(...) / UnSubcribeGameMessageTrigger(...)` (internal helper)
+- `Subcribe(...) / UnSubcribe(...)`
 - `ClearAll()`
 
 주의:
 - game message trigger 인스턴스는 외부에 직접 노출하지 않는다.
-- MissionManager/AchieveManager는 `SubcribeGameMessageTrigger` helper를 통해 trigger를 구독한다.
+- 외부 구독자는 `GameMessageManager.Subcribe(...)`, `UnSubcribe(...)` helper를 사용한다.
 
 ---
 

@@ -4,7 +4,25 @@
       "name": "INVENTORY_MESSAGE_TYPE",
       "values": [
         {"name": "NONE", "value": 0},
-        {"name": "PASS_CHANGED", "value": 1}
+        {"name": "PASS_OWNERSHIP_CHANGED", "value": 1},
+        {"name": "CURRENCY_CHANGED", "value": 2},
+        {"name": "ITEM_EQUIP_CHANGED", "value": 3},
+        {"name": "ITEM_CARD_CHANGED", "value": 4},
+        {"name": "ITEM_MATERIAL_CHANGED", "value": 5},
+        {"name": "ITEM_HERO_CHANGED", "value": 6},
+        {"name": "RENTAL_CHANGED", "value": 7},
+        {"name": "TREASURE_STATE_CHANGED", "value": 8},
+        {"name": "INVENTORY_SNAPSHOT_CHANGED", "value": 9}
+      ]
+    },
+    {
+      "name": "INVENTORY_SNAPSHOT_CHANGE_REASON",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "LOADED", "value": 1},
+        {"name": "CLEARED", "value": 2},
+        {"name": "IMPORTED", "value": 3},
+        {"name": "MIGRATED", "value": 4}
       ]
     }
   ]

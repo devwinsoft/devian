@@ -852,7 +852,8 @@ namespace Devian
 
         public GameResult LoadFromJson(string json)
         {
-            var inventory = getInventoryStorageOrNull();
+            var inventoryManager = getInventoryManagerOrNull();
+            var inventory = inventoryManager != null ? new InventoryStorage() : null;
             var purchase = getPurchaseStorageOrNull();
             var shop = getShopStorageOrNull();
             var shopManager = getShopManagerOrNull();
@@ -888,13 +889,13 @@ namespace Devian
             }
 
             applyLoadedAccountStorageToRuntime();
+            inventoryManager?.ReplaceState(inventory, INVENTORY_SNAPSHOT_CHANGE_REASON.LOADED);
             return GameResult.Ok();
         }
 
         public void ClearGameState()
         {
             getShopManagerOrNull()?.InvalidateRuntimeState();
-            getInventoryStorageOrNull()?.Clear();
             getPurchaseStorageOrNull()?.ClearAll();
             getShopStorageOrNull()?.Clear();
             getAccountStorageOrNull()?.Clear();
@@ -903,8 +904,7 @@ namespace Devian
             getAchieveManagerOrNull()?.ClearStorage();
             getLeaderboardManagerOrNull()?.ClearStorage();
             getAttendManagerOrNull()?.ClearStorage();
-            getInventoryStorageOrNull()?.TreasureCounts.Clear();
-            getInventoryStorageOrNull()?.TreasureCurrent.Clear();
+            getInventoryManagerOrNull()?.ClearState(INVENTORY_SNAPSHOT_CHANGE_REASON.CLEARED);
             applyLoadedAccountStorageToRuntime();
         }
 
@@ -1526,6 +1526,18 @@ namespace Devian
             {
                 var inventoryManager = InventoryManager.Instance;
                 return inventoryManager != null ? inventoryManager.Storage : null;
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        private static InventoryManager getInventoryManagerOrNull()
+        {
+            try
+            {
+                return InventoryManager.Instance;
             }
             catch
             {

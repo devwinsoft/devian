@@ -124,8 +124,7 @@ namespace Devian
                 SaveDataJsonCodecTreasure.DeserializeInto(treasureObj, inventory);
             else
             {
-                inventory?.TreasureCounts.Clear();
-                inventory?.TreasureCurrent.Clear();
+                inventory?.ClearTreasureState();
             }
 
             return GameResult.Ok();

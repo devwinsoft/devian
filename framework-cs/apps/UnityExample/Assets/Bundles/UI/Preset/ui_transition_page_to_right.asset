@@ -19,6 +19,6 @@ MonoBehaviour:
       Duration: 0.2
       Ease: 0
       FromOffset: {x: 0, y: 0}
-      ToOffset: {x: 1400, y: 0}
+      ToOffset: {x: 1600, y: 0}
     ScaleClips: []
     PreferredSizeClips: []

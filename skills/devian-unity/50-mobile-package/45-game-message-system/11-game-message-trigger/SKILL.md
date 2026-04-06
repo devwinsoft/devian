@@ -7,8 +7,8 @@ AppliesTo: v10
 
 Game message 입력 라우터다.
 
-- 타입: `BaseTrigger<int, GAME_MESSAGE_TYPE>`
-- ownerKey: subscriber-defined `int`
+- 타입: `BaseTrigger<EntityId, GAME_MESSAGE_TYPE>`
+- ownerKey: subscriber-defined `EntityId`
 - 실소유자는 `GameMessageManager`다.
 
 ---
@@ -16,7 +16,7 @@ Game message 입력 라우터다.
 ## Contract
 
 ```csharp
-public sealed class GameMessageTrigger : BaseTrigger<int, GAME_MESSAGE_TYPE>
+public sealed class GameMessageTrigger : BaseTrigger<EntityId, GAME_MESSAGE_TYPE>
 {
 }
 ```

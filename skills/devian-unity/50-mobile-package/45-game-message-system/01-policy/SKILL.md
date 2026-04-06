@@ -21,7 +21,7 @@ MobilePackage의 메시지/트리거 계층 하드룰을 정의한다.
 
 - `GameMessageTrigger`은 `GameMessageManager` 내부 소유다.
 - trigger 인스턴스는 외부에 직접 노출하지 않는다.
-- `GameMessageManager` helper를 통해서만 publish/subscribe한다.
+- `GameMessageManager.Notify(...)`, `Subcribe(...)`, `UnSubcribe(...)` helper를 통해서만 접근한다.
 
 ### 3) Mission message trigger는 48-mission-system이 소유한다
 

@@ -14,8 +14,6 @@ namespace Devian
     public sealed class AchieveManager : CompoSingleton<AchieveManager>
     {
         private const string Tag = nameof(AchieveManager);
-        private const int GameMessageOwnerKey = 3001001;
-        private static readonly EntityId InventoryMessageOwnerKey = 3001002;
 
         private enum RuntimePlatformKind
         {
@@ -107,7 +105,7 @@ namespace Devian
         {
             if (!BaseApplication.IsApplicationQuitting)
             {
-                unSubcribeGameMessageTrigger();
+                unSubcribeGameMessages();
                 unSubcribeInventoryMessageTrigger();
             }
         }
@@ -323,8 +321,8 @@ namespace Devian
                     continue;
 
                 var subscribedType = messageType;
-                messageManager.SubcribeGameMessageTrigger(
-                    GameMessageOwnerKey,
+                messageManager.Subcribe(
+                    GetEntityId(),
                     subscribedType,
                     args =>
                     {
@@ -336,12 +334,12 @@ namespace Devian
             _isGameMessageSubscribed = true;
         }
 
-        void unSubcribeGameMessageTrigger()
+        void unSubcribeGameMessages()
         {
             if (!_isGameMessageSubscribed)
                 return;
 
-            GameMessageManager.Instance.UnSubcribeGameMessageTrigger(GameMessageOwnerKey);
+            GameMessageManager.Instance.UnSubcribe(GetEntityId());
             _isGameMessageSubscribed = false;
         }
 
@@ -355,8 +353,8 @@ namespace Devian
                 return;
 
             inventoryManager.Subcribe(
-                InventoryMessageOwnerKey,
-                INVENTORY_MESSAGE_TYPE.PASS_CHANGED,
+                GetEntityId(),
+                INVENTORY_MESSAGE_TYPE.PASS_OWNERSHIP_CHANGED,
                 args =>
                 {
                     onInventoryPassChanged(args);
@@ -373,7 +371,7 @@ namespace Devian
 
             var inventoryManager = InventoryManager.Instance;
             if (inventoryManager != null)
-                inventoryManager.UnSubcribe(InventoryMessageOwnerKey);
+                inventoryManager.UnSubcribe(GetEntityId());
 
             _isInventoryMessageSubscribed = false;
         }

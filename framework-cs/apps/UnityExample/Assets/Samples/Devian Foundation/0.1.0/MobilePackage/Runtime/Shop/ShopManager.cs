@@ -11,7 +11,6 @@ namespace Devian
     public sealed class ShopManager : CompoSingleton<ShopManager>
     {
         const string Tag = nameof(ShopManager);
-        const int CatalogUnlockOwnerKey = 0x53484F50; // "SHOP"
         const long MillisecondsPerDay = 24L * 60L * 60L * 1000L;
 
         public const string DefaultRentalNoAdsId = "NO_ADS";
@@ -487,8 +486,8 @@ namespace Devian
                 return GameResult<RewardData[]>.Failure(resolveChest.Error!);
 
             var chestState = resolveChest.Value;
-            var wallet = default(InventoryWallet);
-            var deduction = default(CurrencyDeduction);
+            var inventoryManager = default(InventoryManager);
+            var deduction = default(InventoryManager.CurrencySpendReceipt);
 
             if (product.ProductType == SHOP_PRODUCT_TYPE.ADS)
             {
@@ -511,7 +510,7 @@ namespace Devian
             }
             else if (product.ProductType == SHOP_PRODUCT_TYPE.CURRENCY)
             {
-                if (!tryGetWallet(out wallet) || wallet == null)
+                if (!tryGetInventoryManager(out inventoryManager) || inventoryManager == null)
                 {
                     return GameResult<RewardData[]>.Failure(
                         GAME_ERROR_TYPE.SHOP_WALLET_UNAVAILABLE,
@@ -526,7 +525,7 @@ namespace Devian
                         $"Shop product price is invalid: shop_id={product.shop_id}, price={price}, basePrice={product.PriceWithoutDiscount}, discountType={product.DiscountType}");
                 }
 
-                if (!tryDeductCurrency(wallet, product.currency_type, price, out deduction))
+                if (!inventoryManager.TrySpendCurrency(product.currency_type, price, out deduction))
                 {
                     return GameResult<RewardData[]>.Failure(
                         GAME_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT,
@@ -545,7 +544,7 @@ namespace Devian
             if (applyRewards.IsFailure)
             {
                 if (deduction.HasDeduction)
-                    rollbackCurrency(wallet, deduction);
+                    inventoryManager?.RollbackCurrencySpend(deduction);
 
                 var details = applyRewards.Error != null
                     ? $"inner={applyRewards.Error.Code}:{applyRewards.Error.Message}"
@@ -572,8 +571,8 @@ namespace Devian
 
         async Task<GameResult<RewardData[]>> buyRewardCatalogAsync(ShopRewardProductBase product, CancellationToken ct)
         {
-            var wallet = default(InventoryWallet);
-            var deduction = default(CurrencyDeduction);
+            var inventoryManager = default(InventoryManager);
+            var deduction = default(InventoryManager.CurrencySpendReceipt);
 
             if (product.ProductType == SHOP_PRODUCT_TYPE.ADS)
             {
@@ -596,7 +595,7 @@ namespace Devian
             }
             else if (product.ProductType == SHOP_PRODUCT_TYPE.CURRENCY)
             {
-                if (!tryGetWallet(out wallet) || wallet == null)
+                if (!tryGetInventoryManager(out inventoryManager) || inventoryManager == null)
                 {
                     return GameResult<RewardData[]>.Failure(
                         GAME_ERROR_TYPE.SHOP_WALLET_UNAVAILABLE,
@@ -611,7 +610,7 @@ namespace Devian
                         $"Shop product price is invalid: shop_id={product.shop_id}, price={price}, basePrice={product.PriceWithoutDiscount}, discountType={product.DiscountType}");
                 }
 
-                if (!tryDeductCurrency(wallet, product.currency_type, price, out deduction))
+                if (!inventoryManager.TrySpendCurrency(product.currency_type, price, out deduction))
                 {
                     return GameResult<RewardData[]>.Failure(
                         GAME_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT,
@@ -629,7 +628,7 @@ namespace Devian
             if (applyRewards.IsFailure)
             {
                 if (deduction.HasDeduction)
-                    rollbackCurrency(wallet, deduction);
+                    inventoryManager?.RollbackCurrencySpend(deduction);
 
                 var details = applyRewards.Error != null
                     ? $"inner={applyRewards.Error.Code}:{applyRewards.Error.Message}"
@@ -1231,8 +1230,8 @@ namespace Devian
                         && messageRow.message_type != GAME_MESSAGE_TYPE.NONE
                         && subscribedMessageTypes.Add(messageRow.message_type))
                     {
-                        messageManager.SubcribeGameMessageTrigger(
-                            CatalogUnlockOwnerKey,
+                        messageManager.Subcribe(
+                            GetEntityId(),
                             messageRow.message_type,
                             onCatalogUnlockMessageTriggered);
                     }
@@ -1280,7 +1279,7 @@ namespace Devian
                 return;
             }
 
-            messageManager.UnSubcribeGameMessageTrigger(CatalogUnlockOwnerKey);
+            messageManager.UnSubcribe(GetEntityId());
             _isCatalogUnlockSubscribed = false;
         }
 
@@ -1475,7 +1474,7 @@ namespace Devian
                 return GameResult<ShopProductBase>.Success(product);
             }
 
-            if (!tryGetWallet(out var wallet) || wallet == null)
+            if (!tryGetInventoryManager(out var inventoryManager) || inventoryManager == null)
             {
                 return GameResult<ShopProductBase>.Failure(
                     GAME_ERROR_TYPE.SHOP_WALLET_UNAVAILABLE,
@@ -1483,7 +1482,7 @@ namespace Devian
             }
 
             var price = product.Price;
-            if (!hasSufficientCurrency(wallet, currencyType, price))
+            if (!inventoryManager.HasSufficientCurrency(currencyType, price))
             {
                 return GameResult<ShopProductBase>.Failure(
                     GAME_ERROR_TYPE.SHOP_CURRENCY_INSUFFICIENT,
@@ -1656,118 +1655,13 @@ namespace Devian
             }
         }
 
-        static bool tryDeductCurrency(
-            InventoryWallet wallet,
-            CURRENCY_TYPE currencyType,
-            int price,
-            out CurrencyDeduction deduction)
+        static bool tryGetInventoryManager(out InventoryManager inventoryManager)
         {
-            deduction = default;
-
-            if (price < 0)
-                return false;
-
-            if (price == 0)
-                return true;
-
-            if (currencyType == CURRENCY_TYPE.FREE)
-                return false;
-
-            if (currencyType == CURRENCY_TYPE.ADS)
-                return false;
-
-            if (currencyType == CURRENCY_TYPE.JEWEL)
-            {
-                var free = wallet.Get(CURRENCY_TYPE.JEWEL_FREE);
-                var paid = wallet.Get(CURRENCY_TYPE.JEWEL_PAID);
-                var total = free + paid;
-                if (total < price)
-                    return false;
-
-                var useFree = Math.Min((long)price, free);
-                var usePaid = price - useFree;
-                if (useFree > 0 && !wallet.TryAdd(CURRENCY_TYPE.JEWEL_FREE, -useFree))
-                    return false;
-
-                if (usePaid > 0 && !wallet.TryAdd(CURRENCY_TYPE.JEWEL_PAID, -usePaid))
-                {
-                    if (useFree > 0)
-                        wallet.TryAdd(CURRENCY_TYPE.JEWEL_FREE, useFree);
-                    return false;
-                }
-
-                deduction = new CurrencyDeduction(CURRENCY_TYPE.JEWEL, useFree, usePaid, 0L);
-                return true;
-            }
-
-            var balance = wallet.Get(currencyType);
-            if (balance < price)
-                return false;
-
-            if (!wallet.TryAdd(currencyType, -price))
-                return false;
-
-            deduction = new CurrencyDeduction(currencyType, 0L, 0L, price);
-            return true;
-        }
-
-        static void rollbackCurrency(InventoryWallet wallet, CurrencyDeduction deduction)
-        {
-            if (deduction.CurrencyType == CURRENCY_TYPE.JEWEL)
-            {
-                if (deduction.DeductJewelFree > 0 &&
-                    !wallet.TryAdd(CURRENCY_TYPE.JEWEL_FREE, deduction.DeductJewelFree))
-                {
-                    Debug.LogError($"[{Tag}] Failed to rollback JEWEL_FREE deduction.");
-                }
-
-                if (deduction.DeductJewelPaid > 0 &&
-                    !wallet.TryAdd(CURRENCY_TYPE.JEWEL_PAID, deduction.DeductJewelPaid))
-                {
-                    Debug.LogError($"[{Tag}] Failed to rollback JEWEL_PAID deduction.");
-                }
-
-                return;
-            }
-
-            if (deduction.DeductAmount > 0 &&
-                !wallet.TryAdd(deduction.CurrencyType, deduction.DeductAmount))
-            {
-                Debug.LogError($"[{Tag}] Failed to rollback currency deduction. currency={deduction.CurrencyType}");
-            }
-        }
-
-        static bool hasSufficientCurrency(InventoryWallet wallet, CURRENCY_TYPE currencyType, int price)
-        {
-            if (price < 0)
-                return false;
-
-            if (price == 0)
-                return true;
-
-            if (currencyType == CURRENCY_TYPE.FREE)
-                return false;
-
-            if (currencyType == CURRENCY_TYPE.ADS)
-                return false;
-
-            if (currencyType == CURRENCY_TYPE.JEWEL)
-            {
-                var free = wallet.Get(CURRENCY_TYPE.JEWEL_FREE);
-                var paid = wallet.Get(CURRENCY_TYPE.JEWEL_PAID);
-                return free + paid >= price;
-            }
-
-            return wallet.Get(currencyType) >= price;
-        }
-
-        static bool tryGetWallet(out InventoryWallet wallet)
-        {
-            wallet = null;
+            inventoryManager = null;
             try
             {
-                wallet = InventoryManager.Instance.Storage.Wallet;
-                return wallet != null;
+                inventoryManager = InventoryManager.Instance;
+                return inventoryManager != null;
             }
             catch
             {
@@ -1857,31 +1751,6 @@ namespace Devian
                 }
                 return;
             }
-        }
-
-        readonly struct CurrencyDeduction
-        {
-            public CurrencyDeduction(
-                CURRENCY_TYPE currencyType,
-                long deductJewelFree,
-                long deductJewelPaid,
-                long deductAmount)
-            {
-                CurrencyType = currencyType;
-                DeductJewelFree = deductJewelFree;
-                DeductJewelPaid = deductJewelPaid;
-                DeductAmount = deductAmount;
-            }
-
-            public bool HasDeduction =>
-                CurrencyType == CURRENCY_TYPE.JEWEL
-                    ? DeductJewelFree > 0 || DeductJewelPaid > 0
-                    : DeductAmount > 0;
-
-            public CURRENCY_TYPE CurrencyType { get; }
-            public long DeductJewelFree { get; }
-            public long DeductJewelPaid { get; }
-            public long DeductAmount { get; }
         }
     }
 }

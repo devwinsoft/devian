@@ -10,8 +10,6 @@ namespace Devian
     {
         const string Tag = "TreasureManager";
 
-        InventoryStorage storage => InventoryManager.Instance.Storage;
-
         // ──────────────────────────────────────────────
         //  OpenCollectedChests
         // ──────────────────────────────────────────────
@@ -21,7 +19,8 @@ namespace Devian
             if (gradeType == TREASURE_GRADE_TYPE.NONE)
                 return GameResult.Failure(GAME_ERROR_TYPE.TREASURE_GRADE_INVALID, "gradeType NONE is not allowed.");
 
-            var count = storage.GetTreasureCount(gradeType);
+            var inventoryManager = InventoryManager.Instance;
+            var count = inventoryManager.GetTreasureCount(gradeType);
             if (count <= 0)
                 return GameResult.Ok();
 
@@ -48,7 +47,7 @@ namespace Devian
             }
 
             // all-or-nothing: commit only after all rewards succeed
-            storage.SetTreasureCount(gradeType, 0);
+            InventoryManager.Instance.RevokeTreasure(gradeType, count);
             return GameResult.Ok();
         }
 
@@ -58,13 +57,15 @@ namespace Devian
 
         public GameResult OpenCurrentChest()
         {
-            var currentLevel = storage.TreasureCurrent.Level;
+            var inventoryManager = InventoryManager.Instance;
+            var currentLevel = inventoryManager.GetTreasureCurrentLevel();
 
             var chestRow = TB_TREASURE_CHEST.Get(currentLevel);
             if (chestRow == null)
                 return GameResult.Failure(GAME_ERROR_TYPE.TREASURE_CHEST_NOT_FOUND, $"TREASURE_CHEST row not found: level={currentLevel}");
 
-            if (storage.TreasureCurrent.Exp < chestRow.max_exp)
+            var currentExp = inventoryManager.GetTreasureCurrentExp();
+            if (currentExp < chestRow.max_exp)
                 return GameResult.Ok();
 
             var gradeType = chestRow.treasure_grade_type;
@@ -88,13 +89,15 @@ namespace Devian
             }
 
             // all-or-nothing: commit only after reward succeeds
-            storage.TreasureCurrent.Exp -= chestRow.max_exp;
-            storage.TreasureCurrent.Level++;
+            var nextExp = currentExp - chestRow.max_exp;
+            var nextLevel = currentLevel + 1;
 
             var allChestRows = TB_TREASURE_CHEST.GetAll();
             var maxLevel = allChestRows.Count > 0 ? allChestRows.Max(r => r.level) : 1;
-            if (storage.TreasureCurrent.Level > maxLevel)
-                storage.TreasureCurrent.Level = 1;
+            if (nextLevel > maxLevel)
+                nextLevel = 1;
+
+            inventoryManager.SetTreasureCurrentState(nextLevel, nextExp);
 
             return GameResult.Ok();
         }

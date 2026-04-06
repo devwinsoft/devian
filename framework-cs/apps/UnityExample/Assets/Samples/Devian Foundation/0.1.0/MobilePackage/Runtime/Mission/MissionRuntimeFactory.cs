@@ -1,5 +1,6 @@
 using System;
 using Devian.Domain.Game;
+using UnityEngine;
 
 namespace Devian
 {
@@ -13,8 +14,8 @@ namespace Devian
         public GAME_MESSAGE_SAVE_TYPE OpType { get; set; }
         public GAME_MESSAGE_OP_TYPE ConditionOpType { get; set; }
         public CBigInt ConditionValue { get; set; }
-        public Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> SubscribeTrigger { get; set; }
-        public Action<int> UnsubscribeTrigger { get; set; }
+        public Action<EntityId, GAME_MESSAGE_TYPE, BaseTrigger<EntityId, GAME_MESSAGE_TYPE>.Handler> SubscribeTrigger { get; set; }
+        public Action<EntityId> UnsubscribeTrigger { get; set; }
         public Func<CBigInt> ReadExternalProgress { get; set; }
         public Action<MissionRuntimeBase> OnChanged { get; set; }
         public Action<MissionRuntimeBase> OnClaimable { get; set; }
@@ -31,8 +32,8 @@ namespace Devian
         public GAME_MESSAGE_SAVE_TYPE OpType { get; set; }
         public GAME_MESSAGE_OP_TYPE ConditionOpType { get; set; }
         public CBigInt ConditionValue { get; set; }
-        public Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> SubscribeTrigger { get; set; }
-        public Action<int> UnsubscribeTrigger { get; set; }
+        public Action<EntityId, GAME_MESSAGE_TYPE, BaseTrigger<EntityId, GAME_MESSAGE_TYPE>.Handler> SubscribeTrigger { get; set; }
+        public Action<EntityId> UnsubscribeTrigger { get; set; }
         public Func<CBigInt> ReadExternalProgress { get; set; }
         public Action<MissionRuntimeBase> OnChanged { get; set; }
         public Action<MissionRuntimeBase> OnClaimable { get; set; }
@@ -52,8 +53,8 @@ namespace Devian
         public GAME_MESSAGE_SAVE_TYPE OpType { get; set; }
         public GAME_MESSAGE_OP_TYPE ConditionOpType { get; set; }
         public CBigInt ConditionValue { get; set; }
-        public Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> SubscribeTrigger { get; set; }
-        public Action<int> UnsubscribeTrigger { get; set; }
+        public Action<EntityId, GAME_MESSAGE_TYPE, BaseTrigger<EntityId, GAME_MESSAGE_TYPE>.Handler> SubscribeTrigger { get; set; }
+        public Action<EntityId> UnsubscribeTrigger { get; set; }
         public Func<CBigInt> ReadExternalProgress { get; set; }
         public Action<MissionRuntimeBase> OnChanged { get; set; }
         public Action<MissionRuntimeBase> OnClaimable { get; set; }

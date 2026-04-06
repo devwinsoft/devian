@@ -45,8 +45,7 @@ namespace Devian
             if (storage == null)
                 return;
 
-            storage.TreasureCounts.Clear();
-            storage.TreasureCurrent.Clear();
+            storage.ClearTreasureState();
 
             if (treasureObj == null)
                 return;
@@ -54,10 +53,8 @@ namespace Devian
             if (treasureObj["current"] is JObject currentObj)
             {
                 var exp = currentObj.Value<int?>("exp") ?? 0;
-                storage.TreasureCurrent.Exp = exp < 0 ? 0 : exp;
-
                 var level = currentObj.Value<int?>("level") ?? 1;
-                storage.TreasureCurrent.Level = level < 1 ? 1 : level;
+                storage.SetTreasureCurrentState(level, exp);
             }
 
             if (treasureObj["chestCounts"] is JObject chestCountsObj)
@@ -77,7 +74,7 @@ namespace Devian
                     if (count <= 0)
                         continue;
 
-                    storage.TreasureCounts[gradeType] = count;
+                    storage.SetTreasureCount(gradeType, count);
                 }
             }
         }

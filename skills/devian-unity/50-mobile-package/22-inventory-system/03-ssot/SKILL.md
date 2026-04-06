@@ -259,16 +259,34 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 ## F) Inventory Message Trigger (정본)
 
 - Inventory 변경 알림 key는 `INVENTORY_MESSAGE_TYPE` enum을 사용한다.
-  - 입력 파일: `input/Domains/Game/ENUM_META.json`
+  - 입력 파일: `input/Domains/Game/ENUM_INVENTORY.json`
 - Trigger 소유자: `InventoryManager`
 - 외부 노출: `InventoryManager` helper(`Subcribe/UnSubcribe`)만 허용
 - Trigger 직접 참조 금지
 
-현재 최소 메시지:
+현재 메시지:
 
-- `PASS_CHANGED`
+- `PASS_OWNERSHIP_CHANGED`
   - payload: `args[0] = passId(string)`, `args[1] = owned(bool)`
+- `CURRENCY_CHANGED`
+  - payload: `args[0] = currencyType(CURRENCY_TYPE)`, `args[1] = delta(long)`, `args[2] = currentAmount(long)`
+- `ITEM_EQUIP_CHANGED`
+  - payload: `args[0] = itemUid(string)`, `args[1] = itemId(string)`, `args[2] = runtimeOrNull(AbilityItemEquip)`, `args[3] = delta(int)`
+- `ITEM_CARD_CHANGED`
+  - payload: `args[0] = itemId(string)`, `args[1] = runtimeOrNull(AbilityItemCard)`, `args[2] = delta(int)`
+- `ITEM_MATERIAL_CHANGED`
+  - payload: `args[0] = itemId(string)`, `args[1] = runtimeOrNull(AbilityItemMaterial)`, `args[2] = delta(int)`
+- `ITEM_HERO_CHANGED`
+  - payload: `args[0] = itemId(string)`, `args[1] = runtimeOrNull(AbilityItemHero)`, `args[2] = delta(int)`
+- `RENTAL_CHANGED`
+  - payload: `args[0] = itemId(string)`, `args[1] = expiresAtClientUtcMs(long)`, `args[2] = active(bool)`
+- `TREASURE_STATE_CHANGED`
+  - payload: `args[0] = gradeType(TREASURE_GRADE_TYPE)`, `args[1] = deltaCount(int)`, `args[2] = currentCount(int)`, `args[3] = currentLevel(int)`, `args[4] = currentExp(int)`
+- `INVENTORY_SNAPSHOT_CHANGED`
+  - payload: `args[0] = reason(INVENTORY_SNAPSHOT_CHANGE_REASON)`
 
 사용 목적:
 
 - `ACHIEVE_PASS.req_pass_id` 조건이 있는 runtime의 `WAIT -> ACTIVE` 전이를 위해 Pass 변동을 구독한다.
+- wallet/item UI는 타입별 `*_CHANGED`를 구독하고 payload 또는 현재 storage 재조회로 갱신한다.
+- load/import/clear 같은 bulk inventory 변경은 per-item replay 없이 `INVENTORY_SNAPSHOT_CHANGED` 한 번만 발행한다.

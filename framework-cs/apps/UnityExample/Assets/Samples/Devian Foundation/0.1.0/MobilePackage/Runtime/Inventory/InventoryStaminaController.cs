@@ -65,19 +65,19 @@ namespace Devian
             }
         }
 
-        public void RecoverStamina(InventoryStorage storage)
+        public long RecoverStamina(InventoryStorage storage)
         {
             int maxStamina = _maxStamina;
             int intervalSeconds = _staminaIntervalSeconds;
 
             if (maxStamina <= 0 || intervalSeconds <= 0)
-                return;
+                return 0L;
 
             var currentStamina = storage.Wallet.Get(CURRENCY_TYPE.STAMINA);
 
             // stamina >= max → 회복 불필요, 타임스탬프 무의미
             if (currentStamina >= maxStamina)
-                return;
+                return 0L;
 
             var nowUtcMs = RemoteDataManager.ServerNowUtcMs;
             var lastUpdateUtcMs = storage.LastStaminaUpdateUtcMs;
@@ -86,17 +86,17 @@ namespace Devian
             if (lastUpdateUtcMs <= 0L)
             {
                 storage.LastStaminaUpdateUtcMs = nowUtcMs;
-                return;
+                return 0L;
             }
 
             var elapsedMs = nowUtcMs - lastUpdateUtcMs;
             if (elapsedMs <= 0L)
-                return;
+                return 0L;
 
             var intervalMs = (long)intervalSeconds * 1000L;
             var recoveryCount = elapsedMs / intervalMs;
             if (recoveryCount <= 0L)
-                return;
+                return 0L;
 
             var actualRecovery = Math.Min(recoveryCount, maxStamina - currentStamina);
             if (actualRecovery > 0L)
@@ -106,12 +106,13 @@ namespace Devian
             if (currentStamina + actualRecovery >= maxStamina)
             {
                 storage.LastStaminaUpdateUtcMs = 0L;
-                return;
+                return actualRecovery;
             }
 
             // 아직 max 미만 → 잔여 시간 보존
             var remainderMs = elapsedMs % intervalMs;
             storage.LastStaminaUpdateUtcMs = nowUtcMs - remainderMs;
+            return actualRecovery;
         }
     }
 }

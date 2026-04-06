@@ -83,15 +83,15 @@ namespace Devian
             _gameMessageTriggerSystem.Notify(messageType, value);
         }
 
-        internal void SubcribeGameMessageTrigger(
-            int ownerKey,
+        public void Subcribe(
+            EntityId ownerKey,
             GAME_MESSAGE_TYPE messageType,
-            BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler handler)
+            BaseTrigger<EntityId, GAME_MESSAGE_TYPE>.Handler handler)
         {
             _gameMessageTriggerSystem.Subcribe(ownerKey, messageType, handler);
         }
 
-        internal void UnSubcribeGameMessageTrigger(int ownerKey)
+        public void UnSubcribe(EntityId ownerKey)
         {
             _gameMessageTriggerSystem.UnSubcribe(ownerKey);
         }

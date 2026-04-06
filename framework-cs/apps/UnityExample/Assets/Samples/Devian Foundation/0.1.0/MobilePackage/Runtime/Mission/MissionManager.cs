@@ -321,14 +321,14 @@ namespace Devian
             _missionMessageSystem.Notify(MISSION_MESSAGE_TYPE.RUNTIME_INIT, runtime);
         }
 
-        void subscribeRuntimeTrigger(int ownerKey, GAME_MESSAGE_TYPE messageType, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler handler)
+        void subscribeRuntimeTrigger(EntityId ownerKey, GAME_MESSAGE_TYPE messageType, BaseTrigger<EntityId, GAME_MESSAGE_TYPE>.Handler handler)
         {
-            GameMessageManager.Instance.SubcribeGameMessageTrigger(ownerKey, messageType, handler);
+            GameMessageManager.Instance.Subcribe(ownerKey, messageType, handler);
         }
 
-        void unSubcribeRuntimeTrigger(int ownerKey)
+        void unSubcribeRuntimeTrigger(EntityId ownerKey)
         {
-            GameMessageManager.Instance.UnSubcribeGameMessageTrigger(ownerKey);
+            GameMessageManager.Instance.UnSubcribe(ownerKey);
         }
 
         void onRuntimeChanged(MissionRuntimeBase runtime)

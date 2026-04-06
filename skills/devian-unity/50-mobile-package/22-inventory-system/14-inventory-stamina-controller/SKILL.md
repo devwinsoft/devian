@@ -126,6 +126,7 @@ else:
 1. `SyncGameStorageAsync()` → codec 복원 (stamina + LastStaminaUpdateUtcMs)
 2. `LoginManager.syncGameStateAsync()` → `InventoryManager.LoadSettings()` (설정 로드)
 3. `InventoryManager.RecoverStamina()` → 오프라인 회복 계산
+4. 실제 회복량이 1 이상이면 `InventoryManager`가 `CURRENCY_CHANGED(STAMINA, delta, currentAmount)`를 publish한다
 
 ---
 

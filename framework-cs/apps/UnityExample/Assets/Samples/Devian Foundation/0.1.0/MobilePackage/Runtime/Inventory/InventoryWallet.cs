@@ -25,7 +25,7 @@ namespace Devian
             };
         }
 
-        public bool TryAdd(CURRENCY_TYPE currencyType, long amount)
+        internal bool TryAdd(CURRENCY_TYPE currencyType, long amount)
         {
             if (currencyType == CURRENCY_TYPE.ADS
                 || currencyType == CURRENCY_TYPE.FREE
@@ -50,9 +50,19 @@ namespace Devian
             }
         }
 
-        public void Clear()
+        internal void Clear()
         {
             mBalances.Clear();
+        }
+
+        internal void CopyFrom(InventoryWallet source)
+        {
+            mBalances.Clear();
+            if (source == null)
+                return;
+
+            foreach (var kv in source.mBalances)
+                mBalances[kv.Key] = kv.Value;
         }
 
         long GetOrZero(CURRENCY_TYPE currencyType)

@@ -33,7 +33,7 @@ AppliesTo: v10
 
 - `ACHIEVE_SOCIAL`/`ACHIEVE_PASS` row 기준 runtime 생성/복구 정상
 - `ACHIEVE_SOCIAL(req_msg_id/req_value)` WAIT 조건 정상
-- `ACHIEVE_PASS(req_pass_id)` WAIT 조건 + Inventory PASS_CHANGED 재평가 정상
+- `ACHIEVE_PASS(req_pass_id)` WAIT 조건 + Inventory PASS_OWNERSHIP_CHANGED 재평가 정상
 - level-up 시 condition_msg_id 변경 + projection 동기화 정상
 - level-up 시에도 req 조건 재평가로 `WAIT/ACTIVE` 시작 상태가 올바르게 적용
 - 동일 업적 `Unlock + Sync` 연속 호출 시 이벤트 1회 보장

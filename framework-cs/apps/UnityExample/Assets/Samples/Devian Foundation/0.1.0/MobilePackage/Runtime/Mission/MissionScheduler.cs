@@ -12,8 +12,8 @@ namespace Devian
         const int MaxDailyRuntimeCount = 5;
 
         readonly MissionStorage _storage;
-        readonly Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> _subscribeTrigger;
-        readonly Action<int> _unsubscribeTrigger;
+        readonly Action<EntityId, GAME_MESSAGE_TYPE, BaseTrigger<EntityId, GAME_MESSAGE_TYPE>.Handler> _subscribeTrigger;
+        readonly Action<EntityId> _unsubscribeTrigger;
         readonly Action<MissionRuntimeBase> _onInitialized;
         readonly Action<MissionRuntimeBase> _onChanged;
         readonly Action<MissionRuntimeBase> _onClaimable;
@@ -25,8 +25,8 @@ namespace Devian
 
         public MissionScheduler(
             MissionStorage storage,
-            Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> subscribeTrigger,
-            Action<int> unsubscribeTrigger,
+            Action<EntityId, GAME_MESSAGE_TYPE, BaseTrigger<EntityId, GAME_MESSAGE_TYPE>.Handler> subscribeTrigger,
+            Action<EntityId> unsubscribeTrigger,
             Action<MissionRuntimeBase> onInitialized,
             Action<MissionRuntimeBase> onChanged,
             Action<MissionRuntimeBase> onClaimable,

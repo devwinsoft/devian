@@ -132,9 +132,14 @@ CompoSingleton<InventoryManager>.Instance
 - `ApplyMaterial(string item_id, int amount) -> CommonResult` — `_storage.Materials`에 AbilityItemMaterial 추가(없으면 생성) + `AbilityItemMaterial.AddAmount(amount)`
 - `ApplyHero(string item_id, int amount) -> CommonResult` — `_storage.Heroes`에 AbilityItemHero 추가(없으면 생성) + `AbilityItemHero.AddAmount(amount)`
 - `ApplyRental(string item_id) -> CommonResult` — `_storage.SetRental(id, max(currentExpiry, now)+30days)`
-- `SetPassOwnership(string item_id, bool owned) -> CommonResult` — `_storage.SetPass(item_id, owned)` + 메시지 트리거
-- `RemovePassOwnership(string item_id) -> CommonResult` — `_storage.RemovePass(item_id)` + 메시지 트리거
-- `ApplyTreasure(TREASURE_GRADE_TYPE gradeType, int amount) -> CommonResult` — `_storage.AddTreasure(gradeType, amount)`
+- `SetPassOwnership(string item_id, bool owned) -> CommonResult` — `_storage.SetPass(item_id, owned)` + `PASS_OWNERSHIP_CHANGED`
+- `RemovePassOwnership(string item_id) -> CommonResult` — `_storage.RemovePass(item_id)` + `PASS_OWNERSHIP_CHANGED`
+- `ApplyTreasure(TREASURE_GRADE_TYPE gradeType, int amount) -> CommonResult` — `_storage.AddTreasure(gradeType, amount)` + `TREASURE_STATE_CHANGED`
+- `TrySpendCurrency(CURRENCY_TYPE currencyType, int amount, out CurrencySpendReceipt receipt) -> bool` — shop 구매용 currency spend + `CURRENCY_CHANGED`
+- `RollbackCurrencySpend(CurrencySpendReceipt receipt)` — spend rollback + `CURRENCY_CHANGED`
+- `SetTreasureCurrentState(int level, int exp)` — current chest progress 갱신 + `TREASURE_STATE_CHANGED`
+- `ClearState(INVENTORY_SNAPSHOT_CHANGE_REASON reason)` — inventory bulk clear + `INVENTORY_SNAPSHOT_CHANGED`
+- `ReplaceState(InventoryStorage snapshot, INVENTORY_SNAPSHOT_CHANGE_REASON reason)` — temp snapshot 적용 + `INVENTORY_SNAPSHOT_CHANGED`
 
 에러 모델:
 - null/empty 입력, 음수 amount, factory lookup 실패는 `CommonResult.Failure(...)`로 반환한다.
@@ -161,11 +166,25 @@ CompoSingleton<InventoryManager>.Instance
 - `HasActiveRental(string item_id) -> bool`
 - `HasPass(string item_id) -> bool`
 - `GetTreasureCount(TREASURE_GRADE_TYPE gradeType) -> int`
+- `GetTreasureCurrentLevel() -> int`
+- `GetTreasureCurrentExp() -> int`
 
 ### Message
 
 - `Subcribe(EntityId ownerKey, INVENTORY_MESSAGE_TYPE msgType, Handler handler)`
 - `UnSubcribe(EntityId ownerKey)`
+- apply/revoke 성공 시 `InventoryManager`가 아래 key를 직접 publish한다.
+  - `CURRENCY_CHANGED`
+  - `ITEM_EQUIP_CHANGED`
+  - `ITEM_CARD_CHANGED`
+  - `ITEM_MATERIAL_CHANGED`
+  - `ITEM_HERO_CHANGED`
+  - `RENTAL_CHANGED`
+  - `PASS_OWNERSHIP_CHANGED`
+  - `TREASURE_STATE_CHANGED`
+  - `INVENTORY_SNAPSHOT_CHANGED`
+- payload는 `itemId`만 전달하지 않고 `key + current runtime(or null) + delta`를 기본 규약으로 둔다.
+- bulk load/import/clear는 세부 delta를 replay하지 않고 `INVENTORY_SNAPSHOT_CHANGED`만 발행한다.
 
 
 ---

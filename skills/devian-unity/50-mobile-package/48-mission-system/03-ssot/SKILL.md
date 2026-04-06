@@ -108,7 +108,7 @@ AppliesTo: v10
 `GameMessageTrigger` 정본 타입:
 
 ```csharp
-BaseTrigger<int, GAME_MESSAGE_TYPE>
+BaseTrigger<EntityId, GAME_MESSAGE_TYPE>
 ```
 
 외부 진입점은 `GameMessageManager.Notify(messageType, delta)`다.

@@ -9,6 +9,9 @@ public class UILobbyShopDailyItemFreeAds : UILobbyShopDailyItemBase
 {
     public SHOP_ITEM_DAILY_ID shopItemAdsId;
     public SHOP_ITEM_DAILY_ID shopItemFreeId;
+    public GameObject itemFreeFrame;
+    public GameObject itemAdsFrame;
+    public TextMeshProUGUI itemAdsRemain;
 
     string shopItemId = null;
     int remainFreeCount = 0;
@@ -35,6 +38,7 @@ public class UILobbyShopDailyItemFreeAds : UILobbyShopDailyItemBase
         var result = await ShopManager.Instance.BuyAsync(shopItemId);
         if (result.IsSuccess)
         {
+            refresh();
             foreach (var reward in result.Value)
             {
                 UIToastService.Instance.Show(reward.Id);
@@ -50,19 +54,30 @@ public class UILobbyShopDailyItemFreeAds : UILobbyShopDailyItemBase
             ? stateAds.remainCount : 0;
         Debug.Log($"shop_item_id={shopItemFreeId.Value}, remainFreeCount={remainFreeCount}, remainAdsCount={remainAdsCount}");
 
+        var table = TB_SHOP_ITEM_DAILY.Get(shopItemAdsId);
+        var max_count = table.max_count;
+
         if (remainFreeCount > 0)
         {
             shopItemId = shopItemFreeId;
+            itemFreeFrame.SetActive(true);
+            itemAdsFrame.SetActive(false);
             dim.gameObject.SetActive(false);
         }
         else if (remainAdsCount > 0)
         {
             shopItemId = shopItemAdsId;
+            itemAdsRemain.text = $"{remainAdsCount}/{max_count}";
+            itemFreeFrame.SetActive(false);
+            itemAdsFrame.SetActive(true);
             dim.gameObject.SetActive(false);
         }
         else
         {
             shopItemId = string.Empty;
+            itemAdsRemain.text = $"{remainAdsCount}/{max_count}";
+            itemFreeFrame.SetActive(false);
+            itemAdsFrame.SetActive(true);
             dim.gameObject.SetActive(true);
         }
     }

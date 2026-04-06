@@ -1,5 +1,6 @@
 using System;
 using Devian.Domain.Game;
+using UnityEngine;
 
 namespace Devian
 {
@@ -17,8 +18,8 @@ namespace Devian
         [NonSerialized] protected GAME_MESSAGE_OP_TYPE _conditionOpType = GAME_MESSAGE_OP_TYPE.GTE;
         [NonSerialized] protected CBigInt _conditionValue = CBigInt.Zero;
         [NonSerialized] private bool _hasSessionMinSample;
-        [NonSerialized] private Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> _subscribeTrigger;
-        [NonSerialized] private Action<int> _unsubscribeTrigger;
+        [NonSerialized] private Action<EntityId, GAME_MESSAGE_TYPE, BaseTrigger<EntityId, GAME_MESSAGE_TYPE>.Handler> _subscribeTrigger;
+        [NonSerialized] private Action<EntityId> _unsubscribeTrigger;
         [NonSerialized] private Action<MissionRuntimeBase> _onProgress;
         [NonSerialized] private Action<MissionRuntimeBase> _onClaimable;
         [NonSerialized] private Func<CBigInt> _externalProgressReader;
@@ -41,8 +42,8 @@ namespace Devian
             GAME_MESSAGE_SAVE_TYPE opType,
             GAME_MESSAGE_OP_TYPE conditionOpType,
             CBigInt conditionValue,
-            Action<int, GAME_MESSAGE_TYPE, BaseTrigger<int, GAME_MESSAGE_TYPE>.Handler> subscribeTrigger,
-            Action<int> unsubscribeTrigger,
+            Action<EntityId, GAME_MESSAGE_TYPE, BaseTrigger<EntityId, GAME_MESSAGE_TYPE>.Handler> subscribeTrigger,
+            Action<EntityId> unsubscribeTrigger,
             Func<CBigInt> readExternalProgress,
             Action<MissionRuntimeBase> onProgress,
             Action<MissionRuntimeBase> onClaimable)
@@ -109,7 +110,7 @@ namespace Devian
             if (_isSubscribed || !ShouldSubscribe() || _subscribeTrigger == null)
                 return;
 
-            _subscribeTrigger.Invoke(missionUid, _statType, handleTrigger);
+            _subscribeTrigger.Invoke(getOwnerKey(), _statType, handleTrigger);
             _isSubscribed = true;
         }
 
@@ -118,7 +119,7 @@ namespace Devian
             if (!_isSubscribed)
                 return;
 
-            _unsubscribeTrigger?.Invoke(missionUid);
+            _unsubscribeTrigger?.Invoke(getOwnerKey());
             _isSubscribed = false;
         }
 
@@ -141,6 +142,13 @@ namespace Devian
 
         protected virtual void OnCompletedCore()
         {
+        }
+
+        EntityId getOwnerKey()
+        {
+#pragma warning disable CS0618
+            return missionUid;
+#pragma warning restore CS0618
         }
 
         protected abstract CBigInt CalculateSumProgress(CBigInt delta);

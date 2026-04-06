@@ -72,6 +72,7 @@ public class UILobbyShopDailyItemRotation : UILobbyShopDailyItemBase
         var result = await ShopManager.Instance.BuyAsync(shopDailyProduct.shop_id);
         if (result.IsSuccess)
         {
+            refresh();
             foreach (var reward in result.Value)
             {
                 UIToastService.Instance.Show(reward.Id);

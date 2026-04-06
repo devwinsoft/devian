@@ -17,7 +17,7 @@ AppliesTo: v10
 
 - `GameMessageManager`
 - `GameMessageStorage`
-- `GameMessageTrigger : BaseTrigger<int, GAME_MESSAGE_TYPE>`
+- `GameMessageTrigger : BaseTrigger<EntityId, GAME_MESSAGE_TYPE>`
 
 공통 trigger 동작 정본:
 - [20-common-package/25-trigger](../../../20-common-package/25-trigger/SKILL.md)
@@ -26,7 +26,7 @@ AppliesTo: v10
 
 ## B) Game Message Trigger Contract
 
-- ownerKey: subscriber-defined `int`
+- ownerKey: subscriber-defined `EntityId`
 - key: `GAME_MESSAGE_TYPE`
 - 외부 진입점: `GameMessageManager.Notify(...)` (일부 시스템은 manager helper를 경유 가능)
 
