@@ -221,18 +221,18 @@ namespace Devian
 
         static GameResult addEquips(
             AbilityUnitHero ability,
-            System.Collections.Generic.IReadOnlyDictionary<int, AbilityItemEquip> equips)
+            System.Collections.Generic.IReadOnlyDictionary<SLOT_TYPE, AbilityItemEquip> equips)
         {
             if (ability == null || equips == null)
                 return GameResult.Ok();
 
             foreach (var kv in equips)
             {
-                if (kv.Key <= 0)
+                if (kv.Key == SLOT_TYPE.NONE)
                 {
                     return GameResult.Failure(
                         GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
-                        $"AbilityUnitFactory.CreateHero: equip slot must be >= 1. actual={kv.Key}");
+                        $"AbilityUnitFactory.CreateHero: equip slot must not be NONE. actual={kv.Key}");
                 }
 
                 if (kv.Value == null)
@@ -249,7 +249,7 @@ namespace Devian
                         $"AbilityUnitFactory.CreateHero: failed to clone equip. slot={kv.Key}");
                 }
 
-                if (!ability.Equip(equipClone, kv.Key))
+                if (!ability._Equip(equipClone, kv.Key))
                 {
                     return GameResult.Failure(
                         GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,

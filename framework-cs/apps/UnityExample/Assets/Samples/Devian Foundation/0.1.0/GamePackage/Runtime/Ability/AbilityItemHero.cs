@@ -7,11 +7,11 @@ namespace Devian
     {
         ITEM_HERO mTable = null;
         ITEM_HERO_LEVEL mLevelTable = null;
-        readonly Dictionary<int, AbilityItemEquip> mEquips = new();
+        readonly Dictionary<SLOT_TYPE, AbilityItemEquip> mEquips = new();
 
         public string UnitId => mTable?.unit_id ?? string.Empty;
         public override string ItemId => mTable?.item_id ?? string.Empty;
-        public IReadOnlyDictionary<int, AbilityItemEquip> Equips => mEquips;
+        public IReadOnlyDictionary<SLOT_TYPE, AbilityItemEquip> Equips => mEquips;
 
         public void Init(ITEM_HERO table, ITEM_HERO_LEVEL levelTable)
         {
@@ -40,70 +40,69 @@ namespace Devian
             return c;
         }
 
-        public bool SetEquip(AbilityItemEquip equip, int slotNumber)
+        public AbilityItemEquip GetEquip(SLOT_TYPE slotType)
         {
-            if (equip == null || slotNumber <= 0)
+            return mEquips.TryGetValue(slotType, out var equip) ? equip : null;
+        }
+
+        internal bool _SetEquip(AbilityItemEquip equip, SLOT_TYPE slotType)
+        {
+            if (equip == null || slotType == SLOT_TYPE.NONE)
                 return false;
 
-            if (mEquips.TryGetValue(slotNumber, out var prev))
+            if (AbilityEquipSlotPolicy.GetPlacementFailure(equip, slotType, mEquips) != AbilityEquipPlacementFailure.None)
+                return false;
+
+            if (slotType == SLOT_TYPE.HAND_MAIN && AbilityEquipSlotPolicy.IsTwoHanded(equip))
+                _RemoveEquip(SLOT_TYPE.HAND_SUB);
+
+            if (mEquips.TryGetValue(slotType, out var prev))
             {
-                if (isSameEquip(prev, equip))
+                if (AbilityItemEquip.IsSame(prev, equip))
                 {
-                    prev.SetOwner(ItemId, slotNumber);
+                    prev.SetOwner(ItemId, slotType);
                     return true;
                 }
 
-                if (prev.OwnerUnitId == ItemId && prev.OwnerSlotNumber == slotNumber)
+                if (prev.OwnerUnitId == ItemId && prev.OwnerSlotType == slotType)
                     prev.ClearOwner();
             }
 
             var existingSlot = findEquipSlot(equip);
-            if (existingSlot > 0)
+            if (existingSlot != SLOT_TYPE.NONE)
             {
-                if (existingSlot == slotNumber)
+                if (existingSlot == slotType)
                     return true;
 
                 mEquips.Remove(existingSlot);
             }
 
-            mEquips[slotNumber] = equip;
-            equip.SetOwner(ItemId, slotNumber);
+            mEquips[slotType] = equip;
+            equip.SetOwner(ItemId, slotType);
             return true;
         }
 
-        public bool RemoveEquip(int slotNumber)
+        internal bool _RemoveEquip(SLOT_TYPE slotType)
         {
-            if (!mEquips.TryGetValue(slotNumber, out var equip))
+            if (!mEquips.TryGetValue(slotType, out var equip))
                 return false;
 
-            if (equip.OwnerUnitId == ItemId && equip.OwnerSlotNumber == slotNumber)
+            if (equip.OwnerUnitId == ItemId && equip.OwnerSlotType == slotType)
                 equip.ClearOwner();
 
-            mEquips.Remove(slotNumber);
+            mEquips.Remove(slotType);
             return true;
         }
 
-        int findEquipSlot(AbilityItemEquip equip)
+        SLOT_TYPE findEquipSlot(AbilityItemEquip equip)
         {
             foreach (var kv in mEquips)
             {
-                if (isSameEquip(kv.Value, equip))
+                if (AbilityItemEquip.IsSame(kv.Value, equip))
                     return kv.Key;
             }
 
-            return 0;
-        }
-
-        static bool isSameEquip(AbilityItemEquip left, AbilityItemEquip right)
-        {
-            if (ReferenceEquals(left, right))
-                return true;
-
-            if (left == null || right == null)
-                return false;
-
-            return !string.IsNullOrWhiteSpace(left.ItemUid)
-                && left.ItemUid == right.ItemUid;
+            return SLOT_TYPE.NONE;
         }
 
         internal GameResult _LevelUp()

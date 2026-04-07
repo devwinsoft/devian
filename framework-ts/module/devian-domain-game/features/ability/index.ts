@@ -5,6 +5,7 @@ export { AbilityBattleStatus } from './AbilityBattleStatus';
 export { AbilityBattleProjectile } from './AbilityBattleProjectile';
 export { AbilityAffect } from './AbilityAffect';
 export { AbilityItemBase } from './AbilityItemBase';
+export { AbilityEquipSlotPolicy } from './AbilityEquipSlotPolicy';
 export { AbilityItemEquip } from './AbilityItemEquip';
 export { AbilityItemCard } from './AbilityItemCard';
 export { AbilityItemMaterial } from './AbilityItemMaterial';

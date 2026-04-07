@@ -81,11 +81,13 @@ level table 규칙:
 - item factory는 level row stat을 직접 apply 하지 않는다
 - `AbilityItem*.Init(table, levelTable, ...)`가 level row stat을 초기 적용한다
 - stack amount 같은 mutable 상태 복원은 factory 바깥 호출부가 담당한다
-- hero equip loadout 저장은 `AbilityItemHero.SetEquip()/RemoveEquip()` 또는 inventory facade가 담당한다
+- hero equip loadout 저장은 `AbilityItemHero._SetEquip()/_RemoveEquip()` 또는 inventory facade가 담당한다
 - 즉 순서는 `find level row -> Init(table, levelTable, ...) -> restore mutable state` 다
 - level row가 없으면 `GameResult.Failure(GAME_ERROR_TYPE.ABILITY_ITEM_TABLE_NOT_FOUND, ...)`
 - 빈 stat slot(`STAT_TYPE.NONE`)은 skip한다
 - level up runtime 갱신은 factory의 next-level resolve helper를 사용한다 (`ResolveNextCardLevelTable`, `ResolveNextHeroLevelTable`, `ResolveNextEquipLevelTable`).
+- equip 생성 시 owner 복원 인자는 `SLOT_TYPE ownerSlotType`를 사용하고 `NONE`은 미장착을 의미한다.
+- `ITEM_EQUIP`는 `equip_type`를 가지며 slot 허용/양손 여부는 `TB_EQUIP_SLOT.Get(equip_type)`로 resolve한다.
 
 ### 4.2 Unit 생성은 unit-table-first
 
@@ -143,13 +145,14 @@ var previewResult = AbilityUnitFactory.CreateHero(itemHero);
 ### Optional
 
 - `int UnitLevel`
-- `IReadOnlyDictionary<int, AbilityItemEquip> Equips`
+- `IReadOnlyDictionary<SLOT_TYPE, AbilityItemEquip> Equips`
 
 ### Notes
 
 - `UnitId`는 필수다.
 - `UnitLevel` 기본값은 `1`이다.
-- `Equips`는 preview/unit 계산에 사용할 장비 입력이다. factory는 clone 후 `AbilityUnitHero.Equip()`으로 projection한다.
+- `Equips`는 preview/unit 계산에 사용할 장비 입력이다. factory는 clone 후 `AbilityUnitHero._Equip()`으로 projection한다.
+- projection 시 slot validation과 two-handed 규칙은 `AbilityEquipSlotPolicy`를 공유한다.
 - invalid input / lookup failure는 `GameResult.Failure(...)`로 반환한다.
 
 ---
@@ -180,7 +183,8 @@ var previewResult = AbilityUnitFactory.CreateHero(itemHero);
 
 현재 지원 범위에서 preview 입력은 `UnitId`, `UnitLevel`, `Equips`를 사용한다.
 
-- `Equips`는 clone 후 `AbilityUnitHero.Equip()`으로 투영된다.
+- `Equips`는 clone 후 `AbilityUnitHero._Equip()`으로 투영된다.
+- slot key는 `SLOT_TYPE`이고 `NONE`은 유효한 projection slot이 아니다.
 - item hero는 저장 모델이고, unit hero가 계산 모델이다.
 
 ---
@@ -201,7 +205,7 @@ public static class AbilityItemFactory
         int itemLevel = 1);
 
     public static GameResult<AbilityItemEquip> CreateEquip(ITEM_EQUIP table, string itemUid,
-        int itemLevel = 1);
+        int itemLevel = 1, SLOT_TYPE ownerSlotType = SLOT_TYPE.NONE);
 }
 
 public sealed class AbilityItemCard
@@ -223,7 +227,7 @@ public sealed class AbilityUnitHeroContext
 {
     public string UnitId { get; init; }
     public int UnitLevel { get; init; } = 1;
-    public IReadOnlyDictionary<int, AbilityItemEquip> Equips { get; init; }
+    public IReadOnlyDictionary<SLOT_TYPE, AbilityItemEquip> Equips { get; init; }
 }
 
 public static class AbilityUnitFactory
@@ -249,7 +253,7 @@ public static class AbilityUnitFactory
 
 ## 9. Projection Rule for Stats
 
-`AbilityUnitFactory.CreateHero(context)`는 `UNIT_*_LEVEL`로 초기화한 뒤 `context.Equips`를 `AbilityUnitHero.Equip()`으로 계산한다.
+`AbilityUnitFactory.CreateHero(context)`는 `UNIT_*_LEVEL`로 초기화한 뒤 `context.Equips`를 `AbilityUnitHero._Equip()`으로 계산한다.
 
 권장 규칙:
 

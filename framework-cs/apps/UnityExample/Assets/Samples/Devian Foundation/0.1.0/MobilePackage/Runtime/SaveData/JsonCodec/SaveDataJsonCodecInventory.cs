@@ -72,7 +72,7 @@ namespace Devian
 
                 var equipsMap = new JObject();
                 foreach (var eq in h.Equips)
-                    equipsMap[eq.Key.ToString()] = eq.Value;
+                    equipsMap[((int)eq.Key).ToString()] = eq.Value;
                 obj["equips"] = equipsMap;
 
                 heroesObj[kv.Key] = obj;
@@ -224,7 +224,7 @@ namespace Devian
                     {
                         foreach (var ep in equipsMap.Properties())
                         {
-                            if (!int.TryParse(ep.Name, out var slotNumber))
+                            if (!tryParseSlotTypeCompat(ep.Name, out var slotType) || slotType == SLOT_TYPE.NONE)
                             {
                                 return GameResult.Failure(
                                     GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
@@ -236,7 +236,7 @@ namespace Devian
                             {
                                 return GameResult.Failure(
                                     GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
-                                    $"SaveDataJsonCodecInventory.DeserializeInto: empty hero equip uid. item_id={itemId}, slot={slotNumber}");
+                                    $"SaveDataJsonCodecInventory.DeserializeInto: empty hero equip uid. item_id={itemId}, slot={slotType}");
                             }
 
                             if (!restoredEquipUids.Add(equipUid))
@@ -246,7 +246,7 @@ namespace Devian
                                     $"SaveDataJsonCodecInventory.DeserializeInto: duplicate hero equip reference. equipUid={equipUid}");
                             }
 
-                            heroSnapshot.Equips[slotNumber] = equipUid;
+                            heroSnapshot.Equips[slotType] = equipUid;
                         }
                     }
 
@@ -324,6 +324,17 @@ namespace Devian
                 default:
                     return System.Enum.TryParse(name, out statType);
             }
+        }
+
+        static bool tryParseSlotTypeCompat(string name, out SLOT_TYPE slotType)
+        {
+            if (int.TryParse(name, out var rawSlot))
+            {
+                slotType = (SLOT_TYPE)rawSlot;
+                return System.Enum.IsDefined(typeof(SLOT_TYPE), slotType);
+            }
+
+            return System.Enum.TryParse(name, out slotType);
         }
     }
 }

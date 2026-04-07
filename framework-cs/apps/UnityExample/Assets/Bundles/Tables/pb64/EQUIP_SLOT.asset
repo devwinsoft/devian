@@ -1,0 +1,10 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!49 &4900000
+TextAsset:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: EQUIP_SLOT
+  m_Script: RFZHQgEAABAAAQAAALMBAACvAAAAH4sIAAAAAAACE5XO0QqCMBTG8Xc51z6Bd9pO22A6cJYXEUNwUTDUciIRvnsYXY3TRXeH78CPP3+Bu8+30Ybn6CAF0+iKQQKt98PiOjv5IUyQnkBkJbNFJks4JxCWwV7bvnMdpJfWT25lkZPr5i8lPGa38jhGSFS/a8whp2N2kSNQFViTDmaMNjAyuNJHNJTx/ZCKiZRKlpwytt0q3G+Rn7uSXNS0+QZFaFCMswEAAA==

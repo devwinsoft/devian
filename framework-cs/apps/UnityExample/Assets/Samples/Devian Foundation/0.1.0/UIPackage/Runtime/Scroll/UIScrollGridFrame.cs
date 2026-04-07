@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Devian
 {
     /// <summary>
-    /// N열 그리드 섹션. Content 자식으로 배치되고, runtime cell은 frame 자식으로 생성한다.
+    /// N열 그리드 섹션. Content 자식으로 Prefab에 배치한다.
     /// IUIScrollSection 구현. Container가 row bind/unbind를 직접 호출한다.
     /// Grid는 "row renderer"이지 "scroll virtualizer"가 아니다.
     ///
@@ -25,6 +25,7 @@ namespace Devian
         [SerializeField] private int _minimumLineCount = 0;
         [SerializeField] private Vector2 _cellSize = new Vector2(200, 200);
         [SerializeField] private float _rowSpacing = 10f;
+        [SerializeField] private RectOffset _padding = new RectOffset();
 
         public string CellPrefabName { get => _cellPrefabId.Value; set => _cellPrefabId = value; }
         public int ColumnCount
@@ -63,6 +64,15 @@ namespace Devian
                 OnGridLayoutChanged();
             }
         }
+        public RectOffset Padding
+        {
+            get => _padding;
+            set
+            {
+                _padding = value ?? new RectOffset();
+                OnGridLayoutChanged();
+            }
+        }
 
         public int CellCount { get; private set; }
         public void SetCellCount(int count)
@@ -89,23 +99,13 @@ namespace Devian
         public Action<UIScrollGridCell> onUnbindCell;
 
         // ─── Size ───
-
-        /// <summary>
-        /// parent RectTransform의 너비를 반환한다.
-        /// Grid width는 항상 parent width와 동일하다.
-        /// X축 spacing은 이 너비 안에서 자동 계산된다.
-        /// </summary>
-        public override float GetWidth()
-        {
-            var parentRt = transform.parent as RectTransform;
-            return parentRt != null ? parentRt.rect.width : 0f;
-        }
+        // GetWidth(): base 구현 사용 (rectTransform.rect.width). override 하지 않는다.
 
         public override float GetHeight()
         {
             int rc = RowCount;
             if (rc <= 0) return 0f;
-            return rc * _cellSize.y + (rc - 1) * _rowSpacing;
+            return _padding.top + rc * _cellSize.y + (rc - 1) * _rowSpacing + _padding.bottom;
         }
 
         protected override void onInitComplete()
@@ -117,21 +117,30 @@ namespace Devian
 
         /// <summary>
         /// frame 너비 기반으로 X축 cell 간격을 자동 계산한다.
-        /// (frameWidth - columnCount * cellSize.x) / max(1, columnCount - 1)
+        /// (frameWidth - padding.left - padding.right - columnCount * cellSize.x) / max(1, columnCount - 1)
         /// </summary>
         private float CalculateAutoXSpacing()
         {
             if (_columnCount <= 1) return 0f;
             float frameWidth = GetWidth();
+            float usableWidth = frameWidth - _padding.left - _padding.right;
             float totalCellWidth = _columnCount * _cellSize.x;
-            float remaining = frameWidth - totalCellWidth;
+            float remaining = usableWidth - totalCellWidth;
             return Mathf.Max(0f, remaining / (_columnCount - 1));
         }
 
         // ─── IUIScrollSection ───
 
         public int GetLogicalRowCount() => RowCount;
-        public float GetLogicalRowMainAxisSize(int localRowIndex) => _cellSize.y;
+        public float GetLogicalRowMainAxisSize(int localRowIndex)
+        {
+            float size = _cellSize.y;
+            int rc = RowCount;
+            if (rc <= 0) return 0f;
+            if (localRowIndex == 0) size += _padding.top;
+            if (localRowIndex == rc - 1) size += _padding.bottom;
+            return size;
+        }
         public float GetLogicalRowSpacing() => _rowSpacing;
 
         public void ApplySectionLayout(in UIUIScrollSectionLayout layout)
@@ -153,15 +162,17 @@ namespace Devian
             int startIndex = localRow * _columnCount;
             int cellsInRow = _columnCount;
             float xSpacing = CalculateAutoXSpacing();
-            float localRowMainAxisPosition = rowLayout.RowMainAxisPosition - _sectionLayout.SectionMainAxisPosition;
 
             var rowCells = new List<UIScrollGridCell>(cellsInRow);
+
+            float mainPos = rowLayout.RowMainAxisPosition;
+            if (localRow == 0) mainPos += _padding.top;
 
             for (int c = 0; c < cellsInRow; c++)
             {
                 int cellIndex = startIndex + c;
                 var cell = BundlePool.Spawn<UIScrollGridCell>(
-                    _cellPrefabId.Value, Vector3.zero, Quaternion.identity, transform);
+                    _cellPrefabId.Value, Vector3.zero, Quaternion.identity, rowLayout.Content);
 
                 var rt = cell.rectTransform;
                 rt.anchorMin = TopLeft;
@@ -169,10 +180,10 @@ namespace Devian
                 rt.pivot = TopLeft;
                 rt.sizeDelta = _cellSize;
 
-                float cross = c * (_cellSize.x + xSpacing);
+                float cross = _padding.left + c * (_cellSize.x + xSpacing);
                 rt.anchoredPosition = rowLayout.Direction == UIScrollDirection.Vertical
-                    ? new Vector2(cross, -localRowMainAxisPosition)
-                    : new Vector2(localRowMainAxisPosition, -cross);
+                    ? new Vector2(cross, -mainPos)
+                    : new Vector2(mainPos, -cross);
 
                 cell.Show(cellIndex);
                 onBindCell?.Invoke(cell, cellIndex);
@@ -239,6 +250,7 @@ namespace Devian
             _columnCount = Mathf.Max(0, _columnCount);
             _minimumLineCount = Mathf.Max(0, _minimumLineCount);
             _rowSpacing = Mathf.Max(0f, _rowSpacing);
+            _padding ??= new RectOffset();
             OnGridLayoutChanged();
         }
 
@@ -288,6 +300,9 @@ namespace Devian
             var rt = rectTransform != null ? rectTransform : transform as RectTransform;
             if (rt == null) return;
 
+            // anchor 변경 전에 현재 rendered width를 캡처한다.
+            float w = rt.rect.width;
+
             rt.anchorMin = TopLeft;
             rt.anchorMax = TopLeft;
             rt.pivot = TopLeft;
@@ -295,7 +310,13 @@ namespace Devian
                 ? new Vector2(0f, -_sectionLayout.SectionMainAxisPosition)
                 : new Vector2(_sectionLayout.SectionMainAxisPosition, 0f);
 
-            SyncRectTransformSize();
+            // width: 유저가 설정한 값을 보존한다.
+            // 0 이하이면 Container가 전달한 CrossAxisSize(viewport 너비)로 초기화한다.
+            if (w <= 0f) w = _sectionLayout.CrossAxisSize;
+            var sd = rt.sizeDelta;
+            if (sd.x <= 0f) sd.x = w;
+            sd.y = GetHeight();
+            rt.sizeDelta = sd;
         }
 
         private readonly Dictionary<int, List<UIScrollGridCell>> _activeRows = new();

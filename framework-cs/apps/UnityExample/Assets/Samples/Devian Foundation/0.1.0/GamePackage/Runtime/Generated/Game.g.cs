@@ -14,6 +14,17 @@ namespace Devian.Domain.Game
 {
     // ========== Enums (gen:) ==========
 
+    /// <summary>Auto-generated enum from TB_EQUIP_SLOT.equip_type</summary>
+    public enum EQUIP_TYPE : int
+    {
+        BOW = 0,
+        GLOVES = 1,
+        HELMET = 2,
+        RING = 3,
+        SHIELD = 4,
+        SWORD = 5,
+    }
+
     /// <summary>Auto-generated enum from TB_GAME_ERROR.id</summary>
     public enum GAME_ERROR_TYPE : int
     {
@@ -325,6 +336,18 @@ namespace Devian.Domain.Game
         HERO_005 = 5,
     }
 
+    /// <summary>SLOT_TYPE enum</summary>
+    public enum SLOT_TYPE
+    {
+        NONE = 0,
+        HAND_MAIN = 4001,
+        HAND_SUB = 4002,
+        HEAD = 4003,
+        GLOVES = 4004,
+        RING_LEFT = 4005,
+        RING_RIGHT = 4006,
+    }
+
     /// <summary>INVENTORY_MESSAGE_TYPE enum</summary>
     public enum INVENTORY_MESSAGE_TYPE
     {
@@ -556,6 +579,16 @@ namespace Devian.Domain.Game
         public int GetKey() => reward_num;
     }
 
+    /// <summary>EQUIP_SLOT row</summary>
+    public sealed class EQUIP_SLOT : IEntityKey<EQUIP_TYPE>
+    {
+        public EQUIP_TYPE equip_type { get; set; }
+        public List<SLOT_TYPE> allowed_slots { get; set; } = new();
+        public bool two_handed { get; set; }
+
+        public EQUIP_TYPE GetKey() => equip_type;
+    }
+
     /// <summary>GAME_ERROR row</summary>
     public sealed class GAME_ERROR : IEntityKey<GAME_ERROR_TYPE>
     {
@@ -611,6 +644,7 @@ namespace Devian.Domain.Game
         public string item_id { get; set; } = string.Empty;
         public string name_id { get; set; } = string.Empty;
         public string desc_id { get; set; } = string.Empty;
+        public EQUIP_TYPE equip_type { get; set; }
 
         public string GetKey() => item_id;
     }
@@ -828,7 +862,7 @@ namespace Devian.Domain.Game
         public string shop_item_id { get; set; } = string.Empty;
         public string name_id { get; set; } = string.Empty;
         public CURRENCY_TYPE currency_type { get; set; }
-        public int price { get; set; }
+        public int unit_price { get; set; }
         public string reward_group_id { get; set; } = string.Empty;
         public int amount_min { get; set; }
         public int amount_max { get; set; }
@@ -1380,6 +1414,100 @@ namespace Devian.Domain.Game
             {
                 if (string.IsNullOrWhiteSpace(jsonRow)) return;
                 var row = JsonConvert.DeserializeObject<REWARD>(jsonRow);
+                if (row == null) return;
+                AddRow(row);
+            });
+        }
+
+        // ====================================================================
+        // AfterLoad Hook (optional)
+        // Called by DomainTableRegistry after TableManager inserts data.
+        // ====================================================================
+
+        internal static void _AfterLoad()
+        {
+            _OnAfterLoad();
+        }
+
+        static partial void _OnAfterLoad();
+    }
+
+    /// <summary>TB_EQUIP_SLOT container</summary>
+    public static partial class TB_EQUIP_SLOT
+    {
+        private static readonly Dictionary<EQUIP_TYPE, EQUIP_SLOT> _dict = new();
+        private static readonly List<EQUIP_SLOT> _list = new();
+
+        public static int Count => _list.Count;
+
+        public static void Clear()
+        {
+            _dict.Clear();
+            _list.Clear();
+        }
+
+        public static IReadOnlyList<EQUIP_SLOT> GetAll() => _list;
+
+        public static EQUIP_SLOT? Get(EQUIP_TYPE key)
+        {
+            return _dict.TryGetValue(key, out var row) ? row : null;
+        }
+
+        public static bool TryGet(EQUIP_TYPE key, out EQUIP_SLOT? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        public static EQUIP_SLOT Find(EQUIP_TYPE key)
+        {
+            if (_dict.TryGetValue(key, out var row)) return row;
+            throw new KeyNotFoundException($"TB_EQUIP_SLOT: key {key} not found");
+        }
+
+        public static bool TryFind(EQUIP_TYPE key, out EQUIP_SLOT? row)
+        {
+            return _dict.TryGetValue(key, out row);
+        }
+
+        private static void AddRow(EQUIP_SLOT row)
+        {
+            _list.Add(row);
+            _dict[row.equip_type] = row;
+        }
+
+        public static void LoadFromJson(string json)
+        {
+            Clear();
+            var rows = JsonConvert.DeserializeObject<List<EQUIP_SLOT>>(json);
+            if (rows == null) return;
+            foreach (var row in rows)
+            {
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromNdjson(string ndjson)
+        {
+            Clear();
+            using var reader = new StringReader(ndjson);
+            string? line;
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var row = JsonConvert.DeserializeObject<EQUIP_SLOT>(line);
+                if (row == null) continue;
+                AddRow(row);
+            }
+        }
+
+        public static void LoadFromPb64Binary(byte[] rawBinary)
+        {
+            Clear();
+            Pb64Loader.ParseRows(rawBinary, jsonRow =>
+            {
+                if (string.IsNullOrWhiteSpace(jsonRow)) return;
+                var row = JsonConvert.DeserializeObject<EQUIP_SLOT>(jsonRow);
                 if (row == null) return;
                 AddRow(row);
             });
@@ -4910,6 +5038,16 @@ namespace Devian.Domain.Game
         public static implicit operator REWARD_ID(int value) => new REWARD_ID { Value = value };
     }
 
+    /// <summary>Inspector-bindable ID for EQUIP_SLOT</summary>
+    [Serializable]
+    public sealed class EQUIP_SLOT_ID
+    {
+        public EQUIP_TYPE Value;
+
+        public static implicit operator EQUIP_TYPE(EQUIP_SLOT_ID id) => id.Value;
+        public static implicit operator EQUIP_SLOT_ID(EQUIP_TYPE value) => new EQUIP_SLOT_ID { Value = value };
+    }
+
     /// <summary>Inspector-bindable ID for GAME_ERROR</summary>
     [Serializable]
     public sealed class GAME_ERROR_ID
@@ -5296,6 +5434,7 @@ namespace Devian.Domain.Game
         public static bool IsValid(this ACHIEVE_SOCIAL_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this ACHIEVE_PASS_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
         public static bool IsValid(this REWARD_ID? obj) => obj != null && !EqualityComparer<int>.Default.Equals(obj.Value, default);
+        public static bool IsValid(this EQUIP_SLOT_ID? obj) => obj != null && !EqualityComparer<EQUIP_TYPE>.Default.Equals(obj.Value, default);
         public static bool IsValid(this GAME_ERROR_ID? obj) => obj != null && !EqualityComparer<GAME_ERROR_TYPE>.Default.Equals(obj.Value, default);
         public static bool IsValid(this GAME_MESSAGE_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);
         public static bool IsValid(this ITEM_HERO_ID? obj) => obj != null && !string.IsNullOrEmpty(obj.Value);

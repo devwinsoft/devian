@@ -61,7 +61,7 @@ public GameResult<ShopProductPurchase> GetPurchaseProduct(string shop_item_id)
 10. 잠긴 카탈로그의 상품은 `CanBuy/BuyAsync`에서 차단된다.
 11. 구매 제한(`max_count/remainCount`) 체크
 12. `ShopProductBase.Price`(할인 반영 최종가)로 구매 가능 여부/통화 차감을 처리한다. 원가는 `ShopProductBase.PriceWithoutDiscount`를 사용한다.
-13. `SHOP_ITEM_DAILY.price`는 단가다. DAILY 상품의 `PriceWithoutDiscount`는 `price * snapshot.amount`이며 할인은 그 결과에 적용한다.
+13. `SHOP_ITEM_DAILY.unit_price`는 단가다. DAILY 상품의 `PriceWithoutDiscount`는 `unit_price * snapshot.amount`이며 할인은 그 결과에 적용한다.
 14. 카탈로그 분기와 storage 기반 초기 product 구성은 `ShopCatalogFactory` + `ShopCatalogBase` 계층이 담당한다. ShopManager는 registry/orchestration/구매 검증/결제를 담당한다.
 15. `ShopManager.onInitAwake()`는 catalog를 초기화하지 않으며, `Initialize()`가 유일한 manager 초기화 진입점이다.
 16. `ShopCatalogBase`는 `Initialize() -> onInitialize() -> RefreshProducts() -> onRefresh()` 라이프사이클을 따른다. product 생성 책임은 `onRefresh()`에 있다.

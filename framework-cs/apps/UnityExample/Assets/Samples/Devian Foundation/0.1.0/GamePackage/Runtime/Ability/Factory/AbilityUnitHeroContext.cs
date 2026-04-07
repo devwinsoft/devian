@@ -1,3 +1,4 @@
+using Devian.Domain.Game;
 using System.Collections.Generic;
 
 namespace Devian
@@ -6,6 +7,6 @@ namespace Devian
     {
         public string UnitId { get; set; }
         public int UnitLevel { get; set; } = 1;
-        public IReadOnlyDictionary<int, AbilityItemEquip> Equips { get; set; }
+        public IReadOnlyDictionary<SLOT_TYPE, AbilityItemEquip> Equips { get; set; }
     }
 }

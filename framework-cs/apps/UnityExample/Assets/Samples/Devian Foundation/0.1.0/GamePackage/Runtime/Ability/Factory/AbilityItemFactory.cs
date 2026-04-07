@@ -123,7 +123,7 @@ namespace Devian
             string itemUid,
             int itemLevel = 1,
             string ownerUnitId = null,
-            int ownerSlotNumber = 0)
+            SLOT_TYPE ownerSlotType = SLOT_TYPE.NONE)
         {
             if (string.IsNullOrWhiteSpace(itemId))
             {
@@ -140,7 +140,7 @@ namespace Devian
                     $"ITEM_EQUIP not found: {itemId}");
             }
 
-            return CreateEquip(table, itemUid, itemLevel, ownerUnitId, ownerSlotNumber);
+            return CreateEquip(table, itemUid, itemLevel, ownerUnitId, ownerSlotType);
         }
 
         public static GameResult<AbilityItemEquip> CreateEquip(
@@ -148,7 +148,7 @@ namespace Devian
             string itemUid,
             int itemLevel = 1,
             string ownerUnitId = null,
-            int ownerSlotNumber = 0)
+            SLOT_TYPE ownerSlotType = SLOT_TYPE.NONE)
         {
             if (table == null)
             {
@@ -164,19 +164,13 @@ namespace Devian
                     "AbilityItemFactory.CreateEquip: itemUid is null or empty.");
             }
 
-            if (ownerSlotNumber < 0)
-            {
-                return GameResult<AbilityItemEquip>.Failure(
-                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
-                    $"AbilityItemFactory.CreateEquip: ownerSlotNumber is invalid: {ownerSlotNumber}");
-            }
-
             var hasOwnerUnitId = !string.IsNullOrWhiteSpace(ownerUnitId);
-            if ((ownerSlotNumber > 0 && !hasOwnerUnitId) || (ownerSlotNumber == 0 && hasOwnerUnitId))
+            var hasOwnerSlot = ownerSlotType != SLOT_TYPE.NONE;
+            if ((hasOwnerSlot && !hasOwnerUnitId) || (!hasOwnerSlot && hasOwnerUnitId))
             {
                 return GameResult<AbilityItemEquip>.Failure(
                     GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
-                    "AbilityItemFactory.CreateEquip: ownerUnitId/ownerSlotNumber must both be set or both be empty.");
+                    "AbilityItemFactory.CreateEquip: ownerUnitId/ownerSlotType must both be set or both be empty.");
             }
 
             var levelTable = resolveEquipLevelTable(table.item_id, itemLevel);
@@ -186,8 +180,8 @@ namespace Devian
             var ability = new AbilityItemEquip();
             ability.Init(table, levelTable.Value, itemUid);
 
-            if (ownerSlotNumber > 0)
-                ability.SetOwner(ownerUnitId, ownerSlotNumber);
+            if (ownerSlotType != SLOT_TYPE.NONE)
+                ability.SetOwner(ownerUnitId, ownerSlotType);
 
             return GameResult<AbilityItemEquip>.Success(ability);
         }

@@ -97,8 +97,8 @@ public sealed class ShopProductPurchase : ShopProductBase<SHOP_ITEM_PURCHASE> {}
 - `ShopProductBase.PriceWithoutDiscount`는 "할인 전 실제 결제 기준 가격"이다.
 - `SHOP_ITEM_DAILY` row는 정적 `amount`를 가지지 않고 `amount_min/amount_max`를 가진다.
 - `ShopRewardProductBase`의 기본 `amount`는 `1`이다. `ShopProductDaily`만 daily snapshot에서 선택된 runtime `amount`를 주입한다.
-- `SHOP_ITEM_DAILY.price`는 단가다. 따라서 `ShopProductDaily.PriceWithoutDiscount = Table.price * amount`이며, 할인은 그 결과에 적용한다.
-- `SHOP_ITEM_EVENT.price`, `SHOP_ITEM_GOLD.price`, `SHOP_ITEM_CHEST.price`는 이미 최종 row 가격으로 해석한다.
+- `SHOP_ITEM_DAILY.unit_price`는 단가다. 따라서 `ShopProductDaily.PriceWithoutDiscount = Table.unit_price * amount`이며, 할인은 그 결과에 적용한다.
+- `SHOP_ITEM_EVENT.price`, `SHOP_ITEM_GOLD.price`, `SHOP_ITEM_CHEST.price`는 이미 최종 row 가격으로 해석한다. 특히 chest는 `amount`가 reward 배수일 뿐 가격에는 곱해지지 않는다.
 - daily runtime `amount`는 reward 반복 횟수이면서 가격 배수에도 반영된다.
 - `SHOP_ITEM_CHEST.amount`는 reward 반복 지급 횟수일 뿐 가격에는 곱하지 않는다.
 - `SHOP_ITEM_CHEST`는 `reward_group_id`를 직접 가지지 않는다. chest 구매 reward는 현재 `ShopCatalogChest.Level`의 `SHOP_CATALOG_CHEST.reward_ads/reward_paid01/reward_paid10`에서 동적으로 결정한다.

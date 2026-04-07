@@ -44,8 +44,8 @@ Inventory 상태는 "통화", "아이템(장비/카드/재료)", "영웅", "Trea
 - `ItemUid: string` (== key, 인스턴스 고유 ID, GUID)
 - `ItemId: string` (템플릿 ID, `mTable.item_id`)
 - `OwnerUnitId: string` (장착된 영웅 ItemId, 미장착 시 empty)
-- `OwnerSlotNumber: int` (장착 슬롯 번호, 0 = 미장착)
-- `IsEquipped: bool` (= `OwnerSlotNumber > 0`)
+- `OwnerSlotType: SLOT_TYPE` (장착 슬롯 enum, `NONE` = 미장착)
+- `IsEquipped: bool` (= `OwnerSlotType != SLOT_TYPE.NONE`)
 - 능력치: `AbilityItemEquip : AbilityItemBase : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)
   - 레벨 = `STAT_TYPE.ITEM_LEVEL`
 
@@ -78,7 +78,7 @@ NOTE:
 - `ItemId: string` (== key, `mTable.item_id`)
 - `Amount: int` (= `this[STAT_TYPE.ITEM_AMOUNT]`)
 - `ItemLevel: int` (= `this[STAT_TYPE.ITEM_LEVEL]`)
-- `Equips: Dict<int, AbilityItemEquip>` (outgame 슬롯별 장착 상태)
+- `Equips: Dict<SLOT_TYPE, AbilityItemEquip>` (outgame 슬롯별 장착 상태)
 - 능력치: `AbilityItemHero : AbilityItemBase : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)
   - level up은 현재 `ITEM_HERO_LEVEL` row stat을 제거한 뒤 다음 level row stat을 적용한다
 
@@ -192,10 +192,15 @@ NOTE: `RewardManager.RevokeRewardDatas` / `RevokeRewardDatasPartial`가 RewardDa
 
 ## C-6) 장비 장착/해제
 
-장비 장착/해제의 저장 모델은 `AbilityItemHero.SetEquip()` / `AbilityItemHero.RemoveEquip()`이다.
+장비 장착/해제의 저장 모델은 `AbilityItemHero._SetEquip()` / `AbilityItemHero._RemoveEquip()`이다.
 이 메서드는 hero loadout metadata와 equip owner metadata만 관리한다.
-실제 장비 stat 계산은 `AbilityUnitHero.Equip()` / `AbilityUnitHero.Unequip()`이 담당한다.
+실제 장비 stat 계산은 `AbilityUnitHero._Equip()` / `AbilityUnitHero._Unequip()`이 담당한다.
 InventoryStorage는 `Equip(heroId, equipSlot, equipUid)` / `Unequip(heroId, equipSlot)` 편의 메서드로 item hero 저장 모델에 위임한다.
+
+- slot rule 정본은 `ITEM_EQUIP.equip_type` + `EQUIP_SLOT.allowed_slots/two_handed`다.
+- `SLOT_TYPE.NONE`은 저장/장착 대상이 아니다.
+- `two_handed=true` 장비를 `HAND_MAIN`에 장착하면 현재 `HAND_SUB` 장비는 자동 해제된다.
+- `HAND_MAIN`에 양손 장비가 있는 상태에서 `HAND_SUB` 장착 시도는 실패한다.
 
 ---
 

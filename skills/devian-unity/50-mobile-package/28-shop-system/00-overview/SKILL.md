@@ -13,7 +13,7 @@ Shop System은 `SHOP_CATALOG_TYPE` 기반 카탈로그(`DAILY/CHEST/PURCHASE/GOL
 `CHEST/PURCHASE/GOLD`는 각 `SHOP_*` 테이블의 모든 상품을 생성한다.
 `EVENT`는 `SHOP_ITEM_EVENT.start_time/end_time` 서버 UTC 시간 구간 안에 있는 상품만 생성한다.
 `SHOP_ITEM_DAILY`는 정적 row에 `amount_min/amount_max`를 두고, 초기화/refresh 시 min/max 범위에서 runtime `amount`를 뽑아 snapshot에 저장한다.
-`SHOP_ITEM_DAILY.price`는 단가이며, 실제 구매 가격은 `price * snapshot.amount`에 discount를 적용한 값이다.
+`SHOP_ITEM_DAILY.unit_price`는 단가이며, 실제 구매 가격은 `unit_price * snapshot.amount`에 discount를 적용한 값이다.
 `SHOP_ITEM_DAILY`의 최종 snapshot(FREE/ADS 포함, remainCount/discountType/amount 포함)은 `daily.dailyCatalogProducts` 하나에 저장한다.
 일반 카탈로그의 구매 제한 자동 refresh는 카탈로그 저장 버킷의 `autoRefreshUtcMs`(다음 refresh 시각) + `auto_refresh_days` 규칙으로 처리된다.
 `EVENT`는 `auto_refresh_days` 대신 다음 `start_time/end_time` 경계 시각을 `autoRefreshUtcMs`로 저장해 refresh를 예약한다.

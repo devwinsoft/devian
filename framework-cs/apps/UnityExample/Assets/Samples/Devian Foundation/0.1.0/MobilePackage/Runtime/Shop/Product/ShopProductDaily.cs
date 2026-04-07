@@ -15,7 +15,7 @@ namespace Devian
                 SHOP_CATALOG_TYPE.DAILY,
                 toProductType(table != null ? table.currency_type : default),
                 table != null ? table.currency_type : default,
-                table?.price ?? 0,
+                table?.unit_price ?? 0,
                 table?.reward_group_id,
                 amount,
                 table?.max_count ?? -1,

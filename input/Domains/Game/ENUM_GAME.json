@@ -95,6 +95,18 @@
         {"name": "HERO_004", "value": 4},
         {"name": "HERO_005", "value": 5}
       ]
+    },
+    {
+      "name": "SLOT_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "HAND_MAIN", "value": 4001},
+        {"name": "HAND_SUB", "value": 4002},
+        {"name": "HEAD", "value": 4003},
+        {"name": "GLOVES", "value": 4004},
+        {"name": "RING_LEFT", "value": 4005},
+        {"name": "RING_RIGHT", "value": 4006}
+      ]
     }
   ]
 }

@@ -62,7 +62,7 @@ internal static class ShopProductFactory
 
 | Method | Source Table | 특이사항 |
 |--------|------------|----------|
-| `CreateDailyProduct` | `SHOP_ITEM_DAILY` | `discountType` + snapshot `amount` 파라미터, `SHOP_ITEM_DAILY.price`는 단가이며 최종 기본 가격은 product에서 `price * amount`로 계산 |
+| `CreateDailyProduct` | `SHOP_ITEM_DAILY` | `discountType` + snapshot `amount` 파라미터, `SHOP_ITEM_DAILY.unit_price`는 단가이며 최종 기본 가격은 product에서 `unit_price * amount`로 계산 |
 | `CreateChestProduct` | `SHOP_ITEM_CHEST` | `NONE` discount |
 | `CreateEventProduct` | `SHOP_ITEM_EVENT` | `amount=1`, `max_count=-1` 고정 |
 | `CreatePurchaseProduct` | `SHOP_ITEM_PURCHASE` | reward 경로 아님, `max_count=-1` 고정 |

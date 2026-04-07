@@ -105,7 +105,7 @@ SHOP_PRODUCT_TYPE: [NONE, FREE, ADS, CURRENCY, PURCHASE]
 - `dailyCatalogProducts`는 DAILY snapshot 전체를 저장한다. `FREE/ADS`도 동일 리스트에 포함한다.
 - 저장된 DAILY snapshot이 있으면 그 상태를 복원한다. legacy save처럼 `FREE/ADS`가 빠져 있으면 fixed row를 보강해 정규화한다.
 - 저장된 DAILY snapshot의 만료 여부는 `ShopManager`의 시간 기반 refresh 판정에서 결정한다.
-- `SHOP_ITEM_DAILY.price`는 단가다. `ShopProductDaily.PriceWithoutDiscount`는 `price * snapshot.amount`이며, 할인은 그 결과에 적용한다.
+- `SHOP_ITEM_DAILY.unit_price`는 단가다. `ShopProductDaily.PriceWithoutDiscount`는 `unit_price * snapshot.amount`이며, 할인은 그 결과에 적용한다.
 - daily runtime `amount`는 reward 반복 횟수이면서 가격 배수에도 반영된다.
 - daily manual refresh는 광고 시청 성공으로만 가능하며, rolling 24시간 기준 최대 5회다.
 - daily manual refresh의 상태 판단, 광고 호출, 성공 시 `manualRefreshUtcMs/manualRefreshRemainCount/autoRefreshUtcMs` 갱신은 `ShopCatalogDaily`가 직접 처리한다.

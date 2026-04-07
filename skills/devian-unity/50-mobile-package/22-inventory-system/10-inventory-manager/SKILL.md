@@ -46,6 +46,8 @@ public sealed class InventoryManager : CompoSingleton<InventoryManager>
     public GameResult LevelUpCard(string item_id) { ... }
     public GameResult LevelUpHero(string item_id) { ... }
     public GameResult LevelUpEquip(string item_uid) { ... }
+    public GameResult SetHeroEquip(string heroId, SLOT_TYPE slotType, string equipUid) { ... }
+    public GameResult RemoveHeroEquip(string heroId, SLOT_TYPE slotType) { ... }
     public GameResult ApplyRental(string item_id) { ... }
     public GameResult ApplyTreasure(TREASURE_GRADE_TYPE gradeType, int amount) { ... }
     public GameResult SetPassOwnership(string item_id, bool owned) { ... }
@@ -126,6 +128,8 @@ CompoSingleton<InventoryManager>.Instance
   - `LevelUpCard`: 카드 runtime level row를 다음 단계로 교체하고 `ITEM_CARD_CHANGED`를 발행
   - `LevelUpHero`: 영웅 runtime level row를 다음 단계로 교체하고 `ITEM_HERO_CHANGED`를 발행
   - `LevelUpEquip`: 장비 runtime level row를 다음 단계로 교체하고 `ITEM_EQUIP_CHANGED`를 발행
+  - `SetHeroEquip`: slot rule 검증 + 장비 장착/이동 + 양손 규칙 자동 해제 + 관련 notify 발행
+  - `RemoveHeroEquip`: hero slot 기준 장비 해제 + 관련 notify 발행
   - `ApplyRental`: 로컬 만료 시각 설정/연장 (`max(currentExpiry, now) + 30days`)
   - `SetPassOwnership`: 소유권 설정 + 메시지 트리거
 - `ApplyTreasure`: chest count 누적
@@ -174,6 +178,8 @@ CompoSingleton<InventoryManager>.Instance
 - `LevelUpCard(string item_id) -> GameResult` — 현재 카드 runtime의 level stat을 제거하고 다음 `ITEM_CARD_LEVEL` row stat을 적용
 - `LevelUpHero(string item_id) -> GameResult` — 현재 영웅 runtime의 level stat을 제거하고 다음 `ITEM_HERO_LEVEL` row stat을 적용
 - `LevelUpEquip(string item_uid) -> GameResult` — 현재 장비 runtime의 level stat을 제거하고 다음 `ITEM_EQUIP_LEVEL` row stat을 적용
+- `SetHeroEquip(string heroId, SLOT_TYPE slotType, string equipUid) -> GameResult` — `EQUIP_SLOT` 규칙 검증 후 장비 장착. two-handed main 장착 시 기존 `HAND_SUB`는 자동 해제
+- `RemoveHeroEquip(string heroId, SLOT_TYPE slotType) -> GameResult` — hero slot 기준 장비 해제
 - `ApplyRental(string item_id) -> GameResult` — `_storage.SetRental(id, max(currentExpiry, now)+30days)`
 - `SetPassOwnership(string item_id, bool owned) -> GameResult` — `_storage.SetPass(item_id, owned)` + `PASS_OWNERSHIP_CHANGED`
 - `RemovePassOwnership(string item_id) -> GameResult` — `_storage.RemovePass(item_id)` + `PASS_OWNERSHIP_CHANGED`
@@ -251,6 +257,7 @@ CompoSingleton<InventoryManager>.Instance
   - `INVENTORY_SNAPSHOT_CHANGED`
 - item changed payload는 `key + current runtime`을 사용한다.
 - item list changed payload는 `action(ADD/REMOVE) + key + runtimeOrNull`을 사용한다.
+- 장착/해제로 inventory membership은 바뀌지 않으므로 `SetHeroEquip/RemoveHeroEquip`는 `ITEM_*_LIST_CHANGED`를 발행하지 않는다.
 - bulk load/import/clear는 세부 delta를 replay하지 않고 `INVENTORY_SNAPSHOT_CHANGED`만 발행한다.
 
 

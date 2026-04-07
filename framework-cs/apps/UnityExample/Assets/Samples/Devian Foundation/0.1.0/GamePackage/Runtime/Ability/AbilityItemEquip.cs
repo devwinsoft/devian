@@ -8,13 +8,14 @@ namespace Devian
         ITEM_EQUIP_LEVEL mLevelTable = null;
         string mItemUid = string.Empty;
         string mOwnerUnitId = string.Empty;
-        int mOwnerSlotNumber = 0;
+        SLOT_TYPE mOwnerSlotType = SLOT_TYPE.NONE;
 
         public string ItemUid => mItemUid;
         public override string ItemId => mTable?.item_id ?? string.Empty;
+        public EQUIP_TYPE EquipType => mTable != null ? mTable.equip_type : default;
         public string OwnerUnitId => mOwnerUnitId;
-        public int OwnerSlotNumber => mOwnerSlotNumber;
-        public bool IsEquipped => mOwnerSlotNumber > 0;
+        public SLOT_TYPE OwnerSlotType => mOwnerSlotType;
+        public bool IsEquipped => mOwnerSlotType != SLOT_TYPE.NONE;
 
         public void Init(ITEM_EQUIP table, ITEM_EQUIP_LEVEL levelTable, string itemUid)
         {
@@ -40,21 +41,33 @@ namespace Devian
             c.mLevelTable = mLevelTable;
             c.mItemUid = mItemUid;
             c.mOwnerUnitId = mOwnerUnitId;
-            c.mOwnerSlotNumber = mOwnerSlotNumber;
+            c.mOwnerSlotType = mOwnerSlotType;
             c.CopyStatsFrom(this);
             return c;
         }
 
-        internal void SetOwner(string unitId, int slotNumber)
+        public static bool IsSame(AbilityItemEquip left, AbilityItemEquip right)
+        {
+            if (ReferenceEquals(left, right))
+                return true;
+
+            if (left == null || right == null)
+                return false;
+
+            return !string.IsNullOrWhiteSpace(left.ItemUid)
+                && left.ItemUid == right.ItemUid;
+        }
+
+        internal void SetOwner(string unitId, SLOT_TYPE slotType)
         {
             mOwnerUnitId = unitId;
-            mOwnerSlotNumber = slotNumber;
+            mOwnerSlotType = slotType;
         }
 
         internal void ClearOwner()
         {
             mOwnerUnitId = string.Empty;
-            mOwnerSlotNumber = 0;
+            mOwnerSlotType = SLOT_TYPE.NONE;
         }
 
         internal GameResult _LevelUp()

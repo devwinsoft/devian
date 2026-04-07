@@ -6,6 +6,16 @@ import { IEntity, IEntityKey, CBigInt } from '@devian/core';
 
 // ========== Enums (gen:) ==========
 
+/** Auto-generated enum from TB_EQUIP_SLOT.equip_type */
+export enum EQUIP_TYPE {
+    BOW = 0,
+    GLOVES = 1,
+    HELMET = 2,
+    RING = 3,
+    SHIELD = 4,
+    SWORD = 5,
+}
+
 /** Auto-generated enum from TB_GAME_ERROR.id */
 export enum GAME_ERROR_TYPE {
     SUCCESS = 0,
@@ -308,6 +318,17 @@ export enum UNIT_HERO_TYPE {
     HERO_005 = 5,
 }
 
+/** SLOT_TYPE enum */
+export enum SLOT_TYPE {
+    NONE = 0,
+    HAND_MAIN = 4001,
+    HAND_SUB = 4002,
+    HEAD = 4003,
+    GLOVES = 4004,
+    RING_LEFT = 4005,
+    RING_RIGHT = 4006,
+}
+
 /** INVENTORY_MESSAGE_TYPE enum */
 export enum INVENTORY_MESSAGE_TYPE {
     NONE = 0,
@@ -513,6 +534,13 @@ export interface REWARD extends IEntityKey<number> {
     getKey(): number;
 }
 
+export interface EQUIP_SLOT extends IEntityKey<EQUIP_TYPE> {
+    equip_type: EQUIP_TYPE;
+    allowed_slots: SLOT_TYPE[];
+    two_handed: boolean;
+    getKey(): EQUIP_TYPE;
+}
+
 export interface GAME_ERROR extends IEntityKey<GAME_ERROR_TYPE> {
     id: GAME_ERROR_TYPE;
     msg_key: string;
@@ -554,6 +582,7 @@ export interface ITEM_EQUIP extends IEntityKey<string> {
     item_id: string;
     name_id: string;
     desc_id: string;
+    equip_type: EQUIP_TYPE;
     getKey(): string;
 }
 
@@ -720,7 +749,7 @@ export interface SHOP_ITEM_DAILY extends IEntityKey<string> {
     shop_item_id: string;
     name_id: string;
     currency_type: CURRENCY_TYPE;
-    price: number;
+    unit_price: number;
     reward_group_id: string;
     amount_min: number;
     amount_max: number;
@@ -963,6 +992,52 @@ export class TB_REWARD {
             const row = JSON.parse(line) as REWARD;
             this._list.push(row);
             this._dict.set(row.reward_num, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_EQUIP_SLOT {
+    private static _dict: Map<EQUIP_TYPE, EQUIP_SLOT> = new Map();
+    private static _list: EQUIP_SLOT[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly EQUIP_SLOT[] { return this._list; }
+
+    static get(key: EQUIP_TYPE): EQUIP_SLOT | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: EQUIP_TYPE): boolean {
+        return this._dict.has(key);
+    }
+
+    static find(key: EQUIP_TYPE): EQUIP_SLOT {
+        const row = this._dict.get(key);
+        if (!row) throw new Error(`TB_EQUIP_SLOT: key ${key} not found`);
+        return row;
+    }
+
+    static tryFind(key: EQUIP_TYPE): EQUIP_SLOT | undefined {
+        return this._dict.get(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as EQUIP_SLOT;
+            this._list.push(row);
+            this._dict.set(row.equip_type, row);
         }
     }
 

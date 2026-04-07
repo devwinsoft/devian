@@ -51,7 +51,7 @@ AppliesTo: v10
 - 실제 product 생성 책임은 `ShopCatalogBase.onRefresh()`가 가진다.
 - `ShopCatalogBase.onRefresh()` 기본 경로는 `CHEST/PURCHASE/GOLD`의 테이블 전체 row를 product로 생성하고, 같은 catalog bucket의 storage remain 상태를 즉시 적용한다.
 - `ShopCatalogDaily.onRefresh()`는 valid storage가 있으면 DAILY snapshot 전체를 복원하고, invalid/empty storage면 `FREE/ADS 고정 + 비고정 5개 선택`으로 새 snapshot을 생성한다.
-- `ShopProductDaily.PriceWithoutDiscount`는 `SHOP_ITEM_DAILY.price * snapshot.amount`다. `SHOP_ITEM_DAILY.price`는 단가로 해석한다.
+- `ShopProductDaily.PriceWithoutDiscount`는 `SHOP_ITEM_DAILY.unit_price * snapshot.amount`다. `SHOP_ITEM_DAILY.unit_price`는 단가로 해석한다.
 - `ShopCatalogEvent.onRefresh()`는 `SHOP_ITEM_EVENT.start_time/end_time`을 서버 UTC 기준으로 평가해 현재 판매 중인 row만 product로 생성한다.
 - `ShopCatalogBase`는 `Storage`를 소유하며, catalog runtime state helper는 catalog 계층에 둔다.
 - `ShopCatalogBase`는 generic `StorageData`를 소유하며, 각 subclass는 자기 typed storage data를 해석한다.

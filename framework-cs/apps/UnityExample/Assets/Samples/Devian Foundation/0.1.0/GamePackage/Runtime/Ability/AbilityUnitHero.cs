@@ -7,10 +7,10 @@ namespace Devian
     {
         UNIT_HERO mTable = null;
         UNIT_HERO_LEVEL mLevelTable = null;
-        readonly Dictionary<int, AbilityItemEquip> mEquips = new();
+        readonly Dictionary<SLOT_TYPE, AbilityItemEquip> mEquips = new();
 
         public override string UnitId => mTable?.unit_id ?? string.Empty;
-        public IReadOnlyDictionary<int, AbilityItemEquip> Equips => mEquips;
+        public IReadOnlyDictionary<SLOT_TYPE, AbilityItemEquip> Equips => mEquips;
 
         public void Init(UNIT_HERO table, UNIT_HERO_LEVEL levelTable)
         {
@@ -35,51 +35,57 @@ namespace Devian
             return c;
         }
 
-        public bool Equip(AbilityItemEquip equip, int slotNumber)
+        internal bool _Equip(AbilityItemEquip equip, SLOT_TYPE slotType)
         {
-            if (equip == null || slotNumber <= 0)
+            if (equip == null || slotType == SLOT_TYPE.NONE)
                 return false;
 
-            if (mEquips.TryGetValue(slotNumber, out var prev))
+            if (AbilityEquipSlotPolicy.GetPlacementFailure(equip, slotType, mEquips) != AbilityEquipPlacementFailure.None)
+                return false;
+
+            if (slotType == SLOT_TYPE.HAND_MAIN && AbilityEquipSlotPolicy.IsTwoHanded(equip))
+                _Unequip(SLOT_TYPE.HAND_SUB);
+
+            if (mEquips.TryGetValue(slotType, out var prev))
             {
-                if (isSameEquip(prev, equip))
+                if (AbilityItemEquip.IsSame(prev, equip))
                 {
-                    prev.SetOwner(UnitId, slotNumber);
+                    prev.SetOwner(UnitId, slotType);
                     return true;
                 }
 
-                Unequip(slotNumber);
+                _Unequip(slotType);
             }
 
             var existingSlot = findEquipSlot(equip);
-            if (existingSlot > 0)
+            if (existingSlot != SLOT_TYPE.NONE)
             {
-                if (existingSlot == slotNumber)
+                if (existingSlot == slotType)
                     return true;
 
-                Unequip(existingSlot);
+                _Unequip(existingSlot);
             }
 
             if (equip.IsEquipped)
                 equip.ClearOwner();
 
-            mEquips[slotNumber] = equip;
-            equip.SetOwner(UnitId, slotNumber);
+            mEquips[slotType] = equip;
+            equip.SetOwner(UnitId, slotType);
             applyEquipStats(equip, +1);
             return true;
         }
 
-        public bool Unequip(int slotNumber)
+        internal bool _Unequip(SLOT_TYPE slotType)
         {
-            if (!mEquips.TryGetValue(slotNumber, out var equip))
+            if (!mEquips.TryGetValue(slotType, out var equip))
                 return false;
 
             applyEquipStats(equip, -1);
 
-            if (equip.OwnerUnitId == UnitId && equip.OwnerSlotNumber == slotNumber)
+            if (equip.OwnerUnitId == UnitId && equip.OwnerSlotType == slotType)
                 equip.ClearOwner();
 
-            mEquips.Remove(slotNumber);
+            mEquips.Remove(slotType);
             return true;
         }
 
@@ -97,27 +103,15 @@ namespace Devian
             }
         }
 
-        int findEquipSlot(AbilityItemEquip equip)
+        SLOT_TYPE findEquipSlot(AbilityItemEquip equip)
         {
             foreach (var kv in mEquips)
             {
-                if (isSameEquip(kv.Value, equip))
+                if (AbilityItemEquip.IsSame(kv.Value, equip))
                     return kv.Key;
             }
 
-            return 0;
-        }
-
-        static bool isSameEquip(AbilityItemEquip left, AbilityItemEquip right)
-        {
-            if (ReferenceEquals(left, right))
-                return true;
-
-            if (left == null || right == null)
-                return false;
-
-            return !string.IsNullOrWhiteSpace(left.ItemUid)
-                && left.ItemUid == right.ItemUid;
+            return SLOT_TYPE.NONE;
         }
 
         static bool shouldApplyEquipStat(STAT_TYPE statType)

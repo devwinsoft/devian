@@ -1,14 +1,15 @@
-import { STAT_TYPE, UNIT_HERO, UNIT_HERO_LEVEL } from '../../Generated/Game.g';
+import { SLOT_TYPE, STAT_TYPE, UNIT_HERO, UNIT_HERO_LEVEL } from '../../Generated/Game.g';
 import { AbilityItemEquip } from './AbilityItemEquip';
+import { AbilityEquipPlacementFailure, AbilityEquipSlotPolicy } from './AbilityEquipSlotPolicy';
 import { AbilityUnitBase } from './AbilityUnitBase';
 
 export class AbilityUnitHero extends AbilityUnitBase {
     private mTable: UNIT_HERO | null = null;
     private mLevelTable: UNIT_HERO_LEVEL | null = null;
-    private readonly mEquips: Map<number, AbilityItemEquip> = new Map();
+    private readonly mEquips: Map<SLOT_TYPE, AbilityItemEquip> = new Map();
 
     get unitId(): string { return this.mTable?.unit_id ?? ''; }
-    get equips(): ReadonlyMap<number, AbilityItemEquip> { return this.mEquips; }
+    get equips(): ReadonlyMap<SLOT_TYPE, AbilityItemEquip> { return this.mEquips; }
 
     init(table: UNIT_HERO, levelTable: UNIT_HERO_LEVEL): void {
         this.mTable = table;
@@ -16,23 +17,29 @@ export class AbilityUnitHero extends AbilityUnitBase {
         this.initUnitState(levelTable.unit_level, levelTable.max_hp);
     }
 
-    equip(equip: AbilityItemEquip, slotNumber: number): boolean {
-        if (!equip || slotNumber <= 0)
+    equip(equip: AbilityItemEquip, slotType: SLOT_TYPE): boolean {
+        if (!equip || slotType === SLOT_TYPE.NONE)
             return false;
 
-        const prev = this.mEquips.get(slotNumber);
+        if (AbilityEquipSlotPolicy.getPlacementFailure(equip, slotType, this.mEquips) !== AbilityEquipPlacementFailure.None)
+            return false;
+
+        if (slotType === SLOT_TYPE.HAND_MAIN && AbilityEquipSlotPolicy.isTwoHanded(equip))
+            this.unequip(SLOT_TYPE.HAND_SUB);
+
+        const prev = this.mEquips.get(slotType);
         if (prev) {
-            if (this.isSameEquip(prev, equip)) {
-                prev.setOwner(this.unitId, slotNumber);
+            if (AbilityItemEquip.isSame(prev, equip)) {
+                prev.setOwner(this.unitId, slotType);
                 return true;
             }
 
-            this.unequip(slotNumber);
+            this.unequip(slotType);
         }
 
         const existingSlot = this.findEquipSlot(equip);
-        if (existingSlot > 0) {
-            if (existingSlot === slotNumber)
+        if (existingSlot !== SLOT_TYPE.NONE) {
+            if (existingSlot === slotType)
                 return true;
 
             this.unequip(existingSlot);
@@ -41,23 +48,23 @@ export class AbilityUnitHero extends AbilityUnitBase {
         if (equip.isEquipped)
             equip.clearOwner();
 
-        this.mEquips.set(slotNumber, equip);
-        equip.setOwner(this.unitId, slotNumber);
+        this.mEquips.set(slotType, equip);
+        equip.setOwner(this.unitId, slotType);
         this.applyEquipStats(equip, +1);
         return true;
     }
 
-    unequip(slotNumber: number): boolean {
-        const equip = this.mEquips.get(slotNumber);
+    unequip(slotType: SLOT_TYPE): boolean {
+        const equip = this.mEquips.get(slotType);
         if (!equip)
             return false;
 
         this.applyEquipStats(equip, -1);
 
-        if (equip.ownerUnitId === this.unitId && equip.ownerSlotNumber === slotNumber)
+        if (equip.ownerUnitId === this.unitId && equip.ownerSlotType === slotType)
             equip.clearOwner();
 
-        this.mEquips.delete(slotNumber);
+        this.mEquips.delete(slotType);
         return true;
     }
 
@@ -84,23 +91,13 @@ export class AbilityUnitHero extends AbilityUnitBase {
         }
     }
 
-    private findEquipSlot(equip: AbilityItemEquip): number {
-        for (const [slotNumber, slottedEquip] of this.mEquips) {
-            if (this.isSameEquip(slottedEquip, equip))
-                return slotNumber;
+    private findEquipSlot(equip: AbilityItemEquip): SLOT_TYPE {
+        for (const [slotType, slottedEquip] of this.mEquips) {
+            if (AbilityItemEquip.isSame(slottedEquip, equip))
+                return slotType;
         }
 
-        return 0;
-    }
-
-    private isSameEquip(left: AbilityItemEquip | undefined, right: AbilityItemEquip | undefined): boolean {
-        if (left === right)
-            return true;
-
-        if (!left || !right)
-            return false;
-
-        return left.itemUid.length > 0 && left.itemUid === right.itemUid;
+        return SLOT_TYPE.NONE;
     }
 
     private shouldApplyEquipStat(statType: STAT_TYPE): boolean {

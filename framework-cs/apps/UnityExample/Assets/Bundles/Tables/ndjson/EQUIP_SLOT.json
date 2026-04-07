@@ -1,0 +1,6 @@
+{"equip_type":"SWORD","allowed_slots":["HAND_MAIN"],"two_handed":false}
+{"equip_type":"BOW","allowed_slots":["HAND_MAIN"],"two_handed":true}
+{"equip_type":"SHIELD","allowed_slots":["HAND_SUB"],"two_handed":false}
+{"equip_type":"HELMET","allowed_slots":["HEAD"],"two_handed":false}
+{"equip_type":"GLOVES","allowed_slots":["GLOVES"],"two_handed":false}
+{"equip_type":"RING","allowed_slots":["RING_LEFT","RING_RIGHT"],"two_handed":false}

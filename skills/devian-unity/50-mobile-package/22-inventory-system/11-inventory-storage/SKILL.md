@@ -42,14 +42,16 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobilePacka
 
 ### 장비 장착
 
-장비 장착/해제의 저장 로직은 `AbilityItemHero.SetEquip/RemoveEquip`이 담당한다.
+장비 장착/해제의 저장 로직은 `AbilityItemHero._SetEquip/_RemoveEquip`이 담당한다.
 - 이 경로는 hero loadout metadata와 equip owner metadata만 갱신한다.
 - 이미 다른 hero에 장착된 equip 이동은 `InventoryStorage.Equip()`가 기존 owner를 먼저 정리한 뒤 위임하는 경로만 사용한다.
-- equip stat 계산은 `AbilityUnitHero.Equip/Unequip`에서 수행한다.
+- equip stat 계산은 `AbilityUnitHero._Equip/_Unequip`에서 수행한다.
 InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제공한다.
 
 - `RemoveEquip`은 장착 상태면 hero 슬롯 맵까지 함께 정리한 뒤 제거한다.
 - `Equip(heroId, equipSlot, equipUid)` / `Unequip(heroId, equipSlot)` 편의 메서드를 제공한다.
+- slot key는 `SLOT_TYPE`이며 `NONE`은 유효한 장착 slot이 아니다.
+- two-handed main 장착에 따른 `HAND_SUB` 자동 해제는 최종적으로 `AbilityItemHero._SetEquip()` 규칙에 따른다.
 
 ---
 
@@ -59,10 +61,10 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
 |---|---|
 | `InventoryManager` | InventoryStorage 소유, 타입별 Apply/Revoke/Query API 제공 |
 | `InventoryStorage` | CurrencyBalances (`Dictionary<CURRENCY_TYPE, long>`), Equipments (itemUid → AbilityItemEquip), Cards (item_id → AbilityItemCard), Materials (item_id → AbilityItemMaterial), Heroes (item_id → AbilityItemHero), Rentals (item_id → expiresAtClientUtcMs), Passes (item_id → owned), TreasureCurrent (`InventoryTreasureCurrent`), TreasureCounts (TREASURE_GRADE_TYPE → int) |
-| `AbilityItemEquip` | OwnerUnitId/OwnerSlotNumber(별도 필드) + 능력치(STAT_TYPE 기반) 관리 |
+| `AbilityItemEquip` | OwnerUnitId/OwnerSlotType(별도 필드) + 능력치(STAT_TYPE 기반) 관리 |
 | `AbilityItemCard` | 수량(`STAT_TYPE.ITEM_AMOUNT`) + 능력치(STAT_TYPE 기반) 관리 |
 | `AbilityItemMaterial` | 수량(`STAT_TYPE.ITEM_AMOUNT`) + 능력치(STAT_TYPE 기반) 관리 |
-| `AbilityItemHero` | 수량(`STAT_TYPE.ITEM_AMOUNT`) + 영웅 장비 슬롯(`Dict<int, AbilityItemEquip>`) 관리 |
+| `AbilityItemHero` | 수량(`STAT_TYPE.ITEM_AMOUNT`) + 영웅 장비 슬롯(`Dict<SLOT_TYPE, AbilityItemEquip>`) 관리 |
 
 - `InventoryManager`가 `InventoryStorage`를 소유한다 (싱글톤 등록 안 함).
 - 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `item_id`에 여러 인스턴스가 존재할 수 있다.

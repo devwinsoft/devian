@@ -546,6 +546,146 @@ namespace Devian
             return GameResult.Ok();
         }
 
+        public GameResult SetHeroEquip(string heroId, SLOT_TYPE slotType, string equipUid)
+        {
+            if (string.IsNullOrWhiteSpace(heroId))
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    "InventoryManager.SetHeroEquip: heroId is null or empty.");
+            }
+
+            if (slotType == SLOT_TYPE.NONE)
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    "InventoryManager.SetHeroEquip: slotType must not be NONE.");
+            }
+
+            if (string.IsNullOrWhiteSpace(equipUid))
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    "InventoryManager.SetHeroEquip: equipUid is null or empty.");
+            }
+
+            var hero = _storage.GetHero(heroId);
+            if (hero == null)
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"InventoryManager.SetHeroEquip: hero runtime not found. heroId={heroId}");
+            }
+
+            var equip = _storage.GetEquip(equipUid);
+            if (equip == null)
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"InventoryManager.SetHeroEquip: equip runtime not found. equipUid={equipUid}");
+            }
+
+            var resolveRule = resolveEquipSlotRule(equip);
+            if (resolveRule.IsFailure)
+                return GameResult.Failure(resolveRule.Error!);
+
+            var rule = resolveRule.Value;
+            switch (AbilityEquipSlotPolicy.GetPlacementFailure(rule, slotType, hero.Equips))
+            {
+                case AbilityEquipPlacementFailure.None:
+                    break;
+                case AbilityEquipPlacementFailure.SlotNotAllowed:
+                    return GameResult.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                        $"InventoryManager.SetHeroEquip: slot is not allowed. heroId={heroId}, equipUid={equipUid}, equipType={equip.EquipType}, slotType={slotType}");
+                case AbilityEquipPlacementFailure.HandSubBlockedByTwoHandedMain:
+                    return GameResult.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                        $"InventoryManager.SetHeroEquip: HAND_SUB is blocked by two-handed main weapon. heroId={heroId}, equipUid={equipUid}");
+                default:
+                    return GameResult.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                        $"InventoryManager.SetHeroEquip: unsupported equip placement failure. heroId={heroId}, equipUid={equipUid}, slotType={slotType}");
+            }
+
+            var targetPrev = hero.GetEquip(slotType);
+            var prevOwnerHeroId = equip.OwnerUnitId;
+            var prevOwnerHero = !string.IsNullOrWhiteSpace(prevOwnerHeroId) && prevOwnerHeroId != heroId
+                ? _storage.GetHero(prevOwnerHeroId)
+                : null;
+            var autoUnequippedSubHand = slotType == SLOT_TYPE.HAND_MAIN && AbilityEquipSlotPolicy.IsTwoHanded(rule)
+                ? hero.GetEquip(SLOT_TYPE.HAND_SUB)
+                : null;
+
+            if (!_storage.Equip(heroId, slotType, equipUid))
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"InventoryManager.SetHeroEquip: equip operation failed. heroId={heroId}, slotType={slotType}, equipUid={equipUid}");
+            }
+
+            notifyHeroChanged(heroId, hero);
+            if (prevOwnerHero != null)
+                notifyHeroChanged(prevOwnerHeroId, prevOwnerHero);
+
+            notifyEquipChanged(equip.ItemUid, equip.ItemId, equip);
+            if (targetPrev != null && !AbilityItemEquip.IsSame(targetPrev, equip))
+                notifyEquipChanged(targetPrev.ItemUid, targetPrev.ItemId, targetPrev);
+
+            if (autoUnequippedSubHand != null
+                && !AbilityItemEquip.IsSame(autoUnequippedSubHand, equip)
+                && !AbilityItemEquip.IsSame(autoUnequippedSubHand, targetPrev))
+            {
+                notifyEquipChanged(autoUnequippedSubHand.ItemUid, autoUnequippedSubHand.ItemId, autoUnequippedSubHand);
+            }
+
+            return GameResult.Ok();
+        }
+
+        public GameResult RemoveHeroEquip(string heroId, SLOT_TYPE slotType)
+        {
+            if (string.IsNullOrWhiteSpace(heroId))
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    "InventoryManager.RemoveHeroEquip: heroId is null or empty.");
+            }
+
+            if (slotType == SLOT_TYPE.NONE)
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    "InventoryManager.RemoveHeroEquip: slotType must not be NONE.");
+            }
+
+            var hero = _storage.GetHero(heroId);
+            if (hero == null)
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"InventoryManager.RemoveHeroEquip: hero runtime not found. heroId={heroId}");
+            }
+
+            var equip = hero.GetEquip(slotType);
+            if (equip == null)
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"InventoryManager.RemoveHeroEquip: no equipped item at slot. heroId={heroId}, slotType={slotType}");
+            }
+
+            if (!_storage.Unequip(heroId, slotType))
+            {
+                return GameResult.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"InventoryManager.RemoveHeroEquip: unequip failed. heroId={heroId}, slotType={slotType}");
+            }
+
+            notifyEquipChanged(equip.ItemUid, equip.ItemId, equip);
+            notifyHeroChanged(heroId, hero);
+            return GameResult.Ok();
+        }
+
         public GameResult ApplyRental(string itemId)
         {
             if (string.IsNullOrWhiteSpace(itemId))
@@ -1007,7 +1147,7 @@ namespace Devian
 
                 foreach (var equip in heroSnapshot.Equips)
                 {
-                    if (equip.Key <= 0 || string.IsNullOrWhiteSpace(equip.Value))
+                    if (equip.Key == SLOT_TYPE.NONE || string.IsNullOrWhiteSpace(equip.Value))
                     {
                         return GameResult<InventoryStorage>.Failure(
                             GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
@@ -1049,6 +1189,26 @@ namespace Devian
             nextStorage.SetTreasureCurrentState(snapshot.TreasureCurrentLevel, snapshot.TreasureCurrentExp);
             nextStorage.LastStaminaUpdateUtcMs = snapshot.LastStaminaUpdateUtcMs;
             return GameResult<InventoryStorage>.Success(nextStorage);
+        }
+
+        static GameResult<EQUIP_SLOT> resolveEquipSlotRule(AbilityItemEquip equip)
+        {
+            if (equip == null)
+            {
+                return GameResult<EQUIP_SLOT>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    "InventoryManager.resolveEquipSlotRule: equip is null.");
+            }
+
+            var rule = AbilityEquipSlotPolicy.GetRule(equip.EquipType);
+            if (rule == null)
+            {
+                return GameResult<EQUIP_SLOT>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"InventoryManager.resolveEquipSlotRule: EQUIP_SLOT not found. equipType={equip.EquipType}, itemId={equip.ItemId}, itemUid={equip.ItemUid}");
+            }
+
+            return GameResult<EQUIP_SLOT>.Success(rule);
         }
 
         void notifyCurrencyChanged(CURRENCY_TYPE currencyType, long delta)

@@ -29,7 +29,7 @@ namespace Devian
         public string ItemId { get; set; } = string.Empty;
         public int ItemLevel { get; set; } = 1;
         public int Amount { get; set; }
-        public Dictionary<int, string> Equips { get; } = new();
+        public Dictionary<SLOT_TYPE, string> Equips { get; } = new();
     }
 
     public sealed class InventorySnapshot

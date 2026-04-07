@@ -130,7 +130,7 @@ namespace Devian
             if (equip.IsEquipped)
             {
                 if (mHeroes.TryGetValue(equip.OwnerUnitId, out var hero))
-                    hero.RemoveEquip(equip.OwnerSlotNumber);
+                    hero._RemoveEquip(equip.OwnerSlotType);
                 else
                     equip.ClearOwner();
             }
@@ -197,14 +197,14 @@ namespace Devian
 
             var equippedSlots = hero.Equips.Keys.ToList();
             for (var i = 0; i < equippedSlots.Count; i++)
-                hero.RemoveEquip(equippedSlots[i]);
+                hero._RemoveEquip(equippedSlots[i]);
 
             return mHeroes.Remove(heroId);
         }
 
         // ── Hero Equip Operations ──
 
-        public bool Equip(string heroId, int equipSlot, string equipUid)
+        public bool Equip(string heroId, SLOT_TYPE equipSlot, string equipUid)
         {
             if (!mHeroes.TryGetValue(heroId, out var hero)) return false;
             if (!mEquipments.TryGetValue(equipUid, out var equip)) return false;
@@ -212,18 +212,18 @@ namespace Devian
             if (equip.IsEquipped)
             {
                 if (mHeroes.TryGetValue(equip.OwnerUnitId, out var prevHero))
-                    prevHero.RemoveEquip(equip.OwnerSlotNumber);
+                    prevHero._RemoveEquip(equip.OwnerSlotType);
                 else
                     equip.ClearOwner();
             }
 
-            return hero.SetEquip(equip, equipSlot);
+            return hero._SetEquip(equip, equipSlot);
         }
 
-        public bool Unequip(string heroId, int equipSlot)
+        public bool Unequip(string heroId, SLOT_TYPE equipSlot)
         {
             if (!mHeroes.TryGetValue(heroId, out var hero)) return false;
-            return hero.RemoveEquip(equipSlot);
+            return hero._RemoveEquip(equipSlot);
         }
 
         // ── Rental Operations ──
