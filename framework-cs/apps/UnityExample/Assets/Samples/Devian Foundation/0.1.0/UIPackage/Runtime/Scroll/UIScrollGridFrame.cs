@@ -5,6 +5,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 
 namespace Devian
@@ -19,6 +20,11 @@ namespace Devian
     /// </summary>
     public class UIScrollGridFrame : UIBaseFrame, IUIScrollSection
     {
+        private static readonly MethodInfo s_spawnPoolableGridCellMethod =
+            typeof(UIScrollGridFrame).GetMethod(
+                nameof(SpawnPoolableGridCell),
+                BindingFlags.Static | BindingFlags.NonPublic);
+
         [Header("Grid")]
         [SerializeField] private UI_SCROLL_CELL_ID _cellPrefabId;
         [SerializeField] private int _columnCount = 4;
@@ -98,6 +104,74 @@ namespace Devian
         /// <summary>콜백 방식: cell.onHide() 후 호출.</summary>
         public Action<UIScrollGridCell> onUnbindCell;
 
+        /// <summary>
+        /// `_cellPrefabId`의 prefab 실제 pool type을 사용해 grid cell prefab을 spawn한다.
+        /// `BundlePool` lifecycle을 그대로 사용하므로 `OnPoolSpawned()`가 자동 호출된다.
+        /// </summary>
+        public UIScrollGridCell Spawn(
+            Transform parent = null,
+            Vector3 position = default,
+            Quaternion rotation = default,
+            PoolOptions options = default)
+        {
+            var prefabName = requireCellPrefabName();
+            var cellType = ResolveCellType(prefabName);
+            if (!s_spawnMethodByPrefabId.TryGetValue(prefabName, out var method))
+            {
+                method = s_spawnPoolableGridCellMethod.MakeGenericMethod(cellType);
+                s_spawnMethodByPrefabId[prefabName] = method;
+            }
+
+            try
+            {
+                return method.Invoke(
+                    null,
+                    new object[] { prefabName, position, rotation, parent, options }) as UIScrollGridCell;
+            }
+            catch (TargetInvocationException e) when (e.InnerException != null)
+            {
+                throw e.InnerException;
+            }
+        }
+
+        /// <summary>
+        /// `_cellPrefabId`를 사용해 grid cell prefab을 typed facade로 spawn한다.
+        /// 내부 spawn은 prefab 실제 pool type 기준으로 수행된다.
+        /// </summary>
+        public T Spawn<T>(
+            Transform parent = null,
+            Vector3 position = default,
+            Quaternion rotation = default,
+            PoolOptions options = default)
+            where T : UIScrollGridCell
+        {
+            var cell = Spawn(parent, position, rotation, options);
+            if (cell is T typedCell)
+            {
+                return typedCell;
+            }
+
+            BundlePool.Despawn(cell);
+            throw new InvalidOperationException(
+                $"UIScrollGridFrame.Spawn<{typeof(T).Name}>: prefab '{CellPrefabName}' resolved to " +
+                $"'{cell?.GetType().Name ?? "null"}', which is not assignable to '{typeof(T).Name}'.");
+        }
+
+        /// <summary>
+        /// grid cell을 pool로 반환한다.
+        /// cell이 바인딩 상태면 먼저 `Hide()`와 `onUnbindCell`을 실행한 뒤
+        /// `BundlePool` lifecycle을 그대로 사용하므로 `OnPoolDespawned()`가 자동 호출된다.
+        /// </summary>
+        public void Despawn<T>(T cell)
+            where T : UIScrollGridCell
+        {
+            if (cell == null)
+                return;
+
+            UnbindCell(cell);
+            BundlePool.Despawn(cell);
+        }
+
         // ─── Size ───
         // GetWidth(): base 구현 사용 (rectTransform.rect.width). override 하지 않는다.
 
@@ -171,8 +245,8 @@ namespace Devian
             for (int c = 0; c < cellsInRow; c++)
             {
                 int cellIndex = startIndex + c;
-                var cell = BundlePool.Spawn<UIScrollGridCell>(
-                    _cellPrefabId.Value, Vector3.zero, Quaternion.identity, rowLayout.Content);
+                var cell = Spawn(
+                    parent: rowLayout.Content);
 
                 var rt = cell.rectTransform;
                 rt.anchorMin = TopLeft;
@@ -199,9 +273,7 @@ namespace Devian
 
             foreach (var cell in rowCells)
             {
-                cell.Hide();
-                onUnbindCell?.Invoke(cell);
-                BundlePool.Despawn(cell);
+                Despawn(cell);
             }
 
             _activeRows.Remove(localRowIndex);
@@ -221,8 +293,7 @@ namespace Devian
             for (int c = 0; c < rowCells.Count; c++)
             {
                 int cellIndex = startIndex + c;
-                rowCells[c].Hide();
-                onUnbindCell?.Invoke(rowCells[c]);
+                UnbindCell(rowCells[c]);
                 rowCells[c].Show(cellIndex);
                 onBindCell?.Invoke(rowCells[c], cellIndex);
             }
@@ -234,9 +305,7 @@ namespace Devian
             {
                 foreach (var cell in kvp.Value)
                 {
-                    cell.Hide();
-                    onUnbindCell?.Invoke(cell);
-                    BundlePool.Despawn(cell);
+                    Despawn(cell);
                 }
             }
             _activeRows.Clear();
@@ -319,9 +388,70 @@ namespace Devian
             rt.sizeDelta = sd;
         }
 
+        private void UnbindCell(UIScrollGridCell cell)
+        {
+            if (cell == null)
+                return;
+
+            if (cell.CellIndex < 0)
+                return;
+
+            cell.Hide();
+            onUnbindCell?.Invoke(cell);
+        }
+
         private readonly Dictionary<int, List<UIScrollGridCell>> _activeRows = new();
+        private static readonly Dictionary<string, Type> s_cellTypeByPrefabId = new();
+        private static readonly Dictionary<string, MethodInfo> s_spawnMethodByPrefabId = new();
         private static readonly Vector2 TopLeft = new Vector2(0f, 1f);
         private UIScrollContainer _ownerScrollContainer;
         private UIUIScrollSectionLayout _sectionLayout;
+
+        private string requireCellPrefabName()
+        {
+            if (!string.IsNullOrWhiteSpace(_cellPrefabId.Value))
+                return _cellPrefabId.Value;
+
+            throw new InvalidOperationException(
+                "UIScrollGridFrame.Spawn: _cellPrefabId is empty. " +
+                "Assign a UIScrollGridCell prefab id before spawning.");
+        }
+
+        private static Type ResolveCellType(string prefabName)
+        {
+            if (s_cellTypeByPrefabId.TryGetValue(prefabName, out var cachedType))
+            {
+                return cachedType;
+            }
+
+            var prefab = BundlePoolFactory.Instance.GetPrefab<GameObject>(prefabName);
+            if (prefab == null)
+            {
+                throw new InvalidOperationException(
+                    $"UIScrollGridFrame.Spawn: prefab '{prefabName}' was not found in AssetManager cache.");
+            }
+
+            var cellType = BundlePoolFactory.Instance.GetPoolType(prefab);
+            if (cellType == null || !typeof(UIScrollGridCell).IsAssignableFrom(cellType) || cellType.IsAbstract)
+            {
+                throw new InvalidOperationException(
+                    $"UIScrollGridFrame.Spawn: prefab '{prefabName}' pool type is " +
+                    $"'{cellType?.Name ?? "null"}', expected a non-abstract UIScrollGridCell subtype.");
+            }
+
+            s_cellTypeByPrefabId[prefabName] = cellType;
+            return cellType;
+        }
+
+        private static UIScrollGridCell SpawnPoolableGridCell<TCell>(
+            string prefabName,
+            Vector3 position,
+            Quaternion rotation,
+            Transform parent,
+            PoolOptions options)
+            where TCell : UIScrollGridCell, IPoolable
+        {
+            return BundlePool.Spawn<TCell>(prefabName, position, rotation, parent, options);
+        }
     }
 }

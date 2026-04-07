@@ -71,6 +71,19 @@ namespace Devian
         public void SetCellCount(int count);
         public void SetMinimumLineCount(int lineCount);
         public bool HasDataAt(int cellIndex);
+        public UIScrollGridCell Spawn(
+            Transform parent = null,
+            Vector3 position = default,
+            Quaternion rotation = default,
+            PoolOptions options = default);
+        public T Spawn<T>(
+            Transform parent = null,
+            Vector3 position = default,
+            Quaternion rotation = default,
+            PoolOptions options = default)
+            where T : UIScrollGridCell;
+        public void Despawn<T>(T cell)
+            where T : UIScrollGridCell;
         // GetWidth(): base 구현 사용 (rectTransform.rect.width). override 하지 않는다.
         public override float GetHeight();
 
@@ -105,6 +118,8 @@ namespace Devian
 
         public void OnPoolSpawned();
         public void OnPoolDespawned();
+        protected virtual void onPoolSpawned();
+        protected virtual void onPoolDespawned();
     }
 }
 ```
@@ -124,6 +139,10 @@ namespace Devian
 - `RenderCellCount` = `RowCount * ColumnCount`
 - `RectTransform.sizeDelta`는 init 및 count/size setter 변경 시 **height만** (`sizeDelta.y = GetHeight()`) 갱신된다. width는 건드리지 않는다
 - init 완료 후 `CellCount`, `MinimumLineCount`, `ColumnCount`, `CellSize`, `Spacing`이 바뀌면 parent `UIScrollContainer.Rebuild()`를 자동 요청한다
+- `Spawn()`은 `_cellPrefabId.Value`의 prefab 실제 pool type을 해석한 뒤 그 concrete type으로 pooled cell을 생성한다. prefab 대표 `IPoolable` component는 반드시 `UIScrollGridCell` 하위 타입이어야 한다
+- `Spawn<T>() where T : UIScrollGridCell`는 typed facade다. 내부 생성은 항상 prefab 실제 pool type 기준으로 수행되고, 반환 타입만 `T`로 검증한다
+- `Despawn<T>(T cell)`는 typed facade이며, cell이 바인딩 상태면 먼저 `Hide()`와 `onUnbindCell`을 실행한 뒤 `BundlePool.Despawn(cell)`에 위임한다
+- grid cell reset 경계는 `onHide()`다. `onShow()`는 현재 데이터에 대한 full bind만 수행한다
 
 ### IUIScrollSection Model
 
@@ -159,7 +178,7 @@ container가 "이 row를 보여라/숨겨라/새로고침하라"를 결정하고
 1. `localRowIndex`가 `0 <= index < RowCount`인지 검사한다
 2. `localRowIndex`에서 row 시작 cell index 계산
 3. 항상 `ColumnCount`개 cell을 생성한다
-4. `BundlePool.Spawn<UIScrollGridCell>(..., parent: frame.transform)`로 cell 생성
+4. `Spawn(parent: rowLayout.Content)`로 cell 생성한다. 이때 `_cellPrefabId` prefab의 실제 pool type을 사용하므로 `UIScrollGridCell` subclass prefab도 그대로 지원된다
 5. anchor/pivot/size 적용
 6. `CalculateAutoXSpacing()`으로 X축 간격 자동 계산
 7. cell X 위치: `_padding.left + c * (cellSize.x + xSpacing)`
@@ -177,9 +196,8 @@ container가 "이 row를 보여라/숨겨라/새로고침하라"를 결정하고
 `UnbindRow(localRowIndex)` 동작:
 
 1. active row lookup
-2. 각 cell에 대해 `Hide()`
-3. `onUnbindCell(cell)` 호출
-4. `BundlePool.Despawn(cell)`
+2. 각 cell에 대해 `Despawn(cell)`
+3. `Despawn(cell)` 내부에서 `Hide() -> onUnbindCell -> BundlePool.Despawn()` 순서를 보장한다
 5. row entry 제거
 
 ### RefreshRow
@@ -187,6 +205,7 @@ container가 "이 row를 보여라/숨겨라/새로고침하라"를 결정하고
 - invalid row면 `UnbindRow(localRowIndex)` 후 return
 - active row만 처리
 - 각 cell에 대해 `Hide -> onUnbindCell -> Show -> onBindCell` 순으로 재바인딩
+- 이때 `Hide()`가 reset 경계이며, 다음 `Show()`는 이전 상태를 재사용하지 않고 full bind를 수행해야 한다
 
 ### Runtime Layout Changes
 
@@ -199,6 +218,14 @@ container가 "이 row를 보여라/숨겨라/새로고침하라"를 결정하고
 - 모든 active row의 cell을 unbind/despawn
 - `_activeRows.Clear()`
 - grid holder는 active 상태를 유지한다
+
+### Cell Pool Lifecycle
+
+- `UIScrollGridCell`은 public `OnPoolSpawned()` / `OnPoolDespawned()` bridge를 base에서 고정한다
+- base bridge는 공통 reset(`CellIndex = -1`) 후 protected `onPoolSpawned()` / `onPoolDespawned()`를 호출한다
+- cell 내용/UI reset은 `onHide()`가 담당한다. pool callback은 pooled lifecycle 보조 훅이지 bind reset 정본이 아니다
+- 파생 cell은 public pool callback을 다시 구현하지 않고 protected hook만 override한다
+- 따라서 `Spawn()` 또는 `Spawn<T>() where T : UIScrollGridCell`로 생성하면 base reset과 subclass hook이 모두 적용된다
 
 ---
 

@@ -3,108 +3,83 @@
 // SSOT: skills/devian-unity/23-ui-package/21-ui-scroll-system/12-ui-scroll-frame-simple/SKILL.md
 // </auto-generated>
 
-using System;
 using UnityEngine;
 
 namespace Devian
 {
     /// <summary>
     /// 고정 프리팹 섹션 (배너, 헤더, 구분선 등).
-    /// Logical row 1개. BindRow에서 위치 설정 + SetActive(true).
+    /// Logical row 1개. Container는 IUIScrollSection으로만 접근하고,
+    /// subclass는 onShow()/onHide() hook만 구현한다.
     /// </summary>
     public class UIScrollSimpleFrame : UIBaseFrame, IUIScrollSection
     {
-        public Action<UIScrollSimpleFrame> onBind;
-        public Action<UIScrollSimpleFrame> onUnbind;
-
         private static readonly Vector2 TopLeft = new Vector2(0f, 1f);
-        private bool _isBound;
 
-        // ─── IUIScrollSection ───
+        protected bool IsShown { get; private set; }
 
-        public int GetLogicalRowCount() => 1;
-        public float GetLogicalRowMainAxisSize(int localRowIndex) => GetHeight();
-        public float GetLogicalRowSpacing() => 0f;
+        int IUIScrollSection.GetLogicalRowCount() => 1;
+        float IUIScrollSection.GetLogicalRowMainAxisSize(int localRowIndex) => GetHeight();
+        float IUIScrollSection.GetLogicalRowSpacing() => 0f;
 
-        public void ApplySectionLayout(in UIUIScrollSectionLayout layout)
+        void IUIScrollSection.ApplySectionLayout(in UIUIScrollSectionLayout layout)
         {
             gameObject.SetActive(false);
-            _isBound = false;
+            IsShown = false;
         }
 
 #if UNITY_EDITOR
         internal void EditorPreviewApplyRowLayout(in UIScrollRowLayout rowLayout)
         {
-            var rt = rectTransform != null ? rectTransform : transform as RectTransform;
-            if (rt == null)
-                return;
-
-            rt.anchorMin = TopLeft;
-            rt.anchorMax = TopLeft;
-            rt.pivot = TopLeft;
-
-            if (rowLayout.Direction == UIScrollDirection.Vertical)
-            {
-                rt.anchoredPosition = new Vector2(0f, -rowLayout.RowMainAxisPosition);
-                rt.sizeDelta = new Vector2(rowLayout.CrossAxisSize, rowLayout.RowMainAxisSize);
-            }
-            else
-            {
-                rt.anchoredPosition = new Vector2(rowLayout.RowMainAxisPosition, 0f);
-                rt.sizeDelta = new Vector2(rowLayout.RowMainAxisSize, rowLayout.CrossAxisSize);
-            }
-
+            applyRowLayout(rowLayout);
             gameObject.SetActive(true);
-            _isBound = false;
+            IsShown = false;
         }
 #endif
 
-        public void BindRow(in UIScrollRowLayout rowLayout)
+        void IUIScrollSection.BindRow(in UIScrollRowLayout rowLayout)
         {
-            rectTransform.anchorMin = TopLeft;
-            rectTransform.anchorMax = TopLeft;
-            rectTransform.pivot = TopLeft;
-
-            if (rowLayout.Direction == UIScrollDirection.Vertical)
-            {
-                rectTransform.anchoredPosition = new Vector2(0, -rowLayout.RowMainAxisPosition);
-                rectTransform.sizeDelta = new Vector2(rowLayout.CrossAxisSize, rowLayout.RowMainAxisSize);
-            }
-            else
-            {
-                rectTransform.anchoredPosition = new Vector2(rowLayout.RowMainAxisPosition, 0);
-                rectTransform.sizeDelta = new Vector2(rowLayout.RowMainAxisSize, rowLayout.CrossAxisSize);
-            }
-
+            applyRowLayout(rowLayout);
             gameObject.SetActive(true);
-            _isBound = true;
-            onBind?.Invoke(this);
+            IsShown = true;
+            onShow();
         }
 
-        public void UnbindRow(int localRowIndex)
+        void IUIScrollSection.UnbindRow(int localRowIndex)
         {
-            if (!_isBound) return;
-            onUnbind?.Invoke(this);
+            if (!IsShown)
+                return;
+
+            onHide();
             gameObject.SetActive(false);
-            _isBound = false;
+            IsShown = false;
         }
 
-        public void RefreshRow(int localRowIndex)
+        void IUIScrollSection.RefreshRow(int localRowIndex)
         {
-            if (!_isBound) return;
-            onUnbind?.Invoke(this);
-            onBind?.Invoke(this);
+            if (!IsShown)
+                return;
+
+            onHide();
+            onShow();
         }
 
-        public void ClearSection()
+        void IUIScrollSection.ClearSection()
         {
-            if (_isBound)
-                onUnbind?.Invoke(this);
+            if (IsShown)
+                onHide();
+
             gameObject.SetActive(false);
-            _isBound = false;
+            IsShown = false;
         }
 
-        internal override void _Clear() => ClearSection();
+        internal override void _Clear()
+        {
+            ((IUIScrollSection)this).ClearSection();
+        }
+
+        protected virtual void onShow() { }
+        protected virtual void onHide() { }
 
         private void OnValidate()
         {
@@ -129,6 +104,28 @@ namespace Devian
                 return;
 
             container.Rebuild();
+        }
+
+        private void applyRowLayout(in UIScrollRowLayout rowLayout)
+        {
+            var rt = rectTransform != null ? rectTransform : transform as RectTransform;
+            if (rt == null)
+                return;
+
+            rt.anchorMin = TopLeft;
+            rt.anchorMax = TopLeft;
+            rt.pivot = TopLeft;
+
+            if (rowLayout.Direction == UIScrollDirection.Vertical)
+            {
+                rt.anchoredPosition = new Vector2(0f, -rowLayout.RowMainAxisPosition);
+                rt.sizeDelta = new Vector2(rowLayout.CrossAxisSize, rowLayout.RowMainAxisSize);
+            }
+            else
+            {
+                rt.anchoredPosition = new Vector2(rowLayout.RowMainAxisPosition, 0f);
+                rt.sizeDelta = new Vector2(rowLayout.RowMainAxisSize, rowLayout.CrossAxisSize);
+            }
         }
     }
 }

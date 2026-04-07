@@ -10,7 +10,8 @@ namespace Devian
     /// <summary>
     /// Grid 셀 프리팹에 부착하는 컴포넌트.
     /// BundlePool과 통합. Show(index)/Hide()로 bind/unbind.
-    /// 개발자는 콜백(Grid.onBindCell) 또는 상속(onShow/onHide override) 중 선택.
+    /// 개발자는 콜백(Grid.onBindCell) 또는 상속(onShow/onHide override) 중 선택한다.
+    /// `onShow()`는 현재 데이터 bind, `onHide()`는 다음 bind 전에 필요한 상태 정리를 담당한다.
     /// </summary>
     [RequireComponent(typeof(RectTransform))]
     public class UIScrollGridCell : MonoBehaviour, IPoolable
@@ -35,22 +36,40 @@ namespace Devian
             onShow(cellIndex);
         }
 
-        /// <summary>셀의 바인딩을 해제한다.</summary>
+        /// <summary>셀의 바인딩을 해제하고 다음 Show 전에 필요한 상태를 정리한다.</summary>
         public void Hide()
         {
+            if (CellIndex < 0)
+                return;
+
             onHide();
             CellIndex = -1;
         }
 
-        /// <summary>데이터 바인딩 시. override하여 사용.</summary>
+        /// <summary>현재 데이터에 대한 full bind 시. override하여 사용.</summary>
         protected virtual void onShow(int cellIndex) { }
 
-        /// <summary>바인딩 해제 시. override하여 사용.</summary>
+        /// <summary>바인딩 해제 및 reset 시. override하여 사용.</summary>
         protected virtual void onHide() { }
+
+        /// <summary>풀에서 spawn된 직후. override하여 사용.</summary>
+        protected virtual void onPoolSpawned() { }
+
+        /// <summary>풀로 반환되기 직전. override하여 사용.</summary>
+        protected virtual void onPoolDespawned() { }
 
         // ─── IPoolable ───
 
-        public void OnPoolSpawned() { CellIndex = -1; }
-        public void OnPoolDespawned() { CellIndex = -1; }
+        public void OnPoolSpawned()
+        {
+            CellIndex = -1;
+            onPoolSpawned();
+        }
+
+        public void OnPoolDespawned()
+        {
+            CellIndex = -1;
+            onPoolDespawned();
+        }
     }
 }

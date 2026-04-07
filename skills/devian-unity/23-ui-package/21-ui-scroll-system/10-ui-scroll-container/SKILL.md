@@ -281,6 +281,7 @@ private struct ScrollLogicalRow
 - `_bufferRows`만큼 앞뒤로 확장한다
 - row가 뷰포트에 진입하면 `BindRow(...)`
 - row가 뷰포트에서 이탈하면 `UnbindRow(localRowIndex)`
+- `UIScrollSimpleFrame`의 경우 위 메서드들은 explicit interface 구현이므로 container만 호출한다. subclass는 `onShow()` / `onHide()`만 구현한다.
 
 ### Render Assignment Rule
 
