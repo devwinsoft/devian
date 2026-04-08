@@ -91,11 +91,12 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
   - `INVENTORY_SNAPSHOT_CHANGED`
 
 - `InventoryManager`가 public query boundary를 제공한다.
-- 외부 시스템은 `EquippedItems/UnequippedItems/GetEquipments/GetCards/GetMaterials/GetHeroes/GetRentals/GetPasses/GetRentalRemainingMs/HasPass/HasActiveRental` 같은 manager helper를 사용한다.
+- 외부 시스템은 `EquippedItems/UnequippedItems/UnownedEquipItems/GetEquipments/GetCards/GetMaterials/GetHeroes/GetRentals/GetPasses/GetRentalRemainingMs/HasPass/HasActiveRental` 같은 manager helper를 사용한다.
 - 신규 코드에서 `InventoryStorage` 직접 조회/변경은 금지한다.
 - load/import/clear는 temp `InventorySnapshot`을 만든 뒤 `InventoryManager.ReplaceState/ClearState`로 반영한다.
 - 카드/재료/영웅은 amount가 0이 되면 storage에서 제거한다.
-- 장착/미장착 장비 목록은 `InventoryStorage`가 아니라 `InventoryManager`가 `_storage.Equipments`로부터 재구성하는 파생 view다.
+- 장착/미장착 장비 목록은 `InventoryStorage`가 아니라 `InventoryManager`가 `_storage.Equipments`로부터 재구성하는 파생 runtime view다.
+- 미보유 장비 목록은 `InventoryStorage`에 저장하지 않는다. `InventoryManager`가 `TB_ITEM_EQUIP.GetAll()`과 owned equip `item_id` 집합을 비교해서 만드는 파생 table-row view다.
 
 ---
 

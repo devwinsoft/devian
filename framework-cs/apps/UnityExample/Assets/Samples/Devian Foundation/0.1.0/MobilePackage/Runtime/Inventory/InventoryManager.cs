@@ -36,16 +36,23 @@ namespace Devian
         readonly InventoryStaminaController _staminaController = new();
         readonly List<AbilityItemEquip> _equippedItems = new();
         readonly List<AbilityItemEquip> _unequippedItems = new();
+        readonly List<ITEM_EQUIP> _unownedEquipItems = new();
 
         public int MaxStamina => _staminaController.MaxStamina;
         public IReadOnlyList<AbilityItemEquip> EquippedItems => _equippedItems;
         public IReadOnlyList<AbilityItemEquip> UnequippedItems => _unequippedItems;
+        public IReadOnlyList<ITEM_EQUIP> UnownedEquipItems => _unownedEquipItems;
 
         [Obsolete("Use EquippedItems.")]
         public IReadOnlyList<AbilityItemEquip> EquipedItems => EquippedItems;
 
         [Obsolete("Use UnequippedItems.")]
         public IReadOnlyList<AbilityItemEquip> UnEquipedItems => UnequippedItems;
+
+        protected override void onInitAwake()
+        {
+            refreshEquipViews();
+        }
 
         // ── Message API ──
 
@@ -228,7 +235,7 @@ namespace Devian
         public void ClearState(INVENTORY_SNAPSHOT_CHANGE_REASON reason)
         {
             _storage.Clear();
-            refreshEquipBuckets();
+            refreshEquipViews();
             notifySnapshotChanged(reason);
         }
 
@@ -239,7 +246,7 @@ namespace Devian
                 return GameResult.Failure(nextStorage.Error!);
 
             _storage.CopyFrom(nextStorage.Value);
-            refreshEquipBuckets();
+            refreshEquipViews();
             notifySnapshotChanged(reason);
             return GameResult.Ok();
         }
@@ -288,7 +295,7 @@ namespace Devian
                 var create = AbilityItemFactory.CreateEquip(itemId, itemUid);
                 if (create.IsFailure)
                 {
-                    refreshEquipBuckets();
+                    refreshEquipViews();
                     return GameResult.Failure(create.Error!);
                 }
 
@@ -297,7 +304,7 @@ namespace Devian
                 notifyEquipListChanged(INVENTORY_LIST_CHANGE_TYPE.ADD, itemUid, itemId, equip);
             }
 
-            refreshEquipBuckets();
+            refreshEquipViews();
             return GameResult.Ok();
         }
 
@@ -461,7 +468,7 @@ namespace Devian
                 else
                 {
                     _storage.RemoveHero(heroId);
-                    refreshEquipBuckets();
+                    refreshEquipViews();
                     notifyHeroListChanged(INVENTORY_LIST_CHANGE_TYPE.REMOVE, heroId, null);
                 }
                 return GameResult.Ok();
@@ -641,7 +648,7 @@ namespace Devian
                     $"InventoryManager.SetHeroEquip: equip operation failed. heroId={heroId}, slotType={slotType}, equipUid={equipUid}");
             }
 
-            refreshEquipBuckets();
+            refreshEquipViews();
             notifyHeroChanged(heroId, hero);
             if (prevOwnerHero != null)
                 notifyHeroChanged(prevOwnerHeroId, prevOwnerHero);
@@ -699,7 +706,7 @@ namespace Devian
                     $"InventoryManager.RemoveHeroEquip: unequip failed. heroId={heroId}, slotType={slotType}");
             }
 
-            refreshEquipBuckets();
+            refreshEquipViews();
             notifyEquipChanged(equip.ItemUid, equip.ItemId, equip);
             notifyHeroChanged(heroId, hero);
             return GameResult.Ok();
@@ -828,7 +835,7 @@ namespace Devian
                 }
             }
 
-            refreshEquipBuckets();
+            refreshEquipViews();
             return GameResult.Ok();
         }
 
@@ -1345,20 +1352,36 @@ namespace Devian
                 reason);
         }
 
-        void refreshEquipBuckets()
+        void refreshEquipViews()
         {
             _equippedItems.Clear();
             _unequippedItems.Clear();
+            _unownedEquipItems.Clear();
+            var ownedEquipItemIds = new HashSet<string>();
 
             foreach (var equip in _storage.Equipments.Values)
             {
                 if (equip == null)
                     continue;
 
+                if (!string.IsNullOrWhiteSpace(equip.ItemId))
+                    ownedEquipItemIds.Add(equip.ItemId);
+
                 if (equip.IsEquipped)
                     _equippedItems.Add(equip);
                 else
                     _unequippedItems.Add(equip);
+            }
+
+            foreach (var table in TB_ITEM_EQUIP.GetAll())
+            {
+                if (table == null)
+                    continue;
+
+                if (ownedEquipItemIds.Contains(table.item_id))
+                    continue;
+
+                _unownedEquipItems.Add(table);
             }
         }
     }

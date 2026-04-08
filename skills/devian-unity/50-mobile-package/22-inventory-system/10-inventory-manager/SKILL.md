@@ -32,6 +32,7 @@ public sealed class InventoryManager : CompoSingleton<InventoryManager>
 
     public IReadOnlyList<AbilityItemEquip> EquippedItems { get; }
     public IReadOnlyList<AbilityItemEquip> UnequippedItems { get; }
+    public IReadOnlyList<ITEM_EQUIP> UnownedEquipItems { get; }
 
     public InventorySnapshot CreateSnapshot() { ... }
     public GameResult ReplaceState(InventorySnapshot snapshot, INVENTORY_SNAPSHOT_CHANGE_REASON reason) { ... }
@@ -142,6 +143,7 @@ CompoSingleton<InventoryManager>.Instance
 - 타입별 Query API로 수량/상태를 조회한다.
 - 외부 시스템의 item/pass/rental 순회는 `InventoryManager` helper를 사용한다. `InventoryStorage` 직접 조회/보관은 금지한다.
 - 장착 장비/미장착 장비 목록은 manager가 `EquippedItems` / `UnequippedItems` derived view로 유지한다. SSOT는 여전히 `_storage.Equipments`다.
+- 미보유 장비 정의 목록은 manager가 `UnownedEquipItems` derived view로 유지한다. 이 목록은 `TB_ITEM_EQUIP.GetAll()` 중 현재 `_storage.Equipments`에 하나도 없는 `item_id` row만 포함한다.
 - save/load boundary에는 `CreateSnapshot`/`ReplaceState`/`ClearState`를 제공한다.
 - runtime query는 live runtime을 반환하지만, runtime mutator는 `GamePackage` internal로 봉인한다.
 - InventoryStorage를 소유한다.
@@ -217,6 +219,7 @@ CompoSingleton<InventoryManager>.Instance
 - `GetCurrencyAmount(CURRENCY_TYPE currency_type) -> long`
 - `EquippedItems -> IReadOnlyList<AbilityItemEquip>` — 현재 장착 상태(`IsEquipped == true`)인 장비 인스턴스 목록
 - `UnequippedItems -> IReadOnlyList<AbilityItemEquip>` — 현재 미장착 상태(`IsEquipped == false`)인 장비 인스턴스 목록
+- `UnownedEquipItems -> IReadOnlyList<ITEM_EQUIP>` — 현재 한 개도 소유하지 않은 equip table row 목록 (`TB_ITEM_EQUIP.GetAll()` 기준 파생 view)
 - `GetEquipments() -> IReadOnlyDictionary<string, AbilityItemEquip>` — live read-only 장비 인스턴스 맵
 - `GetEquip(string item_uid) -> AbilityItemEquip` — itemUid 기준 단건 장비 runtime 조회
 - `GetEquipsByItemId(string item_id) -> IReadOnlyList<AbilityItemEquip>` — itemId 기준 장비 인스턴스 목록

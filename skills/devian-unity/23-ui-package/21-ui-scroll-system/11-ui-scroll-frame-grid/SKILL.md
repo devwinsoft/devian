@@ -87,6 +87,7 @@ namespace Devian
         public Vector2 CellSize { get; set; }
         public float RowSpacing { get; set; }
         public RectOffset Padding { get; set; }
+        public bool FillEmptyCells { get; set; }  // 빈 칸 cell spawn 여부 (기본: false)
 
         public int CellCount { get; }
         public int DataRowCount { get; }

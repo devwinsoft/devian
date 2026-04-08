@@ -53,7 +53,8 @@ NOTE:
 - 같은 `item_id`에 여러 인스턴스(각각 고유 `itemUid`)가 존재할 수 있다.
 - `RewardData.Id`는 `item_id`(템플릿 ID)이다. `itemUid`는 InventoryManager가 Apply 시 생성한다.
 - `ItemData` 클래스는 `AbilityItemEquip`에 통합되어 삭제되었다.
-- `InventoryManager.EquippedItems` / `UnequippedItems`는 이 equip SSOT에서 파생된 view다. 별도 저장 정본이 아니다.
+- `InventoryManager.EquippedItems` / `UnequippedItems`는 이 equip SSOT에서 파생된 runtime view다. 별도 저장 정본이 아니다.
+- `InventoryManager.UnownedEquipItems`는 `TB_ITEM_EQUIP.GetAll()`과 현재 owned equip `item_id` 집합을 비교해서 만든 table-row view다. discovery history를 저장하지 않으므로 "현재 미보유" 의미만 가진다.
 
 ### B-3) Cards
 

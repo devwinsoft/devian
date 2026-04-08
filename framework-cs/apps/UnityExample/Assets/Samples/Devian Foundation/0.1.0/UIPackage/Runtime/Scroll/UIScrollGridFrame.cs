@@ -34,6 +34,7 @@ namespace Devian
         [SerializeField] private Vector2 _cellSize = new Vector2(200, 200);
         [SerializeField] private float _rowSpacing = 10f;
         [SerializeField] private RectOffset _padding = new RectOffset();
+        [SerializeField] private bool _fillEmptyCells = false;
 
         public string CellPrefabName { get => _cellPrefabId.Value; set => _cellPrefabId = value; }
         public int ColumnCount
@@ -78,6 +79,15 @@ namespace Devian
             set
             {
                 _padding = value ?? new RectOffset();
+                OnGridLayoutChanged();
+            }
+        }
+        public bool FillEmptyCells
+        {
+            get => _fillEmptyCells;
+            set
+            {
+                _fillEmptyCells = value;
                 OnGridLayoutChanged();
             }
         }
@@ -267,7 +277,9 @@ namespace Devian
                 unbindRow(localRow);
 
             int startIndex = localRow * _columnCount;
-            int cellsInRow = _columnCount;
+            int cellsInRow = _fillEmptyCells
+                ? _columnCount
+                : Mathf.Min(_columnCount, Mathf.Max(0, CellCount - startIndex));
             float xSpacing = CalculateAutoXSpacing();
 
             var rowCells = new List<UIScrollGridCell>(cellsInRow);

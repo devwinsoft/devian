@@ -407,7 +407,9 @@
       "Bash(cp \"$IMPORT/UIBasePageCanvas.cs\" \"$UPM/UIBasePageCanvas.cs\")",
       "Bash(cp \"$IMPORT/UIBasePagePanel.cs\" \"$UPM/UIBasePagePanel.cs\")",
       "Bash(BASE=\"/Users/maoshy/Documents/Projects/devian/framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/UIPackage/Runtime/Base\")",
-      "Bash(rm \"$BASE/UIPageCanvasBase.cs\" \"$BASE/UIPageCanvasBase.cs.meta\" \"$BASE/UIPagePanelBase.cs\" \"$BASE/UIPagePanelBase.cs.meta\")"
+      "Bash(rm \"$BASE/UIPageCanvasBase.cs\" \"$BASE/UIPageCanvasBase.cs.meta\" \"$BASE/UIPagePanelBase.cs\" \"$BASE/UIPagePanelBase.cs.meta\")",
+      "Bash(/tmp/analysis.md:*)",
+      "Read(//tmp/**)"
     ]
   },
   "project": {
