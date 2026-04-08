@@ -31,6 +31,34 @@ Unity UI를 위한 `UIBaseCanvas` / `UIBasePanel` / `UIBaseContainer` / `UIBaseF
 
 ---
 
+## Init Semantics
+
+`onInit()` / `onInitComplete()`의 기준은 `Awake()`가 아니라 **owner lifecycle**이다.
+
+- `Awake()`는 ref cache와 lightweight setup만 담당한다.
+- semantic init boundary는 `UIBaseCanvas.Init()`에서 시작되는 `_Init()` / `Init(canvas)` 호출이다.
+- 따라서 `onInit()`은 "owner canvas/panel/container/frame에 lifecycle 편입되었다"는 뜻이지, "Unity가 방금 생성했다"는 뜻이 아니다.
+- owner가 이미 initialized 상태라면 동적 생성/attach/respawn 경로에서 `_Init()`이 즉시 실행될 수 있다.
+- owner가 이미 init complete 상태라면 `_InitComplete()`도 같은 call path 안에서 즉시 실행될 수 있다.
+- 즉 `Awake()` 직후 `onInit()`이 보일 수는 있지만, 그 이유는 `Awake()` 때문이 아니라 **이미 initialized 된 owner tree에 편입됐기 때문**이다.
+
+해석 규칙:
+
+- `onInit()`
+  - owner canvas 참조와 subtree lifecycle이 보장된 상태
+  - child component/frame/container 초기화가 먼저 끝난 뒤 호출된다
+- `onInitComplete()`
+  - owner subtree의 init chain이 모두 끝난 뒤 호출된다
+  - 이미 init complete 된 owner에 동적으로 붙으면 즉시 호출될 수 있다
+
+금지 규칙:
+
+- `Awake()`를 별도 UI init 시스템처럼 쓰지 않는다
+- scroll/popup/toast 등 하위 시스템이 base와 별개 `Build/Setup/Init` 의미를 새로 만들지 않는다
+- frame/container/component가 필요로 하는 init은 기존 `_Init()` / `_InitComplete()` 경로를 재사용한다
+
+---
+
 ## Policy
 
 ### Namespace Policy
@@ -54,10 +82,12 @@ Unity UI를 위한 `UIBaseCanvas` / `UIBasePanel` / `UIBaseContainer` / `UIBaseF
 | **MUST** | pooled `UIBaseCanvas` / `UIBasePanel`은 respawn 때 `Init()`를 다시 돌리지 않고 `onPoolSpawned()` / `onPoolDespawned()`로 runtime state만 복구한다 |
 | **MUST** | `UIBaseContainer` / `UIBaseFrame` / `UIComponentBase`는 pool despawn 시 init state를 reset하고, respawn 후 다음 init 경로에서 `onInit()`이 다시 호출될 수 있어야 한다 |
 | **MUST** | `UIComponentBase`는 `Awake()`에서 owner `UIBaseCanvas`가 이미 initialized 상태면 즉시 `Init(canvas)` 된다 |
+| **MUST** | "즉시 init"은 `Awake()` 자체 규칙이 아니라 owner가 이미 initialized 상태인 경우의 결과로 해석한다 |
 | **MUST** | `UIBaseCanvas`는 canvas-owned component와 panel만 직접 초기화한다. container / frame를 직접 수집하거나 관리하지 않는다 |
 | **MUST** | `UIBasePanel`이 자기 subtree의 container / panel-owned frame lifecycle을 관리한다 |
 | **MUST** | 동적 container subtree는 owner panel `CreateContainer<T>()` 경로로 lifecycle에 편입된다 |
 | **MUST** | 동적 frame subtree는 owner panel `CreateFrame<T>()` 경로로 lifecycle에 편입된다 |
+| **MUST** | 동적/pooled object를 initialized owner tree에 붙일 때는 새 init hook을 만들지 말고 `_Init()` / `_InitComplete()` 또는 `Init(canvas)`를 즉시 재사용한다 |
 | **MUST** | Init 우선순위는 `UIComponentBase.onInit` → `UIBaseFrame.onInit` → `UIBaseContainer.onInit` → `UIBaseCanvas.onInit` 이다 |
 | **MUST** | `UIBaseContainer._InitComplete()` / `UIBaseFrame._InitComplete()`는 idempotent 해야 한다 |
 | **MUST** | `UIComponentCircleFilter` / `UIComponentNonDrawing`는 기존 부모 타입을 유지한다 |
@@ -178,6 +208,10 @@ namespace Devian
 `UIBaseFrame` 자체는 `IPoolable`을 구현하지 않는다.
 poolable frame subclass가 public `OnPoolSpawned()` / `OnPoolDespawned()`를 노출할 때
 반드시 base `_HandlePoolSpawned()` / `_HandlePoolDespawned()`로 연결한다.
+
+동적으로 child subtree를 만들 때는 새 init 시스템을 만들지 않는다.
+`UIBaseFrame.InitDynamicSubtree(root)`로 기존 `UIBaseInitHelper.InitOwnedSubtree(...)`
+와 `_InitComplete()`를 재사용해 현재 frame lifecycle에 편입한다.
 
 ### UIBaseCanvas
 
@@ -342,6 +376,11 @@ owner panel 내부 `RegisterDynamicFrameTree(root)`로 편입한다.
 
 이 경로도 canvas registry가 아니라 panel registry다.
 
+핵심:
+
+- dynamic frame의 `onInit()`은 "방금 Instantiate/Spawn 됐다"가 아니라 "이미 살아 있는 owner panel tree에 편입됐다"는 의미다.
+- 따라서 spawn 직후 `onInit()`이 호출되어도 그건 `Awake()` 규칙이 아니라 panel registration 규칙이다.
+
 ---
 
 ## Pool Contract
@@ -359,6 +398,7 @@ owner panel 내부 `RegisterDynamicFrameTree(root)`로 편입한다.
 - pooled `UIBaseContainer` / `UIBaseFrame` / `UIComponentBase`는 despawn 시 init state를 reset한다
 - 따라서 respawn 뒤 다음 `_Init()` / `Init(canvas)` 경로에서 `onInit()`이 다시 호출된다
 - `UIBaseFrame`는 base class 자체가 `IPoolable`이 아니므로 subclass가 bridge를 제공해야 한다
+- respawn 뒤 owner가 이미 initialized + init complete 상태라면 `_Init()`와 `_InitComplete()`가 같은 attach 경로에서 즉시 연속 호출될 수 있다
 
 ---
 

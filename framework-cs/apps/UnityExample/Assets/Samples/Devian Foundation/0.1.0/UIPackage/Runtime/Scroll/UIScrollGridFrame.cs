@@ -12,7 +12,9 @@ namespace Devian
 {
     /// <summary>
     /// N열 그리드 섹션. Content 자식으로 Prefab에 배치한다.
-    /// IUIScrollSection 구현. Container가 row bind/unbind를 직접 호출한다.
+    /// Container는 IUIScrollSection으로만 접근한다.
+    /// Grid는 layout / pool / lifecycle bridge만 담당하고,
+    /// 실제 데이터 bind/reset은 UIScrollGridCell.onShow/onHide가 담당한다.
     /// Grid는 "row renderer"이지 "scroll virtualizer"가 아니다.
     ///
     /// X축 spacing: frame 너비 기반 자동 계산 (cell을 균일 분배)
@@ -99,10 +101,10 @@ namespace Devian
             : 0;
         public int RenderCellCount => _columnCount > 0 ? RowCount * _columnCount : 0;
 
-        /// <summary>콜백 방식: cell.onShow(index) 후 호출.</summary>
-        public Action<UIScrollGridCell, int> onBindCell;
-        /// <summary>콜백 방식: cell.onHide() 후 호출.</summary>
-        public Action<UIScrollGridCell> onUnbindCell;
+        protected virtual UIScrollGridCell createCell(Transform parent)
+        {
+            return Spawn(parent: parent);
+        }
 
         /// <summary>
         /// `_cellPrefabId`의 prefab 실제 pool type을 사용해 grid cell prefab을 spawn한다.
@@ -159,7 +161,7 @@ namespace Devian
 
         /// <summary>
         /// grid cell을 pool로 반환한다.
-        /// cell이 바인딩 상태면 먼저 `Hide()`와 `onUnbindCell`을 실행한 뒤
+        /// cell이 바인딩 상태면 먼저 `Hide()`를 실행한 뒤
         /// `BundlePool` lifecycle을 그대로 사용하므로 `OnPoolDespawned()`가 자동 호출된다.
         /// </summary>
         public void Despawn<T>(T cell)
@@ -168,7 +170,7 @@ namespace Devian
             if (cell == null)
                 return;
 
-            UnbindCell(cell);
+            hideCell(cell);
             BundlePool.Despawn(cell);
         }
 
@@ -185,6 +187,12 @@ namespace Devian
         protected override void onInitComplete()
         {
             SyncRectTransformSize();
+
+            foreach (var rowCells in _activeRows.Values)
+            {
+                for (int i = 0; i < rowCells.Count; i++)
+                    ensureCellInitialized(rowCells[i]);
+            }
         }
 
         public bool HasDataAt(int cellIndex) => cellIndex >= 0 && cellIndex < CellCount;
@@ -205,8 +213,8 @@ namespace Devian
 
         // ─── IUIScrollSection ───
 
-        public int GetLogicalRowCount() => RowCount;
-        public float GetLogicalRowMainAxisSize(int localRowIndex)
+        int IUIScrollSection.GetLogicalRowCount() => RowCount;
+        float IUIScrollSection.GetLogicalRowMainAxisSize(int localRowIndex)
         {
             float size = _cellSize.y;
             int rc = RowCount;
@@ -215,23 +223,48 @@ namespace Devian
             if (localRowIndex == rc - 1) size += _padding.bottom;
             return size;
         }
-        public float GetLogicalRowSpacing() => _rowSpacing;
+        float IUIScrollSection.GetLogicalRowSpacing() => _rowSpacing;
 
-        public void ApplySectionLayout(in UIUIScrollSectionLayout layout)
+        void IUIScrollSection.ApplySectionLayout(in UIUIScrollSectionLayout layout)
         {
             _sectionLayout = layout;
             ApplySectionTransform();
             gameObject.SetActive(true);
         }
 
-        public void BindRow(in UIScrollRowLayout rowLayout)
+        void IUIScrollSection.BindRow(in UIScrollRowLayout rowLayout)
+        {
+            bindRow(rowLayout);
+        }
+
+        void IUIScrollSection.UnbindRow(int localRowIndex)
+        {
+            unbindRow(localRowIndex);
+        }
+
+        void IUIScrollSection.RefreshRow(int localRowIndex)
+        {
+            refreshRow(localRowIndex);
+        }
+
+        void IUIScrollSection.ClearSection()
+        {
+            clearSection();
+        }
+
+        internal override void _Clear()
+        {
+            clearSection();
+        }
+
+        private void bindRow(in UIScrollRowLayout rowLayout)
         {
             int localRow = rowLayout.LocalRowIndex;
             if (_columnCount <= 0) return;
             if (localRow < 0 || localRow >= RowCount) return;
 
             if (_activeRows.ContainsKey(localRow))
-                UnbindRow(localRow);
+                unbindRow(localRow);
 
             int startIndex = localRow * _columnCount;
             int cellsInRow = _columnCount;
@@ -242,11 +275,13 @@ namespace Devian
             float mainPos = rowLayout.RowMainAxisPosition;
             if (localRow == 0) mainPos += _padding.top;
 
+            float localMainPos = mainPos - _sectionLayout.SectionMainAxisPosition;
+
             for (int c = 0; c < cellsInRow; c++)
             {
                 int cellIndex = startIndex + c;
-                var cell = Spawn(
-                    parent: rowLayout.Content);
+                var cell = createCell(transform);
+                ensureCellInitialized(cell);
 
                 var rt = cell.rectTransform;
                 rt.anchorMin = TopLeft;
@@ -256,18 +291,17 @@ namespace Devian
 
                 float cross = _padding.left + c * (_cellSize.x + xSpacing);
                 rt.anchoredPosition = rowLayout.Direction == UIScrollDirection.Vertical
-                    ? new Vector2(cross, -mainPos)
-                    : new Vector2(mainPos, -cross);
+                    ? new Vector2(cross, -localMainPos)
+                    : new Vector2(localMainPos, -cross);
 
                 cell.Show(cellIndex);
-                onBindCell?.Invoke(cell, cellIndex);
                 rowCells.Add(cell);
             }
 
             _activeRows[localRow] = rowCells;
         }
 
-        public void UnbindRow(int localRowIndex)
+        private void unbindRow(int localRowIndex)
         {
             if (!_activeRows.TryGetValue(localRowIndex, out var rowCells)) return;
 
@@ -279,11 +313,11 @@ namespace Devian
             _activeRows.Remove(localRowIndex);
         }
 
-        public void RefreshRow(int localRowIndex)
+        private void refreshRow(int localRowIndex)
         {
             if (localRowIndex < 0 || localRowIndex >= RowCount)
             {
-                UnbindRow(localRowIndex);
+                unbindRow(localRowIndex);
                 return;
             }
 
@@ -293,13 +327,12 @@ namespace Devian
             for (int c = 0; c < rowCells.Count; c++)
             {
                 int cellIndex = startIndex + c;
-                UnbindCell(rowCells[c]);
+                hideCell(rowCells[c]);
                 rowCells[c].Show(cellIndex);
-                onBindCell?.Invoke(rowCells[c], cellIndex);
             }
         }
 
-        public void ClearSection()
+        private void clearSection()
         {
             foreach (var kvp in _activeRows)
             {
@@ -311,8 +344,6 @@ namespace Devian
             _activeRows.Clear();
             gameObject.SetActive(true);
         }
-
-        internal override void _Clear() => ClearSection();
 
         private void OnValidate()
         {
@@ -388,16 +419,24 @@ namespace Devian
             rt.sizeDelta = sd;
         }
 
-        private void UnbindCell(UIScrollGridCell cell)
+        private void hideCell(UIScrollGridCell cell)
         {
-            if (cell == null)
-                return;
-
-            if (cell.CellIndex < 0)
+            if (cell == null || cell.CellIndex < 0)
                 return;
 
             cell.Hide();
-            onUnbindCell?.Invoke(cell);
+        }
+
+        private void ensureCellInitialized(UIScrollGridCell cell)
+        {
+            if (cell == null || canvas == null)
+                return;
+
+            if (!cell.isFrameInitialized)
+                cell._Init(canvas);
+
+            if (isFrameInitComplete && cell.isFrameInitialized && !cell.isFrameInitComplete)
+                cell._InitComplete();
         }
 
         private readonly Dictionary<int, List<UIScrollGridCell>> _activeRows = new();
@@ -453,5 +492,10 @@ namespace Devian
         {
             return BundlePool.Spawn<TCell>(prefabName, position, rotation, parent, options);
         }
+    }
+
+    public abstract class UIScrollGridFrame<TCell> : UIScrollGridFrame
+        where TCell : UIScrollGridCell
+    {
     }
 }

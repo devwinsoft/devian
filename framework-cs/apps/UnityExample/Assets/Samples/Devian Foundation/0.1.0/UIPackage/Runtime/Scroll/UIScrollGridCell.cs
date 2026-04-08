@@ -10,22 +10,14 @@ namespace Devian
     /// <summary>
     /// Grid 셀 프리팹에 부착하는 컴포넌트.
     /// BundlePool과 통합. Show(index)/Hide()로 bind/unbind.
-    /// 개발자는 콜백(Grid.onBindCell) 또는 상속(onShow/onHide override) 중 선택한다.
+    /// 개발자는 상속(onInit/onShow/onHide override)으로 bind/reset을 구현한다.
     /// `onShow()`는 현재 데이터 bind, `onHide()`는 다음 bind 전에 필요한 상태 정리를 담당한다.
     /// </summary>
     [RequireComponent(typeof(RectTransform))]
-    public class UIScrollGridCell : MonoBehaviour, IPoolable
+    public class UIScrollGridCell : UIBaseFrame, IPoolable
     {
         /// <summary>현재 바인딩된 데이터 인덱스. -1 = 미바인딩.</summary>
         public int CellIndex { get; private set; } = -1;
-
-        /// <summary>캐시된 RectTransform.</summary>
-        public RectTransform rectTransform { get; private set; }
-
-        protected void Awake()
-        {
-            rectTransform = (RectTransform)transform;
-        }
 
         // ─── Show / Hide ───
 
@@ -53,23 +45,16 @@ namespace Devian
         protected virtual void onHide() { }
 
         /// <summary>풀에서 spawn된 직후. override하여 사용.</summary>
-        protected virtual void onPoolSpawned() { }
-
-        /// <summary>풀로 반환되기 직전. override하여 사용.</summary>
-        protected virtual void onPoolDespawned() { }
-
-        // ─── IPoolable ───
-
         public void OnPoolSpawned()
         {
             CellIndex = -1;
-            onPoolSpawned();
+            _HandlePoolSpawned();
         }
 
         public void OnPoolDespawned()
         {
             CellIndex = -1;
-            onPoolDespawned();
+            _HandlePoolDespawned();
         }
     }
 }

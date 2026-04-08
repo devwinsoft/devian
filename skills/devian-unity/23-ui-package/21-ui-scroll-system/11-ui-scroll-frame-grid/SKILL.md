@@ -7,26 +7,15 @@ AppliesTo: v3
 
 ## Overview
 
-### Purpose
+`UIScrollGridFrame`는 `UIScrollContainer`가 계산한 logical row enter/exit 요청만 받아
+row 내부 cell을 spawn/show/hide/despawn 하는 grid section renderer다.
+virtualization owner는 아니다.
 
-`UIScrollGridFrame`는 N열 grid section 구현체다.
-`UIBaseFrame`를 상속하고 `IUIScrollSection`을 구현하며,
-`UIScrollContainer`가 계산한 logical row enter/exit 요청에 따라 row 단위로 cell을 spawn/despawn 한다.
+현재 구현 원칙:
 
-현재 구조에서 `UIScrollGridFrame`는 **row renderer**이지 **scroll virtualizer**가 아니다.
-
-### Scope
-
-**Includes:**
-- `UIScrollGridFrame` — `IUIScrollSection` grid section 구현
-- `UIScrollGridCell` — pooled cell component
-- active row dictionary 기반 row bind/unbind/refresh
-
-**Excludes:**
-- `ScrollRect` 구독
-- visible range 계산
-- viewport/scroll position 계산
-- section collection / overall layout
+- `UIScrollGridFrame`는 layout, pool, lifecycle bridge만 담당한다.
+- 실제 데이터 bind/reset은 `UIScrollGridCell.onShow(int cellIndex)` / `onHide()`가 담당한다.
+- scroll 쪽은 별도 init semantics를 만들지 않고 `UIBaseFrame._Init()` / `_InitComplete()`를 재사용한다.
 
 ---
 
@@ -34,36 +23,72 @@ AppliesTo: v3
 
 ### Code Path
 
-```
+```text
 framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Scroll/
 ├── UIScrollGridFrame.cs
 └── UIScrollGridCell.cs
 ```
 
-### Class Signatures
+### 3-Path Mirror
 
-#### UIScrollGridFrame
+| 경로 | 역할 |
+|------|------|
+| `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/` | UPM 정본 |
+| `framework-cs/apps/UnityExample/Packages/com.devian.foundation/Samples~/UIPackage/` | Packages mirror |
+| `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/{version}/UIPackage/` | Assets/Samples 구현 |
+
+---
+
+## Public Model
+
+### UIScrollGridCell
+
+```csharp
+namespace Devian
+{
+    [RequireComponent(typeof(RectTransform))]
+    public class UIScrollGridCell : UIBaseFrame, IPoolable
+    {
+        public int CellIndex { get; }
+
+        public void Show(int cellIndex);
+        public void Hide();
+
+        public void OnPoolSpawned();
+        public void OnPoolDespawned();
+
+        protected virtual void onInit();
+        protected virtual void onInitComplete();
+        protected virtual void onShow(int cellIndex);
+        protected virtual void onHide();
+        protected virtual void onPoolSpawned();
+        protected virtual void onPoolDespawned();
+    }
+}
+```
+
+의미:
+
+- `onInit()` / `onInitComplete()` = semantic init
+- `onShow(int cellIndex)` = 현재 index 기준 full bind
+- `onHide()` = reset / unbind
+- `CellIndex`는 현재 bind index다
+
+### UIScrollGridFrame
 
 ```csharp
 namespace Devian
 {
     public class UIScrollGridFrame : UIBaseFrame, IUIScrollSection
     {
-        [SerializeField] private UI_SCROLL_CELL_ID _cellPrefabId;
-        [SerializeField] private int _columnCount = 4;
-        [SerializeField] private int _minimumLineCount = 0;
-        [SerializeField] private Vector2 _cellSize = new Vector2(200, 200);
-        [SerializeField] private float _rowSpacing = 10f;
-        [SerializeField] private RectOffset _padding = new RectOffset();
-
-        public string CellPrefabName { get; set; }  // UI_SCROLL_CELL_ID.Value 기반
+        public string CellPrefabName { get; set; }
         public int ColumnCount { get; set; }
         public int MinimumLineCount { get; set; }
         public Vector2 CellSize { get; set; }
-        public float RowSpacing { get; set; }  // Y축만. X축은 자동 계산.
-        public RectOffset Padding { get; set; }  // 그리드 내부 여백 (top/bottom/left/right)
+        public float RowSpacing { get; set; }
+        public RectOffset Padding { get; set; }
 
-        public int CellCount { get; }        // actual data count
+        public int CellCount { get; }
         public int DataRowCount { get; }
         public int RowCount { get; }
         public int RenderCellCount { get; }
@@ -71,187 +96,167 @@ namespace Devian
         public void SetCellCount(int count);
         public void SetMinimumLineCount(int lineCount);
         public bool HasDataAt(int cellIndex);
-        public UIScrollGridCell Spawn(
-            Transform parent = null,
-            Vector3 position = default,
-            Quaternion rotation = default,
-            PoolOptions options = default);
-        public T Spawn<T>(
-            Transform parent = null,
-            Vector3 position = default,
-            Quaternion rotation = default,
-            PoolOptions options = default)
-            where T : UIScrollGridCell;
-        public void Despawn<T>(T cell)
-            where T : UIScrollGridCell;
-        // GetWidth(): base 구현 사용 (rectTransform.rect.width). override 하지 않는다.
-        public override float GetHeight();
 
-        public int GetLogicalRowCount();
-        public float GetLogicalRowMainAxisSize(int localRowIndex);
-        public float GetLogicalRowSpacing();
-        public void ApplySectionLayout(in UIUIScrollSectionLayout layout);
-        public void BindRow(in UIScrollRowLayout rowLayout);
-        public void UnbindRow(int localRowIndex);
-        public void RefreshRow(int localRowIndex);
-        public void ClearSection();
+        public UIScrollGridCell Spawn(...);
+        public T Spawn<T>(...) where T : UIScrollGridCell;
+        public void Despawn<T>(T cell) where T : UIScrollGridCell;
 
-        public Action<UIScrollGridCell, int> onBindCell;
-        public Action<UIScrollGridCell> onUnbindCell;
+        protected virtual UIScrollGridCell createCell(Transform parent);
     }
 }
 ```
 
-#### UIScrollGridCell
+### Typed Alias
 
 ```csharp
 namespace Devian
 {
-    [RequireComponent(typeof(RectTransform))]
-    public class UIScrollGridCell : MonoBehaviour, IPoolable
+    public abstract class UIScrollGridFrame<TCell> : UIScrollGridFrame
+        where TCell : UIScrollGridCell
     {
-        public int CellIndex { get; }
-        public RectTransform rectTransform { get; }
-
-        public void Show(int cellIndex);
-        public void Hide();
-
-        public void OnPoolSpawned();
-        public void OnPoolDespawned();
-        protected virtual void onPoolSpawned();
-        protected virtual void onPoolDespawned();
     }
 }
 ```
 
+`UIScrollGridFrame<TCell>`는 타입 의미만 주는 thin wrapper다.
+bind hook을 추가하지 않는다.
+
 ---
 
-## Runtime Model
+## Init Semantics
 
-### Size
+`UIScrollGridFrame`와 `UIScrollGridCell` 모두 별도 scroll init 시스템을 만들지 않는다.
+기존 `UIBaseFrame._Init()` / `_InitComplete()`가 semantic boundary다.
 
-- `GetWidth()` = 자신의 RectTransform 너비 (base 구현 사용, override 하지 않음)
-- `GetHeight()` = `padding.top + rowCount * cellSize.y + (rowCount - 1) * rowSpacing + padding.bottom`
-- X축 spacing = `(frameWidth - padding.left - padding.right - columnCount * cellSize.x) / max(1, columnCount - 1)` — 자동 계산, 셀을 균일 분배
-- `CellCount` = actual data cell count
-- `DataRowCount` = `CeilToInt(CellCount / (float)ColumnCount)` (`ColumnCount > 0`인 경우)
-- `RowCount` = `max(MinimumLineCount, DataRowCount)` (`ColumnCount <= 0`이면 `0`)
-- `RenderCellCount` = `RowCount * ColumnCount`
-- `RectTransform.sizeDelta`는 init 및 count/size setter 변경 시 **height만** (`sizeDelta.y = GetHeight()`) 갱신된다. width는 건드리지 않는다
-- init 완료 후 `CellCount`, `MinimumLineCount`, `ColumnCount`, `CellSize`, `Spacing`이 바뀌면 parent `UIScrollContainer.Rebuild()`를 자동 요청한다
-- `Spawn()`은 `_cellPrefabId.Value`의 prefab 실제 pool type을 해석한 뒤 그 concrete type으로 pooled cell을 생성한다. prefab 대표 `IPoolable` component는 반드시 `UIScrollGridCell` 하위 타입이어야 한다
-- `Spawn<T>() where T : UIScrollGridCell`는 typed facade다. 내부 생성은 항상 prefab 실제 pool type 기준으로 수행되고, 반환 타입만 `T`로 검증한다
-- `Despawn<T>(T cell)`는 typed facade이며, cell이 바인딩 상태면 먼저 `Hide()`와 `onUnbindCell`을 실행한 뒤 `BundlePool.Despawn(cell)`에 위임한다
-- grid cell reset 경계는 `onHide()`다. `onShow()`는 현재 데이터에 대한 full bind만 수행한다
+해석 규칙:
 
-### IUIScrollSection Model
+- owner tree가 이미 initialized 상태면 cell spawn 직후 `cell._Init(canvas)`가 즉시 수행될 수 있다
+- owner frame이 이미 init complete 상태면 같은 경로에서 `cell._InitComplete()`도 즉시 수행될 수 있다
+- frame이 아직 init complete 전이면 cell은 `onInit()`까지만 먼저 수행되고, frame `onInitComplete()` 시점에 active cell들이 `_InitComplete()` 된다
 
-- `GetLogicalRowCount()` = `RowCount`
-- `GetLogicalRowMainAxisSize(localRowIndex)`:
-  - row 0: `_padding.top + _cellSize.y`
-  - 마지막 row: `_cellSize.y + _padding.bottom`
-  - row가 1개뿐: `_padding.top + _cellSize.y + _padding.bottom`
-  - 그 외: `_cellSize.y`
-  - padding을 첫/끝 row 크기에 흡수하여 IUIScrollSection 인터페이스 변경 없이 Container에 전달한다
-- `GetLogicalRowSpacing()` = `_rowSpacing`
-- `ApplySectionLayout(...)`는 grid holder의 section 위치를 적용하고 active 상태를 유지한다
-- `BindRow(...)`는 해당 row의 full-row cell들을 spawn/bind 한다
-- `UnbindRow(localRowIndex)`는 해당 row의 cell들을 unbind/despawn 한다
-- `RefreshRow(localRowIndex)`는 active row의 cell만 재바인딩한다
-- `ClearSection()`는 active row 전체를 정리한다
+실무 규칙:
 
-### Row Ownership
+- child UI 구조 생성 / ref wiring은 `cell.onInit()`에 둔다
+- `cell.onInit()` 안에서 새 `UIComponentBase` / `UIBaseFrame` subtree를 만들었다면 `InitDynamicSubtree(root)`를 호출해 기존 init 체계에 편입한다
+- 현재 데이터 bind는 `cell.onShow(int cellIndex)`에 둔다
+- 이전 bind 정리는 `cell.onHide()`에 둔다
 
-visible row 판단은 하지 않는다.
-container가 "이 row를 보여라/숨겨라/새로고침하라"를 결정하고, grid는 그 요청만 수행한다.
+---
 
-### Active State
+## Runtime Flow
 
-- active row는 `Dictionary<int, List<UIScrollGridCell>> _activeRows`로 관리한다
-- key는 `localRowIndex`
-- value는 해당 row에 현재 spawn된 cell 목록이다
+### Row Bind
 
-### BindRow
+internal `IUIScrollSection.BindRow(...)` 흐름:
 
-`BindRow(in UIScrollRowLayout rowLayout)` 동작:
+1. row index 유효성 검사
+2. 이미 active면 기존 row unbind
+3. row마다 `ColumnCount`개 cell 생성
+4. `createCell(transform)` 호출 — cell은 frame의 child로 생성된다
+5. spawn 직후 `ensureCellInitialized()`로 `cell._Init(canvas)` / 필요 시 `cell._InitComplete()` 연결
+6. anchor/pivot/size 적용
+7. position은 frame 로컬좌표로 계산: `localMainPos = mainPos - sectionMainAxisPosition`
+8. `cell.Show(cellIndex)` 호출
 
-1. `localRowIndex`가 `0 <= index < RowCount`인지 검사한다
-2. `localRowIndex`에서 row 시작 cell index 계산
-3. 항상 `ColumnCount`개 cell을 생성한다
-4. `Spawn(parent: rowLayout.Content)`로 cell 생성한다. 이때 `_cellPrefabId` prefab의 실제 pool type을 사용하므로 `UIScrollGridCell` subclass prefab도 그대로 지원된다
-5. anchor/pivot/size 적용
-6. `CalculateAutoXSpacing()`으로 X축 간격 자동 계산
-7. cell X 위치: `_padding.left + c * (cellSize.x + xSpacing)`
-8. cell main axis 위치: row 0이면 `rowLayout.RowMainAxisPosition + _padding.top`, 그 외 `rowLayout.RowMainAxisPosition`
-9. `cell.Show(index)` 후 `onBindCell(cell, index)` 호출
+### Row Unbind
 
-주의:
-
-- 마지막 row도 partial row가 아니라 full-row로 렌더된다
-- `cellIndex >= CellCount`인 cell은 placeholder slot이다
-- placeholder 판정 helper로 `HasDataAt(cellIndex)`를 제공한다
-
-### UnbindRow
-
-`UnbindRow(localRowIndex)` 동작:
+internal `IUIScrollSection.UnbindRow(...)` 흐름:
 
 1. active row lookup
-2. 각 cell에 대해 `Despawn(cell)`
-3. `Despawn(cell)` 내부에서 `Hide() -> onUnbindCell -> BundlePool.Despawn()` 순서를 보장한다
-5. row entry 제거
+2. 각 cell에 대해 `Hide()` 후 `BundlePool.Despawn(cell)`
 
-### RefreshRow
+### Row Refresh
 
-- invalid row면 `UnbindRow(localRowIndex)` 후 return
-- active row만 처리
-- 각 cell에 대해 `Hide -> onUnbindCell -> Show -> onBindCell` 순으로 재바인딩
-- 이때 `Hide()`가 reset 경계이며, 다음 `Show()`는 이전 상태를 재사용하지 않고 full bind를 수행해야 한다
+active row만 처리한다.
 
-### Runtime Layout Changes
+- `cell.Hide()`
+- `cell.Show(cellIndex)`
 
-- `SetCellCount(...)`, `SetMinimumLineCount(...)`, `ColumnCount`, `CellSize`, `RowSpacing` 변경은 먼저 frame `RectTransform` sizeDelta의 **height만** (`sizeDelta.y = GetHeight()`) 동기화한다. width는 변경하지 않는다
-- play mode에서 parent `UIScrollContainer`가 이미 초기화된 상태라면 `Rebuild()`를 자동 요청한다
-- 그래서 init 이후 data count가 늘어나 row 수가 바뀌는 경우에도 scroll content size와 visible row 계산이 같이 갱신된다
+즉 refresh에서도 `onHide()`가 reset 경계다.
 
-### ClearSection
+### Section Clear
 
-- 모든 active row의 cell을 unbind/despawn
+- 모든 active row cell을 hide/despawn
 - `_activeRows.Clear()`
-- grid holder는 active 상태를 유지한다
-
-### Cell Pool Lifecycle
-
-- `UIScrollGridCell`은 public `OnPoolSpawned()` / `OnPoolDespawned()` bridge를 base에서 고정한다
-- base bridge는 공통 reset(`CellIndex = -1`) 후 protected `onPoolSpawned()` / `onPoolDespawned()`를 호출한다
-- cell 내용/UI reset은 `onHide()`가 담당한다. pool callback은 pooled lifecycle 보조 훅이지 bind reset 정본이 아니다
-- 파생 cell은 public pool callback을 다시 구현하지 않고 protected hook만 override한다
-- 따라서 `Spawn()` 또는 `Spawn<T>() where T : UIScrollGridCell`로 생성하면 base reset과 subclass hook이 모두 적용된다
+- holder는 active 상태를 유지한다
 
 ---
 
-## Virtualization Boundary
+## Layout Rules
 
-| 역할 | 담당 |
-|------|------|
-| `ScrollRect` 구독 | `UIScrollContainer` |
-| visible logical row 계산 | `UIScrollContainer` |
-| row bind/unbind 요청 | `UIScrollContainer` |
-| row 내부 cell spawn/despawn | `UIScrollGridFrame` |
-| cell 데이터 bind/unbind | `UIScrollGridFrame` + `onBindCell` / `onUnbindCell` |
-| placeholder 판단 | consumer (`HasDataAt(cellIndex)` 또는 `cellIndex >= CellCount`) |
+- `GetWidth()`는 `UIBaseFrame` base 구현 사용
+- `GetHeight()` =
+  - `padding.top + rowCount * cellSize.y + (rowCount - 1) * rowSpacing + padding.bottom`
+- X축 spacing은 frame width 기준 자동 계산:
+  - `(frameWidth - padding.left - padding.right - columnCount * cellSize.x) / max(1, columnCount - 1)`
+- `left/right`를 제외한 내부 영역에서 cell 간격을 균등 분배한다
+- row 0은 `padding.top`, 마지막 row는 `padding.bottom`을 흡수한다
+- 마지막 row도 partial row가 아니라 full row renderer다
+- 데이터가 없는 slot은 placeholder로 남고, consumer는 `HasDataAt(cellIndex)`로 판정한다
 
 ---
 
-## Dependencies
+## Pool Rules
 
-| Dependency | Location |
-|------------|----------|
-| `UIBaseFrame` | `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Base/UIBaseFrame.cs` |
-| `IUIScrollSection` | `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Scroll/IUIScrollSection.cs` |
-| `UIScrollRowLayout` | `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Scroll/UIScrollRowLayout.cs` |
-| `UIUIScrollSectionLayout` | `framework-cs/upm/com.devian.foundation/Samples~/UIPackage/Runtime/Scroll/UIScrollSectionLayout.cs` |
-| `BundlePool` | `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/CommonPackage/Runtime/Unity/Pool/Factory/BundlePool.cs` |
-| `IPoolable` | `framework-cs/apps/UnityExample/Assets/Samples/Devian Foundation/0.1.0/CommonPackage/Runtime/Unity/Pool/IPoolable.cs` |
+- `Spawn()`은 `_cellPrefabId` prefab의 실제 pool type을 해석한 뒤 그 concrete type으로 spawn한다
+- prefab 대표 `IPoolable` component는 반드시 `UIScrollGridCell` 하위 타입이어야 한다
+- `Spawn<T>()`는 typed facade다. 실제 생성은 항상 prefab concrete type 기준으로 수행된다
+- `OnPoolSpawned()`는 `CellIndex = -1` 후 `_HandlePoolSpawned()` bridge를 호출한다
+- `OnPoolDespawned()`는 `CellIndex = -1` 후 `_HandlePoolDespawned()` bridge를 호출한다
+- pooled cell은 despawn 시 `UIBaseFrame._ResetForPool()`로 init state가 reset된다
+
+---
+
+## Recommended Usage
+
+### Frame
+
+frame subclass는 보통 layout과 count만 설정한다.
+
+```csharp
+public sealed class HeroEquipGridFrame : UIScrollGridFrame<HeroEquipGridCell>
+{
+    protected override void onInit()
+    {
+        SetCellCount(InventoryManager.Instance.EquippedItems.Count);
+    }
+}
+```
+
+### Cell
+
+실제 데이터 bind는 cell이 `cellIndex`로 직접 조회한다.
+
+```csharp
+public sealed class HeroEquipGridCell : UIScrollGridCell
+{
+    protected override void onInit()
+    {
+        // child UI 생성 / ref wiring
+    }
+
+    protected override void onShow(int cellIndex)
+    {
+        var items = InventoryManager.Instance.EquippedItems;
+        if (cellIndex < 0 || cellIndex >= items.Count)
+            return;
+
+        var item = items[cellIndex];
+        // bind
+    }
+
+    protected override void onHide()
+    {
+        // reset
+    }
+}
+```
+
+즉:
+
+- frame은 데이터 전달하지 않는다
+- cell이 `cellIndex`로 직접 조회한다
+- `onShow(int cellIndex)`만으로 bind를 해결한다
 
 ---
 
@@ -259,4 +264,4 @@ container가 "이 row를 보여라/숨겨라/새로고침하라"를 결정하고
 
 - Parent: `skills/devian-unity/23-ui-package/SKILL.md`
 - Scroll container: `skills/devian-unity/23-ui-package/21-ui-scroll-system/10-ui-scroll-container/SKILL.md`
-- Frame base: `skills/devian-unity/23-ui-package/10-base-system/11-ui-canvas-system/SKILL.md`
+- Frame lifecycle base: `skills/devian-unity/23-ui-package/10-base-system/11-ui-canvas-system/SKILL.md`

@@ -34,8 +34,18 @@ namespace Devian
         readonly InventoryStorage _storage = new();
         readonly InventoryMessageTrigger _messageTrigger = new();
         readonly InventoryStaminaController _staminaController = new();
+        readonly List<AbilityItemEquip> _equippedItems = new();
+        readonly List<AbilityItemEquip> _unequippedItems = new();
 
         public int MaxStamina => _staminaController.MaxStamina;
+        public IReadOnlyList<AbilityItemEquip> EquippedItems => _equippedItems;
+        public IReadOnlyList<AbilityItemEquip> UnequippedItems => _unequippedItems;
+
+        [Obsolete("Use EquippedItems.")]
+        public IReadOnlyList<AbilityItemEquip> EquipedItems => EquippedItems;
+
+        [Obsolete("Use UnequippedItems.")]
+        public IReadOnlyList<AbilityItemEquip> UnEquipedItems => UnequippedItems;
 
         // ── Message API ──
 
@@ -218,6 +228,7 @@ namespace Devian
         public void ClearState(INVENTORY_SNAPSHOT_CHANGE_REASON reason)
         {
             _storage.Clear();
+            refreshEquipBuckets();
             notifySnapshotChanged(reason);
         }
 
@@ -228,6 +239,7 @@ namespace Devian
                 return GameResult.Failure(nextStorage.Error!);
 
             _storage.CopyFrom(nextStorage.Value);
+            refreshEquipBuckets();
             notifySnapshotChanged(reason);
             return GameResult.Ok();
         }
@@ -275,13 +287,17 @@ namespace Devian
                 var itemUid = Guid.NewGuid().ToString("N");
                 var create = AbilityItemFactory.CreateEquip(itemId, itemUid);
                 if (create.IsFailure)
+                {
+                    refreshEquipBuckets();
                     return GameResult.Failure(create.Error!);
+                }
 
                 var equip = create.Value;
                 _storage.AddEquip(itemUid, equip);
                 notifyEquipListChanged(INVENTORY_LIST_CHANGE_TYPE.ADD, itemUid, itemId, equip);
             }
 
+            refreshEquipBuckets();
             return GameResult.Ok();
         }
 
@@ -445,6 +461,7 @@ namespace Devian
                 else
                 {
                     _storage.RemoveHero(heroId);
+                    refreshEquipBuckets();
                     notifyHeroListChanged(INVENTORY_LIST_CHANGE_TYPE.REMOVE, heroId, null);
                 }
                 return GameResult.Ok();
@@ -624,6 +641,7 @@ namespace Devian
                     $"InventoryManager.SetHeroEquip: equip operation failed. heroId={heroId}, slotType={slotType}, equipUid={equipUid}");
             }
 
+            refreshEquipBuckets();
             notifyHeroChanged(heroId, hero);
             if (prevOwnerHero != null)
                 notifyHeroChanged(prevOwnerHeroId, prevOwnerHero);
@@ -681,6 +699,7 @@ namespace Devian
                     $"InventoryManager.RemoveHeroEquip: unequip failed. heroId={heroId}, slotType={slotType}");
             }
 
+            refreshEquipBuckets();
             notifyEquipChanged(equip.ItemUid, equip.ItemId, equip);
             notifyHeroChanged(heroId, hero);
             return GameResult.Ok();
@@ -809,6 +828,7 @@ namespace Devian
                 }
             }
 
+            refreshEquipBuckets();
             return GameResult.Ok();
         }
 
@@ -1323,6 +1343,23 @@ namespace Devian
             _messageTrigger.Notify(
                 INVENTORY_MESSAGE_TYPE.INVENTORY_SNAPSHOT_CHANGED,
                 reason);
+        }
+
+        void refreshEquipBuckets()
+        {
+            _equippedItems.Clear();
+            _unequippedItems.Clear();
+
+            foreach (var equip in _storage.Equipments.Values)
+            {
+                if (equip == null)
+                    continue;
+
+                if (equip.IsEquipped)
+                    _equippedItems.Add(equip);
+                else
+                    _unequippedItems.Add(equip);
+            }
         }
     }
 }

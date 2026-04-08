@@ -187,6 +187,12 @@ public void EditorClearPreview();
 `UIScrollContainer`는 직접 `Init()`를 노출하지 않는다.
 소유 panel의 lifecycle을 통해 `UIBaseCanvas.Init()` 안에서 초기화된다.
 
+해석 규칙:
+
+- 여기서의 `Init`은 `Awake()` 기반이 아니라 owner panel/canvas lifecycle 기반이다.
+- 따라서 scroll subtree가 이미 initialized owner에 동적으로 붙으면 `_Init()` / `_InitComplete()`가 같은 attach 경로에서 즉시 수행될 수 있다.
+- scroll 시스템은 별도 init semantics를 만들지 않고 `UIBaseContainer` / `UIBaseFrame`의 기존 `_Init()` / `_InitComplete()`를 그대로 재사용해야 한다.
+
 ```
 UIBaseCanvas.Init()
   Phase 1: Canvas-owned component init
@@ -222,6 +228,15 @@ UIBaseCanvas.Init()
 동적으로 생성된 `UIScrollContainer`도 `UIBasePanel.CreateContainer<T>()`를 통해
 owner panel lifecycle에 편입되면 동일한 `_Init/_InitComplete`
 계약을 따른다. panel init complete 이후 생성되면 `_InitComplete()`가 즉시 호출된다.
+
+즉, scroll 쪽에서 "spawn 직후 별도 build/init 훅"을 새로 정의하지 않는다.
+owner tree에 편입될 때의 semantic init은 항상 base lifecycle이 담당한다.
+
+추가 규칙:
+
+- `UIScrollGridFrame`가 bind 시점에 동적으로 spawn한 `UIScrollGridCell`도 같은 계약을 따른다.
+- 즉 grid는 새 cell을 만든 뒤 별도 scroll init을 만들지 않고 `cell._Init(canvas)` / 필요 시 `cell._InitComplete()`를 바로 연결한다.
+- grid의 실제 데이터 bind/reset은 frame callback이 아니라 `UIScrollGridCell.onShow(int cellIndex)` / `onHide()`가 담당한다.
 
 ### Destroy
 

@@ -13,6 +13,10 @@ AppliesTo: v1
 `UIScrollContainer`는 `IUIScrollSection`으로만 접근하고,
 subclass는 `onInit()` / `onShow()` / `onHide()`만 구현하면 된다.
 
+여기서 `onInit()`은 `Awake()` 대체 훅이 아니라 `UIBaseFrame._Init()`로 보장되는 semantic init이다.
+owner tree가 이미 initialized 상태면 동적 attach 경로에서 즉시 호출될 수 있고,
+owner tree가 이미 init complete 상태면 `_InitComplete()`도 같은 경로에서 바로 이어질 수 있다.
+
 ### Scope
 
 **Includes:**
@@ -69,7 +73,8 @@ namespace Devian
 
 - `onInit()`
   - 일반 `UIBaseFrame` init hook
-  - 한번만 호출된다
+  - 의미는 "owner tree lifecycle에 편입됨"이다
+  - `Awake()` 자체 기준이 아니다
 - `onShow()`
   - row가 보이게 될 때 호출된다
   - base는 이미 `RectTransform` layout과 `SetActive(true)`를 적용한 뒤 호출한다

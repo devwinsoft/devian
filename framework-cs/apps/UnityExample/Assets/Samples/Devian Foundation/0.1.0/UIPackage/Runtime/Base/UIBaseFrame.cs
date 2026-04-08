@@ -95,6 +95,36 @@ namespace Devian
         public virtual float GetWidth() => UIUtils.GetWidth(rectTransform);
         public virtual float GetHeight() => UIUtils.GetHeight(rectTransform);
 
+        /// <summary>
+        /// 동적으로 생성한 subtree를 현재 frame lifecycle에 편입한다.
+        /// `onInit()` / `onInitComplete()` 중 새 child frame/component를 만들었을 때 호출한다.
+        /// </summary>
+        protected void InitDynamicSubtree(Transform root = null)
+        {
+            var targetRoot = root != null ? root : transform;
+            if (targetRoot == null || canvas == null)
+                return;
+
+            var ownedFrames = new List<UIBaseFrame>();
+            UIBaseInitHelper.InitOwnedSubtree(
+                targetRoot,
+                canvas,
+                ownedFrames,
+                targetRoot == transform ? this : null);
+
+            for (var i = 0; i < ownedFrames.Count; i++)
+            {
+                if (!_ownedFrames.Contains(ownedFrames[i]))
+                    _ownedFrames.Add(ownedFrames[i]);
+            }
+
+            if (!isFrameInitComplete)
+                return;
+
+            for (var i = 0; i < ownedFrames.Count; i++)
+                ownedFrames[i]._InitComplete();
+        }
+
         // ─── Clear ───
 
         internal virtual void _Clear() { }
