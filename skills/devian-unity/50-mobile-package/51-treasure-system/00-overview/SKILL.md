@@ -9,7 +9,7 @@ Treasure 시스템은 "등급별 chest 보유량 + chest(exp/level) 상태 관�
 - `TreasureManager`가 `InventoryStorage`의 treasure 필드를 통해 상태를 관리한다.
 - chest 수집은 `TREASURE_REWARD(gradeType)` -> `RewardManager` 경로로 지급한다.
 - current chest 수집은 `TREASURE_CHEST(level)` -> `TREASURE_REWARD(gradeType)` -> `RewardManager` 경로로 지급한다.
-- chest 상태는 `TREASURE_GRADE_TYPE`별 count로 관리한다 (`InventoryStorage.TreasureCounts`).
+- chest 상태는 `ITEM_GRADE_TYPE`별 count로 관리한다 (`InventoryStorage.TreasureCounts`).
 - chest exp/level 상태는 `InventoryTreasureCurrent` (`TreasureCurrent.Exp`, `TreasureCurrent.Level`)로 관리한다.
 
 ---

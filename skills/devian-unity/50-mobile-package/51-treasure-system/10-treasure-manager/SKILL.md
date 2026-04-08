@@ -30,7 +30,7 @@ namespace Devian
     {
         InventoryStorage storage => InventoryManager.Instance.Storage;
 
-        public GameResult OpenCollectedChests(TREASURE_GRADE_TYPE gradeType) { ... }
+        public GameResult OpenCollectedChests(ITEM_GRADE_TYPE gradeType) { ... }
         public GameResult OpenCurrentChest() { ... }
     }
 }
@@ -41,7 +41,7 @@ namespace Devian
 ## Responsibilities
 
 - `InventoryStorage` treasure 필드 접근 (`InventoryManager.Instance.Storage`)
-- `OpenCollectedChests(TREASURE_GRADE_TYPE)` 구현
+- `OpenCollectedChests(ITEM_GRADE_TYPE)` 구현
 - `OpenCurrentChest()` 구현
 - `TREASURE_CHEST`, `TREASURE_REWARD` lookup
 - `TREASURE_REWARD` 조건 필터링 (`selectBestRewardRow`)
@@ -72,7 +72,7 @@ namespace Devian
 
 ## Public API
 
-- `OpenCollectedChests(TREASURE_GRADE_TYPE gradeType) -> GameResult`
+- `OpenCollectedChests(ITEM_GRADE_TYPE gradeType) -> GameResult`
 - `OpenCurrentChest() -> GameResult`
 
 ---
@@ -131,7 +131,7 @@ namespace Devian
 
 ### 1) Enum / table codegen 정렬
 
-- `TREASURE_TYPE`를 `TREASURE_GRADE_TYPE`로 교체한다.
+- `TREASURE_TYPE`를 `ITEM_GRADE_TYPE`로 교체한다.
 - 값 집합을 `NONE`, `COMMON`, `RARE`, `EPIC`, `LEGENDARY`, `MYTHIC`로 고정한다.
 - `TreasureTable.xlsx` 기반으로 `TB_TREASURE_CHEST`, `TB_TREASURE_REWARD`가 생성되도록 codegen을 재실행한다.
 
@@ -163,7 +163,7 @@ namespace Devian
 
 ### 6) Tests / verification
 
-- enum 생성 확인 (`TREASURE_GRADE_TYPE`)
+- enum 생성 확인 (`ITEM_GRADE_TYPE`)
 - chest collect: 0개 / 1개 / 다수 count (조건 필터 후 best row 선택)
 - current chest collect: exp 부족 / 정확히 같음 / 초과 exp / max level wrap
 - 조건 필터: condition_msg_id 비어있음 / Condition_value null / 조건 미충족 / 조건 충족 best level

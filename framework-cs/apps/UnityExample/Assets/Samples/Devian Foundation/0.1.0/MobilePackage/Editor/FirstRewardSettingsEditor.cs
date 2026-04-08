@@ -37,7 +37,7 @@ namespace Devian
 
         // CURRENCY / TREASURE have no *_ID type, tracked as plain fields
         CURRENCY_TYPE _currencyType = CURRENCY_TYPE.GOLD;
-        TREASURE_GRADE_TYPE _treasureGradeType = TREASURE_GRADE_TYPE.COMMON;
+        ITEM_GRADE_TYPE _treasureGradeType = ITEM_GRADE_TYPE.COMMON;
 
         void OnEnable()
         {
@@ -180,8 +180,8 @@ namespace Devian
                     break;
                 case REWARD_TYPE.TREASURE:
                 {
-                    var newGt = (TREASURE_GRADE_TYPE)EditorGUILayout.EnumPopup("Id", _treasureGradeType);
-                    if (newGt == TREASURE_GRADE_TYPE.NONE) newGt = TREASURE_GRADE_TYPE.COMMON;
+                    var newGt = (ITEM_GRADE_TYPE)EditorGUILayout.EnumPopup("Id", _treasureGradeType);
+                    if (newGt == ITEM_GRADE_TYPE.NONE) newGt = ITEM_GRADE_TYPE.COMMON;
                     if (newGt != _treasureGradeType)
                         _treasureGradeType = newGt;
                     break;
@@ -225,7 +225,7 @@ namespace Devian
                     _currencyType = CURRENCY_TYPE.GOLD;
                     break;
                 case REWARD_TYPE.TREASURE:
-                    _treasureGradeType = TREASURE_GRADE_TYPE.COMMON;
+                    _treasureGradeType = ITEM_GRADE_TYPE.COMMON;
                     break;
                 case REWARD_TYPE.CARD:
                     setStringIdValue(_propCardId, string.Empty);
@@ -251,7 +251,7 @@ namespace Devian
         void clearEditorIdFields()
         {
             _currencyType = CURRENCY_TYPE.GOLD;
-            _treasureGradeType = TREASURE_GRADE_TYPE.COMMON;
+            _treasureGradeType = ITEM_GRADE_TYPE.COMMON;
             setStringIdValue(_propCardId, string.Empty);
             setStringIdValue(_propMaterialId, string.Empty);
             setStringIdValue(_propEquipId, string.Empty);
@@ -284,7 +284,7 @@ namespace Devian
             _rows.Clear();
             _addType = REWARD_TYPE.CURRENCY;
             _currencyType = CURRENCY_TYPE.GOLD;
-            _treasureGradeType = TREASURE_GRADE_TYPE.COMMON;
+            _treasureGradeType = ITEM_GRADE_TYPE.COMMON;
             _addAmount = 1000;
             _statusMessage = string.Empty;
             _statusType = MessageType.Info;

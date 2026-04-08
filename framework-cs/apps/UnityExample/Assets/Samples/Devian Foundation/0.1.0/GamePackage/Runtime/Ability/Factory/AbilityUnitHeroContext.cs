@@ -7,6 +7,6 @@ namespace Devian
     {
         public string UnitId { get; set; }
         public int UnitLevel { get; set; } = 1;
-        public IReadOnlyDictionary<SLOT_TYPE, AbilityItemEquip> Equips { get; set; }
+        public IReadOnlyDictionary<EQUIP_SLOT_TYPE, AbilityItemEquip> Equips { get; set; }
     }
 }

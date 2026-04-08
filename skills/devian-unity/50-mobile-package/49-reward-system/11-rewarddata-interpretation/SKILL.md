@@ -65,7 +65,7 @@ AppliesTo: v10
 | `HERO` | `item_id` | 증가 수량 | 영웅 수량(`ITEM_AMOUNT`) 누적 |
 | `RENTAL` | `item_id` | 활성화 플래그(양수) | 활성 상태 설정 (`SetRental`) |
 | `PASS` | `item_id` | 소유 플래그(양수) | 소유 상태 설정 (`SetPassOwnership`) |
-| `TREASURE` | `TREASURE_GRADE_TYPE` enum name | chest 수량 | treasure chest count 누적 |
+| `TREASURE` | `ITEM_GRADE_TYPE` enum name | chest 수량 | treasure chest count 누적 |
 
 주의:
 - `RENTAL`/`PASS`는 양수 여부만 의미가 있다(값의 크기 자체는 의미 없음).

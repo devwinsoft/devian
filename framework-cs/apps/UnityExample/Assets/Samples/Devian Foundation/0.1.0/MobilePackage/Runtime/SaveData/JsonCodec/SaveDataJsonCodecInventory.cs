@@ -224,7 +224,7 @@ namespace Devian
                     {
                         foreach (var ep in equipsMap.Properties())
                         {
-                            if (!tryParseSlotTypeCompat(ep.Name, out var slotType) || slotType == SLOT_TYPE.NONE)
+                            if (!tryParseSlotTypeCompat(ep.Name, out var slotType) || slotType == EQUIP_SLOT_TYPE.NONE)
                             {
                                 return GameResult.Failure(
                                     GAME_ERROR_TYPE.SAVEDATA_PAYLOAD_PARSE_FAILED,
@@ -270,36 +270,36 @@ namespace Devian
             return GameResult.Ok();
         }
 
-        static int readSavedItemLevel(JObject obj, IReadOnlyDictionary<STAT_TYPE, int> stats)
+        static int readSavedItemLevel(JObject obj, IReadOnlyDictionary<UNIT_STAT_TYPE, int> stats)
         {
             var itemLevel = obj?.Value<int?>("item_level");
             if (itemLevel.HasValue)
                 return itemLevel.Value;
 
-            if (stats != null && stats.TryGetValue(STAT_TYPE.ITEM_LEVEL, out var compatLevel))
+            if (stats != null && stats.TryGetValue(UNIT_STAT_TYPE.ITEM_LEVEL, out var compatLevel))
                 return compatLevel;
 
             return 1;
         }
 
-        static int readSavedItemAmount(JObject obj, IReadOnlyDictionary<STAT_TYPE, int> stats)
+        static int readSavedItemAmount(JObject obj, IReadOnlyDictionary<UNIT_STAT_TYPE, int> stats)
         {
             var amount = obj?.Value<int?>("amount");
             if (amount.HasValue)
                 return amount.Value;
 
-            if (stats != null && stats.TryGetValue(STAT_TYPE.ITEM_AMOUNT, out var compatAmount))
+            if (stats != null && stats.TryGetValue(UNIT_STAT_TYPE.ITEM_AMOUNT, out var compatAmount))
                 return compatAmount;
 
             return 0;
         }
 
-        static Dictionary<STAT_TYPE, int> parseStats(JObject statsObj)
+        static Dictionary<UNIT_STAT_TYPE, int> parseStats(JObject statsObj)
         {
             if (statsObj == null)
                 return null;
 
-            var stats = new Dictionary<STAT_TYPE, int>();
+            var stats = new Dictionary<UNIT_STAT_TYPE, int>();
             foreach (var sp in statsObj.Properties())
             {
                 if (tryParseStatTypeCompat(sp.Name, out var statType))
@@ -309,29 +309,29 @@ namespace Devian
             return stats;
         }
 
-        static bool tryParseStatTypeCompat(string name, out STAT_TYPE statType)
+        static bool tryParseStatTypeCompat(string name, out UNIT_STAT_TYPE statType)
         {
             switch (name)
             {
                 case "CARD_AMOUNT":
                 case "UNIT_AMOUNT":
-                    statType = STAT_TYPE.ITEM_AMOUNT;
+                    statType = UNIT_STAT_TYPE.ITEM_AMOUNT;
                     return true;
                 case "CARD_LEVEL":
                 case "UNIT_LEVEL":
-                    statType = STAT_TYPE.ITEM_LEVEL;
+                    statType = UNIT_STAT_TYPE.ITEM_LEVEL;
                     return true;
                 default:
                     return System.Enum.TryParse(name, out statType);
             }
         }
 
-        static bool tryParseSlotTypeCompat(string name, out SLOT_TYPE slotType)
+        static bool tryParseSlotTypeCompat(string name, out EQUIP_SLOT_TYPE slotType)
         {
             if (int.TryParse(name, out var rawSlot))
             {
-                slotType = (SLOT_TYPE)rawSlot;
-                return System.Enum.IsDefined(typeof(SLOT_TYPE), slotType);
+                slotType = (EQUIP_SLOT_TYPE)rawSlot;
+                return System.Enum.IsDefined(typeof(EQUIP_SLOT_TYPE), slotType);
             }
 
             return System.Enum.TryParse(name, out slotType);

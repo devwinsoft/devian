@@ -29,7 +29,7 @@ namespace Devian
         public string ItemId { get; set; } = string.Empty;
         public int ItemLevel { get; set; } = 1;
         public int Amount { get; set; }
-        public Dictionary<SLOT_TYPE, string> Equips { get; } = new();
+        public Dictionary<EQUIP_SLOT_TYPE, string> Equips { get; } = new();
     }
 
     public sealed class InventorySnapshot
@@ -41,7 +41,7 @@ namespace Devian
         public Dictionary<string, InventorySnapshotHero> Heroes { get; } = new(StringComparer.Ordinal);
         public Dictionary<string, long> Rentals { get; } = new(StringComparer.Ordinal);
         public Dictionary<string, bool> Passes { get; } = new(StringComparer.Ordinal);
-        public Dictionary<TREASURE_GRADE_TYPE, int> TreasureCounts { get; } = new();
+        public Dictionary<ITEM_GRADE_TYPE, int> TreasureCounts { get; } = new();
         public int TreasureCurrentLevel { get; set; } = 1;
         public int TreasureCurrentExp { get; set; }
         public long LastStaminaUpdateUtcMs { get; set; }

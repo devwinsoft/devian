@@ -6,16 +6,6 @@ import { IEntity, IEntityKey, CBigInt } from '@devian/core';
 
 // ========== Enums (gen:) ==========
 
-/** Auto-generated enum from TB_EQUIP_SLOT.equip_type */
-export enum EQUIP_TYPE {
-    BOW = 0,
-    GLOVES = 1,
-    HELMET = 2,
-    RING = 3,
-    SHIELD = 4,
-    SWORD = 5,
-}
-
 /** Auto-generated enum from TB_GAME_ERROR.id */
 export enum GAME_ERROR_TYPE {
     SUCCESS = 0,
@@ -205,6 +195,16 @@ export enum GAME_ERROR_TYPE {
     VERSION_CHECK_URL_NOT_CONFIGURED = 184,
 }
 
+/** Auto-generated enum from TB_EQUIP_SLOT.equip_type */
+export enum EQUIP_TYPE {
+    BOW = 0,
+    GLOVES = 1,
+    HELMET = 2,
+    RING = 3,
+    SHIELD = 4,
+    SWORD = 5,
+}
+
 // ================================================================
 // Contracts
 // ================================================================
@@ -273,53 +273,8 @@ export enum GAME_MESSAGE_OP_TYPE {
     LTE = 3,
 }
 
-/** STAT_TYPE enum */
-export enum STAT_TYPE {
-    NONE = 0,
-    AFFECT_ATK_PHY_ADD = 1001,
-    AFFECT_ATK_PHY_PER = 1002,
-    AFFECT_ATK_MAG_ADD = 1003,
-    AFFECT_ATK_MAG_PER = 1004,
-    AFFECT_DEF_PHY_ADD = 1005,
-    AFFECT_DEF_PHY_PER = 1006,
-    AFFECT_DEF_MAG_ADD = 1007,
-    AFFECT_DEF_MAG_PER = 1008,
-    AFFECT_HP_ADD = 1009,
-    AFFECT_HP_PER = 1010,
-    ITEM_ATK_PHY = 2001,
-    ITEM_ATK_MAG = 2002,
-    ITEM_DEF_PHY = 2003,
-    ITEM_DEF_MAG = 2004,
-    ITEM_AMOUNT = 2005,
-    ITEM_HP = 2006,
-    ITEM_LEVEL = 2007,
-    UNIT_ATK_PHY = 3001,
-    UNIT_ATK_MAG = 3002,
-    UNIT_DEF_PHY = 3003,
-    UNIT_DEF_MAG = 3004,
-    UNIT_HP = 3005,
-    UNIT_LEVEL = 3006,
-}
-
-/** UNIT_TYPE enum */
-export enum UNIT_TYPE {
-    NONE = 0,
-    HERO = 1,
-    MONSTER = 2,
-}
-
-/** UNIT_HERO_TYPE enum */
-export enum UNIT_HERO_TYPE {
-    NONE = 0,
-    HERO_001 = 1,
-    HERO_002 = 2,
-    HERO_003 = 3,
-    HERO_004 = 4,
-    HERO_005 = 5,
-}
-
-/** SLOT_TYPE enum */
-export enum SLOT_TYPE {
+/** EQUIP_SLOT_TYPE enum */
+export enum EQUIP_SLOT_TYPE {
     NONE = 0,
     HAND_MAIN = 4001,
     HAND_SUB = 4002,
@@ -327,6 +282,13 @@ export enum SLOT_TYPE {
     GLOVES = 4004,
     RING_LEFT = 4005,
     RING_RIGHT = 4006,
+}
+
+/** INVENTORY_LIST_CHANGE_TYPE enum */
+export enum INVENTORY_LIST_CHANGE_TYPE {
+    NONE = 0,
+    ADD = 1,
+    REMOVE = 2,
 }
 
 /** INVENTORY_MESSAGE_TYPE enum */
@@ -347,13 +309,6 @@ export enum INVENTORY_MESSAGE_TYPE {
     TREASURE_STATE_CHANGED = 13,
 }
 
-/** INVENTORY_LIST_CHANGE_TYPE enum */
-export enum INVENTORY_LIST_CHANGE_TYPE {
-    NONE = 0,
-    ADD = 1,
-    REMOVE = 2,
-}
-
 /** INVENTORY_SNAPSHOT_CHANGE_REASON enum */
 export enum INVENTORY_SNAPSHOT_CHANGE_REASON {
     NONE = 0,
@@ -361,6 +316,16 @@ export enum INVENTORY_SNAPSHOT_CHANGE_REASON {
     CLEARED = 2,
     IMPORTED = 3,
     MIGRATED = 4,
+}
+
+/** ITEM_GRADE_TYPE enum */
+export enum ITEM_GRADE_TYPE {
+    NONE = 0,
+    COMMON = 1,
+    RARE = 2,
+    EPIC = 3,
+    LEGENDARY = 4,
+    MYTHIC = 5,
 }
 
 /** ADVERTISE_FORMAT enum */
@@ -377,13 +342,6 @@ export enum ADVERTISE_PROVIDER {
     MOCK = 1,
 }
 
-/** LEADERBOARD_MODE enum */
-export enum LEADERBOARD_MODE {
-    NONE = 0,
-    NORMAL = 1,
-    HARDCORE = 2,
-}
-
 /** CURRENCY_TYPE enum */
 export enum CURRENCY_TYPE {
     ADS = 0,
@@ -398,6 +356,21 @@ export enum CURRENCY_TYPE {
     STAMINA = 9,
 }
 
+/** LEADERBOARD_MODE enum */
+export enum LEADERBOARD_MODE {
+    NONE = 0,
+    NORMAL = 1,
+    HARDCORE = 2,
+}
+
+/** PURCHASE_KIND enum */
+export enum PURCHASE_KIND {
+    CONSUMABLE = 0,
+    SUBSCRIPTION = 1,
+    PASS = 2,
+    RENTAL = 3,
+}
+
 /** REWARD_TYPE enum */
 export enum REWARD_TYPE {
     CARD = 0,
@@ -408,24 +381,6 @@ export enum REWARD_TYPE {
     RENTAL = 4,
     PASS = 5,
     TREASURE = 6,
-}
-
-/** TREASURE_GRADE_TYPE enum */
-export enum TREASURE_GRADE_TYPE {
-    NONE = 0,
-    COMMON = 1,
-    RARE = 2,
-    EPIC = 3,
-    LEGENDARY = 4,
-    MYTHIC = 5,
-}
-
-/** PURCHASE_KIND enum */
-export enum PURCHASE_KIND {
-    CONSUMABLE = 0,
-    SUBSCRIPTION = 1,
-    PASS = 2,
-    RENTAL = 3,
 }
 
 /** MISSION_TYPE enum */
@@ -482,6 +437,51 @@ export enum SHOP_PRODUCT_CHEST_TYPE {
     TEN = 3,
 }
 
+/** UNIT_HERO_TYPE enum */
+export enum UNIT_HERO_TYPE {
+    NONE = 0,
+    HERO_001 = 1,
+    HERO_002 = 2,
+    HERO_003 = 3,
+    HERO_004 = 4,
+    HERO_005 = 5,
+}
+
+/** UNIT_STAT_TYPE enum */
+export enum UNIT_STAT_TYPE {
+    NONE = 0,
+    AFFECT_ATK_PHY_ADD = 1001,
+    AFFECT_ATK_PHY_PER = 1002,
+    AFFECT_ATK_MAG_ADD = 1003,
+    AFFECT_ATK_MAG_PER = 1004,
+    AFFECT_DEF_PHY_ADD = 1005,
+    AFFECT_DEF_PHY_PER = 1006,
+    AFFECT_DEF_MAG_ADD = 1007,
+    AFFECT_DEF_MAG_PER = 1008,
+    AFFECT_HP_ADD = 1009,
+    AFFECT_HP_PER = 1010,
+    ITEM_ATK_PHY = 2001,
+    ITEM_ATK_MAG = 2002,
+    ITEM_DEF_PHY = 2003,
+    ITEM_DEF_MAG = 2004,
+    ITEM_AMOUNT = 2005,
+    ITEM_HP = 2006,
+    ITEM_LEVEL = 2007,
+    UNIT_ATK_PHY = 3001,
+    UNIT_ATK_MAG = 3002,
+    UNIT_DEF_PHY = 3003,
+    UNIT_DEF_MAG = 3004,
+    UNIT_HP = 3005,
+    UNIT_LEVEL = 3006,
+}
+
+/** UNIT_TYPE enum */
+export enum UNIT_TYPE {
+    NONE = 0,
+    HERO = 1,
+    MONSTER = 2,
+}
+
 /** UserProfile interface */
 export interface UserProfile extends IEntity {
     id: number;
@@ -534,13 +534,6 @@ export interface REWARD extends IEntityKey<number> {
     getKey(): number;
 }
 
-export interface EQUIP_SLOT extends IEntityKey<EQUIP_TYPE> {
-    equip_type: EQUIP_TYPE;
-    allowed_slots: SLOT_TYPE[];
-    two_handed: boolean;
-    getKey(): EQUIP_TYPE;
-}
-
 export interface GAME_ERROR extends IEntityKey<GAME_ERROR_TYPE> {
     id: GAME_ERROR_TYPE;
     msg_key: string;
@@ -567,15 +560,22 @@ export interface ITEM_HERO_LEVEL extends IEntityKey<number> {
     index: number;
     item_id: string;
     item_level: number;
-    stat_type00: STAT_TYPE;
+    stat_type00: UNIT_STAT_TYPE;
     stat_value00: number;
-    stat_type01: STAT_TYPE;
+    stat_type01: UNIT_STAT_TYPE;
     stat_value01: number;
-    stat_type02: STAT_TYPE;
+    stat_type02: UNIT_STAT_TYPE;
     stat_value02: number;
-    stat_type03: STAT_TYPE;
+    stat_type03: UNIT_STAT_TYPE;
     stat_value03: number;
     getKey(): number;
+}
+
+export interface EQUIP_SLOT extends IEntityKey<EQUIP_TYPE> {
+    equip_type: EQUIP_TYPE;
+    allowed_slots: EQUIP_SLOT_TYPE[];
+    two_handed: boolean;
+    getKey(): EQUIP_TYPE;
 }
 
 export interface ITEM_EQUIP extends IEntityKey<string> {
@@ -583,6 +583,7 @@ export interface ITEM_EQUIP extends IEntityKey<string> {
     name_id: string;
     desc_id: string;
     equip_type: EQUIP_TYPE;
+    upgrade_id: string;
     getKey(): string;
 }
 
@@ -590,13 +591,13 @@ export interface ITEM_EQUIP_LEVEL extends IEntityKey<number> {
     index: number;
     item_id: string;
     item_level: number;
-    stat_type00: STAT_TYPE;
+    stat_type00: UNIT_STAT_TYPE;
     stat_value00: number;
-    stat_type01: STAT_TYPE;
+    stat_type01: UNIT_STAT_TYPE;
     stat_value01: number;
-    stat_type02: STAT_TYPE;
+    stat_type02: UNIT_STAT_TYPE;
     stat_value02: number;
-    stat_type03: STAT_TYPE;
+    stat_type03: UNIT_STAT_TYPE;
     stat_value03: number;
     getKey(): number;
 }
@@ -612,13 +613,13 @@ export interface ITEM_CARD_LEVEL extends IEntityKey<number> {
     index: number;
     item_id: string;
     item_level: number;
-    stat_type00: STAT_TYPE;
+    stat_type00: UNIT_STAT_TYPE;
     stat_value00: number;
-    stat_type01: STAT_TYPE;
+    stat_type01: UNIT_STAT_TYPE;
     stat_value01: number;
-    stat_type02: STAT_TYPE;
+    stat_type02: UNIT_STAT_TYPE;
     stat_value02: number;
-    stat_type03: STAT_TYPE;
+    stat_type03: UNIT_STAT_TYPE;
     stat_value03: number;
     getKey(): number;
 }
@@ -841,14 +842,14 @@ export interface AFFECT extends IEntityKey<string> {
 
 export interface TREASURE_CHEST extends IEntityKey<number> {
     level: number;
-    treasure_grade_type: TREASURE_GRADE_TYPE;
+    treasure_grade_type: ITEM_GRADE_TYPE;
     max_exp: number;
     getKey(): number;
 }
 
 export interface TREASURE_REWARD extends IEntityKey<number> {
     index: number;
-    treasure_grade_type: TREASURE_GRADE_TYPE;
+    treasure_grade_type: ITEM_GRADE_TYPE;
     level: number;
     condition_msg_id: string;
     condition_op: GAME_MESSAGE_OP_TYPE;
@@ -992,52 +993,6 @@ export class TB_REWARD {
             const row = JSON.parse(line) as REWARD;
             this._list.push(row);
             this._dict.set(row.reward_num, row);
-        }
-    }
-
-    static saveToJson(): string {
-        return this._list.map(r => JSON.stringify(r)).join('\n');
-    }
-}
-
-export class TB_EQUIP_SLOT {
-    private static _dict: Map<EQUIP_TYPE, EQUIP_SLOT> = new Map();
-    private static _list: EQUIP_SLOT[] = [];
-
-    static get count(): number { return this._list.length; }
-
-    static clear(): void {
-        this._dict.clear();
-        this._list = [];
-    }
-
-    static getAll(): readonly EQUIP_SLOT[] { return this._list; }
-
-    static get(key: EQUIP_TYPE): EQUIP_SLOT | undefined {
-        return this._dict.get(key);
-    }
-
-    static has(key: EQUIP_TYPE): boolean {
-        return this._dict.has(key);
-    }
-
-    static find(key: EQUIP_TYPE): EQUIP_SLOT {
-        const row = this._dict.get(key);
-        if (!row) throw new Error(`TB_EQUIP_SLOT: key ${key} not found`);
-        return row;
-    }
-
-    static tryFind(key: EQUIP_TYPE): EQUIP_SLOT | undefined {
-        return this._dict.get(key);
-    }
-
-    static loadFromJson(json: string): void {
-        this.clear();
-        const lines = json.split('\n').filter(l => l.trim());
-        for (const line of lines) {
-            const row = JSON.parse(line) as EQUIP_SLOT;
-            this._list.push(row);
-            this._dict.set(row.equip_type, row);
         }
     }
 
@@ -1192,6 +1147,52 @@ export class TB_ITEM_HERO_LEVEL {
             const row = JSON.parse(line) as ITEM_HERO_LEVEL;
             this._list.push(row);
             this._dict.set(row.index, row);
+        }
+    }
+
+    static saveToJson(): string {
+        return this._list.map(r => JSON.stringify(r)).join('\n');
+    }
+}
+
+export class TB_EQUIP_SLOT {
+    private static _dict: Map<EQUIP_TYPE, EQUIP_SLOT> = new Map();
+    private static _list: EQUIP_SLOT[] = [];
+
+    static get count(): number { return this._list.length; }
+
+    static clear(): void {
+        this._dict.clear();
+        this._list = [];
+    }
+
+    static getAll(): readonly EQUIP_SLOT[] { return this._list; }
+
+    static get(key: EQUIP_TYPE): EQUIP_SLOT | undefined {
+        return this._dict.get(key);
+    }
+
+    static has(key: EQUIP_TYPE): boolean {
+        return this._dict.has(key);
+    }
+
+    static find(key: EQUIP_TYPE): EQUIP_SLOT {
+        const row = this._dict.get(key);
+        if (!row) throw new Error(`TB_EQUIP_SLOT: key ${key} not found`);
+        return row;
+    }
+
+    static tryFind(key: EQUIP_TYPE): EQUIP_SLOT | undefined {
+        return this._dict.get(key);
+    }
+
+    static loadFromJson(json: string): void {
+        this.clear();
+        const lines = json.split('\n').filter(l => l.trim());
+        for (const line of lines) {
+            const row = JSON.parse(line) as EQUIP_SLOT;
+            this._list.push(row);
+            this._dict.set(row.equip_type, row);
         }
     }
 

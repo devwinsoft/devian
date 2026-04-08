@@ -30,9 +30,9 @@ Treasure 시스템의 모듈 경계와 하드룰을 정의한다.
 - `TREASURE_REWARD`: treasure_grade_type -> 조건부 reward row[] (조건 필터 후 best level 1개 선택)
 - 호출자(Shop, Mission, Ads 등)는 위 테이블을 직접 파싱하지 않는다.
 
-### 4) `TREASURE_GRADE_TYPE`은 Generated enum이며 chest 등급 키다
+### 4) `ITEM_GRADE_TYPE`은 Generated enum이며 chest 등급 키다
 
-- 입력 정본: `input/Domains/Game/ENUM_META.json`
+- 입력 정본: `input/Domains/Game/ENUM_ITEM.json`
 - enum 값: `NONE`, `COMMON`, `RARE`, `EPIC`, `LEGENDARY`, `MYTHIC`
 - `UNCOMMON`은 사용하지 않는다.
 
@@ -74,5 +74,5 @@ Treasure 시스템의 모듈 경계와 하드룰을 정의한다.
 ## Client API (target)
 
 `TreasureManager`
-- `OpenCollectedChests(TREASURE_GRADE_TYPE gradeType)` -> `GameResult`
+- `OpenCollectedChests(ITEM_GRADE_TYPE gradeType)` -> `GameResult`
 - `OpenCurrentChest()` -> `GameResult`

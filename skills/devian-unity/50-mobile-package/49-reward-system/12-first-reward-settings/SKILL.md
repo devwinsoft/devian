@@ -67,7 +67,7 @@ AppliesTo: v10
   - `HERO` → `ITEM_HERO_ID` — `TB_ITEM_HERO` PK(`Item_id`) 목록
   - `RENTAL` → `ITEM_RENTAL_ID` — `TB_ITEM_RENTAL` PK(`Item_id`) 목록
   - `PASS` → `ITEM_PASS_ID` — `TB_ITEM_PASS` PK(`Item_id`) 목록
-  - `TREASURE` → `TREASURE_GRADE_TYPE` enum 팝업 (`NONE` 제외)
+  - `TREASURE` → `ITEM_GRADE_TYPE` enum 팝업 (`NONE` 제외)
   - 테이블 미로드 시 `AssetManager.FindAssets` → `LoadFromNdjson`으로 자동 로드 (Selector 패턴)
   - 로드 후에도 빈 경우 텍스트 입력 폴백
 - 각 줄의 오른쪽 `삭제` 버튼으로 해당 행 제거

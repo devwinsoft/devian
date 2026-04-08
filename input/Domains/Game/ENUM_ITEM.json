@@ -1,6 +1,26 @@
 {
   "enums": [
     {
+      "name": "EQUIP_SLOT_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "HAND_MAIN", "value": 4001},
+        {"name": "HAND_SUB", "value": 4002},
+        {"name": "HEAD", "value": 4003},
+        {"name": "GLOVES", "value": 4004},
+        {"name": "RING_LEFT", "value": 4005},
+        {"name": "RING_RIGHT", "value": 4006}
+      ]
+    },
+    {
+      "name": "INVENTORY_LIST_CHANGE_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "ADD", "value": 1},
+        {"name": "REMOVE", "value": 2}
+      ]
+    },
+    {
       "name": "INVENTORY_MESSAGE_TYPE",
       "values": [
         {"name": "NONE", "value": 0},
@@ -20,14 +40,6 @@
       ]
     },
     {
-      "name": "INVENTORY_LIST_CHANGE_TYPE",
-      "values": [
-        {"name": "NONE", "value": 0},
-        {"name": "ADD", "value": 1},
-        {"name": "REMOVE", "value": 2}
-      ]
-    },
-    {
       "name": "INVENTORY_SNAPSHOT_CHANGE_REASON",
       "values": [
         {"name": "NONE", "value": 0},
@@ -35,6 +47,17 @@
         {"name": "CLEARED", "value": 2},
         {"name": "IMPORTED", "value": 3},
         {"name": "MIGRATED", "value": 4}
+      ]
+    },
+    {
+      "name": "ITEM_GRADE_TYPE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "COMMON", "value": 1},
+        {"name": "RARE", "value": 2},
+        {"name": "EPIC", "value": 3},
+        {"name": "LEGENDARY", "value": 4},
+        {"name": "MYTHIC", "value": 5}
       ]
     }
   ]

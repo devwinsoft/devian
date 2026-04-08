@@ -221,14 +221,14 @@ namespace Devian
 
         static GameResult addEquips(
             AbilityUnitHero ability,
-            System.Collections.Generic.IReadOnlyDictionary<SLOT_TYPE, AbilityItemEquip> equips)
+            System.Collections.Generic.IReadOnlyDictionary<EQUIP_SLOT_TYPE, AbilityItemEquip> equips)
         {
             if (ability == null || equips == null)
                 return GameResult.Ok();
 
             foreach (var kv in equips)
             {
-                if (kv.Key == SLOT_TYPE.NONE)
+                if (kv.Key == EQUIP_SLOT_TYPE.NONE)
                 {
                     return GameResult.Failure(
                         GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,

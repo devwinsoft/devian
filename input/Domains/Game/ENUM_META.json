@@ -17,14 +17,6 @@
       ]
     },
     {
-      "name": "LEADERBOARD_MODE",
-      "values": [
-        {"name": "NONE", "value": 0},
-        {"name": "NORMAL", "value": 1},
-        {"name": "HARDCORE", "value": 2}
-      ]
-    },
-    {
       "name": "CURRENCY_TYPE",
       "values": [
         {"name": "ADS", "value": 0},
@@ -40,6 +32,23 @@
       ]
     },
     {
+      "name": "LEADERBOARD_MODE",
+      "values": [
+        {"name": "NONE", "value": 0},
+        {"name": "NORMAL", "value": 1},
+        {"name": "HARDCORE", "value": 2}
+      ]
+    },
+    {
+      "name": "PURCHASE_KIND",
+      "values": [
+        {"name": "CONSUMABLE", "value": 0},
+        {"name": "SUBSCRIPTION", "value": 1},
+        {"name": "PASS", "value": 2},
+        {"name": "RENTAL", "value": 3}
+      ]
+    },
+    {
       "name": "REWARD_TYPE",
       "values": [
         {"name": "CARD", "value": 0},
@@ -50,26 +59,6 @@
         {"name": "RENTAL", "value": 4},
         {"name": "PASS", "value": 5},
         {"name": "TREASURE", "value": 6}
-      ]
-    },
-    {
-      "name": "TREASURE_GRADE_TYPE",
-      "values": [
-        {"name": "NONE", "value": 0},
-        {"name": "COMMON", "value": 1},
-        {"name": "RARE", "value": 2},
-        {"name": "EPIC", "value": 3},
-        {"name": "LEGENDARY", "value": 4},
-        {"name": "MYTHIC", "value": 5}
-      ]
-    },
-    {
-      "name": "PURCHASE_KIND",
-      "values": [
-        {"name": "CONSUMABLE", "value": 0},
-        {"name": "SUBSCRIPTION", "value": 1},
-        {"name": "PASS", "value": 2},
-        {"name": "RENTAL", "value": 3}
       ]
     }
   ]

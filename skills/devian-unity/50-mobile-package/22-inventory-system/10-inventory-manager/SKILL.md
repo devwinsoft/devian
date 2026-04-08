@@ -50,10 +50,10 @@ public sealed class InventoryManager : CompoSingleton<InventoryManager>
     public GameResult LevelUpCard(string item_id) { ... }
     public GameResult LevelUpHero(string item_id) { ... }
     public GameResult LevelUpEquip(string item_uid) { ... }
-    public GameResult SetHeroEquip(string heroId, SLOT_TYPE slotType, string equipUid) { ... }
-    public GameResult RemoveHeroEquip(string heroId, SLOT_TYPE slotType) { ... }
+    public GameResult SetHeroEquip(string heroId, EQUIP_SLOT_TYPE slotType, string equipUid) { ... }
+    public GameResult RemoveHeroEquip(string heroId, EQUIP_SLOT_TYPE slotType) { ... }
     public GameResult ApplyRental(string item_id) { ... }
-    public GameResult ApplyTreasure(TREASURE_GRADE_TYPE gradeType, int amount) { ... }
+    public GameResult ApplyTreasure(ITEM_GRADE_TYPE gradeType, int amount) { ... }
     public GameResult SetPassOwnership(string item_id, bool owned) { ... }
     public GameResult RemovePassOwnership(string item_id) { ... }
 
@@ -64,7 +64,7 @@ public sealed class InventoryManager : CompoSingleton<InventoryManager>
     public GameResult RevokeMaterial(string item_id, int amount) { ... }
     public GameResult RevokeHero(string item_id, int amount) { ... }
     public GameResult RevokeRental(string item_id) { ... }
-    public GameResult RevokeTreasure(TREASURE_GRADE_TYPE gradeType, int amount) { ... }
+    public GameResult RevokeTreasure(ITEM_GRADE_TYPE gradeType, int amount) { ... }
 
     // ── Query API ──
     public long GetCurrencyAmount(CURRENCY_TYPE currency_type) { ... }
@@ -86,7 +86,7 @@ public sealed class InventoryManager : CompoSingleton<InventoryManager>
     public long GetRentalRemainingMs(string item_id) { ... }
     public IReadOnlyDictionary<string, bool> GetPasses() { ... }
     public bool HasPass(string item_id) { ... }
-    public int GetTreasureCount(TREASURE_GRADE_TYPE gradeType) { ... }
+    public int GetTreasureCount(ITEM_GRADE_TYPE gradeType) { ... }
 
     // ── Spend API ──
     public bool HasSufficientCurrency(CURRENCY_TYPE currencyType, int amount) { ... }
@@ -123,11 +123,11 @@ CompoSingleton<InventoryManager>.Instance
 - 타입별 구체 API로 인벤토리 상태를 변경한다.
   - `ApplyCurrency`: 잔고 누적
   - `ApplyEquip`: 새 `itemUid`(GUID)로 AbilityItemEquip 인스턴스 생성, amount 횟수만큼
-  - `ApplyCard`: AbilityItemCard 추가/갱신 (`STAT_TYPE.ITEM_AMOUNT` 누적)
+  - `ApplyCard`: AbilityItemCard 추가/갱신 (`UNIT_STAT_TYPE.ITEM_AMOUNT` 누적)
   - `AddCardAmount`: 카드 수량 signed delta 변경 (+적용 / -회수) + 메시지 발행
-  - `ApplyMaterial`: AbilityItemMaterial 추가/갱신 (`STAT_TYPE.ITEM_AMOUNT` 누적)
+  - `ApplyMaterial`: AbilityItemMaterial 추가/갱신 (`UNIT_STAT_TYPE.ITEM_AMOUNT` 누적)
   - `AddMaterialAmount`: 재료 수량 signed delta 변경 (+적용 / -회수) + 메시지 발행
-  - `ApplyHero`: AbilityItemHero 추가/갱신 (`STAT_TYPE.ITEM_AMOUNT` 누적)
+  - `ApplyHero`: AbilityItemHero 추가/갱신 (`UNIT_STAT_TYPE.ITEM_AMOUNT` 누적)
   - `AddHeroAmount`: 영웅 수량 signed delta 변경 (+적용 / -회수) + 메시지 발행
   - `LevelUpCard`: 카드 runtime level row를 다음 단계로 교체하고 `ITEM_CARD_CHANGED`를 발행
   - `LevelUpHero`: 영웅 runtime level row를 다음 단계로 교체하고 `ITEM_HERO_CHANGED`를 발행
@@ -184,12 +184,12 @@ CompoSingleton<InventoryManager>.Instance
 - `LevelUpCard(string item_id) -> GameResult` — 현재 카드 runtime의 level stat을 제거하고 다음 `ITEM_CARD_LEVEL` row stat을 적용
 - `LevelUpHero(string item_id) -> GameResult` — 현재 영웅 runtime의 level stat을 제거하고 다음 `ITEM_HERO_LEVEL` row stat을 적용
 - `LevelUpEquip(string item_uid) -> GameResult` — 현재 장비 runtime의 level stat을 제거하고 다음 `ITEM_EQUIP_LEVEL` row stat을 적용
-- `SetHeroEquip(string heroId, SLOT_TYPE slotType, string equipUid) -> GameResult` — `EQUIP_SLOT` 규칙 검증 후 장비 장착. two-handed main 장착 시 기존 `HAND_SUB`는 자동 해제
-- `RemoveHeroEquip(string heroId, SLOT_TYPE slotType) -> GameResult` — hero slot 기준 장비 해제
+- `SetHeroEquip(string heroId, EQUIP_SLOT_TYPE slotType, string equipUid) -> GameResult` — `EQUIP_SLOT` 규칙 검증 후 장비 장착. two-handed main 장착 시 기존 `HAND_SUB`는 자동 해제
+- `RemoveHeroEquip(string heroId, EQUIP_SLOT_TYPE slotType) -> GameResult` — hero slot 기준 장비 해제
 - `ApplyRental(string item_id) -> GameResult` — `_storage.SetRental(id, max(currentExpiry, now)+30days)`
 - `SetPassOwnership(string item_id, bool owned) -> GameResult` — `_storage.SetPass(item_id, owned)` + `PASS_OWNERSHIP_CHANGED`
 - `RemovePassOwnership(string item_id) -> GameResult` — `_storage.RemovePass(item_id)` + `PASS_OWNERSHIP_CHANGED`
-- `ApplyTreasure(TREASURE_GRADE_TYPE gradeType, int amount) -> GameResult` — `_storage.AddTreasure(gradeType, amount)` + `TREASURE_STATE_CHANGED`
+- `ApplyTreasure(ITEM_GRADE_TYPE gradeType, int amount) -> GameResult` — `_storage.AddTreasure(gradeType, amount)` + `TREASURE_STATE_CHANGED`
 - `HasSufficientCurrency(CURRENCY_TYPE currencyType, int amount) -> bool` — 잔고 충분 여부 확인 (FREE/ADS는 항상 false)
 - `TrySpendCurrency(CURRENCY_TYPE currencyType, int amount, out CurrencySpendReceipt receipt) -> bool` — shop 구매용 currency spend + `CURRENCY_CHANGED`
 - `RollbackCurrencySpend(CurrencySpendReceipt receipt)` — spend rollback + `CURRENCY_CHANGED`
@@ -212,7 +212,7 @@ CompoSingleton<InventoryManager>.Instance
 - `RevokeMaterial(string item_id, int amount) -> GameResult` — `material.AddAmount(-amount)` with insufficient validation
 - `RevokeHero(string item_id, int amount) -> GameResult` — `hero.AddAmount(-amount)` with insufficient validation
 - `RevokeRental(string item_id) -> GameResult` — `_storage.RemoveRental(item_id)`
-- `RevokeTreasure(TREASURE_GRADE_TYPE gradeType, int amount) -> GameResult` — `_storage.SetTreasureCount(gradeType, current - amount)`
+- `RevokeTreasure(ITEM_GRADE_TYPE gradeType, int amount) -> GameResult` — `_storage.SetTreasureCount(gradeType, current - amount)`
 
 ### Query
 
@@ -232,13 +232,13 @@ CompoSingleton<InventoryManager>.Instance
 - `GetMaterialAmount(string item_id) -> long` — `AbilityItemMaterial.Amount`
 - `GetHeroes() -> IReadOnlyDictionary<string, AbilityItemHero>` — live read-only 영웅 맵
 - `GetHero(string item_id) -> AbilityItemHero` — itemId 기준 단건 영웅 runtime 조회
-- `GetHeroAmount(string item_id) -> long` — `hero[STAT_TYPE.ITEM_AMOUNT]`
+- `GetHeroAmount(string item_id) -> long` — `hero[UNIT_STAT_TYPE.ITEM_AMOUNT]`
 - `GetRentals() -> IReadOnlyDictionary<string, long>` — live read-only 렌탈 만료 시각 맵
 - `HasActiveRental(string item_id) -> bool`
 - `GetRentalRemainingMs(string item_id) -> long`
 - `GetPasses() -> IReadOnlyDictionary<string, bool>` — live read-only 패스 소유 맵
 - `HasPass(string item_id) -> bool`
-- `GetTreasureCount(TREASURE_GRADE_TYPE gradeType) -> int`
+- `GetTreasureCount(ITEM_GRADE_TYPE gradeType) -> int`
 - `GetTreasureCurrentLevel() -> int`
 - `GetTreasureCurrentExp() -> int`
 - query가 반환하는 runtime은 live object다. 읽기 전용으로만 사용하고 장기 보관/직접 mutation을 금지한다.
@@ -294,11 +294,11 @@ InventorySnapshot CreateSnapshot() { ... }
 
 NOTE:
 - 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `item_id`에 여러 인스턴스가 존재할 수 있다.
-- 카드 수량 SSOT = `AbilityItemCard.Amount` (= `this[STAT_TYPE.ITEM_AMOUNT]`).
-- 재료 수량 SSOT = `AbilityItemMaterial.Amount` (= `this[STAT_TYPE.ITEM_AMOUNT]`).
-- 영웅 수량 SSOT = `AbilityItemHero.Amount` (= `this[STAT_TYPE.ITEM_AMOUNT]`).
+- 카드 수량 SSOT = `AbilityItemCard.Amount` (= `this[UNIT_STAT_TYPE.ITEM_AMOUNT]`).
+- 재료 수량 SSOT = `AbilityItemMaterial.Amount` (= `this[UNIT_STAT_TYPE.ITEM_AMOUNT]`).
+- 영웅 수량 SSOT = `AbilityItemHero.Amount` (= `this[UNIT_STAT_TYPE.ITEM_AMOUNT]`).
 - 카드/재료/영웅은 amount가 0이 되면 runtime을 storage에서 제거한다.
-- 카드/영웅/장비 level SSOT = 각 runtime의 `STAT_TYPE.ITEM_LEVEL` + 대응 `ITEM_*_LEVEL` row 적용 결과다.
+- 카드/영웅/장비 level SSOT = 각 runtime의 `UNIT_STAT_TYPE.ITEM_LEVEL` + 대응 `ITEM_*_LEVEL` row 적용 결과다.
 - `AbilityItemEquip`이 능력치를 관리한다. outgame 장비 장착은 `AbilityItemHero`가 담당한다.
 - ability 인스턴스 생성은 [15-game-ability-factory](../../../21-game-package/15-game-ability-factory/SKILL.md)의 `AbilityItemFactory`를 우선 사용한다.
 - `AbilityBase.AddStat/SetStat/Clear*`, `AbilityItemBase.AddAmount`, `AbilityItemEquip.SetOwner/ClearOwner`는 `GamePackage` internal이다.
@@ -312,7 +312,7 @@ NOTE:
 
 `Devian.Samples.MobilePackage.asmdef`에 포함된 참조:
 - `Devian.Domain.Common` — `EntityId`, `CompoSingleton`
-- `Devian.Domain.Game` — `GameResult`, `GameResult<T>`, `GAME_ERROR_TYPE`, `STAT_TYPE`, `CURRENCY_TYPE`, `TREASURE_GRADE_TYPE`, `INVENTORY_MESSAGE_TYPE` 등
+- `Devian.Domain.Game` — `GameResult`, `GameResult<T>`, `GAME_ERROR_TYPE`, `UNIT_STAT_TYPE`, `CURRENCY_TYPE`, `ITEM_GRADE_TYPE`, `INVENTORY_MESSAGE_TYPE` 등
 
 
 ---

@@ -3,24 +3,24 @@
 Status: ACTIVE
 AppliesTo: v10
 
-**STAT_TYPE enum 정의.** Game 도메인의 `STAT_TYPE` enum 값(카테고리별)을 관리한다.
+**UNIT_STAT_TYPE enum 정의.** Game 도메인의 `UNIT_STAT_TYPE` enum 값(카테고리별)을 관리한다.
 
 ---
 
 ## 1. Overview
 
-`STAT_TYPE`은 Game 도메인 contract에서 빌드 파이프라인으로 생성되는 enum이다.
+`UNIT_STAT_TYPE`은 Game 도메인 contract에서 빌드 파이프라인으로 생성되는 enum이다.
 모든 Ability 시스템([12-game-ability](../12-game-ability/SKILL.md), [devian-unity/21-game-package/12-game-ability](../../../devian-unity/21-game-package/12-game-ability/SKILL.md))의 key로 사용된다.
 
-- 입력: `input/Domains/Game/ENUM_GAME.json`
-- 생성: `Devian.Domain.Game.STAT_TYPE` enum
+- 입력: `input/Domains/Game/ENUM_UNIT.json`
+- 생성: `Devian.Domain.Game.UNIT_STAT_TYPE` enum
 - 네임스페이스: `Devian.Domain.Game`
 
-이 스킬에 카테고리별 STAT_TYPE 값을 추가/관리한다.
+이 스킬에 카테고리별 UNIT_STAT_TYPE 값을 추가/관리한다.
 
 ---
 
-## 2. STAT_TYPE Values
+## 2. UNIT_STAT_TYPE Values
 
 ### Item (1~)
 
@@ -39,13 +39,13 @@ AppliesTo: v10
 
 ---
 
-## 3. ENUM_GAME.json — STAT_TYPE 부분 (SSOT)
+## 3. ENUM_UNIT.json — UNIT_STAT_TYPE 부분 (SSOT)
 
 ```json
 {
   "enums": [
     {
-      "name": "STAT_TYPE",
+      "name": "UNIT_STAT_TYPE",
       "values": [
         { "name": "NONE", "value": 0 },
         { "name": "ITEM_AMOUNT", "value": 1 },
@@ -65,23 +65,23 @@ AppliesTo: v10
 
 ### AbilityItemCard / AbilityItemMaterial 수량 (ITEM_AMOUNT)
 
-`AbilityItemCard[STAT_TYPE.ITEM_AMOUNT]`, `AbilityItemMaterial[STAT_TYPE.ITEM_AMOUNT]`를 사용한다.
+`AbilityItemCard[UNIT_STAT_TYPE.ITEM_AMOUNT]`, `AbilityItemMaterial[UNIT_STAT_TYPE.ITEM_AMOUNT]`를 사용한다.
 
 ```csharp
 // 수량 읽기
-int amount = abilityCard.Amount;      // = this[STAT_TYPE.ITEM_AMOUNT]
+int amount = abilityCard.Amount;      // = this[UNIT_STAT_TYPE.ITEM_AMOUNT]
 int matAmount = abilityMaterial.Amount;
 
 // 수량 누적
-abilityCard.AddAmount(delta);         // = AddStat(STAT_TYPE.ITEM_AMOUNT, delta)
+abilityCard.AddAmount(delta);         // = AddStat(UNIT_STAT_TYPE.ITEM_AMOUNT, delta)
 abilityMaterial.AddAmount(delta);
 ```
 
-- `AbilityBase.mStats`의 `STAT_TYPE.ITEM_AMOUNT` 값이 카드/재료 수량 SSOT이다.
+- `AbilityBase.mStats`의 `UNIT_STAT_TYPE.ITEM_AMOUNT` 값이 카드/재료 수량 SSOT이다.
 
 ### AbilityItemHero 수량 (ITEM_AMOUNT)
 
-`AbilityItemHero[STAT_TYPE.ITEM_AMOUNT]`를 사용한다.
+`AbilityItemHero[UNIT_STAT_TYPE.ITEM_AMOUNT]`를 사용한다.
 
 ```csharp
 // 수량 읽기
@@ -112,14 +112,14 @@ hero.RemoveEquip(slotNumber);
 
 ## 5. Hard Rules
 
-- `STAT_TYPE`은 Generated enum이다. 수동 정의 금지.
-- 새 STAT_TYPE 값 추가 시 이 스킬 → `ENUM_GAME.json` → 빌드 순서로 진행한다.
+- `UNIT_STAT_TYPE`은 Generated enum이다. 수동 정의 금지.
+- 새 UNIT_STAT_TYPE 값 추가 시 이 스킬 → `ENUM_UNIT.json` → 빌드 순서로 진행한다.
 - value 번호는 카테고리별로 범위를 관리한다 (충돌 방지).
 
 ---
 
 ## 6. Related
 
-- [12-game-ability](../12-game-ability/SKILL.md) — AbilityBase, AbilityItemEquip (STAT_TYPE 소비자)
+- [12-game-ability](../12-game-ability/SKILL.md) — AbilityBase, AbilityItemEquip (UNIT_STAT_TYPE 소비자)
 - [devian-unity/21-game-package/12-game-ability](../../../devian-unity/21-game-package/12-game-ability/SKILL.md) — Unity GamePackage Ability addon
 - [11-game-tables](../11-game-tables/SKILL.md) — Game 도메인 테이블 정의

@@ -5,7 +5,7 @@ using Devian;
 using Devian.Domain.Common;
 using Devian.Domain.Game;
 
-public class LobbySettingPopup : UIPopupFrameBase
+public class UILobbySettingPopup : UIPopupFrameBase
 {
 
     public void OnClick_DVN_Import()

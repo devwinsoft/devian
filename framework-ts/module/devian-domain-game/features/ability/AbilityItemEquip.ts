@@ -1,4 +1,4 @@
-import { EQUIP_TYPE, ITEM_EQUIP, ITEM_EQUIP_LEVEL, SLOT_TYPE } from '../../Generated/Game.g';
+import { EQUIP_TYPE, ITEM_EQUIP, ITEM_EQUIP_LEVEL, EQUIP_SLOT_TYPE } from '../../Generated/Game.g';
 import { AbilityItemBase } from './AbilityItemBase';
 
 export class AbilityItemEquip extends AbilityItemBase {
@@ -6,14 +6,14 @@ export class AbilityItemEquip extends AbilityItemBase {
     private mLevelTable: ITEM_EQUIP_LEVEL | null = null;
     private mItemUid: string = '';
     private mOwnerUnitId: string = '';
-    private mOwnerSlotType: SLOT_TYPE = SLOT_TYPE.NONE;
+    private mOwnerSlotType: EQUIP_SLOT_TYPE = EQUIP_SLOT_TYPE.NONE;
 
     get itemUid(): string { return this.mItemUid; }
     get itemId(): string { return this.mTable?.item_id ?? ''; }
     get equipType(): EQUIP_TYPE { return this.mTable?.equip_type ?? 0; }
     get ownerUnitId(): string { return this.mOwnerUnitId; }
-    get ownerSlotType(): SLOT_TYPE { return this.mOwnerSlotType; }
-    get isEquipped(): boolean { return this.mOwnerSlotType !== SLOT_TYPE.NONE; }
+    get ownerSlotType(): EQUIP_SLOT_TYPE { return this.mOwnerSlotType; }
+    get isEquipped(): boolean { return this.mOwnerSlotType !== EQUIP_SLOT_TYPE.NONE; }
 
     init(table: ITEM_EQUIP, levelTable: ITEM_EQUIP_LEVEL, itemUid: string): void {
         this.mTable = table;
@@ -28,14 +28,14 @@ export class AbilityItemEquip extends AbilityItemBase {
         );
     }
 
-    setOwner(unitId: string, slotType: SLOT_TYPE): void {
+    setOwner(unitId: string, slotType: EQUIP_SLOT_TYPE): void {
         this.mOwnerUnitId = unitId;
         this.mOwnerSlotType = slotType;
     }
 
     clearOwner(): void {
         this.mOwnerUnitId = '';
-        this.mOwnerSlotType = SLOT_TYPE.NONE;
+        this.mOwnerSlotType = EQUIP_SLOT_TYPE.NONE;
     }
 
     clone(): AbilityItemEquip {

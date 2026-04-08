@@ -3,19 +3,18 @@
 Status: ACTIVE
 AppliesTo: v10
 
-`ITEM_EQUIP.equip_type`와 `GameConfigTable.xlsx.EQUIP_SLOT`를 연결해 outgame/preview 장비 슬롯 규칙을 정의한다.
+`ITEM_EQUIP.equip_type`와 `ItemTable.xlsx.EQUIP_SLOT`를 연결해 outgame/preview 장비 슬롯 규칙을 정의한다.
 
 ---
 
 ## 1. SSOT
 
-- enum 정본: `input/Domains/Game/ENUM_GAME.json`
-  - `SLOT_TYPE`
-  - `SLOT_TYPE.NONE = 0`
-- 테이블 정본: `input/Domains/Game/GameConfigTable.xlsx`
+- enum 정본: `input/Domains/Game/ENUM_ITEM.json`
+  - `EQUIP_SLOT_TYPE`
+  - `EQUIP_SLOT_TYPE.NONE = 0`
+- 테이블 정본: `input/Domains/Game/ItemTable.xlsx`
   - `EQUIP_SLOT`
   - columns: `equip_type`, `allowed_slots`, `two_handed`
-- 장비 row 정본: `input/Domains/Game/ItemTable.xlsx`
   - `ITEM_EQUIP.equip_type`
 
 Generated output은 `Game.g.cs`, `Game.g.ts`, `EQUIP_SLOT.json`, `ITEM_EQUIP.json`으로 동기화된다.
@@ -33,7 +32,7 @@ Generated output은 `Game.g.cs`, `Game.g.ts`, `EQUIP_SLOT.json`, `ITEM_EQUIP.jso
   - `EquipType`
   - `OwnerSlotType`
 - `AbilityItemHero`
-  - `Dictionary<SLOT_TYPE, AbilityItemEquip>`
+  - `Dictionary<EQUIP_SLOT_TYPE, AbilityItemEquip>`
   - internal `_SetEquip(equip, slotType)`
   - internal `_RemoveEquip(slotType)`
 - `AbilityUnitHero`
@@ -46,7 +45,7 @@ Generated output은 `Game.g.cs`, `Game.g.ts`, `EQUIP_SLOT.json`, `ITEM_EQUIP.jso
 
 ## 3. Rules
 
-- `SLOT_TYPE.NONE`은 미장착 상태 전용이다.
+- `EQUIP_SLOT_TYPE.NONE`은 미장착 상태 전용이다.
 - 장착 시 `slotType != NONE`이어야 한다.
 - `ITEM_EQUIP.equip_type`로 `TB_EQUIP_SLOT.Get(equipType)`를 조회한다.
 - 요청 slot은 `allowed_slots`에 포함돼야 한다.
@@ -74,7 +73,7 @@ Generated output은 `Game.g.cs`, `Game.g.ts`, `EQUIP_SLOT.json`, `ITEM_EQUIP.jso
 
 ## 5. Save/Load
 
-- hero equip snapshot key는 `SLOT_TYPE`다.
+- hero equip snapshot key는 `EQUIP_SLOT_TYPE`다.
 - JSON 저장은 numeric enum string key를 유지한다.
 - load는 numeric string key와 enum name string key를 모두 허용한다.
 - `NONE` key는 저장/복원 대상이 아니다.

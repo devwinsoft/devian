@@ -1,4 +1,4 @@
-import { SLOT_TYPE, STAT_TYPE, UNIT_HERO, UNIT_HERO_LEVEL } from '../../Generated/Game.g';
+import { EQUIP_SLOT_TYPE, UNIT_STAT_TYPE, UNIT_HERO, UNIT_HERO_LEVEL } from '../../Generated/Game.g';
 import { AbilityItemEquip } from './AbilityItemEquip';
 import { AbilityEquipPlacementFailure, AbilityEquipSlotPolicy } from './AbilityEquipSlotPolicy';
 import { AbilityUnitBase } from './AbilityUnitBase';
@@ -6,10 +6,10 @@ import { AbilityUnitBase } from './AbilityUnitBase';
 export class AbilityUnitHero extends AbilityUnitBase {
     private mTable: UNIT_HERO | null = null;
     private mLevelTable: UNIT_HERO_LEVEL | null = null;
-    private readonly mEquips: Map<SLOT_TYPE, AbilityItemEquip> = new Map();
+    private readonly mEquips: Map<EQUIP_SLOT_TYPE, AbilityItemEquip> = new Map();
 
     get unitId(): string { return this.mTable?.unit_id ?? ''; }
-    get equips(): ReadonlyMap<SLOT_TYPE, AbilityItemEquip> { return this.mEquips; }
+    get equips(): ReadonlyMap<EQUIP_SLOT_TYPE, AbilityItemEquip> { return this.mEquips; }
 
     init(table: UNIT_HERO, levelTable: UNIT_HERO_LEVEL): void {
         this.mTable = table;
@@ -17,15 +17,15 @@ export class AbilityUnitHero extends AbilityUnitBase {
         this.initUnitState(levelTable.unit_level, levelTable.max_hp);
     }
 
-    equip(equip: AbilityItemEquip, slotType: SLOT_TYPE): boolean {
-        if (!equip || slotType === SLOT_TYPE.NONE)
+    equip(equip: AbilityItemEquip, slotType: EQUIP_SLOT_TYPE): boolean {
+        if (!equip || slotType === EQUIP_SLOT_TYPE.NONE)
             return false;
 
         if (AbilityEquipSlotPolicy.getPlacementFailure(equip, slotType, this.mEquips) !== AbilityEquipPlacementFailure.None)
             return false;
 
-        if (slotType === SLOT_TYPE.HAND_MAIN && AbilityEquipSlotPolicy.isTwoHanded(equip))
-            this.unequip(SLOT_TYPE.HAND_SUB);
+        if (slotType === EQUIP_SLOT_TYPE.HAND_MAIN && AbilityEquipSlotPolicy.isTwoHanded(equip))
+            this.unequip(EQUIP_SLOT_TYPE.HAND_SUB);
 
         const prev = this.mEquips.get(slotType);
         if (prev) {
@@ -38,7 +38,7 @@ export class AbilityUnitHero extends AbilityUnitBase {
         }
 
         const existingSlot = this.findEquipSlot(equip);
-        if (existingSlot !== SLOT_TYPE.NONE) {
+        if (existingSlot !== EQUIP_SLOT_TYPE.NONE) {
             if (existingSlot === slotType)
                 return true;
 
@@ -54,7 +54,7 @@ export class AbilityUnitHero extends AbilityUnitBase {
         return true;
     }
 
-    unequip(slotType: SLOT_TYPE): boolean {
+    unequip(slotType: EQUIP_SLOT_TYPE): boolean {
         const equip = this.mEquips.get(slotType);
         if (!equip)
             return false;
@@ -91,18 +91,18 @@ export class AbilityUnitHero extends AbilityUnitBase {
         }
     }
 
-    private findEquipSlot(equip: AbilityItemEquip): SLOT_TYPE {
+    private findEquipSlot(equip: AbilityItemEquip): EQUIP_SLOT_TYPE {
         for (const [slotType, slottedEquip] of this.mEquips) {
             if (AbilityItemEquip.isSame(slottedEquip, equip))
                 return slotType;
         }
 
-        return SLOT_TYPE.NONE;
+        return EQUIP_SLOT_TYPE.NONE;
     }
 
-    private shouldApplyEquipStat(statType: STAT_TYPE): boolean {
-        return statType !== STAT_TYPE.NONE
-            && statType !== STAT_TYPE.ITEM_LEVEL
-            && statType !== STAT_TYPE.ITEM_AMOUNT;
+    private shouldApplyEquipStat(statType: UNIT_STAT_TYPE): boolean {
+        return statType !== UNIT_STAT_TYPE.NONE
+            && statType !== UNIT_STAT_TYPE.ITEM_LEVEL
+            && statType !== UNIT_STAT_TYPE.ITEM_AMOUNT;
     }
 }

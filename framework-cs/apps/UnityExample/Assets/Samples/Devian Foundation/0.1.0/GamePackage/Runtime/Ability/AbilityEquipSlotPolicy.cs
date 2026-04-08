@@ -17,18 +17,18 @@ namespace Devian
             return TB_EQUIP_SLOT.Get(equipType);
         }
 
-        public static bool IsAllowed(AbilityItemEquip equip, SLOT_TYPE slotType)
+        public static bool IsAllowed(AbilityItemEquip equip, EQUIP_SLOT_TYPE slotType)
         {
-            if (equip == null || slotType == SLOT_TYPE.NONE)
+            if (equip == null || slotType == EQUIP_SLOT_TYPE.NONE)
                 return false;
 
             return IsAllowed(GetRule(equip.EquipType), slotType);
         }
 
-        public static bool IsAllowed(EQUIP_SLOT rule, SLOT_TYPE slotType)
+        public static bool IsAllowed(EQUIP_SLOT rule, EQUIP_SLOT_TYPE slotType)
         {
             return rule != null
-                && slotType != SLOT_TYPE.NONE
+                && slotType != EQUIP_SLOT_TYPE.NONE
                 && rule.allowed_slots != null
                 && rule.allowed_slots.Contains(slotType);
         }
@@ -43,20 +43,20 @@ namespace Devian
             return rule != null && rule.two_handed;
         }
 
-        public static bool HasBlockingTwoHandedMain(IReadOnlyDictionary<SLOT_TYPE, AbilityItemEquip> equips)
+        public static bool HasBlockingTwoHandedMain(IReadOnlyDictionary<EQUIP_SLOT_TYPE, AbilityItemEquip> equips)
         {
             if (equips == null)
                 return false;
 
-            return equips.TryGetValue(SLOT_TYPE.HAND_MAIN, out var mainHand)
+            return equips.TryGetValue(EQUIP_SLOT_TYPE.HAND_MAIN, out var mainHand)
                 && mainHand != null
                 && IsTwoHanded(mainHand);
         }
 
         public static AbilityEquipPlacementFailure GetPlacementFailure(
             AbilityItemEquip equip,
-            SLOT_TYPE slotType,
-            IReadOnlyDictionary<SLOT_TYPE, AbilityItemEquip> equips)
+            EQUIP_SLOT_TYPE slotType,
+            IReadOnlyDictionary<EQUIP_SLOT_TYPE, AbilityItemEquip> equips)
         {
             if (equip == null)
                 return AbilityEquipPlacementFailure.SlotNotAllowed;
@@ -66,13 +66,13 @@ namespace Devian
 
         public static AbilityEquipPlacementFailure GetPlacementFailure(
             EQUIP_SLOT rule,
-            SLOT_TYPE slotType,
-            IReadOnlyDictionary<SLOT_TYPE, AbilityItemEquip> equips)
+            EQUIP_SLOT_TYPE slotType,
+            IReadOnlyDictionary<EQUIP_SLOT_TYPE, AbilityItemEquip> equips)
         {
             if (!IsAllowed(rule, slotType))
                 return AbilityEquipPlacementFailure.SlotNotAllowed;
 
-            if (slotType == SLOT_TYPE.HAND_SUB && HasBlockingTwoHandedMain(equips))
+            if (slotType == EQUIP_SLOT_TYPE.HAND_SUB && HasBlockingTwoHandedMain(equips))
                 return AbilityEquipPlacementFailure.HandSubBlockedByTwoHandedMain;
 
             return AbilityEquipPlacementFailure.None;

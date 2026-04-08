@@ -7,7 +7,7 @@ AppliesTo: v10
 
 이 문서는 Treasure 시스템의 정본이다.
 
-- `TREASURE_GRADE_TYPE` enum
+- `ITEM_GRADE_TYPE` enum
 - `TREASURE_CHEST`, `TREASURE_REWARD` 테이블 스키마
 - `InventoryStorage` 내 Treasure 상태 모델 (`TreasureCurrent`, `TreasureCounts`)
 - `OpenCollectedChests` / `OpenCurrentChest` 동작 규칙
@@ -20,7 +20,7 @@ AppliesTo: v10
 
 ## A) Core Terms
 
-- `gradeType`: chest/reward grade key (`TREASURE_GRADE_TYPE`)
+- `gradeType`: chest/reward grade key (`ITEM_GRADE_TYPE`)
 - `reward_group_id`: Reward 시스템 지급 group key
 - `TreasureCurrent`: `InventoryTreasureCurrent` 하위 객체 (exp/level 묶음, `InventoryStorage` 소속)
 - `exp`: 현재 treasure exp (`TreasureTreasureCurrent.Exp`)
@@ -31,9 +31,9 @@ AppliesTo: v10
 
 ## B) Enum Source
 
-`TREASURE_GRADE_TYPE`의 입력 정본:
+`ITEM_GRADE_TYPE`의 입력 정본:
 
-- `input/Domains/Game/ENUM_META.json`
+- `input/Domains/Game/ENUM_ITEM.json`
 
 값:
 
@@ -62,7 +62,7 @@ AppliesTo: v10
 | field | type | note |
 |------|------|------|
 | `level` | int (pk) | chest reward level |
-| `treasure_grade_type` | `TREASURE_GRADE_TYPE` | level reward grade metadata |
+| `treasure_grade_type` | `ITEM_GRADE_TYPE` | level reward grade metadata |
 | `max_exp` | int | collect 필요 exp |
 
 규칙:
@@ -75,7 +75,7 @@ AppliesTo: v10
 | field | type | note |
 |------|------|------|
 | `index` | int (pk) | row key |
-| `treasure_grade_type` | `TREASURE_GRADE_TYPE` (`group:true`) | grade별 reward fan-out group key |
+| `treasure_grade_type` | `ITEM_GRADE_TYPE` (`group:true`) | grade별 reward fan-out group key |
 | `level` | int | group 내 level |
 | `condition_msg_id` | string | 조건 메시지 ID |
 | `condition_op` | `GAME_MESSAGE_OP_TYPE` | 조건 연산자 |
@@ -93,7 +93,7 @@ AppliesTo: v10
 
 - `TB_TREASURE_CHEST.Get(level)`
 - `TB_TREASURE_CHEST.GetAll()`
-- `TB_TREASURE_REWARD.GetByGroup(TREASURE_GRADE_TYPE)`
+- `TB_TREASURE_REWARD.GetByGroup(ITEM_GRADE_TYPE)`
 
 codegen 완료 상태. generated field name: `Treasure_grade_type` (PascalCase).
 
@@ -114,7 +114,7 @@ public sealed class InventoryTreasureCurrent
 
 // InventoryStorage 내부:
 //   InventoryTreasureCurrent TreasureCurrent { get; }
-//   Dictionary<TREASURE_GRADE_TYPE, int> TreasureCounts { get; }
+//   Dictionary<ITEM_GRADE_TYPE, int> TreasureCounts { get; }
 //   GetTreasureCount / AddTreasure / SetTreasureCount / AddTreasureExp / ResetTreasure
 ```
 
@@ -142,7 +142,7 @@ public sealed class InventoryTreasureCurrent
 
 입력:
 
-- `gradeType: TREASURE_GRADE_TYPE`
+- `gradeType: ITEM_GRADE_TYPE`
 
 처리:
 

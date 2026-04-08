@@ -27,7 +27,7 @@ namespace Devian
             var chestCountsObj = new JObject();
             foreach (var kv in storage.TreasureCounts)
             {
-                if (kv.Key == TREASURE_GRADE_TYPE.NONE)
+                if (kv.Key == ITEM_GRADE_TYPE.NONE)
                     continue;
 
                 if (kv.Value <= 0)
@@ -65,10 +65,10 @@ namespace Devian
                     if (string.IsNullOrWhiteSpace(prop.Name))
                         continue;
 
-                    if (!Enum.TryParse<TREASURE_GRADE_TYPE>(prop.Name, out var gradeType))
+                    if (!Enum.TryParse<ITEM_GRADE_TYPE>(prop.Name, out var gradeType))
                         continue;
 
-                    if (gradeType == TREASURE_GRADE_TYPE.NONE)
+                    if (gradeType == ITEM_GRADE_TYPE.NONE)
                         continue;
 
                     var count = prop.Value.Value<int?>() ?? 0;

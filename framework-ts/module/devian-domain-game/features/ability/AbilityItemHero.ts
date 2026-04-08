@@ -1,4 +1,4 @@
-import { ITEM_HERO, ITEM_HERO_LEVEL, SLOT_TYPE } from '../../Generated/Game.g';
+import { ITEM_HERO, ITEM_HERO_LEVEL, EQUIP_SLOT_TYPE } from '../../Generated/Game.g';
 import { AbilityItemBase } from './AbilityItemBase';
 import { AbilityItemEquip } from './AbilityItemEquip';
 import { AbilityEquipPlacementFailure, AbilityEquipSlotPolicy } from './AbilityEquipSlotPolicy';
@@ -6,11 +6,11 @@ import { AbilityEquipPlacementFailure, AbilityEquipSlotPolicy } from './AbilityE
 export class AbilityItemHero extends AbilityItemBase {
     private mTable: ITEM_HERO | null = null;
     private mLevelTable: ITEM_HERO_LEVEL | null = null;
-    private readonly mEquips: Map<SLOT_TYPE, AbilityItemEquip> = new Map();
+    private readonly mEquips: Map<EQUIP_SLOT_TYPE, AbilityItemEquip> = new Map();
 
     get unitId(): string { return this.mTable?.unit_id ?? ''; }
     get itemId(): string { return this.mTable?.item_id ?? ''; }
-    get equips(): ReadonlyMap<SLOT_TYPE, AbilityItemEquip> { return this.mEquips; }
+    get equips(): ReadonlyMap<EQUIP_SLOT_TYPE, AbilityItemEquip> { return this.mEquips; }
 
     init(table: ITEM_HERO, levelTable: ITEM_HERO_LEVEL): void {
         this.mTable = table;
@@ -24,16 +24,16 @@ export class AbilityItemHero extends AbilityItemBase {
         );
     }
 
-    getEquip(slotType: SLOT_TYPE): AbilityItemEquip | undefined {
+    getEquip(slotType: EQUIP_SLOT_TYPE): AbilityItemEquip | undefined {
         return this.mEquips.get(slotType);
     }
 
-    setEquip(equip: AbilityItemEquip, slotType: SLOT_TYPE): boolean {
-        if (!equip || slotType === SLOT_TYPE.NONE) return false;
+    setEquip(equip: AbilityItemEquip, slotType: EQUIP_SLOT_TYPE): boolean {
+        if (!equip || slotType === EQUIP_SLOT_TYPE.NONE) return false;
         if (AbilityEquipSlotPolicy.getPlacementFailure(equip, slotType, this.mEquips) !== AbilityEquipPlacementFailure.None)
             return false;
-        if (slotType === SLOT_TYPE.HAND_MAIN && AbilityEquipSlotPolicy.isTwoHanded(equip))
-            this.removeEquip(SLOT_TYPE.HAND_SUB);
+        if (slotType === EQUIP_SLOT_TYPE.HAND_MAIN && AbilityEquipSlotPolicy.isTwoHanded(equip))
+            this.removeEquip(EQUIP_SLOT_TYPE.HAND_SUB);
 
         const prev = this.mEquips.get(slotType);
         if (prev) {
@@ -47,7 +47,7 @@ export class AbilityItemHero extends AbilityItemBase {
         }
 
         const existingSlot = this.findEquipSlot(equip);
-        if (existingSlot !== SLOT_TYPE.NONE) {
+        if (existingSlot !== EQUIP_SLOT_TYPE.NONE) {
             if (existingSlot === slotType)
                 return true;
 
@@ -59,7 +59,7 @@ export class AbilityItemHero extends AbilityItemBase {
         return true;
     }
 
-    removeEquip(slotType: SLOT_TYPE): boolean {
+    removeEquip(slotType: EQUIP_SLOT_TYPE): boolean {
         const equip = this.mEquips.get(slotType);
         if (!equip) return false;
 
@@ -80,12 +80,12 @@ export class AbilityItemHero extends AbilityItemBase {
         return c;
     }
 
-    private findEquipSlot(equip: AbilityItemEquip): SLOT_TYPE {
+    private findEquipSlot(equip: AbilityItemEquip): EQUIP_SLOT_TYPE {
         for (const [slotType, slottedEquip] of this.mEquips) {
             if (AbilityItemEquip.isSame(slottedEquip, equip))
                 return slotType;
         }
 
-        return SLOT_TYPE.NONE;
+        return EQUIP_SLOT_TYPE.NONE;
     }
 }

@@ -14,9 +14,9 @@ namespace Devian
         //  OpenCollectedChests
         // ──────────────────────────────────────────────
 
-        public GameResult OpenCollectedChests(TREASURE_GRADE_TYPE gradeType)
+        public GameResult OpenCollectedChests(ITEM_GRADE_TYPE gradeType)
         {
-            if (gradeType == TREASURE_GRADE_TYPE.NONE)
+            if (gradeType == ITEM_GRADE_TYPE.NONE)
                 return GameResult.Failure(GAME_ERROR_TYPE.TREASURE_GRADE_INVALID, "gradeType NONE is not allowed.");
 
             var inventoryManager = InventoryManager.Instance;

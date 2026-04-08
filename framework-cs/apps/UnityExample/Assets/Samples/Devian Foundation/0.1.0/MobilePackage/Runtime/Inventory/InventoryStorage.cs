@@ -53,9 +53,9 @@ namespace Devian
 
         // ── Treasure ──
         readonly InventoryTreasureCurrent mTreasureCurrent = new();
-        readonly Dictionary<TREASURE_GRADE_TYPE, int> mTreasureCounts = new();
+        readonly Dictionary<ITEM_GRADE_TYPE, int> mTreasureCounts = new();
         public InventoryTreasureCurrent TreasureCurrent => mTreasureCurrent;
-        public IReadOnlyDictionary<TREASURE_GRADE_TYPE, int> TreasureCounts => mTreasureCounts;
+        public IReadOnlyDictionary<ITEM_GRADE_TYPE, int> TreasureCounts => mTreasureCounts;
 
         // ── Stamina ──
         public long LastStaminaUpdateUtcMs { get; internal set; }
@@ -204,7 +204,7 @@ namespace Devian
 
         // ── Hero Equip Operations ──
 
-        public bool Equip(string heroId, SLOT_TYPE equipSlot, string equipUid)
+        public bool Equip(string heroId, EQUIP_SLOT_TYPE equipSlot, string equipUid)
         {
             if (!mHeroes.TryGetValue(heroId, out var hero)) return false;
             if (!mEquipments.TryGetValue(equipUid, out var equip)) return false;
@@ -220,7 +220,7 @@ namespace Devian
             return hero._SetEquip(equip, equipSlot);
         }
 
-        public bool Unequip(string heroId, SLOT_TYPE equipSlot)
+        public bool Unequip(string heroId, EQUIP_SLOT_TYPE equipSlot)
         {
             if (!mHeroes.TryGetValue(heroId, out var hero)) return false;
             return hero._RemoveEquip(equipSlot);
@@ -286,12 +286,12 @@ namespace Devian
 
         // ── Treasure Operations ──
 
-        public int GetTreasureCount(TREASURE_GRADE_TYPE gradeType)
+        public int GetTreasureCount(ITEM_GRADE_TYPE gradeType)
         {
             return mTreasureCounts.TryGetValue(gradeType, out var count) ? count : 0;
         }
 
-        internal void AddTreasure(TREASURE_GRADE_TYPE gradeType, int amount)
+        internal void AddTreasure(ITEM_GRADE_TYPE gradeType, int amount)
         {
             if (amount <= 0)
                 return;
@@ -300,7 +300,7 @@ namespace Devian
             mTreasureCounts[gradeType] = current + amount;
         }
 
-        internal void SetTreasureCount(TREASURE_GRADE_TYPE gradeType, int count)
+        internal void SetTreasureCount(ITEM_GRADE_TYPE gradeType, int count)
         {
             if (count < 0)
                 count = 0;

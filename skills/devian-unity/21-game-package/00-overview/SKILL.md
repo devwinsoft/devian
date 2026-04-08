@@ -39,7 +39,7 @@ GamePackage는 **Devian Foundation**(`com.devian.foundation`)에 포함된 Unity
 
 - [devian/21-domain-game/00-overview](../../../devian/21-domain-game/00-overview/SKILL.md) — Game 도메인 생성 규약
 - [devian/21-domain-game/11-game-tables](../../../devian/21-domain-game/11-game-tables/SKILL.md) — Game 테이블 입력/생성물
-- [devian/21-domain-game/13-game-stat-type](../../../devian/21-domain-game/13-game-stat-type/SKILL.md) — `STAT_TYPE` enum
+- [devian/21-domain-game/13-game-stat-type](../../../devian/21-domain-game/13-game-stat-type/SKILL.md) — `UNIT_STAT_TYPE` enum
 - [devian-unity/20-common-package/30-string-table](../../20-common-package/30-string-table/SKILL.md) — StringTable 공통 규약
 - [devian-unity/02-unity-bundles](../../02-unity-bundles/SKILL.md) — `Devian.Samples.GamePackage` asmdef/의존 방향
 - [devian-unity/04-package-policy](../../04-package-policy/SKILL.md) — Samples~ 패키지 정책

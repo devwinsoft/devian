@@ -1,1 +1,3 @@
-{"item_id":"item_equip_001","name_id":"","desc_id":"","equip_type":"SWORD"}
+{"item_id":"item_equip_sword_001","name_id":"","desc_id":"","equip_type":"SWORD","upgrade_id":"item_equip_sword_002"}
+{"item_id":"item_equip_sword_002","name_id":"","desc_id":"","equip_type":"SWORD","upgrade_id":"item_equip_sword_003"}
+{"item_id":"item_equip_sword_003","name_id":"","desc_id":"","equip_type":"SWORD","upgrade_id":""}

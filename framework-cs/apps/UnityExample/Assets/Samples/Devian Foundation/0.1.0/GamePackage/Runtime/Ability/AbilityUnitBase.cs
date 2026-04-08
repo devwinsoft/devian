@@ -7,13 +7,13 @@ namespace Devian
         public abstract string UnitId { get; }
         int mCurHP = 0;
 
-        public int UnitLevel => this[STAT_TYPE.UNIT_LEVEL];
+        public int UnitLevel => this[UNIT_STAT_TYPE.UNIT_LEVEL];
         public int CurHP => mCurHP;
 
         protected void InitUnitState(int unitLevel, int maxHp)
         {
-            SetStat(STAT_TYPE.UNIT_LEVEL, unitLevel);
-            SetStat(STAT_TYPE.UNIT_HP, maxHp);
+            SetStat(UNIT_STAT_TYPE.UNIT_LEVEL, unitLevel);
+            SetStat(UNIT_STAT_TYPE.UNIT_HP, maxHp);
             mCurHP = MaxHP;
         }
 

@@ -7,10 +7,10 @@ namespace Devian
     {
         UNIT_HERO mTable = null;
         UNIT_HERO_LEVEL mLevelTable = null;
-        readonly Dictionary<SLOT_TYPE, AbilityItemEquip> mEquips = new();
+        readonly Dictionary<EQUIP_SLOT_TYPE, AbilityItemEquip> mEquips = new();
 
         public override string UnitId => mTable?.unit_id ?? string.Empty;
-        public IReadOnlyDictionary<SLOT_TYPE, AbilityItemEquip> Equips => mEquips;
+        public IReadOnlyDictionary<EQUIP_SLOT_TYPE, AbilityItemEquip> Equips => mEquips;
 
         public void Init(UNIT_HERO table, UNIT_HERO_LEVEL levelTable)
         {
@@ -35,16 +35,16 @@ namespace Devian
             return c;
         }
 
-        internal bool _Equip(AbilityItemEquip equip, SLOT_TYPE slotType)
+        internal bool _Equip(AbilityItemEquip equip, EQUIP_SLOT_TYPE slotType)
         {
-            if (equip == null || slotType == SLOT_TYPE.NONE)
+            if (equip == null || slotType == EQUIP_SLOT_TYPE.NONE)
                 return false;
 
             if (AbilityEquipSlotPolicy.GetPlacementFailure(equip, slotType, mEquips) != AbilityEquipPlacementFailure.None)
                 return false;
 
-            if (slotType == SLOT_TYPE.HAND_MAIN && AbilityEquipSlotPolicy.IsTwoHanded(equip))
-                _Unequip(SLOT_TYPE.HAND_SUB);
+            if (slotType == EQUIP_SLOT_TYPE.HAND_MAIN && AbilityEquipSlotPolicy.IsTwoHanded(equip))
+                _Unequip(EQUIP_SLOT_TYPE.HAND_SUB);
 
             if (mEquips.TryGetValue(slotType, out var prev))
             {
@@ -58,7 +58,7 @@ namespace Devian
             }
 
             var existingSlot = findEquipSlot(equip);
-            if (existingSlot != SLOT_TYPE.NONE)
+            if (existingSlot != EQUIP_SLOT_TYPE.NONE)
             {
                 if (existingSlot == slotType)
                     return true;
@@ -75,7 +75,7 @@ namespace Devian
             return true;
         }
 
-        internal bool _Unequip(SLOT_TYPE slotType)
+        internal bool _Unequip(EQUIP_SLOT_TYPE slotType)
         {
             if (!mEquips.TryGetValue(slotType, out var equip))
                 return false;
@@ -103,7 +103,7 @@ namespace Devian
             }
         }
 
-        SLOT_TYPE findEquipSlot(AbilityItemEquip equip)
+        EQUIP_SLOT_TYPE findEquipSlot(AbilityItemEquip equip)
         {
             foreach (var kv in mEquips)
             {
@@ -111,14 +111,14 @@ namespace Devian
                     return kv.Key;
             }
 
-            return SLOT_TYPE.NONE;
+            return EQUIP_SLOT_TYPE.NONE;
         }
 
-        static bool shouldApplyEquipStat(STAT_TYPE statType)
+        static bool shouldApplyEquipStat(UNIT_STAT_TYPE statType)
         {
-            return statType != STAT_TYPE.NONE
-                && statType != STAT_TYPE.ITEM_LEVEL
-                && statType != STAT_TYPE.ITEM_AMOUNT;
+            return statType != UNIT_STAT_TYPE.NONE
+                && statType != UNIT_STAT_TYPE.ITEM_LEVEL
+                && statType != UNIT_STAT_TYPE.ITEM_AMOUNT;
         }
     }
 }

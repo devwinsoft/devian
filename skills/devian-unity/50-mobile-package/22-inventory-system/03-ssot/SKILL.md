@@ -44,10 +44,10 @@ Inventory 상태는 "통화", "아이템(장비/카드/재료)", "영웅", "Trea
 - `ItemUid: string` (== key, 인스턴스 고유 ID, GUID)
 - `ItemId: string` (템플릿 ID, `mTable.item_id`)
 - `OwnerUnitId: string` (장착된 영웅 ItemId, 미장착 시 empty)
-- `OwnerSlotType: SLOT_TYPE` (장착 슬롯 enum, `NONE` = 미장착)
-- `IsEquipped: bool` (= `OwnerSlotType != SLOT_TYPE.NONE`)
-- 능력치: `AbilityItemEquip : AbilityItemBase : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)
-  - 레벨 = `STAT_TYPE.ITEM_LEVEL`
+- `OwnerSlotType: EQUIP_SLOT_TYPE` (장착 슬롯 enum, `NONE` = 미장착)
+- `IsEquipped: bool` (= `OwnerSlotType != EQUIP_SLOT_TYPE.NONE`)
+- 능력치: `AbilityItemEquip : AbilityItemBase : AbilityBase` → `mStats[UNIT_STAT_TYPE.X]` (UNIT_STAT_TYPE 기반 정규화)
+  - 레벨 = `UNIT_STAT_TYPE.ITEM_LEVEL`
 
 NOTE:
 - 같은 `item_id`에 여러 인스턴스(각각 고유 `itemUid`)가 존재할 수 있다.
@@ -63,12 +63,12 @@ NOTE:
 
 `AbilityItemCard` 필드 (구현: [12-game-ability](../../../21-game-package/12-game-ability/SKILL.md)):
 - `ItemId: string` (== key, `mTable.item_id`)
-- `Amount: int` (= `this[STAT_TYPE.ITEM_AMOUNT]`)
-- `ItemLevel: int` (= `this[STAT_TYPE.ITEM_LEVEL]`)
-- 능력치: `AbilityItemCard : AbilityItemBase : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)
-  - 수량 = `STAT_TYPE.ITEM_AMOUNT`
-  - 레벨 = `STAT_TYPE.ITEM_LEVEL`
-  - Reward/Purchase grants에서는 `STAT_TYPE.ITEM_AMOUNT`만 변경된다
+- `Amount: int` (= `this[UNIT_STAT_TYPE.ITEM_AMOUNT]`)
+- `ItemLevel: int` (= `this[UNIT_STAT_TYPE.ITEM_LEVEL]`)
+- 능력치: `AbilityItemCard : AbilityItemBase : AbilityBase` → `mStats[UNIT_STAT_TYPE.X]` (UNIT_STAT_TYPE 기반 정규화)
+  - 수량 = `UNIT_STAT_TYPE.ITEM_AMOUNT`
+  - 레벨 = `UNIT_STAT_TYPE.ITEM_LEVEL`
+  - Reward/Purchase grants에서는 `UNIT_STAT_TYPE.ITEM_AMOUNT`만 변경된다
   - level up은 현재 `ITEM_CARD_LEVEL` row stat을 제거한 뒤 다음 level row stat을 적용한다
 
 ### B-4) Heroes
@@ -78,10 +78,10 @@ NOTE:
 
 `AbilityItemHero` 필드 (구현: [12-game-ability](../../../21-game-package/12-game-ability/SKILL.md)):
 - `ItemId: string` (== key, `mTable.item_id`)
-- `Amount: int` (= `this[STAT_TYPE.ITEM_AMOUNT]`)
-- `ItemLevel: int` (= `this[STAT_TYPE.ITEM_LEVEL]`)
-- `Equips: Dict<SLOT_TYPE, AbilityItemEquip>` (outgame 슬롯별 장착 상태)
-- 능력치: `AbilityItemHero : AbilityItemBase : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)
+- `Amount: int` (= `this[UNIT_STAT_TYPE.ITEM_AMOUNT]`)
+- `ItemLevel: int` (= `this[UNIT_STAT_TYPE.ITEM_LEVEL]`)
+- `Equips: Dict<EQUIP_SLOT_TYPE, AbilityItemEquip>` (outgame 슬롯별 장착 상태)
+- 능력치: `AbilityItemHero : AbilityItemBase : AbilityBase` → `mStats[UNIT_STAT_TYPE.X]` (UNIT_STAT_TYPE 기반 정규화)
   - level up은 현재 `ITEM_HERO_LEVEL` row stat을 제거한 뒤 다음 level row stat을 적용한다
 
 ### B-5) Materials
@@ -91,12 +91,12 @@ NOTE:
 
 `AbilityItemMaterial` 필드 (구현: [12-game-ability](../../../21-game-package/12-game-ability/SKILL.md)):
 - `ItemId: string` (== key, `mTable.item_id`)
-- `Amount: int` (= `this[STAT_TYPE.ITEM_AMOUNT]`)
-- `ItemLevel: int` (= `this[STAT_TYPE.ITEM_LEVEL]`)
-- 능력치: `AbilityItemMaterial : AbilityItemBase : AbilityBase` → `mStats[STAT_TYPE.X]` (STAT_TYPE 기반 정규화)
-  - 수량 = `STAT_TYPE.ITEM_AMOUNT`
-  - 레벨 = `STAT_TYPE.ITEM_LEVEL`
-  - Reward/Purchase grants에서는 `STAT_TYPE.ITEM_AMOUNT`만 변경된다
+- `Amount: int` (= `this[UNIT_STAT_TYPE.ITEM_AMOUNT]`)
+- `ItemLevel: int` (= `this[UNIT_STAT_TYPE.ITEM_LEVEL]`)
+- 능력치: `AbilityItemMaterial : AbilityItemBase : AbilityBase` → `mStats[UNIT_STAT_TYPE.X]` (UNIT_STAT_TYPE 기반 정규화)
+  - 수량 = `UNIT_STAT_TYPE.ITEM_AMOUNT`
+  - 레벨 = `UNIT_STAT_TYPE.ITEM_LEVEL`
+  - Reward/Purchase grants에서는 `UNIT_STAT_TYPE.ITEM_AMOUNT`만 변경된다
   - 현재 `ITEM_MATERIAL_LEVEL` 테이블이 없으므로 level up 대상이 아니다
 
 
@@ -105,16 +105,16 @@ NOTE:
 - `TreasureCurrent` — `InventoryTreasureCurrent` (exp/level 묶음, 단일 인스턴스)
   - `Exp: int` (현재 treasure exp, 기본값 0)
   - `Level: int` (현재 treasure reward level, 기본값 1)
-- `TreasureCounts` — `Dictionary<TREASURE_GRADE_TYPE, int>` (grade별 보유 chest count)
-  - key: `TREASURE_GRADE_TYPE` (NONE 제외)
+- `TreasureCounts` — `Dictionary<ITEM_GRADE_TYPE, int>` (grade별 보유 chest count)
+  - key: `ITEM_GRADE_TYPE` (NONE 제외)
   - value: `int` (보유량, 기본값 0)
 
 NOTE:
-- `TREASURE_GRADE_TYPE.NONE`은 저장 대상이 아니다.
+- `ITEM_GRADE_TYPE.NONE`은 저장 대상이 아니다.
 - chest count와 exp는 음수가 될 수 없다 (0 이하로 clamp).
 - current 상태는 grade별로 분리하지 않는다. 단일 `TreasureCurrent.Exp` / `TreasureCurrent.Level`만 사용한다.
 - max level 판단은 storage가 아니라 `TREASURE_CHEST` 테이블을 기준으로 한다 (TreasureManager 담당).
-- `RewardData.Id`는 `TREASURE_GRADE_TYPE` enum name 문자열이다 (예: `"COMMON"`, `"EPIC"`).
+- `RewardData.Id`는 `ITEM_GRADE_TYPE` enum name 문자열이다 (예: `"COMMON"`, `"EPIC"`).
 - Treasure 상태의 세부 규칙(max level 판단 등)은 Treasure를 소비하는 상위 시스템이 담당한다.
 
 
@@ -146,30 +146,30 @@ NOTE:
 ### C-5) `type == REWARD_TYPE.CARD`
 
 - `InventoryManager.AddCardAmount(item_id, delta)`가 카드 수량 signed delta boundary다.
-- 내부 적용은 `_storage.Cards[item_id].AddAmount(delta)` (= `AddStat(STAT_TYPE.ITEM_AMOUNT, delta)`)
+- 내부 적용은 `_storage.Cards[item_id].AddAmount(delta)` (= `AddStat(UNIT_STAT_TYPE.ITEM_AMOUNT, delta)`)
 - 없는 키는 `_storage.AddCard(item_id, ability)`로 생성된다.
   - 새 AbilityItemCard의 모든 stat은 0(기본값)으로 시작한다.
-- Apply는 `STAT_TYPE.ITEM_AMOUNT`만 변경한다 (다른 stat은 보존).
+- Apply는 `UNIT_STAT_TYPE.ITEM_AMOUNT`만 변경한다 (다른 stat은 보존).
 - 수량이 0이 되면 카드 runtime은 storage에서 제거된다.
 - 카드 level up은 `InventoryManager.LevelUpCard(item_id)`가 담당한다. 현재 level row stat을 subtract하고 다음 level row stat을 add한다.
 
 ### C-4) `type == REWARD_TYPE.HERO`
 
 - `InventoryManager.AddHeroAmount(item_id, delta)`가 영웅 수량 signed delta boundary다.
-- 내부 적용은 `_storage.Heroes[item_id].AddStat(STAT_TYPE.ITEM_AMOUNT, delta)`
+- 내부 적용은 `_storage.Heroes[item_id].AddStat(UNIT_STAT_TYPE.ITEM_AMOUNT, delta)`
 - 없는 키는 `_storage.AddHero(item_id, ability)`로 생성된다.
   - 새 AbilityItemHero는 `TB_ITEM_HERO.Get(item_id)`로 Init한다.
-- Apply는 `STAT_TYPE.ITEM_AMOUNT`만 변경한다 (다른 stat은 보존).
+- Apply는 `UNIT_STAT_TYPE.ITEM_AMOUNT`만 변경한다 (다른 stat은 보존).
 - 수량이 0이 되면 영웅 runtime은 storage에서 제거되고, 장착 중인 equip owner metadata도 함께 정리된다.
 - 영웅 level up은 `InventoryManager.LevelUpHero(item_id)`가 담당한다. 현재 level row stat을 subtract하고 다음 level row stat을 add한다.
 
 ### C-4a) `type == REWARD_TYPE.MATERIAL`
 
 - `InventoryManager.AddMaterialAmount(item_id, delta)`가 재료 수량 signed delta boundary다.
-- 내부 적용은 `_storage.Materials[item_id].AddAmount(delta)` (= `AddStat(STAT_TYPE.ITEM_AMOUNT, delta)`)
+- 내부 적용은 `_storage.Materials[item_id].AddAmount(delta)` (= `AddStat(UNIT_STAT_TYPE.ITEM_AMOUNT, delta)`)
 - 없는 키는 `_storage.AddMaterial(item_id, ability)`로 생성된다.
   - 새 AbilityItemMaterial은 `TB_ITEM_MATERIAL.Get(item_id)`로 Init한다.
-- Apply는 `STAT_TYPE.ITEM_AMOUNT`만 변경한다 (다른 stat은 보존).
+- Apply는 `UNIT_STAT_TYPE.ITEM_AMOUNT`만 변경한다 (다른 stat은 보존).
 - 수량이 0이 되면 재료 runtime은 storage에서 제거된다.
 - 재료는 현재 level table이 없으므로 `LevelUpMaterial`을 두지 않는다.
 
@@ -177,8 +177,8 @@ NOTE:
 ### C-5) `type == REWARD_TYPE.TREASURE`
 
 - `_storage.AddTreasure(gradeType, amount)`
-- `gradeType`는 `TREASURE_GRADE_TYPE`으로 파싱한다 (`RewardData.Id` = enum name 문자열).
-- `gradeType == TREASURE_GRADE_TYPE.NONE`이면 invalid.
+- `gradeType`는 `ITEM_GRADE_TYPE`으로 파싱한다 (`RewardData.Id` = enum name 문자열).
+- `gradeType == ITEM_GRADE_TYPE.NONE`이면 invalid.
 - 없는 grade key는 0에서 시작하여 amount를 누적한다.
 
 ### C-5a) `RevokeTreasure`
@@ -200,7 +200,7 @@ NOTE: `RewardManager.RevokeRewardDatas` / `RevokeRewardDatasPartial`가 RewardDa
 InventoryStorage는 `Equip(heroId, equipSlot, equipUid)` / `Unequip(heroId, equipSlot)` 편의 메서드로 item hero 저장 모델에 위임한다.
 
 - slot rule 정본은 `ITEM_EQUIP.equip_type` + `EQUIP_SLOT.allowed_slots/two_handed`다.
-- `SLOT_TYPE.NONE`은 저장/장착 대상이 아니다.
+- `EQUIP_SLOT_TYPE.NONE`은 저장/장착 대상이 아니다.
 - `two_handed=true` 장비를 `HAND_MAIN`에 장착하면 현재 `HAND_SUB` 장비는 자동 해제된다.
 - `HAND_MAIN`에 양손 장비가 있는 상태에서 `HAND_SUB` 장착 시도는 실패한다.
 
@@ -277,7 +277,7 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 ## F) Inventory Message Trigger (정본)
 
 - Inventory 변경 알림 key는 `INVENTORY_MESSAGE_TYPE` enum을 사용한다.
-  - 입력 파일: `input/Domains/Game/ENUM_INVENTORY.json`
+  - 입력 파일: `input/Domains/Game/ENUM_ITEM.json`
 - Trigger 소유자: `InventoryManager`
 - 외부 노출: `InventoryManager` helper(`Subcribe/UnSubcribe`)만 허용
 - Trigger 직접 참조 금지
@@ -307,7 +307,7 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 - `RENTAL_CHANGED`
   - payload: `args[0] = itemId(string)`, `args[1] = expiresAtClientUtcMs(long)`, `args[2] = active(bool)`
 - `TREASURE_STATE_CHANGED`
-  - payload: `args[0] = gradeType(TREASURE_GRADE_TYPE)`, `args[1] = deltaCount(int)`, `args[2] = currentCount(int)`, `args[3] = currentLevel(int)`, `args[4] = currentExp(int)`
+  - payload: `args[0] = gradeType(ITEM_GRADE_TYPE)`, `args[1] = deltaCount(int)`, `args[2] = currentCount(int)`, `args[3] = currentLevel(int)`, `args[4] = currentExp(int)`
 - `INVENTORY_SNAPSHOT_CHANGED`
   - payload: `args[0] = reason(INVENTORY_SNAPSHOT_CHANGE_REASON)`
 

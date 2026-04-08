@@ -107,7 +107,7 @@ namespace Devian
                 }
                 else if (r.Type == REWARD_TYPE.TREASURE)
                 {
-                    var gradeType = (TREASURE_GRADE_TYPE)Enum.Parse(typeof(TREASURE_GRADE_TYPE), r.Id);
+                    var gradeType = (ITEM_GRADE_TYPE)Enum.Parse(typeof(ITEM_GRADE_TYPE), r.Id);
                     var apply = inv.ApplyTreasure(gradeType, (int)r.Amount);
                     if (apply.IsFailure)
                         return apply;
@@ -211,7 +211,7 @@ namespace Devian
                 }
                 else if (r.Type == REWARD_TYPE.TREASURE)
                 {
-                    var gradeType = (TREASURE_GRADE_TYPE)Enum.Parse(typeof(TREASURE_GRADE_TYPE), r.Id);
+                    var gradeType = (ITEM_GRADE_TYPE)Enum.Parse(typeof(ITEM_GRADE_TYPE), r.Id);
                     var chestCount = inv.GetTreasureCount(gradeType);
                     if (chestCount < r.Amount)
                     {
@@ -272,7 +272,7 @@ namespace Devian
                 }
                 else if (r.Type == REWARD_TYPE.TREASURE)
                 {
-                    var gradeType = (TREASURE_GRADE_TYPE)Enum.Parse(typeof(TREASURE_GRADE_TYPE), r.Id);
+                    var gradeType = (ITEM_GRADE_TYPE)Enum.Parse(typeof(ITEM_GRADE_TYPE), r.Id);
                     var revoke = inv.RevokeTreasure(gradeType, (int)r.Amount);
                     if (revoke.IsFailure)
                         return revoke;
@@ -380,7 +380,7 @@ namespace Devian
                 }
                 else if (r.Type == REWARD_TYPE.TREASURE)
                 {
-                    var gradeType = (TREASURE_GRADE_TYPE)Enum.Parse(typeof(TREASURE_GRADE_TYPE), r.Id);
+                    var gradeType = (ITEM_GRADE_TYPE)Enum.Parse(typeof(ITEM_GRADE_TYPE), r.Id);
                     var have = inv.GetTreasureCount(gradeType);
                     var clampedAmount = (int)Math.Min(r.Amount, have);
                     if (clampedAmount > 0)
@@ -427,7 +427,7 @@ namespace Devian
 
             if (type == nameof(REWARD_TYPE.TREASURE))
             {
-                var gradeType = (TREASURE_GRADE_TYPE)Enum.Parse(typeof(TREASURE_GRADE_TYPE), id);
+                var gradeType = (ITEM_GRADE_TYPE)Enum.Parse(typeof(ITEM_GRADE_TYPE), id);
                 return inv.GetTreasureCount(gradeType);
             }
 
@@ -639,8 +639,8 @@ namespace Devian
 
             if (r.Type == REWARD_TYPE.TREASURE)
             {
-                if (!Enum.TryParse<TREASURE_GRADE_TYPE>(r.Id, out var gradeType) ||
-                    gradeType == TREASURE_GRADE_TYPE.NONE)
+                if (!Enum.TryParse<ITEM_GRADE_TYPE>(r.Id, out var gradeType) ||
+                    gradeType == ITEM_GRADE_TYPE.NONE)
                 {
                     return GameResult.Failure(
                         GAME_ERROR_TYPE.INVENTORY_DELTA_ID_EMPTY,

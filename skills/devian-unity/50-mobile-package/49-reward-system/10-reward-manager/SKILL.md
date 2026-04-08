@@ -123,7 +123,7 @@ RewardManager는 `MobileApplication.Instance`에서 key/iv를 읽어 사용한�
 - `rewards.Length == 0`은 valid no-op으로 처리한다(`GameResult.Ok()` 반환).
 - `amount == 0`은 valid no-op delta로 처리한다(에러 아님).
 - `type=REWARD_TYPE.CURRENCY`일 때 `id`는 유효한 `CURRENCY_TYPE` enum name이어야 한다.
-- `type=REWARD_TYPE.TREASURE`일 때 `id`는 유효한 `TREASURE_GRADE_TYPE` enum name이어야 하며, `NONE`이면 invalid다.
+- `type=REWARD_TYPE.TREASURE`일 때 `id`는 유효한 `ITEM_GRADE_TYPE` enum name이어야 하며, `NONE`이면 invalid다.
 
 
 ---

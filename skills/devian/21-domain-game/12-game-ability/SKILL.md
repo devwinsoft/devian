@@ -4,27 +4,27 @@ Status: ACTIVE
 AppliesTo: v10
 
 Game 도메인의 **Ability feature layer**이다.
-모든 엔티티(Hero, Item, Skill 등)의 속성 값을 `(STAT_TYPE, value)` 리스트로 정규화하여 관리한다.
+모든 엔티티(Hero, Item, Skill 등)의 속성 값을 `(UNIT_STAT_TYPE, value)` 리스트로 정규화하여 관리한다.
 TypeScript 모듈 관점 설명을 포함하며, Unity `GamePackage` C# addon 구현 정본은 [devian-unity/21-game-package/12-game-ability](../../../devian-unity/21-game-package/12-game-ability/SKILL.md)다.
 
 ---
 
-## 1. STAT_TYPE (Generated enum)
+## 1. UNIT_STAT_TYPE (Generated enum)
 
-`STAT_TYPE`은 Game 도메인 contract에서 빌드 파이프라인으로 생성한다.
+`UNIT_STAT_TYPE`은 Game 도메인 contract에서 빌드 파이프라인으로 생성한다.
 
-- 입력: `input/Domains/Game/ENUM_GAME.json`
-- 생성: `Devian.Domain.Game.STAT_TYPE` enum
+- 입력: `input/Domains/Game/ENUM_UNIT.json`
+- 생성: `Devian.Domain.Game.UNIT_STAT_TYPE` enum
 - 네임스페이스: `Devian.Domain.Game`
 
-**STAT_TYPE 값 정의/관리:** [13-game-stat-type](../13-game-stat-type/SKILL.md)
+**UNIT_STAT_TYPE 값 정의/관리:** [13-game-stat-type](../13-game-stat-type/SKILL.md)
 
 ---
 
 ## 2. 클래스 계층
 
 ```
-AbilityBase              ← Dict<STAT_TYPE, int>, indexer, GetInt, GetFloat, AddStat, SetStat, ClearStat, GetStats, Clone, aggregate property(AtkPhysical/AtkMagical/DefPhysical/DefMagical/MaxHP)
+AbilityBase              ← Dict<UNIT_STAT_TYPE, int>, indexer, GetInt, GetFloat, AddStat, SetStat, ClearStat, GetStats, Clone, aggregate property(AtkPhysical/AtkMagical/DefPhysical/DefMagical/MaxHP)
   ├─ AbilityBattleBase (abstract) ← battle wrapper 공통 베이스
   │   ├─ AbilityBattleSkill      ← SKILL row wrapper
   │   ├─ AbilityBattleStatus     ← STATUS row wrapper
@@ -54,29 +54,29 @@ namespace Devian
 {
     public abstract class AbilityBase
     {
-        Dictionary<STAT_TYPE, int> mStats = new();
-        public int AtkPhysical => (int)((this[STAT_TYPE.AFFECT_ATK_PHY_ADD] + this[STAT_TYPE.ITEM_ATK_PHY])
-            * (100 + this[STAT_TYPE.AFFECT_ATK_PHY_PER]) * 0.01f)
-            + this[STAT_TYPE.UNIT_ATK_PHY];
-        public int AtkMagical => (int)((this[STAT_TYPE.AFFECT_ATK_MAG_ADD] + this[STAT_TYPE.ITEM_ATK_MAG])
-            * (100 + this[STAT_TYPE.AFFECT_ATK_MAG_PER]) * 0.01f)
-            + this[STAT_TYPE.UNIT_ATK_MAG];
-        public int DefPhysical => (int)((this[STAT_TYPE.AFFECT_DEF_PHY_ADD] + this[STAT_TYPE.ITEM_DEF_PHY])
-            * (100 + this[STAT_TYPE.AFFECT_DEF_PHY_PER]) * 0.01f)
-            + this[STAT_TYPE.UNIT_DEF_PHY];
-        public int DefMagical => (int)((this[STAT_TYPE.AFFECT_DEF_MAG_ADD] + this[STAT_TYPE.ITEM_DEF_MAG])
-            * (100 + this[STAT_TYPE.AFFECT_DEF_MAG_PER]) * 0.01f)
-            + this[STAT_TYPE.UNIT_DEF_MAG];
-        public int MaxHP => (int)((this[STAT_TYPE.AFFECT_HP_ADD] + this[STAT_TYPE.ITEM_HP])
-            * (100 + this[STAT_TYPE.AFFECT_HP_PER]) * 0.01f)
-            + this[STAT_TYPE.UNIT_HP];
+        Dictionary<UNIT_STAT_TYPE, int> mStats = new();
+        public int AtkPhysical => (int)((this[UNIT_STAT_TYPE.AFFECT_ATK_PHY_ADD] + this[UNIT_STAT_TYPE.ITEM_ATK_PHY])
+            * (100 + this[UNIT_STAT_TYPE.AFFECT_ATK_PHY_PER]) * 0.01f)
+            + this[UNIT_STAT_TYPE.UNIT_ATK_PHY];
+        public int AtkMagical => (int)((this[UNIT_STAT_TYPE.AFFECT_ATK_MAG_ADD] + this[UNIT_STAT_TYPE.ITEM_ATK_MAG])
+            * (100 + this[UNIT_STAT_TYPE.AFFECT_ATK_MAG_PER]) * 0.01f)
+            + this[UNIT_STAT_TYPE.UNIT_ATK_MAG];
+        public int DefPhysical => (int)((this[UNIT_STAT_TYPE.AFFECT_DEF_PHY_ADD] + this[UNIT_STAT_TYPE.ITEM_DEF_PHY])
+            * (100 + this[UNIT_STAT_TYPE.AFFECT_DEF_PHY_PER]) * 0.01f)
+            + this[UNIT_STAT_TYPE.UNIT_DEF_PHY];
+        public int DefMagical => (int)((this[UNIT_STAT_TYPE.AFFECT_DEF_MAG_ADD] + this[UNIT_STAT_TYPE.ITEM_DEF_MAG])
+            * (100 + this[UNIT_STAT_TYPE.AFFECT_DEF_MAG_PER]) * 0.01f)
+            + this[UNIT_STAT_TYPE.UNIT_DEF_MAG];
+        public int MaxHP => (int)((this[UNIT_STAT_TYPE.AFFECT_HP_ADD] + this[UNIT_STAT_TYPE.ITEM_HP])
+            * (100 + this[UNIT_STAT_TYPE.AFFECT_HP_PER]) * 0.01f)
+            + this[UNIT_STAT_TYPE.UNIT_HP];
 
-        public int this[STAT_TYPE type]
+        public int this[UNIT_STAT_TYPE type]
         {
             get => mStats.TryGetValue(type, out var v) ? v : 0;
         }
 
-        public void AddStat(STAT_TYPE type, int value)
+        public void AddStat(UNIT_STAT_TYPE type, int value)
         {
             mStats.TryGetValue(type, out var cur);
             mStats[type] = cur + value;
@@ -88,17 +88,17 @@ namespace Devian
                 AddStat(kv.Key, kv.Value);
         }
 
-        public int GetInt(STAT_TYPE type) => mStats.TryGetValue(type, out var v) ? v : 0;
+        public int GetInt(UNIT_STAT_TYPE type) => mStats.TryGetValue(type, out var v) ? v : 0;
 
-        public float GetFloat(STAT_TYPE type) => GetInt(type) * 0.0001f;
+        public float GetFloat(UNIT_STAT_TYPE type) => GetInt(type) * 0.0001f;
 
-        public void SetStat(STAT_TYPE type, int value) => mStats[type] = value;
+        public void SetStat(UNIT_STAT_TYPE type, int value) => mStats[type] = value;
 
-        public void ClearStat(STAT_TYPE type) => mStats.Remove(type);
+        public void ClearStat(UNIT_STAT_TYPE type) => mStats.Remove(type);
 
         public void ClearStats() => mStats.Clear();
 
-        public IReadOnlyDictionary<STAT_TYPE, int> GetStats() => mStats;
+        public IReadOnlyDictionary<UNIT_STAT_TYPE, int> GetStats() => mStats;
 
         public abstract AbilityBase Clone();
 
@@ -111,10 +111,10 @@ namespace Devian
 }
 ```
 
-- `Dictionary<STAT_TYPE, int>` — 스탯 정규화 저장소
+- `Dictionary<UNIT_STAT_TYPE, int>` — 스탯 정규화 저장소
 - `AtkPhysical`, `AtkMagical`, `DefPhysical`, `DefMagical` — `(AFFECT_*_ADD + ITEM_*) * (100 + AFFECT_*_PER) / 100 + UNIT_*` aggregate property
 - `MaxHP` — `(AFFECT_HP_ADD + ITEM_HP) * (100 + AFFECT_HP_PER) / 100 + UNIT_HP` aggregate property
-- indexer `this[STAT_TYPE]` — 없는 키는 `0` 반환
+- indexer `this[UNIT_STAT_TYPE]` — 없는 키는 `0` 반환
 - `GetInt(type)` — indexer와 동일 (명시적 int 반환)
 - `GetFloat(type)` — 1만분율 변환 (stat value 1 → 0.0001f)
 - `AddStat(type, value)` — 누적 합산
@@ -122,7 +122,7 @@ namespace Devian
 - `SetStat(type, value)` — 특정 stat을 절대값으로 설정 (기존값 무시, 덮어쓰기)
 - `ClearStat(type)` — 특정 stat 제거 (dict에서 key 삭제, indexer 조회 시 0 반환)
 - `ClearStats()` — 전체 stat 초기화
-- `GetStats()` — `IReadOnlyDictionary<STAT_TYPE, int>` 반환 (직렬화/열거용 read-only view)
+- `GetStats()` — `IReadOnlyDictionary<UNIT_STAT_TYPE, int>` 반환 (직렬화/열거용 read-only view)
 - `Clone()` — abstract. leaf 클래스가 override하여 자기 타입 인스턴스를 생성하고 mTable 참조(shallow) + mStats 값(deep)을 복사한다.
 - `CopyStatsFrom(source)` — protected. Clone() 구현에서 mStats dict를 deep copy하는 헬퍼.
 
@@ -182,9 +182,9 @@ namespace Devian
     public abstract class AbilityItemBase : AbilityBase
     {
         public abstract string ItemId { get; }
-        public int Amount => this[STAT_TYPE.ITEM_AMOUNT];
-        public int ItemLevel => this[STAT_TYPE.ITEM_LEVEL];
-        public void AddAmount(int delta) => AddStat(STAT_TYPE.ITEM_AMOUNT, delta);
+        public int Amount => this[UNIT_STAT_TYPE.ITEM_AMOUNT];
+        public int ItemLevel => this[UNIT_STAT_TYPE.ITEM_LEVEL];
+        public void AddAmount(int delta) => AddStat(UNIT_STAT_TYPE.ITEM_AMOUNT, delta);
     }
 }
 ```
@@ -297,7 +297,7 @@ namespace Devian
 }
 ```
 
-- `AbilityItemBase` — item 공통 abstract 베이스. `abstract ItemId`, `Amount`(`STAT_TYPE.ITEM_AMOUNT`), `ItemLevel`(`STAT_TYPE.ITEM_LEVEL`), `AddAmount(delta)` 공통 프로퍼티/메서드를 제공한다.
+- `AbilityItemBase` — item 공통 abstract 베이스. `abstract ItemId`, `Amount`(`UNIT_STAT_TYPE.ITEM_AMOUNT`), `ItemLevel`(`UNIT_STAT_TYPE.ITEM_LEVEL`), `AddAmount(delta)` 공통 프로퍼티/메서드를 제공한다.
 - `AbilityItemEquip` — ITEM_EQUIP 테이블 entity와 ITEM_EQUIP_LEVEL row를 함께 받아 초기화한다. `ItemUid`(인스턴스 고유 GUID)와 `ItemId`(템플릿 ID) 프로퍼티 노출. 같은 `ItemId`에 여러 인스턴스가 존재할 수 있다.
 - `AbilityItemEquip`: `mTable` 참조 + `Init(table, levelTable, itemUid)` + `ItemUid` + `OwnerUnitId` + `OwnerSlotNumber` + `IsEquipped` + `SetOwner(unit_id, slot)` + `ClearOwner()` + `Clone()`. pk는 `itemUid`(GUID).
 - `AbilityItemCard` — ITEM_CARD 테이블 entity를 직접 참조하여 초기화한다. `ITEM_CARD`는 Generated entity (TB_ITEM_CARD 컨테이너).
@@ -322,7 +322,7 @@ namespace Devian
         public abstract string UnitId { get; }
         int mCurHP = 0;
 
-        public int UnitLevel => this[STAT_TYPE.UNIT_LEVEL];
+        public int UnitLevel => this[UNIT_STAT_TYPE.UNIT_LEVEL];
         public int CurHP => mCurHP;
     }
 }
@@ -448,10 +448,10 @@ ability/
 
 ## 8. Hard Rules
 
-- `STAT_TYPE`은 Generated enum이다. 수동 정의 금지.
+- `UNIT_STAT_TYPE`은 Generated enum이다. 수동 정의 금지.
 - stat value 타입은 `int` (C#) / `number` (TS)이다.
 - POCO이다 (MonoBehaviour 상속 금지).
-- `AbilityBase`의 `mStats`는 `Dictionary<STAT_TYPE, int>` (C#) / `Map<STAT_TYPE, number>` (TS)이다 (정규화 SSOT).
+- `AbilityBase`의 `mStats`는 `Dictionary<UNIT_STAT_TYPE, int>` (C#) / `Map<UNIT_STAT_TYPE, number>` (TS)이다 (정규화 SSOT).
 - Unity GamePackage 경로/asmdef/샘플 배치 규칙은 `devian-unity/21-game-package/12-game-ability`가 정본이다.
 
 ---
@@ -459,5 +459,5 @@ ability/
 ## 9. Related
 
 - [devian-unity/21-game-package/12-game-ability](../../../devian-unity/21-game-package/12-game-ability/SKILL.md) — Unity GamePackage C# addon 구현
-- [13-game-stat-type](../13-game-stat-type/SKILL.md) — STAT_TYPE enum 값 정의/관리
+- [13-game-stat-type](../13-game-stat-type/SKILL.md) — UNIT_STAT_TYPE enum 값 정의/관리
 - [00-overview](../00-overview/SKILL.md) — Game 도메인 개요

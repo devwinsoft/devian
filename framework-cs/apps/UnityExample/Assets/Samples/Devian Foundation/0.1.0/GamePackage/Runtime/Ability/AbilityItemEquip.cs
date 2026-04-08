@@ -8,14 +8,14 @@ namespace Devian
         ITEM_EQUIP_LEVEL mLevelTable = null;
         string mItemUid = string.Empty;
         string mOwnerUnitId = string.Empty;
-        SLOT_TYPE mOwnerSlotType = SLOT_TYPE.NONE;
+        EQUIP_SLOT_TYPE mOwnerSlotType = EQUIP_SLOT_TYPE.NONE;
 
         public string ItemUid => mItemUid;
         public override string ItemId => mTable?.item_id ?? string.Empty;
         public EQUIP_TYPE EquipType => mTable != null ? mTable.equip_type : default;
         public string OwnerUnitId => mOwnerUnitId;
-        public SLOT_TYPE OwnerSlotType => mOwnerSlotType;
-        public bool IsEquipped => mOwnerSlotType != SLOT_TYPE.NONE;
+        public EQUIP_SLOT_TYPE OwnerSlotType => mOwnerSlotType;
+        public bool IsEquipped => mOwnerSlotType != EQUIP_SLOT_TYPE.NONE;
 
         public void Init(ITEM_EQUIP table, ITEM_EQUIP_LEVEL levelTable, string itemUid)
         {
@@ -58,7 +58,7 @@ namespace Devian
                 && left.ItemUid == right.ItemUid;
         }
 
-        internal void SetOwner(string unitId, SLOT_TYPE slotType)
+        internal void SetOwner(string unitId, EQUIP_SLOT_TYPE slotType)
         {
             mOwnerUnitId = unitId;
             mOwnerSlotType = slotType;
@@ -67,7 +67,7 @@ namespace Devian
         internal void ClearOwner()
         {
             mOwnerUnitId = string.Empty;
-            mOwnerSlotType = SLOT_TYPE.NONE;
+            mOwnerSlotType = EQUIP_SLOT_TYPE.NONE;
         }
 
         internal GameResult _LevelUp()

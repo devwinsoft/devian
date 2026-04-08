@@ -7,11 +7,11 @@ namespace Devian
     {
         ITEM_HERO mTable = null;
         ITEM_HERO_LEVEL mLevelTable = null;
-        readonly Dictionary<SLOT_TYPE, AbilityItemEquip> mEquips = new();
+        readonly Dictionary<EQUIP_SLOT_TYPE, AbilityItemEquip> mEquips = new();
 
         public string UnitId => mTable?.unit_id ?? string.Empty;
         public override string ItemId => mTable?.item_id ?? string.Empty;
-        public IReadOnlyDictionary<SLOT_TYPE, AbilityItemEquip> Equips => mEquips;
+        public IReadOnlyDictionary<EQUIP_SLOT_TYPE, AbilityItemEquip> Equips => mEquips;
 
         public void Init(ITEM_HERO table, ITEM_HERO_LEVEL levelTable)
         {
@@ -40,21 +40,21 @@ namespace Devian
             return c;
         }
 
-        public AbilityItemEquip GetEquip(SLOT_TYPE slotType)
+        public AbilityItemEquip GetEquip(EQUIP_SLOT_TYPE slotType)
         {
             return mEquips.TryGetValue(slotType, out var equip) ? equip : null;
         }
 
-        internal bool _SetEquip(AbilityItemEquip equip, SLOT_TYPE slotType)
+        internal bool _SetEquip(AbilityItemEquip equip, EQUIP_SLOT_TYPE slotType)
         {
-            if (equip == null || slotType == SLOT_TYPE.NONE)
+            if (equip == null || slotType == EQUIP_SLOT_TYPE.NONE)
                 return false;
 
             if (AbilityEquipSlotPolicy.GetPlacementFailure(equip, slotType, mEquips) != AbilityEquipPlacementFailure.None)
                 return false;
 
-            if (slotType == SLOT_TYPE.HAND_MAIN && AbilityEquipSlotPolicy.IsTwoHanded(equip))
-                _RemoveEquip(SLOT_TYPE.HAND_SUB);
+            if (slotType == EQUIP_SLOT_TYPE.HAND_MAIN && AbilityEquipSlotPolicy.IsTwoHanded(equip))
+                _RemoveEquip(EQUIP_SLOT_TYPE.HAND_SUB);
 
             if (mEquips.TryGetValue(slotType, out var prev))
             {
@@ -69,7 +69,7 @@ namespace Devian
             }
 
             var existingSlot = findEquipSlot(equip);
-            if (existingSlot != SLOT_TYPE.NONE)
+            if (existingSlot != EQUIP_SLOT_TYPE.NONE)
             {
                 if (existingSlot == slotType)
                     return true;
@@ -82,7 +82,7 @@ namespace Devian
             return true;
         }
 
-        internal bool _RemoveEquip(SLOT_TYPE slotType)
+        internal bool _RemoveEquip(EQUIP_SLOT_TYPE slotType)
         {
             if (!mEquips.TryGetValue(slotType, out var equip))
                 return false;
@@ -94,7 +94,7 @@ namespace Devian
             return true;
         }
 
-        SLOT_TYPE findEquipSlot(AbilityItemEquip equip)
+        EQUIP_SLOT_TYPE findEquipSlot(AbilityItemEquip equip)
         {
             foreach (var kv in mEquips)
             {
@@ -102,7 +102,7 @@ namespace Devian
                     return kv.Key;
             }
 
-            return SLOT_TYPE.NONE;
+            return EQUIP_SLOT_TYPE.NONE;
         }
 
         internal GameResult _LevelUp()

@@ -1,4 +1,4 @@
-import { EQUIP_SLOT, EQUIP_TYPE, SLOT_TYPE, TB_EQUIP_SLOT } from '../../Generated/Game.g';
+import { EQUIP_SLOT, EQUIP_TYPE, EQUIP_SLOT_TYPE, TB_EQUIP_SLOT } from '../../Generated/Game.g';
 import { AbilityItemEquip } from './AbilityItemEquip';
 
 export enum AbilityEquipPlacementFailure {
@@ -12,15 +12,15 @@ export class AbilityEquipSlotPolicy {
         return TB_EQUIP_SLOT.get(equipType);
     }
 
-    static isAllowed(equip: AbilityItemEquip | null | undefined, slotType: SLOT_TYPE): boolean {
-        if (!equip || slotType === SLOT_TYPE.NONE)
+    static isAllowed(equip: AbilityItemEquip | null | undefined, slotType: EQUIP_SLOT_TYPE): boolean {
+        if (!equip || slotType === EQUIP_SLOT_TYPE.NONE)
             return false;
 
         return this.isAllowedByRule(this.getRule(equip.equipType), slotType);
     }
 
-    static isAllowedByRule(rule: EQUIP_SLOT | null | undefined, slotType: SLOT_TYPE): boolean {
-        return !!rule && slotType !== SLOT_TYPE.NONE && rule.allowed_slots.includes(slotType);
+    static isAllowedByRule(rule: EQUIP_SLOT | null | undefined, slotType: EQUIP_SLOT_TYPE): boolean {
+        return !!rule && slotType !== EQUIP_SLOT_TYPE.NONE && rule.allowed_slots.includes(slotType);
     }
 
     static isTwoHanded(equip: AbilityItemEquip | null | undefined): boolean {
@@ -31,15 +31,15 @@ export class AbilityEquipSlotPolicy {
         return !!rule && rule.two_handed;
     }
 
-    static hasBlockingTwoHandedMain(equips: ReadonlyMap<SLOT_TYPE, AbilityItemEquip>): boolean {
-        const mainHand = equips.get(SLOT_TYPE.HAND_MAIN);
+    static hasBlockingTwoHandedMain(equips: ReadonlyMap<EQUIP_SLOT_TYPE, AbilityItemEquip>): boolean {
+        const mainHand = equips.get(EQUIP_SLOT_TYPE.HAND_MAIN);
         return !!mainHand && this.isTwoHanded(mainHand);
     }
 
     static getPlacementFailure(
         equip: AbilityItemEquip | null | undefined,
-        slotType: SLOT_TYPE,
-        equips: ReadonlyMap<SLOT_TYPE, AbilityItemEquip>,
+        slotType: EQUIP_SLOT_TYPE,
+        equips: ReadonlyMap<EQUIP_SLOT_TYPE, AbilityItemEquip>,
     ): AbilityEquipPlacementFailure {
         if (!equip)
             return AbilityEquipPlacementFailure.SlotNotAllowed;
@@ -49,13 +49,13 @@ export class AbilityEquipSlotPolicy {
 
     static getPlacementFailureByRule(
         rule: EQUIP_SLOT | null | undefined,
-        slotType: SLOT_TYPE,
-        equips: ReadonlyMap<SLOT_TYPE, AbilityItemEquip>,
+        slotType: EQUIP_SLOT_TYPE,
+        equips: ReadonlyMap<EQUIP_SLOT_TYPE, AbilityItemEquip>,
     ): AbilityEquipPlacementFailure {
         if (!this.isAllowedByRule(rule, slotType))
             return AbilityEquipPlacementFailure.SlotNotAllowed;
 
-        if (slotType === SLOT_TYPE.HAND_SUB && this.hasBlockingTwoHandedMain(equips))
+        if (slotType === EQUIP_SLOT_TYPE.HAND_SUB && this.hasBlockingTwoHandedMain(equips))
             return AbilityEquipPlacementFailure.HandSubBlockedByTwoHandedMain;
 
         return AbilityEquipPlacementFailure.None;

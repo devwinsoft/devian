@@ -47,66 +47,6 @@
         {"name": "GTE", "value": 2},
         {"name": "LTE", "value": 3}
       ]
-    },
-    {
-      "name": "STAT_TYPE",
-      "values": [
-        {"name": "NONE", "value": 0},
-        {"name": "AFFECT_ATK_PHY_ADD", "value": 1001},
-        {"name": "AFFECT_ATK_PHY_PER", "value": 1002},
-        {"name": "AFFECT_ATK_MAG_ADD", "value": 1003},
-        {"name": "AFFECT_ATK_MAG_PER", "value": 1004},
-        {"name": "AFFECT_DEF_PHY_ADD", "value": 1005},
-        {"name": "AFFECT_DEF_PHY_PER", "value": 1006},
-        {"name": "AFFECT_DEF_MAG_ADD", "value": 1007},
-        {"name": "AFFECT_DEF_MAG_PER", "value": 1008},
-        {"name": "AFFECT_HP_ADD", "value": 1009},
-        {"name": "AFFECT_HP_PER", "value": 1010},
-        {"name": "ITEM_ATK_PHY", "value": 2001},
-        {"name": "ITEM_ATK_MAG", "value": 2002},
-        {"name": "ITEM_DEF_PHY", "value": 2003},
-        {"name": "ITEM_DEF_MAG", "value": 2004},
-        {"name": "ITEM_AMOUNT", "value": 2005},
-        {"name": "ITEM_HP", "value": 2006},
-        {"name": "ITEM_LEVEL", "value": 2007},
-        {"name": "UNIT_ATK_PHY", "value": 3001},
-        {"name": "UNIT_ATK_MAG", "value": 3002},
-        {"name": "UNIT_DEF_PHY", "value": 3003},
-        {"name": "UNIT_DEF_MAG", "value": 3004},
-        {"name": "UNIT_HP", "value": 3005},
-        {"name": "UNIT_LEVEL", "value": 3006}
-      ]
-    },
-    {
-      "name": "UNIT_TYPE",
-      "values": [
-        {"name": "NONE", "value": 0},
-        {"name": "HERO", "value": 1},
-        {"name": "MONSTER", "value": 2}
-      ]
-    },
-    {
-      "name": "UNIT_HERO_TYPE",
-      "values": [
-        {"name": "NONE", "value": 0},
-        {"name": "HERO_001", "value": 1},
-        {"name": "HERO_002", "value": 2},
-        {"name": "HERO_003", "value": 3},
-        {"name": "HERO_004", "value": 4},
-        {"name": "HERO_005", "value": 5}
-      ]
-    },
-    {
-      "name": "SLOT_TYPE",
-      "values": [
-        {"name": "NONE", "value": 0},
-        {"name": "HAND_MAIN", "value": 4001},
-        {"name": "HAND_SUB", "value": 4002},
-        {"name": "HEAD", "value": 4003},
-        {"name": "GLOVES", "value": 4004},
-        {"name": "RING_LEFT", "value": 4005},
-        {"name": "RING_RIGHT", "value": 4006}
-      ]
     }
   ]
 }

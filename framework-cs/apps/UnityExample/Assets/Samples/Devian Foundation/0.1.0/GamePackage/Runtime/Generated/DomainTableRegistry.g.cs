@@ -61,20 +61,6 @@ namespace Devian.Domain.Game
                 }
             });
 
-            global::Devian.TableManager.Instance.RegisterTbLoader("EQUIP_SLOT", (format, text, bin) =>
-            {
-                if (format == global::Devian.TableFormat.Json && text != null)
-                {
-                    TB_EQUIP_SLOT.LoadFromNdjson(text);
-                    TB_EQUIP_SLOT._AfterLoad();
-                }
-                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
-                {
-                    TB_EQUIP_SLOT.LoadFromPb64Binary(bin);
-                    TB_EQUIP_SLOT._AfterLoad();
-                }
-            });
-
             global::Devian.TableManager.Instance.RegisterTbLoader("GAME_ERROR", (format, text, bin) =>
             {
                 if (format == global::Devian.TableFormat.Json && text != null)
@@ -128,6 +114,20 @@ namespace Devian.Domain.Game
                 {
                     TB_ITEM_HERO_LEVEL.LoadFromPb64Binary(bin);
                     TB_ITEM_HERO_LEVEL._AfterLoad();
+                }
+            });
+
+            global::Devian.TableManager.Instance.RegisterTbLoader("EQUIP_SLOT", (format, text, bin) =>
+            {
+                if (format == global::Devian.TableFormat.Json && text != null)
+                {
+                    TB_EQUIP_SLOT.LoadFromNdjson(text);
+                    TB_EQUIP_SLOT._AfterLoad();
+                }
+                else if (format == global::Devian.TableFormat.Pb64 && bin != null)
+                {
+                    TB_EQUIP_SLOT.LoadFromPb64Binary(bin);
+                    TB_EQUIP_SLOT._AfterLoad();
                 }
             });
 

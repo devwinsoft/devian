@@ -26,7 +26,7 @@ Inventory System의 모듈 경계/하드룰을 정의한다.
   - 장비: `itemUid(pk, GUID) -> AbilityItemEquip` (능력치/장비 슬롯을 StatType 기반으로 관리)
 - 장비 PK는 `itemUid`(GUID)이다. `item_id`는 템플릿 ID(ITEM_EQUIP 테이블 키)로 사용한다.
 - 같은 `item_id`에 여러 인스턴스(각각 고유 `itemUid`)가 존재할 수 있다.
-- 장비 내부 속성(레벨/장착 등)은 `AbilityItemEquip : AbilityItemBase : AbilityBase` → `mStats[STAT_TYPE.X]`로 정규화한다.
+- 장비 내부 속성(레벨/장착 등)은 `AbilityItemEquip : AbilityItemBase : AbilityBase` → `mStats[UNIT_STAT_TYPE.X]`로 정규화한다.
 
 
 ### 2) RewardData 규약은 고정이다 (호환성)

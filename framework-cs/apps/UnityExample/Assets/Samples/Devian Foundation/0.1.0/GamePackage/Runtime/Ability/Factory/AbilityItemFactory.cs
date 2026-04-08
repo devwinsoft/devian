@@ -123,7 +123,7 @@ namespace Devian
             string itemUid,
             int itemLevel = 1,
             string ownerUnitId = null,
-            SLOT_TYPE ownerSlotType = SLOT_TYPE.NONE)
+            EQUIP_SLOT_TYPE ownerSlotType = EQUIP_SLOT_TYPE.NONE)
         {
             if (string.IsNullOrWhiteSpace(itemId))
             {
@@ -148,7 +148,7 @@ namespace Devian
             string itemUid,
             int itemLevel = 1,
             string ownerUnitId = null,
-            SLOT_TYPE ownerSlotType = SLOT_TYPE.NONE)
+            EQUIP_SLOT_TYPE ownerSlotType = EQUIP_SLOT_TYPE.NONE)
         {
             if (table == null)
             {
@@ -165,7 +165,7 @@ namespace Devian
             }
 
             var hasOwnerUnitId = !string.IsNullOrWhiteSpace(ownerUnitId);
-            var hasOwnerSlot = ownerSlotType != SLOT_TYPE.NONE;
+            var hasOwnerSlot = ownerSlotType != EQUIP_SLOT_TYPE.NONE;
             if ((hasOwnerSlot && !hasOwnerUnitId) || (!hasOwnerSlot && hasOwnerUnitId))
             {
                 return GameResult<AbilityItemEquip>.Failure(
@@ -180,7 +180,7 @@ namespace Devian
             var ability = new AbilityItemEquip();
             ability.Init(table, levelTable.Value, itemUid);
 
-            if (ownerSlotType != SLOT_TYPE.NONE)
+            if (ownerSlotType != EQUIP_SLOT_TYPE.NONE)
                 ability.SetOwner(ownerUnitId, ownerSlotType);
 
             return GameResult<AbilityItemEquip>.Success(ability);

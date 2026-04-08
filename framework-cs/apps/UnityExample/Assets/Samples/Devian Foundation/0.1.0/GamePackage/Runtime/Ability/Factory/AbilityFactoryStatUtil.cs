@@ -5,7 +5,7 @@ namespace Devian
 {
     internal static class AbilityFactoryStatUtil
     {
-        public static void ApplyStats(AbilityBase ability, IReadOnlyDictionary<STAT_TYPE, int> stats)
+        public static void ApplyStats(AbilityBase ability, IReadOnlyDictionary<UNIT_STAT_TYPE, int> stats)
         {
             if (ability == null || stats == null)
                 return;

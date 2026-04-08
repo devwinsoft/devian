@@ -30,7 +30,7 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobilePacka
 - `SetRental(id, expiresAtClientUtcMs)` / `GetRentalExpiry(id)` / `HasActiveRental(id)` / `GetRentalRemainingMs(id)` / `RemoveRental(id)` — 렌탈 CRUD
 - `SetPass(id, owned)` / `HasPass(id)` / `RemovePass(id)` — 시즌패스 CRUD
 - `TreasureCurrent` — `InventoryTreasureCurrent` (Exp/Level, sealed POCO)
-- `TreasureCounts` — `Dictionary<TREASURE_GRADE_TYPE, int>` (grade별 보유 chest count)
+- `TreasureCounts` — `Dictionary<ITEM_GRADE_TYPE, int>` (grade별 보유 chest count)
 - `GetTreasureCount(gradeType)` / `AddTreasure(gradeType, amount)` / `SetTreasureCount(gradeType, count)` — treasure count CRUD
 - `AddTreasureExp(amount)` — delegates to `TreasureCurrent.Exp`
 - `ResetTreasure(level, exp)` — delegates to `TreasureCurrent.Reset(...)`
@@ -50,7 +50,7 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
 
 - `RemoveEquip`은 장착 상태면 hero 슬롯 맵까지 함께 정리한 뒤 제거한다.
 - `Equip(heroId, equipSlot, equipUid)` / `Unequip(heroId, equipSlot)` 편의 메서드를 제공한다.
-- slot key는 `SLOT_TYPE`이며 `NONE`은 유효한 장착 slot이 아니다.
+- slot key는 `EQUIP_SLOT_TYPE`이며 `NONE`은 유효한 장착 slot이 아니다.
 - two-handed main 장착에 따른 `HAND_SUB` 자동 해제는 최종적으로 `AbilityItemHero._SetEquip()` 규칙에 따른다.
 
 ---
@@ -60,11 +60,11 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
 | 타입 | 책임 |
 |---|---|
 | `InventoryManager` | InventoryStorage 소유, 타입별 Apply/Revoke/Query API 제공 |
-| `InventoryStorage` | CurrencyBalances (`Dictionary<CURRENCY_TYPE, long>`), Equipments (itemUid → AbilityItemEquip), Cards (item_id → AbilityItemCard), Materials (item_id → AbilityItemMaterial), Heroes (item_id → AbilityItemHero), Rentals (item_id → expiresAtClientUtcMs), Passes (item_id → owned), TreasureCurrent (`InventoryTreasureCurrent`), TreasureCounts (TREASURE_GRADE_TYPE → int) |
-| `AbilityItemEquip` | OwnerUnitId/OwnerSlotType(별도 필드) + 능력치(STAT_TYPE 기반) 관리 |
-| `AbilityItemCard` | 수량(`STAT_TYPE.ITEM_AMOUNT`) + 능력치(STAT_TYPE 기반) 관리 |
-| `AbilityItemMaterial` | 수량(`STAT_TYPE.ITEM_AMOUNT`) + 능력치(STAT_TYPE 기반) 관리 |
-| `AbilityItemHero` | 수량(`STAT_TYPE.ITEM_AMOUNT`) + 영웅 장비 슬롯(`Dict<SLOT_TYPE, AbilityItemEquip>`) 관리 |
+| `InventoryStorage` | CurrencyBalances (`Dictionary<CURRENCY_TYPE, long>`), Equipments (itemUid → AbilityItemEquip), Cards (item_id → AbilityItemCard), Materials (item_id → AbilityItemMaterial), Heroes (item_id → AbilityItemHero), Rentals (item_id → expiresAtClientUtcMs), Passes (item_id → owned), TreasureCurrent (`InventoryTreasureCurrent`), TreasureCounts (ITEM_GRADE_TYPE → int) |
+| `AbilityItemEquip` | OwnerUnitId/OwnerSlotType(별도 필드) + 능력치(UNIT_STAT_TYPE 기반) 관리 |
+| `AbilityItemCard` | 수량(`UNIT_STAT_TYPE.ITEM_AMOUNT`) + 능력치(UNIT_STAT_TYPE 기반) 관리 |
+| `AbilityItemMaterial` | 수량(`UNIT_STAT_TYPE.ITEM_AMOUNT`) + 능력치(UNIT_STAT_TYPE 기반) 관리 |
+| `AbilityItemHero` | 수량(`UNIT_STAT_TYPE.ITEM_AMOUNT`) + 영웅 장비 슬롯(`Dict<EQUIP_SLOT_TYPE, AbilityItemEquip>`) 관리 |
 
 - `InventoryManager`가 `InventoryStorage`를 소유한다 (싱글톤 등록 안 함).
 - 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `item_id`에 여러 인스턴스가 존재할 수 있다.
@@ -125,7 +125,7 @@ NOTE: `ItemData` 클래스는 `AbilityItemEquip`에 통합되어 삭제되었다
 ## 4. asmdef
 
 `Devian.Samples.MobilePackage.asmdef`에 포함된 참조:
-- `Devian.Domain.Game` (STAT_TYPE — AbilityItemEquip → AbilityBase 경유)
+- `Devian.Domain.Game` (UNIT_STAT_TYPE — AbilityItemEquip → AbilityBase 경유)
 
 ---
 
@@ -151,7 +151,7 @@ namespace Devian
 - `Rentals` key = `item_id` (string key). value = `long` expiresAtClientUtcMs.
 - `Passes` key = `item_id` (string key). value = `bool` owned.
 - `TreasureCurrent` = `InventoryTreasureCurrent` (sealed POCO, Exp/Level).
-- `TreasureCounts` key = `TREASURE_GRADE_TYPE` (NONE 제외). value = `int` (보유 chest count).
+- `TreasureCounts` key = `ITEM_GRADE_TYPE` (NONE 제외). value = `int` (보유 chest count).
 - treasure count와 exp는 음수 불가 (0 이하 clamp).
 - treasure current 상태는 grade별 분리 없이 단일 Exp/Level만 사용한다.
 - 장비 장착/해제의 핵심 로직은 `AbilityItemHero`가 담당한다. InventoryStorage는 편의 메서드(`Equip`/`Unequip`)로 위임한다.
@@ -177,7 +177,7 @@ JSON 스키마: [03-ssot](../03-ssot/SKILL.md) 참조.
 ## 8. Related
 
 - [12-game-ability](../../../21-game-package/12-game-ability/SKILL.md) — AbilityBase, AbilityItemEquip, AbilityItemCard, AbilityItemMaterial, AbilityItemHero, AbilityUnitHero
-- [13-game-stat-type](../../../../devian/21-domain-game/13-game-stat-type/SKILL.md) — STAT_TYPE enum
+- [13-game-stat-type](../../../../devian/21-domain-game/13-game-stat-type/SKILL.md) — UNIT_STAT_TYPE enum
 - [10-inventory-manager](../10-inventory-manager/SKILL.md) — InventoryManager (InventoryStorage 소유자, 수량 SSOT)
 - [12-inventory-wallet](../12-inventory-wallet/SKILL.md) — Currency State Flattening (legacy wallet wrapper 제거)
 - [03-ssot](../03-ssot/SKILL.md) — Inventory State/Apply Rules

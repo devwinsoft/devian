@@ -570,7 +570,7 @@ namespace Devian
             return GameResult.Ok();
         }
 
-        public GameResult SetHeroEquip(string heroId, SLOT_TYPE slotType, string equipUid)
+        public GameResult SetHeroEquip(string heroId, EQUIP_SLOT_TYPE slotType, string equipUid)
         {
             if (string.IsNullOrWhiteSpace(heroId))
             {
@@ -579,7 +579,7 @@ namespace Devian
                     "InventoryManager.SetHeroEquip: heroId is null or empty.");
             }
 
-            if (slotType == SLOT_TYPE.NONE)
+            if (slotType == EQUIP_SLOT_TYPE.NONE)
             {
                 return GameResult.Failure(
                     GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
@@ -637,8 +637,8 @@ namespace Devian
             var prevOwnerHero = !string.IsNullOrWhiteSpace(prevOwnerHeroId) && prevOwnerHeroId != heroId
                 ? _storage.GetHero(prevOwnerHeroId)
                 : null;
-            var autoUnequippedSubHand = slotType == SLOT_TYPE.HAND_MAIN && AbilityEquipSlotPolicy.IsTwoHanded(rule)
-                ? hero.GetEquip(SLOT_TYPE.HAND_SUB)
+            var autoUnequippedSubHand = slotType == EQUIP_SLOT_TYPE.HAND_MAIN && AbilityEquipSlotPolicy.IsTwoHanded(rule)
+                ? hero.GetEquip(EQUIP_SLOT_TYPE.HAND_SUB)
                 : null;
 
             if (!_storage.Equip(heroId, slotType, equipUid))
@@ -667,7 +667,7 @@ namespace Devian
             return GameResult.Ok();
         }
 
-        public GameResult RemoveHeroEquip(string heroId, SLOT_TYPE slotType)
+        public GameResult RemoveHeroEquip(string heroId, EQUIP_SLOT_TYPE slotType)
         {
             if (string.IsNullOrWhiteSpace(heroId))
             {
@@ -676,7 +676,7 @@ namespace Devian
                     "InventoryManager.RemoveHeroEquip: heroId is null or empty.");
             }
 
-            if (slotType == SLOT_TYPE.NONE)
+            if (slotType == EQUIP_SLOT_TYPE.NONE)
             {
                 return GameResult.Failure(
                     GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
@@ -730,9 +730,9 @@ namespace Devian
             return GameResult.Ok();
         }
 
-        public GameResult ApplyTreasure(TREASURE_GRADE_TYPE gradeType, int amount)
+        public GameResult ApplyTreasure(ITEM_GRADE_TYPE gradeType, int amount)
         {
-            if (gradeType == TREASURE_GRADE_TYPE.NONE)
+            if (gradeType == ITEM_GRADE_TYPE.NONE)
             {
                 return GameResult.Failure(
                     GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
@@ -878,7 +878,7 @@ namespace Devian
             return GameResult.Ok();
         }
 
-        public GameResult RevokeTreasure(TREASURE_GRADE_TYPE gradeType, int amount)
+        public GameResult RevokeTreasure(ITEM_GRADE_TYPE gradeType, int amount)
         {
             if (amount <= 0)
                 return GameResult.Ok();
@@ -1000,7 +1000,7 @@ namespace Devian
             return _storage.HasPass(itemId);
         }
 
-        public int GetTreasureCount(TREASURE_GRADE_TYPE gradeType)
+        public int GetTreasureCount(ITEM_GRADE_TYPE gradeType)
         {
             return _storage.GetTreasureCount(gradeType);
         }
@@ -1024,7 +1024,7 @@ namespace Devian
                 return;
 
             _storage.SetTreasureCurrentState(normalizedLevel, normalizedExp);
-            notifyTreasureStateChanged(TREASURE_GRADE_TYPE.NONE, 0);
+            notifyTreasureStateChanged(ITEM_GRADE_TYPE.NONE, 0);
         }
 
         // ── Stamina ──
@@ -1174,7 +1174,7 @@ namespace Devian
 
                 foreach (var equip in heroSnapshot.Equips)
                 {
-                    if (equip.Key == SLOT_TYPE.NONE || string.IsNullOrWhiteSpace(equip.Value))
+                    if (equip.Key == EQUIP_SLOT_TYPE.NONE || string.IsNullOrWhiteSpace(equip.Value))
                     {
                         return GameResult<InventoryStorage>.Failure(
                             GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
@@ -1204,7 +1204,7 @@ namespace Devian
 
             foreach (var kv in snapshot.TreasureCounts)
             {
-                if (kv.Key == TREASURE_GRADE_TYPE.NONE)
+                if (kv.Key == ITEM_GRADE_TYPE.NONE)
                     continue;
 
                 if (kv.Value <= 0)
@@ -1334,7 +1334,7 @@ namespace Devian
                 owned);
         }
 
-        void notifyTreasureStateChanged(TREASURE_GRADE_TYPE gradeType, int deltaCount)
+        void notifyTreasureStateChanged(ITEM_GRADE_TYPE gradeType, int deltaCount)
         {
             _messageTrigger.Notify(
                 INVENTORY_MESSAGE_TYPE.TREASURE_STATE_CHANGED,

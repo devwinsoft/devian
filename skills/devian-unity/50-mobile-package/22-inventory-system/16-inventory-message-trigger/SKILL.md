@@ -33,7 +33,7 @@ public sealed class InventoryMessageTrigger : BaseTrigger<EntityId, INVENTORY_ME
 
 ## Message Keys
 
-`INVENTORY_MESSAGE_TYPE` enum(입력: `input/Domains/Game/ENUM_INVENTORY.json`)을 사용한다.
+`INVENTORY_MESSAGE_TYPE` enum(입력: `input/Domains/Game/ENUM_ITEM.json`)을 사용한다.
 
 키:
 
@@ -65,7 +65,7 @@ payload 규약:
 - `ITEM_MATERIAL_LIST_CHANGED`: `args[0] = INVENTORY_LIST_CHANGE_TYPE`, `args[1] = string itemId`, `args[2] = AbilityItemMaterial runtimeOrNull`
 - `ITEM_HERO_LIST_CHANGED`: `args[0] = INVENTORY_LIST_CHANGE_TYPE`, `args[1] = string itemId`, `args[2] = AbilityItemHero runtimeOrNull`
 - `RENTAL_CHANGED`: `args[0] = string itemId`, `args[1] = long expiresAtClientUtcMs`, `args[2] = bool active`
-- `TREASURE_STATE_CHANGED`: `args[0] = TREASURE_GRADE_TYPE`, `args[1] = int deltaCount`, `args[2] = int currentCount`, `args[3] = int currentLevel`, `args[4] = int currentExp`
+- `TREASURE_STATE_CHANGED`: `args[0] = ITEM_GRADE_TYPE`, `args[1] = int deltaCount`, `args[2] = int currentCount`, `args[3] = int currentLevel`, `args[4] = int currentExp`
 - `INVENTORY_SNAPSHOT_CHANGED`: `args[0] = INVENTORY_SNAPSHOT_CHANGE_REASON`
 
 ---
