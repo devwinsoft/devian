@@ -44,13 +44,14 @@ InventoryStorage는 InventoryManager가 소유하며 `Devian.Samples.MobilePacka
 
 장비 장착/해제의 저장 로직은 `AbilityItemHero._SetEquip/_RemoveEquip`이 담당한다.
 - 이 경로는 hero loadout metadata와 equip owner metadata만 갱신한다.
-- 이미 다른 hero에 장착된 equip 이동은 `InventoryStorage.Equip()`가 기존 owner를 먼저 정리한 뒤 위임하는 경로만 사용한다.
+- 이미 다른 hero에 장착된 equip 이동은 `InventoryStorage.Equip()`가 target hero의 장착 가능 여부를 먼저 확인한 뒤 기존 owner를 정리하고 위임하는 경로만 사용한다.
 - equip stat 계산은 `AbilityUnitHero._Equip/_Unequip`에서 수행한다.
 InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제공한다.
 
 - `RemoveEquip`은 장착 상태면 hero 슬롯 맵까지 함께 정리한 뒤 제거한다.
 - `Equip(heroId, equipSlot, equipUid)` / `Unequip(heroId, equipSlot)` 편의 메서드를 제공한다.
 - slot key는 `EQUIP_SLOT_TYPE`이며 `NONE`은 유효한 장착 slot이 아니다.
+- SaveData inventory JSON의 `heroes[*].equips` key도 `EQUIP_SLOT_TYPE` enum name 문자열을 사용한다. 숫자 slot key serialize는 금지한다.
 - two-handed main 장착에 따른 `HAND_SUB` 자동 해제는 최종적으로 `AbilityItemHero._SetEquip()` 규칙에 따른다.
 
 ---
@@ -60,7 +61,7 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
 | 타입 | 책임 |
 |---|---|
 | `InventoryManager` | InventoryStorage 소유, 타입별 Apply/Revoke/Query API 제공 |
-| `InventoryStorage` | CurrencyBalances (`Dictionary<CURRENCY_TYPE, long>`), Equipments (itemUid → AbilityItemEquip), Cards (item_id → AbilityItemCard), Materials (item_id → AbilityItemMaterial), Heroes (item_id → AbilityItemHero), Rentals (item_id → expiresAtClientUtcMs), Passes (item_id → owned), TreasureCurrent (`InventoryTreasureCurrent`), TreasureCounts (ITEM_GRADE_TYPE → int) |
+| `InventoryStorage` | CurrencyBalances (`Dictionary<CURRENCY_TYPE, long>`), Equipments (itemUid → AbilityItemEquip), Cards (item_id → AbilityItemCard), Materials (item_id → AbilityItemMaterial), Heroes (item_id → AbilityItemHero), SelectedHeroId (`string`), Rentals (item_id → expiresAtClientUtcMs), Passes (item_id → owned), TreasureCurrent (`InventoryTreasureCurrent`), TreasureCounts (ITEM_GRADE_TYPE → int) |
 | `AbilityItemEquip` | OwnerUnitId/OwnerSlotType(별도 필드) + 능력치(UNIT_STAT_TYPE 기반) 관리 |
 | `AbilityItemCard` | 수량(`UNIT_STAT_TYPE.ITEM_AMOUNT`) + 능력치(UNIT_STAT_TYPE 기반) 관리 |
 | `AbilityItemMaterial` | 수량(`UNIT_STAT_TYPE.ITEM_AMOUNT`) + 능력치(UNIT_STAT_TYPE 기반) 관리 |
@@ -68,10 +69,12 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
 
 - `InventoryManager`가 `InventoryStorage`를 소유한다 (싱글톤 등록 안 함).
 - 장비는 `itemUid`(GUID)를 pk로 관리한다. 같은 `item_id`에 여러 인스턴스가 존재할 수 있다.
-- `ApplyCard(item_id, amount)` / `AddCardAmount(item_id, delta)` — `_storage.Cards`에 AbilityItemCard를 추가하고 `AddAmount(delta)`로 수량을 변경한다.
-- `ApplyMaterial(item_id, amount)` / `AddMaterialAmount(item_id, delta)` — `_storage.Materials`에 AbilityItemMaterial을 추가하고 `AddAmount(delta)`로 수량을 변경한다.
+- `ApplyCard(item_id, amount)` / `AddCardAmount(item_id, delta)` — `_storage.Cards`에 AbilityItemCard를 추가하고 `AddAmount(delta)`로 수량을 증가시킨다. 음수 delta는 허용하지 않는다.
+- `ApplyMaterial(item_id, amount)` / `AddMaterialAmount(item_id, delta)` — `_storage.Materials`에 AbilityItemMaterial을 추가하고 `AddAmount(delta)`로 수량을 증가시킨다. 음수 delta는 허용하지 않는다.
 - `ApplyEquip(item_id)` — 새 `itemUid`(GUID)로 AbilityItemEquip을 생성하여 `_storage.Equipments`에 추가한다.
-- `ApplyHero(item_id, amount)` / `AddHeroAmount(item_id, delta)` — `_storage.Heroes`에 AbilityItemHero를 추가하고 `AddAmount(delta)`로 수량을 변경한다.
+- `ApplyHero(item_id, amount)` / `AddHeroAmount(item_id, delta)` — `_storage.Heroes`에 AbilityItemHero를 추가하고 `AddAmount(delta)`로 수량을 증가시킨다. 음수 delta는 허용하지 않는다.
+- `SelectedHeroId` — 현재 선택된 owned hero의 itemId raw state. 존재하지 않는 hero가 제거되면 함께 비운다.
+- `UpgradeEquipItem(baseItemUid, materialItemUid0, materialItemUid1)` — manager boundary에서 equip upgrade recipe를 검증하고 source 3개를 제거한 뒤 upgraded equip 1개를 추가한다. storage는 개별 `RemoveEquip/AddEquip`만 수행하고, manager는 생성된 upgraded `AbilityItemEquip` runtime을 반환한다.
 - `ApplyRental(item_id, durationMs)` — `_storage.SetRental(id, max(currentExpiry, now)+duration)`로 로컬 만료 시각을 설정/연장한다.
 - `SetPassOwnership(item_id)` — `_storage.SetPass(id, true)`로 소유권을 설정한다.
 - `ApplyTreasure(gradeType, amount)` — `_storage.AddTreasure(gradeType, amount)`로 chest count를 누적한다.
@@ -94,7 +97,9 @@ InventoryStorage는 hero/equip 조회 + 위임하는 **편의 메서드**를 제
 - 외부 시스템은 `EquippedItems/UnequippedItems/UnownedEquipItems/GetEquipments/GetCards/GetMaterials/GetHeroes/GetRentals/GetPasses/GetRentalRemainingMs/HasPass/HasActiveRental` 같은 manager helper를 사용한다.
 - 신규 코드에서 `InventoryStorage` 직접 조회/변경은 금지한다.
 - load/import/clear는 temp `InventorySnapshot`을 만든 뒤 `InventoryManager.ReplaceState/ClearState`로 반영한다.
-- 카드/재료/영웅은 amount가 0이 되면 storage에서 제거한다.
+- 카드/재료/영웅은 일반 revoke/apply 경로에서 amount가 0이 되면 storage에서 제거한다.
+- 단, card/hero level up 결과로 amount가 0이 된 runtime은 level/equip 상태 보존을 위해 storage/snapshot에 남을 수 있다.
+- selected hero raw state는 `InventoryStorage`/`InventorySnapshot`/SaveData inventory JSON(`selectedHeroItemId`)에 저장한다. `SelectedHero` runtime은 manager 파생 view다.
 - 장착/미장착 장비 목록은 `InventoryStorage`가 아니라 `InventoryManager`가 `_storage.Equipments`로부터 재구성하는 파생 runtime view다.
 - 미보유 장비 목록은 `InventoryStorage`에 저장하지 않는다. `InventoryManager`가 `TB_ITEM_EQUIP.GetAll()`과 owned equip `item_id` 집합을 비교해서 만드는 파생 table-row view다.
 

@@ -148,7 +148,7 @@ namespace Devian
 
         static GameResult<UNIT_HERO_LEVEL> resolveHeroLevelTable(string unitId, int unitLevel)
         {
-            var resolveLevel = resolveUnitLevel(unitLevel, "AbilityUnitFactory.CreateHero");
+            var resolveLevel = resolveHeroUnitLevel(unitLevel, "AbilityUnitFactory.CreateHero");
             if (resolveLevel.IsFailure)
                 return GameResult<UNIT_HERO_LEVEL>.Failure(resolveLevel.Error!);
 
@@ -165,7 +165,7 @@ namespace Devian
 
         static GameResult<UNIT_MONSTER_LEVEL> resolveMonsterLevelTable(string unitId, int unitLevel)
         {
-            var resolveLevel = resolveUnitLevel(unitLevel, "AbilityUnitFactory.CreateMonster");
+            var resolveLevel = resolveMonsterUnitLevel(unitLevel, "AbilityUnitFactory.CreateMonster");
             if (resolveLevel.IsFailure)
                 return GameResult<UNIT_MONSTER_LEVEL>.Failure(resolveLevel.Error!);
 
@@ -182,10 +182,22 @@ namespace Devian
 
         static GameResult<int> resolveHeroContextUnitLevel(AbilityUnitHeroContext context)
         {
-            return resolveUnitLevel(context.UnitLevel, "AbilityUnitFactory.CreateHero");
+            return resolveHeroUnitLevel(context.UnitLevel, "AbilityUnitFactory.CreateHero");
         }
 
-        static GameResult<int> resolveUnitLevel(int unitLevel, string context)
+        static GameResult<int> resolveHeroUnitLevel(int unitLevel, string context)
+        {
+            if (unitLevel < 1)
+            {
+                return GameResult<int>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"{context}: unitLevel must be >= 1. actual={unitLevel}");
+            }
+
+            return GameResult<int>.Success(unitLevel);
+        }
+
+        static GameResult<int> resolveMonsterUnitLevel(int unitLevel, string context)
         {
             if (unitLevel < 1)
             {

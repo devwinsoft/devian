@@ -1,7 +1,7 @@
 using Devian;
 using UnityEngine;
 
-public class UILobbyHeroEquipGridFrame : UIScrollGridFrame<UILobbyHeroEquipGridCell>
+public class UILobbyHeroEquipOwnedGridFrame : UIScrollGridFrame<UILobbyHeroEquipOwnedGridCell>
 {
     protected override void onInit()
     {

@@ -196,6 +196,8 @@ deserialize 시 target:
 - codec은 domain rule을 가지지 않는다. domain mutation은 각 manager가 담당한다.
 - inventory item save는 generic `stats` blob를 생성 정본으로 쓰지 않는다. item 생성은 `item_id/itemUid/item_level`과 table lookup으로 복원하고, mutable 상태는 `amount/equips` 같은 explicit field로 저장/복원한다.
 - equip owner는 별도 field로 저장하지 않는다. hero equip ownership의 저장/복원 SSOT는 `heroes[*].equips`다.
+- save JSON에서 enum은 숫자 ordinal로 저장하지 않는다. enum key/value가 필요하면 반드시 enum name 문자열을 사용한다.
+- legacy 숫자 enum 파싱은 load 호환용으로만 유지한다. 새 serialize 경로는 숫자 enum을 쓰지 않는다.
 - 새 저장 섹션 추가 시:
   - root codec 수정
   - section codec 추가

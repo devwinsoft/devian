@@ -97,7 +97,13 @@ AppliesTo: v10
 - `AbilityItemCard.Init()`, `AbilityItemHero.Init()`, `AbilityItemEquip.Init()`는 base `ITEM_*` row와 대응 `ITEM_*_LEVEL` row를 함께 받아서 초기 stat을 세팅한다.
 - `AbilityItemBase`는 level row 교체용 helper를 가진다. level up 시 현재 level row stat을 제거하고 다음 level row stat을 적용한다.
 - `AbilityItemCard`, `AbilityItemHero`, `AbilityItemEquip`는 internal `_LevelUp()`을 제공한다. 현재 row 기준으로 다음 `ITEM_*_LEVEL` row를 찾아 runtime stat을 재적용한다.
-- `AbilityItemHero`는 outgame hero 저장 모델이다. `Equips`와 internal `_SetEquip(equip, slot)` / `_RemoveEquip(slot)`로 loadout metadata만 보유한다.
+- `AbilityItemCard`는 internal `ResolveLevelUpCost()`로 현재 `ITEM_CARD_LEVEL.levelup_count`를 level-up 비용으로 해석한다. 비용 정본은 현재 level row다.
+- `AbilityItemCard`는 internal `ResolveLevelUpCurrencyCost()`로 현재 `ITEM_CARD_LEVEL.levelup_currency` + `levelup_price`를 level-up 재화 비용으로 해석한다. 비용 정본은 현재 level row다.
+- `AbilityItemHero`는 internal `ResolveLevelUpCost()`로 현재 `ITEM_HERO_LEVEL.levelup_count`를 level-up 비용으로 해석한다. 비용 정본은 현재 level row다.
+- `AbilityItemHero`는 internal `ResolveLevelUpCurrencyCost()`로 현재 `ITEM_HERO_LEVEL.levelup_currency` + `levelup_price`를 level-up 재화 비용으로 해석한다. 비용 정본은 현재 level row다.
+- `AbilityItemEquip`는 internal `ResolveLevelUpMaterialCost()`로 현재 `ITEM_EQUIP_LEVEL.levelup_material` + `levelup_count`를 level-up 재료 비용으로 해석한다. 비용 정본은 현재 level row다.
+- `AbilityItemEquip`는 internal `ResolveLevelUpCurrencyCost()`로 현재 `ITEM_EQUIP_LEVEL.levelup_currency` + `levelup_price`를 level-up 재화 비용으로 해석한다. 비용 정본은 현재 level row다.
+- `AbilityItemHero`는 outgame hero 저장 모델이다. 기본 생성 레벨은 `1`이다. `Equips`와 internal `_SetEquip(equip, slot)` / `_RemoveEquip(slot)`로 loadout metadata만 보유한다.
 - `AbilityItemHero` / `AbilityUnitHero`의 장착 슬롯 key는 `Dictionary<EQUIP_SLOT_TYPE, AbilityItemEquip>`다.
 - 장착 허용 규칙 정본은 `ITEM_EQUIP.equip_type` + `EQUIP_SLOT.allowed_slots/two_handed` + `AbilityEquipSlotPolicy`다.
 - `two_handed=true` 장비를 `HAND_MAIN`에 장착하면 현재 `HAND_SUB` 장비를 자동 해제한다.

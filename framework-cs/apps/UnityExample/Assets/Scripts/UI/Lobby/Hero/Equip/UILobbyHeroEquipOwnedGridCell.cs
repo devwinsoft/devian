@@ -1,12 +1,11 @@
-using UnityEngine;
 using Devian;
-using Devian.Domain.Game;
+using UnityEngine;
 
-public class UILobbyHeroUnownedGridCell : UIScrollGridCell
+public class UILobbyHeroEquipOwnedGridCell : UIScrollGridCell
 {
     protected override void onShow(int cellIndex)
     {
-        var items = InventoryManager.Instance.UnownedEquipItems;
+        var items = InventoryManager.Instance.EquippedItems;
         if (cellIndex >= items.Count)
         {
             return;

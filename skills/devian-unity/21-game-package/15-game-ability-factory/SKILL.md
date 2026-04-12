@@ -77,7 +77,7 @@ Item factory는 다음 책임만 가진다.
 
 level table 규칙:
 
-- 대상 level은 factory 인자 `item_level`이고, 기본값은 `1`
+- 대상 level은 factory 인자 `item_level`이다. 기본값은 `AbilityItemFactory.CreateHero`만 `0`, 나머지 item factory(`CreateCard`, `CreateEquip`)는 `1`이다.
 - item factory는 level row stat을 직접 apply 하지 않는다
 - `AbilityItem*.Init(table, levelTable, ...)`가 level row stat을 초기 적용한다
 - stack amount 같은 mutable 상태 복원은 factory 바깥 호출부가 담당한다
@@ -303,6 +303,8 @@ public static class AbilityUnitFactory
 → `AbilityItemFactory.CreateHero(...)`
 → `GameResult<AbilityItemHero>`
 → `IsSuccess` 확인 후 `AbilityItemHero`
+
+- `ITEM_HERO_LEVEL` / `UNIT_HERO_LEVEL`는 미훈련 상태를 위해 level `0` row를 가질 수 있다.
 
 ### Ingame spawn
 

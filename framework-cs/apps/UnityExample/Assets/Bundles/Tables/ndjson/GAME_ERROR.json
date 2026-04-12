@@ -183,3 +183,7 @@
 {"id":"VERSION_CHECK_PARSE_FAILED","msg_key":"","msg":"Version config JSON parse failed."}
 {"id":"VERSION_CHECK_RESPONSE_EMPTY","msg_key":"","msg":"Version config response is empty."}
 {"id":"VERSION_CHECK_URL_NOT_CONFIGURED","msg_key":"","msg":"Version check URL is not configured for this platform."}
+{"id":"INVENTORY_HERO_LEVELUP_COUNT_INSUFFICIENT","msg_key":"","msg":"Insufficient hero count to level up."}
+{"id":"INVENTORY_CARD_LEVELUP_COUNT_INSUFFICIENT","msg_key":"","msg":"Insufficient card count to level up."}
+{"id":"INVENTORY_EQUIP_LEVELUP_MATERIAL_INSUFFICIENT","msg_key":"","msg":"Insufficient level-up material to level up equip."}
+{"id":"INVENTORY_ITEM_LEVELUP_CURRENCY_INSUFFICIENT","msg_key":"","msg":"Insufficient currency to level up item."}

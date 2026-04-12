@@ -11,6 +11,18 @@ namespace Devian
 {
     public sealed class RewardManager : CompoSingleton<RewardManager>
     {
+        readonly struct FirstSelectedHeroEquipGrant
+        {
+            public FirstSelectedHeroEquipGrant(EQUIP_SLOT_TYPE slotType, string itemId)
+            {
+                SlotType = slotType;
+                ItemId = itemId ?? string.Empty;
+            }
+
+            public EQUIP_SLOT_TYPE SlotType { get; }
+            public string ItemId { get; }
+        }
+
         // ── Apply RewardGroup ──
 
         public GameResult<RewardApplyResult> ApplyRewardGroup(string rewardGroupId, int rewardAmountMultiplier = 1)
@@ -440,11 +452,24 @@ namespace Devian
         {
             ct.ThrowIfCancellationRequested();
 
-            var parse = _parseFirstRewardSettings();
+            var loadSetting = _loadFirstRewardSettings();
+            if (loadSetting.IsFailure)
+                return GameResult.Failure(loadSetting.Error!);
+
+            var setting = loadSetting.Value;
+
+            var parse = _parseFirstRewardSettings(setting);
             if (parse.IsFailure)
                 return GameResult.Failure(parse.Error!);
 
-            var rewards = parse.Value ?? Array.Empty<RewardData>();
+            var inv = InventoryManager.Instance;
+            var selectedHeroItem = resolveFirstSelectedHeroItem(setting);
+            var selectedHeroItemId = selectedHeroItem?.item_id?.Trim() ?? string.Empty;
+            var selectedHeroEquipGrants = collectFirstSelectedHeroEquipGrants(selectedHeroItem);
+            var previousEquipUidsByItemId = captureOwnedEquipUids(inv, selectedHeroEquipGrants);
+
+            var rewards = appendFirstSelectedHeroReward(parse.Value ?? Array.Empty<RewardData>(), selectedHeroItemId);
+            rewards = appendFirstSelectedHeroEquipRewards(rewards, selectedHeroEquipGrants);
             if (rewards.Length > 0)
             {
                 var apply = ApplyRewardDatas(rewards);
@@ -453,7 +478,6 @@ namespace Devian
             }
 
             // Stamina: 설정 로드 → MaxStamina 지급
-            var inv = InventoryManager.Instance;
             inv.LoadSettings();
 
             int maxStamina = inv.MaxStamina;
@@ -462,6 +486,23 @@ namespace Devian
                 var apply = inv.ApplyCurrency(CURRENCY_TYPE.STAMINA, maxStamina);
                 if (apply.IsFailure)
                     return GameResult.Failure(apply.Error!);
+            }
+
+            var applyInitialEquips = applyFirstSelectedHeroInitialEquips(
+                inv,
+                selectedHeroItemId,
+                selectedHeroEquipGrants,
+                previousEquipUidsByItemId);
+            if (applyInitialEquips.IsFailure)
+                return GameResult.Failure(applyInitialEquips.Error!);
+
+            inv.SelectedHeroId = selectedHeroItemId;
+            if (!string.IsNullOrEmpty(selectedHeroItemId)
+                && string.IsNullOrEmpty(inv.SelectedHeroId))
+            {
+                var selectedHeroUnitId = setting.SelectedHeroUnitId?.Value ?? string.Empty;
+                Debug.LogWarning(
+                    $"[RewardManager] FirstRewardSettings selected hero is not owned after first init. unitId={selectedHeroUnitId}, itemId={selectedHeroItemId}");
             }
 
             await Task.Yield();
@@ -679,16 +720,21 @@ namespace Devian
             return GameResult.Ok();
         }
 
-        GameResult<RewardData[]> _parseFirstRewardSettings()
+        static GameResult<FirstRewardSettings> _loadFirstRewardSettings()
         {
             var setting = Resources.Load<FirstRewardSettings>(FirstRewardSettings.ResourcesPath);
             if (setting == null)
             {
-                return GameResult<RewardData[]>.Failure(
+                return GameResult<FirstRewardSettings>.Failure(
                     GAME_ERROR_TYPE.GAME_SERVER_TIME_UNAVAILABLE,
                     $"FirstRewardSettings is not available. expected={FirstRewardSettings.DefaultResourcesAssetPath}");
             }
 
+            return GameResult<FirstRewardSettings>.Success(setting);
+        }
+
+        GameResult<RewardData[]> _parseFirstRewardSettings(FirstRewardSettings setting)
+        {
             var payload = ((string)setting.InitialRewards)?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(payload))
                 return GameResult<RewardData[]>.Success(Array.Empty<RewardData>());
@@ -800,6 +846,197 @@ namespace Devian
             }
 
             return GameResult<RewardData[]>.Success(rewards);
+        }
+
+        static ITEM_HERO resolveFirstSelectedHeroItem(FirstRewardSettings setting)
+        {
+            if (setting == null || !setting.SelectedHeroUnitId.IsValid())
+                return null;
+
+            var selectedHeroUnitId = ((string)setting.SelectedHeroUnitId)?.Trim() ?? string.Empty;
+            if (string.IsNullOrEmpty(selectedHeroUnitId))
+                return null;
+
+            var heroRows = TB_ITEM_HERO.GetAll();
+            for (var i = 0; i < heroRows.Count; i++)
+            {
+                var heroRow = heroRows[i];
+                if (heroRow == null)
+                    continue;
+
+                if (!string.Equals(heroRow.unit_id, selectedHeroUnitId, StringComparison.Ordinal))
+                    continue;
+
+                var heroItemId = heroRow.item_id != null ? heroRow.item_id.Trim() : string.Empty;
+                if (!string.IsNullOrEmpty(heroItemId))
+                    return heroRow;
+            }
+
+            Debug.LogWarning(
+                $"[RewardManager] FirstRewardSettings.SelectedHeroUnitId has no matching ITEM_HERO row. unitId={selectedHeroUnitId}");
+            return null;
+        }
+
+        static RewardData[] appendFirstSelectedHeroReward(RewardData[] rewards, string heroItemId)
+        {
+            return appendReward(rewards, REWARD_TYPE.HERO, heroItemId, 1);
+        }
+
+        static RewardData[] appendFirstSelectedHeroEquipRewards(
+            RewardData[] rewards,
+            IReadOnlyList<FirstSelectedHeroEquipGrant> equipGrants)
+        {
+            var merged = rewards ?? Array.Empty<RewardData>();
+            if (equipGrants == null || equipGrants.Count == 0)
+                return merged;
+
+            for (var i = 0; i < equipGrants.Count; i++)
+                merged = appendReward(merged, REWARD_TYPE.EQUIP, equipGrants[i].ItemId, 1);
+
+            return merged;
+        }
+
+        static RewardData[] appendReward(RewardData[] rewards, REWARD_TYPE rewardType, string rewardId, int amount)
+        {
+            if (string.IsNullOrWhiteSpace(rewardId) || amount <= 0)
+                return rewards ?? Array.Empty<RewardData>();
+
+            var source = rewards ?? Array.Empty<RewardData>();
+            for (var i = 0; i < source.Length; i++)
+            {
+                var reward = source[i];
+                if (reward.Type != rewardType
+                    || !string.Equals(reward.Id, rewardId, StringComparison.Ordinal))
+                    continue;
+
+                var merged = new RewardData[source.Length];
+                Array.Copy(source, merged, source.Length);
+                merged[i] = new RewardData(reward.Type, reward.Id, reward.Amount + amount);
+                return merged;
+            }
+
+            var appended = new RewardData[source.Length + 1];
+            if (source.Length > 0)
+                Array.Copy(source, appended, source.Length);
+
+            appended[^1] = new RewardData(rewardType, rewardId, amount);
+            return appended;
+        }
+
+        static FirstSelectedHeroEquipGrant[] collectFirstSelectedHeroEquipGrants(ITEM_HERO selectedHeroItem)
+        {
+            if (selectedHeroItem == null)
+                return Array.Empty<FirstSelectedHeroEquipGrant>();
+
+            var list = new List<FirstSelectedHeroEquipGrant>(4);
+            appendFirstSelectedHeroEquipGrant(list, selectedHeroItem.initial_slot_00, selectedHeroItem.initial_item_00);
+            appendFirstSelectedHeroEquipGrant(list, selectedHeroItem.initial_slot_01, selectedHeroItem.initial_item_01);
+            appendFirstSelectedHeroEquipGrant(list, selectedHeroItem.initial_slot_02, selectedHeroItem.initial_item_02);
+            appendFirstSelectedHeroEquipGrant(list, selectedHeroItem.initial_slot_03, selectedHeroItem.initial_item_03);
+            return list.Count == 0 ? Array.Empty<FirstSelectedHeroEquipGrant>() : list.ToArray();
+        }
+
+        static void appendFirstSelectedHeroEquipGrant(
+            List<FirstSelectedHeroEquipGrant> list,
+            EQUIP_SLOT_TYPE slotType,
+            string itemId)
+        {
+            var normalizedItemId = itemId != null ? itemId.Trim() : string.Empty;
+            if (string.IsNullOrEmpty(normalizedItemId))
+                return;
+
+            if (slotType == EQUIP_SLOT_TYPE.NONE)
+            {
+                Debug.LogWarning(
+                    $"[RewardManager] ITEM_HERO initial equip item has no slot. itemId={normalizedItemId}");
+                return;
+            }
+
+            list.Add(new FirstSelectedHeroEquipGrant(slotType, normalizedItemId));
+        }
+
+        static Dictionary<string, HashSet<string>> captureOwnedEquipUids(
+            InventoryManager inv,
+            IReadOnlyList<FirstSelectedHeroEquipGrant> equipGrants)
+        {
+            var result = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
+            if (inv == null || equipGrants == null || equipGrants.Count == 0)
+                return result;
+
+            for (var i = 0; i < equipGrants.Count; i++)
+            {
+                var itemId = equipGrants[i].ItemId;
+                if (result.ContainsKey(itemId))
+                    continue;
+
+                var currentEquips = inv.GetEquipsByItemId(itemId);
+                var knownUids = new HashSet<string>(StringComparer.Ordinal);
+                for (var j = 0; j < currentEquips.Count; j++)
+                {
+                    var equip = currentEquips[j];
+                    var itemUid = equip?.ItemUid ?? string.Empty;
+                    if (!string.IsNullOrEmpty(itemUid))
+                        knownUids.Add(itemUid);
+                }
+
+                result[itemId] = knownUids;
+            }
+
+            return result;
+        }
+
+        static GameResult applyFirstSelectedHeroInitialEquips(
+            InventoryManager inv,
+            string heroItemId,
+            IReadOnlyList<FirstSelectedHeroEquipGrant> equipGrants,
+            IReadOnlyDictionary<string, HashSet<string>> previousEquipUidsByItemId)
+        {
+            if (inv == null || string.IsNullOrWhiteSpace(heroItemId) || equipGrants == null || equipGrants.Count == 0)
+                return GameResult.Ok();
+
+            var grantedEquipUidsByItemId = new Dictionary<string, Queue<string>>(StringComparer.Ordinal);
+            for (var i = 0; i < equipGrants.Count; i++)
+            {
+                var itemId = equipGrants[i].ItemId;
+                if (grantedEquipUidsByItemId.ContainsKey(itemId))
+                    continue;
+
+                previousEquipUidsByItemId.TryGetValue(itemId, out var previousEquipUids);
+                previousEquipUids ??= new HashSet<string>(StringComparer.Ordinal);
+
+                var grantedUids = new Queue<string>();
+                var currentEquips = inv.GetEquipsByItemId(itemId);
+                for (var j = 0; j < currentEquips.Count; j++)
+                {
+                    var equip = currentEquips[j];
+                    var itemUid = equip?.ItemUid ?? string.Empty;
+                    if (string.IsNullOrEmpty(itemUid) || previousEquipUids.Contains(itemUid))
+                        continue;
+
+                    grantedUids.Enqueue(itemUid);
+                }
+
+                grantedEquipUidsByItemId[itemId] = grantedUids;
+            }
+
+            for (var i = 0; i < equipGrants.Count; i++)
+            {
+                var equipGrant = equipGrants[i];
+                if (!grantedEquipUidsByItemId.TryGetValue(equipGrant.ItemId, out var grantedUids)
+                    || grantedUids.Count == 0)
+                {
+                    return GameResult.Failure(
+                        GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                        $"RewardManager.applyFirstSelectedHeroInitialEquips: granted equip uid not found. heroItemId={heroItemId}, equipItemId={equipGrant.ItemId}, slotType={equipGrant.SlotType}");
+                }
+
+                var equipUid = grantedUids.Dequeue();
+                var setEquip = inv.SetHeroEquip(heroItemId, equipGrant.SlotType, equipUid);
+                if (setEquip.IsFailure)
+                    return GameResult.Failure(setEquip.Error!);
+            }
+
+            return GameResult.Ok();
         }
 
         static RewardData[] scaleRewardAmounts(RewardData[] source, int multiplier)

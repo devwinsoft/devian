@@ -45,6 +45,10 @@ Hard Rule:
 - `ABILITY_*` — Ability factory/projection/table lookup
 - `REWARD_*` — reward table lookup/apply 규칙 실패
 - `INVENTORY_*` — inventory apply/revoke 수량 검증
+- `INVENTORY_CARD_LEVELUP_COUNT_INSUFFICIENT` — card level-up 비용(`ITEM_CARD_LEVEL.levelup_count`) 부족
+- `INVENTORY_HERO_LEVELUP_COUNT_INSUFFICIENT` — hero level-up 비용(`ITEM_HERO_LEVEL.levelup_count`) 부족
+- `INVENTORY_EQUIP_LEVELUP_MATERIAL_INSUFFICIENT` — equip level-up 재료 비용(`ITEM_EQUIP_LEVEL.levelup_material`, `levelup_count`) 부족
+- `INVENTORY_ITEM_LEVELUP_CURRENCY_INSUFFICIENT` — item level-up 재화 비용(`ITEM_*_LEVEL.levelup_currency`, `levelup_price`) 부족
 - `MISSION_*` — mission claim/initialize 규칙 실패
 - `ACHIEVE_*` — achieve claim 규칙 실패
 - `SHOP_*` — shop 구매/제한/갱신/적용 실패

@@ -1,3 +1,5 @@
-{"item_id":"item_equip_sword_001","name_id":"","desc_id":"","equip_type":"SWORD","upgrade_id":"item_equip_sword_002"}
-{"item_id":"item_equip_sword_002","name_id":"","desc_id":"","equip_type":"SWORD","upgrade_id":"item_equip_sword_003"}
-{"item_id":"item_equip_sword_003","name_id":"","desc_id":"","equip_type":"SWORD","upgrade_id":""}
+{"item_id":"item_equip_sword_001","name_id":"","desc_id":"","gradeType":"COMMON","equip_type":"SWORD","upgrade_id":"item_equip_sword_002"}
+{"item_id":"item_equip_sword_002","name_id":"","desc_id":"","gradeType":"RARE","equip_type":"SWORD","upgrade_id":"item_equip_sword_003"}
+{"item_id":"item_equip_sword_003","name_id":"","desc_id":"","gradeType":"EPIC","equip_type":"SWORD","upgrade_id":"item_equip_sword_004"}
+{"item_id":"item_equip_sword_004","name_id":"","desc_id":"","gradeType":"LEGENDARY","equip_type":"SWORD","upgrade_id":"item_equip_sword_005"}
+{"item_id":"item_equip_sword_005","name_id":"","desc_id":"","gradeType":"MYTHIC","equip_type":"SWORD","upgrade_id":""}

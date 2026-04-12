@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Devian.Domain.Game;
@@ -42,6 +43,7 @@ namespace Devian
         // ── Heroes ──
         readonly Dictionary<string, AbilityItemHero> mHeroes = new();
         public IReadOnlyDictionary<string, AbilityItemHero> Heroes => mHeroes;
+        public string SelectedHeroId { get; internal set; } = string.Empty;
 
         // ── Rentals ──
         readonly Dictionary<string, long> mRentals = new();
@@ -199,6 +201,9 @@ namespace Devian
             for (var i = 0; i < equippedSlots.Count; i++)
                 hero._RemoveEquip(equippedSlots[i]);
 
+            if (string.Equals(SelectedHeroId, heroId, StringComparison.Ordinal))
+                SelectedHeroId = string.Empty;
+
             return mHeroes.Remove(heroId);
         }
 
@@ -340,6 +345,7 @@ namespace Devian
             mCards.Clear();
             mMaterials.Clear();
             mHeroes.Clear();
+            SelectedHeroId = string.Empty;
             foreach (var kv in mEquipments)
                 kv.Value.ClearOwner();
             mEquipments.Clear();
@@ -372,6 +378,8 @@ namespace Devian
 
             foreach (var kv in source.mHeroes)
                 mHeroes[kv.Key] = kv.Value;
+
+            SelectedHeroId = source.SelectedHeroId ?? string.Empty;
 
             foreach (var kv in source.mRentals)
                 mRentals[kv.Key] = kv.Value;

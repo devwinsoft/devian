@@ -1,5 +1,5 @@
-{"index":1,"item_id":"item_card_001","item_level":1,"stat_value00":0,"stat_value01":0,"stat_value02":0,"stat_value03":0}
-{"index":2,"item_id":"item_card_001","item_level":2,"stat_value00":0,"stat_value01":0,"stat_value02":0,"stat_value03":0}
-{"index":3,"item_id":"item_card_001","item_level":3,"stat_value00":0,"stat_value01":0,"stat_value02":0,"stat_value03":0}
-{"index":4,"item_id":"item_card_001","item_level":4,"stat_value00":0,"stat_value01":0,"stat_value02":0,"stat_value03":0}
-{"index":5,"item_id":"item_card_001","item_level":5,"stat_value00":0,"stat_value01":0,"stat_value02":0,"stat_value03":0}
+{"index":1,"item_id":"item_card_001","item_level":1,"levelup_count":10,"levelup_currency":"GOLD","levelup_price":100,"stat_value00":0,"stat_value01":0,"stat_value02":0,"stat_value03":0}
+{"index":2,"item_id":"item_card_001","item_level":2,"levelup_count":20,"levelup_currency":"GOLD","levelup_price":200,"stat_value00":0,"stat_value01":0,"stat_value02":0,"stat_value03":0}
+{"index":3,"item_id":"item_card_001","item_level":3,"levelup_count":30,"levelup_currency":"GOLD","levelup_price":300,"stat_value00":0,"stat_value01":0,"stat_value02":0,"stat_value03":0}
+{"index":4,"item_id":"item_card_001","item_level":4,"levelup_count":40,"levelup_currency":"GOLD","levelup_price":400,"stat_value00":0,"stat_value01":0,"stat_value02":0,"stat_value03":0}
+{"index":5,"item_id":"item_card_001","item_level":5,"levelup_count":50,"levelup_currency":"GOLD","levelup_price":500,"stat_value00":0,"stat_value01":0,"stat_value02":0,"stat_value03":0}

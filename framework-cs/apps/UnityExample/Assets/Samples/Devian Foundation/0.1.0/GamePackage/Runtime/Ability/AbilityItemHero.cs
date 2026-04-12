@@ -134,5 +134,56 @@ namespace Devian
             return GameResult.Ok();
         }
 
+        internal GameResult<int> ResolveLevelUpCost()
+        {
+            if (mTable == null || mLevelTable == null)
+            {
+                return GameResult<int>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"AbilityItemHero.ResolveLevelUpCost: hero is not initialized. item_id={ItemId}");
+            }
+
+            var nextLevelTable = AbilityItemFactory.ResolveNextHeroLevelTable(ItemId, mLevelTable.item_level);
+            if (nextLevelTable.IsFailure)
+                return GameResult<int>.Failure(nextLevelTable.Error!);
+
+            return GameResult<int>.Success(mLevelTable.levelup_count);
+        }
+
+        internal GameResult<ItemLevelUpCurrencyCost> ResolveLevelUpCurrencyCost()
+        {
+            if (mTable == null || mLevelTable == null)
+            {
+                return GameResult<ItemLevelUpCurrencyCost>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"AbilityItemHero.ResolveLevelUpCurrencyCost: hero is not initialized. item_id={ItemId}");
+            }
+
+            var nextLevelTable = AbilityItemFactory.ResolveNextHeroLevelTable(ItemId, mLevelTable.item_level);
+            if (nextLevelTable.IsFailure)
+                return GameResult<ItemLevelUpCurrencyCost>.Failure(nextLevelTable.Error!);
+
+            if (mLevelTable.levelup_price < 0)
+            {
+                return GameResult<ItemLevelUpCurrencyCost>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"AbilityItemHero.ResolveLevelUpCurrencyCost: levelup_price must be >= 0. item_id={ItemId}, itemLevel={mLevelTable.item_level}, levelup_price={mLevelTable.levelup_price}");
+            }
+
+            if (mLevelTable.levelup_price == 0)
+                return GameResult<ItemLevelUpCurrencyCost>.Success(new ItemLevelUpCurrencyCost(default, 0));
+
+            if (mLevelTable.levelup_currency == CURRENCY_TYPE.FREE
+                || mLevelTable.levelup_currency == CURRENCY_TYPE.ADS)
+            {
+                return GameResult<ItemLevelUpCurrencyCost>.Failure(
+                    GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT,
+                    $"AbilityItemHero.ResolveLevelUpCurrencyCost: levelup_currency is not spendable. item_id={ItemId}, itemLevel={mLevelTable.item_level}, levelup_currency={mLevelTable.levelup_currency}, levelup_price={mLevelTable.levelup_price}");
+            }
+
+            return GameResult<ItemLevelUpCurrencyCost>.Success(
+                new ItemLevelUpCurrencyCost(mLevelTable.levelup_currency, mLevelTable.levelup_price));
+        }
+
     }
 }

@@ -79,7 +79,7 @@ namespace Devian
         protected override void onAwake()
         {
             CacheScrollRefsIfNeeded();
-            NormalizeRects();
+            NormalizeContentRect();
         }
 
         protected override void onInit()
@@ -246,7 +246,6 @@ namespace Devian
         private float _editorPreviewContentSize;
         private int _editorPreviewSectionCount;
         private int _editorPreviewLogicalRowCount;
-        private EditorRectTransformState _editorViewportState;
         private EditorRectTransformState _editorContentState;
         private readonly List<EditorRectTransformState> _editorFrameStates = new();
 #endif
@@ -479,18 +478,6 @@ namespace Devian
             _viewport = _scrollRect.viewport;
         }
 
-        private void NormalizeViewportRect()
-        {
-            if (_viewport == null) return;
-
-            _viewport.anchorMin = Vector2.zero;
-            _viewport.anchorMax = Vector2.one;
-            _viewport.offsetMin = Vector2.zero;
-            _viewport.offsetMax = Vector2.zero;
-            _viewport.pivot = new Vector2(0f, 1f);
-            _viewport.anchoredPosition = Vector2.zero;
-        }
-
         private void NormalizeContentRect()
         {
             if (_content == null) return;
@@ -499,12 +486,6 @@ namespace Devian
             _content.anchorMax = new Vector2(1f, 1f);
             _content.pivot = new Vector2(0f, 1f);
             _content.anchoredPosition = Vector2.zero;
-        }
-
-        private void NormalizeRects()
-        {
-            NormalizeViewportRect();
-            NormalizeContentRect();
         }
 
         private void ClearVisibleRowsAndSections()
@@ -528,6 +509,10 @@ namespace Devian
             UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += CleanupAllEditorPreviews;
             UnityEditor.EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
             UnityEditor.EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+            UnityEditor.SceneManagement.EditorSceneManager.sceneSaving -= OnSceneSaving;
+            UnityEditor.SceneManagement.EditorSceneManager.sceneSaving += OnSceneSaving;
+            UnityEditor.SceneManagement.EditorSceneManager.sceneSaved -= OnSceneSaved;
+            UnityEditor.SceneManagement.EditorSceneManager.sceneSaved += OnSceneSaved;
         }
 
         private static void OnPlayModeStateChanged(UnityEditor.PlayModeStateChange state)
@@ -543,6 +528,31 @@ namespace Devian
         {
             foreach (var container in Resources.FindObjectsOfTypeAll<UIScrollContainer>())
                 container.EditorClearPreview();
+        }
+
+        private static readonly System.Collections.Generic.List<UIScrollContainer> _pendingRePreview = new();
+
+        private static void OnSceneSaving(UnityEngine.SceneManagement.Scene scene, string path)
+        {
+            _pendingRePreview.Clear();
+            foreach (var container in Resources.FindObjectsOfTypeAll<UIScrollContainer>())
+            {
+                if (container._editorPreviewBaselineCaptured)
+                {
+                    container.RestoreEditorPreviewBaseline();
+                    _pendingRePreview.Add(container);
+                }
+            }
+        }
+
+        private static void OnSceneSaved(UnityEngine.SceneManagement.Scene scene)
+        {
+            foreach (var container in _pendingRePreview)
+            {
+                if (container != null && container._editorAutoPreview)
+                    container.EditorRequestPreviewRebuild();
+            }
+            _pendingRePreview.Clear();
         }
 
         private void OnDisable()
@@ -603,7 +613,7 @@ namespace Devian
 
             CaptureEditorPreviewBaseline();
             Canvas.ForceUpdateCanvases();
-            NormalizeRects();
+            NormalizeContentRect();
             CollectFrames();
             CollectSections();
             RebuildLayoutCore();
@@ -659,7 +669,6 @@ namespace Devian
             if (_editorPreviewBaselineCaptured)
                 return;
 
-            _editorViewportState = EditorRectTransformState.Capture(_viewport);
             _editorContentState = EditorRectTransformState.Capture(_content);
             _editorFrameStates.Clear();
 
@@ -682,7 +691,6 @@ namespace Devian
             if (!_editorPreviewBaselineCaptured)
                 return;
 
-            _editorViewportState.Restore();
             _editorContentState.Restore();
 
             for (int i = 0; i < _editorFrameStates.Count; i++)

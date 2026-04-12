@@ -27,7 +27,7 @@ namespace Devian
     public sealed class InventorySnapshotHero
     {
         public string ItemId { get; set; } = string.Empty;
-        public int ItemLevel { get; set; } = 1;
+        public int ItemLevel { get; set; }
         public int Amount { get; set; }
         public Dictionary<EQUIP_SLOT_TYPE, string> Equips { get; } = new();
     }
@@ -42,6 +42,7 @@ namespace Devian
         public Dictionary<string, long> Rentals { get; } = new(StringComparer.Ordinal);
         public Dictionary<string, bool> Passes { get; } = new(StringComparer.Ordinal);
         public Dictionary<ITEM_GRADE_TYPE, int> TreasureCounts { get; } = new();
+        public string SelectedHeroId { get; set; } = string.Empty;
         public int TreasureCurrentLevel { get; set; } = 1;
         public int TreasureCurrentExp { get; set; }
         public long LastStaminaUpdateUtcMs { get; set; }
@@ -55,6 +56,7 @@ namespace Devian
             Heroes.Clear();
             Rentals.Clear();
             Passes.Clear();
+            SelectedHeroId = string.Empty;
             LastStaminaUpdateUtcMs = 0L;
         }
 

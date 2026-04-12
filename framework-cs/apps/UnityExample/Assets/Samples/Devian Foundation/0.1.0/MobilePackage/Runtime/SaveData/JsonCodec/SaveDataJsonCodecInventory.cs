@@ -72,12 +72,15 @@ namespace Devian
 
                 var equipsMap = new JObject();
                 foreach (var eq in h.Equips)
-                    equipsMap[((int)eq.Key).ToString()] = eq.Value;
+                    equipsMap[eq.Key.ToString()] = eq.Value;
                 obj["equips"] = equipsMap;
 
                 heroesObj[kv.Key] = obj;
             }
             inv["heroes"] = heroesObj;
+
+            if (!string.IsNullOrWhiteSpace(inventory.SelectedHeroId))
+                inv["selectedHeroItemId"] = inventory.SelectedHeroId;
 
             var rentalsObj = new JObject();
             foreach (var kv in inventory.Rentals)
@@ -253,6 +256,8 @@ namespace Devian
                     inventory.Heroes[prop.Name] = heroSnapshot;
                 }
             }
+
+            inventory.SelectedHeroId = inv.Value<string>("selectedHeroItemId") ?? string.Empty;
 
             if (inv["rentals"] is JObject rentalsObj)
             {

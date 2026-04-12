@@ -119,12 +119,18 @@ NOTE:
   - Resources 경로: `Devian/FirstRewardSettings`
   - 프로젝트 에셋 경로: `Assets/Resources/Devian/FirstRewardSettings.asset`
 - `RewardManager.FirstInitAsync()`는 위 에셋의 `InitialRewards(CString)` payload를 읽는다.
+- `FirstRewardSettings`는 `SelectedHeroUnitId(UNIT_HERO_ID)`도 함께 가진다.
 - JSON을 `RewardData[]` 규약으로 파싱/검증한다.
 - 허용 JSON:
   - `RewardData[]`
   - `{ "rewards": RewardData[] }`
 - 파싱/검증 실패 시 `CommonResult.Failure`를 반환하고 적용하지 않는다.
 - 파싱 성공 시 `RewardManager.ApplyRewardDatas`로 적용한다.
+- `SelectedHeroUnitId`가 설정되어 있으면 대응 `ITEM_HERO.item_id`를 hero reward `+1`로 자동 합성한다.
+- 같은 `ITEM_HERO` row의 `initial_item_##`는 `ITEM_EQUIP +1` reward로 자동 합성한다.
+- apply 후 방금 지급된 equip uid를 `initial_slot_##`에 장착한다.
+- 이후 `SelectedHeroUnitId`를 `TB_ITEM_HERO.unit_id -> item_id`로 해석하여 `InventoryManager.SelectedHeroId`에 적용한다.
+- `SelectedHeroUnitId`가 비어 있거나 매핑/보유 상태가 invalid면 선택 hero만 비운다(soft-fail).
 - `LoginManager`는 `FirstInitAsync`를 직접 호출한다. `LoginInitializeResult.IsInitial`을 확인한 뒤 실행한다.
 - first-init payload는 운영 데이터 경계다. AES/JSON 실패도 결과 코드(`GameResult`)로 올리고 상위 호출자가 처리한다.
 

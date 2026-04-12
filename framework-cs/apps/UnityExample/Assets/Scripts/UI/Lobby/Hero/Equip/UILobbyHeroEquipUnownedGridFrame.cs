@@ -2,7 +2,7 @@ using UnityEngine;
 using Devian;
 using Devian.Domain.Game;
 
-public class UILobbyHeroUnownedGridFrame : UIScrollGridFrame<UILobbyHeroUnownedGridCell>
+public class UILobbyHeroEquipUnownedGridFrame : UIScrollGridFrame<UILobbyHeroEquipUnownedGridCell>
 {
     protected override void onInit()
     {

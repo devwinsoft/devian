@@ -15,6 +15,7 @@ namespace Devian
         public const string DefaultResourcesAssetPath = "Assets/Resources/Devian/FirstRewardSettings.asset";
 
         [SerializeField] public CString InitialRewards = "[{\"type\":\"CURRENCY\",\"id\":\"GOLD\",\"amount\":1000}]";
+        [SerializeField] public UNIT_HERO_ID SelectedHeroUnitId = new();
 
         // Editor-only: temporary ID selectors for Add row (cleared on save)
         [HideInInspector, SerializeField] internal ITEM_CARD_ID     _editorCardId     = new();

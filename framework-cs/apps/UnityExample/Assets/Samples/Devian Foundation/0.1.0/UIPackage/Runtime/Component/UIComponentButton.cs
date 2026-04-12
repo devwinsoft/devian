@@ -244,6 +244,7 @@ namespace Devian
                     _rectTransform.localScale = _originalScale * 0.9f;
                     break;
                 case EffectType.AnchoredPosition:
+                    _originalAnchoredPosition = _rectTransform.anchoredPosition;
                     _rectTransform.anchoredPosition =
                         _originalAnchoredPosition + new Vector2(0, -10f);
                     break;

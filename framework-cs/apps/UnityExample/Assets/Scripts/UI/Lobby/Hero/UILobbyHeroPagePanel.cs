@@ -5,7 +5,17 @@ using Devian.Domain.Game;
 
 public class UILobbyHeroPagePanel : UIBasePageMain<UILobbyPageCanvas>
 {
-    protected override void onInit(UILobbyPageCanvas pageCanvas)
+    public GameObject[] scrolls;
+    
+    protected override void onInit(UILobbyPageCanvas canvas)
     {
+    }
+
+    public void OnClick_Button(int index)
+    {
+        for (int i = 0; i < scrolls.Length; i++)
+        {
+            scrolls[i].SetActive(i == index);
+        }
     }
 }

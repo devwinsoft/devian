@@ -33,6 +33,8 @@ public sealed class InventoryManager : CompoSingleton<InventoryManager>
     public IReadOnlyList<AbilityItemEquip> EquippedItems { get; }
     public IReadOnlyList<AbilityItemEquip> UnequippedItems { get; }
     public IReadOnlyList<ITEM_EQUIP> UnownedEquipItems { get; }
+    public string SelectedHeroId { get; set; }
+    public AbilityItemHero SelectedHero { get; }
 
     public InventorySnapshot CreateSnapshot() { ... }
     public GameResult ReplaceState(InventorySnapshot snapshot, INVENTORY_SNAPSHOT_CHANGE_REASON reason) { ... }
@@ -50,6 +52,7 @@ public sealed class InventoryManager : CompoSingleton<InventoryManager>
     public GameResult LevelUpCard(string item_id) { ... }
     public GameResult LevelUpHero(string item_id) { ... }
     public GameResult LevelUpEquip(string item_uid) { ... }
+    public GameResult<AbilityItemEquip> UpgradeEquipItem(string baseItemUid, string materialItemUid0, string materialItemUid1) { ... }
     public GameResult SetHeroEquip(string heroId, EQUIP_SLOT_TYPE slotType, string equipUid) { ... }
     public GameResult RemoveHeroEquip(string heroId, EQUIP_SLOT_TYPE slotType) { ... }
     public GameResult ApplyRental(string item_id) { ... }
@@ -124,15 +127,18 @@ CompoSingleton<InventoryManager>.Instance
   - `ApplyCurrency`: 잔고 누적
   - `ApplyEquip`: 새 `itemUid`(GUID)로 AbilityItemEquip 인스턴스 생성, amount 횟수만큼
   - `ApplyCard`: AbilityItemCard 추가/갱신 (`UNIT_STAT_TYPE.ITEM_AMOUNT` 누적)
-  - `AddCardAmount`: 카드 수량 signed delta 변경 (+적용 / -회수) + 메시지 발행
+  - `AddCardAmount`: 카드 수량 add-only 변경 (+적용) + 메시지 발행
   - `ApplyMaterial`: AbilityItemMaterial 추가/갱신 (`UNIT_STAT_TYPE.ITEM_AMOUNT` 누적)
-  - `AddMaterialAmount`: 재료 수량 signed delta 변경 (+적용 / -회수) + 메시지 발행
+  - `AddMaterialAmount`: 재료 수량 add-only 변경 (+적용) + 메시지 발행
   - `ApplyHero`: AbilityItemHero 추가/갱신 (`UNIT_STAT_TYPE.ITEM_AMOUNT` 누적)
-  - `AddHeroAmount`: 영웅 수량 signed delta 변경 (+적용 / -회수) + 메시지 발행
-  - `LevelUpCard`: 카드 runtime level row를 다음 단계로 교체하고 `ITEM_CARD_CHANGED`를 발행
-  - `LevelUpHero`: 영웅 runtime level row를 다음 단계로 교체하고 `ITEM_HERO_CHANGED`를 발행
-  - `LevelUpEquip`: 장비 runtime level row를 다음 단계로 교체하고 `ITEM_EQUIP_CHANGED`를 발행
-  - `SetHeroEquip`: slot rule 검증 + 장비 장착/이동 + 양손 규칙 자동 해제 + 관련 notify 발행
+  - `AddHeroAmount`: 영웅 수량 add-only 변경 (+적용) + 메시지 발행
+  - `SelectedHeroId`: 현재 선택된 owned hero의 itemId raw state. save/load 대상이다.
+  - `SelectedHero`: `SelectedHeroId`로부터 조회되는 파생 runtime hero
+  - `LevelUpCard`: 현재 `ITEM_CARD_LEVEL.levelup_currency` / `levelup_price`와 `levelup_count`를 함께 소모하고 카드 runtime level row를 다음 단계로 교체한 뒤 `ITEM_CARD_CHANGED`를 발행
+  - `LevelUpHero`: 현재 `ITEM_HERO_LEVEL.levelup_currency` / `levelup_price`와 `levelup_count`를 함께 소모하고 영웅 runtime level row를 다음 단계로 교체한 뒤 `ITEM_HERO_CHANGED`를 발행
+  - `LevelUpEquip`: 현재 `ITEM_EQUIP_LEVEL.levelup_currency` / `levelup_price`와 `levelup_material` / `levelup_count`를 함께 소모하고 장비 runtime level row를 다음 단계로 교체한다. 비용 부족 시 실패하고, 성공 시 currency/material/equip notify를 발행한다.
+  - `UpgradeEquipItem`: 본체 1개 + 같은 `item_id` 재료 2개(모두 `itemUid` 지정)로 `upgrade_id` 장비 1개를 생성하고 source 3개를 제거한다. 새 장비는 본체 장비의 레벨을 상속한다.
+- `SetHeroEquip`: slot rule 검증 + 장비 장착/이동 + 양손 규칙 자동 해제 + 관련 notify 발행
   - `RemoveHeroEquip`: hero slot 기준 장비 해제 + 관련 notify 발행
   - `ApplyRental`: 로컬 만료 시각 설정/연장 (`max(currentExpiry, now) + 30days`)
   - `SetPassOwnership`: 소유권 설정 + 메시지 트리거
@@ -176,15 +182,16 @@ CompoSingleton<InventoryManager>.Instance
 - `ApplyCurrency(CURRENCY_TYPE currency_type, long amount) -> GameResult` — `_storage.TryAddCurrency(currency_type, amount)`
 - `ApplyEquip(string item_id, int amount) -> GameResult` — amount 횟수만큼 새 `itemUid`(GUID)로 AbilityItemEquip 생성 + `_storage.AddEquip(itemUid, ability)`
 - `ApplyCard(string item_id, int amount) -> GameResult` — `_storage.Cards`에 AbilityItemCard 추가(없으면 생성) + `AbilityItemCard.AddAmount(amount)`
-- `AddCardAmount(string item_id, int delta) -> GameResult` — 카드 수량 signed delta boundary. `delta > 0`이면 apply, `delta < 0`이면 revoke 검증 후 차감
+- `AddCardAmount(string item_id, int delta) -> GameResult` — 카드 수량 add-only boundary. `delta < 0`는 `GAME_INVALID_ARGUMENT` 실패, 회수는 `RevokeCard`만 사용
 - `ApplyMaterial(string item_id, int amount) -> GameResult` — `_storage.Materials`에 AbilityItemMaterial 추가(없으면 생성) + `AbilityItemMaterial.AddAmount(amount)`
-- `AddMaterialAmount(string item_id, int delta) -> GameResult` — 재료 수량 signed delta boundary. `delta > 0`이면 apply, `delta < 0`이면 revoke 검증 후 차감
-- `ApplyHero(string item_id, int amount) -> GameResult` — `_storage.Heroes`에 AbilityItemHero 추가(없으면 생성) + `AbilityItemHero.AddAmount(amount)`
-- `AddHeroAmount(string item_id, int delta) -> GameResult` — 영웅 수량 signed delta boundary. `delta > 0`이면 apply, `delta < 0`이면 revoke 검증 후 차감
-- `LevelUpCard(string item_id) -> GameResult` — 현재 카드 runtime의 level stat을 제거하고 다음 `ITEM_CARD_LEVEL` row stat을 적용
-- `LevelUpHero(string item_id) -> GameResult` — 현재 영웅 runtime의 level stat을 제거하고 다음 `ITEM_HERO_LEVEL` row stat을 적용
-- `LevelUpEquip(string item_uid) -> GameResult` — 현재 장비 runtime의 level stat을 제거하고 다음 `ITEM_EQUIP_LEVEL` row stat을 적용
-- `SetHeroEquip(string heroId, EQUIP_SLOT_TYPE slotType, string equipUid) -> GameResult` — `EQUIP_SLOT` 규칙 검증 후 장비 장착. two-handed main 장착 시 기존 `HAND_SUB`는 자동 해제
+- `AddMaterialAmount(string item_id, int delta) -> GameResult` — 재료 수량 add-only boundary. `delta < 0`는 `GAME_INVALID_ARGUMENT` 실패, 회수는 `RevokeMaterial`만 사용
+- `ApplyHero(string item_id, int amount) -> GameResult` — 기본 hero 생성 레벨 `1`로 `_storage.Heroes`에 AbilityItemHero 추가(없으면 생성) + `AbilityItemHero.AddAmount(amount)`
+- `AddHeroAmount(string item_id, int delta) -> GameResult` — 영웅 수량 add-only boundary. `delta < 0`는 `GAME_INVALID_ARGUMENT` 실패, 회수는 `RevokeHero`만 사용
+- `LevelUpCard(string item_id) -> GameResult` — 현재 `ITEM_CARD_LEVEL.levelup_currency`가 가리키는 inventory currency를 `ITEM_CARD_LEVEL.levelup_price`만큼 차감하고, `ITEM_CARD_LEVEL.levelup_count`만큼 card count(`ITEM_AMOUNT`)를 소모한 뒤 현재 카드 runtime의 level stat을 제거하고 다음 `ITEM_CARD_LEVEL` row stat을 적용. currency 부족 시 `GAME_ERROR_TYPE.INVENTORY_ITEM_LEVELUP_CURRENCY_INSUFFICIENT`, count 부족 시 `GAME_ERROR_TYPE.INVENTORY_CARD_LEVELUP_COUNT_INSUFFICIENT`
+- `LevelUpHero(string item_id) -> GameResult` — 현재 `ITEM_HERO_LEVEL.levelup_currency`가 가리키는 inventory currency를 `ITEM_HERO_LEVEL.levelup_price`만큼 차감하고, `ITEM_HERO_LEVEL.levelup_count`만큼 hero count(`ITEM_AMOUNT`)를 소모한 뒤 현재 영웅 runtime의 level stat을 제거하고 다음 `ITEM_HERO_LEVEL` row stat을 적용. currency 부족 시 `GAME_ERROR_TYPE.INVENTORY_ITEM_LEVELUP_CURRENCY_INSUFFICIENT`, count 부족 시 `GAME_ERROR_TYPE.INVENTORY_HERO_LEVELUP_COUNT_INSUFFICIENT`
+- `LevelUpEquip(string item_uid) -> GameResult` — 현재 `ITEM_EQUIP_LEVEL.levelup_currency`가 가리키는 inventory currency를 `ITEM_EQUIP_LEVEL.levelup_price`만큼 차감하고, `ITEM_EQUIP_LEVEL.levelup_material`가 가리키는 `ITEM_MATERIAL`을 `ITEM_EQUIP_LEVEL.levelup_count`만큼 소모한 뒤 현재 장비 runtime의 level stat을 제거하고 다음 `ITEM_EQUIP_LEVEL` row stat을 적용. currency 부족 시 `GAME_ERROR_TYPE.INVENTORY_ITEM_LEVELUP_CURRENCY_INSUFFICIENT`, 재료 부족 시 `GAME_ERROR_TYPE.INVENTORY_EQUIP_LEVELUP_MATERIAL_INSUFFICIENT`
+- `UpgradeEquipItem(string baseItemUid, string materialItemUid0, string materialItemUid1) -> GameResult<AbilityItemEquip>` — 세 source equip runtime(`itemUid`)을 사용해 `base.item_id -> upgrade_id` 업그레이드 수행. source 3개는 서로 달라야 하고 모두 같은 `item_id`여야 하며, 하나라도 장착 중이면 실패한다. 성공 시 생성된 upgraded equip runtime을 반환하고, 새 장비는 본체의 `ItemLevel`을 상속한다.
+- `SetHeroEquip(string heroId, EQUIP_SLOT_TYPE slotType, string equipUid) -> GameResult` — `EQUIP_SLOT` 규칙 검증으로 장비 장착. two-handed main 장착 시 기존 `HAND_SUB`는 자동 해제
 - `RemoveHeroEquip(string heroId, EQUIP_SLOT_TYPE slotType) -> GameResult` — hero slot 기준 장비 해제
 - `ApplyRental(string item_id) -> GameResult` — `_storage.SetRental(id, max(currentExpiry, now)+30days)`
 - `SetPassOwnership(string item_id, bool owned) -> GameResult` — `_storage.SetPass(item_id, owned)` + `PASS_OWNERSHIP_CHANGED`
@@ -197,6 +204,7 @@ CompoSingleton<InventoryManager>.Instance
 - `ClearState(INVENTORY_SNAPSHOT_CHANGE_REASON reason)` — inventory bulk clear + `INVENTORY_SNAPSHOT_CHANGED`
 - `CreateSnapshot() -> InventorySnapshot` — live runtime state를 저장 DTO로 투영
 - `ReplaceState(InventorySnapshot snapshot, INVENTORY_SNAPSHOT_CHANGE_REASON reason) -> GameResult` — temp snapshot을 validate/build 후 live state에 교체 적용 + `INVENTORY_SNAPSHOT_CHANGED`
+- `SelectedHeroId`는 snapshot/save raw state에 포함되며, load 시 현재 owned hero가 아니면 빈 값으로 정규화된다.
 
 에러 모델:
 - null/empty 입력, 음수 amount, factory lookup 실패는 `GameResult.Failure(...)`로 반환한다.
@@ -208,9 +216,9 @@ CompoSingleton<InventoryManager>.Instance
 
 - `RevokeCurrency(CURRENCY_TYPE currency_type, long amount) -> GameResult` — `_storage.TryAddCurrency(currency_type, -amount)` with insufficient validation
 - `RevokeEquip(string item_id, int amount) -> GameResult` — itemId별 인스턴스를 amount만큼 제거
-- `RevokeCard(string item_id, int amount) -> GameResult` — `card.AddAmount(-amount)` with insufficient validation
-- `RevokeMaterial(string item_id, int amount) -> GameResult` — `material.AddAmount(-amount)` with insufficient validation
-- `RevokeHero(string item_id, int amount) -> GameResult` — `hero.AddAmount(-amount)` with insufficient validation
+- `RevokeCard(string item_id, int amount) -> GameResult` — amount 검증 후 차감, 0이 되면 runtime 제거
+- `RevokeMaterial(string item_id, int amount) -> GameResult` — amount 검증 후 차감, 0이 되면 runtime 제거
+- `RevokeHero(string item_id, int amount) -> GameResult` — amount 검증 후 차감, 0이 되면 runtime 제거 + selected hero 정리 + equip view 갱신
 - `RevokeRental(string item_id) -> GameResult` — `_storage.RemoveRental(item_id)`
 - `RevokeTreasure(ITEM_GRADE_TYPE gradeType, int amount) -> GameResult` — `_storage.SetTreasureCount(gradeType, current - amount)`
 
@@ -302,7 +310,7 @@ NOTE:
 - `AbilityItemEquip`이 능력치를 관리한다. outgame 장비 장착은 `AbilityItemHero`가 담당한다.
 - ability 인스턴스 생성은 [15-game-ability-factory](../../../21-game-package/15-game-ability-factory/SKILL.md)의 `AbilityItemFactory`를 우선 사용한다.
 - `AbilityBase.AddStat/SetStat/Clear*`, `AbilityItemBase.AddAmount`, `AbilityItemEquip.SetOwner/ClearOwner`는 `GamePackage` internal이다.
-- `GAME_ERROR_TYPE`의 inventory 관련 에러 코드: `GAME_INVALID_ARGUMENT`, `INVENTORY_REFUND_INSUFFICIENT`.
+- `GAME_ERROR_TYPE`의 inventory 관련 에러 코드: `GAME_INVALID_ARGUMENT`, `INVENTORY_REFUND_INSUFFICIENT`, `INVENTORY_CARD_LEVELUP_COUNT_INSUFFICIENT`, `INVENTORY_HERO_LEVELUP_COUNT_INSUFFICIENT`, `INVENTORY_EQUIP_LEVELUP_MATERIAL_INSUFFICIENT`, `INVENTORY_ITEM_LEVELUP_CURRENCY_INSUFFICIENT`.
 
 
 ---

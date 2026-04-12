@@ -55,6 +55,7 @@ NOTE:
 - `ItemData` 클래스는 `AbilityItemEquip`에 통합되어 삭제되었다.
 - `InventoryManager.EquippedItems` / `UnequippedItems`는 이 equip SSOT에서 파생된 runtime view다. 별도 저장 정본이 아니다.
 - `InventoryManager.UnownedEquipItems`는 `TB_ITEM_EQUIP.GetAll()`과 현재 owned equip `item_id` 집합을 비교해서 만든 table-row view다. discovery history를 저장하지 않으므로 "현재 미보유" 의미만 가진다.
+- equip upgrade는 `ITEM_EQUIP.upgrade_id`를 사용한다. 본체 1개와 같은 `item_id` 재료 2개를 모두 `itemUid`로 지정해 source 3개를 파괴하고, `upgrade_id` 장비 1개를 생성한다. 새 장비는 본체의 `ItemLevel`만 상속한다.
 
 ### B-3) Cards
 
@@ -69,7 +70,7 @@ NOTE:
   - 수량 = `UNIT_STAT_TYPE.ITEM_AMOUNT`
   - 레벨 = `UNIT_STAT_TYPE.ITEM_LEVEL`
   - Reward/Purchase grants에서는 `UNIT_STAT_TYPE.ITEM_AMOUNT`만 변경된다
-  - level up은 현재 `ITEM_CARD_LEVEL` row stat을 제거한 뒤 다음 level row stat을 적용한다
+  - level up은 현재 `ITEM_CARD_LEVEL.levelup_count`만큼 count(`ITEM_AMOUNT`)를 먼저 소모한 뒤 현재 `ITEM_CARD_LEVEL` row stat을 제거하고 다음 level row stat을 적용한다
 
 ### B-4) Heroes
 
@@ -79,10 +80,12 @@ NOTE:
 `AbilityItemHero` 필드 (구현: [12-game-ability](../../../21-game-package/12-game-ability/SKILL.md)):
 - `ItemId: string` (== key, `mTable.item_id`)
 - `Amount: int` (= `this[UNIT_STAT_TYPE.ITEM_AMOUNT]`)
-- `ItemLevel: int` (= `this[UNIT_STAT_TYPE.ITEM_LEVEL]`)
-- `Equips: Dict<EQUIP_SLOT_TYPE, AbilityItemEquip>` (outgame 슬롯별 장착 상태)
-- 능력치: `AbilityItemHero : AbilityItemBase : AbilityBase` → `mStats[UNIT_STAT_TYPE.X]` (UNIT_STAT_TYPE 기반 정규화)
+  - `ItemLevel: int` (= `this[UNIT_STAT_TYPE.ITEM_LEVEL]`)
+  - `Equips: Dict<EQUIP_SLOT_TYPE, AbilityItemEquip>` (outgame 슬롯별 장착 상태)
+  - 능력치: `AbilityItemHero : AbilityItemBase : AbilityBase` → `mStats[UNIT_STAT_TYPE.X]` (UNIT_STAT_TYPE 기반 정규화)
+  - 신규 hero runtime의 시작 레벨 기본값은 `1`
   - level up은 현재 `ITEM_HERO_LEVEL` row stat을 제거한 뒤 다음 level row stat을 적용한다
+- 선택 hero raw state는 `SelectedHeroId: string`으로 저장하고, `SelectedHero: AbilityItemHero`는 manager가 `SelectedHeroId`로부터 계산하는 파생 runtime view다.
 
 ### B-5) Materials
 
@@ -145,33 +148,51 @@ NOTE:
 
 ### C-5) `type == REWARD_TYPE.CARD`
 
-- `InventoryManager.AddCardAmount(item_id, delta)`가 카드 수량 signed delta boundary다.
+- `InventoryManager.AddCardAmount(item_id, delta)`가 카드 수량 add-only boundary다.
+- `delta < 0`는 허용하지 않는다. 회수는 `InventoryManager.RevokeCard(item_id, amount)`만 사용한다.
 - 내부 적용은 `_storage.Cards[item_id].AddAmount(delta)` (= `AddStat(UNIT_STAT_TYPE.ITEM_AMOUNT, delta)`)
 - 없는 키는 `_storage.AddCard(item_id, ability)`로 생성된다.
   - 새 AbilityItemCard의 모든 stat은 0(기본값)으로 시작한다.
 - Apply는 `UNIT_STAT_TYPE.ITEM_AMOUNT`만 변경한다 (다른 stat은 보존).
 - 수량이 0이 되면 카드 runtime은 storage에서 제거된다.
-- 카드 level up은 `InventoryManager.LevelUpCard(item_id)`가 담당한다. 현재 level row stat을 subtract하고 다음 level row stat을 add한다.
+- 카드 level up은 `InventoryManager.LevelUpCard(item_id)`가 담당한다. 현재 `ITEM_CARD_LEVEL.levelup_currency`/`levelup_price`만큼 inventory currency를 먼저 차감하고, 현재 `ITEM_CARD_LEVEL.levelup_count`만큼 card count(`ITEM_AMOUNT`)를 소모한 뒤 현재 level row stat을 subtract하고 다음 level row stat을 add한다.
+- card count가 부족하면 `GAME_ERROR_TYPE.INVENTORY_CARD_LEVELUP_COUNT_INSUFFICIENT`로 실패한다.
+- level-up currency가 부족하면 `GAME_ERROR_TYPE.INVENTORY_ITEM_LEVELUP_CURRENCY_INSUFFICIENT`로 실패한다.
+- level up으로 card count가 `0`이 되더라도 card runtime은 유지되며, save/load도 itemLevel 상태가 있으면 이를 보존해야 한다.
 
 ### C-4) `type == REWARD_TYPE.HERO`
 
-- `InventoryManager.AddHeroAmount(item_id, delta)`가 영웅 수량 signed delta boundary다.
+- `InventoryManager.AddHeroAmount(item_id, delta)`가 영웅 수량 add-only boundary다.
+- `delta < 0`는 허용하지 않는다. 회수는 `InventoryManager.RevokeHero(item_id, amount)`만 사용한다.
 - 내부 적용은 `_storage.Heroes[item_id].AddStat(UNIT_STAT_TYPE.ITEM_AMOUNT, delta)`
 - 없는 키는 `_storage.AddHero(item_id, ability)`로 생성된다.
-  - 새 AbilityItemHero는 `TB_ITEM_HERO.Get(item_id)`로 Init한다.
+  - 새 AbilityItemHero는 `AbilityItemFactory.CreateHero(item_id)`로 생성되며 시작 레벨 기본값은 `1`이다.
 - Apply는 `UNIT_STAT_TYPE.ITEM_AMOUNT`만 변경한다 (다른 stat은 보존).
 - 수량이 0이 되면 영웅 runtime은 storage에서 제거되고, 장착 중인 equip owner metadata도 함께 정리된다.
-- 영웅 level up은 `InventoryManager.LevelUpHero(item_id)`가 담당한다. 현재 level row stat을 subtract하고 다음 level row stat을 add한다.
+- 영웅 level up은 `InventoryManager.LevelUpHero(item_id)`가 담당한다. 현재 `ITEM_HERO_LEVEL.levelup_currency`/`levelup_price`만큼 inventory currency를 먼저 차감하고, 현재 `ITEM_HERO_LEVEL.levelup_count`만큼 hero count(`ITEM_AMOUNT`)를 소모한 뒤 현재 level row stat을 subtract하고 다음 level row stat을 add한다.
+- hero count가 부족하면 `GAME_ERROR_TYPE.INVENTORY_HERO_LEVELUP_COUNT_INSUFFICIENT`로 실패한다.
+- level-up currency가 부족하면 `GAME_ERROR_TYPE.INVENTORY_ITEM_LEVELUP_CURRENCY_INSUFFICIENT`로 실패한다.
+- level up으로 hero count가 `0`이 되더라도 hero runtime은 유지되며, save/load도 itemLevel/equip 상태가 있으면 이를 보존해야 한다.
 
 ### C-4a) `type == REWARD_TYPE.MATERIAL`
 
-- `InventoryManager.AddMaterialAmount(item_id, delta)`가 재료 수량 signed delta boundary다.
+- `InventoryManager.AddMaterialAmount(item_id, delta)`가 재료 수량 add-only boundary다.
+- `delta < 0`는 허용하지 않는다. 회수는 `InventoryManager.RevokeMaterial(item_id, amount)`만 사용한다.
 - 내부 적용은 `_storage.Materials[item_id].AddAmount(delta)` (= `AddStat(UNIT_STAT_TYPE.ITEM_AMOUNT, delta)`)
 - 없는 키는 `_storage.AddMaterial(item_id, ability)`로 생성된다.
   - 새 AbilityItemMaterial은 `TB_ITEM_MATERIAL.Get(item_id)`로 Init한다.
 - Apply는 `UNIT_STAT_TYPE.ITEM_AMOUNT`만 변경한다 (다른 stat은 보존).
 - 수량이 0이 되면 재료 runtime은 storage에서 제거된다.
 - 재료는 현재 level table이 없으므로 `LevelUpMaterial`을 두지 않는다.
+
+### C-4b) Equip Level Up
+
+- 장비 level up은 `InventoryManager.LevelUpEquip(item_uid)`가 담당한다.
+- 현재 `ITEM_EQUIP_LEVEL.levelup_currency`/`levelup_price`만큼 inventory currency를 먼저 차감하고, `ITEM_EQUIP_LEVEL.levelup_material`가 가리키는 `ITEM_MATERIAL`을 `ITEM_EQUIP_LEVEL.levelup_count`만큼 소모한 뒤 현재 level row stat을 subtract하고 다음 `ITEM_EQUIP_LEVEL` row stat을 add한다.
+- 장비 level-up 재료가 부족하면 `GAME_ERROR_TYPE.INVENTORY_EQUIP_LEVELUP_MATERIAL_INSUFFICIENT`로 실패한다.
+- level-up currency가 부족하면 `GAME_ERROR_TYPE.INVENTORY_ITEM_LEVELUP_CURRENCY_INSUFFICIENT`로 실패한다.
+- level up으로 재료 count가 `0`이 되면 재료 runtime은 storage에서 제거된다.
+- currency 또는 재료 소모 후 장비 level-up 적용이 실패하면 소모한 currency/material은 원복된다.
 
 
 ### C-5) `type == REWARD_TYPE.TREASURE`
@@ -187,6 +208,23 @@ NOTE:
 - 적용: `_storage.SetTreasureCount(gradeType, current - amount)`.
 
 NOTE: `RewardManager.RevokeRewardDatas` / `RevokeRewardDatasPartial`가 RewardData 단위의 회수 원자성을 담당한다. InventoryManager의 Revoke API는 단일 타입/단일 건의 storage 변경만 수행한다.
+
+
+---
+
+
+## C-5b) Equip Upgrade
+
+- API 정본: `InventoryManager.UpgradeEquipItem(baseItemUid, materialItemUid0, materialItemUid1) -> GameResult<AbilityItemEquip>`
+- 세 source equip은 모두 존재해야 하며 `itemUid`가 서로 달라야 한다.
+- 본체/재료2개는 모두 같은 `item_id`여야 한다.
+- 본체 row의 `upgrade_id`가 비어 있으면 업그레이드 불가다.
+- 본체/재료2개 중 하나라도 `IsEquipped == true`면 업그레이드 불가다.
+- 새 장비는 `AbilityItemFactory.CreateEquip(upgrade_id, newItemUid, baseEquip.ItemLevel)`로 생성한다.
+- 생성 성공 후 source 3개를 제거하고, 새 장비 1개를 추가한다.
+- 성공 반환값은 생성된 upgraded `AbilityItemEquip` runtime이다.
+- notify는 `ITEM_EQUIP_LIST_CHANGED(REMOVE x3, ADD x1)`만 사용한다.
+- save schema 변경은 없다. 최종 상태는 기존 equip snapshot(`ItemId`, `ItemUid`, `ItemLevel`)으로 직렬화된다.
 
 
 ---
@@ -214,6 +252,7 @@ InventoryStorage는 `Equip(heroId, equipSlot, equipUid)` / `Unequip(heroId, equi
 > 아래 스키마는 SaveData JSON의 `"inventory"` 섹션에 해당한다.
 
 Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
+- inventory 저장 raw state에는 `selectedHeroItemId`가 포함된다. 존재하지 않는 hero를 가리키면 load 시 무시한다.
 
 ```json
 {
@@ -243,18 +282,19 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
       "item_id": "<string>",
       "item_level": <int>,
       "amount": <int>,
-      "equips": { "<slotNumber>": "<equipUid>" }
+      "equips": { "<slotTypeName>": "<equipUid>" }
     }
   }
 }
 ```
 
-- Hero equips: slotNumber(string key) → equipUid(string value).
+- Hero equips: `EQUIP_SLOT_TYPE` enum name(string key) → equipUid(string value).
 - hero equip ownership의 저장 SSOT는 `heroes[*].equips`다.
 - `equipments[*]`는 owner 정보를 저장하지 않는다. equip owner는 deserialize 시 hero equip 맵으로만 복원한다.
 - 역직렬화 시 테이블 참조: `TB_ITEM_EQUIP.Get`/`TB_ITEM_CARD.Get`/`TB_ITEM_MATERIAL.Get`/`TB_ITEM_HERO.Get`으로 `mTable` 복원.
 - 역직렬화 순서: wallet → equipments(항상 unequipped 생성) → cards → materials → heroes (heroes 마지막: equip 슬롯 참조 필요).
 - hero equip 맵에 중복 `equipUid`가 나오면 load 실패로 처리한다.
+- 새 save는 enum slot key를 숫자로 저장하지 않는다. legacy 숫자 key는 load 호환용으로만 허용한다.
 - legacy save의 `CARD_AMOUNT`/`UNIT_AMOUNT`/`CARD_LEVEL`/`UNIT_LEVEL` key는 load 시 `ITEM_AMOUNT`/`ITEM_LEVEL`로 매핑한다.
 - 역직렬화 실패는 `CommonResult.Failure(...)`로 즉시 반환하며, 부분 복원 상태를 성공으로 취급하지 않는다.
 - Treasure 상태는 별도 root key `"treasure"`로 직렬화된다 (`SaveDataJsonCodecTreasure` 담당).
@@ -269,6 +309,10 @@ Inventory 직렬화 스키마 정본 (SaveData JSON inventory 섹션).
 - InventoryManager 타입별 API 실패 에러 코드는 `GAME_ERROR_TYPE`을 사용한다.
   - `GAME_ERROR_TYPE.GAME_INVALID_ARGUMENT` — null/empty/음수 등 입력 검증 실패
   - `GAME_ERROR_TYPE.INVENTORY_REFUND_INSUFFICIENT` — 회수 시 잔고/수량 부족
+  - `GAME_ERROR_TYPE.INVENTORY_CARD_LEVELUP_COUNT_INSUFFICIENT` — card level-up 비용(`ITEM_CARD_LEVEL.levelup_count`) 부족
+  - `GAME_ERROR_TYPE.INVENTORY_HERO_LEVELUP_COUNT_INSUFFICIENT` — hero level-up 비용(`ITEM_HERO_LEVEL.levelup_count`) 부족
+  - `GAME_ERROR_TYPE.INVENTORY_EQUIP_LEVELUP_MATERIAL_INSUFFICIENT` — equip level-up 재료 비용(`ITEM_EQUIP_LEVEL.levelup_material`, `levelup_count`) 부족
+  - `GAME_ERROR_TYPE.INVENTORY_ITEM_LEVELUP_CURRENCY_INSUFFICIENT` — item level-up 재화 비용(`ITEM_*_LEVEL.levelup_currency`, `levelup_price`) 부족
 
 
 ---

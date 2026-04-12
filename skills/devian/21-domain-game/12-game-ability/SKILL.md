@@ -299,13 +299,17 @@ namespace Devian
 
 - `AbilityItemBase` — item 공통 abstract 베이스. `abstract ItemId`, `Amount`(`UNIT_STAT_TYPE.ITEM_AMOUNT`), `ItemLevel`(`UNIT_STAT_TYPE.ITEM_LEVEL`), `AddAmount(delta)` 공통 프로퍼티/메서드를 제공한다.
 - `AbilityItemEquip` — ITEM_EQUIP 테이블 entity와 ITEM_EQUIP_LEVEL row를 함께 받아 초기화한다. `ItemUid`(인스턴스 고유 GUID)와 `ItemId`(템플릿 ID) 프로퍼티 노출. 같은 `ItemId`에 여러 인스턴스가 존재할 수 있다.
-- `AbilityItemEquip`: `mTable` 참조 + `Init(table, levelTable, itemUid)` + `ItemUid` + `OwnerUnitId` + `OwnerSlotNumber` + `IsEquipped` + `SetOwner(unit_id, slot)` + `ClearOwner()` + `Clone()`. pk는 `itemUid`(GUID).
+- `AbilityItemEquip`: `mTable` 참조 + `Init(table, levelTable, itemUid)` + `ResolveLevelUpMaterialCost(current level row.levelup_material, levelup_count)` + `ResolveLevelUpCurrencyCost(current level row.levelup_currency, levelup_price)` + `ItemUid` + `OwnerUnitId` + `OwnerSlotNumber` + `IsEquipped` + `SetOwner(unit_id, slot)` + `ClearOwner()` + `Clone()`. pk는 `itemUid`(GUID).
+- `AbilityItemEquip` level up 비용 정본은 현재 `ITEM_EQUIP_LEVEL.levelup_material` + `levelup_count` + `levelup_currency` + `levelup_price`다.
 - `AbilityItemCard` — ITEM_CARD 테이블 entity를 직접 참조하여 초기화한다. `ITEM_CARD`는 Generated entity (TB_ITEM_CARD 컨테이너).
-- `AbilityItemCard`: `mTable` 참조 + `Init(table, levelTable)` + `Clone()`. `ItemId`/`Amount`/`ItemLevel`/`AddAmount`는 `AbilityItemBase` 상속.
+- `AbilityItemCard`: `mTable` 참조 + `Init(table, levelTable)` + `ResolveLevelUpCost(current level row.levelup_count)` + `ResolveLevelUpCurrencyCost(current level row.levelup_currency, levelup_price)` + `Clone()`. `ItemId`/`Amount`/`ItemLevel`/`AddAmount`는 `AbilityItemBase` 상속.
+- `AbilityItemCard` level up 비용 정본은 현재 `ITEM_CARD_LEVEL.levelup_count` + `levelup_currency` + `levelup_price`다.
 - `AbilityItemMaterial` — `ITEM_MATERIAL` 테이블 entity를 직접 참조하여 초기화한다.
 - `AbilityItemMaterial`: `mTable` 참조 + `Init(table)` + `Clone()`. `ItemId`/`Amount`/`ItemLevel`/`AddAmount`는 `AbilityItemBase` 상속.
-- `AbilityItemHero` — `ITEM_HERO` 테이블 entity와 ITEM_HERO_LEVEL row를 함께 받아 초기화한다. outgame inventory의 hero 수량/레벨/equip slot 저장 SSOT다.
-- `AbilityItemHero`: `mTable` 참조 + `Init(table, levelTable)` + `UnitId` + `Equips` + `SetEquip(equip, slot)` + `RemoveEquip(slot)` + `Clone()`. `ItemId`/`Amount`/`ItemLevel`/`AddAmount`는 `AbilityItemBase` 상속.
+- `AbilityItemHero` — `ITEM_HERO` 테이블 entity와 ITEM_HERO_LEVEL row를 함께 받아 초기화한다. outgame inventory의 hero 수량/레벨/equip slot 저장 SSOT다. 기본 생성 레벨은 `1`이다.
+- `AbilityItemHero`는 `ResolveLevelUpCost(current level row.levelup_count)` + `ResolveLevelUpCurrencyCost(current level row.levelup_currency, levelup_price)`를 제공한다.
+- `AbilityItemHero`: `mTable` 참조 + `Init(table, levelTable)` + `UnitId` + `ResolveLevelUpCost(current level row.levelup_count)` + `Equips` + `SetEquip(equip, slot)` + `RemoveEquip(slot)` + `Clone()`. `ItemId`/`Amount`/`ItemLevel`/`AddAmount`는 `AbilityItemBase` 상속.
+- `AbilityItemHero` level up 비용 정본은 현재 `ITEM_HERO_LEVEL.levelup_count`다.
 - `AbilityItemHero`는 equip stat을 직접 계산하지 않는다. loadout metadata와 equip owner metadata만 유지한다.
 
 ---

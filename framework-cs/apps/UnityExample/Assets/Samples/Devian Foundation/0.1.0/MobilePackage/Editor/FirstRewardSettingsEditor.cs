@@ -28,6 +28,7 @@ namespace Devian
         bool _loaded;
 
         // Cached SerializedProperty for editor-only *_ID fields
+        SerializedProperty _propSelectedHeroUnitId;
         SerializedProperty _propCardId;
         SerializedProperty _propMaterialId;
         SerializedProperty _propEquipId;
@@ -47,6 +48,7 @@ namespace Devian
 
         void cacheIdProperties()
         {
+            _propSelectedHeroUnitId = serializedObject.FindProperty("SelectedHeroUnitId");
             _propCardId   = serializedObject.FindProperty("_editorCardId");
             _propMaterialId = serializedObject.FindProperty("_editorMaterialId");
             _propEquipId  = serializedObject.FindProperty("_editorEquipId");
@@ -65,6 +67,11 @@ namespace Devian
                 return;
 
             serializedObject.Update();
+
+            EditorGUILayout.LabelField("Initial Selected Hero", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(_propSelectedHeroUnitId, new GUIContent("Hero Unit Id"));
+            EditorGUILayout.HelpBox("Selected hero is automatically granted x1 with ITEM_HERO initial equips applied to their configured slots during first init.", MessageType.Info);
+            EditorGUILayout.Space(12f);
 
             EditorGUILayout.LabelField("Initial Rewards (RewardData[])", EditorStyles.boldLabel);
             EditorGUILayout.Space(2f);

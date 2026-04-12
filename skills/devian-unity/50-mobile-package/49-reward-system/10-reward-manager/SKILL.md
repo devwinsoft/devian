@@ -38,7 +38,7 @@ CompoSingleton<RewardManager>.Instance
 - `reward_group_id`를 입력받아 `ResolveRewardDatas(reward_group_id)`로 `TB_REWARD.GetByGroup()` 에서 `RewardData[]`를 만든 뒤 적용
 - `RevokeRewardDatas` / `RevokeRewardDatasPartial`로 RewardData[] 기반 회수 처리
 - `GetAmount(type, id)`로 RewardData 타입 기반 수량 조회
-- `FirstInitAsync()`로 초기 보상 지급 처리 (FirstRewardSettings 로드 + ApplyRewardDatas)
+- `FirstInitAsync()`로 초기 보상 지급 처리 (FirstRewardSettings 로드 + ApplyRewardDatas + 초기 선택 hero 적용)
 - public reward API의 실패는 `GameResult`로 반환한다.
 - `_validateRewardData` 같은 선검증 단계는 all-or-nothing 보장의 일부이며 삭제하지 않는다.
 
@@ -94,8 +94,12 @@ RewardManager는 `MobileApplication.Instance`에서 key/iv를 읽어 사용한�
   - `(type,id)`에 대한 현재 수량을 반환한다.
 - `FirstInitAsync(CancellationToken ct) -> Task<GameResult>`
   - `FirstRewardSettings` 로드 → AES 복호화 → JSON 파싱 → `ApplyRewardDatas`로 적용.
-  - 보상 적용 후 `InventoryManager.Initialize()` 호출 → InventorySettings 로드 + `LastStaminaUpdateUtcMs` 초기화.
+  - 보상 적용 후 `InventoryManager.LoadSettings()` 호출로 InventorySettings를 로드한다.
   - `InventoryManager.ApplyCurrency(STAMINA, MaxStamina)`로 초기 스태미나 지급.
+  - `SelectedHeroUnitId`가 해석되면 대응 `ITEM_HERO.item_id`를 hero reward `+1`로 합성한 뒤 적용한다.
+  - 같은 `ITEM_HERO` row의 `initial_item_##`는 `EQUIP +1` reward로 합성하고, apply 후 `initial_slot_##`에 자동 장착한다.
+  - `FirstRewardSettings.SelectedHeroUnitId(UNIT_HERO_ID)`가 설정되어 있으면 `TB_ITEM_HERO.unit_id -> item_id`로 해석한 뒤 `InventoryManager.SelectedHeroId`에 적용한다.
+  - 선택 hero 해석 실패 또는 미보유 상태는 soft-fail로 보고 선택만 비운다.
   - 리소스/암호화/JSON 실패는 운영 데이터 경계 실패로 보고 `GameResult`를 유지한다.
 
 

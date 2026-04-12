@@ -14,6 +14,7 @@ AppliesTo: v10
 - 네임스페이스: `Devian`
 - 필드:
   - `InitialRewards: CString`
+  - `SelectedHeroUnitId: UNIT_HERO_ID`
 - 기본값:
   - 복호화 원문: `[{"type":"CURRENCY","id":"GOLD","amount":1000}]`
 
@@ -30,11 +31,17 @@ AppliesTo: v10
 
 ## Storage Contract
 
-`InitialRewards(CString)`에는 아래 순서로 저장된다.
+`FirstRewardSettings`에는 아래 2개 데이터가 저장된다.
 
-1. 원본 데이터는 `RewardData[]` JSON
-2. `RewardManager`의 Crypto key/iv로 AES 암호화
-3. 암호화 payload(string, base64)를 `CString`에 저장
+- `InitialRewards(CString)`
+  - 원본 데이터는 `RewardData[]` JSON
+  - `RewardManager`의 Crypto key/iv로 AES 암호화
+  - 암호화 payload(string, base64)를 `CString`에 저장
+- `SelectedHeroUnitId(UNIT_HERO_ID)`
+  - AES payload에 포함하지 않고 ScriptableObject 직렬화 필드로 직접 저장
+  - 값은 `UNIT_HERO.unit_id`를 의미한다
+  - first-init 시 대응 `ITEM_HERO.item_id`를 hero reward `+1`로 자동 합성한다
+  - 같은 `ITEM_HERO` row의 `initial_slot_##`, `initial_item_##`도 `ITEM_EQUIP +1` reward로 자동 합성되고 지정 slot에 장착된다
 
 런타임 로딩 시 (`RewardManager.FirstInitAsync`):
 
@@ -42,8 +49,17 @@ AppliesTo: v10
 2. `MobileApplication`에서 AES 복호화한다
 3. 복호화된 JSON을 `RewardData[]` 규약으로 파싱/검증한다
 4. `RewardManager.ApplyRewardDatas`로 적용한다
-5. `InventoryManager.Initialize()`로 InventorySettings를 로드 + `LastStaminaUpdateUtcMs` 초기화
+   - 이때 `SelectedHeroUnitId`가 설정되어 있으면 대응 hero reward `+1`도 함께 적용된다
+   - 같은 hero row의 `initial_item_##`도 `EQUIP +1`로 함께 적용된다
+5. `InventoryManager.LoadSettings()`로 InventorySettings를 로드한다
 6. `InventoryManager.ApplyCurrency(CURRENCY_TYPE.STAMINA, MaxStamina)`로 초기 스태미나 지급
+7. `SelectedHeroUnitId`를 읽어 `TB_ITEM_HERO.unit_id -> item_id`로 해석한다
+8. `initial_slot_##`, `initial_item_##`로 방금 지급한 equip uid를 찾아 hero slot에 장착한다
+9. 해석된 `item_id`를 `InventoryManager.SelectedHeroId`에 적용한다
+
+soft-fail:
+- `SelectedHeroUnitId`가 비어 있거나 `ITEM_HERO` 매핑이 없으면 선택 hero만 비운다
+- 선택 hero 적용 실패 때문에 first-init 전체를 실패시키지 않는다
 
 암복호화 key/iv 소유 위치:
 - `MobileApplication` (정본, `[SerializeField] CString` + public property)
@@ -56,6 +72,14 @@ AppliesTo: v10
 ## Inspector (CustomEditor)
 
 `FirstRewardSettingsEditor`는 `InitialRewards`를 행 단위로 편집한다.
+
+- 별도 필드:
+  - `SelectedHeroUnitId`는 `UNIT_HERO_ID` selector로 편집한다
+  - 의미는 "초기 선택 hero의 unit_id"다
+  - 설정된 hero는 first-init 때 자동으로 x1 지급된다
+  - 해당 `ITEM_HERO.initial_item_##`도 자동 지급되고 `initial_slot_##`에 장착된다
+- reward row 편집:
+  - `InitialRewards`는 기존처럼 행 단위로 편집한다
 
 - 기존 행: Read-only TextBox(single line) + `삭제` 버튼
   - 표시 형식: `{Type}  |  {Id}  |  {Amount}`

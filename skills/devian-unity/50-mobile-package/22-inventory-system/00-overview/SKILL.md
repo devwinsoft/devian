@@ -44,6 +44,7 @@ live runtime state는 `InventoryManager`가 소유하고, save/load는 `Inventor
 | [13-inventory-settings](../13-inventory-settings/SKILL.md) | InventorySettings (설정 ScriptableObject, AES+CInt) |
 | [14-inventory-stamina-controller](../14-inventory-stamina-controller/SKILL.md) | InventoryStaminaController (설정 로드 + 스태미나 회복) |
 | [16-inventory-message-trigger](../16-inventory-message-trigger/SKILL.md) | Inventory 변경 메시지 트리거 |
+| [17-inventory-team](../17-inventory-team/SKILL.md) | Team/loadout 설계 분석 (`AbilityTeam`, selected team, joined/not-joined/unowned hero view) |
 
 
 ---

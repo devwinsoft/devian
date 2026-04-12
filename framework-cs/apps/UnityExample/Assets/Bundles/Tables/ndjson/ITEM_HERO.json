@@ -1,1 +1,5 @@
-{"item_id":"item_hero_001","unit_id":"unit_hero_001","name_id":"","desc_id":""}
+{"item_id":"item_hero_001","unit_id":"unit_hero_001","name_id":"","desc_id":"","initial_slot_00":"HAND_MAIN","initial_item_00":"item_equip_sword_001","initial_item_01":"","initial_item_02":"","initial_item_03":""}
+{"item_id":"item_hero_002","unit_id":"unit_hero_002","name_id":"","desc_id":"","initial_slot_00":"HAND_MAIN","initial_item_00":"item_equip_sword_001","initial_item_01":"","initial_item_02":"","initial_item_03":""}
+{"item_id":"item_hero_003","unit_id":"unit_hero_003","name_id":"","desc_id":"","initial_slot_00":"HAND_MAIN","initial_item_00":"item_equip_sword_001","initial_item_01":"","initial_item_02":"","initial_item_03":""}
+{"item_id":"item_hero_004","unit_id":"unit_hero_004","name_id":"","desc_id":"","initial_slot_00":"HAND_MAIN","initial_item_00":"item_equip_sword_001","initial_item_01":"","initial_item_02":"","initial_item_03":""}
+{"item_id":"item_hero_005","unit_id":"unit_hero_005","name_id":"","desc_id":"","initial_slot_00":"HAND_MAIN","initial_item_00":"item_equip_sword_001","initial_item_01":"","initial_item_02":"","initial_item_03":""}

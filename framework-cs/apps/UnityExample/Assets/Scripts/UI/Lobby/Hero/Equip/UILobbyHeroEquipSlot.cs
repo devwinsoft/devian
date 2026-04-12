@@ -8,5 +8,12 @@ public class UILobbyHeroEquipSlot : UIComponentBase
 
     protected override void onInit(Canvas canvas)
     {
+        if (InventoryManager.Instance.SelectedHero.Equips.TryGetValue(slotType, out var equip))
+        {
+            Debug.Log($"Equip: {equip.ItemId}");
+        }
+        else
+        {
+        }
     }
 }
